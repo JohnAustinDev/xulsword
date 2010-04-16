@@ -1,0 +1,51 @@
+/* CSS Document */
+
+.advancedSearch {
+  background:white;
+  border:1px solid threeDShadow;
+  border-top:none; 
+  -moz-border-radius-bottomleft:4px;
+  -moz-border-radius-bottomright:4px; 
+  padding:8px;
+}
+
+.searchframe {
+  border:2px solid rgb(200,170,205);
+  -moz-border-radius:4px;
+}
+
+/* SEARCH WINDOW ARROWS */
+image#first {
+  list-style-image: url("chrome://xulsword/skin/images/topArrow.bmp") !important;
+}
+image#last {
+  list-style-image: url("chrome://xulsword/skin/images/bottomArrow.bmp") !important;
+}
+image#prev {
+  list-style-image: url("chrome://xulsword/skin/images/upArrow.bmp") !important;
+}
+image#next {
+  list-style-image: url("chrome://xulsword/skin/images/downArrow.bmp") !important;
+}
+.searchArrow {
+  -moz-image-region: rect(0px, 35px, 34px, 0px) !important;
+}
+.searchArrow:hover {
+  -moz-image-region: rect(0px, 70px, 34px, 35px) !important;
+}
+
+image#question {
+  list-style-image: url("chrome://xulsword/skin/images/question.png") !important;
+}
+.question {
+  -moz-image-region: rect(0px, 27px, 27px, 0px) !important;
+}
+.question:hover {
+  -moz-image-region: rect(0px, 54px, 27px, 27px) !important;
+}
+
+statusbar[chromedir="rtl"] > statusbarpanel > resizer {
+  display: none;
+}
+
+

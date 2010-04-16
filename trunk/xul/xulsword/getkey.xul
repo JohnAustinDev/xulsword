@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of Muqaddas Kitob.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    Muqaddas Kitob is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Muqaddas Kitob is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Muqaddas Kitob.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/">
+<dialog 
+    id="key-window" 
+    title=""
+    onload="loaded()"
+    buttons="accept"
+    buttonpack="center"
+    ondialogaccept="return doOK();"
+    style="border:2px solid rgb(200,170,205); background-image: url(chrome://xulsword/skin/images/9.gif);"
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+    xmlns:html="http://www.w3.org/1999/xhtml">
+
+  <script>var UseBibleObjectFrom = "none";</script>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script>
+  function doOK() {
+    var newkey = document.getElementById('keytextbox').value;
+    if (newkey != "") {
+      prefs.setCharPref("CipherKey" + window.arguments[0], newkey);
+      window.arguments[1].gotKey = true;
+      window.close();
+    }
+    return true;
+  }
+  
+  function loaded() {
+    updateCSSBasedOnCurrentLocale(["#key-window"]);
+    sizeToContent();
+    var ktlabel = document.getElementById("ktlabel").value;
+    //document.getElementById("ktlabel").value = window.arguments[0] + ": " + ktlabel; 
+    document.getElementById("mdlabel").value = window.arguments[0];
+  }
+</script>
+
+  <vbox align="center" pack="center" style="padding:40px;" flex="100%">
+    <label id="ktlabel" value="&getkey.askforkey;" style="font-weight:bold; margin:10px;"/>
+    <label id="mdlabel" value="" style="font-weight:bold; margin:10px;"/>
+    <textbox id="keytextbox" onclick="this.select()" maxlength="24" style="margin:10px;"/>
+  </vbox>
+
+</dialog>

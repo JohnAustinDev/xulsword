@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--
+    This file is part of Muqaddas Kitob.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    Muqaddas Kitob is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Muqaddas Kitob is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Muqaddas Kitob.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=windows-1250">
+  <meta name="searchHelp-window" content="PSPad editor, www.pspad.com">
+  <title>searchHelp-window</title>
+  <link rel="stylesheet" href="chrome://xulsword/skin/style.css" type="text/css">
+  </head>
+  
+  <script>var UseBibleObjectFrom = "none";</script>
+  <script src="chrome://xulsword/content/common0.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/common1.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
+
+  <script>
+  function writeSearchHelp() {
+    var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
+    var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/search-help.properties");
+    window.frameElement.ownerDocument.title = fixWindowTitle(bundle.GetStringFromName("windowTitle"));
+    document.write("<div style=\"width:100%;\">" + bundle.GetStringFromName("searchTypes") + "</div>");
+    document.write("<table style=\"width:100%; font-size:12px; border-collapse:collapse; border:2px solid rgb(200,170,205); -moz-border-radius:4px;\"><tbody>");
+    var grey=false;
+    for (var r=0; r<9; r++) {
+      var style = grey ? "background:rgb(230,230,230);":"background:rgb(245,245,245);";
+      grey = !grey;
+      document.write("<tr>");
+      for (var c=0; c<4; c++) {
+        var mystyle = (c==0) ? style + " text-align:center;":style;
+        document.write("<td style=\"padding:5px; " + mystyle + "\">" + bundle.GetStringFromName("searchTable_" + r + "_" + c) + "</td>");
+      }
+      document.write("</tr>");
+    }
+    document.write("</tbody></table>");
+    document.write("<br><div>" + bundle.GetStringFromName("searchCase") + "</div>");
+  }
+  
+  function htmlLoaded() {
+    var winh = window.frameElement.ownerDocument.height-60;
+    document.getElementById("helpPane").style.height = String(winh) + "px";
+  }
+  
+  </script>
+  
+  <body  id="searchHelp-window" onload="{updateCSSBasedOnCurrentLocale(['#searchHelp-window']); setTimeout('htmlLoaded()',0);}" style="font-size:12px; background-image: url(chrome://xulsword/skin/images/9.gif);">
+    <div id="helpPane" style="overflow:auto; min-width:340px; min-height:300px; padding:20px; background:white; border:2px solid rgb(200,170,205); -moz-border-radius:4px;">
+      <script>writeSearchHelp();</script>
+    </div>
+  </body>
+</html>

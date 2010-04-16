@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of Muqaddas Kitob.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    Muqaddas Kitob is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Muqaddas Kitob is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Muqaddas Kitob.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+
+<!DOCTYPE window [
+<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
+%xulswordDTD;
+<!ENTITY % brandingDTD SYSTEM "chrome://xulsword/locale/branding.dtd" >
+%brandingDTD;
+<!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
+%browserDTD;
+]>
+
+<window 
+    id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"
+    title="&menu.help.about;"
+    onload="onLoad();"
+    hidechrome="true"
+    centerscreen="true"
+    width="500" height="525"
+    style="background-color:transparent; background-image: url(chrome://xulsword/locale/splash.png); background-repeat:no-repeat;"
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+    
+  <script>var UseBibleObjectFrom = "none";</script>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  
+  <script>
+    function onLoad() {
+      LocaleConfigs = [];
+      var localeConfig = {direction:null, font:null, fontSizeAdjust:null, lineHeight:null};
+      var locale = rootprefs.getCharPref("general.useragent.locale");
+      var bundle = getLocaleBundle(locale, "config.properties");
+      if (bundle) {
+        try {localeConfig.direction = bundle.GetStringFromName("Direction");} catch (er) {}
+        try {localeConfig.font = bundle.GetStringFromName("Font");} catch (er) {}
+        try {localeConfig.fontSizeAdjust = bundle.GetStringFromName("FontSizeAdjust");} catch (er) {}
+        try {localeConfig.lineHeight = bundle.GetStringFromName("LineHeight");} catch (er) {}
+      }
+      LocaleConfigs[locale] = localeConfig;
+      updateCSSBasedOnCurrentLocale(['window']);
+      
+      setGlobalDirectionPrefs();
+    }
+  </script>
+  <vbox flex="1">
+    <stack style="height:375px;">
+      <vbox style="margin:7px;" pack="end" align="center">
+        <label id="producedBy" value="&producedby;" style="font-size:14px; color:rgb(77,37,143);"/>
+      </vbox>
+    </stack>
+  </vbox>
+    
+</window>

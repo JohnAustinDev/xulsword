@@ -1,0 +1,222 @@
+<?xml version="1.0"?>
+<RDF:RDF xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#"
+         xmlns:NC="http://home.netscape.com/NC-rdf#"
+         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <RDF:Description RDF:about="rdf:#$sZ7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="John 3:1-21" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Book="John"
+                   BOOKMARKS:Chapter="3"
+                   BOOKMARKS:Verse="1"
+                   BOOKMARKS:LastVerse="21"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="John.3.1.21"
+                   BOOKMARKS:VerseText="Now there was a man of the Pharisees named  Nicodemus,  a ruler of the Jews. This man came to Jesus  by night and said to him,  Rabbi,  we know that you are a teacher come from God, for no one can do these signs that you do  unless God is with him. Jesus answered him, Truly, truly, I say to you, unless one is  born  again he cannot  see the kingdom of God. Nicodemus said to him, How can a man be born when he is old? Can he enter a second time into his mother's womb and be born? Jesus answered, Truly, truly, I say to you, unless one is born  of water and the Spirit, he cannot enter the kingdom of God.  That which is born of the flesh is  flesh, and that which is born of the Spirit is spirit.  Do not marvel that I said to you, You must be born  again.  The wind blows  where it wishes, and you hear its sound, but you do not know where it comes from or where it goes. So it is with everyone who is born of the Spirit.    Nicodemus said to him,  How can these things be? Jesus answered him, Are you the teacher of Israel  and yet you do not understand these things? Truly, truly, I say to you,  we speak of what we know, and bear witness to what we have seen, but  you do not receive our testimony. If I have told you earthly things and you do not believe, how can you believe if I tell you heavenly things?  No one has  ascended into heaven except  he who descended from heaven, the Son of Man. And  as Moses lifted up the serpent in the wilderness, so must the Son of Man  be lifted up, that whoever believes  in him  may have eternal life.      For  God so loved  the world,  that he gave his only Son, that whoever believes in him should not  perish but have eternal life. For  God did not send his Son into the world  to condemn the world, but in order that the world might be saved through him.  Whoever believes in him is not condemned, but whoever does not believe is condemned already, because he has not  believed in the name of the only Son of God.  And this is the judgment:  the light has come into the world, and  people loved the darkness rather than the light because  their deeds were evil.  For everyone who does wicked things hates the light and does not come to the light,  lest his deeds should be exposed. "
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Description RDF:about="rdf:#$tZ7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="Titus 3:4-7" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Book="Titus"
+                   BOOKMARKS:Chapter="3"
+                   BOOKMARKS:Verse="4"
+                   BOOKMARKS:LastVerse="7"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="Titus.3.4.7"
+                   BOOKMARKS:VerseText="But when  the goodness and loving kindness of God our Savior appeared, he saved us,  not because of works done by us in righteousness, but  according to his own mercy, by  the washing of regeneration and  renewal of the Holy Spirit, whom he  poured out on us richly through Jesus Christ our Savior, so that  being justified by his grace we might become  heirs  according to the hope of eternal life. "
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Seq RDF:about="rdf:#$rZ7Ci1">
+    <RDF:li RDF:resource="rdf:#$sZ7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$tZ7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$uZ7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$vZ7Ci1"/>
+  </RDF:Seq>
+  <RDF:Description RDF:about="rdf:#$rZ7Ci1"
+                   BOOKMARKS:Type="Folder"
+                   BOOKMARKS:Name="Born Again" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Seq RDF:about="http://www.xulsword.com/bookmarks/FoundResults">
+  </RDF:Seq>
+  <RDF:Seq RDF:about="http://www.xulsword.com/bookmarks/BookmarksRoot">
+    <RDF:li RDF:resource="http://www.xulsword.com/bookmarks/AllBookmarks"/>
+  </RDF:Seq>
+  <Description RDF:about="http://www.xulsword.com/bookmarks/BookmarksRoot"
+                   BOOKMARKS:Type="Folder"
+                   BOOKMARKS:Name="Bookmarks Root" />
+  <RDF:Description RDF:about="rdf:#$uZ7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="1 Peter 1:23" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Note="" BOOKMARKS:NoteLocale="en-US"
+                   BOOKMARKS:Book="1Pet"
+                   BOOKMARKS:Chapter="1"
+                   BOOKMARKS:Verse="23"
+                   BOOKMARKS:LastVerse="23"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="1Pet.1.23"
+                   BOOKMARKS:VerseText="since you have been born again,  not of perishable seed but of imperishable, through  the living and abiding word of God; "
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Seq RDF:about="http://www.xulsword.com/bookmarks/AllBookmarks">
+    <RDF:li RDF:resource="rdf:#$wZ7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$XX7Ci1"/>
+  </RDF:Seq>
+  <Description RDF:about="http://www.xulsword.com/bookmarks/AllBookmarks"
+                   BOOKMARKS:Type="Folder"
+                   BOOKMARKS:Name="Bookmarks" />
+  <RDF:Description RDF:about="rdf:#$qY7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="Exodus 6:3" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Book="Exod"
+                   BOOKMARKS:Chapter="6"
+                   BOOKMARKS:Verse="3"
+                   BOOKMARKS:LastVerse="3"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="Exod.6.3"
+                   BOOKMARKS:VerseText="I appeared to Abraham, to Isaac, and to Jacob, as  God Almighty, but by my name the  Lord I did not make myself known to them. "
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Seq RDF:about="rdf:#$XX7Ci1">
+    <RDF:li RDF:resource="rdf:#$YX7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$rZ7Ci1"/>
+  </RDF:Seq>
+  <RDF:Description RDF:about="rdf:#$XX7Ci1"
+                   BOOKMARKS:Type="Folder"
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:Name="Example Bookmarks" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Note="You may create your own personal notes and bookmarks." BOOKMARKS:NoteLocale="en-US"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Description RDF:about="rdf:#$vZ7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="1 Peter 1:3" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Note="" BOOKMARKS:NoteLocale="en-US"
+                   BOOKMARKS:Book="1Pet"
+                   BOOKMARKS:Chapter="1"
+                   BOOKMARKS:Verse="3"
+                   BOOKMARKS:LastVerse="3"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="1Pet.1.3"
+                   BOOKMARKS:VerseText="Blessed be the God and Father of our Lord Jesus Christ!  According to his great mercy,  he has caused us to be born again to a living hope  through the resurrection of Jesus Christ from the dead, "
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Description RDF:about="rdf:#$LY7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="1st Corinthians 13:12" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Book="1Cor"
+                   BOOKMARKS:Chapter="13"
+                   BOOKMARKS:Verse="12"
+                   BOOKMARKS:LastVerse="12"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="1Cor.13.12"
+                   BOOKMARKS:VerseText="For  now we see in a mirror dimly, but  then face to face. Now I know in part; then I shall know fully, even as  I have been fully known.    "
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Description RDF:about="rdf:#$rY7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="1 Samuel 3:7" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Book="1Sam"
+                   BOOKMARKS:Chapter="3"
+                   BOOKMARKS:Verse="7"
+                   BOOKMARKS:LastVerse="7"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="1Sam.3.7"
+                   BOOKMARKS:VerseText="Now Samuel did not yet know the Lord, and the word of the Lord had not yet been revealed to him.    "
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Description RDF:about="rdf:#$4Y7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:Name="1 Samuel 2:12" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Book="1Sam"
+                   BOOKMARKS:Chapter="2"
+                   BOOKMARKS:Verse="12"
+                   BOOKMARKS:LastVerse="12"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="1Sam.2.12"
+                   BOOKMARKS:VerseText="Now the sons of Eli were  worthless men.  They did not know the Lord. "
+                   BOOKMARKS:ModifiedDate="-----" />
+  <Description RDF:about="http://www.xulsword.com/bookmarks/emptyBookmark"
+                   BOOKMARKS:Type="EmptyBookmark"
+                   BOOKMARKS:Name="(Empty)" />
+  <RDF:Seq RDF:about="rdf:#$YX7Ci1">
+    <RDF:li RDF:resource="rdf:#$qY7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$pY7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$4Y7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$rY7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$KY7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$LY7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$IY7Ci1"/>
+    <RDF:li RDF:resource="rdf:#$5Z7Ci1"/>
+  </RDF:Seq>
+  <RDF:Description RDF:about="rdf:#$YX7Ci1"
+                   BOOKMARKS:Type="Folder"
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:Name="Knowing God" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Description RDF:about="rdf:#$5Z7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="John 17:3" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Note="" BOOKMARKS:NoteLocale="en-US"
+                   BOOKMARKS:Book="John"
+                   BOOKMARKS:Chapter="17"
+                   BOOKMARKS:Verse="3"
+                   BOOKMARKS:LastVerse="3"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="John.17.3"
+                   BOOKMARKS:VerseText="And this is eternal life,  that they know you  the only  true God, and  Jesus Christ whom you have sent. "
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Description RDF:about="rdf:#$wZ7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="Genesis 1:1" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Book="Gen"
+                   BOOKMARKS:Chapter="1"
+                   BOOKMARKS:Verse="1"
+                   BOOKMARKS:LastVerse="1"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:Location="Gen.1.1"
+                   BOOKMARKS:VerseText="In the  beginning, God created the heavens and the earth. "
+                   BOOKMARKS:Icon="chrome://xulsword/skin/bookmarks/TextsWithNote.png"
+                   BOOKMARKS:Note="You may create your own personal notes and bookmarks." BOOKMARKS:NoteLocale="en-US"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Description RDF:about="rdf:#$KY7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="Jeremiah 22:16" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Book="Jer"
+                   BOOKMARKS:Chapter="22"
+                   BOOKMARKS:Verse="16"
+                   BOOKMARKS:LastVerse="16"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="Jer.22.16"
+                   BOOKMARKS:VerseText="He judged the cause of the poor and needy;   then it was well.  Is not this  to know me?  declares the Lord.  "
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+  <RDF:Description RDF:about="rdf:#$pY7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="Proverbs 2:1-5" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Note="" BOOKMARKS:NoteLocale="en-US"
+                   BOOKMARKS:Book="Prov"
+                   BOOKMARKS:Chapter="2"
+                   BOOKMARKS:Verse="1"
+                   BOOKMARKS:LastVerse="5"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----"
+                   BOOKMARKS:Location="Prov.2.1.5"
+                   BOOKMARKS:VerseText="My son,  if you receive my words  and treasure up my commandments with you,   making your ear attentive to wisdom  and inclining your heart to understanding;   yes, if you call out for insight  and raise your voice  for understanding,   if you seek it like  silver  and search for it as for  hidden treasures,   then  you will understand the fear of the Lord  and find the knowledge of God.  " />
+  <RDF:Description RDF:about="rdf:#$IY7Ci1"
+                   BOOKMARKS:Type="Bookmark"
+                   BOOKMARKS:Name="John 14:6-7" BOOKMARKS:NameLocale="en-US"
+                   BOOKMARKS:Note="" BOOKMARKS:NoteLocale="en-US"
+                   BOOKMARKS:Book="John"
+                   BOOKMARKS:Chapter="14"
+                   BOOKMARKS:Verse="6"
+                   BOOKMARKS:LastVerse="7"
+                   BOOKMARKS:Version="ESV"
+                   BOOKMARKS:Location="John.14.6.7"
+                   BOOKMARKS:VerseText="Jesus said to him, I am  the way, and  the truth, and  the life. No one comes to the Father except through me.  If you had known me, you would have  known my Father also. From now on you do know him and  have seen him.    "
+                   BOOKMARKS:CreationDate="2008"
+                   BOOKMARKS:ModifiedDate="-----" />
+</RDF:RDF>

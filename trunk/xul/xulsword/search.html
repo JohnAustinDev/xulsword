@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--
+    This file is part of Muqaddas Kitob.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    Muqaddas Kitob is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Muqaddas Kitob is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Muqaddas Kitob.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=windows-1250">
+  <meta name="generator" content="PSPad editor, www.pspad.com">
+  <title>Search Frame</title>
+  <link rel="stylesheet" href="chrome://xulsword/skin/style.css" type="text/css">
+
+  <script>var UseBibleObjectFrom = "none";</script>
+  <script src="chrome://xulsword/content/common0.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/common1.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
+  
+  <script>
+  
+  var MainWindowRef = window.frameElement.ownerDocument.defaultView.opener;
+    
+  function init() {
+    createVersionClasses(0); 
+    initializeStyleGlobals(0);
+    getCSS(".sn").style.borderBottom = "";
+    getCSS(".dt").style.textDecoration = "";
+    pullFontSizesFromCSS(0);
+    adjustFontSizes(0, prefs.getIntPref('FontSize'));
+  }
+
+  function searchboxDblClick(e) {
+    var targ = e.target.parentNode;
+    var selob = window.getSelection();
+    var sel = selob.toString();
+    sel = cleanDoubleClickSelection(sel);
+    if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
+    setUnicodePref("SearchText",sel);
+    MainWindowRef.document.getElementById("cmd_xs_search").doCommand();
+  }
+  
+  </script>
+
+  </head>
+  <body class="searchres" id="searchBoxBody" onload="init()">
+    <div id="searchBox" ondblclick="searchboxDblClick(event);"></div>
+  </body>
+  
+</html>

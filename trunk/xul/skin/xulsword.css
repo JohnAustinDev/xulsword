@@ -1,0 +1,264 @@
+@import url(chrome://global/skin/);
+/* CSS Document */
+
+.bibleframe {
+  overflow:-moz-hidden-unscrollable;
+}
+
+/* MAIN WINDOW TOGGLE BUTTONS */
+button#crbutton {
+  list-style-image: url("chrome://xulsword/skin/images/crossrefs.png") !important;
+  -moz-box-orient: vertical;
+}
+button#fnbutton {
+  list-style-image: url("chrome://xulsword/skin/images/footnotes.png") !important;
+  -moz-box-orient: vertical;
+}
+button#hdbutton {
+  list-style-image: url("chrome://xulsword/skin/images/headings.png") !important;
+  -moz-box-orient: vertical;
+}
+button#dtbutton {
+  list-style-image: url("chrome://xulsword/skin/images/dictionary.png") !important;
+  -moz-box-orient: vertical;
+}
+button[class="togglebutton"] {
+  color: black; 
+  -moz-image-region: rect(0px, 64px, 28px, 32px) !important;
+}
+button[class="togglebutton"][value="true"] {
+  color: blue; 
+  -moz-image-region: rect(0px, 32px, 28px, 0px) !important;
+}
+
+/* MAIN WINDOW TOGGLE MENU ITEMS */
+menuitem#hdmitem {
+  list-style-image: url("chrome://xulsword/skin/images/headingssm.png") !important;
+}
+menuitem#crmitem {
+  list-style-image: url("chrome://xulsword/skin/images/crossrefssm.png") !important;
+}
+menuitem#fnmitem {
+  list-style-image: url("chrome://xulsword/skin/images/footnotessm.png") !important;
+}
+menuitem#dtmitem {
+  list-style-image: url("chrome://xulsword/skin/images/dictionarysm.png") !important;
+}
+menuitem#lnmitem {
+  list-style-image: url("chrome://xulsword/skin/images/langstudysm.png") !important;
+}
+menuitem#vnmitem {
+  list-style-image: url("chrome://xulsword/skin/images/versenumberssm.png") !important;
+}
+menuitem#unmitem {
+  list-style-image: url("chrome://xulsword/skin/images/usernotessm.png") !important;
+}
+menuitem#rwmitem {
+  list-style-image: url("chrome://xulsword/skin/images/redwordssm.png") !important;
+}
+.togglemenuitem > .menu-iconic-left > .menu-iconic-icon {
+  width: 16px;
+  height: 16px;
+  -moz-image-region: rect(0px, 32px, 14px, 16px) !important;
+}
+.togglemenuitem[value="true"] > .menu-iconic-left > .menu-iconic-icon {
+  -moz-image-region: rect(0px, 16px, 14px, 0px) !important;
+}
+.togglemenuitem > .menu-iconic-left {
+  display: -moz-box;
+}
+menu#sub-Texts {
+  list-style-image: url("chrome://xulsword/skin/bookmarks/Texts.png") !important;
+}
+menu#sub-Comms {
+  list-style-image: url("chrome://xulsword/skin/bookmarks/Comms.png") !important;
+}
+menu#sub-Dicts {
+  list-style-image: url("chrome://xulsword/skin/bookmarks/Dicts.png") !important;
+}
+menu#sub-Genbks {
+  list-style-image: url("chrome://xulsword/skin/bookmarks/Genbks.png") !important;
+}
+
+/* MAIN WINDOW SEARCH BUTTON */
+button#searchButton {
+  list-style-image: url("chrome://xulsword/skin/images/search.png");
+  -moz-image-region: rect(0px, 30px, 18px, 0px);
+}
+button#searchButton[disabled="true"] {
+  -moz-image-region: rect(0px, 60px, 18px, 30px);
+}
+
+/* MAIN WINDOW HISTORY BUTTONS */
+button#back {
+  list-style-image: url("chrome://xulsword/skin/images/back.png") !important;
+  -moz-image-region: rect(0px, 22px, 14px, 0px) !important;
+  -moz-box-orient: horizontal;
+  margin-left:5px; 
+  margin-right:5px;
+}
+button#back[disabled="true"] {
+  -moz-image-region: rect(0px, 66px, 14px, 44px) !important;
+}
+button#back:not([disabled="true"]):hover {
+  -moz-image-region: rect(0px, 44px, 14px, 22px) !important;
+}
+button#back[chromedir="rtl"] {
+  list-style-image: url("chrome://xulsword/skin/images/forward.png") !important;
+}
+button#forward {
+  list-style-image: url("chrome://xulsword/skin/images/forward.png") !important;
+  -moz-image-region: rect(0px, 22px, 14px, 0px) !important;
+  -moz-box-orient: horizontal;
+  margin-left:5px;
+  margin-right:5px;
+}
+button#forward[disabled="true"] {
+  -moz-image-region: rect(0px, 66px, 14px, 44px) !important;
+}
+button#forward:not([disabled="true"]):hover {
+  -moz-image-region: rect(0px, 44px, 14px, 22px) !important;
+}
+button#forward[chromedir="rtl"] {
+  list-style-image: url("chrome://xulsword/skin/images/back.png") !important;
+}
+
+button#historymenu {
+  list-style-image: url("chrome://xulsword/skin/images/historymenu.png") !important;
+  -moz-image-region: rect(0px, 40px, 11px, 0px) !important;
+  -moz-box-orient: horizontal;
+  margin-left:0px;
+  margin-right:0px;
+}
+button#historymenu[disabled="true"] {
+  -moz-image-region: rect(0px, 120px, 11px, 80px) !important;
+}
+button#historymenu:not([disabled="true"]):hover {
+  -moz-image-region: rect(0px, 80px, 11px, 40px) !important;
+}
+button#historymenu .button-menu-dropmarker,
+button#historymenu .button-text {
+  display: none !important;
+}
+
+/* MAIN WINDOW NAVIGATOR BUTTONS */
+image#nextchap {
+  list-style-image: url("chrome://xulsword/skin/images/smallButtonIncrement.png") !important;
+  margin-bottom:1px;
+}
+image#prevchap {
+  list-style-image: url("chrome://xulsword/skin/images/smallButtonDecrement.png") !important;
+  margin-top:1px;
+}
+image#nextverse {
+  list-style-image: url("chrome://xulsword/skin/images/smallButtonIncrement.png") !important;
+  margin-bottom:1px;
+}
+image#prevverse {
+  list-style-image: url("chrome://xulsword/skin/images/smallButtonDecrement.png") !important;
+  margin-top:1px;
+}
+.smallButtons {
+  -moz-image-region: rect(0px, 30px, 8px, 15px) !important;  
+}
+.smallButtons:hover {
+  -moz-image-region: rect(0px, 15px, 8px, 0px) !important;
+}
+textbox deck[anonid="search-icons"] {
+  display:none;
+}
+
+.button-box {
+  background-color:rgb(255,255,255);
+}
+
+toolbar[printpreview="true"] {
+  -moz-binding: url("chrome://global/content/printPreviewBindings.xml#printpreviewtoolbar");
+}
+
+/* ::::: bookmark items FROM browser.css ::::: */
+.bookmark-item  {
+  list-style-image: url("chrome://global/skin/icons/folder-item.png") !important;
+  -moz-image-region: rect(0px, 16px, 16px, 0px)
+}
+
+.bookmark-item[container="true"] {
+  -moz-image-region: rect(0px, 32px, 16px, 16px) !important;
+}
+
+.bookmark-item[open="true"],
+.bookmark-item[container="true"][open="true"] {
+  -moz-image-region: rect(16px, 32px, 32px, 16px) !important;
+}
+
+/* GENERIC BOOK CHOOSER */
+.genbookchooser {
+  border-top:2px solid rgb(175,145,180);
+  border-left:2px solid rgb(175,145,180);
+  border-right:2px solid rgb(225,195,230);
+  border-bottom:2px solid rgb(225,195,230);
+  -moz-border-radius:6px;
+  background:white;
+}
+/* Make tree hiearchy lines visible again */
+treechildren::-moz-tree-line {
+  visibility:visible;
+  border: 1px dotted ThreeDShadow;
+}
+
+/* XML Bindings */
+reference-dropdown {
+  -moz-binding: url("chrome://xulsword/content/referenceDropdown.xml#reference-dropdown");
+}
+reference-textbox, reference-textbox[type="textbox"] {
+  -moz-binding: url("chrome://xulsword/content/scriprefTextbox.xml#scripref-textbox");
+}
+reference-textbox[type="dropdown"] {
+  -moz-binding: url("chrome://xulsword/content/scriprefTextbox.xml#scripref-textbox-dropdown");
+}
+reference-dropdown menulist[anonid="book"] {
+  -moz-margin-end:9px;
+}
+reference-dropdown menulist[anonid="chapter"] {
+  width:4em;
+  -moz-margin-start:1px;
+  -moz-margin-end:1px;
+}
+reference-dropdown menulist[anonid="verse"] {
+  width:4em;
+  -moz-margin-start:1px;
+  -moz-margin-end:1px;
+}
+reference-dropdown menulist[anonid="lastVerse"] {
+  width:4em;
+  -moz-margin-start:1px;
+  -moz-margin-end:1px;
+}
+reference-dropdown[hidebook="true"][hidechapter="true"][hideverse="true"][hidelastverse="true"] spacer {
+  display:none;
+}
+
+/* Drag and Drop feedback */
+/*#bookmarks-menu menu > hbox[align="center"]{
+  border-top:1px solid transparent;
+  border-bottom:1px solid transparent;
+}
+#bookmarks-menu menu[dragover-top="true"]{
+  padding-top:2em;
+}
+#bookmarks-menu menu[dragover-bottom="true"]{
+  padding-bottom:2em;
+}
+#bookmarks-menu menuitem[dragover-top="true"] {
+  border-top:1px solid black !important;
+}
+#bookmarks-menu menuitem[dragover-bottom="true"] {
+  border-bottom:1px solid black !important;
+}
+#bookmarks-menu menuseparator[dragover-top="true"] {
+  border-top:1px solid black !important;
+}
+#bookmarks-menu menuseparator[dragover-bottom="true"] {
+  border-bottom:1px solid black !important;
+}*/
+
