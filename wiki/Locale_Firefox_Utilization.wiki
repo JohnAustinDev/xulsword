@@ -1,0 +1,254 @@
+#labels Phase-Implementation
+=Firefox Locale Phrases=
+Following is a list of Firefox locale files and phrases which are actually utilized by MK (at this time). So, if neither Firefox-3 nor Firefox-2 exists in your language (and there is no existing Firefox locale that would suffice) you would need to translate all these, in addition to the MK specific files and phrases. In this list, the phrases which would need translation are found after the `English:` tag. There are some repeats in the list.
+
+==From Firefox 3:==
+If no acceptable Firefox-3 locale exists, then copy the following files from an existing Firefox-3 locale, translate only the phrases in the following list, then copy the files to `MKS\localeDev\<locale-code>\mk\`.
+{{{
+
+File:global\browser.properties
+	browsewithcaret.checkMsg <English:Do not show me this dialog box again.>
+
+File:global\commonDialogs.properties
+	Select <English:Select>
+	OK <English:OK>
+	Cancel <English:Cancel>
+	Yes <English:&Yes>
+	No <English:&No>
+	Save <English:&Save>
+
+File:global\crashes.properties
+	deleteconfirm.title <English:Are you sure?>
+
+File:global\dialog.properties
+	button-accept <English:OK>
+
+File:global\dialogOverlay.dtd
+	cancelButton.label <English:Cancel>
+
+File:global\editMenuOverlay.dtd
+	editMenu.label <English:Edit>
+	editMenu.accesskey <English:e>
+	cutCmd.label <English:Cut>
+	copyCmd.label <English:Copy>
+	pasteCmd.label <English:Paste>
+	deleteCmd.label <English:Delete>
+
+File:global\filepicker.properties
+        htmlTitle <English:HTML Files>
+        textTitle <English:Text Files>
+        imageTitle <English:Image Files>
+        xmlTitle <English:XML Files>
+        xulTitle <English:XUL Files>
+
+File:global\global.dtd
+	locale.dir <English:ltr>
+
+File:global\printdialog.dtd
+	frompageInput.label <English:from>
+	topageInput.label <English:to>
+
+File:global\printdialog.properties
+	options <English:Options>
+
+File:global\printPageSetup.dtd
+	printSetup.title <English:Page Setup>
+	basic.tab <English:Format &amp; Options>
+	formatGroup.label <English:Format>
+	orientation.label <English:Orientation:>
+	portrait <English:Portrait>
+	landscape <English:Landscape>
+	scale.label <English:Scale:>
+	scalePercent <English:&#037;>
+	shrinkToFit.label <English:Shrink To Fit Page Width>
+	optionsGroup.label <English:Options>
+	printBG.label <English:Print Background (colors &amp; images)>
+	advanced.tab <English:Margins &amp; Header/Footer>
+	marginGroup.label <English:Margins (#1)>
+	marginUnits.inches <English:inches>
+	marginUnits.metric <English:millimeters>
+	marginTop.label <English:Top:>
+        marginBottom.label <English:Bottom:>
+        marginLeft.label <English:Left:>
+        marginRight.label <English:Right:>
+	headerFooter.label <English:Headers &amp; Footers>
+	hfLeft.label <English:Left:>
+	hfCenter.label <English:Center:>
+	hfRight.label <English:Right:>
+	headerLeft.tip <English:Left header>
+	headerCenter.tip <English:Center header>
+	headerRight.tip <English:Right header>
+	footerLeft.tip <English:Left footer>
+	footerCenter.tip <English:Center footer>
+	footerRight.tip <English:Right footer>
+	hfTitle <English:Title>
+	hfURL <English:URL>
+	hfDateAndTime <English:Date/Time>
+	hfPage <English:Page #>
+	hfPageAndTotal <English:Page # of #>
+	hfBlank <English:--blank-->
+	hfCustom <English:Custom…>
+	customPrompt.title <English:Custom…>
+	customPrompt.prompt <English:Enter your custom header/footer text>
+
+
+File:global\printPreview.dtd
+	print.label <English:Print…>
+	pageSetup.label <English:Page Setup…>
+	page.label <English:Page:>
+	of.label <English:of>
+	scale.label <English:Scale:>
+	portrait.label <English:Portrait>
+	landscape.label <English:Landscape>
+	close.label <English:Close>
+	close.accesskey <English:C>
+	p30.label <English:30&#037;>
+	p40.label <English:40&#037;>
+	p50.label <English:50&#037;>
+	p60.label <English:60&#037;>
+	p70.label <English:70&#037;>
+	p80.label <English:80&#037;>
+	p90.label <English:90&#037;>
+	p100.label <English:100&#037;>
+	p125.label <English:125&#037;>
+	p150.label <English:150&#037;>
+	p175.label <English:175&#037;>
+	p200.label <English:200&#037;>
+	Custom.label <English:Custom…>
+	ShrinkToFit.label <English:Shrink To Fit>
+	customPrompt.title <English:Custom Scale…>
+	homearrow.tooltip <English:First page>
+	endarrow.tooltip <English:Last page>
+	rightarrow.tooltip <English:Next page>
+	leftarrow.tooltip <English:Previous page>
+
+File:global\printPreviewProgress.dtd
+	printWindow.title <English:Print Preview>
+	title <English:Title:>
+	preparing <English:Preparing…>
+	progress <English:Progress:>
+
+File:global\printProgress.dtd
+	printWindow.title <English:Printing>
+	title <English:Title:>
+	progress <English:Progress:>
+	preparing <English:Preparing…>
+	printComplete <English:Printing is Completed.>
+	dialogCancel.label <English:Cancel>
+	dialogClose.label <English:Close>
+
+File:global\textcontext.dtd
+	cutCmd.label <English:Cut>
+	copyCmd.label <English:Copy>
+	pasteCmd.label <English:Paste>
+	undoCmd.label <English:Undo>
+	selectAllCmd.label <English:Select All>
+	deleteCmd.label <English:Delete>
+
+File:global\tree.dtd
+	restoreNaturalOrder.label <English:Restore Defaults>
+
+File:mozapps\handling\handling.dtd
+	window.emWidth <English:26em>
+	window.emHeight <English:26em>
+	ChooseApp.description <English:Choose an Application>
+	ChooseApp.label <English:Choose…>
+
+File:mozapps\handling\handling.properties
+        protocol.title <English:Launch Application>
+        protocol.description <English:This link needs to be opened with an application.>
+        protocol.choices.label <English:Send to:>
+        protocol.checkbox.label <English:Remember my choice for %S links.>
+        protocol.checkbox.extra <English:This can be changed in %S's preferences.>
+        choose.application.title <English:Another Application…>
+}}}
+
+==From Firefox 2:==
+If no acceptable Firefox-2 locale exists, then copy the following files from an existing Firefox-2 locale, translate only the phrases in the following list, then copy the files to `MKS\localeDev\<locale-code>\mk\xulsword\bookmarks`.
+{{{
+File:addBookmark.dtd
+	newBookmark.title <English:Add Bookmark>
+	name.label <English:Name:>
+	url.label <English:Location:>
+	createin.label <English:Create in:>
+	moveto.label <English:Move to:>
+	button.newfolder.label <English:New Folder...>
+	button.newfolder.accesskey <English:o>
+	selectFolder.label <English:Choose Folder>
+	expanderDown.tooltip <English:Show all the bookmarks folders>
+	expanderUp.tooltip <English:Hide>
+
+File:bookmarks.dtd
+	fileMenu.label <English:File>
+	viewMenu.label <English:View>
+	closeCmd.label <English:Close>
+	menuitem.newBookmark.label <English:New Bookmark...>
+	menuitem.newFolder.label <English:New Folder...>
+	menuitem.newSeparator.label <English:New Separator>
+	menuitem.import.label <English:Import...>
+	menuitem.export.label <English:Export...>
+	command.properties.label <English:Properties...>
+	command.rename.label <English:Rename...>
+	command.moveBookmark.label <English:Move Bookmark(s)...>
+	command.moveBookmarkShort.label <English:Move...>
+	menuitem.view.command.toolbar.label <English:Toolbar>
+	menuitem.view.show_columns.label <English:Show columns>
+	menuitem.view.unsorted.label <English:Unsorted>
+	sortAscending.label <English:Ascending>
+	sortDescending.label <English:Descending>
+	treecol.name.label <English:Name>
+	treecol.addedon.label <English:Added>
+	treecol.lastvisit.label <English:Last Visited>
+	bookmarksRoot.label <English:Bookmarks>
+	bookmarksWindowTitle.label <English:Bookmark Manager>
+	search.label <English:Search:>
+
+File:bookmarks.properties
+	cmd_bm_open <English:Open>
+	cmd_bm_openfolder <English:Open All in Tabs>
+	cmd_bm_managefolder <English:Manage Folder>
+	cmd_copy <English:Copy>
+	cmd_paste <English:Paste>
+	cmd_bm_movebookmark <English:Move Bookmark(s)...>
+	cmd_selectAll <English:Select All>
+	cmd_bm_rename <English:Rename...>
+	cmd_bm_properties <English:Properties>
+	cmd_bm_refreshlivemark <English:Reload Live Bookmark>
+	cmd_bm_refreshmicrosummary <English:Reload Live Title>
+	cmd_bm_sortbyname <English:Sort By Name>
+	cmd_bm_undo <English:Undo>
+	cmd_bm_redo <English:Redo>
+	cmd_bm_openinnewwindow <English:Open in New Window>
+	cmd_bm_openinnewtab <English:Open in New Tab>
+	cmd_bm_newfolder <English:New Folder...>
+	cmd_bm_newbookmark <English:New Bookmark...>
+	cmd_bm_newseparator <English:New Separator>
+	ile_newfolder <English:New Folder>
+	ile_newbookmark <English:New Bookmark>
+	bookmarks_title <English:Bookmarks Manager>
+	BookmarksRoot <English:Bookmarks>
+	BookmarksToolbarFolder <English:Bookmarks Toolbar Folder>
+	status_foldercount <English:%S object(s)>
+	SortMenuItem <English:Sorted by %S>
+	SelectImport <English:Import bookmark file:>
+	EnterExport <English:Export bookmark file:>
+	emptyFolder <English:(Empty)>
+
+File:bookmarksProperties.dtd
+	bookmarks.windowtitle.label <English:Properties for &quot;**bm_title**&quot;>
+
+File:browser.dtd
+	printSetupCmd.label <English:Page Setup...>
+	printPreviewCmd.label <English:Print Preview>
+	printCmd.label <English:Print...>
+	bookmarksMenu.label <English:Bookmarks>
+	manBookmarksCmd.label <English:Organize Bookmarks...>
+	search.label <English:Web Search>
+	editMenu.label <English:Edit>
+	cutCmd.label <English:Cut>
+	copyCmd.label <English:Copy>
+	pasteCmd.label <English:Paste>
+	deleteCmd.label <English:Delete>
+	openLinkInWindowCmd.label <English:Open>
+	quitApplicationCmdWin.label <English:Exit>
+}}}

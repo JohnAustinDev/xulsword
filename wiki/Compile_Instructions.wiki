@@ -1,0 +1,48 @@
+#labels Featured,Phase-Implementation
+=Compilation Instructions for Windows=
+
+== Dependancies ==
+The following programs (all free) need to be in your command path:
+  * [http://www.7-zip.org/download.html 7-zip]
+  * [http://technet.microsoft.com/en-us/sysinternals/bb896683.aspx PsKill]
+  * Perl (I used [http://www.activestate.com/activeperl/downloads/ ActivePerl])
+  * C++ Compiler (I have only tried [http://www.softpedia.com/get/Programming/Other-Programming-Files/Microsoft-Visual-C-Toolkit.shtml MSVC8 express edition])
+  * [http://www.microsoft.com/downloads/details.aspx?FamilyId=F26B1AA4-741A-433A-9BE5-FA919850BDBF&displaylang=en Windows SDK]
+-----
+
+== Compilation Steps ==
+  # Check out the code from https://mk-dev.googlecode.com/svn/trunk/ to a project directory of your choice.
+  # Create a permanent environment variable (in Win-XP right-click "My Computer"->"Properties"->"Advanced"->"Environment Variables"->"New"). Set the variable's name to "`MK`" and its value to the new project directory. Do NOT enclose the path in quotes. For example: `D:\progs\mk-devel` NOTE: To include other locales or modules in your build, you will need to set another environment variable named "`MKS`" to a locales and modules directory (more on this later). You may also set an environment variable named "`MKO`" to an output directory of your choice, otherwise a default directory will be created called "`build-out`".
+  # Unzip a recent release of the [https://developer.mozilla.org/en/XULRunner xulrunner runtime] and copy the resulting "`xulrunner`" directory into the project directory. Under this `xulrunner` directory should be subdirectories such as "`chrome`", and "`components`".
+  # Unzip the corresponding xulrunner sdk to the "`Cpp`" directory. In this unzipped directory (called for example: "`xulrunner-1.9.1.3.en-US.win32.sdk`") should be a sub-directory called "`xulrunner-sdk`".
+  # Unzip Clucene (I used [http://sourceforge.net/projects/clucene/files/ clucene-core-0.9.16a]) to the "`Cpp`" directory.
+  # Unzip [http://www.crosswire.org/ftpmirror/pub/sword/source/v1.6/ sword-1.6.1] to the "`Cpp`" directory.
+  # Make sure the "`Cpp\versions.bat`" file contains your directory names for the listed Cpp directories.
+  # Run "`Build\RegisterXulrunner.bat`" to register the xulrunner installation and create necessary generated files.
+  # Run "`Cpp\IDLcomp.bat`" to create an interface descriptor which is used by xulrunner's XPCOM. Afterwards you should have a "`Cpp\Release\ixulsword.xpt`" descriptor file. This must be re-run if you ever change the xulsword XPCOM interface (located in "`Cpp\ixulsword.idl`"). NOTE: The "`Cpp\ixulsword.idl`" file has useful comments on using the xulsword Bible object. This object allows you to access SWORD functions from Javascript.
+  # Compile C code by opening a console window and running "`Cpp\CompileAll.bat NOSECURITY`". Afterwards, you should have a file called "`Cpp\Release\xulsword.dll`".
+  # For development purposes, run "`build\MakeDevelopment.bat`" and then use "`build\Run.bat`" to start the program. The program window will probably be blank because you will need to install modules by clicking "File"->"Add New Modules" (at least one Bible module is necessary for the program to function). When installing modules from [http://www.crosswire.org/sword/index.jsp The Sword Project's] website, use the "raw ZIP" type of module. The development program has a hidden button which displays some useful debugging buttons when clicked. This invisible button is located JUST under the top menu bar at the FAR right of the screen. The debugging buttons appear in that same area when the invisible button is clicked.
+  # For production, run "`build\MakeProduction.bat`". You can then use "`build\Run.bat`" to start the program.
+-----
+
+==Build Controls==
+Build controls are located in the "`build\Appinfo.bat`". You can choose to include modules and locales in your build. Modules which you want to include should be located in "`%MKS%\moduleDev`", and locales should be in "`%MKS%\localeDev\`". See the wiki page on creating your own locale for requirements.
+-----
+
+==Portable Version==
+To build the portable version, download a recent version of [http://portableapps.com/apps/internet/firefox_portable Portable Firefox 3] and create a portable folder by running the setup. Then copy this portable folder to "`portable\FirefoxPortable`" so that the contents of "`portable\FirefoxPortable`" is "`FirefoxPortable.exe`", "`App`", etc. Then run "`build\MakeProduction.bat`" if you haven't already, followed by "`build\MakePortable.bat`". The portable version can then be found in "`%MKO%\versions\PortableVersionVERS`".
+-----
+
+==Security Module==
+To help protect texts from tampering, a security module is provided. To use the security module, follow these steps:
+  # Open "`Appinfo.bat`" and change to "`Set useSecurityModule=true`".
+  # Also in "`Appinfo.bat`", add the name(s) of modules you want to encrypt to `encryptedTexts`.
+  # Also in "`Appinfo.bat`", create an encryption key with the "`Set bibleTextEncryptionKey=akey`". This key is the "visible" key that is combined with a secret key by the security module. NOTE: the "`encryptionKey`" variable can be used to encrypt the installer `setup.exe`. 
+  # Using module "MOD" as an example, create a "`moduleDev\MOD`" directory and put your OSIS file there by the name `MOD.xml`. Also put your conf file there by the name `mod.conf` (NOTE: this conf file should NOT include the following entries because they are supplied by the script: `ModDrv`, `CompressType`, `BlockType`, `CipherKey`).
+  # Go to "`Cpp\swordMK\lib`" and run "`Compile.bat exe`" to create the sword library for executables, then open a console window, go to "`Cpp\swordMK\utilities`" and run "`Compile.bat osis2mod`" and "`Compile.bat mkfastmod`". These executables link to Firefox dlls but you can copy all the dll files from "`Cpp\xulrunner-your.version.sdk\xulrunner-sdk\bin`" directory to the "`Cpp\swordMK\utilities\bin`" directory to insure they run.
+  # Add your own "`getcodes.cpp`" file. It must contain a key generator to supply your own encryption keys.
+  # Run "`build\MakeDevelopment.bat`" or "`build\MakeProduction.bat`" and the encrypted module should appear in the `%MKO%` directory.
+-----
+
+==Installer, Locale & Module Development==
+Contact owner for information on these other projects.

@@ -1,0 +1,319 @@
+#labels Phase-Implementation
+=MK User Interface Translation=
+This page holds all the words and phrases from MK's Graphical User Interface which need to be translated in order to create a GUI for a new language. The program requires other words and phrases in addition to these, however you will not need to worry about translating them if there is a Firefox distribution in an acceptable language.
+
+NOTES:
+  * Special symbols like "%1$S", "%2$S", "%3$S" etc. are place holders for numbers which cannot be supplied until the program is actually run. The symbols can be moved or re-ordered, but the symbols themselves should not be changed.
+  * Some longer entries may contain embedded HTML, like "`<b>`" and "`</b>`". These add formatting to the text.
+
+
+
+From code file: "`books.properties`"
+{{{
+	 Chapter %1$S
+	 Introduction
+	 Hide Introduction
+	 Genesis
+	 Exodus
+	 Leviticus
+	 Numbers
+	 Deuteronomy
+	 Joshua
+	 Judges
+	 Ruth
+	 1 Samuel
+	 2 Samuel
+	 1 Kings
+	 2 Kings
+	 1 Chronicles
+	 2 Chronicles
+	 Ezra
+	 Nehemiah
+	 Esther
+	 Job
+	 Psalms
+	 Proverbs
+	 Ecclesiastes
+	 Song of Songs
+	 Isaiah
+	 Jeremiah
+	 Lamentations
+	 Ezekiel
+	 Daniel
+	 Hosea
+	 Joel
+	 Amos
+	 Obadiah
+	 Jonah
+	 Micah
+	 Nahum
+	 Habakkuk
+	 Zephaniah
+	 Haggai
+	 Zechariah
+	 Malachi
+	 Matthew
+	 Mark
+	 Luke
+	 John
+	 Acts
+	 James
+	 1 Peter
+	 2 Peter
+	 1 John
+	 2 John
+	 3 John
+	 Jude
+	 Romans
+	 1st Corinthians
+	 2nd Corinthians
+	 Galatians
+	 Ephesians
+	 Philippians
+	 Colossians
+	 1st Thessalonians
+	 2nd Thessalonians
+	 1 Timothy
+	 2 Timothy
+	 Titus
+	 Philemon
+	 Hebrews
+	 Revelation
+}}}
+
+From code file: "`branding.dtd`"
+{{{
+         Produced by?
+}}}
+
+From code file: "`search-help.properties`"
+{{{
+	 Search Help
+	 <span style="font-size:large;">There are four types of searches to choose from after you click the "More" button:</span><br><br>1) <b>Find verses which contain the word(s)</b>: Finds verses that have all of the given words in the verse.<br><br>2) <b>Find verses which contain this exact text</b>: Finds the exact word, part of a word, or phrase, everywhere that it occurs.<br><br>3) <b>Advanced matching using special search terms</b>: You may use the special search terms listed in the table below to build complex searches:<br><br>4) <b>Find verses which contain similar words</b>: Finds verses that contain words similar to those given. This is useful if you don't know exactly how a word is spelled, or to find variations of words. Results can be listed in order of relevance by unchecking "Show results in order".<br><br>
+	 TERM
+	 EXAMPLE
+	 DESCRIPTION
+	 NOTES
+	 Heav*
+	 Matches any word beginning with "Heav"
+	 Can be used anywhere except at the beginning of a word
+	 ??loved
+	 Matches "beloved", "unloved" etc.
+	 Can be used anywhere in word
+	 &&
+	 love && God
+	 Finds verses with both "love" <b>and</b> "God"
+	 ||
+	 love || God
+	 Finds verses with either "love" <b>or</b> "God"
+	 love !God
+	 Finds verses with "love" but <b>not</b> "God"
+	 ()
+	 (great || little) && love
+	 Finds verses with "great" <b>or</b> "little" <b>and</b> "love"
+	 Nebacadnezzer~
+	 Finds words <b>spelled similarly</b> to "Nebacadnezzer"
+	 This is useful if you don't know exact spelling of a word
+	 " "
+	 "For God so loved"
+	 Finds verses with the exact phrase "For God so loved"
+	 Note: All searches are case insensitive.
+}}}
+
+From code file: "`xulsword.dtd`"
+{{{
+( PROGRAM MAIN MENU  )
+	 Windows
+
+( FILE MENU  )
+	 Add New Modules
+	 Remove Modules
+	 Delete Modules
+	 Delete Locales
+	 Delete Audio
+	 Import Audio
+	 Export Audio
+	 Print Passage
+
+( EDIT MENU  )
+	 Copy Passage
+	 Passage
+	 Include
+	 Cross Reference Texts
+
+( VIEW MENU  )
+	 Bible Tabs
+	 Commentary Tabs
+	 Resource Tabs
+	 Book Tabs
+	 Headings
+	 Footnotes
+	 Cross References
+	 Dictionary Links
+	 Verse Numbers
+	 Words of Christ in red
+	 Personal Notes
+	 Show all
+	 Show none
+	 Language Notes
+	 Window 1
+	 Window 2
+	 Window 3
+	 All Windows
+	 Show Footnotes
+	 Show Cross References
+	 Show Personal Notes
+	 In popups
+	 In footnote box
+
+( OPTIONS MENU  )
+	 Options
+	 Font
+	 Smallest font
+	 Small font
+	 Normal font
+	 Large font
+	 Largest font
+	 Hebrew
+	 Show Vowel Points
+	 Show Cantillation
+	 Language
+
+( BOOKMARKS MENU  )
+	 New Personal Note...
+
+( WINDOWS MENU  )
+	 1 Window
+	 2 Windows
+	 3 Windows
+
+( HELP MENU  )
+	 Help
+	 About...
+
+( CONTEXT MENUS  )
+	 Select Verse(s)
+	 Open Selected Reference
+	 Delete Personal Note
+	 Edit Personal Note
+	 Close
+
+( PROGRAM TOOL BAR AND TOOL TIPS  )
+	 Go to previous chapter in viewed history.
+	 Back
+	 Go to next chapter in viewed history.
+	 Forward
+	 Choose a location from past history
+	 Find the verses you are looking for.
+	 Search
+	 headings
+	 Toggle the display of headings.
+	 footnotes
+	 Toggle display of footnotes.
+	 cross refs
+	 Toggle display of cross references.
+	 dictionary
+	 Show dictionary links.
+
+( SEARCH WINDOW TOOL BAR AND TOOL TIPS )
+	 Search
+	 Match any word ending with ' * '. Match any single character with ' ? '.
+	 More
+	 Search word or phrase:
+	 Stop
+
+( SEARCH WINDOW ADVANCED OPTIONS (MORE BUTTON)  )
+	 Bibles:
+	 Commentaries:
+	 Glossaries:
+	 Books:
+	 Search Type:
+	 Search Scope:
+	 Find verses which contain the word(s).
+	 Find verses which contain similar words.
+	 Find verses which contain this exact text
+	 Advanced matching using special search terms.
+	 Show results in order
+	 All Books
+	 Old Testament
+	 New Testament
+	 Choose Books to Search:
+
+( THE SEARCH GROUP NAMES AND SCOPES CAN BE ADJUSTED BELOW, TO BEST FITS YOUR NEEDS  )
+	 Pentateuch
+	 History
+	 Psalms
+	 Wisdom books
+	 Prophets
+	 Gospel
+	 Letters
+	 Gen-Deut
+	 Josh-Esth
+	 Job-Song
+	 Isa-Mal
+	 Matt-John
+	 Acts-Rev
+
+( BOOKMARKS WINDOWS  )
+	 Save As...
+	 Location
+	 Note
+	 Verse
+	 Search In
+}}}
+
+From code file: "`xulsword.properties`"
+{{{
+( MAIN TITLE AND ABOUT WINDOW )
+	 Holy Bible
+	 Version: %1$S, Build: %2$S
+
+( PROGRAM MAIN WINDOW TEXT DISPLAY )
+	 Next
+	 Previous
+	 ORIG
+	 Hebrew
+	 Greek
+
+( PROGRAM MAIN WINDOW LOCATION CHOOSER TOOL )
+	 Old Testmnt
+	 New Testmnt
+
+( OPTIONS MENU )
+	 English
+
+( BOOKMARKS RELATED )
+	 Save As
+
+( SEARCH WINDOW AND MESSAGES )
+	 Search
+	 Found %3$S verses (showing %1$S to %2$S)
+	 Verses found: %1$S
+	 Searching %1$S...
+	 More
+	 Less
+	 This text was installed without a search index.\nA search index will now be created for you.
+	 If you stop the indexer, search speed will be slow. \nHowever, you may build the index later if you wish.
+	 Building Search Index...
+
+( MESSAGES FOR MODULE INSTALLATION )
+	 Module installation incomplete.
+	 The following module(s) have components which are not supported:
+	 Upgrade the program to at least version: %1$S
+	 The following module(s) have components which are out of date:
+	 Complete installation requires at least module version: %1$S
+
+( NEEDED FOR BACKWARD COMPATIBILITY ONLY )
+	 Complete installation requires at least module version:
+	 Upgrade the program to at least version:
+
+( MISCELLANEOUS MESSAGES )
+	 This change will take effect the next time you start the program.
+	 Please insert the Muqaddas Kitob installation CDROM and try again.
+	 A QuickTime plugin was not found. \n\nThis may occur because QuickTime 5 or earier is already installed on your computer. If this is the case you must either update your QuickTime installation or else completely uninstall QuickTime and then install "QT Lite".
+	 QT Lite is now installing on your computer. \nDefault install settings should be adequate. \n\nAfter the installer has completed, click "ok" to continue\n.
+	 To listen to audio content, a QuickTime plugin must be installed.
+	 To listen to audio content, a QuickTime plugin must be installed.\n\nWould you like to install the "QT Lite" plugin now?\n
+	 Language can be changed using the menu: "%1$S" в†’ "%2$S".\n\nOr by pressing F1.\n \n
+	 A problem may have been detected. To report this problem press \"%1$S\".
+}}}

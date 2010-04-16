@@ -1,0 +1,32 @@
+#labels Featured,Phase-Implementation
+=Create Your Own Locale for MK=
+
+==Directory Structure==
+To build a new locale for MK, you should set an environment variable called "`MKS`" to a directory of your choice. Create a `localeDev` directory there, and in `localeDev` create a directory named with your [http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes ISO 639-1] language code. If you plan to have multiple locales for multiple scripts, you may need to include a "-" followed by a script abbreviation. The `%MKS%` directory should have the following structure although many of these directories are optional (and `en-US` should be replaced with the code of your locale):
+
+[http://img638.imageshack.us/img638/3684/localefolders.gif]
+
+==What goes into each directory?==
+  * `from-firefox-3` - Copy the `global` and `mozapps` directories from a Firefox 3 locale of your new language. If a Firefox locale does not exist in that language, choose the next best locale which does exist.
+  * `locale-skin` - Optional. Any files put here will override the default MK skin, allowing you to create a unique skin for your locale.
+  * `mk\global` and `mk\mozapps` - Optional. If the Firefox-3 locale which you chose for the `from-firefox-3` directory is not your language of choice, you may translate a subset of that locale and put those files here. These files will overwrite those files during the build. Firefox-3 locale files and phrases which are utilized by MK are listed in Locale_Firefox_Utilization.
+  * `mk\skin` - Optional. This is rarely needed; so far only when images must be used in place of text for specialized situations.
+  * `mk\xulsword` - Contains the MK specific translations (more on this next).
+
+==What must be translated?==
+The code files which contain MK's translations are located under the `xulsword` directory. The English versions of all these files can be found here:
+http://code.google.com/p/mk-dev/source/browse/#svn/trunk/xul/en-US.xs/en-US-xulsword/xulsword and a list of their contents is listed in [MK_Locale_Phrases].
+You should also create your own splash image and place it here. Helpful hint: the `bookmarks` directory contains files which came from Firefox-2, and not all the phrases in these files are utilized by MK. So, if a Firefox-2 locale is available in your language then you don't need to translate these files, just copy them from the Firefox-2 locale. If it is not available, you need to translate only the phrases listed from Firefox 2 in Locale_Firefox_Utilization.
+
+You can also pre-install example bookmarks in your language by translating parts of the `<code>.rdf` file.
+-----
+==Building the new locale==
+To build the locale for use in MK, add your new locale code to the "`%MK%\build\Appinfo.bat`" file's `AllLocales` line. To include the new locale in the MK build, also add it to the `IncludeLocales` line. If built correctly, you should see a language menu item corresponding to the new locale under the Options->Languages menu.
+-----
+
+==Checklist for Validating a New Locale==
+  * Check that `mk/xulsword/config.properties` has the proper parameters for your target language.
+  * Check that the Access Keys for your menu entries look how you want them, or, better yet, make sure they are all removed, since few people use them anyway, and they can clutter menu items if done improperly.
+  * Check that the textbox context menus are properly localized because this text is easy to overlook. So is the tree-viewer widget used on the Organize Bookmarks window.
+  * If you created a new `<code>.rdf` in your target language, check that the `Created` and `Modified` dates in the rdf are all `ModifiedDate="----"` and `CreationDate="2010"` for instance.
+  * Check that the OT/NT terms, which appear on the Bible location chooser at the left end of the MK window, are not so long as to make the chooser undesirably tall. Also, some scripts (like Arabic), which cannot simply be printed vertically, will need images for these vertical texts. These images should be placed under the `mk/skin` directory and named `NT.png` and `OT.png`.
