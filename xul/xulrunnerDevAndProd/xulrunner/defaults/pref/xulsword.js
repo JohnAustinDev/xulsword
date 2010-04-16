@@ -1,0 +1,57 @@
+// functionality prefs
+//pref("xulsword.HideUnavailableCrossReferences", true);
+//pref("xulsword.ShowOriginalTextTabs", true); 
+//pref("xulsword.ShowCommentaryTabsByDefault", true);
+//pref("xulsword.ShowDictionaryTabsByDefault", true);
+//pref("xulsword.ShowAllBibleTabsByDefault", true);
+//pref("xulsword.MinimizeSearchRadios", true);
+//pref("xulsword.HideDisabledBooks", true);
+//pref("xulsword.ShowIntrosBeforeText", true);
+//pref("xulsword.HideDisabledViewMenuItems", true);
+//pref("xulsword.HideDisabledCopyPrintIncludes", true);
+//pref("xulsword.HideHebrewOptions", true);
+//pref("xulsword.DontReadReferenceBible", true);
+
+//For UYG builds, use:
+//pref("xulsword.HideUnavailableCrossReferences", true);
+//pref("xulsword.HideDisabledViewMenuItems", true);
+//pref("xulsword.HideDisabledCopyPrintIncludes", true);
+
+//For KYRG Pastors
+//pref("xulsword.ShowAllBibleTabsByDefault", true);
+//pref("xulsword.HiddenTexts1", "KJV;UZVL;UYG;KYLSA;CARS;HEB;TR;");
+//pref("xulsword.HiddenTexts2", "KJV;UZVL;UYG;KYLSA;CARS;HEB;TR;");
+//pref("xulsword.HiddenTexts3", "KJV;UZVL;UYG;KYLSA;CARS;HEB;TR;");
+
+// xulsword prefs
+pref("xulsword.Footnotes","On");
+pref("xulsword.Headings","On");
+pref("xulsword.Cross-references","On");
+pref("xulsword.Dictionary","On");
+pref("xulsword.Verse Numbers","On");
+pref("xulsword.User Notes","On");
+pref("xulsword.Hebrew Cantillation","On");
+pref("xulsword.Hebrew Vowel Points","On");
+pref("xulsword.Location","Gen.1.1");
+pref("xulsword.SearchText","");
+pref("xulsword.SearchVersion","");
+pref("xulsword.AdvSearchFlag",false);
+pref("xulsword.ShowCrossrefsAtBottom",false);
+pref("xulsword.ShowFootnotesAtBottom",true);
+pref("xulsword.ShowUserNotesAtBottom",true);
+pref("xulsword.SelectedNote","none");
+pref("xulsword.MaximizeNoteBox1",false);
+pref("xulsword.MaximizeNoteBox2",false);
+pref("xulsword.MaximizeNoteBox3",false);
+
+
+// xulrunner prefs
+pref("javascript.options.showInConsole", true);
+pref("browser.bookmarks.sort.resource","direction");
+pref("browser.bookmarks.sort.direction","natural");
+pref("print.print_headerright", "");
+pref("print.print_headercenter", "");
+pref("print.print_headerleft", "");
+pref("print.print_footerright", "");
+pref("print.print_footercenter", "&P");
+pref("print.print_footerleft", "");

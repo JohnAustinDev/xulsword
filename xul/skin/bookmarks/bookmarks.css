@@ -1,0 +1,68 @@
+/* THE FOLLOWING STYLES ARE WRITEN AT RUNTIME BASED ON LOCALE */
+
+bookmarks-tree, bookmarks-tree[type="multi-column"] {
+  -moz-binding: url("chrome://xulsword/content/bookmarks/bookmarksTree.xml#bookmarks-tree-full");
+}
+  
+bookmarks-tree[type="single-column"] {
+  -moz-binding: url("chrome://xulsword/content/bookmarks/bookmarksTree.xml#bookmarks-tree-name");
+}
+
+bookmarks-tree[type="folders"] {
+  -moz-binding: url("chrome://xulsword/content/bookmarks/bookmarksTree.xml#bookmarks-tree-folders");
+}
+
+treecol {
+  text-align:start;
+}
+
+/* Make tree hiearchy lines visible again */
+treechildren::-moz-tree-line {
+  visibility:visible;
+  border: 1px dotted ThreeDShadow;
+}
+treechildren::-moz-tree-twisty {
+  padding-right: 4px;
+}
+
+treechildren::-moz-tree-image(Name) {
+  width:16px;
+  height:16px;
+}
+
+treechildren::-moz-tree-row(separator)
+{
+  margin-top: 9px;
+  border-top: 1px solid ThreeDShadow;
+}
+
+treechildren::-moz-tree-image(Name2), treechildren::-moz-tree-image(Name) {
+  padding-right: 2px;
+  margin: 0px 2px;
+  list-style-image: url("chrome://global/skin/icons/folder-item.png");
+  -moz-image-region: rect(0px, 16px, 16px, 0px);
+}
+
+treechildren::-moz-tree-image(Name2, container), treechildren::-moz-tree-image(Name, container) {
+  -moz-image-region: rect(0px, 32px, 16px, 16px);
+}
+
+treechildren::-moz-tree-image(Name2, open), treechildren::-moz-tree-image(Name, open) {
+  -moz-image-region: rect(16px, 32px, 32px, 16px);
+}
+
+treechildren::-moz-tree-image(separator) {
+  list-style-image: none !important;
+  width: 0px !important;
+  height: 0px !important;
+  margin: 0px 0px !important;
+}
+
+treechildren::-moz-tree-cell-text(Name2, separator) {
+  color: ThreeDShadow;
+  margin: 0px 5px 0px 5px;
+}
+
+treechildren::-moz-tree-cell-text(Name2, separator, selected, focus) {
+  color: HighlightText;
+}

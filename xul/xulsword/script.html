@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--
+    This file is part of Muqaddas Kitob.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    Muqaddas Kitob is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Muqaddas Kitob is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Muqaddas Kitob.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=windows-1250">
+  <meta name="generator" content="PSPad editor, www.pspad.com">
+  <title>Bible Frame</title>
+  <link rel="stylesheet" href="chrome://xulsword/skin/style.css" type="text/css">
+  
+  <script>var UseBibleObjectFrom = null;</script>
+  <script src="chrome://xulsword/content/common0.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/common1.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/textHTML.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/bookmarks/bookmarksTop.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/script.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/chooser.js" type="text/javascript"></script>
+
+  
+  </head>
+  <body id="scriptBoxBody" style="background-image: url(chrome://xulsword/skin/images/9.gif);" onmousemove="boundaryMouseMove(event);" onmouseup="boundaryMouseUp(event);">
+        
+      <!-- The following scripts will only execute in bible1Frame !-->
+      <div id="wholeChooser">
+      <script type="text/javascript">buildChooserGraphics();</script>
+      <script type="text/javascript">buildTestChooser();</script>
+      <script type="text/javascript">buildBookChooser('OT');</script>
+      <script type="text/javascript">buildBookChooser('NT');</script>
+      </div>
+      
+    <div id="langTabs" class="languageTabs"><script type="text/javascript">placeTabs();</script></div>
+    <img id="pin" style="position:absolute; top:10px; left:0px; z-index:2;" onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)" onclick="scriptboxClick(event)" src="chrome://xulsword/skin/images/pushpin0.png">
+    
+    <div id="scriptBox" class="scriptbox"  style="position:absolute; overflow:hidden; height:600px; top:0px;" ondblclick="scriptboxDblClick(event)" onmousedown="clearSelections()">
+      <div id="scriptBoxText" class="scriptboxtext" onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)" onclick="scriptboxClick(event)"></div>
+      <div id="boundary"      class="boundary"      onmousedown="boundaryMouseDown(event);"></div>
+      <div id="noteBox"       class="notebox"       onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)"   onclick="noteboxClick(event)"></div>
+      <img id="nbsizer" src="" style="position:absolute;" onclick="noteboxClick(event)">
+    </div>
+    <div id="npopup"     class="npopup"     style="position:absolute; display:none; overflow:auto;" onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)" onclick="scriptboxClick(event)" ondblclick="scriptboxDblClick(event)"></div>
+    <div id="npopupSH"   class="npopupSH"   style="position:absolute; display:none;"></div>
+    <div id="boundaryHi" class="boundaryHi" style="position:absolute; visibility:hidden;"></div>
+    <div id="connector"  class="connector"  style="position:absolute; visibility:hidden; right:0px; "></div>
+
+  </body>
+</html>

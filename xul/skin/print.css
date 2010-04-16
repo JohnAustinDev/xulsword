@@ -1,0 +1,78 @@
+/* CSS Document */
+
+a {
+  color:black !important;
+	/*text-decoration: underline;*/
+	font-style:italic;
+}
+.page {
+}
+.column {
+  float:left;
+}
+.scripture {
+
+}
+.footnotes {
+
+}
+.phead1 {
+  font-size:18px;
+  text-decoration:underline;
+}
+.phead2 {
+  font-size:18px;
+}
+.psmall {
+  font-size:10px;
+}
+.cr {
+  display:none !important;
+}
+.cr-x-parallel-passage {
+  display:none !important;
+}
+.cr-x-style1 {
+  display:none !important;
+}
+.fn:after {
+  color:black !important;
+}
+.un:after {
+  color:black !important;
+}
+.dt:after {
+  content: "";
+}
+.dt {
+  text-decoration:none !important;
+}
+.sn {
+  border-bottom:none !important;
+}
+.pagebreak {
+  page-break-after: always;
+}
+.fncol1 {
+  display:none;
+}
+.navlink {
+  display:none !important;
+}
+.introlink {
+  display:none !important;
+}
+.audiolink {
+  display:none !important;
+}
+.hl {
+  color:black !important;
+}
+.matchverse {
+  margin:1em !important;
+}
+.searchterm {
+  color:black !important;
+  /*font-style:italic !important;*/
+  text-decoration:underline !important;
+}

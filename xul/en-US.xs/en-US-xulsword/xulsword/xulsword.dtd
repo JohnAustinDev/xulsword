@@ -1,0 +1,178 @@
+<!-- ENGLISH !-->
+
+<!-- Main Title and Message(s) !-->
+<!ENTITY main.title               "Holy Bible"> <!-- not used in MK 2.12+ !-->
+<!ENTITY getkey.askforkey         "Please enter the Bible text decryption key.">
+
+<!-- Program Main Menu !-->
+<!ENTITY menu.windows             "Windows">
+<!ENTITY menu.windows.sc          "W">
+
+<!-- File Menu !-->
+<!ENTITY menu.addNewModule.label  "Add New Modules">
+<!ENTITY menu.addNewModule.sc     "A">
+<!ENTITY menu.removeModule.label  "Remove Modules">
+<!ENTITY menu.removeModule.sc     "R">
+<!ENTITY deleteModules.label      "Delete Modules">
+<!ENTITY deleteLocales.label      "Delete Locales">
+<!ENTITY deleteAudio.label        "Delete Audio">
+<!ENTITY menu.importAudio.label   "Import Audio">
+<!ENTITY menu.importAudio.sc      "I">
+<!ENTITY menu.exportAudio.label   "Export Audio">
+<!ENTITY menu.exportAudio.sc      "E">
+<!ENTITY print.printpassage       "Print Passage">
+<!ENTITY print.printpassage.sc    "a">
+
+<!-- Edit Menu !-->
+<!ENTITY menu.copypassage         "Copy Passage">
+<!ENTITY menu.copypassage.sc      "G">
+<!ENTITY term.passage             "Passage">
+<!ENTITY term.include             "Include">
+<!ENTITY crossrefs.with.text      "Cross Reference Texts">
+
+<!-- View Menu !-->
+<!ENTITY menu.view.showtexttabs   "Bible Tabs">
+<!ENTITY menu.view.showtexttabs.sc "B">
+<!ENTITY menu.view.showcommtabs   "Commentary Tabs">
+<!ENTITY menu.view.showcommtabs.sc "C">
+<!ENTITY menu.view.showdicttabs   "Resource Tabs">
+<!ENTITY menu.view.showdicttabs.sc "R">
+<!ENTITY menu.view.showbooktabs   "Book Tabs">
+<!ENTITY menu.view.showbooktabs.sc "B">
+<!ENTITY menu.view.headings       "Headings">
+<!ENTITY menu.view.headings.sc    "H">
+<!ENTITY menu.view.footnotes      "Footnotes">
+<!ENTITY menu.view.footnotes.sc   "F">
+<!ENTITY menu.view.crossrefs      "Cross References">
+<!ENTITY menu.view.crossrefs.sc   "C">
+<!ENTITY menu.view.dict           "Dictionary Links">
+<!ENTITY menu.view.dict.sc        "D">
+<!ENTITY menu.view.versenums      "Verse Numbers">
+<!ENTITY menu.view.versenums.sc   "V">
+<!ENTITY menu.view.redwords       "Words of Christ in red">
+<!ENTITY menu.view.redwords.sc    "r">
+<!ENTITY menu.view.usernotes      "Personal Notes">
+<!ENTITY menu.view.usernotes.sc   "P">
+<!ENTITY menu.view.showAll        "Show all">
+<!ENTITY menu.view.showAll.sc     "a">
+<!ENTITY menu.view.hideAll        "Show none">
+<!ENTITY menu.view.hideAll.sc     "n">
+<!ENTITY menu.view.langnotes      "Language Notes">
+<!ENTITY menu.view.langnotes.sc   "L">
+<!ENTITY menu.view.window1        "Window 1">
+<!ENTITY menu.view.window2        "Window 2">
+<!ENTITY menu.view.window3        "Window 3">
+<!ENTITY menu.view.allwindows     "All Windows">
+<!ENTITY menu.view.fnlocation     "Show Footnotes">
+<!ENTITY menu.view.fnlocation.sc  "n">
+<!ENTITY menu.view.crlocation     "Show Cross References">
+<!ENTITY menu.view.crlocation.sc  "R">
+<!ENTITY menu.view.unlocation     "Show Personal Notes">
+<!ENTITY menu.view.unlocation.sc  "e">
+<!ENTITY menu.view.popups         "In popups">
+<!ENTITY menu.view.popups.sc      "p">
+<!ENTITY menu.view.notebox        "In footnote box">
+<!ENTITY menu.view.notebox.sc     "f">
+
+<!-- Options Menu !-->
+<!ENTITY menu.options             "Options">
+<!ENTITY menu.options.sc          "O">
+<!ENTITY menu.options.font        "Font">
+<!ENTITY menu.options.font.sc     "F">
+<!ENTITY menu.options.font1       "Smallest font">
+<!ENTITY menu.options.font2       "Small font">
+<!ENTITY menu.options.font3       "Normal font">
+<!ENTITY menu.options.font4       "Large font">
+<!ENTITY menu.options.font5       "Largest font">
+<!ENTITY menu.options.hebrew      "Hebrew">
+<!ENTITY menu.options.hebrew.sc   "H">
+<!ENTITY menu.options.hebVowel    "Show Vowel Points">
+<!ENTITY menu.options.hebVowel.sc "V">
+<!ENTITY menu.options.hebCant     "Show Cantillation">
+<!ENTITY menu.options.hebCant.sc  "C">
+<!ENTITY menu.options.language    "Language">
+<!ENTITY menu.options.language.sc "L">
+
+<!-- Bookmarks Menu !-->
+<!ENTITY menu.usernote.add        "New Personal Note...">
+
+<!-- Windows Menu !-->
+<!ENTITY menu.windows.1win        "1 Window">
+<!ENTITY menu.windows.2win        "2 Windows">
+<!ENTITY menu.windows.3win        "3 Windows">
+
+<!-- Help Menu !-->
+<!ENTITY menu.help                "Help">
+<!ENTITY menu.help.sc             "H">
+<!ENTITY menu.help.about          "About...">
+<!ENTITY menu.help.about.sc       "A">
+
+<!-- Context Menus !-->
+<!ENTITY context.hilight          "Select Verse(s)">
+<!ENTITY context.gotoReference    "Open Selected Reference">
+<!ENTITY context.deleteUserNote   "Delete Personal Note">
+<!ENTITY context.editUserNote     "Edit Personal Note">
+<!ENTITY context.closeTab         "Close">
+
+<!-- Program Tool Bar and Tool Tips !-->
+<!ENTITY history.back.tooltip     "Go to previous chapter in viewed history.">
+<!ENTITY history.back.label       "Back">
+<!ENTITY history.forward.tooltip  "Go to next chapter in viewed history.">
+<!ENTITY history.forward.label    "Forward">
+<!ENTITY history.all.tooltip      "Choose a location from past history">                               
+<!ENTITY search.tooltip           "Find the verses you're looking for.">
+<!ENTITY searchBut.label          "Search">
+<!ENTITY headingsButton.label     "headings">
+<!ENTITY headingsButton.tooltip   "Toggle the display of headings.">
+<!ENTITY notesButton.label        "footnotes">
+<!ENTITY notesButton.tooltip      "Toggle display of footnotes.">
+<!ENTITY crossrefsButton.label    "cross refs">
+<!ENTITY crossrefsButton.tooltip  "Toggle display of cross references.">
+<!ENTITY dictButton.label         "dictionary">
+<!ENTITY dictButton.tooltip       "Show dictionary links.">
+
+<!-- Search Window Tool Bar and Tool Tips!-->
+<!ENTITY search.title             "Search">
+<!ENTITY searchbox.tooltip        "Match any word ending with ' * '. Match any single character with ' ? '.">
+<!ENTITY more.label               "More">
+<!ENTITY searchwhat.label         "Search word or phrase:">
+<!ENTITY stop.label               "Stop">
+
+<!-- Search Window Advanced Options (More button) !-->
+<!ENTITY radio.label.text         "Bibles:">
+<!ENTITY radio.label.comm         "Commentaries:">
+<!ENTITY radio.label.dict         "Glossaries:">
+<!ENTITY radio.label.book         "Books:">
+<!ENTITY type                     "Search Type:">                                         
+<!ENTITY scope                    "Search Scope:">                                                                                     
+<!ENTITY hasthewords              "Find verses which contain the word(s).">                
+<!ENTITY matchparts               "Find verses which contain similar words.">
+<!ENTITY hasthistext              "Find verses which contain this exact text">
+<!ENTITY advancedmatch            "Advanced matching using special search terms.">
+<!ENTITY search.sortorder         "Show results in order">
+<!ENTITY search.all               "All Books">
+<!ENTITY search.old               "Old Testament">
+<!ENTITY search.new               "New Testament">
+<!ENTITY search.groups            "Choose Books to Search:">
+<!-- The search group names and scopes can be adjusted below, to best fits your needs !-->
+<!ENTITY search.torah             "Pentateuch">
+<!ENTITY search.history           "History">
+<!ENTITY search.psalms            "Psalms">
+<!ENTITY search.wisdom            "Wisdom books">
+<!ENTITY search.prophets          "Prophets">
+<!ENTITY search.gospels           "Gospel">
+<!ENTITY search.letters           "Letters">
+<!ENTITY search.torah.books       "Gen-Deut">
+<!ENTITY search.history.books     "Josh-Esth">
+<!ENTITY search.wisdom.books      "Job-Song">
+<!ENTITY search.prophets.books    "Isa-Mal">
+<!ENTITY search.gospels.books     "Matt-John">
+<!ENTITY search.letters.books     "Acts-Rev">
+
+<!-- Bookmarks Windows !-->
+<!ENTITY bmManager.saveas         "Save As...">
+<!ENTITY bmManager.saveas.sh      "S">
+<!ENTITY treecol.location.label   "Location">
+<!ENTITY treecol.note.label       "Note">
+<!ENTITY treecol.versetext.label  "Verse">
+<!ENTITY searchcolumns.label      "Search In">

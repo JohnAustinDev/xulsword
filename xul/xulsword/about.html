@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--
+    This file is part of Muqaddas Kitob.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    Muqaddas Kitob is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Muqaddas Kitob is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Muqaddas Kitob.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=windows-1250">
+  <meta name="generator" content="PSPad editor, www.pspad.com">
+  <title>About</title>
+  <link rel="stylesheet" href="chrome://xulsword/skin/style.css" type="text/css">
+  
+  <script>var UseBibleObjectFrom = "MainWindowBible";</script>
+  <script type="text/javascript" src="chrome://xulsword/content/common0.js"></script>
+  <script type="text/javascript" src="chrome://xulsword/content/common1.js"></script>
+  <script type="text/javascript" src="chrome://xulsword/content/common2.js"></script>
+  
+  <script>
+  
+  function scrollToModule() {
+    if (!MainWindow || !MainWindow.AboutScrollTo) return;
+    var targ = document.getElementById("targ." + MainWindow.AboutScrollTo);
+    if (targ) document.getElementById("scrollbox").scrollTop = targ.offsetTop;
+    MainWindow.AboutScrollTo = null;
+  }
+  
+  function toggleConfInfo(tabNum) {
+    var mod = TabVers[tabNum];
+    var textbox = document.getElementById("conf." + mod);
+    var link = document.getElementById("more." + mod);
+    if (textbox.style.display != "block") {
+      link.innerHTML = SBundle.getString("Less");
+      textbox.innerHTML = getConfFileContents(tabNum);
+      textbox.style.display = "block";
+    }
+    else {
+      textbox.style.display = "none";
+      link.innerHTML = SBundle.getString("More");
+    }
+  }
+    
+  var confFileContents = null;
+  function getConfFileContents(tabNum) {
+    var mod = TabVers[tabNum];
+    if (!confFileContents) {
+      confFileContents = {};
+      var modsd = Components.classes["@mozilla.org/file/directory_service;1"].
+            getService(Components.interfaces.nsIProperties).
+            get("resource:app", Components.interfaces.nsIFile);
+      modsd.append(MODSD);
+      if (modsd) {
+        var re = new RegExp(CONF_EXT + "$");
+        var files = modsd.directoryEntries;
+        while (files.hasMoreElements()) {
+          var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
+          if (file.leafName.match(re)) {
+            var mname = readParamFromConf(file, "ModuleName");
+            var cont = readFile(file) + NEWLINE + "(" + file.path + ")";
+            if (cont && mname) confFileContents[mname] = cont;
+          }
+        }
+      }
+    }
+    if (!confFileContents[mod]) {
+      jsdump("Could not read conf file for \"" + mod + "\".");
+      confFileContents[mod] = "-----";
+    }
+    /*
+    if (TabVers[tabNum]) {
+      var targ = document.getElementById("more." + TabVers[tabNum]);
+      var sb = document.getElementById("scrollbox");
+      if (targ) sb.scrollTop = targ.offsetTop - (sb.clientHeight - 200 - 34);
+    }
+    */
+    return confFileContents[mod];
+  }
+  
+  function onLoad() {
+    createVersionClasses(0);
+    window.setTimeout('scrollToModule();', 0);
+  }
+    
+  </script>
+  
+  </head>
+  
+  <body id="scrollbox" onload="onLoad();" style="background-color:rgb(220,220,220)">
+    <div style="padding:20px;" class="moduleinfo" >
+      <script>
+        document.write("<a href=\"#top\"></a>");
+        // module list
+        for (var t=0; t<TabVers.length; t++) {
+          if (TabVers[t] == ORIGINAL) continue;
+          var desc = Bible.getModuleInformation(TabVers[t], "Description");
+          document.write("<div class=\"vstyle" + (isASCII(desc) ? "ASCII":TabVers[t]) + "\" >");
+          document.write("<a href=\"#" + TabVers[t] + "\">" + TabLabel[t] + " - " + desc + "</a><hr>");
+          document.write("</div>");
+        }
+        document.write("<br><br>");
+        // module information
+        for (t=0; t<TabVers.length; t++) {
+          if (TabVers[t] == ORIGINAL) continue;
+          // anchor
+          document.write("<a id=\"targ." + TabVers[t] + "\" name=\"" + TabVers[t] + "\"></a><br>");
+          document.write("<div id=\"modinfo." + TabVers[t] + "\" >");
+          // tab label, version, and back arrow
+          // collect module data first, and if data is ASCII, overwrite version class style to force LTR.
+          var mdata1, mdata2, mdata3;
+          var modvers = Bible.getModuleInformation(TabVers[t], "Version");
+          if (modvers == NOTFOUND) modvers="";
+          if (modvers) modvers = " (" + modvers + ")";
+          mdata2 = "<span class=\"head1\">" + TabLabel[t] + (modvers ? modvers:"") + "</span><a href=\"#top\" style=\"font-family:ariel;\"> &#8593;</a><br>";
+          // Data for each module:
+          //    Description
+          //    About, DistributionLicense
+          mdata3 = "";
+          var info = Bible.getModuleInformation(TabVers[t],"Description");
+          if (info && info!=NOTFOUND) mdata3 = info + "<br>";
+          info = Bible.getModuleInformation(TabVers[t],"About").replace("\\par", "<br>", "g");
+          var comma="";
+          if (info && info!=NOTFOUND) {
+            mdata3 += info;
+            if (info.search(/[\.\?,:;!]\s*$/)==-1) {comma=",";}
+            comma += " ";
+          }
+          info = Bible.getModuleInformation(TabVers[t],"DistributionLicense");
+          if (info && info!=NOTFOUND) mdata3 += comma + info;
+          mdata3 += "</div>";
+          mdata1 = "<div class=\"vstyle" + (isASCII(mdata3) ? "ASCII":TabVers[t]) + "\" >";
+          document.write(mdata1 + mdata2 + mdata3);
+
+          // more link and conf file area
+          document.write("<a id=\"more." + TabVers[t] + "\" class=\"vstyleProgram\" href=\"javascript:toggleConfInfo('" + t + "');\">" + SBundle.getString("More") + "</a>");
+          document.write("<textarea id=\"conf." + TabVers[t] + "\" class=\"moreinfo vstyleen-US\" readonly=\"readonly\" ></textarea>");
+          document.write("</div>");
+        }
+      </script>
+    </div>
+  </body>
+</html>

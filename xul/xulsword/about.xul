@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of Muqaddas Kitob.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    Muqaddas Kitob is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Muqaddas Kitob is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Muqaddas Kitob.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+
+<!DOCTYPE window [
+<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
+%xulswordDTD;
+<!ENTITY % brandingDTD SYSTEM "chrome://xulsword/locale/branding.dtd" >
+%brandingDTD;
+<!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
+%browserDTD;
+]>
+
+<window 
+    id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"
+    title="&menu.help.about;"
+    hidechrome="true"
+    onload="loaded()"
+    width="500" height="675"
+    style="background-image: url(chrome://xulsword/locale/splash.png); background-repeat:no-repeat;"
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+    
+  <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+  <script>var UseBibleObjectFrom = "none";</script>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  
+  <script>
+  function loaded() {
+    updateCSSBasedOnCurrentLocale(["window", "button", "label"]);
+    var SBundle = document.getElementById("strings");
+    var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
+    document.getElementById("info").value = SBundle.getFormattedString('Version',[appInfo.version,appInfo.appBuildID]);
+    if (window.opener.name == "main-window") {
+      document.getElementById("close").hidden=false;
+      document.getElementById("info").hidden=false;
+      document.getElementById("splash-window").style.backgroundColor="white";
+      document.getElementById("about").hidden=false;
+    }
+  }
+  </script>
+  <vbox flex="1">
+    <stack style="height:375px;">
+      <vbox style="margin:7px;" pack="end" align="center">
+        <label id="info" value="" hidden="true" style="font-size:12px; color:black;"/>
+        <label id="producedBy" value="&producedby;" style="font-size:12px; color:rgb(77,37,143);"/>
+      </vbox>
+      <vbox flex="1" pack="end" align="end" style="-moz-padding-end:15px; margin-bottom:38px;" >
+        <button id="close"  label="&closeCmd.label;" hidden="true" oncommand="window.close();"/>
+      </vbox>
+    </stack>
+    
+    <iframe id="about" flex="1" hidden="true" style="border:2px solid rgb(77,37,143); -moz-border-radius:8px;" src="chrome://xulsword/content/about.html;"/>
+  </vbox>
+    
+</window>

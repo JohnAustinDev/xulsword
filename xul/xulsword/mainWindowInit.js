@@ -1,0 +1,545 @@
+/*  This file is part of Muqaddas Kitob.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    Muqaddas Kitob is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Muqaddas Kitob is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Muqaddas Kitob.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+// INITIALIZES GLOBAL COMMON VARS WHICH ONLY NEED TO BE EVALUATED ONCE
+
+/************************************************************************
+ * Initialize global locale information
+ ***********************************************************************/ 
+ 
+
+var RestartToChangeLocale;
+var HaveValidLocale;
+var Progvers = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).version;
+function initLocales() {
+  // Find locales and test their versions
+  var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
+  var chromeDirectory = Components.classes["@mozilla.org/file/directory_service;1"].
+      getService(Components.interfaces.nsIProperties).get("AChrom", Components.interfaces.nsIFile);
+  var files = chromeDirectory.directoryEntries;
+  var localeListString="";
+  var sep = "";
+  while (files.hasMoreElements()) {
+    var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
+    var localeFromFileName = file.leafName.match(/([^\.]+)\.locale\.manifest/i);
+    if (!localeFromFileName) continue;
+    var filedata = readFile(file);
+    if (!filedata) continue;
+    var version = filedata.match(VERSIONTAG);
+    if (!version)  continue;
+    if (localeFromFileName[1]!=DEFAULTLOCALE && comparator.compare(version[1], getPrefOrCreate("MinUIversion", "Char", Progvers)) < 0) continue;
+    localeListString += sep + localeFromFileName[1];
+    sep = ";";
+  }
+  
+  if (!localeListString) {
+    rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
+    jsdump("No locales found.\n");
+    return false;
+  }
+
+  LocaleList = localeListString.split(";");
+  
+  var currentLocale = rootprefs.getCharPref("general.useragent.locale");
+  var LocaleDefaultVersionString="";
+  sep = "";
+  var currentLocaleIsValid=false;
+  for (var lc=0; lc<LocaleList.length; lc++) {
+    if (LocaleList[lc] == currentLocale) currentLocaleIsValid=true;
+    var bundle = getLocaleBundle(LocaleList[lc], "config.properties");
+    try {var defaultModule = bundle.GetStringFromName("DefaultModule");}
+    catch (er) {defaultModule="none";}
+    LocaleDefaultVersionString += sep + defaultModule;
+    sep = ";";
+    var localeConfig = {direction:"ltr", font:DefaultFont, fontSizeAdjust:null, lineHeight:null};
+    if (bundle) {
+      try {localeConfig.direction = bundle.GetStringFromName("Direction");} catch (er) {}
+      try {localeConfig.font = bundle.GetStringFromName("Font");} catch (er) {}
+      try {localeConfig.fontSizeAdjust = bundle.GetStringFromName("FontSizeAdjust");} catch (er) {}
+      try {localeConfig.lineHeight = bundle.GetStringFromName("LineHeight");} catch (er) {}
+    }
+    LocaleConfigs[LocaleList[lc]] = localeConfig;
+    StyleRules.push(getStyleRule(".vstyle" + LocaleList[lc], localeConfig));
+  }
+  localeConfig = {direction:"ltr", font:DefaultFont, fontSizeAdjust:null, lineHeight:null};
+  StyleRules.push(getStyleRule(".vstyle" + "ASCII", localeConfig));
+  
+  LocaleDefaultVersion = LocaleDefaultVersionString.split(";");
+//dump ("LocaleDefaultVersion:" + LocaleDefaultVersion + "\n");
+    
+  RestartToChangeLocale = false;
+  if (!currentLocaleIsValid) {
+    rootprefs.setCharPref("general.useragent.locale", LocaleList[0]);
+    RestartToChangeLocale = true;
+    jsdump("Current locale is not valid: " + LocaleList + " " + currentLocale + "\n");
+    return false;
+  }
+  else  {
+    rootprefs.setCharPref("general.useragent.locale", currentLocale);
+    return true;
+  }
+}
+
+HaveValidLocale = initLocales();
+//jsdump("LocaleList:" + LocaleList + "\n");
+
+/************************************************************************
+ * Initialize program tabs and labels
+ ***********************************************************************/  
+//Get types, module names, and labels of all tabs.
+//Tab labels are chosen using the following priority:
+//  XXXXX-v2.12: 1 Tab label from the program locale
+//  XXXXX-v2.12: 2 Tab label from a loaded locale which lists this module as its default
+//  1 Tab label from .conf file's TabLabel entry
+//  2 module name
+var LanguageStudyModules = {};
+function createTabs() {
+  if (!Bible) return;
+  // Gets list of available modules
+  var moduleInfo = "";
+  var modules = Bible.getModuleList().split("<nx>");
+  for (var m=0; m<modules.length; m++) {
+    var info = modules[m].split(";");
+        
+    // Weed out unsupported module types
+    var supported=false;
+    for each (var type in SupportedModuleTypes) {
+      supported |= (info[1]==type);
+      if (supported) break;
+    }
+    if (!supported) continue;
+    
+    // Weed out incompatible module versions. The module installer shouldn't 
+    // allow bad mods, but this is just in case.
+    var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
+    var xsversion = Bible.getModuleInformation(info[0], VERSIONPAR);
+    xsversion = (xsversion!=NOTFOUND ? xsversion:MINVERSION);
+    if (comparator.compare(xsversion, getPrefOrCreate("MinXSMversion", "Char", MINVERSION)) < 0) continue;
+    var xminprogvers = Bible.getModuleInformation(info[0], MINPVERPAR);
+    xminprogvers = (xminprogvers!=NOTFOUND ? xminprogvers:MINVERSION);
+    if (comparator.compare(Progvers, xminprogvers) < 0) continue;
+    
+    //Use this opportunity to init the StyleRules and version configs...
+    var versionConfig = {direction:"ltr", font:DefaultFont, fontSizeAdjust:null, lineHeight:null};
+    var dir = Bible.getModuleInformation(info[0], "Direction");
+    var font = Bible.getModuleInformation(info[0], "Font")
+    var fontSA = Bible.getModuleInformation(info[0], "FontSizeAdjust");
+    var fontLH = Bible.getModuleInformation(info[0], "LineHeight");
+    if (dir.search("RtoL","i")!=-1) versionConfig.direction = "rtl";
+    if (font != NOTFOUND) versionConfig.font = font;
+    if (fontSA != NOTFOUND) versionConfig.fontSizeAdjust = fontSA;
+    if (fontLH != NOTFOUND) versionConfig.lineHeight = fontLH;
+    VersionConfigs[info[0]] = versionConfig;
+    StyleRules.push(getStyleRule(".vstyle" + info[0], versionConfig));
+
+    // Language glossaries don't currently work (too big??) and so aren't supported.
+    if      (info[0] == "StrongsGreek")   LanguageStudyModules.StrongsGreek   = info[0];
+    else if (info[0] == "StrongsHebrew")  LanguageStudyModules.StrongsHebrew  = info[0];
+    else if (info[0] == "Robinson")       LanguageStudyModules.Robinson      = info[0];
+    if (Bible.getModuleInformation(info[0], "GlossaryFrom") != NOTFOUND) continue;
+    if (type == DICTIONARY) {
+      var feature = Bible.getModuleInformation(info[0], "Feature");
+      if (feature.search("DailyDevotion")!=-1) {
+        prefs.setCharPref("ShowingKey" + info[0], "DailyDevotionToday");
+      }
+      else if (feature.search("GreekDef")!=-1)  {
+        LanguageStudyModules["StrongsGreek" + Bible.getModuleInformation(info[0], "Lang")] = info[0];
+      }
+      else if (feature.search("HebrewDef")!=-1) {
+        LanguageStudyModules["StrongsHebrew" + Bible.getModuleInformation(info[0], "Lang")] = info[0];
+      }
+      else if (feature.search("GreekParse")!=-1) {
+        LanguageStudyModules["Robinson" + Bible.getModuleInformation(info[0], "Lang")] = info[0];
+      }
+    }
+    //dump(m + " " + info[0] + " " + info[1] + "\n");
+    var moduleLabel = Bible.getModuleInformation(info[0], "TabLabel");
+    var isORIG = Bible.getModuleInformation(info[0], "OriginalTabTestament");
+    if (isORIG=="OT") {
+      OrigModuleOT = info[0];
+      HaveOriginalTab=true;
+      try {moduleLabel = SBundle.getString("ORIGLabelOT");}
+      catch (er) {}
+    }
+    else if (isORIG=="NT") {
+      OrigModuleNT = info[0];
+      HaveOriginalTab=true;
+      try {moduleLabel = SBundle.getString("ORIGLabelNT");}
+      catch (er) {}
+    }
+    moduleInfo += info[1] + ";";
+    moduleInfo += info[0] + ";";
+    moduleInfo += (moduleLabel!=NOTFOUND ? moduleLabel:info[0]) + "<nx>";
+  }
+  
+  //Finish the StyleRules init...
+  StyleRules.push(getStyleRule(".vstyleProgram", LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")], false, true));
+  
+  
+  moduleInfo = moduleInfo.split("<nx>");
+  moduleInfo.pop();
+  
+  // The following has been removed in v2.12 because this allows the style of
+  // tab label script to be different than the associated text. This greatly
+  // complicates display of tab labels. This feature is really only usefull 
+  // (and even then only slightly) when the number of modules is few.
+/*  
+  //Now give special treatment to modules associated with available locales
+  var currentLocale = rootprefs.getCharPref("general.useragent.locale");
+  for (var lc=0; lc<LocaleList.length; lc++) {
+    for (m=0; m<moduleInfo.length; m++) {
+      info = moduleInfo[m].split(";");
+      var tabLabel = info[2];
+      if (LocaleDefaultVersion[lc] == info[1]) {
+        try {tabLabel = SBundle.getString(info[1] + "TabLabel");}
+        //If not in currentLocale, try to see if the version has its own locale 
+        //and if there is a default tab label listed there.
+        catch (er) {
+          var locale = getLocaleOfVersion(info[1]);
+          if (locale) {
+            var bundle = getLocaleBundle(locale, "config.properties");
+            if (bundle) {
+              try {tabLabel = bundle.GetStringFromName("DefaultTabLabel");}
+              catch (er) {}
+            }
+          }
+        }
+      }
+      info[2] = tabLabel;
+      moduleInfo[m] = info.join(";");
+    }
+  }
+*/
+  // Add ORIG tab if needed...
+  if (HaveOriginalTab && SBundle) {
+    moduleInfo.push(getModuleLongType(ORIGINAL) + ";" + ORIGINAL + ";" + SBundle.getString("ORIGLabelTab"));
+  }
+  else {for (var w=1; w<=3; w++) {prefs.setBoolPref("ShowOriginal" + w, false);}}
+ 
+   // Sort tabs...
+  moduleInfo = moduleInfo.sort(tabOrder);
+ 
+  // Create global arrays
+  for (m=0; m<moduleInfo.length; m++) {
+    info = moduleInfo[m].split(";");
+    TabLongType.push(info[0]);
+    TabVers.push(info[1]);
+    TabLabel.push(info[2]);
+    Tabs[0] = {type:info[0], name:info[1], label:info[2]};;
+  }
+
+//jsdump("StrongsGreek=" + LanguageStudyModules.StrongsGreek + ", StrongsHebrew=" + LanguageStudyModules.StrongsHebrew + ", Robinson=" + LanguageStudyModules.Robinson);
+}
+
+if (HaveValidLocale) createTabs();
+//jsdump("TabVers:" + TabVers + "\n");
+//jsdump("TabLongType:" + TabLongType + "\n");
+//jsdump("TabLabel:" + TabLabel + "\n");
+
+
+//Use first BIBLE tab or "none" if not found.
+for (var t=0; t<TabVers.length; t++) {
+  if (TabLongType[t]==BIBLE && TabVers[t]!=ORIGINAL) {var defaultMod=TabVers[t]; break;}
+}
+prefs.setCharPref("DefaultVersion", (defaultMod ? defaultMod:"none"));
+
+// Tabs are sorted by the following:
+//    1) Type
+//        a) Bibles
+//        b) commentaries
+//        c) general books
+//        d) dictionaries
+//    2) Priority
+//        a) tabs with program locale
+//        b) other tabs with installed locale
+//        c) remaining tabs
+//        d) ORIG tab
+//    3) Alphabetically
+function tabOrder(a,b) {
+  // First sort by tap type
+  var moduleTypeOrder = {};
+  moduleTypeOrder[BIBLE] = 1;
+  moduleTypeOrder[COMMENTARY] = 2;
+  moduleTypeOrder[GENBOOK] = 3;
+  moduleTypeOrder[DICTIONARY] = 4;
+  var infoA = a.split(";");
+  var infoB = b.split(";");
+  if (infoA[0] == infoB[0]) {
+    // Tab type is the same.
+    // Always put original tab last.
+    if (infoA[1]==ORIGINAL) return 1;
+    if (infoB[1]==ORIGINAL) return -1;
+    // Priority: 1) DefaultModule(s) for current locale, 2) Other tabs that have
+    // locales installed, 3) remaining tabs.
+    var aLocale = getLocaleOfVersion(infoA[1]);
+    var bLocale = getLocaleOfVersion(infoB[1]);
+    var currentLocale = rootprefs.getCharPref("general.useragent.locale");
+    var aPriority = (aLocale ? (aLocale==currentLocale ? 1:2):3);
+    var bPriority = (bLocale ? (bLocale==currentLocale ? 1:2):3);
+    if (aPriority!=bPriority) return (aPriority > bPriority);
+    // Type and Priority are same. Sort by label's alpha.
+    return (infoA[2] > infoB[2] ? 1:-1);
+  }
+  else return (moduleTypeOrder[infoA[0]] > moduleTypeOrder[infoB[0]] ? 1:-1);
+}
+
+/************************************************************************
+ * Initialize Locale Book Names
+ ***********************************************************************/ 
+function initBooks() {
+  for (var b=0; b < NumBooks; b++) {
+    Book[b] = new Object();
+    Book[b].sName = "";
+    Book[b].bName = "";
+    Book[b].numChaps = 0;
+  }
+
+  var bundle = getCurrentLocaleBundle("books.properties");
+
+Book[Number(bundle.GetStringFromName("Geni"))].sName = "Gen";
+Book[Number(bundle.GetStringFromName("Geni"))].numChaps = 50;
+
+Book[Number(bundle.GetStringFromName("Exodi"))].sName = "Exod";
+Book[Number(bundle.GetStringFromName("Exodi"))].numChaps = 40;
+
+Book[Number(bundle.GetStringFromName("Levi"))].sName = "Lev";
+Book[Number(bundle.GetStringFromName("Levi"))].numChaps = 27;
+
+Book[Number(bundle.GetStringFromName("Numi"))].sName = "Num";
+Book[Number(bundle.GetStringFromName("Numi"))].numChaps = 36;
+
+Book[Number(bundle.GetStringFromName("Deuti"))].sName = "Deut";
+Book[Number(bundle.GetStringFromName("Deuti"))].numChaps = 34;
+
+Book[Number(bundle.GetStringFromName("Joshi"))].sName = "Josh";
+Book[Number(bundle.GetStringFromName("Joshi"))].numChaps = 24;
+
+Book[Number(bundle.GetStringFromName("Judgi"))].sName = "Judg";
+Book[Number(bundle.GetStringFromName("Judgi"))].numChaps = 21;
+
+Book[Number(bundle.GetStringFromName("Ruthi"))].sName = "Ruth";
+Book[Number(bundle.GetStringFromName("Ruthi"))].numChaps = 4;
+
+Book[Number(bundle.GetStringFromName("1Sami"))].sName = "1Sam";
+Book[Number(bundle.GetStringFromName("1Sami"))].numChaps = 31;
+
+Book[Number(bundle.GetStringFromName("2Sami"))].sName = "2Sam";
+Book[Number(bundle.GetStringFromName("2Sami"))].numChaps = 24;
+
+Book[Number(bundle.GetStringFromName("1Kgsi"))].sName = "1Kgs";
+Book[Number(bundle.GetStringFromName("1Kgsi"))].numChaps = 22;
+
+Book[Number(bundle.GetStringFromName("2Kgsi"))].sName = "2Kgs";
+Book[Number(bundle.GetStringFromName("2Kgsi"))].numChaps = 25;
+
+Book[Number(bundle.GetStringFromName("1Chri"))].sName = "1Chr";
+Book[Number(bundle.GetStringFromName("1Chri"))].numChaps = 29;
+
+Book[Number(bundle.GetStringFromName("2Chri"))].sName = "2Chr";
+Book[Number(bundle.GetStringFromName("2Chri"))].numChaps = 36;
+
+Book[Number(bundle.GetStringFromName("Ezrai"))].sName = "Ezra";
+Book[Number(bundle.GetStringFromName("Ezrai"))].numChaps = 10;
+
+Book[Number(bundle.GetStringFromName("Nehi"))].sName = "Neh";
+Book[Number(bundle.GetStringFromName("Nehi"))].numChaps = 13;
+
+Book[Number(bundle.GetStringFromName("Esthi"))].sName = "Esth";
+Book[Number(bundle.GetStringFromName("Esthi"))].numChaps = 10;
+
+Book[Number(bundle.GetStringFromName("Jobi"))].sName = "Job";
+Book[Number(bundle.GetStringFromName("Jobi"))].numChaps = 42;
+
+Book[Number(bundle.GetStringFromName("Psi"))].sName = "Ps";
+Book[Number(bundle.GetStringFromName("Psi"))].numChaps = 150;
+
+Book[Number(bundle.GetStringFromName("Provi"))].sName = "Prov";
+Book[Number(bundle.GetStringFromName("Provi"))].numChaps = 31;
+
+Book[Number(bundle.GetStringFromName("Eccli"))].sName = "Eccl";
+Book[Number(bundle.GetStringFromName("Eccli"))].numChaps = 12;
+
+Book[Number(bundle.GetStringFromName("Songi"))].sName = "Song";
+Book[Number(bundle.GetStringFromName("Songi"))].numChaps = 8;
+
+Book[Number(bundle.GetStringFromName("Isai"))].sName = "Isa";
+Book[Number(bundle.GetStringFromName("Isai"))].numChaps = 66;
+
+Book[Number(bundle.GetStringFromName("Jeri"))].sName = "Jer";
+Book[Number(bundle.GetStringFromName("Jeri"))].numChaps = 52;
+
+Book[Number(bundle.GetStringFromName("Lami"))].sName = "Lam";
+Book[Number(bundle.GetStringFromName("Lami"))].numChaps = 5;
+
+Book[Number(bundle.GetStringFromName("Ezeki"))].sName = "Ezek";
+Book[Number(bundle.GetStringFromName("Ezeki"))].numChaps = 48;
+
+Book[Number(bundle.GetStringFromName("Dani"))].sName = "Dan";
+Book[Number(bundle.GetStringFromName("Dani"))].numChaps = 12;
+
+Book[Number(bundle.GetStringFromName("Hosi"))].sName = "Hos";
+Book[Number(bundle.GetStringFromName("Hosi"))].numChaps = 14;
+
+Book[Number(bundle.GetStringFromName("Joeli"))].sName = "Joel";
+Book[Number(bundle.GetStringFromName("Joeli"))].numChaps = 3;
+
+Book[Number(bundle.GetStringFromName("Amosi"))].sName = "Amos";
+Book[Number(bundle.GetStringFromName("Amosi"))].numChaps = 9;
+
+Book[Number(bundle.GetStringFromName("Obadi"))].sName = "Obad";
+Book[Number(bundle.GetStringFromName("Obadi"))].numChaps = 1;
+
+Book[Number(bundle.GetStringFromName("Jonahi"))].sName = "Jonah";
+Book[Number(bundle.GetStringFromName("Jonahi"))].numChaps = 4;
+
+Book[Number(bundle.GetStringFromName("Mici"))].sName = "Mic";
+Book[Number(bundle.GetStringFromName("Mici"))].numChaps = 7;
+
+Book[Number(bundle.GetStringFromName("Nahi"))].sName = "Nah";
+Book[Number(bundle.GetStringFromName("Nahi"))].numChaps = 3;
+
+Book[Number(bundle.GetStringFromName("Habi"))].sName = "Hab";
+Book[Number(bundle.GetStringFromName("Habi"))].numChaps = 3;
+
+Book[Number(bundle.GetStringFromName("Zephi"))].sName = "Zeph";
+Book[Number(bundle.GetStringFromName("Zephi"))].numChaps = 3;
+
+Book[Number(bundle.GetStringFromName("Hagi"))].sName = "Hag";
+Book[Number(bundle.GetStringFromName("Hagi"))].numChaps = 2;
+
+Book[Number(bundle.GetStringFromName("Zechi"))].sName = "Zech";
+Book[Number(bundle.GetStringFromName("Zechi"))].numChaps = 14;
+
+Book[Number(bundle.GetStringFromName("Mali"))].sName = "Mal";
+Book[Number(bundle.GetStringFromName("Mali"))].numChaps = 4;
+
+Book[Number(bundle.GetStringFromName("Matti"))].sName = "Matt";
+Book[Number(bundle.GetStringFromName("Matti"))].numChaps = 28;
+
+Book[Number(bundle.GetStringFromName("Marki"))].sName = "Mark";
+Book[Number(bundle.GetStringFromName("Marki"))].numChaps = 16;
+
+Book[Number(bundle.GetStringFromName("Lukei"))].sName = "Luke";
+Book[Number(bundle.GetStringFromName("Lukei"))].numChaps = 24;
+
+Book[Number(bundle.GetStringFromName("Johni"))].sName = "John";
+Book[Number(bundle.GetStringFromName("Johni"))].numChaps = 21;
+
+Book[Number(bundle.GetStringFromName("Actsi"))].sName = "Acts";
+Book[Number(bundle.GetStringFromName("Actsi"))].numChaps = 28;
+
+Book[Number(bundle.GetStringFromName("Jasi"))].sName = "Jas";
+Book[Number(bundle.GetStringFromName("Jasi"))].numChaps = 5;
+
+Book[Number(bundle.GetStringFromName("1Peti"))].sName = "1Pet";
+Book[Number(bundle.GetStringFromName("1Peti"))].numChaps = 5;
+
+Book[Number(bundle.GetStringFromName("2Peti"))].sName = "2Pet";
+Book[Number(bundle.GetStringFromName("2Peti"))].numChaps = 3;
+
+Book[Number(bundle.GetStringFromName("1Johni"))].sName = "1John";
+Book[Number(bundle.GetStringFromName("1Johni"))].numChaps = 5;
+
+Book[Number(bundle.GetStringFromName("2Johni"))].sName = "2John";
+Book[Number(bundle.GetStringFromName("2Johni"))].numChaps = 1;
+
+Book[Number(bundle.GetStringFromName("3Johni"))].sName = "3John";
+Book[Number(bundle.GetStringFromName("3Johni"))].numChaps = 1;
+
+Book[Number(bundle.GetStringFromName("Judei"))].sName = "Jude";
+Book[Number(bundle.GetStringFromName("Judei"))].numChaps = 1;
+
+Book[Number(bundle.GetStringFromName("Romi"))].sName = "Rom";
+Book[Number(bundle.GetStringFromName("Romi"))].numChaps = 16;
+
+Book[Number(bundle.GetStringFromName("1Cori"))].sName = "1Cor";
+Book[Number(bundle.GetStringFromName("1Cori"))].numChaps = 16;
+
+Book[Number(bundle.GetStringFromName("2Cori"))].sName = "2Cor";
+Book[Number(bundle.GetStringFromName("2Cori"))].numChaps = 13;
+
+Book[Number(bundle.GetStringFromName("Gali"))].sName = "Gal";
+Book[Number(bundle.GetStringFromName("Gali"))].numChaps = 6;
+
+Book[Number(bundle.GetStringFromName("Ephi"))].sName = "Eph";
+Book[Number(bundle.GetStringFromName("Ephi"))].numChaps = 6;
+
+Book[Number(bundle.GetStringFromName("Phili"))].sName = "Phil";
+Book[Number(bundle.GetStringFromName("Phili"))].numChaps = 4;
+
+Book[Number(bundle.GetStringFromName("Coli"))].sName = "Col";
+Book[Number(bundle.GetStringFromName("Coli"))].numChaps = 4;
+
+Book[Number(bundle.GetStringFromName("1Thessi"))].sName = "1Thess";
+Book[Number(bundle.GetStringFromName("1Thessi"))].numChaps = 5;
+
+Book[Number(bundle.GetStringFromName("2Thessi"))].sName = "2Thess";
+Book[Number(bundle.GetStringFromName("2Thessi"))].numChaps = 3;
+
+Book[Number(bundle.GetStringFromName("1Timi"))].sName = "1Tim";
+Book[Number(bundle.GetStringFromName("1Timi"))].numChaps = 6;
+
+Book[Number(bundle.GetStringFromName("2Timi"))].sName = "2Tim";
+Book[Number(bundle.GetStringFromName("2Timi"))].numChaps = 4;
+
+Book[Number(bundle.GetStringFromName("Titusi"))].sName = "Titus";
+Book[Number(bundle.GetStringFromName("Titusi"))].numChaps = 3;
+
+Book[Number(bundle.GetStringFromName("Phlmi"))].sName = "Phlm";
+Book[Number(bundle.GetStringFromName("Phlmi"))].numChaps = 1;
+
+Book[Number(bundle.GetStringFromName("Hebi"))].sName = "Heb";
+Book[Number(bundle.GetStringFromName("Hebi"))].numChaps = 13;
+
+Book[Number(bundle.GetStringFromName("Revi"))].sName = "Rev";
+Book[Number(bundle.GetStringFromName("Revi"))].numChaps = 22;
+
+  for (var b=0; b < NumBooks; b++) {
+    Book[b].bName  = bundle.GetStringFromName(Book[b].sName);
+    Book[b].bNameL = bundle.GetStringFromName(Book[b].sName);
+  }
+}
+
+function initLongNames() {
+  var myLocale = rootprefs.getCharPref("general.useragent.locale");
+  var bundle = getLocaleBundle(myLocale, "books.properties");
+  if (myLocale && bundle) {
+    var strings = bundle.getSimpleEnumeration();
+    while (strings.hasMoreElements()) {
+      var string = strings.getNext();
+      string = string.QueryInterface(Components.interfaces.nsIPropertyElement);
+      var key = string.key;
+      var isLong = key.match(/Long(.*?)\s*$/);
+      if (!isLong) continue;
+      var bookNum = findBookNum(isLong[1]);
+      if (bookNum == null) continue;
+      Book[bookNum].bNameL = bundle.GetStringFromName(key);
+    }
+  }
+}
+
+LocaleDirectionEntity = "&rlm;";
+if (HaveValidLocale) {
+  LocaleDirectionEntity = ((LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")].direction && 
+                        LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")].direction=="rtl") ? "&rlm;":"&lrm;");
+}
+LocaleDirectionChar = (guiDirection=="rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
+
+initBooks();
+initLongNames();

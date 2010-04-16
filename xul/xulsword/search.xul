@@ -1,0 +1,266 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of Muqaddas Kitob.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    Muqaddas Kitob is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Muqaddas Kitob is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Muqaddas Kitob.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/search.css" type="text/css"?>
+<?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
+
+<!DOCTYPE window [
+<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
+%xulswordDTD;
+<!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd" >
+%bookmarksDTD;
+<!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
+%browserDTD;
+<!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd" >
+%globalDTD;
+]>
+
+<window 
+    id="search-window" xmlns:html="http://www.w3.org/1999/xhtml"
+    title="&search.title; &quot;**search_title**&quot;"
+    width="630" height="400" screenX="50" screenY="50"
+    persist="width height screenX screenY sizemode"
+    style="background-image: url(chrome://xulsword/skin/images/9.gif);"
+    onload="loadSearchWindow()"
+    onunload="unloadSearchWindow();"
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+<stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+
+<script>var UseBibleObjectFrom = "GetSearchBible";</script>
+<script src="chrome://xulsword/content/common0.js"/>
+<script src="chrome://global/content/globalOverlay.js"/>
+<script src="chrome://xulsword/content/common1.js"/>
+<script src="chrome://xulsword/content/common2.js"/>
+<script src="chrome://xulsword/content/textHTML.js"/>
+<script src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
+<script src="chrome://xulsword/content/bookmarks/bookmarksTop.js"/>
+<script src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
+<script src="chrome://xulsword/content/search.js"/>
+
+<keyset>
+  <key keycode="VK_RETURN"                 oncommand="document.getElementById('searchButton').click()"/>
+  <key keycode="VK_ENTER"                  oncommand="document.getElementById('searchButton').click()"/>
+</keyset>
+
+<keyset id="editMenuKeys"/>
+
+<commandset>
+  <command id="cmd_close"                        oncommand="closeWindow(true);"/>
+</commandset>
+
+<commandset id="contextCommands">
+  <command id="cmd_bm_open"                      oncommand="goDoCommand('cmd_bm_open');"/>
+  <command id="cmd_copy"                         oncommand="goDoCommand('cmd_copy');"/>
+  <command id="cmd_xs_searchForSelection"        oncommand="goDoCommand('cmd_xs_searchForSelection');"/>
+  <command id="cmd_xs_newBookmark"               oncommand="goDoCommand('cmd_xs_newBookmark');"/>
+  <command id="cmd_xs_newUserNote"               oncommand="goDoCommand('cmd_xs_newUserNote');"/>
+  <command id="cmd_print"                        oncommand="handlePrintCommand('cmd_print');"/>
+  <command id="cmd_printPreview"                 oncommand="handlePrintCommand('cmd_printPreview');"/>
+  <command id="cmd_pageSetup"                    oncommand="handlePrintCommand('cmd_pageSetup');"/>
+</commandset>
+
+<commandset id="editMenuCommands"/>
+
+<!-- Search Results Controls !-->
+<toolbox>
+  <menubar>
+    <menu label="&fileMenu.label;" accesskey="&fileMenu.accesskey;">
+      <menupopup>
+        <menuitem label="&printSetupCmd.label;" accesskey="&printSetupCmd.accesskey;" command="cmd_pageSetup"/>
+        <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" command="cmd_printPreview"/>
+        <menuitem label="&printCmd.label;" accesskey="&printCmd.accesskey;" key="printKb" command="cmd_print"/>
+        <menuseparator/>
+        <menuitem label="&closeCmd.label;" command="cmd_close"
+                    key="key_close" accesskey="&closeCmd.accesskey;"/>
+      </menupopup>
+    </menu>
+    <menu id="menu_edit">
+      <menupopup onpopupshowing="goUpdateGlobalEditMenuItems()">
+        <menuitem id="menu_undo"/>
+        <menuitem id="menu_redo"/>
+        <menuseparator/>
+        <menuitem id="menu_cut"/>
+        <menuitem id="menu_copy"/>
+        <menuitem id="menu_paste"/>
+        <menuseparator/>
+        <menuitem id="menu_selectAll"/>
+      </menupopup>
+    </menu>
+    <menu id="help-menu" label="&menu.help;" accesskey="&menu.help.sc;">
+      <menupopup id="help-popup">
+        <menuitem id="searchHelp" label="&search.title; &menu.help;" accesskey="&menu.help.sc;" oncommand="clickHandler(this)"/>
+      </menupopup>
+    </menu>
+  </menubar>
+  <menubar pack="center">
+    <vbox flex="1">
+      <hbox pack="center" align="center" style="padding:4px;">
+        <button id="moreless" label="&more.label;" oncommand="clickHandler(this)"/>
+        <label value="&searchwhat.label;" control="searchText"/>
+        <textbox id="searchText" tooltip="searchTextTT" style="width:20em;" maxlength="60"/>
+        <button id="searchButton" label="&searchBut.label;  " dir="reverse" orient="horizontal" oncommand="clickHandler(this)"/>
+        <spacer width="14px" orient="horizontal"/>
+        <image id="question" class="question" onclick="clickHandler(this)"/>
+      </hbox>
+      <separator class="groove" />
+      <hbox id="modulePanel">
+      <spacer flex="1" />
+      <radiogroup id="sversion.adv" hidden="false" pack="center" align="center" orient="horizontal" oncommand="clickHandler(this)" style="padding:6px; margin-bottom:8px;">
+        <grid>
+          <columns>
+            <column />
+            <column flex="1"/>
+          </columns>
+          <rows id="allModRadios.adv">
+          <row id="row.Texts.0.adv" align="center">
+            <label value="&radio.label.text;" id="label.Texts.0.adv"/>
+          </row>
+          <separator class="groove"/>
+          <row id="row.Comms.0.adv" align="center">
+            <label value="&radio.label.comm;" id="label.Comms.0.adv"/>
+          </row>
+          <separator class="groove"/>
+          <row id="row.Dicts.0.adv" align="center">
+            <label value="&radio.label.dict;" id="label.Dicts.0.adv"/>
+          </row>
+          <separator class="groove"/>
+          <row id="row.Genbks.0.adv" align="center">
+            <label value="&radio.label.book;" id="label.Genbks.0.adv"/>
+          </row>
+          </rows>
+        </grid>
+      </radiogroup>
+      <radiogroup id="sversion.sim" hidden="false" pack="center" align="center" orient="horizontal" oncommand="clickHandler(this)" style="padding:6px; margin-bottom:8px;">
+        <grid>
+          <columns>
+            <column />
+            <column flex="1"/>
+          </columns>
+          <rows id="allModRadios.sim">
+          <row id="row.Texts.0.sim" align="center">
+            <label value="" id="label.Texts.0.sim"/>
+          </row>
+          </rows>
+        </grid>
+      </radiogroup>
+      <spacer flex="1" />
+      </hbox>
+    </vbox>
+  </menubar>
+</toolbox>
+
+  <vbox align="center">
+    <hbox id="advanced" hidden="true" align="center" class="advancedSearch">
+      <stack id="searchTypeStack">
+      <vbox flex="100%" id="searchTypeBox">
+        <hbox pack="center"><label value="&type;"/></hbox>
+        <radiogroup id="searchType">
+          <radio id="hasthewords" selected="true" label="&hasthewords;" oncommand="clickHandler(this)"/>
+          <radio id="hasthistext" label="&hasthistext;" oncommand="clickHandler(this)"/>
+          <radio id="advancedmatch" label="&advancedmatch;" oncommand="clickHandler(this)"/>
+          <radio id="matchsimilar" label="&matchparts;" oncommand="clickHandler(this)"/>
+        </radiogroup>
+        <hbox>
+          <checkbox id="sort" label="&search.sortorder;" oncommand="clickHandler(this)" style="margin-left:2em;"/>
+        </hbox>
+      </vbox>
+      <vbox id="dividerBox" style="background:rgb(220,220,220); border:2px grey outset; -moz-border-radius:4px; opacity:0.8" hidden="true">
+      </vbox>
+      <vbox pack="center" align="center" id="createSearchIndexBox" hidden="true">
+        <hbox style="padding:3px; background:rgb(200,200,200); -moz-border-radius:4px;">
+          <button id="createIndexButton" label="Create Search Index" oncommand="clickHandler(this)"/>
+        </hbox>
+      </vbox>
+      </stack>
+      <vbox flex="100%">
+        <hbox pack="center"><label value="&scope;"/></hbox>
+        <radiogroup id="scopeRadio" orient="horizontal" oncommand="clickHandler(this)">
+          <vbox>
+            <radio id="searchAll" selected="true" label="&search.all;" value="Gen-Rev"/>
+            <radio id="searchOT" label="&search.old;" value="Gen-Mal"/>
+            <radio id="searchNT" label="&search.new;" value="Matt-Rev"/>
+          </vbox>
+          <vbox>
+            <radio id="searchSelect" label="&search.groups;" value=""/>
+            <menulist id="scopeMenu"><menupopup>
+              <menuitem id="sg1" selected="true" label="&search.torah;" value="&search.torah.books;"/>
+              <menuitem id="sg2" label="&search.history;" value="&search.history.books;"/>
+              <menuitem id="sg3" label="&search.wisdom;" value="&search.wisdom.books;"/>
+              <menuitem id="sg4" label="&search.prophets;" value="&search.prophets.books;"/>
+              <menuitem id="sg5" label="&search.gospels;" value="&search.gospels.books;"/>
+              <menuitem id="sg6" label="&search.letters;" value="&search.letters.books;"/>
+            </menupopup></menulist>
+          </vbox>
+        </radiogroup>
+      </vbox>
+    </hbox>
+  </vbox>
+
+
+<!-- Search Results Window !-->
+<vbox flex="1" style="padding:10px;">
+  <hbox flex="100%">
+    <vbox  flex="100%">
+      <iframe flex="100%" class="searchframe" context="contextSearchBox" id="search-frame" src="search.html"></iframe>
+    </vbox>
+    <vbox id="resultsnav" width="35px" pack="center" style="margin-left:10px;" hidden="true">
+      <image id="first" class="searchArrow" onclick="clickHandler(this)"/>
+      <spacer flex="50%" orient="horizontal"/>
+      <image id="prev" class="searchArrow" onclick="clickHandler(this)"/>
+      <spacer flex="10%" orient="horizontal"/>
+      <image id="next" class="searchArrow" onclick="clickHandler(this)"/>
+      <spacer flex="50%" orient="horizontal"/>
+      <image id="last" class="searchArrow" onclick="clickHandler(this)"/>
+    </vbox>
+  </hbox>
+</vbox>
+<statusbar id="statusbar" chromedir="&locale.dir;">
+  <statusbarpanel id="statusbar-text" flex="1"/>
+  <hbox id="progressbox" pack="end" align="center" style="visibility:hidden;">
+    <label id="searchmsg" value=""/>
+    <progressmeter id="progress" mode="determined" value="3" style="margin-right:10px;"/>
+  </hbox>
+  <button id="stopButton" label="&stop.label;" style="margin-top:4px;" hidden="true" oncommand="clickHandler(this)"/>
+</statusbar>
+
+<popupset>
+  <menupopup id="contextSearchBox" onpopupshowing="SearchContextMenuShowing(event)" onpopuphidden="SearchContextMenuHidden(event)">
+    <menuitem id="conOpen" label="&openLinkInWindowCmd.label;" command="cmd_bm_open" default="true"/>
+    <menuseparator id="contsep0"/>
+    <menuitem id="cMenu_copy" label="&copyCmd.label;" command="cmd_copy"/>
+    <menuitem id="conSearch" label="&searchBut.label;" command="cmd_xs_searchForSelection"/>
+    <menuseparator id="contsep1"/>
+    <menuitem id="conBookmark" label="&menuitem.newBookmark.label;" command="cmd_xs_newBookmark"/>
+    <menuitem id="conUserNote" label="&menu.usernote.add;" command="cmd_xs_newUserNote"/>
+  </menupopup>
+  
+  <menupopup id="bookmarks-context-menu" 
+               onpopupshowing="return BookmarksMenu.createContextMenu(event);"
+               onpopuphidden ="BookmarksMenu.destroyContextMenu(event);"/>
+</popupset>
+
+<!-- TOOLTIPS DEFINED HERE !-->
+<tooltip id="searchTextTT">
+  <label class="vstyleProgram" value="&searchbox.tooltip;" />
+</tooltip>
+
+</window>
