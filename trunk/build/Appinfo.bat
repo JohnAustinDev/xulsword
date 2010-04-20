@@ -30,9 +30,9 @@
 :: SPECIFY BUILD INFORMATION
 Set version=2.13
 Set setupversion=2.13
-Set name=MK
+Set name=Xulsword
 Set vendor=CrossWire
-Set executable=MK.exe
+Set executable=xulsword.exe
 Set MinXSMversion=1.0
 Set MinUIversion=2.7
 Set HelpEmailAddress=gpl.programs.info@gmail.com
@@ -40,7 +40,7 @@ Set HelpEmailAddress=gpl.programs.info@gmail.com
 :: CHOOSE SECURITY SETTINGS
 Set useSecurityModule=
 Set encryptionKey=
-Set bibleTextEncryptionKey=akey
+Set bibleTextEncryptionKey=aKey
 Set splashScreen=splash.xul
 Set copySecurity=disabled
 Set storeSize=-1
