@@ -1,6 +1,6 @@
 #labels Phase-Implementation
 =Firefox Locale Phrases=
-Following is a list of Firefox locale files and phrases which are actually utilized by MK (at this time). So, if neither Firefox-3 nor Firefox-2 exists in your language (and there is no existing Firefox locale that would suffice) you would need to translate all these, in addition to the MK specific files and phrases. In this list, the phrases which would need translation are found after the `English:` tag. There are some repeats in the list.
+Following is a list of Firefox locale files and phrases which are actually utilized by Xulsword (at this time). So, if neither Firefox-3 nor Firefox-2 exists in your language (and there is no existing Firefox locale that would suffice) you would need to translate all these, in addition to the Xulsword specific files and phrases. In this list, the phrases which would need translation are found after the `English:` tag. There are some repeats in the list.
 
 ==From Firefox 3:==
 If no acceptable Firefox-3 locale exists, then copy the following files from an existing Firefox-3 locale, translate only the phrases in the following list, then copy the files to `MKS\localeDev\<locale-code>\mk\`.

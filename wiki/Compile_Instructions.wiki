@@ -6,7 +6,7 @@ The following programs (all free) need to be in your command path:
   * [http://www.7-zip.org/download.html 7-zip]
   * [http://technet.microsoft.com/en-us/sysinternals/bb896683.aspx PsKill]
   * Perl (I used [http://www.activestate.com/activeperl/downloads/ ActivePerl])
-  * C++ Compiler (I have only tried [http://www.softpedia.com/get/Programming/Other-Programming-Files/Microsoft-Visual-C-Toolkit.shtml MSVC8 express edition])
+  * [http://www.softpedia.com/get/Programming/Other-Programming-Files/Microsoft-Visual-C-Toolkit.shtml MSVC8 C++ Compiler] (the Express Edition works great)
   * [http://www.microsoft.com/downloads/details.aspx?FamilyId=F26B1AA4-741A-433A-9BE5-FA919850BDBF&displaylang=en Windows SDK]
 -----
 
@@ -21,16 +21,16 @@ The following programs (all free) need to be in your command path:
   # Run "`Build\RegisterXulrunner.bat`" to register the xulrunner installation and create necessary generated files.
   # Run "`Cpp\IDLcomp.bat`" to create an interface descriptor which is used by xulrunner's XPCOM. Afterwards you should have a "`Cpp\Release\ixulsword.xpt`" descriptor file. This must be re-run if you ever change the xulsword XPCOM interface (located in "`Cpp\ixulsword.idl`"). NOTE: The "`Cpp\ixulsword.idl`" file has useful comments on using the xulsword Bible object. This object allows you to access SWORD functions from Javascript.
   # Compile C code by opening a console window and running "`Cpp\CompileAll.bat NOSECURITY`". Afterwards, you should have a file called "`Cpp\Release\xulsword.dll`".
-  # For development purposes, run "`build\MakeDevelopment.bat`" and then use "`build\Run.bat`" to start the program. The program window will probably be blank because you will need to install modules by clicking "File"->"Add New Modules" (at least one Bible module is necessary for the program to function). When installing modules from [http://www.crosswire.org/sword/index.jsp The Sword Project's] website, use the "raw ZIP" type of module. The development program has a hidden button which displays some useful debugging buttons when clicked. This invisible button is located JUST under the top menu bar at the FAR right of the screen. The debugging buttons appear in that same area when the invisible button is clicked.
+  # For development purposes, run "`build\MakeDevelopment.bat`" and then use "`build\Run.bat`" to start the program. The program window will be blank (unless you included modules in your build) until you install modules by clicking "File"->"Add New Modules". At least one Bible module is necessary for the program to fully function. When installing modules from [http://www.crosswire.org/sword/index.jsp The Sword Project's] website, use the "raw ZIP" type of module. The development program has a hidden button which displays some useful debugging features when clicked. This invisible button is located JUST under the top menu bar at the FAR right of the screen. Debugging buttons will appear in that same area when the invisible button is clicked.
   # For production, run "`build\MakeProduction.bat`". You can then use "`build\Run.bat`" to start the program.
 -----
 
 ==Build Controls==
-Build controls are located in the "`build\Appinfo.bat`". You can choose to include modules and locales in your build. Modules which you want to include should be located in "`%MKS%\moduleDev`", and locales should be in "`%MKS%\localeDev\`". See the wiki page on creating your own locale for requirements.
+Build controls are located in the "`build\Appinfo.bat`". You can choose to include modules and locales in your build. Modules which you want to include should be located in "`%MKS%\moduleDev`", and locales should be in "`%MKS%\localeDev\`". See Locale_Creation about creating your own locale.
 -----
 
 ==Portable Version==
-To build the portable version, download a recent version of [http://portableapps.com/apps/internet/firefox_portable Portable Firefox 3] and create a portable folder by running the setup. Then copy this portable folder to "`portable\FirefoxPortable`" so that the contents of "`portable\FirefoxPortable`" is "`FirefoxPortable.exe`", "`App`", etc. Then run "`build\MakeProduction.bat`" if you haven't already, followed by "`build\MakePortable.bat`". The portable version can then be found in "`%MKO%\versions\PortableVersionVERS`".
+To build the portable version, download a recent version of [http://portableapps.com/apps/internet/firefox_portable Portable Firefox 3] and create a portable folder by running the setup. Then copy the resulting portable folder to "`portable\FirefoxPortable`" so that the contents of "`portable\FirefoxPortable`" is "`FirefoxPortable.exe`", "`App`", etc. Then run "`build\MakeProduction.bat`" if you haven't already, followed by "`build\MakePortable.bat`". The portable version can then be found in "`%MKO%\versions\PortableVersionVERS`".
 -----
 
 ==Security Module==

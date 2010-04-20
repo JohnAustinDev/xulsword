@@ -1,6 +1,6 @@
 #labels Phase-Implementation
-=MK User Interface Translation=
-This page holds all the words and phrases from MK's Graphical User Interface which need to be translated in order to create a GUI for a new language. The program requires other words and phrases in addition to these, however you will not need to worry about translating them if there is a Firefox distribution in an acceptable language.
+=User Interface Translation=
+This page holds all the words and phrases which need to be translated in order to create a GUI for a new language. The program requires other words and phrases in addition to these, however you will not need to worry about translating them if there is a Firefox distribution in an acceptable language.
 
 NOTES:
   * Special symbols like "%1$S", "%2$S", "%3$S" etc. are place holders for numbers which cannot be supplied until the program is actually run. The symbols can be moved or re-ordered, but the symbols themselves should not be changed.
