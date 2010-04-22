@@ -36,7 +36,7 @@ struct DIR
     char                *name;  /* NTBS */
 };
 
-int access(const char *path, int mode)
+int sw_access(const char *path, int mode)
 {
   nsEmbedCString utf8;
   nsEmbedString utf16;
