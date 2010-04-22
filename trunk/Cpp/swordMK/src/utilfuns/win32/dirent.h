@@ -33,7 +33,7 @@ int           closedir(DIR *);
 struct dirent *readdir(DIR *);
 void          rewinddir(DIR *);
 
-int access(const char *path, int mode);
+int sw_access(const char *path, int mode);
 long findfirst(const char *name, struct _wfinddata_t *fileinfo);
 int mkdir(char *dirname );
 char *getenv(const char *varname, char * buff);

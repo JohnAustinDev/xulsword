@@ -53,7 +53,6 @@ Set cFiles1=^
  "%MK%\%CPPD%\%sword%\src\modules\tests\echomod.cpp"^
  "%MK%\%CPPD%\%sword%\src\mgr\encfiltmgr.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\common\entriesblk.cpp"^
- "%MK%\%CPPD%\%sword%\src\mgr\filemgr.cpp"^
  "%MK%\%CPPD%\%sword%\src\utilfuns\ftpparse.c"^
  "%MK%\%CPPD%\%sword%\src\mgr\ftptrans.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\filters\gbffootnotes.cpp"^
@@ -140,8 +139,6 @@ Set cFiles1=^
  "%MK%\%CPPD%\%sword%\src\modules\lexdict\swld.cpp"^
  "%MK%\%CPPD%\%sword%\src\mgr\swlocale.cpp"^
  "%MK%\%CPPD%\%sword%\src\frontend\swlog.cpp"^
- "%MK%\%CPPD%\%sword%\src\mgr\swmgr.cpp"^
- "%MK%\%CPPD%\%sword%\src\modules\swmodule.cpp"^
  "%MK%\%CPPD%\%sword%\src\utilfuns\swobject.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\filters\swoptfilter.cpp"^
  "%MK%\%CPPD%\%sword%\src\mgr\swsearchable.cpp"^
@@ -171,7 +168,6 @@ Set cFiles1=^
  "%MK%\%CPPD%\%sword%\src\utilfuns\zlib\trees.c"^
  "%MK%\%CPPD%\%sword%\src\utilfuns\zlib\uncompr.c"^
  "%MK%\%CPPD%\%sword%\src\modules\filters\unicodertf.cpp"^
- "%MK%\%CPPD%\%sword%\src\utilfuns\zlib\untgz.c"^
  "%MK%\%CPPD%\%sword%\src\utilfuns\url.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\filters\utf16utf8.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\filters\utf8arabicpoints.cpp"^
@@ -203,7 +199,9 @@ cl.exe %cFlags% %cFiles1%
 Set cFiles1=^
  "%MK%\%CPPD%\swordMK\src\mgr\versemgr.cpp"^
  "%MK%\%CPPD%\swordMK\src\mgr\swmgr.cpp"^
- "%MK%\%CPPD%\swordMK\src\modules\swmodule.cpp"
+ "%MK%\%CPPD%\swordMK\src\modules\swmodule.cpp"^
+ "%MK%\%CPPD%\swordMK\src\mgr\filemgr.cpp"^
+ "%MK%\%CPPD%\swordMK\src\utilfuns\zlib\untgz.c"
  
 cl.exe %cFlags% %cFiles1%
  
