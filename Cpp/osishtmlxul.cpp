@@ -23,6 +23,7 @@
 #include <versekey.h>
 #include <swmodule.h>
 #include <url.h>
+#include <stringmgr.h>
 #include <stack>
 
 SWORD_NAMESPACE_START
@@ -32,7 +33,6 @@ class OSISHTMLXUL::QuoteStack : public std::stack<const char*> {
 
 OSISHTMLXUL::MyUserData::MyUserData(const SWModule *module, const SWKey *key) : BasicFilterUserData(module, key) {
 	inBold = false;
-	inName = false;
 	inXRefNote = false;
 	footnoteNum = 1;
 	suspendLevel = 0;
@@ -55,8 +55,7 @@ OSISHTMLXUL::MyUserData::~MyUserData() {
 	while (!quoteStack->empty()) {
 		const char *tagData = quoteStack->top();
 		quoteStack->pop();
-		//EDIT!! delete tagData;
-		delete const_cast<char *>(tagData);
+		delete [] tagData;
 	}
 	delete quoteStack;
 }
@@ -69,23 +68,18 @@ OSISHTMLXUL::OSISHTMLXUL() {
 	setEscapeEnd(";");
 
 	setEscapeStringCaseSensitive(true);
+	setPassThruNumericEscapeString(true);
 
-//   commenting these out.  If someone is sure we shouldn't
-//   convert these since we are outputing to a markup that
-//   recognizes them, then please delete these lines
-//   addEscapeStringSubstitute("amp",  "&");
-//   addEscapeStringSubstitute("apos", "'");
-//   addEscapeStringSubstitute("lt",   "<");
-//   addEscapeStringSubstitute("gt",   ">");
-//   addEscapeStringSubstitute("quot", "\"");
+	addAllowedEscapeString("quot");
+	addAllowedEscapeString("apos");
+	addAllowedEscapeString("amp");
+	addAllowedEscapeString("lt");
+	addAllowedEscapeString("gt");
 
 	setTokenCaseSensitive(true);
-	
-	addTokenSubstitute("lg",  "<br>");
-	addTokenSubstitute("/lg", "<br>");
 
-	//addTokenSubstitute("<hi type=\"italic\">", "<i>");
-	//addTokenSubstitute("</hi>", "</i>");
+	//	addTokenSubstitute("lg",  "<br />");
+	//	addTokenSubstitute("/lg", "<br />");
 }
 
 // though this might be slightly slower, possibly causing an extra bool check, this is a renderFilter
@@ -160,111 +154,7 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         else if (u->w == "keep") {outText("</span>", buf, u);}
       }
     }
-	
-/*		// <w> tag
-		if (!strcmp(tag.getName(), "w")) {
- 
-			// start <w> tag
-			if ((!tag.isEmpty()) && (!tag.isEndTag())) {
-				u->w = token;
-			}
 
-			// end or empty <w> tag
-			else {
-printf("Enter else\n");
-				bool endTag = tag.isEndTag();
-				SWBuf lastText;
-				//bool show = true;	// to handle unplaced article in kjv2003-- temporary till combined
-
-				if (endTag) {
-					tag = u->w.c_str();
-					lastText = u->lastTextNode.c_str();
-				}
-				else lastText = "stuff";
-
-				const char *attrib;
-				const char *val;
-				if (attrib = tag.getAttribute("xlit")) {
-printf("Tag is xlit\n");
-					val = strchr(attrib, ':');
-					val = (val) ? (val + 1) : attrib;
-					outText(" ", buf, u);
-					outText(val, buf, u);
-				}
-				if (attrib = tag.getAttribute("gloss")) {
-printf("Tag is gloss\n");
-					val = strchr(attrib, ':');
-					val = (val) ? (val + 1) : attrib;
-					outText(" ", buf, u);
-					outText(val, buf, u);
-				}
-				if (attrib = tag.getAttribute("lemma")) {
-printf("Tag is lemma\n");
-					int count = tag.getAttributePartCount("lemma", ' ');
-					int i = (count > 1) ? 0 : -1;		// -1 for whole value cuz it's faster, but does the same thing as 0
-					do {
-						attrib = tag.getAttribute("lemma", i, ' ');
-						if (i < 0) i = 0;	// to handle our -1 condition
-						val = strchr(attrib, ':');
-						val = (val) ? (val + 1) : attrib;
-						SWBuf gh;
-						if(*val == 'G')
-							gh = "Greek";
-						if(*val == 'H')
-							gh = "Hebrew";
-						const char *val2 = val;
-						if ((strchr("GH", *val)) && (isdigit(val[1])))
-							val2++;
-						//if ((!strcmp(val2, "3588")) && (lastText.length() < 1))
-						//	show = false;
-						//else {
-printf("Checking suspendTextPassThru%b\n", u->suspendTextPassThru);
-							if (!u->suspendTextPassThru) {
-								buf.appendFormatted(" <small><em>&lt;<a href=\"passagestudy.jsp?action=showStrongs&type=%s&value=%s\">%s</a>&gt;</em></small> ", 
-										(gh.length()) ? gh.c_str() : "", 
-										URL::encode(val2).c_str(), 
-										val2);
-							}
-						//}
-						
-					} while (++i < count);
-				}
-				if (attrib = tag.getAttribute("morph")) { // && (show)) {
-					SWBuf savelemma = tag.getAttribute("savlm");
-					//if ((strstr(savelemma.c_str(), "3588")) && (lastText.length() < 1))
-					//	show = false;
-					//if (show) {
-						int count = tag.getAttributePartCount("morph", ' ');
-						int i = (count > 1) ? 0 : -1;		// -1 for whole value cuz it's faster, but does the same thing as 0
-						do {
-							attrib = tag.getAttribute("morph", i, ' ');
-							if (i < 0) i = 0;	// to handle our -1 condition
-							val = strchr(attrib, ':');
-							val = (val) ? (val + 1) : attrib;
-							const char *val2 = val;
-							if ((*val == 'T') && (strchr("GH", val[1])) && (isdigit(val[2])))
-								val2+=2;
-							if (!u->suspendTextPassThru) {
-								buf.appendFormatted(" <small><em>(<a href=\"passagestudy.jsp?action=showMorph&type=%s&value=%s\">%s</a>)</em></small> ", 
-										URL::encode(tag.getAttribute("morph")).c_str(),
-										URL::encode(val).c_str(), 
-										val2);
-							}
-						} while (++i < count);
-					//}
-				}
-				if (attrib = tag.getAttribute("POS")) {
-					val = strchr(attrib, ':');
-					val = (val) ? (val + 1) : attrib;
-					outText(" ", buf, u);
-					outText(val, buf, u);
-				}
-
-				//if (endTag)
-				//buf += "}";
-			}
-		}
-*/
 
 		// <note> tag
 		//EDIT!!
@@ -324,21 +214,35 @@ printf("Checking suspendTextPassThru%b\n", u->suspendTextPassThru);
 			}
 		}
 
-		// <p> paragraph tag
-		else if (!strcmp(tag.getName(), "p")) {
+		// <p> paragraph and <lg> linegroup tags
+		else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-empty start tag
-				outText("<!P><br>", buf, u);
+				outText("<!P><br />", buf, u);
 			}
 			else if (tag.isEndTag()) {	// end tag
-				outText("<!/P><br>", buf, u);
+				outText("<!/P><br />", buf, u);
 				userData->supressAdjacentWhitespace = true;
 			}
 			else {					// empty paragraph break marker
-				outText("<!P><br>", buf, u);
+				outText("<!P><br />", buf, u);
 				userData->supressAdjacentWhitespace = true;
 			}
 		}
 		
+		// Milestoned paragraphs, created by osis2mod
+		// <div type="paragraph" sID.../>
+		// <div type="paragraph" eID.../>
+		else if (!tag.isEmpty() && !strcmp(tag.getName(), "div") && tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "paragraph")) {
+			// <div type="paragraph"  sID... />
+			if (tag.getAttribute("sID")) {	// non-empty start tag
+				outText("<!P><br />", buf, u);
+			}
+			// <div type="paragraph"  eID... />
+			else if (tag.getAttribute("eID")) {
+				outText("<!/P><br />", buf, u);
+				userData->supressAdjacentWhitespace = true;
+			}
+		}
 
 		// <reference> tag
 		else if (!strcmp(tag.getName(), "reference")) {
@@ -396,45 +300,27 @@ printf("Checking suspendTextPassThru%b\n", u->suspendTextPassThru);
 			}
 		}
 		
-		else if (!strcmp(tag.getName(), "list")) {
-		  if (!tag.isEndTag()) {
-        outText("<div", buf, u);
-        if (tag.getAttribute("type")) {buf.appendFormatted(" class=\"%s\"", tag.getAttribute("type"));}
-        outText(">", buf, u);
-      }
-		  else {outText("</div>", buf, u);}
-		}
-		
-		else if (!strcmp(tag.getName(), "item")) {
-			if (!tag.isEndTag()) {
-        outText("<div", buf, u);
-        if (tag.getAttribute("type")) {buf.appendFormatted(" class=\"%s\"", tag.getAttribute("type"));}
-        outText(">", buf, u);
-      }
-		  else {outText("</div>", buf, u);}
-		}
-
 		// <l> poetry, etc
 		else if (!strcmp(tag.getName(), "l")) {
 			// end line marker
 			if (tag.getAttribute("eID")) {
-				outText("<br>", buf, u);
+				outText("<br />", buf, u);
 			}
 			// <l/> without eID or sID
 			// Note: this is improper osis. This should be <lb/>
 			else if (tag.isEmpty() && !tag.getAttribute("sID")) {
-				outText("<br>", buf, u);
+				outText("<br />", buf, u);
 			}
 			// end of the line
 			else if (tag.isEndTag()) {
-				outText("<br>", buf, u);
+				outText("<br />", buf, u);
 			}
 		}
 		
 		// <lb.../> 
 		else if (!strcmp(tag.getName(), "lb")) {
-			outText("<br>", buf, u);
-			//if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "x-begin-paragraph")) {outText("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", buf, u);}
+			outText("<br />", buf, u);
+
 			userData->supressAdjacentWhitespace = true;
 		}
 		// <milestone type="line"/>
@@ -442,12 +328,12 @@ printf("Checking suspendTextPassThru%b\n", u->suspendTextPassThru);
 		// <milestone type="cQuote" marker="x"/>
 		else if ((!strcmp(tag.getName(), "milestone")) && (tag.getAttribute("type"))) {
 			if(!strcmp(tag.getAttribute("type"), "line")) {
-				outText("<br>", buf, u);
+				outText("<br />", buf, u);
 				userData->supressAdjacentWhitespace = true;
 			}
 			else if(!strcmp(tag.getAttribute("type"),"x-p"))  {
 				if( tag.getAttribute("marker")) {
-				  outText("<br><br>", buf, u);
+				  outText("<br /><br />", buf, u);
 					//outText(tag.getAttribute("marker"), buf, u);
 				}
 				else outText("<!p>", buf, u);
@@ -471,9 +357,9 @@ printf("Checking suspendTextPassThru%b\n", u->suspendTextPassThru);
 		}
 
 
-		// <title> EDIT!!
+		// <title>
 		else if (!strcmp(tag.getName(), "title")) {
-		  if ((!tag.isEndTag()) && (!tag.isEmpty())) {
+		  if (!tag.isEndTag()) {
         outText("<div class=\"", buf, u);
         if (tag.getAttribute("level") && !strcmp(tag.getAttribute("level"), "2")) {outText("head2", buf, u);}
         else {outText("head1", buf, u);}
@@ -483,6 +369,26 @@ printf("Checking suspendTextPassThru%b\n", u->suspendTextPassThru);
 			else if (tag.isEndTag()) {
 				outText("</div>", buf, u);
 			}
+		}
+		
+		// <list>
+		else if (!strcmp(tag.getName(), "list")) {
+		  if (!tag.isEndTag()) {
+        outText("<div", buf, u);
+        if (tag.getAttribute("type")) {buf.appendFormatted(" class=\"%s\"", tag.getAttribute("type"));}
+        outText(">", buf, u);
+      }
+		  else {outText("</div>", buf, u);}
+		}
+
+    // <item>
+		else if (!strcmp(tag.getName(), "item")) {
+			if (!tag.isEndTag()) {
+        outText("<div", buf, u);
+        if (tag.getAttribute("type")) {buf.appendFormatted(" class=\"%s\"", tag.getAttribute("type"));}
+        outText(">", buf, u);
+      }
+		  else {outText("</div>", buf, u);}
 		}
 
 		// <catchWord> & <rdg> tags (italicize)
@@ -495,34 +401,37 @@ printf("Checking suspendTextPassThru%b\n", u->suspendTextPassThru);
 			}
 		}
 
-		// divineName  
+		// divineName
 		else if (!strcmp(tag.getName(), "divineName")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
-				u->inName = true;
 				u->suspendTextPassThru = (++u->suspendLevel);
 			}
 			else if (tag.isEndTag()) {
-				if(u->inName ) {
-					u->inName = false;
-					u->suspendTextPassThru = (--u->suspendLevel);
-					char firstChar = *u->lastTextNode.c_str();
-					const char *name = u->lastTextNode.c_str();
-					++name;
-					outText(firstChar, buf, u);
-					//outText("<span class=\"divine\">", buf, u);
-					
-					for(int i=0;i<strlen(name);i++)
-						outText(toupper(name[i]), buf, u);
-					//outText("</span>", buf, u);
+				SWBuf lastText = u->lastSuspendSegment.c_str();
+				u->suspendTextPassThru = (--u->suspendLevel);
+				if (lastText.size()) {
+					toupperstr(lastText);
+					scratch.setFormatted("%c<font size=\"-1\">%s</font>", lastText[0], lastText.c_str()+1);
+
+					const unsigned char *tmpBuf = (const unsigned char *)lastText.c_str();
+					getUniCharFromUTF8(&tmpBuf);
+					int char_length = (tmpBuf - (const unsigned char *)lastText.c_str());
+					scratch.setFormatted("%.*s<font size=\"-1\">%s</font>",
+						char_length,
+						lastText.c_str(),
+						lastText.c_str() + char_length
+					);
+
+					outText(scratch.c_str(), buf, u);
 				}
-			} 
+			}
 		}
 
 		// <hi> text highlighting
 		else if (!strcmp(tag.getName(), "hi")) {
 			SWBuf type = tag.getAttribute("type");
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
-				if (type == "b" || type == "x-b") {
+				if (type == "bold" || type == "b" || type == "x-b") {
 					outText("<b>", buf, u);
 					u->inBold = true;
 				}
@@ -536,7 +445,7 @@ printf("Checking suspendTextPassThru%b\n", u->suspendTextPassThru);
 					outText("</b>", buf, u);
 					u->inBold = false;
 				}
-				else {outText("</i>", buf, u);}
+				else outText("</i>", buf, u);
 			}
 		}
 
@@ -558,8 +467,7 @@ printf("Checking suspendTextPassThru%b\n", u->suspendTextPassThru);
 			SWBuf mark      = tmp;
 
 			// open <q> or <q sID... />
-			//EDIT!! Bug fix! Below was !tag.isEmpty- oops
-			if ((!tag.isEndTag()) || (tag.getAttribute("sID"))) {
+			if ((!tag.isEmpty() && !tag.isEndTag()) || (tag.isEmpty() && tag.getAttribute("sID"))) {
 				// if <q> then remember it for the </q>
 				if (!tag.isEmpty()) {
 					char *tagData = 0;
@@ -579,14 +487,13 @@ printf("Checking suspendTextPassThru%b\n", u->suspendTextPassThru);
 					outText((level % 2) ? '\"' : '\'', buf, u);
 			}
 			// close </q> or <q eID... />
-			else if ((tag.isEndTag()) || (tag.getAttribute("eID"))) {
+			else if ((tag.isEndTag()) || (tag.isEmpty() && tag.getAttribute("eID"))) {
 				// if it is </q> then pop the stack for the attributes
 				if (tag.isEndTag() && !u->quoteStack->empty()) {
 					const char *tagData  = u->quoteStack->top();
 					u->quoteStack->pop();
 					XMLTag qTag(tagData);
-					//EDIT!! delete tagData;
-					delete const_cast<char *>(tagData);
+					delete [] tagData;
 
 					type    = qTag.getAttribute("type");
 					who     = qTag.getAttribute("who");

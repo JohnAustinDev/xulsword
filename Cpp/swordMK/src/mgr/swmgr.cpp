@@ -43,7 +43,7 @@
 #include <utilstr.h>
 #include <gbfplain.h>
 #include <thmlplain.h>
-#include <osisplainxul.h>
+#include <osisplain.h>
 #include <teiplain.h>
 #include <papyriplain.h>
 #include <gbfstrongs.h>
@@ -52,6 +52,7 @@
 #include <gbfredletterwords.h>
 #include <gbfmorph.h>
 #include <osisheadings.h>
+#include <osisfootnotes.h>
 #include <osisfootnotesxul.h>
 #include <osisdictionary.h>
 #include <osisstrongs.h>
@@ -250,7 +251,7 @@ void SWMgr::init() {
 	thmlplain = new ThMLPlain();
 	cleanupFilters.push_back(thmlplain);
 
-	osisplain = new OSISPlainXUL();
+	osisplain = new OSISPlain();
 	cleanupFilters.push_back(osisplain);
 
 	teiplain = new TEIPlain();

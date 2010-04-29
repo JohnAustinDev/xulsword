@@ -71,50 +71,6 @@ GBFHTMLXUL::GBFHTMLXUL() {
 	
 }
 
-/*
-void GBFHTMLXUL::getLastStrongsTag(SWBuf &buf, const char *token, bool *success, bool *append, int *p1, int *p2) {
-	char stag[35]="<span class='sn' title='S:G%s'>";
-  *p2 = buf.length();
-  *p1 = *p2;
-  *success = false; 
-  *append = false;
-  
-  bool p2fixed = true;
-  bool p1fixed = false;
-  int si = 28; // the "G"
-        
-  for (int i = buf.length()-1; i>=0; i--) {
-    char I = buf.charAt(i);
-    if (!p2fixed && (I=='<')) {
-      *p2 = i;
-      p2fixed = true;
-    }
-    else if (!p1fixed && p2fixed && ((I=='>') || (I==' '))) {
-      *p1 = i+1;
-      p1fixed = true;
-      if (I==' ') {
-        *success = true;
-        *append = false;
-        break;
-      }
-    }
-    if (p1fixed && p2fixed) {
-      if ((*p2-*p1)<1) {
-        p1fixed = false;
-        p2fixed = false;
-        continue;
-      }
-      if (I != stag[si]) {si = 28;}
-      if (I == '<') {
-        *success = true;
-        *append = (si == 0);
-        break;
-      }
-      si--;
-    }
-  }
-}
-*/
 
 bool GBFHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData) {
 	const char *tok;
@@ -125,7 +81,7 @@ bool GBFHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
 		
 		// NOTE RusVZh does not use WH, WT, WTH, or WTG tags and so they are not implemented below
 		if (!strncmp(token, "WG", 2)) { // strong's numbers
-		  VerseKey *vkey;
+    VerseKey *vkey;
 			// see if we have a VerseKey * or descendant
 			SWTRY {
         vkey = SWDYNAMIC_CAST(VerseKey, u->key);

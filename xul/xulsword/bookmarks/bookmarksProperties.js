@@ -134,7 +134,7 @@ function onRefUserUpdate(e, location, version) {
     gVerseText.className = "vstyle" + TabVers[aVerse.tabNum];
     break;
   case COMMENTARY:
-    gVerseText.value = Bible.getVerseText(version, location).replace(/^\s*/,"");
+    gVerseText.value = Bible.getVerseText(version, location).replace(/^\s*/,"").replace(/\n/g, " ");
     gVerseText.className = "vstyle" + version;
     break;
   }

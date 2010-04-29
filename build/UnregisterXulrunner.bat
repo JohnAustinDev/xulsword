@@ -1,10 +1,10 @@
 if not defined MKAppinfo Set MKAppinfo=%MK%\build
 call "%MKAppinfo%\Appinfo.bat"
 
-call "autogen\RemoveAllProfiles.bat"
+call "%MK%\build\autogen\RemoveAllProfiles.bat"
 
-pushd %MK%\xulrunner
+cd "%MK%\xulrunner"
 call xulrunner.exe --unregister-global
 
-popd
-call "autogen\unsetRegistry.reg"
+cd "%MK%\build"
+call "%MK%\build\autogen\unsetRegistry.reg"

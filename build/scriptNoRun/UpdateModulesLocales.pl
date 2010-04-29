@@ -45,16 +45,16 @@ foreach $entry (@chromelist) {
   $bk = "false";
   foreach $l (@includeLocales) {if ($locale eq $l) {$bk = "true"; last;}}
   if ($bk eq "true") {next;}
-  `del /Q \"$MK\\xulrunner\\chrome\\$locale.*\"`;
+  if (-e "$MK\\xulrunner\\chrome\\$locale.jar") {`del /Q \"$MK\\xulrunner\\chrome\\$locale.*\"`;}
 }
 if ($hasEN eq "false") {`ren \"$MK\\xulrunner\\chrome\\en-US.locale.manifest\" \"en-US.nomenu.manifest\"`;}
 
 # Delete existing modules from xulrunner dir
-`rmdir /S /Q \"$MK\\xulrunner\\mods.d\"`;
-`rmdir /S /Q \"$MK\\xulrunner\\modules\\comments\"`;
-`rmdir /S /Q \"$MK\\xulrunner\\modules\\genbook\"`;
-`rmdir /S /Q \"$MK\\xulrunner\\modules\\lexdict\"`;
-`rmdir /S /Q \"$MK\\xulrunner\\modules\\texts\"`;
+if (-e "$MK\\xulrunner\\mods.d") {`rmdir /S /Q \"$MK\\xulrunner\\mods.d\"`;}
+if (-e "$MK\\xulrunner\\modules\\comments") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\comments\"`;}
+if (-e "$MK\\xulrunner\\modules\\genbook") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\genbook\"`;}
+if (-e "$MK\\xulrunner\\modules\\lexdict") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\lexdict\"`;}
+if (-e "$MK\\xulrunner\\modules\\texts") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\texts\"`;}
 
 # Copy selected modules to xulrunner dir
 `mkdir \"$MK\\xulrunner\\mods.d\"`;
@@ -65,12 +65,12 @@ if ($hasEN eq "false") {`ren \"$MK\\xulrunner\\chrome\\en-US.locale.manifest\" \
 `mkdir \"$MK\\xulrunner\\modules\\texts\\ztext\"`;
 
 # Add or change version info for modules
-opendir(CONF, "$MKS/moduleDev/mods.d");
+opendir(CONF, "$MKS/moduleDev/swordmk-mods/mods.d");
 @confs = readdir(CONF);
 close(CONF);
 foreach $conf (@confs) {
-  open(TMP, ">tmp.conf");
-  open(INC, "<$MKS/moduleDev/mods.d/$conf");
+  open(TMP, ">$MKS/moduleDev/swordmk-mods/tmp.conf");
+  open(INC, "<$MKS/moduleDev/swordmk-mods/mods.d/$conf");
   $hasXSMversion = "false";
   $hasMinProgversionForXSM = "false";
   while(<INC>) {
@@ -79,11 +79,11 @@ foreach $conf (@confs) {
     print TMP $_;
   }
   close(INC);
-  if ($hasXSMversion eq "false") {print TMP "xulswordVersion=$XSMversion\n";}
+  if ($hasXSMversion eq "false") {print TMP "\nxulswordVersion=$XSMversion\n";}
   if ($hasMinProgversionForXSM eq "false") {print TMP "minMKVersion=$MinProgversionForXSM\n";}
   close(TMP);
   unlink(INC);
-  rename("tmp.conf", "$MKS/moduleDev/mods.d/$conf");
+  rename("$MKS/moduleDev/swordmk-mods/tmp.conf", "$MKS/moduleDev/swordmk-mods/mods.d/$conf");
 }
 
 if (-e "$MKS/installer/autogen/uninstall.iss") {unlink("$MKS/installer/autogen/uninstall.iss");}
@@ -106,20 +106,26 @@ sub processModuleGroup($@) {
   $listptr = shift;
   
   # Copy modules to installer location, handle indexes properly
+  $log = "$MKS\\moduleDev\\swordmk-mods\\Out_EncryptTexts.txt";
+  chdir("$MKS\\moduleDev\\swordmk-mods"); # so that mkfastmod will work!
   foreach $mod (@{$listptr}) {
-    $modDir = lc($mod);
-    print `copy \"$MKS\\moduleDev\\mods.d\\$modDir.conf\" \"$MK\\xulrunner\\mods.d\"`;
+    $modlc = lc($mod);
     if ($IncludeIndexes eq "true") {
-      if (!(-e "$MKS\\moduleDev\\modules\\$path\\$modDir\\lucene")) {
-        chdir("$MKS/moduleDev");
-        `\"$MK\\Cpp\\swordMK\\utilities\\bin\\mkfastmod.exe\" \"$mod\"`;
-        chdir("$MK\\build");
-      }
+      print "Creating search index in $path for $mod...\n";
+      &logit("Creating search index in $path for $mod...\n");
+      if (-e "$MKS\\moduleDev\\swordmk-mods\\modules\\$path\\$modlc\\lucene") {`rmdir /Q /S \"$MKS\\moduleDev\\swordmk-mods\\modules\\$path\\$modlc\\lucene\"`;}
+      $mykey="";
+      open(INF, "<$MKS\\moduleDev\\swordmk-mods\\keys.txt") || die "Could not open $MKS\\moduleDev\\swordmk-mods\\keys.txt\n";
+      while(<INF>) {if ($_ =~ /^(.*):$mod$/) {$mykey = $1;}}
+      close(INF);
+      if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\swordmk-mods\\mods.d\\$modlc.conf", $mykey);}
+      `\"$MK\\Cpp\\swordMK\\utilities\\bin\\mkfastmod.exe\" $mod >> \"$log\"`;
+      if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\swordmk-mods\\mods.d\\$modlc.conf", "");}
     }
-  
-    `xcopy \"$MKS\\moduleDev\\modules\\$path\\$modDir\" \"$MK\\xulrunner\\modules\\$path\\$modDir\" /S /Y /I`;
-    
-    if ($IncludeIndexes ne "true") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\$path\\$modDir\\lucene\"`;}
+    `copy \"$MKS\\moduleDev\\swordmk-mods\\mods.d\\$modlc.conf\" \"$MK\\xulrunner\\mods.d\"`;
+    `xcopy \"$MKS\\moduleDev\\swordmk-mods\\modules\\$path\\$modlc\" \"$MK\\xulrunner\\modules\\$path\\$modlc\" /S /Y /I`;
+
+    if ($IncludeIndexes ne "true" && -e "$MK\\xulrunner\\modules\\$path\\$modlc\\lucene") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\$path\\$modlc\\lucene\"`;}
   }
   
   if (-e "$MKS/installer") {
@@ -140,9 +146,9 @@ sub processModuleGroup($@) {
     $modlist="";
     $code="";
     foreach $mod (@{$listptr}) {
-      $modDir = lc($mod);
-      $code = $code."  DelTree(ExpandConstant('{app}\\modules\\".$path."\\".$modDir."'), True, True, True);\n";
-      $code = $code."  DeleteFile(ExpandConstant('{app}\\mods.d\\".$modDir.".conf'));\n";
+      $modlc = lc($mod);
+      $code = $code."  DelTree(ExpandConstant('{app}\\modules\\".$path."\\".$modlc."'), True, True, True);\n";
+      $code = $code."  DeleteFile(ExpandConstant('{app}\\mods.d\\".$modlc.".conf'));\n";
       $modlist = $modlist.";".$mod;
     }
 
@@ -166,4 +172,28 @@ sub processModuleGroup($@) {
     print OUTF $new;
     close(OUTF);
   }
+}
+
+sub setCipher($$) {
+  my $c = shift;
+  my $k = shift;
+  open(TMP, ">$MKS\\moduleDev\\swordmk-mods\\tmp.xml") || die "Could not open $MKS\\moduleDev\\swordmk-mods\\tmp.xml\n";
+  open(CONF, "<$c") || die "Could not open $c\n";
+  $haskey = "false";
+  while(<CONF>) {
+    if ($_ =~ s/^\s*CipherKey\s*=.*$/CipherKey=$k/) {$haskey = "true";}
+    print TMP $_;
+  }
+  if ($haskey eq "false") {print TMP "CipherKey=$k\n";}
+  close(CONF);
+  close(TMP);
+  unlink($c);
+  rename ("$MKS\\moduleDev\\swordmk-mods\\tmp.xml", $c);
+}
+
+sub logit($) {
+  my $l = shift;
+  open(LOGF, ">>$log") || die "Could not open log file $log\n";
+  print LOGF $l;
+  close(LOGF);
 }
