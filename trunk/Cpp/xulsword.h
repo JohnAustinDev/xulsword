@@ -28,18 +28,12 @@
 #include "nsCOMPtr.h"
 #include "ixulsword.h"
 
-#include "osishtmlxul.h"
-#include "thmlhtmlxul.h"
-#include "gbfhtmlxul.h"
-#include "rtfhtml.h"
-#include "plainhtml.h"
-#include "osisplainxul.h"
-#include "teiplain.h"
 #include "swmgr.h"
 #include "swmodule.h"
 #include "versekey.h"
 #include "treekeyidx.h"
 #include "strkey.h"
+#include <markupfiltmgr.h>
 
 #include <swlog.h>
 
@@ -119,7 +113,7 @@ private:
    
 protected:
   /* additional members */
-  SWMgr MyManager;				//Global Module Manager
+  SWMgr *MyManager;				//Global Module Manager
   ModMap::iterator modIterator;	//Iterator for modules
 
   VerseKey EmptyKey;			//Used to replace Persist-ed keys in module
@@ -137,13 +131,6 @@ protected:
   SWFilter * OSISHTMLXUL_p;			//Will point to this filter if created
   SWFilter * ThMLHTMLXUL_p;
   SWFilter * GBFHTMLXUL_p;
-  SWFilter * RTFHTML_p;
-  
-  SWFilter * OSISPlainXUL_p;
-  SWFilter * TEIPlain_p;
-    
-  SWFilter * PLAINHTML_p;
-  //SWFilter * WEBIF
 
   nsresult rv;
 

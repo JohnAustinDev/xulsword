@@ -209,36 +209,37 @@ bool ThMLHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         }
         //else {printf("ERROR:%i\n", error);}
       }
-      
-      
-      
       else {
-			SWBuf value = tag.getAttribute("value");
-      if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "morph")) { //&gt;
-				if(value.length())
-					buf.appendFormatted("<small><em>(<a href=\"passagestudy.jsp?action=showMorph&type=Greek&value=%s\">*s</a>) </em></small>", 
-						URL::encode(value.c_str()).c_str(),
-						value.c_str());
-			}
-			else if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "Strongs")) {
-				if(*value == 'H') {
-					value<<1;
-					buf.appendFormatted("<small><em>&lt;<a href=\"passagestudy.jsp?action=showStrongs&type=Hebrew&value=%s\">",
-						URL::encode(value.c_str()).c_str());
-				}
-				else if(*value == 'G') {
-					value<<1;
-					buf.appendFormatted("<small><em>&lt;<a href=\"passagestudy.jsp?action=showStrongs&type=Greek&value=%s\">",
-						URL::encode(value.c_str()).c_str());
-				}
-				buf += (value.length()) ? value.c_str() : "";
-				buf += "</a>&gt; </em></small>";
-			}
-			else if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "Dict")) {
-				if (!tag.isEndTag())
-					buf += "<b>";
-				else	buf += "</b>";
-			}
+  	    SWBuf value = tag.getAttribute("value");
+  			if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "morph")) { //&gt;
+  				if(value.length())
+  					buf.appendFormatted("<small><em>(<a href=\"passagestudy.jsp?action=showMorph&type=Greek&value=%s\">%s</a>)</em></small>",
+  						URL::encode(value.c_str()).c_str(),
+  						value.c_str());
+  			}
+  			else if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "lemma")) { //&gt;
+  				if(value.length())
+  					// empty "type=" is deliberate.
+  					buf.appendFormatted("<small><em>&lt;<a href=\"passagestudy.jsp?action=showStrongs&type=&value=%s\">%s</a>&gt;</em></small>",
+  						URL::encode(value.c_str()).c_str(),
+  						value.c_str());
+  			}
+  			else if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "Strongs")) {
+  				char ch = *value;
+  				value<<1;
+  				buf.appendFormatted("<small><em>&lt;<a href=\"passagestudy.jsp?action=showStrongs&type=%s&value=%s\">",
+  						    ((ch == 'H') ? "Hebrew" : "Greek"),
+  						    URL::encode(value.c_str()).c_str());
+
+  				buf += (value.length()) ? value.c_str() : "";
+  				buf += "</a>&gt;</em></small>";
+  			}
+  			else if (tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "Dict")) {
+  				buf += (tag.isEndTag() ? "</b>" : "<b>");
+
+
+			 }
+			 
 			}
 		}
 		// <note> tag
@@ -285,24 +286,11 @@ bool ThMLHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 		}
 		else if (!strcmp(tag.getName(), "scripture")) {
-			if (!tag.isEndTag()) buf += "<i>";
-			if (tag.isEndTag()) buf += "</i>";
-		}
-		// <sync> tag
-		else if (!strcmp(tag.getName(), "sync")) {
-		  SWBuf classtxt = "";
-		  SWBuf title = "unavailable";
-		  if (!tag.isEndTag()) {
-		    if (tag.getAttribute("type") && !strcmp("x-glossary", tag.getAttribute("type"))) {classtxt = "dtlink";} 
-        if (tag.getAttribute("value")) {title = tag.getAttribute("value");}
-		    buf.appendFormatted("<a class=\"%s\" title=\"%s\">", classtxt.c_str(), title.c_str());
-		  }
-		  else {
-		    buf.append("</a>");
-		  }
+			buf += (tag.isEndTag() ? "</i>" : "<i>");
 		}
 		// <scripRef> tag
 		else if (!strcmp(tag.getName(), "scripRef")) {
+      // all types of modules work the same with xulsword...
 			if (!tag.isEndTag()) {
 				if (!tag.isEmpty()) {
 					if (tag.getAttribute("passage")) {
@@ -315,39 +303,6 @@ bool ThMLHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 			if (tag.isEndTag()) {	//	</scripRef>
 			 buf.append("</a>");
-				/*if (!u->BiblicalText) {
-					SWBuf refList = u->startTag.getAttribute("passage");
-					if (!refList.length())
-						refList = u->lastTextNode;
-					SWBuf version = tag.getAttribute("version");
-					
-					buf.appendFormatted("&nbsp;<a href=\"passagestudy.jsp?action=showRef&type=scripRef&value=%s&module=%s\">",
-						(refList.length()) ? URL::encode(refList.c_str()).c_str() : "", 
-						(version.length()) ? URL::encode(version.c_str()).c_str() : "");
-					buf += u->lastTextNode.c_str();
-					buf += "</a>&nbsp;";
-				}
-				else {
-					SWBuf footnoteNumber = u->startTag.getAttribute("swordFootnote");
-					VerseKey *vkey = NULL;
-					// see if we have a VerseKey * or descendant
-					SWTRY {
-						vkey = SWDYNAMIC_CAST(VerseKey, u->key);
-					}
-					SWCATCH ( ... ) {}
-					if (vkey) {
-						// leave this special osis type in for crossReference notes types?  Might thml use this some day? Doesn't hurt.
-						//buf.appendFormatted("<a href=\"noteID=%s.x.%s\"><small><sup>*x</sup></small></a> ", vkey->getText(), footnoteNumber.c_str());
-						buf.appendFormatted("<a href=\"passagestudy.jsp?action=showNote&type=x&value=%s&module=%s&passage=%s\"><small><sup>*x</sup></small></a> ",  
-							URL::encode(footnoteNumber.c_str()).c_str(), 
-							URL::encode(u->version.c_str()).c_str(),
-							URL::encode(vkey->getText()).c_str());
-					
-					}
-				}
-
-				// let's let text resume to output again
-				u->suspendTextPassThru = false;*/
 			}
 		}
 		else if (tag.getName() && !strcmp(tag.getName(), "div")) {
@@ -377,8 +332,25 @@ bool ThMLHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			if (!src)		// assert we have a src attribute
 				return false;
 
-			buf += '<';
-			for (const char *c = token; *c; c++) {
+			const char *c, *d;
+			if (((c = strchr(src+3, '"')) == NULL) ||
+			    ((d = strchr( ++c , '"')) == NULL))	// identify endpoints.
+				return false;			// abandon hope.
+
+			SWBuf imagename = "file:";
+			if (*c == '/')				// as below, inside for loop.
+				imagename += userData->module->getConfigEntry("AbsoluteDataPath");
+			while (c != d)				// move bits into the name.
+			    imagename += *(c++);
+
+			// images become clickable, if the UI supports showImage.
+			buf.appendFormatted("<a href=\"passagestudy.jsp?action=showImage&value=%s&module=%s\"><",
+					    URL::encode(imagename.c_str()).c_str(),
+					    URL::encode(u->version.c_str()).c_str());
+
+			for (c = token; *c; c++) {
+				if ((*c == '/') && (*(c+1) == '\0'))
+					continue;
 				if (c == src) {
 					for (;((*c) && (*c != '"')); c++)
 						buf += *c;
@@ -396,7 +368,7 @@ bool ThMLHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				}
 				buf += *c;
 			}
-			buf += '>';
+               buf += " border=0 /></a>";
 		}
 		else {
 			buf += '<';

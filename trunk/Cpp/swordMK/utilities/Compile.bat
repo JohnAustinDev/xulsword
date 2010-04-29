@@ -31,7 +31,6 @@ Set cFiles=%cFiles%^
  "%MK%\%CPPD%\osishtmlxul.cpp"^
  "%MK%\%CPPD%\osisdictionary.cpp"^
  "%MK%\%CPPD%\osisfootnotesxul.cpp"^
- "%MK%\%CPPD%\osisplainxul.cpp"^
  "%MK%\%CPPD%\swordMK\src\utilfuns\win32\dirent.cpp"
 
 Set lFlags=libswordexe.lib libswordll.lib xpcom.lib xpcomglue_s.lib nspr4.lib /libpath:"%MK%\%CPPD%\swordMK\lib\Release" /libpath:"%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /nologo /SUBSYSTEM:CONSOLE /MACHINE:X86 /out:"bin\%utilityName%.exe" 
@@ -41,7 +40,6 @@ Set lFiles=%objDIR%\%utilityName%.obj^
  "%objDIR%\osishtmlxul.obj"^
  "%objDIR%\osisdictionary.obj"^
  "%objDIR%\osisfootnotesxul.obj"^
- "%objDIR%\osisplainxul.obj"^
  "%objDIR%\dirent.obj"
 rem  odbc32.lib^
 rem  odbccp32.lib^

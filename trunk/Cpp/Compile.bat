@@ -41,7 +41,6 @@ Set cFiles=%SECURITYCPP%^
  ".\osishtmlxul.cpp"^
  ".\osisdictionary.cpp"^
  ".\osisfootnotesxul.cpp"^
- ".\osisplainxul.cpp"^
  ".\swordMK\src\utilfuns\win32\dirent.cpp"
 
 Set lFlags=libswordll.lib xpcom.lib xpcomglue_s.lib nspr4.lib crclib.lib /nologo /dll /incremental:no /manifestfile:"xulsword\xulsword.dll.manifest" /implib:"xulsword\xulsword.lib" /pdb:"xulsword/xulsword.pdb" /out:".\Release\xulsword.dll" /libpath:".\crclib\Release" /libpath:".\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /libpath:".\swordMK\lib\Release" 
@@ -52,7 +51,6 @@ Set lFiles=%SECURITYOBJ%^
  ".\xulsword\gbfhtmlxul.obj"^
  ".\xulsword\osisdictionary.obj"^
  ".\xulsword\osisfootnotesxul.obj"^
- ".\xulsword\osisplainxul.obj"^
  ".\xulsword\dirent.obj"
 
 

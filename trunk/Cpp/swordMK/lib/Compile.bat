@@ -199,6 +199,7 @@ cl.exe %cFlags% %cFiles1%
 Set cFiles1=^
  "%MK%\%CPPD%\swordMK\src\mgr\versemgr.cpp"^
  "%MK%\%CPPD%\swordMK\src\mgr\swmgr.cpp"^
+ "%MK%\%CPPD%\swordMK\src\mgr\markupfiltmgr.cpp"^
  "%MK%\%CPPD%\swordMK\src\modules\swmodule.cpp"^
  "%MK%\%CPPD%\swordMK\src\mgr\filemgr.cpp"^
  "%MK%\%CPPD%\swordMK\src\utilfuns\zlib\untgz.c"

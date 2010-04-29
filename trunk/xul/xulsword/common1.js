@@ -767,7 +767,7 @@ function findAVerseText(version, location, windowNum) {
   }
   //If we have a Bible, try it first.
   if (bibleVersion) {
-    try {var text = Bible.getVerseText(bibleVersion, bibleLocation);}
+    try {var text = Bible.getVerseText(bibleVersion, bibleLocation).replace(/\n/g, " ");}
     catch (er) {text = "";}
     if (text && text.length > 7) {
       ret.tabNum = moduleName2TabIndex(bibleVersion);
@@ -785,7 +785,7 @@ function findAVerseText(version, location, windowNum) {
     for (var ab=0; ab<abooks.length; ab++) {if (abooks[ab]==book) break;}
     if (ab==abooks.length) continue;
     var tlocation = Bible.convertLocation(Bible.getVerseSystem(version), location, Bible.getVerseSystem(TabVers[v]));
-    text = Bible.getVerseText(TabVers[v], tlocation);
+    text = Bible.getVerseText(TabVers[v], tlocation).replace(/\n/g, " ");
     if (text && text.length > 7) {
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If

@@ -326,7 +326,7 @@ getVerseSystemOfModule
 // Returns DefaultVersificationSystem if verse system cannot be determined.
 const char *xulsword::getVerseSystemOfModule(const char * mod) {
   if (!mod) return DefaultVersificationSystem;
-  SWModule * module = MyManager.getModule(mod);
+  SWModule * module = MyManager->getModule(mod);
   if (!module) {return DefaultVersificationSystem;}
   VerseKey *vkey;
   vkey = SWDYNAMIC_CAST(VerseKey, module->getKey());
@@ -349,31 +349,10 @@ xulsword::xulsword()
 //printf("INITIALIZING XULSWORD OBJECT\n");
   /* member initializers and constructor code */
   
-  sprintf(DefaultVersificationSystem, "KJV");  
-  
-  //Initialize all modules
-  OSISHTMLXUL_p =   new OSISHTMLXUL();
-  ThMLHTMLXUL_p =   new ThMLHTMLXUL();
-  GBFHTMLXUL_p =    new GBFHTMLXUL();
-  RTFHTML_p =       new RTFHTML();
-  OSISPlainXUL_p =  new OSISPlainXUL();
-  TEIPlain_p =      new TEIPlain();
-  PLAINHTML_p =     new PLAINHTML();
+  sprintf(DefaultVersificationSystem, "KJV");
 
-  for (modIterator = MyManager.Modules.begin(); modIterator != MyManager.Modules.end(); modIterator++) {
-    SWModule *module = (*modIterator).second;
-    if      (module->Markup() == FMT_OSIS)   module->AddRenderFilter(OSISHTMLXUL_p);
-    else if (module->Markup() == FMT_PLAIN)  module->AddRenderFilter(PLAINHTML_p);
-    else if (module->Markup() == FMT_THML)   module->AddRenderFilter(ThMLHTMLXUL_p);
-    else if (module->Markup() == FMT_GBF)    module->AddRenderFilter(GBFHTMLXUL_p);
-    else if (module->Markup() == FMT_RTF)    module->AddRenderFilter(RTFHTML_p);
-    //if (module->Markup() == FMT_WEBIF) module->AddRenderFilter();
-    else if (module->Markup() == FMT_TEI) {
-      module->AddRenderFilter(TEIPlain_p);
-      module->AddRenderFilter(PLAINHTML_p);
-    }
-    //printf("Module: %s, Type: %s, Markup: %i\n", module->Name(), module->Type(), module->Markup());
-  }
+  MyManager = new SWMgr(new MarkupFilterMgr(FMT_HTMLXUL, ENC_UTF8));
+
 }
 
 /********************************************************************
@@ -382,13 +361,8 @@ xulsword::~xulsword()
 xulsword::~xulsword()
 {
   /* destructor code */
-  delete OSISHTMLXUL_p;
-  delete ThMLHTMLXUL_p;
-  delete GBFHTMLXUL_p;
-  delete RTFHTML_p;
-  delete OSISPlainXUL_p;
-  delete TEIPlain_p;
-  delete PLAINHTML_p;
+
+  delete MyManager;
 }
 
 /********************************************************************
@@ -625,7 +599,7 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
   const char * vkeymod;
   NS_CStringGetData(Vkeymod, &vkeymod);
 
-  SWModule * module = MyManager.getModule(vkeymod);
+  SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {return NS_ERROR_FAILURE;}
   
   SWKey *testkey = module->CreateKey();
@@ -638,7 +612,7 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
   myVerseKey->setAutoNormalize(0); // Non-existant calls should return empty string
   module->setKey(myVerseKey);
 
-  updateGlobalOptions(&MyManager);
+  updateGlobalOptions(MyManager);
   module->setSkipConsecutiveLinks(true);
   
   //Initialize Key
@@ -668,8 +642,8 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
   bool haveText = false;
   while (!module->Error()) {
     int vNum = myVerseKey->Verse();
-    if (vNum>1 && vNum == *Verse) {MyManager.setGlobalOption("Words of Christ in Red","Off");}
-    else if (vNum == (*LastVerse + 1)) {MyManager.setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");}
+    if (vNum>1 && vNum == *Verse) {MyManager->setGlobalOption("Words of Christ in Red","Off");}
+    else if (vNum == (*LastVerse + 1)) {MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");}
     verseText.Assign(module->RenderText()); //THIS MUST BE RENDERED BEFORE READING getEntryAttributes!!!
   
     // move verse number after any paragraph indents
@@ -779,8 +753,8 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
   const char * vkeymodlist;
   NS_CStringGetData(Vkeymodlist, &vkeymodlist);
   
-  updateGlobalOptions(&MyManager, true);
-  MyManager.setGlobalOption("Words of Christ in Red","Off"); // Words of Christ in Red is off for multidisplay
+  updateGlobalOptions(MyManager, true);
+  MyManager->setGlobalOption("Words of Christ in Red","Off"); // Words of Christ in Red is off for multidisplay
 
 	std::string modstr;
 	modstr.assign(vkeymodlist);
@@ -789,7 +763,7 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
 	thismod.assign(modstr.substr(0,comma));
 	if (comma == std::string::npos) {return NS_ERROR_ILLEGAL_VALUE;}
 	
-	SWModule * module = MyManager.getModule(thismod.c_str());
+	SWModule * module = MyManager->getModule(thismod.c_str());
   if (!module) {return NS_ERROR_FAILURE;}
   
   SWKey *testkey1 =  module->CreateKey();
@@ -873,7 +847,7 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
       thismod.assign(modstr.substr(0,comma));
       if (comma != std::string::npos) {modstr.assign(modstr.substr(comma+1));}
       
-      versemod = MyManager.getModule(thismod.c_str());
+      versemod = MyManager->getModule(thismod.c_str());
       if (!versemod) {break;}
       
       SWKey *testkey2 = versemod->CreateKey();
@@ -915,7 +889,7 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
   if (!haveText) {chapText16.Assign(NS_ConvertUTF8toUTF16(""));}
 
   // Return Words of Christ in Red feature to original value
-  MyManager.setGlobalOption("Words of Christ in Red",xulsword::Redwords ? "On":"Off");
+  MyManager->setGlobalOption("Words of Christ in Red",xulsword::Redwords ? "On":"Off");
   
   delete(testkey1);
   _retval = chapText16;
@@ -931,7 +905,7 @@ NS_IMETHODIMP xulsword::GetVerseText(const nsACString & Vkeymod, const nsAString
   const char * vkeymod;
   NS_CStringGetData(Vkeymod, &vkeymod);
   
-  SWModule * module = MyManager.getModule(vkeymod);
+  SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {return NS_ERROR_FAILURE;}
   
   SWKey *testkey = module->CreateKey();
@@ -943,14 +917,14 @@ NS_IMETHODIMP xulsword::GetVerseText(const nsACString & Vkeymod, const nsAString
   myVerseKey->Persist(1);
   module->setKey(myVerseKey);
   
-  MyManager.setGlobalOption("Headings","Off");
-  MyManager.setGlobalOption("Footnotes","Off");
-  MyManager.setGlobalOption("Cross-references","Off");
-  MyManager.setGlobalOption("Dictionary","Off");
-  MyManager.setGlobalOption("Words of Christ in Red","Off");
-  MyManager.setGlobalOption("Strong's Numbers","Off");
-  MyManager.setGlobalOption("Morphological Tags","Off");
-  MyManager.setGlobalOption("Morpheme Segmentation","Off");
+  MyManager->setGlobalOption("Headings","Off");
+  MyManager->setGlobalOption("Footnotes","Off");
+  MyManager->setGlobalOption("Cross-references","Off");
+  MyManager->setGlobalOption("Dictionary","Off");
+  MyManager->setGlobalOption("Words of Christ in Red","Off");
+  MyManager->setGlobalOption("Strong's Numbers","Off");
+  MyManager->setGlobalOption("Morphological Tags","Off");
+  MyManager->setGlobalOption("Morpheme Segmentation","Off");
 
   nsEmbedCString bText;
 //myVerseKey->setText(NS_ConvertUTF16toUTF8(ChapterW).get());
@@ -1168,7 +1142,7 @@ NS_IMETHODIMP xulsword::GetBookIntroduction(const nsACString & Vkeymod, const ns
 	const char * vkeymod;
 	NS_CStringGetData(Vkeymod, &vkeymod);
 	
-  SWModule * module = MyManager.getModule(vkeymod);
+  SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {return NS_ERROR_FAILURE;}
   
   SWKey *testkey = module->CreateKey();
@@ -1178,7 +1152,7 @@ NS_IMETHODIMP xulsword::GetBookIntroduction(const nsACString & Vkeymod, const ns
     return NS_ERROR_ILLEGAL_VALUE;
   }
   
-  updateGlobalOptions(&MyManager);
+  updateGlobalOptions(MyManager);
 
 	introkey->Headings(1);
 	introkey->setAutoNormalize(false);	// IMPORTANT!! Otherwise, introductions are skipped!
@@ -1209,10 +1183,10 @@ NS_IMETHODIMP xulsword::GetDictionaryEntry(const nsACString & Lexdictmod, const 
 	const char * lexdictmod;
 	NS_CStringGetData(Lexdictmod, &lexdictmod);
 		
-  updateGlobalOptions(&MyManager);
+  updateGlobalOptions(MyManager);
 
 	SWModule * dmod;
-	dmod = MyManager.getModule(lexdictmod);
+	dmod = MyManager->getModule(lexdictmod);
 	if (!dmod) {return NS_ERROR_FAILURE;}
 	
 	SWKey *tkey = dmod->CreateKey();
@@ -1257,7 +1231,7 @@ NS_IMETHODIMP xulsword::GetAllDictionaryKeys(const nsACString & Lexdictmod, nsAS
 	NS_CStringGetData(Lexdictmod, &lexdictmod);
 
   SWModule * dmod;
-	dmod = MyManager.getModule(lexdictmod);
+	dmod = MyManager->getModule(lexdictmod);
 	if (!dmod) {return NS_ERROR_FAILURE;}
 	
 	SWKey *tkey = dmod->CreateKey();
@@ -1292,10 +1266,10 @@ NS_IMETHODIMP xulsword::GetGenBookChapterText(const nsACString & Gbmod, const ns
   const char * gbmod;
   NS_CStringGetData(Gbmod, &gbmod);
   
-  SWModule * module = MyManager.getModule(gbmod);
+  SWModule * module = MyManager->getModule(gbmod);
   if (!module) {return NS_ERROR_FAILURE;}
   
-  updateGlobalOptions(&MyManager);
+  updateGlobalOptions(MyManager);
 
   SWKey *testkey = module->CreateKey();
   TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
@@ -1336,7 +1310,7 @@ NS_IMETHODIMP xulsword::GetGenBookTableOfContents(const nsACString & Gbmod, nsAS
   const char * gbmod;
   NS_CStringGetData(Gbmod, &gbmod);
   
-  SWModule * module = MyManager.getModule(gbmod);
+  SWModule * module = MyManager->getModule(gbmod);
   if (!module) {return NS_ERROR_FAILURE;}
   
   SWKey *testkey = module->CreateKey();
@@ -1371,7 +1345,7 @@ NS_IMETHODIMP xulsword::LuceneEnabled(const nsACString & Mod, PRBool *_retval)
   const char * mod;
   NS_CStringGetData(Mod, &mod);
   
-  SWModule * module = MyManager.getModule(mod);
+  SWModule * module = MyManager->getModule(mod);
   if (!module) {*_retval=false; return NS_OK;}
   
 	bool supported = true;
@@ -1392,7 +1366,7 @@ NS_IMETHODIMP xulsword::Search(const nsACString & Mod, const nsAString & Srchstr
   const char * scope;
   NS_CStringGetData(Scope, &scope);
   
-  SWModule * module = MyManager.getModule(mod);
+  SWModule * module = MyManager->getModule(mod);
   if (!module) {return NS_ERROR_FAILURE;}
 
 	ListKey listkeyInt;
@@ -1487,21 +1461,21 @@ NS_IMETHODIMP xulsword::GetSearchTexts(const nsACString & Mod, PRInt32 first, PR
   const char * mod;
   NS_CStringGetData(Mod, &mod);
   
-  SWModule * module = MyManager.getModule(mod);
+  SWModule * module = MyManager->getModule(mod);
   if (!module) {return NS_ERROR_FAILURE;}
   
 	if(num==0) {num=SearchList.Count();}
 	
-  if (keepStrongs) {updateGlobalOptions(&MyManager, true);}
+  if (keepStrongs) {updateGlobalOptions(MyManager, true);}
   else {
-    MyManager.setGlobalOption("Headings","Off");
-    MyManager.setGlobalOption("Footnotes","Off");
-    MyManager.setGlobalOption("Cross-references","Off");
-    MyManager.setGlobalOption("Dictionary","Off");
-    MyManager.setGlobalOption("Words of Christ in Red","Off");
-    MyManager.setGlobalOption("Strong's Numbers","Off");
-    MyManager.setGlobalOption("Morphological Tags","Off");
-    MyManager.setGlobalOption("Morpheme Segmentation","Off");
+    MyManager->setGlobalOption("Headings","Off");
+    MyManager->setGlobalOption("Footnotes","Off");
+    MyManager->setGlobalOption("Cross-references","Off");
+    MyManager->setGlobalOption("Dictionary","Off");
+    MyManager->setGlobalOption("Words of Christ in Red","Off");
+    MyManager->setGlobalOption("Strong's Numbers","Off");
+    MyManager->setGlobalOption("Morphological Tags","Off");
+    MyManager->setGlobalOption("Morpheme Segmentation","Off");
   }
 
 	MySearchTexts.Assign(NS_ConvertUTF8toUTF16(""));
@@ -1601,7 +1575,7 @@ NS_IMETHODIMP xulsword::SetCipherKey(const nsACString & Mod, const nsAString & C
 #ifndef NOSECURITY
   if (useSecModule) {
     SWModule * infoModule;
-  	infoModule = MyManager.getModule(mod);
+  	infoModule = MyManager->getModule(mod);
   	nsEmbedCString paramstring;
     paramstring.Assign(NOTFOUND);
     if (infoModule) {
@@ -1618,9 +1592,9 @@ NS_IMETHODIMP xulsword::SetCipherKey(const nsACString & Mod, const nsAString & C
 #endif
 
 	// Set the new Cipher Key. IF WRONG CIPHER KEY IS GIVEN, IT CANNOT BE CHANGED WITHOUT RELOAD (SWORD BUG)
-	if (SWModule * testmod=MyManager.getModule(mod)) 
+	if (SWModule * testmod=MyManager->getModule(mod)) 
 	{
-		MyManager.setCipherKey(mod,Outtext);
+		MyManager->setCipherKey(mod,Outtext);
 		return NS_OK;
 	}
 	else {return NS_ERROR_FAILURE;}
@@ -1637,7 +1611,7 @@ NS_IMETHODIMP xulsword::GetModuleList(nsAString & _retval)
 	SWModule * module;
   
   bool first = true;
-	for (modIterator = MyManager.Modules.begin(); modIterator != MyManager.Modules.end(); modIterator++) {
+	for (modIterator = MyManager->Modules.begin(); modIterator != MyManager->Modules.end(); modIterator++) {
 		module = (*modIterator).second;
 		if (!first) {tr.append("<nx>");}
 		tr.append(module->Name());
@@ -1670,7 +1644,7 @@ NS_IMETHODIMP xulsword::GetModuleInformation(const nsACString & Mod, const nsACS
 	NS_CStringGetData(Paramname, &paramname);
 	
  	SWModule * infoModule;
-	infoModule = MyManager.getModule(mod);
+	infoModule = MyManager->getModule(mod);
 	nsEmbedCString paramstring;
 	
   if (infoModule) {
@@ -1705,7 +1679,7 @@ NS_IMETHODIMP xulsword::SearchIndexDelete(const nsACString & Mod)
   const char * mod;
   NS_CStringGetData(Mod, &mod);
   
-  SWModule * module = MyManager.getModule(mod);
+  SWModule * module = MyManager->getModule(mod);
   if (!module) {return NS_ERROR_FAILURE;}
   
 	if (!module->hasSearchFramework()) {
@@ -1724,7 +1698,7 @@ NS_IMETHODIMP xulsword::SearchIndexBuild(const nsACString & Mod, PRInt32 maxwait
   const char * mod;
   NS_CStringGetData(Mod, &mod);
   
-  SWModule * module = MyManager.getModule(mod);
+  SWModule * module = MyManager->getModule(mod);
   if (!module) {return NS_ERROR_FAILURE;}
   
 	if (!module->hasSearchFramework()) {
