@@ -7,7 +7,8 @@ The following programs (all free) need to be in your command path:
   * [http://technet.microsoft.com/en-us/sysinternals/bb896683.aspx PsKill]
   * Perl (I used [http://www.activestate.com/activeperl/downloads/ ActivePerl])
   * [http://www.softpedia.com/get/Programming/Other-Programming-Files/Microsoft-Visual-C-Toolkit.shtml MSVC8 C++ Compiler] (the Express Edition works great)
-  * [http://www.microsoft.com/downloads/details.aspx?FamilyId=F26B1AA4-741A-433A-9BE5-FA919850BDBF&displaylang=en Windows SDK]
+  * [http://www.microsoft.com/downloads/details.aspx?familyid=0baf2b35-c656-4969-ace8-e4c0c0716adb&displaylang=en Windows SDK]. Install the "Windows Core SDK" and you may choose not to install Sample Code and Documentation to save space and download time.
+
 -----
 
 == Compilation Steps ==
