@@ -18,9 +18,11 @@
 
 
 const HTMLbr = "<div style=\"clear: both;\"><br><br></div>";
+const HTMLbr0 = "<div style=\"clear: both;\"><br></div>";
 
-function getScriptBoxHeader(version, showBookName, showIntroduction, showOriginal) {
-  var myChap = Bible.getChapterNumber(version);
+function getScriptBoxHeader(version, showBookName, showIntroduction, showOriginal, chapOffset) {
+  if (!chapOffset) chapOffset = 0;
+  var myChap = Bible.getChapterNumber(version) + chapOffset;
   var myBook = Bible.getBookName();
   var myVersionsLocale = getLocaleOfVersion(version);
   var myVersionsBundle = myVersionsLocale ? getLocaleBundle(myVersionsLocale, "books.properties"):getCurrentLocaleBundle("books.properties");
@@ -45,7 +47,7 @@ function getScriptBoxHeader(version, showBookName, showIntroduction, showOrigina
       mtext += "<br><br>";
     }
     mtext += getLocalizedChapterTerm(myBook, myChap, myVersionsBundle) + "</div>";
-    
+
     if (!showOriginal) {
       mtext += "<div style=\"margin-top:12px; float:" + oppositeHeadingFloat + "; text-align:" + oppositeHeadingFloat + ";\">";
       mtext += "<img id=\"listenlink\" class=\"audiolink\" src=\"chrome://xulsword/skin/images/listen0.png\" onmouseover=\"scriptboxMouseOver(event)\" onmouseout=\"scriptboxMouseOut(event)\">";
@@ -132,7 +134,7 @@ function insertUserNotes(aBook, aChapter, aModule, text) {
     var encodedResVal = encodeUTF8(res.QueryInterface(kRDFRSCIID).Value);
     var myid = "un." + encodedResVal + "." + book + "." + chapter + "." + verse;
     var newNoteHTML = "<span id=\"" + myid + "\" class=\"un\" title=\"un\"></span>";
-    var idname = (usesVerseKey ? "vs.":"par.");
+    var idname = (usesVerseKey ? "vs." + book + "." + chapter + ".":"par.");
     var verseStart = "id=\"" + idname + verse + "\">";
     // if this is a selected verse, place usernote inside the hilighted element (more like regular notes, so highlightSelectedVerses works right)
     var re = new RegExp(verseStart + "(\\s*<span.*?>)?", "im");
@@ -158,7 +160,7 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
   checkfootnotes :
     // Now parse each note in the chapter separately
     for (var n=0; n < note.length; n++) {
-      // note format is tp.n.Book c:v<bg/>body
+      // note format is tp.n.Book.c.v<bg/>body
       var noteid = note[n].split("<bg/>")[0];
       var body   = note[n].split("<bg/>")[1];
       if (noteid != "") {    // sometimes this is undefined!
@@ -279,17 +281,23 @@ function ascendingVerse(a,b) {
   var t3="cr";
   if (a==null || a=="") return 1;
   if (b==null || b=="") return -1;
-  var av = Number(a.match(/\.(\d+)<bg\/>/)[1]);
-  var bv = Number(b.match(/\.(\d+)<bg\/>/)[1]);
-  if (av == bv) {
-    var at = a.match(/^(\w\w)/)[1];
-    var bt = b.match(/^(\w\w)/)[1];
-    if (at == bt) return 0;
-    if (at == t1) return -1;
-    if (at == t2 && bt == t3) return -1;
-    else return 1
+  var av = Number(a.match(/(\d+)\.(\d+)<bg\/>/)[2]);
+  var bv = Number(b.match(/(\d+)\.(\d+)<bg\/>/)[2]);
+  var ac = Number(a.match(/(\d+)\.(\d+)<bg\/>/)[1]);
+  var bc = Number(b.match(/(\d+)\.(\d+)<bg\/>/)[1]);
+  if (ac == bc) {
+    if (av == bv) {
+      var at = a.match(/^(\w\w)/)[1];
+      var bt = b.match(/^(\w\w)/)[1];
+      if (at == bt) return 0;
+      if (at == t1) return -1;
+      if (at == t2 && bt == t3) return -1;
+      else return 1
+    }
+    return av > bv ? 1:-1
   }
-  return av > bv ? 1:-1
+  else if (ac < bc) return -1;
+  return 1;
 }
 
 // Converts a short book reference into readable text in the locale language, and can handle from-to cases

@@ -159,8 +159,8 @@ function trimVerses(v1, v2, chapterHTML) {
   var html="";
   var rethtml="";
   while (elem) {
-    if (elem.id.match(/vs\.(\d+)/)) {
-      var v = elem.id ? elem.id.match(/vs\.(\d+)/):null;
+    if (elem.id.match(/vs\.[^\.]*\.\d+\.(\d+)/)) {
+      var v = elem.id ? elem.id.match(/vs\.[^\.]*\.\d+\.(\d+)/):null;
       if (Number(v[1])==v2) elem.innerHTML = elem.innerHTML.replace(/(<br>|&nbsp;|\s)+$/i, ""); //remove formatting after last verse
       if (Number(v[1])>=v1 && Number(v[1])<=v2) {
         rethtml += html + "<" + elem.tagName + ">" +  elem.innerHTML + "</" + elem.tagName + ">";

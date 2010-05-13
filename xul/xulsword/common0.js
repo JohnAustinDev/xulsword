@@ -55,6 +55,9 @@ const EASTERNVS = "EASTERN";
 const TOOLTIP_LEN=96;
 const MODSD="mods.d", MODS="modules", CHROME="chrome", FONTS="fonts", AUDIO="audio", AUDIOPLUGIN="QuickTime Plugin", BOOKMARKS="bookmarks";
 const MANIFEST_EXT=".manifest", CONF_EXT=".conf";
+const SCROLLTYPEBEG = 1;
+const SCROLLTYPECENTER = 0;
+const SCROLLTYPEEND = 2;
 
 /************************************************************************
  * THESE FUNCTIONS NEEDED BEFORE XPCOM BIBLE OBJECTS ARE CREATED! This is 
