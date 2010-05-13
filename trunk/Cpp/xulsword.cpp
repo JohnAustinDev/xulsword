@@ -428,6 +428,8 @@ NS_IMETHODIMP xulsword::SetVerse(const nsACString & Mod, PRInt32 firstverse, PRI
   int maxverse = textToMaxVerse(NS_ConvertUTF16toUTF8(*Chapter).get(), &fromKey);
   fromKey.ClearBounds(); // otherwise, can't setVerse without error!
   
+  bool noVerseHighlight = false;
+  if (firstverse == 0) {noVerseHighlight = true;}
   // This routine checks the verse number and makes sure it exists, 
   // and if too small or to large sets to legal value (1 or v-max)
   // If verse is -1 this results in maxverse.
@@ -457,6 +459,13 @@ NS_IMETHODIMP xulsword::SetVerse(const nsACString & Mod, PRInt32 firstverse, PRI
     keyToStaticVars(&fromKey, &ChapterE, &VerseE, &LastVerseE);
     keyToStaticVars(&toKey, &ChapterW, &VerseW, &LastVerseW); 
   }
+  if (noVerseHighlight) {
+    VerseE = 0;
+    LastVerseE = 0;
+    VerseW = 0;
+    LastVerseW = 0;
+  }
+  
 //printf("SetVerse:\nSTATIC LOCATION:\n\tWESTERN = %s:%i-%i\n\tEASTERN = %s:%i-%i\n", NS_ConvertUTF16toUTF8(ChapterW).get(), VerseW, LastVerseW, NS_ConvertUTF16toUTF8(ChapterE).get(), VerseE, LastVerseE);    
   nsEmbedCString vsystem;
   nsEmbedString retval;
@@ -639,6 +648,11 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
 		LastVerse = &LastVerseE;
   }
 
+  nsEmbedString bk;
+  GetBookName(bk);
+  PRInt32 ch;
+  GetChapterNumber(Vkeymod, &ch);
+    
   bool haveText = false;
   while (!module->Error()) {
     int vNum = myVerseKey->Verse();
@@ -699,7 +713,7 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
     //NOW PRINT OUT THE VERSE ITSELF
     //If this is selected verse then designate as so
     //Output verse html code
-    sprintf(Outtext, "<span id=\"vs.%d\">", vNum); 
+    sprintf(Outtext, "<span id=\"vs.%s.%d.%d\">", NS_ConvertUTF16toUTF8(bk).get(), ch, vNum);
     chapText.Append(Outtext);
 
     if (vNum==*Verse) {chapText.Append("<span id=\"sv\" class=\"hl\">");}

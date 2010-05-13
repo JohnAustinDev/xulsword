@@ -837,7 +837,7 @@ function cleanDoubleClickSelection(sel) {
   return sel;
 }
 
-function getGenBookChapterText(moduleAndKey, bible) {
+function getGenBookChapterText(moduleAndKey, bible, fn) {
   var parts = moduleAndKey.match(/^\/([^\/]+)(\/.*)$/);
   if (!parts) {
     var mod = moduleAndKey.match(/^\/(.*)$/);
@@ -846,7 +846,36 @@ function getGenBookChapterText(moduleAndKey, bible) {
   }
   var text = bible.getGenBookChapterText(parts[1], parts[2]);
   text = MainWindow.addParagraphIDs(text);
+  
+  if (fn) {
+    var t = insertUserNotes(bible.getBookName(), bible.getChapterNumber(vers), vers, text);
+    text = t.html;
+    fn.CrossRefs = "";
+    fn.Footnotes = "";
+    fn.Notes = "";
+    fn.UserNotes = text.notes;
+  }
   return text;
+}
+
+function getChapterText(bible, fn, vers, appendNotes) {
+  var text = bible.getChapterText(vers);
+  text = insertUserNotes(bible.getBookName(), bible.getChapterNumber(vers), vers, text);
+  
+  if (!appendNotes) {
+    fn.CrossRefs = bible.getCrossRefs();
+    fn.Footnotes = bible.getFootnotes();
+    fn.Notes = bible.getNotes();
+    fn.UserNotes = text.notes;
+  }
+  else {
+    fn.CrossRefs = (fn.CrossRefs ? fn.CrossRefs:"") + bible.getCrossRefs();
+    fn.Footnotes = (fn.Footnotes ? fn.Footnotes:"") + bible.getFootnotes();
+    fn.Notes = (fn.Notes ? fn.Notes:"") + bible.getNotes();
+    fn.UserNotes = (fn.UserNotes ? fn.UserNotes:"") + text.notes;
+  }
+
+  return text.html;
 }
 
 const delim = "[-]";

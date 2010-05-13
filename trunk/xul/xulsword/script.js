@@ -67,19 +67,19 @@ var FrameWidth;
 var MarginLeftOfScriptBox;
 var BoundaryBarGap;
 var EffectiveWinH;
-var UserNotes;
 var PreviousT;
 var FrameIsPinned;
 var ScriptBoxPinElement;
 var BookOfFrame;
 var ChapterOfFrame;
+var VerseOfFrame;
 var MyFrameNumber;
 var PinnedAndLinked;
-var FrameDocumentWithValidNotes;
 var FrameTextDirectionIsRtoL;
 var MinScriptHeight;
 var MinScriptWidth;
 var LastVersion;
+var MyFootnotes;
 
 /************************************************************************
  * Initialization after HTML has loaded
@@ -140,7 +140,6 @@ function initializeScript() {
   BoundaryBarGap = 10 + 1 + 4 + 1 + 10 + 2 + 2 + 10 + 6; //Only the 6 is unaccounted for
   FrameIsPinned=false;
   MyFrameNumber = Number(Frame.id.substr(5,1));
-  FrameDocumentWithValidNotes = document;
   PinnedAndLinked=0;
   FrameTextDirectionIsRtoL=false;  
   FootnoteWinH = prefs.getIntPref("NoteboxHeight" + MyFrameNumber);
@@ -187,7 +186,7 @@ function initializeScript() {
  * Script Box
  ***********************************************************************/
 
-function updateScriptBox(highlightVerse, showIntroduction) {
+function updateScriptBox(highlightVerse, showIntroduction, scrollToSelectedVerse, scrollTypeFlag) {
 //jsdump("Updating:" + MyFrameNumber + "\n");
   if (MyFrameNumber > prefs.getIntPref("NumDisplayedWindows")) return;
   var myVersion = prefs.getCharPref("Version" + String(MyFrameNumber));
@@ -205,7 +204,7 @@ function updateScriptBox(highlightVerse, showIntroduction) {
   switch (getModuleLongType(myVersion)) {
   case BIBLE:
   case COMMENTARY:
-    updateBibleOrCommentary(highlightVerse, showIntroduction);
+    updateBibleOrCommentary(highlightVerse, showIntroduction, scrollToSelectedVerse, scrollTypeFlag);
     break;
   case DICTIONARY:
     FrameDocumentHavingNoteBox = window.document;
@@ -235,7 +234,7 @@ function updateScriptBox(highlightVerse, showIntroduction) {
   closePopup(); // Needed so that popup closes even if context menu was open
 }
 
-function updateBibleOrCommentary(highlightVerse, showIntroduction) {
+function updateBibleOrCommentary(highlightVerse, showIntroduction, scrollToSelectedVerse, scrollTypeFlag) {
   var savedLocation;
   var myVersion = prefs.getCharPref("Version" + String(MyFrameNumber));
   
@@ -244,11 +243,12 @@ function updateBibleOrCommentary(highlightVerse, showIntroduction) {
     // OTHER BIBLES SHOULD NOT BE ACCESSED WHILE THIS ROUTINE IS EXECUTING OR THEIR LOCATION
     // WILL BE INCORRECT
     savedLocation = Bible.getLocation(myVersion);
-    Bible.setBiblesReference(myVersion, BookOfFrame + "." + ChapterOfFrame + "." + 1);
+    Bible.setBiblesReference(myVersion, BookOfFrame + "." + ChapterOfFrame + "." + VerseOfFrame);
   }
   else {
     BookOfFrame = Bible.getBookName();
     ChapterOfFrame = Bible.getChapterNumber(myVersion);
+    VerseOfFrame = 1;
   }
   if (highlightVerse && !FrameIsPinned && getModuleLongType(myVersion)==BIBLE) {SelectedVerseCSS.style.color=SelectedVerseColor;}
   else {SelectedVerseCSS.style.color=ScriptBoxFontColor;}
@@ -263,7 +263,7 @@ function updateBibleOrCommentary(highlightVerse, showIntroduction) {
       checkFrame++;
       showIntroForThisLink |= (showIntroduction && showIntroduction==checkFrame);
     }
-    MainWindow.writeToScriptBoxes(MyFrameNumber, numberToWrite, (Bible.getModuleInformation(myVersion, "Direction").search("RtoL","i")!=-1), showIntroForThisLink);
+    MainWindow.writeToScriptBoxes(MyFrameNumber, numberToWrite, (Bible.getModuleInformation(myVersion, "Direction").search("RtoL","i")!=-1), showIntroForThisLink, scrollToSelectedVerse, scrollTypeFlag);
   }
   if (FrameIsPinned) {
     Bible.setBiblesReference(myVersion, savedLocation);
@@ -444,28 +444,39 @@ function getNextChapterLinks() {
   return chapterNavigationLink;
 }
 
-function getChapterWithUserNotes() {
+function getChapterWithNotes(fn, chapOffset) {
   var vers = prefs.getCharPref("Version" + MyFrameNumber);
+  if (!chapOffset) chapOffset = 0;
   switch (getModuleLongType(vers)) {
   case BIBLE:
-    var text = Bible.getChapterText(vers);
+    if (chapOffset != 0) {
+      var savedloc = Bible.getLocation(vers);
+      var bkn = findBookNum(Bible.getBookName());
+      var chn = Bible.getChapterNumber(vers) + chapOffset;
+      if (chn > 0 && chn <= Book[bkn].numChaps) {
+        Bible.setBiblesReference(vers, Book[bkn].sName + "." + chn + ".1");
+        Bible.setVerse(vers, 0, 0);
+      }
+      else return "";
+    }
+    var text = getChapterText(Bible, fn, vers, (chapOffset!=0));
+    if (chapOffset != 0) Bible.setBiblesReference(vers, savedloc);
     break;
   case COMMENTARY:
-    var text = Bible.getChapterText(vers);
+    var text = getChapterText(Bible, fn, vers);
     break;
   case GENBOOK:
-    text = getGenBookChapterText(getPrefOrCreate("ShowingKey" + vers, "Unicode", ""), Bible);
+    text = getGenBookChapterText(getPrefOrCreate("ShowingKey" + vers, "Unicode", ""), Bible, fn);
 //if (text.search("<note") != -1) window.alert(getUnicodePref("ShowingKey" + vers));
     break;
   }
-  var usernotes = insertUserNotes(Bible.getBookName(), Bible.getChapterNumber(vers), vers, text);
-  UserNotes = usernotes.notes;
-return usernotes.html;
+
+  return text;
 }
 
 //after user notes are collected and page is drawn, go add highlight to all usernote verses
 function markUserNoteVerse(id) {
-  var verse = id.match(/un.*\.\d+\.(\d+)$/);
+  var verse = id.match(/un\..*?\.([^\.]*\.\d+\.\d+)$/);
   if (!verse) return;
   var userNoteElement = document.getElementById("vs." + verse[1]);
   if (userNoteElement) userNoteElement.className += " unverse";
@@ -662,21 +673,22 @@ function scriptboxClick(e) {
     switch (myType) {
     case BIBLE:
     case COMMENTARY:
+      var pin = {shortName:BookOfFrame, chapter:ChapterOfFrame, verse:1, version:prefs.getCharPref("Version" + MyFrameNumber)};
       if (FrameIsPinned) {
-        var booknum = findBookNum(BookOfFrame);
-        if (ChapterOfFrame > 1) {ChapterOfFrame--;}
-        else if (booknum > 0) {
-          booknum--; 
-          BookOfFrame = Book[booknum].sName;
-          ChapterOfFrame = Book[booknum].numChaps;
-        }
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.BookOfFrame = BookOfFrame;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.ChapterOfFrame = ChapterOfFrame;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.BookOfFrame = BookOfFrame;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.ChapterOfFrame = ChapterOfFrame;
-        MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(MyFrameNumber),true,false);
+        if (pageIsLinked()) MainWindow.previousPage(false, pin);
+        else MainWindow.previousChapter(false, pin);
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.BookOfFrame = pin.shortName;
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.ChapterOfFrame = pin.chapter;
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.VerseOfFrame = pin.verse;
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.BookOfFrame = pin.shortName;
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.ChapterOfFrame = pin.chapter;
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.VerseOfFrame = pin.verse;
+        MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(MyFrameNumber),true,false,false,false,SCROLLTYPEEND);
       }
-      else OwnerDocument.getElementById("cmd_xs_previousChapter").doCommand();
+      else {
+        if (pageIsLinked()) MainWindow.previousPage(false);
+        else OwnerDocument.getElementById("cmd_xs_previousChapter").doCommand();
+      }
       break;
     case DICTIONARY:
       var myModule = prefs.getCharPref("Version" + String(MyFrameNumber));
@@ -696,25 +708,25 @@ function scriptboxClick(e) {
     break;
     
   case "nextchaplink":
-    var myModule = prefs.getCharPref("Version" + String(MyFrameNumber));
-    switch (getModuleLongType(myModule)) {
+    pin = {shortName:BookOfFrame, chapter:ChapterOfFrame, verse:1, version:prefs.getCharPref("Version" + MyFrameNumber)};
+    switch (myType) {
     case BIBLE:
     case COMMENTARY:
       if (FrameIsPinned) {
-        var booknum = findBookNum(BookOfFrame);
-        if (ChapterOfFrame < Book[booknum].numChaps) {ChapterOfFrame++;}
-        else if (booknum < (NumBooks-1)) {
-          booknum++; 
-          BookOfFrame=Book[booknum].sName; 
-          ChapterOfFrame=1;
-        }
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.BookOfFrame = BookOfFrame;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.ChapterOfFrame = ChapterOfFrame;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.BookOfFrame = BookOfFrame;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.ChapterOfFrame = ChapterOfFrame;
-        MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(MyFrameNumber),true,false);
+        if (pageIsLinked()) MainWindow.nextPage(false, pin);
+        else MainWindow.nextChapter(false, pin);
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.BookOfFrame = pin.shortName;
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.ChapterOfFrame = pin.chapter;
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.VerseOfFrame = pin.verse;
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.BookOfFrame = pin.shortName;
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.ChapterOfFrame = pin.chapter;
+        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.VerseOfFrame = pin.verse;
+        MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(MyFrameNumber),true,false,false,false,SCROLLTYPEBEG);
       }
-      else OwnerDocument.getElementById("cmd_xs_nextChapter").doCommand();
+      else {
+        if (pageIsLinked()) MainWindow.nextPage(false);
+        else OwnerDocument.getElementById("cmd_xs_nextChapter").doCommand();
+      }
       break;
     case DICTIONARY:
       var myModule = prefs.getCharPref("Version" + String(MyFrameNumber));
@@ -774,6 +786,12 @@ function scriptboxClick(e) {
     activatePopup("html", elem.nextSibling.innerHTML, 0, yoffset);
     break;
   }
+}
+
+function pageIsLinked() {
+  var linked = MainWindow.isLinkedToNextFrame(MyFrameNumber);
+  if (MyFrameNumber > 1) linked |= MainWindow.isLinkedToNextFrame(MyFrameNumber-1);
+  return linked;
 }
 
 function scriptboxDblClick(e) {
@@ -879,7 +897,7 @@ function activatePopup(datatype, data, delay, yoffset) {
   case "cr":
     if (!pupAlreadyOpened) html += twistyButton(datatype, data, yoffset, versionDirectionEntity);
     var hideEmptyCrossReferences = getPrefOrCreate("HideUnavailableCrossReferences", "Bool", false);
-    var chapRefs = FrameDocumentWithValidNotes.defaultView.Bible.getCrossRefs().split("<nx/>");
+    var chapRefs = MyFootnotes.CrossRefs.split("<nx/>");
     for (var i=0; i<chapRefs.length; i++) {
       var thisid = chapRefs[i].split("<bg/>")[0];
       var reflist = chapRefs[i].split("<bg/>")[1];
@@ -895,7 +913,7 @@ function activatePopup(datatype, data, delay, yoffset) {
   // Footnote: data is elem.title
   //    data form: fn#.bk.c.v
   case "fn":
-    var footnote = FrameDocumentWithValidNotes.defaultView.Bible.getFootnotes().split("<nx/>");
+    var footnote = MyFootnotes.Footnotes.split("<nx/>");
     for (var i=0; i<footnote.length; i++) {
       var fnpart = footnote[i].split("<bg/>");
       // if we've found the note which matches the id under the mouse pointer
@@ -1231,7 +1249,7 @@ function expandCrossRefs(noteid) {
   }
   
   var html = "";
-  var chapRefs = FrameDocumentWithValidNotes.defaultView.Bible.getCrossRefs().split("<nx/>");
+  var chapRefs = MyFootnotes.CrossRefs.split("<nx/>");
   for (var i=0; i<chapRefs.length; i++) {
     var part = chapRefs[i].split("<bg/>");
     // if we've found the note which matches the id under the mouse pointer
@@ -1299,7 +1317,7 @@ function boundaryMouseUp(evt) {
  * Creating Footnotes
  ***********************************************************************/ 
 
-function copyNotes2Notebox() {
+function copyNotes2Notebox(bibleNotes, userNotes) {
   //getChapterText() must be called before this
   var gfn = ((prefs.getCharPref("Footnotes") == "On")&&(prefs.getBoolPref("ShowFootnotesAtBottom")));
   var gcr = ((prefs.getCharPref("Cross-references") == "On")&&(prefs.getBoolPref("ShowCrossrefsAtBottom")));
@@ -1317,10 +1335,9 @@ function copyNotes2Notebox() {
   //  Get all notes for this chapter
   var mytype = getModuleLongType(myversion);
   var allNotes="";
-  if (mytype==BIBLE || mytype==COMMENTARY) {
-    allNotes = FrameDocumentWithValidNotes.defaultView.Bible.getNotes();
-  }
-  allNotes += FrameDocumentWithValidNotes.defaultView.UserNotes;
+  if (mytype==BIBLE || mytype==COMMENTARY || bibleNotes!=NOTFOUND) allNotes = bibleNotes;
+  if (userNotes!=NOTFOUND) allNotes += userNotes;
+  
   var html = getNotesHTML(allNotes, myversion, gfn, gcr, gun, false, MyFrameNumber);
   if (html) NoteBoxEmpty = false;
   t += html
@@ -1363,10 +1380,10 @@ function noteboxClick(e) {
       //OwnerDocument.getElementById("verse").value = v;
       var updateNeeded = MainWindow.getUnpinnedWindows();
       if (FrameIsPinned) {
-        Bible.setBiblesReference(vers, BookOfFrame + "." + ChapterOfFrame + "." + v);
+        Bible.setBiblesReference(vers, idpart[2] + "." + idpart[3] + "." + idpart[4]);
         MainWindow.updateFrameScriptBoxes(updateNeeded,true,true);
       }
-      else {MainWindow.selectVerse(vers, v)}
+      else {MainWindow.selectVerse(vers, v, Number(idpart[3]))}
       MainWindow.updateLocators(false);
       break;
      case DICTIONARY:

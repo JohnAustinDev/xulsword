@@ -400,7 +400,6 @@ function showHeadings(myid,screenY) {
   Bible.setGlobalOption("Headings", prefs.getCharPref("Headings"));
   Bible.setGlobalOption("Verse Numbers", prefs.getCharPref("Verse Numbers"));
   Bible.setBiblesReference(vers, saveLocation);
-  var junk = Bible.getChapterText(vers); // This is needed so that notes are reloaded!
 }
 
 function shiftChooserUp(myID,delta) {
