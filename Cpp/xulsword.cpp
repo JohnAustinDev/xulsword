@@ -350,9 +350,29 @@ xulsword::xulsword()
   /* member initializers and constructor code */
   
   sprintf(DefaultVersificationSystem, "KJV");
-
-  MyManager = new SWMgr(new MarkupFilterMgr(FMT_HTMLXUL, ENC_UTF8));
-
+  
+  // get our application directory and pass to SWORD if successful
+  nsresult rv;
+  nsCOMPtr<nsIFile> mdir;
+  nsCOMPtr<nsIServiceManager> svcMgr;
+  rv = NS_GetServiceManager(getter_AddRefs(svcMgr));
+  if (!NS_FAILED(rv)) {
+    nsCOMPtr<nsIProperties> directory;
+    rv = svcMgr->GetServiceByContractID("@mozilla.org/file/directory_service;1",
+                                        NS_GET_IID(nsIProperties),
+                                        getter_AddRefs(directory));
+    if (!NS_FAILED(rv)) {
+      rv = directory->Get(NS_OS_CURRENT_PROCESS_DIR, NS_GET_IID(nsIFile), (void **)&mdir);
+    }
+  }
+  if (!NS_FAILED(rv) && mdir) {
+    nsEmbedString path;
+    mdir->GetPath(path);
+    MyConfig = new SWConfig();
+    MyConfig->Sections["Install"]["DataPath"] = NS_ConvertUTF16toUTF8(path).get();
+    MyManager = new SWMgr(0, MyConfig, true, new MarkupFilterMgr(FMT_HTMLXUL, ENC_UTF8));
+  }
+  else {MyManager = new SWMgr(new MarkupFilterMgr(FMT_HTMLXUL, ENC_UTF8));}
 }
 
 /********************************************************************
@@ -362,6 +382,7 @@ xulsword::~xulsword()
 {
   /* destructor code */
 
+  if (MyConfig) delete MyConfig;
   delete MyManager;
 }
 
@@ -1777,7 +1798,7 @@ NSGETMODULE_ENTRY_POINT(nsxulswordModule)
             nsIFile* location,                                                
             nsIModule** result)                                               
 {
-  SWLog::getSystemLog()->setLogLevel(1); // set SWORD lof reporting... 5 is all stuff
+  SWLog::getSystemLog()->setLogLevel(5); // set SWORD lof reporting... 5 is all stuff
   //Initialize static variables only once
 	xulsword::ChapterW.Assign(NS_ConvertUTF8toUTF16("Matt 1"));
   xulsword::VerseW = 1;		

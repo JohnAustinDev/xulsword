@@ -28,6 +28,12 @@
 #include "nsCOMPtr.h"
 #include "ixulsword.h"
 
+#include "nsDirectoryServiceDefs.h"
+#include "nsIServiceManager.h"
+#include "nsIProperties.h"
+#include "nsIFile.h"
+
+#include "swconfig.h"
 #include "swmgr.h"
 #include "swmodule.h"
 #include "versekey.h"
@@ -113,6 +119,7 @@ private:
    
 protected:
   /* additional members */
+  SWConfig *MyConfig;
   SWMgr *MyManager;				//Global Module Manager
   ModMap::iterator modIterator;	//Iterator for modules
 

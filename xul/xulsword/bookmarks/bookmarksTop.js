@@ -287,8 +287,8 @@ var BookmarkFuns = {
     if (container.GetCount() == 0) {container.AppendElement(BmEmptyRes);}
   },
     
-  createNewResource: function(propertyValues, keepTimeStamp, resourceName) {
-    this.completeBMInfo(propertyValues);
+  createNewResource: function(propertyValues, keepTimeStamp, resourceName, skipComplete) {
+    if (!skipComplete) this.completeBMInfo(propertyValues);
     var newResource = resourceName ? RDF.GetResource(resourceName):RDF.GetAnonymousResource();
     var skipProps = keepTimeStamp ? 0:2;
      
@@ -540,6 +540,7 @@ var BookmarkFuns = {
   },
   
   updateMainWindow: function (focusOnMainWindow, aUpdateNeededArray) {
+    if (!MainWindow) return;
     if (!aUpdateNeededArray) aUpdateNeededArray = [false, true, true, true];
     if (focusOnMainWindow) MainWindow.focus();
     MainWindow.updateFrameScriptBoxes(aUpdateNeededArray,true,true,true);
@@ -756,6 +757,7 @@ var BookmarkFuns = {
       var parentName = propertyValues.shift();
       var resourceName = propertyValues.shift() + suffix;
       var index = Number(propertyValues.shift());
+      if (!index && index != 0) continue; // weed out junk data
       if (parentName == AllBookmarksID) {parentName = aParentResVal;}
       else {parentName = parentName + suffix;}
       if (overwrite) {
@@ -770,7 +772,7 @@ var BookmarkFuns = {
           }
         }
       }
-      var newResource = this.createNewResource(propertyValues, true, resourceName);
+      var newResource = this.createNewResource(propertyValues, true, resourceName, true);
       var newParent = RDF.GetResource(parentName);
       if (!RDFCU.IsContainer(BMDS, newParent)) {RDFCU.MakeSeq(BMDS,newParent);}
       var resource = {
@@ -789,7 +791,6 @@ var BookmarkFuns = {
     for (var i=0; i<importedResources.length; i++) {
       BookmarkFuns.createAndCommitTxn("import", "import", importedResources[i].child, null, importedResources[i].parent, 0, null);
     }
-    
     gTxnSvc.endBatch();
 
     BookmarksUtils.flushDataSource();

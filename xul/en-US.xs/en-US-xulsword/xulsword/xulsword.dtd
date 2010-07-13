@@ -71,7 +71,7 @@
 <!ENTITY menu.view.unlocation.sc  "e">
 <!ENTITY menu.view.popups         "In popups">
 <!ENTITY menu.view.popups.sc      "p">
-<!ENTITY menu.view.notebox        "In footnote box">
+<!ENTITY menu.view.notebox        "In note box">
 <!ENTITY menu.view.notebox.sc     "f">
 
 <!-- Options Menu !-->
@@ -141,7 +141,7 @@
 <!-- Search Window Advanced Options (More button) !-->
 <!ENTITY radio.label.text         "Bibles:">
 <!ENTITY radio.label.comm         "Commentaries:">
-<!ENTITY radio.label.dict         "Glossaries:">
+<!ENTITY radio.label.dict         "Resources:">
 <!ENTITY radio.label.book         "Books:">
 <!ENTITY type                     "Search Type:">                                         
 <!ENTITY scope                    "Search Scope:">                                                                                     

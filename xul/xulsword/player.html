@@ -34,13 +34,13 @@
 var Skp=0;
   
 function checkAndEmbedPlayer() {
-  var audioVersion = MainWindow.AudioVersion;
-  if (!audioVersion) {MainWindow.endAudioPlayer(); return;}
+  var player = MainWindow.Player;
+  if (!player || !player.version || !player.book || !player.chapter) {MainWindow.endAudioPlayer(); return;}
   
-  var audiofile = MainWindow.getAudioForChapter(audioVersion, Bible.getBookName(audioVersion), Bible.getChapterNumber(audioVersion));
+  var audiofile = MainWindow.getAudioForChapter(player.version, player.book, player.chapter);
   if (!audiofile) {MainWindow.endAudioPlayer(); return;}
   
-  jsdump("Have audio file:" + Bible.getBookName() + " " + Bible.getChapterNumber(audioVersion) + "\n");
+  jsdump("Have audio file:" + player.book + " " + player.chapter + "\n");
   
   if (MainWindow.checkQuickTime()) {
     embedPlayer(audiofile);
@@ -57,7 +57,7 @@ jsdump("Now embedding: File://" + audiofile.path + "\n");
 
 function checkPlayer() {
 //jsdump("Checking player for new chapter\n");
-  var audioVersion = MainWindow.AudioVersion;
+  var player = MainWindow.Player;
   // Skip first 6 calls since player may not be initialized yet
   Skp++; 
   if (Skp >= 7) {
@@ -65,9 +65,10 @@ function checkPlayer() {
     var remaining = myplayer.GetEndTime() - myplayer.GetTime();
     // If file is done playing, then move to next chapter and begin playing next chapter
     if (remaining < 30) {
-      var bkn = findBookNum(Bible.getBookName());
-      var chn = Bible.getChapterNumber(audioVersion);
+      var bkn = findBookNum(player.book);
+      var chn = player.chapter;
       if ((bkn!=NumBooks-1)||(chn!=Book[NumBooks-1].numChaps)) {
+        Bible.setBiblesReference(player.version, player.book + "." + player.chapter);
         MainWindow.document.getElementById("cmd_xs_nextChapter").doCommand();
         windowLocationReload();
       }

@@ -579,7 +579,7 @@ var BookmarksCommand = {
     }
     var selection = RDF.GetResource(AllBookmarksID);
     
-    BookmarkFuns.purgeDataSource(BMDS);
+    if (BMDS) BookmarkFuns.purgeDataSource(BMDS);
     
     resources = BMDS.GetAllResources();
     var data="";

@@ -50,7 +50,7 @@ function getScriptBoxHeader(version, showBookName, showIntroduction, showOrigina
 
     if (!showOriginal) {
       mtext += "<div style=\"margin-top:12px; float:" + oppositeHeadingFloat + "; text-align:" + oppositeHeadingFloat + ";\">";
-      mtext += "<img id=\"listenlink\" class=\"audiolink\" src=\"chrome://xulsword/skin/images/listen0.png\" onmouseover=\"scriptboxMouseOver(event)\" onmouseout=\"scriptboxMouseOut(event)\">";
+      mtext += "<img name=\"listenlink\" id=\"listenlink." + myChap + "\" class=\"audiolink\" src=\"chrome://xulsword/skin/images/listen0.png\" onmouseover=\"scriptboxMouseOver(event)\" onmouseout=\"scriptboxMouseOut(event)\">";
       mtext += "<br><br>";
       
       // introduction link and introduction
@@ -163,7 +163,7 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
       // note format is tp.n.Book.c.v<bg/>body
       var noteid = note[n].split("<bg/>")[0];
       var body   = note[n].split("<bg/>")[1];
-      if (noteid != "") {    // sometimes this is undefined!
+      if (noteid && noteid != "undefined") {    // sometimes this is "undefined" - why?
         // Check if this note should be displayed at bottom, and if not then get next note
         var noteType = noteid.substr(0,2);
         var fn = ((noteType == "fn") && showFootnotes);
@@ -226,7 +226,7 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
     // End the main table
     t += "</div>";
   }
-  if (!haveNotes) return null;
+  if (!haveNotes) return "";
   return t
 }
 

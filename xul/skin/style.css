@@ -110,7 +110,6 @@ a:active{color:blue;}
   z-index:3; 
 }
 .audiolink {
-  display:none;
   position:relative; 
   top:-10px;
   margin-left:35px;

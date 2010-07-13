@@ -21,7 +21,7 @@
  ***********************************************************************/ 
 const QTIMEINS = ["qtlite270.exe", "qtalt.exe"];
 const PLUGINLINKS = ["http://www.ibt.org.ru/russian/bible/info_bible.htm", "http://www.ibt.org.ru/english/bible/info_bible_en.htm", "http://www.apple.com/quicktime/download/"];
-var AudioVersion;
+var Player = {};
 var AudioDirs;
 var AudioRegKeyIndex;
 var AudioRegMounted;

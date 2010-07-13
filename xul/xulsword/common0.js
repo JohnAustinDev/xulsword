@@ -38,6 +38,8 @@ const highlt = "<span id=\"sv\" class=\"hl\">";
 const indnt = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 const Vtext1 = "<span id=\"vs.";
 const Vtext2 = "<div class=\"interB\">";
+const Titles = "<div class=\"head";
+const NewChapter = "<div class=\"chapnum\"";
 const NOTFOUND = "Not Found";
 const TABTEXTLG = 13;
 const TABTEXTSM = 10;
@@ -58,6 +60,8 @@ const MANIFEST_EXT=".manifest", CONF_EXT=".conf";
 const SCROLLTYPEBEG = 1;
 const SCROLLTYPECENTER = 0;
 const SCROLLTYPEEND = 2;
+const SCROLLTYPEPAGENEXT = 3;
+const SCROLLTYPEPAGEPREV = 4;
 
 /************************************************************************
  * THESE FUNCTIONS NEEDED BEFORE XPCOM BIBLE OBJECTS ARE CREATED! This is 
@@ -77,6 +81,13 @@ function escapeRE(text) {
   return text.replace(ESCAPE_RE, "$1\\$2");
 }
 
+var SupportedModuleTypes = {
+  Texts: BIBLE,
+  Comms: COMMENTARY,
+  Dicts: DICTIONARY,
+  Genbks: GENBOOK
+  };
+  
 //returns data from file. Does little checking!
 function readFile(nsIFile) {
   if (!nsIFile || !nsIFile.exists()) return "";
@@ -115,6 +126,18 @@ function readParamFromConf(nsIFileConf, param) {
   return retval;
 }
 
+// Replaces certain character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
+function replaceASCIIcontrolChars(string) {
+  for (var i=0; i<string.length; i++) {
+    var c = string.charCodeAt(i);
+    //don't replace space, tab, newline, or return,
+    if (c<32 && c!=9 && c!=10 && c!=13) {
+      jsdump("Illegal character code " + string.charCodeAt(i) + " found in string: " + string.substr(0,10) + "\n");
+      string = string.substring(0,i) + " " + string.substring(i+1);
+    }
+  }
+  return string;
+}
 
 /************************************************************************
  * Global Preferences Obect and its Support Routines
