@@ -47,8 +47,8 @@
 
 <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>  
 <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
-<!-- NOTE! newModule.js must be read BEFORE ANY BIBLE INSTANCES ARE CREATED!!!! !-->
 <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
+<script>moduleInstall(true)</script>
 
 <!-- <script type="application/x-javascript" src="chrome://xulsword/content/xulswordTest.js"/> !-->
 

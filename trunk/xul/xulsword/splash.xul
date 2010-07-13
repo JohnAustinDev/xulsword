@@ -20,22 +20,58 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
 
-<!DOCTYPE window SYSTEM "chrome://xulsword/locale/">
+<!DOCTYPE window [
+<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/" >
+%xulswordDTD;
+]>
 
 <window id="pre-splash" xmlns:html="http://www.w3.org/1999/xhtml"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   title="Splash"
   hidechrome="true"
-  onunload="SplashScreen.close()"
+  onunload="unload()"
   style="background:transparent;"> 
   
   <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
- 
+  <data id="menu.addNewModule.label">&menu.addNewModule.label;</data>
+  
   <script>
     <![CDATA[
-    var SplashScreen = window.open("chrome://xulsword/content/banner.xul","splash","chrome,alwaysRaised,centerscreen,resizable");
-    window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul','main-window','chrome,resizable')",300);
+    var WindowWatcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
+    var MainWindow = WindowWatcher.getWindowByName("main-window", window);
+    var SplashScreen;
+    function endInstall() {
+      if (WillRestart) return;
+      var installOnly;
+      try {
+        installOnly = prefs.getBoolPref("xsInstallOnly");
+        prefs.setBoolPref("xsInstallOnly", false);
+        prefs.clearUserPref("xsInstallOnly");
+      }
+      catch(er) {installOnly = false;} // if pref did not exist
+      
+      if (installOnly) {
+        jsdump("Quiting... xsInstallOnly command line flag was set.");
+        window.close();
+      }
+      else if (!MainWindow) {
+        SplashScreen = window.open("chrome://xulsword/content/banner.xul","splash","chrome,alwaysRaised,centerscreen,resizable");
+        window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul','main-window','chrome,resizable')",300);
+      }
+      else window.setTimeout("window.close();", 2500); // allow time for other window timeouts to do their thing...
+    }
+    
+    function unload() {
+      if (SplashScreen) {SplashScreen.close();}
+    }
     ]]>
   </script>
- 
+  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksTop.js"/>
+  <script>moduleInstall(false);</script>
+
  </window> 

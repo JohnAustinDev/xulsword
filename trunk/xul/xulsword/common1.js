@@ -95,13 +95,6 @@ if (!UseBibleObjectFrom) {
   var mlist = Bible.getModuleList();
   if (mlist == "No Modules" || mlist.search(BIBLE)==-1) Bible=null;
 }
-
-var SupportedModuleTypes = {
-  Texts: BIBLE, 
-  Comms: COMMENTARY, 
-  Dicts: DICTIONARY, 
-  Genbks: GENBOOK
-  };
   
 var GlobalToggleCommands = {
   cmd_xs_toggleHeadings:   "Headings",
@@ -536,19 +529,6 @@ function getBookNameParts(bname) {
   return retval;
 }
 
-// Replaces certain character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
-function replaceASCIIcontrolChars(string) {
-  for (var i=0; i<string.length; i++) {
-    var c = string.charCodeAt(i);
-    //don't replace space, tab, newline, or return, 
-    if (c<32 && c!=9 && c!=10 && c!=13) {
-      jsdump("Illegal character code " + string.charCodeAt(i) + " found in string: " + string.substr(0,10) + "\n");
-      string = string.substring(0,i) + " " + string.substring(i+1);
-    }
-  }
-  return string;
-}
-
 /************************************************************************
  * Some Bible Utility Functions
  ***********************************************************************/ 
@@ -643,12 +623,16 @@ function getAvailableBooks(version) {
   return AvailableBooks[version];
 }
 
-function getModsWithConfigEntry(param, value, biblesOnly) {
+function getModsWithConfigEntry(param, value, biblesOnly, ignoreCase) {
   var ret = [];
-  if (!Bible || !TabVers) return ret;
+  if (!Bible || !TabVers || !value) return ret;
+  if (ignoreCase) value = new RegExp("^" + value + "$", "i");
+  else value = new RegExp("^" + value + "$");
   for (var t=0; t<TabVers.length; t++) {
     if (biblesOnly && TabLongType[t]!=BIBLE) continue;
-    if (Bible.getModuleInformation(TabVers[t], param)==value) ret.push(TabVers[t]);
+    var tparam = Bible.getModuleInformation(TabVers[t], param);
+    if (!tparam ||  tparam==NOTFOUND) continue;
+    if (tparam.search(value) != -1) ret.push(TabVers[t]);
   }
   return ret;
 }
@@ -751,6 +735,11 @@ function getCurrentLocaleBundle(file) {
 // If "version" is not a Bible, or does not have the book where "location" is, then an alternate 
 // Bible version is used and the location is converted to the new verse system. NOTE! returned 
 // location is "." delimited type! Returns "" if verse text cannot be found in any Bible module.
+//
+// Is module a Bible, or does module specify another reference Bible in its config file? Then use that.
+// If version does not yield verse text, then look at visible tabs in their order.
+// If visible tabs do not yield verse text, then look at hidden tabs in their order.
+
 function findAVerseText(version, location, windowNum) {
   if (!windowNum) windowNum = 1;
   var ret = {tabNum:moduleName2TabIndex(version), location:location, text:""};
@@ -848,7 +837,7 @@ function getGenBookChapterText(moduleAndKey, bible, fn) {
   text = MainWindow.addParagraphIDs(text);
   
   if (fn) {
-    var t = insertUserNotes(bible.getBookName(), bible.getChapterNumber(vers), vers, text);
+    var t = insertUserNotes("na", 1, parts[1], text);
     text = t.html;
     fn.CrossRefs = "";
     fn.Footnotes = "";

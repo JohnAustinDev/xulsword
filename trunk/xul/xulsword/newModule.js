@@ -21,12 +21,15 @@
 const SEP = ",";
 const TIMEOUT = 25;
 const AUDEXT = ["mp3", "wav", "aif"];
+const XSMODEXT = ["zip", "xsm"];
+const XSBMEXT = ["txt", "xsb"];
 const NOVALUE = -1;
 const NORESET = 0;
 const SOFTRESET = 1;
 const HARDRESET = 2;
 const NEWINSTALLFILE = "newInstalls.txt";
 const PMSTD="centerscreen, dependent";
+const PMSPLASH="alwaysRaised,centerscreen";
 const PMNORMAL=0, PMSTOP=1;
 const VERSIONPAR = "xulswordVersion";
 const MINPVERPAR = "minMKVersion";
@@ -39,14 +42,16 @@ var ModuleCopyMutex = false;
 /************************************************************************
  * Module install functions
  ***********************************************************************/ 
-function audioEXT() {
+function getEXTre(exts) {
   var sep="";
   var re ="(";
-  for (var e=0; e<AUDEXT.length; e++) {re += sep + "\\." + AUDEXT[e]; sep="|";}
+  for (var e=0; e<exts.length; e++) {re += sep + "\\." + exts[e]; sep="|";}
   re += ")$";
   return re
 }
-const AUDIOEXT = new RegExp(audioEXT());
+const AUDIOEXT = new RegExp(getEXTre(AUDEXT), "i");
+const XSMODULEEXT = new RegExp(getEXTre(XSMODEXT), "i");
+const XSBOOKMARKEXT = new RegExp(getEXTre(XSBMEXT), "i");
 
 function addNewModule(e) {
   // get a module file
@@ -79,23 +84,27 @@ function addNewModule(e) {
   return installModuleArray(fileArray);
 }
 
-function installModuleArray(fileArray, allowStop) {
-  var installFiles = [];
-  var installEntry = [];
-  var audioFiles = [];
+function installModuleArray(fileArray, allowStop, blocking, exitFunction) {
+  var zipFiles = [];
+  var zipEntry = [];
+  var regularFiles = [];
+  blocking = (blocking ? blocking:false);
+  exitFunction = (exitFunction ? exitFunction:finishAndHandleReset);
   
   for (var f=0; f<fileArray.length; f++) {
-    if (fileArray[f].leafName.match(".zip", "i")) {
+    if (fileArray[f].leafName.match(XSMODULEEXT)) {
       var entries = readZipFile(fileArray[f]);
       if (entries && entries.length) {
-        installFiles.push(fileArray[f]);
-        installEntry.push(entries.sort(sortFiles));
+        zipFiles.push(fileArray[f]);
+        zipEntry.push(entries.sort(sortFiles));
       }
     }
-    else if (fileArray[f].leafName.match(AUDIOEXT)) audioFiles.push(fileArray[f]);
-    else if (fileArray[f].isDirectory()) pushAudioFilesInFolder(fileArray[f], audioFiles);
+    else if (fileArray[f].leafName.match(XSBOOKMARKEXT)) regularFiles.push(fileArray[f]);
+    else if (fileArray[f].leafName.match(AUDIOEXT)) regularFiles.push(fileArray[f]);
+    else if (fileArray[f].isDirectory()) pushAudioFilesInFolder(fileArray[f], regularFiles);
   }
-  return startImport(finishInstall, false, false, audioFiles, installFiles, installEntry, [], [], [], allowStop);
+  var isPreSword = (MainWindow ? false:true);
+  return startImport(exitFunction, blocking, isPreSword, regularFiles, zipFiles, zipEntry, [], [], [], allowStop);
 }
 
 function pushAudioFilesInFolder(aFolder, audioFiles) {
@@ -142,18 +151,18 @@ function sortFiles(a,b) {
 function stopImport() {
   if (CopyAnotherFile) window.clearTimeout(CopyAnotherFile);
   ResetNeeded = NORESET;
-  finishInstall();
+  ExitFunction();
 }
 
 var ResetNeeded;
 var Success;
 var GotoFile;
-var InstallFiles;
-var InstallEntry;
-var AudioFiles;
+var ZipFiles;
+var ZipEntry;
+var RegularFiles;
 var ZipIndex;
 var EntIndex;
-var AudIndex;
+var RegIndex;
 var ExitFunction;
 var NewLocales;
 var NewModules;
@@ -162,10 +171,12 @@ var NewPlugin;
 var PreSword;
 var SkipList;
 var CopyZipFun;
-var CopyAudioFun;
+var CopyRegularFun;
 var CountTotal, CountCurrent;
 var ProgressMeter, ProgressMeterLoaded;
-function startImport(exitFunction, blocking, isPreSword, audioFiles, installFiles, installEntry, newLocales, newModules, newFonts, allowStop) {
+var WillRestart;
+function startImport(exitFunction, blocking, isPreSword, regularFiles, zipFiles, zipEntry, newLocales, newModules, newFonts, allowStop) {
+jsdump("STARTING startImport");
   GotoFile = null;
   ResetNeeded = NOVALUE;
   Success = true;
@@ -175,35 +186,36 @@ function startImport(exitFunction, blocking, isPreSword, audioFiles, installFile
   NewLocales = newLocales;
   NewModules = newModules;
   NewFonts   = newFonts;
-  InstallFiles = installFiles;
-  InstallEntry = installEntry;
-  AudioFiles = audioFiles;
+  ZipFiles = zipFiles;
+  ZipEntry = zipEntry;
+  RegularFiles = regularFiles;
   ZipIndex = 0;
   EntIndex = 0;
-  AudIndex = 0;
+  RegIndex = 0;
   CopyZipFun = (blocking ? copyZipFiles:copyZipFilesTO);
-  CopyAudioFun = (blocking ? copyAudioFiles:copyAudioFilesTO);
+  CopyRegularFun = (blocking ? copyRegularFiles:copyRegularFilesTO);
+  WillRestart = false;
   
-  if (!PreSword) {
+  if (!blocking && (ZipFiles.length || RegularFiles.length>5)) {
     var result = {};
     ProgressMeterLoaded = false;
-    ProgressMeter = window.openDialog("chrome://xulsword/content/workProgress.xul", "work-progress", PMSTD, result, 
-      document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue, 
+    ProgressMeter = window.openDialog("chrome://xulsword/content/workProgress.xul", "work-progress", PMSPLASH, result,
+      document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue,
       "", 
       (allowStop ? PMSTOP:PMNORMAL),
       (allowStop ? stopImport:null));
   }
-  CountTotal = (InstallFiles ? InstallFiles.length:0) + (AudioFiles ? AudioFiles.length:0);
+  CountTotal = (ZipFiles ? ZipFiles.length:0) + (RegularFiles ? RegularFiles.length:0);
   CountCurrent = 0;
   
-  if ((!InstallFiles || !InstallFiles.length) && (!AudioFiles || !AudioFiles.length)) {
+  if ((!ZipFiles || !ZipFiles.length) && (!RegularFiles || !RegularFiles.length)) {
     Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
     jsdump("MODULE WAS EMPTY");
     if (ProgressMeter) ProgressMeter.close();
     return false;  
   }
 
-  var incomp = removeIncompatibleFiles(InstallFiles, InstallEntry);
+  var incomp = removeIncompatibleFiles(ZipFiles, ZipEntry);
   if (incomp.oldmodule.length || incomp.newmodule.length) {
     jsdump("There were incompatible components");
     var msg = SBundle.getString("InstalIncomplete") + "\n";
@@ -234,8 +246,8 @@ function startImport(exitFunction, blocking, isPreSword, audioFiles, installFile
         DLGOK);
   }
 
-  if (InstallFiles && InstallFiles.length) CopyZipFun();
-  else if (AudioFiles && AudioFiles.length) CopyAudioFun();
+  if (ZipFiles && ZipFiles.length) CopyZipFun();
+  else if (RegularFiles && RegularFiles.length) CopyRegularFun();
   // module is MK module, but contained nothing that needed to be, or could be, installed. Show progress meter so user knows it at least tried!
   else {
     if (ProgressMeter) {
@@ -444,44 +456,48 @@ function copyZipFilesTO() {
 }
 
 function copyZipFiles() {
-  var result = installEntryFromZip(InstallFiles[ZipIndex], InstallEntry[ZipIndex][EntIndex]);
-//jsdump("RESULT:" + InstallEntry[ZipIndex][EntIndex] + ", reset:" + result.reset + ", success:" + result.success + ", remove:" + result.remove);
+  var result = installEntryFromZip(ZipFiles[ZipIndex], ZipEntry[ZipIndex][EntIndex]);
+  if (!result.success) jsdump("FAILED:" + ZipEntry[ZipIndex][EntIndex] + ", reset:" + result.reset + ", success:" + result.success + ", remove:" + result.remove);
   if (result.reset > ResetNeeded) ResetNeeded = result.reset;
-  if (result.remove) InstallEntry[ZipIndex][EntIndex] = null;
+  if (result.remove) ZipEntry[ZipIndex][EntIndex] = null;
   Success &= result.success;
   
-  var pc = 100*((CountCurrent+EntIndex/InstallEntry[ZipIndex].length)/CountTotal);
+  var pc = 100*((CountCurrent+EntIndex/ZipEntry[ZipIndex].length)/CountTotal);
   if (CountTotal<=3 && ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", pc);
   
   EntIndex++;
-  if (EntIndex == InstallEntry[ZipIndex].length) {
+  if (EntIndex == ZipEntry[ZipIndex].length) {
     EntIndex = 0;
     ZipIndex++;
     if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100*(++CountCurrent/CountTotal));
   }
-  if (ZipIndex == InstallFiles.length) {
-    if (AudioFiles && AudioFiles.length) CopyAudioFun();
+  if (ZipIndex == ZipFiles.length) {
+    if (RegularFiles && RegularFiles.length) CopyRegularFun();
     else ExitFunction();
   }
   else CopyZipFun();
 }
 
-function copyAudioFilesTO() {
-  CopyAnotherFile = window.setTimeout("copyAudioFiles();", TIMEOUT);
+function copyRegularFilesTO() {
+  CopyAnotherFile = window.setTimeout("copyRegularFiles();", TIMEOUT);
 }
 
-function copyAudioFiles() {
-  var result = installAudioFile(AudioFiles[AudIndex]);
-  if (result.success) GotoFile = AudioFiles[AudIndex];
+function copyRegularFiles() {
+  jsdump("Installing File:" + RegularFiles[RegIndex].path);
+  var result;
+  if (RegularFiles[RegIndex].leafName.match(AUDIOEXT)) result = installAudioFile(RegularFiles[RegIndex]);
+  else if (RegularFiles[RegIndex].leafName.match(XSBOOKMARKEXT)) result = installBookmarkFile(RegularFiles[RegIndex]);
+  if (result.success) GotoFile = RegularFiles[RegIndex];
+  else jsdump("FAILED:" + RegularFiles[RegIndex].leafName + ", reset:" + result.reset + ", success:" + result.success + ", remove:" + result.remove);
   if (result.reset > ResetNeeded) ResetNeeded = result.reset;
-  if (result.remove) AudioFiles[AudIndex] = null;
+  if (result.remove) RegularFiles[RegIndex] = null;
   Success &= result.success;
 
   if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100*(++CountCurrent/CountTotal));
     
-  AudIndex++;
-  if (AudIndex == AudioFiles.length) ExitFunction();
-  else CopyAudioFun();
+  RegIndex++;
+  if (RegIndex == RegularFiles.length) ExitFunction();
+  else CopyRegularFun();
 }
 
 function installAudioFile(aFile) {
@@ -508,6 +524,13 @@ function installAudioFile(aFile) {
   
   try {aFile.copyTo(parent, fileInfo.chapter + "." + fileInfo.ext);}
   catch (er) {return {reset:NORESET, success:false, remove:true};}
+  return {reset:NORESET, success:true, remove:true};
+}
+
+function installBookmarkFile(aFile) {
+  if (!aFile.leafName.match(XSBOOKMARKEXT)) return {reset:NORESET, success:false, remove:true};
+  if (!BMDS) BMDS = initBMServices();
+  if (!BookmarkFuns.importBMFile(aFile, false, true)) return {reset:NORESET, success:false, remove:true};
   return {reset:NORESET, success:true, remove:true};
 }
 
@@ -625,70 +648,112 @@ jsdump("Installing File:" + aEntry);
     break;
     
   case BOOKMARKS:
-    if (PreSword || !BookmarkFuns.importBMFile(inflated, false, true))
+    if (!BMDS) BMDS = initBMServices();
+    if (!BookmarkFuns.importBMFile(inflated, false, true))
         return {reset:NORESET, success:false, remove:true};
+    GotoFile = inflated;
     break;
   }
   
   return {reset:NORESET, success:true, remove:true};
 }
 
-function finishInstall() {
+// use during user installs
+function finishAndHandleReset() {
+  finish();
+  handleResetRequest();
+}
+
+// use after soft-reset (must be run in xulsword.xul scope)
+function finishAndWriteManifest() {
+  finish();
+  writeManifest();
+}
+
+// use after hard-reset
+function finishAndStartXulsword() {
+  finish();
+  writeManifest();
+  installCommandLineModules();
+}
+
+// use when installing command line modules
+function finishAndStartXulSword2() {
+  finish();
+  handleResetRequest();
+  endInstall();
+}
+
+function finish() {
   if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
+  if (ProgressMeter) window.setTimeout("ProgressMeter.close();", 100);
   if (NewPlugin) {
     checkQuickTime();
     NewPlugin = false;
   }
   if (ResetNeeded>NORESET) saveArraysToPrefs();
-  
-  initAudioDirs();
+
+  if (!PreSword) initAudioDirs();
 
   if (Success && ResetNeeded==NORESET) jsdump("ALL FILES WERE SUCCESSFULLY INSTALLED!");
   else if (!Success) {
     jsdump("THERE WERE ERRORS DURING INSTALL!");
     Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
   }
-  
+  ModuleCopyMutex=false;
+}
+
+function handleResetRequest() {
   switch (ResetNeeded) {
-  case NOVALUE:
+  case NOVALUE: // there was a problem
     Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
     jsdump("No compatible files found");
     break;
-  case NORESET:
-    if (!Bible || !TabVers.length) {
-      restartApplication(false);
-      break;
-    }
-    //NOTE: In this case a manafest file for new mods etc. will not be written!
-    if (GotoFile) {
-      var fileInfo = decodeAudioFileName(GotoFile.path);
-      fileInfo.chapter = String(Number(fileInfo.chapter)); // strip off leading 0s
-      var aBibleVers=null;
-      if (moduleName2TabIndex(fileInfo.name)!=null) aBibleVers=fileInfo.name.toUpperCase();
-      else {
-        var mods = getModsWithConfigEntry("Lang", fileInfo.name);
-        for (var m=0; m<mods.length; m++) {
-          if (getModuleLongType(mods[m])!=BIBLE) continue;
-          aBibleVers = mods[m];
-          break;
+  case NORESET: // program continues running and needs no reload or restart
+    if (PreSword) writeManifest(NewLocales, NewModules, NewFonts, true);
+    else {
+      if (!MainWindow.Bible || !MainWindow.TabVers.length) {
+        restartApplication(false);
+        break;
+      }
+      //NOTE: In this case a manafest file for new mods etc. will not be written!
+      if (GotoFile) {
+        if (GotoFile.leafName.match(AUDIOEXT)) {
+          var fileInfo = decodeAudioFileName(GotoFile.path);
+          fileInfo.chapter = String(Number(fileInfo.chapter)); // strip off leading 0s
+          var aBibleVers=null;
+          if (MainWindow.moduleName2TabIndex(fileInfo.name.toUpperCase())!=null) aBibleVers=fileInfo.name.toUpperCase();
+          else {
+            var mods = MainWindow.getModsWithConfigEntry("AudioCode", fileInfo.name, true, true);
+            if (mods[0]) aBibleVers = mods[0];
+            else {
+              mods = MainWindow.getModsWithConfigEntry("Lang", fileInfo.name, true, true);
+              if (mods[0]) aBibleVers = mods[0];
+            }
+          }
+          if (aBibleVers) MainWindow.gotoLink(encodeUTF8(fileInfo.book + "." + fileInfo.chapter + ".1"), aBibleVers);
+          else {MainWindow.updateFrameScriptBoxes();}
+        }
+        else if (GotoFile.leafName.match(XSBOOKMARKEXT)) {
+          MainWindow.focus();
+          MainWindow.setTimeout("document.getElementById('menu_BookmarksPopup').showPopup();", 500);
         }
       }
-      if (aBibleVers) gotoLink(encodeUTF8(fileInfo.book + "." + fileInfo.chapter + ".1"), aBibleVers);
-      else {updateFrameScriptBoxes();}
+      else {MainWindow.updateFrameScriptBoxes();}
     }
-    else {updateFrameScriptBoxes();}
     break;
-  case SOFTRESET:
-    window.setTimeout("windowLocationReload();", 500);
+  case SOFTRESET: // program needs to reload all SWORD modules
+    if (window.name == "main-window") window.setTimeout("windowLocationReload();", 500);
+    else {
+      WillRestart = true;
+      window.setTimeout("restartApplication();", 500);
+    }
     break;
-  case HARDRESET:
+  case HARDRESET: // program needs to quite and restart from nothing
+    WillRestart = true;
     window.setTimeout("restartApplication();", 500);
     break;
   }
-  
-  if (ProgressMeter) window.setTimeout("ProgressMeter.close();", 100);
-  
-  ModuleCopyMutex=false;
 }
 
 function writeManifest(newLocales, newModules, newFonts, filesNotWaiting) {
@@ -712,14 +777,6 @@ function writeManifest(newLocales, newModules, newFonts, filesNotWaiting) {
     foStream.write(modFileText, modFileText.length);
     foStream.close();
   }
-  
-  if (!filesNotWaiting && (!Success || ResetNeeded>0)) {
-    jsdump("ERROR! RESTART WAS NOT SUCESSFULL IN FREEING MODULES TO BE OVERWRITTEN.");
-    Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
-  }
-  else jsdump("ALL FILES WERE SUCCESSFULLY INSTALLED!");
-  
-  ModuleCopyMutex=false;
 }
 
 function saveArraysToPrefs() {
@@ -727,10 +784,10 @@ function saveArraysToPrefs() {
     
   var sString = Components.classes["@mozilla.org/supports-string;1"].createInstance(Components.interfaces.nsISupportsString);
   var x=0;
-  for (var f=0; f<AudioFiles.length; f++) {
-    if (!AudioFiles[f]) continue;
-    prefs.setComplexValue("InsAudio" + x, Components.interfaces.nsILocalFile, AudioFiles[x]);
-//jsdump("SAVING InsAudio" + x + ":" + AudioFiles[x].path);
+  for (var f=0; f<RegularFiles.length; f++) {
+    if (!RegularFiles[f]) continue;
+    prefs.setComplexValue("InsAudio" + x, Components.interfaces.nsILocalFile, RegularFiles[x]);
+//jsdump("SAVING InsAudio" + x + ":" + RegularFiles[x].path);
     x++;
   }
   prefs.setIntPref("InsAudioNum", x);
@@ -739,11 +796,11 @@ function saveArraysToPrefs() {
   var leadingSEP = new RegExp("^" + escapeRE(SEP));
   var trailingSEP = new RegExp(escapeRE(SEP) + "$");
   x=0;
-  for (f=0; f<InstallFiles.length; f++) {
-    sString.data = InstallEntry[f].join(SEP).replace(sequentSEP, SEP).replace(leadingSEP, ""). replace(trailingSEP, "");
+  for (f=0; f<ZipFiles.length; f++) {
+    sString.data = ZipEntry[f].join(SEP).replace(sequentSEP, SEP).replace(leadingSEP, ""). replace(trailingSEP, "");
     if (!sString.data) continue;
     prefs.setComplexValue("InsZipEntry" + x, Components.interfaces.nsISupportsString, sString);
-    prefs.setComplexValue("InsZip" + x, Components.interfaces.nsILocalFile, InstallFiles[f]);
+    prefs.setComplexValue("InsZip" + x, Components.interfaces.nsILocalFile, ZipFiles[f]);
 //jsdump("SAVING InsZipEntry" + x + ":" + sString.data);
     x++;
   }
@@ -916,10 +973,75 @@ function decodeAudioFileName(path) {
 }
 
 function validateChapter(book, chapter) {
-  var bk = findBookNum(book);
-  var chapter = Number(chapter);
-  if (bk !== null && chapter && chapter>0 && chapter<=Book[bk].numChaps) return true;
-  return false;
+  var maxchaps = {};
+	maxchaps.xGen = 50;
+	maxchaps.xExod = 40;
+	maxchaps.xLev = 27;
+	maxchaps.xNum = 36;
+	maxchaps.xDeut = 34;
+	maxchaps.xJosh = 24;
+	maxchaps.xJudg = 21;
+	maxchaps.xRuth = 4;
+	maxchaps.x1Sam = 31;
+	maxchaps.x2Sam = 24;
+	maxchaps.x1Kgs = 22;
+	maxchaps.x2Kgs = 25;
+	maxchaps.x1Chr = 29;
+	maxchaps.x2Chr = 36;
+	maxchaps.xEzra = 10;
+	maxchaps.xNeh = 13;
+	maxchaps.xEsth = 10;
+	maxchaps.xJob = 42;
+	maxchaps.xPs = 150;
+	maxchaps.xProv = 31;
+	maxchaps.xEccl = 12;
+	maxchaps.xSong = 8;
+	maxchaps.xIsa = 66;
+	maxchaps.xJer = 52;
+	maxchaps.xLam = 5;
+	maxchaps.xEzek = 48;
+	maxchaps.xDan = 12;
+	maxchaps.xHos = 14;
+	maxchaps.xJoel = 3;
+	maxchaps.xAmos = 9;
+	maxchaps.xObad = 1;
+	maxchaps.xJonah = 4;
+	maxchaps.xMic = 7;
+	maxchaps.xNah = 3;
+	maxchaps.xHab = 3;
+	maxchaps.xZeph = 3;
+	maxchaps.xHag = 2;
+	maxchaps.xZech = 14;
+	maxchaps.xMal = 4;
+	maxchaps.xMatt = 28;
+	maxchaps.xMark = 16;
+	maxchaps.xLuke = 24;
+	maxchaps.xJohn = 21;
+	maxchaps.xActs = 28;
+	maxchaps.xJas = 5;
+	maxchaps.x1Pet = 5;
+	maxchaps.x2Pet = 3;
+	maxchaps.x1John = 5;
+	maxchaps.x2John = 1;
+	maxchaps.x3John = 1;
+	maxchaps.xJude = 1;
+	maxchaps.xRom = 16;
+	maxchaps.x1Cor = 16;
+	maxchaps.x2Cor = 13;
+	maxchaps.xGal = 6;
+	maxchaps.xEph = 6;
+	maxchaps.xPhil = 4;
+	maxchaps.xCol = 4;
+	maxchaps.x1Thess = 5;
+	maxchaps.x2Thess = 3;
+	maxchaps.x1Tim = 6;
+	maxchaps.x2Tim = 4;
+	maxchaps.xTitus = 3;
+	maxchaps.xPhlm = 1;
+	maxchaps.xHeb = 13;
+	maxchaps.xRev = 22;
+
+  return !(!maxchaps["x" + book] || maxchaps["x" + book] < chapter);
 }
 
 function padChapterNum(ch) {
@@ -1067,17 +1189,50 @@ var fileObserver = {
  * Startup functions
  ***********************************************************************/ 
 
-function checkModuleInstall() {
-  // CHECK TO SEE IF WE HAVE A MODULE WAITING FOR INSTALL!
+function moduleInstall(isMainWindow) {
+jsdump("STARTING moduleInstall, isMainWindow:" + isMainWindow);
   var result = retrieveFileArrays();
+  // Delete any files still scheduled to be deleted
   if (result.files2Delete) deleteFiles(result.deleteFiles);
-  if (result.filesWaiting) 
-      startImport(writeManifest, true, true, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts);
-  else if (result.haveNew) writeManifest(result.newLocales, result.newModules, result.newFonts, !result.filesWaiting);
+  // Install any files waiting from a previous install!
+  if (result.filesWaiting) {
+    if (isMainWindow)
+      startImport(finishAndWriteManifest, true, true, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts, false);
+    else
+      startImport(finishAndStartXulsword, false, true, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts, false);
+  }
+  else if (result.haveNew) {
+    writeManifest(result.newLocales, result.newModules, result.newFonts, true);
+    jsdump("ALL FILES WERE SUCCESSFULLY INSTALLED!");
+    if (!isMainWindow) installCommandLineModules();
+  }
+  else if (!isMainWindow) installCommandLineModules();
 }
 
-checkModuleInstall();
+function installCommandLineModules() {
+  var files = [];
+  prefFileArray(files, "xsModule", XSMODULEEXT);
+  prefFileArray(files, "xsBookmark", XSBOOKMARKEXT);
+  prefFileArray(files, "xsAudio", "directory");
+  if (files.length) installModuleArray(files, true, false, finishAndStartXulSword2);
+  else endInstall();
+}
 
+function prefFileArray(files, aPref, exts) {
+  try {
+    var x=0;
+    while(true) {
+      var file = prefs.getComplexValue(aPref + x, Components.interfaces.nsILocalFile);
+      prefs.clearUserPref(aPref + x);
+      if (file && file.exists() && (file.leafName.match(exts) || (file.isDirectory() && exts=="directory"))) {
+          files.push(file);
+          jsdump(aPref + x + " = " + file.path);
+      }
+      x++;
+    }
+  }
+  catch(e) {}
+}
 
 function restartApplication(promptBefore) {
   if (promptBefore) {
@@ -1092,5 +1247,5 @@ function restartApplication(promptBefore) {
 	var appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                    .getService(Components.interfaces.nsIAppStartup);
 
-	appStartup.quit(Components.interfaces.nsIAppStartup.eRestart | Components.interfaces.nsIAppStartup.eAttemptQuit);
+	appStartup.quit(Components.interfaces.nsIAppStartup.eRestart | Components.interfaces.nsIAppStartup.eForceQuit);
 }

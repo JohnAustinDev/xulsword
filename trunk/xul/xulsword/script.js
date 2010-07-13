@@ -381,7 +381,7 @@ function updateDictionary(dontUpdateText) {
     var sbHTML = "";
     sbHTML += "<div style='display:table; height:100%; width:100%;'>";
     sbHTML += "<div style='display:table-row; height:1em;'>";
-    sbHTML += "<div style='display:table-cell;'>" + getNextChapterLinks() + "</div></div>";
+    sbHTML += "<div style='display:table-cell;'>" + getPageLinks() + "</div></div>";
     sbHTML += "<div style='display:table-row;'>";
     sbHTML += "<div style='display:table-cell; vertical-align:middle;'>" + entryHTML + "</div></div></div>";
     ScriptBoxTextElement.innerHTML = sbHTML;
@@ -419,7 +419,7 @@ function selKey(aKey) {
   window.setTimeout("document.getElementById('keytextbox').focus()", 0);
 }
 
-function getNextChapterLinks() {
+function getPageLinks() {
   var config = LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
   var charNext = (config.direction && config.direction == "rtl" ? String.fromCharCode(8592):String.fromCharCode(8594));
   var charPrev = (config.direction && config.direction == "rtl" ? String.fromCharCode(8594):String.fromCharCode(8592));
@@ -427,8 +427,8 @@ function getNextChapterLinks() {
   charPrev = "<span style=\"font-family:ariel;\">" + charPrev + "</span>"; // Because 'UKIJ Tuz Basma' improperly implements this char!
   var mytype = getModuleLongType(prefs.getCharPref("Version" + MyFrameNumber));
   
-  var prevDisabled = mytype==BIBLE && ChapterOfFrame==1 && BookOfFrame=="Gen";
-  var nextDisabled = mytype==BIBLE && ChapterOfFrame==22 && BookOfFrame=="Rev";
+  var prevDisabled = false; //mytype==BIBLE && ChapterOfFrame==1 && BookOfFrame=="Gen";
+  var nextDisabled = false; //mytype==BIBLE && ChapterOfFrame==22 && BookOfFrame=="Rev";
   
   var chapterNavigationLink = "<div  class=\"navlink vstyleProgram\">";
   if (prevDisabled) {
@@ -752,17 +752,11 @@ function scriptboxClick(e) {
     break;
     
   case "listenlink":
-    var myVersion = prefs.getCharPref("Version" + MyFrameNumber);
-    MainWindow.AudioVersion = myVersion;
-    // If pinned window's listenlink is clicked change static location to frozen one
-    if (FrameIsPinned) {
-      Bible.setBiblesReference(myVersion, BookOfFrame + "." + ChapterOfFrame + ".1");
-      OwnerDocument.getElementById("book").book = BookOfFrame;
-      OwnerDocument.getElementById("book").version = myModule;
-      OwnerDocument.getElementById("chapter").value = ChapterOfFrame;
-      OwnerDocument.getElementById("verse").value = 1;
-      OwnerDocument.getElementById("cmd_xs_navigatorUpdate").doCommand();
-    }
+    MainWindow.Player.version = prefs.getCharPref("Version" + MyFrameNumber);
+    MainWindow.Player.chapter = Number(elem.id.split(".")[1]);
+    if (FrameIsPinned) MainWindow.Player.book = BookOfFrame;
+    else MainWindow.Player.book = Bible.getBookName();
+
     if (MainWindow.CheckPlayer) MainWindow.clearInterval(MainWindow.CheckPlayer);
     try {MainWindow.CheckPlayer = MainWindow.setInterval("document.getElementById('playerFrame').contentDocument.defaultView.checkPlayer()", 5000);} catch (er) {}
     MainWindow.beginAudioPlayer();
@@ -835,7 +829,7 @@ function scriptboxMouseOut(e) {
   HighlightElement2=null;
   HaveLeftTarget=true;
   if (ImmediateUnhighlight) {unhighlightNote();}
-  switch (e.target.id) {
+  switch (getElemType(e.target)) {
   case "listenlink":
     e.target.src = "chrome://xulsword/skin/images/listen0.png";
     break;
@@ -1323,7 +1317,7 @@ function copyNotes2Notebox(bibleNotes, userNotes) {
   var gcr = ((prefs.getCharPref("Cross-references") == "On")&&(prefs.getBoolPref("ShowCrossrefsAtBottom")));
   var gun = ((prefs.getCharPref("User Notes") == "On")&&(prefs.getBoolPref("ShowUserNotesAtBottom")));
   var t = "";
- 
+
   NoteBoxEmpty = true;
   if (!(gfn||gcr||gun)) {
     // If we aren't showing footnotes in box, then turn maximize off
@@ -1337,11 +1331,11 @@ function copyNotes2Notebox(bibleNotes, userNotes) {
   var allNotes="";
   if (mytype==BIBLE || mytype==COMMENTARY || bibleNotes!=NOTFOUND) allNotes = bibleNotes;
   if (userNotes!=NOTFOUND) allNotes += userNotes;
-  
+
   var html = getNotesHTML(allNotes, myversion, gfn, gcr, gun, false, MyFrameNumber);
   if (html) NoteBoxEmpty = false;
   t += html
-  
+
   // Global is set by mouse routines to prevent the scriptbox from changing when desired
   if (t != PreviousT) {
     NoteBoxElement.innerHTML = t;
@@ -1383,7 +1377,7 @@ function noteboxClick(e) {
         Bible.setBiblesReference(vers, idpart[2] + "." + idpart[3] + "." + idpart[4]);
         MainWindow.updateFrameScriptBoxes(updateNeeded,true,true);
       }
-      else {MainWindow.selectVerse(vers, v, Number(idpart[3]))}
+      else {MainWindow.selectVerse(vers, null, Number(idpart[3]), v, Number(idpart[5]), true);}
       MainWindow.updateLocators(false);
       break;
      case DICTIONARY:
@@ -1458,12 +1452,12 @@ function setFontSize(className,sz) {
 /************************************************************************
  * Sizing and placing Scripture, notes, and the boundary bar
  ***********************************************************************/  
-function resizeBibles(dontChangeContents) {
+function resizeBibles(dontChangeContents, hideNoteBox) {
   if (!dontChangeContents) ScriptBoxTextElement.innerHTML="";
   if ((window.frameElement.id=="bible1Frame")&&prefs.getBoolPref("ShowChooser")) {placeChooser();}
   if (MyFrameNumber <= prefs.getIntPref("NumDisplayedWindows")) {
     setBibleWidth();
-    setBibleHeight();
+    setBibleHeight(null, hideNoteBox);
   }
 }
 
@@ -1555,7 +1549,7 @@ function setBibleHeight(initializing, hideNoteBox) {
   var noteHeight, boundaryGap, adjustSBox, adjustNBox, noteBoxVisibility, boundaryBarVisibility;
   var adjust = -2;
   // If we're hiding the note box or it is not showing
-  if (!sdt && ((!sfn && !scr && !sun) || hideNoteBox)) {
+  if (!sdt && !prefs.getBoolPref("MaximizeNoteBox" + MyFrameNumber) && ((!sfn && !scr && !sun) || hideNoteBox)) {
     MainWindow.setNoteBoxSizer(MyFrameNumber, false);
     noteBoxVisibility="hidden";
     boundaryBarVisibility="hidden";
@@ -1565,7 +1559,7 @@ function setBibleHeight(initializing, hideNoteBox) {
     adjustNBox = 0;
   }
   // Else if the note box is showing and it has something inside it
-  else if (NoteBoxEmpty==false || sdt) {
+  else if (NoteBoxEmpty==false || sdt || prefs.getBoolPref("MaximizeNoteBox" + MyFrameNumber)) {
     noteBoxVisibility="visible";
     boundaryBarVisibility="visible";
     if (prefs.getBoolPref("MaximizeNoteBox" + String(MyFrameNumber))) {noteHeight = EffectiveWinH - ScriptBoxMarginTop - BottomMargin - BoundaryBarGap;}

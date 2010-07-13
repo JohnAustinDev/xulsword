@@ -98,8 +98,8 @@ function onLoad() {
           parent.appendChild(checkBoxes[c]);
           break;
         case AUDIOID:
-          var langList = getModsWithConfigEntry("Lang", checkBoxes[c].id, true);
-          var audioList = getModsWithConfigEntry("AudioCode", checkBoxes[c].id, true);
+          var langList = getModsWithConfigEntry("Lang", checkBoxes[c].id, true, true);
+          var audioList = getModsWithConfigEntry("AudioCode", checkBoxes[c].id, true, true);
           var hbox = document.createElement("hbox");
           hbox = parent.appendChild(hbox);
           // add checkbox
