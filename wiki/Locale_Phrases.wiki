@@ -164,7 +164,7 @@ From code file: "`xulsword.dtd`"
 	 Show Cross References
 	 Show Personal Notes
 	 In popups
-	 In footnote box
+	 In note box
 
 ( OPTIONS MENU  )
 	 Options
@@ -225,7 +225,7 @@ From code file: "`xulsword.dtd`"
 ( SEARCH WINDOW ADVANCED OPTIONS (MORE BUTTON)  )
 	 Bibles:
 	 Commentaries:
-	 Glossaries:
+	 Resources:
 	 Books:
 	 Search Type:
 	 Search Scope:
