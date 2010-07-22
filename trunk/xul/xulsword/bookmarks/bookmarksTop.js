@@ -404,6 +404,7 @@ var BookmarkFuns = {
       if (!info[LOCATION]) failed = true;
       else {
         var aVersion = prefs.getCharPref("DefaultVersion");
+        // for backward compatibility...
         // this try is because pre V2.8, LOCATION was undefined and old BMs may cause problems here.
         // NOTE that even with garbage in LOCATION, xulsword will likely return a valid location to somewhere...
         try {var loc = Bible.convertLocation(WESTERNVS, info[LOCATION], Bible.getVerseSystem(aVersion)).split(".");}
@@ -543,7 +544,7 @@ var BookmarkFuns = {
     if (!MainWindow) return;
     if (!aUpdateNeededArray) aUpdateNeededArray = [false, true, true, true];
     if (focusOnMainWindow) MainWindow.focus();
-    MainWindow.updateFrameScriptBoxes(aUpdateNeededArray,true,true,true);
+    MainWindow.updateFrameScriptBoxes(aUpdateNeededArray, SCROLLTYPECENTER, HILIGHTVERSE);
     MainWindow.updateLocators(false);
   },
   

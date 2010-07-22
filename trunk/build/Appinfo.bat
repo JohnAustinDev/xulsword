@@ -28,9 +28,9 @@
 ::                          menu, or leave blank and no email menu element will appear.
 
 :: SPECIFY BUILD INFORMATION
-Set version=2.13
-Set setupversion=2.13
-Set name=Xulsword
+Set version=2.14-beta
+Set setupversion=2.14
+Set name=xulSword
 Set vendor=CrossWire
 Set executable=xulsword.exe
 Set MinXSMversion=1.0
@@ -63,11 +63,11 @@ Set encryptedTexts=""
 
 :: MODULES TO INCLUDE (enclose in quotes, delineated by commas)
 :: Note StrongsGreek,StrongsHebrew,Robinson are used for original lang features
-Set includeBibles=""
+Set includeBibles="KJV,TR,HEB"
 Set includeCommentaries=""
 Set includeGenBooks=""
 Set includeDevotionals=""
-Set includeLexDict=""
+Set includeLexDict="StrongsGreek,StrongsHebrew,Robinson"
 
 :: INCLUDE SEARCH INDEXES IN INSTALLER (Example:true, or false)
 Set includeIndexes=false
@@ -89,7 +89,7 @@ Set                     useUYGskin=false
 
 :: List texts whose tabs should be initially hidden (default is show tabs)
 :: Must not include quotes, must be semicolon delineated, and must include a semicolon at the end. Example:ABC;DEF;GHI;JKL;
-Set HiddenTexts1=
+Set HiddenTexts1=TR;HEB;StrongsGreek;StrongsHebrew;Robinson;
 Set HiddenTexts2=
 Set HiddenTexts3=
 
@@ -100,8 +100,11 @@ Set HiddenTexts3=
 :: Normally XSMversion=UIversion=MKMversion is necessary. But, see
 :: newModule.js:readVersion for exceptions which allow backward compatibility to MK 2.7
 :: If the security module is being used, and UIversion or MinProgversionForUI
-:: is changed before running MakeModules.bat, then MakeProduction.bat must be
-:: rerun (locale's manifest changes, requiring new security codes).
+:: is changed, then MakeProduction.bat must be rerun before running MakeModules.bat
+:: (locale's manifest changes, requiring new security codes).
+::
+:: SWORD modules which are "Synodal" versified will automatically have
+:: MinProgversionForXSM set to >=2.13
 Set XSMversion=2.7
 Set UIversion=2.9
 Set MKMversion=2.9

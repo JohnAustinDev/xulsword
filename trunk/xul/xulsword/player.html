@@ -52,7 +52,7 @@ function checkAndEmbedPlayer() {
 
 function embedPlayer(audiofile) {
 jsdump("Now embedding: File://" + audiofile.path + "\n");
-  document.write("<embed name=\"player\" scriptable=\"true\" kioskmode=\"true\" autoplay=\"true\" width=\"210\" height=\"20\" type=\"application/x-mpeg\" src=\"File://" + audiofile.path + "\"></embed>");
+  document.write("<embed name=\"player\" scriptable=\"true\" kioskmode=\"true\" autoplay=\"true\" width=\"210\" height=\"20\" type=\"audio/mp3\" src=\"File://" + audiofile.path + "\"></embed>");
 }
 
 function checkPlayer() {

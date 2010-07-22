@@ -103,7 +103,7 @@ public:
    
 private:
   ~xulsword();
-   nsEmbedCString GetFolderContents(TreeKey *key, const char *modname, bool isRoot);
+   nsEmbedCString GetFolderContents(TreeKey *key, const char *modname);
    void updateGlobalOptions(SWMgr * manager, bool disableFootCross = false);
    void mapVersifications(VerseKey *vkin, VerseKey *vkout);
    const char *getVerseSystemOfModule(const char * mod);

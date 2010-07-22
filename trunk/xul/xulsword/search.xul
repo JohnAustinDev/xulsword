@@ -59,6 +59,7 @@
 <keyset>
   <key keycode="VK_RETURN"                 oncommand="document.getElementById('searchButton').click()"/>
   <key keycode="VK_ENTER"                  oncommand="document.getElementById('searchButton').click()"/>
+  <key keycode="VK_ESCAPE"                 oncommand="window.close();"/>
 </keyset>
 
 <keyset id="editMenuKeys"/>

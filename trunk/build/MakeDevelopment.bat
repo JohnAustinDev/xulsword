@@ -6,7 +6,9 @@ call "%MKAppinfo%\Appinfo.bat"
 cd "%MK%\build"
 
 ECHO --- COPY XULRUNNER FILES
-if exist "%MK%\xulrunner\xulrunner-stub.exe" move /Y "%MK%\xulrunner\xulrunner-stub.exe" "%MK%\xul\xulrunnerDevAndProd\"
+if exist "%MK%\xulrunner\xulrunner-stub.exe" (echo xsCommandLineHandler.js>> "%MK%\xulrunner\components\components.list")
+if exist "%MK%\xulrunner\xulrunner-stub.exe" (echo xulsword.dll>> "%MK%\xulrunner\components\components.list")
+if exist "%MK%\xulrunner\xulrunner-stub.exe" (move /Y "%MK%\xulrunner\xulrunner-stub.exe" "%MK%\xul\xulrunnerDevAndProd\")
 copy "%MK%\xul\xulrunnerDevAndProd\xulrunner-stub.exe" "%MK%\xulrunner\%executable%"
 xcopy "%MK%\xul\xulrunnerDevAndProd\xulrunner" "%MK%\xulrunner" /S /Y
 del "%MK%\xulrunner\chrome\en-US.nomenu.manifest"

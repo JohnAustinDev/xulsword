@@ -67,7 +67,7 @@
   </hbox>
 
   <vbox flex="1">
-    <label id="item-action-text" control="items"/>
+    <label id="item-action-text" for="items"/>
     <richlistbox id="items" flex="1"
                  ondblclick="dialog.onDblClick();"
                  onselect="dialog.updateOKButton();">

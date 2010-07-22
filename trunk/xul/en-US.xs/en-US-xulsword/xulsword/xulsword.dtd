@@ -72,7 +72,7 @@
 <!ENTITY menu.view.popups         "In popups">
 <!ENTITY menu.view.popups.sc      "p">
 <!ENTITY menu.view.notebox        "In note box">
-<!ENTITY menu.view.notebox.sc     "f">
+<!ENTITY menu.view.notebox.sc     "b">
 
 <!-- Options Menu !-->
 <!ENTITY menu.options             "Options">

@@ -779,7 +779,7 @@ function findAVerseText(version, location, windowNum) {
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If
       // no visible tab match is found, this saved result will be returned
-      if (MainWindow.isTabVersionVisible(v, windowNum)) {
+      if (MainWindow.isTabShowing(v, windowNum)) {
         ret.tabNum = v;
         ret.location = tlocation;
         ret.text = text;
@@ -794,7 +794,7 @@ function findAVerseText(version, location, windowNum) {
   }
   
   return ret;
-} 
+}
 
 // Turns headings on before reading introductions
 function getBookIntroduction(version, book, bibleObj) {
