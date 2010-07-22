@@ -18,15 +18,15 @@ call "%MK%\%CPPD%\versions.bat"
 
 REM _CL_HAVE_DIRENT_H allows us to use sword's patched dirent.h in swordPatch/include
 Set cFlags=/nologo /W0 /EHsc /O2 /Zc:wchar_t-^
- /I "%MK%/%CPPD%"^
- /I "%MK%/%CPPD%/%xulrunnerSDK%/xulrunner-sdk/sdk/include"^
- /I "%MK%/%CPPD%/%clucene%/src/demo"^
- /I "%MK%/%CPPD%/cluceneMK/src"^
- /I "%MK%/%CPPD%/%clucene%/src"^
- /I "%MK%/%CPPD%/swordMK/include"^
- /I "%MK%/%CPPD%/swordMK/src/utilfuns/win32"^
- /I "%MK%/%CPPD%/%sword%/include"^
- /I "%MK%/%CPPD%/%sword%/include/internal/regex"^
+ /I "%MK%\%CPPD%"^
+ /I "%MK%\%CPPD%\%clucene%\src\demo"^
+ /I "%MK%\%CPPD%\cluceneMK\src"^
+ /I "%MK%\%CPPD%\%clucene%\src"^
+ /I "%MK%\%CPPD%\swordMK\include"^
+ /I "%MK%\%CPPD%\swordMK\src\utilfuns\win32"^
+ /I "%MK%\%CPPD%\%sword%\include"^
+ /I "%MK%\%CPPD%\%sword%\include\internal\regex"^
+ /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^
  /D "WIN32_LEAN_AND_MEAN" /D "_CL_HAVE_DIRENT_H" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /Zm200 /c
  
 if %arg1%==dll Set cFlags=/MD /Fo"Release\libswordll/" %cFlags% ^

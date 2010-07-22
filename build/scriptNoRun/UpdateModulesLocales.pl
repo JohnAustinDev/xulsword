@@ -55,8 +55,6 @@ if (-e "$MK\\xulrunner\\modules\\comments") {`rmdir /S /Q \"$MK\\xulrunner\\modu
 if (-e "$MK\\xulrunner\\modules\\genbook") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\genbook\"`;}
 if (-e "$MK\\xulrunner\\modules\\lexdict") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\lexdict\"`;}
 if (-e "$MK\\xulrunner\\modules\\texts") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\texts\"`;}
-
-# Copy selected modules to xulrunner dir
 `mkdir \"$MK\\xulrunner\\mods.d\"`;
 `mkdir \"$MK\\xulrunner\\modules\\comments\\zcom\"`;
 `mkdir \"$MK\\xulrunner\\modules\\genbook\\rawgenbook\"`;
@@ -64,27 +62,9 @@ if (-e "$MK\\xulrunner\\modules\\texts") {`rmdir /S /Q \"$MK\\xulrunner\\modules
 `mkdir \"$MK\\xulrunner\\modules\\lexdict\\rawld\\devotionals\"`;
 `mkdir \"$MK\\xulrunner\\modules\\texts\\ztext\"`;
 
-# Add or change version info for modules
-opendir(CONF, "$MKS/moduleDev/swordmk-mods/mods.d");
-@confs = readdir(CONF);
-close(CONF);
-foreach $conf (@confs) {
-  open(TMP, ">$MKS/moduleDev/swordmk-mods/tmp.conf");
-  open(INC, "<$MKS/moduleDev/swordmk-mods/mods.d/$conf");
-  $hasXSMversion = "false";
-  $hasMinProgversionForXSM = "false";
-  while(<INC>) {
-    if ($_ =~ s/^\s*(xulswordVersion\s*=\s*).*$/$1$XSMversion/) {$hasXSMversion = "true";}
-    if ($_ =~ s/^\s*(minMKVersion\s*=\s*).*$/$1$MinProgversionForXSM/) {$hasMinProgversionForXSM = "true"};
-    print TMP $_;
-  }
-  close(INC);
-  if ($hasXSMversion eq "false") {print TMP "\nxulswordVersion=$XSMversion\n";}
-  if ($hasMinProgversionForXSM eq "false") {print TMP "minMKVersion=$MinProgversionForXSM\n";}
-  close(TMP);
-  unlink(INC);
-  rename("$MKS/moduleDev/swordmk-mods/tmp.conf", "$MKS/moduleDev/swordmk-mods/mods.d/$conf");
-}
+# Add or change version info for included modules
+&updateConfInfo("swordmk-mods");
+&updateConfInfo("sword-mods");
 
 if (-e "$MKS/installer/autogen/uninstall.iss") {unlink("$MKS/installer/autogen/uninstall.iss");}
 if (@includeBibles) {processModuleGroup("texts\\ztext", \@includeBibles);}
@@ -101,29 +81,64 @@ if (-e "$MKS/installer") {
   }
 }
 
+sub updateConfInfo($) {
+  my $dir = shift;
+  opendir(CONF, "$MKS/moduleDev/$dir/mods.d");
+  @confs = readdir(CONF);
+  close(CONF);
+  foreach $conf (@confs) {
+    open(TMP, ">$MKS/moduleDev/$dir/tmp.conf");
+    open(INC, "<$MKS/moduleDev/$dir/mods.d/$conf");
+    $hasXSMversion = "false";
+    $hasMinProgversionForXSM = "false";
+    my $versification = "";
+    my $mpvfxsm = $MinProgversionForXSM;
+    my $xsmv = $XSMversion;
+    while(<INC>) {
+      if ($_ =~ /^\s*Versification\s*=\s*(.*)\s*$/) {$versification = $1;}
+      if ($versification ne "" && $versification ne "EASTERN") {$mpvfxsm = "2.13"; $xsmv = "2.10";}
+      if ($_ =~ s/^\s*(xulswordVersion\s*=\s*).*$/$1$xsmv/) {$hasXSMversion = "true";}
+      if ($_ =~ s/^\s*(minMKVersion\s*=\s*).*$/$1$mpvfxsm/) {$hasMinProgversionForXSM = "true"};
+      print TMP $_;
+    }
+    close(INC);
+    if ($hasXSMversion eq "false") {print TMP "\nxulswordVersion=$xsmv\n";}
+    if ($hasMinProgversionForXSM eq "false") {print TMP "minMKVersion=$mpvfxsm\n";}
+    close(TMP);
+    unlink(INC);
+    rename("$MKS/moduleDev/$dir/tmp.conf", "$MKS/moduleDev/$dir/mods.d/$conf");
+  }
+}
+
 sub processModuleGroup($@) {
-  $path = shift;
-  $listptr = shift;
+  my $path = shift;
+  my $listptr = shift;
   
   # Copy modules to installer location, handle indexes properly
-  $log = "$MKS\\moduleDev\\swordmk-mods\\Out_EncryptTexts.txt";
-  chdir("$MKS\\moduleDev\\swordmk-mods"); # so that mkfastmod will work!
   foreach $mod (@{$listptr}) {
-    $modlc = lc($mod);
+    my $modlc = lc($mod);
+    my $dir = "";
+    if (-e "$MKS\\moduleDev\\swordmk-mods\\mods.d\\$modlc.conf") {$dir = "swordmk-mods";}
+    elsif (-e "$MKS\\moduleDev\\sword-mods\\mods.d\\$modlc.conf") {$dir = "sword-mods";}
+    else {&logit("Could not locate module $mod for copying."); next;}
+    
+    $log = "$MKS\\moduleDev\\$dir\\Out_EncryptTexts.txt";
+    chdir("$MKS\\moduleDev\\$dir"); # so that mkfastmod will work!
+  
     if ($IncludeIndexes eq "true") {
       print "Creating search index in $path for $mod...\n";
       &logit("Creating search index in $path for $mod...\n");
-      if (-e "$MKS\\moduleDev\\swordmk-mods\\modules\\$path\\$modlc\\lucene") {`rmdir /Q /S \"$MKS\\moduleDev\\swordmk-mods\\modules\\$path\\$modlc\\lucene\"`;}
+      if (-e "$MKS\\moduleDev\\$dir\\modules\\$path\\$modlc\\lucene") {`rmdir /Q /S \"$MKS\\moduleDev\\$dir\\modules\\$path\\$modlc\\lucene\"`;}
       $mykey="";
-      open(INF, "<$MKS\\moduleDev\\swordmk-mods\\keys.txt") || die "Could not open $MKS\\moduleDev\\swordmk-mods\\keys.txt\n";
+      open(INF, "<$MKS\\moduleDev\\$dir\\keys.txt") || die "Could not open $MKS\\moduleDev\\$dir\\keys.txt\n";
       while(<INF>) {if ($_ =~ /^(.*):$mod$/) {$mykey = $1;}}
       close(INF);
-      if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\swordmk-mods\\mods.d\\$modlc.conf", $mykey);}
+      if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf", $mykey, $dir);}
       `\"$MK\\Cpp\\swordMK\\utilities\\bin\\mkfastmod.exe\" $mod >> \"$log\"`;
-      if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\swordmk-mods\\mods.d\\$modlc.conf", "");}
+      if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf", "", $dir);}
     }
-    `copy \"$MKS\\moduleDev\\swordmk-mods\\mods.d\\$modlc.conf\" \"$MK\\xulrunner\\mods.d\"`;
-    `xcopy \"$MKS\\moduleDev\\swordmk-mods\\modules\\$path\\$modlc\" \"$MK\\xulrunner\\modules\\$path\\$modlc\" /S /Y /I`;
+    `copy \"$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf\" \"$MK\\xulrunner\\mods.d\"`;
+    `xcopy \"$MKS\\moduleDev\\$dir\\modules\\$path\\$modlc\" \"$MK\\xulrunner\\modules\\$path\\$modlc\" /S /Y /I`;
 
     if ($IncludeIndexes ne "true" && -e "$MK\\xulrunner\\modules\\$path\\$modlc\\lucene") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\$path\\$modlc\\lucene\"`;}
   }
@@ -174,10 +189,11 @@ sub processModuleGroup($@) {
   }
 }
 
-sub setCipher($$) {
+sub setCipher($$$) {
   my $c = shift;
   my $k = shift;
-  open(TMP, ">$MKS\\moduleDev\\swordmk-mods\\tmp.xml") || die "Could not open $MKS\\moduleDev\\swordmk-mods\\tmp.xml\n";
+  my $d = shift;
+  open(TMP, ">$MKS\\moduleDev\\$d\\tmp.xml") || die "Could not open $MKS\\moduleDev\\$d\\tmp.xml\n";
   open(CONF, "<$c") || die "Could not open $c\n";
   $haskey = "false";
   while(<CONF>) {
@@ -188,7 +204,7 @@ sub setCipher($$) {
   close(CONF);
   close(TMP);
   unlink($c);
-  rename ("$MKS\\moduleDev\\swordmk-mods\\tmp.xml", $c);
+  rename ("$MKS\\moduleDev\\$d\\tmp.xml", $c);
 }
 
 sub logit($) {

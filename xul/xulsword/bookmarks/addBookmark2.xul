@@ -46,6 +46,8 @@
 %bookmarksDTD;
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
 %xulswordDTD;
+<!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd" >
+%globalDTD;
 ]>
 
 <dialog id="addBookmarkDialog"
@@ -124,7 +126,7 @@
   <separator class="thin"/>
 
   <bookmarks-tree id="folder-tree" flex="1" type="folders" collapsed="true"
-                  seltype="single" persist="height" rows="6"
+                  seltype="single" persist="height" rows="6" chromedir="&locale.dir;"
                   onselect="selectTreeFolder();"/>
 
 <!-- TOOLTIPS DEFINED HERE !-->

@@ -254,7 +254,7 @@ function chooserMouseHandler(e) {
     Bible.setBiblesReference(refBible, Book[newbk].sName + "." + newch + "." + verse);
     
     //Update everything
-    MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedWindows(),true,false);
+    MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, HILIGHTNONE);
     MainWindow.updateLocators(false); 
   }
   else {jsdump("WARNING: chooserMouseHandler, Unhandled event type: " + e.type + "\n");}

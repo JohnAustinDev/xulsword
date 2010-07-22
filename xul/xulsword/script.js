@@ -68,18 +68,13 @@ var MarginLeftOfScriptBox;
 var BoundaryBarGap;
 var EffectiveWinH;
 var PreviousT;
-var FrameIsPinned;
-var ScriptBoxPinElement;
-var BookOfFrame;
-var ChapterOfFrame;
-var VerseOfFrame;
-var MyFrameNumber;
 var PinnedAndLinked;
-var FrameTextDirectionIsRtoL;
 var MinScriptHeight;
 var MinScriptWidth;
 var LastVersion;
 var MyFootnotes;
+var Win = {number:null, modName:null, modType:null, isRTL:null, isLinkedToRight:null};
+var Pin = {number:null, shortName:null, chapter:null, verse:null, isPinned:null, elem:null, updatePin:null, updateLink:null};
 
 /************************************************************************
  * Initialization after HTML has loaded
@@ -100,7 +95,6 @@ function initializeScript() {
   BoundaryBarShadowElement  = document.getElementById("boundaryHi");
   NoteBoxSizerElement       = document.getElementById("nbsizer");
   LanguageTabsElement       = document.getElementById("langTabs");
-  ScriptBoxPinElement       = document.getElementById("pin");
   
 //********************************
 //*
@@ -138,12 +132,28 @@ function initializeScript() {
   BoundaryClicked=false;
   NoteBoxEmpty = true;
   BoundaryBarGap = 10 + 1 + 4 + 1 + 10 + 2 + 2 + 10 + 6; //Only the 6 is unaccounted for
-  FrameIsPinned=false;
-  MyFrameNumber = Number(Frame.id.substr(5,1));
-  PinnedAndLinked=0;
-  FrameTextDirectionIsRtoL=false;  
-  FootnoteWinH = prefs.getIntPref("NoteboxHeight" + MyFrameNumber);
+  Win.number = Number(Frame.id.substr(5,1));
+  FootnoteWinH = prefs.getIntPref("NoteboxHeight" + Win.number);
   LastVersion="";
+
+  Pin.number = Win.number;
+  Pin.isPinned = false;
+  Pin.elem = document.getElementById("pin");
+  Pin.updateLink = function() {
+    if (!MainWindow.Link.win[this.number]) return;
+    var ud = ["shortName", "chapter", "verse"];
+    for (var u=0; u<ud.length; u++) {
+      for (var w=1; w<=3; w++) {
+        if (!MainWindow.Link.win[w] || w==this.number) continue;
+        MainWindow.FrameDocument[w].defaultView.Pin[ud[u]] = this[ud[u]];
+      }
+    }
+  }
+  Pin.updatePin = function(book, chapter, verse) {
+    this.shortName = book;
+    this.chapter = chapter;
+    this.verse = verse;
+  }
 
   adjustFontSizes(0, prefs.getIntPref('FontSize'));
 
@@ -157,24 +167,26 @@ function initializeScript() {
   
   BMDS = initBMServices(); 
   // Add mouse wheel lister to chooser
-  if (Frame.id == "bible1Frame") {
+  if (Win.number == 1) {
     for (var b=0; b<NumBooks; b++) {
       document.getElementById("book." + String(b)).addEventListener("DOMMouseScroll",wheel,false);
     }
     document.getElementById("chooserNT").addEventListener("DOMMouseScroll",wheel,false);
     document.getElementById("chooserOT").addEventListener("DOMMouseScroll",wheel,false);
   }
+  // Add mouse wheel listener to scriptbox
+  ScriptBoxElement.addEventListener("DOMMouseScroll",scrollwheel,false);
    
   // Initialize size of Chooser and Frames. NOTE: During initialization, prefs 
   // are used to read window height and width. This allows us to completely build 
   // the frames and chooser before the main window opens, allowing the main 
   // window to open already sized (no flashing while frames resize again).
   // updateVersionTabs must be run before setBibleWidth.
-  if (Frame.id == "bible1Frame") {
+  if (Win.number == 1) {
     initChooser(true); //true -> initializing
     MainWindow.updateVersionTabs(true); //true => initializing  
   }
-  if (MyFrameNumber <= prefs.getIntPref("NumDisplayedWindows")) {
+  if (Win.number <= prefs.getIntPref("NumDisplayedWindows")) {
     setBibleWidth(true);  //true -> initializing
     setBibleHeight(true); //true -> initializing
     Frame.style.visibility="visible";
@@ -186,25 +198,24 @@ function initializeScript() {
  * Script Box
  ***********************************************************************/
 
-function updateScriptBox(highlightVerse, showIntroduction, scrollToSelectedVerse, scrollTypeFlag) {
-//jsdump("Updating:" + MyFrameNumber + "\n");
-  if (MyFrameNumber > prefs.getIntPref("NumDisplayedWindows")) return;
-  var myVersion = prefs.getCharPref("Version" + String(MyFrameNumber));
+function updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction) {
+//jsdump("Updating:" + Win.number + "\n");
+  if (Win.number > prefs.getIntPref("NumDisplayedWindows")) return;
   
   var versionHasChanged=false;
-  if (LastVersion != myVersion) {
+  if (LastVersion != Win.modName) {
     versionHasChanged=true;
-    ScriptBoxTextElement.className = "scriptboxtext vstyle" + myVersion;
-    NoteBoxElement.className = "notebox vstyle" + myVersion;
-    PopupElement.className = "npopup vstyle" + myVersion;
-    if (MyFrameNumber == 1) updateCSSBasedOnVersion(myVersion, [".chapsubtable", ".hpopup"]);
-    LastVersion = myVersion;
+    ScriptBoxTextElement.className = "scriptboxtext vstyle" + Win.modName;
+    NoteBoxElement.className = "notebox vstyle" + Win.modName;
+    PopupElement.className = "npopup vstyle" + Win.modName;
+    if (Win.number == 1) updateCSSBasedOnVersion(Win.modName, [".chapsubtable", ".hpopup"]);
+    LastVersion = Win.modName;
   }
   
-  switch (getModuleLongType(myVersion)) {
+  switch (Win.modType) {
   case BIBLE:
   case COMMENTARY:
-    updateBibleOrCommentary(highlightVerse, showIntroduction, scrollToSelectedVerse, scrollTypeFlag);
+    updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction);
     break;
   case DICTIONARY:
     FrameDocumentHavingNoteBox = window.document;
@@ -228,84 +239,73 @@ function updateScriptBox(highlightVerse, showIntroduction, scrollToSelectedVerse
     updateGenBook(showIntroduction);
     break;
   default:
-    jsdump("Tried to update unsupported module type:" + getModuleLongType(myVersion) + " (updateScriptBox)\n");
+    jsdump("Tried to update unsupported module type:" + Win.modType + " (updateScriptBox)\n");
     break;
   }
   closePopup(); // Needed so that popup closes even if context menu was open
 }
 
-function updateBibleOrCommentary(highlightVerse, showIntroduction, scrollToSelectedVerse, scrollTypeFlag) {
+function updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction) {
   var savedLocation;
-  var myVersion = prefs.getCharPref("Version" + String(MyFrameNumber));
   
-  if (FrameIsPinned) {
+  if (Pin.isPinned) {
     // Global location is saved and replaced at end of this routine. This means that
     // OTHER BIBLES SHOULD NOT BE ACCESSED WHILE THIS ROUTINE IS EXECUTING OR THEIR LOCATION
     // WILL BE INCORRECT
-    savedLocation = Bible.getLocation(myVersion);
-    Bible.setBiblesReference(myVersion, BookOfFrame + "." + ChapterOfFrame + "." + VerseOfFrame);
+    savedLocation = Bible.getLocation(Win.modName);
+    Bible.setBiblesReference(Win.modName, Pin.shortName + "." + Pin.chapter + "." + Pin.verse);
   }
   else {
-    BookOfFrame = Bible.getBookName();
-    ChapterOfFrame = Bible.getChapterNumber(myVersion);
-    VerseOfFrame = 1;
+    Pin.shortName = Bible.getBookName();
+    Pin.chapter = Bible.getChapterNumber(Win.modName);
+    Pin.verse = Bible.getVerseNumber(Win.modName);
   }
-  if (highlightVerse && !FrameIsPinned && getModuleLongType(myVersion)==BIBLE) {SelectedVerseCSS.style.color=SelectedVerseColor;}
+  if (highlightFlag &&
+      (highlightFlag==HILIGHTVERSE || (highlightFlag==HILIGHT_IFNOTV1 && Bible.getVerseNumber(Win.modName)!=1)) &&
+      !Pin.isPinned &&
+      Win.modType==BIBLE) {SelectedVerseCSS.style.color=SelectedVerseColor;}
   else {SelectedVerseCSS.style.color=ScriptBoxFontColor;}
-  if (MyFrameNumber==1 || !MainWindow.isLinkedToNextFrame(MyFrameNumber-1)) {
-    //Start collecting ScriptBox text...
-
-    var numberToWrite = 1;
-    var checkFrame = MyFrameNumber;
-    var showIntroForThisLink = (showIntroduction && showIntroduction==checkFrame);
-    while (MainWindow.isLinkedToNextFrame(checkFrame)) {
-      numberToWrite++;
-      checkFrame++;
-      showIntroForThisLink |= (showIntroduction && showIntroduction==checkFrame);
+  
+  if (!MainWindow.Link.win[Win.number] || Win.number == MainWindow.Link.leftWin) {
+    if (!MainWindow.Link.win[Win.number]) {
+      var showIntroForThisLink = ((showIntroduction && showIntroduction==Win.number) ? true:false);
     }
-    MainWindow.writeToScriptBoxes(MyFrameNumber, numberToWrite, (Bible.getModuleInformation(myVersion, "Direction").search("RtoL","i")!=-1), showIntroForThisLink, scrollToSelectedVerse, scrollTypeFlag);
+    else {
+      showIntroForThisLink = ((showIntroduction && (showIntroduction>=MainWindow.Link.leftWin && showIntroduction<=MainWindow.Link.rightWin)) ? true:false);
+    }
+    MainWindow.writeToScriptBoxes(Win, Pin.isPinned, showIntroForThisLink, scrollTypeFlag);
   }
-  if (FrameIsPinned) {
-    Bible.setBiblesReference(myVersion, savedLocation);
+  if (Pin.isPinned) {
+    Bible.setBiblesReference(Win.modName, savedLocation);
   }
 }
 
 function updateGenBook(showIntroduction) {
-  if (MyFrameNumber==1 || !MainWindow.isLinkedToNextFrame(MyFrameNumber-1)) {
-    var numberToWrite = 1;
-    var checkFrame = MyFrameNumber;
-    var showIntroForThisLink = (showIntroduction && showIntroduction==checkFrame);
-    while (MainWindow.isLinkedToNextFrame(checkFrame)) {
-      numberToWrite++;
-      checkFrame++;
-      showIntroForThisLink |= (showIntroduction && showIntroduction==checkFrame);
-    }
-    MainWindow.writeToScriptBoxes(MyFrameNumber, numberToWrite, (Bible.getModuleInformation(prefs.getCharPref("Version" + MyFrameNumber), "Direction").search("RtoL","i")!=-1), showIntroForThisLink, false);
-  }
+  var showIntroForThisLink = (showIntroduction && showIntroduction==Win.number);
+  MainWindow.writeToScriptBoxes(Win, Pin.isPinned, showIntroForThisLink, SCROLLTYPENONE);
 }
 
 var DictionaryList;
 var LangSortSkipChars;
 function writeDictionaryList(refreshKeys) {
-  var myModule = prefs.getCharPref("Version" + String(MyFrameNumber));
   if (refreshKeys) {
-    DictionaryList = Bible.getAllDictionaryKeys(myModule).split("<nx>");
+    DictionaryList = Bible.getAllDictionaryKeys(Win.modName).split("<nx>");
     if (!DictionaryList) return false;
     DictionaryList.pop();
-    SortOrder = Bible.getModuleInformation(myModule, "LangSortOrder");
+    SortOrder = Bible.getModuleInformation(Win.modName, "LangSortOrder");
     if (SortOrder != NOTFOUND) {
       SortOrder += "0123456789";
-      LangSortSkipChars = Bible.getModuleInformation(myModule, "LangSortSkipChars");
+      LangSortSkipChars = Bible.getModuleInformation(Win.modName, "LangSortSkipChars");
       if (LangSortSkipChars==NOTFOUND) LangSortSkipChars="";
       DictionaryList.sort(DictSort);
     }
   }
   
   var nbHTML = "";
-  if (!MainWindow.ScriptBoxIsEmpty[MyFrameNumber]) {
+  if (!MainWindow.ScriptBoxIsEmpty[Win.number]) {
     nbHTML += "<div style=\"position:relative; height:100%;\">"
     nbHTML += "<div id=\"textboxparent\" style=\"position:absolute; margin-right:20px; -moz-padding-start:20px; left:0px; right:0px; top:0px; height:3em;\">";
-    nbHTML += "<input id=\"keytextbox\" name=\"keytextbox\" class=\"vstyle" + myModule + "\" onfocus=\"this.select()\" ondblclick=\"this.select()\" onkeypress=\"dictionaryKeyPress(event)\" style=\"width:100%; margin-top:1em;\"/>";
+    nbHTML += "<input id=\"keytextbox\" name=\"keytextbox\" class=\"vstyle" + Win.modName + "\" onfocus=\"this.select()\" ondblclick=\"this.select()\" onkeypress=\"dictionaryKeyPress(event)\" style=\"width:100%; margin-top:1em;\"/>";
     nbHTML += "</div>";
     nbHTML += "<div id=\"keylist\" onclick=\"selKey(event.target.id)\" class=\"dictionarylist\">";
     for (var e=0; e<DictionaryList.length; e++) {
@@ -315,7 +315,7 @@ function writeDictionaryList(refreshKeys) {
   }
   NoteBoxElement.innerHTML = nbHTML;
   NoteBoxEmpty = false;
-  prefs.setBoolPref("MaximizeNoteBox" + String(MyFrameNumber),false);
+  prefs.setBoolPref("MaximizeNoteBox" + String(Win.number),false);
   return true;
 }
 
@@ -358,26 +358,25 @@ function dictionaryKeyPressR(charCode) {
   }
   else {
     textbox.style.color="";
-    setUnicodePref("ShowingKey" + prefs.getCharPref("Version" + String(MyFrameNumber)), firstMatch[2]);
+    setUnicodePref("ShowingKey" + prefs.getCharPref("Version" + String(Win.number)), firstMatch[2]);
     updateDictionary(charCode!=13);
   }
 }
 
 var SelectedKey;
 function updateDictionary(dontUpdateText) {
-  var myModule = prefs.getCharPref("Version" + String(MyFrameNumber));
   if (!dontUpdateText) {
     var defKey = DictionaryList[0];
     for (var k=1; k<DictionaryList.length; k++) {if (!defKey) {defKey=DictionaryList[k];} else break;}
-    var mychap = getPrefOrCreate("ShowingKey" + myModule, "Unicode", defKey);
+    var mychap = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", defKey);
     if (!mychap) mychap = defKey; //since pref may have previously been set to ""!
     if (mychap == "DailyDevotionToday") {
       var today = new Date();
       mychap = (today.getMonth()<9 ? "0":"") + String(today.getMonth()+1) + "." + (today.getDate()<10 ? "0":"") + today.getDate();
-      prefs.setCharPref("ShowingKey" + myModule, mychap);
+      prefs.setCharPref("ShowingKey" + Win.modName, mychap);
     }
-    var entryHTML = MainWindow.getDictionaryHTML(mychap, myModule);
-    entryHTML = insertUserNotes("na", mychap, myModule, entryHTML).html;
+    var entryHTML = MainWindow.getDictionaryHTML(mychap, Win.modName);
+    entryHTML = insertUserNotes("na", mychap, Win.modName, entryHTML).html;
     var sbHTML = "";
     sbHTML += "<div style='display:table; height:100%; width:100%;'>";
     sbHTML += "<div style='display:table-row; height:1em;'>";
@@ -388,7 +387,7 @@ function updateDictionary(dontUpdateText) {
   }
   
   if (SelectedKey) {try {document.getElementById(SelectedKey).className="";} catch (er) {}}
-  SelectedKey = getUnicodePref("ShowingKey" + myModule);
+  SelectedKey = getUnicodePref("ShowingKey" + Win.modName);
   if (SelectedKey) {
     var keyElement = document.getElementById(SelectedKey);
     if (keyElement) keyElement.className="selectedkey";
@@ -399,6 +398,7 @@ function updateDictionary(dontUpdateText) {
 }
 
 function updateDictionaryTimeout (dontUpdateText) {
+  scrollScriptBox(SCROLLTYPETOP);
   if (!dontUpdateText) {
     var textbox = document.getElementById("keytextbox");
     if (textbox) {
@@ -414,7 +414,7 @@ function updateDictionaryTimeout (dontUpdateText) {
 
 function selKey(aKey) {
   if (aKey == "keylist") return;
-  setUnicodePref("ShowingKey" + prefs.getCharPref("Version" + String(MyFrameNumber)), aKey);
+  setUnicodePref("ShowingKey" + prefs.getCharPref("Version" + String(Win.number)), aKey);
   updateDictionary();
   window.setTimeout("document.getElementById('keytextbox').focus()", 0);
 }
@@ -425,10 +425,10 @@ function getPageLinks() {
   var charPrev = (config.direction && config.direction == "rtl" ? String.fromCharCode(8594):String.fromCharCode(8592));
   charNext = "<span style=\"font-family:ariel;\">" + charNext + "</span>"; // Because 'UKIJ Tuz Basma' improperly implements this char!
   charPrev = "<span style=\"font-family:ariel;\">" + charPrev + "</span>"; // Because 'UKIJ Tuz Basma' improperly implements this char!
-  var mytype = getModuleLongType(prefs.getCharPref("Version" + MyFrameNumber));
-  
-  var prevDisabled = false; //mytype==BIBLE && ChapterOfFrame==1 && BookOfFrame=="Gen";
-  var nextDisabled = false; //mytype==BIBLE && ChapterOfFrame==22 && BookOfFrame=="Rev";
+
+  //var mytype = getModuleLongType(prefs.getCharPref("Version" + Win.number));
+  var prevDisabled = false; //mytype==BIBLE && Pin.chapter==1 && Pin.shortName=="Gen";
+  var nextDisabled = false; //mytype==BIBLE && Pin.chapter==22 && Pin.shortName=="Rev";
   
   var chapterNavigationLink = "<div  class=\"navlink vstyleProgram\">";
   if (prevDisabled) {
@@ -445,7 +445,7 @@ function getPageLinks() {
 }
 
 function getChapterWithNotes(fn, chapOffset) {
-  var vers = prefs.getCharPref("Version" + MyFrameNumber);
+  var vers = prefs.getCharPref("Version" + Win.number);
   if (!chapOffset) chapOffset = 0;
   switch (getModuleLongType(vers)) {
   case BIBLE:
@@ -482,20 +482,56 @@ function markUserNoteVerse(id) {
   if (userNoteElement) userNoteElement.className += " unverse";
 }
 
-//This routine will scroll this Frame to the selected verse
-function scrollScriptBox(elemID, scrollToTop) {
-  if (MyFrameNumber <= prefs.getIntPref("NumDisplayedWindows")) {
-    if (scrollToTop) {
-      ScriptBoxTextElement.scrollTop = 0;
-      return;
+//This routine will scroll this window accordingly. NOTE: This routine is only
+//needed for unlinked windows, link scrolling is handled by "writeToScriptBoxes"
+function scrollScriptBox(scrollTypeFlag, elemID) {
+  if (Win.number > prefs.getIntPref("NumDisplayedWindows")) return;
+  if (MainWindow.Link.win[Win.number]) return;
+  if (!scrollTypeFlag) return;
+  if (!elemID && Pin.isPinned) elemID = "vs." + Pin.shortName + "." + Pin.chapter + "." + Pin.verse;
+  var intid = "";
+  if (!elemID) {
+    if (!prefs.getBoolPref("ShowOriginal" + Win.number))
+      elemID = "vs." + Bible.getBookName() + "." + Bible.getChapterNumber(Win.modName) + "." + Bible.getVerseNumber(Win.modName);
+    else {
+      intid = ".1";
+      elemID = "vs." + Bible.getBookName() + "." + Bible.getChapterNumber(Win.modName) + "." + Bible.getVerseNumber(Win.modName) + intid;
     }
-    var elem = document.getElementById(elemID);
-    if (!elem) return
-    var boxOffsetHeight = ScriptBoxTextElement.offsetHeight;
-    var verseOffsetTop = elem.offsetTop;
-    var verseOffsetHeight = elem.offsetHeight;
-    var boxScrollTop = ScriptBoxTextElement.scrollTop;
-    //dump(MyFrameNumber + " boxOffsetHeight:" + boxOffsetHeight + " boxScrollTop:" + boxScrollTop + " verseOffsetHeight:" + verseOffsetHeight + " verseOffsetTop:" + verseOffsetTop + "\n");
+  }
+  var elem = document.getElementById(elemID);
+  if (!elem) {
+    // verse may be missing, try looking for a previous verse
+    var re = new RegExp("vs\\.([^\\.]+)\\.(\\d+)\\.(\\d+)");
+    var id = elemID.match(re);
+    if (!id) return;
+    var v = Number(id[3]);
+    while (!elem && v > 1) {
+      v--;
+      elem = document.getElementById("vs." + id[1] + "." + id[2] + "." + v + intid);
+    }
+    if (!elem) return;
+  }
+  // if this is verse 1, then SCROLLTYPEBEG and SCROLLTYPECENTER both become SCROLLTYPETOP
+  var v = elem.id.split(".");
+  if (v && v.length && v.length>=4) v = v[3];
+  else v="";
+//jsdump("win:"+ Win.number + ", scrollTypeFlag:" + scrollTypeFlag + ", elemID:" + elem.id + ", v:" + v);
+  if (scrollTypeFlag == SCROLLTYPETOP ||
+      (v && v==1 && (scrollTypeFlag==SCROLLTYPEBEG || scrollTypeFlag==SCROLLTYPECENTER))) {
+    ScriptBoxTextElement.scrollTop = 0;
+    return;
+  }
+
+  var boxOffsetHeight = ScriptBoxTextElement.offsetHeight;
+  var verseOffsetTop = elem.offsetTop;
+  var verseOffsetHeight = elem.offsetHeight;
+  var boxScrollTop = ScriptBoxTextElement.scrollTop;
+  switch (scrollTypeFlag) {
+  case SCROLLTYPEBEG:
+    ScriptBoxTextElement.scrollTop = verseOffsetTop - 20;
+    break;
+  case SCROLLTYPECENTER:
+    //dump(Win.number + " boxOffsetHeight:" + boxOffsetHeight + " boxScrollTop:" + boxScrollTop + " verseOffsetHeight:" + verseOffsetHeight + " verseOffsetTop:" + verseOffsetTop + "\n");
     // Dont scroll if the verse is already completely visible
     if ((verseOffsetTop + verseOffsetHeight > boxScrollTop + boxOffsetHeight)||(verseOffsetTop < boxScrollTop)) {
       //Put the middle of the verse in the middle of the ScriptBox
@@ -504,6 +540,10 @@ function scrollScriptBox(elemID, scrollToTop) {
       if (verseOffsetTop < middle) {ScriptBoxTextElement.scrollTop = verseOffsetTop;}
       else {ScriptBoxTextElement.scrollTop = middle;}
     }
+    break;
+  case SCROLLTYPEEND:
+    ScriptBoxTextElement.scrollTop = verseOffsetTop + verseOffsetHeight - boxOffsetHeight;
+    break;
   }
 }
 
@@ -584,7 +624,7 @@ function scriptboxMouseOver(e) {
     // See if interlinear display and if so process...
     var aVerse = elem;
     while (aVerse.parentNode && (!aVerse.parentNode.className || aVerse.parentNode.className!="interB" && aVerse.parentNode.className!="hl")) {aVerse = aVerse.parentNode;}
-    var isShowingOrig = (prefs.getBoolPref("ShowOriginal" + MyFrameNumber) && aVerse.parentNode);
+    var isShowingOrig = (prefs.getBoolPref("ShowOriginal" + Win.number) && aVerse.parentNode);
     if (prefs.getCharPref("Strong's Numbers")=="On")
         activatePopup("sn", elem.innerHTML.replace(/<.*?>/g, "") + "]-[" + elem.title, POPUPDELAY, (isShowingOrig ? aVerse.parentNode.offsetHeight+10:40));
     if (isShowingOrig) {
@@ -611,7 +651,7 @@ function scriptboxMouseOver(e) {
     break;
             
   case "un":
-    if (prefs.getBoolPref("ShowUserNotesAtBottom") && getModuleLongType(prefs.getCharPref("Version" + MyFrameNumber))!=DICTIONARY) {
+    if (prefs.getBoolPref("ShowUserNotesAtBottom") && (Win.modType==BIBLE || Win.modType==COMMENTARY)) {
       HaveLeftTarget=false;
       ImmediateUnhighlight=false;
       scroll2Note("ntr." + elem.id);
@@ -635,10 +675,8 @@ function scriptboxMouseOver(e) {
 }
 
 function scriptboxClick(e) {
-  var myModule = prefs.getCharPref("Version" + String(MyFrameNumber));
-  var myType = getModuleLongType(myModule);
-  if (myType==GENBOOK) {
-    var key = getPrefOrCreate("ShowingKey" + myModule, "Unicode", "");
+  if (Win.modType==GENBOOK) {
+    var key = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
     if (!MainWindow.isSelectedGenBook(key)) {
       MainWindow.openGenBookKey(key);
       MainWindow.selectGenBook(key);
@@ -670,76 +708,46 @@ function scriptboxClick(e) {
     break;
     
   case "prevchaplink":
-    switch (myType) {
+    switch (Win.modType) {
     case BIBLE:
     case COMMENTARY:
-      var pin = {shortName:BookOfFrame, chapter:ChapterOfFrame, verse:1, version:prefs.getCharPref("Version" + MyFrameNumber)};
-      if (FrameIsPinned) {
-        if (pageIsLinked()) MainWindow.previousPage(false, pin);
-        else MainWindow.previousChapter(false, pin);
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.BookOfFrame = pin.shortName;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.ChapterOfFrame = pin.chapter;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.VerseOfFrame = pin.verse;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.BookOfFrame = pin.shortName;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.ChapterOfFrame = pin.chapter;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.VerseOfFrame = pin.verse;
-        MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(MyFrameNumber),true,false,false,false,SCROLLTYPEEND);
-      }
-      else {
-        if (pageIsLinked()) MainWindow.previousPage(false);
-        else OwnerDocument.getElementById("cmd_xs_previousChapter").doCommand();
-      }
+      if (MainWindow.Link.win[Win.number]) MainWindow.previousPage(false, (Pin.isPinned ? Pin:null));
+      else MainWindow.previousChapter(false, (Pin.isPinned ? Pin:null));
       break;
     case DICTIONARY:
-      var myModule = prefs.getCharPref("Version" + String(MyFrameNumber));
-      var currentKey = getPrefOrCreate("ShowingKey" + myModule, "Unicode", "");
+      var currentKey = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
       for (var k=0; k<DictionaryList.length; k++) {if (DictionaryList[k]==currentKey) break;}
       k--;
       if (DictionaryList[k]) {
-        setUnicodePref("ShowingKey" + myModule, DictionaryList[k]);
+        setUnicodePref("ShowingKey" + Win.modName, DictionaryList[k]);
         updateDictionary();
       }
       break;
     case GENBOOK:
-      //MainWindow.selectGenBook(getUnicodePref("ShowingKey" + myModule));
+      //MainWindow.selectGenBook(getUnicodePref("ShowingKey" + Win.modName));
       MainWindow.bumpSelectedIndex(true);
       break;
     }
     break;
     
   case "nextchaplink":
-    pin = {shortName:BookOfFrame, chapter:ChapterOfFrame, verse:1, version:prefs.getCharPref("Version" + MyFrameNumber)};
-    switch (myType) {
+    switch (Win.modType) {
     case BIBLE:
     case COMMENTARY:
-      if (FrameIsPinned) {
-        if (pageIsLinked()) MainWindow.nextPage(false, pin);
-        else MainWindow.nextChapter(false, pin);
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.BookOfFrame = pin.shortName;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.ChapterOfFrame = pin.chapter;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber) + "Frame").contentDocument.defaultView.VerseOfFrame = pin.verse;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.BookOfFrame = pin.shortName;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.ChapterOfFrame = pin.chapter;
-        OwnerDocument.getElementById("bible" + String(MyFrameNumber-PinnedAndLinked) + "Frame").contentDocument.defaultView.VerseOfFrame = pin.verse;
-        MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(MyFrameNumber),true,false,false,false,SCROLLTYPEBEG);
-      }
-      else {
-        if (pageIsLinked()) MainWindow.nextPage(false);
-        else OwnerDocument.getElementById("cmd_xs_nextChapter").doCommand();
-      }
+      if (MainWindow.Link.win[Win.number]) MainWindow.nextPage(false, (Pin.isPinned ? Pin:null));
+      else MainWindow.nextChapter(false, (Pin.isPinned ? Pin:null));
       break;
     case DICTIONARY:
-      var myModule = prefs.getCharPref("Version" + String(MyFrameNumber));
-      var currentKey = getPrefOrCreate("ShowingKey" + myModule, "Unicode", "");
+      var currentKey = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
       for (var k=0; k<DictionaryList.length; k++) {if (DictionaryList[k]==currentKey) break;}
       k++;
       if (DictionaryList[k]) {
-        setUnicodePref("ShowingKey" + myModule, DictionaryList[k]);
+        setUnicodePref("ShowingKey" + Win.modName, DictionaryList[k]);
         updateDictionary();
       }
       break;
     case GENBOOK:
-      //MainWindow.selectGenBook(getUnicodePref("ShowingKey" + myModule));
+      //MainWindow.selectGenBook(getUnicodePref("ShowingKey" + Win.modName));
       MainWindow.bumpSelectedIndex(false);
       break;
     }
@@ -747,14 +755,14 @@ function scriptboxClick(e) {
     
   case "introlink":
     if (!getPrefOrCreate("ShowIntrosBeforeText", "Bool", false)) return;
-    var showIntro = elem.title=="hide" ? null:MyFrameNumber;
-    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(MyFrameNumber),false,false,false,showIntro);
+    var showIntro = elem.title=="hide" ? null:Win.number;
+    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number), SCROLLTYPETOP, HILIGHTNONE, showIntro);
     break;
     
   case "listenlink":
-    MainWindow.Player.version = prefs.getCharPref("Version" + MyFrameNumber);
+    MainWindow.Player.version = Win.modName;
     MainWindow.Player.chapter = Number(elem.id.split(".")[1]);
-    if (FrameIsPinned) MainWindow.Player.book = BookOfFrame;
+    if (Pin.isPinned) MainWindow.Player.book = Pin.shortName;
     else MainWindow.Player.book = Bible.getBookName();
 
     if (MainWindow.CheckPlayer) MainWindow.clearInterval(MainWindow.CheckPlayer);
@@ -763,14 +771,8 @@ function scriptboxClick(e) {
     break;
     
   case "pin":
-    var preChangeLinks = MainWindow.getLinkArray();
-    var updatesNeeded = MainWindow.setPinOfLink(MyFrameNumber, !FrameIsPinned);
-    var updatesNeeded2 = MainWindow.getUpdatesNeededArray(MyFrameNumber, preChangeLinks);
-    for (var w=1; w<=3; w++) {updatesNeeded[w] |= updatesNeeded2[w];}
-    MainWindow.updatePinVisibility();
-    MainWindow.updateVersionTabs();
-    MainWindow.updateFrameScriptBoxes(updatesNeeded, false, true);
-    MainWindow.updateLocators(false);
+    if (Pin.isPinned) unpinThis();
+    else pinThis();
     break;
     
   case "popupBackLink":
@@ -782,10 +784,52 @@ function scriptboxClick(e) {
   }
 }
 
-function pageIsLinked() {
-  var linked = MainWindow.isLinkedToNextFrame(MyFrameNumber);
-  if (MyFrameNumber > 1) linked |= MainWindow.isLinkedToNextFrame(MyFrameNumber-1);
-  return linked;
+function pinThis() {
+  Pin.isPinned = true;
+  var preChangeLink = MainWindow.copyLinkArray();
+  setFramePinStyle(true);
+  // window texts should not change when pinned
+  var loc = MainWindow.getPassageFromWindow(MainWindow.FIRSTPASSAGE, Pin.number);
+  if (loc) loc = loc.substring(0, loc.lastIndexOf(".")).split(".");
+  else loc = [Bible.getBookName(), Bible.getChapterNumber(Win.modName), Bible.getVerseNumber(Win.modName)];
+  Pin.updatePin(loc[0], loc[1], loc[2], false);
+  MainWindow.updateLinkInfo();
+  Pin.updateLink();
+  MainWindow.updatePinVisibility();
+  MainWindow.updateVersionTabs();
+  MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number, preChangeLink), SCROLLTYPEBEG, HILIGHTNONE);
+  MainWindow.updateLocators(false);
+}
+
+function unpinThis() {
+  Pin.isPinned = false;
+  var preChangeLink = MainWindow.copyLinkArray();
+  setFramePinStyle(false);
+  // make the unpinned win show what the pinned win show
+  var loc = MainWindow.getPassageFromWindow(MainWindow.FIRSTPASSAGE, Pin.number);
+  if (loc) loc = loc.substring(0, loc.lastIndexOf("."));
+  else loc = Pin.shortName + "." + Pin.chapter + "." + Pin.verse;
+  Bible.setBiblesReference(Win.modName, loc);
+  var p = loc.split(".");
+  Pin.updatePin(p[0], p[1], p[2], false);
+  MainWindow.updateLinkInfo();
+  Pin.updateLink();
+  MainWindow.updatePinVisibility();
+  MainWindow.updateVersionTabs();
+  var update = MainWindow.getUpdatesNeededArray(Win.number, preChangeLink);
+  var update2 = MainWindow.getUnpinnedVerseKeyWindows();
+  for (var w=1; w<=3; w++) {update[w] |= update2[w];}
+  MainWindow.updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE);
+  MainWindow.updateLocators(false);
+}
+
+function setFramePinStyle(isPinned) {
+  Pin.elem.src = isPinned ? "chrome://xulsword/skin/images/pushpin1.png":"chrome://xulsword/skin/images/pushpin0.png";
+  ScriptBoxTextElement.className = appendOrRemoveClass("scriptboxPinned", ScriptBoxTextElement, isPinned);
+  ScriptBoxElement.className = appendOrRemoveClass("scriptboxPinned", ScriptBoxElement, isPinned);
+  NoteBoxElement.className = appendOrRemoveClass("scriptboxPinnedNB", NoteBoxElement, isPinned);
+  ConnectorElement.className = isPinned ? "connector scriptboxPinnedCN":"connector";
+  BoundaryBarElement.className = isPinned ? "boundary scriptboxPinnedBB":"boundary";
 }
 
 function scriptboxDblClick(e) {
@@ -809,7 +853,7 @@ function scriptboxDblClick(e) {
     }
     targ = targ.parentNode;
   }
-  if (!myv) myv = prefs.getCharPref("Version" + String(MyFrameNumber));
+  if (!myv) myv = prefs.getCharPref("Version" + String(Win.number));
 
   if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
   setUnicodePref("SearchText",sel);
@@ -835,7 +879,7 @@ function scriptboxMouseOut(e) {
     break;
     
   case "pin":
-    e.target.src = (FrameIsPinned ? "chrome://xulsword/skin/images/pushpin1.png":"chrome://xulsword/skin/images/pushpin0.png");
+    e.target.src = (Pin.isPinned ? "chrome://xulsword/skin/images/pushpin1.png":"chrome://xulsword/skin/images/pushpin0.png");
     break;
   }
   var currentlyOver = e.relatedTarget;
@@ -854,7 +898,7 @@ function activatePopup(datatype, data, delay, yoffset) {
   
   var html = "";
   var hrule = "";
-  var fromMod = prefs.getCharPref("Version" + MyFrameNumber);
+  var fromMod = prefs.getCharPref("Version" + Win.number);
   var versionDirectionEntity = (VersionConfigs[fromMod] && VersionConfigs[fromMod].direction == "rtl" ? "&rlm;":"&lrm;");
   
   // If popup is already open, save the current popup in the "back" link of the new one...
@@ -877,7 +921,7 @@ function activatePopup(datatype, data, delay, yoffset) {
   //  Popup body text should appear in fromMod's style as inherited from ScriptBox
   
   // Get fromMod for scripture references, and style.
-  var fromMod = prefs.getCharPref("Version" + MyFrameNumber);
+  var fromMod = prefs.getCharPref("Version" + Win.number);
   var scripRefLinkStyle = "vstyleProgram";
   
   switch (datatype) {
@@ -897,7 +941,7 @@ function activatePopup(datatype, data, delay, yoffset) {
       var reflist = chapRefs[i].split("<bg/>")[1];
       // if we've found the note which matches the id under the mouse pointer
       if (thisid == datatype + "." + data) {
-        html += getCRNoteHTML(fromMod, "pu", thisid, reflist, "<hr>", getPrefOrCreate("OpenCrossRefPopups", "Bool", true), MyFrameNumber);
+        html += getCRNoteHTML(fromMod, "pu", thisid, reflist, "<hr>", getPrefOrCreate("OpenCrossRefPopups", "Bool", true), Win.number);
         break;
       }
     }
@@ -977,7 +1021,7 @@ function activatePopup(datatype, data, delay, yoffset) {
 //jsdump(data[i]);
       reflist += data[i] + ";";
     }
-    html += getCRNoteHTML(fromMod, "pu", "cr." + cnt++ + ".Gen.1.1", reflist, "<hr>", getPrefOrCreate("OpenCrossRefPopups", "Bool", true), MyFrameNumber);
+    html += getCRNoteHTML(fromMod, "pu", "cr." + cnt++ + ".Gen.1.1", reflist, "<hr>", getPrefOrCreate("OpenCrossRefPopups", "Bool", true), Win.number);
     html += failhtml;
     if (html) html = "<div class=\"vstyle" + fromMod + "\">" + html + "</div>";
     break;
@@ -1026,7 +1070,7 @@ function activatePopup(datatype, data, delay, yoffset) {
     break;
     
   case "introlink":
-    html += getBookIntroduction(prefs.getCharPref("Version" + MyFrameNumber), Bible.getBookName(), Bible) + "<br><br>";
+    html += getBookIntroduction(prefs.getCharPref("Version" + Win.number), Bible.getBookName(), Bible) + "<br><br>";
     break;
     
   default:
@@ -1147,15 +1191,6 @@ function twistyButton(datatype, data, yoffset, dirEntity) {
   return html;
 }
 
-function setFramePinStyle(isPinned) {
-  ScriptBoxPinElement.src = isPinned ? "chrome://xulsword/skin/images/pushpin1.png":"chrome://xulsword/skin/images/pushpin0.png";
-  ScriptBoxTextElement.className = appendOrRemoveClass("scriptboxPinned", ScriptBoxTextElement, isPinned);
-  ScriptBoxElement.className = appendOrRemoveClass("scriptboxPinned", ScriptBoxElement, isPinned);
-  NoteBoxElement.className = appendOrRemoveClass("scriptboxPinnedNB", NoteBoxElement, isPinned);
-  ConnectorElement.className = isPinned ? "connector scriptboxPinnedCN":"connector";
-  BoundaryBarElement.className = isPinned ? "boundary scriptboxPinnedBB":"boundary";
-}
-
 function appendOrRemoveClass(className, element, append) {
   var myClass = element.className;
   if (!myClass) myClass = "";
@@ -1173,9 +1208,11 @@ function goToCrossReference(crTitle, noHighlight) {
   // Needed when chapter was clicked from chapmenu popup
   closePopup();
   Bible.setBiblesReference(t[1], t[2]);
-  MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedWindows(),true,!noHighlight);
+  MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, (noHighlight ? HILIGHTNONE:HILIGHT_IFNOTV1));
   MainWindow.updateLocators(false); 
 }
+
+function scrollwheel(event) {MainWindow.scrollwheel(event, Win.number);}
 
 function scroll2Note(id) {
 //jsdump("scrolling to:" + id + "\n");
@@ -1247,7 +1284,7 @@ function expandCrossRefs(noteid) {
   for (var i=0; i<chapRefs.length; i++) {
     var part = chapRefs[i].split("<bg/>");
     // if we've found the note which matches the id under the mouse pointer
-    if (part[0] == noteid) html = getCRNoteHTML(prefs.getCharPref("Version" + MyFrameNumber), "nb", noteid, part[1], "<br>", expand, MyFrameNumber);
+    if (part[0] == noteid) html = getCRNoteHTML(prefs.getCharPref("Version" + Win.number), "nb", noteid, part[1], "<br>", expand, Win.number);
   }
   FrameDocumentHavingNoteBox.getElementById("body." + noteid).innerHTML = html;
   return true;
@@ -1279,10 +1316,10 @@ function boundaryMouseDown(evt) {
   evt.preventDefault(); //So we don't select while we're dragging the boundary bar
   
   // If maximize is on, we must save maximized size and turn off maximize
-  if (prefs.getBoolPref("MaximizeNoteBox" + String(MyFrameNumber))) {
-    MainWindow.setNoteBoxSizer(MyFrameNumber, false);
+  if (prefs.getBoolPref("MaximizeNoteBox" + String(Win.number))) {
+    MainWindow.setNoteBoxSizer(Win.number, false);
     FootnoteWinH = EffectiveWinH - ScriptBoxMarginTop - BottomMargin - BoundaryBarGap;
-    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(MyFrameNumber),false,true);
+    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number), SCROLLTYPENONE, HILIGHT_IFNOTV1);
   }
   StartMouseY = evt.clientY;
   BoundaryBarShadowElement.style.top = String(evt.clientY) + "px";
@@ -1297,9 +1334,9 @@ function boundaryMouseUp(evt) {
     if (newWinH <= 2) {FootnoteWinH = 0;}
     else if (newWinH > ScriptBoxHeight - BoundaryBarGap) {FootnoteWinH = ScriptBoxHeight - BoundaryBarGap;}
     else FootnoteWinH = newWinH;
-    if      (Frame.id == "bible1Frame") {prefs.setIntPref("NoteboxHeight1",FootnoteWinH);}
-    else if (Frame.id == "bible2Frame") {prefs.setIntPref("NoteboxHeight2",FootnoteWinH);}
-    else if (Frame.id == "bible3Frame") {prefs.setIntPref("NoteboxHeight3",FootnoteWinH);}
+    if      (Win.number == 1) {prefs.setIntPref("NoteboxHeight1",FootnoteWinH);}
+    else if (Win.number == 2) {prefs.setIntPref("NoteboxHeight2",FootnoteWinH);}
+    else if (Win.number == 3) {prefs.setIntPref("NoteboxHeight3",FootnoteWinH);}
     setBibleHeight();
     BoundaryBarElement.style.visibility = "visible";
   }
@@ -1321,18 +1358,16 @@ function copyNotes2Notebox(bibleNotes, userNotes) {
   NoteBoxEmpty = true;
   if (!(gfn||gcr||gun)) {
     // If we aren't showing footnotes in box, then turn maximize off
-    prefs.setBoolPref("MaximizeNoteBox" + String(MyFrameNumber),false);
+    prefs.setBoolPref("MaximizeNoteBox" + String(Win.number),false);
     PreviousT = t;
     return;
   }
-  var myversion = prefs.getCharPref("Version" + MyFrameNumber);
   //  Get all notes for this chapter
-  var mytype = getModuleLongType(myversion);
   var allNotes="";
-  if (mytype==BIBLE || mytype==COMMENTARY || bibleNotes!=NOTFOUND) allNotes = bibleNotes;
+  if (Win.modType==BIBLE || Win.modType==COMMENTARY || bibleNotes!=NOTFOUND) allNotes = bibleNotes;
   if (userNotes!=NOTFOUND) allNotes += userNotes;
 
-  var html = getNotesHTML(allNotes, myversion, gfn, gcr, gun, false, MyFrameNumber);
+  var html = getNotesHTML(allNotes, Win.modName, gfn, gcr, gun, false, Win.number);
   if (html) NoteBoxEmpty = false;
   t += html
 
@@ -1367,28 +1402,28 @@ function noteboxClick(e) {
 //  case "body":
 //  case "ntr":
     var v = Number(idpart[4]);
-    var vers = prefs.getCharPref("Version" + MyFrameNumber);
+    var vers = prefs.getCharPref("Version" + Win.number);
     switch (getModuleLongType(vers)) {
     case BIBLE:
     case COMMENTARY:
       //OwnerDocument.getElementById("verse").value = v;
-      var updateNeeded = MainWindow.getUnpinnedWindows();
-      if (FrameIsPinned) {
+      var updateNeeded = MainWindow.getUnpinnedVerseKeyWindows();
+      if (Pin.isPinned) {
         Bible.setBiblesReference(vers, idpart[2] + "." + idpart[3] + "." + idpart[4]);
-        MainWindow.updateFrameScriptBoxes(updateNeeded,true,true);
+        MainWindow.updateFrameScriptBoxes(updateNeeded, SCROLLTYPECENTER, HILIGHT_IFNOTV1);
       }
-      else {MainWindow.selectVerse(vers, null, Number(idpart[3]), v, Number(idpart[5]), true);}
+      else {MainWindow.selectVerse(vers, null, Number(idpart[3]), v, Number(idpart[5]), HILIGHT_IFNOTV1);}
       MainWindow.updateLocators(false);
       break;
      case DICTIONARY:
      case GENBOOK:
-      scrollScriptBox("par." + v);
+      scrollScriptBox(SCROLLTYPECENTER, "par." + v);
       break;
     } 
     break;
   case "nbsizer":
-    MainWindow.setNoteBoxSizer(MyFrameNumber, !prefs.getBoolPref("MaximizeNoteBox" + String(MyFrameNumber)));
-    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(MyFrameNumber),true,true);
+    MainWindow.setNoteBoxSizer(Win.number, !prefs.getBoolPref("MaximizeNoteBox" + String(Win.number)));
+    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number), SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     break;
   }
 }
@@ -1406,14 +1441,31 @@ function placeTabs() {
     document.write("<input type=\"button\" class=\"tabs\" id=\"tab" + i + "\" value=\"" + TabLabel[i] + "\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\" onclick=\"tabHandler(event);\"></button>");
   }
   // "more tabs" tab is a pulldown to hold all tabs which don't fit
-  document.write("<select class=\"tabs\" id=\"seltab\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\" onclick=\"tabHandler(event);\" style=\"text-align:center; padding-top:2px;\" ></select>");
+  // seltab.button is needed to capture tab selection clicks without activating pulldown menu
+  document.write("<div style=\"position:relative; display:inline; border:1px solid transparent;\">"); // to stack two buttons...
+  document.write("<div id=\"seltab.tab\" onclick=\"tabHandler(event)\" style=\"position:absolute; top:-8px; height:22px;\"></div>");
+  document.write("<select class=\"tabs\" id=\"seltab.menu\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\" style=\"text-align:center; padding-top:2px;\" ></select>");
+  document.write("</div>");
+}
+
+function setSelTabDirection() {
+  var st = document.getElementById("seltab.tab");
+  var modName = tabLabel2ModuleName(st.nextSibling.value);
+  if (VersionConfigs[modName] && VersionConfigs[modName].direction == "rtl") {
+    st.style.left = "24px";
+    st.style.right = "4px";
+  }
+  else {
+    st.style.left = "4px";
+    st.style.right = "24px";
+  }
 }
 
 function tabHandler(e) {
   if (!MainWindow.openTabToolTip) return;
   var tabnum = null;
   try {
-    if (e.target.id == "seltab") tabnum = moduleName2TabIndex(tabLabel2ModuleName(e.target.value));
+    if (e.target.id == "seltab.tab") tabnum = moduleName2TabIndex(tabLabel2ModuleName(e.target.nextSibling.value));
     else if (e.target.id.substr(0,6)=="seltab") tabnum = e.target.id.substr(6);
     else tabnum = e.target.id.substr(3);
   }
@@ -1421,24 +1473,29 @@ function tabHandler(e) {
   if (tabnum===null || tabnum===undefined) return;
   switch (e.type) {
   case "mouseover":
-    MainWindow.openTabToolTip(tabnum, MyFrameNumber, e.clientX, e.clientY);
+    MainWindow.openTabToolTip(tabnum, Win.number, e.clientX, e.clientY);
     break;
   case "mouseout":
     MainWindow.closeTabToolTip();
     break;
   case "click":
     MainWindow.closeTabToolTip();
-    if (e.target.className.search("tabDisabled")!=-1 || FrameIsPinned) {
+    if (e.target.className.search("tabDisabled")!=-1 || Pin.isPinned) {
       if (e.target.id.substr(0,6)=="seltab") MainWindow.updateVersionTabs();
       return;
     }
-    var preChangeLinkArray = MainWindow.getLinkArray();
-    MainWindow.setVersionTo(MyFrameNumber, TabVers[tabnum]);
+    var preChangeLinkArray = MainWindow.copyLinkArray();
+    MainWindow.setVersionTo(Win.number, TabVers[tabnum]);
     MainWindow.updateLocators(false);
     if (MainWindow.UpdateTabs) window.clearTimeout(MainWindow.UpdateTabs);
-    var updatesNeeded = MainWindow.getUpdatesNeededArray(MyFrameNumber, preChangeLinkArray);
-    MainWindow.UpdateTabs = window.setTimeout("{MainWindow.updatePinVisibility(); MainWindow.updateVersionTabs(); MainWindow.updateFrameScriptBoxes([" + updatesNeeded + "],true,true);}",0);
-    break;
+    var updatesNeeded = MainWindow.getUpdatesNeededArray(Win.number, preChangeLinkArray);
+    MainWindow.UpdateTabs = window.setTimeout("{MainWindow.updatePinVisibility(); MainWindow.updateVersionTabs(); MainWindow.updateFrameScriptBoxes([" + updatesNeeded + "]," + SCROLLTYPECENTER + "," + HILIGHT_IFNOTV1 + ");}",0);
+    if (e.target.id) {
+      var blur = null;
+      if (e.target.id.substr(0,6)=="seltab") blur = "seltab.menu";
+      else blur = e.target.id;
+      window.setTimeout("document.getElementById('" + blur + "').blur();", 0);
+    }    break;
   }
 }
 
@@ -1455,7 +1512,7 @@ function setFontSize(className,sz) {
 function resizeBibles(dontChangeContents, hideNoteBox) {
   if (!dontChangeContents) ScriptBoxTextElement.innerHTML="";
   if ((window.frameElement.id=="bible1Frame")&&prefs.getBoolPref("ShowChooser")) {placeChooser();}
-  if (MyFrameNumber <= prefs.getIntPref("NumDisplayedWindows")) {
+  if (Win.number <= prefs.getIntPref("NumDisplayedWindows")) {
     setBibleWidth();
     setBibleHeight(null, hideNoteBox);
   }
@@ -1495,7 +1552,7 @@ function setBibleWidth(initializing) {
   if (actualFrameWidth < MinScriptWidth) actualFrameWidth=MinScriptWidth;
   
   // Assign FrameWidth and MarginLeftOfScriptBox to this particular frame:
-  if (Frame.id=="bible1Frame") {
+  if (Win.number == 1) {
     var genBookChooserElement = OwnerDocument.getElementById("genBookChooser");
     if (prefs.getBoolPref("ShowGenBookChooser")) {
       genBookChooserElement.style.width = effectiveWindowPaddingLeft + "px";
@@ -1507,7 +1564,7 @@ function setBibleWidth(initializing) {
       MarginLeftOfScriptBox = effectiveWindowPaddingLeft;
     }
   }
-  else if (MyFrameNumber > prefs.getIntPref("NumDisplayedWindows")) 
+  else if (Win.number > prefs.getIntPref("NumDisplayedWindows")) 
       FrameWidth=0;
   else {
     FrameWidth = actualFrameWidth;
@@ -1522,13 +1579,13 @@ function setBibleWidth(initializing) {
   Frame.style.minWidth = String(FrameWidth) + "px";
   
   NoteBoxSizerElement.style.right = "43px";
-  ScriptBoxPinElement.style.left = String(MarginLeftOfScriptBox + 3) + "px";
+  Pin.elem.style.left = String(MarginLeftOfScriptBox + 3) + "px";
   LanguageTabsElement.style.marginLeft = String(MarginLeftOfScriptBox + 20) + "px"; //Effects only rtl locales!
 }
 
 function setBibleHeight(initializing, hideNoteBox) {
   //Set the notebox resize image
-  MainWindow.setNoteBoxSizer(MyFrameNumber, prefs.getBoolPref("MaximizeNoteBox" + MyFrameNumber));
+  MainWindow.setNoteBoxSizer(Win.number, prefs.getBoolPref("MaximizeNoteBox" + Win.number));
   
   //This pref is used at initialization because the main window has not been drawn (because it
   //looks much better if the window opens after everything inside has been sized). Since its
@@ -1544,13 +1601,13 @@ function setBibleHeight(initializing, hideNoteBox) {
   var sfn = gfn && prefs.getBoolPref("ShowFootnotesAtBottom");
   var scr = gcr && prefs.getBoolPref("ShowCrossrefsAtBottom");
   var sun = gun && prefs.getBoolPref("ShowUserNotesAtBottom");
-  var sdt = (getModuleLongType(prefs.getCharPref("Version" + MyFrameNumber)) == DICTIONARY);
+  var sdt = (getModuleLongType(prefs.getCharPref("Version" + Win.number)) == DICTIONARY);
   
   var noteHeight, boundaryGap, adjustSBox, adjustNBox, noteBoxVisibility, boundaryBarVisibility;
   var adjust = -2;
   // If we're hiding the note box or it is not showing
-  if (!sdt && !prefs.getBoolPref("MaximizeNoteBox" + MyFrameNumber) && ((!sfn && !scr && !sun) || hideNoteBox)) {
-    MainWindow.setNoteBoxSizer(MyFrameNumber, false);
+  if (!sdt && !prefs.getBoolPref("MaximizeNoteBox" + Win.number) && ((!sfn && !scr && !sun) || hideNoteBox)) {
+    MainWindow.setNoteBoxSizer(Win.number, false);
     noteBoxVisibility="hidden";
     boundaryBarVisibility="hidden";
     noteHeight=2;
@@ -1559,10 +1616,10 @@ function setBibleHeight(initializing, hideNoteBox) {
     adjustNBox = 0;
   }
   // Else if the note box is showing and it has something inside it
-  else if (NoteBoxEmpty==false || sdt || prefs.getBoolPref("MaximizeNoteBox" + MyFrameNumber)) {
+  else if (NoteBoxEmpty==false || sdt || prefs.getBoolPref("MaximizeNoteBox" + Win.number)) {
     noteBoxVisibility="visible";
     boundaryBarVisibility="visible";
-    if (prefs.getBoolPref("MaximizeNoteBox" + String(MyFrameNumber))) {noteHeight = EffectiveWinH - ScriptBoxMarginTop - BottomMargin - BoundaryBarGap;}
+    if (prefs.getBoolPref("MaximizeNoteBox" + String(Win.number))) {noteHeight = EffectiveWinH - ScriptBoxMarginTop - BottomMargin - BoundaryBarGap;}
     else {noteHeight=FootnoteWinH;}
     if (noteHeight < 2) {noteHeight = 2;}
     boundaryGap = BoundaryBarGap;
@@ -1571,7 +1628,7 @@ function setBibleHeight(initializing, hideNoteBox) {
   }
   // Else the note box is otherwise showing, but it is empty
   else {
-    MainWindow.setNoteBoxSizer(MyFrameNumber, false);
+    MainWindow.setNoteBoxSizer(Win.number, false);
     noteBoxVisibility="hidden";
     boundaryBarVisibility="hidden";
     noteHeight=2;
@@ -1590,7 +1647,7 @@ function setBibleHeight(initializing, hideNoteBox) {
   if (ScriptHeight <= minScriptH) {
     ScriptHeight=minScriptH; 
     noteHeight = ScriptBoxHeight - boundaryGap - ScriptHeight;
-    if (!prefs.getBoolPref("MaximizeNoteBox" + String(MyFrameNumber))) {FootnoteWinH = noteHeight;}
+    if (!prefs.getBoolPref("MaximizeNoteBox" + String(Win.number))) {FootnoteWinH = noteHeight;}
   }
   
   ScriptBoxElement.style.top    = String(ScriptBoxMarginTop)+ "px";
@@ -1614,8 +1671,8 @@ function setBibleHeight(initializing, hideNoteBox) {
 //NOTE: THESE FUNCTIONS ARE ALSO CALLED BY CHOOSER.JS FUNCTIONS
 function updateFontSizes() {
   adjustFontSizes(0, prefs.getIntPref('FontSize'));
-  if (Frame.id=="bible1Frame") initChooser();
-  if (MyFrameNumber <= prefs.getIntPref("NumDisplayedWindows")) {
+  if (Win.number == 1) initChooser();
+  if (Win.number <= prefs.getIntPref("NumDisplayedWindows")) {
     setBibleWidth();
     setBibleHeight();
   }
@@ -1623,10 +1680,8 @@ function updateFontSizes() {
 
 function clearSelections() {
   for (var w=1; w<=3; w++) {
-    var tid = "bible" + String(w) + "Frame";
-    if (Frame.id != tid) {
-      var sel = OwnerDocument.getElementById(tid).contentDocument.defaultView.getSelection();
-      sel.removeAllRanges();
+    if (w != Win.number) {
+      MainWindow.FrameDocument[w].defaultView.getSelection().removeAllRanges();
     }
   }
 }

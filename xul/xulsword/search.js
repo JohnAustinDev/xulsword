@@ -102,7 +102,7 @@ function postWindowInit() {
     if (TabVers[t] == ORIGINAL) continue;
     var isShowing = false;
     for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-      isShowing |= MainWindow.isTabVersionVisible(t, w);
+      isShowing |= MainWindow.isTabShowing(t, w);
     }
     if (isShowing || !getPrefOrCreate("MinimizeSearchRadios", "Bool", false)) {
       createAndAppendRadio(t,"adv");

@@ -89,11 +89,11 @@
   <key keycode="VK_F8"     modifiers="control" command="cmd_xs_previousChapter"/>
   <key keycode="VK_F9"     modifiers="control" command="cmd_xs_nextVerse"/>
   <key keycode="VK_DOWN"                       command="cmd_xs_nextVerse"/>
-  <key keycode="VK_DOWN"   modifiers="shift"   command="cmd_xs_nextChapter"/>
-  <key keycode="VK_DOWN"   modifiers="control" command="cmd_xs_nextVerse"/>
+  <key keycode="VK_DOWN"   modifiers="alt"     command="cmd_xs_nextChapter"/>
+  <key keycode="VK_DOWN"   modifiers="alt shift" command="cmd_xs_nextBook"/>
   <key keycode="VK_UP"                         command="cmd_xs_previousVerse"/>
-  <key keycode="VK_UP"     modifiers="shift"   command="cmd_xs_previousChapter"/>
-  <key keycode="VK_UP"     modifiers="control" command="cmd_xs_nextVerse"/>
+  <key keycode="VK_UP"     modifiers="alt"     command="cmd_xs_previousChapter"/>
+  <key keycode="VK_UP"     modifiers="alt shift" command="cmd_xs_previousBook"/>
   <key keycode="VK_LEFT"                       command="cmd_xs_back"/>
   <key keycode="VK_RIGHT"                      command="cmd_xs_forward"/>
   <key id="addBM"         key="&addCurPageAsCmd.commandkey;" modifiers="accel" command="cmd_xs_newBookmark"/>
@@ -101,6 +101,8 @@
   <key id="manBookmarkKb" key="&manBookmarksCmd.accesskey;" modifiers="accel" command="cmd_xs_openManager"/>
   <key id="printKb"       key="&printCmd.accesskey;"        modifiers="accel" command="cmd_print"/>
   <key id="copyPassageKb" key="&menu.copypassage.sc;"       modifiers="accel" oncommand="copyPassageDialog();"/>
+  <key keycode="VK_DOWN"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').select();"/>
+  <key id="openSearchDialog" key="" modifiers="accel" oncommand="openSearchDialog();"/> <!-- key set in script to allow backward compatibility to old UIs !-->
 </keyset>
 
 <keyset id="editMenuKeys"/>
@@ -153,6 +155,8 @@
   <command id="cmd_xs_forward"                   oncommand="goDoCommand('cmd_xs_forward');"/>
   <command id="cmd_xs_nextChapter"               oncommand="goDoCommand('cmd_xs_nextChapter');"/>
   <command id="cmd_xs_previousChapter"           oncommand="goDoCommand('cmd_xs_previousChapter');"/>
+  <command id="cmd_xs_nextBook"                  oncommand="goDoCommand('cmd_xs_nextBook');"/>
+  <command id="cmd_xs_previousBook"              oncommand="goDoCommand('cmd_xs_previousBook');"/>
   <command id="cmd_xs_nextVerse"                 oncommand="goDoCommand('cmd_xs_nextVerse');"/>
   <command id="cmd_xs_previousVerse"             oncommand="goDoCommand('cmd_xs_previousVerse');"/>
   <command id="cmd_xs_navigatorUpdate"           oncommand="goDoCommand('cmd_xs_navigatorUpdate');"/>
@@ -167,7 +171,7 @@
   <command id="cmd_printPreview"                 oncommand="PrintUtils.printPreview(onEnterPrintPreview, onExitPrintPreview);"/>
   <command id="cmd_pageSetup"                    oncommand="PrintUtils.showPageSetup(); restoreFocus();"/>
   <command id="cmd_xs_toggleChooser"             oncommand="toggleChooser();"/>
-  <command id="cmd_xs_startHistoryTimer"         
+  <command id="cmd_xs_startHistoryTimer"
            oncommand="try {window.clearTimeout(HistoryTimer);} catch(er){} var HistoryTimer=window.setTimeout('addToHistory()',HistoryCaptureDelay);"/>
   <command id="cmd_xs_previousVerse"             oncommand="goDoCommand('cmd_xs_previousVerse');"/>
   <command id="cmd_xs_aboutModule"               oncommand="goDoCommand('cmd_xs_aboutModule');"/>
@@ -206,12 +210,13 @@
         <menuitem id="menu_copy"/>
         <menuitem id="menu_paste"/>
         <menuseparator/>
-        <menuitem label="&menu.copypassage;" accesskey="&menu.copypassage.sc;"
-        oncommand="copyPassageDialog();" key="copyPassageKb"/>
+        <menuitem id="edit.search" label="&searchBut.label;" oncommand="openSearchDialog();" key="openSearchDialog"/>
+        <menuseparator/>
+        <menuitem label="&menu.copypassage;" accesskey="&menu.copypassage.sc;" oncommand="copyPassageDialog();" key="copyPassageKb"/>
       </menupopup>
     </menu>
     <menu id="view-menu" label="&viewMenu.label;" accesskey="&viewMenu.accesskey;">
-      <menupopup id="view-popup">
+      <menupopup id="view-popup" onclick="window.setTimeout('document.getElementById(&quot;' + this.id + '&quot;).showPopup()', 0);">
         <!-- NOTE: the observes attributes on menuitems below are redundant but they fix a bug in the nightly build of xulrunner 1.9 !-->
         <menuitem id="hdmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.headings.sc;"  label="  &menu.view.headings;"  command="cmd_xs_toggleHeadings" observes="cmd_xs_toggleHeadings"/>
         <menuitem id="fnmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.footnotes.sc;" label="  &menu.view.footnotes;" command="cmd_xs_toggleFootnotes" observes="cmd_xs_toggleFootnotes"/>

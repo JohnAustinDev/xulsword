@@ -158,6 +158,7 @@ var BookmarksMenu = {
     if (aOrientation == BookmarksUtils.DROP_ON)
       return BookmarksUtils.getTargetFromFolder(parent);
 
+    if (!item.id) return null;
     item = RDF.GetResource(item.id);
     RDFC.Init(BMDS, parent);
     index = RDFC.IndexOf(item);
@@ -422,6 +423,7 @@ var BookmarksMenuDNDObserver = {
     var orientation = BookmarksMenu.getBTOrientation(aEvent);
 
     var selTarget   = BookmarksMenu.getBTTarget(target, orientation);
+    if (!selTarget) return;
 
     // we can only test for kCopyAction if the source is a bookmark
     var checkCopy = aDragSession.isDataFlavorSupported("moz/rdfitem");

@@ -688,7 +688,7 @@ function finish() {
   if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
   if (ProgressMeter) window.setTimeout("ProgressMeter.close();", 100);
   if (NewPlugin) {
-    checkQuickTime();
+    window.setTimeout("checkQuickTime();", 1000);
     NewPlugin = false;
   }
   if (ResetNeeded>NORESET) saveArraysToPrefs();
@@ -732,14 +732,14 @@ function handleResetRequest() {
             }
           }
           if (aBibleVers) MainWindow.gotoLink(encodeUTF8(fileInfo.book + "." + fileInfo.chapter + ".1"), aBibleVers);
-          else {MainWindow.updateFrameScriptBoxes();}
+          else {MainWindow.updateFrameScriptBoxes(null, SCROLLTYPETOP);}
         }
         else if (GotoFile.leafName.match(XSBOOKMARKEXT)) {
           MainWindow.focus();
           MainWindow.setTimeout("document.getElementById('menu_BookmarksPopup').showPopup();", 500);
         }
       }
-      else {MainWindow.updateFrameScriptBoxes();}
+      else {MainWindow.updateFrameScriptBoxes(null, SCROLLTYPETOP);}
     }
     break;
   case SOFTRESET: // program needs to reload all SWORD modules

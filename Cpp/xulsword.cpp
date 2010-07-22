@@ -76,8 +76,12 @@ void percentUpdate(char percent, void *userData) {}
 xulStringToUTF16 
 *********************************************************************/
 void xulsword::xulStringToUTF16(nsEmbedCString *xstring, nsEmbedString *utf16, signed char encoding, bool append) {
-  if      (encoding == ENC_UTF8)   {
-    if (append) {utf16->Append(NS_ConvertUTF8toUTF16(*xstring));}
+  nsEmbedString converted;
+  if (encoding == ENC_UTF8)   {
+    if (append) {
+      converted.Assign(NS_ConvertUTF8toUTF16(*xstring));
+      utf16->Append(converted);
+    }
     else {utf16->Assign(NS_ConvertUTF8toUTF16(*xstring));}
   }
   else if (encoding == ENC_LATIN1) {
@@ -88,12 +92,24 @@ void xulsword::xulStringToUTF16(nsEmbedCString *xstring, nsEmbedString *utf16, s
     /* Note: ENC_SCSU is currently not supported */
     printf("ERROR: Encoding not supported!\n");
   }
+  
+  // if it was not ASCII, check that something was converted, and if not try ASCII.
+  if (encoding != ENC_LATIN1 && ((append && converted.Length()==0)||(!append && utf16->Length()==0))) {
+    SWLog::getSystemLog()->logDebug("UTF8 may have been improperly encoded, trying ASCII conversion.");
+    xulStringToUTF16(xstring, utf16, ENC_LATIN1, append);
+//printf("Converted to:\n%s\n", NS_ConvertUTF16toUTF8(*utf16).get());
+    return;
+  }
   return;
 }
 
 void xulsword::xulStringToUTF16(char * xstring, nsEmbedString *utf16, signed char encoding, bool append) {
-  if      (encoding == ENC_UTF8)   {
-    if (append) {utf16->Append(NS_ConvertUTF8toUTF16(xstring));}
+  nsEmbedString converted;
+  if (encoding == ENC_UTF8)   {
+    if (append) {
+      converted.Assign(NS_ConvertUTF8toUTF16(xstring));
+      utf16->Append(converted);
+    }
     else {utf16->Assign(NS_ConvertUTF8toUTF16(xstring));}
   }
   else if (encoding == ENC_LATIN1) {
@@ -104,6 +120,14 @@ void xulsword::xulStringToUTF16(char * xstring, nsEmbedString *utf16, signed cha
     /* Note: ENC_SCSU is currently not supported */
     printf("ERROR: Encoding not supported!\n");
   }
+
+  // if it was not ASCII, check that something was converted, and if not try ASCII.
+  if (encoding != ENC_LATIN1 && ((append && converted.Length()==0)||(!append && utf16->Length()==0))) {
+    SWLog::getSystemLog()->logDebug("UTF8 may have been improperly encoded, trying ASCII conversion.");
+    xulStringToUTF16(xstring, utf16, ENC_LATIN1, append);
+//printf("Converted to:\n%s\n", NS_ConvertUTF16toUTF8(*utf16).get());
+    return;
+  }
   return;
 }
 
@@ -111,21 +135,11 @@ void xulsword::xulStringToUTF16(char * xstring, nsEmbedString *utf16, signed cha
 GetFolderContents 
 *********************************************************************/
 #define ROOTRDF "http://www.xulsword.com/tableofcontents/ContentsRoot"
-nsEmbedCString xulsword::GetFolderContents(TreeKey *key, const char *modname, bool isRoot) {
+nsEmbedCString xulsword::GetFolderContents(TreeKey *key, const char *modname) {
   char buffer[1024];
   nsEmbedCString retval;
-  if (isRoot) {
-    sprintf(buffer, "\t<RDF:Bag RDF:about=\"rdf:#%s\">\n\t\t<RDF:li RDF:resource=\"rdf:#/%s\" />\n\t</RDF:Bag>\n\n",
-          ROOTRDF,
-          modname);
-    retval.Append(buffer);
-    sprintf(buffer, "\t<RDF:Description RDF:about=\"rdf:#/%s\" \n\t\t\tTABLEOFCONTENTS:Chapter=\"rdf:#/%s\" \n\t\t\tTABLEOFCONTENTS:Type=\"folder\" \n\t\t\tTABLEOFCONTENTS:Name=\"%s\" />\n",
-          modname,
-          key->getText(),
-          modname);
-    retval.Append(buffer);
-  }
-  sprintf(buffer, "\t<RDF:Seq RDF:about=\"rdf:#/%s%s\">\n", modname, (isRoot ? "":key->getText()));
+
+  sprintf(buffer, "\t<RDF:Seq RDF:about=\"rdf:#/%s%s\">\n", modname, key->getText());
   retval.Append(buffer);
   
   nsEmbedCString subfolders;
@@ -149,7 +163,7 @@ nsEmbedCString xulsword::GetFolderContents(TreeKey *key, const char *modname, bo
     
     if (key->hasChildren()) {
       sprintf(buffer, "%s", key->getLocalName());
-      subfolders.Append(GetFolderContents(key, modname, false).get());
+      subfolders.Append(GetFolderContents(key, modname).get());
       key->setLocalName(buffer);
     }
   }
@@ -848,6 +862,9 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
 */
 
   //NOW READ ALL VERSES IN THE CHAPTER
+  nsEmbedString bk;
+  GetBookName(bk);
+  
   nsEmbedString chapText16;
   SWModule * versemod;
   bool haveText = false;
@@ -875,7 +892,7 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
       	sprintf(Outtext, "%d",vNum); 
       	xulStringToUTF16(Outtext, &chapText16, ENC_UTF8, true);
       }
-      sprintf(Outtext,"</sup><span id=\"vs.%d.%d\">", vNum, versionNum++);
+      sprintf(Outtext, "</sup><span id=\"vs.%s.%d.%d.%d\">", NS_ConvertUTF16toUTF8(bk).get(), myVerseKey->Chapter(), vNum, versionNum++);
       xulStringToUTF16(Outtext, &chapText16, ENC_UTF8, true);
       
       comma = modstr.find(',',0);
@@ -1312,7 +1329,7 @@ NS_IMETHODIMP xulsword::GetGenBookChapterText(const nsACString & Gbmod, const ns
     delete(testkey);
     return NS_ERROR_ILLEGAL_VALUE;
   }
-  
+
   nsEmbedCString retval;
   if (!strcmp(NS_ConvertUTF16toUTF8(Treekey).get(), "/")) {
     key->root();
@@ -1354,13 +1371,32 @@ NS_IMETHODIMP xulsword::GetGenBookTableOfContents(const nsACString & Gbmod, nsAS
     delete(testkey);
     return NS_ERROR_ILLEGAL_VALUE;
   }
-  
-  key->root();
+
   nsEmbedCString retval;
-  retval.Assign("<?xml version=\"1.0\"?>\n\n<RDF:RDF xmlns:TABLEOFCONTENTS=\"http://www.xulsword.com/tableofcontents/rdf#\" \n\t\txmlns:NC=\"http://home.netscape.com/NC-rdf#\" \n\t\txmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n\n");
-  retval.Append(GetFolderContents(key, gbmod, true).get());
-  retval.Append("</RDF:RDF>");
+  char buffer[1024];
   
+  // xulSword requires the following header for the RDF file
+  retval.Assign("<?xml version=\"1.0\"?>\n\n<RDF:RDF xmlns:TABLEOFCONTENTS=\"http://www.xulsword.com/tableofcontents/rdf#\" \n\t\txmlns:NC=\"http://home.netscape.com/NC-rdf#\" \n\t\txmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n\n");
+
+  // xulSword requires a table of contents having a single folder with name of the module
+  sprintf(buffer, "\t<RDF:Bag RDF:about=\"rdf:#%s\">\n\t\t<RDF:li RDF:resource=\"rdf:#/%s\" />\n\t</RDF:Bag>\n\n",
+        ROOTRDF,
+        gbmod);
+  retval.Append(buffer);
+  
+  // describe and create the root itself...
+  key->root();
+  sprintf(buffer, "\t<RDF:Description RDF:about=\"rdf:#/%s\" \n\t\t\tTABLEOFCONTENTS:Chapter=\"rdf:#/%s\" \n\t\t\tTABLEOFCONTENTS:Type=\"folder\" \n\t\t\tTABLEOFCONTENTS:Name=\"%s\" />\n",
+        gbmod,
+        key->getText(),
+        gbmod);
+  retval.Append(buffer);
+  
+  // fill the root folder with everything else...
+  retval.Append(GetFolderContents(key, gbmod).get());
+
+  retval.Append("</RDF:RDF>");
+
   nsEmbedString retval16;
   xulStringToUTF16(&retval, &retval16, module->Encoding(), false);
 
@@ -1798,7 +1834,7 @@ NSGETMODULE_ENTRY_POINT(nsxulswordModule)
             nsIFile* location,                                                
             nsIModule** result)                                               
 {
-  SWLog::getSystemLog()->setLogLevel(5); // set SWORD lof reporting... 5 is all stuff
+  SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
   //Initialize static variables only once
 	xulsword::ChapterW.Assign(NS_ConvertUTF8toUTF16("Matt 1"));
   xulsword::VerseW = 1;		

@@ -327,7 +327,9 @@ function deleteModules(e) {
   }
   for (var w=1; w<=3; w++) {
     if (need2ChangeVers[w]) {
-      if (!MainWindow.isTabVersionVisible(aTabNum, w)) MainWindow.toggleTabVisibility(aTabNum, w);
+      if (!MainWindow.isTabShowing(aTabNum, w)) {
+        MainWindow.toggleTabVisibility(aTabNum, w);
+      }
       MainWindow.setVersionTo(w, TabVers[aTabNum]);
     }
   }

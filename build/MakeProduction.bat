@@ -9,7 +9,9 @@ call "%MKAppinfo%\Appinfo.bat"
 cd "%MK%\build"
 
 ECHO --- COPY XULRUNNER FILES
-if exist "%MK%\xulrunner\xulrunner-stub.exe" move /Y "%MK%\xulrunner\xulrunner-stub.exe" "%MK%\xul\xulrunnerDevAndProd\"
+if exist "%MK%\xulrunner\xulrunner-stub.exe" (echo xsCommandLineHandler.js>> "%MK%\xulrunner\components\components.list")
+if exist "%MK%\xulrunner\xulrunner-stub.exe" (echo xulsword.dll>> "%MK%\xulrunner\components\components.list")
+if exist "%MK%\xulrunner\xulrunner-stub.exe" (move /Y "%MK%\xulrunner\xulrunner-stub.exe" "%MK%\xul\xulrunnerDevAndProd\")
 copy "%MK%\xul\xulrunnerDevAndProd\xulrunner-stub.exe" "%MK%\xulrunner\%executable%"
 xcopy "%MK%\xul\xulrunnerDevAndProd\xulrunner" "%MK%\xulrunner" /S /Y
 del "%MK%\xulrunner\chrome\en-US.nomenu.manifest"
@@ -27,6 +29,7 @@ del "%MK%\xulrunner\chrome\venkman.manifest"
 del "%MK%\xulrunner\defaults\pref\debug.js"
 del "%MK%\xulrunner\crashreporter.exe"
 del "%MK%\xulrunner\js.exe"
+del "%MK%\xulrunner\redit.exe"
 del "%MK%\xulrunner\updater.exe"
 del "%MK%\xulrunner\xpcshell.exe"
 del "%MK%\xulrunner\xpidl.exe"

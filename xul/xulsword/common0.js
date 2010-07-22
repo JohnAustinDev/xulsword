@@ -57,11 +57,14 @@ const EASTERNVS = "EASTERN";
 const TOOLTIP_LEN=96;
 const MODSD="mods.d", MODS="modules", CHROME="chrome", FONTS="fonts", AUDIO="audio", AUDIOPLUGIN="QuickTime Plugin", BOOKMARKS="bookmarks";
 const MANIFEST_EXT=".manifest", CONF_EXT=".conf";
-const SCROLLTYPEBEG = 1;
-const SCROLLTYPECENTER = 0;
-const SCROLLTYPEEND = 2;
-const SCROLLTYPEPAGENEXT = 3;
-const SCROLLTYPEPAGEPREV = 4;
+const SCROLLTYPENONE = 0;   // don't scroll (for links this becomes SCROLLTYPECENTER)
+const SCROLLTYPETOP = 1     // scroll to top
+const SCROLLTYPEBEG = 2;    // put selected verse at the top of the window or link
+const SCROLLTYPECENTER = 3; // put selected verse in the middle of the window or link
+const SCROLLTYPEEND = 4;    // put selected verse at the bottom of the window or link
+const HILIGHTNONE = 0;      // highlight no verse
+const HILIGHTVERSE = 1;     // highlight selected verse in blue
+const HILIGHT_IFNOTV1 = 2;  // highlight selected verse in blue unless it is verse 1
 
 /************************************************************************
  * THESE FUNCTIONS NEEDED BEFORE XPCOM BIBLE OBJECTS ARE CREATED! This is 

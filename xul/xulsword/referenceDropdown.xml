@@ -508,6 +508,9 @@
           // the book is autocompleted and letter keys are ignored until "space" or "backspace"
           // is pressed. Pressing "escape" restores original value and pressing "enter" runs
           // updateFromTextBox.
+
+          //control+down-arrow (sometimes used to select text box)
+          if (aEvent.which==40 || aEvent.which==17) return;
           
           //backspace
           if (aEvent.which==8) {this._finishedAutoComplete=false; return;}

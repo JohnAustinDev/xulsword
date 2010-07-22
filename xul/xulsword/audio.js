@@ -167,7 +167,7 @@ function isQTInstalled() {
   try {
     var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
     wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\Apple Computer, Inc.\\QuickTime\\Installed MIME Types",wrk.ACCESS_READ);
-    var retval = wrk.readStringValue("application/x-mpeg");
+    var retval = wrk.readStringValue("audio/mp3");
     wrk.close();
   }
   catch (er) {retval=null;}
@@ -204,7 +204,7 @@ function installQT(installerFile, showWaitDialog) {
 
 function quietQTInstallWin(aInstaller) {
   jsdump("Installing plugin file \"" + aInstaller.leafName + "\":");
-  var iniPath = aInstaller.path.replace(/\.bat$/i, ".ini");
+  var iniPath = aInstaller.path.replace(/\.exe$/i, ".ini");
   var batdata = "@echo Installing QuickTime Lite Plugin\r\n@echo.\r\n@echo Please wait...\r\n@\"" + aInstaller.path + "\" /verysilent /norestart /LoadInf=\"" + iniPath + "\"\r\n@echo Done!";
   launchTempScript("bat", batdata);
 }

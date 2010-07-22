@@ -23,7 +23,6 @@ rmdir /S /Q "%RunDir%uninstall"
 rmdir /S /Q "%RunDir%searchPlugins"
 del "%RunDir%blocklist.xml"
 del "%RunDir%browserconfig.properties"
-del "%RunDir%old-homepage-default.properties"
 
 ECHO --- COPY DEFAULTS
 xcopy "%MK%\xulrunner\defaults" "%RunDir%defaults" /I /S /Y
@@ -48,6 +47,9 @@ copy /Y "%MK%\Cpp\runPortable\Release\runPortable.exe" "%PortableDir%%name%.exe"
 rename "%PortableDir%%name%\firefox.exe" "%name%Local.exe"
 copy /Y "%MK%\xulrunner\components\xulsword.dll" "%RunDir%components\"
 copy /Y "%MK%\xulrunner\components\ixulsword.xpt" "%RunDir%components\"
+copy /Y "%MK%\xulrunner\components\xsCommandLineHelper.js" "%RunDir%components\"
+echo xsCommandLineHandler.js>> "%RunDir%components\components.list"
+echo xulsword.dll>> "%RunDir%components\components.list"
 copy /Y "%MK%\xulrunner\application.ini" "%RunDir%application.ini"
 copy /Y "%MK%\xulrunner\License.txt" "%RunDir%"
 echo.> "%RunDir%\consoleLog.txt"
@@ -66,7 +68,7 @@ xcopy "%MK%\xulrunner\modules\lexdict\*"   "%RunDir%modules\lexdict" /I /S /Y
 xcopy "%MK%\xulrunner\modules\texts\*"     "%RunDir%modules\texts" /I /S /Y
 
 ECHO --- CREATE NEW ELEMENT MANIFEST SO THAT LANGUAGE MENU WILL OPEN ON FIRST RUN
-pushd "%RunDir%\defaults\pref"
+pushd "%RunDir%defaults\pref"
 echo NewLocales;en-US >newInstalls.txt"
 popd
 
