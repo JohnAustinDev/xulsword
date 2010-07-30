@@ -87,9 +87,9 @@ Set  HideDisabledCopyPrintIncludes=false
 Set         DontReadReferenceBible=false
 Set                     useUYGskin=false
 
-:: List texts whose tabs should be initially hidden (default is show tabs)
+:: List Bible texts (NOT books, commentaries, or anything else) whose tabs should be initially hidden (default is show tabs)
 :: Must not include quotes, must be semicolon delineated, and must include a semicolon at the end. Example:ABC;DEF;GHI;JKL;
-Set HiddenTexts1=TR;HEB;StrongsGreek;StrongsHebrew;Robinson;
+Set HiddenTexts1=
 Set HiddenTexts2=
 Set HiddenTexts3=
 

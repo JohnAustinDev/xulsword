@@ -98,16 +98,16 @@ function postWindowInit() {
   }
   //Create the search language radio buttons
   for (shortType in SupportedModuleTypes) {NumberOfShortType[shortType] = 0;}
-  for (var t=0; t<TabVers.length; t++) {
-    if (TabVers[t] == ORIGINAL) continue;
+  for (var t=0; t<Tabs.length; t++) {
+    if (Tabs[t].isOrigTab) continue;
     var isShowing = false;
     for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
       isShowing |= MainWindow.isTabShowing(t, w);
     }
     if (isShowing || !getPrefOrCreate("MinimizeSearchRadios", "Bool", false)) {
       createAndAppendRadio(t,"adv");
-      if (TabLongType[t]==BIBLE) createAndAppendRadio(t,"sim");
-      NumberOfShortType[getShortTypeFromLong(TabLongType[t])]++;
+      if (Tabs[t].modType==BIBLE) createAndAppendRadio(t,"sim");
+      NumberOfShortType[Tabs[t].tabType]++;
     }
   }
   updateAdvancedPanel();
@@ -171,15 +171,15 @@ function resizeWatch() {
 function createAndAppendRadio(tabNum, id) {
   // Create a new radio button
   var xulElement = document.createElement("radio");
-  xulElement.setAttribute("label", TabLabel[tabNum]);
-  xulElement.setAttribute("id", TabVers[tabNum] + "." + id);
+  xulElement.setAttribute("label", Tabs[tabNum].label);
+  xulElement.setAttribute("id", Tabs[tabNum].modName + "." + id);
   
-  var forceDefaultFormatting = (Bible.getModuleInformation(TabVers[tabNum], "OriginalTabTestament")!=NOTFOUND);
+  var forceDefaultFormatting = (Bible.getModuleInformation(Tabs[tabNum].modName, "OriginalTabTestament")!=NOTFOUND);
   
   if (!forceDefaultFormatting) {
-    var versionConfig = VersionConfigs[TabVers[tabNum]];
-    var myfont = (versionConfig && versionConfig.font && !isASCII(TabLabel[tabNum]) ? versionConfig.font:DefaultFont);
-    var myfontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust && !isASCII(TabLabel[tabNum]) ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
+    var versionConfig = VersionConfigs[Tabs[tabNum].modName];
+    var myfont = (versionConfig && versionConfig.font && !isASCII(Tabs[tabNum].label) ? versionConfig.font:DefaultFont);
+    var myfontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust && !isASCII(Tabs[tabNum].label) ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
     xulElement.style.fontFamily = "\"" + myfont + "\"";
     xulElement.style.fontSizeAdjust = myfontSizeAdjust;
   }
@@ -189,11 +189,8 @@ function createAndAppendRadio(tabNum, id) {
   }
   
   // Place the new radio button
-  var moduletype = getShortTypeFromLong(TabLongType[tabNum]);
-  if (!moduletype) return null;
-  
   //var subRow = 0;
-  var myRow = document.getElementById("row." + moduletype + ".0." + id);
+  var myRow = document.getElementById("row." + Tabs[tabNum].tabType + ".0." + id);
   myRow.appendChild(xulElement);
 }
 

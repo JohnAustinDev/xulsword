@@ -92,22 +92,18 @@
         // All Bible mods and possibly all commentary mods are on list
         this.versions = [];
         var defVersionIndex=-1;
-        for (var m=0; m<TabVers.length && Bible; m++) {
-          if (TabVers[m]==ORIGINAL) continue;
-          var name = TabVers[m];
-          var type = TabLongType[m];
-          if (type != BIBLE) {
+        for (var m=0; m<Tabs.length && Bible; m++) {
+          if (Tabs[m].isOrigTab) continue;
+          if (Tabs[m].modType != BIBLE) {
             if (this.versionmenulist.getAttribute("onlybibles")=="true") continue;
-            if (type != COMMENTARY) continue;
+            if (Tabs[m].modType != COMMENTARY) continue;
           }
-          this.versions.push(name);
-          if (name == this._defversion) defVersionIndex=this.versions.length-1;
-          var tab = moduleName2TabIndex(name);
-          var label = tab!=null ? TabLabel[tab]:name;
-          var description = Bible.getModuleInformation(name, "Description");
+          this.versions.push(Tabs[m].modName);
+          if (Tabs[m].modName == this._defversion) defVersionIndex=this.versions.length-1;
+          var description = Bible.getModuleInformation(Tabs[m].modName, "Description");
           if (description==NOTFOUND) description=null;
-          var newitem = this.versionmenulist.appendItem(label, name, description);
-          newitem.className = "vstyle" + TabVers[tab];
+          var newitem = this.versionmenulist.appendItem(Tabs[m].label, Tabs[m].modName, description);
+          newitem.className = "vstyle" + Tabs[m].vstyle;
         }
         
         // Initialize location vars and selections

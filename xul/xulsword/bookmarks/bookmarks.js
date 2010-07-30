@@ -817,8 +817,6 @@ var BookmarksController = {
       if (length != 1 || aSelection.containsImmutable ||
         (type0 != "Folder" && type0 != "Bookmark"))
         return false;
-      //try {if (type0=="Bookmark" && moduleName2TabIndex(BookmarkFuns.BmGetInfo(item0)[MODULE])==null) return false;}
-      //catch (er) {return false;}
       return true;
     case "cmd_bm_saveas":
       if (length != 1 || (type0 != "Folder"))

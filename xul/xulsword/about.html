@@ -39,9 +39,8 @@
   }
   
   function toggleConfInfo(tabNum) {
-    var mod = TabVers[tabNum];
-    var textbox = document.getElementById("conf." + mod);
-    var link = document.getElementById("more." + mod);
+    var textbox = document.getElementById("conf." + Tabs[tabNum].modName);
+    var link = document.getElementById("more." + Tabs[tabNum].modName);
     if (textbox.style.display != "block") {
       link.innerHTML = SBundle.getString("Less");
       textbox.innerHTML = getConfFileContents(tabNum);
@@ -55,7 +54,6 @@
     
   var confFileContents = null;
   function getConfFileContents(tabNum) {
-    var mod = TabVers[tabNum];
     if (!confFileContents) {
       confFileContents = {};
       var modsd = Components.classes["@mozilla.org/file/directory_service;1"].
@@ -75,18 +73,12 @@
         }
       }
     }
-    if (!confFileContents[mod]) {
-      jsdump("Could not read conf file for \"" + mod + "\".");
-      confFileContents[mod] = "-----";
+    if (!confFileContents[Tabs[tabNum].modName]) {
+      jsdump("Could not read conf file for \"" + Tabs[tabNum].modName + "\".");
+      confFileContents[Tabs[tabNum].modName] = "-----";
     }
-    /*
-    if (TabVers[tabNum]) {
-      var targ = document.getElementById("more." + TabVers[tabNum]);
-      var sb = document.getElementById("scrollbox");
-      if (targ) sb.scrollTop = targ.offsetTop - (sb.clientHeight - 200 - 34);
-    }
-    */
-    return confFileContents[mod];
+
+    return confFileContents[Tabs[tabNum].modName];
   }
   
   function onLoad() {
@@ -103,49 +95,49 @@
       <script>
         document.write("<a href=\"#top\"></a>");
         // module list
-        for (var t=0; t<TabVers.length; t++) {
-          if (TabVers[t] == ORIGINAL) continue;
-          var desc = Bible.getModuleInformation(TabVers[t], "Description");
-          document.write("<div class=\"vstyle" + (isASCII(desc) ? "ASCII":TabVers[t]) + "\" >");
-          document.write("<a href=\"#" + TabVers[t] + "\">" + TabLabel[t] + " - " + desc + "</a><hr>");
+        for (var t=0; t<Tabs.length; t++) {
+          if (Tabs[t].isOrigTab) continue;
+          var desc = Bible.getModuleInformation(Tabs[t].modName, "Description");
+          document.write("<div class=\"vstyle" + (isASCII(desc) ? "ASCII":Tabs[t].modName) + "\" >");
+          document.write("<a href=\"#" + Tabs[t].modName + "\">" + Tabs[t].label + " - " + desc + "</a><hr>");
           document.write("</div>");
         }
         document.write("<br><br>");
         // module information
-        for (t=0; t<TabVers.length; t++) {
-          if (TabVers[t] == ORIGINAL) continue;
+        for (t=0; t<Tabs.length; t++) {
+          if (Tabs[t].isOrigTab) continue;
           // anchor
-          document.write("<a id=\"targ." + TabVers[t] + "\" name=\"" + TabVers[t] + "\"></a><br>");
-          document.write("<div id=\"modinfo." + TabVers[t] + "\" >");
+          document.write("<a id=\"targ." + Tabs[t].modName + "\" name=\"" + Tabs[t].modName + "\"></a><br>");
+          document.write("<div id=\"modinfo." + Tabs[t].modName + "\" >");
           // tab label, version, and back arrow
           // collect module data first, and if data is ASCII, overwrite version class style to force LTR.
           var mdata1, mdata2, mdata3;
-          var modvers = Bible.getModuleInformation(TabVers[t], "Version");
+          var modvers = Bible.getModuleInformation(Tabs[t].modName, "Version");
           if (modvers == NOTFOUND) modvers="";
           if (modvers) modvers = " (" + modvers + ")";
-          mdata2 = "<span class=\"head1\">" + TabLabel[t] + (modvers ? modvers:"") + "</span><a href=\"#top\" style=\"font-family:ariel;\"> &#8593;</a><br>";
+          mdata2 = "<span class=\"head1\">" + Tabs[t].label + (modvers ? modvers:"") + "</span><a href=\"#top\" style=\"font-family:ariel;\"> &#8593;</a><br>";
           // Data for each module:
           //    Description
           //    About, DistributionLicense
           mdata3 = "";
-          var info = Bible.getModuleInformation(TabVers[t],"Description");
+          var info = Bible.getModuleInformation(Tabs[t].modName,"Description");
           if (info && info!=NOTFOUND) mdata3 = info + "<br>";
-          info = Bible.getModuleInformation(TabVers[t],"About").replace("\\par", "<br>", "g");
+          info = Bible.getModuleInformation(Tabs[t].modName,"About").replace("\\par", "<br>", "g");
           var comma="";
           if (info && info!=NOTFOUND) {
             mdata3 += info;
             if (info.search(/[\.\?,:;!]\s*$/)==-1) {comma=",";}
             comma += " ";
           }
-          info = Bible.getModuleInformation(TabVers[t],"DistributionLicense");
+          info = Bible.getModuleInformation(Tabs[t].modName,"DistributionLicense");
           if (info && info!=NOTFOUND) mdata3 += comma + info;
           mdata3 += "</div>";
-          mdata1 = "<div class=\"vstyle" + (isASCII(mdata3) ? "ASCII":TabVers[t]) + "\" >";
+          mdata1 = "<div class=\"vstyle" + (isASCII(mdata3) ? "ASCII":Tabs[t].modName) + "\" >";
           document.write(mdata1 + mdata2 + mdata3);
 
           // more link and conf file area
-          document.write("<a id=\"more." + TabVers[t] + "\" class=\"vstyleProgram\" href=\"javascript:toggleConfInfo('" + t + "');\">" + SBundle.getString("More") + "</a>");
-          document.write("<textarea id=\"conf." + TabVers[t] + "\" class=\"moreinfo vstyleen-US\" readonly=\"readonly\" ></textarea>");
+          document.write("<a id=\"more." + Tabs[t].modName + "\" class=\"vstyleProgram\" href=\"javascript:toggleConfInfo('" + t + "');\">" + SBundle.getString("More") + "</a>");
+          document.write("<textarea id=\"conf." + Tabs[t].modName + "\" class=\"moreinfo vstyleen-US\" readonly=\"readonly\" ></textarea>");
           document.write("</div>");
         }
       </script>

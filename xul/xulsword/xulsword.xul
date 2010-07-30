@@ -277,6 +277,22 @@
             <menuitem id="winRadio.all.Dicts" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Dicts" oncommand="handleOptions(this)"/>
           </menupopup>
         </menu>
+        <menu class="menu-iconic" label="  &menu.view.showAll;" accesskey="&menu.view.showAll.sc;">
+          <menupopup id="allTabs.menu">
+            <menuitem id="allTabs.w1" label="&menu.view.window1;" accesskey="1" oncommand="handleOptions(this)"/>
+            <menuitem id="allTabs.w2" label="&menu.view.window2;" accesskey="2" oncommand="handleOptions(this)"/>
+            <menuitem id="allTabs.w3" label="&menu.view.window3;" accesskey="3" oncommand="handleOptions(this)"/>
+            <menuitem id="allTabs.all" label="&menu.view.allwindows;" accesskey="4" oncommand="handleOptions(this)"/>
+          </menupopup>
+        </menu>
+        <menu class="menu-iconic" label="  &menu.view.hideAll;" accesskey="&menu.view.hideAll.sc;">
+          <menupopup id="noTabs.menu">
+            <menuitem id="noTabs.w1" label="&menu.view.window1;" accesskey="1" oncommand="handleOptions(this)"/>
+            <menuitem id="noTabs.w2" label="&menu.view.window2;" accesskey="2" oncommand="handleOptions(this)"/>
+            <menuitem id="noTabs.w3" label="&menu.view.window3;" accesskey="3" oncommand="handleOptions(this)"/>
+            <menuitem id="noTabs.all" label="&menu.view.allwindows;" accesskey="4" oncommand="handleOptions(this)"/>
+          </menupopup>
+        </menu>
         <menuseparator/>
         <menu id="sub-fn" label="  &menu.view.fnlocation;" accesskey="&menu.view.fnlocation.sc;"><menupopup>
           <menuitem id="note0" type="radio" accesskey="&menu.view.popups.sc;" name="fnab" value="ShowFootnotesAtBottom_0" label="&menu.view.popups;" oncommand="handleViewPopup(this)"/>
@@ -480,6 +496,9 @@
   <menupopup id="contextScriptBox" value="closed" onpopupshowing="ScriptContextMenuShowing(event)" onpopuphidden="ScriptContextMenuHidden(event)">
     <menuitem id="aboutModule" label="&menu.help.about;" command="cmd_xs_aboutModule"/>
     <menuitem id="closeTab" label="&context.closeTab;" command="cmd_xs_toggleTab"/>
+    <menuseparator />
+    <menuitem id="allTabs.context" label="&menu.view.showAll;" accesskey="&menu.view.showAll.sc;" oncommand="setAllTabs(true, CurrentTarget.windowNum)"/>
+    <menuitem id="noTabs.context" label="&menu.view.hideAll;" accesskey="&menu.view.hideAll.sc;" oncommand="setAllTabs(false, CurrentTarget.windowNum)"/>
     <menuseparator id="contsep00"/>
     <menuitem id="cMenu_copy"/>
     <menuitem id="conSearch" label="&searchBut.label;" command="cmd_xs_searchForSelection"/>

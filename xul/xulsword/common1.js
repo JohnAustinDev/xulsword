@@ -119,10 +119,8 @@ var HaveOriginalTab;
 var OrigModuleNT;
 var OrigModuleOT;
 
-var TabLongType = [];
-var TabVers = [];
-var TabLabel = [];
 var Tabs = [];
+var Tab = {};
 
 var LocaleList = [];
 var LocaleDefaultVersion = [];
@@ -138,11 +136,11 @@ var LocaleDirectionChar;
 var CheckTexts = [];
 function unlockAllModules(aBible, print) {
   var dumpMsg="";
-  for (var t=0; t<TabVers.length; t++) {
-    if (TabVers[t] == ORIGINAL) continue;
-    if (TabLongType[t] != BIBLE) continue; // only Bible modules are encrypted
-    var retkey = unlockModule(aBible, TabVers[t]);
-    if (retkey) dumpMsg += TabVers[t] + "(" + retkey + ") ";
+  for (var t=0; t<Tabs.length; t++) {
+    if (Tabs[t].isOrigTab) continue;
+    if (Tabs[t].modType != BIBLE) continue; // only Bible modules are encrypted
+    var retkey = unlockModule(aBible, Tabs[t].modName);
+    if (retkey) dumpMsg += Tabs[t].modName + "(" + retkey + ") ";
   }
   if (print && dumpMsg != "") {jsdump("Opening:" + dumpMsg + "\n");}
 }
@@ -347,8 +345,8 @@ function firstDisplayBible(returnFrameNumber) {
   var end = (guidir=="rtl" ? 1-1:numWins+1);
   var step = (guidir=="rtl" ? -1:1);
   for (var w=beg; w!=end; w+=step) {
-    vers = prefs.getCharPref("Version" + w);
-    if (getModuleLongType(vers) == BIBLE) break;
+    vers = MainWindow.Win[w].modName;
+    if (MainWindow.Win[w].modType == BIBLE) break;
   }
   if (!returnFrameNumber) {
     if (!vers || w==end) vers=prefs.getCharPref("DefaultVersion");
@@ -361,7 +359,7 @@ function firstDisplayBible(returnFrameNumber) {
 }
 
 function firstDisplayModule() {
-  return prefs.getCharPref("Version" + (guiDirection()=="rtl" ? prefs.getIntPref("NumDisplayedWindows"):1));
+  return MainWindow.Win[(guiDirection()=="rtl" ? prefs.getIntPref("NumDisplayedWindows"):1)].modName;
 }
 
 function guiDirection() {
@@ -566,25 +564,6 @@ function getShortTypeFromLong(longType) {
   return null;
 }
 
-// Pass a tab label and get a version name in return
-function tabLabel2ModuleName(tablabel, bookShortName) {
-  if (tablabel == SBundle.getString("ORIGLabelTab")) {return resolveOriginalVersion(bookShortName);}
-  for (var i=0; i<TabLabel.length; i++) {
-    if (TabLabel[i] == tablabel) {return TabVers[i];}
-  }
-  return null;
-}
-
-function moduleName2TabIndex(modulename) {
-  var versionIsOriginal = false;
-  if ((modulename == OrigModuleOT)||(modulename == OrigModuleNT)) {versionIsOriginal = true;}
-  for (var i=0; i<TabVers.length; i++) {
-    if (TabVers[i] == modulename) {return i;}
-    if (versionIsOriginal && TabVers[i]==ORIGINAL) {return i;}
-  }
-  return null;
-}
-
 // Find "original" version name corresponding to book's short name "bsName"
 function resolveOriginalVersion(bookShortName) {
   var bnum = (bookShortName ? findBookNum(bookShortName):0);
@@ -625,14 +604,14 @@ function getAvailableBooks(version) {
 
 function getModsWithConfigEntry(param, value, biblesOnly, ignoreCase) {
   var ret = [];
-  if (!Bible || !TabVers || !value) return ret;
+  if (!Bible || !Tabs || !value) return ret;
   if (ignoreCase) value = new RegExp("^" + value + "$", "i");
   else value = new RegExp("^" + value + "$");
-  for (var t=0; t<TabVers.length; t++) {
-    if (biblesOnly && TabLongType[t]!=BIBLE) continue;
-    var tparam = Bible.getModuleInformation(TabVers[t], param);
+  for (var t=0; t<Tabs.length; t++) {
+    if (biblesOnly && Tabs[t].modType!=BIBLE) continue;
+    var tparam = Bible.getModuleInformation(Tabs[t].modName, param);
     if (!tparam ||  tparam==NOTFOUND) continue;
-    if (tparam.search(value) != -1) ret.push(TabVers[t]);
+    if (tparam.search(value) != -1) ret.push(Tabs[t].modName);
   }
   return ret;
 }
@@ -742,8 +721,8 @@ function getCurrentLocaleBundle(file) {
 
 function findAVerseText(version, location, windowNum) {
   if (!windowNum) windowNum = 1;
-  var ret = {tabNum:moduleName2TabIndex(version), location:location, text:""};
-  if (ret.tabNum == null) return null;
+  if (!Tab[version]) return null;
+  var ret = {tabNum:Tab[version].index, location:location, text:""};
   
   //Is version a Bible, or does version specify a Bible?
   var bibleVersion = null;
@@ -751,15 +730,15 @@ function findAVerseText(version, location, windowNum) {
   if (getModuleLongType(version)==BIBLE) bibleVersion = version;
   else if (!getPrefOrCreate("DontReadReferenceBible", "Bool", false)) {
     bibleVersion = Bible.getModuleInformation(version, "ReferenceBible");
-    bibleVersion = (bibleVersion==NOTFOUND || moduleName2TabIndex(bibleVersion)==null ? null:bibleVersion);
+    bibleVersion = (bibleVersion==NOTFOUND || !Tab[bibleVersion] ? null:bibleVersion);
     if (bibleVersion) bibleLocation = Bible.convertLocation(Bible.getVerseSystem(version), location, Bible.getVerseSystem(bibleVersion));
   }
   //If we have a Bible, try it first.
-  if (bibleVersion) {
+  if (bibleVersion && Tab[bibleVersion]) {
     try {var text = Bible.getVerseText(bibleVersion, bibleLocation).replace(/\n/g, " ");}
     catch (er) {text = "";}
     if (text && text.length > 7) {
-      ret.tabNum = moduleName2TabIndex(bibleVersion);
+      ret.tabNum = Tab[bibleVersion].index;
       ret.location = bibleLocation;
       ret.text = text;
       return ret;
@@ -767,14 +746,14 @@ function findAVerseText(version, location, windowNum) {
   }
   //Passed version does not yield verse text. So now look at tabs...
   var book = location.match(/^\W*(\w+)/)[1];
-  for (var v=0; v<TabVers.length; v++) {
-    if (TabVers[v]==ORIGINAL || TabVers[v]==OrigModuleNT || TabVers[v]==OrigModuleOT) continue;
-    if (TabLongType[v]!=BIBLE) continue;
-    var abooks = getAvailableBooks(TabVers[v]);
+  for (var v=0; v<Tabs.length; v++) {
+    if (Tabs[v].modName==ORIGINAL || Tabs[v].modName==OrigModuleNT || Tabs[v].modName==OrigModuleOT) continue;
+    if (Tabs[v].modType!=BIBLE) continue;
+    var abooks = getAvailableBooks(Tabs[v].modName);
     for (var ab=0; ab<abooks.length; ab++) {if (abooks[ab]==book) break;}
     if (ab==abooks.length) continue;
-    var tlocation = Bible.convertLocation(Bible.getVerseSystem(version), location, Bible.getVerseSystem(TabVers[v]));
-    text = Bible.getVerseText(TabVers[v], tlocation).replace(/\n/g, " ");
+    var tlocation = Bible.convertLocation(Bible.getVerseSystem(version), location, Bible.getVerseSystem(Tabs[v].modName));
+    text = Bible.getVerseText(Tabs[v].modName, tlocation).replace(/\n/g, " ");
     if (text && text.length > 7) {
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If

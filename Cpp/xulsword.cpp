@@ -78,11 +78,9 @@ xulStringToUTF16
 void xulsword::xulStringToUTF16(nsEmbedCString *xstring, nsEmbedString *utf16, signed char encoding, bool append) {
   nsEmbedString converted;
   if (encoding == ENC_UTF8)   {
-    if (append) {
-      converted.Assign(NS_ConvertUTF8toUTF16(*xstring));
-      utf16->Append(converted);
-    }
-    else {utf16->Assign(NS_ConvertUTF8toUTF16(*xstring));}
+    converted.Assign(NS_ConvertUTF8toUTF16(*xstring));
+    if (append) {utf16->Append(converted);}
+    else {utf16->Assign(converted);}
   }
   else if (encoding == ENC_LATIN1) {
     if (append) {utf16->Append(NS_ConvertASCIItoUTF16(*xstring));}
@@ -92,42 +90,27 @@ void xulsword::xulStringToUTF16(nsEmbedCString *xstring, nsEmbedString *utf16, s
     /* Note: ENC_SCSU is currently not supported */
     printf("ERROR: Encoding not supported!\n");
   }
-  
-  // if it was not ASCII, check that something was converted, and if not try ASCII.
-  if (encoding != ENC_LATIN1 && ((append && converted.Length()==0)||(!append && utf16->Length()==0))) {
-    SWLog::getSystemLog()->logDebug("UTF8 may have been improperly encoded, trying ASCII conversion.");
-    xulStringToUTF16(xstring, utf16, ENC_LATIN1, append);
+
+  // if it was not ASCII, check conversion length, and if there's a problem try ASCII.
+  if (encoding != ENC_LATIN1 && !xstring->IsEmpty()) {
+    nsEmbedCString backconv; // if the utf8 was improperly encoded, this will catch it...
+    backconv.Assign(NS_ConvertUTF16toUTF8(converted));
+    if ((append && converted.IsEmpty()) || (!append && utf16->IsEmpty()) || !backconv.Equals(xstring->get())) {
+      SWLog::getSystemLog()->logDebug("UTF8 may have been improperly encoded, trying ASCII conversion.");
+      xulStringToUTF16(xstring, utf16, ENC_LATIN1, append);
 //printf("Converted to:\n%s\n", NS_ConvertUTF16toUTF8(*utf16).get());
-    return;
+      return;
+    }
   }
+
   return;
 }
 
 void xulsword::xulStringToUTF16(char * xstring, nsEmbedString *utf16, signed char encoding, bool append) {
-  nsEmbedString converted;
-  if (encoding == ENC_UTF8)   {
-    if (append) {
-      converted.Assign(NS_ConvertUTF8toUTF16(xstring));
-      utf16->Append(converted);
-    }
-    else {utf16->Assign(NS_ConvertUTF8toUTF16(xstring));}
-  }
-  else if (encoding == ENC_LATIN1) {
-    if (append) {utf16->Append(NS_ConvertASCIItoUTF16(xstring));}
-    else {utf16->Assign(NS_ConvertASCIItoUTF16(xstring));}
-  }
-  else {
-    /* Note: ENC_SCSU is currently not supported */
-    printf("ERROR: Encoding not supported!\n");
-  }
+  nsEmbedCString instring;
+  instring.Assign(xstring);
+  xulStringToUTF16(&instring, utf16, encoding, append);
 
-  // if it was not ASCII, check that something was converted, and if not try ASCII.
-  if (encoding != ENC_LATIN1 && ((append && converted.Length()==0)||(!append && utf16->Length()==0))) {
-    SWLog::getSystemLog()->logDebug("UTF8 may have been improperly encoded, trying ASCII conversion.");
-    xulStringToUTF16(xstring, utf16, ENC_LATIN1, append);
-//printf("Converted to:\n%s\n", NS_ConvertUTF16toUTF8(*utf16).get());
-    return;
-  }
   return;
 }
 
@@ -633,7 +616,6 @@ GetChapterText
 *********************************************************************/
 NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _retval)
 {
-  nsEmbedCString chapText;
   nsEmbedCString verseText;
   nsEmbedCString footnoteText;
   nsEmbedCString crossRefText;
@@ -689,12 +671,14 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
   GetChapterNumber(Vkeymod, &ch);
     
   bool haveText = false;
+  nsEmbedString chapHTML;
   while (!module->Error()) {
+    nsEmbedCString verseHTML;
     int vNum = myVerseKey->Verse();
     if (vNum>1 && vNum == *Verse) {MyManager->setGlobalOption("Words of Christ in Red","Off");}
     else if (vNum == (*LastVerse + 1)) {MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");}
     verseText.Assign(module->RenderText()); //THIS MUST BE RENDERED BEFORE READING getEntryAttributes!!!
-  
+
     // move verse number after any paragraph indents
     bool verseStartsWithIndent = false;
     if (!strncmp(verseText.get(),"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",30)) {
@@ -732,60 +716,58 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
     //FIRST PRINT OUT ANY HEADINGS IN THE VERSE
     AttributeValue::iterator Value;
     for (Value = module->getEntryAttributes()["Heading"]["Preverse"].begin(); Value != module->getEntryAttributes()["Heading"]["Preverse"].end(); Value++) {
-		  chapText.Append("<br><div class=\"");
+		  verseHTML.Append("<br><div class=\"");
       if (module->getEntryAttributes()["Heading"][Value->first]["level"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["level"], "2")) {
-        chapText.Append("head2");
+        verseHTML.Append("head2");
       }
-      else {chapText.Append("head1");}
+      else {verseHTML.Append("head1");}
       if (module->getEntryAttributes()["Heading"][Value->first]["canonical"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["canonical"], "true")) {
-        chapText.Append(" canonical");
+        verseHTML.Append(" canonical");
       }
-      chapText.Append("\">");
-		  chapText.Append(Value->second);
-		  chapText.Append("</div>");
+      verseHTML.Append("\">");
+		  verseHTML.Append(Value->second);
+		  verseHTML.Append("</div>");
     }
 	
     //NOW PRINT OUT THE VERSE ITSELF
     //If this is selected verse then designate as so
     //Output verse html code
     sprintf(Outtext, "<span id=\"vs.%s.%d.%d\">", NS_ConvertUTF16toUTF8(bk).get(), ch, vNum);
-    chapText.Append(Outtext);
+    verseHTML.Append(Outtext);
 
-    if (vNum==*Verse) {chapText.Append("<span id=\"sv\" class=\"hl\">");}
-    else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {chapText.Append("<span class=\"hl\">");}
+    if (vNum==*Verse) {verseHTML.Append("<span id=\"sv\" class=\"hl\">");}
+    else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {verseHTML.Append("<span class=\"hl\">");}
 
-    if (verseStartsWithIndent) {chapText.Append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");}
+    if (verseStartsWithIndent) {verseHTML.Append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");}
   
-    chapText.Append("<sup class=\"versenum\">");
+    verseHTML.Append("<sup class=\"versenum\">");
     //If verse is non-empty and verse numbers are being displayed then print the verse number
     if (Versenumbers && (verseText.Length() > 0)) {
 		  sprintf(Outtext, "%d", vNum); 
-		  chapText.Append(Outtext);
-		  chapText.Append("</sup>");
+		  verseHTML.Append(Outtext);
+		  verseHTML.Append("</sup>");
     }
-    else {chapText.Append("</sup> ");}
+    else {verseHTML.Append("</sup> ");}
     
-    chapText.Append(verseText.get());
-    if (isCommentary) {chapText.Append("<br><br>");}
+    verseHTML.Append(verseText.get());
+    if (isCommentary) {verseHTML.Append("<br><br>");}
 
-    if(vNum==*Verse) {chapText.Append("</span>");}
-    else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {chapText.Append("</span>");}
+    if(vNum==*Verse) {verseHTML.Append("</span>");}
+    else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {verseHTML.Append("</span>");}
 
-    chapText.Append("</span>");
-
+    verseHTML.Append("</span>");
+    if(haveText) {xulStringToUTF16(&verseHTML, &chapHTML, module->Encoding(), true);}
     module->increment(1);
   }
   module->setKey(EmptyKey);
 
-  nsEmbedString chapText16;
-  if (!haveText) {chapText16.Assign(NS_ConvertUTF8toUTF16(""));}
-  else {xulStringToUTF16(&chapText, &chapText16, module->Encoding(), false);}
+  if (!haveText) {chapHTML.Assign(NS_ConvertUTF8toUTF16(""));}
   xulStringToUTF16(&footnoteText, &MyFootnotes, module->Encoding(), false);
   xulStringToUTF16(&crossRefText, &MyCrossRefs, module->Encoding(), false);
   xulStringToUTF16(&noteText, &MyNotes, module->Encoding(), false);
 
   delete(testkey);
-  _retval = chapText16;
+  _retval = chapHTML;
   return NS_OK;
 }
 

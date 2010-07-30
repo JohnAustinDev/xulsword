@@ -73,7 +73,7 @@
       </groupbox>
     </hbox>
     <hbox align="end" style="margin-top:10px;">
-      <button id="copy" label="&deleteCmd.label;" oncommand="deleteModules(event);" />
+      <button id="delete" label="&deleteCmd.label;" oncommand="deleteModules(event);" />
       <button id="close" label="&cancelButton.label;" oncommand="window.close()" style="-moz-margin-end:10px;"/>
     </hbox>
   </vbox>
