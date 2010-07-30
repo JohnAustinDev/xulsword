@@ -213,9 +213,8 @@ var BookmarkFuns = {
     }
     
     // Add a module indicator if not a Bible...
-    var myindex = moduleName2TabIndex(location.version);
-    if (TabLongType[myindex]!=BIBLE)
-      bmname = TabLabel[myindex] + ": " + bmname;
+    if (Tab[location.version] && Tab[location.version].modType!=BIBLE)
+      bmname = Tab[location.version].label + ": " + bmname;
     
     return bmname;
   },
@@ -235,8 +234,8 @@ var BookmarkFuns = {
       location.lastVerse = location.lastVerse ? location.lastVerse:location.verse;
       var aVerse = findAVerseText(location.version, bkChap + location.verse + "-" + bkChap + location.lastVerse);
       text = aVerse.text.replace(/^\s*/,"");
-      if (location.version != TabVers[aVerse.tabNum]) text += " (" + TabLabel[aVerse.tabNum] + ")";
-      retval.location = dotStringLoc2ObjectLoc(aVerse.location, TabVers[aVerse.tabNum]);
+      if (location.version != Tabs[aVerse.tabNum].modName) text += " (" + Tabs[aVerse.tabNum].label + ")";
+      retval.location = dotStringLoc2ObjectLoc(aVerse.location, Tabs[aVerse.tabNum].modName);
       break;
       
     case COMMENTARY:

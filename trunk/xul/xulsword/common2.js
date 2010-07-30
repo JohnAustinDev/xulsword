@@ -65,10 +65,8 @@ if (window.name != "main-window") {
   OrigModuleNT          = MainWindow.OrigModuleNT;
   OrigModuleOT          = MainWindow.OrigModuleOT;
 
-  TabLongType           = MainWindow.TabLongType;
-  TabVers               = MainWindow.TabVers;
-  TabLabel              = MainWindow.TabLabel;
   Tabs                  = MainWindow.Tabs;
+  Tab                   = MainWindow.Tab;
 
   LocaleList            = MainWindow.LocaleList;
   LocaleDefaultVersion  = MainWindow.LocaleDefaultVersion;

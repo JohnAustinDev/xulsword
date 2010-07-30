@@ -40,12 +40,12 @@ function onLoad() {
     case MODULESID:
       var hide=false;
       var lastType="";
-      for (var t=0; t<TabVers.length; t++) {
-        if (TabVers[t]==ORIGINAL) continue;
-        if (TabLongType[t]==BIBLE && !firstBibleID) firstBibleID=GROUPS[g] + "." + t;
-        if (TabLongType[t]!=lastType) {
+      for (var t=0; t<Tabs.length; t++) {
+        if (Tabs[t].isOrigTab) continue;
+        if (Tabs[t].modType==BIBLE && !firstBibleID) firstBibleID=GROUPS[g] + "." + t;
+        if (Tabs[t].modType!=lastType) {
           var cb = document.createElement("label");
-          cb.setAttribute("value", document.getElementById("radio.label." + TYPES[getShortTypeFromLong(TabLongType[t])]).childNodes[0].nodeValue);
+          cb.setAttribute("value", document.getElementById("radio.label." + TYPES[Tabs[t].tabType]).childNodes[0].nodeValue);
           cb.setAttribute("class", "header");
           cb.style.marginTop = "1em";
           checkBoxes.push(cb);
@@ -55,7 +55,7 @@ function onLoad() {
         cb.setAttribute("oncommand", "disableItem0('" + cb.id + "');");
         if (!cb) continue;
         checkBoxes.push(cb);
-        lastType = TabLongType[t];
+        lastType = Tabs[t].modType;
       }
       break;
     case LOCALESID:
@@ -158,9 +158,8 @@ function onLoad() {
 function getChildLabel(aModname, control, forceLabel, forceDefaultFormatting) {
   var ne = document.createElement("label");
   if (forceLabel==null) {
-    var tabn = moduleName2TabIndex(aModname);
-    if (tabn==null) return false;
-    ne = MainWindow.writeModuleElem(ne, tabn, "value", "label", true, true, forceDefaultFormatting);
+    if (!Tab[aModname]) return false;
+    ne = MainWindow.writeModuleElem(ne, Tab[aModname].index, "value", "label", true, true, forceDefaultFormatting);
     if (!ne) return false;
   }
   else {
@@ -193,7 +192,7 @@ function disableItem(id) {
     e.disabled=false;
     //Only consider Bibles if this is "module" category
     var idparts = e.id.match(MODULEID);
-    if (idparts && getModuleLongType(TabVers[Number(idparts[1])])!=BIBLE) continue;
+    if (idparts && Tabs[idparts[1]].modType!=BIBLE) continue;
     if (e.tagName != "checkbox") continue;
     if (!e.checked) {
       numUnchecked++;
@@ -264,19 +263,19 @@ function deleteModules(e) {
             var aFile = confs.getNext();
             try {
               var t = Number(child.id.substring(GROUPS[g].length+1));
-              if (readParamFromConf(aFile, "ModuleName") == TabVers[t]) {
+              if (readParamFromConf(aFile, "ModuleName") == Tabs[t].modName) {
                 files.push(aFile);
                 found = true;
                 if (reset<HARDRESET) reset=HARDRESET;
                 for (var w=1; w<=3; w++) {
-                  if (prefs.getCharPref("Version" + w)==TabVers[t]) need2ChangeVers[w] = true;
+                  if (Win[w].modName==Tabs[t].modName) need2ChangeVers[w] = true;
                 }
                 break;
               }
             }
             catch (er) {}
           }
-          if (!found) {success=false; msg+="ERROR: Module \"" + TabVers[Number(child.id.substring(GROUPS[g].length+1))] + "\" .conf not found.\n";}
+          if (!found) {success=false; msg+="ERROR: Module \"" + Tabs[Number(child.id.substring(GROUPS[g].length+1))].modName + "\" .conf not found.\n";}
           break;
         case 1: //locales
           var loc = child.id.substring(GROUPS[g].length+1);
@@ -328,9 +327,9 @@ function deleteModules(e) {
   for (var w=1; w<=3; w++) {
     if (need2ChangeVers[w]) {
       if (!MainWindow.isTabShowing(aTabNum, w)) {
-        MainWindow.toggleTabVisibility(aTabNum, w);
+        MainWindow.toggleHiddenModPref(aTabNum, w);
       }
-      MainWindow.setVersionTo(w, TabVers[aTabNum]);
+      MainWindow.setVersionTo(w, Tabs[aTabNum].modName);
     }
   }
   

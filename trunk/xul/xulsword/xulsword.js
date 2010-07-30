@@ -16,7 +16,6 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 /*
-
 */
 
 /************************************************************************
@@ -28,7 +27,7 @@ var HistoryCaptureDelay;
 var Historyi;
 var History;
 var FrameDocument = new Array(4);
-var FrameElement = new Array(4);
+var Win = new Array(4);
 var Link = {win:[null, null, null, null], modName:null, numWins:null, leftWin:null, rightWin:null, firstWin:null, lastWin:null, isRTL:null};
 var KeyWindow;
 var UsingWaitCursor; 
@@ -65,13 +64,13 @@ function loadedXULReal() {
   ContextMenuShowing = false;
   CurrentTarget = {shortName:null, chapter:null, verse:null, lastVerse:null, tabNum:null, windowNum:null};
 
-  FrameElement = [null, document.getElementById("bible1Frame"),
-                        document.getElementById("bible2Frame"),
-                        document.getElementById("bible3Frame")];
-                        
-  FrameDocument = [null, FrameElement[1].contentDocument, 
-                         FrameElement[2].contentDocument, 
-                         FrameElement[3].contentDocument];
+  FrameDocument = [null, document.getElementById("bible1Frame").contentDocument,
+                         document.getElementById("bible2Frame").contentDocument,
+                         document.getElementById("bible3Frame").contentDocument];
+                         
+  Win = [null, FrameDocument[1].defaultView.Win,
+               FrameDocument[2].defaultView.Win,
+               FrameDocument[3].defaultView.Win];
   
   // check for newly installed modules and reset mods if necessary
   var resetUserPrefs = false;
@@ -130,11 +129,9 @@ function loadedXULReal() {
   //Initialize xulsword static variables and other vars
   for (var w=1; w<=3; w++) {
     getPrefOrCreate("ShowOriginal" + w, "Bool", false);
-    if (!moduleName2TabIndex(getPrefOrCreate("Version" + w, "Char", prefs.getCharPref("DefaultVersion")))) 
+    if (!Tab[getPrefOrCreate("Version" + w, "Char", prefs.getCharPref("DefaultVersion"))])
     prefs.setCharPref("Version" + w, prefs.getCharPref("DefaultVersion"));
   }
-  for (w=1; w<=3; w++) {changeVersionPref(w, prefs.getCharPref("Version" + w));} //initialize data structures
-  updateLinkInfo();
   
   //Initialize history globals
   HistoryDepth = 30;  //Number of saved pages in history
@@ -183,7 +180,7 @@ function loadedXULReal() {
   initAudioDirs();
 
   //Initialize global options buttons and checkboxes
-  if (!Bible || !HaveValidLocale || !TabVers.length) {
+  if (!Bible || !HaveValidLocale || !Tabs.length) {
     hideGUI();
   }
   else {
@@ -211,6 +208,7 @@ function loadedXULReal() {
   // This is impossible unless the chooser and first Bible are together in the same frame.
   if (Bible && HaveValidLocale) {
     initTabHiddenPrefs();
+    for (w=1; w<=3; w++) {changeVersionPref(w, prefs.getCharPref("Version" + w));} //initialize data structures
     var dontHideArray = [];
     if (NewModuleInfo && NewModuleInfo.NewModules && NewModuleInfo.NewModules[0]) {
       dontHideArray = NewModuleInfo.NewModules;
@@ -227,7 +225,10 @@ function loadedXULReal() {
         }
       }
     }
-    for (var i=1; i<=3; i++) {updateTabVisibility(i, dontHideArray, true);}
+    for (var i=1; i<=3; i++) {
+      removeFromHiddenModPref(i, dontHideArray);
+      updateTabsFromHiddenModPrefs(i, true);
+    }
     FrameDocument[1].defaultView.initializeScript();
     FrameDocument[2].defaultView.initializeScript();
     FrameDocument[3].defaultView.initializeScript();
@@ -244,7 +245,7 @@ function loadedXULReal() {
   if (window.opener) {window.opener.close();} //Close splash and opener window
   
   //handle error states...
-  if (HaveValidLocale && (!Bible || !TabVers.length)) window.setTimeout("errorHandler(NOMODULES)",0);
+  if (HaveValidLocale && (!Bible || !Tabs.length)) window.setTimeout("errorHandler(NOMODULES)",0);
   else if (!HaveValidLocale && !RestartToChangeLocale) window.setTimeout("errorHandler(NOLOCALES)",0);
   else if (RestartToChangeLocale) window.setTimeout("errorHandler(NEEDRESTART)",0);
   else if (prefs.getCharPref("DefaultVersion")=="none") window.setTimeout("errorHandler(NOMODULES)",0);
@@ -465,9 +466,9 @@ function errorHandler(error) {
 function identifyModuleFeatures(resetUserPrefs) {
   var f = getModuleFeatures();
   if (Bible) {
-    for (var i=0; i<TabVers.length; i++) {
-      if (TabVers[i]==ORIGINAL) continue;
-      var fthis = getModuleFeatures(TabVers[i]);
+    for (var i=0; i<Tabs.length; i++) {
+      if (Tabs[i].isOrigTab) continue;
+      var fthis = getModuleFeatures(Tabs[i].modName);
       for (var t in fthis) f[t] |= fthis[t];
     }
   }
@@ -537,8 +538,8 @@ function getModuleFeatures(module) {
     var dmods = Bible.getModuleInformation(module, "DictionaryModule");
     dmods = dmods.split("<nx>");
     for (var m=0; m<dmods.length && !features.haveDictionary; m++) {
-      for (var t=0; t<TabVers.length; t++) {
-        if (TabVers[t]==dmods[m]) features.haveDictionary=true;
+      for (var t=0; t<Tabs.length; t++) {
+        if (Tabs[t].modName==dmods[m]) features.haveDictionary=true;
       }
     }
   }
@@ -589,7 +590,7 @@ function localeElemSort(a,b) {
 
 function fillModuleMenuLists() {
   var moduleTypeCounts = {}
-  for (var t=0; t<TabVers.length; t++) {
+  for (var t=0; t<Tabs.length; t++) {
     var xulElement = document.createElement("menuitem");
     xulElement = writeModuleElem(xulElement, t, "label", "modulemenu", false, false, false)
     if (!xulElement) continue;
@@ -598,7 +599,7 @@ function fillModuleMenuLists() {
     xulElement.setAttribute("autocheck","false");
     
     for (var type in SupportedModuleTypes) {
-      if (TabLongType[t]!=SupportedModuleTypes[type]) continue;
+      if (Tabs[t].modType!=SupportedModuleTypes[type]) continue;
       var sub = "sub-" + type;
       var subPup = "sub-" + type + "-pup";
       var sepShowAll = "sepShowAll-" + type;
@@ -674,22 +675,22 @@ function writeLocaleElem(elem, lc, id, noAccessKey) {
 function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefaultFormatting) {
   if (!forceDefaultFormatting) forceDefaultFormatting=false;
   var desc = "";
-  if (TabVers[t]==ORIGINAL) {
+  if (Tabs[t].isOrigTab) {
     if (skipORIG) return null;
   }
   else if (!noDescription) {
-    desc = Bible.getModuleInformation(TabVers[t], "Description");
+    desc = Bible.getModuleInformation(Tabs[t].modName, "Description");
     if (desc==NOTFOUND) desc="";
     else desc = " --- " + desc;
   }
   
-  forceDefaultFormatting |= (Bible.getModuleInformation(TabVers[t], "OriginalTabTestament")!=NOTFOUND);
+  forceDefaultFormatting |= (Tabs[t].vstyle == "program");
   
   var dirChar=String.fromCharCode(8206);
   if (!forceDefaultFormatting) {
-    var versionConfig = VersionConfigs[TabVers[t]];
-    var myfont = (versionConfig && versionConfig.font && !isASCII(TabLabel[t]) ? versionConfig.font:DefaultFont);
-    var myfontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust && !isASCII(TabLabel[t]) ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
+    var versionConfig = VersionConfigs[Tabs[t].modName];
+    var myfont = (versionConfig && versionConfig.font && !isASCII(Tabs[t].label) ? versionConfig.font:DefaultFont);
+    var myfontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust && !isASCII(Tabs[t].label) ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
     dirChar = (versionConfig && versionConfig.direction && versionConfig.direction == "rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
   }
   else {
@@ -700,7 +701,7 @@ function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefa
   elem.style.fontFamily = "\"" + myfont + "\"";
   elem.style.fontSizeAdjust = myfontSizeAdjust;
   
-  elem.setAttribute(attrib, TabLabel[t] + desc + dirChar);
+  elem.setAttribute(attrib, Tabs[t].label + desc + dirChar);
   elem.setAttribute("id", id + "." + String(t));
   
   return elem;
@@ -822,8 +823,7 @@ function updateFromNavigator(numberOfSelectedVerses) {
   // Update BIBLES and COMMENTARIES
   var updateNeeded = [false, false, false, false];
   for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    var mytype =  getModuleLongType(prefs.getCharPref("Version" + w));
-    if (mytype == BIBLE || mytype == COMMENTARY) updateNeeded[w] = true;
+    if (Win[w].modType == BIBLE || Win[w].modType == COMMENTARY) updateNeeded[w] = true;
   }
   updateFrameScriptBoxes(updateNeeded, SCROLLTYPECENTER, HILIGHT_IFNOTV1);
   updateLocators(false);
@@ -840,7 +840,7 @@ function previousBook() {
 
 // if pin info is given, apply changes to pin window only
 function previousChapter(highlightVerse, pin) {
-  var vers = (pin ? prefs.getCharPref("Version" + pin.number):firstDisplayBible());
+  var vers = (pin ? Win[pin.number].modName:firstDisplayBible());
   var bkn = findBookNum(pin ? pin.shortName:Bible.getBookName());
   var chn = (pin ? pin.chapter:Bible.getChapterNumber(vers));
   
@@ -935,7 +935,7 @@ function nextBook() {
 
 // if pin info is given, apply changes to pin window(s) only
 function nextChapter(highlightVerse, pin) {
-  var vers = (pin ? prefs.getCharPref("Version" + pin.number):firstDisplayBible());
+  var vers = (pin ? Win[pin.number].modName:firstDisplayBible());
   var bkn = findBookNum(pin ? pin.shortName:Bible.getBookName());
   var chn = (pin ? pin.chapter:Bible.getChapterNumber(vers));
   
@@ -1037,7 +1037,7 @@ function getPassageFromWindow(pflag, onlyThisWin) {
     if (pflag == LASTPASSAGE) elem = getLastDisplayedPassage(onlyThisWin);
     else elem = getFirstDisplayedPassage(onlyThisWin);
     if (!elem || !elem.id || !elem.id.match(/^vs\.[^\.]+\.\d+\.\d+$/)) return null;
-    return elem.id.substring(elem.id.indexOf(".")+1) + "." + prefs.getCharPref("Version" + onlyThisWin);
+    return elem.id.substring(elem.id.indexOf(".")+1) + "." + Win[onlyThisWin].modName;
   }
   else {
     // if this is a linked window, read text from link
@@ -1093,16 +1093,15 @@ function changeVerseTo(version, bk, ch, vs, lastvs, updateNeeded) {
   var text = "";
   for (var w=1; w<=3; w++) {
     if (!updateNeeded[w]) continue;
-    var wvers = prefs.getCharPref("Version" + w);
-    if (FrameDocument[w].defaultView.Win.modType!=BIBLE && FrameDocument[w].defaultView.Win.modType!=COMMENTARY) continue;
+    if (Win[w].modType!=BIBLE && Win[w].modType!=COMMENTARY) continue;
     // full draw is needed if new verse is not being displayed
     if (!Link.win[w]) {
-      var chID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(wvers) + "\\.");
+      var chID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\.");
       fullDrawNeeded[w] = FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML.search(chID) == -1;
     }
     else {
-      var vsID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(wvers) + "\\." + Bible.getVerseNumber(wvers) + "\"");
-      var vlID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(wvers) + "\\." + Bible.getLastVerseNumber(wvers) + "\"");
+      var vsID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\." + Bible.getVerseNumber(Win[w].modName) + "\"");
+      var vlID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\." + Bible.getLastVerseNumber(Win[w].modName) + "\"");
       text += FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML;
       if (w==3 || !Link.win[w+1]) {
         // finished reading text for link or page
@@ -1128,15 +1127,14 @@ function highlightSelectedVerses(updateNeededArray, dontScroll) {
   if (!updateNeededArray) updateNeededArray = [false, true, true, true];
   for (var w=1; w<updateNeededArray.length; w++) {
     if (!updateNeededArray[w]) continue;
-    if (FrameDocument[w].defaultView.Win.modType != BIBLE) continue;
-    var myvers = prefs.getCharPref("Version" + w);
+    if (Win[w].modType != BIBLE) continue;
     FrameDocument[w].defaultView.SelectedVerseCSS.style.color="blue"; //FrameDocument[w].defaultView.SelectedVerseColor;
     var oldsel = FrameDocument[w].getElementById("sv");
     if (oldsel) oldsel.removeAttribute("id");
     var selem = FrameDocument[w].createElement("span");
     selem.className="hl";
-    var fv = Bible.getVerseNumber(myvers);
-    var lv = Bible.getLastVerseNumber(myvers);
+    var fv = Bible.getVerseNumber(Win[w].modName);
+    var lv = Bible.getLastVerseNumber(Win[w].modName);
     
     var verseID = new RegExp("id=\"(vs\\.[^\\.]*\\.(\\d+)\\.(\\d+))\"");
     verseID = FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML.match(verseID);
@@ -1149,7 +1147,7 @@ function highlightSelectedVerses(updateNeededArray, dontScroll) {
         if (id) {
           var c = Number(id[1]);
           var v = Number(id[2]);
-          if (v<fv || c != Bible.getChapterNumber(myvers)) removeHL(velem);
+          if (v<fv || c != Bible.getChapterNumber(Win[w].modName)) removeHL(velem);
           else if (v==fv) {
             var nelem = selem.cloneNode(true);
             nelem.id="sv";
@@ -1162,7 +1160,7 @@ function highlightSelectedVerses(updateNeededArray, dontScroll) {
       velem = velem.nextSibling;
     }
   }
-  if (!dontScroll) window.setTimeout("scrollScriptBoxes(" + SCROLLTYPECENTER + ", [" + updateNeededArray + "]);", 1);
+  if (!dontScroll) window.setTimeout("scrollScriptBoxes([" + updateNeededArray + "], " + SCROLLTYPECENTER + ");", 1);
 }
 
 function removeHL(velem) {
@@ -1204,8 +1202,7 @@ function scrollwheel(event, w) {
   else {
     // scrolling over non-linked Bible or commentary window
     if (FrameDocument[w].defaultView.Pin.isPinned) return;
-    var type = getModuleLongType(prefs.getCharPref("Version" + w));
-    if (type != BIBLE && type != COMMENTARY) return;
+    if (Win[w].modType != BIBLE && Win[w].modType != COMMENTARY) return;
     if (SWTO) window.clearTimeout(SWTO);
     SWTO = window.setTimeout("scrollWheelNoLink(" + w + ");", 100);
   }
@@ -1216,21 +1213,26 @@ function scrollWheelLink() {
   SWcount = 0;
 }
 
+// Should be run if user is scrolling the mouse wheel over an unlinked, unpinned, versekey window
+// Syncs other unpinned windows to this one...
 function scrollWheelNoLink(refWindow) {
   var elem = getFirstDisplayedPassage(refWindow);
-  //scroll to top verse (if found)
-  if (elem) {
-    var loc = elem.id.substring(elem.id.indexOf(".")+1);
-    Bible.setBiblesReference(prefs.getCharPref("Version" + refWindow), loc);
-    updateFrameScriptBoxes(Link.win, SCROLLTYPEBEG, HILIGHTNONE);
-    var update = [false, false, false, false];
-    for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-      if (Link.win[w] || w==refWindow) continue;
-      if (FrameDocument[w].defaultView.Win.modType == BIBLE || FrameDocument[w].defaultView.Win.modType == COMMENTARY) update[w] = true;
-    }
-    scrollScriptBoxes(SCROLLTYPEBEG, update);
-    updateLocators(false);
+  if (!elem) return;
+  var oloc = Bible.getLocation(Win[refWindow].modName);
+  oloc = oloc.substring(0, oloc.lastIndexOf(".")); // remove lastVerse
+  var nloc = elem.id.match(/vs\.([^\.]+\.[^\.]+\.[^\.]+)/)[1];
+  if (oloc == nloc) return; // already there!
+  
+  //scroll other windows to top verse
+  Bible.setBiblesReference(Win[refWindow].modName, nloc);
+  updateFrameScriptBoxes(Link.win, SCROLLTYPEBEG, HILIGHTNONE);
+  var update = [false, false, false, false];
+  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
+    if (Link.win[w] || w==refWindow) continue;
+    if (Win[w].modType == BIBLE || Win[w].modType == COMMENTARY) update[w] = true;
   }
+  scrollScriptBoxes(update, SCROLLTYPEBEG);
+  updateLocators(false);
 }
 
 function getFirstDisplayedPassage(w) {
@@ -1242,8 +1244,8 @@ function getFirstDisplayedPassage(w) {
   for (var i=0; i<verseIDs.length; i++) {
     verseIDs[i] = verseIDs[i].match(vre)[1];
     var elem = FrameDocument[w].getElementById(verseIDs[i]);
-    if ((elem && elem.offsetTop > scrollTop) ||
-        (elem && (elem.offsetTop+elem.offsetHeight) > (scrollTop+scriptBoxElem.offsetHeight))) return elem;
+    if (elem && elem.offsetTop > scrollTop && elem.offsetTop < (scrollTop + (0.4*scriptBoxElem.offsetHeight))) return elem;
+    if (elem &&             elem.offsetTop+elem.offsetHeight > (scrollTop + (0.4*scriptBoxElem.offsetHeight))) return elem;
   }
   return null;
 }
@@ -1271,8 +1273,10 @@ function linkVerseScroll(numVerses) {
   var v = Number(fp[2]);
   var vers = fp[4];
 
+  var redrawAll = false;
   v += numVerses;
   if (v <= 0) {
+    redrawAll = true;
     c--;
     if (c <= 0) {
       var bn = findBookNum(b);
@@ -1285,6 +1289,7 @@ function linkVerseScroll(numVerses) {
     if (v <= 0) v = 1;
   }
   else if (v > Bible.getMaxVerse(vers, b + "." + c)) {
+    redrawAll = true;
     c++;
     bn = findBookNum(b);
     if (c > Book[bn].numChaps) {
@@ -1298,18 +1303,21 @@ function linkVerseScroll(numVerses) {
     if (v > mv) v = mv;
   }
   var update;
-  var scrollTo;
   var pin = FrameDocument[Link.firstWin].defaultView.Pin;
   if (pin.isPinned) {
     pin.updatePin(b, c, v, true);
     pin.updateLink();
     update = copyLinkArray();
-    scrollTo = null;
   }
   else {
     Bible.setBiblesReference(vers, b + "." + c + "." + v);
-    update = getUnpinnedVerseKeyWindows();
-    scrollTo = "vs." + b + "." + c + "." + v;
+    if (redrawAll) update = getUnpinnedVerseKeyWindows();
+    else {
+      update = copyLinkArray();
+      var scroll = getUnpinnedVerseKeyWindows();
+      for (var w=1; w<=3; w++) {scroll[w] &= !update[w];}
+      scrollScriptBoxes(scroll, SCROLLTYPEBEG);
+    }
   }
   updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE);
   updateLocators(false);
@@ -1427,15 +1435,16 @@ var XulswordController = {
       break;
     case "cmd_xs_toggleTab":
       var preChangeLinkArray = copyLinkArray();
-      var isNowVisible = toggleTabVisibility(CurrentTarget.tabNum, CurrentTarget.windowNum);
-      if (updateTabVisibility(CurrentTarget.windowNum, (isNowVisible ? [TabVers[CurrentTarget.tabNum]]:null))) {
+      var isNowVisible = toggleHiddenModPref(CurrentTarget.tabNum, CurrentTarget.windowNum);
+      updateModuleMenuCheckmarks();
+      if (updateTabsFromHiddenModPrefs(CurrentTarget.windowNum)) {
         updateLinkInfo();
         updatePinVisibility();
         resizeScriptBoxes(getUpdatesNeededArray(CurrentTarget.windowNum, preChangeLinkArray));
       }
       break;
     case "cmd_xs_aboutModule":
-      AboutScrollTo = TabVers[CurrentTarget.tabNum];
+      AboutScrollTo = Tabs[CurrentTarget.tabNum].modName;
       AboutScreen = window.open("chrome://xulsword/content/about.xul","splash","chrome,modal,centerscreen");
       break;
     case "cmd_xs_addNewModule":
@@ -1507,7 +1516,7 @@ var XulswordController = {
       // disable if no Bibles or commentaries
       var haveVK = false;
       for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-        if (FrameDocument[w].defaultView.Win.modType==BIBLE || FrameDocument[w].defaultView.Win.modType==COMMENTARY) haveVK=true;
+        if (Win[w].modType==BIBLE || Win[w].modType==COMMENTARY) haveVK=true;
       }
       return haveVK;
       break;
@@ -1621,19 +1630,10 @@ function handleOptions(elem) {
     case "w1":
     case "w2":
     case "w3":
-      for (var w=1; w<=3; w++) {
-        if (FrameDocument[w].defaultView.Pin.isPinned) {
-          FrameDocument[w].defaultView.Pin.isPinned = false;
-          FrameDocument[w].defaultView.setFramePinStyle(false);
-        }
-      }
       prefs.setIntPref("NumDisplayedWindows", Number(elem.id.substr(1,1)));
-      for (var w=1; w<=3; w++) {updateTabVisibility(w);}
       updateLinkInfo();
-      updatePinVisibility();
-      updateVersionTabs();
+      updatePinVisibility(); //If only one window, there is no pin
       resizeScriptBoxes(); //Will also display correct frames
-      scrollScriptBoxes(SCROLLTYPETOP)
       break;
         
     case "f0":
@@ -1691,6 +1691,18 @@ function handleOptions(elem) {
       }
       break;
       
+    case "allTabs":
+      var w = id[1].match(/^w(\d)$/);
+      if (w) setAllTabs(true, w[1]);
+      else setAllTabs(true);
+      break;
+      
+    case "noTabs":
+      var w = id[1].match(/^w(\d)$/);
+      if (w) setAllTabs(false, w[1]);
+      else setAllTabs(false);
+      break;
+      
     default:
       for (var lc=0; lc<LocaleList.length; lc++) {
         if (elem.id == LocaleList[lc]) {
@@ -1703,9 +1715,36 @@ function handleOptions(elem) {
   }
 }
 
+// Shows or hides all tabs for: if w is passed then window w, otherwise all windows
+function setAllTabs(toShowing, w) {
+  if (w) {var s=w; var e=w;}
+  else {s=1; e=3;}
+  for (var i=s; i<=e; i++) {
+    for (var t=0; t<Tabs.length; t++) {
+      var toggleMe = (toShowing ? !isTabShowing(t, i):isTabShowing(t, i));
+      if (toggleMe) toggleHiddenModPref(t, i);
+    }
+  }
+  
+  updateModuleMenuCheckmarks();
+  if (w) {s=w; e=w;}
+  else {s=1; e=prefs.getIntPref("NumDisplayedWindows");}
+  var needRedraw = false;
+  for (var i=s; i<=e; i++) {
+    needRedraw |= updateTabsFromHiddenModPrefs(i);
+  }
+  if (needRedraw) {
+    var preChangeLinkArray = copyLinkArray();
+    updateLinkInfo();
+    updatePinVisibility();
+    if (w) var update = getUpdatesNeededArray(w, preChangeLinkArray);
+    else update = [false, true, true, true];
+    resizeScriptBoxes(update);
+  }
+}
+
 var RedrawAfterModuleMenuSelect;
 function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
-  var dontHideArray = [];
   document.getElementById("view-popup").showPopup();
   document.getElementById("sub-" + subPupId + "-pup").showPopup();
   var rs = getRadioSelection(subPupId);
@@ -1717,30 +1756,31 @@ function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
     case "modulemenu":
       var isTabVisible = isTabShowing(tabNum, i);
       var doToggle = (isTabVisible == oldCheckedValue);
-      if (doToggle && TabVers[tabNum] && !isTabVisible) dontHideArray.push(TabVers[tabNum]);
-      if (doToggle) toggleTabVisibility(tabNum, i);
+      if (doToggle) {
+        toggleHiddenModPref(tabNum, i);
+        updateModuleMenuCheckmarks();
+      }
       break;
     case "showAllTabs":
     case "showNoTabs":
       var moduletype = SupportedModuleTypes[subPupId];
       if (!moduletype) return;
-      for (var t=0; t<TabVers.length; t++) {
-        if (TabLongType[t] != moduletype) continue;
-        if (id=="showAllTabs") dontHideArray.push(TabVers[t]);
+      for (var t=0; t<Tabs.length; t++) {
+        if (Tabs[t].modType != moduletype) continue;
         var toggleMe = (id=="showNoTabs" ? isTabShowing(t, i):!isTabShowing(t, i));
-        if (toggleMe) toggleTabVisibility(t, i);
+        if (toggleMe) toggleHiddenModPref(t, i);
       }
+      updateModuleMenuCheckmarks();
       break;
     }
   }
-  updateModuleMenuCheckmarks();
   if (rs <= 3) var sw=aWindowNum;
   else {sw=1; rs=3;}
   var needRedraw = false;
   var wins = prefs.getIntPref("NumDisplayedWindows");
   for (var i=sw; i<=rs; i++) {
     if (i>wins) break; 
-    needRedraw |= updateTabVisibility(i, dontHideArray);
+    needRedraw |= updateTabsFromHiddenModPrefs(i);
   }
   if (needRedraw) {
     updateLinkInfo();
@@ -1838,8 +1878,8 @@ var ShowTabToolTip, HideTabToolTip;
 function openTabToolTip(tabNum, frame, cX, cY) {
   if (!document.getElementById('tabTT')) return;
   document.getElementById('tabTT').hidePopup();
-  var modName = TabVers[tabNum];
-  if (modName == ORIGINAL) modName = resolveOriginalVersion(Bible.getBookName());
+  var modName = Tabs[tabNum].modName;
+  if (Tabs[tabNum].isOrigTab) modName = resolveOriginalVersion(Bible.getBookName());
   if (!modName) return;
   
   var desc = Bible.getModuleInformation(modName, "Description");
@@ -1915,13 +1955,13 @@ jsdump ("ScriptContextMenuShowing id:" + document.popupNode.id + ", title:" + do
   
   // Is this the select tab menu?
   if (document.popupNode.id == "seltab.menu") {
-    CurrentTarget.tabNum = moduleName2TabIndex(tabLabel2ModuleName(document.popupNode.value));
+    CurrentTarget.tabNum = Tab[document.popupNode.value].index;
     buildPopup(e, false, false, false, true, true);
     return;
   }
   // Is this the select tab tab?
   if (document.popupNode.id == "seltab.tab") {
-    CurrentTarget.tabNum = moduleName2TabIndex(tabLabel2ModuleName(document.popupNode.nextSibling.value));
+    CurrentTarget.tabNum = Tab[document.popupNode.nextSibling.value].index;
     buildPopup(e, false, false, false, true, true);
     return;
   }
@@ -1976,9 +2016,9 @@ jsdump ("ScriptContextMenuShowing id:" + document.popupNode.id + ", title:" + do
 //jsdump(contextTargs.shortName + " " + contextTargs.chapter + ":" + contextTargs.verse + "-" + contextTargs.lastVerse + ", res=" + contextTargs.resource);
    
   // Set Global Target variables
-  var myModuleName = prefs.getCharPref("Version" + document.popupNode.ownerDocument.defaultView.frameElement.id.substr(5,1));
+  var myModuleName = Win[document.popupNode.ownerDocument.defaultView.frameElement.id.substr(5,1)].modName;
   CurrentTarget.version = contextTargs.version ? contextTargs.version:myModuleName;
-  CurrentTarget.tabNum = moduleName2TabIndex(CurrentTarget.version);
+  CurrentTarget.tabNum = (Tab[CurrentTarget.version] ? Tab[CurrentTarget.version].index:null);
   switch (getModuleLongType(myModuleName)) {
   case BIBLE:
   case COMMENTARY:
@@ -2008,7 +2048,7 @@ jsdump ("ScriptContextMenuShowing id:" + document.popupNode.id + ", title:" + do
   // Set some flags
   var haveVerse = (CurrentTarget.verse!=null && contextTargs.paragraph==null);
   var overScriptboxVerse = (haveVerse && !contextTargs.isCrossReference);
-  var overSelectedVerse = (overScriptboxVerse && CurrentTarget.verse==Bible.getVerseNumber(prefs.getCharPref("Version" + CurrentTarget.windowNum)) && CurrentTarget.verse!=1);
+  var overSelectedVerse = (overScriptboxVerse && CurrentTarget.verse==Bible.getVerseNumber(Win[CurrentTarget.windowNum].modName) && CurrentTarget.verse!=1);
   var frameIsPinned = document.popupNode.ownerDocument.defaultView.Pin.isPinned;
   var overPopup = isOverPopup();
   var overResource = (BookmarksMenu._selection != null);
@@ -2124,7 +2164,7 @@ function getTargetsFromElement(element) {
 //jsdump("Context searching id=" + element.id);
     if (element.id) {
       if (element.id=="scriptBox" || element.id=="npopup") {inScriptBox=true;}
-      if (element.id=="scriptBox" && !targs.version) targs.version = prefs.getCharPref("Version" + element.ownerDocument.defaultView.frameElement.id.substr(5,1));
+      if (element.id=="scriptBox" && !targs.version) targs.version = Win[element.ownerDocument.defaultView.frameElement.id.substr(5,1)].modName;
       // Are we over a cross reference?
       if (targs.verse == null && element.title) {
         // First get location data
@@ -2145,7 +2185,7 @@ function getTargetsFromElement(element) {
       // Are we over a note body?
       if (targs.verse == null) {try {loc = element.id.match(/body\..*([^\.]*)\.(\d+)\.(\d+)$/); targs.shortName = loc[1]; targs.chapter=Number(loc[2]); targs.verse = Number(loc[3]); targs.paragraph=targs.verse;} catch (er) {}}
       // Are we over a user note?
-      if (targs.resource == null) {try {targs.resource = decodeUTF8(element.id.match(/^un\.(.*?)\./)[1]);} catch (er) {}}
+      if (targs.resource == null) {try {targs.resource = decodeUTF8(element.id.match(/(^|\.)un\.(.*?)\./)[2]);} catch (er) {}}
       // Are we over a paragraph?
       if (targs.paragraph == null) {try {targs.paragraph = Number(element.id.match(/par\.(\d+)/)[1]);} catch (er) {}}
       // If we don't have a resource, search applicable children...
@@ -2249,17 +2289,15 @@ function getGenBookInfo() {
   var genBookList = "";
   var modsAtRoot = [];
   for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    var mymod = prefs.getCharPref("Version" + w);
-    var mytype = getModuleLongType(mymod);
-    if (mytype == GENBOOK) {
-      var mymodRE = new RegExp("(^|;)(" + escapeRE(mymod) + ");");
+    if (Win[w].modType == GENBOOK) {
+      var mymodRE = new RegExp("(^|;)(" + escapeRE(Win[w].modName) + ");");
       if (!genBookList.match(mymodRE)) numUniqueGenBooks++;
       else continue;
       // Insure genbook has a showingkey pref!
-      var key = getPrefOrCreate("ShowingKey" + mymod, "Unicode", "/" + mymod);
-      if (key == "/" + mymod) modsAtRoot.push(mymod);
-      if (!firstGenBook) firstGenBook=mymod;
-      genBookList += mymod + ";";
+      var key = getPrefOrCreate("ShowingKey" + Win[w].modName, "Unicode", "/" + Win[w].modName);
+      if (key == "/" + Win[w].modName) modsAtRoot.push(Win[w].modName);
+      if (!firstGenBook) firstGenBook=Win[w].modName;
+      genBookList += Win[w].modName + ";";
     }
   }
   var ret = {};
@@ -2412,7 +2450,7 @@ function onSelectGenBook(elem) {
   if (newkey != oldkey) {
     var updateNeeded = [false, false, false, false];
     for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-      if (prefs.getCharPref("Version" + w) == newmod) updateNeeded[w] = true;
+      if (Win[w].modName == newmod) updateNeeded[w] = true;
     }
     setUnicodePref("ShowingKey" + newmod, newkey);
     updateFrameScriptBoxes(updateNeeded, SCROLLTYPETOP);
@@ -2720,7 +2758,7 @@ function waitCursor() {
   for (var w=1; w<=3; w++) {
     FrameDocument[w].getElementById("scriptBox").style.cursor="wait";
     FrameDocument[w].getElementById("pin").style.cursor="wait";
-    for (var t=0; t<TabVers.length; t++) {FrameDocument[w].getElementById("tab" + String(t)).style.cursor="wait";}
+    for (var t=0; t<Tabs.length; t++) {FrameDocument[w].getElementById("tab" + t).style.cursor="wait";}
   }
 }
 
@@ -2731,8 +2769,10 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
   
   var haveGenBook = updateGenBooks();
   //Dont need to update chooser if this is init and there are no genbooks
-  if ((haveGenBook || (PreviousHaveGenBook!=null)) && haveGenBook != PreviousHaveGenBook) 
-      updateChooserVisibility(false, true, true);
+  if ((haveGenBook || (PreviousHaveGenBook!=null)) && haveGenBook != PreviousHaveGenBook) {
+    updateChooserVisibility();
+    resizeScriptBoxes(null, true);
+  }
   PreviousHaveGenBook = haveGenBook;
   
   // Order is 3,2,1 because lower number Frames can write text to higher number Frames
@@ -2745,7 +2785,7 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
   goUpdateTargetLocation();
   
   if (UsingWaitCursor) window.setTimeout("cancelWaitCursor();", 0);
-  if (scrollTypeFlag) window.setTimeout("scrollScriptBoxes(" + scrollTypeFlag + ", [" + updateNeededArray + "]);", 1);
+  if (scrollTypeFlag) window.setTimeout("scrollScriptBoxes([" + updateNeededArray + "], " + scrollTypeFlag + ");", 1);
 
   updateAudioLinks(updateNeededArray, true);
   if (CheckAL) window.clearTimeout(CheckAL);
@@ -2765,7 +2805,7 @@ function cancelWaitCursor() {
   for (var w=1; w<=3; w++) {
     FrameDocument[w].getElementById("scriptBox").style.cursor="";
     FrameDocument[w].getElementById("pin").style.cursor="";
-    for (var t=0; t<TabVers.length; t++) {FrameDocument[w].getElementById("tab" + String(t)).style.cursor="";}
+    for (var t=0; t<Tabs.length; t++) {FrameDocument[w].getElementById("tab" + t).style.cursor="";}
   }
 }
 
@@ -2773,13 +2813,12 @@ var CheckAL;
 function updateAudioLinks(updateNeededArray, forceHidden) {
   for (var w=1; w<updateNeededArray.length; w++) {
     if (!updateNeededArray[w]) continue;
-    var tvers = prefs.getCharPref("Version" + w);
     if (FrameDocument[w].defaultView.Pin.isPinned) var bk = FrameDocument[w].defaultView.Pin.shortName;
     else bk = Bible.getBookName();
     var icons = FrameDocument[w].getElementsByName("listenlink");
     for (var i = 0; i < icons.length; ++i) {
       var icon = icons[i];
-      if (!forceHidden && getAudioForChapter(tvers, bk, Number(icon.id.split(".")[1]))) icon.style.display = "inline";
+      if (!forceHidden && getAudioForChapter(Win[w].modName, bk, Number(icon.id.split(".")[1]))) icon.style.display = "inline";
       else icon.style.display = "none";
     }
   }
@@ -2789,8 +2828,7 @@ var HideCR;
 function hideEmptyCrossRefs(updateNeededArray) {
   for (var w=1; w<updateNeededArray.length; w++) {
     if (!updateNeededArray[w]) continue;
-    var version = prefs.getCharPref("Version" + w);
-    if (getModuleLongType(version) != BIBLE) {continue;}
+    if (Win[w].modType != BIBLE) {continue;}
     var notes = Fn[w].CrossRefs;
     if (!notes) continue;
     notes = notes.split("<nx/>");
@@ -2801,7 +2839,7 @@ function hideEmptyCrossRefs(updateNeededArray) {
       if (!notes[n][1].length) continue;
       var hideCR = true;
       for (var r=0; r<notes[n][1].length; r++) {
-        if (findAVerseText(version, notes[n][1][r]).text.length > 7) {
+        if (findAVerseText(Win[w].modName, notes[n][1][r]).text.length > 7) {
           hideCR = false;
           break;
         }
@@ -3181,7 +3219,8 @@ function appendVerse(f, p, s, fn, header, footer, intend, appendExtraVerse) {
 }
 
 function prependVerse(f, p, s, fn, header, footer) {
-  var itest = p.text.lastIndexOf(Vtext1, p.ibeg-1);
+  var itest = (p.ibeg > 0 ? p.text.lastIndexOf(Vtext1, p.ibeg-1):-1);
+
   if (itest == -1) {
     p.numPrependedChaps--;
     var newtext = getChapterWithHeading(s, fn, p.numPrependedChaps);
@@ -3236,14 +3275,11 @@ function hilightUserNotes(userNotes, frameNumber) {
   }
 }
 
-function scrollScriptBoxes(scrollTypeFlag, updateNeededArray) {
+function scrollScriptBoxes(updateNeededArray, scrollTypeFlag) {
   if (!updateNeededArray) updateNeededArray = [false, true, true, true];
-  for (var w=1; w<=3; w++) {
+  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
     if (!updateNeededArray[w]) continue;
-    var mytype = getModuleLongType(prefs.getCharPref("Version" + w));
-    if (FrameElement[w].style.visibility=="visible") {
-      FrameDocument[w].defaultView.scrollScriptBox(scrollTypeFlag);
-    }
+    FrameDocument[w].defaultView.scrollScriptBox(scrollTypeFlag);
   }
 }
 
@@ -3271,10 +3307,10 @@ function resizeScriptBoxes(updateNeededArray, dontChangeContents) {
   //This seems to be related to when showFrames() occurs.
   //We must update scriptboxes because innerHTMLs are null at this point
   if (!dontChangeContents) {
-    window.setTimeout("updateFrameScriptBoxes([" + updateNeededArray + "],true,true);",0);
+    window.setTimeout("updateFrameScriptBoxes([" + updateNeededArray + "], SCROLLTYPECENTER, HILIGHT_IFNOTV1);",0);
     for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
       if (!updateNeededArray[w]) continue;
-      window.setTimeout("{updateTabVisibility(" + w + ", '[" + prefs.getCharPref("Version" + w) + "]'); updateLinkInfo(); updateModuleMenuCheckmarks();}", 0);
+      window.setTimeout("{updateTabsFromHiddenModPrefs(" + w + "); updateLinkInfo();}", 0);
     }
   }
 }
@@ -3326,9 +3362,10 @@ function toggleChooser() {
   prefs.setBoolPref("ShowChooser", !prefs.getBoolPref("ShowChooser"));
   for (var w=1; w<=3; w++) {setNoteBoxSizer(w, false);}
   updateChooserVisibility(true);
+  resizeScriptBoxes();
 }
 
-function updateChooserVisibility(resizeAll, resizeFirst, dontUpdateScriptBoxes) {
+function updateChooserVisibility() {
   var showBibleChooser = prefs.getBoolPref("ShowChooser") && !prefs.getBoolPref("ShowGenBookChooser");
   var showGetBookChooser = prefs.getBoolPref("ShowGenBookChooser");
   FrameDocument[1].getElementById("wholeChooser").style.visibility = showBibleChooser ? "visible":"hidden";
@@ -3342,9 +3379,6 @@ function updateChooserVisibility(resizeAll, resizeFirst, dontUpdateScriptBoxes) 
   var genBookChooserElement = document.getElementById("genBookChooser");
   genBookChooserElement.style.visibility = (showGetBookChooser ? "visible":"hidden");
   genBookChooserElement.style.display = (showGetBookChooser ? "":"none");
-      
-  if (resizeAll) resizeScriptBoxes(null, dontUpdateScriptBoxes);
-  else if (resizeFirst) resizeScriptBoxes([null, true, false, false], dontUpdateScriptBoxes);
 }
 
 /************************************************************************
@@ -3366,10 +3400,10 @@ function setVersionTo(w, version) {
 
 function changeVersionPref(w, version) {
   prefs.setCharPref("Version" + w, version);
-  MainWindow.FrameDocument[w].defaultView.Win.modName = version;
+  Win[w].modName = version;
   if (Bible) var dir = Bible.getModuleInformation(version, "Direction");
-  MainWindow.FrameDocument[w].defaultView.Win.isRTL = (dir ? dir.search("RtoL","i")!=-1:false);
-  MainWindow.FrameDocument[w].defaultView.Win.modType = getModuleLongType(version);
+  Win[w].isRTL = (dir ? dir.search("RtoL","i")!=-1:false);
+  Win[w].modType = getModuleLongType(version);
   updateORIGtab(w);
   var genbookinfo = getGenBookInfo();
   prefs.setBoolPref("ShowGenBookChooser", genbookinfo.numUniqueGenBooks>0);
@@ -3413,12 +3447,10 @@ function disableMissingBooks(hideDisabledBooks) {
 // Writes labels and styles for all tabs. When used for initialization, we don't run
 // setNoteBoxSizer during init since it isn't needed, and because Globals used
 // are not yet initialized
-function updateVersionTabs(initializing) {
+// This needs to be run when pinning/unpinning, or changing the selected version of a window
+function updateTabLabelsAndStyles(initializing) {
   for (var w=1; w<=3; w++) {FrameDocument[w].defaultView.PreviousT="";}
   
-  var w2 = (prefs.getIntPref("NumDisplayedWindows") >= 2 ? true:false);
-  var w3 = (prefs.getIntPref("NumDisplayedWindows") == 3 ? true:false);
-
   // minimize noteboxes which aren't being shown so we aren't surprised by them later.
   // only last window in a link needs the notebox maximize button
   var f = (Link.isRTL ? 1:3);
@@ -3432,21 +3464,20 @@ function updateVersionTabs(initializing) {
   }
   
   for (w=1; w<=3; w++) {
-    for (var b=0; b<TabLabel.length; b++) {
+    for (var b=0; b<Tabs.length; b++) {
       var tabClasses = {normal:null, selected:null};
       getTabClasses(w, b, tabClasses);
 
       var myTabElement = FrameDocument[w].getElementById("tab" + b);
-      //myTabElement.value = TabLabel[b];
-      if (prefs.getBoolPref("ShowOriginal" + w) && TabVers[b]==ORIGINAL &&
-              getModuleLongType(prefs.getCharPref("Version" + w)) == BIBLE)
+      //myTabElement.value = Tabs[b].label;
+      if (prefs.getBoolPref("ShowOriginal" + w) && Tabs[b].isOrigTab && Win[w].modType == BIBLE)
         myTabElement.className = tabClasses.selected;
-      else if (TabVers[b]==ORIGINAL) {
+      else if (Tabs[b].isOrigTab) {
         // retain tabDisabled setting!
         if (myTabElement.className.search("tabDisabled")!=-1) myTabElement.className = "tabDisabled " + tabClasses.normal;
         else myTabElement.className= tabClasses.normal;
       }
-      else myTabElement.className = ((b == moduleName2TabIndex(prefs.getCharPref("Version" + w))) ? tabClasses.selected:tabClasses.normal);
+      else myTabElement.className = ((b == Tab[Win[w].modName].index) ? tabClasses.selected:tabClasses.normal);
     }
     
     updateSelectTab(w);
@@ -3455,7 +3486,7 @@ function updateVersionTabs(initializing) {
 }
     
 function updateSelectTab(aWindowNum) {
-  for (var b=0; b<TabLabel.length; b++) {
+  for (var b=0; b<Tabs.length; b++) {
     var mySelectTabOption = FrameDocument[aWindowNum].getElementById("seltab" + b);
     if (mySelectTabOption) {
       var tabClasses = {normal:null, selected:null};
@@ -3463,7 +3494,7 @@ function updateSelectTab(aWindowNum) {
       mySelectTabOption.className = tabClasses.normal;
       var mySelectTab = FrameDocument[aWindowNum].getElementById("seltab.menu");
       if (mySelectTab.value==mySelectTabOption.value) {
-        mySelectTab.className = ((b == moduleName2TabIndex(prefs.getCharPref("Version" + aWindowNum))) ? tabClasses.selected:tabClasses.normal);
+        mySelectTab.className = ((b == Tab[Win[aWindowNum].modName].index) ? tabClasses.selected:tabClasses.normal);
       }
       if (mySelectTab.className.search("tabDisabled")!=-1 || mySelectTab.className.search("scriptboxPinnedSelTab")!=-1) mySelectTab.setAttribute("disabled", "disabled");
       else mySelectTab.removeAttribute("disabled");
@@ -3474,15 +3505,16 @@ function updateSelectTab(aWindowNum) {
 
 function updateORIGtab(w) {
   var origtab = null;
-  for (var t=0; t<TabVers.length; t++) {
-    if (TabVers[t]==ORIGINAL) {
+  for (var t=0; t<Tabs.length; t++) {
+    if (Tabs[t].isOrigTab) {
       origtab = t;
       break;
     }
   }
+  if (!origtab) return;
   var ot = FrameDocument[w].getElementById("tab" + origtab);
-  if (origtab===null || !ot) return;
-  if (getModuleLongType(prefs.getCharPref("Version" + w)) == BIBLE) ot.className = ot.className.replace(/\s*tabDisabled\s*/g, "");
+  var tw = Tab[Win[w].modName].index;
+  if (Win[w].modType == BIBLE && isTabShowing(tw, w)) ot.className = ot.className.replace(/\s*tabDisabled\s*/g, "");
   else if (ot.className.search("tabDisabled")==-1) ot.className = "tabDisabled " + ot.className;
 }
 
@@ -3490,20 +3522,8 @@ function getTabClasses(aWindowNum, aTabNum, retobj) {
   var tabClass = (FrameDocument[aWindowNum].defaultView.Pin.isPinned ? "tabDisabled ":"");
   var selectedtabClass = (FrameDocument[aWindowNum].defaultView.Pin.isPinned ? "scriptboxPinnedSelTab ":"");
   
-  var moduletype="";
-  for (var type in SupportedModuleTypes) {
-    if (SupportedModuleTypes[type]==TabLongType[aTabNum]) moduletype=type;
-  }
-  
-  try {var isOrignalLabelOT = (TabLabel[aTabNum]==SBundle.getString("ORIGLabelOT"));}
-  catch (er) {isOrignalLabelOT = false;}
-  try {var isOrignalLabelNT = (TabLabel[aTabNum]==SBundle.getString("ORIGLabelNT"));}
-  catch (er) {isOrignalLabelNT = false;}
-  if (isOrignalLabelOT || isOrignalLabelNT) var mystyle = "program";
-  else mystyle = TabVers[aTabNum];
-  
-  tabClass += " tabs tab" + moduletype + " vstyle" + mystyle;
-  selectedtabClass += " tabs tab" + moduletype + " seltab vstyle" + mystyle;
+  tabClass += " tabs tab" + Tabs[aTabNum].tabType + " vstyle" + Tabs[aTabNum].vstyle;
+  selectedtabClass += " tabs tab" + Tabs[aTabNum].tabType + " seltab vstyle" + Tabs[aTabNum].vstyle;
   
   retobj.selected = selectedtabClass;
   retobj.normal = tabClass;
@@ -3516,12 +3536,12 @@ function initTabHiddenPrefs() {
   var allDicts="";
   var allGenbks="";
   var someBibles="";
-  for (var t=0; t<TabVers.length; t++) {
-    var keepBible = (TabVers[t]==ORIGINAL || getLocaleOfVersion(TabVers[t]) || TabVers[t]==prefs.getCharPref("DefaultVersion"));
-    someBibles  += (TabLongType[t]==BIBLE && !keepBible ? TabVers[t] + ";":"");
-    allComms    += (TabLongType[t]==COMMENTARY ? TabVers[t] + ";":"");
-    allDicts    += (TabLongType[t]==DICTIONARY ? TabVers[t] + ";":"");
-    allGenbks   += (TabLongType[t]==GENBOOK ? TabVers[t] + ";":"");
+  for (var t=0; t<Tabs.length; t++) {
+    var keepBible = (Tabs[t].isOrigTab || getLocaleOfVersion(Tabs[t].modName) || Tabs[t].modName==prefs.getCharPref("DefaultVersion"));
+    someBibles  += (Tabs[t].modType==BIBLE && !keepBible ? Tabs[t].modName + ";":"");
+    allComms    += (Tabs[t].modType==COMMENTARY ? Tabs[t].modName + ";":"");
+    allDicts    += (Tabs[t].modType==DICTIONARY ? Tabs[t].modName + ";":"");
+    allGenbks   += (Tabs[t].modType==GENBOOK ? Tabs[t].modName + ";":"");
   }
   var defaultPref = {
     Texts: (getPrefOrCreate("ShowAllBibleTabsByDefault", "Bool", false) ? "":someBibles),
@@ -3538,7 +3558,7 @@ function initTabHiddenPrefs() {
 HIDDENMODS:
       for (var m=0; m<mypref.length; m++) {
         if (mypref[m]==ORIGINAL && HaveOriginalTab) continue;
-        for (var t=0; t<TabVers.length; t++) {if (mypref[m]==TabVers[t]) continue HIDDENMODS;}
+        for (var t=0; t<Tabs.length; t++) {if (mypref[m]==Tabs[t].modName) continue HIDDENMODS;}
         mypref.splice(m,1);
         m--;
       }
@@ -3567,23 +3587,28 @@ HIDDENMODS:
 // Rules for hidden pref lists:
 //    1) Every module name in the list ends with a ";"
 //    2) If there are no modules in the list, the list is "" (not ";")
-function toggleTabVisibility(tabNum, aWindowNum) {
+function toggleHiddenModPref(tabNum, aWindowNum) {
   if (tabNum==null || aWindowNum==null) return null;
-  var oldpref="";
-  for (var shortType in SupportedModuleTypes) {
-    //jsdump("BEFORE TOGGLE- shortType:" + shortType + " hidden:" + prefs.getCharPref("Hidden" + shortType + aWindowNum) + "\n");
-    if (SupportedModuleTypes[shortType]==TabLongType[tabNum]) var moduletype=shortType;
-  }
-  if (!moduletype) return null;
-  
-  oldpref = prefs.getCharPref("Hidden" + moduletype + aWindowNum);
-  var version = new RegExp("(^|;)" + escapeRE(TabVers[tabNum]) + ";");
+  var oldpref = prefs.getCharPref("Hidden" + Tabs[tabNum].tabType + aWindowNum);
+  var version = new RegExp("(^|;)" + escapeRE(Tabs[tabNum].modName) + ";");
   var showTab = (oldpref.search(version)!=-1);
-  var newprefval = (showTab ? oldpref.replace(version, "$1"):oldpref + TabVers[tabNum] + ";")
-  prefs.setCharPref("Hidden" + moduletype + aWindowNum, newprefval);
+  var newprefval = (showTab ? oldpref.replace(version, "$1"):oldpref + Tabs[tabNum].modName + ";")
+  prefs.setCharPref("Hidden" + Tabs[tabNum].tabType + aWindowNum, newprefval);
   return showTab;
 }
 
+function removeFromHiddenModPref(modNameArray, aWindowNum) {
+  if (!modNameArray || !modNameArray.length) return;
+  var needUpdate = false;
+  for (var i=0; i<modNameArray.length; i++) {
+    if (!Tab[modNameArray[i]]) continue;
+    if (!isTabShowing(Tab[dontHideArray[i]].index, aWindowNum)) {
+      toggleHiddenModPref(Tab[modNameArray[i]].index, aWindowNum);
+      needUpdate = true;
+    }
+  }
+  if (needUpdate) updateModuleMenuCheckmarks();
+}
 
 function fitTabs(aWindowNum) {
   if (aWindowNum>prefs.getIntPref("NumDisplayedWindows")) return;
@@ -3598,7 +3623,8 @@ function fitTabs(aWindowNum) {
   var twMargin = getTabWidthMargin(aWindowNum);
   if (!twMargin || twMargin>0) return;
   seltab.style.display="";
-  var t=TabVers.length;
+  
+  var t=Tabs.length;
   try {var showingOrig = prefs.getBoolPref("ShowOriginal" + aWindowNum);}
   catch (er) {showingOrig=false;}
   var html = "";
@@ -3606,12 +3632,12 @@ function fitTabs(aWindowNum) {
   while (getTabWidthMargin(aWindowNum)<0 && t>0) {
     t--;
     // Find a tab to move to the seltab...
-    if (TabVers[t] == ORIGINAL) continue;
+    if (Tabs[t].isOrigTab) continue;
     if (!isTabShowing(t, aWindowNum)) continue;
     var ohtml = "<option id=\"seltab" + t + "\" style=\"margin:4px; padding-top:2px; height:20px; \"";
-    ohtml += (TabVers[t]==prefs.getCharPref("Version" + aWindowNum) ? " selected=\"selected\"":"");
+    ohtml += (Tabs[t].modName==Win[aWindowNum].modName ? " selected=\"selected\"":"");
     ohtml += "onclick=\"tabHandler(event);\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\"" + ">"
-    ohtml += TabLabel[t] + "</option>";
+    ohtml += Tabs[t].label + "</option>";
     html = ohtml + html;
     FrameDocument[aWindowNum].getElementById("tab" + t).style.display="none";
     seltab.innerHTML = html;
@@ -3621,61 +3647,52 @@ function fitTabs(aWindowNum) {
 }
 
 // Adjusts tab visibility based on hidden module prefs. Does NOT redraw anything!
-function updateTabVisibility(aWindowNum, dontHideArray, initializing) {
-  if (!dontHideArray) dontHideArray = [];
+function updateTabsFromHiddenModPrefs(aWindowNum, initializing) {
   var needScriptBoxUpdate = false;
-
-  //Make sure mods in dontHideArray are not hidden
-  for (var m=0; m<dontHideArray.length; m++) {
-    var t=moduleName2TabIndex(dontHideArray[m]);
-    if (!isTabShowing(t, aWindowNum)) {
-      toggleTabVisibility(t, aWindowNum);
-    }
-  }
     
   var hiddenModuleString="";
   for (var type in SupportedModuleTypes) {
     hiddenModuleString += prefs.getCharPref("Hidden" + type + aWindowNum);
   }
   
-  //Find a visible default tab first
-  var defVers = TabVers[0];
+  //Init some vars
+  var defVers = prefs.getCharPref("DefaultVersion");
   var noBiblesAreVisible = true;
-  var hidingORIG = false;
-  for (var t=0; t<TabVers.length; t++) {
-    if (TabVers[t]==ORIGINAL) continue;
-    var sversion = new RegExp("(^|;)" + escapeRE(TabVers[t]) + ";");
+  for (var t=0; t<Tabs.length; t++) {
+    if (Tabs[t].isOrigTab) continue;
+    var sversion = new RegExp("(^|;)" + escapeRE(Tabs[t].modName) + ";");
     if (hiddenModuleString.search(sversion)==-1) {
-      defVers = TabVers[t];
-      if (TabLongType[t]==BIBLE) noBiblesAreVisible=false;
+      defVers = Tabs[t].modName;
+      if (Tabs[t].modType==BIBLE) noBiblesAreVisible=false;
       break;
     }
   }
 
   //Now hide/show tabs
   var numVisibleTabsNotInclORIG = 0;
-  for (var t=0; t<TabVers.length; t++) {
-    var sversion = new RegExp("(^|;)" + escapeRE(TabVers[t]) + ";");
+  var hidingORIG = false;
+  for (var t=0; t<Tabs.length; t++) {
+    var sversion = new RegExp("(^|;)" + escapeRE(Tabs[t].modName) + ";");
     var hide = (hiddenModuleString.search(sversion)!=-1);
-    if (!hide && TabVers[t]!=ORIGINAL) numVisibleTabsNotInclORIG++;
+    if (!hide && !Tabs[t].isOrigTab) numVisibleTabsNotInclORIG++;
     FrameDocument[aWindowNum].getElementById("tab" + t).style.display = (hide ? "none":"");
-    if (hide && prefs.getCharPref("Version" + aWindowNum) == TabVers[t]) {
+    if (hide && Win[aWindowNum].modName == Tabs[t].modName) {
       setVersionTo(aWindowNum, defVers);
       if (UpdateTabs) window.clearTimeout(UpdateTabs);
       if (!initializing) {
-        updatePinVisibility(); 
-        updateVersionTabs();
+        updatePinVisibility();
+        updateTabLabelsAndStyles();
         needScriptBoxUpdate = true;
-      } 
+      }
     }
-    if (hide && TabVers[t]==ORIGINAL) hidingORIG = true;
+    if (hide && Tabs[t].isOrigTab) hidingORIG = true;
   }
   if (hidingORIG && prefs.getBoolPref("ShowOriginal" + aWindowNum)) {
     setVersionTo(aWindowNum, ORIGINAL); //This toggles ORIGINAL off!
     if (UpdateTabs) window.clearTimeout(UpdateTabs);
     if (!initializing) {
       updatePinVisibility(); 
-      updateVersionTabs();
+      updateTabLabelsAndStyles();
       needScriptBoxUpdate = true;
     }
   }
@@ -3684,10 +3701,7 @@ function updateTabVisibility(aWindowNum, dontHideArray, initializing) {
   ScriptBoxIsEmpty[aWindowNum] = numVisibleTabsNotInclORIG <= 0;
   
   //On init, skip tab updates for now (they are done separately later during init)
-  if (!initializing) {
-    fitTabs(aWindowNum);
-    updateModuleMenuCheckmarks();
-  }
+  if (!initializing) fitTabs(aWindowNum);
 
   FrameDocument[aWindowNum].getElementById("langTabs").style.visibility="visible";
   return needScriptBoxUpdate;
@@ -3707,14 +3721,8 @@ function getTabWidthMargin(aWindowNum) {
 
 function updateModuleMenuCheckmarks() {
 //jsdump("RUNNING UPDATE MODULE MENU CHECKMARKS");
-  for (var t=0; t<TabVers.length; t++) {
-    for (var shortType in SupportedModuleTypes) {
-      if (SupportedModuleTypes[shortType]==TabLongType[t]) {
-        var moduletype=shortType;
-        break;
-      }
-    }
-    var aWindowNum = getRadioSelection(moduletype);
+  for (var t=0; t<Tabs.length; t++) {
+    var aWindowNum = getRadioSelection(Tabs[t].tabType);
     var checked = true;
     if (aWindowNum <= 3) var sw = aWindowNum;
     else {sw=1; aWindowNum=3;}
@@ -3724,20 +3732,13 @@ function updateModuleMenuCheckmarks() {
     }
     checked = (checked ? "true":"false");
     document.getElementById("modulemenu." + t).setAttribute("checked", checked);
-//jsdump(TabVers[t] + "=" + checked);
+//jsdump(Tabs[t].modName + "=" + checked);
   }
 }
 
 function isTabShowing(tabNum, aWindowNum) {
-  for (var shortType in SupportedModuleTypes) {
-    if (SupportedModuleTypes[shortType]==TabLongType[tabNum]) {
-      var moduletype=shortType;
-      break;
-    }
-  }
-  if (!moduletype) return null;
-  var hiddenMods = prefs.getCharPref("Hidden" + moduletype + aWindowNum);
-  var rt = new RegExp("(^|;)" + escapeRE(TabVers[tabNum]) + ";");
+  var hiddenMods = prefs.getCharPref("Hidden" + Tabs[tabNum].tabType + aWindowNum);
+  var rt = new RegExp("(^|;)" + escapeRE(Tabs[tabNum].modName) + ";");
   return (hiddenMods.search(rt)==-1);
 }
 
@@ -3745,6 +3746,7 @@ function isTabShowing(tabNum, aWindowNum) {
 //verse2 is lastVerse for versekeys and paragraph number for others
 function gotoLink(link, version, verse2) {
   var frameNum = ensureModuleShowing(version);
+  if (!frameNum) return;
   window.setTimeout("gotoLinkReal('" + link + "', '" + version + "', " + frameNum + (verse2 ? ", '" + verse2 + "'":"") + ")", 0);
 }
 function gotoLinkReal(link, version, frameNum, verse2) {
@@ -3777,22 +3779,33 @@ function gotoLinkReal(link, version, frameNum, verse2) {
   }
 }
 
+// This routine returns the number of the first window which is showing the desired version.
+// If no window is showing the version, it looks for the first unpinned window
+// which has the version's tab showing, selects that tab, and returns that window's number.
+// If no window even has the tab showing, the tab is added to the first unpinned
+// window, and that tab is selected, and that window's number is returned.
+// If no window can be made to show the desired version, then "0" is returned.
 function ensureModuleShowing(version) {
-  var tabnum = moduleName2TabIndex(version);
+  if (!Tab[version]) return 0;
   var aWindow = 0;
   var numWins = prefs.getIntPref("NumDisplayedWindows");
   var guidir = guiDirection();
   var beg = (guidir=="rtl" ? numWins:1);
   var end = (guidir=="rtl" ? 1-1:numWins+1);
   var step = (guidir=="rtl" ? -1:1);
+  var firstUnPinnedWin;
   for (var w=beg; w != end; w+=step) {
-    if (prefs.getCharPref("Version" + w) == version) return w;
-    if (!aWindow && isTabShowing(tabnum, w)) {aWindow = w;}
+    if (FrameDocument[w].defaultView.Pin.isPinned) continue;
+    if (!firstUnPinnedWin) firstUnPinnedWin = w;
+    if (Win[w].modName == version) return w;
+    if (!aWindow && isTabShowing(Tab[version].index, w)) {aWindow = w;}
   }
   if (aWindow == 0) {
-    aWindow = (guidir=="rtl" ? prefs.getIntPref("NumDisplayedWindows"):1);
-    toggleTabVisibility(tabnum, aWindow);
-    if (updateTabVisibility(aWindow, [version])) {
+    if (!firstUnPinnedWin) return 0;
+    aWindow = firstUnPinnedWin;
+    toggleHiddenModPref(Tab[version].index, aWindow);
+    updateModuleMenuCheckmarks();
+    if (updateTabsFromHiddenModPrefs(aWindow)) {
       updateLinkInfo();
       updatePinVisibility();
       FrameDocument[aWindow].defaultView.resizeBibles();
@@ -3801,7 +3814,7 @@ function ensureModuleShowing(version) {
   setVersionTo(aWindow, version);
   if (UpdateTabs) window.clearTimeout(UpdateTabs);
   updatePinVisibility(); 
-  updateVersionTabs(); 
+  updateTabLabelsAndStyles(); 
   return aWindow;
 }
  
@@ -3822,13 +3835,12 @@ function updateLinkInfo() {
   Link.win[0] = false;
 
   for (var w=1; w<=3; w++) {
-    var view = FrameDocument[w].defaultView;
-    view.Win.isLinkedToRight = isLinkedToRight(w);
-    Link.win[w] = view.Win.isLinkedToRight || (w>1 && FrameDocument[w-1].defaultView.Win.isLinkedToRight);
+    Win[w].isLinkedToRight = isLinkedToRight(w);
+    Link.win[w] = Win[w].isLinkedToRight || (w>1 && Win[w-1].isLinkedToRight);
     if (Link.win[w]) Link.numWins++;
     if (Link.win[w] && Link.numWins == 1) {
-      Link.isRTL = view.Win.isRTL;
-      Link.modName = view.Win.modName;
+      Link.isRTL = Win[w].isRTL;
+      Link.modName = Win[w].modName;
       Link.leftWin = w;
     }
   }
@@ -3842,38 +3854,36 @@ function updateLinkInfo() {
 
 function getLinkInfoForWindow(w) {
   var link = {}
-  link.modName = FrameDocument[w].defaultView.Win.modName;
+  link.modName = Win[w].modName;
   link.numWins = 1;
   link.leftWin = w;
   link.rightWin = w;
   link.firstWin = w;
   link.lastWin = w;
-  link.isRTL = FrameDocument[w].defaultView.Win.isRTL;
+  link.isRTL = Win[w].isRTL;
   link.win = [false, false, false, false];
   return link;
 }
 
 function isLinkedToRight(w) {
-  var v = getVersionsWithPinnedInfo();
   if (w < 1 || w > 2) return false;
   if (w >= prefs.getIntPref("NumDisplayedWindows")) return false;
   if (ScriptBoxIsEmpty[w] || ScriptBoxIsEmpty[w+1]) return false;
-  if (FrameDocument[w].defaultView.Win.modType != BIBLE) return false;
+  if (Win[w].modType != BIBLE) return false;
   if (prefs.getBoolPref("ShowOriginal" + w)) return false;
+  var v = getVersionsWithPinnedInfo();
   if (v[w] == v[w+1]) return true;
   return false;
 }
 
-//If only one window, don't show pin icon. Only Bibles and commentaries
-//(because they track global book/chapter/verse) need a pin icon. If ScriptBoxIsEmpty
-//also don't show a pin icon
+//If only one window, don't show pin icon (unless the window is already pinned!).
+//Only Bibles and commentaries (because they track global book/chapter/verse)
+//need a pin icon. If ScriptBoxIsEmpty also don't show a pin icon
 function updatePinVisibility() {
   var needsPin = [null];
   for (var w=1; w<=3; w++) {
-    var ww = FrameDocument[w].defaultView;
-    needsPin.push(!ScriptBoxIsEmpty[w] && (ww.Win.modType==BIBLE || ww.Win.modType==COMMENTARY));
+    needsPin.push(FrameDocument[w].defaultView.Pin.isPinned || (!ScriptBoxIsEmpty[w] && (Win[w].modType==BIBLE || Win[w].modType==COMMENTARY)));
   }
-  if (prefs.getIntPref("NumDisplayedWindows") == 1) needsPin[1] = false;
   for (w=1; w<=3; w++) {
     FrameDocument[w].defaultView.Pin.elem.style.visibility = (needsPin[w] ? "visible":"hidden");
   }
@@ -3882,7 +3892,7 @@ function updatePinVisibility() {
 function getVersionsWithPinnedInfo() {
   var v = new Array(4);
   for (var w=1; w<=3; w++) {
-    v[w] = prefs.getCharPref("Version" + w) +
+    v[w] = Win[w].modName +
             (prefs.getBoolPref("ShowOriginal" + w) ? "ShowOriginal":"") +
             (FrameDocument[w].defaultView.Pin.isPinned ?
             FrameDocument[w].defaultView.Pin.shortName + " " +
@@ -3894,8 +3904,7 @@ function getVersionsWithPinnedInfo() {
 function getUnpinnedVerseKeyWindows() {
   var wins = [false, false, false, false];
   for (var w=1; w<=3; w++) {
-    var type = getModuleLongType(prefs.getCharPref("Version" + w));
-    if (type != BIBLE && type != COMMENTARY) continue;
+    if (Win[w].modType != BIBLE && Win[w].modType != COMMENTARY) continue;
     wins[w] = !FrameDocument[w].defaultView.Pin.isPinned;
   }
   return wins;
@@ -3993,25 +4002,24 @@ function getPrintHTML() {
   var rtlPage="";
   var fnotes="";
   for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    var myversion = prefs.getCharPref("Version" + w);
-    if (getModuleLongType(myversion)!=DICTIONARY &&
+    if (Win[w].modType != DICTIONARY &&
         FrameDocument[w].getElementById("noteBox").innerHTML && 
         FrameDocument[w].defaultView.NoteBoxElement.style.visibility!="hidden") {
       fnotes = FrameDocument[w].getElementById("noteBox").innerHTML + "<br><hr><br>";
     }
     var text = FrameDocument[w].getElementById("scriptBoxText").innerHTML;
     thiscolumn = ltrPage + text + rtlPage;
-    if (!FrameDocument[w].defaultView.Win.isLinkedToRight) {
-      versions.push(myversion);
+    if (!Win[w].isLinkedToRight) {
+      versions.push(Win[w].modName);
       columns.push(thiscolumn);
       ltrPage="";
       rtlPage="";
       notes.push(fnotes);
       fnotes="";
-      copyright.push(getCopyright(myversion));
+      copyright.push(getCopyright(Win[w].modName));
     }
     else {
-      var versionConfig = VersionConfigs[myversion];
+      var versionConfig = VersionConfigs[Win[w].modName];
       var isRTL = (versionConfig.direction && versionConfig.direction=="rtl");
       rtlPage = isRTL ? thiscolumn:"";
       ltrPage = isRTL ? "":thiscolumn;
@@ -4099,7 +4107,7 @@ function saveHTML () {
     data += "\n\nSCRIPTBOX:\n" + document.getElementById("bible" + i + "Frame").contentDocument.getElementById("scriptBoxText").innerHTML;
     data += "\n\nNOTEBOX:\n" + document.getElementById("bible" + i + "Frame").contentDocument.getElementById("noteBox").innerHTML;
     try {
-      var tmp = Bible.getChapterText(prefs.getCharPref("Version" + i));
+      var tmp = Bible.getChapterText(Win[i].modName);
       data += "\n\nCROSSREFS\n" + Bible.getCrossRefs();
     }
     catch (er) {}

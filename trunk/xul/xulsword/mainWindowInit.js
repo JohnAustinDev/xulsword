@@ -195,37 +195,6 @@ function createTabs() {
   moduleInfo = moduleInfo.split("<nx>");
   moduleInfo.pop();
   
-  // The following has been removed in v2.12 because this allows the style of
-  // tab label script to be different than the associated text. This greatly
-  // complicates display of tab labels. This feature is really only usefull 
-  // (and even then only slightly) when the number of modules is few.
-/*  
-  //Now give special treatment to modules associated with available locales
-  var currentLocale = rootprefs.getCharPref("general.useragent.locale");
-  for (var lc=0; lc<LocaleList.length; lc++) {
-    for (m=0; m<moduleInfo.length; m++) {
-      info = moduleInfo[m].split(";");
-      var tabLabel = info[2];
-      if (LocaleDefaultVersion[lc] == info[1]) {
-        try {tabLabel = SBundle.getString(info[1] + "TabLabel");}
-        //If not in currentLocale, try to see if the version has its own locale 
-        //and if there is a default tab label listed there.
-        catch (er) {
-          var locale = getLocaleOfVersion(info[1]);
-          if (locale) {
-            var bundle = getLocaleBundle(locale, "config.properties");
-            if (bundle) {
-              try {tabLabel = bundle.GetStringFromName("DefaultTabLabel");}
-              catch (er) {}
-            }
-          }
-        }
-      }
-      info[2] = tabLabel;
-      moduleInfo[m] = info.join(";");
-    }
-  }
-*/
   // Add ORIG tab if needed...
   if (HaveOriginalTab && SBundle) {
     moduleInfo.push(getModuleLongType(ORIGINAL) + ";" + ORIGINAL + ";" + SBundle.getString("ORIGLabelTab"));
@@ -238,24 +207,33 @@ function createTabs() {
   // Create global arrays
   for (m=0; m<moduleInfo.length; m++) {
     info = moduleInfo[m].split(";");
-    TabLongType.push(info[0]);
-    TabVers.push(info[1]);
-    TabLabel.push(info[2]);
-    Tabs[0] = {type:info[0], name:info[1], label:info[2]};;
+    
+    var tab = {label:null, modName:null, modType:null, tabType:null, vstyle:null, isRTL:null, isOrigTab:null, index:null};
+    tab.label = info[2];
+    tab.modName = info[1];
+    tab.modType = info[0];
+    tab.tabType = getShortTypeFromLong(tab.modType);
+    try {var isOT = (tab.label==SBundle.getString("ORIGLabelOT"));}
+    catch (er) {isOT = false;}
+    try {var isNT = (tab.label==SBundle.getString("ORIGLabelNT"));}
+    catch (er) {isNT = false;}
+    tab.vstyle = (tab.modName==ORIGINAL || isOT || isNT ? "program":tab.modName);
+    tab.isRTL = (VersionConfigs[tab.vstyle] && VersionConfigs[tab.vstyle].direction == "rtl");
+    tab.isOrigTab = (tab.modName==ORIGINAL);
+    tab.index = m;
+    Tabs.push(tab);
+    Tab[tab.label] = tab;
+    Tab[tab.modName] = tab;
   }
 
 //jsdump("StrongsGreek=" + LanguageStudyModules.StrongsGreek + ", StrongsHebrew=" + LanguageStudyModules.StrongsHebrew + ", Robinson=" + LanguageStudyModules.Robinson);
 }
 
 if (HaveValidLocale) createTabs();
-//jsdump("TabVers:" + TabVers + "\n");
-//jsdump("TabLongType:" + TabLongType + "\n");
-//jsdump("TabLabel:" + TabLabel + "\n");
-
 
 //Use first BIBLE tab or "none" if not found.
-for (var t=0; t<TabVers.length; t++) {
-  if (TabLongType[t]==BIBLE && TabVers[t]!=ORIGINAL) {var defaultMod=TabVers[t]; break;}
+for (var t=0; t<Tabs.length; t++) {
+  if (Tabs[t].modType==BIBLE && !Tabs[t].isOrigTab) {var defaultMod=Tabs[t].modName; break;}
 }
 prefs.setCharPref("DefaultVersion", (defaultMod ? defaultMod:"none"));
 
@@ -285,6 +263,11 @@ function tabOrder(a,b) {
     // Always put original tab last.
     if (infoA[1]==ORIGINAL) return 1;
     if (infoB[1]==ORIGINAL) return -1;
+    if (OrigModuleNT && infoA[1]==OrigModuleNT) return 1;
+    if (OrigModuleNT && infoB[1]==OrigModuleNT) return -1;
+    if (OrigModuleOT && infoA[1]==OrigModuleOT) return 1;
+    if (OrigModuleOT && infoB[1]==OrigModuleOT) return -1;
+
     // Priority: 1) DefaultModule(s) for current locale, 2) Other tabs that have
     // locales installed, 3) remaining tabs.
     var aLocale = getLocaleOfVersion(infoA[1]);

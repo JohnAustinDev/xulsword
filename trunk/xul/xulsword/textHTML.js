@@ -261,13 +261,13 @@ function getVerseTextDiv(origVers, origRef, id, xsID, hideEmptyCrossReferences, 
   var aVerse = findAVerseText(origVers, origRef, frameNumber);
   if (hideEmptyCrossReferences && aVerse.text.search(/\S/)==-1) return "";
   
-  var textDirectionChar = (VersionConfigs[TabVers[aVerse.tabNum]] && VersionConfigs[TabVers[aVerse.tabNum]].direction == "rtl" ? "&rlm;":"&lrm;");
+  var textDirectionChar = (VersionConfigs[Tabs[aVerse.tabNum].modName] && VersionConfigs[Tabs[aVerse.tabNum].modName].direction == "rtl" ? "&rlm;":"&lrm;");
   
   var html = "";
-  html += "<div class=\"vstyle" + TabVers[aVerse.tabNum] + "\">";
-  html += "<a id=\"" + id + "l." + xsID + "\" title=\"" + TabVers[aVerse.tabNum] + "." + aVerse.location + "\" class=\"vstyleProgram\">" + ref2ProgramLocaleText(aVerse.location) + textDirectionChar + ":</a>";
-  html += "<span id=\"" + id + "t." + xsID + "\" title=\"" + TabVers[aVerse.tabNum] + "." + aVerse.location + "\" class=\"vstyle" + TabVers[aVerse.tabNum] + "\"> ";
-  html += aVerse.text + (origVers != TabVers[aVerse.tabNum] ? " (" + TabLabel[aVerse.tabNum] + ")":"");
+  html += "<div class=\"vstyle" + Tabs[aVerse.tabNum].modName + "\">";
+  html += "<a id=\"" + id + "l." + xsID + "\" title=\"" + Tabs[aVerse.tabNum].modName + "." + aVerse.location + "\" class=\"vstyleProgram\">" + ref2ProgramLocaleText(aVerse.location) + textDirectionChar + ":</a>";
+  html += "<span id=\"" + id + "t." + xsID + "\" title=\"" + Tabs[aVerse.tabNum].modName + "." + aVerse.location + "\" class=\"vstyle" + Tabs[aVerse.tabNum].modName + "\"> ";
+  html += aVerse.text + (origVers != Tabs[aVerse.tabNum].modName ? " (" + Tabs[aVerse.tabNum].label + ")":"");
   html += "</span><br>";
   html += "</div>"
   
@@ -345,8 +345,7 @@ if (myrefsP[0]==null) {jsdump("WARNING: Didn't find ref >" + myrefs[ix] + "< in 
 function getCopyright(module) {
   var copyr = Bible.getModuleInformation(module, "ShortCopyright");
   if (copyr==NOTFOUND) {
-    copyr = moduleName2TabIndex(module);
-    copyr = (copyr!==null ? TabLabel[copyr] + ": ":"");
+    copyr = (Tab[module] ? Tab[module].label + ": ":"");
     var cr2 = Bible.getModuleInformation(module, "DistributionLicense");
     if (cr2 != NOTFOUND) copyr += cr2;
   }

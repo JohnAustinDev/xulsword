@@ -67,7 +67,7 @@ function Init()
   // If the module for this bookmark is no longer available, then display the bookmark
   // but it cannot be edited, and may "beep" if opened. It also needs to show 
   // module name, and location if available.
-  if (!gIsContainer && moduleName2TabIndex(gInfoResource[MODULE])==null) {
+  if (!gIsContainer && !Tab[gInfoResource[MODULE]]) {
     gUnknownModule = true;
     gDropDown.setAttribute("disabled", "true");
     gDropDown.setAttribute("hidebook", "true");
@@ -130,8 +130,8 @@ function onRefUserUpdate(e, location, version) {
   case BIBLE:
     var aVerse = findAVerseText(version, location);
     gVerseText.value = aVerse.text.replace(/^\s*/,"");
-    if (version != TabVers[aVerse.tabNum]) gVerseText.value += " (" + TabLabel[aVerse.tabNum] + ")";
-    gVerseText.className = "vstyle" + TabVers[aVerse.tabNum];
+    if (version != Tabs[aVerse.tabNum].modName) gVerseText.value += " (" + Tabs[aVerse.tabNum].label + ")";
+    gVerseText.className = "vstyle" + Tabs[aVerse.tabNum].modName;
     break;
   case COMMENTARY:
     gVerseText.value = Bible.getVerseText(version, location).replace(/^\s*/,"").replace(/\n/g, " ");

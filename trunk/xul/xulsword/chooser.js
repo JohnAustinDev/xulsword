@@ -165,7 +165,7 @@ function chooserMouseHandler(e) {
         document.getElementById(e.target.id).className = "chapmenucellhigh";
         SaveCellId = e.target.id; //Save cell id to re-highlight if we go onto a popup next
         var showHeadings = false;
-        for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {showHeadings |= (prefs.getCharPref("Version" + w)==refBible);}
+        for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {showHeadings |= (Win.modName==refBible);}
         if (showHeadings)
           ShowHeadingID = window.setTimeout("showHeadings('" + e.target.id + "','" + e.clientY + "')",500);
       }

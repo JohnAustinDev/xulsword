@@ -712,7 +712,7 @@ function handleResetRequest() {
   case NORESET: // program continues running and needs no reload or restart
     if (PreSword) writeManifest(NewLocales, NewModules, NewFonts, true);
     else {
-      if (!MainWindow.Bible || !MainWindow.TabVers.length) {
+      if (!MainWindow.Bible || !MainWindow.Tabs.length) {
         restartApplication(false);
         break;
       }
@@ -722,7 +722,7 @@ function handleResetRequest() {
           var fileInfo = decodeAudioFileName(GotoFile.path);
           fileInfo.chapter = String(Number(fileInfo.chapter)); // strip off leading 0s
           var aBibleVers=null;
-          if (MainWindow.moduleName2TabIndex(fileInfo.name.toUpperCase())!=null) aBibleVers=fileInfo.name.toUpperCase();
+          if (Tab[fileInfo.name.toUpperCase()]) aBibleVers=fileInfo.name.toUpperCase();
           else {
             var mods = MainWindow.getModsWithConfigEntry("AudioCode", fileInfo.name, true, true);
             if (mods[0]) aBibleVers = mods[0];

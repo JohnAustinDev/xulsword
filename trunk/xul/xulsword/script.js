@@ -181,10 +181,10 @@ function initializeScript() {
   // are used to read window height and width. This allows us to completely build 
   // the frames and chooser before the main window opens, allowing the main 
   // window to open already sized (no flashing while frames resize again).
-  // updateVersionTabs must be run before setBibleWidth.
+  // updateTabLabelsAndStyles must be run before setBibleWidth.
   if (Win.number == 1) {
     initChooser(true); //true -> initializing
-    MainWindow.updateVersionTabs(true); //true => initializing  
+    MainWindow.updateTabLabelsAndStyles(true); //true => initializing  
   }
   if (Win.number <= prefs.getIntPref("NumDisplayedWindows")) {
     setBibleWidth(true);  //true -> initializing
@@ -358,7 +358,7 @@ function dictionaryKeyPressR(charCode) {
   }
   else {
     textbox.style.color="";
-    setUnicodePref("ShowingKey" + prefs.getCharPref("Version" + String(Win.number)), firstMatch[2]);
+    setUnicodePref("ShowingKey" + Win.modName, firstMatch[2]);
     updateDictionary(charCode!=13);
   }
 }
@@ -414,7 +414,7 @@ function updateDictionaryTimeout (dontUpdateText) {
 
 function selKey(aKey) {
   if (aKey == "keylist") return;
-  setUnicodePref("ShowingKey" + prefs.getCharPref("Version" + String(Win.number)), aKey);
+  setUnicodePref("ShowingKey" + Win.modName, aKey);
   updateDictionary();
   window.setTimeout("document.getElementById('keytextbox').focus()", 0);
 }
@@ -426,7 +426,7 @@ function getPageLinks() {
   charNext = "<span style=\"font-family:ariel;\">" + charNext + "</span>"; // Because 'UKIJ Tuz Basma' improperly implements this char!
   charPrev = "<span style=\"font-family:ariel;\">" + charPrev + "</span>"; // Because 'UKIJ Tuz Basma' improperly implements this char!
 
-  //var mytype = getModuleLongType(prefs.getCharPref("Version" + Win.number));
+  //var mytype = win.modType;
   var prevDisabled = false; //mytype==BIBLE && Pin.chapter==1 && Pin.shortName=="Gen";
   var nextDisabled = false; //mytype==BIBLE && Pin.chapter==22 && Pin.shortName=="Rev";
   
@@ -445,28 +445,27 @@ function getPageLinks() {
 }
 
 function getChapterWithNotes(fn, chapOffset) {
-  var vers = prefs.getCharPref("Version" + Win.number);
   if (!chapOffset) chapOffset = 0;
-  switch (getModuleLongType(vers)) {
+  switch (Win.modType) {
   case BIBLE:
     if (chapOffset != 0) {
-      var savedloc = Bible.getLocation(vers);
+      var savedloc = Bible.getLocation(Win.modName);
       var bkn = findBookNum(Bible.getBookName());
-      var chn = Bible.getChapterNumber(vers) + chapOffset;
+      var chn = Bible.getChapterNumber(Win.modName) + chapOffset;
       if (chn > 0 && chn <= Book[bkn].numChaps) {
-        Bible.setBiblesReference(vers, Book[bkn].sName + "." + chn + ".1");
-        Bible.setVerse(vers, 0, 0);
+        Bible.setBiblesReference(Win.modName, Book[bkn].sName + "." + chn + ".1");
+        Bible.setVerse(Win.modName, 0, 0);
       }
       else return "";
     }
-    var text = getChapterText(Bible, fn, vers, (chapOffset!=0));
-    if (chapOffset != 0) Bible.setBiblesReference(vers, savedloc);
+    var text = getChapterText(Bible, fn, Win.modName, (chapOffset!=0));
+    if (chapOffset != 0) Bible.setBiblesReference(Win.modName, savedloc);
     break;
   case COMMENTARY:
-    var text = getChapterText(Bible, fn, vers);
+    var text = getChapterText(Bible, fn, Win.modName);
     break;
   case GENBOOK:
-    text = getGenBookChapterText(getPrefOrCreate("ShowingKey" + vers, "Unicode", ""), Bible, fn);
+    text = getGenBookChapterText(getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", ""), Bible, fn);
 //if (text.search("<note") != -1) window.alert(getUnicodePref("ShowingKey" + vers));
     break;
   }
@@ -511,21 +510,27 @@ function scrollScriptBox(scrollTypeFlag, elemID) {
     }
     if (!elem) return;
   }
-  // if this is verse 1, then SCROLLTYPEBEG and SCROLLTYPECENTER both become SCROLLTYPETOP
-  var v = elem.id.split(".");
-  if (v && v.length && v.length>=4) v = v[3];
-  else v="";
-//jsdump("win:"+ Win.number + ", scrollTypeFlag:" + scrollTypeFlag + ", elemID:" + elem.id + ", v:" + v);
-  if (scrollTypeFlag == SCROLLTYPETOP ||
-      (v && v==1 && (scrollTypeFlag==SCROLLTYPEBEG || scrollTypeFlag==SCROLLTYPECENTER))) {
-    ScriptBoxTextElement.scrollTop = 0;
-    return;
-  }
-
+  
   var boxOffsetHeight = ScriptBoxTextElement.offsetHeight;
   var verseOffsetTop = elem.offsetTop;
   var verseOffsetHeight = elem.offsetHeight;
   var boxScrollTop = ScriptBoxTextElement.scrollTop;
+  
+  // if part of commentary element is already visible, don't rescroll
+  if (Win.modType==COMMENTARY &&
+      (verseOffsetTop < boxScrollTop) &&
+      (verseOffsetTop + verseOffsetHeight > boxScrollTop + 20)) return;
+    
+  // if this is verse 1 then SCROLLTYPEBEG and SCROLLTYPECENTER both become SCROLLTYPETOP
+  var v = elem.id.split(".");
+  if (v && v.length && v.length>=4) v = v[3];
+  else v="";
+  if (scrollTypeFlag == SCROLLTYPETOP ||
+     (v && v==1 && (scrollTypeFlag==SCROLLTYPEBEG || scrollTypeFlag==SCROLLTYPECENTER))) {
+    ScriptBoxTextElement.scrollTop = 0;
+    return;
+  }
+
   switch (scrollTypeFlag) {
   case SCROLLTYPEBEG:
     ScriptBoxTextElement.scrollTop = verseOffsetTop - 20;
@@ -796,7 +801,7 @@ function pinThis() {
   MainWindow.updateLinkInfo();
   Pin.updateLink();
   MainWindow.updatePinVisibility();
-  MainWindow.updateVersionTabs();
+  MainWindow.updateTabLabelsAndStyles();
   MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number, preChangeLink), SCROLLTYPEBEG, HILIGHTNONE);
   MainWindow.updateLocators(false);
 }
@@ -815,7 +820,7 @@ function unpinThis() {
   MainWindow.updateLinkInfo();
   Pin.updateLink();
   MainWindow.updatePinVisibility();
-  MainWindow.updateVersionTabs();
+  MainWindow.updateTabLabelsAndStyles();
   var update = MainWindow.getUpdatesNeededArray(Win.number, preChangeLink);
   var update2 = MainWindow.getUnpinnedVerseKeyWindows();
   for (var w=1; w<=3; w++) {update[w] |= update2[w];}
@@ -853,7 +858,7 @@ function scriptboxDblClick(e) {
     }
     targ = targ.parentNode;
   }
-  if (!myv) myv = prefs.getCharPref("Version" + String(Win.number));
+  if (!myv) myv = Win.modName;
 
   if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
   setUnicodePref("SearchText",sel);
@@ -898,7 +903,7 @@ function activatePopup(datatype, data, delay, yoffset) {
   
   var html = "";
   var hrule = "";
-  var fromMod = prefs.getCharPref("Version" + Win.number);
+  var fromMod = Win.modName;
   var versionDirectionEntity = (VersionConfigs[fromMod] && VersionConfigs[fromMod].direction == "rtl" ? "&rlm;":"&lrm;");
   
   // If popup is already open, save the current popup in the "back" link of the new one...
@@ -921,7 +926,7 @@ function activatePopup(datatype, data, delay, yoffset) {
   //  Popup body text should appear in fromMod's style as inherited from ScriptBox
   
   // Get fromMod for scripture references, and style.
-  var fromMod = prefs.getCharPref("Version" + Win.number);
+  var fromMod = Win.modName;
   var scripRefLinkStyle = "vstyleProgram";
   
   switch (datatype) {
@@ -1070,7 +1075,7 @@ function activatePopup(datatype, data, delay, yoffset) {
     break;
     
   case "introlink":
-    html += getBookIntroduction(prefs.getCharPref("Version" + Win.number), Bible.getBookName(), Bible) + "<br><br>";
+    html += getBookIntroduction(Win.modName, Bible.getBookName(), Bible) + "<br><br>";
     break;
     
   default:
@@ -1284,7 +1289,7 @@ function expandCrossRefs(noteid) {
   for (var i=0; i<chapRefs.length; i++) {
     var part = chapRefs[i].split("<bg/>");
     // if we've found the note which matches the id under the mouse pointer
-    if (part[0] == noteid) html = getCRNoteHTML(prefs.getCharPref("Version" + Win.number), "nb", noteid, part[1], "<br>", expand, Win.number);
+    if (part[0] == noteid) html = getCRNoteHTML(Win.modName, "nb", noteid, part[1], "<br>", expand, Win.number);
   }
   FrameDocumentHavingNoteBox.getElementById("body." + noteid).innerHTML = html;
   return true;
@@ -1402,17 +1407,16 @@ function noteboxClick(e) {
 //  case "body":
 //  case "ntr":
     var v = Number(idpart[4]);
-    var vers = prefs.getCharPref("Version" + Win.number);
-    switch (getModuleLongType(vers)) {
+    switch (Win.modType) {
     case BIBLE:
     case COMMENTARY:
       //OwnerDocument.getElementById("verse").value = v;
       var updateNeeded = MainWindow.getUnpinnedVerseKeyWindows();
       if (Pin.isPinned) {
-        Bible.setBiblesReference(vers, idpart[2] + "." + idpart[3] + "." + idpart[4]);
+        Bible.setBiblesReference(Win.modName, idpart[2] + "." + idpart[3] + "." + idpart[4]);
         MainWindow.updateFrameScriptBoxes(updateNeeded, SCROLLTYPECENTER, HILIGHT_IFNOTV1);
       }
-      else {MainWindow.selectVerse(vers, null, Number(idpart[3]), v, Number(idpart[5]), HILIGHT_IFNOTV1);}
+      else {MainWindow.selectVerse(Win.modName, null, Number(idpart[3]), v, Number(idpart[5]), HILIGHT_IFNOTV1);}
       MainWindow.updateLocators(false);
       break;
      case DICTIONARY:
@@ -1422,7 +1426,7 @@ function noteboxClick(e) {
     } 
     break;
   case "nbsizer":
-    MainWindow.setNoteBoxSizer(Win.number, !prefs.getBoolPref("MaximizeNoteBox" + String(Win.number)));
+    MainWindow.setNoteBoxSizer(Win.number, !prefs.getBoolPref("MaximizeNoteBox" + Win.number));
     MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number), SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     break;
   }
@@ -1437,21 +1441,23 @@ function noteboxClick(e) {
 //    3) select tab item- created for each display configuration. (id: seltabn)
 //    4) ORIG tab- always treated specially. 
 function placeTabs() {
-  for (var i=0; i<TabVers.length; i++) {
-    document.write("<input type=\"button\" class=\"tabs\" id=\"tab" + i + "\" value=\"" + TabLabel[i] + "\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\" onclick=\"tabHandler(event);\"></button>");
+  for (var i=0; i<Tabs.length; i++) {
+    document.write("<input type=\"button\" class=\"tabs\" id=\"tab" + i + "\" value=\"" + Tabs[i].label + "\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\" onclick=\"tabHandler(event);\"></button>");
   }
   // "more tabs" tab is a pulldown to hold all tabs which don't fit
   // seltab.button is needed to capture tab selection clicks without activating pulldown menu
   document.write("<div style=\"position:relative; display:inline; border:1px solid transparent;\">"); // to stack two buttons...
-  document.write("<div id=\"seltab.tab\" onclick=\"tabHandler(event)\" style=\"position:absolute; top:-8px; height:22px;\"></div>");
+  document.write("<div id=\"seltab.tab\" onclick=\"tabHandler(event)\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\" style=\"position:absolute; top:-8px; height:22px;\"></div>");
   document.write("<select class=\"tabs\" id=\"seltab.menu\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\" style=\"text-align:center; padding-top:2px;\" ></select>");
   document.write("</div>");
 }
 
 function setSelTabDirection() {
   var st = document.getElementById("seltab.tab");
-  var modName = tabLabel2ModuleName(st.nextSibling.value);
-  if (VersionConfigs[modName] && VersionConfigs[modName].direction == "rtl") {
+  if (!st || !st.nextSibling.value) return;
+  var modName = Tab[st.nextSibling.value].modName;
+  var isOrig = ((OrigModuleNT && modName==OrigModuleNT) || (OrigModuleOT && modName==OrigModuleOT));
+  if (!isOrig && VersionConfigs[modName] && VersionConfigs[modName].direction == "rtl") {
     st.style.left = "24px";
     st.style.right = "4px";
   }
@@ -1465,12 +1471,14 @@ function tabHandler(e) {
   if (!MainWindow.openTabToolTip) return;
   var tabnum = null;
   try {
-    if (e.target.id == "seltab.tab") tabnum = moduleName2TabIndex(tabLabel2ModuleName(e.target.nextSibling.value));
-    else if (e.target.id.substr(0,6)=="seltab") tabnum = e.target.id.substr(6);
+    if (e.target.id == "seltab.tab") tabnum = Tab[e.target.nextSibling.value].index;
+    else if (e.target.id.substr(0,6)=="seltab") {
+      tabnum = e.target.id.match(/seltab(\d+)/)[1];
+    }
     else tabnum = e.target.id.substr(3);
   }
   catch (er) {tabnum=null;}
-  if (tabnum===null || tabnum===undefined) return;
+  if (!tabnum && tabnum!=0) return;
   switch (e.type) {
   case "mouseover":
     MainWindow.openTabToolTip(tabnum, Win.number, e.clientX, e.clientY);
@@ -1481,15 +1489,15 @@ function tabHandler(e) {
   case "click":
     MainWindow.closeTabToolTip();
     if (e.target.className.search("tabDisabled")!=-1 || Pin.isPinned) {
-      if (e.target.id.substr(0,6)=="seltab") MainWindow.updateVersionTabs();
+      if (e.target.id.substr(0,6)=="seltab") MainWindow.updateTabLabelsAndStyles();
       return;
     }
     var preChangeLinkArray = MainWindow.copyLinkArray();
-    MainWindow.setVersionTo(Win.number, TabVers[tabnum]);
+    MainWindow.setVersionTo(Win.number, Tabs[tabnum].modName);
     MainWindow.updateLocators(false);
     if (MainWindow.UpdateTabs) window.clearTimeout(MainWindow.UpdateTabs);
     var updatesNeeded = MainWindow.getUpdatesNeededArray(Win.number, preChangeLinkArray);
-    MainWindow.UpdateTabs = window.setTimeout("{MainWindow.updatePinVisibility(); MainWindow.updateVersionTabs(); MainWindow.updateFrameScriptBoxes([" + updatesNeeded + "]," + SCROLLTYPECENTER + "," + HILIGHT_IFNOTV1 + ");}",0);
+    MainWindow.UpdateTabs = window.setTimeout("{MainWindow.updatePinVisibility(); MainWindow.updateTabLabelsAndStyles(); MainWindow.updateFrameScriptBoxes([" + updatesNeeded + "]," + SCROLLTYPECENTER + "," + HILIGHT_IFNOTV1 + ");}",0);
     if (e.target.id) {
       var blur = null;
       if (e.target.id.substr(0,6)=="seltab") blur = "seltab.menu";
@@ -1601,7 +1609,7 @@ function setBibleHeight(initializing, hideNoteBox) {
   var sfn = gfn && prefs.getBoolPref("ShowFootnotesAtBottom");
   var scr = gcr && prefs.getBoolPref("ShowCrossrefsAtBottom");
   var sun = gun && prefs.getBoolPref("ShowUserNotesAtBottom");
-  var sdt = (getModuleLongType(prefs.getCharPref("Version" + Win.number)) == DICTIONARY);
+  var sdt = (Win.modType == DICTIONARY);
   
   var noteHeight, boundaryGap, adjustSBox, adjustNBox, noteBoxVisibility, boundaryBarVisibility;
   var adjust = -2;
