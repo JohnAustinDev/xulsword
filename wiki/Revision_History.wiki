@@ -1,7 +1,8 @@
 #labels Featured
 =Revision History=
 
-==xulSword 2.14 (soon to be released)==
+==xulSword 2.14 (8/19/2010)==
+  * Name of program changed to xulSword for development purposes
   * Updated to XULRunner 1.9.6.2
   * Created .xsm (module) and .xsb (bookmark) extensions and command line handler
   * Tab settings are now remembered after window is hidden
@@ -16,8 +17,12 @@
   * Search added to Edit menu- opens search window without beginning a search
   * ESC now closes a search window.
   * Updated to QTLite 3.2.2 and changed to audio/mp3 from application/x-mpeg for registry checks and player MIME code.
-  * Installer also updated to look for Apple's audio/mp3 registry key to determine install choices.
-  * Other minor bug fixes and improvements as well
+  * Installer also updated to look for Apple's audio/x-mp3 registry key to determine install choices.
+  * All module, bookmark, font, and audio resources have been moved from Program Files to the user's profile
+  * Modules are now read from and written to both the shared Sword directory and the user's module directory.
+  * Many other minor bug fixes and improvements as well
+
+-----
 
 ==xulSword 2.13 (6/1/10)==
   * Robinson morphology module's name was coded as Robinsons rather than Robinson.
@@ -61,8 +66,7 @@
 
 -----
 
-==xulSword 2.10 (10/18/2009)==
-used on original UZDVDB
+==xulSword 2.10 (10/18/2009)== (used on original UZDVDB)
   * Added select tab with pulldown menu to handle tab overflow. No more toggling tabs around!
 
 -----
@@ -85,7 +89,7 @@ used on original UZDVDB
   * Improved module installer to allow audio files in root directory of zip file.
   * Changed keygen to output only a-z,A-Z,0-9 chars (relaeased mods [2.7] all have spiritappender so this should have no BC problems. However, when modules are given new keys, only versions 2.9+ will decrypt them. VERSION 2.8 will NOT!).
 
-  Revamped bookmark code:
+  ===Revamped bookmark code:===
   * History and bookmarks-LOCATION are now always stored in WESTERN verse system, regardless of installed module type.
   * fixed meaning of LOCATION bm property to be a normalized full location (always Western, no module name needed)
   * drag-and-drop bugs were fixed,

@@ -311,7 +311,8 @@ From code file: "`xulsword.properties`"
 	 This change will take effect the next time you start the program.
 	 Please insert the Muqaddas Kitob installation CDROM and try again.
 	 A QuickTime plugin was not found. \n\nThis may occur because QuickTime 5 or earier is already installed on your computer. If this is the case you must either update your QuickTime installation or else completely uninstall QuickTime and then install "QT Lite".
-	 QT Lite is now installing on your computer. \nDefault install settings should be adequate. \n\nAfter the installer has completed, click "ok" to continue\n.
+   Please update your QuickTime installation.
+   QT Lite is now installing on your computer. \nDefault install settings should be adequate. \n\nAfter the installer has completed, click "ok" to continue\n.
 	 To listen to audio content, a QuickTime plugin must be installed.
 	 To listen to audio content, a QuickTime plugin must be installed.\n\nWould you like to install the "QT Lite" plugin now?\n
 	 Language can be changed using the menu: "%1$S" в†’ "%2$S".\n\nOr by pressing F1.\n \n
