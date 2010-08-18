@@ -225,7 +225,7 @@ int makedir (char *newdir)
   if (buffer[len-1] == '/') {
     buffer[len-1] = '\0';
   }
-  if (mkdir(buffer, 0775) == 0)
+  if (sw_mkdir(buffer) == 0)
     {
       free(buffer);
       return 1;
@@ -240,7 +240,7 @@ int makedir (char *newdir)
 	p++;
       hold = *p;
       *p = 0;
-      if ((mkdir(buffer, 0775) == -1) && (errno == ENOENT))
+      if ((sw_mkdir(buffer) == -1) && (errno == ENOENT))
 	{
 	  fprintf(stderr,"%s: couldn't create directory %s\n",prog,buffer);
 	  free(buffer);

@@ -201,7 +201,7 @@ function getChapterHTML() {
     var textWithUserNotes = insertUserNotes(Bible.getBookName(), Bible.getChapterNumber(Version), Version, chap);
     PrintHTML += PageBreak;
     if (!PageBreak) PageBreak = "<div class=\"pagebreak\"></div><br>";
-    PrintHTML += "<div class=\"scripture vstyle" + Version + "\">" + getScriptBoxHeader(Version, true, Introduction.checked, false) + "</div>";
+    PrintHTML += "<div class=\"scripture vstyle" + Version + "\">" + getScriptBoxHeader(Bible.getBookName(), Bible.getChapterNumber(Version), Version, true, Introduction.checked, false) + "</div>";
     PrintHTML += "<div class=\"scripture vstyle" + Version + "\">" + textWithUserNotes.html + "</div>";
     var allNotes = Bible.getNotes();
     allNotes += textWithUserNotes.notes;

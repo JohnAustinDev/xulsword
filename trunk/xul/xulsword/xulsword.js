@@ -16,6 +16,7 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 /*
+
 */
 
 /************************************************************************
@@ -31,7 +32,6 @@ var Win = new Array(4);
 var Link = {win:[null, null, null, null], modName:null, numWins:null, leftWin:null, rightWin:null, firstWin:null, lastWin:null, isRTL:null};
 var KeyWindow;
 var UsingWaitCursor; 
-var CheckPlayer;
 var SavedWindowWithFocus;
 var NewModuleInfo;
 var AboutScrollTo;
@@ -74,7 +74,7 @@ function loadedXULReal() {
   
   // check for newly installed modules and reset mods if necessary
   var resetUserPrefs = false;
-  var pfile = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("PrfDef", Components.interfaces.nsIFile);
+  var pfile = getSpecialDirectory("xsResD");
   pfile.append(NEWINSTALLFILE);
   NewModuleInfo = (pfile.exists() ? readNewInstallsFile(pfile):null);
   if (pfile.exists()) pfile.remove(false);
@@ -229,6 +229,7 @@ function loadedXULReal() {
       removeFromHiddenModPref(i, dontHideArray);
       updateTabsFromHiddenModPrefs(i, true);
     }
+    updateLinkInfo();
     FrameDocument[1].defaultView.initializeScript();
     FrameDocument[2].defaultView.initializeScript();
     FrameDocument[3].defaultView.initializeScript();
@@ -236,7 +237,6 @@ function loadedXULReal() {
     updateModuleMenuCheckmarks();
     updateLocators(true);
     updateChooserVisibility();
-    updateLinkInfo();
     updatePinVisibility();
     window.setTimeout("checkCipherKeys()",0);
   }
@@ -297,7 +297,7 @@ function createSearchBible() {
 }
 
 function updateAfterInit() {
-  updateFrameScriptBoxes();
+  updateFrameScriptBoxes(null, SCROLLTYPECENTER, HILIGHTNONE);
   window.setTimeout("postWindowInit()", 1000);
 }
 
@@ -336,12 +336,12 @@ function postWindowInit() {
   
   createSearchBible();
   
-  if (NewModuleInfo && NewModuleInfo.NewLocales && NewModuleInfo.NewLocales[0]) {
+  if (NewModuleInfo && NewModuleInfo.NewLocales && NewModuleInfo.NewLocales[0] && !document.getElementById("sub-lang").disabled) {
     var opmenu = document.getElementById("menu.options").childNodes[0].nodeValue;
     var lamenu = document.getElementById("menu.options.language").childNodes[0].nodeValue;
     var result={};
     var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-        document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue, 
+        document.getElementById("menu.options.language").childNodes[0].nodeValue,
         SBundle.getFormattedString("LangSelectMsg", [opmenu, lamenu]), 
         DLGINFO,
         DLGOK);
@@ -370,7 +370,7 @@ function useFirstAvailableBookIf() {
   if (b<availableBooks.length) return;
   Bible.setBiblesReference(vers, availableBooks[0] + ".1.1.1");
   updateLocators(true);
-  updateFrameScriptBoxes();
+  updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);
 }
 
 function readNewInstallsFile(aFile) {
@@ -595,7 +595,7 @@ function fillModuleMenuLists() {
     xulElement = writeModuleElem(xulElement, t, "label", "modulemenu", false, false, false)
     if (!xulElement) continue;
     xulElement.setAttribute("type", "checkbox");
-    xulElement.setAttribute("oncommand", "handleOptions(this)");
+    xulElement.setAttribute("oncommand", "holdMenuAndHandleOptions(this)");
     xulElement.setAttribute("autocheck","false");
     
     for (var type in SupportedModuleTypes) {
@@ -834,12 +834,12 @@ function previousBook() {
   bkn--;
   if (bkn < 0) return;
   Bible.setBiblesReference(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
-  updateFrameScriptBoxes(getUnpinnedVerseKeyWindows(), SCROLLTYPETOP);
+  updateFrameScriptBoxes(getUnpinnedVerseKeyWindows(), SCROLLTYPETOP, HILIGHTNONE);
   updateLocators(false);
 }
 
 // if pin info is given, apply changes to pin window only
-function previousChapter(highlightVerse, pin) {
+function previousChapter(highlightFlag, scrollType, pin) {
   var vers = (pin ? Win[pin.number].modName:firstDisplayBible());
   var bkn = findBookNum(pin ? pin.shortName:Bible.getBookName());
   var chn = (pin ? pin.chapter:Bible.getChapterNumber(vers));
@@ -848,25 +848,25 @@ function previousChapter(highlightVerse, pin) {
   else if (bkn > 0) {bkn--; chn = Book[bkn].numChaps;}
   
   if (!pin) {
-    if (highlightVerse) selectVerse(vers, Book[bkn].sName, chn, LAST_VERSE_IN_CHAPTER, LAST_VERSE_IN_CHAPTER, HILIGHTVERSE);
-    else selectVerse(vers, Book[bkn].sName, chn, 1, 1, HILIGHTNONE);
+    if (!scrollType || scrollType==SCROLLTYPETOP || scrollType==SCROLLTYPEBEG) quickSelectVerse(vers, Book[bkn].sName, chn, 1, 1, highlightFlag, scrollType);
+    else quickSelectVerse(vers, Book[bkn].sName, chn, LAST_VERSE_IN_CHAPTER, LAST_VERSE_IN_CHAPTER, highlightFlag, scrollType);
   }
   else {
     var update = [];
     if (Link.win[pin.number]) update = copyLinkArray();
     else {for (var w=0; w<=3; w++) update.push(w==pin.number);}
-    pin.updatePin(Book[bkn].sName, chn, 1, true);
+    pin.updatePin(Book[bkn].sName, chn, 1);
     pin.updateLink();
-    updateFrameScriptBoxes(update, SCROLLTYPEBEG);
+    updateFrameScriptBoxes(update, scrollType, HILIGHTNONE);
     updateLocators(false);
   }
 }
 
 // if pin info is given, apply changes to pin window(s) only
-function previousPage(highlightVerse, pin) {
+function previousPage(highlightFlag, scrollType, pin) {
   var firstPassageInLink = getPassageFromWindow(FIRSTPASSAGE); //FIRSTPLASTW
   if (!firstPassageInLink) {
-    previousChapter(highlightVerse, (pin ? pin:null));
+    previousChapter(highlightFlag, SCROLLTYPEBEG, (pin ? pin:null));
     return;
   }
   
@@ -879,13 +879,13 @@ function previousPage(highlightVerse, pin) {
   if (ch==1 && v==1) {
     if (!pin) {
       Bible.setBiblesReference(vers, bk + "." + ch + "." + v);
-      previousChapter(highlightVerse);
+      previousChapter(highlightFlag, scrollType);
       return;
     }
     else {
-      pin.updatePin(bk, ch, v, true);
+      pin.updatePin(bk, ch, v);
       pin.updateLink();
-      previousChapter(highlightVerse, pin);
+      previousChapter(highlightFlag, scrollType, pin);
       return;
     }
   }
@@ -897,31 +897,24 @@ function previousPage(highlightVerse, pin) {
   }
 
   var update;
-  if (!pin) {
-    Bible.setBiblesReference(vers, bk + "." + ch + "." + v);
-    update = getUnpinnedVerseKeyWindows();
-  }
+  if (!pin) quickSelectVerse(vers, bk, ch, v, v, highlightFlag, scrollType);
   else {
     update = copyLinkArray();
-    pin.updatePin(bk, ch, v, true);
+    pin.updatePin(bk, ch, v);
     pin.updateLink();
+    updateFrameScriptBoxes(update, scrollType, HILIGHTNONE);
+    updateLocators(false);
   }
-  updateFrameScriptBoxes(update, SCROLLTYPEEND, (highlightVerse ? HILIGHTVERSE:HILIGHTNONE));
-  updateLocators(false);
 }
 
-function previousVerse() {
+function previousVerse(scrollType) {
+  UseTextCache = true;
  // Set Version/Chapter so that setVerse corresponds to the verse/versification of window1
   var vers = firstDisplayBible();
-  var cv = Bible.getVerseNumber(vers);
-  cv--;
-  if ((cv==0)&&(findBookNum(Bible.getBookName()) >= 0)) {previousChapter(true);}
-  else if (cv > 0) {
-    var fp = getPassageFromWindow(FIRSTPASSAGE);
-    Bible.setVerse(vers, cv, cv); // set to firstDisplayBible, then compare, since link version may be different
-    if (fp && Bible.getChapterNumber(fp.split(".")[4]) == Number(fp.split(".")[1]) && Bible.getVerseNumber(fp.split(".")[4]) < Number(fp.split(".")[2])) previousPage(true);
-    else selectVerse(vers, null, null, cv, null, HILIGHTVERSE);
-  }
+  var v = Bible.getVerseNumber(vers);
+  v--;
+  if ((v==0)&&(findBookNum(Bible.getBookName()) >= 0)) previousChapter(HILIGHTVERSE, scrollType);
+  else if (v > 0) quickSelectVerse(vers, null, null, v, null, HILIGHTVERSE, scrollType);
 }
 
 function nextBook() {
@@ -929,12 +922,12 @@ function nextBook() {
   bkn++;
   if (bkn >= NumBooks) return;
   Bible.setBiblesReference(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
-  updateFrameScriptBoxes(getUnpinnedVerseKeyWindows(), SCROLLTYPETOP);
+  updateFrameScriptBoxes(getUnpinnedVerseKeyWindows(), SCROLLTYPETOP, HILIGHTNONE);
   updateLocators(false);
 }
 
 // if pin info is given, apply changes to pin window(s) only
-function nextChapter(highlightVerse, pin) {
+function nextChapter(highlightFlag, scrollType, pin) {
   var vers = (pin ? Win[pin.number].modName:firstDisplayBible());
   var bkn = findBookNum(pin ? pin.shortName:Bible.getBookName());
   var chn = (pin ? pin.chapter:Bible.getChapterNumber(vers));
@@ -943,23 +936,23 @@ function nextChapter(highlightVerse, pin) {
   else if (bkn < (NumBooks-1)) {bkn++; chn=1;}
   else return;
   
-  if (!pin) {selectVerse(vers, Book[bkn].sName, chn, 1, 1, (highlightVerse ? HILIGHTVERSE:HILIGHTNONE));}
+  if (!pin) {quickSelectVerse(vers, Book[bkn].sName, chn, 1, 1, highlightFlag, scrollType);}
   else {
     var update = [];
     if (Link.win[pin.number]) update = copyLinkArray();
     else {for (var w=0; w<=3; w++) update.push(w==pin.number);}
-    pin.updatePin(Book[bkn].sName, chn, 1, true);
+    pin.updatePin(Book[bkn].sName, chn, 1);
     pin.updateLink();
-    updateFrameScriptBoxes(update, SCROLLTYPEBEG);
+    updateFrameScriptBoxes(update, scrollType, HILIGHTNONE);
     updateLocators(false);
   }
 }
 
 // if pin info is given, apply changes to pin window(s) only
-function nextPage(highlightVerse, pin) {
+function nextPage(highlightFlag, pin) {
   var lastPassageOfLink = getPassageFromWindow(LASTPASSAGE); //LASTPFIRSTW
   if (!lastPassageOfLink) {
-    nextChapter(highlightVerse, (pin ? pin:null));
+    nextChapter(highlightFlag, SCROLLTYPEBEG, (pin ? pin:null));
     return;
   }
 
@@ -973,13 +966,13 @@ function nextPage(highlightVerse, pin) {
   if (ch==Book[bkn].numChaps && v==maxv) {
     if (!pin) {
       Bible.setBiblesReference(vers, bk + "." + ch + "." + v);
-      nextChapter(highlightVerse);
+      nextChapter(highlightFlag, SCROLLTYPEBEG);
       return;
     }
     else {
-      pin.updatePin(bk, ch, v, true);
+      pin.updatePin(bk, ch, v);
       pin.updateLink();
-      nextChapter(highlightVerse, pin);
+      nextChapter(highlightFlag, SCROLLTYPEBEG, pin);
       return;
     }
   }
@@ -991,31 +984,26 @@ function nextPage(highlightVerse, pin) {
   }
   
   var update;
-  if (!pin) {
-    Bible.setBiblesReference(vers, bk + "." + ch + "." + v);
-    update = getUnpinnedVerseKeyWindows();
-  }
+  if (!pin) quickSelectVerse(vers, bk, ch, v, v, highlightFlag, SCROLLTYPEBEG)
   else {
     update = copyLinkArray();
-    pin.updatePin(bk, ch, v, true);
+    pin.updatePin(bk, ch, v);
     pin.updateLink();
+    updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE);
+    updateLocators(false);
   }
-  updateFrameScriptBoxes(update, SCROLLTYPEBEG, (highlightVerse ? HILIGHTVERSE:HILIGHTNONE));
-  updateLocators(false);
 }
 
-function nextVerse() {
+function nextVerse(scrollType) {
+  UseTextCache = true;
  // Set Version/Chapter such that we get verse/versification of window1 set up correctly
   var vers = firstDisplayBible();
   var cv = Bible.getVerseNumber(vers);
   if (cv < Bible.getMaxVerse(vers, Bible.getLocation(vers))) {
     cv++;
-    var lp = getPassageFromWindow(LASTPASSAGE);
-    Bible.setVerse(vers, cv, cv); // set to firstDisplayBible, then compare, since link version may be different
-    if (lp && Bible.getChapterNumber(lp.split(".")[4]) == Number(lp.split(".")[1]) && Bible.getVerseNumber(lp.split(".")[4]) > Number(lp.split(".")[2])) nextPage(true);
-    else selectVerse(vers, null, null, cv, null, HILIGHTVERSE);
+    quickSelectVerse(vers, null, null, cv, null, HILIGHTVERSE, scrollType);
   }
-  else if (findBookNum(Bible.getBookName()) <= NumBooks-1) nextChapter(true);
+  else if (findBookNum(Bible.getBookName()) <= NumBooks-1) nextChapter(HILIGHTVERSE, scrollType);
 }
 
 // If onlyThisWin is false (or null), it reads the full text of the link and
@@ -1069,72 +1057,69 @@ function getPassageFromWindow(pflag, onlyThisWin) {
   return passage.join(".");
 }
 
-// not for use with pinned windows, because they don't allow verse selections
-function selectVerse(version, bk, ch, vs, lastvs, highlightFlag) {
+// not for use with non versekey windows, or with pinned windows because they don't allow verse selections
+function quickSelectVerse(version, bk, ch, vs, lastvs, highlightFlag, scrollType) {
   if (!bk) bk = Bible.getBookName();
   if (!ch) ch = Bible.getChapterNumber(version);
   if (!lastvs) lastvs = vs;
   var updateNeeded = getUnpinnedVerseKeyWindows();
-  var redrawNeeded = changeVerseTo(version, bk, ch, vs, lastvs, updateNeeded); // this may modify updateNeeded!
-  updateFrameScriptBoxes(redrawNeeded, SCROLLTYPECENTER, highlightFlag);
-  highlightSelectedVerses(updateNeeded);
-  updateLocators(false); 
-}
-
-// Works on links or non-lnked windows. It sets a new global location and
-// requests a full redraw only for Bible and Commentary links or windows in
-// which the new location is not already in the window or link (and some other
-// special cases). This saves considerable time...
-function changeVerseTo(version, bk, ch, vs, lastvs, updateNeeded) {
-  if (!lastvs) lastvs = vs;
-  var fullDrawNeeded = [false, false, false, false];
   Bible.setBiblesReference(version, bk + "." + ch);
   Bible.setVerse(version, vs, lastvs);
+  var forceNonlinkRedraw = false;
+  var forceRedraw = [false, false, false, false];
+  // if we have a link which needs scrolling, force a redraw of the link
+  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
+    if (!updateNeeded[w] || !Link.win[w]) continue;
+    if (scrollType && scrollType != SCROLLTYPECENTER) forceRedraw[w] = true;
+    if (scrollType && scrollType == SCROLLTYPEEND) forceNonlinkRedraw = true; // selected verse might change during updateFrameScriptBoxes!
+  }
+  var forceLinkRedraw = false;
   var text = "";
-  for (var w=1; w<=3; w++) {
-    if (!updateNeeded[w]) continue;
-    if (Win[w].modType!=BIBLE && Win[w].modType!=COMMENTARY) continue;
-    // full draw is needed if new verse is not being displayed
-    if (!Link.win[w]) {
+  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
+    if (!updateNeeded[w] || forceRedraw[w]) continue;
+    else if (prefs.getBoolPref("ShowOriginal" + w)) forceRedraw[w] = true;
+    else if (!Link.win[w] && forceNonlinkRedraw) forceRedraw[w] = true;
+    else if (!Link.win[w]) {
       var chID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\.");
-      fullDrawNeeded[w] = FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML.search(chID) == -1;
+      if (FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML.search(chID) == -1) forceRedraw[w] = true;
     }
     else {
-      var vsID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\." + Bible.getVerseNumber(Win[w].modName) + "\"");
-      var vlID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\." + Bible.getLastVerseNumber(Win[w].modName) + "\"");
       text += FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML;
-      if (w==3 || !Link.win[w+1]) {
+      if (w==Link.rightWin) {
         // finished reading text for link or page
+        var vsID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\." + Bible.getVerseNumber(Win[w].modName) + "\"");
+        var vlID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\." + Bible.getLastVerseNumber(Win[w].modName) + "\"");
         vsID = text.search(vsID);
         vlID = text.search(vlID);
         if (vsID == -1 || vlID == -1) {
-          for (var x=1; x<=3; x++) {fullDrawNeeded[x] |= Link.win[w];}
+          for (var x=1; x<=3; x++) {forceRedraw[x] |= Link.win[w];}
         }
         text = "";
       }
     }
-    // full draw is needed if page has red-words-of-Christ because "highlightSelectedVerses" cannot overwrite RWOC.
-    if (FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML.search(REDWORDS)!=-1) fullDrawNeeded[w] = true;
-    // full draw is needed if window is in interlinear mode.
-    if (prefs.getBoolPref("ShowOriginal" + w)) fullDrawNeeded[w] = true;
   }
-  
-  for (w=1; w<=3; w++) {if (fullDrawNeeded[w]) updateNeeded[w] = false;}
-  return fullDrawNeeded;
+  updateFrameScriptBoxes(forceRedraw, scrollType, highlightFlag);
+  var notYetUpdated = [false];
+  for (w=1; w<=3; w++) {notYetUpdated.push(updateNeeded[w] && !forceRedraw[w]);}
+  highlightSelectedVerses(notYetUpdated, highlightFlag);
+  if (scrollType) window.setTimeout("scrollScriptBoxes([" + notYetUpdated + "], " + scrollType + ");", 1);
+  updateLocators(false); 
 }
 
-function highlightSelectedVerses(updateNeededArray, dontScroll) {
+function highlightSelectedVerses(updateNeededArray, highlightFlag) {
   if (!updateNeededArray) updateNeededArray = [false, true, true, true];
   for (var w=1; w<updateNeededArray.length; w++) {
-    if (!updateNeededArray[w]) continue;
-    if (Win[w].modType != BIBLE) continue;
-    FrameDocument[w].defaultView.SelectedVerseCSS.style.color="blue"; //FrameDocument[w].defaultView.SelectedVerseColor;
+    if (!updateNeededArray[w] || Win[w].modType != BIBLE) continue;
     var oldsel = FrameDocument[w].getElementById("sv");
     if (oldsel) oldsel.removeAttribute("id");
     var selem = FrameDocument[w].createElement("span");
     selem.className="hl";
     var fv = Bible.getVerseNumber(Win[w].modName);
     var lv = Bible.getLastVerseNumber(Win[w].modName);
+    if (!highlightFlag || (highlightFlag==HILIGHT_IFNOTV1 && fv==1 && lv==1))
+        FrameDocument[w].defaultView.SelectedVerseCSS.style.color=FrameDocument[w].defaultView.ScriptBoxFontColor;
+    else
+        FrameDocument[w].defaultView.SelectedVerseCSS.style.color=FrameDocument[w].defaultView.SelectedVerseColor;
     
     var verseID = new RegExp("id=\"(vs\\.[^\\.]*\\.(\\d+)\\.(\\d+))\"");
     verseID = FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML.match(verseID);
@@ -1160,7 +1145,6 @@ function highlightSelectedVerses(updateNeededArray, dontScroll) {
       velem = velem.nextSibling;
     }
   }
-  if (!dontScroll) window.setTimeout("scrollScriptBoxes([" + updateNeededArray + "], " + SCROLLTYPECENTER + ");", 1);
 }
 
 function removeHL(velem) {
@@ -1190,6 +1174,7 @@ function addHL(velem, aSpan) {
 var SWcount = 0;
 var SWTO;
 function scrollwheel(event, w) {
+  UseTextCache = true;
   if (Link.win[w]) {
     // scrolling over linked windows
     // Over a delay, sum up scroll wheel values, then call the scroll function at end of delay (help scroll keep up).
@@ -1305,7 +1290,7 @@ function linkVerseScroll(numVerses) {
   var update;
   var pin = FrameDocument[Link.firstWin].defaultView.Pin;
   if (pin.isPinned) {
-    pin.updatePin(b, c, v, true);
+    pin.updatePin(b, c, v);
     pin.updateLink();
     update = copyLinkArray();
   }
@@ -1393,39 +1378,13 @@ var XulswordController = {
       break;
     case "cmd_xs_selectVerse":
       document.getElementById("verse").value = CurrentTarget.verse;
-      selectVerse(CurrentTarget.version, CurrentTarget.shortName, CurrentTarget.chapter, CurrentTarget.verse, CurrentTarget.lastVerse, HILIGHTVERSE);
+      quickSelectVerse(CurrentTarget.version, CurrentTarget.shortName, CurrentTarget.chapter, CurrentTarget.verse, CurrentTarget.lastVerse, HILIGHTVERSE, SCROLLTYPECENTER);
       break;
     case "cmd_xs_back":
       historyBack();
       break;
     case "cmd_xs_forward":
       historyForward();
-      break;
-    case "cmd_xs_nextBook":
-      nextBook(false);
-      break;
-    case "cmd_xs_previousBook":
-      previousBook();
-      break;
-    case "cmd_xs_nextChapter":
-      var cd = getFocusedElemID();
-      if (cd && (cd=="chapter" || cd=="verse")) previousChapter(false);
-      else nextChapter();
-      break;
-    case "cmd_xs_previousChapter":
-      cd = getFocusedElemID();
-      if (cd && (cd=="chapter" || cd=="verse")) nextChapter();
-      else previousChapter(false);
-      break;
-    case "cmd_xs_nextVerse":
-      cd = getFocusedElemID();
-      if (cd && (cd=="chapter" || cd=="verse")) previousVerse();
-      else nextVerse();
-      break;
-    case "cmd_xs_previousVerse":
-      cd = getFocusedElemID();
-      if (cd && (cd=="chapter" || cd=="verse")) nextVerse();
-      else previousVerse();
       break;
     case "cmd_xs_navigatorUpdate":
       updateFromNavigator();
@@ -1497,28 +1456,12 @@ var XulswordController = {
       if (AudioDirs.length>1 || AudioRegKeyIndex==-1) return true;
       var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
       aFile.initWithPath(AudioDirs[AudioRegKeyIndex]);
-      return aFile.exists();
+      return AudioDirs.length>2 || aFile.exists();
       break;
     case "cmd_xs_addNewModule":
     case "cmd_xs_removeModule":
     case "cmd_xs_importAudio":
       if (ModuleCopyMutex) return false;
-      break;
-    case "cmd_xs_nextBook":
-    case "cmd_xs_previousBook":
-    case "cmd_xs_nextChapter":
-    case "cmd_xs_previousChapter":
-    case "cmd_xs_nextVerse":
-    case "cmd_xs_previousVerse":
-      // disable if genbook-tree is focused (it has its own handler)
-      var cd = document.commandDispatcher;
-      if (cd && cd.focusedElement && cd.focusedElement.id && cd.focusedElement.id=="genbook-tree") return false;
-      // disable if no Bibles or commentaries
-      var haveVK = false;
-      for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-        if (Win[w].modType==BIBLE || Win[w].modType==COMMENTARY) haveVK=true;
-      }
-      return haveVK;
       break;
     }
     return true;
@@ -1549,12 +1492,6 @@ var XulswordController = {
     case "cmd_xs_selectVerse":
     case "cmd_xs_back":
     case "cmd_xs_forward":
-    case "cmd_xs_nextBook":
-    case "cmd_xs_previousBook":
-    case "cmd_xs_nextChapter":
-    case "cmd_xs_previousChapter":
-    case "cmd_xs_nextVerse":
-    case "cmd_xs_previousVerse":
     case "cmd_xs_navigatorUpdate":
     case "cmd_xs_openManager":
     case "cmd_xs_openFromSelection":
@@ -1569,6 +1506,63 @@ var XulswordController = {
       return false;
     }
   }
+}
+      
+function handleNextPrev(id) {
+  if (!id || !isNextPrevEnabled()) return;
+  id = id.split(".");
+  if (id[0] == "next") {
+    //NEXT
+    switch(id[1]) {
+    case "verse":
+      //var cd = getFocusedElemID();
+      //if (id[2] && id[2]=="key" && cd && (cd=="chapter" || cd=="verse")) previousVerse(SCROLLTYPECENTER);
+      nextVerse(id[2] && id[2]=="button" ? SCROLLTYPECENTERALWAYS:SCROLLTYPECENTER);
+      break;
+    case "chapter":
+      //cd = getFocusedElemID();
+      //if (id[2] && id[2]=="key" && cd && (cd=="chapter" || cd=="verse")) previousChapter(HILIGHTNONE, SCROLLTYPEBEG);
+      nextChapter(HILIGHTNONE, SCROLLTYPEBEG);
+      break;
+    case "book":
+      nextBook(false);
+      break;
+    default:
+      return;
+    }
+  }
+  else {
+    //PREVIOUS
+    switch(id[1]) {
+    case "verse":
+      //cd = getFocusedElemID();
+      //if (id[2] && id[2]=="key" && cd && (cd=="chapter" || cd=="verse")) nextVerse(SCROLLTYPECENTER);
+      previousVerse(id[2] && id[2]=="button" ? SCROLLTYPECENTERALWAYS:SCROLLTYPECENTER);
+      break;
+    case "chapter":
+      //cd = getFocusedElemID();
+      //if (id[2] && id[2]=="key" && cd && (cd=="chapter" || cd=="verse")) nextChapter(HILIGHTNONE, SCROLLTYPEBEG);
+      previousChapter(HILIGHTNONE, SCROLLTYPEBEG);
+      break;
+    case "book":
+      previousBook();
+      break;
+    default:
+      return;
+    }
+  }
+}
+
+function isNextPrevEnabled() {
+  // disable if genbook-tree is focused (it has its own handler)
+  var cd = document.commandDispatcher;
+  if (cd && cd.focusedElement && cd.focusedElement.id && cd.focusedElement.id=="genbook-tree") return false;
+  // disable if no Bibles or commentaries
+  var haveVK = false;
+  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
+    if (Win[w].modType==BIBLE || Win[w].modType==COMMENTARY) haveVK=true;
+  }
+  return haveVK;
 }
 
 function getFocusedElemID() {
@@ -1622,8 +1616,16 @@ function handleViewPopup(elem) {
   updateFrameScriptBoxes(null, SCROLLTYPECENTER, HILIGHT_IFNOTV1);
 }
 
-var AboutScreen; 
+var AboutScreen;
+var OptionsElement;
+function holdMenuAndHandleOptions(elem) {
+  preventMenuFromHiding();
+  OptionsElement = elem;
+  window.setTimeout("handleOptions();", 0);
+}
+
 function handleOptions(elem) {
+  if (!elem) elem = OptionsElement;
   var id = String(elem.id + ".").split(".");
   id.pop();
   switch (id[0]) {
@@ -1645,7 +1647,7 @@ function handleOptions(elem) {
       FrameDocument[1].defaultView.updateFontSizes();
       FrameDocument[2].defaultView.updateFontSizes();
       FrameDocument[3].defaultView.updateFontSizes();
-      updateFrameScriptBoxes(null, SCROLLTYPETOP);
+      updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);
       break;
     
     case "about":
@@ -1673,7 +1675,6 @@ function handleOptions(elem) {
         }
       }
       updateModuleMenuCheckmarks();
-      MainWindow.setTimeout("document.getElementById('view-popup').showPopup(); document.getElementById('sub-" + id[2] + "-pup').showPopup()", 0);
       break;
 
     case "emailus":
@@ -1715,6 +1716,32 @@ function handleOptions(elem) {
   }
 }
 
+function holdPopupAndDo(cmd) {
+  preventMenuFromHiding();
+  if (cmd == "cmd_xs_toggleStrongsTags") window.setTimeout("goDoCommand('cmd_xs_toggleStrongsTags'); goDoCommand('cmd_xs_toggleMorphTags');", 0);
+  else window.setTimeout("goDoCommand('" + cmd + "');", 0);
+}
+
+var PreventMenuHide = false;
+function preventMenuFromHiding() {
+  PreventMenuHide = true;
+  window.setTimeout("PreventMenuHide = false; Pups = null;", 0);
+}
+
+var Pups;
+function checkMenuHide(elem, e) {
+  if (!PreventMenuHide) {Pups = null; return;}
+
+  if (!Pups) Pups = [];
+  Pups.push(e.target);
+  
+  if (elem == e.target) {
+    for (var i=Pups.length-1; i>=0; i--) {
+      Pups[i].parentNode.open = true;
+    }
+  }
+}
+
 // Shows or hides all tabs for: if w is passed then window w, otherwise all windows
 function setAllTabs(toShowing, w) {
   if (w) {var s=w; var e=w;}
@@ -1745,8 +1772,6 @@ function setAllTabs(toShowing, w) {
 
 var RedrawAfterModuleMenuSelect;
 function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
-  document.getElementById("view-popup").showPopup();
-  document.getElementById("sub-" + subPupId + "-pup").showPopup();
   var rs = getRadioSelection(subPupId);
   var aWindowNum = rs;
   if (aWindowNum <= 3) var sw=aWindowNum;
@@ -2344,9 +2369,7 @@ function updateGenBooks() {
   }
   for (i=0; i<GBs.length; i++) {
     needToRebuild=true; 
-    var moduleRDF = Components.classes["@mozilla.org/file/directory_service;1"].
-                getService(Components.interfaces.nsIProperties).
-                get("ProfD", Components.interfaces.nsIFile);
+    var moduleRDF = getSpecialDirectory("ProfD");
     moduleRDF.append(GBs[i] + ".rdf");
     if (!moduleRDF.exists() || !RDFChecked[GBs[i]]) writeFile(moduleRDF, Bible.getGenBookTableOfContents(GBs[i]));
     RDFChecked[GBs[i]] = true;
@@ -2417,7 +2440,10 @@ function selectGenBook(key, elem) {
     var i = elemTB.getIndexOfResource(selRes);
     elem.view.selection.select(i);
   }
-  catch (er) {elem.view.selection.select(0);}
+  catch (er) {
+    if (UpdateOnlyPin) UpdateOnlyPin = null;
+    else elem.view.selection.select(0);
+  }
 }
 
 function isSelectedGenBook(key, elem) {
@@ -2431,45 +2457,100 @@ function isSelectedGenBook(key, elem) {
   return key==chapter;
 }
 
+var SkipGenBookWindow=0;
+var UpdateOnlyPin;
 function onSelectGenBook(elem) {
+  if (BlockOnSelect) return;
+  if (UpdateOnlyPin && UpdateOnlyPin.done) {
+    UpdateOnlyPin=null;
+    SkipGenBookWindow=0;
+    return;
+  }
+  if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) {
+    if (!bumpSelectedIndex((UpdateOnlyPin.shiftKey==-1), elem)) {
+      UpdateOnlyPin.done = true;
+      selectGenBook(UpdateOnlyPin.selectedKey, elem);
+    }
+    UpdateOnlyPin=null;
+    SkipGenBookWindow=0;
+    return;
+  }
+  
   if (!elem) elem=document.getElementById("genbook-tree");
   try {var selRes = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(elem.currentIndex);}
   catch (er) {}
-  if (!selRes) return;
+  if (!selRes) {SkipGenBookWindow=0; UpdateOnlyPin=null; return;}
   
   var newkey = elem.database.GetTarget(selRes, RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
   newkey = newkey.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
   
   var newmod = newkey.match(/^\/([^\/]+)/);
-  if (!newmod) return;
+  if (!newmod)  {SkipGenBookWindow=0; UpdateOnlyPin=null; return;}
   newmod = newmod[1];
   
-  try {var oldkey = getUnicodePref("ShowingKey" + newmod);}
-  catch (er) {oldkey = "";}
+  if (!UpdateOnlyPin) {
+    try {var oldkey = getUnicodePref("ShowingKey" + newmod);}
+    catch (er) {oldkey = "";}
+  }
+  else oldkey = UpdateOnlyPin.key;
   
   if (newkey != oldkey) {
     var updateNeeded = [false, false, false, false];
     for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-      if (Win[w].modName == newmod) updateNeeded[w] = true;
+      if (!UpdateOnlyPin) {
+        if (w == SkipGenBookWindow) continue;
+        if (Win[w].modName == newmod && !FrameDocument[w].defaultView.Pin.isPinned) updateNeeded[w] = true;
+      }
+      else if (w == UpdateOnlyPin.number) updateNeeded[w] = true;
     }
-    setUnicodePref("ShowingKey" + newmod, newkey);
-    updateFrameScriptBoxes(updateNeeded, SCROLLTYPETOP);
+    if (!UpdateOnlyPin) setUnicodePref("ShowingKey" + newmod, newkey);
+    else UpdateOnlyPin.key = newkey;
+    updateFrameScriptBoxes(updateNeeded, SCROLLTYPETOP, HILIGHTNONE);
+  }
+  SkipGenBookWindow=0;
+  
+  if (UpdateOnlyPin) {
+    UpdateOnlyPin.done = true;
+    selectGenBook(UpdateOnlyPin.selectedKey, elem);
   }
 }
 
+var BlockOnSelect;
 function bumpSelectedIndex(previousNotNext, elem) {
+  if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) UpdateOnlyPin.shiftKey = 0;
   if (!elem) elem=document.getElementById("genbook-tree");
   var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
   var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
   var index = elem.currentIndex;
   var newindex = index;
   newindex = (previousNotNext ? --newindex:++newindex);
-  if (newindex<0) return;
+  if (newindex<0) return false;
+  BlockOnSelect = true;
   elem.view.selection.select(newindex);
   try {var selRes = elemTB.getResourceAtIndex(elem.currentIndex);}
   catch (er) {elem.view.selection.select(index); newindex = index;}
   //dump(newindex + "\n");
   if (elemTV.isContainer(newindex) && !elemTV.isContainerOpen(newindex)) elemTV.toggleOpenState(newindex);
+  BlockOnSelect = false;
+  if (newindex != index) onSelectGenBook(elem);
+  return newindex != index;
+}
+
+// set UpdateOnlyPin to start the process, and select pin.key -> trigger onSelectGenBook
+// run onSelectGenBook which does nothing but call bumpSelectedIndex
+// run bumpSelectedIndex to select shifted pin entry -> trigger onSelectGenBook
+// run onSelectGenBook to redraw shifted pin window and then select original key again -> trigger onSelectGenBook
+// run onSelectGenBook which does nothing but clear UpdateOnlyPin to stop the process.
+function bumpPinnedIndex(pin, previousNotNext, elem) {
+  if (!elem) elem=document.getElementById("genbook-tree");
+  var selectedKey = getPrefOrCreate("ShowingKey" + Win[pin.number].modName, "Unicode", "");
+  UpdateOnlyPin = pin;
+  UpdateOnlyPin.selectedKey = selectedKey;
+  UpdateOnlyPin.shiftKey = (previousNotNext ? -1:1);
+  UpdateOnlyPin.done = false;
+  selectGenBook(pin.key, elem);
+  if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) onSelectGenBook(elem); // needed when pin.key == selectedKey
+  UpdateOnlyPin = null;
 }
 
 //NOTE: Does not open row first!
@@ -2683,10 +2764,10 @@ function completeImageLinks(dictionaryName, text) {
   if (text.match("<image src=\"File://.") == -1) return text;
   // If Sword is started in runDir, then sword returns "./" as the path,
   // and this is not acceptable to xul, so replace with full path
-  var runDirectory = getRunDirectory();
-  if (!runDirectory) return text;
-  runDirectory = runDirectory.replace(/\\/g, "/");
-  text = text.replace("<image src=\"File://.", "<image src=\"File://" + runDirectory, "gm");
+  var modDir = getSpecialDirectory("xsModsUser");
+  modDir = encodeURI(modDir.path).replace(/%5C/g, "/");
+  modDir = modDir.replace(/\\/g, "/");
+  text = text.replace("<image src=\"File://.", "<image src=\"File://" + modDir, "gm");
   return text;
 }
 
@@ -2775,12 +2856,29 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
   }
   PreviousHaveGenBook = haveGenBook;
   
-  // Order is 3,2,1 because lower number Frames can write text to higher number Frames
+  // Order is high to low because lower number Frames can write text to higher number Frames
   // so this order insures that the higher number frames have been initialized
   // before text is written to it.
-  for (var w=3; w>=1; w--) {
-    if (updateNeededArray[w]) FrameDocument[w].defaultView.updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction);
+  // Links are processed first because in the case of SCROLLTYPEEND on a link, the link
+  // must be completed first, so that the first verse of the link can be set as SCROLLTYPEBEG
+  // for non-linked window.
+  var nonLinked = [];
+  var ref = Bible.getLocation(prefs.getCharPref("DefaultVersion"));
+  for (var w=prefs.getIntPref("NumDisplayedWindows"); w>=1; w--) {
+    if (!updateNeededArray[w]) continue;
+    if (!Link.win[w]) {
+      nonLinked.push(w);
+      continue;
+    }
+    FrameDocument[w].defaultView.updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction);
   }
+  // if Bible location was changed after writing link, then scroll to beginning of new location
+  if (ref != Bible.getLocation(prefs.getCharPref("DefaultVersion"))) scrollTypeFlag = SCROLLTYPEBEG;
+  while (nonLinked.length) {
+    if (updateNeededArray[nonLinked[0]]) FrameDocument[nonLinked[0]].defaultView.updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction);
+    nonLinked.shift();
+  }
+  
   document.getElementById("cmd_xs_startHistoryTimer").doCommand();
   goUpdateTargetLocation();
   
@@ -2829,7 +2927,7 @@ function hideEmptyCrossRefs(updateNeededArray) {
   for (var w=1; w<updateNeededArray.length; w++) {
     if (!updateNeededArray[w]) continue;
     if (Win[w].modType != BIBLE) {continue;}
-    var notes = Fn[w].CrossRefs;
+    var notes = TextCache[w].fn.CrossRefs;
     if (!notes) continue;
     notes = notes.split("<nx/>");
     for (var n=0; n<notes.length; n++) {
@@ -2859,10 +2957,16 @@ function hideEmptyCrossRefs(updateNeededArray) {
 //either a link of windows, or a single window. Text flows either left-to-right through the link
 //or right-to-left depending on isRTL flag. Bible text, Bible notes, and connectors
 //for the link are all updated by this routine.
-var Fn = new Array(4);
-Fn[1] = new Object();
-Fn[2] = new Object();
-Fn[3] = new Object();
+var Footnotes = new Array(4);
+Footnotes[1] = new Object();
+Footnotes[2] = new Object();
+Footnotes[3] = new Object();
+var TextCache = new Array(4); // used for link scrolling to avoid repeated module reads
+TextCache[1] = {fn:Footnotes[1]};
+TextCache[2] = {fn:Footnotes[2]};
+TextCache[3] = {fn:Footnotes[3]};
+var UseTextCache = false;
+const MAXTEXTCACHE = 131071;
 function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
   var s = {link:{}};
   if (Link.win[win.number]) {
@@ -2873,6 +2977,7 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
   s.isPinned = isPinned;
   s.showIntroduction = showIntroduction;
   s.scrollTypeFlag = scrollTypeFlag;
+  if (s.scrollTypeFlag==SCROLLTYPEENDSELECT) s.scrollTypeFlag=SCROLLTYPEEND;
   if (Bible.getVerseNumber(s.win.modName) == 1 && s.scrollTypeFlag == SCROLLTYPECENTER) s.scrollTypeFlag = SCROLLTYPEBEG;
   if (s.scrollTypeFlag == SCROLLTYPETOP) {
     if (FrameDocument[s.link.leftWin].defaultView.Pin.isPinned) {
@@ -2885,22 +2990,19 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
   }
   
   s.navlinks = FrameDocument[s.link.leftWin].defaultView.getPageLinks();
-  
-  //Set connector visibility and designate frame which holds the note box, as well as which Bible to read for popups
+
+  if (needToReadText(s, TextCache[s.link.firstWin])) {
+    initTextCache(s, TextCache[s.link.firstWin]);
+  }
+
   for (var i=0; i<s.link.numWins; i++) {
     FrameDocument[s.link.leftWin+i].defaultView.ConnectorElement.style.visibility = (i==s.link.numWins-1 ? "hidden":"visible");
     FrameDocument[s.link.leftWin+i].defaultView.FrameDocumentHavingNoteBox = FrameDocument[s.link.lastWin];
-    Fn[s.link.leftWin+i].CrossRefs = "";
-    Fn[s.link.leftWin+i].Footnotes = "";
-    Fn[s.link.leftWin+i].Notes = "";
-    Fn[s.link.leftWin+i].UserNotes = "";
-    FrameDocument[s.link.leftWin+i].defaultView.MyFootnotes = Fn[s.link.firstWin];
+    FrameDocument[s.link.leftWin+i].defaultView.MyFootnotes = TextCache[s.link.firstWin].fn;
   }
-
-  var chapterText = getChapterWithHeading(s, Fn[s.link.firstWin]);
-
+  
   // if note box is maximized make necessary adjustments
-  s.link.lastWindowNotesAreMaximized = prefs.getBoolPref("MaximizeNoteBox" + s.link.lastWin) &&
+  s.lastWindowNotesAreMaximized = prefs.getBoolPref("MaximizeNoteBox" + s.link.lastWin) &&
                                   !prefs.getBoolPref("ShowOriginal" + win.number);
   if (s.lastWindowNotesAreMaximized && !ScriptBoxIsEmpty[s.link.leftWin]) {
     FrameDocument[s.link.lastWin].defaultView.ScriptBoxTextElement.innerHTML="";
@@ -2913,33 +3015,71 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
   s.forceNoteBox2Hide = prefs.getBoolPref("ShowOriginal" + win.number) ||
                         s.lastWindowNotesAreMaximized ||
                         ScriptBoxIsEmpty[s.link.leftWin]; //If last window notes are max'mzd this is second to last window, so hide!
+  var firstVerseInLink;
   if (s.link.numWins>1) {
-    var p = {text:chapterText, ibeg:null, iend:null, imin:-1, imax:-1, numAppendedChaps:0, numPrependedChaps:0};
-    text2LinkedWindows(p, s, Fn[s.link.firstWin]);
-    if (Fn[s.link.firstWin].Notes) Fn[s.link.firstWin].Notes = filterNotes(Fn[s.link.firstWin].Notes, p);
-    else Fn[s.link.firstWin].Notes = NOTFOUND;
-    if (Fn[s.link.firstWin].UserNotes) Fn[s.link.firstWin].UserNotes = filterNotes(Fn[s.link.firstWin].UserNotes, p);
-    else Fn[s.link.firstWin].UserNotes = NOTFOUND;
+    var tc = TextCache[s.link.firstWin];
+    text2LinkedWindows(tc, s, tc.fn);
+    firstVerseInLink = new RegExp("id=\"vs\\.([^\\.]+\\.\\d+\.\\d+)");
+    firstVerseInLink = FrameDocument[s.link.firstWin].defaultView.ScriptBoxTextElement.innerHTML.match(firstVerseInLink);
+    var notes, userNotes;
+    if (tc.fn.Notes) notes = filterNotes(tc.fn.Notes, tc);
+    else notes = NOTFOUND;
+    if (tc.fn.UserNotes) userNotes = filterNotes(tc.fn.UserNotes, tc);
+    else userNotes = NOTFOUND;
     if (!s.forceNoteBox2Hide)
-      FrameDocument[s.link.lastWin].defaultView.copyNotes2Notebox(Fn[s.link.firstWin].Notes, Fn[s.link.firstWin].UserNotes);
+      FrameDocument[s.link.lastWin].defaultView.copyNotes2Notebox(notes, userNotes);
   }
   else {
-    FrameDocument[s.link.firstWin].defaultView.ScriptBoxTextElement.innerHTML = (ScriptBoxIsEmpty[s.link.firstWin] ? "":s.navlinks + chapterText + s.navlinks);
-    if (!s.forceNoteBox2Hide) FrameDocument[s.link.firstWin].defaultView.copyNotes2Notebox(Fn[s.link.firstWin].Notes, Fn[s.link.firstWin].UserNotes);
+    FrameDocument[s.link.firstWin].defaultView.ScriptBoxTextElement.innerHTML = (ScriptBoxIsEmpty[s.link.firstWin] ? "":s.navlinks + TextCache[s.link.firstWin].text + s.navlinks);
+    if (!s.forceNoteBox2Hide) FrameDocument[s.link.firstWin].defaultView.copyNotes2Notebox(TextCache[s.link.firstWin].fn.Notes, TextCache[s.link.firstWin].fn.UserNotes);
   }
   FrameDocument[s.link.lastWin].defaultView.setBibleHeight(false, s.forceNoteBox2Hide);
 
   //Write maximized notes in last window if needed
   if (s.lastWindowNotesAreMaximized && !ScriptBoxIsEmpty[s.link.leftWin]) {
-    FrameDocument[s.maximizedNotesWin].defaultView.copyNotes2Notebox(Fn[s.link.firstWin].Notes, Fn[s.link.firstWin].UserNotes);
+    FrameDocument[s.maximizedNotesWin].defaultView.copyNotes2Notebox(TextCache[s.link.firstWin].fn.Notes, TextCache[s.link.firstWin].fn.UserNotes);
   }
+  if (s.win.modType==BIBLE) {
+    for (i=s.link.leftWin; i<s.link.leftWin+s.link.numWins; i++) {
+      hilightUserNotes(TextCache[s.link.firstWin].fn.UserNotes, i);
+    }
+  }
+  if (scrollTypeFlag==SCROLLTYPEEND && !isPinned && firstVerseInLink) Bible.setBiblesReference(s.win.modName, firstVerseInLink[1]);
 //for (var par in s) {jsdump("s." + par + ":" + s[par]); for (var par2 in s[par]) {if (par != "navlinks") jsdump("\ts." + par + "." + par2 + ":" + s[par][par2]);}}
 }
 
-function getChapterWithHeading(s, fn, chapOffset) {
+function needToReadText(s, textCache) {
+  if (!UseTextCache) return true;
+  UseTextCache = false;
+  if (!textCache || !textCache.text || !textCache.text.length || textCache.text.length > MAXTEXTCACHE) return true;
+  var needCh = Bible.getChapterNumber(s.win.modName);
+  var haveBeg = textCache.initChapter - textCache.numPrependedChaps;
+  var haveEnd = textCache.initChapter + textCache.numAppendedChaps;
+  return !(needCh >= haveBeg && needCh <= haveEnd);
+}
+
+function initTextCache(s, textCache) {
+  for (var i=0; i<s.link.numWins; i++) {
+    TextCache[s.link.leftWin+i].fn.CrossRefs = "";
+    TextCache[s.link.leftWin+i].fn.Footnotes = "";
+    TextCache[s.link.leftWin+i].fn.Notes = "";
+    TextCache[s.link.leftWin+i].fn.UserNotes = "";
+  }
+
+  textCache.ibeg = null;
+  textCache.iend = null;
+  textCache.initChapter = Bible.getChapterNumber(s.win.modName);
+  textCache.numAppendedChaps = 0;
+  textCache.doneAppendedChaps = false;
+  textCache.numPrependedChaps = 0;
+  textCache.donePrependedChaps = false;
+  textCache.text = getBodyHTML(s, textCache, 0);
+}
+    
+function getBodyHTML(s, p, chapOffset) {
+//jsdump("getBodyHTML:" + s.win.number + ", " + chapOffset);
   var chapterText;
   var showHeader = (Bible.getGlobalOption("Headings")=="On");
-  if (!chapOffset) chapOffset = 0;
   if (!ScriptBoxIsEmpty[s.link.firstWin]) {
     if (prefs.getBoolPref("ShowOriginal" + s.win.number) && s.win.modType==BIBLE) {
       if (chapOffset && chapOffset != 0) return null; // chapter offsets for interlinear not yet supported
@@ -2951,22 +3091,14 @@ function getChapterWithHeading(s, fn, chapOffset) {
       Bible.setGlobalOption("Strong's Numbers", prefs.getCharPref("Strong's Numbers"));
       Bible.setGlobalOption("Morphological Tags", prefs.getCharPref("Morphological Tags"));
     }
-    else {
-      chapterText = FrameDocument[s.link.firstWin].defaultView.getChapterWithNotes(fn, chapOffset);
-      if (s.win.modType==BIBLE) {
-        for (i=s.link.leftWin; i<s.link.leftWin+s.link.numWins; i++) {
-          hilightUserNotes(fn.UserNotes, i);
-        }
-      }
-    }
+    else chapterText = FrameDocument[s.link.firstWin].defaultView.getChapterWithNotes(p.fn, p.initChapter, chapOffset);
   }
   
   if (showHeader && chapterText) {
-    if (!chapOffset) chapOffset = 0;
     var showBook = s.isPinned;
     showBook |=  ((s.scrollTypeFlag==SCROLLTYPENONE || s.scrollTypeFlag==SCROLLTYPEBEG || Bible.getChapterNumber(s.win.modName)==1) && chapOffset==0);
     if (chapterText)
-      chapterText = FrameDocument[s.link.firstWin].defaultView.getScriptBoxHeader(s.win.modName, showBook, s.showIntroduction, prefs.getBoolPref("ShowOriginal" + s.win.number), chapOffset) + chapterText;
+      chapterText = FrameDocument[s.link.firstWin].defaultView.getScriptBoxHeader(Bible.getBookName(), p.initChapter+chapOffset, s.win.modName, showBook, s.showIntroduction, prefs.getBoolPref("ShowOriginal" + s.win.number)) + chapterText;
   }
   return chapterText;
 }
@@ -3006,6 +3138,8 @@ function text2LinkedWindows(p, s, fn) {
   var verse = Bible.getVerseNumber(s.win.modName);
   var lastverse = Bible.getLastVerseNumber(s.win.modName);
   var wstep = (s.win.isRTL ? -1:1);
+  p.imin = -1;
+  p.imax = -1;
   for (var i=s.link.firstWin; i!=s.link.lastWin+wstep; i += wstep) {
     FrameDocument[i].defaultView.NoteBoxEmpty = true;
     FrameDocument[i].defaultView.NoteBoxElement.innerHTML = "";
@@ -3014,9 +3148,9 @@ function text2LinkedWindows(p, s, fn) {
   }
 
   // center scroll...
-  if (s.scrollTypeFlag == SCROLLTYPECENTER) {
+  if (s.scrollTypeFlag == SCROLLTYPECENTER || s.scrollTypeFlag == SCROLLTYPECENTERALWAYS) {
 //jsdump("Center scrolling to verse " + verse);
-    p.iend = getIndexOfVerse(p.text, chapter, verse, CENTER);
+    p.iend = getIndexOfVerse(p, chapter, verse, CENTER);
     if (s.link.numWins > 2) {
       // three page link...
       fitPage(2, CENTER, p, s, fn, false, false);
@@ -3038,7 +3172,7 @@ function text2LinkedWindows(p, s, fn) {
   // end scroll...
   else if (s.scrollTypeFlag==SCROLLTYPEEND) {
 //jsdump("End scrolling to verse " + verse);
-    p.ibeg = getIndexOfVerse(p.text, chapter, lastverse, PREPEND);
+    p.ibeg = getIndexOfVerse(p, chapter, lastverse, PREPEND);
     var check = true;
     for (i=s.link.lastWin; i!=s.link.firstWin-wstep; i-=wstep) {
       if (!fitPage(i, PREPEND, p, s, fn, (i==s.link.firstWin ? s.navlinks:false), (i==s.link.lastWin ? s.navlinks:false))) {
@@ -3051,7 +3185,7 @@ function text2LinkedWindows(p, s, fn) {
         if (FrameDocument[s.link.lastWin].defaultView.ScriptBoxTextElement.scrollHeight > FrameDocument[s.link.lastWin].defaultView.ScriptBoxTextElement.clientHeight) {
 //jsdump("Restarting end scroll, this time with note box on...");
           i = s.link.lastWin + wstep;
-          p.ibeg = getIndexOfVerse(p.text, chapter, verse, PREPEND);
+          p.ibeg = getIndexOfVerse(p, chapter, verse, PREPEND);
           p.imax = -1;
           p.imin = -1;
         }
@@ -3065,7 +3199,7 @@ function text2LinkedWindows(p, s, fn) {
     else firstVerse = 1;
     if (!firstVerse || firstVerse < 1) firstVerse = 1;
 //jsdump("Beg scrolling to verse " + firstVerse);
-    p.iend = getIndexOfVerse(p.text, chapter, firstVerse, APPEND);
+    p.iend = getIndexOfVerse(p, chapter, firstVerse, APPEND);
     beginningScroll(p.iend, p, s, fn);
   }
 }
@@ -3080,17 +3214,17 @@ function beginningScroll(iend, p, s, fn) {
   }
 }
 
-function getIndexOfVerse(text, chapNum, verseNum, type) {
+function getIndexOfVerse(p, chapNum, verseNum, type) {
   if (type == PREPEND) verseNum++;
   
   var vre = new RegExp("\"vs\\.[^\\.]*\\." + chapNum + "\\." + verseNum +"\"");
-  var i = text.search(vre);
+  var i = p.text.search(vre);
   
   if (i == -1) {
     // verse may just be missing, so find applicable nearest verse or end point.
     var vb, va;
     var verses = new RegExp("\"vs\\.[^\\.]*\\." + chapNum + "\\.(\\d+)\"", "g");
-    verses = text.match(verses);
+    verses = p.text.match(verses);
     if (!verses) i = 0;
     else {
       for (var x=0; x<verses.length; x++) {
@@ -3107,7 +3241,7 @@ function getIndexOfVerse(text, chapNum, verseNum, type) {
 
       case PREPEND:
         v = va;
-        endPoint = text.length-1;
+        endPoint = p.text.length-1;
         break;
 
       case APPEND:
@@ -3117,18 +3251,18 @@ function getIndexOfVerse(text, chapNum, verseNum, type) {
       }
       if (v) {
         vre = new RegExp("\"vs\\.[^\\.]*\\." + chapNum + "\\." + v +"\"");
-        i = text.search(vre);
+        i = p.text.search(vre);
       }
       else i = endPoint;
     }
   }
   
-  // include any title and chapter headings with the verse
-  if (i != 0 && i != text.length) {
-    i = text.lastIndexOf("<", i);
-    var prevchap = text.lastIndexOf(NewChapter, i-1);
-    var prevtitle = text.lastIndexOf(Titles, i-1);
-    var preverse = text.lastIndexOf(Vtext1, i-1);
+  // include any title and chapter headings before the verse
+  if (i != 0 && i != p.text.length) {
+    i = p.text.lastIndexOf("<", i);
+    var prevchap = p.text.lastIndexOf(NewChapter, i-1);
+    var prevtitle = p.text.lastIndexOf(Titles, i-1);
+    var preverse = p.text.lastIndexOf(Vtext1, i-1);
     if (prevtitle > preverse) i = prevtitle;
     if (prevchap > preverse) i = prevchap;
   }
@@ -3163,7 +3297,7 @@ function fitPage(fnum, type, p, s, fn, header, footer) {
     sw = true;
     break;
   }
-
+  
   do {
     if (sw) {
       itest = appendVerse(f, p, s, fn, header, footer);
@@ -3188,32 +3322,39 @@ function fitPage(fnum, type, p, s, fn, header, footer) {
   return true;
 }
 
-// Audio icons sometimes do not render fast enough, and this causes scroll bars.
-// FUDGE allows some room so scroll bars do not appear in these cases
-const FUDGE = "<br><br>"; 
 function appendVerse(f, p, s, fn, header, footer, intend, appendExtraVerse) {
   intend = (intend ? intend:p.iend); // allow us to use interim endpoint without changing p.iend
   // Find next closest verse or title start point. If we're starting at a title, append an extra verse.
   var itest = p.text.indexOf(Vtext1, intend+1);
   if (appendExtraVerse === undefined) {
     var title = p.text.indexOf(Titles, intend-1);
+    var title2 = p.text.indexOf(NewChapter, intend-1);
+    if (title2 != -1 && (title == -1 || title2 < title)) title = title2;
     if (title != -1 && title == intend) return appendVerse(f, p, s, fn, header, footer, title, true);
     if (title != -1 && title < itest) itest = title;
   }
   // append more chapter text if we couldn't progress...
   if (itest == -1) {
-    p.numAppendedChaps++;
-    p.text += (Bible.getGlobalOption("Headings")=="On" ? FrameDocument[1].defaultView.HTMLbr:FrameDocument[1].defaultView.HTMLbr0);
-    var newtext = getChapterWithHeading(s, fn, p.numAppendedChaps);
-    if (newtext) p.text += newtext;
-    itest = p.text.indexOf(Vtext1, intend+1);
-    if (itest != -1) itest = p.text.indexOf(Vtext1, itest+1); // include first verse text of new chapter
-    if (itest == -1) itest = p.text.length;
+    if (!p.doneAppendedChaps) { // don't even try if we've already done so
+      p.numAppendedChaps++;
+      var newtext = getBodyHTML(s, p, p.numAppendedChaps);
+      if (newtext) {
+        p.text += (Bible.getGlobalOption("Headings")=="On" ? FrameDocument[1].defaultView.HTMLbr:FrameDocument[1].defaultView.HTMLbr0);
+        itest = p.text.length;
+        p.text += newtext;
+      }
+      else {
+        p.numAppendedChaps--;
+        p.doneAppendedChaps = true;
+        itest = p.text.length;
+      }
+    }
+    else itest = p.text.length;
   }
   if (appendExtraVerse) return appendVerse(f, p, s, fn, header, footer, itest, false);
 
   checkNoteBox(p.imin, itest, p, s, fn);
-  f.innerHTML = header + p.text.substring(p.ibeg, itest) + footer + FUDGE;
+  f.innerHTML = header + p.text.substring(p.ibeg, itest) + footer;
   
   return itest;
 }
@@ -3222,17 +3363,23 @@ function prependVerse(f, p, s, fn, header, footer) {
   var itest = (p.ibeg > 0 ? p.text.lastIndexOf(Vtext1, p.ibeg-1):-1);
 
   if (itest == -1) {
-    p.numPrependedChaps--;
-    var newtext = getChapterWithHeading(s, fn, p.numPrependedChaps);
-    if (newtext) {
-      newtext = newtext + (Bible.getGlobalOption("Headings")=="On" ? FrameDocument[1].defaultView.HTMLbr:FrameDocument[1].defaultView.HTMLbr0);
-      p.text =  newtext + p.text;
-      p.ibeg = p.ibeg + newtext.length;
-      p.iend = p.iend + newtext.length;
-      p.imin = p.imin + newtext.length;
-      p.imax = p.imax + newtext.length;
+    if (!p.donePrependedChaps) { // don't even try if we've already done so
+      p.numPrependedChaps--;
+      var newtext = getBodyHTML(s, p, p.numPrependedChaps);
+      if (newtext) {
+        newtext = newtext + (Bible.getGlobalOption("Headings")=="On" ? FrameDocument[1].defaultView.HTMLbr:FrameDocument[1].defaultView.HTMLbr0);
+        p.text =  newtext + p.text;
+        p.ibeg = p.ibeg + newtext.length;
+        p.iend = p.iend + newtext.length;
+        p.imin = p.imin + newtext.length;
+        p.imax = p.imax + newtext.length;
+      }
+      else {
+        p.numPrependedChaps++;
+        p.donePrependedChaps = true;
+      }
+      itest = p.text.lastIndexOf(Vtext1, p.ibeg-1);
     }
-    itest = p.text.lastIndexOf(Vtext1, p.ibeg-1);
     if (itest == -1) itest = 0;
   }
   
@@ -3243,7 +3390,7 @@ function prependVerse(f, p, s, fn, header, footer) {
   if (prevtitle > preverse) itest = prevtitle;
   if (prevchap > preverse) itest = prevchap;
   checkNoteBox(itest, p.imax, p, s, fn);
-  f.innerHTML = header + p.text.substring(itest, p.iend) + footer + FUDGE;
+  f.innerHTML = header + p.text.substring(itest, p.iend) + footer;
   
   return itest;
 }
@@ -3453,14 +3600,11 @@ function updateTabLabelsAndStyles(initializing) {
   
   // minimize noteboxes which aren't being shown so we aren't surprised by them later.
   // only last window in a link needs the notebox maximize button
-  var f = (Link.isRTL ? 1:3);
-  var t = (Link.isRTL ? 3:1);
-  var button = false;
-  for (w=f; w<=t; w++) {
-    var hidebutton = !Link.win[w] || button;
+  for (w=1; w<=3; w++) {
+    var hidebutton = !Link.win[w];
+    hidebutton |= (Link.win[w] && !Link.lastWin);
     FrameDocument[w].getElementById("nbsizer").style.visibility = (hidebutton ? "hidden":"visible");
     if (hidebutton && !initializing) setNoteBoxSizer(w, false);
-    if (!hidebutton) button = true;
   }
   
   for (w=1; w<=3; w++) {
@@ -3878,11 +4022,14 @@ function isLinkedToRight(w) {
 
 //If only one window, don't show pin icon (unless the window is already pinned!).
 //Only Bibles and commentaries (because they track global book/chapter/verse)
-//need a pin icon. If ScriptBoxIsEmpty also don't show a pin icon
+//and general books need a pin icon. If ScriptBoxIsEmpty also don't show a pin icon
 function updatePinVisibility() {
   var needsPin = [null];
   for (var w=1; w<=3; w++) {
-    needsPin.push(FrameDocument[w].defaultView.Pin.isPinned || (!ScriptBoxIsEmpty[w] && (Win[w].modType==BIBLE || Win[w].modType==COMMENTARY)));
+    var needs = FrameDocument[w].defaultView.Pin.isPinned;
+    var isPinableType = (Win[w].modType==BIBLE || Win[w].modType==COMMENTARY || Win[w].modType==GENBOOK);
+    needs |= (!ScriptBoxIsEmpty[w] && prefs.getIntPref("NumDisplayedWindows") > 1 && isPinableType);
+    needsPin.push(needs);
   }
   for (w=1; w<=3; w++) {
     FrameDocument[w].defaultView.Pin.elem.style.visibility = (needsPin[w] ? "visible":"hidden");
@@ -4112,7 +4259,6 @@ function saveHTML () {
     }
     catch (er) {}
   
-    //file = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("UChrm", Components.interfaces.nsIFile);
     var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
     file.initWithPath("C:\\");
     file.append("ScriptBox" + i + ".txt");

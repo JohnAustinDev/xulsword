@@ -262,10 +262,11 @@ void SWMgr::init() {
 SWBuf SWMgr::getHomeDir() {
 
 	// figure out 'home' directory for app data
-	SWBuf homeDir = getenv("HOME");
+	SWBuf homeDir;
+  sw_getenv("HOME", &homeDir);
 	if (!homeDir.length()) {
 		// silly windows
-		homeDir = getenv("APPDATA");
+		sw_getenv("APPDATA", &homeDir);
 	}
 	if (homeDir.length()) {
 		if ((homeDir[homeDir.length()-1] != '\\') && (homeDir[homeDir.length()-1] != '/')) {
@@ -448,7 +449,8 @@ void SWMgr::findConfig(char *configType, char **prefixPath, char **configPath, s
 			// check environment variable SWORD_PATH
 			SWLog::getSystemLog()->logDebug("Checking $SWORD_PATH...");
 
-			SWBuf envsworddir = getenv("SWORD_PATH");
+			SWBuf envsworddir;
+      sw_getenv("SWORD_PATH", &envsworddir);
 			if (envsworddir.length()) {
 				
 				SWLog::getSystemLog()->logDebug("found (%s).", envsworddir.c_str());
@@ -579,7 +581,8 @@ void SWMgr::findConfig(char *configType, char **prefixPath, char **configPath, s
 
 	SWLog::getSystemLog()->logDebug("Checking $ALLUSERSPROFILE/Application Data/sword/...");
 
-	SWBuf envallusersdir  = getenv("ALLUSERSPROFILE");
+	SWBuf envallusersdir;
+  sw_getenv("ALLUSERSPROFILE", &envallusersdir);
 	if (envallusersdir.length()) {
 		SWLog::getSystemLog()->logDebug("found (%s).", envallusersdir.c_str());
 		path = envallusersdir;
@@ -669,14 +672,14 @@ void SWMgr::loadConfigDir(const char *ipath)
 	struct dirent *ent;
 	SWBuf newmodfile;
  
-	if ((dir = opendir(ipath))) {
-		rewinddir(dir);
-		while ((ent = readdir(dir))) {
+	if ((dir = sw_opendir(ipath))) {
+		sw_rewinddir(dir);
+		while ((ent = sw_readdir(dir))) {
 			//check whether it ends with .conf, if it doesn't skip it!
 			if (!ent->d_name || (strlen(ent->d_name) <= 5) || strncmp(".conf", (ent->d_name + strlen(ent->d_name) - 5), 5 )) {
 				continue;
 			}
-			
+
 			newmodfile = ipath;
 			if ((ipath[strlen(ipath)-1] != '\\') && (ipath[strlen(ipath)-1] != '/'))
 				newmodfile += "/";
@@ -687,7 +690,7 @@ void SWMgr::loadConfigDir(const char *ipath)
 			}
 			else	config = myconfig = new SWConfig(newmodfile.c_str());
 		}
-		closedir(dir);
+		sw_closedir(dir);
 		
 		if (!config) {	// if no .conf file exist yet, create a default
 			newmodfile = ipath;
@@ -1253,9 +1256,9 @@ void SWMgr::InstallScan(const char *dirname)
    SWBuf targetName;
  
 	if (FileMgr::existsDir(dirname)) {
-		if ((dir = opendir(dirname))) {
-			rewinddir(dir);
-			while ((ent = readdir(dir))) {
+		if ((dir = sw_opendir(dirname))) {
+			sw_rewinddir(dir);
+			while ((ent = sw_readdir(dir))) {
 				if ((strcmp(ent->d_name, ".")) && (strcmp(ent->d_name, ".."))) {
 					newmodfile = dirname;
 					if ((dirname[strlen(dirname)-1] != '\\') && (dirname[strlen(dirname)-1] != '/'))
@@ -1291,7 +1294,7 @@ void SWMgr::InstallScan(const char *dirname)
 			}
 			if (conffd)
 				FileMgr::getSystemFileMgr()->close(conffd);
-			closedir(dir);
+			sw_closedir(dir);
 		}
 	}
 }

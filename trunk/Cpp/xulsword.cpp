@@ -345,31 +345,39 @@ xulsword::xulsword()
 {
 //printf("INITIALIZING XULSWORD OBJECT\n");
   /* member initializers and constructor code */
-  
   sprintf(DefaultVersificationSystem, "KJV");
   
-  // get our application directory and pass to SWORD if successful
+  // get our "resources" directory and pass to SWORD if successful
+  MyManager = 0;
   nsresult rv;
   nsCOMPtr<nsIFile> mdir;
   nsCOMPtr<nsIServiceManager> svcMgr;
   rv = NS_GetServiceManager(getter_AddRefs(svcMgr));
   if (!NS_FAILED(rv)) {
-    nsCOMPtr<nsIProperties> directory;
+    nsCOMPtr<nsIProperties> directoryService;
     rv = svcMgr->GetServiceByContractID("@mozilla.org/file/directory_service;1",
                                         NS_GET_IID(nsIProperties),
-                                        getter_AddRefs(directory));
+                                        getter_AddRefs(directoryService));
     if (!NS_FAILED(rv)) {
-      rv = directory->Get(NS_OS_CURRENT_PROCESS_DIR, NS_GET_IID(nsIFile), (void **)&mdir);
+      rv = directoryService->Get("ProfD", NS_GET_IID(nsIFile), getter_AddRefs(mdir));
     }
   }
   if (!NS_FAILED(rv) && mdir) {
     nsEmbedString path;
     mdir->GetPath(path);
-    MyConfig = new SWConfig();
-    MyConfig->Sections["Install"]["DataPath"] = NS_ConvertUTF16toUTF8(path).get();
-    MyManager = new SWMgr(0, MyConfig, true, new MarkupFilterMgr(FMT_HTMLXUL, ENC_UTF8));
+    // change leafName to "resources"
+    SWBuf res = NS_ConvertUTF16toUTF8(path).get();
+    int i = res.length()-1;
+    char c = res.charAt(i);
+    while (i > 0 && c != '\\') c = res.charAt(--i);
+    if (i>0){
+      res -= (res.length()-i-1);
+      res.append("resources");
+      MyManager = new SWMgr(res.c_str(), true, new MarkupFilterMgr(FMT_HTMLXUL, ENC_UTF8), false);
+    }
   }
-  else {MyManager = new SWMgr(new MarkupFilterMgr(FMT_HTMLXUL, ENC_UTF8));}
+
+  if (!MyManager) {MyManager = new SWMgr(new MarkupFilterMgr(FMT_HTMLXUL, ENC_UTF8), false);}
 }
 
 /********************************************************************
@@ -379,9 +387,9 @@ xulsword::~xulsword()
 {
   /* destructor code */
 
-  if (MyConfig) delete MyConfig;
   delete MyManager;
 }
+
 
 /********************************************************************
 SetBiblesReference
@@ -1655,14 +1663,14 @@ NS_IMETHODIMP xulsword::SetCipherKey(const nsACString & Mod, const nsAString & C
 
 
 /********************************************************************
-GetModuleList
+ModuleManager
 *********************************************************************/
-NS_IMETHODIMP xulsword::GetModuleList(nsAString & _retval)
+NS_IMETHODIMP xulsword::GetModuleList(nsAString & _retval NS_OUTPARAM)
 {
 	std::string tr;
 	nsEmbedString trx;
 	SWModule * module;
-  
+
   bool first = true;
 	for (modIterator = MyManager->Modules.begin(); modIterator != MyManager->Modules.end(); modIterator++) {
 		module = (*modIterator).second;
@@ -1672,14 +1680,14 @@ NS_IMETHODIMP xulsword::GetModuleList(nsAString & _retval)
 		tr.append(module->Type());
 		first = false;
 	}
-	
+
 	if (!strcmp(tr.c_str(), "")) {tr.assign("No Modules");}
 
   nsEmbedCString modlist;
   nsEmbedString retval;
   modlist.Assign(tr.c_str());
   xulStringToUTF16(&modlist, &retval, ENC_UTF8, false);
-	
+
   _retval = retval;
 	return NS_OK;
 }
@@ -1816,7 +1824,7 @@ NSGETMODULE_ENTRY_POINT(nsxulswordModule)
             nsIFile* location,                                                
             nsIModule** result)                                               
 {
-  SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
+  SWLog::getSystemLog()->setLogLevel(0); // set SWORD log reporting... 5 is all stuff
   //Initialize static variables only once
 	xulsword::ChapterW.Assign(NS_ConvertUTF8toUTF16("Matt 1"));
   xulsword::VerseW = 1;		

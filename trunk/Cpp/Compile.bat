@@ -1,5 +1,5 @@
 @ECHO USAGE: Compile.bat [fileName] [NOSECURITY or DUMPCODES] (NOTE: fileName is not used)
-
+if not exist "%MK%\Cpp\Release" mkdir "%MK%\Cpp\Release"
 set CPPD=Cpp
 
 set cFlags=
@@ -43,7 +43,7 @@ Set cFiles=%SECURITYCPP%^
  ".\osisfootnotesxul.cpp"^
  ".\swordMK\src\utilfuns\win32\dirent.cpp"
 
-Set lFlags=libswordll.lib xpcom.lib xpcomglue_s.lib nspr4.lib crclib.lib /nologo /dll /incremental:no /manifestfile:"xulsword\xulsword.dll.manifest" /implib:"xulsword\xulsword.lib" /pdb:"xulsword/xulsword.pdb" /out:".\Release\xulsword.dll" /libpath:".\crclib\Release" /libpath:".\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /libpath:".\swordMK\lib\Release" 
+Set lFlags=libswordll.lib clucenedll.lib xpcom.lib xpcomglue_s.lib nspr4.lib crclib.lib /nologo /dll /incremental:no /manifestfile:"xulsword\xulsword.dll.manifest" /implib:"xulsword\xulsword.lib" /pdb:"xulsword/xulsword.pdb" /out:".\Release\xulsword.dll" /libpath:".\crclib\Release" /libpath:".\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /libpath:".\swordMK\lib\Release" /libpath:".\cluceneMK\lib\Release"
 Set lFiles=%SECURITYOBJ%^
  ".\xulsword\xulsword.obj"^
  ".\xulsword\osishtmlxul.obj"^

@@ -30,8 +30,7 @@ var Progvers = Components.classes["@mozilla.org/xre/app-info;1"].getService(Comp
 function initLocales() {
   // Find locales and test their versions
   var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
-  var chromeDirectory = Components.classes["@mozilla.org/file/directory_service;1"].
-      getService(Components.interfaces.nsIProperties).get("AChrom", Components.interfaces.nsIFile);
+  var chromeDirectory = getSpecialDirectory("AChrom");
   var files = chromeDirectory.directoryEntries;
   var localeListString="";
   var sep = "";
@@ -47,7 +46,7 @@ function initLocales() {
     localeListString += sep + localeFromFileName[1];
     sep = ";";
   }
-  
+
   if (!localeListString) {
     rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
     jsdump("No locales found.\n");
@@ -108,6 +107,8 @@ HaveValidLocale = initLocales();
 //  XXXXX-v2.12: 2 Tab label from a loaded locale which lists this module as its default
 //  1 Tab label from .conf file's TabLabel entry
 //  2 module name
+var UserConfFiles = {};
+var CommConfFiles = {};
 var LanguageStudyModules = {};
 function createTabs() {
   if (!Bible) return;
@@ -204,6 +205,11 @@ function createTabs() {
    // Sort tabs...
   moduleInfo = moduleInfo.sort(tabOrder);
  
+  var commonDir = getSpecialDirectory("xsModsCommon");
+  getConfFiles(getSpecialDirectory("xsModsUser"), UserConfFiles);
+  getConfFiles(commonDir, CommConfFiles);
+  commonDir.append(MODSD);
+
   // Create global arrays
   for (m=0; m<moduleInfo.length; m++) {
     info = moduleInfo[m].split(";");
@@ -212,6 +218,11 @@ function createTabs() {
     tab.label = info[2];
     tab.modName = info[1];
     tab.modType = info[0];
+    tab.confModUnique = true;
+    tab.conf = CommConfFiles[info[1]]; // Sword looks at common directory first...
+    if (!tab.conf) tab.conf = UserConfFiles[info[1]];
+    else if (UserConfFiles[info[1]]) tab.confModUnique = false;
+    tab.isCommDir = (tab.conf && tab.conf.path.substring(0, tab.conf.path.lastIndexOf("\\")) == commonDir.path);
     tab.tabType = getShortTypeFromLong(tab.modType);
     try {var isOT = (tab.label==SBundle.getString("ORIGLabelOT"));}
     catch (er) {isOT = false;}
@@ -281,6 +292,22 @@ function tabOrder(a,b) {
   }
   else return (moduleTypeOrder[infoA[0]] > moduleTypeOrder[infoB[0]] ? 1:-1);
 }
+
+function getConfFiles(dir, aObj) {
+  var aDir = dir.clone();
+  aDir.append(MODSD);
+  if (!aDir.exists()) return;
+  var re = new RegExp(CONF_EXT + "$");
+  var files = aDir.directoryEntries;
+  while (files.hasMoreElements()) {
+    var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
+    if (file.leafName.match(re)) {
+      var mname = readParamFromConf(file, "ModuleName");
+      if (mname) aObj[mname] = file;
+    }
+  }
+}
+  
 
 /************************************************************************
  * Initialize Locale Book Names

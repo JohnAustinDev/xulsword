@@ -81,27 +81,28 @@
 
 <!-- HOT KEY DEFINITIONS !-->
 <keyset>
-  <key keycode="VK_F1"                         oncommand="openLanguageMenu();"/>
-  <key keycode="VK_F7"                         command="cmd_xs_nextVerse"/>
-  <key keycode="VK_F8"                         command="cmd_xs_nextChapter"/>
-  <key keycode="VK_F9"                         command="cmd_xs_nextVerse"/>
-  <key keycode="VK_F7"     modifiers="control" command="cmd_xs_previousVerse"/>
-  <key keycode="VK_F8"     modifiers="control" command="cmd_xs_previousChapter"/>
-  <key keycode="VK_F9"     modifiers="control" command="cmd_xs_nextVerse"/>
-  <key keycode="VK_DOWN"                       command="cmd_xs_nextVerse"/>
-  <key keycode="VK_DOWN"   modifiers="alt"     command="cmd_xs_nextChapter"/>
-  <key keycode="VK_DOWN"   modifiers="alt shift" command="cmd_xs_nextBook"/>
-  <key keycode="VK_UP"                         command="cmd_xs_previousVerse"/>
-  <key keycode="VK_UP"     modifiers="alt"     command="cmd_xs_previousChapter"/>
-  <key keycode="VK_UP"     modifiers="alt shift" command="cmd_xs_previousBook"/>
-  <key keycode="VK_LEFT"                       command="cmd_xs_back"/>
-  <key keycode="VK_RIGHT"                      command="cmd_xs_forward"/>
+  <key keycode="VK_F7"                         oncommand="handleNextPrev('prev.verse.key.VK_F7');"/>
+  <key keycode="VK_F8"                         oncommand="handleNextPrev('next.chapter.key.VK_F8');"/>
+  <key keycode="VK_F9"                         oncommand="handleNextPrev('next.verse.key.VK_F9');"/>
+  <key keycode="VK_F7"   modifiers="control"   oncommand="handleNextPrev('prev.verse.key.VK_F7');"/>
+  <key keycode="VK_F8"   modifiers="control"   oncommand="handleNextPrev('prev.chapter.key.VK_F8');"/>
+  <key keycode="VK_F9"   modifiers="control"   oncommand="handleNextPrev('next.verse.key.VK_F9');"/>
+  <key keycode="VK_DOWN"                       oncommand="handleNextPrev('next.verse.key.VK_DOWN');"/>
+  <key keycode="VK_DOWN" modifiers="alt"       oncommand="handleNextPrev('next.chapter.key.VK_DOWN.alt');"/>
+  <key keycode="VK_DOWN" modifiers="alt shift" oncommand="handleNextPrev('next.book.key.VK_DOWN.alt-shift');"/>
+  <key keycode="VK_UP"                         oncommand="handleNextPrev('prev.verse.key.VK_UP');"/>
+  <key keycode="VK_UP"   modifiers="alt"       oncommand="handleNextPrev('prev.chapter.key.VK_UP.alt');"/>
+  <key keycode="VK_UP"   modifiers="alt shift" oncommand="handleNextPrev('prev.book.key.VK_UP.alt-shift');"/>
+  <key keycode="VK_LEFT"   command="cmd_xs_back"/>
+  <key keycode="VK_RIGHT"  command="cmd_xs_forward"/>
+  <key keycode="VK_F1"     oncommand="openLanguageMenu();"/>
   <key id="addBM"         key="&addCurPageAsCmd.commandkey;" modifiers="accel" command="cmd_xs_newBookmark"/>
   <key id="addBMN"        key="&addCurPageAsCmd.commandkey;" modifiers="control shift" command="cmd_xs_newUserNote"/>
   <key id="manBookmarkKb" key="&manBookmarksCmd.accesskey;" modifiers="accel" command="cmd_xs_openManager"/>
   <key id="printKb"       key="&printCmd.accesskey;"        modifiers="accel" command="cmd_print"/>
   <key id="copyPassageKb" key="&menu.copypassage.sc;"       modifiers="accel" oncommand="copyPassageDialog();"/>
   <key keycode="VK_DOWN"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').select();"/>
+  <key key="B"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').select();"/> <!-- Like Paratext !-->
   <key id="openSearchDialog" key="" modifiers="accel" oncommand="openSearchDialog();"/> <!-- key set in script to allow backward compatibility to old UIs !-->
 </keyset>
 
@@ -133,18 +134,18 @@
 <commandset id="editMenuCommands"/>
 
 <commandset id="xulswordCommandSet">
-  <command id="cmd_xs_toggleHeadings"            oncommand="goDoCommand('cmd_xs_toggleHeadings');"/>
-  <command id="cmd_xs_toggleFootnotes"           oncommand="goDoCommand('cmd_xs_toggleFootnotes');"/>
-  <command id="cmd_xs_toggleCrossRefs"           oncommand="goDoCommand('cmd_xs_toggleCrossRefs');"/>
-  <command id="cmd_xs_toggleDictionary"          oncommand="goDoCommand('cmd_xs_toggleDictionary');"/>
-  <command id="cmd_xs_toggleStrongsTags"         oncommand="goDoCommand('cmd_xs_toggleStrongsTags'); goDoCommand('cmd_xs_toggleMorphTags');"/>
-  <command id="cmd_xs_toggleVerseNums"           oncommand="goDoCommand('cmd_xs_toggleVerseNums');"/>
-  <command id="cmd_xs_toggleUserNotes"           oncommand="goDoCommand('cmd_xs_toggleUserNotes');"/>
-  <command id="cmd_xs_toggleRedWords"            oncommand="goDoCommand('cmd_xs_toggleRedWords');"/>
-  <command id="cmd_xs_toggleHebrewCantillation"  oncommand="goDoCommand('cmd_xs_toggleHebrewCantillation');"/>
-  <command id="cmd_xs_toggleHebrewVowelPoints"   oncommand="goDoCommand('cmd_xs_toggleHebrewVowelPoints');"/>
-  <command id="cmd_xs_allTogglesOn"              oncommand="goDoCommand('cmd_xs_allTogglesOn');"/>
-  <command id="cmd_xs_allTogglesOff"             oncommand="goDoCommand('cmd_xs_allTogglesOff');"/>
+  <command id="cmd_xs_toggleHeadings"            oncommand="holdPopupAndDo('cmd_xs_toggleHeadings');"/>
+  <command id="cmd_xs_toggleFootnotes"           oncommand="holdPopupAndDo('cmd_xs_toggleFootnotes');"/>
+  <command id="cmd_xs_toggleCrossRefs"           oncommand="holdPopupAndDo('cmd_xs_toggleCrossRefs');"/>
+  <command id="cmd_xs_toggleDictionary"          oncommand="holdPopupAndDo('cmd_xs_toggleDictionary');"/>
+  <command id="cmd_xs_toggleStrongsTags"         oncommand="holdPopupAndDo('cmd_xs_toggleStrongsTags');"/>
+  <command id="cmd_xs_toggleVerseNums"           oncommand="holdPopupAndDo('cmd_xs_toggleVerseNums');"/>
+  <command id="cmd_xs_toggleUserNotes"           oncommand="holdPopupAndDo('cmd_xs_toggleUserNotes');"/>
+  <command id="cmd_xs_toggleRedWords"            oncommand="holdPopupAndDo('cmd_xs_toggleRedWords');"/>
+  <command id="cmd_xs_toggleHebrewCantillation"  oncommand="holdPopupAndDo('cmd_xs_toggleHebrewCantillation');"/>
+  <command id="cmd_xs_toggleHebrewVowelPoints"   oncommand="holdPopupAndDo('cmd_xs_toggleHebrewVowelPoints');"/>
+  <command id="cmd_xs_allTogglesOn"              oncommand="holdPopupAndDo('cmd_xs_allTogglesOn');"/>
+  <command id="cmd_xs_allTogglesOff"             oncommand="holdPopupAndDo('cmd_xs_allTogglesOff');"/>
   <command id="cmd_xs_search"                    oncommand="goDoCommand('cmd_xs_search');"/>
   <command id="cmd_xs_searchForSelection"        oncommand="goDoCommand('cmd_xs_searchForSelection');"/>
   <command id="cmd_xs_searchFromTextBox"         oncommand="goDoCommand('cmd_xs_searchFromTextBox');"/>
@@ -153,12 +154,6 @@
   <command id="cmd_xs_selectVerse"               oncommand="goDoCommand('cmd_xs_selectVerse');"/>
   <command id="cmd_xs_back"                      oncommand="goDoCommand('cmd_xs_back');"/>
   <command id="cmd_xs_forward"                   oncommand="goDoCommand('cmd_xs_forward');"/>
-  <command id="cmd_xs_nextChapter"               oncommand="goDoCommand('cmd_xs_nextChapter');"/>
-  <command id="cmd_xs_previousChapter"           oncommand="goDoCommand('cmd_xs_previousChapter');"/>
-  <command id="cmd_xs_nextBook"                  oncommand="goDoCommand('cmd_xs_nextBook');"/>
-  <command id="cmd_xs_previousBook"              oncommand="goDoCommand('cmd_xs_previousBook');"/>
-  <command id="cmd_xs_nextVerse"                 oncommand="goDoCommand('cmd_xs_nextVerse');"/>
-  <command id="cmd_xs_previousVerse"             oncommand="goDoCommand('cmd_xs_previousVerse');"/>
   <command id="cmd_xs_navigatorUpdate"           oncommand="goDoCommand('cmd_xs_navigatorUpdate');"/>
   <command id="cmd_xs_openManager"               oncommand="goDoCommand('cmd_xs_openManager');"/>
   <command id="cmd_xs_openFromSelection"         oncommand="goDoCommand('cmd_xs_openFromSelection');"/>
@@ -173,7 +168,6 @@
   <command id="cmd_xs_toggleChooser"             oncommand="toggleChooser();"/>
   <command id="cmd_xs_startHistoryTimer"
            oncommand="try {window.clearTimeout(HistoryTimer);} catch(er){} var HistoryTimer=window.setTimeout('addToHistory()',HistoryCaptureDelay);"/>
-  <command id="cmd_xs_previousVerse"             oncommand="goDoCommand('cmd_xs_previousVerse');"/>
   <command id="cmd_xs_aboutModule"               oncommand="goDoCommand('cmd_xs_aboutModule');"/>
   
 </commandset>
@@ -216,7 +210,7 @@
       </menupopup>
     </menu>
     <menu id="view-menu" label="&viewMenu.label;" accesskey="&viewMenu.accesskey;">
-      <menupopup id="view-popup" onclick="window.setTimeout('document.getElementById(&quot;' + this.id + '&quot;).showPopup()', 0);">
+      <menupopup id="view-popup" onpopuphidden="checkMenuHide(this, event);">
         <!-- NOTE: the observes attributes on menuitems below are redundant but they fix a bug in the nightly build of xulrunner 1.9 !-->
         <menuitem id="hdmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.headings.sc;"  label="  &menu.view.headings;"  command="cmd_xs_toggleHeadings" observes="cmd_xs_toggleHeadings"/>
         <menuitem id="fnmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.footnotes.sc;" label="  &menu.view.footnotes;" command="cmd_xs_toggleFootnotes" observes="cmd_xs_toggleFootnotes"/>
@@ -232,65 +226,65 @@
         <menu id="sub-Texts" class="menu-iconic" label="  &menu.view.showtexttabs;" accesskey="&menu.view.showtexttabs.sc;">
           <menupopup id="sub-Texts-pup">
             <menuseparator id="sepShowAll-Texts"/>
-            <menuitem id="showAllTabs.Texts" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="handleOptions(this);"/>
-            <menuitem id="showNoTabs.Texts" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="handleOptions(this);"/>
+            <menuitem id="showAllTabs.Texts" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
+            <menuitem id="showNoTabs.Texts" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuseparator id="sep2ShowAll-Texts"/>
-            <menuitem id="winRadio.1.Texts"  label="&menu.view.window1;" accesskey="1" type="radio" name="Texts" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.2.Texts"  label="&menu.view.window2;" accesskey="2" type="radio" name="Texts" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.3.Texts"  label="&menu.view.window3;" accesskey="3" type="radio" name="Texts" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.all.Texts" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Texts" oncommand="handleOptions(this)"/>
+            <menuitem id="winRadio.1.Texts"  label="&menu.view.window1;" accesskey="1" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.2.Texts"  label="&menu.view.window2;" accesskey="2" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.3.Texts"  label="&menu.view.window3;" accesskey="3" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.all.Texts" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menu id="sub-Comms" class="menu-iconic" label="  &menu.view.showcommtabs;" accesskey="&menu.view.showcommtabs.sc;">
           <menupopup id="sub-Comms-pup">
             <menuseparator id="sepShowAll-Comms"/>
-            <menuitem id="showAllTabs.Comms" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="handleOptions(this);"/>
-            <menuitem id="showNoTabs.Comms" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="handleOptions(this);"/>
+            <menuitem id="showAllTabs.Comms" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
+            <menuitem id="showNoTabs.Comms" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuseparator id="sep2ShowAll-Comms"/>
-            <menuitem id="winRadio.1.Comms"  label="&menu.view.window1;" accesskey="1" type="radio" name="Comms" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.2.Comms"  label="&menu.view.window2;" accesskey="2" type="radio" name="Comms" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.3.Comms"  label="&menu.view.window3;" accesskey="3" type="radio" name="Comms" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.all.Comms" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Comms" oncommand="handleOptions(this)"/>
+            <menuitem id="winRadio.1.Comms"  label="&menu.view.window1;" accesskey="1" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.2.Comms"  label="&menu.view.window2;" accesskey="2" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.3.Comms"  label="&menu.view.window3;" accesskey="3" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.all.Comms" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menu id="sub-Genbks" class="menu-iconic" label="  &menu.view.showbooktabs;" accesskey="&menu.view.showbooktabs.sc;">
           <menupopup id="sub-Genbks-pup">
             <menuseparator id="sepShowAll-Genbks"/>
-            <menuitem id="showAllTabs.Genbks" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="handleOptions(this);"/>
-            <menuitem id="showNoTabs.Genbks" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="handleOptions(this);"/>
+            <menuitem id="showAllTabs.Genbks" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
+            <menuitem id="showNoTabs.Genbks" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuseparator id="sep2ShowAll-Genbks"/>
-            <menuitem id="winRadio.1.Genbks"  label="&menu.view.window1;" accesskey="1" type="radio" name="Genbks" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.2.Genbks"  label="&menu.view.window2;" accesskey="2" type="radio" name="Genbks" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.3.Genbks"  label="&menu.view.window3;" accesskey="3" type="radio" name="Genbks" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.all.Genbks" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Genbks" oncommand="handleOptions(this)"/>            
+            <menuitem id="winRadio.1.Genbks"  label="&menu.view.window1;" accesskey="1" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.2.Genbks"  label="&menu.view.window2;" accesskey="2" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.3.Genbks"  label="&menu.view.window3;" accesskey="3" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.all.Genbks" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menu id="sub-Dicts" class="menu-iconic" label="  &menu.view.showdicttabs;" accesskey="&menu.view.showdicttabs.sc;">
           <menupopup id="sub-Dicts-pup">
             <menuseparator id="sepShowAll-Dicts"/>
-            <menuitem id="showAllTabs.Dicts" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="handleOptions(this);"/>
-            <menuitem id="showNoTabs.Dicts" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="handleOptions(this);"/>
+            <menuitem id="showAllTabs.Dicts" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
+            <menuitem id="showNoTabs.Dicts" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuseparator id="sep2ShowAll-Dicts"/>
-            <menuitem id="winRadio.1.Dicts"  label="&menu.view.window1;" accesskey="1" type="radio" name="Dicts" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.2.Dicts"  label="&menu.view.window2;" accesskey="2" type="radio" name="Dicts" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.3.Dicts"  label="&menu.view.window3;" accesskey="3" type="radio" name="Dicts" oncommand="handleOptions(this)"/>
-            <menuitem id="winRadio.all.Dicts" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Dicts" oncommand="handleOptions(this)"/>
+            <menuitem id="winRadio.1.Dicts"  label="&menu.view.window1;" accesskey="1" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.2.Dicts"  label="&menu.view.window2;" accesskey="2" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.3.Dicts"  label="&menu.view.window3;" accesskey="3" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.all.Dicts" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menu class="menu-iconic" label="  &menu.view.showAll;" accesskey="&menu.view.showAll.sc;">
           <menupopup id="allTabs.menu">
-            <menuitem id="allTabs.w1" label="&menu.view.window1;" accesskey="1" oncommand="handleOptions(this)"/>
-            <menuitem id="allTabs.w2" label="&menu.view.window2;" accesskey="2" oncommand="handleOptions(this)"/>
-            <menuitem id="allTabs.w3" label="&menu.view.window3;" accesskey="3" oncommand="handleOptions(this)"/>
-            <menuitem id="allTabs.all" label="&menu.view.allwindows;" accesskey="4" oncommand="handleOptions(this)"/>
+            <menuitem id="allTabs.w1" label="&menu.view.window1;" accesskey="1" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="allTabs.w2" label="&menu.view.window2;" accesskey="2" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="allTabs.w3" label="&menu.view.window3;" accesskey="3" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="allTabs.all" label="&menu.view.allwindows;" accesskey="4" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menu class="menu-iconic" label="  &menu.view.hideAll;" accesskey="&menu.view.hideAll.sc;">
           <menupopup id="noTabs.menu">
-            <menuitem id="noTabs.w1" label="&menu.view.window1;" accesskey="1" oncommand="handleOptions(this)"/>
-            <menuitem id="noTabs.w2" label="&menu.view.window2;" accesskey="2" oncommand="handleOptions(this)"/>
-            <menuitem id="noTabs.w3" label="&menu.view.window3;" accesskey="3" oncommand="handleOptions(this)"/>
-            <menuitem id="noTabs.all" label="&menu.view.allwindows;" accesskey="4" oncommand="handleOptions(this)"/>
+            <menuitem id="noTabs.w1" label="&menu.view.window1;" accesskey="1" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="noTabs.w2" label="&menu.view.window2;" accesskey="2" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="noTabs.w3" label="&menu.view.window3;" accesskey="3" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="noTabs.all" label="&menu.view.allwindows;" accesskey="4" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menuseparator/>
@@ -408,7 +402,7 @@
       </hbox>
       
       <hbox id="player" flex="1" align="center" style="margin-top:2px; min-height:32px;" hidden="true"> <!-- height is specified because player's actual height is large (for showing video) !-->
-        <iframe id="playerFrame" style="-moz-margin-start:10px; -moz-margin-end:0px; height:32px; width:212px;" src="chrome://xulsword/content/player.html"/>
+        <iframe id="playerFrame" style="-moz-margin-start:10px; -moz-margin-end:0px; width:218px; height:32px; overflow:hidden;" src="chrome://xulsword/content/player.html"/>
         <button id="closeplayer" flex="1" label="&closeCmd.label;"  style="-moz-margin-start:10px;  -moz-margin-end:10px;" oncommand="endAudioPlayer()"/>
       </hbox>
       
@@ -416,13 +410,13 @@
         <reference-dropdown id="book" sizetopopup="none" flex="1" hidechapter="true" hideverse="true" hidelastverse="true" hideversion="true" />
         <textbox  id="chapter" type="search" timeout="300" command="cmd_xs_navigatorUpdate" onclick="this.select()" width="35px" style="-moz-margin-start:-3px;" />
         <vbox>
-          <image  id="nextchap"  class="smallButtons" onclick="goDoCommand('cmd_xs_nextChapter')"/>
-          <image  id="prevchap"  class="smallButtons" onclick="goDoCommand('cmd_xs_previousChapter')"/>
+          <image  id="nextchap"  class="smallButtons" onclick="handleNextPrev('next.chapter.button');"/>
+          <image  id="prevchap"  class="smallButtons" onclick="handleNextPrev('prev.chapter.button');"/>
         </vbox>
         <textbox  id="verse" type="search" timeout="300" command="cmd_xs_navigatorUpdate" onclick="this.select()" width="35px"/>
         <vbox>
-          <image  id="nextverse" class="smallButtons" onclick="goDoCommand('cmd_xs_nextVerse')"/>
-          <image  id="prevverse" class="smallButtons" onclick="goDoCommand('cmd_xs_previousVerse')"/>
+          <image  id="nextverse" class="smallButtons" onclick="handleNextPrev('next.verse.button');"/>
+          <image  id="prevverse" class="smallButtons" onclick="handleNextPrev('prev.verse.button');"/>
         </vbox>
       </hbox>
     </vbox>

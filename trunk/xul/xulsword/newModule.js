@@ -170,6 +170,7 @@ var NewFonts;
 var NewPlugin;
 var PreSword;
 var SkipList;
+var CommonList;
 var CopyZipFun;
 var CopyRegularFun;
 var CountTotal, CountCurrent;
@@ -181,8 +182,9 @@ jsdump("STARTING startImport");
   ResetNeeded = NOVALUE;
   Success = true;
   SkipList = [];
+  CommonList = [];
   ExitFunction = exitFunction;
-  PreSword = isPreSword;    
+  PreSword = isPreSword;
   NewLocales = newLocales;
   NewModules = newModules;
   NewFonts   = newFonts;
@@ -217,33 +219,38 @@ jsdump("STARTING startImport");
 
   var incomp = removeIncompatibleFiles(ZipFiles, ZipEntry);
   if (incomp.oldmodule.length || incomp.newmodule.length) {
-    jsdump("There were incompatible components");
-    var msg = SBundle.getString("InstalIncomplete") + "\n";
-    if (incomp.oldmodule.length) {
-      msg += SBundle.getString("OutOfDate") + "\n\n";
-      for (var bf=0; bf<incomp.oldmodule.length; bf++) {msg+="\"" + incomp.oldmodule[bf].leafName + "\"\n";}
-      msg += "\n" + SBundle.getFormattedString("MinModVersion2", [incomp.minmodversion]) + "\n\n";
-    }
-    if (incomp.newmodule.length) {
-      // Try is for Backward Compatibility to previous UI. May be removed when new UI is released.
-      try {
-        msg += SBundle.getString("TooNew") + "\n\n";
-        for (var bf=0; bf<incomp.newmodule.length; bf++) {msg+="\"" + incomp.newmodule[bf].leafName + "\"\n";}
-        msg += "\n" + SBundle.getFormattedString("NeedUpgrade2", [incomp.minprogversion]) + "\n\n";
+    jsdump("There were incompatible components:");
+    for (bf=0; bf<incomp.oldmodule.length; bf++) {jsdump("oldmodule:" + incomp.oldmodule[bf].leafName + ", minmodversion:" + incomp.minmodversion);}
+    for (bf=0; bf<incomp.newmodule.length; bf++) {jsdump("newmodule:" + incomp.newmodule[bf].leafName + ", minprogversion:" + incomp.minprogversion);}
+    try {var showPrompt = (!PreSword && SBundle);} catch (er) {showPrompt = false;}
+    if (showPrompt) {
+      var msg = SBundle.getString("InstalIncomplete") + "\n";
+      if (incomp.oldmodule.length) {
+        msg += SBundle.getString("OutOfDate") + "\n\n";
+        for (var bf=0; bf<incomp.oldmodule.length; bf++) {msg+="\"" + incomp.oldmodule[bf].leafName + "\"\n";}
+        msg += "\n" + SBundle.getFormattedString("MinModVersion2", [incomp.minmodversion]) + "\n\n";
       }
-      catch (er) {
-        msg += "The following module(s) have components which are not supported:\n\n";
-        for (var bf=0; bf<incomp.newmodule.length; bf++) {msg+="\"" + incomp.newmodule[bf].leafName + "\"\n";}
-        msg += "\nUpgrade the program to at least version:\"" + incomp.minprogversion + "\"\n\n";
+      if (incomp.newmodule.length) {
+        // Try is for Backward Compatibility to previous UI. May be removed when new UI is released.
+        try {
+          msg += SBundle.getString("TooNew") + "\n\n";
+          for (var bf=0; bf<incomp.newmodule.length; bf++) {msg+="\"" + incomp.newmodule[bf].leafName + "\"\n";}
+          msg += "\n" + SBundle.getFormattedString("NeedUpgrade2", [incomp.minprogversion]) + "\n\n";
+        }
+        catch (er) {
+          msg += "The following module(s) have components which are not supported:\n\n";
+          for (var bf=0; bf<incomp.newmodule.length; bf++) {msg+="\"" + incomp.newmodule[bf].leafName + "\"\n";}
+          msg += "\nUpgrade the program to at least version:\"" + incomp.minprogversion + "\"\n\n";
+        }
       }
+      Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
+      var result = {};
+      var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
+          document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue,
+          msg,
+          DLGALERT,
+          DLGOK);
     }
-    Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
-    var result = {};
-    var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-        document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue, 
-        msg, 
-        DLGALERT,
-        DLGOK);
   }
 
   if (ZipFiles && ZipFiles.length) CopyZipFun();
@@ -313,10 +320,8 @@ function removeIncompatibleFiles(fileArray, entryArray) {
             // must read conf file directly because Bible object is not necessarily available...
             else {
               var instconf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-              var appDir = Components.classes["@mozilla.org/file/directory_service;1"].
-                    getService(Components.interfaces.nsIProperties).
-                    get("resource:app", Components.interfaces.nsIFile);
-              instconf.initWithPath(appDir.path + "\\" + entryArray[f][e].replace("\/", "\\", "g"));
+              var xsModsUser = getSpecialDirectory("xsModsUser");
+              instconf.initWithPath(xsModsUser.path + "\\" + entryArray[f][e].replace("\/", "\\", "g"));
               if (instconf.exists()) {
                 overwriteInstalledVersion = readParamFromConf(instconf, VERSIONPAR);
                 matchingXSmoduleTextVersion = readParamFromConf(instconf, "Version");
@@ -325,8 +330,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
             }
           }
           else if (versioninfo.type == MANIFEST_EXT) {
-            var locmanifest = Components.classes["@mozilla.org/file/directory_service;1"].
-                getService(Components.interfaces.nsIProperties).get("AChrom", Components.interfaces.nsIFile);
+            var locmanifest = getSpecialDirectory("AChrom");
             locmanifest.append(versioninfo.localename + ".locale.manifest");
             if (locmanifest.exists()) {
               var locfiledata = readFile(locmanifest);
@@ -392,9 +396,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
 // The above rules allow modules to be created with new version numbers, which are still backward compatible to at least 2.7.
 function readVersion(aZip, aEntry, progVers) {
   var info = {compversion:"1.0", minprogversion:null, type:null, path:null, mincompversion:null, error:false, localename:null, xsmodulename:null, xsmoduletext:null};
-  var temp = Components.classes["@mozilla.org/file/directory_service;1"].
-    getService(Components.interfaces.nsIProperties).
-    get("TmpD", Components.interfaces.nsIFile);
+  var temp = getSpecialDirectory("TmpD");
     
   //exceptions result in keeping the file...
   if (!temp.exists()) return null;
@@ -504,16 +506,11 @@ function installAudioFile(aFile) {
   if (!aFile.leafName.match(AUDIOEXT)) return {reset:NORESET, success:false, remove:true};
 //jsdump("Importing file:" + aFile.leafName);
 
-  var appDir = Components.classes["@mozilla.org/file/directory_service;1"].
-      getService(Components.interfaces.nsIProperties).
-      get("resource:app", Components.interfaces.nsIFile);
-  appDir.append(AUDIO);
-  
   var fileInfo = decodeAudioFileName(aFile.path);
   if (!fileInfo) return {reset:NORESET, success:false, remove:true};
   
   var parent = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  parent.initWithPath(appDir.path + "\\" + fileInfo.name + "\\" + fileInfo.book);
+  parent.initWithPath(getSpecialDirectory("xsAudio").path + "\\" + fileInfo.name + "\\" + fileInfo.book);
   if (!parent.exists()) parent.create(parent.DIRECTORY_TYPE , 0777);
   var check = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   check.initWithPath(parent.path + "\\" + fileInfo.chapter + "." + fileInfo.ext);
@@ -543,37 +540,44 @@ jsdump("Installing File:" + aEntry);
   var zReader = Components.classes["@mozilla.org/libjar/zip-reader;1"]
                         .createInstance(Components.interfaces.nsIZipReader);
   var inflated = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  var appDir = Components.classes["@mozilla.org/file/directory_service;1"].
-        getService(Components.interfaces.nsIProperties).
-        get("resource:app", Components.interfaces.nsIFile);
-        
+  var entryFileName = aEntry.substring(aEntry.lastIndexOf("/")+1);
+  
   //Try and copy this file to destination...
   switch (type) {
   case AUDIO:
     var fileInfo = decodeAudioFileName(aEntry);
     if (!fileInfo) return {reset:NORESET, success:false, remove:true};
-    inflated.initWithPath(appDir.path + "\\" + AUDIO + "\\" + fileInfo.name + "\\" + fileInfo.book + "\\" + fileInfo.chapter + "." + fileInfo.ext);
+    inflated.initWithPath(getSpecialDirectory("xsAudio").path + "\\" + fileInfo.name + "\\" + fileInfo.book + "\\" + fileInfo.chapter + "." + fileInfo.ext);
     break;
     
   case MODSD:
-    inflated.initWithPath(appDir.path + "\\" + aEntry.replace("\/", "\\", "g"));
+    var conf = getConfInfo(aZip, aEntry, zReader);
+    inflated.initWithPath(getSpecialDirectory(conf.isCommon ? "xsModsCommon":"xsModsUser").path + "\\" + aEntry.replace("\/", "\\", "g"));
     if (inflated.exists() && !PreSword) {
       //Skip writing anything to mods that are currently installed
-      try {SkipList.push(readParamFromConf(inflated, "DataPath").replace(/^\.\//, "").replace(/\/[^\/]+$/, "/"));} 
-      catch (er) {jsdump("Could not read contents of " + inflated.leafName);}
-      return {reset:HARDRESET, success:true, remove:false};
+      if (conf.modPath) {
+        SkipList.push(conf.modPath);
+        return {reset:HARDRESET, success:true, remove:false};
+      }
+      else {
+        jsdump("Could not read contents of " + aEntry + ", sending to user module location");
+        conf.isCommon = false;
+      }
     }
+    if (conf.isCommon) CommonList.push(conf.modPath);
     break;
     
   case MODS:
-    inflated.initWithPath(appDir.path + "\\" + aEntry.replace("\/", "\\", "g"));
     var skip = false;
     for (var s=0; s<SkipList.length; s++) {if (aEntry.match(SkipList[s], "i")) skip=true;}
     if (skip) return {reset:HARDRESET, success:true, remove:false};
+    var dest = "xsModsUser";
+    for (var s=0; s<CommonList.length; s++) {if (aEntry.match(CommonList[s], "i"))dest = "xsModsCommon";}
+    inflated.initWithPath(getSpecialDirectory(dest).path + "\\" + aEntry.replace("\/", "\\", "g"));
     break;
 
   case CHROME:
-    inflated.initWithPath(appDir.path + "\\" + aEntry.replace("\/", "\\", "g"));
+    inflated.initWithPath(getSpecialDirectory("AChrom").path + "\\" + entryFileName);
     var localeName = inflated.leafName.match(/(.*)\.jar/i);
     if (localeName) {
       NewLocales = pushIf(NewLocales, localeName[1]);
@@ -585,12 +589,14 @@ jsdump("Installing File:" + aEntry);
     }
     break;
   case AUDIOPLUGIN:
-    inflated.initWithPath(appDir.path + "\\" + AUDIO + "\\" + aEntry.replace("\/", "\\", "g"));
+    inflated.initWithPath(getSpecialDirectory("xsAudioPI").path + "\\" + entryFileName);
     break;
     
   case FONTS:
+    inflated.initWithPath(getSpecialDirectory("xsFonts").path + "\\" + entryFileName);
+    break;
   case BOOKMARKS:
-    inflated.initWithPath(appDir.path + "\\" + aEntry.replace("\/", "\\", "g"));
+    inflated.initWithPath(getSpecialDirectory("xsBookmarks").path + "\\" + entryFileName);
     break;
     
   default:
@@ -628,7 +634,6 @@ jsdump("Installing File:" + aEntry);
     break;
     
   case FONTS:
-    appDir.append(FONTS);
     installFontWin(inflated);
     NewFonts = pushIf(NewFonts, inflated.leafName);
     break;
@@ -649,8 +654,11 @@ jsdump("Installing File:" + aEntry);
     
   case BOOKMARKS:
     if (!BMDS) BMDS = initBMServices();
-    if (!BookmarkFuns.importBMFile(inflated, false, true))
-        return {reset:NORESET, success:false, remove:true};
+    if (!BookmarkFuns.importBMFile(inflated, false, true)) {
+      inflated.remove(false);
+      return {reset:NORESET, success:false, remove:true};
+    }
+    inflated.remove(false);
     GotoFile = inflated;
     break;
   }
@@ -688,7 +696,7 @@ function finish() {
   if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
   if (ProgressMeter) window.setTimeout("ProgressMeter.close();", 100);
   if (NewPlugin) {
-    window.setTimeout("checkQuickTime();", 1000);
+    window.setTimeout("checkQuickTime(false);", 1000);
     NewPlugin = false;
   }
   if (ResetNeeded>NORESET) saveArraysToPrefs();
@@ -732,14 +740,14 @@ function handleResetRequest() {
             }
           }
           if (aBibleVers) MainWindow.gotoLink(encodeUTF8(fileInfo.book + "." + fileInfo.chapter + ".1"), aBibleVers);
-          else {MainWindow.updateFrameScriptBoxes(null, SCROLLTYPETOP);}
+          else {MainWindow.updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);}
         }
         else if (GotoFile.leafName.match(XSBOOKMARKEXT)) {
           MainWindow.focus();
           MainWindow.setTimeout("document.getElementById('menu_BookmarksPopup').showPopup();", 500);
         }
       }
-      else {MainWindow.updateFrameScriptBoxes(null, SCROLLTYPETOP);}
+      else {MainWindow.updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);}
     }
     break;
   case SOFTRESET: // program needs to reload all SWORD modules
@@ -766,7 +774,7 @@ function writeManifest(newLocales, newModules, newFonts, filesNotWaiting) {
   if (newLocales.length>0 || newModules.length>0 || newFonts.length>0) {
     var modFileText = "NewLocales;" + newLocales.join(";") + ";NewModules;" + newModules.join(";") + ";NewFonts;" + newFonts.join(";");
     jsdump("WRITING NEW MODULE MANIFEST:" + modFileText + "\n");
-    var pfile = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("PrfDef", Components.interfaces.nsIFile);
+    var pfile = getSpecialDirectory("xsResD");
     pfile.append(NEWINSTALLFILE);
     if (pfile.exists()) {
       try {pfile.remove(false);} catch (er) {jsdump("Could not delete " + pfile.path + ".\n");}
@@ -922,6 +930,35 @@ function pushIf(aArray, elem) {
   return aArray;
 }
 
+
+function getConfInfo(aZip, aEntry, zReader) {
+  var ret = {isCommon:true, modPath:null};
+  var tconf = getSpecialDirectory("TmpD");
+  tconf.append("xulsword.conf");
+  tconf.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0777);
+  
+  zReader.open(aZip);
+  try {zReader.extract(aEntry, tconf);}
+  catch (er) {}
+  zReader.close(aZip);
+  
+  ret.modPath = readParamFromConf(tconf, "DataPath");
+  if (!ret.modPath) return ret;
+  ret.modPath = ret.modPath.replace("./", "").replace(/\/[^\/]+$/, "/");
+  ret.isCommon = isConfCommon(tconf);
+  tconf.remove(false);
+  return ret;
+}
+
+function isConfCommon(aConf) {
+  if (ProgramIsPortable) return false; // install all mods as user if Portable Version
+  var data = readParamFromConf(aConf, "Versification");
+  if (data && data == "EASTERN") return false; // must be user mod (not supported by other front-ends)
+  data = readParamFromConf(aConf, "CipherKey");
+  if (data !== null && data == "") return false; // encrypted with no key provided
+  return true;
+}
+
 //Audio file name format: name-BookshortName-chapterNumber.extension
 //name can be language abbreviation (ie ru), module (ie RSTE), or AudioCode from module's .conf file
 function decodeAudioFileName(path) {
@@ -1060,7 +1097,7 @@ function installFontWin(aFontFile) {
   
   jsdump("Installing font file \"" + aFontFile.leafName + "\":");
   var vbsdata = "Const FONTS = &H14& \r\nSet objShell = CreateObject(\"Shell.Application\")\r\nSet objFolder = objShell.Namespace(FONTS)\r\nSet objFolderItem = objFolder.ParseName(\"" + aFontFile.leafName + "\")\r\nif (objFolderItem is nothing) then\r\nobjFolder.CopyHere(\"" + aFontFile.path + "\")\r\nend if";
-  launchTempScript("vbs", vbsdata);
+  launchTempScript(vbsdata, "vbs");
 
 /* THE FOLLOWING DOES NOT WORK IF THERE ARE SPACES IN THE FILE PATH!!!!!!!
   // execute the vbs script using cmd.exe
@@ -1082,17 +1119,15 @@ function installFontWin(aFontFile) {
 */
 }
 
-function launchTempScript(scriptExtension, scriptContents) {
-  var script = Components.classes["@mozilla.org/file/directory_service;1"].
-    getService(Components.interfaces.nsIProperties).
-    get("TmpD", Components.interfaces.nsIFile);
+function launchTempScript(scriptContents, ext) {
+  var script = getSpecialDirectory("TmpD");
   if (!script.exists()) return;
-  script.append("xulswordScript." + scriptExtension);
+  script.append("xulswordScript." + ext);
   script.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0777);
 
   var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
   foStream.init(script, 0x02 | 0x08 | 0x20, 0777, 0);
-  var charset = "UTF-8"; // Can be any character encoding name that Mozilla supports
+  var charset = (ext.match(/^vbs$/i) ? "UTF-16LE":"ASCII"); // VBS understands UTF-16LE, but BAT must be ASCII to work!
   var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
   os.init(foStream, charset, 0, 0x0000);
   os.writeString(scriptContents);
@@ -1123,6 +1158,9 @@ function deleteFiles(files) {
   }
 }
 
+// Removes existing module contents if they exist. Returns null only if the conf
+// could not be read, or if there is a module which cannot be deleted. Otherwise
+// it returns the module name from the conf file.
 function removeModuleContents(aConfFile) {
   var pathFromConf = readParamFromConf(aConfFile, "DataPath");
   var modName = readParamFromConf(aConfFile, "ModuleName");
@@ -1132,13 +1170,16 @@ function removeModuleContents(aConfFile) {
   }
     
   pathFromConf = pathFromConf.replace("/", "\\", "g").replace(/^\.\\/, "").replace(/\\[^\\]*$/, "");
-  var aMod = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties)
-    .get("resource:app", Components.interfaces.nsIFile).QueryInterface(Components.interfaces.nsILocalFile);
-  aMod.initWithPath(aMod.path + "\\" + pathFromConf);
+  var aMod = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+  aMod.initWithPath(aConfFile.path.substring(0, aConfFile.path.lastIndexOf("\\" + MODSD)+1) + pathFromConf);
   if (aMod.path.search(MODS)!=-1 && aMod.exists()) {
     jsdump("Attempting remove: " + aMod.path);
-    try {aMod.remove(true);} catch (er) {return null;}
+    try {aMod.remove(true);} catch (er) {
+      jsdump("Could not remove " + aMod.path);
+      return null;
+    }
   }
+  else jsdump("No file to remove:" + aMod.path);
   
   try {prefs.clearUserPref("dontAskAboutSearchIndex" + modName);} catch (er) {}
   try {prefs.clearUserPref("CipherKey" + modName);} catch (er) {}

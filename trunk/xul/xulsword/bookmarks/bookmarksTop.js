@@ -26,7 +26,8 @@ var UserDataURI;
 var gIcon = {};
 var gIconWithNote = {};
 
-const kUserDataFileName = "userdata.rdf";
+const kUserDataFileName = "bookmarks.rdf";
+const kUserDataBackupName = "bookmarks_bak.rdf";
 const kBATCH_LIMIT = 4;
 const kExportDelimiter = "<bg/>";
 const TextFileReturn="\r\n";
@@ -803,9 +804,18 @@ var BookmarkFuns = {
  ***********************************************************************/ 
  
 function initBookmarksDataFile(useEmptyDataSet) {
-  var userDataInProfile = Components.classes["@mozilla.org/file/directory_service;1"].
-      getService(Components.interfaces.nsIProperties).get("ProfD", Components.interfaces.nsIFile);
+  var userDataInProfile = getSpecialDirectory("xsBookmarks");
   userDataInProfile.append(kUserDataFileName);
+  // for Backward Compatibility, copy profile bookmarks to resource dir if found...
+  var oldLocation = getSpecialDirectory("ProfD");
+  oldLocation.append("userdata.rdf");
+  if (oldLocation.exists()) {
+    if (userDataInProfile.exists()) userDataInProfile.moveTo(null, kUserDataFileName.replace(".rdf", BookmarkFuns.getRandomString() + ".rdf"));
+    oldLocation.moveTo(getSpecialDirectory("xsBookmarks"), kUserDataFileName);
+    userDataInProfile = getSpecialDirectory("xsBookmarks");
+    userDataInProfile.append(kUserDataFileName)
+  }
+
   UserDataURI = encodeURI("File://" + userDataInProfile.path.replace("\\", "/", "g"));
 
   if (!userDataInProfile.exists()) {
@@ -872,9 +882,7 @@ return data;
 }
 
 function getDefaultUserData(fileName) {
-  var file = Components.classes["@mozilla.org/file/directory_service;1"]
-                     .getService(Components.interfaces.nsIProperties)
-                     .get("DefRt", Components.interfaces.nsIFile);
+  var file = getSpecialDirectory("DefRt");
   file.append(fileName);
   if (!file.exists()) {return null;}
   
@@ -883,25 +891,29 @@ function getDefaultUserData(fileName) {
   return filedata;
 }
 
-function moveUserDataFileTo(fileName) {
-  var userDataInProfile = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("ProfD", Components.interfaces.nsIFile);
-  userDataInProfile.append(kUserDataFileName);
-  if (!userDataInProfile.exists()) {return false;}
-  var chromeDir = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("ProfD", Components.interfaces.nsIFile);
-  userDataInProfile.moveTo(chromeDir, fileName);
-  return true;
-}
-
 function getUserData() {
   var myDS=null;
-  try {myDS = RDF.GetDataSourceBlocking(UserDataURI);}
+  var DSisGood=false;
+  try {myDS = RDF.GetDataSourceBlocking(UserDataURI); DSisGood = true;}
   catch (er) {
-    var ok = moveUserDataFileTo(kUserDataFileName.replace(".rdf","") + BookmarkFuns.getRandomString() + ".rdf");
-    if (ok) {
+    var badRDF = getSpecialDirectory("xsBookmarks");
+    badRDF.append(kUserDataFileName);
+    if (badRDF.exists()) {
+      badRDF.moveTo(null, kUserDataFileName.replace(".rdf", BookmarkFuns.getRandomString() + ".rdf"));
       initBookmarksDataFile(true);
       myDS = RDF.GetDataSourceBlocking(UserDataURI);
     }
   }
+  
+  if (DSisGood) {
+    // Back up this DS now
+    var bmdir = getSpecialDirectory("xsBookmarks");
+    var goodDS = bmdir.clone(); goodDS.append(kUserDataFileName);
+    var backup = bmdir.clone(); backup.append(kUserDataBackupName);
+    if (backup.exists()) backup.remove(false);
+    goodDS.copyTo(bmdir, kUserDataBackupName);
+  }
+  
   return myDS;
 }
 

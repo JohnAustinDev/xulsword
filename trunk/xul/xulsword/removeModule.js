@@ -20,29 +20,26 @@
 
 const MODULESID="modules", LOCALESID="locales", AUDIOID="audio";
 const GROUPS = [MODULESID, LOCALESID, AUDIOID];
-const TYPES = {Texts: "text", Comms: "comm", Dicts: "dict", Genbks: "book"};
 const MODULEID = new RegExp(escapeRE(GROUPS[0]) + "\." + "(\\d+)");
 const NOSHOWDEF = ".nomenu.manifest";
 const CBMAXHEIGHT = 500;
 
 function onLoad() {
-  var audioDir = Components.classes["@mozilla.org/file/directory_service;1"]
-    .getService(Components.interfaces.nsIProperties)
-    .get("resource:app", Components.interfaces.nsIFile);
-  audioDir.append(AUDIO);
+  var audioDir = getSpecialDirectory("xsAudio");
   updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
   createVersionClasses(0);
   for (var g=0; g<GROUPS.length; g++) {
     var checkBoxes = [];
     var hide=true;
     var firstBibleID;
+    // Create all checkboxes
     switch (GROUPS[g]) {
     case MODULESID:
       var hide=false;
       var lastType="";
       for (var t=0; t<Tabs.length; t++) {
         if (Tabs[t].isOrigTab) continue;
-        if (Tabs[t].modType==BIBLE && !firstBibleID) firstBibleID=GROUPS[g] + "." + t;
+        if (Tabs[t].modType==BIBLE && !firstBibleID) firstBibleID = "ch." + Tabs[t].modName;
         if (Tabs[t].modType!=lastType) {
           var cb = document.createElement("label");
           cb.setAttribute("value", document.getElementById("radio.label." + TYPES[Tabs[t].tabType]).childNodes[0].nodeValue);
@@ -52,8 +49,8 @@ function onLoad() {
         }
         cb = document.createElement("checkbox");
         cb = MainWindow.writeModuleElem(cb, t, "label", GROUPS[g], true, false, false);
+        cb.setAttribute("id", "ch." + Tabs[t].modName);
         cb.setAttribute("oncommand", "disableItem0('" + cb.id + "');");
-        if (!cb) continue;
         checkBoxes.push(cb);
         lastType = Tabs[t].modType;
       }
@@ -65,6 +62,7 @@ function onLoad() {
         var cb = document.createElement("checkbox");
         cb = MainWindow.writeLocaleElem(cb, lc, GROUPS[g], true);
         if (!cb) continue;
+        cb.setAttribute("id", "lc." + LocaleList[lc]);
         checkBoxes.push(cb);
         if (++cnt > 0) hide=false;
       }
@@ -76,6 +74,7 @@ function onLoad() {
         var subs = audioDir.directoryEntries;
         while (subs.hasMoreElements()) {
           var adir = subs.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+          if (!adir.isDirectory()) continue;
           if (adir.leafName == AUDIOPLUGIN) continue;
           var cb = document.createElement("checkbox");
           cb.style.MozMarginEnd = "8px";
@@ -88,12 +87,25 @@ function onLoad() {
       break;
     }
     
+    // Place all checkboxes on window
     var parent = document.getElementById(GROUPS[g]);
     if (hide) parent.parentNode.hidden=true;
     else {
       for (var c=0; c<checkBoxes.length; c++) {
         switch (GROUPS[g]) {
         case MODULESID:
+          hbox = parent.appendChild(document.createElement("hbox"));
+          var img = document.createElement("image");
+          img.setAttribute("src", "chrome://xulsword/skin/images/shared.png");
+          var isCommDir = checkBoxes[c].id;
+          if (isCommDir) hbox.setAttribute("id", "gt." + isCommDir);
+          if (!isCommDir || !Tab[isCommDir.substring(3)].isCommDir) img.setAttribute("hidden", "true");
+          var img2 = hbox.appendChild(document.createElement("hbox"));
+          img2.setAttribute("width", "16px");
+          img2.setAttribute("align", "center");
+          img2.appendChild(img);
+          hbox.appendChild(checkBoxes[c]);
+          break;
         case LOCALESID:
           parent.appendChild(checkBoxes[c]);
           break;
@@ -102,6 +114,7 @@ function onLoad() {
           var audioList = getModsWithConfigEntry("AudioCode", checkBoxes[c].id, true, true);
           var hbox = document.createElement("hbox");
           hbox = parent.appendChild(hbox);
+          if (checkBoxes[c].id) hbox.setAttribute("id", "gt." + checkBoxes[c].id);
           // add checkbox
           hbox.appendChild(checkBoxes[c]);
           // then audio directory name using default formatting
@@ -180,23 +193,21 @@ function disableItem0(id) {
 }
 
 function disableItem(id) {
-  var elem = document.getElementById(id);
-  if (!elem) return;
-  elem = elem.parentNode;
-  elem = elem.firstChild;
+  var elem = document.getElementById("gt." + id).parentNode.firstChild;
   var numUnchecked = 0;
-  var lastUnchecked = elem;
+  var lastUnchecked;
   while(elem) {
     var e = elem;
     elem = elem.nextSibling;
-    e.disabled=false;
+    if (!e.id) continue;
+    var cb = document.getElementById(e.id.substring(3));
+    cb.disabled=false;
     //Only consider Bibles if this is "module" category
-    var idparts = e.id.match(MODULEID);
-    if (idparts && Tabs[idparts[1]].modType!=BIBLE) continue;
-    if (e.tagName != "checkbox") continue;
-    if (!e.checked) {
+    var modName = cb.id.substring(3);
+    if (Tab[modName].modType!=BIBLE) continue;
+    if (!cb.checked) {
       numUnchecked++;
-      lastUnchecked = e;
+      lastUnchecked = cb;
     }
   }
   if (numUnchecked<2) {
@@ -230,20 +241,13 @@ function deleteModules(e) {
   var reset=NOVALUE;
   var msg="";
   const LFILES = [".jar", ".txt", ".locale.manifest"];
-  var chromeDir = Components.classes["@mozilla.org/file/directory_service;1"]
-    .getService(Components.interfaces.nsIProperties)
-    .get("AChrom", Components.interfaces.nsIFile);
-  var modsDir = Components.classes["@mozilla.org/file/directory_service;1"]
-    .getService(Components.interfaces.nsIProperties)
-    .get("resource:app", Components.interfaces.nsIFile);
-  var audioDir = modsDir.clone();
-  audioDir.append(AUDIO);
-  modsDir.append(MODSD);
+  var chromeDir = getSpecialDirectory("AChrom");
+  var audioDir = getSpecialDirectory("xsAudio");
   
   var need2ChangeLocale=false;
   var aLocale=DEFAULTLOCALE;
   var need2RemoveEN=false;
-  var aTabNum=prefs.getCharPref("DefaultVersion");
+  var aTabMod=prefs.getCharPref("DefaultVersion");
   var need2ChangeVers = [false, false, false, false];
   var x=0; //must be set BEFORE main loop
   for (var g=0; g<GROUPS.length; g++) {
@@ -251,34 +255,28 @@ function deleteModules(e) {
     while (tchild) {
       var child = tchild;
       tchild = tchild.nextSibling;
-      if (child.nodeName=="hbox") child=child.firstChild;
-      if (child.nodeName!="checkbox") continue;
+      if (child.nodeName != "checkbox") {
+        if (!child.id) continue;
+        child = document.getElementById(child.id.substring(3));
+        if (!child) continue;
+      }
+
       if (child.checked) {
         var files = [];
         switch (g) {
         case 0: //modules
-          var confs = modsDir.directoryEntries;
-          var found=false;
-          while (confs.hasMoreElements()) {
-            var aFile = confs.getNext();
-            try {
-              var t = Number(child.id.substring(GROUPS[g].length+1));
-              if (readParamFromConf(aFile, "ModuleName") == Tabs[t].modName) {
-                files.push(aFile);
-                found = true;
-                if (reset<HARDRESET) reset=HARDRESET;
-                for (var w=1; w<=3; w++) {
-                  if (Win[w].modName==Tabs[t].modName) need2ChangeVers[w] = true;
-                }
-                break;
-              }
+          var modName = child.id.substring(3);
+          if (Tab[modName].conf) {
+            files.push(Tab[modName].conf);
+            if (reset<HARDRESET) reset=HARDRESET;
+            for (var w=1; w<=3; w++) {
+              if (MainWindow.Win[w].modName == modName) need2ChangeVers[w] = true;
             }
-            catch (er) {}
           }
-          if (!found) {success=false; msg+="ERROR: Module \"" + Tabs[Number(child.id.substring(GROUPS[g].length+1))].modName + "\" .conf not found.\n";}
+          else {success=false; msg+="ERROR: Module \"" + modName + "\" .conf not found.\n";}
           break;
         case 1: //locales
-          var loc = child.id.substring(GROUPS[g].length+1);
+          var loc = child.id.substring(3);
           if (loc == rootprefs.getCharPref("general.useragent.locale")) need2ChangeLocale=true;
           if (loc == DEFAULTLOCALE) need2RemoveEN=true;
           else {
@@ -313,10 +311,10 @@ function deleteModules(e) {
       }
       // Checkbox is NOT checked...
       else if (GROUPS[g]==LOCALESID) {aLocale = child.id.substring(GROUPS[g].length+1);}
-      else if (GROUPS[g]==MODULESID) {aTabNum = Number(child.id.substring(GROUPS[g].length+1));}
+      else if (GROUPS[g]==MODULESID) {aTabMod = child.id.substring(3);}
     }
   }
-  
+
   if (need2ChangeLocale) rootprefs.setCharPref("general.useragent.locale", aLocale);
   if (need2RemoveEN) {
     var enMan = chromeDir.clone();
@@ -326,10 +324,10 @@ function deleteModules(e) {
   }
   for (var w=1; w<=3; w++) {
     if (need2ChangeVers[w]) {
-      if (!MainWindow.isTabShowing(aTabNum, w)) {
-        MainWindow.toggleHiddenModPref(aTabNum, w);
+      if (!MainWindow.isTabShowing(Tab[aTabMod].index, w)) {
+        MainWindow.toggleHiddenModPref(Tab[aTabMod].index, w);
       }
-      MainWindow.setVersionTo(w, Tabs[aTabNum].modName);
+      MainWindow.setVersionTo(w, aTabMod);
     }
   }
   
@@ -361,9 +359,7 @@ function addDefaultLocaleIfNeeded() {
       if (!locGBox.childNodes.item(i).checked) locRemains=true;
     }
     if (locRemains) return;
-    var enMan = Components.classes["@mozilla.org/file/directory_service;1"]
-    .getService(Components.interfaces.nsIProperties)
-    .get("AChrom", Components.interfaces.nsIFile);
+    var enMan = getSpecialDirectory("AChrom");
     enMan.append(DEFAULTLOCALE + NOSHOWDEF);
     if (enMan.exists()) {enMan.moveTo(null, DEFAULTLOCALE + ".locale.manifest");}
   }

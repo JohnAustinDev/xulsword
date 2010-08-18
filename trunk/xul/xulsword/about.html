@@ -52,33 +52,9 @@
     }
   }
     
-  var confFileContents = null;
   function getConfFileContents(tabNum) {
-    if (!confFileContents) {
-      confFileContents = {};
-      var modsd = Components.classes["@mozilla.org/file/directory_service;1"].
-            getService(Components.interfaces.nsIProperties).
-            get("resource:app", Components.interfaces.nsIFile);
-      modsd.append(MODSD);
-      if (modsd) {
-        var re = new RegExp(CONF_EXT + "$");
-        var files = modsd.directoryEntries;
-        while (files.hasMoreElements()) {
-          var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
-          if (file.leafName.match(re)) {
-            var mname = readParamFromConf(file, "ModuleName");
-            var cont = readFile(file) + NEWLINE + "(" + file.path + ")";
-            if (cont && mname) confFileContents[mname] = cont;
-          }
-        }
-      }
-    }
-    if (!confFileContents[Tabs[tabNum].modName]) {
-      jsdump("Could not read conf file for \"" + Tabs[tabNum].modName + "\".");
-      confFileContents[Tabs[tabNum].modName] = "-----";
-    }
-
-    return confFileContents[Tabs[tabNum].modName];
+    if (!Tabs[tabNum].conf) return "-----";
+    return readFile(Tabs[tabNum].conf) + NEWLINE + "(" + Tabs[tabNum].conf.path + ")\nconfModUnique=" + Tabs[tabNum].confModUnique;
   }
   
   function onLoad() {
@@ -95,8 +71,16 @@
       <script>
         document.write("<a href=\"#top\"></a>");
         // module list
+        var lastType;
+        var sep = "";
         for (var t=0; t<Tabs.length; t++) {
           if (Tabs[t].isOrigTab) continue;
+          if (!lastType || Tabs[t].modType!=lastType) {
+            var type = window.frameElement.ownerDocument.getElementById("radio.label." + TYPES[Tabs[t].tabType]).childNodes[0].nodeValue;
+            document.write(sep + "<div class=\"head1 vstyleprogram\">" + type + "</div>");
+            sep = "<br><br>";
+          }
+          lastType = Tabs[t].modType;
           var desc = Bible.getModuleInformation(Tabs[t].modName, "Description");
           document.write("<div class=\"vstyle" + (isASCII(desc) ? "ASCII":Tabs[t].modName) + "\" >");
           document.write("<a href=\"#" + Tabs[t].modName + "\">" + Tabs[t].label + " - " + desc + "</a><hr>");

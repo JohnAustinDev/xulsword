@@ -5,16 +5,16 @@ if not defined MKAppinfo Set MKAppinfo=%MK%\build
 call "%MKAppinfo%\Appinfo.bat"
 cd "%MK%\build"
 
+if exist "%MK%\xulrunner\xulrunner-stub.exe" call "%MK%\build\scriptNoRun\FirstRun.bat"
+
 ECHO --- COPY XULRUNNER FILES
-if exist "%MK%\xulrunner\xulrunner-stub.exe" (echo xsCommandLineHandler.js>> "%MK%\xulrunner\components\components.list")
-if exist "%MK%\xulrunner\xulrunner-stub.exe" (echo xulsword.dll>> "%MK%\xulrunner\components\components.list")
-if exist "%MK%\xulrunner\xulrunner-stub.exe" (move /Y "%MK%\xulrunner\xulrunner-stub.exe" "%MK%\xul\xulrunnerDevAndProd\")
-copy "%MK%\xul\xulrunnerDevAndProd\xulrunner-stub.exe" "%MK%\xulrunner\%executable%"
+del /Q "%MK%\xulrunner\*.exe"
 xcopy "%MK%\xul\xulrunnerDevAndProd\xulrunner" "%MK%\xulrunner" /S /Y
-del "%MK%\xulrunner\chrome\en-US.nomenu.manifest"
+rename "%MK%\xulrunner\xulrunner-stub.exe" "%executable%"
 
 ECHO --- COPY XUL DEVELOPMENT ONLY FILES
 copy /Y "%MK%\xul\xulrunnerDevelopment\chrome\*" "%MK%\xulrunner\chrome"
+del "%MK%\xulrunner\chrome\en-US.nomenu.manifest"
 call "%MK%\build\scriptNoRun\UpdateJars.pl" "%MK%" "%MKS%" "%MKO%" false %UIversion% %MinProgversionForUI% %IncludeLocales% %AllLocales%
 
 copy /Y "%MK%\xul\xulrunnerDevelopment\debug\venkmanOverlay.xul" "%MK%\xul\xulsword"

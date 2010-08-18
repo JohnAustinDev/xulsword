@@ -20,8 +20,6 @@ Set cFlags=/nologo /MT /W0 /EHsc /O2 /Zc:wchar_t-^
  /I "%MK%\%CPPD%\swordMK\src\utilfuns\win32"^
  /I "%MK%\%CPPD%\swordMK\include"^
  /I "%MK%\%CPPD%\%sword%\include"^
- /I "%MK%\%CPPD%\cluceneMK\src"^
- /I "%MK%\%CPPD%\%clucene%\src"^
  /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^
  /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /Zm200 /c 
 
@@ -34,7 +32,7 @@ Set cFiles=%cFiles%^
  "%MK%\%CPPD%\osisfootnotesxul.cpp"^
  "%MK%\%CPPD%\swordMK\src\utilfuns\win32\dirent.cpp"
 
-Set lFlags=libswordexe.lib libswordll.lib xpcom.lib xpcomglue_s.lib nspr4.lib /libpath:"%MK%\%CPPD%\swordMK\lib\Release" /libpath:"%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /nologo /SUBSYSTEM:CONSOLE /MACHINE:X86 /out:"bin\%utilityName%.exe" 
+Set lFlags=libswordexe.lib clucenexe.lib xpcom.lib xpcomglue_s.lib nspr4.lib /libpath:"%MK%\%CPPD%\swordMK\lib\Release" /libpath:"%MK%\%CPPD%\cluceneMK\lib\Release" /libpath:"%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /nologo /SUBSYSTEM:CONSOLE /MACHINE:X86 /out:"bin\%utilityName%.exe"
 Set lFiles=%objDIR%\%utilityName%.obj^
  "%objDIR%\thmlhtmlxul.obj"^
  "%objDIR%\gbfhtmlxul.obj"^
@@ -42,9 +40,6 @@ Set lFiles=%objDIR%\%utilityName%.obj^
  "%objDIR%\osisdictionary.obj"^
  "%objDIR%\osisfootnotesxul.obj"^
  "%objDIR%\dirent.obj"
-rem  odbc32.lib^
-rem  odbccp32.lib^
-rem  kernel32.lib
 
 if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
 set INCLUDE=%INCLUDE%;%ProgramFiles%\Microsoft SDKs\Windows\v6.1\Include

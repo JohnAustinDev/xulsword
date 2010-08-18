@@ -19,16 +19,6 @@
 
 // VAR AND FUNCTION DECLARATIONS WHICH MAY BE USED BY ALL XUL AND HTML DOCUMENTS
 
-function getRunDirectory() {
-  var runDirectory = Components.classes["@mozilla.org/file/directory_service;1"].
-        getService(Components.interfaces.nsIProperties).
-        get("resource:app", Components.interfaces.nsIFile);
-  var path = runDirectory.path;
-  // encodeURI creates windows readable path for utf8 chars
-  if (runDirectory.exists()) return encodeURI(runDirectory.path).replace(/%5C/g, "/");
-  else return null;
-}
-
 /************************************************************************
  * String Bundle used for script locality
  ***********************************************************************/  

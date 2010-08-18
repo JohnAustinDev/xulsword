@@ -200,10 +200,9 @@ function setConsoleService(addListener) {
 }
 
 function initLogging() {
-  var debugInfo = Components.classes["@mozilla.org/file/directory_service;1"].
-      getService(Components.interfaces.nsIProperties).
-      get("resource:app", Components.interfaces.nsIFile);
+  var debugInfo = getSpecialDirectory("ProfD");
   debugInfo.append("consoleLog.txt");
+  if (!debugInfo.exists()) debugInfo.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0644);
   var env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
   env.set("XRE_CONSOLE_LOG", debugInfo.path);
     

@@ -106,7 +106,7 @@ void StopFilter::fillStopTable(CLSetList<const TCHAR*>* stopTable,
 
 bool StopFilter::next(Token* token) {
 	// return the first non-stop word found
-	for (; input->next(token); ){
+	while (input->next(token)){
 		if (table->find(token->_termText)==table->end()){
 			return true;
 		}
@@ -129,7 +129,6 @@ StopAnalyzer::StopAnalyzer( const TCHAR** stopWords) {
 TokenStream* StopAnalyzer::tokenStream(const TCHAR* fieldName, Reader* reader) {
 	return _CLNEW StopFilter(_CLNEW LowerCaseTokenizer(reader),true, &stopTable);
 }
-
 /*
 const TCHAR* StopAnalyzer::ENGLISH_STOP_WORDS[]  = 
 {
@@ -140,8 +139,7 @@ const TCHAR* StopAnalyzer::ENGLISH_STOP_WORDS[]  =
 	_T("they"), _T("this"), _T("to"), _T("was"), _T("will"), _T("with"), NULL
 };
 */
-
-const TCHAR* StopAnalyzer::ENGLISH_STOP_WORDS[]  = 
+const TCHAR* StopAnalyzer::ENGLISH_STOP_WORDS[]  =
 {
  NULL
 };
@@ -161,7 +159,7 @@ void PerFieldAnalyzerWrapper::addAnalyzer(const TCHAR* fieldName, Analyzer* anal
 }
 
 TokenStream* PerFieldAnalyzerWrapper::tokenStream(const TCHAR* fieldName, Reader* reader) {
-    Analyzer* analyzer = analyzerMap.get(fieldName);
+    Analyzer* analyzer = (fieldName==NULL?defaultAnalyzer:analyzerMap.get(fieldName));
     if (analyzer == NULL) {
       analyzer = defaultAnalyzer;
     }
@@ -173,14 +171,30 @@ TokenStream* PerFieldAnalyzerWrapper::tokenStream(const TCHAR* fieldName, Reader
 
 bool ISOLatin1AccentFilter::next(Token* token){
 	if ( input->next(token) ){
-		StringBuffer output;
 		int32_t l = token->termTextLength();
 		const TCHAR* chars = token->termText();
-		for (int32_t i = 0; i < l; i++) {
+		bool doProcess = false;
+		for (int32_t i = 0; i < l; ++i) {
 			#ifdef _UCS2
-			TCHAR c = chars[i];
+			if ( chars[i] >= 0xC0 && chars[i] <= 0x178 ) {
 			#else
-			unsigned char c = chars[i];
+			if ( (chars[i] >= 0xC0 && chars[i] <= 0xFF) || chars[i] < 0 ) {
+			#endif
+				doProcess = true;
+				break;
+			}
+			
+		}
+		if ( !doProcess ) {
+			return true;
+		}
+
+		StringBuffer output(l*2);
+		for (int32_t j = 0; j < l; j++) {
+			#ifdef _UCS2
+			TCHAR c = chars[j];
+			#else
+			unsigned char c = chars[j];
 			#endif
 			switch (c) {
 				case 0xC0 : // À
@@ -304,7 +318,7 @@ bool ISOLatin1AccentFilter::next(Token* token){
 					break;
 				#endif
 				default :
-					output.appendChar(chars[i]);
+					output.appendChar(c);
 					break;
 			}
 		}
@@ -313,5 +327,67 @@ bool ISOLatin1AccentFilter::next(Token* token){
 	}
 	return false;
 }
+
+
+TokenStream* KeywordAnalyzer::tokenStream(const TCHAR* fieldName, CL_NS(util)::Reader* reader){
+    return _CLNEW KeywordTokenizer(reader);
+}
+
+KeywordTokenizer::KeywordTokenizer(CL_NS(util)::Reader* input, int bufferSize):
+	Tokenizer(input)
+{
+    this->done = false;
+	if ( bufferSize < 0 )
+		this->bufferSize = DEFAULT_BUFFER_SIZE;
+}
+KeywordTokenizer::~KeywordTokenizer(){
+}
+
+bool KeywordTokenizer::next(Token* token){
+    if (!done) {
+      done = true;
+	  int32_t rd;
+	  const TCHAR* buffer=0;
+      while (true) {
+        rd = input->read(buffer, bufferSize);
+        if (rd == -1) 
+			break;
+		token->growBuffer(token->_termTextLen +rd+1);
+
+		int32_t cp = rd;
+		if ( token->_termTextLen + cp > token->bufferLength() )
+			cp = token->bufferLength() -  token->_termTextLen;
+		_tcsncpy(token->_termText+token->_termTextLen,buffer,cp);
+		token->_termTextLen+=rd;
+      }
+	  token->_termText[token->_termTextLen]=0;
+	  token->set(token->_termText,0,token->_termTextLen);
+	  return true;
+    }
+    return false;
+}
+
+
+LengthFilter::LengthFilter(TokenStream* in, int _min, int _max):
+    TokenFilter(in)
+{
+    this->_min = _min;
+    this->_max = _max;
+}
+
+bool LengthFilter::next(Token* token)
+{
+    // return the first non-stop word found
+    while ( input->next(token) )
+    {
+        size_t len = token->termTextLength();
+        if (len >= _min && len <= _max)
+            return true;
+        // note: else we ignore it but should we index each part of it?
+    }
+    // reached EOS -- return null
+    return false;
+}
+
 
 CL_NS_END
