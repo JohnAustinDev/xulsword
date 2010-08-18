@@ -18,7 +18,8 @@ echo pref("toolkit.defaultChromeURI", "chrome://xulsword/content/%splashScreen%"
 
 ECHO --- WRITING THE DEFAULT PREFS INSPREFS.JS
 cd "%MK%\xulrunner\defaults\pref"
-if %ShowDictionaryTabsByDefault%==true echo pref("xulsword.ShowDictionaryTabsByDefault", true);> buildprefs.js
+del buildprefs.js
+if %ShowDictionaryTabsByDefault%==true echo pref("xulsword.ShowDictionaryTabsByDefault", true);>> buildprefs.js
 if %ShowCommentaryTabsByDefault%==true echo pref("xulsword.ShowCommentaryTabsByDefault", true);>> buildprefs.js
 if %ShowAllBibleTabsByDefault%==true echo pref("xulsword.ShowAllBibleTabsByDefault", true);>> buildprefs.js
 if %HideUnavailableCrossReferences%==true echo pref("xulsword.HideUnavailableCrossReferences", true);>> buildprefs.js

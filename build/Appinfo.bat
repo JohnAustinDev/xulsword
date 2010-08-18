@@ -73,7 +73,7 @@ Set includeLexDict="StrongsGreek,StrongsHebrew,Robinson"
 Set includeIndexes=false
 
 :: OTHER OPTIONS (Example: true or false)
-Set    ShowDictionaryTabsByDefault=true
+Set    ShowDictionaryTabsByDefault=false
 Set      ShowAllBibleTabsByDefault=true
 Set    ShowCommentaryTabsByDefault=false
 Set HideUnavailableCrossReferences=false
