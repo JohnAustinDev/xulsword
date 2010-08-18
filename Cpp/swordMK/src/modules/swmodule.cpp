@@ -22,6 +22,13 @@
 
 #include "demo\stdafx.h"
 
+#include "nsEmbedString.h"
+#include "nsCOMPtr.h"
+#include "nsDirectoryServiceDefs.h"
+#include "nsIServiceManager.h"
+#include "nsIProperties.h"
+#include "nsIFile.h"
+
 #include <vector>
 
 #include <swlog.h>
@@ -38,7 +45,6 @@
 #ifndef _MSC_VER
 #include <iostream>
 #endif
-
 #ifdef USELUCENE
 #include <CLucene.h>
 #include <CLucene/CLBackwards.h>
@@ -435,6 +441,7 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 
 #ifdef USELUCENE
 	SWBuf target = getConfigEntry("AbsoluteDataPath");
+	convertToRelativePath(&target);
 	if (!target.endsWith("/") && !target.endsWith("\\")) {
 		target.append('/');
 	}
@@ -983,6 +990,8 @@ bool SWModule::hasSearchFramework() {
 void SWModule::deleteSearchFramework() {
 #ifdef USELUCENE
 	SWBuf target = getConfigEntry("AbsoluteDataPath");
+	convertToRelativePath(&target);
+	
 	if (!target.endsWith("/") && !target.endsWith("\\")) {
 		target.append('/');
 	}
@@ -1015,7 +1024,7 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 	char *word = 0;
 	char *wordBuf = 0;
 	SWBuf c;
-  
+	
 	// turn all filters to default values
 	StringList filterSettings;
 	for (OptionFilterList::iterator filter = optionFilters->begin(); filter != optionFilters->end(); filter++) {
@@ -1059,9 +1068,10 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 	IndexWriter *fsWriter = NULL;
 	Directory *d = NULL;
  
+	bool includeKeyInSearch = getConfig().has("SearchOption", "IncludeKeyInSearch");
 	standard::StandardAnalyzer *an = new standard::StandardAnalyzer();
 	SWBuf target = getConfigEntry("AbsoluteDataPath");
-	bool includeKeyInSearch = getConfig().has("SearchOption", "IncludeKeyInSearch");
+	convertToRelativePath(&target);
 	char ch = target.c_str()[strlen(target.c_str())-1];
 	if ((ch != '/') && (ch != '\\'))
 		target.append('/');
@@ -1078,7 +1088,6 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 
 	TreeKeyIdx *tkcheck = 0;
 	tkcheck = SWDYNAMIC_CAST(TreeKeyIdx, key);
-
 
 	*this = BOTTOM;
 	long highIndex = (vkcheck)?32300/*vkcheck->NewIndex()*/:key->Index();
@@ -1184,7 +1193,7 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 
 			//lucene_utf8towcs(wcharBuffer, content, MAX_CONV_SIZE); //content must be utf8
 			//doc->add( *Field::UnStored(_T("content"), wcharBuffer) );
-			nsEmbedCString contentCS;
+			nsEmbedCString contentCS; // No size limitation using nsEmbedCString
 			contentCS.Assign(content);
 			doc->add( *Field::UnStored(_T("content"), NS_ConvertUTF8toUTF16(contentCS).get()) );
 
@@ -1482,6 +1491,40 @@ void SWModule::prepText(SWBuf &buf) {
 			buf.setSize(to);
 		else break;
 	}
+}
+
+// Clucene can't handle non-ASCII file names, so for portable version (which
+// could include non-ASCII paths) we need to use a relative path for all Clucene
+// functions. The relative path will always be ASCII so Clucene can use it.
+void SWModule::convertToRelativePath(SWBuf *path) {
+  nsEmbedString appRootDir;
+  nsresult rv;
+  nsCOMPtr<nsIFile> mdir;
+  nsCOMPtr<nsIServiceManager> svcMgr;
+  rv = NS_GetServiceManager(getter_AddRefs(svcMgr));
+  if (!NS_FAILED(rv)) {
+    nsCOMPtr<nsIProperties> directoryService;
+    rv = svcMgr->GetServiceByContractID("@mozilla.org/file/directory_service;1",
+                                        NS_GET_IID(nsIProperties),
+                                        getter_AddRefs(directoryService));
+    if (!NS_FAILED(rv)) {
+      rv = directoryService->Get("resource:app", NS_GET_IID(nsIFile), getter_AddRefs(mdir));
+    }
+  }
+  if (!NS_FAILED(rv) && mdir) {
+    mdir->GetPath(appRootDir);
+    SWBuf appRD = NS_ConvertUTF16toUTF8(appRootDir).get();
+    int i = appRD.length()-1;
+    char c = appRD.charAt(i);
+    while (i > 0 && c != '\\') c = appRD.charAt(--i);
+    if (i>0){
+      appRD -= (appRD.length()-i-1);
+      if (path->startsWith(appRD)) {
+        (*path)<<(appRD.length()-1);
+        path->insert(0, "..");
+      }
+    }
+  }
 }
 
 SWORD_NAMESPACE_END

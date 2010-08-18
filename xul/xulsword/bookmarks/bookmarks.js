@@ -1411,7 +1411,8 @@ var BookmarksUtils = {
       var bestFlavour = {}, dataObj = {}, len = {};
       aDragSession.getData(trans, i);
       //trans.getAnyTransferData(bestFlavour, dataObj, len);
-      trans.getTransferData("moz/rdfitem", dataObj, len);
+      try {trans.getTransferData("moz/rdfitem", dataObj, len);}
+      catch (er) {continue;}
       dataObj = dataObj.value.QueryInterface(Components.interfaces.nsISupportsString);
       if (!dataObj)
         continue;
@@ -1457,7 +1458,7 @@ var BookmarksUtils = {
   flushDataSource: function ()
   {
     var remoteDS = BMDS.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource);
-    setTimeout(function () {remoteDS.Flush()}, 100);
+    setTimeout(function () {try {remoteDS.Flush();} catch (er) {}}, 100);
   }
 
 }

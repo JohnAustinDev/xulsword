@@ -74,7 +74,7 @@ var MinScriptWidth;
 var LastVersion;
 var MyFootnotes;
 var Win = {number:null, modName:null, modType:null, isRTL:null, isLinkedToRight:null};
-var Pin = {number:null, shortName:null, chapter:null, verse:null, isPinned:null, elem:null, updatePin:null, updateLink:null};
+var Pin = {number:null, shortName:null, chapter:null, verse:null, key:null, isPinned:null, elem:null, updatePin:null, updateLink:null};
 
 /************************************************************************
  * Initialization after HTML has loaded
@@ -175,7 +175,7 @@ function initializeScript() {
     document.getElementById("chooserOT").addEventListener("DOMMouseScroll",wheel,false);
   }
   // Add mouse wheel listener to scriptbox
-  ScriptBoxElement.addEventListener("DOMMouseScroll",scrollwheel,false);
+  ScriptBoxTextElement.addEventListener("DOMMouseScroll",scrollwheel,false);
    
   // Initialize size of Chooser and Frames. NOTE: During initialization, prefs 
   // are used to read window height and width. This allows us to completely build 
@@ -200,7 +200,6 @@ function initializeScript() {
 
 function updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction) {
 //jsdump("Updating:" + Win.number + "\n");
-  if (Win.number > prefs.getIntPref("NumDisplayedWindows")) return;
   
   var versionHasChanged=false;
   if (LastVersion != Win.modName) {
@@ -262,8 +261,7 @@ function updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction
   }
   if (highlightFlag &&
       (highlightFlag==HILIGHTVERSE || (highlightFlag==HILIGHT_IFNOTV1 && Bible.getVerseNumber(Win.modName)!=1)) &&
-      !Pin.isPinned &&
-      Win.modType==BIBLE) {SelectedVerseCSS.style.color=SelectedVerseColor;}
+      !Pin.isPinned && Win.modType==BIBLE) {SelectedVerseCSS.style.color=SelectedVerseColor;}
   else {SelectedVerseCSS.style.color=ScriptBoxFontColor;}
   
   if (!MainWindow.Link.win[Win.number] || Win.number == MainWindow.Link.leftWin) {
@@ -281,8 +279,23 @@ function updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction
 }
 
 function updateGenBook(showIntroduction) {
+  var savedKey;
+
+  if (Pin.isPinned) {
+    // Global key is saved and replaced at end of this routine. This means that
+    // OTHER WINDOWS SHOWING THIS BOOK SHOULD NOT BE ACCESSED WHILE THIS ROUTINE IS EXECUTING OR THEIR LOCATION
+    // WILL BE INCORRECT
+    savedKey = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
+    setUnicodePref("ShowingKey" + Win.modName, Pin.key);
+  }
+  else Pin.key = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
+
   var showIntroForThisLink = (showIntroduction && showIntroduction==Win.number);
   MainWindow.writeToScriptBoxes(Win, Pin.isPinned, showIntroForThisLink, SCROLLTYPENONE);
+  
+  if (Pin.isPinned) {
+    setUnicodePref("ShowingKey" + Win.modName, savedKey);
+  }
 }
 
 var DictionaryList;
@@ -398,6 +411,7 @@ function updateDictionary(dontUpdateText) {
 }
 
 function updateDictionaryTimeout (dontUpdateText) {
+jsdump("Scrolling to top w:" + Win.number);
   scrollScriptBox(SCROLLTYPETOP);
   if (!dontUpdateText) {
     var textbox = document.getElementById("keytextbox");
@@ -444,14 +458,16 @@ function getPageLinks() {
   return chapterNavigationLink;
 }
 
-function getChapterWithNotes(fn, chapOffset) {
+function getChapterWithNotes(fn, ch, chapOffset) {
   if (!chapOffset) chapOffset = 0;
+  var bch = Bible.getChapterNumber(Win.modName);
+  var needDifferentChap = (chapOffset != 0 || bch != ch);
   switch (Win.modType) {
   case BIBLE:
-    if (chapOffset != 0) {
+    if (needDifferentChap) {
       var savedloc = Bible.getLocation(Win.modName);
       var bkn = findBookNum(Bible.getBookName());
-      var chn = Bible.getChapterNumber(Win.modName) + chapOffset;
+      var chn = ch + chapOffset;
       if (chn > 0 && chn <= Book[bkn].numChaps) {
         Bible.setBiblesReference(Win.modName, Book[bkn].sName + "." + chn + ".1");
         Bible.setVerse(Win.modName, 0, 0);
@@ -459,7 +475,7 @@ function getChapterWithNotes(fn, chapOffset) {
       else return "";
     }
     var text = getChapterText(Bible, fn, Win.modName, (chapOffset!=0));
-    if (chapOffset != 0) Bible.setBiblesReference(Win.modName, savedloc);
+    if (needDifferentChap) Bible.setBiblesReference(Win.modName, savedloc);
     break;
   case COMMENTARY:
     var text = getChapterText(Bible, fn, Win.modName);
@@ -487,6 +503,11 @@ function scrollScriptBox(scrollTypeFlag, elemID) {
   if (Win.number > prefs.getIntPref("NumDisplayedWindows")) return;
   if (MainWindow.Link.win[Win.number]) return;
   if (!scrollTypeFlag) return;
+  if (scrollTypeFlag == SCROLLTYPETOP) {
+    ScriptBoxTextElement.scrollTop = 0;
+    return;
+  }
+  
   if (!elemID && Pin.isPinned) elemID = "vs." + Pin.shortName + "." + Pin.chapter + "." + Pin.verse;
   var intid = "";
   if (!elemID) {
@@ -525,8 +546,7 @@ function scrollScriptBox(scrollTypeFlag, elemID) {
   var v = elem.id.split(".");
   if (v && v.length && v.length>=4) v = v[3];
   else v="";
-  if (scrollTypeFlag == SCROLLTYPETOP ||
-     (v && v==1 && (scrollTypeFlag==SCROLLTYPEBEG || scrollTypeFlag==SCROLLTYPECENTER))) {
+  if (v && v==1 && (scrollTypeFlag==SCROLLTYPEBEG || scrollTypeFlag==SCROLLTYPECENTER)) {
     ScriptBoxTextElement.scrollTop = 0;
     return;
   }
@@ -535,10 +555,12 @@ function scrollScriptBox(scrollTypeFlag, elemID) {
   case SCROLLTYPEBEG:
     ScriptBoxTextElement.scrollTop = verseOffsetTop - 20;
     break;
+  case SCROLLTYPECENTERALWAYS:
   case SCROLLTYPECENTER:
     //dump(Win.number + " boxOffsetHeight:" + boxOffsetHeight + " boxScrollTop:" + boxScrollTop + " verseOffsetHeight:" + verseOffsetHeight + " verseOffsetTop:" + verseOffsetTop + "\n");
     // Dont scroll if the verse is already completely visible
-    if ((verseOffsetTop + verseOffsetHeight > boxScrollTop + boxOffsetHeight)||(verseOffsetTop < boxScrollTop)) {
+    if (scrollTypeFlag==SCROLLTYPECENTERALWAYS ||
+       ((verseOffsetTop + verseOffsetHeight > boxScrollTop + boxOffsetHeight)||(verseOffsetTop < boxScrollTop))) {
       //Put the middle of the verse in the middle of the ScriptBox
       var middle = Math.round(verseOffsetTop - (boxOffsetHeight/2) + (verseOffsetHeight/2));
       // but if beginning of verse is not showing then make it show
@@ -546,8 +568,11 @@ function scrollScriptBox(scrollTypeFlag, elemID) {
       else {ScriptBoxTextElement.scrollTop = middle;}
     }
     break;
-  case SCROLLTYPEEND:
+  case SCROLLTYPEENDSELECT:
     ScriptBoxTextElement.scrollTop = verseOffsetTop + verseOffsetHeight - boxOffsetHeight;
+    break;
+  case SCROLLTYPEEND:
+    // do nothing
     break;
   }
 }
@@ -716,8 +741,8 @@ function scriptboxClick(e) {
     switch (Win.modType) {
     case BIBLE:
     case COMMENTARY:
-      if (MainWindow.Link.win[Win.number]) MainWindow.previousPage(false, (Pin.isPinned ? Pin:null));
-      else MainWindow.previousChapter(false, (Pin.isPinned ? Pin:null));
+      if (MainWindow.Link.win[Win.number]) MainWindow.previousPage(HILIGHTNONE, SCROLLTYPEEND, (Pin.isPinned ? Pin:null));
+      else MainWindow.previousChapter(HILIGHTNONE, SCROLLTYPEBEG, (Pin.isPinned ? Pin:null));
       break;
     case DICTIONARY:
       var currentKey = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
@@ -729,8 +754,8 @@ function scriptboxClick(e) {
       }
       break;
     case GENBOOK:
-      //MainWindow.selectGenBook(getUnicodePref("ShowingKey" + Win.modName));
-      MainWindow.bumpSelectedIndex(true);
+      if (!Pin.isPinned) MainWindow.bumpSelectedIndex(true);
+      else MainWindow.bumpPinnedIndex(Pin, true);
       break;
     }
     break;
@@ -739,8 +764,8 @@ function scriptboxClick(e) {
     switch (Win.modType) {
     case BIBLE:
     case COMMENTARY:
-      if (MainWindow.Link.win[Win.number]) MainWindow.nextPage(false, (Pin.isPinned ? Pin:null));
-      else MainWindow.nextChapter(false, (Pin.isPinned ? Pin:null));
+      if (MainWindow.Link.win[Win.number]) MainWindow.nextPage(HILIGHTNONE, (Pin.isPinned ? Pin:null));
+      else MainWindow.nextChapter(HILIGHTNONE, SCROLLTYPEBEG, (Pin.isPinned ? Pin:null));
       break;
     case DICTIONARY:
       var currentKey = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
@@ -752,8 +777,8 @@ function scriptboxClick(e) {
       }
       break;
     case GENBOOK:
-      //MainWindow.selectGenBook(getUnicodePref("ShowingKey" + Win.modName));
-      MainWindow.bumpSelectedIndex(false);
+      if (!Pin.isPinned) MainWindow.bumpSelectedIndex(false);
+      else MainWindow.bumpPinnedIndex(Pin, false);
       break;
     }
     break;
@@ -765,13 +790,12 @@ function scriptboxClick(e) {
     break;
     
   case "listenlink":
+    MainWindow.Player.isPinned = Pin.isPinned;
     MainWindow.Player.version = Win.modName;
     MainWindow.Player.chapter = Number(elem.id.split(".")[1]);
     if (Pin.isPinned) MainWindow.Player.book = Pin.shortName;
     else MainWindow.Player.book = Bible.getBookName();
 
-    if (MainWindow.CheckPlayer) MainWindow.clearInterval(MainWindow.CheckPlayer);
-    try {MainWindow.CheckPlayer = MainWindow.setInterval("document.getElementById('playerFrame').contentDocument.defaultView.checkPlayer()", 5000);} catch (er) {}
     MainWindow.beginAudioPlayer();
     break;
     
@@ -793,11 +817,14 @@ function pinThis() {
   Pin.isPinned = true;
   var preChangeLink = MainWindow.copyLinkArray();
   setFramePinStyle(true);
-  // window texts should not change when pinned
-  var loc = MainWindow.getPassageFromWindow(MainWindow.FIRSTPASSAGE, Pin.number);
-  if (loc) loc = loc.substring(0, loc.lastIndexOf(".")).split(".");
-  else loc = [Bible.getBookName(), Bible.getChapterNumber(Win.modName), Bible.getVerseNumber(Win.modName)];
-  Pin.updatePin(loc[0], loc[1], loc[2], false);
+  if (Win.modType == BIBLE || Win.modType == COMMENTARY) {
+    // window texts should not change when pinned
+    var loc = MainWindow.getPassageFromWindow(MainWindow.FIRSTPASSAGE, Pin.number);
+    if (loc) loc = loc.substring(0, loc.lastIndexOf(".")).split(".");
+    else loc = [Bible.getBookName(), Bible.getChapterNumber(Win.modName), Bible.getVerseNumber(Win.modName)];
+    Pin.updatePin(loc[0], loc[1], loc[2]);
+  }
+  else if (Win.modType == GENBOOK) Pin.key = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
   MainWindow.updateLinkInfo();
   Pin.updateLink();
   MainWindow.updatePinVisibility();
@@ -810,22 +837,30 @@ function unpinThis() {
   Pin.isPinned = false;
   var preChangeLink = MainWindow.copyLinkArray();
   setFramePinStyle(false);
-  // make the unpinned win show what the pinned win show
-  var loc = MainWindow.getPassageFromWindow(MainWindow.FIRSTPASSAGE, Pin.number);
-  if (loc) loc = loc.substring(0, loc.lastIndexOf("."));
-  else loc = Pin.shortName + "." + Pin.chapter + "." + Pin.verse;
-  Bible.setBiblesReference(Win.modName, loc);
-  var p = loc.split(".");
-  Pin.updatePin(p[0], p[1], p[2], false);
+  if (Win.modType == BIBLE || Win.modType == COMMENTARY) {
+    // make the unpinned win show what the pinned win show
+    var loc = MainWindow.getPassageFromWindow(MainWindow.FIRSTPASSAGE, Pin.number);
+    if (loc) loc = loc.substring(0, loc.lastIndexOf("."));
+    else loc = Pin.shortName + "." + Pin.chapter + "." + Pin.verse;
+    Bible.setBiblesReference(Win.modName, loc);
+    var p = loc.split(".");
+    Pin.updatePin(p[0], p[1], p[2]);
+  }
   MainWindow.updateLinkInfo();
   Pin.updateLink();
   MainWindow.updatePinVisibility();
   MainWindow.updateTabLabelsAndStyles();
-  var update = MainWindow.getUpdatesNeededArray(Win.number, preChangeLink);
-  var update2 = MainWindow.getUnpinnedVerseKeyWindows();
-  for (var w=1; w<=3; w++) {update[w] |= update2[w];}
-  MainWindow.updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE);
-  MainWindow.updateLocators(false);
+  if (Win.modType == BIBLE || Win.modType == COMMENTARY) {
+    var update = MainWindow.getUpdatesNeededArray(Win.number, preChangeLink);
+    var update2 = MainWindow.getUnpinnedVerseKeyWindows();
+    for (var w=1; w<=3; w++) {update[w] |= update2[w];}
+    MainWindow.updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE);
+    MainWindow.updateLocators(false);
+  }
+  else if (Win.modType == GENBOOK) {
+    MainWindow.SkipGenBookWindow = Win.number; // don't update or scroll text of this window
+    MainWindow.selectGenBook(Pin.key);
+  }
 }
 
 function setFramePinStyle(isPinned) {
@@ -1369,7 +1404,7 @@ function copyNotes2Notebox(bibleNotes, userNotes) {
   }
   //  Get all notes for this chapter
   var allNotes="";
-  if (Win.modType==BIBLE || Win.modType==COMMENTARY || bibleNotes!=NOTFOUND) allNotes = bibleNotes;
+  if ((Win.modType==BIBLE || Win.modType==COMMENTARY) && bibleNotes!=NOTFOUND) allNotes = bibleNotes;
   if (userNotes!=NOTFOUND) allNotes += userNotes;
 
   var html = getNotesHTML(allNotes, Win.modName, gfn, gcr, gun, false, Win.number);
@@ -1416,7 +1451,7 @@ function noteboxClick(e) {
         Bible.setBiblesReference(Win.modName, idpart[2] + "." + idpart[3] + "." + idpart[4]);
         MainWindow.updateFrameScriptBoxes(updateNeeded, SCROLLTYPECENTER, HILIGHT_IFNOTV1);
       }
-      else {MainWindow.selectVerse(Win.modName, null, Number(idpart[3]), v, Number(idpart[5]), HILIGHT_IFNOTV1);}
+      else {MainWindow.quickSelectVerse(Win.modName, null, Number(idpart[3]), v, Number(idpart[5]), HILIGHT_IFNOTV1, SCROLLTYPECENTER);}
       MainWindow.updateLocators(false);
       break;
      case DICTIONARY:

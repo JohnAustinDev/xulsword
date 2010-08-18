@@ -1,10 +1,11 @@
 #!/usr/bin/perl
-#usage UpdateModulesLocales.pl MK MKS MKO AllLocales IncludeLocales IncludeIndexes XSMversion MinProgversionForXSM includeBibles includeCommentaries includeGenBooks includeDevotionals includeLexDict
+#usage UpdateModulesLocales.pl MK MKS MKO ResDir AllLocales IncludeLocales IncludeIndexes XSMversion MinProgversionForXSM includeBibles includeCommentaries includeGenBooks includeDevotionals includeLexDict
 
 $MK = shift;
 $MKS = shift;
 $MKO = shift;
 
+$ResDir = shift;
 $AllLocales = shift;
 $IncludeLocales = shift;
 $IncludeIndexes = shift;
@@ -50,17 +51,17 @@ foreach $entry (@chromelist) {
 if ($hasEN eq "false") {`ren \"$MK\\xulrunner\\chrome\\en-US.locale.manifest\" \"en-US.nomenu.manifest\"`;}
 
 # Delete existing modules from xulrunner dir
-if (-e "$MK\\xulrunner\\mods.d") {`rmdir /S /Q \"$MK\\xulrunner\\mods.d\"`;}
-if (-e "$MK\\xulrunner\\modules\\comments") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\comments\"`;}
-if (-e "$MK\\xulrunner\\modules\\genbook") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\genbook\"`;}
-if (-e "$MK\\xulrunner\\modules\\lexdict") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\lexdict\"`;}
-if (-e "$MK\\xulrunner\\modules\\texts") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\texts\"`;}
-`mkdir \"$MK\\xulrunner\\mods.d\"`;
-`mkdir \"$MK\\xulrunner\\modules\\comments\\zcom\"`;
-`mkdir \"$MK\\xulrunner\\modules\\genbook\\rawgenbook\"`;
-`mkdir \"$MK\\xulrunner\\modules\\lexdict\\rawld\"`;
-`mkdir \"$MK\\xulrunner\\modules\\lexdict\\rawld\\devotionals\"`;
-`mkdir \"$MK\\xulrunner\\modules\\texts\\ztext\"`;
+if (-e "$ResDir\\mods.d")            {`rmdir /S /Q \"$ResDir\\mods.d\"`;}
+if (-e "$ResDir\\modules\\comments") {`rmdir /S /Q \"$ResDir\\modules\\comments\"`;}
+if (-e "$ResDir\\modules\\genbook")  {`rmdir /S /Q \"$ResDir\\modules\\genbook\"`;}
+if (-e "$ResDir\\modules\\lexdict")  {`rmdir /S /Q \"$ResDir\\modules\\lexdict\"`;}
+if (-e "$ResDir\\modules\\texts")    {`rmdir /S /Q \"$ResDir\\modules\\texts\"`;}
+`mkdir \"$ResDir\\mods.d\"`;
+`mkdir \"$ResDir\\modules\\comments\\zcom\"`;
+`mkdir \"$ResDir\\modules\\genbook\\rawgenbook\"`;
+`mkdir \"$ResDir\\modules\\lexdict\\rawld\"`;
+`mkdir \"$ResDir\\modules\\lexdict\\rawld\\devotionals\"`;
+`mkdir \"$ResDir\\modules\\texts\\ztext\"`;
 
 # Add or change version info for included modules
 &updateConfInfo("swordmk-mods");
@@ -137,10 +138,10 @@ sub processModuleGroup($@) {
       `\"$MK\\Cpp\\swordMK\\utilities\\bin\\mkfastmod.exe\" $mod >> \"$log\"`;
       if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf", "", $dir);}
     }
-    `copy \"$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf\" \"$MK\\xulrunner\\mods.d\"`;
-    `xcopy \"$MKS\\moduleDev\\$dir\\modules\\$path\\$modlc\" \"$MK\\xulrunner\\modules\\$path\\$modlc\" /S /Y /I`;
+    `copy \"$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf\" \"$ResDir\\mods.d\"`;
+    `xcopy \"$MKS\\moduleDev\\$dir\\modules\\$path\\$modlc\" \"$ResDir\\modules\\$path\\$modlc\" /S /Y /I`;
 
-    if ($IncludeIndexes ne "true" && -e "$MK\\xulrunner\\modules\\$path\\$modlc\\lucene") {`rmdir /S /Q \"$MK\\xulrunner\\modules\\$path\\$modlc\\lucene\"`;}
+    if ($IncludeIndexes ne "true" && -e "$MK\\xulrunner\\modules\\$path\\$modlc\\lucene") {`rmdir /S /Q \"$ResDir\\modules\\$path\\$modlc\\lucene\"`;}
   }
   
   if (-e "$MKS/installer") {
@@ -150,9 +151,11 @@ sub processModuleGroup($@) {
       open(OUTF, ">$MKS/installer/autogen/uninstall.iss") || die "Could not open autogen/uninstall.iss";
       print OUTF "if ResultCode = 0 then\n";
       print OUTF "begin\n";
-      print OUTF "  CreateDir(ExpandConstant('{app}\\defaults'));\n";
-      print OUTF "  CreateDir(ExpandConstant('{app}\\defaults\\pref'));\n";
-      print OUTF "  SaveStringToFile(ExpandConstant('{app}\\defaults\\pref\\newInstalls.txt'), 'NewLocales;NewModules', False);\n";
+      print OUTF "  CreateDir(ExpandConstant('{userappdata}\\{#MyPublisher}'));\n";
+      print OUTF "  CreateDir(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}'));\n";
+      print OUTF "  CreateDir(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles'));\n";
+      print OUTF "  CreateDir(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources'));\n";
+      print OUTF "  SaveStringToFile(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\newInstalls.txt'), 'NewLocales;NewModules', False);\n";
       print OUTF "end\n";
       close(OUTF);
     }
@@ -162,8 +165,8 @@ sub processModuleGroup($@) {
     $code="";
     foreach $mod (@{$listptr}) {
       $modlc = lc($mod);
-      $code = $code."  DelTree(ExpandConstant('{app}\\modules\\".$path."\\".$modlc."'), True, True, True);\n";
-      $code = $code."  DeleteFile(ExpandConstant('{app}\\mods.d\\".$modlc.".conf'));\n";
+      $code = $code."  DelTree(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\modules\\".$path."\\".$modlc."'), True, True, True);\n";
+      $code = $code."  DeleteFile(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\mods.d\\".$modlc.".conf'));\n";
       $modlist = $modlist.";".$mod;
     }
 

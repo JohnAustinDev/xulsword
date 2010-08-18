@@ -232,7 +232,7 @@ int FileMgr::sysOpen(FileDesc *file) {
 						file->mode = (file->mode & ~O_RDWR);	// remove write access
 						file->mode = (file->mode | O_RDONLY);// add read access
 					}
-					file->fd = ::open(file->path, file->mode|O_BINARY, file->perms);
+					file->fd = sw_open(file->path, file->mode|O_BINARY, file->perms);
 
 					if (file->fd >= 0)
 						break;
@@ -275,7 +275,7 @@ signed char FileMgr::trunc(FileDesc *file) {
 		if (i == 9999)
 			return -2;
 
-		int fd = ::open(buf, O_CREAT|O_RDWR, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH);
+		int fd = sw_open(buf, O_CREAT|O_RDWR, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH);
 		if (fd < 0)
 			return -3;
 	
@@ -289,7 +289,7 @@ signed char FileMgr::trunc(FileDesc *file) {
 		if (size < 1) {
 			// zero out the file
 			::close(file->fd);
-			file->fd = ::open(file->path, O_TRUNC, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH);
+			file->fd = sw_open(file->path, O_TRUNC, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH);
 			::close(file->fd);
 			file->fd = -77;	// force file open by filemgr
 			// copy tmp file back (dumb, but must preserve file permissions)
@@ -369,13 +369,13 @@ int FileMgr::createParent(const char *pName) {
 	buf[end] = 0;
 	if (strlen(buf)>0) {
 		if (sw_access(buf, 02)) {  // not exists with write access?
-			if ((retCode = mkdir(buf
+			if ((retCode = sw_mkdir(buf
 #ifndef WIN32
 					, 0755
 #endif
 					))) {
 				createParent(buf);
-				retCode = mkdir(buf
+				retCode = sw_mkdir(buf
 #ifndef WIN32
 					, 0755
 #endif
@@ -390,7 +390,7 @@ int FileMgr::createParent(const char *pName) {
 	
 
 int FileMgr::openFileReadOnly(const char *fName) {
-	int fd = ::open(fName, O_RDONLY|O_BINARY, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH);
+	int fd = sw_open(fName, O_RDONLY|O_BINARY, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH);
 	return fd;
 }
 
@@ -398,10 +398,10 @@ int FileMgr::openFileReadOnly(const char *fName) {
 int FileMgr::createPathAndFile(const char *fName) {
 	int fd;
 	
-	fd = ::open(fName, O_CREAT|O_WRONLY|O_BINARY, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH);
+	fd = sw_open(fName, O_CREAT|O_WRONLY|O_BINARY, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH);
 	if (fd < 1) {
 		createParent(fName);
-		fd = ::open(fName, O_CREAT|O_WRONLY|O_BINARY, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH);
+		fd = sw_open(fName, O_CREAT|O_WRONLY|O_BINARY, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH);
 	}
 	return fd;
 }
@@ -411,7 +411,7 @@ int FileMgr::copyFile(const char *sourceFile, const char *targetFile) {
 	int sfd, dfd, len;
 	char buf[4096];
 
-	if ((sfd = ::open(sourceFile, O_RDONLY|O_BINARY, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH)) < 1)
+	if ((sfd = sw_open(sourceFile, O_RDONLY|O_BINARY, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH)) < 1)
 		return -1;
 	if ((dfd = createPathAndFile(targetFile)) < 1)
 		return -1;
@@ -508,9 +508,9 @@ char FileMgr::isDirectory(const char *path) {
 int FileMgr::copyDir(const char *srcDir, const char *destDir) {
 	DIR *dir;
 	struct dirent *ent;
-	if ((dir = opendir(srcDir))) {
-		rewinddir(dir);
-		while ((ent = readdir(dir))) {
+	if ((dir = sw_opendir(srcDir))) {
+		sw_rewinddir(dir);
+		while ((ent = sw_readdir(dir))) {
 			if ((strcmp(ent->d_name, ".")) && (strcmp(ent->d_name, ".."))) {
 				SWBuf srcPath  = (SWBuf)srcDir  + (SWBuf)"/" + ent->d_name;
 				SWBuf destPath = (SWBuf)destDir + (SWBuf)"/" + ent->d_name;
@@ -522,18 +522,18 @@ int FileMgr::copyDir(const char *srcDir, const char *destDir) {
 				}
 			}
 		}
-		closedir(dir);
+		sw_closedir(dir);
 	}
 	return 0;
 }
 
 
 int FileMgr::removeDir(const char *targetDir) {
-	DIR *dir = opendir(targetDir);
+	DIR *dir = sw_opendir(targetDir);
 	struct dirent *ent;
 	if (dir) {
-		rewinddir(dir);
-		while ((ent = readdir(dir))) {
+		sw_rewinddir(dir);
+		while ((ent = sw_readdir(dir))) {
 			if ((strcmp(ent->d_name, ".")) && (strcmp(ent->d_name, ".."))) {
 				SWBuf targetPath = (SWBuf)targetDir + (SWBuf)"/" + ent->d_name;
 				if (!isDirectory(targetPath.c_str())) {
@@ -544,7 +544,7 @@ int FileMgr::removeDir(const char *targetDir) {
 				}
 			}
 		}
-		closedir(dir);
+		sw_closedir(dir);
 		removeFile(targetDir);
 	}
 	return 0;

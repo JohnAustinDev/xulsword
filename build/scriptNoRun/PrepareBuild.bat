@@ -85,12 +85,13 @@ echo #define HebrewFont "%HebrewFont%">>appinfo.iss
 echo #define MK "%MK%">>appinfo.iss
 echo #define MKS "%MKS%">>appinfo.iss
 echo #define MKO "%MKO%">>appinfo.iss
+echo #define APPDATA "%APPDATA%">>appinfo.iss
 
 ECHO --- WRITING CDRUN DEFINES USED BY STARTUP EXEs
 mkdir "%MK%\Cpp\Release"
 cd "%MK%\Cpp\Release"
 echo #define PATH_TO_PROGRAM "%%s\\%executable%"> appInfo.h
-echo #define KEYADDRESS "Software\\%vendor%">> appInfo.h
+echo #define KEYADDRESS "Software\\%vendor%\\%name%">> appInfo.h
 echo #define PROC_NAME "%executable%">> appInfo.h
 ::echo #define PORTABLE_RUN L"\".\\%name%\\%name%Local.exe\" -profile \"..\\profile\" -console -jsconsole">> appInfo.h
 echo #define PORTABLE_RUN L"\".\\%name%\\%name%Local.exe\" -profile \"..\\profile\"">> appInfo.h
@@ -107,12 +108,12 @@ ECHO --- WRITING REGISTRY SET/UNSET BAT FILES
 mkdir "%MK%\build\autogen"
 cd "%MK%\build\autogen"
 echo Windows Registry Editor Version 5.00 > setRegistry.reg
-echo [HKEY_LOCAL_MACHINE\SOFTWARE\%vendor%] >> setRegistry.reg
+echo [HKEY_LOCAL_MACHINE\SOFTWARE\%vendor%\%name%] >> setRegistry.reg
 echo "InstallDrive"="%MKO:\=\\%\\toCDROM\\Install\\setup" >> setRegistry.reg
 echo "RunDir"="%MK:\=\\%\\xulrunner" >> setRegistry.reg
 echo "AudioDir"="%MKO:\=\\%\\audio" >> setRegistry.reg
 echo Windows Registry Editor Version 5.00 > unsetRegistry.reg
-echo [HKEY_LOCAL_MACHINE\SOFTWARE\%vendor%] >> unsetRegistry.reg
+echo [HKEY_LOCAL_MACHINE\SOFTWARE\%vendor%\%name%] >> unsetRegistry.reg
 echo "AudioDir"=- >> unsetRegistry.reg
 echo "InstallDrive"=- >> unsetRegistry.reg
 echo "RunDir"=- >> unsetRegistry.reg

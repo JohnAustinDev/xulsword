@@ -28,7 +28,7 @@
 ::                          menu, or leave blank and no email menu element will appear.
 
 :: SPECIFY BUILD INFORMATION
-Set version=2.14-beta
+Set version=2.14
 Set setupversion=2.14
 Set name=xulSword
 Set vendor=CrossWire

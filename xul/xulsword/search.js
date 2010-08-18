@@ -93,7 +93,7 @@ function postWindowInit() {
   //Make sure we have a Bible (if last window was aborted a Bible may not be available)
   if (!Bible) {
     Bible = Components.classes["@xulsword.com/xulsword/xulsword;1"].createInstance(Components.interfaces.ixulsword);
-    var mlist = Bible.getModuleList();
+    mlist = Bible.getModuleList();
     if (mlist == "No Modules" || mlist.search(BIBLE)==-1) Bible=null;
   }
   //Create the search language radio buttons

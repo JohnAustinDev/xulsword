@@ -144,7 +144,7 @@ void security::CheckIntegrity() {
 	bool error = false;
 
 
-//Remove after UI update!! And for Source Pub ---------------------------------------------------
+//Remove after UI update!! ---------------------------------------------------
 #ifdef DUMPCODES
   // For backward compatibility to UI add-on modules that were created before 
   // auto code generation was implemented, their CRC values must be handed to us 
@@ -170,38 +170,34 @@ void security::CheckIntegrity() {
 	PRBool exists;
 	nsCOMPtr<nsISupports> next;
 
-	// Check each chrome directory
-	while (NS_SUCCEEDED(chromeML->HasMoreElements(&exists)) && exists) {
-		chromeML->GetNext(getter_AddRefs(next));
-		nsCOMPtr<nsILocalFile> lmanifest = do_QueryInterface(next);
-		if (!lmanifest) {error = true; continue;}
+	// Check application chrome directory
+	while (NS_SUCCEEDED(chromeML->HasMoreElements(&exists)) && exists) {chromeML->GetNext(getter_AddRefs(next));}
+	nsCOMPtr<nsILocalFile> lmanifest = do_QueryInterface(next);
+	if (!lmanifest) {error = true;}
 
-		PRBool isDir;
-		if (NS_SUCCEEDED(lmanifest->IsDirectory(&isDir)) && isDir) {
-			nsCOMPtr<nsISimpleEnumerator> entries;
-			rv = lmanifest->GetDirectoryEntries(getter_AddRefs(entries));
-			if (NS_FAILED(rv)) continue;
- 
-			// Check each file in directory
-			while (NS_SUCCEEDED(entries->HasMoreElements(&exists)) && exists) {
-				entries->GetNext(getter_AddRefs(next));
-				lmanifest = do_QueryInterface(next);
-				// Ignore sub-directories because manifests are not read from sub-directories
-				if (lmanifest && NS_SUCCEEDED(lmanifest->IsDirectory(&isDir)) && !isDir) {
-				  CRC=0;
-					error |= (checkFile(lmanifest, &CRC, &AllowList, &ReadableList, cipher) != 0);
-					if (!error && CRC) {ChromeCodes.push_back(CRC);}
-				}
-			}
+	PRBool isDir;
+	if (lmanifest && NS_SUCCEEDED(lmanifest->IsDirectory(&isDir)) && isDir) {
+		nsCOMPtr<nsISimpleEnumerator> entries;
+		rv = lmanifest->GetDirectoryEntries(getter_AddRefs(entries));
+		if (!NS_FAILED(rv)) {
+  		// Check each file in directory
+  		while (NS_SUCCEEDED(entries->HasMoreElements(&exists)) && exists) {
+  			entries->GetNext(getter_AddRefs(next));
+  			lmanifest = do_QueryInterface(next);
+  			if (lmanifest) {
+    			// Ignore sub-directories because manifests are not read from sub-directories
+    			if (NS_SUCCEEDED(lmanifest->IsDirectory(&isDir)) && !isDir) {
+    			  CRC=0;
+    				error |= (checkFile(lmanifest, &CRC, &AllowList, &ReadableList, cipher) != 0);
+    				if (!error && CRC) {ChromeCodes.push_back(CRC);}
+    			}
+  			}
+  			else {error = true;}
+  		}
 		}
-		
-		// If separate file is found, include its checksum too
-		else if (lmanifest) {
-		  CRC=0;
-      error |= (checkFile(lmanifest, &CRC, &AllowList, &ReadableList, cipher) != 0);
-      if (!error & CRC) {ChromeCodes.push_back(CRC);}
-		}
+		else {error = true;}
 	}
+	else {error = true;}
 	delete cipher;
 
 	PassedIntegrityCheck = false;

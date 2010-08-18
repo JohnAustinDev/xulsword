@@ -20,10 +20,7 @@
 const HTMLbr = "<div style=\"clear: both;\"><br><br></div>";
 const HTMLbr0 = "<div style=\"clear: both;\"><br></div>";
 
-function getScriptBoxHeader(version, showBookName, showIntroduction, showOriginal, chapOffset) {
-  if (!chapOffset) chapOffset = 0;
-  var myChap = Bible.getChapterNumber(version) + chapOffset;
-  var myBook = Bible.getBookName();
+function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduction, showOriginal) {
   var myVersionsLocale = getLocaleOfVersion(version);
   var myVersionsBundle = myVersionsLocale ? getLocaleBundle(myVersionsLocale, "books.properties"):getCurrentLocaleBundle("books.properties");
   var myConfig = myVersionsLocale ? LocaleConfigs[myVersionsLocale]:LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
@@ -43,13 +40,13 @@ function getScriptBoxHeader(version, showBookName, showIntroduction, showOrigina
     // book and chapter heading
     mtext += "<div class=\"chapnum\" style=\"margin-top:12px; float:" + chapterHeadingFloat + "; font-family:'" + chapterHeadingFont + "'; font-size-adjust:" + chapterHeadingSize + "; line-height:0.75;\">";
     if (showBookName) {
-      mtext += myVersionsBundle.GetStringFromName(Bible.getBookName());
+      mtext += myVersionsBundle.GetStringFromName(myBook);
       mtext += "<br><br>";
     }
     mtext += getLocalizedChapterTerm(myBook, myChap, myVersionsBundle) + "</div>";
 
     if (!showOriginal) {
-      mtext += "<div style=\"margin-top:12px; float:" + oppositeHeadingFloat + "; text-align:" + oppositeHeadingFloat + ";\">";
+      mtext += "<div style=\"margin-top:12px; margin-bottom:-54px; float:" + oppositeHeadingFloat + "; text-align:" + oppositeHeadingFloat + ";\">";
       mtext += "<img name=\"listenlink\" id=\"listenlink." + myChap + "\" class=\"audiolink\" src=\"chrome://xulsword/skin/images/listen0.png\" onmouseover=\"scriptboxMouseOver(event)\" onmouseout=\"scriptboxMouseOut(event)\">";
       mtext += "<br><br>";
       

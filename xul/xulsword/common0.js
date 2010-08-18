@@ -52,19 +52,22 @@ const DLGALERT=0, DLGQUEST=1, DLGINFO=2;
 const DLGOK=0, DLGOKCANCEL=1, DLGYESNO=2;
 const WESTERNVS = "KJV";
 const EASTERNVS = "EASTERN";
+const TYPES = {Texts: "text", Comms: "comm", Dicts: "dict", Genbks: "book"};
 //const WESTERNVS = 1
 //const EASTERNVS = 2;
 const TOOLTIP_LEN=96;
 const MODSD="mods.d", MODS="modules", CHROME="chrome", FONTS="fonts", AUDIO="audio", AUDIOPLUGIN="QuickTime Plugin", BOOKMARKS="bookmarks";
 const MANIFEST_EXT=".manifest", CONF_EXT=".conf";
-const SCROLLTYPENONE = 0;   // don't scroll (for links this becomes SCROLLTYPECENTER)
-const SCROLLTYPETOP = 1     // scroll to top
-const SCROLLTYPEBEG = 2;    // put selected verse at the top of the window or link
-const SCROLLTYPECENTER = 3; // put selected verse in the middle of the window or link
-const SCROLLTYPEEND = 4;    // put selected verse at the bottom of the window or link
-const HILIGHTNONE = 0;      // highlight no verse
-const HILIGHTVERSE = 1;     // highlight selected verse in blue
-const HILIGHT_IFNOTV1 = 2;  // highlight selected verse in blue unless it is verse 1
+const SCROLLTYPENONE = 0;         // don't scroll (for links this becomes SCROLLTYPECENTER)
+const SCROLLTYPETOP = 1           // scroll to top
+const SCROLLTYPEBEG = 2;          // put selected verse at the top of the window or link
+const SCROLLTYPECENTER = 3;       // put selected verse in the middle of the window or link, unless verse is already visible or verse 1
+const SCROLLTYPECENTERALWAYS = 4; // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
+const SCROLLTYPEEND = 5;          // put selected verse at the end of the window or link, then select first verse of link or verse 1
+const SCROLLTYPEENDSELECT = 6;    // put selected verse at the end of the window or link, and don't change selection
+const HILIGHTNONE = 0;            // highlight no verse
+const HILIGHTVERSE = 1;           // highlight selected verse in blue
+const HILIGHT_IFNOTV1 = 2;        // highlight selected verse in blue unless it is verse 1
 
 /************************************************************************
  * THESE FUNCTIONS NEEDED BEFORE XPCOM BIBLE OBJECTS ARE CREATED! This is 
@@ -142,6 +145,53 @@ function replaceASCIIcontrolChars(string) {
   return string;
 }
 
+// in addition to the XULRunner special directories, the following are also recognized
+// xsResD       = resource directory
+// xsFonts      = user fonts directory
+// xsAudio      = user audio directory
+// xsAudioPI    = user audio plugin directory
+// xsBookmarks  = user bookmarks directory
+// xsModsUser   = user SWORD module directory (contains mods.d & modules)
+// xsModsCommon = shared SWORD module directory (contains mods.d & modules)
+function getSpecialDirectory(name) {
+  var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
+  if (name.substr(0,2) == "xs") {
+    var dir = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+    var prof = directoryService.get("ProfD", Components.interfaces.nsIFile);
+    var re = new RegExp(prof.leafName + "$");
+    dir.initWithPath(prof.path.replace(re, "resources"));
+    switch(name) {
+    case "xsFonts":
+      dir.append(FONTS);
+      break;
+    case "xsAudio":
+      dir.append(AUDIO);
+      break;
+    case "xsAudioPI":
+      dir.append(AUDIO);
+      dir.append(AUDIOPLUGIN);
+      break;
+    case "xsBookmarks":
+      dir.append(BOOKMARKS);
+      break;
+    case "xsModsCommon":
+      var userAppPath = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment).get("APPDATA");
+      userAppPath += "\\Sword";
+      dir.initWithPath(userAppPath);
+      break;
+    case "xsResD":
+    case "xsModsUser":
+      // already correct...
+      break;
+    }
+  }
+  else {
+    dir = directoryService.get(name, Components.interfaces.nsIFile);
+    dir = dir.QueryInterface(Components.interfaces.nsILocalFile);
+  }
+  return dir;
+}
+
 /************************************************************************
  * Global Preferences Obect and its Support Routines
  ***********************************************************************/ 
@@ -205,3 +255,9 @@ function getPrefOrCreate(prefName, prefType, defaultValue) {
   return prefVal;
 }
 
+function isProgramPortable() {
+  var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
+  appInfo = appInfo.appBuildID;
+  return (appInfo && appInfo.substr(appInfo.length-1) == "P");
+}
+var ProgramIsPortable = isProgramPortable();

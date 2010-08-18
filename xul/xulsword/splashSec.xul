@@ -51,8 +51,9 @@
     var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
     var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
     var vendor = appInfo.vendor;
+    var name = appInfo.name;
     try {
-      wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\" + vendor,wrk.ACCESS_READ);
+      wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\" + vendor + "\\" + name,wrk.ACCESS_READ);
       var id = wrk.readStringValue("InstallDrive");
     } 
     catch(er) {

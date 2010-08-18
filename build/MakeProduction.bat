@@ -8,39 +8,28 @@ if not defined MKAppinfo Set MKAppinfo=%MK%\build
 call "%MKAppinfo%\Appinfo.bat"
 cd "%MK%\build"
 
+if exist "%MK%\xulrunner\xulrunner-stub.exe" call "%MK%\build\scriptNoRun\FirstRun.bat"
+
 ECHO --- COPY XULRUNNER FILES
-if exist "%MK%\xulrunner\xulrunner-stub.exe" (echo xsCommandLineHandler.js>> "%MK%\xulrunner\components\components.list")
-if exist "%MK%\xulrunner\xulrunner-stub.exe" (echo xulsword.dll>> "%MK%\xulrunner\components\components.list")
-if exist "%MK%\xulrunner\xulrunner-stub.exe" (move /Y "%MK%\xulrunner\xulrunner-stub.exe" "%MK%\xul\xulrunnerDevAndProd\")
-copy "%MK%\xul\xulrunnerDevAndProd\xulrunner-stub.exe" "%MK%\xulrunner\%executable%"
+del /Q "%MK%\xulrunner\*.exe"
 xcopy "%MK%\xul\xulrunnerDevAndProd\xulrunner" "%MK%\xulrunner" /S /Y
-del "%MK%\xulrunner\chrome\en-US.nomenu.manifest"
+rename "%MK%\xulrunner\xulrunner-stub.exe" "%executable%"
 
 ECHO --- COPY XUL PRODUCTION ONLY FILES
 del /Q "%MKS%\localeDev\locales\*"
 copy /Y "%MK%\xul\xulrunnerProduction\chrome\*" "%MK%\xulrunner\chrome"
+del "%MK%\xulrunner\chrome\en-US.nomenu.manifest"
 copy /Y "%MK%\xul\xulrunnerProduction\venkmanOverlay.xul" "%MK%\xul\xulsword"
 call "%MK%\build\scriptNoRun\UpdateJars.pl" "%MK%" "%MKS%" "%MKO%" true %UIversion% %MinProgversionForUI% %IncludeLocales% %AllLocales%
 
 ECHO --- DELETING UNNECESSARY FILES
-del "%MK%\xulrunner\components\venkman-service.js"
-del "%MK%\xulrunner\chrome\venkman.jar"
-del "%MK%\xulrunner\chrome\venkman.manifest"
-del "%MK%\xulrunner\defaults\pref\debug.js"
-del "%MK%\xulrunner\crashreporter.exe"
-del "%MK%\xulrunner\js.exe"
-del "%MK%\xulrunner\redit.exe"
-del "%MK%\xulrunner\updater.exe"
-del "%MK%\xulrunner\xpcshell.exe"
-del "%MK%\xulrunner\xpidl.exe"
-del "%MK%\xulrunner\xpt_dump.exe"
-del "%MK%\xulrunner\xpt_link.exe"
-echo.> "%MK%\xulrunner\consoleLog.txt"
-del "%MK%\xulrunner\dictionaries\en-US.dic"
-del "%MK%\xulrunner\dictionaries\en-US.aff"
-rmdir /S /Q "%MK%\xulrunner\fonts"
-rmdir /S /Q "%MK%\xulrunner\audio"
-rmdir /S /Q "%MK%\xulrunner\bookmarks"
+if exist "%MK%\xulrunner\components\venkman-service.js" del "%MK%\xulrunner\components\venkman-service.js"
+if exist "%MK%\xulrunner\chrome\venkman.jar" del "%MK%\xulrunner\chrome\venkman.jar"
+if exist "%MK%\xulrunner\chrome\venkman.manifest" del "%MK%\xulrunner\chrome\venkman.manifest"
+if exist "%MK%\xulrunner\defaults\pref\debug.js" del "%MK%\xulrunner\defaults\pref\debug.js"
+if exist "%MK%\xulrunner\fonts" rmdir /S /Q "%MK%\xulrunner\fonts"
+if exist "%MK%\xulrunner\audio" rmdir /S /Q "%MK%\xulrunner\audio"
+if exist "%MK%\xulrunner\bookmarks" rmdir /S /Q "%MK%\xulrunner\bookmarks"
 
 call "%MK%\build\scriptNoRun\Update.bat"
 

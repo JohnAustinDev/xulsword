@@ -4,6 +4,7 @@ set CPPD=Cpp
 
 set cdrun=true;
 set crclib=true;
+set lucene=true;
 set libsword=true;
 set xulsword=true;
 set runPortable=true;
@@ -22,6 +23,12 @@ call versions.bat
 @call Compile.bat
 @cd ".."
 :NO_CRCLIB
+
+@if not %lucene%==true goto NO_CLUCENE
+@cd ".\cluceneMK\lib"
+@call Compile.bat
+@cd "..\.."
+:NO_CLUCENE
 
 @if not %libsword%==true goto NO_LIBSWORD
 @cd ".\swordMK\lib"

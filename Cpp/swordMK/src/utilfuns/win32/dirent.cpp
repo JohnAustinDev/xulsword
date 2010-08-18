@@ -36,6 +36,15 @@ struct DIR
     char                *name;  /* NTBS */
 };
 
+int sw_open(const char *path, int mode, int perms)
+{
+  nsEmbedCString utf8;
+  nsEmbedString utf16;
+  utf8.Assign(path);
+  utf16.Assign(NS_ConvertUTF8toUTF16(utf8));
+  return _wopen(utf16.get(), mode, perms);
+}
+
 int sw_access(const char *path, int mode)
 {
   nsEmbedCString utf8;
@@ -45,7 +54,7 @@ int sw_access(const char *path, int mode)
   return _waccess(utf16.get(), mode);
 }
 
-long findfirst(const char *name, struct _wfinddata_t *fileinfo)
+long sw_findfirst(const char *name, struct _wfinddata_t *fileinfo)
 {
   nsEmbedCString utf8;
   nsEmbedString utf16;
@@ -54,7 +63,7 @@ long findfirst(const char *name, struct _wfinddata_t *fileinfo)
   return _wfindfirst(utf16.get(), fileinfo);
 }
 
-int mkdir(char *dirname )
+int sw_mkdir(char *dirname )
 {
   nsEmbedCString utf8;
   nsEmbedString utf16;
@@ -63,21 +72,20 @@ int mkdir(char *dirname )
   return _wmkdir(utf16.get());
 }
 
-char *getenv(const char *varname, char * buff)
+void sw_getenv(const char *varname, sword::SWBuf * buff)
 {
   nsEmbedCString utf8;
   nsEmbedString utf16;
   utf8.Assign(varname);
   utf16.Assign(NS_ConvertUTF8toUTF16(utf8));
   nsEmbedString value;
-  
+
   value.Assign(_wgetenv(utf16.get()));
   utf8.Assign(NS_ConvertUTF16toUTF8(value));
-  sprintf(buff, "%s", utf8.get());
-  return buff;
+  buff->set(utf8.get());
 }
 
-DIR *opendir(const char *name)
+DIR *sw_opendir(const char *name)
 {
     DIR *dir = 0;
 
@@ -92,7 +100,7 @@ DIR *opendir(const char *name)
         {
             strcat(strcpy(dir->name, name), all);
 
-            if((dir->handle = findfirst(dir->name, &dir->info)) != -1)
+            if((dir->handle = sw_findfirst(dir->name, &dir->info)) != -1)
             {
                 dir->result.d_name = 0;
             }
@@ -117,7 +125,7 @@ DIR *opendir(const char *name)
     return dir;
 }
 
-int closedir(DIR *dir)
+int sw_closedir(DIR *dir)
 {
     int result = -1;
 
@@ -143,7 +151,7 @@ int closedir(DIR *dir)
     return result;
 }
 
-struct dirent *readdir(DIR *dir)
+struct dirent *sw_readdir(DIR *dir)
 {
     struct dirent *result = 0;
 
@@ -173,12 +181,12 @@ struct dirent *readdir(DIR *dir)
     return result;
 }
 
-void rewinddir(DIR *dir)
+void sw_rewinddir(DIR *dir)
 {
     if(dir && dir->handle != -1)
     {
         _findclose(dir->handle);
-        dir->handle = findfirst(dir->name, &dir->info);
+        dir->handle = sw_findfirst(dir->name, &dir->info);
         if (dir->result.d_name) {
           free(dir->result.d_name);
           dir->result.d_name = 0;
