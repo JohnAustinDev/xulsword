@@ -32,7 +32,7 @@ pref("xulsword.Verse Numbers","On");
 pref("xulsword.User Notes","On");
 pref("xulsword.Hebrew Cantillation","On");
 pref("xulsword.Hebrew Vowel Points","On");
-pref("xulsword.Location","Gen.1.1");
+pref("xulsword.Location","Matt.1.1");
 pref("xulsword.SearchText","");
 pref("xulsword.SearchVersion","");
 pref("xulsword.AdvSearchFlag",false);
