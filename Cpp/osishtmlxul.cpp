@@ -32,7 +32,7 @@ class OSISHTMLXUL::QuoteStack : public std::stack<const char*> {
 };
 
 OSISHTMLXUL::MyUserData::MyUserData(const SWModule *module, const SWKey *key) : BasicFilterUserData(module, key) {
-	inBold = false;
+	hiStack = "";
 	inXRefNote = false;
 	footnoteNum = 1;
 	suspendLevel = 0;
@@ -433,19 +433,18 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 				if (type == "bold" || type == "b" || type == "x-b") {
 					outText("<b>", buf, u);
-					u->inBold = true;
+					u->hiStack.insert(0, "b");
 				}
 				else {	// all other types
 					outText("<i>", buf, u);
-					u->inBold = false;
+					u->hiStack.insert(0, "i");
 				}
 			}
 			else if (tag.isEndTag()) {
-				if(u->inBold) {
-					outText("</b>", buf, u);
-					u->inBold = false;
-				}
-				else outText("</i>", buf, u);
+        outText("</", buf, u);
+        outText((u->hiStack.startsWith("b") ? "b" : "i"), buf, u);
+        outText(">", buf, u);
+        u->hiStack<<(1);
 			}
 		}
 

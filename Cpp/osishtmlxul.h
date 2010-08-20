@@ -37,7 +37,7 @@ protected:
 	class MyUserData : public BasicFilterUserData {
 	public:
 		bool osisQToTick;
-		bool inBold;
+		SWBuf hiStack;
 		bool inName;
 		bool inXRefNote;
 		bool BiblicalText;
