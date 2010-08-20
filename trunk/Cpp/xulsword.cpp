@@ -724,7 +724,7 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
     //FIRST PRINT OUT ANY HEADINGS IN THE VERSE
     AttributeValue::iterator Value;
     for (Value = module->getEntryAttributes()["Heading"]["Preverse"].begin(); Value != module->getEntryAttributes()["Heading"]["Preverse"].end(); Value++) {
-		  verseHTML.Append("<br><div class=\"");
+		  verseHTML.Append("<div class=\"");
       if (module->getEntryAttributes()["Heading"][Value->first]["level"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["level"], "2")) {
         verseHTML.Append("head2");
       }
