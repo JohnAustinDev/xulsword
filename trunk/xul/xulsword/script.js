@@ -140,11 +140,11 @@ function initializeScript() {
   Pin.isPinned = false;
   Pin.elem = document.getElementById("pin");
   Pin.updateLink = function() {
-    if (!MainWindow.Link.win[this.number]) return;
+    if (!MainWindow.Link.isLink[this.number]) return;
     var ud = ["shortName", "chapter", "verse"];
     for (var u=0; u<ud.length; u++) {
       for (var w=1; w<=3; w++) {
-        if (!MainWindow.Link.win[w] || w==this.number) continue;
+        if (!MainWindow.Link.isLink[w] || w==this.number) continue;
         MainWindow.FrameDocument[w].defaultView.Pin[ud[u]] = this[ud[u]];
       }
     }
@@ -264,8 +264,8 @@ function updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction
       !Pin.isPinned && Win.modType==BIBLE) {SelectedVerseCSS.style.color=SelectedVerseColor;}
   else {SelectedVerseCSS.style.color=ScriptBoxFontColor;}
   
-  if (!MainWindow.Link.win[Win.number] || Win.number == MainWindow.Link.leftWin) {
-    if (!MainWindow.Link.win[Win.number]) {
+  if (!MainWindow.Link.isLink[Win.number] || Win.number == MainWindow.Link.leftWin) {
+    if (!MainWindow.Link.isLink[Win.number]) {
       var showIntroForThisLink = ((showIntroduction && showIntroduction==Win.number) ? true:false);
     }
     else {
@@ -328,7 +328,7 @@ function writeDictionaryList(refreshKeys) {
   }
   NoteBoxElement.innerHTML = nbHTML;
   NoteBoxEmpty = false;
-  prefs.setBoolPref("MaximizeNoteBox" + String(Win.number),false);
+  MainWindow.setNoteBoxSizer(Win.number, false);
   return true;
 }
 
@@ -501,7 +501,7 @@ function markUserNoteVerse(id) {
 //needed for unlinked windows, link scrolling is handled by "writeToScriptBoxes"
 function scrollScriptBox(scrollTypeFlag, elemID) {
   if (Win.number > prefs.getIntPref("NumDisplayedWindows")) return;
-  if (MainWindow.Link.win[Win.number]) return;
+  if (MainWindow.Link.isTextLink[Win.number]) return;
   if (!scrollTypeFlag) return;
   if (scrollTypeFlag == SCROLLTYPETOP) {
     ScriptBoxTextElement.scrollTop = 0;
@@ -741,7 +741,7 @@ function scriptboxClick(e) {
     switch (Win.modType) {
     case BIBLE:
     case COMMENTARY:
-      if (MainWindow.Link.win[Win.number]) MainWindow.previousPage(HILIGHTNONE, SCROLLTYPEEND, (Pin.isPinned ? Pin:null));
+      if (MainWindow.Link.isTextLink[Win.number]) MainWindow.previousPage(HILIGHTNONE, SCROLLTYPEEND, (Pin.isPinned ? Pin:null));
       else MainWindow.previousChapter(HILIGHTNONE, SCROLLTYPEBEG, (Pin.isPinned ? Pin:null));
       break;
     case DICTIONARY:
@@ -764,7 +764,7 @@ function scriptboxClick(e) {
     switch (Win.modType) {
     case BIBLE:
     case COMMENTARY:
-      if (MainWindow.Link.win[Win.number]) MainWindow.nextPage(HILIGHTNONE, (Pin.isPinned ? Pin:null));
+      if (MainWindow.Link.isTextLink[Win.number]) MainWindow.nextPage(HILIGHTNONE, (Pin.isPinned ? Pin:null));
       else MainWindow.nextChapter(HILIGHTNONE, SCROLLTYPEBEG, (Pin.isPinned ? Pin:null));
       break;
     case DICTIONARY:
@@ -1398,7 +1398,7 @@ function copyNotes2Notebox(bibleNotes, userNotes) {
   NoteBoxEmpty = true;
   if (!(gfn||gcr||gun)) {
     // If we aren't showing footnotes in box, then turn maximize off
-    prefs.setBoolPref("MaximizeNoteBox" + String(Win.number),false);
+    MainWindow.setNoteBoxSizer(Win.number, false);
     PreviousT = t;
     return;
   }
