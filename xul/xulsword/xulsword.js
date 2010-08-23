@@ -29,7 +29,7 @@ var Historyi;
 var History;
 var FrameDocument = new Array(4);
 var Win = new Array(4);
-var Link = {win:[null, null, null, null], modName:null, numWins:null, leftWin:null, rightWin:null, firstWin:null, lastWin:null, isRTL:null};
+var Link = {isLink:[null, null, null, null], isTextLink:[null, null, null, null], modName:null, numWins:null, leftWin:null, rightWin:null, firstWin:null, lastWin:null, isRTL:null};
 var KeyWindow;
 var UsingWaitCursor; 
 var SavedWindowWithFocus;
@@ -853,7 +853,7 @@ function previousChapter(highlightFlag, scrollType, pin) {
   }
   else {
     var update = [];
-    if (Link.win[pin.number]) update = copyLinkArray();
+    if (Link.isLink[pin.number]) update = copyLinkArray();
     else {for (var w=0; w<=3; w++) update.push(w==pin.number);}
     pin.updatePin(Book[bkn].sName, chn, 1);
     pin.updateLink();
@@ -939,7 +939,7 @@ function nextChapter(highlightFlag, scrollType, pin) {
   if (!pin) {quickSelectVerse(vers, Book[bkn].sName, chn, 1, 1, highlightFlag, scrollType);}
   else {
     var update = [];
-    if (Link.win[pin.number]) update = copyLinkArray();
+    if (Link.isLink[pin.number]) update = copyLinkArray();
     else {for (var w=0; w<=3; w++) update.push(w==pin.number);}
     pin.updatePin(Book[bkn].sName, chn, 1);
     pin.updateLink();
@@ -1019,7 +1019,7 @@ function getPassageFromWindow(pflag, onlyThisWin) {
   if (!Link.numWins && !onlyThisWin) return null; // no link and no onlyThisWin!
   var text = "";
   
-  if (onlyThisWin && !Link.win[onlyThisWin]) {
+  if (onlyThisWin && !Link.isLink[onlyThisWin]) {
     // if this is a single, non-linked window:
     var elem;
     if (pflag == LASTPASSAGE) elem = getLastDisplayedPassage(onlyThisWin);
@@ -1030,7 +1030,7 @@ function getPassageFromWindow(pflag, onlyThisWin) {
   else {
     // if this is a linked window, read text from link
     for (var w=1; w<=3; w++) {
-      if (!Link.win[w]) continue;
+      if (!Link.isLink[w]) continue;
       if (onlyThisWin && w!=onlyThisWin) continue;
       if (prefs.getBoolPref("MaximizeNoteBox" + w)) continue;
       if (Link.isRTL) {
@@ -1069,7 +1069,7 @@ function quickSelectVerse(version, bk, ch, vs, lastvs, highlightFlag, scrollType
   var forceRedraw = [false, false, false, false];
   // if we have a link which needs scrolling, force a redraw of the link
   for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    if (!updateNeeded[w] || !Link.win[w]) continue;
+    if (!updateNeeded[w] || !Link.isLink[w]) continue;
     if (scrollType && scrollType != SCROLLTYPECENTER) forceRedraw[w] = true;
     if (scrollType && scrollType == SCROLLTYPEEND) forceNonlinkRedraw = true; // selected verse might change during updateFrameScriptBoxes!
   }
@@ -1078,8 +1078,8 @@ function quickSelectVerse(version, bk, ch, vs, lastvs, highlightFlag, scrollType
   for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
     if (!updateNeeded[w] || forceRedraw[w]) continue;
     else if (prefs.getBoolPref("ShowOriginal" + w)) forceRedraw[w] = true;
-    else if (!Link.win[w] && forceNonlinkRedraw) forceRedraw[w] = true;
-    else if (!Link.win[w]) {
+    else if (!Link.isLink[w] && forceNonlinkRedraw) forceRedraw[w] = true;
+    else if (!Link.isLink[w]) {
       var chID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\.");
       if (FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML.search(chID) == -1) forceRedraw[w] = true;
     }
@@ -1092,7 +1092,7 @@ function quickSelectVerse(version, bk, ch, vs, lastvs, highlightFlag, scrollType
         vsID = text.search(vsID);
         vlID = text.search(vlID);
         if (vsID == -1 || vlID == -1) {
-          for (var x=1; x<=3; x++) {forceRedraw[x] |= Link.win[w];}
+          for (var x=1; x<=3; x++) {forceRedraw[x] |= Link.isLink[w];}
         }
         text = "";
       }
@@ -1175,7 +1175,7 @@ var SWcount = 0;
 var SWTO;
 function scrollwheel(event, w) {
   UseTextCache = true;
-  if (Link.win[w]) {
+  if (Link.isTextLink[w]) {
     // scrolling over linked windows
     // Over a delay, sum up scroll wheel values, then call the scroll function at end of delay (help scroll keep up).
     var vd = Math.round(event.detail/3);
@@ -1210,10 +1210,10 @@ function scrollWheelNoLink(refWindow) {
   
   //scroll other windows to top verse
   Bible.setBiblesReference(Win[refWindow].modName, nloc);
-  updateFrameScriptBoxes(Link.win, SCROLLTYPEBEG, HILIGHTNONE);
+  updateFrameScriptBoxes(Link.isTextLink, SCROLLTYPEBEG, HILIGHTNONE);
   var update = [false, false, false, false];
   for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    if (Link.win[w] || w==refWindow) continue;
+    if (Link.isTextLink[w] || w==refWindow) continue;
     if (Win[w].modType == BIBLE || Win[w].modType == COMMENTARY) update[w] = true;
   }
   scrollScriptBoxes(update, SCROLLTYPEBEG);
@@ -2790,7 +2790,7 @@ function getModulePath(moduleName) {
  
 function copyLinkArray() {
   var linkArray = [false];
-  for (var w=1; w<=3; w++) linkArray.push(Link.win[w]);
+  for (var w=1; w<=3; w++) linkArray.push(Link.isLink[w]);
   return linkArray;
 }
 // Returns an array of boolean values indicating which windows need to be
@@ -2799,14 +2799,14 @@ function getUpdatesNeededArray(changedWindow, aPreChangeLinkArray) {
   // update changed window and its link (if it has one)
   var updatesNeeded = [false, false, false, false];
   updatesNeeded[changedWindow] = true;
-  if (Link.win[changedWindow]) {
-    for (var w=1; w<=3; w++) {updatesNeeded[w] = Link.win[w];}
+  if (Link.isLink[changedWindow]) {
+    for (var w=1; w<=3; w++) {updatesNeeded[w] = Link.isLink[w];}
   }
   if (!aPreChangeLinkArray) return updatesNeeded;
   
   // if old link has changed, update all windows in old link too
   var needed = false;
-  for (w=1; w<=3; w++) {needed |= (aPreChangeLinkArray[w] != Link.win[w]);}
+  for (w=1; w<=3; w++) {needed |= (aPreChangeLinkArray[w] != Link.isLink[w]);}
   if (needed) {
     for (w=1; w<=3; w++) {updatesNeeded[w] |= aPreChangeLinkArray[w];}
   }
@@ -2866,7 +2866,7 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
   var ref = Bible.getLocation(prefs.getCharPref("DefaultVersion"));
   for (var w=prefs.getIntPref("NumDisplayedWindows"); w>=1; w--) {
     if (!updateNeededArray[w]) continue;
-    if (!Link.win[w]) {
+    if (!Link.isLink[w]) {
       nonLinked.push(w);
       continue;
     }
@@ -2969,7 +2969,7 @@ var UseTextCache = false;
 const MAXTEXTCACHE = 131071;
 function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
   var s = {link:{}};
-  if (Link.win[win.number]) {
+  if (Link.isLink[win.number]) {
     for (var par in Link) {s.link[par] = Link[par];}
   }
   else s.link = getLinkInfoForWindow(win.number);
@@ -3016,12 +3016,12 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
                         s.lastWindowNotesAreMaximized ||
                         ScriptBoxIsEmpty[s.link.leftWin]; //If last window notes are max'mzd this is second to last window, so hide!
   var firstVerseInLink;
+  var notes, userNotes;
   if (s.link.numWins>1) {
     var tc = TextCache[s.link.firstWin];
     text2LinkedWindows(tc, s, tc.fn);
     firstVerseInLink = new RegExp("id=\"vs\\.([^\\.]+\\.\\d+\.\\d+)");
     firstVerseInLink = FrameDocument[s.link.firstWin].defaultView.ScriptBoxTextElement.innerHTML.match(firstVerseInLink);
-    var notes, userNotes;
     if (tc.fn.Notes) notes = filterNotes(tc.fn.Notes, tc);
     else notes = NOTFOUND;
     if (tc.fn.UserNotes) userNotes = filterNotes(tc.fn.UserNotes, tc);
@@ -3030,14 +3030,16 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
       FrameDocument[s.link.lastWin].defaultView.copyNotes2Notebox(notes, userNotes);
   }
   else {
+    notes = TextCache[s.link.firstWin].fn.Notes;
+    userNotes = TextCache[s.link.firstWin].fn.UserNotes;
     FrameDocument[s.link.firstWin].defaultView.ScriptBoxTextElement.innerHTML = (ScriptBoxIsEmpty[s.link.firstWin] ? "":s.navlinks + TextCache[s.link.firstWin].text + s.navlinks);
-    if (!s.forceNoteBox2Hide) FrameDocument[s.link.firstWin].defaultView.copyNotes2Notebox(TextCache[s.link.firstWin].fn.Notes, TextCache[s.link.firstWin].fn.UserNotes);
+    if (!s.forceNoteBox2Hide) FrameDocument[s.link.firstWin].defaultView.copyNotes2Notebox(notes, userNotes);
   }
   FrameDocument[s.link.lastWin].defaultView.setBibleHeight(false, s.forceNoteBox2Hide);
 
   //Write maximized notes in last window if needed
   if (s.lastWindowNotesAreMaximized && !ScriptBoxIsEmpty[s.link.leftWin]) {
-    FrameDocument[s.maximizedNotesWin].defaultView.copyNotes2Notebox(TextCache[s.link.firstWin].fn.Notes, TextCache[s.link.firstWin].fn.UserNotes);
+    FrameDocument[s.maximizedNotesWin].defaultView.copyNotes2Notebox(notes, userNotes);
   }
   if (s.win.modType==BIBLE) {
     for (i=s.link.leftWin; i<s.link.leftWin+s.link.numWins; i++) {
@@ -3475,6 +3477,7 @@ function showFrames() {
 function setNoteBoxSizer(frameNumber, maximizeNoteBox) {
   prefs.setBoolPref("MaximizeNoteBox" + String(frameNumber), maximizeNoteBox);
   FrameDocument[frameNumber].defaultView.NoteBoxSizerElement.src = (maximizeNoteBox ? "chrome://xulsword/skin/images/norm.bmp":"chrome://xulsword/skin/images/max.bmp");
+  updateLinkInfo();
 }
 
 /************************************************************************
@@ -3601,8 +3604,8 @@ function updateTabLabelsAndStyles(initializing) {
   // minimize noteboxes which aren't being shown so we aren't surprised by them later.
   // only last window in a link needs the notebox maximize button
   for (w=1; w<=3; w++) {
-    var hidebutton = !Link.win[w];
-    hidebutton |= (Link.win[w] && !Link.lastWin);
+    var hidebutton = !Link.isLink[w];
+    hidebutton |= (Link.isLink[w] && w != Link.lastWin);
     FrameDocument[w].getElementById("nbsizer").style.visibility = (hidebutton ? "hidden":"visible");
     if (hidebutton && !initializing) setNoteBoxSizer(w, false);
   }
@@ -3967,7 +3970,7 @@ function ensureModuleShowing(version) {
  ***********************************************************************/ 
 
 // Needs to be rerun when the following change:
-// Version1,2,3 ShowOriginal1,2,3, NumDisplayedWindows, ScriptBoxIsEmpty, Win.isRTL, Win.modName, Pin.isPinned, Pin.shortName, Pin.chapter
+// Version1,2,3 ShowOriginal1,2,3, NumDisplayedWindows, ScriptBoxIsEmpty, Win.isRTL, Win.modName, Pin.isPinned, Pin.shortName, Pin.chapter, MaximizeNoteBox
 function updateLinkInfo() {
   Link.modName = null;
   Link.numWins = 0;
@@ -3976,13 +3979,13 @@ function updateLinkInfo() {
   Link.firstWin = 0;
   Link.lastWin = 0;
   Link.isRTL = false;
-  Link.win[0] = false;
+  Link.isLink[0] = false;
 
   for (var w=1; w<=3; w++) {
     Win[w].isLinkedToRight = isLinkedToRight(w);
-    Link.win[w] = Win[w].isLinkedToRight || (w>1 && Win[w-1].isLinkedToRight);
-    if (Link.win[w]) Link.numWins++;
-    if (Link.win[w] && Link.numWins == 1) {
+    Link.isLink[w] = Win[w].isLinkedToRight || (w>1 && Win[w-1].isLinkedToRight);
+    if (Link.isLink[w]) Link.numWins++;
+    if (Link.isLink[w] && Link.numWins == 1) {
       Link.isRTL = Win[w].isRTL;
       Link.modName = Win[w].modName;
       Link.leftWin = w;
@@ -3992,6 +3995,11 @@ function updateLinkInfo() {
     Link.rightWin = Link.leftWin + Link.numWins - 1;
     Link.firstWin = (Link.isRTL ? Link.rightWin:Link.leftWin);
     Link.lastWin = (Link.isRTL ? Link.leftWin:Link.rightWin);
+  }
+  for (var w=1; w<=3; w++) {
+    Link.isTextLink[w] = (Link.isLink[w] &&
+                         !prefs.getBoolPref("MaximizeNoteBox" + w) &&
+                         !(Link.numWins==2 && prefs.getBoolPref("MaximizeNoteBox" + Link.lastWin)))
   }
 //for (var par in Link) {jsdump(par + ":" + Link[par]);}
 }
@@ -4005,7 +4013,8 @@ function getLinkInfoForWindow(w) {
   link.firstWin = w;
   link.lastWin = w;
   link.isRTL = Win[w].isRTL;
-  link.win = [false, false, false, false];
+  link.isLink = [false, false, false, false];
+  link.isTextLink = [false, false, false, false];
   return link;
 }
 

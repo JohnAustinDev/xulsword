@@ -142,6 +142,7 @@ function insertUserNotes(aBook, aChapter, aModule, text) {
 }
 
 function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserNotes, openAllCrossReferences, frameNumber) {
+  if (!allNotes) return "";
   if (!frameNumber) frameNumber = (guiDirection()=="rtl" ? prefs.getIntPref("NumDisplayedWindows"):1);
   
   //Start building notebox contents
@@ -212,7 +213,7 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
             userNoteIdentifierClose = de + "</span>";
           }
           // Replace OSIS <hi> tags with <i> or <b> as appropriate
-          body = userNoteIdentifierOpen + body.replace(/<hi.*?type="i[^"]*".*?>(.*?)<\/hi>/g,"<i>$&</i>").replace(/<hi.*?type="b[^"]*".*?>(.*?)<\/hi>/g,"<b>$&</b>") + userNoteIdentifierClose;
+          body = userNoteIdentifierOpen + noteBody2HTML(body, version) + userNoteIdentifierClose;
           t += body;
         }
         
@@ -225,6 +226,19 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
   }
   if (!haveNotes) return "";
   return t
+}
+
+// converts hilights only for OSIS source right now
+function noteBody2HTML(body, modName) {
+  var bold = new RegExp("<hi [^>]*type=\"b[^\"]*\"[^>]*>", "g");
+  var ital = new RegExp("<hi [^>]*type=\"i[^\"]*\"[^>]*>", "g");
+  body = body.replace(bold, "X~LTspan style=\"font-weight:bold;\"X~GT");
+  body = body.replace(ital, "X~LTspan style=\"font-style:italic;\"X~GT");
+  body = body.replace(/<\/hi>/g, "X~LT/spanX~GT");
+  body = body.replace(/<[^>*]>/, "");
+  body = body.replace("X~LT", "<", "g");
+  body = body.replace("X~GT", ">", "g");
+  return body;
 }
 
 function getCRNoteHTML(version, id, xsID, xsNodeBody, sep, expanded, frameNumber) {
