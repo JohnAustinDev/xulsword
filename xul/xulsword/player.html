@@ -41,7 +41,8 @@ function checkAndEmbedPlayer() {
   
   if (player.installMonInterval) {MainWindow.endAudioPlayer(); return;}
   
-  var audiofile = MainWindow.getAudioForChapter(player.version, player.book, player.chapter);
+  if (MainWindow.AudioDirs === null) MainWindow.AudioDirs = getAudioDirs();
+  var audiofile = MainWindow.getAudioForChapter(player.version, player.book, player.chapter, MainWindow.AudioDirs);
   if (!audiofile) {MainWindow.endAudioPlayer(); return;}
   
   jsdump("Have audio file:" + player.book + " " + player.chapter + "\n");
