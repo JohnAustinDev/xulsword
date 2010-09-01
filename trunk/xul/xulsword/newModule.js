@@ -23,6 +23,7 @@ const TIMEOUT = 25;
 const AUDEXT = ["mp3", "wav", "aif"];
 const XSMODEXT = ["zip", "xsm"];
 const XSBMEXT = ["txt", "xsb"];
+const XSVIDEXT = ["wmv", "mov", "mpeg", "mpg", "avi"];
 const NOVALUE = -1;
 const NORESET = 0;
 const SOFTRESET = 1;
@@ -52,6 +53,7 @@ function getEXTre(exts) {
 const AUDIOEXT = new RegExp(getEXTre(AUDEXT), "i");
 const XSMODULEEXT = new RegExp(getEXTre(XSMODEXT), "i");
 const XSBOOKMARKEXT = new RegExp(getEXTre(XSBMEXT), "i");
+const XSVIDEOEXT = new RegExp(getEXTre(XSVIDEXT), "i");
 
 function addNewModule(e) {
   // get a module file
@@ -62,10 +64,7 @@ function addNewModule(e) {
     const kTitle = fixWindowTitle(document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue);
     var kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
     kFilePicker.init(window, kTitle, kFilePickerIID.modeOpenMultiple);
-    kFilePicker.appendFilter("ZIP", "*.zip");
-    for (var f=0; f<AUDEXT.length; f++) {
-      kFilePicker.appendFilter(AUDEXT[f].toLowerCase(), "*." + AUDEXT[f]);
-    }
+    kFilePicker.appendFilter("XSM, ZIP", "*.xsm; *.zip");
     if (kFilePicker.show() != kFilePickerIID.returnCancel) {
       if (!kFilePicker.files.hasMoreElements()) return false;
       files = kFilePicker.files;
@@ -81,15 +80,13 @@ function addNewModule(e) {
     if (!aFile) break;
     fileArray.push(aFile);
   }
-  return installModuleArray(fileArray);
+  return installModuleArray(false, false, false, finishAndHandleReset, fileArray);
 }
 
-function installModuleArray(fileArray, allowStop, blocking, exitFunction) {
+function installModuleArray(blocking, isPreSword, allowStop, exitFunction, fileArray, audioDestination) {
   var zipFiles = [];
   var zipEntry = [];
   var regularFiles = [];
-  blocking = (blocking ? blocking:false);
-  exitFunction = (exitFunction ? exitFunction:finishAndHandleReset);
   
   for (var f=0; f<fileArray.length; f++) {
     if (fileArray[f].leafName.match(XSMODULEEXT)) {
@@ -103,13 +100,13 @@ function installModuleArray(fileArray, allowStop, blocking, exitFunction) {
     else if (fileArray[f].leafName.match(AUDIOEXT)) regularFiles.push(fileArray[f]);
     else if (fileArray[f].isDirectory()) pushAudioFilesInFolder(fileArray[f], regularFiles);
   }
-  var isPreSword = (MainWindow ? false:true);
-  return startImport(exitFunction, blocking, isPreSword, regularFiles, zipFiles, zipEntry, [], [], [], allowStop);
+
+  return startImport(blocking, isPreSword, allowStop, exitFunction, regularFiles, zipFiles, zipEntry, [], [], [], audioDestination);
 }
 
 function pushAudioFilesInFolder(aFolder, audioFiles) {
   aFolder = aFolder.QueryInterface(Components.interfaces.nsIFile);
-  if (!aFolder || !aFolder.isDirectory()) return;
+  if (!aFolder || !aFolder.isDirectory() || !aFolder.directoryEntries) return;
   var files = aFolder.directoryEntries;
   while (files.hasMoreElements()) {
     var aFile = files.getNext().QueryInterface(Components.interfaces.nsILocalFile);
@@ -126,11 +123,12 @@ function readZipFile(aZipFile) {
   var zReader = Components.classes["@mozilla.org/libjar/zip-reader;1"]
                         .createInstance(Components.interfaces.nsIZipReader);
   try {zReader.open(aZipFile);}
-  catch (er) {jsdump("Error opening ZIP " + aZipFile.leafName); return [];}
+  catch (er) {jsdump("Error opening ZIP " + aZipFile.leafName + ". " + er); return [];}
   var entries = zReader.findEntries(null);
   while (entries.hasMore()) {
     var entryText = entries.getNext();
-    var entryObj = zReader.getEntry(entryText);
+    try {var entryObj = zReader.getEntry(entryText);}
+    catch (er) {jsdump("Error getting zip entry " + entryText + ". " + er); continue;}
     if (entryObj.isDirectory) continue;
     entryArray.push(entryText);
   }
@@ -156,7 +154,9 @@ function stopImport() {
 
 var ResetNeeded;
 var Success;
-var GotoFile;
+var GotoAudioFile;
+var GotoBookmarkFile;
+var GotoVideoFile;
 var ZipFiles;
 var ZipEntry;
 var RegularFiles;
@@ -175,16 +175,20 @@ var CopyZipFun;
 var CopyRegularFun;
 var CountTotal, CountCurrent;
 var ProgressMeter, ProgressMeterLoaded;
-var WillRestart;
-function startImport(exitFunction, blocking, isPreSword, regularFiles, zipFiles, zipEntry, newLocales, newModules, newFonts, allowStop) {
+var WillRestart = false;
+var AudioDestination;
+function startImport(blocking, isPreSword, allowStop, exitFunction, regularFiles, zipFiles, zipEntry, newLocales, newModules, newFonts, audioDestination) {
 jsdump("STARTING startImport");
-  GotoFile = null;
+  GotoAudioFile = null;
+  GotoBookmarkFile = null;
+  GotoVideoFile = null;
   ResetNeeded = NOVALUE;
   Success = true;
   SkipList = [];
   CommonList = [];
   ExitFunction = exitFunction;
   PreSword = isPreSword;
+  AudioDestination = (audioDestination ? audioDestination:getSpecialDirectory("xsAudio"));
   NewLocales = newLocales;
   NewModules = newModules;
   NewFonts   = newFonts;
@@ -196,13 +200,12 @@ jsdump("STARTING startImport");
   RegIndex = 0;
   CopyZipFun = (blocking ? copyZipFiles:copyZipFilesTO);
   CopyRegularFun = (blocking ? copyRegularFiles:copyRegularFilesTO);
-  WillRestart = false;
   
   if (!blocking && (ZipFiles.length || RegularFiles.length>5)) {
     var result = {};
     ProgressMeterLoaded = false;
     ProgressMeter = window.openDialog("chrome://xulsword/content/workProgress.xul", "work-progress", PMSPLASH, result,
-      document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue,
+      fixWindowTitle(document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue),
       "", 
       (allowStop ? PMSTOP:PMNORMAL),
       (allowStop ? stopImport:null));
@@ -246,7 +249,7 @@ jsdump("STARTING startImport");
       Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       var result = {};
       var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
-          document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue,
+          fixWindowTitle(document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue),
           msg,
           DLGALERT,
           DLGOK);
@@ -489,7 +492,6 @@ function copyRegularFiles() {
   var result;
   if (RegularFiles[RegIndex].leafName.match(AUDIOEXT)) result = installAudioFile(RegularFiles[RegIndex]);
   else if (RegularFiles[RegIndex].leafName.match(XSBOOKMARKEXT)) result = installBookmarkFile(RegularFiles[RegIndex]);
-  if (result.success) GotoFile = RegularFiles[RegIndex];
   else jsdump("FAILED:" + RegularFiles[RegIndex].leafName + ", reset:" + result.reset + ", success:" + result.success + ", remove:" + result.remove);
   if (result.reset > ResetNeeded) ResetNeeded = result.reset;
   if (result.remove) RegularFiles[RegIndex] = null;
@@ -503,31 +505,39 @@ function copyRegularFiles() {
 }
 
 function installAudioFile(aFile) {
-  if (!aFile.leafName.match(AUDIOEXT)) return {reset:NORESET, success:false, remove:true};
 //jsdump("Importing file:" + aFile.leafName);
-
-  var fileInfo = decodeAudioFileName(aFile.path);
-  if (!fileInfo) return {reset:NORESET, success:false, remove:true};
+  var toFile = getAudioDestination(AudioDestination, aFile.path);
+  if (!toFile) {jsdump("Could not determine audio file destination:" + aFile.path); return {reset:NORESET, success:false, remove:true};}
   
-  var parent = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  parent.initWithPath(getSpecialDirectory("xsAudio").path + "\\" + fileInfo.name + "\\" + fileInfo.book);
-  if (!parent.exists()) parent.create(parent.DIRECTORY_TYPE , 0777);
-  var check = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  check.initWithPath(parent.path + "\\" + fileInfo.chapter + "." + fileInfo.ext);
-  if (check.exists()) {
-    try {check.remove(false);}
-    catch (er) {return {reset:NORESET, success:false, remove:true};}
+  if (!toFile.parent.exists()) toFile.parent.create(toFile.DIRECTORY_TYPE , 0777);
+  if (toFile.exists()) {
+    try {toFile.remove(false);}
+    catch (er) {jsdump("Could not remove pre-existing file:" +  toFile.path); return {reset:NORESET, success:false, remove:true};}
   }
   
-  try {aFile.copyTo(parent, fileInfo.chapter + "." + fileInfo.ext);}
-  catch (er) {return {reset:NORESET, success:false, remove:true};}
+  try {aFile.copyTo(toFile.parent, toFile.leafName);}
+  catch (er) {jsdump("Could not copy " + aFile.path + " to " + toFile.parent + "\\" + toFile.leafName); return {reset:NORESET, success:false, remove:true};}
+  GotoAudioFile = toFile;
   return {reset:NORESET, success:true, remove:true};
+}
+
+function getAudioDestination(aOutDir, audioFilePath) {
+  var info = decodeAudioFileName(audioFilePath);
+  if (!info) {jsdump("Could not decode audio file path:" + audioFilePath); return null;}
+
+  if (aOutDir.equals(getSpecialDirectory("xsAudio")))
+    var toFile = getThisAudioFile(aOutDir, info.basecode.toLowerCase(), info.book, info.chapter, info.ext);
+  else
+    toFile = getLocalizedAudioFile(aOutDir, info.basecode.toLowerCase(), info.book, info.chapter, info.ext, rootprefs.getCharPref("general.useragent.locale"));
+
+  return (toFile ? toFile:null);
 }
 
 function installBookmarkFile(aFile) {
   if (!aFile.leafName.match(XSBOOKMARKEXT)) return {reset:NORESET, success:false, remove:true};
   if (!BMDS) BMDS = initBMServices();
   if (!BookmarkFuns.importBMFile(aFile, false, true)) return {reset:NORESET, success:false, remove:true};
+  GotoBookmarkFile = aFile;
   return {reset:NORESET, success:true, remove:true};
 }
 
@@ -545,14 +555,14 @@ jsdump("Installing File:" + aEntry);
   //Try and copy this file to destination...
   switch (type) {
   case AUDIO:
-    var fileInfo = decodeAudioFileName(aEntry);
-    if (!fileInfo) return {reset:NORESET, success:false, remove:true};
-    inflated.initWithPath(getSpecialDirectory("xsAudio").path + "\\" + fileInfo.name + "\\" + fileInfo.book + "\\" + fileInfo.chapter + "." + fileInfo.ext);
+    inflated = getAudioDestination(AudioDestination, aEntry);
+    if (!inflated) return {reset:NORESET, success:false, remove:true};
+    if (!inflated.leafName.match(AUDIOEXT)) return {reset:NORESET, success:true, remove:true};
     break;
     
   case MODSD:
     var conf = getConfInfo(aZip, aEntry, zReader);
-    inflated.initWithPath(getSpecialDirectory(conf.isCommon ? "xsModsCommon":"xsModsUser").path + "\\" + aEntry.replace("\/", "\\", "g"));
+    inflated.initWithPath(getSpecialDirectory("xsModsUser").path + "\\" + aEntry.replace("\/", "\\", "g"));
     if (inflated.exists() && !PreSword) {
       //Skip writing anything to mods that are currently installed
       if (conf.modPath) {
@@ -572,7 +582,7 @@ jsdump("Installing File:" + aEntry);
     for (var s=0; s<SkipList.length; s++) {if (aEntry.match(SkipList[s], "i")) skip=true;}
     if (skip) return {reset:HARDRESET, success:true, remove:false};
     var dest = "xsModsUser";
-    for (var s=0; s<CommonList.length; s++) {if (aEntry.match(CommonList[s], "i"))dest = "xsModsCommon";}
+//    for (var s=0; s<CommonList.length; s++) {if (aEntry.match(CommonList[s], "i")) dest = "xsModsCommon";}
     inflated.initWithPath(getSpecialDirectory(dest).path + "\\" + aEntry.replace("\/", "\\", "g"));
     break;
 
@@ -591,27 +601,47 @@ jsdump("Installing File:" + aEntry);
   case AUDIOPLUGIN:
     inflated.initWithPath(getSpecialDirectory("xsAudioPI").path + "\\" + entryFileName);
     break;
-    
+
   case FONTS:
     inflated.initWithPath(getSpecialDirectory("xsFonts").path + "\\" + entryFileName);
     break;
+    
   case BOOKMARKS:
     inflated.initWithPath(getSpecialDirectory("xsBookmarks").path + "\\" + entryFileName);
+    if (!inflated.leafName.match(XSBOOKMARKEXT)) return {reset:NORESET, success:true, remove:true};
+    break;
+    
+  case VIDEO:
+    inflated.initWithPath(getSpecialDirectory("xsVideo").path + aEntry.replace(/^[^\\\/]+/, "").replace("/", "\\", "g"));
+    if (!inflated.leafName.match(XSVIDEOEXT) && !inflated.leafName.match(/\.txt$/i)) return {reset:NORESET, success:true, remove:true};
     break;
     
   default:
     jsdump("WARNING: Unknown type \"" + type + "\" in " + aZip.leafName);
     return {reset:NORESET, success:false, remove:true};
   }
-  
-  if (inflated.exists()) {
-    try {inflated.remove(true);} catch (er) {return {reset:HARDRESET, success:false, remove:false};}
+
+  var overwriting = inflated.exists();
+  if (overwriting) {
+    try {inflated.remove(false);}
+    catch (er) {
+      jsdump("Could not remove pre-existing ZIP entry destination " + inflated.path + ". " + er);
+      return {reset:HARDRESET, success:false, remove:false};
+    }
   }
-  inflated.create(inflated.NORMAL_FILE_TYPE, 0777);
+  
+  try {inflated.create(inflated.NORMAL_FILE_TYPE, 0777);}
+  catch (er) {
+    //don't log this because it commonly happens when parent dir was just deleted and is not ready to receive children. HARDRESET takes care if this...
+    //jsdump("Could not create empty target file: " + inflated.path + ". " + er);
+    return {reset:HARDRESET, success:true, remove:false};
+  }
+  
   zReader.open(aZip);
   try {zReader.extract(aEntry, inflated);}
   catch (er) {
     zReader.close(aZip);
+    jsdump("Could not extract from zip to target file: " + inflated.path + ". " + er);
     return {reset:HARDRESET, success:false, remove:false};
   }
   zReader.close(aZip);
@@ -620,13 +650,10 @@ jsdump("Installing File:" + aEntry);
   switch (type) {
   case MODSD:
     // delete existing appDir module if it exists
-    var modName = removeModuleContents(inflated);
-    if (!modName) {
-      jsdump("Could not remove module contents " + modName + ".\n");
-      return {reset:NORESET, success:false, remove:true};    
-    }
-    else NewModules = pushIf(NewModules, modName);
-    return {reset:(PreSword ? NORESET:SOFTRESET), success:true, remove:true}; 
+    if (overwriting) var success = removeModuleContents(inflated).success;
+    else success = true;
+    NewModules = pushIf(NewModules, conf.modName);
+    return {reset:(PreSword ? NORESET:SOFTRESET), success:success, remove:true};
     break;
     
   case CHROME:
@@ -639,7 +666,11 @@ jsdump("Installing File:" + aEntry);
     break;
     
   case AUDIO:
-    GotoFile = inflated;
+    GotoAudioFile = inflated;
+    break;
+    
+  case VIDEO:
+    GotoVideoFile = inflated;
     break;
     
   case AUDIOPLUGIN:
@@ -659,7 +690,7 @@ jsdump("Installing File:" + aEntry);
       return {reset:NORESET, success:false, remove:true};
     }
     inflated.remove(false);
-    GotoFile = inflated;
+    GotoBookmarkFile = inflated;
     break;
   }
   
@@ -674,13 +705,13 @@ function finishAndHandleReset() {
 
 // use after soft-reset (must be run in xulsword.xul scope)
 function finishAndWriteManifest() {
-  finish();
+  finish(true);
   writeManifest();
 }
 
 // use after hard-reset
 function finishAndStartXulsword() {
-  finish();
+  finish(true);
   writeManifest();
   installCommandLineModules();
 }
@@ -692,22 +723,23 @@ function finishAndStartXulSword2() {
   endInstall();
 }
 
-function finish() {
+function finish(isFinalPass) {
   if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
   if (ProgressMeter) window.setTimeout("ProgressMeter.close();", 100);
   if (NewPlugin) {
     window.setTimeout("checkQuickTime(false);", 1000);
     NewPlugin = false;
   }
-  if (ResetNeeded>NORESET) saveArraysToPrefs();
-
-  if (!PreSword) initAudioDirs();
+  if (GotoAudioFile) audioDirPref(AudioDestination);
+  if (!isFinalPass && ResetNeeded>NORESET) saveArraysToPrefs();
 
   if (Success && ResetNeeded==NORESET) jsdump("ALL FILES WERE SUCCESSFULLY INSTALLED!");
   else if (!Success) {
     jsdump("THERE WERE ERRORS DURING INSTALL!");
     Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
   }
+
+  if (isFinalPass && ResetNeeded != NORESET) jsdump("INSTALL DID NOT COMPLETE- RESET CODE: " + ResetNeeded);
   ModuleCopyMutex=false;
 }
 
@@ -720,37 +752,26 @@ function handleResetRequest() {
   case NORESET: // program continues running and needs no reload or restart
     if (PreSword) writeManifest(NewLocales, NewModules, NewFonts, true);
     else {
-      if (!MainWindow.Bible || !MainWindow.Tabs.length) {
+      if (!MainWindow || !MainWindow.Bible || !MainWindow.Tabs.length) {
         restartApplication(false);
         break;
       }
-      //NOTE: In this case a manafest file for new mods etc. will not be written!
-      if (GotoFile) {
-        if (GotoFile.leafName.match(AUDIOEXT)) {
-          var fileInfo = decodeAudioFileName(GotoFile.path);
-          fileInfo.chapter = String(Number(fileInfo.chapter)); // strip off leading 0s
-          var aBibleVers=null;
-          if (Tab[fileInfo.name.toUpperCase()]) aBibleVers=fileInfo.name.toUpperCase();
-          else {
-            var mods = MainWindow.getModsWithConfigEntry("AudioCode", fileInfo.name, true, true);
-            if (mods[0]) aBibleVers = mods[0];
-            else {
-              mods = MainWindow.getModsWithConfigEntry("Lang", fileInfo.name, true, true);
-              if (mods[0]) aBibleVers = mods[0];
-            }
-          }
-          if (aBibleVers) MainWindow.gotoLink(encodeUTF8(fileInfo.book + "." + fileInfo.chapter + ".1"), aBibleVers);
-          else {MainWindow.updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);}
-        }
-        else if (GotoFile.leafName.match(XSBOOKMARKEXT)) {
-          MainWindow.focus();
-          MainWindow.setTimeout("document.getElementById('menu_BookmarksPopup').showPopup();", 500);
-        }
+      //NOTE: In this case a manifest file for new mods etc. will not be written!
+      if (GotoVideoFile) MainWindow.createHelpVideoMenu();
+      if (GotoBookmarkFile) {
+        MainWindow.focus();
+        MainWindow.setTimeout("document.getElementById('menu_BookmarksPopup').showPopup();", 500);
       }
+      if (GotoAudioFile) {
+        var info = decodeAudioFileName(GotoAudioFile.path);
+        var modsUsingAudio = getModsUsingAudioCode(info.basecode);
+      }
+      if (modsUsingAudio && modsUsingAudio[0]) MainWindow.gotoLink(encodeUTF8(info.book + "." + info.chapter + ".1"), modsUsingAudio[0]);
       else {MainWindow.updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);}
     }
     break;
   case SOFTRESET: // program needs to reload all SWORD modules
+    jsdump("Initiating SOFTRESET");
     if (window.name == "main-window") window.setTimeout("windowLocationReload();", 500);
     else {
       WillRestart = true;
@@ -758,6 +779,7 @@ function handleResetRequest() {
     }
     break;
   case HARDRESET: // program needs to quite and restart from nothing
+    jsdump("Initiating HARDRESET");
     WillRestart = true;
     window.setTimeout("restartApplication();", 500);
     break;
@@ -777,7 +799,7 @@ function writeManifest(newLocales, newModules, newFonts, filesNotWaiting) {
     var pfile = getSpecialDirectory("xsResD");
     pfile.append(NEWINSTALLFILE);
     if (pfile.exists()) {
-      try {pfile.remove(false);} catch (er) {jsdump("Could not delete " + pfile.path + ".\n");}
+      try {pfile.remove(false);} catch (er) {jsdump("Could not delete " + pfile.path + ". " + er);}
     }
     
     var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
@@ -789,7 +811,7 @@ function writeManifest(newLocales, newModules, newFonts, filesNotWaiting) {
 
 function saveArraysToPrefs() {
   jsdump("PREPARING FOR RESTART...");
-    
+
   var sString = Components.classes["@mozilla.org/supports-string;1"].createInstance(Components.interfaces.nsISupportsString);
   var x=0;
   for (var f=0; f<RegularFiles.length; f++) {
@@ -932,24 +954,31 @@ function pushIf(aArray, elem) {
 
 
 function getConfInfo(aZip, aEntry, zReader) {
-  var ret = {isCommon:true, modPath:null};
+  var ret = {isCommon:false, modPath:null, modName:null};
   var tconf = getSpecialDirectory("TmpD");
+  tconf.append(MODSD);
+  if (!tconf.exists()) tconf.create(tconf.DIRECTORY_TYPE, 0777);
   tconf.append("xulsword.conf");
-  tconf.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0777);
+  tconf.createUnique(tconf.NORMAL_FILE_TYPE, 0777);
   
   zReader.open(aZip);
   try {zReader.extract(aEntry, tconf);}
   catch (er) {}
   zReader.close(aZip);
   
-  ret.modPath = readParamFromConf(tconf, "DataPath");
-  if (!ret.modPath) return ret;
-  ret.modPath = ret.modPath.replace("./", "").replace(/\/[^\/]+$/, "/");
-  ret.isCommon = isConfCommon(tconf);
+  ret.modName = readParamFromConf(tconf, "ModuleName");
+  var re = new RegExp("^.*\/" + MODS, "i");
+  ret.modPath = readParamFromConf(tconf, "DataPath").replace("\\", "/", "g").replace(re, MODS);
+// It is not safe to try and write to both common and user directories, because
+// it is very difficult to tell from a conf file alone what the module directory
+// name is, and without knowing this it is impossible to match incoming module
+// files to their module directory and hence their correct destination (common
+// or user). The only solution is to have only one destination.
+//  ret.isCommon = isConfCommon(tconf);
   tconf.remove(false);
   return ret;
 }
-
+/*
 function isConfCommon(aConf) {
   if (ProgramIsPortable) return false; // install all mods as user if Portable Version
   var data = readParamFromConf(aConf, "Versification");
@@ -958,54 +987,67 @@ function isConfCommon(aConf) {
   if (data !== null && data == "") return false; // encrypted with no key provided
   return true;
 }
-
+*/
 //Audio file name format: name-BookshortName-chapterNumber.extension
 //name can be language abbreviation (ie ru), module (ie RSTE), or AudioCode from module's .conf file
 function decodeAudioFileName(path) {
   var ret = {};
   var savepath = path;
-  path = savepath.replace(/^.*[\\\/]/, ""); // get only leafName
-  path = path.match(/^(.*)\s*-\s*([^-]+)\s*-\s*(\d+)\s*\.(.*)$/);
+  path = savepath.match(/^(.*)[\\\/](.*)\s*-\s*([^-]+)\s*-\s*(\d+)\s*\.(.*)$/);
   if (path) {
-    ret.name =      path[1];
-    ret.book =      path[2];
-    ret.chapter =   padChapterNum(path[3]);
-    ret.ext =       path[4];
+    ret.type =      AUDIOFILEXSM;
+    ret.dir =       path[1];
+    ret.basecode =  path[2];
+    ret.book =      path[3];
+    ret.chapter =   padChapterNum(path[4]);
+    ret.ext =       path[5];
     AUDEXT
     for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(AUDEXT[e], "i")!=-1) break;}
-    if (e==AUDEXT.length) return null;
-    if (!validateChapter(ret.book, ret.chapter)) return null;
+    if (e==AUDEXT.length) {jsdump("A: Bad audio ext:" + ret.ext); return null;}
+    if (!validateChapter(ret.book, ret.chapter)) {jsdump("A: Bad book/chapter:" + ret.book + ", " + ret.chapter); return null;}
     return ret;
   }
   
   // If this is exported audio file, return correct info
-  path = savepath.match(/([^\\\/]+)[\\\/]\d+\s*-\s*([^\\\/]+)[\\\/](\d+)\s*-\s*[^\.]+\.([^\.]+)$/);
+  path = savepath.match(/^(.*)[\\\/]([^\\\/]+)[\\\/]\d+\s*-\s*([^\\\/]+)[\\\/](\d+)\s*-\s*[^\.]+\.([^\.]+)$/);
   if (path) {
-    ret.name =      path[1];
-    try {ret.book = identifyBook(path[2]);} catch (er) {return null;} // This try is needed because identifyBook may be undefined during init
-    if (ret.book && ret.book.shortName) ret.book = ret.book.shortName;
-    else return null;
-    ret.chapter =   padChapterNum(path[3]);
-    ret.ext =       path[4];
+    ret.type =      AUDIOFILELOC;
+    ret.dir =       path[1];
+    ret.basecode =  path[2];
+    var inloc;
+    var np = ret.basecode.match(/^(.*)_(.*)$/); // get locale designation
+    if (np) {
+      ret.basecode = np[1];
+      inloc = np[2];
+    }
+    try {var bkinfo = identifyBook(path[3]);} catch (er) {jsdump("B: Cannot use identifyBook in pre-Sword:" + path[3]); return null;} // This try is needed because identifyBook may be undefined during init
+    if (!bkinfo || !bkinfo.shortName) {jsdump("B: Could not identify book:" + path[3]); return null;}
+    ret.book = bkinfo.shortName;
+    ret.locale = (inloc ? inloc:bkinfo.locale);
+    ret.chapter =   padChapterNum(path[4]);
+    ret.ext =       path[5];
     for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(AUDEXT[e], "i")!=-1) break;}
-    if (e==AUDEXT.length) return null;
-    if (!validateChapter(ret.book, ret.chapter)) return null;
+    if (e==AUDEXT.length) {jsdump("B: Bad audio ext:" + ret.ext); return null;}
+    if (!validateChapter(ret.book, ret.chapter)) {jsdump("B: Bad book/chapter:" + ret.book + ", " + ret.chapter); return null;}
     return ret;  
   }
   
   // If this is an internal audio file, return the correct info
-  path = savepath.match(/([^\\\/]+)[\\\/]([^\\\/]+)[\\\/](\d+)\.([^\.]+)$/);
+  path = savepath.match(/^(.*)[\\\/]([^\\\/]+)[\\\/]([^\\\/]+)[\\\/](\d+)\.([^\.]+)$/);
   if (path) {
-    ret.name =      path[1];
-    ret.book =      path[2];
-    ret.chapter =   padChapterNum(path[3]);
-    ret.ext =       path[4];
+    ret.type =      AUDIOFILESIM;
+    ret.dir =       path[1];
+    ret.basecode =  path[2];
+    ret.book =      path[3];
+    ret.chapter =   padChapterNum(path[4]);
+    ret.ext =       path[5];
     for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(AUDEXT[e], "i")!=-1) break;}
-    if (e==AUDEXT.length) return null;
-    if (!validateChapter(ret.book, ret.chapter)) return null;
+    if (e==AUDEXT.length) {jsdump("C: Bad audio ext:" + ret.ext); return null;}
+    if (!validateChapter(ret.book, ret.chapter)) {jsdump("C: Bad book/chapter:" + ret.book + ", " + ret.chapter); return null;}
     return ret;  
   }
   
+  jsdump("Audio path did not match any pattern:" + savepath);
   return null;
 }
 
@@ -1148,8 +1190,8 @@ function deleteFiles(files) {
   var success = true;
   var msg="";
   for (var f=0; f<files.length; f++) {
-    if (files[f].leafName.search(/\.conf$/i)!=-1) success &= (removeModuleContents(files[f]) ? true:false);
-    try {files[f].remove(true);} catch (er) {success=false; msg += "ERROR: Problem deleting \"" + aMod.path + "\"\n"; continue;}
+    if (files[f].leafName.search(/\.conf$/i)!=-1) success &= (removeModuleContents(files[f]).success ? true:false);
+    try {files[f].remove(true);} catch (er) {success=false; msg += "ERROR: Problem deleting \"" + files[f].path + "\ " + er + "\n"; continue;}
   }
   if (success) jsdump("Delete was successful!");
   else {
@@ -1162,31 +1204,78 @@ function deleteFiles(files) {
 // could not be read, or if there is a module which cannot be deleted. Otherwise
 // it returns the module name from the conf file.
 function removeModuleContents(aConfFile) {
-  var pathFromConf = readParamFromConf(aConfFile, "DataPath");
   var modName = readParamFromConf(aConfFile, "ModuleName");
-  if (!pathFromConf || !modName) {
+  if (!modName) {
     jsdump("Could not read conf file: " + aConfFile.path);
-    return null;
+    return {modName:null, success:false};
   }
-    
-  pathFromConf = pathFromConf.replace("/", "\\", "g").replace(/^\.\\/, "").replace(/\\[^\\]*$/, "");
-  var aMod = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  aMod.initWithPath(aConfFile.path.substring(0, aConfFile.path.lastIndexOf("\\" + MODSD)+1) + pathFromConf);
-  if (aMod.path.search(MODS)!=-1 && aMod.exists()) {
-    jsdump("Attempting remove: " + aMod.path);
-    try {aMod.remove(true);} catch (er) {
-      jsdump("Could not remove " + aMod.path);
-      return null;
-    }
-  }
-  else jsdump("No file to remove:" + aMod.path);
-  
   try {prefs.clearUserPref("dontAskAboutSearchIndex" + modName);} catch (er) {}
   try {prefs.clearUserPref("CipherKey" + modName);} catch (er) {}
   try {prefs.clearUserPref("ShowingKey" + modName);} catch (er) {}
-  return modName;
+  
+  var aMod = getSwordModParent(aConfFile, true);
+  if (!aMod || !aMod.parent) {
+    jsdump("Possible problem with DataPath in conf: " + aConfFile.path);
+    return {modName:null, success:false};
+  }
+  aMod = aMod.parent;
+  
+  jsdump("Attempting to remove directory: " + aMod.path);
+  if (aMod && aMod.path.search(MODS)!=-1 && aMod.exists() && aMod.isDirectory()) {
+    try {aMod.remove(true);}
+    catch (er) {
+jsdump("NO CLEAN REMOVE");
+      // Sometimes the remove fails because the dir itself was not removed, even though all the contents were removed. So check for this...
+      if (aMod.exists() && aMod.directoryEntries && aMod.directoryEntries.getNext()) {
+        jsdump("Could not remove directory contents: " + aMod.path + ". " + er);
+        return {modName:modName, success:false};
+      }
+    }
+  }
+  else jsdump("Module directory did not exist: " + aMod.path);
+  
+  return {modName:modName, success:true};
 }
-    
+
+function getSwordModParent(aConfFile, willDelete) {
+  var pathFromConf = readParamFromConf(aConfFile, "DataPath");
+  
+  // SWORD is inconistent with the usage of their critical "DataPath" parameter.
+  // So, unless the DataPath ends with "\", it is uncertain whether the leafName
+  // of the DataPath is intended to represent a directory or a set of files. So,
+  // if DataPath does not end with "\", look for any files matching the DataPath
+  // param (as in DataPath.*) and if matching files are found, remove their
+  // parent directory. Otherwise, assume DataPath is a directory and remove only it.
+  
+  var aMod;
+  pathFromConf = pathFromConf.replace("/", "\\", "g").replace(/^\.\\/, "");
+  var modulePath = aConfFile.path.substring(0, aConfFile.path.lastIndexOf("\\" + MODSD)+1) + pathFromConf;
+  var confLeaf = pathFromConf.match(/\\([^\\]*)\s*$/);
+  if (confLeaf && confLeaf[1]) {
+    var parentPath = modulePath.replace(/\\[^\\]*$/, "");
+    var p = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+    p.initWithPath(parentPath);
+    if (p.exists() && p.isDirectory()) {
+      var mfile = new RegExp(confLeaf[1] + "\\.[^\\\\]+$");
+      var files = p.directoryEntries;
+      while (files && files.hasMoreElements()) {
+        var aFile = files.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+        if (!aFile) continue;
+        if (aFile.isDirectory()) continue;
+        if (!aFile.leafName.match(mfile)) continue;
+        if (willDelete) aFile.remove(false); // otherwise, existence of this file object causes a runtime error when deleting parent directory below.
+        aMod = p;
+      }
+    }
+  }
+  if (!aMod) {
+    modulePath = modulePath.replace(/\\\s*$/, ""); // not sure if this is needed or not
+    aMod = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+    try {aMod.initWithPath(modulePath);} catch (er) {return {pathFromConf:pathFromConf, parent:null};}
+  }
+  
+  return {pathFromConf:pathFromConf, parent:aMod};
+}
     
  
 
@@ -1215,7 +1304,7 @@ var fileObserver = {
       files.push(transferData.dataList[i].first.data)
     }
     ModuleCopyMutex=true; //insures other module functions are blocked during this operation
-    if (!installModuleArray(files)) ModuleCopyMutex=false;
+    if (!installModuleArray(false, false, false, finishAndHandleReset, files)) ModuleCopyMutex=false;
   },
   
   onDragOver : function (event, flavour, session) {},
@@ -1238,9 +1327,9 @@ jsdump("STARTING moduleInstall, isMainWindow:" + isMainWindow);
   // Install any files waiting from a previous install!
   if (result.filesWaiting) {
     if (isMainWindow)
-      startImport(finishAndWriteManifest, true, true, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts, false);
+      startImport(true, true, false, finishAndWriteManifest, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts);
     else
-      startImport(finishAndStartXulsword, false, true, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts, false);
+      startImport(false, true, false, finishAndStartXulsword, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts);
   }
   else if (result.haveNew) {
     writeManifest(result.newLocales, result.newModules, result.newFonts, true);
@@ -1252,34 +1341,66 @@ jsdump("STARTING moduleInstall, isMainWindow:" + isMainWindow);
 
 function installCommandLineModules() {
   var files = [];
-  prefFileArray(files, "xsModule", XSMODULEEXT);
-  prefFileArray(files, "xsBookmark", XSBOOKMARKEXT);
-  prefFileArray(files, "xsAudio", "directory");
-  if (files.length) installModuleArray(files, true, false, finishAndStartXulSword2);
-  else endInstall();
+  var mods = prefFileArray(files, "xsModule", XSMODULEEXT);
+  var bms = prefFileArray(files, "xsBookmark", XSBOOKMARKEXT);
+  var audio = prefFileArray(files, "xsAudio", "directory");
+  var toFile;
+  if (audio.haveFiles) {
+    var audioPath = [];
+    var audiop = prefFileArray(audioPath, "xsAudioPath", "directory", true);
+    if (audiop.haveFiles) toFile = audioPath[0];
+    if (toFile && !toFile.exists()) {
+      try {toFile.create(toFile.DIRECTORY_TYPE, 0777);} catch (er) {toFile = null;}
+    }
+  }
+    
+  if (files.length) {
+    if (audio.haveFiles) {
+      if (!toFile) toFile = importAudioTo();
+      if (toFile && toFile.diskSpaceAvailable < audio.size) {
+        diskSpaceMessage(audio.leafNames);
+        toFile = null;
+      }
+      if (!toFile) {
+        endInstall();
+        return;
+      }
+    }
+    installModuleArray(false, true, (!mods.haveFiles && (bms.haveFiles || audio.haveFiles)), finishAndStartXulSword2, files, toFile);
+    return;
+  }
+
+  endInstall();
 }
 
-function prefFileArray(files, aPref, exts) {
+function prefFileArray(files, aPref, exts, dontCheckExists) {
+  var haveFiles = false;
+  var totalsize = 0;
+  var leafNames = "";
   try {
     var x=0;
     while(true) {
       var file = prefs.getComplexValue(aPref + x, Components.interfaces.nsILocalFile);
       prefs.clearUserPref(aPref + x);
-      if (file && file.exists() && (file.leafName.match(exts) || (file.isDirectory() && exts=="directory"))) {
+      if (file && (dontCheckExists || file.exists()) && (file.leafName.match(exts) || (file.isDirectory() && exts=="directory"))) {
           files.push(file);
+          haveFiles = true;
+          totalsize += getFileSize(file);
+          leafNames += file.leafName + ";";
           jsdump(aPref + x + " = " + file.path);
       }
       x++;
     }
   }
   catch(e) {}
+  return {haveFiles:haveFiles, leafNames:leafNames, size:totalsize};
 }
 
 function restartApplication(promptBefore) {
   if (promptBefore) {
     var result = {};
     var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-      SBundle.getString("Title"), 
+      fixWindowTitle(SBundle.getString("Title")),
       SBundle.getString("RestartMsg"), 
       DLGINFO,
       DLGOK);

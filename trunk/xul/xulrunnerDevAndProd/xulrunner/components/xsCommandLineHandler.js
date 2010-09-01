@@ -47,8 +47,10 @@ function saveFileArgs(arg, cmdLine, prefs) {
     while (filestr) {
       var file = cmdLine.resolveFile(filestr);
       file = file.QueryInterface(Components.interfaces.nsILocalFile);
-      if (file) prefs.setComplexValue(arg + x, Components.interfaces.nsILocalFile, file);
-      x++;
+      if (file) {
+        prefs.setComplexValue(arg + x, Components.interfaces.nsILocalFile, file);
+        x++;
+      }
       filestr = cmdLine.handleFlagWithParam(arg, false);
     }
   }
@@ -84,6 +86,7 @@ const myAppHandler = {
     saveFileArgs("xsModule", cmdLine, prefs);
     saveFileArgs("xsBookmark", cmdLine, prefs);
     saveFileArgs("xsAudio", cmdLine, prefs);
+    saveFileArgs("xsAudioPath", cmdLine, prefs);
 
     if (cmdLine.handleFlag("xsInstallOnly", false)) prefs.setBoolPref("xsInstallOnly", true);
 
@@ -91,7 +94,8 @@ const myAppHandler = {
 
   helpInfo : "  -xsModule <path>     Install a xulSword module\n" +
              "  -xsBookmark <path>   Install bookmark from file\n" +
-             "  -xsAudio <path>      Install audio from directory\n" +
+             "  -xsAudio <path>      Install audio from this directory\n" +
+             "  -xsAudioPath         Install audio to this directory\n" +
              "  -xsInstallOnly       Don't open xulSword\n",
 
   /* nsIFactory */

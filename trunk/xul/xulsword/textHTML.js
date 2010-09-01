@@ -23,6 +23,7 @@ const HTMLbr0 = "<div style=\"clear: both;\"><br></div>";
 function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduction, showOriginal) {
   var myVersionsLocale = getLocaleOfVersion(version);
   var myVersionsBundle = myVersionsLocale ? getLocaleBundle(myVersionsLocale, "books.properties"):getCurrentLocaleBundle("books.properties");
+  if (!myVersionsBundle) myVersionsBundle = getCurrentLocaleBundle("books.properties");
   var myConfig = myVersionsLocale ? LocaleConfigs[myVersionsLocale]:LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
   
   var chapterHeadingFloat = ((myConfig && myConfig.direction && myConfig.direction=="rtl") ? "right":"left");
@@ -78,17 +79,6 @@ function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduct
   
   mtext += HTMLbr;
   return mtext;
-}
-
-function getLocalizedChapterTerm(shortBookName, chapternumber, bookbundle) {
-  var chapTerm;
-  var bnum = findBookNum(shortBookName);
-  if (shortBookName=="Ps") {
-    try {chapTerm = bookbundle.formatStringFromName("PsalmTerm",[chapternumber],1);} 
-    catch (er) {chapTerm=null;}
-  }
-  if (!chapTerm) chapTerm = bookbundle.formatStringFromName("Chaptext",[chapternumber],1);
-  return chapTerm;
 }
 
 function insertUserNotes(aBook, aChapter, aModule, text) {

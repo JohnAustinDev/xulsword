@@ -176,9 +176,6 @@ function loadedXULReal() {
   window.controllers.appendController(XulswordController);
   window.controllers.appendController(BookmarksMenuController);
 
-  //Initialize audio directories and related menu items
-  initAudioDirs();
-
   //Initialize global options buttons and checkboxes
   if (!Bible || !HaveValidLocale || !Tabs.length) {
     hideGUI();
@@ -341,7 +338,7 @@ function postWindowInit() {
     var lamenu = document.getElementById("menu.options.language").childNodes[0].nodeValue;
     var result={};
     var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-        document.getElementById("menu.options.language").childNodes[0].nodeValue,
+        fixWindowTitle(document.getElementById("menu.options.language").childNodes[0].nodeValue),
         SBundle.getFormattedString("LangSelectMsg", [opmenu, lamenu]), 
         DLGINFO,
         DLGOK);
@@ -359,6 +356,8 @@ function postWindowInit() {
     menu.removeAttribute("hidden");
     document.getElementById("emailus-sep").removeAttribute("hidden");
   }
+  
+  createHelpVideoMenu();
 }
 
 function useFirstAvailableBookIf() {
@@ -456,7 +455,7 @@ function errorHandler(error) {
   }
   var result={};
   var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-      SBundle.getString("Title"), 
+      fixWindowTitle(SBundle.getString("Title")),
       error, 
       DLGALERT,
       DLGOK);
@@ -588,6 +587,129 @@ function localeElemSort(a,b) {
   return 0;
 }
 
+function writeLocaleElem(elem, lc, id, noAccessKey) {
+  var myID = LocaleList[lc];
+  if (id) myID = id + "." + myID;
+  // The following has been removed in v2.12 because it was deemed better to
+  // always have each language menu item appear in it's language/font/etc. There
+  // is no reason to translate language items since if the user cannot read
+  // the label he/she should certainly not switch the program into that language.
+  // Plus, if a user does open the program in a language he/she doesn't know and
+  // opens the language menu, the language items would also not be understood.
+  // So, it is far better if the user can see each item in its own language!
+  /*
+  try {
+    var myLabel = SBundle.getString(LocaleList[lc] + "LanguageMenuLabel");
+    var myAccKey = SBundle.getString(LocaleList[lc] + "LanguageMenuAccKey");
+    var myLocale = rootprefs.getCharPref("general.useragent.locale");
+  }
+  catch (er) {
+    var bundle = getLocaleBundle(LocaleList[lc], "xulsword.properties");
+    if (!bundle) return null;
+    myLabel = bundle.GetStringFromName("LanguageMenuLabel");
+    myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");
+    myLocale = LocaleList[lc];
+  }
+  */
+
+  var bundle = getLocaleBundle(LocaleList[lc], "xulsword.properties");
+  if (!bundle) return null;
+  var myLabel = bundle.GetStringFromName("LanguageMenuLabel");
+  var myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");
+  var myLocale = LocaleList[lc];
+
+  elem.setAttribute("label", myLabel);
+  if (!noAccessKey) elem.setAttribute("accesskey", myAccKey);
+  elem.setAttribute("id", myID);
+  if (LocaleConfigs[myLocale]) addConfigStyleToElem(LocaleConfigs[myLocale], elem, myLabel);
+  return elem;
+}
+
+
+var AllVideos = [];
+function createHelpVideoMenu() {
+  var olditems = [];
+  var olditem = document.getElementById("help-popup").firstChild;
+  while (olditem && olditem.id && olditem.id != "help-popup-sep1") {
+    olditems.push(olditem);
+    olditem = olditem.nextSibling;
+  }
+  while(olditems.length) {
+    olditems[0].parentNode.removeChild(olditems[0]);
+    olditems.shift();
+  }
+  while(AllVideos.length) {AllVideos.shift();}
+
+
+  if (!readVideos(AllVideos)) {
+    document.getElementById("help-popup-sep1").setAttribute("hidden", "true");
+    return;
+  }
+  
+  document.getElementById("help-popup-sep1").removeAttribute("hidden");
+  for (var v=0; v<AllVideos.length; v++) {
+    if (!AllVideos[v].type || AllVideos[v].type != "help" || !AllVideos[v].file.leafName.match(XSVIDEOEXT)) continue;
+    var xulElement = document.createElement("menuitem");
+    xulElement = writeHelpVideoElem(xulElement, AllVideos[v]);
+    document.getElementById("help-popup").insertBefore(xulElement, document.getElementById("help-popup-sep1"));
+  }
+}
+
+function readVideos(vArray) {
+  var vdirs = [getSpecialDirectory("xsVideo_progd"), getSpecialDirectory("xsVideo")];
+  for (var i=0; i<vdirs.length; i++) {
+    if (!vdirs[i].exists()) continue;
+    getVideosInDir(vdirs[i], vArray, null, null);
+  }
+  return vArray.length;
+}
+
+function getVideosInDir(dir, vArray, type, locale) {
+  if (!dir || !dir.isDirectory() || !dir.directoryEntries) return;
+  var subs = dir.directoryEntries;
+  while (subs && subs.hasMoreElements()) {
+    var v = subs.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+    if (!v) continue;
+    if (v.isDirectory()) getVideosInDir(v, vArray, (!type ? v.leafName:type), (type && !locale ? v.leafName:null));
+    if (!v.leafName.match(XSVIDEOEXT)) continue;
+    else {
+      var obj = {file:v, type:type, locale:locale, label:getLabelOfVideo(v), index:vArray.length, id:"video.help." + vArray.length};
+      vArray.push(obj);
+    }
+  }
+}
+
+var VideoInfoFiles = {};
+function getLabelOfVideo(file) {
+  var info = file.parent.clone();
+  info.append(file.leafName.replace(/\d\d\..*$/, "00.txt"));
+  if (!VideoInfoFiles[info.leafName]) VideoInfoFiles[info.leafName] = readFile(info);
+  if (!VideoInfoFiles[info.leafName]) return file.leafName;
+  var labels = VideoInfoFiles[info.leafName];
+  var re = new RegExp("^\\s*" + escapeRE(file.leafName) + "\\s*=\\s*(.*)\\s*$", "im");
+  var label = labels.match(re);
+  return (label ? label[1]:file.leafName);
+}
+
+function writeHelpVideoElem(elem, v) {
+  elem.setAttribute("id", v.id);
+  elem.setAttribute("label", v.label);
+  elem.setAttribute("oncommand", "AllVideos[" + v.index + "].file.launch()");
+  elem.setAttribute("class", "menuitem-iconic videoHelpMenuItem");
+  var localeConfig = (!v.locale || !LocaleConfigs[v.locale] ? LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")]:LocaleConfigs[v.locale]);
+  if (localeConfig) addConfigStyleToElem(localeConfig, elem, v.label);
+  return elem;
+}
+
+function addConfigStyleToElem(config, elem, label) {
+  var myfont = (config && config.font && (!label || !isASCII(label)) ? config.font:DefaultFont);
+  var myfontSizeAdjust = (config && config.fontSizeAdjust && (!label || !isASCII(label)) ? config.fontSizeAdjust:DefaultFontSizeAdjust);
+  var mylineHeight = (config && config.lineHeight ? config.lineHeight:DefaultLocaleLineHeight);
+  elem.style.fontFamily = "\"" + myfont + "\"";
+  elem.style.fontSizeAdjust = myfontSizeAdjust;
+  elem.style.lineHeight = mylineHeight;
+}
+
 function fillModuleMenuLists() {
   var moduleTypeCounts = {}
   for (var t=0; t<Tabs.length; t++) {
@@ -628,50 +750,6 @@ function fillModuleMenuLists() {
   }
 }
 
-function writeLocaleElem(elem, lc, id, noAccessKey) {
-  var myID = LocaleList[lc];
-  if (id) myID = id + "." + myID;
-  // The following has been removed in v2.12 because it was deemed better to
-  // always have each language menu item appear in it's language/font/etc. There
-  // is no reason to translate language items since if the user cannot read
-  // the label he/she should certainly not switch the program into that language.
-  // Plus, if a user does open the program in a language he/she doesn't know and 
-  // opens the language menu, the language items would also not be understood.
-  // So, it is far better if the user can see each item in its own language! 
-  /*
-  try {
-    var myLabel = SBundle.getString(LocaleList[lc] + "LanguageMenuLabel");
-    var myAccKey = SBundle.getString(LocaleList[lc] + "LanguageMenuAccKey");
-    var myLocale = rootprefs.getCharPref("general.useragent.locale");
-  }
-  catch (er) { 
-    var bundle = getLocaleBundle(LocaleList[lc], "xulsword.properties");
-    if (!bundle) return null;
-    myLabel = bundle.GetStringFromName("LanguageMenuLabel");
-    myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");
-    myLocale = LocaleList[lc];
-  }
-  */
-  
-  var bundle = getLocaleBundle(LocaleList[lc], "xulsword.properties");
-  if (!bundle) return null;
-  var myLabel = bundle.GetStringFromName("LanguageMenuLabel");
-  var myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");
-  var myLocale = LocaleList[lc];
-    
-  elem.setAttribute("label", myLabel);
-  if (!noAccessKey) elem.setAttribute("accesskey", myAccKey);
-  elem.setAttribute("id", myID);
-  var localeConfig = LocaleConfigs[myLocale];
-  var myfont = (localeConfig && localeConfig.font && !isASCII(myLabel) ? localeConfig.font:DefaultFont);
-  var myfontSizeAdjust = (localeConfig && localeConfig.fontSizeAdjust && !isASCII(myLabel) ? localeConfig.fontSizeAdjust:DefaultFontSizeAdjust);
-  var mylineHeight = (localeConfig && localeConfig.lineHeight ? localeConfig.lineHeight:DefaultLocaleLineHeight);
-  elem.style.fontFamily = "\"" + myfont + "\"";
-  elem.style.fontSizeAdjust = myfontSizeAdjust;
-  elem.style.lineHeight = mylineHeight;
-  return elem;
-}
-
 function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefaultFormatting) {
   if (!forceDefaultFormatting) forceDefaultFormatting=false;
   var desc = "";
@@ -706,6 +784,8 @@ function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefa
   
   return elem;
 }
+
+
 /************************************************************************
  * Hot keys...
  ***********************************************************************/  
@@ -1415,11 +1495,11 @@ var XulswordController = {
       break;
     case "cmd_xs_exportAudio":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
-      if (!exportAudio()) ModuleCopyMutex=false;
+      if (!exportAudio(AUDIOFILELOC)) ModuleCopyMutex=false;
       break;
     case "cmd_xs_importAudio":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
-      if (!importAudio()) ModuleCopyMutex=false;
+      if (!importAudio(null, null, false)) ModuleCopyMutex=false;
       break;
     }
   },
@@ -1452,11 +1532,19 @@ var XulswordController = {
       break;
     case "cmd_xs_exportAudio":
       if (ModuleCopyMutex) return false;
-      if (!AudioDirs || !AudioDirs.length) return false;
-      if (AudioDirs.length>1 || AudioRegKeyIndex==-1) return true;
-      var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-      aFile.initWithPath(AudioDirs[AudioRegKeyIndex]);
-      return AudioDirs.length>2 || aFile.exists();
+      var audioDirs = getAudioDirs();
+      if (!audioDirs || !audioDirs.length) return false;
+      for (var i=0; i<audioDirs.length; i++) {
+        if (audioDirs[i].isExportable && audioDirs[i].dir.exists()) {
+          var subs = audioDirs[i].dir.directoryEntries;
+          while (subs && subs.hasMoreElements()) {
+            var sub = subs.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+            if (!sub || !sub.isDirectory() || sub.equals(getSpecialDirectory("xsAudioPI"))) continue;
+            return true;
+          }
+        }
+      }
+      return false;
       break;
     case "cmd_xs_addNewModule":
     case "cmd_xs_removeModule":
@@ -3320,7 +3408,7 @@ function fitPage(fnum, type, p, s, fn, header, footer) {
   f.innerHTML = header + p.text.substring(p.ibeg, p.iend) + footer;
   if (p.imin==-1 || p.imin > p.ibeg) p.imin = p.ibeg;
   if (p.imax==-1 || p.imax < p.iend) p.imax = p.iend;
-  
+
   return true;
 }
 
@@ -3355,7 +3443,7 @@ function appendVerse(f, p, s, fn, header, footer, intend, appendExtraVerse) {
   }
   if (appendExtraVerse) return appendVerse(f, p, s, fn, header, footer, itest, false);
 
-  checkNoteBox(p.imin, itest, p, s, fn);
+  checkNoteBox(p.imax, itest, p, s, fn);
   f.innerHTML = header + p.text.substring(p.ibeg, itest) + footer;
   
   return itest;
@@ -3391,7 +3479,7 @@ function prependVerse(f, p, s, fn, header, footer) {
   var preverse = p.text.lastIndexOf(Vtext1, itest-1);
   if (prevtitle > preverse) itest = prevtitle;
   if (prevchap > preverse) itest = prevchap;
-  checkNoteBox(itest, p.imax, p, s, fn);
+  checkNoteBox(itest, p.imin, p, s, fn);
   f.innerHTML = header + p.text.substring(itest, p.iend) + footer;
   
   return itest;
@@ -4272,7 +4360,7 @@ function saveHTML () {
     file.initWithPath("C:\\");
     file.append("ScriptBox" + i + ".txt");
   
-    if (!file.exists()) {file.create(0,0664);}
+    if (!file.exists()) {file.create(file.NORMAL_FILE_TYPE,0777);}
   
     var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
     foStream.init(file, 0x02 | 0x08 | 0x20, 0664, 0);

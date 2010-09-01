@@ -113,11 +113,12 @@ echo [HKEY_LOCAL_MACHINE\SOFTWARE\%vendor%\%name%] >> setRegistry.reg
 echo "InstallDrive"="%MKO:\=\\%\\toCDROM\\Install\\setup" >> setRegistry.reg
 echo "RunDir"="%MK:\=\\%\\xulrunner" >> setRegistry.reg
 echo "AudioDir"="%MKO:\=\\%\\audio" >> setRegistry.reg
+echo "Version"="%version%" >> setRegistry.reg
 echo Windows Registry Editor Version 5.00 > unsetRegistry.reg
 echo [HKEY_LOCAL_MACHINE\SOFTWARE\%vendor%\%name%] >> unsetRegistry.reg
-echo "AudioDir"=- >> unsetRegistry.reg
 echo "InstallDrive"=- >> unsetRegistry.reg
 echo "RunDir"=- >> unsetRegistry.reg
+echo "Version"=- >> unsetRegistry.reg
 
 ECHO --- WRITING REMOVEALLPROFILES.BAT
 cd "%MK%\build\autogen"

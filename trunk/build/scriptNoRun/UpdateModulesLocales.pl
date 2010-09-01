@@ -156,7 +156,7 @@ sub processModuleGroup($@) {
       print OUTF "  CreateDir(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles'));\n";
       print OUTF "  CreateDir(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources'));\n";
       print OUTF "  SaveStringToFile(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\newInstalls.txt'), 'NewLocales;NewModules', False);\n";
-      print OUTF "end\n";
+      print OUTF "end;\n";
       close(OUTF);
     }
 
