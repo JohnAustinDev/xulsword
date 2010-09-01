@@ -36,6 +36,7 @@ var SavedWindowWithFocus;
 var NewModuleInfo;
 var AboutScrollTo;
 var CrossReferences;
+var AudioDirs = null;
 const NOMODULES="0000", NOLOCALES="0001", NEEDRESTART="0002";
 
 function loadedXUL() {
@@ -1532,11 +1533,11 @@ var XulswordController = {
       break;
     case "cmd_xs_exportAudio":
       if (ModuleCopyMutex) return false;
-      var audioDirs = getAudioDirs();
-      if (!audioDirs || !audioDirs.length) return false;
-      for (var i=0; i<audioDirs.length; i++) {
-        if (audioDirs[i].isExportable && audioDirs[i].dir.exists()) {
-          var subs = audioDirs[i].dir.directoryEntries;
+      if (AudioDirs === null) AudioDirs = getAudioDirs();
+      if (!AudioDirs.length) return false;
+      for (var i=0; i<AudioDirs.length; i++) {
+        if (AudioDirs[i].isExportable && AudioDirs[i].dir.exists()) {
+          var subs = AudioDirs[i].dir.directoryEntries;
           while (subs && subs.hasMoreElements()) {
             var sub = subs.getNext().QueryInterface(Components.interfaces.nsILocalFile);
             if (!sub || !sub.isDirectory() || sub.equals(getSpecialDirectory("xsAudioPI"))) continue;
@@ -3004,7 +3005,8 @@ function updateAudioLinks(updateNeededArray, forceHidden) {
     var icons = FrameDocument[w].getElementsByName("listenlink");
     for (var i = 0; i < icons.length; ++i) {
       var icon = icons[i];
-      if (!forceHidden && getAudioForChapter(Win[w].modName, bk, Number(icon.id.split(".")[1]))) icon.style.display = "inline";
+      if (AudioDirs === null) AudioDirs = getAudioDirs();
+      if (!forceHidden && getAudioForChapter(Win[w].modName, bk, Number(icon.id.split(".")[1]), AudioDirs)) icon.style.display = "inline";
       else icon.style.display = "none";
     }
   }

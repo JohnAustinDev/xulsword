@@ -381,6 +381,7 @@ function audioDirPref(aDir) {
   prefs.setComplexValue("AudioImportDir" + n, Components.interfaces.nsILocalFile, aDir);
   n++;
   prefs.setIntPref("NumAudioImportDirs", n);
+  if (MainWindow) MainWindow.AudioDirs = null; // invalidate so that it will be refreshed when next used
 }
 
 function getFileSize(aFile) {
