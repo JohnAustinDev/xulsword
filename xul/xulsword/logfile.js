@@ -82,7 +82,7 @@ var aConsoleListener =
  
         var result={};
         var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-            SBundle.getString("Title"), 
+            fixWindowTitle(SBundle.getString("Title")),
             SBundle.getFormattedString("SendErrorReport", [bundle1.GetStringFromName("OK")]), 
             DLGALERT,
             DLGOKCANCEL,
@@ -202,7 +202,7 @@ function setConsoleService(addListener) {
 function initLogging() {
   var debugInfo = getSpecialDirectory("ProfD");
   debugInfo.append("consoleLog.txt");
-  if (!debugInfo.exists()) debugInfo.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0644);
+  if (!debugInfo.exists()) debugInfo.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0777);
   var env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
   env.set("XRE_CONSOLE_LOG", debugInfo.path);
     

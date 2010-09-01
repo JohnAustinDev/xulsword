@@ -529,9 +529,8 @@ var BookmarksCommand = {
     
       const kTitle = fixWindowTitle(BookmarksUtils.getLocaleString("SelectImport"));
       kFilePicker.init(window, kTitle, kFilePickerIID["modeOpen"]);
-      kFilePicker.appendFilters(kFilePickerIID.filterText | kFilePickerIID.filterAll);
-      kFilePicker.defaultString = "exported bookmarks.txt";
-      kFilePicker.defaultExtension = "txt";
+      kFilePicker.appendFilter("XSB, TXT", "*.xsb; *.txt");
+      kFilePicker.defaultExtension = "xsb";
       var fileName;
       if (kFilePicker.show() != kFilePickerIID.returnCancel) {
         fileName = kFilePicker.file.path;
@@ -555,9 +554,9 @@ var BookmarksCommand = {
       
       const kTitle = fixWindowTitle(BookmarksUtils.getLocaleString("EnterExport"));
       kFilePicker.init(window, kTitle, kFilePickerIID["modeSave"]);
-      kFilePicker.appendFilters(kFilePickerIID.filterText);
-      kFilePicker.defaultString = "exported bookmarks.txt";
-      kFilePicker.defaultExtension = "txt";
+      kFilePicker.appendFilter("XSB, TXT", "*.xsb; *.txt");
+      kFilePicker.defaultString = "exported bookmarks.xsb";
+      kFilePicker.defaultExtension = "xsb";
       var fileName;
       if (kFilePicker.show() != kFilePickerIID.returnCancel) {
         fileName = kFilePicker.file.path;
@@ -571,7 +570,7 @@ var BookmarksCommand = {
         return;
       file.initWithPath(fileName);
       if (!file.exists()) {
-        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0644);
+        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0777);
       }
     }
     catch (e) {

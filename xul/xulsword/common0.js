@@ -56,7 +56,7 @@ const TYPES = {Texts: "text", Comms: "comm", Dicts: "dict", Genbks: "book"};
 //const WESTERNVS = 1
 //const EASTERNVS = 2;
 const TOOLTIP_LEN=96;
-const MODSD="mods.d", MODS="modules", CHROME="chrome", FONTS="fonts", AUDIO="audio", AUDIOPLUGIN="QuickTime Plugin", BOOKMARKS="bookmarks";
+const MODSD="mods.d", MODS="modules", CHROME="chrome", FONTS="fonts", AUDIO="audio", AUDIOPLUGIN="QuickTime Plugin", BOOKMARKS="bookmarks", VIDEO="video";
 const MANIFEST_EXT=".manifest", CONF_EXT=".conf";
 const SCROLLTYPENONE = 0;         // don't scroll (for links this becomes SCROLLTYPECENTER)
 const SCROLLTYPETOP = 1           // scroll to top
@@ -125,7 +125,7 @@ function readParamFromConf(nsIFileConf, param) {
     if (retval) retval = retval[1];
   }
   else {
-    prm = new RegExp("\s*" + escapeRE(param) + "\s*=\s*(.*?)\s*?[\r\n]", "im");
+    prm = new RegExp("\\s*" + escapeRE(param) + "\\s*=\\s*(.*?)\\s*?[\\r\\n]", "im");
     retval = filedata.match(prm);
     if (retval) retval = retval[1];
   }
@@ -174,10 +174,18 @@ function getSpecialDirectory(name) {
     case "xsBookmarks":
       dir.append(BOOKMARKS);
       break;
+    case "xsVideo":
+      dir.append(VIDEO);
+      break;
     case "xsModsCommon":
       var userAppPath = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment).get("APPDATA");
       userAppPath += "\\Sword";
       dir.initWithPath(userAppPath);
+      break;
+    case "xsVideo_progd":
+      dir = directoryService.get("resource:app", Components.interfaces.nsIFile);
+      dir.append(VIDEO);
+      dir = dir.QueryInterface(Components.interfaces.nsILocalFile);
       break;
     case "xsResD":
     case "xsModsUser":
@@ -253,6 +261,72 @@ function getPrefOrCreate(prefName, prefType, defaultValue) {
     }
   }
   return prefVal;
+}
+
+/************************************************************************
+ * Locale Functions
+ ***********************************************************************/
+
+// THERE MAY BE A BETTER WAY TO IMPLEMENT THIS IMPORTANT FUNCTION!!!!
+function getLocaleBundle(locale, file) {
+  var bundle;
+  var saveLocale = rootprefs.getCharPref("general.useragent.locale");
+  rootprefs.setCharPref("general.useragent.locale", locale);
+  var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
+  try {bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/" + file);}
+  catch (er) {bundle=null;}
+  try {bundle.GetStringFromName("dummy");} catch (er) {} //CLUDGE to get bundle initialized before locale changes!
+  rootprefs.setCharPref("general.useragent.locale", saveLocale);
+  return bundle;
+}
+
+function getCurrentLocaleBundle(file) {
+  var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
+  try {var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/" + file);}
+  catch (er) {bundle=null;}
+  return bundle;
+}
+
+// This function is needed because window titles are NOT Unicode and so must fit into the operating system's code-page
+function fixWindowTitle(title) {
+  if (!title) return "";
+
+  // Uzbek chars
+  title = title.replace(String.fromCharCode(1202),String.fromCharCode(1061),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1203),String.fromCharCode(1093),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1178),String.fromCharCode(1050),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1179),String.fromCharCode(1082),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1170),String.fromCharCode(1043),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1171),String.fromCharCode(1075),"gm"); //? to ?
+
+  // Kyrgyz chars
+  title = title.replace(String.fromCharCode(2626),String.fromCharCode(205),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(2627),String.fromCharCode(237),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1198),"Y","gm"); //? to ?
+  title = title.replace(String.fromCharCode(1199),"v","gm"); //? to ?
+  title = title.replace(String.fromCharCode(1256),String.fromCharCode(206),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1257),String.fromCharCode(238),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1186),String.fromCharCode(1053),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1187),String.fromCharCode(1085),"gm"); //? to ?
+
+  // remove Unicode directional chars
+  title = title.replace(String.fromCharCode(8207), "", "gm");
+  title = title.replace(String.fromCharCode(8206), "", "gm");
+
+  // The ? chars seem to be in the 1251 code page and so aren't included
+  //title = title.replace(String.fromCharCode(1038),String.fromCharCode(1059),"gm"); //? to ?
+  //title = title.replace(String.fromCharCode(1118),String.fromCharCode(1091),"gm"); //? to ?
+  return title;
+}
+
+function getLocalizedChapterTerm(shortBookName, chapternumber, bookbundle) {
+  var chapTerm;
+  if (shortBookName=="Ps") {
+    try {chapTerm = bookbundle.formatStringFromName("PsalmTerm",[chapternumber],1);}
+    catch (er) {chapTerm=null;}
+  }
+  if (!chapTerm) chapTerm = bookbundle.formatStringFromName("Chaptext",[chapternumber],1);
+  return chapTerm;
 }
 
 function isProgramPortable() {

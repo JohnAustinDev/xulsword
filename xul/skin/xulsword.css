@@ -242,6 +242,10 @@ reference-dropdown[hidebook="true"][hidechapter="true"][hideverse="true"][hidela
   content: "\00D7 ";
 }
 
+.videoHelpMenuItem {
+  list-style-image: url("chrome://xulsword/skin/images/videohelp.png") !important;
+}
+
 /* Drag and Drop feedback */
 /*#bookmarks-menu menu > hbox[align="center"]{
   border-top:1px solid transparent;

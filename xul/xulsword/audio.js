@@ -23,20 +23,35 @@ const QTIMEINS = ["qtlite270.exe", "qtalt.exe"];
 const PLUGINLINKS = ["http://www.ibt.org.ru/russian/bible/info_bible.htm", "http://www.ibt.org.ru/english/bible/info_bible_en.htm", "http://www.apple.com/quicktime/download/"];
 var Player = {};
 Player.volume = 128;
-var AudioDirs;
-var AudioRegKeyIndex;
-var AudioRegMounted;
-//NOTE: All audio dir paths returned by this function must end with backslash.
 // The first audio dir is the user profile's audio dir.
 // For Backward Compatibility, if there is audio in the Program Files install dir, add it.
+// Add any dirs registered in prefs as having audio files
 // Add the audio dir that is that pointed to by the AudioDir registry key.
-function initAudioDirs() {
-  AudioRegKeyIndex=-1;
-  AudioDirs = [];
-  AudioRegMounted=false;
+function getAudioDirs() {
+  var audioDirs = [];
   //Check user profile- THIS SHOULD BE FIRST IN AudioDirs ARRAY
   var resAudio = getSpecialDirectory("xsAudio");
-  if (resAudio.exists() && resAudio.isDirectory() && resAudio.directoryEntries.hasMoreElements()) AudioDirs.push(resAudio.path + "\\");
+  if (resAudio.exists() && resAudio.isDirectory()) {
+    var af = {dir:resAudio, isExportable:true, isInstallDir:false};
+    audioDirs.push(af);
+  }
+  
+  //for Backward Compatibility...
+  resAudio = getSpecialDirectory("resource:app");
+  resAudio.append(AUDIO);
+  if (resAudio.exists() && resAudio.isDirectory()) {
+    af = {dir:resAudio, isExportable:true, isInstallDir:false};
+    audioDirs.push(af);
+  }
+  
+  //Add dirs registered in prefs
+  for (var i=0; i<getPrefOrCreate("NumAudioImportDirs", "Int", 0); i++) {
+    var resPref = prefs.getComplexValue("AudioImportDir" + i, Components.interfaces.nsILocalFile);
+    if (resPref.exists() && resPref.isDirectory()) {
+      af = {dir:resPref, isExportable:false, isInstallDir:false};
+      audioDirs.push(af);
+    }
+  }
   
   //Check AudioDir registry key location
   var path;
@@ -57,22 +72,17 @@ function initAudioDirs() {
     }
     catch (er) {}
   }
-
-  if (!path) jsdump("Could not read audio registry keys: HKLM\\SOFTWARE\\" + appInfo.vendor + "or HKLM\\SOFTWARE\\" + appInfo.vendor + "\\" + appInfo.name + "\n");
-  else {
+  if (path) {
     var regDir = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
     regDir.initWithPath(path);
-    AudioDirs.push(regDir.path + "\\");
-    AudioRegKeyIndex = AudioDirs.length-1;
-    if (regDir.exists()) AudioRegMounted=true;
+    if (regDir.exists() && regDir.isDirectory()) {
+      af = {dir:regDir, isExportable:false, isInstallDir:true};
+      audioDirs.push(af);
+    }
   }
-  
-  //for Backward Compatibility...
-  resAudio = getSpecialDirectory("resource:app");
-  resAudio.append(AUDIO);
-  if (resAudio.exists() && resAudio.isDirectory() && resAudio.directoryEntries.hasMoreElements()) AudioDirs.push(resAudio.path + "\\");
 
-  jsdump("Audio:" + AudioDirs);
+  //for (var i=0; i<audioDirs.length; i++) {jsdump("audioDir[" + i + "]= " + audioDirs[i].dir.path);}
+  return audioDirs;
 }
 
 // Audio files are chosen as follows:
@@ -80,40 +90,57 @@ function initAudioDirs() {
 //    2) If not found, get audio matching the module's "AudioCode" if it exists.
 //    3) If still not found, look for audio matching the module's "Lang".
 //    4) If still not found, there is no audio...
-function getAudioForChapter(version, bookShortName, chapterNumber) {
-  var cn = padChapterNum(chapterNumber);
-
-  var ret = getAudioFile(version, bookShortName, cn);
+function getAudioForChapter(version, bookShortName, chapterNumber, audioDirs) {
+  if (!audioDirs) audioDirs = getAudioDirs();
+  var ret = getAudioFile(version, bookShortName, chapterNumber, audioDirs);
   if (ret) return ret;
     
   var audioCode = Bible.getModuleInformation(version, "AudioCode");
   if (audioCode!=NOTFOUND) {
-    ret = getAudioFile(audioCode, bookShortName, cn);
+    ret = getAudioFile(audioCode, bookShortName, chapterNumber, audioDirs);
     if (ret) return ret;
   }
   
-  ret = getAudioFile(Bible.getModuleInformation(version, "Lang"), bookShortName, cn);
+  ret = getAudioFile(Bible.getModuleInformation(version, "Lang"), bookShortName, chapterNumber, audioDirs);
   if (ret) return ret;
   
   return null;
 }
 
-function getAudioFile(dirName, subFolder, fileName) {
-  var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  for (var d=0; d<AudioDirs.length; d++) {
-    for (var e=0; e<AUDEXT.length; e++) {
-      aFile.initWithPath(AudioDirs[d] + dirName + "\\" + subFolder + "\\" + fileName + "." + AUDEXT[e]);
-      if (aFile.exists()) return aFile;
+function getAudioFile(code, shortName, chapter, audioDirs) {
+  if (!audioDirs) audioDirs = getAudioDirs();
+  var dcode;
+  var dlocale;
+  for (var d=0; d<audioDirs.length; d++) {
+    try {var ok = (audioDirs[d].dir.exists() && audioDirs[d].dir.directoryEntries)} catch (er) {continue;}
+    if (!ok) continue;
+    var files = audioDirs[d].dir.directoryEntries;
+    while (files.hasMoreElements()) {
+      var file = files.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+      if (!file || !file.isDirectory()) continue;
+      var re = new RegExp("^" + code + "(_(.*))?$", "i");
+      var fcode = file.leafName.match(re);
+      if (fcode) {
+        for (var e=0; e<AUDEXT.length; e++) {
+          if (fcode[2]) {
+            var aFile = getLocalizedAudioFile(audioDirs[d].dir, file.leafName.replace(/_.*$/, ""), shortName, chapter, AUDEXT[e], fcode[2]);
+          }
+          else aFile = getThisAudioFile(audioDirs[d].dir, file.leafName.replace(/_.*$/, ""), shortName, chapter, AUDEXT[e]);
+          if (aFile && aFile.exists()) return aFile;
+        }
+      }
     }
   }
   return null;
 }
 
-function getAudioRelatedFile(dirName, fileName) {
-  dirName = (dirName ? dirName + "\\":"");
-  var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  for (var d=0; d<AudioDirs.length; d++) {
-    aFile.initWithPath(AudioDirs[d] + dirName + fileName);
+function getAudioRelatedFile(dirName, fileName, audioDirs) {
+  if (!audioDirs) audioDirs = getAudioDirs();
+  var aFile;
+  for (var d=0; d<audioDirs.length; d++) {
+    aFile = audioDirs[d].file.clone();
+    if (dirName) aFile.append(dirName);
+    aFile.append(fileName);
     if (aFile.exists()) return aFile;
   }
   return null;
@@ -160,7 +187,7 @@ function checkQuickTime(startPlayerAfterInstall) {
       msg += "\n";
       var result = {};
       var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
-          SBundle.getString("Title"),
+          fixWindowTitle(SBundle.getString("Title")),
           msg,
           DLGINFO,
           DLGOK);
@@ -175,7 +202,7 @@ function checkQuickTime(startPlayerAfterInstall) {
     catch (er) {msg = SBundle.getString("QuickTimeUpdateNeeded");} //BACKWARD COMPATIBILITY
     var result = {};
     var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
-        SBundle.getString("Title"),
+        fixWindowTitle(SBundle.getString("Title")),
         SBundle.getString("QuickTimeUpdateNeeded"),
         DLGINFO,
         DLGOK);
@@ -216,7 +243,7 @@ function installQT(installerFile, startPlayerAfterInstall) {
 	
   var result = {};
   var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-      SBundle.getString("Title"), 
+      fixWindowTitle(SBundle.getString("Title")),
       SBundle.getString("Want2InstallQuickTime"), 
       DLGQUEST,
       DLGYESNO);
@@ -273,31 +300,99 @@ function isQTInstallDone() {
 /************************************************************************
  * Audio import functions
  ***********************************************************************/  
-function importAudio() {
-  initAudioDirs();
-  
-  try {
-    const kFilePickerContractID = "@mozilla.org/filepicker;1";
-    const kFilePickerIID = Components.interfaces.nsIFilePicker;
-    const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
-    const kTitle = fixWindowTitle(document.getElementById("menu.importAudio.label").childNodes[0].nodeValue);
-    if (AudioRegKeyIndex!=-1) {
-      var def = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-      def.initWithPath(AudioDirs[AudioRegKeyIndex]);
-      if (def.exists()) {
-        kFilePicker.displayDirectory = def;
-        kFilePicker.defaultString = "Audio";
+function importAudio(fromDir, toDir, doNotCopyFiles) {
+  var audioDirs = getAudioDirs();
+  const kFilePickerContractID = "@mozilla.org/filepicker;1";
+  const kFilePickerIID = Components.interfaces.nsIFilePicker;
+  const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
+  if (!fromDir || doNotCopyFiles) {
+    try {
+      var kTitle = fixWindowTitle(document.getElementById("savingSource").childNodes[0].nodeValue);
+      for (var i=0; i<audioDirs.length; i++) {
+        if (audioDirs[i].isInstallDir && audioDirs[i].dir.exists()) {
+          kFilePicker.displayDirectory = audioDirs[i].dir;
+          kFilePicker.defaultString = "Audio";
+        }
       }
+      kFilePicker.init(window, kTitle, kFilePickerIID.modeGetFolder);
+      kFilePicker.show();
     }
+    catch (e) {}
+    if (kFilePicker.file) fromDir = kFilePicker.file;
+  }
+  
+  if (!toDir) toDir = importAudioTo();
+  if (!toDir) return false;
+  
+  if (fromDir && !doNotCopyFiles) {
+    if (getFileSize(fromDir) > toDir.diskSpaceAvailable) {
+      diskSpaceMessage(fromDir.leafName);
+      return false;
+    }
+    else return installModuleArray(false, false, true, finishAndHandleReset, [fromDir], toDir);
+  }
+
+  // no fromDir or doNotCopyFiles...
+  audioDirPref(toDir); // allow setting of pref without copy
+  MainWindow.updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);
+  return false;
+}
+
+function diskSpaceMessage(fromLeafName) {
+  Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
+  var msg;
+  try {
+    msg = Components.classes["@mozilla.org/intl/stringbundle;1"]
+    .getService(Components.interfaces.nsIStringBundleService)
+    .createBundle("chrome://global/locale/nsWebBrowserPersist.properties")
+    .formatStringFromName("diskFull", [fromLeafName], 1);
+  }
+  catch (er) {msg = "Not enough disk space for this operation.";}
+  var result = {};
+  var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
+      fixWindowTitle(document.getElementById("menu.importAudio.label").childNodes[0].nodeValue),
+      msg,
+      DLGALERT,
+      DLGOK);
+}
+
+function importAudioTo() {
+  const kFilePickerContractID = "@mozilla.org/filepicker;1";
+  const kFilePickerIID = Components.interfaces.nsIFilePicker;
+  const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
+  try {
+    var kTitle = fixWindowTitle(document.getElementById("savingTarget").childNodes[0].nodeValue);
     kFilePicker.init(window, kTitle, kFilePickerIID.modeGetFolder);
     if (kFilePicker.show() == kFilePickerIID.returnCancel) return false;
   }
-  catch (e) {
-    return false;
+  catch (e) {return false;}
+  if (!kFilePicker.file) return false;
+  return kFilePicker.file;
+}
+
+function audioDirPref(aDir) {
+  var audioDirs = getAudioDirs();
+  var n = getPrefOrCreate("NumAudioImportDirs", "Int", 0);
+  aDir = aDir.QueryInterface(Components.interfaces.nsILocalFile);
+  if (aDir.equals(getSpecialDirectory("xsAudio"))) return;
+  for (var i=0; i<audioDirs.length; i++) {if (aDir.equals(audioDirs[i].dir)) return;}
+  // prefs may not be same as audioDirs so check them too...
+  for (i=0; i<n; i++) {if (aDir.equals(prefs.getComplexValue("AudioImportDir" + i, Components.interfaces.nsILocalFile))) return;}
+  prefs.setComplexValue("AudioImportDir" + n, Components.interfaces.nsILocalFile, aDir);
+  n++;
+  prefs.setIntPref("NumAudioImportDirs", n);
+}
+
+function getFileSize(aFile) {
+  var s = 0;
+  aFile = aFile.QueryInterface(Components.interfaces.nsIFile);
+  if (!aFile || !aFile.exists()) return s;
+  if (!aFile.isDirectory()) s = aFile.fileSize;
+  else {
+    var subs = aFile.directoryEntries;
+    while (subs && subs.hasMoreElements()) {s += getFileSize(subs.getNext());}
   }
-  
-  if (!kFilePicker.file) return;
-  return installModuleArray([kFilePicker.file], true);
+  return s;
 }
 
 /************************************************************************
@@ -307,10 +402,10 @@ var Success;
 var Files;
 var Index;
 var ADestFolder;
-var ExportFormat;
+var ExportFileFormat;
 var ExportAnotherFile;
-function exportAudio(toSimpleFormat) {
-  toSimpleFormat = toSimpleFormat ? true:false;
+const AUDIOFILELOC=0, AUDIOFILESIM=1, AUDIOFILEXSM=2;
+function exportAudio(exportFileFormat) {
   try {
     const kFilePickerContractID = "@mozilla.org/filepicker;1";
     const kFilePickerIID = Components.interfaces.nsIFilePicker;
@@ -328,22 +423,22 @@ function exportAudio(toSimpleFormat) {
   Files = [];
   Index = 0;
   ADestFolder = kFilePicker.file.clone();
-  ADestFolder.append(AUDIO);
   if (!ADestFolder.exists()) ADestFolder.create(ADestFolder.DIRECTORY_TYPE, 0777);
-  ExportFormat = toSimpleFormat;
+  ExportFileFormat = exportFileFormat;
   jsdump("Beginnig audio export to: " + kFilePicker.file.path);
-  if (ADestFolder && ADestFolder.isDirectory() && AudioDirs.length) {
-    for (var d=AudioDirs.length-1; d>=0; d--) {
-      var toExport = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-      toExport.initWithPath(AudioDirs[d]);
-      if (!toExport.exists()) continue;
-      exportThisFolder(toExport, ADestFolder);
+  var audioDirs = getAudioDirs();
+  if (ADestFolder && ADestFolder.isDirectory() && audioDirs.length) {
+    for (var d=audioDirs.length-1; d>=0; d--) {
+      if (!audioDirs[d].isExportable || !audioDirs[d].dir.exists() || !audioDirs[d].dir.isDirectory()) continue;
+      exportThisFolder(audioDirs[d].dir, ADestFolder);
     }
   }
   
+  if (!Files || !Files.length) return false;
+  
   var result = {};
   ProgressMeter = window.openDialog("chrome://xulsword/content/workProgress.xul", "work-progress", PMSTD, result, 
-      document.getElementById("menu.exportAudio.label").childNodes[0].nodeValue, 
+      fixWindowTitle(document.getElementById("menu.exportAudio.label").childNodes[0].nodeValue),
       "", 
       PMSTOP,
       stopExport);
@@ -360,15 +455,17 @@ function stopExport() {
 }
   
 function copyFiles() {
-  if (Files[Index]) Success &= exportThisFile(Files[Index], ADestFolder, ExportFormat);
+  if (Files[Index]) Success &= exportThisFile(Files[Index], ADestFolder, ExportFileFormat);
   Index++;
-  if (ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100*(++CountCurrent/CountTotal));
+  try {if (ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100*(++CountCurrent/CountTotal));}
+  catch (er) {}
   if (Index==Files.length) finishExport();
   else ExportAnotherFile = window.setTimeout("copyFiles();", TIMEOUT);
 }
 
 function finishExport() {
   if (!Success) Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
+
   if (ProgressMeter) {
     if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
     window.setTimeout("ProgressMeter.close();", 1000);
@@ -384,8 +481,8 @@ function exportThisFolder(aFolder, aDestFolder) {
     else Files.push(file);
   }
 }
-  
-function exportThisFile(aFile, aDestFolder, toSimpleFormat) {
+
+function exportThisFile(aFile, aDestFolder, localized) {
   var sep = "";
   var re = AUDIO + "\\\\([^\\\\]+)\\\\([^\\\\]+)\\\\(\\d+)\\.(";
   for (var e=0; e<AUDEXT.length; e++) {re += sep + AUDEXT[e]; sep = "|";}
@@ -394,45 +491,100 @@ function exportThisFile(aFile, aDestFolder, toSimpleFormat) {
   var parts = aFile.path.match(re);
   if (!parts) {jsdump("WARNING not copying: " + aFile.path); return true;}
   
-  var name = parts[1];
-  var bookNum = findBookNum(parts[2]);
-  if (bookNum==null) {jsdump("ERORR unknown book: \"" + parts[2] + "\" in " + aFile.path); return false;}
-  var chapter = Number(parts[3]);
-  var ext = parts[4];
-  
-  var bns = ((bookNum+1)<10 ? "0":"") + String(bookNum+1);
-  var cns = padChapterNumForExport(bookNum, chapter);
-
-  var chapTerm = getLocalizedChapterTerm(parts[2], chapter, getCurrentLocaleBundle("books.properties")).replace(/^[\s\d-]*/, "").replace(/[\s\d-]*$/, "");
-  
+  var newFile;
   try {
-    var newParent = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-    if (!toSimpleFormat) {
-      newParent.initWithPath(aDestFolder.path + "\\" + name + "\\" + bns + "-" + Book[bookNum].bNameL);
-      var fileName = cns + "-" + chapTerm + "." + ext;
+    switch(localized) {
+    case AUDIOFILELOC:
+      newFile = getLocalizedAudioFile(aDestFolder, parts[1].toLowerCase(), parts[2], parts[3], parts[4], rootprefs.getCharPref("general.useragent.locale"));
+      break;
+    case AUDIOFILESIM:
+      newFile = getThisAudioFile(aDestFolder, parts[1].toLowerCase(), parts[2], parts[3], parts[4]);
+      break;
+    case AUDIOFILEXSM:
+      newFile = getXSModAudioFile(aDestFolder, parts[1].toLowerCase(), parts[2], parts[3], parts[4]);
+      break;
     }
-    else {
-      newParent.initWithPath(aDestFolder.path + "\\" + name); // + "\\" + bns + "-" + Book[bookNum].bNameL);
-      fileName = name + "-" + parts[2] + "-" + padChapterNumForExport(bookNum, chapter, true) + "." + ext;
-    }
-    if (!newParent.exists()) newParent.create(newParent.DIRECTORY_TYPE, 0777);
-    var newFile = newParent.clone();
-    newFile.append(fileName);
+
+    if (!newFile) {jsdump("Failed to parse audio file name: " + aFile.path); return false;}
+    if (!newFile.parent.exists()) newFile.parent.create(newFile.DIRECTORY_TYPE, 0777);
     if (newFile.exists()) newFile.remove(false);
   }
   catch (er) {sdump("ERROR making parent folder for " + aFile.path); return false;}
   
-  try {aFile.copyTo(newParent, fileName);}
+  try {aFile.copyTo(newFile.parent, newFile.leafName);}
   catch (er) {jsdump("Failed to copy " + aFile.path); return false;}
   return true;
 }
 
-function padChapterNumForExport(bookNum, chapterNumber, atLeast2Digits) {
-  var numChaps = Book[bookNum].numChaps;
+function getLocalizedAudioFile(aDir, basecode, shortName, chapter, ext, locale) {
+  chapter = Number(chapter);
+  var localeBundle = getLocaleBundle(locale, "books.properties");
+  try {var ok = (localeBundle && localeBundle.GetStringFromName("Matt"))} catch (er) {ok=false;}
+  if (!ok) return null;
+  var bnl = Number(localeBundle.GetStringFromName(shortName + "i"));
+  var bns = ((bnl+1)<10 ? "0":"") + String(bnl+1);
+  var cns =  padChapterLocalized(shortName, chapter);
+  try {var lbk = localeBundle.GetStringFromName("Long" + shortName);}
+  catch (er) {lbk = localeBundle.GetStringFromName(shortName);}
+  var chapTerm = getLocalizedChapterTerm(shortName, chapter, localeBundle).replace(/^[\s\d-]*/, "").replace(/[\s\d-]*$/, "");
+  var path = aDir.path + "\\" + basecode + "_" + locale + "\\" + bns + "-" + lbk + "\\" + cns + "-" + chapTerm + "." + ext;
+  var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+  aFile.initWithPath(path);
+  return aFile;
+}
+
+function getThisAudioFile(aDir, code, shortName, chapter, ext) {
+  chapter = Number(chapter);
+  var bn = findBookNumPreMainWin(shortName);
+  if (!bn) return null;
+  var path = aDir.path + "\\" + code + "\\" + shortName + "\\" + padChapterNum(chapter) + "." + ext;
+  var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+  aFile.initWithPath(path);
+  return aFile;
+}
+
+function getXSModAudioFile(aDir, code, shortName, chapter, ext) {
+  chapter = Number(chapter);
+  var bn = findBookNumPreMainWin(shortName);
+  if (!bn) return null;
+  var path = aDir.path + "\\" + code + "\\" + code + "-" + shortName + "-" + padChapterNumForExport(bn, chapter, true) + "." + ext;
+  var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+  aFile.initWithPath(path);
+  return aFile;
+}
+
+function getModsUsingAudioCode(basecode) {
+  var list = [];
+  if (Tab[basecode]) list.push(basecode);
+  else if (Tab[basecode.toUpperCase()]) list.push(basecode.toUpperCase());
+  var matchAudioCode = MainWindow.getModsWithConfigEntry("AudioCode", basecode, true, true);
+  if (matchAudioCode && matchAudioCode[0]) list = list.concat(matchAudioCode);
+  var matchLang = MainWindow.getModsWithConfigEntry("Lang", basecode, true, true);
+  if (matchLang && matchLang[0]) list = list.concat(matchLang);
+  
+  return list;
+}
+
+function padChapterLocalized(shortName, chapterNumber, atLeast2Digits) {
+  const bksFewChaps = ["Ruth", "Song", "Lam", "Joel", "Amos", "Obad", "Jonah", "Mic", "Nah", "Hab", "Zeph", "Hag", "Mal", "Jas", "1Pet", "2Pet", "1John", "2John", "3John", "Jude", "Gal", "Eph", "Phil", "Col", "1Thess", "2Thess", "1Tim", "2Tim", "Titus", "Phlm"];
+
+  var numChaps = 10;
+  if (shortName == "Ps") numChaps = 100;
+  else {for (var i=0; i<bksFewChaps.length; i++) {if (shortName == bksFewChaps[i]) {numChaps = 1; break;}}}
+  
   var cn = "";
   if (numChaps>99 && chapterNumber<=99) cn += "0";
   if (numChaps>9  && chapterNumber<=9)  cn += "0";
   if (numChaps<=9 && chapterNumber<=9 && atLeast2Digits) cn += "0";
   cn += String(chapterNumber);
   return cn;
+}
+
+function findBookNumPreMainWin(shortName) {
+  var bundle = getCurrentLocaleBundle("books.properties");
+  try {var bnum = bundle.GetStringFromName(shortName + "i");}
+  catch (er) {bnum = null;}
+  if (bnum !== null) bnum = Number(bnum);
+
+  return bnum;
 }

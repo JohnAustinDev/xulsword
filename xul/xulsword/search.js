@@ -390,7 +390,7 @@ function searchBible() {
     if (!dontAsk) {
       var result={};
       var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-          SBundle.getString("BuildingIndex"), 
+          fixWindowTitle(SBundle.getString("BuildingIndex")),
           SBundle.getString("NeedSearchIndex"), 
           DLGINFO,
           DLGOK);

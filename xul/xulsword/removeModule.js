@@ -77,7 +77,6 @@ function onLoad() {
           if (!adir.isDirectory()) continue;
           if (adir.leafName == AUDIOPLUGIN) continue;
           var cb = document.createElement("checkbox");
-          cb.style.MozMarginEnd = "8px";
           cb.setAttribute("id", adir.leafName);
           cb.style.MozMarginEnd = "0px";
           checkBoxes.push(cb);
@@ -110,8 +109,6 @@ function onLoad() {
           parent.appendChild(checkBoxes[c]);
           break;
         case AUDIOID:
-          var langList = getModsWithConfigEntry("Lang", checkBoxes[c].id, true, true);
-          var audioList = getModsWithConfigEntry("AudioCode", checkBoxes[c].id, true, true);
           var hbox = document.createElement("hbox");
           hbox = parent.appendChild(hbox);
           if (checkBoxes[c].id) hbox.setAttribute("id", "gt." + checkBoxes[c].id);
@@ -123,15 +120,10 @@ function onLoad() {
           hbox.appendChild(elem);
           // then collect modules which access the audio directory
           var dlabs = [];
-          var elem = getChildLabel(checkBoxes[c].id, checkBoxes[c].id);
-          if (elem) dlabs.push(elem);
-          for (var m=0; m<audioList.length; m++) {
-            elem = getChildLabel(audioList[m], checkBoxes[c].id);
-            if (elem) dlabs.push(elem);
-          }
-          for (var m=0; m<langList.length; m++) {
-            elem = getChildLabel(langList[m], checkBoxes[c].id);
-            if (elem) dlabs.push(elem);
+          var dmods = getModsUsingAudioCode(checkBoxes[c].id.replace(/_.*$/, ""));
+          for (var i=0; i<dmods.length; i++) {
+            var elem = getChildLabel(dmods[i], checkBoxes[c].id);
+             if (elem) dlabs.push(elem);
           }
           // if matching modules exist, then put them in an hbox for dir control, and insert labels with formatting
           var lhbox = document.createElement("hbox");
@@ -229,7 +221,7 @@ function deleteModules(e) {
   
   var result = {};
   var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-      document.getElementById("menu.removeModule.label").childNodes[0].nodeValue, 
+      fixWindowTitle(document.getElementById("menu.removeModule.label").childNodes[0].nodeValue),
       areYouSure, 
       DLGQUEST,
       DLGYESNO);

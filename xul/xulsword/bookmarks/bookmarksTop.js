@@ -645,7 +645,7 @@ var BookmarkFuns = {
         return;
       file.initWithPath(fileName);
       if (!file.exists()) {
-        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0644);
+        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0777);
       }
     }
     catch (e) {

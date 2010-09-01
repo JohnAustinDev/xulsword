@@ -31,6 +31,8 @@
 %browserDTD;
 <!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd" >
 %globalDTD;
+<!ENTITY % nsProgressDialogDTD SYSTEM "chrome://global/locale/nsProgressDialog.dtd" >
+%nsProgressDialogDTD;
 ]>
 
 <window 
@@ -77,7 +79,8 @@
 <data id="menu.options.language">&menu.options.language;</data>
 <data id="menu.options">&menu.options;</data>
 <data id="menu.removeModule.label">&menu.removeModule.label;</data>
-    
+<data id="savingSource">&savingSource;</data>
+<data id="savingTarget">&savingTarget;</data>
 
 <!-- HOT KEY DEFINITIONS !-->
 <keyset>
@@ -378,9 +381,10 @@
     </menu>
     <menu id="help-menu" label="&menu.help;" accesskey="&menu.help.sc;">
       <menupopup id="help-popup">
-        <menuitem id="about" label="&menu.help.about;" accesskey="&menu.help.about.sc;" oncommand="handleOptions(this)"/>
-        <menuseparator id="emailus-sep" hidden="true"/>
+        <menuseparator id="help-popup-sep1" hidden="true" />
         <menuitem id="emailus" label="" class="vstyleen-US" hidden="true" oncommand="handleOptions(this)"/>
+        <menuseparator id="emailus-sep" hidden="true"/>
+        <menuitem id="about" label="&menu.help.about;" accesskey="&menu.help.about.sc;" oncommand="handleOptions(this)"/>
       </menupopup>
     </menu>
   </menubar>

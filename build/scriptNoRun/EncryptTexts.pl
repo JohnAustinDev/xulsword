@@ -57,8 +57,16 @@ while($EncryptedTexts[0]) {
     $conf = "$MKS\\moduleDev\\swordmk-mods\\mods.d\\$modlc.conf";
     $mdir = "$MKS\\moduleDev\\swordmk-mods\\modules\\texts\\ztext\\$modlc";
     if (!open(VSYS, "<$conf")) {&logit("Conf file $conf not found."); &dienow;}
-    while (<VSYS>) {if ($_ =~ /Versification\s*=\s*(.*)$/) {$vsys=$1;}}
+    while (<VSYS>) {
+      if ($_ =~ /Versification\s*=\s*(.*)$/) {$vsys=$1;}
+      if ($_ =~ /CipherKey\s*=/) {$hasCK = "true";}
+    }
     close(VSYS);
+    if ($hasCK ne "true") {
+      if (!open(VSYS, ">>$conf")) {&logit("Conf file $conf could not write."); &dienow;}
+      print VSYS "\nCipherKey=\n";
+      close(VSYS);
+    }
 
     # clean old module out
     if (-e $mdir) {`rmdir /Q /S \"$mdir\" >> \"$log\"`;}
