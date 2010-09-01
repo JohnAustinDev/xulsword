@@ -161,6 +161,14 @@ File:mozapps\handling\handling.properties
         protocol.checkbox.label <English:Remember my choice for %S links.>
         protocol.checkbox.extra <English:This can be changed in %S's preferences.>
         choose.application.title <English:Another Application…>
+        
+File:global\nsWebBrowserPersist.properties
+        diskFull <English:There is not enough room on the disk to save %S.\n\nRemove unnecessary files from the disk and try again, or try saving in a different location.>
+        
+File:global\nsProgressDialog.dtd
+        savingSource <English: Saving From:>
+        savingTarget <English: To:>
+        
 }}}
 
 ==From Firefox 2:==
