@@ -542,7 +542,7 @@ var BookmarkFuns = {
   
   updateMainWindow: function (focusOnMainWindow, aUpdateNeededArray) {
     if (!MainWindow) return;
-    if (!aUpdateNeededArray) aUpdateNeededArray = [false, true, true, true];
+    if (!aUpdateNeededArray) aUpdateNeededArray = MainWindow.getUnpinnedWindows();
     if (focusOnMainWindow) MainWindow.focus();
     MainWindow.updateFrameScriptBoxes(aUpdateNeededArray, SCROLLTYPECENTER, HILIGHTVERSE);
     MainWindow.updateLocators(false);

@@ -922,8 +922,8 @@ function previousBook() {
 // if pin info is given, apply changes to pin window only
 function previousChapter(highlightFlag, scrollType, pin) {
   var vers = (pin ? Win[pin.number].modName:firstDisplayBible());
-  var bkn = findBookNum(pin ? pin.shortName:Bible.getBookName());
-  var chn = (pin ? pin.chapter:Bible.getChapterNumber(vers));
+  var bkn = findBookNum(pin ? pin.display.shortName:Bible.getBookName());
+  var chn = (pin ? pin.display.chapter:Bible.getChapterNumber(vers));
   
   if (chn > 1) {chn--;}
   else if (bkn > 0) {bkn--; chn = Book[bkn].numChaps;}
@@ -1010,8 +1010,8 @@ function nextBook() {
 // if pin info is given, apply changes to pin window(s) only
 function nextChapter(highlightFlag, scrollType, pin) {
   var vers = (pin ? Win[pin.number].modName:firstDisplayBible());
-  var bkn = findBookNum(pin ? pin.shortName:Bible.getBookName());
-  var chn = (pin ? pin.chapter:Bible.getChapterNumber(vers));
+  var bkn = findBookNum(pin ? pin.display.shortName:Bible.getBookName());
+  var chn = (pin ? pin.display.chapter:Bible.getChapterNumber(vers));
   
   if (chn < Book[bkn].numChaps) {chn++;}
   else if (bkn < (NumBooks-1)) {bkn++; chn=1;}
@@ -1418,7 +1418,7 @@ var XulswordController = {
     case "cmd_xs_toggleHebrewVowelPoints":
       prefs.setCharPref(GlobalToggleCommands[aCommand],(prefs.getCharPref(GlobalToggleCommands[aCommand])=="Off") ? "On":"Off");
       updateXulswordButtons();
-      updateFrameScriptBoxes(null, SCROLLTYPECENTER, HILIGHTNONE);
+      updateFrameScriptBoxes(getUnpinnedWindows(), SCROLLTYPECENTER, HILIGHTNONE);
       break;
     case "cmd_xs_allTogglesOn":
     case "cmd_xs_allTogglesOff":
@@ -1430,7 +1430,7 @@ var XulswordController = {
         }
       }
       updateXulswordButtons();
-      updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);
+      updateFrameScriptBoxes(getUnpinnedWindows(), SCROLLTYPETOP, HILIGHTNONE);
       break;
     case "cmd_xs_search":
       // override default type by setting to negative of desired type.
@@ -1736,7 +1736,7 @@ function handleOptions(elem) {
       FrameDocument[1].defaultView.updateFontSizes();
       FrameDocument[2].defaultView.updateFontSizes();
       FrameDocument[3].defaultView.updateFontSizes();
-      updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);
+      updateFrameScriptBoxes(getUnpinnedWindows(), SCROLLTYPETOP, HILIGHTNONE);
       break;
     
     case "about":
@@ -2136,8 +2136,8 @@ jsdump ("ScriptContextMenuShowing id:" + document.popupNode.id + ", title:" + do
   switch (getModuleLongType(myModuleName)) {
   case BIBLE:
   case COMMENTARY:
-    CurrentTarget.shortName = (contextTargs.shortName ? contextTargs.shortName:document.popupNode.ownerDocument.defaultView.Pin.shortName);
-    CurrentTarget.chapter = (contextTargs.chapter ? contextTargs.chapter:document.popupNode.ownerDocument.defaultView.Pin.chapter);
+    CurrentTarget.shortName = (contextTargs.shortName ? contextTargs.shortName:document.popupNode.ownerDocument.defaultView.Pin.display.shortName);
+    CurrentTarget.chapter = (contextTargs.chapter ? contextTargs.chapter:document.popupNode.ownerDocument.defaultView.Pin.display.chapter);
     CurrentTarget.verse = contextTargs.verse;
     CurrentTarget.lastVerse = contextTargs.lastVerse;
     break;
@@ -2551,11 +2551,13 @@ var UpdateOnlyPin;
 function onSelectGenBook(elem) {
   if (BlockOnSelect) return;
   if (UpdateOnlyPin && UpdateOnlyPin.done) {
+//jsdump("5 onSelectGenBook:");
     UpdateOnlyPin=null;
     SkipGenBookWindow=0;
     return;
   }
   if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) {
+//jsdump("2 onSelectGenBook:");
     if (!bumpSelectedIndex((UpdateOnlyPin.shiftKey==-1), elem)) {
       UpdateOnlyPin.done = true;
       selectGenBook(UpdateOnlyPin.selectedKey, elem);
@@ -2564,7 +2566,7 @@ function onSelectGenBook(elem) {
     SkipGenBookWindow=0;
     return;
   }
-  
+//jsdump("4 onSelectGenBook:");
   if (!elem) elem=document.getElementById("genbook-tree");
   try {var selRes = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(elem.currentIndex);}
   catch (er) {}
@@ -2581,7 +2583,7 @@ function onSelectGenBook(elem) {
     try {var oldkey = getUnicodePref("ShowingKey" + newmod);}
     catch (er) {oldkey = "";}
   }
-  else oldkey = UpdateOnlyPin.key;
+  else oldkey = UpdateOnlyPin.display.key;
   
   if (newkey != oldkey) {
     var updateNeeded = [false, false, false, false];
@@ -2593,7 +2595,7 @@ function onSelectGenBook(elem) {
       else if (w == UpdateOnlyPin.number) updateNeeded[w] = true;
     }
     if (!UpdateOnlyPin) setUnicodePref("ShowingKey" + newmod, newkey);
-    else UpdateOnlyPin.key = newkey;
+    else UpdateOnlyPin.display.key = newkey;
     updateFrameScriptBoxes(updateNeeded, SCROLLTYPETOP, HILIGHTNONE);
   }
   SkipGenBookWindow=0;
@@ -2606,6 +2608,7 @@ function onSelectGenBook(elem) {
 
 var BlockOnSelect;
 function bumpSelectedIndex(previousNotNext, elem) {
+//jsdump("3 bumpSelectedIndex:");
   if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) UpdateOnlyPin.shiftKey = 0;
   if (!elem) elem=document.getElementById("genbook-tree");
   var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
@@ -2625,20 +2628,21 @@ function bumpSelectedIndex(previousNotNext, elem) {
   return newindex != index;
 }
 
-// set UpdateOnlyPin to start the process, and select pin.key -> trigger onSelectGenBook
-// run onSelectGenBook which does nothing but call bumpSelectedIndex
-// run bumpSelectedIndex to select shifted pin entry -> trigger onSelectGenBook
-// run onSelectGenBook to redraw shifted pin window and then select original key again -> trigger onSelectGenBook
-// run onSelectGenBook which does nothing but clear UpdateOnlyPin to stop the process.
+// 1 run bumpPinnedIndex to set UpdateOnlyPin to start the process, and select pin.display.key -> trigger onSelectGenBook
+// 2 run onSelectGenBook which does nothing but call bumpSelectedIndex
+// 3 run bumpSelectedIndex to select shifted pin entry -> trigger onSelectGenBook
+// 4 run onSelectGenBook to redraw shifted pin window and then select original key again -> trigger onSelectGenBook
+// 5 run onSelectGenBook which does nothing but clear UpdateOnlyPin to stop the process.
 function bumpPinnedIndex(pin, previousNotNext, elem) {
+//jsdump("1 bumpPinnedIndex:" + previousNotNext);
   if (!elem) elem=document.getElementById("genbook-tree");
   var selectedKey = getPrefOrCreate("ShowingKey" + Win[pin.number].modName, "Unicode", "");
   UpdateOnlyPin = pin;
   UpdateOnlyPin.selectedKey = selectedKey;
   UpdateOnlyPin.shiftKey = (previousNotNext ? -1:1);
   UpdateOnlyPin.done = false;
-  selectGenBook(pin.key, elem);
-  if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) onSelectGenBook(elem); // needed when pin.key == selectedKey
+  selectGenBook(pin.display.key, elem);
+  if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) onSelectGenBook(elem); // needed when pin.display.key == selectedKey
   UpdateOnlyPin = null;
 }
 
@@ -3011,7 +3015,7 @@ var CheckAL;
 function updateAudioLinks(updateNeededArray) {
   for (var w=1; w<updateNeededArray.length; w++) {
     if (!updateNeededArray[w]) continue;
-    if (FrameDocument[w].defaultView.Pin.isPinned) var bk = FrameDocument[w].defaultView.Pin.shortName;
+    if (FrameDocument[w].defaultView.Pin.isPinned) var bk = FrameDocument[w].defaultView.Pin.display.shortName;
     else bk = Bible.getBookName();
     var icons = FrameDocument[w].getElementsByName("listenlink");
     for (var i = 0; i < icons.length; ++i) {
@@ -3052,6 +3056,32 @@ function hideEmptyCrossRefs(updateNeededArray) {
       }
     }
   }
+}
+
+// Saves window's display information to a display object
+function saveWindowDisplay(win) {
+  var display = {modName:null, shortName:null, chapter:null, verse:null, key:null, globalOptions:{}};
+  display.modName = win.modName;
+  display.shortName = Bible.getBookName();
+  display.chapter = Bible.getChapterNumber(win.modName);
+  display.verse = Bible.getVerseNumber(win.modName);
+  display.key = getPrefOrCreate("ShowingKey" + win.modName, "Unicode", "");
+
+  try {for (var cmd in GlobalToggleCommands) display.globalOptions[cmd] = Bible.getGlobalOption(GlobalToggleCommands[cmd]);}
+  catch (er) {display.globalOptions["cmd_xs_toggleUserNotes"] = prefs.getCharPref(GlobalToggleCommands[cmd]);}
+  
+  return display;
+}
+
+// Set window's display information from a display object
+// Normally we are setting global option prefs temporarily, or setting them
+// back to their toggle button status, therefore no toggle button or pref updates are performed.
+function setWindowDisplay(win, display) {
+  Bible.setBiblesReference(display.modName, display.shortName + "." + display.chapter + "." + display.verse);
+  setUnicodePref("ShowingKey" + win.modName, display.key);
+  
+  try {for (var cmd in GlobalToggleCommands) Bible.setGlobalOption(GlobalToggleCommands[cmd], display.globalOptions[cmd]);}
+  catch (er) {prefs.setCharPref(GlobalToggleCommands[cmd], display.globalOptions[cmd]);}
 }
 
 //Writes a Bible chapter, including the chapterNavigationLink at top and bottom, to
@@ -4079,7 +4109,7 @@ function ensureModuleShowing(version) {
  ***********************************************************************/ 
 
 // Needs to be rerun when the following change:
-// Version1,2,3 ShowOriginal1,2,3, NumDisplayedWindows, ScriptBoxIsEmpty, Win.isRTL, Win.modName, Pin.isPinned, Pin.shortName, Pin.chapter, MaximizeNoteBox
+// Version1,2,3 ShowOriginal1,2,3, NumDisplayedWindows, ScriptBoxIsEmpty, Win.isRTL, Win.modName, Pin.isPinned, Pin.display.shortName, Pin.display.chapter, MaximizeNoteBox
 function updateLinkInfo() {
   Link.modName = null;
   Link.numWins = 0;
@@ -4160,8 +4190,8 @@ function getVersionsWithPinnedInfo() {
     v[w] = Win[w].modName +
             (prefs.getBoolPref("ShowOriginal" + w) ? "ShowOriginal":"") +
             (FrameDocument[w].defaultView.Pin.isPinned ?
-            FrameDocument[w].defaultView.Pin.shortName + " " +
-            FrameDocument[w].defaultView.Pin.chapter:"");
+            FrameDocument[w].defaultView.Pin.display.shortName + " " +
+            FrameDocument[w].defaultView.Pin.display.chapter:"");
   }
   return v;
 }
@@ -4170,6 +4200,14 @@ function getUnpinnedVerseKeyWindows() {
   var wins = [false, false, false, false];
   for (var w=1; w<=3; w++) {
     if (Win[w].modType != BIBLE && Win[w].modType != COMMENTARY) continue;
+    wins[w] = !FrameDocument[w].defaultView.Pin.isPinned;
+  }
+  return wins;
+}
+
+function getUnpinnedWindows() {
+  var wins = [false, false, false, false];
+  for (var w=1; w<=3; w++) {
     wins[w] = !FrameDocument[w].defaultView.Pin.isPinned;
   }
   return wins;

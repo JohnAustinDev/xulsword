@@ -74,7 +74,7 @@ var MinScriptWidth;
 var LastVersion;
 var MyFootnotes;
 var Win = {number:null, modName:null, modType:null, isRTL:null, isLinkedToRight:null};
-var Pin = {number:null, shortName:null, chapter:null, verse:null, key:null, isPinned:null, elem:null, updatePin:null, updateLink:null};
+var Pin = {number:null, display:{}, isPinned:null, elem:null, updatePin:null, updateLink:null};
 
 /************************************************************************
  * Initialization after HTML has loaded
@@ -141,18 +141,15 @@ function initializeScript() {
   Pin.elem = document.getElementById("pin");
   Pin.updateLink = function() {
     if (!MainWindow.Link.isLink[this.number]) return;
-    var ud = ["shortName", "chapter", "verse"];
-    for (var u=0; u<ud.length; u++) {
-      for (var w=1; w<=3; w++) {
-        if (!MainWindow.Link.isLink[w] || w==this.number) continue;
-        MainWindow.FrameDocument[w].defaultView.Pin[ud[u]] = this[ud[u]];
-      }
+    for (var w=1; w<=3; w++) {
+      if (!MainWindow.Link.isLink[w] || w==this.number) continue;
+      MainWindow.FrameDocument[w].defaultView.Pin.display = this.display;
     }
   }
   Pin.updatePin = function(book, chapter, verse) {
-    this.shortName = book;
-    this.chapter = chapter;
-    this.verse = verse;
+    this.display.shortName = book;
+    this.display.chapter = chapter;
+    this.display.verse = verse;
   }
 
   adjustFontSizes(0, prefs.getIntPref('FontSize'));
@@ -247,20 +244,16 @@ function updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction) {
 }
 
 function updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction) {
-  var savedLocation;
+  var savedWindow = {};
   
   if (Pin.isPinned) {
     // Global location is saved and replaced at end of this routine. This means that
     // OTHER BIBLES SHOULD NOT BE ACCESSED WHILE THIS ROUTINE IS EXECUTING OR THEIR LOCATION
     // WILL BE INCORRECT
-    savedLocation = Bible.getLocation(Win.modName);
-    Bible.setBiblesReference(Win.modName, Pin.shortName + "." + Pin.chapter + "." + Pin.verse);
+    savedWindow = MainWindow.saveWindowDisplay(Win);
+    MainWindow.setWindowDisplay(Win, Pin.display);
   }
-  else {
-    Pin.shortName = Bible.getBookName();
-    Pin.chapter = Bible.getChapterNumber(Win.modName);
-    Pin.verse = Bible.getVerseNumber(Win.modName);
-  }
+  else Pin.display = MainWindow.saveWindowDisplay(Win);
   if (highlightFlag &&
       (highlightFlag==HILIGHTVERSE || (highlightFlag==HILIGHT_IFNOTV1 && Bible.getVerseNumber(Win.modName)!=1)) &&
       !Pin.isPinned && Win.modType==BIBLE) {SelectedVerseCSS.style.color=SelectedVerseColor;}
@@ -275,29 +268,25 @@ function updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction
     }
     MainWindow.writeToScriptBoxes(Win, Pin.isPinned, showIntroForThisLink, scrollTypeFlag);
   }
-  if (Pin.isPinned) {
-    Bible.setBiblesReference(Win.modName, savedLocation);
-  }
+  if (Pin.isPinned) MainWindow.setWindowDisplay(Win, savedWindow);
 }
 
 function updateGenBook(showIntroduction) {
-  var savedKey;
+  var savedWindow = {};
 
   if (Pin.isPinned) {
     // Global key is saved and replaced at end of this routine. This means that
     // OTHER WINDOWS SHOWING THIS BOOK SHOULD NOT BE ACCESSED WHILE THIS ROUTINE IS EXECUTING OR THEIR LOCATION
     // WILL BE INCORRECT
-    savedKey = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
-    setUnicodePref("ShowingKey" + Win.modName, Pin.key);
+    savedWindow = MainWindow.saveWindowDisplay(Win);
+    MainWindow.setWindowDisplay(Win, Pin.display);
   }
-  else Pin.key = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
+  else Pin.display = MainWindow.saveWindowDisplay(Win);
 
   var showIntroForThisLink = (showIntroduction && showIntroduction==Win.number);
   MainWindow.writeToScriptBoxes(Win, Pin.isPinned, showIntroForThisLink, SCROLLTYPENONE);
   
-  if (Pin.isPinned) {
-    setUnicodePref("ShowingKey" + Win.modName, savedKey);
-  }
+  if (Pin.isPinned) MainWindow.setWindowDisplay(Win, savedWindow);
 }
 
 var DictionaryList;
@@ -445,8 +434,8 @@ function getPageLinks() {
   charPrev = "<span style=\"font-family:ariel;\">" + charPrev + "</span>"; // Because 'UKIJ Tuz Basma' improperly implements this char!
 
   //var mytype = win.modType;
-  var prevDisabled = false; //mytype==BIBLE && Pin.chapter==1 && Pin.shortName=="Gen";
-  var nextDisabled = false; //mytype==BIBLE && Pin.chapter==22 && Pin.shortName=="Rev";
+  var prevDisabled = false; //mytype==BIBLE && Pin.display.chapter==1 && Pin.display.shortName=="Gen";
+  var nextDisabled = false; //mytype==BIBLE && Pin.display.chapter==22 && Pin.display.shortName=="Rev";
   
   var chapterNavigationLink = "<div  class=\"navlink vstyleProgram\">";
   if (prevDisabled) {
@@ -512,7 +501,7 @@ function scrollScriptBox(scrollTypeFlag, elemID) {
     return;
   }
   
-  if (!elemID && Pin.isPinned) elemID = "vs." + Pin.shortName + "." + Pin.chapter + "." + Pin.verse;
+  if (!elemID && Pin.isPinned) elemID = "vs." + Pin.display.shortName + "." + Pin.display.chapter + "." + Pin.display.verse;
   var intid = "";
   if (!elemID) {
     if (!prefs.getBoolPref("ShowOriginal" + Win.number))
@@ -799,7 +788,7 @@ function scriptboxClick(e) {
       MainWindow.Player.isPinned = Pin.isPinned;
       MainWindow.Player.version = Win.modName;
       MainWindow.Player.chapter = Number(elem.id.split(".")[1]);
-      if (Pin.isPinned) MainWindow.Player.book = Pin.shortName;
+      if (Pin.isPinned) MainWindow.Player.book = Pin.display.shortName;
       else MainWindow.Player.book = Bible.getBookName();
 
       MainWindow.beginAudioPlayer();
@@ -831,7 +820,7 @@ function pinThis() {
     else loc = [Bible.getBookName(), Bible.getChapterNumber(Win.modName), Bible.getVerseNumber(Win.modName)];
     Pin.updatePin(loc[0], loc[1], loc[2]);
   }
-  else if (Win.modType == GENBOOK) Pin.key = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
+  else if (Win.modType == GENBOOK) Pin.display.key = getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", "");
   MainWindow.updateLinkInfo();
   Pin.updateLink();
   MainWindow.updatePinVisibility();
@@ -848,7 +837,7 @@ function unpinThis() {
     // make the unpinned win show what the pinned win show
     var loc = MainWindow.getPassageFromWindow(MainWindow.FIRSTPASSAGE, Pin.number);
     if (loc) loc = loc.substring(0, loc.lastIndexOf("."));
-    else loc = Pin.shortName + "." + Pin.chapter + "." + Pin.verse;
+    else loc = Pin.display.shortName + "." + Pin.display.chapter + "." + Pin.display.verse;
     Bible.setBiblesReference(Win.modName, loc);
     var p = loc.split(".");
     Pin.updatePin(p[0], p[1], p[2]);
@@ -1398,11 +1387,11 @@ function boundaryMouseUp(evt) {
 
 function copyNotes2Notebox(bibleNotes, userNotes) {
   //getChapterText() must be called before this
-  var gfn = ((prefs.getCharPref("Footnotes") == "On")&&(prefs.getBoolPref("ShowFootnotesAtBottom")));
-  var gcr = ((prefs.getCharPref("Cross-references") == "On")&&(prefs.getBoolPref("ShowCrossrefsAtBottom")));
+  var gfn = ((Bible.getGlobalOption("Footnotes") == "On")&&(prefs.getBoolPref("ShowFootnotesAtBottom")));
+  var gcr = ((Bible.getGlobalOption("Cross-references") == "On")&&(prefs.getBoolPref("ShowCrossrefsAtBottom")));
   var gun = ((prefs.getCharPref("User Notes") == "On")&&(prefs.getBoolPref("ShowUserNotesAtBottom")));
   var t = "";
-
+  
   NoteBoxEmpty = true;
   if (!(gfn||gcr||gun)) {
     // If we aren't showing footnotes in box, then turn maximize off
