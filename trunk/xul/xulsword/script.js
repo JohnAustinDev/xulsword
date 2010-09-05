@@ -228,7 +228,9 @@ function updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction) {
       if (written) updateDictionary();
       else {
         //If module is empty or not loaded correctly
+        ScriptBoxTextElement.scrollTop = 0; // prevents window from flashing white
         ScriptBoxTextElement.innerHTML="";
+        NoteBoxElement.scrollTop = 0; // prevents window from flashing white
         NoteBoxElement.innerHTML=""
       }
     }
@@ -326,6 +328,7 @@ function writeDictionaryList(refreshKeys) {
     }
     nbHTML += "</div></div>";
   }
+  NoteBoxElement.scrollTop = 0; // prevents window from flashing white
   NoteBoxElement.innerHTML = nbHTML;
   NoteBoxEmpty = false;
   MainWindow.setNoteBoxSizer(Win.number, false);
@@ -396,6 +399,7 @@ function updateDictionary(dontUpdateText) {
     sbHTML += "<div style='display:table-cell;'>" + getPageLinks() + "</div></div>";
     sbHTML += "<div style='display:table-row;'>";
     sbHTML += "<div style='display:table-cell; vertical-align:middle;'>" + entryHTML + "</div></div></div>";
+    ScriptBoxTextElement.scrollTop = 0; // prevents window from flashing white
     ScriptBoxTextElement.innerHTML = sbHTML;
   }
   
@@ -690,7 +694,8 @@ function scriptboxMouseOver(e) {
     break;
     
   case "listenlink":
-    elem.src="chrome://xulsword/skin/images/listen1.gif";
+    if (elem.src != "chrome://xulsword/skin/images/listen.png")
+      elem.src="chrome://xulsword/skin/images/listen1.gif";
     break;
     
   case "pin":
@@ -790,13 +795,15 @@ function scriptboxClick(e) {
     break;
     
   case "listenlink":
-    MainWindow.Player.isPinned = Pin.isPinned;
-    MainWindow.Player.version = Win.modName;
-    MainWindow.Player.chapter = Number(elem.id.split(".")[1]);
-    if (Pin.isPinned) MainWindow.Player.book = Pin.shortName;
-    else MainWindow.Player.book = Bible.getBookName();
+    if (elem.src!="chrome://xulsword/skin/images/listen.png") {
+      MainWindow.Player.isPinned = Pin.isPinned;
+      MainWindow.Player.version = Win.modName;
+      MainWindow.Player.chapter = Number(elem.id.split(".")[1]);
+      if (Pin.isPinned) MainWindow.Player.book = Pin.shortName;
+      else MainWindow.Player.book = Bible.getBookName();
 
-    MainWindow.beginAudioPlayer();
+      MainWindow.beginAudioPlayer();
+    }
     break;
     
   case "pin":
@@ -915,7 +922,8 @@ function scriptboxMouseOut(e) {
   if (ImmediateUnhighlight) {unhighlightNote();}
   switch (getElemType(e.target)) {
   case "listenlink":
-    e.target.src = "chrome://xulsword/skin/images/listen0.png";
+    if (e.target.src != "chrome://xulsword/skin/images/listen.png")
+      e.target.src = "chrome://xulsword/skin/images/listen0.png";
     break;
     
   case "pin":
@@ -1413,6 +1421,7 @@ function copyNotes2Notebox(bibleNotes, userNotes) {
 
   // Global is set by mouse routines to prevent the scriptbox from changing when desired
   if (t != PreviousT) {
+    NoteBoxElement.scrollTop = 0; // prevents window from flashing white
     NoteBoxElement.innerHTML = t;
   }
   PreviousT = t;
@@ -1553,7 +1562,10 @@ function setFontSize(className,sz) {
  * Sizing and placing Scripture, notes, and the boundary bar
  ***********************************************************************/  
 function resizeBibles(dontChangeContents, hideNoteBox) {
-  if (!dontChangeContents) ScriptBoxTextElement.innerHTML="";
+  if (!dontChangeContents) {
+    ScriptBoxTextElement.scrollTop = 0; // prevents window from flashing white
+    ScriptBoxTextElement.innerHTML="";
+  }
   if ((window.frameElement.id=="bible1Frame")&&prefs.getBoolPref("ShowChooser")) {placeChooser();}
   if (Win.number <= prefs.getIntPref("NumDisplayedWindows")) {
     setBibleWidth();
