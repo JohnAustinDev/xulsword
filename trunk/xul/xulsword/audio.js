@@ -334,7 +334,7 @@ function importAudio(fromDir, toDir, doNotCopyFiles) {
 
   // no fromDir or doNotCopyFiles...
   audioDirPref(toDir); // allow setting of pref without copy
-  MainWindow.updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);
+  MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedWindows(), SCROLLTYPETOP, HILIGHTNONE);
   return false;
 }
 
