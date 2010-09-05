@@ -147,7 +147,7 @@ function sortFiles(a,b) {
 }
 
 function stopImport() {
-  if (CopyAnotherFile) window.clearTimeout(CopyAnotherFile);
+  try {if (CopyAnotherFile) window.clearTimeout(CopyAnotherFile);} catch (er) {}
   ResetNeeded = NORESET;
   ExitFunction();
 }
@@ -625,8 +625,8 @@ jsdump("Installing File:" + aEntry);
   if (overwriting) {
     try {inflated.remove(false);}
     catch (er) {
-      jsdump("Could not remove pre-existing ZIP entry destination " + inflated.path + ". " + er);
-      return {reset:HARDRESET, success:false, remove:false};
+      //jsdump("Could not remove pre-existing ZIP entry destination " + inflated.path + ". " + er);
+      return {reset:HARDRESET, success:true, remove:false};
     }
   }
   

@@ -48,7 +48,7 @@ function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduct
 
     if (!showOriginal) {
       mtext += "<div style=\"margin-top:12px; margin-bottom:-54px; float:" + oppositeHeadingFloat + "; text-align:" + oppositeHeadingFloat + ";\">";
-      mtext += "<img name=\"listenlink\" id=\"listenlink." + myChap + "\" class=\"audiolink\" src=\"chrome://xulsword/skin/images/listen0.png\" onmouseover=\"scriptboxMouseOver(event)\" onmouseout=\"scriptboxMouseOut(event)\">";
+      mtext += "<img name=\"listenlink\" id=\"listenlink." + myChap + "\" class=\"audiolink\" src=\"chrome://xulsword/skin/images/listen.png\" onmouseover=\"scriptboxMouseOver(event)\" onmouseout=\"scriptboxMouseOut(event)\">";
       mtext += "<br><br>";
       
       // introduction link and introduction

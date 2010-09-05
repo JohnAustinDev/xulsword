@@ -2816,6 +2816,7 @@ function getLemmaHTML(numberList, matchingPhrase) {
 function getDictionaryHTML(dictionaryWord, dictionaryNames, dontAddParagraphIDs) {
 //jsdump("dictionaryWord:" + dictionaryWord + " dictionaryNames:" + dictionaryNames + "\n");
   if (!dictionaryWord || !dictionaryNames) return "";
+  dictionaryWord = decodeOSISRef(dictionaryWord);
   dictionaryNames += ";";
   var dictMods = dictionaryNames.split(";");
   dictMods.pop();
@@ -2845,6 +2846,17 @@ function getDictionaryHTML(dictionaryWord, dictionaryNames, dontAddParagraphIDs)
   if (!dontAddParagraphIDs) dictHTML = addParagraphIDs(dictHTML);
   dictHTML = "<div class=\"vstyle" + dictMods[0] + "\">" + dictHTML + "</div>";
   return dictHTML;
+}
+
+function decodeOSISRef(aRef) {
+  var re = new RegExp(/_(\d+)_/);
+  var m = aRef.match(re);
+  while(m) {
+    var r = String.fromCharCode(Number(m[1]));
+    aRef = aRef.replace(m[0], r, "g");
+    m = aRef.match(re);
+  }
+  return aRef;
 }
 
 function completeImageLinks(dictionaryName, text) {
@@ -2974,7 +2986,6 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
   if (UsingWaitCursor) window.setTimeout("cancelWaitCursor();", 0);
   if (scrollTypeFlag) window.setTimeout("scrollScriptBoxes([" + updateNeededArray + "], " + scrollTypeFlag + ");", 1);
 
-  updateAudioLinks(updateNeededArray, true);
   if (CheckAL) window.clearTimeout(CheckAL);
   CheckAL = window.setTimeout("updateAudioLinks([" + updateNeededArray + "]);", 2);
   
@@ -2997,7 +3008,7 @@ function cancelWaitCursor() {
 }
 
 var CheckAL;
-function updateAudioLinks(updateNeededArray, forceHidden) {
+function updateAudioLinks(updateNeededArray) {
   for (var w=1; w<updateNeededArray.length; w++) {
     if (!updateNeededArray[w]) continue;
     if (FrameDocument[w].defaultView.Pin.isPinned) var bk = FrameDocument[w].defaultView.Pin.shortName;
@@ -3006,8 +3017,8 @@ function updateAudioLinks(updateNeededArray, forceHidden) {
     for (var i = 0; i < icons.length; ++i) {
       var icon = icons[i];
       if (AudioDirs === null) AudioDirs = getAudioDirs();
-      if (!forceHidden && getAudioForChapter(Win[w].modName, bk, Number(icon.id.split(".")[1]), AudioDirs)) icon.style.display = "inline";
-      else icon.style.display = "none";
+      if (getAudioForChapter(Win[w].modName, bk, Number(icon.id.split(".")[1]), AudioDirs)) icon.src="chrome://xulsword/skin/images/listen0.png";
+      else icon.src="chrome://xulsword/skin/images/listen.png";
     }
   }
 }
@@ -3095,6 +3106,7 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
   s.lastWindowNotesAreMaximized = prefs.getBoolPref("MaximizeNoteBox" + s.link.lastWin) &&
                                   !prefs.getBoolPref("ShowOriginal" + win.number);
   if (s.lastWindowNotesAreMaximized && !ScriptBoxIsEmpty[s.link.leftWin]) {
+    FrameDocument[s.link.lastWin].defaultView.ScriptBoxTextElement.scrollTop = 0; // prevents window from flashing white
     FrameDocument[s.link.lastWin].defaultView.ScriptBoxTextElement.innerHTML="";
     FrameDocument[s.link.lastWin].defaultView.setBibleHeight(false, false);
     s.maximizedNotesWin = s.link.lastWin;
@@ -3122,6 +3134,7 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
   else {
     notes = TextCache[s.link.firstWin].fn.Notes;
     userNotes = TextCache[s.link.firstWin].fn.UserNotes;
+    FrameDocument[s.link.firstWin].defaultView.ScriptBoxTextElement.scrollTop = 0; // prevents window from flashing white
     FrameDocument[s.link.firstWin].defaultView.ScriptBoxTextElement.innerHTML = (ScriptBoxIsEmpty[s.link.firstWin] ? "":s.navlinks + TextCache[s.link.firstWin].text + s.navlinks);
     if (!s.forceNoteBox2Hide) FrameDocument[s.link.firstWin].defaultView.copyNotes2Notebox(notes, userNotes);
   }
@@ -3233,7 +3246,9 @@ function text2LinkedWindows(p, s, fn) {
   p.imin = -1;
   p.imax = -1;
   for (var i=s.link.firstWin; i!=s.link.lastWin+wstep; i += wstep) {
+    FrameDocument[i].defaultView.ScriptBoxTextElement.scrollTop = 0;
     FrameDocument[i].defaultView.NoteBoxEmpty = true;
+    FrameDocument[i].defaultView.NoteBoxElement.scrollTop = 0; // prevents window from flashing white
     FrameDocument[i].defaultView.NoteBoxElement.innerHTML = "";
     FrameDocument[i].defaultView.PreviousT = "";
     FrameDocument[i].defaultView.setBibleHeight(false, (i!=s.link.lastWin ? true:s.forceNoteBox2Hide));
@@ -3320,8 +3335,11 @@ function getIndexOfVerse(p, chapNum, verseNum, type) {
     if (!verses) i = 0;
     else {
       for (var x=0; x<verses.length; x++) {
-        if (Number(verses[x]) < verseNum) vb = Number(verses[x]);
-        if (Number(verses[x]) > verseNum) va = Number(verses[x]);
+        var vre = new RegExp("\"vs\\.[^\\.]*\\." + chapNum + "\\.(\\d+)\"");
+        var n = verses[x].match(vre);
+        n = Number(n[1]);
+        if (n < verseNum) vb = n;
+        if (n > verseNum) va = n;
       }
 
       var v, endPoint;
@@ -3358,7 +3376,7 @@ function getIndexOfVerse(p, chapNum, verseNum, type) {
     if (prevtitle > preverse) i = prevtitle;
     if (prevchap > preverse) i = prevchap;
   }
-  
+
   return i;
 }
 
@@ -3533,7 +3551,8 @@ function resizeScriptBoxes(updateNeededArray, dontChangeContents) {
     if (!updateNeededArray[w]) continue;
     //Done in resizeBibles(): FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML="";
     if (!dontChangeContents) {
-      FrameDocument[w].defaultView.NoteBoxElement.innerHTML="";
+      FrameDocument[w].defaultView.NoteBoxElement.scrollTop = 0; // prevents window from flashing white
+      FrameDocument[w].defaultView.NoteBoxElement.innerHTML = "";
       FrameDocument[w].defaultView.PreviousT="";
       FrameDocument[w].getElementById("langTabs").style.visibility="hidden";
     }
