@@ -28,8 +28,8 @@
 ::                          menu, or leave blank and no email menu element will appear.
 
 :: SPECIFY BUILD INFORMATION
-Set version=2.14
-Set setupversion=2.14
+Set version=2.15
+Set setupversion=2.15
 Set name=xulSword
 Set vendor=CrossWire
 Set executable=xulsword.exe
