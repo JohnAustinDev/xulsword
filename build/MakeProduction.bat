@@ -8,7 +8,7 @@ if not defined MKAppinfo Set MKAppinfo=%MK%\build
 call "%MKAppinfo%\Appinfo.bat"
 cd "%MK%\build"
 
-if exist "%MK%\xulrunner\xulrunner-stub.exe" call "%MK%\build\scriptNoRun\FirstRun.bat"
+if exist "%MK%\xulrunner\xulrunner-stub.exe" call "%MK%\build\script\FirstRun.bat"
 
 ECHO --- COPY XULRUNNER FILES
 del /Q "%MK%\xulrunner\*.exe"
@@ -20,7 +20,7 @@ del /Q "%MKS%\localeDev\locales\*"
 copy /Y "%MK%\xul\xulrunnerProduction\chrome\*" "%MK%\xulrunner\chrome"
 del "%MK%\xulrunner\chrome\en-US.nomenu.manifest"
 copy /Y "%MK%\xul\xulrunnerProduction\venkmanOverlay.xul" "%MK%\xul\xulsword"
-call "%MK%\build\scriptNoRun\UpdateJars.pl" "%MK%" "%MKS%" "%MKO%" true %UIversion% %MinProgversionForUI% %IncludeLocales% %AllLocales%
+call "%MK%\build\script\UpdateJars.pl" "%MK%" "%MKS%" "%MKO%" true %UIversion% %MinProgversionForUI% %IncludeLocales% %AllLocales%
 
 ECHO --- DELETING UNNECESSARY FILES
 if exist "%MK%\xulrunner\components\venkman-service.js" del "%MK%\xulrunner\components\venkman-service.js"
@@ -31,7 +31,7 @@ if exist "%MK%\xulrunner\fonts" rmdir /S /Q "%MK%\xulrunner\fonts"
 if exist "%MK%\xulrunner\audio" rmdir /S /Q "%MK%\xulrunner\audio"
 if exist "%MK%\xulrunner\bookmarks" rmdir /S /Q "%MK%\xulrunner\bookmarks"
 
-call "%MK%\build\scriptNoRun\Update.bat"
+call "%MK%\build\script\Update.bat"
 
 if %skipPause%==true goto EOF
 ECHO --- MAKE COMPLETE ---

@@ -203,7 +203,7 @@ function checkQuickTime(startPlayerAfterInstall) {
     var result = {};
     var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
         fixWindowTitle(SBundle.getString("Title")),
-        SBundle.getString("QuickTimeUpdateNeeded"),
+        msg,
         DLGINFO,
         DLGOK);
     AlreadyPrompted = true;

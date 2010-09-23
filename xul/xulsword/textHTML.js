@@ -323,7 +323,7 @@ function ref2ProgramLocaleText(reference) {
     if (myrefsP[2] && myrefsP[3] && myrefsP[2]==myrefsP[3]) {myrefsP.pop();}
     if (myrefsP.length == 4) {
       myrefsP[0] = Book[findBookNum(myrefsP[0])].bName;
-if (myrefsP[0]==null) {jsdump("WARNING: Didn't find ref >" + myrefs[ix] + "< in ref2ProgramLocaleText\n");}
+      if (myrefsP[0]==null) {jsdump("WARNING: Didn't find ref >" + myrefs[ix] + "< in ref2ProgramLocaleText\n");}
       else {
         if (separator != "") {retv += dc + "-" + myrefsP[3];}
         else {retv += separator + myrefsP[0] + dc + " " + myrefsP[1] + ":" + dc + myrefsP[2] + dc + "-" + myrefsP[3];}
@@ -331,8 +331,9 @@ if (myrefsP[0]==null) {jsdump("WARNING: Didn't find ref >" + myrefs[ix] + "< in 
       separator = ", ";
     }
     else if (myrefsP.length == 3) {
-      myrefsP[0] = Book[findBookNum(myrefsP[0])].bName;
-if (myrefsP[0]==null) {jsdump("WARNING: Didn't find ref >" + myrefs[ix] + "< in ref2ProgramLocaleText\n");}
+      var bn = findBookNum(myrefsP[0]);
+      if (bn!=null) myrefsP[0] = Book[bn].bName;
+      if (bn==null || myrefsP[0]==null) {jsdump("WARNING: Didn't find ref >" + myrefs[ix] + "< in ref2ProgramLocaleText\n");}
       else {
         if (separator != "") {retv += dc + "-" + myrefsP[2];}
         else {retv += separator + myrefsP[0] + dc + " " + myrefsP[1] + ":" + dc + myrefsP[2];}

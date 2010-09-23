@@ -171,6 +171,7 @@ function createTabs() {
     }
     //dump(m + " " + info[0] + " " + info[1] + "\n");
     var moduleLabel = Bible.getModuleInformation(info[0], "TabLabel");
+    if (moduleLabel == NOTFOUND) moduleLabel = Bible.getModuleInformation(info[0], "Abbreviation");
     var isORIG = Bible.getModuleInformation(info[0], "OriginalTabTestament");
     if (isORIG=="OT") {
       OrigModuleOT = info[0];
