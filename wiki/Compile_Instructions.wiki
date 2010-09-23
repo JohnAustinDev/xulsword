@@ -16,7 +16,7 @@ The following programs (all free) need to be in your command path:
   # Create a permanent environment variable named "`MK`" and set its value to the new project directory. Do NOT enclose the path in quotes. For example: `D:\progs\xulsword` NOTE: To include other locales or modules in your build, you will need to set another environment variable named "`MKS`" to a locales and modules directory (more on this later). You may also set an environment variable named "`MKO`" to an output directory of your choice, otherwise a default directory will be created called "`build-out`".
   # Unzip a recent release of the [https://developer.mozilla.org/en/XULRunner xulrunner runtime] and copy the resulting "`xulrunner`" directory into the project directory. Under this `xulrunner` directory should be subdirectories such as "`chrome`", and "`components`".
   # Unzip the corresponding xulrunner sdk to the "`Cpp`" directory. In this unzipped directory (called for example: "`xulrunner-1.9.1.3.en-US.win32.sdk`") should be a sub-directory called "`xulrunner-sdk`".
-  # Unzip Clucene (I used [http://sourceforge.net/projects/clucene/files/ clucene-core-0.9.16a]) to the "`Cpp`" directory.
+  # Unzip [http://sourceforge.net/projects/clucene/files/ Clucene-core] to the "`Cpp`" directory.
   # Unzip [http://www.crosswire.org/ftpmirror/pub/sword/source/v1.6/ sword-1.6.1] to the "`Cpp`" directory.
   # Make sure the "`Cpp\versions.bat`" file contains your directory names for the listed Cpp directories.
   # Run "`Build\RegisterXulrunner.bat`" to register the xulrunner installation and create necessary generated files.
