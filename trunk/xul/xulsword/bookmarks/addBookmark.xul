@@ -48,7 +48,7 @@
 <dialog id="moveBookmarkDialog" style="width: 36em; height: 18em;"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         ondialogaccept="return onOK(event)"
-        title="&newBookmark.title;" title-selectFolder="&selectFolder.label;"
+        title="&selectFolder.label;" title-selectFolder="&selectFolder.label;"
         onload="Startup();"
         persist="screenX screenY width height"
         screenX="24" screenY="24">
@@ -75,7 +75,7 @@
     </columns>
     <rows>
       <row align="center">
-        <label value="&name.label;" accesskey="&name.accesskey;" control="name"/>
+        <label value="name" accesskey="n" control="name"/>
         <textbox id="name" oninput="onFieldInput();"/>
         <spacer/>
       </row>
@@ -85,7 +85,7 @@
         <spacer/>
       </row>
       <row align="center">
-        <label value="&url.label;" accesskey="&url.accesskey;" control="url"/>
+        <label value="url" accesskey="u" control="url"/>
         <textbox id="url" oninput="onFieldInput();"/>
         <spacer/>
       </row>

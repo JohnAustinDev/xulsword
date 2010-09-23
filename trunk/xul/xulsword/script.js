@@ -329,18 +329,18 @@ var DictSort = function(a,b) {
   var xa=0;
   var xb=0;
   var ca = a.charAt(xa);
-  while (ca && LangSortSkipChars.search(ca)!=-1) {ca = a.charAt(++xa);}
+  while (ca && LangSortSkipChars.indexOf(ca)!=-1) {ca = a.charAt(++xa);}
   var cb = b.charAt(xb);
-  while (cb && LangSortSkipChars.search(cb)!=-1) {cb = b.charAt(++xb);}
+  while (cb && LangSortSkipChars.indexOf(cb)!=-1) {cb = b.charAt(++xb);}
   while (ca || cb) {
     if (!ca) return -1;
     if (!cb) return 1;
     if (SortOrder.indexOf(ca) < SortOrder.indexOf(cb)) return -1;
     if (SortOrder.indexOf(ca) > SortOrder.indexOf(cb)) return 1;
     ca = a.charAt(++xa);
-    while (ca && LangSortSkipChars.search(ca)!=-1) {ca = a.charAt(++xa);}
+    while (ca && LangSortSkipChars.indexOf(ca)!=-1) {ca = a.charAt(++xa);}
     cb = b.charAt(++xb);
-    while (cb && LangSortSkipChars.search(cb)!=-1) {cb = b.charAt(++xb);}
+    while (cb && LangSortSkipChars.indexOf(cb)!=-1) {cb = b.charAt(++xb);}
   }
   return 0;
 }
