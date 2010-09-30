@@ -2,17 +2,17 @@
 =Create Your Own Locale for Xulsword=
 
 ==What must be translated?==
-The entire User Interface source is listed in two files. But only one of these contains words and phrases which must be translated. The English listing (`UI-en-US.txt`) can be found in `%MK%\localeDev` or also in [Locale_Phrases]. There are many entries to translate, but don't despair because if there is a Firefox translation in the target language, then half the work has already been done for you (read on...)
+The entire User Interface source is listed in two files. But only one of these contains words and phrases which must be translated. The English listing (`UI-en-US.txt`) can be found in `%MK%\localeDev` or also in [Locale_Phrases]. There are many entries to translate, but don't despair because if there is a Firefox translation in your language, then half the work has already been done for you (read on...)
 
 ==Let Firefox translate half the UI for you==
 Set an environment variable called "`MKS`" to a directory of your choice. Create a `localeDev` directory there, and in `localeDev` create a directory named with your [http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes ISO 639-1] language code, such as `es-MX` for Mexican Spanish.
 
 Download a Firefox 3 language pack in your target language, or the next best language which you can find. Inside the language pack is a jar file such as `es-MX.jar`. Create a directory `%MKS%\localeDev\Firefox3` and unzip the contents of the jar file there. Finally, you must create a shortcut link from this directory to `%MKS%\localeDev\es-MX` (see the image below).
 
-Create the UI listing files from the Firefox language pack by running `UI-listing.pl` (located in the `localeDev` directory). Now translation of the listing file (`UI-es-MX.txt`) can be completed.
+Create the UI listing files from the Firefox language pack by running `UI-listing.pl` (located in the `localeDev` directory). Now translation of the listing file (`UI-es-MX.txt`) may be completed.
 
 ==Building a new UI==
-Once the UI listing file is translated, run `UI-code.pl` (located in the `localeDev` directory) to create new UI code files. Then add your new locale code to the "`%MK%\build\Appinfo.bat`" file's `AllLocales` line. To include the new locale in your build, also add it to the `IncludeLocales` line. After rebuilding xulSword, you should see a language menu item corresponding to the new locale under the `Options->Languages` menu.
+Once the UI listing file is translated, run `UI-code.pl` (located in the `localeDev` directory) to create new UI code files (these are .dtd and .properties files). Then add your new locale's [http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes ISO 639-1] code to the "`%MK%\build\Appinfo.bat`" file's `AllLocales` line. To include the new locale in your build, also add it to the `IncludeLocales` line. After rebuilding xulSword, you should see a language menu item corresponding to the new locale under the `Options->Languages` menu.
 
 The `%MKS%\localeDev` directory has the following basic structure:
 
@@ -26,7 +26,5 @@ The `%MKS%\localeDev` directory has the following basic structure:
   * Add localized bookmarks with an rdf file. Check that the `Created` and `Modified` dates in the rdf are all `ModifiedDate="----"` and `CreationDate="2010"`.
   * Add a localized skin.
   * Check that the OT/NT terms, which appear on the Bible location chooser at the left end of the main program window, are not so long as to make the chooser undesirably tall. Also, some scripts (like Arabic), which cannot simply be printed vertically, will need images for these vertical texts. These images should be placed under the `mk/skin` directory and named `NT.png` and `OT.png`.
-
-
 
 
