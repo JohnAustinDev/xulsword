@@ -169,6 +169,16 @@ function loadedXULReal() {
   catch (er) {newck = "F";}
   if (newck) document.getElementById("openSearchDialog").setAttribute("key", newck);
   
+  document.getElementById("w1").setAttribute("accesskey", dString("1"));
+  document.getElementById("w2").setAttribute("accesskey", dString("2"));
+  document.getElementById("w3").setAttribute("accesskey", dString("3"));
+  document.getElementById("f0").setAttribute("accesskey", dString("1"));
+  document.getElementById("f1").setAttribute("accesskey", dString("2"));
+  document.getElementById("f2").setAttribute("accesskey", dString("3"));
+  document.getElementById("f3").setAttribute("accesskey", dString("4"));
+  document.getElementById("f4").setAttribute("accesskey", dString("5"));
+  
+  
   //Listen for keypresses on search textbox (for return key)
   document.getElementById("searchText").addEventListener("keypress",keypress,false);
 
@@ -819,8 +829,8 @@ function updateScriptToHistory(index) {
   Bible.setBiblesReference(refBible, loc);
   document.getElementById("book").book = Bible.getBookName();
   document.getElementById("book").version = refBible;
-  document.getElementById("chapter").value = Bible.getChapterNumber(refBible);
-  document.getElementById("verse").value = Bible.getVerseNumber(refBible);  
+  document.getElementById("chapter").value = dString(Bible.getChapterNumber(refBible));
+  document.getElementById("verse").value = dString(Bible.getVerseNumber(refBible));
   updateFromNavigator();
   goUpdateCommand("cmd_xs_forward");
   goUpdateCommand("cmd_xs_back");
@@ -837,8 +847,7 @@ function createHistoryMenu(aEvent) {
     var xulElement = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "menuitem");
     xulElement.setAttribute("oncommand", "goToHistoryIndex('" + i + "')");
     var aref = Bible.convertLocation(WESTERNVS, History[i], Bible.getVerseSystem(vers));
-    aref = aref.split(".");
-    xulElement.setAttribute("label", Book[findBookNum(aref[0])].bNameL + " " + aref[1] + ":" + LocaleDirectionChar + aref[2]);
+    xulElement.setAttribute("label", ref2ProgramLocaleText(aref, true));
     //if (i == Historyi) {xulElement.style.background="rgb(230,200,255)";}
     popup.appendChild(xulElement);  
   }
@@ -871,8 +880,8 @@ function updateToNewLocation(loc) {
     document.getElementById("book").book = loc.shortName;
     document.getElementById("book").version = firstDisplayBible();
   }
-  if (loc.chapter)   {document.getElementById("chapter").value = String(loc.chapter);}
-  if (loc.verse)     {document.getElementById("verse").value = String(loc.verse);}
+  if (loc.chapter)   {document.getElementById("chapter").value = dString(loc.chapter);}
+  if (loc.verse)     {document.getElementById("verse").value = dString(loc.verse);}
   if (loc.lastVerse) {numberOfSelectedVerses = loc.lastVerse - loc.verse + 1;}
   updateFromNavigator(numberOfSelectedVerses);
 }
@@ -883,10 +892,10 @@ function updateFromNavigator(numberOfSelectedVerses) {
   
   var myb = document.getElementById("book").book;
   var myversion = document.getElementById("book").version;
-  var myc = Number(document.getElementById("chapter").value);
-  if (isNaN(myc)) {myc=1; document.getElementById("chapter").value=myc;}
-  var myv = Number(document.getElementById("verse").value);
-  if (isNaN(myv)) {myv=1; document.getElementById("verse").value=myv;}
+  var myc = Number(iString(document.getElementById("chapter").value));
+  if (isNaN(myc)) {myc=1; document.getElementById("chapter").value=dString(myc);}
+  var myv = Number(iString(document.getElementById("verse").value));
+  if (isNaN(myv)) {myv=1; document.getElementById("verse").value=dString(myv);}
   
   //check book
   var mybn = findBookNum(myb);
@@ -1458,7 +1467,7 @@ var XulswordController = {
       BookmarkFuns.addBookmarkAs(CurrentTarget, true);
       break;
     case "cmd_xs_selectVerse":
-      document.getElementById("verse").value = CurrentTarget.verse;
+      document.getElementById("verse").value = dString(CurrentTarget.verse);
       quickSelectVerse(CurrentTarget.version, CurrentTarget.shortName, CurrentTarget.chapter, CurrentTarget.verse, CurrentTarget.lastVerse, HILIGHTVERSE, SCROLLTYPECENTER);
       break;
     case "cmd_xs_back":
@@ -2811,9 +2820,9 @@ function getLemmaHTML(numberList, matchingPhrase) {
     }
     else html += sep + saveKey;
     sep = "<hr>";
-  }
-  if (html)
+    if (html && module)
     html = "<div class=\"vstyle" + module + "\">" + html + "</div>";
+  }
   return html;
 }  
 
@@ -3642,8 +3651,8 @@ function updateLocators(forceChooserRedraw) {
   if (Bible) {
     document.getElementById("book").book = Book[bNum].sName;
     document.getElementById("book").version = myvers;
-    document.getElementById("chapter").value = Bible.getChapterNumber(myvers);
-    document.getElementById("verse").value = Bible.getVerseNumber(myvers);
+    document.getElementById("chapter").value = dString(Bible.getChapterNumber(myvers));
+    document.getElementById("verse").value = dString(Bible.getVerseNumber(myvers));
   }
 }
 

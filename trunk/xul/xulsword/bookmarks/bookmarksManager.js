@@ -364,7 +364,7 @@ function onViewSelected(aEvent)
           count++;
       }
 
-      displayValue = BookmarksUtils.getLocaleString("status_foldercount", String(count));
+      displayValue = BookmarksUtils.getLocaleString("status_foldercount", dString(count));
     }
     else if (selection.type[0] == "Bookmark")
       displayValue = BookmarksUtils.getProperty(selection.item[0], gNC_NS+"Name", aEvent.target.db)

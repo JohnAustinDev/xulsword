@@ -1443,7 +1443,6 @@ function noteboxClick(e) {
     switch (Win.modType) {
     case BIBLE:
     case COMMENTARY:
-      //OwnerDocument.getElementById("verse").value = v;
       var updateNeeded = MainWindow.getUnpinnedVerseKeyWindows();
       if (Pin.isPinned) {
         Bible.setBiblesReference(Win.modName, idpart[2] + "." + idpart[3] + "." + idpart[4]);

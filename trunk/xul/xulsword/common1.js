@@ -353,6 +353,7 @@ function parseLocation(loc2parse) {
   loc2parse = loc2parse.replace(/[“|”|\(|\)|\[|\]|,]/g," ");
   loc2parse = loc2parse.replace(/^\s+/,"");
   loc2parse = loc2parse.replace(/\s+$/,"");
+  loc2parse = iString(loc2parse);
 //jsdump("reference:\"" + loc2parse + "\"\n");
   if (loc2parse=="" || loc2parse==null) {return null;}
   var location = {shortName: null, version: null, chapter: null, verse: null, lastVerse: null}
@@ -763,8 +764,14 @@ function getGenBookChapterText(moduleAndKey, bible, fn) {
   return text;
 }
 
+var VerseNm = new RegExp("(<sup class=\"versenum\">)(\\d+)(</sup>)", "g");
 function getChapterText(bible, fn, vers, appendNotes) {
   var text = bible.getChapterText(vers);
+  var tl = getLocaleOfVersion(vers);
+  if (!tl) {tl = rootprefs.getCharPref("general.useragent.locale");}
+  if (!DisplayNumeral[tl]) getDisplayNumerals(tl);
+  if (DisplayNumeral[tl][10])
+      text = text.replace(VerseNm, function(str, p1, p2, p3) {return p1 + dString(p2, tl) + p3;});
   text = insertUserNotes(bible.getBookName(), bible.getChapterNumber(vers), vers, text);
   
   if (!appendNotes) {

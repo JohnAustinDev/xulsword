@@ -145,10 +145,10 @@
         <parameter name="aNumber"/>
         <parameter name="maxLength"/>
         <body><![CDATA[
-          if (!aMenuList.menupopup) aMenuList.appendItem(1, 1);
+          if (!aMenuList.menupopup) aMenuList.appendItem(dString(1), 1);
           for (var i=aMenuList.menupopup.childNodes.length+1; (i<=aNumber && i<=maxLength); i++) {
-          var newitem = aMenuList.appendItem(i, i);
-//jsdump("Added menu item " + i + ".\n");
+          var newitem = aMenuList.appendItem(dString(i), i);
+//jsdump("Added menu item " + dString(i) + ".\n");
         }
         ]]>
         </body>

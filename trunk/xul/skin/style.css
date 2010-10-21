@@ -113,6 +113,8 @@ a:active{color:blue;}
 .audiolink {
   position:relative; 
   top:-10px;
+  width:45px;
+  height:37px;
   margin-left:35px;
   margin-right:35px;
   margin-bottom:-10px;

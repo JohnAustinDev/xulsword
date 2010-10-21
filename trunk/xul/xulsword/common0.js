@@ -319,14 +319,61 @@ function fixWindowTitle(title) {
   return title;
 }
 
-function getLocalizedChapterTerm(shortBookName, chapternumber, bookbundle) {
+function getLocalizedChapterTerm(shortBookName, chapternumber, bookbundle, locale) {
   var chapTerm;
   if (shortBookName=="Ps") {
-    try {chapTerm = bookbundle.formatStringFromName("PsalmTerm",[chapternumber],1);}
+    try {chapTerm = bookbundle.formatStringFromName("PsalmTerm",[dString(chapternumber, locale)],1);}
     catch (er) {chapTerm=null;}
   }
-  if (!chapTerm) chapTerm = bookbundle.formatStringFromName("Chaptext",[chapternumber],1);
+  if (!chapTerm) chapTerm = bookbundle.formatStringFromName("Chaptext",[dString(chapternumber, locale)],1);
   return chapTerm;
+}
+
+function dString(x, locale) {
+  if (!locale) locale = rootprefs.getCharPref("general.useragent.locale");
+  var s = String(x);
+  if (!DisplayNumeral[locale]) getDisplayNumerals(locale);
+  s = s.replace("0", DisplayNumeral[locale][0],"g");
+  s = s.replace("1", DisplayNumeral[locale][1],"g");
+  s = s.replace("2", DisplayNumeral[locale][2],"g");
+  s = s.replace("3", DisplayNumeral[locale][3],"g");
+  s = s.replace("4", DisplayNumeral[locale][4],"g");
+  s = s.replace("5", DisplayNumeral[locale][5],"g");
+  s = s.replace("6", DisplayNumeral[locale][6],"g");
+  s = s.replace("7", DisplayNumeral[locale][7],"g");
+  s = s.replace("8", DisplayNumeral[locale][8],"g");
+  s = s.replace("9", DisplayNumeral[locale][9],"g");
+  return s;
+}
+
+function iString(x, locale) {
+  if (!locale) locale = rootprefs.getCharPref("general.useragent.locale");
+  var s = String(x);
+  if (!DisplayNumeral[locale]) getDisplayNumerals(locale);
+  s = s.replace(DisplayNumeral[locale][0], "0", "g");
+  s = s.replace(DisplayNumeral[locale][1], "1", "g");
+  s = s.replace(DisplayNumeral[locale][2], "2", "g");
+  s = s.replace(DisplayNumeral[locale][3], "3", "g");
+  s = s.replace(DisplayNumeral[locale][4], "4", "g");
+  s = s.replace(DisplayNumeral[locale][5], "5", "g");
+  s = s.replace(DisplayNumeral[locale][6], "6", "g");
+  s = s.replace(DisplayNumeral[locale][7], "7", "g");
+  s = s.replace(DisplayNumeral[locale][8], "8", "g");
+  s = s.replace(DisplayNumeral[locale][9], "9", "g");
+  return s;
+}
+
+var DisplayNumeral = new Object();
+function getDisplayNumerals(locale) {
+  DisplayNumeral[locale] = new Array(11);
+  DisplayNumeral[locale][10] = false;
+  var bundle = getLocaleBundle(locale, "numbers.properties");
+  for (var i=0; i<=9; i++) {
+    var n = String(i);
+    if (bundle) {try {n = bundle.GetStringFromName("n" + i);} catch(er) {}}
+    if (n != String(i)) DisplayNumeral[locale][10] = true;
+    DisplayNumeral[locale][i] = n;
+  }
 }
 
 function isProgramPortable() {

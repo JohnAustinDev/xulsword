@@ -80,6 +80,9 @@ sub loadMAP($%%%$) {
     if ($_ !~ /^([^=]+?)\s*\=\s*(.*)\s*$/) {&Log("ERROR line $line: Could not parse UI-MAP entry \"$_\"\n"); next;}
     my $fileEntry = $1;
     my $desc = $2;
+    
+    my $fileReqd = "true";
+    if ($fileEntry =~ s/\\\?([^\\]*)$/\\$1/) {$fileReqd = "false";}
 
     # capture and remove any special <> or ? markers
     $desc =~ s/^(\??(<[^>]+>)*)//;
@@ -104,7 +107,7 @@ sub loadMAP($%%%$) {
     $mapFileEntryInfoP->{$fileEntry.":optional"}   = $optional;
 
     # get and save description's value when applicable...
-    my $value = &readValuesFromFile($fileEntry, $codeFileEntryValueP, $supressWarn);
+    my $value = &readValuesFromFile($fileEntry, $codeFileEntryValueP, $supressWarn, $fileReqd);
     if (exists($mapDescInfoP->{$desc.":value"})) {
       if    ($value eq "_NOT_FOUND_") {next;}
       elsif ($mapDescInfoP->{$desc.":value"} eq "_NOT_FOUND_") {}
@@ -126,10 +129,11 @@ sub loadMAP($%%%$) {
 
 # Reads all values in the file (if file has not already been read) into
 # associative array. Returns requested value.
-sub readValuesFromFile($%$) {
+sub readValuesFromFile($%$$) {
   my $fe = shift;
   my $feValuesP = shift;
   my $supressWarn = shift;
+  my $fReqd = shift;
   
   my $te = $fe;
   # if we're sourcing from ff3 and we have a matching MAP entry, transform the file to ff3
@@ -142,14 +146,14 @@ sub readValuesFromFile($%$) {
   $te =~ /^(.*?)\:/;
   my $f = $1;
   
-  if (!exists($Readfiles{$f})) {&readFile($f, $feValuesP);}
+  if (!exists($Readfiles{$f})) {&readFile($f, $feValuesP, $fReqd);}
   if (!exists($feValuesP->{$te})) {
     # if this was a mapped file, but the entry was missing, look in the original file for the entry
     if ($te ne $fe) {
       $te = $fe;
       $te =~ /^(.*?)\:/;
       $f = $1;
-      if (!exists($Readfiles{$f})) {&readFile($f, $feValuesP);}
+      if (!exists($Readfiles{$f})) {&readFile($f, $feValuesP, $fReqd);}
     }
     if (!exists($feValuesP->{$te})) {
       if ($supressWarn ne "true") {
@@ -165,14 +169,16 @@ sub readValuesFromFile($%$) {
   return $feValuesP->{$te};
 }
 
-sub readFile($%) {
+sub readFile($%$) {
   my $f = shift;
   my $feValuesP = shift;
+  my $fr = shift;
   
   # look in locale, if file is not found, then look in alternate locale
   my $ff = &getFileFromLocale($f, $locale);
   if ($ff eq "") {$ff = &getFileFromLocale($f, $localeALT);}
-  if ($ff eq "") {&Log("ERROR readFile  \"$f\": Could not locate code file. Tried \"$locale\" and \"$localeALT\".\nFinished.\n"); die;}
+  if ($ff eq "" && $fr eq "false") {return;}
+  elsif ($ff eq "") {&Log("ERROR readFile  \"$f\": Could not locate code file. Tried \"$locale\" and \"$localeALT\".\nFinished.\n"); die;}
 
   my $t = $ff;
   $t =~ s/^.*\.//;

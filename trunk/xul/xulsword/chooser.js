@@ -100,7 +100,7 @@ function writeChapterMenu(bk) {
       dend="</div>";
     }
     document.write("<div id=\"ID." + bk + "." + ch + "\" class=\"chapmenucell\">");
-    document.write(ch);
+    document.write(dString(ch));
     document.write("</div>");
     col++; 
     if (col == 11) {col=1; row++; document.write(dend); dend="";}

@@ -527,7 +527,7 @@ function getLocalizedAudioFile(aDir, basecode, shortName, chapter, ext, locale) 
   var cns =  padChapterLocalized(shortName, chapter);
   try {var lbk = localeBundle.GetStringFromName("Long" + shortName);}
   catch (er) {lbk = localeBundle.GetStringFromName(shortName);}
-  var chapTerm = getLocalizedChapterTerm(shortName, chapter, localeBundle).replace(/^[\s\d-]*/, "").replace(/[\s\d-]*$/, "");
+  var chapTerm = getLocalizedChapterTerm(shortName, chapter, localeBundle, locale).replace(/^[\s\d-]*/, "").replace(/[\s\d-]*$/, "");
   var path = aDir.path + "\\" + basecode + "_" + locale + "\\" + bns + "-" + lbk + "\\" + cns + "-" + chapTerm + "." + ext;
   var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   aFile.initWithPath(path);
