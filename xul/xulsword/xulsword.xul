@@ -374,9 +374,9 @@
     </menu>
     <menu id="window-menu" label="&menu.windows;" accesskey="&menu.windows.sc;">
       <menupopup id="wins">
-        <menuitem id="w1" label="&menu.windows.1win;" accesskey="1" type="radio" name="winum" oncommand="handleOptions(this)"/>
-        <menuitem id="w2" label="&menu.windows.2win;" accesskey="2" type="radio" name="winum" oncommand="handleOptions(this)"/>
-        <menuitem id="w3" label="&menu.windows.3win;" accesskey="3" type="radio" name="winum" oncommand="handleOptions(this)"/>
+        <menuitem id="w1" label="&menu.windows.1win;" type="radio" name="winum" oncommand="handleOptions(this)"/>
+        <menuitem id="w2" label="&menu.windows.2win;" type="radio" name="winum" oncommand="handleOptions(this)"/>
+        <menuitem id="w3" label="&menu.windows.3win;" type="radio" name="winum" oncommand="handleOptions(this)"/>
       </menupopup>
     </menu>
     <menu id="help-menu" label="&menu.help;" accesskey="&menu.help.sc;">

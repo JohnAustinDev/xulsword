@@ -217,7 +217,7 @@ var BookmarkFuns = {
     if (Tab[location.version] && Tab[location.version].modType!=BIBLE)
       bmname = Tab[location.version].label + ": " + bmname;
     
-    return bmname;
+    return dString(bmname);
   },
   
   addModuleLabel: function (text, moduleName) {

@@ -22,10 +22,10 @@ const HTMLbr0 = "<div style=\"clear: both;\"><br></div>";
 
 function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduction, showOriginal) {
   var myVersionsLocale = getLocaleOfVersion(version);
-  var myVersionsBundle = myVersionsLocale ? getLocaleBundle(myVersionsLocale, "books.properties"):getCurrentLocaleBundle("books.properties");
-  if (!myVersionsBundle) myVersionsBundle = getCurrentLocaleBundle("books.properties");
-  var myConfig = myVersionsLocale ? LocaleConfigs[myVersionsLocale]:LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
-  
+  if (!myVersionsLocale) {myVersionsLocale = rootprefs.getCharPref("general.useragent.locale");}
+  var myVersionsBundle = getLocaleBundle(myVersionsLocale, "books.properties");
+  var myConfig = LocaleConfigs[myVersionsLocale];
+
   var chapterHeadingFloat = ((myConfig && myConfig.direction && myConfig.direction=="rtl") ? "right":"left");
   var oppositeHeadingFloat = (chapterHeadingFloat == "left" ? "right":"left");
   var chapterHeadingFont = (myConfig && myConfig.font ? myConfig.font:DefaultFont);
@@ -39,12 +39,12 @@ function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduct
   case BIBLE:
   case COMMENTARY:
     // book and chapter heading
-    mtext += "<div class=\"chapnum\" style=\"margin-top:12px; float:" + chapterHeadingFloat + "; font-family:'" + chapterHeadingFont + "'; font-size-adjust:" + chapterHeadingSize + "; line-height:0.75;\">";
+    mtext += "<div class=\"chapnum\" style=\"margin-top:12px; text-align:" + chapterHeadingFloat + "; float:" + chapterHeadingFloat + "; font-family:'" + chapterHeadingFont + "'; font-size-adjust:" + chapterHeadingSize + "; line-height:0.75;\">";
     if (showBookName) {
       mtext += myVersionsBundle.GetStringFromName(myBook);
       mtext += "<br><br>";
     }
-    mtext += getLocalizedChapterTerm(myBook, myChap, myVersionsBundle) + "</div>";
+    mtext += getLocalizedChapterTerm(myBook, myChap, myVersionsBundle, myVersionsLocale) + "</div>";
 
     if (!showOriginal) {
       mtext += "<div style=\"margin-top:12px; margin-bottom:-54px; float:" + oppositeHeadingFloat + "; text-align:" + oppositeHeadingFloat + ";\">";
@@ -175,8 +175,9 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
         
         // Write cell #4: chapter and verse
         var tmp = noteid.match(/\.(\d+)\.(\d+)$/);
-        var myc = tmp[1]
-        var myv = tmp[2];
+        var lov = getLocaleOfVersion(version);
+        var myc = dString(tmp[1], lov);
+        var myv = dString(tmp[2], lov);
         t += "<a id=\"notl." + noteid + "\" class=\"fncol4 vstyle" + version + "\" >" + "<i>" + myc + ":" + versionDirectionEntity + myv + "</i>" + " -" + "</a>";
         
         // Write cell #5: note body
@@ -308,9 +309,9 @@ function ascendingVerse(a,b) {
 //    bk c:v-lv
 //    bk c:v-lv, bk c:v-lv
 //    
-function ref2ProgramLocaleText(reference) {
+function ref2ProgramLocaleText(reference, notHTML) {
   var separator="";
-  var dc = LocaleDirectionEntity;
+  var dc = notHTML ? LocaleDirectionChar:LocaleDirectionEntity;
   var retv=dc;
  
   reference += "-";
@@ -341,7 +342,7 @@ function ref2ProgramLocaleText(reference) {
       separator = dc + " " + dc + "-" + dc + " ";
     }
   }
-  return retv;
+  return dString(retv);
 }
 
 function getCopyright(module) {

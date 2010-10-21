@@ -44,7 +44,7 @@ foreach $locale (@allLocales) {
   print OUTF "locale xulsword $locale $manpath/xulsword/\n";
   print OUTF "locale global $locale jar:$locale.jar!/global/\n"; # must always use jar, because global is result of a merge
   print OUTF "locale mozapps $locale jar:$locale.jar!/mozapps/\n"; # must always use jar, because global is result of a merge
-  if (-e "$MKS/localeDev/$locale/xulsword/skin") {
+  if (-e "$MKS/localeDev/$locale/text-skin") {
     print OUTF "skin localeskin skin $manpath/skin/\n";
   }
   print OUTF "# xulswordVersion=$UIversion\n";
@@ -58,10 +58,12 @@ foreach $locale (@allLocales) {
   foreach (@files) {if ($_ =~ /^(.*?)\.lnk/ && -e "$MKS\\localeDev\\Firefox3\\$1") {$ff3 = $1;}}
   close(DIR);
   if ($ff3 eq "") {$ff3 = "en-US"; `ECHO ERROR: COULD NOT DETERMINE BASE LOCALE OF $locale. DEFAULTING TO en-US.`;}
-  rmdir ("$MK/xulrunner/chrome/$locale.jar");
   `7z a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$ff3\\global\" -x!.svn`;
   `7z a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$ff3\\mozapps\" -x!.svn`;
   `7z a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\$locale\\locale\\*\" -x!.svn`;
+  if (-e "$MKS/localeDev/$locale/text-skin") {
+    `7z a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\$locale\\text-skin\\*\" -x!.svn`;
+  }
   
   # copy rdf file to destination
   `copy /Y \"$MKS\\localeDev\\$locale\\$locale.rdf\" \"$MK\\xulrunner\\defaults\\\"`;

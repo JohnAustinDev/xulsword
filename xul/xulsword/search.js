@@ -567,9 +567,9 @@ function makeTermsArray(terms) {
 function updateSearchStatusBar(totalMatches, firstMatchShown, matchesPerPage) {
   document.getElementById("resultsnav").hidden = (totalMatches <= matchesPerPage);
   var lastMatchShown = (totalMatches-firstMatchShown < matchesPerPage ? totalMatches:firstMatchShown + matchesPerPage);
-  if (totalMatches == 0) {document.getElementById("statusbar-text").label = SBundle.getFormattedString("Found",["0"]);}
-  if (totalMatches > matchesPerPage) {document.getElementById("statusbar-text").label = SBundle.getFormattedString("FoundMult",[String(firstMatchShown+1),String(lastMatchShown),String(totalMatches)]);}
-  else {document.getElementById("statusbar-text").label = SBundle.getFormattedString("Found",[String(totalMatches)]);}
+  if (totalMatches == 0) {document.getElementById("statusbar-text").label = SBundle.getFormattedString("Found",[dString("0")]);}
+  if (totalMatches > matchesPerPage) {document.getElementById("statusbar-text").label = SBundle.getFormattedString("FoundMult",[dString(firstMatchShown+1),dString(lastMatchShown),dString(totalMatches)]);}
+  else {document.getElementById("statusbar-text").label = SBundle.getFormattedString("Found",[dString(totalMatches)]);}
 }
 
 function getHTMLSearchResults(firstMatchToWrite, numMatchesToWrite, wordsToHighlight) {
