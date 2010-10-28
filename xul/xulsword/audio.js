@@ -81,7 +81,7 @@ function getAudioDirs() {
     }
   }
 
-  //for (var i=0; i<audioDirs.length; i++) {jsdump("audioDir[" + i + "]= " + audioDirs[i].dir.path);}
+  for (var i=0; i<audioDirs.length; i++) {jsdump("audioDir[" + i + "]= " + audioDirs[i].dir.path);}
   return audioDirs;
 }
 
@@ -138,7 +138,7 @@ function getAudioRelatedFile(dirName, fileName, audioDirs) {
   if (!audioDirs) audioDirs = getAudioDirs();
   var aFile;
   for (var d=0; d<audioDirs.length; d++) {
-    aFile = audioDirs[d].file.clone();
+    aFile = audioDirs[d].dir.clone();
     if (dirName) aFile.append(dirName);
     aFile.append(fileName);
     if (aFile.exists()) return aFile;

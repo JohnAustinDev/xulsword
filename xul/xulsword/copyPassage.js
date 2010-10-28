@@ -122,8 +122,8 @@ function copyPassage(e) {
   verseHtml = prepVerseHtml4Clipboard(verseHtml, PassageChooser.version, PassageChooser.location);
   var verseUnicode = html2text(verseHtml);
   
-jsdump(verseHtml);
-jsdump(verseUnicode);
+//jsdump(verseHtml);
+//jsdump(verseUnicode);
   
   var str = Components.classes["@mozilla.org/supports-string;1"].  
                           createInstance(Components.interfaces.nsISupportsString);  

@@ -410,6 +410,7 @@ function searchBible() {
   sText = sText.replace(/\s*$/,"");       //remove trailing whitespace
   sText = sText.replace(/\s+/," ");       //change all white space to " "
   setUnicodePref("SearchText",sText);
+  sText = replaceLocaleSearchSymbols(sText);
   var rawText = sText;
   
   //Change window title to new search
@@ -545,6 +546,19 @@ function searchBible() {
   }
 }
 
+const LocaleSearchSymbols = ["SINGLECharWildCard", "MULTICharWildCard", "AND", "OR", "NOT", "SIMILAR", "GROUPSTART", "GROUPEND", "QUOTESTART", "QUOTEEND"];
+const ActualSearchSymbols = ["?", "*", "&&", "||", "!", "~", "(", ")", "\"", "\""];
+function replaceLocaleSearchSymbols(s) {
+  var b = getCurrentLocaleBundle("searchSymbols.properties");
+  if (!b) return s;
+  for (var i=0; i<LocaleSearchSymbols.length; i++) {
+    try {var sym = b.GetStringFromName(LocaleSearchSymbols[i]);} catch (er) {continue;}
+    if (!sym || sym.search(/^\s*$/)!=-1) continue;
+    s = s.replace(sym, ActualSearchSymbols[i], "g");
+  }
+  return s;
+}
+
 function makeTermsArray(terms) {
   TR = [];
   terms = terms.split(";");
@@ -604,12 +618,9 @@ function getHTMLSearchResults(firstMatchToWrite, numMatchesToWrite, wordsToHighl
   for (var i=0; i<match.length; i++) {
     var parts = match[i].split("<bg/>");
     if (ModuleUsesVerseKey) {
-      var verseLocation = parts[0].split(".");
-      try {var bname = Book[findBookNum(verseLocation[0])].bName;}
+      try {var bname = Book[findBookNum(parts[0].split(".")[0])].bName;}
       catch (er) {jsdump("WARNING: getHTMLSearchResults, NO BNUM!!: " + parts[0] + "\n"); continue;}
-      var cnum = verseLocation[1];
-      var vnum = verseLocation[2];
-      matchLink = LocaleDirectionEntity + bname + " " + cnum + ":" + LocaleDirectionEntity + vnum;
+      matchLink = ref2ProgramLocaleText(parts[0]);
     }
     else matchLink = parts[0];
     switch (getModuleLongType(displayVersion)) {

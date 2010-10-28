@@ -18,9 +18,9 @@ mkdir "%ResDir%"
 mkdir "%ProfDir%"
 echo. > "%ProfDir%\store.bat"
 echo NewLocales;en-US >"%ResDir%\newInstalls.txt"
-attrib +H "%RunDir%"
-attrib +H "%ResDir%"
-attrib +H "%ProfDir%"
+::attrib +H "%RunDir%"
+::attrib +H "%ResDir%"
+::attrib +H "%ProfDir%"
 
 ECHO --- COPY FIREFOX PORTABLE FILES
 xcopy "%FirefoxPortableDir%\App\Firefox\*" "%RunDir%\" /S /Y

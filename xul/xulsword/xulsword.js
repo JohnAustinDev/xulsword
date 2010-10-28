@@ -29,7 +29,7 @@ var Historyi;
 var History;
 var FrameDocument = new Array(4);
 var Win = new Array(4);
-var Link = {isLink:[null, null, null, null], isTextLink:[null, null, null, null], modName:null, numWins:null, leftWin:null, rightWin:null, firstWin:null, lastWin:null, isRTL:null};
+var Link = {isLink:[null, null, null, null], isTextLink:[null, null, null, null], modName:null, numWins:null, startWin:null, finishWin:null, firstWin:null, lastWin:null, isRTL:null};
 var KeyWindow;
 var UsingWaitCursor; 
 var SavedWindowWithFocus;
@@ -206,7 +206,6 @@ function loadedXULReal() {
   initTemplateDataSource(document.getElementById("bookmarks-menu"), BMDS); 
   // Cludge to get history button the right height, must happen after updating locale configuration
   document.getElementById("historymenu").style.height = String(document.getElementById("back").boxObject.height) + "px";
-  //if (document.getElementById("historyButtons").getAttribute("chromedir")=="rtl") document.getElementById("historyButtons").dir = "reverse";
   
   // Order is 1,2,3 because Frame 1 has the chooser, and the chooser size must be
   // defined before any Frames can be properly sized
@@ -998,7 +997,6 @@ function previousPage(highlightFlag, scrollType, pin) {
 }
 
 function previousVerse(scrollType) {
-  UseTextCache = true;
  // Set Version/Chapter so that setVerse corresponds to the verse/versification of window1
   var vers = firstDisplayBible();
   var v = Bible.getVerseNumber(vers);
@@ -1085,7 +1083,6 @@ function nextPage(highlightFlag, pin) {
 }
 
 function nextVerse(scrollType) {
-  UseTextCache = true;
  // Set Version/Chapter such that we get verse/versification of window1 set up correctly
   var vers = firstDisplayBible();
   var cv = Bible.getVerseNumber(vers);
@@ -1119,16 +1116,14 @@ function getPassageFromWindow(pflag, onlyThisWin) {
   }
   else {
     // if this is a linked window, read text from link
-    for (var w=1; w<=3; w++) {
+    for (var w=Link.startWin; w<=Link.finishWin; w++) {
       if (!Link.isLink[w]) continue;
       if (onlyThisWin && w!=onlyThisWin) continue;
       if (prefs.getBoolPref("MaximizeNoteBox" + w)) continue;
-      if (Link.isRTL) {
-        text = FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML + text;
-      }
-      else {
-        text = text + FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML;
-      }
+      if ((Link.isRTL && guiDirection() == "rtl") || (!Link.isRTL && guiDirection() != "rtl"))
+          text = text + FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML;
+      else
+          text = FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML + text;
     }
   }
   
@@ -1175,7 +1170,7 @@ function quickSelectVerse(version, bk, ch, vs, lastvs, highlightFlag, scrollType
     }
     else {
       text += FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML;
-      if (w==Link.rightWin) {
+      if (w==Link.finishWin) {
         // finished reading text for link or page
         var vsID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\." + Bible.getVerseNumber(Win[w].modName) + "\"");
         var vlID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\." + Bible.getLastVerseNumber(Win[w].modName) + "\"");
@@ -1264,7 +1259,6 @@ function addHL(velem, aSpan) {
 var SWcount = 0;
 var SWTO;
 function scrollwheel(event, w) {
-  UseTextCache = true;
   if (Link.isTextLink[w]) {
     // scrolling over linked windows
     // Over a delay, sum up scroll wheel values, then call the scroll function at end of delay (help scroll keep up).
@@ -2015,6 +2009,7 @@ function openTabToolTip(tabNum, frame, cX, cY) {
   if (ShowTabToolTip) window.clearTimeout(ShowTabToolTip);
   if (HideTabToolTip) window.clearTimeout(HideTabToolTip);
   cX += document.getElementById("bible" + frame + "Frame").boxObject.x;
+  if (guiDirection() == "rtl") cX = document.getElementById('frameset').boxObject.width - cX;
   ShowTabToolTip = window.setTimeout("document.getElementById('tabTT').openPopup(document.getElementById('frameset'), 'after_pointer', " + cX + ", " + cY + ");", 500);
   HideTabToolTip = window.setTimeout("document.getElementById('tabTT').hidePopup();", 5000);
 }
@@ -2969,7 +2964,7 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
     resizeScriptBoxes(null, true);
   }
   PreviousHaveGenBook = haveGenBook;
-  
+
   // Order is high to low because lower number Frames can write text to higher number Frames
   // so this order insures that the higher number frames have been initialized
   // before text is written to it.
@@ -3030,8 +3025,7 @@ function updateAudioLinks(updateNeededArray) {
     for (var i = 0; i < icons.length; ++i) {
       var icon = icons[i];
       if (AudioDirs === null) AudioDirs = getAudioDirs();
-      if (getAudioForChapter(Win[w].modName, bk, Number(icon.id.split(".")[1]), AudioDirs)) icon.src="chrome://xulsword/skin/images/listen0.png";
-      else icon.src="chrome://xulsword/skin/images/listen.png";
+      if (getAudioForChapter(Win[w].modName, bk, Number(icon.id.split(".")[1]), AudioDirs)) icon.style.visibility = "visible";
     }
   }
 }
@@ -3075,6 +3069,8 @@ function saveWindowDisplay(win) {
   display.chapter = Bible.getChapterNumber(win.modName);
   display.verse = Bible.getVerseNumber(win.modName);
   display.key = getPrefOrCreate("ShowingKey" + win.modName, "Unicode", "");
+  display.showingOrig = prefs.getBoolPref("ShowOriginal" + win.number);
+  display.maximizeNoteBox = prefs.getBoolPref("MaximizeNoteBox" + win.number);
 
   try {for (var cmd in GlobalToggleCommands) display.globalOptions[cmd] = Bible.getGlobalOption(GlobalToggleCommands[cmd]);}
   catch (er) {display.globalOptions["cmd_xs_toggleUserNotes"] = prefs.getCharPref(GlobalToggleCommands[cmd]);}
@@ -3088,6 +3084,8 @@ function saveWindowDisplay(win) {
 function setWindowDisplay(win, display) {
   Bible.setBiblesReference(display.modName, display.shortName + "." + display.chapter + "." + display.verse);
   setUnicodePref("ShowingKey" + win.modName, display.key);
+  prefs.setBoolPref("ShowOriginal" + win.number, display.showingOrig);
+  prefs.setBoolPref("MaximizeNoteBox" + win.number, display.maximizeNoteBox);
   
   try {for (var cmd in GlobalToggleCommands) Bible.setGlobalOption(GlobalToggleCommands[cmd], display.globalOptions[cmd]);}
   catch (er) {prefs.setCharPref(GlobalToggleCommands[cmd], display.globalOptions[cmd]);}
@@ -3102,12 +3100,12 @@ Footnotes[1] = new Object();
 Footnotes[2] = new Object();
 Footnotes[3] = new Object();
 var TextCache = new Array(4); // used for link scrolling to avoid repeated module reads
-TextCache[1] = {fn:Footnotes[1]};
-TextCache[2] = {fn:Footnotes[2]};
-TextCache[3] = {fn:Footnotes[3]};
-var UseTextCache = false;
+TextCache[1] = {fn:Footnotes[1], text:null, iend:null, numAppendedChaps:null, doneAppendedChaps:null, numPrependedChaps:null, donePrependedChaps:null, display:{}};
+TextCache[2] = {fn:Footnotes[2], text:null, iend:null, numAppendedChaps:null, doneAppendedChaps:null, numPrependedChaps:null, donePrependedChaps:null, display:{}};
+TextCache[3] = {fn:Footnotes[3], text:null, iend:null, numAppendedChaps:null, doneAppendedChaps:null, numPrependedChaps:null, donePrependedChaps:null, display:{}};
+  
 const MAXTEXTCACHE = 131071;
-function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
+function writeToScriptBoxes(win, isPinned, display, showIntroduction, scrollTypeFlag) {
   var s = {link:{}};
   if (Link.isLink[win.number]) {
     for (var par in Link) {s.link[par] = Link[par];}
@@ -3119,9 +3117,10 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
   s.scrollTypeFlag = scrollTypeFlag;
   if (s.scrollTypeFlag==SCROLLTYPEENDSELECT) s.scrollTypeFlag=SCROLLTYPEEND;
   if (Bible.getVerseNumber(s.win.modName) == 1 && s.scrollTypeFlag == SCROLLTYPECENTER) s.scrollTypeFlag = SCROLLTYPEBEG;
+  // If we're scrolling to the top, set Bible or Pin to verse 1
   if (s.scrollTypeFlag == SCROLLTYPETOP) {
-    if (FrameDocument[s.link.leftWin].defaultView.Pin.isPinned) {
-      var tpin = FrameDocument[s.link.leftWin].defaultView.Pin;
+    if (FrameDocument[s.link.startWin].defaultView.Pin.isPinned) {
+      var tpin = FrameDocument[s.link.startWin].defaultView.Pin;
       tpin.updatePin(tpin.shortName, tpin.chapter, 1);
       tpin.updateLink();
     }
@@ -3129,22 +3128,21 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
     s.scrollTypeFlag = SCROLLTYPEBEG
   }
   
-  s.navlinks = FrameDocument[s.link.leftWin].defaultView.getPageLinks();
+  s.navlinks = FrameDocument[s.link.firstWin].defaultView.getPageLinks();
 
-  if (needToReadText(s, TextCache[s.link.firstWin])) {
-    initTextCache(s, TextCache[s.link.firstWin]);
-  }
+  if (needToInitText(s, TextCache[s.link.firstWin], display)) initTextCache(s, TextCache[s.link.firstWin], display);
+  //else jsdump("USING CACHE");
 
-  for (var i=0; i<s.link.numWins; i++) {
-    FrameDocument[s.link.leftWin+i].defaultView.ConnectorElement.style.visibility = (i==s.link.numWins-1 ? "hidden":"visible");
-    FrameDocument[s.link.leftWin+i].defaultView.FrameDocumentHavingNoteBox = FrameDocument[s.link.lastWin];
-    FrameDocument[s.link.leftWin+i].defaultView.MyFootnotes = TextCache[s.link.firstWin].fn;
+  for (var i=s.link.startWin; i<=s.link.finishWin; i++) {
+    FrameDocument[i].defaultView.ConnectorElement.style.visibility = (Win[i].isLinkedToNext ? "visible":"hidden");
+    FrameDocument[i].defaultView.FrameDocumentHavingNoteBox = FrameDocument[s.link.lastWin];
+    FrameDocument[i].defaultView.MyFootnotes = TextCache[s.link.firstWin].fn;
   }
   
   // if note box is maximized make necessary adjustments
   s.lastWindowNotesAreMaximized = prefs.getBoolPref("MaximizeNoteBox" + s.link.lastWin) &&
                                   !prefs.getBoolPref("ShowOriginal" + win.number);
-  if (s.lastWindowNotesAreMaximized && !ScriptBoxIsEmpty[s.link.leftWin]) {
+  if (s.lastWindowNotesAreMaximized && !ScriptBoxIsEmpty[s.link.firstWin]) {
     FrameDocument[s.link.lastWin].defaultView.ScriptBoxTextElement.scrollTop = 0; // prevents window from flashing white
     FrameDocument[s.link.lastWin].defaultView.ScriptBoxTextElement.innerHTML="";
     FrameDocument[s.link.lastWin].defaultView.setBibleHeight(false, false);
@@ -3155,17 +3153,16 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
 
   s.forceNoteBox2Hide = prefs.getBoolPref("ShowOriginal" + win.number) ||
                         s.lastWindowNotesAreMaximized ||
-                        ScriptBoxIsEmpty[s.link.leftWin]; //If last window notes are max'mzd this is second to last window, so hide!
+                        ScriptBoxIsEmpty[s.link.firstWin]; //If last window notes are max'mzd this is second to last window, so hide!
   var firstVerseInLink;
   var notes, userNotes;
   if (s.link.numWins>1) {
-    var tc = TextCache[s.link.firstWin];
-    text2LinkedWindows(tc, s, tc.fn);
+    text2LinkedWindows(TextCache[s.link.firstWin], s, TextCache[s.link.firstWin].fn);
     firstVerseInLink = new RegExp("id=\"vs\\.([^\\.]+\\.\\d+\.\\d+)");
     firstVerseInLink = FrameDocument[s.link.firstWin].defaultView.ScriptBoxTextElement.innerHTML.match(firstVerseInLink);
-    if (tc.fn.Notes) notes = filterNotes(tc.fn.Notes, tc);
+    if (TextCache[s.link.firstWin].fn.Notes) notes = filterNotes(TextCache[s.link.firstWin].fn.Notes, TextCache[s.link.firstWin]);
     else notes = NOTFOUND;
-    if (tc.fn.UserNotes) userNotes = filterNotes(tc.fn.UserNotes, tc);
+    if (TextCache[s.link.firstWin].fn.UserNotes) userNotes = filterNotes(TextCache[s.link.firstWin].fn.UserNotes, TextCache[s.link.firstWin]);
     else userNotes = NOTFOUND;
     if (!s.forceNoteBox2Hide)
       FrameDocument[s.link.lastWin].defaultView.copyNotes2Notebox(notes, userNotes);
@@ -3180,11 +3177,11 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
   FrameDocument[s.link.lastWin].defaultView.setBibleHeight(false, s.forceNoteBox2Hide);
 
   //Write maximized notes in last window if needed
-  if (s.lastWindowNotesAreMaximized && !ScriptBoxIsEmpty[s.link.leftWin]) {
+  if (s.lastWindowNotesAreMaximized && !ScriptBoxIsEmpty[s.link.firstWin]) {
     FrameDocument[s.maximizedNotesWin].defaultView.copyNotes2Notebox(notes, userNotes);
   }
   if (s.win.modType==BIBLE) {
-    for (i=s.link.leftWin; i<s.link.leftWin+s.link.numWins; i++) {
+    for (i=s.link.startWin; i<=s.link.finishWin; i++) {
       hilightUserNotes(TextCache[s.link.firstWin].fn.UserNotes, i);
     }
   }
@@ -3192,27 +3189,46 @@ function writeToScriptBoxes(win, isPinned, showIntroduction, scrollTypeFlag) {
 //for (var par in s) {jsdump("s." + par + ":" + s[par]); for (var par2 in s[par]) {if (par != "navlinks") jsdump("\ts." + par + "." + par2 + ":" + s[par][par2]);}}
 }
 
-function needToReadText(s, textCache) {
-  if (!UseTextCache) return true;
-  UseTextCache = false;
-  if (!textCache || !textCache.text || !textCache.text.length || textCache.text.length > MAXTEXTCACHE) return true;
-  var needCh = Bible.getChapterNumber(s.win.modName);
-  var haveBeg = textCache.initChapter - textCache.numPrependedChaps;
-  var haveEnd = textCache.initChapter + textCache.numAppendedChaps;
-  return !(needCh >= haveBeg && needCh <= haveEnd);
-}
+function needToInitText(s, textCache, display) {
+  if (!textCache || !textCache.text || !textCache.text.length || textCache.text.length > MAXTEXTCACHE) {return true;}
 
-function initTextCache(s, textCache) {
-  for (var i=0; i<s.link.numWins; i++) {
-    TextCache[s.link.leftWin+i].fn.CrossRefs = "";
-    TextCache[s.link.leftWin+i].fn.Footnotes = "";
-    TextCache[s.link.leftWin+i].fn.Notes = "";
-    TextCache[s.link.leftWin+i].fn.UserNotes = "";
+  // has display changed, or is new reference not in cache
+  var initCache = false;
+  for (var el in display) {
+    if (el == "key" || el == "verse") continue; // only verseKey mods use cacheing
+    else if (el == "chapter") {
+      if (1*(textCache.display.chapter - textCache.numPrependedChaps) > display.chapter) {initCache = true;}
+      if (1*(textCache.display.chapter + textCache.numAppendedChaps)  < display.chapter) {initCache = true;}
+    }
+    else if (el == "globalOptions") {
+      for (var el2 in display.globalOptions) {
+        if (textCache.display.globalOptions[el2] != display.globalOptions[el2]) {initCache = true;}
+      }
+    }
+    else if (textCache.display[el] != display[el]) {initCache = true;}
   }
 
+  return initCache;
+}
+
+function initTextCache(s, textCache, display) {
+  for (var i=s.link.startWin; i<=s.link.finishWin; i++) {
+    TextCache[i].fn.CrossRefs = "";
+    TextCache[i].fn.Footnotes = "";
+    TextCache[i].fn.Notes = "";
+    TextCache[i].fn.UserNotes = "";
+  }
+  
+  for (var el in display) {
+    if (el == "globalOptions") {
+      if (!textCache.display.globalOptions) textCache.display.globalOptions = {};
+      for (var el2 in display.globalOptions) {textCache.display.globalOptions[el2] = display.globalOptions[el2];}
+    }
+    else textCache.display[el] = display[el];
+  }
+  
   textCache.ibeg = null;
   textCache.iend = null;
-  textCache.initChapter = Bible.getChapterNumber(s.win.modName);
   textCache.numAppendedChaps = 0;
   textCache.doneAppendedChaps = false;
   textCache.numPrependedChaps = 0;
@@ -3235,14 +3251,14 @@ function getBodyHTML(s, p, chapOffset) {
       Bible.setGlobalOption("Strong's Numbers", prefs.getCharPref("Strong's Numbers"));
       Bible.setGlobalOption("Morphological Tags", prefs.getCharPref("Morphological Tags"));
     }
-    else chapterText = FrameDocument[s.link.firstWin].defaultView.getChapterWithNotes(p.fn, p.initChapter, chapOffset);
+    else chapterText = FrameDocument[s.link.firstWin].defaultView.getChapterWithNotes(p.fn, p.display.chapter, chapOffset);
   }
   
   if (showHeader && chapterText) {
     var showBook = s.isPinned;
     showBook |=  ((s.scrollTypeFlag==SCROLLTYPENONE || s.scrollTypeFlag==SCROLLTYPEBEG || Bible.getChapterNumber(s.win.modName)==1) && chapOffset==0);
     if (chapterText)
-      chapterText = FrameDocument[s.link.firstWin].defaultView.getScriptBoxHeader(Bible.getBookName(), p.initChapter+chapOffset, s.win.modName, showBook, s.showIntroduction, prefs.getBoolPref("ShowOriginal" + s.win.number)) + chapterText;
+      chapterText = FrameDocument[s.link.firstWin].defaultView.getScriptBoxHeader(Bible.getBookName(), p.display.chapter+chapOffset, s.win.modName, showBook, s.showIntroduction, prefs.getBoolPref("ShowOriginal" + s.win.number)) + chapterText;
   }
   return chapterText;
 }
@@ -3281,7 +3297,7 @@ function text2LinkedWindows(p, s, fn) {
   var chapter = Bible.getChapterNumber(s.win.modName);
   var verse = Bible.getVerseNumber(s.win.modName);
   var lastverse = Bible.getLastVerseNumber(s.win.modName);
-  var wstep = (s.win.isRTL ? -1:1);
+  var wstep = (s.link.startWin == s.link.firstWin ? 1:-1);
   p.imin = -1;
   p.imax = -1;
   for (var i=s.link.firstWin; i!=s.link.lastWin+wstep; i += wstep) {
@@ -3354,7 +3370,7 @@ function beginningScroll(iend, p, s, fn) {
   p.imin = -1;
   p.imax = -1;
   p.iend = iend;
-  var wstep = (s.win.isRTL ? -1:1);
+  var wstep = (s.link.startWin == s.link.firstWin ? 1:-1);
   for (var i=s.link.firstWin; i!=s.link.lastWin+wstep; i += wstep) {
     fitPage(i, APPEND, p, s, fn, (i==s.link.firstWin ? s.navlinks:false), (i==s.link.lastWin ? s.navlinks:false));
   }
@@ -3610,6 +3626,13 @@ function resizeScriptBoxes(updateNeededArray, dontChangeContents) {
       window.setTimeout("{updateTabsFromHiddenModPrefs(" + w + "); updateLinkInfo();}", 0);
     }
   }
+  else {
+    for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
+      if (!updateNeededArray[w]) continue;
+      updateTabsFromHiddenModPrefs(w);
+      updateLinkInfo();
+    }
+  }
 }
 
 function hideFrames(aWinUpdateArray) {
@@ -3659,7 +3682,7 @@ function updateLocators(forceChooserRedraw) {
 function toggleChooser() {
   prefs.setBoolPref("ShowChooser", !prefs.getBoolPref("ShowChooser"));
   for (var w=1; w<=3; w++) {setNoteBoxSizer(w, false);}
-  updateChooserVisibility(true);
+  updateChooserVisibility();
   resizeScriptBoxes();
 }
 
@@ -3759,6 +3782,7 @@ function updateTabLabelsAndStyles(initializing) {
   }
   
   for (w=1; w<=3; w++) {
+    updateORIGtab(w);
     for (var b=0; b<Tabs.length; b++) {
       var tabClasses = {normal:null, selected:null};
       getTabClasses(w, b, tabClasses);
@@ -4006,7 +4030,7 @@ function getTabWidthMargin(aWindowNum) {
   var frameDoc = FrameDocument[aWindowNum];
   var frameWin = frameDoc.defaultView;
   //var scriptBoxWxx = frameDoc.getElementById("scriptBox").offsetWidth;
-  var scriptBoxW = frameWin.FrameWidth - frameWin.MarginRight - frameWin.MarginLeftOfScriptBox; //This method works before UI redraw!
+  var scriptBoxW = frameWin.FrameWidth - frameWin.MarginEnd - frameWin.MarginStartOfScriptBox; //This method works before UI redraw!
   var tabRowW = frameDoc.getElementById("langTabs").offsetWidth;
 //jsdump("GET TAB WIDTH MARGIN:" + aWindowNum + ", Margin=" + scriptBoxW + "-" + tabRowW + "-" + frameWin.TabBarMargin);
 //jsdump("TabWidthMargin=" + ((!scriptBoxW || !tabRowW) ? null:scriptBoxW - tabRowW - frameWin.TabBarMargin));
@@ -4122,27 +4146,28 @@ function ensureModuleShowing(version) {
 function updateLinkInfo() {
   Link.modName = null;
   Link.numWins = 0;
-  Link.leftWin = 0;
-  Link.rightWin = 0;
   Link.firstWin = 0;
   Link.lastWin = 0;
+  Link.startWin = 0;
+  Link.finishWin = 0;
   Link.isRTL = false;
   Link.isLink[0] = false;
 
   for (var w=1; w<=3; w++) {
-    Win[w].isLinkedToRight = isLinkedToRight(w);
-    Link.isLink[w] = Win[w].isLinkedToRight || (w>1 && Win[w-1].isLinkedToRight);
+    Win[w].isLinkedToNext = isLinkedToNext(w);
+    Link.isLink[w] = Win[w].isLinkedToNext || (w>1 && Win[w-1].isLinkedToNext);
     if (Link.isLink[w]) Link.numWins++;
     if (Link.isLink[w] && Link.numWins == 1) {
+      Link.startWin = w;
       Link.isRTL = Win[w].isRTL;
       Link.modName = Win[w].modName;
-      Link.leftWin = w;
     }
   }
   if (Link.numWins) {
-    Link.rightWin = Link.leftWin + Link.numWins - 1;
-    Link.firstWin = (Link.isRTL ? Link.rightWin:Link.leftWin);
-    Link.lastWin = (Link.isRTL ? Link.leftWin:Link.rightWin);
+    Link.finishWin = Link.startWin + Link.numWins - 1;
+    var startIsFirst = (guiDirection() == "rtl" && Link.isRTL) || (guiDirection() != "rtl" && !Link.isRTL);
+    Link.firstWin = (startIsFirst ? Link.startWin:Link.finishWin);
+    Link.lastWin  = (startIsFirst ? Link.finishWin:Link.startWin);
   }
   for (var w=1; w<=3; w++) {
     Link.isTextLink[w] = (Link.isLink[w] &&
@@ -4156,17 +4181,17 @@ function getLinkInfoForWindow(w) {
   var link = {}
   link.modName = Win[w].modName;
   link.numWins = 1;
-  link.leftWin = w;
-  link.rightWin = w;
   link.firstWin = w;
   link.lastWin = w;
+  link.startWin = w;
+  link.finishWin = w;
   link.isRTL = Win[w].isRTL;
   link.isLink = [false, false, false, false];
   link.isTextLink = [false, false, false, false];
   return link;
 }
 
-function isLinkedToRight(w) {
+function isLinkedToNext(w) {
   if (w < 1 || w > 2) return false;
   if (w >= prefs.getIntPref("NumDisplayedWindows")) return false;
   if (ScriptBoxIsEmpty[w] || ScriptBoxIsEmpty[w+1]) return false;
@@ -4321,7 +4346,7 @@ function getPrintHTML() {
     }
     var text = FrameDocument[w].getElementById("scriptBoxText").innerHTML;
     thiscolumn = ltrPage + text + rtlPage;
-    if (!Win[w].isLinkedToRight) {
+    if (!Win[w].isLinkedToNext) {
       versions.push(Win[w].modName);
       columns.push(thiscolumn);
       ltrPage="";

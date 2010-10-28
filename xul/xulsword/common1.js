@@ -131,7 +131,7 @@ var ScriptBoxFontColor;
 var ScriptBoxTextCSS;
 var SelectedBookBackground;
 var PointedBookBackground;
-var ChooserLeftMargin;
+var ChooserStartMargin;
 var SelectedVerseCSS;
 var SelectedVerseColor;
 //var BookNameCSS;
@@ -253,7 +253,6 @@ function initializeStyleGlobals(sheetNum) {
     case ".scriptboxtext": ScriptBoxTextCSS = myRule; break;
     case ".booknameshowing": SelectedBookBackground = myRule.style.background; break;
     case ".booknamepoint": PointedBookBackground = myRule.style.background; break;
-    case ".testamentchooser": ChooserLeftMargin = Number(myRule.style.left.match(/(\d+)/)[1]); break;  
     case ".hl":
       //Save the CSS hl color for future use
       SelectedVerseCSS = myRule;
@@ -300,33 +299,32 @@ function adjustFontSizes(sheetNum, delta) {
 function firstDisplayBible(returnFrameNumber) {
   var vers=null;
   var numWins = prefs.getIntPref("NumDisplayedWindows");
-  var guidir = guiDirection();
-  var beg = (guidir=="rtl" ? numWins:1);
-  var end = (guidir=="rtl" ? 1-1:numWins+1);
-  var step = (guidir=="rtl" ? -1:1);
-  for (var w=beg; w!=end; w+=step) {
+  for (var w=1; w<=numWins; w++) {
     vers = MainWindow.Win[w].modName;
     if (MainWindow.Win[w].modType == BIBLE) break;
   }
   if (!returnFrameNumber) {
-    if (!vers || w==end) vers=prefs.getCharPref("DefaultVersion");
+    if (!vers || w>numWins) return prefs.getCharPref("DefaultVersion");
     return vers;
   }
   else {
-    if (!vers || w==end) w=beg;
-    return w;  
+    if (!vers || w>numWins) w=1;
+    return w;
   }
 }
 
 function firstDisplayModule() {
-  return MainWindow.Win[(guiDirection()=="rtl" ? prefs.getIntPref("NumDisplayedWindows"):1)].modName;
+  return MainWindow.Win[1].modName;
 }
 
+var LocaleDir;
 function guiDirection() {
+  if (LocaleDir) return LocaleDir;
   var guidir = LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
   if (guidir && guidir.direction) guidir=guidir.direction;
   else {guidir="ltr";}
-  return guidir;
+  LocaleDir = guidir;
+  return LocaleDir;
 }
 
 function setGlobalDirectionPrefs() {

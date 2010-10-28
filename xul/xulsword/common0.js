@@ -132,6 +132,47 @@ function readParamFromConf(nsIFileConf, param) {
   return retval;
 }
 
+/*
+function recursiveDelete(path) {
+  if (!path) return false;
+  var f = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+  f.initWithPath(path);
+  if (!f.exists()) return true;
+  
+  var dlist = [];
+  getAllFilesIn(f, dlist);
+
+  var retval = true;
+  for (var i=0; i<dlist.length; i++) {
+    f.initWithPath(dlist[i]);
+    if (f.isDirectory()) continue;
+    if (!f.exists()) continue;
+    jsdump("Removing " + f.leafName);
+    try {f.remove(false);}
+    catch (er) {jsdump(er + ": Could not remove file " + f.path); retval = false;}
+  }
+  for (var i=0; i<dlist.length; i++) {
+    f.initWithPath(dlist[i]);
+    if (!f.exists()) continue;
+    jsdump("Removing " + f.leafName);
+    try {f.remove(true);}
+    catch (er) {jsdump(er + ": Could not remove (empty) dir " + f.path); retval = false;}
+  }
+  
+  return retval;
+}
+
+function getAllFilesIn(f, l) {
+  try {f = f.QueryInterface(Components.interfaces.nsILocalFile);} catch (er) {return;}
+  if (!f.exists()) return;
+  l.push(f.path);
+  if (f.isDirectory()) {
+    var files = f.directoryEntries;
+    while (files && files.hasMoreElements()) {getAllFilesIn(files.getNext(), l);}
+  }
+}
+*/
+
 // Replaces certain character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
 function replaceASCIIcontrolChars(string) {
   for (var i=0; i<string.length; i++) {

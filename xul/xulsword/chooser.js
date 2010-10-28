@@ -34,9 +34,7 @@ function buildChooserGraphics() {
     document.write("</div>");
     document.write("<div id=\"chooserhole\" class=\"chooserhole\">");
     document.write("</div>");
-  }
-  if (window.frameElement.id=="bible1Frame") {
-    document.write("<img id=\"chbutOpen\" style=\"top:30px; left:8px;\"class=\"chbut\" src=\"chrome://xulsword/skin/images/open0.bmp\" onMouseOver=\"chooserControlButton(event)\" onMouseOut=\"chooserControlButton(event)\" onClick=\"chooserControlButton(event)\">");
+    document.write("<img id=\"chbutOpen\" class=\"chbut\" src=\"chrome://xulsword/skin/images/open0.bmp\" onMouseOver=\"chooserControlButton(event)\" onMouseOut=\"chooserControlButton(event)\" onClick=\"chooserControlButton(event)\">");
   }
 }
 
@@ -46,14 +44,14 @@ function buildTestChooser() {
     document.write("<div id=\"testamentChooser\" class=\"testamentchooser\" onClick=\"chooserMouseHandler(event);\" onMouseOver=\"chooserMouseHandler(event);\" onMouseOut=\"chooserMouseHandler(event);\">");
     document.write("<table><tbody>");
     document.write("<tr>");
-    document.write("<td id=\"chooseOT.\" class=\"testheading\" style=\"-moz-border-radius-topleft:8px;\"><br><br>");
+    document.write("<td id=\"chooseOT\" class=\"testheading\"><br><br>");
     var text = SBundle.getString('OTtext');
     if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
     else document.write("<img id=\"OTtestimg\" src=\"chrome://localeskin/skin/OT.png\">");
     document.write("<br></td>");
     document.write("</tr>");
     document.write("<tr>");
-    document.write("<td id=\"chooseNT.\" class=\"testheading\" style=\"-moz-border-radius-bottomleft:8px\"><br>");
+    document.write("<td id=\"chooseNT\" class=\"testheading\"><br>");
     text = SBundle.getString('NTtext');
     if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
     else document.write("<img id=\"NTtestimg\" src=\"chrome://localeskin/skin/NT.png\">");
@@ -77,11 +75,10 @@ function buildBookChooser(tsmt) {
       bend=NumOT-1;
       document.write("<div id=\"chooserOT\" class=\"chooser\">");
     }
-    
     for (var b=bstart; b <= bend; b++) {
       document.write("<div id=\"book." + b + "\" class=\"bookname\" onClick=\"chooserMouseHandler(event);\" onMouseOver=\"chooserMouseHandler(event);\" onMouseOut=\"chooserMouseHandler(event);\">");
       document.write(Book[b].bName);
-      document.write("<div style=\"position:relative;\"><img id=\"arrow." + b + "\" class=\"chapterarrow\" src=\"chrome://xulsword/skin/images/arrow.png\"></div>");
+      document.write("<div style=\"position:relative;\"><img id=\"arrow." + b + "\" class=\"chapterarrow\" src=\"chrome://xulsword/skin/images/" + (guiDirection()=="rtl" ? "arrow-rtl.png":"arrow.png") + "\"></div>");
       writeChapterMenu(b);
       document.write("</div>");
     }
@@ -99,7 +96,7 @@ function writeChapterMenu(bk) {
       document.write("<div id=\"ST." + bk + "." + row + "\" class=\"chapsubtable\" >");
       dend="</div>";
     }
-    document.write("<div id=\"ID." + bk + "." + ch + "\" class=\"chapmenucell\">");
+    document.write("<div id=\"ID." + bk + "." + ch + "\" class=\"chapmenucell vstyleprogram\">");
     document.write(dString(ch));
     document.write("</div>");
     col++; 
@@ -137,7 +134,7 @@ function chooserMouseHandler(e) {
   //If target has no id, find first parent that does
   var elem = e.target; 
   while (elem.id == "") {elem=elem.parentNode;}
-  var val = elem.id.split(".");
+  var val = (elem.id + ".").split(".");
   var myid = val[0] ? val[0]:null; 
   var bk = val[1] ? Number(val[1]):0;
   var refBible = firstDisplayBible();
@@ -156,13 +153,13 @@ function chooserMouseHandler(e) {
 
     case "ID":
       // First try and unhighlight last saved cell, in case it's still highlighted
-      if (e.target.id != SaveCellId) {try {document.getElementById(SaveCellId).className = "chapmenucell";} catch(er) {}}
+      if (e.target.id != SaveCellId) {try {document.getElementById(SaveCellId).className = "chapmenucell vstyleprogram";} catch(er) {}}
       //Always turn off popup when entering a cell
       document.getElementById("hpopup." + bk).style.visibility = "hidden";
       document.getElementById("hpopupSH." + bk).style.visibility = "hidden";
       try {window.clearTimeout(ShowHeadingID);} catch(er){}
       if (!needAutoScroll(e, true)) {
-        document.getElementById(e.target.id).className = "chapmenucellhigh";
+        document.getElementById(e.target.id).className = "chapmenucell chapmenucellhigh vstyleprogram";
         SaveCellId = e.target.id; //Save cell id to re-highlight if we go onto a popup next
         var showHeadings = false;
         for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {showHeadings |= (Win.modName==refBible);}
@@ -172,18 +169,20 @@ function chooserMouseHandler(e) {
       break;
       
     case "hpopup":
-      document.getElementById(SaveCellId).className = "chapmenucellhigh";
+      document.getElementById(SaveCellId).className = "chapmenucell chapmenucellhigh vstyleprogram";
       break;
       
     case "hpopupSH":
-      document.getElementById(SaveCellId).className = "chapmenucellhigh";
+      document.getElementById(SaveCellId).className = "chapmenucell chapmenucellhigh vstyleprogram";
       break;
 
     case "chooseNT":
+    case "NTtestimg":
       ShowChooserID = window.setTimeout("showChooser('NT',false)",100);
       break;
       
     case "chooseOT":
+    case "OTtestimg":
       ShowChooserID = window.setTimeout("showChooser('OT',false)",100);
       break;
       
@@ -200,14 +199,16 @@ function chooserMouseHandler(e) {
       
     case "ID":
       try {window.clearTimeout(ShowHeadingID);} catch(er){}  //try is needed since ID may not be valid!
-      document.getElementById(elem.id).className = "chapmenucell";
+      document.getElementById(elem.id).className = "chapmenucell vstyleprogram";
       break;
       
     case "chooseNT":
+    case "NTtestimg":
       try {window.clearTimeout(ShowChooserID);} catch(er){}
       break;
       
     case "chooseOT":
+    case "OTtestimg":
       try {window.clearTimeout(ShowChooserID);} catch(er){}
       break;
     }
@@ -228,10 +229,12 @@ function chooserMouseHandler(e) {
       break;
       
     case "chooseNT":
+    case "NTtestimg":
       newbk=NumOT; newch=1;
       break;
       
     case "chooseOT":
+    case "OTtestimg":
       newbk=0; newch=1;
       break;
       
@@ -312,7 +315,7 @@ function openChapMenu(bk) {
   document.getElementById("chapPD." + bk).style.left = String(document.getElementById("book." + bk).offsetWidth) + "px";
   document.getElementById("chapPD." + bk).style.width = String(document.getElementById("scriptBox").offsetWidth) + "px";
   document.getElementById("chapPD." + bk).className = "chapterpopup";
-  document.getElementById("arrow." + bk).src="chrome://xulsword/skin/images/arrow2.png";
+  document.getElementById("arrow." + bk).src=(guiDirection()=="rtl" ? "chrome://xulsword/skin/images/arrow2-rtl.png":"chrome://xulsword/skin/images/arrow2.png");
 }
 
 //Close the chapter/heading selection menu. Have delayed or instant versions...
@@ -324,7 +327,7 @@ function closeChapMenu(bk) {
 }
 function closeChapMenuNow(bk) {
   var mycolor = (bk == findBookNum(Bible.getBookName())) ? SelectedBookBackground:NormalBookBackground;
-  document.getElementById("arrow." + bk).src="chrome://xulsword/skin/images/arrow.png";
+  document.getElementById("arrow." + bk).src=(guiDirection()=="rtl" ? "chrome://xulsword/skin/images/arrow-rtl.png":"chrome://xulsword/skin/images/arrow.png");
   document.getElementById("book." + bk).style.background = mycolor;
   document.getElementById("chapPD." + bk).className = "chapterpopuph";
   document.getElementById("hpopup." + bk).style.visibility = "hidden";
@@ -367,14 +370,17 @@ function showHeadings(myid,screenY) {
     var pop = document.getElementById("hpopup." + mybk);
     var popsh = document.getElementById("hpopupSH." + mybk);
     var cell = document.getElementById("ID." + mybk + "." + mych);
-    pop.innerHTML = headingtxt;;
-    
+    pop.innerHTML = headingtxt;
+
     //Starting layout values
     var row  = 1 + Math.round((mych-5.5)/10);  // Calculate row from chapter number
     row = document.getElementById("ST." + mybk + "." + row);
     var top = row.offsetTop + row.offsetHeight - 2;
-    var left = cell.offsetLeft+(cell.offsetWidth-pop.offsetWidth)/2;
-    
+    if (guiDirection() == "rtl")
+        var left = cell.offsetLeft - (pop.offsetWidth-cell.offsetWidth)/2;
+    else
+        left = cell.offsetLeft - (pop.offsetWidth-cell.offsetWidth)/2;
+
     //Now see if popup needs to be shifted left or right (so that doesn't go beyond scriptbox)
     if (left < 0) {left=0;}
     else {
@@ -472,6 +478,8 @@ function scrollChooser() {
 
 //Size, update and place the chooser
 function initChooser(firstInit) {
+  document.getElementById("wholeChooser").setAttribute("chromedir", guiDirection());
+  
   var bookButCSS = getCSS(".bookname", 0);
   if (bookButCSS) {
     var fa = prefs.getIntPref('FontSize');
@@ -512,24 +520,41 @@ function resizeChooser() {
   var CSR = document.getElementById("chooserOT");
   var CSN = document.getElementById("chooserNT");
   
-  CSR.style.left = TST.offsetLeft + TST.offsetWidth + "px";
-  CSN.style.left = TST.offsetLeft + TST.offsetWidth + "px";
-
+  if (guiDirection() == "rtl") {
+    TST.style.right = ChooserStartMargin + "px";
+    CSR.style.right = ChooserStartMargin + TST.offsetWidth + "px";
+    CSN.style.right = ChooserStartMargin + TST.offsetWidth + "px";
+  }
+  else {
+    TST.style.left = ChooserStartMargin + "px";
+    CSR.style.left = TST.offsetLeft + TST.offsetWidth + "px";
+    CSN.style.left = TST.offsetLeft + TST.offsetWidth + "px";
+  }
+  
   CSR.style.width = "";  
   CSN.style.width = "";
-  if (CSN.offsetWidth < CSR.offsetWidth) CSN.style.width = CSR.offsetWidth + "px";
-  else CSR.style.width = CSN.offsetWidth + "px";
   
-  var holeWidth = CSR.offsetLeft - TST.offsetLeft + CSR.offsetWidth + (2*HoleMarginH);
-   
-  CH.style.left   = String(TST.offsetLeft - HoleMarginH) + "px";
+  if (CSN.offsetWidth < CSR.offsetWidth) CSN.style.width = (CSR.offsetWidth-2)+ "px";
+  else CSR.style.width = (CSN.offsetWidth-2) + "px";
+
+  if (guiDirection() == "rtl") {
+    var holeWidth = (TST.offsetLeft + TST.offsetWidth) - (CSR.offsetLeft + CSR.offsetWidth) + CSR.offsetWidth + (2*HoleMarginH);
+    CH.style.right   = String(ChooserStartMargin - HoleMarginH) + "px";
+    CHT.style.right  = String(ChooserStartMargin - HoleMarginH - 2) + "px";
+    CHB.style.right  = String(ChooserStartMargin - HoleMarginH - 2) + "px";
+  }
+  else {
+    holeWidth = CSR.offsetLeft - TST.offsetLeft + CSR.offsetWidth + (2*HoleMarginH);
+    CH.style.left   = String(TST.offsetLeft - HoleMarginH) + "px";
+    CHT.style.left  = String(TST.offsetLeft - HoleMarginH + 2) + "px";
+    CHB.style.left  = String(TST.offsetLeft - HoleMarginH + 2) + "px";
+  }
+  
   CH.style.width  = String(holeWidth) + "px";
-  FDT.style.width = String(ChooserLeftMargin + holeWidth) + "px";
+  FDT.style.width = String(ChooserStartMargin + holeWidth) + "px";
   FDB.style.width = FDT.style.width;
   CHT.style.width = CH.style.width;
-  CHT.style.left  = String(TST.offsetLeft - HoleMarginH + 2) + "px";
   CHB.style.width = CH.style.width;
-  CHB.style.left  = String(TST.offsetLeft - HoleMarginH + 2) + "px";
   
   OwnerDocument.getElementById("genBookTree").style.width = holeWidth + "px";
 }
@@ -557,8 +582,8 @@ function placeChooser(initializing) {
 //  var oh = ((document.getElementById("book.1").offsetHeight+2)*(NumOT));
 
   // minH of chooser is two times the height of the tallest testament button when they are unconstrained
-  var eOT = document.getElementById("chooseOT.");
-  var eNT = document.getElementById("chooseNT.");
+  var eOT = document.getElementById("chooseOT");
+  var eNT = document.getElementById("chooseNT");
   eOT.style.height = "";
   eNT.style.height = "";
   var minH = (eOT.offsetHeight > eNT.offsetHeight ? 2*eOT.offsetHeight:2*eNT.offsetHeight);
@@ -609,12 +634,12 @@ var ChooserHeight=0;
 function showChooser(tsmt,resetchooser) {
   if (resetchooser) {Need2DownShiftOT=false; Need2DownShiftNT=false;}
   if (tsmt == "NT") {
-    document.getElementById("chooseNT.").style.background = SelectedBookBackground;
-    document.getElementById("chooseOT.").style.background = "";
+    document.getElementById("chooseNT").style.background = SelectedBookBackground;
+    document.getElementById("chooseOT").style.background = "";
     document.getElementById("chooserNT").style.visibility = "visible";
     document.getElementById("chooserOT").style.visibility = "hidden";
-    document.getElementById("chooseOT.").style.height = String(TestchNTh/2) + "px";
-    document.getElementById("chooseNT.").style.height = String(TestchNTh/2) + "px";
+    document.getElementById("chooseOT").style.height = String(TestchNTh/2) + "px";
+    document.getElementById("chooseNT").style.height = String(TestchNTh/2) + "px";
     document.getElementById("testamentChooser").style.top = String(MarginTopNT-1) + "px";
     ChooserHeight = document.getElementById("chooserNT").offsetHeight;
     document.getElementById("chbutClose").style.top = String(MarginTopNT + 6) + "px";
@@ -624,12 +649,12 @@ function showChooser(tsmt,resetchooser) {
     }
   }
   else {
-    document.getElementById("chooseOT.").style.background = SelectedBookBackground;
-    document.getElementById("chooseNT.").style.background = "";
+    document.getElementById("chooseOT").style.background = SelectedBookBackground;
+    document.getElementById("chooseNT").style.background = "";
     document.getElementById("chooserOT").style.visibility = "visible";
     document.getElementById("chooserNT").style.visibility = "hidden";
-    document.getElementById("chooseOT.").style.height = String(TestchOTh/2) + "px";
-    document.getElementById("chooseNT.").style.height = String(TestchOTh/2) + "px";
+    document.getElementById("chooseOT").style.height = String(TestchOTh/2) + "px";
+    document.getElementById("chooseNT").style.height = String(TestchOTh/2) + "px";
     document.getElementById("testamentChooser").style.top = String(MarginTopOT-1) + "px";
     ChooserHeight = document.getElementById("chooserOT").offsetHeight;
     document.getElementById("chbutClose").style.top = String(MarginTopOT + 6) + "px";
