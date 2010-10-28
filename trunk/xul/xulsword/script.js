@@ -23,8 +23,8 @@
  ***********************************************************************/
 var ChooserGap;
 var TabBarMargin;             
-var MarginRight;
-var MarginLeftWhenNoChooser;
+var MarginEnd;
+var MarginStartWhenNoChooser;
 var ShX, ShY;
 var ScriptBoxMarginTop;
 var BottomMargin;
@@ -43,7 +43,6 @@ var ConnectorElement;
 var BoundaryBarElement;
 var BoundaryBarShadowElement;
 var NoteBoxSizerElement;
-var LanguageTabsElement;
 var Frame;
 var OwnerDocument;
 var FootnoteWinH;
@@ -64,7 +63,7 @@ var ScriptWidth;
 var ScriptHeight;
 var ScriptBoxHeight;
 var FrameWidth;
-var MarginLeftOfScriptBox;
+var MarginStartOfScriptBox;
 var BoundaryBarGap;
 var EffectiveWinH;
 var PreviousT;
@@ -73,7 +72,7 @@ var MinScriptHeight;
 var MinScriptWidth;
 var LastVersion;
 var MyFootnotes;
-var Win = {number:null, modName:null, modType:null, isRTL:null, isLinkedToRight:null};
+var Win = {number:null, modName:null, modType:null, isRTL:null, isLinkedToNext:null};
 var Pin = {number:null, display:{}, isPinned:null, elem:null, updatePin:null, updateLink:null};
 
 /************************************************************************
@@ -94,18 +93,18 @@ function initializeScript() {
   BoundaryBarElement        = document.getElementById("boundary");
   BoundaryBarShadowElement  = document.getElementById("boundaryHi");
   NoteBoxSizerElement       = document.getElementById("nbsizer");
-  LanguageTabsElement       = document.getElementById("langTabs");
   
 //********************************
 //*
   //Style like params for horizontal layout 
   ChooserGap=10;                //Gap between chooser and text
   TabBarMargin=44;              //Margin left+right of Tab Bar              
-  MarginRight=30;               //Margin right of ScriptBox
-  MarginLeftWhenNoChooser=30;   //Left window margin when chooser is closed
-  ShX=(guiDirection()=="rtl" ? -14:14); 
+  MarginEnd=30;               //Margin end of ScriptBox
+  MarginStartWhenNoChooser=30;   //Start window margin when chooser is closed
+  ShX=(guiDirection()=="rtl" ? -14:14);
   ShY=12;               //Shadow offset for popups
   MinScriptWidth = 270;         //Miniumum width script box will go
+  ChooserStartMargin = 14;
 
   //Style like params for vertical layout
   ScriptBoxMarginTop=32;        //Margin above ScriptBox
@@ -121,11 +120,14 @@ function initializeScript() {
   HoleMarginH = 5;              //Margin around chooser to "hole" edge horizontal
   
 //*
-//********************************/ 
+//********************************/
 
   Frame = window.frameElement;  //Parent frame located in XUL doc
   OwnerDocument = Frame.ownerDocument; //XUL document itslef
   
+  document.getElementById("langTabs").setAttribute("chromedir", guiDirection());
+  document.getElementById("pin").setAttribute("chromedir", guiDirection());
+  document.getElementById("connector").setAttribute("chromedir", guiDirection());
   FrameDocumentHavingNoteBox = window.document;      //Global for saving the document object of Frame which will display footnotes
   HaveLeftTarget=false;
   ImmediateUnhighlight=false;
@@ -259,14 +261,14 @@ function updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction
       !Pin.isPinned && Win.modType==BIBLE) {SelectedVerseCSS.style.color=SelectedVerseColor;}
   else {SelectedVerseCSS.style.color=ScriptBoxFontColor;}
   
-  if (!MainWindow.Link.isLink[Win.number] || Win.number == MainWindow.Link.leftWin) {
+  if (!MainWindow.Link.isLink[Win.number] || Win.number == MainWindow.Link.startWin) {
     if (!MainWindow.Link.isLink[Win.number]) {
       var showIntroForThisLink = ((showIntroduction && showIntroduction==Win.number) ? true:false);
     }
     else {
-      showIntroForThisLink = ((showIntroduction && (showIntroduction>=MainWindow.Link.leftWin && showIntroduction<=MainWindow.Link.rightWin)) ? true:false);
+      showIntroForThisLink = ((showIntroduction && (showIntroduction>=MainWindow.Link.startWin && showIntroduction<=MainWindow.Link.finishWin)) ? true:false);
     }
-    MainWindow.writeToScriptBoxes(Win, Pin.isPinned, showIntroForThisLink, scrollTypeFlag);
+    MainWindow.writeToScriptBoxes(Win, Pin.isPinned, Pin.display, showIntroForThisLink, scrollTypeFlag);
   }
   if (Pin.isPinned) MainWindow.setWindowDisplay(Win, savedWindow);
 }
@@ -284,7 +286,7 @@ function updateGenBook(showIntroduction) {
   else Pin.display = MainWindow.saveWindowDisplay(Win);
 
   var showIntroForThisLink = (showIntroduction && showIntroduction==Win.number);
-  MainWindow.writeToScriptBoxes(Win, Pin.isPinned, showIntroForThisLink, SCROLLTYPENONE);
+  MainWindow.writeToScriptBoxes(Win, Pin.isPinned, Pin.display, showIntroForThisLink, SCROLLTYPENONE);
   
   if (Pin.isPinned) MainWindow.setWindowDisplay(Win, savedWindow);
 }
@@ -436,7 +438,7 @@ function getPageLinks() {
   //var mytype = win.modType;
   var prevDisabled = false; //mytype==BIBLE && Pin.display.chapter==1 && Pin.display.shortName=="Gen";
   var nextDisabled = false; //mytype==BIBLE && Pin.display.chapter==22 && Pin.display.shortName=="Rev";
-  
+
   var chapterNavigationLink = "<div  class=\"navlink vstyleProgram\">";
   if (prevDisabled) {
     chapterNavigationLink += "<span class=\"navlinkDisabled\">" + charPrev + " " + SBundle.getString('PrevChaptext') + "</span>" + " / ";
@@ -683,8 +685,7 @@ function scriptboxMouseOver(e) {
     break;
     
   case "listenlink":
-    if (elem.src != "chrome://xulsword/skin/images/listen.png")
-      elem.src="chrome://xulsword/skin/images/listen1.gif";
+    elem.src="chrome://xulsword/skin/images/listen1.gif";
     break;
     
   case "pin":
@@ -784,15 +785,13 @@ function scriptboxClick(e) {
     break;
     
   case "listenlink":
-    if (elem.src!="chrome://xulsword/skin/images/listen.png") {
-      MainWindow.Player.isPinned = Pin.isPinned;
-      MainWindow.Player.version = Win.modName;
-      MainWindow.Player.chapter = Number(elem.id.split(".")[1]);
-      if (Pin.isPinned) MainWindow.Player.book = Pin.display.shortName;
-      else MainWindow.Player.book = Bible.getBookName();
+    MainWindow.Player.isPinned = Pin.isPinned;
+    MainWindow.Player.version = Win.modName;
+    MainWindow.Player.chapter = Number(elem.id.split(".")[1]);
+    if (Pin.isPinned) MainWindow.Player.book = Pin.display.shortName;
+    else MainWindow.Player.book = Bible.getBookName();
 
-      MainWindow.beginAudioPlayer();
-    }
+    MainWindow.beginAudioPlayer();
     break;
     
   case "pin":
@@ -911,8 +910,7 @@ function scriptboxMouseOut(e) {
   if (ImmediateUnhighlight) {unhighlightNote();}
   switch (getElemType(e.target)) {
   case "listenlink":
-    if (e.target.src != "chrome://xulsword/skin/images/listen.png")
-      e.target.src = "chrome://xulsword/skin/images/listen0.png";
+    e.target.src = "chrome://xulsword/skin/images/listen0.png";
     break;
     
   case "pin":
@@ -1136,7 +1134,8 @@ function showPopup(yOffset) {
   PopupShadowElement.style.display = "";
 
   // Look at width:
-  var right0 = 0;
+  if (guiDirection() == "rtl") var right0 = (Win.number == 1 ? document.getElementById("chooserhole").offsetWidth+ChooserGap+ChooserStartMargin:0);
+  else right0 = MarginEnd;
   var left0 = ScriptBoxElement.offsetLeft + 4 + 20; //4 is borders?, 20 comes from scripbox CSS padding-left
   PopupElement.style.left = String(left0) + "px";
   // If single line note, then center under mouse
@@ -1348,7 +1347,7 @@ function boundaryMouseMove(evt) {
 
 function boundaryMouseDown(evt) {
   BoundaryClicked=true;
-  BoundaryBarShadowElement.style.left = String(BoundaryBarElement.offsetLeft + MarginLeftOfScriptBox) + "px";
+  BoundaryBarShadowElement.style.left = String(BoundaryBarElement.offsetLeft + MarginStartOfScriptBox) + "px";
   BoundaryBarShadowElement.style.width = String(BoundaryBarElement.offsetWidth) + "px";
   evt.preventDefault(); //So we don't select while we're dragging the boundary bar
   
@@ -1566,64 +1565,53 @@ function setBibleWidth(initializing) {
   winW = initializing ? prefs.getIntPref("WindowWidth"):OwnerDocument.width;
   //jsdump("Frame Width Pref:" + prefs.getIntPref("WindowWidth") + ", Measured:" + OwnerDocument.width + "\n");
   
-  var effectiveWindowPaddingLeft;
+  var effectiveWindowPaddingStart;
   if (prefs.getBoolPref("ShowChooser") || prefs.getBoolPref("ShowGenBookChooser")) {
     var chooserInnerWidth = OwnerDocument.getElementById("bible1Frame").contentDocument.getElementById("chooserhole").offsetWidth;
-    effectiveWindowPaddingLeft = chooserInnerWidth + ChooserLeftMargin + ChooserGap;
+    effectiveWindowPaddingStart = chooserInnerWidth + ChooserStartMargin + ChooserGap;
   }
-  else effectiveWindowPaddingLeft = MarginLeftWhenNoChooser;
+  else effectiveWindowPaddingStart = MarginStartWhenNoChooser;
 
-  DesiredFrameWidth = (winW - effectiveWindowPaddingLeft)/prefs.getIntPref("NumDisplayedWindows");
+  DesiredFrameWidth = (winW - effectiveWindowPaddingStart)/prefs.getIntPref("NumDisplayedWindows");
   var actualFrameWidth = DesiredFrameWidth;
 
-  // Shrink tabs if neccessary, don't let window get narrower than shrunken tabs
-/*  var myLocale = rootprefs.getCharPref("general.useragent.locale");
-  LargeTabSize=true;
-  if (myLocale=="ko") {
-    setFontSize(".tabs",TABTEXTLG-1);  
-  }
-  else {
-    setFontSize(".tabs",TABTEXTLG); 
-  }
-  if (DesiredFrameWidth - MarginRight - TabBarMargin < LanguageTabsElement.offsetWidth) {
-    setFontSize(".tabs",TABTEXTSM);
-    LargeTabSize=false;
-    if (DesiredFrameWidth - MarginRight - TabBarMargin < LanguageTabsElement.offsetWidth) {
-      actualFrameWidth = LanguageTabsElement.offsetWidth + MarginRight + TabBarMargin + 6;
-    }
-  }*/
   if (actualFrameWidth < MinScriptWidth) actualFrameWidth=MinScriptWidth;
   
-  // Assign FrameWidth and MarginLeftOfScriptBox to this particular frame:
+  // Assign FrameWidth and MarginStartOfScriptBox to this particular frame:
   if (Win.number == 1) {
     var genBookChooserElement = OwnerDocument.getElementById("genBookChooser");
     if (prefs.getBoolPref("ShowGenBookChooser")) {
-      genBookChooserElement.style.width = effectiveWindowPaddingLeft + "px";
+      genBookChooserElement.style.width = effectiveWindowPaddingStart + "px";
       FrameWidth = actualFrameWidth;
-      MarginLeftOfScriptBox = 0;
+      MarginStartOfScriptBox = 0;
     }
     else {
-      FrameWidth = actualFrameWidth + effectiveWindowPaddingLeft;
-      MarginLeftOfScriptBox = effectiveWindowPaddingLeft;
+      FrameWidth = actualFrameWidth + effectiveWindowPaddingStart;
+      MarginStartOfScriptBox = effectiveWindowPaddingStart;
     }
   }
   else if (Win.number > prefs.getIntPref("NumDisplayedWindows")) 
       FrameWidth=0;
   else {
     FrameWidth = actualFrameWidth;
-    MarginLeftOfScriptBox = 0;
+    MarginStartOfScriptBox = 0;
   }
 
-  ScriptWidth = FrameWidth - MarginRight;
+  ScriptWidth = FrameWidth - MarginEnd;
 
-  ScriptBoxElement.style.left  = String(MarginLeftOfScriptBox) + "px";
-  ScriptBoxElement.style.right = String(MarginRight) + "px";
-  ConnectorElement.style.width  = String(MarginRight)+ "px";
+  ScriptBoxElement.style.left  = (guiDirection() == "rtl" ? String(MarginEnd) + "px":String(MarginStartOfScriptBox) + "px");
+  ScriptBoxElement.style.right = (guiDirection() == "rtl" ? String(MarginStartOfScriptBox) + "px":String(MarginEnd) + "px");
+  ConnectorElement.style.width  = String(MarginEnd)+ "px";
   Frame.style.minWidth = String(FrameWidth) + "px";
   
-  NoteBoxSizerElement.style.right = "43px";
-  Pin.elem.style.left = String(MarginLeftOfScriptBox + 3) + "px";
-  LanguageTabsElement.style.marginLeft = String(MarginLeftOfScriptBox + 20) + "px"; //Effects only rtl locales!
+  if (guiDirection() == "rtl") {
+    NoteBoxSizerElement.style.left = "43px";
+    Pin.elem.style.right = String(MarginStartOfScriptBox + 3) + "px";
+  }
+  else {
+    NoteBoxSizerElement.style.right = "43px";
+    Pin.elem.style.left = String(MarginStartOfScriptBox + 3) + "px";
+  }
 }
 
 function setBibleHeight(initializing, hideNoteBox) {

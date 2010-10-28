@@ -18,7 +18,7 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/xulsword-v2.css" type="text/css"?>
 <?xul-overlay href="chrome://xulsword/content/venkmanOverlay.xul"?>
 <?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
 
@@ -47,6 +47,20 @@
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#">
 
+<data id="print.printpassage">&print.printpassage;</data>
+<data id="menu.copypassage">&menu.copypassage;</data>
+<data id="history.back.label">&history.back.label;</data>
+<data id="menu.addNewModule.label">&menu.addNewModule.label;</data>
+<data id="menu.removeModule.label">&menu.removeModule.label;</data>
+<data id="menu.importAudio.label">&menu.importAudio.label;</data>
+<data id="menu.exportAudio.label">&menu.exportAudio.label;</data>
+<data id="menu.options.language">&menu.options.language;</data>
+<data id="menu.options">&menu.options;</data>
+<data id="menu.removeModule.label">&menu.removeModule.label;</data>
+<data id="savingSource">&savingSource;</data>
+<data id="savingTarget">&savingTarget;</data>
+<data id="localeDir">&locale.dir;</data>
+
 <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>  
 <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
@@ -68,19 +82,6 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksTop.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
-
-<data id="print.printpassage">&print.printpassage;</data>
-<data id="menu.copypassage">&menu.copypassage;</data>
-<data id="history.back.label">&history.back.label;</data>
-<data id="menu.addNewModule.label">&menu.addNewModule.label;</data>
-<data id="menu.removeModule.label">&menu.removeModule.label;</data>
-<data id="menu.importAudio.label">&menu.importAudio.label;</data>
-<data id="menu.exportAudio.label">&menu.exportAudio.label;</data>
-<data id="menu.options.language">&menu.options.language;</data>
-<data id="menu.options">&menu.options;</data>
-<data id="menu.removeModule.label">&menu.removeModule.label;</data>
-<data id="savingSource">&savingSource;</data>
-<data id="savingTarget">&savingTarget;</data>
 
 <!-- HOT KEY DEFINITIONS !-->
 <keyset>
@@ -396,8 +397,8 @@
   
     <spacer width="17px" orient="vertical"/>
     
-    <vbox pack="top" style="min-width:346px"> <!-- min-width is specified to allow for player's width !-->
-      <hbox id="historyButtons" align="center" chromedir="&locale.dir;" style="margin-top:2px; min-height:32px;"> <!-- min-height is specified to allow for player's height !-->
+    <vbox pack="start" style="min-width:346px"> <!-- min-width is specified to allow for player's width !-->
+      <hbox id="historyButtons" align="center" chromedir="&locale.dir;" style="margin-top:2px; min-height:34px;"> <!-- min-height is specified to allow for player's height !-->
         <button id="back" tooltip="backTT" label="  &history.back.label;" chromedir="&locale.dir;" command="cmd_xs_back" flex="40%"/>
         <button id="historymenu" tooltip="historymenuTT" type="menu">
           <menupopup id="historypopup" onpopupshowing="createHistoryMenu(event);"/>
@@ -405,9 +406,9 @@
         <button id="forward" tooltip="forwardTT" label="&history.forward.label;  " command="cmd_xs_forward" chromedir="&locale.dir;" dir="reverse" flex="40%"/>
       </hbox>
       
-      <hbox id="player" flex="1" align="center" style="margin-top:2px; min-height:32px;" hidden="true"> <!-- height is specified because player's actual height is large (for showing video) !-->
-        <iframe id="playerFrame" style="-moz-margin-start:10px; -moz-margin-end:0px; width:218px; height:32px; overflow:hidden;" src="chrome://xulsword/content/player.html"/>
-        <button id="closeplayer" flex="1" label="&closeCmd.label;"  style="-moz-margin-start:10px;  -moz-margin-end:10px;" oncommand="endAudioPlayer()"/>
+      <hbox id="player" flex="1" align="center" pack="end" hidden="true" style="margin-top:2px; min-height:32px;"> <!-- height is specified because player's actual height is large (for showing video) !-->
+        <iframe id="playerFrame" style="width:218px; height:34px; overflow:hidden;" src="chrome://xulsword/content/player.html"/>
+        <button id="closeplayer" label="&closeCmd.label;" style="width:98px; -moz-margin-end:14px;" oncommand="endAudioPlayer()"/>
       </hbox>
       
       <hbox id="textnav" align="center" style="margin-left:10px; margin-right:10px;">
@@ -455,7 +456,7 @@
   <vbox flex="100%">
     <deck id="appcontent" flex="100%">
       <!-- <iframe id="aboutConfig" flex="100%" class="bibleframe" src="about:config" /> !-->
-      <hbox id="frameset" flex="100%" style="direction:ltr;">
+      <hbox id="frameset" flex="100%">
         <vbox id="genBookChooser" pack="center" align="center" style="background-image: url(chrome://xulsword/skin/images/9.gif); visibility:hidden;">
           <vbox id="genBookTree" class="genbookchooser">
             <!-- tree starts out hidden to prevent endless loop if no Bible object is found ~-->
@@ -480,7 +481,7 @@
         </vbox>
         <iframe id="bible1Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden;"/>
         <iframe id="bible2Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden;"/>
-        <iframe id="bible3Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden; border-right:1px solid white;"/>
+        <iframe id="bible3Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden;"/>
       </hbox>
       <browser type="content-primary" id="printBrowser" src="print.html"/>
     </deck>

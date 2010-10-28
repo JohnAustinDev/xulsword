@@ -18,13 +18,15 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/xulsword-v2.css" type="text/css"?>
 
 <!DOCTYPE window [
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/" >
 %xulswordDTD;
 <!ENTITY % nsProgressDialogDTD SYSTEM "chrome://global/locale/nsProgressDialog.dtd" >
 %nsProgressDialogDTD;
+<!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd" >
+%globalDTD;
 ]>
 
 <window id="pre-splash" xmlns:html="http://www.w3.org/1999/xhtml"
@@ -40,6 +42,7 @@
   <data id="menu.importAudio.label">&menu.importAudio.label;</data>
   <data id="savingSource">&savingSource;</data>
   <data id="savingTarget">&savingTarget;</data>
+  <data id="localeDir">&locale.dir;</data>
   
   <script>
     <![CDATA[
