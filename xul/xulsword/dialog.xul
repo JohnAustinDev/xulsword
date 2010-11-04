@@ -18,7 +18,7 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/xulsword-v2.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
 
 <dialog id="dlg" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"
         onload="Load()"

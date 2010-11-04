@@ -17,13 +17,9 @@ Set cFlags=/nologo /EHsc /O2 /Zc:wchar_t- /Ob2 /Oi /Ot^
  /I "%MK%\%CPPD%\%clucene%\src"^
  /D "_CRT_SECURE_NO_DEPRECATE" /D "_VC80_UPGRADE=0x0710" /D "_UNICODE" /D "UNICODE" /GF /c
 
-if %arg1%==dll Set cFlags=/MD /Fo"Release\clucenedll/" %cFlags% ^
- &Set lFlags=/nologo /out:"Release\clucenedll.lib" ^
- &Set objDIR=Release\clucenedll
-
-if %arg1%==exe Set cFlags=/MT /Fo"Release\clucenexe/" %cFlags% ^
- &Set lFlags=/nologo /out:"Release\clucenexe.lib" ^
- &Set objDIR=Release\clucenexe
+Set cFlags=/MT /Fo"Release\libclucene/" %cFlags% ^
+ &Set lFlags=/nologo /out:"Release\libclucene.lib" ^
+ &Set objDIR=Release\libclucene
 
 mkdir "%objDIR%"
 

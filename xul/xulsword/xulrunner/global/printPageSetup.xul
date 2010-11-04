@@ -43,7 +43,7 @@
 
  ***** END LICENSE BLOCK ***** -->
 
-<?xml-stylesheet href="chrome://global/skin/xulsword-v2.css" type="text/css"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://global/skin/printPageSetup.css" type="text/css"?>
 <!DOCTYPE dialog SYSTEM "chrome://global/locale/printPageSetup.dtd">
 
