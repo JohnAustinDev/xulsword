@@ -1,32 +1,4 @@
-<?xml version="1.0"?> <!-- -*- Mode: HTML -*- -->
+<?xml version="1.0"?> <!-- -*- Mode: HTML -*- --> 
 
 <overlay id="venkman" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-
-  <script src="chrome://venkman/content/venkman-overlay.js"/>
-  <script>
-  function showPlugins() {
-    document.getElementById("printBrowser").setAttribute("src", "about:plugins");
-    document.getElementById("appcontent").selectedIndex=1;
-  }
-  function showConfig() {
-    document.getElementById("printBrowser").setAttribute("src", "about:config");
-    document.getElementById("appcontent").selectedIndex=1;
-  }
-  </script>
-
-  <hbox id="debug" hidden="true">
-    <vbox>
-      <hbox>
-        <button id="config"       label="config"    oncommand="showConfig();"/>
-        <button id="reloadButton" label="Reload"    oncommand="window.location.reload();"/>
-        <button id="saveButton"   label="Save HTML" oncommand="saveHTML();"/>
-      </hbox>
-      <hbox>
-        <button id="debugger"     label="Debug"     oncommand="start_venkman()"/>
-        <button id="throw"        label="Throw"     oncommand="throw 'The user has thrown an exception.';"/>
-        <button id="plugins"      label="Plugins"   oncommand="showPlugins();"/>
-      </hbox>
-    </vbox>
-  </hbox>
-
 </overlay>

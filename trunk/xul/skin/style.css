@@ -65,7 +65,11 @@ a:active{color:blue;}
 	border:2px solid rgb(200,170,205);
   -moz-border-radius:8px;
   cursor:default;
-  z-index:1; 
+  z-index:1;
+  position:absolute;
+  overflow:hidden;
+  height:600px;
+  top:0px;
 }
 .scriptboxtext {
   overflow:auto;
@@ -92,7 +96,7 @@ a:active{color:blue;}
 }
 .npopup {
   font-size: 13px;
-  margin-right:50px;
+  margin-right:20px;
   padding-left:20px;
   padding-right:20px;
   padding-top:20px;
@@ -102,13 +106,16 @@ a:active{color:blue;}
   background:rgb(245,220,255);
   -moz-border-radius:5px;
   z-index:4;
+  position:absolute;
+  overflow:auto;
 }
 .npopupSH {
   background:black;
   opacity:.35;
   -moz-border-radius:7px;
   cursor:default;
-  z-index:3; 
+  z-index:3;
+  position:absolute;
 }
 .audiolink {
   position:relative; 
@@ -232,9 +239,15 @@ a:active{color:blue;}
 .languageTabs {
   z-index:2; 
   position:relative; 
-  margin-right:40px;
-  float:right; 
   white-space:nowrap;
+}
+.languageTabs[chromedir=ltr] {
+  margin-right:40px;
+  float:right;
+}
+.languageTabs[chromedir=rtl] {
+  margin-left:40px;
+  float:left;
 }
 .tabs {
   color:grey;
@@ -273,7 +286,17 @@ a:active{color:blue;}
 .tabGenbks {
   -moz-border-top-colors:   rgb(200,170,205) rgb(150,207,225) rgb(100,245,245);
 }
-
+.scriptPin {
+  position:absolute;
+  top:10px;
+  z-index:2;
+}
+.scriptPin[chromedir=ltr] {
+  left:0px;
+}
+.scriptPin[chromedir=rtl] {
+  right:0px;
+}
 
 /* BOUNDARY BAR */
 .boundary {
@@ -294,6 +317,8 @@ a:active{color:blue;}
   height:1px;
   cursor:N-resize;
   z-index:8;
+  position:absolute;
+  visibility:hidden;
 }
 
 
@@ -394,18 +419,36 @@ a:active{color:blue;}
   border-bottom:1px solid rgb(200,170,205);
   border-right:1px solid rgb(230,200,235);
   background:rgb(240,215,240);
-  z-index:0; 
+  z-index:0;
+  position:absolute;
+  visibility:hidden;
+
+}
+.connector[chromedir=ltr] {
+  right:0px;
+}
+.connector[chromedir=rtl] {
+  left:0px;
 }
 
 
-
 /* CHOOSER PARAMETERS */
-
 .testamentchooser {
-  left:14px;
   position:absolute; 
   cursor:pointer;
   z-index:1;
+}
+div[chromedir=ltr] #chooseNT {
+  -moz-border-radius-bottomleft: 8px;
+}
+div[chromedir=rtl] #chooseNT {
+  -moz-border-radius-bottomright: 8px;
+}
+div[chromedir=ltr] #chooseOT {
+  -moz-border-radius-topleft: 8px;
+}
+div[chromedir=rtl] #chooseOT {
+  -moz-border-radius-topright: 8px;
 }
 .testheading {
   width:18px;
@@ -418,12 +461,18 @@ a:active{color:blue;}
 .chooser {
   background:rgb(255,230,255);
   border:1px outset rgb(200,200,200);
-  border-left:1px solid rgb(150,150,150);
-  -moz-border-radius-topright:8px;
-  -moz-border-radius-bottomright:8px;
+  -moz-border-start:1px solid rgb(150,150,150);
   cursor:pointer;
   position:absolute;
   visibility:hidden;
+}
+div[chromedir=ltr] .chooser {
+  -moz-border-radius-topright:8px;
+  -moz-border-radius-bottomright:8px;
+}
+div[chromedir=rtl] .chooser {
+  -moz-border-radius-topleft:8px;
+  -moz-border-radius-bottomleft:8px;
 }
 .bookname {
   height:20px;
@@ -433,8 +482,8 @@ a:active{color:blue;}
   font-size:13px;
   color:rgb(0,0,100);
   border:1px outset black;
-  padding-left:10px;
-  padding-right:30px;
+  -moz-padding-start:10px;
+  -moz-padding-end:30px;
   margin:2px;
   -moz-border-radius:6px;
 }
@@ -453,14 +502,18 @@ a:active{color:blue;}
 .chapterarrow {
   width:20px;
   position:absolute; 
-  right:-32px;
   top:-16px;
+}
+div[chromedir=ltr] .chapterarrow {
+  right:-32px;
+}
+div[chromedir=rtl] .chapterarrow {
+  left:-32px;
 }
 .chapterpopuph {
   visibility:hidden;
   overflow:hidden;
   width:4px;
-  left:0px;
   position:absolute;
 }
 .chapterpopup {
@@ -471,14 +524,27 @@ a:active{color:blue;}
   border-spacing:0px 0px;
   z-index:3;
   position:absolute;
-  border-left:6px solid transparent;
+  -moz-border-start:6px solid transparent;
+}
+div[chromedir=ltr] .chapterpopup {
+  left:0px;
+}
+div[chromedir=rtl] .chapterpopup {
+  right:96%;
 }
 .chapsubtable {
+  overflow:hidden;
+  width:200%;
   background:rgb(255,243,255);
   background:transparent;
-  float:left;
   clear:both;
   z-index:3;
+}
+div[chromedir=ltr] .chapsubtable {
+  float:left;
+}
+div[chromedir=rtl] .chapsubtable {
+  float:right;
 }
 .chapmenucell {
   display:table-cell;
@@ -491,23 +557,21 @@ a:active{color:blue;}
   z-index:3;
   padding:2px;
 }
+div[chromedir=ltr] .chapmenucell {
+  float:left;
+}
+div[chromedir=rtl] .chapmenucell {
+  float:right;
+}
 .chapmenucellhigh {
-  display:table-cell;
-  width:26px;
-  font-size:12px;
   background:yellow;
   border:1px inset rgb(255,243,255);
-  color:blue;
-  text-align:center;
-  z-index:3;
-  padding:2px;
 }
 .hpopup {
   white-space:nowrap;
   font-size:13px;
-  margin-right:50px;
-  padding-left:20px;
-  padding-right:20px;
+  -moz-padding-start:20px;
+  -moz-padding-end:20px;
   padding-top:10px;
   padding-bottom:10px;
   border:1px outset black;
@@ -526,12 +590,17 @@ a:active{color:blue;}
 .fader {
   z-index:7; 
   position:absolute; 
-  left:0px; 
   opacity:.5;
 }
+div[chromedir=ltr] .fader {
+  left:0px;
+}
+div[chromedir=rtl] .fader {
+  right:0px;
+}
 .chooserhole {
-  border-left:2px solid rgb(175,145,180);
-  border-right:2px solid rgb(225,195,230);
+  -moz-border-start:2px solid rgb(175,145,180);
+  -moz-border-end:2px solid rgb(225,195,230);
   -moz-border-radius:8px;
   background:white;
   position:absolute;
@@ -552,10 +621,24 @@ a:active{color:blue;}
   -moz-border-radius:8px;
 }
 .chbut {
-  left:20px;
   z-index:10;
   position:absolute;
 }
+div[chromedir=ltr] #chbutClose {
+  left:20px;
+}
+div[chromedir=rtl] #chbutClose {
+  right:20px;
+}
+div[chromedir=ltr] #chbutOpen {
+  top:30px;
+  left:8px;
+}
+div[chromedir=rtl] #chbutOpen {
+  top:30px;
+  right:8px;
+}
+
 
 /* Search HTML Window */
 .searchres {
@@ -563,8 +646,8 @@ a:active{color:blue;}
   white-space:nowrap;
   font-size:14px;
   color: rgb(100,100,100);
-  padding-left:20px;
-  padding-right:20px;
+  -moz-padding-start:20px;
+  -moz-padding-end:20px;
   padding-top:20px;
   padding-bottom:20px;
   cursor:default;

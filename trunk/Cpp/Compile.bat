@@ -22,7 +22,7 @@ Set DUMPCODES=
 if %arg1%==DUMPCODES Set DUMPCODES=/D "DUMPCODES"
 
 REM Changing "DEBUG" to "NDEBUG" turns off NS_WARNING etc.
-Set cFlags=/nologo /W2 /MD /EHsc /O2 /Zc:wchar_t-^
+Set cFlags=/nologo /W2 /MT /EHsc /O2 /Zc:wchar_t-^
  /I ".\crclib"^
  /I ".\\"^
  /I ".\swordMK\include"^
@@ -43,7 +43,7 @@ Set cFiles=%SECURITYCPP%^
  ".\osisfootnotesxul.cpp"^
  ".\swordMK\src\utilfuns\win32\dirent.cpp"
 
-Set lFlags=libswordll.lib clucenedll.lib xpcom.lib xpcomglue_s.lib nspr4.lib crclib.lib /nologo /dll /incremental:no /manifestfile:"xulsword\xulsword.dll.manifest" /implib:"xulsword\xulsword.lib" /pdb:"xulsword/xulsword.pdb" /out:".\Release\xulsword.dll" /libpath:".\crclib\Release" /libpath:".\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /libpath:".\swordMK\lib\Release" /libpath:".\cluceneMK\lib\Release"
+Set lFlags=libsword.lib libclucene.lib xpcom.lib xpcomglue_s.lib nspr4.lib crclib.lib /nologo /dll /incremental:no /manifestfile:"xulsword\xulsword.dll.manifest" /implib:"xulsword\xulsword.lib" /pdb:"xulsword/xulsword.pdb" /out:".\Release\xulsword.dll" /libpath:".\crclib\Release" /libpath:".\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /libpath:".\swordMK\lib\Release" /libpath:".\cluceneMK\lib\Release"
 Set lFiles=%SECURITYOBJ%^
  ".\xulsword\xulsword.obj"^
  ".\xulsword\osishtmlxul.obj"^

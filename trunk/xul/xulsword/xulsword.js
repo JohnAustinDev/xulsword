@@ -4335,8 +4335,8 @@ function getPrintHTML() {
   var versions = [];
   var copyright = [];
   var thiscolumn="";
-  var ltrPage="";
-  var rtlPage="";
+  var fwdPage="";
+  var revPage="";
   var fnotes="";
   for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
     if (Win[w].modType != DICTIONARY &&
@@ -4345,12 +4345,12 @@ function getPrintHTML() {
       fnotes = FrameDocument[w].getElementById("noteBox").innerHTML + "<br><hr><br>";
     }
     var text = FrameDocument[w].getElementById("scriptBoxText").innerHTML;
-    thiscolumn = ltrPage + text + rtlPage;
+    thiscolumn = fwdPage + text + revPage;
     if (!Win[w].isLinkedToNext) {
       versions.push(Win[w].modName);
       columns.push(thiscolumn);
-      ltrPage="";
-      rtlPage="";
+      fwdPage="";
+      revPage="";
       notes.push(fnotes);
       fnotes="";
       copyright.push(getCopyright(Win[w].modName));
@@ -4358,8 +4358,8 @@ function getPrintHTML() {
     else {
       var versionConfig = VersionConfigs[Win[w].modName];
       var isRTL = (versionConfig.direction && versionConfig.direction=="rtl");
-      rtlPage = isRTL ? thiscolumn:"";
-      ltrPage = isRTL ? "":thiscolumn;
+      if (((isRTL && guiDirection() == "rtl") || (!isRTL && guiDirection() != "rtl"))) {revPage = ""; fwdPage = thiscolumn;}
+      else {revPage = thiscolumn; fwdPage = "";}
     }
   }
   

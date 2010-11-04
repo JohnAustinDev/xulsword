@@ -26,13 +26,9 @@ Set cFlags=/nologo /W0 /EHsc /O2 /Zc:wchar_t-^
  /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^
  /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /Zm200 /c
  
-if %arg1%==dll Set cFlags=/MD /Fo"Release\libswordll/" %cFlags% ^
- &Set lFlags=xpcom.lib xpcomglue_s.lib /nologo /out:"Release\libswordll.lib" /libpath:"%MK%/%CPPD%/%xulrunnerSDK%/xulrunner-sdk/sdk/lib" ^
- &Set objDIR=Release\libswordll
-
-if %arg1%==exe Set cFlags=/MT /Fo"Release\libswordexe/" %cFlags% ^
- &Set lFlags=xpcom.lib xpcomglue_s.lib /nologo /out:"Release\libswordexe.lib" /libpath:"%MK%/%CPPD%/%xulrunnerSDK%/xulrunner-sdk/sdk/lib" ^
- &Set objDIR=Release\libswordexe
+Set cFlags=/MT /Fo"Release\libsword/" %cFlags% ^
+ &Set lFlags=xpcom.lib xpcomglue_s.lib /nologo /out:"Release\libsword.lib" /libpath:"%MK%/%CPPD%/%xulrunnerSDK%/xulrunner-sdk/sdk/lib" ^
+ &Set objDIR=Release\libsword
 
 mkdir "%objDIR%"
 

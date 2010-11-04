@@ -32,7 +32,7 @@ Set cFiles=%cFiles%^
  "%MK%\%CPPD%\osisfootnotesxul.cpp"^
  "%MK%\%CPPD%\swordMK\src\utilfuns\win32\dirent.cpp"
 
-Set lFlags=libswordexe.lib clucenexe.lib xpcom.lib xpcomglue_s.lib nspr4.lib /libpath:"%MK%\%CPPD%\swordMK\lib\Release" /libpath:"%MK%\%CPPD%\cluceneMK\lib\Release" /libpath:"%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /nologo /SUBSYSTEM:CONSOLE /MACHINE:X86 /out:"bin\%utilityName%.exe"
+Set lFlags=libsword.lib libclucene.lib xpcom.lib xpcomglue_s.lib nspr4.lib /libpath:"%MK%\%CPPD%\swordMK\lib\Release" /libpath:"%MK%\%CPPD%\cluceneMK\lib\Release" /libpath:"%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /nologo /SUBSYSTEM:CONSOLE /MACHINE:X86 /out:"bin\%utilityName%.exe"
 Set lFiles=%objDIR%\%utilityName%.obj^
  "%objDIR%\thmlhtmlxul.obj"^
  "%objDIR%\gbfhtmlxul.obj"^
