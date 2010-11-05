@@ -47,7 +47,7 @@ function checkAndEmbedPlayer() {
   
   jsdump("Have audio file:" + player.book + " " + player.chapter + "\n");
   
-  if (!MainWindow.checkQuickTime(true)) {MainWindow.endAudioPlayer(); return;}
+  if (!MainWindow.checkQuickTime()) {MainWindow.endAudioPlayer(); return;}
 
   embedPlayer(audiofile);
 }

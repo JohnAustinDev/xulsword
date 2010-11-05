@@ -678,7 +678,6 @@ jsdump("Installing File:" + aEntry);
       var inst = new RegExp("^" + escapeRE(QTIMEINS[f]) + "$");
       if (inflated.leafName.search(inst)!=-1) {
         NewPlugin = inflated;
-        break;
       }
     }
     break;
@@ -727,7 +726,7 @@ function finish(isFinalPass) {
   if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
   if (ProgressMeter) window.setTimeout("ProgressMeter.close();", 100);
   if (NewPlugin) {
-    window.setTimeout("checkQuickTime(false);", 1000);
+    window.setTimeout("checkQuickTime();", 1000);
     NewPlugin = false;
   }
   if (GotoAudioFile) audioDirPref(AudioDestination);
