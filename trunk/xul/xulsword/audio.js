@@ -170,7 +170,7 @@ function endAudioPlayer() {
 // there is can try and play the file).
 // If everything is good, true is returned with no message.
 var AlreadyPrompted;
-function checkQuickTime(startPlayerAfterInstall) {
+function checkQuickTime() {
   var haveQT = isQTInstalled();
   var haveOKQT = isQTVersionOK();
   
@@ -192,7 +192,7 @@ function checkQuickTime(startPlayerAfterInstall) {
           DLGINFO,
           DLGOK);
     }
-    else installQT(installer, startPlayerAfterInstall);
+    else installQT(installer);
 
     return false;
   }
@@ -238,7 +238,7 @@ function isQTVersionOK() {
 }
 
 // Tries to install QuickTime and returns true if the install was started, false otherwise...
-function installQT(installerFile, startPlayerAfterInstall) {
+function installQT(installerFile) {
 	if (!installerFile || !installerFile.exists()) return false;
 	
   var result = {};
@@ -249,11 +249,11 @@ function installQT(installerFile, startPlayerAfterInstall) {
       DLGYESNO);
   if (!result.ok) return false;
   
-  quietQTInstallWin(installerFile, startPlayerAfterInstall);
+  quietQTInstallWin(installerFile);
   return true;
 }
 
-function quietQTInstallWin(aInstaller, startPlayerAfterInstall) {
+function quietQTInstallWin(aInstaller) {
   jsdump("Installing plugin file \"" + aInstaller.leafName + "\":");
   var iniPath = aInstaller.path.replace(/\.exe$/i, ".ini");
   
@@ -282,18 +282,17 @@ function quietQTInstallWin(aInstaller, startPlayerAfterInstall) {
   Player.installMon = installMon;
   Player.installMonCnt = 0;
   Player.installTmps = [tmpini, tmpexe];
-  Player.installStartPlayer = startPlayerAfterInstall;
   Player.installMonInterval = window.setInterval("isQTInstallDone();", 500);
 }
 
 function isQTInstallDone() {
-  // wait max 3 minutes...
-  if (Player.installMonCnt++ > 360) window.clearInterval(Player.installMonInterval);
+  // wait max 5 minutes...
+  if (Player.installMonCnt++ > 600) window.clearInterval(Player.installMonInterval);
   if (Player.installMon.exists()) {
     Player.installMon.remove(false);
     for (var i=0; i<Player.installTmps.length; i++) Player.installTmps[i].remove(false);
     window.clearInterval(Player.installMonInterval)
-    if (Player.installStartPlayer) beginAudioPlayer();
+    window.setTimeout("restartApplication();", 500);
   }
 }
 
