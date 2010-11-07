@@ -1,5 +1,27 @@
-[books.*_long_form]: _NOT_FOUND_
-[books.*_variations]: _NOT_FOUND_
+Locale:en-US, Version:2.0 (Alternate locale:en-US)
+[books._long_form]: _NOT_FOUND_
+[books.Ps_variations]: PSM,PSS
+[books.Matt_variations]: Mt,Ma
+[books.Phlm_variations]: PHLM,PHM
+[books.Isa_variations]: Isa
+[books.Song_variations]: SNG,SOS
+[books.3John_variations]: 3 JN
+[books.1Kgs_variations]: 1 KGS
+[books.Jas_variations]: Jas
+[books.Nah_variations]: NAM
+[books.Luke_variations]: LK
+[books.1Pet_variations]: 1 PTR
+[books.2John_variations]: 2 JN
+[books.2Pet_variations]: 2 PTR
+[books.1John_variations]: 1 JN
+[books.Judg_variations]: JDGS
+[books.2Kgs_variations]: 2 KGS
+[books.Joel_variations]: Jol
+[books.Deut_variations]: Dt
+[books.Phil_variations]: Php,Phil
+[books.Mark_variations]: Mrk,Mr,Mk
+[books.John_variations]: Jn,Jo,Jhn
+[books.Ezek_variations]: EZK
 [books.Genesis_index]: 0
 [books.Exodus_index]: 1
 [books.Leviticus_index]: 2
@@ -170,3 +192,23 @@
 [unknown2.ak]: i
 [unknown3.ck]: X
 [unknown4.kb]: i
+[numeral-0]: _NOT_FOUND_
+[numeral-1]: _NOT_FOUND_
+[numeral-2]: _NOT_FOUND_
+[numeral-3]: _NOT_FOUND_
+[numeral-4]: _NOT_FOUND_
+[numeral-5]: _NOT_FOUND_
+[numeral-6]: _NOT_FOUND_
+[numeral-7]: _NOT_FOUND_
+[numeral-8]: _NOT_FOUND_
+[numeral-9]: _NOT_FOUND_
+[search-window.search_symbols.SINGLE_CHARACTER_WILD_CARD]: _NOT_FOUND_
+[search-window.search_symbols.MULTIPLE_CHARACTER_WILD_CARD]: _NOT_FOUND_
+[search-window.search_symbols.AND]: _NOT_FOUND_
+[search-window.search_symbols.OR]: _NOT_FOUND_
+[search-window.search_symbols.NOT]: _NOT_FOUND_
+[search-window.search_symbols.SIMILAR]: _NOT_FOUND_
+[search-window.search_symbols.GROUP_START]: _NOT_FOUND_
+[search-window.search_symbols.GROUP_END]: _NOT_FOUND_
+[search-window.search_symbols.QUOTE_START]: _NOT_FOUND_
+[search-window.search_symbols.QUOTE_END]: _NOT_FOUND_

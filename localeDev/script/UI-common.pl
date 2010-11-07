@@ -72,6 +72,9 @@ sub loadMAP($%%%$) {
   my $codeFileEntryValueP = shift;
   my $supressWarn = shift;
   
+  my @values;
+  my @wildms;
+  
   if (!open(INF, "<$f")) {&Log("Could not open MAP file $f.\nFinished.\n"); die;}
   my $line = 0;
   while(<INF>) {
@@ -100,38 +103,53 @@ sub loadMAP($%%%$) {
     }
     if ($tmp eq "next") {next;}
 
-    # save fileEntry and its information
-    $mapFileEntryInfoP->{$fileEntry.":desc"}       = $desc;
-    $mapFileEntryInfoP->{$fileEntry.":line"}       = $line;
-    $mapFileEntryInfoP->{$fileEntry.":unused"}     = $unused;
-    $mapFileEntryInfoP->{$fileEntry.":optional"}   = $optional;
-
     # get and save description's value when applicable...
-    my $value = &readValuesFromFile($fileEntry, $codeFileEntryValueP, $supressWarn, $fileReqd);
-    if (exists($mapDescInfoP->{$desc.":value"})) {
-      if    ($value eq "_NOT_FOUND_") {next;}
-      elsif ($mapDescInfoP->{$desc.":value"} eq "_NOT_FOUND_") {}
-      elsif ($unused eq "true") {next;}
-      elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$desc.":fileEntry"}.":unused"} eq "true") {}
-      elsif ($sourceFF3 ne "true" && $fileEntry !~ /^xulsword\\/) {next;}
-      elsif ($sourceFF3 eq "true" && $fileEntry =~ /^xulsword\\/ && (!exists($FF2_to_FF3{$fileEntry}) || $FF2_to_FF3{$fileEntry} =~ /<unavailable>/))  {next;}
-
-      if ($supressWarn ne "true" && $mapDescInfoP->{$desc.":value"} ne $value) {
-        &Log("WARNING line $line: Changing \"".$desc."\" from \"".$mapDescInfoP->{$desc.":value"}."\" to \"".$value."\"\n");
+    undef(@values);
+    undef(@wildms);
+    # this routines usually returns only one value, but when the "*" wildcard is present in the entry, it needs to return all matching entries plus the wild match...
+    &readValuesFromFile(\@values, \@wildms, $fileEntry, $codeFileEntryValueP, $supressWarn, $fileReqd);
+    
+    my $i;
+    for ($i = 0; $i < @values; $i++) {
+      my $d = $desc;
+      if (exists($wildms[$i]) && $wildms[$i] ne "") {
+        $d =~ s/\*/$wildms[$i]/;
+        $fileEntry =~ s/\*/$wildms[$i]/;
       }
-    }
+      
+      # save fileEntry and its information
+      $mapFileEntryInfoP->{$fileEntry.":desc"}       = $d;
+      $mapFileEntryInfoP->{$fileEntry.":line"}       = $line;
+      $mapFileEntryInfoP->{$fileEntry.":unused"}     = $unused;
+      $mapFileEntryInfoP->{$fileEntry.":optional"}   = $optional;
+    
+      if (exists($mapDescInfoP->{$d.":value"})) {
+        if    ($values[$i] eq "_NOT_FOUND_") {next;}
+        elsif ($mapDescInfoP->{$d.":value"} eq "_NOT_FOUND_") {}
+        elsif ($unused eq "true") {next;}
+        elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$d.":fileEntry"}.":unused"} eq "true") {}
+        elsif ($sourceFF3 ne "true" && $fileEntry !~ /^xulsword\\/) {next;}
+        elsif ($sourceFF3 eq "true" && $fileEntry =~ /^xulsword\\/ && (!exists($FF2_to_FF3{$fileEntry}) || $FF2_to_FF3{$fileEntry} =~ /<unavailable>/))  {next;}
 
-    $mapDescInfoP->{$desc.":value"}     = $value;
-    $mapDescInfoP->{$desc.":fileEntry"} = $fileEntry;
+        if ($supressWarn ne "true" && $mapDescInfoP->{$d.":value"} ne $values[$i]) {
+          &Log("WARNING line $line: Changing \"".$d."\" from \"".$mapDescInfoP->{$d.":value"}."\" to \"".$values[$i]."\"\n");
+        }
+      }
+
+      $mapDescInfoP->{$d.":value"}     = $values[$i];
+      $mapDescInfoP->{$d.":fileEntry"} = $fileEntry;
+    }
   }
   close(INF);
 }
 
 # Reads all values in the file (if file has not already been read) into
 # associative array. Returns requested value.
-sub readValuesFromFile($%$$) {
+sub readValuesFromFile(@@$%$$) {
+  my $valuesP = shift;
+  my $wildmsP = shift;
   my $fe = shift;
-  my $feValuesP = shift;
+  my $codeFileEntryValueP = shift;
   my $supressWarn = shift;
   my $fReqd = shift;
   
@@ -146,32 +164,61 @@ sub readValuesFromFile($%$$) {
   $te =~ /^(.*?)\:/;
   my $f = $1;
   
-  if (!exists($Readfiles{$f})) {&readFile($f, $feValuesP, $fReqd);}
-  if (!exists($feValuesP->{$te})) {
-    # if this was a mapped file, but the entry was missing, look in the original file for the entry
-    if ($te ne $fe) {
-      $te = $fe;
-      $te =~ /^(.*?)\:/;
-      $f = $1;
-      if (!exists($Readfiles{$f})) {&readFile($f, $feValuesP, $fReqd);}
-    }
-    if (!exists($feValuesP->{$te})) {
-      if ($supressWarn ne "true") {
-        &Log("WARNING readValuesFromFile was \"_NOT_FOUND_\": \"$te\"\n");
-      }
-      return "_NOT_FOUND_";
-    }
-  }
+  if (!exists($Readfiles{$f})) {&readFile($f, $codeFileEntryValueP, $fReqd);}
 
-  if ($fr ne "") {$feValuesP->{$te} =~ s/\Q$fr/$to/;}
-  if ($ap ne "") {$feValuesP->{$te} = $feValuesP->{$te}." ".$ap;}
-      
-  return $feValuesP->{$te};
+  my @entries;
+  $entries[0] = $te;
+  if ($te =~ /:.*\*/) {&getMatchingEntries(\@entries, $wildmsP, $te, $codeFileEntryValueP);}
+  my $i = 0;
+  foreach (@entries) {
+    # wildcard (multiple) entries cannot be mapped from FF2_to_FF3 and we know they exist in the $codeFileEntryValueP already, so they skip the following block
+    if (@entries == 1 && !exists($codeFileEntryValueP->{$_})) {
+      # if this was a mapped file, but the entry was missing, look in the original file for the entry
+      if ($_ ne $fe) {
+        $_ = $fe;
+        $_ =~ /^(.*?)\:/;
+        $f = $1;
+        if (!exists($Readfiles{$f})) {&readFile($f, $codeFileEntryValueP, $fReqd);}
+      }
+      if (!exists($codeFileEntryValueP->{$_})) {
+        if ($supressWarn ne "true") {
+          &Log("WARNING readValuesFromFile was \"_NOT_FOUND_\": \"$_\"\n");
+        }
+        $valuesP->[$i++] = "_NOT_FOUND_";
+        return;
+      }
+    }
+
+    if ($fr ne "") {$codeFileEntryValueP->{$_} =~ s/\Q$fr/$to/;}
+    if ($ap ne "") {$codeFileEntryValueP->{$_} = $codeFileEntryValueP->{$_}." ".$ap;}
+    $valuesP->[$i++] = $codeFileEntryValueP->{$_};
+  }
+}
+
+sub getMatchingEntries(@@$%) {
+  my $listP = shift;
+  my $wildmatchesP = shift;
+  my $e = shift;
+  my $codeFileEntryValueP = shift;
+
+  $re = quotemeta($e);
+  $re =~ s/\\\*/(.*)/;
+
+  my $i = 0;
+  for $ee (keys %{$codeFileEntryValueP}) {
+    if ($ee !~ /$re/) {next;}
+    my $s = $1;
+    my $eee = $ee;
+    $eee =~ s/\*/$s/;
+    $listP->[$i] = $eee;
+    $wildmatchesP->[$i] = $s;
+    $i++;
+  }
 }
 
 sub readFile($%$) {
   my $f = shift;
-  my $feValuesP = shift;
+  my $codeFileEntryValueP = shift;
   my $fr = shift;
   
   # look in locale, if file is not found, then look in alternate locale
@@ -194,13 +241,13 @@ sub readFile($%$) {
     }
     elsif ($t =~ /^dtd$/i) {
       if ($_ =~ /^\s*<\!--/) {next;}
-      elsif ($_ =~ /<\!ENTITY ([^\"]+?)\s*\"(.*?)\"\s*>/) {$e = $1; $v = $2;}
+      elsif ($_ =~ /<\!ENTITY\s+([^\"]+?)\s*\"(.*?)\"\s*>/) {$e = $1; $v = $2;}
       else {next;}
     }
     else {&Log("ERROR readFile \"$f\": Unknown file type $t\nFinished.\n"); die;}
 
-    if (exists($feValuesP->{$f.":".$e})) {&Log("ERROR readFile \"$f\": Multiple instances of $e in $f\n");}
-    else {$feValuesP->{$f.":".$e} = $v;}
+    if (exists($codeFileEntryValueP->{$f.":".$e})) {&Log("ERROR readFile \"$f\": Multiple instances of $e in $f\n");}
+    else {$codeFileEntryValueP->{$f.":".$e} = $v;}
   }
   $Readfiles{$f} = $ff;
   close(CFL);

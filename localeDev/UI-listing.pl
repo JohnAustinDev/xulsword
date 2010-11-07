@@ -8,12 +8,12 @@ $locale = shift;
 $version = shift;
 $localeALT = shift;
 $sourceFF3 = shift;
-$logFile = shift;
 
+$logFile = "listing_log.txt";
 $dontsort = "true";
 require "$MK\\localeDev\\script\\UI-common.pl";
-if ($logFile ne "") {if (!open(LOG, ">$logFile")) {&Log("Could not open lof file $logFile\nFinished.\n"); die;}}
 if (!-e "$MKS\\localeDev\\$locale") {mkdir("$MKS\\localeDev\\$locale");}
+if ($logFile ne "") {if (!open(LOG, ">$MKS\\localeDev\\$locale\\$logFile")) {&Log("Could not open log file $logFile\nFinished.\n"); die;}}
 if (-e $listFile)  {&Log("Listing file \"$listFile\" already exists.\nFinished.\n"); die;}
 if (-e $listFile2) {&Log("Listing file \"$listFile2\" already exists.\nFinished.\n"); die;}
 
@@ -35,28 +35,22 @@ if ($sourceFF3 eq "true") {
 
 # print the listing to UI file(s)...
 if (!open(OUTF, ">$listFile")) {&Log("Could not open output file $listFile.\nFinished.\n"); die;}
-&Print("Locale:$locale, Version:$version (Alternate locale:$localeALT)\n");
+$File2 = "Locale:$locale, Version:$version (Alternate locale:$localeALT)\n";
+&Print($File2);
 for $di (sort descsort keys %MapDescInfo) {
   if ($di !~ /\:value$/) {next;}
   $d = $di; $d =~ s/\:value$//;
-  $p = "[$d]: ".$MapDescInfo{$di}."\n";
-  
-  # a second file is used for things which UI translators don't need to worry about
-  if    ($MapDescInfo{$di} =~ /^\s*$/)             {$file2 = $file2.$p;}
-  elsif ($d =~ /^search-help-window\..*_term$/)    {$file2 = $file2.$p;}
-  elsif ($d =~ /^locale_direction/)                {$file2 = $file2.$p;}
-  elsif ($d =~ /^books\..*_index/)                 {$file2 = $file2.$p;}
-  elsif ($d =~ /print-preview.p\d+/)               {$file2 = $file2.$p;}
-  elsif ($d =~ /\.(ak|sc|ck|kb)$/)                 {$file2 = $file2.$p;}
-  elsif ($MapFileEntryInfo{$MapDescInfo{$d.":fileEntry"}.":unused"}   eq "true") {$file2 = $file2.$p;}
-  elsif ($MapFileEntryInfo{$MapDescInfo{$d.":fileEntry"}.":optional"} eq "true") {$file2 = $file2.$p;}
-  else {&Print($p);}
+  $e = $MapDescInfo{"$d:fileEntry"};
+  $list[0] = $d;
+  my @wildm; # not used here
+  if ($e =~ /:.*\*/) {&getMatchingEntries(\@list, \@wildm, $e, \%CodeFileEntryValue);}
+  &saveListing(\@list, \%MapDescInfo, \%MapFileEntryInfo);
 }
 close(OUTF);
 
-if ($file2 ne "") {
+if ($File2 ne "Locale:$locale, Version:$version (Alternate locale:$localeALT)\n") {
   if (!open(OUTF, ">$listFile2")) {&Log("Could not open output file $listFile2.\nFinished.\n"); die;}
-  print OUTF $file2;
+  print OUTF $File2;
   close(OUTF);
 }
 
@@ -65,3 +59,27 @@ if ($file2 ne "") {
 for $f (sort keys %Readfiles) {&Log($Readfiles{$f}."\n");}
 &Log("\nFinished.\n");
 if ($logFile ne "") {close(LOG);}
+
+################################################################################
+################################################################################
+
+sub saveListing(@%%) {
+  my $listP = shift;
+  my $mapDescInfoP = shift;
+  my $mapFileEntryInfoP = shift;
+  
+  foreach (@{$listP}) {
+    my $p = "[$_]: ".$MapDescInfo{"$_:value"}."\n";
+
+    # a second file is used for things which UI translators don't need to worry about
+    if    ($mapDescInfoP->{"$_:value"} =~ /^\s*$/)   {$File2 = $File2.$p;}
+    elsif ($_ =~ /^search-help-window\..*_term$/)    {$File2 = $File2.$p;}
+    elsif ($_ =~ /^locale_direction/)                {$File2 = $File2.$p;}
+    elsif ($_ =~ /^books\..*_index/)                 {$File2 = $File2.$p;}
+    elsif ($_ =~ /print-preview.p\d+/)               {$File2 = $File2.$p;}
+    elsif ($_ =~ /\.(ak|sc|ck|kb)$/)                 {$File2 = $File2.$p;}
+    elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$_.":fileEntry"}.":unused"}   eq "true") {$File2 = $File2.$p;}
+    elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$_.":fileEntry"}.":optional"} eq "true") {$File2 = $File2.$p;}
+    else {&Print($p);}
+  }
+}

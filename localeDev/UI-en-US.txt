@@ -1,4 +1,4 @@
-Locale:en-US, Version:2.15 (Alternate locale:en-US)
+Locale:en-US, Version:2.0 (Alternate locale:en-US)
 [books.Genesis]: Genesis
 [books.Exodus]: Exodus
 [books.Leviticus]: Leviticus
@@ -72,7 +72,9 @@ Locale:en-US, Version:2.15 (Alternate locale:en-US)
 [main-window.menu-file.add_new_module.components_out_of_date]: The following module(s) have components which are out of date:
 [main-window.menu-file.add_new_module.installation_incomplete]: Module installation incomplete.
 [main-window.menu-file.add_new_module.module_upgrade_needed]: Complete installation requires at least module version: %1$S
+[main-window.menu-file.add_new_module.module_upgrade_needed_NOARG]: Complete installation requires at least module version:
 [main-window.menu-file.add_new_module.program_upgrade_needed]: Upgrade the program to at least version: %1$S
+[main-window.menu-file.add_new_module.program_upgrade_needed_NOARG]: Upgrade the program to at least version:
 [main-window.menu-file.add_new_module.restart_needed]: This change will take effect the next time you start the program.
 [main-window.menu-file.exit]: Exit
 [main-window.menu-file.export_audio]: Export Audio
@@ -250,8 +252,10 @@ Locale:en-US, Version:2.15 (Alternate locale:en-US)
 [main-window.context-menu.open_selected_reference]: Open Selected Reference
 [main-window.context-menu.search]: Search
 [main-window.context-menu.select_verses]: Select Verse(s)
+[main-window.audio-player.quicktime_install_instructions]: QT Lite is now installing on your computer. \nDefault install settings should be adequate. \n\nAfter the installer has completed, click "ok" to continue\n.
 [main-window.audio-player.quicktime_install_needed]: To listen to audio content, a QuickTime plugin must be installed.
 [main-window.audio-player.quicktime_upgrade_needed]: Please update your QuickTime installation.
+[main-window.audio-player.quicktime_want_to_install_prompt]: To listen to audio content, a QuickTime plugin must be installed.\n\nWould you like to install the "QT Lite" plugin now?\n
 [main-window.bible-tabs.greek]: Greek
 [main-window.bible-tabs.hebrew]: Hebrew
 [main-window.bible-tabs.original_language]: ORIG
@@ -339,6 +343,7 @@ Locale:en-US, Version:2.15 (Alternate locale:en-US)
 [search-window.search_label]: Search word or phrase:
 [search-window.search_progress_label]: Searching %1$S...
 [search-window.stop-button]: Stop
+[search-window.stop_index_warning_message]: If you stop the indexer, search speed will be slow. \nHowever, you may build the index later if you wish.
 [search-help-window.title]: Search Help
 [search-help-window.ampersand_description]: Finds verses with both "love" <b>and</b> "God"
 [search-help-window.ampersand_example]: love && God
@@ -378,3 +383,4 @@ Locale:en-US, Version:2.15 (Alternate locale:en-US)
 [file-chooser.xul_title]: XUL Files
 [error-reporter.dont_show_this_again]: Do not show me this dialog box again.
 [error-reporter.error_detection_message]: A problem may have been detected. To report this problem press \"%1$S\".
+[splash-secure-window.insert_cdrom]: Please insert the installation CDROM and try again.

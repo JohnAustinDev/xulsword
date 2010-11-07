@@ -1,5 +1,5 @@
-REM The next line creates the UI-listing files in %MKS%\localeDev\es-MK
-::UI-listing.pl "%MK%" "%MKS%" fa 2.15 en-US true listing_log_fa.txt
+REM The next line creates the UI-listing files in %MKS%\localeDev\es-MX
+UI-listing.pl "%MK%" "%MKS%" zh-CN 2.16 en-US true
 
 REM When the UI-listing file is translated, then run the following
-UI-code.pl "%MK%" "%MKS%" fa true code_log_fa.txt
+::UI-code.pl "%MK%" "%MKS%" en-US false code_log_en-US.txt

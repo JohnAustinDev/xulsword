@@ -6,10 +6,10 @@ $MK = shift;
 $MKS = shift;
 $locale = shift;
 $nokeys = shift;
-$logFile = shift;
 
+$logFile = "code_log.txt";
 require "$MK\\localeDev\\script\\UI-common.pl";
-if ($logFile ne "") {if (!open(LOG, ">$logFile")) {&Log("Could not open lof file $logFile\nFinished.\n"); die;}}
+if ($logFile ne "") {if (!open(LOG, ">$MKS\\localeDev\\$locale\\$logFile")) {&Log("Could not open log file $logFile\nFinished.\n"); die;}}
 if (-e "$MKS\\localeDev\\$locale\\locale") {&Log("UI locale directory \"$MKS\\localeDev\\$locale\\locale\" already exists.\nFinished.\n"); die;}
 
 # read UI file(s). This must be done before reading MAP to find version
