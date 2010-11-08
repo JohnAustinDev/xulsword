@@ -3,7 +3,7 @@
 
 == Dependancies ==
 The following programs (all free) need to be in your command path:
-  * [http://www.7-zip.org/download.html 7-zip]
+  * [http://www.7-zip.org/download.html 7-zip] (command line version)
   * [http://technet.microsoft.com/en-us/sysinternals/bb896683.aspx PsKill]
   * Perl (I used [http://www.activestate.com/activeperl/downloads/ ActivePerl])
   * [http://www.softpedia.com/get/Programming/Other-Programming-Files/Microsoft-Visual-C-Toolkit.shtml MSVC8 C++ Compiler] (the Express Edition works great)
