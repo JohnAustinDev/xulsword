@@ -23,14 +23,14 @@ while (<INF>) {
   if ($_ =~ /$skipdir\t+/) {next;}
   
   # Skip listed directories names
-  if ($_ =~ /^(\s*)[-+](Release|autogen|\.svn|bin|tmp|compare|xulrunner-.*|clucene-core.*)$/) {$skipdir = $1; next;}
+  if ($_ =~ /^(\s*)[-+](swordmk-mods|sword-mods|zipmods|Original Backups|libxml*|GoBibleCreator|Release|autogen|\.svn|bin|tmp|compare|xulrunner-.*|clucene-core.*)$/) {$skipdir = $1; next;}
 
   # Skip listed root directories
   elsif ($_ =~ /^(\t\t)[-+](build-out|portable|xulrunner)$/) {$skipdir = $1; next;}
   else {$skipdir = "none";}
 
   # Skip listed files and file types
-  if ($_ =~ /^\s*[^-+]*(.+.ppr|.+.lnk|Thumbs.db)$/) {next;}
+  if ($_ =~ /^\s*[^-+]*(filter-ppr\.pl|Thumbs\.db|.+\.(ppr|lnk|ods|png|gif|jpg|tif|pdf|zip|.zz|exe|jar|xsm|xsb|ttf|cfs|idx))\s*$/i) {next;}
   
   print OUTF $_;
 }
