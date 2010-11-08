@@ -20,14 +20,14 @@ $AllLocales =~ s/(^\s*|\"|\s*$)//g;
 # Create new skin and content jar files
 unlink("$MK/xulrunner/chrome/xulsword.jar");
 unlink("$MK/xulrunner/chrome/skin.jar");
-`7z a -tzip \"$MK\\xulrunner\\chrome\\xulsword.jar\" -r \"$MK\\xul\\xulsword\\*\" -x!.svn`;
-`7z a -tzip \"$MK\\xulrunner\\chrome\\skin.jar\" -r \"$MK\\xul\\skin\\*\" -x!.svn`;
+`7za a -tzip \"$MK\\xulrunner\\chrome\\xulsword.jar\" -r \"$MK\\xul\\xulsword\\*\" -x!.svn`;
+`7za a -tzip \"$MK\\xulrunner\\chrome\\skin.jar\" -r \"$MK\\xul\\skin\\*\" -x!.svn`;
 
 # Create new locale jar files and locale manifest files
 # en-US is always updated and always exists in the xulrunner directory
 unlink ("$MK/xulrunner/chrome/en-US.xs.jar");
-`7z a -tzip \"$MK\\xulrunner\\chrome\\en-US.xs.jar\" \"$MK\\xul\\en-US.xs\\en-US-xulsword\\*\" -x!.svn`;
-`7z a -tzip \"$MK\\xulrunner\\chrome\\en-US.jar\" -r \"$MK\\xul\\en-US\\*\" -x!.svn`;
+`7za a -tzip \"$MK\\xulrunner\\chrome\\en-US.xs.jar\" \"$MK\\xul\\en-US.xs\\en-US-xulsword\\*\" -x!.svn`;
+`7za a -tzip \"$MK\\xulrunner\\chrome\\en-US.jar\" -r \"$MK\\xul\\en-US\\*\" -x!.svn`;
 `copy /Y \"$MK\\xul\\en-US.xs\\en-US.rdf\" \"$MK\\xulrunner\\defaults\\"`;
 
 # Now handle all locales other than en-US
@@ -58,11 +58,11 @@ foreach $locale (@allLocales) {
   foreach (@files) {if ($_ =~ /^(.*?)\.lnk/ && -e "$MKS\\localeDev\\Firefox3\\$1") {$ff3 = $1;}}
   close(DIR);
   if ($ff3 eq "") {$ff3 = "en-US"; `ECHO ERROR: COULD NOT DETERMINE BASE LOCALE OF $locale. DEFAULTING TO en-US.`;}
-  `7z a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$ff3\\global\" -x!.svn`;
-  `7z a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$ff3\\mozapps\" -x!.svn`;
-  `7z a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\$locale\\locale\\*\" -x!.svn`;
+  `7za a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$ff3\\global\" -x!.svn`;
+  `7za a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$ff3\\mozapps\" -x!.svn`;
+  `7za a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\$locale\\locale\\*\" -x!.svn`;
   if (-e "$MKS/localeDev/$locale/text-skin") {
-    `7z a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\$locale\\text-skin\\*\" -x!.svn`;
+    `7za a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\$locale\\text-skin\\*\" -x!.svn`;
   }
   
   # copy rdf file to destination
@@ -75,7 +75,7 @@ foreach $locale (@allLocales) {
   # if an included locale has its own skin write it into the skin.jar
   if ($skinDone eq "" && -e "$MKS/localeDev/$locale/locale-skin") {
     $skinDone = "true";
-    `7z a -tzip \"$MK\\xulrunner\\chrome\\skin.jar\" -r \"$MKS\\localeDev\\$locale\\locale-skin\\*\" -x!.svn`;
+    `7za a -tzip \"$MK\\xulrunner\\chrome\\skin.jar\" -r \"$MKS\\localeDev\\$locale\\locale-skin\\*\" -x!.svn`;
   }
 }
 

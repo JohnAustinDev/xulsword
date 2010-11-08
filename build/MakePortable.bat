@@ -73,7 +73,7 @@ xcopy "%APPDATA%\%vendor%\%name%\Profiles\resources\modules\*"  "%ResDir%\module
 ECHO --- COPYING TO MKO
 rmdir /S /Q  "%MKO%\versions\portableVersion%version%"
 mkdir "%MKO%\versions\portableVersion%version%"
-call 7z a -tzip "%MKO%\versions\portableVersion%version%\%name% Portable-%version%.zip" -r "%PortableDir%\*"
+call 7za a -tzip "%MKO%\versions\portableVersion%version%\%name% Portable-%version%.zip" -r "%PortableDir%\*"
 
 Set arg1=%1
 if not defined arg1 pause

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use Encode;
-#usage UI-listing.pl MK MKS locale version alternateLocale sourcingFromFirefox3(true|false) [logFile]
+#usage UI-listing.pl MK MKS locale version alternateLocale sourcingFromFirefox3(true|false)
 
 $MK = shift;
 $MKS = shift;

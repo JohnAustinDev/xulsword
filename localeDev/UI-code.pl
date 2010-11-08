@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use Encode;
-#usage: UI-code.pl MK MKS locale noKeys(true|false) [logFile]
+#usage: UI-code.pl MK MKS locale noKeys(true|false)
 
 $MK = shift;
 $MKS = shift;
