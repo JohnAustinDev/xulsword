@@ -166,14 +166,14 @@ function endAudioPlayer() {
 // Checks QuickTime installation and version:
 // If not installed, a message is given, and then QT may be installed if available (non-blocking,
 // with option to start player once finished). False is returned.
-// If version is too old, a message is given, and then true is returned (then whatever QT version
-// there is can try and play the file).
+// If version is too old, a message is given, and then false is returned.
 // If everything is good, true is returned with no message.
 var AlreadyPrompted;
 function checkQuickTime() {
   var haveQT = isQTInstalled();
   var haveOKQT = isQTVersionOK();
   
+  if (haveQT && haveOKQT) return true;
   if (!haveQT) {
     jsdump("QuickTime not installed\n");
     for (var f=QTIMEINS.length-1; f>=0; f--) {
@@ -209,7 +209,7 @@ function checkQuickTime() {
     AlreadyPrompted = true;
   }
   
-  return true;
+  return false;
 }
 
 // Returns value of key if plugin is installed, null otherwise
@@ -274,7 +274,7 @@ function quietQTInstallWin(aInstaller) {
   var installMon = tmp.clone();
   installMon.append("xsQTinstallmon.txt");
   if (installMon.exists()) installMon.remove(false);
-  var batdata = "@cd \"" + tmp.path + "\"\r\n";
+  var batdata = "@cd /D \"" + tmp.path + "\"\r\n";
   batdata += "@echo Installing QuickTime Lite Plugin\r\n@echo.\r\n@echo Please wait...\r\n@\"" + tmpexe.leafName + "\" /verysilent /norestart /LoadInf=\"" + tmpini.leafName + "\"\r\n@echo Done!";
   batdata += "\r\n@echo Done! > \"" + installMon.path + "\"";
   launchTempScript(batdata, "bat");

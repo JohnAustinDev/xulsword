@@ -241,8 +241,6 @@
       <toolbarseparator/>
       <toolbarbutton id="properties" label="&command.properties.label;"
                      command="cmd_bm_properties"/>
-      <toolbarbutton id="rename" label="&command.rename.label;"
-                     command="cmd_bm_rename"/>
       <toolbarbutton id="delete" label="&deleteCmd.label;"
                      command="cmd_bm_delete"/>
     </toolbar>
