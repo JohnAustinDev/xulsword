@@ -341,12 +341,10 @@ function fixWindowTitle(title) {
   title = title.replace(String.fromCharCode(1171),String.fromCharCode(1075),"gm"); //? to ?
 
   // Kyrgyz chars
-  title = title.replace(String.fromCharCode(2626),String.fromCharCode(205),"gm"); //? to ?
-  title = title.replace(String.fromCharCode(2627),String.fromCharCode(237),"gm"); //? to ?
   title = title.replace(String.fromCharCode(1198),"Y","gm"); //? to ?
   title = title.replace(String.fromCharCode(1199),"v","gm"); //? to ?
-  title = title.replace(String.fromCharCode(1256),String.fromCharCode(206),"gm"); //? to ?
-  title = title.replace(String.fromCharCode(1257),String.fromCharCode(238),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1256),String.fromCharCode(216),"gm"); //? to ?
+  title = title.replace(String.fromCharCode(1257),String.fromCharCode(248),"gm"); //? to ?
   title = title.replace(String.fromCharCode(1186),String.fromCharCode(1053),"gm"); //? to ?
   title = title.replace(String.fromCharCode(1187),String.fromCharCode(1085),"gm"); //? to ?
 
