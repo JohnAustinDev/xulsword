@@ -23,8 +23,8 @@
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA.
  */
-#include "jstreamsconfig.h"
-#include "fileinputstream.h"
+#include <CLucene/util/jstreamsconfig.h>
+#include <CLucene/util/fileinputstream.h>
 #include <cerrno>
 #include <cstring>
 namespace jstreams {
@@ -32,7 +32,7 @@ namespace jstreams {
 const int32_t FileInputStream::defaultBufferSize = 1048576;
 FileInputStream::FileInputStream(const char *filepath, int32_t buffersize) {
     // try to open the file for reading
-    file = fopen(filepath, "rb");
+    file = sw_fopen(filepath, "rb");
     this->filepath = filepath;
     if (file == 0) {
         // handle error

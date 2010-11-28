@@ -5,13 +5,13 @@
 * the GNU Lesser General Public License, as specified in the COPYING file.
 ------------------------------------------------------------------------------*/
 #include "CLucene/StdHeader.h"
-#include "FSDirectory.h"
+#include "CLucene/store/FSDirectory.h"
 #include "CLucene/index/IndexReader.h"
 #include "CLucene/util/Misc.h"
 #include "CLucene/util/MD5Digester.h"
 #include "CLucene/debug/condition.h"
 
-#include "CLucene/util/dirent.h" //if we have dirent, then the native one will be used
+#include "dirent.h" //if we have dirent, then the native one will be used
 
 CL_NS_DEF(store)
 CL_NS_USE(util)
@@ -38,7 +38,7 @@ CL_NS_USE(util)
 	  strcpy(handle->path,path);
 
 	  //Open the file
-	  handle->fhandle  = _open(path, O_BINARY | O_RDONLY | O_RANDOM, _S_IREAD );
+	  handle->fhandle  = sw_open(path, O_BINARY | O_RDONLY | O_RANDOM, _S_IREAD );
 	  
 	  //Check if a valid handle was retrieved
 	  if (handle->fhandle < 0){
@@ -169,9 +169,9 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
 	//O_RANDOM - Specifies that caching is optimized for, but not restricted to, random access from disk.
 	//O_WRONLY - Opens file for writing only;
 	if ( Misc::dir_Exists(path) )
-	  fhandle = _open( path, O_BINARY | O_RDWR | O_RANDOM | O_TRUNC, _S_IREAD | _S_IWRITE);
+	  fhandle = sw_open( path, O_BINARY | O_RDWR | O_RANDOM | O_TRUNC, _S_IREAD | _S_IWRITE);
 	else // added by JBP
-	  fhandle = _open( path, O_BINARY | O_RDWR | O_RANDOM | O_CREAT, _S_IREAD | _S_IWRITE);
+	  fhandle = sw_open( path, O_BINARY | O_RDWR | O_RANDOM | O_CREAT, _S_IREAD | _S_IWRITE);
 
 	if ( fhandle < 0 ){
         int err = errno;
@@ -259,7 +259,7 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
    refCount(0),
    useMMap(false)
   {
-  	_realpath(path,directory);//set a realpath so that if we change directory, we can still function
+  	sw_fullpath(directory, path);//set a realpath so that if we change directory, we can still function
   	if ( !directory || !*directory ){
   		strcpy(directory,path);	
   	}
@@ -270,12 +270,12 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
     } else {
       strcpy(lockDir,tmplockdir);
     }
-    
+      
     // Ensure that lockDir exists and is a directory.
 		struct fileStat fstat;
-	  if ( fileStat(tmplockdir,&fstat) != 0 ) {
+	  if ( sw_fileStat(tmplockdir,&fstat) != 0 ) {
 			//todo: should construct directory using _mkdirs... have to write replacement
-			if ( _mkdir(directory) == -1 ){
+			if ( sw_mkdir(directory) == -1 ){
 				_CLTHROWA(CL_ERR_IO,"Cannot create temp directory"); //todo: make richer error
 			}
 		}
@@ -300,9 +300,9 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
   void FSDirectory::create(){
     SCOPED_LOCK_MUTEX(THIS_LOCK)
 		struct fileStat fstat;
-    if ( fileStat(directory,&fstat) != 0 ) {
+    if ( sw_fileStat(directory,&fstat) != 0 ) {
 	  	//todo: should construct directory using _mkdirs... have to write replacement
-      if ( _mkdir(directory) == -1 ){
+      if ( sw_mkdir(directory) == -1 ){
 			  char* err = _CL_NEWARRAY(char,27+strlen(directory)+1); //27: len of "Couldn't create directory: "
 			  strcpy(err,"Couldn't create directory: ");
 			  strcat(err,directory);
@@ -310,7 +310,7 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
       }
 		}
 
-		if ( fileStat(directory,&fstat) != 0 || !(fstat.st_mode & S_IFDIR) ){
+		if ( sw_fileStat(directory,&fstat) != 0 || !(fstat.st_mode & S_IFDIR) ){
 	      char tmp[1024];
 	      _snprintf(tmp,1024,"%s not a directory", directory);
 	      _CLTHROWA(CL_ERR_IO,tmp);
@@ -325,7 +325,7 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
     while ( fl != NULL ){
 		  if ( CL_NS(index)::IndexReader::isLuceneFile(fl->d_name) ){
 				_snprintf(path,CL_MAX_DIR,"%s/%s",directory,fl->d_name);
-				int32_t ret = fileStat(path,&buf);
+				int32_t ret = sw_fileStat(path,&buf);
 				if ( ret==0 && !(buf.st_mode & S_IFDIR) ) {
 					if ( (strcmp(fl->d_name, ".")) && (strcmp(fl->d_name, "..")) ) {
 						if ( _unlink( path ) == -1 ) {
@@ -385,7 +385,7 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
 
     while ( fl != NULL ){
       strcpy(pathP,fl->d_name);
-      fileStat(path,&buf);
+      sw_fileStat(path,&buf);
       if ( !(buf.st_mode & S_IFDIR) ) {
         names->push_back( fl->d_name );
       }
@@ -436,7 +436,7 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
     struct fileStat buf;
     char buffer[CL_MAX_DIR];
     priv_getFN(buffer,name);
-    if (fileStat( buffer, &buf ) == -1 )
+    if (sw_fileStat( buffer, &buf ) == -1 )
       return 0;
     else
       return buf.st_mtime;
@@ -447,7 +447,7 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
     struct fileStat buf;
     char buffer[CL_MAX_DIR];
 	_snprintf(buffer,CL_MAX_DIR,"%s%s%s",dir,PATH_DELIMITERA,name);
-    fileStat( buffer, &buf );
+    sw_fileStat( buffer, &buf );
     return buf.st_mtime;
   }
 
@@ -456,7 +456,7 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
     char buffer[CL_MAX_DIR];
     _snprintf(buffer,CL_MAX_DIR,"%s%s%s",directory,PATH_DELIMITERA,name);
 	
-    int32_t r = _open(buffer, O_RDWR, _S_IWRITE);
+    int32_t r = sw_open(buffer, O_RDWR, _S_IWRITE);
 	if ( r < 0 )
 		_CLTHROWA(CL_ERR_IO,"IO Error while touching file");
 	_close(r);
@@ -467,7 +467,7 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
     struct fileStat buf;
     char buffer[CL_MAX_DIR];
     priv_getFN(buffer,name);
-    if ( fileStat( buffer, &buf ) == -1 )
+    if ( sw_fileStat( buffer, &buf ) == -1 )
       return 0;
     else
       return buf.st_size;
@@ -528,7 +528,7 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
 
 	char* FSDirectory::getLockPrefix() const{
 		char dirName[CL_MAX_PATH]; // name to be hashed
-		if ( _realpath(directory,dirName) == NULL ){
+		if ( sw_fullpath(dirName, directory) == NULL ){
 			_CLTHROWA(CL_ERR_Runtime,"Invalid directory path");
 		}
 
@@ -658,14 +658,14 @@ void FSDirectory::FSIndexInput::readInternal(uint8_t* b, const int32_t len) {
 
 	if ( !Misc::dir_Exists(lockDir) ){
        //todo: should construct directory using _mkdirs... have to write replacement
-      if ( _mkdir(lockDir) == -1 ){
+      if ( sw_mkdir(lockDir) == -1 ){
 		  char* err = _CL_NEWARRAY(char,34+strlen(lockDir)+1); //34: len of "Couldn't create lock directory: "
 		  strcpy(err,"Couldn't create lock directory: ");
 		  strcat(err,lockDir);
 		  _CLTHROWA_DEL(CL_ERR_IO, err );
       }
     }
-    int32_t r = _open(lockFile,  O_RDWR | O_CREAT | O_RANDOM | O_EXCL, 
+    int32_t r = sw_open(lockFile,  O_RDWR | O_CREAT | O_RANDOM | O_EXCL, 
     	_S_IREAD | _S_IWRITE); //must do this or file will be created Read only
 	if ( r < 0 )
 	  return false;

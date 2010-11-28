@@ -5,7 +5,7 @@
 * the GNU Lesser General Public License, as specified in the COPYING file.
 ------------------------------------------------------------------------------*/
 #include "CLucene/StdHeader.h"
-#include "Misc.h"
+#include "CLucene/util/Misc.h"
 
 #ifdef _CL_TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -140,13 +140,13 @@ bool Misc::dir_Exists(const char* path){
 	if ( !path || !*path )
 		return false;
 	struct fileStat buf;
-	int32_t ret = fileStat(path,&buf);
+	int32_t ret = sw_fileStat(path,&buf);
 	return ( ret == 0);
 }
 
 int64_t Misc::file_Size(const char* path){
 	struct fileStat buf;
-	if ( fileStat(path,&buf) == 0 )
+	if ( sw_fileStat(path,&buf) == 0 )
 		return buf.st_size;
 	else
 		return -1;

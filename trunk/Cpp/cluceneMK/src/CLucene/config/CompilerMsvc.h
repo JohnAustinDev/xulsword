@@ -89,10 +89,16 @@
 #endif
 
 //_rename is not defined???
-#define _rename rename
+//#define _rename rename
 
 #define CL_MAX_PATH 260 //give the windef.h value for this...
-#define _realpath(rel,abs) _fullpath(abs,rel,CL_MAX_PATH)
+#define _realpath(rel,abs) sw_fullpath(abs,rel,CL_MAX_PATH)
+#define _unlink(file) sw_unlink(file)
+#define opendir(dir) sw_opendir(dir)
+#define closedir(DIR) sw_closedir(DIR)
+#define readdir(DIR) sw_readdir(DIR)
+#define sw_fileStat sw_stati64
+#define _rename(from, to) sw_rename(from, to)
 
 //java long type
 typedef __int64 int64_t; 
