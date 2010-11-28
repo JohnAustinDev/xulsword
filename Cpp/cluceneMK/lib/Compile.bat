@@ -13,12 +13,16 @@ cd "%MK%\%CPPD%\cluceneMK\lib"
 call "%MK%\%CPPD%\versions.bat"
 
 Set cFlags=/nologo /EHsc /O2 /Zc:wchar_t- /Ob2 /Oi /Ot^
+ /I "..\..\swordMK\include"^
+ /I "..\..\swordMK\src\utilfuns\win32"^
+ /I "..\..\%sword%\include"^
  /I "%MK%\%CPPD%\cluceneMK\src"^
  /I "%MK%\%CPPD%\%clucene%\src"^
- /D "_CRT_SECURE_NO_DEPRECATE" /D "_VC80_UPGRADE=0x0710" /D "_UNICODE" /D "UNICODE" /GF /c
+ /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^
+ /D "WIN32_LEAN_AND_MEAN" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /D "_CRT_SECURE_NO_DEPRECATE" /D "_VC80_UPGRADE=0x0710" /D "_UNICODE" /D "UNICODE" /GF /c
 
 Set cFlags=/MT /Fo"Release\libclucene/" %cFlags% ^
- &Set lFlags=/nologo /out:"Release\libclucene.lib" ^
+ &Set lFlags=libsword.lib /nologo /out:"Release\libclucene.lib" /libpath:"..\..\swordMK\lib\Release" ^
  &Set objDIR=Release\libclucene
 
 mkdir "%objDIR%"
@@ -27,10 +31,13 @@ if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Commo
 set INCLUDE=%INCLUDE%;%ProgramFiles%\Microsoft SDKs\Windows\v6.1\Include
 set LIB=%LIB%;%ProgramFiles%\Microsoft SDKs\Windows\v6.1\Lib
 
-Set cFiles1="%MK%\%CPPD%\%clucene%\src\CLucene\CLMonolithic.cpp"
+Set cFiles1="%MK%\%CPPD%\cluceneMK\src\CLucene\CLMonolithic.cpp"^
+ "%MK%\%CPPD%\swordMK\src\utilfuns\win32\dirent.cpp"
+ 
 cl.exe %cFlags% %cFiles1%
  
-Set lFiles1=".\%objDIR%\CLMonolithic.obj"
+Set lFiles1=".\%objDIR%\CLMonolithic.obj"^
+ ".\%objDIR%\dirent.obj"
 link.exe -lib %lFlags% %lFiles1%
 
 rem rmdir /S /Q "%objDIR%"

@@ -21,7 +21,7 @@ Set cFlags=/nologo /MT /W0 /EHsc /O2 /Zc:wchar_t-^
  /I "%MK%\%CPPD%\swordMK\include"^
  /I "%MK%\%CPPD%\%sword%\include"^
  /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^
- /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /Zm200 /c 
+ /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /Zm200 /c 
 
 if exist "%MK%\%CPPD%\swordMK\utilities\%utilityName%.cpp" (Set cFiles="%MK%\%CPPD%\swordMK\utilities\%utilityName%.cpp") else Set cFiles="%MK%\%CPPD%\%sword%\utilities\%utilityName%.cpp"
 Set cFiles=%cFiles%^

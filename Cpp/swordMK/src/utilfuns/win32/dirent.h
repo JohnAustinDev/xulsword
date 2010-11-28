@@ -13,12 +13,12 @@
     documentation except to cover cost of distribution.
     
 */
-
 #ifndef DIRENT_INCLUDED
 #define DIRENT_INCLUDED
 
-#include <windows.h>
-#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string>
 #include <swbuf.h>
 
 #define MAX_DIR_NAME 10000
@@ -49,10 +49,15 @@ void          sw_rewinddir(DIR *);
     understand UTF-8!
 */
 
-int sw_open(const char *path, int mode, int perms);
-int sw_access(const char *path, int mode);
-long sw_findfirst(const char *name, struct _wfinddata_t *fileinfo);
-int sw_mkdir(char *dirname );
-void sw_getenv(const char *varname, sword::SWBuf *buff);
-
+int   sw_open(const char *path, int mode, int perms);
+int   sw_access(const char *path, int mode);
+long  sw_findfirst(const char *name, struct _wfinddata_t *fileinfo);
+int   sw_mkdir(char *dirname );
+void  sw_getenv(const char *varname, sword::SWBuf *buff);
+char *sw_fullpath(char *absPath, const char *relPath);
+int   sw_fileStat(const char *file, struct fileStat * fileinfo);
+int   sw_unlink(const char * file);
+int   sw_rename(const char *from, const char *to);
+FILE *sw_fopen(const char *file, const char *mode);
 #endif
+

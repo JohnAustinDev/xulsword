@@ -18,15 +18,12 @@
 
 */
 
-#include <windows.h>
-#include <direct.h>
-#include <dirent.h>
-#include <errno.h>
-#include <io.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "nsEmbedString.h"
+#include <CLucene/StdHeader.h>
+#include "dirent.h"
+#include <nsEmbedString.h>
+#include <share.h>
+
+#define CL_MAX_PATH 260
 
 struct DIR
 {
@@ -70,6 +67,61 @@ int sw_mkdir(char *dirname )
   utf8.Assign(dirname);
   utf16.Assign(NS_ConvertUTF8toUTF16(utf8));
   return _wmkdir(utf16.get());
+}
+
+int sw_fileStat(const char *file, struct fileStat *fileinfo)
+{
+  nsEmbedCString utf8;
+  nsEmbedString utf16;
+  utf8.Assign(file);
+  utf16.Assign(NS_ConvertUTF8toUTF16(utf8));
+  return _wstat64(utf16.get(), fileinfo);
+}
+
+int sw_unlink(const char * file)
+{
+  nsEmbedCString utf8;
+  nsEmbedString utf16;
+  utf8.Assign(file);
+  utf16.Assign(NS_ConvertUTF8toUTF16(utf8));
+  return _wunlink(utf16.get());
+}
+
+int sw_rename(const char *from, const char *to)
+{
+  nsEmbedCString utf8;
+  nsEmbedString utf16f, utf16t;
+  utf8.Assign(from);
+  utf16f.Assign(NS_ConvertUTF8toUTF16(utf8));
+  utf8.Assign(to);
+  utf16t.Assign(NS_ConvertUTF8toUTF16(utf8));
+  return _wrename(utf16f.get(), utf16t.get());
+}
+
+FILE *sw_fopen(const char *file, const char *mode)
+{
+  nsEmbedCString utf8;
+  nsEmbedString utf16f, utf16m;
+  utf8.Assign(file);
+  utf16f.Assign(NS_ConvertUTF8toUTF16(utf8));
+  utf8.Assign(mode);
+  utf16m.Assign(NS_ConvertUTF8toUTF16(utf8));
+  return _wfsopen(utf16f.get(), utf16m.get(), _SH_DENYNO);
+}
+
+char *sw_fullpath(char *absPath, const char *relPath)
+{
+  nsEmbedCString utf8;
+  nsEmbedString utf16;
+  utf8.Assign(relPath);
+  utf16.Assign(NS_ConvertUTF8toUTF16(utf8));
+  nsEmbedString absPath16;
+  TCHAR * buff16 = NULL;
+  absPath16.Assign(_wfullpath(buff16, utf16.get(), 2*CL_MAX_PATH));
+  utf8.Assign(NS_ConvertUTF16toUTF8(absPath16));
+  delete buff16;
+  strcpy(absPath, utf8.get());
+  return absPath;
 }
 
 void sw_getenv(const char *varname, sword::SWBuf * buff)
