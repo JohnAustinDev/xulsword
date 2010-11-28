@@ -32,7 +32,7 @@ Set cFlags=/nologo /W2 /MT /EHsc /O2 /Zc:wchar_t-^
  /I ".\%clucene%\src"^
  /I "%MK%/%CPPD%/%sword%/include/internal/regex"^
  /I ".\%xulrunnerSDK%\xulrunner-sdk\include"^
- %NOSECURITY%%DUMPCODES% /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D "_WINDOWS" /D "_USRDLL" /D "XULSWORD_EXPORTS" /D "_WINDLL" /D "_AFXDLL" /D "_CRT_SECURE_NO_DEPRECATE" /Fp"xulsword/xulsword.pch" /Fo"xulsword/" /c
+ %NOSECURITY%%DUMPCODES% /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_USRDLL" /D "XULSWORD_EXPORTS" /D "_WINDLL" /D "_AFXDLL" /D "_CRT_SECURE_NO_DEPRECATE" /Fp"xulsword/xulsword.pch" /Fo"xulsword/" /c
 
 Set cFiles=%SECURITYCPP%^
  ".\xulsword.cpp"^
