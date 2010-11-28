@@ -41,7 +41,7 @@
 ------------------------------------------------------------------------------*/
 
 #include "CLucene/StdHeader.h"
-#include "MD5Digester.h"
+#include <CLucene/util/MD5Digester.h>
 CL_NS_DEF(util)
 
 static unsigned char PADDING[64] =
@@ -115,7 +115,7 @@ char* MD5File(char* szFilename)
 	{
 		memset(chBuffer, 0, 1024);
 
-		if ((file = fopen (szFilename, "rb")) != NULL)
+		if ((file = sw_fopen (szFilename, "rb")) != NULL)
 		{
 			while ((nLen = fread (chBuffer, 1, 1024, file)))
 				alg.Update(chBuffer, nLen);

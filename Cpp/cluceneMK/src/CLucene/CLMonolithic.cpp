@@ -110,5 +110,5 @@
 #include "CLucene/util/Reader.cpp"
 #include "CLucene/util/StringBuffer.cpp"
 #include "CLucene/util/StringIntern.cpp"
-#include "CLucene/util/dirent.cpp"
+//#include "CLucene/util/dirent.cpp"
 #include "CLucene/util/ThreadLocal.cpp"
