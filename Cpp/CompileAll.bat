@@ -24,17 +24,17 @@ call versions.bat
 @cd ".."
 :NO_CRCLIB
 
-@if not %lucene%==true goto NO_CLUCENE
-@cd ".\cluceneMK\lib"
-@call Compile.bat
-@cd "..\.."
-:NO_CLUCENE
-
 @if not %libsword%==true goto NO_LIBSWORD
 @cd ".\swordMK\lib"
 @call Compile.bat
 @cd "..\.."
 :NO_LIBSWORD
+
+@if not %lucene%==true goto NO_CLUCENE
+@cd ".\cluceneMK\lib"
+@call Compile.bat
+@cd "..\.."
+:NO_CLUCENE
 
 @if not %runPortable%==true goto NO_RUNPORT
 @cd ".\runPortable"
