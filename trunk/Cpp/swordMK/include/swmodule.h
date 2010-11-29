@@ -143,8 +143,6 @@ protected:
 
 	SWKey *indexerKey;
 	
-	void convertToRelativePath(SWBuf *path);
-	
 public:
 
 	/**

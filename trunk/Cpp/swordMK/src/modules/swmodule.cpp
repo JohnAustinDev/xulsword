@@ -440,17 +440,17 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 	bool includeComponents = false;	// for entryAttrib e.g., /Lemma.1/ 
 
 #ifdef USELUCENE
-	SWBuf target = getConfigEntry("AbsoluteDataPath");
-	convertToRelativePath(&target);
-	if (!target.endsWith("/") && !target.endsWith("\\")) {
-		target.append('/');
-	}
-	target.append("lucene");
+	nsEmbedCString target;
+  target.Assign(getConfigEntry("AbsoluteDataPath"));
+	char ch = target.get()[strlen(target.get())-1];
+	if ((ch != '/') && (ch != '\\'))
+		target.Append('/');
+	target.Append("lucene");
 #endif
 	if (justCheckIfSupported) {
 		*justCheckIfSupported = (searchType >= -3);
 #ifdef USELUCENE
-		if ((searchType == -4) && (IndexReader::indexExists(target.c_str()))) {
+		if ((searchType == -4) && (IndexReader::indexExists(target.get()))) {
 			*justCheckIfSupported = true;
 		}
 #endif
@@ -517,7 +517,7 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 		Query                         *q  = 0;
 		Hits                          *h  = 0;
 		SWTRY {
-			ir = IndexReader::open(target);
+			ir = IndexReader::open(target.get());
 			is = new IndexSearcher(ir);
 			(*percent)(10, percentUserData);
 
@@ -989,13 +989,13 @@ bool SWModule::hasSearchFramework() {
 
 void SWModule::deleteSearchFramework() {
 #ifdef USELUCENE
-	SWBuf target = getConfigEntry("AbsoluteDataPath");
-	convertToRelativePath(&target);
+	nsEmbedCString target;
+  target.Assign(getConfigEntry("AbsoluteDataPath"));
 	
-	if (!target.endsWith("/") && !target.endsWith("\\")) {
-		target.append('/');
-	}
-	target.append("lucene");
+	char ch = target.get()[strlen(target.get())-1];
+	if ((ch != '/') && (ch != '\\'))
+		target.Append('/');
+	target.Append("lucene");
 
 // Begin mod...
 	SWKey *saveKey = 0;
@@ -1009,7 +1009,7 @@ void SWModule::deleteSearchFramework() {
 	setKey(*saveKey);
 // End mod...
 
-	FileMgr::removeDir(target.c_str());
+	FileMgr::removeDir(target.get());
 #else
 	SWSearchable::deleteSearchFramework();
 #endif
@@ -1070,13 +1070,16 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
  
 	bool includeKeyInSearch = getConfig().has("SearchOption", "IncludeKeyInSearch");
 	standard::StandardAnalyzer *an = new standard::StandardAnalyzer();
-	SWBuf target = getConfigEntry("AbsoluteDataPath");
-	convertToRelativePath(&target);
-	char ch = target.c_str()[strlen(target.c_str())-1];
+	nsEmbedCString target;
+  target.Assign(getConfigEntry("AbsoluteDataPath"));
+	char ch = target.get()[strlen(target.get())-1];
 	if ((ch != '/') && (ch != '\\'))
-		target.append('/');
-	target.append("lucene");
-	FileMgr::createParent(target+"/dummy");
+		target.Append('/');
+	target.Append("lucene");
+	nsEmbedCString dummy;
+	dummy.Assign(target);
+	dummy.Append("/dummy");
+	FileMgr::createParent(dummy.get());
 
 	ramDir = new RAMDirectory();
 	coreWriter = new IndexWriter(ramDir, an, true);
@@ -1350,15 +1353,15 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 	//coreWriter->optimize();
 	coreWriter->close();
 
-	if (IndexReader::indexExists(target.c_str())) {
-		d = FSDirectory::getDirectory(target.c_str(), false);
+	if (IndexReader::indexExists(target.get())) {
+		d = FSDirectory::getDirectory(target.get(), false);
 		if (IndexReader::isLocked(d)) {
 			IndexReader::unlock(d);
 		}
  
 		fsWriter = new IndexWriter( d, an, false);
 	} else {
-		d = FSDirectory::getDirectory(target.c_str(), true);
+		d = FSDirectory::getDirectory(target.get(), true);
 		fsWriter = new IndexWriter( d ,an, true);
 	}
 
@@ -1491,40 +1494,6 @@ void SWModule::prepText(SWBuf &buf) {
 			buf.setSize(to);
 		else break;
 	}
-}
-
-// Clucene can't handle non-ASCII file names, so for portable version (which
-// could include non-ASCII paths) we need to use a relative path for all Clucene
-// functions. The relative path will always be ASCII so Clucene can use it.
-void SWModule::convertToRelativePath(SWBuf *path) {
-  nsEmbedString appRootDir;
-  nsresult rv;
-  nsCOMPtr<nsIFile> mdir;
-  nsCOMPtr<nsIServiceManager> svcMgr;
-  rv = NS_GetServiceManager(getter_AddRefs(svcMgr));
-  if (!NS_FAILED(rv)) {
-    nsCOMPtr<nsIProperties> directoryService;
-    rv = svcMgr->GetServiceByContractID("@mozilla.org/file/directory_service;1",
-                                        NS_GET_IID(nsIProperties),
-                                        getter_AddRefs(directoryService));
-    if (!NS_FAILED(rv)) {
-      rv = directoryService->Get("resource:app", NS_GET_IID(nsIFile), getter_AddRefs(mdir));
-    }
-  }
-  if (!NS_FAILED(rv) && mdir) {
-    mdir->GetPath(appRootDir);
-    SWBuf appRD = NS_ConvertUTF16toUTF8(appRootDir).get();
-    int i = appRD.length()-1;
-    char c = appRD.charAt(i);
-    while (i > 0 && c != '\\') c = appRD.charAt(--i);
-    if (i>0){
-      appRD -= (appRD.length()-i-1);
-      if (path->startsWith(appRD)) {
-        (*path)<<(appRD.length()-1);
-        path->insert(0, "..");
-      }
-    }
-  }
 }
 
 SWORD_NAMESPACE_END
