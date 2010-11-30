@@ -41,8 +41,6 @@ const Vtext2 = "<div class=\"interB\">";
 const Titles = "<div class=\"head";
 const NewChapter = "<div class=\"chapnum\"";
 const NOTFOUND = "Not Found";
-const TABTEXTLG = 13;
-const TABTEXTSM = 10;
 const CROSSREFTARGET = new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+)(\.(\d+)|\s*-\s*[^\.]+\.\d+\.(\d+))?)$/);
 const REDWORDS = new RegExp(/<font color="red">/i);
 const NEWLINE = "\r\n"; //Only valid for Windows operating systems!!!
@@ -58,6 +56,7 @@ const TYPES = {Texts: "text", Comms: "comm", Dicts: "dict", Genbks: "book"};
 const TOOLTIP_LEN=96;
 const MODSD="mods.d", MODS="modules", CHROME="chrome", FONTS="fonts", AUDIO="audio", AUDIOPLUGIN="QuickTime Plugin", BOOKMARKS="bookmarks", VIDEO="video";
 const MANIFEST_EXT=".manifest", CONF_EXT=".conf";
+// scrolling
 const SCROLLTYPENONE = 0;         // don't scroll (for links this becomes SCROLLTYPECENTER)
 const SCROLLTYPETOP = 1           // scroll to top
 const SCROLLTYPEBEG = 2;          // put selected verse at the top of the window or link
@@ -65,10 +64,17 @@ const SCROLLTYPECENTER = 3;       // put selected verse in the middle of the win
 const SCROLLTYPECENTERALWAYS = 4; // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
 const SCROLLTYPEEND = 5;          // put selected verse at the end of the window or link, then select first verse of link or verse 1
 const SCROLLTYPEENDSELECT = 6;    // put selected verse at the end of the window or link, and don't change selection
+const SCROLLTYPECUSTOM = 7;       // scroll by running CustomScrollFunction
+// highlighting
 const HILIGHTNONE = 0;            // highlight no verse
 const HILIGHTVERSE = 1;           // highlight selected verse in blue
 const HILIGHT_IFNOTV1 = 2;        // highlight selected verse in blue unless it is verse 1
+// visual locators
+const UPDATELOCATORS = 0          // update locators
+const FORCEREDRAW = 1             // update locators and force redraw
+const NOUPDATELOCATOR = 2                // dont update locators
 
+var CustomScrollFunction;
 /************************************************************************
  * THESE FUNCTIONS NEEDED BEFORE XPCOM BIBLE OBJECTS ARE CREATED! This is 
  *  why they have been placed in a separate file. 

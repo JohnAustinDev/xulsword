@@ -257,8 +257,7 @@ function chooserMouseHandler(e) {
     Bible.setBiblesReference(refBible, Book[newbk].sName + "." + newch + "." + verse);
     
     //Update everything
-    MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, HILIGHTNONE);
-    MainWindow.updateLocators(false); 
+    MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, HILIGHTNONE, UPDATELOCATORS);
   }
   else {jsdump("WARNING: chooserMouseHandler, Unhandled event type: " + e.type + "\n");}
 }
@@ -489,7 +488,7 @@ function initChooser(firstInit) {
   }
   resizeChooser();
   placeChooser(firstInit);
-  MainWindow.updateLocators(true);
+  MainWindow.updateLocators(FORCEREDRAW);
 }
 
 var OTRowHeight=0;
@@ -682,4 +681,7 @@ function showChooser(tsmt,resetchooser) {
   FDB.style.height= String (fdbH) + "px";
   CHT.style.top   = CH.style.top;
   CHB.style.top   = String(bot-4) + "px";
+  
+  document.getElementById("testamentChooser").style.visibility = "visible";
+  document.getElementById("chbutClose").style.visibility = "visible";
 }

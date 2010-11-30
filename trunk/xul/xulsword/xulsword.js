@@ -31,12 +31,20 @@ var FrameDocument = new Array(4);
 var Win = new Array(4);
 var Link = {isLink:[null, null, null, null], isTextLink:[null, null, null, null], modName:null, numWins:null, startWin:null, finishWin:null, firstWin:null, lastWin:null, isRTL:null};
 var KeyWindow;
-var UsingWaitCursor; 
 var SavedWindowWithFocus;
 var NewModuleInfo;
 var AboutScrollTo;
 var CrossReferences;
 var AudioDirs = null;
+var Footnotes = new Array(4);
+Footnotes[1] = new Object();
+Footnotes[2] = new Object();
+Footnotes[3] = new Object();
+var TextCache = new Array(4); // used for link scrolling to avoid repeated module reads
+TextCache[1] = {fn:Footnotes[1], text:null, iend:null, numAppendedChaps:null, doneAppendedChaps:null, numPrependedChaps:null, donePrependedChaps:null, display:{}};
+TextCache[2] = {fn:Footnotes[2], text:null, iend:null, numAppendedChaps:null, doneAppendedChaps:null, numPrependedChaps:null, donePrependedChaps:null, display:{}};
+TextCache[3] = {fn:Footnotes[3], text:null, iend:null, numAppendedChaps:null, doneAppendedChaps:null, numPrependedChaps:null, donePrependedChaps:null, display:{}};
+const MAXTEXTCACHE = 131071;
 const NOMODULES="0000", NOLOCALES="0001", NEEDRESTART="0002";
 
 function loadedXUL() {
@@ -242,13 +250,13 @@ function loadedXULReal() {
     FrameDocument[3].defaultView.initializeScript();
     for (var i=1; i<=3; i++) fitTabs(i);
     updateModuleMenuCheckmarks();
-    updateLocators(true);
     updateChooserVisibility();
-    updatePinVisibility();
+    updatePinVisibility();    
+    PreviousHaveGenBook = updateGenBooks();
     window.setTimeout("checkCipherKeys()",0);
   }
   
-  if (Bible) window.setInterval(resizeWatch,1000);
+  if (Bible) window.onresize = resizeWatch;
   if (window.opener) {window.opener.close();} //Close splash and opener window
   
   //handle error states...
@@ -304,7 +312,8 @@ function createSearchBible() {
 }
 
 function updateAfterInit() {
-  updateFrameScriptBoxes(null, SCROLLTYPECENTER, HILIGHTNONE);
+  for (var w=1; w<=3; w++) {document.getElementById("bible" + w + "Frame").style.visibility = "visible";}
+  updateFrameScriptBoxes(null, SCROLLTYPECENTER, HILIGHTNONE, NOUPDATELOCATOR, FORCEREDRAW);
   window.setTimeout("postWindowInit()", 1000);
 }
 
@@ -378,8 +387,7 @@ function useFirstAvailableBookIf() {
   for (var b=0; b<availableBooks.length; b++) {if (availableBooks[b]==book) break;}
   if (b<availableBooks.length) return;
   Bible.setBiblesReference(vers, availableBooks[0] + ".1.1.1");
-  updateLocators(true);
-  updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE);
+  updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE, FORCEREDRAW);
 }
 
 function readNewInstallsFile(aFile) {
@@ -914,8 +922,7 @@ function updateFromNavigator(numberOfSelectedVerses) {
   for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
     if (Win[w].modType == BIBLE || Win[w].modType == COMMENTARY) updateNeeded[w] = true;
   }
-  updateFrameScriptBoxes(updateNeeded, SCROLLTYPECENTER, HILIGHT_IFNOTV1);
-  updateLocators(false);
+  updateFrameScriptBoxes(updateNeeded, SCROLLTYPECENTER, HILIGHT_IFNOTV1, UPDATELOCATORS);
 }
 
 function previousBook() {
@@ -923,8 +930,7 @@ function previousBook() {
   bkn--;
   if (bkn < 0) return;
   Bible.setBiblesReference(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
-  updateFrameScriptBoxes(getUnpinnedVerseKeyWindows(), SCROLLTYPETOP, HILIGHTNONE);
-  updateLocators(false);
+  updateFrameScriptBoxes(getUnpinnedVerseKeyWindows(), SCROLLTYPETOP, HILIGHTNONE, UPDATELOCATORS);
 }
 
 // if pin info is given, apply changes to pin window only
@@ -946,8 +952,7 @@ function previousChapter(highlightFlag, scrollType, pin) {
     else {for (var w=0; w<=3; w++) update.push(w==pin.number);}
     pin.updatePin(Book[bkn].sName, chn, 1);
     pin.updateLink();
-    updateFrameScriptBoxes(update, scrollType, HILIGHTNONE);
-    updateLocators(false);
+    updateFrameScriptBoxes(update, scrollType, HILIGHTNONE, UPDATELOCATORS);
   }
 }
 
@@ -991,8 +996,7 @@ function previousPage(highlightFlag, scrollType, pin) {
     update = copyLinkArray();
     pin.updatePin(bk, ch, v);
     pin.updateLink();
-    updateFrameScriptBoxes(update, scrollType, HILIGHTNONE);
-    updateLocators(false);
+    updateFrameScriptBoxes(update, scrollType, HILIGHTNONE, UPDATELOCATORS);
   }
 }
 
@@ -1010,8 +1014,7 @@ function nextBook() {
   bkn++;
   if (bkn >= NumBooks) return;
   Bible.setBiblesReference(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
-  updateFrameScriptBoxes(getUnpinnedVerseKeyWindows(), SCROLLTYPETOP, HILIGHTNONE);
-  updateLocators(false);
+  updateFrameScriptBoxes(getUnpinnedVerseKeyWindows(), SCROLLTYPETOP, HILIGHTNONE, UPDATELOCATORS);
 }
 
 // if pin info is given, apply changes to pin window(s) only
@@ -1031,8 +1034,7 @@ function nextChapter(highlightFlag, scrollType, pin) {
     else {for (var w=0; w<=3; w++) update.push(w==pin.number);}
     pin.updatePin(Book[bkn].sName, chn, 1);
     pin.updateLink();
-    updateFrameScriptBoxes(update, scrollType, HILIGHTNONE);
-    updateLocators(false);
+    updateFrameScriptBoxes(update, scrollType, HILIGHTNONE, UPDATELOCATORS);
   }
 }
 
@@ -1077,8 +1079,7 @@ function nextPage(highlightFlag, pin) {
     update = copyLinkArray();
     pin.updatePin(bk, ch, v);
     pin.updateLink();
-    updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE);
-    updateLocators(false);
+    updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE, UPDATELOCATORS);
   }
 }
 
@@ -1183,29 +1184,33 @@ function quickSelectVerse(version, bk, ch, vs, lastvs, highlightFlag, scrollType
       }
     }
   }
-  updateFrameScriptBoxes(forceRedraw, scrollType, highlightFlag);
   var notYetUpdated = [false];
   for (w=1; w<=3; w++) {notYetUpdated.push(updateNeeded[w] && !forceRedraw[w]);}
-  highlightSelectedVerses(notYetUpdated, highlightFlag);
   if (scrollType) window.setTimeout("scrollScriptBoxes([" + notYetUpdated + "], " + scrollType + ");", 1);
-  updateLocators(false); 
+  updateFrameScriptBoxes(forceRedraw, scrollType, highlightFlag, UPDATELOCATORS);
+  var needhl = true; // if forceRedraw was all false, we need to run highlighter here instead
+  for (w=1; w<=3; w++) {if (forceRedraw[w]) {needhl = false; break;}}
+  if (needhl) highlightSelectedVerses(highlightFlag); 
 }
 
-function highlightSelectedVerses(updateNeededArray, highlightFlag) {
-  if (!updateNeededArray) updateNeededArray = [false, true, true, true];
-  for (var w=1; w<updateNeededArray.length; w++) {
-    if (!updateNeededArray[w] || Win[w].modType != BIBLE) continue;
+function highlightSelectedVerses(highlightFlag) {
+  for (var w=1; w<=3; w++) {
+    if (Win[w].modType != BIBLE || 
+        FrameDocument[w].defaultView.Pin.isPinned ||
+        !highlightFlag || (highlightFlag==HILIGHT_IFNOTV1 && fv==1 && lv==1)) 
+    {
+      FrameDocument[w].defaultView.SelectedVerseCSS.style.color=FrameDocument[w].defaultView.ScriptBoxFontColor;
+      continue;   
+    }
+    else {FrameDocument[w].defaultView.SelectedVerseCSS.style.color=FrameDocument[w].defaultView.SelectedVerseColor;}
+
     var oldsel = FrameDocument[w].getElementById("sv");
     if (oldsel) oldsel.removeAttribute("id");
     var selem = FrameDocument[w].createElement("span");
     selem.className="hl";
     var fv = Bible.getVerseNumber(Win[w].modName);
     var lv = Bible.getLastVerseNumber(Win[w].modName);
-    if (!highlightFlag || (highlightFlag==HILIGHT_IFNOTV1 && fv==1 && lv==1))
-        FrameDocument[w].defaultView.SelectedVerseCSS.style.color=FrameDocument[w].defaultView.ScriptBoxFontColor;
-    else
-        FrameDocument[w].defaultView.SelectedVerseCSS.style.color=FrameDocument[w].defaultView.SelectedVerseColor;
-    
+
     var verseID = new RegExp("id=\"(vs\\.[^\\.]*\\.(\\d+)\\.(\\d+))\"");
     verseID = FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML.match(verseID);
     var velem, v, c;
@@ -1294,14 +1299,13 @@ function scrollWheelNoLink(refWindow) {
   
   //scroll other windows to top verse
   Bible.setBiblesReference(Win[refWindow].modName, nloc);
-  updateFrameScriptBoxes(Link.isTextLink, SCROLLTYPEBEG, HILIGHTNONE);
   var update = [false, false, false, false];
   for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
     if (Link.isTextLink[w] || w==refWindow) continue;
     if (Win[w].modType == BIBLE || Win[w].modType == COMMENTARY) update[w] = true;
   }
   scrollScriptBoxes(update, SCROLLTYPEBEG);
-  updateLocators(false);
+  updateFrameScriptBoxes(Link.isTextLink, SCROLLTYPEBEG, HILIGHTNONE, UPDATELOCATORS);
 }
 
 function getFirstDisplayedPassage(w) {
@@ -1388,8 +1392,7 @@ function linkVerseScroll(numVerses) {
       scrollScriptBoxes(scroll, SCROLLTYPEBEG);
     }
   }
-  updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE);
-  updateLocators(false);
+  updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE, UPDATELOCATORS);
 }
 
 
@@ -1421,7 +1424,7 @@ var XulswordController = {
     case "cmd_xs_toggleHebrewVowelPoints":
       prefs.setCharPref(GlobalToggleCommands[aCommand],(prefs.getCharPref(GlobalToggleCommands[aCommand])=="Off") ? "On":"Off");
       updateXulswordButtons();
-      updateFrameScriptBoxes(getUnpinnedWindows(), SCROLLTYPECENTER, HILIGHTNONE);
+      updateFrameScriptBoxes(getUnpinnedWindows(), SCROLLTYPECENTER, HILIGHTNONE, NOUPDATELOCATOR);
       break;
     case "cmd_xs_allTogglesOn":
     case "cmd_xs_allTogglesOff":
@@ -1433,7 +1436,7 @@ var XulswordController = {
         }
       }
       updateXulswordButtons();
-      updateFrameScriptBoxes(getUnpinnedWindows(), SCROLLTYPETOP, HILIGHTNONE);
+      updateFrameScriptBoxes(getUnpinnedWindows(), SCROLLTYPETOP, HILIGHTNONE, NOUPDATELOCATOR);
       break;
     case "cmd_xs_search":
       // override default type by setting to negative of desired type.
@@ -1478,12 +1481,12 @@ var XulswordController = {
       break;
     case "cmd_xs_toggleTab":
       var preChangeLinkArray = copyLinkArray();
-      var isNowVisible = toggleHiddenModPref(CurrentTarget.tabNum, CurrentTarget.windowNum);
+      toggleHiddenModPref(CurrentTarget.tabNum, CurrentTarget.windowNum);
       updateModuleMenuCheckmarks();
       if (updateTabsFromHiddenModPrefs(CurrentTarget.windowNum)) {
         updateLinkInfo();
         updatePinVisibility();
-        resizeScriptBoxes(getUpdatesNeededArray(CurrentTarget.windowNum, preChangeLinkArray));
+        updateFrameScriptBoxes(getUpdatesNeededArray(CurrentTarget.windowNum, preChangeLinkArray), SCROLLTYPETOP, HILIGHTNONE, NOUPDATELOCATOR);
       }
       break;
     case "cmd_xs_aboutModule":
@@ -1705,7 +1708,7 @@ function handleViewPopup(elem) {
   var val=elem.getAttribute('value');
   var vals=val.split("_");
   prefs.setBoolPref(vals[0],(vals[1]=="1" ? true:false));
-  updateFrameScriptBoxes(null, SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+  updateFrameScriptBoxes(null, SCROLLTYPECENTER, HILIGHT_IFNOTV1, NOUPDATELOCATOR);
 }
 
 var AboutScreen;
@@ -1739,7 +1742,7 @@ function handleOptions(elem) {
       FrameDocument[1].defaultView.updateFontSizes();
       FrameDocument[2].defaultView.updateFontSizes();
       FrameDocument[3].defaultView.updateFontSizes();
-      updateFrameScriptBoxes(getUnpinnedWindows(), SCROLLTYPETOP, HILIGHTNONE);
+      updateFrameScriptBoxes(getUnpinnedWindows(), SCROLLTYPETOP, HILIGHTNONE, NOUPDATELOCATOR);
       break;
     
     case "about":
@@ -1858,7 +1861,7 @@ function setAllTabs(toShowing, w) {
     updatePinVisibility();
     if (w) var update = getUpdatesNeededArray(w, preChangeLinkArray);
     else update = [false, true, true, true];
-    resizeScriptBoxes(update);
+    updateFrameScriptBoxes(update, SCROLLTYPETOP, HILIGHTNONE, NOUPDATELOCATOR);
   }
 }
 
@@ -1900,9 +1903,10 @@ function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
     needRedraw |= updateTabsFromHiddenModPrefs(i);
   }
   if (needRedraw) {
+    var preChangeLinkArray = copyLinkArray();
     updateLinkInfo();
     updatePinVisibility();
-    resizeScriptBoxes();
+    updateFrameScriptBoxes(getUpdatesNeededArray(sw, preChangeLinkArray), SCROLLTYPETOP, HILIGHTNONE, NOUPDATELOCATOR);
   }
 
 //jsdump("Texts:" + prefs.getCharPref("HiddenTexts1") + "\n");
@@ -2600,7 +2604,7 @@ function onSelectGenBook(elem) {
     }
     if (!UpdateOnlyPin) setUnicodePref("ShowingKey" + newmod, newkey);
     else UpdateOnlyPin.display.key = newkey;
-    updateFrameScriptBoxes(updateNeeded, SCROLLTYPETOP, HILIGHTNONE);
+    updateFrameScriptBoxes(updateNeeded, SCROLLTYPETOP, HILIGHTNONE, NOUPDATELOCATOR);
   }
   SkipGenBookWindow=0;
   
@@ -2632,10 +2636,10 @@ function bumpSelectedIndex(previousNotNext, elem) {
   return newindex != index;
 }
 
-// 1 run bumpPinnedIndex to set UpdateOnlyPin to start the process, and select pin.display.key -> trigger onSelectGenBook
+// 1 run bumpPinnedIndex to set UpdateOnlyPin to start the process, and select pin.display.key which will trigger onSelectGenBook
 // 2 run onSelectGenBook which does nothing but call bumpSelectedIndex
-// 3 run bumpSelectedIndex to select shifted pin entry -> trigger onSelectGenBook
-// 4 run onSelectGenBook to redraw shifted pin window and then select original key again -> trigger onSelectGenBook
+// 3 run bumpSelectedIndex to select shifted pin entry which will trigger onSelectGenBook
+// 4 run onSelectGenBook to redraw shifted pin window and then select original key again which will trigger onSelectGenBook
 // 5 run onSelectGenBook which does nothing but clear UpdateOnlyPin to stop the process.
 function bumpPinnedIndex(pin, previousNotNext, elem) {
 //jsdump("1 bumpPinnedIndex:" + previousNotNext);
@@ -2928,42 +2932,28 @@ function getUpdatesNeededArray(changedWindow, aPreChangeLinkArray) {
 // a certain threshold, a wait cursor is used (helpful on very slow computers). 
 // Plus the scriptbox update then happens in a timeout to allow the cursor to appear before update begins.
 var ScriptBoxIsEmpty = [false, false, false, false];
-function updateFrameScriptBoxes(updateNeededArray ,scrollTypeFlag, highlightFlag, showIntroduction) {
+function updateFrameScriptBoxes(updateNeededArray ,scrollTypeFlag, highlightFlag, locatorFlag, showIntroduction) {
   if (!updateNeededArray) updateNeededArray = [false, true, true, true];
   var needed=false;
   for (var w=1; w<updateNeededArray.length; w++) {needed |= updateNeededArray[w];}
   if (!needed || !Bible) return;
-  var vers = prefs.getCharPref("DefaultVersion");
-  var numberOfVerses = Bible.getMaxVerse(vers, Bible.getLocation(vers));
-  if (numberOfVerses <= 50) {updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlightFlag, showIntroduction);}
-  else {
-    waitCursor();
-    window.setTimeout("updateFrameScriptBoxesReal([" + updateNeededArray + "], " + scrollTypeFlag + "," + highlightFlag + "," + showIntroduction + ")",50);
+  
+  var haveGenBook = updateGenBooks();
+  if ((haveGenBook || (PreviousHaveGenBook!=null)) && haveGenBook != PreviousHaveGenBook) {
+    updateChooserVisibility();
+    resizeScriptBoxes(true);
+    locatorFlag = FORCEREDRAW;
+    updateLinkInfo();
   }
-}
-
-function waitCursor() {
-  UsingWaitCursor = true;
-  document.getElementById("main-window").setAttribute("wait-cursor", "true");
-  for (var w=1; w<=3; w++) {
-    FrameDocument[w].getElementById("scriptBox").style.cursor="wait";
-    FrameDocument[w].getElementById("pin").style.cursor="wait";
-    for (var t=0; t<Tabs.length; t++) {FrameDocument[w].getElementById("tab" + t).style.cursor="wait";}
-  }
+  PreviousHaveGenBook = haveGenBook;
+  
+  window.setTimeout("updateFrameScriptBoxesReal([" + updateNeededArray + "], " + scrollTypeFlag + "," + highlightFlag + "," + locatorFlag + "," + showIntroduction + ")",50);
 }
 
 var PreviousHaveGenBook;
-function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlightFlag, showIntroduction) {
+function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlightFlag, locatorFlag, showIntroduction) {
   var vers = firstDisplayBible();
   //var focused = document.commandDispatcher.focusedElement;
-  
-  var haveGenBook = updateGenBooks();
-  //Dont need to update chooser if this is init and there are no genbooks
-  if ((haveGenBook || (PreviousHaveGenBook!=null)) && haveGenBook != PreviousHaveGenBook) {
-    updateChooserVisibility();
-    resizeScriptBoxes(null, true);
-  }
-  PreviousHaveGenBook = haveGenBook;
 
   // Order is high to low because lower number Frames can write text to higher number Frames
   // so this order insures that the higher number frames have been initialized
@@ -2979,21 +2969,29 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
       nonLinked.push(w);
       continue;
     }
-    FrameDocument[w].defaultView.updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction);
+    FrameDocument[w].defaultView.updateScriptBox(scrollTypeFlag, showIntroduction);
   }
   // if Bible location was changed after writing link, then scroll to beginning of new location
-  if (ref != Bible.getLocation(prefs.getCharPref("DefaultVersion"))) scrollTypeFlag = SCROLLTYPEBEG;
+  if (ref != Bible.getLocation(prefs.getCharPref("DefaultVersion"))) {
+    scrollTypeFlag = SCROLLTYPEBEG;
+    if (locatorFlag == NOUPDATELOCATOR) locatorFlag = UPDATELOCATORS;
+  }
   while (nonLinked.length) {
-    if (updateNeededArray[nonLinked[0]]) FrameDocument[nonLinked[0]].defaultView.updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction);
+    if (updateNeededArray[nonLinked[0]]) FrameDocument[nonLinked[0]].defaultView.updateScriptBox(scrollTypeFlag, showIntroduction);
     nonLinked.shift();
   }
   
   document.getElementById("cmd_xs_startHistoryTimer").doCommand();
   goUpdateTargetLocation();
   
-  if (UsingWaitCursor) window.setTimeout("cancelWaitCursor();", 0);
-  if (scrollTypeFlag) window.setTimeout("scrollScriptBoxes([" + updateNeededArray + "], " + scrollTypeFlag + ");", 1);
-
+  highlightSelectedVerses(highlightFlag);
+  
+  if (scrollTypeFlag) {
+    if (scrollTypeFlag != SCROLLTYPECUSTOM) 
+        window.setTimeout("scrollScriptBoxes([" + updateNeededArray + "], " + scrollTypeFlag + ");", 1);
+    else window.setTimeout(CustomScrollFunction, 1);
+  }
+  if (!locatorFlag || locatorFlag != NOUPDATELOCATOR) window.setTimeout("updateLocators(" + locatorFlag + ")", 0);
   if (CheckAL) window.clearTimeout(CheckAL);
   CheckAL = window.setTimeout("updateAudioLinks([" + updateNeededArray + "]);", 2);
   
@@ -3003,16 +3001,6 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
   }
   
   //if (haveGenBook) document.getElementById("genbook-tree").focus();
-}
-
-function cancelWaitCursor() {
-  UsingWaitCursor = false;
-  document.getElementById("main-window").removeAttribute("wait-cursor");
-  for (var w=1; w<=3; w++) {
-    FrameDocument[w].getElementById("scriptBox").style.cursor="";
-    FrameDocument[w].getElementById("pin").style.cursor="";
-    for (var t=0; t<Tabs.length; t++) {FrameDocument[w].getElementById("tab" + t).style.cursor="";}
-  }
 }
 
 var CheckAL;
@@ -3095,16 +3083,7 @@ function setWindowDisplay(win, display) {
 //either a link of windows, or a single window. Text flows either left-to-right through the link
 //or right-to-left depending on isRTL flag. Bible text, Bible notes, and connectors
 //for the link are all updated by this routine.
-var Footnotes = new Array(4);
-Footnotes[1] = new Object();
-Footnotes[2] = new Object();
-Footnotes[3] = new Object();
-var TextCache = new Array(4); // used for link scrolling to avoid repeated module reads
-TextCache[1] = {fn:Footnotes[1], text:null, iend:null, numAppendedChaps:null, doneAppendedChaps:null, numPrependedChaps:null, donePrependedChaps:null, display:{}};
-TextCache[2] = {fn:Footnotes[2], text:null, iend:null, numAppendedChaps:null, doneAppendedChaps:null, numPrependedChaps:null, donePrependedChaps:null, display:{}};
-TextCache[3] = {fn:Footnotes[3], text:null, iend:null, numAppendedChaps:null, doneAppendedChaps:null, numPrependedChaps:null, donePrependedChaps:null, display:{}};
-  
-const MAXTEXTCACHE = 131071;
+
 function writeToScriptBoxes(win, isPinned, display, showIntroduction, scrollTypeFlag) {
   var s = {link:{}};
   if (Link.isLink[win.number]) {
@@ -3191,7 +3170,8 @@ function writeToScriptBoxes(win, isPinned, display, showIntroduction, scrollType
 
 function needToInitText(s, textCache, display) {
   if (!textCache || !textCache.text || !textCache.text.length || textCache.text.length > MAXTEXTCACHE) {return true;}
-
+  if (s.link.numWins == 1) {return true;} // dont need cache for single windows
+  
   // has display changed, or is new reference not in cache
   var initCache = false;
   for (var el in display) {
@@ -3596,43 +3576,31 @@ function scrollScriptBoxes(updateNeededArray, scrollTypeFlag) {
 }
 
 var SavedUpdatesNeeded;
-function resizeScriptBoxes(updateNeededArray, dontChangeContents) {
-  if (!updateNeededArray) updateNeededArray = [false, true, true, true];
+function resizeScriptBoxes(resizeOnly) {
   // Order is 1,2,3 because Frame 1 has the chooser, and the chooser size must be
   // defined before any Frames can be properly sized
   hideFrames();
   // Extra stuff in this loop helps make the transition look smoother.
   for (var w=1; w<=3; w++) {
-    if (!updateNeededArray[w]) continue;
     //Done in resizeBibles(): FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML="";
-    if (!dontChangeContents) {
+    if (!resizeOnly) {
       FrameDocument[w].defaultView.NoteBoxElement.scrollTop = 0; // prevents window from flashing white
       FrameDocument[w].defaultView.NoteBoxElement.innerHTML = "";
       FrameDocument[w].defaultView.PreviousT="";
-      FrameDocument[w].getElementById("langTabs").style.visibility="hidden";
     }
-    FrameDocument[w].defaultView.resizeBibles(dontChangeContents, true);
+    FrameDocument[w].defaultView.resizeBibles(resizeOnly, true);
+    if (w<=prefs.getIntPref("NumDisplayedWindows")) updateTabsFromHiddenModPrefs(w);
   }
-  updateLocators(true);
+  if (!resizeOnly) {
+    updateLinkInfo();
+    updateLocators(FORCEREDRAW);
+  }
   showFrames();
   //Using the following timeout seemed to fix a problem with script box linking, where
   //scrollbars would inappropriately appear in frame 1 or 2 due to improper fitting of text.
   //This seems to be related to when showFrames() occurs.
   //We must update scriptboxes because innerHTMLs are null at this point
-  if (!dontChangeContents) {
-    window.setTimeout("updateFrameScriptBoxes([" + updateNeededArray + "], SCROLLTYPECENTER, HILIGHT_IFNOTV1);",0);
-    for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-      if (!updateNeededArray[w]) continue;
-      window.setTimeout("{updateTabsFromHiddenModPrefs(" + w + "); updateLinkInfo();}", 0);
-    }
-  }
-  else {
-    for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-      if (!updateNeededArray[w]) continue;
-      updateTabsFromHiddenModPrefs(w);
-      updateLinkInfo();
-    }
-  }
+  if (!resizeOnly) window.setTimeout("updateFrameScriptBoxes(''," + SCROLLTYPECENTER + "," + HILIGHT_IFNOTV1 + "," + NOUPDATELOCATOR + ");",0);
 }
 
 function hideFrames(aWinUpdateArray) {
@@ -3655,7 +3623,7 @@ function setNoteBoxSizer(frameNumber, maximizeNoteBox) {
  * Chooser Control Functions
  ***********************************************************************/ 
  //Updates the chooser and the Text Navigator based on the Bible's current book/chapter/verse
-function updateLocators(forceChooserRedraw) {
+function updateLocators(locatorFlag) {
   var myvers = firstDisplayBible();
   var bNum = Bible ? findBookNum(Bible.getBookName()):-1;
   if (prefs.getBoolPref("ShowChooser") && !prefs.getBoolPref("ShowGenBookChooser")) {
@@ -3667,8 +3635,11 @@ function updateLocators(forceChooserRedraw) {
     if (bNum>=0) FrameDocument[1].getElementById("book." + bNum).style.background = FrameDocument[1].defaultView.SelectedBookBackground;
   
     // Bring forward the correct chooser
-    if ((bNum <  NumOT)&&(forceChooserRedraw||(FrameDocument[1].getElementById("chooserNT").style.visibility == "visible"))) {FrameDocument[1].defaultView.showChooser("OT",forceChooserRedraw);}
-    if ((bNum >= NumOT)&&(forceChooserRedraw||(FrameDocument[1].getElementById("chooserOT").style.visibility == "visible"))) {FrameDocument[1].defaultView.showChooser("NT",forceChooserRedraw);}
+    var forceChooserRedraw = (locatorFlag && locatorFlag == FORCEREDRAW);
+    if ((bNum <  NumOT)&&(forceChooserRedraw||(FrameDocument[1].getElementById("chooserNT").style.visibility == "visible"))) 
+        FrameDocument[1].defaultView.showChooser("OT",forceChooserRedraw);
+    if ((bNum >= NumOT)&&(forceChooserRedraw||(FrameDocument[1].getElementById("chooserOT").style.visibility == "visible"))) 
+        FrameDocument[1].defaultView.showChooser("NT",forceChooserRedraw);
   }
   //Update the input boxes in XUL
   if (Bible) {
@@ -3692,11 +3663,12 @@ function updateChooserVisibility() {
   FrameDocument[1].getElementById("wholeChooser").style.visibility = showBibleChooser ? "visible":"hidden";
   if (!showBibleChooser) {
     FrameDocument[1].getElementById("chooserNT").style.visibility = "hidden";
-    FrameDocument[1].getElementById("chooserOT").style.visibility = "hidden";
+    FrameDocument[1].getElementById("chooserOT").style.visibility = "hidden";    
+    FrameDocument[1].getElementById("testamentChooser").style.visibility = "hidden";
+    FrameDocument[1].getElementById("chbutClose").style.visibility = "hidden"; 
   }
-  FrameDocument[1].getElementById("chbutClose").style.visibility = showBibleChooser ? "visible":"hidden";
   FrameDocument[1].getElementById("chbutOpen").style.visibility = !showBibleChooser && !showGetBookChooser ? "visible":"hidden";
-
+  
   var genBookChooserElement = document.getElementById("genBookChooser");
   genBookChooserElement.style.visibility = (showGetBookChooser ? "visible":"hidden");
   genBookChooserElement.style.display = (showGetBookChooser ? "":"none");
@@ -3801,7 +3773,6 @@ function updateTabLabelsAndStyles(initializing) {
     
     updateSelectTab(w);
   }
-//for (var shortType in SupportedModuleTypes) {dump(shortType + ":" + prefs.getCharPref("Hidden" + shortType + 1) + "\n");}
 }
     
 function updateSelectTab(aWindowNum) {
@@ -3935,34 +3906,59 @@ function fitTabs(aWindowNum) {
     
   // Shrink or move tabs if there are too many to fit
   seltab.style.display="none";
-  FrameDocument[aWindowNum].defaultView.setFontSize(".tabs", TABTEXTLG);
   var twMargin = getTabWidthMargin(aWindowNum);
   if (!twMargin || twMargin>0) return;
-  FrameDocument[aWindowNum].defaultView.setFontSize(".tabs", TABTEXTSM);
-  var twMargin = getTabWidthMargin(aWindowNum);
-  if (!twMargin || twMargin>0) return;
-  seltab.style.display="";
   
-  var t=Tabs.length;
+  seltab.style.display=""; 
   try {var showingOrig = prefs.getBoolPref("ShowOriginal" + aWindowNum);}
   catch (er) {showingOrig=false;}
   var html = "";
-
-  while (getTabWidthMargin(aWindowNum)<0 && t>0) {
-    t--;
-    // Find a tab to move to the seltab...
-    if (Tabs[t].isOrigTab) continue;
-    if (!isTabShowing(t, aWindowNum)) continue;
-    var ohtml = "<option id=\"seltab" + t + "\" style=\"margin:4px; padding-top:2px; height:20px; \"";
-    ohtml += (Tabs[t].modName==Win[aWindowNum].modName ? " selected=\"selected\"":"");
-    ohtml += "onclick=\"tabHandler(event);\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\"" + ">"
-    ohtml += Tabs[t].label + "</option>";
-    html = ohtml + html;
-    FrameDocument[aWindowNum].getElementById("tab" + t).style.display="none";
-    seltab.innerHTML = html;
-    updateSelectTab(aWindowNum);
+  
+  var tmargin = 140;
+  var finished = quickSetTabsToMargin(tmargin, aWindowNum);
+  while (!finished && getTabWidthMargin(aWindowNum)<0) {
+    tmargin += 20;
+    finished = quickSetTabsToMargin(tmargin, aWindowNum);
   }
-//jsdump("FINISHED fitTabs W=" + aWindowNum + ". Free=" + getTabWidthMargin(aWindowNum));
+}
+
+function quickSetTabsToMargin(margin, w) {
+  var frameDoc = FrameDocument[w];
+  var frameWin = frameDoc.defaultView;
+  var scriptBoxW = frameWin.FrameWidth - frameWin.MarginEnd - frameWin.MarginStartOfScriptBox;  
+  var gap = scriptBoxW - margin - 20 - 40; // 20 for margin scrollbar-side, 40 for margin pin-side
+  var numVisibleTabs = 0;
+  // ORIG tab can't be hidden, so if it's showing, make space for it first
+  for (t=0; t<Tabs.length; t++) {
+    if (!Tabs[t].isOrigTab) continue;
+    if (isTabShowing(t, w)) {
+      numVisibleTabs++;
+      gap = gap - FrameDocument[w].getElementById("tab" + t).offsetWidth + 6;
+    }
+    break;
+  }
+  // add tabs until gap is full
+  for (var t=0; t<Tabs.length; t++) {
+    if (Tabs[t].isOrigTab) continue;
+    if (!isTabShowing(t, w)) continue;
+    gap = gap - (FrameDocument[w].getElementById("tab" + t).offsetWidth + 6); // 6 for margin between tabs
+    if (gap < 0) break;
+    numVisibleTabs++;
+  }
+  // place remaining tabs in seltab
+  var html = "";
+  for (var ts=t; ts<Tabs.length; ts++) {
+    if (Tabs[ts].isOrigTab) continue;
+    html += "<option id=\"seltab" + ts + "\" style=\"margin:4px; padding-top:2px; height:20px; \"";
+    html += (Tabs[ts].modName==Win[w].modName ? " selected=\"selected\"":"");
+    html += "onclick=\"tabHandler(event);\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\"" + ">"
+    html += Tabs[ts].label + "</option>";
+    FrameDocument[w].getElementById("tab" + ts).style.display="none";  
+  }
+  FrameDocument[w].getElementById("seltab.menu").innerHTML = html;
+  updateSelectTab(w);
+
+  return (numVisibleTabs <= 1);
 }
 
 // Adjusts tab visibility based on hidden module prefs. Does NOT redraw anything!
@@ -3994,6 +3990,7 @@ function updateTabsFromHiddenModPrefs(aWindowNum, initializing) {
     var sversion = new RegExp("(^|;)" + escapeRE(Tabs[t].modName) + ";");
     var hide = (hiddenModuleString.search(sversion)!=-1);
     if (!hide && !Tabs[t].isOrigTab) numVisibleTabsNotInclORIG++;
+    FrameDocument[aWindowNum].getElementById("tab" + t).style.visibility = "hidden"; // hide for now so these operations aren't visible
     FrameDocument[aWindowNum].getElementById("tab" + t).style.display = (hide ? "none":"");
     if (hide && Win[aWindowNum].modName == Tabs[t].modName) {
       setVersionTo(aWindowNum, defVers);
@@ -4021,8 +4018,8 @@ function updateTabsFromHiddenModPrefs(aWindowNum, initializing) {
   
   //On init, skip tab updates for now (they are done separately later during init)
   if (!initializing) fitTabs(aWindowNum);
+  for (t=0; t<Tabs.length; t++) {FrameDocument[aWindowNum].getElementById("tab" + t).style.visibility = "visible";}
 
-  FrameDocument[aWindowNum].getElementById("langTabs").style.visibility="visible";
   return needScriptBoxUpdate;
 }
 
@@ -4083,17 +4080,17 @@ function gotoLinkReal(link, version, frameNum, verse2) {
     break;
   case DICTIONARY:
     setUnicodePref("ShowingKey" + version, link);
-    BookmarkFuns.updateMainWindow(true, updateNeeded);
-    if (verse2) window.setTimeout("FrameDocument[" + frameNum + "].defaultView.scrollScriptBox(" + SCROLLTYPECENTER + ", 'par." + verse2 + "');", 0);
-    else window.setTimeout("FrameDocument[" + frameNum + "].defaultView.scrollScriptBox(" + SCROLLTYPETOP + ");", 0);
+    if (verse2) CustomScrollFunction = "FrameDocument[" + frameNum + "].defaultView.scrollScriptBox(" + SCROLLTYPECENTER + ", 'par." + verse2 + "');";
+    else CustomScrollFunction = "FrameDocument[" + frameNum + "].defaultView.scrollScriptBox(" + SCROLLTYPETOP + ");";
+    BookmarkFuns.updateMainWindow(true, updateNeeded, SCROLLTYPECUSTOM);
     break;
   case GENBOOK:
     setUnicodePref("ShowingKey" + version, link);
-    BookmarkFuns.updateMainWindow(true, updateNeeded);
-    if (verse2) window.setTimeout("FrameDocument[" + frameNum + "].defaultView.scrollScriptBox(" + SCROLLTYPECENTER + ", 'par." + verse2 + "');", 0);
-    else window.setTimeout("FrameDocument[" + frameNum + "].defaultView.scrollScriptBox(" + SCROLLTYPETOP + ");", 0);
     //This timeout is needed because RDF may not be ready until after updateScriptBoxes()
-    window.setTimeout("{openGenBookKey(decodeUTF8('" + link2 + "')); selectGenBook(decodeUTF8('" + link2 + "'));}", 500);
+    CustomScrollFunction = "{ openGenBookKey(decodeUTF8('" + link2 + "')); selectGenBook(decodeUTF8('" + link2 + "'));";
+    if (verse2) CustomScrollFunction += " FrameDocument[" + frameNum + "].defaultView.scrollScriptBox(" + SCROLLTYPECENTER + ", 'par." + verse2 + "'); }";
+    else CustomScrollFunction += "FrameDocument[" + frameNum + "].defaultView.scrollScriptBox(" + SCROLLTYPETOP + "); }";
+    BookmarkFuns.updateMainWindow(true, updateNeeded, SCROLLTYPECUSTOM);
     break;
   }
 }
@@ -4124,15 +4121,12 @@ function ensureModuleShowing(version) {
     aWindow = firstUnPinnedWin;
     toggleHiddenModPref(Tab[version].index, aWindow);
     updateModuleMenuCheckmarks();
-    if (updateTabsFromHiddenModPrefs(aWindow)) {
-      updateLinkInfo();
-      updatePinVisibility();
-      FrameDocument[aWindow].defaultView.resizeBibles();
-    }
   }
-  setVersionTo(aWindow, version);
   if (UpdateTabs) window.clearTimeout(UpdateTabs);
-  updatePinVisibility(); 
+  setVersionTo(aWindow, version);
+  updateTabsFromHiddenModPrefs(aWindow); // needed to select seltab module!!!!
+  updateLinkInfo();
+  updatePinVisibility();
   updateTabLabelsAndStyles(); 
   return aWindow;
 }
@@ -4252,14 +4246,24 @@ function getUnpinnedWindows() {
  ***********************************************************************/ 
 
 //Watch for window resize
+var ResizeWatchTimer;
 function resizeWatch() {
   if (window.innerHeight==0 && window.innerWidth==0) return; // This happens when window is minimized!!!
   // If window has been resized
   if (window.innerHeight!=prefs.getIntPref("WindowHeight") || window.innerWidth!=prefs.getIntPref("WindowWidth")) {
-    prefs.setIntPref("WindowHeight",window.innerHeight);
-    prefs.setIntPref("WindowWidth",window.innerWidth);
-    resizeScriptBoxes();
+    for (var w=1; w<=3; w++) {document.getElementById("bible" + w + "Frame").style.visibility = "hidden";}
+    document.getElementById("genBookChooser").style.visibility = "hidden";
+    if (ResizeWatchTimer) window.clearTimeout(ResizeWatchTimer);
+    ResizeWatchTimer = window.setTimeout("resizeWatchReal();", 300);
   }
+}
+
+function resizeWatchReal() {
+  prefs.setIntPref("WindowHeight",window.innerHeight);
+  prefs.setIntPref("WindowWidth",window.innerWidth);
+  resizeScriptBoxes();
+  for (var w=1; w<=3; w++) {document.getElementById("bible" + w + "Frame").style.visibility = "visible";}
+  document.getElementById("genBookChooser").style.visibility = (prefs.getBoolPref("ShowGenBookChooser") ? "visible":"hidden");
 }
 
 function unloadXUL() {

@@ -638,6 +638,7 @@ jsdump("Installing File:" + aEntry);
   }
   
   zReader.open(aZip);
+  jsdump("\tWriting to \"" + inflated.path + "\"");
   try {zReader.extract(aEntry, inflated);}
   catch (er) {
     zReader.close(aZip);
@@ -766,7 +767,7 @@ function handleResetRequest() {
         var modsUsingAudio = getModsUsingAudioCode(info.basecode);
       }
       if (modsUsingAudio && modsUsingAudio[0]) MainWindow.gotoLink(encodeUTF8(info.book + "." + info.chapter + ".1"), modsUsingAudio[0]);
-      else {MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedWindows(), SCROLLTYPETOP, HILIGHTNONE);}
+      else {MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedWindows(), SCROLLTYPETOP, HILIGHTNONE, NOUPDATELOCATOR);}
     }
     break;
   case SOFTRESET: // program needs to reload all SWORD modules
@@ -966,8 +967,7 @@ function getConfInfo(aZip, aEntry, zReader) {
   zReader.close(aZip);
   
   ret.modName = readParamFromConf(tconf, "ModuleName");
-  var re = new RegExp("^.*\/" + MODS, "i");
-  ret.modPath = readParamFromConf(tconf, "DataPath").replace("\\", "/", "g").replace(re, MODS);
+  ret.modPath = getModDirectoryRelPath(readParamFromConf(tconf, "DataPath"));
 // It is not safe to try and write to both common and user directories, because
 // it is very difficult to tell from a conf file alone what the module directory
 // name is, and without knowing this it is impossible to match incoming module
@@ -987,6 +987,23 @@ function isConfCommon(aConf) {
   return true;
 }
 */
+
+function getModDirectoryRelPath(aDataPath) {
+  var re = new RegExp("^.*\/" + MODS, "i");
+  aDataPath = aDataPath.replace(re, MODS);
+  var d = 0;
+  var d1 = 0;
+  var d2 = 0;
+  while (d<4 || aDataPath.substring(d1, d2) == "devotionals") {
+    d1 = d2+1;
+    d2 = aDataPath.indexOf("/", d1);
+    if (d2 == -1) break;
+    d++;
+  }
+  if (d2 == -1) d2 = aDataPath.length;
+  return aDataPath.substring(0, d2);
+}
+
 //Audio file name format: name-BookshortName-chapterNumber.extension
 //name can be language abbreviation (ie ru), module (ie RSTE), or AudioCode from module's .conf file
 function decodeAudioFileName(path) {

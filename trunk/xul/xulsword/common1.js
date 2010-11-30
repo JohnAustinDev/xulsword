@@ -292,7 +292,9 @@ function adjustFontSizes(sheetNum, delta) {
     var myRule = document.styleSheets[sheetNum].cssRules[CssRuleHavingFontSize[i]];
     var newFontSize = InitialCssFontSize[i] + delta;
     if (newFontSize < 6) newFontSize=6;
-    document.styleSheets[sheetNum].cssRules[CssRuleHavingFontSize[i]].style.fontSize = newFontSize + "px";
+    
+    if (myRule.cssText.match(/^(.*?) /)[1] != ".tabs")
+        document.styleSheets[sheetNum].cssRules[CssRuleHavingFontSize[i]].style.fontSize = newFontSize + "px";
   }
 }
 
@@ -713,6 +715,7 @@ function findAVerseText(version, location, windowNum) {
 
 // Turns headings on before reading introductions
 function getBookIntroduction(version, book, bibleObj) {
+  if (!Tab[version] || (Tab[version].modType != BIBLE && Tab[version].modType != COMMENTARY)) return "";
   bibleObj.setGlobalOption("Headings", "On");
   var intro = bibleObj.getBookIntroduction(version, book);
   bibleObj.setGlobalOption("Headings", prefs.getCharPref("Headings"));

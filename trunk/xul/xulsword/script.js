@@ -188,7 +188,6 @@ function initializeScript() {
   if (Win.number <= prefs.getIntPref("NumDisplayedWindows")) {
     setBibleWidth(true);  //true -> initializing
     setBibleHeight(true); //true -> initializing
-    Frame.style.visibility="visible";
   }
 }
 
@@ -197,7 +196,7 @@ function initializeScript() {
  * Script Box
  ***********************************************************************/
 
-function updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction) {
+function updateScriptBox(scrollTypeFlag, showIntroduction) {
 //jsdump("Updating:" + Win.number + "\n");
   
   var versionHasChanged=false;
@@ -213,7 +212,7 @@ function updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction) {
   switch (Win.modType) {
   case BIBLE:
   case COMMENTARY:
-    updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction);
+    updateBibleOrCommentary(scrollTypeFlag, showIntroduction);
     break;
   case DICTIONARY:
     FrameDocumentHavingNoteBox = window.document;
@@ -221,7 +220,9 @@ function updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction) {
       updateDictionary();
     }
     else {
+      MainWindow.TextCache[Win.number].text = null;
       ConnectorElement.style.visibility = "hidden";
+      FrameDocumentHavingNoteBox = Win.number;
       SelectedKey=null;
       var written = writeDictionaryList(versionHasChanged);
       if (written) updateDictionary();
@@ -245,7 +246,7 @@ function updateScriptBox(scrollTypeFlag, highlightFlag, showIntroduction) {
   closePopup(); // Needed so that popup closes even if context menu was open
 }
 
-function updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction) {
+function updateBibleOrCommentary(scrollTypeFlag, showIntroduction) {
   var savedWindow = {};
   
   if (Pin.isPinned) {
@@ -256,11 +257,7 @@ function updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction
     MainWindow.setWindowDisplay(Win, Pin.display);
   }
   else Pin.display = MainWindow.saveWindowDisplay(Win);
-  if (highlightFlag &&
-      (highlightFlag==HILIGHTVERSE || (highlightFlag==HILIGHT_IFNOTV1 && Bible.getVerseNumber(Win.modName)!=1)) &&
-      !Pin.isPinned && Win.modType==BIBLE) {SelectedVerseCSS.style.color=SelectedVerseColor;}
-  else {SelectedVerseCSS.style.color=ScriptBoxFontColor;}
-  
+
   if (!MainWindow.Link.isLink[Win.number] || Win.number == MainWindow.Link.startWin) {
     if (!MainWindow.Link.isLink[Win.number]) {
       var showIntroForThisLink = ((showIntroduction && showIntroduction==Win.number) ? true:false);
@@ -274,8 +271,12 @@ function updateBibleOrCommentary(scrollTypeFlag, highlightFlag, showIntroduction
 }
 
 function updateGenBook(showIntroduction) {
+  ScriptBoxTextElement.scrollTop = 0; // prevents window from flashing white
+  ConnectorElement.style.visibility = "hidden";
+  FrameDocumentHavingNoteBox = Win.number;
+  MainWindow.TextCache[Win.number].text = null;
+  
   var savedWindow = {};
-
   if (Pin.isPinned) {
     // Global key is saved and replaced at end of this routine. This means that
     // OTHER WINDOWS SHOWING THIS BOOK SHOULD NOT BE ACCESSED WHILE THIS ROUTINE IS EXECUTING OR THEIR LOCATION
@@ -285,8 +286,11 @@ function updateGenBook(showIntroduction) {
   }
   else Pin.display = MainWindow.saveWindowDisplay(Win);
 
-  var showIntroForThisLink = (showIntroduction && showIntroduction==Win.number);
-  MainWindow.writeToScriptBoxes(Win, Pin.isPinned, Pin.display, showIntroForThisLink, SCROLLTYPENONE);
+  var navlinks = getPageLinks();
+  MyFootnotes = {};
+  var text = getGenBookChapterText(getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", ""), Bible, MyFootnotes);
+  ScriptBoxTextElement.innerHTML = (MainWindow.ScriptBoxIsEmpty[Win.number] ? "":navlinks + text + navlinks);
+  setBibleHeight(false, true);
   
   if (Pin.isPinned) MainWindow.setWindowDisplay(Win, savedWindow);
 }
@@ -453,6 +457,7 @@ function getPageLinks() {
   return chapterNavigationLink;
 }
 
+// This function is only for versekey modules (BIBLE, COMMENTARY)
 function getChapterWithNotes(fn, ch, chapOffset) {
   if (!chapOffset) chapOffset = 0;
   var bch = Bible.getChapterNumber(Win.modName);
@@ -474,10 +479,6 @@ function getChapterWithNotes(fn, ch, chapOffset) {
     break;
   case COMMENTARY:
     var text = getChapterText(Bible, fn, Win.modName);
-    break;
-  case GENBOOK:
-    text = getGenBookChapterText(getPrefOrCreate("ShowingKey" + Win.modName, "Unicode", ""), Bible, fn);
-//if (text.search("<note") != -1) window.alert(getUnicodePref("ShowingKey" + vers));
     break;
   }
 
@@ -781,7 +782,7 @@ function scriptboxClick(e) {
   case "introlink":
     if (!getPrefOrCreate("ShowIntrosBeforeText", "Bool", false)) return;
     var showIntro = elem.title=="hide" ? null:Win.number;
-    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number), SCROLLTYPETOP, HILIGHTNONE, showIntro);
+    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number), SCROLLTYPETOP, HILIGHTNONE, showIntro, NOUPDATELOCATOR);
     break;
     
   case "listenlink":
@@ -824,8 +825,7 @@ function pinThis() {
   Pin.updateLink();
   MainWindow.updatePinVisibility();
   MainWindow.updateTabLabelsAndStyles();
-  MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number, preChangeLink), SCROLLTYPEBEG, HILIGHTNONE);
-  MainWindow.updateLocators(false);
+  MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number, preChangeLink), SCROLLTYPEBEG, HILIGHTNONE, UPDATELOCATORS);
 }
 
 function unpinThis() {
@@ -849,12 +849,11 @@ function unpinThis() {
     var update = MainWindow.getUpdatesNeededArray(Win.number, preChangeLink);
     var update2 = MainWindow.getUnpinnedVerseKeyWindows();
     for (var w=1; w<=3; w++) {update[w] |= update2[w];}
-    MainWindow.updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE);
-    MainWindow.updateLocators(false);
+    MainWindow.updateFrameScriptBoxes(update, SCROLLTYPEBEG, HILIGHTNONE, UPDATELOCATORS);
   }
   else if (Win.modType == GENBOOK) {
     MainWindow.SkipGenBookWindow = Win.number; // don't update or scroll text of this window
-    MainWindow.selectGenBook(Pin.key);
+    MainWindow.selectGenBook(Pin.display.key);
   }
 }
 
@@ -1244,8 +1243,7 @@ function goToCrossReference(crTitle, noHighlight) {
   // Needed when chapter was clicked from chapmenu popup
   closePopup();
   Bible.setBiblesReference(t[1], t[2]);
-  MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, (noHighlight ? HILIGHTNONE:HILIGHT_IFNOTV1));
-  MainWindow.updateLocators(false); 
+  MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, (noHighlight ? HILIGHTNONE:HILIGHT_IFNOTV1), UPDATELOCATORS); 
 }
 
 function scrollwheel(event) {MainWindow.scrollwheel(event, Win.number);}
@@ -1355,7 +1353,7 @@ function boundaryMouseDown(evt) {
   if (prefs.getBoolPref("MaximizeNoteBox" + String(Win.number))) {
     MainWindow.setNoteBoxSizer(Win.number, false);
     FootnoteWinH = EffectiveWinH - ScriptBoxMarginTop - BottomMargin - BoundaryBarGap;
-    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number), SCROLLTYPENONE, HILIGHT_IFNOTV1);
+    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number), SCROLLTYPENONE, HILIGHT_IFNOTV1, NOUPDATELOCATOR);
   }
   StartMouseY = evt.clientY;
   BoundaryBarShadowElement.style.top = String(evt.clientY) + "px";
@@ -1445,10 +1443,9 @@ function noteboxClick(e) {
       var updateNeeded = MainWindow.getUnpinnedVerseKeyWindows();
       if (Pin.isPinned) {
         Bible.setBiblesReference(Win.modName, idpart[2] + "." + idpart[3] + "." + idpart[4]);
-        MainWindow.updateFrameScriptBoxes(updateNeeded, SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+        MainWindow.updateFrameScriptBoxes(updateNeeded, SCROLLTYPECENTER, HILIGHT_IFNOTV1, UPDATELOCATORS);
       }
       else {MainWindow.quickSelectVerse(Win.modName, null, Number(idpart[3]), v, Number(idpart[5]), HILIGHT_IFNOTV1, SCROLLTYPECENTER);}
-      MainWindow.updateLocators(false);
       break;
      case DICTIONARY:
      case GENBOOK:
@@ -1458,7 +1455,7 @@ function noteboxClick(e) {
     break;
   case "nbsizer":
     MainWindow.setNoteBoxSizer(Win.number, !prefs.getBoolPref("MaximizeNoteBox" + Win.number));
-    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number), SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+    MainWindow.updateFrameScriptBoxes(MainWindow.getUpdatesNeededArray(Win.number), SCROLLTYPECENTER, HILIGHT_IFNOTV1, NOUPDATELOCATOR);
     break;
   }
 }
@@ -1528,20 +1525,21 @@ function tabHandler(e) {
     MainWindow.updateLocators(false);
     if (MainWindow.UpdateTabs) window.clearTimeout(MainWindow.UpdateTabs);
     var updatesNeeded = MainWindow.getUpdatesNeededArray(Win.number, preChangeLinkArray);
-    MainWindow.UpdateTabs = window.setTimeout("{MainWindow.updatePinVisibility(); MainWindow.updateTabLabelsAndStyles(); MainWindow.updateFrameScriptBoxes([" + updatesNeeded + "]," + SCROLLTYPECENTER + "," + HILIGHT_IFNOTV1 + ");}",0);
     if (e.target.id) {
       var blur = null;
       if (e.target.id.substr(0,6)=="seltab") blur = "seltab.menu";
       else blur = e.target.id;
       window.setTimeout("document.getElementById('" + blur + "').blur();", 0);
-    }    break;
+    }
+    MainWindow.UpdateTabs = window.setTimeout("{MainWindow.updatePinVisibility(); MainWindow.updateTabLabelsAndStyles(); MainWindow.updateFrameScriptBoxes([" + updatesNeeded + "]," + SCROLLTYPECENTER + "," + HILIGHT_IFNOTV1 + "," + NOUPDATELOCATOR + ");}",0);    
+    break;
   }
 }
 
 function setFontSize(className,sz) {
   for (var i=0; i<document.styleSheets[0].cssRules.length; i++) {
     var thisText = document.styleSheets[0].cssRules[i].cssText;
-    if (thisText.match(/^(.*?) /)[1]  == className) {document.styleSheets[0].cssRules[i].style.fontSize = String(sz) + "px"}
+    if (thisText.match(/^(.*?) /)[1]  == className) {document.styleSheets[0].cssRules[i].style.fontSize = String(sz) + "px";}
   }
 }
 
@@ -1553,7 +1551,7 @@ function resizeBibles(dontChangeContents, hideNoteBox) {
     ScriptBoxTextElement.scrollTop = 0; // prevents window from flashing white
     ScriptBoxTextElement.innerHTML="";
   }
-  if ((window.frameElement.id=="bible1Frame")&&prefs.getBoolPref("ShowChooser")) {placeChooser();}
+  if ((window.frameElement.id=="bible1Frame") && (prefs.getBoolPref("ShowChooser") || prefs.getBoolPref("ShowGenBookChooser"))) {placeChooser();}
   if (Win.number <= prefs.getIntPref("NumDisplayedWindows")) {
     setBibleWidth();
     setBibleHeight(null, hideNoteBox);
