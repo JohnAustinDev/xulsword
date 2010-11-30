@@ -540,12 +540,12 @@ var BookmarkFuns = {
     gTxnSvc.doTransaction(newTransaction);
   },
   
-  updateMainWindow: function (focusOnMainWindow, aUpdateNeededArray) {
+  updateMainWindow: function (focusOnMainWindow, aUpdateNeededArray, scrollFlag) {
     if (!MainWindow) return;
     if (!aUpdateNeededArray) aUpdateNeededArray = MainWindow.getUnpinnedWindows();
+    if (scrollFlag === null) scrollFlag = SCROLLTYPECENTER;
     if (focusOnMainWindow) MainWindow.focus();
-    MainWindow.updateFrameScriptBoxes(aUpdateNeededArray, SCROLLTYPECENTER, HILIGHTVERSE);
-    MainWindow.updateLocators(false);
+    MainWindow.updateFrameScriptBoxes(aUpdateNeededArray, scrollFlag, HILIGHTVERSE, UPDATELOCATORS);
   },
   
   getRandomString: function () {

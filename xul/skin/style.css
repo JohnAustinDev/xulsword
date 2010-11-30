@@ -250,6 +250,7 @@ a:active{color:blue;}
   float:left;
 }
 .tabs {
+  font-size:10px;
   color:grey;
   margin-left:3px;
   margin-right:3px;
