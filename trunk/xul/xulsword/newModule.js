@@ -80,10 +80,10 @@ function addNewModule(e) {
     if (!aFile) break;
     fileArray.push(aFile);
   }
-  return installModuleArray(false, false, false, finishAndHandleReset, fileArray);
+  return installModuleArray(false, false, finishAndHandleReset, fileArray);
 }
 
-function installModuleArray(blocking, isPreSword, allowStop, exitFunction, fileArray, audioDestination) {
+function installModuleArray(blocking, allowStop, exitFunction, fileArray, audioDestination) {
   var zipFiles = [];
   var zipEntry = [];
   var regularFiles = [];
@@ -101,7 +101,7 @@ function installModuleArray(blocking, isPreSword, allowStop, exitFunction, fileA
     else if (fileArray[f].isDirectory()) pushAudioFilesInFolder(fileArray[f], regularFiles);
   }
 
-  return startImport(blocking, isPreSword, allowStop, exitFunction, regularFiles, zipFiles, zipEntry, [], [], [], audioDestination);
+  return startImport(blocking, allowStop, exitFunction, regularFiles, zipFiles, zipEntry, [], [], [], audioDestination);
 }
 
 function pushAudioFilesInFolder(aFolder, audioFiles) {
@@ -177,7 +177,7 @@ var CountTotal, CountCurrent;
 var ProgressMeter, ProgressMeterLoaded;
 var WillRestart = false;
 var AudioDestination;
-function startImport(blocking, isPreSword, allowStop, exitFunction, regularFiles, zipFiles, zipEntry, newLocales, newModules, newFonts, audioDestination) {
+function startImport(blocking, allowStop, exitFunction, regularFiles, zipFiles, zipEntry, newLocales, newModules, newFonts, audioDestination) {
 jsdump("STARTING startImport");
   GotoAudioFile = null;
   GotoBookmarkFile = null;
@@ -187,7 +187,6 @@ jsdump("STARTING startImport");
   SkipList = [];
   CommonList = [];
   ExitFunction = exitFunction;
-  PreSword = isPreSword;
   AudioDestination = (audioDestination ? audioDestination:getSpecialDirectory("xsAudio"));
   NewLocales = newLocales;
   NewModules = newModules;
@@ -200,6 +199,8 @@ jsdump("STARTING startImport");
   RegIndex = 0;
   CopyZipFun = (blocking ? copyZipFiles:copyZipFilesTO);
   CopyRegularFun = (blocking ? copyRegularFiles:copyRegularFilesTO);
+  
+  setPreSword();
   
   if (!blocking && (ZipFiles.length || RegularFiles.length>5)) {
     var result = {};
@@ -440,7 +441,7 @@ function readVersion(aZip, aEntry, progVers) {
   }
   
   var filedata = readFile(temp);
-  temp.remove(false);
+  removeFile(temp, false);
   //if the file is empty, there is a problem! Remove it...
   if (!filedata) {
     info.error = true;
@@ -488,7 +489,7 @@ function copyRegularFilesTO() {
 }
 
 function copyRegularFiles() {
-  jsdump("Installing File:" + RegularFiles[RegIndex].path);
+  jsdump("Processing File:" + RegularFiles[RegIndex].path);
   var result;
   if (RegularFiles[RegIndex].leafName.match(AUDIOEXT)) result = installAudioFile(RegularFiles[RegIndex]);
   else if (RegularFiles[RegIndex].leafName.match(XSBOOKMARKEXT)) result = installBookmarkFile(RegularFiles[RegIndex]);
@@ -542,7 +543,7 @@ function installBookmarkFile(aFile) {
 }
 
 function installEntryFromZip(aZip, aEntry) {
-jsdump("Installing File:" + aEntry);
+jsdump("Processing Entry:" + aEntry);
   var type = aEntry.match(/^([^\\\/]+)(\\|\/)/);
   if (!type) type=AUDIO;
   else {type = type[1];}
@@ -563,23 +564,25 @@ jsdump("Installing File:" + aEntry);
   case MODSD:
     var conf = getConfInfo(aZip, aEntry, zReader);
     inflated.initWithPath(getSpecialDirectory("xsModsUser").path + "\\" + aEntry.replace("\/", "\\", "g"));
-    if (inflated.exists() && !PreSword) {
-      //Skip writing anything to mods that are currently installed
-      if (conf.modPath) {
-        SkipList.push(conf.modPath);
-        return {reset:HARDRESET, success:true, remove:false};
-      }
-      else {
-        jsdump("Could not read contents of " + aEntry + ", sending to user module location");
-        conf.isCommon = false;
-      }
+    if (!conf.modPath) {
+      jsdump("Could not read DataPath of " + aEntry + ", SKIPPING conf file!");
+      return {reset:NORESET, success:false, remove:true};
     }
-    if (conf.isCommon) CommonList.push(conf.modPath);
+    else {
+      if (inflated.exists() && !PreSword) {
+        //Skip writing anything to mods that are currently installed
+        SkipList.push(conf.modPath);
+        return {reset:HARDRESET, success:true, remove:false};  
+      }
+      if (conf.isCommon) CommonList.push(conf.modPath);
+    }    
     break;
     
   case MODS:
     var skip = false;
-    for (var s=0; s<SkipList.length; s++) {if (aEntry.match(SkipList[s], "i")) skip=true;}
+    for (var s=0; s<SkipList.length; s++) {
+      if (aEntry.indexOf(SkipList[s].replace("\\", "/", "g")!=-1)) skip=true;
+    }
     if (skip) return {reset:HARDRESET, success:true, remove:false};
     var dest = "xsModsUser";
 //    for (var s=0; s<CommonList.length; s++) {if (aEntry.match(CommonList[s], "i")) dest = "xsModsCommon";}
@@ -651,8 +654,9 @@ jsdump("Installing File:" + aEntry);
   switch (type) {
   case MODSD:
     // delete existing appDir module if it exists
+    var success = true;
     if (overwriting) var success = removeModuleContents(inflated).success;
-    else success = true;
+    if (!success) SkipList.push(conf.modPath);
     NewModules = pushIf(NewModules, conf.modName);
     return {reset:(PreSword ? NORESET:SOFTRESET), success:success, remove:true};
     break;
@@ -686,10 +690,10 @@ jsdump("Installing File:" + aEntry);
   case BOOKMARKS:
     if (!BMDS) BMDS = initBMServices();
     if (!BookmarkFuns.importBMFile(inflated, false, true)) {
-      inflated.remove(false);
+      removeFile(inflated, false);
       return {reset:NORESET, success:false, remove:true};
     }
-    inflated.remove(false);
+    removeFile(inflated, false);
     GotoBookmarkFile = inflated;
     break;
   }
@@ -967,14 +971,14 @@ function getConfInfo(aZip, aEntry, zReader) {
   zReader.close(aZip);
   
   ret.modName = readParamFromConf(tconf, "ModuleName");
-  ret.modPath = getModDirectoryRelPath(readParamFromConf(tconf, "DataPath"));
+  ret.modPath = cleanDataPathDir(readParamFromConf(tconf, "DataPath"));
 // It is not safe to try and write to both common and user directories, because
 // it is very difficult to tell from a conf file alone what the module directory
 // name is, and without knowing this it is impossible to match incoming module
 // files to their module directory and hence their correct destination (common
 // or user). The only solution is to have only one destination.
 //  ret.isCommon = isConfCommon(tconf);
-  tconf.remove(false);
+  removeFile(tconf, false);
   return ret;
 }
 /*
@@ -988,18 +992,21 @@ function isConfCommon(aConf) {
 }
 */
 
-function getModDirectoryRelPath(aDataPath) {
-  var re = new RegExp("^.*\/" + MODS, "i");
-  aDataPath = aDataPath.replace(re, MODS);
+function cleanDataPathDir(aDataPath) {
+  if (!aDataPath) return null;
+  aDataPath = aDataPath.replace("/", "\\", "g").replace(/(^\s*\.\\|\s*$)/, "", "g");
   var d = 0;
   var d1 = 0;
   var d2 = 0;
   while (d<4 || aDataPath.substring(d1, d2) == "devotionals") {
-    d1 = d2+1;
-    d2 = aDataPath.indexOf("/", d1);
-    if (d2 == -1) break;
     d++;
+    d1 = d2+1;
+    d2 = aDataPath.indexOf("\\", d1);
+    if (d2 == -1) break;
   }
+  if (d<4) return null; // not enough subdirs
+  if (d==4 && d1==aDataPath.length) return null; // no mod name
+
   if (d2 == -1) d2 = aDataPath.length;
   return aDataPath.substring(0, d2);
 }
@@ -1171,7 +1178,7 @@ function installFontWin(aFontFile) {
   args.push(argt);
   var result = process.run(true, args, args.length);
 
-  aTempFolder.remove(true);
+  removeFile(aTempFolder, true);
   jsdump((result==0 ? "Success!":"FAILURE!!!") + "\n");  
   return result==0;
 */
@@ -1230,11 +1237,11 @@ function removeModuleContents(aConfFile) {
   try {prefs.clearUserPref("ShowingKey" + modName);} catch (er) {}
   
   var aMod = getSwordModParent(aConfFile, true);
-  if (!aMod || !aMod.parent) {
+  if (!aMod || !aMod.file) {
     jsdump("Possible problem with DataPath in conf: " + aConfFile.path);
     return {modName:null, success:false};
   }
-  aMod = aMod.parent;
+  aMod = aMod.file;
   
   jsdump("Attempting to remove directory: " + aMod.path);
   if (aMod && aMod.path.search(MODS)!=-1 && aMod.exists() && aMod.isDirectory()) {
@@ -1255,42 +1262,15 @@ jsdump("NO CLEAN REMOVE");
 
 function getSwordModParent(aConfFile, willDelete) {
   var pathFromConf = readParamFromConf(aConfFile, "DataPath");
+  if (!pathFromConf) return {pathFromConf:null, file:null};
   
-  // SWORD is inconistent with the usage of their critical "DataPath" parameter.
-  // So, unless the DataPath ends with "\", it is uncertain whether the leafName
-  // of the DataPath is intended to represent a directory or a set of files. So,
-  // if DataPath does not end with "\", look for any files matching the DataPath
-  // param (as in DataPath.*) and if matching files are found, remove their
-  // parent directory. Otherwise, assume DataPath is a directory and remove only it.
-  
-  var aMod;
-  pathFromConf = pathFromConf.replace("/", "\\", "g").replace(/^\.\\/, "");
-  var modulePath = aConfFile.path.substring(0, aConfFile.path.lastIndexOf("\\" + MODSD)+1) + pathFromConf;
-  var confLeaf = pathFromConf.match(/\\([^\\]*)\s*$/);
-  if (confLeaf && confLeaf[1]) {
-    var parentPath = modulePath.replace(/\\[^\\]*$/, "");
-    var p = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-    p.initWithPath(parentPath);
-    if (p.exists() && p.isDirectory()) {
-      var mfile = new RegExp(confLeaf[1] + "\\.[^\\\\]+$");
-      var files = p.directoryEntries;
-      while (files && files.hasMoreElements()) {
-        var aFile = files.getNext().QueryInterface(Components.interfaces.nsILocalFile);
-        if (!aFile) continue;
-        if (aFile.isDirectory()) continue;
-        if (!aFile.leafName.match(mfile)) continue;
-        if (willDelete) aFile.remove(false); // otherwise, existence of this file object causes a runtime error when deleting parent directory below.
-        aMod = p;
-      }
-    }
-  }
-  if (!aMod) {
-    modulePath = modulePath.replace(/\\\s*$/, ""); // not sure if this is needed or not
-    aMod = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-    try {aMod.initWithPath(modulePath);} catch (er) {return {pathFromConf:pathFromConf, parent:null};}
-  }
-  
-  return {pathFromConf:pathFromConf, parent:aMod};
+  pathFromConf = pathFromConf.replace("/", "\\", "g").replace(/(^\s*\.\\|\s*$)/, "", "g");
+  var realdir = cleanDataPathDir(pathFromConf);
+  if (!realdir) return {pathFromConf:pathFromConf, file:null};
+  var modulePath = aConfFile.path.substring(0, aConfFile.path.lastIndexOf("\\" + MODSD)+1) + realdir;
+  var aMod = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+  try {aMod.initWithPath(modulePath);} catch (er) {return {pathFromConf:pathFromConf, file:null};}  
+  return {pathFromConf:pathFromConf, file:aMod};
 }
     
  
@@ -1320,7 +1300,7 @@ var fileObserver = {
       files.push(transferData.dataList[i].first.data)
     }
     ModuleCopyMutex=true; //insures other module functions are blocked during this operation
-    if (!installModuleArray(false, false, false, finishAndHandleReset, files)) ModuleCopyMutex=false;
+    if (!installModuleArray(false, false, finishAndHandleReset, files)) ModuleCopyMutex=false;
   },
   
   onDragOver : function (event, flavour, session) {},
@@ -1343,9 +1323,9 @@ jsdump("STARTING moduleInstall, isMainWindow:" + isMainWindow);
   // Install any files waiting from a previous install!
   if (result.filesWaiting) {
     if (isMainWindow)
-      startImport(true, true, false, finishAndWriteManifest, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts);
+      startImport(true, false, finishAndWriteManifest, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts);
     else
-      startImport(false, true, false, finishAndStartXulsword, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts);
+      startImport(false, false, finishAndStartXulsword, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts);
   }
   else if (result.haveNew) {
     writeManifest(result.newLocales, result.newModules, result.newFonts, true);
@@ -1382,7 +1362,7 @@ function installCommandLineModules() {
         return;
       }
     }
-    installModuleArray(false, true, (!mods.haveFiles && (bms.haveFiles || audio.haveFiles)), finishAndStartXulSword2, files, toFile);
+    installModuleArray(false, (!mods.haveFiles && (bms.haveFiles || audio.haveFiles)), finishAndStartXulSword2, files, toFile);
     return;
   }
 
@@ -1426,4 +1406,9 @@ function restartApplication(promptBefore) {
                    .getService(Components.interfaces.nsIAppStartup);
 
 	appStartup.quit(Components.interfaces.nsIAppStartup.eRestart | Components.interfaces.nsIAppStartup.eForceQuit);
+}
+
+function setPreSword() {
+  PreSword = (MainWindow ? false:true);
+  jsdump("PreSword = " + PreSword);
 }

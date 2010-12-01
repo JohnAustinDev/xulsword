@@ -86,7 +86,7 @@ function loadedXULReal() {
   var pfile = getSpecialDirectory("xsResD");
   pfile.append(NEWINSTALLFILE);
   NewModuleInfo = (pfile.exists() ? readNewInstallsFile(pfile):null);
-  if (pfile.exists()) pfile.remove(false);
+  if (pfile.exists()) removeFile(pfile, false);
   if (NewModuleInfo && NewModuleInfo.NewModules && NewModuleInfo.NewModules[0]) {
     resetUserPrefs = true;
     for (var m=0; m<NewModuleInfo.NewModules.length; m++) {
@@ -312,8 +312,8 @@ function createSearchBible() {
 }
 
 function updateAfterInit() {
-  for (var w=1; w<=3; w++) {document.getElementById("bible" + w + "Frame").style.visibility = "visible";}
-  updateFrameScriptBoxes(null, SCROLLTYPECENTER, HILIGHTNONE, NOUPDATELOCATOR, FORCEREDRAW);
+  updateFrameScriptBoxesReal([false, true, true, true], SCROLLTYPECENTER, HILIGHTNONE, NOUPDATELOCATOR);
+  window.setTimeout("for (var w=1; w<=3; w++) {document.getElementById('bible' + w + 'Frame').style.visibility = 'visible';}", 100);
   window.setTimeout("postWindowInit()", 1000);
 }
 
@@ -2874,13 +2874,15 @@ function decodeOSISRef(aRef) {
 function completeImageLinks(dictionaryName, text) {
   // Add File:// to path
   text = text.replace("<image src=\"", "<image src=\"File://", "gm");
-  if (text.match("<image src=\"File://.") == -1) return text;
-  // If Sword is started in runDir, then sword returns "./" as the path,
-  // and this is not acceptable to xul, so replace with full path
-  var modDir = getSpecialDirectory("xsModsUser");
-  modDir = encodeURI(modDir.path).replace(/%5C/g, "/");
-  modDir = modDir.replace(/\\/g, "/");
-  text = text.replace("<image src=\"File://.", "<image src=\"File://" + modDir, "gm");
+  if (text.search("<image src=\"File://.") != -1) {
+    // If Sword is started in runDir, then sword returns "./" as the path,
+    // and this is not acceptable to xul, so replace with full path
+    var modDir = getSpecialDirectory("xsModsUser");
+    modDir = encodeURI(modDir.path).replace(/%5C/g, "/");
+    modDir = modDir.replace(/\\/g, "/");
+    text = text.replace("<image src=\"File://.", "<image src=\"File://" + modDir, "gm");
+  }
+  text = text.replace(/(src="[^"]*?)\\/, "$1/", "g"); // "\" is converted to %5C which breaks popup's "back" link
   return text;
 }
 
@@ -2932,7 +2934,7 @@ function getUpdatesNeededArray(changedWindow, aPreChangeLinkArray) {
 // a certain threshold, a wait cursor is used (helpful on very slow computers). 
 // Plus the scriptbox update then happens in a timeout to allow the cursor to appear before update begins.
 var ScriptBoxIsEmpty = [false, false, false, false];
-function updateFrameScriptBoxes(updateNeededArray ,scrollTypeFlag, highlightFlag, locatorFlag, showIntroduction) {
+function updateFrameScriptBoxes(updateNeededArray ,scrollTypeFlag, highlightFlag, locatorFlag) {
   if (!updateNeededArray) updateNeededArray = [false, true, true, true];
   var needed=false;
   for (var w=1; w<updateNeededArray.length; w++) {needed |= updateNeededArray[w];}
@@ -2947,11 +2949,11 @@ function updateFrameScriptBoxes(updateNeededArray ,scrollTypeFlag, highlightFlag
   }
   PreviousHaveGenBook = haveGenBook;
   
-  window.setTimeout("updateFrameScriptBoxesReal([" + updateNeededArray + "], " + scrollTypeFlag + "," + highlightFlag + "," + locatorFlag + "," + showIntroduction + ")",50);
+  window.setTimeout("updateFrameScriptBoxesReal([" + updateNeededArray + "], " + scrollTypeFlag + "," + highlightFlag + "," + locatorFlag + ")",50);
 }
 
 var PreviousHaveGenBook;
-function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlightFlag, locatorFlag, showIntroduction) {
+function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlightFlag, locatorFlag) {
   var vers = firstDisplayBible();
   //var focused = document.commandDispatcher.focusedElement;
 
@@ -2969,7 +2971,7 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
       nonLinked.push(w);
       continue;
     }
-    FrameDocument[w].defaultView.updateScriptBox(scrollTypeFlag, showIntroduction);
+    FrameDocument[w].defaultView.updateScriptBox(scrollTypeFlag);
   }
   // if Bible location was changed after writing link, then scroll to beginning of new location
   if (ref != Bible.getLocation(prefs.getCharPref("DefaultVersion"))) {
@@ -2977,7 +2979,7 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
     if (locatorFlag == NOUPDATELOCATOR) locatorFlag = UPDATELOCATORS;
   }
   while (nonLinked.length) {
-    if (updateNeededArray[nonLinked[0]]) FrameDocument[nonLinked[0]].defaultView.updateScriptBox(scrollTypeFlag, showIntroduction);
+    if (updateNeededArray[nonLinked[0]]) FrameDocument[nonLinked[0]].defaultView.updateScriptBox(scrollTypeFlag);
     nonLinked.shift();
   }
   
@@ -3084,7 +3086,7 @@ function setWindowDisplay(win, display) {
 //or right-to-left depending on isRTL flag. Bible text, Bible notes, and connectors
 //for the link are all updated by this routine.
 
-function writeToScriptBoxes(win, isPinned, display, showIntroduction, scrollTypeFlag) {
+function writeToScriptBoxes(win, isPinned, display, scrollTypeFlag) {
   var s = {link:{}};
   if (Link.isLink[win.number]) {
     for (var par in Link) {s.link[par] = Link[par];}
@@ -3092,7 +3094,6 @@ function writeToScriptBoxes(win, isPinned, display, showIntroduction, scrollType
   else s.link = getLinkInfoForWindow(win.number);
   s.win = win;
   s.isPinned = isPinned;
-  s.showIntroduction = showIntroduction;
   s.scrollTypeFlag = scrollTypeFlag;
   if (s.scrollTypeFlag==SCROLLTYPEENDSELECT) s.scrollTypeFlag=SCROLLTYPEEND;
   if (Bible.getVerseNumber(s.win.modName) == 1 && s.scrollTypeFlag == SCROLLTYPECENTER) s.scrollTypeFlag = SCROLLTYPEBEG;
@@ -3238,7 +3239,7 @@ function getBodyHTML(s, p, chapOffset) {
     var showBook = s.isPinned;
     showBook |=  ((s.scrollTypeFlag==SCROLLTYPENONE || s.scrollTypeFlag==SCROLLTYPEBEG || Bible.getChapterNumber(s.win.modName)==1) && chapOffset==0);
     if (chapterText)
-      chapterText = FrameDocument[s.link.firstWin].defaultView.getScriptBoxHeader(Bible.getBookName(), p.display.chapter+chapOffset, s.win.modName, showBook, s.showIntroduction, prefs.getBoolPref("ShowOriginal" + s.win.number)) + chapterText;
+      chapterText = FrameDocument[s.link.firstWin].defaultView.getScriptBoxHeader(Bible.getBookName(), p.display.chapter+chapOffset, s.win.modName, showBook, false, prefs.getBoolPref("ShowOriginal" + s.win.number)) + chapterText;
   }
   return chapterText;
 }

@@ -72,7 +72,7 @@ const HILIGHT_IFNOTV1 = 2;        // highlight selected verse in blue unless it 
 // visual locators
 const UPDATELOCATORS = 0          // update locators
 const FORCEREDRAW = 1             // update locators and force redraw
-const NOUPDATELOCATOR = 2                // dont update locators
+const NOUPDATELOCATOR = 2         // dont update locators
 
 var CustomScrollFunction;
 /************************************************************************
@@ -115,6 +115,16 @@ function readFile(nsIFile) {
   fstream.close();
   is.close();
   return filedata;
+}
+
+function removeFile(file, recurse) {
+  if (!recurse) recurse = false;
+  if (file) file = file.QueryInterface(Components.interfaces.nsILocalFile);
+  if (!file) return false;
+  if (!file.exists()) return true;
+  try {file.remove(recurse);}
+  catch (er) {jsdump("Failed to remove " + (file.isDirectory() ? "directory":"file") + " \"" + file.path + "\", recurse=" + recurse + ". " + er); return false;}
+  return true;
 }
 
 // Returns null if param is not found.
