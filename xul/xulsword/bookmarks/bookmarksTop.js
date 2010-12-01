@@ -543,7 +543,7 @@ var BookmarkFuns = {
   updateMainWindow: function (focusOnMainWindow, aUpdateNeededArray, scrollFlag) {
     if (!MainWindow) return;
     if (!aUpdateNeededArray) aUpdateNeededArray = MainWindow.getUnpinnedWindows();
-    if (scrollFlag === null) scrollFlag = SCROLLTYPECENTER;
+    if (scrollFlag == null) scrollFlag = SCROLLTYPECENTER;
     if (focusOnMainWindow) MainWindow.focus();
     MainWindow.updateFrameScriptBoxes(aUpdateNeededArray, scrollFlag, HILIGHTVERSE, UPDATELOCATORS);
   },
@@ -910,7 +910,7 @@ function getUserData() {
     var bmdir = getSpecialDirectory("xsBookmarks");
     var goodDS = bmdir.clone(); goodDS.append(kUserDataFileName);
     var backup = bmdir.clone(); backup.append(kUserDataBackupName);
-    if (backup.exists()) backup.remove(false);
+    if (backup.exists()) removeFile(backup, false);
     goodDS.copyTo(bmdir, kUserDataBackupName);
   }
   

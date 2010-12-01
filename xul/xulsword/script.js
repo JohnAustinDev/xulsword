@@ -196,7 +196,7 @@ function initializeScript() {
  * Script Box
  ***********************************************************************/
 
-function updateScriptBox(scrollTypeFlag, showIntroduction) {
+function updateScriptBox(scrollTypeFlag) {
 //jsdump("Updating:" + Win.number + "\n");
   
   var versionHasChanged=false;
@@ -212,7 +212,7 @@ function updateScriptBox(scrollTypeFlag, showIntroduction) {
   switch (Win.modType) {
   case BIBLE:
   case COMMENTARY:
-    updateBibleOrCommentary(scrollTypeFlag, showIntroduction);
+    updateBibleOrCommentary(scrollTypeFlag);
     break;
   case DICTIONARY:
     FrameDocumentHavingNoteBox = window.document;
@@ -237,7 +237,7 @@ function updateScriptBox(scrollTypeFlag, showIntroduction) {
     break;
   case GENBOOK:
     FrameDocumentHavingNoteBox = window.document;
-    updateGenBook(showIntroduction);
+    updateGenBook();
     break;
   default:
     jsdump("Tried to update unsupported module type:" + Win.modType + " (updateScriptBox)\n");
@@ -246,7 +246,7 @@ function updateScriptBox(scrollTypeFlag, showIntroduction) {
   closePopup(); // Needed so that popup closes even if context menu was open
 }
 
-function updateBibleOrCommentary(scrollTypeFlag, showIntroduction) {
+function updateBibleOrCommentary(scrollTypeFlag) {
   var savedWindow = {};
   
   if (Pin.isPinned) {
@@ -258,19 +258,13 @@ function updateBibleOrCommentary(scrollTypeFlag, showIntroduction) {
   }
   else Pin.display = MainWindow.saveWindowDisplay(Win);
 
-  if (!MainWindow.Link.isLink[Win.number] || Win.number == MainWindow.Link.startWin) {
-    if (!MainWindow.Link.isLink[Win.number]) {
-      var showIntroForThisLink = ((showIntroduction && showIntroduction==Win.number) ? true:false);
-    }
-    else {
-      showIntroForThisLink = ((showIntroduction && (showIntroduction>=MainWindow.Link.startWin && showIntroduction<=MainWindow.Link.finishWin)) ? true:false);
-    }
-    MainWindow.writeToScriptBoxes(Win, Pin.isPinned, Pin.display, showIntroForThisLink, scrollTypeFlag);
-  }
+  if (!MainWindow.Link.isLink[Win.number] || Win.number == MainWindow.Link.startWin)
+      MainWindow.writeToScriptBoxes(Win, Pin.isPinned, Pin.display, scrollTypeFlag);
+  
   if (Pin.isPinned) MainWindow.setWindowDisplay(Win, savedWindow);
 }
 
-function updateGenBook(showIntroduction) {
+function updateGenBook() {
   ScriptBoxTextElement.scrollTop = 0; // prevents window from flashing white
   ConnectorElement.style.visibility = "hidden";
   FrameDocumentHavingNoteBox = Win.number;

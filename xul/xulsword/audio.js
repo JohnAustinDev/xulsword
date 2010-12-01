@@ -328,7 +328,7 @@ function importAudio(fromDir, toDir, doNotCopyFiles) {
       diskSpaceMessage(fromDir.leafName);
       return false;
     }
-    else return installModuleArray(false, false, true, finishAndHandleReset, [fromDir], toDir);
+    else return installModuleArray(false, true, finishAndHandleReset, [fromDir], toDir);
   }
 
   // no fromDir or doNotCopyFiles...
