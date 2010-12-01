@@ -6,388 +6,388 @@ NOTES:
   * Special symbols like "%1$S", "%2$S", "%3$S" etc. are place holders for numbers which are supplied when the program is actually run. The symbols can be moved or re-ordered, but the symbols themselves should not be changed.
   * Certain entries may contain HTML tags, like "`<b>`" and "`</b>`". These add formatting to the text. But most entries cannot contain HTML.
 
-`[books.Genesis]:` Genesis<br>
-`[books.Exodus]:` Exodus<br>
-`[books.Leviticus]:` Leviticus<br>
-`[books.Numbers]:` Numbers<br>
-`[books.Deuteronomy]:` Deuteronomy<br>
-`[books.Joshua]:` Joshua<br>
-`[books.Judges]:` Judges<br>
-`[books.Ruth]:` Ruth<br>
-`[books.1-Samuel]:` 1 Samuel<br>
-`[books.2-Samuel]:` 2 Samuel<br>
-`[books.1-Kings]:` 1 Kings<br>
-`[books.2-Kings]:` 2 Kings<br>
-`[books.1-Chronicles]:` 1 Chronicles<br>
-`[books.2-Chronicles]:` 2 Chronicles<br>
-`[books.Ezra]:` Ezra<br>
-`[books.Nehemiah]:` Nehemiah<br>
-`[books.Esther]:` Esther<br>
-`[books.Job]:` Job<br>
-`[books.Psalms]:` Psalms<br>
-`[books.Proverbs]:` Proverbs<br>
-`[books.Ecclesiastes]:` Ecclesiastes<br>
-`[books.Song-of-Songs]:` Song of Songs<br>
-`[books.Isaiah]:` Isaiah<br>
-`[books.Jeremiah]:` Jeremiah<br>
-`[books.Lamentations]:` Lamentations<br>
-`[books.Ezekiel]:` Ezekiel<br>
-`[books.Daniel]:` Daniel<br>
-`[books.Hosea]:` Hosea<br>
-`[books.Joel]:` Joel<br>
-`[books.Amos]:` Amos<br>
-`[books.Obadiah]:` Obadiah<br>
-`[books.Jonah]:` Jonah<br>
-`[books.Micah]:` Micah<br>
-`[books.Nahum]:` Nahum<br>
-`[books.Habakkuk]:` Habakkuk<br>
-`[books.Zephaniah]:` Zephaniah<br>
-`[books.Haggai]:` Haggai<br>
-`[books.Zechariah]:` Zechariah<br>
-`[books.Malachi]:` Malachi<br>
-`[books.Matthew]:` Matthew<br>
-`[books.Mark]:` Mark<br>
-`[books.Luke]:` Luke<br>
-`[books.John]:` John<br>
-`[books.Acts]:` Acts<br>
-`[books.James]:` James<br>
-`[books.1-Peter]:` 1 Peter<br>
-`[books.2-Peter]:` 2 Peter<br>
-`[books.1-John]:` 1 John<br>
-`[books.2-John]:` 2 John<br>
-`[books.3-John]:` 3 John<br>
-`[books.Jude]:` Jude<br>
-`[books.Romans]:` Romans<br>
-`[books.1st-Corinthians]:` 1st Corinthians<br>
-`[books.2nd-Corinthians]:` 2nd Corinthians<br>
-`[books.Galatians]:` Galatians<br>
-`[books.Ephesians]:` Ephesians<br>
-`[books.Philippians]:` Philippians<br>
-`[books.Colossians]:` Colossians<br>
-`[books.1st-Thessalonians]:` 1st Thessalonians<br>
-`[books.2nd-Thessalonians]:` 2nd Thessalonians<br>
-`[books.1-Timothy]:` 1 Timothy<br>
-`[books.2-Timothy]:` 2 Timothy<br>
-`[books.Titus]:` Titus<br>
-`[books.Philemon]:` Philemon<br>
-`[books.Hebrews]:` Hebrews<br>
-`[books.Revelation]:` Revelation<br>
-`[main-window.title]:` Holy Bible<br>
-`[main-window.menu-file]:` File<br>
-`[main-window.menu-file.add_new_module]:` Add New Modules<br>
-`[main-window.menu-file.add_new_module.components_not_supported]:` The following module(s) have components which are not supported:<br>
-`[main-window.menu-file.add_new_module.components_out_of_date]:` The following module(s) have components which are out of date:<br>
-`[main-window.menu-file.add_new_module.installation_incomplete]:` Module installation incomplete.<br>
-`[main-window.menu-file.add_new_module.module_upgrade_needed]:` Complete installation requires at least module version: %1$S<br>
-`[main-window.menu-file.add_new_module.module_upgrade_needed_NOARG]:` Complete installation requires at least module version:<br>
-`[main-window.menu-file.add_new_module.program_upgrade_needed]:` Upgrade the program to at least version: %1$S<br>
-`[main-window.menu-file.add_new_module.program_upgrade_needed_NOARG]:` Upgrade the program to at least version:<br>
-`[main-window.menu-file.add_new_module.restart_needed]:` This change will take effect the next time you start the program.<br>
-`[main-window.menu-file.exit]:` Exit<br>
-`[main-window.menu-file.export_audio]:` Export Audio<br>
-`[main-window.menu-file.import-audio]:` Import Audio<br>
-`[main-window.menu-file.import-audio.import_from]:` Saving From:<br>
-`[main-window.menu-file.import-audio.import_to]:` To:<br>
-`[main-window.menu-file.import-audio.not_enough_disk_space]:` There is not enough room on the disk to save %S.\n\nRemove unnecessary files from the disk and try again, or try saving in a different location.<br>
-`[main-window.menu-file.page-setup]:` Page Setup...<br>
-`[main-window.menu-file.page-setup.advanced_tab]:` Margins &amp; Header/Footer<br>
-`[main-window.menu-file.page-setup.basic_tab]:` Format &amp; Options<br>
-`[main-window.menu-file.page-setup.format-group]:` Format<br>
-`[main-window.menu-file.page-setup.format-group.orientation]:` Orientation:<br>
-`[main-window.menu-file.page-setup.format-group.scale]:` Scale:<br>
-`[main-window.menu-file.page-setup.format-group.scale_percent]:` &#037;<br>
-`[main-window.menu-file.page-setup.format-group.shrink_to_fit]:` Shrink To Fit Page Width<br>
-`[main-window.menu-file.page-setup.header-footer-group]:` Headers &amp; Footers<br>
-`[main-window.menu-file.page-setup.header-footer-group.center_footer_tooltip]:` Center footer<br>
-`[main-window.menu-file.page-setup.header-footer-group.center_header_tooltip]:` Center header<br>
-`[main-window.menu-file.page-setup.header-footer-group.center_label]:` Center:<br>
-`[main-window.menu-file.page-setup.header-footer-group.left_footer_tooltip]:` Left footer<br>
-`[main-window.menu-file.page-setup.header-footer-group.left_header_tooltip]:` Left header<br>
-`[main-window.menu-file.page-setup.header-footer-group.left_label]:` Left:<br>
-`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.blank]:` --blank--<br>
-`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.custom]:` Custom…<br>
-`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.custom.prompt]:` Enter your custom header/footer text<br>
-`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.custom.title]:` Custom…<br>
-`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.date_time]:` Date/Time<br>
-`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.page]:` Page #<br>
-`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.page_total]:` Page # of #<br>
-`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.title]:` Title<br>
-`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.url]:` URL<br>
-`[main-window.menu-file.page-setup.header-footer-group.right_footer_tooltip]:` Right footer<br>
-`[main-window.menu-file.page-setup.header-footer-group.right_header_tooltip]:` Right header<br>
-`[main-window.menu-file.page-setup.header-footer-group.right_label]:` Right:<br>
-`[main-window.menu-file.page-setup.margin-group]:` Margins (#1)<br>
-`[main-window.menu-file.page-setup.margin-group.margin_bottom]:` Bottom:<br>
-`[main-window.menu-file.page-setup.margin-group.margin_left]:` Left:<br>
-`[main-window.menu-file.page-setup.margin-group.margin_right]:` Right:<br>
-`[main-window.menu-file.page-setup.margin-group.margin_top]:` Top:<br>
-`[main-window.menu-file.page-setup.margin-group.units_inches]:` inches<br>
-`[main-window.menu-file.page-setup.margin-group.units_metric]:` millimeters<br>
-`[main-window.menu-file.page-setup.options-group]:` Options<br>
-`[main-window.menu-file.page-setup.options-group.print_background]:` Print Background (colors &amp; images)<br>
-`[main-window.menu-file.page-setup.title]:` Page Setup<br>
-`[main-window.menu-file.print]:` Print...<br>
-`[main-window.menu-file.print-preview]:` Print Preview<br>
-`[main-window.menu-file.print-preview.close]:` Close<br>
-`[main-window.menu-file.print-preview.custom]:` Custom…<br>
-`[main-window.menu-file.print-preview.custom.title]:` Custom Scale…<br>
-`[main-window.menu-file.print-preview.first_arrow_tooltip]:` First page<br>
-`[main-window.menu-file.print-preview.landscape]:` Landscape<br>
-`[main-window.menu-file.print-preview.last_arrow_tooltip]:` Last page<br>
-`[main-window.menu-file.print-preview.next_arrow_tooltip]:` Next page<br>
-`[main-window.menu-file.print-preview.of]:` of<br>
-`[main-window.menu-file.print-preview.page]:` Page:<br>
-`[main-window.menu-file.print-preview.page_setup]:` Page Setup…<br>
-`[main-window.menu-file.print-preview.portrait]:` Portrait<br>
-`[main-window.menu-file.print-preview.previous_arrow_tooltip]:` Previous page<br>
-`[main-window.menu-file.print-preview.print]:` Print…<br>
-`[main-window.menu-file.print-preview.progress-window.preparing]:` Preparing…<br>
-`[main-window.menu-file.print-preview.progress-window.progress]:` Progress:<br>
-`[main-window.menu-file.print-preview.progress-window.title]:` Title:<br>
-`[main-window.menu-file.print-preview.progress-window.window_title]:` Print Preview<br>
-`[main-window.menu-file.print-preview.scale]:` Scale:<br>
-`[main-window.menu-file.print-preview.shrink_to_fit]:` Shrink To Fit<br>
-`[main-window.menu-file.print.from_page]:` from<br>
-`[main-window.menu-file.print.options]:` Options<br>
-`[main-window.menu-file.print.progress-window.cancel]:` Cancel<br>
-`[main-window.menu-file.print.progress-window.close]:` Close<br>
-`[main-window.menu-file.print.progress-window.completed]:` Printing is Completed.<br>
-`[main-window.menu-file.print.progress-window.preparing]:` Preparing…<br>
-`[main-window.menu-file.print.progress-window.progress]:` Progress:<br>
-`[main-window.menu-file.print.progress-window.title]:` Title:<br>
-`[main-window.menu-file.print.progress-window.window_title]:` Printing<br>
-`[main-window.menu-file.print.to_page]:` to<br>
-`[main-window.menu-file.print_passage]:` Print Passage<br>
-`[main-window.menu-file.remove_modules]:` Remove Modules<br>
-`[main-window.menu-file.remove_modules.delete_audio]:` Delete Audio<br>
-`[main-window.menu-file.remove_modules.delete_confirmation]:` Are you sure?<br>
-`[main-window.menu-file.remove_modules.delete_locales]:` Delete Locales<br>
-`[main-window.menu-file.remove_modules.delete_sword_modules]:` Delete Modules<br>
-`[main-window.menu-edit]:` Edit<br>
-`[main-window.menu-edit.copy]:` Copy<br>
-`[main-window.menu-edit.copy_passage]:` Copy Passage<br>
-`[main-window.menu-edit.copy_passage.cross-references-with-text]:` Cross Reference Texts<br>
-`[main-window.menu-edit.copy_passage.include_label]:` Include<br>
-`[main-window.menu-edit.copy_passage.passage_label]:` Passage<br>
-`[main-window.menu-edit.cut]:` Cut<br>
-`[main-window.menu-edit.paste]:` Paste<br>
-`[main-window.menu-edit.redo]:` Redo<br>
-`[main-window.menu-edit.undo]:` Undo<br>
-`[main-window.menu-view]:` View<br>
-`[main-window.menu-view.all_windows]:` All Windows<br>
-`[main-window.menu-view.bible_tabs]:` Bible Tabs<br>
-`[main-window.menu-view.book_tabs]:` Book Tabs<br>
-`[main-window.menu-view.commentary_tabs]:` Commentary Tabs<br>
-`[main-window.menu-view.cross_references]:` Cross References<br>
-`[main-window.menu-view.dictionary_links]:` Dictionary Links<br>
-`[main-window.menu-view.dictionary_tabs]:` Resource Tabs<br>
-`[main-window.menu-view.footnotes]:` Footnotes<br>
-`[main-window.menu-view.headings]:` Headings<br>
-`[main-window.menu-view.hide_all]:` Show none<br>
-`[main-window.menu-view.language_notes]:` Language Notes<br>
-`[main-window.menu-view.red_words_of_christ]:` Words of Christ in red<br>
-`[main-window.menu-view.show_all]:` Show all<br>
-`[main-window.menu-view.show_cross_references]:` Show Cross References<br>
-`[main-window.menu-view.show_footnotes]:` Show Footnotes<br>
-`[main-window.menu-view.show_notes.in_note_box]:` In note box<br>
-`[main-window.menu-view.show_notes.in_popup]:` In popups<br>
-`[main-window.menu-view.show_user_notes]:` Show Personal Notes<br>
-`[main-window.menu-view.user_notes]:` Personal Notes<br>
-`[main-window.menu-view.verse_numbers]:` Verse Numbers<br>
-`[main-window.menu-view.window1]:` Window 1<br>
-`[main-window.menu-view.window2]:` Window 2<br>
-`[main-window.menu-view.window3]:` Window 3<br>
-`[main-window.menu-options]:` Options<br>
-`[main-window.menu-options.font]:` Font<br>
-`[main-window.menu-options.font.size1]:` Smallest font<br>
-`[main-window.menu-options.font.size2]:` Small font<br>
-`[main-window.menu-options.font.size3]:` Normal font<br>
-`[main-window.menu-options.font.size4]:` Large font<br>
-`[main-window.menu-options.font.size5]:` Largest font<br>
-`[main-window.menu-options.hebrew]:` Hebrew<br>
-`[main-window.menu-options.hebrew.show_cantillation]:` Show Cantillation<br>
-`[main-window.menu-options.hebrew.show_vowel_points]:` Show Vowel Points<br>
-`[main-window.menu-options.language]:` Language<br>
-`[main-window.menu-options.language.this_langauge]:` English<br>
-`[main-window.menu-bookmarks]:` Bookmarks<br>
-`[main-window.menu-bookmarks.context-menu.new_folder]:` New Folder...<br>
-`[main-window.menu-bookmarks.context-menu.new_separator]:` New Separator<br>
-`[main-window.menu-bookmarks.context-menu.open]:` Open<br>
-`[main-window.menu-bookmarks.context-menu.properties]:` Properties...<br>
-`[main-window.menu-bookmarks.context-menu.sort_by]:` Sorted by %S<br>
-`[main-window.menu-bookmarks.new-bookmark]:` New Bookmark...<br>
-`[main-window.menu-bookmarks.new-bookmark.title]:` New Bookmark<br>
-`[main-window.menu-bookmarks.new-bookmark.create_in]:` Create in:<br>
-`[main-window.menu-bookmarks.new-bookmark.expander-button-down.tooltip]:` Show all the bookmarks folders<br>
-`[main-window.menu-bookmarks.new-bookmark.expander-button-up.tooltip]:` Hide<br>
-`[main-window.menu-bookmarks.new_user_note]:` New Personal Note...<br>
-`[main-window.menu-bookmarks.organize_bookmarks]:` Organize Bookmarks...<br>
-`[main-window.menu-windows]:` Windows<br>
-`[main-window.menu-windows.1_window]:` 1 Window<br>
-`[main-window.menu-windows.2_window]:` 2 Windows<br>
-`[main-window.menu-windows.3_window]:` 3 Windows<br>
-`[main-window.menu-help]:` Help<br>
-`[main-window.menu-help.about]:` About...<br>
-`[main-window.menu-help.about.version]:` Version: %1$S, Build: %2$S<br>
-`[main-window.menu-help.email-address.choose_button]:` Choose…<br>
-`[main-window.menu-help.email-address.choose_label]:` Choose an Application<br>
-`[main-window.menu-help.email-address.description]:` This link needs to be opened with an application.<br>
-`[main-window.menu-help.email-address.file-chooser.title]:` Another Application…<br>
-`[main-window.menu-help.email-address.remember_my_choice]:` Remember my choice for %S links.<br>
-`[main-window.menu-help.email-address.remember_my_choice_message]:` This can be changed in %S's preferences.<br>
-`[main-window.menu-help.email-address.send_to]:` Send to:<br>
-`[main-window.menu-help.email-address.title]:` Launch Application<br>
-`[main-window.menu-help.email-address.window-height]:` 26em<br>
-`[main-window.menu-help.email-address.window-width]:` 26em<br>
-`[main-window.tool-bar.back]:` Back<br>
-`[main-window.tool-bar.back.tooltip]:` Go to previous chapter in viewed history.<br>
-`[main-window.tool-bar.cross-references]:` cross refs<br>
-`[main-window.tool-bar.cross-references.tooltip]:` Toggle display of cross references.<br>
-`[main-window.tool-bar.dictionary-links]:` dictionary<br>
-`[main-window.tool-bar.dictionary-links.tooltip]:` Show dictionary links.<br>
-`[main-window.tool-bar.footnotes]:` footnotes<br>
-`[main-window.tool-bar.footnotes.tooltip]:` Toggle display of footnotes.<br>
-`[main-window.tool-bar.forward]:` Forward<br>
-`[main-window.tool-bar.forward.tooltip]:` Go to next chapter in viewed history.<br>
-`[main-window.tool-bar.headings]:` headings<br>
-`[main-window.tool-bar.headings.tooltip]:` Toggle the display of headings.<br>
-`[main-window.tool-bar.search]:` Search<br>
-`[main-window.tool-bar.search.tooltip]:` Find the verses you're looking for.<br>
-`[main-window.tool-bar.show-history.tooltip]:` Choose a location from past history<br>
-`[main-window.context-menu.close_tab]:` Close<br>
-`[main-window.context-menu.delete_user_note]:` Delete Personal Note<br>
-`[main-window.context-menu.open_selected_reference]:` Open Selected Reference<br>
-`[main-window.context-menu.search]:` Search<br>
-`[main-window.context-menu.select_verses]:` Select Verse(s)<br>
-`[main-window.audio-player.quicktime_install_instructions]:` QT Lite is now installing on your computer. \nDefault install settings should be adequate. \n\nAfter the installer has completed, click "ok" to continue\n.<br>
-`[main-window.audio-player.quicktime_install_needed]:` To listen to audio content, a QuickTime plugin must be installed.<br>
-`[main-window.audio-player.quicktime_upgrade_needed]:` Please update your QuickTime installation.<br>
-`[main-window.audio-player.quicktime_want_to_install_prompt]:` To listen to audio content, a QuickTime plugin must be installed.\n\nWould you like to install the "QT Lite" plugin now?\n<br>
-`[main-window.bible-tabs.greek]:` Greek<br>
-`[main-window.bible-tabs.hebrew]:` Hebrew<br>
-`[main-window.bible-tabs.original_language]:` ORIG<br>
-`[main-window.bible.chapter-1-heading.hide_introduction]:` Hide Introduction<br>
-`[main-window.bible.chapter-1-heading.introduction]:` Introduction<br>
-`[main-window.bible.chapter-heading.chapter]:` Chapter %1$S<br>
-`[main-window.bible.next_link]:` Next<br>
-`[main-window.bible.previous_link]:` Previous<br>
-`[main-window.change_language_help_message]:` Language can be changed using the menu: "%1$S" → "%2$S".\n\nOr by pressing F1.\n \n<br>
-`[main-window.chooser-tool.new_testament]:` New Testmnt<br>
-`[main-window.chooser-tool.old_testament]:` Old Testmnt<br>
-`[main-window.cipher_key_prompt]:` Please enter the Bible text decryption key.<br>
-`[main-window.context-menu-edit_user_note]:` Edit Personal Note<br>
-`[bookmark-window.title]:` Bookmark Manager<br>
-`[bookmark-window.menu-file.export]:` Export...<br>
-`[bookmark-window.menu-file.export.file-chooser.export]:` Export bookmark file:<br>
-`[bookmark-window.menu-file.import]:` Import...<br>
-`[bookmark-window.menu-file.import.file-chooser.import]:` Import bookmark file:<br>
-`[bookmark-window.menu-file.save-as]:` Save As...<br>
-`[bookmark-window.menu-file.save-as.file-chooser.save_as]:` Save As<br>
-`[bookmark-window.menu-edit.delete]:` Delete<br>
-`[bookmark-window.menu-edit.move-bookmark]:` Move Bookmark(s)...<br>
-`[bookmark-window.menu-edit.move-bookmark.move_to]:` Move to:<br>
-`[bookmark-window.menu-edit.move-bookmark.new_folder]:` New Folder...<br>
-`[bookmark-window.menu-edit.move-bookmark.window_title]:` Choose Folder<br>
-`[bookmark-window.menu-edit.properties.window_title]:` Properties for &quot;**bm_title**&quot;<br>
-`[bookmark-window.menu-edit.select_all]:` Select All<br>
-`[bookmark-window.menu-view.show-columns]:` Show columns<br>
-`[bookmark-window.menu-view.show-columns.ascending]:` Ascending<br>
-`[bookmark-window.menu-view.show-columns.descending]:` Descending<br>
-`[bookmark-window.menu-view.show-columns.sort_by_name]:` Sort By Name<br>
-`[bookmark-window.menu-view.show-columns.unsorted]:` Unsorted<br>
-`[bookmark-window.menu-view.toolbar]:` Toolbar<br>
-`[bookmark-window.tool-bar.move-bookmark]:` Move...<br>
-`[bookmark-window.tool-bar.rename_button]:` Rename...<br>
-`[bookmark-window.tree-column.added]:` Added<br>
-`[bookmark-window.tree-column.location]:` Location<br>
-`[bookmark-window.tree-column.name]:` Name<br>
-`[bookmark-window.tree-column.note]:` Note<br>
-`[bookmark-window.tree-column.verse_text]:` Verse<br>
-`[bookmark-window.tree-column.visited]:` Last Visited<br>
-`[bookmark-window.tree.bookmark_root_folder]:` Bookmarks<br>
-`[bookmark-window.tree.empty_folder]:` (Empty)<br>
-`[bookmark-window.tree.new_folder]:` New Folder<br>
-`[bookmark-window.tree.restore_natural_order]:` Restore Defaults<br>
-`[bookmark-window.tree.status.folder_count]:` %S object(s)<br>
-`[bookmark-window.search-in-menu]:` Search In<br>
-`[bookmark-window.search_label]:` Search:<br>
-`[search-window.title]:` Search<br>
-`[search-window.more-options.book_group_label]:` Books:<br>
-`[search-window.more-options.commentary_group_label]:` Commentaries:<br>
-`[search-window.more-options.resource_group_label]:` Resources:<br>
-`[search-window.more-options.search-scope]:` Search Scope:<br>
-`[search-window.more-options.search-scope.all_books]:` All Books<br>
-`[search-window.more-options.search-scope.choose-books]:` Choose Books to Search:<br>
-`[search-window.more-options.search-scope.choose-books.gospel]:` Gospel<br>
-`[search-window.more-options.search-scope.choose-books.gospel.range]:` Matt-John<br>
-`[search-window.more-options.search-scope.choose-books.history]:` History<br>
-`[search-window.more-options.search-scope.choose-books.history.range]:` Josh-Esth<br>
-`[search-window.more-options.search-scope.choose-books.letters]:` Letters<br>
-`[search-window.more-options.search-scope.choose-books.letters.range]:` Acts-Rev<br>
-`[search-window.more-options.search-scope.choose-books.pentateuch]:` Pentateuch<br>
-`[search-window.more-options.search-scope.choose-books.pentateuch.range]:` Gen-Deut<br>
-`[search-window.more-options.search-scope.choose-books.prophets]:` Prophets<br>
-`[search-window.more-options.search-scope.choose-books.prophets.range]:` Isa-Mal<br>
-`[search-window.more-options.search-scope.choose-books.psalms]:` Psalms<br>
-`[search-window.more-options.search-scope.choose-books.wisdom]:` Wisdom books<br>
-`[search-window.more-options.search-scope.choose-books.wisdom.range]:` Job-Song<br>
-`[search-window.more-options.search-scope.new_testament]:` New Testament<br>
-`[search-window.more-options.search-scope.old_testament]:` Old Testament<br>
-`[search-window.more-options.search-type]:` Search Type:<br>
-`[search-window.more-options.search-type.contains_exact_text]:` Find verses which contain this exact text<br>
-`[search-window.more-options.search-type.contains_similar_words]:` Find verses which contain similar words.<br>
-`[search-window.more-options.search-type.contains_the_words]:` Find verses which contain the word(s).<br>
-`[search-window.more-options.search-type.show_results_in_order]:` Show results in order<br>
-`[search-window.more-options.search-type.using_special_search_terms]:` Advanced matching using special search terms.<br>
-`[search-window.more-options.text_group_label]:` Bibles:<br>
-`[search-window.build_index_progress_label]:` Building Search Index...<br>
-`[search-window.first_search_prompt]:` This text was installed without a search index.\nA search index will now be created for you.<br>
-`[search-window.more-less-button.less]:` Less<br>
-`[search-window.more-less-button.more]:` More<br>
-`[search-window.search-button.tooltip]:` Match any word ending with ' * '. Match any single character with ' ? '.<br>
-`[search-window.search-status.found_showing_all]:` Verses found: %1$S<br>
-`[search-window.search-status.found_showing_some]:` Found %3$S verses (showing %1$S to %2$S)<br>
-`[search-window.search_label]:` Search word or phrase:<br>
-`[search-window.search_progress_label]:` Searching %1$S...<br>
-`[search-window.stop-button]:` Stop<br>
-`[search-window.stop_index_warning_message]:` If you stop the indexer, search speed will be slow. \nHowever, you may build the index later if you wish.<br>
-`[search-help-window.title]:` Search Help<br>
-`[search-help-window.ampersand_description]:` Finds verses with both "love" <b>and</b> "God"<br>
-`[search-help-window.ampersand_example]:` love && God<br>
-`[search-help-window.case_sensitivity_note]:` Note: All searches are case insensitive.<br>
-`[search-help-window.description_heading]:` DESCRIPTION<br>
-`[search-help-window.description_of_search_types]:` <span style="font-size:large;">There are four types of searches to choose from after you click the "More" button:</span><br><br>1) <b>Find verses which contain the word(s)</b>: Finds verses that have all of the given words in the verse.<br><br>2) <b>Find verses which contain this exact text</b>: Finds the exact word, part of a word, or phrase, everywhere that it occurs.<br><br>3) <b>Advanced matching using special search terms</b>: You may use the special search terms listed in the table below to build complex searches:<br><br>4) <b>Find verses which contain similar words</b>: Finds verses that contain words similar to those given. This is useful if you don't know exactly how a word is spelled, or to find variations of words. Results can be listed in order of relevance by unchecking "Show results in order".<br><br><br>
-`[search-help-window.example_heading]:` EXAMPLE<br>
-`[search-help-window.exclamation_description]:` Finds verses with "love" but <b>not</b> "God"<br>
-`[search-help-window.exclamation_example]:` love !God<br>
-`[search-help-window.notes_heading]:` NOTES<br>
-`[search-help-window.parenthesis_description]:` Finds verses with "great" <b>or</b> "little" <b>and</b> "love"<br>
-`[search-help-window.parenthesis_example]:` (great || little) && love<br>
-`[search-help-window.question_mark_description]:` Matches "beloved", "unloved" etc.<br>
-`[search-help-window.question_mark_example]:` ??loved<br>
-`[search-help-window.question_mark_notes]:` Can be used anywhere in word<br>
-`[search-help-window.quotes_description]:` Finds verses with the exact phrase "For God so loved"<br>
-`[search-help-window.quotes_example]:` "For God so loved"<br>
-`[search-help-window.star_description]:` Matches any word beginning with "Heav"<br>
-`[search-help-window.star_example]:` Heav*<br>
-`[search-help-window.star_notes]:` Can be used anywhere except at the beginning of a word<br>
-`[search-help-window.term_heading]:` TERM<br>
-`[search-help-window.tilde_description]:` Finds words <b>spelled similarly</b> to "Nebacadnezzer"<br>
-`[search-help-window.tilde_example]:` Nebacadnezzer~<br>
-`[search-help-window.tilde_notes]:` This is useful if you don't know exact spelling of a word<br>
-`[search-help-window.vertical_bar_description]:` Finds verses with either "love" <b>or</b> "God"<br>
-`[search-help-window.vertical_bar_example]:` love || God<br>
-`[dialog-window.cancel]:` Cancel<br>
-`[dialog-window.no]:` &No<br>
-`[dialog-window.ok]:` OK<br>
-`[dialog-window.save]:` &Save<br>
-`[dialog-window.select]:` Select<br>
-`[dialog-window.yes]:` &Yes<br>
-`[file-chooser.html_title]:` HTML Files<br>
-`[file-chooser.image_title]:` Image Files<br>
-`[file-chooser.text_title]:` Text Files<br>
-`[file-chooser.xml_title]:` XML Files<br>
-`[file-chooser.xul_title]:` XUL Files<br>
-`[error-reporter.dont_show_this_again]:` Do not show me this dialog box again.<br>
-`[error-reporter.error_detection_message]:` A problem may have been detected. To report this problem press \"%1$S\".<br>
-`[splash-secure-window.insert_cdrom]:` Please insert the installation CDROM and try again.<br>
+`[books.Genesis]:`<b>` Genesis`</b><br>
+`[books.Exodus]:`<b>` Exodus`</b><br>
+`[books.Leviticus]:`<b>` Leviticus`</b><br>
+`[books.Numbers]:`<b>` Numbers`</b><br>
+`[books.Deuteronomy]:`<b>` Deuteronomy`</b><br>
+`[books.Joshua]:`<b>` Joshua`</b><br>
+`[books.Judges]:`<b>` Judges`</b><br>
+`[books.Ruth]:`<b>` Ruth`</b><br>
+`[books.1-Samuel]:`<b>` 1 Samuel`</b><br>
+`[books.2-Samuel]:`<b>` 2 Samuel`</b><br>
+`[books.1-Kings]:`<b>` 1 Kings`</b><br>
+`[books.2-Kings]:`<b>` 2 Kings`</b><br>
+`[books.1-Chronicles]:`<b>` 1 Chronicles`</b><br>
+`[books.2-Chronicles]:`<b>` 2 Chronicles`</b><br>
+`[books.Ezra]:`<b>` Ezra`</b><br>
+`[books.Nehemiah]:`<b>` Nehemiah`</b><br>
+`[books.Esther]:`<b>` Esther`</b><br>
+`[books.Job]:`<b>` Job`</b><br>
+`[books.Psalms]:`<b>` Psalms`</b><br>
+`[books.Proverbs]:`<b>` Proverbs`</b><br>
+`[books.Ecclesiastes]:`<b>` Ecclesiastes`</b><br>
+`[books.Song-of-Songs]:`<b>` Song of Songs`</b><br>
+`[books.Isaiah]:`<b>` Isaiah`</b><br>
+`[books.Jeremiah]:`<b>` Jeremiah`</b><br>
+`[books.Lamentations]:`<b>` Lamentations`</b><br>
+`[books.Ezekiel]:`<b>` Ezekiel`</b><br>
+`[books.Daniel]:`<b>` Daniel`</b><br>
+`[books.Hosea]:`<b>` Hosea`</b><br>
+`[books.Joel]:`<b>` Joel`</b><br>
+`[books.Amos]:`<b>` Amos`</b><br>
+`[books.Obadiah]:`<b>` Obadiah`</b><br>
+`[books.Jonah]:`<b>` Jonah`</b><br>
+`[books.Micah]:`<b>` Micah`</b><br>
+`[books.Nahum]:`<b>` Nahum`</b><br>
+`[books.Habakkuk]:`<b>` Habakkuk`</b><br>
+`[books.Zephaniah]:`<b>` Zephaniah`</b><br>
+`[books.Haggai]:`<b>` Haggai`</b><br>
+`[books.Zechariah]:`<b>` Zechariah`</b><br>
+`[books.Malachi]:`<b>` Malachi`</b><br>
+`[books.Matthew]:`<b>` Matthew`</b><br>
+`[books.Mark]:`<b>` Mark`</b><br>
+`[books.Luke]:`<b>` Luke`</b><br>
+`[books.John]:`<b>` John`</b><br>
+`[books.Acts]:`<b>` Acts`</b><br>
+`[books.James]:`<b>` James`</b><br>
+`[books.1-Peter]:`<b>` 1 Peter`</b><br>
+`[books.2-Peter]:`<b>` 2 Peter`</b><br>
+`[books.1-John]:`<b>` 1 John`</b><br>
+`[books.2-John]:`<b>` 2 John`</b><br>
+`[books.3-John]:`<b>` 3 John`</b><br>
+`[books.Jude]:`<b>` Jude`</b><br>
+`[books.Romans]:`<b>` Romans`</b><br>
+`[books.1st-Corinthians]:`<b>` 1st Corinthians`</b><br>
+`[books.2nd-Corinthians]:`<b>` 2nd Corinthians`</b><br>
+`[books.Galatians]:`<b>` Galatians`</b><br>
+`[books.Ephesians]:`<b>` Ephesians`</b><br>
+`[books.Philippians]:`<b>` Philippians`</b><br>
+`[books.Colossians]:`<b>` Colossians`</b><br>
+`[books.1st-Thessalonians]:`<b>` 1st Thessalonians`</b><br>
+`[books.2nd-Thessalonians]:`<b>` 2nd Thessalonians`</b><br>
+`[books.1-Timothy]:`<b>` 1 Timothy`</b><br>
+`[books.2-Timothy]:`<b>` 2 Timothy`</b><br>
+`[books.Titus]:`<b>` Titus`</b><br>
+`[books.Philemon]:`<b>` Philemon`</b><br>
+`[books.Hebrews]:`<b>` Hebrews`</b><br>
+`[books.Revelation]:`<b>` Revelation`</b><br>
+`[main-window.title]:`<b>` Holy Bible`</b><br>
+`[main-window.menu-file]:`<b>` File`</b><br>
+`[main-window.menu-file.add_new_module]:`<b>` Add New Modules`</b><br>
+`[main-window.menu-file.add_new_module.components_not_supported]:`<b>` The following module(s) have components which are not supported:`</b><br>
+`[main-window.menu-file.add_new_module.components_out_of_date]:`<b>` The following module(s) have components which are out of date:`</b><br>
+`[main-window.menu-file.add_new_module.installation_incomplete]:`<b>` Module installation incomplete.`</b><br>
+`[main-window.menu-file.add_new_module.module_upgrade_needed]:`<b>` Complete installation requires at least module version: %1$S`</b><br>
+`[main-window.menu-file.add_new_module.module_upgrade_needed_NOARG]:`<b>` Complete installation requires at least module version:`</b><br>
+`[main-window.menu-file.add_new_module.program_upgrade_needed]:`<b>` Upgrade the program to at least version: %1$S`</b><br>
+`[main-window.menu-file.add_new_module.program_upgrade_needed_NOARG]:`<b>` Upgrade the program to at least version:`</b><br>
+`[main-window.menu-file.add_new_module.restart_needed]:`<b>` This change will take effect the next time you start the program.`</b><br>
+`[main-window.menu-file.exit]:`<b>` Exit`</b><br>
+`[main-window.menu-file.export_audio]:`<b>` Export Audio`</b><br>
+`[main-window.menu-file.import-audio]:`<b>` Import Audio`</b><br>
+`[main-window.menu-file.import-audio.import_from]:`<b>` Saving From:`</b><br>
+`[main-window.menu-file.import-audio.import_to]:`<b>` To:`</b><br>
+`[main-window.menu-file.import-audio.not_enough_disk_space]:`<b>` There is not enough room on the disk to save %S.\n\nRemove unnecessary files from the disk and try again, or try saving in a different location.`</b><br>
+`[main-window.menu-file.page-setup]:`<b>` Page Setup...`</b><br>
+`[main-window.menu-file.page-setup.advanced_tab]:`<b>` Margins &amp; Header/Footer`</b><br>
+`[main-window.menu-file.page-setup.basic_tab]:`<b>` Format &amp; Options`</b><br>
+`[main-window.menu-file.page-setup.format-group]:`<b>` Format`</b><br>
+`[main-window.menu-file.page-setup.format-group.orientation]:`<b>` Orientation:`</b><br>
+`[main-window.menu-file.page-setup.format-group.scale]:`<b>` Scale:`</b><br>
+`[main-window.menu-file.page-setup.format-group.scale_percent]:`<b>` &#037;`</b><br>
+`[main-window.menu-file.page-setup.format-group.shrink_to_fit]:`<b>` Shrink To Fit Page Width`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group]:`<b>` Headers &amp; Footers`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.center_footer_tooltip]:`<b>` Center footer`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.center_header_tooltip]:`<b>` Center header`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.center_label]:`<b>` Center:`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.left_footer_tooltip]:`<b>` Left footer`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.left_header_tooltip]:`<b>` Left header`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.left_label]:`<b>` Left:`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.blank]:`<b>` --blank--`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.custom]:`<b>` Custom…`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.custom.prompt]:`<b>` Enter your custom header/footer text`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.custom.title]:`<b>` Custom…`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.date_time]:`<b>` Date/Time`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.page]:`<b>` Page #`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.page_total]:`<b>` Page # of #`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.title]:`<b>` Title`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.url]:`<b>` URL`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.right_footer_tooltip]:`<b>` Right footer`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.right_header_tooltip]:`<b>` Right header`</b><br>
+`[main-window.menu-file.page-setup.header-footer-group.right_label]:`<b>` Right:`</b><br>
+`[main-window.menu-file.page-setup.margin-group]:`<b>` Margins (#1)`</b><br>
+`[main-window.menu-file.page-setup.margin-group.margin_bottom]:`<b>` Bottom:`</b><br>
+`[main-window.menu-file.page-setup.margin-group.margin_left]:`<b>` Left:`</b><br>
+`[main-window.menu-file.page-setup.margin-group.margin_right]:`<b>` Right:`</b><br>
+`[main-window.menu-file.page-setup.margin-group.margin_top]:`<b>` Top:`</b><br>
+`[main-window.menu-file.page-setup.margin-group.units_inches]:`<b>` inches`</b><br>
+`[main-window.menu-file.page-setup.margin-group.units_metric]:`<b>` millimeters`</b><br>
+`[main-window.menu-file.page-setup.options-group]:`<b>` Options`</b><br>
+`[main-window.menu-file.page-setup.options-group.print_background]:`<b>` Print Background (colors &amp; images)`</b><br>
+`[main-window.menu-file.page-setup.title]:`<b>` Page Setup`</b><br>
+`[main-window.menu-file.print]:`<b>` Print...`</b><br>
+`[main-window.menu-file.print-preview]:`<b>` Print Preview`</b><br>
+`[main-window.menu-file.print-preview.close]:`<b>` Close`</b><br>
+`[main-window.menu-file.print-preview.custom]:`<b>` Custom…`</b><br>
+`[main-window.menu-file.print-preview.custom.title]:`<b>` Custom Scale…`</b><br>
+`[main-window.menu-file.print-preview.first_arrow_tooltip]:`<b>` First page`</b><br>
+`[main-window.menu-file.print-preview.landscape]:`<b>` Landscape`</b><br>
+`[main-window.menu-file.print-preview.last_arrow_tooltip]:`<b>` Last page`</b><br>
+`[main-window.menu-file.print-preview.next_arrow_tooltip]:`<b>` Next page`</b><br>
+`[main-window.menu-file.print-preview.of]:`<b>` of`</b><br>
+`[main-window.menu-file.print-preview.page]:`<b>` Page:`</b><br>
+`[main-window.menu-file.print-preview.page_setup]:`<b>` Page Setup…`</b><br>
+`[main-window.menu-file.print-preview.portrait]:`<b>` Portrait`</b><br>
+`[main-window.menu-file.print-preview.previous_arrow_tooltip]:`<b>` Previous page`</b><br>
+`[main-window.menu-file.print-preview.print]:`<b>` Print…`</b><br>
+`[main-window.menu-file.print-preview.progress-window.preparing]:`<b>` Preparing…`</b><br>
+`[main-window.menu-file.print-preview.progress-window.progress]:`<b>` Progress:`</b><br>
+`[main-window.menu-file.print-preview.progress-window.title]:`<b>` Title:`</b><br>
+`[main-window.menu-file.print-preview.progress-window.window_title]:`<b>` Print Preview`</b><br>
+`[main-window.menu-file.print-preview.scale]:`<b>` Scale:`</b><br>
+`[main-window.menu-file.print-preview.shrink_to_fit]:`<b>` Shrink To Fit`</b><br>
+`[main-window.menu-file.print.from_page]:`<b>` from`</b><br>
+`[main-window.menu-file.print.options]:`<b>` Options`</b><br>
+`[main-window.menu-file.print.progress-window.cancel]:`<b>` Cancel`</b><br>
+`[main-window.menu-file.print.progress-window.close]:`<b>` Close`</b><br>
+`[main-window.menu-file.print.progress-window.completed]:`<b>` Printing is Completed.`</b><br>
+`[main-window.menu-file.print.progress-window.preparing]:`<b>` Preparing…`</b><br>
+`[main-window.menu-file.print.progress-window.progress]:`<b>` Progress:`</b><br>
+`[main-window.menu-file.print.progress-window.title]:`<b>` Title:`</b><br>
+`[main-window.menu-file.print.progress-window.window_title]:`<b>` Printing`</b><br>
+`[main-window.menu-file.print.to_page]:`<b>` to`</b><br>
+`[main-window.menu-file.print_passage]:`<b>` Print Passage`</b><br>
+`[main-window.menu-file.remove_modules]:`<b>` Remove Modules`</b><br>
+`[main-window.menu-file.remove_modules.delete_audio]:`<b>` Delete Audio`</b><br>
+`[main-window.menu-file.remove_modules.delete_confirmation]:`<b>` Are you sure?`</b><br>
+`[main-window.menu-file.remove_modules.delete_locales]:`<b>` Delete Locales`</b><br>
+`[main-window.menu-file.remove_modules.delete_sword_modules]:`<b>` Delete Modules`</b><br>
+`[main-window.menu-edit]:`<b>` Edit`</b><br>
+`[main-window.menu-edit.copy]:`<b>` Copy`</b><br>
+`[main-window.menu-edit.copy_passage]:`<b>` Copy Passage`</b><br>
+`[main-window.menu-edit.copy_passage.cross-references-with-text]:`<b>` Cross Reference Texts`</b><br>
+`[main-window.menu-edit.copy_passage.include_label]:`<b>` Include`</b><br>
+`[main-window.menu-edit.copy_passage.passage_label]:`<b>` Passage`</b><br>
+`[main-window.menu-edit.cut]:`<b>` Cut`</b><br>
+`[main-window.menu-edit.paste]:`<b>` Paste`</b><br>
+`[main-window.menu-edit.redo]:`<b>` Redo`</b><br>
+`[main-window.menu-edit.undo]:`<b>` Undo`</b><br>
+`[main-window.menu-view]:`<b>` View`</b><br>
+`[main-window.menu-view.all_windows]:`<b>` All Windows`</b><br>
+`[main-window.menu-view.bible_tabs]:`<b>` Bible Tabs`</b><br>
+`[main-window.menu-view.book_tabs]:`<b>` Book Tabs`</b><br>
+`[main-window.menu-view.commentary_tabs]:`<b>` Commentary Tabs`</b><br>
+`[main-window.menu-view.cross_references]:`<b>` Cross References`</b><br>
+`[main-window.menu-view.dictionary_links]:`<b>` Dictionary Links`</b><br>
+`[main-window.menu-view.dictionary_tabs]:`<b>` Resource Tabs`</b><br>
+`[main-window.menu-view.footnotes]:`<b>` Footnotes`</b><br>
+`[main-window.menu-view.headings]:`<b>` Headings`</b><br>
+`[main-window.menu-view.hide_all]:`<b>` Show none`</b><br>
+`[main-window.menu-view.language_notes]:`<b>` Language Notes`</b><br>
+`[main-window.menu-view.red_words_of_christ]:`<b>` Words of Christ in red`</b><br>
+`[main-window.menu-view.show_all]:`<b>` Show all`</b><br>
+`[main-window.menu-view.show_cross_references]:`<b>` Show Cross References`</b><br>
+`[main-window.menu-view.show_footnotes]:`<b>` Show Footnotes`</b><br>
+`[main-window.menu-view.show_notes.in_note_box]:`<b>` In note box`</b><br>
+`[main-window.menu-view.show_notes.in_popup]:`<b>` In popups`</b><br>
+`[main-window.menu-view.show_user_notes]:`<b>` Show Personal Notes`</b><br>
+`[main-window.menu-view.user_notes]:`<b>` Personal Notes`</b><br>
+`[main-window.menu-view.verse_numbers]:`<b>` Verse Numbers`</b><br>
+`[main-window.menu-view.window1]:`<b>` Window 1`</b><br>
+`[main-window.menu-view.window2]:`<b>` Window 2`</b><br>
+`[main-window.menu-view.window3]:`<b>` Window 3`</b><br>
+`[main-window.menu-options]:`<b>` Options`</b><br>
+`[main-window.menu-options.font]:`<b>` Font`</b><br>
+`[main-window.menu-options.font.size1]:`<b>` Smallest font`</b><br>
+`[main-window.menu-options.font.size2]:`<b>` Small font`</b><br>
+`[main-window.menu-options.font.size3]:`<b>` Normal font`</b><br>
+`[main-window.menu-options.font.size4]:`<b>` Large font`</b><br>
+`[main-window.menu-options.font.size5]:`<b>` Largest font`</b><br>
+`[main-window.menu-options.hebrew]:`<b>` Hebrew`</b><br>
+`[main-window.menu-options.hebrew.show_cantillation]:`<b>` Show Cantillation`</b><br>
+`[main-window.menu-options.hebrew.show_vowel_points]:`<b>` Show Vowel Points`</b><br>
+`[main-window.menu-options.language]:`<b>` Language`</b><br>
+`[main-window.menu-options.language.this_langauge]:`<b>` English`</b><br>
+`[main-window.menu-bookmarks]:`<b>` Bookmarks`</b><br>
+`[main-window.menu-bookmarks.context-menu.new_folder]:`<b>` New Folder...`</b><br>
+`[main-window.menu-bookmarks.context-menu.new_separator]:`<b>` New Separator`</b><br>
+`[main-window.menu-bookmarks.context-menu.open]:`<b>` Open`</b><br>
+`[main-window.menu-bookmarks.context-menu.properties]:`<b>` Properties...`</b><br>
+`[main-window.menu-bookmarks.context-menu.sort_by]:`<b>` Sorted by %S`</b><br>
+`[main-window.menu-bookmarks.new-bookmark]:`<b>` New Bookmark...`</b><br>
+`[main-window.menu-bookmarks.new-bookmark.title]:`<b>` New Bookmark`</b><br>
+`[main-window.menu-bookmarks.new-bookmark.create_in]:`<b>` Create in:`</b><br>
+`[main-window.menu-bookmarks.new-bookmark.expander-button-down.tooltip]:`<b>` Show all the bookmarks folders`</b><br>
+`[main-window.menu-bookmarks.new-bookmark.expander-button-up.tooltip]:`<b>` Hide`</b><br>
+`[main-window.menu-bookmarks.new_user_note]:`<b>` New Personal Note...`</b><br>
+`[main-window.menu-bookmarks.organize_bookmarks]:`<b>` Organize Bookmarks...`</b><br>
+`[main-window.menu-windows]:`<b>` Windows`</b><br>
+`[main-window.menu-windows.1_window]:`<b>` 1 Window`</b><br>
+`[main-window.menu-windows.2_window]:`<b>` 2 Windows`</b><br>
+`[main-window.menu-windows.3_window]:`<b>` 3 Windows`</b><br>
+`[main-window.menu-help]:`<b>` Help`</b><br>
+`[main-window.menu-help.about]:`<b>` About...`</b><br>
+`[main-window.menu-help.about.version]:`<b>` Version: %1$S, Build: %2$S`</b><br>
+`[main-window.menu-help.email-address.choose_button]:`<b>` Choose…`</b><br>
+`[main-window.menu-help.email-address.choose_label]:`<b>` Choose an Application`</b><br>
+`[main-window.menu-help.email-address.description]:`<b>` This link needs to be opened with an application.`</b><br>
+`[main-window.menu-help.email-address.file-chooser.title]:`<b>` Another Application…`</b><br>
+`[main-window.menu-help.email-address.remember_my_choice]:`<b>` Remember my choice for %S links.`</b><br>
+`[main-window.menu-help.email-address.remember_my_choice_message]:`<b>` This can be changed in %S's preferences.`</b><br>
+`[main-window.menu-help.email-address.send_to]:`<b>` Send to:`</b><br>
+`[main-window.menu-help.email-address.title]:`<b>` Launch Application`</b><br>
+`[main-window.menu-help.email-address.window-height]:`<b>` 26em`</b><br>
+`[main-window.menu-help.email-address.window-width]:`<b>` 26em`</b><br>
+`[main-window.tool-bar.back]:`<b>` Back`</b><br>
+`[main-window.tool-bar.back.tooltip]:`<b>` Go to previous chapter in viewed history.`</b><br>
+`[main-window.tool-bar.cross-references]:`<b>` cross refs`</b><br>
+`[main-window.tool-bar.cross-references.tooltip]:`<b>` Toggle display of cross references.`</b><br>
+`[main-window.tool-bar.dictionary-links]:`<b>` dictionary`</b><br>
+`[main-window.tool-bar.dictionary-links.tooltip]:`<b>` Show dictionary links.`</b><br>
+`[main-window.tool-bar.footnotes]:`<b>` footnotes`</b><br>
+`[main-window.tool-bar.footnotes.tooltip]:`<b>` Toggle display of footnotes.`</b><br>
+`[main-window.tool-bar.forward]:`<b>` Forward`</b><br>
+`[main-window.tool-bar.forward.tooltip]:`<b>` Go to next chapter in viewed history.`</b><br>
+`[main-window.tool-bar.headings]:`<b>` headings`</b><br>
+`[main-window.tool-bar.headings.tooltip]:`<b>` Toggle the display of headings.`</b><br>
+`[main-window.tool-bar.search]:`<b>` Search`</b><br>
+`[main-window.tool-bar.search.tooltip]:`<b>` Find the verses you're looking for.`</b><br>
+`[main-window.tool-bar.show-history.tooltip]:`<b>` Choose a location from past history`</b><br>
+`[main-window.context-menu.close_tab]:`<b>` Close`</b><br>
+`[main-window.context-menu.delete_user_note]:`<b>` Delete Personal Note`</b><br>
+`[main-window.context-menu.open_selected_reference]:`<b>` Open Selected Reference`</b><br>
+`[main-window.context-menu.search]:`<b>` Search`</b><br>
+`[main-window.context-menu.select_verses]:`<b>` Select Verse(s)`</b><br>
+`[main-window.audio-player.quicktime_install_instructions]:`<b>` QT Lite is now installing on your computer. \nDefault install settings should be adequate. \n\nAfter the installer has completed, click "ok" to continue\n.`</b><br>
+`[main-window.audio-player.quicktime_install_needed]:`<b>` To listen to audio content, a QuickTime plugin must be installed.`</b><br>
+`[main-window.audio-player.quicktime_upgrade_needed]:`<b>` Please update your QuickTime installation.`</b><br>
+`[main-window.audio-player.quicktime_want_to_install_prompt]:`<b>` To listen to audio content, a QuickTime plugin must be installed.\n\nWould you like to install the "QT Lite" plugin now?\n`</b><br>
+`[main-window.bible-tabs.greek]:`<b>` Greek`</b><br>
+`[main-window.bible-tabs.hebrew]:`<b>` Hebrew`</b><br>
+`[main-window.bible-tabs.original_language]:`<b>` ORIG`</b><br>
+`[main-window.bible.chapter-1-heading.hide_introduction]:`<b>` Hide Introduction`</b><br>
+`[main-window.bible.chapter-1-heading.introduction]:`<b>` Introduction`</b><br>
+`[main-window.bible.chapter-heading.chapter]:`<b>` Chapter %1$S`</b><br>
+`[main-window.bible.next_link]:`<b>` Next`</b><br>
+`[main-window.bible.previous_link]:`<b>` Previous`</b><br>
+`[main-window.change_language_help_message]:`<b>` Language can be changed using the menu: "%1$S" → "%2$S".\n\nOr by pressing F1.\n \n`</b><br>
+`[main-window.chooser-tool.new_testament]:`<b>` New Testmnt`</b><br>
+`[main-window.chooser-tool.old_testament]:`<b>` Old Testmnt`</b><br>
+`[main-window.cipher_key_prompt]:`<b>` Please enter the Bible text decryption key.`</b><br>
+`[main-window.context-menu-edit_user_note]:`<b>` Edit Personal Note`</b><br>
+`[bookmark-window.title]:`<b>` Bookmark Manager`</b><br>
+`[bookmark-window.menu-file.export]:`<b>` Export...`</b><br>
+`[bookmark-window.menu-file.export.file-chooser.export]:`<b>` Export bookmark file:`</b><br>
+`[bookmark-window.menu-file.import]:`<b>` Import...`</b><br>
+`[bookmark-window.menu-file.import.file-chooser.import]:`<b>` Import bookmark file:`</b><br>
+`[bookmark-window.menu-file.save-as]:`<b>` Save As...`</b><br>
+`[bookmark-window.menu-file.save-as.file-chooser.save_as]:`<b>` Save As`</b><br>
+`[bookmark-window.menu-edit.delete]:`<b>` Delete`</b><br>
+`[bookmark-window.menu-edit.move-bookmark]:`<b>` Move Bookmark(s)...`</b><br>
+`[bookmark-window.menu-edit.move-bookmark.move_to]:`<b>` Move to:`</b><br>
+`[bookmark-window.menu-edit.move-bookmark.new_folder]:`<b>` New Folder...`</b><br>
+`[bookmark-window.menu-edit.move-bookmark.window_title]:`<b>` Choose Folder`</b><br>
+`[bookmark-window.menu-edit.properties.window_title]:`<b>` Properties for &quot;**bm_title**&quot;`</b><br>
+`[bookmark-window.menu-edit.select_all]:`<b>` Select All`</b><br>
+`[bookmark-window.menu-view.show-columns]:`<b>` Show columns`</b><br>
+`[bookmark-window.menu-view.show-columns.ascending]:`<b>` Ascending`</b><br>
+`[bookmark-window.menu-view.show-columns.descending]:`<b>` Descending`</b><br>
+`[bookmark-window.menu-view.show-columns.sort_by_name]:`<b>` Sort By Name`</b><br>
+`[bookmark-window.menu-view.show-columns.unsorted]:`<b>` Unsorted`</b><br>
+`[bookmark-window.menu-view.toolbar]:`<b>` Toolbar`</b><br>
+`[bookmark-window.tool-bar.move-bookmark]:`<b>` Move...`</b><br>
+`[bookmark-window.tool-bar.rename_button]:`<b>` Rename...`</b><br>
+`[bookmark-window.tree-column.added]:`<b>` Added`</b><br>
+`[bookmark-window.tree-column.location]:`<b>` Location`</b><br>
+`[bookmark-window.tree-column.name]:`<b>` Name`</b><br>
+`[bookmark-window.tree-column.note]:`<b>` Note`</b><br>
+`[bookmark-window.tree-column.verse_text]:`<b>` Verse`</b><br>
+`[bookmark-window.tree-column.visited]:`<b>` Last Visited`</b><br>
+`[bookmark-window.tree.bookmark_root_folder]:`<b>` Bookmarks`</b><br>
+`[bookmark-window.tree.empty_folder]:`<b>` (Empty)`</b><br>
+`[bookmark-window.tree.new_folder]:`<b>` New Folder`</b><br>
+`[bookmark-window.tree.restore_natural_order]:`<b>` Restore Defaults`</b><br>
+`[bookmark-window.tree.status.folder_count]:`<b>` %S object(s)`</b><br>
+`[bookmark-window.search-in-menu]:`<b>` Search In`</b><br>
+`[bookmark-window.search_label]:`<b>` Search:`</b><br>
+`[search-window.title]:`<b>` Search`</b><br>
+`[search-window.more-options.book_group_label]:`<b>` Books:`</b><br>
+`[search-window.more-options.commentary_group_label]:`<b>` Commentaries:`</b><br>
+`[search-window.more-options.resource_group_label]:`<b>` Resources:`</b><br>
+`[search-window.more-options.search-scope]:`<b>` Search Scope:`</b><br>
+`[search-window.more-options.search-scope.all_books]:`<b>` All Books`</b><br>
+`[search-window.more-options.search-scope.choose-books]:`<b>` Choose Books to Search:`</b><br>
+`[search-window.more-options.search-scope.choose-books.gospel]:`<b>` Gospel`</b><br>
+`[search-window.more-options.search-scope.choose-books.gospel.range]:`<b>` Matt-John`</b><br>
+`[search-window.more-options.search-scope.choose-books.history]:`<b>` History`</b><br>
+`[search-window.more-options.search-scope.choose-books.history.range]:`<b>` Josh-Esth`</b><br>
+`[search-window.more-options.search-scope.choose-books.letters]:`<b>` Letters`</b><br>
+`[search-window.more-options.search-scope.choose-books.letters.range]:`<b>` Acts-Rev`</b><br>
+`[search-window.more-options.search-scope.choose-books.pentateuch]:`<b>` Pentateuch`</b><br>
+`[search-window.more-options.search-scope.choose-books.pentateuch.range]:`<b>` Gen-Deut`</b><br>
+`[search-window.more-options.search-scope.choose-books.prophets]:`<b>` Prophets`</b><br>
+`[search-window.more-options.search-scope.choose-books.prophets.range]:`<b>` Isa-Mal`</b><br>
+`[search-window.more-options.search-scope.choose-books.psalms]:`<b>` Psalms`</b><br>
+`[search-window.more-options.search-scope.choose-books.wisdom]:`<b>` Wisdom books`</b><br>
+`[search-window.more-options.search-scope.choose-books.wisdom.range]:`<b>` Job-Song`</b><br>
+`[search-window.more-options.search-scope.new_testament]:`<b>` New Testament`</b><br>
+`[search-window.more-options.search-scope.old_testament]:`<b>` Old Testament`</b><br>
+`[search-window.more-options.search-type]:`<b>` Search Type:`</b><br>
+`[search-window.more-options.search-type.contains_exact_text]:`<b>` Find verses which contain this exact text`</b><br>
+`[search-window.more-options.search-type.contains_similar_words]:`<b>` Find verses which contain similar words.`</b><br>
+`[search-window.more-options.search-type.contains_the_words]:`<b>` Find verses which contain the word(s).`</b><br>
+`[search-window.more-options.search-type.show_results_in_order]:`<b>` Show results in order`</b><br>
+`[search-window.more-options.search-type.using_special_search_terms]:`<b>` Advanced matching using special search terms.`</b><br>
+`[search-window.more-options.text_group_label]:`<b>` Bibles:`</b><br>
+`[search-window.build_index_progress_label]:`<b>` Building Search Index...`</b><br>
+`[search-window.first_search_prompt]:`<b>` This text was installed without a search index.\nA search index will now be created for you.`</b><br>
+`[search-window.more-less-button.less]:`<b>` Less`</b><br>
+`[search-window.more-less-button.more]:`<b>` More`</b><br>
+`[search-window.search-button.tooltip]:`<b>` Match any word ending with ' * '. Match any single character with ' ? '.`</b><br>
+`[search-window.search-status.found_showing_all]:`<b>` Verses found: %1$S`</b><br>
+`[search-window.search-status.found_showing_some]:`<b>` Found %3$S verses (showing %1$S to %2$S)`</b><br>
+`[search-window.search_label]:`<b>` Search word or phrase:`</b><br>
+`[search-window.search_progress_label]:`<b>` Searching %1$S...`</b><br>
+`[search-window.stop-button]:`<b>` Stop`</b><br>
+`[search-window.stop_index_warning_message]:`<b>` If you stop the indexer, search speed will be slow. \nHowever, you may build the index later if you wish.`</b><br>
+`[search-help-window.title]:`<b>` Search Help`</b><br>
+`[search-help-window.ampersand_description]:`<b>` Finds verses with both "love" <b>and</b> "God"`</b><br>
+`[search-help-window.ampersand_example]:`<b>` love && God`</b><br>
+`[search-help-window.case_sensitivity_note]:`<b>` Note: All searches are case insensitive.`</b><br>
+`[search-help-window.description_heading]:`<b>` DESCRIPTION`</b><br>
+`[search-help-window.description_of_search_types]:`<b>` <span style="font-size:large;">There are four types of searches to choose from after you click the "More" button:</span>`</b><br>`</b><br>1) <b>Find verses which contain the word(s)</b>: Finds verses that have all of the given words in the verse.`</b><br>`</b><br>2) <b>Find verses which contain this exact text</b>: Finds the exact word, part of a word, or phrase, everywhere that it occurs.`</b><br>`</b><br>3) <b>Advanced matching using special search terms</b>: You may use the special search terms listed in the table below to build complex searches:`</b><br>`</b><br>4) <b>Find verses which contain similar words</b>: Finds verses that contain words similar to those given. This is useful if you don't know exactly how a word is spelled, or to find variations of words. Results can be listed in order of relevance by unchecking "Show results in order".`</b><br>`</b><br>`</b><br>
+`[search-help-window.example_heading]:`<b>` EXAMPLE`</b><br>
+`[search-help-window.exclamation_description]:`<b>` Finds verses with "love" but <b>not</b> "God"`</b><br>
+`[search-help-window.exclamation_example]:`<b>` love !God`</b><br>
+`[search-help-window.notes_heading]:`<b>` NOTES`</b><br>
+`[search-help-window.parenthesis_description]:`<b>` Finds verses with "great" <b>or</b> "little" <b>and</b> "love"`</b><br>
+`[search-help-window.parenthesis_example]:`<b>` (great || little) && love`</b><br>
+`[search-help-window.question_mark_description]:`<b>` Matches "beloved", "unloved" etc.`</b><br>
+`[search-help-window.question_mark_example]:`<b>` ??loved`</b><br>
+`[search-help-window.question_mark_notes]:`<b>` Can be used anywhere in word`</b><br>
+`[search-help-window.quotes_description]:`<b>` Finds verses with the exact phrase "For God so loved"`</b><br>
+`[search-help-window.quotes_example]:`<b>` "For God so loved"`</b><br>
+`[search-help-window.star_description]:`<b>` Matches any word beginning with "Heav"`</b><br>
+`[search-help-window.star_example]:`<b>` Heav*`</b><br>
+`[search-help-window.star_notes]:`<b>` Can be used anywhere except at the beginning of a word`</b><br>
+`[search-help-window.term_heading]:`<b>` TERM`</b><br>
+`[search-help-window.tilde_description]:`<b>` Finds words <b>spelled similarly</b> to "Nebacadnezzer"`</b><br>
+`[search-help-window.tilde_example]:`<b>` Nebacadnezzer~`</b><br>
+`[search-help-window.tilde_notes]:`<b>` This is useful if you don't know exact spelling of a word`</b><br>
+`[search-help-window.vertical_bar_description]:`<b>` Finds verses with either "love" <b>or</b> "God"`</b><br>
+`[search-help-window.vertical_bar_example]:`<b>` love || God`</b><br>
+`[dialog-window.cancel]:`<b>` Cancel`</b><br>
+`[dialog-window.no]:`<b>` &No`</b><br>
+`[dialog-window.ok]:`<b>` OK`</b><br>
+`[dialog-window.save]:`<b>` &Save`</b><br>
+`[dialog-window.select]:`<b>` Select`</b><br>
+`[dialog-window.yes]:`<b>` &Yes`</b><br>
+`[file-chooser.html_title]:`<b>` HTML Files`</b><br>
+`[file-chooser.image_title]:`<b>` Image Files`</b><br>
+`[file-chooser.text_title]:`<b>` Text Files`</b><br>
+`[file-chooser.xml_title]:`<b>` XML Files`</b><br>
+`[file-chooser.xul_title]:`<b>` XUL Files`</b><br>
+`[error-reporter.dont_show_this_again]:`<b>` Do not show me this dialog box again.`</b><br>
+`[error-reporter.error_detection_message]:`<b>` A problem may have been detected. To report this problem press \"%1$S\".`</b><br>
+`[splash-secure-window.insert_cdrom]:`<b>` Please insert the installation CDROM and try again.`</b><br>
