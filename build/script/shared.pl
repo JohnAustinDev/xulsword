@@ -42,18 +42,20 @@ sub updateConfInfo($$$) {
   }
 }
 
-sub copyModulesTo($@$$$) {
+sub copyModulesTo($@$$) {
   my $modpath = shift;
   my $listptr = shift;
   my $includeIndexes = shift;
   my $dest = shift;
-  my $log = shift;
+  
+  my $keyfile = "$MKS\\moduleDev\\swordmk-mods\\keys.txt";
 
   # Copy modules to destination, handle indexes properly
   foreach $mod (@{$listptr}) {
     my $modlc = lc($mod);
     my $dir = &getSwordDir($modlc);
     if ($dir eq "") {next;}
+    my $log = "$MKS\\moduleDev\\$dir\\module_log.txt";
 
     chdir("$MKS\\moduleDev\\$dir"); # so that mkfastmod will work!
 
@@ -62,9 +64,11 @@ sub copyModulesTo($@$$$) {
       &logit("Creating search index in $modpath for $mod...\n", $log);
       if (-e "$MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc\\lucene") {`rmdir /Q /S \"$MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc\\lucene\"`;}
       $mykey="";
-      open(INF, "<$MKS\\moduleDev\\$dir\\keys.txt") || die "Could not open $MKS\\moduleDev\\$dir\\keys.txt\n";
-      while(<INF>) {if ($_ =~ /^(.*):$mod$/) {$mykey = $1;}}
-      close(INF);
+      if ($dir eq "swordmk-mods") {
+        open(INF, "<$keyfile") || die "Could not open $keyfile\n";
+        while(<INF>) {if ($_ =~ /^(.*):$mod$/) {$mykey = $1;}}
+        close(INF);
+      }
       if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf", $mykey, $dir);}
       `\"$MK\\Cpp\\swordMK\\utilities\\bin\\mkfastmod.exe\" $mod >> \"$log\"`;
       if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf", "", $dir);}

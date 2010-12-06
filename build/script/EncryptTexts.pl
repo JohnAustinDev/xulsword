@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#usage EncryptTexts.pl MK MKS MKO useSecurityMod moduleVersion bibleTextEncryptionKey currentKeys.txt chromeCode.h modname1 modname2 ...
+#usage EncryptTexts.pl MK MKS MKO useSecurityMod moduleVersion bibleTextEncryptionKey chromeCode.h modname1 modname2 ...
 
 $MK = shift;
 $MKS = shift;
@@ -8,15 +8,16 @@ $MKO = shift;
 $usesecm = shift;
 $version = shift;
 $progkey = shift;
-$keyfile = shift;
 $codfile = shift;
 $encryptedTexts = shift;
-$log = "$MKS\\moduleDev\\swordmk-mods\\Out_EncryptTexts.txt";
+$log = "$MKS\\moduleDev\\swordmk-mods\\module_log.txt";
+
+$keyfile = "$MKS\\moduleDev\\swordmk-mods\\keys.txt";
 
 $encryptedTexts =~ s/(^\s*|\"|\s*$)//g;
 @EncryptedTexts = split(/\s*,\s*/, $encryptedTexts);
 
-&logit("\n\n------------------------------------------\n" . `date /T` . `time /T`);
+&logit("\n\n------------------------------------------\nEncryptTexts.pl\n" . `date /T` . `time /T`);
 
 # Read encryption codes of current texts
 open(INF, "<$keyfile");

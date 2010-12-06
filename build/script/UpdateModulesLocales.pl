@@ -88,7 +88,7 @@ sub processModuleGroup($@) {
   my $path = shift;
   my $listptr = shift;
   
-  copyModulesTo($path, \@{$listptr}, $IncludeIndexes, $ResDir, "$MKS\\moduleDev\\$dir\\Out_EncryptTexts.txt");
+  copyModulesTo($path, \@{$listptr}, $IncludeIndexes, $ResDir);
   
   if (-e "$MKS/installer") {
     if (!(-e "$MKS/installer/autogen")) {mkdir("$MKS/installer/autogen");}
