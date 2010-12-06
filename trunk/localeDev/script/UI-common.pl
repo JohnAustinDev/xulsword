@@ -60,6 +60,7 @@ sub readDescriptionsFromUI($%) {
     my $d = $1;
     my $v = $2;
     if ($v eq "_NOT_FOUND_") {&Log("WARNING $f line $line: Value for $d was \"$v\"\n"); next;}
+    if (exists($descValuesP->{$d})) {&Log("WARNING $f line $line: Overwriting \"".$descValuesP->{$d}."\" with \"".$v."\" in \"$d\".\n");}
     $descValuesP->{$d} = $v;
   }
   close(UI);

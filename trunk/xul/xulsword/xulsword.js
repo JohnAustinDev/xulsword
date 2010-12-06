@@ -313,7 +313,7 @@ function createSearchBible() {
 
 function updateAfterInit() {
   updateFrameScriptBoxesReal([false, true, true, true], SCROLLTYPECENTER, HILIGHTNONE, NOUPDATELOCATOR);
-  window.setTimeout("for (var w=1; w<=3; w++) {document.getElementById('bible' + w + 'Frame').style.visibility = 'visible';}", 100);
+  window.setTimeout("for (var w=1; w<=prefs.getIntPref('NumDisplayedWindows'); w++) {document.getElementById('bible' + w + 'Frame').style.visibility = 'visible';}", 100);
   window.setTimeout("postWindowInit()", 1000);
 }
 
@@ -3014,6 +3014,7 @@ function updateAudioLinks(updateNeededArray) {
     var icons = FrameDocument[w].getElementsByName("listenlink");
     for (var i = 0; i < icons.length; ++i) {
       var icon = icons[i];
+//icon.style.visibility = "visible"; continue;
       if (AudioDirs === null) AudioDirs = getAudioDirs();
       if (getAudioForChapter(Win[w].modName, bk, Number(icon.id.split(".")[1]), AudioDirs)) icon.style.visibility = "visible";
     }
@@ -4263,7 +4264,7 @@ function resizeWatchReal() {
   prefs.setIntPref("WindowHeight",window.innerHeight);
   prefs.setIntPref("WindowWidth",window.innerWidth);
   resizeScriptBoxes();
-  for (var w=1; w<=3; w++) {document.getElementById("bible" + w + "Frame").style.visibility = "visible";}
+  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {document.getElementById("bible" + w + "Frame").style.visibility = "visible";}
   document.getElementById("genBookChooser").style.visibility = (prefs.getBoolPref("ShowGenBookChooser") ? "visible":"hidden");
 }
 
