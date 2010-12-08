@@ -12,11 +12,11 @@ Download a Firefox 3 language pack in your target language, or the next best lan
 ==Building a new UI==
 To do this properly, you need a Subversion (SVN) client installed on your computer. A good one is TortoiseSVN: http://tortoisesvn.net/downloads.html. After installing TortoiseSVN you should create a folder for the code somewhere. Right click on this folder and click on the context menu where it should show "`SVN Checkout...`". Then enter "https://xulsword.googlecode.com/svn/trunk/" as the repository URL and click ok. It should then download the code for you. Finally, you need to set another Windows environment variable called "`MK`" to this directory.
 
-Now, assuming you have Perl installed and in your path, then you need to edit the `%MK%\localeDev\makeUI.bat` file to replace `ex` with <your-locale> where `ex` appears in the arguments for the Perl scripts. Run `makeUI.bat` and you should have two new files in the `%MKS%\localeDev\locales` directory. These two files constitute the new xulsword locale. Copy them into the chrome directory of your xulsword installation and restart xulsword. Your new language should now appear in the `Options->Languages` menu.
+Now, assuming you have Perl installed and in your path, then you need to edit the `%MK%\localeDev\makeUI.bat` file to replace "`ex`" with `<your-locale>` where "`ex`" appears in the argument lists for the Perl scripts. Run `makeUI.bat` and you should have two new files in the `%MKS%\localeDev\locales` directory. These two files constitute the new xulsword locale. Copy them into the chrome directory of your xulsword installation and restart xulsword. Your new language should now appear in the `Options->Languages` menu.
 
-Of course, you will want to finish translating the locale listing file(s) of the new UI (which were just created in `%MKS%\localeDev\<your-locale>`), and then rerun `makeUI.bat` again, but this time COMMENT OUT the `UI-listing.pl` line, because you do not want to overwrite the listing files which you have translated. 
+Of course, you will want to finish translating the locale listing file of the new UI (which was just created in `%MKS%\localeDev\<your-locale>`), and then rerun `makeUI.bat` again- but this time COMMENT OUT the `UI-listing.pl` line, because you do not want to overwrite the listing file which you have translated. 
 
-==Add a locale to your xulSword build==
+==Add a locale to the xulSword build==
 Add the locale's [http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes ISO 639-1] code to the "`%MK%\build\Appinfo.bat`" file's `AllLocales` line. Also add it to the `IncludeLocales` line to include it in your build. After rebuilding xulSword, you should see a language menu item corresponding to the new locale under the `Options->Languages` menu.
 
 The `%MKS%\localeDev` directory has the following basic structure:
