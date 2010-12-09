@@ -39,3 +39,4 @@ ECHO --- MAKE COMPLETE ---
 pause
 
 :EOF
+exit
