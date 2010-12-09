@@ -3,19 +3,21 @@
 # NOTE: these functions must have globals $MK and $MKS defined before they will work!
 
 # Updates the "minMKVersion" and "xulswordVersion" of each conf file in the dir.
-# If "minMKVersion" already exists then it is not changed (because it is specific
-# to each module). But "xulswordVersion" is always updated (because it depends on
-# other elements in the xulSword module).
-sub updateConfInfo($$$) {
+sub updateConfInfo($$$$) {
   my $dir = shift;
   my $mpvfxsm = shift;
   my $xsmv = shift;
+  my $thisModOnly = shift;
+
+  my $msg = "";
   
   if ($xsmv eq "" || $xsmv < 2.10) {$xsmv = 2.10;}
   opendir(CONF, "$MKS/moduleDev/$dir/mods.d");
   @confs = readdir(CONF);
   close(CONF);
   foreach $conf (@confs) {
+    if ($conf =~ /^\.+$/ || -d "$MKS/moduleDev/$dir/mods.d/$conf") {next;}
+    if ($thisModOnly ne "" && $conf ne lc($thisModOnly).".conf") {next;}
     open(TMP, ">$MKS/moduleDev/$dir/tmp.conf");
     open(INC, "<$MKS/moduleDev/$dir/mods.d/$conf");
     $hasXSMversion = "false";
@@ -23,14 +25,15 @@ sub updateConfInfo($$$) {
     my $versification = "";
     while(<INC>) {
       if ($_ =~ /^\s*Versification\s*=\s*(.*)\s*$/) {$versification = $1;}
+      $mpvfxsm =~ /^\s*(\d+)\.(\d+)\s*$/;
       if ($versification ne "" && $versification ne "EASTERN") {
-        if ($mpvfxsm eq "" || $mpvfxsm < 2.13) {$mpvfxsm = 2.13;}
+        if ($mpvfxsm eq "" || $1<2 || ($1==2 && $2<13)) {$mpvfxsm = 2.13;}
       }
       else {
-        if ($mpvfxsm eq "" || $mpvfxsm < 2.7) {$mpvfxsm = 2.7;}
+        if ($mpvfxsm eq "" || $1<2 || ($1==2 && $2<7)) {$mpvfxsm = 2.7;}
       }
       if ($_ =~ s/^\s*(xulswordVersion\s*=\s*).*$/$1$xsmv/) {$hasXSMversion = "true";}
-      if ($_ =~ /^\s*(minMKVersion\s*=\s*).*$/) {$hasMinProgversionForXSM = "true"};
+      if ($_ =~ s/^\s*(minMKVersion\s*=\s*).*$/$1$mpvfxsm/) {$hasMinProgversionForXSM = "true"};
       print TMP $_;
     }
     close(INC);
@@ -39,7 +42,10 @@ sub updateConfInfo($$$) {
     close(TMP);
     unlink(INC);
     rename("$MKS/moduleDev/$dir/tmp.conf", "$MKS/moduleDev/$dir/mods.d/$conf");
+    $msg = $msg."    $dir\\$conf: xulswordVersion=$xsmv, minMKVersion=$mpvfxsm\n";
   }
+  if ($msg eq "") {&logit("ERROR: Did not update any conf file in $dir\n")}
+  else {&logit("$msg");}
 }
 
 sub copyModulesTo($@$$) {
@@ -55,13 +61,13 @@ sub copyModulesTo($@$$) {
     my $modlc = lc($mod);
     my $dir = &getSwordDir($modlc);
     if ($dir eq "") {next;}
-    my $log = "$MKS\\moduleDev\\$dir\\module_log.txt";
 
     chdir("$MKS\\moduleDev\\$dir"); # so that mkfastmod will work!
+    if (! -e "$MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc") {&logit("ERROR: Skipping $MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc. Module directory does not exist\n"); next;}
+    &logit("    $dir\\modules\\$modpath\\$modlc - COPYING\n");
 
     if ($includeIndexes eq "true") {
-      print "Creating search index in $modpath for $mod...\n";
-      &logit("Creating search index in $modpath for $mod...\n", $log);
+      &logit("    $dir\\modules\\$modpath\\$modlc\\lucene - CREATING SEARCH INDEX\n");
       if (-e "$MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc\\lucene") {`rmdir /Q /S \"$MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc\\lucene\"`;}
       $mykey="";
       if ($dir eq "swordmk-mods") {
@@ -70,7 +76,7 @@ sub copyModulesTo($@$$) {
         close(INF);
       }
       if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf", $mykey, $dir);}
-      `\"$MK\\Cpp\\swordMK\\utilities\\bin\\mkfastmod.exe\" $mod >> \"$log\"`;
+      `\"$MK\\Cpp\\swordMK\\utilities\\bin\\mkfastmod.exe\" $mod >> \"$LOG\"`;
       if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf", "", $dir);}
     }
     if (!-e "$dest\\mods.d") {`mkdir "$dest\\mods.d"`;}
@@ -99,21 +105,51 @@ sub setCipher($$$) {
   rename ("$MKS\\moduleDev\\$d\\tmp.xml", $c);
 }
 
+sub updateAppinfo($\@) {
+  my $appinfo = shift;
+  my $changesP = shift;
+  `copy /Y \"$MKS\\build\\Appinfo.bat\" \"$MKS\\build\\Appinfo.bat.save\"`;
+  open(INF, "<$MKS\\build\\Appinfo.bat.save") || die "Could not open $MKS\\build\\Appinfo.bat.save\n";
+  open(OUTF, ">$MKS\\build\\Appinfo.bat") || die "Could not open $MKS\\build\\Appinfo.bat\n";
+  while(<INF>) {
+    for ($i=0; $i<@{$changesP}; $i++) {
+      if (@{$changesP}[$i] !~ /^\s*(.*?)\s*=\s*(.*?)\s*$/) {die "Bad Appinfo data\n";}
+      my $var = $1;
+      my $val = $2;
+      if ($_ =~ s/^\s*(Set|set|SET)\s+($var)\s*=.*$/$1 $2=$val/) {last;}
+    }
+    print OUTF $_;
+  }
+  close(INF);
+  close(OUTF);
+}
+
 sub getSwordDir($) {
   my $mod = shift;
   my $mdir = "";
   if (-e "$MKS\\moduleDev\\swordmk-mods\\mods.d\\$mod.conf") {$mdir = "swordmk-mods";}
   elsif (-e "$MKS\\moduleDev\\sword-mods\\mods.d\\$mod.conf") {$mdir = "sword-mods";}
-  else {&logit("Could not locate module $mod for copying.", $log);}
+  else {&logit("ERROR: Skipping $mod. Could not locate conf file in swordmk-mods or sword-mods.");}
   return $mdir;
 }
 
-sub logit($$) {
-  my $l = shift;
-  my $lf = shift;
+sub getPathOfType($) {
+  my $t = shift;
+  my $p = "texts\\ztext";
+  if ($t eq "commentary")    {$p = "comments\\zcom";}
+  elsif ($t eq "genbook")    {$p = "genbook\\rawgenbook";}
+  elsif ($t eq "dictionary") {$p = "lexdict\\rawld";}
+  elsif ($t eq "devotional") {$p = "lexdict\\rawld\\devotionals";}
+  return $p;
+}
+
+sub logit($) {
+  my $p = shift;
   
-  open(LOGF, ">>$lf") || die "Could not open log file $lf\n";
-  print LOGF $l;
+  print $p;
+  if ($LOG eq "") {$LOG = "$MKS\\moduleDev\\module_log.txt";}
+  open(LOGF, ">>$LOG") || die "Could not open log file $LOG\n";
+  print LOGF $p;
   close(LOGF);
 }
 
