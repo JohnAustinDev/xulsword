@@ -3,6 +3,8 @@ cd "%MK%\build"
 
 Set skipPause=%1
 if not defined skipPause Set skipPause=false
+Set exitWhenDone=%2
+if not defined exitWhenDone Set exitWhenDone=false
 
 if not defined MKAppinfo Set MKAppinfo=%MK%\build
 call "%MKAppinfo%\Appinfo.bat"
@@ -39,4 +41,7 @@ ECHO --- MAKE COMPLETE ---
 pause
 
 :EOF
+if not %exitWhenDone%==true goto EOF2
 exit
+
+:EOF2
