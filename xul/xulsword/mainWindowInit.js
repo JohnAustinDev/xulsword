@@ -142,6 +142,7 @@ function createTabs() {
     var font = Bible.getModuleInformation(info[0], "Font")
     var fontSA = Bible.getModuleInformation(info[0], "FontSizeAdjust");
     var fontLH = Bible.getModuleInformation(info[0], "LineHeight");
+    var mlang = Bible.getModuleInformation(info[0], "Lang");
     if (dir.search("RtoL","i")!=-1) versionConfig.direction = "rtl";
     if (font != NOTFOUND) versionConfig.font = font;
     if (fontSA != NOTFOUND) versionConfig.fontSizeAdjust = fontSA;
@@ -150,9 +151,6 @@ function createTabs() {
     StyleRules.push(getStyleRule(".vstyle" + info[0], versionConfig));
 
     // Language glossaries don't currently work (too big??) and so aren't supported.
-    if      (info[0] == "StrongsGreek")   LanguageStudyModules.StrongsGreek   = info[0];
-    else if (info[0] == "StrongsHebrew")  LanguageStudyModules.StrongsHebrew  = info[0];
-    else if (info[0] == "Robinson")       LanguageStudyModules.Robinson      = info[0];
     if (Bible.getModuleInformation(info[0], "GlossaryFrom") != NOTFOUND) continue;
     if (type == DICTIONARY) {
       var feature = Bible.getModuleInformation(info[0], "Feature");
@@ -160,13 +158,16 @@ function createTabs() {
         prefs.setCharPref("ShowingKey" + info[0], "DailyDevotionToday");
       }
       else if (feature.search("GreekDef")!=-1)  {
-        LanguageStudyModules["StrongsGreek" + Bible.getModuleInformation(info[0], "Lang")] = info[0];
+        if (mlang.match(/^ru/i) || !LanguageStudyModules.StrongsGreek) LanguageStudyModules.StrongsGreek = info[0];
+        LanguageStudyModules["StrongsGreek" + mlang] = info[0];
       }
       else if (feature.search("HebrewDef")!=-1) {
+        if (mlang.match(/^ru/i) || !LanguageStudyModules.StrongsHebrew) LanguageStudyModules.StrongsHebrew = info[0];
         LanguageStudyModules["StrongsHebrew" + Bible.getModuleInformation(info[0], "Lang")] = info[0];
       }
       else if (feature.search("GreekParse")!=-1) {
-        LanguageStudyModules["Robinson" + Bible.getModuleInformation(info[0], "Lang")] = info[0];
+        if (mlang.match(/^ru/i) || !LanguageStudyModules.GreekParse) LanguageStudyModules.GreekParse = info[0];
+        LanguageStudyModules["GreekParse" + Bible.getModuleInformation(info[0], "Lang")] = info[0];
       }
     }
     //dump(m + " " + info[0] + " " + info[1] + "\n");

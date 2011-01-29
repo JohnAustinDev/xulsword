@@ -2798,10 +2798,10 @@ function getLemmaHTML(numberList, matchingPhrase) {
       key = pad.substr(0,5-(key.length-1)) + key.substr(1);
       break;
     case "RM":
-      if (LanguageStudyModules["Robinson" + defaultBibleLanguage])
-        module = LanguageStudyModules["Robinson" + defaultBibleLanguage];
-      else if (LanguageStudyModules["Robinson"])
-        module = LanguageStudyModules["Robinson"];
+      if (LanguageStudyModules["GreekParse" + defaultBibleLanguage])
+        module = LanguageStudyModules["GreekParse" + defaultBibleLanguage];
+      else if (LanguageStudyModules["GreekParse"])
+        module = LanguageStudyModules["GreekParse"];
       break;
     case "SM":
       saveKey = "SM" + key;
@@ -3179,8 +3179,8 @@ function needToInitText(s, textCache, display) {
   for (var el in display) {
     if (el == "key" || el == "verse") continue; // only verseKey mods use cacheing
     else if (el == "chapter") {
-      if (1*(textCache.display.chapter - textCache.numPrependedChaps) > display.chapter) {initCache = true;}
-      if (1*(textCache.display.chapter + textCache.numAppendedChaps)  < display.chapter) {initCache = true;}
+      if ((Number(textCache.display.chapter) - textCache.numPrependedChaps) > display.chapter) {initCache = true;}
+      if ((Number(textCache.display.chapter) + textCache.numAppendedChaps)  < display.chapter) {initCache = true;}
     }
     else if (el == "globalOptions") {
       for (var el2 in display.globalOptions) {
@@ -3240,7 +3240,7 @@ function getBodyHTML(s, p, chapOffset) {
     var showBook = s.isPinned;
     showBook |=  ((s.scrollTypeFlag==SCROLLTYPENONE || s.scrollTypeFlag==SCROLLTYPEBEG || Bible.getChapterNumber(s.win.modName)==1) && chapOffset==0);
     if (chapterText)
-      chapterText = FrameDocument[s.link.firstWin].defaultView.getScriptBoxHeader(Bible.getBookName(), p.display.chapter+chapOffset, s.win.modName, showBook, false, prefs.getBoolPref("ShowOriginal" + s.win.number)) + chapterText;
+      chapterText = FrameDocument[s.link.firstWin].defaultView.getScriptBoxHeader(Bible.getBookName(), Number(p.display.chapter)+chapOffset, s.win.modName, showBook, false, prefs.getBoolPref("ShowOriginal" + s.win.number)) + chapterText;
   }
   return chapterText;
 }
