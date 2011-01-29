@@ -106,8 +106,11 @@ var aConsoleListener =
         aURI = aURI.substr(0,MAXLENGTH);
         
 //jsdump(aURI);
-        window.location = aURI;
-        jsdump("Launched mailto URI of " + aURI.length + " chars.");
+        try {
+          window.location = aURI;
+          jsdump("Launched mailto URI of " + aURI.length + " chars.");
+        }
+        catch (er) {jsdump(er);}
         //this.haveException = false;
       }
     }

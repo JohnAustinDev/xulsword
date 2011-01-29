@@ -1200,7 +1200,8 @@ function launchTempScript(scriptContents, ext) {
   foStream.close();
   
   script = script.QueryInterface(Components.interfaces.nsILocalFile);
-  script.launch();
+  try {script.launch();}
+  catch (er) {jsdump("Could not execute script:\n" + scriptContents);}
   
   // This leaves the temp file in the temp directory! But since we are not blocking, it's hard to know when to delete it, and they're small anyway
   return;

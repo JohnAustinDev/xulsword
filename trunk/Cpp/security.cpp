@@ -28,7 +28,7 @@
 using namespace std;
 using namespace sword;
 
-#include "../../extra/Cpp/getcodes.cpp"
+#include "X:/xulsword/extra/Cpp/getcodes.cpp"
 
 bool security::PassedIntegrityCheck = false;
 
