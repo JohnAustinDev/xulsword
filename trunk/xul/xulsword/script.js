@@ -1555,6 +1555,8 @@ function resizeBibles(dontChangeContents, hideNoteBox) {
 function setBibleWidth(initializing) {
   var winW, chooserWidth;
   winW = initializing ? prefs.getIntPref("WindowWidth"):OwnerDocument.width;
+  // Cludge
+  if (guiDirection() == "rtl" && winW < OwnerDocument.getElementById("main-controlbar").boxObject.width) winW = OwnerDocument.getElementById("main-controlbar").boxObject.width;
   //jsdump("Frame Width Pref:" + prefs.getIntPref("WindowWidth") + ", Measured:" + OwnerDocument.width + "\n");
   
   var effectiveWindowPaddingStart;
