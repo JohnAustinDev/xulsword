@@ -95,14 +95,7 @@ sub processModuleGroup($@) {
     # Hack uninstaller file
     if (!(-e "$MKS/installer/autogen/uninstall.iss")) {
       open(OUTF, ">$MKS/installer/autogen/uninstall.iss") || die "Could not open autogen/uninstall.iss";
-      print OUTF "if ResultCode = 0 then\n";
-      print OUTF "begin\n";
-      print OUTF "  CreateDir(ExpandConstant('{userappdata}\\{#MyPublisher}'));\n";
-      print OUTF "  CreateDir(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}'));\n";
-      print OUTF "  CreateDir(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles'));\n";
-      print OUTF "  CreateDir(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources'));\n";
-      print OUTF "  SaveStringToFile(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\newInstalls.txt'), 'NewLocales;NewModules', False);\n";
-      print OUTF "end;\n";
+      print OUTF "SaveStringToFile(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\newInstalls.txt'), 'NewLocales;NewModules', False);\n";
       close(OUTF);
     }
 
@@ -111,8 +104,8 @@ sub processModuleGroup($@) {
     $code="";
     foreach $mod (@{$listptr}) {
       $modlc = lc($mod);
-      $code = $code."  DelTree(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\modules\\".$path."\\".$modlc."'), True, True, True);\n";
-      $code = $code."  DeleteFile(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\mods.d\\".$modlc.".conf'));\n";
+      $code = $code."DelTree(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\modules\\".$path."\\".$modlc."'), True, True, True);\n";
+      $code = $code."DeleteFile(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\mods.d\\".$modlc.".conf'));\n";
       $modlist = $modlist.";".$mod;
     }
 
@@ -125,7 +118,8 @@ sub processModuleGroup($@) {
         $man = $2;
         $en = $3;
         $newlocales = join(";", @includeLocales);
-        $man =~ s/(NewLocales.*)(;NewModules)/NewLocales;$newlocales$2/;
+        #$man =~ s/(NewLocales.*)(;NewModules)/NewLocales;$newlocales$2/;
+        $man =~ s/(NewLocales.*)(;NewModules)/NewLocales$2/; # We don't want F1 activating on regular install!
         $man = $man.$modlist;
         $_ = $st.$man.$en."\n".$code;
       }
