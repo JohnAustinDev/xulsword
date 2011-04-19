@@ -2,6 +2,7 @@
 use Encode;
 #usage: UI-code.pl MK MKS locale noKeys(true|false)
 
+if (!@ARGV) {die;}
 $MK = shift;
 $MKS = shift;
 $locale = shift;
@@ -18,6 +19,13 @@ if (-e "$listFile2") {&readDescriptionsFromUI($listFile2, \%UIDescValue);}
 
 # read the MAP and code file contents into memory structures
 &loadMAP($mapFile, \%MapDescInfo, \%MapFileEntryInfo, \%CodeFileEntryValue, "true");
+
+# remove code file entries that are optional, so that they do not propogate
+for $mfe (keys %MapFileEntryInfo) {
+  if ($mfe !~ /^(.*?)\:optional/ || $MapFileEntryInfo{$mfe} ne "true") {next;}
+#print "HERE IS ONE: ".$1."=".$CodeFileEntryValue{$1}."\n";
+  $CodeFileEntryValue{$1} = "_NOT_FOUND_";  
+}
 
 # merge UI values from listing over existing values from the map
 for $d (keys %UIDescValue) {

@@ -107,30 +107,31 @@ sub loadMAP($%%%$) {
     # get and save description's value when applicable...
     undef(@values);
     undef(@wildms);
-    # this routines usually returns only one value, but when the "*" wildcard is present in the entry, it needs to return all matching entries plus the wild match...
+    # this routine usually returns only one value, but when the "*" wildcard is present in the entry, it needs to return all matching entries plus the wild match...
     &readValuesFromFile(\@values, \@wildms, $fileEntry, $codeFileEntryValueP, $supressWarn, $fileReqd);
     
     my $i;
     for ($i = 0; $i < @values; $i++) {
       my $d = $desc;
+      my $fe = $fileEntry;
       if (exists($wildms[$i]) && $wildms[$i] ne "") {
         $d =~ s/\*/$wildms[$i]/;
-        $fileEntry =~ s/\*/$wildms[$i]/;
+        $fe =~ s/\*/$wildms[$i]/;
       }
       
       # save fileEntry and its information
-      $mapFileEntryInfoP->{$fileEntry.":desc"}       = $d;
-      $mapFileEntryInfoP->{$fileEntry.":line"}       = $line;
-      $mapFileEntryInfoP->{$fileEntry.":unused"}     = $unused;
-      $mapFileEntryInfoP->{$fileEntry.":optional"}   = $optional;
+      $mapFileEntryInfoP->{$fe.":desc"}       = $d;
+      $mapFileEntryInfoP->{$fe.":line"}       = $line;
+      $mapFileEntryInfoP->{$fe.":unused"}     = $unused;
+      $mapFileEntryInfoP->{$fe.":optional"}   = $optional;
     
       if (exists($mapDescInfoP->{$d.":value"})) {
         if    ($values[$i] eq "_NOT_FOUND_") {next;}
         elsif ($mapDescInfoP->{$d.":value"} eq "_NOT_FOUND_") {}
         elsif ($unused eq "true") {next;}
         elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$d.":fileEntry"}.":unused"} eq "true") {}
-        elsif ($sourceFF3 ne "true" && $fileEntry !~ /^xulsword\\/) {next;}
-        elsif ($sourceFF3 eq "true" && $fileEntry =~ /^xulsword\\/ && (!exists($FF2_to_FF3{$fileEntry}) || $FF2_to_FF3{$fileEntry} =~ /<unavailable>/))  {next;}
+        elsif ($sourceFF3 ne "true" && $fe !~ /^xulsword\\/) {next;}
+        elsif ($sourceFF3 eq "true" && $fe =~ /^xulsword\\/ && (!exists($FF2_to_FF3{$fe}) || $FF2_to_FF3{$fe} =~ /<unavailable>/))  {next;}
 
         if ($supressWarn ne "true" && $mapDescInfoP->{$d.":value"} ne $values[$i]) {
           &Log("WARNING line $line: Changing \"".$d."\" from \"".$mapDescInfoP->{$d.":value"}."\" to \"".$values[$i]."\"\n");
@@ -138,7 +139,7 @@ sub loadMAP($%%%$) {
       }
 
       $mapDescInfoP->{$d.":value"}     = $values[$i];
-      $mapDescInfoP->{$d.":fileEntry"} = $fileEntry;
+      $mapDescInfoP->{$d.":fileEntry"} = $fe;
     }
   }
   close(INF);
