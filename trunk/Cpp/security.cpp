@@ -280,14 +280,14 @@ void security::CheckIntegrity() {
         fprintf(info, "%s:%s:%s\n", kbuf, "2.8", mod.c_str());
         getcodes(kbuf, "2.9", mod.c_str());
         fprintf(info, "%s:%s:%s\n", kbuf, "2.9", mod.c_str());
-        getcodes(kbuf, "2.10", mod.c_str());
-        fprintf(info, "%s:%s:%s\n", kbuf, "2.10", mod.c_str());
-        getcodes(kbuf, "2.11", mod.c_str());
-        fprintf(info, "%s:%s:%s\n", kbuf, "2.11", mod.c_str());
-        getcodes(kbuf, "2.12", mod.c_str());
-        fprintf(info, "%s:%s:%s\n", kbuf, "2.12", mod.c_str());
         getcodes(kbuf, "3.0", mod.c_str());
         fprintf(info, "%s:%s:%s\n", kbuf, "3.0", mod.c_str());
+        getcodes(kbuf, "3.1", mod.c_str());
+        fprintf(info, "%s:%s:%s\n", kbuf, "3.1", mod.c_str());
+        getcodes(kbuf, "3.2", mod.c_str());
+        fprintf(info, "%s:%s:%s\n", kbuf, "3.2", mod.c_str());
+        getcodes(kbuf, "3.3", mod.c_str());
+        fprintf(info, "%s:%s:%s\n", kbuf, "3.3", mod.c_str());
       }
       while (e < mods.length());
   		fprintf(info, "*/");
