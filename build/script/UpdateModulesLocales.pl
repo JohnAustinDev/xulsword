@@ -42,7 +42,7 @@ opendir(CHROME, "$MK/xulrunner/chrome");
 close(CHROME);
   
 foreach $entry (@chromelist) {
-  if ($entry !~ /^(\w\w(-\w*)?)\.(locale\.manifest|jar|txt)$/) {next;}
+  if ($entry !~ /^(.*)\.(locale\.manifest)$/) {next;}
   $locale = $1;
   if ($locale eq "en-US") {$hasEN = "true"; next;}
   $bk = "false";
