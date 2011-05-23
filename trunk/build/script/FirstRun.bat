@@ -17,3 +17,4 @@ move "%MK%\xul\xulrunnerDevAndProd\xulrunner\xpcshell.exe"      "%MK%\xul\xulrun
 move "%MK%\xul\xulrunnerDevAndProd\xulrunner\xpidl.exe"         "%MK%\xul\xulrunnerDevAndProd\unused"
 move "%MK%\xul\xulrunnerDevAndProd\xulrunner\xpt_dump.exe"      "%MK%\xul\xulrunnerDevAndProd\unused"
 move "%MK%\xul\xulrunnerDevAndProd\xulrunner\xpt_link.exe"      "%MK%\xul\xulrunnerDevAndProd\unused"
+move "%MK%\xul\xulrunnerDevAndProd\xulrunner\xulrunner-stub.exe" "%MK%\xul\xulrunnerDevAndProd\unused"
