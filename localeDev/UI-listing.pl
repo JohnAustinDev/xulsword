@@ -17,6 +17,11 @@ if ($logFile ne "") {if (!open(LOG, ">$MKS\\localeDev\\$locale\\$logFile")) {&Lo
 if (-e $listFile)  {&Log("Listing file \"$listFile\" already exists.\nFinished.\n"); die;}
 if (-e $listFile2) {&Log("Listing file \"$listFile2\" already exists.\nFinished.\n"); die;}
 
+# if the local locale contains special UI material, handle it
+&extractFromLocale("xulsword\\splash.png", "text-skin\\xulsword");
+&extractFromLocale("skin\\NT.png", "text-skin\\skin");
+&extractFromLocale("skin\\OT.png", "text-skin\\skin"); 
+
 # read Firefox 2 to Firefox 3 map if needed
 if ($sourceFF3 eq "true") {
   if (!open(FF2, "<$ff2to3MAP")) {&Log("Could not open Firefox 2 to 3 MAP file \"$ff2to3MAP\"\nFinished.\n"); die;}
@@ -81,5 +86,19 @@ sub saveListing(@%%) {
     elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$_.":fileEntry"}.":unused"}   eq "true") {$File2 = $File2.$p;}
     elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$_.":fileEntry"}.":optional"} eq "true") {$File2 = $File2.$p;}
     else {&Print($p);}
+  }
+}
+
+sub extractFromLocale($$) {
+  my $srcf = shift;
+  my $dest = shift;
+  
+  if (-e "$MKS\\localeDev\\$locale\\locale\\$srcf") {
+    print "\n\nFound in locale: \"$srcf\"\n\tExtract and overwrite existing? (Y/N):"; 
+    $in = <>; 
+    if ($in =~ /^\s*y\s*$/i) {
+      if (!-e "$MKS\\localeDev\\$locale\\$dest") {`mkdir \"$MKS\\localeDev\\$locale\\$dest\"`;}
+      `copy /Y \"$MKS\\localeDev\\$locale\\locale\\$srcf\" \"$MKS\\localeDev\\$locale\\$dest\\\"`;
+    }
   }
 }
