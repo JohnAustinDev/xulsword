@@ -16,7 +16,12 @@ if errorlevel 1 call "%MK%\build\script\FirstRun.bat"
 ECHO --- COPY XULRUNNER FILES
 del /Q "%MK%\xulrunner\*.exe"
 xcopy "%MK%\xul\xulrunnerDevAndProd\xulrunner" "%MK%\xulrunner" /S /Y
-rename "%MK%\xulrunner\xulrunner-stub.exe" "%executable%"
+
+ECHO --- COMPILE executable stub
+cd %MK%\Cpp\runMK"
+del "Release\runMK.exe"
+call Compile.bat
+copy "%MK%\Cpp\runMK\Release\runMK.exe" "%MK%\xulrunner\%executable%"
 
 ECHO --- COPY XUL PRODUCTION ONLY FILES
 del /Q "%MKS%\localeDev\locales\*"

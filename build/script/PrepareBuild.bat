@@ -122,7 +122,7 @@ echo "Version"=- >> unsetRegistry.reg
 
 ECHO --- WRITING REMOVEALLPROFILES.BAT
 cd "%MK%\build\autogen"
-echo RMDIR /S /Q "%USERPROFILE%\Local Settings\Application Data\%vendor%" > RemoveAllProfiles.bat
-echo RMDIR /S /Q "%USERPROFILE%\Application Data\%vendor%" >> RemoveAllProfiles.bat
+echo RMDIR /S /Q "%APPDATA%\%vendor%" > RemoveAllProfiles.bat
+echo RMDIR /S /Q "%LOCALAPPDATA%\%vendor%" >> RemoveAllProfiles.bat
 
 cd "%MK%\build"

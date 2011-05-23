@@ -8,6 +8,7 @@ set lucene=true;
 set libsword=true;
 set xulsword=true;
 set runPortable=true;
+set runMK=true;
 
 cd "%MK%\%CPPD%"
 call versions.bat
@@ -41,6 +42,12 @@ call versions.bat
 @call Compile.bat
 @cd "..\"
 :NO_RUNPORT
+
+@if not %runMK%==true goto NO_RUNMK
+@cd ".\runMK"
+@call Compile.bat
+@cd "..\"
+:NO_RUNMK
 
 @if not %xulsword%==true goto NO_XULSWORD
 @call Compile.bat %1
