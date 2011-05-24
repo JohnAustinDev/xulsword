@@ -2,7 +2,7 @@ echo off
 cd "%MK%\Cpp"
 
 ECHO Killing any existing xulrunner...
-pskill -t %executable%
+pskill -t %xsprocess%
 
 cd "%MK%\Cpp"
 
@@ -43,7 +43,7 @@ goto WAIT4CODE1
 
 :KILLPROG1
 ECHO Creating locale.txt crc code files
-pskill -t %executable%
+pskill -t %xsprocess%
 cd "%MK%\Cpp"
 call localeCodes.pl "%MK%" "%MKS%" "%MKO%"
 call localeCodes2.7.pl "%MK%" "%MKS%" "%MKO%"
@@ -61,7 +61,7 @@ if exist "Release\chromeCode.h" goto KILLPROG2
 goto WAIT4CODE2
 
 :KILLPROG2
-pskill -t %executable%
+pskill -t %xsprocess%
 
 :COMPILE
 ECHO Compiling...

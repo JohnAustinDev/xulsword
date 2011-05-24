@@ -17,6 +17,7 @@ cd %MK%\Cpp\runMK"
 del "Release\runMK.exe"
 call Compile.bat
 copy "%MK%\Cpp\runMK\Release\runMK.exe" "%MK%\xulrunner\%executable%"
+rename "%MK%\xulrunner\xulrunner.exe" %xsprocess% 
 
 ECHO --- COPY XUL DEVELOPMENT ONLY FILES
 copy /Y "%MK%\xul\xulrunnerDevelopment\chrome\*" "%MK%\xulrunner\chrome"
