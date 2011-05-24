@@ -37,11 +37,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
   wchar_t commandLine[1024];
   wchar_t rundir[1024];
   if (lret==0) {
-    StringCbPrintf(commandLine, sizeof(wchar_t)*1024, L"\"%s\\xulrunner.exe\" application.ini %s", keyvalue, wlpCmdLine);
+    StringCbPrintf(commandLine, sizeof(wchar_t)*1024, L"\"%s\\%s\" application.ini %s", keyvalue, TEXT(PROC_NAME), wlpCmdLine);
     StringCbPrintf(rundir,      sizeof(wchar_t)*1024, L"%s", keyvalue);
   }
   // if no registry value is found, look for xulrunner.exe etc in caller's directory
-  else {StringCbPrintf(commandLine, sizeof(wchar_t)*1024, L"\"xulrunner.exe\" application.ini %s", wlpCmdLine);}
+  else {StringCbPrintf(commandLine, sizeof(wchar_t)*1024, L"\"%s\" application.ini %s", TEXT(PROC_NAME), wlpCmdLine);}
   //std::wcout << L"commandLine:" << commandLine << L", rundir:" << rundir << '\n';  
     
 	// Parameter 2 MUST be modifiable for CreateProcessW

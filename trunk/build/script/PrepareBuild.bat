@@ -1,6 +1,9 @@
 echo off
 cd "%MK%\Build"
 
+:: define process name
+set xsprocess=%executable:.exe=Runner.exe%
+
 :: isPortable is set the first time Appinfo is called during a thread, and then remains unchanged
 if not defined isPortable Set isPortable=%1
 if not defined isPortable Set isPortable=false
@@ -93,7 +96,7 @@ mkdir "%MK%\Cpp\Release"
 cd "%MK%\Cpp\Release"
 echo #define PATH_TO_PROGRAM "%%s\\%executable%"> appInfo.h
 echo #define KEYADDRESS "Software\\%vendor%\\%name%">> appInfo.h
-echo #define PROC_NAME "%executable%">> appInfo.h
+echo #define PROC_NAME "%xsprocess%">> appInfo.h
 ::echo #define PORTABLE_RUN L"\".\\%name%\\%name%Local.exe\" -profile \"..\\profile\" -console -jsconsole">> appInfo.h
 echo #define PORTABLE_RUN L"\".\\%name%\\%name%Local.exe\" -profile \"..\\profile\"">> appInfo.h
 echo #define PORTABLE_DIR L".\\%name%">> appInfo.h

@@ -22,6 +22,7 @@ cd %MK%\Cpp\runMK"
 del "Release\runMK.exe"
 call Compile.bat
 copy "%MK%\Cpp\runMK\Release\runMK.exe" "%MK%\xulrunner\%executable%"
+rename "%MK%\xulrunner\xulrunner.exe" %xsprocess%
 
 ECHO --- COPY XUL PRODUCTION ONLY FILES
 del /Q "%MKS%\localeDev\locales\*"
