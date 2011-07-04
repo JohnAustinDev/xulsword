@@ -1,26 +1,28 @@
 #!/usr/bin/perl
 use Encode;
-#usage UI-listing.pl MK MKS locale version alternateLocale sourcingFromFirefox3(true|false)
+#usage UI-listing.pl MK MKS locale version alternateLocale firefoxLocale sourcingFromFirefox3(true|false)
 
 $MK = shift;
 $MKS = shift;
 $locale = shift;
 $version = shift;
 $localeALT = shift;
+$firefox = shift;
 $sourceFF3 = shift;
 
 $logFile = "listing_log.txt";
 $dontsort = "true";
 require "$MK\\localeDev\\script\\UI-common.pl";
+
 if (!-e "$MKS\\localeDev\\$locale") {mkdir("$MKS\\localeDev\\$locale");}
 if ($logFile ne "") {if (!open(LOG, ">$MKS\\localeDev\\$locale\\$logFile")) {&Log("Could not open log file $logFile\nFinished.\n"); die;}}
 if (-e $listFile)  {&Log("Listing file \"$listFile\" already exists.\nFinished.\n"); die;}
 if (-e $listFile2) {&Log("Listing file \"$listFile2\" already exists.\nFinished.\n"); die;}
 
 # if the local locale contains special UI material, handle it
-&extractFromLocale("xulsword\\splash.png", "text-skin\\xulsword");
-&extractFromLocale("skin\\NT.png", "text-skin\\skin");
-&extractFromLocale("skin\\OT.png", "text-skin\\skin"); 
+&extractFromLocale($locale, "xulsword\\splash.png", "text-skin\\xulsword");
+&extractFromLocale($locale, "skin\\NT.png", "text-skin\\skin");
+&extractFromLocale($locale, "skin\\OT.png", "text-skin\\skin"); 
 
 # read Firefox 2 to Firefox 3 map if needed
 if ($sourceFF3 eq "true") {
@@ -35,13 +37,14 @@ if ($sourceFF3 eq "true") {
   close(FF2);
 }
 
+&Log($locinfo);
+
 # read the MAP and code file contents into memory structures
 &loadMAP($mapFile, \%MapDescInfo, \%MapFileEntryInfo, \%CodeFileEntryValue);
 
 # print the listing to UI file(s)...
 if (!open(OUTF, ">$listFile")) {&Log("Could not open output file $listFile.\nFinished.\n"); die;}
-$File2 = "Locale:$locale, Version:$version (Alternate locale:$localeALT)\n";
-&Print($File2);
+&Print($locinfo);
 for $di (sort descsort keys %MapDescInfo) {
   if ($di !~ /\:value$/) {next;}
   $d = $di; $d =~ s/\:value$//;
@@ -53,9 +56,9 @@ for $di (sort descsort keys %MapDescInfo) {
 }
 close(OUTF);
 
-if ($File2 ne "Locale:$locale, Version:$version (Alternate locale:$localeALT)\n") {
+if ($File2) {
   if (!open(OUTF, ">$listFile2")) {&Log("Could not open output file $listFile2.\nFinished.\n"); die;}
-  print OUTF $File2;
+  &Print($locinfo.$File2);
   close(OUTF);
 }
 
@@ -89,16 +92,17 @@ sub saveListing(@%%) {
   }
 }
 
-sub extractFromLocale($$) {
+sub extractFromLocale($$$) {
+  my $loc = shift;
   my $srcf = shift;
   my $dest = shift;
   
-  if (-e "$MKS\\localeDev\\$locale\\locale\\$srcf") {
+  if (-e "$MKS\\localeDev\\$loc\\locale\\$srcf") {
     print "\n\nFound in locale: \"$srcf\"\n\tExtract and overwrite existing? (Y/N):"; 
     $in = <>; 
     if ($in =~ /^\s*y\s*$/i) {
-      if (!-e "$MKS\\localeDev\\$locale\\$dest") {`mkdir \"$MKS\\localeDev\\$locale\\$dest\"`;}
-      `copy /Y \"$MKS\\localeDev\\$locale\\locale\\$srcf\" \"$MKS\\localeDev\\$locale\\$dest\\\"`;
+      if (!-e "$MKS\\localeDev\\$loc\\$dest") {`mkdir \"$MKS\\localeDev\\$loc\\$dest\"`;}
+      `copy /Y \"$MKS\\localeDev\\$loc\\locale\\$srcf\" \"$MKS\\localeDev\\$loc\\$dest\\\"`;
     }
   }
 }

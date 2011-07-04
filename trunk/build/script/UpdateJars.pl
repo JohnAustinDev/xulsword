@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 #usage UpdateJars.pl MK MKS MKO isProduction UIversion MinProgversionForUI IncludeLocales AllLocales
-
+use File::Copy;
+use File::Compare;
+    
 $MK = shift;
 $MKS = shift;
 $MKO = shift;
@@ -52,14 +54,25 @@ foreach $locale (@allLocales) {
   close(OUTF);
   
   # create new jar files for each locale
-  $ff3 = ""; # get the base locale
-  opendir(DIR, "$MKS\\localeDev\\$locale");
-  @files = readdir(DIR);
-  foreach (@files) {if ($_ =~ /^(.*?)\.lnk/ && -e "$MKS\\localeDev\\Firefox3\\$1") {$ff3 = $1;}}
-  close(DIR);
-  if ($ff3 eq "") {$ff3 = "en-US"; `ECHO ERROR: COULD NOT DETERMINE BASE LOCALE OF $locale. DEFAULTING TO en-US.`;}
-  `7za a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$ff3\\global\" -x!.svn`;
-  `7za a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$ff3\\mozapps\" -x!.svn`;
+  move("$MKS\\localeDev\\$locale\\code_log.txt", "$MKS\\localeDev\\$locale\\code_log-bak.txt");
+  `$MK\\localeDev\\UI-code.pl "$MK" "$MKS" $locale`;
+  if (compare("$MKS\\localeDev\\$locale\\code_log.txt", "$MKS\\localeDev\\$locale\\code_log-bak.txt") != 0) {
+    print "WARNING: $locale LOG FILE HAS CHANGED. PLEASE CHECK IT!!\n";
+  }
+  unlink("$MKS\\localeDev\\$locale\\code_log-bak.txt");  
+  $firefox = "";
+  if (open(INF, "<$MKS\\localeDev\\$locale\\UI-$locale.txt")) {
+    while (<INF>) {if ($_ =~ /Firefox_locale=([^,]+)/) {$firefox = $1; last;}}
+    close(INF);
+  }
+  if ($firefox eq "") {print "ERROR! DEFAULTING TO en-US FOR LOCALE $locale!!\n"; $firefox = "en-US";}
+  if ($firefox && !-e "$MKS\\localeDev\\Firefox3\\$firefox") {
+    if ($firefox eq "en-US") {print "ERROR! DEFAULT FIREFOX LOCALE NOT FOUND \"$MKS\\localeDev\\Firefox3\\en-US\"\n";}
+    else {print "ERROR! FIREFOX LOCALE NOT FOUND \"$MKS\\localeDev\\Firefox3\\$firefox\"\n";}
+    $firefox = "en-US";
+  }
+  `7za a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\Firefox3\\$firefox\\locale\\$firefox\\global\" -x!.svn`;
+  `7za a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\Firefox3\\$firefox\\locale\\$firefox\\mozapps\" -x!.svn`;
   `7za a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\$locale\\locale\\*\" -x!.svn`;
   if (-e "$MKS/localeDev/$locale/text-skin") {
     `7za a -tzip \"$MKS\\localeDev\\locales\\$locale.jar\" -r \"$MKS\\localeDev\\$locale\\text-skin\\*\" -x!.svn`;

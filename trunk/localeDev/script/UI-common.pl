@@ -5,6 +5,29 @@ $ff2to3MAP = "$MK\\localeDev\\FF2_to_FF3.txt";
 $listFile  = "$MKS\\localeDev\\$locale\\UI-".$locale.".txt";
 $listFile2 = "$MKS\\localeDev\\$locale\\UI-".$locale."_2.txt";
 
+# Get locale information
+$ignoreShortCutKeys = "false";
+if ($locale && $version && $localeALT && $firefox) {}
+elsif ($locale) {
+  if (!open(INF, "<$listFile")) {&Log("\n\nERROR UI-common.pl: could not open UI file \"$listFile\".\n"); die;}
+  while(<INF>) {
+    if ($_ =~ /Locale=([^,]+),\s*Version=([^,]+),\s*Alternate_locale=([^,]+),\s*Firefox_locale=([^,]+)(,\s*Ignore_shortCut_keys=([^,\s]+))?\s*$/i) {
+      $ltmp = $1;
+      $version = $2;
+      $localeALT = $3;
+      $firefox = $4;
+      $ignoreShortCutKeys = $6;
+      if ($ignoreShortCutKeys ne "true") {$ignoreShortCutKeys = "false";}
+      if ($ltmp ne $locale) {&Log("\n\nERROR UI-common.pl: Locale \"$locale\" is different than UI listing locale \"$ltmp\"!\n");}
+      last;
+    }
+  }
+  close(INF);
+  if (!$version || !$localeALT || !$firefox) {&Log("\n\nERROR UI-common.pl: List file \"$listFile\" header information is missing or malformed.\n"); die;}
+}
+else {&Log("ERROR UI-common.pl: Locale name was not provided.\n"); die;}
+$locinfo = "Locale=$locale, Version=$version, Alternate_locale=$localeALT, Firefox_locale=$firefox, Ignore_shortCut_keys=$ignoreShortCutKeys\n";
+
 # initialize sort variables
 @sort1 = ("books","main-window","bookmark-window","search-window","search-help-window","dialog-window","file-chooser","error-reporter","splash-secure-window","configuration");
 @sort2 = ("menu-file","menu-edit","menu-view","menu-options","menu-bookmarks","menu-windows","menu-help","tool-bar","context-menu","tree-column","tree","more-options");
@@ -49,13 +72,8 @@ sub readDescriptionsFromUI($%) {
   my $line = 0;
   while(<UI>) {
     $line++;
+    if ($line == 1) {next;}
     if ($_ =~ /^\s*$/) {next;}
-    if ($_ =~ /Locale:(.*?), Version:(.*?) \(Alternate locale:(.*?)\)/) {
-      $version = $2;
-      $localeALT = $3;
-      if ($locale ne $1) {&Log("WARNING $f line $line: Locale label \"$1\" does not match locale directory \"$locale\"\n");}
-      next;
-    }
     if ($_ !~ /^\[(.*?)\]:\s*(.*?)\s*$/) {&Log("ERROR $f line $line: Could not parse line $_\n"); next;}
     my $d = $1;
     my $v = $2;
@@ -221,13 +239,14 @@ sub getMatchingEntries(@@$%) {
 sub readFile($%$) {
   my $f = shift;
   my $codeFileEntryValueP = shift;
-  my $fr = shift;
+  my $fileRequired = shift;
   
-  # look in locale, if file is not found, then look in alternate locale
-  my $ff = &getFileFromLocale($f, $locale);
-  if ($ff eq "") {$ff = &getFileFromLocale($f, $localeALT);}
-  if ($ff eq "" && $fr eq "false") {return;}
-  elsif ($ff eq "") {&Log("ERROR readFile  \"$f\": Could not locate code file. Tried \"$locale\" and \"$localeALT\".\nFinished.\n"); die;}
+  # look in locale, if file is not found, then look in alternate locale, if still not found, then use en-US and report WARNING
+  my $ff = &getFileFromLocale($f, $locale, $firefox);
+  if ($ff eq "") {$ff = &getFileFromLocale($f, $localeALT, $firefox);}
+  if ($ff eq "" && $fileRequired eq "false") {return;}
+  if ($ff eq "") {$ff = &getFileFromLocale($f, "en-US", "en-US"); &Log("WARNING: Resorting to en-US for file \"$f\".\n");}
+  if ($ff eq "") {&Log("ERROR readFile \"$f\": Could not locate code file. Tried \"$locale\", \"$localeALT\" and \"en-US\".\nFinished.\n"); die;}
 
   my $t = $ff;
   $t =~ s/^.*\.//;
@@ -256,35 +275,27 @@ sub readFile($%$) {
 }
 
 # decode the file path and locale name into a real path and return that path
-sub getFileFromLocale($$) {
+sub getFileFromLocale($$$) {
   my $f = shift;
   my $l = shift;
-  my $ff3 = "";
-  opendir(DIR, "$MKS\\localeDev\\$l");
-  @files = readdir(DIR);
-  foreach (@files) {if ($_ =~ /^(.*?)\.lnk/ && -e "$MKS\\localeDev\\Firefox3\\$1") {$ff3 = $1;}}
-  close(DIR);
-  if ($ff3 eq "") {&Log("ERROR line $line: Missing shortcut to base locale in $l.\nFinished.\n"); die;}
-  my $f1 = ""; my $f2 = "";
-  if ($f =~ s/^\[locale-browser\]\\//) {$f1 = "$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$f";}
-  elsif ($f =~ s/^\[locale-global\]\\//) {$f1 = "$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$ff3\\$f";}
-  elsif ($f =~ /^xulsword\\/) {
-    if ($l eq "en-US") {
-      $f1 = "$MK\\xul\\en-US.xs\\en-US-xulsword\\$f";
+  my $ffl = shift;
+  
+  if ($f =~ /^xulsword\\/) {
+    if ($l ne "en-US") {
+      $fr = "$MKS\\localeDev\\$l\\locale\\$f";
     }
-    else {$f1 = "$MKS\\localeDev\\$l\\locale\\$f";}
+    else {$fr = "$MK\\xul\\en-US.xs\\en-US-xulsword\\$f";}
   }
+  elsif ($sourceFF3 eq "true" && $f =~ s/^\[locale-browser\]\\//) {$fr = "$MKS\\localeDev\\Firefox3\\$ffl\\locale\\$f";}
+  elsif ($sourceFF3 eq "true" && $f =~ s/^\[locale-global\]\\//)  {$fr = "$MKS\\localeDev\\Firefox3\\$ffl\\locale\\$ffl\\$f";}
   else {
-    if ($sourceFF3 ne "true") {
-      if ($l eq "en-US") {$f1 = "$MK\\xul\\en-US.xs\\en-US-xulsword\\$f";}
-      else {$f1 = "$MKS\\localeDev\\$l\\locale\\$f";}
-    }
-    $f2 = "$MKS\\localeDev\\Firefox3\\$ff3\\locale\\$ff3\\$f";
+    if ($l ne "en-US") {$fr = "$MKS\\localeDev\\$l\\locale\\$f";}
+    else {$fr = "$MK\\xul\\en-US.xs\\en-US-xulsword\\$f";}
+    if ($sourceFF3 eq "true" || !-e $fr) {$fr = "$MKS\\localeDev\\Firefox3\\$ffl\\locale\\$ffl\\$f";}  
   }
-
-  if (-e $f1) {return $f1;}
-  if (-e $f2) {return $f2;}
-  return "";
+ 
+  if (!-e $fr) {return "";}
+  return $fr;
 }
 
 sub Print($) {
