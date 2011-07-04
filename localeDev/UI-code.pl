@@ -1,17 +1,20 @@
 #!/usr/bin/perl
+#usage: UI-code.pl MK MKS locale
 use Encode;
-#usage: UI-code.pl MK MKS locale noKeys(true|false)
+use File::Copy;
+use File::Path;
 
 if (!@ARGV) {die;}
 $MK = shift;
 $MKS = shift;
 $locale = shift;
-$nokeys = shift;
 
-$logFile = "code_log.txt";
 require "$MK\\localeDev\\script\\UI-common.pl";
-if ($logFile ne "") {if (!open(LOG, ">$MKS\\localeDev\\$locale\\$logFile")) {&Log("Could not open log file $logFile\nFinished.\n"); die;}}
-if (-e "$MKS\\localeDev\\$locale\\locale") {&Log("UI locale directory \"$MKS\\localeDev\\$locale\\locale\" already exists.\nFinished.\n"); die;}
+$logFile = "code_log.txt";
+if (!open(LOG, ">$MKS\\localeDev\\$locale\\$logFile")) {&Log("Could not open log file $logFile\nFinished.\n"); die;}
+if (-e "$MKS\\localeDev\\$locale\\locale") {rmtree(["$MKS\\localeDev\\$locale\\locale"]);}
+
+&Log($locinfo);
 
 # read UI file(s). This must be done before reading MAP to find version
 &readDescriptionsFromUI($listFile, \%UIDescValue);
@@ -41,7 +44,7 @@ mkdir("$locale\\locale");
 for $fe (sort keys %CodeFileEntryValue) {
   $v = $CodeFileEntryValue{$fe};
   if ($v eq "_NOT_FOUND_") {next;}
-  if ($nokeys eq "true" && $MapFileEntryInfo{$fe.":desc"} =~ /\.(ak|sc|ck|kb)$/) {$v = "";}
+  if ($ignoreShortCutKeys eq "true" && $MapFileEntryInfo{$fe.":desc"} =~ /\.(ak|sc|ck|kb)$/) {$v = "";}
   $fe =~ /^(.*?):(.*?)\s*$/;
   $f = "$MKS\\localeDev\\$locale\\locale\\$1";
   $e = $2;
