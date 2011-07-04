@@ -11,5 +11,5 @@ REM   output goes to: %MKS%\localeDev\<locale-code>\locale
 REM usage: UpdateJars.pl MK MKS MKO isProduction UIversion MinProgversionForUI IncludeLocales AllLocales
 REM   Read the UI-listing text files, create and package the locale for xulsword
 REM   output goes to: "%MKS%\localeDev\locales\
-::"%MK%\build\script\UpdateJars.pl" "%MK%" "%MKS%" "" true 2.9 2.9 ex ex
+"%MK%\build\script\UpdateJars.pl" "%MK%" "%MKS%" "" true 2.9 2.9 ex ex
 
