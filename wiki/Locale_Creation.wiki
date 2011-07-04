@@ -7,7 +7,7 @@ The entire User Interface source is listed in two files. But only one of these c
 ==Let Firefox translate half the UI for you==
 Set an environment variable called "`MKS`" to a directory of your choice. Create a `localeDev` directory there, and in `localeDev` create a directory named with your [http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes ISO 639-1] language code, such as `es-MX` for Mexican Spanish.
 
-Download a Firefox 3 language pack in your target language, or the next best language which you can find. Inside the language pack is a jar file such as `es-MX.jar`. Create a directory `%MKS%\localeDev\Firefox3` and unzip the contents of the jar file there. Finally, you must create a shortcut link which has the name of the Firefox 3 locale you just unzipped. The link must be put in the `localeDev\<your-locale>` directory, and the target of the link must be the Firefox 3 locale's location (see the image below). This links your locale to a Firefox 3 locale which may be used to populate much of your new UI.
+Download a Firefox 3 language pack in your target language, or the next best language which you can find. Inside the language pack is a jar file such as `es-MX.jar`. Create a directory `%MKS%\localeDev\Firefox3` and unzip the contents of the jar file there.
 
 ==Building a new UI==
 To do this properly, you need a Subversion (SVN) client installed on your computer. A good one is TortoiseSVN: http://tortoisesvn.net/downloads.html. After installing TortoiseSVN you should create a folder for the code somewhere. Right click on this folder and click on the context menu where it should show "`SVN Checkout...`". Then enter "https://xulsword.googlecode.com/svn/trunk/" as the repository URL and click ok. It should then download the code for you. Finally, you need to set another Windows environment variable called "`MK`" to this directory.
@@ -18,10 +18,6 @@ Of course, you will want to finish translating the locale listing file of the ne
 
 ==Add a locale to the xulSword build==
 Add the locale's [http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes ISO 639-1] code to the "`%MK%\build\Appinfo.bat`" file's `AllLocales` line. Also add it to the `IncludeLocales` line to include it in your build. After rebuilding xulSword, you should see a language menu item corresponding to the new locale under the `Options->Languages` menu.
-
-The `%MKS%\localeDev` directory has the following basic structure:
-
-[http://img245.imageshack.us/img245/3316/imgno.png]
 
 -----
 
