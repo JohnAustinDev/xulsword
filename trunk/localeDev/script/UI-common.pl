@@ -28,6 +28,9 @@ elsif ($locale) {
 else {&Log("ERROR UI-common.pl: Locale name was not provided.\n"); die;}
 $locinfo = "Locale=$locale, Version=$version, Alternate_locale=$localeALT, Firefox_locale=$firefox, Ignore_shortCut_keys=$ignoreShortCutKeys\n";
 
+if (!-e "$MKS\\localeDev") {mkdir("$MKS\\localeDev");}
+if (!-e "$MKS\\localeDev\\$locale") {mkdir("$MKS\\localeDev\\$locale");}
+  
 # initialize sort variables
 @sort1 = ("books","main-window","bookmark-window","search-window","search-help-window","dialog-window","file-chooser","error-reporter","splash-secure-window","configuration");
 @sort2 = ("menu-file","menu-edit","menu-view","menu-options","menu-bookmarks","menu-windows","menu-help","tool-bar","context-menu","tree-column","tree","more-options");
