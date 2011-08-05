@@ -31,14 +31,14 @@ SWORD_NAMESPACE_START
  */
 class SWDLLEXPORT OSISHTMLXUL : public SWBasicFilter {
 private:
+	bool morphFirst;
 protected:
 	// used by derived classes so we have it in the header
-	class QuoteStack;
-	class MyUserData : public BasicFilterUserData {
+	class TagStacks;
+	class SWDLLEXPORT MyUserData : public BasicFilterUserData {
 	public:
 		bool osisQToTick;
-		SWBuf hiStack;
-		bool inName;
+		bool inBold;	// TODO: obsolete. left for binary compat for 1.6.x
 		bool inXRefNote;
 		bool BiblicalText;
 		int suspendLevel;
@@ -46,7 +46,8 @@ protected:
 		SWBuf referenceTag;
 		SWBuf wordsOfChristStart;
 		SWBuf wordsOfChristEnd;
-    QuoteStack *quoteStack;
+                TagStacks *tagStacks;	// TODO: modified to wrap all TagStacks necessary for this filter until 1.7.x
+//                TagStack *hiStack;	// TODO: commented out for binary compat for 1.6.x	 wrapped in tagStacks until 1.7.x
 		SWBuf lastTransChange;
 		SWBuf w;
 		SWBuf fn;
@@ -60,6 +61,7 @@ protected:
 	virtual bool handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData);
 public:
 	OSISHTMLXUL();
+	void setMorphFirst(bool val = true) { morphFirst = val; }
 };
 
 SWORD_NAMESPACE_END

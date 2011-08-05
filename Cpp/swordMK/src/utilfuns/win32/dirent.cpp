@@ -18,7 +18,7 @@
 
 */
 
-#include <CLucene/StdHeader.h>
+#include <CLucene/StdHeader.h> 
 #include "dirent.h"
 #include <nsEmbedString.h>
 #include <share.h>

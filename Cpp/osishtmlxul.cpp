@@ -28,17 +28,24 @@
 
 SWORD_NAMESPACE_START
 
-class OSISHTMLXUL::QuoteStack : public std::stack<const char*> {
+namespace {
+	typedef std::stack<SWBuf> TagStack;
+}
+
+// TODO: this bridge pattern is to preserve binary compat on 1.6.x
+class OSISHTMLXUL::TagStacks {
+public:
+	TagStack quoteStack;
+	TagStack hiStack;
 };
 
 OSISHTMLXUL::MyUserData::MyUserData(const SWModule *module, const SWKey *key) : BasicFilterUserData(module, key) {
-	hiStack = "";
 	inXRefNote = false;
 	footnoteNum = 1;
 	suspendLevel = 0;
-	quoteStack = new QuoteStack();
-	wordsOfChristStart = "<font color=\"red\">";
-	wordsOfChristEnd   = "</font>";
+	tagStacks = new TagStacks();
+	wordsOfChristStart = "<font color=\"red\"> ";
+	wordsOfChristEnd   = "</font> ";
 	if (module) {
 		osisQToTick = ((!module->getConfigEntry("OSISqToTick")) || (strcmp(module->getConfigEntry("OSISqToTick"), "false")));
 		version = module->Name();
@@ -51,13 +58,7 @@ OSISHTMLXUL::MyUserData::MyUserData(const SWModule *module, const SWKey *key) : 
 }
 
 OSISHTMLXUL::MyUserData::~MyUserData() {
-	// Just in case the quotes are not well formed
-	while (!quoteStack->empty()) {
-		const char *tagData = quoteStack->top();
-		quoteStack->pop();
-		delete [] tagData;
-	}
-	delete quoteStack;
+	delete tagStacks;
 }
 
 OSISHTMLXUL::OSISHTMLXUL() {
@@ -77,15 +78,17 @@ OSISHTMLXUL::OSISHTMLXUL() {
 	addAllowedEscapeString("gt");
 
 	setTokenCaseSensitive(true);
-
+	
 	//	addTokenSubstitute("lg",  "<br />");
 	//	addTokenSubstitute("/lg", "<br />");
+
+	morphFirst = false;
 }
 
 // though this might be slightly slower, possibly causing an extra bool check, this is a renderFilter
 // so speed isn't the absolute highest priority, and this is a very minor possible hit
-static inline void outText(const char *t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; }
-static inline void outText(char t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; }
+static inline void outText(const char *t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
+static inline void outText(char t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
 
 bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData) {
 	MyUserData *u = (MyUserData *)userData;
@@ -171,7 +174,12 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					if (!strongsMarkup) {	// leave strong's markup notes out, in the future we'll probably have different option filters to turn different note types on or off
 						SWBuf footnoteNumber = tag.getAttribute("swordFootnote");
 						while (footnoteNumber.length() > 1 && footnoteNumber.startsWith("0")) {footnoteNumber << 1;}
-						VerseKey *vkey;
+						VerseKey *vkey = NULL;
+						char ch = ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref")))) ? 'x':'n');
+
+						u->inXRefNote = true; // Why this change? Ben Morgan: Any note can have references in, so we need to set this to true for all notes
+//						u->inXRefNote = (ch == 'x');
+
 						// see if we have a VerseKey * or descendant
 						SWTRY {
 							vkey = SWDYNAMIC_CAST(VerseKey, u->key);
@@ -211,6 +219,7 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			if (tag.isEndTag()) {
 				u->suspendTextPassThru = (--u->suspendLevel);
 				u->inXRefNote = false;
+				u->lastSuspendSegment = ""; // fix/work-around for nasb devineName in note bug
 			}
 		}
 
@@ -228,7 +237,7 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				userData->supressAdjacentWhitespace = true;
 			}
 		}
-		
+
 		// Milestoned paragraphs, created by osis2mod
 		// <div type="paragraph" sID.../>
 		// <div type="paragraph" eID.../>
@@ -299,7 +308,7 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				if (tag.isEndTag()) {buf.appendFormatted("</%s>", u->referenceTag.c_str());}
 			}
 		}
-		
+
 		// <l> poetry, etc
 		else if (!strcmp(tag.getName(), "l")) {
 			// end line marker
@@ -316,8 +325,8 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				outText("<br />", buf, u);
 			}
 		}
-		
-		// <lb.../> 
+
+		// <lb.../>
 		else if (!strcmp(tag.getName(), "lb")) {
 			outText("<br />", buf, u);
 
@@ -327,8 +336,11 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// <milestone type="x-p"/>
 		// <milestone type="cQuote" marker="x"/>
 		else if ((!strcmp(tag.getName(), "milestone")) && (tag.getAttribute("type"))) {
-			if(!strcmp(tag.getAttribute("type"), "line")) {
+			if (!strcmp(tag.getAttribute("type"), "line")) {
 				outText("<br />", buf, u);
+				if (tag.getAttribute("subType") && !strcmp(tag.getAttribute("subType"), "x-PM")) {
+					outText("<br />", buf, u);
+				}
 				userData->supressAdjacentWhitespace = true;
 			}
 			else if(!strcmp(tag.getAttribute("type"),"x-p"))  {
@@ -401,7 +413,7 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 		}
 
-		// divineName
+		// divineName  
 		else if (!strcmp(tag.getName(), "divineName")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 				u->suspendTextPassThru = (++u->suspendLevel);
@@ -416,15 +428,15 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					const unsigned char *tmpBuf = (const unsigned char *)lastText.c_str();
 					getUniCharFromUTF8(&tmpBuf);
 					int char_length = (tmpBuf - (const unsigned char *)lastText.c_str());
-					scratch.setFormatted("%.*s<font size=\"-1\">%s</font>",
-						char_length,
+					scratch.setFormatted("%.*s<font size=\"-1\">%s</font>", 
+						char_length, 
 						lastText.c_str(),
 						lastText.c_str() + char_length
 					);
-
+					
 					outText(scratch.c_str(), buf, u);
-				}
-			}
+				}               
+			} 
 		}
 
 		// <hi> text highlighting
@@ -433,18 +445,23 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 				if (type == "bold" || type == "b" || type == "x-b") {
 					outText("<b>", buf, u);
-					u->hiStack.insert(0, "b");
 				}
 				else {	// all other types
 					outText("<i>", buf, u);
-					u->hiStack.insert(0, "i");
 				}
+				u->tagStacks->hiStack.push(tag.toString());
 			}
 			else if (tag.isEndTag()) {
-        outText("</", buf, u);
-        outText((u->hiStack.startsWith("b") ? "b" : "i"), buf, u);
-        outText(">", buf, u);
-        u->hiStack<<(1);
+				SWBuf type = "";
+				if (!u->tagStacks->hiStack.empty()) {
+					XMLTag tag(u->tagStacks->hiStack.top());
+					u->tagStacks->hiStack.pop();
+					type = tag.getAttribute("type");
+				}
+				if (type == "bold" || type == "b" || type == "x-b") {
+					outText("</b>", buf, u);
+				}
+				else outText("</i>", buf, u);
 			}
 		}
 
@@ -469,9 +486,7 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			if ((!tag.isEmpty() && !tag.isEndTag()) || (tag.isEmpty() && tag.getAttribute("sID"))) {
 				// if <q> then remember it for the </q>
 				if (!tag.isEmpty()) {
-					char *tagData = 0;
-					stdstr(&tagData, tag.toString());
-					u->quoteStack->push(tagData);
+					u->tagStacks->quoteStack.push(tag.toString());
 				}
 
 				// Do this first so quote marks are included as WoC
@@ -488,11 +503,9 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			// close </q> or <q eID... />
 			else if ((tag.isEndTag()) || (tag.isEmpty() && tag.getAttribute("eID"))) {
 				// if it is </q> then pop the stack for the attributes
-				if (tag.isEndTag() && !u->quoteStack->empty()) {
-					const char *tagData  = u->quoteStack->top();
-					u->quoteStack->pop();
-					XMLTag qTag(tagData);
-					delete [] tagData;
+				if (tag.isEndTag() && !u->tagStacks->quoteStack.empty()) {
+					XMLTag qTag(u->tagStacks->quoteStack.top());
+					u->tagStacks->quoteStack.pop();
 
 					type    = qTag.getAttribute("type");
 					who     = qTag.getAttribute("who");
@@ -551,7 +564,6 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 			filepath += src;
 
-// we do this because BibleCS looks for this EXACT format for an image tag
       outText("<div style=\"text-align:center;\">", buf, u);
 			outText("<image src=\"", buf, u);
 			outText(filepath, buf, u);

@@ -15,6 +15,10 @@
  *
  */
 
+#ifdef _MSC_VER
+	#pragma warning( disable: 4251 )
+#endif
+
 #include <ctype.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -452,7 +456,7 @@ void makeValidRef(VerseKey &key) {
 void writeEntry(SWBuf &text, bool force = false) {
 	char keyOsisID[255];
 
-	static const char* revision = "<milestone type=\"x-importer\" subType=\"x-osis2mod\" n=\"$Rev: 2478 $\"/>";
+	static const char* revision = "<milestone type=\"x-importer\" subType=\"x-osis2mod\" n=\"$Rev: 2562 $\"/>";
 	static bool firstOT = true;
 	static bool firstNT = true;
 
@@ -586,7 +590,7 @@ bool handleToken(SWBuf &text, XMLTag token) {
 
 	// Flags indicating whether we are processing the content of to be prepended to a verse
 	static bool               inPreVerse      = false;
-	static int                genID           = 1;
+//	static int                genID           = 1;
 
 	// Flag indicating whether we are in "Words of Christ"
 	static bool               inWOC           = false;
@@ -765,9 +769,9 @@ bool handleToken(SWBuf &text, XMLTag token) {
 
 				// Did we have pre-verse material that needs to be marked?
 				if (inPreVerse) {
-					char genBuf[200];
-					sprintf(genBuf, "<div type=\"x-milestone\" subType=\"x-preverse\" eID=\"pv%d\"/>", genID++);
-					text.append(genBuf);
+//					char genBuf[200];
+//					sprintf(genBuf, "<div type=\"x-milestone\" subType=\"x-preverse\" eID=\"pv%d\"/>", genID++);
+//					text.append(genBuf);
 				}
 
 				// Get osisID for verse or annotateRef for commentary
@@ -912,9 +916,9 @@ bool handleToken(SWBuf &text, XMLTag token) {
 			}
 
 			if (inPreVerse) {
-				char genBuf[200];
-				sprintf(genBuf, "<div type=\"x-milestone\" subType=\"x-preverse\" sID=\"pv%d\"/>", genID);
-				text.append(genBuf);
+//				char genBuf[200];
+//				sprintf(genBuf, "<div type=\"x-milestone\" subType=\"x-preverse\" sID=\"pv%d\"/>", genID);
+//				text.append(genBuf);
 			}
 		}
 
@@ -1179,32 +1183,37 @@ XMLTag transformBSP(XMLTag t) {
 		}
 	}
 	else {
-		XMLTag topToken = bspTagStack.top();
+		if (!bspTagStack.empty()) {
+			XMLTag topToken = bspTagStack.top();
 
-		if (debug & DEBUG_XFORM) {
-			cout << "DEBUG(XFORM): " << currentOsisID << ": xform pop(" << bspTagStack.size() << ") " << topToken << endl;
+			if (debug & DEBUG_XFORM) {
+				cout << "DEBUG(XFORM): " << currentOsisID << ": xform pop(" << bspTagStack.size() << ") " << topToken << endl;
+			}
+
+			bspTagStack.pop();
+
+			// Look for the milestoneable container tags handled above.
+			if (tagName == "chapter" ||
+			    tagName == "closer"  ||
+			    tagName == "div"     ||
+			    tagName == "l"       ||
+			    tagName == "lg"      ||
+			    tagName == "p"       ||
+			    tagName == "q"       ||
+			    tagName == "salute"  ||
+			    tagName == "signed"  ||
+			    tagName == "speech"  ||
+			    tagName == "verse"
+			) {
+				// make this a clone of the start tag with sID changed to eID
+				// Note: in the case of </p> the topToken is a <div type="paragraph">
+				t = topToken;
+				t.setAttribute("eID", t.getAttribute("sID"));
+				t.setAttribute("sID", 0);
+			}
 		}
-
-		bspTagStack.pop();
-
-		// Look for the milestoneable container tags handled above.
-		if (tagName == "chapter" ||
-		    tagName == "closer"  ||
-		    tagName == "div"     ||
-		    tagName == "l"       ||
-		    tagName == "lg"      ||
-		    tagName == "p"       ||
-		    tagName == "q"       ||
-		    tagName == "salute"  ||
-		    tagName == "signed"  ||
-		    tagName == "speech"  ||
-		    tagName == "verse"
-		) {
-			// make this a clone of the start tag with sID changed to eID
-			// Note: in the case of </p> the topToken is a <div type="paragraph">
-			t = topToken;
-			t.setAttribute("eID", t.getAttribute("sID"));
-			t.setAttribute("sID", 0);
+		else {
+			cout << "FATAL(TAGSTACK): " << currentOsisID << ": closing tag without opening tag" << endl;
 		}
 	}
 
@@ -1324,7 +1333,7 @@ void processOSIS(istream& infile) {
 	bool intoken = false;
 	bool inWhitespace = false;
 	bool seeingSpace = false;
-	char curChar = '\0';
+	unsigned char curChar = '\0';
 
 	while (infile.good()) {
 		
@@ -1343,7 +1352,7 @@ void processOSIS(istream& infile) {
 
 		// Outside of tokens merge adjacent whitespace
 		if (!intoken) {
-			seeingSpace = isspace(curChar);
+			seeingSpace = isspace(curChar)!=0;
 			if (seeingSpace) {
 				if (inWhitespace) {
 					continue;
@@ -1395,7 +1404,7 @@ void processOSIS(istream& infile) {
 
 int main(int argc, char **argv) {
 
-	fprintf(stderr, "You are running osis2mod: $Rev: 2478 $\n");
+	fprintf(stderr, "You are running osis2mod: $Rev: 2562 $\n");
 
 	// Let's test our command line arguments
 	if (argc < 3) {

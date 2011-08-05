@@ -4,7 +4,6 @@ Set CPPD=Cpp
 
 @echo off
 Set utilityName=%1
-Set binDIR=D:\home\cygwin\usr\local\bin
 Set objDIR=intermediateFiles
 if not defined utilityName Set goto EOF
 
@@ -13,15 +12,16 @@ call "%MK%\%CPPD%\versions.bat"
 
 mkdir %objDIR%
 
-Set cFlags=/nologo /MT /W0 /EHsc /O2 /Zc:wchar_t-^
+Set cFlags=/nologo /MT /W1 /EHsc /O2 /Zc:wchar_t-^
  /Fo"%objDIR%/"^
  /I "%MK%\%CPPD%"^
  /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^
  /I "%MK%\%CPPD%\swordMK\src\utilfuns\win32"^
  /I "%MK%\%CPPD%\swordMK\include"^
  /I "%MK%\%CPPD%\%sword%\include"^
- /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^
- /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /Zm200 /c 
+ /I "%MK%\%CPPD%\cluceneMK\src"^
+ /I "%MK%\%CPPD%\%clucene%\src"^
+ /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /D "_CRT_SECURE_NO_DEPRECATE" /Zm200 /c 
 
 if exist "%MK%\%CPPD%\swordMK\utilities\%utilityName%.cpp" (Set cFiles="%MK%\%CPPD%\swordMK\utilities\%utilityName%.cpp") else Set cFiles="%MK%\%CPPD%\%sword%\utilities\%utilityName%.cpp"
 Set cFiles=%cFiles%^
@@ -49,7 +49,6 @@ echo on
 cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
 
-copy /Y "bin\%utilityName%.exe" "%binDIR%"
 rmdir /S /Q %objDIR%
 
 :EOF
