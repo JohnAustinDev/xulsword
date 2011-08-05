@@ -24,20 +24,21 @@ Crashed one time when choosing Ps 114 (could be caused by xulrunner!)
 MODULE RELATED
 CARS intro doesn't always work! (1Cor)
 
-Notes - EASTERN vs SynodalProt:
+Notes - EASTERN vs Synodal:
   EASTERN - 
       Encrypted
       Includes ESV cross references, Scripture references or dictionary links.
       No verse linking
       Verse system is unique to MK (NT books are in wrong order, internally)
       Works on ALL versions of MK, but not with other SWORD programs.
-  SynodalProt-
+  Synodal-
       Not encrypted?
-      No ESV cross references, Scripture references or dictionary links?
+      No ESV cross references, dictionary links?
       Uses verse linking.
-      Verse system is compiled into all new SWORD engines.
-      Works on new versions of MK (2.13+), and on all other updated SWORD programs.
-      Needs minMKVersion=2.13. 
+      Verse system is compiled into all new SWORD engines, but sword-1.6.1 Synodal is missing Psalms 114:9!
+      Synodal0 (with the error) works on versions of MK 2.13+.
+      Synodal (corrected) works on versions of MK 2.21+, and on all other updated SWORD programs.
+      Needs minMKVersion=2.13 or 2.21. 
 */
 
 #include "windows.h"
@@ -905,8 +906,8 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
       readKey.copyFrom(myVerseKey);
       readKey.setAutoNormalize(0); // Non-existant calls should return empty string!
       const char * frVS = readKey.getVersificationSystem();
-      if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || !strcmp(toVS,SYNODALPRO))) || 
-          (!strcmp(toVS,WESTERN) && (!strcmp(frVS,EASTERN) || !strcmp(frVS,SYNODALPRO)))) {
+      if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) || 
+          (!strcmp(toVS,WESTERN) && (!strcmp(frVS,EASTERN) || strstr(frVS,SYNODAL)))) {
         VerseKey convertKey;
         convertKey.copyFrom(readKey);
         mapVersifications(&convertKey, &readKey);
@@ -1083,8 +1084,8 @@ NS_IMETHODIMP xulsword::ConvertLocation(const nsACString & FromVerseSystem, cons
 //printf("FROM- KT:%s, LB:%s, UB:%s\n", fromKey.getShortText(), fromKey.LowerBound().getShortText(), fromKey.UpperBound().getShortText());
 
   SWBuf result;
-  if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || !strcmp(toVS,SYNODALPRO))) || 
-      (!strcmp(toVS,WESTERN) && (!strcmp(frVS,EASTERN) || !strcmp(frVS,SYNODALPRO)))) {
+  if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) || 
+      (!strcmp(toVS,WESTERN) && (!strcmp(frVS,EASTERN) || strstr(frVS,SYNODAL)))) {
     VerseKey toKey;
     mapVersifications(&fromKey, &toKey);
 //printf("TO  - KT:%s, LB:%s, UB:%s\n", toKey.getShortText(), toKey.LowerBound().getShortText(), toKey.UpperBound().getShortText());
@@ -1559,8 +1560,8 @@ NS_IMETHODIMP xulsword::GetSearchTexts(const nsACString & Mod, PRInt32 first, PR
     
     while (!SearchList.Error()&&(written<num)) {
       fromkey=SearchList;
-      if ((!strcmp(searchedvers,WESTERN) && (!strcmp(toVS,EASTERN) || !strcmp(toVS,SYNODALPRO))) || 
-          (!strcmp(toVS,WESTERN) && (!strcmp(searchedvers,EASTERN) || !strcmp(searchedvers,SYNODALPRO)))) {
+      if ((!strcmp(searchedvers,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) || 
+          (!strcmp(toVS,WESTERN) && (!strcmp(searchedvers,EASTERN) || strstr(searchedvers,SYNODAL)))) {
          mapVersifications(&fromkey, &tokey);
       }
       else {tokey.copyFrom(fromkey);}

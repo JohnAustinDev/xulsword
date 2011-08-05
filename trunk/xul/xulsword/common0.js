@@ -49,10 +49,8 @@ const DLGSTD="centerscreen, modal, resizable=no";
 const DLGALERT=0, DLGQUEST=1, DLGINFO=2;
 const DLGOK=0, DLGOKCANCEL=1, DLGYESNO=2;
 const WESTERNVS = "KJV";
-const EASTERNVS = "EASTERN";
+const EASTERNVS = "Synodal";
 const TYPES = {Texts: "text", Comms: "comm", Dicts: "dict", Genbks: "book"};
-//const WESTERNVS = 1
-//const EASTERNVS = 2;
 const TOOLTIP_LEN=96;
 const MODSD="mods.d", MODS="modules", CHROME="chrome", FONTS="fonts", AUDIO="audio", AUDIOPLUGIN="QuickTime Plugin", BOOKMARKS="bookmarks", VIDEO="video";
 const MANIFEST_EXT=".manifest", CONF_EXT=".conf";

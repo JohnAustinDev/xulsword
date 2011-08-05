@@ -18,28 +18,36 @@ sub updateConfInfo($$$$) {
   foreach $conf (@confs) {
     if ($conf =~ /^\.+$/ || -d "$MKS/moduleDev/$dir/mods.d/$conf") {next;}
     if ($thisModOnly ne "" && $conf ne lc($thisModOnly).".conf") {next;}
-    open(TMP, ">$MKS/moduleDev/$dir/tmp.conf");
+    
+    my %confInfo;
     open(INC, "<$MKS/moduleDev/$dir/mods.d/$conf");
+    while(<INC>) {
+      if ($_ =~ /^\s*([^=]+)\s*=\s*(.*?)\s*$/) {$confInfo{$1} = $2;}
+    }
+    close(INC);
+    if ($confInfo{"Versification"} eq "Synodal" && $confInfo{"MinumumVersion"} =~ /(\d+)\.(\d+)\.(\d+)/) {
+      if ($1>1 || ($1==1 && $2>6) || ($1==1 && $2==6 && $3>1)) {$mpvfxsm = 2.21;}
+      else {$mpvfxsm = 2.13;} 
+    }
+    elsif ($confInfo{"Versification"} && $confInfo{"Versification"} ne "EASTERN") {
+      if ($mpvfxsm eq "" || $1<2 || ($1==2 && $2<13)) {$mpvfxsm = 2.13;}
+    }
+    else {
+      if ($mpvfxsm eq "" || $1<2 || ($1==2 && $2<7)) {$mpvfxsm = 2.7;}
+    }
     $hasXSMversion = "false";
     $hasMinProgversionForXSM = "false";
-    my $versification = "";
+    open(INC, "<$MKS/moduleDev/$dir/mods.d/$conf");
+    open(TMP, ">$MKS/moduleDev/$dir/tmp.conf");
     while(<INC>) {
-      if ($_ =~ /^\s*Versification\s*=\s*(.*)\s*$/) {$versification = $1;}
-      $mpvfxsm =~ /^\s*(\d+)\.(\d+)\s*$/;
-      if ($versification ne "" && $versification ne "EASTERN") {
-        if ($mpvfxsm eq "" || $1<2 || ($1==2 && $2<13)) {$mpvfxsm = 2.13;}
-      }
-      else {
-        if ($mpvfxsm eq "" || $1<2 || ($1==2 && $2<7)) {$mpvfxsm = 2.7;}
-      }
       if ($_ =~ s/^\s*(xulswordVersion\s*=\s*).*$/$1$xsmv/) {$hasXSMversion = "true";}
       if ($_ =~ s/^\s*(minMKVersion\s*=\s*).*$/$1$mpvfxsm/) {$hasMinProgversionForXSM = "true"};
       print TMP $_;
     }
-    close(INC);
+    close(TMP);
     if ($hasXSMversion eq "false") {print TMP "\nxulswordVersion=$xsmv\n";}
     if ($hasMinProgversionForXSM eq "false") {print TMP "minMKVersion=$mpvfxsm\n";}
-    close(TMP);
+    close(INC);    
     unlink(INC);
     rename("$MKS/moduleDev/$dir/tmp.conf", "$MKS/moduleDev/$dir/mods.d/$conf");
     $msg = $msg."    $dir\\$conf: xulswordVersion=$xsmv, minMKVersion=$mpvfxsm\n";

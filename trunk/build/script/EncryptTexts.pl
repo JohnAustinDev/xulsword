@@ -53,20 +53,42 @@ while($EncryptedTexts[0]) {
   
   #Encrypt only if we need to...
   if (!$lastkeys{$mod} || $lastkeys{$mod} ne $key) {
+  
+    # get osis2mod version
+    my $o2mv;
+    my $outf = "$MK\\Cpp\\swordMK\\utilities\\bin\\osis2mod.out"; 
+    `\"$MK\\Cpp\\swordMK\\utilities\\bin\\osis2mod.exe\" 2> \"$outf\"`;
+    open(OUTF, "<$outf") || die "Could not open $outf\n";
+    while(<OUTF>) {
+      if ($_ =~ (/\$REV:\s*(\d+)\s*\$/i)) {
+        $o2mv = $1; 
+        last;
+      }
+    }
+    close(OUTF);
+    unlink($outf);
+    
     &logit("\n--------------- ENCRYPTING MODULE $mod ---------------\n");
     $vsys = "KJV";
     $osis = "$MKS\\moduleDev\\".$tdir."\\$mod\\$mod.xml";
     $conf = "$MKS\\moduleDev\\".$tdir."\\mods.d\\$modlc.conf";
     $mdir = "$MKS\\moduleDev\\".$tdir."\\modules\\texts\\ztext\\$modlc";
     if (!open(VSYS, "<$conf")) {&logit("Conf file $conf not found."); die;}
+    my %confInfo;
     while (<VSYS>) {
-      if ($_ =~ /Versification\s*=\s*(.*)$/) {$vsys=$1;}
-      if ($_ =~ /CipherKey\s*=/) {$hasCK = "true";}
+      if ($_ =~ /^\s*([^=]+)\s*=\s*(.*?)\s*$/) {$confInfo{$1} = $2;}
     }
     close(VSYS);
-    if ($hasCK ne "true") {
+    if ($confInfo{"Versification"}) {$vsys = $confInfo{"Versification"};}
+    if (!$confInfo{"CipherKey"} || $vsys ne "KJV") {
       if (!open(VSYS, ">>$conf")) {&logit("Conf file $conf could not write."); die;}
-      print VSYS "\nCipherKey=\n";
+      print VSYS "\n";
+      if (!$confInfo{"CipherKey"}) {print VSYS "CipherKey=\n";}
+      if ($vsys ne "KJV") {
+        my $msv = "1.6.1";
+        if ($o2mv > 2478) {$msv = "1.6.2";}
+        print VSYS "MinumumVersion=$msv\n";
+      }
       close(VSYS);
     }
 

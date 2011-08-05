@@ -2,7 +2,6 @@
 //
 
 #include "stdafx.h"
-#include "w32process.h"
 #include "..\Release\appInfo.h"
 
 #define BUFSIZE 1024

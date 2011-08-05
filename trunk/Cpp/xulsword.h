@@ -54,8 +54,8 @@
 { 0x99, 0x25, 0x56, 0xe1, 0x04, 0x88, 0x02, 0xca}}
 
 #define WESTERN "KJV"
-#define EASTERN "EASTERN"
-#define SYNODALPRO "SynodalProtestant"
+#define EASTERN "EASTERN" // DEPRICATED verse system used by pre sword-1.6.1 built modules
+#define SYNODAL "Synodal"  // can be used by strstr to match SynodalProt, SynodalP, Synodal0, and Synodal
 #define VSERROR 99
 
 #ifndef NO_SWORD_NAMESPACE

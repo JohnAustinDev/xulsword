@@ -845,6 +845,13 @@ SWModule *SWMgr::CreateMod(const char *name, const char *driver, ConfigEntMap &s
 		datapath += "/";
 
 	SWBuf versification = ((entry = section.find("Versification"))  != section.end()) ? (*entry).second : (SWBuf)"KJV";
+	
+	// FOR BACKWARD COMPATIBILITY
+	// sword-1.6.1 Synodal canon was missing Psalms 114:9, but we need to detect and it continue its support
+	if (versification == "Synodal") {
+		SWBuf minvers = ((entry = section.find("MinumumVersion"))  != section.end()) ? (*entry).second : (SWBuf)"1.6.1";
+		if (minvers == "1.6.1") {versification = "Synodal0";}	
+	}
 
 	// DataPath - relative path to data used by module driver.  May be a directory, may be a File.
 	//   Typically not useful by outside world.  See AbsoluteDataPath, PrefixPath, and RelativePrefixPath

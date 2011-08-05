@@ -15,6 +15,10 @@
  *
  */
 
+#ifdef _MSC_VER
+	#pragma warning( disable: 4251 )
+#endif
+
 #include <swmgr.h>
 #include <swmodule.h>
 #include <versekey.h>
