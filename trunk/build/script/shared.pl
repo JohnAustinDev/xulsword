@@ -44,9 +44,9 @@ sub updateConfInfo($$$$) {
       if ($_ =~ s/^\s*(minMKVersion\s*=\s*).*$/$1$mpvfxsm/) {$hasMinProgversionForXSM = "true"};
       print TMP $_;
     }
-    close(TMP);
     if ($hasXSMversion eq "false") {print TMP "\nxulswordVersion=$xsmv\n";}
     if ($hasMinProgversionForXSM eq "false") {print TMP "minMKVersion=$mpvfxsm\n";}
+    close(TMP);
     close(INC);    
     unlink(INC);
     rename("$MKS/moduleDev/$dir/tmp.conf", "$MKS/moduleDev/$dir/mods.d/$conf");
