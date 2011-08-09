@@ -10,7 +10,7 @@ $version = shift;
 $progkey = shift;
 $codfile = shift;
 $encryptedTexts = shift;
-$log = "$MKS\\moduleDev\\swordmk-mods\\module_log.txt";
+$log = "$MKS\\moduleDev\\module_log.txt";
 
 require "$MK/build/script/shared.pl";
 
@@ -46,14 +46,13 @@ while($EncryptedTexts[0]) {
     $newkeys{$2}=$1;
   }
   close(INF);
-  if (!open(OUTF, ">$keyfile")) {&logit("Could not open $keyfile.\n"); die;}
+  if (!open(KEYF, ">$keyfile")) {&logit("Could not open $keyfile.\n"); die;}
       
   if (!$newkeys{$mod}) {&logit("No key for $mod!\n"); die;}
   $key = $progkey . $newkeys{$mod};
   
   #Encrypt only if we need to...
   if (!$lastkeys{$mod} || $lastkeys{$mod} ne $key) {
-  
     # get osis2mod version
     my $o2mv;
     my $outf = "$MK\\Cpp\\swordMK\\utilities\\bin\\osis2mod.out"; 
@@ -80,14 +79,18 @@ while($EncryptedTexts[0]) {
     }
     close(VSYS);
     if ($confInfo{"Versification"}) {$vsys = $confInfo{"Versification"};}
-    if (!$confInfo{"CipherKey"} || $vsys ne "KJV") {
+    if (!exists($confInfo{"CipherKey"}) || $vsys ne "KJV" || !exists($confInfo{"xulswordVersion"})) {
       if (!open(VSYS, ">>$conf")) {&logit("Conf file $conf could not write."); die;}
       print VSYS "\n";
-      if (!$confInfo{"CipherKey"}) {print VSYS "CipherKey=\n";}
+      if (!exists($confInfo{"CipherKey"})) {print VSYS "CipherKey=\n";}
       if ($vsys ne "KJV") {
         my $msv = "1.6.1";
         if ($o2mv > 2478) {$msv = "1.6.2";}
-        print VSYS "MinumumVersion=$msv\n";
+        if (!exists($confInfo{"MinumumVersion"})) {print VSYS "MinumumVersion=$msv\n";}
+        elsif ($confInfo{"MinumumVersion"} ne $msv) {&logit("ERROR: Conflicting MinimumVersion in $conf"); die;}
+      }
+      if (!exists($confInfo{"xulswordVersion"})) {
+        print VSYS "xulswordVersion=".(exists($confInfo{"Version"}) ? $confInfo{"Version"}:"3.0")."\n";
       }
       close(VSYS);
     }
@@ -100,8 +103,8 @@ while($EncryptedTexts[0]) {
     `\"$MK\\Cpp\\swordMK\\utilities\\bin\\osis2mod.exe\" \"$mdir\" \"$osis\" -N -v $vsys -z -c $key >> \"$log\"`;
   }
   else {&logit("$mod already encrypted to $key.\n");}
-  print OUTF "$key:$mod\n";
-  close(OUTF);
+  print KEYF "$key:$mod\n";
+  close(KEYF);
 }
 
 sub logit($) {
