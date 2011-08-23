@@ -563,9 +563,10 @@ bool OSISHTMLXUL::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					filepath += '/';
 			}
 			filepath += src;
-
+      filepath.replaceBytes("\\", '/');
+      
       outText("<div style=\"text-align:center;\">", buf, u);
-			outText("<image src=\"", buf, u);
+			outText("<img src=\"File://", buf, u);
 			outText(filepath, buf, u);
 			outText("\" />", buf, u);
 			outText("</div>", buf, u);

@@ -25,7 +25,7 @@ sub updateConfInfo($$$$) {
       if ($_ =~ /^\s*([^=]+)\s*=\s*(.*?)\s*$/) {$confInfo{$1} = $2;}
     }
     close(INC);
-    if ($confInfo{"Versification"} eq "Synodal" && $confInfo{"MinumumVersion"} =~ /(\d+)\.(\d+)\.(\d+)/) {
+    if ($confInfo{"Versification"} eq "Synodal" && $confInfo{"MinimumVersion"} =~ /(\d+)\.(\d+)\.(\d+)/) {
       if ($1>1 || ($1==1 && $2>6) || ($1==1 && $2==6 && $3>1)) {$mpvfxsm = 2.21;}
       else {$mpvfxsm = 2.13;} 
     }

@@ -22,7 +22,7 @@ const HTMLbr0 = "<div style=\"clear: both;\"><br></div>";
 
 // This function is only for versekey modules (BIBLE, COMMENTARY)
 function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduction, showOriginal) {
-  var myVersionsLocale = getLocaleOfVersion(version);
+  var myVersionsLocale = getLocaleOfModule(version);
   if (!myVersionsLocale) {myVersionsLocale = rootprefs.getCharPref("general.useragent.locale");}
   var myVersionsBundle = getLocaleBundle(myVersionsLocale, "books.properties");
   var myConfig = LocaleConfigs[myVersionsLocale];
@@ -171,7 +171,7 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
         
         // Write cell #4: chapter and verse
         var tmp = noteid.match(/\.(\d+)\.(\d+)$/);
-        var lov = getLocaleOfVersion(version);
+        var lov = getLocaleOfModule(version);
         var myc = dString(tmp[1], lov);
         var myv = dString(tmp[2], lov);
         t += "<a id=\"notl." + noteid + "\" class=\"fncol4 vstyle" + version + "\" >" + "<i>" + myc + ":" + versionDirectionEntity + myv + "</i>" + " -" + "</a>";

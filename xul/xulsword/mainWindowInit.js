@@ -257,7 +257,7 @@ prefs.setCharPref("DefaultVersion", (defaultMod ? defaultMod:"none"));
 //        c) general books
 //        d) dictionaries
 //    2) Priority
-//        a) tabs with program locale
+//        a) tabs matching program locale
 //        b) other tabs with installed locale
 //        c) remaining tabs
 //        d) ORIG tab
@@ -281,10 +281,10 @@ function tabOrder(a,b) {
     if (OrigModuleOT && infoA[1]==OrigModuleOT) return 1;
     if (OrigModuleOT && infoB[1]==OrigModuleOT) return -1;
 
-    // Priority: 1) DefaultModule(s) for current locale, 2) Other tabs that have
+    // Priority: 1) Modules matching current locale, 2) Other tabs that have
     // locales installed, 3) remaining tabs.
-    var aLocale = getLocaleOfVersion(infoA[1]);
-    var bLocale = getLocaleOfVersion(infoB[1]);
+    var aLocale = getLocaleOfModule(infoA[1]);
+    var bLocale = getLocaleOfModule(infoB[1]);
     var currentLocale = rootprefs.getCharPref("general.useragent.locale");
     var aPriority = (aLocale ? (aLocale==currentLocale ? 1:2):3);
     var bPriority = (bLocale ? (bLocale==currentLocale ? 1:2):3);

@@ -86,8 +86,8 @@ while($EncryptedTexts[0]) {
       if ($vsys ne "KJV") {
         my $msv = "1.6.1";
         if ($o2mv > 2478) {$msv = "1.6.2";}
-        if (!exists($confInfo{"MinumumVersion"})) {print VSYS "MinumumVersion=$msv\n";}
-        elsif ($confInfo{"MinumumVersion"} ne $msv) {&logit("ERROR: Conflicting MinimumVersion in $conf"); die;}
+        if (!exists($confInfo{"MinimumVersion"})) {print VSYS "MinimumVersion=$msv\n";}
+        elsif ($confInfo{"MinimumVersion"} ne $msv) {&logit("ERROR: Conflicting MinimumVersion in $conf"); die;}
       }
       if (!exists($confInfo{"xulswordVersion"})) {
         print VSYS "xulswordVersion=".(exists($confInfo{"Version"}) ? $confInfo{"Version"}:"3.0")."\n";
