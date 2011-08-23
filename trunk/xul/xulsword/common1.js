@@ -225,12 +225,24 @@ function updateCSSBasedOnCurrentLocale(cssRuleNameArray, styleSheetNumber) {
 
 var LocaleConfigs = {};
 var VersionConfigs = {};
-
-function getLocaleOfVersion(version) {
+// Return a locale (if any) to associate with the module
+function getLocaleOfModule(module) {
   var myLocale=null;
   for (var lc=0; lc<LocaleDefaultVersion.length; lc++) {
-    var regex = new RegExp("(^|\s|,)+" + version + "(,|\s|$)+");
+    var regex = new RegExp("(^|\s|,)+" + module + "(,|\s|$)+");
     if (LocaleDefaultVersion[lc] && LocaleDefaultVersion[lc].match(regex)) myLocale = LocaleList[lc];
+  }
+  if (Bible && !myLocale) {
+    for (lc=0; lc<LocaleList.length; lc++) {
+      var lcs, ms;
+      try {
+        lcs = LocaleList[lc].replace(/-.*$/, "").toLowerCase();
+        ms = Bible.getModuleInformation(module, "Lang").toLowerCase();
+      }
+      catch(er) {lcs=null; ms==null;}
+      
+      if (ms && ms == lcs) {myLocale = LocaleList[lc];}
+    }
   }
   return myLocale;
 }
@@ -678,7 +690,7 @@ function findAVerseText(version, location, windowNum) {
     if (text && text.length > 7) {
       ret.tabNum = Tab[bibleVersion].index;
       ret.location = bibleLocation;
-      ret.text = text;
+      ret.text = text; 
       return ret;
     }
   }
@@ -768,7 +780,7 @@ function getGenBookChapterText(moduleAndKey, bible, fn) {
 var VerseNm = new RegExp("(<sup class=\"versenum\">)(\\d+)(</sup>)", "g");
 function getChapterText(bible, fn, vers, appendNotes) {
   var text = bible.getChapterText(vers);
-  var tl = getLocaleOfVersion(vers);
+  var tl = getLocaleOfModule(vers);
   if (!tl) {tl = rootprefs.getCharPref("general.useragent.locale");}
   if (!DisplayNumeral[tl]) getDisplayNumerals(tl);
   if (DisplayNumeral[tl][10])

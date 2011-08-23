@@ -509,7 +509,7 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 	if (searchType == -4) {	// lucene
 		//Buffers for the wchar<->utf8 char* conversion
 		const unsigned short int MAX_CONV_SIZE = 2047;
-		wchar_t wcharBuffer[MAX_CONV_SIZE + 1];
+		TCHAR wcharBuffer[MAX_CONV_SIZE + 1];
 		char utfBuffer[MAX_CONV_SIZE + 1];
 		
 		lucene::index::IndexReader    *ir = 0;
@@ -525,31 +525,33 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 			standard::StandardAnalyzer analyzer(stopWords);
 			lucene_utf8towcs(wcharBuffer, istr, MAX_CONV_SIZE); //TODO Is istr always utf8?
 			q = QueryParser::parse(wcharBuffer, _T("content"), &analyzer);
-			(*percent)(20, percentUserData);
-			if ((flags & 2048) == 2048) {h = is->search(q,lucene::search::Sort::RELEVANCE );}
-			else						            {h = is->search(q,lucene::search::Sort::INDEXORDER );}
-			(*percent)(80, percentUserData);
-
-			// iterate thru each good module position that meets the search
-			bool checkBounds = getKey()->isBoundSet();
-			for (long i = 0; i < h->length(); i++) {
-				Document &doc = h->doc(i);
-
-				// set a temporary verse key to this module position
-				lucene_wcstoutf8(utfBuffer, doc.get(_T("key")), MAX_CONV_SIZE);	
-				*resultKey = utfBuffer; //TODO Does a key always accept utf8?
-
-				// check to see if it sets ok (within our bounds) and if not, skip
-				if (checkBounds) {
-					*getKey() = *resultKey;
-					if (*getKey() != *resultKey) {
-						continue;
-					}
-				}
-				listKey << *resultKey;
-				listKey.GetElement()->userData = (void *)((__u32)(h->score(i)*100));
-			}
-			(*percent)(98, percentUserData);
+      if (q) {  
+  			(*percent)(20, percentUserData);
+  			if ((flags & 2048) == 2048) {h = is->search(q,lucene::search::Sort::RELEVANCE );}
+  			else						            {h = is->search(q,lucene::search::Sort::INDEXORDER );}
+  			(*percent)(80, percentUserData);
+  
+  			// iterate thru each good module position that meets the search
+  			bool checkBounds = getKey()->isBoundSet();
+  			for (long i = 0; i < h->length(); i++) {
+  				Document &doc = h->doc(i);
+  
+  				// set a temporary verse key to this module position
+  				lucene_wcstoutf8(utfBuffer, doc.get(_T("key")), MAX_CONV_SIZE);	
+  				*resultKey = utfBuffer; //TODO Does a key always accept utf8?
+  
+  				// check to see if it sets ok (within our bounds) and if not, skip
+  				if (checkBounds) {
+  					*getKey() = *resultKey;
+  					if (*getKey() != *resultKey) {
+  						continue;
+  					}
+  				}
+  				listKey << *resultKey;
+  				listKey.GetElement()->userData = (void *)((__u32)(h->score(i)*100));
+  			}
+  			(*percent)(98, percentUserData);
+  		}
 		}
 		SWCATCH (...) {
 			q = 0;
@@ -1113,7 +1115,7 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 	SWBuf strong;
 
 	const short int MAX_CONV_SIZE = 2047;
-	wchar_t wcharBuffer[MAX_CONV_SIZE + 1];
+	TCHAR wcharBuffer[MAX_CONV_SIZE + 1];
 	
 	char err = Error();
 	

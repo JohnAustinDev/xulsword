@@ -36,7 +36,7 @@ Notes - EASTERN vs Synodal:
       No ESV cross references, dictionary links?
       Uses verse linking.
       Verse system is compiled into all new SWORD engines, but sword-1.6.1 Synodal is missing Psalms 114:9!
-      Synodal0 (with the error) works on versions of MK 2.13+.
+      Synodal0 (non-corrected) works on versions of MK 2.13+.
       Synodal (corrected) works on versions of MK 2.21+, and on all other updated SWORD programs.
       Needs minMKVersion=2.13 or 2.21. 
 */
@@ -181,11 +181,17 @@ void xulsword::updateGlobalOptions(SWMgr * manager, bool disableFootCrossRed) {
 mapVersifications 
 *********************************************************************/
 // Reads an input key and sets the output key to the same verse in opposing verse system.
+// Conversion is always between WESTERN (KJV) and EASTERN (Synodal, Synodal0, SynodalP, SynodalProt etc). 
 // If upper bound is set on input key, then converted upper bound will be set on output key
 void xulsword::mapVersifications(VerseKey *vkin, VerseKey *vkout) {
   const char *inVerseSystem = vkin->getVersificationSystem();
+  const char *outVerseSystem = vkout->getVersificationSystem();
+  
+  // only change output key's verse system when it's necessary
+  if (!strcmp(inVerseSystem,EASTERN) || strstr(inVerseSystem,SYNODAL)) vkout->setVersificationSystem(WESTERN);
+  else if (!strcmp(inVerseSystem,WESTERN) && (strcmp(outVerseSystem,EASTERN) && !strstr(outVerseSystem,SYNODAL))) 
+    vkout->setVersificationSystem(EASTERN);
 	
-  vkout->setVersificationSystem(!strcmp(inVerseSystem, WESTERN) ? EASTERN:WESTERN);
   vkout->ClearBounds(); // important to prevent errors which changing key!
         
 	// Prepare to map UpperBound
@@ -409,6 +415,7 @@ NS_IMETHODIMP xulsword::SetBiblesReference(const nsACString & Mod, const nsAStri
   fromKey.setVersificationSystem(versification);
   locationToVerseKey(NS_ConvertUTF16toUTF8(Vkeytext).get(), &fromKey);
   VerseKey toKey;
+  toKey.setVersificationSystem(EASTERN); // init value only, may be changed by mapVersifications
   mapVersifications(&fromKey, &toKey);
 
   if (!strcmp(versification, WESTERN)) {
@@ -475,6 +482,7 @@ NS_IMETHODIMP xulsword::SetVerse(const nsACString & Mod, PRInt32 firstverse, PRI
   
   // Map to other verse systems too
   VerseKey toKey;
+  toKey.setVersificationSystem(EASTERN); // init value only, may be changed by mapVersifications
   mapVersifications(&fromKey, &toKey);
   
   // Save map results
@@ -910,6 +918,7 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
           (!strcmp(toVS,WESTERN) && (!strcmp(frVS,EASTERN) || strstr(frVS,SYNODAL)))) {
         VerseKey convertKey;
         convertKey.copyFrom(readKey);
+        readKey.setVersificationSystem(toVS);
         mapVersifications(&convertKey, &readKey);
       }
       versemod->SetKey(readKey);
@@ -1087,6 +1096,7 @@ NS_IMETHODIMP xulsword::ConvertLocation(const nsACString & FromVerseSystem, cons
   if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) || 
       (!strcmp(toVS,WESTERN) && (!strcmp(frVS,EASTERN) || strstr(frVS,SYNODAL)))) {
     VerseKey toKey;
+    toKey.setVersificationSystem(EASTERN); // init value only, may be changed by mapVersifications
     mapVersifications(&fromKey, &toKey);
 //printf("TO  - KT:%s, LB:%s, UB:%s\n", toKey.getShortText(), toKey.LowerBound().getShortText(), toKey.UpperBound().getShortText());
     result.appendFormatted("%s.%i", toKey.getOSISRef(), toKey.UpperBound().Verse());
@@ -1557,12 +1567,14 @@ NS_IMETHODIMP xulsword::GetSearchTexts(const nsACString & Mod, PRInt32 first, PR
 
     tokey.Persist(1);
     module->setKey(tokey);
+    tokey.setAutoNormalize(0); // Non-existant calls should return empty string!
     
     while (!SearchList.Error()&&(written<num)) {
       fromkey=SearchList;
       if ((!strcmp(searchedvers,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) || 
           (!strcmp(toVS,WESTERN) && (!strcmp(searchedvers,EASTERN) || strstr(searchedvers,SYNODAL)))) {
-         mapVersifications(&fromkey, &tokey);
+        tokey.setVersificationSystem(toVS);
+        mapVersifications(&fromkey, &tokey);
       }
       else {tokey.copyFrom(fromkey);}
 

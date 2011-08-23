@@ -2836,7 +2836,6 @@ function getDictionaryHTML(dictionaryWord, dictionaryNames, dontAddParagraphIDs)
   if (dictMods.length == 1) {
     try {dictHTML = Bible.getDictionaryEntry(dictMods[0], dictionaryWord);}
     catch (er) {dictHTML = "";}
-    if (dictHTML) dictHTML = completeImageLinks(dictMods[0], dictHTML);
   }
   else if (dictMods.length > 1) {
     for (var dw=0; dw<dictMods.length; dw++) {
@@ -2844,7 +2843,6 @@ function getDictionaryHTML(dictionaryWord, dictionaryNames, dontAddParagraphIDs)
       try {dictEntry = Bible.getDictionaryEntry(dictMods[dw], dictionaryWord);}
       catch (er) {dictEntry = "";}
       if (dictEntry) {
-        dictEntry = completeImageLinks(dictMods[dw], dictEntry);
         dictEntry = dictEntry.replace(/^(<br>)+/,"");
         var dictTitle = Bible.getModuleInformation(dictMods[dw], "Description");
         dictTitle = (dictTitle != NOTFOUND ? "<b>" + dictTitle + "</b><br>":"");
@@ -2869,21 +2867,6 @@ function decodeOSISRef(aRef) {
     m = aRef.match(re);
   }
   return aRef;
-}
-
-function completeImageLinks(dictionaryName, text) {
-  // Add File:// to path
-  text = text.replace("<image src=\"", "<image src=\"File://", "gm");
-  if (text.search("<image src=\"File://.") != -1) {
-    // If Sword is started in runDir, then sword returns "./" as the path,
-    // and this is not acceptable to xul, so replace with full path
-    var modDir = getSpecialDirectory("xsModsUser");
-    modDir = encodeURI(modDir.path).replace(/%5C/g, "/");
-    modDir = modDir.replace(/\\/g, "/");
-    text = text.replace("<image src=\"File://.", "<image src=\"File://" + modDir, "gm");
-  }
-  text = text.replace(/(src="[^"]*?)\\/, "$1/", "g"); // "\" is converted to %5C which breaks popup's "back" link
-  return text;
 }
 
 /*
@@ -3829,7 +3812,7 @@ function initTabHiddenPrefs() {
   var allGenbks="";
   var someBibles="";
   for (var t=0; t<Tabs.length; t++) {
-    var keepBible = (Tabs[t].isOrigTab || getLocaleOfVersion(Tabs[t].modName) || Tabs[t].modName==prefs.getCharPref("DefaultVersion"));
+    var keepBible = (Tabs[t].isOrigTab || getLocaleOfModule(Tabs[t].modName) || Tabs[t].modName==prefs.getCharPref("DefaultVersion"));
     someBibles  += (Tabs[t].modType==BIBLE && !keepBible ? Tabs[t].modName + ";":"");
     allComms    += (Tabs[t].modType==COMMENTARY ? Tabs[t].modName + ";":"");
     allDicts    += (Tabs[t].modType==DICTIONARY ? Tabs[t].modName + ";":"");

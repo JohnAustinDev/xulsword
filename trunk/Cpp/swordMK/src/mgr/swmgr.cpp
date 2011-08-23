@@ -849,7 +849,7 @@ SWModule *SWMgr::CreateMod(const char *name, const char *driver, ConfigEntMap &s
 	// FOR BACKWARD COMPATIBILITY
 	// sword-1.6.1 Synodal canon was missing Psalms 114:9, but we need to detect and it continue its support
 	if (versification == "Synodal") {
-		SWBuf minvers = ((entry = section.find("MinumumVersion"))  != section.end()) ? (*entry).second : (SWBuf)"1.6.1";
+		SWBuf minvers = ((entry = section.find("MinimumVersion"))  != section.end()) ? (*entry).second : (SWBuf)"1.6.1";
 		if (minvers == "1.6.1") {versification = "Synodal0";}	
 	}
 
