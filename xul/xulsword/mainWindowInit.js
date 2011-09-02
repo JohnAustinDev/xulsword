@@ -27,6 +27,8 @@
 var RestartToChangeLocale;
 var HaveValidLocale;
 var Progvers = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).version;
+var Enginevers = getPrefOrCreate("EngineVersion", "Char", NOTFOUND);
+
 function initLocales() {
   // Find locales and test their versions
   var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
@@ -135,6 +137,9 @@ function createTabs() {
     var xminprogvers = Bible.getModuleInformation(info[0], MINPVERPAR);
     xminprogvers = (xminprogvers!=NOTFOUND ? xminprogvers:MINVERSION);
     if (comparator.compare(Progvers, xminprogvers) < 0) continue;
+    var xsengvers = Bible.getModuleInformation(info[0], "MinimumVersion");
+    xsengvers = (xsengvers!=NOTFOUND ? xsengvers:0);
+    if (Enginevers != NOTFOUND && comparator.compare(Enginevers, xsengvers) < 0) continue;
     
     //Use this opportunity to init the StyleRules and version configs...
     var versionConfig = {direction:"ltr", font:DefaultFont, fontSizeAdjust:null, lineHeight:null};

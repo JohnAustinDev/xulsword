@@ -225,7 +225,11 @@ function updateCSSBasedOnCurrentLocale(cssRuleNameArray, styleSheetNumber) {
 
 var LocaleConfigs = {};
 var VersionConfigs = {};
-// Return a locale (if any) to associate with the module
+// Return a locale (if any) to associate with the module:
+//    Return a Locale which lists the module as its default
+//    Return a Locale with exact same language code as module
+//    Return a Locale having same base language code as module, prefering current Locale over any others
+//    Return null if no match
 function getLocaleOfModule(module) {
   var myLocale=null;
   for (var lc=0; lc<LocaleDefaultVersion.length; lc++) {
@@ -236,12 +240,16 @@ function getLocaleOfModule(module) {
     for (lc=0; lc<LocaleList.length; lc++) {
       var lcs, ms;
       try {
-        lcs = LocaleList[lc].replace(/-.*$/, "").toLowerCase();
+        lcs = LocaleList[lc].toLowerCase();
         ms = Bible.getModuleInformation(module, "Lang").toLowerCase();
       }
-      catch(er) {lcs=null; ms==null;}
+			catch(er) {lcs=null; ms==null;}
       
-      if (ms && ms == lcs) {myLocale = LocaleList[lc];}
+			if (ms && ms == lcs) {myLocale = LocaleList[lc]; break;}
+			if (ms && lcs && ms.replace(/-.*$/, "") == lcs.replace(/-.*$/, "")) {
+				myLocale = LocaleList[lc];
+				if (myLocale == rootprefs.getCharPref("general.useragent.locale")) break;
+			}
     }
   }
   return myLocale;

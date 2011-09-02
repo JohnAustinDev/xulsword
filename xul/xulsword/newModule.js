@@ -232,14 +232,14 @@ jsdump("STARTING startImport");
       if (incomp.oldmodule.length) {
         msg += SBundle.getString("OutOfDate") + "\n\n";
         for (var bf=0; bf<incomp.oldmodule.length; bf++) {msg+="\"" + incomp.oldmodule[bf].leafName + "\"\n";}
-        msg += "\n" + SBundle.getFormattedString("MinModVersion2", [incomp.minmodversion]) + "\n\n";
+        msg += "\n" + SBundle.getFormattedString("MinModVersion2", [(incomp.minmodversion ? incomp.minmodversion:"?")]) + "\n\n";
       }
       if (incomp.newmodule.length) {
         // Try is for Backward Compatibility to previous UI. May be removed when new UI is released.
         try {
           msg += SBundle.getString("TooNew") + "\n\n";
           for (var bf=0; bf<incomp.newmodule.length; bf++) {msg+="\"" + incomp.newmodule[bf].leafName + "\"\n";}
-          msg += "\n" + SBundle.getFormattedString("NeedUpgrade2", [incomp.minprogversion]) + "\n\n";
+          msg += "\n" + SBundle.getFormattedString("NeedUpgrade2", [(incomp.minprogversion ? incomp.minprogversion:"?")]) + "\n\n";
         }
         catch (er) {
           msg += "The following module(s) have components which are not supported:\n\n";
@@ -247,6 +247,7 @@ jsdump("STARTING startImport");
           msg += "\nUpgrade the program to at least version:\"" + incomp.minprogversion + "\"\n\n";
         }
       }
+      if (ProgressMeter) ProgressMeter.close();
       Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       var result = {};
       var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
@@ -279,6 +280,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
   var conf = new RegExp(MODSD + "\/[^\/]+" + CONF_EXT + "$");
   var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
   var progVersion = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).version;
+  var engineVersion = getPrefOrCreate("EngineVersion", "Char", NOTFOUND); // cannot read directly from engine because it's not loaded yet!
   var incompModsPath = [];
   var incompGUIs = [];
   for (var f=0; f<entryArray.length; f++) {
@@ -331,6 +333,14 @@ function removeIncompatibleFiles(fileArray, entryArray) {
                 matchingXSmoduleTextVersion = readParamFromConf(instconf, "Version");
                 if (!matchingXSmoduleTextVersion) matchingXSmoduleTextVersion = 0;
               }
+              
+							// If conf file's MinimumVersion is greater than program's own engine version, then remove
+							if (versioninfo.xsmodulemineng && engineVersion != NOTFOUND &&
+									comparator.compare(engineVersion, versioninfo.xsmodulemineng) < 0) {
+							  remove = true;
+							  modHasIncompatibleNewComponents = true;
+              	incomp.newmodule.push(fileArray[f]);
+							}
             }
           }
           else if (versioninfo.type == MANIFEST_EXT) {
@@ -425,6 +435,7 @@ function readVersion(aZip, aEntry, progVers) {
     info.path = readParamFromConf(temp, "DataPath").replace(/^\.\//, "").replace(/\/[^\/]+$/, "/");
     info.xsmodulename = readParamFromConf(temp, "ModuleName");
     info.xsmoduletext = readParamFromConf(temp, "Version");
+    info.xsmodulemineng = readParamFromConf(temp, "MinimumVersion");
     if (!info.xsmoduletext) info.xsmoduletext = 0;
   }
   else if (aEntry.search("." + MANIFEST_EXT, "i")!=-1) {

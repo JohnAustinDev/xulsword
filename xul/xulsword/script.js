@@ -691,6 +691,10 @@ function scriptboxMouseOver(e) {
     if (getPrefOrCreate("ShowIntrosBeforeText", "Bool", false)) return;
     activatePopup("introlink", elem.title);
     break;
+
+  case "noticelink":
+    activatePopup("noticelink", elem.title);
+    break;
   }
 }
 
@@ -1099,6 +1103,10 @@ function activatePopup(datatype, data, delay, yoffset) {
     
   case "introlink":
     html += getBookIntroduction(Win.modName, Bible.getBookName(), Bible) + "<br><br>";
+    break;
+    
+  case "noticelink":
+    html += getNoticeLink(Win.modName, 1) + "<br>";
     break;
     
   default:

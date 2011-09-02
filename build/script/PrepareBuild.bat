@@ -2,7 +2,7 @@ echo off
 cd "%MK%\Build"
 
 :: define process name
-set xsprocess=%executable:.exe=Runner.exe%
+set xsprocess=%executable:.exe=-srv.exe%
 
 :: isPortable is set the first time Appinfo is called during a thread, and then remains unchanged
 if not defined isPortable Set isPortable=%1
@@ -94,12 +94,10 @@ echo #define APPDATA "%APPDATA%">>appinfo.iss
 ECHO --- WRITING CDRUN DEFINES USED BY STARTUP EXEs
 mkdir "%MK%\Cpp\Release"
 cd "%MK%\Cpp\Release"
-echo #define PATH_TO_PROGRAM "%%s\\%executable%"> appInfo.h
-echo #define KEYADDRESS "Software\\%vendor%\\%name%">> appInfo.h
-echo #define PROC_NAME "%xsprocess%">> appInfo.h
-::echo #define PORTABLE_RUN L"\".\\%name%\\%name%Local.exe\" -profile \"..\\profile\" -console -jsconsole">> appInfo.h
-echo #define PORTABLE_RUN L"\".\\%name%\\%name%Local.exe\" -profile \"..\\profile\"">> appInfo.h
+echo #define PATH_TO_PROGRAM L"%%s\\%executable%"> appInfo.h
 echo #define PORTABLE_DIR L".\\%name%">> appInfo.h
+echo #define KEYADDRESS L"Software\\%vendor%\\%name%">> appInfo.h
+echo #define PROC_NAME L"%xsprocess%">> appInfo.h
 
 ECHO --- WRITING INFO FOR COMPILATION
 cd "%MK%\Cpp\Release"

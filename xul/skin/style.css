@@ -59,6 +59,8 @@ a:active{color:blue;}
   font-size:28px;
   font-weight:bold;
   color:rgb(110,85,110);
+  line-height:120%;
+	width:50%;
 }
 .scriptbox {
   font-size: 14px;

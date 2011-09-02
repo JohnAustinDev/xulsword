@@ -7,17 +7,17 @@ cd "%MK%\%CPPD%\runPortable"
 rmdir /s /Q Release
 mkdir Release
 
-Set cFlags=/O2 /GL /W0 /D "USE_STL" /D "NDEBUG" /D "_UNICODE" /D "UNICODE" /FD /EHsc /MT /Fo"Release\\" /Fd"Release\vc80.pdb" /FR"Release\\" /nologo /c /Wp64 /Zi /TP
-Set cFiles="w32process.cpp" "runPortable.cpp"
-Set lFlags=/OUT:"Release\runPortable.exe" /INCREMENTAL:NO /NOLOGO /MANIFEST /MANIFESTFILE:"Release\runPortable.exe.intermediate.manifest" /DEBUG /PDB:"Release\runPortable.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /LTCG /MACHINE:X86 kernel32.lib Advapi32.lib
-Set lFiles="Release\w32process.obj" "Release\runPortable.obj" "Release\CDRunApp.res"
+Set cFlags=/MT /O2 /W1 /EHsc /nologo /Wp64 /c /D "NDEBUG" /D "_UNICODE" /D "UNICODE" /D "_CRT_SECURE_NO_DEPRECATE" /Fo"Release\\" /TP 
+Set cFiles="runPortable.cpp"
+Set lFlags=/OUT:"Release\runPortable.exe" /INCREMENTAL:NO /NOLOGO /MANIFEST /MANIFESTFILE:"Release\runPortable.exe.intermediate.manifest" /SUBSYSTEM:WINDOWS User32.lib
+Set lFiles="Release\runPortable.obj" "Release\runPortable.res"
 
 if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
 set INCLUDE=%INCLUDE%;%ProgramFiles%\Microsoft SDKs\Windows\v6.1\Include
 set LIB=%LIB%;%ProgramFiles%\Microsoft SDKs\Windows\v6.1\Lib
 
 echo on
-rc.exe /l 0x409 /fo".\Release\CDRunApp.res" /d "NDEBUG" /d "_AFXDLL" ".\CDRunApp.rc"
+rc.exe /l 0x409 /fo".\Release\runPortable.res" ".\runPortable.rc"
 cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
 mt.exe -manifest "Release\runPortable.exe.intermediate.manifest" -outputresource:"Release\runPortable.exe";1
