@@ -39,13 +39,13 @@ const indnt = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 const Vtext1 = "<span id=\"vs.";
 const Vtext2 = "<div class=\"interB\">";
 const Titles = "<div class=\"head";
-const NewChapter = "<div class=\"chapnum\"";
+const NewChapter = "<div class=\"chapterhead\"";
 const NOTFOUND = "Not Found";
 const CROSSREFTARGET = new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+)(\.(\d+)|\s*-\s*[^\.]+\.\d+\.(\d+))?)$/);
 const REDWORDS = new RegExp(/<font color="red">/i);
 const NEWLINE = "\r\n"; //Only valid for Windows operating systems!!!
 const DEFAULTLOCALE = "en-US";
-const DLGSTD="centerscreen, modal, resizable=no";
+const DLGSTD="centerscreen, modal, resizable";
 const DLGALERT=0, DLGQUEST=1, DLGINFO=2;
 const DLGOK=0, DLGOKCANCEL=1, DLGYESNO=2;
 const WESTERNVS = "KJV";
@@ -259,6 +259,14 @@ function getSpecialDirectory(name) {
  * Global Preferences Obect and its Support Routines
  ***********************************************************************/ 
 // Get the "xulsword." branch of prefs
+
+// IMPORTANT: Preferences in Mozilla have two separate values stored in
+// two separate trees: A Default value, and a User value. Default values are
+// assigned each time the program starts up, and they come from whatever
+// is in the /defaults/pref/*.js files. User values are set by the
+// program or user, and they permanently override the default values.
+// SO, IT IS IMPORTANT NOT TO SET VALUES FOR ANY PREFERENCES
+// WHICH MIGHT NEED TO BE CHANGED DURING A PROGRAM UPGRADE!
 var prefs = Components.classes["@mozilla.org/preferences-service;1"].
                     getService(Components.interfaces.nsIPrefService);  
 prefs = prefs.getBranch("xulsword.");

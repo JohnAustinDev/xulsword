@@ -2,35 +2,31 @@
 //
 
 #include "stdafx.h"
-#include "w32process.h"
 #include "..\Release\appInfo.h"
+
+#define BUFSIZE 1024
 
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
-	// Start the program...
-	static STARTUPINFO  si;
-	static PROCESS_INFORMATION  pi;
-	
-	// Parameter 2 MUST be modifiable for CreateProcessW
-  wchar_t commandLine[32768];
-  wcscpy(commandLine, PORTABLE_RUN);
-	int res = CreateProcessW(NULL, commandLine, NULL, NULL, false, CREATE_NEW_PROCESS_GROUP, NULL, PORTABLE_DIR, &si, &pi);
-	return 0;
-}
-
-/*
-//For Debug...
-#include <io.h>
-#include <Fcntl.h>
-  int hCrt;
-  FILE *hf;
+  WCHAR wlpCmdLine[BUFSIZE];
+  mbstowcs(wlpCmdLine, lpCmdLine, sizeof(WCHAR)*(BUFSIZE-1));
+  wlpCmdLine[BUFSIZE-1] = NULL; // insure null termination
+  //std::wcout << L"Incoming command line:" << wlpCmdLine << '\n';
   
-  AllocConsole();
-  hCrt = _open_osfhandle((long) GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
-  hf = _fdopen( hCrt, "w" );
-  *stdout = *hf;
-  setvbuf( stdout, NULL, _IONBF, 0 );
-*/
+	// Start the program...
+  static STARTUPINFO  si;
+  static PROCESS_INFORMATION  pi;
+  
+  // Parameter 2 MUST be modifiable for CreateProcessW
+  WCHAR commandLine[2*BUFSIZE];
+  WCHAR rundir[BUFSIZE]; 
+  wsprintf(commandLine, L"\"%s\\%s\" -profile \"..\\profile\" %s", PORTABLE_DIR, PROC_NAME, wlpCmdLine);
+  wsprintf(rundir, L"%s", PORTABLE_DIR);
+  int success = CreateProcessW(NULL, commandLine, NULL, NULL, false, CREATE_NEW_PROCESS_GROUP, NULL, rundir, &si, &pi);
+  //std::wcout << L"success=" << success << L", commandLine:" << commandLine << L", rundir:" << rundir << '\n'; 
+  
+  return 0;
+}

@@ -1,28 +1,3 @@
-// functionality prefs
-//pref("xulsword.HideUnavailableCrossReferences", true);
-//pref("xulsword.ShowOriginalTextTabs", true); 
-//pref("xulsword.ShowCommentaryTabsByDefault", true);
-//pref("xulsword.ShowDictionaryTabsByDefault", true);
-//pref("xulsword.ShowAllBibleTabsByDefault", true);
-//pref("xulsword.MinimizeSearchRadios", true);
-//pref("xulsword.HideDisabledBooks", true);
-//pref("xulsword.ShowIntrosBeforeText", true);
-//pref("xulsword.HideDisabledViewMenuItems", true);
-//pref("xulsword.HideDisabledCopyPrintIncludes", true);
-//pref("xulsword.HideHebrewOptions", true);
-//pref("xulsword.DontReadReferenceBible", true);
-
-//For UYG builds, use:
-//pref("xulsword.HideUnavailableCrossReferences", true);
-//pref("xulsword.HideDisabledViewMenuItems", true);
-//pref("xulsword.HideDisabledCopyPrintIncludes", true);
-
-//For KYRG Pastors
-//pref("xulsword.ShowAllBibleTabsByDefault", true);
-//pref("xulsword.HiddenTexts1", "KJV;UZVL;UYG;KYLSA;CARS;HEB;TR;");
-//pref("xulsword.HiddenTexts2", "KJV;UZVL;UYG;KYLSA;CARS;HEB;TR;");
-//pref("xulsword.HiddenTexts3", "KJV;UZVL;UYG;KYLSA;CARS;HEB;TR;");
-
 // xulsword prefs
 pref("xulsword.Footnotes","On");
 pref("xulsword.Headings","On");

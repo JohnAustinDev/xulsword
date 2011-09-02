@@ -53,7 +53,7 @@ call Compile.bat
 
 ECHO -- COPY COMPONENTS ETC
 copy /Y "%MK%\Cpp\runPortable\Release\runPortable.exe" "%PortableDir%\%name%.exe"
-rename "%PortableDir%\%name%\firefox.exe" "%name%Local.exe"
+rename "%PortableDir%\%name%\firefox.exe" "%xsprocess%"
 copy /Y "%MK%\xulrunner\components\xulsword.dll" "%RunDir%\components\"
 copy /Y "%MK%\xulrunner\components\ixulsword.xpt" "%RunDir%\components\"
 copy /Y "%MK%\xulrunner\components\xsCommandLineHelper.js" "%RunDir%\components\"

@@ -24,6 +24,7 @@
 #include <versekey.h>
 #include <iostream>
 #include <stdio.h>
+#include <swbuf.h>
 
 #ifndef NO_SWORD_NAMESPACE
 using sword::SWMgr;
@@ -32,6 +33,7 @@ using sword::ModMap;
 using sword::SWKey;
 using sword::SWModule;
 using sword::SW_POSITION;
+using sword::SWBuf;
 #endif
 
 int main(int argc, char **argv) {
@@ -66,11 +68,23 @@ int main(int argc, char **argv) {
 
 	(*mod) = TOP;
 
+	bool haveBook = false;
+	SWBuf thisBook = "none";
+	SWBuf lastBook = "none";
 	while (!mod->Error()) {
 	  
-	  if (vkey->Verse())
-	    if (!strlen ((const char *)(*mod)))
-	      std::cout << *vkey << ", shortName=" << vkey->getBookAbbrev() << std::endl;
+	  if (vkey->Verse()) {
+		thisBook = vkey->getBookName();
+		if (thisBook != lastBook) {
+			if (lastBook != "none" && !haveBook) std::cout << "Whole book: " << lastBook << std::endl;
+			haveBook = false;
+		}
+		if (strlen ((const char *)(*mod))) haveBook = true;
+	    if (haveBook && !strlen ((const char *)(*mod)))
+	      std::cout << *vkey << std::endl;
+	    lastBook = thisBook;
+	  }
+	  
 	  (*mod)++;
 	}
 }

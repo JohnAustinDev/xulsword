@@ -34,23 +34,25 @@ function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduct
   //var chapterHeadingLineHeight = (myConfig.lineHeight ? myConfig.lineHeight:DefaultLocaleLineHeight); --> line-height:" + chapterHeadingLineHeight + ";
   
   // book and chapter heading
-  var mtext = "<div>";  
+  var mtext = "<div class=\"chapterhead\">";
   mtext += "<div class=\"chapnum\" style=\"text-align:" + chapterHeadingFloat + "; float:" + chapterHeadingFloat + "; font-family:'" + chapterHeadingFont + "'; \">";
   if (showBookName) {
     mtext += myVersionsBundle.GetStringFromName(myBook);
-    mtext += "<br><br>";
+    mtext += "<br>";
   }
-  mtext += getLocalizedChapterTerm(myBook, myChap, myVersionsBundle, myVersionsLocale) + "</div>";
+  mtext += getLocalizedChapterTerm(myBook, myChap, myVersionsBundle, myVersionsLocale);
+	mtext += "</div>";
 
   var intro = "";
   if (!showOriginal) {
-    mtext += "<div style=\"padding-right:20px; padding-left:20px; position:relative; top:4px;" +
-      " float:" + oppositeHeadingFloat + 
+    mtext += "<div style=\"width:40%; position:relative; top:4px;" +
+      " float:" + oppositeHeadingFloat +
       "; text-align:" + chapterHeadingFloat + "\">";
+    mtext +=  getNoticeLink(version);
     mtext += "<div class=\"audiolink\">";
     mtext += "<img name=\"listenlink\" id=\"listenlink." + myChap + "\" src=\"chrome://xulsword/skin/images/listen0.png\" style=\"visibility:hidden;\" onmouseover=\"scriptboxMouseOver(event)\" onmouseout=\"scriptboxMouseOut(event)\">";
     mtext += "</div>";
-    
+
     // introduction link and introduction
     if (myChap==1) {
       intro = getBookIntroduction(version, myBook, Bible); 
@@ -75,6 +77,16 @@ function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduct
 
   mtext += (intro ? HTMLbr:HTMLbr0);
   return mtext;
+}
+
+function getNoticeLink(mod, inner) {
+	if (!inner) {
+	  var lt = Bible.getModuleInformation(mod, "NoticeLink");
+	  if (lt == NOTFOUND) {return "";}
+	  return lt.replace("<a>", "<a id=\"noticelink\">");
+	}
+	else
+	  return Bible.getModuleInformation(mod, "NoticeText");
 }
 
 function insertUserNotes(aBook, aChapter, aModule, text) {

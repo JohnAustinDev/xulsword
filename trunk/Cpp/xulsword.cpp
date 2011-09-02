@@ -1451,8 +1451,8 @@ NS_IMETHODIMP xulsword::Search(const nsACString & Mod, const nsAString & Srchstr
 	PRInt32 type1;
 	char noneed = 0;
 
-	searchString.Assign(NS_ConvertUTF16toUTF8(Srchstr).get());
-  
+	searchString.Assign(module->StripText(NS_ConvertUTF16toUTF8(Srchstr).get()));
+
   SWKey *nvk;
   SWKey *testkey = module->CreateKey();
   VerseKey *modvkey = SWDYNAMIC_CAST(VerseKey, testkey);

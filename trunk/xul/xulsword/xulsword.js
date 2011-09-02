@@ -3445,10 +3445,12 @@ function fitPage(fnum, type, p, s, fn, header, footer) {
   
   // remove the scrollbars that are likely there!
   f.innerHTML = ""; var dummy = f.scrollHeight;
-  f.innerHTML = header + p.text.substring(p.ibeg, p.iend) + footer;
+  var ind = "";
+  var i = p.ibeg - 7 - indnt.length; // 7 = length of </span>
+	while(p.text.substr(i, indnt.length) == indnt) {ind += indnt; i -= indnt.length;}
+  f.innerHTML = header + ind + p.text.substring(p.ibeg, p.iend) + footer;
   if (p.imin==-1 || p.imin > p.ibeg) p.imin = p.ibeg;
   if (p.imax==-1 || p.imax < p.iend) p.imax = p.iend;
-
   return true;
 }
 
@@ -3484,7 +3486,10 @@ function appendVerse(f, p, s, fn, header, footer, intend, appendExtraVerse) {
   if (appendExtraVerse) return appendVerse(f, p, s, fn, header, footer, itest, false);
 
   checkNoteBox(p.imax, itest, p, s, fn);
-  f.innerHTML = header + p.text.substring(p.ibeg, itest) + footer;
+  var ind = "";
+  var i = p.ibeg - 7 - indnt.length; // 7 = length of </span>
+	while(p.text.substr(i, indnt.length) == indnt) {ind += indnt; i -= indnt.length;}
+  f.innerHTML = header + ind + p.text.substring(p.ibeg, itest) + footer;
   
   return itest;
 }
@@ -3520,7 +3525,10 @@ function prependVerse(f, p, s, fn, header, footer) {
   if (prevtitle > preverse) itest = prevtitle;
   if (prevchap > preverse) itest = prevchap;
   checkNoteBox(itest, p.imin, p, s, fn);
-  f.innerHTML = header + p.text.substring(itest, p.iend) + footer;
+  var ind = "";
+  var i = itest - 7 - indnt.length; // 7 = length of </span>
+	while(p.text.substr(i, indnt.length) == indnt) {ind += indnt; i -= indnt.length;}
+  f.innerHTML = header + ind + p.text.substring(itest, p.iend) + footer;
   
   return itest;
 }

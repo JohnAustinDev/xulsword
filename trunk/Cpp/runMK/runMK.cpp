@@ -5,15 +5,16 @@
 #include "..\Release\appInfo.h"
 
 #define BUFSIZE 1024
-#define KEYNAME "RunDir"
+#define KEYNAME L"RunDir"
 
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
-  wchar_t wlpCmdLine[1024];
-  mbstowcs (wlpCmdLine, lpCmdLine, sizeof(wchar_t)*1024);
+  WCHAR wlpCmdLine[BUFSIZE];
+  mbstowcs(wlpCmdLine, lpCmdLine, sizeof(WCHAR)*(BUFSIZE-1));
+  wlpCmdLine[BUFSIZE-1] = NULL; // insure null termination
   //std::wcout << L"Incoming command line:" << wlpCmdLine << '\n';
   
 	// Start the program...
@@ -22,29 +23,42 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	
 	// Get run directory from Windows registry
 	HKEY hkey;
-	TCHAR keyvalue[BUFSIZE];
-	DWORD length=BUFSIZE*sizeof(TCHAR);
-	LONG lret=0;
-	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT(KEYADDRESS), 0, KEY_QUERY_VALUE, &hkey))
+	BYTE keyvalue[BUFSIZE*sizeof(WCHAR)];
+	DWORD length=(BUFSIZE-1)*sizeof(WCHAR); // one char shorter than keyvalue so extra null can be added after read
+	DWORD type;
+	LONG lret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, KEYADDRESS, NULL, KEY_QUERY_VALUE, &hkey);
+	if (lret == ERROR_SUCCESS)
 	{
-	 lret = RegQueryValueEx(hkey,TEXT(KEYNAME),NULL,NULL,(LPBYTE)keyvalue,&length);
-	 keyvalue[BUFSIZE] = NULL; // insure null termination
-	 RegCloseKey(hkey);
-	 //std::wcout << L"keyvalue:" << keyvalue << '\n';
+    lret = RegQueryValueExW(hkey, KEYNAME, NULL, &type, keyvalue, &length);
+    if (type!=REG_SZ) {lret=ERROR_INVALID_DATA;}
+    if (lret==ERROR_SUCCESS) 
+    {
+      keyvalue[length] = NULL; // insure null termination
+      keyvalue[length+1] = NULL;
+    }
+    RegCloseKey(hkey);
+    //std::wcout << L"keyvalue:" << keyvalue << '\n';
 	}
 	
 	// assign command line and run directory
-  wchar_t commandLine[1024];
-  wchar_t rundir[1024];
-  if (lret==0) {
-    StringCbPrintf(commandLine, sizeof(wchar_t)*1024, L"\"%s\\%s\" application.ini %s", keyvalue, TEXT(PROC_NAME), wlpCmdLine);
-    StringCbPrintf(rundir,      sizeof(wchar_t)*1024, L"%s", keyvalue);
+  WCHAR commandLine[3*BUFSIZE];
+  WCHAR rundir[BUFSIZE];
+  if (lret==ERROR_SUCCESS) {
+    wsprintf(commandLine, L"\"%s\\%s\" application.ini %s", keyvalue, PROC_NAME, wlpCmdLine);
+    wsprintf(rundir, L"%s", keyvalue);
   }
-  // if no registry value is found, look for xulrunner.exe etc in caller's directory
-  else {StringCbPrintf(commandLine, sizeof(wchar_t)*1024, L"\"%s\" application.ini %s", TEXT(PROC_NAME), wlpCmdLine);}
-  //std::wcout << L"commandLine:" << commandLine << L", rundir:" << rundir << '\n';  
+  // if no registry value is found, look for exe in caller's directory
+  else {wsprintf(commandLine, L"\"%s\" application.ini %s", PROC_NAME, wlpCmdLine);} 
     
 	// Parameter 2 MUST be modifiable for CreateProcessW
-	int res = CreateProcessW(NULL, commandLine, NULL, NULL, false, CREATE_NEW_PROCESS_GROUP, NULL, (lret==0 ? rundir:NULL), &si, &pi);
+	int success = CreateProcessW(NULL, commandLine, NULL, NULL, false, CREATE_NEW_PROCESS_GROUP, NULL, (lret==ERROR_SUCCESS ? rundir:NULL), &si, &pi);
+  //std::wcout << L"success=" << success << L", commandLine:" << commandLine << L", rundir:" << rundir << '\n';  
+  	
+	// If registry key value was wrong, try current directory anyway
+	if (lret==ERROR_SUCCESS && !success) {
+    wsprintf(commandLine, L"\"%s\" application.ini %s", PROC_NAME, wlpCmdLine);
+    success = CreateProcessW(NULL, commandLine, NULL, NULL, false, CREATE_NEW_PROCESS_GROUP, NULL, NULL, &si, &pi);
+	}
+	
 	return 0;
 }
