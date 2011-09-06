@@ -27,7 +27,7 @@
 var RestartToChangeLocale;
 var HaveValidLocale;
 var Progvers = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).version;
-var Enginevers = getPrefOrCreate("EngineVersion", "Char", NOTFOUND);
+var Enginevers; try {Enginevers = prefs.getCharPref("EngineVersion");} catch (er) {Enginevers = NOTFOUND;}
 
 function initLocales() {
   // Find locales and test their versions
@@ -44,7 +44,9 @@ function initLocales() {
     if (!filedata) continue;
     var version = filedata.match(VERSIONTAG);
     if (!version)  continue;
-    if (localeFromFileName[1]!=DEFAULTLOCALE && comparator.compare(version[1], getPrefOrCreate("MinUIversion", "Char", Progvers)) < 0) continue;
+    var minuivers;
+    try {minuivers = prefs.getCharPref("MinUIversion");} catch (er) {minuivers = Progvers;}
+    if (localeFromFileName[1]!=DEFAULTLOCALE && comparator.compare(version[1], minuivers) < 0) continue;
     localeListString += sep + localeFromFileName[1];
     sep = ";";
   }
@@ -133,7 +135,9 @@ function createTabs() {
     var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
     var xsversion = Bible.getModuleInformation(info[0], VERSIONPAR);
     xsversion = (xsversion!=NOTFOUND ? xsversion:MINVERSION);
-    if (comparator.compare(xsversion, getPrefOrCreate("MinXSMversion", "Char", MINVERSION)) < 0) continue;
+    var modminxsvers;
+    try {modminxsvers = prefs.getCharPref("MinXSMversion");} catch (er) {modminxsvers = MINVERSION;}
+    if (comparator.compare(xsversion, modminxsvers) < 0) continue;
     var xminprogvers = Bible.getModuleInformation(info[0], MINPVERPAR);
     xminprogvers = (xminprogvers!=NOTFOUND ? xminprogvers:MINVERSION);
     if (comparator.compare(Progvers, xminprogvers) < 0) continue;

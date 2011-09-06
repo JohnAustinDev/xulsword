@@ -988,8 +988,6 @@ function activatePopup(datatype, data, delay, yoffset) {
       var fnpart = footnote[i].split("<bg/>");
       // if we've found the note which matches the id under the mouse pointer
       if (fnpart[0] == "fn." + data) {
-        // Replace OSIS tags with HTML tags, such as <hi> tags with <i> or <b>.
-        fnpart[1]=fnpart[1].replace(/<hi.*?type="italic".*?>(.*?)<\/hi>/g,"<i>$&</i>").replace(/<hi.*?type="bold".*?>(.*?)<\/hi>/g,"<b>$&</b>");
         html += fnpart[1];
         break;
       }

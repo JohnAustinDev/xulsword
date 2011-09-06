@@ -74,6 +74,7 @@ Set cFiles1=^
  "%MK%\%CPPD%\%sword%\src\keys\listkey.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\common\lzsscomprs.cpp"^
  "%MK%\%CPPD%\%sword%\src\mgr\markupfiltmgr.cpp"^
+ "%MK%\%CPPD%\%sword%\src\modules\filters\osisheadings.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\filters\osisfootnotes.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\filters\osishtmlhref.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\filters\osislemma.cpp"^
@@ -193,7 +194,6 @@ Set cFiles1=^
  "%MK%\%CPPD%\swordMK\src\mgr\swmgr.cpp"^
  "%MK%\%CPPD%\swordMK\src\mgr\versemgr.cpp"^
  "%MK%\%CPPD%\swordMK\src\modules\swmodule.cpp"^
- "%MK%\%CPPD%\swordMK\src\modules\filters\osisheadings.cpp"^
  "%MK%\%CPPD%\swordMK\src\utilfuns\zlib\untgz.c"
  
 cl.exe %cFlags% %cFiles1%

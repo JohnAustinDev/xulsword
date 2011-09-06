@@ -266,6 +266,7 @@ function loadedXULReal() {
   else if (prefs.getCharPref("DefaultVersion")=="none") window.setTimeout("errorHandler(NOMODULES)",0);
   
   //we're ok!
+  // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
   else if (Bible) window.setTimeout("updateAfterInit()", 500);
   jsdump("Initilization Complete\n");
 }
@@ -1339,7 +1340,10 @@ function getLastDisplayedPassage(w) {
 
 function linkVerseScroll(numVerses) {
   var fp = getPassageFromWindow(FIRSTPASSAGE);
-  if (!fp) return;
+  if (!fp) {
+    var df = prefs.getCharPref("DefaultVersion");
+    fp = Bible.getLocation(df) + "." + df;
+  }
   fp = fp.split(".");
   var b = fp[0];
   var c = Number(fp[1]);
@@ -3140,6 +3144,8 @@ function writeToScriptBoxes(win, isPinned, display, scrollTypeFlag) {
   }
   FrameDocument[s.link.lastWin].defaultView.setBibleHeight(false, s.forceNoteBox2Hide);
 
+  for (var i=s.link.startWin; i<=s.link.finishWin; i++) {adjustChapnum(i);}
+
   //Write maximized notes in last window if needed
   if (s.lastWindowNotesAreMaximized && !ScriptBoxIsEmpty[s.link.firstWin]) {
     FrameDocument[s.maximizedNotesWin].defaultView.copyNotes2Notebox(notes, userNotes);
@@ -3151,6 +3157,30 @@ function writeToScriptBoxes(win, isPinned, display, scrollTypeFlag) {
   }
   if (scrollTypeFlag==SCROLLTYPEEND && !isPinned && firstVerseInLink) Bible.setBiblesReference(s.win.modName, firstVerseInLink[1]);
 //for (var par in s) {jsdump("s." + par + ":" + s[par]); for (var par2 in s[par]) {if (par != "navlinks") jsdump("\ts." + par + "." + par2 + ":" + s[par][par2]);}}
+}
+
+// resize chapter header if needed
+function adjustChapnum(w) {
+  w = FrameDocument[w];
+  if (!w) return;
+  var f = w.defaultView.ScriptBoxTextElement;
+  var hs = f.getElementsByClassName("chapnum");
+  if (!hs || !hs.length) return;
+  
+  // insures scrollbars do not appear during adjustment and stay!
+  var tmp = f.style.overflow;
+  f.style.overflow = "visible";
+  
+  for (var i=0; hs && i<hs.length; i++) {
+    hs[i].style.overflow = "auto";
+    var fs = 22;
+    while(fs >= 10 && hs[i].clientWidth < hs[i].scrollWidth) {
+      hs[i].style.fontSize = fs + "px";
+      fs -= 4;
+    }
+    hs[i].style.overflow = "";
+  }
+  f.style.overflow = (tmp ? tmp: "");
 }
 
 function needToInitText(s, textCache, display) {
@@ -3529,7 +3559,7 @@ function prependVerse(f, p, s, fn, header, footer) {
   var i = itest - 7 - indnt.length; // 7 = length of </span>
 	while(p.text.substr(i, indnt.length) == indnt) {ind += indnt; i -= indnt.length;}
   f.innerHTML = header + ind + p.text.substring(itest, p.iend) + footer;
-  
+
   return itest;
 }
 
@@ -4130,6 +4160,8 @@ function ensureModuleShowing(version) {
 
 // Needs to be rerun when the following change:
 // Version1,2,3 ShowOriginal1,2,3, NumDisplayedWindows, ScriptBoxIsEmpty, Win.isRTL, Win.modName, Pin.isPinned, Pin.display.shortName, Pin.display.chapter, MaximizeNoteBox
+// NOTE: startWin is lowest frame number of a link and finishWin is the highest number.
+// NOTE: firstWin is frame in which text reading begins and lastWin is frame in which text reading ends.
 function updateLinkInfo() {
   Link.modName = null;
   Link.numWins = 0;

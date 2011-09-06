@@ -244,7 +244,7 @@ jsdump("STARTING startImport");
         catch (er) {
           msg += "The following module(s) have components which are not supported:\n\n";
           for (var bf=0; bf<incomp.newmodule.length; bf++) {msg+="\"" + incomp.newmodule[bf].leafName + "\"\n";}
-          msg += "\nUpgrade the program to at least version:\"" + incomp.minprogversion + "\"\n\n";
+          msg += "\nUpgrade the program to at least version:\"" + (incomp.minprogversion ? incomp.minprogversion:"?") + "\"\n\n";
         }
       }
       if (ProgressMeter) ProgressMeter.close();
@@ -280,7 +280,9 @@ function removeIncompatibleFiles(fileArray, entryArray) {
   var conf = new RegExp(MODSD + "\/[^\/]+" + CONF_EXT + "$");
   var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
   var progVersion = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).version;
-  var engineVersion = getPrefOrCreate("EngineVersion", "Char", NOTFOUND); // cannot read directly from engine because it's not loaded yet!
+  // cannot read directly from engine because it's not loaded yet!
+  var engineVersion; try {engineVersion = prefs.getCharPref("EngineVersion");} catch (er) {engineVersion = NOTFOUND;}
+
   var incompModsPath = [];
   var incompGUIs = [];
   for (var f=0; f<entryArray.length; f++) {
@@ -430,7 +432,7 @@ function readVersion(aZip, aEntry, progVers) {
   var isSwordMod = false;
   if (aEntry.search("." + CONF_EXT, "i")!=-1) {
     info.type = CONF_EXT;
-    info.mincompversion = getPrefOrCreate("MinXSMversion", "Char", MINVERSION);
+    try {info.mincompversion = prefs.getCharPref("MinXSMversion");} catch (er) {info.mincompversion = MINVERSION;}
     isSwordMod = true;
     info.path = readParamFromConf(temp, "DataPath").replace(/^\.\//, "").replace(/\/[^\/]+$/, "/");
     info.xsmodulename = readParamFromConf(temp, "ModuleName");
@@ -440,7 +442,7 @@ function readVersion(aZip, aEntry, progVers) {
   }
   else if (aEntry.search("." + MANIFEST_EXT, "i")!=-1) {
     info.type = MANIFEST_EXT;
-    info.mincompversion = getPrefOrCreate("MinUIversion", "Char", progVers);
+    try {info.mincompversion = prefs.getCharPref("MinUIversion");} catch (er) {info.mincompversion = progVers;}
     var locale = aEntry.match(/(^|\/)([^\.\/]+)[^\/]+$/);
     // If the manifest is not a locale manifest, remove it.
     if (!locale) {

@@ -53,14 +53,44 @@ a:active{color:blue;}
   font-size: 13px;
 	color: black;
 }
-.chapnum {
+.chapterhead > div {
   margin-top:12px;
   margin-bottom:12px;
+}
+.chapnum {
   font-size:28px;
   font-weight:bold;
   color:rgb(110,85,110);
   line-height:120%;
 	width:50%;
+	padding:0px;
+	margin:0px;
+	overflow:visible;
+}
+.chapnum span {
+  white-space:nowrap;
+}
+.chapinfo {
+  width:40%; /* 10% remaining becomes margin */
+  padding:0px;
+  margin:0px;
+  overflow:visible;
+}
+.noticelink {
+  display:block;
+  margin: 0px 0px 5px 0px;
+}
+.audiolink {
+  display:block;
+  width:45px;
+  height:37px;
+  margin: 0px 5px 5px 0px;
+}
+.introlink {
+  display:block;
+  font-size:20px;
+  font-weight:normal;
+  margin: 0px 5px 0px 0px;
 }
 .scriptbox {
   font-size: 14px;
@@ -120,14 +150,6 @@ a:active{color:blue;}
   cursor:default;
   z-index:3;
   position:absolute;
-}
-.audiolink {
-  width:45px;
-  height:37px;
-}
-.introlink {
-  font-size:20px;
-  font-weight:normal;
 }
 .navlink {
   direction:ltr !important;
