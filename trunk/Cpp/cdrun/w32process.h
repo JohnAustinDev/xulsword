@@ -1,3 +1,4 @@
+#include <tchar.h>
 #pragma once
 #include <tlhelp32.h>
 #pragma comment(lib, "kernel32.lib")

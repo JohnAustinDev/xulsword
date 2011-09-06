@@ -56,6 +56,7 @@ for $fe (sort keys %CodeFileEntryValue) {
   }
   $lastf = $f;
   
+  if ($v =~ /^\s*$/ && $e !~ /(commandkey|keybinding|accesskey|AccKey|\.sh|\.sc)/i) {&Log("WARNING $fe: Value is empty.\n");}
   if ($f =~ /\.properties$/i) {print OUTF $e."=".$v."\n";}
   elsif ($f =~ /\.dtd$/i) {print OUTF "<!ENTITY ".$e."\t\t\t\t\"".$v."\">\n";}
   else {&Log("ERROR FileEntry=\"".$fe."\": Unknown file type \"".$f."\"\n");}

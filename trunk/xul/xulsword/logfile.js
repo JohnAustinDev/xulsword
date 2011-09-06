@@ -42,7 +42,8 @@ var aConsoleListener =
         var file = "";
         try {
           var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
-          file += "Vendor:" + appInfo.vendor + ", Name:" + appInfo.name + ", Version:" + appInfo.version + ", Build:" + appInfo.appBuildID + ", Xulrunner:" + appInfo.platformVersion + ", " + appInfo.platformBuildID + URLNEWLINE;
+          var engineVersion; try {engineVersion = prefs.getCharPref("EngineVersion");} catch (er) {engineVersion = NOTFOUND;}
+          file += "Vendor:" + appInfo.vendor + ", Name:" + appInfo.name + ", Version:" + appInfo.version + ", Build:" + appInfo.appBuildID + ", Xulrunner:" + appInfo.platformVersion + ", " + appInfo.platformBuildID + ", Engine:" + engineVersion + URLNEWLINE;
         }
         catch (er) {file += "Could not read appInfo!" + URLNEWLINE;}
         file += aMessage.message + URLNEWLINE;

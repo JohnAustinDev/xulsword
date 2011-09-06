@@ -7,15 +7,10 @@
 
 
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
-#include <stdio.h>
-
+//#include <iostream>
 
 
 // TODO: reference additional headers your program requires here
 #include <windows.h>
 #include <stdlib.h>
-#include <tchar.h>
-//#include "resource.h"
-#include <tlhelp32.h>
 #include "w32process.h"
-#include <strsafe.h>

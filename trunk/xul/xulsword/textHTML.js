@@ -37,15 +37,15 @@ function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduct
   var mtext = "<div class=\"chapterhead\">";
   mtext += "<div class=\"chapnum\" style=\"text-align:" + chapterHeadingFloat + "; float:" + chapterHeadingFloat + "; font-family:'" + chapterHeadingFont + "'; \">";
   if (showBookName) {
-    mtext += myVersionsBundle.GetStringFromName(myBook);
+    mtext += "<span>" + myVersionsBundle.GetStringFromName(myBook) + "</span>";
     mtext += "<br>";
   }
-  mtext += getLocalizedChapterTerm(myBook, myChap, myVersionsBundle, myVersionsLocale);
+  mtext += "<span>" + getLocalizedChapterTerm(myBook, myChap, myVersionsBundle, myVersionsLocale) + "</span>";
 	mtext += "</div>";
 
   var intro = "";
   if (!showOriginal) {
-    mtext += "<div style=\"width:40%; position:relative; top:4px;" +
+    mtext += "<div class=\"chapinfo\" style=\"" +
       " float:" + oppositeHeadingFloat +
       "; text-align:" + chapterHeadingFloat + "\">";
     mtext +=  getNoticeLink(version);
@@ -61,7 +61,7 @@ function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduct
       if (intro) {
         var linkt = showIntroduction ? myVersionsBundle.GetStringFromName("HideIntroLink"):myVersionsBundle.GetStringFromName("IntroLink");
         var links = showIntroduction ? "hide":"show";
-        mtext += "<br><a class=\"introlink\" title=\"" + links + "\" id=\"introlink\">" + linkt + "</a>";
+        mtext += "<a class=\"introlink\" title=\"" + links + "\" id=\"introlink\">" + linkt + "</a>";
         mtext += "</div>";
         if (showIntroduction) {
           mtext += HTMLbr + "<span class=\"vstyle" + version + "\">" + intro + "</span>" + HTMLbr;
@@ -71,11 +71,11 @@ function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduct
       }
       else {mtext += "</div>";}
     }
-    else {mtext += "</div>";}    
+    else {mtext += "</div>";}
   }
   mtext += "</div>";
 
-  mtext += (intro ? HTMLbr:HTMLbr0);
+  mtext += HTMLbr0;
   return mtext;
 }
 
@@ -83,7 +83,7 @@ function getNoticeLink(mod, inner) {
 	if (!inner) {
 	  var lt = Bible.getModuleInformation(mod, "NoticeLink");
 	  if (lt == NOTFOUND) {return "";}
-	  return lt.replace("<a>", "<a id=\"noticelink\">");
+	  return "<span class=\"vstyle" + mod + " noticelink\">" + lt.replace("<a>", "<a id=\"noticelink\">") + "</span>";
 	}
 	else
 	  return Bible.getModuleInformation(mod, "NoticeText");
@@ -211,8 +211,7 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
             userNoteIdentifierOpen  = "<span class=\"" + unclass + "\">" + de;
             userNoteIdentifierClose = de + "</span>";
           }
-          // Replace OSIS <hi> tags with <i> or <b> as appropriate
-          body = userNoteIdentifierOpen + noteBody2HTML(body, version) + userNoteIdentifierClose;
+          body = userNoteIdentifierOpen + body + userNoteIdentifierClose;
           t += body;
         }
         
@@ -225,19 +224,6 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
   }
   if (!haveNotes) return "";
   return t
-}
-
-// converts hilights only for OSIS source right now
-function noteBody2HTML(body, modName) {
-  var bold = new RegExp("<hi [^>]*type=\"b[^\"]*\"[^>]*>", "g");
-  var ital = new RegExp("<hi [^>]*type=\"i[^\"]*\"[^>]*>", "g");
-  body = body.replace(bold, "X~LTspan style=\"font-weight:bold;\"X~GT");
-  body = body.replace(ital, "X~LTspan style=\"font-style:italic;\"X~GT");
-  body = body.replace(/<\/hi>/g, "X~LT/spanX~GT");
-  body = body.replace(/<[^>*]>/, "");
-  body = body.replace("X~LT", "<", "g");
-  body = body.replace("X~GT", ">", "g");
-  return body;
 }
 
 function getCRNoteHTML(version, id, xsID, xsNodeBody, sep, expanded, frameNumber) {

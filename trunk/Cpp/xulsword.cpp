@@ -721,10 +721,10 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
 		  else {
 		    sprintf(Outtext, "fn.%d.%s<bg/>", fnV, myVerseKey->getOSISRef());
 		    footnoteText.Append(Outtext);
-		    footnoteText.Append(AtIndex->second["body"]);
+		    footnoteText.Append(module->RenderText(AtIndex->second["body"]));
 		    footnoteText.Append("<nx/>");
 		    noteText.Append(Outtext);
-		    noteText.Append(AtIndex->second["body"]);
+		    noteText.Append(module->RenderText(AtIndex->second["body"]));
 		    noteText.Append("<nx/>");
 		  }
 		  fnV++;
@@ -742,7 +742,7 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
         verseHTML.Append(" canonical");
       }
       verseHTML.Append("\">");
-		  verseHTML.Append(Value->second);
+		  verseHTML.Append(module->RenderText(Value->second));
 		  verseHTML.Append("</div>");
     }
 	
@@ -1261,7 +1261,7 @@ NS_IMETHODIMP xulsword::GetDictionaryEntry(const nsACString & Lexdictmod, const 
       if (footnoteNum == 1) {xstring.Append("<br><br><br><hr>");}
 	    sprintf(Outtext, "<sup>%i</sup>", footnoteNum++);
 	    xstring.Append(Outtext);
-	    xstring.Append(AtIndex->second["body"]);
+	    xstring.Append(dmod->RenderText(AtIndex->second["body"]));
 	    xstring.Append("<br><br>");
     }
     xulStringToUTF16(&xstring, &retval, dmod->Encoding(), false);

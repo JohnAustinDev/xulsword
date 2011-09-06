@@ -545,6 +545,7 @@ var BookmarkFuns = {
     if (!aUpdateNeededArray) aUpdateNeededArray = MainWindow.getUnpinnedWindows();
     if (scrollFlag == null) scrollFlag = SCROLLTYPECENTER;
     if (focusOnMainWindow) MainWindow.focus();
+    for (var i=1; i<=3; i++) {MainWindow.TextCache[i].text = null;} // force reread due to changed user-notes
     MainWindow.updateFrameScriptBoxes(aUpdateNeededArray, scrollFlag, HILIGHTVERSE, UPDATELOCATORS);
   },
   

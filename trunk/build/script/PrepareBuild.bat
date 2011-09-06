@@ -48,6 +48,7 @@ ECHO --- WRITING COMPATIBILITY INFO TO PREFS
 cd "%MK%\xulrunner\defaults\pref"
 echo pref("xulsword.MinXSMversion","%MinXSMversion%");>> buildprefs.js
 echo pref("xulsword.MinUIversion","%MinUIversion%");>> buildprefs.js
+echo pref("xulsword.EngineVersion","%engineversion%");>> buildprefs.js
 
 ECHO --- WRITING HELP EMAIL ADDRESS TO PREFS
 if not defined HelpEmailAddress goto SKIPHEA
