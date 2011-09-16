@@ -29,7 +29,6 @@ Set cFiles=%cFiles%^
  "%MK%\%CPPD%\gbfhtmlxul.cpp"^
  "%MK%\%CPPD%\osishtmlxul.cpp"^
  "%MK%\%CPPD%\osisdictionary.cpp"^
- "%MK%\%CPPD%\osisfootnotesxul.cpp"^
  "%MK%\%CPPD%\swordMK\src\utilfuns\win32\dirent.cpp"
 
 Set lFlags=libsword.lib libclucene.lib xpcom.lib xpcomglue_s.lib nspr4.lib /libpath:"%MK%\%CPPD%\swordMK\lib\Release" /libpath:"%MK%\%CPPD%\cluceneMK\lib\Release" /libpath:"%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /nologo /SUBSYSTEM:CONSOLE /MACHINE:X86 /out:"bin\%utilityName%.exe"
@@ -38,7 +37,6 @@ Set lFiles=%objDIR%\%utilityName%.obj^
  "%objDIR%\gbfhtmlxul.obj"^
  "%objDIR%\osishtmlxul.obj"^
  "%objDIR%\osisdictionary.obj"^
- "%objDIR%\osisfootnotesxul.obj"^
  "%objDIR%\dirent.obj"
 
 if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
