@@ -53,7 +53,6 @@
 #include <gbfmorph.h>
 #include <osisheadings.h>
 #include <osisfootnotes.h>
-#include <osisfootnotesxul.h>
 #include <osisdictionary.h>
 #include <osisstrongs.h>
 #include <osismorph.h>
@@ -165,7 +164,7 @@ void SWMgr::init() {
 	optionFilters.insert(OptionFilterMap::value_type("OSISLemma", tmpFilter));
 	cleanupFilters.push_back(tmpFilter);
 
-	tmpFilter = new OSISFootnotesXUL();
+	tmpFilter = new OSISFootnotes();
 	optionFilters.insert(OptionFilterMap::value_type("OSISFootnotes", tmpFilter));
 	cleanupFilters.push_back(tmpFilter);
 	
