@@ -3467,7 +3467,7 @@ function fitPage(fnum, type, p, s, fn, header, footer) {
       itest = prependVerse(f, p, s, fn, header, footer);
       if (f.scrollHeight <= f.clientHeight) p.ibeg = itest;
       // if we're at the beginning of the book with nothing left to prepend return error condition.
-      if (p.ibeg==0 && type==PREPEND && Bible.getChapterNumber(s.win.modName)+p.numPrependedChaps <= 1) return false;
+      if (p.ibeg==0 && type==PREPEND && Number(p.display.chapter)+p.numPrependedChaps <= 1) return false;
     }
     if (type==CENTER) sw = !sw;
   }

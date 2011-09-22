@@ -20,21 +20,33 @@ sub updateConfInfo($$$$) {
     if ($thisModOnly ne "" && $conf ne lc($thisModOnly).".conf") {next;}
     
     my %confInfo;
+    my $pvxsm;
     open(INC, "<$MKS/moduleDev/$dir/mods.d/$conf");
     while(<INC>) {
       if ($_ =~ /^\s*([^=]+)\s*=\s*(.*?)\s*$/) {$confInfo{$1} = $2;}
     }
     close(INC);
     if ($confInfo{"Versification"} eq "Synodal" && $confInfo{"MinimumVersion"} =~ /(\d+)\.(\d+)\.(\d+)/) {
-      if ($1>1 || ($1==1 && $2>6) || ($1==1 && $2==6 && $3>1)) {$mpvfxsm = 2.21;}
-      else {$mpvfxsm = 2.13;} 
+      if ($1>1 || ($1==1 && $2>6) || ($1==1 && $2==6 && $3>1)) {$pvxsm = 2.21;}
+      else {$pvxsm = 2.13;}
     }
-    elsif ($confInfo{"Versification"} && $confInfo{"Versification"} ne "EASTERN") {
-      if ($mpvfxsm eq "" || $1<2 || ($1==2 && $2<13)) {$mpvfxsm = 2.13;}
-    }
+    elsif ($confInfo{"Versification"} && $confInfo{"Versification"} ne "EASTERN") {$pvxsm = 2.13;}
+    else {$pvxsm = 2.7;}
+
+    # if passed $mpvfxsm is greater than pvxsm, then use it, otherwise ignore it
+    if (!$mpvfxsm) {$mpvfxsm = $pvxsm;}
     else {
-      if ($mpvfxsm eq "" || $1<2 || ($1==2 && $2<7)) {$mpvfxsm = 2.7;}
+      $mpvfxsm =~ /(\d+)\.(\d+)\.(\d+)/;
+      my $v0p=$1;
+      my $v1p=$2;
+      my $v2p=$3;
+      $pvxsm =~ /(\d+)\.(\d+)\.(\d+)/;
+      my $v0=$1;
+      my $v1=$2;
+      my $v2=$3;
+      if ($v0>$v0p || ($v0==$v0p && $v1>$v1p) || ($v0==$v0p && $v1==$v1p && $v2>$v2p)) {$mpvfxsm = $pvxsm;}
     }
+    
     $hasXSMversion = "false";
     $hasMinProgversionForXSM = "false";
     open(INC, "<$MKS/moduleDev/$dir/mods.d/$conf");

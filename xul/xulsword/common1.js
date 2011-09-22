@@ -568,7 +568,7 @@ function getAvailableBooks(version) {
     if (type==BIBLE) {
       var v1 = Bible.getVerseText(version, Book[b].sName + " 1:1");
       var v2 = Bible.getVerseText(version, Book[b].sName + " 1:2");
-      if (!v1 && !v2) {
+      if ((!v1 && !v2) || (v1.match(/^\s*-\s*$/) && v2.match(/^\s*-\s*$/))) {
         hasMissing=true;
         continue;
       }
