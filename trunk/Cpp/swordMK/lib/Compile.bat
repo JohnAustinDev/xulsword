@@ -113,7 +113,6 @@ cl.exe %cFlags% %cFiles1%
 
 Set cFiles1=^
  "%MK%\%CPPD%\%sword%\src\modules\common\sapphire.cpp"^
- "%MK%\%CPPD%\%sword%\src\mgr\stringmgr.cpp"^
  "%MK%\%CPPD%\%sword%\src\keys\strkey.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\filters\swbasicfilter.cpp"^
  "%MK%\%CPPD%\%sword%\src\utilfuns\swbuf.cpp"^
@@ -194,7 +193,8 @@ Set cFiles1=^
  "%MK%\%CPPD%\swordMK\src\mgr\swmgr.cpp"^
  "%MK%\%CPPD%\swordMK\src\mgr\versemgr.cpp"^
  "%MK%\%CPPD%\swordMK\src\modules\swmodule.cpp"^
- "%MK%\%CPPD%\swordMK\src\utilfuns\zlib\untgz.c"
+ "%MK%\%CPPD%\swordMK\src\utilfuns\zlib\untgz.c"^
+ "%MK%\%CPPD%\swordMK\src\mgr\stringmgr.cpp"^
  
 cl.exe %cFlags% %cFiles1%
  

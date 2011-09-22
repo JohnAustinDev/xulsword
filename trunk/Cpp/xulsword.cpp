@@ -733,6 +733,12 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
     //FIRST PRINT OUT ANY HEADINGS IN THE VERSE
     AttributeValue::iterator Value;
     for (Value = module->getEntryAttributes()["Heading"]["Preverse"].begin(); Value != module->getEntryAttributes()["Heading"]["Preverse"].end(); Value++) {
+      // if a line break is not found at or near the end of the previous verse,
+      // add a line break to help insure titles have space above them.
+      if (!verseHTML.Length() && chapHTML.Length() > 64) {
+        PRInt32 lbr = chapHTML.RFind(NS_LITERAL_STRING("<br />"));
+        if (chapHTML.Length()-1-lbr < 64) verseHTML.Append("<br />");
+      }
 		  verseHTML.Append("<div class=\"");
       if (module->getEntryAttributes()["Heading"][Value->first]["level"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["level"], "2")) {
         verseHTML.Append("head2");
@@ -1302,7 +1308,7 @@ NS_IMETHODIMP xulsword::GetAllDictionaryKeys(const nsACString & Lexdictmod, nsAS
    //printf("%i\n", count);
 	 dmod->increment(1);
 	}
-	
+
 	nsEmbedString retval;
 	xulStringToUTF16(&keytext, &retval, dmod->Encoding(), false);
   

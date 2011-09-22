@@ -51,7 +51,7 @@ a {
   border-bottom:none !important;
 }
 .pagebreak {
-  page-break-after: always;
+  page-break-after: auto;
 }
 .fncol1 {
   display:none;

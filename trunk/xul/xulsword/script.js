@@ -1057,17 +1057,24 @@ function activatePopup(datatype, data, delay, yoffset) {
     break;
   
   // Glossary Word: data is elem.title
-  //    data form: mod.wrd; mod.wrd
+  //    data form: mod1.wrd; mod2.wrd (Backward Compatibility to <2.23)
+  //      or form: mod1:wrd mod2:wrd
   case "dtl":
   case "dt":
-    var t = data + ";";
-    t = t.split(";");
-    t.pop();
-    var dword = t[0].substring(t[0].indexOf(".")+1); // use substring, not split, to get everything after first "."
-    var dnames="";
-    var sep = "";
+    // Backward Compatibility to < 2.23
+    if (data.indexOf(":") == -1) {
+      data = data.replace(" ", "_32_", "g");
+      data = data.replace(";", " ", "g");
+      data = data.replace(/((^|\s)\w+)\./g, "$1:");
+    }
+    
+    var t = data.split(" ");
+    if (!t || !t[0]) break;
+    var dnames="", dword="", sep="";
     for (var i=0; i<t.length; i++) {
-      dnames += sep + t[i].split(".")[0];
+      if (!t[i]) continue;
+      dnames += sep + t[i].split(":")[0];
+      if (!dword) dword = t[i].split(":")[1];
       sep = ";"
     }
     // Returns with style of dnames[0]
