@@ -1029,7 +1029,7 @@ function cleanDataPathDir(aDataPath) {
 function decodeAudioFileName(path) {
   var ret = {};
   var savepath = path;
-  path = savepath.match(/^(.*)[\\\/](.*)\s*-\s*([^-]+)\s*-\s*(\d+)\s*\.(.*)$/);
+  path = savepath.match(/^(.*)[\\\/](.*)\s*-\s*([^-]+)\s*-\s*(\d+)\s*\.([^\.]+)$/);
   if (path) {
     ret.type =      AUDIOFILEXSM;
     ret.dir =       path[1];
@@ -1037,7 +1037,6 @@ function decodeAudioFileName(path) {
     ret.book =      path[3];
     ret.chapter =   padChapterNum(path[4]);
     ret.ext =       path[5];
-    AUDEXT
     for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(AUDEXT[e], "i")!=-1) break;}
     if (e==AUDEXT.length) {jsdump("A: Bad audio ext:" + ret.ext); return null;}
     if (!validateChapter(ret.book, ret.chapter)) {jsdump("A: Bad book/chapter:" + ret.book + ", " + ret.chapter); return null;}

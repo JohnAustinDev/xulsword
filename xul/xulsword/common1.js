@@ -584,11 +584,10 @@ function getAvailableBooks(version) {
   return AvailableBooks[version];
 }
 
-function getModsWithConfigEntry(param, value, biblesOnly, ignoreCase) {
+function getModsWithConfigEntry(param, value, biblesOnly, ignoreCase, matchValueBase) {
   var ret = [];
   if (!Bible || !Tabs || !value) return ret;
-  if (ignoreCase) value = new RegExp("^" + value + "$", "i");
-  else value = new RegExp("^" + value + "$");
+  value = new RegExp("^" + value + (matchValueBase ? "(-.*)?":"") + "$", (ignoreCase ? "i":""));
   for (var t=0; t<Tabs.length; t++) {
     if (biblesOnly && Tabs[t].modType!=BIBLE) continue;
     var tparam = Bible.getModuleInformation(Tabs[t].modName, param);
