@@ -152,6 +152,7 @@ function createTabs() {
     var fontSA = Bible.getModuleInformation(info[0], "FontSizeAdjust");
     var fontLH = Bible.getModuleInformation(info[0], "LineHeight");
     var mlang = Bible.getModuleInformation(info[0], "Lang");
+    var mlangs = mlang.replace(/-.*$/, "");
     if (dir.search("RtoL","i")!=-1) versionConfig.direction = "rtl";
     if (font != NOTFOUND) versionConfig.font = font;
     if (fontSA != NOTFOUND) versionConfig.fontSizeAdjust = fontSA;
@@ -169,14 +170,17 @@ function createTabs() {
       else if (feature.search("GreekDef")!=-1)  {
         if (mlang.match(/^ru/i) || !LanguageStudyModules.StrongsGreek) LanguageStudyModules.StrongsGreek = info[0];
         LanguageStudyModules["StrongsGreek" + mlang] = info[0];
+        LanguageStudyModules["StrongsGreek" + mlangs] = info[0];
       }
       else if (feature.search("HebrewDef")!=-1) {
         if (mlang.match(/^ru/i) || !LanguageStudyModules.StrongsHebrew) LanguageStudyModules.StrongsHebrew = info[0];
-        LanguageStudyModules["StrongsHebrew" + Bible.getModuleInformation(info[0], "Lang")] = info[0];
+        LanguageStudyModules["StrongsHebrew" + mlang] = info[0];
+        LanguageStudyModules["StrongsHebrew" + mlangs] = info[0];
       }
       else if (feature.search("GreekParse")!=-1) {
         if (mlang.match(/^ru/i) || !LanguageStudyModules.GreekParse) LanguageStudyModules.GreekParse = info[0];
-        LanguageStudyModules["GreekParse" + Bible.getModuleInformation(info[0], "Lang")] = info[0];
+        LanguageStudyModules["GreekParse" + mlang] = info[0];
+        LanguageStudyModules["GreekParse" + mlangs] = info[0];
       }
     }
     //dump(m + " " + info[0] + " " + info[1] + "\n");

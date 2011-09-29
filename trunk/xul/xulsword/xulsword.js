@@ -2068,7 +2068,7 @@ var CurrentTarget = {};
 //var TargParagraph;
 
 function ScriptContextMenuShowing(e) {
-jsdump ("ScriptContextMenuShowing id:" + document.popupNode.id + ", title:" + document.popupNode.title + "\n");
+//jsdump ("ScriptContextMenuShowing id:" + document.popupNode.id + ", title:" + document.popupNode.title + "\n");
   closeTabToolTip()
   CurrentTarget.windowNum = Number(document.popupNode.ownerDocument.defaultView.frameElement.id.substr(5,1));
 
@@ -2775,6 +2775,7 @@ function getLemmaHTML(numberList, matchingPhrase) {
   var styleModule = "Program";
   var defaultBibleLanguage = Bible.getModuleInformation(prefs.getCharPref("DefaultVersion"), "Lang");
   if (defaultBibleLanguage == NOTFOUND) defaultBibleLanguage="";
+  var defaultBibleLangBase = (defaultBibleLanguage ? defaultBibleLanguage.replace(/-.*$/, ""):"");
   var html = "<b>" + matchingPhrase + "</b><br>";
   var sep = "";
   for (var i=0; i<numberList.length; i++) {
@@ -2789,6 +2790,8 @@ function getLemmaHTML(numberList, matchingPhrase) {
       if (key.charAt(0)=="H") {
         if (LanguageStudyModules["StrongsHebrew" + defaultBibleLanguage])
           module = LanguageStudyModules["StrongsHebrew" + defaultBibleLanguage];
+        else if (LanguageStudyModules["StrongsHebrew" + defaultBibleLangBase])
+          module = LanguageStudyModules["StrongsHebrew" + defaultBibleLangBase];
         else if (LanguageStudyModules["StrongsHebrew"])
           module = LanguageStudyModules["StrongsHebrew"];
       }
@@ -2796,6 +2799,8 @@ function getLemmaHTML(numberList, matchingPhrase) {
         if (Number(key.substr(1)) >= 5627) continue; // SWORD filters these out- not valid it says
         if (LanguageStudyModules["StrongsGreek" + defaultBibleLanguage])
           module = LanguageStudyModules["StrongsGreek" + defaultBibleLanguage];
+        else if (LanguageStudyModules["StrongsGreek" + defaultBibleLangBase])
+          module = LanguageStudyModules["StrongsGreek" + defaultBibleLangBase];
         else if (LanguageStudyModules["StrongsGreek"])
           module = LanguageStudyModules["StrongsGreek"];
       }
@@ -2804,6 +2809,8 @@ function getLemmaHTML(numberList, matchingPhrase) {
     case "RM":
       if (LanguageStudyModules["GreekParse" + defaultBibleLanguage])
         module = LanguageStudyModules["GreekParse" + defaultBibleLanguage];
+      else if (LanguageStudyModules["GreekParse" + defaultBibleLangBase])
+        module = LanguageStudyModules["GreekParse" + defaultBibleLangBase];
       else if (LanguageStudyModules["GreekParse"])
         module = LanguageStudyModules["GreekParse"];
       break;

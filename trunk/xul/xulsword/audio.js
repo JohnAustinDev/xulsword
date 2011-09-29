@@ -88,7 +88,7 @@ function getAudioDirs() {
 // Audio files are chosen as follows:
 //    1) Look for audio matching the module name.
 //    2) If not found, get audio matching the module's "AudioCode" if it exists.
-//    3) If still not found, look for audio matching the module's "Lang".
+//    3) If still not found, look for audio matching the module's base "Lang" attribute.
 //    4) If still not found, there is no audio...
 function getAudioForChapter(version, bookShortName, chapterNumber, audioDirs) {
   if (!audioDirs) audioDirs = getAudioDirs();
@@ -101,7 +101,9 @@ function getAudioForChapter(version, bookShortName, chapterNumber, audioDirs) {
     if (ret) return ret;
   }
   
-  ret = getAudioFile(Bible.getModuleInformation(version, "Lang"), bookShortName, chapterNumber, audioDirs);
+  var mLang = Bible.getModuleInformation(version, "Lang");
+  if (mLang) mLang = mLang.replace(/-.*$/, "");
+  ret = getAudioFile(mLang, bookShortName, chapterNumber, audioDirs);
   if (ret) return ret;
   
   return null;
@@ -536,7 +538,7 @@ function getLocalizedAudioFile(aDir, basecode, shortName, chapter, ext, locale) 
 function getThisAudioFile(aDir, code, shortName, chapter, ext) {
   chapter = Number(chapter);
   var bn = findBookNumPreMainWin(shortName);
-  if (!bn) return null;
+  if (bn===null) return null;
   var path = aDir.path + "\\" + code + "\\" + shortName + "\\" + padChapterNum(chapter) + "." + ext;
   var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   aFile.initWithPath(path);
@@ -546,8 +548,8 @@ function getThisAudioFile(aDir, code, shortName, chapter, ext) {
 function getXSModAudioFile(aDir, code, shortName, chapter, ext) {
   chapter = Number(chapter);
   var bn = findBookNumPreMainWin(shortName);
-  if (!bn) return null;
-  var path = aDir.path + "\\" + code + "\\" + code + "-" + shortName + "-" + padChapterNumForExport(bn, chapter, true) + "." + ext;
+  if (bn===null) return null;
+  var path = aDir.path + "\\" + code + "\\" + code + "-" + shortName + "-" + padChapterNum(chapter) + "." + ext;
   var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   aFile.initWithPath(path);
   return aFile;
@@ -555,11 +557,12 @@ function getXSModAudioFile(aDir, code, shortName, chapter, ext) {
 
 function getModsUsingAudioCode(basecode) {
   var list = [];
+  if (!basecode) return list;
   if (Tab[basecode]) list.push(basecode);
   else if (Tab[basecode.toUpperCase()]) list.push(basecode.toUpperCase());
-  var matchAudioCode = MainWindow.getModsWithConfigEntry("AudioCode", basecode, true, true);
+  var matchAudioCode = MainWindow.getModsWithConfigEntry("AudioCode", basecode, true, true, false);
   if (matchAudioCode && matchAudioCode[0]) list = list.concat(matchAudioCode);
-  var matchLang = MainWindow.getModsWithConfigEntry("Lang", basecode, true, true);
+  var matchLang = MainWindow.getModsWithConfigEntry("Lang", basecode.replace(/-.*$/, ""), true, true, true);
   if (matchLang && matchLang[0]) list = list.concat(matchLang);
   
   return list;
@@ -583,7 +586,7 @@ function padChapterLocalized(shortName, chapterNumber, atLeast2Digits) {
 function findBookNumPreMainWin(shortName) {
   var bundle = getCurrentLocaleBundle("books.properties");
   try {var bnum = bundle.GetStringFromName(shortName + "i");}
-  catch (er) {bnum = null;}
+  catch (er) {bnum = null; jsdump("Book \"" + shortName + "\" is not in books.properties.");}
   if (bnum !== null) bnum = Number(bnum);
 
   return bnum;
