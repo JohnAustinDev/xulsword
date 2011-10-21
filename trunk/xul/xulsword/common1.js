@@ -319,16 +319,15 @@ function adjustFontSizes(sheetNum, delta) {
 }
 
 function firstDisplayBible(returnFrameNumber) {
-  var vers=null;
+  try {var vers=prefs.getCharPref("DefaultVersion");}
+  catch (er) {vers = null;}
   var numWins = prefs.getIntPref("NumDisplayedWindows");
   for (var w=1; w<=numWins; w++) {
+    if (!MainWindow || !MainWindow.Win[w]) continue;
     vers = MainWindow.Win[w].modName;
     if (MainWindow.Win[w].modType == BIBLE) break;
   }
-  if (!returnFrameNumber) {
-    if (!vers || w>numWins) return prefs.getCharPref("DefaultVersion");
-    return vers;
-  }
+  if (!returnFrameNumber) return vers;
   else {
     if (!vers || w>numWins) w=1;
     return w;

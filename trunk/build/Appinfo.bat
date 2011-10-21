@@ -41,7 +41,7 @@ Set HelpEmailAddress=gpl.programs.info@gmail.com
 :: CHOOSE SECURITY SETTINGS
 Set useSecurityModule=
 Set encryptionKey=
-Set bibleTextEncryptionKey=aKey
+Set bibleTextEncryptionKey=
 Set splashScreen=splash.xul
 Set copySecurity=disabled
 Set storeSize=-1

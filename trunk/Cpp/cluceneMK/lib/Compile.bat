@@ -28,8 +28,8 @@ Set cFlags=/MT /Fo"Release\libclucene/" %cFlags% ^
 mkdir "%objDIR%"
 
 if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
-set INCLUDE=%INCLUDE%;%ProgramFiles%\Microsoft SDKs\Windows\v6.1\Include
-set LIB=%LIB%;%ProgramFiles%\Microsoft SDKs\Windows\v6.1\Lib
+set INCLUDE=%INCLUDE%;%microsoftsdk%\Include
+set LIB=%LIB%;%microsoftsdk%\Lib
 
 Set cFiles1="%MK%\%CPPD%\cluceneMK\src\CLucene\CLMonolithic.cpp"^
  "%MK%\%CPPD%\swordMK\src\utilfuns\win32\dirent.cpp"
