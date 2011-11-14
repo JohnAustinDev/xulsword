@@ -2025,7 +2025,8 @@ function openTabToolTip(tabNum, frame, cX, cY) {
 function closeTabToolTip() {
   window.clearTimeout(ShowTabToolTip);
   window.clearTimeout(HideTabToolTip);
-  document.getElementById('tabTT').hidePopup();
+  var tabtt = document.getElementById('tabTT');
+  if (tabtt) tabtt.hidePopup();
 }
 
 
