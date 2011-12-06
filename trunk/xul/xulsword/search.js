@@ -703,7 +703,7 @@ var IndexerStopped;
 function buildIndexer(searchWhenDone) {
   if (IndexerStopped) {
     Bible.searchIndexDelete(prefs.getCharPref("SearchVersion"));
-    PercentComplete = 100;
+    PercentComplete = -1;
   }
   else {
     // There is a significant time hit (likely this is especially so when writing to portable drives) for each pass at the indexer.
@@ -717,7 +717,8 @@ function buildIndexer(searchWhenDone) {
     TotalTime += waitTime;
     document.getElementById("progress").value = PercentComplete;
   }
-  if (PercentComplete < 100) {BuildIndexerTM = window.setTimeout("buildIndexer(" + searchWhenDone + ");",0);}
+  
+  if (PercentComplete != -1) {BuildIndexerTM = window.setTimeout("buildIndexer(" + searchWhenDone + ");",0);}
   else {
     document.getElementById("progressbox").style.visibility="hidden";
     document.getElementById("progress").value=0;

@@ -1095,7 +1095,7 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 	tkcheck = SWDYNAMIC_CAST(TreeKeyIdx, key);
 
 	*this = BOTTOM;
-	long highIndex = (vkcheck)?32300/*vkcheck->NewIndex()*/:key->Index();
+	long highIndex = key->Index();
 	if (!highIndex)
 		highIndex = 1;		// avoid division by zero errors.
 
@@ -1348,7 +1348,7 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 		err = Error();
 		time(&lastTime);
 	}
-	
+
 	 (*percent)(95, percentUserData);
 
 	// Optimizing automatically happens with the call to addIndexes
@@ -1377,7 +1377,7 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 	delete an;
 
   if (percentComplete) {
-    if (err) {*percentComplete = 100;}
+    if (err) {*percentComplete = -1;}
     else {*percentComplete = (int)perc;}
   }
   indexerKey->setText(key->getText());
