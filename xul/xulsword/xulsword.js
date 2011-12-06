@@ -383,7 +383,7 @@ function postWindowInit() {
 function useFirstAvailableBookIf() {
   var vers = firstDisplayBible();
   var availableBooks = getAvailableBooks(vers);
-  if (!availableBooks.length) return;
+  if (!availableBooks || !availableBooks.length) return;
   var book = Bible.getBookName();
   for (var b=0; b<availableBooks.length; b++) {if (availableBooks[b]==book) break;}
   if (b<availableBooks.length) return;
@@ -3747,7 +3747,7 @@ function disableMissingBooks(hideDisabledBooks) {
     var belem = FrameDocument[1].getElementById("book." + b);
     var aelem = FrameDocument[1].getElementById("arrow." + b);
     var isAvailable = false;
-    for (var a=0; a<availableBooks.length; a++) {if (Book[b].sName==availableBooks[a]) {isAvailable=true; break;}}
+    for (var a=0; availableBooks && a<availableBooks.length; a++) {if (Book[b].sName==availableBooks[a]) {isAvailable=true; break;}}
     if (!isAvailable) {
       if (hideDisabledBooks)
         belem.style.display = "none";
