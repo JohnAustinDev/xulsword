@@ -47,7 +47,7 @@ foreach $locale (@allLocales) {
   print OUTF "locale global $locale jar:$locale.jar!/global/\n"; # must always use jar, because global is result of a merge
   print OUTF "locale mozapps $locale jar:$locale.jar!/mozapps/\n"; # must always use jar, because global is result of a merge
   if (-e "$MKS/localeDev/$locale/text-skin") {
-    print OUTF "skin localeskin skin $manpath/skin/\n";
+    print OUTF "skin localeskin $locale $manpath/skin/\n";
   }
   print OUTF "# xulswordVersion=$UIversion\n";
   print OUTF "# minMKVersion=$MinProgversionForUI\n";
