@@ -1,0 +1,13 @@
+#labels Featured
+=Audio Modules=
+Some translations may have associated audio files which are readings of the text. These audio files can be packaged in one or more zip files for easy installation into xulsword. After installation, the audio icon will appear above the associated texts, and the audio files may be exported from xulsword at any time as well.
+
+==Packaging an audio module==
+The audio module is a zip archive with a special directory structure containing mp3 audio files. The zip file should contain a subdirectory called: `audio`. Inside this directory is one or more subdirectories named with audio-codes (more about that below). The audio-code will associate its audio files with one or more SWORD Bible modules. Inside the audio-code directory are subdirectories named with [http://www.crosswire.org/wiki/OSIS_Book_Abbreviations OSIS Bible book-name abbreviations]. Finally, inside each book-name directory are mp3 audio files named by their chapter number. For example, the path inside the zip archive for an audio file reading of the ESV Bible, Matthew chapter 1 would be:
+
+Path within zip archive = `audio/ESV/Matt/001.mp3`
+
+The audio-code can be chosen three different ways: usually, it is simply the name of a SWORD Bible module. But sometimes, when audio files need to target more than one Bible module (for instance two modules of the same translation using different scripts), then any unique audio-code may be used, but in this case all SWORD modules associated with the audio files need to have `AudioCode=<audio-code>` in their .conf files. Finally it is also possible to just use the [http://en.wikipedia.org/wiki/ISO_639-1 ISO-639] language code as the audio-code, which will then associate the audio files with all SWORD modules that share that language code.
+
+==Audio file tagging==
+Since audio files can be exported from xulsword for use with mp3 players of various kinds. It is also a good idea to tag the audio files so that those devices may utilise such tags. Although xulsword itself does not require or utilise audio file tags, they are useful for other mp3 players.
