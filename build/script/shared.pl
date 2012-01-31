@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+use File::Copy;
+use File::Path qw(make_path remove_tree);
 
 # NOTE: these functions must have globals $MK and $MKS defined before they will work!
 
@@ -12,16 +14,16 @@ sub updateConfInfo($$$$) {
   my $msg = "";
   
   if ($xsmv eq "" || $xsmv < 2.10) {$xsmv = 2.10;}
-  opendir(CONF, "$MKS/moduleDev/$dir/mods.d");
+  opendir(CONF, "$dir/mods.d");
   @confs = readdir(CONF);
   close(CONF);
   foreach $conf (@confs) {
-    if ($conf =~ /^\.+$/ || -d "$MKS/moduleDev/$dir/mods.d/$conf") {next;}
+    if ($conf =~ /^\.+$/ || -d "$dir/mods.d/$conf") {next;}
     if ($thisModOnly ne "" && $conf ne lc($thisModOnly).".conf") {next;}
     
     my %confInfo;
     my $pvxsm;
-    open(INC, "<$MKS/moduleDev/$dir/mods.d/$conf");
+    open(INC, "<$dir/mods.d/$conf");
     while(<INC>) {
       if ($_ =~ /^\s*([^=]+)\s*=\s*(.*?)\s*$/) {$confInfo{$1} = $2;}
     }
@@ -49,8 +51,8 @@ sub updateConfInfo($$$$) {
     
     $hasXSMversion = "false";
     $hasMinProgversionForXSM = "false";
-    open(INC, "<$MKS/moduleDev/$dir/mods.d/$conf");
-    open(TMP, ">$MKS/moduleDev/$dir/tmp.conf");
+    open(INC, "<$dir/mods.d/$conf");
+    open(TMP, ">$dir/tmp.conf");
     while(<INC>) {
       if ($_ =~ s/^\s*(xulswordVersion\s*=\s*).*$/$1$xsmv/) {$hasXSMversion = "true";}
       if ($_ =~ s/^\s*(minMKVersion\s*=\s*).*$/$1$mpvfxsm/) {$hasMinProgversionForXSM = "true"};
@@ -61,7 +63,7 @@ sub updateConfInfo($$$$) {
     close(TMP);
     close(INC);    
     unlink(INC);
-    rename("$MKS/moduleDev/$dir/tmp.conf", "$MKS/moduleDev/$dir/mods.d/$conf");
+    rename("$dir/tmp.conf", "$dir/mods.d/$conf");
     $msg = $msg."    $dir\\$conf: xulswordVersion=$xsmv, minMKVersion=$mpvfxsm\n";
   }
   if ($msg eq "") {&logit("ERROR: Did not update any conf file in $dir\n")}
@@ -74,44 +76,42 @@ sub copyModulesTo($@$$) {
   my $includeIndexes = shift;
   my $dest = shift;
   
-  my $keyfile = "$MKS\\moduleDev\\swordmk-mods\\keys.txt";
+  my $keyfile = "$MKS\\moduleDev\\keys.txt";
 
   # Copy modules to destination, handle indexes properly
   foreach $mod (@{$listptr}) {
     my $modlc = lc($mod);
-    my $dir = &getSwordDir($modlc);
+    my $dir = &getSwordDir($mod);
     if ($dir eq "") {next;}
 
-    chdir("$MKS\\moduleDev\\$dir"); # so that mkfastmod will work!
-    if (! -e "$MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc") {&logit("ERROR: Skipping $MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc. Module directory does not exist\n"); next;}
+    chdir($dir); # so that mkfastmod will work!
+    if (! -e "$dir\\modules\\$modpath\\$modlc") {&logit("ERROR: Skipping $dir\\modules\\$modpath\\$modlc. Module directory does not exist\n"); next;}
     &logit("    $dir\\modules\\$modpath\\$modlc - COPYING\n");
 
     if ($includeIndexes eq "true") {
       &logit("    $dir\\modules\\$modpath\\$modlc\\lucene - CREATING SEARCH INDEX\n");
-      if (-e "$MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc\\lucene") {`rmdir /Q /S \"$MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc\\lucene\"`;}
+      if (-e "$dir\\modules\\$modpath\\$modlc\\lucene") {`rmdir /Q /S \"$dir\\modules\\$modpath\\$modlc\\lucene\"`;}
       $mykey="";
-      if ($dir eq "swordmk-mods") {
-        open(INF, "<$keyfile") || die "Could not open $keyfile\n";
-        while(<INF>) {if ($_ =~ /^(.*):$mod$/) {$mykey = $1;}}
-        close(INF);
-      }
-      if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf", $mykey, $dir);}
+      open(INF, "<$keyfile") || die "Could not open $keyfile\n";
+      while(<INF>) {if ($_ =~ /^(.*):$mod$/) {$mykey = $1;}}
+      close(INF);
+      if ($mykey ne "") {&setCipher("$dir\\mods.d\\$modlc.conf", $mykey);}
       `\"$MK\\Cpp\\swordMK\\utilities\\bin\\mkfastmod.exe\" $mod >> \"$LOG\"`;
-      if ($mykey ne "") {&setCipher("$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf", "", $dir);}
+      if ($mykey ne "") {&setCipher("$dir\\mods.d\\$modlc.conf", "");}
     }
     if (!-e "$dest\\mods.d") {`mkdir "$dest\\mods.d"`;}
-    `copy \"$MKS\\moduleDev\\$dir\\mods.d\\$modlc.conf\" \"$dest\\mods.d\"`;
-    `xcopy \"$MKS\\moduleDev\\$dir\\modules\\$modpath\\$modlc\" \"$dest\\modules\\$modpath\\$modlc\" /S /Y /I`;
+    `copy \"$dir\\mods.d\\$modlc.conf\" \"$dest\\mods.d\"`;
+    `xcopy \"$dir\\modules\\$modpath\\$modlc\" \"$dest\\modules\\$modpath\\$modlc\" /S /Y /I`;
     if ($includeIndexes ne "true" && -e "$dest\\modules\\$modpath\\$modlc\\lucene") {`rmdir /S /Q \"$dest\\modules\\$modpath\\$modlc\\lucene\"`;}
   }
 }
 
-sub setCipher($$$) {
+sub setCipher($$) {
   my $c = shift;
   my $k = shift;
-  my $d = shift;
   
-  open(TMP, ">$MKS\\moduleDev\\$d\\tmp.xml") || die "Could not open $MKS\\moduleDev\\$d\\tmp.xml\n";
+  my $d = "$c.tmp";
+  open(TMP, ">$d") || die "Could not open $d\n";
   open(CONF, "<$c") || die "Could not open $c\n";
   $haskey = "false";
   while(<CONF>) {
@@ -122,7 +122,7 @@ sub setCipher($$$) {
   close(CONF);
   close(TMP);
   unlink($c);
-  rename ("$MKS\\moduleDev\\$d\\tmp.xml", $c);
+  rename ($d, $c);
 }
 
 sub updateAppinfo($\@) {
@@ -147,9 +147,20 @@ sub updateAppinfo($\@) {
 sub getSwordDir($) {
   my $mod = shift;
   my $mdir = "";
-  if (-e "$MKS\\moduleDev\\swordmk-mods\\mods.d\\$mod.conf") {$mdir = "swordmk-mods";}
-  elsif (-e "$MKS\\moduleDev\\sword-mods\\mods.d\\$mod.conf") {$mdir = "sword-mods";}
-  else {&logit("ERROR: Skipping $mod. Could not locate conf file in swordmk-mods or sword-mods.");}
+  
+  my @paths;
+  push (@paths, "$MKS\\moduleDev\\swordmk-mods\\mods.d\\".lc($mod).".conf");
+  push (@paths, "$MKS\\moduleDev\\sword-mods\\mods.d\\".lc($mod).".conf");
+  for (my $i=0; $i<@paths; $i++) {
+    if (-e $paths[$i]) {
+      $mdir = $paths[$i];
+      $mdir =~ s/\\mods\.d.*?$//;
+    }
+  }
+  if (!$mdir) {
+    &logit("ERROR: Skipping $mod. Could not locate conf file, looked:\n");
+    for (my $i=0; $i<@paths; $i++) {&logit("    ".$paths[$i]."\n");}
+  }
   return $mdir;
 }
 
@@ -161,6 +172,35 @@ sub getPathOfType($) {
   elsif ($t eq "dictionary") {$p = "lexdict\\rawld";}
   elsif ($t eq "devotional") {$p = "lexdict\\rawld\\devotionals";}
   return $p;
+}
+
+# copies a directory to a non existing destination directory
+sub copy_dir($$) {
+  my $id = shift;
+  my $od = shift;
+
+  if (!-e $id || !-d $id) {
+    &Log("ERROR copy_dir: Source does not exist or is not a direcory: $id\n");
+    return 0;
+  }
+  if (-e $od) {
+    &Log("ERROR copy_dir: Destination already exists: $od\n");
+    return 0;
+  }
+
+  opendir(DIR, $id) || die "Could not open dir $id\n";
+  my @fs = readdir(DIR);
+  closedir(DIR);
+  make_path($od);
+
+  for(my $i=0; $i < @fs; $i++) {
+    if ($fs[$i] =~ /^\.+$/) {next;}
+    my $if = "$id/".$fs[$i];
+    my $of = "$od/".$fs[$i];
+    if (-d $if) {&copy_dir($if, $of);}
+    else {copy($if, $of);}
+  }
+  return 1;
 }
 
 sub logit($) {

@@ -26,11 +26,11 @@ while($EncryptedTexts[0]) {
   $mod = shift(@EncryptedTexts);
   $modlc = lc($mod);
    
-  $tdir = &getSwordDir($modlc);
-  if (!$tdir) {$tdir = "swordmk-mods";}
+  $tdir = &getSwordDir($mod);
+  if (!$tdir) {$tdir = "$MKS\\moduleDev\\swordmk-mods";}
   
   # Read encryption codes of current texts
-  $keyfile = "$MKS\\moduleDev\\".$tdir."\\keys.txt";
+  $keyfile = "$MKS\\moduleDev\\keys.txt";
   open(INF, "<$keyfile");
   while(<INF>) {
     $_ =~ /(\S+):(\S+)/;
@@ -69,9 +69,9 @@ while($EncryptedTexts[0]) {
     
     &logit("\n--------------- ENCRYPTING MODULE $mod ---------------\n");
     $vsys = "KJV";
-    $osis = "$MKS\\moduleDev\\".$tdir."\\$mod\\$mod.xml";
-    $conf = "$MKS\\moduleDev\\".$tdir."\\mods.d\\$modlc.conf";
-    $mdir = "$MKS\\moduleDev\\".$tdir."\\modules\\texts\\ztext\\$modlc";
+    $osis = $tdir."\\$mod\\$mod.xml";
+    $conf = $tdir."\\mods.d\\$modlc.conf";
+    $mdir = $tdir."\\modules\\texts\\ztext\\$modlc";
     if (!open(VSYS, "<$conf")) {&logit("Conf file $conf not found."); die;}
     my %confInfo;
     while (<VSYS>) {
