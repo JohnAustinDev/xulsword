@@ -68,13 +68,13 @@ using namespace sword;
 NS_IMPL_ISUPPORTS1(xulsword, ixulsword)
 
 /********************************************************************
-percentUpdate 
+percentUpdate
 *********************************************************************/
 void percentUpdate(char percent, void *userData) {}
 
 
 /********************************************************************
-xulStringToUTF16 
+xulStringToUTF16
 *********************************************************************/
 void xulsword::xulStringToUTF16(nsEmbedCString *xstring, nsEmbedString *utf16, signed char encoding, bool append) {
   nsEmbedString converted;
@@ -116,7 +116,7 @@ void xulsword::xulStringToUTF16(char * xstring, nsEmbedString *utf16, signed cha
 }
 
 /********************************************************************
-GetFolderContents 
+GetFolderContents
 *********************************************************************/
 #define ROOTRDF "http://www.xulsword.com/tableofcontents/ContentsRoot"
 nsEmbedCString xulsword::GetFolderContents(TreeKey *key, const char *modname) {
@@ -125,26 +125,26 @@ nsEmbedCString xulsword::GetFolderContents(TreeKey *key, const char *modname) {
 
   sprintf(buffer, "\t<RDF:Seq RDF:about=\"rdf:#/%s%s\">\n", modname, key->getText());
   retval.Append(buffer);
-  
+
   nsEmbedCString subfolders;
   nsEmbedCString descriptions;
-  
+
   bool ok;
   bool isChild=false;
   for (ok = key->firstChild(); ok; ok = key->nextSibling()) {
     isChild=true;
     sprintf(buffer, "\t\t<RDF:li RDF:resource=\"rdf:#/%s%s\" />\n", modname, key->getText());
     retval.Append(buffer);
-    sprintf(buffer, "\t<RDF:Description RDF:about=\"rdf:#/%s%s\" \n\t\t\tTABLEOFCONTENTS:Chapter=\"rdf:#/%s%s\" \n\t\t\tTABLEOFCONTENTS:Type=\"%s\" \n\t\t\tTABLEOFCONTENTS:Name=\"%s\" />\n", 
+    sprintf(buffer, "\t<RDF:Description RDF:about=\"rdf:#/%s%s\" \n\t\t\tTABLEOFCONTENTS:Chapter=\"rdf:#/%s%s\" \n\t\t\tTABLEOFCONTENTS:Type=\"%s\" \n\t\t\tTABLEOFCONTENTS:Name=\"%s\" />\n",
           modname,
           key->getText(),
           modname,
-          key->getText(), 
-          (key->hasChildren() ? "folder":"key"), 
+          key->getText(),
+          (key->hasChildren() ? "folder":"key"),
           key->getLocalName());
-          
+
     descriptions.Append(buffer);
-    
+
     if (key->hasChildren()) {
       sprintf(buffer, "%s", key->getLocalName());
       subfolders.Append(GetFolderContents(key, modname).get());
@@ -152,7 +152,7 @@ nsEmbedCString xulsword::GetFolderContents(TreeKey *key, const char *modname) {
     }
   }
   if (isChild) {key->parent();}
-  
+
   retval.Append("\t</RDF:Seq>\n\n");
   retval.Append(descriptions.get());
   retval.Append(subfolders.get());
@@ -162,7 +162,7 @@ nsEmbedCString xulsword::GetFolderContents(TreeKey *key, const char *modname) {
 
 
 /********************************************************************
-updateGlobalOptions 
+updateGlobalOptions
 *********************************************************************/
 void xulsword::updateGlobalOptions(SWMgr * manager, bool disableFootCrossRed) {
   manager->setGlobalOption("Headings",xulsword::Headings ? "On":"Off");
@@ -178,22 +178,22 @@ void xulsword::updateGlobalOptions(SWMgr * manager, bool disableFootCrossRed) {
 }
 
 /********************************************************************
-mapVersifications 
+mapVersifications
 *********************************************************************/
 // Reads an input key and sets the output key to the same verse in opposing verse system.
-// Conversion is always between WESTERN (KJV) and EASTERN (Synodal, Synodal0, SynodalP, SynodalProt etc). 
+// Conversion is always between WESTERN (KJV) and EASTERN (Synodal, Synodal0, SynodalP, SynodalProt etc).
 // If upper bound is set on input key, then converted upper bound will be set on output key
 void xulsword::mapVersifications(VerseKey *vkin, VerseKey *vkout) {
   const char *inVerseSystem = vkin->getVersificationSystem();
   const char *outVerseSystem = vkout->getVersificationSystem();
-  
+
   // only change output key's verse system when it's necessary
   if (!strcmp(inVerseSystem,EASTERN) || strstr(inVerseSystem,SYNODAL)) vkout->setVersificationSystem(WESTERN);
-  else if (!strcmp(inVerseSystem,WESTERN) && (strcmp(outVerseSystem,EASTERN) && !strstr(outVerseSystem,SYNODAL))) 
+  else if (!strcmp(inVerseSystem,WESTERN) && (strcmp(outVerseSystem,EASTERN) && !strstr(outVerseSystem,SYNODAL)))
     vkout->setVersificationSystem(EASTERN);
-	
+
   vkout->ClearBounds(); // important to prevent errors which changing key!
-        
+
 	// Prepare to map UpperBound
   SWBuf keyTextU;
   VerseKey bkey;
@@ -202,7 +202,7 @@ void xulsword::mapVersifications(VerseKey *vkin, VerseKey *vkout) {
     bkey.setVersificationSystem(!strcmp(inVerseSystem, WESTERN) ? EASTERN:WESTERN);
     bkey.setText(keyTextU.c_str());
   }
-  
+
   // Prepare to map key
   SWBuf keyText;
   keyText.appendFormatted("%s %i:%i", vkin->getBookAbbrev(), vkin->Chapter(), vkin->Verse());
@@ -221,22 +221,22 @@ void xulsword::mapVersifications(VerseKey *vkin, VerseKey *vkout) {
 		if (!strcmp(keyText.c_str(), mf)) {vkout->setText(mt);}
 	}
 	if (vkin->isBoundSet()) {vkout->UpperBound(bkey);}
-	
+
 //printf("POST MAPPING\nfromKey=%s, %s, fromUB=%s, %s\ntoKey  =%s, %s, toUB  =%s, %s\n\n", vkin->getText(), vkin->getVersificationSystem(), vkin->UpperBound().getText(), vkin->UpperBound().getVersificationSystem(), vkout->getText(), vkout->getVersificationSystem(), vkout->UpperBound().getText(), vkout->UpperBound().getVersificationSystem());
 }
 
 
 /********************************************************************
-textToMaxVerse 
+textToMaxVerse
 *********************************************************************/
 // Takes vkeytext and versification, and returns max verse of chapter, plus inits vkey to vkeytext (with vmax).
 int xulsword::textToMaxVerse(const char *vkeytext, VerseKey *vkey) {
   locationToVerseKey(vkeytext, vkey);
   return (PRInt32)vkey->getVerseMax();
 }
-  
+
 /********************************************************************
-locationToVerseKey 
+locationToVerseKey
 *********************************************************************/
 /*  Reads a xulsword reference and sets the versekey text and upper bounds
     xulsword references never cross chapter boundaries and can have these forms:
@@ -298,7 +298,7 @@ int xulsword::locationToVerseKey(const char *locationText, VerseKey *vk) {
       keytext.assign(keytext, 0, p-1);
     }
   }
-  
+
   vk->setText(keytext.c_str());
 //printf("set=%s, actual=%s\n", keytext.c_str(), vk->getText());
   ub.copyFrom(vk);
@@ -311,7 +311,7 @@ int xulsword::locationToVerseKey(const char *locationText, VerseKey *vk) {
 
 
 /********************************************************************
-keyToStaticVars 
+keyToStaticVars
 *********************************************************************/
 // Assign a set of static verse locations from a key
 void xulsword::keyToStaticVars(VerseKey *key, nsEmbedString *chapter, PRUint16 *verse, PRUint16 *lastverse) {
@@ -350,10 +350,10 @@ xulsword::xulsword()
 *********************************************************************/
 xulsword::xulsword()
 {
-//printf("INITIALIZING XULSWORD OBJECT\n");
+printf("INITIALIZING XULSWORD OBJECT\n");
   /* member initializers and constructor code */
   sprintf(DefaultVersificationSystem, "KJV");
-  
+
   // get our "resources" directory and pass to SWORD if successful
   MyManager = 0;
   nsresult rv;
@@ -408,7 +408,7 @@ NS_IMETHODIMP xulsword::SetBiblesReference(const nsACString & Mod, const nsAStri
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   // Determine which verse system is being used
   const char *versification = getVerseSystemOfModule(mod);
   VerseKey fromKey;
@@ -420,11 +420,11 @@ NS_IMETHODIMP xulsword::SetBiblesReference(const nsACString & Mod, const nsAStri
 
   if (!strcmp(versification, WESTERN)) {
     keyToStaticVars(&fromKey, &ChapterW, &VerseW, &LastVerseW);
-    keyToStaticVars(&toKey, &ChapterE, &VerseE, &LastVerseE); 
+    keyToStaticVars(&toKey, &ChapterE, &VerseE, &LastVerseE);
   }
   else {
     keyToStaticVars(&fromKey, &ChapterE, &VerseE, &LastVerseE);
-    keyToStaticVars(&toKey, &ChapterW, &VerseW, &LastVerseW); 
+    keyToStaticVars(&toKey, &ChapterW, &VerseW, &LastVerseW);
   }
 //printf("SetBookChapter:\nSTATIC LOCATION:\n\tWESTERN = %s:%i-%i\n\tEASTERN = %s:%i-%i\n", NS_ConvertUTF16toUTF8(ChapterW).get(), VerseW, LastVerseW, NS_ConvertUTF16toUTF8(ChapterE).get(), VerseE, LastVerseE);
 
@@ -461,10 +461,10 @@ NS_IMETHODIMP xulsword::SetVerse(const nsACString & Mod, PRInt32 firstverse, PRI
   fromKey.setVersificationSystem(versification);
   int maxverse = textToMaxVerse(NS_ConvertUTF16toUTF8(*Chapter).get(), &fromKey);
   fromKey.ClearBounds(); // otherwise, can't setVerse without error!
-  
+
   bool noVerseHighlight = false;
   if (firstverse == 0) {noVerseHighlight = true;}
-  // This routine checks the verse number and makes sure it exists, 
+  // This routine checks the verse number and makes sure it exists,
   // and if too small or to large sets to legal value (1 or v-max)
   // If verse is -1 this results in maxverse.
   if ((firstverse == -1)||(firstverse > maxverse)) {firstverse = maxverse;}
@@ -472,27 +472,27 @@ NS_IMETHODIMP xulsword::SetVerse(const nsACString & Mod, PRInt32 firstverse, PRI
   if ((lastverse == -1)||(lastverse > maxverse)) {lastverse = maxverse;}
   else if (lastverse <= 0) {lastverse = 1;}
   if (lastverse < firstverse) {lastverse = firstverse;}
-  
+
   // Set adjusted bounds
   fromKey.setVerse(firstverse);
   VerseKey ub;
   ub.copyFrom(fromKey);
   ub.setVerse(lastverse);
   fromKey.UpperBound(ub);
-  
+
   // Map to other verse systems too
   VerseKey toKey;
   toKey.setVersificationSystem(EASTERN); // init value only, may be changed by mapVersifications
   mapVersifications(&fromKey, &toKey);
-  
+
   // Save map results
   if (!strcmp(versification, WESTERN)) {
     keyToStaticVars(&fromKey, &ChapterW, &VerseW, &LastVerseW);
-    keyToStaticVars(&toKey, &ChapterE, &VerseE, &LastVerseE); 
+    keyToStaticVars(&toKey, &ChapterE, &VerseE, &LastVerseE);
   }
   else {
     keyToStaticVars(&fromKey, &ChapterE, &VerseE, &LastVerseE);
-    keyToStaticVars(&toKey, &ChapterW, &VerseW, &LastVerseW); 
+    keyToStaticVars(&toKey, &ChapterW, &VerseW, &LastVerseW);
   }
   if (noVerseHighlight) {
     VerseE = 0;
@@ -500,8 +500,8 @@ NS_IMETHODIMP xulsword::SetVerse(const nsACString & Mod, PRInt32 firstverse, PRI
     VerseW = 0;
     LastVerseW = 0;
   }
-  
-//printf("SetVerse:\nSTATIC LOCATION:\n\tWESTERN = %s:%i-%i\n\tEASTERN = %s:%i-%i\n", NS_ConvertUTF16toUTF8(ChapterW).get(), VerseW, LastVerseW, NS_ConvertUTF16toUTF8(ChapterE).get(), VerseE, LastVerseE);    
+
+//printf("SetVerse:\nSTATIC LOCATION:\n\tWESTERN = %s:%i-%i\n\tEASTERN = %s:%i-%i\n", NS_ConvertUTF16toUTF8(ChapterW).get(), VerseW, LastVerseW, NS_ConvertUTF16toUTF8(ChapterE).get(), VerseE, LastVerseE);
   nsEmbedCString vsystem;
   nsEmbedString retval;
   vsystem.Assign(versification);
@@ -518,9 +518,9 @@ NS_IMETHODIMP xulsword::GetChapter(const nsACString & Mod, nsAString & _retval)
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   const char *versification = getVerseSystemOfModule(mod);
-  
+
   nsEmbedString * Chapter;
   !strcmp(versification, WESTERN) ? Chapter = &ChapterW : Chapter = &ChapterE;
   _retval = *Chapter;
@@ -536,7 +536,7 @@ NS_IMETHODIMP xulsword::GetBookName(nsAString & _retval)
 {
   std::string chapter;
   std::string book;
-  
+
   chapter.assign(NS_ConvertUTF16toUTF8(ChapterW).get());
 
   int space = chapter.find(' ',0);
@@ -557,7 +557,7 @@ NS_IMETHODIMP xulsword::GetVerseNumber(const nsACString & Mod, PRInt32 *_retval)
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   const char *versification = getVerseSystemOfModule(mod);
   *_retval = (!strcmp(versification, WESTERN) ? VerseW:VerseE);
 
@@ -572,9 +572,9 @@ NS_IMETHODIMP xulsword::GetLastVerseNumber(const nsACString & Mod, PRInt32 *_ret
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   const char *versification = getVerseSystemOfModule(mod);
-  
+
   *_retval = (!strcmp(versification, WESTERN) ? LastVerseW:LastVerseE);
 
   return NS_OK;
@@ -588,7 +588,7 @@ NS_IMETHODIMP xulsword::GetChapterNumber(const nsACString & Mod, PRInt32 *_retva
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   const char *versification = getVerseSystemOfModule(mod);
 
   VerseKey myVerseKey;
@@ -615,14 +615,14 @@ NS_IMETHODIMP xulsword::GetLocation(const nsACString & Mod, nsAString & _retval)
   if (GetChapterNumber(Mod, &ch)   != NS_OK) {return NS_ERROR_FAILURE;}
   if (GetVerseNumber(Mod, &vs)     != NS_OK) {return NS_ERROR_FAILURE;}
   if (GetLastVerseNumber(Mod, &lv) != NS_OK) {return NS_ERROR_FAILURE;}
-  
+
   SWBuf location;
   location.appendFormatted("%s.%i.%i.%i", NS_ConvertUTF16toUTF8(bk).get(), ch, vs, lv);
-  
+
   nsEmbedString ret;
   ret.Assign(NS_ConvertUTF8toUTF16(location.c_str()));
   _retval = ret;
-  
+
   return NS_OK;
 }
 
@@ -638,13 +638,13 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
   nsEmbedCString crossRefText;
   nsEmbedCString noteText;
   nsEmbedString * Chapter;
-  
+
   const char * vkeymod;
   NS_CStringGetData(Vkeymod, &vkeymod);
 
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {return NS_ERROR_FAILURE;}
-  
+
   SWKey *testkey = module->CreateKey();
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!myVerseKey) {
@@ -657,11 +657,11 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
 
   updateGlobalOptions(MyManager);
   module->setSkipConsecutiveLinks(true);
-  
+
   //Initialize Key
   !strcmp(myVerseKey->getVersificationSystem(), WESTERN) ? Chapter = &ChapterW : Chapter = &ChapterE;
   myVerseKey->setText(NS_ConvertUTF16toUTF8(*Chapter).get());
-  
+
   VerseKey ub;
   ub.copyFrom(myVerseKey);
   ub.setVerse(ub.getVerseMax());
@@ -674,7 +674,7 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
   PRUint16 * Verse;
   PRUint16 * LastVerse;
   if (!strcmp(myVerseKey->getVersificationSystem(), WESTERN)) {
-		Verse = &VerseW; 
+		Verse = &VerseW;
 		LastVerse = &LastVerseW;
   }
   else {
@@ -686,7 +686,7 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
   GetBookName(bk);
   PRInt32 ch;
   GetChapterNumber(Vkeymod, &ch);
-    
+
   bool haveText = false;
   nsEmbedString chapHTML;
   while (!module->Error()) {
@@ -704,7 +704,7 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
     }
     haveText = haveText || *verseText.get();
 
-	
+
     //SAVE ANY FOOTNOTES
     int fnV = 1;
     AttributeList::iterator AtIndex;
@@ -751,7 +751,7 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
 		  verseHTML.Append(module->RenderText(Value->second));
 		  verseHTML.Append("</div>");
     }
-	
+
     //NOW PRINT OUT THE VERSE ITSELF
     //If this is selected verse then designate as so
     //Output verse html code
@@ -762,16 +762,16 @@ NS_IMETHODIMP xulsword::GetChapterText(const nsACString & Vkeymod, nsAString & _
     else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {verseHTML.Append("<span class=\"hl\">");}
 
     if (verseStartsWithIndent) {verseHTML.Append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");}
-  
+
     verseHTML.Append("<sup class=\"versenum\">");
     //If verse is non-empty and verse numbers are being displayed then print the verse number
     if (Versenumbers && (verseText.Length() > 0)) {
-		  sprintf(Outtext, "%d", vNum); 
+		  sprintf(Outtext, "%d", vNum);
 		  verseHTML.Append(Outtext);
 		  verseHTML.Append("</sup>");
     }
     else {verseHTML.Append("</sup> ");}
-    
+
     verseHTML.Append(verseText.get());
     if (isCommentary) {verseHTML.Append("<br><br>");}
 
@@ -803,10 +803,10 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
   nsEmbedString * Chapter;
   PRUint16 * Verse;
 	PRUint16 * LastVerse;
-	
+
   const char * vkeymodlist;
   NS_CStringGetData(Vkeymodlist, &vkeymodlist);
-  
+
   updateGlobalOptions(MyManager, true);
   MyManager->setGlobalOption("Words of Christ in Red","Off"); // Words of Christ in Red is off for multidisplay
 
@@ -816,10 +816,10 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
 	std::string thismod;
 	thismod.assign(modstr.substr(0,comma));
 	if (comma == std::string::npos) {return NS_ERROR_ILLEGAL_VALUE;}
-	
+
 	SWModule * module = MyManager->getModule(thismod.c_str());
   if (!module) {return NS_ERROR_FAILURE;}
-  
+
   SWKey *testkey1 =  module->CreateKey();
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey1);
   if (!myVerseKey) {
@@ -831,82 +831,82 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
 
   !strcmp(modvers, WESTERN) ? Chapter = &ChapterW : Chapter = &ChapterE;
   myVerseKey->setText(NS_ConvertUTF16toUTF8(*Chapter).get());
-  
+
   VerseKey ub;
   ub.copyFrom(myVerseKey);
   ub.setVerse(ub.getVerseMax());
   myVerseKey->UpperBound(ub);
 
 	if (!strcmp(modvers, WESTERN)) {
-		Verse = &VerseW; 
+		Verse = &VerseW;
 		LastVerse = &LastVerseW;
 	}
 	else {
  		Verse = &VerseE;
 		LastVerse = &LastVerseE;
 	}
-	
+
 /*
   <div class="interB>
-  
+
     [<span class="hl" [id="sv"]>]
     <div class="interV1">
       <sup class="versnum">5</sup>
       <span id="vs.5.1">Some verse text from module 1.</span>
     </div>
-    
+
     <div class="interS"></div>
-    
+
     <div class="interV2">
       <sup class="versnum">5</sup>
       <span id="vs.5.2">Some verse text from module 2.</span>
     </div>
     [</span>]
-    
+
   </div>
 */
 
   //NOW READ ALL VERSES IN THE CHAPTER
   nsEmbedString bk;
   GetBookName(bk);
-  
+
   nsEmbedString chapText16;
   SWModule * versemod;
   bool haveText = false;
   while (!myVerseKey->Error()) {
     int vNum = myVerseKey->Verse();
-    
+
     // Each verse group has its own div with a class
     xulStringToUTF16("<div class=\"interB\">", &chapText16, ENC_UTF8, true);
-    
+
     //If this is the selected verse group then designate as so
     if(vNum==*Verse) {xulStringToUTF16("<span id=\"sv\" class=\"hl\">", &chapText16, ENC_UTF8, true);}
     else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {xulStringToUTF16("<span class=\"hl\">", &chapText16, ENC_UTF8, true);}
-    
+
     int versionNum = 1;
     modstr.assign(vkeymodlist);
     do {
       // each version is separated by a separator that has a class
       if (versionNum > 1) {xulStringToUTF16("<div class=\"interS\"></div>", &chapText16, ENC_UTF8, true);}
-      
+
       // each version has its own unique class ID
       sprintf(Outtext, "<div class=\"interV%d\">", versionNum);
       xulStringToUTF16(Outtext, &chapText16, ENC_UTF8, true);
       xulStringToUTF16("<sup class=\"versenum\">", &chapText16, ENC_UTF8, true);
       if (Versenumbers) {
-      	sprintf(Outtext, "%d",vNum); 
+      	sprintf(Outtext, "%d",vNum);
       	xulStringToUTF16(Outtext, &chapText16, ENC_UTF8, true);
       }
       sprintf(Outtext, "</sup><span id=\"vs.%s.%d.%d.%d\">", NS_ConvertUTF16toUTF8(bk).get(), myVerseKey->Chapter(), vNum, versionNum++);
       xulStringToUTF16(Outtext, &chapText16, ENC_UTF8, true);
-      
+
       comma = modstr.find(',',0);
       thismod.assign(modstr.substr(0,comma));
       if (comma != std::string::npos) {modstr.assign(modstr.substr(comma+1));}
-      
+
       versemod = MyManager->getModule(thismod.c_str());
       if (!versemod) {break;}
-      
+
       SWKey *testkey2 = versemod->CreateKey();
       VerseKey *mainkey = SWDYNAMIC_CAST(VerseKey, testkey2);
       if (!mainkey) {
@@ -915,12 +915,12 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
       }
       const char * toVS = mainkey->getVersificationSystem();
       delete(testkey2);
-      
+
       VerseKey readKey;
       readKey.copyFrom(myVerseKey);
       readKey.setAutoNormalize(0); // Non-existant calls should return empty string!
       const char * frVS = readKey.getVersificationSystem();
-      if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) || 
+      if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) ||
           (!strcmp(toVS,WESTERN) && (!strcmp(frVS,EASTERN) || strstr(frVS,SYNODAL)))) {
         VerseKey convertKey;
         convertKey.copyFrom(readKey);
@@ -928,19 +928,19 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
         mapVersifications(&convertKey, &readKey);
       }
       versemod->SetKey(readKey);
-      
+
       nsEmbedCString tmp;
       if (!versemod->Error()) {tmp.Assign(versemod->RenderText());}
       xulStringToUTF16(&tmp, &chapText16, versemod->Encoding(), true);
       haveText = haveText || tmp.get();
-      
+
       xulStringToUTF16("</span></div>", &chapText16, ENC_UTF8, true);
     } while (comma != std::string::npos);
-    
+
     if (vNum==*Verse) {xulStringToUTF16("</span>", &chapText16, ENC_UTF8, true);}
     else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {xulStringToUTF16("</span>", &chapText16, ENC_UTF8, true);}
     xulStringToUTF16("</div>", &chapText16, ENC_UTF8, true);
-    
+
     myVerseKey->increment(1);
   }
 
@@ -948,7 +948,7 @@ NS_IMETHODIMP xulsword::GetChapterTextMulti(const nsACString & Vkeymodlist, nsAS
 
   // Return Words of Christ in Red feature to original value
   MyManager->setGlobalOption("Words of Christ in Red",xulsword::Redwords ? "On":"Off");
-  
+
   delete(testkey1);
   _retval = chapText16;
   return NS_OK;
@@ -962,10 +962,10 @@ NS_IMETHODIMP xulsword::GetVerseText(const nsACString & Vkeymod, const nsAString
 {
   const char * vkeymod;
   NS_CStringGetData(Vkeymod, &vkeymod);
-  
+
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {return NS_ERROR_FAILURE;}
-  
+
   SWKey *testkey = module->CreateKey();
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!myVerseKey) {
@@ -974,7 +974,7 @@ NS_IMETHODIMP xulsword::GetVerseText(const nsACString & Vkeymod, const nsAString
   }
   myVerseKey->Persist(1);
   module->setKey(myVerseKey);
-  
+
   MyManager->setGlobalOption("Headings","Off");
   MyManager->setGlobalOption("Footnotes","Off");
   MyManager->setGlobalOption("Cross-references","Off");
@@ -1007,7 +1007,7 @@ NS_IMETHODIMP xulsword::GetVerseText(const nsACString & Vkeymod, const nsAString
     if (--numverses == 0) {break;}
   }
   module->setKey(EmptyKey);
-  
+
   nsEmbedString retval;
   xulStringToUTF16(&bText, &retval, module->Encoding(), false);
 
@@ -1022,7 +1022,7 @@ NS_IMETHODIMP xulsword::SetGlobalOption(const nsACString & Option, const nsACStr
 {
   const char * option;
   NS_CStringGetData(Option, &option);
-  
+
   const char * setting;
   NS_CStringGetData(Setting, &setting);
 
@@ -1058,10 +1058,10 @@ NS_IMETHODIMP xulsword::GetMaxVerse(const nsACString & Mod, const nsAString & Vk
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   VerseKey vkey;
   vkey.setVersificationSystem(getVerseSystemOfModule(mod));
-  *_retval = textToMaxVerse(NS_ConvertUTF16toUTF8(Vkeytext).get(), &vkey); 
+  *_retval = textToMaxVerse(NS_ConvertUTF16toUTF8(Vkeytext).get(), &vkey);
    return NS_OK;    
 }
 
@@ -1077,7 +1077,7 @@ NS_IMETHODIMP xulsword::GetVerseSystem(const nsACString & Mod, nsAString & _retv
   nsEmbedString retval;
   vsystem.Assign(getVerseSystemOfModule(mod));
   xulStringToUTF16(&vsystem, &retval, ENC_UTF8, false);
-  
+
   _retval = retval;
   return NS_OK;  
 }
@@ -1092,14 +1092,14 @@ NS_IMETHODIMP xulsword::ConvertLocation(const nsACString & FromVerseSystem, cons
   NS_CStringGetData(FromVerseSystem, &frVS);
   const char * toVS;
   NS_CStringGetData(ToVerseSystem, &toVS);
-  
+
   VerseKey fromKey;
   fromKey.setVersificationSystem(frVS);
   locationToVerseKey(NS_ConvertUTF16toUTF8(Vkeytext).get(), &fromKey);
 //printf("FROM- KT:%s, LB:%s, UB:%s\n", fromKey.getShortText(), fromKey.LowerBound().getShortText(), fromKey.UpperBound().getShortText());
 
   SWBuf result;
-  if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) || 
+  if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) ||
       (!strcmp(toVS,WESTERN) && (!strcmp(frVS,EASTERN) || strstr(frVS,SYNODAL)))) {
     VerseKey toKey;
     toKey.setVersificationSystem(EASTERN); // init value only, may be changed by mapVersifications
@@ -1108,14 +1108,14 @@ NS_IMETHODIMP xulsword::ConvertLocation(const nsACString & FromVerseSystem, cons
     result.appendFormatted("%s.%i", toKey.getOSISRef(), toKey.UpperBound().Verse());
   }
   else {
-    result.appendFormatted("%s.%i", fromKey.getOSISRef(), fromKey.UpperBound().Verse());  
+    result.appendFormatted("%s.%i", fromKey.getOSISRef(), fromKey.UpperBound().Verse());
   }
 
   nsEmbedCString newloc;
   nsEmbedString retval;
   newloc.Assign(result.c_str());
   xulStringToUTF16(&newloc, &retval, ENC_UTF8, false);
-  
+
   _retval = retval;
   return NS_OK;    
 }
@@ -1151,7 +1151,7 @@ NS_IMETHODIMP xulsword::GetGlobalOption(const nsACString & Option, nsAString & _
 
   nsEmbedString retval;
   xulStringToUTF16(&rCText, &retval, ENC_UTF8, false);
-  
+
   _retval = retval;
 
   return NS_OK;
@@ -1200,17 +1200,17 @@ NS_IMETHODIMP xulsword::GetBookIntroduction(const nsACString & Vkeymod, const ns
 {
 	const char * vkeymod;
 	NS_CStringGetData(Vkeymod, &vkeymod);
-	
+
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {return NS_ERROR_FAILURE;}
-  
+
   SWKey *testkey = module->CreateKey();
   VerseKey *introkey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!introkey) {
     delete(testkey);
     return NS_ERROR_ILLEGAL_VALUE;
   }
-  
+
   updateGlobalOptions(MyManager);
 
 	introkey->Headings(1);
@@ -1220,12 +1220,12 @@ NS_IMETHODIMP xulsword::GetBookIntroduction(const nsACString & Vkeymod, const ns
 	introkey->Verse(0);
 	introkey->Persist(true);
 	module->setKey(introkey);
-	
+
 	nsEmbedCString intro;
 	nsEmbedString retval;
 	intro.Assign(module->RenderText());
 	xulStringToUTF16(&intro, &retval, module->Encoding(), false);
-	
+
 	module->setKey(EmptyKey);
 	delete(testkey);
 
@@ -1241,19 +1241,19 @@ NS_IMETHODIMP xulsword::GetDictionaryEntry(const nsACString & Lexdictmod, const 
 {
 	const char * lexdictmod;
 	NS_CStringGetData(Lexdictmod, &lexdictmod);
-		
+
   updateGlobalOptions(MyManager);
 
 	SWModule * dmod;
 	dmod = MyManager->getModule(lexdictmod);
 	if (!dmod) {return NS_ERROR_FAILURE;}
-	
+
 	SWKey *tkey = dmod->CreateKey();
   if (!SWDYNAMIC_CAST(StrKey, tkey)) {return NS_ERROR_ILLEGAL_VALUE;}
   delete(tkey);
-  
+
 	nsEmbedString retval;
-	
+
 	dmod->setKey(NS_ConvertUTF16toUTF8(Key).get());
 	dmod->increment(0); // Refresh the key's location
 	if (strcmp(dmod->getKeyText(), NS_ConvertUTF16toUTF8(Key).get())) {retval.Assign(NS_ConvertUTF8toUTF16(""));}
@@ -1292,11 +1292,11 @@ NS_IMETHODIMP xulsword::GetAllDictionaryKeys(const nsACString & Lexdictmod, nsAS
   SWModule * dmod;
 	dmod = MyManager->getModule(lexdictmod);
 	if (!dmod) {return NS_ERROR_FAILURE;}
-	
+
 	SWKey *tkey = dmod->CreateKey();
   if (!SWDYNAMIC_CAST(StrKey, tkey)) {return NS_ERROR_ILLEGAL_VALUE;}
   delete(tkey);
-  
+
 	dmod->setPosition(TOP);
 
   long count=0;
@@ -1311,7 +1311,7 @@ NS_IMETHODIMP xulsword::GetAllDictionaryKeys(const nsACString & Lexdictmod, nsAS
 
 	nsEmbedString retval;
 	xulStringToUTF16(&keytext, &retval, dmod->Encoding(), false);
-  
+
   _retval = retval;
 	return NS_OK;
 }
@@ -1324,10 +1324,10 @@ NS_IMETHODIMP xulsword::GetGenBookChapterText(const nsACString & Gbmod, const ns
 {
   const char * gbmod;
   NS_CStringGetData(Gbmod, &gbmod);
-  
+
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {return NS_ERROR_FAILURE;}
-  
+
   updateGlobalOptions(MyManager);
 
   SWKey *testkey = module->CreateKey();
@@ -1344,18 +1344,18 @@ NS_IMETHODIMP xulsword::GetGenBookChapterText(const nsACString & Gbmod, const ns
   }
   else {key->setText(NS_ConvertUTF16toUTF8(Treekey).get());}
 
-  key->Persist(1);  
+  key->Persist(1);
   module->setKey(key);
   if (module->Error()) key->root();
-  
+
   retval.Assign(module->RenderText());
   module->SetKey(EmptyKey);
-    
+
   nsEmbedString retval16;
   xulStringToUTF16(&retval, &retval16, module->Encoding(), false);
 
   delete(testkey);
-  
+
   _retval = retval16;
   return NS_OK;
 }
@@ -1368,10 +1368,10 @@ NS_IMETHODIMP xulsword::GetGenBookTableOfContents(const nsACString & Gbmod, nsAS
 {
   const char * gbmod;
   NS_CStringGetData(Gbmod, &gbmod);
-  
+
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {return NS_ERROR_FAILURE;}
-  
+
   SWKey *testkey = module->CreateKey();
   TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
   if (!key) {
@@ -1381,7 +1381,7 @@ NS_IMETHODIMP xulsword::GetGenBookTableOfContents(const nsACString & Gbmod, nsAS
 
   nsEmbedCString retval;
   char buffer[1024];
-  
+
   // xulSword requires the following header for the RDF file
   retval.Assign("<?xml version=\"1.0\"?>\n\n<RDF:RDF xmlns:TABLEOFCONTENTS=\"http://www.xulsword.com/tableofcontents/rdf#\" \n\t\txmlns:NC=\"http://home.netscape.com/NC-rdf#\" \n\t\txmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n\n");
 
@@ -1390,7 +1390,7 @@ NS_IMETHODIMP xulsword::GetGenBookTableOfContents(const nsACString & Gbmod, nsAS
         ROOTRDF,
         gbmod);
   retval.Append(buffer);
-  
+
   // describe and create the root itself...
   key->root();
   sprintf(buffer, "\t<RDF:Description RDF:about=\"rdf:#/%s\" \n\t\t\tTABLEOFCONTENTS:Chapter=\"rdf:#/%s\" \n\t\t\tTABLEOFCONTENTS:Type=\"folder\" \n\t\t\tTABLEOFCONTENTS:Name=\"%s\" />\n",
@@ -1398,7 +1398,7 @@ NS_IMETHODIMP xulsword::GetGenBookTableOfContents(const nsACString & Gbmod, nsAS
         key->getText(),
         gbmod);
   retval.Append(buffer);
-  
+
   // fill the root folder with everything else...
   retval.Append(GetFolderContents(key, gbmod).get());
 
@@ -1408,7 +1408,7 @@ NS_IMETHODIMP xulsword::GetGenBookTableOfContents(const nsACString & Gbmod, nsAS
   xulStringToUTF16(&retval, &retval16, module->Encoding(), false);
 
   delete(testkey);
-    
+
   _retval = retval16;
   return NS_OK;
 }
@@ -1418,14 +1418,14 @@ NS_IMETHODIMP xulsword::GetGenBookTableOfContents(const nsACString & Gbmod, nsAS
 /********************************************************************
 LuceneEnabled
 *********************************************************************/
-NS_IMETHODIMP xulsword::LuceneEnabled(const nsACString & Mod, PRBool *_retval)
+NS_IMETHODIMP xulsword::LuceneEnabled(const nsACString & Mod, bool *_retval)
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   SWModule * module = MyManager->getModule(mod);
   if (!module) {*_retval=false; return NS_OK;}
-  
+
 	bool supported = true;
 	ListKey tmp = module->search(NULL,-4,NULL,NULL,&supported, NULL, NULL);
 	*_retval=supported;
@@ -1436,14 +1436,14 @@ NS_IMETHODIMP xulsword::LuceneEnabled(const nsACString & Mod, PRBool *_retval)
 /********************************************************************
 Search
 *********************************************************************/
-NS_IMETHODIMP xulsword::Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, PRBool newsearch, PRInt32 *_retval)
+NS_IMETHODIMP xulsword::Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, bool newsearch, PRInt32 *_retval)
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   const char * scope;
   NS_CStringGetData(Scope, &scope);
-  
+
   SWModule * module = MyManager->getModule(mod);
   if (!module) {return NS_ERROR_FAILURE;}
 
@@ -1451,7 +1451,7 @@ NS_IMETHODIMP xulsword::Search(const nsACString & Mod, const nsAString & Srchstr
 	ListKey scopeK;
 	VerseKey parser;
 	SWKey key;
-	
+
 	nsEmbedCString searchString;
 
 	PRInt32 type1;
@@ -1470,7 +1470,7 @@ NS_IMETHODIMP xulsword::Search(const nsACString & Mod, const nsAString & Srchstr
     module->setKey(nvk);
   }
   delete(testkey);
-  
+
   searchedvers = getVerseSystemOfModule(mod);
 
     /*
@@ -1502,12 +1502,12 @@ NS_IMETHODIMP xulsword::Search(const nsACString & Mod, const nsAString & Srchstr
 			listkeyInt.Persist(1);
 			module->setKey(listkeyInt);
 			//*workKeys = module->search(searchString.get(), 0, flags, 0, 0, &percentUpdate, &noneed);
-			*workKeys = module->search(searchString.get(), -1, flags, 0, 0, &percentUpdate, &noneed);			
+			*workKeys = module->search(searchString.get(), -1, flags, 0, 0, &percentUpdate, &noneed);
 		}
 	}
 	// SIMPLE SEARCH
 	else {*workKeys = module->search(searchString.get(), type1, flags, 0, 0, &percentUpdate, &noneed);}
-	
+
 	// If not a new search append new results to existing key
 	if (!newsearch) {
 		workKeys->setPosition(TOP);
@@ -1521,7 +1521,7 @@ NS_IMETHODIMP xulsword::Search(const nsACString & Mod, const nsAString & Srchstr
 		}
 	}
 	module->setKey(EmptyKey);
-  
+
 	MySearchVerses.Assign(NS_ConvertUTF8toUTF16(""));
 
 	*_retval = SearchList.Count();
@@ -1534,16 +1534,16 @@ NS_IMETHODIMP xulsword::Search(const nsACString & Mod, const nsAString & Srchstr
 /********************************************************************
 GetSearchTexts
 *********************************************************************/
-NS_IMETHODIMP xulsword::GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, PRBool keepStrongs, nsAString & _retval)
+NS_IMETHODIMP xulsword::GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, bool keepStrongs, nsAString & _retval)
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   SWModule * module = MyManager->getModule(mod);
   if (!module) {return NS_ERROR_FAILURE;}
-  
+
 	if(num==0) {num=SearchList.Count();}
-	
+
   if (keepStrongs) {updateGlobalOptions(MyManager, true);}
   else {
     MyManager->setGlobalOption("Headings","Off");
@@ -1560,7 +1560,7 @@ NS_IMETHODIMP xulsword::GetSearchTexts(const nsACString & Mod, PRInt32 first, PR
 	SearchList.SetToElement(first,TOP);
 	PRInt32 written=0;
 	int savePersist = SearchList.Persist();
-	
+
 	SWKey * testkey = module->CreateKey();
 	VerseKey * modvkey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (modvkey) {
@@ -1574,10 +1574,10 @@ NS_IMETHODIMP xulsword::GetSearchTexts(const nsACString & Mod, PRInt32 first, PR
     tokey.Persist(1);
     module->setKey(tokey);
     tokey.setAutoNormalize(0); // Non-existant calls should return empty string!
-    
+
     while (!SearchList.Error()&&(written<num)) {
       fromkey=SearchList;
-      if ((!strcmp(searchedvers,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) || 
+      if ((!strcmp(searchedvers,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) ||
           (!strcmp(toVS,WESTERN) && (!strcmp(searchedvers,EASTERN) || strstr(searchedvers,SYNODAL)))) {
         tokey.setVersificationSystem(toVS);
         mapVersifications(&fromkey, &tokey);
@@ -1614,7 +1614,7 @@ NS_IMETHODIMP xulsword::GetSearchTexts(const nsACString & Mod, PRInt32 first, PR
 		  narrowBuf.Append("<nx/>");
 		  xulStringToUTF16(&narrowBuf, &wideBuf, module->Encoding(), false);
 		  MySearchTexts.Append(wideBuf);
-		  
+
 		  narrowBuf.Assign(module->getKeyText());
 		  narrowBuf.Append("<nx/>");
 		  xulStringToUTF16(&narrowBuf, &wideBuf, ENC_UTF8, false);
@@ -1623,7 +1623,7 @@ NS_IMETHODIMP xulsword::GetSearchTexts(const nsACString & Mod, PRInt32 first, PR
 		  written++;
 		}
 	}
-  
+
 	module->setKey(EmptyKey); // Overcomes the crash on Persist problem
   SearchList.Persist(savePersist);
 
@@ -1648,7 +1648,7 @@ NS_IMETHODIMP xulsword::GetSearchVerses(const nsACString & Mod, nsAString & _ret
 /********************************************************************
 SetCipherKey
 *********************************************************************/
-NS_IMETHODIMP xulsword::SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, PRBool useSecModule)
+NS_IMETHODIMP xulsword::SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, bool useSecModule)
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
@@ -1672,7 +1672,7 @@ NS_IMETHODIMP xulsword::SetCipherKey(const nsACString & Mod, const nsAString & C
 #endif
 
 	// Set the new Cipher Key. IF WRONG CIPHER KEY IS GIVEN, IT CANNOT BE CHANGED WITHOUT RELOAD (SWORD BUG)
-	if (SWModule * testmod=MyManager->getModule(mod)) 
+	if (SWModule * testmod=MyManager->getModule(mod))
 	{
 		MyManager->setCipherKey(mod,Outtext);
 		return NS_OK;
@@ -1719,14 +1719,14 @@ NS_IMETHODIMP xulsword::GetModuleInformation(const nsACString & Mod, const nsACS
 {
 	const char * mod;
 	NS_CStringGetData(Mod, &mod);
-	
+
 	const char * paramname;
 	NS_CStringGetData(Paramname, &paramname);
-	
+
  	SWModule * infoModule;
 	infoModule = MyManager->getModule(mod);
 	nsEmbedCString paramstring;
-	
+
   if (infoModule) {
     ConfigEntMap * infoConfig = const_cast<ConfigEntMap *>(&infoModule->getConfig());
     ConfigEntMap::iterator it = infoConfig->find(paramname);
@@ -1742,7 +1742,7 @@ NS_IMETHODIMP xulsword::GetModuleInformation(const nsACString & Mod, const nsACS
       }
     }
   }
-	 
+
 	nsEmbedString retval;
 	xulStringToUTF16(&paramstring, &retval, ENC_UTF8, false);
 
@@ -1758,10 +1758,10 @@ NS_IMETHODIMP xulsword::SearchIndexDelete(const nsACString & Mod)
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   SWModule * module = MyManager->getModule(mod);
   if (!module) {return NS_ERROR_FAILURE;}
-  
+
 	if (!module->hasSearchFramework()) {
 		return NS_OK;
 	}
@@ -1777,39 +1777,24 @@ NS_IMETHODIMP xulsword::SearchIndexBuild(const nsACString & Mod, PRInt32 maxwait
 {
   const char * mod;
   NS_CStringGetData(Mod, &mod);
-  
+
   SWModule * module = MyManager->getModule(mod);
   if (!module) {return NS_ERROR_FAILURE;}
-  
+
 	if (!module->hasSearchFramework()) {
 		*_retval=100;
     return NS_OK;
 	}
-	
+
 	int percentComplete = 0;
 	char noneed = 0;
 	module->createSearchFramework(&percentUpdate, &noneed, (double)maxwait, &percentComplete);
 	*_retval = (PRInt32)percentComplete;
-  	
+
 	return NS_OK;
 }
 
 /* End of implementation class template. */
-
-
-
-NS_GENERIC_FACTORY_CONSTRUCTOR(xulsword);
-
-static const nsModuleComponentInfo components[] =
-{
-  { XULSWORD_CLASSNAME,
-    XULSWORD_CID,
-    XULSWORD_CONTRACTID,
-    xulswordConstructor
-  }
-};
-
-//NS_IMPL_NSGETMODULE(nsxulswordModule, components)
 
 //Declare Static Variables
 nsEmbedString xulsword::ChapterW;	//Holds current global chapter
@@ -1830,28 +1815,17 @@ bool xulsword::Strongs;
 bool xulsword::Morph;
 bool xulsword::MorphSeg;
 
-static nsModuleInfo const kModuleInfo = {                                     
-    NS_MODULEINFO_VERSION,                                                    
-    ("nsxulswordModule"),                                                                 
-    (components),                                                            
-    (sizeof(components) / sizeof(components[0])),                           
-    (nsnull),                                                                  
-    (nsnull)                                                                   
-};                                                                            
-NSGETMODULE_ENTRY_POINT(nsxulswordModule)                                                
-(nsIComponentManager *servMgr,                                                
-            nsIFile* location,                                                
-            nsIModule** result)                                               
+nsresult initXulswordModule()
 {
   SWLog::getSystemLog()->setLogLevel(0); // set SWORD log reporting... 5 is all stuff
   //Initialize static variables only once
 	xulsword::ChapterW.Assign(NS_ConvertUTF8toUTF16("Matt 1"));
-  xulsword::VerseW = 1;		
-	xulsword::LastVerseW = 1;	
+  xulsword::VerseW = 1;
+	xulsword::LastVerseW = 1;
 	xulsword::ChapterE.Assign(NS_ConvertUTF8toUTF16("Matt 1"));
-  xulsword::VerseE = 1;		
-	xulsword::LastVerseE = 1;	
-  xulsword::Footnotes = 1;			
+  xulsword::VerseE = 1;
+	xulsword::LastVerseE = 1;
+  xulsword::Footnotes = 1;
   xulsword::Headings = 1;
   xulsword::Crossrefs = 1;
 	xulsword::Dictionary = 1;
@@ -1869,9 +1843,55 @@ NSGETMODULE_ENTRY_POINT(nsxulswordModule)
 
 	CreateMutexA(NULL, FALSE, "xulswordmutex");
 
-
-  NS_WARNING("*********************************");
-	NS_WARNING("GOING TO CREATE NEW NSIMODULE NOW");
-	NS_WARNING("*********************************");
-	return NS_NewGenericModule2(&kModuleInfo, result);                        
+	return NS_OK;
 }
+
+NS_GENERIC_FACTORY_CONSTRUCTOR(xulsword)
+
+// The following line defines a kNS_SAMPLE_CID CID variable.
+NS_DEFINE_NAMED_CID(XULSWORD_CID);
+
+// Build a table of ClassIDs (CIDs) which are implemented by this module. CIDs
+// should be completely unique UUIDs.
+// each entry has the form { CID, service, factoryproc, constructorproc }
+// where factoryproc is usually NULL.
+static const mozilla::Module::CIDEntry kXSCIDs[] = {
+    { &kXULSWORD_CID, false, NULL, xulswordConstructor },
+    { NULL }
+};
+
+// Build a table which maps contract IDs to CIDs.
+// A contract is a string which identifies a particular set of functionality. In some
+// cases an extension component may override the contract ID of a builtin gecko component
+// to modify or extend functionality.
+static const mozilla::Module::ContractIDEntry kXSContracts[] = {
+    { XULSWORD_CONTRACTID, &kXULSWORD_CID },
+    { NULL }
+};
+
+// Category entries are category/key/value triples which can be used
+// to register contract ID as content handlers or to observe certain
+// notifications. Most modules do not need to register any category
+// entries: this is just a sample of how you'd do it.
+// @see nsICategoryManager for information on retrieving category data.
+static const mozilla::Module::CategoryEntry kXSCategories[] = {
+    { "my-category", "my-key", XULSWORD_CONTRACTID },
+    { NULL }
+};
+
+static const mozilla::Module kXSModule = {
+    mozilla::Module::kVersion,
+    kXSCIDs,
+    kXSContracts,
+    kXSCategories
+};
+
+// The following line implements the one-and-only "NSModule" symbol exported from this
+// shared library.
+NSMODULE_DEFN(nsXSModule) = &kXSModule;
+
+// The following line implements the one-and-only "NSGetModule" symbol
+// for compatibility with mozilla 1.9.2. You should only use this
+// if you need a binary which is backwards-compatible and if you use
+// interfaces carefully across multiple versions.
+NS_IMPL_MOZILLA192_NSGETMODULE(&kXSModule)

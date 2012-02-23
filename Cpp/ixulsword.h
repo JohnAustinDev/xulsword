@@ -1,5 +1,5 @@
 /*
- * DO NOT EDIT.  THIS FILE IS GENERATED FROM .\ixulsword.idl
+ * DO NOT EDIT.  THIS FILE IS GENERATED FROM ixulsword.idl
  */
 
 #ifndef __gen_ixulsword_h__
@@ -27,9 +27,6 @@ class NS_NO_VTABLE NS_SCRIPTABLE ixulsword : public nsISupports {
 
   NS_DECLARE_STATIC_IID_ACCESSOR(IXULSWORD_IID)
 
-  /*******************************************************************************
-* GETTING BIBLE TEXT AND BIBLE LOCATION INFORMATION:
-*******************************************************************************/
   /* AString setBiblesReference (in ACString Mod, in AString Vkeytext); */
   NS_SCRIPTABLE NS_IMETHOD SetBiblesReference(const nsACString & Mod, const nsAString & Vkeytext, nsAString & _retval NS_OUTPARAM) = 0;
 
@@ -72,9 +69,6 @@ class NS_NO_VTABLE NS_SCRIPTABLE ixulsword : public nsISupports {
   /* AString convertLocation (in ACString FromVerseSystem, in AString Vkeytext, in ACString ToVerseSystem); */
   NS_SCRIPTABLE NS_IMETHOD ConvertLocation(const nsACString & FromVerseSystem, const nsAString & Vkeytext, const nsACString & ToVerseSystem, nsAString & _retval NS_OUTPARAM) = 0;
 
-  /*******************************************************************************
-* RETRIEVING FOOTNOTES, CROSS REFERENCES, INTRODUCTIONS, DICTIONARY ENTRIES, ETC.:
-*******************************************************************************/
   /* AString getBookIntroduction (in ACString Vkeymod, in AString Bname); */
   NS_SCRIPTABLE NS_IMETHOD GetBookIntroduction(const nsACString & Vkeymod, const nsAString & Bname, nsAString & _retval NS_OUTPARAM) = 0;
 
@@ -99,20 +93,17 @@ class NS_NO_VTABLE NS_SCRIPTABLE ixulsword : public nsISupports {
   /* AString getNotes (); */
   NS_SCRIPTABLE NS_IMETHOD GetNotes(nsAString & _retval NS_OUTPARAM) = 0;
 
-  /*******************************************************************************
-* SEARCHING: USE THESE TO SEARCH MODULES:
-*******************************************************************************/
   /* boolean luceneEnabled (in ACString Mod); */
-  NS_SCRIPTABLE NS_IMETHOD LuceneEnabled(const nsACString & Mod, PRBool *_retval NS_OUTPARAM) = 0;
+  NS_SCRIPTABLE NS_IMETHOD LuceneEnabled(const nsACString & Mod, bool *_retval NS_OUTPARAM) = 0;
 
   /* long search (in ACString Mod, in AString Srchstr, in ACString Scope, in long type, in long flags, in boolean newsearch); */
-  NS_SCRIPTABLE NS_IMETHOD Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, PRBool newsearch, PRInt32 *_retval NS_OUTPARAM) = 0;
+  NS_SCRIPTABLE NS_IMETHOD Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, bool newsearch, PRInt32 *_retval NS_OUTPARAM) = 0;
 
   /* AString getSearchVerses (in ACString Mod); */
   NS_SCRIPTABLE NS_IMETHOD GetSearchVerses(const nsACString & Mod, nsAString & _retval NS_OUTPARAM) = 0;
 
   /* AString getSearchTexts (in ACString Mod, in long first, in long num, in boolean keepStrongs); */
-  NS_SCRIPTABLE NS_IMETHOD GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, PRBool keepStrongs, nsAString & _retval NS_OUTPARAM) = 0;
+  NS_SCRIPTABLE NS_IMETHOD GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, bool keepStrongs, nsAString & _retval NS_OUTPARAM) = 0;
 
   /* void searchIndexDelete (in ACString Mod); */
   NS_SCRIPTABLE NS_IMETHOD SearchIndexDelete(const nsACString & Mod) = 0;
@@ -120,24 +111,15 @@ class NS_NO_VTABLE NS_SCRIPTABLE ixulsword : public nsISupports {
   /* long searchIndexBuild (in ACString Mod, in long maxwait); */
   NS_SCRIPTABLE NS_IMETHOD SearchIndexBuild(const nsACString & Mod, PRInt32 maxwait, PRInt32 *_retval NS_OUTPARAM) = 0;
 
-  /*******************************************************************************
-* SETTING/READING GLOBAL OPTIONS FOR RENDERING SCRIPTURE TEXTS: 
-*******************************************************************************/
   /* void setGlobalOption (in ACString Option, in ACString Setting); */
   NS_SCRIPTABLE NS_IMETHOD SetGlobalOption(const nsACString & Option, const nsACString & Setting) = 0;
 
   /* AString getGlobalOption (in ACString Option); */
   NS_SCRIPTABLE NS_IMETHOD GetGlobalOption(const nsACString & Option, nsAString & _retval NS_OUTPARAM) = 0;
 
-  /*******************************************************************************
-* PROVIDING THE DECRYPTION KEY: 
-*******************************************************************************/
   /* void setCipherKey (in ACString Mod, in AString Cipherkey, in boolean useSecModule); */
-  NS_SCRIPTABLE NS_IMETHOD SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, PRBool useSecModule) = 0;
+  NS_SCRIPTABLE NS_IMETHOD SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, bool useSecModule) = 0;
 
-  /*******************************************************************************
-* READING MODULE LIST AND MODULE INFORMATION: 
-*******************************************************************************/
   /* AString getModuleList (); */
   NS_SCRIPTABLE NS_IMETHOD GetModuleList(nsAString & _retval NS_OUTPARAM) = 0;
 
@@ -172,15 +154,15 @@ class NS_NO_VTABLE NS_SCRIPTABLE ixulsword : public nsISupports {
   NS_SCRIPTABLE NS_IMETHOD GetFootnotes(nsAString & _retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD GetCrossRefs(nsAString & _retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD GetNotes(nsAString & _retval NS_OUTPARAM); \
-  NS_SCRIPTABLE NS_IMETHOD LuceneEnabled(const nsACString & Mod, PRBool *_retval NS_OUTPARAM); \
-  NS_SCRIPTABLE NS_IMETHOD Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, PRBool newsearch, PRInt32 *_retval NS_OUTPARAM); \
+  NS_SCRIPTABLE NS_IMETHOD LuceneEnabled(const nsACString & Mod, bool *_retval NS_OUTPARAM); \
+  NS_SCRIPTABLE NS_IMETHOD Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, bool newsearch, PRInt32 *_retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD GetSearchVerses(const nsACString & Mod, nsAString & _retval NS_OUTPARAM); \
-  NS_SCRIPTABLE NS_IMETHOD GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, PRBool keepStrongs, nsAString & _retval NS_OUTPARAM); \
+  NS_SCRIPTABLE NS_IMETHOD GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, bool keepStrongs, nsAString & _retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD SearchIndexDelete(const nsACString & Mod); \
   NS_SCRIPTABLE NS_IMETHOD SearchIndexBuild(const nsACString & Mod, PRInt32 maxwait, PRInt32 *_retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD SetGlobalOption(const nsACString & Option, const nsACString & Setting); \
   NS_SCRIPTABLE NS_IMETHOD GetGlobalOption(const nsACString & Option, nsAString & _retval NS_OUTPARAM); \
-  NS_SCRIPTABLE NS_IMETHOD SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, PRBool useSecModule); \
+  NS_SCRIPTABLE NS_IMETHOD SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, bool useSecModule); \
   NS_SCRIPTABLE NS_IMETHOD GetModuleList(nsAString & _retval NS_OUTPARAM); \
   NS_SCRIPTABLE NS_IMETHOD GetModuleInformation(const nsACString & Mod, const nsACString & Paramname, nsAString & _retval NS_OUTPARAM); 
 
@@ -208,15 +190,15 @@ class NS_NO_VTABLE NS_SCRIPTABLE ixulsword : public nsISupports {
   NS_SCRIPTABLE NS_IMETHOD GetFootnotes(nsAString & _retval NS_OUTPARAM) { return _to GetFootnotes(_retval); } \
   NS_SCRIPTABLE NS_IMETHOD GetCrossRefs(nsAString & _retval NS_OUTPARAM) { return _to GetCrossRefs(_retval); } \
   NS_SCRIPTABLE NS_IMETHOD GetNotes(nsAString & _retval NS_OUTPARAM) { return _to GetNotes(_retval); } \
-  NS_SCRIPTABLE NS_IMETHOD LuceneEnabled(const nsACString & Mod, PRBool *_retval NS_OUTPARAM) { return _to LuceneEnabled(Mod, _retval); } \
-  NS_SCRIPTABLE NS_IMETHOD Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, PRBool newsearch, PRInt32 *_retval NS_OUTPARAM) { return _to Search(Mod, Srchstr, Scope, type, flags, newsearch, _retval); } \
+  NS_SCRIPTABLE NS_IMETHOD LuceneEnabled(const nsACString & Mod, bool *_retval NS_OUTPARAM) { return _to LuceneEnabled(Mod, _retval); } \
+  NS_SCRIPTABLE NS_IMETHOD Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, bool newsearch, PRInt32 *_retval NS_OUTPARAM) { return _to Search(Mod, Srchstr, Scope, type, flags, newsearch, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD GetSearchVerses(const nsACString & Mod, nsAString & _retval NS_OUTPARAM) { return _to GetSearchVerses(Mod, _retval); } \
-  NS_SCRIPTABLE NS_IMETHOD GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, PRBool keepStrongs, nsAString & _retval NS_OUTPARAM) { return _to GetSearchTexts(Mod, first, num, keepStrongs, _retval); } \
+  NS_SCRIPTABLE NS_IMETHOD GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, bool keepStrongs, nsAString & _retval NS_OUTPARAM) { return _to GetSearchTexts(Mod, first, num, keepStrongs, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD SearchIndexDelete(const nsACString & Mod) { return _to SearchIndexDelete(Mod); } \
   NS_SCRIPTABLE NS_IMETHOD SearchIndexBuild(const nsACString & Mod, PRInt32 maxwait, PRInt32 *_retval NS_OUTPARAM) { return _to SearchIndexBuild(Mod, maxwait, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD SetGlobalOption(const nsACString & Option, const nsACString & Setting) { return _to SetGlobalOption(Option, Setting); } \
   NS_SCRIPTABLE NS_IMETHOD GetGlobalOption(const nsACString & Option, nsAString & _retval NS_OUTPARAM) { return _to GetGlobalOption(Option, _retval); } \
-  NS_SCRIPTABLE NS_IMETHOD SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, PRBool useSecModule) { return _to SetCipherKey(Mod, Cipherkey, useSecModule); } \
+  NS_SCRIPTABLE NS_IMETHOD SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, bool useSecModule) { return _to SetCipherKey(Mod, Cipherkey, useSecModule); } \
   NS_SCRIPTABLE NS_IMETHOD GetModuleList(nsAString & _retval NS_OUTPARAM) { return _to GetModuleList(_retval); } \
   NS_SCRIPTABLE NS_IMETHOD GetModuleInformation(const nsACString & Mod, const nsACString & Paramname, nsAString & _retval NS_OUTPARAM) { return _to GetModuleInformation(Mod, Paramname, _retval); } 
 
@@ -244,15 +226,15 @@ class NS_NO_VTABLE NS_SCRIPTABLE ixulsword : public nsISupports {
   NS_SCRIPTABLE NS_IMETHOD GetFootnotes(nsAString & _retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetFootnotes(_retval); } \
   NS_SCRIPTABLE NS_IMETHOD GetCrossRefs(nsAString & _retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetCrossRefs(_retval); } \
   NS_SCRIPTABLE NS_IMETHOD GetNotes(nsAString & _retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetNotes(_retval); } \
-  NS_SCRIPTABLE NS_IMETHOD LuceneEnabled(const nsACString & Mod, PRBool *_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->LuceneEnabled(Mod, _retval); } \
-  NS_SCRIPTABLE NS_IMETHOD Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, PRBool newsearch, PRInt32 *_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Search(Mod, Srchstr, Scope, type, flags, newsearch, _retval); } \
+  NS_SCRIPTABLE NS_IMETHOD LuceneEnabled(const nsACString & Mod, bool *_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->LuceneEnabled(Mod, _retval); } \
+  NS_SCRIPTABLE NS_IMETHOD Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, bool newsearch, PRInt32 *_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->Search(Mod, Srchstr, Scope, type, flags, newsearch, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD GetSearchVerses(const nsACString & Mod, nsAString & _retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetSearchVerses(Mod, _retval); } \
-  NS_SCRIPTABLE NS_IMETHOD GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, PRBool keepStrongs, nsAString & _retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetSearchTexts(Mod, first, num, keepStrongs, _retval); } \
+  NS_SCRIPTABLE NS_IMETHOD GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, bool keepStrongs, nsAString & _retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetSearchTexts(Mod, first, num, keepStrongs, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD SearchIndexDelete(const nsACString & Mod) { return !_to ? NS_ERROR_NULL_POINTER : _to->SearchIndexDelete(Mod); } \
   NS_SCRIPTABLE NS_IMETHOD SearchIndexBuild(const nsACString & Mod, PRInt32 maxwait, PRInt32 *_retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->SearchIndexBuild(Mod, maxwait, _retval); } \
   NS_SCRIPTABLE NS_IMETHOD SetGlobalOption(const nsACString & Option, const nsACString & Setting) { return !_to ? NS_ERROR_NULL_POINTER : _to->SetGlobalOption(Option, Setting); } \
   NS_SCRIPTABLE NS_IMETHOD GetGlobalOption(const nsACString & Option, nsAString & _retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetGlobalOption(Option, _retval); } \
-  NS_SCRIPTABLE NS_IMETHOD SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, PRBool useSecModule) { return !_to ? NS_ERROR_NULL_POINTER : _to->SetCipherKey(Mod, Cipherkey, useSecModule); } \
+  NS_SCRIPTABLE NS_IMETHOD SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, bool useSecModule) { return !_to ? NS_ERROR_NULL_POINTER : _to->SetCipherKey(Mod, Cipherkey, useSecModule); } \
   NS_SCRIPTABLE NS_IMETHOD GetModuleList(nsAString & _retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetModuleList(_retval); } \
   NS_SCRIPTABLE NS_IMETHOD GetModuleInformation(const nsACString & Mod, const nsACString & Paramname, nsAString & _retval NS_OUTPARAM) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetModuleInformation(Mod, Paramname, _retval); } 
 
@@ -421,13 +403,13 @@ NS_IMETHODIMP _MYCLASS_::GetNotes(nsAString & _retval NS_OUTPARAM)
 }
 
 /* boolean luceneEnabled (in ACString Mod); */
-NS_IMETHODIMP _MYCLASS_::LuceneEnabled(const nsACString & Mod, PRBool *_retval NS_OUTPARAM)
+NS_IMETHODIMP _MYCLASS_::LuceneEnabled(const nsACString & Mod, bool *_retval NS_OUTPARAM)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 /* long search (in ACString Mod, in AString Srchstr, in ACString Scope, in long type, in long flags, in boolean newsearch); */
-NS_IMETHODIMP _MYCLASS_::Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, PRBool newsearch, PRInt32 *_retval NS_OUTPARAM)
+NS_IMETHODIMP _MYCLASS_::Search(const nsACString & Mod, const nsAString & Srchstr, const nsACString & Scope, PRInt32 type, PRInt32 flags, bool newsearch, PRInt32 *_retval NS_OUTPARAM)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -439,7 +421,7 @@ NS_IMETHODIMP _MYCLASS_::GetSearchVerses(const nsACString & Mod, nsAString & _re
 }
 
 /* AString getSearchTexts (in ACString Mod, in long first, in long num, in boolean keepStrongs); */
-NS_IMETHODIMP _MYCLASS_::GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, PRBool keepStrongs, nsAString & _retval NS_OUTPARAM)
+NS_IMETHODIMP _MYCLASS_::GetSearchTexts(const nsACString & Mod, PRInt32 first, PRInt32 num, bool keepStrongs, nsAString & _retval NS_OUTPARAM)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -469,7 +451,7 @@ NS_IMETHODIMP _MYCLASS_::GetGlobalOption(const nsACString & Option, nsAString & 
 }
 
 /* void setCipherKey (in ACString Mod, in AString Cipherkey, in boolean useSecModule); */
-NS_IMETHODIMP _MYCLASS_::SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, PRBool useSecModule)
+NS_IMETHODIMP _MYCLASS_::SetCipherKey(const nsACString & Mod, const nsAString & Cipherkey, bool useSecModule)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
 }

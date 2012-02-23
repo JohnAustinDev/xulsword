@@ -12,7 +12,7 @@ set lFlags=
 cd "%MK%\%CPPD%\cluceneMK\lib"
 call "%MK%\%CPPD%\versions.bat"
 
-Set cFlags=/nologo /EHsc /O2 /Zc:wchar_t- /Ob2 /Oi /Ot^
+Set cFlags=/nologo /EHsc /O2 /Ob2 /Oi /Ot^
  /I "..\..\swordMK\include"^
  /I "..\..\swordMK\src\utilfuns\win32"^
  /I "..\..\%sword%\include"^
@@ -21,9 +21,9 @@ Set cFlags=/nologo /EHsc /O2 /Zc:wchar_t- /Ob2 /Oi /Ot^
  /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^
  /D "WIN32_LEAN_AND_MEAN" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /D "_CRT_SECURE_NO_DEPRECATE" /D "_VC80_UPGRADE=0x0710" /D "_UNICODE" /D "UNICODE" /GF /c
 
-Set cFlags=/MT /Fo"Release\libclucene/" %cFlags% ^
- &Set lFlags=libsword.lib /nologo /out:"Release\libclucene.lib" /libpath:"..\..\swordMK\lib\Release" ^
- &Set objDIR=Release\libclucene
+Set cFlags=/MT /Fo"Release\libclucene/" %cFlags%
+Set lFlags=/nologo /out:"Release\libclucene.lib" /libpath:"..\..\swordMK\lib\Release"
+Set objDIR=Release\libclucene
 
 mkdir "%objDIR%"
 

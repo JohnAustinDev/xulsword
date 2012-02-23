@@ -126,4 +126,6 @@ echo MKS directory=%MKS%
 echo MKO directory=%MKO%
 
 cd "%MK%\build"
+find "initialized" "%MK%\xulrunner\init.txt" > nul
+if errorlevel 1 call "%MK%\build\script\FirstRun.bat"
 call "%MK%\build\script\PrepareBuild.bat" %1
