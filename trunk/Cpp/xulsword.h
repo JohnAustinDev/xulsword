@@ -20,7 +20,8 @@
 #define XULSWORD_H
 
 #include "nsXPCOM.h"
-#include "nsIGenericFactory.h"
+#include "mozilla/ModuleUtils.h"
+#include "nsIClassInfoImpl.h"
 #include "nsISupportsUtils.h"
 #include "nsStringAPI.h"
 #include "nsMemory.h"
@@ -48,7 +49,6 @@
 #define NOTFOUND "Not Found"
 
 #define XULSWORD_CONTRACTID "@xulsword.com/xulsword/xulsword;1"
-#define XULSWORD_CLASSNAME "SWORD implementation"
 #define XULSWORD_CID \
 { 0x5503a97b, 0x6198, 0x49f6, \
 { 0x99, 0x25, 0x56, 0xe1, 0x04, 0x88, 0x02, 0xca}}
@@ -111,7 +111,7 @@ private:
    void keyToStaticVars(VerseKey *key, nsEmbedString *chapter, PRUint16 *verse, PRUint16 *lastverse);
    void xulStringToUTF16(nsEmbedCString *xstring, nsEmbedString *utf16, signed char encoding=ENC_UTF8, bool append = false);
    void xulStringToUTF16(char *xstring, nsEmbedString *utf16, signed char encoding=ENC_UTF8, bool append = false);
-   
+
 #ifndef NOSECURITY
    security InstSecurity;
 #endif
@@ -130,9 +130,9 @@ protected:
 
   nsEmbedString MySearchVerses;
   nsEmbedString MySearchTexts;
-  
+
   int setchaptervers;
-  
+
   SWFilter * OSISHTMLXUL_p;			//Will point to this filter if created
   SWFilter * ThMLHTMLXUL_p;
   SWFilter * GBFHTMLXUL_p;
@@ -142,13 +142,13 @@ protected:
   char Outtext[256];
 
   const char *searchedvers;
-  
+
   typedef std::map < SWBuf, SWBuf, std::less < SWBuf > > AttributeValue;
 
   static struct w2emap West2EastMap[];
-  
+
   int PercentComplete;
-  
+
   char DefaultVersificationSystem[64];
 };
 

@@ -69,8 +69,8 @@ echo Version=%version%>> application.ini
 if %isPortable%==true (echo BuildID=%yy%%mm%%dd%P>> application.ini) else echo BuildID=%yy%%mm%%dd%>> application.ini
 echo.>> application.ini
 echo [Gecko]>> application.ini
-echo MinVersion=1.8>> application.ini
-echo MaxVersion=1.10>> application.ini
+echo MinVersion=10.0.0>> application.ini
+echo MaxVersion=10.9.9>> application.ini
 
 ECHO --- WRITING PREDEFINED MACRO FILE FOR USE BY INSTALLER
 cd "%MKS%\installer"

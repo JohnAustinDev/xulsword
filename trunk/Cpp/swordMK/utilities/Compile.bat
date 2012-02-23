@@ -12,7 +12,7 @@ call "%MK%\%CPPD%\versions.bat"
 
 mkdir %objDIR%
 
-Set cFlags=/nologo /MT /W1 /EHsc /O2 /Zc:wchar_t-^
+Set cFlags=/nologo /MT /W1 /EHsc /O2^
  /Fo"%objDIR%/"^
  /I "%MK%\%CPPD%"^
  /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^

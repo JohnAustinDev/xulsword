@@ -167,7 +167,7 @@ void security::CheckIntegrity() {
 
 	// Get list of chrome directories
 	rv = dirSvc->Get("ChromeML", NS_GET_IID(nsISimpleEnumerator), getter_AddRefs(chromeML));
-	PRBool exists;
+	bool exists;
 	nsCOMPtr<nsISupports> next;
 
 	// Check application chrome directory
@@ -175,7 +175,7 @@ void security::CheckIntegrity() {
 	nsCOMPtr<nsILocalFile> lmanifest = do_QueryInterface(next);
 	if (!lmanifest) {error = true;}
 
-	PRBool isDir;
+	bool isDir;
 	if (lmanifest && NS_SUCCEEDED(lmanifest->IsDirectory(&isDir)) && isDir) {
 		nsCOMPtr<nsISimpleEnumerator> entries;
 		rv = lmanifest->GetDirectoryEntries(getter_AddRefs(entries));

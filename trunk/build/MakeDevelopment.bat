@@ -5,9 +5,6 @@ if not defined MKAppinfo Set MKAppinfo=%MK%\build
 call "%MKAppinfo%\Appinfo.bat"
 cd "%MK%\build"
 
-find "xulsword.dll" "%MK%\xulrunner\components\components.list" > nul
-if errorlevel 1 call "%MK%\build\script\FirstRun.bat"
-
 ECHO --- COPY XULRUNNER FILES
 del /Q "%MK%\xulrunner\*.exe"
 xcopy "%MK%\xul\xulrunnerDevAndProd\xulrunner" "%MK%\xulrunner" /S /Y
