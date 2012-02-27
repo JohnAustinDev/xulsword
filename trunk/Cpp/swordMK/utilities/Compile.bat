@@ -4,7 +4,7 @@ Set CPPD=Cpp
 
 @echo off
 Set utilityName=%1
-Set objDIR=intermediateFiles
+Set objDIR=tmp
 if not defined utilityName Set goto EOF
 
 cd "%MK%\%CPPD%\swordMK\utilities"
@@ -12,32 +12,24 @@ call "%MK%\%CPPD%\versions.bat"
 
 mkdir %objDIR%
 
-Set cFlags=/nologo /MT /W1 /EHsc /O2^
- /Fo"%objDIR%/"^
- /I "%MK%\%CPPD%"^
- /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^
- /I "%MK%\%CPPD%\swordMK\src\utilfuns\win32"^
- /I "%MK%\%CPPD%\swordMK\include"^
- /I "%MK%\%CPPD%\%sword%\include"^
- /I "%MK%\%CPPD%\cluceneMK\src"^
+Set cFlags=/nologo /W0 /EHsc /O2^
  /I "%MK%\%CPPD%\%clucene%\src"^
- /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /D "_CRT_SECURE_NO_DEPRECATE" /Zm200 /c 
+ /I "%MK%\%CPPD%\swordMK\src\utilfuns\win32"^
+ /I "%MK%\%CPPD%\%sword%\include"^
+ /I "%MK%\%CPPD%\%sword%\include\internal\regex"^
+ /FI "fileops.h"^
+ /FI "redefs_sword.h"^
+ /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /Zm200 /Fo"%objDIR%/" /c
 
 if exist "%MK%\%CPPD%\swordMK\utilities\%utilityName%.cpp" (Set cFiles="%MK%\%CPPD%\swordMK\utilities\%utilityName%.cpp") else Set cFiles="%MK%\%CPPD%\%sword%\utilities\%utilityName%.cpp"
 Set cFiles=%cFiles%^
- "%MK%\%CPPD%\thmlhtmlxul.cpp"^
- "%MK%\%CPPD%\gbfhtmlxul.cpp"^
- "%MK%\%CPPD%\osishtmlxul.cpp"^
- "%MK%\%CPPD%\osisdictionary.cpp"^
- "%MK%\%CPPD%\swordMK\src\utilfuns\win32\dirent.cpp"
+ "%MK%\%CPPD%\swordMK\src\utilfuns\win32\dirent.cpp"^
+ "%MK%\%CPPD%\swordMK\src\utilfuns\win32\fileops.cpp"
 
-Set lFlags=libsword.lib libclucene.lib xpcom.lib xpcomglue_s.lib nspr4.lib /libpath:"%MK%\%CPPD%\swordMK\lib\Release" /libpath:"%MK%\%CPPD%\cluceneMK\lib\Release" /libpath:"%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\sdk\lib" /nologo /SUBSYSTEM:CONSOLE /MACHINE:X86 /out:"bin\%utilityName%.exe"
+Set lFlags=libsword.lib libclucene.lib /libpath:"%MK%\%CPPD%\swordMK\lib\Release" /libpath:"%MK%\%CPPD%\cluceneMK\lib\Release" /nologo /SUBSYSTEM:CONSOLE /MACHINE:X86 /out:"bin\%utilityName%.exe"
 Set lFiles=%objDIR%\%utilityName%.obj^
- "%objDIR%\thmlhtmlxul.obj"^
- "%objDIR%\gbfhtmlxul.obj"^
- "%objDIR%\osishtmlxul.obj"^
- "%objDIR%\osisdictionary.obj"^
- "%objDIR%\dirent.obj"
+ "%objDIR%\dirent.obj"^
+ "%objDIR%\fileops.obj"
 
 if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
 set INCLUDE=%INCLUDE%;%microsoftsdk%\Include

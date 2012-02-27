@@ -17,17 +17,16 @@ cd "%MK%\%CPPD%\swordMK\lib"
 call "%MK%\%CPPD%\versions.bat"
 
 Set cFlags=/nologo /W0 /EHsc /O2^
- /I "%MK%\%CPPD%"^
  /I "%MK%\%CPPD%\%clucene%\src"^
- /I "%MK%\%CPPD%\swordMK\include"^
  /I "%MK%\%CPPD%\swordMK\src\utilfuns\win32"^
  /I "%MK%\%CPPD%\%sword%\include"^
  /I "%MK%\%CPPD%\%sword%\include\internal\regex"^
- /I "%MK%\%CPPD%\%xulrunnerSDK%\xulrunner-sdk\include"^
+ /FI "fileops.h"^
+ /FI "redefs_sword.h"^
  /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /Zm200 /c
  
 Set cFlags=/MT /Fo"Release\libsword/" %cFlags%
-Set lFlags=/nologo /out:"Release\libsword.lib" /libpath:"%MK%/%CPPD%/%xulrunnerSDK%/xulrunner-sdk/sdk/lib"
+Set lFlags=/nologo /out:"Release\libsword.lib"
 Set objDIR=Release\libsword
 
 mkdir "%objDIR%"
@@ -181,23 +180,27 @@ Set cFiles1=^
  "%MK%\%CPPD%\%sword%\src\modules\common\zstr.cpp"^
  "%MK%\%CPPD%\%sword%\src\modules\texts\ztext\ztext.cpp"^
  "%MK%\%CPPD%\%sword%\src\utilfuns\zlib\zutil.c"^
- "%MK%\%CPPD%\%sword%\src\modules\common\zverse.cpp"
+ "%MK%\%CPPD%\%sword%\src\modules\common\zverse.cpp"^
+ "%MK%\%CPPD%\%sword%\src\modules\filters\osisxhtml.cpp"^
+ "%MK%\%CPPD%\%sword%\src\modules\filters\gbfxhtml.cpp"^
+ "%MK%\%CPPD%\%sword%\src\modules\filters\thmlxhtml.cpp"
 
 cl.exe %cFlags% %cFiles1%
 
 Set cFiles1=^
- "%MK%\%CPPD%\swordMK\src\mgr\filemgr.cpp"^
- "%MK%\%CPPD%\swordMK\src\mgr\installmgr.cpp"^
- "%MK%\%CPPD%\swordMK\src\mgr\localemgr.cpp"^
- "%MK%\%CPPD%\swordMK\src\mgr\markupfiltmgr.cpp"^
- "%MK%\%CPPD%\swordMK\src\mgr\swmgr.cpp"^
- "%MK%\%CPPD%\swordMK\src\mgr\versemgr.cpp"^
- "%MK%\%CPPD%\swordMK\src\modules\swmodule.cpp"^
- "%MK%\%CPPD%\swordMK\src\utilfuns\zlib\untgz.c"^
- "%MK%\%CPPD%\swordMK\src\mgr\stringmgr.cpp"^
+ "%MK%\%CPPD%\%sword%\src\mgr\filemgr.cpp"^
+ "%MK%\%CPPD%\%sword%\src\mgr\installmgr.cpp"^
+ "%MK%\%CPPD%\%sword%\src\mgr\localemgr.cpp"^
+ "%MK%\%CPPD%\%sword%\src\mgr\markupfiltmgr.cpp"^
+ "%MK%\%CPPD%\%sword%\src\mgr\swmgr.cpp"^
+ "%MK%\%CPPD%\%sword%\src\mgr\versemgr.cpp"^
+ "%MK%\%CPPD%\%sword%\src\utilfuns\zlib\untgz.c"^
+ "%MK%\%CPPD%\%sword%\src\mgr\stringmgr.cpp"
  
 cl.exe %cFlags% %cFiles1%
- 
+
+cl.exe %cFlags% /FI "demo\stdafx.h"  "%MK%\%CPPD%\%sword%\src\modules\swmodule.cpp"
+
 Set lFiles1=^
  ".\%objDIR%\adler32.obj"^
  ".\%objDIR%\cipherfil.obj"^
@@ -349,7 +352,10 @@ Set lFiles2=^
  ".\%objDIR%\zstr.obj"^
  ".\%objDIR%\ztext.obj"^
  ".\%objDIR%\zutil.obj"^
- ".\%objDIR%\zverse.obj"
+ ".\%objDIR%\zverse.obj"^
+ ".\%objDIR%\osisxhtml.obj"^
+ ".\%objDIR%\gbfxhtml.obj"^
+ ".\%objDIR%\thmlxhtml.obj"
 
 link.exe -lib %lFlags% %lFiles1% %lFiles2%
 
