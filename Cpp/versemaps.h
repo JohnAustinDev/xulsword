@@ -16,7 +16,10 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-struct w2emap xulsword::West2EastMap[] = {
+#define MAPLEN 2697
+// 2714
+
+struct w2emap West2EastMap[] = {
 {"1Sam 23:29", "1Sam 24:1"},
 {"1Sam 24:1", "1Sam 24:2"},
 {"1Sam 24:10", "1Sam 24:11"},

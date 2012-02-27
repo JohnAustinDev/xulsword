@@ -16,12 +16,8 @@
 #ifndef DIRENT_INCLUDED
 #define DIRENT_INCLUDED
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string>
-#include <swbuf.h>
-
 #define MAX_DIR_NAME 10000
+
 typedef struct DIR DIR;
 
 struct dirent
@@ -30,34 +26,16 @@ struct dirent
 };
 
 /*
-    WINDOWS PATCH: normal byte dirent functions must be replaced by these functions
+    WINDOWS: normal utf8 dirent functions must be replaced by these functions
     which take UTF-8 file name inputs, convert them to wide-char UTF16 strings,
     and then call the native wide-char file functions. Windows API does NOT
     understand UTF-8!
 */
 
-DIR           *sw_opendir(const char *);
-int           sw_closedir(DIR *);
-struct dirent *sw_readdir(DIR *);
-void          sw_rewinddir(DIR *);
+DIR           *opendir(const char *);
+int           closedir(DIR *);
+struct dirent *readdir(DIR *);
+void          rewinddir(DIR *);
 
-
-/*
-    WINDOWS PATCH: these other low level functions must be replaced by functions
-    which take UTF-8 file name inputs, convert them to wide-char UTF16 strings,
-    and then call the native wide-char functions. Windows API does NOT
-    understand UTF-8!
-*/
-
-int   sw_open(const char *path, int mode, int perms);
-int   sw_access(const char *path, int mode);
-long  sw_findfirst(const char *name, struct _wfinddata_t *fileinfo);
-int   sw_mkdir(char *dirname );
-void  sw_getenv(const char *varname, sword::SWBuf *buff);
-char *sw_fullpath(char *absPath, const char *relPath);
-int   sw_fileStat(const char *file, struct fileStat * fileinfo);
-int   sw_unlink(const char * file);
-int   sw_rename(const char *from, const char *to);
-FILE *sw_fopen(const char *file, const char *mode);
 #endif
 
