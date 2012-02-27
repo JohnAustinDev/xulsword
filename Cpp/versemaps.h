@@ -19,6 +19,12 @@
 #define MAPLEN 2697
 // 2714
 
+struct w2emap
+{
+        const char *west;
+        const char *east;
+};
+
 struct w2emap West2EastMap[] = {
 {"1Sam 23:29", "1Sam 24:1"},
 {"1Sam 24:1", "1Sam 24:2"},

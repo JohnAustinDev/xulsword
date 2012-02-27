@@ -17,7 +17,7 @@ For /F "tokens=2-4 delims=/ " %%G in ('date /T')  do Set mm=%%G& Set dd=%%H& Set
 
 ECHO --- WRITING THE XULRUNNER "PREFS.JS" STARTUP FILE
 cd "%MK%\xulrunner\defaults\pref"
-echo pref("toolkit.defaultChromeURI", "chrome://xulsword/content/%splashScreen%");> prefs.js
+echo pref("toolkit.defaultChromeURI", "chrome://xulsword/content/libsword.xul");> prefs.js
 
 ECHO --- WRITING THE DEFAULT PREFS INSPREFS.JS
 cd "%MK%\xulrunner\defaults\pref"
