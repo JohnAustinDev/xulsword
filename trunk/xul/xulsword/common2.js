@@ -20,41 +20,11 @@
 /************************************************************************
  * Retrieve some common globals from the Main Window for use locally 
  ***********************************************************************/ 
-if (window.name != "main-window") {
-  switch (UseBibleObjectFrom) {
-  case "BMManagerBible":
-    Bible               = MainWindow.BMManagerBible;
-    //jsdump(window.name + " is using MainWindow.BMManagerBible...\n");
-    break;
-  
-  case "none":
-    Bible               = null;
-    //jsdump(window.name + " is using null Bible...\n");
-    break;
-    
-  case "GetSearchBible":
-    var MySearchBible = {bible: null, index: null};
-    for (var i=0; i<MainWindow.SearchBibles.length; i++) {
-      if (!MainWindow.SearchBiblesOut[i] && MainWindow.SearchBibles[i]) {
-        MySearchBible = {bible: MainWindow.SearchBibles[i], index: i};
-        MainWindow.SearchBiblesOut[i] = true;
-      }
-    }
-    Bible               = MySearchBible.bible;
-    //jsdump(window.name + " is using SearchBible #" + MySearchBible.index + "...\n");
-    break;
-    
-  case "MainWindowBible":
-    Bible               = MainWindow.Bible;
-    //jsdump(window.name + " is using MainWindow Bible...\n");
-    break;
-    
-  case "Opener":
-    Bible               = window.opener.Bible;
-    //jsdump(window.name + " is using Bible of window.opener...\n");
-    break;
-  }
+var Bible = MainWindow.Bible;
+var mlist = Bible.getModuleList();
+if (mlist == "No Modules" || mlist.search(BIBLE)==-1) Bible=null;
 
+if (window.name != "main-window") {
   LocaleConfigs         = MainWindow.LocaleConfigs;
   VersionConfigs        = MainWindow.VersionConfigs;
   StyleRules            = MainWindow.StyleRules;
@@ -72,4 +42,4 @@ if (window.name != "main-window") {
   LocaleDefaultVersion  = MainWindow.LocaleDefaultVersion;
 }
 
-if (!UseBibleObjectFrom) unlockAllModules(Bible, window.name == "main-window");
+if (window.name == "main-window") unlockAllModules(Bible, true);

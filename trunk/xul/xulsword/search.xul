@@ -45,7 +45,6 @@
 
 <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
 
-<script>var UseBibleObjectFrom = "GetSearchBible";</script>
 <script src="chrome://xulsword/content/common0.js"/>
 <script src="chrome://global/content/globalOverlay.js"/>
 <script src="chrome://xulsword/content/common1.js"/>

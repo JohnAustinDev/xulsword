@@ -523,7 +523,7 @@ function installAudioFile(aFile) {
   var toFile = getAudioDestination(AudioDestination, aFile.path);
   if (!toFile) {jsdump("Could not determine audio file destination:" + aFile.path); return {reset:NORESET, success:false, remove:true};}
   
-  if (!toFile.parent.exists()) toFile.parent.create(toFile.DIRECTORY_TYPE , 0777);
+  if (!toFile.parent.exists()) toFile.parent.create(toFile.DIRECTORY_TYPE);
   if (toFile.exists()) {
     try {toFile.remove(false);}
     catch (er) {jsdump("Could not remove pre-existing file:" +  toFile.path); return {reset:NORESET, success:false, remove:true};}
@@ -646,7 +646,7 @@ jsdump("Processing Entry:" + aEntry);
     }
   }
   
-  try {inflated.create(inflated.NORMAL_FILE_TYPE, 0777);}
+  try {inflated.create(inflated.NORMAL_FILE_TYPE);}
   catch (er) {
     //don't log this because it commonly happens when parent dir was just deleted and is not ready to receive children. HARDRESET takes care if this...
     //jsdump("Could not create empty target file: " + inflated.path + ". " + er);
@@ -974,7 +974,7 @@ function getConfInfo(aZip, aEntry, zReader) {
   var ret = {isCommon:false, modPath:null, modName:null};
   var tconf = getSpecialDirectory("TmpD");
   tconf.append(MODSD);
-  if (!tconf.exists()) tconf.create(tconf.DIRECTORY_TYPE, 0777);
+  if (!tconf.exists()) tconf.create(tconf.DIRECTORY_TYPE);
   tconf.append("xulsword.conf");
   tconf.createUnique(tconf.NORMAL_FILE_TYPE, 0777);
   
@@ -1359,7 +1359,7 @@ function installCommandLineModules() {
     var audiop = prefFileArray(audioPath, "xsAudioPath", "directory", true);
     if (audiop.haveFiles) toFile = audioPath[0];
     if (toFile && !toFile.exists()) {
-      try {toFile.create(toFile.DIRECTORY_TYPE, 0777);} catch (er) {toFile = null;}
+      try {toFile.create(toFile.DIRECTORY_TYPE);} catch (er) {toFile = null;}
     }
   }
     

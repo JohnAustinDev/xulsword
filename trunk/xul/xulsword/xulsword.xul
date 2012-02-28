@@ -61,6 +61,7 @@
 <data id="savingTarget">&savingTarget;</data>
 <data id="localeDir">&locale.dir;</data>
 
+<script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>  
 <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
@@ -69,7 +70,6 @@
 <!-- <script type="application/x-javascript" src="chrome://xulsword/content/xulswordTest.js"/> !-->
 
 <stringbundle id="strings"   src="chrome://xulsword/locale/xulsword.properties"/>
-<script>var UseBibleObjectFrom = null;</script>
 <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js"/>
 <script type="application/x-javascript" src="chrome://global/content/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>

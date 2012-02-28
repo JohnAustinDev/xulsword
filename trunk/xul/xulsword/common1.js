@@ -48,14 +48,7 @@ function getWindowTitle(term) {
 
 /************************************************************************
  * Create Bible Instance, Versions, Tabs and their globals
- ***********************************************************************/ 
-var Bible;
-if (!UseBibleObjectFrom) {
-  Bible = Components.classes["@xulsword.com/xulsword/xulsword;1"].createInstance(Components.interfaces.ixulsword);
-  var mlist = Bible.getModuleList();
-  if (mlist == "No Modules" || mlist.search(BIBLE)==-1) Bible=null;
-}
-  
+ ***********************************************************************/
 var GlobalToggleCommands = {
   cmd_xs_toggleHeadings:   "Headings",
   cmd_xs_toggleFootnotes:  "Footnotes",
@@ -533,7 +526,7 @@ function getModuleLongType(aModule) {
   if (!Bible) return null;
   if (aModule==ORIGINAL) return BIBLE;
   var typeRE = new RegExp("(^|<nx>)\\s*" + escapeRE(aModule) + "\\s*;\\s*(.*?)\\s*(<nx>|$)");
-  var type = typeRE(Bible.getModuleList());
+  var type = Bible.getModuleList().match(typeRE);
   if (type) type = type[2];
   return type;
 }

@@ -570,7 +570,7 @@ var BookmarksCommand = {
         return;
       file.initWithPath(fileName);
       if (!file.exists()) {
-        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0777);
+        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE);
       }
     }
     catch (e) {
@@ -604,7 +604,7 @@ var BookmarksCommand = {
     }
 
     var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-    foStream.init(file, 0x02 | 0x08 | 0x20, 0664, 0);
+    foStream.init(file, 0x02 | 0x08 | 0x20, -1, 0);
     var charset = "UTF-8"; // Can be any character encoding name that Mozilla supports
     var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
     os.init(foStream, charset, 0, 0x0000);

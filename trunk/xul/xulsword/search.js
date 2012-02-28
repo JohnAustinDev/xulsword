@@ -113,7 +113,6 @@ function postWindowInit() {
   updateAdvancedPanel();
   updateSearchWindow();
   updateSortBy();
-  window.setTimeout("MainWindow.createSearchBible()", 1000);
 
   if (document.getElementById("searchText").value != "") {
     if (SearchTypeRadio.selectedIndex==EXACT_TEXT || !Bible.luceneEnabled(prefs.getCharPref("SearchVersion")))
@@ -890,10 +889,6 @@ function unloadSearchWindow() {
   }
   window.controllers.removeController(XulswordSearchController);
   window.controllers.removeController(BookmarksMenuController);
-  if (MySearchBible && MySearchBible.index) {
-    MainWindow.SearchBibles[MySearchBible.index] = null;
-    MainWindow.SearchBiblesOut[MySearchBible.index] = false;
-  }
   try {SearchHelpWindow.close();} catch(er) {}
 }
 

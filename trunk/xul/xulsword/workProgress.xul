@@ -29,7 +29,6 @@
   onload="Load()"
   style="border:2px solid rgb(200,170,205); background-image: url(chrome://xulsword/skin/images/9.gif);">
   
-  <script>var UseBibleObjectFrom = "none";</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
