@@ -1,0 +1,80 @@
+#----------------------------------------------------------------
+#----------------------------------------------------------------
+#NOTES...
+# Target -                 Building for: Windows or Linux
+# Version -                This should only include numbers and period(s).
+# MinXSMversion -          The minimum XSMversion required for compatible MK modules' text modules.
+# MinUIversion -           The minimum UIversion required for compatible MK modules' UI modules.
+# BibleTextEncryptionKey - Alpha-numberic LATIN characters only (no spaces). The actual
+#                          key value is modified by Security Module if
+#                          useSecurityModule=true.
+# UseSecurityModule -      Set to true to include the security module compiles in
+#                          your key generator to decrypt your texts automatically.
+# HelpEmailAddress -       Set to en email address which will appear under "Help"
+#                          menu, or leave blank and no email menu element will appear.
+
+# BUILD WHAT?
+Set Target=Windows
+Set MakeDevelopmentOnly=true
+Set MakeSetup=false
+Set MakeFFextension=false
+Set MakePortable=false
+
+# SPECIFY SOME PATHS
+Set OutputDirectory=C:\home\dev\build-out
+Set ModuleRepository=X:\repository\modsword\raw
+Set XulswordExtras=C:\home\dev\sup-dev
+
+# SPECIFY BUILD INFORMATION
+Set Version=3.0
+Set PrefEngineVersion=1.6.2
+Set Name=xulsword
+Set Vendor=CrossWire
+Set Executable=xulsword.exe
+Set PrefMinXSMversion=1.0
+Set PrefMinUIversion=2.7
+Set GeckoMinVersion=10.0.0
+Set GeckoMaxVersion=10.9.9
+Set PrefHelpEmailAddress=gpl.programs.info@gmail.com
+
+# CHOOSE SECURITY SETTINGS
+Set UseSecurityModule=true
+Set PrefBibleTextEncryptionKey=empty
+Set StartWindow=splash.xul
+
+# DEFAULT LOCALE (en-US, ru, etc.)
+Set DefaultLanguage=en-US
+
+# LOCALES TO INCLUDE IN BUILD (Must include at least one locale. Example:en-US, or ru,ar)
+# Set to "ALL" to include all locales in the locale directory
+Set IncludeLocales=en-US
+
+# MODULES TO INCLUDE IN BUILD
+# Note StrongsGreek,StrongsHebrew,Robinson are used for original lang features
+Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+
+# INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
+Set IncludeIndexes=false
+
+# OTHER OPTIONS (true or false)
+Set    PrefShowDictionaryTabsByDefault=false
+Set      PrefShowAllBibleTabsByDefault=true
+Set    PrefShowCommentaryTabsByDefault=false
+Set PrefHideUnavailableCrossReferences=false
+Set           PrefShowOriginalTextTabs=false
+Set           PrefMinimizeSearchRadios=false
+Set              PrefHideDisabledBooks=false
+Set           PrefShowIntrosBeforeText=false
+Set        PrefAlwaysHideHebrewOptions=false
+Set      PrefHideDisabledViewMenuItems=false
+Set  PrefHideDisabledCopyPrintIncludes=false
+Set         PrefDontReadReferenceBible=false
+Set                     PrefuseUYGskin=false
+
+# SHOULD THE INSTALLER INSTALL THE HEBREW FONT? (true:false)
+Set IncludeHebrewFont=false
+
+# List modules for each window listing tabs should be initially hidden (default is to show tabs for all)
+Set PrefHiddenTexts1=
+Set PrefHiddenTexts2=
+Set PrefHiddenTexts3=
