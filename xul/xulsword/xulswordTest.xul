@@ -30,10 +30,5 @@
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#">
 
   <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
-  <script>
-    <![CDATA[
-    Bible.init();
-    ]]>
-  </script>
   <script type="application/x-javascript" src="chrome://xulsword/content/xulswordTest.js"/>
 </window>

@@ -916,7 +916,7 @@ function scriptboxMouseOut(e) {
   }
   var currentlyOver = e.relatedTarget;
   while (currentlyOver) {
-    if (currentlyOver.id == "npopup") return;
+    if (currentlyOver.id && currentlyOver.id == "npopup") return;
     currentlyOver = currentlyOver.parentNode;
   }
   closePopup();

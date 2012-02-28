@@ -17,7 +17,7 @@
 */
 
 /************************************************************************
- * Functions in this file may NOT access any Bible XPCOM objects!
+ * Functions in this file may NOT access any Bible objects!
  ***********************************************************************/ 
 
 /************************************************************************
@@ -236,11 +236,6 @@ function getSpecialDirectory(name) {
       var userAppPath = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment).get("APPDATA");
       userAppPath += "\\Sword";
       dir.initWithPath(userAppPath);
-      break;
-    case "xsVideo_progd":
-      dir = directoryService.get("resource:app", Components.interfaces.nsIFile);
-      dir.append(VIDEO);
-      dir = dir.QueryInterface(Components.interfaces.nsILocalFile);
       break;
     case "xsResD":
     case "xsModsUser":

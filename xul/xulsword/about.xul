@@ -44,7 +44,6 @@
   <data id="radio.label.book">&radio.label.book;</data>
   <data id="radio.label.dict">&radio.label.dict;</data>
   
-  <script>var UseBibleObjectFrom = "none";</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>

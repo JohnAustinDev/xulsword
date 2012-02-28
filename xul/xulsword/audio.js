@@ -36,14 +36,6 @@ function getAudioDirs() {
     audioDirs.push(af);
   }
   
-  //for Backward Compatibility...
-  resAudio = getSpecialDirectory("resource:app");
-  resAudio.append(AUDIO);
-  if (resAudio.exists() && resAudio.isDirectory()) {
-    af = {dir:resAudio, isExportable:true, isInstallDir:false};
-    audioDirs.push(af);
-  }
-  
   //Add dirs registered in prefs
   for (var i=0; i<getPrefOrCreate("NumAudioImportDirs", "Int", 0); i++) {
     var resPref = prefs.getComplexValue("AudioImportDir" + i, Components.interfaces.nsILocalFile);
@@ -425,7 +417,7 @@ function exportAudio(exportFileFormat) {
   Files = [];
   Index = 0;
   ADestFolder = kFilePicker.file.clone();
-  if (!ADestFolder.exists()) ADestFolder.create(ADestFolder.DIRECTORY_TYPE, 0777);
+  if (!ADestFolder.exists()) ADestFolder.create(ADestFolder.DIRECTORY_TYPE);
   ExportFileFormat = exportFileFormat;
   jsdump("Beginnig audio export to: " + kFilePicker.file.path);
   var audioDirs = getAudioDirs();
@@ -508,7 +500,7 @@ function exportThisFile(aFile, aDestFolder, localized) {
     }
 
     if (!newFile) {jsdump("Failed to parse audio file name: " + aFile.path); return false;}
-    if (!newFile.parent.exists()) newFile.parent.create(newFile.DIRECTORY_TYPE, 0777);
+    if (!newFile.parent.exists()) newFile.parent.create(newFile.DIRECTORY_TYPE);
     if (newFile.exists()) newFile.remove(false);
   }
   catch (er) {sdump("ERROR making parent folder for " + aFile.path); return false;}

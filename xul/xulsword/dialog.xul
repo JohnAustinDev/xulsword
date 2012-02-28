@@ -27,7 +27,6 @@
         ondialogaccept="accept();"
         ondialogcancel="cancel();">
 
-  <script>var UseBibleObjectFrom = "Opener";</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>

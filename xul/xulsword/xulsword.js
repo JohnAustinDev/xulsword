@@ -283,34 +283,6 @@ function hideGUI() {
 }
 
 var TreeStyleRules = [];
-var BMManagerBible;
-var SearchBibles = [];
-var SearchBiblesOut = [];
-
-function createSearchBible() {
-  var searchBible = Components.classes["@xulsword.com/xulsword/xulsword;1"].createInstance(Components.interfaces.ixulsword);
-  var mlist = Bible.getModuleList();
-  if (mlist == "No Modules" || mlist.search(BIBLE)==-1) {
-    searchBible=null;
-    return false;
-  }
-  else unlockAllModules(searchBible);
-
-  var createNewSlot = true;
-  for (var i=0; i<SearchBibles.length; i++) {
-    if (SearchBibles[i] == null) {
-      SearchBibles[i] = searchBible;
-      SearchBiblesOut[i] = false;
-      createNewSlot = false;
-      break;
-    }
-  }
-  if (createNewSlot) {
-    SearchBibles.push(searchBible);
-    SearchBiblesOut.push(false);
-  }
-  return true;
-}
 
 function updateAfterInit() {
   updateFrameScriptBoxesReal([false, true, true, true], SCROLLTYPECENTER, HILIGHTNONE, NOUPDATELOCATOR);
@@ -345,13 +317,6 @@ function postWindowInit() {
   // Hide disabled books on chooser
   useFirstAvailableBookIf();
   disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));
-  
-  BMManagerBible = Components.classes["@xulsword.com/xulsword/xulsword;1"].createInstance(Components.interfaces.ixulsword);
-  var mlist = Bible.getModuleList();
-  if (mlist == "No Modules" || mlist.search(BIBLE)==-1) BMManagerBible=null;
-  else unlockAllModules(BMManagerBible);
-  
-  createSearchBible();
   
   if (NewModuleInfo && NewModuleInfo.NewLocales && NewModuleInfo.NewLocales[0] && !document.getElementById("sub-lang").disabled) {
     var opmenu = document.getElementById("menu.options").childNodes[0].nodeValue;
@@ -675,7 +640,7 @@ function createHelpVideoMenu() {
 }
 
 function readVideos(vArray) {
-  var vdirs = [getSpecialDirectory("xsVideo_progd"), getSpecialDirectory("xsVideo")];
+  var vdirs = [getSpecialDirectory("xsVideo")];
   for (var i=0; i<vdirs.length; i++) {
     if (!vdirs[i].exists()) continue;
     getVideosInDir(vdirs[i], vArray, null, null);
@@ -4490,10 +4455,10 @@ function saveHTML () {
     file.initWithPath("C:\\");
     file.append("ScriptBox" + i + ".txt");
   
-    if (!file.exists()) {file.create(file.NORMAL_FILE_TYPE,0777);}
+    if (!file.exists()) {file.create(file.NORMAL_FILE_TYPE);}
   
     var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-    foStream.init(file, 0x02 | 0x08 | 0x20, 0664, 0);
+    foStream.init(file, 0x02 | 0x08 | 0x20, -1, 0);
 
     var charset = "UTF-16"; // Can be any character encoding name that Mozilla supports
     var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
