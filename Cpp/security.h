@@ -19,14 +19,7 @@
 #ifndef _XULSECURITY_
 #define _XULSECURITY_
 
-#define KEYLEN 16
-
 #include "Release\compInfo.h"
-#ifdef DUMPCODES
-#include "Release\compDump.h"
-#else
-#include "Release\chromeCode.h"
-#endif
 
 class security
 {

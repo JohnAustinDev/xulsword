@@ -16,7 +16,7 @@ if not defined arg1 Set arg1=undefined
 Set NOSECURITY=
 Set SECURITYCPP=".\security.cpp"
 Set SECURITYOBJ=".\xulsword\security.obj"
-Set NOSECURITY=/D "NOSECURITY"& Set SECURITYCPP=& Set SECURITYOBJ=
+if %arg1%==NOSECURITY Set NOSECURITY=/D "NOSECURITY"& Set SECURITYCPP=& Set SECURITYOBJ=
 
 Set DUMPCODES=
 if %arg1%==DUMPCODES Set DUMPCODES=/D "DUMPCODES"
@@ -35,7 +35,7 @@ Set cFiles=%SECURITYCPP%^
  ".\swordMK\src\utilfuns\win32\dirent.cpp"^
  ".\swordMK\src\utilfuns\win32\fileops.cpp"
 
-Set lFlags=libsword.lib libclucene.lib crclib.lib /nologo /dll /incremental:no /manifest /manifestfile:"xulsword\xulsword.dll.manifest" /implib:"xulsword\xulsword.lib" /pdb:"xulsword/xulsword.pdb" /out:".\Release\xulsword.dll" /libpath:".\crclib\Release" /libpath:".\swordMK\lib\Release" /libpath:".\cluceneMK\lib\Release"
+Set lFlags=libsword.lib libclucene.lib /nologo /dll /incremental:no /manifest /manifestfile:"xulsword\xulsword.dll.manifest" /implib:"xulsword\xulsword.lib" /pdb:"xulsword/xulsword.pdb" /out:".\Release\xulsword.dll" /libpath:".\swordMK\lib\Release" /libpath:".\cluceneMK\lib\Release"
 Set lFiles=%SECURITYOBJ%^
  ".\xulsword\xulsword.obj"^
  ".\xulsword\dirent.obj"^
