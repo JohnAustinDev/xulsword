@@ -3,7 +3,6 @@
 @echo off
 set CPPD=Cpp
 
-cd "%MK%\%CPPD%\runMK"
 call ..\versions.bat
 rmdir /s /Q Release
 mkdir Release

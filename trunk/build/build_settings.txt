@@ -22,7 +22,8 @@ Set MakePortable=false
 
 # SPECIFY SOME PATHS
 Set OutputDirectory=C:\home\dev\build-out
-Set ModuleRepository=X:\repository\modsword\raw
+Set ModuleRepository1=X:\repository\modsword\raw
+Set ModuleRepository2=X:\moduleDev\$modname\sword
 Set XulswordExtras=C:\home\dev\sup-dev
 Set CluceneSource=C:\home\dev\mk-dev\Cpp\clucene-core-0.9.21b
 Set SwordSource=C:\home\dev\mk-dev\Cpp\sword-svn
@@ -56,6 +57,7 @@ Set IncludeLocales=en-US
 # MODULES TO INCLUDE IN BUILD
 # Note StrongsGreek,StrongsHebrew,Robinson are used for original lang features
 Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+Set IncludeSearchIndexes=false
 
 # INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
 Set IncludeIndexes=false

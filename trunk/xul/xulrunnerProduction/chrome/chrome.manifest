@@ -1,8 +1,0 @@
-content xulsword jar:xulsword.jar!/
-skin xulsword skin jar:skin.jar!/
-override chrome://global/content/printPageSetup.xul chrome://xulsword/content/xulrunner/global/printPageSetup.xul
-override chrome://global/content/printPreviewBindings.xml chrome://xulsword/content/xulrunner/global/printPreviewBindings.xml
-override chrome://global/content/printPreviewProgress.xul chrome://xulsword/content/xulrunner/global/printPreviewProgress.xul
-override chrome://global/content/printProgress.xul chrome://xulsword/content/xulrunner/global/printProgress.xul
-override chrome://global/content/bindings/tree.xml chrome://xulsword/content/xulrunner/global/bindings/tree.xml
-override chrome://mozapps/content/handling/dialog.xul chrome://xulsword/content/xulrunner/mozapps/handling/dialog.xul

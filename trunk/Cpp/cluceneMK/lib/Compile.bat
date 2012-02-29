@@ -9,12 +9,12 @@ set CPPD=Cpp
 set cFlags=
 set lFlags=
 
-cd "%MK%\%CPPD%\cluceneMK\lib"
-call "%MK%\%CPPD%\versions.bat"
+
+call "..\..\..\versions.bat"
 
 Set cFlags=/nologo /EHsc /O2 /Ob2 /Oi /Ot^
- /I "%MK%\%CPPD%\swordMK\src\utilfuns\win32"^
- /I "%MK%\%CPPD%\%clucene%\src"^
+ /I "..\..\..\swordMK\src\utilfuns\win32"^
+ /I "%clucene%\src"^
  /FI "fileops.h"^
  /FI "redefs_clucene.h"^
  /D "WIN32_LEAN_AND_MEAN" /D _CL_HAVE_DIRENT_H /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /D "_CRT_SECURE_NO_DEPRECATE" /D "_VC80_UPGRADE=0x0710" /D "_UNICODE" /D "UNICODE" /GF /c
@@ -29,7 +29,7 @@ if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Commo
 set INCLUDE=%INCLUDE%;%microsoftsdk%\Include
 set LIB=%LIB%;%microsoftsdk%\Lib
 
-Set cFiles1="%MK%\%CPPD%\%clucene%\src\CLucene\CLMonolithic.cpp"
+Set cFiles1="%clucene%\src\CLucene\CLMonolithic.cpp"
  
 cl.exe %cFlags% %cFiles1%
  
