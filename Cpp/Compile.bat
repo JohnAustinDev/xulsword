@@ -1,11 +1,10 @@
 @ECHO USAGE: Compile.bat [fileName] [NOSECURITY or DUMPCODES] (NOTE: fileName is not used)
-if not exist "%MK%\Cpp\Release" mkdir "%MK%\Cpp\Release"
+if not exist ".\Release" mkdir ".\Release"
 set CPPD=Cpp
 
 set cFlags=
 set lFlags=
 
-cd "%MK%\%CPPD%"
 call versions.bat
 
 @echo off
@@ -18,17 +17,14 @@ Set SECURITYCPP=".\security.cpp"
 Set SECURITYOBJ=".\xulsword\security.obj"
 if %arg1%==NOSECURITY Set NOSECURITY=/D "NOSECURITY"& Set SECURITYCPP=& Set SECURITYOBJ=
 
-Set DUMPCODES=
-if %arg1%==DUMPCODES Set DUMPCODES=/D "DUMPCODES"
-
 REM Changing "DEBUG" to "NDEBUG" turns off NS_WARNING etc.
 Set cFlags=/nologo /W2 /LD /EHsc /O2^
  /I ".\crclib"^
  /I ".\\"^
- /I ".\%sword%\include"^
+ /I "%sword%\include"^
  /I ".\swordMK\src\utilfuns\win32"^
- /I "%MK%/%CPPD%/%sword%/include/internal/regex"^
- %NOSECURITY%%DUMPCODES% /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_USRDLL" /D "XULSWORD_EXPORTS" /D "_WINDLL" /D "_AFXDLL" /D "_CRT_SECURE_NO_DEPRECATE" /Fp"xulsword/xulsword.pch" /Fo"xulsword/" /c
+ /I "%sword%/include/internal/regex"^
+ /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_USRDLL" /D "XULSWORD_EXPORTS" /D "_WINDLL" /D "_AFXDLL" /D "_CRT_SECURE_NO_DEPRECATE" /Fp"xulsword/xulsword.pch" /Fo"xulsword/" /c
 
 Set cFiles=%SECURITYCPP%^
  ".\xulsword.cpp"^

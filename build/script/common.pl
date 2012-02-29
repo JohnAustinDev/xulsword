@@ -94,6 +94,29 @@ sub createLocaleExtension($$) {
   &Log("WARNING: createLocaleExtension not yet implemented.\n");
 }
 
+sub getInfoFromConf($) {
+  my $conf = shift;
+  my %ConfEntry, $MOD;
+  open(CONF, "<:encoding(UTF-8)", $conf) || die "Could not open $conf\n";
+  while(<CONF>) {
+    if ($_ =~ /^\s*(.*?)\s*=\s*(.*?)\s*$/) {
+      if ($ConfEntry{$1} ne "") {$ConfEntry{$1} = $ConfEntry{$1}."<nx>".$2;}
+      else {$ConfEntry{$1} = $2;}
+    }
+    if ($_ =~ /^\s*\[(.*?)\]\s*$/) {$MOD = $1}
+  }
+  close(CONF);
+
+  # short var names
+  my $MODPATH = $ConfEntry{"DataPath"};
+  $MODPATH =~ s/([\/\\][^\/\\]+)\s*$//; # remove any file name at end
+  $MODPATH =~ s/[\\\/]\s*$//; # remove ending slash
+  $MODPATH =~ s/^[\s\.]*[\\\/]//; # normalize beginning of path
+  $ConfEntry{"DataPath"} = $MODPATH;
+  undef(%Conf{$MOD});
+  foreach my $k (keys %ConfEntry) {$Conf{$MOD}{$k} = $ConfEntry{$k};}
+}
+
 sub Log($$) {
   my $p = shift; # log message
   my $h = shift; # -1 = hide from console, 1 = show in console, 2 = only console
