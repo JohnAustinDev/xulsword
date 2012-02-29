@@ -17,6 +17,7 @@ sub copy_dir($$$$) {
   opendir(DIR, $id) || die "Could not open dir $id\n";
   my @fs = readdir(DIR);
   closedir(DIR);
+  
   if (!-e $od) {make_path($od);}
 
   for(my $i=0; $i < @fs; $i++) {
@@ -33,6 +34,64 @@ sub copy_dir($$$$) {
     }
   }
   return 1;
+}
+
+sub writePrefs($\%){
+  my $f = shift;
+  my $pP = shift;
+  
+  my $fn = $f;
+  $fn =~ s/^.*?([^\\\/]+)$/$1/;
+  open(PREF, ">:encoding(UTF-8)", "$f") || die "Can't open $f";
+  foreach my $p (sort keys %{$pP}) {
+    if (!$pP->{$p}) {next;}
+    if ($pP->{$p} !~ s/^\($fn\)\://) {next;}
+    my $q = '"';
+    if ($pP->{$p} =~ s/^.*?(true|false).*?$/my $b=$1; $b=lc($b);/ie) {$q = "";}
+    if ($p =~ /^HiddenTexts/) {$pP->{$p} =~ s/,/\;/; $pP->{$p} =~ s/\s+//; $pP->{$p}.=";"}
+    print PREF "pref(\"$p\", $q".$pP->{$p}."$q);\n";
+  }
+  close(PREF);
+}
+
+sub makeJAR($$) {
+  my $jf = shift;
+  my $di = shift;
+  if ("$^O" =~ /MSWin32/i && $Target eq "Windows") {
+    $jf =~ s/[\/]/\\/g;
+    $di =~ s/[\/]/\\/g;
+    $di .= "\\*";
+    my $cmd = "7za a -tzip \"$jf\" -r \"$di\" -x!.svn";
+    &Log($cmd);
+    `$cmd`;
+  }
+  else {
+    &Log("ERROR: Please update common.pl->makeJAR() to include your platform.\n");
+  }
+}
+
+sub updateJAR($$) {
+  my $jf = shift;
+  my $di = shift;
+  
+  if (!-e $jf) {&Log("ERROR: no JAR to update \"$jf\".\n"); return;}
+  if ("$^O" =~ /MSWin32/i && $Target eq "Windows") {
+    $jf =~ s/[\/]/\\/g;
+    $di =~ s/[\/]/\\/g;
+    $di .= "\\*";
+    my $cmd = "7za u -tzip \"$jf\" -r \"$di\" -x!.svn";
+    &Log($cmd);
+    `$cmd`;
+  }
+  else {
+    &Log("ERROR: Please update common.pl->updateJAR() to include your platform.\n");
+  }
+}
+
+sub createLocaleExtension($$) {
+  my $loc = shift;
+  my $di = shift;
+  &Log("WARNING: createLocaleExtension not yet implemented.\n");
 }
 
 sub Log($$) {
