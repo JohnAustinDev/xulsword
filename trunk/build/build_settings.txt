@@ -1,7 +1,7 @@
 #----------------------------------------------------------------
 #----------------------------------------------------------------
 #NOTES...
-# Target -                 Building for: Windows or Linux
+# Target -                 Building for: Windows, Linux, or Mac
 # Version -                This should only include numbers and period(s).
 # MinXSMversion -          The minimum XSMversion required for compatible MK modules' text modules.
 # MinUIversion -           The minimum UIversion required for compatible MK modules' UI modules.
@@ -15,7 +15,7 @@
 
 # BUILD WHAT?
 Set Target=Windows
-Set MakeDevelopmentOnly=true
+Set MakeDevelopment=true
 Set MakeSetup=false
 Set MakeFFextension=false
 Set MakePortable=false
@@ -24,29 +24,33 @@ Set MakePortable=false
 Set OutputDirectory=C:\home\dev\build-out
 Set ModuleRepository=X:\repository\modsword\raw
 Set XulswordExtras=C:\home\dev\sup-dev
+Set CluceneSource=C:\home\dev\mk-dev\Cpp\clucene-core-0.9.21b
+Set SwordSource=C:\home\dev\mk-dev\Cpp\sword-svn
+Set $MicrosoftSDK=%ProgramFiles%\Microsoft SDKs
 
 # SPECIFY BUILD INFORMATION
 Set Version=3.0
-Set PrefEngineVersion=1.6.2
+Set (buildprefs.js):xulsword.EngineVersion=1.6.2
 Set Name=xulsword
 Set Vendor=CrossWire
 Set Executable=xulsword.exe
-Set PrefMinXSMversion=1.0
-Set PrefMinUIversion=2.7
+Set (buildprefs.js):xulsword.MinXSMversion=1.0
+Set (buildprefs.js):xulsword.MinUIversion=2.7
 Set GeckoMinVersion=10.0.0
 Set GeckoMaxVersion=10.9.9
-Set PrefHelpEmailAddress=gpl.programs.info@gmail.com
+Set (buildprefs.js):xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
 # CHOOSE SECURITY SETTINGS
 Set UseSecurityModule=true
-Set PrefBibleTextEncryptionKey=empty
-Set StartWindow=splash.xul
+Set (buildprefs.js):xulsword.BibleTextEncryptionKey=empty
+
+# STARTUP XUL FILE
+Set (prefs.js):toolkit.defaultChromeURI=chrome://xulsword/content/xulsword.xul
 
 # DEFAULT LOCALE (en-US, ru, etc.)
-Set DefaultLanguage=en-US
+Set (language.js):general.useragent.locale=en-US
 
 # LOCALES TO INCLUDE IN BUILD (Must include at least one locale. Example:en-US, or ru,ar)
-# Set to "ALL" to include all locales in the locale directory
 Set IncludeLocales=en-US
 
 # MODULES TO INCLUDE IN BUILD
@@ -57,24 +61,33 @@ Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
 Set IncludeIndexes=false
 
 # OTHER OPTIONS (true or false)
-Set    PrefShowDictionaryTabsByDefault=false
-Set      PrefShowAllBibleTabsByDefault=true
-Set    PrefShowCommentaryTabsByDefault=false
-Set PrefHideUnavailableCrossReferences=false
-Set           PrefShowOriginalTextTabs=false
-Set           PrefMinimizeSearchRadios=false
-Set              PrefHideDisabledBooks=false
-Set           PrefShowIntrosBeforeText=false
-Set        PrefAlwaysHideHebrewOptions=false
-Set      PrefHideDisabledViewMenuItems=false
-Set  PrefHideDisabledCopyPrintIncludes=false
-Set         PrefDontReadReferenceBible=false
-Set                     PrefuseUYGskin=false
+Set (buildprefs.js):xulsword.ShowDictionaryTabsByDefault=false
+Set (buildprefs.js):xulsword.ShowAllBibleTabsByDefault=true
+Set (buildprefs.js):xulsword.ShowCommentaryTabsByDefault=false
+Set (buildprefs.js):xulsword.HideUnavailableCrossReferences=false
+Set (buildprefs.js):xulsword.ShowOriginalTextTabs=false
+Set (buildprefs.js):xulsword.MinimizeSearchRadios=false
+Set (buildprefs.js):xulsword.HideDisabledBooks=false
+Set (buildprefs.js):xulsword.ShowIntrosBeforeText=false
+Set (buildprefs.js):xulsword.AlwaysHideHebrewOptions=false
+Set (buildprefs.js):xulsword.HideDisabledViewMenuItems=false
+Set (buildprefs.js):xulsword.HideDisabledCopyPrintIncludes=false
+Set (buildprefs.js):xulsword.DontReadReferenceBible=false
+Set (buildprefs.js):xulsword.useUYGskin=false
 
 # SHOULD THE INSTALLER INSTALL THE HEBREW FONT? (true:false)
 Set IncludeHebrewFont=false
 
-# List modules for each window listing tabs should be initially hidden (default is to show tabs for all)
-Set PrefHiddenTexts1=
-Set PrefHiddenTexts2=
-Set PrefHiddenTexts3=
+# LIST MODULES FOR EACH WINDOW LISTING TABS SHOULD BE INITIALLY HIDDEN (default is to show tabs for all)
+Set (buildprefs.js):xulsword.HiddenTexts1=
+Set (buildprefs.js):xulsword.HiddenTexts2=
+Set (buildprefs.js):xulsword.HiddenTexts3=
+
+# DEBUG PREFERENCES (USED ONLY WHEN: MakeDevelopmentOnly=true)
+Set (debug.js):javascript.options.strict=true
+Set (debug.js):nglayout.debug.disable_xul_cache=true
+Set (debug.js):nglayout.debug.disable_xul_fastload=true
+Set (debug.js):extensions.logging.enabled=true
+Set (debug.js):javascript.options.showInConsole=true
+Set (debug.js):nglayout.debug.disable_xul_fastload=true
+Set (debug.js):dom.report_all_js_exceptions=true

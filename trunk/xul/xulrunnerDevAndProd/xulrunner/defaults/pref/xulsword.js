@@ -19,9 +19,7 @@ pref("xulsword.MaximizeNoteBox1",false);
 pref("xulsword.MaximizeNoteBox2",false);
 pref("xulsword.MaximizeNoteBox3",false);
 
-
 // xulrunner prefs
-pref("javascript.options.showInConsole", true);
 pref("browser.bookmarks.sort.resource","direction");
 pref("browser.bookmarks.sort.direction","natural");
 pref("print.print_headerright", "");
