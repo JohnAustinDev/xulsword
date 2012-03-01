@@ -3,17 +3,17 @@
 Set arg2=%2
 if defined arg2 (Set arg1=%arg2%) else Set arg1=%1
 if not defined arg1 Set arg1=dll
-if not exist Release mkdir Release
+if exist .\Release del /S /Q .\Release
+mkdir .\Release
 
 set CPPD=Cpp
 set cFlags=
 set lFlags=
 
-
-call "..\..\..\versions.bat"
+call "..\..\versions.bat"
 
 Set cFlags=/nologo /EHsc /O2 /Ob2 /Oi /Ot^
- /I "..\..\..\swordMK\src\utilfuns\win32"^
+ /I "..\..\swordMK\src\utilfuns\win32"^
  /I "%clucene%\src"^
  /FI "fileops.h"^
  /FI "redefs_clucene.h"^
@@ -37,4 +37,4 @@ Set lFiles1=".\%objDIR%\CLMonolithic.obj"
 
 link.exe -lib %lFlags% %lFiles1%
 
-rem rmdir /S /Q "%objDIR%"
+exit

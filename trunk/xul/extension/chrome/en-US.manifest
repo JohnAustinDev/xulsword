@@ -1,0 +1,2 @@
+locale mozapps en-US jar:en-US.jar!/locale/en-US/mozapps/
+locale global en-US jar:en-US.jar!/locale/en-US/global/

@@ -8,7 +8,7 @@ sub copy_dir($$$$) {
   my $od = shift;
   my $skf = shift;
   my $skd = shift;
-  
+
   if (!-e $id || !-d $id) {
     &Log("ERROR copy_dir: Source does not exist or is not a direcory: $id\n");
     return 0;
@@ -36,24 +36,6 @@ sub copy_dir($$$$) {
   return 1;
 }
 
-sub writePrefs($\%){
-  my $f = shift;
-  my $pP = shift;
-  
-  my $fn = $f;
-  $fn =~ s/^.*?([^\\\/]+)$/$1/;
-  open(PREF, ">:encoding(UTF-8)", "$f") || die "Can't open $f";
-  foreach my $p (sort keys %{$pP}) {
-    if (!$pP->{$p}) {next;}
-    if ($pP->{$p} !~ s/^\($fn\)\://) {next;}
-    my $q = '"';
-    if ($pP->{$p} =~ s/^.*?(true|false).*?$/my $b=$1; $b=lc($b);/ie) {$q = "";}
-    if ($p =~ /^HiddenTexts/) {$pP->{$p} =~ s/,/\;/; $pP->{$p} =~ s/\s+//; $pP->{$p}.=";"}
-    print PREF "pref(\"$p\", $q".$pP->{$p}."$q);\n";
-  }
-  close(PREF);
-}
-
 sub makeJAR($$) {
   my $jf = shift;
   my $di = shift;
@@ -62,7 +44,7 @@ sub makeJAR($$) {
     $di =~ s/[\/]/\\/g;
     $di .= "\\*";
     my $cmd = "7za a -tzip \"$jf\" -r \"$di\" -x!.svn";
-    &Log($cmd);
+    #&Log("$cmd\n");
     `$cmd`;
   }
   else {
@@ -80,7 +62,7 @@ sub updateJAR($$) {
     $di =~ s/[\/]/\\/g;
     $di .= "\\*";
     my $cmd = "7za u -tzip \"$jf\" -r \"$di\" -x!.svn";
-    &Log($cmd);
+    #&Log("$cmd\n");
     `$cmd`;
   }
   else {
@@ -113,13 +95,14 @@ sub getInfoFromConf($) {
   $MODPATH =~ s/[\\\/]\s*$//; # remove ending slash
   $MODPATH =~ s/^[\s\.]*[\\\/]//; # normalize beginning of path
   $ConfEntry{"DataPath"} = $MODPATH;
-  undef(%Conf{$MOD});
+  $Conf{$MOD} = "";
   foreach my $k (keys %ConfEntry) {$Conf{$MOD}{$k} = $ConfEntry{$k};}
 }
 
 sub Log($$) {
   my $p = shift; # log message
   my $h = shift; # -1 = hide from console, 1 = show in console, 2 = only console
+  if ($p =~ /error/i) {$p = "\n$p\n";}
   if ((!$NOCONSOLELOG && $h!=-1) || $h>=1 || $p =~ /error/i) {print encode("utf8", "$p");}
   if ($LOGFILE && $h!=2) {
     open(LOGF, ">>:encoding(UTF-8)", $LOGFILE) || die "Could not open log file \"$LOGFILE\"\n";

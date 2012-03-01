@@ -4,8 +4,8 @@
 set CPPD=Cpp
 
 call ..\versions.bat
-rmdir /s /Q Release
-mkdir Release
+if exist .\Release del /S /Q .\Release
+mkdir .\Release
 
 Set cFlags=/MT /O2 /W1 /EHsc /nologo /Wp64 /c /D "NDEBUG" /D "_UNICODE" /D "UNICODE" /D "_CRT_SECURE_NO_DEPRECATE" /Fo"Release\\" /TP 
 Set cFiles="runMK.cpp"
@@ -22,3 +22,4 @@ cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
 mt.exe -manifest "Release\runMK.exe.intermediate.manifest" -outputresource:"Release\runMK.exe";1
 
+exit
