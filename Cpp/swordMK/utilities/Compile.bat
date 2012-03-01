@@ -42,3 +42,4 @@ link.exe %lFlags% %lFiles%
 rmdir /S /Q %objDIR%
 
 :EOF
+exit

@@ -19,8 +19,6 @@
 #ifndef _XULSECURITY_
 #define _XULSECURITY_
 
-#include "Release\compInfo.h"
-
 class security
 {
 public:

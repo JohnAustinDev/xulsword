@@ -4,8 +4,8 @@
 set CPPD=Cpp
 
 call ..\versions.bat
-rmdir /s /Q Release
-mkdir Release
+if exist .\Release del /S /Q .\Release
+mkdir .\Release
 
 Set cFlags=/MT /O2 /W1 /EHsc /nologo /Wp64 /c /D "NDEBUG" /D "_UNICODE" /D "UNICODE" /D "_CRT_SECURE_NO_DEPRECATE" /D "USE_STL" /Fo"Release\\" /TP
 Set cFiles="w32process.cpp" "cdrun.cpp"
@@ -21,3 +21,5 @@ rc.exe /l 0x409 /fo".\Release\CDRunApp.res" ".\CDRunApp.rc"
 cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
 mt.exe -manifest "Release\cdrun.exe.intermediate.manifest" -outputresource:"Release\cdrun.exe";1
+
+exit

@@ -30,34 +30,8 @@ var Progvers = Components.classes["@mozilla.org/xre/app-info;1"].getService(Comp
 var Enginevers; try {Enginevers = prefs.getCharPref("EngineVersion");} catch (er) {Enginevers = NOTFOUND;}
 
 function initLocales() {
-  // Find locales and test their versions
-  var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
-  var chromeDirectory = getSpecialDirectory("AChrom");
-  var files = chromeDirectory.directoryEntries;
-  var localeListString="";
-  var sep = "";
-  while (files.hasMoreElements()) {
-    var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
-    var localeFromFileName = file.leafName.match(/([^\.]+)\.locale\.manifest/i);
-    if (!localeFromFileName) continue;
-    var filedata = readFile(file);
-    if (!filedata) continue;
-    var version = filedata.match(VERSIONTAG);
-    if (!version)  continue;
-    var minuivers;
-    try {minuivers = prefs.getCharPref("MinUIversion");} catch (er) {minuivers = Progvers;}
-    if (localeFromFileName[1]!=DEFAULTLOCALE && comparator.compare(version[1], minuivers) < 0) continue;
-    localeListString += sep + localeFromFileName[1];
-    sep = ";";
-  }
-
-  if (!localeListString) {
-    rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
-    jsdump("No locales found.\n");
-    return false;
-  }
-
-  LocaleList = localeListString.split(";");
+  // TODO: get listing of locales from extension manager
+  LocaleList = ["en-US"];
   
   var currentLocale = rootprefs.getCharPref("general.useragent.locale");
   var LocaleDefaultVersionString="";

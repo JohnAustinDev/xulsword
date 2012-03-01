@@ -21,13 +21,13 @@ Set MakeFFextension=false
 Set MakePortable=false
 
 # SPECIFY SOME PATHS
-Set OutputDirectory=C:\home\dev\build-out
+Set OutputDirectory=C:\home\dev\mk-dev\build-out
 Set ModuleRepository1=X:\repository\modsword\raw
-Set ModuleRepository2=X:\moduleDev\$modname\sword
+Set ModuleRepository2=X:\moduleDev\$mod\sword
 Set XulswordExtras=C:\home\dev\sup-dev
 Set CluceneSource=C:\home\dev\mk-dev\Cpp\clucene-core-0.9.21b
 Set SwordSource=C:\home\dev\mk-dev\Cpp\sword-svn
-Set $MicrosoftSDK=%ProgramFiles%\Microsoft SDKs
+Set MicrosoftSDK=%ProgramFiles%\Microsoft SDKs\Windows\v6.1
 
 # SPECIFY BUILD INFORMATION
 Set Version=3.0
@@ -56,7 +56,8 @@ Set IncludeLocales=en-US
 
 # MODULES TO INCLUDE IN BUILD
 # Note StrongsGreek,StrongsHebrew,Robinson are used for original lang features
-Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+#Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+Set IncludeModules=UZV,UZDOT,UZDNT
 Set IncludeSearchIndexes=false
 
 # INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
