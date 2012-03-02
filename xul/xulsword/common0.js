@@ -20,9 +20,17 @@
  * Functions in this file may NOT access any Bible objects!
  ***********************************************************************/ 
 
+var OSName="Unknown OS";
+if (navigator.appVersion.indexOf("Win")!=-1) OSName="Windows";
+if (navigator.appVersion.indexOf("Mac")!=-1) OSName="MacOS";
+if (navigator.appVersion.indexOf("X11")!=-1) OSName="UNIX";
+if (navigator.appVersion.indexOf("Linux")!=-1) OSName="Linux";
+
 /************************************************************************
  * Declare/Define Some Common Global Variables
  ***********************************************************************/
+const FPERM = 0777; //511;
+const DPERM = 0777; //511;
 const LAST_VERSE_IN_CHAPTER=-1;       //Understood by xulsword to be last verse
 const ORIGINAL = "ORIG";        //Value doen't really matter, just a const
 const FootnoteMarker = 215;           //The Unicode character used by xulsword.dll to mark footnotes
@@ -248,6 +256,25 @@ function getSpecialDirectory(name) {
     dir = dir.QueryInterface(Components.interfaces.nsILocalFile);
   }
   return dir;
+}
+
+function createAppDirectories() {
+  var checkdir = getSpecialDirectory("xsResD");   if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+  checkdir = getSpecialDirectory("xsModsUser");   if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+  var checkdi2 = checkdir.clone();
+  checkdi2.append(MODSD);                         if (!checkdi2.exists()) checkdi2.create(checkdi2.DIRECTORY_TYPE, DPERM);
+  checkdir.append(MODS);                          if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+  if (!ProgramIsPortable) {
+    checkdir=getSpecialDirectory("xsModsCommon"); if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+    checkdi2=checkdir.clone();
+    checkdi2.append(MODSD);                       if (!checkdi2.exists()) checkdi2.create(checkdi2.DIRECTORY_TYPE, DPERM);
+    checkdir.append(MODS);                        if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+  }
+  checkdir = getSpecialDirectory("xsFonts");      if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+  checkdir = getSpecialDirectory("xsAudio");      if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+  checkdir = getSpecialDirectory("xsBookmarks");  if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+  checkdir = getSpecialDirectory("xsAudioPI");    if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+  checkdir = getSpecialDirectory("xsVideo");      if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
 }
 
 /************************************************************************

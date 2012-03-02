@@ -38,7 +38,7 @@ getGlobalOption             test with MK
 
 setCipherKey                test with MK
 */
-
+window.alert("test Bible=" + Bible);
 function jsdump(str)
 {
   Components.classes['@mozilla.org/consoleservice;1']
@@ -230,10 +230,14 @@ function test(testNum, result, expectedResult) {
   }
 }
 
-if (NumFailed) 
+if (NumFailed) {
   jsdump("xulswordText.js " + NumFailed + " FAILURES found.\n");
-else 
+  window.alert("xulswordText.js " + NumFailed + " FAILURES found.");
+}
+else {
   jsdump("CONGRATS!!!! ITS WORKING PERFECTLY!!!!\n");
+  window.alert("CONGRATS!!!! ITS WORKING PERFECTLY!!!!");
+}
 
 jsdump("getModuleList=" + Bible.getModuleList());
 jsdump("getBookIntroduction=" + Bible.getBookIntroduction("UZV", "Matt"));
@@ -241,3 +245,5 @@ jsdump("getDictionaryEntry БАШАН=" + Bible.getDictionaryEntry("UZDOT", "Б�
 jsdump("getAllDictionaryKeys=" + Bible.getAllDictionaryKeys("UZDOT"));
 jsdump("getGenBookTableOfContents=" + Bible.getGenBookTableOfContents("Pilgrim"));
 jsdump("getGenBookChapterText=" + Bible.getGenBookChapterText("Pilgrim", "/Pilgrim/PART II/PREFACE"));
+
+Bible.quitSword();

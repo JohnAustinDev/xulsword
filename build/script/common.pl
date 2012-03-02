@@ -6,8 +6,8 @@ use File::Path qw(make_path remove_tree);
 sub copy_dir($$$$) {
   my $id = shift;
   my $od = shift;
-  my $skf = shift;
-  my $skd = shift;
+  my $incl = shift;
+  my $skip = shift;
 
   if (!-e $id || !-d $id) {
     &Log("ERROR copy_dir: Source does not exist or is not a direcory: $id\n");
@@ -24,12 +24,12 @@ sub copy_dir($$$$) {
     if ($fs[$i] =~ /^\.+$/) {next;}
     my $if = "$id/".$fs[$i];
     my $of = "$od/".$fs[$i];
+    if ($incl && $if !~ /$incl/i) {next;}
+    if ($skip && $if =~ /$skip/i) {next;}
     if (-d $if) {
-      if ($skd && $if =~ /$skd/) {next;}
-      &copy_dir($if, $of, $skf, $skd);
+      &copy_dir($if, $of, $incl, $skip);
     }
     else {
-      if ($skf && $if =~ /$skf/) {next;}
       copy($if, $of);
     }
   }
@@ -76,27 +76,25 @@ sub createLocaleExtension($$) {
   &Log("WARNING: createLocaleExtension not yet implemented.\n");
 }
 
-sub getInfoFromConf($) {
+sub getInfoFromConf($\%) {
   my $conf = shift;
-  my %ConfEntry, $MOD;
+  my $ceP = shift;
   open(CONF, "<:encoding(UTF-8)", $conf) || die "Could not open $conf\n";
   while(<CONF>) {
     if ($_ =~ /^\s*(.*?)\s*=\s*(.*?)\s*$/) {
-      if ($ConfEntry{$1} ne "") {$ConfEntry{$1} = $ConfEntry{$1}."<nx>".$2;}
-      else {$ConfEntry{$1} = $2;}
+      if ($ceP->{$1} ne "") {$ceP->{$1} = $ceP->{$1}."<nx>".$2;}
+      else {$ceP->{$1} = $2;}
     }
-    if ($_ =~ /^\s*\[(.*?)\]\s*$/) {$MOD = $1}
+    if ($_ =~ /^\s*\[(.*?)\]\s*$/) {$ceP->{"modname"} = $1;}
   }
   close(CONF);
 
   # short var names
-  my $MODPATH = $ConfEntry{"DataPath"};
+  my $MODPATH = $ceP->{"DataPath"};
   $MODPATH =~ s/([\/\\][^\/\\]+)\s*$//; # remove any file name at end
   $MODPATH =~ s/[\\\/]\s*$//; # remove ending slash
   $MODPATH =~ s/^[\s\.]*[\\\/]//; # normalize beginning of path
-  $ConfEntry{"DataPath"} = $MODPATH;
-  $Conf{$MOD} = "";
-  foreach my $k (keys %ConfEntry) {$Conf{$MOD}{$k} = $ConfEntry{$k};}
+  $ceP->{"DataPath"} = $MODPATH;
 }
 
 sub Log($$) {

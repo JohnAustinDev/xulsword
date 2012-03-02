@@ -66,6 +66,7 @@
         onunload="setFolderTreeHeight();"
         persist="screenX screenY width">
    
+  <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>

@@ -44,11 +44,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
   WCHAR commandLine[3*BUFSIZE];
   WCHAR rundir[BUFSIZE];
   if (lret==ERROR_SUCCESS) {
-    wsprintf(commandLine, L"\"%s\\%s\" application.ini %s", keyvalue, PROC_NAME, wlpCmdLine);
+    wsprintf(commandLine, L"\"%s\\%s\" --app application.ini -no-remote %s", keyvalue, PROC_NAME, wlpCmdLine);
     wsprintf(rundir, L"%s", keyvalue);
   }
   // if no registry value is found, look for exe in caller's directory
-  else {wsprintf(commandLine, L"\"%s\" application.ini %s", PROC_NAME, wlpCmdLine);} 
+  else {wsprintf(commandLine, L"\"%s\" --app application.ini -no-remote %s", PROC_NAME, wlpCmdLine);}
     
 	// Parameter 2 MUST be modifiable for CreateProcessW
 	int success = CreateProcessW(NULL, commandLine, NULL, NULL, false, CREATE_NEW_PROCESS_GROUP, NULL, (lret==ERROR_SUCCESS ? rundir:NULL), &si, &pi);
@@ -56,7 +56,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
   	
 	// If registry key value was wrong, try current directory anyway
 	if (lret==ERROR_SUCCESS && !success) {
-    wsprintf(commandLine, L"\"%s\" application.ini %s", PROC_NAME, wlpCmdLine);
+    wsprintf(commandLine, L"\"%s\" --app application.ini -no-remote %s", PROC_NAME, wlpCmdLine);
     success = CreateProcessW(NULL, commandLine, NULL, NULL, false, CREATE_NEW_PROCESS_GROUP, NULL, NULL, &si, &pi);
 	}
 	

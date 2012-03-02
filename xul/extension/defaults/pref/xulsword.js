@@ -18,6 +18,7 @@ pref("xulsword.SelectedNote","none");
 pref("xulsword.MaximizeNoteBox1",false);
 pref("xulsword.MaximizeNoteBox2",false);
 pref("xulsword.MaximizeNoteBox3",false);
+pref("xulsword.DefaultVersion", "none");
 
 // xulrunner prefs
 pref("browser.bookmarks.sort.resource","direction");

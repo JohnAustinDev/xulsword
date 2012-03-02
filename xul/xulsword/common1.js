@@ -23,7 +23,7 @@
  * String Bundle used for script locality
  ***********************************************************************/  
 var WindowWatcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
-var MainWindow = WindowWatcher.getWindowByName("main-window", window);
+if (!MainWindow) MainWindow = WindowWatcher.getWindowByName("main-window", window);
 if (!MainWindow) MainWindow = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
                    .getInterface(Components.interfaces.nsIWebNavigation)
                    .QueryInterface(Components.interfaces.nsIDocShellTreeItem)
@@ -31,6 +31,7 @@ if (!MainWindow) MainWindow = window.QueryInterface(Components.interfaces.nsIInt
                    .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
                    .getInterface(Components.interfaces.nsIDOMWindow);
 if (!MainWindow) jsdump("WARNING: Unable to initialize MainWindow: (" + window.name + ")\n");
+
 var SBundle;
 try {SBundle = MainWindow.document.getElementById("strings");}
 catch (er) {}

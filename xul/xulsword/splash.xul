@@ -87,26 +87,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksTop.js"/>
   
   <!-- Create program's special directories if needed !-->
-  <script>
-  <![CDATA[
-    var checkdir = getSpecialDirectory("xsResD");   if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE);
-    checkdir = getSpecialDirectory("xsModsUser");   if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE);
-    var checkdi2 = checkdir.clone();
-    checkdi2.append(MODSD);                         if (!checkdi2.exists()) checkdi2.create(checkdi2.DIRECTORY_TYPE);
-    checkdir.append(MODS);                          if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE);
-    if (!ProgramIsPortable) {
-      checkdir=getSpecialDirectory("xsModsCommon"); if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE);
-      checkdi2=checkdir.clone();
-      checkdi2.append(MODSD);                       if (!checkdi2.exists()) checkdi2.create(checkdi2.DIRECTORY_TYPE);
-      checkdir.append(MODS);                        if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE);
-    }
-    checkdir = getSpecialDirectory("xsFonts");      if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE);
-    checkdir = getSpecialDirectory("xsAudio");      if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE);
-    checkdir = getSpecialDirectory("xsBookmarks");  if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE);
-    checkdir = getSpecialDirectory("xsAudioPI");    if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE);
-    checkdir = getSpecialDirectory("xsVideo");      if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE);
-  ]]>
-  </script>
+  <script>createAppDirectories();</script>
   
   <script>
   <![CDATA[
@@ -124,7 +105,7 @@
     if (installOnly) {
       var mutex = getSpecialDirectory("TmpD");
       mutex.append("xsInstallOnlyMutex");
-      if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE);
+      if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
     }
   ]]>
   </script>

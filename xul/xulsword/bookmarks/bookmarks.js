@@ -570,7 +570,7 @@ var BookmarksCommand = {
         return;
       file.initWithPath(fileName);
       if (!file.exists()) {
-        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE);
+        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
       }
     }
     catch (e) {

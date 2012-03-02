@@ -24,7 +24,6 @@
     id="main-window" xmlns:html="http://www.w3.org/1999/xhtml"
     width="1024" height="738" screenX="50" screenY="50"
     persist="width height screenX screenY sizemode"
-    onunload="quitSword()"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#">

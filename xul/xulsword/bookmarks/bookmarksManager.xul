@@ -62,6 +62,7 @@
         onload="Startup();" onunload="Shutdown();"
         onclose="{var remote=BMDS.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource); if (remote) remote.Flush(); return closeWindow(false);}">
 
+  <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js"/>
   <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>

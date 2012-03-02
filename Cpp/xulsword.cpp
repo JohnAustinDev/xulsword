@@ -178,8 +178,8 @@ VerseMgr *MyVerseMgr;
 /********************************************************************
 percentComplete
 *********************************************************************/
-char percentComplete = 0;
-void savePercentComplete(char percent, void *userData) {percentComplete = percent;}
+static char percentComplete = 0;
+static void savePercentComplete(char percent, void *userData) {percentComplete = percent;}
 
 
 /********************************************************************
@@ -436,10 +436,11 @@ QuitSwordEngine()
 *********************************************************************/
 DLLEXPORT void QuitSwordEngine()
 {
-  delete MyManager;
-  delete MyStringMgr;
-  delete MyMarkupFilterMgr;
   if (MyVerseMgr) {delete MyVerseMgr;}
+  delete MyMarkupFilterMgr;
+  delete MyStringMgr;
+  delete MyManager;
+
 }
 
 
@@ -1540,7 +1541,7 @@ DLLEXPORT void SearchIndexBuild(const char *mod) {
   SWModule * module = MyManager->getModule(mod);
   if (module) {
     if (module->hasSearchFramework()) {
-      int percentComplete = 0;
+      percentComplete = 0;
       module->createSearchFramework(&savePercentComplete);
     }
   }
