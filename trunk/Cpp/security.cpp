@@ -38,7 +38,7 @@ void security::ModCipherKey(char * outkey, const char * inkey, const char * modV
   if (PassedIntegrityCheck) {
     char compKey[KEYLEN+1];
     getcodes(compKey, modVersion, modName);
-//printf("TxtKey:%s, modVersion:%s, modName:%s\n", compKey, modVersion, modName);
+printf("ModCipherKey: key:%s, version:%s, mod:%s\n", compKey, modVersion, modName);
     // Source Code
     //sprintf(outkey,"%s%s", compKey, inkey);
   	sprintf(outkey, "%s%s", inkey, compKey);

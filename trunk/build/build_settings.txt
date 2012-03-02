@@ -5,9 +5,8 @@
 # Version -                This should only include numbers and period(s).
 # MinXSMversion -          The minimum XSMversion required for compatible MK modules' text modules.
 # MinUIversion -           The minimum UIversion required for compatible MK modules' UI modules.
-# BibleTextEncryptionKey - Alpha-numberic LATIN characters only (no spaces). The actual
-#                          key value is modified by Security Module if
-#                          useSecurityModule=true.
+# DefaultCK -              Default security key. Alpha-numberic LATIN characters only (no spaces). 
+#                          The actual key value is modified by Security Module if useSecurityModule=true.
 # UseSecurityModule -      Set to true to include the security module compiles in
 #                          your key generator to decrypt your texts automatically.
 # HelpEmailAddress -       Set to en email address which will appear under "Help"
@@ -16,9 +15,9 @@
 # BUILD WHAT?
 Set Target=Windows
 Set MakeDevelopment=true
+Set MakePortable=false
 Set MakeSetup=false
 Set MakeFFextension=false
-Set MakePortable=false
 
 # SPECIFY SOME PATHS
 Set OutputDirectory=C:\home\dev\mk-dev\build-out
@@ -43,7 +42,7 @@ Set (buildprefs.js):xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
 # CHOOSE SECURITY SETTINGS
 Set UseSecurityModule=true
-Set (buildprefs.js):xulsword.BibleTextEncryptionKey=empty
+Set (buildprefs.js):xulsword.DefaultCK=spirit
 
 # STARTUP XUL FILE
 Set (prefs.js):toolkit.defaultChromeURI=chrome://xulsword/content/xulsword.xul
@@ -57,7 +56,7 @@ Set IncludeLocales=en-US
 # MODULES TO INCLUDE IN BUILD
 # Note StrongsGreek,StrongsHebrew,Robinson are used for original lang features
 #Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
-Set IncludeModules=UZV,UZDOT,UZDNT
+Set IncludeModules=UZV,UZDOT,UZDNT,OSS
 Set IncludeSearchIndexes=false
 
 # INCLUDE SEARCH INDEXES IN INSTALLER (true:false)

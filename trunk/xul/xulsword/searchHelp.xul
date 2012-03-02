@@ -25,7 +25,8 @@
     id="searchHelp-window" xmlns:html="http://www.w3.org/1999/xhtml"
     width="800" height="600"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-    
+
+  <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>

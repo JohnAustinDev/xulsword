@@ -23,7 +23,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
   // Parameter 2 MUST be modifiable for CreateProcessW
   WCHAR commandLine[2*BUFSIZE];
   WCHAR rundir[BUFSIZE]; 
-  wsprintf(commandLine, L"\"%s\\%s\" -profile \"..\\profile\" %s", PORTABLE_DIR, PROC_NAME, wlpCmdLine);
+  wsprintf(commandLine, L"\"%s\\%s\" --app application.ini -no-remote -profile \"..\\profile\" %s", PORTABLE_DIR, PROC_NAME, wlpCmdLine);
   wsprintf(rundir, L"%s", PORTABLE_DIR);
   int success = CreateProcessW(NULL, commandLine, NULL, NULL, false, CREATE_NEW_PROCESS_GROUP, NULL, rundir, &si, &pi);
   //std::wcout << L"success=" << success << L", commandLine:" << commandLine << L", rundir:" << rundir << '\n'; 

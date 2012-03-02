@@ -646,7 +646,7 @@ var BookmarkFuns = {
         return;
       file.initWithPath(fileName);
       if (!file.exists()) {
-        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE);
+        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
       }
     }
     catch (e) {
@@ -820,7 +820,7 @@ function initBookmarksDataFile(useEmptyDataSet) {
   UserDataURI = encodeURI("File://" + userDataInProfile.path.replace("\\", "/", "g"));
 
   if (!userDataInProfile.exists()) {
-    userDataInProfile.create(0);
+    userDataInProfile.create(userDataInProfile.NORMAL_FILE_TYPE, FPERM);
     var data = "";
     if (useEmptyDataSet) {data = getEmptyUserData();}
     else {

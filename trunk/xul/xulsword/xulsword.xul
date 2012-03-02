@@ -35,7 +35,7 @@
 %nsProgressDialogDTD;
 ]>
 
-<window 
+<window
     id="main-window" xmlns:html="http://www.w3.org/1999/xhtml"
     width="1024" height="738" screenX="50" screenY="50"
     persist="width height screenX screenY sizemode"
@@ -61,13 +61,12 @@
 <data id="savingTarget">&savingTarget;</data>
 <data id="localeDir">&locale.dir;</data>
 
+<script>MainWindow = window;</script>
 <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>  
 <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
 <script>moduleInstall(true)</script>
-
-<!-- <script type="application/x-javascript" src="chrome://xulsword/content/xulswordTest.js"/> !-->
 
 <stringbundle id="strings"   src="chrome://xulsword/locale/xulsword.properties"/>
 <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js"/>
@@ -75,7 +74,9 @@
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+
+<!-- invoke the Bible object for the first time and init. !-->
+<script>var mlist=Bible.getModuleList(); if (mlist=="No Modules" || mlist.search(BIBLE)==-1) {Bible=null;} else {unlockAllModules(Bible, true);}</script>
 <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>

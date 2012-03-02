@@ -683,6 +683,24 @@ function searchBook() {
   //SearchBoxElement.innerHTML = sText + " " + sScope + " " + sType + " " + sFlags;
 }
 
+/*
+function startIndexer(searchWhenDone) {
+  document.getElementById("progressbox").style.visibility="visible";
+  document.getElementById("progress").value=0;
+  document.getElementById("searchmsg").value = SBundle.getString("BuildingIndex");
+  document.getElementById("stopButton").hidden = true;
+  Bible.searchIndexDelete(prefs.getCharPref("SearchVersion"));
+  Bible.searchIndexBuild(prefs.getCharPref("SearchVersion"));
+  document.getElementById("progressbox").style.visibility="hidden";
+  document.getElementById("progress").value=0;
+  document.getElementById("searchmsg").value = "";
+  document.getElementById("stopButton").hidden = true;
+  updateSearchWindow();
+  updateSortBy();
+  //if (searchWhenDone) searchBible();
+}
+*/
+
 var BuildIndexerTM;
 function startIndexer(searchWhenDone) {
   document.getElementById("progressbox").style.visibility="visible";
@@ -716,7 +734,7 @@ function buildIndexer(searchWhenDone) {
     TotalTime += waitTime;
     document.getElementById("progress").value = PercentComplete;
   }
-  
+
   if (PercentComplete != -1) {BuildIndexerTM = window.setTimeout("buildIndexer(" + searchWhenDone + ");",0);}
   else {
     document.getElementById("progressbox").style.visibility="hidden";

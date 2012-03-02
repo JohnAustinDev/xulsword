@@ -21,25 +21,19 @@
  * Retrieve some common globals from the Main Window for use locally 
  ***********************************************************************/ 
 var Bible = MainWindow.Bible;
-var mlist = Bible.getModuleList();
-if (mlist == "No Modules" || mlist.search(BIBLE)==-1) Bible=null;
 
-if (window.name != "main-window") {
-  LocaleConfigs         = MainWindow.LocaleConfigs;
-  VersionConfigs        = MainWindow.VersionConfigs;
-  StyleRules            = MainWindow.StyleRules;
-  LocaleDirectionEntity = MainWindow.LocaleDirectionEntity;
-  LocaleDirectionChar   = MainWindow.LocaleDirectionChar
-  
-  Book                  = MainWindow.Book;
-  OrigModuleNT          = MainWindow.OrigModuleNT;
-  OrigModuleOT          = MainWindow.OrigModuleOT;
+LocaleConfigs         = MainWindow.LocaleConfigs;
+VersionConfigs        = MainWindow.VersionConfigs;
+StyleRules            = MainWindow.StyleRules;
+LocaleDirectionEntity = MainWindow.LocaleDirectionEntity;
+LocaleDirectionChar   = MainWindow.LocaleDirectionChar
 
-  Tabs                  = MainWindow.Tabs;
-  Tab                   = MainWindow.Tab;
+Book                  = MainWindow.Book;
+OrigModuleNT          = MainWindow.OrigModuleNT;
+OrigModuleOT          = MainWindow.OrigModuleOT;
 
-  LocaleList            = MainWindow.LocaleList;
-  LocaleDefaultVersion  = MainWindow.LocaleDefaultVersion;
-}
+Tabs                  = MainWindow.Tabs;
+Tab                   = MainWindow.Tab;
 
-if (window.name == "main-window") unlockAllModules(Bible, true);
+LocaleList            = MainWindow.LocaleList;
+LocaleDefaultVersion  = MainWindow.LocaleDefaultVersion;

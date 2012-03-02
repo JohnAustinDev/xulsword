@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<overlay id="xulsword-overlay" xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+<script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+<script type="text/javascript">
+
+<![CDATA[
+function startxulsword() {
+  createAppDirectories();
+  window.open('chrome://xulsword/content/xulsword.xul','main-window','chrome,resizable');
+}
+]]>
+  
+</script>
+							
+<menupopup id="menu_ToolsPopup">
+  <menuseparator/>
+  <menuitem label="xulsword..." insertafter="menu_preferences" oncommand="startxulsword();" class="menuitem-iconic" image="chrome://xulsword/skin/icon.png"/>
+</menupopup>
+  
+</overlay>

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #usage build.pl [build_settings.txt]
 
-$Debug_skip_compile = 1;
+$Debug_debug_prefs = 0;  # add debug prefs to all builds (not just the development build)
 
 use File::Spec;
 $TRUNK = File::Spec->rel2abs( __FILE__ );
@@ -36,13 +36,11 @@ if ($OutputDirectory =~ /^\./) {
   $OutputDirectory = File::Spec->rel2abs($OutputDirectory);
 }
 if (!-e $OutputDirectory) {make_path($OutputDirectory);}
-&Log("----> Deleting \"$TRUNK/build-files/$Name\"\n");
-if (-e "$TRUNK/build-files/$Name") {remove_tree("$TRUNK/build-files/$Name");}
-create_path("$TRUNK/build-files/$Name");
+if (!-e "$TRUNK/build-files/$Name") {make_path("$TRUNK/build-files/$Name");}
 $DEVELOPMENT="$TRUNK/build-files/$Name/development";
 $INSTALLER="$TRUNK/build-files/$Name/installer";
 $FFEXTENSION="$TRUNK/build-files/$Name/extension";
-$PORTABLE="$TRUNK/build-files/$Name/portable";
+$PORTABLE="$TRUNK/build-files/$Name/portable/$Name";
 if ("$^O" =~ /MSWin32/i) {$Appdata = `Set APPDATA`; $Appdata =~ s/APPDATA=(.*?)\s*$/$1/i;}
 else {&Log("ERROR: need to assign Linux application directory\n");}
 
@@ -50,6 +48,7 @@ else {&Log("ERROR: need to assign Linux application directory\n");}
 
 if ($MakeDevelopment =~ /true/i) {
   &Log("\n----> BUILDING DEVELOPMENT ENVIRONMENT\n");
+  if (-e $DEVELOPMENT) {remove_tree($DEVELOPMENT);}
   make_path($DEVELOPMENT);
   &compileLibSword($DEVELOPMENT);
   my @manifest;
@@ -57,7 +56,6 @@ if ($MakeDevelopment =~ /true/i) {
   &copyXulRunnerFiles($DEVELOPMENT);
   &writeAllPreferences($DEVELOPMENT, \%Prefs, 1);
   &writeApplicationINI($DEVELOPMENT);
-  &compileStartup($DEVELOPMENT);
   &includeModules($IncludeModules, \@ModRepos, "$Appdata/$Vendor/$Name/Profiles/resources", $IncludeSearchIndexes);
   &writeManifest(\@manifest, $DEVELOPMENT);
   &processLocales($IncludeLocales, "$DEVELOPMENT/defaults", "$Appdata/$Vendor/$Name/Profiles/*.default/extensions");
@@ -65,16 +63,19 @@ if ($MakeDevelopment =~ /true/i) {
 }
 if ($MakeFFextension =~ /true/i) {
   &Log("\n----> BUILDING FIREFOX EXTENSION\n");
+  if (-e $FFEXTENSION) {remove_tree($FFEXTENSION);}
   make_path($FFEXTENSION);
   &compileLibSword($FFEXTENSION);
   my @manifest;
-  &copyExtensionFiles($FFEXTENSION, \@manifest);
+  push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/extension-overlay.xul");
+  &copyExtensionFiles($FFEXTENSION, \@manifest, 0, 1);
   &writeAllPreferences($FFEXTENSION, \%Prefs);
-  &writeFFInstallFiles();
   &writeManifest(\@manifest, $FFEXTENSION);
+  &packageFFExtension($FFEXTENSION, "$OutputDirectory/$Name-Extension-$Version/$Name Extension-$Version.xpi");
 }
 if ($MakePortable =~ /true/i) {
   &Log("\n----> BUILDING PORTABLE VERSION\n");
+  if (-e $PORTABLE) {remove_tree($PORTABLE);}
   make_path("$PORTABLE/$Name");
   make_path("$PORTABLE/resources");
   make_path("$PORTABLE/profile");
@@ -83,21 +84,22 @@ if ($MakePortable =~ /true/i) {
   &copyExtensionFiles("$PORTABLE/$Name", \@manifest);
   &copyXulRunnerFiles("$PORTABLE/$Name");
   &writeAllPreferences("$PORTABLE/$Name", \%Prefs);
-  &writeApplicationINI("$PORTABLE/$Name", 1);
+  &writeApplicationINI("$PORTABLE/$Name", "P");
   &compileStartup($PORTABLE);
-  &includeModules($IncludeModules, \@ModRepos, "$PORTABLE/resoures", $IncludeSearchIndexes);
+  &includeModules($IncludeModules, \@ModRepos, "$PORTABLE/resources", $IncludeSearchIndexes);
   &writeManifest(\@manifest, "$PORTABLE/$Name");
   &processLocales($IncludeLocales, "$PORTABLE/$Name/defaults", "$PORTABLE/profile/extensions");
   open(NIN, ">:encoding(UTF-8)", "$PORTABLE/resources/newInstalls.txt") || die;
   print NIN "NewLocales;en-US\n"; # this opens language menu on first run
   close(NIN);
-  &createPortableZip($PORTABLE, "OutputDirectory/$Name-Portable-$Version/$Name Portable-$Version.zip");
+  &packagePortable($PORTABLE, "$OutputDirectory/$Name-Portable-$Version/$Name Portable-$Version.zip");
   &writeRunScript($Name, $PORTABLE, "port");
 }
 if ($MakeSetup =~ /true/i) {
   if ($Target eq "Windows") {
     if (-e "$XulswordExtras/installer") {
       &Log("\n----> BUILDING SETUP INSTALLER\n");
+      if (-e $INSTALLER) {remove_tree($INSTALLER);}
       make_path($INSTALLER);
       &compileLibSword($INSTALLER);
       my @manifest;
@@ -107,10 +109,12 @@ if ($MakeSetup =~ /true/i) {
       &writeApplicationINI($INSTALLER);
       &compileStartup($INSTALLER);
       if (-e "$Appdata/$Vendor/$Name/Profiles/resources/mods.d") {
-        &Log("----> Deleting \"$Appdata/$Vendor/$Name/Profiles/resources/mods.d\"\n");
+        &Log("----> Deleting ...resources/mods.d\n");
+        remove_tree("$Appdata/$Vendor/$Name/Profiles/resources/mods.d");
       }
       if (-e "$Appdata/$Vendor/$Name/Profiles/resources/modules") {
-        &Log("----> Deleting \"$Appdata/$Vendor/$Name/Profiles/resources/modules\"\n");
+        &Log("----> Deleting ...resources/modules\n");
+        remove_tree("$Appdata/$Vendor/$Name/Profiles/resources/modules");
       }
       &includeModules($IncludeModules, \@ModRepos, "$Appdata/$Vendor/$Name/Profiles/resources", $IncludeSearchIndexes);
       &writeManifest(\@manifest, $INSTALLER);
@@ -119,7 +123,7 @@ if ($MakeSetup =~ /true/i) {
       &writeInstallerAppInfo("$XulswordExtras/installer/autogen/appinfo.iss");
       &writeInstallerLocaleinfo($IncludeLocales, "$XulswordExtras/installer/autogen/localeinfo.iss")
       &writeInstallerModuleUninstall($IncludeModules, $IncludeLocales, "$XulswordExtras/installer/autogen/uninstall.iss", "$Appdata/$Vendor/$Name/Profiles/resources");
-      &createSetupInstaller("$INSTALLER/scriptProduction.iss");
+      &packageSetupInstaller("$XulswordExtras/installer/scriptProduction.iss");
       &writeRunScript($Name, $PORTABLE, "setup");
     }
     else {&Log("ERROR: the Inno Setup 5 installer script is missing.\n");}
@@ -158,35 +162,33 @@ sub writeCompileDeps() {
 sub compileLibSword($) {
   my $do = shift;
   &Log("----> Compiling libsword binary.\n");
-  if (!$CompiledAlready) {
-    if ("$^O" =~ /MSWin32/i && $Target eq "Windows") {
-      if (!$Debug_skip_compile) {
-        if (!-e "$TRUNK/Cpp/cluceneMK/lib/Release/libclucene.lib") {
-          chdir("$TRUNK/Cpp/cluceneMK/lib");
-          `start "cluceneMK" /wait Compile.bat`;
-        }
-        if (!-e "$TRUNK/Cpp/swordMK/lib/Release/libsword.lib") {
-          chdir("$TRUNK/Cpp/swordMK/lib");
-          `start "swordMK" /wait Compile.bat`;
-        }
-        chdir("$TRUNK/Cpp");
-        if ($UseSecurityModule =~ /true/i) {
-          `start "xulsword" /wait Compile.bat`;
-        }
-        else {
-          `start "xulsword" /wait Compile.bat NOSECURITY`;
-        }
-        if (!-e "$TRUNK/Cpp/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n");}
-        elsif (!-e "$do/xulsword.dll") {
-          copy("$TRUNK/Cpp/Release/xulsword.dll", $do);
-          $CompiledAlready = 1;
-        }
-        chdir("$TRUNK/build");
+  if ("$^O" =~ /MSWin32/i && $Target eq "Windows") {
+    if (!$CompiledAlready) {
+      if (!-e "$TRUNK/Cpp/cluceneMK/lib/Release/libclucene.lib") {
+        chdir("$TRUNK/Cpp/cluceneMK/lib");
+        `start "cluceneMK" /wait Compile.bat`;
       }
-      else {copy("$TRUNK/Cpp/Release/xulsword.dll", $do);}
+      if (!-e "$TRUNK/Cpp/swordMK/lib/Release/libsword.lib") {
+        chdir("$TRUNK/Cpp/swordMK/lib");
+        `start "swordMK" /wait Compile.bat`;
+      }
+      chdir("$TRUNK/Cpp");
+      if ($UseSecurityModule =~ /true/i) {
+        `start "xulsword" /wait Compile.bat`;
+      }
+      else {
+        `start "xulsword" /wait Compile.bat NOSECURITY`;
+      }
+      if (!-e "$TRUNK/Cpp/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); return;}
+
+      copy("$TRUNK/Cpp/Release/xulsword.dll", $do);
+      $CompiledAlready = 1;
+
+      chdir("$TRUNK/build");
     }
-    else {&Log("ERROR: Please make and call a compile script for your platform.\n");}
+    else {copy("$TRUNK/Cpp/Release/xulsword.dll", $do);}
   }
+  else {&Log("ERROR: Please make and call a compile script for your platform.\n");}
 }
 
 sub writeAllPreferences($\%$) {
@@ -201,7 +203,7 @@ sub writeAllPreferences($\%$) {
     my $pref = $p;
     if ($pref !~ s/^\((.*?)\)\://) {&Log("ERROR: malformed pref entry \"$pref\"\n"); next;}
     my $fn = $1;
-    if ($fn eq "debug.js" && !$debug) {next;}
+    if (!$Debug_debug_prefs && $fn eq "debug.js" && !$debug) {next;}
     my $pfile = "$do/defaults/pref/$fn";
     my $mode = ($prefFiles{$pfile} ? ">>":">").":encoding(UTF-8)";
     open(PREF, $mode, $pfile) || die "Could not open pref file \"$pfile\"\n";
@@ -218,14 +220,17 @@ sub copyExtensionFiles($\@$) {
   my $do = shift;
   my $manifestP = shift;
   my $makeDevelopment = shift;
+  my $isFFextension = shift;
 
   &Log("----> Copying Firefox extension files.\n");
-  &copy_dir("$TRUNK/xul/extension", $do, "\\.svn", "\\.svn");
+  my $skip = "(\\.svn".($isFFextension ? "":"|install.rdf").")";
+  &copy_dir("$TRUNK/xul/extension", $do, "", $skip);
 
   if ($makeDevelopment) {
     push(@{$manifestP}, "content xulsword file:../../../xul/xulsword/");
     push(@{$manifestP}, "locale xulsword en-US file:../../../xul/en-US.xs/en-US-xulsword/xulsword/");
     push(@{$manifestP}, "skin xulsword skin file:../../../xul/skin/");
+    push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/debug-overlay.xul");
   }
   else {
     push(@{$manifestP}, "content xulsword jar:chrome/xulsword.jar!/");
@@ -237,30 +242,32 @@ sub copyExtensionFiles($\@$) {
     &makeJAR("$do/chrome/en-US.xs.jar", "$TRUNK/xul/en-US.xs/en-US-xulsword");
     &makeJAR("$do/chrome/skin.jar", "$TRUNK/xul/skin");
   }
-  push (@{$manifestP}, "override chrome://global/locale/printPageSetup.dtd chrome://xulsword/locale/printPageSetup.dtd");
-  push (@{$manifestP}, "override chrome://global/content/printPageSetup.xul chrome://xulsword/content/xulrunner/global/printPageSetup.xul");
-  push (@{$manifestP}, "override chrome://global/content/printPreviewBindings.xml chrome://xulsword/content/xulrunner/global/printPreviewBindings.xml");
-  push (@{$manifestP}, "override chrome://global/content/printPreviewProgress.xul chrome://xulsword/content/xulrunner/global/printPreviewProgress.xul");
-  push (@{$manifestP}, "override chrome://global/content/printProgress.xul chrome://xulsword/content/xulrunner/global/printProgress.xul");
-  push (@{$manifestP}, "override chrome://global/content/bindings/tree.xml chrome://xulsword/content/xulrunner/global/bindings/tree.xml");
-  push (@{$manifestP}, "override chrome://mozapps/content/handling/dialog.xul chrome://xulsword/content/xulrunner/mozapps/handling/dialog.xul");
+  if (!$isFFextension) { # don't want to override real Firefox UI!
+    push (@{$manifestP}, "override chrome://global/locale/printPageSetup.dtd chrome://xulsword/locale/printPageSetup.dtd");
+    push (@{$manifestP}, "override chrome://global/content/printPageSetup.xul chrome://xulsword/content/xulrunner/global/printPageSetup.xul");
+    push (@{$manifestP}, "override chrome://global/content/printPreviewBindings.xml chrome://xulsword/content/xulrunner/global/printPreviewBindings.xml");
+    push (@{$manifestP}, "override chrome://global/content/printPreviewProgress.xul chrome://xulsword/content/xulrunner/global/printPreviewProgress.xul");
+    push (@{$manifestP}, "override chrome://global/content/printProgress.xul chrome://xulsword/content/xulrunner/global/printProgress.xul");
+    push (@{$manifestP}, "override chrome://global/content/bindings/tree.xml chrome://xulsword/content/xulrunner/global/bindings/tree.xml");
+    push (@{$manifestP}, "override chrome://mozapps/content/handling/dialog.xul chrome://xulsword/content/xulrunner/mozapps/handling/dialog.xul");
+  }
 }
 
 sub copyXulRunnerFiles($) {
   my $do = shift;
   &Log("----> Copying xulrunner files.\n");
-  copy_dir("$TRUNK/xulrunner", $do, "xulrunner\-stub\.exe", "");
+  copy_dir("$TRUNK/xulrunner", $do, "", "xulrunner\-stub\.exe");
   move("$do/xulrunner.exe", "$do/$Xsprocess");
 }
 
 sub writeApplicationINI($$) {
   my $do = shift;
-  my $isPortable = shift;
+  my $buildTypeID = shift;
 
   &Log("----> Writing application.ini.\n");
   @d = localtime(time);
   $BuildID = sprintf("%02d%02d%02d", ($d[5]%100), ($d[4]+1), $d[3]);
-  if ($isPortable) {$BuildID .= "P";}
+  $BuildID .= $buildTypeID;
   open(INI, ">:encoding(UTF-8)", "$do/application.ini") || die;
   print INI "[App]\n";
   print INI "Vendor=$Vendor\n";
@@ -269,7 +276,9 @@ sub writeApplicationINI($$) {
   print INI "BuildID=$BuildID\n\n";
   print INI "[Gecko]\n";
   print INI "MinVersion=$GeckoMinVersion\n";
-  print INI "MaxVersion=$GeckoMaxVersion\n";
+  print INI "MaxVersion=$GeckoMaxVersion\n\n";
+  print INI "[XRE]\n";
+  print INI "EnableExtensionManager=1\n";
   close(INI);
 }
 
@@ -284,22 +293,24 @@ sub includeModules($\@$$) {
   my $path;
   foreach my $mod (@modules) {
     foreach my $di (@{$repsP}) {
-      #if ($di =~ /\$/) {$di =~ s/\\/\//g; print "HERE-> $di\n"; $di = eval($di);}
       $di =~ s/(\$\w+)/my $e=$1; $e=eval($e)/eg;
       $path = "$di/mods.d/".lc($mod).".conf";
       if (-e $path) {last;}
     }
     if (!-e $path) {&Log("ERROR: could not locate conf for module $mod\n"); next;}
-    if (!$Conf{$mod}{"DataPath"}) {&getInfoFromConf($path);}
-    if (!$Conf{$mod}{"DataPath"}) {&Log("ERROR: could not read conf file $path\n"); next;}
+    undef(%conf);
+    &getInfoFromConf($path, \%conf);
+    if (!$conf{"DataPath"}) {&Log("ERROR: could not read conf file $path\n"); next;}
     my $mpath = $path;
     $mpath =~ s/mods\.d[\\\/][^\\\/]*$//;
-    $mpath .= $Conf{$mod}{"DataPath"};
+    $mpath .= $conf{"DataPath"};
     if (!-e $mpath) {&Log("ERROR: module $mod files not found in $mpath.\n"); next;}
     if ($includeIndexes && !-e "$mpath/lucene") {&Log("ERROR: search index requested but is not available.\n");}
     my $dfilter = ($includeIndexes ? "":"lucene");
-    my $confd = "$do/mods.d/".lc($mod).".conf";
-    my $modfd = "$do/".$Conf{$mod}{"DataPath"};
+    my $confmd = "$do/mods.d";
+    if (!-e $confmd) {make_path($confmd);}
+    my $confd = "$confmd/".lc($mod).".conf";
+    my $modfd = "$do/".$conf{"DataPath"};
     if (-e $confd) {unlink($confd);}
     if ($modfd =~ /modules/ && -e $modfd) {remove_tree($modfd);}
     copy_dir($mpath, $modfd, "", $dfilter);
@@ -329,13 +340,12 @@ sub compileStartup($) {
   if ($do eq $PORTABLE)  {$rd = "runPortable";}
   else {$rd = "runMK";}
 
-  if (!$Debug_skip_compile) {
-    &Log("----> Compiling startup stub.\n");
-    remove_tree("$TRUNK/Cpp/$rd/Release");
-    chdir("$TRUNK/Cpp/$rd");
-    `start "$rd" /wait Compile.bat`;
-    chdir("$TRUNK/build");
-  }
+  &Log("----> Compiling startup stub.\n");
+  remove_tree("$TRUNK/Cpp/$rd/Release");
+  chdir("$TRUNK/Cpp/$rd");
+  `start "$rd" /wait Compile.bat`;
+  chdir("$TRUNK/build");
+
   copy("$TRUNK/Cpp/$rd/Release/$rd.exe", "$do/$Executable");
 }
 
@@ -378,29 +388,17 @@ sub writeInstallerModuleUninstall($$$$) {
   &Log("----> Writing installer uninstall script.\n");
   my $newInstalls = "NewLocales;"; # don't list any locales- language menu should not open after setup install
   $newInstalls .= "NewModules";
-  if ($modules) {$newInstalls .= ";".join(";", @modules);}
+  if (@modules) {$newInstalls .= ";".join(";", @modules);}
 
-  open(OUTF, ">:encopding(UTF-8)", $of) || die;
+  open(OUTF, ">:encoding(UTF-8)", $of) || die;
   print OUTF "SaveStringToFile(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\newInstalls.txt'), '$newInstalls', False);\n";
   foreach my $mod (@modules) {
-    &getInfoFromConf("$md/mods.d/".lc($mod).".conf");
-    print OUTF "DelTree(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\".$Conf{$mod}{"DataPath"}."'), True, True, True);\n";
+    undef(%conf);
+    &getInfoFromConf("$md/mods.d/".lc($mod).".conf", \%conf);
+    print OUTF "DelTree(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\".$conf{"DataPath"}."'), True, True, True);\n";
     print OUTF "DeleteFile(ExpandConstant('{userappdata}\\{#MyPublisher}\\{#MyAppName}\\Profiles\\resources\\mods.d\\".lc($mod).".conf'));\n";
   }
   close(OUTF);
-}
-
-sub createSetupInstaller($) {
-  my $is = shift;
-  my $id = $is;
-  
-  &Log("----> Creating Windows setup installer.\n");
-  
-  $is =~ s/[\\\/][^\\\/]+$//;
-  if (!-e $is) {&Log("ERROR: installer script $is not found.\n"); return;}
-  chdir($id);
-  `"%ProgramFiles%\Inno Setup 5\ISCC.exe" "$is" > "$INSTALLER\autogen\setuplog.txt"`;
-  chdir("$TRUNK/build");
 }
 
 sub writeRunScript($$$) {
@@ -417,14 +415,15 @@ sub writeRunScript($$$) {
     print SCR "#!/usr/bin/perl\n";
     if ($type eq "dev") {
       print SCR "chdir(\"".$DEVELOPMENT."\");\n";
-      print SCR "`$Name.exe -console -jsconsole`;\n";
+      print SCR "`$Name-srv.exe --app application.ini -console -jsconsole`;\n";
     }
     elsif ($type eq "port") {
-      print SCR "`\"$PORTABLE\\$Name.exe\"`;\n";
+      print SCR "chdir(\"".$PORTABLE."\");\n";
+      print SCR "`$Name.exe`;\n";
     }
     elsif ($type eq "setup") {
       &writeWindowsRegistryScript();
-      print SCR "`\"$INSTALLER\\$Name.exe\"`;\n";
+      print SCR "`\"$INSTALLER/$Name.exe\"`;\n";
     }
     close(SCR);
   }
@@ -458,6 +457,50 @@ sub processLocales($$$) {
     copy("$XulswordExtras/localeDev/$loc/$loc.rdf", $rdf);
   }
 }
+
+sub packageSetupInstaller($) {
+  my $is = shift;
+
+  &Log("----> Creating Windows setup installer.\n");
+
+  my $id = $is;
+  $id =~ s/[\\\/][^\\\/]+$//;
+  if (!-e $is) {&Log("ERROR: installer script $is not found.\n"); return;}
+
+  my $resdir = "$OutputDirectory/$Name-Setup-$Version";
+  if (!-e $resdir) {make_path($resdir);}
+
+  chdir($id);
+  `"%ProgramFiles%/Inno Setup 5/ISCC.exe" "$is" > "$resdir/file_log.txt"`;
+  chdir("$TRUNK/build");
+}
+
+sub packagePortable($$) {
+  my $id = shift;
+  my $of = shift;
+  my $od = $of;
+  $od =~ s/[\\\/][^\\\/]+$//;
+  if (!-e $od) {make_path($od);}
+  if ($Target eq "Windows") {
+    &Log("----> Making portable package.\n");
+    unlink($of);
+    `7za a -tzip "$of" -r "$id\*" > "$OutputDirectory/$Name-Portable-$Version/file_log.txt"`;
+  }
+  else {&Log("ERROR: packagePortable not yet implemented on this platform.\n");}
+}
+
+sub packageFFExtension($$) {
+  my $id = shift;
+  my $of = shift;
+  &Log("----> Making extension xpt package.\n");
+  my $od = $of;
+  $od =~ s/[\\\/][^\\\/]+$//;
+  if (!-e $od) {make_path($od);}
+  
+  unlink($of);
+  `7za a -tzip "$of" -r "$id/*" > "$OutputDirectory/$Name-Extension-$Version/file_log.txt"`;
+}
+
 
 sub createLocaleExtension($$) {
   &Log("WARNING: createLocaleExtension is not yet implemented\n");

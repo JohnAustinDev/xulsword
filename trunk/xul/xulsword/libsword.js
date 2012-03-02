@@ -74,13 +74,13 @@ checkerror: function() {
 Libsword:null,
 initSword: function() {
   if (this.Libsword) return;
-  this.Libsword = ctypes.open("xulsword.dll");
-
+  
   var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
-  var resource = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   var prof = directoryService.get("ProfD", Components.interfaces.nsIFile);
-  var re = new RegExp(prof.leafName + "$");
-  resource.initWithPath(prof.path.replace(re, "resources"));
+  
+  var isExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");
+  if (!isExtension) {this.Libsword = ctypes.open("xulsword.dll");}
+  else {this.Libsword = ctypes.open(prof.path + "/extensions/{EC34AE58-63B4-11E1-8AB2-991B4924019B}/xulsword.dll");}
 
   var funcTypeUpperCasePtr = ctypes.FunctionType(ctypes.default_abi, ctypes.PointerType(ctypes.char), [ctypes.ArrayType(ctypes.char)]).ptr;
   this.UpperCasePtr = funcTypeUpperCasePtr(this.UpperCase);
@@ -88,14 +88,15 @@ initSword: function() {
   var funcTypeThrowJSErrorPtr = ctypes.FunctionType(ctypes.default_abi, ctypes.void_t, [ctypes.ArrayType(ctypes.char)]).ptr;
   this.ThrowJSErrorPtr = funcTypeThrowJSErrorPtr(this.ThrowJSError);
 
+  var re = new RegExp(prof.leafName + "$");
   var initSwordEngine = this.Libsword.declare("InitSwordEngine", ctypes.default_abi, ctypes.void_t, ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr);
-  initSwordEngine(ctypes.char.array()(resource.path), this.UpperCasePtr, this.ThrowJSErrorPtr);
+  initSwordEngine(ctypes.char.array()(prof.path.replace(re, "resources")), this.UpperCasePtr, this.ThrowJSErrorPtr);
 },
 
 quitSword: function() {
   if (this.Libsword) {
-    var quitSwordEngine = this.Libsword.declare("QuitSwordEngine", ctypes.default_abi, ctypes.void_t);
-    quitSwordEngine();
+    //var quitSwordEngine = this.Libsword.declare("QuitSwordEngine", ctypes.default_abi, ctypes.void_t);
+    //quitSwordEngine(); # cased crash as FF extension
   }
   this.Libsword.close();
   this.Libsword=null;

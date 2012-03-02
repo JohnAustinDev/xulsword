@@ -4455,7 +4455,7 @@ function saveHTML () {
     file.initWithPath("C:\\");
     file.append("ScriptBox" + i + ".txt");
   
-    if (!file.exists()) {file.create(file.NORMAL_FILE_TYPE);}
+    if (!file.exists()) {file.create(file.NORMAL_FILE_TYPE, FPERM);}
   
     var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
     foStream.init(file, 0x02 | 0x08 | 0x20, -1, 0);

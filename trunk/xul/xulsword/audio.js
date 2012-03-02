@@ -417,7 +417,7 @@ function exportAudio(exportFileFormat) {
   Files = [];
   Index = 0;
   ADestFolder = kFilePicker.file.clone();
-  if (!ADestFolder.exists()) ADestFolder.create(ADestFolder.DIRECTORY_TYPE);
+  if (!ADestFolder.exists()) ADestFolder.create(ADestFolder.DIRECTORY_TYPE, DPERM);
   ExportFileFormat = exportFileFormat;
   jsdump("Beginnig audio export to: " + kFilePicker.file.path);
   var audioDirs = getAudioDirs();
@@ -500,7 +500,7 @@ function exportThisFile(aFile, aDestFolder, localized) {
     }
 
     if (!newFile) {jsdump("Failed to parse audio file name: " + aFile.path); return false;}
-    if (!newFile.parent.exists()) newFile.parent.create(newFile.DIRECTORY_TYPE);
+    if (!newFile.parent.exists()) newFile.parent.create(newFile.DIRECTORY_TYPE, DPERM);
     if (newFile.exists()) newFile.remove(false);
   }
   catch (er) {sdump("ERROR making parent folder for " + aFile.path); return false;}

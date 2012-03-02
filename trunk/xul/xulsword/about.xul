@@ -44,6 +44,7 @@
   <data id="radio.label.book">&radio.label.book;</data>
   <data id="radio.label.dict">&radio.label.dict;</data>
   
+  <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
@@ -73,7 +74,7 @@
       </vbox>
     </stack>
     
-    <iframe id="about" flex="1" hidden="true" style="border:2px solid rgb(77,37,143); -moz-border-radius:8px;" src="chrome://xulsword/content/about.html;"/>
+    <iframe id="about" flex="1" hidden="true" style="border:2px solid rgb(77,37,143); -moz-border-radius:8px;" src="chrome://xulsword/content/about.html"/>
   </vbox>
     
 </window>
