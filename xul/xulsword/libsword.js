@@ -1,4 +1,5 @@
-Components.utils.import("resource://gre/modules/ctypes.jsm");
+// as a ChromeWorker, Components is not available and automatically ctypes is.
+if (typeof ctypes == "undefined") Components.utils.import("resource://gre/modules/ctypes.jsm");
 
 /*
 The following is the list of libsword functions to use with Bible objects.
@@ -72,15 +73,10 @@ checkerror: function() {
 },
 
 Libsword:null,
+ModuleDirectory:null,
+LibswordPath:null,
 initSword: function() {
   if (this.Libsword) return;
-  
-  var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
-  var prof = directoryService.get("ProfD", Components.interfaces.nsIFile);
-  
-  var isExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");
-  if (!isExtension) {this.Libsword = ctypes.open("xulsword.dll");}
-  else {this.Libsword = ctypes.open(prof.path + "/extensions/{EC34AE58-63B4-11E1-8AB2-991B4924019B}/xulsword.dll");}
 
   var funcTypeUpperCasePtr = ctypes.FunctionType(ctypes.default_abi, ctypes.PointerType(ctypes.char), [ctypes.ArrayType(ctypes.char)]).ptr;
   this.UpperCasePtr = funcTypeUpperCasePtr(this.UpperCase);
@@ -88,9 +84,25 @@ initSword: function() {
   var funcTypeThrowJSErrorPtr = ctypes.FunctionType(ctypes.default_abi, ctypes.void_t, [ctypes.ArrayType(ctypes.char)]).ptr;
   this.ThrowJSErrorPtr = funcTypeThrowJSErrorPtr(this.ThrowJSError);
 
-  var re = new RegExp(prof.leafName + "$");
-  var initSwordEngine = this.Libsword.declare("InitSwordEngine", ctypes.default_abi, ctypes.void_t, ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr);
-  initSwordEngine(ctypes.char.array()(prof.path.replace(re, "resources")), this.UpperCasePtr, this.ThrowJSErrorPtr);
+  var funcTypeReportProgressPtr = ctypes.FunctionType(ctypes.default_abi, ctypes.void_t, [ctypes.int]).ptr;
+  this.ReportProgressPtr = funcTypeReportProgressPtr(this.ReportProgress);
+
+  if (!this.ModuleDirectory) {
+    var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
+    this.ModuleDirectory = directoryService.get("ProfD", Components.interfaces.nsIFile).path.replace(/[^\/\\]*$/, "resources");
+  }
+  
+  if (!this.LibswordPath) {
+    var isExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");
+    if (!isExtension) this.LibswordPath = "xulsword.dll";
+    else {
+      this.LibswordPath = directoryService.get("ProfD", Components.interfaces.nsIFile).path + "/extensions/{EC34AE58-63B4-11E1-8AB2-991B4924019B}/xulsword.dll";
+    }
+  }
+  this.Libsword = ctypes.open(this.LibswordPath);
+
+  var initSwordEngine = this.Libsword.declare("InitSwordEngine", ctypes.default_abi, ctypes.void_t, ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
+  initSwordEngine(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
 },
 
 quitSword: function() {
@@ -118,6 +130,10 @@ ThrowJSError: function(charPtr) {
   var aString = charPtr.readString();
   if (aString) ThrowMSG = aString;
   else ThrowMSG = "Uknown libsword exception";
+},
+
+ReportProgress: function(intgr) {
+  if (postMessage) postMessage(intgr);
 },
 
 /*******************************************************************************
@@ -532,18 +548,6 @@ searchIndexBuild: function(modname) {
     this.sib = this.Libsword.declare("SearchIndexBuild", ctypes.default_abi, ctypes.void_t, ctypes.PointerType(ctypes.char));
   this.sib(ctypes.char.array()(modname));
   this.checkerror();
-},
-
-//**************** CHANGED! NEW *************************
-// getPercentComplete
-//Before starting to build a new search index, call "searchIndexDelete()"
-getPercentComplete: function() {
-  if (!this.Libsword) this.init();
-  if (!this.gpc)
-    this.gpc = this.Libsword.declare("GetPercentComplete", ctypes.default_abi, ctypes.int);
-  var intgr = this.gpc();
-  this.checkerror();
-  return intgr;
 },
 
 

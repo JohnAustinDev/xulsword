@@ -166,15 +166,15 @@ sub compileLibSword($) {
     if (!$CompiledAlready) {
       if (!-e "$TRUNK/Cpp/cluceneMK/lib/Release/libclucene.lib") {
         chdir("$TRUNK/Cpp/cluceneMK/lib");
-        `start "cluceneMK" /wait Compile.bat`;
+        `call Compile.bat`;
       }
       if (!-e "$TRUNK/Cpp/swordMK/lib/Release/libsword.lib") {
         chdir("$TRUNK/Cpp/swordMK/lib");
-        `start "swordMK" /wait Compile.bat`;
+        `call Compile.bat`;
       }
       chdir("$TRUNK/Cpp");
       if ($UseSecurityModule =~ /true/i) {
-        `start "xulsword" /wait Compile.bat`;
+        `call Compile.bat`;
       }
       else {
         `start "xulsword" /wait Compile.bat NOSECURITY`;
@@ -343,7 +343,7 @@ sub compileStartup($) {
   &Log("----> Compiling startup stub.\n");
   remove_tree("$TRUNK/Cpp/$rd/Release");
   chdir("$TRUNK/Cpp/$rd");
-  `start "$rd" /wait Compile.bat`;
+  `call Compile.bat`;
   chdir("$TRUNK/build");
 
   copy("$TRUNK/Cpp/$rd/Release/$rd.exe", "$do/$Executable");
@@ -415,7 +415,7 @@ sub writeRunScript($$$) {
     print SCR "#!/usr/bin/perl\n";
     if ($type eq "dev") {
       print SCR "chdir(\"".$DEVELOPMENT."\");\n";
-      print SCR "`$Name-srv.exe --app application.ini -console -jsconsole`;\n";
+      print SCR "`start /wait $Name-srv.exe --app application.ini -jsconsole -console`;\n";
     }
     elsif ($type eq "port") {
       print SCR "chdir(\"".$PORTABLE."\");\n";

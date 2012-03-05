@@ -35,7 +35,7 @@ function initLocales() {
   
   var currentLocale = rootprefs.getCharPref("general.useragent.locale");
   var LocaleDefaultVersionString="";
-  sep = "";
+  var sep = "";
   var currentLocaleIsValid=false;
   for (var lc=0; lc<LocaleList.length; lc++) {
     if (LocaleList[lc] == currentLocale) currentLocaleIsValid=true;

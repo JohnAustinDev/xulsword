@@ -3,7 +3,7 @@
 Set arg2=%2
 if defined arg2 (Set arg1=%arg2%) else Set arg1=%1
 if not defined arg1 Set arg1=dll
-if exist .\Release del /S /Q .\Release
+if exist .\Release rmdir /S /Q .\Release
 mkdir .\Release
 
 set CPPD=Cpp
@@ -17,8 +17,8 @@ set lFiles2=
 call "..\..\versions.bat"
 
 Set cFlags=/nologo /W0 /EHsc /O2^
+ /I "..\..\\"^
  /I "%clucene%\src"^
- /I "..\..\swordMK\src\utilfuns\win32"^
  /I "%sword%\include"^
  /I "%sword%\include\internal\regex"^
  /FI "fileops.h"^
@@ -170,7 +170,6 @@ Set cFiles1=^
  "%sword%\src\modules\filters\utf8nfkd.cpp"^
  "%sword%\src\modules\filters\utf8transliterator.cpp"^
  "%sword%\src\modules\filters\utf8utf16.cpp"^
- "%sword%\src\utilfuns\utilstr.cpp"^
  "%sword%\src\utilfuns\utilxml.cpp"^
  "%sword%\src\keys\versekey.cpp"^
  "%sword%\src\keys\versetreekey.cpp"^
@@ -188,14 +187,15 @@ Set cFiles1=^
 cl.exe %cFlags% %cFiles1%
 
 Set cFiles1=^
- "%sword%\src\mgr\filemgr.cpp"^
  "%sword%\src\mgr\installmgr.cpp"^
  "%sword%\src\mgr\localemgr.cpp"^
  "%sword%\src\mgr\markupfiltmgr.cpp"^
  "%sword%\src\mgr\swmgr.cpp"^
  "%sword%\src\mgr\versemgr.cpp"^
  "%sword%\src\utilfuns\zlib\untgz.c"^
- "%sword%\src\mgr\stringmgr.cpp"
+ "%sword%\src\mgr\stringmgr.cpp"^
+ "..\..\swordMK\utilstr.cpp"^
+ "..\..\swordMK\filemgr.cpp"
  
 cl.exe %cFlags% %cFiles1%
 
@@ -359,4 +359,3 @@ Set lFiles2=^
 
 link.exe -lib %lFlags% %lFiles1% %lFiles2%
 
-exit

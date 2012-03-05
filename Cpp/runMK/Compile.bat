@@ -21,5 +21,3 @@ rc.exe /l 0x409 /fo".\Release\runMK.res" ".\runMK.rc"
 cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
 mt.exe -manifest "Release\runMK.exe.intermediate.manifest" -outputresource:"Release\runMK.exe";1
-
-exit
