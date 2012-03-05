@@ -30,10 +30,12 @@ int   wn_open(const char *path, int mode, int perms);
 int   wn_access(const char *path, int mode);
 long  wn_findfirst(const char *name, struct _wfinddata_t *fileinfo);
 int   wn_mkdir(char *dirname );
+FILE *wn_fdopen(int fd, const char *mode);
 FILE *wn_fopen(const char *file, const char *mode);
 int   wn_rename(const char *from, const char *to);
 char *wn_fullpath(char *absPath, const char *relPath, size_t maxlen);
-int   wn_stat64(const char *file, struct __stat64 * fileinfo);
+int   wn_stat64(const char *file, struct _stat64 * fileinfo);
+int   wn_stati64(const char *path, struct _stati64 *buffer);
 int   wn_unlink(const char * file);
 const char *wn_getenv(const char *varname);
 

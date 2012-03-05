@@ -61,7 +61,7 @@
 <data id="savingTarget">&savingTarget;</data>
 <data id="localeDir">&locale.dir;</data>
 
-<script>MainWindow = window;</script>
+<script>var MainWindow = window;</script>
 <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>  
 <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>

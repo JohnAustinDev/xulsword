@@ -21,5 +21,3 @@ rc.exe /l 0x409 /fo".\Release\runPortable.res" ".\runPortable.rc"
 cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
 mt.exe -manifest "Release\runPortable.exe.intermediate.manifest" -outputresource:"Release\runPortable.exe";1
-
-exit

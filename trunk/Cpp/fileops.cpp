@@ -19,8 +19,7 @@
 */
 
 #include <windows.h>
-#include <fileops.h>
-#include <utilstr.h>
+#include "fileops.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <io.h> // for _wopen
@@ -28,8 +27,6 @@
 #include <share.h> // for _SH_DENYNO
 
 #define CL_MAX_PATH 260
-
-using namespace sword;
 
 int wn_open(const char *path, int mode, int perms)
 {
@@ -40,7 +37,6 @@ int wn_open(const char *path, int mode, int perms)
 
 int wn_access(const char *path, int mode)
 {
-
   wchar_t utf16[CL_MAX_PATH];
   MultiByteToWideChar(CP_UTF8, 0, path, -1, utf16, CL_MAX_PATH);
   return _waccess(utf16, mode);
@@ -58,6 +54,13 @@ int wn_mkdir(char *dirname )
   wchar_t utf16[CL_MAX_PATH];
   MultiByteToWideChar(CP_UTF8, 0, dirname, -1, utf16, CL_MAX_PATH);
   return _wmkdir(utf16);
+}
+
+FILE *wn_fdopen(int fd, const char *mode)
+{
+  wchar_t utf16[CL_MAX_PATH];
+  MultiByteToWideChar(CP_UTF8, 0, mode, -1, utf16, CL_MAX_PATH);
+  return _wfdopen(fd, utf16);
 }
 
 FILE *wn_fopen(const char *file, const char *mode)
@@ -80,21 +83,29 @@ int wn_rename(const char *from, const char *to)
 
 char *wn_fullpath(char *absPath, const char *relPath, size_t maxlen)
 {
-  SWBuf utf8 = relPath;
-  SWBuf utf16 = utf8ToWChar(utf8.c_str());
+  wchar_t utf16[CL_MAX_PATH];
+  MultiByteToWideChar(CP_UTF8, 0, relPath, -1, utf16, CL_MAX_PATH);
   wchar_t * buff16 = NULL;
-  SWBuf absPath16 = (char *)_wfullpath(buff16, (wchar_t *)utf16.c_str(), maxlen);
-  utf8 = wcharToUTF8((wchar_t *)absPath16.c_str());
+  _wfullpath(buff16, utf16, maxlen);
+  char buff8[CL_MAX_PATH];
+  WideCharToMultiByte(CP_UTF8, 0, buff16, -1, buff8, CL_MAX_PATH, NULL, NULL);
   delete buff16;
-  strcpy(absPath, utf8.c_str());
+  strcpy(absPath, buff8);
   return absPath;
 }
 
-int wn_stat64(const char *file, struct __stat64 *fileinfo)
+int wn_stat64(const char *file, struct _stat64 *fileinfo)
 {
   wchar_t utf16[CL_MAX_PATH];
   MultiByteToWideChar(CP_UTF8, 0, file, -1, utf16, CL_MAX_PATH);
   return _wstat64(utf16, fileinfo);
+}
+
+int wn_stati64(const char *path, struct _stati64 *buffer)
+{
+  wchar_t utf16[CL_MAX_PATH];
+  MultiByteToWideChar(CP_UTF8, 0, path, -1, utf16, CL_MAX_PATH);
+  return _wstati64(utf16, buffer);
 }
 
 int wn_unlink(const char * file)
@@ -109,8 +120,11 @@ const char *wn_getenv(const char *varname)
   wchar_t utf16[CL_MAX_PATH];
   MultiByteToWideChar(CP_UTF8, 0, varname, -1, utf16, CL_MAX_PATH);
   char utf8[CL_MAX_PATH];
-  WideCharToMultiByte(CP_UTF8, 0, _wgetenv(utf16), -1, utf8, CL_MAX_PATH, NULL, NULL);
+  wchar_t *result = _wgetenv(utf16);
+  if (!result) return NULL;
+  WideCharToMultiByte(CP_UTF8, 0, result, -1, utf8, CL_MAX_PATH, NULL, NULL);
   const char *retval = utf8;
   return retval;
 }
+
 

@@ -394,7 +394,8 @@ function searchBible() {
           DLGINFO,
           DLGOK);
       prefs.setBoolPref("dontAskAboutSearchIndex" + SearchedVersion, true);
-      startIndexer(true);
+      SearchAfterIndexed = true;
+      startIndexer();
       return;
     }
   }
@@ -683,68 +684,65 @@ function searchBook() {
   //SearchBoxElement.innerHTML = sText + " " + sScope + " " + sType + " " + sFlags;
 }
 
-/*
-function startIndexer(searchWhenDone) {
+var Indexer;
+var IndexerInProgress;
+function indexerError(event) {throw event.data;}
+
+function indexerProgress(event) {
+  document.getElementById("progress").value = event.data;
+  if (event.data >= 100) {
+    // copy new index back to module
+    endIndexer();
+  }
+}
+
+function startIndexer() {
   document.getElementById("progressbox").style.visibility="visible";
   document.getElementById("progress").value=0;
   document.getElementById("searchmsg").value = SBundle.getString("BuildingIndex");
   document.getElementById("stopButton").hidden = true;
-  Bible.searchIndexDelete(prefs.getCharPref("SearchVersion"));
-  Bible.searchIndexBuild(prefs.getCharPref("SearchVersion"));
+  
+  var modname = prefs.getCharPref("SearchVersion");
+  try {var mykey = getPrefOrCreate("CipherKey" + modname, "Char", prefs.getCharPref("DefaultCK"));}
+  catch (er) {mykey="0";}
+  
+  // delete existing module index and copy module to temp dir to create a new one there
+  if (!Indexer) {
+    Indexer = ChromeWorker("chrome://xulsword/content/indexer.js");
+    Indexer.onerror = indexerError;
+    Indexer.onmessage = indexerProgress;
+  }
+  Bible.searchIndexDelete(modname);
+  
+/*
+  var modpath = readParamFromConf(conf:Tab[modname].conf, "DataPath");
+  modpath = modpath.replace(/[\/\\][^\/\\]*$/, "");
+  modpath = modpath.replace(/^\.[\/\\]/, "");
+  modpath = data.conf.path.replace(/mods\.d[\/\\][^\/\\]*$/, modpath);
+  var module = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+  module.initWithPath(modpath);
+*/
+
+  //try {
+    Indexer.postMessage({modname:modname, moddir:Bible.ModuleDirectory, libpath:Bible.LibswordPath, cipherkey:null, usesecurity:false});
+    IndexerInProgress = modname;
+  /*}
+  catch(er) {
+    jsdump("Failed to start index builder for " + prefs.getCharPref("SearchVersion") + ".");
+    endIndexer();
+  }*/
+}
+
+var SearchAfterIndexed;
+function endIndexer() {
+  IndexerInProgress = null;
   document.getElementById("progressbox").style.visibility="hidden";
   document.getElementById("progress").value=0;
   document.getElementById("searchmsg").value = "";
   document.getElementById("stopButton").hidden = true;
   updateSearchWindow();
   updateSortBy();
-  //if (searchWhenDone) searchBible();
-}
-*/
-
-var BuildIndexerTM;
-function startIndexer(searchWhenDone) {
-  document.getElementById("progressbox").style.visibility="visible";
-  document.getElementById("progress").value=0;
-  document.getElementById("searchmsg").value = SBundle.getString("BuildingIndex");
-  document.getElementById("stopButton").hidden = true;
-  Bible.searchIndexDelete(prefs.getCharPref("SearchVersion"));
-  TotalTime = 0;
-  PercentComplete = 1;
-  IndexerStopped = false;
-  BuildIndexerTM = window.setTimeout("buildIndexer(" + searchWhenDone + ");",0);
-}
-
-var TotalTime;
-var PercentComplete;
-var IndexerStopped;
-function buildIndexer(searchWhenDone) {
-  if (IndexerStopped) {
-    Bible.searchIndexDelete(prefs.getCharPref("SearchVersion"));
-    PercentComplete = -1;
-  }
-  else {
-    // There is a significant time hit (likely this is especially so when writing to portable drives) for each pass at the indexer.
-    const numberOfTicks = 10;
-    const minWait = 1;
-    const maxWait = 15;
-    var waitTime = Math.round(TotalTime*100/(PercentComplete*numberOfTicks));
-    if (waitTime < minWait) waitTime = minWait;
-    else if (waitTime > maxWait) waitTime = maxWait;
-    PercentComplete = Bible.searchIndexBuild(prefs.getCharPref("SearchVersion"), waitTime);
-    TotalTime += waitTime;
-    document.getElementById("progress").value = PercentComplete;
-  }
-
-  if (PercentComplete != -1) {BuildIndexerTM = window.setTimeout("buildIndexer(" + searchWhenDone + ");",0);}
-  else {
-    document.getElementById("progressbox").style.visibility="hidden";
-    document.getElementById("progress").value=0;
-    document.getElementById("searchmsg").value = "";
-    document.getElementById("stopButton").hidden = true;
-    updateSearchWindow();
-    updateSortBy();
-    if (!IndexerStopped && searchWhenDone) searchBible();
-  }
+  if (SearchAfterIndexed) searchBible();
 }
 
 var SearchHelpWindow;
@@ -835,8 +833,8 @@ function clickHandler(e) {
     document.getElementById("searchmsg").value = "";
     document.getElementById("stopButton").hidden = true;
     document.getElementById("progress").value = 0;
-    IndexerStopped = true;
-    startIndexer(false);
+    SearchAfterIndexed = false;
+    startIndexer();
     break;
     
   case "question":
@@ -854,7 +852,6 @@ function stopSearch() {
   document.getElementById("searchmsg").value = "";
   document.getElementById("stopButton").hidden = true;
   document.getElementById("progress").value = 0;
-  IndexerStopped = true;
   Searching=false;
 }
 
@@ -901,9 +898,9 @@ function mouseHandler(e) {
 }
 
 function unloadSearchWindow() {
-  if (PercentComplete && PercentComplete<100) {
-    window.clearTimeout(BuildIndexerTM);
-    Bible.searchIndexDelete(prefs.getCharPref("SearchVersion"));
+  if (IndexerInProgress) {
+    if (Indexer) {Indexer.terminate();}
+    Bible.searchIndexDelete(IndexerInProgress);
   }
   window.controllers.removeController(XulswordSearchController);
   window.controllers.removeController(BookmarksMenuController);

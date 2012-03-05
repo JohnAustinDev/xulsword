@@ -369,17 +369,9 @@ int FileMgr::createParent(const char *pName) {
 	buf[end] = 0;
 	if (strlen(buf)>0) {
 		if (access(buf, 02)) {  // not exists with write access?
-			if ((retCode = mkdir(buf
-#ifndef WIN32
-					, 0755
-#endif
-					))) {
+			if ((retCode = mkdir(buf))) {
 				createParent(buf);
-				retCode = mkdir(buf
-#ifndef WIN32
-					, 0755
-#endif
-					);
+				retCode = mkdir(buf);
 			}
 		}
 	}
@@ -498,7 +490,7 @@ char FileMgr::getLine(FileDesc *fDesc, SWBuf &line) {
 
 
 char FileMgr::isDirectory(const char *path) {
-	struct stat stats;
+	struct __stat64 stats;
 	if (stat(path, &stats))
 		return 0;
 	return ((stats.st_mode & S_IFDIR) == S_IFDIR);

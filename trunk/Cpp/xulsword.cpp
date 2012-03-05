@@ -102,6 +102,7 @@ Javascript callback functions
 *********************************************************************/
 static char *(*ToUpperCase)(char *) = NULL;
 static void (*ThrowJS)(char *) = NULL;
+static void (*ReportProgress)(int) = NULL;
 
 
 /********************************************************************
@@ -176,10 +177,11 @@ VerseMgr *MyVerseMgr;
 
 
 /********************************************************************
-percentComplete
+savePercentComplete
 *********************************************************************/
-static char percentComplete = 0;
-static void savePercentComplete(char percent, void *userData) {percentComplete = percent;}
+static void savePercentComplete(char percent, void *userData) {
+  ReportProgress((int)percent);
+}
 
 
 /********************************************************************
@@ -407,10 +409,13 @@ void mapVersifications(VerseKey *vkin, VerseKey *vkout) {
 /********************************************************************
 InitSwordEngine()
 *********************************************************************/
-DLLEXPORT void InitSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(char *))
+DLLEXPORT void InitSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(char *), void (*reportProgress)(int))
 {
+  SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
+  
   if (toUpperCase) {ToUpperCase = toUpperCase;}
   if (throwJS) {ThrowJS = throwJS;}
+  if (reportProgress) {ReportProgress = reportProgress;}
 
   MyVerseMgr = VerseMgr::getSystemVerseMgr();
   MyVerseMgr->registerVersificationSystem("Synodal0", otbooks_synodal0, ntbooks_synodal0, vm_synodal0);
@@ -420,14 +425,13 @@ DLLEXPORT void InitSwordEngine(char *path, char *(*toUpperCase)(char *), void (*
   MyMarkupFilterMgr = new MarkupFilterMgrXS();
 
   MyManager = 0;
-  MyManager = new SWMgrXS(path, true, (MarkupFilterMgr *)MyMarkupFilterMgr, false);
 
-  if (!MyManager) {MyManager = new SWMgrXS((MarkupFilterMgr *)MyMarkupFilterMgr, false);}
+  MyManager = new SWMgrXS(path, true, (MarkupFilterMgr *)MyMarkupFilterMgr, true, true);
+
+  if (!MyManager) {MyManager = new SWMgrXS((MarkupFilterMgr *)MyMarkupFilterMgr, true);}
   
   MyStringMgr = new StringMgrXS();
   StringMgr::setSystemStringMgr(MyStringMgr);
-
-  SWLog::getSystemLog()->setLogLevel(0); // set SWORD log reporting... 5 is all stuff
 }
 
 
@@ -1541,17 +1545,10 @@ DLLEXPORT void SearchIndexBuild(const char *mod) {
   SWModule * module = MyManager->getModule(mod);
   if (module) {
     if (module->hasSearchFramework()) {
-      percentComplete = 0;
       module->createSearchFramework(&savePercentComplete);
     }
   }
 }
-
-
-/********************************************************************
-GetPercentComplete
-*********************************************************************/
-DLLEXPORT int GetPercentComplete() {return (int)percentComplete;}
 
 
 /********************************************************************
