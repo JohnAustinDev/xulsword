@@ -90,14 +90,8 @@ function loadSearchWindow() {
 
 var NumberOfShortType = {};
 function postWindowInit() {
-  //Make sure we have a Bible (if last window was aborted a Bible may not be available)
-  if (!Bible) {
-    Bible = Components.classes["@xulsword.com/xulsword/xulsword;1"].createInstance(Components.interfaces.ixulsword);
-    mlist = Bible.getModuleList();
-    if (mlist == "No Modules" || mlist.search(BIBLE)==-1) Bible=null;
-  }
   //Create the search language radio buttons
-  for (shortType in SupportedModuleTypes) {NumberOfShortType[shortType] = 0;}
+  for (var shortType in SupportedModuleTypes) {NumberOfShortType[shortType] = 0;}
   for (var t=0; t<Tabs.length; t++) {
     if (Tabs[t].isOrigTab) continue;
     var isShowing = false;
@@ -394,8 +388,7 @@ function searchBible() {
           DLGINFO,
           DLGOK);
       prefs.setBoolPref("dontAskAboutSearchIndex" + SearchedVersion, true);
-      SearchAfterIndexed = true;
-      startIndexer();
+      startIndexer(true)
       return;
     }
   }
@@ -684,67 +677,6 @@ function searchBook() {
   //SearchBoxElement.innerHTML = sText + " " + sScope + " " + sType + " " + sFlags;
 }
 
-var Indexer;
-var IndexerInProgress;
-function indexerError(event) {throw event.data;}
-
-function indexerProgress(event) {
-  document.getElementById("progress").value = event.data;
-  if (event.data >= 100) {
-    // copy new index back to module
-    endIndexer();
-  }
-}
-
-function startIndexer() {
-  document.getElementById("progressbox").style.visibility="visible";
-  document.getElementById("progress").value=0;
-  document.getElementById("searchmsg").value = SBundle.getString("BuildingIndex");
-  document.getElementById("stopButton").hidden = true;
-  
-  var modname = prefs.getCharPref("SearchVersion");
-  try {var mykey = getPrefOrCreate("CipherKey" + modname, "Char", prefs.getCharPref("DefaultCK"));}
-  catch (er) {mykey="0";}
-  
-  // delete existing module index and copy module to temp dir to create a new one there
-  if (!Indexer) {
-    Indexer = ChromeWorker("chrome://xulsword/content/indexer.js");
-    Indexer.onerror = indexerError;
-    Indexer.onmessage = indexerProgress;
-  }
-  Bible.searchIndexDelete(modname);
-  
-/*
-  var modpath = readParamFromConf(conf:Tab[modname].conf, "DataPath");
-  modpath = modpath.replace(/[\/\\][^\/\\]*$/, "");
-  modpath = modpath.replace(/^\.[\/\\]/, "");
-  modpath = data.conf.path.replace(/mods\.d[\/\\][^\/\\]*$/, modpath);
-  var module = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  module.initWithPath(modpath);
-*/
-
-  //try {
-    Indexer.postMessage({modname:modname, moddir:Bible.ModuleDirectory, libpath:Bible.LibswordPath, cipherkey:null, usesecurity:false});
-    IndexerInProgress = modname;
-  /*}
-  catch(er) {
-    jsdump("Failed to start index builder for " + prefs.getCharPref("SearchVersion") + ".");
-    endIndexer();
-  }*/
-}
-
-var SearchAfterIndexed;
-function endIndexer() {
-  IndexerInProgress = null;
-  document.getElementById("progressbox").style.visibility="hidden";
-  document.getElementById("progress").value=0;
-  document.getElementById("searchmsg").value = "";
-  document.getElementById("stopButton").hidden = true;
-  updateSearchWindow();
-  updateSortBy();
-  if (SearchAfterIndexed) searchBible();
-}
-
 var SearchHelpWindow;
 function clickHandler(e) {
   var myId;
@@ -833,8 +765,7 @@ function clickHandler(e) {
     document.getElementById("searchmsg").value = "";
     document.getElementById("stopButton").hidden = true;
     document.getElementById("progress").value = 0;
-    SearchAfterIndexed = false;
-    startIndexer();
+    startIndexer(false)
     break;
     
   case "question":
@@ -898,10 +829,6 @@ function mouseHandler(e) {
 }
 
 function unloadSearchWindow() {
-  if (IndexerInProgress) {
-    if (Indexer) {Indexer.terminate();}
-    Bible.searchIndexDelete(IndexerInProgress);
-  }
   window.controllers.removeController(XulswordSearchController);
   window.controllers.removeController(BookmarksMenuController);
   try {SearchHelpWindow.close();} catch(er) {}
@@ -1035,6 +962,58 @@ function getSearchWindowSelection() {
 
 function SearchContextMenuHidden(aEvent) {
   var TargLink = "";
+}
+
+
+/************************************************************************
+ * Indexer
+ ***********************************************************************/
+
+var SearchAfterCreate;
+function startIndexer(searchAfterCreate) {
+  allWindowsModal(true);
+  SearchAfterCreate = searchAfterCreate;
+  document.getElementById("progressbox").style.visibility="visible";
+  document.getElementById("progress").value=0;
+  document.getElementById("searchmsg").value = SBundle.getString("BuildingIndex");
+  document.getElementById("stopButton").hidden = true;
+  Indexer.create();
+}
+
+function indexerFinished() {
+  document.getElementById("progressbox").style.visibility="hidden";
+  document.getElementById("progress").value=0;
+  document.getElementById("searchmsg").value = "";
+  document.getElementById("stopButton").hidden = true;
+  updateSearchWindow();
+  updateSortBy();
+  allWindowsModal(false);
+  if (SearchAfterCreate) searchBible();
+}
+
+function allWindowsModal(setModal) {
+  for (var i=0; i<MainWindow.SearchWins.length; i++) {
+    windowModal(MainWindow.SearchWins[i], setModal);
+  }
+  if (MainWindow.ManagerWindow)
+    windowModal(MainWindow.ManagerWindow, setModal);
+  windowModal(MainWindow, setModal);
+}
+
+var stopevent = function(event) {event.stopPropagation(); event.preventDefault();}
+function windowModal(win, setModal) {
+  var events = ["click", "mouseover", "mouseout", "mousemove", "mousedown",
+            "mouseup", "dblclick", "select", "keydown", "keypress", "keyup"];
+  if (setModal) {
+    for (var i=0; i<events.length; i++){
+      win.addEventListener(events[i], stopevent, true);
+    }
+  }
+  else {
+    for (var i=0; i<events.length; i++){
+      win.removeEventListener(events[i], stopevent, true);
+    }
+  }
 }
 
 /************************************************************************

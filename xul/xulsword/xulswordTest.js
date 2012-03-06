@@ -246,4 +246,4 @@ jsdump("getAllDictionaryKeys=" + Bible.getAllDictionaryKeys("UZDOT"));
 jsdump("getGenBookTableOfContents=" + Bible.getGenBookTableOfContents("Pilgrim"));
 jsdump("getGenBookChapterText=" + Bible.getGenBookChapterText("Pilgrim", "/Pilgrim/PART II/PREFACE"));
 
-Bible.quitSword();
+Bible.quitLibsword();

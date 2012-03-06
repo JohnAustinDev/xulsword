@@ -26,29 +26,32 @@
 ]>
 
 <window id="work-progress" xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-  onload="Load()"
+  onload="Load();"
+  onunload="if (OnUnload) OnUnload();"
   style="border:2px solid rgb(200,170,205); background-image: url(chrome://xulsword/skin/images/9.gif);">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/indexer.js"/>
   <script>
   
-  var RetVal = window.arguments[0];
+  var UserObj = window.arguments[0];
   var Title = window.arguments[1];
   var Label = window.arguments[2];
   var Type = window.arguments[3];
   var OnCancel = window.arguments[4];
+  var OnUnload = window.arguments[5];
     
   var Progress, LabelElem, ButtonElem;
 
-  
   function Load() {
     updateCSSBasedOnCurrentLocale(["#work-progress", "label, button, progressmeter"],0);
     document.title = fixWindowTitle(Title);
     
-    RetVal.ok=false;
+    UserObj.ok=false;
+
     Progress = document.getElementById("progress");
     LabelElem = document.getElementById("label");
     ButtonElem = document.getElementById("stop");
@@ -65,6 +68,8 @@
   
     window.setTimeout("sizeToContent()", 0);
     window.setTimeout("finishedLoading()", 0);
+    
+    if (UserObj.afterload) window.setTimeout(UserObj.afterload, 1);
   }
   
   function finishedLoading() {

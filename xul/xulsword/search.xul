@@ -54,6 +54,7 @@
 <script src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
 <script src="chrome://xulsword/content/bookmarks/bookmarksTop.js"/>
 <script src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
+<script src="chrome://xulsword/content/indexer.js"/>
 <script src="chrome://xulsword/content/search.js"/>
 
 <keyset>

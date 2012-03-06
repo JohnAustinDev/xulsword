@@ -373,15 +373,15 @@ function parseLocation(loc2parse) {
   var m; //used for debugging only
   var has1chap;
   var shft;                                                   // book=1, chap=2, verse=3, lastVerse=4                          
-  var parsed = /([^:-]+)\s+(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/(loc2parse);           shft=0; m=0; has1chap=false;  // book 1:2-3
-  if (parsed==null) {parsed = /([^:-]+)\s+(\d+)\s*:\s*(\d+)/(loc2parse);        shft=0; m=1; has1chap=false;} // book 4:5
-  if (parsed==null) {parsed = /([^:-]+)\s+(\d+)/(loc2parse);                    shft=0; m=2; has1chap=false;} // book 6
-  if (parsed==null) {parsed = /([^:-]+)\s+[v|V].*(\d+)/(loc2parse);             shft=0; m=3; has1chap=true;}  // book v6 THIS VARIES WITH LOCALE!!!
-  if (parsed==null) {parsed = /^(\d+)$/(loc2parse);                             shft=2; m=4; has1chap=false;} // 6
-  if (parsed==null) {parsed = /(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/(loc2parse);       shft=1; m=5; has1chap=false;} // 1:2-3
-  if (parsed==null) {parsed = /(\d+)\s*:\s*(\d+)/(loc2parse);                   shft=1; m=6; has1chap=false;} // 4:5
-  if (parsed==null) {parsed = /(\d+)\s*-\s*(\d+)/(loc2parse);                   shft=2; m=7; has1chap=false;} // 4-5
-  if (parsed==null) {parsed = /^(.*?)$/(loc2parse);                             shft=0; m=8; has1chap=false;} // book
+  var parsed = loc2parse.match(/([^:-]+)\s+(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/);           shft=0; m=0; has1chap=false;  // book 1:2-3
+  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+(\d+)\s*:\s*(\d+)/);        shft=0; m=1; has1chap=false;} // book 4:5
+  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+(\d+)/);                    shft=0; m=2; has1chap=false;} // book 6
+  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+[v|V].*(\d+)/);             shft=0; m=3; has1chap=true;}  // book v6 THIS VARIES WITH LOCALE!!!
+  if (parsed==null) {parsed = loc2parse.match(/^(\d+)$/);                             shft=2; m=4; has1chap=false;} // 6
+  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/);       shft=1; m=5; has1chap=false;} // 1:2-3
+  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*:\s*(\d+)/);                   shft=1; m=6; has1chap=false;} // 4:5
+  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*-\s*(\d+)/);                   shft=2; m=7; has1chap=false;} // 4-5
+  if (parsed==null) {parsed = loc2parse.match(/^(.*?)$/);                             shft=0; m=8; has1chap=false;} // book
 //jsdump("parsed:" + parsed + " match type:" + m + "\n");
   
   if (parsed) {
@@ -488,7 +488,7 @@ function getBookNameParts(bname) {
   var name="";
   var sp = "";
   for (var p=0; p<parts.length; p++) {
-    var fnum = /(\d+)/(parts[p]);
+    var fnum = parts[p].match(/(\d+)/);
     if (fnum) {
       var number = Number(fnum[1]);
       if (parts.length==1) {name=parts[p].replace(String(number),"");}

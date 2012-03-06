@@ -15,6 +15,7 @@
  *
  */
 
+#include <windows.h>
 #include <utilstr.h>
 #include <ctype.h>
 #include <string.h>

@@ -179,7 +179,7 @@ sub compileLibSword($) {
       else {
         `start "xulsword" /wait Compile.bat NOSECURITY`;
       }
-      if (!-e "$TRUNK/Cpp/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); return;}
+      if (!-e "$TRUNK/Cpp/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); die;}
 
       copy("$TRUNK/Cpp/Release/xulsword.dll", $do);
       $CompiledAlready = 1;

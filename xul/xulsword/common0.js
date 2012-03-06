@@ -62,6 +62,10 @@ const TYPES = {Texts: "text", Comms: "comm", Dicts: "dict", Genbks: "book"};
 const TOOLTIP_LEN=96;
 const MODSD="mods.d", MODS="modules", CHROME="chrome", FONTS="fonts", AUDIO="audio", AUDIOPLUGIN="QuickTime Plugin", BOOKMARKS="bookmarks", VIDEO="video";
 const MANIFEST_EXT=".manifest", CONF_EXT=".conf";
+const PMSTD="centerscreen, dependent";
+const PMSPLASH="alwaysRaised,centerscreen";
+const PMMODAL="alwaysRaised,centerscreen,modal";
+const PMNORMAL=0, PMSTOP=1;
 // scrolling
 const SCROLLTYPENONE = 0;         // don't scroll (for links this becomes SCROLLTYPECENTER)
 const SCROLLTYPETOP = 1           // scroll to top
