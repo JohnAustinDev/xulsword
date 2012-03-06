@@ -46,7 +46,7 @@
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#">
-
+    
 <data id="print.printpassage">&print.printpassage;</data>
 <data id="menu.copypassage">&menu.copypassage;</data>
 <data id="history.back.label">&history.back.label;</data>
@@ -63,7 +63,7 @@
 
 <script>var MainWindow = window;</script>
 <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>  
+<script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
 <script>moduleInstall(true)</script>
@@ -73,10 +73,9 @@
 <script type="application/x-javascript" src="chrome://global/content/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
+<!-- mainWindowInit.js invokes the Bible object for the first time. !-->
 <script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
-
-<!-- invoke the Bible object for the first time and init. !-->
-<script>var mlist=Bible.getModuleList(); if (mlist=="No Modules" || mlist.search(BIBLE)==-1) {Bible=null;} else {unlockAllModules(Bible, true);}</script>
+<script>if (!Bible.unlock()) Bible=null;</script>
 <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>

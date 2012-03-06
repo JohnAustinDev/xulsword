@@ -4289,7 +4289,7 @@ function unloadXUL() {
     for (var i=0; i<History.length; i++) {newhist += History[i] + HistoryDelimeter;}
     prefs.setCharPref("History",newhist);
     prefs.setIntPref("HistoryIndex",Historyi);
-
+    Bible.quitLibsword();
   }
   
   //Purge UserData data source
