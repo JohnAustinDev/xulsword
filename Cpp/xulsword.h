@@ -24,6 +24,19 @@
 #include "markupfiltmgr.h"
 #include "stringmgr.h"
 #include "swconfig.h"
+#include "swmodule.h"
+#include "ztext.h"
+#include "rawtext.h"
+#include "rawtext4.h"
+#include "zcom.h"
+#include "rawcom.h"
+#include "rawcom4.h"
+#include "zld.h"
+#include "rawld.h"
+#include "rawld4.h"
+#include "rawgenbook.h"
+#include "rawfiles.h"
+#include "hrefcom.h"
 
 #ifndef NOSECURITY
    #include "security.h"
@@ -34,7 +47,7 @@ SWORD_NAMESPACE_START
 /********************************************************************
 CUSTOM DERIVATIVE CLASSES
 *********************************************************************/
-
+//SWMgrXS - to over-ride modules and how they are loaded
 class SWMgrXS : public SWMgr {
   public:
     SWMgrXS(const char *iConfigPath, bool autoload = true, SWFilterMgr *filterMgr = 0, bool multiMod = false, bool augmentHome = true);
@@ -46,7 +59,7 @@ class SWMgrXS : public SWMgr {
     bool augmentHome; // was private in SWMgr...
 };
 
-
+//StringMgrXS - to over-ride broken toUpperCase
 class StringMgrXS : public StringMgr {
   public:
   StringMgrXS::StringMgrXS(char *(*toUpperCase)(char *));
@@ -54,11 +67,13 @@ class StringMgrXS : public StringMgr {
   char *(*ToUpperCase)(char *);
 };
 
+//MarkupFilterMgrXS - to implement xulsword's own OSIS markup filters
 class MarkupFilterMgrXS : MarkupFilterMgr {
   public:
     MarkupFilterMgrXS();
     ~MarkupFilterMgrXS();
 };
+
 
 SWORD_NAMESPACE_END
 

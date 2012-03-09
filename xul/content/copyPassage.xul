@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of xulSword.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    xulSword is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    xulSword is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+
+<!DOCTYPE window [
+<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
+%xulswordDTD;
+<!ENTITY % printdialogDTD SYSTEM "chrome://xulsword/locale/xulrunner/globalprintdialog.dtd" >
+%printdialogDTD;
+<!ENTITY % dialogOverlayDTD SYSTEM "chrome://xulsword/locale/xulrunner/globaldialogOverlay.dtd" >
+%dialogOverlayDTD;
+<!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
+%browserDTD;
+]>
+
+
+<window 
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  id="modal"
+  onload="onLoad();"
+  onunload="onUnload();"
+  title="&menu.copypassage;"
+  persist="screenX screenY"
+  screenX="24" screenY="24">
+
+  <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/copyPassage.js"/>
+
+  <groupbox style="padding-bottom:10px; padding-top:5px;">
+    <caption label="&term.passage;" style="color:blue;" />
+    <vbox align="start">
+      <reference-dropdown id="passage" flex="1" onlybibles="true" onlyavailablebooks="true" />
+    </vbox>
+  </groupbox>
+  
+  <iframe id="chaptertext" style="height:1px; visibility:hidden;"/>
+    
+  <hbox style="margin-bottom:10px;">                
+    <groupbox style="padding:10px;">
+      <caption label="&term.include;:" style="color:blue;" />
+      <grid>
+        <rows>
+          <row style="margin-bottom:5px;"/>
+          <row />
+        </rows>
+  
+        <columns>
+          <column>    
+            <checkbox id="cmd_xs_toggleVerseNums" label="&menu.view.versenums;" />
+            <checkbox id="cmd_xs_toggleHeadings" label="&menu.view.headings;" />
+            <checkbox id="cmd_xs_toggleRedWords" label="&menu.view.redwords;" />
+          </column>
+        </columns>
+      </grid>
+    </groupbox>
+    <spacer flex="1"/>
+    <vbox>
+      <spacer flex="1"/>
+      <hbox align="end">
+        <button id="copy" label="&copyCmd.label;" oncommand="copyPassage(event);" />
+        <button id="close" label="&cancelButton.label;" oncommand="window.close()" style="-moz-margin-end:10px;"/>
+      </hbox>
+    </vbox>
+  </hbox>
+</window>
+

@@ -18,13 +18,13 @@ $line = 0;
 while(<SETF>) {
   $line++;
   if ($_ =~ /^\s*$/) {next;}
-  elsif ($_ =~ /^#/) {next;}
+  elsif ($_ =~ /^(\:\:|rem|\#)/i) {next;}
   elsif ($_ =~ /^Set\s+(\S+)\s*=\s*(.*?)\s*$/i) {
     my $var=$1; my $val=$2;
     if ($var =~ /^\(.*?\.js\)\:/) {$Prefs{$var} = $val;}
     else {$$1 = $2;}
   }
-  else {&Log("ERROR: unhandled control file line $line: \"$_\"\n");}
+  else {&Log("WARNING: unhandled control file line $line: \"$_\"\n");}
 }
 close(SETF);
 $Xsprocess = $Executable;
@@ -140,7 +140,7 @@ $p = <>;
 sub writeCompileDeps() {
   &Log("----> Writing application info for C++ compiler.\n");
   if (!-e "$TRUNK/Cpp/Release") {mkdir "$TRUNK/Cpp/Release";}
-  open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/Release/appInfo.h") || die;
+  open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/appInfo.h") || die;
   print INFO "#define PATH_TO_PROGRAM L\"%s\\\\$Executable\"\n";
   print INFO "#define PORTABLE_DIR L\".\\\\$Name\"\n";
   print INFO "#define KEYADDRESS L\"Software\\\\$Vendor\\\\$Name\"\n";
@@ -216,7 +216,7 @@ sub writeAllPreferences($\%$) {
   }
 }
 
-sub copyExtensionFiles($\@$) {
+sub copyExtensionFiles($\@$$) {
   my $do = shift;
   my $manifestP = shift;
   my $makeDevelopment = shift;
@@ -227,30 +227,22 @@ sub copyExtensionFiles($\@$) {
   &copy_dir("$TRUNK/xul/extension", $do, "", $skip);
 
   if ($makeDevelopment) {
-    push(@{$manifestP}, "content xulsword file:../../../xul/xulsword/");
-    push(@{$manifestP}, "locale xulsword en-US file:../../../xul/en-US.xs/en-US-xulsword/xulsword/");
+    push(@{$manifestP}, "content xulsword file:../../../xul/content/");
+    push(@{$manifestP}, "locale xulsword en-US file:../../../xul/en-US/en-US/xulsword/");
     push(@{$manifestP}, "skin xulsword skin file:../../../xul/skin/");
     push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/debug-overlay.xul");
   }
   else {
-    push(@{$manifestP}, "content xulsword jar:chrome/xulsword.jar!/");
-    push(@{$manifestP}, "locale xulsword en-US jar:chrome/en-US.xs.jar!/xulsword/");
+    push(@{$manifestP}, "content xulsword jar:chrome/content.jar!/");
+    push(@{$manifestP}, "locale xulsword en-US jar:chrome/en-US.jar!/xulsword/");
     push(@{$manifestP}, "skin xulsword skin jar:chrome/skin.jar!/");
 
     &Log("----> Creating JAR files.\n");
-    &makeJAR("$do/chrome/xulsword.jar", "$TRUNK/xul/xulsword");
-    &makeJAR("$do/chrome/en-US.xs.jar", "$TRUNK/xul/en-US.xs/en-US-xulsword");
+    &makeJAR("$do/chrome/content.jar", "$TRUNK/xul/content");
+    &makeJAR("$do/chrome/en-US.jar", "$TRUNK/xul/en-US/en-US");
     &makeJAR("$do/chrome/skin.jar", "$TRUNK/xul/skin");
   }
-  if (!$isFFextension) { # don't want to override real Firefox UI!
-    push (@{$manifestP}, "override chrome://global/locale/printPageSetup.dtd chrome://xulsword/locale/printPageSetup.dtd");
-    push (@{$manifestP}, "override chrome://global/content/printPageSetup.xul chrome://xulsword/content/xulrunner/global/printPageSetup.xul");
-    push (@{$manifestP}, "override chrome://global/content/printPreviewBindings.xml chrome://xulsword/content/xulrunner/global/printPreviewBindings.xml");
-    push (@{$manifestP}, "override chrome://global/content/printPreviewProgress.xul chrome://xulsword/content/xulrunner/global/printPreviewProgress.xul");
-    push (@{$manifestP}, "override chrome://global/content/printProgress.xul chrome://xulsword/content/xulrunner/global/printProgress.xul");
-    push (@{$manifestP}, "override chrome://global/content/bindings/tree.xml chrome://xulsword/content/xulrunner/global/bindings/tree.xml");
-    push (@{$manifestP}, "override chrome://mozapps/content/handling/dialog.xul chrome://xulsword/content/xulrunner/mozapps/handling/dialog.xul");
-  }
+
 }
 
 sub copyXulRunnerFiles($) {

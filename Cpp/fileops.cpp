@@ -83,14 +83,13 @@ int wn_rename(const char *from, const char *to)
 
 char *wn_fullpath(char *absPath, const char *relPath, size_t maxlen)
 {
-  wchar_t utf16[CL_MAX_PATH];
-  MultiByteToWideChar(CP_UTF8, 0, relPath, -1, utf16, CL_MAX_PATH);
-  wchar_t * buff16 = NULL;
-  _wfullpath(buff16, utf16, maxlen);
-  char buff8[CL_MAX_PATH];
-  WideCharToMultiByte(CP_UTF8, 0, buff16, -1, buff8, CL_MAX_PATH, NULL, NULL);
-  delete buff16;
-  strcpy(absPath, buff8);
+  wchar_t wrelPath[CL_MAX_PATH];
+  MultiByteToWideChar(CP_UTF8, 0, relPath, -1, wrelPath, CL_MAX_PATH);
+  wchar_t wabsPath[CL_MAX_PATH];
+  _wfullpath(wabsPath, wrelPath, maxlen);
+  char *cabsPath = (char *)malloc(CL_MAX_PATH);
+  WideCharToMultiByte(CP_UTF8, 0, wabsPath, -1, cabsPath, CL_MAX_PATH, NULL, NULL);
+  strcpy(absPath, cabsPath);
   return absPath;
 }
 
@@ -119,12 +118,11 @@ const char *wn_getenv(const char *varname)
 {
   wchar_t utf16[CL_MAX_PATH];
   MultiByteToWideChar(CP_UTF8, 0, varname, -1, utf16, CL_MAX_PATH);
-  char utf8[CL_MAX_PATH];
   wchar_t *result = _wgetenv(utf16);
   if (!result) return NULL;
+  char *utf8 = (char *)malloc(CL_MAX_PATH);
   WideCharToMultiByte(CP_UTF8, 0, result, -1, utf8, CL_MAX_PATH, NULL, NULL);
-  const char *retval = utf8;
-  return retval;
+  return utf8;
 }
 
 

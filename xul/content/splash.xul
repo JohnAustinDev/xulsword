@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of xulSword.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    xulSword is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    xulSword is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+
+<!DOCTYPE window [
+<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/" >
+%xulswordDTD;
+<!ENTITY % nsProgressDialogDTD SYSTEM "chrome://xulsword/locale/xulrunner/globalnsProgressDialog.dtd" >
+%nsProgressDialogDTD;
+<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/xulrunner/globalglobal.dtd" >
+%globalDTD;
+]>
+
+<window id="pre-splash" xmlns:html="http://www.w3.org/1999/xhtml"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  title="Splash"
+  hidechrome="true"
+  onunload="unload()"
+  width="100" height="100"
+  style="background:transparent;"> 
+  
+  <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+  <data id="menu.addNewModule.label">&menu.addNewModule.label;</data>
+  <data id="menu.importAudio.label">&menu.importAudio.label;</data>
+  <data id="savingSource">&savingSource;</data>
+  <data id="savingTarget">&savingTarget;</data>
+  <data id="localeDir">&locale.dir;</data>
+  
+  <script>
+    <![CDATA[
+    var WindowWatcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
+    var MainWindow = WindowWatcher.getWindowByName("main-window", window);
+    var SplashScreen;
+    var InstallOnly;
+    function endInstall() {
+      if (WillRestart) return;
+      try {
+        InstallOnly = prefs.getBoolPref("xsInstallOnly");
+        prefs.setBoolPref("xsInstallOnly", false);
+        prefs.clearUserPref("xsInstallOnly");
+      }
+      catch(er) {InstallOnly = false;} // if pref did not exist
+      
+      if (!InstallOnly && !MainWindow) {
+        SplashScreen = window.open("chrome://xulsword/content/banner.xul","splash","chrome,alwaysRaised,centerscreen,resizable");
+        window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul','main-window','chrome,resizable')",300);
+      }
+      else window.close();
+    }
+    
+    function unload() {
+      if (SplashScreen) {SplashScreen.close();}
+      if (InstallOnly) {
+        jsdump("Quiting... xsInstallOnly command line flag was set.");
+        // scripts or programs that need to block while MK installs stuff will get confused if MK needs to restart, hence we need xsInstallOnlyMutex
+        var mutex = getSpecialDirectory("TmpD");
+        mutex.append("xsInstallOnlyMutex");
+        if (mutex.exists()) mutex.remove(false);
+      }
+    }
+    ]]>
+  </script>
+  
+  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksTop.js"/>
+  
+  <!-- Create program's special directories if needed !-->
+  <script>createAppDirectories();</script>
+  
+  <script>
+  <![CDATA[
+    window.screenX = window.screen.width/2-50;
+    window.screenY = window.screen.height/2-50;
+  ]]>
+  </script>
+  
+  <script>
+  <![CDATA[
+    // Scripts or programs that need to block while MK installs stuff will get confused if MK needs to restart, hence we need xsInstallOnlyMutex.
+    // If the script or program does not have a blocking feature, it will need to create the xsInstallOnlyMutex file itself.
+    var installOnly = false;
+    try {installOnly = prefs.getBoolPref("xsInstallOnly");} catch (er) {}
+    if (installOnly) {
+      var mutex = getSpecialDirectory("TmpD");
+      mutex.append("xsInstallOnlyMutex");
+      if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
+    }
+  ]]>
+  </script>
+
+  <script>moduleInstall(false);</script>
+  
+ </window> 

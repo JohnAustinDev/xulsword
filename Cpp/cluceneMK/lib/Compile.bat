@@ -6,21 +6,27 @@ if not defined arg1 Set arg1=dll
 if exist .\Release rmdir /S /Q .\Release
 mkdir .\Release
 
+::set cdbg=d /Zi /DEBUG
+set cdbg= /O2
 set CPPD=Cpp
 set cFlags=
 set lFlags=
 
 call "..\..\versions.bat"
 
-Set cFlags=/nologo /EHsc /O2 /Ob2 /Oi /Ot^
+Set cFlags=/nologo /EHsc^
  /I "..\..\\"^
  /I "%clucene%\src"^
- /FI "CLucene/StdHeader.cpp"^
+ /FI "%clucene%\src\CLucene\StdHeader.cpp"^
  /FI "fileops.h"^
- /FI "redefs_clucene.h"^
- /D "WIN32_LEAN_AND_MEAN" /D _CL_HAVE_DIRENT_H /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /D "_CRT_SECURE_NO_DEPRECATE" /D "_VC80_UPGRADE=0x0710" /D "_UNICODE" /D "UNICODE" /GF /c
+ /FI "windefs_clucene.h"^
+ /D "_CL_HAVE_DIRENT_H" /D "WIN32_LEAN_AND_MEAN" /D "UNICODE" /D "_UNICODE" /D "_LIB" /D "_CRT_SECURE_NO_DEPRECATE" /GF /c
 
-Set cFlags=/MT /Fo"Release\libclucene/" %cFlags%
+rem /FI "../StdHeader.cpp"
+rem /FI "fileops.h"^
+rem /FI "redefs_clucene.h"^
+
+Set cFlags=/MT%cdbg% /Fo"Release\libclucene/" %cFlags%
 Set lFlags=/nologo /out:"Release\libclucene.lib"
 Set objDIR=Release\libclucene
 
@@ -30,7 +36,7 @@ if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Commo
 set INCLUDE=%INCLUDE%;%microsoftsdk%\Include
 set LIB=%LIB%;%microsoftsdk%\Lib
 
-Set cFiles1="..\CLMonolithic.cpp"
+Set cFiles1="%clucene%\src\Clucene\CLMonolithic.cpp"
  
 cl.exe %cFlags% %cFiles1%
  
