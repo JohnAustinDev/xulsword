@@ -39,7 +39,7 @@ treechildren::-moz-tree-row(separator)
 treechildren::-moz-tree-image(Name2), treechildren::-moz-tree-image(Name) {
   padding-right: 2px;
   margin: 0px 2px;
-  list-style-image: url("chrome://global/skin/icons/folder-item.png");
+  list-style-image: url("chrome://xulsword/skin/xulrunner/global/icons/folder-item.png");
   -moz-image-region: rect(0px, 16px, 16px, 0px);
 }
 

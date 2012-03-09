@@ -325,18 +325,22 @@ xulsword::~xulsword() {
   //delete(MyStringMgr);
 }
 
-
+static bool HaveInstance = false;
 /********************************************************************
 InitSwordEngine()
 *********************************************************************/
 xulsword *xulsword::initSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(char *), void (*reportProgress)(int)) {
   SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
-SWLog::getSystemLog()->logDebug("\nXULSWORD BEGIN\n");
+  SWLog::getSystemLog()->logDebug("\nXULSWORD BEGIN\n");
+
+  if (HaveInstance) {ThrowJS("initSwordEngine: Currently limited to single instance!\n"); return NULL;}
 
   xulsword *inst = (xulsword *)malloc(sizeof(xulsword));
   if (!inst) {ThrowJS("initSwordEngine: out of memory\n"); return NULL;}
 
   inst = new xulsword(path, toUpperCase, throwJS, reportProgress);
+  HaveInstance = true;
+  
   return inst;
 }
 
@@ -1238,6 +1242,7 @@ bool xulsword::luceneEnabled(const char *mod) {
 
   bool supported = true;
   ListKey tmp = module->search(NULL,-4,NULL,NULL,&supported,NULL,NULL);
+
   return supported;
 }
 
@@ -1603,6 +1608,11 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
 /********************************************************************
 CUSTOM DERIVATIVE CLASSES
 *********************************************************************/
+
+
+/********************************************************************
+SWMgrXS - to over-ride modules and how they are loaded
+*********************************************************************/
 SWMgrXS::SWMgrXS(const char *iConfigPath, bool autoload, SWFilterMgr *filterMgr, bool multiMod, bool xaugmentHome)
     : SWMgr(iConfigPath, autoload, filterMgr, multiMod, xaugmentHome) {
 
@@ -1700,6 +1710,10 @@ printf("CreateMods mgrModeMultiMod=%i, augmentHome=%i\n", mgrModeMultiMod, augme
 	return ret;
 }
 
+
+/********************************************************************
+StringMgrXS - to over-ride broken toUpperCase
+*********************************************************************/
 StringMgrXS::StringMgrXS(char *(*toUpperCase)(char *)) {ToUpperCase = toUpperCase;}
 
 char *StringMgrXS::upperUTF8(char *text, unsigned int max) const {
@@ -1707,6 +1721,10 @@ char *StringMgrXS::upperUTF8(char *text, unsigned int max) const {
   return text;
 }
 
+
+/********************************************************************
+MarkupFilterMgrXS - to implement xulsword's own OSIS markup filters
+*********************************************************************/
 MarkupFilterMgrXS::MarkupFilterMgrXS() {
   markup = -1;
   fromplain = NULL;

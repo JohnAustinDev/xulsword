@@ -6,6 +6,8 @@ if not defined arg1 Set arg1=dll
 if exist .\Release rmdir /S /Q .\Release
 mkdir .\Release
 
+::set cdbg=d /Zi /DEBUG
+set cdbg= /O2
 set CPPD=Cpp
 set cFlags=
 set lFlags=
@@ -16,16 +18,16 @@ set lFiles2=
 
 call "..\..\versions.bat"
 
-Set cFlags=/nologo /W0 /EHsc /O2^
+Set cFlags=/nologo /EHsc /W0^
  /I "..\..\\"^
  /I "%clucene%\src"^
  /I "%sword%\include"^
  /I "%sword%\include\internal\regex"^
  /FI "fileops.h"^
- /FI "redefs_sword.h"^
- /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /Zm200 /c
- 
-Set cFlags=/MT /Fo"Release\libsword/" %cFlags%
+ /FI "windefs_sword.h"^
+ /D WIN32 /D "_WINDOWS" /D "USELUCENE" /D REGEX_MALLOC /D "_CL_HAVE_DIRENT_H" /D "WIN32_LEAN_AND_MEAN" /D "UNICODE" /D "_UNICODE" /D "_LIB" /Zm200 /c
+
+Set cFlags=/MT%cdbg% /Fo"Release\libsword/" %cFlags%
 Set lFlags=/nologo /out:"Release\libsword.lib"
 Set objDIR=Release\libsword
 
@@ -34,6 +36,8 @@ mkdir "%objDIR%"
 if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
 set INCLUDE=%INCLUDE%;%microsoftsdk%\Include
 set LIB=%LIB%;%microsoftsdk%\Lib
+
+::cl.exe /FI "demo\stdafx.h" %cFlags% "%sword%\src\modules\swmodule.cpp"
 
 Set cFiles1=^
  "%sword%\src\utilfuns\zlib\adler32.c"^
@@ -194,12 +198,10 @@ Set cFiles1=^
  "%sword%\src\mgr\versemgr.cpp"^
  "%sword%\src\utilfuns\zlib\untgz.c"^
  "%sword%\src\mgr\stringmgr.cpp"^
- "..\..\swordMK\utilstr.cpp"^
+ "%sword%\src\utilfuns\utilstr.cpp"^
  "..\..\swordMK\filemgr.cpp"
  
 cl.exe %cFlags% %cFiles1%
-
-cl.exe %cFlags% /FI "demo\stdafx.h"  "%sword%\src\modules\swmodule.cpp"
 
 Set lFiles1=^
  ".\%objDIR%\adler32.obj"^
@@ -296,7 +298,6 @@ Set lFiles2=^
  ".\%objDIR%\swlocale.obj"^
  ".\%objDIR%\swlog.obj"^
  ".\%objDIR%\swmgr.obj"^
- ".\%objDIR%\swmodule.obj"^
  ".\%objDIR%\swobject.obj"^
  ".\%objDIR%\swoptfilter.obj"^
  ".\%objDIR%\swsearchable.obj"^
@@ -356,6 +357,8 @@ Set lFiles2=^
  ".\%objDIR%\osisxhtml.obj"^
  ".\%objDIR%\gbfxhtml.obj"^
  ".\%objDIR%\thmlxhtml.obj"
+
+:: ".\%objDIR%\swmodule.obj"
 
 link.exe -lib %lFlags% %lFiles1% %lFiles2%
 

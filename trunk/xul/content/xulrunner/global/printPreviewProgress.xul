@@ -1,0 +1,44 @@
+<?xml version="1.0"?> 
+
+<?xml-stylesheet href="chrome://xulsword/skin/xulrunner/global/" type="text/css"?>
+<?xul-overlay href="chrome://xulsword/content/xulrunner/global/dialogOverlay.xul"?>
+
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/xulrunner/globalprintPreviewProgress.dtd">
+
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        class="dialog"
+        title="&printWindow.title;"
+        style="width: 36em;"
+        onload="onLoad()"
+        onunload="onUnload()">
+
+  <!-- EDIT!! !-->
+  <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script type="application/javascript" src="chrome://xulsword/content/xulrunner/global/printPreviewProgress.js"/>
+  <!-- END EDIT!! !-->
+
+    <grid flex="1">
+      <columns>
+        <column/>
+        <column/>
+      </columns>
+      
+      <rows>
+        <row>
+          <hbox pack="end">
+            <label id="dialog.titleLabel" value="&title;"/>
+          </hbox>
+          <label id="dialog.title"/>
+        </row>
+        <row class="thin-separator">             
+          <hbox pack="end">
+            <label id="dialog.progressSpaces" value="&progress;"/>
+          </hbox>
+            <label id="dialog.progressLabel" value="&preparing;"/>
+        </row>
+      </rows>
+    </grid>
+</window>
