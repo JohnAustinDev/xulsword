@@ -252,7 +252,8 @@ function loadedXULReal() {
   }
   
   if (Bible) window.onresize = resizeWatch;
-  if (window.opener) {window.opener.close();} //Close splash and opener window
+  if (window.opener && window.opener.document.title=="Splash")
+      window.opener.close(); //Close splash and opener window
   
   //handle error states...
   if (HaveValidLocale && (!Bible || !Tabs.length)) window.setTimeout("errorHandler(NOMODULES)",0);

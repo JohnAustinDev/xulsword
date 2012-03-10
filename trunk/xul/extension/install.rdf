@@ -4,7 +4,7 @@
      xmlns:em="http://www.mozilla.org/2004/em-rdf#">
 
   <Description about="urn:mozilla:install-manifest">
-    <em:id>{EC34AE58-63B4-11E1-8AB2-991B4924019B}</em:id>
+    <em:id>xulsword@xulsword.org</em:id>
     <em:version>3.0</em:version>
     <em:type>2</em:type>
 

@@ -15,9 +15,9 @@
 # BUILD WHAT?
 Set Target=Windows
 Set MakeDevelopment=true
-Set MakePortable=true
+Set MakePortable=false
 Set MakeSetup=false
-Set MakeFFextension=false
+Set MakeFFextension=true
 
 # SPECIFY SOME PATHS
 Set OutputDirectory=C:\home\dev\mk-dev\build-out

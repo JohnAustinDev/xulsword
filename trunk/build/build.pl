@@ -54,7 +54,7 @@ if ($MakeDevelopment =~ /true/i) {
   my @manifest;
   &copyExtensionFiles($DEVELOPMENT, \@manifest, 1);
   &copyXulRunnerFiles($DEVELOPMENT);
-  &writeAllPreferences($DEVELOPMENT, \%Prefs, 1);
+  &writePreferences($DEVELOPMENT, \%Prefs, 1);
   &writeApplicationINI($DEVELOPMENT);
   &includeModules($IncludeModules, \@ModRepos, "$Appdata/$Vendor/$Name/Profiles/resources", $IncludeSearchIndexes);
   &writeManifest(\@manifest, $DEVELOPMENT);
@@ -69,9 +69,10 @@ if ($MakeFFextension =~ /true/i) {
   my @manifest;
   push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/extension-overlay.xul");
   &copyExtensionFiles($FFEXTENSION, \@manifest, 0, 1);
-  &writeAllPreferences($FFEXTENSION, \%Prefs);
+  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "";
+  &writePreferences($FFEXTENSION, \%Prefs);
   &writeManifest(\@manifest, $FFEXTENSION);
-  &packageFFExtension($FFEXTENSION, "$OutputDirectory/$Name-Extension-$Version/$Name Extension-$Version.xpi");
+  &packageFFExtension($FFEXTENSION, "$OutputDirectory/$Name-Extension-$Version/$Name-Firefox-$Version.xpi");
 }
 if ($MakePortable =~ /true/i) {
   &Log("\n----> BUILDING PORTABLE VERSION\n");
@@ -83,7 +84,7 @@ if ($MakePortable =~ /true/i) {
   my @manifest;
   &copyExtensionFiles("$PORTABLE/$Name", \@manifest);
   &copyXulRunnerFiles("$PORTABLE/$Name");
-  &writeAllPreferences("$PORTABLE/$Name", \%Prefs);
+  &writePreferences("$PORTABLE/$Name", \%Prefs);
   &writeApplicationINI("$PORTABLE/$Name", "P");
   &compileStartup($PORTABLE);
   &includeModules($IncludeModules, \@ModRepos, "$PORTABLE/resources", $IncludeSearchIndexes);
@@ -105,7 +106,7 @@ if ($MakeSetup =~ /true/i) {
       my @manifest;
       &copyExtensionFiles($INSTALLER, \@manifest);
       &copyXulRunnerFiles($INSTALLER);
-      &writeAllPreferences($INSTALLER, \%Prefs);
+      &writePreferences($INSTALLER, \%Prefs);
       &writeApplicationINI($INSTALLER);
       &compileStartup($INSTALLER);
       if (-e "$Appdata/$Vendor/$Name/Profiles/resources/mods.d") {
@@ -191,20 +192,20 @@ sub compileLibSword($) {
   else {&Log("ERROR: Please make and call a compile script for your platform.\n");}
 }
 
-sub writeAllPreferences($\%$) {
+sub writePreferences($\%$) {
   my $do = shift;
   my $pP = shift;
   my $debug = shift;
 
   &Log("----> Writing preferences.\n");
-
+  
   foreach my $p (sort keys %{$pP}) {
     if (!$pP->{$p}) {next;}
     my $pref = $p;
     if ($pref !~ s/^\((.*?)\)\://) {&Log("ERROR: malformed pref entry \"$pref\"\n"); next;}
     my $fn = $1;
     if (!$Debug_debug_prefs && $fn eq "debug.js" && !$debug) {next;}
-    my $pfile = "$do/defaults/pref/$fn";
+    my $pfile = "$do/defaults/preferences/$fn";
     my $mode = ($prefFiles{$pfile} ? ">>":">").":encoding(UTF-8)";
     open(PREF, $mode, $pfile) || die "Could not open pref file \"$pfile\"\n";
     my $q = '"';
