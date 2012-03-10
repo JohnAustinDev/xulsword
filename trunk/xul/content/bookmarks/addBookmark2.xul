@@ -35,7 +35,7 @@
  ***** END LICENSE BLOCK ***** !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/xulrunner/global/arrow.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xsglobal/skin/arrow.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks.css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/addBookmark.css"?>
 
@@ -46,7 +46,7 @@
 %bookmarksDTD;
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
 %xulswordDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/xulrunner/globalglobal.dtd" >
+<!ENTITY % globalDTD SYSTEM "chrome://xsglobal/locale/global.dtd" >
 %globalDTD;
 ]>
 

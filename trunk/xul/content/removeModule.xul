@@ -21,13 +21,13 @@
 <?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
 
 <!DOCTYPE window [
-<!ENTITY % editMenuOverlayDTD SYSTEM "chrome://xulsword/locale/xulrunner/globaleditMenuOverlay.dtd" >
+<!ENTITY % editMenuOverlayDTD SYSTEM "chrome://xsglobal/locale/editMenuOverlay.dtd" >
 %editMenuOverlayDTD;
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
 %xulswordDTD;
 <!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd" >
 %bookmarksDTD;
-<!ENTITY % dialogOverlayDTD SYSTEM "chrome://xulsword/locale/xulrunner/globaldialogOverlay.dtd" >
+<!ENTITY % dialogOverlayDTD SYSTEM "chrome://xsglobal/locale/dialogOverlay.dtd" >
 %dialogOverlayDTD;
 ]>
 

@@ -79,6 +79,8 @@ var Bible = {
   LibswordPath:null,
 
   initLibsword: function() {
+    if (typeof(jsdump) != "undefined") jsdump("Initializing libsword...");
+    
     if (this.Libsword) return;
 
     this.fdata = {};
@@ -110,17 +112,25 @@ var Bible = {
     this.inst = initSwordEngine(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
 
     this.free = this.Libsword.declare("FreeMemory", ctypes.default_abi, ctypes.void_t, ctypes.voidptr_t);
+    
+    if (typeof(prefs) != "undefined") {
+      Bible.setBiblesReference(WESTERNVS, prefs.getCharPref("Location"));
+    }
   },
 
   quitLibsword: function() {
-    if (this.Libsword) {this.free(this.inst);}
-    this.Libsword.close();
-    this.Libsword = null;
+    if (this.Libsword) {
+      if (typeof(prefs) != "undefined") {
+        prefs.setCharPref("Location", Bible.getLocation(WESTERNVS));
+      }
+      this.free(this.inst);
+      this.Libsword.close();
+      this.Libsword = null;
+    }
   },
 
   // save Bible info and free up libsword for another thread to use.
   pause: function() {
-    this.location = Bible.getLocation("KJV");
     this.quitLibsword();
     this.paused = true;
   },
@@ -129,7 +139,6 @@ var Bible = {
     this.paused = false;
     if (!this.unlock())
         throw(new Error("libsword, resumed with no Bible modules."));
-    this.setBiblesReference("KJV", this.location);
   },
 
   unlock: function() {

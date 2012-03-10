@@ -6,6 +6,8 @@ var gFocusedElement = null;
 
 var PrintUtils = {
 
+  printWindow:null,
+
   showPageSetup: function ()
   {
     try {
@@ -28,6 +30,8 @@ var PrintUtils = {
 
   print: function (aWindow)
   {
+    aWindow = (aWindow ? aWindow:document.getElementById("printBrowser").contentWindow);
+    this.printWindow = aWindow;
     var webBrowserPrint = this.getWebBrowserPrint(aWindow);
     var printSettings = this.getPrintSettings();
     try {
@@ -56,6 +60,8 @@ var PrintUtils = {
   // nsIWebNavigation object
   printPreview: function (aEnterPPCallback, aExitPPCallback, aWindow)
   {
+    aWindow = (aWindow ? aWindow:document.getElementById("printBrowser").contentWindow);
+    this.printWindow = aWindow;
     // if we're already in PP mode, don't set the callbacks; chances
     // are they're null because someone is calling printPreview() to
     // get us to refresh the display.
@@ -98,14 +104,15 @@ var PrintUtils = {
       // this tells us whether we should continue on with PP or 
       // wait for the callback via the observer
       if (!notifyOnOpen.value.valueOf() || this._webProgressPP.value == null)
-        this.enterPrintPreview();
+        this.enterPrintPreview(aWindow);
     } catch (e) {
-      this.enterPrintPreview();
+      this.enterPrintPreview(aWindow);
     }
   },
 
   getWebBrowserPrint: function (aWindow)
   {
+    if (!aWindow) aWindow = this.printWindow;
     var contentWindow = aWindow || window.content;
     return contentWindow.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
                         .getInterface(Components.interfaces.nsIWebBrowserPrint);
@@ -178,6 +185,7 @@ var PrintUtils = {
 
   enterPrintPreview: function (aWindow)
   {
+    if (!aWindow) aWindow = this.printWindow;
     gFocusedElement = document.commandDispatcher.focusedElement;
 
     // Reset the zoom value and save it to be restored later.
@@ -189,8 +197,9 @@ var PrintUtils = {
     var webBrowserPrint = this.getWebBrowserPrint(aWindow);
     var printSettings   = this.getPrintSettings();
     try {
-      webBrowserPrint.printPreview(printSettings, null, this._webProgressPP.value);
+      webBrowserPrint.printPreview(printSettings, aWindow, this._webProgressPP.value);
     } catch (e) {
+
       if (typeof ZoomManager == "object")
         ZoomManager.zoom = this._originalZoomValue;
       // Pressing cancel is expressed as an NS_ERROR_ABORT return value,
@@ -243,6 +252,7 @@ var PrintUtils = {
 
   exitPrintPreview: function (aWindow)
   {
+    if (!aWindow) aWindow = this.printWindow;
     window.removeEventListener("keypress", this.onKeyPressPP, true);
 
     // restore the old close handler

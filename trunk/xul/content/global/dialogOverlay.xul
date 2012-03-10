@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE overlay SYSTEM "chrome://xulsword/locale/xulrunner/globaldialogOverlay.dtd">
+<!DOCTYPE overlay SYSTEM "chrome://xsglobal/locale/dialogOverlay.dtd">
 
 <overlay id="dialogOverlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <script type="application/javascript" src="chrome://xulsword/content/xulrunner/global/dialogOverlay.js"/>
+  <script type="application/javascript" src="chrome://xsglobal/content/dialogOverlay.js"/>
 
   <hbox id="okCancelButtons">
     <spacer flex="1"/>

@@ -2,9 +2,9 @@
 
 
 <!DOCTYPE bindings [
-<!ENTITY % printPreviewDTD SYSTEM "chrome://xulsword/locale/xulrunner/globalprintPreview.dtd" >
+<!ENTITY % printPreviewDTD SYSTEM "chrome://xsglobal/locale/printPreview.dtd" >
 %printPreviewDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/xulrunner/globalglobal.dtd">
+<!ENTITY % globalDTD SYSTEM "chrome://xsglobal/locale/global.dtd">
 %globalDTD;
 ]>
 
@@ -13,9 +13,9 @@
    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
   <binding id="printpreviewtoolbar" 
-           extends="chrome://xulsword/content/xulrunner/global/bindings/toolbar.xml#toolbar">
+           extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbar">
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/printPreview.css"/>
+      <stylesheet src="chrome://xsglobal/skin/printPreview.css"/>
     </resources>
 
     <!-- EDIT!! ADDED TOOL TIPS !-->

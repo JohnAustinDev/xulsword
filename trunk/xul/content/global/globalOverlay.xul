@@ -3,7 +3,7 @@
 <overlay id="globalOverlay"
 		 xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <script type="application/javascript" src="chrome://xulsword/content/xulrunner/global/globalOverlay.js"/>
+  <script type="application/javascript" src="chrome://xsglobal/content/globalOverlay.js"/>
   <script type="application/javascript"><![CDATA[
 
     function FillInTooltip ( tipElement )

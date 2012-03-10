@@ -225,21 +225,48 @@ sub copyExtensionFiles($\@$$) {
   &Log("----> Copying Firefox extension files.\n");
   my $skip = "(\\.svn".($isFFextension ? "":"|install.rdf").")";
   &copy_dir("$TRUNK/xul/extension", $do, "", $skip);
+  
+  if (opendir(COMP, "$do/components")) {
+    my @comps = readdir(COMP);
+    close(COMP);
+    foreach my $comp (@comps) {
+      if ($comp =~ /\.manifest$/i) {
+        push(@{$manifestP}, "manifest components/$comp");
+      }
+    }
+  }
 
   if ($makeDevelopment) {
     push(@{$manifestP}, "content xulsword file:../../../xul/content/");
-    push(@{$manifestP}, "locale xulsword en-US file:../../../xul/en-US/en-US/xulsword/");
+    push(@{$manifestP}, "locale xulsword en-US file:../../../xul/locale/en-US/");
     push(@{$manifestP}, "skin xulsword skin file:../../../xul/skin/");
+    push(@{$manifestP}, "content xsglobal file:../../../xul/content/global/");
+    push(@{$manifestP}, "locale xsglobal en-US file:../../../xul/locale/en-US/global/");
+    push(@{$manifestP}, "skin xsglobal skin file:../../../xul/skin/global/");
+    push(@{$manifestP}, "content xsmozapps file:../../../xul/content/mozapps/");
+    push(@{$manifestP}, "locale xsmozapps en-US file:../../../xul/locale/en-US/mozapps/");
+    push(@{$manifestP}, "skin xsmozapps skin file:../../../xul/skin/mozapps/");
+    push(@{$manifestP}, "locale branding en-US file:../../../xul/locale/branding/");
+    push(@{$manifestP}, "content branding file:../../../xul/content/branding/");
     push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/debug-overlay.xul");
+    &copy_dir("$TRUNK/xul/distribution", "$do/distribution");
   }
   else {
     push(@{$manifestP}, "content xulsword jar:chrome/content.jar!/");
-    push(@{$manifestP}, "locale xulsword en-US jar:chrome/en-US.jar!/xulsword/");
+    push(@{$manifestP}, "locale xulsword en-US jar:chrome/en-US.jar!/");
     push(@{$manifestP}, "skin xulsword skin jar:chrome/skin.jar!/");
+    push(@{$manifestP}, "content xsglobal jar:chrome/content.jar!/global/");
+    push(@{$manifestP}, "locale xsglobal en-US jar:chrome/en-US.jar!/global/");
+    push(@{$manifestP}, "skin xsglobal skin jar:chrome/skin.jar!/global/");
+    push(@{$manifestP}, "content xsmozapps jar:chrome/content.jar!/mozapps/");
+    push(@{$manifestP}, "locale xsmozapps en-US jar:chrome/en-US.jar!/mozapps/");
+    push(@{$manifestP}, "skin xsmozapps skin jar:chrome/skin.jar!/mozapps/");
+    push(@{$manifestP}, "locale branding en-US jar:chrome/en-US.jar!/branding/");
+    push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
 
     &Log("----> Creating JAR files.\n");
     &makeJAR("$do/chrome/content.jar", "$TRUNK/xul/content");
-    &makeJAR("$do/chrome/en-US.jar", "$TRUNK/xul/en-US/en-US");
+    &makeJAR("$do/chrome/en-US.jar", "$TRUNK/xul/locale/en-US");
     &makeJAR("$do/chrome/skin.jar", "$TRUNK/xul/skin");
   }
 
@@ -265,6 +292,7 @@ sub writeApplicationINI($$) {
   print INI "Vendor=$Vendor\n";
   print INI "Name=$Name\n";
   print INI "Version=$Version\n";
+  print INI "ID=xulsword\@xulsword.org\n";
   print INI "BuildID=$BuildID\n\n";
   print INI "[Gecko]\n";
   print INI "MinVersion=$GeckoMinVersion\n";

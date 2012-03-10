@@ -46,7 +46,7 @@ function onLoad() {
   Introduction.label = getCurrentLocaleBundle("books.properties").GetStringFromName("IntroLink");
   
   var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-  try {var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/xulrunner/globalcommonDialogs.properties");} catch(er) {bundle=null;}
+  try {var bundle = BUNDLESVC.createBundle("chrome://xsglobal/locale/commonDialogs.properties");} catch(er) {bundle=null;}
   if (bundle) document.getElementById("close").label = bundle.GetStringFromName("Cancel");
   
   BMDS = initBMServices();

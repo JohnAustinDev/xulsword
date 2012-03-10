@@ -155,7 +155,7 @@ html|*.menulist-editable-input {
   -moz-border-left-colors: ThreeDHighlight ThreeDLightShadow;
   background-color: ThreeDFace;
   color: ButtonText;
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/arrow/arrow-dn.gif");
+  list-style-image: url("chrome://xsglobal/skin/arrow/arrow-dn.gif");
 }
 
 .menulist-compact > .menulist-label-box > .menulist-label {
@@ -175,7 +175,7 @@ html|*.menulist-editable-input {
 }
 
 .menulist-compact[disabled="true"] {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/arrow/arrow-dn-dis.gif");
+  list-style-image: url("chrome://xsglobal/skin/arrow/arrow-dn-dis.gif");
 }
 
 .menulist-compact:focus > .menulist-label-box {

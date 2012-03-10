@@ -1,4 +1,4 @@
-@import url(chrome://xulsword/skin/xulrunner/global/);
+@import url(chrome://global/skin/);
 /* CSS Document */
 
 .bibleframe {
@@ -173,12 +173,12 @@ textbox deck[anonid="search-icons"] {
 }
 
 toolbar[printpreview="true"] {
-  -moz-binding: url("chrome://xulsword/content/xulrunner/global/printPreviewBindings.xml#printpreviewtoolbar");
+  -moz-binding: url("chrome://xsglobal/content/printPreviewBindings.xml#printpreviewtoolbar");
 }
 
 /* ::::: bookmark items FROM browser.css ::::: */
 .bookmark-item  {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/icons/folder-item.png") !important;
+  list-style-image: url("chrome://xsglobal/skin/icons/folder-item.png") !important;
   -moz-image-region: rect(0px, 16px, 16px, 0px)
 }
 

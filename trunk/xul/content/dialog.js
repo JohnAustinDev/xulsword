@@ -45,7 +45,7 @@ function Load() {
   Textbox = document.getElementById("textbox");
 
   var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-  try {var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/xulrunner/globalcommonDialogs.properties");}
+  try {var bundle = BUNDLESVC.createBundle("chrome://xsglobal/locale/commonDialogs.properties");}
   catch (er) {bundle=null; jsdump("Could not find string bundle.");}
   var acceptLabel, cancelLabel;
   if (bundle) {
@@ -68,13 +68,13 @@ function Load() {
   var imgSrc;
   switch (Type) {
   case DLGALERT:
-    imgSrc = "chrome://xulsword/skin/xulrunner/global/icons/Warning.png";
+    imgSrc = "chrome://xsglobal/skin/icons/Warning.png";
     break;
   case DLGQUEST:
-    imgSrc = "chrome://xulsword/skin/xulrunner/global/icons/Question.png";
+    imgSrc = "chrome://xsglobal/skin/icons/Question.png";
     break;
   case DLGINFO:
-    imgSrc = "chrome://xulsword/skin/xulrunner/global/icons/information-32.png";
+    imgSrc = "chrome://xsglobal/skin/icons/information-32.png";
     break;      
   }
   

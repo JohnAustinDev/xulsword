@@ -30,9 +30,15 @@ var Progvers = Components.classes["@mozilla.org/xre/app-info;1"].getService(Comp
 var Enginevers; try {Enginevers = prefs.getCharPref("EngineVersion");} catch (er) {Enginevers = NOTFOUND;}
 
 function initLocales() {
-  // TODO: get listing of locales from extension manager
-  LocaleList = ["en-US"];
-  
+  LocaleList = [];
+  var chromeRegService = Components.classes["@mozilla.org/chrome/chrome-registry;1"].getService();
+	var toolkitChromeReg = chromeRegService.QueryInterface(Components.interfaces.nsIToolkitChromeRegistry);
+	var availableLocales = toolkitChromeReg.getLocalesForPackage("xulsword");
+	while(availableLocales.hasMore()) {
+		var locale = availableLocales.getNext();
+		LocaleList.push(locale);
+	}
+  jsdump("Loaded locales:" + LocaleList);
   var currentLocale = rootprefs.getCharPref("general.useragent.locale");
   var LocaleDefaultVersionString="";
   var sep = "";

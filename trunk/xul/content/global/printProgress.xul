@@ -1,9 +1,9 @@
 <?xml version="1.0"?> 
 
-<?xml-stylesheet href="chrome://xulsword/skin/xulrunner/global/" type="text/css"?>
-<?xul-overlay href="chrome://xulsword/content/xulrunner/global/dialogOverlay.xul"?>
+<?xml-stylesheet href="chrome://xsglobal/skin/" type="text/css"?>
+<?xul-overlay href="chrome://xsglobal/content/dialogOverlay.xul"?>
 
-<!DOCTYPE window SYSTEM "chrome://xulsword/locale/xulrunner/globalprintProgress.dtd">
+<!DOCTYPE window SYSTEM "chrome://xsglobal/locale/printProgress.dtd">
 
 <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         class="dialog"
@@ -17,7 +17,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
-  <script type="application/javascript" src="chrome://xulsword/content/xulrunner/global/printProgress.js"/>
+  <script type="application/javascript" src="chrome://xsglobal/content/printProgress.js"/>
   <!-- END EDIT!! !-->
   
     <!-- This is non-visible content that simply adds translatable string

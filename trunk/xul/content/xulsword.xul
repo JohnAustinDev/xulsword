@@ -19,8 +19,7 @@
 !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
-<?xul-overlay href="chrome://xulsword/content/venkmanOverlay.xul"?>
-<?xul-overlay href="chrome://xulsword/content/xulrunner/global/editMenuOverlay.xul"?>
+<?xul-overlay href="chrome://xsglobal/content/editMenuOverlay.xul"?>
 
 <!DOCTYPE window [
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
@@ -29,9 +28,9 @@
 %bookmarksDTD;
 <!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
 %browserDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/xulrunner/globalglobal.dtd" >
+<!ENTITY % globalDTD SYSTEM "chrome://xsglobal/locale/global.dtd" >
 %globalDTD;
-<!ENTITY % nsProgressDialogDTD SYSTEM "chrome://xulsword/locale/xulrunner/globalnsProgressDialog.dtd" >
+<!ENTITY % nsProgressDialogDTD SYSTEM "chrome://xsglobal/locale/nsProgressDialog.dtd" >
 %nsProgressDialogDTD;
 ]>
 
@@ -62,16 +61,16 @@
 <data id="localeDir">&locale.dir;</data>
 
 <script>var MainWindow = window;</script>
-<script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
 <script>moduleInstall(true)</script>
 
 <stringbundle id="strings"   src="chrome://xulsword/locale/xulsword.properties"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/xulrunner/global/globalOverlay.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/xulrunner/global/nsDragAndDrop.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/xulrunner/global/printUtils.js"/>
+<script type="application/x-javascript" src="chrome://xsglobal/content/globalOverlay.js"/>
+<script type="application/x-javascript" src="chrome://xsglobal/content/nsDragAndDrop.js"/>
+<script type="application/x-javascript" src="chrome://xsglobal/content/printUtils.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
 <!-- mainWindowInit.js invokes the Bible object for the first time. !-->
 <script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
@@ -447,9 +446,13 @@
 
     <spacer id="rightspacer"  flex="72%" orient="vertical"/>
     
-    <!-- DEBUG STUFF FROM VenkmanOverlay.xul!-->
+    <!-- DEBUG STUFF FROM debug-overlay.xul!-->
     <html:div onclick="document.getElementById('debug').hidden=!document.getElementById('debug').hidden" style="width:20px;"></html:div>
-    <hbox id="debug">
+    <hbox id="debug" hidden="true">
+      <vbox>
+        <hbox id="debug-row1"></hbox>
+        <hbox id="debug-row2"></hbox>
+      </vbox>
     </hbox>
   </hbox>
   
@@ -484,7 +487,7 @@
         <iframe id="bible2Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden;"/>
         <iframe id="bible3Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden;"/>
       </hbox>
-      <browser type="content-primary" id="printBrowser" src="print.html"/>
+      <iframe id="printBrowser" src="print.html" />
     </deck>
   </vbox>
 </vbox>

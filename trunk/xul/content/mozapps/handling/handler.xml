@@ -42,7 +42,7 @@
           xmlns:xbl="http://www.mozilla.org/xbl">
 
   <binding id="handler"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/richlistbox.xml#richlistitem">
+           extends="chrome://xsglobal/content/bindings/richlistbox.xml#richlistitem">
 
     <content>
       <xul:vbox pack="center">
