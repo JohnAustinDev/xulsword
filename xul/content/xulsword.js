@@ -146,11 +146,6 @@ function loadedXULReal() {
   HistoryDepth = 30;  //Number of saved pages in history
   HistoryDelimeter = "<nx>";
   HistoryCaptureDelay = 3500; //Delay in ms before new page is captured as history
-  if (Bible) {
-    var aVersion = prefs.getCharPref("DefaultVersion");
-    if (aVersion != "none")
-        Bible.setBiblesReference(aVersion, Bible.convertLocation(WESTERNVS, prefs.getCharPref("Location"), Bible.getVerseSystem(aVersion)));
-  }
   History = getPrefOrCreate("History","Char",HistoryDelimeter).split(HistoryDelimeter);
   Historyi = getPrefOrCreate("HistoryIndex","Int",0);
   History.pop(); // History pref should always end with HistoryDelimeter
@@ -425,7 +420,7 @@ function errorHandler(error) {
     return; //allow user to install some modules
     break;
   case NOLOCALES:
-    jsdump("No locale to load. Please add a valid manifest (such as '" + DEFAULTLOCALE + ".locale.manifest') to chrome directory.\n");
+    jsdump("No locale to load. Please install a valid locale.\n");
     break;
   case NEEDRESTART:
     jsdump("Program restart is needed.\n");
@@ -574,27 +569,6 @@ function localeElemSort(a,b) {
 function writeLocaleElem(elem, lc, id, noAccessKey) {
   var myID = LocaleList[lc];
   if (id) myID = id + "." + myID;
-  // The following has been removed in v2.12 because it was deemed better to
-  // always have each language menu item appear in it's language/font/etc. There
-  // is no reason to translate language items since if the user cannot read
-  // the label he/she should certainly not switch the program into that language.
-  // Plus, if a user does open the program in a language he/she doesn't know and
-  // opens the language menu, the language items would also not be understood.
-  // So, it is far better if the user can see each item in its own language!
-  /*
-  try {
-    var myLabel = SBundle.getString(LocaleList[lc] + "LanguageMenuLabel");
-    var myAccKey = SBundle.getString(LocaleList[lc] + "LanguageMenuAccKey");
-    var myLocale = rootprefs.getCharPref("general.useragent.locale");
-  }
-  catch (er) {
-    var bundle = getLocaleBundle(LocaleList[lc], "xulsword.properties");
-    if (!bundle) return null;
-    myLabel = bundle.GetStringFromName("LanguageMenuLabel");
-    myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");
-    myLocale = LocaleList[lc];
-  }
-  */
 
   var bundle = getLocaleBundle(LocaleList[lc], "xulsword.properties");
   if (!bundle) return null;
@@ -4278,17 +4252,13 @@ function unloadXUL() {
   //Clear Transactions
   gTxnSvc.clear();
   
-  //Save Bible chapter/verse
   if (Bible) {
-    var vers = prefs.getCharPref("DefaultVersion");
-    if (vers != "none")
-        prefs.setCharPref("Location", Bible.convertLocation(Bible.getVerseSystem(vers), Bible.getLocation(vers), WESTERNVS));
-  
     //Save history info
     var newhist="";
     for (var i=0; i<History.length; i++) {newhist += History[i] + HistoryDelimeter;}
     prefs.setCharPref("History",newhist);
     prefs.setIntPref("HistoryIndex",Historyi);
+    //Save Bible chapter/verse
     Bible.quitLibsword();
   }
   

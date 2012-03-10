@@ -1,5 +1,5 @@
 richlistitem[type="handler"] {
-  -moz-binding: url('chrome://xulsword/content/xulrunner/mozapps/handling/handler.xml#handler');
+  -moz-binding: url('chrome://xsmozapps/content/handling/handler.xml#handler');
 }
 
 #remember-text:not([visible]) {

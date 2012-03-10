@@ -212,7 +212,7 @@ function deleteModules(e) {
 
   var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
   try {
-    var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/xulrunner/globalcrashes.properties");
+    var bundle = BUNDLESVC.createBundle("chrome://xsglobal/locale/crashes.properties");
     var areYouSure = bundle.GetStringFromName("deleteconfirm.title");
   }
   catch (er) {
@@ -227,8 +227,6 @@ function deleteModules(e) {
       DLGYESNO);
   if (!result.ok) return;
   
-  addDefaultLocaleIfNeeded();
-  
   var success=true;
   var reset=NOVALUE;
   var msg="";
@@ -238,7 +236,6 @@ function deleteModules(e) {
   
   var need2ChangeLocale=false;
   var aLocale=DEFAULTLOCALE;
-  var need2RemoveEN=false;
   var aTabMod=prefs.getCharPref("DefaultVersion");
   var need2ChangeVers = [false, false, false, false];
   var x=0; //must be set BEFORE main loop
@@ -260,7 +257,7 @@ function deleteModules(e) {
           var modName = child.id.substring(3);
           if (Tab[modName].conf) {
             files.push(Tab[modName].conf);
-            if (reset<HARDRESET) reset=HARDRESET;
+            if (reset<SOFTRESET) reset=SOFTRESET;
             for (var w=1; w<=3; w++) {
               if (MainWindow.Win[w].modName == modName) need2ChangeVers[w] = true;
             }
@@ -270,17 +267,14 @@ function deleteModules(e) {
         case 1: //locales
           var loc = child.id.substring(3);
           if (loc == rootprefs.getCharPref("general.useragent.locale")) need2ChangeLocale=true;
-          if (loc == DEFAULTLOCALE) need2RemoveEN=true;
           else {
-            for (var f=0; f<LFILES.length; f++) {
-              var aFile = chromeDir.clone();
-              aFile.append(loc + LFILES[f]);
-              if (aFile.exists()) {
-                files.push(aFile);
-                if (reset<SOFTRESET) reset=SOFTRESET;
-              }
-              else {success=false; msg+="ERROR: File \"" + aFile.path + "\" not found.\n";}
+            var aFile = getSpecialDirectory("xsExtension");
+            aFile.append(loc + "@xulsword.org");
+            if (aFile.exists()) {
+              files.push(aFile);
+              if (reset<HARDRESET) reset=HARDRESET;
             }
+            else {success=false; msg+="ERROR: File \"" + aFile.path + "\" not found.\n";}
           }
           break;
         case 2: //audio
@@ -308,12 +302,6 @@ function deleteModules(e) {
   }
 
   if (need2ChangeLocale) rootprefs.setCharPref("general.useragent.locale", aLocale);
-  if (need2RemoveEN) {
-    var enMan = chromeDir.clone();
-    enMan.append(DEFAULTLOCALE + ".locale.manifest");
-    if (enMan.exists()) {enMan.moveTo(null, DEFAULTLOCALE + NOSHOWDEF);}
-    if (reset<SOFTRESET) reset=SOFTRESET;
-  }
   for (var w=1; w<=3; w++) {
     if (need2ChangeVers[w]) {
       if (!MainWindow.isTabShowing(Tab[aTabMod].index, w)) {
@@ -328,7 +316,7 @@ function deleteModules(e) {
     jsdump("ERRORS DURING DELETE: " + msg);
   }
   
-  if (x>0 || need2RemoveEN) {
+  if (x>0) {
     switch(reset) {
     case NOVALUE:
     case NORESET:
@@ -341,20 +329,6 @@ function deleteModules(e) {
     }
   }
   window.close();
-}
-
-function addDefaultLocaleIfNeeded() {
-  var locGBox = document.getElementById(GROUPS[1]);
-  if (locGBox && locGBox.childNodes && locGBox.childNodes.length) {
-    var locRemains=false;
-    for (var i=0; i<locGBox.childNodes.length; i++) {
-      if (!locGBox.childNodes.item(i).checked) locRemains=true;
-    }
-    if (locRemains) return;
-    var enMan = getSpecialDirectory("AChrom");
-    enMan.append(DEFAULTLOCALE + NOSHOWDEF);
-    if (enMan.exists()) {enMan.moveTo(null, DEFAULTLOCALE + ".locale.manifest");}
-  }
 }
 
 function onUnload() {

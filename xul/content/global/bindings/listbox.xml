@@ -108,7 +108,7 @@
     _fireOnSelect()
    -->
    <binding id="listbox-base"
-            extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#basecontrol">
+            extends="chrome://xsglobal/content/bindings/general.xml#basecontrol">
 
     <implementation implements="nsIDOMXULMultiSelectControlElement, nsIAccessibleProvider">
       <field name="_lastKeyTime">0</field>
@@ -672,7 +672,7 @@
            extends="#listbox-base">
 
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/listbox.css"/>
+      <stylesheet src="chrome://xsglobal/skin/listbox.css"/>
     </resources>
 
     <content>
@@ -876,7 +876,7 @@
   <binding id="listrows">
 
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/listbox.css"/>
+      <stylesheet src="chrome://xsglobal/skin/listbox.css"/>
     </resources>
 
     <handlers>
@@ -900,9 +900,9 @@
   </binding>
   
   <binding id="listitem"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#basetext">
+           extends="chrome://xsglobal/content/bindings/general.xml#basetext">
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/listbox.css"/>
+      <stylesheet src="chrome://xsglobal/skin/listbox.css"/>
     </resources>
 
     <content>
@@ -1030,7 +1030,7 @@
   </binding>
 
   <binding id="listitem-iconic"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/listbox.xml#listitem">
+           extends="chrome://xsglobal/content/bindings/listbox.xml#listitem">
     <content>
       <children>
         <xul:listcell class="listcell-iconic" xbl:inherits="label,image,crop,disabled,flexlabel"/>
@@ -1039,7 +1039,7 @@
   </binding>
   
   <binding id="listitem-checkbox"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/listbox.xml#listitem">
+           extends="chrome://xsglobal/content/bindings/listbox.xml#listitem">
     <content>
       <children>
         <xul:listcell type="checkbox" xbl:inherits="label,crop,checked,disabled,flexlabel"/>
@@ -1075,7 +1075,7 @@
   </binding>
   
   <binding id="listitem-checkbox-iconic"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/listbox.xml#listitem-checkbox">
+           extends="chrome://xsglobal/content/bindings/listbox.xml#listitem-checkbox">
     <content>
       <children>
         <xul:listcell type="checkbox" class="listcell-iconic" xbl:inherits="label,image,crop,checked,disabled,flexlabel"/>
@@ -1084,10 +1084,10 @@
   </binding>
   
   <binding id="listcell"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#basecontrol">
+           extends="chrome://xsglobal/content/bindings/general.xml#basecontrol">
 
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/listbox.css"/>
+      <stylesheet src="chrome://xsglobal/skin/listbox.css"/>
     </resources>
 
     <content>
@@ -1130,7 +1130,7 @@
   </binding>
 
   <binding id="listcell-iconic"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/listbox.xml#listcell">
+           extends="chrome://xsglobal/content/bindings/listbox.xml#listcell">
     <content>
       <children>
         <xul:image class="listcell-icon" xbl:inherits="src=image"/>
@@ -1140,7 +1140,7 @@
   </binding>
 
   <binding id="listcell-checkbox"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/listbox.xml#listcell">
+           extends="chrome://xsglobal/content/bindings/listbox.xml#listcell">
     <content>
       <children>
         <xul:image class="listcell-check" xbl:inherits="checked,disabled"/>
@@ -1150,7 +1150,7 @@
   </binding>
 
   <binding id="listcell-checkbox-iconic"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/listbox.xml#listcell-checkbox">
+           extends="chrome://xsglobal/content/bindings/listbox.xml#listcell-checkbox">
     <content>
       <children>
         <xul:image class="listcell-check" xbl:inherits="checked,disabled"/>
@@ -1163,7 +1163,7 @@
   <binding id="listhead">
 
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/listbox.css"/>
+      <stylesheet src="chrome://xsglobal/skin/listbox.css"/>
     </resources>
 
     <content>
@@ -1184,7 +1184,7 @@
   <binding id="listheader" display="xul:button">
 
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/listbox.css"/>
+      <stylesheet src="chrome://xsglobal/skin/listbox.css"/>
     </resources>
 
     <content>

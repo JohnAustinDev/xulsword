@@ -76,8 +76,8 @@ var aConsoleListener =
         
         // EMAIL REPORT FILE
         var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-        var bundle1 = BUNDLESVC.createBundle("chrome://xulsword/locale/xulrunner/globalcommonDialogs.properties");
-        var bundle2 = BUNDLESVC.createBundle("chrome://xulsword/locale/xulrunner/globalbrowser.properties");
+        var bundle1 = BUNDLESVC.createBundle("chrome://xsglobal/locale/commonDialogs.properties");
+        var bundle2 = BUNDLESVC.createBundle("chrome://xsglobal/locale/browser.properties");
         var SBundle = document.getElementById("strings");
         if (window.opener) {window.opener.close();} // Don't let splash screen obscure dialogs...
  

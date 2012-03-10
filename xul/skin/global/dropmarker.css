@@ -11,7 +11,7 @@ dropmarker {
   -moz-border-left-colors: ThreeDLightShadow ThreeDHighlight;
   background-color: -moz-Dialog;
   padding: 1px;
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/arrow/arrow-dn.gif");
+  list-style-image: url("chrome://xsglobal/skin/arrow/arrow-dn.gif");
   -moz-image-region: auto;
 }
 
@@ -27,7 +27,7 @@ dropmarker:hover:active {
 }
 
 dropmarker[disabled="true"] {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/arrow/arrow-dn-dis.gif");
+  list-style-image: url("chrome://xsglobal/skin/arrow/arrow-dn-dis.gif");
   -moz-border-top-colors: ThreeDLightShadow ThreeDHighlight !important;
   -moz-border-right-colors: ThreeDDarkShadow ThreeDShadow !important;
   -moz-border-bottom-colors: ThreeDDarkShadow ThreeDShadow !important;

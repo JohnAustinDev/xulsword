@@ -1,11 +1,11 @@
 <?xml version="1.0"?> <!-- -*- Mode: HTML -*- --> 
 
-<!DOCTYPE overlay SYSTEM "chrome://xulsword/locale/xulrunner/globaleditMenuOverlay.dtd">
+<!DOCTYPE overlay SYSTEM "chrome://xsglobal/locale/editMenuOverlay.dtd">
 
 <overlay id="editMenuOverlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <script type="application/javascript" src="chrome://xulsword/content/xulrunner/global/editMenuOverlay.js"/>
+  <script type="application/javascript" src="chrome://xsglobal/content/editMenuOverlay.js"/>
 
   <commandset id="editMenuCommands">
     <commandset id="editMenuCommandSetAll" commandupdater="true" events="focus,select"

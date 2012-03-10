@@ -337,7 +337,7 @@ function diskSpaceMessage(fromLeafName) {
   try {
     msg = Components.classes["@mozilla.org/intl/stringbundle;1"]
     .getService(Components.interfaces.nsIStringBundleService)
-    .createBundle("chrome://xulsword/locale/xulrunner/globalnsWebBrowserPersist.properties")
+    .createBundle("chrome://xsglobal/locale/nsWebBrowserPersist.properties")
     .formatStringFromName("diskFull", [fromLeafName], 1);
   }
   catch (er) {msg = "Not enough disk space for this operation.";}

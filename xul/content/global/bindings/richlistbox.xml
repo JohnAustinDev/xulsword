@@ -44,9 +44,9 @@
           xmlns:xbl="http://www.mozilla.org/xbl">
 
   <binding id="richlistbox"
-           extends="chrome://xulsword/skin/xulrunner/global/bindings/listbox.xml#listbox-base">
+           extends="chrome://xsglobal/skin/bindings/listbox.xml#listbox-base">
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/richlistbox.css"/>
+      <stylesheet src="chrome://xsglobal/skin/richlistbox.css"/>
     </resources>
 
     <content>
@@ -498,13 +498,13 @@
   </binding>
 
   <binding id="richlistitem"
-           extends="chrome://xulsword/skin/xulrunner/global/bindings/listbox.xml#listitem">
+           extends="chrome://xsglobal/skin/bindings/listbox.xml#listitem">
     <content>
       <children/>
     </content>
 
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/richlistbox.css"/>
+      <stylesheet src="chrome://xsglobal/skin/richlistbox.css"/>
     </resources>
 
     <implementation>

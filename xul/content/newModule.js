@@ -176,6 +176,7 @@ var WillRestart = false;
 var AudioDestination;
 function startImport(blocking, allowStop, exitFunction, regularFiles, zipFiles, zipEntry, newLocales, newModules, newFonts, audioDestination) {
 jsdump("STARTING startImport");
+  if (typeof(Bible) != "undefined") Bible.pause();
   GotoAudioFile = null;
   GotoBookmarkFile = null;
   GotoVideoFile = null;
@@ -593,23 +594,54 @@ jsdump("Processing Entry:" + aEntry);
     for (var s=0; s<SkipList.length; s++) {
       if (aEntry.indexOf(SkipList[s].replace("\\", "/", "g")!=-1)) skip=true;
     }
-    if (skip) return {reset:HARDRESET, success:true, remove:false};
+    if (skip) return {reset:SOFTRESET, success:true, remove:false};
     var dest = "xsModsUser";
 //    for (var s=0; s<CommonList.length; s++) {if (aEntry.match(CommonList[s], "i")) dest = "xsModsCommon";}
     inflated.initWithPath(getSpecialDirectory(dest).path + "\\" + aEntry.replace("\/", "\\", "g"));
     break;
 
   case CHROME:
-    inflated.initWithPath(getSpecialDirectory("AChrom").path + "\\" + entryFileName);
-    var localeName = inflated.leafName.match(/(.*)\.jar/i);
-    if (localeName) {
-      NewLocales = pushIf(NewLocales, localeName[1]);
-      var rootprefs = Components.classes["@mozilla.org/preferences-service;1"].
-          getService(Components.interfaces.nsIPrefBranch);
-      if (localeName[1] == rootprefs.getCharPref("general.useragent.locale")) {
-        rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
-      }
+    if (entryFileName.search(/\.jar$/i) == -1) {
+      // ignore everything in Chrome the jar files
+      return {reset:NORESET, success:true, remove:true};
     }
+    var localeName = entryFileName.match(/^([^\.]*)/)[1];
+    var localeDir = localeName + "@xulsword.org";
+    var inflated = getSpecialDirectory("xsExtension");
+    inflated.append(localeDir);
+    inflated.append(CHROME);
+    inflated.append(entryFileName);
+
+    // create extension package for our locale jar file
+    var file = getSpecialDirectory("xsExtension");
+    file.append(localeDir);
+    file.append("chrome.manifest");
+    if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
+    var str = "locale xulsword " + localeName + " jar:chrome/" + localeName + ".jar!/xulsword/ \n";
+    str    += "locale xsglobal " + localeName + " jar:chrome/" + localeName + ".jar!/global/ \n";
+    str    += "locale xsmozapps " + localeName + " jar:chrome/" + localeName + ".jar!/mozapps/ \n";
+    writeFile(file, str, true);
+    file = getSpecialDirectory("xsExtension");
+    file.append(localeDir);
+    file.append("install.rdf");
+    str  = "<?xml version=\"1.0\"?><RDF xmlns=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" \n";
+    str += "xmlns:em=\"http://www.mozilla.org/2004/em-rdf#\">\n";
+    str += "<Description about=\"urn:mozilla:install-manifest\">\n";
+    str += "<em:id>" + localeName + "@xulsword.org</em:id><em:version>1.0</em:version>\n";
+    str += "<em:type>8</em:type><em:name>" + localeName + " xulsword locale</em:name>\n";
+    str += "<em:targetApplication><Description>\n";
+    str += "<em:id>xulsword@xulsword.org</em:id><em:minVersion>1.0</em:minVersion>\n";
+    str += "<em:maxVersion>99.0</em:maxVersion></Description>\n";
+    str += "</em:targetApplication></Description></RDF>\n";
+    if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
+    writeFile(file, str, true);
+    NewLocales = pushIf(NewLocales, localeName);
+    var rootprefs = Components.classes["@mozilla.org/preferences-service;1"].
+        getService(Components.interfaces.nsIPrefBranch);
+    if (localeName[1] == rootprefs.getCharPref("general.useragent.locale")) {
+      rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
+    }
+
     break;
   case AUDIOPLUGIN:
     inflated.initWithPath(getSpecialDirectory("xsAudioPI").path + "\\" + entryFileName);
@@ -638,7 +670,7 @@ jsdump("Processing Entry:" + aEntry);
   if (overwriting) {
     try {inflated.remove(false);}
     catch (er) {
-      //jsdump("Could not remove pre-existing ZIP entry destination " + inflated.path + ". " + er);
+      jsdump("Could not remove pre-existing ZIP entry destination " + inflated.path + ". " + er);
       return {reset:HARDRESET, success:true, remove:false};
     }
   }
@@ -646,7 +678,7 @@ jsdump("Processing Entry:" + aEntry);
   try {inflated.create(inflated.NORMAL_FILE_TYPE, FPERM);}
   catch (er) {
     //don't log this because it commonly happens when parent dir was just deleted and is not ready to receive children. HARDRESET takes care if this...
-    //jsdump("Could not create empty target file: " + inflated.path + ". " + er);
+    jsdump("Could not create empty target file: " + inflated.path + ". " + er);
     return {reset:HARDRESET, success:true, remove:false};
   }
   
@@ -738,6 +770,7 @@ function finishAndStartXulSword2() {
 }
 
 function finish(isFinalPass) {
+  if (typeof(Bible) != "undefined" && Bible.paused) Bible.resume();
   if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
   if (ProgressMeter) window.setTimeout("ProgressMeter.close();", 100);
   if (NewPlugin) {
@@ -1419,6 +1452,6 @@ function restartApplication(promptBefore) {
 }
 
 function setPreSword() {
-  PreSword = (MainWindow ? false:true);
+  PreSword = (!MainWindow || !MainWindow.Bible || !MainWindow.Bible.inst)
   jsdump("PreSword = " + PreSword);
 }

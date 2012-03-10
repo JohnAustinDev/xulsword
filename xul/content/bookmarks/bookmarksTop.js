@@ -653,14 +653,7 @@ var BookmarkFuns = {
       return;
     }
     
-    var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-    foStream.init(file, 0x02 | 0x08 | 0x20, -1, 0);
-    var charset = "UTF-16"; // UTF-16 is recognized by notepad, wordpad, MSWord, Open Office etc...
-    var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
-    os.init(foStream, charset, 0, 0x0000);
-    os.writeString(this.getFormattedBMdata(aSelection.item[0], false));
-    os.close();
-    foStream.close();
+    writeFile(file, this.getFormattedBMdata(aSelection.item[0], false), true, "UTF-16");
   },
   
   getFormattedBMdata: function(afolder, isHTML) {

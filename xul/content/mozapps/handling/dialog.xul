@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
-<?xml-stylesheet href="chrome://xulsword/skin/xulrunner/global/global.css"?>
-<?xml-stylesheet href="chrome://xulsword/content/xulrunner/mozapps/handling/handler.css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/xulrunner/mozapps/handling/handling.css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://xsmozapps/content/handling/handler.css"?>
+<?xml-stylesheet href="chrome://xsmozapps/skin/handling/handling.css"?>
 <!-- ***** BEGIN LICENSE BLOCK *****
    - Version: MPL 1.1/GPL 2.0/LGPL 2.1
    -
@@ -39,7 +39,7 @@
    -
    - ***** END LICENSE BLOCK ***** -->
 
-<!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/xulrunner/mozapps/handling/handling.dtd">
+<!DOCTYPE dialog SYSTEM "chrome://xsmozapps/locale/handling/handling.dtd">
 
 <dialog id="handling"
         ondialogaccept="return dialog.onAccept();"
@@ -53,12 +53,12 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
-  <script type="application/javascript" src="chrome://xulsword/content/xulrunner/mozapps/handling/dialog.js"/>
+  <script type="application/javascript" src="chrome://xsmozapps/content/handling/dialog.js"/>
   <!-- END EDIT!! !-->
 
   <stringbundleset id="strings">
     <stringbundle id="base-strings"
-                  src="chrome://xulsword/locale/xulrunner/mozapps/handling/handling.properties"/>
+                  src="chrome://xsmozapps/locale/handling/handling.properties"/>
   </stringbundleset>
 
   <hbox>

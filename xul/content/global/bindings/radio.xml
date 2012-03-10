@@ -5,9 +5,9 @@
    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
    xmlns:xbl="http://www.mozilla.org/xbl">
 
-  <binding id="radiogroup" extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#basecontrol">
+  <binding id="radiogroup" extends="chrome://xsglobal/content/bindings/general.xml#basecontrol">
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/radio.css"/>
+      <stylesheet src="chrome://xsglobal/skin/radio.css"/>
     </resources>
 
     <implementation implements="nsIDOMXULSelectControlElement, nsIAccessibleProvider">
@@ -428,9 +428,9 @@
     </handlers>
   </binding>
 
-  <binding id="radio" extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#control-item">
+  <binding id="radio" extends="chrome://xsglobal/content/bindings/general.xml#control-item">
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/radio.css"/>
+      <stylesheet src="chrome://xsglobal/skin/radio.css"/>
     </resources>
 
     <content>

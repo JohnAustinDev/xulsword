@@ -40,27 +40,27 @@
   ======================================================================= */
 
 /* all localizable skin settings shall live here */
-@import url("chrome://xulsword/locale/xulrunner/global/intl.css");
+@import url("chrome://xsglobal/locale/intl.css");
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
 /* ::::: XBL bindings ::::: */
 
 radio {
-  -moz-binding: url("chrome://xulsword/skin/xulrunner/global/globalBindings.xml#radio");
+  -moz-binding: url("chrome://xsglobal/skin/globalBindings.xml#radio");
 }
 
 menulist > menupopup,
 .menulist-menupopup {
-  -moz-binding: url("chrome://xulsword/content/xulrunner/global/bindings/popup.xml#popup-scrollbars");
+  -moz-binding: url("chrome://xsglobal/content/bindings/popup.xml#popup-scrollbars");
 }
 
 .menulist-compact {
-  -moz-binding: url("chrome://xulsword/skin/xulrunner/global/globalBindings.xml#menulist-compact");
+  -moz-binding: url("chrome://xsglobal/skin/globalBindings.xml#menulist-compact");
 }
 
 progressmeter[mode="undetermined"] {
-  -moz-binding: url("chrome://xulsword/content/xulrunner/global/bindings/progressmeter.xml#progressmeter-undetermined");
+  -moz-binding: url("chrome://xsglobal/content/bindings/progressmeter.xml#progressmeter-undetermined");
 }
 
 /* ::::: root elements ::::: */
@@ -95,19 +95,19 @@ window.dialog {
 }
 
 .message-icon {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/icons/information-32.png");
+  list-style-image: url("chrome://xsglobal/skin/icons/information-32.png");
 }
 
 .alert-icon {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/icons/Warning.png");
+  list-style-image: url("chrome://xsglobal/skin/icons/Warning.png");
 }
 
 .error-icon {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/icons/Error.png");
+  list-style-image: url("chrome://xsglobal/skin/icons/Error.png");
 }
 
 .question-icon {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/icons/Question.png");
+  list-style-image: url("chrome://xsglobal/skin/icons/Question.png");
 }
 
 /* ::::: iframe ::::: */
@@ -336,7 +336,7 @@ label[disabled="true"]:-moz-system-metric(windows-classic) {
   border: none;
   margin: -14px;
   padding: 0;
-  background-image: url("chrome://xulsword/skin/xulrunner/global/icons/autoscroll.png");
+  background-image: url("chrome://xsglobal/skin/icons/autoscroll.png");
   background-color: transparent;
   background-position: right top;
   -moz-appearance: none;

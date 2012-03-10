@@ -20,7 +20,7 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/search.css" type="text/css"?>
-<?xul-overlay href="chrome://xulsword/content/xulrunner/global/editMenuOverlay.xul"?>
+<?xul-overlay href="chrome://xsglobal/content/editMenuOverlay.xul"?>
 
 <!DOCTYPE window [
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
@@ -29,7 +29,7 @@
 %bookmarksDTD;
 <!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
 %browserDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/xulrunner/globalglobal.dtd" >
+<!ENTITY % globalDTD SYSTEM "chrome://xsglobal/locale/global.dtd" >
 %globalDTD;
 ]>
 
@@ -47,7 +47,7 @@
 
 <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
 <script src="chrome://xulsword/content/common0.js"/>
-<script src="chrome://xulsword/content/xulrunner/global/globalOverlay.js"/>
+<script src="chrome://xsglobal/content/globalOverlay.js"/>
 <script src="chrome://xulsword/content/common1.js"/>
 <script src="chrome://xulsword/content/common2.js"/>
 <script src="chrome://xulsword/content/textHTML.js"/>

@@ -7,11 +7,11 @@
 
   <binding id="toolbar-base">
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/toolbar.css"/>
+      <stylesheet src="chrome://xsglobal/skin/toolbar.css"/>
     </resources>
   </binding>
   
-  <binding id="toolbox" extends="chrome://xulsword/content/xulrunner/global/bindings/toolbar.xml#toolbar-base">
+  <binding id="toolbox" extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbar-base">
     <implementation>
       <field name="palette">
         null
@@ -83,7 +83,7 @@
     </implementation>
   </binding>
   
-  <binding id="toolbar" extends="chrome://xulsword/content/xulrunner/global/bindings/toolbar.xml#toolbar-base">
+  <binding id="toolbar" extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbar-base">
     <implementation implements="nsIAccessibleProvider">
       <property name="accessibleType" readonly="true">
         <getter>
@@ -327,7 +327,7 @@
   </binding>
 
   <binding id="toolbar-menubar-autohide"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/toolbar.xml#toolbar">
+           extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbar">
     <implementation>
       <constructor>
         this._setInactive();
@@ -428,7 +428,7 @@
   </binding>
 
   <binding id="toolbar-drag"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/toolbar.xml#toolbar">
+           extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbar">
     <implementation>
       <constructor><![CDATA[
         try {
@@ -443,7 +443,7 @@
     </implementation>
   </binding>
 
-  <binding id="menubar" extends="chrome://xulsword/content/xulrunner/global/bindings/toolbar.xml#toolbar-base" display="xul:menubar">
+  <binding id="menubar" extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbar-base" display="xul:menubar">
     <implementation implements="nsIAccessibleProvider">
       <property name="accessibleType" readonly="true">
         <getter>
@@ -494,7 +494,7 @@
     </handlers>
   </binding>
 
-  <binding id="toolbardecoration" extends="chrome://xulsword/content/xulrunner/global/bindings/toolbar.xml#toolbar-base">
+  <binding id="toolbardecoration" extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbar-base">
     <implementation implements="nsIAccessibleProvider">
       <property name="accessibleType" readonly="true">
         <getter>
@@ -504,7 +504,7 @@
     </implementation>
   </binding>
 
-  <binding id="toolbarpaletteitem" extends="chrome://xulsword/content/xulrunner/global/bindings/toolbar.xml#toolbar-base" display="xul:button">
+  <binding id="toolbarpaletteitem" extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbar-base" display="xul:button">
     <content>
       <xul:hbox class="toolbarpaletteitem-box" flex="1" xbl:inherits="type,place">
         <children/>
@@ -512,7 +512,7 @@
     </content>
   </binding>
     
-  <binding id="toolbarpaletteitem-palette" extends="chrome://xulsword/content/xulrunner/global/bindings/toolbar.xml#toolbarpaletteitem">
+  <binding id="toolbarpaletteitem-palette" extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbarpaletteitem">
     <content>
       <xul:hbox class="toolbarpaletteitem-box" xbl:inherits="type,place">
         <children/>

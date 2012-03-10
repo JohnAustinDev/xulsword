@@ -125,9 +125,9 @@ radio:hover:active > .radio-check-box1 {
 /* ..... selected state ..... */
 
 radio[selected="true"] > .radio-check-box1 > .radio-check-box2 {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/radio/radio-check.gif");
+  list-style-image: url("chrome://xsglobal/skin/radio/radio-check.gif");
 }
 
 radio[selected="true"][disabled="true"] > .radio-check-box1 > .radio-check-box2 {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/radio/radio-check-dis.gif") !important
+  list-style-image: url("chrome://xsglobal/skin/radio/radio-check-dis.gif") !important
 }

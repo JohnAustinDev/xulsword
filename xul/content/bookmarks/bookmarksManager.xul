@@ -38,10 +38,10 @@
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksManager.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks.css" type="text/css"?>
 
-<?xul-overlay href="chrome://xulsword/content/xulrunner/global/editMenuOverlay.xul"?>
+<?xul-overlay href="chrome://xsglobal/content/editMenuOverlay.xul"?>
 
 <!DOCTYPE window [
-<!ENTITY % editMenuOverlayDTD SYSTEM "chrome://xulsword/locale/xulrunner/globaleditMenuOverlay.dtd" >
+<!ENTITY % editMenuOverlayDTD SYSTEM "chrome://xsglobal/locale/editMenuOverlay.dtd" >
 %editMenuOverlayDTD;
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
 %xulswordDTD;
@@ -49,7 +49,7 @@
 %bookmarksDTD;
 <!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
 %browserDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/xulrunner/globalglobal.dtd" >
+<!ENTITY % globalDTD SYSTEM "chrome://xsglobal/locale/global.dtd" >
 %globalDTD;
 ]>
 
@@ -64,9 +64,9 @@
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/xulrunner/global/globalOverlay.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/xulrunner/global/printUtils.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/xulrunner/global/nsDragAndDrop.js"/>
+  <script type="application/x-javascript" src="chrome://xsglobal/content/globalOverlay.js"/>
+  <script type="application/x-javascript" src="chrome://xsglobal/content/printUtils.js"/>
+  <script type="application/x-javascript" src="chrome://xsglobal/content/nsDragAndDrop.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>

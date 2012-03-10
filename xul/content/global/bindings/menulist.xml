@@ -6,15 +6,15 @@
    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
    xmlns:xbl="http://www.mozilla.org/xbl">
 
-  <binding id="menulist-base" extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#basecontrol">
+  <binding id="menulist-base" extends="chrome://xsglobal/content/bindings/general.xml#basecontrol">
     <resources>
-      <stylesheet src="chrome://xulsword/content/xulrunner/global/menulist.css"/>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/menulist.css"/>
+      <stylesheet src="chrome://xsglobal/content/menulist.css"/>
+      <stylesheet src="chrome://xsglobal/skin/menulist.css"/>
     </resources>
   </binding>
 
   <binding id="menulist" display="xul:menu"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/menulist.xml#menulist-base">
+           extends="chrome://xsglobal/content/bindings/menulist.xml#menulist-base">
     <content sizetopopup="pref">
       <xul:hbox class="menulist-label-box" flex="1">
         <xul:image class="menulist-icon" xbl:inherits="src=image,src"/>
@@ -406,7 +406,7 @@
     </implementation>
   </binding>
 
-  <binding id="menulist-editable" extends="chrome://xulsword/skin/xulrunner/global/bindings/menulist.xml#menulist">
+  <binding id="menulist-editable" extends="chrome://xsglobal/skin/bindings/menulist.xml#menulist">
     <content sizetopopup="pref">
       <xul:hbox class="menulist-editable-box textbox-input-box" xbl:inherits="context,disabled,readonly,focused" flex="1">
         <html:input class="menulist-editable-input" flex="1" anonid="input" allowevents="true"
@@ -602,7 +602,7 @@
   </binding>
 
   <binding id="menulist-compact" display="xul:menu"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/menulist.xml#menulist">
+           extends="chrome://xsglobal/content/bindings/menulist.xml#menulist">
     <content sizetopopup="false">
       <xul:dropmarker class="menulist-dropmarker" type="menu" xbl:inherits="disabled,open"/>
       <xul:image class="menulist-icon" xbl:inherits="src=image,src"/>
@@ -612,7 +612,7 @@
   </binding>
 
   <binding id="menulist-description" display="xul:menu"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/menulist.xml#menulist">
+           extends="chrome://xsglobal/content/bindings/menulist.xml#menulist">
     <content sizetopopup="pref">
       <xul:hbox class="menulist-label-box" flex="1">
         <xul:image class="menulist-icon" xbl:inherits="src=image,src"/>

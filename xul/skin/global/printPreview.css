@@ -2,7 +2,7 @@
 
 .home-arrow,
 .end-arrow:-moz-locale-dir(rtl) {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/printpreview/arrow-left-end.png");
+  list-style-image: url("chrome://xsglobal/skin/printpreview/arrow-left-end.png");
   -moz-image-region: rect(0, 16px, 16px, 0);
 }
 
@@ -13,7 +13,7 @@
 
 .end-arrow,
 .home-arrow:-moz-locale-dir(rtl) {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/printpreview/arrow-right-end.png");
+  list-style-image: url("chrome://xsglobal/skin/printpreview/arrow-right-end.png");
   -moz-image-region: rect(0, 16px, 16px, 0);
 }
 
@@ -24,7 +24,7 @@
 
 .left-arrow,
 .right-arrow:-moz-locale-dir(rtl) {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/printpreview/arrow-left.png");
+  list-style-image: url("chrome://xsglobal/skin/printpreview/arrow-left.png");
   -moz-image-region: rect(0, 16px, 16px, 0);
 }
 
@@ -35,7 +35,7 @@
 
 .right-arrow,
 .left-arrow:-moz-locale-dir(rtl) {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/printpreview/arrow-right.png");
+  list-style-image: url("chrome://xsglobal/skin/printpreview/arrow-right.png");
   -moz-image-region: rect(0, 16px, 16px, 0);
 }
 
@@ -47,22 +47,22 @@
 /* ...... scale in/decrement ..... */
 
 .up-arrow {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/arrow/arrow-up-sharp.gif");
+  list-style-image: url("chrome://xsglobal/skin/arrow/arrow-up-sharp.gif");
 }
 
 .down-arrow {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/arrow/arrow-dn-sharp.gif");
+  list-style-image: url("chrome://xsglobal/skin/arrow/arrow-dn-sharp.gif");
 }
 
 
 /* ..... orientation ..... */
 
 .toolbar-portrait-page {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/icons/Print-preview.png");
+  list-style-image: url("chrome://xsglobal/skin/icons/Print-preview.png");
   -moz-image-region: rect(0px 16px 16px 0px);
 }
 
 .toolbar-landscape-page {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/icons/Print-preview.png");
+  list-style-image: url("chrome://xsglobal/skin/icons/Print-preview.png");
   -moz-image-region: rect(0px 32px 16px 16px);
 }

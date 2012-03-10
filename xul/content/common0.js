@@ -127,6 +127,24 @@ function readFile(nsIFile) {
   return filedata;
 }
 
+function writeFile(nsIFile, str, overwrite, toEncoding) {
+  if (!nsIFile || ! nsIFile.QueryInterface(Components.interfaces.nsILocalFile)) return 0;
+  if (nsIFile.exists()) {
+    if (!overwrite) return 0;
+    nsIFile.remove(true);
+  }
+  nsIFile.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
+    
+  var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
+  foStream.init(nsIFile, 0x02 | 0x08 | 0x20, -1, 0);
+  var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
+  os.init(foStream, (toEncoding ? toEncoding:"UTF-8"), 0, 0x0000);
+  os.writeString(str);
+  os.close();
+  foStream.close();
+  return 1;
+}
+
 function removeFile(file, recurse) {
   if (!recurse) recurse = false;
   if (file) file = file.QueryInterface(Components.interfaces.nsILocalFile);
@@ -220,6 +238,7 @@ function replaceASCIIcontrolChars(string) {
 // xsBookmarks  = user bookmarks directory
 // xsModsUser   = user SWORD module directory (contains mods.d & modules)
 // xsModsCommon = shared SWORD module directory (contains mods.d & modules)
+// xsExtension  = profile extensions directory
 function getSpecialDirectory(name) {
   var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
   if (name.substr(0,2) == "xs") {
@@ -248,6 +267,10 @@ function getSpecialDirectory(name) {
       var userAppPath = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment).get("APPDATA");
       userAppPath += "\\Sword";
       dir.initWithPath(userAppPath);
+      break;
+    case "xsExtension":
+      dir = prof.clone();
+      dir.append("extensions");
       break;
     case "xsResD":
     case "xsModsUser":

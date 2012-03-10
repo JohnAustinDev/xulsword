@@ -18,7 +18,7 @@
     </implementation>
   </binding>
 
-  <binding id="basetext" extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#basecontrol">
+  <binding id="basetext" extends="chrome://xsglobal/content/bindings/general.xml#basecontrol">
     <implementation implements="nsIDOMXULLabeledControlElement">
       <!-- public implementation -->
       <property name="label"      onset="this.setAttribute('label',val); return val;"
@@ -53,7 +53,7 @@
     </implementation>      
   </binding>
 
-  <binding id="control-item" extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#basetext">
+  <binding id="control-item" extends="chrome://xsglobal/content/bindings/general.xml#basetext">
     <implementation>
       <property name="value"      onset="this.setAttribute('value', val); return val;"
                                   onget="return this.getAttribute('value');"/>
@@ -92,7 +92,7 @@
     - Note that this widget will be no longer used in the bookmarks window once 
     - tree is extended to have this functionality built in. 
     -->
-  <binding id="inline-edit-base" extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#basetext">
+  <binding id="inline-edit-base" extends="chrome://xsglobal/content/bindings/general.xml#basetext">
     <implementation>
       <field name="_mode">0</field>
       <method name="setMode">
@@ -214,7 +214,7 @@
   </binding>
 
   <!-- inline editable buttons -->
-  <binding id="buttonleft-ile" extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#inline-edit-base">
+  <binding id="buttonleft-ile" extends="chrome://xsglobal/content/bindings/general.xml#inline-edit-base">
     <content>
       <xul:hbox class="button-internal-box" align="center" flex="1">
         <xul:image class="button-icon" xbl:inherits="src"/>
@@ -278,7 +278,7 @@
   </binding>
 
   <binding id="statusbarpanel-menu-iconic" display="xul:menu"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#statusbarpanel">
+           extends="chrome://xsglobal/content/bindings/general.xml#statusbarpanel">
     <content>
       <xul:image class="statusbarpanel-icon" xbl:inherits="src,src=image"/>
       <children/>
@@ -305,7 +305,7 @@
   </binding>
   
   <binding id="statusbar-drag"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#statusbar">
+           extends="chrome://xsglobal/content/bindings/general.xml#statusbar">
     <implementation>
       <constructor>
         try {
@@ -317,14 +317,14 @@
   </binding>
 
   <binding id="statusbarpanel-iconic" display="xul:button"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#statusbarpanel">
+           extends="chrome://xsglobal/content/bindings/general.xml#statusbarpanel">
     <content>
       <xul:image class="statusbarpanel-icon" xbl:inherits="src,src=image"/>
     </content>
   </binding>
 
   <binding id="statusbarpanel-iconic-text" display="xul:button"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#statusbarpanel">
+           extends="chrome://xsglobal/content/bindings/general.xml#statusbarpanel">
     <content>
       <xul:image class="statusbarpanel-icon" xbl:inherits="src,src=image"/>
       <xul:label class="statusbarpanel-text" xbl:inherits="value=label,crop"/>
@@ -388,7 +388,7 @@
 
   <binding id="dropmarker" extends="xul:button">
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/dropmarker.css"/>
+      <stylesheet src="chrome://xsglobal/skin/dropmarker.css"/>
     </resources>
 
     <content>

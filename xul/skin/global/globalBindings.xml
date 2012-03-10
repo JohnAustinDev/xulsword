@@ -6,7 +6,7 @@
    xmlns:xbl="http://www.mozilla.org/xbl">
 
   <binding id="radio"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/radio.xml#radio">
+           extends="chrome://xsglobal/content/bindings/radio.xml#radio">
     <content>
       <xul:hbox class="radio-check-box1" xbl:inherits="selected,checked,disabled">
         <xul:hbox class="radio-check-box2" flex="1">
@@ -21,7 +21,7 @@
   </binding>
 
   <binding id="radio-with-spacing"
-           extends="chrome://xulsword/skin/xulrunner/global/globalBindings.xml#radio">
+           extends="chrome://xsglobal/skin/globalBindings.xml#radio">
     <content>
       <xul:hbox class="radio-spacer-box">
         <xul:hbox class="radio-check-box1" xbl:inherits="selected,checked,disabled">
@@ -40,7 +40,7 @@
   </binding>
 
   <binding id="toolbarpaletteitem-spacer"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/toolbar.xml#toolbarpaletteitem">
+           extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbarpaletteitem">
     <content>
       <xul:spacer class="spacer-left"/>
       <children/>
@@ -49,7 +49,7 @@
   </binding>
 
   <binding id="menulist-compact" display="xul:menu" 
-           extends="chrome://xulsword/content/xulrunner/global/bindings/menulist.xml#menulist">
+           extends="chrome://xsglobal/content/bindings/menulist.xml#menulist">
     <content sizetopopup="false">
       <xul:hbox class="menulist-label-box" flex="1">
         <xul:image class="menulist-icon" xbl:inherits="src"/>

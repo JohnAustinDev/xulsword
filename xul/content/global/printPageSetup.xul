@@ -43,9 +43,9 @@
 
  ***** END LICENSE BLOCK ***** -->
 
-<?xml-stylesheet href="chrome://xulsword/skin/xulrunner/global/" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/xulrunner/global/printPageSetup.css" type="text/css"?>
-<!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/xulrunner/globalprintPageSetup.dtd">
+<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://xsglobal/skin/printPageSetup.css" type="text/css"?>
+<!DOCTYPE dialog SYSTEM "chrome://xsglobal/locale/printPageSetup.dtd">
 
 <dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   id="printPageSetupDialog"
@@ -61,7 +61,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
-  <script type="application/javascript" src="chrome://xulsword/content/xulrunner/global/printPageSetup.js"/>
+  <script type="application/javascript" src="chrome://xsglobal/content/printPageSetup.js"/>
   <!-- END EDIT!! !-->
   
   <!-- Localizable strings manipulated at run-time. -->

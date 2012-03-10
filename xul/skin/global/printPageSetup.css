@@ -1,7 +1,7 @@
 .portrait-page {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/icons/Portrait.png");
+  list-style-image: url("chrome://xsglobal/skin/icons/Portrait.png");
 }
 
 .landscape-page {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/icons/Landscape.png");
+  list-style-image: url("chrome://xsglobal/skin/icons/Landscape.png");
 }

@@ -222,7 +222,7 @@ treechildren::-moz-tree-progressmeter {
 }
 
 treechildren::-moz-tree-progressmeter(progressUndetermined) {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/progressmeter/progressmeter-busy.gif");
+  list-style-image: url("chrome://xsglobal/skin/progressmeter/progressmeter-busy.gif");
 }
 
 treechildren::-moz-tree-cell-text(progressmeter) {
@@ -321,25 +321,25 @@ treechildren::-moz-tree-column(insertafter) {
 }
 
 treecol:not([hideheader="true"]) > .treecol-sortdirection[sortDirection="ascending"] {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/tree/sort-asc.png");
+  list-style-image: url("chrome://xsglobal/skin/tree/sort-asc.png");
 }
 
 treecol:not([hideheader="true"]) > .treecol-sortdirection[sortDirection="ascending"]:-moz-system-metric(windows-classic) {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/tree/sort-asc-classic.png");
+  list-style-image: url("chrome://xsglobal/skin/tree/sort-asc-classic.png");
 }
 
 treecol:not([hideheader="true"]) > .treecol-sortdirection[sortDirection="descending"] {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/tree/sort-dsc.png");
+  list-style-image: url("chrome://xsglobal/skin/tree/sort-dsc.png");
 }
 
 treecol:not([hideheader="true"]) > .treecol-sortdirection[sortDirection="descending"]:-moz-system-metric(windows-classic) {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/tree/sort-dsc-classic.png");
+  list-style-image: url("chrome://xsglobal/skin/tree/sort-dsc-classic.png");
 }
 
 /* ::::: column picker :::::  */
 
 .tree-columnpicker-icon {
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/tree/columnpicker.gif");
+  list-style-image: url("chrome://xsglobal/skin/tree/columnpicker.gif");
 }
 
 /* ::::: twisty :::::  */
@@ -348,12 +348,12 @@ treechildren::-moz-tree-twisty {
   -moz-padding-end: 4px;
   padding-top: 1px;
   width: 9px; /* The image's width is 9 pixels */
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/tree/twisty-clsd.png");
+  list-style-image: url("chrome://xsglobal/skin/tree/twisty-clsd.png");
 }
 
 treechildren::-moz-tree-twisty(open) {
   width: 9px; /* The image's width is 9 pixels */
-  list-style-image: url("chrome://xulsword/skin/xulrunner/global/tree/twisty-open.png");
+  list-style-image: url("chrome://xsglobal/skin/tree/twisty-open.png");
 }
 
 treechildren::-moz-tree-indentation {

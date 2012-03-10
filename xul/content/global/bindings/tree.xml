@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!DOCTYPE bindings [
-<!ENTITY % treeDTD SYSTEM "chrome://xulsword/locale/xulrunner/globaltree.dtd">
+<!ENTITY % treeDTD SYSTEM "chrome://xsglobal/locale/tree.dtd">
 %treeDTD;
 ]>
 
@@ -10,9 +10,9 @@
    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
    xmlns:xbl="http://www.mozilla.org/xbl">
   
-  <binding id="tree-base" extends="chrome://xulsword/content/xulrunner/global/bindings/general.xml#basecontrol">
+  <binding id="tree-base" extends="chrome://xsglobal/content/bindings/general.xml#basecontrol">
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/tree.css"/>
+      <stylesheet src="chrome://xsglobal/skin/tree.css"/>
     </resources>
     <implementation>
       <method name="_isAccelPressed">
@@ -24,7 +24,7 @@
     </implementation>
   </binding>
 
-  <binding id="tree" extends="chrome://xulsword/content/xulrunner/global/bindings/tree.xml#tree-base">
+  <binding id="tree" extends="chrome://xsglobal/content/bindings/tree.xml#tree-base">
     <content hidevscroll="true" hidehscroll="true">
       <children includes="treecols"/>
       <xul:stack class="tree-stack" flex="1">
@@ -881,7 +881,7 @@
 
   <binding id="treecols">
     <resources>
-      <stylesheet src="chrome://xulsword/skin/xulrunner/global/tree.css"/>
+      <stylesheet src="chrome://xsglobal/skin/tree.css"/>
     </resources>
     <content orient="horizontal">
       <xul:hbox class="tree-scrollable-columns" flex="1">
@@ -900,7 +900,7 @@
     </implementation>
   </binding>
 
-  <binding id="treerows" extends="chrome://xulsword/content/xulrunner/global/bindings/tree.xml#tree-base">
+  <binding id="treerows" extends="chrome://xsglobal/content/bindings/tree.xml#tree-base">
     <content>
       <xul:hbox flex="1" class="tree-bodybox">
         <children/>
@@ -935,7 +935,7 @@
     </handlers>
   </binding>
 
-  <binding id="treebody" extends="chrome://xulsword/content/xulrunner/global/bindings/tree.xml#tree-base">
+  <binding id="treebody" extends="chrome://xsglobal/content/bindings/tree.xml#tree-base">
     <implementation>
       <constructor>
         if ("_ensureColumnOrder" in this.parentNode)
@@ -1125,7 +1125,7 @@
     </handlers>
   </binding>
 
-  <binding id="treecol-base" extends="chrome://xulsword/content/xulrunner/global/bindings/tree.xml#tree-base">
+  <binding id="treecol-base" extends="chrome://xsglobal/content/bindings/tree.xml#tree-base">
     <implementation implements="nsIAccessibleProvider">
       <constructor>
         this.parentNode.parentNode._columnsDirty = true;
@@ -1335,21 +1335,21 @@
     </handlers>
   </binding>
 
-  <binding id="treecol" extends="chrome://xulsword/content/xulrunner/global/bindings/tree.xml#treecol-base">
+  <binding id="treecol" extends="chrome://xsglobal/content/bindings/tree.xml#treecol-base">
     <content>
       <xul:label class="treecol-text" xbl:inherits="crop,value=label" flex="1" crop="right"/>
       <xul:image class="treecol-sortdirection" xbl:inherits="sortDirection,hidden=hideheader"/>
     </content>
   </binding>
 
-  <binding id="treecol-image" extends="chrome://xulsword/content/xulrunner/global/bindings/tree.xml#treecol-base">
+  <binding id="treecol-image" extends="chrome://xsglobal/content/bindings/tree.xml#treecol-base">
     <content>
       <xul:image class="treecol-icon" xbl:inherits="src"/>
     </content>
   </binding>
 
   <binding id="columnpicker" display="xul:button"
-           extends="chrome://xulsword/content/xulrunner/global/bindings/tree.xml#tree-base">
+           extends="chrome://xsglobal/content/bindings/tree.xml#tree-base">
     <content>
       <xul:image class="tree-columnpicker-icon"/>
       <xul:menupopup anonid="popup">

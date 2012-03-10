@@ -15,7 +15,7 @@
 # BUILD WHAT?
 Set Target=Windows
 Set MakeDevelopment=true
-Set MakePortable=false
+Set MakePortable=true
 Set MakeSetup=false
 Set MakeFFextension=false
 
@@ -46,7 +46,7 @@ Set UseSecurityModule=true
 Set (buildprefs.js):xulsword.DefaultCK=spirit
 
 # STARTUP XUL FILE
-Set (prefs.js):toolkit.defaultChromeURI=chrome://xulsword/content/xulsword.xul
+Set (prefs.js):toolkit.defaultChromeURI=chrome://xulsword/content/splash.xul
 
 # DEFAULT LOCALE (en-US, ru, etc.)
 Set (language.js):general.useragent.locale=en-US
