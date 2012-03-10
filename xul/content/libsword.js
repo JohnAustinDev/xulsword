@@ -103,7 +103,7 @@ var Bible = {
       var isExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");
       if (!isExtension) this.LibswordPath = "xulsword.dll";
       else {
-        this.LibswordPath = directoryService.get("ProfD", Components.interfaces.nsIFile).path + "/extensions/{EC34AE58-63B4-11E1-8AB2-991B4924019B}/xulsword.dll";
+        this.LibswordPath = directoryService.get("ProfD", Components.interfaces.nsIFile).path + "/extensions/xulsword@xulsword.org/xulsword.dll";
       }
     }
     this.Libsword = ctypes.open(this.LibswordPath);
