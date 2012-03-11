@@ -14,18 +14,19 @@
 
 # BUILD WHAT?
 Set MakeDevelopment=true
-Set MakePortable=true
-Set MakeSetup=true
-Set MakeFFextension=true
+Set MakePortable=false
+Set MakeSetup=false
+Set MakeFFextension=false
 
 # SPECIFY PATHS
-Set OutputDirectory=C:\home\dev\mk-dev\build-out
+Set OutputDirectory=..\build-out
+Set XULRunner=..\xulrunner
+Set CluceneSource=..\Cpp\clucene-core-0.9.21b
+Set SwordSource=..\Cpp\sword-svn
+Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v6.1
 Set ModuleRepository1=X:\repository\modsword\raw
 Set ModuleRepository2=C:\home\dev\repository
 Set XulswordExtras=C:\home\dev\sup-dev
-Set CluceneSource=C:\home\dev\mk-dev\Cpp\clucene-core-0.9.21b
-Set SwordSource=C:\home\dev\mk-dev\Cpp\sword-svn
-Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v6.1
 
 # SPECIFY BUILD INFORMATION
 Set Version=2.26
@@ -41,7 +42,8 @@ Set (buildprefs.js):xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
 # CHOOSE SECURITY SETTINGS
 Set UseSecurityModule=false
-Set (buildprefs.js):xulsword.DefaultCK=aKey
+Set KeyGenPath=
+Set (buildprefs.js):xulsword.DefaultCK=defaultKey
 
 # DEFAULT LOCALE (en-US, ru, etc.)
 Set (language.js):general.useragent.locale=en-US
@@ -51,7 +53,7 @@ Set IncludeLocales=en-US
 
 # MODULES TO INCLUDE IN BUILD
 # Note StrongsGreek,StrongsHebrew,Robinson are used for original lang features
-Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+#Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
 
 # INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
 Set IncludeIndexes=false

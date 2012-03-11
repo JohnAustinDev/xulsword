@@ -26,7 +26,7 @@
 #define KEYLEN 16
 #define NOTFOUND "Not Found"
 
-#include "X:/xulsword/extra/Cpp/getcodes.cpp"
+#include "appInfo.h"
 
 bool security::PassedIntegrityCheck = true;
 
