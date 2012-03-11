@@ -252,7 +252,7 @@ function loadedXULReal() {
   }
   
   if (Bible) window.onresize = resizeWatch;
-  if (window.opener && window.opener.document.title=="Splash")
+  if (window.opener && window.opener.document && window.opener.document.title=="Splash")
       window.opener.close(); //Close splash and opener window
   
   //handle error states...
@@ -1873,7 +1873,7 @@ function changeLocaleTo(newLocale) {
   
   setGlobalDirectionPrefs();
   
-  windowLocationReload();
+  restartApplication();
 }
 
 function updateXulswordButtons() {

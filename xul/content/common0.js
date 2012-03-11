@@ -26,6 +26,8 @@ if (navigator.appVersion.indexOf("Mac")!=-1) OSName="MacOS";
 if (navigator.appVersion.indexOf("X11")!=-1) OSName="UNIX";
 if (navigator.appVersion.indexOf("Linux")!=-1) OSName="Linux";
 
+var IsExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");
+
 /************************************************************************
  * Declare/Define Some Common Global Variables
  ***********************************************************************/
@@ -66,6 +68,8 @@ const PMSTD="centerscreen, dependent";
 const PMSPLASH="alwaysRaised,centerscreen";
 const PMMODAL="alwaysRaised,centerscreen,modal";
 const PMNORMAL=0, PMSTOP=1;
+const APPLICATIONID="xulsword@xulsword.org";
+
 // scrolling
 const SCROLLTYPENONE = 0;         // don't scroll (for links this becomes SCROLLTYPECENTER)
 const SCROLLTYPETOP = 1           // scroll to top
@@ -243,9 +247,19 @@ function getSpecialDirectory(name) {
   var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
   if (name.substr(0,2) == "xs") {
     var dir = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-    var prof = directoryService.get("ProfD", Components.interfaces.nsIFile);
-    var re = new RegExp(prof.leafName + "$");
-    dir.initWithPath(prof.path.replace(re, "resources"));
+    var profile = directoryService.get("ProfD", Components.interfaces.nsIFile);
+    
+    if (!IsExtension) {
+      var re = new RegExp(profile.leafName + "$");
+      dir.initWithPath(profile.path.replace(re, "resources"));
+    }
+    else {
+      dir = profile.clone().QueryInterface(Components.interfaces.nsILocalFile);
+      dir.append("extensions");
+      dir.append(APPLICATIONID);
+      dir.append("resources");
+    }
+    
     switch(name) {
     case "xsFonts":
       dir.append(FONTS);
@@ -269,7 +283,7 @@ function getSpecialDirectory(name) {
       dir.initWithPath(userAppPath);
       break;
     case "xsExtension":
-      dir = prof.clone();
+      dir = profile.clone();
       dir.append("extensions");
       break;
     case "xsResD":

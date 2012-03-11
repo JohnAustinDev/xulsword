@@ -59,6 +59,9 @@ function onLoad() {
       var cnt=0;
       for (var lc=0; lc<LocaleList.length; lc++) {
         if (LocaleList[lc]==DEFAULTLOCALE) continue;
+        var aFile = getSpecialDirectory("xsExtension");
+        aFile.append(LocaleList[lc] + "@xulsword.org");
+        if (!aFile.exists()) continue;
         var cb = document.createElement("checkbox");
         cb = MainWindow.writeLocaleElem(cb, lc, GROUPS[g], true);
         if (!cb) continue;
