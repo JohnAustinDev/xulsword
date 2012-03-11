@@ -13,40 +13,35 @@
 #                          menu, or leave blank and no email menu element will appear.
 
 # BUILD WHAT?
-Set Target=Windows
 Set MakeDevelopment=true
-Set MakePortable=false
-Set MakeSetup=false
+Set MakePortable=true
+Set MakeSetup=true
 Set MakeFFextension=true
 
-# SPECIFY SOME PATHS
+# SPECIFY PATHS
 Set OutputDirectory=C:\home\dev\mk-dev\build-out
 Set ModuleRepository1=X:\repository\modsword\raw
-::Set ModuleRepository2=X:\moduleDev\$mod\sword
 Set ModuleRepository2=C:\home\dev\repository
 Set XulswordExtras=C:\home\dev\sup-dev
 Set CluceneSource=C:\home\dev\mk-dev\Cpp\clucene-core-0.9.21b
 Set SwordSource=C:\home\dev\mk-dev\Cpp\sword-svn
-Set MicrosoftSDK=%ProgramFiles%\Microsoft SDKs\Windows\v6.1
+Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v6.1
 
 # SPECIFY BUILD INFORMATION
-Set Version=3.0
-Set (buildprefs.js):xulsword.EngineVersion=1.6.2
+Set Version=2.26
 Set Name=xulsword
 Set Vendor=CrossWire
 Set Executable=xulsword.exe
-Set (buildprefs.js):xulsword.MinXSMversion=1.0
-Set (buildprefs.js):xulsword.MinUIversion=2.7
 Set GeckoMinVersion=10.0.0
 Set GeckoMaxVersion=10.9.9
+Set (buildprefs.js):xulsword.EngineVersion=1.6.2
+Set (buildprefs.js):xulsword.MinXSMversion=1.0
+Set (buildprefs.js):xulsword.MinUIversion=2.7
 Set (buildprefs.js):xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
 # CHOOSE SECURITY SETTINGS
-Set UseSecurityModule=true
-Set (buildprefs.js):xulsword.DefaultCK=spirit
-
-# STARTUP XUL FILE
-Set (prefs.js):toolkit.defaultChromeURI=chrome://xulsword/content/splash.xul
+Set UseSecurityModule=false
+Set (buildprefs.js):xulsword.DefaultCK=aKey
 
 # DEFAULT LOCALE (en-US, ru, etc.)
 Set (language.js):general.useragent.locale=en-US
@@ -56,9 +51,7 @@ Set IncludeLocales=en-US
 
 # MODULES TO INCLUDE IN BUILD
 # Note StrongsGreek,StrongsHebrew,Robinson are used for original lang features
-#Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
-Set IncludeModules=UZV,UZDOT,UZDNT,ESV,ADG
-Set IncludeSearchIndexes=false
+Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
 
 # INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
 Set IncludeIndexes=false
@@ -81,7 +74,7 @@ Set (buildprefs.js):xulsword.useUYGskin=false
 # SHOULD THE INSTALLER INSTALL THE HEBREW FONT? (true:false)
 Set IncludeHebrewFont=false
 
-# LIST MODULES FOR EACH WINDOW LISTING TABS SHOULD BE INITIALLY HIDDEN (default is to show tabs for all)
+# MODULES FOR EACH WINDOW WHOSE TABS SHOULD BE INITIALLY HIDDEN (default is to show tabs)
 Set (buildprefs.js):xulsword.HiddenTexts1=
 Set (buildprefs.js):xulsword.HiddenTexts2=
 Set (buildprefs.js):xulsword.HiddenTexts3=

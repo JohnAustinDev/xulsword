@@ -1,6 +1,7 @@
 use Encode;
 use File::Copy;
 use File::Path qw(make_path remove_tree);
+use File::Compare;
 
 # copies a directory recursively
 sub copy_dir($$$$) {
@@ -36,37 +37,31 @@ sub copy_dir($$$$) {
   return 1;
 }
 
-sub makeJAR($$) {
-  my $jf = shift;
+sub makeZIP($$$$) {
+  my $zf = shift;
   my $di = shift;
-  if ("$^O" =~ /MSWin32/i && $Target eq "Windows") {
-    $jf =~ s/[\/]/\\/g;
-    $di =~ s/[\/]/\\/g;
-    $di .= "\\*";
-    my $cmd = "7za a -tzip \"$jf\" -r \"$di\" -x!.svn";
-    #&Log("$cmd\n");
-    `$cmd`;
-  }
-  else {
-    &Log("ERROR: Please update common.pl->makeJAR() to include your platform.\n");
-  }
-}
-
-sub updateJAR($$) {
-  my $jf = shift;
-  my $di = shift;
+  my $updateExisting = shift;
+  my $logfile = shift;
   
-  if (!-e $jf) {&Log("ERROR: no JAR to update \"$jf\".\n"); return;}
-  if ("$^O" =~ /MSWin32/i && $Target eq "Windows") {
-    $jf =~ s/[\/]/\\/g;
+  my $zd = $zf;
+  $zd =~ s/[\/\\][^\/\\]+$//;
+  if (!-e $zd) {make_path($zd);}
+  if ("$^O" =~ /MSWin32/i) {
+    $zf =~ s/[\/]/\\/g;
     $di =~ s/[\/]/\\/g;
     $di .= "\\*";
-    my $cmd = "7za u -tzip \"$jf\" -r \"$di\" -x!.svn";
+    my $a = ($updateExisting ? "u":"a");
+    my $cmd = "7za $a -tzip \"$zf\" -r \"$di\" -x!.svn";
+    if ($logfile) {
+      my $lf = $zf;
+      $lf =~ s/[^\/\\]+$/$logfile/;
+      $cmd .= " > $lf";
+    }
     #&Log("$cmd\n");
     `$cmd`;
   }
   else {
-    &Log("ERROR: Please update common.pl->updateJAR() to include your platform.\n");
+    &Log("ERROR: Please update common.pl->makeZIP() to include your platform.\n");
   }
 }
 

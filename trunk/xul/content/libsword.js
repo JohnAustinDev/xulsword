@@ -95,15 +95,15 @@ var Bible = {
     this.ReportProgressPtr = funcTypeReportProgressPtr(this.ReportProgress);
 
     if (!this.ModuleDirectory) {
-      var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
-      this.ModuleDirectory = directoryService.get("ProfD", Components.interfaces.nsIFile).path.replace(/[^\/\\]*$/, "resources");
+      // can't call this in indexWorker...
+      this.ModuleDirectory = getSpecialDirectory("xsResD").path;
     }
 
     if (!this.LibswordPath) {
-      var isExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");
-      if (!isExtension) this.LibswordPath = "xulsword.dll";
+      if (!IsExtension) this.LibswordPath = "xulsword.dll";
       else {
-        this.LibswordPath = directoryService.get("ProfD", Components.interfaces.nsIFile).path + "/extensions/xulsword@xulsword.org/xulsword.dll";
+        // can't call this in indexWorker...
+        this.LibswordPath = getSpecialDirectory("xsExtension").path + "/" + APPLICATIONID + "/xulsword.dll";
       }
     }
     this.Libsword = ctypes.open(this.LibswordPath);

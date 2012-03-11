@@ -287,13 +287,16 @@ sub getFileFromLocale($$$) {
     if ($l ne "en-US") {
       $fr = "$MKS\\localeDev\\$l\\locale\\$f";
     }
-    else {$fr = "$MK\\xul\\en-US.xs\\en-US-xulsword\\$f";}
+    else {
+      $f =~ s/^xulsword\\//; # this path was changed...
+      $fr = "$MK\\xul\\locale\\en-US\\$f";
+    }
   }
   elsif ($sourceFF3 eq "true" && $f =~ s/^\[locale-browser\]\\//) {$fr = "$MKS\\localeDev\\Firefox3\\$ffl\\locale\\$f";}
   elsif ($sourceFF3 eq "true" && $f =~ s/^\[locale-global\]\\//)  {$fr = "$MKS\\localeDev\\Firefox3\\$ffl\\locale\\$ffl\\$f";}
   else {
     if ($l ne "en-US") {$fr = "$MKS\\localeDev\\$l\\locale\\$f";}
-    else {$fr = "$MK\\xul\\en-US.xs\\en-US-xulsword\\$f";}
+    else {$fr = "$MK\\xul\\locale\\en-US\\$f";}
     if ($sourceFF3 eq "true" || !-e $fr) {$fr = "$MKS\\localeDev\\Firefox3\\$ffl\\locale\\$ffl\\$f";}  
   }
  

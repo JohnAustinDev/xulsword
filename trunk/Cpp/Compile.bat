@@ -29,7 +29,7 @@ Set cFlags=/nologo /LD%cdbg% /EHsc /W0^
  /I "%sword%\include\internal\regex"^
  /FI "fileops.h"^
  /FI "windefs_sword.h"^
- /D WIN32 /D "_WINDOWS" /D "USELUCENE" /D "_CL_HAVE_DIRENT_H" /D REGEX_MALLOC /D "WIN32_LEAN_AND_MEAN" /D "UNICODE" /D "_UNICODE" /D "_WINDLL" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" /Fp"Release/xulsword.pch" /Fo"Release/" /c
+ %NOSECURITY% /D WIN32 /D "_WINDOWS" /D "USELUCENE" /D "_CL_HAVE_DIRENT_H" /D REGEX_MALLOC /D "WIN32_LEAN_AND_MEAN" /D "UNICODE" /D "_UNICODE" /D "_WINDLL" /D "_USRDLL" /D "_CRT_SECURE_NO_DEPRECATE" /Fp"Release/xulsword.pch" /Fo"Release/" /c
  
 Set cFiles=%SECURITYCPP%^
  ".\xulsword.cpp"^
