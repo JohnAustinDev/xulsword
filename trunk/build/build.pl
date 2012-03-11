@@ -150,6 +150,13 @@ $p = <>;
 ################################################################################
 
 sub writeCompileDeps() {
+  if ($UseSecurityModule =~ /true/i) {
+    if (!-e $KeyGenPath) {
+      &Log("ERROR: You cannot use the security module without supplying a key generator. (UseSecurityModule=true, KeyGenPath=???)\n");
+      die;
+    }
+  }
+  
   &Log("----> Writing application info for C++ compiler.\n");
   if (!-e "$TRUNK/Cpp/Release") {mkdir "$TRUNK/Cpp/Release";}
   open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/appInfo.h") || die;
@@ -157,6 +164,9 @@ sub writeCompileDeps() {
   print INFO "#define PORTABLE_DIR L\".\\\\$Name\"\n";
   print INFO "#define KEYADDRESS L\"Software\\\\$Vendor\\\\$Name\"\n";
   print INFO "#define PROC_NAME L\"$Xsprocess\"\n";
+  if ($UseSecurityModule =~ /true/i) {
+     print INFO "#include \"$KeyGenPath\"\n";
+  }
   close(INFO);
 
   if (!-e $SwordSource) {&Log("ERROR: No SWORD source code.\n"); die;}
@@ -318,7 +328,9 @@ sub copyXulRunnerFiles($) {
   }
 
   $skip .= ")";
-  copy_dir("$TRUNK/xulrunner", $do, "", $skip);
+  
+  if (!-e $XULRunner) {&Log("ERROR: No xulrunner directory: \"$XULRunner\".\n"); die;}
+  copy_dir($XULRunner, $do, "", $skip);
   move("$do/xulrunner.exe", "$do/$Xsprocess");
 }
 
