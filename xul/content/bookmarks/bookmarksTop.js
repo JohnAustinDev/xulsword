@@ -541,7 +541,7 @@ var BookmarkFuns = {
   },
   
   updateMainWindow: function (focusOnMainWindow, aUpdateNeededArray, scrollFlag) {
-    if (!MainWindow) return;
+    if (!MainWindow || Bible.paused) return;
     if (!aUpdateNeededArray) aUpdateNeededArray = MainWindow.getUnpinnedWindows();
     if (scrollFlag == null) scrollFlag = SCROLLTYPECENTER;
     if (focusOnMainWindow) MainWindow.focus();

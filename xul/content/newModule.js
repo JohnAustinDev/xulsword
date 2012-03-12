@@ -1441,7 +1441,7 @@ function restartApplication(promptBefore) {
       DLGOK);
   }
   
-  if (Bible && Bible.paused) Bible.resume(); // window unload uses Bible object
+  if (Bible && Bible.paused) Bible.resume(); // window unload accesses Bible object
   
 	var appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                    .getService(Components.interfaces.nsIAppStartup);
