@@ -270,21 +270,9 @@ function deleteModules(e) {
         case 1: //locales
           var loc = child.id.substring(3);
           if (loc == rootprefs.getCharPref("general.useragent.locale")) need2ChangeLocale=true;
-          else {
-            /*
-            var aFile = getSpecialDirectory("xsExtension");
-            aFile.append(loc + "@xulsword.org");
-            if (aFile.exists()) {
-              files.push(aFile);
-              if (reset<HARDRESET) reset=HARDRESET;
-            }
-            else {success=false; msg+="ERROR: File \"" + aFile.path + "\" not found.\n";}
-            */
-            jsdump("BEFORE");
-            Components.utils.import("resource://gre/modules/AddonManager.jsm");
-            jsdump("AFTER:" + AddonManager);
-            AddonManager.getAddonById(loc + "@xulsword.org", uninstallAddon);
-          }
+          Components.utils.import("resource://gre/modules/AddonManager.jsm");
+          AddonManager.getAddonByID(loc + "@xulsword.org", function(addon) {addon.uninstall();});
+          if (reset<HARDRESET) reset=HARDRESET;
           break;
         case 2: //audio
           var aFile = audioDir.clone();
@@ -325,9 +313,8 @@ function deleteModules(e) {
     jsdump("ERRORS DURING DELETE: " + msg);
   }
   
-  if (x>0) {
+  if (reset != NOVALUE) {
     switch(reset) {
-    case NOVALUE:
     case NORESET:
     case SOFTRESET:
       MainWindow.location.reload();
@@ -338,12 +325,6 @@ function deleteModules(e) {
     }
   }
   window.close();
-}
-
-function uninstallAddon(addon) {
-  jsdump(addon);
-  jsdump("permissions=" + addon.permissions);
-  addon.uninstall();
 }
 
 function onUnload() {

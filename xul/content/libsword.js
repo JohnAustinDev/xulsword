@@ -62,6 +62,8 @@ var Bible = {
   inst:null,
 
   ThrowMSG:"",
+  
+  paused:false,
 
   checkerror: function() {
     if (this.ThrowMSG) {

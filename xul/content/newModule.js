@@ -196,7 +196,7 @@ jsdump("STARTING startImport");
   RegIndex = 0;
   CopyZipFun = (blocking ? copyZipFiles:copyZipFilesTO);
   CopyRegularFun = (blocking ? copyRegularFiles:copyRegularFilesTO);
-  
+
   setPreSword();
   
   if (!blocking && (ZipFiles.length || RegularFiles.length>5)) {
@@ -582,7 +582,7 @@ jsdump("Processing Entry:" + aEntry);
     }
     else {
       if (conf.isCommon) CommonList.push(conf.modPath);
-    }    
+    }
     break;
     
   case MODS:
