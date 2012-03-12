@@ -31,8 +31,8 @@ var IsExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(
 /************************************************************************
  * Declare/Define Some Common Global Variables
  ***********************************************************************/
-const FPERM = 0777; //511;
-const DPERM = 0777; //511;
+const FPERM = 511; //0777; //511;
+const DPERM = 511; //0777; //511;
 const LAST_VERSE_IN_CHAPTER=-1;       //Understood by xulsword to be last verse
 const ORIGINAL = "ORIG";        //Value doen't really matter, just a const
 const FootnoteMarker = 215;           //The Unicode character used by xulsword.dll to mark footnotes

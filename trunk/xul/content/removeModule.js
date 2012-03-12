@@ -271,6 +271,7 @@ function deleteModules(e) {
           var loc = child.id.substring(3);
           if (loc == rootprefs.getCharPref("general.useragent.locale")) need2ChangeLocale=true;
           else {
+            /*
             var aFile = getSpecialDirectory("xsExtension");
             aFile.append(loc + "@xulsword.org");
             if (aFile.exists()) {
@@ -278,6 +279,11 @@ function deleteModules(e) {
               if (reset<HARDRESET) reset=HARDRESET;
             }
             else {success=false; msg+="ERROR: File \"" + aFile.path + "\" not found.\n";}
+            */
+            jsdump("BEFORE");
+            Components.utils.import("resource://gre/modules/AddonManager.jsm");
+            jsdump("AFTER:" + AddonManager);
+            AddonManager.getAddonById(loc + "@xulsword.org", uninstallAddon);
           }
           break;
         case 2: //audio
@@ -332,6 +338,12 @@ function deleteModules(e) {
     }
   }
   window.close();
+}
+
+function uninstallAddon(addon) {
+  jsdump(addon);
+  jsdump("permissions=" + addon.permissions);
+  addon.uninstall();
 }
 
 function onUnload() {

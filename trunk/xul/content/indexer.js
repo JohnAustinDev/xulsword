@@ -13,7 +13,6 @@ var Indexer = {
   },
 
   create: function() {
-    this.allWindowsModal(true);
     var modname = prefs.getCharPref("SearchVersion");
     var cipherkey = null;
     var usesecurity = null;
@@ -46,35 +45,9 @@ var Indexer = {
   finished: function() {
     Indexer.inprogress = false;
     Bible.resume();
-    Indexer.allWindowsModal(false);
     if (Indexer.exitfunc) Indexer.exitfunc();
   },
-  
-  allWindowsModal: function(setModal) {
-    for (var i=0; i<SearchWins.length; i++) {
-      Indexer.windowModal(SearchWins[i], setModal);
-    }
-    if (ManagerWindow)
-      Indexer.windowModal(ManagerWindow, setModal);
-    Indexer.windowModal(window, setModal);
-  },
 
-  stopevent: function(event) {event.stopPropagation(); event.preventDefault();},
-  
-  windowModal: function(win, setModal) {
-    var events = ["click", "mouseover", "mouseout", "mousemove", "mousedown",
-              "mouseup", "dblclick", "select", "keydown", "keypress", "keyup"];
-    if (setModal) {
-      for (var i=0; i<events.length; i++){
-        win.addEventListener(events[i], Indexer.stopevent, true);
-      }
-    }
-    else {
-      for (var i=0; i<events.length; i++){
-        win.removeEventListener(events[i], Indexer.stopevent, true);
-      }
-    }
-  },
 
-  indexer:null,
+  indexer:null
 };
