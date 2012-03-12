@@ -176,7 +176,6 @@ var WillRestart = false;
 var AudioDestination;
 function startImport(blocking, allowStop, exitFunction, regularFiles, zipFiles, zipEntry, newLocales, newModules, newFonts, audioDestination) {
 jsdump("STARTING startImport");
-  if (typeof(Bible) != "undefined") Bible.pause();
   GotoAudioFile = null;
   GotoBookmarkFile = null;
   GotoVideoFile = null;
@@ -256,6 +255,8 @@ jsdump("STARTING startImport");
     }
   }
 
+  if (typeof(Bible) != "undefined") Bible.pause();
+ 
   if (ZipFiles && ZipFiles.length) CopyZipFun();
   else if (RegularFiles && RegularFiles.length) CopyRegularFun();
   // module is MK module, but contained nothing that needed to be, or could be, installed. Show progress meter so user knows it at least tried!
@@ -580,11 +581,6 @@ jsdump("Processing Entry:" + aEntry);
       return {reset:NORESET, success:false, remove:true};
     }
     else {
-      if (inflated.exists() && !PreSword) {
-        //Skip writing anything to mods that are currently installed
-        SkipList.push(conf.modPath);
-        return {reset:HARDRESET, success:true, remove:false};  
-      }
       if (conf.isCommon) CommonList.push(conf.modPath);
     }    
     break;
@@ -1444,6 +1440,8 @@ function restartApplication(promptBefore) {
       DLGINFO,
       DLGOK);
   }
+  
+  if (Bible && Bible.paused) Bible.resume(); // window unload uses Bible object
   
 	var appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                    .getService(Components.interfaces.nsIAppStartup);

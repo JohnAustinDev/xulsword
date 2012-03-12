@@ -52,7 +52,7 @@ var aConsoleListener =
         //file += "SYSTEM INFO:" + URLNEWLINE;
         //file += getRuntimeInfo();
         var keys = ["ProductName", "CSDVersion", "CurrentBuildNumber", "CurrentVersion"];
-        for (var k=0; k<keys.length; k++) {file += getRegKeySafeWin("ROOT_KEY_LOCAL_MACHINE", "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", keys[k]) + URLNEWLINE;}
+        for (var k=0; k<keys.length; k++) {file += this.getRegKeySafeWin("ROOT_KEY_LOCAL_MACHINE", "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", keys[k]) + URLNEWLINE;}
 
         file += URLNEWLINE;        
         //file += "MODULES, STATIC VARS:" + URLNEWLINE;
@@ -78,13 +78,13 @@ var aConsoleListener =
         var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
         var bundle1 = BUNDLESVC.createBundle("chrome://xsglobal/locale/commonDialogs.properties");
         var bundle2 = BUNDLESVC.createBundle("chrome://xsglobal/locale/browser.properties");
-        var SBundle = document.getElementById("strings");
+        var SBundle = (document ? document.getElementById("strings"):null);
         if (window.opener) {window.opener.close();} // Don't let splash screen obscure dialogs...
  
         var result={};
         var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-            fixWindowTitle(SBundle.getString("Title")),
-            SBundle.getFormattedString("SendErrorReport", [bundle1.GetStringFromName("OK")]), 
+            fixWindowTitle(SBundle ? SBundle.getString("Title"):"xulsword"),
+            (SBundle ? SBundle.getFormattedString("SendErrorReport", [bundle1.GetStringFromName("OK")]):"Error Report"),
             DLGALERT,
             DLGOKCANCEL,
             bundle2.GetStringFromName("browsewithcaret.checkMsg"));
@@ -109,9 +109,9 @@ var aConsoleListener =
 //jsdump(aURI);
         try {
           window.location = aURI;
-          jsdump("Launched mailto URI of " + aURI.length + " chars.");
+          this.jsdump("Launched mailto URI of " + aURI.length + " chars.");
         }
-        catch (er) {jsdump(er);}
+        catch (er) {this.jsdump(er);}
         //this.haveException = false;
       }
     }
@@ -122,23 +122,29 @@ var aConsoleListener =
 		  throw Components.results.NS_ERROR_NO_INTERFACE;
 	  }
     return this;
+  },
+  
+  getRegKeySafeWin: function(rootKey, key, value) {
+    var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
+    if (!wrk) {
+      this.jsdump("Could not get nsIWindowsRegKey instance from @mozilla.org/windows-registry-key;1");
+      return "";
+    }
+    try {
+      wrk.open(wrk[rootKey], key, wrk.ACCESS_READ);
+      var data = wrk.readStringValue(value);
+      wrk.close();
+    }
+    catch (er) {this.jsdump("Could not read Windows key:" + rootKey + ", " + key + ", " + value); return "";}
+    return value + " = " + data;
+  },
+  
+  jsdump: function(str) {
+    Components.classes['@mozilla.org/consoleservice;1']
+              .getService(Components.interfaces.nsIConsoleService)
+              .logStringMessage(str);
   }
 };
-
-function getRegKeySafeWin(rootKey, key, value) {
-  var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
-  if (!wrk) {
-    jsdump("Could not get nsIWindowsRegKey instance from @mozilla.org/windows-registry-key;1");
-    return "";
-  }
-  try {
-    wrk.open(wrk[rootKey], key, wrk.ACCESS_READ);
-    var data = wrk.readStringValue(value);
-    wrk.close();
-  }
-  catch (er) {jsdump("Could not read Windows key:" + rootKey + ", " + key + ", " + value); return "";}
-  return value + " = " + data;
-}
 
 /*
 function getXULRuntimeInfo() {
@@ -209,12 +215,12 @@ function initLogging() {
   if (!debugInfo.exists()) debugInfo.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
   var env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
   env.set("XRE_CONSOLE_LOG", debugInfo.path);
-    
-  var dsed = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService); 
+
+  var dsed = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
   dsed = dsed.getBranch("xulsword.");
   try {dsed = dsed.getBoolPref("DontShowExceptionDialog");}
   catch(er) {dsed=false;}
-  
+
   setConsoleService(!dsed);
 }
 

@@ -983,7 +983,7 @@ function startIndexer(searchAfterCreate) {
   if (!MainWindow.Indexer.inprogress) {
     MainWindow.Indexer.progressMeter = document.getElementById("progress");
     MainWindow.Indexer.exitfunc = indexerFinished;
-    MainWindow.Indexer.allWindowsModal(true); // prevent triggering of Bible ops
+    Bible.allWindowsModal(true); // prevent triggering of Bible ops
     window.setTimeout("MainWindow.Indexer.create();", 500); // allow pending Bible ops before starting indexer
   }
 }

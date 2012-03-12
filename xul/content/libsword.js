@@ -116,6 +116,7 @@ var Bible = {
     if (typeof(prefs) != "undefined") {
       Bible.setBiblesReference(WESTERNVS, prefs.getCharPref("Location"));
     }
+
   },
 
   quitLibsword: function() {
@@ -131,14 +132,18 @@ var Bible = {
 
   // save Bible info and free up libsword for another thread to use.
   pause: function() {
+    if (this.paused) return;
+    this.allWindowsModal(true);
     this.quitLibsword();
     this.paused = true;
   },
 
   resume: function() {
+    if (!this.paused) return;
     this.paused = false;
     if (!this.unlock())
         throw(new Error("libsword, resumed with no Bible modules."));
+    this.allWindowsModal(false);
   },
 
   unlock: function() {
@@ -146,7 +151,34 @@ var Bible = {
     if (mlist=="No Modules" || mlist.search(BIBLE)==-1) return false;
     unlockAllModules(this, true);
     return true;
-},
+  },
+
+  allWindowsModal: function(setModal) {
+    if (!MainWindow) return;
+    for (var i=0; i<MainWindow.SearchWins.length; i++) {
+      this.windowModal(MainWindow.SearchWins[i], setModal);
+    }
+    if (MainWindow.ManagerWindow)
+      this.windowModal(MainWindow.ManagerWindow, setModal);
+    this.windowModal(MainWindow, setModal);
+  },
+
+  stopevent: function(event) {event.stopPropagation(); event.preventDefault();},
+
+  windowModal: function(win, setModal) {
+    var events = ["click", "mouseover", "mouseout", "mousemove", "mousedown",
+              "mouseup", "dblclick", "select", "keydown", "keypress", "keyup"];
+    if (setModal) {
+      for (var i=0; i<events.length; i++){
+        win.addEventListener(events[i], this.stopevent, true);
+      }
+    }
+    else {
+      for (var i=0; i<events.length; i++){
+        win.removeEventListener(events[i], this.stopevent, true);
+      }
+    }
+  },
 
 
 /*******************************************************************************
