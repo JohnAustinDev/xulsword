@@ -1,7 +1,0 @@
-richlistitem[type="handler"] {
-  -moz-binding: url('chrome://xsmozapps/content/handling/handler.xml#handler');
-}
-
-#remember-text:not([visible]) {
-  visibility: hidden;
-}
