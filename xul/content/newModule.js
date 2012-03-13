@@ -568,6 +568,7 @@ jsdump("Processing Entry:" + aEntry);
   //Try and copy this file to destination...
   switch (type) {
   case AUDIO:
+    // this doesn't access the Bible object, unless files have localized names which they should not.
     inflated = getAudioDestination(AudioDestination, aEntry);
     if (!inflated) return {reset:NORESET, success:false, remove:true};
     if (!inflated.leafName.match(AUDIOEXT)) return {reset:NORESET, success:true, remove:true};
@@ -726,6 +727,7 @@ jsdump("Processing Entry:" + aEntry);
     break;
     
   case BOOKMARKS:
+    // this doesn't access the Bible object in this case.
     if (!BMDS) BMDS = initBMServices();
     if (!BookmarkFuns.importBMFile(inflated, false, true)) {
       removeFile(inflated, false);

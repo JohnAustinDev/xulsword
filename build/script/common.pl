@@ -37,6 +37,26 @@ sub copy_dir($$$$) {
   return 1;
 }
 
+sub cleanDir($) {
+  my $id = shift;
+  if (!-e $id || !-d $id) {
+    &Log("WARNING: cleanDir: Not a directory \"$id\".\n");
+    return;
+  }
+  if (!opendir(CDIR, $id)) {
+    &Log("WARNING: cleanDir: Could not open \"$id\".\n");
+    return;
+  }
+  my @files = readdir(CDIR);
+  closedir(CDIR);
+  foreach my $f (@files) {
+    if ($f =~ /^\.+/) {next;}
+    $f = "$id/$f";
+    if (-d $f) {remove_tree($f);}
+    else {unlink($f);}
+  }
+}
+
 sub makeZIP($$$$) {
   my $zf = shift;
   my $di = shift;
