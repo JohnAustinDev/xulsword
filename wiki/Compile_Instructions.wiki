@@ -15,16 +15,21 @@ The following programs need to be in your command path:
   # Unzip [https://developer.mozilla.org/en/XULRunner the xulrunner runtime].
   # Unzip [http://sourceforge.net/projects/clucene/files/ Clucene-core].
   # Unzip [http://www.crosswire.org/ftpmirror/pub/sword/source/v1.6/ sword-1.6.2].
-  # Check the paths at the top of "`build/build_settings.txt`".
-  # Run `build.pl`.
+  # Check the paths at the top of [http://code.google.com/p/xulsword/source/browse/trunk/build/build_settings.txt build_settings.txt].
+  # Run [http://code.google.com/p/xulsword/source/browse/trunk/build/build.pl build.pl].
   # Start the program by running "`run-xulsword-dev.pl`". The program window will be blank (unless you included modules in your build) so install modules by clicking "File"->"Add New Modules". When installing modules from [http://www.crosswire.org/sword/index.jsp The Sword Project's] website, use the "raw ZIP" type of module. The development program has a hidden button which displays useful debugging features when clicked. This invisible button is located JUST under the top menu bar at the FAR right of the screen. Debugging buttons will appear in that same area when the invisible button is clicked.
 
 -----
 
 ==Build Controls==
-All build controls are in `build_settings.txt`. Build the Portable version, Firefox extension, and installer version by setting their values to "true". Install modules with your build by adding your repository path(s) and by adding SWORD module names to the `IncludeModules` line. Various user preferences can be set here as well.
+All build controls are in [http://code.google.com/p/xulsword/source/browse/trunk/build/build_settings.txt build_settings.txt]. Build the Portable version, Firefox extension, and installer version by setting their values to "true". Install modules with your build by adding your repository path(s) and by adding SWORD module names to the `IncludeModules` line. Various user preferences can be set here as well.
 
 -----
 
 ==Security Module==
 To help protect texts from tampering, a security module is provided. To use the security module, set `UseSecurityModule` to true and set the path of `KeyGenPath` to your key generator. 
+
+----
+
+==Locale Creation==
+See Locale_Creation
