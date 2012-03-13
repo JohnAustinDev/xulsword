@@ -52,8 +52,8 @@ else {&Log("ERROR: Please add assignment to application directory of your platfo
 # DEVELOPMENT ENVIRONMENT
 if ($MakeDevelopment =~ /true/i) {
   &Log("\n----> BUILDING DEVELOPMENT ENVIRONMENT\n");
-  if (-e $DEVELOPMENT) {remove_tree($DEVELOPMENT);}
-  make_path($DEVELOPMENT);
+  if (-e $DEVELOPMENT) {&cleanDir($DEVELOPMENT);}
+  else {make_path($DEVELOPMENT);}
   &compileLibSword($DEVELOPMENT);
   my @manifest;
   &copyExtensionFiles($DEVELOPMENT, \@manifest, $IncludeLocales, 1);
@@ -70,8 +70,8 @@ if ($MakeDevelopment =~ /true/i) {
 # FIREFOX EXTENSION
 if ($MakeFFextension =~ /true/i) {
   &Log("\n----> BUILDING FIREFOX EXTENSION\n");
-  if (-e $FFEXTENSION) {remove_tree($FFEXTENSION);}
-  make_path($FFEXTENSION);
+  if (-e $FFEXTENSION) {&cleanDir($FFEXTENSION);}
+  else {make_path($FFEXTENSION);}
   &compileLibSword($FFEXTENSION);
   my @manifest;
   push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/extension-overlay.xul");
@@ -87,7 +87,8 @@ if ($MakeFFextension =~ /true/i) {
 # PORTABLE VERSION
 if ($MakePortable =~ /true/i) {
   &Log("\n----> BUILDING PORTABLE VERSION\n");
-  if (-e $PORTABLE) {remove_tree($PORTABLE);}
+  if (-e $PORTABLE) {&cleanDir($PORTABLE);}
+  else {make_path("$PORTABLE");}
   make_path("$PORTABLE/$Name");
   make_path("$PORTABLE/resources");
   make_path("$PORTABLE/profile");
@@ -112,8 +113,8 @@ if ($MakePortable =~ /true/i) {
 # WINDOWS INSTALLER VERSION
 if ($MakeSetup =~ /true/i) {
   &Log("\n----> BUILDING PROGRAM INSTALLER\n");
-  if (-e $INSTALLER) {remove_tree($INSTALLER);}
-  make_path($INSTALLER);
+  if (-e $INSTALLER) {&cleanDir($INSTALLER);}
+  else {make_path($INSTALLER);}
   &compileLibSword($INSTALLER);
   my @manifest;
   &copyExtensionFiles($INSTALLER, \@manifest, $IncludeLocales);
@@ -133,7 +134,7 @@ if ($MakeSetup =~ /true/i) {
   &includeModules($IncludeModules, \@ModRepos, "$Appdata/$Vendor/$Name/Profiles/resources", $IncludeSearchIndexes);
   &processLocales($IncludeLocales, \@manifest, $INSTALLER);
   &writeManifest(\@manifest, $INSTALLER);
-  &writeRunScript($Name, $PORTABLE, "install");
+  &writeRunScript($Name, $INSTALLER, "install");
 
   if ("$^O" =~ /MSWin32/i) {
     if (!-e "$XulswordExtras/installer/autogen") {make_path("$XulswordExtras/installer/autogen");}
@@ -168,7 +169,9 @@ sub writeCompileDeps() {
   print INFO "#define KEYADDRESS L\"Software\\\\$Vendor\\\\$Name\"\n";
   print INFO "#define PROC_NAME L\"$Xsprocess\"\n";
   if ($UseSecurityModule =~ /true/i) {
-     print INFO "#include \"$KeyGenPath\"\n";
+    print INFO "#ifdef _XULSECURITY_\n";
+    print INFO "#  include \"$KeyGenPath\"\n";
+    print INFO "#endif\n";
   }
   close(INFO);
 
@@ -255,7 +258,7 @@ sub copyExtensionFiles($\@$$$) {
   &Log("----> Copying Firefox extension files.\n");
   my $skip = "(\\.svn".($isFFextension ? "":"|install.rdf").")";
   &copy_dir("$TRUNK/xul/extension", $do, "", $skip);
-  
+
   if (opendir(COMP, "$do/components")) {
     my @comps = readdir(COMP);
     close(COMP);
@@ -298,7 +301,7 @@ sub copyExtensionFiles($\@$$$) {
     &makeZIP("$do/chrome/content.jar", "$TRUNK/xul/content");
     &makeZIP("$do/chrome/en-US.jar", "$TRUNK/xul/locale/en-US");
     &makeZIP("$do/chrome/skin.jar", "$TRUNK/xul/skin");
-    
+
     for my $loc (@locales) {
       if (!-e "$XulswordExtras/localeDev/$loc/locale-skin") {next;}
       &Log("----> Including $loc locale-skin in skin.jar.\n");
@@ -500,7 +503,7 @@ sub writeRunScript($$$) {
       print SCR "chdir(\"".$PORTABLE."\");\n";
       print SCR "`$Name.exe`;\n";
     }
-    elsif ($type eq "setup") {
+    elsif ($type eq "install") {
       &writeWindowsRegistryScript();
       print SCR "`\"$INSTALLER/$Name.exe\"`;\n";
     }
@@ -646,7 +649,7 @@ sub packageFFExtension($$) {
   my $od = shift;
 
   &cleanDir($od);
-  $of = "$od/$Name-$Version"."_Firefox(win).xpi";
+  $of = "$od/$Name"."_Firefox(win)-$Version.xpi";
   
   &Log("----> Making extension xpt package.\n");
   if (-e $of) {unlink($of);}
