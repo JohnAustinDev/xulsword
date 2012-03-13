@@ -1,12 +1,9 @@
 #----------------------------------------------------------------
 #----------------------------------------------------------------
 #NOTES...
-# Target -                 Building for: Windows, Linux, or Mac
 # Version -                This should only include numbers and period(s).
 # MinXSMversion -          The minimum XSMversion required for compatible MK modules' text modules.
 # MinUIversion -           The minimum UIversion required for compatible MK modules' UI modules.
-# DefaultCK -              Default security key. Alpha-numberic LATIN characters only (no spaces). 
-#                          The actual key value is modified by Security Module if useSecurityModule=true.
 # UseSecurityModule -      Set to true to include the security module compiles in
 #                          your key generator to decrypt your texts automatically.
 # HelpEmailAddress -       Set to en email address which will appear under "Help"
@@ -14,9 +11,9 @@
 
 # BUILD WHAT?
 Set MakeDevelopment=true
-Set MakePortable=false
+Set MakePortable=true
 Set MakeSetup=false
-Set MakeFFextension=false
+Set MakeFFextension=true
 
 # SPECIFY PATHS
 Set OutputDirectory=..\build-out
@@ -29,12 +26,12 @@ Set ModuleRepository2=C:\home\dev\repository
 Set XulswordExtras=C:\home\dev\sup-dev
 
 # SPECIFY BUILD INFORMATION
-Set Version=2.26
+Set Version=3.0
 Set Name=xulsword
 Set Vendor=CrossWire
 Set Executable=xulsword.exe
-Set GeckoMinVersion=10.0.0
-Set GeckoMaxVersion=10.9.9
+Set GeckoMinVersion=7.0
+Set GeckoMaxVersion=11.*
 Set (buildprefs.js):xulsword.EngineVersion=1.6.2
 Set (buildprefs.js):xulsword.MinXSMversion=1.0
 Set (buildprefs.js):xulsword.MinUIversion=2.7
@@ -58,9 +55,22 @@ Set IncludeLocales=en-US
 # INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
 Set IncludeIndexes=false
 
+# DEFAULT SETTINGS (On or Off)
+Set (globalops.js):xulsword.Headings=On
+Set (globalops.js):xulsword.Footnotes=On
+Set (globalops.js):xulsword.CrossRefs=On
+Set (globalops.js):xulsword.Dictionary=On
+Set (globalops.js):xulsword.StrongsTags=On
+Set (globalops.js):xulsword.MorphTags=On
+Set (globalops.js):xulsword.VerseNums=On
+Set (globalops.js):xulsword.UserNotes=On
+Set (globalops.js):xulsword.HebrewCantillation=On
+Set (globalops.js):xulsword.HebrewVowelPoints=On
+Set (globalops.js):xulsword.RedWords=On
+  
 # OTHER OPTIONS (true or false)
-Set (buildprefs.js):xulsword.ShowDictionaryTabsByDefault=false
 Set (buildprefs.js):xulsword.ShowAllBibleTabsByDefault=true
+Set (buildprefs.js):xulsword.ShowDictionaryTabsByDefault=false
 Set (buildprefs.js):xulsword.ShowCommentaryTabsByDefault=false
 Set (buildprefs.js):xulsword.HideUnavailableCrossReferences=false
 Set (buildprefs.js):xulsword.ShowOriginalTextTabs=false
@@ -73,13 +83,13 @@ Set (buildprefs.js):xulsword.HideDisabledCopyPrintIncludes=false
 Set (buildprefs.js):xulsword.DontReadReferenceBible=false
 Set (buildprefs.js):xulsword.useUYGskin=false
 
-# SHOULD THE INSTALLER INSTALL THE HEBREW FONT? (true:false)
+# SHOULD THE INSTALLER INSTALL THE HEBREW FONT? (true or false)
 Set IncludeHebrewFont=false
 
-# MODULES FOR EACH WINDOW WHOSE TABS SHOULD BE INITIALLY HIDDEN (default is to show tabs)
-Set (buildprefs.js):xulsword.HiddenTexts1=
-Set (buildprefs.js):xulsword.HiddenTexts2=
-Set (buildprefs.js):xulsword.HiddenTexts3=
+# MODULES FOR EACH WINDOW WHOSE TABS SHOULD BE INITIALLY HIDDEN
+Set (buildprefs.js):xulsword.HiddenTexts1=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+Set (buildprefs.js):xulsword.HiddenTexts2=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+Set (buildprefs.js):xulsword.HiddenTexts3=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
 
 # DEBUG PREFERENCES (USED ONLY WHEN: MakeDevelopmentOnly=true)
 Set (debug.js):javascript.options.strict=true

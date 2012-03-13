@@ -7,6 +7,9 @@ use File::Spec;
 $TRUNK = File::Spec->rel2abs( __FILE__ );
 $TRUNK =~ s/[\\\/]build[\\\/][^\\\/]+$//;
 $TRUNK =~ s/\\/\//g;
+$LOGFILE = File::Spec->rel2abs( __FILE__ );
+$LOGFILE .= "_log.txt";
+if (-e $LOGFILE) {unlink($LOGFILE);}
 require "$TRUNK/build/script/common.pl";
 
 $SETTING = shift;
@@ -78,7 +81,7 @@ if ($MakeFFextension =~ /true/i) {
   &includeModules($IncludeModules, \@ModRepos, "$FFEXTENSION/resources", $IncludeSearchIndexes);
   &processLocales($IncludeLocales, \@manifest, $FFEXTENSION);
   &writeManifest(\@manifest, $FFEXTENSION);
-  &packageFFExtension($FFEXTENSION, "$OutputDirectory/$Name-Extension-$Version/$Name-Firefox-$Version.xpi");
+  &packageFFExtension($FFEXTENSION, "$OutputDirectory/$Name-Extension-$Version");
 }
 
 # PORTABLE VERSION
@@ -102,7 +105,7 @@ if ($MakePortable =~ /true/i) {
   open(NIN, ">:encoding(UTF-8)", "$PORTABLE/resources/newInstalls.txt") || die;
   print NIN "NewLocales;en-US\n"; # this opens language menu on first run
   close(NIN);
-  &packagePortable($PORTABLE, "$OutputDirectory/$Name-Portable-$Version/$Name Portable-$Version.zip");
+  &packagePortable($PORTABLE, "$OutputDirectory/$Name-Portable-$Version");
   &writeRunScript($Name, $PORTABLE, "port");
 }
 
@@ -192,18 +195,18 @@ sub compileLibSword($) {
     if (!$CompiledAlready) {
       if (!-e "$TRUNK/Cpp/cluceneMK/lib/Release/libclucene.lib") {
         chdir("$TRUNK/Cpp/cluceneMK/lib");
-        `call Compile.bat`;
+        `call Compile.bat >> $LOGFILE`;
       }
       if (!-e "$TRUNK/Cpp/swordMK/lib/Release/libsword.lib") {
         chdir("$TRUNK/Cpp/swordMK/lib");
-        `call Compile.bat`;
+        `call Compile.bat >> $LOGFILE`;
       }
       chdir("$TRUNK/Cpp");
       if ($UseSecurityModule =~ /true/i) {
-        `call Compile.bat`;
+        `call Compile.bat >> $LOGFILE`;
       }
       else {
-        `call Compile.bat NOSECURITY`;
+        `call Compile.bat NOSECURITY >> $LOGFILE`;
       }
       if (!-e "$TRUNK/Cpp/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); die;}
 
@@ -419,7 +422,7 @@ sub compileStartup($) {
   &Log("----> Compiling startup stub.\n");
   remove_tree("$TRUNK/Cpp/$rd/Release");
   chdir("$TRUNK/Cpp/$rd");
-  `call Compile.bat`;
+  `call Compile.bat >> $LOGFILE`;
   chdir("$TRUNK/build");
 
   copy("$TRUNK/Cpp/$rd/Release/$rd.exe", "$do/$Executable");
@@ -628,7 +631,10 @@ sub packageWindowsSetup($) {
 
 sub packagePortable($$) {
   my $id = shift;
-  my $of = shift;
+  my $od = shift;
+
+  &cleanDir($od);
+  $of = "$od/$Name Portable-$Version.zip";
   
   &Log("----> Making portable zip package.\n");
   if (-e $of) {unlink($of);}
@@ -637,7 +643,10 @@ sub packagePortable($$) {
 
 sub packageFFExtension($$) {
   my $id = shift;
-  my $of = shift;
+  my $od = shift;
+
+  &cleanDir($od);
+  $of = "$od/$Name-$Version"."_Firefox(win).xpi";
   
   &Log("----> Making extension xpt package.\n");
   if (-e $of) {unlink($of);}
