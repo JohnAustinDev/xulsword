@@ -39,10 +39,7 @@ sub copy_dir($$$$) {
 
 sub cleanDir($) {
   my $id = shift;
-  if (!-e $id || !-d $id) {
-    &Log("WARNING: cleanDir: Not a directory \"$id\".\n");
-    return;
-  }
+  if (!-e $id || !-d $id) {return;}
   if (!opendir(CDIR, $id)) {
     &Log("WARNING: cleanDir: Could not open \"$id\".\n");
     return;
