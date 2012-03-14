@@ -81,6 +81,7 @@ if ($MakeFFextension =~ /true/i) {
   &includeModules($IncludeModules, \@ModRepos, "$FFEXTENSION/resources", $IncludeSearchIndexes);
   &processLocales($IncludeLocales, \@manifest, $FFEXTENSION);
   &writeManifest(\@manifest, $FFEXTENSION);
+  &writeInstallManifest($FFEXTENSION);
   &packageFFExtension($FFEXTENSION, "$OutputDirectory/$Name-Extension-$Version");
 }
 
@@ -256,8 +257,7 @@ sub copyExtensionFiles($\@$$$) {
   my $isFFextension = shift;
 
   &Log("----> Copying Firefox extension files.\n");
-  my $skip = "(\\.svn".($isFFextension ? "":"|install.rdf").")";
-  &copy_dir("$TRUNK/xul/extension", $do, "", $skip);
+  &copy_dir("$TRUNK/xul/extension", $do, "", "(\\.svn)");
 
   if (opendir(COMP, "$do/components")) {
     my @comps = readdir(COMP);
@@ -415,6 +415,44 @@ sub writeManifest(\@$) {
   close(MAN);
 }
 
+sub writeInstallManifest($) {
+  my $od = shift;
+  
+  &Log("----> Writing Install Manifest\n");
+  my $platform;
+  if ("$^O" =~ /MSWin32/i) {$platform = "WINNT_x86-msvc";}
+  else {&Log("ERROR: Please add Firefox Extension platform identifier for your platform.\n");}
+  open(INM, ">:encoding(UTF-8)", "$od/install.rdf") || die "Could not open \"$od/install.rdf\".\n";
+print INM "<?xml version=\"1.0\"?>\n";
+print INM "\n";
+print INM "<RDF xmlns=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n";
+print INM "     xmlns:em=\"http://www.mozilla.org/2004/em-rdf#\">\n";
+print INM "\n";
+print INM "  <Description about=\"urn:mozilla:install-manifest\">\n";
+print INM "    <em:id>xulsword\@xulsword.org</em:id>\n";
+print INM "    <em:version>$Version</em:version>\n";
+print INM "    <em:type>2</em:type>\n";
+print INM "\n";
+print INM "    <!-- Firefox -->\n";
+print INM "    <em:targetApplication>\n";
+print INM "      <Description>\n";
+print INM "        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>\n";
+print INM "        <em:minVersion>$GeckoMinVersion</em:minVersion>\n";
+print INM "        <em:maxVersion>$GeckoMaxVersion</em:maxVersion>\n";
+print INM "      </Description>\n";
+print INM "    </em:targetApplication>\n";
+print INM "\n";
+print INM "    <!-- Front End MetaData -->\n";
+print INM "    <em:name>xulsword</em:name>\n";
+print INM "    <em:description>A Bible reading and study tool.</em:description>\n";
+print INM "    <em:homepageURL>http://code.google.com/p/xulsword</em:homepageURL>\n";
+print INM "    <em:iconURL>chrome://xulsword/skin/icon.png</em:iconURL>\n";
+print INM "    <em:unpack>true</em:unpack>\n";
+print INM "    <em:targetPlatform>$platform</em:targetPlatform>\n";
+print INM "  </Description>\n";
+print INM "</RDF>\n";
+  close(INM);
+}
 
 sub compileStartup($) {
   my $do = shift;
