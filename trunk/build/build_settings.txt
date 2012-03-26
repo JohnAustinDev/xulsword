@@ -10,8 +10,8 @@
 #                          menu, or leave blank and no email menu element will appear.
 
 # BUILD WHAT?
-Set MakeDevelopment=true
-Set MakePortable=true
+Set MakeDevelopment=false
+Set MakePortable=false
 Set MakeSetup=false
 Set MakeFFextension=true
 
@@ -26,12 +26,12 @@ Set ModuleRepository2=C:\home\dev\repository
 Set XulswordExtras=C:\home\dev\sup-dev
 
 # SPECIFY BUILD INFORMATION
-Set Version=3.0
+Set Version=3.1
 Set Name=xulsword
 Set Vendor=CrossWire
 Set Executable=xulsword.exe
 Set GeckoMinVersion=7.0
-Set GeckoMaxVersion=11.*
+Set GeckoMaxVersion=15.*
 Set (buildprefs.js):xulsword.EngineVersion=1.6.2
 Set (buildprefs.js):xulsword.MinXSMversion=1.0
 Set (buildprefs.js):xulsword.MinUIversion=2.7
@@ -50,7 +50,7 @@ Set IncludeLocales=en-US
 
 # MODULES TO INCLUDE IN BUILD
 # Note StrongsGreek,StrongsHebrew,Robinson are used for original lang features
-#Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
 
 # INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
 Set IncludeIndexes=false

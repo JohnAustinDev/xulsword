@@ -77,6 +77,7 @@ if ($MakeFFextension =~ /true/i) {
   push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/extension-overlay.xul");
   &copyExtensionFiles($FFEXTENSION, \@manifest, $IncludeLocales, 0, 1);
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "";
+  $Prefs{"(language.js):general.useragent.locale"} = ""; # default takes precendence after each startup in Firefox!
   &writePreferences($FFEXTENSION, \%Prefs);
   &includeModules($IncludeModules, \@ModRepos, "$FFEXTENSION/resources", $IncludeSearchIndexes);
   &processLocales($IncludeLocales, \@manifest, $FFEXTENSION);
@@ -257,7 +258,8 @@ sub copyExtensionFiles($\@$$$) {
   my $isFFextension = shift;
 
   &Log("----> Copying Firefox extension files.\n");
-  &copy_dir("$TRUNK/xul/extension", $do, "", "(\\.svn)");
+  my $skip = "(\\.svn".($isFFextension ? "|main-window.ico\$":"").")";
+  &copy_dir("$TRUNK/xul/extension", $do, "", $skip);
 
   if (opendir(COMP, "$do/components")) {
     my @comps = readdir(COMP);
@@ -294,8 +296,10 @@ sub copyExtensionFiles($\@$$$) {
     push(@{$manifestP}, "content xsmozapps jar:chrome/content.jar!/mozapps/");
     push(@{$manifestP}, "locale xsmozapps en-US jar:chrome/en-US.jar!/mozapps/");
     push(@{$manifestP}, "skin xsmozapps skin jar:chrome/skin.jar!/mozapps/");
-    push(@{$manifestP}, "locale branding en-US jar:chrome/en-US.jar!/branding/");
-    push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
+    if (!$isFFextension) {
+      push(@{$manifestP}, "locale branding en-US jar:chrome/en-US.jar!/branding/");
+      push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
+    }
 
     &Log("----> Creating JAR files.\n");
     &makeZIP("$do/chrome/content.jar", "$TRUNK/xul/content");
