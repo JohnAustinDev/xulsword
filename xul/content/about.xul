@@ -53,8 +53,7 @@
   function loaded() {
     updateCSSBasedOnCurrentLocale(["window", "button", "label"]);
     var SBundle = document.getElementById("strings");
-    var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
-    document.getElementById("info").value = SBundle.getFormattedString('Version',[appInfo.version,appInfo.appBuildID]);
+    document.getElementById("info").value = SBundle.getFormattedString('Version',[prefs.getCharPref("Version"), prefs.getCharPref("BuildID")]);
     if (window.opener.name == "main-window") {
       document.getElementById("close").hidden=false;
       document.getElementById("info").hidden=false;

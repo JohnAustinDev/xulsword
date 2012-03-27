@@ -501,8 +501,7 @@ function getDisplayNumerals(locale) {
 }
 
 function isProgramPortable() {
-  var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
-  appInfo = appInfo.appBuildID;
+  var appInfo = prefs.getCharPref("BuildID");
   return (appInfo && appInfo.substr(appInfo.length-1) == "P");
 }
 var ProgramIsPortable = isProgramPortable();

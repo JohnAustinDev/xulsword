@@ -26,7 +26,7 @@ Set ModuleRepository2=C:\home\dev\repository
 Set XulswordExtras=C:\home\dev\sup-dev
 
 # SPECIFY BUILD INFORMATION
-Set Version=3.1
+Set Version=3.2
 Set Name=xulsword
 Set Vendor=CrossWire
 Set Executable=xulsword.exe
@@ -99,3 +99,35 @@ Set (debug.js):extensions.logging.enabled=true
 Set (debug.js):javascript.options.showInConsole=true
 Set (debug.js):nglayout.debug.disable_xul_fastload=true
 Set (debug.js):dom.report_all_js_exceptions=true
+
+# MISC INITIAL PROGRAM SETTINGS
+Set (xulsword.js):xulsword.Footnotes=On
+Set (xulsword.js):xulsword.Headings=On
+Set (xulsword.js):xulsword.Cross-references=On
+Set (xulsword.js):xulsword.Dictionary=On
+Set (xulsword.js):xulsword.Verse Numbers=On
+Set (xulsword.js):xulsword.User Notes=On
+Set (xulsword.js):xulsword.Hebrew Cantillation=On
+Set (xulsword.js):xulsword.Hebrew Vowel Points=On
+Set (xulsword.js):xulsword.Location=Matt.1.1
+Set (xulsword.js):xulsword.SearchText=""
+Set (xulsword.js):xulsword.SearchVersion=""
+Set (xulsword.js):xulsword.AdvSearchFlag=false
+Set (xulsword.js):xulsword.ShowCrossrefsAtBottom=false
+Set (xulsword.js):xulsword.ShowFootnotesAtBottom=true
+Set (xulsword.js):xulsword.ShowUserNotesAtBottom=true
+Set (xulsword.js):xulsword.SelectedNote=none
+Set (xulsword.js):xulsword.MaximizeNoteBox1=false
+Set (xulsword.js):xulsword.MaximizeNoteBox2=false
+Set (xulsword.js):xulsword.MaximizeNoteBox3=false
+Set (xulsword.js):xulsword.DefaultVersion=none
+
+# PRINT AND BOOKMARKS INITIAL SETTINGS
+Set (xulsword.js):browser.bookmarks.sort.resource=direction
+Set (xulsword.js):browser.bookmarks.sort.direction=natural
+Set (xulsword.js):print.print_headerright=""
+Set (xulsword.js):print.print_headercenter=""
+Set (xulsword.js):print.print_headerleft=""
+Set (xulsword.js):print.print_footerright=""
+Set (xulsword.js):print.print_footercenter=&P
+Set (xulsword.js):print.print_footerleft=""

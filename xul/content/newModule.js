@@ -278,7 +278,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
   var manifest = new RegExp(CHROME + "\/[^\/]+" + MANIFEST_EXT + "$");
   var conf = new RegExp(MODSD + "\/[^\/]+" + CONF_EXT + "$");
   var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
-  var progVersion = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).version;
+  var progVersion = prefs.getCharPref("Version");
   // cannot read directly from engine because it's not loaded yet!
   var engineVersion; try {engineVersion = prefs.getCharPref("EngineVersion");} catch (er) {engineVersion = NOTFOUND;}
 

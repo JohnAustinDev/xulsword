@@ -26,7 +26,7 @@
 
 var RestartToChangeLocale;
 var HaveValidLocale;
-var Progvers = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).version;
+var Progvers = prefs.getCharPref("Version");
 var Enginevers; try {Enginevers = prefs.getCharPref("EngineVersion");} catch (er) {Enginevers = NOTFOUND;}
 
 function initLocales() {
