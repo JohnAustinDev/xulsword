@@ -48,9 +48,8 @@ function getAudioDirs() {
   //Check AudioDir registry key location
   var path;
   var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
-  var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
   try {
-    wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\" + appInfo.vendor + "\\" + appInfo.name,wrk.ACCESS_READ);
+    wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\" + prefs.getCharPref("Vendor") + "\\" + prefs.getCharPref("Name"), wrk.ACCESS_READ);
     path = wrk.readStringValue("AudioDir");
     path = path.replace("\\Install\\setup\\..\\..","") + "\\";
   }
@@ -58,7 +57,7 @@ function getAudioDirs() {
   //for Backward Compatibility...
   if (!path) {
     try {
-      wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\" + appInfo.vendor,wrk.ACCESS_READ);
+      wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\" + prefs.getCharPref("Vendor"), wrk.ACCESS_READ);
       path = wrk.readStringValue("AudioDir");
       path = path.replace("\\Install\\setup\\..\\..","") + "\\";
     }

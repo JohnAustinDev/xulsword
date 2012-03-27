@@ -22,7 +22,7 @@ while(<SETF>) {
   $line++;
   if ($_ =~ /^\s*$/) {next;}
   elsif ($_ =~ /^(\:\:|rem|\#)/i) {next;}
-  elsif ($_ =~ /^Set\s+(\S+)\s*=\s*(.*?)\s*$/i) {
+  elsif ($_ =~ /^Set\s+(.*?)\s*=\s*(.*?)\s*$/i) {
     my $var=$1; my $val=$2;
     if ($var =~ /^\(.*?\.js\)\:/) {$Prefs{$var} = $val;}
     else {$$1 = $2;}
@@ -46,6 +46,8 @@ $FFEXTENSION="$TRUNK/build-files/$Name/extension";
 $PORTABLE="$TRUNK/build-files/$Name/portable/$Name";
 if ("$^O" =~ /MSWin32/i) {$Appdata = `Set APPDATA`; $Appdata =~ s/APPDATA=(.*?)\s*$/$1/i;}
 else {&Log("ERROR: Please add assignment to application directory of your platform\n");}
+@d = localtime(time);
+$BuildID = sprintf("%02d%02d%02d", ($d[5]%100), ($d[4]+1), $d[3]);
 
 &writeCompileDeps();
 
@@ -77,6 +79,7 @@ if ($MakeFFextension =~ /true/i) {
   push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/extension-overlay.xul");
   &copyExtensionFiles($FFEXTENSION, \@manifest, $IncludeLocales, 0, 1);
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "";
+  $Prefs{"(prefs.js):xulsword.DontShowExceptionDialog"} = "true";
   $Prefs{"(language.js):general.useragent.locale"} = ""; # default takes precendence after each startup in Firefox!
   &writePreferences($FFEXTENSION, \%Prefs);
   &includeModules($IncludeModules, \@ModRepos, "$FFEXTENSION/resources", $IncludeSearchIndexes);
@@ -232,6 +235,11 @@ sub writePreferences($\%$) {
 
   &Log("----> Writing preferences.\n");
   
+  $pP->{"(prefs.js):xulsword.Vendor"} = $Vendor;
+  $pP->{"(prefs.js):xulsword.Name"} = $Name;
+  $pP->{"(prefs.js):xulsword.Version"} = $Version;
+  $pP->{"(prefs.js):xulsword.BuildID"} = $BuildID;
+  
   foreach my $p (sort keys %{$pP}) {
     if (!$pP->{$p}) {next;}
     my $pref = $p;
@@ -243,6 +251,7 @@ sub writePreferences($\%$) {
     open(PREF, $mode, $pfile) || die "Could not open pref file \"$pfile\"\n";
     my $q = '"';
     if ($pP->{$p} =~ s/^.*?(true|false).*?$/my $b=$1; $b=lc($b);/ie) {$q = "";}
+    if ($pP->{$p} =~ /^""$/) {$q = "";} # let Set pref="" pass as is
     if ($pref =~ /^HiddenTexts/) {$pP->{$p} =~ s/,/\;/; $pP->{$p} =~ s/\s+//; $pP->{$p}.=";"}
     print PREF "pref(\"$pref\", $q".$pP->{$p}."$q);\n";
     close(PREF);
@@ -349,16 +358,13 @@ sub writeApplicationINI($$) {
   my $buildTypeID = shift;
 
   &Log("----> Writing application.ini.\n");
-  @d = localtime(time);
-  $BuildID = sprintf("%02d%02d%02d", ($d[5]%100), ($d[4]+1), $d[3]);
-  $BuildID .= $buildTypeID;
   open(INI, ">:encoding(UTF-8)", "$do/application.ini") || die;
   print INI "[App]\n";
   print INI "Vendor=$Vendor\n";
   print INI "Name=$Name\n";
   print INI "Version=$Version\n";
   print INI "ID=xulsword\@xulsword.org\n";
-  print INI "BuildID=$BuildID\n\n";
+  print INI "BuildID=$BuildID".$buildTypeID."\n\n";
   print INI "[Gecko]\n";
   print INI "MinVersion=$GeckoMinVersion\n";
   print INI "MaxVersion=$GeckoMaxVersion\n\n";

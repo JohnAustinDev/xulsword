@@ -560,7 +560,7 @@ var BookmarksMenuDNDObserver = {
     if (this.isTimerSupported || !aDragSession.sourceNode) {
       var targetToBeLoaded = aTarget;
       clearTimeout(this.loadTimer);
-      if (aTarget == aDragSession.sourceNode)
+      if (!aTarget || aTarget == aDragSession.sourceNode)
         return;
       var This = this;
       this.loadTimer=setTimeout(function () {This.onDragLoadTarget(targetToBeLoaded)}, This.springLoadedMenuDelay);
@@ -630,13 +630,13 @@ var BookmarksMenuDNDObserver = {
   { 
     var newTarget;
     var bt;
-    if (aTarget.id == "bookmarks-ptf") { 
+    if (aTarget.id && aTarget.id == "bookmarks-ptf") {
       // hit when dropping in the bt or between the last visible bookmark 
       // and the chevron
       newTarget = BookmarksToolbar.getLastVisibleBookmark();
       if (newTarget)
         newTarget.removeAttribute("dragover-right");
-    } else if (aTarget.id == "bookmarks-stack") {
+    } else if (aTarget.id && aTarget.id == "bookmarks-stack") {
       newTarget = BookmarksToolbar.getLastVisibleBookmark();
       newTarget.removeAttribute("dragover-right");
     } else {
