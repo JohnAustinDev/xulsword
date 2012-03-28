@@ -44,7 +44,14 @@ $DEVELOPMENT="$TRUNK/build-files/$Name/development";
 $INSTALLER="$TRUNK/build-files/$Name/installer";
 $FFEXTENSION="$TRUNK/build-files/$Name/extension";
 $PORTABLE="$TRUNK/build-files/$Name/portable/$Name";
-if ("$^O" =~ /MSWin32/i) {$Appdata = `Set APPDATA`; $Appdata =~ s/APPDATA=(.*?)\s*$/$1/i;}
+if ("$^O" =~ /MSWin32/i) {
+  $Appdata = `Set APPDATA`; $Appdata =~ s/APPDATA=(.*?)\s*$/$1/i;
+  $RESOURCES = "$Appdata/$Vendor/$Name/Profiles/resources";
+}
+if ("$^O" =~ /linux/i) {
+  $Appdata = `echo $HOME`; $Appdata =~ s/APPDATA=(.*?)\s*$/$1/i;
+  $RESOURCES = "$Appdata/.$Vendor/$Name/Profiles/resources";
+}
 else {&Log("ERROR: Please add assignment to application directory of your platform\n");}
 @d = localtime(time);
 $BuildID = sprintf("%02d%02d%02d", ($d[5]%100), ($d[4]+1), $d[3]);
@@ -63,7 +70,7 @@ if ($MakeDevelopment =~ /true/i) {
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/splash.xul";
   &writePreferences($DEVELOPMENT, \%Prefs, 1);
   &writeApplicationINI($DEVELOPMENT);
-  &includeModules($IncludeModules, \@ModRepos, "$Appdata/$Vendor/$Name/Profiles/resources", $IncludeSearchIndexes);
+  &includeModules($IncludeModules, \@ModRepos, $RESOURCES, $IncludeSearchIndexes);
   &processLocales($IncludeLocales, \@manifest, $DEVELOPMENT);
   &writeManifest(\@manifest, $DEVELOPMENT);
   &writeRunScript($Name, $DEVELOPMENT, "dev");
@@ -128,15 +135,15 @@ if ($MakeSetup =~ /true/i) {
   &writePreferences($INSTALLER, \%Prefs);
   &writeApplicationINI($INSTALLER);
   &compileStartup($INSTALLER);
-  if (-e "$Appdata/$Vendor/$Name/Profiles/resources/mods.d") {
+  if (-e "$RESOURCES/mods.d") {
     &Log("----> Deleting ...resources/mods.d\n");
-    remove_tree("$Appdata/$Vendor/$Name/Profiles/resources/mods.d");
+    remove_tree("$RESOURCES/mods.d");
   }
-  if (-e "$Appdata/$Vendor/$Name/Profiles/resources/modules") {
+  if (-e "$RESOURCES/modules") {
     &Log("----> Deleting ...resources/modules\n");
-    remove_tree("$Appdata/$Vendor/$Name/Profiles/resources/modules");
+    remove_tree("$RESOURCES/modules");
   }
-  &includeModules($IncludeModules, \@ModRepos, "$Appdata/$Vendor/$Name/Profiles/resources", $IncludeSearchIndexes);
+  &includeModules($IncludeModules, \@ModRepos, $RESOURCES, $IncludeSearchIndexes);
   &processLocales($IncludeLocales, \@manifest, $INSTALLER);
   &writeManifest(\@manifest, $INSTALLER);
   &writeRunScript($Name, $INSTALLER, "install");
@@ -145,7 +152,7 @@ if ($MakeSetup =~ /true/i) {
     if (!-e "$XulswordExtras/installer/autogen") {make_path("$XulswordExtras/installer/autogen");}
     &writeInstallerAppInfo("$XulswordExtras/installer/autogen/appinfo.iss");
     &writeInstallerLocaleinfo($IncludeLocales, "$XulswordExtras/installer/autogen/localeinfo.iss")
-    &writeInstallerModuleUninstall($IncludeModules, $IncludeLocales, "$XulswordExtras/installer/autogen/uninstall.iss", "$Appdata/$Vendor/$Name/Profiles/resources");
+    &writeInstallerModuleUninstall($IncludeModules, $IncludeLocales, "$XulswordExtras/installer/autogen/uninstall.iss", $RESOURCES);
     &packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
   }
   else {&Log("ERROR: Please add an installer creator script for your platform.\n");}
@@ -182,10 +189,10 @@ sub writeCompileDeps() {
 
   if (!-e $SwordSource) {&Log("ERROR: No SWORD source code.\n"); die;}
   if (!-e $CluceneSource) {&Log("ERROR: No Clucene source code.\n"); die;}
-  if (!-e $MicrosoftSDK) {&Log("ERROR: No Microsoft SDK.\n"); die;}
   
   &Log("----> Writing path info for C++ compiler.\n");
   if ("$^O" =~ /MSWin32/i) {
+    if (!-e $MicrosoftSDK) {&Log("ERROR: No Microsoft SDK.\n"); die;}
     open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/Versions.bat") || die;
     print INFO "Set clucene=$CluceneSource\n";
     print INFO "Set sword=$SwordSource\n";
@@ -193,7 +200,10 @@ sub writeCompileDeps() {
     print INFO "Set Name=$Name\n";
     close(INFO);
   }
-  else {&Log("ERROR: Please add code for your platform.\n");}
+  elsif ("$^O" =~ /linux/i) {
+  
+  }
+  else {&Log("ERROR: Please add pre-compile script for your platform.\n");}
 }
 
 sub compileLibSword($) {
@@ -224,6 +234,9 @@ sub compileLibSword($) {
       chdir("$TRUNK/build");
     }
     else {copy("$TRUNK/Cpp/Release/xulsword.dll", $do);}
+  }
+  elsif ("$^O" =~ /linux/i) {
+  
   }
   else {&Log("ERROR: Please add a compile script for your platform.\n");}
 }
