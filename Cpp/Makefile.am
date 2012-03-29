@@ -20,3 +20,13 @@ endif
 
 dist_doc_DATA = README
 
+#/home/dale/xulsword/mk-dev/Cpp/config.h.in
+#/home/dale/xulsword/mk-dev/Cpp/aclocal.m4
+#/home/dale/xulsword/mk-dev/Cpp/Makefile.in
+#/home/dale/xulsword/mk-dev/Cpp/config.sub
+#/home/dale/xulsword/mk-dev/Cpp/config.guess
+#/home/dale/xulsword/mk-dev/Cpp/configure
+#/home/dale/xulsword/mk-dev/Cpp/depcomp
+#/home/dale/xulsword/mk-dev/Cpp/install-sh
+#/home/dale/xulsword/mk-dev/Cpp/ltmain.sh
+#/home/dale/xulsword/mk-dev/Cpp/missing
