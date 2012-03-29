@@ -1,5 +1,5 @@
 use Encode;
-use File::Copy;
+use File::Copy "cp", "mv";
 use File::Path qw(make_path remove_tree);
 use File::Compare;
 
@@ -31,10 +31,20 @@ sub copy_dir($$$$) {
       &copy_dir($if, $of, $incl, $skip);
     }
     else {
-      copy($if, $of);
+      &copy_file($if, $of);
     }
   }
   return 1;
+}
+
+sub copy_file($$) {
+  my $if = shift;
+  my $of = shift;
+  if ("$^O" =~ /MSWin32/i) {cp($if, $of);}
+  elsif ("$^O" =~ /linux/i) {
+    my $cmd = "cp -p ".&escfile($if)." ".&escfile($of);
+    `$cmd`;
+  }
 }
 
 sub cleanDir($) {
@@ -60,6 +70,8 @@ sub makeZIP($$$$) {
   my $updateExisting = shift;
   my $logfile = shift;
   
+  my $cmd = "";
+  my $cwd = "";
   my $zd = $zf;
   $zd =~ s/[\/\\][^\/\\]+$//;
   if (!-e $zd) {make_path($zd);}
@@ -68,7 +80,7 @@ sub makeZIP($$$$) {
     $di =~ s/[\/]/\\/g;
     $di .= "\\*";
     my $a = ($updateExisting ? "u":"a");
-    my $cmd = "7za $a -tzip \"$zf\" -r \"$di\" -x!.svn";
+    $cmd = "7za $a -tzip ".&escfile($zf)." -r ".&escfile($di)." -x!.svn";
     if ($logfile) {
       my $lf = $zf;
       $lf =~ s/[^\/\\]+$/$logfile/;
@@ -77,9 +89,25 @@ sub makeZIP($$$$) {
     #&Log("$cmd\n");
     `$cmd`;
   }
+  elsif ("$^O" =~ /linux/i) {
+    $cwd = `echo $PWD`; $cwd =~ s/\s*$//;
+    chdir($di);
+    $di .= "/*";
+    my $a = ($updateExisting ? "-u ":"");
+    $cmd = "zip -r ".$a.&escfile($zf)." * -x \\*.svn";  
+  }
   else {
     &Log("ERROR: Please update common.pl->makeZIP() to include your platform.\n");
   }
+  
+  if ($cmd && $logfile) {
+    my $lf = $zf;
+    $lf =~ s/[^\/\\]+$/$logfile/;
+    $cmd .= " > $lf";
+  }
+  #&Log("$cmd\n");
+  if ($cmd) {`$cmd`;}
+  if ($cwd) {chdir($cwd);}
 }
 
 sub createLocaleExtension($$) {
@@ -107,6 +135,15 @@ sub getInfoFromConf($\%) {
   $MODPATH =~ s/[\\\/]\s*$//; # remove ending slash
   $MODPATH =~ s/^[\s\.]*[\\\/]//; # normalize beginning of path
   $ceP->{"DataPath"} = $MODPATH;
+}
+
+sub escfile($) {
+  my $n = shift;
+  
+  if ("$^O" =~ /MSWin32/i) {$n = "\"".$n."\"";}
+  elsif ("$^O" =~ /linux/i) {$n =~ s/([ \(\)])/\\$1/g;}
+  else {&Log("Please add file escape function for your platform.\n");}
+  return $n;
 }
 
 sub Log($$) {

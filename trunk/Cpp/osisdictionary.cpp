@@ -59,7 +59,8 @@ char OSISDictionary::processText(SWBuf &text, const SWKey *key, const SWModule *
 				text.append('>');
 			}
 			else {
-        XMLTag tag = token;
+        XMLTag tag;
+        tag = token;
         if (!tag.isEndTag() && tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "x-glossary")) {
           stripThisToken = true; 
           continue;

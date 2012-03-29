@@ -62,7 +62,7 @@ class SWMgrXS : public SWMgr {
 //StringMgrXS - to over-ride broken toUpperCase
 class StringMgrXS : public StringMgr {
   public:
-  StringMgrXS::StringMgrXS(char *(*toUpperCase)(char *));
+  StringMgrXS(char *(*toUpperCase)(char *));
   char *upperUTF8(char *text, unsigned int max = 0) const;
   char *(*ToUpperCase)(char *);
 };
@@ -134,9 +134,9 @@ class xulsword {
 
 
   public:
-  xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(char *), void (*reportProgress)(int));
+  xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(char *), void (*reportProgress)(int));
 
-  xulsword::~xulsword();
+  ~xulsword();
 
   char *(*ToUpperCase)(char *);
   void (*ThrowJS)(char *);

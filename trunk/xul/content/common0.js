@@ -20,11 +20,11 @@
  * Functions in this file may NOT access any Bible objects!
  ***********************************************************************/ 
 
-var OSName="Unknown OS";
-if (navigator.appVersion.indexOf("Win")!=-1) OSName="Windows";
-if (navigator.appVersion.indexOf("Mac")!=-1) OSName="MacOS";
-if (navigator.appVersion.indexOf("X11")!=-1) OSName="UNIX";
-if (navigator.appVersion.indexOf("Linux")!=-1) OSName="Linux";
+var OPSYS="Unknown OS";
+if (navigator.appVersion.indexOf("Win")!=-1) OPSYS="Windows";
+else if (navigator.appVersion.indexOf("Mac")!=-1) OPSYS="MacOS";
+else if (navigator.appVersion.indexOf("Linux")!=-1) OPSYS="Linux";
+else if (navigator.appVersion.indexOf("X11")!=-1) OPSYS="Linux";
 
 var IsExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");
 
@@ -278,8 +278,18 @@ function getSpecialDirectory(name) {
       dir.append(VIDEO);
       break;
     case "xsModsCommon":
-      var userAppPath = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment).get("APPDATA");
-      userAppPath += "\\Sword";
+      switch (OPSYS) {
+      case "Windows":
+        var userAppPath = Components.classes["@mozilla.org/process/environment;1"].
+            getService(Components.interfaces.nsIEnvironment).get("APPDATA");
+        userAppPath += "/Sword";
+        break
+      case "Linux":
+        var userAppPath = Components.classes["@mozilla.org/process/environment;1"].
+            getService(Components.interfaces.nsIEnvironment).get("HOME");
+        userAppPath += "/.sword";
+        break;
+      }
       dir.initWithPath(userAppPath);
       break;
     case "xsExtension":

@@ -39,7 +39,6 @@
 #include "osisdictionary.h"
 #include "versemaps.h"
 
-#define DLLEXPORT extern "C" __declspec(dllexport)
 #define MAXSTRING 1000
 #define MAXDICTSIZE 20000 /*ISBE is 9350 entries*/
 #define MODVERSION "xulswordVersion"
@@ -49,6 +48,13 @@
 #define SYNODAL "Synodal"  // can be used by strstr to match SynodalProt, SynodalP, Synodal0, and Synodal
 #define VSERROR 99
 #define MAXINSTANCE 10;
+
+#ifdef WIN32
+#define DLLEXPORT extern "C" __declspec(dllexport)
+#else
+#define DLLEXPORT extern "C"
+#endif
+
 
 const char DefaultVersificationSystem[] = "KJV";
 
@@ -1449,7 +1455,7 @@ void xulsword::searchIndexBuild(const char *mod) {
   SWModule * module = MyManager->getModule(mod);
   if (module) {
     if (module->hasSearchFramework()) {
-      module->createSearchFramework(&savePercentComplete, ReportProgress);
+      module->createSearchFramework(&savePercentComplete, (void *)ReportProgress);
     }
   }
 }
