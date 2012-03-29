@@ -239,6 +239,7 @@ sub compileLibSword($) {
       chdir("$TRUNK/Cpp");
       if (!-e "$TRUNK/Cpp/Makefile.in") {
         `./autogen.sh >> $LOGFILE 2>&1`;
+        `./configure >> $LOGFILE 2>&1`;
       }
       `make clean >> $LOGFILE 2>&1`;
       `make >> $LOGFILE 2>&1`;
