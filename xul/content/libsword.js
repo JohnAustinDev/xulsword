@@ -102,10 +102,11 @@ var Bible = {
     }
 
     if (!this.LibswordPath) {
-      if (!IsExtension) this.LibswordPath = "xulsword.dll";
+      var dll = (OPSYS == "Windows" ? "xulsword.dll":"libxulsword.so");
+      if (!IsExtension) {this.LibswordPath = getSpecialDirectory("CurProcD").path + "/" + dll;}
       else {
         // can't call this in indexWorker...
-        this.LibswordPath = getSpecialDirectory("xsExtension").path + "/" + APPLICATIONID + "/xulsword.dll";
+        this.LibswordPath = getSpecialDirectory("xsExtension").path + "/" + APPLICATIONID + "/" + dll;
       }
     }
     this.Libsword = ctypes.open(this.LibswordPath);

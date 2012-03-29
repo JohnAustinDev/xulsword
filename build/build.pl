@@ -30,8 +30,12 @@ while(<SETF>) {
   else {&Log("WARNING: unhandled control file line $line: \"$_\"\n");}
 }
 close(SETF);
+if ("$^O" =~ /MSWin32/i) {$EXE = ".exe"; $DLL = ".dll";}
+elsif ("$^O" =~ /linux/i) {$EXE = ""; $DLL = ".so";}
+else {"ERROR: Please provide file extensions for your platform.\n";}
 $Xsprocess = $Executable;
-$Xsprocess =~ s/\.exe$/-srv.exe/i;
+$Xsprocess .= "-srv$EXE";
+$Executable .= $EXE;
 @ModRepos = ($ModuleRepository1, $ModuleRepository2);
 
 &Log("----> Getting file paths.\n");
@@ -49,8 +53,8 @@ if ("$^O" =~ /MSWin32/i) {
   $RESOURCES = "$Appdata/$Vendor/$Name/Profiles/resources";
 }
 if ("$^O" =~ /linux/i) {
-  $Appdata = `echo $HOME`; $Appdata =~ s/APPDATA=(.*?)\s*$/$1/i;
-  $RESOURCES = "$Appdata/.$Vendor/$Name/Profiles/resources";
+  $Appdata = `echo \$HOME`; $Appdata =~ s/^\s*(.*?)\s*$/$1/;
+  $RESOURCES = "$Appdata/.".lc($Vendor)."/".lc($Name)."/resources";
 }
 else {&Log("ERROR: Please add assignment to application directory of your platform\n");}
 @d = localtime(time);
@@ -66,7 +70,7 @@ if ($MakeDevelopment =~ /true/i) {
   &compileLibSword($DEVELOPMENT);
   my @manifest;
   &copyExtensionFiles($DEVELOPMENT, \@manifest, $IncludeLocales, 1);
-  &copyXulRunnerFiles($DEVELOPMENT);
+  #&copyXulRunnerFiles($DEVELOPMENT);
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/splash.xul";
   &writePreferences($DEVELOPMENT, \%Prefs, 1);
   &writeApplicationINI($DEVELOPMENT);
@@ -227,18 +231,25 @@ sub compileLibSword($) {
         `call Compile.bat NOSECURITY >> $LOGFILE`;
       }
       if (!-e "$TRUNK/Cpp/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); die;}
-
-      copy("$TRUNK/Cpp/Release/xulsword.dll", $do);
-      $CompiledAlready = 1;
-
-      chdir("$TRUNK/build");
     }
-    else {copy("$TRUNK/Cpp/Release/xulsword.dll", $do);}
+    &copy_file("$TRUNK/Cpp/Release/xulsword.dll", $do);
   }
   elsif ("$^O" =~ /linux/i) {
-  
+    if (!$CompiledAlready) {
+      chdir("$TRUNK/Cpp");
+      if (!-e "$TRUNK/Cpp/Makefile.in") {
+        `./autogen.sh >> $LOGFILE 2>&1`;
+      }
+      `make clean >> $LOGFILE 2>&1`;
+      `make >> $LOGFILE 2>&1`;
+      if (!-e "$TRUNK/Cpp/.libs/libxulsword.so") {&Log("ERROR: libxulsword did not compile.\n"); die;}
+    }
+    &copy_file("$TRUNK/Cpp/.libs/libxulsword.so", $do);
   }
   else {&Log("ERROR: Please add a compile script for your platform.\n");}
+  
+  $CompiledAlready = 1;
+  chdir("$TRUNK/build");
 }
 
 sub writePreferences($\%$) {
@@ -341,29 +352,29 @@ sub copyExtensionFiles($\@$$$) {
 sub copyXulRunnerFiles($) {
   my $do = shift;
   &Log("----> Copying xulrunner files.\n");
-  my $skip = "(xulrunner\-stub\.exe";
-  if ("$^O" =~ /MSWin32/i) {
-    # skip undeeded stuff: 2+1.9+1.9+0.6+0.4+0.36+0.25+0.12+0.1++0.1 ~ 8MB
-    $skip .= "|dictionaries|";
-    $skip .= "D3DCompiler_43.dll|";
-    $skip .= "d3dx9_43.dll|";
-    $skip .= "js.exe|";
-    $skip .= "libGLESv2.dll|";
-    $skip .= "nssckbi.dll|";
-    $skip .= "freebl3.dll|";
-    $skip .= "updater.exe|";
-    $skip .= "crashreporter.exe|";
-    $skip .= "nssdbm3.dll|";
-    $skip .= "libEGL.dll|";
-    $skip .= "xpcshell.exe|";
-    $skip .= "IA2Marshal.dll";
-  }
-
+  # skip undeeded stuff: 2+1.9+1.9+0.6+0.4+0.36+0.25+0.12+0.1++0.1 ~ 8MB
+  my $skip = "(";
+  $skip .= "xulrunner\-stub\$EXE|";
+  $skip .= "dictionaries|";
+  $skip .= "D3DCompiler_43$DLL|";
+  $skip .= "d3dx9_43$DLL|";
+  $skip .= "js$EXE|";
+  $skip .= "libGLESv2$DLL|";
+  $skip .= "nssckbi$DLL|";
+  $skip .= "freebl3$DLL|";
+  $skip .= "updater$EXE|";
+  $skip .= "crashreporter$EXE|";
+  $skip .= "nssdbm3$DLL|";
+  $skip .= "libEGL$DLL|";
+  $skip .= "xpcshell$EXE|";
+  $skip .= "IA2Marshal$DLL";
   $skip .= ")";
-  
+   
   if (!-e $XULRunner) {&Log("ERROR: No xulrunner directory: \"$XULRunner\".\n"); die;}
-  copy_dir($XULRunner, $do, "", $skip);
-  move("$do/xulrunner.exe", "$do/$Xsprocess");
+  &copy_dir($XULRunner, $do, "", $skip);
+  if ("$^O" =~ /MSWin32/i) {mv("$do/xulrunner.exe", "$do/$Xsprocess");}
+  elsif ("$^O" =~ /linux/i) {mv("$do/xulrunner-bin", "$do/$Xsprocess");}
+  else {&Log("ERROR: Please provide xulrunner executable name for this platform.\n");}
 }
 
 sub writeApplicationINI($$) {
@@ -418,8 +429,8 @@ sub includeModules($\@$$) {
     my $modfd = "$do/".$conf{"DataPath"};
     if (-e $confd) {unlink($confd);}
     if ($modfd =~ /modules/ && -e $modfd) {remove_tree($modfd);}
-    copy_dir($mpath, $modfd, "", $dfilter);
-    copy($path, $confd);
+    &copy_dir($mpath, $modfd, "", $dfilter);
+    &copy_file($path, $confd);
   }
 }
 
@@ -444,6 +455,7 @@ sub writeInstallManifest($) {
   &Log("----> Writing Install Manifest\n");
   my $platform;
   if ("$^O" =~ /MSWin32/i) {$platform = "WINNT_x86-msvc";}
+  elsif ("$^O" =~ /linux/i) {$platform = "Linux_x86-gcc3";}
   else {&Log("ERROR: Please add Firefox Extension platform identifier for your platform.\n");}
   open(INM, ">:encoding(UTF-8)", "$od/install.rdf") || die "Could not open \"$od/install.rdf\".\n";
 print INM "<?xml version=\"1.0\"?>\n";
@@ -489,7 +501,7 @@ sub compileStartup($) {
   `call Compile.bat >> $LOGFILE`;
   chdir("$TRUNK/build");
 
-  copy("$TRUNK/Cpp/$rd/Release/$rd.exe", "$do/$Executable");
+  &copy_file("$TRUNK/Cpp/$rd/Release/$rd$EXE", "$do/$Executable");
 }
 
 sub writeInstallerAppInfo($) {
@@ -552,25 +564,36 @@ sub writeRunScript($$$) {
   &Log("----> Writing run script.\n");
 
   my $s = "./run_$name-$type.pl";
-
+  open(SCR, ">:encoding(UTF-8)", $s) || die;
+  print SCR "#!/usr/bin/perl\n";
+    
   if ("$^O" =~ /MSWin32/i) {
-    open(SCR, ">:encoding(UTF-8)", $s) || die;
-    print SCR "#!/usr/bin/perl\n";
     if ($type eq "dev") {
       print SCR "chdir(\"".$DEVELOPMENT."\");\n";
-      print SCR "`start /wait $Name-srv.exe --app application.ini -jsconsole -console`;\n";
+      print SCR "`start /wait $Name-srv$EXE --app application.ini -jsconsole -console`;\n";
     }
     elsif ($type eq "port") {
       print SCR "chdir(\"".$PORTABLE."\");\n";
-      print SCR "`$Name.exe`;\n";
+      print SCR "`$Name$EXE`;\n";
     }
     elsif ($type eq "install") {
       &writeWindowsRegistryScript();
-      print SCR "`\"$INSTALLER/$Name.exe\"`;\n";
+      print SCR "`\"$INSTALLER/$Name$EXE\"`;\n";
     }
-    close(SCR);
+  }
+  if ("$^O" =~ /linux/i) {
+    if ($type eq "dev") {
+      print SCR "`firefox --app $DEVELOPMENT/application.ini -jsconsole`;\n";
+    }
+    elsif ($type eq "port") {
+      &Log("NOTE: Portable run script not implemented for linux.\n");
+    }
+    elsif ($type eq "install") {
+      &Log("NOTE: Installer run script not implemented for linux.\n");
+    }  
   }
   else {&Log("ERROR: Please add run scripts for your platform.\n");}
+  close(SCR);
 }
 
 sub writeWindowsRegistryScript() {
@@ -602,8 +625,8 @@ sub processLocales($\@$) {
       &createLocale($loc);
       $haveLocale{$loc} = 1;
     }
-    copy("$TRUNK/build-files/locales/$loc.jar", "$od/chrome");
-    copy("$XulswordExtras/localeDev/$loc/$loc.rdf", "$od/defaults/");
+    &copy_file("$TRUNK/build-files/locales/$loc.jar", "$od/chrome");
+    &copy_file("$XulswordExtras/localeDev/$loc/$loc.rdf", "$od/defaults/");
     
     # write locale manifest info
     push(@{$manifestP}, "# xulswordVersion=3.0\n");
@@ -637,7 +660,7 @@ sub createLocale($) {
   }
   
   # recreate xulsword locale from UI source and report if the log file changes
-  move("$XulswordExtras/localeDev/$locale/code_log.txt", "$XulswordExtras/localeDev/$locale/code_log-bak.txt");
+  mv("$XulswordExtras/localeDev/$locale/code_log.txt", "$XulswordExtras/localeDev/$locale/code_log-bak.txt");
   
   system("$TRUNK/localeDev/UI-code.pl", $TRUNK, $XulswordExtras, $locale);
   

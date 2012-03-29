@@ -9,6 +9,8 @@ AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_ARG_ENABLE(security,AC_HELP_STRING([--enable-security],[enable text security (default=no)]),,[security=no])
+
 # Checks for programs.
 AC_PROG_LIBTOOL
 AC_PROG_CXX
@@ -29,5 +31,6 @@ AC_TYPE_SIZE_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([mkdir regcomp strchr strstr])
 
+AM_CONDITIONAL(NOSECURITY, test "x$security" = xno)
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
