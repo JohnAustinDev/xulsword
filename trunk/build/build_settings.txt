@@ -10,7 +10,7 @@
 #                          menu, or leave blank and no email menu element will appear.
 
 # BUILD WHAT?
-Set MakeDevelopment=false
+Set MakeDevelopment=true
 Set MakePortable=false
 Set MakeSetup=false
 Set MakeFFextension=true
@@ -26,10 +26,10 @@ Set ModuleRepository2=C:\home\dev\repository
 Set XulswordExtras=C:\home\dev\sup-dev
 
 # SPECIFY BUILD INFORMATION
-Set Version=3.2
+Set Version=3.3
 Set Name=xulsword
 Set Vendor=CrossWire
-Set Executable=xulsword.exe
+Set Executable=xulsword
 Set GeckoMinVersion=7.0
 Set GeckoMaxVersion=15.*
 Set (buildprefs.js):xulsword.EngineVersion=1.6.2

@@ -65,7 +65,7 @@ function getAudioDirs() {
   }
   if (path) {
     var regDir = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-    regDir.initWithPath(path);
+    regDir.initWithPath(lpath(path));
     if (regDir.exists() && regDir.isDirectory()) {
       af = {dir:regDir, isExportable:false, isInstallDir:true};
       audioDirs.push(af);
@@ -257,7 +257,7 @@ function quietQTInstallWin(aInstaller) {
   // BAT script cannot handle Unicode file names, so all file names must be ASCII and must be copied to TmpD.
   var tmp = getSpecialDirectory("TmpD");
   var ini = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  ini.initWithPath(iniPath);
+  ini.initWithPath(lpath(iniPath));
   var tmpini = tmp.clone(); tmpini.append(ini.leafName);
   if (tmpini.exists()) tmpini.remove(false);
   ini.copyTo(tmp, ""); // copy .ini to TmpD
@@ -522,7 +522,7 @@ function getLocalizedAudioFile(aDir, basecode, shortName, chapter, ext, locale) 
   var chapTerm = getLocalizedChapterTerm(shortName, chapter, localeBundle, locale).replace(/^[\s\d-]*/, "").replace(/[\s\d-]*$/, "");
   var path = aDir.path + "/" + basecode + "_" + locale + "/" + bns + "-" + lbk + "/" + cns + "-" + chapTerm + "." + ext;
   var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  aFile.initWithPath(path);
+  aFile.initWithPath(lpath(path));
   return aFile;
 }
 
@@ -532,7 +532,7 @@ function getThisAudioFile(aDir, code, shortName, chapter, ext) {
   if (bn===null) return null;
   var path = aDir.path + "/" + code + "/" + shortName + "/" + padChapterNum(chapter) + "." + ext;
   var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  aFile.initWithPath(path);
+  aFile.initWithPath(lpath(path));
   return aFile;
 }
 
@@ -542,7 +542,7 @@ function getXSModAudioFile(aDir, code, shortName, chapter, ext) {
   if (bn===null) return null;
   var path = aDir.path + "/" + code + "/" + code + "-" + shortName + "-" + padChapterNum(chapter) + "." + ext;
   var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  aFile.initWithPath(path);
+  aFile.initWithPath(lpath(path));
   return aFile;
 }
 

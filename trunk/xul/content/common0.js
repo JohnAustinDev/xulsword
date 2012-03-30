@@ -184,7 +184,7 @@ function readParamFromConf(nsIFileConf, param) {
 function recursiveDelete(path) {
   if (!path) return false;
   var f = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  f.initWithPath(path);
+  f.initWithPath(lpath(path));
   if (!f.exists()) return true;
   
   var dlist = [];
@@ -192,7 +192,7 @@ function recursiveDelete(path) {
 
   var retval = true;
   for (var i=0; i<dlist.length; i++) {
-    f.initWithPath(dlist[i]);
+    f.initWithPath(lpath(dlist[i]));
     if (f.isDirectory()) continue;
     if (!f.exists()) continue;
     jsdump("Removing " + f.leafName);
@@ -200,7 +200,7 @@ function recursiveDelete(path) {
     catch (er) {jsdump(er + ": Could not remove file " + f.path); retval = false;}
   }
   for (var i=0; i<dlist.length; i++) {
-    f.initWithPath(dlist[i]);
+    f.initWithPath(lpath(dlist[i]));
     if (!f.exists()) continue;
     jsdump("Removing " + f.leafName);
     try {f.remove(true);}
@@ -234,6 +234,13 @@ function replaceASCIIcontrolChars(string) {
   return string;
 }
 
+function lpath(path) {
+  if (OPSYS == "Windows") {path = path.replace(/\//g, "\\");}
+  else if (OPSYS == "Linux") {path = path.replace(/\\/g, "/");}
+
+  return path;
+}
+
 // in addition to the XULRunner special directories, the following are also recognized
 // xsResD       = resource directory
 // xsFonts      = user fonts directory
@@ -251,7 +258,7 @@ function getSpecialDirectory(name) {
     
     if (!IsExtension) {
       var re = new RegExp(profile.leafName + "$");
-      dir.initWithPath(profile.path.replace(re, "resources"));
+      dir.initWithPath(lpath(profile.path.replace(re, "resources")));
     }
     else {
       dir = profile.clone().QueryInterface(Components.interfaces.nsILocalFile);
@@ -290,7 +297,7 @@ function getSpecialDirectory(name) {
         userAppPath += "/.sword";
         break;
       }
-      dir.initWithPath(userAppPath);
+      dir.initWithPath(lpath(userAppPath));
       break;
     case "xsExtension":
       dir = profile.clone();

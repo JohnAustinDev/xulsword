@@ -328,7 +328,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
             else {
               var instconf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
               var xsModsUser = getSpecialDirectory("xsModsUser");
-              instconf.initWithPath(xsModsUser.path + "/" + entryArray[f][e].replace("\\", "/", "g"));
+              instconf.initWithPath(lpath(xsModsUser.path + "/" + entryArray[f][e]));
               if (instconf.exists()) {
                 overwriteInstalledVersion = readParamFromConf(instconf, VERSIONPAR);
                 matchingXSmoduleTextVersion = readParamFromConf(instconf, "Version");
@@ -576,7 +576,7 @@ jsdump("Processing Entry:" + aEntry);
     
   case MODSD:
     var conf = getConfInfo(aZip, aEntry, zReader);
-    inflated.initWithPath(getSpecialDirectory("xsModsUser").path + "/" + aEntry.replace("\\", "/", "g"));
+    inflated.initWithPath(lpath(getSpecialDirectory("xsModsUser").path + "/" + aEntry));
     if (!conf.modPath) {
       jsdump("Could not read DataPath of " + aEntry + ", SKIPPING conf file!");
       return {reset:NORESET, success:false, remove:true};
@@ -594,7 +594,7 @@ jsdump("Processing Entry:" + aEntry);
     if (skip) return {reset:SOFTRESET, success:true, remove:false};
     var dest = "xsModsUser";
 //    for (var s=0; s<CommonList.length; s++) {if (aEntry.match(CommonList[s], "i")) dest = "xsModsCommon";}
-    inflated.initWithPath(getSpecialDirectory(dest).path + "/" + aEntry.replace("\\", "/", "g"));
+    inflated.initWithPath(lpath(getSpecialDirectory(dest).path + "/" + aEntry));
     break;
 
   case CHROME:
@@ -641,20 +641,20 @@ jsdump("Processing Entry:" + aEntry);
 
     break;
   case AUDIOPLUGIN:
-    inflated.initWithPath(getSpecialDirectory("xsAudioPI").path + "/" + entryFileName);
+    inflated.initWithPath(lpath(getSpecialDirectory("xsAudioPI").path + "/" + entryFileName));
     break;
 
   case FONTS:
-    inflated.initWithPath(getSpecialDirectory("xsFonts").path + "/" + entryFileName);
+    inflated.initWithPath(lpath(getSpecialDirectory("xsFonts").path + "/" + entryFileName));
     break;
     
   case BOOKMARKS:
-    inflated.initWithPath(getSpecialDirectory("xsBookmarks").path + "/" + entryFileName);
+    inflated.initWithPath(lpath(getSpecialDirectory("xsBookmarks").path + "/" + entryFileName));
     if (!inflated.leafName.match(XSBOOKMARKEXT)) return {reset:NORESET, success:true, remove:true};
     break;
     
   case VIDEO:
-    inflated.initWithPath(getSpecialDirectory("xsVideo").path + aEntry.replace(/^[^\\\/]+/, "").replace("\\", "/", "g"));
+    inflated.initWithPath(lpath(getSpecialDirectory("xsVideo").path + aEntry.replace(/^[^\\\/]+/, "")));
     if (!inflated.leafName.match(XSVIDEOEXT) && !inflated.leafName.match(/\.txt$/i)) return {reset:NORESET, success:true, remove:true};
     break;
     
@@ -1209,7 +1209,7 @@ function installFontWin(aFontFile) {
   var cmdpath = Components.classes["@mozilla.org/process/environment;1"].
       getService(Components.interfaces.nsIEnvironment).get("ComSpec");
   var cmdexe = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  cmdexe.initWithPath(cmdpath);
+  cmdexe.initWithPath(lpath(cmdpath));
 
   var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);  
   process.init(cmdexe);
@@ -1310,7 +1310,7 @@ function getSwordModParent(aConfFile, willDelete) {
   if (!realdir) return {pathFromConf:pathFromConf, file:null};
   var modulePath = aConfFile.path.substring(0, aConfFile.path.lastIndexOf("/" + MODSD)+1) + realdir;
   var aMod = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  try {aMod.initWithPath(modulePath);} catch (er) {return {pathFromConf:pathFromConf, file:null};}  
+  try {aMod.initWithPath(lpath(modulePath));} catch (er) {return {pathFromConf:pathFromConf, file:null};}
   return {pathFromConf:pathFromConf, file:aMod};
 }
     

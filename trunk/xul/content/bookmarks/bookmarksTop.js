@@ -644,7 +644,7 @@ var BookmarkFuns = {
                            .createInstance(Components.interfaces.nsILocalFile);
       if (!file)
         return;
-      file.initWithPath(fileName);
+      file.initWithPath(lpath(fileName));
       if (!file.exists()) {
         file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
       }
