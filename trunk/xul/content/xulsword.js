@@ -655,7 +655,7 @@ function writeHelpVideoElem(elem, v) {
   elem.setAttribute("label", v.label);
   elem.setAttribute("oncommand", "AllVideos[" + v.index + "].file.launch()");
   elem.setAttribute("class", "menuitem-iconic videoHelpMenuItem");
-  var localeConfig = (!v.locale || !LocaleConfigs[v.locale] ? LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")]:LocaleConfigs[v.locale]);
+  var localeConfig = (!v.locale || !LocaleConfigs[v.locale] ? LocaleConfigs[getLocale()]:LocaleConfigs[v.locale]);
   if (localeConfig) addConfigStyleToElem(localeConfig, elem, v.label);
   return elem;
 }
@@ -1868,7 +1868,7 @@ function getRadioSelection(type) {
 function changeLocaleTo(newLocale) {
   var rootPrefBranch = Components.classes["@mozilla.org/preferences-service;1"].
                       getService(Components.interfaces.nsIPrefBranch);
-  if (newLocale == rootPrefBranch.getCharPref("general.useragent.locale")) return;
+  if (newLocale == getLocale()) return;
   rootPrefBranch.setCharPref("general.useragent.locale",newLocale);
   
   setGlobalDirectionPrefs();
@@ -1890,9 +1890,7 @@ function updateXulswordButtons() {
     try {Bible.setGlobalOption(GlobalToggleCommands[cmd],prefs.getCharPref(GlobalToggleCommands[cmd]));} catch (er) {}
   }
   // Menu Checkboxes
-  var myLocale = Components.classes["@mozilla.org/preferences-service;1"].
-                 getService(Components.interfaces.nsIPrefBranch).
-                 getCharPref("general.useragent.locale");
+  var myLocale = getLocale();
   if (document.getElementById("sub-lang").getAttribute("disabled") != "true") {
     for (var lc=0; lc<LocaleList.length; lc++) {
       document.getElementById(LocaleList[lc]).setAttribute("checked",(LocaleList[lc] == myLocale ? true:false));
@@ -4422,8 +4420,7 @@ function saveHTML () {
     }
     catch (er) {}
   
-    var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-    file.initWithPath("C:\\");
+    var file = getSpecialDirectory("xsResD");
     file.append("ScriptBox" + i + ".txt");
   
     if (!file.exists()) {file.create(file.NORMAL_FILE_TYPE, FPERM);}

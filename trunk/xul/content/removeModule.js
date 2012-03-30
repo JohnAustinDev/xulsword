@@ -269,7 +269,7 @@ function deleteModules(e) {
           break;
         case 1: //locales
           var loc = child.id.substring(3);
-          if (loc == rootprefs.getCharPref("general.useragent.locale")) need2ChangeLocale=true;
+          if (loc == getLocale()) need2ChangeLocale=true;
           Components.utils.import("resource://gre/modules/AddonManager.jsm");
           AddonManager.getAddonByID(loc + "@xulsword.org", function(addon) {addon.uninstall();});
           if (reset<HARDRESET) reset=HARDRESET;

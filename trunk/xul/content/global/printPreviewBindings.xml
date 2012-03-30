@@ -13,7 +13,7 @@
    xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
   <binding id="printpreviewtoolbar" 
-           extends="chrome://xsglobal/content/bindings/toolbar.xml#toolbar">
+           extends="chrome://global/content/bindings/toolbar.xml#toolbar">
     <resources>
       <stylesheet src="chrome://xsglobal/skin/printPreview.css"/>
     </resources>

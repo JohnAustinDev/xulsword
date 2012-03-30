@@ -191,8 +191,8 @@ function Commit() {
     
     if (!newValue) newValue = "";
     if (!oldValue) oldValue = "";
-    if (i == NAME && newValue != oldValue) gInfoResource[NAMELOCALE] = rootprefs.getCharPref("general.useragent.locale");
-    if (i == NOTE && newValue != oldValue) gInfoResource[NOTELOCALE] = rootprefs.getCharPref("general.useragent.locale");
+    if (i == NAME && newValue != oldValue) gInfoResource[NAMELOCALE] = getLocale();
+    if (i == NOTE && newValue != oldValue) gInfoResource[NOTELOCALE] = getLocale();
   }
 
   var remote = BMDS.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource);

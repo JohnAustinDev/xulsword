@@ -34,8 +34,6 @@
     title="&menu.help.about;"
     hidechrome="true"
     onload="loaded()"
-    width="500" height="675"
-    style="background-image: url(chrome://xulsword/locale/splash.png); background-repeat:no-repeat;"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
     
   <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
@@ -54,26 +52,21 @@
     updateCSSBasedOnCurrentLocale(["window", "button", "label"]);
     var SBundle = document.getElementById("strings");
     document.getElementById("info").value = SBundle.getFormattedString('Version',[prefs.getCharPref("Version"), prefs.getCharPref("BuildID")]);
-    if (window.opener.name == "main-window") {
-      document.getElementById("close").hidden=false;
-      document.getElementById("info").hidden=false;
-      document.getElementById("splash-window").style.backgroundColor="white";
-      document.getElementById("about").hidden=false;
-    }
+    window.sizeToContent();
   }
   </script>
-  <vbox flex="1">
-    <stack style="height:375px;">
-      <vbox style="margin:7px;" pack="end" align="center">
-        <label id="info" value="" hidden="true" style="font-size:12px; color:black;"/>
+  <vbox flex="1" style="background-image: url(chrome://xulsword/locale/splash.png); background-repeat:no-repeat;">
+    <stack style="width:500px; height:375px;">
+      <vbox pack="end" align="center">
+        <label id="info" value="" style="font-size:12px; color:black;"/>
         <label id="producedBy" value="&producedby;" style="font-size:12px; color:rgb(77,37,143);"/>
       </vbox>
-      <vbox flex="1" pack="end" align="end" style="-moz-padding-end:15px; margin-bottom:38px;" >
-        <button id="close"  label="&closeCmd.label;" hidden="true" oncommand="window.close();"/>
+      <vbox flex="1" pack="end" align="end" style="-moz-padding-end:8px; margin-bottom:8px;" >
+        <button id="close"  label="&closeCmd.label;" oncommand="window.close();"/>
       </vbox>
     </stack>
     
-    <iframe id="about" flex="1" hidden="true" style="border:2px solid rgb(77,37,143); -moz-border-radius:8px;" src="chrome://xulsword/content/about.html"/>
+    <iframe id="about" style="width:500px; height:300px; border:2px solid rgb(77,37,143); -moz-border-radius:8px;" src="chrome://xulsword/content/about.html"/>
   </vbox>
     
 </window>

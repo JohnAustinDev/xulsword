@@ -488,7 +488,7 @@ function exportThisFile(aFile, aDestFolder, localized) {
   try {
     switch(localized) {
     case AUDIOFILELOC:
-      newFile = getLocalizedAudioFile(aDestFolder, parts[1].toLowerCase(), parts[2], parts[3], parts[4], rootprefs.getCharPref("general.useragent.locale"));
+      newFile = getLocalizedAudioFile(aDestFolder, parts[1].toLowerCase(), parts[2], parts[3], parts[4], getLocale());
       break;
     case AUDIOFILESIM:
       newFile = getThisAudioFile(aDestFolder, parts[1].toLowerCase(), parts[2], parts[3], parts[4]);
@@ -520,7 +520,7 @@ function getLocalizedAudioFile(aDir, basecode, shortName, chapter, ext, locale) 
   try {var lbk = localeBundle.GetStringFromName("Long" + shortName);}
   catch (er) {lbk = localeBundle.GetStringFromName(shortName);}
   var chapTerm = getLocalizedChapterTerm(shortName, chapter, localeBundle, locale).replace(/^[\s\d-]*/, "").replace(/[\s\d-]*$/, "");
-  var path = aDir.path + "\\" + basecode + "_" + locale + "\\" + bns + "-" + lbk + "\\" + cns + "-" + chapTerm + "." + ext;
+  var path = aDir.path + "/" + basecode + "_" + locale + "/" + bns + "-" + lbk + "/" + cns + "-" + chapTerm + "." + ext;
   var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   aFile.initWithPath(path);
   return aFile;
@@ -530,7 +530,7 @@ function getThisAudioFile(aDir, code, shortName, chapter, ext) {
   chapter = Number(chapter);
   var bn = findBookNumPreMainWin(shortName);
   if (bn===null) return null;
-  var path = aDir.path + "\\" + code + "\\" + shortName + "\\" + padChapterNum(chapter) + "." + ext;
+  var path = aDir.path + "/" + code + "/" + shortName + "/" + padChapterNum(chapter) + "." + ext;
   var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   aFile.initWithPath(path);
   return aFile;
@@ -540,7 +540,7 @@ function getXSModAudioFile(aDir, code, shortName, chapter, ext) {
   chapter = Number(chapter);
   var bn = findBookNumPreMainWin(shortName);
   if (bn===null) return null;
-  var path = aDir.path + "\\" + code + "\\" + code + "-" + shortName + "-" + padChapterNum(chapter) + "." + ext;
+  var path = aDir.path + "/" + code + "/" + code + "-" + shortName + "-" + padChapterNum(chapter) + "." + ext;
   var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   aFile.initWithPath(path);
   return aFile;

@@ -8,7 +8,7 @@ ORIGDIR=`pwd`
 cd $srcdir
 PROJECT=xulsword
 TEST_TYPE=-f
-FILE=xulsword.h
+FILE=configure.ac
 
 DIE=0
 

@@ -14,7 +14,7 @@
   <script type="text/javascript">
     createVersionClasses(0);
     
-    var localeConfig = LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
+    var localeConfig = LocaleConfigs[getLocale()];
     document.styleSheets[0].insertRule(".bmfolderindent { margin-" + (localeConfig && localeConfig.direction=="rtl" ? "right":"left") + ": 3em; }", document.styleSheets[0].cssRules.length);
     
   </script>

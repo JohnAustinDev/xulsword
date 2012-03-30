@@ -328,7 +328,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
             else {
               var instconf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
               var xsModsUser = getSpecialDirectory("xsModsUser");
-              instconf.initWithPath(xsModsUser.path + "\\" + entryArray[f][e].replace("\/", "\\", "g"));
+              instconf.initWithPath(xsModsUser.path + "/" + entryArray[f][e].replace("\\", "/", "g"));
               if (instconf.exists()) {
                 overwriteInstalledVersion = readParamFromConf(instconf, VERSIONPAR);
                 matchingXSmoduleTextVersion = readParamFromConf(instconf, "Version");
@@ -529,7 +529,7 @@ function installAudioFile(aFile) {
   }
   
   try {aFile.copyTo(toFile.parent, toFile.leafName);}
-  catch (er) {jsdump("Could not copy " + aFile.path + " to " + toFile.parent + "\\" + toFile.leafName); return {reset:NORESET, success:false, remove:true};}
+  catch (er) {jsdump("Could not copy " + aFile.path + " to " + toFile.parent + "/" + toFile.leafName); return {reset:NORESET, success:false, remove:true};}
   GotoAudioFile = toFile;
   return {reset:NORESET, success:true, remove:true};
 }
@@ -541,7 +541,7 @@ function getAudioDestination(aOutDir, audioFilePath) {
   if (aOutDir.equals(getSpecialDirectory("xsAudio")))
     var toFile = getThisAudioFile(aOutDir, info.basecode.toLowerCase(), info.book, info.chapter, info.ext);
   else
-    toFile = getLocalizedAudioFile(aOutDir, info.basecode.toLowerCase(), info.book, info.chapter, info.ext, rootprefs.getCharPref("general.useragent.locale"));
+    toFile = getLocalizedAudioFile(aOutDir, info.basecode.toLowerCase(), info.book, info.chapter, info.ext, getLocale());
 
   return (toFile ? toFile:null);
 }
@@ -576,7 +576,7 @@ jsdump("Processing Entry:" + aEntry);
     
   case MODSD:
     var conf = getConfInfo(aZip, aEntry, zReader);
-    inflated.initWithPath(getSpecialDirectory("xsModsUser").path + "\\" + aEntry.replace("\/", "\\", "g"));
+    inflated.initWithPath(getSpecialDirectory("xsModsUser").path + "/" + aEntry.replace("\\", "/", "g"));
     if (!conf.modPath) {
       jsdump("Could not read DataPath of " + aEntry + ", SKIPPING conf file!");
       return {reset:NORESET, success:false, remove:true};
@@ -594,7 +594,7 @@ jsdump("Processing Entry:" + aEntry);
     if (skip) return {reset:SOFTRESET, success:true, remove:false};
     var dest = "xsModsUser";
 //    for (var s=0; s<CommonList.length; s++) {if (aEntry.match(CommonList[s], "i")) dest = "xsModsCommon";}
-    inflated.initWithPath(getSpecialDirectory(dest).path + "\\" + aEntry.replace("\/", "\\", "g"));
+    inflated.initWithPath(getSpecialDirectory(dest).path + "/" + aEntry.replace("\\", "/", "g"));
     break;
 
   case CHROME:
@@ -635,26 +635,26 @@ jsdump("Processing Entry:" + aEntry);
     NewLocales = pushIf(NewLocales, localeName);
     var rootprefs = Components.classes["@mozilla.org/preferences-service;1"].
         getService(Components.interfaces.nsIPrefBranch);
-    if (localeName[1] == rootprefs.getCharPref("general.useragent.locale")) {
+    if (localeName[1] == getLocale()) {
       rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
     }
 
     break;
   case AUDIOPLUGIN:
-    inflated.initWithPath(getSpecialDirectory("xsAudioPI").path + "\\" + entryFileName);
+    inflated.initWithPath(getSpecialDirectory("xsAudioPI").path + "/" + entryFileName);
     break;
 
   case FONTS:
-    inflated.initWithPath(getSpecialDirectory("xsFonts").path + "\\" + entryFileName);
+    inflated.initWithPath(getSpecialDirectory("xsFonts").path + "/" + entryFileName);
     break;
     
   case BOOKMARKS:
-    inflated.initWithPath(getSpecialDirectory("xsBookmarks").path + "\\" + entryFileName);
+    inflated.initWithPath(getSpecialDirectory("xsBookmarks").path + "/" + entryFileName);
     if (!inflated.leafName.match(XSBOOKMARKEXT)) return {reset:NORESET, success:true, remove:true};
     break;
     
   case VIDEO:
-    inflated.initWithPath(getSpecialDirectory("xsVideo").path + aEntry.replace(/^[^\\\/]+/, "").replace("/", "\\", "g"));
+    inflated.initWithPath(getSpecialDirectory("xsVideo").path + aEntry.replace(/^[^\\\/]+/, "").replace("\\", "/", "g"));
     if (!inflated.leafName.match(XSVIDEOEXT) && !inflated.leafName.match(/\.txt$/i)) return {reset:NORESET, success:true, remove:true};
     break;
     
@@ -1035,14 +1035,14 @@ function isConfCommon(aConf) {
 
 function cleanDataPathDir(aDataPath) {
   if (!aDataPath) return null;
-  aDataPath = aDataPath.replace("/", "\\", "g").replace(/(^\s*\.\\|\s*$)/, "", "g");
+  aDataPath = aDataPath.replace("\\", "/", "g").replace(/(^\s*\.\/|\s*$)/, "", "g");
   var d = 0;
   var d1 = 0;
   var d2 = 0;
   while (d<4 || aDataPath.substring(d1, d2) == "devotionals") {
     d++;
     d1 = d2+1;
-    d2 = aDataPath.indexOf("\\", d1);
+    d2 = aDataPath.indexOf("/", d1);
     if (d2 == -1) break;
   }
   if (d<4) return null; // not enough subdirs
@@ -1305,10 +1305,10 @@ function getSwordModParent(aConfFile, willDelete) {
   var pathFromConf = readParamFromConf(aConfFile, "DataPath");
   if (!pathFromConf) return {pathFromConf:null, file:null};
   
-  pathFromConf = pathFromConf.replace("/", "\\", "g").replace(/(^\s*\.\\|\s*$)/, "", "g");
+  pathFromConf = pathFromConf.replace("\\", "/", "g").replace(/(^\s*\.\/|\s*$)/, "", "g");
   var realdir = cleanDataPathDir(pathFromConf);
   if (!realdir) return {pathFromConf:pathFromConf, file:null};
-  var modulePath = aConfFile.path.substring(0, aConfFile.path.lastIndexOf("\\" + MODSD)+1) + realdir;
+  var modulePath = aConfFile.path.substring(0, aConfFile.path.lastIndexOf("/" + MODSD)+1) + realdir;
   var aMod = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   try {aMod.initWithPath(modulePath);} catch (er) {return {pathFromConf:pathFromConf, file:null};}  
   return {pathFromConf:pathFromConf, file:aMod};
