@@ -102,7 +102,7 @@ function Startup()
   sizeToContent();
  
   var title = BookmarksUtils.getLocaleString("ile_newbookmark");
-  var loc = LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
+  var loc = LocaleConfigs[getLocale()];
   if (!loc || !loc.font || loc.font == DefaultFont) title += " \"" + gName.value + "\"";
   document.title = fixWindowTitle(title);
   

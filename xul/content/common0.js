@@ -399,6 +399,18 @@ function getPrefOrCreate(prefName, prefType, defaultValue) {
   return prefVal;
 }
 
+function getLocale() {
+  var loc = rootprefs.getCharPref("general.useragent.locale");
+  if (loc.indexOf("chrome")==0) {
+    try {
+      loc = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService).createBundle(loc);
+      loc = GetStringFromName("general.useragent.locale");
+    }
+    catch(er) {loc = "en-US";}
+  }
+  return loc;
+}
+
 /************************************************************************
  * Locale Functions
  ***********************************************************************/
@@ -406,7 +418,7 @@ function getPrefOrCreate(prefName, prefType, defaultValue) {
 // THERE MAY BE A BETTER WAY TO IMPLEMENT THIS IMPORTANT FUNCTION!!!!
 function getLocaleBundle(locale, file) {
   var bundle;
-  var saveLocale = rootprefs.getCharPref("general.useragent.locale");
+  var saveLocale = getLocale();
   rootprefs.setCharPref("general.useragent.locale", locale);
   var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
   try {bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/" + file);}
@@ -464,7 +476,7 @@ function getLocalizedChapterTerm(shortBookName, chapternumber, bookbundle, local
 }
 
 function dString(x, locale) {
-  if (!locale) locale = rootprefs.getCharPref("general.useragent.locale");
+  if (!locale) locale = getLocale();
   var s = String(x);
   if (!DisplayNumeral[locale]) getDisplayNumerals(locale);
   s = s.replace("0", DisplayNumeral[locale][0],"g");
@@ -481,7 +493,7 @@ function dString(x, locale) {
 }
 
 function iString(x, locale) {
-  if (!locale) locale = rootprefs.getCharPref("general.useragent.locale");
+  if (!locale) locale = getLocale();
   var s = String(x);
   if (!DisplayNumeral[locale]) getDisplayNumerals(locale);
   s = s.replace(DisplayNumeral[locale][0], "0", "g");

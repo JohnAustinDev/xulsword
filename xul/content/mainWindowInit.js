@@ -39,7 +39,8 @@ function initLocales() {
 		LocaleList.push(locale);
 	}
   jsdump("Loaded locales:" + LocaleList);
-  var currentLocale = rootprefs.getCharPref("general.useragent.locale");
+  var currentLocale = getLocale();
+
   var LocaleDefaultVersionString="";
   var sep = "";
   var currentLocaleIsValid=false;
@@ -185,7 +186,7 @@ function createTabs() {
   }
   
   //Finish the StyleRules init...
-  StyleRules.push(getStyleRule(".vstyleProgram", LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")], false, true));
+  StyleRules.push(getStyleRule(".vstyleProgram", LocaleConfigs[getLocale()], false, true));
   
   
   moduleInfo = moduleInfo.split("<nx>");
@@ -278,7 +279,7 @@ function tabOrder(a,b) {
     // locales installed, 3) remaining tabs.
     var aLocale = getLocaleOfModule(infoA[1]);
     var bLocale = getLocaleOfModule(infoB[1]);
-    var currentLocale = rootprefs.getCharPref("general.useragent.locale");
+    var currentLocale = getLocale();
     var aPriority = (aLocale ? (aLocale==currentLocale ? 1:2):3);
     var bPriority = (bLocale ? (bLocale==currentLocale ? 1:2):3);
     if (aPriority!=bPriority) return (aPriority > bPriority);
@@ -522,7 +523,7 @@ Book[Number(bundle.GetStringFromName("Revi"))].numChaps = 22;
 }
 
 function initLongNames() {
-  var myLocale = rootprefs.getCharPref("general.useragent.locale");
+  var myLocale = getLocale();
   var bundle = getLocaleBundle(myLocale, "books.properties");
   if (myLocale && bundle) {
     var strings = bundle.getSimpleEnumeration();
@@ -541,8 +542,8 @@ function initLongNames() {
 
 LocaleDirectionEntity = "&rlm;";
 if (HaveValidLocale) {
-  LocaleDirectionEntity = ((LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")].direction && 
-                        LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")].direction=="rtl") ? "&rlm;":"&lrm;");
+  LocaleDirectionEntity = ((LocaleConfigs[getLocale()].direction && 
+                        LocaleConfigs[getLocale()].direction=="rtl") ? "&rlm;":"&lrm;");
 }
 LocaleDirectionChar = (guiDirection=="rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
 

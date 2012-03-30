@@ -194,7 +194,7 @@ function updateCSSBasedOnVersion(version, cssRuleNameArray, styleSheetNumber) {
 // Adjusts rtl related styles for listed CSS rules or creates the rule if it doesn't exist
 function updateCSSBasedOnCurrentLocale(cssRuleNameArray, styleSheetNumber) {
   if (!styleSheetNumber) styleSheetNumber=0;
-  var currentLocale = rootprefs.getCharPref("general.useragent.locale");
+  var currentLocale = getLocale();
   var localeConfig = LocaleConfigs[currentLocale];
   for (var i=0; i<cssRuleNameArray.length; i++) {
     var thisRule = getCSS(cssRuleNameArray[i], styleSheetNumber);
@@ -242,7 +242,7 @@ function getLocaleOfModule(module) {
 			if (ms && ms == lcs) {myLocale = LocaleList[lc]; break;}
 			if (ms && lcs && ms.replace(/-.*$/, "") == lcs.replace(/-.*$/, "")) {
 				myLocale = LocaleList[lc];
-				if (myLocale == rootprefs.getCharPref("general.useragent.locale")) break;
+				if (myLocale == getLocale()) break;
 			}
     }
   }
@@ -250,7 +250,7 @@ function getLocaleOfModule(module) {
 }
 
 function getVersionOfLocale(alocale) {
-  if (!alocale) alocale = rootprefs.getCharPref("general.useragent.locale");
+  if (!alocale) alocale = getLocale();
   for (var i=0; i<LocaleList.length; i++) {
     if (LocaleList[i] == alocale) return LocaleDefaultVersion[i];
   }
@@ -335,7 +335,7 @@ function firstDisplayModule() {
 var LocaleDir;
 function guiDirection() {
   if (LocaleDir) return LocaleDir;
-  var guidir = LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
+  var guidir = LocaleConfigs[getLocale()];
   if (guidir && guidir.direction) guidir=guidir.direction;
   else {guidir="ltr";}
   LocaleDir = guidir;
@@ -781,7 +781,7 @@ var VerseNm = new RegExp("(<sup class=\"versenum\">)(\\d+)(</sup>)", "g");
 function getChapterText(bible, fn, vers, appendNotes) {
   var text = bible.getChapterText(vers);
   var tl = getLocaleOfModule(vers);
-  if (!tl) {tl = rootprefs.getCharPref("general.useragent.locale");}
+  if (!tl) {tl = getLocale();}
   if (!DisplayNumeral[tl]) getDisplayNumerals(tl);
   if (DisplayNumeral[tl][10])
       text = text.replace(VerseNm, function(str, p1, p2, p3) {return p1 + dString(p2, tl) + p3;});

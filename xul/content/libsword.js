@@ -1,4 +1,4 @@
-// as a ChromeWorker, Components is not available and automatically ctypes is.
+// as a ChromeWorker, Components is not available but ctypes is.
 if (typeof ctypes == "undefined") Components.utils.import("resource://gre/modules/ctypes.jsm");
 
 /*
@@ -109,7 +109,11 @@ var Bible = {
         this.LibswordPath = getSpecialDirectory("xsExtension").path + "/" + APPLICATIONID + "/" + dll;
       }
     }
-    this.Libsword = ctypes.open(this.LibswordPath);
+    try {this.Libsword = ctypes.open(this.LibswordPath);}
+    catch (er) {
+      window.alert("Could not load " + this.LibswordPath);
+      if (OPSYS == "Linux") {window.alert("These Linux libraries must be installed:	linux-gate, libz, libstdc++, libgcc_s, libm, libc, libpthread, ld-linux");}
+    }
 
     var initSwordEngine = this.Libsword.declare("InitSwordEngine", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
     this.inst = initSwordEngine(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);

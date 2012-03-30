@@ -85,7 +85,7 @@ if ($MakeFFextension =~ /true/i) {
   &Log("\n----> BUILDING FIREFOX EXTENSION\n");
   if (-e $FFEXTENSION) {&cleanDir($FFEXTENSION);}
   else {make_path($FFEXTENSION);}
-  &compileLibSword($FFEXTENSION);
+  &compileLibSword($FFEXTENSION, 1);
   my @manifest;
   push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/extension-overlay.xul");
   &copyExtensionFiles($FFEXTENSION, \@manifest, $IncludeLocales, 0, 1);
@@ -103,12 +103,13 @@ if ($MakeFFextension =~ /true/i) {
 # PORTABLE VERSION
 if ($MakePortable =~ /true/i) {
   &Log("\n----> BUILDING PORTABLE VERSION\n");
+  if ("$^O" !~ /MSWin32/i) {&Log("ERROR: Portable has not been implemented for your platform yet.\n"); die;}
   if (-e $PORTABLE) {&cleanDir($PORTABLE);}
   else {make_path("$PORTABLE");}
   make_path("$PORTABLE/$Name");
   make_path("$PORTABLE/resources");
   make_path("$PORTABLE/profile");
-  &compileLibSword("$PORTABLE/$Name");
+  &compileLibSword("$PORTABLE/$Name", 1);
   my @manifest;
   &copyExtensionFiles("$PORTABLE/$Name", \@manifest, $IncludeLocales);
   &copyXulRunnerFiles("$PORTABLE/$Name");
@@ -179,7 +180,7 @@ sub writeCompileDeps() {
   
   &Log("----> Writing application info for C++ compiler.\n");
   if (!-e "$TRUNK/Cpp/Release") {mkdir "$TRUNK/Cpp/Release";}
-  open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/appInfo.h") || die;
+  open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/src/include/appInfo.h") || die;
   print INFO "#define PATH_TO_PROGRAM L\"%s\\\\$Executable\"\n";
   print INFO "#define PORTABLE_DIR L\".\\\\$Name\"\n";
   print INFO "#define KEYADDRESS L\"Software\\\\$Vendor\\\\$Name\"\n";
@@ -190,12 +191,11 @@ sub writeCompileDeps() {
     print INFO "#endif\n";
   }
   close(INFO);
-
-  if (!-e $SwordSource) {&Log("ERROR: No SWORD source code.\n"); die;}
-  if (!-e $CluceneSource) {&Log("ERROR: No Clucene source code.\n"); die;}
   
   &Log("----> Writing path info for C++ compiler.\n");
   if ("$^O" =~ /MSWin32/i) {
+    if (!-e $SwordSource) {&Log("ERROR: No SWORD source code.\n"); die;}
+    if (!-e $CluceneSource) {&Log("ERROR: No Clucene source code.\n"); die;}
     if (!-e $MicrosoftSDK) {&Log("ERROR: No Microsoft SDK.\n"); die;}
     open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/Versions.bat") || die;
     print INFO "Set clucene=$CluceneSource\n";
@@ -212,6 +212,7 @@ sub writeCompileDeps() {
 
 sub compileLibSword($) {
   my $do = shift;
+  my $useStaticLib = shift;
   &Log("----> Compiling libsword binary.\n");
   if ("$^O" =~ /MSWin32/i) {
     if (!$CompiledAlready) {
@@ -243,9 +244,14 @@ sub compileLibSword($) {
       }
       `make clean >> $LOGFILE 2>&1`;
       `make >> $LOGFILE 2>&1`;
+      `./staticlib.sh >> $LOGFILE 2>&1`;
       if (!-e "$TRUNK/Cpp/.libs/libxulsword.so") {&Log("ERROR: libxulsword did not compile.\n"); die;}
     }
-    &copy_file("$TRUNK/Cpp/.libs/libxulsword.so", $do);
+    if (!$useStaticLib) {&copy_file("$TRUNK/Cpp/.libs/libxulsword.so", $do);}
+    else {
+      &copy_file("$TRUNK/Cpp/.libs/libxulswordstatic.so", $do);
+      mv("$do/libxulswordstatic.so", "$do/libxulsword.so");
+    }
   }
   else {&Log("ERROR: Please add a compile script for your platform.\n");}
   
@@ -732,9 +738,14 @@ sub packagePortable($$) {
 sub packageFFExtension($$) {
   my $id = shift;
   my $od = shift;
-
+  
+  my $type = "";
+  if ("$^O" =~ /MSWin32/i) {$type = "win";}
+  elsif ("$^O" =~ /linux/i) {$type = "linux";}
+  else {&Log("ERROR: Please add extension type for your platform.\n");}
+  
   &cleanDir($od);
-  $of = "$od/$Name"."_Firefox(win)-$Version.xpi";
+  $of = "$od/$Name"."_Firefox".($type ? "($type)":"")."-$Version.xpi";
   
   &Log("----> Making extension xpt package.\n");
   if (-e $of) {unlink($of);}

@@ -198,7 +198,7 @@ var BookmarkFuns = {
     switch (getModuleLongType(location.version)) {
     case BIBLE:
     case COMMENTARY:
-      var aConfig = LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
+      var aConfig = LocaleConfigs[getLocale()];
       var directionChar = (aConfig && aConfig.direction && aConfig.direction=="rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
       bmname = Book[findBookNum(location.shortName)].bNameL + " " + location.chapter + ":" + directionChar + location.verse;
       if (location.lastVerse>location.verse) bmname += directionChar + "-" + location.lastVerse;
@@ -314,8 +314,8 @@ var BookmarkFuns = {
     }
     
     if (propertyValues[TYPE] == "Bookmark" || propertyValues[TYPE] == "Folder") {
-      BMDS.Assert(newResource,gBmProperties[NAMELOCALE],RDF.GetLiteral(replaceASCIIcontrolChars(rootprefs.getCharPref("general.useragent.locale"))),true);
-      BMDS.Assert(newResource,gBmProperties[NOTELOCALE],RDF.GetLiteral(replaceASCIIcontrolChars(rootprefs.getCharPref("general.useragent.locale"))),true);
+      BMDS.Assert(newResource,gBmProperties[NAMELOCALE],RDF.GetLiteral(replaceASCIIcontrolChars(getLocale())),true);
+      BMDS.Assert(newResource,gBmProperties[NOTELOCALE],RDF.GetLiteral(replaceASCIIcontrolChars(getLocale())),true);
     }
     return newResource;
   },
@@ -817,7 +817,7 @@ function initBookmarksDataFile(useEmptyDataSet) {
     var data = "";
     if (useEmptyDataSet) {data = getEmptyUserData();}
     else {
-      var currentLocale = rootprefs.getCharPref("general.useragent.locale");
+      var currentLocale = getLocale();
       data = getDefaultUserData(currentLocale + ".rdf");
       if (!data) {data = getEmptyUserData();}
     }

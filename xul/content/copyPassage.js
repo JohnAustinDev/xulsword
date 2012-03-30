@@ -198,7 +198,7 @@ function prepVerseHtml4Clipboard(html, version, location) {
   //html = html.replace(/<sup class="versenum">(\d+)<\/sup>/g, "<sup style=\"font-size:8px;\">$1<\/sup>");
   
   // add reference
-  var aConfig = LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
+  var aConfig = LocaleConfigs[getLocale()];
   if (aConfig) {
     //dir attribute is not needed because ambiguous punctuation character direction is defined by ref2ProgramLocaleText dir chars and embeded Unicode dir control chars
     var emdir = (aConfig.direction && aConfig.direction=="rtl" ? RTE:LRE);

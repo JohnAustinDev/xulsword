@@ -427,7 +427,7 @@ function selKey(aKey) {
 }
 
 function getPageLinks() {
-  var config = LocaleConfigs[rootprefs.getCharPref("general.useragent.locale")];
+  var config = LocaleConfigs[getLocale()];
   var charNext = (config.direction && config.direction == "rtl" ? String.fromCharCode(8592):String.fromCharCode(8594));
   var charPrev = (config.direction && config.direction == "rtl" ? String.fromCharCode(8594):String.fromCharCode(8592));
   charNext = "<span style=\"font-family:ariel;\">" + charNext + "</span>"; // Because 'UKIJ Tuz Basma' improperly implements this char!

@@ -35,8 +35,6 @@
     onload="onLoad();"
     hidechrome="true"
     centerscreen="true"
-    width="500" height="525"
-    style="background-color:transparent; background-image: url(chrome://xulsword/locale/splash.png); background-repeat:no-repeat;"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
@@ -48,7 +46,7 @@
     function onLoad() {
       LocaleConfigs = [];
       var localeConfig = {direction:null, font:null, fontSizeAdjust:null, lineHeight:null};
-      var locale = rootprefs.getCharPref("general.useragent.locale");
+      var locale = getLocale();
       var bundle = getLocaleBundle(locale, "config.properties");
       if (bundle) {
         try {localeConfig.direction = bundle.GetStringFromName("Direction");} catch (er) {}
@@ -62,8 +60,8 @@
       setGlobalDirectionPrefs();
     }
   </script>
-  <vbox flex="1">
-    <stack style="height:375px;">
+  <vbox flex="1" style="background-color:transparent; background-image: url(chrome://xulsword/locale/splash.png); background-repeat:no-repeat;">
+    <stack style="height:375px; width:500px;">
       <vbox style="margin:7px;" pack="end" align="center">
         <label id="producedBy" value="&producedby;" style="font-size:14px; color:rgb(77,37,143);"/>
       </vbox>
