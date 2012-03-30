@@ -52,7 +52,7 @@ if ("$^O" =~ /MSWin32/i) {
   $Appdata = `Set APPDATA`; $Appdata =~ s/APPDATA=(.*?)\s*$/$1/i;
   $RESOURCES = "$Appdata/$Vendor/$Name/Profiles/resources";
 }
-if ("$^O" =~ /linux/i) {
+elsif ("$^O" =~ /linux/i) {
   $Appdata = `echo \$HOME`; $Appdata =~ s/^\s*(.*?)\s*$/$1/;
   $RESOURCES = "$Appdata/.".lc($Vendor)."/".lc($Name)."/resources";
 }
@@ -70,7 +70,7 @@ if ($MakeDevelopment =~ /true/i) {
   &compileLibSword($DEVELOPMENT);
   my @manifest;
   &copyExtensionFiles($DEVELOPMENT, \@manifest, $IncludeLocales, 1);
-  #&copyXulRunnerFiles($DEVELOPMENT);
+  if ("$^O" =~ /MSWin32/i) {&copyXulRunnerFiles($DEVELOPMENT);}
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/splash.xul";
   &writePreferences($DEVELOPMENT, \%Prefs, 1);
   &writeApplicationINI($DEVELOPMENT);
@@ -588,7 +588,7 @@ sub writeRunScript($$$) {
       print SCR "`\"$INSTALLER/$Name$EXE\"`;\n";
     }
   }
-  if ("$^O" =~ /linux/i) {
+  elsif ("$^O" =~ /linux/i) {
     if ($type eq "dev") {
       print SCR "`firefox --app $DEVELOPMENT/application.ini -jsconsole`;\n";
     }
