@@ -10,6 +10,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/include -I$(top_srcdir)/clucene-core-0.9.21b/
 lib_LTLIBRARIES = libxulsword.la
 libxulsword_la_LDFLAGS = -Wl,--no-undefined -lsword -lclucene
 libxulsword_la_SOURCES = $(top_srcdir)/src/xulsword.cpp
+libxulsword_la_SOURCES += $(top_srcdir)/src/libxulsword.cpp
 if !NOSECURITY
 libxulsword_la_SOURCES += $(top_srcdir)/src/security.cpp
 endif
