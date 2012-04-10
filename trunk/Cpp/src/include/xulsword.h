@@ -92,12 +92,6 @@ class xulsword {
 
   ModMap::iterator modIterator;	//Iterator for modules
 
-  SWBuf ChapterW;    //current chapter (KJV)
-  int VerseW;        //current verse (KJV)
-  int LastVerseW;    //current last-verse (KJV)
-  SWBuf ChapterE;    //current chapter (Synodal)
-  int VerseE;        //current verse (Synodal)
-  int LastVerseE;    //current last-verse (Synodal)
   bool Footnotes;
   bool Headings;
   bool Crossrefs;
@@ -124,36 +118,35 @@ class xulsword {
 
 
   protected:
-  void keyToStaticVars(VerseKey *key, SWBuf *chapter, int *verse, int *lastverse);
+  void xsThrow(const char *msg);
+  void keyToVars(VerseKey *key, SWBuf *chapter, int *verse, int *lastverse);
   const char *getVerseSystemOfModule(const char * mod);
   int locationToVerseKey(const char *locationText, VerseKey *vk);
+  int textToMaxChapter(const char *vkeytext, VerseKey *vkey);
   int textToMaxVerse(const char *vkeytext, VerseKey *vkey);
   void getFolderContents(TreeKey *key, const char *modname, SWBuf *retval);
   virtual void updateGlobalOptions(bool disableFootCrossRed);
   void mapVersifications(VerseKey *vkin, VerseKey *vkout);
+  char *getBookName(SWBuf *Chapter);
 
 
   public:
-  xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(char *), void (*reportProgress)(int));
+  xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int));
 
   ~xulsword();
 
   char *(*ToUpperCase)(char *);
-  void (*ThrowJS)(char *);
+  void (*ThrowJS)(const char *);
   void (*ReportProgress)(int);
 
-  xulsword *initSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(char *), void (*reportProgress)(int));
-  char* setBiblesReference(char * mod, char * Vkeytext);
-  char *setVerse(char *mod, int firstverse, int lastverse);
-  char *getBookName();
-  char *getChapter(const char *mod);
-  int getVerseNumber(const char *mod);
-  int getLastVerseNumber(const char *mod);
-  int getChapterNumber(const char * mod);
-  char *getLocation(const char *mod);
-  char *getChapterText(const char *vkeymod);
-  char *getChapterTextMulti(const char *vkeymodlist);
+  xulsword *initSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int));
+  char *getChapterText(const char *vkeymod, const char *vkeytext);
+  char *getChapterTextMulti(const char *vkeymodlist, const char *vkeytext);
+  char *getFootnotes();
+  char *getCrossRefs();
+  char *getNotes();
   char *getVerseText(const char *vkeymod, const char *vkeytext);
+  int getMaxChapter(const char *mod, const char *vkeytext);
   int getMaxVerse(const char *mod, const char *vkeytext);
   char *getVerseSystem(const char *mod);
   char *convertLocation(const char *frVS, const char *vkeytext, const char *toVS);
@@ -162,16 +155,13 @@ class xulsword {
   char *getAllDictionaryKeys(const char *lexdictmod);
   char *getGenBookChapterText(const char *gbmod, const char *treekey);
   char *getGenBookTableOfContents(const char *gbmod);
-  char *getFootnotes();
-  char *getCrossRefs();
-  char *getNotes();
   bool luceneEnabled(const char *mod);
   int search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch);
   char *getSearchTexts(const char *mod, int first, int num, bool keepStrongs);
   void searchIndexDelete(const char *mod);
   void searchIndexBuild(const char *mod);
   void setGlobalOption(const char *option, const char *setting);
-  char *getGlobalOption(const char *option, char *e);
+  char *getGlobalOption(const char *option);
   void setCipherKey(const char *mod, const char *cipherkey, bool useSecModule);
   char* getModuleList();
   char *getModuleInformation(const char *mod, const char *paramname);

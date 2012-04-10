@@ -34,6 +34,7 @@ Set cFlags=/nologo /LD%cdbg% /EHsc /W0^
  
 Set cFiles=%SECURITYCPP%^
  ".\src\xulsword.cpp"^
+ ".\src\libxulsword.cpp"^
  ".\src\windows\dirent.cpp"^
  ".\src\windows\fileops.cpp"^
  ".\swordMK\swmodule.cpp"
@@ -41,6 +42,7 @@ Set cFiles=%SECURITYCPP%^
 Set lFlags=libsword.lib libclucene.lib /nologo /dll /incremental:no /manifest /manifestfile:"Release\xulsword.dll.manifest" /implib:"Release\xulsword.lib" /pdb:"Release/xulsword.pdb" /out:".\Release\xulsword.dll" /libpath:".\swordMK\lib\Release" /libpath:".\cluceneMK\lib\Release"
 Set lFiles=%ldbg% %SECURITYOBJ%^
  ".\Release\xulsword.obj"^
+ ".\Release\libxulsword.obj"^
  ".\Release\dirent.obj"^
  ".\Release\fileops.obj"^
  ".\Release\swmodule.obj"

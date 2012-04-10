@@ -78,14 +78,22 @@ using namespace sword;
 
 
 /********************************************************************
-keyToStaticVars
+xsThrow
+*********************************************************************/
+void xulsword::xsThrow(const char *msg) {
+  if (ThrowJS) {ThrowJS(msg);}
+}
+
+
+/********************************************************************
+keyToVars
 *********************************************************************/
 // Assign a set of verse locations from a key
-void xulsword::keyToStaticVars(VerseKey *key, SWBuf *chapter, int *verse, int *lastverse) {
-  chapter->setFormatted("%s %i", key->getBookAbbrev(), key->Chapter());
-  *verse = key->Verse();
-  if (key->isBoundSet()) {*lastverse = key->UpperBound().Verse();}
-  else {*lastverse = key->Verse();}
+void xulsword::keyToVars(VerseKey *key, SWBuf *chapter, int *verse, int *lastverse) {
+  chapter->setFormatted("%s %i", key->getBookAbbrev(), key->getChapter());
+  *verse = key->getVerse();
+  if (key->isBoundSet()) {*lastverse = key->UpperBound().getVerse();}
+  else {*lastverse = key->getVerse();}
 }
 
 
@@ -141,12 +149,12 @@ int xulsword::locationToVerseKey(const char *locationText, VerseKey *vk) {
     if (lastverse < 1 || upperbound.length() > 3) {
       ub.setVersificationSystem(vk->getVersificationSystem());
       locationToVerseKey(upperbound.c_str(), &ub);
-      lastverse = ub.Verse();
+      lastverse = ub.getVerse();
     }
   }
   else {
     // If there is no dash, look for a "." delineated lastverse location (The "last verse"
-    // position is unique to MK and so if it exists, it needs to be parsed here before handing to verse key.)
+    // position is unique to xulsword and so if it exists, it needs to be parsed here before handing to verse key.)
     lastverse = 0;
     unsigned int p=0;
     for (int i=0; i<3; i++) {
@@ -177,13 +185,25 @@ int xulsword::locationToVerseKey(const char *locationText, VerseKey *vk) {
   }
 
   vk->setText(keytext.c_str());
+  if (vk->getChapter() < 1) {vk->setChapter(1);}
+  if (vk->getVerse() < 1) {vk->setVerse(1);}
 //printf("set=%s, actual=%s\n", keytext.c_str(), vk->getText());
   ub.copyFrom(vk);
-  if (lastverse < ub.Verse()) {lastverse = ub.Verse();}
+  if (lastverse < ub.getVerse()) {lastverse = ub.getVerse();}
   else if (lastverse > ub.getVerseMax()) {lastverse = ub.getVerseMax();}
-  ub.Verse(lastverse);
+  ub.setVerse(lastverse);
   vk->UpperBound(ub);
   return (vk->Error());
+}
+
+
+/********************************************************************
+textToMaxChapter
+*********************************************************************/
+// Takes vkeytext and versification, and returns max chapter, plus inits vkey to vkeytext (with vmax).
+int xulsword::textToMaxChapter(const char *vkeytext, VerseKey *vkey) {
+  locationToVerseKey(vkeytext, vkey);
+  return vkey->getChapterMax();
 }
 
 
@@ -275,14 +295,14 @@ void xulsword::mapVersifications(VerseKey *vkin, VerseKey *vkout) {
   SWBuf keyTextU;
   VerseKey bkey;
   if (vkin->isBoundSet()) {
-    keyTextU.appendFormatted("%s %i:%i", vkin->UpperBound().getBookAbbrev(), vkin->UpperBound().Chapter(), vkin->UpperBound().Verse());
+    keyTextU.appendFormatted("%s %i:%i", vkin->UpperBound().getBookAbbrev(), vkin->UpperBound().getChapter(), vkin->UpperBound().getVerse());
     bkey.setVersificationSystem(!strcmp(inVerseSystem, WESTERN) ? EASTERN:WESTERN);
     bkey.setText(keyTextU.c_str());
   }
 
   // Prepare to map key
   SWBuf keyText;
-  keyText.appendFormatted("%s %i:%i", vkin->getBookAbbrev(), vkin->Chapter(), vkin->Verse());
+  keyText.appendFormatted("%s %i:%i", vkin->getBookAbbrev(), vkin->getChapter(), vkin->getVerse());
   vkout->setText(keyText.c_str());
 
   // Map key and bounds
@@ -300,14 +320,34 @@ void xulsword::mapVersifications(VerseKey *vkin, VerseKey *vkout) {
 
 
 /********************************************************************
+getBookName
+*********************************************************************/
+char *xulsword::getBookName(SWBuf *Chapter) {
+  std::string chapter;
+  std::string book;
+
+  chapter.assign(Chapter->c_str());
+
+  int space = chapter.find(' ',0);
+  book.assign(chapter.substr(0,space));
+
+  char *retval;
+  retval = (char *)malloc(book.length() + 1);
+  if (retval) {strcpy(retval, book.c_str());}
+
+  return retval;
+}
+
+
+/********************************************************************
 PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
-xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(char *), void (*reportProgress)(int)) {
+xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
 SWLog::getSystemLog()->logDebug("\nXULSWORD CONSTRUCTOR\n");
-  ToUpperCase = toUpperCase;
-  ThrowJS = throwJS;
-  ReportProgress = reportProgress;
+  ToUpperCase = (toUpperCase ? toUpperCase:NULL);
+  ThrowJS = (throwJS ? throwJS:NULL);
+  ReportProgress = (reportProgress ? reportProgress:NULL);
 
   MyMarkupFilterMgr = new MarkupFilterMgrXS();
 
@@ -320,7 +360,8 @@ SWLog::getSystemLog()->logDebug("\nXULSWORD CONSTRUCTOR\n");
   
   MyManager->Load();
 
-  MyStringMgr = new StringMgrXS(ToUpperCase);
+  if (ToUpperCase) {MyStringMgr = new StringMgrXS(ToUpperCase);}
+  else {MyStringMgr = NULL;}
   StringMgr::setSystemStringMgr(MyStringMgr);
 
 }
@@ -335,14 +376,14 @@ static bool HaveInstance = false;
 /********************************************************************
 InitSwordEngine()
 *********************************************************************/
-xulsword *xulsword::initSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(char *), void (*reportProgress)(int)) {
+xulsword *xulsword::initSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
   SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
   SWLog::getSystemLog()->logDebug("\nXULSWORD BEGIN\n");
 
-  if (HaveInstance) {ThrowJS("initSwordEngine: Currently limited to single instance!\n"); return NULL;}
+  if (HaveInstance) {xsThrow("initSwordEngine: Currently limited to single instance!\n"); return NULL;}
 
   xulsword *inst = (xulsword *)malloc(sizeof(xulsword));
-  if (!inst) {ThrowJS("initSwordEngine: out of memory\n"); return NULL;}
+  if (!inst) {xsThrow("initSwordEngine: out of memory\n"); return NULL;}
 
   inst = new xulsword(path, toUpperCase, throwJS, reportProgress);
   HaveInstance = true;
@@ -352,206 +393,20 @@ xulsword *xulsword::initSwordEngine(char *path, char *(*toUpperCase)(char *), vo
 
 
 /********************************************************************
-SetBiblesReference()
-*********************************************************************/
-char* xulsword::setBiblesReference(char * mod, char * Vkeytext)
-{
-  // Determine which verse system is being used
-  const char *versification = getVerseSystemOfModule(mod);
-
-  VerseKey fromKey;
-  fromKey.setVersificationSystem(versification);
-
-  locationToVerseKey(Vkeytext, &fromKey);
-
-  VerseKey toKey;
-  toKey.setVersificationSystem(EASTERN); // init value only, may be changed by mapVersifications
-
-  mapVersifications(&fromKey, &toKey);
-
-  if (!strcmp(versification, WESTERN)) {
-    keyToStaticVars(&fromKey, &ChapterW, &VerseW, &LastVerseW);
-    keyToStaticVars(&toKey, &ChapterE, &VerseE, &LastVerseE);
-  }
-  else {
-    keyToStaticVars(&fromKey, &ChapterE, &VerseE, &LastVerseE);
-    keyToStaticVars(&toKey, &ChapterW, &VerseW, &LastVerseW);
-  }
-
-  char *retval;
-  retval = (char *)malloc(strlen(versification) + 1);
-  if (retval) {strcpy(retval, versification);}
-
-	return retval;
-}
-
-
-/********************************************************************
-SetVerse
-*********************************************************************/
-char *xulsword::setVerse(char *mod, int firstverse, int lastverse) {
-  // Determine which verse system is being used
-  const char *versification = getVerseSystemOfModule(mod);
-
-  // Get maxverse and fromKey
-  SWBuf *Chapter;
-  !strcmp(versification, WESTERN) ? Chapter = &ChapterW : Chapter = &ChapterE;
-  VerseKey fromKey;
-  fromKey.setVersificationSystem(versification);
-  int maxverse = textToMaxVerse(Chapter->c_str(), &fromKey);
-  fromKey.ClearBounds(); // otherwise, can't setVerse without error!
-
-  bool noVerseHighlight = false;
-  if (firstverse == 0) {noVerseHighlight = true;}
-  // This routine checks the verse number and makes sure it exists,
-  // and if too small or to large sets to legal value (1 or v-max)
-  // If verse is -1 this results in maxverse.
-  if ((firstverse == -1)||(firstverse > maxverse)) {firstverse = maxverse;}
-  else if (firstverse <= 0) {firstverse = 1;}
-  if ((lastverse == -1)||(lastverse > maxverse)) {lastverse = maxverse;}
-  else if (lastverse <= 0) {lastverse = 1;}
-  if (lastverse < firstverse) {lastverse = firstverse;}
-
-  // Set adjusted bounds
-  fromKey.setVerse(firstverse);
-  VerseKey ub;
-  ub.copyFrom(fromKey);
-  ub.setVerse(lastverse);
-  fromKey.UpperBound(ub);
-
-  // Map to other verse systems too
-  VerseKey toKey;
-  toKey.setVersificationSystem(EASTERN); // init value only, may be changed by mapVersifications
-  mapVersifications(&fromKey, &toKey);
-
-  // Save map results
-  if (!strcmp(versification, WESTERN)) {
-    keyToStaticVars(&fromKey, &ChapterW, &VerseW, &LastVerseW);
-    keyToStaticVars(&toKey, &ChapterE, &VerseE, &LastVerseE);
-  }
-  else {
-    keyToStaticVars(&fromKey, &ChapterE, &VerseE, &LastVerseE);
-    keyToStaticVars(&toKey, &ChapterW, &VerseW, &LastVerseW);
-  }
-  if (noVerseHighlight) {
-    VerseE = 0;
-    LastVerseE = 0;
-    VerseW = 0;
-    LastVerseW = 0;
-  }
-
-  char *retval;
-  retval = (char *)malloc(strlen(versification) + 1);
-  if (retval) {strcpy(retval, versification);}
-  return retval;
-}
-
-
-/********************************************************************
-GetBookName
-*********************************************************************/
-char *xulsword::getBookName() {
-  std::string chapter;
-  std::string book;
-
-  chapter.assign(ChapterW.c_str());
-
-  int space = chapter.find(' ',0);
-  book.assign(chapter.substr(0,space));
-
-  char *retval;
-  retval = (char *)malloc(book.length() + 1);
-  if (retval) {strcpy(retval, book.c_str());}
-
-  return retval;
-}
-
-
-/********************************************************************
-GetChapter
-*********************************************************************/
-char *xulsword::getChapter(const char *mod) {
-  const char *versification = getVerseSystemOfModule(mod);
-
-  SWBuf *Chapter;
-  !strcmp(versification, WESTERN) ? Chapter = &ChapterW : Chapter = &ChapterE;
-  char *retval;
-  retval = (char *)malloc(Chapter->length() + 1);
-  if (retval) {strcpy(retval, Chapter->c_str());}
-  return retval;
-}
-
-
-/********************************************************************
-GetVerseNumber
-*********************************************************************/
-int xulsword::getVerseNumber(const char *mod) {
-  const char *versification = getVerseSystemOfModule(mod);
-  return (!strcmp(versification, WESTERN) ? VerseW:VerseE);
-}
-
-
-/********************************************************************
-GetLastVerseNumber
-*********************************************************************/
-int xulsword::getLastVerseNumber(const char *mod) {
-  const char *versification = getVerseSystemOfModule(mod);
-  return (!strcmp(versification, WESTERN) ? LastVerseW:LastVerseE);
-}
-
-
-/********************************************************************
-GetChapterNumber
-*********************************************************************/
-int xulsword::getChapterNumber(const char * mod) {
-  const char *versification = getVerseSystemOfModule(mod);
-
-  VerseKey myVerseKey;
-  myVerseKey.setVersificationSystem(versification);
-
-  SWBuf *Chapter;
-  !strcmp(versification, WESTERN) ? Chapter = &ChapterW : Chapter = &ChapterE;
-  myVerseKey.setText(Chapter->c_str());
-  
-  return myVerseKey.Chapter();
-}
-
-
-/********************************************************************
-GetLocation
-*********************************************************************/
-char *xulsword::getLocation(const char *mod) {
-  char *bkp = getBookName();
-  SWBuf bk;
-  bk.set(bkp);
-  delete(bkp);
-  int ch = getChapterNumber(mod);
-  int vs = getVerseNumber(mod);
-  int lv = getLastVerseNumber(mod);
-
-  SWBuf location;
-  location.appendFormatted("%s.%i.%i.%i", bk.c_str(), ch, vs, lv);
-
-  char *retval;
-  retval = (char *)malloc(location.length() + 1);
-  if (retval) {strcpy(retval, location);}
-  return retval;
-}
-
-
-/********************************************************************
 GetChapterText
 *********************************************************************/
-char *xulsword::getChapterText(const char *vkeymod) {
+char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   SWBuf verseText;
   SWBuf footnoteText;
   SWBuf crossRefText;
   SWBuf noteText;
-  SWBuf * Chapter;
-
+  SWBuf Chapter;
+  int Verse;
+  int LastVerse;
+  
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
-    ThrowJS("GetChapterText: module not found.");
+    xsThrow("GetChapterText: module not found.");
     return NULL;
   }
 
@@ -559,18 +414,20 @@ char *xulsword::getChapterText(const char *vkeymod) {
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!myVerseKey) {
     delete(testkey);
-    ThrowJS("GetChapterText: module was not Bible or Commentary.");
+    xsThrow("GetChapterText: module was not Bible or Commentary.");
   }
   myVerseKey->Persist(1);
   myVerseKey->setAutoNormalize(0); // Non-existant calls should return empty string
   module->setKey(myVerseKey);
 
+  locationToVerseKey(vkeytext, myVerseKey);
+  keyToVars(myVerseKey, &Chapter, &Verse, &LastVerse);
+
   updateGlobalOptions(false);
   module->setSkipConsecutiveLinks(true);
 
-  //Initialize Key
-  !strcmp(myVerseKey->getVersificationSystem(), WESTERN) ? Chapter = &ChapterW : Chapter = &ChapterE;
-  myVerseKey->setText(Chapter->c_str());
+  //Initialize Key to chapter
+  myVerseKey->setText(Chapter.c_str());
 
   VerseKey ub;
   ub.copyFrom(myVerseKey);
@@ -581,30 +438,21 @@ char *xulsword::getChapterText(const char *vkeymod) {
   bool isCommentary = !strcmp(module->Type(), "Commentaries");
 
   //NOW READ ALL VERSES IN THE CHAPTER
-  int * Verse;
-  int * LastVerse;
-  if (!strcmp(myVerseKey->getVersificationSystem(), WESTERN)) {
-    Verse = &VerseW;
-    LastVerse = &LastVerseW;
-  }
-  else {
-    Verse = &VerseE;
-    LastVerse = &LastVerseE;
-  }
 
-  char *bkp = getBookName();
+  char *bkp = getBookName(&Chapter);
   SWBuf bk;
   bk.set(bkp);
   delete(bkp);
-  int ch = getChapterNumber(vkeymod);
+  int ch = myVerseKey->getChapter();
 
   bool haveText = false;
   std::string chapHTML;
+
   while (!module->Error()) {
     SWBuf verseHTML;
-    int vNum = myVerseKey->Verse();
-    if (vNum>1 && vNum == *Verse) {MyManager->setGlobalOption("Words of Christ in Red","Off");}
-    else if (vNum == (*LastVerse + 1)) {MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");}
+    int vNum = myVerseKey->getVerse();
+    if (vNum>1 && vNum == Verse) {MyManager->setGlobalOption("Words of Christ in Red","Off");}
+    else if (vNum == (LastVerse + 1)) {MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");}
     verseText = module->RenderText(); //THIS MUST BE RENDERED BEFORE READING getEntryAttributes!!!
 
     // move verse number after any paragraph indents
@@ -669,9 +517,11 @@ char *xulsword::getChapterText(const char *vkeymod) {
     sprintf(Outtext, "<span id=\"vs.%s.%d.%d\">", bk.c_str(), ch, vNum);
     verseHTML.append(Outtext);
 
-    if (vNum==*Verse) {verseHTML.append("<span id=\"sv\" class=\"hl\">");}
-    else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {verseHTML.append("<span class=\"hl\">");}
-
+    if (Verse > 1) {
+      if (vNum==Verse) {verseHTML.append("<span id=\"sv\" class=\"hl\">");}
+      else if ((vNum > Verse)&&(vNum <= LastVerse)) {verseHTML.append("<span class=\"hl\">");}
+    }
+    
     if (verseStartsWithIndent) {verseHTML.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");}
 
     verseHTML.append("<sup class=\"versenum\">");
@@ -686,9 +536,11 @@ char *xulsword::getChapterText(const char *vkeymod) {
     verseHTML.append(verseText.c_str());
     if (isCommentary) {verseHTML.append("<br><br>");}
 
-    if(vNum==*Verse) {verseHTML.append("</span>");}
-    else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {verseHTML.append("</span>");}
-
+    if (Verse > 1) {
+      if(vNum==Verse) {verseHTML.append("</span>");}
+      else if ((vNum > Verse)&&(vNum <= LastVerse)) {verseHTML.append("</span>");}
+    }
+    
     verseHTML.append("</span>");
     chapHTML.append(verseHTML.c_str());
     module->increment(1);
@@ -712,11 +564,11 @@ char *xulsword::getChapterText(const char *vkeymod) {
 /********************************************************************
 GetChapterTextMulti
 *********************************************************************/
-char *xulsword::getChapterTextMulti(const char *vkeymodlist)
+char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytext)
 {
-  SWBuf *Chapter;
-  int *Verse;
-  int *LastVerse;
+  SWBuf Chapter;
+  int Verse;
+  int LastVerse;
   
   updateGlobalOptions(true);
   MyManager->setGlobalOption("Words of Christ in Red","Off"); // Words of Christ in Red is off for multidisplay
@@ -727,13 +579,13 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist)
   std::string thismod;
   thismod.assign(modstr.substr(0,comma));
   if (comma == std::string::npos) {
-    ThrowJS("GetChapterTextMulti: module list does not have form 'mod1,mod2,...'.");
+    xsThrow("GetChapterTextMulti: module list does not have form 'mod1,mod2,...'.");
     return NULL;
   }
 
   SWModule *module = MyManager->getModule(thismod.c_str());
   if (!module) {
-    ThrowJS("GetChapterTextMulti: module not found.");
+    xsThrow("GetChapterTextMulti: module not found.");
     return NULL;
   }
 
@@ -741,28 +593,18 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist)
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey1);
   if (!myVerseKey) {
     delete(testkey1);
-    ThrowJS("GetChapterTextMulti: module is not Bible or Commentary'.");
+    xsThrow("GetChapterTextMulti: module is not Bible or Commentary'.");
     return NULL;
   }
-
-  const char *modvers = myVerseKey->getVersificationSystem();
-
-  !strcmp(modvers, WESTERN) ? Chapter = &ChapterW : Chapter = &ChapterE;
-  myVerseKey->setText(Chapter->c_str());
+  
+  locationToVerseKey(vkeytext, myVerseKey);
+  keyToVars(myVerseKey, &Chapter, &Verse, &LastVerse);
+  myVerseKey->setText(Chapter.c_str());
 
   VerseKey ub;
   ub.copyFrom(myVerseKey);
   ub.setVerse(ub.getVerseMax());
   myVerseKey->UpperBound(ub);
-
-  if (!strcmp(modvers, WESTERN)) {
-    Verse = &VerseW;
-    LastVerse = &LastVerseW;
-  }
-  else {
-    Verse = &VerseE;
-    LastVerse = &LastVerseE;
-  }
 
 /*
   <div class="interB>
@@ -785,21 +627,26 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist)
 */
 
   //NOW READ ALL VERSES IN THE CHAPTER
-  SWBuf bk = getBookName();
+  char *bkp = getBookName(&Chapter);
+  SWBuf bk;
+  bk.set(bkp);
+  delete(bkp);
 
   SWBuf chapText;
   SWModule *versemod;
   bool haveText = false;
   while (!myVerseKey->Error()) {
-    int vNum = myVerseKey->Verse();
+    int vNum = myVerseKey->getVerse();
 
     // Each verse group has its own div with a class
     chapText.append("<div class=\"interB\">");
 
     //If this is the selected verse group then designate as so
-    if(vNum==*Verse) {chapText.append("<span id=\"sv\" class=\"hl\">");}
-    else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {chapText.append("<span class=\"hl\">");}
-
+    if (Verse > 1) {
+      if(vNum==Verse) {chapText.append("<span id=\"sv\" class=\"hl\">");}
+      else if ((vNum > Verse)&&(vNum <= LastVerse)) {chapText.append("<span class=\"hl\">");}
+    }
+    
     int versionNum = 1;
     modstr.assign(vkeymodlist);
     do {
@@ -809,7 +656,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist)
       // each version has its own unique class ID
       chapText.appendFormatted("<div class=\"interV%d\"><sup class=\"versenum\">", versionNum);
       if (Versenumbers) {chapText.appendFormatted("%d",vNum);}
-      chapText.appendFormatted("</sup><span id=\"vs.%s.%d.%d.%d\">", bk.c_str(), myVerseKey->Chapter(), vNum, versionNum++);
+      chapText.appendFormatted("</sup><span id=\"vs.%s.%d.%d.%d\">", bk.c_str(), myVerseKey->getChapter(), vNum, versionNum++);
 
       comma = modstr.find(',',0);
       thismod.assign(modstr.substr(0,comma));
@@ -848,8 +695,10 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist)
       chapText.append("</span></div>");
     } while (comma != std::string::npos);
 
-    if (vNum==*Verse) {chapText.append("</span>");}
-    else if ((vNum > *Verse)&&(vNum <= *LastVerse)) {chapText.append("</span>");}
+    if (Verse > 1) {
+      if (vNum==Verse) {chapText.append("</span>");}
+      else if ((vNum > Verse)&&(vNum <= LastVerse)) {chapText.append("</span>");}
+    }
     chapText.append("</div>");
 
     myVerseKey->increment(1);
@@ -869,13 +718,52 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist)
 }
 
 
+
+/********************************************************************
+GetFootnotes
+*********************************************************************/
+char *xulsword::getFootnotes() {
+  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
+  char *retval;
+  retval = (char *)malloc(MyFootnotes.length() + 1);
+  if (retval) {strcpy(retval, MyFootnotes.c_str());}
+	return retval;
+}
+
+
+/********************************************************************
+GetCrossRefs
+*********************************************************************/
+char *xulsword::getCrossRefs() {
+  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
+
+  char *retval;
+  retval = (char *)malloc(MyCrossRefs.length() + 1);
+  if (retval) {strcpy(retval, MyCrossRefs.c_str());}
+	return retval;
+}
+
+
+/********************************************************************
+GetNotes
+*********************************************************************/
+char *xulsword::getNotes() {
+  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
+
+  char *retval;
+  retval = (char *)malloc(MyNotes.length() + 1);
+  if (retval) {strcpy(retval, MyNotes.c_str());}
+	return retval;
+}
+
+
 /********************************************************************
 GetVerseText
 *********************************************************************/
 char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
-    ThrowJS("GetVerseText: module not found.");
+    xsThrow("GetVerseText: module not found.");
     return NULL;
   }
 
@@ -883,7 +771,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!myVerseKey) {
     delete(testkey);
-    ThrowJS("GetVerseText: module is not a Bible or Commentary.");
+    xsThrow("GetVerseText: module is not a Bible or Commentary.");
     return NULL;
   }
   myVerseKey->Persist(1);
@@ -931,6 +819,16 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
 
 
 /********************************************************************
+GetMaxChapter
+*********************************************************************/
+int xulsword::getMaxChapter(const char *mod, const char *vkeytext) {
+  VerseKey vkey;
+  vkey.setVersificationSystem(getVerseSystemOfModule(mod));
+  return textToMaxChapter(vkeytext, &vkey);
+}
+
+
+/********************************************************************
 GetMaxVerse
 *********************************************************************/
 int xulsword::getMaxVerse(const char *mod, const char *vkeytext) {
@@ -969,10 +867,10 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
     toKey.setVersificationSystem(EASTERN); // init value only, may be changed by mapVersifications
     mapVersifications(&fromKey, &toKey);
 //printf("TO  - KT:%s, LB:%s, UB:%s\n", toKey.getShortText(), toKey.LowerBound().getShortText(), toKey.UpperBound().getShortText());
-    result.appendFormatted("%s.%i", toKey.getOSISRef(), toKey.UpperBound().Verse());
+    result.appendFormatted("%s.%i", toKey.getOSISRef(), toKey.UpperBound().getVerse());
   }
   else {
-    result.appendFormatted("%s.%i", fromKey.getOSISRef(), fromKey.UpperBound().Verse());
+    result.appendFormatted("%s.%i", fromKey.getOSISRef(), fromKey.UpperBound().getVerse());
   }
 
   char *retval;
@@ -988,7 +886,7 @@ GetBookIntroduction
 char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
-    ThrowJS("GetBookIntroduction: module not found.");
+    xsThrow("GetBookIntroduction: module not found.");
     return NULL;
   }
 
@@ -996,7 +894,7 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   VerseKey *introkey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!introkey) {
     delete(testkey);
-    ThrowJS("GetBookIntroduction: module is not a Bible or Commentary.");
+    xsThrow("GetBookIntroduction: module is not a Bible or Commentary.");
     return NULL;
   }
 
@@ -1005,8 +903,8 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   introkey->Headings(1);
   introkey->setAutoNormalize(false); // IMPORTANT!! Otherwise, introductions are skipped!
   introkey->setText(bname);
-  introkey->Chapter(0);
-  introkey->Verse(0);
+  introkey->setChapter(0);
+  introkey->setVerse(0);
   introkey->Persist(1);
   module->setKey(introkey);
 
@@ -1032,14 +930,14 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
   SWModule *dmod;
   dmod = MyManager->getModule(lexdictmod);
   if (!dmod) {
-    ThrowJS("GetDictionaryEntry: module not found.");
+    xsThrow("GetDictionaryEntry: module not found.");
     return NULL;
   }
 
   SWKey *tkey = dmod->CreateKey();
   if (!SWDYNAMIC_CAST(StrKey, tkey)) {
     delete(tkey);
-    ThrowJS("GetDictionaryEntry: module is not a Dictionary.");
+    xsThrow("GetDictionaryEntry: module is not a Dictionary.");
     return NULL;
   }
   delete(tkey);
@@ -1077,14 +975,14 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
   SWModule * dmod;
   dmod = MyManager->getModule(lexdictmod);
   if (!dmod) {
-    ThrowJS("GetAllDictionaryKeys: module not found.");
+    xsThrow("GetAllDictionaryKeys: module not found.");
     return NULL;
   }
 
   SWKey *tkey = dmod->CreateKey();
   if (!SWDYNAMIC_CAST(StrKey, tkey)) {
     delete(tkey);
-    ThrowJS("GetAllDictionaryKeys: module is not a Dictionary.");
+    xsThrow("GetAllDictionaryKeys: module is not a Dictionary.");
     return NULL;
   }
   delete(tkey);
@@ -1114,7 +1012,7 @@ GetGenBookChapterText
 char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
-    ThrowJS("GetGenBookChapterText: module not found.");
+    xsThrow("GetGenBookChapterText: module not found.");
     return NULL;
   }
 
@@ -1124,7 +1022,7 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
   if (!key) {
     delete(testkey);
-    ThrowJS("GetGenBookChapterText: module is not a General-Book.");
+    xsThrow("GetGenBookChapterText: module is not a General-Book.");
     return NULL;
   }
 
@@ -1157,7 +1055,7 @@ GetGenBookTableOfContents
 char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
-    ThrowJS("GetGenBookTableOfContents: module not found.");
+    xsThrow("GetGenBookTableOfContents: module not found.");
     return NULL;
   }
 
@@ -1165,7 +1063,7 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
   if (!key) {
     delete(testkey);
-    ThrowJS("GetGenBookTableOfContents: module is not a General-Book.");
+    xsThrow("GetGenBookTableOfContents: module is not a General-Book.");
     return NULL;
   }
 
@@ -1202,44 +1100,6 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
 
 
 /********************************************************************
-GetFootnotes
-*********************************************************************/
-char *xulsword::getFootnotes() {
-  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-  char *retval;
-  retval = (char *)malloc(MyFootnotes.length() + 1);
-  if (retval) {strcpy(retval, MyFootnotes.c_str());}
-	return retval;
-}
-
-
-/********************************************************************
-GetCrossRefs
-*********************************************************************/
-char *xulsword::getCrossRefs() {
-  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-
-  char *retval;
-  retval = (char *)malloc(MyCrossRefs.length() + 1);
-  if (retval) {strcpy(retval, MyCrossRefs.c_str());}
-	return retval;
-}
-
-
-/********************************************************************
-GetNotes
-*********************************************************************/
-char *xulsword::getNotes() {
-  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-
-  char *retval;
-  retval = (char *)malloc(MyNotes.length() + 1);
-  if (retval) {strcpy(retval, MyNotes.c_str());}
-	return retval;
-}
-
-
-/********************************************************************
 LuceneEnabled
 *********************************************************************/
 bool xulsword::luceneEnabled(const char *mod) {
@@ -1259,7 +1119,7 @@ Search
 int xulsword::search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {
-    ThrowJS("Search: module not found.");
+    xsThrow("Search: module not found.");
     return NULL;
   }
 
@@ -1349,7 +1209,7 @@ GetSearchTexts
 char *xulsword::getSearchTexts(const char *mod, int first, int num, bool keepStrongs) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {
-    ThrowJS("GetSearchTexts: module not found.");
+    xsThrow("GetSearchTexts: module not found.");
     return NULL;
   }
 
@@ -1453,7 +1313,7 @@ SearchIndexBuild
 *********************************************************************/
 void xulsword::searchIndexBuild(const char *mod) {
   SWModule * module = MyManager->getModule(mod);
-  if (module) {
+  if (module && ReportProgress) {
     if (module->hasSearchFramework()) {
       module->createSearchFramework(&savePercentComplete, (void *)ReportProgress);
     }
@@ -1479,19 +1339,19 @@ void xulsword::setGlobalOption(const char *option, const char *setting) {
   else if (!strcmp(option,"Strong's Numbers"))       {thisOption = &Strongs;}
   else if (!strcmp(option,"Morphological Tags"))     {thisOption = &Morph;}
   else if (!strcmp(option,"Morpheme Segmentation"))  {thisOption = &MorphSeg;}
-  else {ThrowJS("SetGlobalOption: unknown option."); return;}
+  else {xsThrow("SetGlobalOption: unknown option."); return;}
 
   // Now update the global option
   if (!strcmp(setting,"On"))  {*thisOption = 1;}
   else if (!strcmp(setting,"Off")) {*thisOption = 0;}
-  else {ThrowJS("SetGlobalOption: setting was not 'On' or 'Off'."); return;}
+  else {xsThrow("SetGlobalOption: setting was not 'On' or 'Off'."); return;}
 }
 
 
 /********************************************************************
 GetGlobalOption
 *********************************************************************/
-char *xulsword::getGlobalOption(const char *option, char *e) {
+char *xulsword::getGlobalOption(const char *option) {
   bool *thisOption;
   SWBuf rCText;
 
@@ -1507,7 +1367,7 @@ char *xulsword::getGlobalOption(const char *option, char *e) {
   else if (!strcmp(option,"Strong's Numbers"))       {thisOption = &Strongs;}
   else if (!strcmp(option,"Morphological Tags"))     {thisOption = &Morph;}
   else if (!strcmp(option,"Morpheme Segmentation"))  {thisOption = &MorphSeg;}
-  else {ThrowJS("GetGlobalOption: unknown option."); return NULL;}
+  else {xsThrow("GetGlobalOption: unknown option."); return NULL;}
 
   // Now return the proper value
   *thisOption ? rCText.set("On") : rCText.set("Off");
@@ -1527,7 +1387,7 @@ void xulsword::setCipherKey(const char *mod, const char *cipherkey, bool useSecM
   module = MyManager->getModule(mod);
   if (!module) {
     delete(module);
-    ThrowJS("SetCipherKey: module not found.");
+    xsThrow("SetCipherKey: module not found.");
     return;
   }
       
@@ -1752,145 +1612,3 @@ MarkupFilterMgrXS::~MarkupFilterMgrXS() {
     if (fromtei)
             delete (fromtei);
 }
-
-
-/********************************************************************
-EXPORTED INTERFACE FUNCTIONS
-*********************************************************************/
-DLLEXPORT xulsword *InitSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(char *), void (*reportProgress)(int)) {
-  SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
-  xulsword *xsobj = (xulsword *)malloc(sizeof(xulsword));
-  xsobj = new xulsword(path, toUpperCase, throwJS, reportProgress);
-  return xsobj;
-}
-
-DLLEXPORT char* SetBiblesReference(xulsword *inst, char *mod, char *Vkeytext) {
-  return inst->setBiblesReference(mod, Vkeytext);
-}
-
-DLLEXPORT char *SetVerse(xulsword *inst, char *mod, int firstverse, int lastverse) {
-  return inst->setVerse(mod, firstverse, lastverse);
-}
-
-DLLEXPORT char *GetBookName(xulsword *inst) {
-  return inst->getBookName();
-}
-
-DLLEXPORT char *GetChapter(xulsword *inst, const char *mod) {
-  return inst->getChapter(mod);
-}
-
-DLLEXPORT int GetVerseNumber(xulsword *inst, const char *mod) {
-  return inst->getVerseNumber(mod);
-}
-
-
-DLLEXPORT int GetLastVerseNumber(xulsword *inst, const char *mod) {
-  return inst->getLastVerseNumber(mod);
-}
-
-DLLEXPORT int GetChapterNumber(xulsword *inst, const char * mod) {
-  return inst->getChapterNumber(mod);
-}
-
-DLLEXPORT char *GetLocation(xulsword *inst, const char *mod) {
-  return inst->getLocation(mod);
-}
-
-DLLEXPORT char *GetChapterText(xulsword *inst, const char *vkeymod) {
-  return inst->getChapterText(vkeymod);
-}
-
-DLLEXPORT char *GetChapterTextMulti(xulsword *inst, const char *vkeymodlist) {
-  return inst->getChapterTextMulti(vkeymodlist);
-}
-
-DLLEXPORT char *GetVerseText(xulsword *inst, const char *vkeymod, const char *vkeytext) {
-  return inst->getVerseText(vkeymod, vkeytext);
-}
-
-DLLEXPORT int GetMaxVerse(xulsword *inst, const char *mod, const char *vkeytext) {
-  return inst->getMaxVerse(mod, vkeytext);
-}
-
-DLLEXPORT char *GetVerseSystem(xulsword *inst, const char *mod) {
-  return inst->getVerseSystem(mod);
-}
-
-DLLEXPORT char *ConvertLocation(xulsword *inst, const char *frVS, const char *vkeytext, const char *toVS) {
-  return inst->convertLocation(frVS, vkeytext, toVS);
-}
-
-DLLEXPORT char *GetBookIntroduction(xulsword *inst, const char *vkeymod, const char *bname) {
-  return inst->getBookIntroduction(vkeymod, bname);
-}
-
-DLLEXPORT char *GetDictionaryEntry(xulsword *inst, const char *lexdictmod, const char *key) {
-  return inst->getDictionaryEntry(lexdictmod, key);
-}
-
-DLLEXPORT char *GetAllDictionaryKeys(xulsword *inst, const char *lexdictmod) {
-  return inst->getAllDictionaryKeys(lexdictmod);
-}
-
-DLLEXPORT char *GetGenBookChapterText(xulsword *inst, const char *gbmod, const char *treekey) {
-  return inst->getGenBookChapterText(gbmod, treekey);
-}
-
-DLLEXPORT char *GetGenBookTableOfContents(xulsword *inst, const char *gbmod) {
-  return inst->getGenBookTableOfContents(gbmod);
-}
-
-DLLEXPORT char *GetFootnotes(xulsword *inst) {
-  return inst->getFootnotes();
-}
-
-DLLEXPORT char *GetCrossRefs(xulsword *inst) {
-  return inst->getCrossRefs();
-}
-
-DLLEXPORT char *GetNotes(xulsword *inst) {
-  return inst->getNotes();
-}
-
-DLLEXPORT bool LuceneEnabled(xulsword *inst, const char *mod) {
-  return inst->luceneEnabled(mod);
-}
-
-DLLEXPORT int Search(xulsword *inst, const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch) {
-  return inst->search(mod, srchstr, scope, type, flags, newsearch);
-}
-
-DLLEXPORT char *GetSearchTexts(xulsword *inst, const char *mod, int first, int num, bool keepStrongs) {
-  return inst->getSearchTexts(mod, first, num, keepStrongs);
-}
-
-DLLEXPORT void SearchIndexDelete(xulsword *inst, const char *mod) {
-  return inst->searchIndexDelete(mod);
-}
-
-DLLEXPORT void SearchIndexBuild(xulsword *inst, const char *mod) {
-  return inst->searchIndexBuild(mod);
-}
-
-DLLEXPORT void SetGlobalOption(xulsword *inst, const char *option, const char *setting) {
-  return inst->setGlobalOption(option, setting);
-}
-
-DLLEXPORT char *GetGlobalOption(xulsword *inst, const char *option, char *e) {
-  return inst->getGlobalOption(option, e);
-}
-
-DLLEXPORT void SetCipherKey(xulsword *inst, const char *mod, const char *cipherkey, bool useSecModule) {
-  return inst->setCipherKey(mod, cipherkey, useSecModule);
-}
-
-DLLEXPORT char* GetModuleList(xulsword *inst) {
-  return inst->getModuleList();
-}
-
-DLLEXPORT char *GetModuleInformation(xulsword *inst, const char *mod, const char *paramname) {
-  return inst->getModuleInformation(mod, paramname);
-}
-
-DLLEXPORT void FreeMemory(void *tofree) {if (tofree) {delete tofree;}}

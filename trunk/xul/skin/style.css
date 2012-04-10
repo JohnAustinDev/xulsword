@@ -252,6 +252,9 @@ a:active{color:blue;}
 .matchingStrongs {
   background:yellow;
 }
+.wordsOfJesus {
+  color:red;
+}
 
 /* selected verse highlight */
 .hl {
