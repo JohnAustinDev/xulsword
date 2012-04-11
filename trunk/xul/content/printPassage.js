@@ -25,14 +25,12 @@ var To;
 var Count, TotalChaps;
 var Version;
 var PrintCommand;
-var SavedLocation;
-var SavedBible;
 var SavedGlobalOptions = [];
 var SavedCharPrefs = [];
 
 function onLoad() {
   updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createVersionClasses(0);
+  createVersionClasses();
   document.title = fixWindowTitle(getWindowTitle("print.printpassage"));
   
   ProgressMeter = document.getElementById("progress");
@@ -62,13 +60,13 @@ function onLoad() {
   CheckBoxes.push(Introduction.id);
   CheckBoxes.push(Crossreftexts.id);
 
-  SavedBible = firstDisplayBible();
-  initCheckBoxes(SavedBible, CheckBoxes);
-  SavedLocation = Bible.getLocation(SavedBible);
-  FromChooser.version = SavedBible;
-  ToChooser.version = SavedBible;
-  FromChooser.location = SavedLocation;
-  ToChooser.location = SavedLocation;
+  var startBible = firstDisplayBible();
+  initCheckBoxes(startBible, CheckBoxes);
+  var startLocation = MainWindow.Location.getLocation(startBible);
+  FromChooser.version = startBible;
+  ToChooser.version = startBible;
+  FromChooser.location = startLocation;
+  ToChooser.location = startLocation;
   //document.getElementById("to-input").hidden = !allowPrintAll(SavedBible);
     
   FromTextBox.focus();
@@ -147,7 +145,6 @@ function onUnload(checkboxes) {
     prefs.setBoolPref("printPassage." + checkboxes[c], cbelem.checked);
   }
   returnProgramSettings(SavedGlobalOptions, SavedCharPrefs);
-  Bible.setBiblesReference(SavedBible, SavedLocation);
   MainWindow.updateXulswordButtons();
 }
 
@@ -193,15 +190,15 @@ var OldChap;
 var PageBreak = "";
 function getChapterHTML() {
   Count++;
-  Bible.setBiblesReference(Version, Book[Now.bookNumber].sName + " " + Now.chapter);
-  Bible.setVerse(Version, 0, 0);
-  var chap = Bible.getChapterText(Version);
+  Location.setLocation(Version, Book[Now.bookNumber].sName + " " + Now.chapter);
+  Location.setVerse(Version, 0, 0);
+  var chap = Bible.getChapterText(Version, Location.getLocation(Version));
   if (chap && chap!=OldChap) {
     OldChap = chap;
-    var textWithUserNotes = insertUserNotes(Bible.getBookName(), Bible.getChapterNumber(Version), Version, chap);
+    var textWithUserNotes = insertUserNotes(Location.getBookName(), Location.getChapterNumber(Version), Version, chap);
     PrintHTML += PageBreak;
     if (!PageBreak) PageBreak = "<div class=\"pagebreak\"></div><br>";
-    PrintHTML += "<div class=\"scripture vstyle" + Version + "\">" + getScriptBoxHeader(Bible.getBookName(), Bible.getChapterNumber(Version), Version, true, Introduction.checked, false) + "</div>";
+    PrintHTML += "<div class=\"scripture vstyle" + Version + "\">" + getScriptBoxHeader(Location.getBookName(), Location.getChapterNumber(Version), Version, true, Introduction.checked, false) + "</div>";
     PrintHTML += "<div class=\"scripture vstyle" + Version + "\">" + textWithUserNotes.html + "</div>";
     var allNotes = Bible.getNotes();
     allNotes += textWithUserNotes.notes;

@@ -51,10 +51,10 @@ var bookmarksView, bookmarksFolder;
 function Startup()
 {
   updateCSSBasedOnCurrentLocale(["#bookmark-window", "input, button, menu, menuitem"]);
-  createVersionClasses(0);
+  createVersionClasses();
   createVersionTreeClasses(0);
-  //pullFontSizesFromCSS(0);
-  //adjustFontSizes(0, prefs.getIntPref('FontSize'));
+  //pullFontSizesFromCSS();
+  //adjustFontSizes(prefs.getIntPref('FontSize'));
   
   const windowNode = document.getElementById("bookmark-window");
   bookmarksView = document.getElementById("bookmarks-view");

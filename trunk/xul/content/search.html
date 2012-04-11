@@ -35,12 +35,10 @@
   var MainWindowRef = window.frameElement.ownerDocument.defaultView.opener;
     
   function init() {
-    createVersionClasses(0); 
-    initializeStyleGlobals(0);
-    getCSS(".sn").style.borderBottom = "";
-    getCSS(".dt").style.textDecoration = "";
-    pullFontSizesFromCSS(0);
-    adjustFontSizes(0, prefs.getIntPref('FontSize'));
+    createVersionClasses(); 
+    initializeStyleGlobals();
+    pullFontSizesFromCSS();
+    adjustFontSizes(prefs.getIntPref('FontSize'));
   }
 
   function searchboxDblClick(e) {

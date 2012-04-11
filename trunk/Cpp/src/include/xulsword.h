@@ -139,15 +139,14 @@ class xulsword {
   void (*ThrowJS)(const char *);
   void (*ReportProgress)(int);
 
-  xulsword *initSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int));
   char *getChapterText(const char *vkeymod, const char *vkeytext);
-  char *getChapterTextMulti(const char *vkeymodlist, const char *vkeytext);
   char *getFootnotes();
   char *getCrossRefs();
   char *getNotes();
+  char *getChapterTextMulti(const char *vkeymodlist, const char *vkeytext);
   char *getVerseText(const char *vkeymod, const char *vkeytext);
-  int getMaxChapter(const char *mod, const char *vkeytext);
-  int getMaxVerse(const char *mod, const char *vkeytext);
+  int   getMaxChapter(const char *mod, const char *vkeytext);
+  int   getMaxVerse(const char *mod, const char *vkeytext);
   char *getVerseSystem(const char *mod);
   char *convertLocation(const char *frVS, const char *vkeytext, const char *toVS);
   char *getBookIntroduction(const char *vkeymod, const char *bname);
@@ -155,15 +154,15 @@ class xulsword {
   char *getAllDictionaryKeys(const char *lexdictmod);
   char *getGenBookChapterText(const char *gbmod, const char *treekey);
   char *getGenBookTableOfContents(const char *gbmod);
-  bool luceneEnabled(const char *mod);
-  int search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch);
-  char *getSearchTexts(const char *mod, int first, int num, bool keepStrongs);
-  void searchIndexDelete(const char *mod);
-  void searchIndexBuild(const char *mod);
-  void setGlobalOption(const char *option, const char *setting);
+  bool  luceneEnabled(const char *mod);
+  int   search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch);
+  char *getSearchResults(const char *mod, int first, int num, bool keepStrongs);
+  void  searchIndexDelete(const char *mod);
+  void  searchIndexBuild(const char *mod);
+  void  setGlobalOption(const char *option, const char *setting);
   char *getGlobalOption(const char *option);
-  void setCipherKey(const char *mod, const char *cipherkey, bool useSecModule);
-  char* getModuleList();
+  void  setCipherKey(const char *mod, const char *cipherkey, bool useSecModule);
+  char *getModuleList();
   char *getModuleInformation(const char *mod, const char *paramname);
 
 };

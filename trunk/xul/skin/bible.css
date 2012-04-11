@@ -1,0 +1,319 @@
+/* SCRIPT BOX */
+.script .head1 {
+  font-size:18px;
+  color:rgb(110,85,110);
+  font-weight:bold;
+  text-align:center;
+  margin-bottom:1em;
+  margin-top:1em;
+  clear:both;
+}
+.script .head2 {
+  font-size:16px;
+  color:rgb(110,85,110);
+  font-weight:bold;
+  margin-bottom:0.5em;
+  clear:both;
+}
+.canonical {
+  font-style:italic;
+}
+.divine {
+  font-size: 13px;
+	color: black;
+}
+.chapterhead > div {
+  margin-top:12px;
+  margin-bottom:12px;
+}
+.chapnum {
+  font-size:28px;
+  font-weight:bold;
+  color:rgb(110,85,110);
+  line-height:120%;
+	width:50%;
+	padding:0px;
+	margin:0px;
+	overflow:visible;
+}
+.chapnum span {
+  white-space:nowrap;
+}
+.chapinfo {
+  width:40%; /* 10% remaining becomes margin */
+  padding:0px;
+  margin:0px;
+  overflow:visible;
+}
+.noticelink {
+  display:block;
+  margin: 0px 0px 5px 0px;
+}
+.audiolink {
+  display:block;
+  width:45px;
+  height:37px;
+  margin: 0px 5px 5px 0px;
+}
+.introlink {
+  display:block;
+  font-size:20px;
+  font-weight:normal;
+  margin: 0px 5px 0px 0px;
+}
+.scriptbox {
+  font-size: 14px;
+	background:rgb(255,243,255);
+	color: black;
+	border:2px solid rgb(200,170,205);
+  -moz-border-radius:8px;
+  cursor:default;
+  z-index:1;
+  position:absolute;
+  overflow:hidden;
+  height:600px;
+  top:0px;
+}
+.scriptboxtext {
+  overflow:auto;
+/*  line-height:135%; */
+	background:rgb(255,243,255);
+	padding-left:40px; 
+  padding-right:40px;
+  margin-bottom:10px;
+  z-index:1;
+  -moz-border-radius:8px;
+}
+.scriptboxPinned {
+  /*background:rgb(235,235,228) !important;*/
+  background:rgb(248,248,241) !important;
+}
+.scriptboxPinnedNB {
+  /* background:rgb(235,230,235) !important; */
+}
+.scriptboxPinnedCN {
+  /* background:rgb(223,198,223) !important; */
+}
+.scriptboxPinnedBB {
+  /* background:rgb(213,213,213) !important; */
+}
+.npopup {
+  font-size: 13px;
+  margin-right:20px;
+  padding-left:20px;
+  padding-right:20px;
+  padding-top:20px;
+  padding-bottom:20px;
+  border:1px solid black;
+  cursor:default;
+  background:rgb(245,220,255);
+  -moz-border-radius:5px;
+  z-index:4;
+  position:absolute;
+  overflow:auto;
+}
+.npopupSH {
+  background:black;
+  opacity:.35;
+  -moz-border-radius:7px;
+  cursor:default;
+  z-index:3;
+  position:absolute;
+}
+.navlink {
+  direction:ltr !important;
+  margin: 10px;
+  text-align:center;
+}
+.navlinkDisabled {
+  color:rgb(200,200,200);
+}
+.versenum {
+  font-size:9px;
+}
+.interB {
+  margin-top:16px;
+  margin-bottom:16px;
+}
+.interS {
+  width:50px;
+  border-top:1px solid blue;
+  margin-top:4px;
+  margin-bottom:4px;
+}
+/* cross-reference, footnote, and user note symbols */
+.cr:after {
+  content: "\00D7 ";
+  vertical-align:super;
+  font-family:'Arial' !important;
+  font-size-adjust:0.55 !important;
+  line-height:100% !important;
+  color:rgb(255,0,0);
+  cursor:pointer;
+  z-index:7;
+}
+.cr-x-parallel-passage:after {
+  content: "\25CF ";
+  vertical-align:super;
+  font-family:'Arial' !important;
+  font-size-adjust:0.55 !important;
+  line-height:100% !important;
+  color:rgb(255,0,0);
+  cursor:pointer;
+  z-index:7;
+}
+.cr-x-style1:after {
+  content: "+ ";
+  vertical-align:super;
+  font-family:'Arial' !important;
+  font-size-adjust:0.55 !important;
+  line-height:100% !important;
+  color:rgb(255,0,0);
+  cursor:pointer;
+  z-index:7;
+}
+.fn:after {
+  content: "\00D7 ";
+  vertical-align:super;
+  font-family:'Arial' !important;
+  font-size-adjust:0.55 !important;
+  line-height:100% !important;
+  color:rgb(0,200,250);
+  cursor:pointer;
+  z-index:7;
+}
+.un:after {
+  content: "\00D7 ";
+  vertical-align:super;
+  font-family:'Arial' !important;
+  font-size-adjust:0.55 !important;
+  line-height:100% !important;
+  color:rgb(0,0,200);
+  cursor:pointer;
+  z-index:7;
+}
+/* user note highlight */
+.unverse {
+  background:rgb(255,255,140);
+}
+/* dictionary word style */
+/*.dt:after {
+  content: "\00D7 ";
+  vertical-align:super;
+  color:rgb(2,255,0);
+}
+.dt {
+  cursor:pointer;
+  z-index:7;
+}*/
+.dt {
+  text-decoration:underline;
+  cursor:pointer;
+  z-index:7;
+}
+.genbknote {
+  color:blue;
+}
+/* Words with Strong's number attached */
+.sn {
+  border-bottom: 1px solid rgb(220,195,220); /*(240,215,240);*/
+}
+.matchingStrongs {
+  background:yellow;
+}
+.wordsOfJesus {
+  color:red;
+}
+/* selected verse highlight */
+.hl {
+  color:blue;
+}
+
+/* NOTEBOX */
+.notebox {
+  font-size:12px;
+  overflow:auto;
+	background:rgb(240,235,240);
+	border:2px solid rgb(150,150,150);
+	padding-left:20px; 
+  padding-right:20px;
+  padding-top:4px;
+  padding-bottom:4px;
+  margin-right:10px;
+  margin-left:10px;
+  -moz-border-radius:8px;
+  z-index:2;
+}
+.normalNote {
+  padding-right:16px;
+  border:1px solid transparent;
+  -moz-border-radius:8px;
+}
+.selectedNote {
+  padding-right:16px;
+  border:1px outset yellow;
+  background:rgb(255,243,255);
+  -moz-border-radius:8px;
+  cursor:pointer;
+}
+.fntable {
+  border-collapse:separate;
+  border-spacing:0px 1px;
+}
+.fncol1 {
+  display:table-cell; 
+  width:10px;
+  vertical-align:top;
+  padding-top:8px;
+  padding-right:0px;
+}
+.fncol2 {
+  visibility:hidden;
+  display:table-cell; 
+  vertical-align:top;
+  padding-top:12px;
+  padding-right:0px;
+}
+.fndash {
+  width:10px; 
+  height:2px; 
+  border-top:1px solid rgb(150,150,150);
+}
+.fncol3 {
+  visibility:hidden;
+  width:6px;
+  display:table-cell;
+  border-top:1px solid rgb(150,150,150);
+  border-bottom:1px solid rgb(150,150,150);
+}
+.fncol3LTR {
+  border-left:1px solid rgb(150,150,150);
+}
+.fncol3RTL {
+  border-right:1px solid rgb(150,150,150);
+}
+.fncol4 {
+  padding-left:4px;
+  display:table-cell;
+  white-space:nowrap;
+}
+.fncol5 {
+  display:table-cell;
+  padding-left:4px;
+}
+.noteBoxUserNote {
+  font-style:italic;
+}
+.dictionarylist {
+  position:absolute;
+  left:0px;
+  right:0px;
+  top:4em;
+  bottom:0px;
+  -moz-padding-start:20px;
+  overflow:auto;
+}
+.selectedkey {
+  background:highlight;
+  color:white;
+}

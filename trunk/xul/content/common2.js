@@ -37,3 +37,5 @@ Tab                   = MainWindow.Tab;
 
 LocaleList            = MainWindow.LocaleList;
 LocaleDefaultVersion  = MainWindow.LocaleDefaultVersion;
+
+if (window.name.search(/^bible\dFrame$/) != -1) Location = MainWindow.Location;

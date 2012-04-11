@@ -5,6 +5,7 @@
   <meta name="generator" content="PSPad editor, www.pspad.com">
   <title>Print</title>
   <link rel="stylesheet" href="chrome://xulsword/skin/style.css" type="text/css">
+  <link rel="stylesheet" href="chrome://xulsword/skin/bible.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/print.css" type="text/css">
   
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
@@ -12,7 +13,7 @@
   <script src="chrome://xulsword/content/common1.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
   <script type="text/javascript">
-    createVersionClasses(0);
+    createVersionClasses();
     
     var localeConfig = LocaleConfigs[getLocale()];
     document.styleSheets[0].insertRule(".bmfolderindent { margin-" + (localeConfig && localeConfig.direction=="rtl" ? "right":"left") + ": 3em; }", document.styleSheets[0].cssRules.length);

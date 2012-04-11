@@ -46,22 +46,24 @@ function getAudioDirs() {
   }
   
   //Check AudioDir registry key location
-  var path;
-  var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
-  try {
-    wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\" + prefs.getCharPref("Vendor") + "\\" + prefs.getCharPref("Name"), wrk.ACCESS_READ);
-    path = wrk.readStringValue("AudioDir");
-    path = path.replace("\\Install\\setup\\..\\..","") + "\\";
-  }
-  catch (er) {}
-  //for Backward Compatibility...
-  if (!path) {
+  var path = null;
+  if (typeof Components.classes["@mozilla.org/windows-registry-key;1"] != "undefined") {
+    var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
     try {
-      wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\" + prefs.getCharPref("Vendor"), wrk.ACCESS_READ);
+      wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\" + prefs.getCharPref("Vendor") + "\\" + prefs.getCharPref("Name"), wrk.ACCESS_READ);
       path = wrk.readStringValue("AudioDir");
       path = path.replace("\\Install\\setup\\..\\..","") + "\\";
     }
     catch (er) {}
+    //for Backward Compatibility...
+    if (!path) {
+      try {
+        wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\" + prefs.getCharPref("Vendor"), wrk.ACCESS_READ);
+        path = wrk.readStringValue("AudioDir");
+        path = path.replace("\\Install\\setup\\..\\..","") + "\\";
+      }
+      catch (er) {}
+    }
   }
   if (path) {
     var regDir = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
@@ -208,6 +210,7 @@ function checkQuickTime() {
 // Returns value of key if plugin is installed, null otherwise
 function isQTInstalled() {
   var retval=null;
+  if (typeof Components.classes["@mozilla.org/windows-registry-key;1"] == "undefined") return null;
   try {
     var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
     wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\Apple Computer, Inc.\\QuickTime",wrk.ACCESS_READ);
@@ -220,6 +223,7 @@ function isQTInstalled() {
 
 function isQTVersionOK() {
   var retval=null;
+  if (typeof Components.classes["@mozilla.org/windows-registry-key;1"] == "undefined") return false;
   try {
     var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
     wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\Apple Computer, Inc.\\QuickTime",wrk.ACCESS_READ);

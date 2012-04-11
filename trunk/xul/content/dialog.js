@@ -36,7 +36,7 @@ function cancel() {RetVal.ok=false; if (CheckBoxText) RetVal.checked=Checkbox.ch
 function Unload() {}
 
 function Load() {
-  updateCSSBasedOnCurrentLocale(["#dlg", "label, button"],0);
+  updateCSSBasedOnCurrentLocale(["#dlg", "label, button"]);
   document.title = fixWindowTitle(Title);
   
   RetVal.ok=false;

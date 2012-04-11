@@ -193,7 +193,7 @@ function chooserMouseHandler(e) {
     switch (myid) {
     case "book":
       if (bookDisabled) return;
-      var mycolor = (bk == findBookNum(Bible.getBookName())) ? SelectedBookBackground:NormalBookBackground;
+      var mycolor = (bk == findBookNum(Location.getBookName())) ? SelectedBookBackground:NormalBookBackground;
       document.getElementById("book." + bk).style.background = mycolor;
       break;
       
@@ -254,7 +254,7 @@ function chooserMouseHandler(e) {
       newbk=0; newch=1;
     }
     
-    Bible.setBiblesReference(refBible, Book[newbk].sName + "." + newch + "." + verse);
+    Location.setLocation(refBible, Book[newbk].sName + "." + newch + "." + verse);
     
     //Update everything
     MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, HILIGHTNONE, UPDATELOCATORS);
@@ -325,7 +325,7 @@ function closeChapMenu(bk) {
   CloseChapMenuID[bk] = window.setTimeout("closeChapMenuNow(" + bk + ")",1);
 }
 function closeChapMenuNow(bk) {
-  var mycolor = (bk == findBookNum(Bible.getBookName())) ? SelectedBookBackground:NormalBookBackground;
+  var mycolor = (bk == findBookNum(Location.getBookName())) ? SelectedBookBackground:NormalBookBackground;
   document.getElementById("arrow." + bk).src=(guiDirection()=="rtl" ? "chrome://xulsword/skin/images/arrow-rtl.png":"chrome://xulsword/skin/images/arrow.png");
   document.getElementById("book." + bk).style.background = mycolor;
   document.getElementById("chapPD." + bk).className = "chapterpopuph";
@@ -340,11 +340,11 @@ function showHeadings(myid,screenY) {
   var bkch = myid.split(".");
   var mybk = bkch[1]; 
   var mych = bkch[2];
-  var saveLocation=Bible.getLocation(vers);
+  var saveLocation=Location.getLocation(vers);
   Bible.setGlobalOption("Headings", "On");
   Bible.setGlobalOption("Verse Numbers", "On");
-  Bible.setBiblesReference(vers, Book[mybk].sName + "." + String(mych) + ".1");
-  var alltxt = Bible.getChapterText(vers);
+  Location.setLocation(vers, Book[mybk].sName + "." + String(mych) + ".1");
+  var alltxt = Bible.getChapterText(vers, Location.getLocation(vers));
   
   // Find all headings and their following verses
   var hdplus = /class="head1".*?>.*?<\/div>.*?<sup.*?>\d+<\/sup>/gim; // Get Array of head + next verse's
@@ -404,7 +404,7 @@ function showHeadings(myid,screenY) {
   //Return Bible to original state
   Bible.setGlobalOption("Headings", prefs.getCharPref("Headings"));
   Bible.setGlobalOption("Verse Numbers", prefs.getCharPref("Verse Numbers"));
-  Bible.setBiblesReference(vers, saveLocation);
+  Location.setLocation(vers, saveLocation);
 }
 
 function shiftChooserUp(myID,delta) {
