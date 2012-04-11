@@ -24,6 +24,7 @@
   <meta name="generator" content="PSPad editor, www.pspad.com">
   <title>Bible Frame</title>
   <link rel="stylesheet" href="chrome://xulsword/skin/style.css" type="text/css">
+  <link rel="stylesheet" href="chrome://xulsword/skin/bible.css" type="text/css">
   
   <script>var MainWindow = (window.frameElement.ownerDocument.defaultView.MainWindow ? window.frameElement.ownerDocument.defaultView.MainWindow:null)</script>
   <script src="chrome://xulsword/content/common0.js" type="text/javascript"></script>
@@ -49,7 +50,7 @@
     <div id="langTabs" class="languageTabs"><script type="text/javascript">placeTabs();</script></div>
     <img id="pin" class="scriptPin" onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)" onclick="scriptboxClick(event)" src="chrome://xulsword/skin/images/pushpin0.png">
     
-    <div id="scriptBox" class="scriptbox" ondblclick="scriptboxDblClick(event)" onmousedown="clearSelections()">
+    <div id="scriptBox" class="script scriptbox" ondblclick="scriptboxDblClick(event)" onmousedown="clearSelections()">
       <div id="scriptBoxText" class="scriptboxtext" onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)" onclick="scriptboxClick(event)"></div>
       <div id="boundary"      class="boundary"      onmousedown="boundaryMouseDown(event);"></div>
       <div id="noteBox"       class="notebox"       onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)"   onclick="noteboxClick(event)"></div>

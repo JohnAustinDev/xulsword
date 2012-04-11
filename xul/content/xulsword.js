@@ -49,7 +49,7 @@ const NOMODULES="0000", NOLOCALES="0001", NEEDRESTART="0002";
 
 function loadedXUL() {
   updateCSSBasedOnCurrentLocale(["#main-window", "input, button, menu, menuitem"]);
-  createVersionClasses(0); // needed for tooltips
+  createVersionClasses(); // needed for tooltips
   document.title = fixWindowTitle(SBundle.getString("Title"));
   //window.alert(rootprefs.getIntPref("layout.scrollbar.side") + " " + rootprefs.getIntPref("bidi.direction"));
 
@@ -151,7 +151,7 @@ function loadedXULReal() {
   History.pop(); // History pref should always end with HistoryDelimeter
   if (Bible && HaveValidLocale && prefs.getCharPref("DefaultVersion")!="none") {
     var aVersion = prefs.getCharPref("DefaultVersion");
-    var loc = Bible.convertLocation(Bible.getVerseSystem(aVersion), Bible.getLocation(aVersion), WESTERNVS).split(".");
+    var loc = Bible.convertLocation(Bible.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
     History[Historyi] = loc[0] + "." + loc[1] + "." + loc[2];
   }
   
@@ -345,10 +345,10 @@ function useFirstAvailableBookIf() {
   var vers = firstDisplayBible();
   var availableBooks = getAvailableBooks(vers);
   if (!availableBooks || !availableBooks.length) return;
-  var book = Bible.getBookName();
+  var book = Location.getBookName();
   for (var b=0; b<availableBooks.length; b++) {if (availableBooks[b]==book) break;}
   if (b<availableBooks.length) return;
-  Bible.setBiblesReference(vers, availableBooks[0] + ".1.1.1");
+  Location.setLocation(vers, availableBooks[0] + ".1.1.1");
   updateFrameScriptBoxes(null, SCROLLTYPETOP, HILIGHTNONE, FORCEREDRAW);
 }
 
@@ -774,11 +774,11 @@ function updateScriptToHistory(index) {
   //setBibleToHistory(index);
   var refBible = firstDisplayBible();
   var loc = Bible.convertLocation(WESTERNVS, History[index] + ".1", Bible.getVerseSystem(refBible));
-  Bible.setBiblesReference(refBible, loc);
-  document.getElementById("book").book = Bible.getBookName();
+  Location.setLocation(refBible, loc);
+  document.getElementById("book").book = Location.getBookName();
   document.getElementById("book").version = refBible;
-  document.getElementById("chapter").value = dString(Bible.getChapterNumber(refBible));
-  document.getElementById("verse").value = dString(Bible.getVerseNumber(refBible));
+  document.getElementById("chapter").value = dString(Location.getChapterNumber(refBible));
+  document.getElementById("verse").value = dString(Location.getVerseNumber(refBible));
   updateFromNavigator();
   goUpdateCommand("cmd_xs_forward");
   goUpdateCommand("cmd_xs_back");
@@ -853,10 +853,10 @@ function updateFromNavigator(numberOfSelectedVerses) {
   if (myc < 1) {myc=1;}
   if (myc > Book[mybn].numChaps) {myc=Book[mybn].numChaps;}
   
-  if (!fail) {Bible.setBiblesReference(myversion, Book[mybn].sName + "." + myc);}
+  if (!fail) {Location.setLocation(myversion, Book[mybn].sName + "." + myc);}
   
-  //check verse is not necessary since sending XPCOM Bible an illegal verse number will result in return of the appropriate boundary (1 or max verse)
-  Bible.setVerse(myversion, myv, myv+numberOfSelectedVerses-1);
+  //check verse is not necessary since sending Location an illegal verse number will result in return of the appropriate boundary (1 or max verse)
+  Location.setVerse(myversion, myv, myv+numberOfSelectedVerses-1);
   
   // Update BIBLES and COMMENTARIES
   var updateNeeded = [false, false, false, false];
@@ -867,18 +867,18 @@ function updateFromNavigator(numberOfSelectedVerses) {
 }
 
 function previousBook() {
-  var bkn = findBookNum(Bible.getBookName());
+  var bkn = findBookNum(Location.getBookName());
   bkn--;
   if (bkn < 0) return;
-  Bible.setBiblesReference(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
+  Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
   updateFrameScriptBoxes(getUnpinnedVerseKeyWindows(), SCROLLTYPETOP, HILIGHTNONE, UPDATELOCATORS);
 }
 
 // if pin info is given, apply changes to pin window only
 function previousChapter(highlightFlag, scrollType, pin) {
   var vers = (pin ? Win[pin.number].modName:firstDisplayBible());
-  var bkn = findBookNum(pin ? pin.display.shortName:Bible.getBookName());
-  var chn = (pin ? pin.display.chapter:Bible.getChapterNumber(vers));
+  var bkn = findBookNum(pin ? pin.display.shortName:Location.getBookName());
+  var chn = (pin ? pin.display.chapter:Location.getChapterNumber(vers));
   
   if (chn > 1) {chn--;}
   else if (bkn > 0) {bkn--; chn = Book[bkn].numChaps;}
@@ -913,7 +913,7 @@ function previousPage(highlightFlag, scrollType, pin) {
   var v = Number(firstPassageInLink[2]);
   if (ch==1 && v==1) {
     if (!pin) {
-      Bible.setBiblesReference(vers, bk + "." + ch + "." + v);
+      Location.setLocation(vers, bk + "." + ch + "." + v);
       previousChapter(highlightFlag, scrollType);
       return;
     }
@@ -944,25 +944,25 @@ function previousPage(highlightFlag, scrollType, pin) {
 function previousVerse(scrollType) {
  // Set Version/Chapter so that setVerse corresponds to the verse/versification of window1
   var vers = firstDisplayBible();
-  var v = Bible.getVerseNumber(vers);
+  var v = Location.getVerseNumber(vers);
   v--;
-  if ((v==0)&&(findBookNum(Bible.getBookName()) >= 0)) previousChapter(HILIGHTVERSE, scrollType);
+  if ((v==0)&&(findBookNum(Location.getBookName()) >= 0)) previousChapter(HILIGHTVERSE, scrollType);
   else if (v > 0) quickSelectVerse(vers, null, null, v, null, HILIGHTVERSE, scrollType);
 }
 
 function nextBook() {
-  var bkn = findBookNum(Bible.getBookName());
+  var bkn = findBookNum(Location.getBookName());
   bkn++;
   if (bkn >= NumBooks) return;
-  Bible.setBiblesReference(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
+  Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
   updateFrameScriptBoxes(getUnpinnedVerseKeyWindows(), SCROLLTYPETOP, HILIGHTNONE, UPDATELOCATORS);
 }
 
 // if pin info is given, apply changes to pin window(s) only
 function nextChapter(highlightFlag, scrollType, pin) {
   var vers = (pin ? Win[pin.number].modName:firstDisplayBible());
-  var bkn = findBookNum(pin ? pin.display.shortName:Bible.getBookName());
-  var chn = (pin ? pin.display.chapter:Bible.getChapterNumber(vers));
+  var bkn = findBookNum(pin ? pin.display.shortName:Location.getBookName());
+  var chn = (pin ? pin.display.chapter:Location.getChapterNumber(vers));
   
   if (chn < Book[bkn].numChaps) {chn++;}
   else if (bkn < (NumBooks-1)) {bkn++; chn=1;}
@@ -996,7 +996,7 @@ function nextPage(highlightFlag, pin) {
   var maxv = Bible.getMaxVerse(vers, bk + "." + ch);
   if (ch==Book[bkn].numChaps && v==maxv) {
     if (!pin) {
-      Bible.setBiblesReference(vers, bk + "." + ch + "." + v);
+      Location.setLocation(vers, bk + "." + ch + "." + v);
       nextChapter(highlightFlag, SCROLLTYPEBEG);
       return;
     }
@@ -1027,12 +1027,12 @@ function nextPage(highlightFlag, pin) {
 function nextVerse(scrollType) {
  // Set Version/Chapter such that we get verse/versification of window1 set up correctly
   var vers = firstDisplayBible();
-  var cv = Bible.getVerseNumber(vers);
-  if (cv < Bible.getMaxVerse(vers, Bible.getLocation(vers))) {
+  var cv = Location.getVerseNumber(vers);
+  if (cv < Bible.getMaxVerse(vers, Location.getLocation(vers))) {
     cv++;
     quickSelectVerse(vers, null, null, cv, null, HILIGHTVERSE, scrollType);
   }
-  else if (findBookNum(Bible.getBookName()) <= NumBooks-1) nextChapter(HILIGHTVERSE, scrollType);
+  else if (findBookNum(Location.getBookName()) <= NumBooks-1) nextChapter(HILIGHTVERSE, scrollType);
 }
 
 // If onlyThisWin is false (or null), it reads the full text of the link and
@@ -1086,12 +1086,11 @@ function getPassageFromWindow(pflag, onlyThisWin) {
 
 // not for use with non versekey windows, or with pinned windows because they don't allow verse selections
 function quickSelectVerse(version, bk, ch, vs, lastvs, highlightFlag, scrollType) {
-  if (!bk) bk = Bible.getBookName();
-  if (!ch) ch = Bible.getChapterNumber(version);
+  if (!bk) bk = Location.getBookName();
+  if (!ch) ch = Location.getChapterNumber(version);
   if (!lastvs) lastvs = vs;
   var updateNeeded = getUnpinnedVerseKeyWindows();
-  Bible.setBiblesReference(version, bk + "." + ch);
-  Bible.setVerse(version, vs, lastvs);
+  Location.setLocation(version, bk + "." + ch + "." + vs + "." + lastvs);
   var forceNonlinkRedraw = false;
   var forceRedraw = [false, false, false, false];
   // if we have a link which needs scrolling, force a redraw of the link
@@ -1107,15 +1106,15 @@ function quickSelectVerse(version, bk, ch, vs, lastvs, highlightFlag, scrollType
     else if (prefs.getBoolPref("ShowOriginal" + w)) forceRedraw[w] = true;
     else if (!Link.isLink[w] && forceNonlinkRedraw) forceRedraw[w] = true;
     else if (!Link.isLink[w]) {
-      var chID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\.");
+      var chID = RegExp("id=\"vs\\." + Location.getBookName() + "\\." + Location.getChapterNumber(Win[w].modName) + "\\.");
       if (FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML.search(chID) == -1) forceRedraw[w] = true;
     }
     else {
       text += FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML;
       if (w==Link.finishWin) {
         // finished reading text for link or page
-        var vsID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\." + Bible.getVerseNumber(Win[w].modName) + "\"");
-        var vlID = RegExp("id=\"vs\\." + Bible.getBookName() + "\\." + Bible.getChapterNumber(Win[w].modName) + "\\." + Bible.getLastVerseNumber(Win[w].modName) + "\"");
+        var vsID = RegExp("id=\"vs\\." + Location.getBookName() + "\\." + Location.getChapterNumber(Win[w].modName) + "\\." + Location.getVerseNumber(Win[w].modName) + "\"");
+        var vlID = RegExp("id=\"vs\\." + Location.getBookName() + "\\." + Location.getChapterNumber(Win[w].modName) + "\\." + Location.getLastVerseNumber(Win[w].modName) + "\"");
         vsID = text.search(vsID);
         vlID = text.search(vlID);
         if (vsID == -1 || vlID == -1) {
@@ -1149,8 +1148,8 @@ function highlightSelectedVerses(highlightFlag) {
     if (oldsel) oldsel.removeAttribute("id");
     var selem = FrameDocument[w].createElement("span");
     selem.className="hl";
-    var fv = Bible.getVerseNumber(Win[w].modName);
-    var lv = Bible.getLastVerseNumber(Win[w].modName);
+    var fv = Location.getVerseNumber(Win[w].modName);
+    var lv = Location.getLastVerseNumber(Win[w].modName);
 
     var verseID = new RegExp("id=\"(vs\\.[^\\.]*\\.(\\d+)\\.(\\d+))\"");
     verseID = FrameDocument[w].defaultView.ScriptBoxTextElement.innerHTML.match(verseID);
@@ -1163,7 +1162,7 @@ function highlightSelectedVerses(highlightFlag) {
         if (id) {
           var c = Number(id[1]);
           var v = Number(id[2]);
-          if (v<fv || c != Bible.getChapterNumber(Win[w].modName)) removeHL(velem);
+          if (v<fv || c != Location.getChapterNumber(Win[w].modName)) removeHL(velem);
           else if (v==fv) {
             var nelem = selem.cloneNode(true);
             nelem.id="sv";
@@ -1233,13 +1232,13 @@ function scrollWheelLink() {
 function scrollWheelNoLink(refWindow) {
   var elem = getFirstDisplayedPassage(refWindow);
   if (!elem) return;
-  var oloc = Bible.getLocation(Win[refWindow].modName);
+  var oloc = Location.getLocation(Win[refWindow].modName);
   oloc = oloc.substring(0, oloc.lastIndexOf(".")); // remove lastVerse
   var nloc = elem.id.match(/vs\.([^\.]+\.[^\.]+\.[^\.]+)/)[1];
   if (oloc == nloc) return; // already there!
   
   //scroll other windows to top verse
-  Bible.setBiblesReference(Win[refWindow].modName, nloc);
+  Location.setLocation(Win[refWindow].modName, nloc);
   var update = [false, false, false, false];
   for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
     if (Link.isTextLink[w] || w==refWindow) continue;
@@ -1282,7 +1281,7 @@ function linkVerseScroll(numVerses) {
   var fp = getPassageFromWindow(FIRSTPASSAGE);
   if (!fp) {
     var df = prefs.getCharPref("DefaultVersion");
-    fp = Bible.getLocation(df) + "." + df;
+    fp = Location.getLocation(df) + "." + df;
   }
   fp = fp.split(".");
   var b = fp[0];
@@ -1327,7 +1326,7 @@ function linkVerseScroll(numVerses) {
     update = copyLinkArray();
   }
   else {
-    Bible.setBiblesReference(vers, b + "." + c + "." + v);
+    Location.setLocation(vers, b + "." + c + "." + v);
     if (redrawAll) update = getUnpinnedVerseKeyWindows();
     else {
       update = copyLinkArray();
@@ -1942,7 +1941,7 @@ function openTabToolTip(tabNum, frame, cX, cY) {
   if (!document.getElementById('tabTT')) return;
   document.getElementById('tabTT').hidePopup();
   var modName = Tabs[tabNum].modName;
-  if (Tabs[tabNum].isOrigTab) modName = resolveOriginalVersion(Bible.getBookName());
+  if (Tabs[tabNum].isOrigTab) modName = resolveOriginalVersion(Location.getBookName());
   if (!modName) return;
   
   var desc = Bible.getModuleInformation(modName, "Description");
@@ -1977,7 +1976,7 @@ function addToHistory() {
   var bcvN = new Array(3);
   // Always store as SAME versification!
   var aVersion = prefs.getCharPref("DefaultVersion");
-  var loc = Bible.convertLocation(Bible.getVerseSystem(aVersion), Bible.getLocation(aVersion), WESTERNVS).split(".");
+  var loc = Bible.convertLocation(Bible.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
   bcvN[0] = loc[0];
   bcvN[1] = loc[1];
   bcvN[2] = loc[2];
@@ -2113,7 +2112,7 @@ function ScriptContextMenuShowing(e) {
   // Set some flags
   var haveVerse = (CurrentTarget.verse!=null && contextTargs.paragraph==null);
   var overScriptboxVerse = (haveVerse && !contextTargs.isCrossReference);
-  var overSelectedVerse = (overScriptboxVerse && CurrentTarget.verse==Bible.getVerseNumber(Win[CurrentTarget.windowNum].modName) && CurrentTarget.verse!=1);
+  var overSelectedVerse = (overScriptboxVerse && CurrentTarget.verse==Location.getVerseNumber(Win[CurrentTarget.windowNum].modName) && CurrentTarget.verse!=1);
   var frameIsPinned = document.popupNode.ownerDocument.defaultView.Pin.isPinned;
   var overPopup = isOverPopup();
   var overResource = (BookmarksMenu._selection != null);
@@ -2295,10 +2294,10 @@ function goUpdateTargetLocation() {
   switch (getModuleLongType(CurrentTarget.version)) {
   case BIBLE:
   case COMMENTARY:
-    CurrentTarget.shortName = Bible.getBookName();
-    CurrentTarget.chapter = Bible.getChapterNumber(CurrentTarget.version);
-    CurrentTarget.verse = Bible.getVerseNumber(CurrentTarget.version);
-    CurrentTarget.lastVerse = Bible.getLastVerseNumber(CurrentTarget.version);
+    CurrentTarget.shortName = Location.getBookName();
+    CurrentTarget.chapter = Location.getChapterNumber(CurrentTarget.version);
+    CurrentTarget.verse = Location.getVerseNumber(CurrentTarget.version);
+    CurrentTarget.lastVerse = Location.getLastVerseNumber(CurrentTarget.version);
     break;
   case DICTIONARY:
   case GENBOOK:
@@ -2897,7 +2896,7 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
   // must be completed first, so that the first verse of the link can be set as SCROLLTYPEBEG
   // for non-linked window.
   var nonLinked = [];
-  var ref = Bible.getLocation(prefs.getCharPref("DefaultVersion"));
+  var ref = Location.getLocation(prefs.getCharPref("DefaultVersion"));
   for (var w=prefs.getIntPref("NumDisplayedWindows"); w>=1; w--) {
     if (!updateNeededArray[w]) continue;
     if (!Link.isLink[w]) {
@@ -2906,8 +2905,8 @@ function updateFrameScriptBoxesReal(updateNeededArray, scrollTypeFlag, highlight
     }
     FrameDocument[w].defaultView.updateScriptBox(scrollTypeFlag);
   }
-  // if Bible location was changed after writing link, then scroll to beginning of new location
-  if (ref != Bible.getLocation(prefs.getCharPref("DefaultVersion"))) {
+  // if Location was changed after writing link, then scroll to beginning of new location
+  if (ref != Location.getLocation(prefs.getCharPref("DefaultVersion"))) {
     scrollTypeFlag = SCROLLTYPEBEG;
     if (locatorFlag == NOUPDATELOCATOR) locatorFlag = UPDATELOCATORS;
   }
@@ -2943,7 +2942,7 @@ function updateAudioLinks(updateNeededArray) {
   for (var w=1; w<updateNeededArray.length; w++) {
     if (!updateNeededArray[w]) continue;
     if (FrameDocument[w].defaultView.Pin.isPinned) var bk = FrameDocument[w].defaultView.Pin.display.shortName;
-    else bk = Bible.getBookName();
+    else bk = Location.getBookName();
     var icons = FrameDocument[w].getElementsByName("listenlink");
     for (var i = 0; i < icons.length; ++i) {
       var icon = icons[i];
@@ -2989,9 +2988,9 @@ function hideEmptyCrossRefs(updateNeededArray) {
 function saveWindowDisplay(win) {
   var display = {modName:null, shortName:null, chapter:null, verse:null, key:null, globalOptions:{}};
   display.modName = win.modName;
-  display.shortName = Bible.getBookName();
-  display.chapter = Bible.getChapterNumber(win.modName);
-  display.verse = Bible.getVerseNumber(win.modName);
+  display.shortName = Location.getBookName();
+  display.chapter = Location.getChapterNumber(win.modName);
+  display.verse = Location.getVerseNumber(win.modName);
   display.key = getPrefOrCreate("ShowingKey" + win.modName, "Unicode", "");
   display.showingOrig = prefs.getBoolPref("ShowOriginal" + win.number);
   display.maximizeNoteBox = prefs.getBoolPref("MaximizeNoteBox" + win.number);
@@ -3006,7 +3005,7 @@ function saveWindowDisplay(win) {
 // Normally we are setting global option prefs temporarily, or setting them
 // back to their toggle button status, therefore no toggle button or pref updates are performed.
 function setWindowDisplay(win, display) {
-  Bible.setBiblesReference(display.modName, display.shortName + "." + display.chapter + "." + display.verse);
+  Location.setLocation(display.modName, display.shortName + "." + display.chapter + "." + display.verse);
   setUnicodePref("ShowingKey" + win.modName, display.key);
   prefs.setBoolPref("ShowOriginal" + win.number, display.showingOrig);
   prefs.setBoolPref("MaximizeNoteBox" + win.number, display.maximizeNoteBox);
@@ -3030,7 +3029,7 @@ function writeToScriptBoxes(win, isPinned, display, scrollTypeFlag) {
   s.isPinned = isPinned;
   s.scrollTypeFlag = scrollTypeFlag;
   if (s.scrollTypeFlag==SCROLLTYPEENDSELECT) s.scrollTypeFlag=SCROLLTYPEEND;
-  if (Bible.getVerseNumber(s.win.modName) == 1 && s.scrollTypeFlag == SCROLLTYPECENTER) s.scrollTypeFlag = SCROLLTYPEBEG;
+  if (Location.getVerseNumber(s.win.modName) == 1 && s.scrollTypeFlag == SCROLLTYPECENTER) s.scrollTypeFlag = SCROLLTYPEBEG;
   // If we're scrolling to the top, set Bible or Pin to verse 1
   if (s.scrollTypeFlag == SCROLLTYPETOP) {
     if (FrameDocument[s.link.startWin].defaultView.Pin.isPinned) {
@@ -3038,7 +3037,7 @@ function writeToScriptBoxes(win, isPinned, display, scrollTypeFlag) {
       tpin.updatePin(tpin.shortName, tpin.chapter, 1);
       tpin.updateLink();
     }
-    Bible.setVerse(s.link.modName, 1, 1);
+    Location.setVerse(s.link.modName, 1, 1);
     s.scrollTypeFlag = SCROLLTYPEBEG
   }
   
@@ -3101,7 +3100,7 @@ function writeToScriptBoxes(win, isPinned, display, scrollTypeFlag) {
       hilightUserNotes(TextCache[s.link.firstWin].fn.UserNotes, i);
     }
   }
-  if (scrollTypeFlag==SCROLLTYPEEND && !isPinned && firstVerseInLink) Bible.setBiblesReference(s.win.modName, firstVerseInLink[1]);
+  if (scrollTypeFlag==SCROLLTYPEEND && !isPinned && firstVerseInLink) Location.setLocation(s.win.modName, firstVerseInLink[1]);
 //for (var par in s) {jsdump("s." + par + ":" + s[par]); for (var par2 in s[par]) {if (par != "navlinks") jsdump("\ts." + par + "." + par2 + ":" + s[par][par2]);}}
 }
 
@@ -3187,8 +3186,8 @@ function getBodyHTML(s, p, chapOffset) {
       Bible.setGlobalOption("Strong's Numbers", "On");
       Bible.setGlobalOption("Morphological Tags", "On");
       var version1 = s.win.modName;
-      var version2 = (findBookNum(Bible.getBookName()) < NumOT ? OrigModuleOT:OrigModuleNT);
-      chapterText = FrameDocument[s.link.firstWin].defaultView.Bible.getChapterTextMulti(version1 + "," + version2).replace("interV2", "vstyle" + version2, "gm");
+      var version2 = (findBookNum(Location.getBookName()) < NumOT ? OrigModuleOT:OrigModuleNT);
+      chapterText = FrameDocument[s.link.firstWin].defaultView.Bible.getChapterTextMulti(version1 + "," + version2, Location.getLocation(version1)).replace("interV2", "vstyle" + version2, "gm");
       Bible.setGlobalOption("Strong's Numbers", prefs.getCharPref("Strong's Numbers"));
       Bible.setGlobalOption("Morphological Tags", prefs.getCharPref("Morphological Tags"));
     }
@@ -3197,9 +3196,9 @@ function getBodyHTML(s, p, chapOffset) {
   
   if (showHeader && chapterText) {
     var showBook = s.isPinned;
-    showBook |=  ((s.scrollTypeFlag==SCROLLTYPENONE || s.scrollTypeFlag==SCROLLTYPEBEG || Bible.getChapterNumber(s.win.modName)==1) && chapOffset==0);
+    showBook |=  ((s.scrollTypeFlag==SCROLLTYPENONE || s.scrollTypeFlag==SCROLLTYPEBEG || Location.getChapterNumber(s.win.modName)==1) && chapOffset==0);
     if (chapterText)
-      chapterText = FrameDocument[s.link.firstWin].defaultView.getScriptBoxHeader(Bible.getBookName(), Number(p.display.chapter)+chapOffset, s.win.modName, showBook, false, prefs.getBoolPref("ShowOriginal" + s.win.number)) + chapterText;
+      chapterText = FrameDocument[s.link.firstWin].defaultView.getScriptBoxHeader(Location.getBookName(), Number(p.display.chapter)+chapOffset, s.win.modName, showBook, false, prefs.getBoolPref("ShowOriginal" + s.win.number)) + chapterText;
   }
   return chapterText;
 }
@@ -3235,9 +3234,9 @@ const PREPEND = 0;
 const CENTER = 1;
 const APPEND = 2;
 function text2LinkedWindows(p, s, fn) {
-  var chapter = Bible.getChapterNumber(s.win.modName);
-  var verse = Bible.getVerseNumber(s.win.modName);
-  var lastverse = Bible.getLastVerseNumber(s.win.modName);
+  var chapter = Location.getChapterNumber(s.win.modName);
+  var verse = Location.getVerseNumber(s.win.modName);
+  var lastverse = Location.getLastVerseNumber(s.win.modName);
   var wstep = (s.link.startWin == s.link.firstWin ? 1:-1);
   p.imin = -1;
   p.imax = -1;
@@ -3594,7 +3593,7 @@ function setNoteBoxSizer(frameNumber, maximizeNoteBox) {
  //Updates the chooser and the Text Navigator based on the Bible's current book/chapter/verse
 function updateLocators(locatorFlag) {
   var myvers = firstDisplayBible();
-  var bNum = Bible ? findBookNum(Bible.getBookName()):-1;
+  var bNum = Bible ? findBookNum(Location.getBookName()):-1;
   if (prefs.getBoolPref("ShowChooser") && !prefs.getBoolPref("ShowGenBookChooser")) {
     // Take background style away from all chaps
     for (var b=0; b < NumBooks; b++) {
@@ -3614,8 +3613,8 @@ function updateLocators(locatorFlag) {
   if (Bible) {
     document.getElementById("book").book = Book[bNum].sName;
     document.getElementById("book").version = myvers;
-    document.getElementById("chapter").value = dString(Bible.getChapterNumber(myvers));
-    document.getElementById("verse").value = dString(Bible.getVerseNumber(myvers));
+    document.getElementById("chapter").value = dString(Location.getChapterNumber(myvers));
+    document.getElementById("verse").value = dString(Location.getVerseNumber(myvers));
   }
 }
 
@@ -4044,7 +4043,7 @@ function gotoLinkReal(link, version, frameNum, verse2) {
   case BIBLE:
   case COMMENTARY:
     link += (verse2 ? "." + verse2:"");
-    Bible.setBiblesReference(version, link);
+    Location.setLocation(version, link);
     BookmarkFuns.updateMainWindow(true);
     break;
   case DICTIONARY:
@@ -4289,7 +4288,7 @@ function handlePrintCommand(command) {
     document.getElementById('printBrowser').contentDocument.getElementById('printBox').innerHTML = getPrintHTML();
     var mymod = firstDisplayModule();
     var mytype = getModuleLongType(mymod);
-    var printTitle = ((mytype==DICTIONARY || mytype==GENBOOK) ? getPrefOrCreate("ShowingKey" + mymod, "Unicode", ""):Book[findBookNum(Bible.getBookName())].bNameL);
+    var printTitle = ((mytype==DICTIONARY || mytype==GENBOOK) ? getPrefOrCreate("ShowingKey" + mymod, "Unicode", ""):Book[findBookNum(Location.getBookName())].bNameL);
     document.getElementById("printBrowser").contentDocument.title = SBundle.getString("Title") + ": " + printTitle;
     document.getElementById(command).doCommand();
     break;
@@ -4415,7 +4414,7 @@ function saveHTML () {
     data += "\n\nSCRIPTBOX:\n" + document.getElementById("bible" + i + "Frame").contentDocument.getElementById("scriptBoxText").innerHTML;
     data += "\n\nNOTEBOX:\n" + document.getElementById("bible" + i + "Frame").contentDocument.getElementById("noteBox").innerHTML;
     try {
-      var tmp = Bible.getChapterText(Win[i].modName);
+      var tmp = Bible.getChapterText(Win[i].modName, Location.getLocation(Win[i].modName));
       data += "\n\nCROSSREFS\n" + Bible.getCrossRefs();
     }
     catch (er) {}

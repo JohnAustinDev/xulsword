@@ -582,7 +582,7 @@ function updateSearchStatusBar(totalMatches, firstMatchShown, matchesPerPage) {
 function getHTMLSearchResults(firstMatchToWrite, numMatchesToWrite, wordsToHighlight) {
   var displayVersion = prefs.getCharPref("SearchVersion");
   var html="";
-  var matches = Bible.getSearchTexts(displayVersion, firstMatchToWrite, numMatchesToWrite, document.getElementById("searchText").value.search("lemma:")!=-1);
+  var matches = Bible.getSearchResults(displayVersion, firstMatchToWrite, numMatchesToWrite, document.getElementById("searchText").value.search("lemma:")!=-1);
   if (!matches) {
     return html;
   }

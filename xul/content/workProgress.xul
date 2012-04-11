@@ -46,7 +46,7 @@
   var Progress, LabelElem, ButtonElem;
 
   function Load() {
-    updateCSSBasedOnCurrentLocale(["#work-progress", "label, button, progressmeter"],0);
+    updateCSSBasedOnCurrentLocale(["#work-progress", "label, button, progressmeter"]);
     document.title = fixWindowTitle(Title);
     
     UserObj.ok=false;

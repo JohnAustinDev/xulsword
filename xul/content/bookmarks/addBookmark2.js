@@ -73,8 +73,8 @@ var WSucks;
 
 function Startup()
 {
-  updateCSSBasedOnCurrentLocale(["#addBookmarkDialog", "input, button, menu, menuitem"],2);
-  createVersionClasses(2);
+  updateCSSBasedOnCurrentLocale(["#addBookmarkDialog", "input, button, menu, menuitem"]);
+  createVersionClasses();
 
   BMDS = initBMServices();
   initTemplateDataSource(document.getElementById("folderPopup"), BMDS);

@@ -115,21 +115,21 @@ var Bible = {
       if (OPSYS == "Linux") {window.alert("These Linux libraries must be installed:	linux-gate, libz, libstdc++, libgcc_s, libm, libc, libpthread, ld-linux");}
     }
 
-    var initSwordEngine = this.Libsword.declare("InitSwordEngine", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
-    this.inst = initSwordEngine(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
+    var newXulsword = this.Libsword.declare("GetNewXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
+    this.inst = newXulsword(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
 
     this.free = this.Libsword.declare("FreeMemory", ctypes.default_abi, ctypes.void_t, ctypes.voidptr_t);
     
-    if (typeof(prefs) != "undefined") {
-      Bible.setBiblesReference(WESTERNVS, prefs.getCharPref("Location"));
+    if (typeof(prefs) != "undefined" && Location) {
+      Location.setLocation(WESTERNVS, prefs.getCharPref("Location"));
     }
 
   },
 
   quitLibsword: function() {
     if (this.Libsword) {
-      if (typeof(prefs) != "undefined") {
-        prefs.setCharPref("Location", Bible.getLocation(WESTERNVS));
+      if (typeof(prefs) != "undefined" && Location) {
+        prefs.setCharPref("Location", Location.getLocation(WESTERNVS));
       }
       this.free(this.inst);
       this.Libsword.close();
@@ -213,136 +213,64 @@ ReportProgress: function(intgr) {
 * GETTING BIBLE TEXT AND BIBLE LOCATION INFORMATION:
 *******************************************************************************/
 
-// setBiblesReference
-//Choose the Bible reference for all ixulsword instances to work with (it sets
-//  the static Book, Chapter, Verse, Lastverse variables as desribed using
-//  the verse system of Mod).
-//Vkeytext is a "xulsword reference" (see definition above).
-//returns versification of Mod.
-setBiblesReference: function(modname, xsref) {
-  if (this.paused) throw(new Error("libsword paused, setBiblesReference inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.sbr)
-    this.fdata.sbr = this.Libsword.declare("SetBiblesReference", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
-  var cdata = this.fdata.sbr(this.inst, ctypes.char.array()(modname), ctypes.char.array()(xsref));
-  this.checkerror();
-  try {var str = cdata.readString();} catch(er) {str = "";}
-  this.free(cdata);
-  return str;
-},
-
-// setVerse
-//Sets static Verse and Lastverse variables (applies to ALL Bible calls).
-//  Book and Chapter remain whatever they were previously set to.
-//firstverse:
-//  If firstverse is 0 then no verse is selected.
-//  If firstverse is -1 then Verse will be set to the current chapter's max-verse.
-//  If firstverse is greater then max-verse then Verse equals max-verse.
-//lastverse:
-//  Lastverse will always be: verse >= lastVerse <= max-verse.
-//Returns versification which was used when assigning chapter
-setVerse: function(modname, firstverse, lastverse) {
-  if (this.paused) throw(new Error("libsword paused, setVerse inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.svr)
-    this.fdata.svr = this.Libsword.declare("SetVerse", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.int, ctypes.int);
-  var cdata = this.fdata.svr(this.inst, ctypes.char.array()(modname), firstverse, lastverse);
-  this.checkerror();
-  try {var str = cdata.readString();} catch(er) {str = "";}
-  this.free(cdata);
-  return str;
-},
-
-// getBookName
-//Returns current short book name, "Gen" for instance.
-getBookName: function() {
-  if (this.paused) throw(new Error("libsword paused, getBookName inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.gbn)
-    this.fdata.gbn = this.Libsword.declare("GetBookName", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
-  var cdata = this.fdata.gbn(this.inst);
-  this.checkerror();
-  try {var str = cdata.readString();} catch(er) {str = "";}
-  this.free(cdata);
-  return str;
-},
-
-// getChapter
-//Returns current Book and Chapter as described using the verse system of module Mod.
-//Returns in the form: "Gen 3"
-getChapter: function(modname) {
-  if (this.paused) throw(new Error("libsword paused, getChapter inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.gch)
-    this.fdata.gch = this.Libsword.declare("GetChapter", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
-  var cdata = this.fdata.gch(this.inst, ctypes.char.array()(modname));
-  this.checkerror();
-  try {var str = cdata.readString();} catch(er) {str = "";}
-  this.free(cdata);
-  return str;
-},
-
-// getVerseNumber
-//Returns current Verse number as described using the verse system of module Mod.
-getVerseNumber: function(modname) {
-  if (this.paused) throw(new Error("libsword paused, getVerseNumber inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.gvn)
-    this.fdata.gvn = this.Libsword.declare("GetVerseNumber", ctypes.default_abi, ctypes.int, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
-  var intgr = this.fdata.gvn(this.inst, ctypes.char.array()(modname));
-  this.checkerror();
-  return intgr;
-},
-
-// getLastVerseNumber
-//Returns current Lastverse number as described using the verse system of module Mod.
-getLastVerseNumber: function(modname) {
-  if (this.paused) throw(new Error("libsword paused, getLastVerseNumber inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.glv)
-    this.fdata.glv = this.Libsword.declare("GetLastVerseNumber", ctypes.default_abi, ctypes.int, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
-  var intgr = this.fdata.glv(this.inst, ctypes.char.array()(modname));
-  this.checkerror();
-  return intgr;
-},
-
-// getChapterNumber
-//Returns current Chapter number as described using the verse system of module Mod.
-getChapterNumber: function(modname) {
-  if (this.paused) throw(new Error("libsword paused, getChapterNumber inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.gcn)
-    this.fdata.gcn = this.Libsword.declare("GetChapterNumber", ctypes.default_abi, ctypes.int, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
-  var intgr = this.fdata.gcn(this.inst, ctypes.char.array()(modname));
-  this.checkerror();
-  return intgr;
-},
-
-// getLocation
-//Returns current location as described using the verse system of module Mod;
-//Returns in the form: Gen.1.2.5 (meaning Genesis 1:2-5)
-getLocation: function(modname) {
-  if (this.paused) throw(new Error("libsword paused, getLocation inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.glc)
-    this.fdata.glc = this.Libsword.declare("GetLocation", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
-  var cdata = this.fdata.glc(this.inst, ctypes.char.array()(modname));
-  this.checkerror();
-  try {var str = cdata.readString();} catch(er) {str = "";}
-  this.free(cdata);
-  return str;
-},
-
 // getChapterText
 //Will return a chapter of text with footnote markers from module Vkeymod.
 //Vkeymod must be a module having a key type of versekey (Bibles & commentaries),
 //  otherwise null is returned.
-getChapterText: function(modname) {
+getChapterText: function(modname, vkeytext) {
   if (this.paused) throw(new Error("libsword paused, getChapterText inaccessible."));
   if (!this.Libsword) this.initLibsword();
   if (!this.fdata.gct)
-    this.fdata.gct = this.Libsword.declare("GetChapterText", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
-  var cdata = this.fdata.gct(this.inst, ctypes.char.array()(modname));
+    this.fdata.gct = this.Libsword.declare("GetChapterText", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
+  var cdata = this.fdata.gct(this.inst, ctypes.char.array()(modname), ctypes.char.array()(vkeytext));
+  this.checkerror();
+  try {var str = cdata.readString();} catch(er) {str = "";}
+  this.free(cdata);
+  return str;
+},
+
+//IMPORTANT: THE FOLLOWING 3 ROUTINES MUST BE CALLED AFTER getChapterText IS CALLED!
+
+// getFootnotes
+//Will return the footnotes (or empty string if there aren't any).
+//See * below.
+getFootnotes:function() {
+  if (this.paused) throw(new Error("libsword paused, getFootnotes inaccessible."));
+  if (!this.Libsword) this.initLibsword();
+  if (!this.fdata.gfn)
+    this.fdata.gfn = this.Libsword.declare("GetFootnotes", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
+  var cdata = this.fdata.gfn(this.inst);
+  this.checkerror();
+  try {var str = cdata.readString();} catch(er) {str = "";}
+  this.free(cdata);
+  return str;
+},
+
+// getCrossRefs
+//Will return the cross references (or empty string if there aren't any).
+//See * below.
+getCrossRefs:function() {
+  if (this.paused) throw(new Error("libsword paused, getCrossRefs inaccessible."));
+  if (!this.Libsword) this.initLibsword();
+  if (!this.fdata.gcr)
+    this.fdata.gcr = this.Libsword.declare("GetCrossRefs", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
+  var cdata = this.fdata.gcr(this.inst);
+  this.checkerror();
+  try {var str = cdata.readString();} catch(er) {str = "";}
+  this.free(cdata);
+  return str;
+},
+
+// getNotes
+//Will return both footnotes and cross references interleaved.
+//See * below.
+//order is: v1-footnotes, v1-crossrefs, v2-footnotes, v2-crossrefs, etc
+getNotes:function() {
+  if (this.paused) throw(new Error("libsword paused, getNotes inaccessible."));
+  if (!this.Libsword) this.initLibsword();
+  if (!this.fdata.gns)
+    this.fdata.gns = this.Libsword.declare("GetNotes", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
+  var cdata = this.fdata.gns(this.inst);
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
   this.free(cdata);
@@ -358,12 +286,12 @@ getChapterText: function(modname) {
 //  the first module listed, subsequent modules return the same reference as
 //  that returned by the first, even though it may have come from a different
 //  chapter or verse number than did the first.
-getChapterTextMulti: function(modstrlist) {
+getChapterTextMulti: function(modstrlist, vkeytext) {
   if (this.paused) throw(new Error("libsword paused, getChapterTextMulti inaccessible."));
   if (!this.Libsword) this.initLibsword();
   if (!this.fdata.ctm)
-    this.fdata.ctm = this.Libsword.declare("GetChapterTextMulti", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
-  var cdata = this.fdata.ctm(this.inst, ctypes.char.array()(modstrlist));
+    this.fdata.ctm = this.Libsword.declare("GetChapterTextMulti", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
+  var cdata = this.fdata.ctm(this.inst, ctypes.char.array()(modstrlist), ctypes.char.array()(vkeytext));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
   this.free(cdata);
@@ -387,6 +315,19 @@ getVerseText: function(vkeymod, vkeytext) {
   try {var str = cdata.readString();} catch(er) {str = "";}
   this.free(cdata);
   return str;
+},
+
+// getMaxChapter
+//Returns the maximum chapter number of the chapter refered to by the
+//  xulsword reference Vkeytext, when using the verse system of Mod.
+getMaxChapter: function(modname, vkeytext) {
+  if (this.paused) throw(new Error("libsword paused, getMaxChapter inaccessible."));
+  if (!this.Libsword) this.initLibsword();
+  if (!this.fdata.gmc)
+    this.fdata.gmc = this.Libsword.declare("GetMaxChapter", ctypes.default_abi, ctypes.int, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
+  var intgr = this.fdata.gmc(this.inst, ctypes.char.array()(modname), ctypes.char.array()(vkeytext));
+  this.checkerror();
+  return intgr;
 },
 
 // getMaxVerse
@@ -515,54 +456,6 @@ getGenBookTableOfContents: function(gbmod) {
   return str;
 },
 
-//IMPORTANT: THE FOLLOWING 3 ROUTINES MUST BE CALLED AFTER getChapterText IS CALLED!
-
-// getFootnotes
-//Will return the footnotes (or empty string if there aren't any).
-//See * below.
-getFootnotes:function() {
-  if (this.paused) throw(new Error("libsword paused, getFootnotes inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.gfn)
-    this.fdata.gfn = this.Libsword.declare("GetFootnotes", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
-  var cdata = this.fdata.gfn(this.inst);
-  this.checkerror();
-  try {var str = cdata.readString();} catch(er) {str = "";}
-  this.free(cdata);
-  return str;
-},
-
-// getCrossRefs
-//Will return the cross references (or empty string if there aren't any).
-//See * below.
-getCrossRefs:function() {
-  if (this.paused) throw(new Error("libsword paused, getCrossRefs inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.gcr)
-    this.fdata.gcr = this.Libsword.declare("GetCrossRefs", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
-  var cdata = this.fdata.gcr(this.inst);
-  this.checkerror();
-  try {var str = cdata.readString();} catch(er) {str = "";}
-  this.free(cdata);
-  return str;
-},
-
-// getNotes
-//Will return both footnotes and cross references interleaved.
-//See * below.
-//order is: v1-footnotes, v1-crossrefs, v2-footnotes, v2-crossrefs, etc
-getNotes:function() {
-  if (this.paused) throw(new Error("libsword paused, getNotes inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.fdata.gns)
-    this.fdata.gns = this.Libsword.declare("GetNotes", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
-  var cdata = this.fdata.gns(this.inst);
-  this.checkerror();
-  try {var str = cdata.readString();} catch(er) {str = "";}
-  this.free(cdata);
-  return str;
-},
-
 
 /******************************************************************************
 * SEARCHING: USE THESE TO SEARCH MODULES:
@@ -611,14 +504,14 @@ getSearchVerses: function(modname) {
   return null;
 },
 
-// getSearchTexts
+// getSearchResults
 //Will return the verse texts from previous search.
 //See * below
-getSearchTexts: function(modname, first, num, keepStrongs) {
-  if (this.paused) throw(new Error("libsword paused, getSearchTexts inaccessible."));
+getSearchResults: function(modname, first, num, keepStrongs) {
+  if (this.paused) throw(new Error("libsword paused, getSearchResults inaccessible."));
   if (!this.Libsword) this.initLibsword();
   if (!this.fdata.gst)
-    this.fdata.gst = this.Libsword.declare("GetSearchTexts", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.int, ctypes.int, ctypes.bool);
+    this.fdata.gst = this.Libsword.declare("GetSearchResults", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.int, ctypes.int, ctypes.bool);
   var cdata = this.fdata.gst(this.inst, ctypes.char.array()(modname), first, num, keepStrongs);
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}

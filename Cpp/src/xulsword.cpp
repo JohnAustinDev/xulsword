@@ -344,7 +344,7 @@ PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
 xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
-SWLog::getSystemLog()->logDebug("\nXULSWORD CONSTRUCTOR\n");
+  SWLog::getSystemLog()->logDebug("\nXULSWORD CONSTRUCTOR\n");
   ToUpperCase = (toUpperCase ? toUpperCase:NULL);
   ThrowJS = (throwJS ? throwJS:NULL);
   ReportProgress = (reportProgress ? reportProgress:NULL);
@@ -367,28 +367,9 @@ SWLog::getSystemLog()->logDebug("\nXULSWORD CONSTRUCTOR\n");
 }
 
 xulsword::~xulsword() {
-  //delete(MyManager);
-  //delete(MyMarkupFilterMgr);
-  //delete(MyStringMgr);
-}
-
-static bool HaveInstance = false;
-/********************************************************************
-InitSwordEngine()
-*********************************************************************/
-xulsword *xulsword::initSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
-  SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
-  SWLog::getSystemLog()->logDebug("\nXULSWORD BEGIN\n");
-
-  if (HaveInstance) {xsThrow("initSwordEngine: Currently limited to single instance!\n"); return NULL;}
-
-  xulsword *inst = (xulsword *)malloc(sizeof(xulsword));
-  if (!inst) {xsThrow("initSwordEngine: out of memory\n"); return NULL;}
-
-  inst = new xulsword(path, toUpperCase, throwJS, reportProgress);
-  HaveInstance = true;
-  
-  return inst;
+  //delete(MyStringMgr); deleted by _staticsystemStringMgr
+  if (MyManager) {delete(MyManager);}
+  //delete(MyMarkupFilterMgr); deleted by SWMgr
 }
 
 
@@ -562,6 +543,44 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
 
 
 /********************************************************************
+GetFootnotes
+*********************************************************************/
+char *xulsword::getFootnotes() {
+  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
+  char *retval;
+  retval = (char *)malloc(MyFootnotes.length() + 1);
+  if (retval) {strcpy(retval, MyFootnotes.c_str());}
+	return retval;
+}
+
+
+/********************************************************************
+GetCrossRefs
+*********************************************************************/
+char *xulsword::getCrossRefs() {
+  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
+
+  char *retval;
+  retval = (char *)malloc(MyCrossRefs.length() + 1);
+  if (retval) {strcpy(retval, MyCrossRefs.c_str());}
+	return retval;
+}
+
+
+/********************************************************************
+GetNotes
+*********************************************************************/
+char *xulsword::getNotes() {
+  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
+
+  char *retval;
+  retval = (char *)malloc(MyNotes.length() + 1);
+  if (retval) {strcpy(retval, MyNotes.c_str());}
+	return retval;
+}
+
+
+/********************************************************************
 GetChapterTextMulti
 *********************************************************************/
 char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytext)
@@ -714,45 +733,6 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   char *retval;
   retval = (char *)malloc(chapText.length() + 1);
   if (retval) {strcpy(retval, chapText.c_str());}
-	return retval;
-}
-
-
-
-/********************************************************************
-GetFootnotes
-*********************************************************************/
-char *xulsword::getFootnotes() {
-  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-  char *retval;
-  retval = (char *)malloc(MyFootnotes.length() + 1);
-  if (retval) {strcpy(retval, MyFootnotes.c_str());}
-	return retval;
-}
-
-
-/********************************************************************
-GetCrossRefs
-*********************************************************************/
-char *xulsword::getCrossRefs() {
-  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-
-  char *retval;
-  retval = (char *)malloc(MyCrossRefs.length() + 1);
-  if (retval) {strcpy(retval, MyCrossRefs.c_str());}
-	return retval;
-}
-
-
-/********************************************************************
-GetNotes
-*********************************************************************/
-char *xulsword::getNotes() {
-  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-
-  char *retval;
-  retval = (char *)malloc(MyNotes.length() + 1);
-  if (retval) {strcpy(retval, MyNotes.c_str());}
 	return retval;
 }
 
@@ -1204,12 +1184,12 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
 
 
 /********************************************************************
-GetSearchTexts
+GetSearchResults
 *********************************************************************/
-char *xulsword::getSearchTexts(const char *mod, int first, int num, bool keepStrongs) {
+char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepStrongs) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {
-    xsThrow("GetSearchTexts: module not found.");
+    xsThrow("GetSearchResults: module not found.");
     return NULL;
   }
 

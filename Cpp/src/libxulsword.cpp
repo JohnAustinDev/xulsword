@@ -28,7 +28,7 @@
 /********************************************************************
 EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
-DLLEXPORT xulsword *InitSwordEngine(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
+DLLEXPORT xulsword *GetNewXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
   SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
   xulsword *xsobj = (xulsword *)malloc(sizeof(xulsword));
   xsobj = new xulsword(path, toUpperCase, throwJS, reportProgress);
@@ -37,10 +37,6 @@ DLLEXPORT xulsword *InitSwordEngine(char *path, char *(*toUpperCase)(char *), vo
 
 DLLEXPORT char *GetChapterText(xulsword *inst, const char *vkeymod, const char *vkeytext) {
   return inst->getChapterText(vkeymod, vkeytext);
-}
-
-DLLEXPORT char *GetChapterTextMulti(xulsword *inst, const char *vkeymodlist, const char *vkeytext) {
-  return inst->getChapterTextMulti(vkeymodlist, vkeytext);
 }
 
 DLLEXPORT char *GetFootnotes(xulsword *inst) {
@@ -53,6 +49,10 @@ DLLEXPORT char *GetCrossRefs(xulsword *inst) {
 
 DLLEXPORT char *GetNotes(xulsword *inst) {
   return inst->getNotes();
+}
+
+DLLEXPORT char *GetChapterTextMulti(xulsword *inst, const char *vkeymodlist, const char *vkeytext) {
+  return inst->getChapterTextMulti(vkeymodlist, vkeytext);
 }
 
 DLLEXPORT char *GetVerseText(xulsword *inst, const char *vkeymod, const char *vkeytext) {
@@ -103,8 +103,8 @@ DLLEXPORT int Search(xulsword *inst, const char *mod, const char *srchstr, const
   return inst->search(mod, srchstr, scope, type, flags, newsearch);
 }
 
-DLLEXPORT char *GetSearchTexts(xulsword *inst, const char *mod, int first, int num, bool keepStrongs) {
-  return inst->getSearchTexts(mod, first, num, keepStrongs);
+DLLEXPORT char *GetSearchResults(xulsword *inst, const char *mod, int first, int num, bool keepStrongs) {
+  return inst->getSearchResults(mod, first, num, keepStrongs);
 }
 
 DLLEXPORT void SearchIndexDelete(xulsword *inst, const char *mod) {

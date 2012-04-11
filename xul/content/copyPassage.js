@@ -18,13 +18,13 @@
  
 
 var PassageChooser, PassageTextBox, VerseNumCheckbox, HeadingsCheckBox, RedWordsCheckBox;
-var SavedGlobalOptions, SavedCharPrefs, SavedLocation, SavedBible;
+var SavedGlobalOptions, SavedCharPrefs;
 var CheckBoxes = ["cmd_xs_toggleVerseNums", "cmd_xs_toggleHeadings", "cmd_xs_toggleRedWords"];
 var FirstDisplayBible;
 
 function onLoad() {
   updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createVersionClasses(0);
+  createVersionClasses();
   PassageChooser = document.getElementById("passage");
   PassageTextBox = document.getAnonymousElementByAttribute(PassageChooser, "anonid", "book");
   VerseNumCheckbox = document.getElementById("cmd_xs_toggleVerseNums");
@@ -37,8 +37,8 @@ function onLoad() {
   
   document.title = fixWindowTitle(document.title);
   
-  SavedBible = firstDisplayBible();
-  SavedLocation = Bible.getLocation(SavedBible);
+  var savedBible = firstDisplayBible();
+  var savedLocation = MainWindow.Location.getLocation(savedBible);
   saveProgramSettings(SavedGlobalOptions, SavedCharPrefs);
 
   var sel = null;  
@@ -46,11 +46,11 @@ function onLoad() {
   if (selob) sel = MainWindow.getTargetsFromSelection(selob);
   if (sel && sel.version && sel.verse && sel.lastVerse) {
     PassageChooser.version = sel.version;
-    PassageChooser.location = SavedLocation.split(".")[0] + "." + SavedLocation.split(".")[1] + "." + sel.verse + "." + sel.lastVerse;
+    PassageChooser.location = savedLocation.split(".")[0] + "." + savedLocation.split(".")[1] + "." + sel.verse + "." + sel.lastVerse;
   }
   else {
-    PassageChooser.version = SavedBible;
-    PassageChooser.location = SavedLocation;
+    PassageChooser.version = savedBible;
+    PassageChooser.location = savedLocation;
   }
   
   for (var c=0; c<CheckBoxes.length; c++) {document.getElementById(CheckBoxes[c]).checked = getPrefOrCreate("copyPassage." + CheckBoxes[c], "Bool", true);}
@@ -112,9 +112,9 @@ function copyPassage(e) {
   Bible.setGlobalOption(GlobalToggleCommands["cmd_xs_toggleRedWords"], (RedWordsCheckBox.checked ? "On":"Off"));
   
   var loc = PassageChooser.location.split(".");
-  Bible.setBiblesReference(PassageChooser.version, loc[0] + " " + loc[1]);
-  Bible.setVerse(PassageChooser.version, 0, 0);
-  var verseHtml = Bible.getChapterText(PassageChooser.version);
+  Location.setLocation(PassageChooser.version, loc[0] + " " + loc[1]);
+  Location.setVerse(PassageChooser.version, 0, 0);
+  var verseHtml = Bible.getChapterText(PassageChooser.version, Location.getLocation(PassageChooser.version));
 //jsdump(verseHtml); 
   verseHtml = trimVerses(loc[2], loc[3], verseHtml);
 //jsdump(verseHtml);
@@ -238,7 +238,6 @@ function html2text(html) {
 
 function onUnload() {
   returnProgramSettings(SavedGlobalOptions, SavedCharPrefs);
-  Bible.setBiblesReference(SavedBible, SavedLocation);
   for (var c=0; c<CheckBoxes.length; c++) {prefs.setBoolPref("copyPassage." + CheckBoxes[c], document.getElementById(CheckBoxes[c]).checked);}
   MainWindow.updateXulswordButtons();
 }

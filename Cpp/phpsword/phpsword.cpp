@@ -75,16 +75,52 @@ PHP_METHOD(phpsword, getChapterText)
     char *vkeytext;
     int l2;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymod, &l1, &vkeytext, &l2) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
     char *ret = sword->getChapterText(vkeymod, vkeytext);
-    if (ret) {
-      RETURN_STRING(ret, 1);
-      delete ret;
-    }
-    else RETURN_STRING("NULL", 1);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
+}
+
+PHP_METHOD(phpsword, getFootnotes)
+{
+  xulsword *sword;
+  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword = obj->sword;
+  if (sword != NULL) {
+    char *ret = sword->getFootnotes();
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
+  }
+  RETURN_EMPTY_STRING();
+}
+
+PHP_METHOD(phpsword, getCrossRefs)
+{
+  xulsword *sword;
+  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword = obj->sword;
+  if (sword != NULL) {
+    char *ret = sword->getCrossRefs();
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
+  }
+  RETURN_EMPTY_STRING();
+}
+
+PHP_METHOD(phpsword, getNotes)
+{
+  xulsword *sword;
+  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword = obj->sword;
+  if (sword != NULL) {
+    char *ret = sword->getNotes();
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
+  }
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, getChapterTextMulti)
@@ -98,44 +134,13 @@ PHP_METHOD(phpsword, getChapterTextMulti)
     char *vkeytext;
     int l2;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymodlist, &l1, &vkeytext, &l2) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getChapterTextMulti(vkeymodlist, vkeytext), 1);
+    char *ret = sword->getChapterTextMulti(vkeymodlist, vkeytext);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
-}
-
-PHP_METHOD(phpsword, getFootnotes)
-{
-  xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-  sword = obj->sword;
-  if (sword != NULL) {
-    RETURN_STRING(sword->getFootnotes(), 1);
-  }
-  RETURN_NULL();
-}
-
-PHP_METHOD(phpsword, getCrossRefs)
-{
-  xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-  sword = obj->sword;
-  if (sword != NULL) {
-    RETURN_STRING(sword->getCrossRefs(), 1);
-  }
-  RETURN_NULL();
-}
-
-PHP_METHOD(phpsword, getNotes)
-{
-  xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
-  sword = obj->sword;
-  if (sword != NULL) {
-    RETURN_STRING(sword->getNotes(), 1);
-  }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, getVerseText)
@@ -149,11 +154,13 @@ PHP_METHOD(phpsword, getVerseText)
     char *vkeytext;
     int l2;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymod, &l1, &vkeytext, &l2) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getVerseText(vkeymod, vkeytext), 1);
+    char *ret = sword->getVerseText(vkeymod, vkeytext);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, getMaxChapter)
@@ -167,11 +174,11 @@ PHP_METHOD(phpsword, getMaxChapter)
     char *vkeytext;
     int l2;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &mod, &l1, &vkeytext, &l2) == FAILURE) {
-      RETURN_NULL();
+      RETURN_LONG(-1);
     }
     RETURN_LONG(sword->getMaxChapter(mod, vkeytext));
   }
-  RETURN_NULL();
+  RETURN_LONG(-1);
 }
 
 PHP_METHOD(phpsword, getMaxVerse)
@@ -185,11 +192,11 @@ PHP_METHOD(phpsword, getMaxVerse)
     char *vkeytext;
     int l2;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &mod, &l1, &vkeytext, &l2) == FAILURE) {
-      RETURN_NULL();
+      RETURN_LONG(-1);
     }
     RETURN_LONG(sword->getMaxVerse(mod, vkeytext));
   }
-  RETURN_NULL();
+  RETURN_LONG(-1);
 }
 
 PHP_METHOD(phpsword, getVerseSystem)
@@ -201,11 +208,13 @@ PHP_METHOD(phpsword, getVerseSystem)
     char *mod;
     int l1;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &mod, &l1) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getVerseSystem(mod), 1);
+    char *ret = sword->getVerseSystem(mod);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, convertLocation)
@@ -221,11 +230,13 @@ PHP_METHOD(phpsword, convertLocation)
     char *toVS;
     int l3;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sss", &frVS, &l1, &vkeytext, &l2,  &toVS, &l3) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->convertLocation(frVS, vkeytext, toVS), 1);
+    char *ret = sword->convertLocation(frVS, vkeytext, toVS);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, getBookIntroduction)
@@ -239,11 +250,13 @@ PHP_METHOD(phpsword, getBookIntroduction)
     char *bname;
     int l2;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymod, &l1, &bname, &l2) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getBookIntroduction(vkeymod, bname), 1);
+    char *ret = sword->getBookIntroduction(vkeymod, bname);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, getDictionaryEntry)
@@ -257,11 +270,13 @@ PHP_METHOD(phpsword, getDictionaryEntry)
     char *key;
     int l2;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &lexdictmod, &l1, &key, &l2) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getDictionaryEntry(lexdictmod, key), 1);
+    char *ret = sword->getDictionaryEntry(lexdictmod, key);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, getAllDictionaryKeys)
@@ -273,11 +288,13 @@ PHP_METHOD(phpsword, getAllDictionaryKeys)
     char *lexdictmod;
     int l1;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &lexdictmod, &l1) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getAllDictionaryKeys(lexdictmod), 1);
+    char *ret = sword->getAllDictionaryKeys(lexdictmod);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, getGenBookChapterText)
@@ -291,11 +308,13 @@ PHP_METHOD(phpsword, getGenBookChapterText)
     char *treekey;
     int l2;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &gbmod, &l1, &treekey, &l2) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getGenBookChapterText(gbmod, treekey), 1);
+    char *ret = sword->getGenBookChapterText(gbmod, treekey);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, getGenBookTableOfContents)
@@ -307,11 +326,13 @@ PHP_METHOD(phpsword, getGenBookTableOfContents)
     char *gbmod;
     int l1;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &gbmod, &l1) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getGenBookTableOfContents(gbmod), 1);
+    char *ret = sword->getGenBookTableOfContents(gbmod);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, luceneEnabled)
@@ -323,11 +344,11 @@ PHP_METHOD(phpsword, luceneEnabled)
     char *mod;
     int l1;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &mod, &l1) == FAILURE) {
-      RETURN_NULL();
+      RETURN_FALSE;
     }
     RETURN_BOOL(sword->luceneEnabled(mod));
   }
-  RETURN_NULL();
+  RETURN_FALSE;
 }
 
 PHP_METHOD(phpsword, search)
@@ -345,14 +366,14 @@ PHP_METHOD(phpsword, search)
     int type, flags;
     bool newsearch;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssllb", &mod, &l1, &srchstr, &l2, &scope, &l3, type, flags, newsearch) == FAILURE) {
-      RETURN_NULL();
+      RETURN_LONG(0);
     }
     RETURN_LONG(sword->search(mod, srchstr, scope, type, flags, newsearch));
   }
-  RETURN_NULL();
+  RETURN_LONG(0);
 }
 
-PHP_METHOD(phpsword, getSearchTexts)
+PHP_METHOD(phpsword, getSearchResults)
 {
   xulsword *sword;
   sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -363,11 +384,13 @@ PHP_METHOD(phpsword, getSearchTexts)
     int first, num;
     bool keepStrongs;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sllb", &mod, &l1, &first, &num, &keepStrongs) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getSearchTexts(mod, first, num, keepStrongs), 1);
+    char *ret = sword->getSearchResults(mod, first, num, keepStrongs);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, setGlobalOption)
@@ -397,11 +420,13 @@ PHP_METHOD(phpsword, getGlobalOption)
     char *option;
     int l1;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &option, &l1) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getGlobalOption(option), 1);
+    char *ret = sword->getGlobalOption(option);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, setCipherKey)
@@ -430,9 +455,11 @@ PHP_METHOD(phpsword, getModuleList)
   sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
   sword = obj->sword;
   if (sword != NULL) {
-      RETURN_STRING(sword->getModuleList(), 1);
+    char *ret = sword->getModuleList();
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 PHP_METHOD(phpsword, getModuleInformation)
@@ -446,11 +473,13 @@ PHP_METHOD(phpsword, getModuleInformation)
     char *paramname;
     int l2;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &mod, &l1, &paramname, &l2) == FAILURE) {
-      RETURN_NULL();
+      RETURN_EMPTY_STRING();
     }
-    RETURN_STRING(sword->getModuleInformation(mod, paramname), 1);
+    char *ret = sword->getModuleInformation(mod, paramname);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
   }
-  RETURN_NULL();
+  RETURN_EMPTY_STRING();
 }
 
 
@@ -461,10 +490,10 @@ More PHPSWORD Extension Glue
 function_entry sword_methods[] = {
     PHP_ME(phpsword,  __construct,     NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
     PHP_ME(phpsword,  getChapterText,   NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getChapterTextMulti,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getFootnotes,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getCrossRefs,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getNotes,   NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getChapterTextMulti,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getVerseText,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getMaxChapter,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getMaxVerse,   NULL, ZEND_ACC_PUBLIC)
@@ -477,7 +506,7 @@ function_entry sword_methods[] = {
     PHP_ME(phpsword,  getGenBookTableOfContents,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  luceneEnabled,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  search,   NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getSearchTexts,   NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getSearchResults,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  setGlobalOption,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getGlobalOption,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  setCipherKey,   NULL, ZEND_ACC_PUBLIC)

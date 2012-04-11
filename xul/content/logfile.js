@@ -61,7 +61,7 @@ var aConsoleListener =
           file += "Version2:" + prefs.getCharPref("Version2") + URLNEWLINE;
           file += "Version3:" + prefs.getCharPref("Version3") + URLNEWLINE;
           file += "DefaultVersion:" + prefs.getCharPref("DefaultVersion") + URLNEWLINE;
-          file += "Location:" + Bible.getLocation(prefs.getCharPref("DefaultVersion")) + URLNEWLINE;
+          file += "Location:" + Location.getLocation(prefs.getCharPref("DefaultVersion")) + URLNEWLINE;
           file += "Module List:" + Bible.getModuleList() + URLNEWLINE;
         }
         catch(er) {file += "ERROR: Could not read b-object." + URLNEWLINE;}
@@ -125,8 +125,10 @@ var aConsoleListener =
   },
   
   getRegKeySafeWin: function(rootKey, key, value) {
-    var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
-    if (!wrk) {
+    if (typeof Components.classes["@mozilla.org/windows-registry-key;1"] != "undefined") {
+      var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
+    }
+    else {
       this.jsdump("Could not get nsIWindowsRegKey instance from @mozilla.org/windows-registry-key;1");
       return "";
     }

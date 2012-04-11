@@ -359,7 +359,7 @@ function onLoad()
 {
   // EDIT!!
   updateCSSBasedOnCurrentLocale(["window", "button", "menuitem"]);
-  createVersionClasses(0); // needed for tooltips
+  createVersionClasses(); // needed for tooltips
   document.title = fixWindowTitle(document.title);
   
   // Init gDialog.

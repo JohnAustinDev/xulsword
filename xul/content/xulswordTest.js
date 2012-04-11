@@ -29,7 +29,7 @@ getNotes                    test with MK
 
 search                      test with MK
 searchIndexBuild            test with MK
-getSearchTexts              test with MK
+getSearchResults            test with MK
 searchIndexDelete           test with MK (close search window during index creation, and lucene folder should be deleted)
 luceneEnabled               test with MK (does "create index" button appear when it should?)
 
@@ -49,63 +49,63 @@ function jsdump(str)
 var NumFailed = 0;
 if (Bible.getModuleList() == "No Modules") Bible = null;
 
-Bible.setBiblesReference("ESV", "Matt.4");
+Location.setLocation("ESV", "Matt.4");
 testLocs(1, "ESV", "Matt", 4, 1, 25, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("ESV", "Matt.2.3");
+Location.setLocation("ESV", "Matt.2.3");
 testLocs(2, "ESV", "Matt", 2, 3, 3, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("ESV", "Matt.3.5.8");
+Location.setLocation("ESV", "Matt.3.5.8");
 testLocs(3, "ESV", "Matt", 3, 5, 8, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("ESV", "Ps.119");
+Location.setLocation("ESV", "Ps.119");
 testLocs(4, "UZV", "Ps", 118, 1, 176, "Synodal");
 jsdump("\n");
 
-Bible.setBiblesReference("ESV", "Ps.25.3");
+Location.setLocation("ESV", "Ps.25.3");
 testLocs(5, "UZV", "Ps", 24, 3, 3, "Synodal");
 jsdump("\n");
 
-Bible.setBiblesReference("ESV", "Ps.22.9.12");
+Location.setLocation("ESV", "Ps.22.9.12");
 testLocs(6, "UZV", "Ps", 21, 10, 13, "Synodal");
 jsdump("\n");
 
-Bible.setBiblesReference("UZV", "Ps.118");
+Location.setLocation("UZV", "Ps.118");
 testLocs(7, "ESV", "Ps", 119, 1, 176, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("UZV", "Ps.24.3");
+Location.setLocation("UZV", "Ps.24.3");
 testLocs(8, "ESV", "Ps", 25, 3, 3, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("UZV", "Ps.21.10.13");
+Location.setLocation("UZV", "Ps.21.10.13");
 testLocs(9, "ESV", "Ps", 22, 9, 12, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("UZV", "Ps.114.1-Ps.114.2");
+Location.setLocation("UZV", "Ps.114.1-Ps.114.2");
 testLocs(10, "ESV", "Ps", 116, 1, 2, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("UZV", "Ps.114.1 - Ps.114.2");
+Location.setLocation("UZV", "Ps.114.1 - Ps.114.2");
 testLocs(11, "ESV", "Ps", 116, 1, 2, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("UZV", "Ps 109");
+Location.setLocation("UZV", "Ps 109");
 testLocs(12, "ESV", "Ps", 110, 1, 7, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("UZV", "Ps 110:6");
+Location.setLocation("UZV", "Ps 110:6");
 testLocs(13, "ESV", "Ps", 111, 6, 6, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("UZV", "Ps 113:2-7");
+Location.setLocation("UZV", "Ps 113:2-7");
 testLocs(14, "ESV", "Ps", 114, 2, 7, "KJV");
 jsdump("\n");
 
-Bible.setBiblesReference("UZV", "Ps 113:10-Ps 113:20");
+Location.setLocation("UZV", "Ps 113:10-Ps 113:20");
 testLocs(15, "ESV", "Ps", 115, 2, 12, "KJV");
 jsdump("\n");
 
@@ -156,47 +156,47 @@ jsdump("\n");
 test(60, Bible.convertLocation("Synodal", "Ps 113:10-Ps 113:20", "KJV"), "Ps.115.2.12");
 jsdump("\n");
 
-Bible.setBiblesReference("ESV", "Rev 12:2");
-Bible.setVerse("ESV", 6, 8);
-test(61, Bible.getChapter("ESV"), "Rev 12");
-test(62, Bible.getVerseNumber("ESV"), "6");
-test(63, Bible.getLastVerseNumber("ESV"), "8");
+Location.setLocation("ESV", "Rev 12:2");
+Location.setVerse("ESV", 6, 8);
+test(61, Location.getChapter("ESV"), "Rev 12");
+test(62, Location.getVerseNumber("ESV"), "6");
+test(63, Location.getLastVerseNumber("ESV"), "8");
 jsdump("\n");
 
-Bible.setVerse("ESV", 6, 5);
-test(64, Bible.getChapter("ESV"), "Rev 12");
-test(65, Bible.getVerseNumber("ESV"), "6");
-test(66, Bible.getLastVerseNumber("ESV"), "6");
+Location.setVerse("ESV", 6, 5);
+test(64, Location.getChapter("ESV"), "Rev 12");
+test(65, Location.getVerseNumber("ESV"), "6");
+test(66, Location.getLastVerseNumber("ESV"), "6");
 jsdump("\n");
 
-Bible.setVerse("ESV", 6, 6);
-test(67, Bible.getChapter("ESV"), "Rev 12");
-test(68, Bible.getVerseNumber("ESV"), "6");
-test(69, Bible.getLastVerseNumber("ESV"), "6");
+Location.setVerse("ESV", 6, 6);
+test(67, Location.getChapter("ESV"), "Rev 12");
+test(68, Location.getVerseNumber("ESV"), "6");
+test(69, Location.getLastVerseNumber("ESV"), "6");
 jsdump("\n");
 
-Bible.setVerse("ESV", -1, 6);
-test(70, Bible.getChapter("ESV"), "Rev 12");
-test(71, Bible.getVerseNumber("ESV"), "17");
-test(72, Bible.getLastVerseNumber("ESV"), "17");
+Location.setVerse("ESV", -1, 6);
+test(70, Location.getChapter("ESV"), "Rev 12");
+test(71, Location.getVerseNumber("ESV"), "17");
+test(72, Location.getLastVerseNumber("ESV"), "17");
 jsdump("\n");
 
-Bible.setVerse("ESV", 1, -1);
-test(73, Bible.getChapter("ESV"), "Rev 12");
-test(74, Bible.getVerseNumber("ESV"), "1");
-test(75, Bible.getLastVerseNumber("ESV"), "17");
+Location.setVerse("ESV", 1, -1);
+test(73, Location.getChapter("ESV"), "Rev 12");
+test(74, Location.getVerseNumber("ESV"), "1");
+test(75, Location.getLastVerseNumber("ESV"), "17");
 jsdump("\n");
 
-Bible.setVerse("ESV", 0, 0);
-test(76, Bible.getChapter("ESV"), "Rev 12");
-test(77, Bible.getVerseNumber("ESV"), "0");
-test(78, Bible.getLastVerseNumber("ESV"), "0");
+Location.setVerse("ESV", 0, 0);
+test(76, Location.getChapter("ESV"), "Rev 12");
+test(77, Location.getVerseNumber("ESV"), "0");
+test(78, Location.getLastVerseNumber("ESV"), "0");
 jsdump("\n");
 
-Bible.setVerse("ESV", 3, 9);
-test(79, Bible.getChapter("ESV"), "Rev 12");
-test(80, Bible.getVerseNumber("ESV"), "3");
-test(81, Bible.getLastVerseNumber("ESV"), "9");
+Location.setVerse("ESV", 3, 9);
+test(79, Location.getChapter("ESV"), "Rev 12");
+test(80, Location.getVerseNumber("ESV"), "3");
+test(81, Location.getLastVerseNumber("ESV"), "9");
 jsdump("\n");
 
 test(82, Bible.getMaxVerse("ESV", "Ps 119"), 176);
@@ -213,12 +213,12 @@ test(92, Bible.getMaxVerse("UZV", "Ps.118.24"), 176);
 test(93, Bible.getMaxVerse("UZV", "Ps.118.100.120"), 176);
 
 function testLocs(tn, vers, bk, ch, vs, lv, sys) {
-  test(tn + "a", Bible.getChapter(vers), bk + " " + ch);
-  test(tn + "b", Bible.getBookName(vers), bk);
-  test(tn + "c", Bible.getChapterNumber(vers), ch);
-  test(tn + "d", Bible.getVerseNumber(vers), vs);
-  test(tn + "e", Bible.getLastVerseNumber(vers), lv);
-  test(tn + "f", Bible.getLocation(vers), bk + "." + ch + "." + vs + "." +lv);
+  test(tn + "a", Location.getChapter(vers), bk + " " + ch);
+  test(tn + "b", Location.getBookName(vers), bk);
+  test(tn + "c", Location.getChapterNumber(vers), ch);
+  test(tn + "d", Location.getVerseNumber(vers), vs);
+  test(tn + "e", Location.getLastVerseNumber(vers), lv);
+  test(tn + "f", Location.getLocation(vers), bk + "." + ch + "." + vs + "." +lv);
   test(tn + "g", Bible.getVerseSystem(vers), sys);
 }
 

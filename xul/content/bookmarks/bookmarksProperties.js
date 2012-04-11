@@ -45,8 +45,8 @@ var gUnknownModule = false;
 
 function Init()
 {
-  updateCSSBasedOnCurrentLocale(["#bmPropsWindow", "input, button, menu, menuitem"],2);
-  createVersionClasses(2);
+  updateCSSBasedOnCurrentLocale(["#bmPropsWindow", "input, button, menu, menuitem"]);
+  createVersionClasses();
   
   BMDS = initBMServices();
   gResource = RDF.GetResource(window.arguments[0]);

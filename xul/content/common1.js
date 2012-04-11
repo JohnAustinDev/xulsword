@@ -82,6 +82,71 @@ var LocaleDefaultVersion = [];
 var LocaleDirectionEntity;
 var LocaleDirectionChar;
 
+var Location = {
+  modname:null,
+  modvsys:null,
+  book:null,
+  chapter:null,
+  verse:null,
+  lastverse:null,
+  
+  setLocation: function(modname, xsref) {
+    this.modname = modname;
+    this.modvsys = Bible.getVerseSystem(modname);
+    var loc = Bible.convertLocation(this.modvsys, xsref, this.modvsys);
+    var p = loc.split(".");
+    this.book = p[0];
+    this.chapter = p[1];
+    this.verse = p[2];
+    this.lastverse = p[3];
+    return this.modvsys;
+  },
+  
+  setVerse: function(modname, verse, lastverse) {
+    var loc = this.getLocation(modname);
+    var p = loc.split(".");
+    var maxv = Bible.getMaxVerse(modname, loc);
+    
+    if (verse == -1 || verse > maxv) verse = maxv;
+    else if (verse < 0) {verse = 0;}
+    
+    if (lastverse > maxv) {lastverse = maxv;}
+    else if (lastverse < verse) lastverse = verse;
+    
+    p[2] = verse;
+    p[3] = lastverse;
+    this.setLocation(modname, p.join("."));
+  
+    return this.modvsys;
+  },
+  
+  getLocation: function(modname) {
+    if (!this.modname) {setLocation(WESTERNVS, "Gen.1.1.1");}
+    return Bible.convertLocation(this.modname, this.book + "." + this.chapter + "." + this.verse + "." + this.lastverse, modname);
+  },
+  
+  getChapter: function(modname) {
+    var p = this.getLocation(modname).split(".");
+    return p[0] + " " + p[1];
+  },
+    
+  getBookName: function() {
+    return this.getLocation(this.modname).split(".")[0];
+  },
+
+  getChapterNumber: function(modname) {
+    return this.getLocation(modname).split(".")[1];
+  },
+  
+  getVerseNumber: function(modname) {
+    return this.getLocation(modname).split(".")[2];
+  },
+  
+  getLastVerseNumber: function(modname) {
+    return this.getLocation(modname).split(".")[3];
+  }
+};
+
 
 /************************************************************************
  * Unlock all texts
@@ -128,12 +193,8 @@ var PointedBookBackground;
 var ChooserStartMargin;
 var SelectedVerseCSS;
 var SelectedVerseColor;
-//var BookNameCSS;
 var ChooserBookButtonHeight;
 var NormalBookBackground;
-//var ChooserFontSize;
-//var TestHeadingCSS;
-//var TestHeadingFontSize;
 var ChapterArrowCSS;
 var InitialCssFontSize = [];
 var CssRuleHavingFontSize = [];
@@ -142,19 +203,21 @@ var DefaultFontSizeAdjust = "0.55";
 var DefaultVersionLineHeight = "135%";
 var DefaultLocaleLineHeight = "100%";
 
-function getCSS(searchText, styleSheetNumber) {
-  if (!styleSheetNumber) styleSheetNumber=0;
+function getCSS(searchText) {
   searchText = new RegExp("^" + escapeRE(searchText));
-  for (var z=0; z!=document.styleSheets[styleSheetNumber].cssRules.length; z++) {
-    var myRule = document.styleSheets[styleSheetNumber].cssRules[z];
-    if (myRule.cssText.search(searchText) != -1) return myRule;
+  var myRule = null;
+  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
+    for (var z=0; z!=document.styleSheets[ssn].cssRules.length; z++) {
+      var myRule = document.styleSheets[ssn].cssRules[z];
+      if (myRule.cssText.search(searchText) != -1) return myRule;
+    }
   }
   return null;
 }
 
 var StyleRules = [];
-function createVersionClasses(sheetNum) {
-  var sheet = document.styleSheets[sheetNum];
+function createVersionClasses() {
+  var sheet = document.styleSheets[document.styleSheets.length-1];
   if (!sheet) return;
   var sheetLength = sheet.cssRules.length;
   for (var r=0; r<StyleRules.length; r++) {
@@ -172,12 +235,11 @@ function getStyleRule(selector, config, notImportant, sizeNotImportant) {
   return selector + " {" + direction + font + fontSizeAdjust + lineHeight + " }";
 }
 
-function updateCSSBasedOnVersion(version, cssRuleNameArray, styleSheetNumber) {
-  if (!styleSheetNumber) styleSheetNumber=0;
+function updateCSSBasedOnVersion(version, cssRuleNameArray) {
   var versionConfig = VersionConfigs[version];
   var rules = [];
   for (var i=0; i<cssRuleNameArray.length; i++) {
-    var thisRule = getCSS(cssRuleNameArray[i], styleSheetNumber);
+    var thisRule = getCSS(cssRuleNameArray[i]);
     if (thisRule) {
       thisRule.style.fontFamily = (versionConfig && versionConfig.font ? "\"" + versionConfig.font + "\"":"\"" + DefaultFont + "\"");
       thisRule.style.direction = (versionConfig && versionConfig.direction ? versionConfig.direction:"ltr");
@@ -185,19 +247,18 @@ function updateCSSBasedOnVersion(version, cssRuleNameArray, styleSheetNumber) {
       thisRule.style.lineHeight = (versionConfig && versionConfig.lineHeight ? versionConfig.lineHeight:DefaultVersionLineHeight);
     }
     else {
-      var sheet = document.styleSheets[styleSheetNumber];
+      var sheet = document.styleSheets[document.styleSheets.length-1];
       sheet.insertRule(getStyleRule(cssRuleNameArray[i], versionConfig), sheet.cssRules.length);
     }
   }
 }
 
 // Adjusts rtl related styles for listed CSS rules or creates the rule if it doesn't exist
-function updateCSSBasedOnCurrentLocale(cssRuleNameArray, styleSheetNumber) {
-  if (!styleSheetNumber) styleSheetNumber=0;
+function updateCSSBasedOnCurrentLocale(cssRuleNameArray) {
   var currentLocale = getLocale();
   var localeConfig = LocaleConfigs[currentLocale];
   for (var i=0; i<cssRuleNameArray.length; i++) {
-    var thisRule = getCSS(cssRuleNameArray[i], styleSheetNumber);
+    var thisRule = getCSS(cssRuleNameArray[i]);
     if (thisRule) {
       thisRule.style.fontFamily = (localeConfig && localeConfig.font ? "\"" + localeConfig.font + "\"":"\"" + DefaultFont + "\"");
       thisRule.style.direction = (localeConfig && localeConfig.direction ? localeConfig.direction:"ltr");
@@ -211,7 +272,7 @@ function updateCSSBasedOnCurrentLocale(cssRuleNameArray, styleSheetNumber) {
       }
     }
     else {
-      var sheet = document.styleSheets[styleSheetNumber];
+      var sheet = document.styleSheets[document.styleSheets.length-1];
       sheet.insertRule(getStyleRule(cssRuleNameArray[i], localeConfig, true), sheet.cssRules.length);
     }
   }
@@ -257,102 +318,65 @@ function getVersionOfLocale(alocale) {
   return "none";
 }
 
-function initializeStyleGlobals(sheetNum) {
-  if (!document.styleSheets[sheetNum]) return;
-  //Save to global variables the CSS initial values of those things which may be programatically changed
-  for (var z=0; z<document.styleSheets[sheetNum].cssRules.length; z++) {
-    var myRule = document.styleSheets[sheetNum].cssRules[z];
-    switch (myRule.cssText.match(/^(.*?) /)[1]) {
-    case ".scriptbox": ScriptBoxFontColor = myRule.style.color; break;  
-    case ".scriptboxtext": ScriptBoxTextCSS = myRule; break;
-    case ".booknameshowing": SelectedBookBackground = myRule.style.background; break;
-    case ".booknamepoint": PointedBookBackground = myRule.style.background; break;
-    case ".hl":
-      //Save the CSS hl color for future use
-      SelectedVerseCSS = myRule;
-      SelectedVerseColor = myRule.style.color;
-      break;
-    case ".bookname":
-      //BookNameCSS = myRule;
-      NormalBookBackground = myRule.style.background;
-      ChooserBookButtonHeight = Number(myRule.style.height.match(/(\d+)/)[1]);
-      //ChooserFontSize = Number(myRule.style.fontSize.match(/(\d+)/)[1]);
-      break;
-    
-/*    case ".testheading":
-      TestHeadingCSS = myRule;
-      TestHeadingFontSize = Number(myRule.style.fontSize.match(/(\d+)/)[1]);
-      break;*/
-    } 
-  }
-}
-
-function pullFontSizesFromCSS(sheetNum) {
-  if (!document.styleSheets[sheetNum]) return;
-  //Save to global variables the CSS initial values of those things which may be programatically changed
-  for (var z=0; z<document.styleSheets[sheetNum].cssRules.length; z++) {
-    var myRule = document.styleSheets[sheetNum].cssRules[z];
-    if (myRule.style && myRule.style.fontSize) {
-      var fontSize = myRule.style.fontSize.match(/(\d+)\s*px/);
-      if (!fontSize || !fontSize[1]) continue;
-      InitialCssFontSize.push(Number(fontSize[1]));
-      CssRuleHavingFontSize.push(z);
+function initializeStyleGlobals() {
+  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
+    //Save to global variables the CSS initial values of those things which may be programatically changed
+    for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
+      var myRule = document.styleSheets[ssn].cssRules[z];
+      switch (myRule.cssText.match(/^(.*?) /)[1]) {
+      case ".scriptbox": ScriptBoxFontColor = myRule.style.color; break;  
+      case ".scriptboxtext": ScriptBoxTextCSS = myRule; break;
+      case ".booknameshowing": SelectedBookBackground = myRule.style.background; break;
+      case ".booknamepoint": PointedBookBackground = myRule.style.background; break;
+      case ".hl":
+        //Save the CSS hl color for future use
+        SelectedVerseCSS = myRule;
+        SelectedVerseColor = myRule.style.color;
+        break;
+      case ".bookname":
+        //BookNameCSS = myRule;
+        NormalBookBackground = myRule.style.background;
+        ChooserBookButtonHeight = Number(myRule.style.height.match(/(\d+)/)[1]);
+        //ChooserFontSize = Number(myRule.style.fontSize.match(/(\d+)/)[1]);
+        break;
+      
+  /*    case ".testheading":
+        TestHeadingCSS = myRule;
+        TestHeadingFontSize = Number(myRule.style.fontSize.match(/(\d+)/)[1]);
+        break;*/
+      } 
     }
   }
 }
 
-function adjustFontSizes(sheetNum, delta) {
+function pullFontSizesFromCSS() {
+  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
+    //Save to global variables the CSS initial values of those things which may be programatically changed
+    for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
+      var myRule = document.styleSheets[ssn].cssRules[z];
+      if (myRule.style && myRule.style.fontSize) {
+        var fontSize = myRule.style.fontSize.match(/(\d+)\s*px/);
+        if (!fontSize || !fontSize[1]) continue;
+        InitialCssFontSize.push(Number(fontSize[1]));
+        CssRuleHavingFontSize.push(ssn + "><" + z);
+      }
+    }
+  }
+}
+
+function adjustFontSizes(delta) {
   for (var i=0; i<CssRuleHavingFontSize.length; i++) {
-    var myRule = document.styleSheets[sheetNum].cssRules[CssRuleHavingFontSize[i]];
+    var sheetNum = CssRuleHavingFontSize[i].split("><")[0];
+    var ruleNum = CssRuleHavingFontSize[i].split("><")[1];
+    var myRule = document.styleSheets[sheetNum].cssRules[ruleNum];
     var newFontSize = InitialCssFontSize[i] + delta;
     if (newFontSize < 6) newFontSize=6;
     
     if (myRule.cssText.match(/^(.*?) /)[1] != ".tabs")
-        document.styleSheets[sheetNum].cssRules[CssRuleHavingFontSize[i]].style.fontSize = newFontSize + "px";
+        document.styleSheets[sheetNum].cssRules[ruleNum].style.fontSize = newFontSize + "px";
   }
 }
 
-function firstDisplayBible(returnFrameNumber) {
-  try {var vers=prefs.getCharPref("DefaultVersion");}
-  catch (er) {vers = null;}
-  var numWins = prefs.getIntPref("NumDisplayedWindows");
-  for (var w=1; w<=numWins; w++) {
-    if (!MainWindow || !MainWindow.Win[w]) continue;
-    vers = MainWindow.Win[w].modName;
-    if (MainWindow.Win[w].modType == BIBLE) break;
-  }
-  if (!returnFrameNumber) return vers;
-  else {
-    if (!vers || w>numWins) w=1;
-    return w;
-  }
-}
-
-function firstDisplayModule() {
-  return MainWindow.Win[1].modName;
-}
-
-var LocaleDir;
-function guiDirection() {
-  if (LocaleDir) return LocaleDir;
-  var guidir = LocaleConfigs[getLocale()];
-  if (guidir && guidir.direction) guidir=guidir.direction;
-  else {guidir="ltr";}
-  LocaleDir = guidir;
-  return LocaleDir;
-}
-
-function setGlobalDirectionPrefs() {
-  // Set scrollbar location (left side for RTL locale)
-  var progdir = guiDirection();
-  rootprefs.setIntPref("layout.scrollbar.side", (progdir=="rtl" ? 4:0));
-  rootprefs.setIntPref("bidi.direction", (progdir=="rtl" ? 2:1));
-}
-
-function windowLocationReload() {
-  setGlobalDirectionPrefs();
-  window.location.reload();
-}
 
 /************************************************************************
  * Bible Location Parsing Functions etc.
@@ -650,7 +674,7 @@ function normalizeOsisReference(ref, bibleMod) {
   if (ref.search(/^[^\.]+\.\d+$/) != -1)                        // bk.c
     return  ref + ".1-" + ref + "." + Bible.getMaxVerse(bibleMod, ref);
     
-  //else {jsdump("WARNING: Unrecognized Osis Cross Reference " + "\"" + saveref + ", " + ref + "\" found in " + Bible.getLocation(bibleMod) + "\n");}
+  //else {jsdump("WARNING: Unrecognized Osis Cross Reference " + "\"" + saveref + ", " + ref + "\" found in " + Location.getLocation(bibleMod) + "\n");}
   return null;
 }
 
@@ -739,6 +763,48 @@ function getBookIntroduction(version, book, bibleObj) {
  * Miscellaneous Functions
  ***********************************************************************/ 
 
+function firstDisplayBible(returnFrameNumber) {
+  try {var vers=prefs.getCharPref("DefaultVersion");}
+  catch (er) {vers = null;}
+  var numWins = prefs.getIntPref("NumDisplayedWindows");
+  for (var w=1; w<=numWins; w++) {
+    if (!MainWindow || !MainWindow.Win[w]) continue;
+    vers = MainWindow.Win[w].modName;
+    if (MainWindow.Win[w].modType == BIBLE) break;
+  }
+  if (!returnFrameNumber) return vers;
+  else {
+    if (!vers || w>numWins) w=1;
+    return w;
+  }
+}
+
+function firstDisplayModule() {
+  return MainWindow.Win[1].modName;
+}
+
+var LocaleDir;
+function guiDirection() {
+  if (LocaleDir) return LocaleDir;
+  var guidir = LocaleConfigs[getLocale()];
+  if (guidir && guidir.direction) guidir=guidir.direction;
+  else {guidir="ltr";}
+  LocaleDir = guidir;
+  return LocaleDir;
+}
+
+function setGlobalDirectionPrefs() {
+  // Set scrollbar location (left side for RTL locale)
+  var progdir = guiDirection();
+  rootprefs.setIntPref("layout.scrollbar.side", (progdir=="rtl" ? 4:0));
+  rootprefs.setIntPref("bidi.direction", (progdir=="rtl" ? 2:1));
+}
+
+function windowLocationReload() {
+  setGlobalDirectionPrefs();
+  window.location.reload();
+}
+
 //Removes white-space, trailing or leading punctuation, "x" (note symbol),
 //and leading digits (for verse numbers)
 function cleanDoubleClickSelection(sel) {
@@ -778,14 +844,14 @@ function getGenBookChapterText(moduleAndKey, bible, fn) {
 }
 
 var VerseNm = new RegExp("(<sup class=\"versenum\">)(\\d+)(</sup>)", "g");
-function getChapterText(bible, fn, vers, appendNotes) {
-  var text = bible.getChapterText(vers);
+function getChapterText(bible, location, fn, vers, appendNotes) {
+  var text = bible.getChapterText(vers, Location.getLocation(vers));
   var tl = getLocaleOfModule(vers);
   if (!tl) {tl = getLocale();}
   if (!DisplayNumeral[tl]) getDisplayNumerals(tl);
   if (DisplayNumeral[tl][10])
       text = text.replace(VerseNm, function(str, p1, p2, p3) {return p1 + dString(p2, tl) + p3;});
-  text = insertUserNotes(bible.getBookName(), bible.getChapterNumber(vers), vers, text);
+  text = insertUserNotes(location.getBookName(), location.getChapterNumber(vers), vers, text);
   
   if (!appendNotes) {
     fn.CrossRefs = bible.getCrossRefs();
