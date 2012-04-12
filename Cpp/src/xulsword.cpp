@@ -18,6 +18,8 @@
 
 #ifdef _WIN32
   #include "windows.h"
+#else
+  #include "config.h"
 #endif
 
 #include <dirent.h>
@@ -53,6 +55,14 @@
 #define DLLEXPORT extern "C" __declspec(dllexport)
 #else
 #define DLLEXPORT extern "C"
+#endif
+
+#ifndef PHPSWORD
+#define emalloc malloc
+#else
+extern "C" {
+#include "php.h"
+}
 #endif
 
 
@@ -344,7 +354,10 @@ PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
 xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
-  SWLog::getSystemLog()->logDebug("\nXULSWORD CONSTRUCTOR\n");
+  MyLog = new SWLogXS();
+  SWLog::setSystemLog(MyLog);
+  SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
+  SWLog::getSystemLog()->logDebug("XULSWORD CONSTRUCTOR");
   ToUpperCase = (toUpperCase ? toUpperCase:NULL);
   ThrowJS = (throwJS ? throwJS:NULL);
   ReportProgress = (reportProgress ? reportProgress:NULL);
@@ -360,14 +373,15 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   
   MyManager->Load();
 
-  if (ToUpperCase) {MyStringMgr = new StringMgrXS(ToUpperCase);}
-  else {MyStringMgr = NULL;}
-  StringMgr::setSystemStringMgr(MyStringMgr);
-
+  if (ToUpperCase) {
+    MyStringMgrXS = new StringMgrXS(ToUpperCase);
+    StringMgr::setSystemStringMgr(MyStringMgrXS);
+  }
 }
 
 xulsword::~xulsword() {
-  //delete(MyStringMgr); deleted by _staticsystemStringMgr
+  //delete(MyLog); deleted by _staticSystemLog
+  //delete(MyStringMgrXS); deleted by _staticsystemStringMgr
   if (MyManager) {delete(MyManager);}
   //delete(MyMarkupFilterMgr); deleted by SWMgr
 }
@@ -397,6 +411,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     delete(testkey);
     xsThrow("GetChapterText: module was not Bible or Commentary.");
   }
+
   myVerseKey->Persist(1);
   myVerseKey->setAutoNormalize(0); // Non-existant calls should return empty string
   module->setKey(myVerseKey);
@@ -424,6 +439,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   SWBuf bk;
   bk.set(bkp);
   delete(bkp);
+
   int ch = myVerseKey->getChapter();
 
   bool haveText = false;
@@ -450,22 +466,22 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     AttributeList::iterator AtIndex;
     for (AtIndex = module->getEntryAttributes()["Footnote"].begin(); AtIndex != module->getEntryAttributes()["Footnote"].end(); AtIndex++) {
       if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
-          sprintf(Outtext, "cr.%d.%s<bg/>", fnV, myVerseKey->getOSISRef());
+          sprintf(Outtext, "cr.%d.%s<bg>", fnV, myVerseKey->getOSISRef());
           crossRefText.append(Outtext);
           crossRefText.append(AtIndex->second["refList"]);
-          crossRefText.append("<nx/>");
+          crossRefText.append("<nx>");
           noteText.append(Outtext);
           noteText.append(AtIndex->second["refList"]);
-          noteText.append("<nx/>");
+          noteText.append("<nx>");
         }
         else {
-          sprintf(Outtext, "fn.%d.%s<bg/>", fnV, myVerseKey->getOSISRef());
+          sprintf(Outtext, "fn.%d.%s<bg>", fnV, myVerseKey->getOSISRef());
           footnoteText.append(Outtext);
           footnoteText.append(module->RenderText(AtIndex->second["body"]));
-          footnoteText.append("<nx/>");
+          footnoteText.append("<nx>");
           noteText.append(Outtext);
           noteText.append(module->RenderText(AtIndex->second["body"]));
-          noteText.append("<nx/>");
+          noteText.append("<nx>");
         }
       fnV++;
     }
@@ -536,7 +552,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   delete(testkey);
   
   char *retval;
-  retval = (char *)malloc(chapHTML.length() + 1);
+  retval = (char *)emalloc(chapHTML.length() + 1);
   if (retval) {strcpy(retval, chapHTML.c_str());}
   return retval;
 }
@@ -548,7 +564,7 @@ GetFootnotes
 char *xulsword::getFootnotes() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
   char *retval;
-  retval = (char *)malloc(MyFootnotes.length() + 1);
+  retval = (char *)emalloc(MyFootnotes.length() + 1);
   if (retval) {strcpy(retval, MyFootnotes.c_str());}
 	return retval;
 }
@@ -561,7 +577,7 @@ char *xulsword::getCrossRefs() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
 
   char *retval;
-  retval = (char *)malloc(MyCrossRefs.length() + 1);
+  retval = (char *)emalloc(MyCrossRefs.length() + 1);
   if (retval) {strcpy(retval, MyCrossRefs.c_str());}
 	return retval;
 }
@@ -574,7 +590,7 @@ char *xulsword::getNotes() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
 
   char *retval;
-  retval = (char *)malloc(MyNotes.length() + 1);
+  retval = (char *)emalloc(MyNotes.length() + 1);
   if (retval) {strcpy(retval, MyNotes.c_str());}
 	return retval;
 }
@@ -731,7 +747,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   delete(testkey1);
   
   char *retval;
-  retval = (char *)malloc(chapText.length() + 1);
+  retval = (char *)emalloc(chapText.length() + 1);
   if (retval) {strcpy(retval, chapText.c_str());}
 	return retval;
 }
@@ -792,7 +808,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
   delete(testkey);
   
   char *retval;
-  retval = (char *)malloc(bText.length() + 1);
+  retval = (char *)emalloc(bText.length() + 1);
   if (retval) {strcpy(retval, bText.c_str());}
 	return retval;
 }
@@ -825,7 +841,7 @@ char *xulsword::getVerseSystem(const char *mod) {
   SWBuf vsystem;
   vsystem.set(getVerseSystemOfModule(mod));
   char *retval;
-  retval = (char *)malloc(vsystem.length() + 1);
+  retval = (char *)emalloc(vsystem.length() + 1);
   if (retval) {strcpy(retval, vsystem.c_str());}
 	return retval;
 }
@@ -854,7 +870,7 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
   }
 
   char *retval;
-  retval = (char *)malloc(result.length() + 1);
+  retval = (char *)emalloc(result.length() + 1);
   if (retval) {strcpy(retval, result.c_str());}
 	return retval;
 }
@@ -895,7 +911,7 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   delete(testkey);
 
   char *retval;
-  retval = (char *)malloc(intro.length() + 1);
+  retval = (char *)emalloc(intro.length() + 1);
   if (retval) {strcpy(retval, intro.c_str());}
 	return retval;
 }
@@ -942,7 +958,7 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
   }
 
   char *retval;
-  retval = (char *)malloc(xstring.length() + 1);
+  retval = (char *)emalloc(xstring.length() + 1);
   if (retval) {strcpy(retval, xstring.c_str());}
 	return retval;
 }
@@ -980,7 +996,7 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
   }
 
   char *retval;
-  retval = (char *)malloc(keytext.length() + 1);
+  retval = (char *)emalloc(keytext.length() + 1);
   if (retval) {strcpy(retval, keytext.c_str());}
 	return retval;
 }
@@ -1023,7 +1039,7 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   delete(testkey);
 
   char *retval;
-  retval = (char *)malloc(chapterText.length() + 1);
+  retval = (char *)emalloc(chapterText.length() + 1);
   if (retval) {strcpy(retval, chapterText.c_str());}
 	return retval;
 }
@@ -1073,7 +1089,7 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   delete(testkey);
 
   char *retval;
-  retval = (char *)malloc(toc.length() + 1);
+  retval = (char *)emalloc(toc.length() + 1);
   if (retval) {strcpy(retval, toc.c_str());}
 	return retval;
 }
@@ -1236,12 +1252,12 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
       else {tokey.copyFrom(fromkey);}
 
       MySearchTexts.append(tokey.getOSISRef());
-      MySearchTexts.append("<bg/>");
+      MySearchTexts.append("<bg>");
       keepStrongs ? MySearchTexts.append(module->RenderText()):MySearchTexts.append(module->StripText());
-      MySearchTexts.append("<nx/>");
+      MySearchTexts.append("<nx>");
 
       MySearchVerses.append(tokey.getOSISRef());
-      MySearchVerses.append("<nx/>");
+      MySearchVerses.append("<nx>");
       
       SearchList++;
       written++;
@@ -1253,12 +1269,12 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
     module->setKey(SearchList);
     while (!SearchList.Error()&&(written<num)) {
       MySearchTexts.append(module->getKeyText());
-      MySearchTexts.append("<bg/>");
+      MySearchTexts.append("<bg>");
       keepStrongs ? MySearchTexts.append(module->RenderText()):MySearchTexts.append(module->StripText());
-      MySearchTexts.append("<nx/>");
+      MySearchTexts.append("<nx>");
 
       MySearchVerses.append(module->getKeyText());
-      MySearchVerses.append("<nx/>");
+      MySearchVerses.append("<nx>");
 
       SearchList++;
       written++;
@@ -1269,7 +1285,7 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
   SearchList.Persist(savePersist);
 
   char *retval;
-  retval = (char *)malloc(MySearchTexts.length() + 1);
+  retval = (char *)emalloc(MySearchTexts.length() + 1);
   if (retval) {strcpy(retval, MySearchTexts.c_str());}
 	return retval;
 }
@@ -1353,7 +1369,7 @@ char *xulsword::getGlobalOption(const char *option) {
   *thisOption ? rCText.set("On") : rCText.set("Off");
 
   char *retval;
-  retval = (char *)malloc(rCText.length() + 1);
+  retval = (char *)emalloc(rCText.length() + 1);
   if (retval) {strcpy(retval, rCText.c_str());}
 	return retval;
 }
@@ -1414,7 +1430,7 @@ char* xulsword::getModuleList() {
 	if (!strcmp(tr.c_str(), "")) {tr.assign("No Modules");}
 
   char *retval;
-  retval = (char *)malloc(tr.length() + 1);
+  retval = (char *)emalloc(tr.length() + 1);
   if (retval) {strcpy(retval, tr.c_str());}
 	return retval;
 }
@@ -1445,7 +1461,7 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
   }
 
   char *retval;
-  retval = (char *)malloc(paramstring.length() + 1);
+  retval = (char *)emalloc(paramstring.length() + 1);
   if (retval) {strcpy(retval, paramstring.c_str());}
 	return retval;
 }
@@ -1467,7 +1483,7 @@ SWMgrXS::SWMgrXS(const char *iConfigPath, bool autoload, SWFilterMgr *filterMgr,
 }
 
 signed char SWMgrXS::Load() {
-SWLog::getSystemLog()->logDebug("\nSWMgrXS Load\n");
+SWLog::getSystemLog()->logDebug("SWMgrXS Load");
 //COPIED from SWMgr::Load 3/6/2012
 	signed char ret = 0;
 
@@ -1525,7 +1541,6 @@ SWLog::getSystemLog()->logDebug("\nSWMgrXS Load\n");
 		}
 //EDIT_END
 
-printf("CreateMods mgrModeMultiMod=%i, augmentHome=%i\n", mgrModeMultiMod, augmentHome);
 		CreateMods(mgrModeMultiMod);
 
 		for (std::list<SWBuf>::iterator pathIt = augPaths.begin(); pathIt != augPaths.end(); pathIt++) {
@@ -1581,14 +1596,20 @@ MarkupFilterMgrXS::MarkupFilterMgrXS() {
 }
 
 MarkupFilterMgrXS::~MarkupFilterMgrXS() {
-    if (fromthml)
-            delete (fromthml);
-    if (fromgbf)
-            delete (fromgbf);
-    if (fromplain)
-            delete (fromplain);
-    if (fromosis)
-            delete (fromosis);
-    if (fromtei)
-            delete (fromtei);
+  // parent destructor takes case of everything
+}
+
+
+/********************************************************************
+SWLogXS - to implement xulsword's own OSIS markup filters
+*********************************************************************/
+SWLogXS::SWLogXS() {}
+SWLogXS::~SWLogXS() {}
+void SWLogXS::logMessage(const char *message, int level) const {
+#ifndef PHPSWORD
+	std::cerr << message;
+	std::cerr << std::endl;
+#else
+  printf("%s\n", message);
+#endif
 }

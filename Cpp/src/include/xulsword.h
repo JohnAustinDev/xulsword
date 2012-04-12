@@ -25,6 +25,7 @@
 #include "stringmgr.h"
 #include "swconfig.h"
 #include "swmodule.h"
+#include "swlog.h"
 #include "ztext.h"
 #include "rawtext.h"
 #include "rawtext4.h"
@@ -74,6 +75,14 @@ class MarkupFilterMgrXS : MarkupFilterMgr {
     ~MarkupFilterMgrXS();
 };
 
+//SWLog - for custom logging
+class SWLogXS : public SWLog {
+  public:
+    SWLogXS();
+    ~SWLogXS();
+    virtual void logMessage(const char *message, int level) const;
+};
+
 
 SWORD_NAMESPACE_END
 
@@ -86,8 +95,9 @@ class xulsword {
 
   private:
   SWMgrXS           *MyManager;
-  StringMgrXS       *MyStringMgr;
+  StringMgrXS       *MyStringMgrXS;
   MarkupFilterMgrXS *MyMarkupFilterMgr;
+  SWLogXS           *MyLog;
   VerseMgr          *MyVerseMgr;
 
   ModMap::iterator modIterator;	//Iterator for modules

@@ -51,8 +51,8 @@ DEFINITION OF A "XULSWORD REFERENCE":
                           never cross chapter boundaries).
 
 LISTS OF VERSES OR NOTES ARE RETURNED IN THE FOLLOWING FORMAT:
-  identifier<bg/>body<nx/>
-  Note: the identifier and <bg/> tag are not returned with getSearchVerses()
+  identifier<bg>body<nx>
+  Note: the identifier and <bg> tag are not returned with getSearchVerses()
 
 */
 

@@ -3,6 +3,7 @@ PHP_ARG_ENABLE(phpsword,
     [  --enable-phpsword      Enable "phpsword" extension support])
 
 if test $PHP_PHPSWORD != "no"; then
+    AC_DEFINE([PHPSWORD], [1], [Compiling phpsword])
     PHP_REQUIRE_CXX()
     PHP_SUBST(PHPSWORD_SHARED_LIBADD)
 

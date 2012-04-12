@@ -192,6 +192,11 @@
   cursor:pointer;
   z-index:7;
 }
+.sr {
+  color:inherit;
+	text-decoration:underline;
+  cursor:pointer;
+}
 /* user note highlight */
 .unverse {
   background:rgb(255,255,140);

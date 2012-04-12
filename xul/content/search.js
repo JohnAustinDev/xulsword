@@ -606,10 +606,10 @@ function getHTMLSearchResults(firstMatchToWrite, numMatchesToWrite, wordsToHighl
   }
 //dump(strongsArray + "\n");
   var matchid, matchLink, matchText; 
-  var match = matches.split("<nx/>");
+  var match = matches.split("<nx>");
   match.pop(); //remove last value which is always empty
   for (var i=0; i<match.length; i++) {
-    var parts = match[i].split("<bg/>");
+    var parts = match[i].split("<bg>");
     if (ModuleUsesVerseKey) {
       try {var bname = Book[findBookNum(parts[0].split(".")[0])].bName;}
       catch (er) {jsdump("WARNING: getHTMLSearchResults, NO BNUM!!: " + parts[0] + "\n"); continue;}
