@@ -70,9 +70,9 @@ PHP_METHOD(phpsword, getChapterText)
   sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
   sword = obj->sword;
   if (sword != NULL) {
-    char *vkeymod;
+    const char *vkeymod;
     int l1;
-    char *vkeytext;
+    const char *vkeytext;
     int l2;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymod, &l1, &vkeytext, &l2) == FAILURE) {
       RETURN_EMPTY_STRING();

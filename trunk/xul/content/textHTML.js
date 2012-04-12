@@ -134,7 +134,7 @@ function insertUserNotes(aBook, aChapter, aModule, text) {
     // if this is a selected verse, place usernote inside the hilighted element (more like regular notes, so highlightSelectedVerses works right)
     var re = new RegExp(verseStart + "(\\s*<span.*?>)?", "im");
     usernotes.html = usernotes.html.replace(re, "$&" + newNoteHTML);
-    usernotes.notes += myid + "<bg/>" + note + "<nx/>";
+    usernotes.notes += myid + "<bg>" + note + "<nx>";
   }
   return usernotes;
 }
@@ -148,7 +148,7 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
   var versionDirectionEntity = (VersionConfigs[version] && VersionConfigs[version].direction == "rtl" ? "&rlm;":"&lrm;");
   var orient = (VersionConfigs[version] && VersionConfigs[version].direction == "rtl" ? "fncol3RTL":"fncol3LTR");
   var t = "<div id=\"maintable.\" class=\"fntable\">";
-  var note = allNotes.split("<nx/>");
+  var note = allNotes.split("<nx>");
   note = note.sort(ascendingVerse);
   if (note[0] != "") {
     var te = "";
@@ -156,9 +156,9 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
   checkfootnotes :
     // Now parse each note in the chapter separately
     for (var n=0; n < note.length; n++) {
-      // note format is tp.n.Book.c.v<bg/>body
-      var noteid = note[n].split("<bg/>")[0];
-      var body   = note[n].split("<bg/>")[1];
+      // note format is tp.n.Book.c.v<bg>body
+      var noteid = note[n].split("<bg>")[0];
+      var body   = note[n].split("<bg>")[1];
       if (noteid && noteid != "undefined") {    // sometimes this is "undefined" - why?
         // Check if this note should be displayed at bottom, and if not then get next note
         var noteType = noteid.substr(0,2);
@@ -277,10 +277,10 @@ function ascendingVerse(a,b) {
   var t3="cr";
   if (a==null || a=="") return 1;
   if (b==null || b=="") return -1;
-  var av = Number(a.match(/(\d+)\.(\d+)<bg\/>/)[2]);
-  var bv = Number(b.match(/(\d+)\.(\d+)<bg\/>/)[2]);
-  var ac = Number(a.match(/(\d+)\.(\d+)<bg\/>/)[1]);
-  var bc = Number(b.match(/(\d+)\.(\d+)<bg\/>/)[1]);
+  var av = Number(a.match(/(\d+)\.(\d+)<bg>/)[2]);
+  var bv = Number(b.match(/(\d+)\.(\d+)<bg>/)[2]);
+  var ac = Number(a.match(/(\d+)\.(\d+)<bg>/)[1]);
+  var bc = Number(b.match(/(\d+)\.(\d+)<bg>/)[1]);
   if (ac == bc) {
     if (av == bv) {
       var at = a.match(/^(\w\w)/)[1];

@@ -2960,10 +2960,10 @@ function hideEmptyCrossRefs(updateNeededArray) {
     if (Win[w].modType != BIBLE) {continue;}
     var notes = TextCache[w].fn.CrossRefs;
     if (!notes) continue;
-    notes = notes.split("<nx/>");
+    notes = notes.split("<nx>");
     for (var n=0; n<notes.length; n++) {
       if (!notes[n]) continue;
-      notes[n] = notes[n].split("<bg/>");
+      notes[n] = notes[n].split("<bg>");
       notes[n][1] = notes[n][1].split(";");
       if (!notes[n][1].length) continue;
       var hideCR = true;
@@ -3205,7 +3205,7 @@ function getBodyHTML(s, p, chapOffset) {
 
 function filterNotes(notes, p) {
 //jsdump(p.text.substr(p.imin,32) + ", " + p.text.substr(p.imax, 32));
-  const nsep = "<nx/>";
+  const nsep = "<nx>";
   var retval = "";
   var i = p.text.substring(p.imin, p.imax).indexOf(Vtext1) + p.imin;
   var loc = p.text.substr(i).match(/id=\"vs\.[^\.]*\.(\d+)\.(\d+)\"/);
@@ -3220,7 +3220,7 @@ function filterNotes(notes, p) {
 
   notes = notes.split(nsep);
   for (i=0; i<notes.length; i++) {
-    loc = notes[i].match(/(\d+)\.(\d+)<bg\/>/);
+    loc = notes[i].match(/(\d+)\.(\d+)<bg>/);
     if (!loc) continue;
     if (Number(loc[1])<minch || (Number(loc[1])==minch && Number(loc[2])<minvs)) continue;
     if (Number(loc[1])>maxch || (Number(loc[1])==maxch && Number(loc[2])>maxvs)) continue;
@@ -3525,10 +3525,10 @@ function checkNoteBox(beg, end, p, s, fn) {
 
 function hilightUserNotes(userNotes, frameNumber) {
   if (!userNotes) return;
-  userNotes = userNotes.split("<nx/>"); //UserNotes + myid + "<bg/>" + note + "<nx/>";
+  userNotes = userNotes.split("<nx>"); //UserNotes + myid + "<bg>" + note + "<nx>";
   userNotes.pop();
   for (var i=0; i<userNotes.length; i++) {
-    var userNote = userNotes[i].split("<bg/>");
+    var userNote = userNotes[i].split("<bg>");
     if (userNote && userNote[0]) {
       window.setTimeout("FrameDocument[" + frameNumber + "].defaultView.markUserNoteVerse('" + userNote[0] + "');",0);
     }

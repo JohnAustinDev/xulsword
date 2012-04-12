@@ -29,7 +29,6 @@
 EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
 DLLEXPORT xulsword *GetNewXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
-  SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
   xulsword *xsobj = (xulsword *)malloc(sizeof(xulsword));
   xsobj = new xulsword(path, toUpperCase, throwJS, reportProgress);
   return xsobj;

@@ -967,10 +967,10 @@ function activatePopup(datatype, data, delay, yoffset) {
   case "cr":
     if (!pupAlreadyOpened) html += twistyButton(datatype, data, yoffset, versionDirectionEntity);
     var hideEmptyCrossReferences = getPrefOrCreate("HideUnavailableCrossReferences", "Bool", false);
-    var chapRefs = MyFootnotes.CrossRefs.split("<nx/>");
+    var chapRefs = MyFootnotes.CrossRefs.split("<nx>");
     for (var i=0; i<chapRefs.length; i++) {
-      var thisid = chapRefs[i].split("<bg/>")[0];
-      var reflist = chapRefs[i].split("<bg/>")[1];
+      var thisid = chapRefs[i].split("<bg>")[0];
+      var reflist = chapRefs[i].split("<bg>")[1];
       // if we've found the note which matches the id under the mouse pointer
       if (thisid == datatype + "." + data) {
         html += getCRNoteHTML(fromMod, "pu", thisid, reflist, "<hr>", getPrefOrCreate("OpenCrossRefPopups", "Bool", true), Win.number);
@@ -983,9 +983,9 @@ function activatePopup(datatype, data, delay, yoffset) {
   // Footnote: data is elem.title
   //    data form: fn#.bk.c.v
   case "fn":
-    var footnote = MyFootnotes.Footnotes.split("<nx/>");
+    var footnote = MyFootnotes.Footnotes.split("<nx>");
     for (var i=0; i<footnote.length; i++) {
-      var fnpart = footnote[i].split("<bg/>");
+      var fnpart = footnote[i].split("<bg>");
       // if we've found the note which matches the id under the mouse pointer
       if (fnpart[0] == "fn." + data) {
         html += fnpart[1];
@@ -1321,9 +1321,9 @@ function expandCrossRefs(noteid) {
   }
   
   var html = "";
-  var chapRefs = MyFootnotes.CrossRefs.split("<nx/>");
+  var chapRefs = MyFootnotes.CrossRefs.split("<nx>");
   for (var i=0; i<chapRefs.length; i++) {
-    var part = chapRefs[i].split("<bg/>");
+    var part = chapRefs[i].split("<bg>");
     // if we've found the note which matches the id under the mouse pointer
     if (part[0] == noteid) html = getCRNoteHTML(Win.modName, "nb", noteid, part[1], "<br>", expand, Win.number);
   }
