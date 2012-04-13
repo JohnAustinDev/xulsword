@@ -9,6 +9,7 @@ $dictLinks["RU"] ="RDictionary Links";
 $verseNumbers["RU"] ="RVerse Numbers";
 $strongsNumbers["RU"] ="RStrongs";
 $redWords["RU"] ="RRed Words";
+$back["RU"] ="Rback";
 
 // ENGLISH PHRASES
 $headings["EN"] ="Headings";
@@ -18,6 +19,7 @@ $dictLinks["EN"] ="Dictionary Links";
 $verseNumbers["EN"] ="Verse Numbers";
 $strongsNumbers["EN"] ="Strongs";
 $redWords["EN"] ="Red Words";
+$back["EN"] ="back";
 
 // GERMAN PHRASES
 $headings["DE"] ="GHeadings";
@@ -27,4 +29,5 @@ $dictLinks["DE"] ="GDictionary Links";
 $verseNumbers["DE"] ="GVerse Numbers";
 $strongsNumbers["DE"] ="GStrongs";
 $redWords["DE"] ="GRed Words";
+$back["DE"] ="Gback";
 ?>
