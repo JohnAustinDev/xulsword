@@ -151,7 +151,7 @@ function loadedXULReal() {
   History.pop(); // History pref should always end with HistoryDelimeter
   if (Bible && HaveValidLocale && prefs.getCharPref("DefaultVersion")!="none") {
     var aVersion = prefs.getCharPref("DefaultVersion");
-    var loc = Bible.convertLocation(Bible.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
+    var loc = Location.convertLocation(Bible.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
     History[Historyi] = loc[0] + "." + loc[1] + "." + loc[2];
   }
   
@@ -773,7 +773,7 @@ function historyForward() {
 function updateScriptToHistory(index) {
   //setBibleToHistory(index);
   var refBible = firstDisplayBible();
-  var loc = Bible.convertLocation(WESTERNVS, History[index] + ".1", Bible.getVerseSystem(refBible));
+  var loc = Location.convertLocation(WESTERNVS, History[index] + ".1", Bible.getVerseSystem(refBible));
   Location.setLocation(refBible, loc);
   document.getElementById("book").book = Location.getBookName();
   document.getElementById("book").version = refBible;
@@ -794,7 +794,7 @@ function createHistoryMenu(aEvent) {
   for (var i=0; i<History.length; i++) {
     var xulElement = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "menuitem");
     xulElement.setAttribute("oncommand", "goToHistoryIndex('" + i + "')");
-    var aref = Bible.convertLocation(WESTERNVS, History[i], Bible.getVerseSystem(vers));
+    var aref = Location.convertLocation(WESTERNVS, History[i], Bible.getVerseSystem(vers));
     xulElement.setAttribute("label", ref2ProgramLocaleText(aref, true));
     //if (i == Historyi) {xulElement.style.background="rgb(230,200,255)";}
     popup.appendChild(xulElement);  
@@ -1976,7 +1976,7 @@ function addToHistory() {
   var bcvN = new Array(3);
   // Always store as SAME versification!
   var aVersion = prefs.getCharPref("DefaultVersion");
-  var loc = Bible.convertLocation(Bible.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
+  var loc = Location.convertLocation(Bible.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
   bcvN[0] = loc[0];
   bcvN[1] = loc[1];
   bcvN[2] = loc[2];

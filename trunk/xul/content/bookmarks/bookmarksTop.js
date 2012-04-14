@@ -164,7 +164,7 @@ var BookmarkFuns = {
       if (!bmInfo[BMTEXT]) bmInfo[BMTEXT] = BookmarkFuns.getTextForBookmark(loc).text;
       if (!bmInfo[NAME]) bmInfo[NAME] = BookmarkFuns.getNameForBookmark(loc);
       if (!bmInfo[LOCATION] && loc.shortName)
-          bmInfo[LOCATION] = Bible.convertLocation(Bible.getVerseSystem(loc.version), loc.shortName + "." + loc.chapter + "." + loc.verse + "." + loc.lastVerse, WESTERNVS);
+          bmInfo[LOCATION] = Location.convertLocation(Bible.getVerseSystem(loc.version), loc.shortName + "." + loc.chapter + "." + loc.verse + "." + loc.lastVerse, WESTERNVS);
       break;
       
     case "Folder":
@@ -407,7 +407,7 @@ var BookmarkFuns = {
         // for backward compatibility...
         // this try is because pre V2.8, LOCATION was undefined and old BMs may cause problems here.
         // NOTE that even with garbage in LOCATION, xulsword will likely return a valid location to somewhere...
-        try {var loc = Bible.convertLocation(WESTERNVS, info[LOCATION], Bible.getVerseSystem(aVersion)).split(".");}
+        try {var loc = Location.convertLocation(WESTERNVS, info[LOCATION], Bible.getVerseSystem(aVersion)).split(".");}
         catch (er) {failed = true;}
         if (!failed) {
           prefs.setBoolPref("HighlightVerse", true); //type==BIBLE
