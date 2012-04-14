@@ -89,16 +89,41 @@ var Location = {
   chapter:null,
   verse:null,
   lastverse:null,
+
+convertLocation: function(vsys1, xsref, vsys2) {
+    var p = xsref.split(".");
+    var vzero = false;
+    if (p && (p.length==3 || p.length==4) && p[2]==0) {
+      // libxulsword convertLocation was changed to always return valid
+      // references (verse=0 is never returned any more). So the old 
+      // behaviour is enforced here to keep xulsword happy.
+      vzero = true;
+      p[2] = 1;
+      p[3] = 1;
+      xsref = p.join(".");
+    }
+ 
+    var loc = Bible.convertLocation(vsys1, xsref, vsys2);
+    if (!vzero) return loc;
+    
+    p = loc.split(".");
+    p[2] = 0;
+    p[3] = 0;
+    return p.join(".");
+  },
   
   setLocation: function(modname, xsref) {
     this.modname = modname;
     this.modvsys = Bible.getVerseSystem(modname);
-    var loc = Bible.convertLocation(this.modvsys, xsref, this.modvsys);
-    var p = loc.split(".");
+ 
+    var loc = this.convertLocation(this.modvsys, xsref, this.modvsys);
+    p = loc.split(".");
+
     this.book = p[0];
     this.chapter = p[1];
     this.verse = p[2];
     this.lastverse = p[3];
+
     return this.modvsys;
   },
   
@@ -107,22 +132,23 @@ var Location = {
     var p = loc.split(".");
     var maxv = Bible.getMaxVerse(modname, loc);
     
-    if (verse == -1 || verse > maxv) verse = maxv;
-    else if (verse < 0) {verse = 0;}
+    if (verse == -1 || verse > maxv) p[2] = maxv;
+    else if (verse < 0) p[2] = 0;
+    else p[2] = verse;
     
-    if (lastverse > maxv) {lastverse = maxv;}
-    else if (lastverse < verse) lastverse = verse;
-    
-    p[2] = verse;
-    p[3] = lastverse;
-    this.setLocation(modname, p.join("."));
+    if (lastverse == -1 || lastverse > maxv) p[3] = maxv;
+    else if (lastverse < verse) p[3] = verse;
+    else p[3] = lastverse;
   
+    this.setLocation(modname, p.join("."));
+
     return this.modvsys;
   },
   
   getLocation: function(modname) {
     if (!this.modname) {setLocation(WESTERNVS, "Gen.1.1.1");}
-    return Bible.convertLocation(this.modname, this.book + "." + this.chapter + "." + this.verse + "." + this.lastverse, modname);
+    var r = this.convertLocation(Bible.getVerseSystem(this.modname), this.book + "." + this.chapter + "." + this.verse + "." + this.lastverse, Bible.getVerseSystem(modname));
+    return r;
   },
   
   getChapter: function(modname) {
@@ -705,7 +731,7 @@ function findAVerseText(version, location, windowNum) {
   else if (!getPrefOrCreate("DontReadReferenceBible", "Bool", false)) {
     bibleVersion = Bible.getModuleInformation(version, "ReferenceBible");
     bibleVersion = (bibleVersion==NOTFOUND || !Tab[bibleVersion] ? null:bibleVersion);
-    if (bibleVersion) bibleLocation = Bible.convertLocation(Bible.getVerseSystem(version), location, Bible.getVerseSystem(bibleVersion));
+    if (bibleVersion) bibleLocation = Location.convertLocation(Bible.getVerseSystem(version), location, Bible.getVerseSystem(bibleVersion));
   }
   //If we have a Bible, try it first.
   if (bibleVersion && Tab[bibleVersion]) {
@@ -726,7 +752,7 @@ function findAVerseText(version, location, windowNum) {
     var abooks = getAvailableBooks(Tabs[v].modName);
     for (var ab=0; ab<abooks.length; ab++) {if (abooks[ab]==book) break;}
     if (ab==abooks.length) continue;
-    var tlocation = Bible.convertLocation(Bible.getVerseSystem(version), location, Bible.getVerseSystem(Tabs[v].modName));
+    var tlocation = Location.convertLocation(Bible.getVerseSystem(version), location, Bible.getVerseSystem(Tabs[v].modName));
     text = Bible.getVerseText(Tabs[v].modName, tlocation).replace(/\n/g, " ");
     if (text && text.length > 7) {
       // We have a valid result. If this version's tab is showing, then return it

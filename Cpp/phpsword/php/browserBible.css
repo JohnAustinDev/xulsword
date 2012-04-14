@@ -71,7 +71,9 @@
 	background:rgb(255,243,255);
 	color: black;
 	border:2px solid rgb(200,170,205);
-	-moz-border-radius:8px;
+	-moz-border-radius: 8px; /* Firefox */
+	-webkit-border-radius: 8px; /* Safari, Chrome */
+	border-radius: 8px; /* CSS3 */
 	cursor:default;
 	z-index:1;
 	position:absolute;
@@ -87,7 +89,9 @@
 	padding-right:40px;
 	margin-bottom:10px;
 	z-index:1;
-	-moz-border-radius:8px;
+	-moz-border-radius: 8px; /* Firefox */
+	-webkit-border-radius: 8px; /* Safari, Chrome */
+	border-radius: 8px; /* CSS3 */
 }
 .npopup {
 	font-size: 13px;
@@ -99,7 +103,9 @@
 	border:1px solid black;
 	cursor:default;
 	background:#f8f0d1;
-	-moz-border-radius:5px;
+	-moz-border-radius: 5px; /* Firefox */
+	-webkit-border-radius: 5px; /* Safari, Chrome */
+	border-radius: 5px; /* CSS3 */
 	z-index:4;
 	position:absolute;
 	overflow:auto;
@@ -111,7 +117,9 @@
 .npopupSH {
 	background:black;
 	opacity:.35;
-	-moz-border-radius:7px;
+	-moz-border-radius: 7px; /* Firefox */
+	-webkit-border-radius: 7px; /* Safari, Chrome */
+	border-radius: 7px; /* CSS3 */
 	cursor:default;
 	z-index:3;
 	position:absolute;
@@ -139,7 +147,9 @@
 }
 /* cross-reference, footnote, and user note symbols */
 .cr:after {
-content: '\00D7 ';
+	content: '\00D7 ';
+}
+.cr, .cr:after {
 	vertical-align:super;
 	font-family:'Arial' !important;
 	font-size-adjust:0.55 !important;
@@ -150,6 +160,8 @@ content: '\00D7 ';
 }
 .cr-x-parallel-passage:after {
 	content: '\25CF ';
+}
+.cr-x-parallel-passage, .cr-x-parallel-passage:after {
 	vertical-align:super;
 	font-family:'Arial' !important;
 	font-size-adjust:0.55 !important;
@@ -160,6 +172,8 @@ content: '\00D7 ';
 }
 .cr-x-style1:after {
 	content: '+ ';
+}
+.cr-x-style1, .cr-x-style1:after {
 	vertical-align:super;
 	font-family:'Arial' !important;
 	font-size-adjust:0.55 !important;
@@ -170,6 +184,8 @@ content: '\00D7 ';
 }
 .fn:after {
 	content: '\00D7 ';
+}
+.fn, .fn:after {
 	vertical-align:super;
 	font-family:'Arial' !important;
 	font-size-adjust:0.55 !important;
@@ -180,6 +196,8 @@ content: '\00D7 ';
 }
 .un:after {
 	content: '\00D7 ';
+}
+.un, .un:after {
 	vertical-align:super;
 	font-family:'Arial' !important;
 	font-size-adjust:0.55 !important;
@@ -232,19 +250,25 @@ content: '\00D7 ';
 	padding-bottom:4px;
 	margin-right:10px;
 	margin-left:10px;
-	-moz-border-radius:8px;
+	-moz-border-radius: 8px; /* Firefox */
+	-webkit-border-radius: 8px; /* Safari, Chrome */
+	border-radius: 8px; /* CSS3 */
 	z-index:2;
 }
 .normalNote {
 	padding-right:16px;
 	border:1px solid transparent;
-	-moz-border-radius:8px;
+	-moz-border-radius: 8px; /* Firefox */
+	-webkit-border-radius: 8px; /* Safari, Chrome */
+	border-radius: 8px; /* CSS3 */
 }
 .selectedNote {
 	padding-right:16px;
 	border:1px outset yellow;
 	background:rgb(255,243,255);
-	-moz-border-radius:8px;
+	-moz-border-radius: 8px; /* Firefox */
+	-webkit-border-radius: 8px; /* Safari, Chrome */
+	border-radius: 8px; /* CSS3 */
 	cursor:pointer;
 }
 .fntable {

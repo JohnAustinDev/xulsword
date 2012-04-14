@@ -38,7 +38,7 @@ getGlobalOption             test with MK
 
 setCipherKey                test with MK
 */
-window.alert("test Bible=" + Bible);
+
 function jsdump(str)
 {
   Components.classes['@mozilla.org/consoleservice;1']
@@ -48,6 +48,7 @@ function jsdump(str)
 
 var NumFailed = 0;
 if (Bible.getModuleList() == "No Modules") Bible = null;
+jsdump("Need ESV and UZV, have " + Bible.getModuleList());
 
 Location.setLocation("ESV", "Matt.4");
 testLocs(1, "ESV", "Matt", 4, 1, 25, "KJV");
@@ -111,49 +112,49 @@ jsdump("\n");
 
 test (16, Bible.getModuleInformation("UZV", "GlobalOptionFilter"), "OSISFootnotes<nx>OSISHeadings<nx>OSISScripref<nx>OSISDictionary");
 
-test(46, Bible.convertLocation("KJV", "Matt.4", "Synodal"), "Matt.4.1.25");
+test(46, Location.convertLocation("KJV", "Matt.4", "Synodal"), "Matt.4.1.25");
 jsdump("\n");
 
-test(47, Bible.convertLocation("KJV", "Matt.2.3", "Synodal"), "Matt.2.3.3");
+test(47, Location.convertLocation("KJV", "Matt.2.3", "Synodal"), "Matt.2.3.3");
 jsdump("\n");
 
-test(48, Bible.convertLocation("KJV", "Matt.3.5.8", "Synodal"), "Matt.3.5.8");
+test(48, Location.convertLocation("KJV", "Matt.3.5.8", "Synodal"), "Matt.3.5.8");
 jsdump("\n");
 
-test(49, Bible.convertLocation("KJV", "Ps.119", "Synodal"), "Ps.118.1.176");
+test(49, Location.convertLocation("KJV", "Ps.119", "Synodal"), "Ps.118.1.176");
 jsdump("\n");
 
-test(50, Bible.convertLocation("KJV", "Ps.25.3", "Synodal"), "Ps.24.3.3");
+test(50, Location.convertLocation("KJV", "Ps.25.3", "Synodal"), "Ps.24.3.3");
 jsdump("\n");
 
-test(51, Bible.convertLocation("KJV", "Ps.22.9.12", "Synodal"), "Ps.21.10.13");
+test(51, Location.convertLocation("KJV", "Ps.22.9.12", "Synodal"), "Ps.21.10.13");
 jsdump("\n");
 
-test(52, Bible.convertLocation("Synodal", "Ps.118", "KJV"), "Ps.119.1.176");
+test(52, Location.convertLocation("Synodal", "Ps.118", "KJV"), "Ps.119.1.176");
 jsdump("\n");
 
-test(53, Bible.convertLocation("Synodal", "Ps.24.3", "KJV"), "Ps.25.3.3");
+test(53, Location.convertLocation("Synodal", "Ps.24.3", "KJV"), "Ps.25.3.3");
 jsdump("\n");
 
-test(54, Bible.convertLocation("Synodal", "Ps.21.10.13", "KJV"), "Ps.22.9.12");
+test(54, Location.convertLocation("Synodal", "Ps.21.10.13", "KJV"), "Ps.22.9.12");
 jsdump("\n");
 
-test(55, Bible.convertLocation("Synodal", "1Kgs.6.1-1Kgs.6.18", "KJV"), "1Kgs.6.1.18");
+test(55, Location.convertLocation("Synodal", "1Kgs.6.1-1Kgs.6.18", "KJV"), "1Kgs.6.1.18");
 jsdump("\n");
 
-test(56, Bible.convertLocation("Synodal", "Ps.114.1 - Ps.114.2", "KJV"), "Ps.116.1.2");
+test(56, Location.convertLocation("Synodal", "Ps.114.1 - Ps.114.2", "KJV"), "Ps.116.1.2");
 jsdump("\n");
 
-test(57, Bible.convertLocation("Synodal", "Ps 109", "KJV"), "Ps.110.1.7");
+test(57, Location.convertLocation("Synodal", "Ps 109", "KJV"), "Ps.110.1.7");
 jsdump("\n");
 
-test(58, Bible.convertLocation("Synodal", "Ps 110:6", "KJV"), "Ps.111.6.6");
+test(58, Location.convertLocation("Synodal", "Ps 110:6", "KJV"), "Ps.111.6.6");
 jsdump("\n");
 
-test(59, Bible.convertLocation("Synodal", "Ps 113:2-7", "KJV"), "Ps.114.2.7");
+test(59, Location.convertLocation("Synodal", "Ps 113:2-7", "KJV"), "Ps.114.2.7");
 jsdump("\n");
 
-test(60, Bible.convertLocation("Synodal", "Ps 113:10-Ps 113:20", "KJV"), "Ps.115.2.12");
+test(60, Location.convertLocation("Synodal", "Ps 113:10-Ps 113:20", "KJV"), "Ps.115.2.12");
 jsdump("\n");
 
 Location.setLocation("ESV", "Rev 12:2");

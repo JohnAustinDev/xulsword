@@ -28,6 +28,9 @@
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#">
 
+  <script>var MainWindow = window;</script>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/xulswordTest.js"/>
 </window>

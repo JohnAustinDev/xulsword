@@ -365,7 +365,7 @@
           if (a == showBooks.length) currentBookIsAvailable=false;
           
           if (currentBookIsAvailable) {
-            var convertedLocation = Bible ? Bible.convertLocation(Bible.getVerseSystem(this._preversion), this.location, Bible.getVerseSystem(this.version)):this.location;
+            var convertedLocation = Bible ? Location.convertLocation(Bible.getVerseSystem(this._preversion), this.location, Bible.getVerseSystem(this.version)):this.location;
             this._preversion = this.version;
           }
           
