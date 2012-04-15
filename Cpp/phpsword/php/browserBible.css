@@ -224,8 +224,12 @@
 	color:blue;
 }
 /* Words with Strong's number attached */
+.sn:hover {
+	border-bottom: 1px solid rgb(120,95,120);
+}
 .sn {
 	border-bottom: 1px solid rgb(220,195,220); /*(240,215,240);*/
+	cursor:pointer;
 }
 .matchingStrongs {
 	background:yellow;

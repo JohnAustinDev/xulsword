@@ -26,11 +26,13 @@
 #include <stdio.h>
 #include <string>
 #include <iostream>
+#include <list>
 
 #include "xulsword.h"
 #include "strkey.h"
 #include "swmodule.h"
 #include "swlog.h"
+#include "localemgr.h"
 #include "osisxhtml.h"
 #include "gbfxhtml.h"
 #include "thmlxhtml.h"
@@ -363,21 +365,40 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   ReportProgress = (reportProgress ? reportProgress:NULL);
 
   MyMarkupFilterMgr = new MarkupFilterMgrXS();
-
-  MyManager = new SWMgrXS(path, false, (MarkupFilterMgr *)MyMarkupFilterMgr, true, true);
-  
+      
+  std::string aPath = path;
+  int comma = aPath.find(", ", 0);
+  if (comma == std::string::npos) {comma = aPath.length();}
+  SWBuf path1;
+  path1.set(aPath.substr(0, comma).c_str());
+  MyManager = new SWMgrXS(path1.c_str(), false, (MarkupFilterMgr *)MyMarkupFilterMgr, false, true);   
   MyVerseMgr = VerseMgr::getSystemVerseMgr();
   MyVerseMgr->registerVersificationSystem("Synodal0", otbooks_synodal0, ntbooks_synodal0, vm_synodal0);
   MyVerseMgr->registerVersificationSystem("EASTERN", otbooks_eastern, ntbooks_eastern, vm_eastern);
   MyVerseMgr->registerVersificationSystem("SynodalProt", otbooks_synodalprot, ntbooks_synodalprot, vm_synodalprot);
   
   MyManager->Load();
+  
+  while (comma != aPath.length()) {
+    int beg = comma+2; // 2 is length of ", "
+    comma = aPath.find(", ", beg);
+    if (comma == std::string::npos) {comma = aPath.length();}
+    MyManager->augmentModules(aPath.substr(beg, comma-beg).c_str(), false);
+  }
 
   if (ToUpperCase) {
     MyStringMgrXS = new StringMgrXS(ToUpperCase);
     StringMgr::setSystemStringMgr(MyStringMgrXS);
   }
+  
+/*  
+  path1.append("/locales.d");
+  LocaleMgr *myLocaleMgr = new LocaleMgr(path1.c_str());
+  LocaleMgr::setSystemLocaleMgr(myLocaleMgr);
+  myLocaleMgr->setDefaultLocaleName("ru");
+*/
 }
+
 
 xulsword::~xulsword() {
   //delete(MyLog); deleted by _staticSystemLog
@@ -1465,6 +1486,55 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
   if (retval) {strcpy(retval, paramstring.c_str());}
 	return retval;
 }
+
+
+/********************************************************************
+Translate
+*********************************************************************/
+/*
+char *xulsword::translate(const char *vkeymod, const char *text, const char *localeName) {
+  SWModule * module = MyManager->getModule(vkeymod);
+  if (!module) {
+    xsThrow("translate: module not found.");
+    return NULL;
+  }
+
+  SWKey *testkey = module->CreateKey();
+  VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
+  if (!myVerseKey) {
+    delete(testkey);
+    xsThrow("translate: module was not Bible or Commentary.");
+  }
+
+  locationToVerseKey(text, myVerseKey);
+  
+  LocaleMgr *myLocaleMgr = LocaleMgr::getSystemLocaleMgr();
+  if (!myLocaleMgr) {
+    xsThrow("translate: Couldn't get locale manager.");
+    delete(testkey);
+    return NULL;
+  }
+  
+  SWBuf result;
+  result.set(myLocaleMgr->translate(myVerseKey->getText(), localeName));
+  delete(testkey);
+
+
+  result.set("");
+  std::list <SWBuf> locs = myLocaleMgr->getAvailableLocales();
+  std::list <SWBuf>::iterator it;
+	for (it = locs.begin(); it != locs.end(); it++) {
+    result.append(it->c_str());
+    result.append(", ");
+  }
+
+
+  char *retval;
+  retval = (char *)emalloc(result.length() + 1);
+  if (retval) {strcpy(retval, result.c_str());}
+	return retval;
+}
+*/
 // END class xulsword
 
 /********************************************************************
