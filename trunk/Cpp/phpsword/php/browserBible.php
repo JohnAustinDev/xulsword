@@ -6,25 +6,33 @@ $Option["crn"] = "Cross-references";
 $Option["dtl"] = "Dictionary";
 $Option["vsn"] = "Verse Numbers";
 $Option["stn"] = "Strong's Numbers";
+$Option["mlt"] = "Morphological Tags";
 $Option["wcr"] = "Words of Christ in Red";
 $Option["hvp"] = "Hebrew Vowel Points";
 $Option["hcn"] = "Hebrew Cantillation";
-$Option["mlt"] = "Morphological Tags";
 $Option["mse"] = "Morpheme Segmentation";
 			
 // Versions of IE < 9 cannot fully utilize this page
 $UpgradeBrowser = 0;
+/*
 $test = array();
 if (preg_match('/MSIE (\\d+)/', $_SERVER['HTTP_USER_AGENT'], $test)) {
-	//if ($test[1] < 9) $UpgradeBrowser = 1;
+	if ($test[1] < 9) $UpgradeBrowser = 1;
 }
-  
-$Sword = new phpsword("/home/dale/ibt.org.ru/modsword/raw");
-$Modlist = $Sword->getModuleList();
+*/
 
-$Default= array('typ'=>'Biblical Texts', 'mod'=>'UZV', 'loc'=>'Gen.1.1.1', 'hdg'=>'On', 
-					'ftn'=>'On', 'crn'=>'On', 'dtl'=>'On', 'wcr'=>'On', 'vsn'=>'On', 
-					'hvp'=>'On', 'hcn'=>'On', 'stn'=>'On', 'mlt'=>'On', 'mse'=>'On',
+$defbible = "RSP";
+$Sword = new phpsword($REPOSITORY);
+$Modlist = $Sword->getModuleList();
+if	(!preg_match("/(^|<nx>)".$defbible.";Biblical Texts(<nx>|$)/", $Modlist)) {
+	$firstbible = array();
+	preg_match("/(^|<nx>)([^;]+);Biblical Texts/", $Modlist, $firstbible);
+	if (count($firstbible)) $defbible = $firstbible[2];
+}
+
+$Default= array('typ'=>'Biblical Texts', 'mod'=>$defbible, 'loc'=>'Gen.1.1.1', 'hdg'=>'1', 
+					'ftn'=>'1', 'crn'=>'1', 'dtl'=>'1', 'wcr'=>'1', 'vsn'=>'1', 
+					'hvp'=>'1', 'hcn'=>'1', 'stn'=>'1', 'mlt'=>'1', 'mse'=>'1',
 					'rtype'=>'', 'rlist'=>'');
 
 // Do input checking and apply defaults
@@ -44,14 +52,15 @@ while (list($name, $val) = each($_GET)) {
 			$_GET[$name] = $Default[$name];
 		}
 	}
-	else if (!preg_match("/^(On|Off)$/", $val)) {$_GET[$name] = $Default[$name];}
+	else if (!preg_match("/^(0|1)$/", $val)) {$_GET[$name] = $Default[$name];}
 }
 $vsys = $Sword->getVerseSystem($_GET['mod']);
 $_GET['loc']  = $Sword->convertLocation($vsys, $_GET['loc'], $vsys);
 	
 // Apply Sword options
+$_GET['mlt'] = $_GET['stn']; // just synch these two together
 reset($Option);
-while (list($var, $val) = each($Option)) {$Sword->setGlobalOption($val, $_GET[$var]);}
+while (list($var, $val) = each($Option)) {$Sword->setGlobalOption($val, ($_GET[$var]==1 ? "On":"Off"));}
   
 // Handle any AJAX request
 if ($_GET['rtype'] && $_GET['rlist']) {
@@ -78,7 +87,7 @@ if ($_GET['rtype'] && $_GET['rlist']) {
 			if (!$refs[$i]) continue;
 			$p = preg_split("/\./", $refs[$i]);
 			if (count($p) != 2) {$p = preg_split("/:/", $refs[$i]);}
-			$p[1] = decodeOSISRef($p[1]);
+			$p[1] = decodeutf8($p[1]);
 			$ent = $Sword->getDictionaryEntry($p[0], $p[1]);
 			if ($ent) {
 				$ent = preg_replace_callback("/<img ([^>]*)src=\"File:\/\/(.*?)\"/", "imgpath", $ent);
@@ -88,6 +97,7 @@ if ($_GET['rtype'] && $_GET['rlist']) {
 		}
 		break;
 	case "stronglist":
+		$html = getLemmaHTML(decodeutf8($list));
 		break;
 	}
 	echo $html;
@@ -139,7 +149,17 @@ function loc2href($r) {
 	return urlencode(currentFileName())."?".htmlentities($h2);	
 }
 
-function loc2UI($r) {return $r;} 
+function loc2UI($r) {
+	global $_GET, $Sword, $Book, $Language;
+	$loc = $Sword->convertLocation($_GET['mod'], $r, $_GET['mod']);
+	$loc = preg_split("/\./", $loc);
+	$ret = $Book[$Language][$loc[0]]." ".$loc[1];
+	if ($loc[2]==1 && ($loc[3]==1 || $loc[3]==$Sword->getMaxVerse($_GET['mod'], $r))) {
+		return $ret;
+	}
+	if ($loc[3]==$loc[2]) return $ret.":".$loc[2];
+	return $ret.":".$loc[2]."-".$loc[3];
+} 
 
 function sreflink($ref) {return '<a href="'.loc2href($ref).'#sv">'.loc2UI($ref).'</a>';}
 
@@ -153,7 +173,7 @@ function chrUTF8($num) {
 
 function deOSISRef($m) {return chrUTF8($m[1]);}
 
-function decodeOSISRef($ref) {
+function decodeutf8($ref) {
 	$res = preg_replace_callback("/_(\d+)_/", "deOSISRef", $ref);
 	return $res;
 }
@@ -183,7 +203,7 @@ function optionButton($name, $phrase) {
 	$gval = $Sword->getGlobalOption($Option[$name]);
 	echo '<button type="submit" name="'.$name.'" ';
 	if ($gval == "On") echo 'class="optenabled" ';
-	echo 'value="'.($gval=="On" ? "Off":"On").'" >';
+	echo 'value="'.($gval=="On" ? "0":"1").'" >';
 	echo $phrase;
 	echo "</button>\n";
 }
@@ -206,5 +226,64 @@ function availableBooks() {
 		$loc = $Sword->convertLocation($vsys, join(".", $p), $vsys);
 	} while($b != "Rev");
 	return $books;	
+}
+
+// Builds HTML text which displays lemma information
+//    list form: (S|WT|SM|RM):(G|H)#
+function getLemmaHTML($list) {
+	global $Sword, $Language, $StrongsHebrewModule, $StrongsGreekModule, $GreekParseModule;
+	$pad = "00000";
+	$styleModule = "Program";
+	$list = preg_split("/\./", $list);
+	$matchingPhrase = array_shift($list);
+	$html = "<b>" . $matchingPhrase . "</b>: ";
+	$sep = "";
+	for ($i=0; $i<count($list); $i++) {
+		$parts = preg_split("/:/", $list[$i]);
+		if (!count($parts) || !$parts[1]) continue;
+		$module = "";
+		$key = $parts[1];
+		$key = preg_replace("/ /", "", $key);
+		$saveKey = $key;
+		switch ($parts[0]) {
+		case "S":
+			if (substr($key, 0, 1) == "H") {
+				$module = $StrongsHebrewModule[$Language];
+			}
+			else if (substr($key, 0, 1) == "G") {
+				$module = $StrongsGreekModule[$Language];
+				if (intval(substr($key, 1)) >= 5627) continue; // SWORD filters these out- not valid it says
+			}
+			$len = 5-strlen($key)+1;
+			if ($len < 0) $len = 0;
+			$key = substr($pad, 0, $len) . substr($key, 1);
+			break;
+		case "RM":
+			$module = $GreekParseModule[$Language];
+			break;
+		case "SM":
+			$saveKey = "SM" . $key;
+			break;
+		case "WT":
+			$saveKey = "WT" . $key;
+			break;     
+		}
+
+		if ($module) {
+			if ($styleModule == "Program") $styleModule = $module;
+			if ($key == $pad) continue; // G tags with no number
+			$entry = $Sword->getDictionaryEntry($module, $key);
+			if ($entry) $html .= $sep . $entry;
+			else $html .= $sep . $key;
+		}
+		else $html .= $sep . $saveKey;
+		
+		$sep = "<hr>";
+		if ($html && $module) {
+			$html = "<div class=\"vstyle" . $module . "\">" . $html . "</div>";
+		}
+	}
+	
+	return $html;
 }
 ?>

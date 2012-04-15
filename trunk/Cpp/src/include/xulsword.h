@@ -38,6 +38,7 @@
 #include "rawgenbook.h"
 #include "rawfiles.h"
 #include "hrefcom.h"
+#include "localemgr.h"
 
 #ifndef NOSECURITY
    #include "security.h"

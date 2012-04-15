@@ -11,39 +11,6 @@ function init() {
 	PopupShadowElement = document.getElementById("npopupSH");
 }
 
-/*
-// IE does not have this function, so add it if needed
-if (!document.getElementsByClassName) {
-  //window.alert("Creating document.getElementsByClassName()");
-	document.getElementsByClassName = function(cl) {
-  	var retnode = [];
-  	var myclass = new RegExp('\\b'+cl+'\\b');
-  	var elem = this.getElementsByTagName('*');
-  	for (var i = 0; i < elem.length; i++) {
-  		var classes = elem[i].className;
-  		if (myclass.test(classes)) retnode.push(elem[i]);
-  	}
-  	return retnode;
-  }; 
-}
-
-function addMouseOvers() {
-	fixClass("cr", String.fromCharCode(215) + " ");
-	fixClass(".cr-x-parallel-passage", String.fromCharCode(9679) + " ");
-	fixClass("cr-x-style1", '+ ');
-	fixClass("fn", String.fromCharCode(215) + " ");
-	fixClass("un", String.fromCharCode(215) + " ");
-}
-
-
-function fixClass(name, sym) {
-	var s = document.getElementsByClassName(name);
-	for (var i=0; i<s.length; i++) {
-		s[i].innerHTML = sym;
-	}		
-}
-*/
-
 function mouseHandler(e) {
 	if (EventInProgress || !PopupElement) return;
 	EventInProgress = true;
@@ -191,9 +158,13 @@ function getContent(rnf) {
 	case "dtl":
 		rnf.doRequest = true;
 		rnf.type = "dictlist";
+		rnf.list = encodeutf8(rnf.list); // IE doesn't transmit utf8!
 		break;
 	case "sn":
 		rnf.doRequest = true;
+		var elem = (PopupEvent.target ? PopupEvent.target:PopupEvent.srcElement);
+		rnf.content = elem.innerHTML + "." + rnf.list;
+		rnf.list = encodeutf8(rnf.content);
 		rnf.type = "stronglist";
 		break;
 	}
@@ -204,8 +175,7 @@ function doRequest(type, key, list) {
 	var req = window.location.pathname + "?rtype=" + type + "&rlist=" + list;
 	req += "&mod=" + document.getElementById("mod").value;
 	req += "&typ=" + document.getElementById("typ").value;
-	if (type == "dictlist") req = encodeutf8(req); // IE doesn't transmit utf8!
-	ajax.open("GET", req, true);	
+	ajax.open("GET", req, true);
 	ajax.rkey = key;
 	ajax.onreadystatechange = function() {
 	if (ajax.readyState==4 && ajax.status==200) {
@@ -245,4 +215,3 @@ function encodeutf8(t) {
 	}
 	return t;
 }
-
