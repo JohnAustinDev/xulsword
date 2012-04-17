@@ -32,7 +32,7 @@ function mouseHandler(e) {
 
 var RNF;
 function activatePopup(type, data) {
-	RNF = {doRequest:false, content:data, back:"", type:type, key:type + data, list:data};
+	RNF = {doRequest:false, content:data, back:"", type:type, key:type + data, list:data, win:getWin(PopupEvent)};
 	
 	if (PopupElement.style.visibility == "visible") {
 		RNF.back += "<div style=\"margin-bottom:20px;\">";
@@ -52,6 +52,12 @@ function activatePopup(type, data) {
 		else ShowPopupID = window.setTimeout("showPopup();", POPUPDELAY);
 	}
 	else EventInProgress = false;
+}
+
+function getWin(e) {
+	var el = e.target;
+	while(el && (!el.id || el.id.indexOf("text") != 0)) {e = e.parentNode;}
+	return (el && el.id == "text2" ? 2:1);	
 }
 
 function popupBack(elem) {
@@ -82,7 +88,7 @@ function showPopup() {
 	shadowPup();
 	PopupShadowElement.style.visibility = "visible";
 	EventInProgress = false;
-	if (RNF.doRequest) doRequest(RNF.type, RNF.key, RNF.list); 
+	if (RNF.doRequest) doRequest(RNF.type, RNF.key, RNF.list, RNF.win); 
 }
 
 function shadowPup() {
@@ -171,9 +177,9 @@ function getContent(rnf) {
 	return;
 }
 
-function doRequest(type, key, list) {
+function doRequest(type, key, list, win) {
 	var req = window.location.pathname + "?rtype=" + type + "&rlist=" + list;
-	req += "&mod=" + document.getElementById("mod").value;
+	req += "&mod=" + document.getElementById("mod" + (win != 1 ? win:"")).value;
 	req += "&typ=" + document.getElementById("typ").value;
 	ajax.open("GET", req, true);
 	ajax.rkey = key;
