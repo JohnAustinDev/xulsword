@@ -3,6 +3,12 @@
 	color:blue;
 } 
 
+#mainPage {
+	width:550px;
+	padding-bottom:20px;
+	text-align:left;
+	float:right;
+}
 /* SCRIPT BOX */
 .script .head1 {
 	font-size:18px;
@@ -19,6 +25,11 @@
 	font-weight:bold;
 	margin-bottom:0.5em;
 	clear:both;
+}
+.twowin {
+	display:table-cell;
+	padding-left:20px;
+	width:50%;
 }
 .canonical {
 	font-style:italic;
