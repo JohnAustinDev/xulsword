@@ -487,7 +487,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     AttributeList::iterator AtIndex;
     for (AtIndex = module->getEntryAttributes()["Footnote"].begin(); AtIndex != module->getEntryAttributes()["Footnote"].end(); AtIndex++) {
       if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
-          sprintf(Outtext, "cr.%d.%s<bg>", fnV, myVerseKey->getOSISRef());
+          sprintf(Outtext, "%s.cr.%d.%s<bg>", vkeymod, fnV, myVerseKey->getOSISRef());
           crossRefText.append(Outtext);
           crossRefText.append(AtIndex->second["refList"]);
           crossRefText.append("<nx>");
@@ -496,7 +496,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
           noteText.append("<nx>");
         }
         else {
-          sprintf(Outtext, "fn.%d.%s<bg>", fnV, myVerseKey->getOSISRef());
+          sprintf(Outtext, "%s.fn.%d.%s<bg>", vkeymod, fnV, myVerseKey->getOSISRef());
           footnoteText.append(Outtext);
           footnoteText.append(module->RenderText(AtIndex->second["body"]));
           footnoteText.append("<nx>");
@@ -620,14 +620,14 @@ char *xulsword::getNotes() {
 /********************************************************************
 GetChapterTextMulti
 *********************************************************************/
-char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytext)
+char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes)
 {
+  SWBuf footnoteText;
+  SWBuf crossRefText;
+  SWBuf noteText;
   SWBuf Chapter;
   int Verse;
   int LastVerse;
-  
-  updateGlobalOptions(true);
-  MyManager->setGlobalOption("Words of Christ in Red","Off"); // Words of Christ in Red is off for multidisplay
 
   std::string modstr;
   modstr.assign(vkeymodlist);
@@ -652,9 +652,20 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     xsThrow("GetChapterTextMulti: module is not Bible or Commentary'.");
     return NULL;
   }
-  
+
+  myVerseKey->Persist(1);
+  myVerseKey->setAutoNormalize(0); // Non-existant calls should return empty string
+  module->setKey(myVerseKey);
+    
   locationToVerseKey(vkeytext, myVerseKey);
   keyToVars(myVerseKey, &Chapter, &Verse, &LastVerse);
+
+  updateGlobalOptions(!keepnotes);
+  if (!keepnotes) {
+    MyManager->setGlobalOption("Words of Christ in Red","Off"); // Words of Christ in Red is off for multidisplay
+  }
+
+  //Initialize Key to chapter  
   myVerseKey->setText(Chapter.c_str());
 
   VerseKey ub;
@@ -693,6 +704,8 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   bool haveText = false;
   while (!myVerseKey->Error()) {
     int vNum = myVerseKey->getVerse();
+    if (keepnotes && vNum>1 && vNum == Verse) {MyManager->setGlobalOption("Words of Christ in Red","Off");}
+    else if (keepnotes && vNum == (LastVerse + 1)) {MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");}
 
     // Each verse group has its own div with a class
     chapText.append("<div class=\"interB\">");
@@ -749,6 +762,32 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
       haveText = haveText || tmp.c_str();
 
       chapText.append("</span></div>");
+      
+      //SAVE ANY FOOTNOTES
+      int fnV = 1;
+      AttributeList::iterator AtIndex;
+      for (AtIndex = versemod->getEntryAttributes()["Footnote"].begin(); AtIndex != versemod->getEntryAttributes()["Footnote"].end(); AtIndex++) {
+        if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
+            sprintf(Outtext, "%s.cr.%d.%s<bg>", thismod.c_str(), fnV, readKey.getOSISRef());
+            crossRefText.append(Outtext);
+            crossRefText.append(AtIndex->second["refList"]);
+            crossRefText.append("<nx>");
+            noteText.append(Outtext);
+            noteText.append(AtIndex->second["refList"]);
+            noteText.append("<nx>");
+          }
+          else {
+            sprintf(Outtext, "%s.fn.%d.%s<bg>", thismod.c_str(), fnV, readKey.getOSISRef());
+            footnoteText.append(Outtext);
+            footnoteText.append(versemod->RenderText(AtIndex->second["body"]));
+            footnoteText.append("<nx>");
+            noteText.append(Outtext);
+            noteText.append(versemod->RenderText(AtIndex->second["body"]));
+            noteText.append("<nx>");
+          }
+        fnV++;
+      }
+    
     } while (comma != std::string::npos);
 
     if (Verse > 1) {
@@ -761,9 +800,14 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   }
 
   if (!haveText) {chapText.set("");}
+  MyFootnotes = footnoteText;
+  MyCrossRefs = crossRefText;
+  MyNotes = noteText;
 
-  // Return Words of Christ in Red feature to original value
-  MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");
+  if (!keepnotes) {
+    // Return Words of Christ in Red feature to original value
+    MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");
+  }
 
   delete(testkey1);
   

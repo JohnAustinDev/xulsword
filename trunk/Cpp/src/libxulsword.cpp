@@ -50,8 +50,8 @@ DLLEXPORT char *GetNotes(xulsword *inst) {
   return inst->getNotes();
 }
 
-DLLEXPORT char *GetChapterTextMulti(xulsword *inst, const char *vkeymodlist, const char *vkeytext) {
-  return inst->getChapterTextMulti(vkeymodlist, vkeytext);
+DLLEXPORT char *GetChapterTextMulti(xulsword *inst, const char *vkeymodlist, const char *vkeytext, bool keepnotes) {
+  return inst->getChapterTextMulti(vkeymodlist, vkeytext, keepnotes);
 }
 
 DLLEXPORT char *GetVerseText(xulsword *inst, const char *vkeymod, const char *vkeytext) {

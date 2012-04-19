@@ -133,10 +133,11 @@ PHP_METHOD(phpsword, getChapterTextMulti)
     int l1;
     char *vkeytext;
     int l2;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymodlist, &l1, &vkeytext, &l2) == FAILURE) {
+    bool keepnotes;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssb", &vkeymodlist, &l1, &vkeytext, &l2, &keepnotes) == FAILURE) {
       RETURN_EMPTY_STRING();
     }
-    char *ret = sword->getChapterTextMulti(vkeymodlist, vkeytext);
+    char *ret = sword->getChapterTextMulti(vkeymodlist, vkeytext, keepnotes);
     if (ret) {RETURN_STRING(ret, 0);}
     else RETURN_EMPTY_STRING();
   }
