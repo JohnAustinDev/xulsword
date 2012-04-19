@@ -18,22 +18,25 @@ function mouseHandler(e) {
 
 	if (!elem || !elem.className) {EventInProgress = false; return;}
 	var type = elem.className.replace(/\-.*$/, "");
-//document.getElementById("test").innerHTML = type + " <> " + elem.id;
-	var re = new RegExp("^(fn|cr|sr|dt|dtl|sn)$");
+	
+//window.alert(type + " <> " + elem.id);
+
+	var re = new RegExp("^(fn|cr|sr|dt|dtl|sn|introlink|infolink)$");
 	if (!re.test(type)) {EventInProgress = false; return;}
 
 	// IE can't handle simple PopupEvent = e;
 	PopupEvent = {};
 	for (var m in e) {PopupEvent[m] = e[m];}
-	//var a=""; for (var m in e) {a += m + " = " + e[m] + ", ";} window.alert(a);
+//var a=""; for (var m in e) {a += m + " = " + e[m] + ", ";} window.alert(a);
 	
 	activatePopup(type, elem.title);
 }
 
 var RNF;
-function activatePopup(type, data) {
-	RNF = {doRequest:false, content:data, back:"", type:type, key:type + data, list:data, win:getWin(PopupEvent)};
-	
+function activatePopup(type, title) {
+	var mod = getMod(PopupEvent);
+	RNF = {doRequest:false, content:title, back:"", type:type, key:mod + "." + type + "." + title, list:title, modName:mod};
+//var a=""; for (var m in RNF) {a += m + " = " + RNF[m] + ", ";} window.alert(a);	
 	if (PopupElement.style.visibility == "visible") {
 		RNF.back += "<div style=\"margin-bottom:20px;\">";
 		RNF.back += "<a class=\"popupBackLink\" onclick=\"popupBack(this)\">";
@@ -46,7 +49,7 @@ function activatePopup(type, data) {
 	getContent(RNF);
 
 	if (RNF.content) {
-//window.alert(RNF.back);
+//window.alert(RNF.content);
 		PopupElement.innerHTML = RNF.back + RNF.content;
 		if (PopupEvent.type == "click") showPopup();
 		else ShowPopupID = window.setTimeout("showPopup();", POPUPDELAY);
@@ -54,10 +57,18 @@ function activatePopup(type, data) {
 	else EventInProgress = false;
 }
 
-function getWin(e) {
+function getMod(e) {
+	var mod = document.getElementById("mod").value;
+	var re = new RegExp("(^| )(text|interV(\\d+))( |$)");
 	var el = e.target;
-	while(el && (!el.id || el.id.indexOf("text") != 0)) {e = e.parentNode;}
-	return (el && el.id == "text2" ? 2:1);	
+	while(el && (!el.className || el.className.search(re)==-1)) {
+		el = el.parentNode;
+	}
+	if (!el || !el.className) return mod;
+	var m = el.className.match(re);
+	if (!m || !m[3]) return mod;
+	if (m[3] == 1) return document.getElementById("mod2").value;
+	return document.getElementById("mod").value;	
 }
 
 function popupBack(elem) {
@@ -88,7 +99,7 @@ function showPopup() {
 	shadowPup();
 	PopupShadowElement.style.visibility = "visible";
 	EventInProgress = false;
-	if (RNF.doRequest) doRequest(RNF.type, RNF.key, RNF.list, RNF.win); 
+	if (RNF.doRequest) doRequest(RNF.type, RNF.key, RNF.list, RNF.modName); 
 }
 
 function shadowPup() {
@@ -99,7 +110,6 @@ function shadowPup() {
 }
 
 function hidePopup(e, keepInProgress) {
-	//if (PopupEvent.type == "click" && EventInProgress) {return;} // for goofy IE
 	if (ShowPopupID) window.clearTimeout(ShowPopupID);
 	ShowPopupID = null;
 	if (!keepInProgress) {
@@ -127,13 +137,13 @@ function getContent(rnf) {
 	}
 	switch (rnf.type) {
 	case "fn":
-		var fns = document.getElementById("fnnotes1").innerHTML;
+		var fns = document.getElementById("fnnotes").innerHTML;
 		if (!fns) {rnf.content = ""; return;}
 		fns = decodeHTML(fns).split("<nx>");
 		for (var i=0; i<fns.length; i++) {
 			if (!fns[i]) continue;
 			var fnp = fns[i].split("<bg>");
-			if (fnp[0].substr(fnp[0].indexOf(".")+1) == rnf.list) {
+			if (fnp[0] == rnf.modName + "." + rnf.type + "." + rnf.list) {
 				RequestData[rnf.key] = fnp[1];
 				rnf.content = fnp[1];
 				break;
@@ -141,13 +151,13 @@ function getContent(rnf) {
 		}
 		break;
 	case "cr":
-		var fns = document.getElementById("crnotes1").innerHTML;
+		var fns = document.getElementById("crnotes").innerHTML;
 		if (!fns) {rnf.content = ""; return;}
 		fns = decodeHTML(fns).split("<nx>");
 		for (var i=0; i<fns.length; i++) {
 			if (!fns[i]) continue;
 			var fnp = fns[i].split("<bg>");
-			if (fnp[0].substr(fnp[0].indexOf(".")+1) == rnf.list) {
+			if (fnp[0] == rnf.modName + "." + rnf.type + "." + rnf.list) {
 				rnf.doRequest = true;
 				rnf.type = "reflist";
 				rnf.list = fnp[1];
@@ -173,14 +183,30 @@ function getContent(rnf) {
 		rnf.list = encodeutf8(rnf.content);
 		rnf.type = "stronglist";
 		break;
+	case "introlink":
+		RequestData[rnf.key] = document.getElementById("bkintro." + rnf.modName).innerHTML;
+		rnf.content = RequestData[rnf.key];
+		break;
+	case "infolink":
+		RequestData[rnf.key] = document.getElementById("modinfo." + rnf.modName).innerHTML;
+		rnf.content = RequestData[rnf.key];
+		break;
 	}
 	return;
 }
 
-function doRequest(type, key, list, win) {
-	var req = window.location.pathname + "?rtype=" + type + "&rlist=" + list;
-	req += "&mod=" + document.getElementById("mod" + (win != 1 ? win:"")).value;
-	req += "&typ=" + document.getElementById("typ").value;
+function doRequest(type, key, list, modName) {
+	var req = window.location.pathname;
+	var set = document.getElementById("settings");
+	set = set.firstChild;
+	var sep = "?";
+	while(set) {
+		req += sep + set.id + "=" + set.value;
+		sep = "&";
+		set = set.nextSibling;
+	}
+	req += "&rtype=" + type + "&rlist=" + list + "&rmod=" + modName;
+//window.alert(req);
 	ajax.open("GET", req, true);
 	ajax.rkey = key;
 	ajax.onreadystatechange = function() {

@@ -1,5 +1,7 @@
-<?php include('php/Phrases_browserBible.php'); ?>
+<?php require_once("php/Common.php"); ?>
+<?php require_once('php/Phrases_browserBible.php'); ?>
 <?php
+
 $Option["hdg"] = "Headings";
 $Option["ftn"] = "Footnotes";
 $Option["crn"] = "Cross-references";
@@ -12,7 +14,6 @@ $Option["hvp"] = "Hebrew Vowel Points";
 $Option["hcn"] = "Hebrew Cantillation";
 $Option["mse"] = "Morpheme Segmentation";
 			
-// Versions of IE < 9 cannot fully utilize this page
 $UpgradeBrowser = 0;
 /*
 $test = array();
@@ -21,7 +22,7 @@ if (preg_match('/MSIE (\\d+)/', $_SERVER['HTTP_USER_AGENT'], $test)) {
 }
 */
 
-$Sword = new phpsword($REPOSITORY);
+$Sword = new phpsword($REPOSITORIES);
 $Modlist = $Sword->getModuleList();
 if	(!preg_match("/(^|<nx>)".$defaultbible[$Language].";Biblical Texts(<nx>|$)/", $Modlist)) {
 	$firstbible = array();
@@ -29,12 +30,14 @@ if	(!preg_match("/(^|<nx>)".$defaultbible[$Language].";Biblical Texts(<nx>|$)/",
 	if (count($firstbible)) $defaultbible[$Language] = $firstbible[2];
 }
 
-$Default= array('mod'=>$defaultbible[$Language], 'mod2'=>'', 'typ'=>'', 'typ2'=>'', 'loc'=>'Gen.1.1.1',
+$Default= array('mod'=>$defaultbible[$Language], 'mod2'=>$defaultbible[$Language], 'cmp'=>'0', 'loc'=>'Gen.1.1.1',
 					'hdg'=>'1', 'ftn'=>'1', 'crn'=>'1', 'dtl'=>'1', 'wcr'=>'1', 'vsn'=>'1', 
 					'hvp'=>'1', 'hcn'=>'1', 'stn'=>'1', 'mlt'=>'1', 'mse'=>'1',
-					'rtype'=>'', 'rlist'=>'');
+					'rmod'=>'', 'rtype'=>'', 'rlist'=>'');
 
 // Do input checking and apply defaults
+$PromptForBook = 0;
+if (!isset($_GET['mod'])) {$PromptForBook = 1;}
 $_GET = array_merge($Default, $_GET);
 
 // GET names: bk, ch, vs, lv all override loc, but are then unset
@@ -47,20 +50,14 @@ $_GET['loc'] = join(".", $p);
 
 // Check that requested modules exist or revert to defaults
 $matches = array();
-$nomod = 0;
 if	(!preg_match("/(^|<nx>)".$_GET['mod'].";(.*?)(<nx>|$)/", $Modlist, $matches)) {
-	$nomod = 1;
 	$_GET['mod'] = $Default['mod'];
-	$_GET['typ'] = $Default['typ'];
 }
-else {$_GET['typ'] = $matches[2];}
-if ($nomod || ($_GET['mod2'] != "" && !preg_match("/(^|<nx>)".$_GET['mod2'].";(.*?)(<nx>|$)/", $Modlist, $matches))) {
+if ($_GET['mod2'] != "" && !preg_match("/(^|<nx>)".$_GET['mod2'].";(.*?)(<nx>|$)/", $Modlist, $matches)) {
 	$_GET['mod2'] = "";
 }
-else {$_GET['typ2'] = $matches[2];}
-if ($_GET['mod2'] == "") {
+if ($_GET['mod2'] == "" || $_GET['cmp'] == 0) {
 	unset($_GET['mod2']); 
-	unset($_GET['typ2']);
 }
 
 // Remove all GET names not included in the Default list
@@ -71,7 +68,7 @@ while (list($name, $val) = each($del)) {unset($_GET[$name]);}
 // Check values of GET params
 reset($_GET);
 while (list($name, $val) = each($_GET)) {
-	if (preg_match("/^(mod|typ|mod2|typ2|loc|rlist)$/", $name)) continue;
+	if (preg_match("/^(mod|mod2|loc|rmod|rlist)$/", $name)) continue;
 	else if ($name == 'rtype') {
 		if (!preg_match("/^(reflist|dictlist|stronglist)$/", $val)) {
 			$_GET[$name] = $Default[$name];
@@ -90,26 +87,24 @@ reset($Option);
 while (list($var, $val) = each($Option)) {$Sword->setGlobalOption($val, ($_GET[$var]==1 ? "On":"Off"));}
   
 // Handle any AJAX request
-if ($_GET['rtype'] && $_GET['rlist']) {
-	$type = $_GET['rtype'];
-	$list = $_GET['rlist'];
+if ($_GET['rmod'] && $_GET['rtype'] && $_GET['rlist']) {
 	$html = "";
-	switch($type) {
+	switch($_GET['rtype']) {
 	case "reflist":
 		$sep = "";
-		$refs = preg_split("/\s*;\s*/", $list);
+		$refs = preg_split("/\s*;\s*/", $_GET['rlist']);
 		for ($i=0; $i<count($refs); $i++) {
 			if (!$refs[$i]) continue;
-			$vsys = $Sword->getVerseSystem($_GET['mod']);
-			$html .= $sep.sreflink($Sword->convertLocation($vsys, $refs[$i], $vsys));
-			$vss = $Sword->getVerseText($_GET['mod'], $refs[$i]);
+			$vsys = $Sword->getVerseSystem($_GET['rmod']);
+			$html .= $sep.sreflink($_GET['rmod'], $Sword->convertLocation($vsys, $refs[$i], $vsys));
+			$vss = $Sword->getVerseText($_GET['rmod'], $refs[$i]);
 			if ($vss) {$html .= ": ".$vss;}
 			$sep = "<br><hr>";
 		}
 		break;
 	case "dictlist":
 		$sep = "";
-		$refs = preg_split("/\s+/", $list);
+		$refs = preg_split("/\s+/", $_GET['rlist']);
 		for ($i=0; $i<count($refs); $i++) {
 			if (!$refs[$i]) continue;
 			$p = preg_split("/\./", $refs[$i]);
@@ -124,7 +119,7 @@ if ($_GET['rtype'] && $_GET['rlist']) {
 		}
 		break;
 	case "stronglist":
-		$html = getLemmaHTML(decodeutf8($list));
+		$html = getLemmaHTML(decodeutf8($_GET['rlist']));
 		break;
 	}
 	echo $html;
@@ -132,27 +127,30 @@ if ($_GET['rtype'] && $_GET['rlist']) {
 }
 unset($_GET['rtype']);
 unset($_GET['rlist']);
+unset($_GET['rmod']);
 
-// Finally read and save chapter text and footnotes
-$availbooks = availableBooks($_GET['mod']);
-if (isset($_GET['mod2'])) {
-	$bks2 = availableBooks($_GET['mod2']);
-	$availbooks = array_intersect($availbooks, $bks2);
-}
-$loc = preg_split("/\./", $_GET['loc']);
-if (!in_array($loc[0], $availbooks)) {
-	$loc[0] = reset($availbooks);
-	$_GET['loc'] = $loc[0].".1.1.1";
-}
+// Finally read and save chapter text, footnotes and other script variables
+$Biblelist = getBibleList();
 
-$ChapterText = $Sword->getChapterText($_GET['mod'], $_GET['loc']);
-$ChapterFootnotes = htmlspecialchars($Sword->getFootnotes());
-$ChapterCrossrefs = htmlspecialchars($Sword->getCrossRefs());
-if (isset($_GET['mod2'])) {
-	$ChapterText2 = $Sword->getChapterText($_GET['mod2'], $Sword->convertLocation($_GET['mod'], $_GET['loc'], $_GET['mod2']));
-	$ChapterFootnotes2 = htmlspecialchars($Sword->getFootnotes());
-	$ChapterCrossrefs2 = htmlspecialchars($Sword->getCrossRefs());
+if (!isset($_GET['mod2'])) {	
+	$PageText = $Sword->getChapterText($_GET['mod'], $_GET['loc']);
+	$PageFootnotes = htmlspecialchars($Sword->getFootnotes());
+	$PageCrossrefs = htmlspecialchars($Sword->getCrossRefs());
+	$BookIntro1 = $Sword->getBookIntroduction($_GET['mod'], $_GET['loc']);
+	$BookIntro2 = "";
+	$ModInfo1 = moduleInfo($_GET['mod']);
+	$ModInfo2 = "";
 }
+else {
+	$PageText = $Sword->getChapterTextMulti($_GET['mod2'].",".$_GET['mod'], $_GET['loc'], true);
+	$PageFootnotes = htmlspecialchars($Sword->getFootnotes());
+	$PageCrossrefs = htmlspecialchars($Sword->getCrossRefs());
+	$BookIntro1  = $Sword->getBookIntroduction($_GET['mod'], $_GET['loc']);
+	$BookIntro2 = $Sword->getBookIntroduction($_GET['mod2'], $_GET['loc']);
+	$ModInfo1 = moduleInfo($_GET['mod']);
+	$ModInfo2 = moduleInfo($_GET['mod2']);
+}
+$P_LOC = preg_split("/\./", $_GET['loc']);
 
 //
 // Various utility functions
@@ -176,20 +174,10 @@ function validBook($mod) {
 	return $Sword->getChapterText($mod, $_GET['loc']);		
 }
 
-function loc2href($r) {
-	global $Sword;
-	$s = ""; $h2 = "";
-	reset($_GET);
-	while (list($name, $val) = each($_GET)) {
-		if (preg_match("/^(t|rtype|rlist|typ|typ2)$/", $name)) continue;
-		if ($name == 'loc') {
-			$vsys = $Sword->getVerseSystem($_GET['mod']);
-			$val = $Sword->convertLocation($vsys, $r, $vsys);
-		}
-		$h2 .= $s.$name.'='.$val;
-		$s = "&";	
-	}
-	return urlencode(currentFileName())."?".htmlentities($h2);	
+function loc2href($mod, $normref) {
+	global $Sword, $_GET;
+	$new = array('loc'=>$normref);
+	return pageURL($_GET, $new);
 }
 
 function loc2UI($r) {
@@ -204,7 +192,7 @@ function loc2UI($r) {
 	return $ret.":".$loc[2]."-".$loc[3];
 } 
 
-function sreflink($ref) {return '<a href="'.loc2href($ref).'#sv">'.loc2UI($ref).'</a>';}
+function sreflink($mod, $ref) {return '<a href="'.loc2href($mod, $ref).'">'.loc2UI($ref).'</a>';}
 
 function chrUTF8($num) {
 	if($num<=0x7F)       return chr($num);
@@ -233,21 +221,56 @@ function chapter($d) {
 	$loc = preg_split("/\./", $loc);
 	return $loc[1];	
 }
-	
-function optionButton($name, $phrase) {
-	global $Sword, $Option;
-	$gval = $Sword->getGlobalOption($Option[$name]);
-	echo '<button type="submit" name="'.$name.'" ';
-	if ($gval == "On") echo 'class="optenabled" ';
-	echo 'value="'.($gval=="On" ? "0":"1").'" >';
-	echo $phrase;
-	echo "</button>\n";
+
+function verse($d) {
+	global $Sword;
+	$loc = preg_split("/\./", $_GET['loc']);
+	$loc[2] = $loc[2] + $d;;
+	$loc[3] = $loc[2];
+	$vsys = $Sword->getVerseSystem($_GET['mod']);
+	$loc = $Sword->convertLocation($vsys, join(".", $loc), $vsys);
+	$loc = preg_split("/\./", $loc);
+	return $loc[2];	
 }
 
-function availableBooks($mod) {
+function globalToggleAnchor($name, $phrase) {
+	global $Sword, $Option;
+	$gval = $Sword->getGlobalOption($Option[$name]);
+	$new = array($name => ($gval == "On" ? "0":"1"));
+	return anchor("b".$name, $new, 'button', $phrase, $name, '1');
+}
+
+function anchor($id, $new, $class, $phrase, $enName, $enVal) {
+	global $_GET;
+	$ret = '<a id="'.$id.'" class="'.$class;
+	if ($enName && $enVal && $new[$enName] == $enVal) {
+		$ret .= ' disabled';
+	}
+	$ret .= '" title="'.$phrase.'" href="'.pageURL($_GET, $new).'" >';
+	$ret .= '<span>'.$phrase.'</span></a>'."\n";
+	return $ret;
+}
+
+function pageURL($base, $new) {
+	$url = array_merge($base, $new);
+	$s = "";
+	$h = "";
+	while (list($name, $val) = each($url)) {
+		if (preg_match("/^(rtype|rlist|rmod)$/", $name)) continue;
+		$h .= $s.$name.'='.$val;
+		$s = "&";	
+	}
+	$h .= "#sv";
+	return urlencode(currentFileName())."?".htmlentities($h);		
+}
+
+function availableBooks($mod, $incbks) {
 	global $Sword, $NOT_FOUND, $Booki;
 	$books = array();
 	$vsys = $Sword->getVerseSystem($mod);
+	foreach ($incbks as $bk) {
+		$books[indexOfBook($vsys, $bk)] = $bk;
+	}
 	$scope = $Sword->getModuleInformation($mod, "Scope");
 	if ($scope != $NOT_FOUND && ($vsys == "Synodal" || $vsys == "KJV")) {
 		$scope = preg_split("/ /", $scope);
@@ -260,10 +283,12 @@ function availableBooks($mod) {
 				if ($lst == 0) {$lst = $idx;}
 				else {
 					for ($y=$lst+1; $y<$idx; $y++) {
-						array_push($books, $Booki[$vsys][$y]);	
+						$books[$y] = $Booki[$vsys][$y];	
 					}	
 				}
-				if (!count($books) || $books[count($books)-1] != $bks[$x]) array_push($books, $bks[$x]);		
+				if (!in_array($bks[$x], $books)) {
+					$books[indexOfBook($vsys, $bks[$x])] = $bks[$x];		
+				}
 			}		
 		}
 	}
@@ -271,23 +296,8 @@ function availableBooks($mod) {
 		// Then just return all books...
 		if ($vsys != "Synodal") $vsys = "KJV";
 		for ($i=0; $i<count($Booki[$vsys]); $i++) {
-			array_push($books, $Booki[$vsys][$i]);	
+			$books[$i] = $Booki[$vsys][$i];	
 		}
-		/* the following works without Scope param, but is slow!
-		$loc = "Gen.1.1.1";
-		do {
-			$p = preg_split("/\./", $loc);
-			$b = $p[0];
-			if (strlen($Sword->getChapterText($_GET['mod'], $loc)) > 64) {
-				array_push($books, $p[0]);
-			}
-			$p[1] = $Sword->getMaxChapter($_GET['mod'], $loc);
-			$p[2] = $Sword->getMaxVerse($_GET['mod'], $loc) + 1;
-			$p[3] = $p[2];
-			$vsys = $Sword->getVerseSystem($_GET['mod']);
-			$loc = $Sword->convertLocation($vsys, join(".", $p), $vsys);
-		} while($b != "Rev");
-		*/
 	}
 	return $books;	
 }
@@ -297,6 +307,41 @@ function indexOfBook($vsys, $bk) {
 	for ($i=0; $i<count($Booki[$vsys]); $i++) {if ($bk == $Booki[$vsys][$i]) return $i;}
 	return 0;
 }
+
+function getLangName($mod) {
+	global $NOT_FOUND, $Language, $languageNames, $Sword;
+	if (isset($languageNames[$mod][$Language])) {
+		return $languageNames[$mod][$Language];
+	}
+	if (isset($languageNames[$mod]['All'])) {
+		return $languageNames[$mod]['All'];
+	}
+	$n = $Sword->getModuleInformation($mod, "Abbreviation");
+	if ($n != $NOT_FOUND) return $n;
+	return $mod;
+}
+
+function getBibleList() {
+	global $Modlist;
+	$ret = array();	
+	$mods = preg_split("/<nx>/", $Modlist);
+	for ($m=0; $m < count($mods); $m++) {
+		$mod = preg_split("/;/", $mods[$m]);
+		if ($mod[1] != "Biblical Texts") continue;
+		array_push($ret, getLangName($mod[0]).'<nx>'.$mod[0]);
+	}
+	sort($ret, SORT_STRING);
+	for ($i=0; $i<count($ret); $i++) {
+		$r = preg_split("/<nx>/", $ret[$i]);
+		$ret[$i] = $r;	
+	}
+	return $ret;
+}
+
+function moduleInfo($modname) {
+	return "Not yet implemented: ".$modname;
+}
+
 
 // Builds HTML text which displays lemma information
 //    list form: (S|WT|SM|RM):(G|H)#

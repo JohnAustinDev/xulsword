@@ -154,7 +154,7 @@ class xulsword {
   char *getFootnotes();
   char *getCrossRefs();
   char *getNotes();
-  char *getChapterTextMulti(const char *vkeymodlist, const char *vkeytext);
+  char *getChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes);
   char *getVerseText(const char *vkeymod, const char *vkeytext);
   int   getMaxChapter(const char *mod, const char *vkeytext);
   int   getMaxVerse(const char *mod, const char *vkeytext);
