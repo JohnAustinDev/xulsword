@@ -42,9 +42,9 @@ $_GET = array_merge($Default, $_GET);
 
 // GET names: bk, ch, vs, lv all override loc, but are then unset
 $p = preg_split("/\./", $_GET['loc']);
-if (isset($_GET['bk'])) $p[0] = $_GET['bk'];
-if (isset($_GET['ch'])) $p[1] = $_GET['ch'];
-if (isset($_GET['vs'])) $p[2] = $_GET['vs'];
+if (isset($_GET['bk'])) {$p[0] = $_GET['bk']; $p[3] = $p[2] = $p[1] = 1;}
+if (isset($_GET['ch'])) {$p[1] = $_GET['ch']; $p[3] = $p[2] = 1;}
+if (isset($_GET['vs'])) {$p[2] = $_GET['vs']; $p[3] = $p[2];}
 if (isset($_GET['lv'])) $p[3] = $_GET['lv'];
 $_GET['loc'] = join(".", $p);
 
@@ -55,6 +55,9 @@ if	(!preg_match("/(^|<nx>)".$_GET['mod'].";(.*?)(<nx>|$)/", $Modlist, $matches))
 }
 if ($_GET['mod2'] != "" && !preg_match("/(^|<nx>)".$_GET['mod2'].";(.*?)(<nx>|$)/", $Modlist, $matches)) {
 	$_GET['mod2'] = "";
+}
+if ($_GET['mod2'] == "" && $_GET['cmp'] != 0) {
+	$_GET['mod2'] = $defaultbible[$Language];
 }
 if ($_GET['mod2'] == "" || $_GET['cmp'] == 0) {
 	unset($_GET['mod2']); 
@@ -78,8 +81,10 @@ while (list($name, $val) = each($_GET)) {
 }
 
 // Check and normalize page location
+//echo "BEFORE=".$_GET['loc']."<br>";
 $vsys = $Sword->getVerseSystem($_GET['mod']);
 $_GET['loc']  = $Sword->convertLocation($vsys, $_GET['loc'], $vsys);
+//echo "AFTER =".$_GET['loc']."<br>";
 
 // Apply Sword options
 $_GET['mlt'] = $_GET['stn']; // just synch these two together
@@ -134,6 +139,7 @@ $Biblelist = getBibleList();
 
 if (!isset($_GET['mod2'])) {	
 	$PageText = $Sword->getChapterText($_GET['mod'], $_GET['loc']);
+	if (strlen($PageText) < 64) {$PageText = validBook($_GET['mod']);}
 	$PageFootnotes = htmlspecialchars($Sword->getFootnotes());
 	$PageCrossrefs = htmlspecialchars($Sword->getCrossRefs());
 	$BookIntro1 = $Sword->getBookIntroduction($_GET['mod'], $_GET['loc']);
@@ -152,6 +158,8 @@ else {
 }
 $P_LOC = preg_split("/\./", $_GET['loc']);
 
+
+
 //
 // Various utility functions
 //
@@ -168,7 +176,7 @@ function validBook($mod) {
 		$_GET['loc'] = $p[0].".1.1.1";
 	}
 	else {
-		$books = availableBooks();
+		$books = availableBooks($mod, array());
 		if (count($books)) {$_GET['loc'] = $books[0].".1.1.1";}
 	}
 	return $Sword->getChapterText($mod, $_GET['loc']);		
@@ -339,8 +347,57 @@ function getBibleList() {
 }
 
 function moduleInfo($modname) {
-	return "Not yet implemented: ".$modname;
+	global $Sword, $NOT_FOUND;
+		$h  = '<div class="script head1">'.getLangName($modname).'</div>'."\n";
+	$v  = $Sword->getModuleInformation($modname, "ShortPromo");
+	if ($v != $NOT_FOUND) {
+		$h .= '<div class="script head1">'.$v.'</div>'."\n";
+	}
+	$v  = $Sword->getModuleInformation($modname, "Description");
+	$v2 = $Sword->getModuleInformation($modname, "About");
+	if ($v != $NOT_FOUND) {
+		$h .= '<span>'.parseRTF($v).'</span'."\n";
+	}
+	if ($v2 != $NOT_FOUND && $v2 != $v) {
+		$h .= '<span>'.parseRTF($v2).'</span>'."\n";
+	}
+	$v = $Sword->getModuleInformation($modname, "DistributionLicense");
+	$v2 = $Sword->getModuleInformation($modname, "Copyright");
+	$s = "";
+		$h .= '<br><hr><br><div style="text-align:center;">';
+	if ($v != $NOT_FOUND) {
+		$h .= $v;
+		$s = ": ";
+	}
+	if ($v2 != $NOT_FOUND) {
+		$h .= $s.$v2;
+	}
+		$h .= '</div>'."\n";
+		$h .= '<div style="text-align:center;"><div>'."\n";
+	$v  = $Sword->getModuleInformation($modname, "CopyrightHolder");
+	if ($v != $NOT_FOUND) {
+		$h .= '<h3>'.$v.'</h3>'."\n";
+	}	
+	$v  = $Sword->getModuleInformation($modname, "CopyrightContactAddress");
+	if ($v != $NOT_FOUND) {
+		$h .= '<h3>'.$v.'</h3>'."\n";
+	}
+	$v  = $Sword->getModuleInformation($modname, "CopyrightContactEmail");
+	if ($v != $NOT_FOUND) {
+		$h .= '<h3>'.$v.'</h3>'."\n";
+	}			
+		$h .= '</div></div>'."\n";
+		
+	return $h;
 }
+
+function parseRTF($t) {
+	$t = preg_replace("/\\\\par/", "<br>", $t);
+	$t = preg_replace("/\\\\qc(.*?)\\\\pard/", "<div style='text-align:center;'>$1</div>", $t);
+	$t = preg_replace_callback("/\\\\u\{(\d+)\}(?)/", "chrUTF8CB", $t);
+	return $t;
+}
+function chrUTF8CB($m) {return chrUTF8($m[1]);}
 
 
 // Builds HTML text which displays lemma information
@@ -401,4 +458,5 @@ function getLemmaHTML($list) {
 	
 	return $html;
 }
+
 ?>

@@ -10,6 +10,25 @@
 	float:right;
 }
 
+#modtable {
+	display:table;
+	margin:60px 150px 0px 0px;
+}
+#modmsg {
+	width:100%;
+	padding-right:16px;
+	display:table-cell;
+	text-align:right;
+	
+}
+#modlinks {
+	display:table-cell;
+}
+#modlinks a {
+	display:block;
+	color:blue;
+}
+
 /* SCRIPT BOX */
 .script .head1 {
 	font-size:18px;
@@ -459,7 +478,7 @@
 	background-position:center -196px;
 }
 #bhdg.disabled {
-	background-position:left 0px;
+	background-position:right 0px;
 }
 #bftn.disabled {
 	background-position:right -28px;
