@@ -1,7 +1,6 @@
 <?php require_once("php/Common.php"); ?>
 <?php 
 $NOT_FOUND ="Not Found";
-$REPOSITORIES = "/home/dale/ibt.org.ru/browserbible, /home/dale/ibt.org.ru/modsword/raw";
 
 // RUSSIAN PHRASES
 if ($Language == "RU") {
@@ -13,10 +12,47 @@ $dictLinks["RU"] ="RDictionary Links";
 $verseNumbers["RU"] ="RVerse Numbers";
 $strongsNumbers["RU"] ="RStrongs";
 $redWords["RU"] ="RRed Words";
+
+}
+
+// ENGLISH PHRASES
+if ($Language == "EN") {
+$defaultbible["EN"] ="KJV";
+$headings["EN"] ="Headings";
+$footnotes["EN"] ="Footnotes";
+$crossRefs["EN"] ="Cross-Refs";
+$dictLinks["EN"] ="Dictionary Links";
+$verseNumbers["EN"] ="Verse Numbers";
+$strongsNumbers["EN"] ="Strongs";
+$redWords["EN"] ="Red Words";
+
+}
+
+// GERMAN PHRASES
+if ($Language == "DE") {
+$defaultbible["DE"] ="RSP";
+$headings["DE"] ="GHeadings";
+$footnotes["DE"] ="GFootnotes";
+$crossRefs["DE"] ="GCross-Refs";
+$dictLinks["DE"] ="GDictionary Links";
+$verseNumbers["DE"] ="GVerse Numbers";
+$strongsNumbers["DE"] ="GStrongs";
+$redWords["DE"] ="GRed Words";
+
+}
+
 $StrongsHebrewModule["RU"] ="StrongsHebrewRU";
 $StrongsGreekModule["RU"] ="StrongsGreekRU";
 $GreekParseModule["RU"] ="Robinson";
-// SWORD locale was not used because ICU becomes necessary
+$StrongsHebrewModule["EN"] ="StrongsHebrew";
+$StrongsGreekModule["EN"] ="StrongsGreek";
+$GreekParseModule["EN"] ="Robinson";
+$StrongsHebrewModule["DE"] ="StrongsHebrew";
+$StrongsGreekModule["DE"] ="StrongsGreek";
+$GreekParseModule["DE"] ="Robinson";
+
+// SWORD locale was not used because ICU then becomes necessary
+if ($Language == "RU") {
 $Book["RU"]["Gen"]="Бытие";
 $Book["RU"]["Exod"]="Исход";
 $Book["RU"]["Lev"]="Левит";
@@ -85,20 +121,7 @@ $Book["RU"]["Jude"]="Иуды";
 $Book["RU"]["Rev"]="Откровение";
 }
 
-// ENGLISH PHRASES
 if ($Language == "EN") {
-$defaultbible["EN"] ="KJV";
-$headings["EN"] ="Headings";
-$footnotes["EN"] ="Footnotes";
-$crossRefs["EN"] ="Cross-Refs";
-$dictLinks["EN"] ="Dictionary Links";
-$verseNumbers["EN"] ="Verse Numbers";
-$strongsNumbers["EN"] ="Strongs";
-$redWords["EN"] ="Red Words";
-$StrongsHebrewModule["EN"] ="StrongsHebrew";
-$StrongsGreekModule["EN"] ="StrongsGreek";
-$GreekParseModule["EN"] ="Robinson";
-// SWORD locale was not used because ICU becomes necessary
 $Book["EN"]["Gen"]="Genesis";
 $Book["EN"]["Exod"]="Exodus";
 $Book["EN"]["Lev"]="Leviticus";
@@ -167,20 +190,7 @@ $Book["EN"]["Heb"]="Hebrews";
 $Book["EN"]["Rev"]="Revelation";
 }
 
-// GERMAN PHRASES
 if ($Language == "DE") {
-$defaultbible["DE"] ="RSP";
-$headings["DE"] ="GHeadings";
-$footnotes["DE"] ="GFootnotes";
-$crossRefs["DE"] ="GCross-Refs";
-$dictLinks["DE"] ="GDictionary Links";
-$verseNumbers["DE"] ="GVerse Numbers";
-$strongsNumbers["DE"] ="GStrongs";
-$redWords["DE"] ="GRed Words";
-$StrongsHebrewModule["DE"] ="StrongsHebrew";
-$StrongsGreekModule["DE"] ="StrongsGreek";
-$GreekParseModule["DE"] ="Robinson";
-// SWORD locale was not used because ICU becomes necessary
 $Book["DE"]["Gen"]="1. Mose";
 $Book["DE"]["Exod"]="2. Mose";
 $Book["DE"]["Lev"]="3. Mose";
@@ -249,138 +259,4 @@ $Book["DE"]["Jude"]="Judas";
 $Book["DE"]["Rev"]="Offenbarung";
 }
 
-// IBT verse system book orders. SWORD was not used in order to increase speed
-$Booki["Synodal"][0] = "Gen";
-$Booki["Synodal"][1] = "Exod";
-$Booki["Synodal"][2] = "Lev";
-$Booki["Synodal"][3] = "Num";
-$Booki["Synodal"][4] = "Deut";
-$Booki["Synodal"][5] = "Josh";
-$Booki["Synodal"][6] = "Judg";
-$Booki["Synodal"][7] = "Ruth";
-$Booki["Synodal"][8] = "1Sam";
-$Booki["Synodal"][9] = "2Sam";
-$Booki["Synodal"][10] = "1Kgs";
-$Booki["Synodal"][11] = "2Kgs";
-$Booki["Synodal"][12] = "1Chr";
-$Booki["Synodal"][13] = "2Chr";
-$Booki["Synodal"][14] = "Ezra";
-$Booki["Synodal"][15] = "Neh";
-$Booki["Synodal"][16] = "Esth";
-$Booki["Synodal"][17] = "Job";
-$Booki["Synodal"][18] = "Ps";
-$Booki["Synodal"][19] = "Prov";
-$Booki["Synodal"][20] = "Eccl";
-$Booki["Synodal"][21] = "Song";
-$Booki["Synodal"][22] = "Isa";
-$Booki["Synodal"][23] = "Jer";
-$Booki["Synodal"][24] = "Lam";
-$Booki["Synodal"][25] = "Ezek";
-$Booki["Synodal"][26] = "Dan";
-$Booki["Synodal"][27] = "Hos";
-$Booki["Synodal"][28] = "Joel";
-$Booki["Synodal"][29] = "Amos";
-$Booki["Synodal"][30] = "Obad";
-$Booki["Synodal"][31] = "Jonah";
-$Booki["Synodal"][32] = "Mic";
-$Booki["Synodal"][33] = "Nah";
-$Booki["Synodal"][34] = "Hab";
-$Booki["Synodal"][35] = "Zeph";
-$Booki["Synodal"][36] = "Hag";
-$Booki["Synodal"][37] = "Zech";
-$Booki["Synodal"][38] = "Mal";
-$Booki["Synodal"][39] = "Matt";
-$Booki["Synodal"][40] = "Mark";
-$Booki["Synodal"][41] = "Luke";
-$Booki["Synodal"][42] = "John";
-$Booki["Synodal"][43] = "Acts";
-$Booki["Synodal"][44] = "Jas";
-$Booki["Synodal"][45] = "1Pet";
-$Booki["Synodal"][46] = "2Pet";
-$Booki["Synodal"][47] = "1John";
-$Booki["Synodal"][48] = "2John";
-$Booki["Synodal"][49] = "3John";
-$Booki["Synodal"][50] = "Jude";
-$Booki["Synodal"][51] = "Rom";
-$Booki["Synodal"][52] = "1Cor";
-$Booki["Synodal"][53] = "2Cor";
-$Booki["Synodal"][54] = "Gal";
-$Booki["Synodal"][55] = "Eph";
-$Booki["Synodal"][56] = "Phil";
-$Booki["Synodal"][57] = "Col";
-$Booki["Synodal"][58] = "1Thess";
-$Booki["Synodal"][59] = "2Thess";
-$Booki["Synodal"][60] = "1Tim";
-$Booki["Synodal"][61] = "2Tim";
-$Booki["Synodal"][62] = "Titus";
-$Booki["Synodal"][63] = "Phlm";
-$Booki["Synodal"][64] = "Heb";
-$Booki["Synodal"][65] = "Rev";
-
-$Booki["KJV"][0] = "Gen";
-$Booki["KJV"][1] = "Exod";
-$Booki["KJV"][2] = "Lev";
-$Booki["KJV"][3] = "Num";
-$Booki["KJV"][4] = "Deut";
-$Booki["KJV"][5] = "Josh";
-$Booki["KJV"][6] = "Judg";
-$Booki["KJV"][7] = "Ruth";
-$Booki["KJV"][8] = "1Sam";
-$Booki["KJV"][9] = "2Sam";
-$Booki["KJV"][10] = "1Kgs";
-$Booki["KJV"][11] = "2Kgs";
-$Booki["KJV"][12] = "1Chr";
-$Booki["KJV"][13] = "2Chr";
-$Booki["KJV"][14] = "Ezra";
-$Booki["KJV"][15] = "Neh";
-$Booki["KJV"][16] = "Esth";
-$Booki["KJV"][17] = "Job";
-$Booki["KJV"][18] = "Ps";
-$Booki["KJV"][19] = "Prov";
-$Booki["KJV"][20] = "Eccl";
-$Booki["KJV"][21] = "Song";
-$Booki["KJV"][22] = "Isa";
-$Booki["KJV"][23] = "Jer";
-$Booki["KJV"][24] = "Lam";
-$Booki["KJV"][25] = "Ezek";
-$Booki["KJV"][26] = "Dan";
-$Booki["KJV"][27] = "Hos";
-$Booki["KJV"][28] = "Joel";
-$Booki["KJV"][29] = "Amos";
-$Booki["KJV"][30] = "Obad";
-$Booki["KJV"][31] = "Jonah";
-$Booki["KJV"][32] = "Mic";
-$Booki["KJV"][33] = "Nah";
-$Booki["KJV"][34] = "Hab";
-$Booki["KJV"][35] = "Zeph";
-$Booki["KJV"][36] = "Hag";
-$Booki["KJV"][37] = "Zech";
-$Booki["KJV"][38] = "Mal";
-$Booki["KJV"][39] = "Matt";
-$Booki["KJV"][40] = "Mark";
-$Booki["KJV"][41] = "Luke";
-$Booki["KJV"][42] = "John";
-$Booki["KJV"][43] = "Acts";
-$Booki["KJV"][44] = "Rom";
-$Booki["KJV"][45] = "1Cor";
-$Booki["KJV"][46] = "2Cor";
-$Booki["KJV"][47] = "Gal";
-$Booki["KJV"][48] = "Eph";
-$Booki["KJV"][49] = "Phil";
-$Booki["KJV"][50] = "Col";
-$Booki["KJV"][51] = "1Thess";
-$Booki["KJV"][52] = "2Thess";
-$Booki["KJV"][53] = "1Tim";
-$Booki["KJV"][54] = "2Tim";
-$Booki["KJV"][55] = "Titus";
-$Booki["KJV"][56] = "Phlm";
-$Booki["KJV"][57] = "Heb";
-$Booki["KJV"][58] = "Jas";
-$Booki["KJV"][59] = "1Pet";
-$Booki["KJV"][60] = "2Pet";
-$Booki["KJV"][61] = "1John";
-$Booki["KJV"][62] = "2John";
-$Booki["KJV"][63] = "3John";
-$Booki["KJV"][64] = "Jude";
-$Booki["KJV"][65] = "Rev";
 ?>

@@ -3,12 +3,16 @@ var PopupElement, PopupShadowElement;
 var PopupEvent;
 var ShowPopupID;
 var EventInProgress;
+var Selverse, Selchap, Selbook;
 
 var ajax = new XMLHttpRequest();
 
 function init() {
 	PopupElement = document.getElementById("npopup");
 	PopupShadowElement = document.getElementById("npopupSH");
+	Selverse = document.getElementById("selverse");
+	Selchap = document.getElementById("selchap");
+	Selbook = document.getElementById("selbook");
 }
 
 function mouseHandler(e) {
@@ -37,14 +41,18 @@ function activatePopup(type, title) {
 	var mod = getMod(PopupEvent);
 	RNF = {doRequest:false, content:title, back:"", type:type, key:mod + "." + type + "." + title, list:title, modName:mod};
 //var a=""; for (var m in RNF) {a += m + " = " + RNF[m] + ", ";} window.alert(a);	
+	RNF.back += "<div style=\"margin-bottom:20px;\">";
 	if (PopupElement.style.visibility == "visible") {
-		RNF.back += "<div style=\"margin-bottom:20px;\">";
 		RNF.back += "<a class=\"popupBackLink\" onclick=\"popupBack(this)\">";
 		RNF.back += document.getElementById("ui.back").innerHTML + "</a>";
 		RNF.back += "<div style=\"display:none;\">" + PopupElement.innerHTML + "</div>";
-		RNF.back += "</div>";
 		hidePopup(null, true);
 	}
+	else {
+		RNF.back += "<a class=\"popupBackLink\" onclick=\"hidePopup(event)\">";
+		RNF.back += document.getElementById("ui.close").innerHTML + "</a>";
+	}
+	RNF.back += "</div>";
 	
 	getContent(RNF);
 
@@ -246,4 +254,13 @@ function encodeutf8(t) {
 		}	
 	}
 	return t;
+}
+
+function resetloc(elem) {
+	if (elem.id == "selbook") {
+		Selchap.value = 1;
+		Selverse.value = 1;
+	}
+	else if (elem.id == "selchap") 
+		Selverse.value = 1;
 }
