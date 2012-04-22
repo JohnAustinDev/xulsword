@@ -93,6 +93,7 @@ using namespace sword;
 xsThrow
 *********************************************************************/
 void xulsword::xsThrow(const char *msg) {
+  SWLog::getSystemLog()->logDebug("xsThrow: %s", msg);
   if (ThrowJS) {ThrowJS(msg);}
 }
 

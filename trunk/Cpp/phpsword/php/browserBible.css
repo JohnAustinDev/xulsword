@@ -116,7 +116,7 @@
 .infolink {
 	position:absolute;
 	left:-4px;
-	bottom:-14px;
+	bottom:-18px;
 	text-align:center;
 	width:100%;
 }
@@ -148,12 +148,13 @@
 	border-radius: 8px; /* CSS3 */
 }
 .npopup {
+	position:fixed;
+	text-align:left;
+	width:400px;
+	max-height:500px;
 	font-size: 13px;
 	margin-right:20px;
-	padding-left:20px;
-	padding-right:20px;
-	padding-top:20px;
-	padding-bottom:20px;
+	padding:20px;
 	border:1px solid black;
 	cursor:default;
 	background:#f8f0d1;
@@ -161,7 +162,6 @@
 	-webkit-border-radius: 5px; /* Safari, Chrome */
 	border-radius: 5px; /* CSS3 */
 	z-index:4;
-	position:absolute;
 	overflow:auto;
 }
 .npopup a {
@@ -169,6 +169,7 @@
 	text-decoration: underline !important;	
 }
 .npopupSH {
+	position:fixed;
 	background:black;
 	opacity:.35;
 	-moz-border-radius: 7px; /* Firefox */
@@ -176,7 +177,6 @@
 	border-radius: 7px; /* CSS3 */
 	cursor:default;
 	z-index:3;
-	position:absolute;
 }
 .navlink {
 	direction:ltr !important;
@@ -203,12 +203,11 @@
 	margin-bottom:4px;
 }
 .interV1, .interV2 {
-	width:50%;
-	max-width:50%;
+	width:300px;
 	display:table-cell;
 	padding-left:20px;
 }
-.interV1 select, .interV2 select {
+.interV select, interV1 select, .interV2 select {
 	margin-right:10px;
 }
 
