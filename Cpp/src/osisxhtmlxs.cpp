@@ -162,8 +162,9 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
                   mclass.append("-");
                   mclass.append(tag.getAttribute("subType"));
                 }
-								buf.appendFormatted("<span class=\"%s\" id=\"cr.%s.%s\" title=\"%s.%s\"></span>",
+								buf.appendFormatted("<span class=\"%s\" id=\"%s.cr.%s.%s\" title=\"%s.%s\"></span>",
 								mclass.c_str(),
+                userData->module->Name(),
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
 								footnoteNumber.c_str(), 
@@ -171,7 +172,8 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 							}
 							else {
                 u->inXRefNote = false;
-								buf.appendFormatted("<span class=\"fn\" id=\"fn.%s.%s\" title=\"%s.%s\"></span>",
+								buf.appendFormatted("<span class=\"fn\" id=\"%s.fn.%s.%s\" title=\"%s.%s\"></span>",
+                userData->module->Name(),
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
 								footnoteNumber.c_str(), 

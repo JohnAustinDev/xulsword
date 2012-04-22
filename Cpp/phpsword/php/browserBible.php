@@ -15,14 +15,17 @@ $Option["hcn"] = "Hebrew Cantillation";
 $Option["mse"] = "Morpheme Segmentation";
 			
 $UpgradeBrowser = 0;
-/*
 $test = array();
 if (preg_match('/MSIE (\\d+)/', $_SERVER['HTTP_USER_AGENT'], $test)) {
-	if ($test[1] < 9) $UpgradeBrowser = 1;
+	if ($test[1] < 8) $UpgradeBrowser = 1;
 }
-*/
+
+// Go to "home" page if no mod is specified
+$PromptForBook = 0;
+if (!isset($_GET['mod'])) {$PromptForBook = 1;}
 
 $Sword = new phpsword($REPOSITORIES);
+	
 $Modlist = $Sword->getModuleList();
 if	(!preg_match("/(^|<nx>)".$defaultbible[$Language].";Biblical Texts(<nx>|$)/", $Modlist)) {
 	$firstbible = array();
@@ -30,15 +33,21 @@ if	(!preg_match("/(^|<nx>)".$defaultbible[$Language].";Biblical Texts(<nx>|$)/",
 	if (count($firstbible)) $defaultbible[$Language] = $firstbible[2];
 }
 
-$Default= array('mod'=>$defaultbible[$Language], 'mod2'=>$defaultbible[$Language], 'cmp'=>'0', 'loc'=>'Gen.1.1.1',
+$Default = array('mod'=>$defaultbible[$Language], 'mod2'=>$defaultbible[$Language], 'cmp'=>'0',
+					'loc'=>'Gen.1.1.1',
 					'hdg'=>'1', 'ftn'=>'1', 'crn'=>'1', 'dtl'=>'1', 'wcr'=>'1', 'vsn'=>'1', 
 					'hvp'=>'1', 'hcn'=>'1', 'stn'=>'1', 'mlt'=>'1', 'mse'=>'1',
 					'rmod'=>'', 'rtype'=>'', 'rlist'=>'');
 
 // Do input checking and apply defaults
-$PromptForBook = 0;
-if (!isset($_GET['mod'])) {$PromptForBook = 1;}
 $_GET = array_merge($Default, $_GET);
+if ($_GET['cmp'] == '0') $_GET['mod2'] = $Default['mod2'];
+if (isset($_GET['noj'])) {
+	$_GET['ftn'] = '0';
+	$_GET['crn'] = '0';
+	$_GET['dtl'] = '0';
+	unset($_GET['noj']);	
+}
 
 // GET names: bk, ch, vs, lv all override loc, but are then unset
 $p = preg_split("/\./", $_GET['loc']);
@@ -48,21 +57,6 @@ if (isset($_GET['vs'])) {$p[2] = $_GET['vs']; $p[3] = $p[2];}
 if (isset($_GET['lv'])) $p[3] = $_GET['lv'];
 $_GET['loc'] = join(".", $p);
 
-// Check that requested modules exist or revert to defaults
-$matches = array();
-if	(!preg_match("/(^|<nx>)".$_GET['mod'].";(.*?)(<nx>|$)/", $Modlist, $matches)) {
-	$_GET['mod'] = $Default['mod'];
-}
-if ($_GET['mod2'] != "" && !preg_match("/(^|<nx>)".$_GET['mod2'].";(.*?)(<nx>|$)/", $Modlist, $matches)) {
-	$_GET['mod2'] = "";
-}
-if ($_GET['mod2'] == "" && $_GET['cmp'] != 0) {
-	$_GET['mod2'] = $defaultbible[$Language];
-}
-if ($_GET['mod2'] == "" || $_GET['cmp'] == 0) {
-	unset($_GET['mod2']); 
-}
-
 // Remove all GET names not included in the Default list
 $del = array_diff_key($_GET, $Default);
 reset($del);
@@ -71,25 +65,37 @@ while (list($name, $val) = each($del)) {unset($_GET[$name]);}
 // Check values of GET params
 reset($_GET);
 while (list($name, $val) = each($_GET)) {
-	if (preg_match("/^(mod|mod2|loc|rmod|rlist)$/", $name)) continue;
-	else if ($name == 'rtype') {
-		if (!preg_match("/^(reflist|dictlist|stronglist)$/", $val)) {
+	if (preg_match("/^(mod|mod2|rmod)$/", $name)) {
+		$_GET[$name] = urlencode($val);
+		if	(!preg_match("/(^|<nx>)".$val.";(.*?)(<nx>|$)/", $Modlist)) {
 			$_GET[$name] = $Default[$name];
+		}
+		continue;
+	}
+	else if ($name == 'loc') {$_GET[$name] = urlencode($val); continue;}
+	else if ($name == 'rlist') {continue;}
+	else if ($name == 'rtype' && $val !== '') {
+		if (!preg_match("/^(reflist|dictlist|stronglist)$/", $val)) {
+			// Cancel any un-supported AJAX requests
+			$_GET['rmod'] = '';
+			$_GET['rtype'] = '';
+			$_GET['rlist'] = '';
 		}
 	}
 	else if (!preg_match("/^(0|1)$/", $val)) {$_GET[$name] = $Default[$name];}
 }
 
+// The master verse system/module is the verse system of the URL location
+$MasterMod = $_GET['mod']; // left most text, like "Holy Bible" program
+$MasterVsys = $Sword->getVerseSystem($MasterMod);
+
 // Check and normalize page location
-//echo "BEFORE=".$_GET['loc']."<br>";
-$vsys = $Sword->getVerseSystem($_GET['mod']);
-$_GET['loc']  = $Sword->convertLocation($vsys, $_GET['loc'], $vsys);
-//echo "AFTER =".$_GET['loc']."<br>";
+$_GET['loc']  = $Sword->convertLocation($MasterVsys, $_GET['loc'], $MasterVsys);
 
 // Apply Sword options
 $_GET['mlt'] = $_GET['stn']; // just synch these two together
 reset($Option);
-while (list($var, $val) = each($Option)) {$Sword->setGlobalOption($val, ($_GET[$var]==1 ? "On":"Off"));}
+while (list($var, $val) = each($Option)) {$Sword->setGlobalOption($val, ($_GET[$var] == '1' ? "On":"Off"));}
   
 // Handle any AJAX request
 if ($_GET['rmod'] && $_GET['rtype'] && $_GET['rlist']) {
@@ -100,10 +106,22 @@ if ($_GET['rmod'] && $_GET['rtype'] && $_GET['rlist']) {
 		$refs = preg_split("/\s*;\s*/", $_GET['rlist']);
 		for ($i=0; $i<count($refs); $i++) {
 			if (!$refs[$i]) continue;
+			$refs[$i] = urlencode($refs[$i]);
 			$vsys = $Sword->getVerseSystem($_GET['rmod']);
-			$html .= $sep.sreflink($_GET['rmod'], $Sword->convertLocation($vsys, $refs[$i], $vsys));
-			$vss = $Sword->getVerseText($_GET['rmod'], $refs[$i]);
+			$refs[$i] = $Sword->convertLocation($vsys, $refs[$i], $vsys);
+			$loc = $Sword->convertLocation($vsys, $refs[$i], $MasterVsys);
+			$html .= $sep.sreflink($loc, $refs[$i]);
+			$vss = $Sword->getVerseText($_GET['rmod'], $loc);
 			if ($vss) {$html .= ": ".$vss;}
+			else {
+				$vsys2 = $Sword->getVerseSystem($defaultbible[$Language]);
+				$loc2 = $Sword->convertLocation($vsys, $refs[$i], $vsys2);
+				$vss = $Sword->getVerseText($defaultbible[$Language], $loc2);
+				$html .= ': '.$vss.'(';
+				if ($refs[$i] != $loc2) {$html .= loc2UI($loc2).', ';}
+				$html .= getLangName($defaultbible[$Language]);
+				$html .= ')';
+			}
 			$sep = "<br><hr>";
 		}
 		break;
@@ -114,6 +132,7 @@ if ($_GET['rmod'] && $_GET['rtype'] && $_GET['rlist']) {
 			if (!$refs[$i]) continue;
 			$p = preg_split("/\./", $refs[$i]);
 			if (count($p) != 2) {$p = preg_split("/:/", $refs[$i]);}
+			$p[0] = urlencode($p[0]);
 			$p[1] = decodeutf8($p[1]);
 			$ent = $Sword->getDictionaryEntry($p[0], $p[1]);
 			if ($ent) {
@@ -134,12 +153,28 @@ unset($_GET['rtype']);
 unset($_GET['rlist']);
 unset($_GET['rmod']);
 
+function test($string) {
+    $hex='';
+    for ($i=0; $i < strlen($string); $i++)
+    {
+        $hex .= dechex(ord($string[$i])).", ";
+    }
+    return $hex;
+}
+
+
+
+
+
 // Finally read and save chapter text, footnotes and other script variables
 $Biblelist = getBibleList();
 
-if (!isset($_GET['mod2'])) {	
+if ($_GET['cmp'] == '0') {	
 	$PageText = $Sword->getChapterText($_GET['mod'], $_GET['loc']);
-	if (strlen($PageText) < 64) {$PageText = validBook($_GET['mod']);}
+	if (strlen($PageText) < 64) {
+		$_GET['loc'] = validLocation($_GET['mod']);
+		$PageText = $Sword->getChapterText($_GET['mod'], $_GET['loc']);		
+	}
 	$PageFootnotes = htmlspecialchars($Sword->getFootnotes());
 	$PageCrossrefs = htmlspecialchars($Sword->getCrossRefs());
 	$BookIntro1 = $Sword->getBookIntroduction($_GET['mod'], $_GET['loc']);
@@ -148,7 +183,7 @@ if (!isset($_GET['mod2'])) {
 	$ModInfo2 = "";
 }
 else {
-	$PageText = $Sword->getChapterTextMulti($_GET['mod2'].",".$_GET['mod'], $_GET['loc'], true);
+	$PageText = $Sword->getChapterTextMulti($_GET['mod'].",".$_GET['mod2'], $_GET['loc'], true);
 	$PageFootnotes = htmlspecialchars($Sword->getFootnotes());
 	$PageCrossrefs = htmlspecialchars($Sword->getCrossRefs());
 	$BookIntro1  = $Sword->getBookIntroduction($_GET['mod'], $_GET['loc']);
@@ -164,8 +199,11 @@ $P_LOC = preg_split("/\./", $_GET['loc']);
 // Various utility functions
 //
 
-function validBook($mod) {
+// Tries to set 'loc' to a valid location for the given module.
+// NOTE that if Scope is not available $_GET['loc'] is returned unchanged.
+function validLocation($mod) {
 	global $Sword, $NOT_FOUND, $_GET;
+	$loc = $_GET['loc'];
 	$scope = $Sword->getModuleInformation($mod, "Scope");
 	if ($scope != $NOT_FOUND) {
 		$scope = preg_split("/\s+/", $scope);
@@ -173,34 +211,35 @@ function validBook($mod) {
 		$vsys = $Sword->getVerseSystem($mod);
 		$p = $Sword->convertLocation($vsys, $scope, $vsys);
 		$p = preg_split("/\./", $p);
-		$_GET['loc'] = $p[0].".1.1.1";
+		$loc = $p[0].".1.1.1";
 	}
-	else {
-		$books = availableBooks($mod, array());
-		if (count($books)) {$_GET['loc'] = $books[0].".1.1.1";}
-	}
-	return $Sword->getChapterText($mod, $_GET['loc']);		
+	return $loc;
 }
 
-function loc2href($mod, $normref) {
-	global $Sword, $_GET;
-	$new = array('loc'=>$normref);
-	return pageURL($_GET, $new);
-}
-
-function loc2UI($r) {
+// Returns human readable localized Bible reference
+function loc2UI($loc) {
 	global $_GET, $Sword, $Book, $Language;
-	$loc = $Sword->convertLocation($_GET['mod'], $r, $_GET['mod']);
-	$loc = preg_split("/\./", $loc);
-	$ret = $Book[$Language][$loc[0]]." ".$loc[1];
-	if ($loc[2]==1 && ($loc[3]==1 || $loc[3]==$Sword->getMaxVerse($_GET['mod'], $r))) {
+	$p = preg_split("/\./", $loc);
+	$ret = $Book[$Language][$p[0]]." ".$p[1];
+	if ($p[2]==1 && $p[3]==$Sword->getMaxVerse($_GET['mod'], $loc)) {
 		return $ret;
 	}
-	if ($loc[3]==$loc[2]) return $ret.":".$loc[2];
-	return $ret.":".$loc[2]."-".$loc[3];
+	if ($p[3] == $p[2]) return $ret.":".$p[2];
+	return $ret.":".$p[2]."-".$p[3];
 } 
 
-function sreflink($mod, $ref) {return '<a href="'.loc2href($mod, $ref).'">'.loc2UI($ref).'</a>';}
+// Returns anchor pointing to new location within current page
+function sreflink($loc, $locUI) {
+	global $_GET;
+	return '<a href="'.pageURL(array('loc' => $loc)).'">'.loc2UI($locUI).'</a>';
+}
+
+function decodeutf8($ref) {
+	$res = preg_replace_callback("/_(\d+)_/", "deOSISRef", $ref);
+	return $res;
+}
+
+function deOSISRef($m) {return chrUTF8($m[1]);}
 
 function chrUTF8($num) {
 	if($num<=0x7F)       return chr($num);
@@ -210,35 +249,27 @@ function chrUTF8($num) {
 	return '';
 }
 
-function deOSISRef($m) {return chrUTF8($m[1]);}
-
-function decodeutf8($ref) {
-	$res = preg_replace_callback("/_(\d+)_/", "deOSISRef", $ref);
-	return $res;
-}
 function imgpath($m) {return '<img '.$m[1].'src="'.filepath2url($m[2]).'"';}
 
-function chapter($d) {
-	global $Sword;
+// Returns new location after applying given chapter delta 
+function chapterDelta($d) {
+	global $Sword, $MasterVsys;
 	$loc = preg_split("/\./", $_GET['loc']);
 	$loc[1] = $loc[1] + $d;
 	$loc[2] = 1;
 	$loc[3] = 1;
-	$vsys = $Sword->getVerseSystem($_GET['mod']);
-	$loc = $Sword->convertLocation($vsys, join(".", $loc), $vsys);
-	$loc = preg_split("/\./", $loc);
-	return $loc[1];	
+	$loc = $Sword->convertLocation($MasterVsys, join(".", $loc), $MasterVsys);
+	return $loc;	
 }
 
-function verse($d) {
-	global $Sword;
+// Returns new location after applying given verse delta
+function verseDelta($d) {
+	global $Sword, $MasterVsys;
 	$loc = preg_split("/\./", $_GET['loc']);
 	$loc[2] = $loc[2] + $d;;
 	$loc[3] = $loc[2];
-	$vsys = $Sword->getVerseSystem($_GET['mod']);
-	$loc = $Sword->convertLocation($vsys, join(".", $loc), $vsys);
-	$loc = preg_split("/\./", $loc);
-	return $loc[2];	
+	$loc = $Sword->convertLocation($MasterVsys, join(".", $loc), $MasterVsys);
+	return $loc;	
 }
 
 function globalToggleAnchor($name, $phrase) {
@@ -248,23 +279,36 @@ function globalToggleAnchor($name, $phrase) {
 	return anchor("b".$name, $new, 'button', $phrase, $name, '1');
 }
 
+// Return anchor with id, class, title, href, and innerHTML
 function anchor($id, $new, $class, $phrase, $enName, $enVal) {
 	global $_GET;
 	$ret = '<a id="'.$id.'" class="'.$class;
 	if ($enName && $enVal && $new[$enName] == $enVal) {
 		$ret .= ' disabled';
 	}
-	$ret .= '" title="'.$phrase.'" href="'.pageURL($_GET, $new).'" >';
+	$ret .= '" title="'.$phrase.'" href="'.pageURL($new).'" >';
 	$ret .= '<span>'.$phrase.'</span></a>'."\n";
 	return $ret;
 }
 
-function pageURL($base, $new) {
-	$url = array_merge($base, $new);
+// Return a complete URL with $new data overwriting current page URL data.
+//		ADDS an anchor target to selected verse because without this,
+//			form controls can never scroll to selected verse.
+//		SKIPS AJAX params
+//		SKIPS params having a value of "<unset>"
+//		SKIPS params with default values to reduce URL length,
+//			which also means that changes to defaults will apply 
+//			retro-actively to bookmarked URLS.
+function pageURL($new) {
+	global $_GET, $Default;
+	$url = array_merge($_GET, $new);
 	$s = "";
 	$h = "";
 	while (list($name, $val) = each($url)) {
+		if ($val == "<unset>") continue;
 		if (preg_match("/^(rtype|rlist|rmod)$/", $name)) continue;
+		// Keep 'mod' because otherwise we'll go to "home" page!
+		if ($name != 'mod' && $val == $Default[$name]) continue;
 		$h .= $s.$name.'='.$val;
 		$s = "&";	
 	}
@@ -272,12 +316,25 @@ function pageURL($base, $new) {
 	return urlencode(currentFileName())."?".htmlentities($h);		
 }
 
+function currentFileName() {
+	global $EntryPage;
+	$parts = Explode('/', $EntryPage);
+	return $parts[count($parts) - 1];
+}
+
+// Returns available books in $mod, including all $mod vsys book 
+// names which are listed as values in the $incbks array. The 
+// returned array's keys are keys to $Booki[$mod's vsys] and values 
+// are book abbreviations. NOTE: 1) if $mod's vsys is not Synodal
+// or KJV then all books in KJV are returned. 2) if Scope is not
+// supplied then ALL books in $mod's vsys are returned. 
 function availableBooks($mod, $incbks) {
 	global $Sword, $NOT_FOUND, $Booki;
 	$books = array();
 	$vsys = $Sword->getVerseSystem($mod);
 	foreach ($incbks as $bk) {
-		$books[indexOfBook($vsys, $bk)] = $bk;
+		$i = indexOfBook($vsys, $bk);
+		if ($i != -1) $books[$i] = $bk;
 	}
 	$scope = $Sword->getModuleInformation($mod, "Scope");
 	if ($scope != $NOT_FOUND && ($vsys == "Synodal" || $vsys == "KJV")) {
@@ -288,6 +345,7 @@ function availableBooks($mod, $incbks) {
 			for ($x=0; $x<count($bks); $x++) {
 				$bks[$x] = preg_replace("/\..*$/", "", $bks[$x]);
 				$idx = indexOfBook($vsys, $bks[$x]);
+				if ($idx == -1) continue;
 				if ($lst == 0) {$lst = $idx;}
 				else {
 					for ($y=$lst+1; $y<$idx; $y++) {
@@ -295,7 +353,8 @@ function availableBooks($mod, $incbks) {
 					}	
 				}
 				if (!in_array($bks[$x], $books)) {
-					$books[indexOfBook($vsys, $bks[$x])] = $bks[$x];		
+					$mi = indexOfBook($vsys, $bks[$x]);
+					if ($mi != -1) $books[$mi] = $bks[$x];		
 				}
 			}		
 		}
@@ -312,10 +371,16 @@ function availableBooks($mod, $incbks) {
 
 function indexOfBook($vsys, $bk) {
 	global $Booki;
-	for ($i=0; $i<count($Booki[$vsys]); $i++) {if ($bk == $Booki[$vsys][$i]) return $i;}
-	return 0;
+	$key = array_search($bk, $Booki[$vsys]);
+	if ($key === false) return -1;
+	return $key;
 }
 
+// Returns human readable name corresponding to $mod name
+// Uses $Language specific name if available
+// Otherwise uses mono-lingual name if available
+// Otherwise uses module's Abbreviation name if available
+// Otherwise uses module name itself
 function getLangName($mod) {
 	global $NOT_FOUND, $Language, $languageNames, $Sword;
 	if (isset($languageNames[$mod][$Language])) {
@@ -329,6 +394,8 @@ function getLangName($mod) {
 	return $mod;
 }
 
+// Returns a sorted array of available Bible modules. Each
+// array value is an array: 0=>human-readable name, 1=>mod-name
 function getBibleList() {
 	global $Modlist;
 	$ret = array();	
@@ -356,7 +423,7 @@ function moduleInfo($modname) {
 	$v  = $Sword->getModuleInformation($modname, "Description");
 	$v2 = $Sword->getModuleInformation($modname, "About");
 	if ($v != $NOT_FOUND) {
-		$h .= '<span>'.parseRTF($v).'</span'."\n";
+		$h .= '<span>'.parseRTF($v).'</span>'."\n";
 	}
 	if ($v2 != $NOT_FOUND && $v2 != $v) {
 		$h .= '<span>'.parseRTF($v2).'</span>'."\n";
@@ -373,24 +440,23 @@ function moduleInfo($modname) {
 		$h .= $s.$v2;
 	}
 		$h .= '</div>'."\n";
-		$h .= '<div style="text-align:center;"><div>'."\n";
+		$h .= '<div style="text-align:center;"><br><div>'."\n";
 	$v  = $Sword->getModuleInformation($modname, "CopyrightHolder");
 	if ($v != $NOT_FOUND) {
-		$h .= '<h3>'.$v.'</h3>'."\n";
+		$h .= '<b>'.$v.'</b><br>'."\n";
 	}	
 	$v  = $Sword->getModuleInformation($modname, "CopyrightContactAddress");
 	if ($v != $NOT_FOUND) {
-		$h .= '<h3>'.$v.'</h3>'."\n";
+		$h .= '<b>'.$v.'</b><br>'."\n";
 	}
 	$v  = $Sword->getModuleInformation($modname, "CopyrightContactEmail");
 	if ($v != $NOT_FOUND) {
-		$h .= '<h3>'.$v.'</h3>'."\n";
+		$h .= '<b>'.$v.'</b><br>'."\n";
 	}			
 		$h .= '</div></div>'."\n";
 		
 	return $h;
 }
-
 function parseRTF($t) {
 	$t = preg_replace("/\\\\par/", "<br>", $t);
 	$t = preg_replace("/\\\\qc(.*?)\\\\pard/", "<div style='text-align:center;'>$1</div>", $t);
@@ -400,21 +466,20 @@ function parseRTF($t) {
 function chrUTF8CB($m) {return chrUTF8($m[1]);}
 
 
-// Builds HTML text which displays lemma information
-//    list form: (S|WT|SM|RM):(G|H)#
+// Builds HTML text which displays lemma information.
+//    list form is: (S|WT|SM|RM):(G|H)#
 function getLemmaHTML($list) {
 	global $Sword, $Language, $StrongsHebrewModule, $StrongsGreekModule, $GreekParseModule;
 	$pad = "00000";
-	$styleModule = "Program";
 	$list = preg_split("/\./", $list);
-	$matchingPhrase = array_shift($list);
+	$matchingPhrase = htmlspecialchars(array_shift($list));
 	$html = "<b>" . $matchingPhrase . "</b>: ";
 	$sep = "";
 	for ($i=0; $i<count($list); $i++) {
 		$parts = preg_split("/:/", $list[$i]);
 		if (!count($parts) || !$parts[1]) continue;
 		$module = "";
-		$key = $parts[1];
+		$key = htmlentities($parts[1]);
 		$key = preg_replace("/ /", "", $key);
 		$saveKey = $key;
 		switch ($parts[0]) {
@@ -442,7 +507,6 @@ function getLemmaHTML($list) {
 		}
 
 		if ($module) {
-			if ($styleModule == "Program") $styleModule = $module;
 			if ($key == $pad) continue; // G tags with no number
 			$entry = $Sword->getDictionaryEntry($module, $key);
 			if ($entry) $html .= $sep . $entry;
@@ -452,7 +516,7 @@ function getLemmaHTML($list) {
 		
 		$sep = "<hr>";
 		if ($html && $module) {
-			$html = "<div class=\"vstyle" . $module . "\">" . $html . "</div>";
+			$html = "<div>" . $html . "</div>";
 		}
 	}
 	

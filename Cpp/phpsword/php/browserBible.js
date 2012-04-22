@@ -22,18 +22,25 @@ function mouseHandler(e) {
 
 	if (!elem || !elem.className) {EventInProgress = false; return;}
 	var type = elem.className.replace(/\-.*$/, "");
-	
 //window.alert(type + " <> " + elem.id);
 
 	var re = new RegExp("^(fn|cr|sr|dt|dtl|sn|introlink|infolink)$");
 	if (!re.test(type)) {EventInProgress = false; return;}
 
 	// IE can't handle simple PopupEvent = e;
+	if (PopupEvent && PopupEvent.savedTitle) PopupEvent.target.title = PopupEvent.savedTitle;
 	PopupEvent = {};
 	for (var m in e) {PopupEvent[m] = e[m];}
-//var a=""; for (var m in e) {a += m + " = " + e[m] + ", ";} window.alert(a);
+	if (PopupEvent.srcElement) PopupEvent.target = PopupEvent.srcElement;
+//var a=""; for (var m in e.srcElement) {a += m + " = " + e.srcElement[m] + ", ";} document.getElementById("test").innerHTML = a; //window.alert(a);
+
+	if (PopupEvent.target.title) {
+		PopupEvent.savedTitle = PopupEvent.target.title;
+		 // remove bothersome tool tips that cause popup to close if touched
+		if (PopupEvent.type == "mouseover") PopupEvent.target.title = "";
+	}
 	
-	activatePopup(type, elem.title);
+	activatePopup(type, PopupEvent.savedTitle);
 }
 
 var RNF;
@@ -49,7 +56,7 @@ function activatePopup(type, title) {
 		hidePopup(null, true);
 	}
 	else {
-		RNF.back += "<a class=\"popupBackLink\" onclick=\"hidePopup(event)\">";
+		RNF.back += "<a class=\"popupBackLink\" onclick=\"hidePopup(null, null)\">";
 		RNF.back += document.getElementById("ui.close").innerHTML + "</a>";
 	}
 	RNF.back += "</div>";
@@ -74,39 +81,49 @@ function getMod(e) {
 	}
 	if (!el || !el.className) return mod;
 	var m = el.className.match(re);
-	if (!m || !m[3]) return mod;
-	if (m[3] == 1) return document.getElementById("mod2").value;
-	return document.getElementById("mod").value;	
+	if (!m || !m[3] || m[3] == 1) return mod;
+	return document.getElementById("mod2").value;	
 }
 
 function popupBack(elem) {
 	var tmp = elem.nextSibling.innerHTML;
+	if (!tmp) tmp = elem.nextSibling.nextSibling.innerHTML;
 	PopupElement.innerHTML = tmp;
-	shadowPup();
+	showPopup(true);
 }
 
-function showPopup() {
-	var mp = document.getElementById("mainPage");
-	var os = findPos(mp);
-	var top;
-	if (typeof(pageYOffset) != "undefined")
-		top = pageYOffset + PopupEvent.clientY - (PopupEvent.type=="click" ? PopupElement.offsetHeight/2:10);
-	else 
-		top = os[1] + PopupEvent.y - (PopupEvent.type=="click" ? PopupElement.offsetHeight/2:10);
+function showPopup(keepPos) {
+	var win = winSize();
+	var pupclick = PopupEvent.type=="click" && RNF.type.search("link") == -1;
+	
+	var top, left;
+	if (!keepPos) {
+		top = PopupEvent.clientY - (pupclick ? PopupElement.offsetHeight/2:10);
+		left = (pupclick ? PopupElement.offsetLeft:PopupEvent.clientX - (PopupElement.offsetWidth/2));
+	}
+	else {
+		top = PopupElement.offsetTop;
+		left = PopupElement.offsetLeft;
+	}
+	
+	var maxY = win.height-10;
+	var minY = 0;
+	var maxX = win.width-20;
+	var minX = 120;
 
-	var left = Number(PopupEvent.clientX) - (PopupElement.offsetWidth/2);
-	var osm = os[1] + mp.offsetHeight - PopupElement.offsetHeight;
-	if (top > osm) top = osm;
-	if (top < os[1]) top = os[1];
-	if (left < os[0]) left = os[0];
-	osm = os[0] + mp.offsetWidth - PopupElement.offsetWidth;
-	if (left > osm) left = osm;
+	if (top + PopupElement.offsetHeight > maxY) top = maxY - PopupElement.offsetHeight;
+	if (top < minY) top = minY;
+
+	if (left + PopupElement.offsetWidth > maxX) left = maxX - PopupElement.offsetWidth;
+	if (left < minX) left = minX;	
+	
 	PopupElement.style.top = top + "px";
 	PopupElement.style.left = left + "px";
 	PopupElement.style.visibility = "visible";
 	shadowPup();
 	PopupShadowElement.style.visibility = "visible";
 	EventInProgress = false;
+	
 	if (RNF.doRequest) doRequest(RNF.type, RNF.key, RNF.list, RNF.modName); 
 }
 
@@ -118,17 +135,12 @@ function shadowPup() {
 }
 
 function hidePopup(e, keepInProgress) {
+//document.getElementById("test").innerHTML = (e.srcElement && e.srcElement.id ? e.srcElement.id:"NOPE");
 	if (ShowPopupID) window.clearTimeout(ShowPopupID);
 	ShowPopupID = null;
 	if (!keepInProgress) {
 		EventInProgress = false;
-		if (e) {
-			var mo = (e.relatedTarget ? e.relatedTarget:e.toElement);
-			while (mo) {
-				if (mo.id && mo.id == "npopup") return;
-				mo = mo.parentNode;
-			}
-		}
+		if (e && onPopup(e)) return;
 	}
 	if (PopupElement && PopupElement.style.visibility == "visible") {
 		if (ajax.readyState!=4 || ajax.status!=200) ajax.abort();
@@ -137,6 +149,16 @@ function hidePopup(e, keepInProgress) {
 	}
 }
 
+function onPopup(e) {
+	var mo = (e.relatedTarget ? e.relatedTarget:e.toElement);
+	while (mo) {
+		if (mo.id && mo.id == "npopup") return true;;
+		mo = mo.parentNode;	
+	}
+	return false;
+}
+
+var tags = new RegExp("<[^>]*>", "g");
 var RequestData = {};
 function getContent(rnf) {
 	if (RequestData[rnf.key]) {
@@ -186,8 +208,8 @@ function getContent(rnf) {
 		break;
 	case "sn":
 		rnf.doRequest = true;
-		var elem = (PopupEvent.target ? PopupEvent.target:PopupEvent.srcElement);
-		rnf.content = elem.innerHTML + "." + rnf.list;
+		var elem = PopupEvent.target;
+		rnf.content = elem.innerHTML.replace(tags, "") + "." + rnf.list;
 		rnf.list = encodeutf8(rnf.content);
 		rnf.type = "stronglist";
 		break;
@@ -209,8 +231,10 @@ function doRequest(type, key, list, modName) {
 	set = set.firstChild;
 	var sep = "?";
 	while(set) {
-		req += sep + set.id + "=" + set.value;
-		sep = "&";
+		if (set.id) {
+			req += sep + set.id + "=" + set.value;
+			sep = "&";
+		}
 		set = set.nextSibling;
 	}
 	req += "&rtype=" + type + "&rlist=" + list + "&rmod=" + modName;
@@ -221,7 +245,8 @@ function doRequest(type, key, list, modName) {
 	if (ajax.readyState==4 && ajax.status==200) {
 			RequestData[ajax.rkey] = ajax.responseText;
 			PopupElement.innerHTML = RNF.back + ajax.responseText;
-			shadowPup();
+			if (RNF.doRequest) RNF.doRequest = false;
+			showPopup(true);
 		}
 	}
 	ajax.send();
@@ -236,15 +261,24 @@ function decodeHTML(t) {
 	return t;
 }
 
-function findPos(obj) {
-	var curleft = curtop = 0;
-	if (obj.offsetParent) {
-	do {
-		curleft += obj.offsetLeft;
-		curtop += obj.offsetTop;
-		} while (obj = obj.offsetParent);
+function winSize() {
+	var winW = 630, winH = 460;
+	if (document.body && document.body.offsetWidth) {
+	 winW = document.body.offsetWidth;
+	 winH = document.body.offsetHeight;
 	}
-	return [curleft,curtop];
+	if (document.compatMode=='CSS1Compat' &&
+	    document.documentElement &&
+	    document.documentElement.offsetWidth ) {
+	 winW = document.documentElement.offsetWidth;
+	 winH = document.documentElement.offsetHeight;
+	}
+	if (window.innerWidth && window.innerHeight) {
+	 winW = window.innerWidth;
+	 winH = window.innerHeight;
+	}
+	
+	return {width:winW, height:winH};
 }
 
 function encodeutf8(t) {
