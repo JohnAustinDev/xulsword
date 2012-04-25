@@ -4,7 +4,7 @@ $NOT_FOUND ="Not Found";
 
 $defaultbible["RU"] ="RSP";
 $defaultbible["EN"] ="KJV";
-$defaultbible["DE"] ="RSP";
+$defaultbible["DE"] ="KJV";
 
 $StrongsHebrewModule["RU"] ="StrongsHebrewRU";
 $StrongsGreekModule["RU"] ="StrongsGreekRU";

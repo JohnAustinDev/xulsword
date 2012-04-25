@@ -106,10 +106,12 @@ function showPopup(keepPos) {
 		left = PopupElement.offsetLeft;
 	}
 	
+	var txtarea = findPos(document.getElementById("pagebox"));
+	
 	var maxY = win.height-10;
 	var minY = 0;
 	var maxX = win.width-20;
-	var minX = 120;
+	var minX = txtarea.left+20;
 
 	if (top + PopupElement.offsetHeight > maxY) top = maxY - PopupElement.offsetHeight;
 	if (top < minY) top = minY;
@@ -160,6 +162,7 @@ function onPopup(e) {
 
 var tags = new RegExp("<[^>]*>", "g");
 var RequestData = {};
+var loading = "<div class='loading'></div>";
 function getContent(rnf) {
 	if (RequestData[rnf.key]) {
 		rnf.content = RequestData[rnf.key];
@@ -192,6 +195,7 @@ function getContent(rnf) {
 				rnf.type = "reflist";
 				rnf.list = fnp[1];
 				rnf.content = fnp[1];
+				rnf.content += loading;
 				break;
 			}
 		}
@@ -199,12 +203,14 @@ function getContent(rnf) {
 	case "sr":
 		rnf.doRequest = true;
 		rnf.type = "reflist";
+		rnf.content += loading;
 		break;
 	case "dt":
 	case "dtl":
 		rnf.doRequest = true;
 		rnf.type = "dictlist";
 		rnf.list = encodeutf8(rnf.list); // IE doesn't transmit utf8!
+		rnf.content += loading;
 		break;
 	case "sn":
 		rnf.doRequest = true;
@@ -212,6 +218,7 @@ function getContent(rnf) {
 		rnf.content = elem.innerHTML.replace(tags, "") + "." + rnf.list;
 		rnf.list = encodeutf8(rnf.content);
 		rnf.type = "stronglist";
+		rnf.content += loading;
 		break;
 	case "introlink":
 		RequestData[rnf.key] = document.getElementById("bkintro." + rnf.modName).innerHTML;
@@ -297,4 +304,16 @@ function resetloc(elem) {
 	}
 	else if (elem.id == "selchap") 
 		Selverse.value = 1;
+}
+
+function findPos(obj) {
+	var curleft, curtop;
+	curleft = curtop = 0;
+	if (obj.offsetParent) {
+		do {
+			curleft += obj.offsetLeft;
+			curtop += obj.offsetTop;
+		} while (obj = obj.offsetParent);
+	}
+	return {left:curleft, top:curtop};
 }
