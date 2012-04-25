@@ -24,6 +24,10 @@ if (preg_match('/MSIE (\\d+)/', $_SERVER['HTTP_USER_AGENT'], $test)) {
 $PromptForBook = 0;
 if (!isset($_GET['mod'])) {$PromptForBook = 1;}
 
+if (!extension_loaded("phpsword")) {
+	header('Location: ' . $REDIRECT[$Language]);
+}
+
 $Sword = new phpsword($REPOSITORIES);
 	
 $Modlist = $Sword->getModuleList();
@@ -161,9 +165,6 @@ function test($string) {
     }
     return $hex;
 }
-
-
-
 
 
 // Finally read and save chapter text, footnotes and other script variables

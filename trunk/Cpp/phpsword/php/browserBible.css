@@ -524,3 +524,10 @@
 .spinbutinc:hover {
 	background-position:left top;	
 }
+
+.loading {
+	background-image: url(/images/loading.gif);
+	margin-top:1em;
+	width:32px;
+	height:32px;
+}
