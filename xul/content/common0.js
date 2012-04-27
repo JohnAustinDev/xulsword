@@ -95,6 +95,7 @@ var CustomScrollFunction;
  ***********************************************************************/ 
 function jsdump(str)
 {
+  window.dump(str + "\n");
   Components.classes['@mozilla.org/consoleservice;1']
             .getService(Components.interfaces.nsIConsoleService)
             .logStringMessage(str);

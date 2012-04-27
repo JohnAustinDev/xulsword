@@ -18,6 +18,7 @@
 
 #include "xulsword.h"
 #include "swlog.h"
+#include <iostream>
 
 #ifdef WIN32
 #define DLLEXPORT extern "C" __declspec(dllexport)
@@ -25,13 +26,18 @@
 #define DLLEXPORT extern "C"
 #endif
 
+#define MAXINST 2
+static xulsword *keep[MAXINST] = {};
 /********************************************************************
 EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
 DLLEXPORT xulsword *GetNewXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
-  xulsword *xsobj = (xulsword *)malloc(sizeof(xulsword));
-  xsobj = new xulsword(path, toUpperCase, throwJS, reportProgress);
-  return xsobj;
+  int i;
+  for (i=0; i<MAXINST; i++) {if (!keep[i]) {break;}}
+  if (i == MAXINST) return NULL;
+  std::cerr << "ASSIGNING xulsword[" << i << "]" << std::endl;
+  keep[i] = new xulsword(path, toUpperCase, throwJS, reportProgress);
+  return keep[i];
 }
 
 DLLEXPORT char *GetChapterText(xulsword *inst, const char *vkeymod, const char *vkeytext) {
@@ -134,4 +140,26 @@ DLLEXPORT char *GetModuleInformation(xulsword *inst, const char *mod, const char
   return inst->getModuleInformation(mod, paramname);
 }
 
-DLLEXPORT void FreeMemory(void *tofree) {if (tofree) {delete tofree;}}
+DLLEXPORT void FreeMemory(void *tofree, char *type) {
+
+  if (!strcmp(type, "char")) free(tofree);
+  
+  else if (!strcmp(type, "xulsword")) {
+    for (int i=0; i<MAXINST; i++) {
+      if (keep[i] == (xulsword *)tofree) {
+        std::cerr << "FREEING xulsword[" << i << "]" << std::endl;
+        delete keep[i];
+        keep[i] = NULL;
+      }
+    }
+  }
+  
+}
+
+DLLEXPORT void FreeLibxulsword() {
+  std::cerr << "LIBXULSWORD DESTRUCTOR" << std::endl;
+  if (xulsword::MySWLogXS) delete(xulsword::MySWLogXS);
+  xulsword::MySWLogXS = NULL;
+  if (xulsword::MyStringMgrXS) delete(xulsword::MyStringMgrXS);
+  xulsword::MyStringMgrXS = NULL;
+}

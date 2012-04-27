@@ -2,6 +2,11 @@
 <?php require_once('php/Phrases_browserBible.php'); ?>
 <?php
 
+$MODCLEAN     = "/[^A-Za-z0-9_]/";
+$LOCCLEAN     = "/[^A-Za-z0-9\.]/";
+$REFLISTCLEAN = "/[^A-Za-z0-9\.\;\- ]/";
+$OSISREFCLEAN = "/[^\w\-]/";
+
 $Option["hdg"] = "Headings";
 $Option["ftn"] = "Footnotes";
 $Option["crn"] = "Cross-references";
@@ -68,19 +73,23 @@ while (list($name, $val) = each($del)) {unset($_GET[$name]);}
 
 // Check values of GET params
 reset($_GET);
+
 while (list($name, $val) = each($_GET)) {
 	if (preg_match("/^(mod|mod2|rmod)$/", $name)) {
-		$_GET[$name] = urlencode($val);
+		$_GET[$name] = preg_replace($MODCLEAN, "", $val);
 		if	(!preg_match("/(^|<nx>)".$val.";(.*?)(<nx>|$)/", $Modlist)) {
 			$_GET[$name] = $Default[$name];
 		}
 		continue;
 	}
-	else if ($name == 'loc') {$_GET[$name] = urlencode($val); continue;}
-	else if ($name == 'rlist') {continue;}
+	else if ($name == 'loc') {
+		$_GET[$name] = preg_replace($LOCCLEAN, "", $val);
+		continue;
+	}
+	else if ($name == 'rlist') {continue;} // handled by AJAX below
 	else if ($name == 'rtype' && $val !== '') {
 		if (!preg_match("/^(reflist|dictlist|stronglist)$/", $val)) {
-			// Cancel any un-supported AJAX requests
+			// Then cancel any un-supported AJAX requests
 			$_GET['rmod'] = '';
 			$_GET['rtype'] = '';
 			$_GET['rlist'] = '';
@@ -101,16 +110,17 @@ $_GET['mlt'] = $_GET['stn']; // just synch these two together
 reset($Option);
 while (list($var, $val) = each($Option)) {$Sword->setGlobalOption($val, ($_GET[$var] == '1' ? "On":"Off"));}
   
+
 // Handle any AJAX request
 if ($_GET['rmod'] && $_GET['rtype'] && $_GET['rlist']) {
 	$html = "";
 	switch($_GET['rtype']) {
 	case "reflist":
+		$_GET['rlist'] = preg_replace($REFLISTCLEAN, "", $_GET['rlist']);
 		$sep = "";
 		$refs = preg_split("/\s*;\s*/", $_GET['rlist']);
 		for ($i=0; $i<count($refs); $i++) {
 			if (!$refs[$i]) continue;
-			$refs[$i] = urlencode($refs[$i]);
 			$vsys = $Sword->getVerseSystem($_GET['rmod']);
 			$refs[$i] = $Sword->convertLocation($vsys, $refs[$i], $vsys);
 			$loc = $Sword->convertLocation($vsys, $refs[$i], $MasterVsys);
@@ -136,8 +146,8 @@ if ($_GET['rmod'] && $_GET['rtype'] && $_GET['rlist']) {
 			if (!$refs[$i]) continue;
 			$p = preg_split("/\./", $refs[$i]);
 			if (count($p) != 2) {$p = preg_split("/:/", $refs[$i]);}
-			$p[0] = urlencode($p[0]);
-			$p[1] = decodeutf8($p[1]);
+			$p[0] = preg_replace($MODCLEAN, "", $p[0]);
+			$p[1] = decodeutf8(preg_replace($OSISREFCLEAN, "", $p[1]));
 			$ent = $Sword->getDictionaryEntry($p[0], $p[1]);
 			if ($ent) {
 				$ent = preg_replace_callback("/<img ([^>]*)src=\"File:\/\/(.*?)\"/", "imgpath", $ent);
@@ -157,14 +167,7 @@ unset($_GET['rtype']);
 unset($_GET['rlist']);
 unset($_GET['rmod']);
 
-function test($string) {
-    $hex='';
-    for ($i=0; $i < strlen($string); $i++)
-    {
-        $hex .= dechex(ord($string[$i])).", ";
-    }
-    return $hex;
-}
+
 
 
 // Finally read and save chapter text, footnotes and other script variables
@@ -470,18 +473,18 @@ function chrUTF8CB($m) {return chrUTF8($m[1]);}
 // Builds HTML text which displays lemma information.
 //    list form is: (S|WT|SM|RM):(G|H)#
 function getLemmaHTML($list) {
-	global $Sword, $Language, $StrongsHebrewModule, $StrongsGreekModule, $GreekParseModule;
+	global $Sword, $Language, $StrongsHebrewModule, $StrongsGreekModule, $GreekParseModule, $OSISREFCLEAN;
 	$pad = "00000";
 	$list = preg_split("/\./", $list);
-	$matchingPhrase = htmlspecialchars(array_shift($list));
+	$matchingPhrase = array_shift($list);
+	$matchingPhrase = htmlspecialchars(preg_replace("/<[^>]*>/", "", $matchingPhrase));
 	$html = "<b>" . $matchingPhrase . "</b>: ";
 	$sep = "";
 	for ($i=0; $i<count($list); $i++) {
 		$parts = preg_split("/:/", $list[$i]);
 		if (!count($parts) || !$parts[1]) continue;
 		$module = "";
-		$key = htmlentities($parts[1]);
-		$key = preg_replace("/ /", "", $key);
+		$key = preg_replace($OSISREFCLEAN, "", $parts[1]);
 		$saveKey = $key;
 		switch ($parts[0]) {
 		case "S":

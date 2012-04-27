@@ -317,7 +317,7 @@ function deleteModules(e) {
     switch(reset) {
     case NORESET:
     case SOFTRESET:
-      MainWindow.location.reload();
+      MainWindow.REL=true; MainWindow.location.reload();
       break;
     case HARDRESET:
       MainWindow.setTimeout("restartApplication();", 0);

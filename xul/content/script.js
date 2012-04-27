@@ -609,7 +609,7 @@ function scriptboxMouseOver(e) {
     if (prefs.getBoolPref("ShowCrossrefsAtBottom")) {
       HaveLeftTarget=false;
       ImmediateUnhighlight=false;
-      scroll2Note("ntr." + edata + "." + elem.title);
+      scroll2Note("ntr." + elem.id);
     }
     else if (!activatePopup(edata, elem.title)) {elem.style.cursor = "default";}
     break;
@@ -618,7 +618,7 @@ function scriptboxMouseOver(e) {
     if (prefs.getBoolPref("ShowFootnotesAtBottom")) {
       HaveLeftTarget=false;
       ImmediateUnhighlight=false;
-      scroll2Note("ntr.fn." + elem.title);
+      scroll2Note("ntr." + elem.id);
     }
     else activatePopup("fn", elem.title);
     break;
@@ -715,7 +715,7 @@ function scriptboxClick(e) {
   switch (edata) {
     case "cr":
     var ok = expandCrossRefs(edata + "." + elem.title);
-    if (ok) scroll2Note("ntr." + edata + "." + elem.title);
+    if (ok) scroll2Note("ntr." + elem.id);
     break;
     
   case "pul":
