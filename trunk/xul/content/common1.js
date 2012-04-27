@@ -117,7 +117,7 @@ convertLocation: function(vsys1, xsref, vsys2) {
     this.modvsys = Bible.getVerseSystem(modname);
  
     var loc = this.convertLocation(this.modvsys, xsref, this.modvsys);
-    p = loc.split(".");
+    var p = loc.split(".");
 
     this.book = p[0];
     this.chapter = p[1];
@@ -828,7 +828,7 @@ function setGlobalDirectionPrefs() {
 
 function windowLocationReload() {
   setGlobalDirectionPrefs();
-  window.location.reload();
+  REL=true; window.location.reload();
 }
 
 //Removes white-space, trailing or leading punctuation, "x" (note symbol),

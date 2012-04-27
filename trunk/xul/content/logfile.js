@@ -83,7 +83,7 @@ var aConsoleListener =
  
         var result={};
         var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-            fixWindowTitle(SBundle ? SBundle.getString("Title"):"xulsword"),
+            (SBundle ? SBundle.getString("Title"):"xulsword"),
             (SBundle ? SBundle.getFormattedString("SendErrorReport", [bundle1.GetStringFromName("OK")]):"Error Report"),
             DLGALERT,
             DLGOKCANCEL,

@@ -19,7 +19,7 @@
 
   <hbox id="debug-row1">
     <button id="config"       label="config"     oncommand="showConfig();"/>
-    <button id="reloadButton" label="Reload"     oncommand="window.location.reload();"/>
+    <button id="reloadButton" label="Reload"     oncommand="REL=true; window.location.reload();"/>
     <button id="saveButton"   label="Save HTML"  oncommand="saveHTML();"/>
   </hbox>
   

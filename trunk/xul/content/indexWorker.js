@@ -15,6 +15,6 @@ onmessage = function(event) {
     Bible.searchIndexBuild(data.modname);
   }
   
-  Bible.quitLibsword();
+  Bible.freeInstance();
   postMessage(-1);
 }

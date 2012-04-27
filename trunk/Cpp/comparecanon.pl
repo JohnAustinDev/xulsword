@@ -3,8 +3,8 @@
 
 # Compares two canon.h header files and reports all differences in names/numbers of books, chapters, and verses
 
-$canon1 = "sword-1.6.1/include/canon_synodal.h"; #shift;
-$canon2 = "canon_synodalprot.h"; #shift;
+$canon1 = "sword-svn/include/canon_synodal.h"; #shift;
+$canon2 = "src/include/canon_east.h"; #shift;
 
 readCanonFile($canon1, \%data1);
 readCanonFile($canon2, \%data2);

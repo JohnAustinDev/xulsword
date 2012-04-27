@@ -69,6 +69,9 @@ extern "C" {
 
 
 const char DefaultVersificationSystem[] = "KJV";
+StringMgrXS *xulsword::MyStringMgrXS = NULL;
+SWLogXS *xulsword::MySWLogXS = NULL;
+  
 
 void savePercentComplete(char percent, void *userData) {
   if (userData) {
@@ -92,9 +95,22 @@ using namespace sword;
 /********************************************************************
 xsThrow
 *********************************************************************/
-void xulsword::xsThrow(const char *msg) {
-  SWLog::getSystemLog()->logDebug("xsThrow: %s", msg);
-  if (ThrowJS) {ThrowJS(msg);}
+void xulsword::xsThrow(const char *msg, const char *param) {
+  char *fmsg;
+  fmsg = (char *)malloc(1024);
+
+  if (param && (strlen(msg) + strlen(param)) < 1000) {
+    sprintf(fmsg, msg, param);
+  }
+  else if (msg && strlen(msg) < 1000) {
+    strcpy(fmsg, msg);
+  }
+  else strcpy(fmsg, "(xsThrow no message)");
+
+  SWLog::getSystemLog()->logDebug("xsThrow: %s", fmsg);
+  
+  if (ThrowJS) {ThrowJS(fmsg);}
+  else free(fmsg);
 }
 
 
@@ -357,26 +373,29 @@ PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
 xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
-  MyLog = new SWLogXS();
-  SWLog::setSystemLog(MyLog);
+  if (!MySWLogXS) {
+    MySWLogXS = new SWLogXS();
+    SWLog::setSystemLog(MySWLogXS);
+  }
   SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
   SWLog::getSystemLog()->logDebug("XULSWORD CONSTRUCTOR");
-  ToUpperCase = (toUpperCase ? toUpperCase:NULL);
-  ThrowJS = (throwJS ? throwJS:NULL);
-  ReportProgress = (reportProgress ? reportProgress:NULL);
+  
+  ToUpperCase = toUpperCase;
+  ThrowJS = throwJS;
+  ReportProgress = reportProgress;
 
-  MyMarkupFilterMgr = new MarkupFilterMgrXS();
+  MarkupFilterMgrXS *muf = new MarkupFilterMgrXS();
       
   std::string aPath = path;
   int comma = aPath.find(", ", 0);
   if (comma == std::string::npos) {comma = aPath.length();}
   SWBuf path1;
   path1.set(aPath.substr(0, comma).c_str());
-  MyManager = new SWMgrXS(path1.c_str(), false, (MarkupFilterMgr *)MyMarkupFilterMgr, false, true);   
-  MyVerseMgr = VerseMgr::getSystemVerseMgr();
-  MyVerseMgr->registerVersificationSystem("Synodal0", otbooks_synodal0, ntbooks_synodal0, vm_synodal0);
-  MyVerseMgr->registerVersificationSystem("EASTERN", otbooks_eastern, ntbooks_eastern, vm_eastern);
-  MyVerseMgr->registerVersificationSystem("SynodalProt", otbooks_synodalprot, ntbooks_synodalprot, vm_synodalprot);
+  MyManager = new SWMgrXS(path1.c_str(), false, (MarkupFilterMgr *)muf, false, true);   
+  VerseMgr *vsm = VerseMgr::getSystemVerseMgr();
+  vsm->registerVersificationSystem("Synodal0", otbooks_synodal0, ntbooks_synodal0, vm_synodal0);
+  vsm->registerVersificationSystem("EASTERN", otbooks_eastern, ntbooks_eastern, vm_eastern);
+  vsm->registerVersificationSystem("SynodalProt", otbooks_synodalprot, ntbooks_synodalprot, vm_synodalprot);
   
   MyManager->Load();
   
@@ -388,24 +407,20 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   }
 
   if (ToUpperCase) {
-    MyStringMgrXS = new StringMgrXS(ToUpperCase);
-    StringMgr::setSystemStringMgr(MyStringMgrXS);
+    if (!MyStringMgrXS) {
+      MyStringMgrXS = new StringMgrXS(ToUpperCase);
+      StringMgr::setSystemStringMgr(MyStringMgrXS);
+    }
   }
-  
-/*  
-  path1.append("/locales.d");
-  LocaleMgr *myLocaleMgr = new LocaleMgr(path1.c_str());
-  LocaleMgr::setSystemLocaleMgr(myLocaleMgr);
-  myLocaleMgr->setDefaultLocaleName("ru");
-*/
 }
 
 
 xulsword::~xulsword() {
-  //delete(MyLog); deleted by _staticSystemLog
-  //delete(MyStringMgrXS); deleted by _staticsystemStringMgr
-  if (MyManager) {delete(MyManager);}
-  //delete(MyMarkupFilterMgr); deleted by SWMgr
+  SWLog::getSystemLog()->logDebug("XULSWORD DESTRUCTOR");
+  //delete(SWLogXS); deleted by _staticSystemLog
+  //delete(StringMgrXS); deleted by _staticsystemStringMgr
+
+  delete(MyManager); // will delete MarkupFilterMgrXS
 }
 
 
@@ -423,7 +438,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
-    xsThrow("GetChapterText: module not found.");
+    xsThrow("GetChapterText: module \"%s\" not found.", vkeymod);
     return NULL;
   }
 
@@ -431,7 +446,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!myVerseKey) {
     delete(testkey);
-    xsThrow("GetChapterText: module was not Bible or Commentary.");
+    xsThrow("GetChapterText: module \"%s\" was not Bible or Commentary.", vkeymod);
   }
 
   myVerseKey->Persist(1);
@@ -636,13 +651,13 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   std::string thismod;
   thismod.assign(modstr.substr(0,comma));
   if (comma == std::string::npos) {
-    xsThrow("GetChapterTextMulti: module list does not have form 'mod1,mod2,...'.");
+    xsThrow("GetChapterTextMulti: module list \"%s\" does not have form 'mod1,mod2,...'.", vkeymodlist);
     return NULL;
   }
 
   SWModule *module = MyManager->getModule(thismod.c_str());
   if (!module) {
-    xsThrow("GetChapterTextMulti: module not found.");
+    xsThrow("GetChapterTextMulti: module \"%s\" not found.", thismod.c_str());
     return NULL;
   }
 
@@ -650,7 +665,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey1);
   if (!myVerseKey) {
     delete(testkey1);
-    xsThrow("GetChapterTextMulti: module is not Bible or Commentary'.");
+    xsThrow("GetChapterTextMulti: module \"%s\" is not Bible or Commentary'.", thismod.c_str());
     return NULL;
   }
 
@@ -825,7 +840,7 @@ GetVerseText
 char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
-    xsThrow("GetVerseText: module not found.");
+    xsThrow("GetVerseText: module \"%s\" not found.", vkeymod);
     return NULL;
   }
 
@@ -833,7 +848,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!myVerseKey) {
     delete(testkey);
-    xsThrow("GetVerseText: module is not a Bible or Commentary.");
+    xsThrow("GetVerseText: module \"%s\" is not a Bible or Commentary.", vkeymod);
     return NULL;
   }
   myVerseKey->Persist(1);
@@ -948,7 +963,7 @@ GetBookIntroduction
 char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
-    xsThrow("GetBookIntroduction: module not found.");
+    xsThrow("GetBookIntroduction: module \"%s\" not found.", vkeymod);
     return NULL;
   }
 
@@ -956,7 +971,7 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   VerseKey *introkey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!introkey) {
     delete(testkey);
-    xsThrow("GetBookIntroduction: module is not a Bible or Commentary.");
+    xsThrow("GetBookIntroduction: module \"%s\" is not a Bible or Commentary.", vkeymod);
     return NULL;
   }
 
@@ -992,14 +1007,14 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
   SWModule *dmod;
   dmod = MyManager->getModule(lexdictmod);
   if (!dmod) {
-    xsThrow("GetDictionaryEntry: module not found.");
+    xsThrow("GetDictionaryEntry: module \"%s\" not found.", lexdictmod);
     return NULL;
   }
 
   SWKey *tkey = dmod->CreateKey();
   if (!SWDYNAMIC_CAST(StrKey, tkey)) {
     delete(tkey);
-    xsThrow("GetDictionaryEntry: module is not a Dictionary.");
+    xsThrow("GetDictionaryEntry: module \"%s\" is not a Dictionary.", lexdictmod);
     return NULL;
   }
   delete(tkey);
@@ -1037,14 +1052,14 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
   SWModule * dmod;
   dmod = MyManager->getModule(lexdictmod);
   if (!dmod) {
-    xsThrow("GetAllDictionaryKeys: module not found.");
+    xsThrow("GetAllDictionaryKeys: module \"%s\" not found.", lexdictmod);
     return NULL;
   }
 
   SWKey *tkey = dmod->CreateKey();
   if (!SWDYNAMIC_CAST(StrKey, tkey)) {
     delete(tkey);
-    xsThrow("GetAllDictionaryKeys: module is not a Dictionary.");
+    xsThrow("GetAllDictionaryKeys: module \"%s\" is not a Dictionary.", lexdictmod);
     return NULL;
   }
   delete(tkey);
@@ -1074,7 +1089,7 @@ GetGenBookChapterText
 char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
-    xsThrow("GetGenBookChapterText: module not found.");
+    xsThrow("GetGenBookChapterText: module \"%s\" not found.", gbmod);
     return NULL;
   }
 
@@ -1084,7 +1099,7 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
   if (!key) {
     delete(testkey);
-    xsThrow("GetGenBookChapterText: module is not a General-Book.");
+    xsThrow("GetGenBookChapterText: module \"%s\" is not a General-Book.", gbmod);
     return NULL;
   }
 
@@ -1117,7 +1132,7 @@ GetGenBookTableOfContents
 char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   SWModule * module = MyManager->getModule(gbmod);
   if (!module) {
-    xsThrow("GetGenBookTableOfContents: module not found.");
+    xsThrow("GetGenBookTableOfContents: module \"%s\" not found.", gbmod);
     return NULL;
   }
 
@@ -1125,7 +1140,7 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
   if (!key) {
     delete(testkey);
-    xsThrow("GetGenBookTableOfContents: module is not a General-Book.");
+    xsThrow("GetGenBookTableOfContents: module \"%s\" is not a General-Book.", gbmod);
     return NULL;
   }
 
@@ -1169,7 +1184,7 @@ bool xulsword::luceneEnabled(const char *mod) {
   if (!module) {return false;}
 
   bool supported = true;
-  ListKey tmp = module->search(NULL,-4,NULL,NULL,&supported,NULL,NULL);
+  ListKey tmp = module->search(NULL,-4,0,NULL,&supported,NULL,NULL);
 
   return supported;
 }
@@ -1181,8 +1196,8 @@ Search
 int xulsword::search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {
-    xsThrow("Search: module not found.");
-    return NULL;
+    xsThrow("Search: module \"%s\" not found.", mod);
+    return 0;
   }
 
   ListKey listkeyInt;
@@ -1271,7 +1286,7 @@ GetSearchResults
 char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepStrongs) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {
-    xsThrow("GetSearchResults: module not found.");
+    xsThrow("GetSearchResults: module \"%s\" not found.", mod);
     return NULL;
   }
 
@@ -1401,12 +1416,12 @@ void xulsword::setGlobalOption(const char *option, const char *setting) {
   else if (!strcmp(option,"Strong's Numbers"))       {thisOption = &Strongs;}
   else if (!strcmp(option,"Morphological Tags"))     {thisOption = &Morph;}
   else if (!strcmp(option,"Morpheme Segmentation"))  {thisOption = &MorphSeg;}
-  else {xsThrow("SetGlobalOption: unknown option."); return;}
+  else {xsThrow("SetGlobalOption: unknown option \"%s\" .", option); return;}
 
   // Now update the global option
   if (!strcmp(setting,"On"))  {*thisOption = 1;}
   else if (!strcmp(setting,"Off")) {*thisOption = 0;}
-  else {xsThrow("SetGlobalOption: setting was not 'On' or 'Off'."); return;}
+  else {xsThrow("SetGlobalOption: setting was not 'On' or 'Off', was \"%s\".", setting); return;}
 }
 
 
@@ -1429,7 +1444,7 @@ char *xulsword::getGlobalOption(const char *option) {
   else if (!strcmp(option,"Strong's Numbers"))       {thisOption = &Strongs;}
   else if (!strcmp(option,"Morphological Tags"))     {thisOption = &Morph;}
   else if (!strcmp(option,"Morpheme Segmentation"))  {thisOption = &MorphSeg;}
-  else {xsThrow("GetGlobalOption: unknown option."); return NULL;}
+  else {xsThrow("GetGlobalOption: unknown option \"%s\".", option); return NULL;}
 
   // Now return the proper value
   *thisOption ? rCText.set("On") : rCText.set("Off");
@@ -1449,7 +1464,7 @@ void xulsword::setCipherKey(const char *mod, const char *cipherkey, bool useSecM
   module = MyManager->getModule(mod);
   if (!module) {
     delete(module);
-    xsThrow("SetCipherKey: module not found.");
+    xsThrow("SetCipherKey: module \"%s\" not found.", mod);
     return;
   }
       
@@ -1532,54 +1547,6 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
 	return retval;
 }
 
-
-/********************************************************************
-Translate
-*********************************************************************/
-/*
-char *xulsword::translate(const char *vkeymod, const char *text, const char *localeName) {
-  SWModule * module = MyManager->getModule(vkeymod);
-  if (!module) {
-    xsThrow("translate: module not found.");
-    return NULL;
-  }
-
-  SWKey *testkey = module->CreateKey();
-  VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
-  if (!myVerseKey) {
-    delete(testkey);
-    xsThrow("translate: module was not Bible or Commentary.");
-  }
-
-  locationToVerseKey(text, myVerseKey);
-  
-  LocaleMgr *myLocaleMgr = LocaleMgr::getSystemLocaleMgr();
-  if (!myLocaleMgr) {
-    xsThrow("translate: Couldn't get locale manager.");
-    delete(testkey);
-    return NULL;
-  }
-  
-  SWBuf result;
-  result.set(myLocaleMgr->translate(myVerseKey->getText(), localeName));
-  delete(testkey);
-
-
-  result.set("");
-  std::list <SWBuf> locs = myLocaleMgr->getAvailableLocales();
-  std::list <SWBuf>::iterator it;
-	for (it = locs.begin(); it != locs.end(); it++) {
-    result.append(it->c_str());
-    result.append(", ");
-  }
-
-
-  char *retval;
-  retval = (char *)emalloc(result.length() + 1);
-  if (retval) {strcpy(retval, result.c_str());}
-	return retval;
-}
-*/
 // END class xulsword
 
 /********************************************************************
@@ -1597,8 +1564,9 @@ SWMgrXS::SWMgrXS(const char *iConfigPath, bool autoload, SWFilterMgr *filterMgr,
   augmentHome = xaugmentHome;
 }
 
+SWMgrXS::~SWMgrXS() {}
+
 signed char SWMgrXS::Load() {
-SWLog::getSystemLog()->logDebug("SWMgrXS Load");
 //COPIED from SWMgr::Load 3/6/2012
 	signed char ret = 0;
 
@@ -1688,17 +1656,6 @@ SWLog::getSystemLog()->logDebug("SWMgrXS Load");
 
 
 /********************************************************************
-StringMgrXS - to over-ride broken toUpperCase
-*********************************************************************/
-StringMgrXS::StringMgrXS(char *(*toUpperCase)(char *)) {ToUpperCase = toUpperCase;}
-
-char *StringMgrXS::upperUTF8(char *text, unsigned int max) const {
-  text = ToUpperCase(text);
-  return text;
-}
-
-
-/********************************************************************
 MarkupFilterMgrXS - to implement xulsword's own OSIS markup filters
 *********************************************************************/
 MarkupFilterMgrXS::MarkupFilterMgrXS() {
@@ -1710,13 +1667,28 @@ MarkupFilterMgrXS::MarkupFilterMgrXS() {
   fromtei = NULL;
 }
 
-MarkupFilterMgrXS::~MarkupFilterMgrXS() {
-  // parent destructor takes case of everything
+MarkupFilterMgrXS::~MarkupFilterMgrXS() {}
+
+
+/********************************************************************
+StringMgrXS - to over-ride broken toUpperCase
+*********************************************************************/
+StringMgrXS::StringMgrXS(char *(*toUpperCase)(char *)) {ToUpperCase = toUpperCase;}
+StringMgrXS::~StringMgrXS() {}
+
+char *StringMgrXS::upperUTF8(char *text, unsigned int max) const {
+  if (text) {
+    char *res = ToUpperCase(text);
+//SWLog::getSystemLog()->logDebug("upperUTF8 in=%s, out=%s", text, res);
+    strcpy(text, res);
+  }
+  
+  return text;
 }
 
 
 /********************************************************************
-SWLogXS - to implement xulsword's own OSIS markup filters
+SWLogXS - to implement xulsword's own logger
 *********************************************************************/
 SWLogXS::SWLogXS() {}
 SWLogXS::~SWLogXS() {}

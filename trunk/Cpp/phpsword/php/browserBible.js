@@ -15,23 +15,30 @@ function init() {
 	Selbook = document.getElementById("selbook");
 }
 
+var classes = new RegExp("^(fn|cr|sr|dt|dtl|sn|introlink|infolink)$");
 function mouseHandler(e) {
 	if (EventInProgress || !PopupElement) return;
 	EventInProgress = true;
+	
 	var elem = (e.target ? e.target:e.srcElement);
 
-	if (!elem || !elem.className) {EventInProgress = false; return;}
-	var type = elem.className.replace(/\-.*$/, "");
-//window.alert(type + " <> " + elem.id);
-
-	var re = new RegExp("^(fn|cr|sr|dt|dtl|sn|introlink|infolink)$");
-	if (!re.test(type)) {EventInProgress = false; return;}
+	var type = null;
+	while (elem && (!elem.className || elem.className != "script")) {
+		if (elem.className) {
+			type = elem.className.replace(/\-.*$/, "");
+			if (classes.test(type)) break;
+		}
+		elem = elem.parentNode;
+	}
+	 
+	if (!elem || !classes.test(type)) {EventInProgress = false; return;}
+//window.alert("type=" + type + ", elem.id=" + elem.id);
 
 	// IE can't handle simple PopupEvent = e;
 	if (PopupEvent && PopupEvent.savedTitle) PopupEvent.target.title = PopupEvent.savedTitle;
 	PopupEvent = {};
 	for (var m in e) {PopupEvent[m] = e[m];}
-	if (PopupEvent.srcElement) PopupEvent.target = PopupEvent.srcElement;
+	PopupEvent.target = elem;
 //var a=""; for (var m in e.srcElement) {a += m + " = " + e.srcElement[m] + ", ";} document.getElementById("test").innerHTML = a; //window.alert(a);
 
 	if (PopupEvent.target.title) {
@@ -160,7 +167,6 @@ function onPopup(e) {
 	return false;
 }
 
-var tags = new RegExp("<[^>]*>", "g");
 var RequestData = {};
 var loading = "<div class='loading'></div>";
 function getContent(rnf) {
@@ -215,7 +221,7 @@ function getContent(rnf) {
 	case "sn":
 		rnf.doRequest = true;
 		var elem = PopupEvent.target;
-		rnf.content = elem.innerHTML.replace(tags, "") + "." + rnf.list;
+		rnf.content = elem.innerHTML + "." + rnf.list;
 		rnf.list = encodeutf8(rnf.content);
 		rnf.type = "stronglist";
 		rnf.content += loading;

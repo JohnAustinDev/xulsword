@@ -99,6 +99,7 @@ Set (debug.js):extensions.logging.enabled=true
 Set (debug.js):javascript.options.showInConsole=true
 Set (debug.js):nglayout.debug.disable_xul_fastload=true
 Set (debug.js):dom.report_all_js_exceptions=true
+Set (debug.js):browser.dom.window.dump.enabled=true
 
 # MISC INITIAL PROGRAM SETTINGS
 Set (xulsword.js):xulsword.Footnotes=On

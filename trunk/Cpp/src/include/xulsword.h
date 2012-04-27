@@ -53,6 +53,8 @@ CUSTOM DERIVATIVE CLASSES
 class SWMgrXS : public SWMgr {
   public:
     SWMgrXS(const char *iConfigPath, bool autoload = true, SWFilterMgr *filterMgr = 0, bool multiMod = false, bool augmentHome = true);
+    ~SWMgrXS();
+    
     // needed to enable support sword-1.6.1 Synodal modules and to add OSISDictionary filter option to all modules
     signed char Load();
   
@@ -65,6 +67,7 @@ class SWMgrXS : public SWMgr {
 class StringMgrXS : public StringMgr {
   public:
   StringMgrXS(char *(*toUpperCase)(char *));
+  ~StringMgrXS();
   char *upperUTF8(char *text, unsigned int max = 0) const;
   char *(*ToUpperCase)(char *);
 };
@@ -89,18 +92,19 @@ SWORD_NAMESPACE_END
 
 using namespace sword;
 
+
 /********************************************************************
 MAIN XULSWORD CLASS
 *********************************************************************/
 class xulsword {
 
   private:
-  SWMgrXS           *MyManager;
-  StringMgrXS       *MyStringMgrXS;
-  MarkupFilterMgrXS *MyMarkupFilterMgr;
-  SWLogXS           *MyLog;
-  VerseMgr          *MyVerseMgr;
+  SWMgrXS *MyManager;
 
+  char *(*ToUpperCase)(char *);
+  void (*ThrowJS)(const char *);
+  void (*ReportProgress)(int);
+  
   ModMap::iterator modIterator;	//Iterator for modules
 
   bool Footnotes;
@@ -129,7 +133,7 @@ class xulsword {
 
 
   protected:
-  void xsThrow(const char *msg);
+  void xsThrow(const char *msg, const char *param = NULL);
   void keyToVars(VerseKey *key, SWBuf *chapter, int *verse, int *lastverse);
   const char *getVerseSystemOfModule(const char * mod);
   int locationToVerseKey(const char *locationText, VerseKey *vk);
@@ -143,12 +147,10 @@ class xulsword {
 
   public:
   xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int));
-
   ~xulsword();
-
-  char *(*ToUpperCase)(char *);
-  void (*ThrowJS)(const char *);
-  void (*ReportProgress)(int);
+  
+  static StringMgrXS *MyStringMgrXS;
+  static SWLogXS *MySWLogXS;
 
   char *getChapterText(const char *vkeymod, const char *vkeytext);
   char *getFootnotes();

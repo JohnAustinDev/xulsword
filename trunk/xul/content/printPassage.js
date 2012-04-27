@@ -258,7 +258,7 @@ function saveProgramSettings(savedGlobalOptions, savedCharPrefs) {
     cmd_xs_toggleUserNotes:null,
   };
   for (var go in savedGlobalOptions) {savedGlobalOptions[go] = Bible.getGlobalOption(GlobalToggleCommands[go]);}
-  for (var pr in savedGlobalOptions) {savedCharPrefs[pr] = prefs.getCharPref(GlobalToggleCommands[pr]);}
+  for (var pr in savedCharPrefs) {savedCharPrefs[pr] = prefs.getCharPref(GlobalToggleCommands[pr]);}
 }
 
 function returnProgramSettings(savedGlobalOptions, savedCharPrefs) {

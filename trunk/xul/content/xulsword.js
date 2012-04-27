@@ -1886,7 +1886,8 @@ function updateXulswordButtons() {
       try {document.getElementById(cmd).setAttribute("value",(prefs.getCharPref(GlobalToggleCommands[cmd])=="On") ? true:false);}
       catch (er) {}
     }
-    try {Bible.setGlobalOption(GlobalToggleCommands[cmd],prefs.getCharPref(GlobalToggleCommands[cmd]));} catch (er) {}
+    if (GlobalToggleCommands[cmd] != "User Notes")
+      Bible.setGlobalOption(GlobalToggleCommands[cmd], prefs.getCharPref(GlobalToggleCommands[cmd]));
   }
   // Menu Checkboxes
   var myLocale = getLocale();
@@ -2995,8 +2996,11 @@ function saveWindowDisplay(win) {
   display.showingOrig = prefs.getBoolPref("ShowOriginal" + win.number);
   display.maximizeNoteBox = prefs.getBoolPref("MaximizeNoteBox" + win.number);
 
-  try {for (var cmd in GlobalToggleCommands) display.globalOptions[cmd] = Bible.getGlobalOption(GlobalToggleCommands[cmd]);}
-  catch (er) {display.globalOptions["cmd_xs_toggleUserNotes"] = prefs.getCharPref(GlobalToggleCommands[cmd]);}
+  for (var cmd in GlobalToggleCommands) {
+  if (GlobalToggleCommands[cmd] == "User Notes") 
+    display.globalOptions["cmd_xs_toggleUserNotes"] = prefs.getCharPref(GlobalToggleCommands[cmd]);
+  else display.globalOptions[cmd] = Bible.getGlobalOption(GlobalToggleCommands[cmd]);
+  }
   
   return display;
 }
@@ -3010,15 +3014,17 @@ function setWindowDisplay(win, display) {
   prefs.setBoolPref("ShowOriginal" + win.number, display.showingOrig);
   prefs.setBoolPref("MaximizeNoteBox" + win.number, display.maximizeNoteBox);
   
-  try {for (var cmd in GlobalToggleCommands) Bible.setGlobalOption(GlobalToggleCommands[cmd], display.globalOptions[cmd]);}
-  catch (er) {prefs.setCharPref(GlobalToggleCommands[cmd], display.globalOptions[cmd]);}
+  for (var cmd in GlobalToggleCommands) {
+    if (GlobalToggleCommands[cmd] == "User Notes")
+      prefs.setCharPref(GlobalToggleCommands[cmd], display.globalOptions[cmd]);
+    else Bible.setGlobalOption(GlobalToggleCommands[cmd], display.globalOptions[cmd]);
+  }
 }
 
 //Writes a Bible chapter, including the chapterNavigationLink at top and bottom, to
 //either a link of windows, or a single window. Text flows either left-to-right through the link
 //or right-to-left depending on isRTL flag. Bible text, Bible notes, and connectors
 //for the link are all updated by this routine.
-
 function writeToScriptBoxes(win, isPinned, display, scrollTypeFlag) {
   var s = {link:{}};
   if (Link.isLink[win.number]) {
@@ -3067,6 +3073,7 @@ function writeToScriptBoxes(win, isPinned, display, scrollTypeFlag) {
   s.forceNoteBox2Hide = prefs.getBoolPref("ShowOriginal" + win.number) ||
                         s.lastWindowNotesAreMaximized ||
                         ScriptBoxIsEmpty[s.link.firstWin]; //If last window notes are max'mzd this is second to last window, so hide!
+jsdump("s.forceNoteBox2Hide=" + s.forceNoteBox2Hide);
   var firstVerseInLink;
   var notes, userNotes;
   if (s.link.numWins>1) {
@@ -3174,6 +3181,7 @@ function initTextCache(s, textCache, display) {
   textCache.numPrependedChaps = 0;
   textCache.donePrependedChaps = false;
   textCache.text = getBodyHTML(s, textCache, 0);
+  textCache.modName = s.win.modName;
 }
     
 function getBodyHTML(s, p, chapOffset) {
@@ -3513,9 +3521,8 @@ function checkNoteBox(beg, end, p, s, fn) {
   if (end == -1) end = p.iend;
   if (!s.forceNoteBox2Hide && FrameDocument[s.link.lastWin].defaultView.NoteBoxEmpty) {
     // check new verse for footnotes and if found turn note box on!
-    if (fn.fn && p.text.substring(beg, end).match(/id="fn\..*"/) ||
-        fn.cr && p.text.substring(beg, end).match(/id="cr\..*"/) ||
-        fn.un && p.text.substring(beg, end).match(/id="un\..*"/)) {
+    var fn = new RegExp("id=\"" + p.modName + "\\.(fn|cr|un)\\.");
+    if (fn.fn && p.text.substring(beg, end).match(fn)) {
       FrameDocument[s.link.lastWin].defaultView.NoteBoxEmpty = false;
       FrameDocument[s.link.lastWin].defaultView.setBibleHeight(false, s.forceNoteBox2Hide);
     }
@@ -4236,6 +4243,7 @@ function resizeWatchReal() {
   document.getElementById("genBookChooser").style.visibility = (prefs.getBoolPref("ShowGenBookChooser") ? "visible":"hidden");
 }
 
+var REL; // set true on reload() so be don't shut down libsword
 function unloadXUL() {
   try {window.controllers.removeController(XulswordController);} catch(er) {}
   try {window.controllers.removeController(BookmarksMenuController);} catch(er) {}
@@ -4257,7 +4265,7 @@ function unloadXUL() {
     prefs.setCharPref("History",newhist);
     prefs.setIntPref("HistoryIndex",Historyi);
     //Save Bible chapter/verse
-    Bible.quitLibsword();
+    if (!REL) Bible.quitLibsword();
   }
   
   //Purge UserData data source
