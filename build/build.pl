@@ -67,7 +67,7 @@ if ($MakeDevelopment =~ /true/i) {
   &Log("\n----> BUILDING DEVELOPMENT ENVIRONMENT\n");
   if (-e $DEVELOPMENT) {&cleanDir($DEVELOPMENT);}
   else {make_path($DEVELOPMENT);}
-  &compileLibSword($DEVELOPMENT, 1);
+  &compileLibSword($DEVELOPMENT);
   my @manifest;
   &copyExtensionFiles($DEVELOPMENT, \@manifest, $IncludeLocales, 1);
   if ("$^O" =~ /MSWin32/i) {&copyXulRunnerFiles($DEVELOPMENT);}

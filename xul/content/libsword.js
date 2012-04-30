@@ -117,8 +117,8 @@ var Bible = {
       if (typeof(prefs) != "undefined" && Location) {
         prefs.setCharPref("Location", Location.getLocation(WESTERNVS));
       }
-      //this.freeInstance(); Deleting xulsword seems to cause memory problems when library is re-opened
-      //this.freeLibxulsword(); Deleting libxulsword static objects seems to cause memory problems when library is re-opened
+      this.freeInstance(); //Deleting xulsword sometimes caused memory problems when library was re-opened
+      this.freeLibxulsword(); //Deleting libxulsword static objects sometimes caused memory problems when library was re-opened
       this.Libsword.close();
       this.Libsword = null;
       jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" ? window.name:"<no-window>") + ")");
