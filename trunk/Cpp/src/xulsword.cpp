@@ -369,6 +369,40 @@ char *xulsword::getBookName(SWBuf *Chapter) {
 
 
 /********************************************************************
+saveFootnotes
+*********************************************************************/
+void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *crossRefText, SWBuf *noteText) {
+  SWKey *testkey = module->getKey();
+  VerseKey *modKey = SWDYNAMIC_CAST(VerseKey, testkey);
+  if (!modKey) {return;}
+  
+  int fnV = 1;
+  AttributeList::iterator AtIndex;
+  for (AtIndex = module->getEntryAttributes()["Footnote"].begin(); AtIndex != module->getEntryAttributes()["Footnote"].end(); AtIndex++) {
+    if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
+        sprintf(Outtext, "cr.%d.%s.%s<bg>", fnV, modKey->getOSISRef(), module->Name());
+        crossRefText->append(Outtext);
+        crossRefText->append(AtIndex->second["refList"]);
+        crossRefText->append("<nx>");
+        noteText->append(Outtext);
+        noteText->append(AtIndex->second["refList"]);
+        noteText->append("<nx>");
+      }
+      else {
+        sprintf(Outtext, "fn.%d.%s.%s<bg>", fnV, modKey->getOSISRef(), module->Name());
+        footnoteText->append(Outtext);
+        footnoteText->append(module->RenderText(AtIndex->second["body"]));
+        footnoteText->append("<nx>");
+        noteText->append(Outtext);
+        noteText->append(module->RenderText(AtIndex->second["body"]));
+        noteText->append("<nx>");
+      }
+    fnV++;
+  }
+}
+
+
+/********************************************************************
 PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
@@ -420,6 +454,8 @@ xulsword::~xulsword() {
   //delete(SWLogXS); deleted by _staticSystemLog
   //delete(StringMgrXS); deleted by _staticsystemStringMgr
 
+  //deleting MyManager causes mozalloc to abort for some reason,
+  //so xulsword objects are never deleted
   delete(MyManager); // will delete MarkupFilterMgrXS
 }
 
@@ -487,7 +523,8 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     int vNum = myVerseKey->getVerse();
     if (vNum>1 && vNum == Verse) {MyManager->setGlobalOption("Words of Christ in Red","Off");}
     else if (vNum == (LastVerse + 1)) {MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");}
-    verseText = module->RenderText(); //THIS MUST BE RENDERED BEFORE READING getEntryAttributes!!!
+    verseText = module->RenderText();
+    saveFootnotes(module, &footnoteText, &crossRefText, &noteText);
 
     // move verse number after any paragraph indents
     bool verseStartsWithIndent = false;
@@ -496,32 +533,6 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
       verseText << 30;
     }
     haveText = haveText || *verseText.c_str();
-
-
-    //SAVE ANY FOOTNOTES
-    int fnV = 1;
-    AttributeList::iterator AtIndex;
-    for (AtIndex = module->getEntryAttributes()["Footnote"].begin(); AtIndex != module->getEntryAttributes()["Footnote"].end(); AtIndex++) {
-      if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
-          sprintf(Outtext, "%s.cr.%d.%s<bg>", vkeymod, fnV, myVerseKey->getOSISRef());
-          crossRefText.append(Outtext);
-          crossRefText.append(AtIndex->second["refList"]);
-          crossRefText.append("<nx>");
-          noteText.append(Outtext);
-          noteText.append(AtIndex->second["refList"]);
-          noteText.append("<nx>");
-        }
-        else {
-          sprintf(Outtext, "%s.fn.%d.%s<bg>", vkeymod, fnV, myVerseKey->getOSISRef());
-          footnoteText.append(Outtext);
-          footnoteText.append(module->RenderText(AtIndex->second["body"]));
-          footnoteText.append("<nx>");
-          noteText.append(Outtext);
-          noteText.append(module->RenderText(AtIndex->second["body"]));
-          noteText.append("<nx>");
-        }
-      fnV++;
-    }
 
     //FIRST PRINT OUT ANY HEADINGS IN THE VERSE
     AttributeValue::iterator Value;
@@ -592,44 +603,6 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   retval = (char *)emalloc(chapHTML.length() + 1);
   if (retval) {strcpy(retval, chapHTML.c_str());}
   return retval;
-}
-
-
-/********************************************************************
-GetFootnotes
-*********************************************************************/
-char *xulsword::getFootnotes() {
-  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-  char *retval;
-  retval = (char *)emalloc(MyFootnotes.length() + 1);
-  if (retval) {strcpy(retval, MyFootnotes.c_str());}
-	return retval;
-}
-
-
-/********************************************************************
-GetCrossRefs
-*********************************************************************/
-char *xulsword::getCrossRefs() {
-  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-
-  char *retval;
-  retval = (char *)emalloc(MyCrossRefs.length() + 1);
-  if (retval) {strcpy(retval, MyCrossRefs.c_str());}
-	return retval;
-}
-
-
-/********************************************************************
-GetNotes
-*********************************************************************/
-char *xulsword::getNotes() {
-  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-
-  char *retval;
-  retval = (char *)emalloc(MyNotes.length() + 1);
-  if (retval) {strcpy(retval, MyNotes.c_str());}
-	return retval;
 }
 
 
@@ -773,36 +746,14 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
       versemod->SetKey(readKey);
 
       SWBuf tmp;
-      if (!versemod->Error()) {tmp.set(versemod->RenderText());}
+      if (!versemod->Error()) {
+        tmp.set(versemod->RenderText());
+        saveFootnotes(versemod, &footnoteText, &crossRefText, &noteText);
+      }
       chapText.append(tmp);
       haveText = haveText || tmp.c_str();
 
       chapText.append("</span></div>");
-      
-      //SAVE ANY FOOTNOTES
-      int fnV = 1;
-      AttributeList::iterator AtIndex;
-      for (AtIndex = versemod->getEntryAttributes()["Footnote"].begin(); AtIndex != versemod->getEntryAttributes()["Footnote"].end(); AtIndex++) {
-        if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
-            sprintf(Outtext, "%s.cr.%d.%s<bg>", thismod.c_str(), fnV, readKey.getOSISRef());
-            crossRefText.append(Outtext);
-            crossRefText.append(AtIndex->second["refList"]);
-            crossRefText.append("<nx>");
-            noteText.append(Outtext);
-            noteText.append(AtIndex->second["refList"]);
-            noteText.append("<nx>");
-          }
-          else {
-            sprintf(Outtext, "%s.fn.%d.%s<bg>", thismod.c_str(), fnV, readKey.getOSISRef());
-            footnoteText.append(Outtext);
-            footnoteText.append(versemod->RenderText(AtIndex->second["body"]));
-            footnoteText.append("<nx>");
-            noteText.append(Outtext);
-            noteText.append(versemod->RenderText(AtIndex->second["body"]));
-            noteText.append("<nx>");
-          }
-        fnV++;
-      }
     
     } while (comma != std::string::npos);
 
@@ -830,6 +781,44 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   char *retval;
   retval = (char *)emalloc(chapText.length() + 1);
   if (retval) {strcpy(retval, chapText.c_str());}
+	return retval;
+}
+
+
+/********************************************************************
+GetFootnotes
+*********************************************************************/
+char *xulsword::getFootnotes() {
+  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
+  char *retval;
+  retval = (char *)emalloc(MyFootnotes.length() + 1);
+  if (retval) {strcpy(retval, MyFootnotes.c_str());}
+	return retval;
+}
+
+
+/********************************************************************
+GetCrossRefs
+*********************************************************************/
+char *xulsword::getCrossRefs() {
+  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
+
+  char *retval;
+  retval = (char *)emalloc(MyCrossRefs.length() + 1);
+  if (retval) {strcpy(retval, MyCrossRefs.c_str());}
+	return retval;
+}
+
+
+/********************************************************************
+GetNotes
+*********************************************************************/
+char *xulsword::getNotes() {
+  //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
+
+  char *retval;
+  retval = (char *)emalloc(MyNotes.length() + 1);
+  if (retval) {strcpy(retval, MyNotes.c_str());}
 	return retval;
 }
 

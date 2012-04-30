@@ -481,7 +481,7 @@ function getChapterWithNotes(fn, ch, chapOffset) {
 
 //after user notes are collected and page is drawn, go add highlight to all usernote verses
 function markUserNoteVerse(id) {
-  var verse = id.match(/un\..*?\.([^\.]*\.\d+\.\d+)$/);
+  var verse = id.match(/un\..*?\.([^\.]*\.\d+\.\d+)\.[^\.]+$/);
   if (!verse) return;
   var userNoteElement = document.getElementById("vs." + verse[1]);
   if (userNoteElement) userNoteElement.className += " unverse";
@@ -611,7 +611,7 @@ function scriptboxMouseOver(e) {
       ImmediateUnhighlight=false;
       scroll2Note("ntr." + elem.id);
     }
-    else if (!activatePopup(edata, elem.title)) {elem.style.cursor = "default";}
+    else if (!activatePopup(edata, elem.id)) {elem.style.cursor = "default";}
     break;
      
   case "fn":
@@ -620,7 +620,7 @@ function scriptboxMouseOver(e) {
       ImmediateUnhighlight=false;
       scroll2Note("ntr." + elem.id);
     }
-    else activatePopup("fn", elem.title);
+    else activatePopup("fn", elem.id);
     break;
 
   case "sr":
@@ -714,7 +714,7 @@ function scriptboxClick(e) {
 //jsdump("edata:" + edata + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
   switch (edata) {
     case "cr":
-    var ok = expandCrossRefs(edata + "." + elem.title);
+    var ok = expandCrossRefs(elem.id);
     if (ok) scroll2Note("ntr." + elem.id);
     break;
     
@@ -972,7 +972,7 @@ function activatePopup(datatype, data, delay, yoffset) {
       var thisid = chapRefs[i].split("<bg>")[0];
       var reflist = chapRefs[i].split("<bg>")[1];
       // if we've found the note which matches the id under the mouse pointer
-      if (thisid == datatype + "." + data) {
+      if (thisid == data) {
         html += getCRNoteHTML(fromMod, "pu", thisid, reflist, "<hr>", getPrefOrCreate("OpenCrossRefPopups", "Bool", true), Win.number);
         break;
       }
@@ -987,7 +987,7 @@ function activatePopup(datatype, data, delay, yoffset) {
     for (var i=0; i<footnote.length; i++) {
       var fnpart = footnote[i].split("<bg>");
       // if we've found the note which matches the id under the mouse pointer
-      if (fnpart[0] == "fn." + data) {
+      if (fnpart[0] == data) {
         html += fnpart[1];
         break;
       }

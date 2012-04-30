@@ -62,21 +62,12 @@ LISTS OF VERSES OR NOTES ARE RETURNED IN THE FOLLOWING FORMAT:
 var ThrowMSG, FreeMem, UpperCaseResult; // must be globals, not Bible members
 var Bible = {
   fdata:null,
-  
-  freeLibxulsword:null,
 
   inst:null,
   
   paused:false,
-
-  checkerror: function() {
-    if (ThrowMSG) {
-      var tmp = ThrowMSG;
-      ThrowMSG = "";
-      jsdump("THROW: libsword, " + tmp);
-      throw("THROW: libsword, " + tmp);
-    }
-  },
+  
+  freeLibxulsword:null,
 
   Libsword:null,
 
@@ -119,7 +110,6 @@ var Bible = {
     if (typeof(prefs) != "undefined" && Location) {
       Location.setLocation(WESTERNVS, prefs.getCharPref("Location"));
     }
-
   },
 
   quitLibsword: function() {
@@ -127,8 +117,8 @@ var Bible = {
       if (typeof(prefs) != "undefined" && Location) {
         prefs.setCharPref("Location", Location.getLocation(WESTERNVS));
       }
-      this.freeInstance();
-      this.freeLibxulsword();
+      //this.freeInstance(); Deleting xulsword seems to cause memory problems when library is re-opened
+      //this.freeLibxulsword(); Deleting libxulsword static objects seems to cause memory problems when library is re-opened
       this.Libsword.close();
       this.Libsword = null;
       jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" ? window.name:"<no-window>") + ")");
@@ -144,21 +134,24 @@ var Bible = {
 
     var funcTypeReportProgressPtr = ctypes.FunctionType(ctypes.default_abi, ctypes.void_t, [ctypes.int]).ptr;
     this.ReportProgressPtr = funcTypeReportProgressPtr(this.ReportProgress);
+    
     var newXulsword = this.Libsword.declare("GetNewXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
     this.inst = newXulsword(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
     jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined"  ? window.name:"<no-window>") + ")");  
   },
   
   freeInstance: function() {
+    // deleting xulsword seems to cause memory problems when library is re-opened!
     if (this.inst) {
       FreeMem(this.inst, ctypes.char.array()("xulsword"));
       this.inst = null;
-    }  
+    }
   },
   
   // save Bible info and free up libsword for another thread to use.
   pause: function() {
     if (this.paused) return;
+    this.quitLibsword();
     this.allWindowsModal(true);
     this.paused = true;
   },
@@ -188,8 +181,6 @@ var Bible = {
     this.windowModal(MainWindow, setModal);
   },
 
-  stopevent: function(event) {event.stopPropagation(); event.preventDefault();},
-
   windowModal: function(win, setModal) {
     var events = ["click", "mouseover", "mouseout", "mousemove", "mousedown",
               "mouseup", "dblclick", "select", "keydown", "keypress", "keyup"];
@@ -204,11 +195,23 @@ var Bible = {
       }
     }
   },
+  
+  stopevent: function(event) {event.stopPropagation(); event.preventDefault();},
 
+  checkerror: function() {
+    if (ThrowMSG) {
+      var tmp = ThrowMSG;
+      ThrowMSG = "";
+      jsdump("THROW: libsword, " + tmp);
+      throw(new Error("THROW: libsword, " + tmp));
+    }
+  },
 
 /*******************************************************************************
  * Callback functions available to libsword binary
  ******************************************************************************/
+ 
+// NOTE: these functions must NOT use "this." because they are used as callbacks
 UpperCase: function(charPtr) {
   var aString = charPtr.readString();
   if (aString) {
@@ -228,6 +231,7 @@ ThrowJSError: function(charPtr) {
 ReportProgress: function(intgr) {
   if (postMessage) postMessage(intgr);
 },
+
 
 /*******************************************************************************
 * GETTING BIBLE TEXT AND BIBLE LOCATION INFORMATION:

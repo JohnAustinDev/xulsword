@@ -127,7 +127,7 @@ function insertUserNotes(aBook, aChapter, aModule, text) {
     // Encode ID
 //dump ("FOUND ONE!:" + book + " " + chapter + " " + verse + " " + aModule + "\n");
     var encodedResVal = encodeUTF8(res.QueryInterface(kRDFRSCIID).Value);
-    var myid = "un." + encodedResVal + "." + book + "." + chapter + "." + verse;
+    var myid = "un." + encodedResVal + "." + book + "." + chapter + "." + verse + "." + aModule;
     var newNoteHTML = "<span id=\"" + myid + "\" class=\"un\" title=\"un\"></span>";
     var idname = (usesVerseKey ? "vs." + book + "." + chapter + ".":"par.");
     var verseStart = "id=\"" + idname + verse + "\">";
@@ -182,10 +182,11 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
         t += "<div id=\"ntr." + noteid + "\" class=\"normalNote\">";
         
         // Write cell #4: chapter and verse
-        var tmp = noteid.match(/\.(\d+)\.(\d+)$/);
+        var xsn = new RegExp("^" + XSNOTE + "$");
+        var tmp = noteid.match(xsn);
         var lov = getLocaleOfModule(version);
-        var myc = dString(tmp[1], lov);
-        var myv = dString(tmp[2], lov);
+        var myc = dString(tmp[4], lov);
+        var myv = dString(tmp[5], lov);
         t += "<a id=\"notl." + noteid + "\" class=\"fncol4 vstyle" + version + "\" >" + "<i>" + myc + ":" + versionDirectionEntity + myv + "</i>" + " -" + "</a>";
         
         // Write cell #5: note body
@@ -277,10 +278,11 @@ function ascendingVerse(a,b) {
   var t3="cr";
   if (a==null || a=="") return 1;
   if (b==null || b=="") return -1;
-  var av = Number(a.match(/(\d+)\.(\d+)<bg>/)[2]);
-  var bv = Number(b.match(/(\d+)\.(\d+)<bg>/)[2]);
-  var ac = Number(a.match(/(\d+)\.(\d+)<bg>/)[1]);
-  var bc = Number(b.match(/(\d+)\.(\d+)<bg>/)[1]);
+  var xsn = new RegExp("^" + XSNOTE + "<bg>");
+  var av = Number(a.match(xsn)[5]);
+  var bv = Number(b.match(xsn)[5]);
+  var ac = Number(a.match(xsn)[4]);
+  var bc = Number(b.match(xsn)[4]);
   if (ac == bc) {
     if (av == bv) {
       var at = a.match(/^(\w\w)/)[1];
