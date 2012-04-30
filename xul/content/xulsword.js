@@ -2013,7 +2013,7 @@ function ScriptContextMenuShowing(e) {
 
   // Close Script Popup if we're not over it
   var elem = document.popupNode;
-  while (elem && elem.id != "npopup") {elem = elem.parentNode;}
+  while (elem && (!elem.id || elem.id != "npopup")) {elem = elem.parentNode;}
   if (!elem) {
     FrameDocument[CurrentTarget.windowNum].defaultView.closePopup();
   }
@@ -3073,7 +3073,7 @@ function writeToScriptBoxes(win, isPinned, display, scrollTypeFlag) {
   s.forceNoteBox2Hide = prefs.getBoolPref("ShowOriginal" + win.number) ||
                         s.lastWindowNotesAreMaximized ||
                         ScriptBoxIsEmpty[s.link.firstWin]; //If last window notes are max'mzd this is second to last window, so hide!
-jsdump("s.forceNoteBox2Hide=" + s.forceNoteBox2Hide);
+
   var firstVerseInLink;
   var notes, userNotes;
   if (s.link.numWins>1) {
@@ -3226,12 +3226,13 @@ function filterNotes(notes, p) {
   var maxch = Number(loc[1]);
   var maxvs = Number(loc[2]);
 
+  var xsn = "^" + XSNOTE + "<bg>";
   notes = notes.split(nsep);
   for (i=0; i<notes.length; i++) {
-    loc = notes[i].match(/(\d+)\.(\d+)<bg>/);
+    loc = notes[i].match(xsn);
     if (!loc) continue;
-    if (Number(loc[1])<minch || (Number(loc[1])==minch && Number(loc[2])<minvs)) continue;
-    if (Number(loc[1])>maxch || (Number(loc[1])==maxch && Number(loc[2])>maxvs)) continue;
+    if (Number(loc[4])<minch || (Number(loc[4])==minch && Number(loc[5])<minvs)) continue;
+    if (Number(loc[4])>maxch || (Number(loc[4])==maxch && Number(loc[5])>maxvs)) continue;
     retval += notes[i] + nsep;
   }
 
@@ -3521,7 +3522,7 @@ function checkNoteBox(beg, end, p, s, fn) {
   if (end == -1) end = p.iend;
   if (!s.forceNoteBox2Hide && FrameDocument[s.link.lastWin].defaultView.NoteBoxEmpty) {
     // check new verse for footnotes and if found turn note box on!
-    var fn = new RegExp("id=\"" + p.modName + "\\.(fn|cr|un)\\.");
+    var fn = new RegExp("id=\"(fn|cr|un)\\.");
     if (fn.fn && p.text.substring(beg, end).match(fn)) {
       FrameDocument[s.link.lastWin].defaultView.NoteBoxEmpty = false;
       FrameDocument[s.link.lastWin].defaultView.setBibleHeight(false, s.forceNoteBox2Hide);
@@ -4243,7 +4244,6 @@ function resizeWatchReal() {
   document.getElementById("genBookChooser").style.visibility = (prefs.getBoolPref("ShowGenBookChooser") ? "visible":"hidden");
 }
 
-var REL; // set true on reload() so be don't shut down libsword
 function unloadXUL() {
   try {window.controllers.removeController(XulswordController);} catch(er) {}
   try {window.controllers.removeController(BookmarksMenuController);} catch(er) {}
@@ -4265,7 +4265,7 @@ function unloadXUL() {
     prefs.setCharPref("History",newhist);
     prefs.setIntPref("HistoryIndex",Historyi);
     //Save Bible chapter/verse
-    if (!REL) Bible.quitLibsword();
+    Bible.quitLibsword();
   }
   
   //Purge UserData data source

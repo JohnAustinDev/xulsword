@@ -828,7 +828,7 @@ function setGlobalDirectionPrefs() {
 
 function windowLocationReload() {
   setGlobalDirectionPrefs();
-  REL=true; window.location.reload();
+  window.location.reload();
 }
 
 //Removes white-space, trailing or leading punctuation, "x" (note symbol),

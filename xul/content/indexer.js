@@ -44,6 +44,7 @@ var Indexer = {
 
   finished: function() {
     Indexer.inprogress = false;
+    this.indexer = null;
     Bible.resume();
     if (Indexer.exitfunc) Indexer.exitfunc();
   },

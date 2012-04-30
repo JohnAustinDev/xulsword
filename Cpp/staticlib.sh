@@ -1,6 +1,7 @@
 #!/bin/bash
 
 g++ -shared \
+.libs/libxulsword.o \
 .libs/xulsword.o \
 -pthread  \
 clucene-core-0.9.21b/src/*.o \

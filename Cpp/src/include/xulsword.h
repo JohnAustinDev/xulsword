@@ -143,6 +143,7 @@ class xulsword {
   virtual void updateGlobalOptions(bool disableFootCrossRed);
   void mapVersifications(VerseKey *vkin, VerseKey *vkout);
   char *getBookName(SWBuf *Chapter);
+  void saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *crossRefText, SWBuf *noteText);
 
 
   public:

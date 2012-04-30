@@ -18,6 +18,7 @@
 
 #include "xulsword.h"
 #include "swlog.h"
+#include "stringmgr.h"
 #include <iostream>
 
 #ifdef WIN32
@@ -26,7 +27,7 @@
 #define DLLEXPORT extern "C"
 #endif
 
-#define MAXINST 2
+#define MAXINST 4
 static xulsword *keep[MAXINST] = {};
 /********************************************************************
 EXPORTED INTERFACE FUNCTIONS
@@ -35,8 +36,8 @@ DLLEXPORT xulsword *GetNewXulsword(char *path, char *(*toUpperCase)(char *), voi
   int i;
   for (i=0; i<MAXINST; i++) {if (!keep[i]) {break;}}
   if (i == MAXINST) return NULL;
-  std::cerr << "ASSIGNING xulsword[" << i << "]" << std::endl;
   keep[i] = new xulsword(path, toUpperCase, throwJS, reportProgress);
+  SWLog::getSystemLog()->logDebug("CREATED xulsword[%i]", i);
   return keep[i];
 }
 
@@ -147,19 +148,37 @@ DLLEXPORT void FreeMemory(void *tofree, char *type) {
   else if (!strcmp(type, "xulsword")) {
     for (int i=0; i<MAXINST; i++) {
       if (keep[i] == (xulsword *)tofree) {
-        std::cerr << "FREEING xulsword[" << i << "]" << std::endl;
+        SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING xulsword[%i]", i);
         delete keep[i];
         keep[i] = NULL;
       }
     }
   }
-  
+
 }
 
 DLLEXPORT void FreeLibxulsword() {
   std::cerr << "LIBXULSWORD DESTRUCTOR" << std::endl;
-  if (xulsword::MySWLogXS) delete(xulsword::MySWLogXS);
+
+  for (int i=0; i<MAXINST; i++) {
+    if (keep[i]) {
+      SWLog::getSystemLog()->logDebug("(FreeLibxulsword) FREEING xulsword[%i]", i);
+      delete keep[i];
+      keep[i] = NULL;
+    }
+  }
+ 
+  SWLog::setSystemLog(NULL);
   xulsword::MySWLogXS = NULL;
-  if (xulsword::MyStringMgrXS) delete(xulsword::MyStringMgrXS);
+  
+  StringMgr::setSystemStringMgr(NULL);
   xulsword::MyStringMgrXS = NULL;
+
+/*  
+  VerseMgr::setSystemVerseMgr(NULL);
+  FileMgr::setSystemFileMgr(NULL);
+  delete LocaleMgr::systemLocaleMgr;
+  LocaleMgr::systemLocaleMgr = NULL;
+*/ 
+
 }
