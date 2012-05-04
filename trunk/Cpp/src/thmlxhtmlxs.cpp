@@ -42,6 +42,7 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		if ((!tag.isEndTag()) && (!tag.isEmpty()))
 			u->startTag = tag;
 
+// The TR (Textus Recepticus) module is Thml with Strong's numbers
 		if (tag.getName() && !strcmp(tag.getName(), "sync")) {
 		  VerseKey *vkey;
 			// see if we have a VerseKey * or descendant

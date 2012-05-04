@@ -92,11 +92,15 @@
         // All Bible mods and possibly all commentary mods are on list
         this.versions = [];
         var defVersionIndex=-1;
+        var reqVK = !(this.getAttribute("hidebook")=="true" &&
+                    this.getAttribute("hidechapter")=="true" &&
+                    this.getAttribute("hideverse")=="true" &&
+                    this.getAttribute("hidelastverse")=="true");
         for (var m=0; m<Tabs.length && Bible; m++) {
           if (Tabs[m].isOrigTab) continue;
           if (Tabs[m].modType != BIBLE) {
             if (this.versionmenulist.getAttribute("onlybibles")=="true") continue;
-            if (Tabs[m].modType != COMMENTARY) continue;
+            if (reqVK && Tabs[m].modType != COMMENTARY) continue;
           }
           this.versions.push(Tabs[m].modName);
           if (Tabs[m].modName == this._defversion) defVersionIndex=this.versions.length-1;
@@ -137,6 +141,15 @@
         this.version = this._defversion;
         this.location = this._defbook + ".1.1.1";
         this._isInit = false;
+        
+        var mheight = this.getAttribute("menuheight");
+        if (mheight) {
+          this.versionmenulist.menupopup.style.height = mheight;
+          this.bookmenulist.menupopup.style.height = mheight;
+          this.chaptermenulist.menupopup.style.height = mheight;
+          this.versemenulist.menupopup.style.height = mheight;
+          this.lastVersemenulist.menupopup.style.height = mheight;
+        }
         
       ]]></constructor>
       
@@ -383,7 +396,7 @@
           
           if (currentBookIsAvailable) this.location = convertedLocation;
           else this.book = showBooks[0];
-          if (aEvent) onRefUserUpdate(aEvent, this.location, this.version);
+          if (aEvent && typeof(onRefUserUpdate)!="undefined") onRefUserUpdate(aEvent, this.location, this.version);
         ]]></body>
       </method>
       
@@ -457,7 +470,7 @@
           }
           else this._lastVerse=this.verse;
           
-          if (aEvent) onRefUserUpdate(aEvent, this.location, this.version);
+          if (aEvent && typeof(onRefUserUpdate)!="undefined") onRefUserUpdate(aEvent, this.location, this.version);
         ]]></body>
       </method>
       
@@ -492,7 +505,7 @@
           if (newloc.verse!=null) {this.verse = newloc.verse; needUpdate = true;}
           if (newloc.lastVerse!=null && newloc.lastVerse > this.verse) {this.lastVerse = newloc.lastVerse; needUpdate = true;}
           this._maskHiddenFields = false; // Tell this.location getter NOT to maks hidden params
-          if (needUpdate && aEvent) onRefUserUpdate(aEvent, this.location, this.version);
+          if (needUpdate && aEvent && typeof(onRefUserUpdate)!="undefined") onRefUserUpdate(aEvent, this.location, this.version);
           this._maskHiddenFields = true;
         ]]></body>
       </method>
@@ -588,7 +601,7 @@
           
         <menulist anonid="lastVerse"
           sizetopopup="never" 
-          oncommand="onRefUserUpdate(event, this.parentNode.parentNode.location, this.parentNode.parentNode.version);" 
+          oncommand="if (typeof(onRefUserUpdate)!='undefined') onRefUserUpdate(event, this.parentNode.parentNode.location, this.parentNode.parentNode.version);" 
           hidden="false" xbl:inherits="hidden=hidelastverse, disabled" />
           
         <spacer width="27px" />

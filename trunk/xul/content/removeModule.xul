@@ -38,6 +38,7 @@
   id="modal"
   onload="onLoad();"
   onunload="onUnload();"
+  onresize="onResize();"
   title="&menu.removeModule.label;"
   persist="screenX screenY"
   screenX="24" screenY="24">
@@ -57,24 +58,24 @@
   <data id="deleteCmd.label">&deleteCmd.label;</data>
   <data id="menu.removeModule.label">&menu.removeModule.label;</data>
 
-  <vbox style="padding:10px;">
-    <hbox id="checkboxes">
-      <groupbox>
-        <caption label="&deleteModules.label;:" style="color:blue;" />
-        <vbox id="modules" style="max-width:500px;"></vbox>
+  <vbox id="body" flex="1">
+    <hbox id="checkboxes" flex="1">
+      <groupbox id="modgroup" flex="1" style="max-height:400px; max-width:400px; -moz-margin-end:0px;">
+        <caption label="&deleteModules.label;:" />
+        <vbox flex="1" id="modules"></vbox>
       </groupbox>
-      <groupbox>
-        <caption label="&deleteLocales.label;:" style="color:blue;" />
-        <vbox id="locales"></vbox>
+      <groupbox id="locgroup" style="-moz-margin-end:0px;">
+        <caption label="&deleteLocales.label;:" />
+        <vbox flex="1" id="locales"></vbox>
       </groupbox>
-      <groupbox>
-        <caption label="&deleteAudio.label;:" style="color:blue;" />
-        <vbox id="audio" style="-moz-padding-end:10px;"></vbox>
+      <groupbox id="audgroup">
+        <caption label="&deleteAudio.label;:" />
+        <vbox flex="1" id="audio"></vbox>
       </groupbox>
     </hbox>
-    <hbox align="end" style="margin-top:10px;">
+    <hbox id="dialogbuttons" class="dialogbuttons" align="end">
       <button id="delete" label="&deleteCmd.label;" oncommand="deleteModules(event);" />
-      <button id="close" label="&cancelButton.label;" oncommand="window.close()" style="-moz-margin-end:10px;"/>
+      <button id="close" label="&cancelButton.label;" oncommand="window.close()" />
     </hbox>
   </vbox>
   

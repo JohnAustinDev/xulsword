@@ -49,18 +49,18 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/copyPassage.js"/>
 
-  <groupbox style="padding-bottom:10px; padding-top:5px;">
-    <caption label="&term.passage;" style="color:blue;" />
+  <groupbox>
+    <caption label="&term.passage;" />
     <vbox align="start">
       <reference-dropdown id="passage" flex="1" onlybibles="true" onlyavailablebooks="true" />
     </vbox>
   </groupbox>
   
-  <iframe id="chaptertext" style="height:1px; visibility:hidden;"/>
+  <iframe flex="1" id="chaptertext" style="height:1px; visibility:hidden;"/>
     
   <hbox style="margin-bottom:10px;">                
-    <groupbox style="padding:10px;">
-      <caption label="&term.include;:" style="color:blue;" />
+    <groupbox>
+      <caption label="&term.include;:" />
       <grid>
         <rows>
           <row style="margin-bottom:5px;"/>
@@ -79,9 +79,9 @@
     <spacer flex="1"/>
     <vbox>
       <spacer flex="1"/>
-      <hbox align="end">
+      <hbox class="dialogbuttons" align="end">
         <button id="copy" label="&copyCmd.label;" oncommand="copyPassage(event);" />
-        <button id="close" label="&cancelButton.label;" oncommand="window.close()" style="-moz-margin-end:10px;"/>
+        <button id="close" label="&cancelButton.label;" oncommand="window.close()" />
       </hbox>
     </vbox>
   </hbox>

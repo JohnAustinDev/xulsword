@@ -254,6 +254,28 @@ getChapterText: function(modname, vkeytext) {
   return str;
 },
 
+// getChapterTextMulti
+//Will return chapter text in interlinear style.
+//Footnote markers are NOT included.
+//Vkeymodlist is formatted as follows: "UZV,TR,RSTE". The first module must be a
+//  versekey module or an error is returned. If any successive module is not a
+//  versekey module, it is simply ignored. Verse numbers retured are those of
+//  the first module listed, subsequent modules return the same reference as
+//  that returned by the first, even though it may have come from a different
+//  chapter or verse number than did the first.
+getChapterTextMulti: function(modstrlist, vkeytext) {
+  if (this.paused) throw(new Error("libsword paused, getChapterTextMulti inaccessible."));
+  if (!this.Libsword) this.initLibsword();
+  if (!this.inst) this.initInstance();
+  if (!this.fdata.ctm)
+    this.fdata.ctm = this.Libsword.declare("GetChapterTextMulti", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
+  var cdata = this.fdata.ctm(this.inst, ctypes.char.array()(modstrlist), ctypes.char.array()(vkeytext));
+  this.checkerror();
+  try {var str = cdata.readString();} catch(er) {str = "";}
+  FreeMem(cdata, ctypes.char.array()("char"));
+  return str;
+},
+
 //IMPORTANT: THE FOLLOWING 3 ROUTINES MUST BE CALLED AFTER getChapterText IS CALLED!
 
 // getFootnotes
@@ -299,28 +321,6 @@ getNotes:function() {
   if (!this.fdata.gns)
     this.fdata.gns = this.Libsword.declare("GetNotes", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
   var cdata = this.fdata.gns(this.inst);
-  this.checkerror();
-  try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
-  return str;
-},
-
-// getChapterTextMulti
-//Will return chapter text in interlinear style.
-//Footnote markers are NOT included.
-//Vkeymodlist is formatted as follows: "UZV,TR,RSTE". The first module must be a
-//  versekey module or an error is returned. If any successive module is not a
-//  versekey module, it is simply ignored. Verse numbers retured are those of
-//  the first module listed, subsequent modules return the same reference as
-//  that returned by the first, even though it may have come from a different
-//  chapter or verse number than did the first.
-getChapterTextMulti: function(modstrlist, vkeytext) {
-  if (this.paused) throw(new Error("libsword paused, getChapterTextMulti inaccessible."));
-  if (!this.Libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
-  if (!this.fdata.ctm)
-    this.fdata.ctm = this.Libsword.declare("GetChapterTextMulti", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
-  var cdata = this.fdata.ctm(this.inst, ctypes.char.array()(modstrlist), ctypes.char.array()(vkeytext));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
   FreeMem(cdata, ctypes.char.array()("char"));

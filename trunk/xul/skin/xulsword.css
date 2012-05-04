@@ -246,6 +246,43 @@ reference-dropdown[hidebook="true"][hidechapter="true"][hideverse="true"][hidela
   list-style-image: url("chrome://xulsword/skin/images/videohelp.png") !important;
 }
 
+
+/* GROUPBOX STYLING */
+groupbox {
+  margin:16px;
+  background:rgb(251,251,251);
+  border:1px solid threeDShadow;
+  -moz-border-radius:8px;
+}
+
+groupbox caption {
+  background:white;
+  border:1px solid threeDShadow;
+  -moz-border-radius:5px;
+  padding:2px;
+}
+
+groupbox > * {
+  margin:0px 4px 4px 4px;
+}
+
+/* DIALOG BUTTONS */
+.dialogbuttons {
+  margin-top:8px;
+  -moz-margin-end:8px;
+  margin-bottom:8px;
+  -moz-margin-start:16px;
+}
+
+.dialogbuttons button {
+  -moz-margin-end:8px;
+}
+
+.dialogbuttons > hbox {
+  min-width:180px;
+  -moz-margin-end:8px;
+}
+ 
 /* Drag and Drop feedback */
 /*#bookmarks-menu menu > hbox[align="center"]{
   border-top:1px solid transparent;

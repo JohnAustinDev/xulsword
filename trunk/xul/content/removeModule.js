@@ -327,6 +327,18 @@ function deleteModules(e) {
   window.close();
 }
 
+function onResize() {
+  var mg = document.getElementById("modgroup");
+  var lg = document.getElementById("locgroup");
+  var ag = document.getElementById("audgroup");
+  var cb = document.getElementById("checkboxes");
+  mg.style.maxWidth = Number(cb.boxObject.width - lg.boxObject.width - ag.boxObject.width) + "px";
+  
+  var bd = document.getElementById("body");
+  var dl = document.getElementById("dialogbuttons");
+  mg.style.maxHeight = Number(bd.boxObject.height - dl.boxObject.height) + "px";
+}
+
 function onUnload() {
 
 }
