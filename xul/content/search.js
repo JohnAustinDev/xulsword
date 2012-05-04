@@ -99,12 +99,11 @@ function postWindowInit() {
       isShowing |= MainWindow.isTabShowing(t, w);
     }
     if (isShowing || !getPrefOrCreate("MinimizeSearchRadios", "Bool", false)) {
-      createAndAppendRadio(t,"adv");
       if (Tabs[t].modType==BIBLE) createAndAppendRadio(t,"sim");
       NumberOfShortType[Tabs[t].tabType]++;
     }
   }
-  updateAdvancedPanel();
+  updatePanel();
   updateSearchWindow();
   updateSortBy();
 
@@ -113,51 +112,20 @@ function postWindowInit() {
       window.setTimeout("searchBible()", 500); // Timeout is for non-Lucene search
     else searchBible();
   }
-  window.setInterval(resizeWatch,500);
 }
 
 // Updates between simple/advanced panel according to user pref.
-function updateAdvancedPanel() {
+function updatePanel() {
   // Hide/Show advanced search features according to pref
   document.getElementById("advanced").hidden = !prefs.getBoolPref("AdvSearchFlag");
   document.getElementById("moreless").label = (prefs.getBoolPref("AdvSearchFlag") ? SBundle.getString("Less"):SBundle.getString("More"));
-  document.getElementById("sversion.adv").hidden = !prefs.getBoolPref("AdvSearchFlag");
   document.getElementById("sversion.sim").hidden = prefs.getBoolPref("AdvSearchFlag");
   
   fitModuleRadiosToWindow();
   
   // Hide empty rows
-  if (prefs.getBoolPref("AdvSearchFlag")) {
-    document.getElementById("modulePanel").hidden = false;
-    var aRow = document.getElementById("allModRadios.adv").firstChild;
-    while (aRow) {
-      var subrownum = aRow.id.split(".");
-      if (subrownum && subrownum[2] && subrownum[2]=="0" && aRow.childNodes.length==1) aRow.hidden=true;
-      else aRow.hidden=false;
-      var possibleSep = aRow.previousSibling;
-      if (possibleSep && possibleSep.id == "") possibleSep.hidden=aRow.hidden;
-      aRow = aRow.nextSibling;
-    }
-  }
-  else {
+  if (!prefs.getBoolPref("AdvSearchFlag")) {
     document.getElementById("modulePanel").hidden = (document.getElementById("row.Texts.0.sim").childNodes.length==2);
-  }
-}
-
-var MyHeight, MyWidth;
-function resizeWatch() {
-  // If window is minimized!!!
-  if (window.innerHeight==0 && window.innerWidth==0) return;
-  // If first time setting values
-  else if (!MyHeight && !MyWidth) {
-    MyHeight = window.innerHeight;
-    MyWidth  = window.innerWidth;
-  }
-  // If window has been resized
-  else if (Math.abs(window.innerHeight-MyHeight) > 40 || Math.abs(window.innerWidth-MyWidth) > 40) {
-    MyHeight = window.innerHeight;
-    MyWidth  = window.innerWidth;
-    fitModuleRadiosToWindow();
   }
 }
 
@@ -188,8 +156,7 @@ function createAndAppendRadio(tabNum, id) {
 }
 
 function fitModuleRadiosToWindow() {
-  var id = (document.getElementById("sversion.adv").hidden ? "sim":"adv");
-  var aRow = document.getElementById("allModRadios." + id).firstChild;
+  var aRow = document.getElementById("allModRadios.sim").firstChild;
   var cols = 0;
   while (aRow) {
     var mycol = aRow.childNodes.length-1;
@@ -197,13 +164,13 @@ function fitModuleRadiosToWindow() {
     aRow = aRow.nextSibling;
   }
 
-  var windowWidth = window.innerWidth;
-  var sversion = document.getElementById("sversion." + id);
+  var windowWidth = 800; // max-width of sversion.sim
+  var sversion = document.getElementById("allModRadios.sim");
   // IF RADIO GROUP NEEDS TO BE WIDER
   if (sversion.boxObject.width < windowWidth) {
-    while (!isRadioGridFlat(id) && (sversion.boxObject.width < windowWidth)) {
+    while (!isRadioGridFlat() && (sversion.boxObject.width < windowWidth)) {
       cols++;
-      var aRow = document.getElementById("allModRadios." + id).firstChild;
+      var aRow = document.getElementById("allModRadios.sim").firstChild;
       while (aRow) {
         if (!aRow.id) {aRow = aRow.nextSibling; continue;}
         var myCol = getOptimumColForRow(aRow, cols);
@@ -222,7 +189,7 @@ function fitModuleRadiosToWindow() {
   if (sversion.boxObject.width > windowWidth) {
     while ((cols >= MINRADIOCOLS) && (sversion.boxObject.width > windowWidth)) {
       cols--;
-      var aRow = document.getElementById("allModRadios." + id).firstChild;
+      var aRow = document.getElementById("allModRadios.sim").firstChild;
       while (aRow) {
         myCol = getOptimumColForRow(aRow, cols);
         result = 0
@@ -235,8 +202,8 @@ function fitModuleRadiosToWindow() {
   }
 }
 
-function isRadioGridFlat(id) {
-  var aRow = document.getElementById("row.Texts.0." + id);
+function isRadioGridFlat() {
+  var aRow = document.getElementById("row.Texts.0.sim");
   while (aRow) {
     if (!aRow.id || aRow.id.split(".")[2] != "0") {aRow = aRow.nextSibling; continue;}
     if (aRow.childNodes.length-1 != NumberOfShortType[aRow.id.split(".")[1]]) return false;
@@ -318,7 +285,7 @@ function createNewRow(moduletype, subRow, id) {
 function updateSearchWindow() {
   // Set version selection according to pref
   var svers = getPrefOrCreate("SearchVersion", "Char", prefs.getCharPref("DefaultVersion"));
-  document.getElementById("sversion.adv").selectedItem = document.getElementById(svers + ".adv");
+  document.getElementById("moddropdown").version = svers;
   document.getElementById("sversion.sim").selectedItem = document.getElementById(svers + ".sim");
   
   var myType = getModuleLongType(svers);
@@ -638,7 +605,7 @@ function getHTMLSearchResults(firstMatchToWrite, numMatchesToWrite, wordsToHighl
         matchText = matchText.replace(wordsToHighlight[r].term, "<span class=\"searchterm\">$&</span>", "gim");
       }
     }
-    if (!matchText || matchText.length < 4) {matchText[1] = versionDirectionEntity;} //Unicode control mark insures blank rtl lines do not become ltr or vice versa...
+    if (!matchText || matchText.length < 4) {matchText = versionDirectionEntity;} //Unicode control mark insures blank rtl lines do not become ltr or vice versa...
     matchid = encodeUTF8(matchid);
     matchText = matchText.replace(/<br[^>]*>/g, "");
     var tline = "<div class=\"matchverse\"><a id=\"vl." + matchid + "\" href=\"javascript:MainWindowRef.gotoLink('" + matchid + "','" + displayVersion + "');\" class=\"vstyleProgram\">" + matchLink + " - " + "</a><span id=\"vt." + matchid + "\">" + matchText + "</span><br></div>";
@@ -677,6 +644,24 @@ function searchBook() {
   //SearchBoxElement.innerHTML = sText + " " + sScope + " " + sType + " " + sFlags;
 }
 
+function onRefUserUpdate() {
+  changeToModule(document.getElementById("moddropdown").version);
+}
+
+function changeToModule(mod) {
+  if (Searching) stopSearch();
+  document.getElementById("scopeRadio").selectedIndex=0; // IMPORTANT!: Or else user may unknowingly get a partial search without his choosing!
+  if (prefs.getCharPref("SearchVersion") != mod) {
+    prefs.setCharPref("SearchVersion", mod);
+    updateSearchWindow();
+    updateSortBy();
+    if (getModuleLongType(SearchedVersion) == BIBLE && getModuleLongType(mod) == BIBLE) {
+      updateSearchBoxStyle(mod);
+      SearchBoxElement.innerHTML = getHTMLSearchResults(StartVerse, VersesPerPage, TR);
+    }
+  }
+}
+
 var SearchHelpWindow;
 function clickHandler(e) {
   var myId;
@@ -693,29 +678,17 @@ function clickHandler(e) {
     updateSortBy();
     break;
         
-  case "sversion.adv":
   case "sversion.sim":
-    if (Searching) stopSearch();
-    document.getElementById("scopeRadio").selectedIndex=0; // IMPORTANT!: Or else user may unknowingly get a partial search without his choosing!
-    // Set Bible version according to selection
     var svers = document.getElementById(myId).selectedItem;
     if (svers && svers.id) {
       svers = svers.id.split(".")[0];
-      if (prefs.getCharPref("SearchVersion") != svers) {
-        prefs.setCharPref("SearchVersion", svers);
-        updateSearchWindow();
-        updateSortBy();
-        if (getModuleLongType(SearchedVersion) == BIBLE && getModuleLongType(svers) == BIBLE) {
-          updateSearchBoxStyle(svers);
-          SearchBoxElement.innerHTML = getHTMLSearchResults(StartVerse, VersesPerPage, TR);
-        }
-      }
+      changeToModule(svers);
     }
     break;
     
   case "moreless":
     prefs.setBoolPref("AdvSearchFlag",!prefs.getBoolPref("AdvSearchFlag"));
-    updateAdvancedPanel();
+    updatePanel();
     break;
     
   case "sort":

@@ -69,7 +69,7 @@ const PMSPLASH="alwaysRaised,centerscreen";
 const PMMODAL="alwaysRaised,centerscreen,modal";
 const PMNORMAL=0, PMSTOP=1;
 const APPLICATIONID="xulsword@xulsword.org";
-const XSNOTE = "(fn|cr|un)\\.(\\d+)\\.(\\w+)\\.(\\d+)\\.(\\d+)\\.(\\w+)";
+const XSNOTE = "(fn|cr|un)\\.([^\\.]+)\\.(\\w+)\\.(\\d+)\\.(\\d+)\\.(\\w+)";
 
 // scrolling
 const SCROLLTYPENONE = 0;         // don't scroll (for links this becomes SCROLLTYPECENTER)

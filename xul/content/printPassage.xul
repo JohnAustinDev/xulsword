@@ -49,22 +49,22 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksTop.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/printPassage.js"/>
   <vbox flex="1">
-    <groupbox style="padding-bottom:10px; padding-top:5px;">
-      <caption label="&frompageInput.label;" style="color:blue;" />
+    <groupbox>
+      <caption label="&frompageInput.label;"/>
       <hbox pack="start" style="-moz-padding-start:20px;">
         <reference-dropdown id="from-dropdown" onlybibles="true" onlyavailablebooks="true" hidelastverse="true" hideverse="true" style="width:400px;" />
       </hbox>
     </groupbox>
   
-    <groupbox id="to-input" style="padding-bottom:10px; padding-top:5px;">
-      <caption label="&topageInput.label;" style="color:blue;" />
+    <groupbox id="to-input">
+      <caption label="&topageInput.label;" />
       <vbox align="start" style="-moz-padding-start:20px;">
         <reference-dropdown id="to-dropdown" onlybibles="true" onlyavailablebooks="true" hidelastverse="true" hideverse="true" hideversion="true" style="width:400px;" />
       </vbox>
     </groupbox>
   </vbox>                            
-  <groupbox style="padding:10px;">
-    <caption label="&term.include;:" style="color:blue;" />
+  <groupbox>
+    <caption label="&term.include;:" />
     <grid>
       <rows>
         <row />
@@ -94,10 +94,10 @@
       </columns>
     </grid>
   </groupbox>
-  <hbox>
+  <hbox align="center" class="dialogbuttons">
     <button label="&printCmd.label;" oncommand="buttonPress('cmd_print');" />
     <button label="&printPreviewCmd.label;" oncommand="buttonPress('cmd_printPreview')" />
-    <hbox flex="1"><progressmeter flex="1" id="progress" mode="determined" value="0" hidden="true" /></hbox>
+    <hbox flex="1"><progressmeter height="26" flex="1" id="progress" mode="determined" value="0" hidden="true" /></hbox>
     <button id="close" label="&cancelButton.label;" oncommand="window.close()" />
   </hbox>
 </window>

@@ -112,9 +112,10 @@
       </menupopup>
     </menu>
   </menubar>
-  <menubar pack="center">
+  
+  <toolbar>
     <vbox flex="1">
-      <hbox pack="center" align="center" style="padding:4px;">
+      <hbox id="searchrow" pack="center" align="center" style="padding:4px;">
         <button id="moreless" label="&more.label;" oncommand="clickHandler(this)"/>
         <label value="&searchwhat.label;" control="searchText"/>
         <textbox id="searchText" tooltip="searchTextTT" style="width:20em;" maxlength="60"/>
@@ -124,97 +125,75 @@
       </hbox>
       <separator class="groove" />
       <hbox id="modulePanel">
-      <spacer flex="1" />
-      <radiogroup id="sversion.adv" hidden="false" pack="center" align="center" orient="horizontal" oncommand="clickHandler(this)" style="padding:6px; margin-bottom:8px;">
-        <grid>
-          <columns>
-            <column />
-            <column flex="1"/>
-          </columns>
-          <rows id="allModRadios.adv">
-          <row id="row.Texts.0.adv" align="center">
-            <label value="&radio.label.text;" id="label.Texts.0.adv"/>
-          </row>
-          <separator class="groove"/>
-          <row id="row.Comms.0.adv" align="center">
-            <label value="&radio.label.comm;" id="label.Comms.0.adv"/>
-          </row>
-          <separator class="groove"/>
-          <row id="row.Dicts.0.adv" align="center">
-            <label value="&radio.label.dict;" id="label.Dicts.0.adv"/>
-          </row>
-          <separator class="groove"/>
-          <row id="row.Genbks.0.adv" align="center">
-            <label value="&radio.label.book;" id="label.Genbks.0.adv"/>
-          </row>
-          </rows>
-        </grid>
-      </radiogroup>
-      <radiogroup id="sversion.sim" hidden="false" pack="center" align="center" orient="horizontal" oncommand="clickHandler(this)" style="padding:6px; margin-bottom:8px;">
-        <grid>
-          <columns>
-            <column />
-            <column flex="1"/>
-          </columns>
-          <rows id="allModRadios.sim">
-          <row id="row.Texts.0.sim" align="center">
-            <label value="" id="label.Texts.0.sim"/>
-          </row>
-          </rows>
-        </grid>
-      </radiogroup>
-      <spacer flex="1" />
-      </hbox>
-    </vbox>
-  </menubar>
-</toolbox>
+        <spacer flex="1" />
 
-  <vbox align="center">
-    <hbox id="advanced" hidden="true" align="center" class="advancedSearch">
-      <stack id="searchTypeStack">
-      <vbox flex="100%" id="searchTypeBox">
-        <hbox pack="center"><label value="&type;"/></hbox>
-        <radiogroup id="searchType">
-          <radio id="hasthewords" selected="true" label="&hasthewords;" oncommand="clickHandler(this)"/>
-          <radio id="hasthistext" label="&hasthistext;" oncommand="clickHandler(this)"/>
-          <radio id="advancedmatch" label="&advancedmatch;" oncommand="clickHandler(this)"/>
-          <radio id="matchsimilar" label="&matchparts;" oncommand="clickHandler(this)"/>
+        <radiogroup id="sversion.sim" hidden="false" pack="center" align="center" orient="horizontal" oncommand="clickHandler(this)" style="max-width:800px; max-height:90px; overflow-x:hidden; overflow-y:auto; padding:6px;">
+          <grid>
+            <columns>
+              <column />
+              <column flex="1"/>
+            </columns>
+            <rows id="allModRadios.sim">
+            <row id="row.Texts.0.sim" align="center">
+              <label value="" id="label.Texts.0.sim"/>
+            </row>
+            </rows>
+          </grid>
         </radiogroup>
-        <hbox>
-          <checkbox id="sort" label="&search.sortorder;" oncommand="clickHandler(this)" style="margin-left:2em;"/>
+        <spacer flex="1" />
+      </hbox>
+    
+      <vbox align="center">
+        <hbox id="advanced" hidden="true">
+          <groupbox>
+            <caption label="&scope;" />    
+            <reference-dropdown id="moddropdown" menuheight="400px" onlybibles="false" hidebook="true" hidechapter="true" hideverse="true" hidelastverse="true" />
+            <radiogroup id="scopeRadio" orient="horizontal" oncommand="clickHandler(this)">
+              <vbox>
+                <radio id="searchAll" selected="true" label="&search.all;" value="Gen-Rev"/>
+                <radio id="searchOT" label="&search.old;" value="Gen-Mal"/>
+                <radio id="searchNT" label="&search.new;" value="Matt-Rev"/>
+              </vbox>
+              <vbox>
+                <radio id="searchSelect" label="&search.groups;" value=""/>
+                <menulist id="scopeMenu"><menupopup>
+                  <menuitem id="sg1" selected="true" label="&search.torah;" value="&search.torah.books;"/>
+                  <menuitem id="sg2" label="&search.history;" value="&search.history.books;"/>
+                  <menuitem id="sg3" label="&search.wisdom;" value="&search.wisdom.books;"/>
+                  <menuitem id="sg4" label="&search.prophets;" value="&search.prophets.books;"/>
+                  <menuitem id="sg5" label="&search.gospels;" value="&search.gospels.books;"/>
+                  <menuitem id="sg6" label="&search.letters;" value="&search.letters.books;"/>
+                </menupopup></menulist>
+              </vbox>
+            </radiogroup>
+          </groupbox>
+          <stack id="searchTypeStack">
+          <groupbox>
+            <caption label="&type;" /> 
+            <radiogroup id="searchType">
+              <radio id="hasthewords" selected="true" label="&hasthewords;" oncommand="clickHandler(this)"/>
+              <radio id="hasthistext" label="&hasthistext;" oncommand="clickHandler(this)"/>
+              <radio id="advancedmatch" label="&advancedmatch;" oncommand="clickHandler(this)"/>
+              <radio id="matchsimilar" label="&matchparts;" oncommand="clickHandler(this)"/>
+            </radiogroup>
+            <hbox>
+              <checkbox id="sort" label="&search.sortorder;" oncommand="clickHandler(this)" style="margin-left:2em;"/>
+            </hbox>
+          </groupbox>
+          <vbox id="dividerBox" hidden="true">
+          </vbox>
+          <vbox pack="center" align="center" id="createSearchIndexBox" hidden="true">
+            <hbox>
+              <button id="createIndexButton" label="Create Search Index" oncommand="clickHandler(this)"/>
+            </hbox>
+          </vbox>
+          </stack>
         </hbox>
       </vbox>
-      <vbox id="dividerBox" style="background:rgb(220,220,220); border:2px grey outset; -moz-border-radius:4px; opacity:0.8" hidden="true">
-      </vbox>
-      <vbox pack="center" align="center" id="createSearchIndexBox" hidden="true">
-        <hbox style="padding:3px; background:rgb(200,200,200); -moz-border-radius:4px;">
-          <button id="createIndexButton" label="Create Search Index" oncommand="clickHandler(this)"/>
-        </hbox>
-      </vbox>
-      </stack>
-      <vbox flex="100%">
-        <hbox pack="center"><label value="&scope;"/></hbox>
-        <radiogroup id="scopeRadio" orient="horizontal" oncommand="clickHandler(this)">
-          <vbox>
-            <radio id="searchAll" selected="true" label="&search.all;" value="Gen-Rev"/>
-            <radio id="searchOT" label="&search.old;" value="Gen-Mal"/>
-            <radio id="searchNT" label="&search.new;" value="Matt-Rev"/>
-          </vbox>
-          <vbox>
-            <radio id="searchSelect" label="&search.groups;" value=""/>
-            <menulist id="scopeMenu"><menupopup>
-              <menuitem id="sg1" selected="true" label="&search.torah;" value="&search.torah.books;"/>
-              <menuitem id="sg2" label="&search.history;" value="&search.history.books;"/>
-              <menuitem id="sg3" label="&search.wisdom;" value="&search.wisdom.books;"/>
-              <menuitem id="sg4" label="&search.prophets;" value="&search.prophets.books;"/>
-              <menuitem id="sg5" label="&search.gospels;" value="&search.gospels.books;"/>
-              <menuitem id="sg6" label="&search.letters;" value="&search.letters.books;"/>
-            </menupopup></menulist>
-          </vbox>
-        </radiogroup>
-      </vbox>
-    </hbox>
-  </vbox>
+    
+    </vbox>
+  </toolbar>
+</toolbox>
 
 
 <!-- Search Results Window !-->
