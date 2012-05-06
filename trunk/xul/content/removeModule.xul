@@ -60,15 +60,15 @@
 
   <vbox id="body" flex="1">
     <hbox id="checkboxes" flex="1">
-      <groupbox id="modgroup" flex="1" style="max-height:400px; max-width:400px; -moz-margin-end:0px;">
+      <groupbox id="modgroup" flex="1" style="max-height:400px; max-width:400px;">
         <caption label="&deleteModules.label;:" />
         <vbox flex="1" id="modules"></vbox>
       </groupbox>
-      <groupbox id="locgroup" style="-moz-margin-end:0px;">
+      <groupbox id="locgroup" style="-moz-margin-start:0px;">
         <caption label="&deleteLocales.label;:" />
         <vbox flex="1" id="locales"></vbox>
       </groupbox>
-      <groupbox id="audgroup">
+      <groupbox id="audgroup" style="-moz-margin-start:0px;">
         <caption label="&deleteAudio.label;:" />
         <vbox flex="1" id="audio"></vbox>
       </groupbox>

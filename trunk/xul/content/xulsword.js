@@ -1441,7 +1441,7 @@ var XulswordController = {
       if (!addNewModule()) ModuleCopyMutex=false;
       break;
     case "cmd_xs_removeModule":
-      window.open("chrome://xulsword/content/removeModule.xul",document.getElementById("menu.removeModule.label").childNodes[0].nodeValue,"chrome,modal");
+      window.open("chrome://xulsword/content/removeModule.xul",document.getElementById("menu.removeModule.label").childNodes[0].nodeValue,"chrome,resizable");
       break;
     case "cmd_xs_exportAudio":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
@@ -4279,7 +4279,7 @@ function unloadXUL() {
  ***********************************************************************/ 
 
 function copyPassageDialog() {
-  var retval = window.open("chrome://xulsword/content/copyPassage.xul",document.getElementById("menu.copypassage").childNodes[0].nodeValue,"chrome,modal");
+  var retval = window.open("chrome://xulsword/content/copyPassage.xul",document.getElementById("menu.copypassage").childNodes[0].nodeValue,"chrome,resizable");
 }
  
 var PrintPassageHTML;
@@ -4301,7 +4301,7 @@ function handlePrintCommand(command) {
     document.getElementById(command).doCommand();
     break;
   case "cmd_print_passage":
-    var retval = window.open("chrome://xulsword/content/printPassage.xul",document.getElementById("print.printpassage").childNodes[0].nodeValue,"chrome,modal");
+    var retval = window.open("chrome://xulsword/content/printPassage.xul",document.getElementById("print.printpassage").childNodes[0].nodeValue,"chrome,resizable");
     break;
   }
 }

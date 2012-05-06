@@ -19,6 +19,7 @@
 !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/mainwin.css" type="text/css"?>
 <?xul-overlay href="chrome://xsglobal/content/editMenuOverlay.xul"?>
 
 <!DOCTYPE window [
@@ -59,19 +60,19 @@
 <data id="savingSource">&savingSource;</data>
 <data id="savingTarget">&savingTarget;</data>
 <data id="localeDir">&locale.dir;</data>
+<stringbundle id="strings"   src="chrome://xulsword/locale/xulsword.properties"/>
 
 <script>var MainWindow = window;</script>
 <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
 <script>moduleInstall(true)</script>
 
-<stringbundle id="strings"   src="chrome://xulsword/locale/xulsword.properties"/>
 <script type="application/x-javascript" src="chrome://xsglobal/content/globalOverlay.js"/>
 <script type="application/x-javascript" src="chrome://xsglobal/content/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://xsglobal/content/printUtils.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
 <!-- mainWindowInit.js invokes the Bible object for the first time. !-->
 <script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
 <script>if (!Bible.unlock()) Bible=null;</script>

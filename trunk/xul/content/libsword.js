@@ -107,7 +107,7 @@ var Bible = {
 
     this.initInstance();
     
-    if (typeof(prefs) != "undefined" && Location) {
+    if (typeof(prefs) != "undefined" && Location && Location.setLocation) {
       Location.setLocation(WESTERNVS, prefs.getCharPref("Location"));
     }
   },
@@ -173,7 +173,7 @@ var Bible = {
 
   allWindowsModal: function(setModal) {
     if (!MainWindow) return;
-    for (var i=0; i<MainWindow.SearchWins.length; i++) {
+    for (var i=0; MainWindow.SearchWins && i<MainWindow.SearchWins.length; i++) {
       this.windowModal(MainWindow.SearchWins[i], setModal);
     }
     if (MainWindow.ManagerWindow)

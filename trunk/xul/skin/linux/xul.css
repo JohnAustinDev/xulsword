@@ -1,0 +1,20 @@
+@import url(chrome://global/skin/);
+
+/* GROUPBOX STYLING */
+groupbox {
+  margin:16px;
+  background:rgb(251,251,251);
+  border:1px solid threeDShadow;
+  -moz-border-radius:8px;
+}
+
+groupbox caption {
+  background:white;
+  border:1px solid threeDShadow;
+  -moz-border-radius:5px;
+  padding:2px;
+}
+
+groupbox > * {
+  margin:0px 4px 4px 4px;
+}
