@@ -1,0 +1,65 @@
+@import url(chrome://global/skin/);
+@import url(chrome://xsplatform/skin/xul.css);
+
+.button-box {
+  background-color:rgb(255,255,255);
+}
+
+toolbar[printpreview="true"] {
+  -moz-binding: url("chrome://xsglobal/content/printPreviewBindings.xml#printpreviewtoolbar");
+}
+
+/* Make tree hiearchy lines visible again */
+treechildren::-moz-tree-line {
+  visibility:visible;
+  border: 1px dotted ThreeDShadow;
+}
+
+/* XML Bindings */
+reference-dropdown {
+  -moz-binding: url("chrome://xulsword/content/referenceDropdown.xml#reference-dropdown");
+}
+reference-textbox, reference-textbox[type="textbox"] {
+  -moz-binding: url("chrome://xulsword/content/scriprefTextbox.xml#scripref-textbox");
+}
+reference-textbox[type="dropdown"] {
+  -moz-binding: url("chrome://xulsword/content/scriprefTextbox.xml#scripref-textbox-dropdown");
+}
+reference-dropdown menulist[anonid="book"] {
+  -moz-margin-end:9px;
+}
+reference-dropdown menulist[anonid="chapter"] {
+  width:4em;
+  -moz-margin-start:1px;
+  -moz-margin-end:1px;
+}
+reference-dropdown menulist[anonid="verse"] {
+  width:4em;
+  -moz-margin-start:1px;
+  -moz-margin-end:1px;
+}
+reference-dropdown menulist[anonid="lastVerse"] {
+  width:4em;
+  -moz-margin-start:1px;
+  -moz-margin-end:1px;
+}
+reference-dropdown[hidebook="true"][hidechapter="true"][hideverse="true"][hidelastverse="true"] spacer {
+  display:none;
+}
+
+/* DIALOG BUTTONS */
+.dialogbuttons {
+  margin-top:8px;
+  -moz-margin-end:8px;
+  margin-bottom:8px;
+  -moz-margin-start:16px;
+}
+
+.dialogbuttons button {
+  -moz-margin-end:8px;
+}
+
+.dialogbuttons > hbox {
+  min-width:180px;
+  -moz-margin-end:8px;
+}
