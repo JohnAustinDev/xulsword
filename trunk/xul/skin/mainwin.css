@@ -6,27 +6,27 @@
 }
 
 /* MAIN WINDOW TOGGLE BUTTONS */
-button#crbutton {
+#crbutton {
   list-style-image: url("chrome://xulsword/skin/images/crossrefs.png") !important;
   -moz-box-orient: vertical;
 }
-button#fnbutton {
+#fnbutton {
   list-style-image: url("chrome://xulsword/skin/images/footnotes.png") !important;
   -moz-box-orient: vertical;
 }
-button#hdbutton {
+#hdbutton {
   list-style-image: url("chrome://xulsword/skin/images/headings.png") !important;
   -moz-box-orient: vertical;
 }
-button#dtbutton {
+#dtbutton {
   list-style-image: url("chrome://xulsword/skin/images/dictionary.png") !important;
   -moz-box-orient: vertical;
 }
-button[class="togglebutton"] {
+toolbarbutton[class="togglebutton"] {
   color: black; 
   -moz-image-region: rect(0px, 64px, 28px, 32px) !important;
 }
-button[class="togglebutton"][value="true"] {
+toolbarbutton[class="togglebutton"][value="true"] {
   color: blue; 
   -moz-image-region: rect(0px, 32px, 28px, 0px) !important;
 }
@@ -81,63 +81,63 @@ menu#sub-Genbks {
 }
 
 /* MAIN WINDOW SEARCH BUTTON */
-button#searchButton {
+#searchButton {
   list-style-image: url("chrome://xulsword/skin/images/search.png");
   -moz-image-region: rect(0px, 30px, 18px, 0px);
 }
-button#searchButton[disabled="true"] {
+#searchButton[disabled="true"] {
   -moz-image-region: rect(0px, 60px, 18px, 30px);
 }
 
 /* MAIN WINDOW HISTORY BUTTONS */
-button#back {
+#back {
   list-style-image: url("chrome://xulsword/skin/images/back.png") !important;
   -moz-image-region: rect(0px, 22px, 14px, 0px) !important;
   -moz-box-orient: horizontal;
   margin-left:5px; 
   margin-right:5px;
 }
-button#back[disabled="true"] {
+#back[disabled="true"] {
   -moz-image-region: rect(0px, 66px, 14px, 44px) !important;
 }
-button#back:not([disabled="true"]):hover {
+#back:not([disabled="true"]):hover {
   -moz-image-region: rect(0px, 44px, 14px, 22px) !important;
 }
-button#back[chromedir="rtl"] {
+#back[chromedir="rtl"] {
   list-style-image: url("chrome://xulsword/skin/images/forward.png") !important;
 }
-button#forward {
+#forward {
   list-style-image: url("chrome://xulsword/skin/images/forward.png") !important;
   -moz-image-region: rect(0px, 22px, 14px, 0px) !important;
   -moz-box-orient: horizontal;
   margin-left:5px;
   margin-right:5px;
 }
-button#forward[disabled="true"] {
+#forward[disabled="true"] {
   -moz-image-region: rect(0px, 66px, 14px, 44px) !important;
 }
-button#forward:not([disabled="true"]):hover {
+#forward:not([disabled="true"]):hover {
   -moz-image-region: rect(0px, 44px, 14px, 22px) !important;
 }
-button#forward[chromedir="rtl"] {
+#forward[chromedir="rtl"] {
   list-style-image: url("chrome://xulsword/skin/images/back.png") !important;
 }
 
-button#historymenu {
+#historymenu {
   list-style-image: url("chrome://xulsword/skin/images/historymenu.png") !important;
   -moz-image-region: rect(0px, 40px, 11px, 0px) !important;
   -moz-box-orient: horizontal;
   margin-left:0px;
   margin-right:0px;
 }
-button#historymenu[disabled="true"] {
+#historymenu[disabled="true"] {
   -moz-image-region: rect(0px, 120px, 11px, 80px) !important;
 }
-button#historymenu:not([disabled="true"]):hover {
+#historymenu:not([disabled="true"]):hover {
   -moz-image-region: rect(0px, 80px, 11px, 40px) !important;
 }
-button#historymenu .button-menu-dropmarker,
-button#historymenu .button-text {
+#historymenu .button-menu-dropmarker,
+#historymenu .button-text {
   display: none !important;
 }
 
@@ -166,21 +166,6 @@ image#prevverse {
 }
 textbox deck[anonid="search-icons"] {
   display:none;
-}
-
-/* ::::: bookmark items FROM browser.css ::::: */
-.bookmark-item  {
-  list-style-image: url("chrome://xulsword/skin/images/folder-item.png") !important;
-  -moz-image-region: rect(0px, 16px, 16px, 0px)
-}
-
-.bookmark-item[container="true"] {
-  -moz-image-region: rect(0px, 32px, 16px, 16px) !important;
-}
-
-.bookmark-item[open="true"],
-.bookmark-item[container="true"][open="true"] {
-  -moz-image-region: rect(16px, 32px, 32px, 16px) !important;
 }
 
 /* GENERIC BOOK CHOOSER */

@@ -144,11 +144,11 @@
         
         var mheight = this.getAttribute("menuheight");
         if (mheight) {
-          this.versionmenulist.menupopup.style.height = mheight;
-          this.bookmenulist.menupopup.style.height = mheight;
-          this.chaptermenulist.menupopup.style.height = mheight;
-          this.versemenulist.menupopup.style.height = mheight;
-          this.lastVersemenulist.menupopup.style.height = mheight;
+          this.versionmenulist.menupopup.style.maxHeight = mheight;
+          this.bookmenulist.menupopup.style.maxHeight = mheight;
+          this.chaptermenulist.menupopup.style.maxHeight = mheight;
+          this.versemenulist.menupopup.style.maxHeight = mheight;
+          this.lastVersemenulist.menupopup.style.maxHeight = mheight;
         }
         
       ]]></constructor>

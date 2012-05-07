@@ -73,9 +73,7 @@
 <script type="application/x-javascript" src="chrome://xsglobal/content/globalOverlay.js"/>
 <script type="application/x-javascript" src="chrome://xsglobal/content/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://xsglobal/content/printUtils.js"/>
-<!-- mainWindowInit.js invokes the Bible object for the first time. !-->
 <script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
-<script>if (!Bible.unlock()) Bible=null;</script>
 <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
@@ -439,10 +437,10 @@
     <spacer flex="14%"  orient="vertical"/>
     
     <hbox hidden="false" id="optionButtons" align="start" style="padding-top:2px;">
-      <button id="hdbutton" class="togglebutton" label="&headingsButton.label;"  tooltip="hdbuttonTT"  command="cmd_xs_toggleHeadings"/>
-      <button id="fnbutton" class="togglebutton" label="&notesButton.label;"     tooltip="fnbuttonTT"  command="cmd_xs_toggleFootnotes"/>
-      <button id="crbutton" class="togglebutton" label="&crossrefsButton.label;" tooltip="crbuttonTT"  command="cmd_xs_toggleCrossRefs"/>
-      <button id="dtbutton" class="togglebutton" label="&dictButton.label;"      tooltip="dtbuttonTT"  command="cmd_xs_toggleDictionary"/>
+      <toolbarbutton id="hdbutton" class="togglebutton" label="&headingsButton.label;"  tooltip="hdbuttonTT"  command="cmd_xs_toggleHeadings"/>
+      <toolbarbutton id="fnbutton" class="togglebutton" label="&notesButton.label;"     tooltip="fnbuttonTT"  command="cmd_xs_toggleFootnotes"/>
+      <toolbarbutton id="crbutton" class="togglebutton" label="&crossrefsButton.label;" tooltip="crbuttonTT"  command="cmd_xs_toggleCrossRefs"/>
+      <toolbarbutton id="dtbutton" class="togglebutton" label="&dictButton.label;"      tooltip="dtbuttonTT"  command="cmd_xs_toggleDictionary"/>
     </hbox>
 
     <spacer id="rightspacer"  flex="72%" orient="vertical"/>

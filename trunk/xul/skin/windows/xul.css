@@ -1,18 +1,8 @@
-/* GROUPBOX STYLING */
-groupbox {
-  margin:16px;
-  background:rgb(251,251,251);
-  border:1px solid threeDShadow;
-  -moz-border-radius:8px;
+/* search windows */
+toolbar groupbox caption {
+  background:rgb(211,218,237);
 }
-/*
-groupbox caption {
-  background:white;
-  border:1px solid threeDShadow;
-  -moz-border-radius:5px;
-  padding:2px;
-}
-*/
-groupbox > * {
-  margin:0px 4px 4px 4px;
+
+toolbar groupbox, #dividerBox {
+  margin:0px 14px 10px 0px;
 }
