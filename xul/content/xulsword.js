@@ -3925,6 +3925,7 @@ function quickSetTabsToMargin(margin, w) {
   var html = "";
   for (var ts=t; ts<Tabs.length; ts++) {
     if (Tabs[ts].isOrigTab) continue;
+    if (!isTabShowing(ts, w)) continue;
     html += "<option id=\"seltab" + ts + "\" style=\"margin:4px; padding-top:2px; height:20px; \"";
     html += (Tabs[ts].modName==Win[w].modName ? " selected=\"selected\"":"");
     html += "onclick=\"tabHandler(event);\" onmouseover=\"tabHandler(event);\" onmouseout=\"tabHandler(event);\"" + ">"

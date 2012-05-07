@@ -107,21 +107,21 @@ var Bible = {
 
     this.initInstance();
     
-    if (typeof(prefs) != "undefined" && Location && Location.setLocation) {
+    if (typeof(prefs) != "undefined" && prefs && Location && Location.setLocation) {
       Location.setLocation(WESTERNVS, prefs.getCharPref("Location"));
     }
   },
 
   quitLibsword: function() {
     if (this.Libsword) {
-      if (typeof(prefs) != "undefined" && Location) {
+      if (typeof(prefs) != "undefined" && prefs && Location) {
         prefs.setCharPref("Location", Location.getLocation(WESTERNVS));
       }
       this.freeInstance(); //Deleting xulsword sometimes caused memory problems when library was re-opened
       this.freeLibxulsword(); //Deleting libxulsword static objects sometimes caused memory problems when library was re-opened
       this.Libsword.close();
       this.Libsword = null;
-      jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" ? window.name:"<no-window>") + ")");
+      jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
     }
   },
   
@@ -137,7 +137,7 @@ var Bible = {
     
     var newXulsword = this.Libsword.declare("GetNewXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
     this.inst = newXulsword(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
-    jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined"  ? window.name:"<no-window>") + ")");  
+    jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");  
   },
   
   freeInstance: function() {
