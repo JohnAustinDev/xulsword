@@ -165,7 +165,7 @@ var NewLocales;
 var NewModules;
 var NewFonts;
 var NewPlugin;
-var PreSword;
+var PreMainWin;
 var SkipList;
 var CommonList;
 var CopyZipFun;
@@ -197,7 +197,7 @@ jsdump("STARTING startImport");
   CopyZipFun = (blocking ? copyZipFiles:copyZipFilesTO);
   CopyRegularFun = (blocking ? copyRegularFiles:copyRegularFilesTO);
 
-  setPreSword();
+  setPreMainWin();
   
   if (!blocking && (ZipFiles.length || RegularFiles.length>5)) {
     var result = {};
@@ -223,7 +223,7 @@ jsdump("STARTING startImport");
     jsdump("There were incompatible components:");
     for (bf=0; bf<incomp.oldmodule.length; bf++) {jsdump("oldmodule:" + incomp.oldmodule[bf].leafName + ", minmodversion:" + incomp.minmodversion);}
     for (bf=0; bf<incomp.newmodule.length; bf++) {jsdump("newmodule:" + incomp.newmodule[bf].leafName + ", minprogversion:" + incomp.minprogversion);}
-    try {var showPrompt = (!PreSword && SBundle);} catch (er) {showPrompt = false;}
+    try {var showPrompt = (!PreMainWin && SBundle);} catch (er) {showPrompt = false;}
     if (showPrompt) {
       var msg = SBundle.getString("InstalIncomplete") + "\n";
       if (incomp.oldmodule.length) {
@@ -697,7 +697,7 @@ jsdump("Processing Entry:" + aEntry);
     if (overwriting) var success = removeModuleContents(inflated).success;
     if (!success) SkipList.push(conf.modPath);
     NewModules = pushIf(NewModules, conf.modName);
-    return {reset:(PreSword ? NORESET:SOFTRESET), success:success, remove:true};
+    return {reset:(PreMainWin ? NORESET:SOFTRESET), success:success, remove:true};
     break;
     
   case CHROME:
@@ -795,7 +795,7 @@ function handleResetRequest() {
     jsdump("No compatible files found");
     break;
   case NORESET: // program continues running and needs no reload or restart
-    if (PreSword) writeManifest(NewLocales, NewModules, NewFonts, true);
+    if (PreMainWin) writeManifest(NewLocales, NewModules, NewFonts, true);
     else {
       if (!MainWindow || !MainWindow.Bible || !MainWindow.Tabs.length) {
         restartApplication(false);
@@ -1451,7 +1451,7 @@ function restartApplication(promptBefore) {
 	appStartup.quit(Components.interfaces.nsIAppStartup.eRestart | Components.interfaces.nsIAppStartup.eForceQuit);
 }
 
-function setPreSword() {
-  PreSword = (!MainWindow || !MainWindow.Bible || !MainWindow.Bible.inst)
-  jsdump("PreSword = " + PreSword);
+function setPreMainWin() {
+  PreMainWin = (!MainWindow)
+  jsdump("PreMainWin = " + PreMainWin);
 }
