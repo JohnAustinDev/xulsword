@@ -601,7 +601,7 @@
           
         <menulist anonid="lastVerse"
           sizetopopup="never" 
-          oncommand="if (typeof(onRefUserUpdate)!='undefined' && onRefUserUpdate) onRefUserUpdate(event, this.parentNode.parentNode.location, this.parentNode.parentNode.version);" 
+          oncommand="if (typeof(onRefUserUpdate)!='undefined') {if (onRefUserUpdate) onRefUserUpdate(event, this.parentNode.parentNode.location, this.parentNode.parentNode.version);}" 
           hidden="false" xbl:inherits="hidden=hidelastverse, disabled" />
           
         <spacer width="27px" />
