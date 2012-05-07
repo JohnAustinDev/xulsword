@@ -182,8 +182,8 @@ var Bible = {
   },
 
   windowModal: function(win, setModal) {
-    var events = ["click", "mouseover", "mouseout", "mousemove", "mousedown",
-              "mouseup", "dblclick", "select", "keydown", "keypress", "keyup"];
+    var events = ["dragstart", "drop", "click", "mousewheel", "mouseover", "mouseout", "mousemove", "mousedown",
+              "mouseup", "dblclick", "select", "keydown", "keypress", "keyup", "contextmenu"];
     if (setModal) {
       for (var i=0; i<events.length; i++){
         win.addEventListener(events[i], this.stopevent, true);

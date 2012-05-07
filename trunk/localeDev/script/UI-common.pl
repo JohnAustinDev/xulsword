@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 
-$mapFile   = "$MK\\localeDev\\UI-MAP.txt";
-$ff2to3MAP = "$MK\\localeDev\\FF2_to_FF3.txt";
-$listFile  = "$MKS\\localeDev\\$locale\\UI-".$locale.".txt";
-$listFile2 = "$MKS\\localeDev\\$locale\\UI-".$locale."_2.txt";
+$mapFile   = "$MK/localeDev/UI-MAP.txt";
+$ff2to3MAP = "$MK/localeDev/FF2_to_FF3.txt";
+$listFile  = "$MKS/localeDev/$locale/UI-".$locale.".txt";
+$listFile2 = "$MKS/localeDev/$locale/UI-".$locale."_2.txt";
 
 # Get locale information
 $ignoreShortCutKeys = "false";
@@ -28,8 +28,8 @@ elsif ($locale) {
 else {&Log("ERROR UI-common.pl: Locale name was not provided.\n"); die;}
 $locinfo = "Locale=$locale, Version=$version, Alternate_locale=$localeALT, Firefox_locale=$firefox, Ignore_shortCut_keys=$ignoreShortCutKeys\n";
 
-if (!-e "$MKS\\localeDev") {mkdir("$MKS\\localeDev");}
-if (!-e "$MKS\\localeDev\\$locale") {mkdir("$MKS\\localeDev\\$locale");}
+if (!-e "$MKS/localeDev") {mkdir("$MKS/localeDev");}
+if (!-e "$MKS/localeDev/$locale") {mkdir("$MKS/localeDev/$locale");}
   
 # initialize sort variables
 @sort1 = ("books","main-window","bookmark-window","search-window","search-help-window","dialog-window","file-chooser","error-reporter","splash-secure-window","configuration");
@@ -151,8 +151,8 @@ sub loadMAP($%%%$) {
         elsif ($mapDescInfoP->{$d.":value"} eq "_NOT_FOUND_") {}
         elsif ($unused eq "true") {next;}
         elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$d.":fileEntry"}.":unused"} eq "true") {}
-        elsif ($sourceFF3 ne "true" && $fe !~ /^xulsword\\/) {next;}
-        elsif ($sourceFF3 eq "true" && $fe =~ /^xulsword\\/ && (!exists($FF2_to_FF3{$fe}) || $FF2_to_FF3{$fe} =~ /<unavailable>/))  {next;}
+        elsif ($sourceFF3 ne "true" && $fe !~ /^xulsword\//) {next;}
+        elsif ($sourceFF3 eq "true" && $fe =~ /^xulsword\// && (!exists($FF2_to_FF3{$fe}) || $FF2_to_FF3{$fe} =~ /<unavailable>/))  {next;}
 
         if ($supressWarn ne "true" && $mapDescInfoP->{$d.":value"} ne $values[$i]) {
           &Log("WARNING line $line: Changing \"".$d."\" from \"".$mapDescInfoP->{$d.":value"}."\" to \"".$values[$i]."\"\n");
@@ -285,19 +285,19 @@ sub getFileFromLocale($$$) {
   
   if ($f =~ /^xulsword\\/) {
     if ($l ne "en-US") {
-      $fr = "$MKS\\localeDev\\$l\\locale\\$f";
+      $fr = "$MKS/localeDev/$l/locale/$f";
     }
     else {
-      $f =~ s/^xulsword\\//; # this path was changed...
-      $fr = "$MK\\xul\\locale\\en-US\\$f";
+      $f =~ s/^xulsword\///; # this path was changed...
+      $fr = "$MK/xul/locale/en-US/$f";
     }
   }
-  elsif ($sourceFF3 eq "true" && $f =~ s/^\[locale-browser\]\\//) {$fr = "$MKS\\localeDev\\Firefox3\\$ffl\\locale\\$f";}
-  elsif ($sourceFF3 eq "true" && $f =~ s/^\[locale-global\]\\//)  {$fr = "$MKS\\localeDev\\Firefox3\\$ffl\\locale\\$ffl\\$f";}
+  elsif ($sourceFF3 eq "true" && $f =~ s/^\[locale-browser\]\///) {$fr = "$MKS/localeDev/Firefox3/$ffl/locale/$f";}
+  elsif ($sourceFF3 eq "true" && $f =~ s/^\[locale-global\]\///)  {$fr = "$MKS/localeDev/Firefox3/$ffl/locale/$ffl/$f";}
   else {
-    if ($l ne "en-US") {$fr = "$MKS\\localeDev\\$l\\locale\\$f";}
-    else {$fr = "$MK\\xul\\locale\\en-US\\$f";}
-    if ($sourceFF3 eq "true" || !-e $fr) {$fr = "$MKS\\localeDev\\Firefox3\\$ffl\\locale\\$ffl\\$f";}  
+    if ($l ne "en-US") {$fr = "$MKS/localeDev/$l/locale/$f";}
+    else {$fr = "$MK/xul/locale/en-US/$f";}
+    if ($sourceFF3 eq "true" || !-e $fr) {$fr = "$MKS/localeDev/Firefox3/$ffl/locale/$ffl/$f";}  
   }
  
   if (!-e $fr) {return "";}

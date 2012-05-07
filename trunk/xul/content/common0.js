@@ -255,36 +255,50 @@ function lpath(path) {
 function getSpecialDirectory(name) {
   var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
   if (name.substr(0,2) == "xs") {
-    var dir = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+    var retval = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
     var profile = directoryService.get("ProfD", Components.interfaces.nsIFile);
     
+    var re = new RegExp(profile.leafName + "$");
     if (!IsExtension) {
-      var re = new RegExp(profile.leafName + "$");
-      dir.initWithPath(lpath(profile.path.replace(re, "resources")));
+      retval.initWithPath(lpath(profile.path.replace(re, "resources")));
     }
     else {
-      dir = profile.clone().QueryInterface(Components.interfaces.nsILocalFile);
-      dir.append("extensions");
-      dir.append(APPLICATIONID);
-      dir.append("resources");
+      retval.initWithPath(lpath(profile.path.replace(re, "resources")));
+         
+/*
+  Code below works, but was removed so that uninstalling/upgrading xulsword's Firefox
+  extension does not result in loss of data like bookmarks, modules, etc. etc.
+      retval = profile.clone().QueryInterface(Components.interfaces.nsILocalFile);
+      retval.append("extensions");
+      retval.append(APPLICATIONID);
+      retval.append("resources");
+*/
     }
     
     switch(name) {
     case "xsFonts":
-      dir.append(FONTS);
+      retval.append(FONTS);
       break;
     case "xsAudio":
-      dir.append(AUDIO);
+      retval.append(AUDIO);
       break;
     case "xsAudioPI":
-      dir.append(AUDIO);
-      dir.append(AUDIOPLUGIN);
+      retval.append(AUDIO);
+      retval.append(AUDIOPLUGIN);
       break;
     case "xsBookmarks":
-      dir.append(BOOKMARKS);
+      retval.append(BOOKMARKS);
       break;
     case "xsVideo":
-      dir.append(VIDEO);
+      retval.append(VIDEO);
+      break;
+    case "xsExtension":
+      retval = profile.clone();
+      retval.append("extensions");
+      break;
+    case "xsResD":
+    case "xsModsUser":
+      // already correct...
       break;
     case "xsModsCommon":
       switch (OPSYS) {
@@ -299,23 +313,15 @@ function getSpecialDirectory(name) {
         userAppPath += "/.sword";
         break;
       }
-      dir.initWithPath(lpath(userAppPath));
-      break;
-    case "xsExtension":
-      dir = profile.clone();
-      dir.append("extensions");
-      break;
-    case "xsResD":
-    case "xsModsUser":
-      // already correct...
+      retval.initWithPath(lpath(userAppPath));
       break;
     }
   }
   else {
-    dir = directoryService.get(name, Components.interfaces.nsIFile);
-    dir = dir.QueryInterface(Components.interfaces.nsILocalFile);
+    retval = directoryService.get(name, Components.interfaces.nsIFile);
+    retval = retval.QueryInterface(Components.interfaces.nsILocalFile);
   }
-  return dir;
+  return retval;
 }
 
 function createAppDirectories() {

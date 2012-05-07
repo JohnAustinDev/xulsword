@@ -12,17 +12,17 @@ $sourceFF3 = shift;
 
 $logFile = "listing_log.txt";
 $dontsort = "true";
-require "$MK\\localeDev\\script\\UI-common.pl";
+require "$MK/localeDev/script/UI-common.pl";
 
-if (!-e "$MKS\\localeDev\\$locale") {mkdir("$MKS\\localeDev\\$locale");}
-if ($logFile ne "") {if (!open(LOG, ">$MKS\\localeDev\\$locale\\$logFile")) {&Log("Could not open log file $logFile\nFinished.\n"); die;}}
+if (!-e "$MKS/localeDev/$locale") {mkdir("$MKS/localeDev/$locale");}
+if ($logFile ne "") {if (!open(LOG, ">$MKS/localeDev/$locale/$logFile")) {&Log("Could not open log file $logFile\nFinished.\n"); die;}}
 if (-e $listFile)  {&Log("Listing file \"$listFile\" already exists.\nFinished.\n"); die;}
 if (-e $listFile2) {&Log("Listing file \"$listFile2\" already exists.\nFinished.\n"); die;}
 
 # if the local locale contains special UI material, handle it
-&extractFromLocale($locale, "xulsword\\splash.png", "text-skin\\xulsword");
-&extractFromLocale($locale, "skin\\NT.png", "text-skin\\skin");
-&extractFromLocale($locale, "skin\\OT.png", "text-skin\\skin"); 
+&extractFromLocale($locale, "xulsword/splash.png", "text-skin/xulsword");
+&extractFromLocale($locale, "skin/NT.png", "text-skin/skin");
+&extractFromLocale($locale, "skin/OT.png", "text-skin/skin"); 
 
 # read Firefox 2 to Firefox 3 map if needed
 if ($sourceFF3 eq "true") {
@@ -97,11 +97,11 @@ sub extractFromLocale($$$) {
   my $srcf = shift;
   my $dest = shift;
   
-  if (-e "$MKS\\localeDev\\$loc\\locale\\$srcf") {
+  if (-e "$MKS/localeDev/$loc/locale/$srcf") {
     print "\n\nFound in locale: \"$srcf\"\n\tExtract and overwrite existing? (Y/N):"; 
     $in = <>; 
     if ($in =~ /^\s*y\s*$/i) {
-      if (!-e "$MKS\\localeDev\\$loc\\$dest") {`mkdir \"$MKS\\localeDev\\$loc\\$dest\"`;}
+      if (!-e "$MKS/localeDev/$loc/$dest") {`mkdir \"$MKS\\localeDev\\$loc\\$dest\"`;}
       `copy /Y \"$MKS\\localeDev\\$loc\\locale\\$srcf\" \"$MKS\\localeDev\\$loc\\$dest\\\"`;
     }
   }

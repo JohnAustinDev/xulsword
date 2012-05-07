@@ -9,10 +9,10 @@ $MK = shift;
 $MKS = shift;
 $locale = shift;
 
-require "$MK\\localeDev\\script\\UI-common.pl";
+require "$MK/localeDev/script/UI-common.pl";
 $logFile = "code_log.txt";
-if (!open(LOG, ">$MKS\\localeDev\\$locale\\$logFile")) {&Log("Could not open log file $logFile\nFinished.\n"); die;}
-if (-e "$MKS\\localeDev\\$locale\\locale") {rmtree(["$MKS\\localeDev\\$locale\\locale"]);}
+if (!open(LOG, ">$MKS/localeDev/$locale/$logFile")) {&Log("Could not open log file $logFile\nFinished.\n"); die;}
+if (-e "$MKS/localeDev/$locale/locale") {rmtree(["$MKS/localeDev/$locale/locale"]);}
 
 &Log($locinfo);
 
@@ -40,15 +40,15 @@ for $d (keys %UIDescValue) {
 }
 
 # write the UI to code files
-mkdir("$locale\\locale");
+mkdir("$locale/locale");
 for $fe (sort keys %CodeFileEntryValue) {
   $v = $CodeFileEntryValue{$fe};
   if ($v eq "_NOT_FOUND_") {next;}
   if ($ignoreShortCutKeys eq "true" && $MapFileEntryInfo{$fe.":desc"} =~ /\.(ak|sc|ck|kb)$/) {$v = "";}
   $fe =~ /^(.*?):(.*?)\s*$/;
-  $f = "$MKS\\localeDev\\$locale\\locale\\$1";
+  $f = "$MKS/localeDev/$locale/locale/$1";
   $e = $2;
-  $d = $f; $d =~ s/\\[^\\]+$//;
+  $d = $f; $d =~ s/\/[^\/]+$//;
   if ($f ne $lastf) {
     if ($last ne "") {close(OUTF);}
     if (!-e "$d") {`mkdir \"$d\"`;}

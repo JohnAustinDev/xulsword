@@ -78,7 +78,6 @@ sub makeZIP($$$$) {
   if ("$^O" =~ /MSWin32/i) {
     $zf =~ s/[\/]/\\/g;
     $di =~ s/[\/]/\\/g;
-    $di .= "\\*";
     my $a = ($updateExisting ? "u":"a");
     $cmd = "7za $a -tzip ".&escfile($zf)." -r ".&escfile($di)." -x!.svn";
     if ($logfile) {
