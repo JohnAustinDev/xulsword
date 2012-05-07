@@ -695,11 +695,11 @@ sub createLocale($) {
   
   # make locale jar file
   if (-e "$TRUNK/build-files/locales/$locale.jar") {unlink("$TRUNK/build-files/locales/$locale.jar");}
-  &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/$locale/locale");
   &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/Firefox3/$firefox/locale/$firefox/global", 1);
   &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/Firefox3/$firefox/locale/$firefox/mozapps", 1);
+  &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/$locale/locale/*");
   if (-e "$XulswordExtras/localeDev/$locale/text-skin") {
-    &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/$locale/text-skin", 1);
+    &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/$locale/text-skin/xulsword", 1);
   }
 }
 

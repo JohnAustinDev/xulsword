@@ -353,9 +353,9 @@ function searchBible() {
           fixWindowTitle(SBundle.getString("BuildingIndex")),
           SBundle.getString("NeedSearchIndex"), 
           DLGINFO,
-          DLGOK);
+          DLGOKCANCEL);
       prefs.setBoolPref("dontAskAboutSearchIndex" + SearchedVersion, true);
-      startIndexer(true)
+      if (result.ok) startIndexer(true)
       return;
     }
   }
