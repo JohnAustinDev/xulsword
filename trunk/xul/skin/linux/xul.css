@@ -11,7 +11,7 @@ groupbox caption {
   border-left:1px solid rgb(220,220,220);
   border-right:1px transparent;
   border-bottom:none;
-  -moz-border-radius-topleft:5px;
+  -moz-border-radius-topleft:8px;
   -moz-border-radius-topright:5px;
   -moz-border-radius-bottomright:5px;
   padding:2px 6px 2px 6px;

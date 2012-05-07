@@ -396,7 +396,7 @@
           
           if (currentBookIsAvailable) this.location = convertedLocation;
           else this.book = showBooks[0];
-          if (aEvent && typeof(onRefUserUpdate)!="undefined") onRefUserUpdate(aEvent, this.location, this.version);
+          if (aEvent && typeof(onRefUserUpdate)!="undefined" && onRefUserUpdate) onRefUserUpdate(aEvent, this.location, this.version);
         ]]></body>
       </method>
       
@@ -470,7 +470,7 @@
           }
           else this._lastVerse=this.verse;
           
-          if (aEvent && typeof(onRefUserUpdate)!="undefined") onRefUserUpdate(aEvent, this.location, this.version);
+          if (aEvent && typeof(onRefUserUpdate)!="undefined" && onRefUserUpdate) onRefUserUpdate(aEvent, this.location, this.version);
         ]]></body>
       </method>
       
@@ -505,7 +505,7 @@
           if (newloc.verse!=null) {this.verse = newloc.verse; needUpdate = true;}
           if (newloc.lastVerse!=null && newloc.lastVerse > this.verse) {this.lastVerse = newloc.lastVerse; needUpdate = true;}
           this._maskHiddenFields = false; // Tell this.location getter NOT to maks hidden params
-          if (needUpdate && aEvent && typeof(onRefUserUpdate)!="undefined") onRefUserUpdate(aEvent, this.location, this.version);
+          if (needUpdate && aEvent && typeof(onRefUserUpdate)!="undefined" && onRefUserUpdate) onRefUserUpdate(aEvent, this.location, this.version);
           this._maskHiddenFields = true;
         ]]></body>
       </method>
@@ -601,7 +601,7 @@
           
         <menulist anonid="lastVerse"
           sizetopopup="never" 
-          oncommand="if (typeof(onRefUserUpdate)!='undefined') onRefUserUpdate(event, this.parentNode.parentNode.location, this.parentNode.parentNode.version);" 
+          oncommand="if (typeof(onRefUserUpdate)!='undefined' && onRefUserUpdate) onRefUserUpdate(event, this.parentNode.parentNode.location, this.parentNode.parentNode.version);" 
           hidden="false" xbl:inherits="hidden=hidelastverse, disabled" />
           
         <spacer width="27px" />

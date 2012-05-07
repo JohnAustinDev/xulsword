@@ -255,7 +255,7 @@ jsdump("STARTING startImport");
     }
   }
 
-  if (typeof(Bible) != "undefined") Bible.pause();
+  if (typeof(Bible) != "undefined" && Bible) Bible.pause();
  
   if (ZipFiles && ZipFiles.length) CopyZipFun();
   else if (RegularFiles && RegularFiles.length) CopyRegularFun();
@@ -768,7 +768,7 @@ function finishAndStartXulSword2() {
 }
 
 function finish(isFinalPass) {
-  if (typeof(Bible) != "undefined" && Bible.paused) Bible.resume();
+  if (typeof(Bible) != "undefined" && Bible && Bible.paused) Bible.resume();
   if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
   if (ProgressMeter) window.setTimeout("ProgressMeter.close();", 100);
   if (NewPlugin) {
