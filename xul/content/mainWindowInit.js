@@ -549,3 +549,5 @@ LocaleDirectionChar = (guiDirection=="rtl" ? String.fromCharCode(8207):String.fr
 
 initBooks();
 initLongNames();
+
+if (!Bible.unlock()) Bible=null;

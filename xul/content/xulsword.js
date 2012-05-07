@@ -1385,7 +1385,7 @@ var XulswordController = {
       // override default type by setting to negative of desired type.
       var tp = (getPrefOrCreate("InitialSearchType", "Int", CONTAINS_THE_WORDS) < 0 ? Math.abs(prefs.getIntPref("InitialSearchType")):CONTAINS_THE_WORDS);
       prefs.setIntPref("InitialSearchType", tp);
-      SearchWins.push(window.open("chrome://xulsword/content/search.xul","Swn"+SearchWins.length,"chrome,resizable"));
+      SearchWins.push(window.open("chrome://xulsword/content/search.xul","Swn"+SearchWins.length,"chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchFromTextBox":
       // override default type by setting to negative of desired type.
@@ -1420,7 +1420,7 @@ var XulswordController = {
       updateFromNavigator();
       break;
     case "cmd_xs_openManager":
-      ManagerWindow = toOpenWindowByType("bookmarks:manager", "chrome://xulsword/content/bookmarks/bookmarksManager.xul", "chrome,resizable");
+      ManagerWindow = toOpenWindowByType("bookmarks:manager", "chrome://xulsword/content/bookmarks/bookmarksManager.xul", "chrome,resizable,centerscreen");
       break;
     case "cmd_xs_toggleTab":
       var preChangeLinkArray = copyLinkArray();
@@ -1441,7 +1441,7 @@ var XulswordController = {
       if (!addNewModule()) ModuleCopyMutex=false;
       break;
     case "cmd_xs_removeModule":
-      window.open("chrome://xulsword/content/removeModule.xul",document.getElementById("menu.removeModule.label").childNodes[0].nodeValue,"chrome,resizable");
+      window.open("chrome://xulsword/content/removeModule.xul",document.getElementById("menu.removeModule.label").childNodes[0].nodeValue,"chrome,resizable,centerscreen");
       break;
     case "cmd_xs_exportAudio":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
@@ -1643,7 +1643,7 @@ function openSearchDialog(text, version, type) {
   prefs.setIntPref("InitialSearchType", type);
   prefs.setCharPref("SearchVersion", version);
   setUnicodePref("SearchText", text);
-  SearchWins.push(window.open("chrome://xulsword/content/search.xul","Swn"+SearchWins.length,"chrome,resizable"));
+  SearchWins.push(window.open("chrome://xulsword/content/search.xul","Swn"+SearchWins.length,"chrome,resizable,centerscreen"));
 }
 
 //Sets view->Show... prefs
@@ -4279,7 +4279,7 @@ function unloadXUL() {
  ***********************************************************************/ 
 
 function copyPassageDialog() {
-  var retval = window.open("chrome://xulsword/content/copyPassage.xul",document.getElementById("menu.copypassage").childNodes[0].nodeValue,"chrome,resizable");
+  var retval = window.open("chrome://xulsword/content/copyPassage.xul",document.getElementById("menu.copypassage").childNodes[0].nodeValue,"chrome,resizable,centerscreen");
 }
  
 var PrintPassageHTML;
@@ -4301,7 +4301,7 @@ function handlePrintCommand(command) {
     document.getElementById(command).doCommand();
     break;
   case "cmd_print_passage":
-    var retval = window.open("chrome://xulsword/content/printPassage.xul",document.getElementById("print.printpassage").childNodes[0].nodeValue,"chrome,resizable");
+    var retval = window.open("chrome://xulsword/content/printPassage.xul",document.getElementById("print.printpassage").childNodes[0].nodeValue,"chrome,resizable,centerscreen");
     break;
   }
 }

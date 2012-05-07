@@ -37,7 +37,7 @@
 <window 
     id="search-window" xmlns:html="http://www.w3.org/1999/xhtml"
     title="&search.title; &quot;**search_title**&quot;"
-    width="630" height="400" screenX="50" screenY="50"
+    width="800" height="630" screenX="50" screenY="50"
     persist="width height screenX screenY sizemode"
     style="background-image: url(chrome://xulsword/skin/images/9.gif);"
     onload="loadSearchWindow()"
