@@ -645,7 +645,7 @@ sub processLocales($\@$) {
     push(@{$manifestP}, "locale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
     push(@{$manifestP}, "locale xsglobal $loc jar:chrome/$loc.jar!/global/");
     push(@{$manifestP}, "locale xsmozapps $loc jar:chrome/$loc.jar!/mozapps/");
-    if (-e "$XulswordExtras/localeDev/$loc/text-skin") {
+    if (-e "$XulswordExtras/localeDev/$loc/text-skin/skin") {
       push(@{$manifestP}, "skin localeskin $loc jar:chrome/$loc.jar!/skin/");
     }
   }

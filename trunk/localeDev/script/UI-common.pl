@@ -1,5 +1,10 @@
 #!/usr/bin/perl
 
+use Encode;
+use File::Copy "cp", "mv";
+use File::Path qw(make_path remove_tree);
+use File::Compare;
+
 $mapFile   = "$MK/localeDev/UI-MAP.txt";
 $ff2to3MAP = "$MK/localeDev/FF2_to_FF3.txt";
 $listFile  = "$MKS/localeDev/$locale/UI-".$locale.".txt";
@@ -9,7 +14,7 @@ $listFile2 = "$MKS/localeDev/$locale/UI-".$locale."_2.txt";
 $ignoreShortCutKeys = "false";
 if ($locale && $version && $localeALT && $firefox) {}
 elsif ($locale) {
-  if (!open(INF, "<$listFile")) {&Log("\n\nERROR UI-common.pl: could not open UI file \"$listFile\".\n"); die;}
+  if (!open(INF, "<:encoding(UTF-8)", "$listFile")) {&Log("\n\nERROR UI-common.pl: could not open UI file \"$listFile\".\n"); die;}
   while(<INF>) {
     if ($_ =~ /Locale=([^,]+),\s*Version=([^,]+),\s*Alternate_locale=([^,]+),\s*Firefox_locale=([^,]+)(,\s*Ignore_shortCut_keys=([^,\s]+))?\s*$/i) {
       $ltmp = $1;
@@ -28,8 +33,8 @@ elsif ($locale) {
 else {&Log("ERROR UI-common.pl: Locale name was not provided.\n"); die;}
 $locinfo = "Locale=$locale, Version=$version, Alternate_locale=$localeALT, Firefox_locale=$firefox, Ignore_shortCut_keys=$ignoreShortCutKeys\n";
 
-if (!-e "$MKS/localeDev") {mkdir("$MKS/localeDev");}
-if (!-e "$MKS/localeDev/$locale") {mkdir("$MKS/localeDev/$locale");}
+if (!-e "$MKS/localeDev") {make_path("$MKS/localeDev");}
+if (!-e "$MKS/localeDev/$locale") {make_path("$MKS/localeDev/$locale");}
   
 # initialize sort variables
 @sort1 = ("books","main-window","bookmark-window","search-window","search-help-window","dialog-window","file-chooser","error-reporter","splash-secure-window","configuration");
@@ -67,11 +72,14 @@ sub descsort {
   }
 }
 
-sub readDescriptionsFromUI($%) {
+sub read_UI_File($%) {
   my $f = shift;
   my $descValuesP = shift;
 
-  if (!open(UI, "<$f")) {&Log("Could not open UI file \"$f\".\nFinished.\n"); die;}
+  if (!open(UI, "<:encoding(UTF-8)", "$f")) {&Log("Could not open UI file \"$f\".\nFinished.\n"); die;}
+  my $fn = $f;
+  $fn =~ s/^.*?\/([^\/]+)$/$1/;
+  &Log("INFO: Reading UI file: \"$fn\"\n");
   my $line = 0;
   while(<UI>) {
     $line++;
@@ -80,8 +88,8 @@ sub readDescriptionsFromUI($%) {
     if ($_ !~ /^\[(.*?)\]:\s*(.*?)\s*$/) {&Log("ERROR $f line $line: Could not parse line $_\n"); next;}
     my $d = $1;
     my $v = $2;
-    if ($v eq "_NOT_FOUND_") {&Log("WARNING $f line $line: Value for $d was \"$v\"\n"); next;}
-    if (exists($descValuesP->{$d})) {&Log("WARNING $f line $line: Overwriting \"".$descValuesP->{$d}."\" with \"".$v."\" in \"$d\".\n");}
+    if ($v eq "_NOT_FOUND_") {&Log("WARNING $fn line $line: Value for $d was \"_NOT_FOUND_\"\n"); next;}
+    if (exists($descValuesP->{$d})) {&Log("WARNING $fn line $line: Overwriting \"".$descValuesP->{$d}."\" with \"".$v."\" in \"$d\".\n");}
     $descValuesP->{$d} = $v;
   }
   close(UI);
@@ -89,25 +97,35 @@ sub readDescriptionsFromUI($%) {
 
 sub loadMAP($%%%$) {
   my $f = shift;
-  my $mapDescInfoP = shift;
+  
+  # "real" below means any wild cards have been replaced with real values
+  # all-code-files-in-map:real-entries:(real-description|line|unused|optional) = corresponding value
   my $mapFileEntryInfoP = shift;
+  
+  # real-description:(final-value|final-code-file-and-real-entry) = corresponding value
+  my $mapDescInfoP = shift;
+  
+  # all-code-files-in-map:each-entry-in-located-code-file = UI phrase
   my $codeFileEntryValueP = shift;
+  
   my $supressWarn = shift;
   
   my @values;
   my @wildms;
   
-  if (!open(INF, "<$f")) {&Log("Could not open MAP file $f.\nFinished.\n"); die;}
+  if (!open(INF, "<:encoding(UTF-8)", "$f")) {&Log("Could not open MAP file $f.\nFinished.\n"); die;}
   my $line = 0;
   while(<INF>) {
     $line++;
-    if ($_ =~ /^[\s]*$/) {next;}
-    if ($_ !~ /^([^=]+?)\s*\=\s*(.*)\s*$/) {&Log("ERROR line $line: Could not parse UI-MAP entry \"$_\"\n"); next;}
+    if ($_ =~ /^\s*$/) {next;}
+    if ($_ !~ /^([^=]+?)\s*\=\s*(.*?)\s*$/) {&Log("ERROR line $line: Could not parse UI-MAP entry \"$_\"\n"); next;}
     my $fileEntry = $1;
     my $desc = $2;
     
+    $fileEntry =~ s/\\/\//g;
+    
     my $fileReqd = "true";
-    if ($fileEntry =~ s/\\\?([^\\]*)$/\\$1/) {$fileReqd = "false";}
+    if ($fileEntry =~ s/\/\?([^\/]*)$/\/$1/) {$fileReqd = "false";}
 
     # capture and remove any special <> or ? markers
     $desc =~ s/^(\??(<[^>]+>)*)//;
@@ -225,7 +243,8 @@ sub getMatchingEntries(@@$%) {
   my $codeFileEntryValueP = shift;
 
   $re = quotemeta($e);
-  $re =~ s/\\\*/(.*)/;
+  if ($re =~ s/\\\*/(.*)/) {$got=1;}
+  else {$got=0;}
 
   my $i = 0;
   for $ee (keys %{$codeFileEntryValueP}) {
@@ -246,16 +265,15 @@ sub readFile($%$) {
   
   # look in locale, if file is not found, then look in alternate locale, if still not found, then use en-US and report WARNING
   my $ff = &getFileFromLocale($f, $locale, $firefox);
-  if ($ff eq "") {$ff = &getFileFromLocale($f, $localeALT, $firefox);}
-  if ($ff eq "" && $fileRequired eq "false") {return;}
-  if ($ff eq "") {$ff = &getFileFromLocale($f, "en-US", "en-US"); &Log("WARNING: Resorting to en-US for file \"$f\".\n");}
-  if ($ff eq "") {&Log("ERROR readFile \"$f\": Could not locate code file. Tried \"$locale\", \"$localeALT\" and \"en-US\".\nFinished.\n"); die;}
+  if (!-e $ff) {$ff = &getFileFromLocale($f, $localeALT, $firefox);}
+  if (!-e $ff && $fileRequired eq "false") {return;}
+  if (!-e $ff) {$ff = &getFileFromLocale($f, "en-US", "en-US"); &Log("WARNING: Resorting to en-US for file \"$f\".\n");}
+  if (!-e $ff) {&Log("ERROR readFile \"$f\": Could not locate code file. Tried \"$locale\", \"$localeALT\" and \"en-US\".\nFinished.\n"); die;}
 
   my $t = $ff;
   $t =~ s/^.*\.//;
-  if (!open(CFL, "<$ff")) {&Log("ERROR readFile \"$f\": Could not open code file $ff\nFinished.\n"); die;}
+  if (!open(CFL, "<:encoding(UTF-8)", "$ff")) {&Log("ERROR readFile \"$f\": Could not open code file $ff\nFinished.\n"); die;}
   while(<CFL>) {
-    #utf8::upgrade($_);
     my $e = "";
     my $v = "";
     if ($t =~ /^properties$/i) {
@@ -283,7 +301,7 @@ sub getFileFromLocale($$$) {
   my $l = shift;
   my $ffl = shift;
   
-  if ($f =~ /^xulsword\\/) {
+  if ($f =~ /^xulsword\//) {
     if ($l ne "en-US") {
       $fr = "$MKS/localeDev/$l/locale/$f";
     }
@@ -299,21 +317,62 @@ sub getFileFromLocale($$$) {
     else {$fr = "$MK/xul/locale/en-US/$f";}
     if ($sourceFF3 eq "true" || !-e $fr) {$fr = "$MKS/localeDev/Firefox3/$ffl/locale/$ffl/$f";}  
   }
- 
-  if (!-e $fr) {return "";}
+
   return $fr;
 }
 
-sub Print($) {
-  my $p = shift;
-  print OUTF $p;
+sub matchDescToMapFileEntry($$$) {
+  my $f = shift;
+  my $d = shift;
+  my $loc = shift;
+  
+  if (!open(INF, "<:encoding(UTF-8)", "$f")) {&Log("Could not open MAP file $f.\nFinished.\n"); die;}
+  while(<INF>) {
+    if ($_ =~ /^\s*$/) {next;}
+    if ($_ !~ /^([^=]+?)\s*\=\s*(.*?)\s*$/) {&Log("ERROR line $line: Could not parse UI-MAP entry \"$_\"\n"); next;}
+    my $me = $1;
+    my $md = $2;
+    $me =~ s/\\/\//g;
+    $md =~ s/^\??(<[^>]*>|\s)*//;
+    $md =~ s/\*/(.*)/;
+    if ($d =~ /^$md$/) {
+      my $rep = $1;
+      $me =~ s/\*/$rep/;
+      if ($me !~ /^xulsword[\\\/]/) {
+        &Log("ERROR: description \"$d\" matched file \"$fe\" but file is not in xulsword directory.\n");
+        die;
+      }
+      return $me;
+    }
+  }
+  close(INF);
+  
+  &Log("ERROR: Description \"$d\" not found in MAP\n");
+  return "";
 }
 
-sub Log($) {
-  my $p = shift;
-  if ($SupressLog eq "true") {return;}
-  if ($logFile ne "") {print LOG $p;}
-  else {print $p;}
+sub escfile($) {
+  my $n = shift;
+  
+  if ("$^O" =~ /MSWin32/i) {$n = "\"".$n."\"";}
+  elsif ("$^O" =~ /linux/i) {$n =~ s/([ \(\)])/\\$1/g;}
+  else {&Log("Please add file escape function for your platform.\n");}
+  return $n;
+}
+
+sub Log($$) {
+  my $p = shift; # log message
+  my $h = shift; # -1 = hide from console, 1 = show in console, 2 = only console
+  if ($p =~ /error/i) {$p = "\n$p\n";}
+  if ((!$NOCONSOLELOG && $h!=-1) || $h>=1 || $p =~ /error/i) {print encode("utf8", "$p");}
+  if ($LOGFILE && $h!=2) {
+    open(LOGF, ">>:encoding(UTF-8)", $LOGFILE) || die "Could not open log file \"$LOGFILE\"\n";
+    # don't log absolute file names
+    $p =~ s/\Q$MK//g;
+    $p =~ s/\Q$MKS//g;
+    print LOGF $p;
+    close(LOGF);
+  }
 }
 
 1;

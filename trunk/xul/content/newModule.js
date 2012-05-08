@@ -555,7 +555,7 @@ function installBookmarkFile(aFile) {
 }
 
 function installEntryFromZip(aZip, aEntry) {
-jsdump("Processing Entry:" + aEntry);
+jsdump("Processing Entry:" + aZip + ", " + aEntry);
   var type = aEntry.match(/^([^\\\/]+)(\\|\/)/);
   if (!type) type=AUDIO;
   else {type = type[1];}

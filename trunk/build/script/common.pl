@@ -90,10 +90,13 @@ sub makeZIP($$$$) {
   }
   elsif ("$^O" =~ /linux/i) {
     $cwd = `echo $PWD`; $cwd =~ s/\s*$//;
-    chdir($di);
-    $di .= "/*";
+    my $dip = $di;
+    $dip =~ s/\/([^\/]*)$//;
+    $d = $1;
+    if (!$d || $d =~ /^\s*\*\s*$/) {$d = "*";}
+    chdir($dip);
     my $a = ($updateExisting ? "-u ":"");
-    $cmd = "zip -r ".$a.&escfile($zf)." * -x \\*.svn";  
+    $cmd = "zip -r ".$a.&escfile($zf)." ".$d." -x '*/.svn/*'";  
   }
   else {
     &Log("ERROR: Please update common.pl->makeZIP() to include your platform.\n");
