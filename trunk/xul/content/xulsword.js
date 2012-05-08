@@ -1876,7 +1876,7 @@ function changeLocaleTo(newLocale) {
 }
 
 function updateXulswordButtons() {
-  
+
   var checkboxes = ["cmd_xs_toggleHebrewCantillation", "cmd_xs_toggleHebrewVowelPoints"];
   for (var cmd in GlobalToggleCommands) {
     var checkbox=false;

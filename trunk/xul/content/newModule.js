@@ -626,10 +626,18 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     str += "<Description about=\"urn:mozilla:install-manifest\">\n";
     str += "<em:id>" + localeName + "@xulsword.org</em:id><em:version>1.0</em:version>\n";
     str += "<em:type>8</em:type><em:name>" + localeName + " xulsword locale</em:name>\n";
-    str += "<em:targetApplication><Description>\n";
-    str += "<em:id>xulsword@xulsword.org</em:id><em:minVersion>1.0</em:minVersion>\n";
-    str += "<em:maxVersion>99.0</em:maxVersion></Description>\n";
-    str += "</em:targetApplication></Description></RDF>\n";
+    if (!IsExtension) {
+      str += "<em:targetApplication><Description>\n";
+      str += "<em:id>xulsword@xulsword.org</em:id><em:minVersion>1.0</em:minVersion>\n";
+      str += "<em:maxVersion>99.0</em:maxVersion></Description>\n";
+      str += "</em:targetApplication></Description></RDF>\n";
+    }
+    else {
+      str += "<em:targetApplication><Description>\n";
+      str += "<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id><em:minVersion>1.0</em:minVersion>\n";
+      str += "<em:maxVersion>99.0</em:maxVersion></Description>\n";
+      str += "</em:targetApplication></Description></RDF>\n";
+    }
     if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
     writeFile(file, str, true);
     NewLocales = pushIf(NewLocales, localeName);

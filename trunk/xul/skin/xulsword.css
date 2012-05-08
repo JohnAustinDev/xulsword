@@ -88,3 +88,7 @@ groupbox > * {
   margin:0px 4px 4px 4px;
 }
 
+/* MENU ICONS (hidden by default on Linux) */
+.menu-iconic-left {
+  visibility:visible !important;
+}
