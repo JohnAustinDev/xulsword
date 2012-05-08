@@ -7,6 +7,8 @@ $MK = shift;
 $MKS = shift;
 $locale = shift;
 
+$NOCONSOLELOG = 1;
+
 $MK  =~ s/\\/\//g;
 $MKS =~ s/\\/\//g;
 if ($MK  =~ /^\s*\./) {$MK  = File::Spec->rel2abs($MK);}

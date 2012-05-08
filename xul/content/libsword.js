@@ -85,6 +85,7 @@ var Bible = {
     if (!this.ModuleDirectory) {
       // can't call this in indexWorker...
       this.ModuleDirectory = getSpecialDirectory("xsResD").path;
+      if (IsExtension) this.ModuleDirectory += ", " + getSpecialDirectory("xsExtResource").path;
     }
 
     if (!this.LibswordPath) {
@@ -137,7 +138,8 @@ var Bible = {
     
     var newXulsword = this.Libsword.declare("GetNewXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
     this.inst = newXulsword(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
-    jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");  
+    jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
+    jsdump("ModuleDirectory=\"" + this.ModuleDirectory + "\""); 
   },
   
   freeInstance: function() {

@@ -259,21 +259,10 @@ function getSpecialDirectory(name) {
     var profile = directoryService.get("ProfD", Components.interfaces.nsIFile);
     
     var re = new RegExp(profile.leafName + "$");
-    if (!IsExtension) {
-      retval.initWithPath(lpath(profile.path.replace(re, "resources")));
-    }
-    else {
-      retval.initWithPath(lpath(profile.path.replace(re, "resources")));
-         
-/*
-  Code below works, but was removed so that uninstalling/upgrading xulsword's Firefox
-  extension does not result in loss of data like bookmarks, modules, etc. etc.
-      retval = profile.clone().QueryInterface(Components.interfaces.nsILocalFile);
-      retval.append("extensions");
-      retval.append(APPLICATIONID);
-      retval.append("resources");
-*/
-    }
+    var path = profile.path;
+    if (!IsExtension) path = path.replace(re, "resources");
+    else path += "/xulsword_resources";
+    retval.initWithPath(lpath(path));
     
     switch(name) {
     case "xsFonts":
@@ -299,6 +288,15 @@ function getSpecialDirectory(name) {
     case "xsResD":
     case "xsModsUser":
       // already correct...
+      break;
+    case "xsExtResource":
+      if (IsExtension) {
+        retval = profile.clone().QueryInterface(Components.interfaces.nsILocalFile);
+        retval.append("extensions");
+        retval.append(APPLICATIONID);
+        retval.append("resources");
+      }
+      // else return regular profile directory
       break;
     case "xsModsCommon":
       switch (OPSYS) {

@@ -97,7 +97,7 @@ if ($MakeFFextension =~ /true/i) {
   &processLocales($IncludeLocales, \@manifest, $FFEXTENSION);
   &writeManifest(\@manifest, $FFEXTENSION);
   &writeInstallManifest($FFEXTENSION);
-  &packageFFExtension($FFEXTENSION, "$OutputDirectory/$Name-Extension-$Version");
+  &packageFFExtension("$FFEXTENSION/*", "$OutputDirectory/$Name-Extension-$Version");
 }
 
 # PORTABLE VERSION
@@ -123,7 +123,7 @@ if ($MakePortable =~ /true/i) {
   open(NIN, ">:encoding(UTF-8)", "$PORTABLE/resources/newInstalls.txt") || die;
   print NIN "NewLocales;en-US\n"; # this opens language menu on first run
   close(NIN);
-  &packagePortable($PORTABLE, "$OutputDirectory/$Name-Portable-$Version");
+  &packagePortable("$PORTABLE/*", "$OutputDirectory/$Name-Portable-$Version");
   &writeRunScript($Name, $PORTABLE, "port");
 }
 
@@ -346,15 +346,15 @@ sub copyExtensionFiles($\@$$$) {
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/windows/ os=WINNT");
 
     &Log("----> Creating JAR files.\n");
-    &makeZIP("$do/chrome/content.jar", "$TRUNK/xul/content");
-    &makeZIP("$do/chrome/en-US.jar", "$TRUNK/xul/locale/en-US");
-    &makeZIP("$do/chrome/skin.jar", "$TRUNK/xul/skin");
+    &makeZIP("$do/chrome/content.jar", "$TRUNK/xul/content/*");
+    &makeZIP("$do/chrome/en-US.jar", "$TRUNK/xul/locale/en-US/*");
+    &makeZIP("$do/chrome/skin.jar", "$TRUNK/xul/skin/*");
 
     for my $loc (@locales) {
       if (!-e "$XulswordExtras/localeDev/$loc/locale-skin") {next;}
       &Log("----> Including $loc locale-skin in skin.jar.\n");
       print OUTF "skin localeskin $locale $manpath/skin/\n";
-      &makeZIP("$do/chrome/skin.jar", "$XulswordExtras/localeDev/$loc/locale-skin", 1);
+      &makeZIP("$do/chrome/skin.jar", "$XulswordExtras/localeDev/$loc/locale-skin/*", 1);
     }
   }
 
@@ -641,7 +641,7 @@ sub processLocales($\@$) {
     
     # write locale manifest info
     push(@{$manifestP}, "# xulswordVersion=3.0\n");
-    push(@{$manifestP}, "# minMKVersion=2.9\n");
+    push(@{$manifestP}, "# minMKVersion=3.0\n"); # locales no longer have security codes and aren't backward compatible
     push(@{$manifestP}, "locale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
     push(@{$manifestP}, "locale xsglobal $loc jar:chrome/$loc.jar!/global/");
     push(@{$manifestP}, "locale xsmozapps $loc jar:chrome/$loc.jar!/mozapps/");
