@@ -55,6 +55,9 @@ Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
 # INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
 Set IncludeIndexes=false
 
+# INSURE LINUX VERSION CAN SWITCH LOCALES
+Set (buildprefs.js):intl.locale.matchOS=false
+
 # DEFAULT SETTINGS (On or Off)
 Set (globalops.js):xulsword.Headings=On
 Set (globalops.js):xulsword.Footnotes=On
