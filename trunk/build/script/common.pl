@@ -3,6 +3,27 @@ use File::Copy "cp", "mv";
 use File::Path qw(make_path remove_tree);
 use File::Compare;
 
+# read settings files
+sub readSettings($) {
+  my $f = shift;
+  if (!-e $f) {&Log("Build control file \"$f\" not found.\n"); exit;}
+  &Log("----> Reading control file: \"$f\".\n");
+  open(SETF, "<:encoding(UTF-8)", $f) || die;
+  $line = 0;
+  while(<SETF>) {
+    $line++;
+    if ($_ =~ /^\s*$/) {next;}
+    elsif ($_ =~ /^(\:\:|rem|\#)/i) {next;}
+    elsif ($_ =~ /^Set\s+(.*?)\s*=\s*(.*?)\s*$/i) {
+      my $var=$1; my $val=$2;
+      if ($var =~ /^\(.*?\.js\)\:/) {$Prefs{$var} = $val;}
+      else {$$1 = $2;}
+    }
+    else {&Log("WARNING: unhandled control file line $line: \"$_\"\n");}
+  }
+  close(SETF);
+}
+
 # copies a directory recursively
 sub copy_dir($$$$) {
   my $id = shift;
@@ -152,7 +173,7 @@ sub Log($$) {
   my $p = shift; # log message
   my $h = shift; # -1 = hide from console, 1 = show in console, 2 = only console
   if ($p =~ /error/i) {$p = "\n$p\n";}
-  if ((!$NOCONSOLELOG && $h!=-1) || $h>=1 || $p =~ /error/i) {print encode("utf8", "$p");}
+  if ((!$NOCONSOLELOG && $h!=-1) || !$LOGFILE || $h>=1 || $p =~ /error/i) {print encode("utf8", "$p");}
   if ($LOGFILE && $h!=2) {
     open(LOGF, ">>:encoding(UTF-8)", $LOGFILE) || die "Could not open log file \"$LOGFILE\"\n";
     print LOGF $p;
