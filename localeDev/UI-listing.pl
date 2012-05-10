@@ -18,31 +18,29 @@ if ($MKS =~ /^\s*\./) {$MKS = File::Spec->rel2abs($MKS);}
 $MK  =~ s/\/\s*$//;
 $MKS =~ s/\/\s*$//;
 
-$LOGFILE = "$MKS/localeDev/$locale/listing_log.txt";
-if (-e $LOGFILE) {unlink($LOGFILE);}
-
 require "$MK/localeDev/script/UI-common.pl";
+
+$LOGFILE = "$LOCALEDIR/listing_log.txt";
+if (-e $LOGFILE) {unlink($LOGFILE);}
 
 $dontsort = "true";
 
-if (!-e "$MKS/localeDev/$locale") {make_path("$MKS/localeDev/$locale");}
-
-if (-e $listFile)  {&Log("Listing file \"$listFile\" already exists.\nFinished.\n"); die;}
-if (-e $listFile2) {&Log("Listing file \"$listFile2\" already exists.\nFinished.\n"); die;}
+if (-e $LISTFILE1)  {&Log("Listing file \"$LISTFILE1\" already exists.\nFinished.\n"); die;}
+if (-e $LISTFILE2) {&Log("Listing file \"$LISTFILE2\" already exists.\nFinished.\n"); die;}
 
 # if the local locale contains special UI material, handle it
-&extractFromLocale($locale, "xulsword/splash.png", "text-skin/xulsword");
-&extractFromLocale($locale, "skin/NT.png", "text-skin/skin");
-&extractFromLocale($locale, "skin/OT.png", "text-skin/skin"); 
+&extractFromLocale("xulsword/splash.png", "text-skin/xulsword");
+&extractFromLocale("skin/NT.png", "text-skin/skin");
+&extractFromLocale("skin/OT.png", "text-skin/skin"); 
 
 # read Firefox 2 to Firefox 3 map if needed
 if ($sourceFF3 eq "true") {
-  if (!open(FF2, "<:encoding(UTF-8)", "$ff2to3MAP")) {&Log("Could not open Firefox 2 to 3 MAP file \"$ff2to3MAP\"\nFinished.\n"); die;}
+  if (!open(FF2, "<:encoding(UTF-8)", "$FF2TO3MAP")) {&Log("Could not open Firefox 2 to 3 MAP file \"$FF2TO3MAP\"\nFinished.\n"); die;}
   $line = 0;
   while(<FF2>) {
     $line++;
     if ($_ =~ /^\s*$/) {next;}
-    if ($_ !~ /^([^=]+?)\s*\=\s*(.*?)\s*$/) {&Log("ERROR $ff2to3MAP line $line: Could not parse FF2 to FF3 MAP entry \"$_\"\n"); next;}
+    if ($_ !~ /^([^=]+?)\s*\=\s*(.*?)\s*$/) {&Log("ERROR $FF2TO3MAP line $line: Could not parse FF2 to FF3 MAP entry \"$_\"\n"); next;}
     my $pff2 = $1;
     my $pff3 = $2;
     
@@ -57,10 +55,10 @@ if ($sourceFF3 eq "true") {
 &Log($locinfo);
 
 # read the MAP and code file contents into memory structures
-&loadMAP($mapFile, \%MapFileEntryInfo, \%MapDescInfo, \%CodeFileEntryValue);
+&loadMAP($MAPFILE, \%MapFileEntryInfo, \%MapDescInfo, \%CodeFileEntryValue);
 
 # print the listing to UI file(s)...
-if (!open(OUTF, ">:encoding(UTF-8)", "$listFile")) {&Log("Could not open output file $listFile.\nFinished.\n"); die;}
+if (!open(OUTF, ">:encoding(UTF-8)", "$LISTFILE1")) {&Log("Could not open output file $LISTFILE1.\nFinished.\n"); die;}
 
 print OUTF $locinfo;
 
@@ -76,7 +74,7 @@ for $di (sort descsort keys %MapDescInfo) {
 close(OUTF);
 
 if ($File2) {
-  if (!open(OUTF, ">:encoding(UTF-8)", "$listFile2")) {&Log("Could not open output file $listFile2.\nFinished.\n"); die;}
+  if (!open(OUTF, ">:encoding(UTF-8)", "$LISTFILE2")) {&Log("Could not open output file $LISTFILE2.\nFinished.\n"); die;}
   print OUTF $locinfo.$File2;
   close(OUTF);
 }
@@ -92,7 +90,7 @@ for $f (sort keys %Readfiles) {&Log($Readfiles{$f}."\n");}
 sub saveListing(@%%) {
   my $listP = shift;
   my $mapDescInfoP = shift;
-  my $mapFileEntryInfoP = shift;
+  my $MAPFILEEntryInfoP = shift;
   
   foreach (@{$listP}) {
     my $p = "[$_]: ".$MapDescInfo{"$_:value"}."\n";
@@ -104,23 +102,22 @@ sub saveListing(@%%) {
     elsif ($_ =~ /^books\..*_index/)                 {$File2 = $File2.$p;}
     elsif ($_ =~ /print-preview.p\d+/)               {$File2 = $File2.$p;}
     elsif ($_ =~ /\.(ak|sc|ck|kb)$/)                 {$File2 = $File2.$p;}
-    elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$_.":fileEntry"}.":unused"}   eq "true") {$File2 = $File2.$p;}
-    elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$_.":fileEntry"}.":optional"} eq "true") {$File2 = $File2.$p;}
+    elsif ($MAPFILEEntryInfoP->{$mapDescInfoP->{$_.":fileEntry"}.":unused"}   eq "true") {$File2 = $File2.$p;}
+    elsif ($MAPFILEEntryInfoP->{$mapDescInfoP->{$_.":fileEntry"}.":optional"} eq "true") {$File2 = $File2.$p;}
     else {print OUTF $p;}
   }
 }
 
-sub extractFromLocale($$$) {
-  my $loc = shift;
+sub extractFromLocale($$) {
   my $srcf = shift;
   my $dest = shift;
   
-  if (-e "$MKS/localeDev/$loc/locale/$srcf") {
+  if (-e "$LOCALECODE/$srcf") {
     print "\n\nFound in locale: \"$srcf\"\n\tExtract and overwrite existing? (Y/N):"; 
     $in = <>; 
     if ($in =~ /^\s*y\s*$/i) {
-      if (!-e "$MKS/localeDev/$loc/$dest") {make_path("$MKS/localeDev/$loc/$dest");}
-      cp("$MKS/localeDev/$loc/locale/$srcf", "$MKS/localeDev/$loc/$dest/");
+      if (!-e "$LOCALEDIR/$dest") {make_path("$LOCALEDIR/$dest");}
+      cp("LOCALECODE/$srcf", "$LOCALEDIR/$dest/");
     }
   }
 }

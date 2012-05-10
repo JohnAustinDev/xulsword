@@ -616,7 +616,6 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
     var str = "locale xulsword " + localeName + " jar:chrome/" + localeName + ".jar!/xulsword/ \n";
     str    += "locale xsglobal " + localeName + " jar:chrome/" + localeName + ".jar!/global/ \n";
-    str    += "locale xsmozapps " + localeName + " jar:chrome/" + localeName + ".jar!/mozapps/ \n";
     writeFile(file, str, true);
     file = getSpecialDirectory("xsExtension");
     file.append(localeDir);

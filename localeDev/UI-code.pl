@@ -16,27 +16,26 @@ if ($MKS =~ /^\s*\./) {$MKS = File::Spec->rel2abs($MKS);}
 $MK  =~ s/\/\s*$//;
 $MKS =~ s/\/\s*$//;
 
-$LOGFILE = "$MKS/localeDev/$locale/code_log.txt";
-if (-e $LOGFILE) {unlink($LOGFILE);}
-
 require "$MK/localeDev/script/UI-common.pl";
 
-if (!-e "$MKS/localeDev/$locale") {&Log("ERROR: Locale \"$MKS/localeDev/$locale\" was not found"); die;}
-if (-e "$MKS/localeDev/$locale/locale") {remove_tree("$MKS/localeDev/$locale/locale");}
+$LOGFILE = "$LOCALEDIR/code_log.txt";
+if (-e $LOGFILE) {unlink($LOGFILE);}
+
+if (!-e $LOCALEDIR) {&Log("ERROR: Locale \"$LOCALEDIR\" was not found"); die;}
+if (-e $LOCALECODE) {remove_tree($LOCALECODE);}
 
 &Log($locinfo);
 
 # read UI file(s). This must be done before reading MAP to find version
-&read_UI_File($listFile, \%UIDescValue);
-if (-e "$listFile2") {&read_UI_File($listFile2, \%UIDescValue);}
+&read_UI_File($LISTFILE1, \%UIDescValue);
+if (-e "$LISTFILE2") {&read_UI_File($LISTFILE2, \%UIDescValue);}
 
 # read the MAP and code file contents into memory structures
-&loadMAP($mapFile, \%MapFileEntryInfo, \%MapDescInfo, \%CodeFileEntryValue, "true");
+&loadMAP($MAPFILE, \%MapFileEntryInfo, \%MapDescInfo, \%CodeFileEntryValue, "true");
 
 # remove code file entries that are optional, so that they do not propogate
 for my $mfe (keys %MapFileEntryInfo) {
   if ($mfe !~ /^(.*?)\:optional/ || $MapFileEntryInfo{$mfe} ne "true") {next;}
-#print "HERE IS ONE: ".$1."=".$CodeFileEntryValue{$1}."\n";
   $CodeFileEntryValue{$1} = "_NOT_FOUND_";  
 }
 
@@ -50,7 +49,7 @@ for my $d (keys %UIDescValue) {
     $CodeFileEntryValue{$fe} = $UIDescValue{$d};
   }
   if (!$found) {
-    my $fe = &matchDescToMapFileEntry($mapFile, $d, $locale);
+    my $fe = &matchDescToMapFileEntry($MAPFILE, $d, $locale);
     if ($fe) {$CodeFileEntryValue{$fe} = $UIDescValue{$d}}
   }
 }
@@ -61,8 +60,10 @@ for my $fe (sort keys %CodeFileEntryValue) {
   if ($v eq "_NOT_FOUND_") {next;}
   if ($ignoreShortCutKeys eq "true" && $MapFileEntryInfo{$fe.":desc"} =~ /\.(ak|sc|ck|kb)$/) {$v = "";}
   $fe =~ /^(.*?):(.*?)\s*$/;
-  $f = "$MKS/localeDev/$locale/locale/$1";
+  $f = $1;
   $e = $2;
+  if ($f !~ /^xulsword\//) {$f = "xs".$f;}
+  $f = "$LOCALECODE/$f";
   $d = $f; $d =~ s/\/[^\/]+$//;
   if ($f ne $lastf) {
     if ($last ne "") {close(OUTF);}
@@ -73,7 +74,7 @@ for my $fe (sort keys %CodeFileEntryValue) {
   
   if ($v =~ /^\s*$/ && $e !~ /(commandkey|keybinding|accesskey|AccKey|\.sh|\.sc)/i) {&Log("WARNING $fe: Value is empty.\n");}
   if ($f =~ /\.properties$/i) {print OUTF $e."=".$v."\n";}
-  elsif ($f =~ /\.dtd$/i) {print OUTF "<!ENTITY ".$e."\t\t\t\t\"".$v."\">\n";}
+  elsif ($f =~ /\.dtd$/i) {print OUTF "<!ENTITY ".$e." \"".$v."\">\n";}
   else {&Log("ERROR FileEntry=\"".$fe."\": Unknown file type \"".$f."\"\n");}
 }
 close(OUTF);

@@ -5,16 +5,23 @@ use File::Copy "cp", "mv";
 use File::Path qw(make_path remove_tree);
 use File::Compare;
 
-$mapFile   = "$MK/localeDev/UI-MAP.txt";
-$ff2to3MAP = "$MK/localeDev/FF2_to_FF3.txt";
-$listFile  = "$MKS/localeDev/$locale/UI-".$locale.".txt";
-$listFile2 = "$MKS/localeDev/$locale/UI-".$locale."_2.txt";
+$MKDEV = "$MK/localeDev";
+$MKSDEV = "$MKS/localeDev";
+$MAPFILE   = "$MKDEV/UI-MAP.txt";
+$FF2TO3MAP = "$MKDEV/FF2_to_FF3.txt";
+$LOCALEDIR = ($locale ne "en-US" ? "$MKSDEV/$locale":"$MKDEV/$locale");
+$LOCALECODE = "$LOCALEDIR/locale";
+$LISTFILE1  = "$LOCALEDIR/UI-".$locale.".txt";
+$LISTFILE2 = "$LOCALEDIR/UI-".$locale."_2.txt";
+$FIREFOX3 = "$MKSDEV/Firefox3";
+
+if (!-e $LOCALEDIR) {make_path($LOCALEDIR);}
 
 # Get locale information
 $ignoreShortCutKeys = "false";
 if ($locale && $version && $localeALT && $firefox) {}
 elsif ($locale) {
-  if (!open(INF, "<:encoding(UTF-8)", "$listFile")) {&Log("\n\nERROR UI-common.pl: could not open UI file \"$listFile\".\n"); die;}
+  if (!open(INF, "<:encoding(UTF-8)", "$LISTFILE1")) {&Log("\n\nERROR UI-common.pl: could not open UI file \"$LISTFILE1\".\n"); die;}
   while(<INF>) {
     if ($_ =~ /Locale=([^,]+),\s*Version=([^,]+),\s*Alternate_locale=([^,]+),\s*Firefox_locale=([^,]+)(,\s*Ignore_shortCut_keys=([^,\s]+))?\s*$/i) {
       $ltmp = $1;
@@ -28,13 +35,11 @@ elsif ($locale) {
     }
   }
   close(INF);
-  if (!$version || !$localeALT || !$firefox) {&Log("\n\nERROR UI-common.pl: List file \"$listFile\" header information is missing or malformed.\n"); die;}
+  if (!$version || !$localeALT || !$firefox) {&Log("\n\nERROR UI-common.pl: List file \"$LISTFILE1\" header information is missing or malformed.\n"); die;}
 }
 else {&Log("ERROR UI-common.pl: Locale name was not provided.\n"); die;}
-$locinfo = "Locale=$locale, Version=$version, Alternate_locale=$localeALT, Firefox_locale=$firefox, Ignore_shortCut_keys=$ignoreShortCutKeys\n";
 
-if (!-e "$MKS/localeDev") {make_path("$MKS/localeDev");}
-if (!-e "$MKS/localeDev/$locale") {make_path("$MKS/localeDev/$locale");}
+$locinfo = "Locale=$locale, Version=$version, Alternate_locale=$localeALT, Firefox_locale=$firefox, Ignore_shortCut_keys=$ignoreShortCutKeys\n";
   
 # initialize sort variables
 @sort1 = ("books","main-window","bookmark-window","search-window","search-help-window","dialog-window","file-chooser","error-reporter","splash-secure-window","configuration");
@@ -100,7 +105,7 @@ sub loadMAP($%%%$) {
   
   # "real" below means any wild cards have been replaced with real values
   # all-code-files-in-map:real-entries:(real-description|line|unused|optional) = corresponding value
-  my $mapFileEntryInfoP = shift;
+  my $MAPFILEEntryInfoP = shift;
   
   # real-description:(final-value|final-code-file-and-real-entry) = corresponding value
   my $mapDescInfoP = shift;
@@ -159,16 +164,16 @@ sub loadMAP($%%%$) {
       }
       
       # save fileEntry and its information
-      $mapFileEntryInfoP->{$fe.":desc"}       = $d;
-      $mapFileEntryInfoP->{$fe.":line"}       = $line;
-      $mapFileEntryInfoP->{$fe.":unused"}     = $unused;
-      $mapFileEntryInfoP->{$fe.":optional"}   = $optional;
+      $MAPFILEEntryInfoP->{$fe.":desc"}       = $d;
+      $MAPFILEEntryInfoP->{$fe.":line"}       = $line;
+      $MAPFILEEntryInfoP->{$fe.":unused"}     = $unused;
+      $MAPFILEEntryInfoP->{$fe.":optional"}   = $optional;
     
       if (exists($mapDescInfoP->{$d.":value"})) {
         if    ($values[$i] eq "_NOT_FOUND_") {next;}
         elsif ($mapDescInfoP->{$d.":value"} eq "_NOT_FOUND_") {}
         elsif ($unused eq "true") {next;}
-        elsif ($mapFileEntryInfoP->{$mapDescInfoP->{$d.":fileEntry"}.":unused"} eq "true") {}
+        elsif ($MAPFILEEntryInfoP->{$mapDescInfoP->{$d.":fileEntry"}.":unused"} eq "true") {}
         elsif ($sourceFF3 ne "true" && $fe !~ /^xulsword\//) {next;}
         elsif ($sourceFF3 eq "true" && $fe =~ /^xulsword\// && (!exists($FF2_to_FF3{$fe}) || $FF2_to_FF3{$fe} =~ /<unavailable>/))  {next;}
 
@@ -268,7 +273,9 @@ sub readFile($%$) {
   if (!-e $ff) {$ff = &getFileFromLocale($f, $localeALT, $firefox);}
   if (!-e $ff && $fileRequired eq "false") {return;}
   if (!-e $ff) {$ff = &getFileFromLocale($f, "en-US", "en-US"); &Log("WARNING: Resorting to en-US for file \"$f\".\n");}
-  if (!-e $ff) {&Log("ERROR readFile \"$f\": Could not locate code file. Tried \"$locale\", \"$localeALT\" and \"en-US\".\nFinished.\n"); die;}
+  
+  if (!-e $ff && $f =~ /^xulsword\//) {&Log("WARNING readFile \"$f\": No code file found for required file.\n"); return;}
+  elsif (!-e $ff) {&Log("ERROR readFile \"$f\": Could not locate code file. Tried \"$locale\", \"$localeALT\" and \"en-US\".\nFinished.\n"); die;}
 
   my $t = $ff;
   $t =~ s/^.*\.//;
@@ -301,22 +308,13 @@ sub getFileFromLocale($$$) {
   my $l = shift;
   my $ffl = shift;
   
-  if ($f =~ /^xulsword\//) {
-    if ($l ne "en-US") {
-      $fr = "$MKS/localeDev/$l/locale/$f";
-    }
-    else {
-      $f =~ s/^xulsword\///; # this path was changed...
-      $fr = "$MK/xul/locale/en-US/$f";
-    }
+  my $fr = "$LOCALECODE/$f";
+  if ($sourceFF3 eq "true") {
+    if    ($f =~ s/^\[locale-browser\]\///) {$fr = "$FIREFOX3/$ffl/locale/$f";}
+    elsif ($f =~ s/^\[locale-global\]\///)  {$fr = "$FIREFOX3/$ffl/locale/$ffl/$f";}
   }
-  elsif ($sourceFF3 eq "true" && $f =~ s/^\[locale-browser\]\///) {$fr = "$MKS/localeDev/Firefox3/$ffl/locale/$f";}
-  elsif ($sourceFF3 eq "true" && $f =~ s/^\[locale-global\]\///)  {$fr = "$MKS/localeDev/Firefox3/$ffl/locale/$ffl/$f";}
-  else {
-    if ($l ne "en-US") {$fr = "$MKS/localeDev/$l/locale/$f";}
-    else {$fr = "$MK/xul/locale/en-US/$f";}
-    if ($sourceFF3 eq "true" || !-e $fr) {$fr = "$MKS/localeDev/Firefox3/$ffl/locale/$ffl/$f";}  
-  }
+  
+  if (!-e $fr) {$fr = "$FIREFOX3/$ffl/locale/$ffl/$f";}  
 
   return $fr;
 }
@@ -364,7 +362,7 @@ sub Log($$) {
   my $p = shift; # log message
   my $h = shift; # -1 = hide from console, 1 = show in console, 2 = only console
   if ($p =~ /error/i) {$p = "\n$p\n";}
-  if ((!$NOCONSOLELOG && $h!=-1) || $h>=1 || $p =~ /error/i) {print encode("utf8", "$p");}
+  if ((!$NOCONSOLELOG && $h!=-1) || !$LOGFILE || $h>=1 || $p =~ /error/i) {print encode("utf8", "$p");}
   if ($LOGFILE && $h!=2) {
     open(LOGF, ">>:encoding(UTF-8)", $LOGFILE) || die "Could not open log file \"$LOGFILE\"\n";
     # don't log absolute file names

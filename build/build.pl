@@ -14,22 +14,9 @@ require "$TRUNK/build/script/common.pl";
 
 $SETTING = shift;
 if (!$SETTING) {$SETTING = "build_settings.txt";}
-if (!-e $SETTING) {&Log("Build control file \"$SETTING\" not found.\n"); exit;}
-&Log("----> Reading control file: \"$SETTING\".\n");
-open(SETF, "<:encoding(UTF-8)", $SETTING) || die;
-$line = 0;
-while(<SETF>) {
-  $line++;
-  if ($_ =~ /^\s*$/) {next;}
-  elsif ($_ =~ /^(\:\:|rem|\#)/i) {next;}
-  elsif ($_ =~ /^Set\s+(.*?)\s*=\s*(.*?)\s*$/i) {
-    my $var=$1; my $val=$2;
-    if ($var =~ /^\(.*?\.js\)\:/) {$Prefs{$var} = $val;}
-    else {$$1 = $2;}
-  }
-  else {&Log("WARNING: unhandled control file line $line: \"$_\"\n");}
-}
-close(SETF);
+&readSettings("build_prefs.txt");
+&readSettings($SETTING);
+
 if ("$^O" =~ /MSWin32/i) {$EXE = ".exe"; $DLL = ".dll";}
 elsif ("$^O" =~ /linux/i) {$EXE = ""; $DLL = ".so";}
 else {"ERROR: Please provide file extensions for your platform.\n";}
@@ -313,16 +300,11 @@ sub copyExtensionFiles($\@$$$) {
 
   if ($makeDevelopment) {
     push(@{$manifestP}, "content xulsword file:../../../xul/content/");
-    push(@{$manifestP}, "locale xulsword en-US file:../../../xul/locale/en-US/");
     push(@{$manifestP}, "skin xulsword skin file:../../../xul/skin/");
     push(@{$manifestP}, "content xsglobal file:../../../xul/content/global/");
-    push(@{$manifestP}, "locale xsglobal en-US file:../../../xul/locale/en-US/global/");
     push(@{$manifestP}, "skin xsglobal skin file:../../../xul/skin/global/");
-    push(@{$manifestP}, "content xsmozapps file:../../../xul/content/mozapps/");
-    push(@{$manifestP}, "locale xsmozapps en-US file:../../../xul/locale/en-US/mozapps/");
-    push(@{$manifestP}, "skin xsmozapps skin file:../../../xul/skin/mozapps/");
-    push(@{$manifestP}, "locale branding en-US file:../../../xul/locale/branding/");
     push(@{$manifestP}, "content branding file:../../../xul/content/branding/");
+    push(@{$manifestP}, "locale branding en-US file:../../../xul/locale/branding/");
     push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/debug-overlay.xul");
     push(@{$manifestP}, "skin xsplatform skin file:../../../xul/skin/linux/ os=Linux");
     push(@{$manifestP}, "skin xsplatform skin file:../../../xul/skin/windows/ os=WINNT");
@@ -330,31 +312,26 @@ sub copyExtensionFiles($\@$$$) {
   }
   else {
     push(@{$manifestP}, "content xulsword jar:chrome/content.jar!/");
-    push(@{$manifestP}, "locale xulsword en-US jar:chrome/en-US.jar!/");
     push(@{$manifestP}, "skin xulsword skin jar:chrome/skin.jar!/");
     push(@{$manifestP}, "content xsglobal jar:chrome/content.jar!/global/");
-    push(@{$manifestP}, "locale xsglobal en-US jar:chrome/en-US.jar!/global/");
     push(@{$manifestP}, "skin xsglobal skin jar:chrome/skin.jar!/global/");
-    push(@{$manifestP}, "content xsmozapps jar:chrome/content.jar!/mozapps/");
-    push(@{$manifestP}, "locale xsmozapps en-US jar:chrome/en-US.jar!/mozapps/");
-    push(@{$manifestP}, "skin xsmozapps skin jar:chrome/skin.jar!/mozapps/");
     if (!$isFFextension) {
-      push(@{$manifestP}, "locale branding en-US jar:chrome/en-US.jar!/branding/");
       push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
+      push(@{$manifestP}, "locale branding en-US jar:chrome/en-US.jar!/branding/");
     }
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/linux/ os=Linux");
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/windows/ os=WINNT");
 
     &Log("----> Creating JAR files.\n");
     &makeZIP("$do/chrome/content.jar", "$TRUNK/xul/content/*");
-    &makeZIP("$do/chrome/en-US.jar", "$TRUNK/xul/locale/en-US/*");
     &makeZIP("$do/chrome/skin.jar", "$TRUNK/xul/skin/*");
 
     for my $loc (@locales) {
-      if (!-e "$XulswordExtras/localeDev/$loc/locale-skin") {next;}
+      my $ldir = "$XulswordExtras/localeDev/$loc";
+      if ($loc eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
+      if (!-e "$ldir/locale-skin") {next;}
       &Log("----> Including $loc locale-skin in skin.jar.\n");
-      print OUTF "skin localeskin $locale $manpath/skin/\n";
-      &makeZIP("$do/chrome/skin.jar", "$XulswordExtras/localeDev/$loc/locale-skin/*", 1);
+      &makeZIP("$do/chrome/skin.jar", "$ldir/locale-skin/*", 1);
     }
   }
 
@@ -574,7 +551,7 @@ sub writeRunScript($$$) {
 
   &Log("----> Writing run script.\n");
 
-  my $s = "./run_$name-$type.pl";
+  my $s = "$TRUNK/build/run_$name-$type.pl";
   open(SCR, ">:encoding(UTF-8)", $s) || die;
   print SCR "#!/usr/bin/perl\n";
     
@@ -629,26 +606,32 @@ sub processLocales($\@$) {
   
   &Log("----> Processing requested locales.\n");
   foreach my $loc (@locales) {
-    if ($loc eq "en-US") {next;}
 
+  my $ldir = "$XulswordExtras/localeDev/$loc";
+  if ($loc eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
+  
     # create locale jar file
     if (!$haveLocale{$loc}) {
       &createLocale($loc);
       $haveLocale{$loc} = 1;
     }
     &copy_file("$TRUNK/build-files/locales/$loc.jar", "$od/chrome");
-    &copy_file("$XulswordExtras/localeDev/$loc/$loc.rdf", "$od/defaults/");
+    &copy_file("$ldir/$loc.rdf", "$od/defaults/");
     
     # write locale manifest info
-    push(@{$manifestP}, "# xulswordVersion=3.0\n");
-    push(@{$manifestP}, "# minMKVersion=3.0\n"); # locales no longer have security codes and aren't backward compatible
-    push(@{$manifestP}, "locale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
-    push(@{$manifestP}, "locale xsglobal $loc jar:chrome/$loc.jar!/global/");
-    push(@{$manifestP}, "locale xsmozapps $loc jar:chrome/$loc.jar!/mozapps/");
-    if (-e "$XulswordExtras/localeDev/$loc/text-skin/skin") {
+    push(@{$manifestP}, "\nlocale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
+    push(@{$manifestP}, "locale xsglobal $loc jar:chrome/$loc.jar!/xsglobal/");
+    
+    # these will break the program until Firefox locales are updated.
+    #push(@{$manifestP}, "locale global $loc jar:chrome/$loc.jar!/global/");
+    #push(@{$manifestP}, "locale mozapps $loc jar:chrome/$loc.jar!/mozapps/");
+    if (-e "$ldir/text-skin/skin") {
       push(@{$manifestP}, "skin localeskin $loc jar:chrome/$loc.jar!/skin/");
     }
   }
+  
+  push(@{$manifestP}, "\n# xulswordVersion=3.0\n");
+  push(@{$manifestP}, "# minMKVersion=3.0\n"); # locales no longer have security codes and aren't backward compatible
 }
 
 sub createLocale($) {
@@ -670,17 +653,13 @@ sub createLocale($) {
     return;
   }
   
+  my $ldir = "$XulswordExtras/localeDev/$locale";
+  if ($locale eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
+  
   # recreate xulsword locale from UI source and report if the log file changes
-  mv("$XulswordExtras/localeDev/$locale/code_log.txt", "$XulswordExtras/localeDev/$locale/code_log-bak.txt");
+  mv("$ldir/code_log.txt", "$ldir/code_log-bak.txt");
   
-  system("$TRUNK/localeDev/UI-code.pl", $TRUNK, $XulswordExtras, $locale);
-  
-  if (compare("$XulswordExtras/localeDev/$locale/code_log.txt", "$XulswordExtras/localeDev/$locale/code_log-bak.txt") != 0) {
-    &Log("WARNING: $locale LOG FILE HAS CHANGED. PLEASE CHECK IT: \"$XulswordExtras/localeDev/$locale/code_log.txt\".\n");
-  }
-  unlink("$XulswordExtras/localeDev/$locale/code_log-bak.txt");
-  
-  # determine the Firefox locale to use as backup, and report
+  # report the Firefox locale being used as backup
   if (!$firefox) {
     &Log("WARNING: Defaulting to en-US for locale $locale.\n");
     $firefox = "en-US";
@@ -693,13 +672,21 @@ sub createLocale($) {
     &log("ERROR: Default firefox locale not found in \"$XulswordExtras/localeDev/Firefox3/$firefox\".\n");
   }
   
-  # make locale jar file
+  system("$TRUNK/localeDev/UI-code.pl", $TRUNK, $XulswordExtras, $locale);
+  
+  if (compare("$ldir/code_log.txt", "$ldir/code_log-bak.txt") != 0) {
+    &Log("WARNING: $locale LOG FILE HAS CHANGED. PLEASE CHECK IT: \"$ldir/code_log.txt\".\n");
+  }
+  unlink("$ldir/code_log-bak.txt");
+  
   if (-e "$TRUNK/build-files/locales/$locale.jar") {unlink("$TRUNK/build-files/locales/$locale.jar");}
+  
+  # make locale jar file
   &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/Firefox3/$firefox/locale/$firefox/global", 1);
   &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/Firefox3/$firefox/locale/$firefox/mozapps", 1);
-  &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/$locale/locale/*");
-  if (-e "$XulswordExtras/localeDev/$locale/text-skin") {
-    &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/$locale/text-skin/xulsword", 1);
+  &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$ldir/locale/*");
+  if (-e "$ldir/text-skin") {
+    &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$ldir/text-skin/xulsword", 1);
   }
 }
 

@@ -156,6 +156,7 @@
                 <radio id="searchNT" label="&search.new;" value="Matt-Rev"/>
               </vbox>
               <vbox>
+                <radio id="searchCB" label="&search.currentbook;"/>
                 <radio id="searchSelect" label="&search.groups;" value=""/>
                 <menulist id="scopeMenu"><menupopup>
                   <menuitem id="sg1" selected="true" label="&search.torah;" value="&search.torah.books;"/>
