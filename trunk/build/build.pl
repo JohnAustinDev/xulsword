@@ -301,8 +301,7 @@ sub copyExtensionFiles($\@$$$) {
   if ($makeDevelopment) {
     push(@{$manifestP}, "content xulsword file:../../../xul/content/");
     push(@{$manifestP}, "skin xulsword skin file:../../../xul/skin/");
-    push(@{$manifestP}, "content xsglobal file:../../../xul/content/global/");
-    push(@{$manifestP}, "skin xsglobal skin file:../../../xul/skin/global/");
+    push(@{$manifestP}, "content xsglobal file:../../../xul/content/xsglobal/");
     push(@{$manifestP}, "content branding file:../../../xul/content/branding/");
     push(@{$manifestP}, "locale branding en-US file:../../../xul/locale/branding/");
     push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/debug-overlay.xul");
@@ -313,8 +312,7 @@ sub copyExtensionFiles($\@$$$) {
   else {
     push(@{$manifestP}, "content xulsword jar:chrome/content.jar!/");
     push(@{$manifestP}, "skin xulsword skin jar:chrome/skin.jar!/");
-    push(@{$manifestP}, "content xsglobal jar:chrome/content.jar!/global/");
-    push(@{$manifestP}, "skin xsglobal skin jar:chrome/skin.jar!/global/");
+    push(@{$manifestP}, "content xsglobal jar:chrome/content.jar!/xsglobal/");
     if (!$isFFextension) {
       push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
       push(@{$manifestP}, "locale branding en-US jar:chrome/en-US.jar!/branding/");
@@ -620,7 +618,7 @@ sub processLocales($\@$) {
     
     # write locale manifest info
     push(@{$manifestP}, "\nlocale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
-    push(@{$manifestP}, "locale xsglobal $loc jar:chrome/$loc.jar!/global/");
+    push(@{$manifestP}, "locale xsglobal $loc jar:chrome/$loc.jar!/xsglobal/");
     
     # these will break the program until Firefox locales are updated.
 
