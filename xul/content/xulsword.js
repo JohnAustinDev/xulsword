@@ -4364,30 +4364,33 @@ function restoreFocus() {
   SavedWindowWithFocus = null;
 }
 
-function onEnterPrintPreview() {
-  document.getElementById("mainbar").hidden=true;
-  document.getElementById("main-controlbar").hidden=true;
-  document.getElementById("appcontent").selectedIndex=1;
-}
-function onExitPrintPreview() {
-  restoreFocus();
-  document.getElementById("mainbar").hidden=false;
-  document.getElementById("main-controlbar").hidden=false;
-  document.getElementById("appcontent").selectedIndex=0;
-}
-function getPPBrowser() {
-  return document.getElementById("printBrowser");
-}
-function getNavToolbox() {
-  return document.getElementById("mainbar");
-}
-function getWebNavigation() {
-  try {
-    return document.getElementById("printBrowser").webNavigation;
-  } catch (e) {
-    return null;
+var PrintPreviewCallbacks = {
+  onEnter: function() {
+    document.getElementById("mainbar").hidden=true;
+    document.getElementById("main-controlbar").hidden=true;
+    document.getElementById("appcontent").selectedIndex=1;
+  },
+  
+  onExit: function() {
+    restoreFocus();
+    document.getElementById("mainbar").hidden=false;
+    document.getElementById("main-controlbar").hidden=false;
+    document.getElementById("appcontent").selectedIndex=0;
+  },
+  
+  getSourceBrowser: function() {
+    return document.getElementById("printBrowser");
+  },
+  
+  getPrintPreviewBrowser: function() {
+    return document.getElementById("printPreviewBrowser");
+  },
+  
+  getNavToolbox: function() {
+    return document.getElementById("mainbar");
   }
 }
+
 
 /************************************************************************
  * Miscellaneous Functions

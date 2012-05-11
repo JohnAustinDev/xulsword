@@ -6,7 +6,7 @@
 }
 
 toolbar[printpreview="true"] {
-  -moz-binding: url("chrome://xsglobal/content/printPreviewBindings.xml#printpreviewtoolbar");
+  -moz-binding: url("chrome://global/content/printPreviewBindings.xml#printpreviewtoolbar");
 }
 
 /* Make tree hiearchy lines visible again */

@@ -72,7 +72,7 @@
 
 <script type="application/x-javascript" src="chrome://xsglobal/content/globalOverlay.js"/>
 <script type="application/x-javascript" src="chrome://xsglobal/content/nsDragAndDrop.js"/>
-<script type="application/x-javascript" src="chrome://xsglobal/content/printUtils.js"/>
+<script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
@@ -166,7 +166,7 @@
   <command id="cmd_xs_exportAudio"               oncommand="goDoCommand('cmd_xs_exportAudio');"/>
   <command id="cmd_xs_importAudio"               oncommand="goDoCommand('cmd_xs_importAudio');"/>
   <command id="cmd_print"                        oncommand="PrintUtils.print(); restoreFocus();"/>
-  <command id="cmd_printPreview"                 oncommand="PrintUtils.printPreview(onEnterPrintPreview, onExitPrintPreview);"/>
+  <command id="cmd_printPreview"                 oncommand="PrintUtils.printPreview(PrintPreviewCallbacks);"/>
   <command id="cmd_pageSetup"                    oncommand="PrintUtils.showPageSetup(); restoreFocus();"/>
   <command id="cmd_xs_toggleChooser"             oncommand="toggleChooser();"/>
   <command id="cmd_xs_startHistoryTimer"
@@ -485,7 +485,8 @@
         <iframe id="bible2Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden;"/>
         <iframe id="bible3Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden;"/>
       </hbox>
-      <iframe id="printBrowser" src="print.html" />
+      <browser id="printPreviewBrowser"/>
+      <browser id="printBrowser" type="content-primary" src="print.html" style="visibility:hidden;" />
     </deck>
   </vbox>
 </vbox>
