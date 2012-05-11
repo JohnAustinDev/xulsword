@@ -16,7 +16,7 @@ function startxulsword() {
 							
 <menupopup id="menu_ToolsPopup">
   <menuseparator/>
-  <menuitem label="&main-window.title;..." insertafter="menu_preferences" oncommand="startxulsword();" class="menuitem-iconic" image="chrome://xulsword/skin/icon.png"/>
+  <menuitem label="&main.title;..." insertafter="menu_preferences" oncommand="startxulsword();" class="menuitem-iconic" image="chrome://xulsword/skin/icon.png"/>
 </menupopup>
   
 </overlay>

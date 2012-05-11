@@ -620,11 +620,10 @@ sub processLocales($\@$) {
     
     # write locale manifest info
     push(@{$manifestP}, "\nlocale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
-    push(@{$manifestP}, "locale xsglobal $loc jar:chrome/$loc.jar!/xsglobal/");
+    push(@{$manifestP}, "locale xsglobal $loc jar:chrome/$loc.jar!/global/");
     
     # these will break the program until Firefox locales are updated.
-    #push(@{$manifestP}, "locale global $loc jar:chrome/$loc.jar!/global/");
-    #push(@{$manifestP}, "locale mozapps $loc jar:chrome/$loc.jar!/mozapps/");
+
     if (-e "$ldir/text-skin/skin") {
       push(@{$manifestP}, "skin localeskin $loc jar:chrome/$loc.jar!/skin/");
     }
@@ -659,19 +658,6 @@ sub createLocale($) {
   # recreate xulsword locale from UI source and report if the log file changes
   mv("$ldir/code_log.txt", "$ldir/code_log-bak.txt");
   
-  # report the Firefox locale being used as backup
-  if (!$firefox) {
-    &Log("WARNING: Defaulting to en-US for locale $locale.\n");
-    $firefox = "en-US";
-  }
-  elsif (!-e "$XulswordExtras/localeDev/Firefox3/$firefox") {
-    &Log("WARNING: Requested firefox locale not found in \"$XulswordExtras/localeDev/Firefox3/$firefox\"\n");
-    $firefox = "en-US";
-  }
-  if (!-e "$XulswordExtras/localeDev/Firefox3/$firefox") {
-    &log("ERROR: Default firefox locale not found in \"$XulswordExtras/localeDev/Firefox3/$firefox\".\n");
-  }
-  
   system("$TRUNK/localeDev/UI-code.pl", $TRUNK, $XulswordExtras, $locale);
   
   if (compare("$ldir/code_log.txt", "$ldir/code_log-bak.txt") != 0) {
@@ -679,14 +665,32 @@ sub createLocale($) {
   }
   unlink("$ldir/code_log-bak.txt");
   
-  if (-e "$TRUNK/build-files/locales/$locale.jar") {unlink("$TRUNK/build-files/locales/$locale.jar");}
-  
   # make locale jar file
-  &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/Firefox3/$firefox/locale/$firefox/global", 1);
-  &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$XulswordExtras/localeDev/Firefox3/$firefox/locale/$firefox/mozapps", 1);
+  if (-e "$TRUNK/build-files/locales/$locale.jar") {unlink("$TRUNK/build-files/locales/$locale.jar");}
   &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$ldir/locale/*");
   if (-e "$ldir/text-skin") {
     &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$ldir/text-skin/xulsword", 1);
+  }
+  
+  # A few minor UI elements can utilize Firefox toolkit localization
+  # en-US toolkit is already included in XULRunner/Firefox
+  if (!$firefox) {
+    &Log("WARNING: Defaulting to en-US for locale $locale.\n");
+    $firefox = "en-US";
+  }
+  elsif ($firefox ne "en-US" && !-e "$XulswordExtras/localeDev/Firefox12/$firefox") {
+    &Log("WARNING: Firefox-12 locale \"$firefox\" not found in \"$XulswordExtras/localeDev/Firefox12/$firefox\"\n");
+    $firefox = "en-US";
+  }
+  if ($firefox ne "en-US") {
+    my $toolkit = "XulswordExtras/localeDev/Firefox12/$firefox";
+    if (-e $toolkit) {
+      &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$toolkit/locale/$firefox/global", 1);
+      &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$toolkit/locale/$firefox/mozapps", 1);
+      push(@{$manifestP}, "locale global $locale jar:chrome/$loc.jar!/global/");
+      push(@{$manifestP}, "locale mozapps $locale jar:chrome/$loc.jar!/mozapps/");
+    }
+    else {&Log("WARNING: Some minor UI elements will not be localized because this Firefox locale was not found: \"$toolkit\".\n");}
   }
 }
 
