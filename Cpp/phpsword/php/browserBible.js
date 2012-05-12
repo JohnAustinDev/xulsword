@@ -80,6 +80,7 @@ function activatePopup(type, title) {
 }
 
 function getMod(e) {
+	// get modname either from "mod" element, or from parent node class
 	var mod = document.getElementById("mod").value;
 	var re = new RegExp("(^| )(text|interV(\\d+))( |$)");
 	var el = e.target;
@@ -182,7 +183,7 @@ function getContent(rnf) {
 		for (var i=0; i<fns.length; i++) {
 			if (!fns[i]) continue;
 			var fnp = fns[i].split("<bg>");
-			if (fnp[0] == rnf.modName + "." + rnf.type + "." + rnf.list) {
+			if (fnp[0] == rnf.type + "." + rnf.list + "." + rnf.modName) {
 				RequestData[rnf.key] = fnp[1];
 				rnf.content = fnp[1];
 				break;
@@ -196,7 +197,7 @@ function getContent(rnf) {
 		for (var i=0; i<fns.length; i++) {
 			if (!fns[i]) continue;
 			var fnp = fns[i].split("<bg>");
-			if (fnp[0] == rnf.modName + "." + rnf.type + "." + rnf.list) {
+			if (fnp[0] == rnf.type + "." + rnf.list + "." + rnf.modName) {
 				rnf.doRequest = true;
 				rnf.type = "reflist";
 				rnf.list = fnp[1];
