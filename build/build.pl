@@ -301,7 +301,6 @@ sub copyExtensionFiles($\@$$$) {
   if ($makeDevelopment) {
     push(@{$manifestP}, "content xulsword file:../../../xul/content/");
     push(@{$manifestP}, "skin xulsword skin file:../../../xul/skin/");
-    push(@{$manifestP}, "content xsglobal file:../../../xul/content/xsglobal/");
     push(@{$manifestP}, "content branding file:../../../xul/content/branding/");
     push(@{$manifestP}, "locale branding en-US file:../../../xul/locale/branding/");
     push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/debug-overlay.xul");
@@ -312,7 +311,6 @@ sub copyExtensionFiles($\@$$$) {
   else {
     push(@{$manifestP}, "content xulsword jar:chrome/content.jar!/");
     push(@{$manifestP}, "skin xulsword skin jar:chrome/skin.jar!/");
-    push(@{$manifestP}, "content xsglobal jar:chrome/content.jar!/xsglobal/");
     if (!$isFFextension) {
       push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
       push(@{$manifestP}, "locale branding en-US jar:chrome/en-US.jar!/branding/");
@@ -320,7 +318,7 @@ sub copyExtensionFiles($\@$$$) {
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/linux/ os=Linux");
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/windows/ os=WINNT");
 
-    &Log("----> Creating JAR files.\n");
+    &Log("----> Creating content and skin JAR files.\n");
     &makeZIP("$do/chrome/content.jar", "$TRUNK/xul/content/*");
     &makeZIP("$do/chrome/skin.jar", "$TRUNK/xul/skin/*");
 
@@ -618,14 +616,14 @@ sub processLocales($\@$) {
     
     # write locale manifest info
     push(@{$manifestP}, "\nlocale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
-    push(@{$manifestP}, "locale xsglobal $loc jar:chrome/$loc.jar!/xsglobal/");
-    
-    # these will break the program until Firefox locales are updated.
 
     if (-e "$ldir/text-skin/skin") {
       push(@{$manifestP}, "skin localeskin $loc jar:chrome/$loc.jar!/skin/");
     }
   }
+  
+  push(@{$manifestP}, "override chrome://global/locale/textcontext.dtd chrome://xulsword/locale/xsglobal/textcontext.dtd");
+  push(@{$manifestP}, "override chrome://global/locale/tree.dtd chrome://xulsword/locale/xsglobal/tree.dtd");
   
   push(@{$manifestP}, "\n# xulswordVersion=3.0\n");
   push(@{$manifestP}, "# minMKVersion=3.0\n"); # locales no longer have security codes and aren't backward compatible
@@ -635,20 +633,6 @@ sub createLocale($) {
   my $locale = shift;
 
   &Log("----> Creating locale $locale\n");
-
-  # get UI info
-  my $firefox;
-  if (open(INF, "<$XulswordExtras/localeDev/$locale/UI-$locale.txt")) {
-    while (<INF>) {
-      if ($_ =~ /Firefox_locale=\s*([^,]+)/) {$firefox = $1;}
-      #if ($_ =~ /Version=\s*([^,]+)/) {$version = $1;}
-    }
-    close(INF);
-  }
-  else {
-    &Log("ERROR: Requested locale not found: \"$XulswordExtras/localeDev/$locale/UI-$locale.txt\".\n");
-    return;
-  }
   
   my $ldir = "$XulswordExtras/localeDev/$locale";
   if ($locale eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
@@ -670,26 +654,6 @@ sub createLocale($) {
     &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$ldir/text-skin/xulsword", 1);
   }
   
-  # A few minor UI elements can utilize Firefox toolkit localization
-  # en-US toolkit is already included in XULRunner/Firefox
-  if (!$firefox) {
-    &Log("WARNING: Defaulting to en-US for locale $locale.\n");
-    $firefox = "en-US";
-  }
-  elsif ($firefox ne "en-US" && !-e "$XulswordExtras/localeDev/Firefox12/$firefox") {
-    &Log("WARNING: Firefox-12 locale \"$firefox\" not found in \"$XulswordExtras/localeDev/Firefox12/$firefox\"\n");
-    $firefox = "en-US";
-  }
-  if ($firefox ne "en-US") {
-    my $toolkit = "XulswordExtras/localeDev/Firefox12/$firefox";
-    if (-e $toolkit) {
-      &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$toolkit/locale/$firefox/global", 1);
-      &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$toolkit/locale/$firefox/mozapps", 1);
-      push(@{$manifestP}, "locale global $locale jar:chrome/$loc.jar!/global/");
-      push(@{$manifestP}, "locale mozapps $locale jar:chrome/$loc.jar!/mozapps/");
-    }
-    else {&Log("WARNING: Some minor UI elements will not be localized because this Firefox locale was not found: \"$toolkit\".\n");}
-  }
 }
 
 sub packageWindowsSetup($) {

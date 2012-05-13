@@ -183,7 +183,6 @@ var BookmarksMenu = {
     switch (parent) {
     case "bookmarks-stack":
     case "bookmarks-toolbar":
-      return BMSVC.getBookmarksToolbarFolder().Value;
     case "bookmarks-menu":
       return AllBookmarksID;
     default:

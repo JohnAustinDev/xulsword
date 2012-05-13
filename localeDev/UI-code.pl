@@ -26,55 +26,78 @@ if (-e $LOCALECODE) {remove_tree($LOCALECODE);}
 
 &Log($locinfo);
 
-# read UI file(s). This must be done before reading MAP to find version
-&read_UI_File($LISTFILE1, \%UIDescValue);
-if (-e "$LISTFILE2") {&read_UI_File($LISTFILE2, \%UIDescValue);}
+# read UI file(s).
+&read_UI_Files($locale, \%UIDescValue);
 
-# read the MAP and code file contents into memory structures
-&loadMAP($MAPFILE, \%MapFileEntryInfo, \%MapDescInfo, \%CodeFileEntryValue, "true");
+# read the MAP contents into memory
+&readMAP($MAPFILE, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty);
 
-# remove code file entries that are optional, so that they do not propogate
-for my $mfe (keys %MapFileEntryInfo) {
-  if ($mfe !~ /^(.*?)\:optional/ || $MapFileEntryInfo{$mfe} ne "true") {next;}
-  $CodeFileEntryValue{$1} = "_NOT_FOUND_";  
+# create code file data
+for my $d (sort keys %UIDescValue) {
+  for my $fe (keys %FileEntryDesc) {
+    my $fed = quotemeta($FileEntryDesc{$fe});
+    if ($fed =~ s/\\\*/(.*)/) {$IsWild{$fe}++;}
+    if ($d =~ /^$fed$/) {
+      my $w = $1;
+      my $fe2 = $fe;
+      if (exists($IsWild{$fe})) {
+        $fe2 =~ s/\*/$w/;
+      }
+      $MatchedDescriptions{$d}++;
+      if ($fe2 !~ /^(.+?)\:(.+)\s*$/) {&Log("ERROR: Malformed file:entry \"$fe2\"\n"); next;}
+      $CodeFileEntryValues{$fe2} = $UIDescValue{$d};
+      if (exists($IsWild{$fe})) {next;}
+      if ($UIDescValue{$d} =~ /^\s*$/ && !exists($MayBeEmpty{$FileEntryDesc{$fe}})) {&Log("WARNING $fe2: Value is empty.\n");}
+      $FileEntryDesc{$fe} = "<uSEd>";
+    }
+  }
 }
 
-# merge UI values from listing over existing values from the map
-for my $d (keys %UIDescValue) {
-  my $found = 0;
-  for my $fei (keys %MapFileEntryInfo) {
-    if ($fei !~ /\:desc$/ || $MapFileEntryInfo{$fei} ne $d) {next;}
-    $found = 1;
-    my $fe = $fei; $fe =~ s/\:desc$//;
-    $CodeFileEntryValue{$fe} = $UIDescValue{$d};
-  }
-  if (!$found) {
-    my $fe = &matchDescToMapFileEntry($MAPFILE, $d, $locale);
-    if ($fe) {$CodeFileEntryValue{$fe} = $UIDescValue{$d}}
+# handle MAP file-entries which need to exist, but which are not used by the UI (and so are not in the UI files)
+for my $fe (keys %FileEntryDesc) {
+  if ($FileEntryDesc{$fe} =~ /^"(.*)"$/) {
+    $CodeFileEntryValues{$fe} = $1;
+    $FileEntryDesc{$fe} = "<uSEd>";
   }
 }
 
-# write the UI to code files
-for my $fe (sort keys %CodeFileEntryValue) {
-  $v = $CodeFileEntryValue{$fe};
-  if ($v eq "_NOT_FOUND_") {next;}
-  if ($ignoreShortCutKeys eq "true" && $MapFileEntryInfo{$fe.":desc"} =~ /\.(ak|sc|ck|kb)$/) {$v = "";}
-  $fe =~ /^(.*?):(.*?)\s*$/;
-  $f = $1;
-  $e = $2;
-  if ($f !~ /^xulsword\//) {$f = "xs".$f;}
-  $f = "$LOCALECODE/$f";
-  $d = $f; $d =~ s/\/[^\/]+$//;
-  if ($f ne $lastf) {
-    if ($last ne "") {close(OUTF);}
-    if (!-e "$d") {make_path($d);}
-    if (!open(OUTF, ">:encoding(UTF-8)", "$f")) {&Log("ERROR: Could not open code file \"$f\"\n"); die;}
+# write code files
+for my $fe2 (sort keys %CodeFileEntryValues) {
+  $fe2 =~ /^(.+?)\:(.+)\s*$/;
+  my $f = "$LOCALECODE/$1";
+  my $e = $2;
+  my $v = $CodeFileEntryValues{$fe2};
+
+  my $dir = $f;
+  $dir =~ s/\/[^\/]+$//;
+  if (!-e $dir) {make_path($dir);}
+      
+  if ($f ne $openfile) {
+    if ($openfile) {close(OUTF);}
+    if (!open(OUTF, ">>:encoding(UTF-8)", $f)) {&Log("ERROR: Could not open code file \"$f\"\n"); die;}
   }
-  $lastf = $f;
-  
-  if ($v =~ /^\s*$/ && $e !~ /(commandkey|keybinding|accesskey|AccKey|\.sh|\.sc)/i) {&Log("WARNING $fe: Value is empty.\n");}
+  $openfile = $f;
+
   if ($f =~ /\.properties$/i) {print OUTF $e."=".$v."\n";}
   elsif ($f =~ /\.dtd$/i) {print OUTF "<!ENTITY ".$e." \"".$v."\">\n";}
-  else {&Log("ERROR FileEntry=\"".$fe."\": Unknown file type \"".$f."\"\n");}
+  else {&Log("ERROR FileEntry=\"".$fe2."\": Unknown file type \"".$f."\"\n");}
 }
 close(OUTF);
+  
+# report any UI listing phrases which were not used
+for my $d (sort keys %UIDescValue) {
+  if (!exists($MatchedDescriptions{$d})) {
+    &Log("ERROR: Description \"$d = ".$UIDescValue{$d}."\" was not found in the MAP.\n");
+  }
+}
+
+# report any MAP file entries which were not matched
+for my $fe (keys %FileEntryDesc) {
+  if (exists($MayBeMissing{$FileEntryDesc{$fe}})) {next;}
+  if (exists($IsWild{$fe})) {next;}
+  if ($FileEntryDesc{$fe} ne "<uSEd>") {
+    &Log("ERROR: MAP file entry was not matched: \"$fe = ".$FileEntryDesc{$fe}."\".\n");
+  }
+}
+
+&Log("Finished.\n");

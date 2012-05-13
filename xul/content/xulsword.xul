@@ -20,7 +20,7 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/mainwin.css" type="text/css"?>
-<?xul-overlay href="chrome://xsglobal/content/editMenuOverlay.xul"?>
+<?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
 
 <!DOCTYPE window [
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
@@ -29,9 +29,9 @@
 %bookmarksDTD;
 <!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
 %browserDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xsglobal/locale/global.dtd" >
+<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/global.dtd" >
 %globalDTD;
-<!ENTITY % nsProgressDialogDTD SYSTEM "chrome://xsglobal/locale/nsProgressDialog.dtd" >
+<!ENTITY % nsProgressDialogDTD SYSTEM "chrome://xulsword/locale/dialog.dtd" >
 %nsProgressDialogDTD;
 ]>
 
@@ -57,8 +57,8 @@
 <data id="menu.options.language">&menu.options.language;</data>
 <data id="menu.options">&menu.options;</data>
 <data id="menu.removeModule.label">&menu.removeModule.label;</data>
-<data id="savingSource">&savingSource;</data>
-<data id="savingTarget">&savingTarget;</data>
+<data id="savingSource">&dlgFrom;</data>
+<data id="savingTarget">&dlgTo;</data>
 <data id="localeDir">&locale.dir;</data>
 <stringbundle id="strings"   src="chrome://xulsword/locale/xulsword.properties"/>
 
@@ -70,8 +70,8 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
 <script>moduleInstall(true)</script>
 
-<script type="application/x-javascript" src="chrome://xsglobal/content/globalOverlay.js"/>
-<script type="application/x-javascript" src="chrome://xsglobal/content/nsDragAndDrop.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
@@ -114,10 +114,6 @@
   <key id="bm_key_properties" key="&edit.properties.keybinding;" modifiers="accel" command="cmd_bm_properties"/>
 </keyset>
 
-<keyset id="mainKeyset">   
-  <key id="key_switchTextDirection" key="&bidiSwitchTextDirectionItem.commandkey;" command="cmd_switchTextDirection" modifiers="accel,shift" />
-</keyset>
-  
 <commandset id="BookmarksMenuCommandSet">
   <command id="cmd_bm_open"                      oncommand="goDoCommand('cmd_bm_open');"/>
   <command id="cmd_bm_openfolder"                oncommand="goDoCommand('cmd_bm_openfolder');"/>

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use File::Spec;
 
-if (!@ARGV) {print "usage UI-listing.pl MK MKS locale version alternateLocale firefoxLocale sourcingFromFirefox3(true|false)\n"; exit;}
+if (!@ARGV) {print "usage UI-listing.pl MK MKS locale version alternateLocale firefoxLocale firefoxWins\n"; exit;}
 
 $MK = shift;
 $MKS = shift;
@@ -9,7 +9,7 @@ $locale = shift;
 $version = shift;
 $localeALT = shift;
 $firefox = shift;
-$sourceFF3 = shift;
+$firefoxWins = shift;
 
 $MK  =~ s/\\/\//g;
 $MKS =~ s/\\/\//g;
@@ -23,39 +23,42 @@ require "$MK/localeDev/script/UI-common.pl";
 $LOGFILE = "$LOCALEDIR/listing_log.txt";
 if (-e $LOGFILE) {unlink($LOGFILE);}
 
-$dontsort = "true";
+if ($locale eq "en-US") {&Log("ERROR: Cannot run on en-US.\n"); die;}
 
-if (-e $LISTFILE1)  {&Log("Listing file \"$LISTFILE1\" already exists.\nFinished.\n"); die;}
-if (-e $LISTFILE2) {&Log("Listing file \"$LISTFILE2\" already exists.\nFinished.\n"); die;}
+$dontsort = 1;
+
+if (-e &UI_File($locale, 1)) {&Log("Listing file \"".&UI_File($locale, 1)."\" already exists.\nFinished.\n"); die;}
+if (-e &UI_File($locale, 2)) {&Log("Listing file \"".&UI_File($locale, 2)."\" already exists.\nFinished.\n"); die;}
 
 # if the local locale contains special UI material, handle it
 &extractFromLocale("xulsword/splash.png", "text-skin/xulsword");
 &extractFromLocale("skin/NT.png", "text-skin/skin");
 &extractFromLocale("skin/OT.png", "text-skin/skin"); 
 
-# read Firefox 2 to Firefox 3 map if needed
-if ($sourceFF3 eq "true") {
-  if (!open(FF2, "<:encoding(UTF-8)", "$FF2TO3MAP")) {&Log("Could not open Firefox 2 to 3 MAP file \"$FF2TO3MAP\"\nFinished.\n"); die;}
-  $line = 0;
-  while(<FF2>) {
-    $line++;
-    if ($_ =~ /^\s*$/) {next;}
-    if ($_ !~ /^([^=]+?)\s*\=\s*(.*?)\s*$/) {&Log("ERROR $FF2TO3MAP line $line: Could not parse FF2 to FF3 MAP entry \"$_\"\n"); next;}
-    my $pff2 = $1;
-    my $pff3 = $2;
-    
-    $pff2 =~ s/\\/\//g;
-    $pff3 =~ s/\\/\//g;
-    
-    $FF2_to_FF3{$pff2} = $pff3;
-  }
-  close(FF2);
-}
-
 &Log($locinfo);
 
-# read the MAP and code file contents into memory structures
-&loadMAP($MAPFILE, \%MapFileEntryInfo, \%MapDescInfo, \%CodeFileEntryValue);
+# read the MAP contents into memory
+&readMAP($MAPFILE, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty);
+
+# copy the alternate locale UI as a starting point
+&read_UI_Files($localeALT, \%UIDescValue);
+
+# now scour the Firefox locale for matching phrases
+&read_UI_Files("en-US", \%UIDescValueEN);
+for my $d (keys %UIDescValueEN) {
+  my $fe = &findFileEntry($UIDescValueEN{$d}, "en-US");
+  if ($fe) {
+    my $v = &getValue($fe, $locale);
+    if (!$v) {&Log("WARNING: \"".$fe."\" was located in en-US, but not in $locale.\n");}
+    elsif ($firefoxWins || !exists($UIDescValue{$d}) || !$UIDescValue{$d} || $UIDescValue{$d} eq "_NOT_FOUND_") {
+      $UIDescValue{$d} = $v;
+      &Log("INFO: Found \"$d\" as \"$v\" (".$UIDescValueEN{$d}.")\n");
+    }
+  }
+}
+
+
+
 
 # print the listing to UI file(s)...
 if (!open(OUTF, ">:encoding(UTF-8)", "$LISTFILE1")) {&Log("Could not open output file $LISTFILE1.\nFinished.\n"); die;}

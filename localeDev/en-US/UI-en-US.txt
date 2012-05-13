@@ -80,73 +80,10 @@ Locale=en-US, Version=3.0, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_
 [main-window.menu-file.import-audio.import_from]: Saving From:
 [main-window.menu-file.import-audio.import_to]: To:
 [main-window.menu-file.import-audio.not_enough_disk_space]: There is not enough room on the disk to save %S.\n\nRemove unnecessary files from the disk and try again, or try saving in a different location.
-[main-window.menu-file.page-setup]: Page Setup...
-[main-window.menu-file.page-setup.advanced_tab]: Margins &amp; Header/Footer
-[main-window.menu-file.page-setup.basic_tab]: Format &amp; Options
-[main-window.menu-file.page-setup.format-group]: Format
-[main-window.menu-file.page-setup.format-group.orientation]: Orientation:
-[main-window.menu-file.page-setup.format-group.scale]: Scale:
-[main-window.menu-file.page-setup.format-group.scale_percent]: &#037;
-[main-window.menu-file.page-setup.format-group.shrink_to_fit]: Shrink To Fit Page Width
-[main-window.menu-file.page-setup.header-footer-group]: Headers &amp; Footers
-[main-window.menu-file.page-setup.header-footer-group.center_footer_tooltip]: Center footer
-[main-window.menu-file.page-setup.header-footer-group.center_header_tooltip]: Center header
-[main-window.menu-file.page-setup.header-footer-group.center_label]: Center:
-[main-window.menu-file.page-setup.header-footer-group.left_footer_tooltip]: Left footer
-[main-window.menu-file.page-setup.header-footer-group.left_header_tooltip]: Left header
-[main-window.menu-file.page-setup.header-footer-group.left_label]: Left:
-[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.blank]: --blank--
-[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.custom]: Custom…
-[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.custom.prompt]: Enter your custom header/footer text
-[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.custom.title]: Custom…
-[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.date_time]: Date/Time
-[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.page]: Page #
-[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.page_total]: Page # of #
-[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.title]: Title
-[main-window.menu-file.page-setup.header-footer-group.pulldown-menu.url]: URL
-[main-window.menu-file.page-setup.header-footer-group.right_footer_tooltip]: Right footer
-[main-window.menu-file.page-setup.header-footer-group.right_header_tooltip]: Right header
-[main-window.menu-file.page-setup.header-footer-group.right_label]: Right:
-[main-window.menu-file.page-setup.margin-group]: Margins (#1)
-[main-window.menu-file.page-setup.margin-group.margin_bottom]: Bottom:
-[main-window.menu-file.page-setup.margin-group.margin_left]: Left:
-[main-window.menu-file.page-setup.margin-group.margin_right]: Right:
-[main-window.menu-file.page-setup.margin-group.margin_top]: Top:
-[main-window.menu-file.page-setup.margin-group.units_inches]: inches
-[main-window.menu-file.page-setup.margin-group.units_metric]: millimeters
-[main-window.menu-file.page-setup.options-group]: Options
-[main-window.menu-file.page-setup.options-group.print_background]: Print Background (colors &amp; images)
-[main-window.menu-file.page-setup.title]: Page Setup
-[main-window.menu-file.print]: Print...
+[main-window.menu-file.print]: Print
+[main-window.menu-file.page-setup]: Page Setup
 [main-window.menu-file.print-preview]: Print Preview
-[main-window.menu-file.print-preview.close]: Close
-[main-window.menu-file.print-preview.custom]: Custom…
-[main-window.menu-file.print-preview.custom.title]: Custom Scale…
-[main-window.menu-file.print-preview.first_arrow_tooltip]: First page
-[main-window.menu-file.print-preview.landscape]: Landscape
-[main-window.menu-file.print-preview.last_arrow_tooltip]: Last page
-[main-window.menu-file.print-preview.next_arrow_tooltip]: Next page
-[main-window.menu-file.print-preview.of]: of
-[main-window.menu-file.print-preview.page]: Page:
-[main-window.menu-file.print-preview.page_setup]: Page Setup…
-[main-window.menu-file.print-preview.portrait]: Portrait
-[main-window.menu-file.print-preview.previous_arrow_tooltip]: Previous page
-[main-window.menu-file.print-preview.print]: Print…
-[main-window.menu-file.print-preview.progress-window.preparing]: Preparing…
-[main-window.menu-file.print-preview.progress-window.progress]: Progress:
-[main-window.menu-file.print-preview.progress-window.title]: Title:
-[main-window.menu-file.print-preview.progress-window.window_title]: Print Preview
-[main-window.menu-file.print-preview.scale]: Scale:
-[main-window.menu-file.print-preview.shrink_to_fit]: Shrink To Fit
 [main-window.menu-file.print.from_page]: from
-[main-window.menu-file.print.options]: Options
-[main-window.menu-file.print.progress-window.cancel]: Cancel
-[main-window.menu-file.print.progress-window.close]: Close
-[main-window.menu-file.print.progress-window.completed]: Printing is Completed.
-[main-window.menu-file.print.progress-window.preparing]: Preparing…
-[main-window.menu-file.print.progress-window.progress]: Progress:
-[main-window.menu-file.print.progress-window.title]: Title:
-[main-window.menu-file.print.progress-window.window_title]: Printing
 [main-window.menu-file.print.to_page]: to
 [main-window.menu-file.print_passage]: Print Passage
 [main-window.menu-file.remove_modules]: Remove Modules
@@ -287,7 +224,7 @@ Locale=en-US, Version=3.0, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_
 [bookmark-window.tree.bookmark_root_folder]: Bookmarks
 [bookmark-window.tree.empty_folder]: (Empty)
 [bookmark-window.tree.new_folder]: New Folder
-[bookmark-window.tree.restore_natural_order]: Restore Defaults
+[bookmark-window.tree.restore-column-order]: Restore Column Order
 [bookmark-window.tree.status.folder_count]: %S object(s)
 [bookmark-window.search-in-menu]: Search In
 [bookmark-window.search_label]: Search:
@@ -358,15 +295,9 @@ Locale=en-US, Version=3.0, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_
 [search-help-window.vertical_bar_description]: Finds verses with either "love" <b>or</b> "God"
 [search-help-window.vertical_bar_example]: love || God
 [dialog-window.cancel]: Cancel
-[dialog-window.no]: &No
+[dialog-window.no]: No
 [dialog-window.ok]: OK
-[dialog-window.save]: &Save
 [dialog-window.select]: Select
-[dialog-window.yes]: &Yes
-[file-chooser.html_title]: HTML Files
-[file-chooser.image_title]: Image Files
-[file-chooser.text_title]: Text Files
-[file-chooser.xml_title]: XML Files
-[file-chooser.xul_title]: XUL Files
+[dialog-window.yes]: Yes
 [error-reporter.dont_show_this_again]: Do not show me this dialog box again.
 [error-reporter.error_detection_message]: A problem may have been detected. To report this problem press \"%1$S\".

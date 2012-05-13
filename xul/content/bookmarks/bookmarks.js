@@ -721,8 +721,6 @@ var BookmarksController = {
     case "cmd_bm_delete":
     case "cmd_selectAll":
     case "cmd_bm_open":
-    case "cmd_bm_openinnewwindow":
-    case "cmd_bm_openinnewtab":
     case "cmd_bm_openfolder":
     case "cmd_bm_managefolder":
     case "cmd_bm_newbookmark":
@@ -737,8 +735,6 @@ var BookmarksController = {
     case "cmd_bm_import":
     case "cmd_bm_export":
     case "cmd_bm_movebookmark":
-    case "cmd_bm_refreshlivemark":
-    case "cmd_bm_refreshmicrosummary":
     case "cmd_bm_sortbyname":
     case "cmd_bm_saveas":
     case "cmd_bm_pageSetup":
@@ -912,12 +908,6 @@ var BookmarksController = {
     case "cmd_bm_saveas":
       BookmarkFuns.saveAs(aSelection);
       break;
-    case "cmd_bm_refreshlivemark":
-      BookmarksCommand.refreshLivemark(aSelection);
-      break;
-    case "cmd_bm_refreshmicrosummary":
-      BookmarksCommand.refreshMicrosummary(aSelection);
-      break;
     case "cmd_bm_sortbyname":
       BookmarksCommand.sortByName(aSelection);
       break;
@@ -946,8 +936,7 @@ var BookmarksController = {
                     "cmd_undo", "cmd_redo", "cmd_bm_properties", "cmd_bm_rename", "cmd_bm_saveas", "cmd_bm_print", "cmd_bm_printPreview",
                     "cmd_bm_copy", "cmd_bm_paste", "cmd_bm_cut", "cmd_bm_delete",
                     "cmd_bm_setpersonaltoolbarfolder", "cmd_bm_movebookmark",
-                    "cmd_bm_openfolder", "cmd_bm_managefolder", "cmd_bm_refreshlivemark",
-                    "cmd_bm_refreshmicrosummary", "cmd_bm_sortbyname"];
+                    "cmd_bm_openfolder", "cmd_bm_managefolder", "cmd_bm_sortbyname"];
     for (var i = 0; i < commands.length; ++i) {
       var enabled = this.isCommandEnabled(commands[i], aSelection, aTarget);
       var commandNode = document.getElementById(commands[i]);

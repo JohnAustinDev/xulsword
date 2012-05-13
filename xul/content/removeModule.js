@@ -215,7 +215,7 @@ function deleteModules(e) {
 
   var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
   try {
-    var bundle = BUNDLESVC.createBundle("chrome://xsglobal/locale/crashes.properties");
+    var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/dialog.properties");
     var areYouSure = bundle.GetStringFromName("deleteconfirm.title");
   }
   catch (er) {

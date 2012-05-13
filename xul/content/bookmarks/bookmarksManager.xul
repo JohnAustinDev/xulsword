@@ -38,10 +38,10 @@
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksManager.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks.css" type="text/css"?>
 
-<?xul-overlay href="chrome://xsglobal/content/editMenuOverlay.xul"?>
+<?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
 
 <!DOCTYPE window [
-<!ENTITY % editMenuOverlayDTD SYSTEM "chrome://xsglobal/locale/editMenuOverlay.dtd" >
+<!ENTITY % editMenuOverlayDTD SYSTEM "chrome://xulsword/locale/editMenuOverlay.dtd" >
 %editMenuOverlayDTD;
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
 %xulswordDTD;
@@ -49,7 +49,7 @@
 %bookmarksDTD;
 <!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
 %browserDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xsglobal/locale/global.dtd" >
+<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/global.dtd" >
 %globalDTD;
 ]>
 
@@ -64,9 +64,9 @@
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xsglobal/content/globalOverlay.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
   <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
-  <script type="application/x-javascript" src="chrome://xsglobal/content/nsDragAndDrop.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
@@ -86,8 +86,6 @@
   <commandset>
     <command id="cmd_close"                        oncommand="closeWindow(true);"/>
     <command id="cmd_bm_open"                      oncommand="goDoCommand('cmd_bm_open');"/>
-    <command id="cmd_bm_openinnewwindow"           oncommand="goDoCommand('cmd_bm_openinnewwindow');"/>
-    <command id="cmd_bm_openinnewtab"              oncommand="goDoCommand('cmd_bm_openinnewtab');"/>
     <command id="cmd_bm_openfolder"                oncommand="goDoCommand('cmd_bm_openfolder');"/>
     <command id="cmd_bm_managefolder"              oncommand="goDoCommand('cmd_bm_managefolder');"/>
     <command id="cmd_bm_newfolder"                 oncommand="goDoCommand('cmd_bm_newfolder');"/>
@@ -98,8 +96,6 @@
     <command id="cmd_bm_setnewbookmarkfolder"      oncommand="goDoCommand('cmd_bm_setnewbookmarkfolder');"/>
     <command id="cmd_bm_setpersonaltoolbarfolder"  oncommand="goDoCommand('cmd_bm_setpersonaltoolbarfolder');"/>
     <command id="cmd_bm_setnewsearchfolder"        oncommand="goDoCommand('cmd_bm_setnewsearchfolder');"/>
-    <command id="cmd_bm_refreshlivemark"           oncommand="goDoCommand('cmd_bm_refreshlivemark');"/>
-    <command id="cmd_bm_refreshmicrosummary"       oncommand="goDoCommand('cmd_bm_refreshmicrosummary');"/>
     <command id="cmd_bm_properties"                oncommand="goDoCommand('cmd_bm_properties');"/>
     <command id="cmd_bm_rename"                    oncommand="goDoCommand('cmd_bm_rename');"/>
     <command id="cmd_bm_import"                    oncommand="goDoCommand('cmd_bm_import');"/>
