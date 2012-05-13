@@ -1,11 +1,11 @@
 <?xml version="1.0"?> <!-- -*- Mode: HTML -*- --> 
 
-<!DOCTYPE overlay SYSTEM "chrome://xsglobal/locale/editMenuOverlay.dtd">
+<!DOCTYPE overlay SYSTEM "chrome://xulsword/locale/editMenuOverlay.dtd">
 
 <overlay id="editMenuOverlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <script type="application/javascript" src="chrome://xsglobal/content/editMenuOverlay.js"/>
+  <script type="application/javascript" src="chrome://xulsword/content/xsglobal/editMenuOverlay.js"/>
 
   <commandset id="editMenuCommands">
     <commandset id="editMenuCommandSetAll" commandupdater="true" events="focus,select"
@@ -21,7 +21,6 @@
     <command id="cmd_paste" oncommand="goDoCommand('cmd_paste')"/>
     <command id="cmd_delete" oncommand="goDoCommand('cmd_delete')"/>
     <command id="cmd_selectAll" oncommand="goDoCommand('cmd_selectAll')"/>
-    <command id="cmd_switchTextDirection" oncommand="goDoCommand('cmd_switchTextDirection');"/>
   </commandset>
 
   <!-- These key nodes are here only for show. The real bindings come from

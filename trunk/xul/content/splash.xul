@@ -23,9 +23,9 @@
 <!DOCTYPE window [
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/" >
 %xulswordDTD;
-<!ENTITY % nsProgressDialogDTD SYSTEM "chrome://xsglobal/locale/nsProgressDialog.dtd" >
+<!ENTITY % nsProgressDialogDTD SYSTEM "chrome://xulsword/locale/dialog.dtd" >
 %nsProgressDialogDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xsglobal/locale/global.dtd" >
+<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/global.dtd" >
 %globalDTD;
 ]>
 
@@ -40,8 +40,8 @@
   <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
   <data id="menu.addNewModule.label">&menu.addNewModule.label;</data>
   <data id="menu.importAudio.label">&menu.importAudio.label;</data>
-  <data id="savingSource">&savingSource;</data>
-  <data id="savingTarget">&savingTarget;</data>
+  <data id="savingSource">&dlgFrom;</data>
+  <data id="savingTarget">&dlgTo;</data>
   <data id="localeDir">&locale.dir;</data>
   
   <script>

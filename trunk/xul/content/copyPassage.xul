@@ -23,10 +23,8 @@
 <!DOCTYPE window [
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
 %xulswordDTD;
-<!ENTITY % printdialogDTD SYSTEM "chrome://xsglobal/locale/printdialog.dtd" >
-%printdialogDTD;
-<!ENTITY % dialogOverlayDTD SYSTEM "chrome://xsglobal/locale/dialogOverlay.dtd" >
-%dialogOverlayDTD;
+<!ENTITY % passageDTD SYSTEM "chrome://xulsword/locale/passage.dtd" >
+%passageDTD;
 <!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
 %browserDTD;
 ]>

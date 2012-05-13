@@ -45,7 +45,7 @@ function Load() {
   Textbox = document.getElementById("textbox");
 
   var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-  try {var bundle = BUNDLESVC.createBundle("chrome://xsglobal/locale/commonDialogs.properties");}
+  try {var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/dialog.properties");}
   catch (er) {bundle=null; jsdump("Could not find string bundle.");}
   var acceptLabel, cancelLabel;
   if (bundle) {
@@ -59,8 +59,8 @@ function Load() {
       cancelLabel = bundle.GetStringFromName("Cancel");
       break;
     case DLGYESNO:
-      acceptLabel = bundle.GetStringFromName("Yes").replace(String.fromCharCode(38),"").replace(/\(Y\)/i,"");
-      cancelLabel = bundle.GetStringFromName("No").replace(String.fromCharCode(38),"").replace(/\(N\)/i,"");
+      acceptLabel = bundle.GetStringFromName("Yes");
+      cancelLabel = bundle.GetStringFromName("No");
       break;
     }
   }
@@ -68,13 +68,13 @@ function Load() {
   var imgSrc;
   switch (Type) {
   case DLGALERT:
-    imgSrc = "chrome://xsglobal/skin/icons/Warning.png";
+    imgSrc = "chrome://xulsword/skin/icons/Warning.png";
     break;
   case DLGQUEST:
-    imgSrc = "chrome://xsglobal/skin/icons/Question.png";
+    imgSrc = "chrome://xulsword/skin/icons/Question.png";
     break;
   case DLGINFO:
-    imgSrc = "chrome://xsglobal/skin/icons/information-32.png";
+    imgSrc = "chrome://xulsword/skin/icons/information-32.png";
     break;      
   }
   

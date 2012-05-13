@@ -76,18 +76,17 @@ var aConsoleListener =
         
         // EMAIL REPORT FILE
         var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-        var bundle1 = BUNDLESVC.createBundle("chrome://xsglobal/locale/commonDialogs.properties");
-        var bundle2 = BUNDLESVC.createBundle("chrome://xsglobal/locale/browser.properties");
+        var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/logfile.properties");
         var SBundle = (document ? document.getElementById("strings"):null);
         if (window.opener) {window.opener.close();} // Don't let splash screen obscure dialogs...
  
         var result={};
         var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
             (SBundle ? SBundle.getString("Title"):"xulsword"),
-            (SBundle ? SBundle.getFormattedString("SendErrorReport", [bundle1.GetStringFromName("OK")]):"Error Report"),
+            (SBundle ? SBundle.getFormattedString("SendErrorReport", [bundle.GetStringFromName("OK")]):"Error Report"),
             DLGALERT,
             DLGOKCANCEL,
-            bundle2.GetStringFromName("browsewithcaret.checkMsg"));
+            bundle.GetStringFromName("browsewithcaret.checkMsg"));
           
         if (result.checked) {
           var dsed = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService); 

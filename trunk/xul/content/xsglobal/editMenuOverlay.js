@@ -18,7 +18,6 @@ function goUpdateGlobalEditMenuItems()
   goUpdateCommand("cmd_paste");
   goUpdateCommand("cmd_selectAll");
   goUpdateCommand("cmd_delete");
-  goUpdateCommand("cmd_switchTextDirection");
 }
 
 // update menu items that relate to undo/redo

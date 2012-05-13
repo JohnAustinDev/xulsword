@@ -1,5 +1,5 @@
 Locale=en-US, Version=3.0, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_shortCut_keys=false
-[books.*_long_form]: _NOT_FOUND_
+[books.*_long_form]: 
 [books.Ps_variations]: PSM,PSS
 [books.Matt_variations]: Mt,Ma
 [books.Phlm_variations]: PHLM,PHM
@@ -95,20 +95,7 @@ Locale=en-US, Version=3.0, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_
 [main-window.menu-file.import-audio.sc]: I
 [main-window.menu-file.page-setup.ak]: u
 [main-window.menu-file.print.ak]: P
-[main-window.menu-file.print-preview.ak]: v
-[main-window.menu-file.print-preview.close.ak]: C
-[main-window.menu-file.print-preview.p100]: 100&#037;
-[main-window.menu-file.print-preview.p125]: 125&#037;
-[main-window.menu-file.print-preview.p150]: 150&#037;
-[main-window.menu-file.print-preview.p175]: 175&#037;
-[main-window.menu-file.print-preview.p200]: 200&#037;
-[main-window.menu-file.print-preview.p30]: 30&#037;
-[main-window.menu-file.print-preview.p40]: 40&#037;
-[main-window.menu-file.print-preview.p50]: 50&#037;
-[main-window.menu-file.print-preview.p60]: 60&#037;
-[main-window.menu-file.print-preview.p70]: 70&#037;
-[main-window.menu-file.print-preview.p80]: 80&#037;
-[main-window.menu-file.print-preview.p90]: 90&#037;
+[main-window.menu-file.print-preview.ak]: 
 [main-window.menu-file.print_passage.sc]: a
 [main-window.menu-file.remove_modules.sc]: R
 [main-window.menu-edit.ak]: E
@@ -193,31 +180,29 @@ Locale=en-US, Version=3.0, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_
 [search-help-window.vertical_bar_term]: ||
 [locale_direction]: ltr
 [configuration.default_modules]: ESV
-[configuration.font]: _NOT_FOUND_
-[configuration.font_size_adjust]: _NOT_FOUND_
-[configuration.line_height]: _NOT_FOUND_
-[configuration.text_direction]: _NOT_FOUND_
-[unknown1.kb]: f
-[unknown2.ak]: i
-[unknown3.ck]: X
-[unknown4.kb]: i
-[numeral-0]: _NOT_FOUND_
-[numeral-1]: _NOT_FOUND_
-[numeral-2]: _NOT_FOUND_
-[numeral-3]: _NOT_FOUND_
-[numeral-4]: _NOT_FOUND_
-[numeral-5]: _NOT_FOUND_
-[numeral-6]: _NOT_FOUND_
-[numeral-7]: _NOT_FOUND_
-[numeral-8]: _NOT_FOUND_
-[numeral-9]: _NOT_FOUND_
-[search-window.search_symbols.SINGLE_CHARACTER_WILD_CARD]: _NOT_FOUND_
-[search-window.search_symbols.MULTIPLE_CHARACTER_WILD_CARD]: _NOT_FOUND_
-[search-window.search_symbols.AND]: _NOT_FOUND_
-[search-window.search_symbols.OR]: _NOT_FOUND_
-[search-window.search_symbols.NOT]: _NOT_FOUND_
-[search-window.search_symbols.SIMILAR]: _NOT_FOUND_
-[search-window.search_symbols.GROUP_START]: _NOT_FOUND_
-[search-window.search_symbols.GROUP_END]: _NOT_FOUND_
-[search-window.search_symbols.QUOTE_START]: _NOT_FOUND_
-[search-window.search_symbols.QUOTE_END]: _NOT_FOUND_
+[configuration.font]: 
+[configuration.font_size_adjust]: 
+[configuration.line_height]: 
+[configuration.text_direction]: 
+[find.kb]: f
+[properties.kb]: i
+[numeral-0]: 0
+[numeral-1]: 1
+[numeral-2]: 2
+[numeral-3]: 3
+[numeral-4]: 4
+[numeral-5]: 5
+[numeral-6]: 6
+[numeral-7]: 7
+[numeral-8]: 8
+[numeral-9]: 9
+[search-window.search_symbols.SINGLE_CHARACTER_WILD_CARD]: 
+[search-window.search_symbols.MULTIPLE_CHARACTER_WILD_CARD]: 
+[search-window.search_symbols.AND]: 
+[search-window.search_symbols.OR]: 
+[search-window.search_symbols.NOT]: 
+[search-window.search_symbols.SIMILAR]: 
+[search-window.search_symbols.GROUP_START]: 
+[search-window.search_symbols.GROUP_END]: 
+[search-window.search_symbols.QUOTE_START]: 
+[search-window.search_symbols.QUOTE_END]: 
