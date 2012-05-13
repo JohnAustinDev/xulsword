@@ -68,13 +68,13 @@ function Load() {
   var imgSrc;
   switch (Type) {
   case DLGALERT:
-    imgSrc = "chrome://xulsword/skin/icons/Warning.png";
+    imgSrc = "chrome://xulsword/skin/xsglobal/icons/Warning.png";
     break;
   case DLGQUEST:
-    imgSrc = "chrome://xulsword/skin/icons/Question.png";
+    imgSrc = "chrome://xulsword/skin/xsglobal/icons/Question.png";
     break;
   case DLGINFO:
-    imgSrc = "chrome://xulsword/skin/icons/information-32.png";
+    imgSrc = "chrome://xulsword/skin/xsglobal/icons/information-32.png";
     break;      
   }
   
