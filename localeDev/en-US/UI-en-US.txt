@@ -1,4 +1,4 @@
-Locale=en-US, Version=3.0, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_shortCut_keys=false
+# Locale=en-US, Version=3.0, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_shortCut_keys=false
 [books.Genesis]: Genesis
 [books.Exodus]: Exodus
 [books.Leviticus]: Leviticus

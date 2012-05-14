@@ -116,7 +116,7 @@
             </template>
           </menupopup>
         </menulist>
-        <button id="expander" class="down" tooltip="expanderTT" oncommand="expandTree();"
+        <button id="expander" width="32" height="32" class="down" tooltip="expanderTT" oncommand="expandTree();"
                  tooltiptextdown="&expanderDown.tooltip;"
                  tooltiptextup="&expanderUp.tooltip;"/>
       </row>

@@ -1,0 +1,4 @@
+Locale=en-US, Version=Firefox12, Alternate_locale=3.0, Firefox_locale=en-US, Ignore_shortCut_keys=0
+
+ERROR: Cannot run on en-US.
+

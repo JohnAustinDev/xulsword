@@ -629,7 +629,7 @@ var BookmarksMenuDNDObserver = {
   { 
     var newTarget;
     var bt;
-    if (aTarget.id && aTarget.id == "bookmarks-ptf") {
+    if (aTarget && aTarget.id && aTarget.id == "bookmarks-ptf") {
       // hit when dropping in the bt or between the last visible bookmark 
       // and the chevron
       newTarget = BookmarksToolbar.getLastVisibleBookmark();
