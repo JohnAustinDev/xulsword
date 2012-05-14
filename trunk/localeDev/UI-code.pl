@@ -1,13 +1,12 @@
 #!/usr/bin/perl
 use File::Spec;
+$NOCONSOLELOG = 1;
 
 if (!@ARGV) {print "usage: UI-code.pl MK MKS locale\n"; exit;}
 
 $MK = shift;
 $MKS = shift;
 $locale = shift;
-
-$NOCONSOLELOG = 1;
 
 $MK  =~ s/\\/\//g;
 $MKS =~ s/\\/\//g;
@@ -30,36 +29,10 @@ if (-e $LOCALECODE) {remove_tree($LOCALECODE);}
 &read_UI_Files($locale, \%UIDescValue);
 
 # read the MAP contents into memory
-&readMAP($MAPFILE, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty);
+&readMAP($MAPFILE, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%MapLine);
 
-# create code file data
-for my $d (sort keys %UIDescValue) {
-  for my $fe (keys %FileEntryDesc) {
-    my $fed = quotemeta($FileEntryDesc{$fe});
-    if ($fed =~ s/\\\*/(.*)/) {$IsWild{$fe}++;}
-    if ($d =~ /^$fed$/) {
-      my $w = $1;
-      my $fe2 = $fe;
-      if (exists($IsWild{$fe})) {
-        $fe2 =~ s/\*/$w/;
-      }
-      $MatchedDescriptions{$d}++;
-      if ($fe2 !~ /^(.+?)\:(.+)\s*$/) {&Log("ERROR: Malformed file:entry \"$fe2\"\n"); next;}
-      $CodeFileEntryValues{$fe2} = $UIDescValue{$d};
-      if (exists($IsWild{$fe})) {next;}
-      if ($UIDescValue{$d} =~ /^\s*$/ && !exists($MayBeEmpty{$FileEntryDesc{$fe}})) {&Log("WARNING $fe2: Value is empty.\n");}
-      $FileEntryDesc{$fe} = "<uSEd>";
-    }
-  }
-}
-
-# handle MAP file-entries which need to exist, but which are not used by the UI (and so are not in the UI files)
-for my $fe (keys %FileEntryDesc) {
-  if ($FileEntryDesc{$fe} =~ /^"(.*)"$/) {
-    $CodeFileEntryValues{$fe} = $1;
-    $FileEntryDesc{$fe} = "<uSEd>";
-  }
-}
+# correlate UI descriptions to MAP entries
+&correlateUItoMAP(\%UIDescValue, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%CodeFileEntryValues, \%IsShortcutKey, \%MatchedDescriptions);
 
 # write code files
 for my $fe2 (sort keys %CodeFileEntryValues) {
@@ -67,6 +40,7 @@ for my $fe2 (sort keys %CodeFileEntryValues) {
   my $f = "$LOCALECODE/$1";
   my $e = $2;
   my $v = $CodeFileEntryValues{$fe2};
+  if ($ignoreShortCutKeys && $IsShortcutKey{$fe2}) {$FilteredShortcuts = 1; $v = "";}
 
   my $dir = $f;
   $dir =~ s/\/[^\/]+$//;
@@ -83,21 +57,6 @@ for my $fe2 (sort keys %CodeFileEntryValues) {
   else {&Log("ERROR FileEntry=\"".$fe2."\": Unknown file type \"".$f."\"\n");}
 }
 close(OUTF);
-  
-# report any UI listing phrases which were not used
-for my $d (sort keys %UIDescValue) {
-  if (!exists($MatchedDescriptions{$d})) {
-    &Log("ERROR: Description \"$d = ".$UIDescValue{$d}."\" was not found in the MAP.\n");
-  }
-}
-
-# report any MAP file entries which were not matched
-for my $fe (keys %FileEntryDesc) {
-  if (exists($MayBeMissing{$FileEntryDesc{$fe}})) {next;}
-  if (exists($IsWild{$fe})) {next;}
-  if ($FileEntryDesc{$fe} ne "<uSEd>") {
-    &Log("ERROR: MAP file entry was not matched: \"$fe = ".$FileEntryDesc{$fe}."\".\n");
-  }
-}
+if ($FilteredShortcuts) {&Log("WARNING: All access and command keys have been filtered out (Ignore_shortCut_keys=true).\n");}
 
 &Log("Finished.\n");

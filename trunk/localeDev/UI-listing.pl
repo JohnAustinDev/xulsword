@@ -1,15 +1,14 @@
 #!/usr/bin/perl
 use File::Spec;
 
-if (!@ARGV) {print "usage UI-listing.pl MK MKS locale version alternateLocale firefoxLocale firefoxWins\n"; exit;}
+if (!@ARGV) {print "usage UI-listing.pl MK MKS locale alternateLocale version firefoxDirName\n"; exit;}
 
 $MK = shift;
 $MKS = shift;
 $locale = shift;
-$version = shift;
 $localeALT = shift;
-$firefox = shift;
-$firefoxWins = shift;
+$version = shift;
+$firefoxDirName = shift;
 
 $MK  =~ s/\\/\//g;
 $MKS =~ s/\\/\//g;
@@ -23,104 +22,69 @@ require "$MK/localeDev/script/UI-common.pl";
 $LOGFILE = "$LOCALEDIR/listing_log.txt";
 if (-e $LOGFILE) {unlink($LOGFILE);}
 
-if ($locale eq "en-US") {&Log("ERROR: Cannot run on en-US.\n"); die;}
-
-$dontsort = 1;
-
-if (-e &UI_File($locale, 1)) {&Log("Listing file \"".&UI_File($locale, 1)."\" already exists.\nFinished.\n"); die;}
-if (-e &UI_File($locale, 2)) {&Log("Listing file \"".&UI_File($locale, 2)."\" already exists.\nFinished.\n"); die;}
-
-# if the local locale contains special UI material, handle it
-&extractFromLocale("xulsword/splash.png", "text-skin/xulsword");
-&extractFromLocale("skin/NT.png", "text-skin/skin");
-&extractFromLocale("skin/OT.png", "text-skin/skin"); 
-
 &Log($locinfo);
 
 # read the MAP contents into memory
-&readMAP($MAPFILE, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty);
+&readMAP($MAPFILE, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%MapLine);
 
-# copy the alternate locale UI as a starting point
-&read_UI_Files($localeALT, \%UIDescValue);
-
-# now scour the Firefox locale for matching phrases
+# read the default UI
 &read_UI_Files("en-US", \%UIDescValueEN);
+
+# read existing locale files
+if ($locale eq "en-US") {&Log("ERROR: Cannot run on en-US.\n"); die;}
+&read_UI_Files($locale, \%UIDescValue);
+&saveLocaleCode($locale, "xulsword/splash.png", "text-skin/xulsword");
+&saveLocaleCode($locale, "skin/NT.png", "text-skin/skin");
+&saveLocaleCode($locale, "skin/OT.png", "text-skin/skin"); 
+
+# read the alternate locale UI to use if a translation not found
+&read_UI_Files($localeALT, \%UIDescValueALT);
+
+# now scour the firefox locale, translating all matching phrases
 for my $d (keys %UIDescValueEN) {
-  my $fe = &findFileEntry($UIDescValueEN{$d}, "en-US");
-  if ($fe) {
-    my $v = &getValue($fe, $locale);
-    if (!$v) {&Log("WARNING: \"".$fe."\" was located in en-US, but not in $locale.\n");}
-    elsif ($firefoxWins || !exists($UIDescValue{$d}) || !$UIDescValue{$d} || $UIDescValue{$d} eq "_NOT_FOUND_") {
-      $UIDescValue{$d} = $v;
-      &Log("INFO: Found \"$d\" as \"$v\" (".$UIDescValueEN{$d}.")\n");
+  if (exists($UIDescValue{$d}) && $UIDescValue{$d} ne "" && $UIDescValue{$d} ne "_NOT_FOUND_") {next;}
+  my $v = $UIDescValueEN{$d};
+  if (&isSecondary($v, $d, \%MayBeMissing, \%MayBeEmpty)) {next;} # Don't try to translate secondary elements
+  my $tv = &translateValue($v, "en-US", $locale);
+  if ($tv) {
+    $UIDescValue{$d} = $tv;
+    $MapLine{$d} += 100000; # Move translated phrases to end of file
+    &Log("INFO: Translated \"$v\" to \"$tv\" ($d)\n");
+  }
+  else {
+    &Log("INFO: Couldn't translate \"$v\" ($d)\n");
+    if (exists($UIDescValueALT{$d})) {
+      $UIDescValue{$d}= $UIDescValueALT{$d};
+      &Log("INFO: Using alternate locale instead of translation: \"".$UIDescValueALT{$d}."\" ($d)\n");
     }
   }
 }
 
+# correlate UI descriptions to MAP entries
+&correlateUItoMAP(\%UIDescValue, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%CodeFileEntryValues, \%IsShortcutKey, \%MatchedDescriptions);
 
-
-
-# print the listing to UI file(s)...
-if (!open(OUTF, ">:encoding(UTF-8)", "$LISTFILE1")) {&Log("Could not open output file $LISTFILE1.\nFinished.\n"); die;}
-
+# write the UI files
+# file1
+my $listfile1 = &UI_File($locale, 1);
+if (!open(OUTF, ">:encoding(UTF-8)", $listfile1)) {&Log("ERROR: Could not open output file $listfile1.\n"); die;}
 print OUTF $locinfo;
-
-for $di (sort descsort keys %MapDescInfo) {
-  if ($di !~ /\:value$/) {next;}
-  $d = $di; $d =~ s/\:value$//;
-  $e = $MapDescInfo{"$d:fileEntry"};
-  $list[0] = $d;
-  my @wildm; # not used here
-  if ($e =~ /:.*\*/) {&getMatchingEntries(\@list, \@wildm, $e, \%CodeFileEntryValue);}
-  &saveListing(\@list, \%MapDescInfo, \%MapFileEntryInfo);
+my $f2 = "";
+foreach my $d (sort {$MapLine{$a} <=> $MapLine{$b}} keys %UIDescValue) {
+  my $v = $UIDescValue{$d};
+  my $p = "[$d]: $v\n";
+  
+  # put secondary UI stuff in the second UI file
+  if (&isSecondary($v, $d, \%MayBeMissing, \%MayBeEmpty)) {$f2 .= $p;}
+  else {print OUTF $p;}
 }
 close(OUTF);
 
-if ($File2) {
-  if (!open(OUTF, ">:encoding(UTF-8)", "$LISTFILE2")) {&Log("Could not open output file $LISTFILE2.\nFinished.\n"); die;}
-  print OUTF $locinfo.$File2;
+# file2
+if ($f2) {
+  my $listfile2 = &UI_File($locale, 2);
+  if (!open(OUTF, ">:encoding(UTF-8)", $listfile2)) {&Log("ERROR: Could not open output file $listfile2.\n"); die;}
+  print OUTF $f2;
   close(OUTF);
 }
 
-&Log("$outdated\n");
-&Log("\nCODE FILES THAT WERE READ:\n");
-for $f (sort keys %Readfiles) {&Log($Readfiles{$f}."\n");}
 &Log("\nFinished.\n");
-
-################################################################################
-################################################################################
-
-sub saveListing(@%%) {
-  my $listP = shift;
-  my $mapDescInfoP = shift;
-  my $MAPFILEEntryInfoP = shift;
-  
-  foreach (@{$listP}) {
-    my $p = "[$_]: ".$MapDescInfo{"$_:value"}."\n";
-
-    # a second file is used for things which UI translators don't need to worry about
-    if    ($mapDescInfoP->{"$_:value"} =~ /^\s*$/)   {$File2 = $File2.$p;}
-    elsif ($_ =~ /^search-help-window\..*_term$/)    {$File2 = $File2.$p;}
-    elsif ($_ =~ /^locale_direction/)                {$File2 = $File2.$p;}
-    elsif ($_ =~ /^books\..*_index/)                 {$File2 = $File2.$p;}
-    elsif ($_ =~ /print-preview.p\d+/)               {$File2 = $File2.$p;}
-    elsif ($_ =~ /\.(ak|sc|ck|kb)$/)                 {$File2 = $File2.$p;}
-    elsif ($MAPFILEEntryInfoP->{$mapDescInfoP->{$_.":fileEntry"}.":unused"}   eq "true") {$File2 = $File2.$p;}
-    elsif ($MAPFILEEntryInfoP->{$mapDescInfoP->{$_.":fileEntry"}.":optional"} eq "true") {$File2 = $File2.$p;}
-    else {print OUTF $p;}
-  }
-}
-
-sub extractFromLocale($$) {
-  my $srcf = shift;
-  my $dest = shift;
-  
-  if (-e "$LOCALECODE/$srcf") {
-    print "\n\nFound in locale: \"$srcf\"\n\tExtract and overwrite existing? (Y/N):"; 
-    $in = <>; 
-    if ($in =~ /^\s*y\s*$/i) {
-      if (!-e "$LOCALEDIR/$dest") {make_path("$LOCALEDIR/$dest");}
-      cp("LOCALECODE/$srcf", "$LOCALEDIR/$dest/");
-    }
-  }
-}
