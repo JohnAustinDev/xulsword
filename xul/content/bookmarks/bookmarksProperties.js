@@ -47,10 +47,10 @@ function Init()
 {
   updateCSSBasedOnCurrentLocale(["#bmPropsWindow", "input, button, menu, menuitem"]);
   createVersionClasses();
+  AllWindows.push(window);
   
-  BMDS = initBMServices();
-  gResource = RDF.GetResource(window.arguments[0]);
-  gIsContainer = RDFCU.IsContainer(BMDS, gResource);
+  gResource = BM.RDF.GetResource(window.arguments[0]);
+  gIsContainer = BM.RDFCU.IsContainer(BMDS, gResource);
   gName = document.getElementById("bmname");
   gNote = document.getElementById("note");
   gVerseText = document.getElementById("versetext");
@@ -179,15 +179,15 @@ function Commit() {
     // Get the new value as a literal, using 'null' if the value is empty.
     var newValue = gInfoResource[i];
     
-    var oldValue = BMDS.GetTarget(gResource, gBmProperties[i], true);
+    var oldValue = BMDS.GetTarget(gResource, BM.gBmProperties[i], true);
 
     if (oldValue)
       oldValue = oldValue.QueryInterface(Components.interfaces.nsIRDFLiteral);
 
     if (newValue)
-      newValue = RDF.GetLiteral(newValue);
+      newValue = BM.RDF.GetLiteral(newValue);
 
-    changed |= BookmarkFuns.updateAttribute(gResource, gBmProperties[i], oldValue, newValue);
+    changed |= BookmarkFuns.updateAttribute(gResource, BM.gBmProperties[i], oldValue, newValue);
     
     if (!newValue) newValue = "";
     if (!oldValue) oldValue = "";

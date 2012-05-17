@@ -317,9 +317,7 @@ var nsDragAndDrop = {
     {
       if (!this._mDS) 
         {
-          const kDSContractID = "@mozilla.org/widget/dragservice;1";
-          const kDSIID = Components.interfaces.nsIDragService;
-          this._mDS = Components.classes[kDSContractID].getService(kDSIID);
+          this._mDS = Components.classes["@mozilla.org/widget/dragservice;1"].getService(Components.interfaces.nsIDragService);
         }
       return this._mDS;
     },

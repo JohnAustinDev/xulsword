@@ -44,7 +44,6 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksTop.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/printPassage.js"/>
   <vbox flex="1">
     <groupbox>

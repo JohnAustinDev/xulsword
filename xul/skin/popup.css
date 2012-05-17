@@ -1,0 +1,96 @@
+#npopup {
+  z-index:4;
+  position:absolute;
+}
+#npopupTX {
+  margin: 0px 20px 10px 0px;
+  font-size: 13px;
+  padding: 22px 20px 20px 20px;
+  border:1px solid black;
+  background:rgb(245,220,255);
+  -moz-border-radius:5px;
+  cursor:default;
+  overflow:auto;
+  -moz-box-shadow: 3px 3px 5px 6px #ccc;
+}
+#npopup[value=pinned] #npopupTX {
+  margin: 5px 15px 5px 5px;
+  -moz-box-shadow: 1px 1px 2px 3px #ccc;
+}
+
+.textpopup {
+  width:80%;
+  max-height:100%;
+  min-height:60px;
+}
+
+/* FOR WINDOW PINNED POPUP */
+.windowedpup {
+  margin:0px;
+  border:1px solid black;
+  background:rgb(245,220,255);
+  -moz-border-radius:5px;
+  height:100%;
+  overflow:hidden;
+}
+.windowedpup #npopupTX {
+  border:none !important;
+  -moz-box-shadow:none !important;
+}
+.windowedpup .popuppin {
+  visibility:hidden;
+}
+
+/* FOR INTERNAL POPUP STYLES */
+.popupheader {
+  position:relative;
+  margin:0px 0px 20px 0px;
+}
+
+.popupheader select {
+  visibility:hidden;
+  position:absolute;
+  top:-10px;
+  right:0px;
+}
+
+.popupbody {
+  position:relative;
+}
+
+.popuppin {
+  position:absolute;
+  background: url('chrome://xulsword/skin/images/pushpin0.png');
+  width: 28px;
+  height: 37px;
+  top:-19px;
+  left:-18px;
+}
+.popuppin:hover {
+  background: url('chrome://xulsword/skin/images/pushpin2.png');
+}
+.popuppin[value=pinned] {
+  background: url('chrome://xulsword/skin/images/pushpin1.png');
+}
+
+.twisty {
+  position:absolute;
+  top:4px;
+  background:url('chrome://xulsword/skin/images/twisty-open.png');
+  width:9px;
+  height:9px;
+  -moz-margin-start:0px;
+}
+.twisty[value=open] {
+  background:url('chrome://xulsword/skin/images/twisty-close.png');
+}
+.twisty-rtl {
+  right:-15px;
+}
+.twisty-ltr {
+  left:-14px;
+}
+
+.prevhtml {
+  display:none;
+}

@@ -20,24 +20,24 @@
 
 <html>
   <head>
-  <meta http-equiv="content-type" content="text/html; charset=windows-1250">
-  <meta name="generator" content="PSPad editor, www.pspad.com">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <title>Bible Frame</title>
   <link rel="stylesheet" href="chrome://xulsword/skin/style.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/bible.css" type="text/css">
+  <link rel="stylesheet" href="chrome://xulsword/skin/popup.css" type="text/css">
   
-  <script>var MainWindow = (window.frameElement.ownerDocument.defaultView.MainWindow ? window.frameElement.ownerDocument.defaultView.MainWindow:null)</script>
+  <script>var MainWindow = window.frameElement.ownerDocument.defaultView.MainWindow</script>
   <script src="chrome://xulsword/content/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common1.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/textHTML.js" type="text/javascript"></script>
-  <script src="chrome://xulsword/content/bookmarks/bookmarksTop.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/script.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/scriptmouse.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/popup.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/chooser.js" type="text/javascript"></script>
 
-  
   </head>
-  <body id="scriptBoxBody" style="background-image: url(chrome://xulsword/skin/images/9.gif);" onmousemove="boundaryMouseMove(event);" onmouseup="boundaryMouseUp(event);">
+  <body id="scriptBoxBody" style="background-image: url(chrome://xulsword/skin/images/9.gif);" onmousemove="boundaryMouseMove(event);" onmouseup="boundaryMouseUp(event);" >
         
     <!-- The following scripts will only execute in bible1Frame !-->
     <div id="wholeChooser">
@@ -48,16 +48,24 @@
     </div>
       
     <div id="langTabs" class="languageTabs"><script type="text/javascript">placeTabs();</script></div>
-    <img id="pin" class="scriptPin" onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)" onclick="scriptboxClick(event)" src="chrome://xulsword/skin/images/pushpin0.png">
+    <div id="pin" class="scriptPin" onclick="scriptClick(event)"></div>
     
-    <div id="scriptBox" class="script scriptbox" ondblclick="scriptboxDblClick(event)" onmousedown="clearSelections()">
-      <div id="scriptBoxText" class="scriptboxtext" onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)" onclick="scriptboxClick(event)"></div>
+    <div id="scriptBox" class="script scriptbox" ondblclick="scriptDblClick(event)" onmousedown="clearSelections()">
+      <div id="scriptBoxText" class="scriptboxtext" onmouseover="scriptMouseOver(event)" onmouseout="scriptMouseOut(event)" onclick="scriptClick(event)"></div>
       <div id="boundary"      class="boundary"      onmousedown="boundaryMouseDown(event);"></div>
-      <div id="noteBox"       class="notebox"       onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)"   onclick="noteboxClick(event)"></div>
+      <div id="noteBox"       class="notebox"       onmouseover="scriptMouseOver(event)" onmouseout="scriptMouseOut(event)"   onclick="noteClick(event)"></div>
       <img id="nbsizer" src="" style="position:absolute;" onclick="noteboxClick(event)">
     </div>
-    <div id="npopup"     class="npopup" style="display:none;" onmouseover="scriptboxMouseOver(event)" onmouseout="scriptboxMouseOut(event)" onclick="scriptboxClick(event)" ondblclick="scriptboxDblClick(event)"></div>
-    <div id="npopupSH"   class="npopupSH" style="display:none;"></div>
+    
+    <div id="npopup" class="textpopup" value="unpinned" style="display:none;">
+      <div id="npopupTX"
+        onmouseover="scriptMouseOver(event)" 
+        onmouseout="scriptMouseOut(event); var m=event.relatedTarget; while(m && !m.id) {m=m.parentNode;} if (m) jsdump(m.id);" 
+        onclick="scriptClick(event)" 
+        ondblclick="scriptDblClick(event)">
+      </div>
+    </div>
+    
     <div id="boundaryHi" class="boundaryHi"></div>
     <div id="connector"  class="connector"></div>
 

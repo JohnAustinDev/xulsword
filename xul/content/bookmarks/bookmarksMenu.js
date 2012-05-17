@@ -66,7 +66,7 @@ var BookmarksMenu = {
     this._orientation = this.getBTOrientation(aEvent, target);
     // Don't let commands target the contents of folders, rather target before folders
     if (this._orientation == BookmarksUtils.DROP_ON) this._orientation = BookmarksUtils.DROP_BEFORE;
-    if (RDF.GetResource(target.id)==BmEmptyRes || targettype != "ImmutableBookmark")
+    if (BM.RDF.GetResource(target.id)==BM.BmEmptyRes || targettype != "ImmutableBookmark")
       this._target = this.getBTTarget(target, this._orientation);
 
     // walk up the tree until we find a database node
@@ -116,7 +116,7 @@ var BookmarksMenu = {
     var item;
     switch (aNode.id) {
     case "bookmarks-menu":
-      item = AllBookmarksID;
+      item = BM.AllBookmarksID;
       break;
     default:
       item = aNode.id;
@@ -126,8 +126,8 @@ var BookmarksMenu = {
     var parent           = this.getBTContainer(aNode);
     var isExpanded       = aNode.hasAttribute("open") && aNode.open;
     var selection        = {};
-    selection.item       = [RDF.GetResource(item)];
-    selection.parent     = [RDF.GetResource(parent)];
+    selection.item       = [BM.RDF.GetResource(item)];
+    selection.parent     = [BM.RDF.GetResource(parent)];
     selection.isExpanded = [isExpanded];
     selection.length     = selection.item.length;
     BookmarksUtils.checkSelection(selection);
@@ -142,7 +142,7 @@ var BookmarksMenu = {
     switch (aNode.id) {
 
     case "bookmarks-menu":
-      parent = AllBookmarksID;
+      parent = BM.AllBookmarksID;
       break;
 
     default:
@@ -154,14 +154,14 @@ var BookmarksMenu = {
       }
     }
 
-    parent = RDF.GetResource(parent);
+    parent = BM.RDF.GetResource(parent);
     if (aOrientation == BookmarksUtils.DROP_ON)
       return BookmarksUtils.getTargetFromFolder(parent);
 
     if (!item.id) return null;
-    item = RDF.GetResource(item.id);
-    RDFC.Init(BMDS, parent);
-    index = RDFC.IndexOf(item);
+    item = BM.RDF.GetResource(item.id);
+    BM.RDFC.Init(BMDS, parent);
+    index = BM.RDFC.IndexOf(item);
     if (aOrientation == BookmarksUtils.DROP_AFTER)
       ++index;
 
@@ -177,14 +177,14 @@ var BookmarksMenu = {
     var parent;
     var item = aNode.id;
     if (!this.isBTBookmark(item))
-      return AllBookmarksID;
+      return BM.AllBookmarksID;
     parent = aNode.parentNode.parentNode;
     parent = parent.id;
     switch (parent) {
     case "bookmarks-stack":
     case "bookmarks-toolbar":
     case "bookmarks-menu":
-      return AllBookmarksID;
+      return BM.AllBookmarksID;
     default:
       return parent;
     }
@@ -453,7 +453,7 @@ var BookmarksMenuDNDObserver = {
     var btype = BookmarksUtils.resolveType(target.id);
 
     return target.id == "bookmarks-menu" ||
-          (target.id != BookmarksRootRes &&
+          (target.id != BM.BookmarksRootRes &&
            btype == "Folder" ||
            btype == "Bookmark");
   },

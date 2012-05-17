@@ -18,24 +18,31 @@
 
 
 /************************************************************************
- * Retrieve some common globals from the Main Window for use locally 
+ * Globals defined in MainWindow to be re-used everywhere else
  ***********************************************************************/ 
-var Bible = MainWindow.Bible;
+var Bible                 = MainWindow.Bible;
+var Location              = MainWindow.Location;
 
-LocaleConfigs         = MainWindow.LocaleConfigs;
-VersionConfigs        = MainWindow.VersionConfigs;
-StyleRules            = MainWindow.StyleRules;
-LocaleDirectionEntity = MainWindow.LocaleDirectionEntity;
-LocaleDirectionChar   = MainWindow.LocaleDirectionChar
+var LocaleConfigs         = MainWindow.LocaleConfigs;
+var VersionConfigs        = MainWindow.VersionConfigs;
+var StyleRules            = MainWindow.StyleRules;
+var LocaleDirectionEntity = MainWindow.LocaleDirectionEntity;
+var LocaleDirectionChar   = MainWindow.LocaleDirectionChar
 
-Book                  = MainWindow.Book;
-OrigModuleNT          = MainWindow.OrigModuleNT;
-OrigModuleOT          = MainWindow.OrigModuleOT;
+var Book                  = MainWindow.Book;
+var OrigModuleNT          = MainWindow.OrigModuleNT;
+var OrigModuleOT          = MainWindow.OrigModuleOT;
 
-Tabs                  = MainWindow.Tabs;
-Tab                   = MainWindow.Tab;
+var Tabs                  = MainWindow.Tabs;
+var Tab                   = MainWindow.Tab;
+var HaveOriginalTab       = MainWindow.HaveOriginalTab;
 
-LocaleList            = MainWindow.LocaleList;
-LocaleDefaultVersion  = MainWindow.LocaleDefaultVersion;
+var LocaleList            = MainWindow.LocaleList;
+var LocaleDefaultVersion  = MainWindow.LocaleDefaultVersion;
 
-if (window.name.search(/^bible\dFrame$/) != -1) Location = MainWindow.Location;
+var BMDS                  = MainWindow.BMDS;
+var BM                    = MainWindow.BM;
+var BookmarkFuns          = MainWindow.BookmarkFuns;
+
+var AllWindows            = MainWindow.AllWindows;
+

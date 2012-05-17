@@ -1,4 +1,15 @@
 /* SCRIPT BOX */
+.scriptPin {
+  background:url('chrome://xulsword/skin/images/pushpin0.png');
+  width:28px;
+  height:37px;
+}
+.scriptPin[value="pinned"] {
+  background:url('chrome://xulsword/skin/images/pushpin1.png');
+}
+.scriptPin:hover {
+  background:url('chrome://xulsword/skin/images/pushpin2.png');
+}
 .script .head1 {
   font-size:18px;
   color:rgb(110,85,110);
@@ -61,6 +72,16 @@
   font-weight:normal;
   margin: 0px 5px 0px 0px;
 }
+.listenlink {
+  background:url('chrome://xulsword/skin/images/listen0.png');
+  width:45px;
+  height:37px;
+  visibility:hidden;
+}
+.listenlink:hover {
+  background:url('chrome://xulsword/skin/images/listen1.gif');
+}
+
 .scriptbox {
   font-size: 14px;
 	background:rgb(255,243,255);
@@ -82,7 +103,6 @@
   padding-right:40px;
   margin-bottom:10px;
   z-index:1;
-  -moz-border-radius:8px;
 }
 .scriptboxPinned {
   /*background:rgb(235,235,228) !important;*/
@@ -96,29 +116,6 @@
 }
 .scriptboxPinnedBB {
   /* background:rgb(213,213,213) !important; */
-}
-.npopup {
-  font-size: 13px;
-  margin-right:20px;
-  padding-left:20px;
-  padding-right:20px;
-  padding-top:20px;
-  padding-bottom:20px;
-  border:1px solid black;
-  cursor:default;
-  background:rgb(245,220,255);
-  -moz-border-radius:5px;
-  z-index:4;
-  position:absolute;
-  overflow:auto;
-}
-.npopupSH {
-  background:black;
-  opacity:.35;
-  -moz-border-radius:7px;
-  cursor:default;
-  z-index:3;
-  position:absolute;
 }
 .navlink {
   direction:ltr !important;

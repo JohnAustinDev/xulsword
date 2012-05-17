@@ -51,9 +51,6 @@
   <binding id="bookmarks-tree">
     <implementation>
       <constructor><![CDATA[
-        // This function only reads in the bookmarks from disk if they have not already been read.
-        initBMServices();
-        
         // We implement nsIController
         this.tree.controllers.appendController(this.controller);
         var olb = document.getAnonymousElementByAttribute(this, "anonid", "bookmarks-tree");
@@ -90,10 +87,10 @@
           for (i = 0; i < mycolumns.length; ++i) {
             try {var test = myprefs.getBoolPref("searchFlag-" + mycolumns[i].resource);} 
             catch (er) {
-              var searchableDef = mycolumns[i].resource.substring(4) == gBmProperties[NAME].Value ||
-                                  mycolumns[i].resource.substring(4) == gBmProperties[NOTE].Value ||
-                                  mycolumns[i].resource.substring(4) == gBmProperties[LOCATION].Value ||
-                                  mycolumns[i].resource.substring(4) == gBmProperties[BMTEXT].Value;
+              var searchableDef = mycolumns[i].resource.substring(4) == BM.gBmProperties[NAME].Value ||
+                                  mycolumns[i].resource.substring(4) == BM.gBmProperties[NOTE].Value ||
+                                  mycolumns[i].resource.substring(4) == BM.gBmProperties[LOCATION].Value ||
+                                  mycolumns[i].resource.substring(4) == BM.gBmProperties[BMTEXT].Value;
               myprefs.setBoolPref("searchFlag-" + mycolumns[i].resource, searchableDef);
             } 
           }
@@ -119,7 +116,7 @@
         // Save column settings and sort info to persisted attribute
         var persistString = "";
         
-        var sortResource = gNC_NS + "Name";
+        var sortResource = BM.gNC_NS + "Name";
         var sortDirection = "none";
 
         var treecols = document.getAnonymousElementByAttribute(this, "anonid", "treecols");
@@ -326,7 +323,7 @@
       <method name="getRootResource">
         <body><![CDATA[
           var tree = document.getAnonymousElementByAttribute(this, "anonid", "bookmarks-tree");
-          return RDF.GetResource(tree.ref);
+          return BM.RDF.GetResource(tree.ref);
         ]]></body>
       </method>
 
@@ -342,8 +339,8 @@
           thisDS = BMDS;
           allElems = thisDS.GetAllResources();
           while (allElems.hasMoreElements()) {
-            rParent = allElems.getNext().QueryInterface(kRDFRSCIID);
-            if (!RDFCU.IsContainer(BMDS,rParent)) {continue;}
+            rParent = allElems.getNext().QueryInterface(BM.kRDFRSCIID);
+            if (!BM.RDFCU.IsContainer(BMDS,rParent)) {continue;}
             index = this.treeBuilder.getIndexOfResource(rParent);
             if (index == -1) {continue;}
             if (!this.treeBoxObject.view.isContainerOpen(index)) {this.treeBoxObject.view.toggleOpenState(index);}
@@ -397,14 +394,14 @@
         <parameter name="aOrientation"/>
         <body><![CDATA[
 
-          if (!aParent || aParent.Value == BookmarksRootID)
-            return BookmarksUtils.getTargetFromFolder(RDF.GetResource(AllBookmarksID))
+          if (!aParent || aParent.Value == BM.BookmarksRootID)
+            return BookmarksUtils.getTargetFromFolder(BM.RDF.GetResource(BM.AllBookmarksID))
 
           if (aOrientation == BookmarksUtils.DROP_ON)
             return BookmarksUtils.getTargetFromFolder(aItem);
 
-          RDFC.Init(this.db, aParent);
-          var index = RDFC.IndexOf(aItem);
+          BM.RDFC.Init(this.db, aParent);
+          var index = BM.RDFC.IndexOf(aItem);
           if (aOrientation == BookmarksUtils.DROP_AFTER)
             ++index;
           return { parent: aParent, index: index };
@@ -588,20 +585,20 @@
           else
             {
               selectedColor = "blue";
-              var oldresults = RDF.GetResource(FoundResultsID);
+              var oldresults = BM.RDF.GetResource(BM.FoundResultsID);
               BookmarkFuns.emptySearchResultsFolder();
               var allres = BMDS.GetAllResources();
-              var srcontainer = Components.classes[kRDFCContractID].createInstance(kRDFCIID);
-              srcontainer.Init(BMDS, FoundResultsRes);
+              var srcontainer = BM.RDFC;
+              srcontainer.Init(BMDS, BM.FoundResultsRes);
             ALLELEMENTS:
               while (allres.hasMoreElements()) {
                 var et = allres.getNext();
-                if (RDFCU.IsContainer(BMDS,et)) {continue;}
-                if (et == BmEmptyRes) {continue;}
-                if (!BookmarkFuns.isItemChildOf(et,AllBookmarksRes,BMDS)) {continue;}
+                if (BM.RDFCU.IsContainer(BMDS,et)) {continue;}
+                if (et == BM.BmEmptyRes) {continue;}
+                if (!BookmarkFuns.isItemChildOf(et, BM.AllBookmarksRes, BMDS)) {continue;}
                 for (i = 0; i < columns.length; ++i) {
                   if (!prefs.getBoolPref("searchFlag-" + columns[i].resource)) {continue;}
-                  var columnRes = RDF.GetResource(columns[i].resource.substring(4));
+                  var columnRes = BM.RDF.GetResource(columns[i].resource.substring(4));
                   var tliteral;
                   try {tliteral=BMDS.GetTarget(et,columnRes,true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
                   if (tliteral.search(aInput,"i") == -1) {continue;}
@@ -609,7 +606,7 @@
                   continue ALLELEMENTS;
                 }
               }
-              this.tree.setAttribute("ref", FoundResultsID);
+              this.tree.setAttribute("ref", BM.FoundResultsID);
             }
             var ids = ["Name","Note","VerseText","CreationDate","LastVisitDate"];
             for (i = 0; i < columns.length; ++i) {
@@ -631,7 +628,7 @@
           var selection = this.mOuter._selection;
           aXferData.data = BookmarksUtils.getXferDataFromSelection(selection);
           if (aEvent.ctrlKey)
-            aDragAction.action = kDSIID.DRAGDROP_ACTION_COPY;
+            aDragAction.action = Components.interfaces.nsIDragService.DRAGDROP_ACTION_COPY;
         },
         onDragOver: function (aEvent, aFlavour, aDragSession)
         {
@@ -707,7 +704,7 @@
 
         canDrop: function(index, orientation)
         {
-          var dragSession = DS.getCurrentSession();
+          var dragSession = BM.DS.getCurrentSession();
           if (!dragSession)
             return false;
 
@@ -737,7 +734,7 @@
 
         onDrop: function(row, orientation)
         {
-          var dragSession = DS.getCurrentSession();
+          var dragSession = BM.DS.getCurrentSession();
           if (!dragSession)
             return;
           //var date = Date.now();
@@ -758,7 +755,7 @@
 
           // we can only test for kCopyAction if the source is a bookmark
           var checkCopy = dragSession.isDataFlavorSupported("moz/rdfitem");
-          const kCopyAction = kDSIID.DRAGDROP_ACTION_COPY + kDSIID.DRAGDROP_ACTION_LINK;
+          const kCopyAction = Components.interfaces.nsIDragService.DRAGDROP_ACTION_COPY + Components.interfaces.nsIDragService.DRAGDROP_ACTION_LINK;
 
           // doCopy defaults to true; check if we should make it false.
           // we make it false only if all the selection items have valid parent

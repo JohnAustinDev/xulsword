@@ -64,114 +64,9 @@ var GlobalToggleCommands = {
   cmd_xs_toggleRedWords:  "Words of Christ in Red"
 };
     
-var NumBooks=66;
-var NumOT=39;
-var NumNT=27;
-var Book = new Array(NumBooks);
-
-var HaveOriginalTab;
-var OrigModuleNT;
-var OrigModuleOT;
-
-var Tabs = [];
-var Tab = {};
-
-var LocaleList = [];
-var LocaleDefaultVersion = [];
-
-var LocaleDirectionEntity;
-var LocaleDirectionChar;
-
-var Location = {
-  modname:null,
-  modvsys:null,
-  book:null,
-  chapter:null,
-  verse:null,
-  lastverse:null,
-
-convertLocation: function(vsys1, xsref, vsys2) {
-    var p = xsref.split(".");
-    var vzero = false;
-    if (p && (p.length==3 || p.length==4) && p[2]==0) {
-      // libxulsword convertLocation was changed to always return valid
-      // references (verse=0 is never returned any more). So the old 
-      // behaviour is enforced here to keep xulsword happy.
-      vzero = true;
-      p[2] = 1;
-      p[3] = 1;
-      xsref = p.join(".");
-    }
- 
-    var loc = Bible.convertLocation(vsys1, xsref, vsys2);
-    if (!vzero) return loc;
-    
-    p = loc.split(".");
-    p[2] = 0;
-    p[3] = 0;
-    return p.join(".");
-  },
-  
-  setLocation: function(modname, xsref) {
-    this.modname = modname;
-    this.modvsys = Bible.getVerseSystem(modname);
- 
-    var loc = this.convertLocation(this.modvsys, xsref, this.modvsys);
-    var p = loc.split(".");
-
-    this.book = p[0];
-    this.chapter = p[1];
-    this.verse = p[2];
-    this.lastverse = p[3];
-
-    return this.modvsys;
-  },
-  
-  setVerse: function(modname, verse, lastverse) {
-    var loc = this.getLocation(modname);
-    var p = loc.split(".");
-    var maxv = Bible.getMaxVerse(modname, loc);
-    
-    if (verse == -1 || verse > maxv) p[2] = maxv;
-    else if (verse < 0) p[2] = 0;
-    else p[2] = verse;
-    
-    if (lastverse == -1 || lastverse > maxv) p[3] = maxv;
-    else if (lastverse < verse) p[3] = verse;
-    else p[3] = lastverse;
-  
-    this.setLocation(modname, p.join("."));
-
-    return this.modvsys;
-  },
-  
-  getLocation: function(modname) {
-    if (!this.modname) {setLocation(WESTERNVS, "Gen.1.1.1");}
-    var r = this.convertLocation(Bible.getVerseSystem(this.modname), this.book + "." + this.chapter + "." + this.verse + "." + this.lastverse, Bible.getVerseSystem(modname));
-    return r;
-  },
-  
-  getChapter: function(modname) {
-    var p = this.getLocation(modname).split(".");
-    return p[0] + " " + p[1];
-  },
-    
-  getBookName: function() {
-    return this.getLocation(this.modname).split(".")[0];
-  },
-
-  getChapterNumber: function(modname) {
-    return this.getLocation(modname).split(".")[1];
-  },
-  
-  getVerseNumber: function(modname) {
-    return this.getLocation(modname).split(".")[2];
-  },
-  
-  getLastVerseNumber: function(modname) {
-    return this.getLocation(modname).split(".")[3];
-  }
-};
+const NumBooks=66;
+const NumOT=39;
+const NumNT=27;
 
 
 /************************************************************************
@@ -241,7 +136,6 @@ function getCSS(searchText) {
   return null;
 }
 
-var StyleRules = [];
 function createVersionClasses() {
   var sheet = document.styleSheets[document.styleSheets.length-1];
   if (!sheet) return;
@@ -304,8 +198,6 @@ function updateCSSBasedOnCurrentLocale(cssRuleNameArray) {
   }
 }
 
-var LocaleConfigs = {};
-var VersionConfigs = {};
 // Return a locale (if any) to associate with the module:
 //    Return a Locale which lists the module as its default
 //    Return a Locale with exact same language code as module
@@ -786,6 +678,40 @@ function getBookIntroduction(version, book, bibleObj) {
 
 
 /************************************************************************
+ * Script and Scriptmouse functions
+ ***********************************************************************/ 
+
+function scroll2(outerElement, element2Scroll, offsetParentId, dontScrollIfVisible, margin) {
+  //dump ("outerElement:" + outerElement.id + "\nelement2Scroll:" + element2Scroll.id + "\noffsetParentId:" + offsetParentId + "\ndontScrollIfVisible:" + dontScrollIfVisible + "\nmargin:" + margin + "\n");
+  if (!element2Scroll || !element2Scroll.offsetParent) return;
+  //jsdump("offsetParentId:" + offsetParentId + "\n");
+  while (element2Scroll && element2Scroll.offsetParent && element2Scroll.offsetParent.id != offsetParentId) {element2Scroll = element2Scroll.parentNode;}
+  
+  var noteOffsetTop = element2Scroll.offsetTop;
+  var boxScrollHeight = outerElement.scrollHeight;
+  var boxOffsetHeight = outerElement.offsetHeight;
+  
+  //jsdump("id:" + element2Scroll.id + " outElemScrollTop: " + outerElement.scrollTop + " boxOffsetHeight:" + boxOffsetHeight + " boxScrollHeight:" + boxScrollHeight + " noteOffsetTop:" + noteOffsetTop + "\n");
+  var scrollmargin=10;
+  if (dontScrollIfVisible && noteOffsetTop > outerElement.scrollTop+scrollmargin && noteOffsetTop < outerElement.scrollTop+boxOffsetHeight-scrollmargin) return;
+  
+  // If note is near bottom then shift to note (which will be max shift)
+  if (noteOffsetTop > (boxScrollHeight - boxOffsetHeight + margin)) {outerElement.scrollTop = noteOffsetTop;}
+  // Otherwise shift to note and add a little margin above note
+  else {outerElement.scrollTop = noteOffsetTop - margin;}
+}
+
+// Reads verse references including from-to type, it sets first verse as selected verse and any following verses are also highlighted
+function goToCrossReference(crTitle, noHighlight) {
+  if (!crTitle) return;
+  var t = crTitle.match(CROSSREFTARGET);
+  if (!t) return;
+  // Needed when chapter was clicked from chapmenu popup
+  if (Popup && typeof(Popup)!="undefined") Popup.close();
+  Location.setLocation(t[1], t[2]);
+  MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, (noHighlight ? HILIGHTNONE:HILIGHT_IFNOTV1), UPDATELOCATORS); 
+}
+/************************************************************************
  * Miscellaneous Functions
  ***********************************************************************/ 
 
@@ -924,3 +850,5 @@ function isASCII(text) {
   }
   return !notASCII;
 }
+
+

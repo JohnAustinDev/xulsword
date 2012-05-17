@@ -548,7 +548,6 @@ function getAudioDestination(aOutDir, audioFilePath) {
 
 function installBookmarkFile(aFile) {
   if (!aFile.leafName.match(XSBOOKMARKEXT)) return {reset:NORESET, success:false, remove:true};
-  if (!BMDS) BMDS = initBMServices();
   if (!BookmarkFuns.importBMFile(aFile, false, true)) return {reset:NORESET, success:false, remove:true};
   GotoBookmarkFile = aFile;
   return {reset:NORESET, success:true, remove:true};
@@ -735,7 +734,6 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     
   case BOOKMARKS:
     // this doesn't access the Bible object in this case.
-    if (!BMDS) BMDS = initBMServices();
     if (!BookmarkFuns.importBMFile(inflated, false, true)) {
       removeFile(inflated, false);
       return {reset:NORESET, success:false, remove:true};
