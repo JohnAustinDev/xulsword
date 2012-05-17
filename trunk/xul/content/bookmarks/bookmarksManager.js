@@ -60,9 +60,8 @@ function Startup()
   bookmarksView = document.getElementById("bookmarks-view");
   bookmarksFolder = document.getElementById("bookmark-folders-view");
   
-  BMDS = initBMServices();
-  initTemplateDataSource(document.getAnonymousElementByAttribute(bookmarksFolder, "anonid", "bookmarks-tree"), BMDS);
-  initTemplateDataSource(document.getAnonymousElementByAttribute(bookmarksView, "anonid", "bookmarks-tree"), BMDS);
+  BookmarkFuns.initTemplateDataSource(document.getAnonymousElementByAttribute(bookmarksFolder, "anonid", "bookmarks-tree"), BMDS);
+  BookmarkFuns.initTemplateDataSource(document.getAnonymousElementByAttribute(bookmarksView, "anonid", "bookmarks-tree"), BMDS);
 
   var titleString;
 
@@ -90,7 +89,7 @@ function Startup()
   
   //setAllTwisties(true);
   
-  gTxnSvc.clear();
+  BM.gTxnSvc.clear();
 }
 
 /*
@@ -141,7 +140,7 @@ function Shutdown()
   bookmarksFolder.tree.builderView.removeObserver(FolderTreeObserver);
   bookmarksView.tree.builderView.removeObserver(BookmarkTreeObserver);
   
-  gTxnSvc.clear();
+  BM.gTxnSvc.clear();
 }
 
 var gConstructedViewMenuSortItems = false;
@@ -356,9 +355,9 @@ function onViewSelected(aEvent)
   
   if (statusBar && selection.length == 1) {
     if (selection.isContainer[0]) {
-      RDFC.Init(aEvent.target.db, selection.item[0]);
+      BM.RDFC.Init(aEvent.target.db, selection.item[0]);
       var count = 0;
-      var children = RDFC.GetElements();
+      var children = BM.RDFC.GetElements();
       while (children.hasMoreElements()) {
         if (BookmarksUtils.resolveType(children.getNext()) != "BookmarkSeparator")
           count++;
@@ -367,7 +366,7 @@ function onViewSelected(aEvent)
       displayValue = BookmarksUtils.getLocaleString("status_foldercount", dString(count));
     }
     else if (selection.type[0] == "Bookmark")
-      displayValue = BookmarksUtils.getProperty(selection.item[0], gNC_NS+"Name", aEvent.target.db)
+      displayValue = BookmarksUtils.getProperty(selection.item[0], BM.gNC_NS+"Name", aEvent.target.db)
     else
       displayValue = "";
     statusBar.label = displayValue;

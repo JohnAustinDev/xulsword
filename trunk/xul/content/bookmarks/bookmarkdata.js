@@ -16,126 +16,178 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// DATA AND FUNCTIONS USED BY BOOKMARKS
-
-var gNC_NS, gRDF_NS, gXUL_NS, gNC_NS_CMD;
-var BmEmptyID, BookmarksRootID, AllBookmarksID, FoundResultsID, NumberFieldValueID;
-var BmEmptyRes, BookmarksRootRes, AllBookmarksRes, FoundResultsRes;
-var gBmProperties;
+/************************************************************************
+ * Bookmark data service initialization
+ ***********************************************************************/ 
 var UserDataURI;
-var gIcon = {};
-var gIconWithNote = {};
-
 const kUserDataFileName = "bookmarks.rdf";
 const kUserDataBackupName = "bookmarks_bak.rdf";
-const kBATCH_LIMIT = 4;
-const kExportDelimiter = "<bg/>";
 const TextFileReturn="\r\n";
-const kExportResourceDelimiter = "<nx/>" + TextFileReturn;
-
-// definition of the services frequently used for bookmarks
-var RDF;
-var RDFC;
-var RDFCU;
-var BMDS;
-var kDSContractID, kDSIID, DS;
-var kRDFRSCIID;
-var kRDFLITIID;
-var kRDFCContractID;
-var kRDFCIID;
-
-var ManagerWindow;
-
 const BROWSER_ADD_BM_FEATURES = "centerscreen,modal,chrome,dialog,resizable,dependent";
 
-// THE LIST BELOW CANNOT BE CHANGED WITHOUT BREAKING COMPATIBILITY WITH EARLIER EXPORTED BOOKMARKS
-// "TYPE" - "BookmarkSeparator", "Folder", or "Bookmark".
-// "NAME" - Default name is generated based on TYPE and MODULE.
-// "NOTE"  - User note.
-// "BOOK" - Bible book for MODULEs using versekey.
-// "CHAPTER" - 
-//    Bible chapter for MODULEs using versekey, 
-//    key for dictionary MODULEs, 
-//    module:key for GENBOOK MODULEs
-// "VERSE" - 
-//    Bible verse for MODULEs using versekey.
-//    paragraph for non-versekey MODULEs
-// "LASTVERSE" - Bible lastVerse for MODULEs using versekey.
-// "MODULE" - Module name
-// "LOCATION" - Location in form bookShortName.chap.verse[.lastverse] ALWAYS WITH EASTERN VERSIFICATION
-// "BMTEXT" - Bookmarked text sample
-// "ICON" - URL to Texts.png, Comms.png, Dicts.png, Genbks.png. Or TextsWithNote.png etc. (add WithNote)
-// "CREATIONDATE" - Creation month, day, year, localized to operating system locale.
-// "VISITEDDATE" - Last visited month, day, year, localized to operating system locale. (When is this updated?)
-//THE FOLLOWING WERE INTRODUCED IN v2.12. EARIER BOOKMARKS WILL NOT HAVE THESE PARAMETERS
-// "NAMELOCALE" - Program locale when NAME was set.
-// "NOTELOCALE" - Program locale when note was set.
-const TYPE=0, NAME=1, NOTE=2, BOOK=3, CHAPTER=4, VERSE=5, LASTVERSE=6, MODULE=7, LOCATION=8, BMTEXT=9, ICON=10, CREATIONDATE=11, VISITEDDATE=12, NAMELOCALE=13, NOTELOCALE=14;
-const WNOTE = "WithNote";
-
-//This function loads the UserData, attaches it to the passed element, and sets all globals appropriately 
-function initBMServices() {
-  RDF              = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService);
-  kRDFRSCIID       = Components.interfaces.nsIRDFResource;
-  kRDFLITIID       = Components.interfaces.nsIRDFLiteral;
-  kRDFCContractID  = "@mozilla.org/rdf/container;1";
-  kRDFCIID         = Components.interfaces.nsIRDFContainer;
-  RDFC             = Components.classes[kRDFCContractID].createInstance(kRDFCIID);
-  RDFCU            = Components.classes["@mozilla.org/rdf/container-utils;1"].getService(Components.interfaces.nsIRDFContainerUtils);
-  kDSContractID    = "@mozilla.org/widget/dragservice;1";
-  kDSIID           = Components.interfaces.nsIDragService;
-  DS               = Components.classes[kDSContractID].getService(kDSIID);
+function initBMServices(bm) {
+  bm.RDF              = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService);
+  bm.kRDFRSCIID       = Components.interfaces.nsIRDFResource;
+  bm.kRDFLITIID       = Components.interfaces.nsIRDFLiteral;
+  bm.kRDFCContractID  = "@mozilla.org/rdf/container;1";
+  bm.RDFC             = Components.classes[bm.kRDFCContractID].createInstance(Components.interfaces.nsIRDFContainer);
+  bm.RDFCU            = Components.classes["@mozilla.org/rdf/container-utils;1"].getService(Components.interfaces.nsIRDFContainerUtils);
+  bm.DS               = Components.classes["@mozilla.org/widget/dragservice;1"].getService(Components.interfaces.nsIDragService);
+  bm.gTxnSvc          = Components.classes["@mozilla.org/transactionmanager;1"].getService(Components.interfaces.nsITransactionManager);
   
-  gNC_NS     = "http://www.xulsword.com/bookmarks/rdf#";
-  gRDF_NS    = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-  gXUL_NS    = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-  gNC_NS_CMD = gNC_NS + "command?cmd=";
-  BmEmptyID = "http://www.xulsword.com/bookmarks/emptyBookmark";
-  BookmarksRootID = "http://www.xulsword.com/bookmarks/BookmarksRoot";
-  AllBookmarksID = "http://www.xulsword.com/bookmarks/AllBookmarks";
-  FoundResultsID = "http://www.xulsword.com/bookmarks/FoundResults";
-  NumberFieldValueID = "http://www.xulsword.com/location/rdf#Anumber";
+  bm.gNC_NS     = "http://www.xulsword.com/bookmarks/rdf#";
+  bm.gRDF_NS    = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+  bm.gXUL_NS    = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+  bm.gNC_NS_CMD = bm.gNC_NS + "command?cmd=";
+  bm.BmEmptyID = "http://www.xulsword.com/bookmarks/emptyBookmark";
+  bm.BookmarksRootID = "http://www.xulsword.com/bookmarks/BookmarksRoot";
+  bm.AllBookmarksID = "http://www.xulsword.com/bookmarks/AllBookmarks";
+  bm.FoundResultsID = "http://www.xulsword.com/bookmarks/FoundResults";
+  bm.NumberFieldValueID = "http://www.xulsword.com/location/rdf#Anumber";
   
+  bm.gIcon = {};
+  bm.gIconWithNote = {};
   for (var type in SupportedModuleTypes) {
-    gIcon[type]          = "chrome://xulsword/skin/bookmarks/" + type + ".png";
-    gIconWithNote[type]  = "chrome://xulsword/skin/bookmarks/" + type + WNOTE + ".png";
+    bm.gIcon[type]          = "chrome://xulsword/skin/bookmarks/" + type + ".png";
+    bm.gIconWithNote[type]  = "chrome://xulsword/skin/bookmarks/" + type + "WithNote.png";
   }
   
-  BmEmptyRes = RDF.GetResource(BmEmptyID);
-  BookmarksRootRes = RDF.GetResource(BookmarksRootID);
-  AllBookmarksRes = RDF.GetResource(AllBookmarksID);
-  FoundResultsRes = RDF.GetResource(FoundResultsID);
+  bm.BmEmptyRes       = bm.RDF.GetResource(bm.BmEmptyID);
+  bm.BookmarksRootRes = bm.RDF.GetResource(bm.BookmarksRootID);
+  bm.AllBookmarksRes  = bm.RDF.GetResource(bm.AllBookmarksID);
+  bm.FoundResultsRes  = bm.RDF.GetResource(bm.FoundResultsID);
     
-  gBmProperties     = [RDF.GetResource(gNC_NS+"Type"),
-                       RDF.GetResource(gNC_NS+"Name"),
-                       RDF.GetResource(gNC_NS+"Note"),
-                       RDF.GetResource(gNC_NS+"Book"),
-                       RDF.GetResource(gNC_NS+"Chapter"),
-                       RDF.GetResource(gNC_NS+"Verse"),
-                       RDF.GetResource(gNC_NS+"LastVerse"),
-                       RDF.GetResource(gNC_NS+"Version"),
-                       RDF.GetResource(gNC_NS+"Location"),
-                       RDF.GetResource(gNC_NS+"VerseText"),
-                       RDF.GetResource(gNC_NS+"Icon"),
-                       RDF.GetResource(gNC_NS+"CreationDate"),
-                       RDF.GetResource(gNC_NS+"ModifiedDate"),
-                       RDF.GetResource(gNC_NS+"NameLocale"),
-                       RDF.GetResource(gNC_NS+"NoteLocale")];
+  bm.gBmProperties    = [bm.RDF.GetResource(bm.gNC_NS+"Type"),
+                        bm.RDF.GetResource(bm.gNC_NS+"Name"),
+                        bm.RDF.GetResource(bm.gNC_NS+"Note"),
+                        bm.RDF.GetResource(bm.gNC_NS+"Book"),
+                        bm.RDF.GetResource(bm.gNC_NS+"Chapter"),
+                        bm.RDF.GetResource(bm.gNC_NS+"Verse"),
+                        bm.RDF.GetResource(bm.gNC_NS+"LastVerse"),
+                        bm.RDF.GetResource(bm.gNC_NS+"Version"),
+                        bm.RDF.GetResource(bm.gNC_NS+"Location"),
+                        bm.RDF.GetResource(bm.gNC_NS+"VerseText"),
+                        bm.RDF.GetResource(bm.gNC_NS+"Icon"),
+                        bm.RDF.GetResource(bm.gNC_NS+"CreationDate"),
+                        bm.RDF.GetResource(bm.gNC_NS+"ModifiedDate"),
+                        bm.RDF.GetResource(bm.gNC_NS+"NameLocale"),
+                        bm.RDF.GetResource(bm.gNC_NS+"NoteLocale")];
+                       
+  bm.kBATCH_LIMIT = 4;
+  bm.kExportDelimiter = "<bg/>";
+  bm.kExportResourceDelimiter = "<nx/>" + TextFileReturn;
     
   initBookmarksDataFile(false);
-  var userDataDS = getUserData();
-  initBookmarksLocale(userDataDS);
-  return userDataDS;
+  var bmds = getUserData(bm.RDF);
+  initBookmarksLocale(bm.RDF, bmds, bm.AllBookmarksRes, bm.gBmProperties, bm.BmEmptyRes);
+  return bmds;
 }
 
-function initTemplateDataSource(elem, DS) {
-  elem.database.AddDataSource(DS);
-  elem.builder.rebuild();
+function initBookmarksDataFile(useEmptyDataSet) {
+  var userDataInProfile = getSpecialDirectory("xsBookmarks");
+  userDataInProfile.append(kUserDataFileName);
+
+  UserDataURI = encodeURI("File://" + userDataInProfile.path.replace("\\", "/", "g"));
+
+  if (!userDataInProfile.exists()) {
+    userDataInProfile.create(userDataInProfile.NORMAL_FILE_TYPE, FPERM);
+    var data = "";
+    if (useEmptyDataSet) {data = getEmptyUserData();}
+    else {
+      var currentLocale = getLocale();
+      data = getDefaultUserData(currentLocale + ".rdf");
+      if (!data) {data = getEmptyUserData();}
+    }
+    writeFile(userDataInProfile, data, 1);
+  }
 }
+
+function getUserData(rdf) {
+  var myDS=null;
+  var DSisGood=false;
+  try {myDS = rdf.GetDataSourceBlocking(UserDataURI); DSisGood = true;}
+  catch (er) {
+    var badRDF = getSpecialDirectory("xsBookmarks");
+    badRDF.append(kUserDataFileName);
+    if (badRDF.exists()) {
+      badRDF.moveTo(null, kUserDataFileName.replace(".rdf", BookmarkFuns.getRandomString() + ".rdf"));
+      initBookmarksDataFile(true);
+      myDS = rdf.GetDataSourceBlocking(UserDataURI);
+    }
+  }
+  
+  if (DSisGood) {
+    // Back up this DS now
+    var bmdir = getSpecialDirectory("xsBookmarks");
+    var goodDS = bmdir.clone(); goodDS.append(kUserDataFileName);
+    var backup = bmdir.clone(); backup.append(kUserDataBackupName);
+    if (backup.exists()) removeFile(backup, false);
+    goodDS.copyTo(bmdir, kUserDataBackupName);
+  }
+  
+  return myDS;
+}
+
+function initBookmarksLocale(rdf, aDS, allBookmarksRes, bmProperties, bmEmptyRes) {
+  var oldValue = aDS.GetTarget(allBookmarksRes, bmProperties[NAME], true);
+  var newValue = rdf.GetLiteral(BookmarkFuns.getLocaleString("BookmarksRoot"));
+  BookmarkFuns.updateAttribute(allBookmarksRes, bmProperties[NAME], oldValue, newValue, aDS);
+  
+  oldValue = aDS.GetTarget(bmEmptyRes, bmProperties[NAME], true);
+  newValue = rdf.GetLiteral(BookmarkFuns.getLocaleString("emptyFolder"));
+  BookmarkFuns.updateAttribute(bmEmptyRes, bmProperties[NAME], oldValue, newValue, aDS);
+}
+
+function getEmptyUserData() {
+var data = "\
+<?xml version=\"1.0\"?>\n\
+<RDF:RDF xmlns:BOOKMARKS=\"http://www.xulsword.com/bookmarks/rdf#\"\n\
+         xmlns:NC=\"http://home.netscape.com/NC-rdf#\"\n\
+         xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n\
+\n\
+  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/BookmarksRoot\">\n\
+    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/AllBookmarks\"/>\n\
+  </RDF:Seq>\n\
+\n\
+  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/AllBookmarks\">\n\
+    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/emptyBookmark\"/>\n\
+  </RDF:Seq>\n\
+\n\
+  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/FoundResults\">\n\
+    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/emptyBookmark\"/>\n\
+  </RDF:Seq>\n\
+\n\
+  <Description RDF:about=\"http://www.xulsword.com/bookmarks/BookmarksRoot\" BOOKMARKS:Type=\"Folder\" BOOKMARKS:Name=\"Bookmarks Root\"/>\n\
+  <Description RDF:about=\"http://www.xulsword.com/bookmarks/AllBookmarks\" BOOKMARKS:Type=\"Folder\"/>\n\
+  <Description RDF:about=\"http://www.xulsword.com/bookmarks/emptyBookmark\" BOOKMARKS:Type=\"EmptyBookmark\"/>\n\
+</RDF:RDF>\n\
+";
+return data;
+}
+
+function getDefaultUserData(fileName) {
+  var file = getSpecialDirectory("DefRt");
+  file.append(fileName);
+  if (!file.exists()) {return null;}
+  
+  var filedata = readFile(file);
+  
+  return filedata;
+}
+
+
+/************************************************************************
+ * Bookmark functions
+ ***********************************************************************/ 
 
 var BookmarkFuns = {
   _bundle        : null,
   
+  initTemplateDataSource: function(elem, ds) {
+    elem.database.AddDataSource(ds);
+    elem.builder.rebuild();
+  },
+
   // This routine does not modify any existing BM data! It only intelligently
   // fills in empty properties 
   completeBMInfo : function (bmInfo, bmType) {
@@ -152,7 +204,7 @@ var BookmarkFuns = {
     case "Bookmark":
       if (!bmInfo[MODULE]) bmInfo[MODULE] = prefs.getCharPref("DefaultVersion");
       var type = getModuleLongType(bmInfo[MODULE]);
-      if (type && !bmInfo[ICON]) bmInfo[ICON] = (bmInfo[NOTE] ? gIconWithNote[getShortTypeFromLong(type)]:gIcon[getShortTypeFromLong(type)]);
+      if (type && !bmInfo[ICON]) bmInfo[ICON] = (bmInfo[NOTE] ? BM.gIconWithNote[getShortTypeFromLong(type)]:BM.gIcon[getShortTypeFromLong(type)]);
       if (!bmInfo[TYPE]) bmInfo[TYPE] = "Bookmark";
       if (!bmInfo[VERSE]) bmInfo[VERSE] = 1; //could be verse OR paragraph
       if (!bmInfo[CHAPTER]) { //only fill in book & lastVerse if there is no chapter- could be non-versekey!
@@ -186,7 +238,7 @@ var BookmarkFuns = {
     // Create the new bookmark now...
     var myprops = ["Bookmark", retVal.name, retVal.note, location.shortName, location.chapter, location.verse, location.lastVerse, location.version, null, text.text];
     var resource = this.createNewResource(myprops);
-    var aTarget = {parent: RDF.GetResource(retVal.chosenFolderID), index: 1};
+    var aTarget = {parent: BM.RDF.GetResource(retVal.chosenFolderID), index: 1};
     var selection = BookmarksUtils.getSelectionFromResource(resource, aTarget.parent);
     var ok        = BookmarksUtils.insertAndCheckSelection("newbookmark", selection, aTarget, -1);
     BookmarkFuns.updateMainWindow();
@@ -269,90 +321,90 @@ var BookmarkFuns = {
   },
 
   deleteItemById: function (itemID, parentID) {
-    var itemRes = RDF.GetResource(itemID);
-    var parentFolderRes = RDF.GetResource(parentID);
+    var itemRes = BM.RDF.GetResource(itemID);
+    var parentFolderRes = BM.RDF.GetResource(parentID);
     this.deleteElement(itemRes, parentFolderRes, true);
   },
   
   deleteBookmarkElement: function (bmelem) {
-    var bm2delete = RDF.GetResource(bmelem.id);
-    var parentFolder = RDF.GetResource(this.getParentID(bmelem));
+    var bm2delete = BM.RDF.GetResource(bmelem.id);
+    var parentFolder = BM.RDF.GetResource(this.getParentID(bmelem));
     this.deleteElement(bm2delete, parentFolder, true);
   },
   
   deleteElement: function (aResource, aParent, renumber) {
-    var container = Components.classes[kRDFCContractID].createInstance(kRDFCIID);
+    var container = BM.RDFC;
     container.Init(BMDS, aParent);
     container.RemoveElement(aResource,renumber);
-    if (container.GetCount() == 0) {container.AppendElement(BmEmptyRes);}
+    if (container.GetCount() == 0) {container.AppendElement(BM.BmEmptyRes);}
   },
     
   createNewResource: function(propertyValues, keepTimeStamp, resourceName, skipComplete) {
     if (!skipComplete) this.completeBMInfo(propertyValues);
-    var newResource = resourceName ? RDF.GetResource(resourceName):RDF.GetAnonymousResource();
+    var newResource = resourceName ? BM.RDF.GetResource(resourceName):BM.RDF.GetAnonymousResource();
     var skipProps = keepTimeStamp ? 0:2;
      
-    for (var i=0; i<gBmProperties.length-skipProps; i++) {
+    for (var i=0; i<BM.gBmProperties.length-skipProps; i++) {
       if (propertyValues[i] != null) {
-        BMDS.Assert(newResource,gBmProperties[i],RDF.GetLiteral(replaceASCIIcontrolChars(propertyValues[i])),true);
+        BMDS.Assert(newResource,BM.gBmProperties[i], BM.RDF.GetLiteral(replaceASCIIcontrolChars(propertyValues[i])),true);
       }
     }
     
     if ((propertyValues[TYPE] != "BookmarkSeparator")&&!keepTimeStamp) {
       var currentDate = new Date().toLocaleDateString();
-      BMDS.Assert(newResource,gBmProperties[CREATIONDATE],RDF.GetLiteral(currentDate),true);
-      BMDS.Assert(newResource,gBmProperties[VISITEDDATE],RDF.GetLiteral(currentDate),true);
+      BMDS.Assert(newResource,BM.gBmProperties[CREATIONDATE], BM.RDF.GetLiteral(currentDate),true);
+      BMDS.Assert(newResource,BM.gBmProperties[VISITEDDATE], BM.RDF.GetLiteral(currentDate),true);
     }
     
     if (propertyValues[TYPE] == "Folder") {
       //When importing it is possible that we could be running "createNewResource" on an already partially "created" (and un-empty) folder!
-      if (RDFCU.IsSeq(BMDS, newResource)) {return newResource;}
-      RDFCU.MakeSeq(BMDS,newResource);
-      var container = Components.classes[kRDFCContractID].createInstance(kRDFCIID);
+      if (BM.RDFCU.IsSeq(BMDS, newResource)) {return newResource;}
+      BM.RDFCU.MakeSeq(BMDS,newResource);
+      var container = BM.RDFC;
       container.Init(BMDS, newResource);
-      container.AppendElement(BmEmptyRes);
+      container.AppendElement(BM.BmEmptyRes);
     }
     
     if (propertyValues[TYPE] == "Bookmark" || propertyValues[TYPE] == "Folder") {
-      BMDS.Assert(newResource,gBmProperties[NAMELOCALE],RDF.GetLiteral(replaceASCIIcontrolChars(getLocale())),true);
-      BMDS.Assert(newResource,gBmProperties[NOTELOCALE],RDF.GetLiteral(replaceASCIIcontrolChars(getLocale())),true);
+      BMDS.Assert(newResource,BM.gBmProperties[NAMELOCALE],BM.RDF.GetLiteral(replaceASCIIcontrolChars(getLocale())),true);
+      BMDS.Assert(newResource,BM.gBmProperties[NOTELOCALE],BM.RDF.GetLiteral(replaceASCIIcontrolChars(getLocale())),true);
     }
     return newResource;
   },
   
   addResourceToFolder: function (res, folderID, insertionIndex) {
-    var parentFolderRes = RDF.GetResource(folderID);
-    if (RDFCU.IsContainer(BMDS, parentFolderRes)) {
+    var parentFolderRes = BM.RDF.GetResource(folderID);
+    if (BM.RDFCU.IsContainer(BMDS, parentFolderRes)) {
       if (insertionIndex == null) {insertionIndex = 1;}
-      RDFC.Init(BMDS, parentFolderRes);
-      try {RDFC.InsertElementAt(res,insertionIndex,true);}
-      catch (er) {RDFC.AppendElement(res); jsdump("WARNING: addResourceToFolder failed first InsertElementAt attempt!\n");}
+      BM.RDFC.Init(BMDS, parentFolderRes);
+      try {BM.RDFC.InsertElementAt(res,insertionIndex,true);}
+      catch (er) {BM.RDFC.AppendElement(res); jsdump("WARNING: addResourceToFolder failed first InsertElementAt attempt!\n");}
       this.removeEmptyResFrom(folderID);
     }
   },
   
   appendResourceToFolder: function (res, folderID) {
-    var parentFolderRes = RDF.GetResource(folderID);
-    RDFC.Init(BMDS, parentFolderRes);
-    RDFC.AppendElement(res);
+    var parentFolderRes = BM.RDF.GetResource(folderID);
+    BM.RDFC.Init(BMDS, parentFolderRes);
+    BM.RDFC.AppendElement(res);
     this.removeEmptyResFrom(folderID);
   },
   
   getParentID: function (element) {
     var parentRes;
     try {
-      parentRes = RDF.GetResource(element.parentNode.parentNode.id);
-      RDFC.Init(BMDS, parentRes);
+      parentRes = BM.RDF.GetResource(element.parentNode.parentNode.id);
+      BM.RDFC.Init(BMDS, parentRes);
     }
-    catch (er) {return AllBookmarksID;}
+    catch (er) {return BM.AllBookmarksID;}
     return parentRes.Value;
   },
     
   findIndexOf: function (elemID, parentID) {
-    var elemResource = RDF.GetResource(elemID);
-    var parentFolderRes = RDF.GetResource(parentID);
-    RDFC.Init(BMDS, parentFolderRes);
-    return RDFC.IndexOf(elemResource);
+    var elemResource = BM.RDF.GetResource(elemID);
+    var parentFolderRes = BM.RDF.GetResource(parentID);
+    BM.RDFC.Init(BMDS, parentFolderRes);
+    return BM.RDFC.IndexOf(elemResource);
   },
   
   showPropertiesWindow: function (resourceID, editNote) {
@@ -381,11 +433,11 @@ var BookmarkFuns = {
   },
   
   BmGetInfo: function (bmelemID) {
-    var infoArray = new Array(gBmProperties.length);
-    var bmres = RDF.GetResource(bmelemID);
-    for (var i=0; i<gBmProperties.length; i++) {
+    var infoArray = new Array(BM.gBmProperties.length);
+    var bmres = BM.RDF.GetResource(bmelemID);
+    for (var i=0; i<BM.gBmProperties.length; i++) {
       infoArray[i] = null;
-      var targ = BMDS.GetTarget(bmres, gBmProperties[i], true);
+      var targ = BMDS.GetTarget(bmres, BM.gBmProperties[i], true);
       if (!targ) continue;
       targ = targ.QueryInterface(Components.interfaces.nsIRDFLiteral);
       if (!targ) continue;
@@ -437,11 +489,11 @@ var BookmarkFuns = {
   },
   
   removeEmptyResFrom: function (folderID) {
-    var folderRes = RDF.GetResource(folderID);
-    if (RDFCU.IsContainer(BMDS, folderRes)) {
-      var container = Components.classes[kRDFCContractID].createInstance(kRDFCIID);
+    var folderRes = BM.RDF.GetResource(folderID);
+    if (BM.RDFCU.IsContainer(BMDS, folderRes)) {
+      var container = BM.RDFC;
       container.Init(BMDS, folderRes);
-      container.RemoveElement(BmEmptyRes,true);
+      container.RemoveElement(BM.BmEmptyRes,true);
     }
   },
   
@@ -455,13 +507,13 @@ var BookmarkFuns = {
   },
   
   getParentOfResource: function (aResource, aDS) {
-    try {aResource = aResource.QueryInterface(kRDFRSCIID);} catch(er) {return null;}
+    try {aResource = aResource.QueryInterface(BM.kRDFRSCIID);} catch(er) {return null;}
     var arcsIn = aDS.ArcLabelsIn(aResource);
     var parents = [];
     var myParent = null;    
     while (arcsIn.hasMoreElements()) {
       var arc = arcsIn.getNext();
-      if (RDFCU.IsOrdinalProperty(arc)) {
+      if (BM.RDFCU.IsOrdinalProperty(arc)) {
         var thisparent = aDS.GetSource(arc, aResource, true);
         parents.push(thisparent);
       }
@@ -469,7 +521,7 @@ var BookmarkFuns = {
 
     var inFoundResults = false;
     for (var i=0; i<parents.length; i++) {
-      if (parents[i] != FoundResultsRes) {myParent = parents[i];}
+      if (parents[i] != BM.FoundResultsRes) {myParent = parents[i];}
       else {inFoundResults = true;} 
     }
     
@@ -486,16 +538,16 @@ var BookmarkFuns = {
   cloneResource: function (aResource) {
     var type = BookmarksUtils.resolveType(aResource, BMDS);
     if (type == "ImmutableBookmark" || type == "ImmutableFolder") return aResource;
-    if (aResource == BmEmptyRes) return aResource;
+    if (aResource == BM.BmEmptyRes) return aResource;
         
-    aResource = aResource.QueryInterface(kRDFRSCIID);
+    aResource = aResource.QueryInterface(BM.kRDFRSCIID);
     var myprops = this.BmGetInfo(aResource.Value);
     var newResource = this.createNewResource(myprops,true);
-    if (RDFCU.IsContainer(BMDS, aResource) && BookmarksUtils.resolveType(aResource, BMDS)=="Folder") {
-      RDFCU.MakeSeq(BMDS, newResource);
+    if (BM.RDFCU.IsContainer(BMDS, aResource) && BookmarksUtils.resolveType(aResource, BMDS)=="Folder") {
+      BM.RDFCU.MakeSeq(BMDS, newResource);
       this.removeEmptyResFrom(newResource.Value);
-      var container = Components.classes[kRDFCContractID].createInstance(kRDFCIID);
-      var newContainer = Components.classes[kRDFCContractID].createInstance(kRDFCIID);
+      var container = BM.RDFC;
+      var newContainer = BM.RDFC;
       container.Init(BMDS, aResource);
       newContainer.Init(BMDS, newResource);
       var children = container.GetElements();
@@ -504,7 +556,7 @@ var BookmarkFuns = {
         var child = children.getNext();
         var newchild = {
           resource: this.cloneResource(child),
-          index: RDFCU.indexOf(BMDS, aResource, child)
+          index: BM.RDFCU.indexOf(BMDS, aResource, child)
         }
         newchildren.push(newchild);
       }
@@ -537,7 +589,7 @@ var BookmarkFuns = {
   
   createAndCommitTxn: function (TxnType, aAction, aItem, aIndex, aParent, propLength, propArray) {
     var newTransaction = new nsITransaction(TxnType, aAction, aItem, aIndex, aParent, propLength, propArray);
-    gTxnSvc.doTransaction(newTransaction);
+    BM.gTxnSvc.doTransaction(newTransaction);
   },
   
   updateMainWindow: function (focusOnMainWindow, aUpdateNeededArray, scrollFlag) {
@@ -557,11 +609,11 @@ var BookmarkFuns = {
     var resources = aDS.GetAllResources();
     while (resources.hasMoreElements()){
       var resource = resources.getNext();
-      if (resource == BookmarksRootRes || 
-          resource == AllBookmarksRes || 
-          resource == BmEmptyRes ||
-          resource == FoundResultsRes) {continue;}
-      if (this.isItemChildOf(resource, AllBookmarksRes, aDS)) {continue;}
+      if (resource == BM.BookmarksRootRes || 
+          resource == BM.AllBookmarksRes || 
+          resource == BM.BmEmptyRes ||
+          resource == BM.FoundResultsRes) {continue;}
+      if (this.isItemChildOf(resource, BM.AllBookmarksRes, aDS)) {continue;}
       this.removeResource(resource, aDS);
     }
     this.emptySearchResultsFolder();
@@ -573,8 +625,8 @@ var BookmarkFuns = {
   },
   
   emptySearchResultsFolder: function () {
-    var resultsFolder = Components.classes[kRDFCContractID].createInstance(kRDFCIID);
-    resultsFolder.Init(BMDS, FoundResultsRes);
+    var resultsFolder = BM.RDFC;
+    resultsFolder.Init(BMDS, BM.FoundResultsRes);
     var srs = resultsFolder.GetElements();
     while (srs.hasMoreElements()) {resultsFolder.RemoveElement(srs.getNext(),false);}
   },
@@ -676,10 +728,10 @@ var BookmarkFuns = {
   
   getDataAboutFolder: function(afolder, h1s, h1e, ret, isHTML) {
     var data = (isHTML ? "<hr>":"");
-    try {data += h1s + replaceASCIIcontrolChars(BMDS.GetTarget(afolder,gBmProperties[NAME],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value + ret + h1e);} catch (er) {}
+    try {data += h1s + replaceASCIIcontrolChars(BMDS.GetTarget(afolder,BM.gBmProperties[NAME],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value + ret + h1e);} catch (er) {}
     try {
       var aNote="";
-      aNote = replaceASCIIcontrolChars(BMDS.GetTarget(afolder,gBmProperties[NOTE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);
+      aNote = replaceASCIIcontrolChars(BMDS.GetTarget(afolder,BM.gBmProperties[NOTE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);
       if (aNote) {data += (isHTML ? "<br>":"") + "[" + aNote + "]" + ret;}
     } catch (er) {}
     return data;
@@ -695,7 +747,7 @@ var BookmarkFuns = {
     
     var data="";
     
-    var container = Components.classes[kRDFCContractID].createInstance(kRDFCIID);
+    var container = BM.RDFC;
     try {container.Init(BMDS, aFolder);} catch (er) {return data;}
     var folderElements = container.GetElements();
     var datalast;
@@ -703,19 +755,19 @@ var BookmarkFuns = {
     while (folderElements.hasMoreElements()) {
       datalast = data;
       var thisElem = folderElements.getNext();
-      if (RDFCU.IsContainer(BMDS, thisElem)) {
+      if (BM.RDFCU.IsContainer(BMDS, thisElem)) {
         data += BookmarkFuns.getDataAboutFolder(thisElem, h1s, h1e, ret, isHTML);
         data += fds + ret + BookmarkFuns.getDataFromFolder(thisElem, h1s, h1e, ret, isHTML) + fde;
       }
       else {
-        try {data += h2s + replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,gBmProperties[NAME],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value) + ret + h2e;} catch (er) {}
+        try {data += h2s + replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,BM.gBmProperties[NAME],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value) + ret + h2e;} catch (er) {}
         aNote="";
-        try {aNote = replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,gBmProperties[NOTE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);} catch (er) {}
+        try {aNote = replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,BM.gBmProperties[NOTE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);} catch (er) {}
         if (aNote) data += "[" +  aNote + "]" + ret;
         try {
-          if (isHTML) data += "<div class=\"vstyle" + BMDS.GetTarget(thisElem,gBmProperties[MODULE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value + "\">";
-          data += replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,gBmProperties[BMTEXT],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);
-          data += sms + "[" + getCopyright(replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,gBmProperties[MODULE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value)) + "]" + sme;
+          if (isHTML) data += "<div class=\"vstyle" + BMDS.GetTarget(thisElem,BM.gBmProperties[MODULE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value + "\">";
+          data += replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,BM.gBmProperties[BMTEXT],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);
+          data += sms + "[" + getCopyright(replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,BM.gBmProperties[MODULE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value)) + "]" + sme;
           data += ret;
           if (isHTML) data += "</div>";
         } catch (er) {}
@@ -727,36 +779,36 @@ var BookmarkFuns = {
   
   importBMFile: function (aFile, aParentRes, overwrite) {
     var aParentResVal;
-    if (!aParentRes) aParentResVal = AllBookmarksID;
+    if (!aParentRes) aParentResVal = BM.AllBookmarksID;
     else {
       try {aParentResVal = aParentRes.Value;}
-      catch (er) {aParentResVal = AllBookmarksID;}
+      catch (er) {aParentResVal = BM.AllBookmarksID;}
     }
     var filedata = readFile(aFile);
     if (!filedata) return 0;
 
     var suffix = (overwrite ? "":BookmarkFuns.getRandomString());
     
-    gTxnSvc.beginBatch();
+    BM.gTxnSvc.beginBatch();
     
     var importedResources = [];
     filedata = replaceASCIIcontrolChars(filedata);
-    var textBookmarks = filedata.split(kExportResourceDelimiter);
+    var textBookmarks = filedata.split(BM.kExportResourceDelimiter);
     //Next 2 lines are for backward compatibility to pre V2.8 code
     var tmp = filedata.split("<nx/>\n");
     if (tmp.length > textBookmarks.length) textBookmarks = tmp;
     if (!textBookmarks.length) return 0;
     for (var bm=0; bm<textBookmarks.length; bm++) {
       if (!textBookmarks[bm]) continue;
-      var propertyValues = textBookmarks[bm].split(kExportDelimiter);
+      var propertyValues = textBookmarks[bm].split(BM.kExportDelimiter);
       var parentName = propertyValues.shift();
       var resourceName = propertyValues.shift() + suffix;
       var index = Number(propertyValues.shift());
       if (!index && index != 0) continue; // weed out junk data
-      if (parentName == AllBookmarksID) {parentName = aParentResVal;}
+      if (parentName == BM.AllBookmarksID) {parentName = aParentResVal;}
       else {parentName = parentName + suffix;}
       if (overwrite) {
-        var todelete = RDF.GetResource(resourceName);
+        var todelete = BM.RDF.GetResource(resourceName);
         BookmarkFuns.removeResource(todelete, BMDS);
         var arcsIn = BMDS.ArcLabelsIn(todelete);
         while (arcsIn.hasMoreElements()) {
@@ -768,8 +820,8 @@ var BookmarkFuns = {
         }
       }
       var newResource = this.createNewResource(propertyValues, true, resourceName, true);
-      var newParent = RDF.GetResource(parentName);
-      if (!RDFCU.IsContainer(BMDS, newParent)) {RDFCU.MakeSeq(BMDS,newParent);}
+      var newParent = BM.RDF.GetResource(parentName);
+      if (!BM.RDFCU.IsContainer(BMDS, newParent)) {BM.RDFCU.MakeSeq(BMDS,newParent);}
       var resource = {
         parent: newParent,
         child: newResource,
@@ -786,7 +838,7 @@ var BookmarkFuns = {
     for (var i=0; i<importedResources.length; i++) {
       BookmarkFuns.createAndCommitTxn("import", "import", importedResources[i].child, null, importedResources[i].parent, 0, null);
     }
-    gTxnSvc.endBatch();
+    BM.gTxnSvc.endBatch();
 
     BookmarksUtils.flushDataSource();
     return importedResources.length;
@@ -794,126 +846,9 @@ var BookmarkFuns = {
 }
 
 /************************************************************************
- * Various Functions...
+ * Bookmark Undo/Redo Functions...
  ***********************************************************************/ 
- 
-function initBookmarksDataFile(useEmptyDataSet) {
-  var userDataInProfile = getSpecialDirectory("xsBookmarks");
-  userDataInProfile.append(kUserDataFileName);
-  // for Backward Compatibility, copy profile bookmarks to resource dir if found...
-  var oldLocation = getSpecialDirectory("ProfD");
-  oldLocation.append("userdata.rdf");
-  if (oldLocation.exists()) {
-    if (userDataInProfile.exists()) userDataInProfile.moveTo(null, kUserDataFileName.replace(".rdf", BookmarkFuns.getRandomString() + ".rdf"));
-    oldLocation.moveTo(getSpecialDirectory("xsBookmarks"), kUserDataFileName);
-    userDataInProfile = getSpecialDirectory("xsBookmarks");
-    userDataInProfile.append(kUserDataFileName)
-  }
-
-  UserDataURI = encodeURI("File://" + userDataInProfile.path.replace("\\", "/", "g"));
-
-  if (!userDataInProfile.exists()) {
-    userDataInProfile.create(userDataInProfile.NORMAL_FILE_TYPE, FPERM);
-    var data = "";
-    if (useEmptyDataSet) {data = getEmptyUserData();}
-    else {
-      var currentLocale = getLocale();
-      data = getDefaultUserData(currentLocale + ".rdf");
-      if (!data) {data = getEmptyUserData();}
-    }
-    writeFile(userDataInProfile, data);
-  }
-}
-
-function writeFile(aFile, data) {
-  var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].
-        createInstance(Components.interfaces.nsIFileOutputStream);
-  foStream.init(aFile, 0x02 | 0x08 | 0x20, -1, 0);
-    
-  var charset = "UTF-8"; // Can be any character encoding name that Mozilla supports
-  var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
-  os.init(foStream, charset, 0, 0x0000);
-  os.writeString(data);
-  os.close();
-  foStream.close();
-}
-
-function initBookmarksLocale(aDS) {
-  var oldValue = aDS.GetTarget(AllBookmarksRes, gBmProperties[NAME], true);
-  var newValue = RDF.GetLiteral(BookmarkFuns.getLocaleString("BookmarksRoot"));
-  BookmarkFuns.updateAttribute(AllBookmarksRes, gBmProperties[NAME], oldValue, newValue, aDS);
-  
-  oldValue = aDS.GetTarget(BmEmptyRes, gBmProperties[NAME], true);
-  newValue = RDF.GetLiteral(BookmarkFuns.getLocaleString("emptyFolder"));
-  BookmarkFuns.updateAttribute(BmEmptyRes, gBmProperties[NAME], oldValue, newValue, aDS);
-}
-
-function getEmptyUserData() {
-var data = "\
-<?xml version=\"1.0\"?>\n\
-<RDF:RDF xmlns:BOOKMARKS=\"http://www.xulsword.com/bookmarks/rdf#\"\n\
-         xmlns:NC=\"http://home.netscape.com/NC-rdf#\"\n\
-         xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n\
-\n\
-  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/BookmarksRoot\">\n\
-    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/AllBookmarks\"/>\n\
-  </RDF:Seq>\n\
-\n\
-  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/AllBookmarks\">\n\
-    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/emptyBookmark\"/>\n\
-  </RDF:Seq>\n\
-\n\
-  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/FoundResults\">\n\
-    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/emptyBookmark\"/>\n\
-  </RDF:Seq>\n\
-\n\
-  <Description RDF:about=\"http://www.xulsword.com/bookmarks/BookmarksRoot\" BOOKMARKS:Type=\"Folder\" BOOKMARKS:Name=\"Bookmarks Root\"/>\n\
-  <Description RDF:about=\"http://www.xulsword.com/bookmarks/AllBookmarks\" BOOKMARKS:Type=\"Folder\"/>\n\
-  <Description RDF:about=\"http://www.xulsword.com/bookmarks/emptyBookmark\" BOOKMARKS:Type=\"EmptyBookmark\"/>\n\
-</RDF:RDF>\n\
-";
-return data;
-}
-
-function getDefaultUserData(fileName) {
-  var file = getSpecialDirectory("DefRt");
-  file.append(fileName);
-  if (!file.exists()) {return null;}
-  
-  var filedata = readFile(file);
-  
-  return filedata;
-}
-
-function getUserData() {
-  var myDS=null;
-  var DSisGood=false;
-  try {myDS = RDF.GetDataSourceBlocking(UserDataURI); DSisGood = true;}
-  catch (er) {
-    var badRDF = getSpecialDirectory("xsBookmarks");
-    badRDF.append(kUserDataFileName);
-    if (badRDF.exists()) {
-      badRDF.moveTo(null, kUserDataFileName.replace(".rdf", BookmarkFuns.getRandomString() + ".rdf"));
-      initBookmarksDataFile(true);
-      myDS = RDF.GetDataSourceBlocking(UserDataURI);
-    }
-  }
-  
-  if (DSisGood) {
-    // Back up this DS now
-    var bmdir = getSpecialDirectory("xsBookmarks");
-    var goodDS = bmdir.clone(); goodDS.append(kUserDataFileName);
-    var backup = bmdir.clone(); backup.append(kUserDataBackupName);
-    if (backup.exists()) removeFile(backup, false);
-    goodDS.copyTo(bmdir, kUserDataBackupName);
-  }
-  
-  return myDS;
-}
-
-const IMPORT="import", REMOVE="remove", INSERT="insert";
-var gTxnSvc = Components.classes["@mozilla.org/transactionmanager;1"].getService(Components.interfaces.nsITransactionManager);
-var PendingTO;
+var TransactionTO;
 
 function nsITransaction (TxnType, aAction, aItem, aIndex, aParent, propLength, propArray) {
   this.type = TxnType;
@@ -928,20 +863,20 @@ function nsITransaction (TxnType, aAction, aItem, aIndex, aParent, propLength, p
 nsITransaction.prototype = {
   doTransaction: function () {
     switch (this.type) {
-    case INSERT:
+    case "insert":
       BookmarkFuns.addResourceToFolder(this.item, this.parent.Value, this.index);
       break;
     
-    case REMOVE:
+    case "remove":
       BookmarkFuns.deleteItemById(this.item.Value, this.parent.Value);
       break;
     
-    case IMPORT:
+    case "import":
       BookmarkFuns.appendResourceToFolder(this.item, this.parent.Value);
       break;
     }
-    try {window.clearTimeout(PendingTO);} catch (er) {}
-    PendingTO = window.setTimeout("BookmarkFuns.updateMainWindow()",0);
+    try {window.clearTimeout(TransactionTO);} catch (er) {}
+    TransactionTO = window.setTimeout("BookmarkFuns.updateMainWindow()",0);
   },
   
   merge: function () {
@@ -953,19 +888,22 @@ nsITransaction.prototype = {
   
   undoTransaction: function () {
     switch (this.type) {
-    case INSERT:
+    case "insert":
       BookmarkFuns.deleteItemById(this.item.Value, this.parent.Value);
       break;
     
-    case REMOVE:
+    case "remove":
       BookmarkFuns.addResourceToFolder(this.item, this.parent.Value, this.index);
       break;
       
-    case IMPORT:
+    case "import":
       BookmarkFuns.deleteItemById(this.item.Value, this.parent.Value);
       break;
     }
-    try {window.clearTimeout(PendingTO);} catch (er) {}
-    PendingTO = window.setTimeout("BookmarkFuns.updateMainWindow()",0);
+    try {window.clearTimeout(TransactionTO);} catch (er) {}
+    TransactionTO = window.setTimeout("BookmarkFuns.updateMainWindow()",0);
   }
 }
+
+var BM = {};
+var BMDS = initBMServices(BM);

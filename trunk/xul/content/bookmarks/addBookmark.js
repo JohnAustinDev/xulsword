@@ -93,16 +93,16 @@ var gBookmarkCharset = null;
 
 var gSelectItemObserver = null;
 
-var gCreateInFolder = AllBookmarksID;
+var gCreateInFolder = BM.AllBookmarksID;
 
 function Startup()
 {
   updateCSSBasedOnCurrentLocale(["#moveBookmarkDialog", "input, button, menu, menuitem"]);
   createVersionClasses();
+  AllWindows.push(window);
 
   document.title = fixWindowTitle(document.title);
-  BMDS = initBMServices();
-  initTemplateDataSource(document.getAnonymousElementByAttribute(document.getElementById("bookmarks-view"), "anonid", "bookmarks-tree"), BMDS);
+  BookmarkFuns.initTemplateDataSource(document.getAnonymousElementByAttribute(document.getElementById("bookmarks-view"), "anonid", "bookmarks-tree"), BMDS);
     
   gFld_Name = document.getElementById("name");
   gFld_URL = document.getElementById("url");
@@ -126,7 +126,7 @@ function Startup()
       document.title = fixWindowTitle(document.documentElement.getAttribute("title-selectFolder"));
       shouldSetOKButton = false;
       if (window.arguments[2])
-        folderItem = RDF.GetResource(window.arguments[2]);
+        folderItem = BM.RDF.GetResource(window.arguments[2]);
       if (folderItem) {
         ind = bookmarkView.treeBuilder.getIndexOfResource(folderItem);
         bookmarkView.treeBoxObject.view.selection.select(ind);
@@ -208,14 +208,14 @@ function onOK()
     window.arguments[5].target = BookmarksUtils.getTargetFromFolder(bookmarkView.treeBuilder.getResourceAtIndex(currentIndex));
   else {
     // Otherwise add a bookmark to the selected folder. 
-    var rFolder = RDF.GetResource(gCreateInFolder);
+    var rFolder = BM.RDF.GetResource(gCreateInFolder);
     try {
-      RDFC.Init(BMDS, rFolder);
+      BM.RDFC.Init(BMDS, rFolder);
     }
     catch (e) {
       // No "NC:NewBookmarkFolder" exists, just append to the root.
-      rFolder = RDF.GetResource("NC:BookmarksRoot");
-      RDFC.Init(BMDS, rFolder);
+      rFolder = BM.RDF.GetResource("NC:BookmarksRoot");
+      BM.RDFC.Init(BMDS, rFolder);
     }
 
     // if no URL was provided, do nothing

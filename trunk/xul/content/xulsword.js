@@ -22,6 +22,7 @@
 /************************************************************************
  * Initialize Static Bible Variables and some Globals
  ***********************************************************************/
+var CopyPopup;
 var HistoryDepth;
 var HistoryDelimeter;
 var HistoryCaptureDelay;
@@ -30,7 +31,6 @@ var History;
 var FrameDocument = new Array(4);
 var Win = new Array(4);
 var Link = {isLink:[null, null, null, null], isTextLink:[null, null, null, null], modName:null, numWins:null, startWin:null, finishWin:null, firstWin:null, lastWin:null, isRTL:null};
-var KeyWindow;
 var SavedWindowWithFocus;
 var NewModuleInfo;
 var AboutScrollTo;
@@ -205,8 +205,7 @@ function loadedXULReal() {
   getPrefOrCreate("WindowHeight","Int",window.innerHeight);
   getPrefOrCreate("WindowWidth","Int",window.innerWidth);
   
-  BMDS = initBMServices();
-  initTemplateDataSource(document.getElementById("bookmarks-menu"), BMDS); 
+  BookmarkFuns.initTemplateDataSource(document.getElementById("bookmarks-menu"), BMDS); 
   // Cludge to get history button the right height, must happen after updating locale configuration
   document.getElementById("historymenu").style.height = String(document.getElementById("back").boxObject.height) + "px";
   
@@ -240,9 +239,10 @@ function loadedXULReal() {
       updateTabsFromHiddenModPrefs(i, true);
     }
     updateLinkInfo();
-    FrameDocument[1].defaultView.initializeScript();
-    FrameDocument[2].defaultView.initializeScript();
-    FrameDocument[3].defaultView.initializeScript();
+    for (var i=1; i<=3; i++) {
+      FrameDocument[i].defaultView.initializeScript();  
+      FrameDocument[i].defaultView.initPopup();
+    }
     for (var i=1; i<=3; i++) fitTabs(i);
     updateModuleMenuCheckmarks();
     updateChooserVisibility();
@@ -532,7 +532,7 @@ function checkCipherKeys() {
         Bible.getVerseText(CheckTexts[t], "Matt 1:1").length < 2 &&
         !getAvailableBooks(CheckTexts[t])[0]) {
       var retVals = {gotKey: false};
-      KeyWindow = window.openDialog("chrome://xulsword/content/getkey.xul","getkey","chrome, dependent, alwaysRaised, centerscreen, modal", CheckTexts[t], retVals);
+      AllWindows.push(window.openDialog("chrome://xulsword/content/getkey.xul","getkey","chrome, dependent, alwaysRaised, centerscreen, modal", CheckTexts[t], retVals));
       gotKey |= retVals.gotKey;
     }
   }
@@ -1342,7 +1342,6 @@ function linkVerseScroll(numVerses) {
 /************************************************************************
  * Main Command Controller...
  ***********************************************************************/
-var SearchWins = [];
 var XulswordController = {
   parsedLocation: {},
  
@@ -1385,7 +1384,7 @@ var XulswordController = {
       // override default type by setting to negative of desired type.
       var tp = (getPrefOrCreate("InitialSearchType", "Int", CONTAINS_THE_WORDS) < 0 ? Math.abs(prefs.getIntPref("InitialSearchType")):CONTAINS_THE_WORDS);
       prefs.setIntPref("InitialSearchType", tp);
-      SearchWins.push(window.open("chrome://xulsword/content/search.xul","Swn"+SearchWins.length,"chrome,resizable,centerscreen"));
+      AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchFromTextBox":
       // override default type by setting to negative of desired type.
@@ -1420,7 +1419,7 @@ var XulswordController = {
       updateFromNavigator();
       break;
     case "cmd_xs_openManager":
-      ManagerWindow = toOpenWindowByType("bookmarks:manager", "chrome://xulsword/content/bookmarks/bookmarksManager.xul", "chrome,resizable,centerscreen");
+      AllWindows.push(window.open("chrome://xulsword/content/bookmarks/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_toggleTab":
       var preChangeLinkArray = copyLinkArray();
@@ -1434,14 +1433,14 @@ var XulswordController = {
       break;
     case "cmd_xs_aboutModule":
       AboutScrollTo = Tabs[CurrentTarget.tabNum].modName;
-      AboutScreen = window.open("chrome://xulsword/content/about.xul","splash","chrome,modal,centerscreen");
+      AllWindows.push(window.open("chrome://xulsword/content/about.xul","splash","chrome,modal,centerscreen"));
       break;
     case "cmd_xs_addNewModule":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
       if (!addNewModule()) ModuleCopyMutex=false;
       break;
     case "cmd_xs_removeModule":
-      window.open("chrome://xulsword/content/removeModule.xul",document.getElementById("menu.removeModule.label").childNodes[0].nodeValue,"chrome,resizable,centerscreen");
+      AllWindows.push(window.open("chrome://xulsword/content/removeModule.xul",document.getElementById("menu.removeModule.label").childNodes[0].nodeValue,"chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_exportAudio":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
@@ -1457,9 +1456,9 @@ var XulswordController = {
   isCommandEnabled: function (aCommand) {
     switch (aCommand) {
     case "cmd_undo":
-      return (gTxnSvc.numberOfUndoItems > 0);
+      return (BM.gTxnSvc.numberOfUndoItems > 0);
     case "cmd_redo":
-      return (gTxnSvc.numberOfRedoItems > 0);
+      return (BM.gTxnSvc.numberOfRedoItems > 0);
     case "cmd_xs_searchFromTextBox":
       var ct = document.getElementById('searchText').value
       return (ct.length > 0);
@@ -1643,7 +1642,7 @@ function openSearchDialog(text, version, type) {
   prefs.setIntPref("InitialSearchType", type);
   prefs.setCharPref("SearchVersion", version);
   setUnicodePref("SearchText", text);
-  SearchWins.push(window.open("chrome://xulsword/content/search.xul","Swn"+SearchWins.length,"chrome,resizable,centerscreen"));
+  AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
 }
 
 //Sets view->Show... prefs
@@ -1654,7 +1653,6 @@ function handleViewPopup(elem) {
   updateFrameScriptBoxes(null, SCROLLTYPECENTER, HILIGHT_IFNOTV1, NOUPDATELOCATOR);
 }
 
-var AboutScreen;
 var OptionsElement;
 function holdMenuAndHandleOptions(elem) {
   preventMenuFromHiding();
@@ -1689,7 +1687,7 @@ function handleOptions(elem) {
       break;
     
     case "about":
-      AboutScreen = window.open("chrome://xulsword/content/about.xul","splash","chrome,modal,centerscreen");
+      AllWindows.push(window.open("chrome://xulsword/content/about.xul","splash","chrome,modal,centerscreen"));
       break;
       
     case "modulemenu":
@@ -2004,41 +2002,44 @@ function addToHistory() {
  ***********************************************************************/ 
 var ContextMenuShowing;
 var CurrentTarget = {};
+var PopupNode;
 //var TargParagraph;
 
-function ScriptContextMenuShowing(e) {
+function ScriptContextMenuShowing(e, winnum, popupnode) {
 //jsdump ("ScriptContextMenuShowing id:" + document.popupNode.id + ", title:" + document.popupNode.title + "\n");
+  PopupNode = popupnode;
+  
   closeTabToolTip()
-  CurrentTarget.windowNum = Number(document.popupNode.ownerDocument.defaultView.frameElement.id.substr(5,1));
+  CurrentTarget.windowNum = winnum;
 
   // Close Script Popup if we're not over it
-  var elem = document.popupNode;
+  var elem = PopupNode;
   while (elem && (!elem.id || elem.id != "npopup")) {elem = elem.parentNode;}
   if (!elem) {
-    FrameDocument[CurrentTarget.windowNum].defaultView.closePopup();
+    FrameDocument[CurrentTarget.windowNum].defaultView.Popup.close();
   }
   
   // Is this the select tab menu?
-  if (document.popupNode.id == "seltab.menu") {
-    CurrentTarget.tabNum = Tab[document.popupNode.value].index;
+  if (PopupNode.id == "seltab.menu") {
+    CurrentTarget.tabNum = Tab[PopupNode.value].index;
     buildPopup(e, false, false, false, true, true);
     return;
   }
   // Is this the select tab tab?
-  if (document.popupNode.id == "seltab.tab") {
-    CurrentTarget.tabNum = Tab[document.popupNode.nextSibling.value].index;
+  if (PopupNode.id == "seltab.tab") {
+    CurrentTarget.tabNum = Tab[PopupNode.nextSibling.value].index;
     buildPopup(e, false, false, false, true, true);
     return;
   }
   // Is this a version tab?
-  if (document.popupNode.id.search(/tab\d+/)!=-1) {
-    CurrentTarget.tabNum = document.popupNode.id.match(/tab(\d+)/)[1];
+  if (PopupNode.id.search(/tab\d+/)!=-1) {
+    CurrentTarget.tabNum = PopupNode.id.match(/tab(\d+)/)[1];
     buildPopup(e, false, false, false, true, true);
     return;
   }
   
   // Is mouse over a word with strong's numbers?
-  var selem = document.popupNode;
+  var selem = PopupNode;
   var strongsNum;
   while (selem && !strongsNum) {
     strongsNum = (selem.className && selem.className.search(/(^|\s)sn($|\s)/)!=-1 ? selem.title:"");
@@ -2069,7 +2070,7 @@ function ScriptContextMenuShowing(e) {
   
   // First get targets from mouse pointer or selection
   var isSelection=false;
-  var contextTargs = getTargetsFromElement(document.popupNode);
+  var contextTargs = getTargetsFromElement(PopupNode);
   if (contextTargs==null) {e.preventDefault(); return;}
   var selob = getMainWindowSelectionObject();
   if (selob) {
@@ -2081,14 +2082,14 @@ function ScriptContextMenuShowing(e) {
 //jsdump(contextTargs.shortName + " " + contextTargs.chapter + ":" + contextTargs.verse + "-" + contextTargs.lastVerse + ", res=" + contextTargs.resource);
    
   // Set Global Target variables
-  var myModuleName = Win[document.popupNode.ownerDocument.defaultView.frameElement.id.substr(5,1)].modName;
+  var myModuleName = Win[winnum].modName;
   CurrentTarget.version = contextTargs.version ? contextTargs.version:myModuleName;
   CurrentTarget.tabNum = (Tab[CurrentTarget.version] ? Tab[CurrentTarget.version].index:null);
   switch (getModuleLongType(myModuleName)) {
   case BIBLE:
   case COMMENTARY:
-    CurrentTarget.shortName = (contextTargs.shortName ? contextTargs.shortName:document.popupNode.ownerDocument.defaultView.Pin.display.shortName);
-    CurrentTarget.chapter = (contextTargs.chapter ? contextTargs.chapter:document.popupNode.ownerDocument.defaultView.Pin.display.chapter);
+    CurrentTarget.shortName = (contextTargs.shortName ? contextTargs.shortName:PopupNode.ownerDocument.defaultView.Pin.display.shortName);
+    CurrentTarget.chapter = (contextTargs.chapter ? contextTargs.chapter:PopupNode.ownerDocument.defaultView.Pin.display.chapter);
     CurrentTarget.verse = contextTargs.verse;
     CurrentTarget.lastVerse = contextTargs.lastVerse;
     break;
@@ -2103,7 +2104,7 @@ function ScriptContextMenuShowing(e) {
   
   BookmarksMenu._selection = null;
   if (contextTargs.resource) {
-    var aItem = RDF.GetResource(contextTargs.resource);
+    var aItem = BM.RDF.GetResource(contextTargs.resource);
     var aParent = BookmarkFuns.getParentOfResource(aItem, BMDS);
     if (aParent) {
       BookmarksMenu._selection = BookmarksUtils.getSelectionFromResource(aItem, aParent);
@@ -2114,7 +2115,7 @@ function ScriptContextMenuShowing(e) {
   var haveVerse = (CurrentTarget.verse!=null && contextTargs.paragraph==null);
   var overScriptboxVerse = (haveVerse && !contextTargs.isCrossReference);
   var overSelectedVerse = (overScriptboxVerse && CurrentTarget.verse==Location.getVerseNumber(Win[CurrentTarget.windowNum].modName) && CurrentTarget.verse!=1);
-  var frameIsPinned = document.popupNode.ownerDocument.defaultView.Pin.isPinned;
+  var frameIsPinned = PopupNode.ownerDocument.defaultView.Pin.isPinned;
   var overPopup = isOverPopup();
   var overResource = (BookmarksMenu._selection != null);
   var overParagraph = (contextTargs.paragraph != null);
@@ -2152,7 +2153,7 @@ function buildPopup(e, haveVerse, overParagraph, overResource, disableVerseSelec
 }
 
 function isOverPopup() {
-  var parent = document.popupNode;
+  var parent = PopupNode;
   var overPopup = false;
   while (parent) {
     if (parent.id && parent.id == "npopup") {overPopup = true;}
@@ -2284,7 +2285,7 @@ function ScriptContextMenuHidden(aEvent) {
   }
   // Close popup if open, otherwise if both popup and context were open, popup
   // may remain open after context closes
-  FrameDocument[CurrentTarget.windowNum].defaultView.closePopup();
+  FrameDocument[CurrentTarget.windowNum].defaultView.Popup.close();
   aEvent.target.setAttribute("value","closed");
   goUpdateTargetLocation();
   goUpdateCommand("cmd_bm_properties");
@@ -2416,7 +2417,7 @@ function updateGenBooks() {
   
     var myURI = encodeURI("File://" + moduleRDF.path.replace("\\","/","g"));
     //jsdump("Adding: " + myURI.match(/\/([^\/]+\.rdf)/)[1] + "\n");
-    elem.database.AddDataSource(RDF.GetDataSourceBlocking(myURI));
+    elem.database.AddDataSource(BM.RDF.GetDataSourceBlocking(myURI));
   }
   if (needToRebuild) {
     if (numUniqueGenBooks>1)  elem.ref = "rdf:#http://www.xulsword.com/tableofcontents/ContentsRoot";
@@ -2434,12 +2435,12 @@ function updateGenBooks() {
 
 function setPrefToRoot(module, elem) {
   if (!elem) elem = document.getElementById("genbook-tree");
-  var root = RDF.GetResource("rdf:#" + "/" + module);
+  var root = BM.RDF.GetResource("rdf:#" + "/" + module);
   var notFound=false;
-  try {var child1 = elem.database.GetTarget(root, RDFCU.IndexToOrdinalResource(1), true);}
+  try {var child1 = elem.database.GetTarget(root, BM.RDFCU.IndexToOrdinalResource(1), true);}
   catch (er) {notFound=true;}
   if (!child1 || notFound) {jsdump("Resource " + root.Value + " not found.\n"); return;}
-  var chapter = elem.database.GetTarget(child1, RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true)
+  var chapter = elem.database.GetTarget(child1, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true)
                 .QueryInterface(Components.interfaces.nsIRDFLiteral);
   setUnicodePref("ShowingKey" + module, chapter.Value.replace("rdf:#",""));
 }
@@ -2454,7 +2455,7 @@ function openGenBookKey(key, elem) {
   
   while (t != -1) {
     var resvalue = "rdf:#" + key.substring(0,t);
-    var res = RDF.GetResource(resvalue);
+    var res = BM.RDF.GetResource(resvalue);
     try {var index = elemTB.getIndexOfResource(res);}
     catch (er) {return;}
     if (index == -1) {
@@ -2475,7 +2476,7 @@ function selectGenBook(key, elem) {
   if (!elem) elem = document.getElementById("genbook-tree");
   if (!elem.view) return;
   var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
-  var selRes = RDF.GetResource("rdf:#" + key);
+  var selRes = BM.RDF.GetResource("rdf:#" + key);
   try {
     var i = elemTB.getIndexOfResource(selRes);
     elem.view.selection.select(i);
@@ -2492,7 +2493,7 @@ function isSelectedGenBook(key, elem) {
   var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
   try {var selRes = elemTB.getResourceAtIndex(elem.currentIndex);}
   catch (er) {return false;}
-  var chapter = elem.database.GetTarget(selRes, RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
+  var chapter = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
   chapter = chapter.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
   return key==chapter;
 }
@@ -2523,7 +2524,7 @@ function onSelectGenBook(elem) {
   catch (er) {}
   if (!selRes) {SkipGenBookWindow=0; UpdateOnlyPin=null; return;}
   
-  var newkey = elem.database.GetTarget(selRes, RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
+  var newkey = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
   newkey = newkey.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
   
   var newmod = newkey.match(/^\/([^\/]+)/);
@@ -2602,11 +2603,11 @@ function scrollGenBookTo(resvalue, elem) {
   if (!elem) elem=document.getElementById("genbook-tree");
   var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
   
-  var res = RDF.GetResource("rdf:#" + resvalue);
+  var res = BM.RDF.GetResource("rdf:#" + resvalue);
   try {var index = elemTB.getIndexOfResource(res);}
   catch (er) {return;}
   
-  var parentres = RDF.GetResource("rdf:#" + resvalue.replace(/\/[^\/]+$/,""));
+  var parentres = BM.RDF.GetResource("rdf:#" + resvalue.replace(/\/[^\/]+$/,""));
   try {var parentindex = elemTB.getIndexOfResource(parentres);}
   catch (er) {return;}
   
@@ -2868,6 +2869,7 @@ function getUpdatesNeededArray(changedWindow, aPreChangeLinkArray) {
 // Plus the scriptbox update then happens in a timeout to allow the cursor to appear before update begins.
 var ScriptBoxIsEmpty = [false, false, false, false];
 function updateFrameScriptBoxes(updateNeededArray ,scrollTypeFlag, highlightFlag, locatorFlag) {
+return;
   if (!updateNeededArray) updateNeededArray = [false, true, true, true];
   var needed=false;
   for (var w=1; w<updateNeededArray.length; w++) {needed |= updateNeededArray[w];}
@@ -2944,7 +2946,7 @@ function updateAudioLinks(updateNeededArray) {
     if (!updateNeededArray[w]) continue;
     if (FrameDocument[w].defaultView.Pin.isPinned) var bk = FrameDocument[w].defaultView.Pin.display.shortName;
     else bk = Location.getBookName();
-    var icons = FrameDocument[w].getElementsByName("listenlink");
+    var icons = FrameDocument[w].getElementsByClassName("listenlink");
     for (var i = 0; i < icons.length; ++i) {
       var icon = icons[i];
 //icon.style.visibility = "visible"; continue;
@@ -3055,7 +3057,7 @@ function writeToScriptBoxes(win, isPinned, display, scrollTypeFlag) {
   for (var i=s.link.startWin; i<=s.link.finishWin; i++) {
     FrameDocument[i].defaultView.ConnectorElement.style.visibility = (Win[i].isLinkedToNext ? "visible":"hidden");
     FrameDocument[i].defaultView.FrameDocumentHavingNoteBox = FrameDocument[s.link.lastWin];
-    FrameDocument[i].defaultView.MyFootnotes = TextCache[s.link.firstWin].fn;
+    for (var m in TextCache[s.link.firstWin].fn) {FrameDocument[i].defaultView.MyFootnotes[m] = TextCache[s.link.firstWin].fn[m];}
   }
   
   // if note box is maximized make necessary adjustments
@@ -4220,6 +4222,9 @@ function getUnpinnedWindows() {
   return wins;
 }
 
+function popupkeydown(e) {for (var w=1; w<=3; w++) {FrameDocument[w].defaultView.Popup.keydown(e);}}
+function popupkeyup(e)   {for (var w=1; w<=3; w++) {FrameDocument[w].defaultView.Popup.keyup(e);}}
+
 /************************************************************************
  * XUL Window Unload
  ***********************************************************************/ 
@@ -4250,14 +4255,13 @@ function unloadXUL() {
   try {window.controllers.removeController(BookmarksMenuController);} catch(er) {}
   
   //Close search windows and other windows
-  for (var i=0; i<SearchWins.length; i++) {SearchWins[i].close();}
-  try {ManagerWindow.close();} catch (er) {}
-  try {AboutScreen.close();} catch (er) {}
-  try {KeyWindow.close();} catch (er) {}
-  try {ProgressMeter.close();} catch (er) {}
+  for (var i=0; i<AllWindows.length; i++) {
+    if (!AllWindows[i]) next;
+    try {AllWindows[i].close();} catch(er) {}
+  }
     
   //Clear Transactions
-  gTxnSvc.clear();
+  BM.gTxnSvc.clear();
   
   if (Bible) {
     //Save history info
@@ -4280,7 +4284,7 @@ function unloadXUL() {
  ***********************************************************************/ 
 
 function copyPassageDialog() {
-  var retval = window.open("chrome://xulsword/content/copyPassage.xul",document.getElementById("menu.copypassage").childNodes[0].nodeValue,"chrome,resizable,centerscreen");
+  AllWindows.push(window.open("chrome://xulsword/content/copyPassage.xul",document.getElementById("menu.copypassage").childNodes[0].nodeValue,"chrome,resizable,centerscreen"));
 }
  
 var PrintPassageHTML;
@@ -4302,7 +4306,7 @@ function handlePrintCommand(command) {
     document.getElementById(command).doCommand();
     break;
   case "cmd_print_passage":
-    var retval = window.open("chrome://xulsword/content/printPassage.xul",document.getElementById("print.printpassage").childNodes[0].nodeValue,"chrome,resizable,centerscreen");
+    AllWindows.push(window.open("chrome://xulsword/content/printPassage.xul",document.getElementById("print.printpassage").childNodes[0].nodeValue,"chrome,resizable,centerscreen"));
     break;
   }
 }
@@ -4405,10 +4409,14 @@ function toOpenWindowByType(inType, uri, features)
   var thiswin;
   if (topWindow)
     topWindow.focus();
-  else if (features)
+  else if (features) {
     thiswin = window.open(uri, "_blank", features);
-  else
+    AllWindows.push(thiswin);
+  }
+  else {
     thiswin = window.open(uri, "_blank", "chrome,extrachrome,menubar,resizable,scrollbars,status,toolbar");
+    AllWindows.push(thiswin);
+  }
   
   return thiswin;
 }
@@ -4421,10 +4429,12 @@ function toOpenWindowByType(inType, uri, features)
 function saveHTML () {
   for (var i=1; i<=prefs.getIntPref("NumDisplayedWindows"); i++) {
     var data = "";
+/*
     if (SearchWins[i-1])
     data += "\n\nSEARCHRESULTS:\n" + SearchWins[i-1].document.getElementById("search-frame").contentDocument.getElementById("searchBox").innerHTML;
     data += "\n\nSCRIPTBOX:\n" + document.getElementById("bible" + i + "Frame").contentDocument.getElementById("scriptBoxText").innerHTML;
     data += "\n\nNOTEBOX:\n" + document.getElementById("bible" + i + "Frame").contentDocument.getElementById("noteBox").innerHTML;
+*/
     try {
       var tmp = Bible.getChapterText(Win[i].modName, Location.getLocation(Win[i].modName));
       data += "\n\nCROSSREFS\n" + Bible.getCrossRefs();

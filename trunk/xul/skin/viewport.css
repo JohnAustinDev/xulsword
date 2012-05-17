@@ -1,0 +1,73 @@
+#texts {
+  display:table;
+  font-size:12px;
+}
+.text {
+  display:table-cell;
+  border:1px solid white;
+}
+.sb {
+  height:600px;
+  overflow:hidden;
+}
+
+.text[value="show1"] {
+  width:32%;
+}
+.text[value="show1"] .sb {
+  -moz-columns:1;
+}
+
+.text[value="show2"] {
+  width:64%;
+}
+.text[value="show2"] .sb {
+  -moz-columns:2;
+}
+
+.text[value="show3"] {
+  width:96%;
+}
+.text[value="show3"] .sb {
+  -moz-columns:3;
+}
+
+.text[value=""], .text[value="hide"], .text:not([value]) {
+  display:none !important;
+}
+
+.text > div {
+  position:relative;
+}
+.text > div > div {
+  position:absolute;
+  height:600px;
+  
+  right:0px;
+}
+.text[value="show1"] > div > div {
+  width:100%;
+}
+.text[value="show2"] > div > div {
+  width:50%;
+}
+.text[value="show3"] > div > div {
+  width:33%;
+}
+
+.text > div > div > div {
+  position:absolute;
+  bottom:0px;
+  width:100%;
+  height:200px;
+  background:grey;
+  z-index:99;
+}
+
+.text > div > div > div[value="hide"] {
+  display:none;
+}
+.text:not([value="show1"]) > div > div > div[value="max"] {
+  height:100% !important;
+}
+

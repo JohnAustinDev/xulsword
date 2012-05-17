@@ -41,6 +41,8 @@
     persist="width height screenX screenY sizemode"
     onload="loadedXUL()"
     onunload="unloadXUL()"
+    onkeydown="popupkeydown(event);" 
+    onkeyup="popupkeyup(event);"
     ondragover="nsDragAndDrop.dragOver(event,fileObserver)"
     ondragdrop="nsDragAndDrop.drop(event,fileObserver)"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -65,22 +67,21 @@
 <script>var MainWindow = window;</script>
 <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkdata.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
 <script>moduleInstall(true)</script>
-
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksTop.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
-<script src="chrome://xulsword/content/indexer.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/indexer.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
 
 <!-- HOT KEY DEFINITIONS !-->
 <keyset>
@@ -454,6 +455,7 @@
   <vbox flex="100%">
     <deck id="appcontent" flex="100%">
       <!-- <iframe id="aboutConfig" flex="100%" class="bibleframe" src="about:config" /> !-->
+      <iframe id="viewport" flex="100%" src="viewport.html" />
       <hbox id="frameset" flex="100%">
         <vbox id="genBookChooser" pack="center" align="center" style="background-image: url(chrome://xulsword/skin/images/9.gif); visibility:hidden;">
           <vbox id="genBookTree" class="genbookchooser">
@@ -491,7 +493,7 @@
 
 <!-- POPUP MENUS ARE DEFINED HERE !-->
 <popupset>
-  <menupopup id="contextScriptBox" value="closed" onpopupshowing="ScriptContextMenuShowing(event)" onpopuphidden="ScriptContextMenuHidden(event)">
+  <menupopup id="contextScriptBox" value="closed" onpopupshowing="ScriptContextMenuShowing(event,Number(document.popupNode.ownerDocument.defaultView.frameElement.id.substr(5,1)),document.popupNode)" onpopuphidden="ScriptContextMenuHidden(event)">
     <menuitem id="aboutModule" label="&menu.help.about;" command="cmd_xs_aboutModule"/>
     <menuitem id="closeTab" label="&context.closeTab;" command="cmd_xs_toggleTab"/>
     <menuseparator />

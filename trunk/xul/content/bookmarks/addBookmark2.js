@@ -75,10 +75,10 @@ function Startup()
 {
   updateCSSBasedOnCurrentLocale(["#addBookmarkDialog", "input, button, menu, menuitem"]);
   createVersionClasses();
+  AllWindows.push(window);
 
-  BMDS = initBMServices();
-  initTemplateDataSource(document.getElementById("folderPopup"), BMDS);
-  initTemplateDataSource(document.getAnonymousElementByAttribute(document.getElementById("folder-tree"), "anonid", "bookmarks-tree"), BMDS);
+  BookmarkFuns.initTemplateDataSource(document.getElementById("folderPopup"), BMDS);
+  BookmarkFuns.initTemplateDataSource(document.getAnonymousElementByAttribute(document.getElementById("folder-tree"), "anonid", "bookmarks-tree"), BMDS);
   
   gName = document.getElementById("name");
   gNote = document.getElementById("note");
@@ -113,11 +113,11 @@ function Startup()
     WSucks = 150;
 
   // fix no more persisted class attribute in old profiles
-  var localStore = RDF.GetDataSource("rdf:local-store");
-  var rAttribute = RDF.GetResource("class");
-  var rElement   = RDF.GetResource("chrome://xulsword/content/bookmarks/addBookmark2.xul#expander");
-  var rDialog    = RDF.GetResource("chrome://xulsword/content/bookmarks/addBookmark2.xul");
-  var rPersist   = RDF.GetResource(gNC_NS+"persist");
+  var localStore = BM.RDF.GetDataSource("rdf:local-store");
+  var rAttribute = BM.RDF.GetResource("class");
+  var rElement   = BM.RDF.GetResource("chrome://xulsword/content/bookmarks/addBookmark2.xul#expander");
+  var rDialog    = BM.RDF.GetResource("chrome://xulsword/content/bookmarks/addBookmark2.xul");
+  var rPersist   = BM.RDF.GetResource(BM.gNC_NS+"persist");
   
   var rOldValue = localStore.GetTarget(rElement, rAttribute, true);
   if (rOldValue) {
@@ -137,7 +137,7 @@ function Startup()
         gMenulist.selectedItem = folderItem;
     }
     else {gMenulist.selectedIndex = 0;}
-    gSelectedFolder = RDF.GetResource(gMenulist.selectedItem.id);
+    gSelectedFolder = BM.RDF.GetResource(gMenulist.selectedItem.id);
   }
   setTimeout(initMenulist, 0);
   
@@ -165,7 +165,7 @@ function onCancel()
 
 function selectMenulistFolder(aEvent)
 {
-  gSelectedFolder = RDF.GetResource(aEvent.target.id);
+  gSelectedFolder = BM.RDF.GetResource(aEvent.target.id);
   if (!gBookmarksTree.collapsed)
     selectFolder(gSelectedFolder);
 }
@@ -188,7 +188,7 @@ function selectTreeFolder()
   gMenulist.selectedItem = menuitem;
   if (!menuitem) {
     gMenulist.removeItemAt(gMenulist.firstChild.childNodes.length-1);
-    var newItem = gMenulist.appendItem(BookmarksUtils.getProperty(gSelectedFolder, gNC_NS+"Name"), gSelectedFolder.Value);
+    var newItem = gMenulist.appendItem(BookmarksUtils.getProperty(gSelectedFolder, BM.gNC_NS+"Name"), gSelectedFolder.Value);
     newItem.setAttribute("class", "menuitem-iconic folder-icon");
     newItem.setAttribute("id", gSelectedFolder.Value);
     gMenulist.selectedItem = newItem;
@@ -215,7 +215,7 @@ function expandTree()
     document.documentElement.buttons = "accept,cancel";
     WSucks = gBookmarksTree.boxObject.height;
     gMenulist.selectedIndex = 0;
-    gSelectedFolder = RDF.GetResource(gMenulist.selectedItem.id);
+    gSelectedFolder = BM.RDF.GetResource(gMenulist.selectedItem.id);
   } else {
     document.documentElement.buttons = "accept,cancel,extra2";
     if (!gBookmarksTree.treeBoxObject.view.isContainerOpen(0)) gBookmarksTree.treeBoxObject.view.toggleOpenState(0);
@@ -236,7 +236,7 @@ function setFolderTreeHeight()
 function newFolder()
 {
   gBookmarksTree.focus();
-  var parentRes = RDF.GetResource(gMenulist.selectedItem.id);
+  var parentRes = BM.RDF.GetResource(gMenulist.selectedItem.id);
   var target = {parent: parentRes, index: 1}
   BookmarksCommand.createNewFolder(target);
 }

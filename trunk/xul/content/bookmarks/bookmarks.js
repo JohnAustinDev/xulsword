@@ -40,9 +40,9 @@ var BookmarksCommand = {
   // as appropriate.
   createMenuItem: function (aDisplayName, aAccessKey, aCommandName, aSelection)
   {
-    var xulElement = document.createElementNS(gXUL_NS, "menuitem");
+    var xulElement = document.createElementNS(BM.gXUL_NS, "menuitem");
     xulElement.setAttribute("cmd", aCommandName);
-    var cmd = "cmd_" + aCommandName.substring(gNC_NS_CMD.length);
+    var cmd = "cmd_" + aCommandName.substring(BM.gNC_NS_CMD.length);
     xulElement.setAttribute("command", cmd);
     xulElement.setAttribute("label", aDisplayName);
     xulElement.setAttribute("accesskey", aAccessKey);
@@ -84,9 +84,9 @@ var BookmarksCommand = {
     // Now that we should have generated a list of commands that is valid
     // for the entire selection, build a context menu.
     for (i = 0; i < commonCommands.length; ++i) {
-      var currCommand = commonCommands[i].QueryInterface(kRDFRSCIID).Value;
+      var currCommand = commonCommands[i].QueryInterface(BM.kRDFRSCIID).Value;
       var element = null;
-      if (currCommand != gNC_NS_CMD + "bm_separator") {
+      if (currCommand != BM.gNC_NS_CMD + "bm_separator") {
         var commandName = this.getCommandName(currCommand);
         var accessKey = this.getAccessKey(currCommand);
         element = this.createMenuItem(commandName, null, currCommand, aSelection);
@@ -94,7 +94,7 @@ var BookmarksCommand = {
       else if (i != 0 && i < commonCommands.length-1) {
         // Never append a separator as the first or last element in a context
         // menu.
-        element = document.createElementNS(gXUL_NS, "menuseparator");
+        element = document.createElementNS(BM.gXUL_NS, "menuseparator");
       }
       if (element) 
         popup.appendChild(element);
@@ -192,7 +192,7 @@ var BookmarksCommand = {
                   "bm_properties"];
       break;
     case "ImmutableBookmark":
-      if (aNodeID==BmEmptyRes) commands = ["bm_newbookmark", "bm_newfolder"];
+      if (aNodeID==BM.BmEmptyRes) commands = ["bm_newbookmark", "bm_newfolder"];
       else commands = [];
       break;
     default: 
@@ -207,7 +207,7 @@ var BookmarksCommand = {
   // manufacturing a UI to invoke commands.
   getCommandName: function (aCommand) 
   {
-    var cmdName = aCommand.substring(gNC_NS_CMD.length);
+    var cmdName = aCommand.substring(BM.gNC_NS_CMD.length);
     var useCommonNameFor = ["bm_cut", "bm_copy", "bm_paste", "bm_delete"];
     var commonName = ["cut", "copy", "paste", "delete"];
     for (var i=0; i<useCommonNameFor.length; i++) {
@@ -225,7 +225,7 @@ var BookmarksCommand = {
   // manufacturing a UI to invoke commands.
   getAccessKey: function (aCommand) 
   {
-    var cmdName = aCommand.substring(gNC_NS_CMD.length);
+    var cmdName = aCommand.substring(BM.gNC_NS_CMD.length);
     var useCommonNameFor = ["bm_cut", "bm_copy", "bm_paste", "bm_delete"];
     var commonName = ["cut", "copy", "paste", "delete"];
     for (var i=0; i<useCommonNameFor.length; i++) {
@@ -241,7 +241,7 @@ var BookmarksCommand = {
   // Execute a command with the given source and arguments
   doBookmarksCommand: function (aSource, aCommand, aArgumentsArray)
   {
-    var rCommand = RDF.GetResource(aCommand);
+    var rCommand = BM.RDF.GetResource(aCommand);
   
     var kSuppArrayContractID = "@mozilla.org/supports-array;1";
     var kSuppArrayIID = Components.interfaces.nsISupportsArray;
@@ -253,14 +253,14 @@ var BookmarksCommand = {
     var argsArray = Components.classes[kSuppArrayContractID].createInstance(kSuppArrayIID);
     var length = aArgumentsArray?aArgumentsArray.length:0;
     for (var i = 0; i < length; ++i) {
-      var rArc = RDF.GetResource(aArgumentsArray[i].property);
+      var rArc = BM.RDF.GetResource(aArgumentsArray[i].property);
       argsArray.AppendElement(rArc);
       var rValue = null;
       if ("resource" in aArgumentsArray[i]) { 
-        rValue = RDF.GetResource(aArgumentsArray[i].resource);
+        rValue = BM.RDF.GetResource(aArgumentsArray[i].resource);
       }
       else
-        rValue = RDF.GetLiteral(aArgumentsArray[i].literal);
+        rValue = BM.RDF.GetLiteral(aArgumentsArray[i].literal);
       argsArray.AppendElement(rValue);
     }
 
@@ -270,21 +270,21 @@ var BookmarksCommand = {
 
   undoBookmarkTransaction: function ()
   {
-    gTxnSvc.undoTransaction();
+    BM.gTxnSvc.undoTransaction();
     BookmarksUtils.refreshSearch();
     BookmarksUtils.flushDataSource();
   },
 
   redoBookmarkTransaction: function ()
   {
-    gTxnSvc.redoTransaction();
+    BM.gTxnSvc.redoTransaction();
     BookmarksUtils.refreshSearch();
     BookmarksUtils.flushDataSource();
   },
 
   manageFolder: function (aSelection)
   {
-    openDialog("chrome://browser/content/bookmarks/bookmarksManager.xul","", "chrome,all,dialog=no", aSelection.item[0].Value);
+    //openDialog("chrome://browser/content/bookmarks/bookmarksManager.xul","", "chrome,all,dialog=no", aSelection.item[0].Value);
   },
   
   cutBookmark: function (aSelection)
@@ -313,10 +313,10 @@ var BookmarksCommand = {
       // and in INSERT tranasactions
       // (if the selection is folder or livemark save all childs property)
       var aType = BookmarksUtils.resolveType(aSelection.item[i]);
-         for (var j = 0; j < gBmProperties.length; ++j) {
-            var itemValue = BMDS.GetTarget(aSelection.item[i], gBmProperties[j], true);
+         for (var j = 0; j < BM.gBmProperties.length; ++j) {
+            var itemValue = BMDS.GetTarget(aSelection.item[i], BM.gBmProperties[j], true);
             if (itemValue)
-                sBookmarkItem += itemValue.QueryInterface(kRDFLITIID).Value + "\n";
+                sBookmarkItem += itemValue.QueryInterface(BM.kRDFLITIID).Value + "\n";
             else
                 sBookmarkItem += "\n";
          }
@@ -325,7 +325,7 @@ var BookmarksCommand = {
          var propArray = [];
          BookmarksUtils.getAllChildren(aSelection.item[i], propArray);
          for (var k = 0; k < propArray.length; ++k) {
-            for (var j = 0; j < gBmProperties.length + 1; ++j) {
+            for (var j = 0; j < BM.gBmProperties.length + 1; ++j) {
                if (propArray[k][j])
                    sBookmarkItem += propArray[k][j].Value + "\n";
                else
@@ -401,18 +401,18 @@ var BookmarksCommand = {
       // since data are ended by separator, remove the last empty node
       items.pop(); 
       // convert propery from text string to array
-      var p = gBmProperties.length+1;
+      var p = BM.gBmProperties.length+1;
       for (var i = 0; i < items.length; ++i) {
         childs = items[i].split("\n");
         childs.pop();
         var childCount = childs.shift();
-        items[i] = RDF.GetResource(childs[0]);
+        items[i] = BM.RDF.GetResource(childs[0]);
         var propArray = [];
         for (var k = 0; k < childCount; ++k) {
           for (var j = 1; j < p; ++j) {
              var prop = childs[p*k+j];
              if (prop)
-                 propArray.push(RDF.GetLiteral(prop));
+                 propArray.push(BM.RDF.GetLiteral(prop));
              else
                  propArray.push(null);
           }
@@ -460,9 +460,9 @@ var BookmarksCommand = {
     var currentDate = new Date().toLocaleDateString();
     var parent = BookmarkFuns.getParentOfResource(aSelection.item[0], BMDS);
     var visited = [aSelection.item[0]];
-    if (parent && parent.Value!=AllBookmarksID) visited.push(parent);
+    if (parent && parent.Value!=BM.AllBookmarksID) visited.push(parent);
     for (var i=0; i<visited.length; i++) {
-      BookmarkFuns.updateAttribute(visited[i], gBmProperties[VISITEDDATE], BMDS.GetTarget(visited[i], gBmProperties[VISITEDDATE], true), RDF.GetLiteral(currentDate));
+      BookmarkFuns.updateAttribute(visited[i], BM.gBmProperties[VISITEDDATE], BMDS.GetTarget(visited[i], BM.gBmProperties[VISITEDDATE], true), BM.RDF.GetLiteral(currentDate));
     }
     BookmarkFuns.gotoBookMark(aSelection.item[0].Value);
   },
@@ -576,7 +576,7 @@ var BookmarksCommand = {
     catch (e) {
       return;
     }
-    var selection = RDF.GetResource(AllBookmarksID);
+    var selection = BM.RDF.GetResource(BM.AllBookmarksID);
     
     if (BMDS) BookmarkFuns.purgeDataSource(BMDS);
     
@@ -584,22 +584,22 @@ var BookmarksCommand = {
     var data="";
     var resourceDelim="";
     while (resources.hasMoreElements()) {
-      var myres = resources.getNext().QueryInterface(kRDFRSCIID);
+      var myres = resources.getNext().QueryInterface(BM.kRDFRSCIID);
       var myparent = BookmarkFuns.getParentOfResource(myres, BMDS);
       if (!myparent || 
-      (myparent == FoundResultsRes) || 
-      (myres == BmEmptyRes) || 
-      (myres == AllBookmarksRes) ||
-      (myres == BookmarksRootRes)) {continue;}
+      (myparent == BM.FoundResultsRes) || 
+      (myres == BM.BmEmptyRes) || 
+      (myres == BM.AllBookmarksRes) ||
+      (myres == BM.BookmarksRootRes)) {continue;}
       data = data + resourceDelim + myparent.Value;
-      data = data + kExportDelimiter + myres.Value;
-      data = data + kExportDelimiter + RDFCU.indexOf(BMDS,myparent,myres);
-      resourceDelim = kExportResourceDelimiter;
-      for (var i=0; i<gBmProperties.length; i++) {
+      data = data + BM.kExportDelimiter + myres.Value;
+      data = data + BM.kExportDelimiter + BM.RDFCU.indexOf(BMDS,myparent,myres);
+      resourceDelim = BM.kExportResourceDelimiter;
+      for (var i=0; i<BM.gBmProperties.length; i++) {
         try {
-        value = replaceASCIIcontrolChars(BMDS.GetTarget(myres,gBmProperties[i],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);}
+        value = replaceASCIIcontrolChars(BMDS.GetTarget(myres,BM.gBmProperties[i],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);}
         catch (er) {value="";}
-        data = data + kExportDelimiter + value;
+        data = data + BM.kExportDelimiter + value;
       }
     }
 
@@ -644,17 +644,17 @@ var BookmarksCommand = {
     }
 
     var toSort = [];
-    RDFC.Init(BMDS, theFolder);
-    var folderContents = RDFC.GetElements();
+    BM.RDFC.Init(BMDS, theFolder);
+    var folderContents = BM.RDFC.GetElements();
     while (folderContents.hasMoreElements()) {
-        var rsrc = folderContents.getNext().QueryInterface(kRDFRSCIID);
+        var rsrc = folderContents.getNext().QueryInterface(BM.kRDFRSCIID);
         var rtype = BookmarksUtils.resolveType(rsrc);
         if (rtype == "BookmarkSeparator")
           continue;
         toSort.push(rsrc);
     }
 
-    const kName = RDF.GetResource(gNC_NS+"Name");
+    const kName = BM.RDF.GetResource(BM.gNC_NS+"Name");
 
     var localeService = Components.classes["@mozilla.org/intl/nslocaleservice;1"]
                                   .getService(Components.interfaces.nsILocaleService);
@@ -676,8 +676,8 @@ var BookmarksCommand = {
                      return 1;
 
                    // then sort by name
-                   var aname = BMDS.GetTarget(a, kName, true).QueryInterface(kRDFLITIID).Value;
-                   var bname = BMDS.GetTarget(b, kName, true).QueryInterface(kRDFLITIID).Value;
+                   var aname = BMDS.GetTarget(a, kName, true).QueryInterface(BM.kRDFLITIID).Value;
+                   var bname = BMDS.GetTarget(b, kName, true).QueryInterface(BM.kRDFLITIID).Value;
 
                    return collation.compareString(0, aname, bname);
                  });
@@ -685,17 +685,17 @@ var BookmarksCommand = {
     // we now have the resources here sorted by name
     BMDS.beginUpdateBatch();
 
-    RDFC.Init(BMDS, theFolder);
+    BM.RDFC.Init(BMDS, theFolder);
 
     // remove existing elements
-    var folderContents = RDFC.GetElements();
+    var folderContents = BM.RDFC.GetElements();
     while (folderContents.hasMoreElements()) {
-      RDFC.RemoveElement (folderContents.getNext(), false);
+      BM.RDFC.RemoveElement (folderContents.getNext(), false);
     }
 
     // and add our elements back
     for (var i = 0; i < toSort.length; i++) {
-      RDFC.InsertElementAt (toSort[i], i+1, true);
+      BM.RDFC.InsertElementAt (toSort[i], i+1, true);
     }
 
     BMDS.endUpdateBatch();
@@ -765,10 +765,10 @@ var BookmarksController = {
     switch(aCommand) {
     case "cmd_undo":
     case "cmd_bm_undo":
-      return (gTxnSvc.numberOfUndoItems > 0);
+      return (BM.gTxnSvc.numberOfUndoItems > 0);
     case "cmd_redo":
     case "cmd_bm_redo":
-      return (gTxnSvc.numberOfRedoItems > 0);
+      return (BM.gTxnSvc.numberOfRedoItems > 0);
     case "cmd_bm_paste":
       return true;
     case "cmd_bm_copy":
@@ -789,8 +789,8 @@ var BookmarksController = {
             aSelection.type[i] == "BookmarkSeparator")
           return false;
         try {
-          RDFC.Init(BMDS, aSelection.item[i]);
-          var children = RDFC.GetElements();
+          BM.RDFC.Init(BMDS, aSelection.item[i]);
+          var children = BM.RDFC.GetElements();
           while (children.hasMoreElements()) {
             var childType = BookmarksUtils.resolveType(children.getNext());
             if (childType == "Bookmark" || childType == "LivemarkBookmark")
@@ -806,7 +806,7 @@ var BookmarksController = {
     case "cmd_bm_newbookmark":
     case "cmd_bm_newfolder":
     case "cmd_bm_newseparator":
-      return (aSelection.item[0]==BmEmptyRes || BookmarksUtils.isValidTargetContainer(aTarget.parent));
+      return (aSelection.item[0]==BM.BmEmptyRes || BookmarksUtils.isValidTargetContainer(aTarget.parent));
     case "cmd_bm_properties":
     case "cmd_bm_rename":
       if (length != 1 || aSelection.containsImmutable ||
@@ -869,7 +869,7 @@ var BookmarksController = {
     case "cmd_bm_setnewbookmarkfolder":
     case "cmd_bm_setpersonaltoolbarfolder":
     case "cmd_bm_setnewsearchfolder":
-      BookmarksCommand.doBookmarksCommand(aSelection.item[0], gNC_NS_CMD+aCommand.substring("cmd_bm_".length), []);
+      BookmarksCommand.doBookmarksCommand(aSelection.item[0], BM.gNC_NS_CMD+aCommand.substring("cmd_bm_".length), []);
       break;
     case "cmd_bm_rename":
     case "cmd_bm_properties":
@@ -954,7 +954,7 @@ function CommandArrayEnumerator (aCommandArray)
 {
   this._inner = [];
   for (var i = 0; i < aCommandArray.length; ++i)
-    this._inner.push(RDF.GetResource(gNC_NS_CMD + aCommandArray[i]));
+    this._inner.push(BM.RDF.GetResource(BM.gNC_NS_CMD + aCommandArray[i]));
     
   this._index = 0;
 }
@@ -1027,18 +1027,18 @@ var BookmarksUtils = {
   getProperty: function (aInput, aArcURI, aDS)
   {
     var node;
-    var arc  = RDF.GetResource(aArcURI);
+    var arc  = BM.RDF.GetResource(aArcURI);
     if (typeof(aInput) == "string") 
-      aInput = RDF.GetResource(aInput);
+      aInput = BM.RDF.GetResource(aInput);
     if (!aDS)
       node = BMDS.GetTarget(aInput, arc, true);
     else
       node = aDS .GetTarget(aInput, arc, true);
     try {
-      return node.QueryInterface(kRDFRSCIID).Value;
+      return node.QueryInterface(BM.kRDFRSCIID).Value;
     }
     catch (e) {
-      return node? node.QueryInterface(kRDFLITIID).Value : "";
+      return node? node.QueryInterface(BM.kRDFLITIID).Value : "";
     }    
   },
 
@@ -1046,18 +1046,18 @@ var BookmarksUtils = {
   // Determine the rdf:type property for the given resource.
   resolveType: function (aResource, aDS)
   {
-    var type = this.getProperty(aResource, gNC_NS+"Type", aDS);
+    var type = this.getProperty(aResource, BM.gNC_NS+"Type", aDS);
     
     if (type == "EmptyBookmark") {return "ImmutableBookmark";} //"Bookmark" NO!!!!!!
 
     if (type == "") {
       switch (aResource.Value) {
-      case NumberFieldValueID:
+      case BM.NumberFieldValueID:
         type = "ImmutableBookmark"
         break;
-      case BookmarksRootID:
-      case AllBookmarksID:
-      case FoundResultsID:
+      case BM.BookmarksRootID:
+      case BM.AllBookmarksID:
+      case BM.FoundResultsID:
         type =  "ImmutableFolder";
         break;
       default:
@@ -1086,10 +1086,10 @@ var BookmarksUtils = {
       parent      = aSelection.parent[i];
       type        = BookmarksUtils.resolveType(item);
       protocol    = item.Value.split(":")[0];
-      isContainer = RDFCU.IsContainer(BMDS, item) ||
+      isContainer = BM.RDFCU.IsContainer(BMDS, item) ||
                     protocol == "find" || protocol == "file";
       isImmutable = false;
-      if ((item.Value == BookmarksRootID) || (item.Value == AllBookmarksID)) {
+      if ((item.Value == BM.BookmarksRootID) || (item.Value == BM.AllBookmarksID)) {
         isImmutable = true;
       }
       else if (type != "Bookmark" && type != "BookmarkSeparator" && 
@@ -1137,12 +1137,12 @@ var BookmarksUtils = {
       //folder = BMSVC.getParent(folder);
       if (!folder)
         return false; // sanity check
-    } while (folder.Value != BookmarksRootID)
+    } while (folder.Value != BM.BookmarksRootID)
     return false;
   },
   
-  getParent: function (resource, DS) {
-    return BookmarkFuns.getParentOfResource(resource, DS);
+  getParent: function (resource, ds) {
+    return BookmarkFuns.getParentOfResource(resource, ds);
   },
 
   /////////////////////////////////////////////////////////////////////////////
@@ -1151,9 +1151,9 @@ var BookmarksUtils = {
   {
     if (!aFolder)
       return false;
-    if (aFolder.Value == BookmarksRootID)
+    if (aFolder.Value == BM.BookmarksRootID)
       return false;
-    if (aFolder.Value == AllBookmarksID)
+    if (aFolder.Value == BM.AllBookmarksID)
       return true;
 
     // don't insert items in an invalid container
@@ -1192,31 +1192,31 @@ var BookmarksUtils = {
   {
 
     if (aSelection.length > 1)
-      gTxnSvc.beginBatch();
-    if (aSelection.length > kBATCH_LIMIT && aAction != "move")
+      BM.gTxnSvc.beginBatch();
+    if (aSelection.length > BM.kBATCH_LIMIT && aAction != "move")
       BMDS.beginUpdateBatch();
 
     for (var i = 0; i < aSelection.length; ++i) {
       // try to put back aSelection.parent[i] if it's null, so we can delete after searching
-      if (aSelection.parent[i] == null || aSelection.parent[i] == FoundResultsRes) {
+      if (aSelection.parent[i] == null || aSelection.parent[i] == BM.FoundResultsRes) {
           aSelection.parent[i] = BookmarksUtils.getParent(aSelection.item[i],BMDS);
       }
       
       if (aSelection.parent[i]) {
-        RDFC.Init(BMDS, aSelection.parent[i]);
+        BM.RDFC.Init(BMDS, aSelection.parent[i]);
 
         // save the selection property into array that is used later in
         // when performing the REMOVE transaction
         // (if the selection is folder save all childs property)
         var propArray;
         if (aAction != "move") {
-            propArray = new Array(gBmProperties.length);
+            propArray = new Array(BM.gBmProperties.length);
             var aType = BookmarksUtils.resolveType(aSelection.item[i]);            
             //if (aType != "Livemark") {// don't change livemark properties
-               for (var j = 0; j < gBmProperties.length; ++j) {
-                  var oldValue = BMDS.GetTarget(aSelection.item[i], gBmProperties[j], true);
+               for (var j = 0; j < BM.gBmProperties.length; ++j) {
+                  var oldValue = BMDS.GetTarget(aSelection.item[i], BM.gBmProperties[j], true);
                   if (oldValue)
-                      propArray[j] = oldValue.QueryInterface(kRDFLITIID);
+                      propArray[j] = oldValue.QueryInterface(BM.kRDFLITIID);
                }
             //}
             if (aType == "Folder" || aType == "Livemark")
@@ -1227,14 +1227,14 @@ var BookmarksUtils = {
 
         BookmarkFuns.createAndCommitTxn("remove", aAction, 
                                        aSelection.item[i], 
-                                       RDFC.IndexOf(aSelection.item[i]),
+                                       BM.RDFC.IndexOf(aSelection.item[i]),
                                        aSelection.parent[i], 
                                        proplength, propArray);
       }
     }
     if (aSelection.length > 1)
-      gTxnSvc.endBatch();
-    if (aSelection.length > kBATCH_LIMIT && aAction != "move")
+      BM.gTxnSvc.endBatch();
+    if (aSelection.length > BM.kBATCH_LIMIT && aAction != "move")
       BMDS.endUpdateBatch();
     return true;
   },
@@ -1242,21 +1242,21 @@ var BookmarksUtils = {
   //  this recursive function return array of all childrens properties for given folder
   getAllChildren: function (folder, propArray)
   {
-    var container = Components.classes[kRDFCContractID].createInstance(kRDFCIID);
+    var container = BM.RDFC;
     container.Init(BMDS, folder);
     var children = container.GetElements();
     while (children.hasMoreElements()){
       var child = children.getNext() ;
       if (child instanceof Components.interfaces.nsIRDFResource){
          var aType = BookmarksUtils.resolveType(child);
-         var childResource = child.QueryInterface(kRDFRSCIID);
-         var props = new Array(gBmProperties.length);
+         var childResource = child.QueryInterface(BM.kRDFRSCIID);
+         var props = new Array(BM.gBmProperties.length);
          // don't change livemark properties
          //if (aType != "Livemark") {
-            for (var j = 0; j < gBmProperties.length; ++j) {
-               var oldValue = BMDS.GetTarget(childResource, gBmProperties[j], true);
+            for (var j = 0; j < BM.gBmProperties.length; ++j) {
+               var oldValue = BMDS.GetTarget(childResource, BM.gBmProperties[j], true);
                if (oldValue)
-                   props[(j)] = oldValue.QueryInterface(kRDFLITIID);
+                   props[(j)] = oldValue.QueryInterface(BM.kRDFLITIID);
             }
          //}
          propArray.push(props);
@@ -1288,18 +1288,18 @@ var BookmarksUtils = {
     var index = aTarget.index;
     var brokenIndex = aTarget.index;
     
-    RDFC.Init(BMDS, aTarget.parent);
-    var startedEmpty = (RDFC.IndexOf(BmEmptyRes) != -1);
+    BM.RDFC.Init(BMDS, aTarget.parent);
+    var startedEmpty = (BM.RDFC.IndexOf(BM.BmEmptyRes) != -1);
 
     if (aSelection.length > 1)
-      gTxnSvc.beginBatch();
-    if (aSelection.length > kBATCH_LIMIT && aAction != "move")
+      BM.gTxnSvc.beginBatch();
+    if (aSelection.length > BM.kBATCH_LIMIT && aAction != "move")
       BMDS.beginUpdateBatch();
 
     for (var i=0; i<aSelection.length; ++i) {
       var rSource = aSelection.item[i];
 
-      if (BookmarkFuns.isItemChildOf(rSource,AllBookmarksRes,BMDS))
+      if (BookmarkFuns.isItemChildOf(rSource, BM.AllBookmarksRes, BMDS))
           rSource = BookmarkFuns.cloneResource(rSource); 
 
       item = rSource;
@@ -1313,8 +1313,8 @@ var BookmarksUtils = {
       BookmarkFuns.createAndCommitTxn("insert", aAction, item, index, aTarget.parent, proplength, removedProps);
     }
     if (aSelection.length > 1)
-      gTxnSvc.endBatch();
-    if (aSelection.length > kBATCH_LIMIT && aAction != "move")
+      BM.gTxnSvc.endBatch();
+    if (aSelection.length > BM.kBATCH_LIMIT && aAction != "move")
       BMDS.endUpdateBatch();
   },
 
@@ -1333,19 +1333,18 @@ var BookmarksUtils = {
 
   moveSelection: function (aAction, aSelection, aTarget)
   {
-    if (aSelection.length > kBATCH_LIMIT)
+    if (aSelection.length > BM.kBATCH_LIMIT)
       BMDS.beginUpdateBatch();
 
-    //gBkmkTxnSvc.startBatch();
-    gTxnSvc.beginBatch();
+    BM.gTxnSvc.beginBatch();
     // ORDER OF THE NEXT STATEMENTS IS CRITICAL FOR DROP-N-DRAG BUT MAY MESS SOMETHING ELSE UP ??
     //BookmarksUtils.removeSelection("move", aSelection);
     BookmarksUtils.insertSelection("move", aSelection, aTarget);
     BookmarksUtils.removeSelection("move", aSelection);
     
     //gBkmkTxnSvc.endBatch();
-    gTxnSvc.endBatch();
-    if (aSelection.length > kBATCH_LIMIT)
+    BM.gTxnSvc.endBatch();
+    if (aSelection.length > BM.kBATCH_LIMIT)
       BMDS.endUpdateBatch();
   }, 
 
@@ -1376,7 +1375,7 @@ var BookmarksUtils = {
     for (var i=0; i<aSelection.length; ++i) {
       data     = new TransferData();
       item     = aSelection.item[i].Value;
-      itemName = this.getProperty(item, gNC_NS+"Name");
+      itemName = this.getProperty(item, BM.gNC_NS+"Name");
       parent   = aSelection.parent[i].Value;
       data.addDataForFlavour("moz/rdfitem",    item+"\n"+(parent?parent:""));
       dataSet.push(data);
@@ -1410,11 +1409,11 @@ var BookmarksUtils = {
         extra = dataObj[1];
       else
         extra = null;
-      rSource = RDF.GetResource(uri);
+      rSource = BM.RDF.GetResource(uri);
       parent  = extra;
       selection.item.push(rSource);
       if (parent)
-        rParent = RDF.GetResource(parent);
+        rParent = BM.RDF.GetResource(parent);
       else
         rParent = null;
       selection.parent.push(rParent);
@@ -1426,7 +1425,7 @@ var BookmarksUtils = {
 
   getTargetFromFolder: function(aResource)
   {
-    var index = parseInt(this.getProperty(aResource, gRDF_NS+"nextVal"));
+    var index = parseInt(this.getProperty(aResource, BM.gRDF_NS+"nextVal"));
     if (isNaN(index))
       return {parent: null, index: -1};
     else

@@ -50,7 +50,7 @@ function getScriptBoxHeader(myBook, myChap, version, showBookName, showIntroduct
       "; text-align:" + chapterHeadingFloat + "\">";
     mtext +=  getNoticeLink(version);
     mtext += "<div class=\"audiolink\">";
-    mtext += "<img name=\"listenlink\" id=\"listenlink." + myChap + "\" src=\"chrome://xulsword/skin/images/listen0.png\" style=\"visibility:hidden;\" onmouseover=\"scriptboxMouseOver(event)\" onmouseout=\"scriptboxMouseOut(event)\">";
+    mtext += "<div class=\"listenlink\" id=\"listenlink." + myChap + "\"></div>";
     mtext += "</div>";
 
     // introduction link and introduction
@@ -99,20 +99,20 @@ function insertUserNotes(aBook, aChapter, aModule, text) {
   var recs = BMDS.GetAllResources();
   while (recs.hasMoreElements()) {
     var res = recs.getNext();
-    var note = BMDS.GetTarget(res, gBmProperties[NOTE], true);
+    var note = BMDS.GetTarget(res, BM.gBmProperties[NOTE], true);
     if (!note) continue;
     note = note.QueryInterface(Components.interfaces.nsIRDFLiteral);
     if (!note) continue;
     note=note.Value;
     if (!note) {continue;}
-    if (RDFCU.IsContainer(BMDS, res)) {continue;}
+    if (BM.RDFCU.IsContainer(BMDS, res)) {continue;}
       
-    try {var module = BMDS.GetTarget(res, gBmProperties[MODULE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
+    try {var module = BMDS.GetTarget(res, BM.gBmProperties[MODULE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
     if (module != aModule) continue;
-    try {var chapter = BMDS.GetTarget(res, gBmProperties[CHAPTER], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}      
+    try {var chapter = BMDS.GetTarget(res, BM.gBmProperties[CHAPTER], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}      
     if (usesVerseKey) {
       if (chapter != String(aChapter)) continue;
-      try {var book = BMDS.GetTarget(res, gBmProperties[BOOK], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
+      try {var book = BMDS.GetTarget(res, BM.gBmProperties[BOOK], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
       if (book != aBook) continue;
     }
     else {
@@ -120,13 +120,13 @@ function insertUserNotes(aBook, aChapter, aModule, text) {
       book = "na";
       chapter = "1";
     }
-    try {var verse = BMDS.GetTarget(res, gBmProperties[VERSE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
-    if (!BookmarkFuns.isItemChildOf(res,AllBookmarksRes,BMDS)) continue;
+    try {var verse = BMDS.GetTarget(res, BM.gBmProperties[VERSE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
+    if (!BookmarkFuns.isItemChildOf(res, BM.AllBookmarksRes, BMDS)) continue;
       
     // We have a keeper, lets save the note and show it in the text!
     // Encode ID
 //dump ("FOUND ONE!:" + book + " " + chapter + " " + verse + " " + aModule + "\n");
-    var encodedResVal = encodeUTF8(res.QueryInterface(kRDFRSCIID).Value);
+    var encodedResVal = encodeUTF8(res.QueryInterface(BM.kRDFRSCIID).Value);
     var myid = "un." + encodedResVal + "." + book + "." + chapter + "." + verse + "." + aModule;
     var newNoteHTML = "<span id=\"" + myid + "\" class=\"un\" title=\"un\"></span>";
     var idname = (usesVerseKey ? "vs." + book + "." + chapter + ".":"par.");
@@ -172,7 +172,7 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
         
         // Write cell #1: an expander link for cross references only
         t += "<div class=\"fncol1\">";
-        if (cr) {t += "<img id=\"exp." + noteid + "\" src=\"chrome://xulsword/skin/images/twisty-clsd.png\">";}
+        if (cr) {t += "<img id=\"exp." + noteid + "\" src=\"chrome://xulsword/skin/images/twisty-close.png\">";}
         t += "</div>";
         // These are the lines for showing expanded verse refs
         t += "<div id=\"exp2." + noteid + "\" class=\"fncol2\"><div class=\"fndash\"></div></div>";
@@ -201,7 +201,7 @@ function getNotesHTML(allNotes, version, showFootnotes, showCrossRefs, showUserN
             var unclass = "noteBoxUserNote";
             var de = "&lrm;";
             try {
-              var unmod = BMDS.GetTarget(RDF.GetResource(decodeUTF8(noteid.match(/un\.(.*?)\./)[1])), gBmProperties[NOTELOCALE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+              var unmod = BMDS.GetTarget(BM.RDF.GetResource(decodeUTF8(noteid.match(/un\.(.*?)\./)[1])), BM.gBmProperties[NOTELOCALE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
               unclass += " vstyle" + unmod;
             }
             catch (er) {}
@@ -296,6 +296,37 @@ function ascendingVerse(a,b) {
   }
   else if (ac < bc) return -1;
   return 1;
+}
+
+function expandCrossRefs(noteid, footnotes, win, doc) {
+  // Find out whether we're expanding or closing
+  var exp = doc.getElementById("exp." + noteid);
+  var exp2 = doc.getElementById("exp2." + noteid);
+  var exp3 = doc.getElementById("exp3." + noteid);
+  var expand;
+  if (exp==null||exp2==null||exp3==null) {return false;}
+  if (exp.src.search(/twisty-close/) != -1) {
+    exp.src="chrome://xulsword/skin/images/twisty-open.png"; 
+    exp2.style.visibility="visible"; 
+    exp3.style.visibility="visible"; 
+    expand = true;
+  }
+  else {
+    exp.src="chrome://xulsword/skin/images/twisty-close.png"; 
+    exp2.style.visibility="hidden"; 
+    exp3.style.visibility="hidden"; 
+    expand = false;
+  }
+  
+  var html = "";
+  var chapRefs = footnotes.CrossRefs.split("<nx>");
+  for (var i=0; i<chapRefs.length; i++) {
+    var part = chapRefs[i].split("<bg>");
+    // if we've found the note which matches the id under the mouse pointer
+    if (part[0] == noteid) html = getCRNoteHTML(win.modName, "nb", noteid, part[1], "<br>", expand, win.number);
+  }
+  doc.getElementById("body." + noteid).innerHTML = html;
+  return true;
 }
 
 // Converts a short book reference into readable text in the locale language, and can handle from-to cases

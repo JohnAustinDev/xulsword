@@ -60,7 +60,7 @@
       catch(er) {InstallOnly = false;} // if pref did not exist
       
       if (!InstallOnly && !MainWindow) {
-        SplashScreen = window.open("chrome://xulsword/content/banner.xul","splash","chrome,alwaysRaised,centerscreen,resizable");
+        SplashScreen = window.open("chrome://xulsword/content/banner.xul","splash-banner","chrome,alwaysRaised,centerscreen,resizable");
         window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul','main-window','chrome,resizable')",300);
       }
       else window.close();
@@ -78,13 +78,12 @@
     }
     ]]>
   </script>
-  
+    
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkdata.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksTop.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
   
   <!-- Create program's special directories if needed !-->
   <script>createAppDirectories();</script>

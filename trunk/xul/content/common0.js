@@ -16,6 +16,32 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+// THE LIST BELOW CANNOT BE CHANGED WITHOUT BREAKING COMPATIBILITY WITH EARLIER EXPORTED BOOKMARKS
+// "TYPE" - "BookmarkSeparator", "Folder", or "Bookmark".
+// "NAME" - Default name is generated based on TYPE and MODULE.
+// "NOTE"  - User note.
+// "BOOK" - Bible book for MODULEs using versekey.
+// "CHAPTER" - 
+//    Bible chapter for MODULEs using versekey, 
+//    key for dictionary MODULEs, 
+//    module:key for GENBOOK MODULEs
+// "VERSE" - 
+//    Bible verse for MODULEs using versekey.
+//    paragraph for non-versekey MODULEs
+// "LASTVERSE" - Bible lastVerse for MODULEs using versekey.
+// "MODULE" - Module name
+// "LOCATION" - Location in form bookShortName.chap.verse[.lastverse] ALWAYS WITH EASTERN VERSIFICATION
+// "BMTEXT" - Bookmarked text sample
+// "ICON" - URL to Texts.png, Comms.png, Dicts.png, Genbks.png. Or TextsWithNote.png etc. (add WithNote)
+// "CREATIONDATE" - Creation month, day, year, localized to operating system locale.
+// "VISITEDDATE" - Last visited month, day, year, localized to operating system locale. (When is this updated?)
+//THE FOLLOWING WERE INTRODUCED IN v2.12. EARIER BOOKMARKS WILL NOT HAVE THESE PARAMETERS
+// "NAMELOCALE" - Program locale when NAME was set.
+// "NOTELOCALE" - Program locale when note was set.
+const TYPE=0, NAME=1, NOTE=2, BOOK=3, CHAPTER=4, VERSE=5, LASTVERSE=6, MODULE=7, LOCATION=8, BMTEXT=9, ICON=10, CREATIONDATE=11, VISITEDDATE=12, NAMELOCALE=13, NOTELOCALE=14;
+
+
 /************************************************************************
  * Functions in this file may NOT access any Bible objects!
  ***********************************************************************/ 

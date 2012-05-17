@@ -47,8 +47,6 @@ function onLoad() {
   try {var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/dialog.properties");} catch(er) {bundle=null;}
   if (bundle) document.getElementById("close").label = bundle.GetStringFromName("Cancel");
   
-  BMDS = initBMServices();
-  
   saveProgramSettings(SavedGlobalOptions, SavedCharPrefs);
 
   // Collect array of checkboxes...

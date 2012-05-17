@@ -82,7 +82,6 @@ function loadSearchWindow() {
     if (elem.label=="") {elem.hidden=true;}
   }
   
-  BMDS = initBMServices();
   window.controllers.appendController(XulswordSearchController);
   window.controllers.appendController(BookmarksMenuController);
   window.setTimeout("postWindowInit()", 0);
@@ -744,6 +743,7 @@ function clickHandler(e) {
   case "question":
   case "searchHelp":
     SearchHelpWindow = window.open("chrome://xulsword/content/searchHelp.xul","searchHelp","chrome,resizable");
+    AllWindows.push(SearchHelpWindow);
     break;
   }
 }
@@ -845,9 +845,9 @@ var XulswordSearchController = {
   isCommandEnabled: function (aCommand) {
     switch (aCommand) {
     case "cmd_undo":
-      return (gTxnSvc.numberOfUndoItems > 0);
+      return (BM.gTxnSvc.numberOfUndoItems > 0);
     case "cmd_redo":
-      return (gTxnSvc.numberOfRedoItems > 0);
+      return (BM.gTxnSvc.numberOfRedoItems > 0);
     case "cmd_xs_searchForSelection":
       return (getSearchWindowSelection()!="");
     case "cmd_bm_open":

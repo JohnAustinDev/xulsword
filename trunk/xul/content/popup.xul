@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of xulSword.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    xulSword is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    xulSword is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+
+<!DOCTYPE window [
+<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
+%xulswordDTD;
+<!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd" >
+%bookmarksDTD;
+]>
+
+<window 
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+    xmlns:html="http://www.w3.org/1999/xhtml"
+    onload="load();">
+   
+  <script>var MainWindow = window.opener;</script>
+  <script><![CDATA[
+    var CWIN;
+    function load() {
+      CWIN = document.getElementById('npopup').contentDocument.defaultView;
+      CWIN.initPopup();
+      CWIN.load();
+    }
+  ]]></script>
+  
+  <commandset id="popupCommandSet">
+    <command id="cmd_xs_search"                    oncommand="MainWindow.goDoCommand('cmd_xs_search');"/>
+    <command id="cmd_xs_aboutModule"               oncommand="MainWindow.goDoCommand('cmd_xs_aboutModule');"/>
+    <command id="cmd_xs_toggleTab"                 oncommand="MainWindow.goDoCommand('cmd_xs_toggleTab');"/>
+    <command id="cmd_xs_searchForSelection"        oncommand="MainWindow.goDoCommand('cmd_xs_searchForSelection');"/>
+    <command id="cmd_xs_openFromSelection"         oncommand="MainWindow.goDoCommand('cmd_xs_openFromSelection');"/>
+    <command id="cmd_xs_selectVerse"               oncommand="MainWindow.goDoCommand('cmd_xs_selectVerse');"/>
+    <command id="cmd_xs_newBookmark"               oncommand="MainWindow.goDoCommand('cmd_xs_newBookmark');"/>
+    <command id="cmd_xs_newUserNote"               oncommand="MainWindow.goDoCommand('cmd_xs_newUserNote');"/>
+    <command id="cmd_bm_properties"                oncommand="MainWindow.goDoCommand('cmd_bm_properties');"/>
+    <command id="cmd_bm_delete"                    oncommand="MainWindow.goDoCommand('cmd_bm_delete')" valueDefault="Delete;" disabled="true"/>
+  </commandset>
+  
+  <iframe id="npopup" flex="1" src="popup.html" context="contextScriptBox"/>
+
+  <popupset>
+    <menupopup id="contextScriptBox" value="closed" 
+        onpopupshowing="MainWindow.ScriptContextMenuShowing(event,CWIN.Win.number,document.popupNode);" 
+        onpopuphidden="MainWindow.ScriptContextMenuHidden(event);">
+      <menuitem id="aboutModule" label="&menu.help.about;" command="cmd_xs_aboutModule"/>
+      <menuitem id="closeTab" label="&context.closeTab;" command="cmd_xs_toggleTab"/>
+      <menuseparator />
+      <menuitem id="allTabs.context" label="&menu.view.showAll;" accesskey="&menu.view.showAll.sc;" oncommand="MainWindow.setAllTabs(true, CurrentTarget.windowNum)"/>
+      <menuitem id="noTabs.context" label="&menu.view.hideAll;" accesskey="&menu.view.hideAll.sc;" oncommand="MainWindow.setAllTabs(false, CurrentTarget.windowNum)"/>
+      <menuseparator id="contsep00"/>
+      <menuitem id="cMenu_copy"/>
+      <menuitem id="conSearch" label="&searchBut.label;" command="cmd_xs_searchForSelection"/>
+      <menuseparator id="contsep0"/>
+      <menuitem id="conGotoSel" label="&context.gotoReference;" command="cmd_xs_openFromSelection"/>
+      <menuseparator id="contsep1"/>
+      <menuitem id="conSelect" label="&context.hilight;" command="cmd_xs_selectVerse"/>
+      <menuseparator id="contsep2"/>
+      <menuitem id="conBookmark" label="&menuitem.newBookmark.label;" command="cmd_xs_newBookmark"/>
+      <menuitem id="conUserNote" label="&menu.usernote.add;" command="cmd_xs_newUserNote"/>
+      <menuseparator id="contsep3"/>
+      <menuitem id="conProps" label="&context.editUserNote;" command="cmd_bm_properties"/>
+      <menuitem id="delUserNote" label="&context.deleteUserNote;" command="cmd_bm_delete"/>
+    </menupopup>
+  </popupset>
+
+</window>
