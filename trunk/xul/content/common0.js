@@ -131,8 +131,8 @@ function jsdump(str)
 jsdump("Load common: " + window.name + "\n");
 
 function escapeRE(text) {
-  const ESCAPE_RE= new RegExp(/([^\\]|^)([\[\]\(\)\{\}\-\+\*\.\^\$\?\|\\])/g);
-  return text.replace(ESCAPE_RE, "$1\\$2");
+  const ESCAPE_RE= new RegExp(/([\-\[\]\(\)\{\}\+\*\.\:\^\$\?\|\\])/g);
+  return text.replace(ESCAPE_RE, "\\$1");
 }
 
 var SupportedModuleTypes = {

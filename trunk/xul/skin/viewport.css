@@ -1,73 +1,143 @@
-#texts {
-  display:table;
+body {
   font-size:12px;
-}
-.text {
-  display:table-cell;
-  border:1px solid white;
-}
-.sb {
-  height:600px;
+  padding:0px;
+  margin:0px;
   overflow:hidden;
 }
 
-.text[value="show1"] {
-  width:32%;
+#viewport {
+  display:table;
 }
-.text[value="show1"] .sb {
-  -moz-columns:1;
-}
-
-.text[value="show2"] {
-  width:64%;
-}
-.text[value="show2"] .sb {
-  -moz-columns:2;
+#viewport > div {
+  display:table-cell;
+  vertical-align:top;
 }
 
-.text[value="show3"] {
-  width:96%;
-}
-.text[value="show3"] .sb {
-  -moz-columns:3;
-}
-
-.text[value=""], .text[value="hide"], .text:not([value]) {
-  display:none !important;
-}
-
-.text > div {
-  position:relative;
-}
-.text > div > div {
-  position:absolute;
-  height:600px;
-  
-  right:0px;
-}
-.text[value="show1"] > div > div {
+#tabrow {
+  display:block;
   width:100%;
 }
-.text[value="show2"] > div > div {
+#tabrow > div {
+  display:table;
+  width:100%;
+}
+.tabs {
+  height:20px;
+  display:none;
+}
+#tabs1 {background:red;}
+#tabs2 {background:grey;}
+#tabs3 {background:blue;}
+#tabrow[value="show1"] #tabs1 {
+  display:table-cell;
+  width:100%;
+}
+#tabrow[value="show2"] #tabs1, 
+#tabrow[value="show2"] #tabs2 {
+  display:table-cell;
   width:50%;
 }
-.text[value="show3"] > div > div {
+#tabrow[value="show3"] #tabs1, 
+#tabrow[value="show3"] #tabs2,
+#tabrow[value="show3"] #tabs3 {
+  display:table-cell;
   width:33%;
 }
 
-.text > div > div > div {
+#textrow {
+  display:table;
+  width:100%;
+}
+
+.text {
+  display:table-cell;
+  vertical-align:top;
+}
+.text[value="show1"] {
+  width:30%;
+}
+.text[value="show2"] {
+  width:60%;
+}
+.text[value="show3"] {
+  width:90%;
+}
+.text[value=""], .text[value="hide"], .text:not([value]) {
+  display:none !important;
+}
+.text[pin="pinned"] {
+  border:1px solid red;
+}
+
+.sb {
+  height:600px;
+}
+.text[value="show1"] .sb {
+  overflow:auto;
+  padding-left:30px;
+  padding-right:30px;
+}
+.text[value="show1"][foot="show"] .sb {
+  margin-bottom:200px;
+  height:400px;
+}
+.text[value="show2"] .sb {
+  overflow:hidden;
+  padding-left:30px;
+  padding-right:30px;
+  -moz-columns:2;
+  -moz-column-rule:40px solid grey;
+  -moz-column-gap:100px;
+}
+.text[value="show3"] .sb {
+  overflow:hidden;
+  -moz-columns:3;
+  -moz-column-rule:40px solid grey;
+  -moz-column-gap:100px;
+}
+
+
+.nbc {
+  position:relative;
+  width:100%;
+}
+.nb {
   position:absolute;
   bottom:0px;
-  width:100%;
+  right:0px;
   height:200px;
   background:grey;
-  z-index:99;
+  z-index:20;
+}
+.text[value="show1"] .nb {
+  width:100%;
+}
+.text[value="show2"] .nb {
+  width:50%;
+}
+.text[value="show3"] .nb {
+  width:33%;
 }
 
-.text > div > div > div[value="hide"] {
+.text[foot="hide"] .nb {
   display:none;
 }
-.text:not([value="show1"]) > div > div > div[value="max"] {
-  height:100% !important;
+.text[foot="max"]:not([value="show1"]) .nb {
+  height:600px;
 }
 
+#chooser {
+  background:grey;
+}
+#biblechooser, #bookchooser {
+  display:none;
+  height:620px; /* tabs + scriptbox */
+}
+#chooser[value="bible"] #biblechooser {
+  display:block;
+  width:300px;
+}
+#chooser[value="book"] #bookchooser {
+  display:block;
+  width:350px;
+}
