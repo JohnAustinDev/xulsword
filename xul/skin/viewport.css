@@ -77,7 +77,15 @@ body {
   padding-left:30px;
   padding-right:30px;
 }
-.text[value="show1"][foot="show"] .sb {
+#text1[value="show1"][foot^="show"] .sb {
+  margin-bottom:200px;
+  height:400px;
+}
+#text2[value="show1"][foot^="show"] .sb {
+  margin-bottom:200px;
+  height:400px;
+}
+#text3[value="show1"][foot^="show"] .sb {
   margin-bottom:200px;
   height:400px;
 }
@@ -91,11 +99,12 @@ body {
 }
 .text[value="show3"] .sb {
   overflow:hidden;
+  padding-left:30px;
+  padding-right:30px;
   -moz-columns:3;
   -moz-column-rule:40px solid grey;
   -moz-column-gap:100px;
 }
-
 
 .nbc {
   position:relative;
@@ -105,9 +114,17 @@ body {
   position:absolute;
   bottom:0px;
   right:0px;
-  height:200px;
   background:grey;
   z-index:20;
+}
+#note1 {
+  height:200px;
+}
+#note2 {
+  height:200px;
+}
+#note3 {
+  height:200px;
 }
 .text[value="show1"] .nb {
   width:100%;
@@ -122,7 +139,7 @@ body {
 .text[foot="hide"] .nb {
   display:none;
 }
-.text[foot="max"]:not([value="show1"]) .nb {
+.text[foot="showmax"]:not([value="show1"]) .nb {
   height:600px;
 }
 

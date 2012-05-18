@@ -10,6 +10,7 @@ function loadViewPort() {
     getPrefOrCreate("ShowOriginal" + w, "Bool", false);
     getPrefOrCreate("IsPinned" + w, "Bool", false);
     getPrefOrCreate("ShowNoteBox" + w, "Bool", false);
+    getPrefOrCreate("NoteBoxHeight" + w, "Int", 200);
     getPrefOrCreate("MaximizeNoteBox" + w, "Bool", false);
     if (!Tab[getPrefOrCreate("Version" + w, "Char", prefs.getCharPref("DefaultVersion"))])
         prefs.setCharPref("Version" + w, prefs.getCharPref("DefaultVersion"));
@@ -19,11 +20,12 @@ function loadViewPort() {
   window.onresize = updateViewPort;
 }
 
-var TabHeight = 20;
 function updateViewPort() {
-
-  // Window height
-  var wh = window.innerHeight - TabHeight - 20; // 20 for borders etc.
+  var tabheight = getCSS(".tabs {");
+  tabheight = tabheight.style.height.match(/^(\d+)\s*px/)[1];
+  
+  // Reset CSS rules which depend on window height
+  var wh = window.innerHeight - tabheight;
   if (wh < 100) wh = 100;
 
   var rule;
@@ -31,18 +33,23 @@ function updateViewPort() {
   rule.style.height = wh + "px";
   
   rule = getCSS("#biblechooser, #bookchooser {");
-  rule.style.height = Number(wh + TabHeight) + "px";
+  rule.style.height = Number(wh + tabheight) + "px";
   
-  rule = getCSS(".nb {");
-  rule.style.height = 200 + "px"; //prefs.getIntPref("NoteBoxHeight" + w);
+  for (var w=1; w<=NW; w++) {
+    var nbh = prefs.getIntPref("NoteBoxHeight" + w);
+    if (nbh > wh) nbh = wh;
+    
+    rule = getCSS("#note" + w + " {");
+    rule.style.height = nbh + "px";
   
-  rule = getCSS(".text[value=\"show1\"][foot=\"show\"] .sb {");
-  rule.style.height = Number(wh - 200) + "px";
-
-  rule = getCSS(".text[foot=\"max\"]:not([value=\"show1\"]) .nb {");
-jsdump(rule.cssText);
+    rule = getCSS("#text" + w + "[value=\"show1\"][foot^=\"show\"] .sb {");
+    rule.style.marginBottom = nbh + "px";
+    rule.style.height = Number(wh - nbh) + "px";
+  }
+  
+  rule = getCSS(".text[foot=\"showmax\"]:not([value=\"show1\"]) .nb {");
   rule.style.height = wh + "px";
-jsdump(rule.cssText);
+    
   // Bible chooser
   var value = (needBookChooser() ? "book":(prefs.getBoolPref("ShowChooser") ? "bible":"hide"));
   document.getElementById("chooser").setAttribute("value", value);
@@ -58,7 +65,7 @@ jsdump(rule.cssText);
     else {
       if ((w+1)<=dw && prefs.getCharPref("Version" + w) == prefs.getCharPref("Version" + Number(w+1)))
           value = "show2";
-      if (value == "show2" && w+2<dw && prefs.getCharPref("Version" + Number(w+1)) == prefs.getCharPref("Version" + Number(w+2)))
+      if (value == "show2" && w+2<=dw && prefs.getCharPref("Version" + Number(w+1)) == prefs.getCharPref("Version" + Number(w+2)))
           value = "show3";
     }
     
@@ -86,7 +93,7 @@ jsdump(rule.cssText);
   for (w=1; w<=NW; w++) {
     value = "hide";
     if (prefs.getBoolPref("ShowNoteBox" + w)) value = "show";
-    if (value == "show" && prefs.getBoolPref("MaximizeNoteBox" + w)) value = "max";
+    if (value == "show" && prefs.getBoolPref("MaximizeNoteBox" + w)) value = "showmax";
     document.getElementById("text" + w).setAttribute("foot", value);
   }
   

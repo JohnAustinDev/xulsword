@@ -2869,7 +2869,9 @@ function getUpdatesNeededArray(changedWindow, aPreChangeLinkArray) {
 // Plus the scriptbox update then happens in a timeout to allow the cursor to appear before update begins.
 var ScriptBoxIsEmpty = [false, false, false, false];
 function updateFrameScriptBoxes(updateNeededArray ,scrollTypeFlag, highlightFlag, locatorFlag) {
-return;
+
+document.getElementById("viewport").contentDocument.defaultView.updateViewPort();
+
   if (!updateNeededArray) updateNeededArray = [false, true, true, true];
   var needed=false;
   for (var w=1; w<updateNeededArray.length; w++) {needed |= updateNeededArray[w];}
