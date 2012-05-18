@@ -21,9 +21,9 @@
 <html>
   <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <link rel="stylesheet" href="chrome://xulsword/skin/style.css" type="text/css">
+  <!--<link rel="stylesheet" href="chrome://xulsword/skin/style.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/bible.css" type="text/css">
-  <link rel="stylesheet" href="chrome://xulsword/skin/popup.css" type="text/css">
+  <link rel="stylesheet" href="chrome://xulsword/skin/popup.css" type="text/css">!-->
   <link rel="stylesheet" href="chrome://xulsword/skin/viewport.css" type="text/css">
   
   <script>var MainWindow = window.frameElement.ownerDocument.defaultView.MainWindow</script>
@@ -40,30 +40,69 @@
   </head>
   <body onload="loadViewPort();">
   
-  <div id="texts">
-    <div id="text1" class="text" title="unpinned" value="show3">
-      <div><div><div id="note1" class="nb" value="show"></div></div></div>
-      <div class="sb"><script>document.write(Bible.getChapterText("KJV", "Ps 119"));</script></div>
+  <div id="viewport">
+    <div>
+      <div id="chooser" value="bible">
+        <div id="biblechooser"></div>
+        <div id="bookchooser"></div>
+      </div>
     </div>
     
-    <div id="text2" class="text" title="unpinned" value="hide">
-      <div><div><div id="note2" class="nb" value="max"></div></div></div>
-      <div class="sb"><script>document.write(Bible.getChapterText("UZIBT", "Ps 118"));</script></div>
-    </div>
-    
-    <div id="text3" class="text" title="pinned"   value="hide">
-      <div><div><div id="note3" class="nb" value="max"></div></div></div>
-      <div class="sb"><script>document.write(Bible.getChapterText("ESV", "Ps 119"));</script></div>
+    <div>
+      <div id="tabrow" value="show3">
+        <div>
+          <div id="tabs1" class="tabs"></div>
+          <div id="tabs2" class="tabs"></div>
+          <div id="tabs3" class="tabs"></div>
+        </div>
+      </div>
+      <div id="textrow">
+        <div id="text1" class="text" value="show1" pin="unpinned" foot="show">
+          <div class="sb"><script>document.write(Bible.getChapterText("KJV", "Ps 119"));</script></div>
+          <div class="nbc"><div id="note1" class="nb"></div></div>
+        </div>
+        
+        <div id="text2" class="text" value="show2" pin="pinned" foot="max">
+          <div class="sb"><script>document.write(Bible.getChapterText("ESV", "Ps 119"));</script></div>
+          <div class="nbc"><div id="note2" class="nb"></div></div>
+        </div>
+        
+        <div id="text3" class="text" value="hide" pin="pinned" foot="max">
+          <div class="sb"><script>document.write(Bible.getChapterText("ESV", "Ps 119"));</script></div>
+          <div class="nbc"><div id="note3" class="nb"></div></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <select onchange="document.getElementById('text1').setAttribute('value', this.value);"><option value="show1">show1</option><option value="show2">show2</option><option value="show3">show3</option><option value="hide">hide</option><select>
-  <select onchange="document.getElementById('text2').setAttribute('value', this.value);"><option value="show1">show1</option><option value="show2">show2</option><option value="show3">show3</option><option value="hide">hide</option><select>
-  <select onchange="document.getElementById('text3').setAttribute('value', this.value);"><option value="show1">show1</option><option value="show2">show2</option><option value="show3">show3</option><option value="hide">hide</option><select>
-  
-  <select onchange="document.getElementById('note1').setAttribute('value', this.value);"><option value="show">show</option><option value="hide">hide</option><option value="max">max</option></select>
-  <select onchange="document.getElementById('note2').setAttribute('value', this.value);"><option value="show">show</option><option value="hide">hide</option><option value="max">max</option></select>
-  <select onchange="document.getElementById('note3').setAttribute('value', this.value);"><option value="show">show</option><option value="hide">hide</option><option value="max">max</option></select>
-    
+<!--  
+  <label>Chooser value<label>
+  <select onchange="document.getElementById('chooser').setAttribute('value', this.value);"><option value="bible" selected="selected">bible</option><option value="book">book</option><option value="none">none</option></select>
+  <br>
+  <label>Tabrow value<label>
+  <select onchange="document.getElementById('tabrow').setAttribute('value', this.value);"><option value="show1">show1</option><option value="show2">show2</option><option value="show3" selected="selected">show3</option></select>
+  <br>
+  <label>Text1 value</label>
+  <select onchange="document.getElementById('text1').setAttribute('value', this.value);"><option value="show1" selected="selected">show1</option><option value="show2">show2</option><option value="show3">show3</option><option value="hide">hide</option><select>
+  <label>Text2 value<label>
+  <select onchange="document.getElementById('text2').setAttribute('value', this.value);"><option value="show1" selected="selected">show1</option><option value="show2">show2</option><option value="show3">show3</option><option value="hide">hide</option><select>
+  <label>Text3 value<label>
+  <select onchange="document.getElementById('text3').setAttribute('value', this.value);"><option value="show1" selected="selected">show1</option><option value="show2">show2</option><option value="show3">show3</option><option value="hide">hide</option><select>
+  <br>
+  <label>Foot1 value<label>
+  <select onchange="document.getElementById('note1').setAttribute('value', this.value);"><option value="show">show</option><option value="hide" selected="selected">hide</option><option value="max">max</option></select>
+  <label>Foot2 value<label>
+  <select onchange="document.getElementById('note2').setAttribute('value', this.value);"><option value="show" selected="selected">show</option><option value="hide">hide</option><option value="max">max</option></select>
+  <label>Foot3 value<label>
+  <select onchange="document.getElementById('note3').setAttribute('value', this.value);"><option value="show">show</option><option value="hide">hide</option><option value="max" selected="selected">max</option></select>
+  <br>
+  <label>Pin1 value<label>
+  <select onchange="document.getElementById('text1').setAttribute('title', this.value);"><option value="pinned">pinned</option><option value="unpinned" selected="selected">unpinned</option></select>
+  <label>Pin2 value<label>
+  <select onchange="document.getElementById('text2').setAttribute('title', this.value);"><option value="pinned">pinned</option><option value="unpinned" selected="selected">unpinned</option></select>
+  <label>Pin3 value<label>
+  <select onchange="document.getElementById('text3').setAttribute('title', this.value);"><option value="pinned" selected="selected">pinned</option><option value="unpinned">unpinned</option></select>
+!-->
+
   </body>
 </html>
