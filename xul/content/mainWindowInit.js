@@ -35,6 +35,7 @@ var LocaleDirectionEntity;
 var LocaleDirectionChar;
 var Tabs = [];
 var Tab = {};
+var Win = new Array(null, {}, {}, {});
 var Book = new Array(NumBooks);
 var OrigModuleNT;
 var OrigModuleOT;
@@ -333,6 +334,7 @@ function createTabs() {
     tab.isRTL = (VersionConfigs[tab.vstyle] && VersionConfigs[tab.vstyle].direction == "rtl");
     tab.isOrigTab = (tab.modName==ORIGINAL);
     tab.index = m;
+    tab.description = Bible.getModuleInformation(info[1], "Description");
     Tabs.push(tab);
     Tab[tab.label] = tab;
     Tab[tab.modName] = tab;

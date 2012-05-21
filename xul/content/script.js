@@ -66,7 +66,6 @@ var MinScriptHeight;
 var MinScriptWidth;
 var LastVersion;
 var MyFootnotes = {};
-var Win = {number:null, modName:null, modType:null, isRTL:null, isLinkedToNext:null};
 var Pin = {number:null, display:{}, isPinned:null, elem:null, updatePin:null, updateLink:null};
 
 /************************************************************************

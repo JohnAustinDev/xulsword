@@ -1,8 +1,13 @@
-body {
+#viewportbody {
+  font-family:'arial';
   font-size:12px;
-  padding:0px;
+  padding-top:0px; /* used in viewport.js */
+  padding-right:0px;
+  padding-bottom:14px; /* used in viewport.js */
+  padding-left:14px;
   margin:0px;
   overflow:hidden;
+  background:url(chrome://xulsword/skin/images/b2.gif);
 }
 
 #viewport {
@@ -16,42 +21,138 @@ body {
 #tabrow {
   display:block;
   width:100%;
+  padding-top:14px;
 }
 #tabrow > div {
   display:table;
   width:100%;
 }
 .tabs {
-  height:20px;
-  display:none;
-}
-#tabs1 {background:red;}
-#tabs2 {background:grey;}
-#tabs3 {background:blue;}
-#tabrow[value="show1"] #tabs1 {
   display:table-cell;
+  padding:0px 20px 0px 20px;
+  position:relative;
+  white-space:nowrap;
+  z-index:2;
+  text-align:right;
+}
+#tabrow[value="show1"] #tabs1 {
   width:100%;
+}
+#tabrow[value="show1"] #tabs2,
+#tabrow[value="show1"] #tabs3 {
+  display:none;
 }
 #tabrow[value="show2"] #tabs1, 
 #tabrow[value="show2"] #tabs2 {
-  display:table-cell;
   width:50%;
+}
+#tabrow[value="show2"] #tabs3 {
+  display:none;
 }
 #tabrow[value="show3"] #tabs1, 
 #tabrow[value="show3"] #tabs2,
 #tabrow[value="show3"] #tabs3 {
-  display:table-cell;
   width:33%;
+}
+.tab {
+  position:relative;
+  top:2px;
+  font-size:10px;
+  color:grey;
+  margin-left:3px;
+  margin-right:3px;
+  border:3px solid;
+  border-bottom:2px solid rgb(200,170,205);
+  -moz-border-left-colors:  rgb(200,170,205) rgb(200,170,205) transparent;
+  -moz-border-right-colors: rgb(200,170,205) rgb(200,170,205) transparent;
+  background:rgb(255,250,255);
+  height:23px;
+  vertical-align:bottom;
+  -moz-border-radius-topright:4px;
+  -moz-border-radius-topleft:4px;
+}
+.multitab {
+  position:relative;
+  display:inline;
+  border:1px solid transparent;
+}
+.multitab > div {
+  position:absolute;
+  top:-8px;
+  height:22px;
+}
+.multitab > select {
+  text-align:center;
+  padding-top:2px;
+}
+.multitabTab {
+  margin:4px;
+  padding-top:2px;
+  height:20px;
+}
+.tab[selected="true"] {
+  color:blue;
+  border-bottom:none;
+  background:rgb(255,243,255);
+}
+.tab[pinned="true"] {
+  color:rgb(210,210,210);
+}
+.tab[selected="true"][pinned="true"] {
+  background:rgb(248,248,241);
+}
+.tabTexts {
+  -moz-border-top-colors:   rgb(200,170,205) rgb(235,50,80) transparent;
+}
+.tabComms {
+  -moz-border-top-colors:   rgb(200,170,205) rgb(175,145,230) rgb(100,100,255);
+}
+.tabDicts {
+  -moz-border-top-colors:   rgb(200,170,205) rgb(226,212,102) rgb(255,255,0);
+}
+.tabGenbks {
+  -moz-border-top-colors:   rgb(200,170,205) rgb(150,207,225) rgb(100,245,245);
 }
 
 #textrow {
   display:table;
   width:100%;
+  border-collapse:separate;
+  border-spacing:14px 0px;
+}
+
+.hd {
+  position:relative;
+  width:100%;
+  text-align:center;
+  height:30px;
+}
+.sbpin {
+  position:absolute;
+  top:-23px;
+  left:0px;
+  width:28px;
+  height:37px;
+  background:url(chrome://xulsword/skin/images/pushpin0.png);
+}
+.text[pin="pinned"] .sbpin {
+  background:url(chrome://xulsword/skin/images/pushpin1.png);
+}
+.sbpin:hover {
+  background:url(chrome://xulsword/skin/images/pushpin2.png);
 }
 
 .text {
   display:table-cell;
   vertical-align:top;
+  font-size: 14px;
+	background:rgb(255,243,255);
+	color: black;
+	border:2px solid rgb(200,170,205);
+  -moz-border-radius:8px;
+}
+.text[pin="pinned"] {
+  background:rgb(248,248,241);
 }
 .text[value="show1"] {
   width:30%;
@@ -70,7 +171,7 @@ body {
 }
 
 .sb {
-  height:600px;
+  height:600px; /* used in viewport.js */
 }
 .text[value="show1"] .sb {
   overflow:auto;
@@ -94,7 +195,7 @@ body {
   padding-left:30px;
   padding-right:30px;
   -moz-columns:2;
-  -moz-column-rule:40px solid grey;
+  -moz-column-rule:40px solid rgb(240,215,240);
   -moz-column-gap:100px;
 }
 .text[value="show3"] .sb {
@@ -102,7 +203,7 @@ body {
   padding-left:30px;
   padding-right:30px;
   -moz-columns:3;
-  -moz-column-rule:40px solid grey;
+  -moz-column-rule:40px solid rgb(240,215,240);
   -moz-column-gap:100px;
 }
 
@@ -118,7 +219,7 @@ body {
   z-index:20;
 }
 #note1 {
-  height:200px;
+  height:200px; /* used in viewport.js */
 }
 #note2 {
   height:200px;
@@ -140,21 +241,5 @@ body {
   display:none;
 }
 .text[foot="showmax"]:not([value="show1"]) .nb {
-  height:600px;
-}
-
-#chooser {
-  background:grey;
-}
-#biblechooser, #bookchooser {
-  display:none;
-  height:620px; /* tabs + scriptbox */
-}
-#chooser[value="bible"] #biblechooser {
-  display:block;
-  width:300px;
-}
-#chooser[value="book"] #bookchooser {
-  display:block;
-  width:350px;
+  height:600px; /* used in viewport.js */
 }

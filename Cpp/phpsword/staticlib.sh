@@ -4,7 +4,7 @@
 
 rm .libs/phpswordstatic.so
 
-cc -m64 -shared -pthread .libs/phpsword.o .libs/.o \
+cc -shared -pthread .libs/phpsword.o .libs/.o \
 -L/usr/lib64 -L/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/64 \
 -lstdc++ \
 ../clucene-core-0.9.21b/src/*.o \
