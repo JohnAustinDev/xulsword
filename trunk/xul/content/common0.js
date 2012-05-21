@@ -16,6 +16,7 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+const NW = 3; // number of horizontal text windows xulsword supports
 
 // THE LIST BELOW CANNOT BE CHANGED WITHOUT BREAKING COMPATIBILITY WITH EARLIER EXPORTED BOOKMARKS
 // "TYPE" - "BookmarkSeparator", "Folder", or "Bookmark".

@@ -45,4 +45,5 @@ var BM                    = MainWindow.BM;
 var BookmarkFuns          = MainWindow.BookmarkFuns;
 
 var AllWindows            = MainWindow.AllWindows;
+var Win                   = MainWindow.Win;
 

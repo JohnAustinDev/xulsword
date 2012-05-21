@@ -29,7 +29,6 @@ var HistoryCaptureDelay;
 var Historyi;
 var History;
 var FrameDocument = new Array(4);
-var Win = new Array(4);
 var Link = {isLink:[null, null, null, null], isTextLink:[null, null, null, null], modName:null, numWins:null, startWin:null, finishWin:null, firstWin:null, lastWin:null, isRTL:null};
 var SavedWindowWithFocus;
 var NewModuleInfo;
