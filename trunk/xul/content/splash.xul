@@ -47,7 +47,7 @@
   <script>
     <![CDATA[
     var WindowWatcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
-    var MainWindow = WindowWatcher.getWindowByName("main-window", window);
+    var MainWindow = WindowWatcher.getWindowByName("xulsword-window", window);
     var SplashScreen;
     var InstallOnly;
     function endInstall() {
@@ -61,7 +61,7 @@
       
       if (!InstallOnly && !MainWindow) {
         SplashScreen = window.open("chrome://xulsword/content/banner.xul","splash-banner","chrome,alwaysRaised,centerscreen,resizable");
-        window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul','main-window','chrome,resizable')",300);
+        window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul','xulsword-window','chrome,resizable')",300);
       }
       else window.close();
     }

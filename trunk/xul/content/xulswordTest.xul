@@ -21,7 +21,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
 
 <window
-    id="main-window" xmlns:html="http://www.w3.org/1999/xhtml"
+    id="xulsword-window" xmlns:html="http://www.w3.org/1999/xhtml"
     width="1024" height="738" screenX="50" screenY="50"
     persist="width height screenX screenY sizemode"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"

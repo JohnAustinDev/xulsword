@@ -436,7 +436,7 @@ function chooserControlButton(e) {
   
   //CLICK
   if (e.type == "click") {
-    OwnerDocument.getElementById("cmd_xs_toggleChooser").doCommand();
+    //OwnerDocument.getElementById("cmd_xs_toggleChooser").doCommand();
   }
   //MOUSE OUT
   else if (e.type == "mouseout") {

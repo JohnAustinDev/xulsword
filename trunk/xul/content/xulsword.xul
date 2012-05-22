@@ -36,7 +36,7 @@
 ]>
 
 <window
-    id="main-window" xmlns:html="http://www.w3.org/1999/xhtml"
+    id="xulsword-window" xmlns:html="http://www.w3.org/1999/xhtml"
     width="1024" height="738" screenX="50" screenY="50"
     persist="width height screenX screenY sizemode"
     onload="loadedXUL()"
@@ -165,7 +165,6 @@
   <command id="cmd_print"                        oncommand="PrintUtils.print(); restoreFocus();"/>
   <command id="cmd_printPreview"                 oncommand="PrintUtils.printPreview(PrintPreviewCallbacks);"/>
   <command id="cmd_pageSetup"                    oncommand="PrintUtils.showPageSetup(); restoreFocus();"/>
-  <command id="cmd_xs_toggleChooser"             oncommand="toggleChooser();"/>
   <command id="cmd_xs_startHistoryTimer"
            oncommand="try {window.clearTimeout(HistoryTimer);} catch(er){} var HistoryTimer=window.setTimeout('addToHistory()',HistoryCaptureDelay);"/>
   <command id="cmd_xs_aboutModule"               oncommand="goDoCommand('cmd_xs_aboutModule');"/>

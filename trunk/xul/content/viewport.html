@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="chrome://xulsword/skin/chooser.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/viewport.css" type="text/css">
   
-  <script>var MainWindow = window.frameElement.ownerDocument.defaultView.MainWindow</script>
+  <script>var MainWindow = (window.frameElement.ownerDocument.defaultView.MainWindow ? window.frameElement.ownerDocument.defaultView.MainWindow:null)</script>
   <script src="chrome://xulsword/content/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common1.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
@@ -39,55 +39,58 @@
   <script src="chrome://xulsword/content/viewport.js" type="text/javascript"></script>
 
   </head>
-  <body id="viewportbody" onload="loadViewPort();" onunload="unloadViewPort();">
+  <body id="viewportbody" chooser="bible" onload="loadViewPort();" onunload="unloadViewPort();" onmouseover="chooserMouse(event)" onmouseout="chooserMouse(event)" onclick="chooserMouse(event)">
   
+  <div id="chbutton_open"></div>
+        
   <div id="viewport">
     <div>
-      <div id="chooser" value="bible">
-      
-        <div id="openbutton"></div>
+      <div id="chooser">
         
-        <div id="biblechooser">
+        <div id="fadetop"></div>
+        
+        <div id="biblechooser" showing="nt">
           <div>
-            <div id="fadetop"></div>
-            <div id="choosertable">
+            <div id="testaments">
               <div>
-                <div id="otselect">
-                  <div id="closebutton"></div>
+                <div id="testament_ot">
+                  <div id="chbutton_close"></div>
                   <script>
-    var text = SBundle.getString('OTtext');
-    if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
-    else document.write("<img src=\"chrome://localeskin/skin/OT.png\">");
-                  </script>
-                </div>
-                <div id="ntselect">
-                  <script>
-    var text = SBundle.getString('NTtext');
-    if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
-    else document.write("<img src=\"chrome://localeskin/skin/NT.png\">");
+                  var text = SBundle.getString('OTtext');
+                  if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
+                  else document.write("<img src=\"chrome://localeskin/skin/OT.png\">");
                   </script>
                 </div>
               </div>
               <div>
-                <div id="otchooser" class="testchooser">
-                  <script>drawOTchooser();</script>                
-                </div>
-                <div id="ntchooser" class="testchooser">
-                  <script>drawNTchooser();</script>
+                <div id="testament_nt">
+                  <script>
+                  var text = SBundle.getString('NTtext');
+                  if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
+                  else document.write("<img src=\"chrome://localeskin/skin/NT.png\">");
+                  </script>
                 </div>
               </div>
             </div>
-            <div id="fadebot"></div>
+          </div>
+          <div>
+            <div id="biblebooks_ot" class="biblebooks">
+              <script>drawOTbooks();</script>         
+            </div>
+            <div id="biblebooks_nt" class="biblebooks">
+              <script>drawNTbooks();</script>
+            </div>
           </div>
         </div>
-        
+
         <div id="bookchooser"></div>
+        
+        <div id="fadebot"></div>
         
       </div>
     </div>
-    
-    
-    
+  
+
     <div>
       <div id="tabrow" value="show3">
         <div>
