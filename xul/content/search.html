@@ -31,9 +31,7 @@
   <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
   
   <script>
-  
-  var MainWindowRef = window.frameElement.ownerDocument.defaultView.opener;
-    
+
   function init() {
     createVersionClasses(); 
     initializeStyleGlobals();
@@ -48,7 +46,7 @@
     sel = cleanDoubleClickSelection(sel);
     if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
     setUnicodePref("SearchText",sel);
-    MainWindowRef.document.getElementById("cmd_xs_search").doCommand();
+    MainWindow.document.getElementById("cmd_xs_search").doCommand();
   }
   
   </script>

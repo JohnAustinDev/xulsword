@@ -33,7 +33,7 @@ if (!-e $OutputDirectory) {make_path($OutputDirectory);}
 if (!-e "$TRUNK/build-files/$Name") {make_path("$TRUNK/build-files/$Name");}
 $DEVELOPMENT="$TRUNK/build-files/$Name/development";
 $INSTALLER="$TRUNK/build-files/$Name/installer";
-$FFEXTENSION="$TRUNK/build-files/$Name/extension";
+$FFEXTENSION="$TRUNK/build-files/$Name/xulsword\@xulsword.org";
 $PORTABLE="$TRUNK/build-files/$Name/portable/$Name";
 if ("$^O" =~ /MSWin32/i) {
   $Appdata = `Set APPDATA`; $Appdata =~ s/APPDATA=(.*?)\s*$/$1/i;

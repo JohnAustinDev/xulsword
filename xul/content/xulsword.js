@@ -47,7 +47,7 @@ const MAXTEXTCACHE = 131071;
 const NOMODULES="0000", NOLOCALES="0001", NEEDRESTART="0002";
 
 function loadedXUL() {
-  updateCSSBasedOnCurrentLocale(["#main-window", "input, button, menu, menuitem"]);
+  updateCSSBasedOnCurrentLocale(["#xulsword-window", "input, button, menu, menuitem"]);
   createVersionClasses(); // needed for tooltips
   document.title = fixWindowTitle(SBundle.getString("Title"));
   //window.alert(rootprefs.getIntPref("layout.scrollbar.side") + " " + rootprefs.getIntPref("bidi.direction"));
@@ -67,8 +67,8 @@ function loadedXUL() {
 }
 
 function loadedXULReal() {
-  window.name="main-window";
-  document.getElementById("main-window").setAttribute("active", "true"); //overcomes bug in xulrunner1.9.1.3 where after reload (change locale etc.) window.active was false.
+  window.name="xulsword-window";
+  document.getElementById("xulsword-window").setAttribute("active", "true"); //overcomes bug in xulrunner1.9.1.3 where after reload (change locale etc.) window.active was false.
   ContextMenuShowing = false;
   CurrentTarget = {shortName:null, chapter:null, verse:null, lastVerse:null, tabNum:null, windowNum:null};
 
@@ -2869,7 +2869,7 @@ function getUpdatesNeededArray(changedWindow, aPreChangeLinkArray) {
 var ScriptBoxIsEmpty = [false, false, false, false];
 function updateFrameScriptBoxes(updateNeededArray ,scrollTypeFlag, highlightFlag, locatorFlag) {
 
-document.getElementById("viewport").contentDocument.defaultView.updateViewPort();
+//document.getElementById("viewport").contentDocument.defaultView.updateViewPort();
 
   if (!updateNeededArray) updateNeededArray = [false, true, true, true];
   var needed=false;
@@ -4244,6 +4244,7 @@ function resizeWatch() {
 }
 
 function resizeWatchReal() {
+  document.getElementById("viewport").contentDocument.defaultView.updateViewPort();
   prefs.setIntPref("WindowHeight",window.innerHeight);
   prefs.setIntPref("WindowWidth",window.innerWidth);
   resizeScriptBoxes();
@@ -4290,7 +4291,7 @@ function copyPassageDialog() {
  
 var PrintPassageHTML;
 function handlePrintCommand(command) {
-  var topWindow = WindowWatcher.getWindowByName("main-window",window);
+  var topWindow = WindowWatcher.getWindowByName("xulsword-window",window);
   //Fixes a Gecko print preview bug where scroll bar was not appearing
   document.getElementById("printBrowser").style.overflow="auto";
   switch (command) {

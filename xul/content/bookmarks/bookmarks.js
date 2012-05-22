@@ -912,11 +912,11 @@ var BookmarksController = {
       BookmarksCommand.sortByName(aSelection);
       break;
     case "cmd_bm_pageSetup":
-      WindowWatcher.getWindowByName("main-window",window).document.getElementById("cmd_pageSetup").doCommand();
+      WindowWatcher.getWindowByName("xulsword-window",window).document.getElementById("cmd_pageSetup").doCommand();
       break;
     case "cmd_bm_print":
     case "cmd_bm_printPreview":
-      var topWindow = WindowWatcher.getWindowByName("main-window",window);
+      var topWindow = WindowWatcher.getWindowByName("xulsword-window",window);
       topWindow.SavedWindowWithFocus = window;
       topWindow.focus();
       topWindow.document.getElementById("printBrowser").contentDocument.getElementById("printBox").innerHTML = BookmarkFuns.getFormattedBMdata(resource0, true);

@@ -23,7 +23,7 @@
  * String Bundle used for script locality
  ***********************************************************************/  
 var WindowWatcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
-if (!MainWindow) MainWindow = WindowWatcher.getWindowByName("main-window", window);
+if (!MainWindow) MainWindow = WindowWatcher.getWindowByName("xulsword-window", window);
 if (!MainWindow) MainWindow = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
                    .getInterface(Components.interfaces.nsIWebNavigation)
                    .QueryInterface(Components.interfaces.nsIDocShellTreeItem)
@@ -716,17 +716,20 @@ function goToCrossReference(crTitle, noHighlight) {
  ***********************************************************************/ 
 
 function firstDisplayBible(returnFrameNumber) {
-  try {var vers=prefs.getCharPref("DefaultVersion");}
-  catch (er) {vers = null;}
-  var numWins = prefs.getIntPref("NumDisplayedWindows");
-  for (var w=1; w<=numWins; w++) {
-    if (!MainWindow || !MainWindow.Win[w]) continue;
-    vers = MainWindow.Win[w].modName;
-    if (MainWindow.Win[w].modType == BIBLE) break;
+  try {var ret=prefs.getCharPref("DefaultVersion");}
+  catch (er) {ret = null;}
+  
+  var wn = prefs.getIntPref("NumDisplayedWindows");
+  for (var w=1; w<=wn; w++) {
+    var amod = prefs.getCharPref("Version" + w);
+    if (Tab[amod].tabType == BIBLE) {
+      ret = amod;
+      break;
+    }
   }
-  if (!returnFrameNumber) return vers;
+  if (!returnFrameNumber) return ret;
   else {
-    if (!vers || w>numWins) w=1;
+    if (!ret || w>wn) w=1;
     return w;
   }
 }

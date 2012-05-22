@@ -975,7 +975,7 @@ function indexerFinished() {
  * Printing Functions
  ***********************************************************************/ 
 function handlePrintCommand(command) {
-  var topWindow = WindowWatcher.getWindowByName("main-window",window);
+  var topWindow = WindowWatcher.getWindowByName("xulsword-window",window);
   topWindow.SavedWindowWithFocus = window;
   topWindow.focus();
   

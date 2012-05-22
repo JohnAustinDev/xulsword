@@ -8,7 +8,7 @@
 <![CDATA[
 function startxulsword() {
   createAppDirectories();
-  window.open('chrome://xulsword/content/xulsword.xul','main-window','chrome,resizable');
+  window.open('chrome://xulsword/content/xulsword.xul','xulsword-window','chrome,resizable');
 }
 ]]>
   

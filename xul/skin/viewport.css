@@ -2,9 +2,9 @@
   font-family:'arial';
   font-size:12px;
   padding-top:0px; /* used in viewport.js */
-  padding-right:0px;
+  -moz-padding-end:0px;
   padding-bottom:14px; /* used in viewport.js */
-  padding-left:14px;
+  -moz-padding-start:0px;
   margin:0px;
   overflow:hidden;
   background:url(chrome://xulsword/skin/images/b2.gif);
@@ -12,6 +12,7 @@
 
 #viewport {
   display:table;
+  height:600px;
 }
 #viewport > div {
   display:table-cell;
@@ -125,7 +126,7 @@
   position:relative;
   width:100%;
   text-align:center;
-  height:30px;
+  height:30px; /* used in viewport.js */
 }
 .sbpin {
   position:absolute;
@@ -179,12 +180,12 @@
   padding-right:30px;
 }
 #text1[value="show1"][foot^="show"] .sb {
-  margin-bottom:200px;
-  height:400px;
+  margin-bottom:200px; /* used in viewport.js */
+  height:400px; /* used in viewport.js */
 }
 #text2[value="show1"][foot^="show"] .sb {
-  margin-bottom:200px;
-  height:400px;
+  margin-bottom:200px; /* used in viewport.js */
+  height:400px; /* used in viewport.js */
 }
 #text3[value="show1"][foot^="show"] .sb {
   margin-bottom:200px;
@@ -222,10 +223,10 @@
   height:200px; /* used in viewport.js */
 }
 #note2 {
-  height:200px;
+  height:200px; /* used in viewport.js */
 }
 #note3 {
-  height:200px;
+  height:200px; /* used in viewport.js */
 }
 .text[value="show1"] .nb {
   width:100%;

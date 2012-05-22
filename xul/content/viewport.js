@@ -33,36 +33,34 @@ function loadViewPort() {
   }
   
   // update the viewport now
-  updateViewPort();
-  window.onresize = updateViewPort;
+  window.setTimeout("updateViewPort();", 1);
 }
 
 // This function updates the viewport based on all previously set global
 // user settings. It does not set/change any global paramters, but only
-// implements them in the viewport. Ideally, these should be CSS changes.
-function updateViewPort() {
+// implements them in the viewport. Ideally, updates should be implemented
+// with CSS.
+function updateViewPort(skipBibleChooserTest) {
+//return;
+jsdump("UPDATING VIEW PORT");
   // Read CSS constant rules
-  var css = getCSS(".tab {");
-  var tabheight = Number(css.style.height.match(/^(\d+)\s*px/)[1]);
-  css = getCSS("#tabrow {");
-  tabheight += Number(css.style.paddingTop.match(/^(\d+)\s*px/)[1]);
-  css = getCSS("#viewportbody {");
-  var padtop = Number(css.style.paddingTop.match(/^(\d+)\s*px/)[1]);
-  var padbot = Number(css.style.paddingBottom.match(/^(\d+)\s*px/)[1]);
-  css = getCSS(".hd {");
-  var headheight = Number(css.style.height.match(/^(\d+)\s*px/)[1]);
+  var rule = getCSS(".tab {");
+  var tabheight = Number(rule.style.height.match(/^(\d+)\s*px/)[1]);
+  rule = getCSS("#tabrow {");
+  tabheight += Number(rule.style.paddingTop.match(/^(\d+)\s*px/)[1]);
+  rule = getCSS("#viewportbody {");
+  var padtop = Number(rule.style.paddingTop.match(/^(\d+)\s*px/)[1]);
+  var padbot = Number(rule.style.paddingBottom.match(/^(\d+)\s*px/)[1]);
+  rule = getCSS(".hd {");
+  var headheight = Number(rule.style.height.match(/^(\d+)\s*px/)[1]);
   
-  // Reset CSS rules which depend on window height
+  // Reset those CSS rules which depend on window height
   var sbh = window.innerHeight - padtop - tabheight - headheight - padbot;
   if (sbh < 100) sbh = 100;
 
-  var rule;
   rule = getCSS(".sb {");
   rule.style.height = sbh + "px";
-  
-  rule = getCSS("#biblechooser, #bookchooser {");
-  rule.style.height = (window.innerHeight - padtop - padbot) + "px";
-  
+
   for (var w=1; w<=NW; w++) {
     var nbh = prefs.getIntPref("NoteBoxHeight" + w);
     if (nbh > sbh) nbh = sbh;
@@ -74,18 +72,47 @@ function updateViewPort() {
     rule.style.marginBottom = nbh + "px";
     rule.style.height = Number(sbh - nbh) + "px";
   }
-  
+
   rule = getCSS(".text[foot=\"showmax\"]:not([value=\"show1\"]) .nb {");
   rule.style.height = sbh + "px";
-    
+
   // Bible chooser
-  var value = (needBookChooser() ? "book":(prefs.getBoolPref("ShowChooser") ? "bible":"hide"));
-  document.getElementById("chooser").setAttribute("value", value);
+  var chooser = (needBookChooser() ? "book":(prefs.getBoolPref("ShowChooser") ? "bible":"hide"));
+  document.getElementById("viewportbody").setAttribute("chooser", chooser);
+
+  var lbn = findBookNum(Location.getBookName());
+  if (!skipBibleChooserTest) document.getElementById("biblechooser").setAttribute("showing", (lbn >= NumOT ? "nt":"ot"));
+
+  for (var b=0; b<NumBooks; b++) {
+    var chel = document.getElementById("book_" + b);
+    if (chel) chel.setAttribute("selected", (b==lbn ? "true":"false"));
+  }
+  
+  if (chooser != "hide") {
+    var faderheight = padtop + tabheight;
+    var chooserheight = document.getElementById("biblebooks_" + (lbn >= NumOT ? "nt":"ot")).offsetHeight;
+    if (chooserheight > sbh) chooserheight = sbh;
+    else faderheight += 0.3*(sbh - chooserheight);
+    var rulef = getCSS("#fadetop, #fadebot {");
+    rulef.style.height = faderheight + "px";
+    var rulec = getCSS("#biblechooser, #bookchooser {");
+    rulec.style.height = chooserheight + "px";
+    document.getElementById("fadebot").style.height = Number(window.innerHeight - faderheight - chooserheight) + "px";
+
+    var ntw = document.getElementById("biblebooks_nt");
+    var otw = document.getElementById("biblebooks_ot");
+    otw.style.width = "";
+    ntw.style.width = "";
+    if (ntw.offsetWidth > otw.offsetWidth) otw.style.width = Number(ntw.offsetWidth - 2) + "px";
+    else ntw.style.width = Number(otw.offsetWidth - 2) + "px";
+    rulef.style.width = Number(otw.offsetLeft + otw.offsetWidth + 20) + "px";
+    rulec.style.width = Number(otw.offsetLeft + otw.offsetWidth - 6) + "px";
+  }
   
   // Tab row
   var dw = prefs.getIntPref("NumDisplayedWindows");
   document.getElementById("tabrow").setAttribute("value", "show" + dw);
-  
+ 
   // Windows
   for (var w=1; w<=NW; w++) {
     value = "show1";
@@ -111,7 +138,7 @@ function updateViewPort() {
     }
     
   }
-  
+ 
   // Window pins
   for (w=1; w<=NW; w++) {
     document.getElementById("text" + w).setAttribute("pin", (prefs.getBoolPref("IsPinned" + w) ? "pinned":"unpinned"));
