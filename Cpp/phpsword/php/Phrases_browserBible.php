@@ -4,7 +4,6 @@ $NOT_FOUND ="Not Found";
 
 $defaultbible["RU"] ="RSP";
 $defaultbible["EN"] ="KJV";
-$defaultbible["DE"] ="KJV";
 
 $StrongsHebrewModule["RU"] ="StrongsHebrewRU";
 $StrongsGreekModule["RU"] ="StrongsGreekRU";
@@ -12,9 +11,6 @@ $GreekParseModule["RU"] ="Robinson";
 $StrongsHebrewModule["EN"] ="StrongsHebrew";
 $StrongsGreekModule["EN"] ="StrongsGreek";
 $GreekParseModule["EN"] ="Robinson";
-$StrongsHebrewModule["DE"] ="StrongsHebrew";
-$StrongsGreekModule["DE"] ="StrongsGreek";
-$GreekParseModule["DE"] ="Robinson";
 
 // SWORD locale was not used because ICU then becomes necessary
 if ($Language == "RU") {
@@ -153,75 +149,6 @@ $Book["EN"]["Titus"]="Titus";
 $Book["EN"]["Phlm"]="Philemon";
 $Book["EN"]["Heb"]="Hebrews";
 $Book["EN"]["Rev"]="Revelation";
-}
-
-if ($Language == "DE") {
-$Book["DE"]["Gen"]="1. Mose";
-$Book["DE"]["Exod"]="2. Mose";
-$Book["DE"]["Lev"]="3. Mose";
-$Book["DE"]["Num"]="4. Mose";
-$Book["DE"]["Deut"]="5. Mose";
-$Book["DE"]["Josh"]="Josua";
-$Book["DE"]["Judg"]="Richter";
-$Book["DE"]["Ruth"]="Rut";
-$Book["DE"]["1Sam"]="1. Samuel";
-$Book["DE"]["2Sam"]="2. Samuel";
-$Book["DE"]["1Kgs"]="1. Könige";
-$Book["DE"]["2Kgs"]="2. Könige";
-$Book["DE"]["1Chr"]="1. Chronik";
-$Book["DE"]["2Chr"]="2. Chronik";
-$Book["DE"]["Ezra"]="Esra";
-$Book["DE"]["Neh"]="Nehemia";
-$Book["DE"]["Esth"]="Ester";
-$Book["DE"]["Job"]="Hiob";
-$Book["DE"]["Ps"]="Psalmen";
-$Book["DE"]["Prov"]="Sprüche";
-$Book["DE"]["Eccl"]="Prediger";
-$Book["DE"]["Song"]="Hoheslied";
-$Book["DE"]["Isa"]="Jesaja";
-$Book["DE"]["Jer"]="Jeremia";
-$Book["DE"]["Lam"]="Klagelieder";
-$Book["DE"]["Ezek"]="Hesekiel";
-$Book["DE"]["Dan"]="Daniel";
-$Book["DE"]["Hos"]="Hosea";
-$Book["DE"]["Joel"]="Joel";
-$Book["DE"]["Amos"]="Amos";
-$Book["DE"]["Obad"]="Obadja";
-$Book["DE"]["Jonah"]="Jona";
-$Book["DE"]["Mic"]="Micha";
-$Book["DE"]["Nah"]="Nahum";
-$Book["DE"]["Hab"]="Habakuk";
-$Book["DE"]["Zeph"]="Zefanja";
-$Book["DE"]["Hag"]="Haggai";
-$Book["DE"]["Zech"]="Sacharja";
-$Book["DE"]["Mal"]="Maleachi";
-$Book["DE"]["Matt"]="Matthäus";
-$Book["DE"]["Mark"]="Markus";
-$Book["DE"]["Luke"]="Lukas";
-$Book["DE"]["John"]="Johannes";
-$Book["DE"]["Acts"]="Apostelgeschichte";
-$Book["DE"]["Rom"]="Römer";
-$Book["DE"]["1Cor"]="1. Korinther";
-$Book["DE"]["2Cor"]="2. Korinther";
-$Book["DE"]["Gal"]="Galater";
-$Book["DE"]["Eph"]="Epheser";
-$Book["DE"]["Phil"]="Philipper";
-$Book["DE"]["Col"]="Kolosser";
-$Book["DE"]["1Thess"]="1. Thessalonicher";
-$Book["DE"]["2Thess"]="2. Thessalonicher";
-$Book["DE"]["1Tim"]="1. Timotheus";
-$Book["DE"]["2Tim"]="2. Timotheus";
-$Book["DE"]["Titus"]="Titus";
-$Book["DE"]["Phlm"]="Philemon";
-$Book["DE"]["Heb"]="Hebräer";
-$Book["DE"]["Jas"]="Jakobus";
-$Book["DE"]["1Pet"]="1. Petrus";
-$Book["DE"]["2Pet"]="2. Petrus";
-$Book["DE"]["1John"]="1. Johannes";
-$Book["DE"]["2John"]="2. Johannes";
-$Book["DE"]["3John"]="3. Johannes";
-$Book["DE"]["Jude"]="Judas";
-$Book["DE"]["Rev"]="Offenbarung";
 }
 
 ?>

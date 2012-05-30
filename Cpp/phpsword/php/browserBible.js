@@ -81,7 +81,7 @@ function activatePopup(type, title) {
 
 function getMod(e) {
 	// get modname either from "mod" element, or from parent node class
-	var mod = document.getElementById("mod").value;
+	var mod = document.getElementById("m1").value;
 	var re = new RegExp("(^| )(text|interV(\\d+))( |$)");
 	var el = e.target;
 	while(el && (!el.className || el.className.search(re)==-1)) {
@@ -90,7 +90,7 @@ function getMod(e) {
 	if (!el || !el.className) return mod;
 	var m = el.className.match(re);
 	if (!m || !m[3] || m[3] == 1) return mod;
-	return document.getElementById("mod2").value;	
+	return document.getElementById("m" + m[3]).value;	
 }
 
 function popupBack(elem) {
@@ -258,6 +258,7 @@ function doRequest(type, key, list, modName) {
 	ajax.onreadystatechange = function() {
 	if (ajax.readyState==4 && ajax.status==200) {
 			RequestData[ajax.rkey] = ajax.responseText;
+//window.alert(ajax.responseText);
 			PopupElement.innerHTML = RNF.back + ajax.responseText;
 			if (RNF.doRequest) RNF.doRequest = false;
 			showPopup(true);
@@ -297,12 +298,39 @@ function winSize() {
 
 function encodeutf8(t) {
 	for (var i=0; i<t.length; i++) {
-		if (t.charCodeAt(i) > 255) {
-			t = t.substring(0,i) + "_" + t.charCodeAt(i) + "_" + t.substr(i+1);		
+		try {var cp = fixedCharCodeAt (t, i);}
+		catch (er) {cp = false;}
+		if (cp === false) continue;
+		if (cp > 127) {
+			t = t.substring(0,i) + "_" + cp + "_" + t.substr(i+1);		
 		}	
 	}
 	return t;
 }
+
+function fixedCharCodeAt(str, idx) {  
+	// ex. fixedCharCodeAt ('\uD800\uDC00', 0); // 65536  
+	// ex. fixedCharCodeAt ('\uD800\uDC00', 1); // 65536  
+	idx = idx || 0;  
+	var code = str.charCodeAt(idx);  
+	var hi, low;  
+	if (0xD800 <= code && code <= 0xDBFF) { // High surrogate (could change last hex to 0xDB7F to treat high private surrogates as single characters)  
+		hi = code;  
+		low = str.charCodeAt(idx+1);  
+		if (isNaN(low)) {  
+			throw 'High surrogate not followed by low surrogate in fixedCharCodeAt()';  
+		}  
+		return ((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000;  
+	}  
+	if (0xDC00 <= code && code <= 0xDFFF) { // Low surrogate  
+		// We return false to allow loops to skip this iteration since should have already handled high surrogate above in the previous iteration  
+		return false;  
+		/*hi = str.charCodeAt(idx-1); 
+		low = code; 
+		return ((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000;*/  
+	}  
+	return code;  
+} 
 
 function resetloc(elem) {
 	if (elem.id == "selbook") {
