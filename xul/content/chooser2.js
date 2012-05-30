@@ -75,21 +75,22 @@ function verticalWrite(txt) {
  * Interactive Mouse Response routines for chooser
  ***********************************************************************/  
 var ShowChooserTO, ShowHeadingTO;
+var MouseScrollTO = null;
 function chooserMouse(e) {
-  var p;
+  var t;
   if (ShowHeadingTO) window.clearTimeout(ShowHeadingTO);
   if (e.type == "mouseout" && e.target.id && e.target.id.substr(0,12) == "headingmenu_") {
-    p = e.relatedTarget;
-    while(p && (!p.id || (p.id && p.id != e.target.id))) {p = p.parentNode;}
-    if (!p || p.id != e.target.id) {
+    t = e.relatedTarget;
+    while(t && (!t.id || (t.id && t.id != e.target.id))) {t = t.parentNode;}
+    if (!t || t.id != e.target.id) {
       document.getElementById(e.target.id.replace("headingmenu_", "chmenu_")).setAttribute("headingmenu", "hide");
     }
   }
   
-  p = e.target;
-  while(p && !p.id) {p = p.parentNode;}
+  t = e.target;
+  while(t && !t.id) {t = t.parentNode;}
   
-  if (p) p = p.id.split("_");
+  if (t) var p = t.id.split("_");
   else return;
 
   switch(p[0]) {
@@ -115,7 +116,12 @@ function chooserMouse(e) {
     
   // Book selector of the Bible Navigator
   case "book":
-    switch (e.type) {      
+    switch (e.type) {  
+    case "mouseover":
+      if (!MouseScrollTO) {
+        MouseScrollTO = window.setTimeout("mouseScroll('" + t.parentNode.id + "', " + t.offsetTop + ");", 100);
+      }
+      break;
     case "click":
       Location.setLocation(firstDisplayBible(), Book[p[1]].sName + ".1.1");
       MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, HILIGHTNONE, UPDATELOCATORS);
@@ -130,6 +136,18 @@ function chooserMouse(e) {
       document.getElementById("chmenu_" + p[1]).setAttribute("headingmenu", "hide");
       if (ShowHeadingTO) window.clearTimeout(ShowHeadingTO);
       ShowHeadingTO = window.setTimeout("showHeadings('" + e.target.id + "','" + e.clientY + "')", 500);
+      if (!MouseScrollTO && 
+          (e.target.parentNode.parentNode.offsetHeight - e.target.offsetTop > 
+          document.getElementById("book_1").offsetTop - document.getElementById("book_0").offsetTop)) {
+        var offsetTop = 0;
+        var m = e.target;
+        while(m && (!m.id || !(/^book_\d+$/).test(m.id))) {
+          if (m.id) offsetTop += m.offsetTop; // ok- this just happens to work :)
+          m = m.parentNode;
+        }
+        offsetTop += m.offsetTop;
+        MouseScrollTO = window.setTimeout("mouseScroll('" + m.parentNode.id + "', " + offsetTop + ");", 100);
+      }
       break;
         
     case "click":
@@ -205,102 +223,67 @@ function showHeadings(myid, screenY) {
 /************************************************************************
  * Chooser Mouse wheel functions
  ***********************************************************************/  
+var CanUpShift   = {biblebooks_nt:true,  biblebooks_ot:true};
+var CanDownShift = {biblebooks_nt:false, biblebooks_ot:false};
 var Delta=0;
-function wheel(event) {
-  if (Delta == 0) {window.setTimeout('scrollChooser()',50);}
-  Delta = Delta + event.detail;
-} 
 
-function scrollChooser() {
+function wheel(event) {
+  if (Delta == 0) 
+      window.setTimeout("wheelScroll('biblebooks_" + document.getElementById("biblechooser").getAttribute("showing") + "')", 50);
+  Delta = Delta + event.detail;
+}
+
+function wheelScroll(testid) {
   Delta = Delta/6;
-  if (document.getElementById("chooserNT").style.visibility == "visible") {
-    if ((Delta>0)&&(Need2UpShiftNT)) {
-      Need2DownShiftNT=true; 
-      if (shiftChooserUp("chooserNT",Delta*(NTRowHeight))) Need2UpShiftNT=false;
-    }
-    else if ((Delta<0)&&(Need2DownShiftNT)) {
-      Need2UpShiftNT=true;
-      if (shiftChooserDown("chooserNT",-1*Delta*(NTRowHeight))) Need2DownShiftNT=false;
-    }
+  var rh = document.getElementById("book_1").offsetTop - document.getElementById("book_0").offsetTop;
+
+  if (CanUpShift[testid] && Delta > 0) {
+    CanDownShift[testid] = true; 
+    CanUpShift[testid] = shiftChooserUp(testid, Delta*(rh));
   }
-  else {
-    if ((Delta>0)&&(Need2UpShiftOT)) {
-      Need2DownShiftOT=true; 
-      if (shiftChooserUp("chooserOT",Delta*(OTRowHeight))) Need2UpShiftOT=false;
-    }
-    else if ((Delta<0)&&(Need2DownShiftOT)) {
-      Need2UpShiftOT=true; 
-      if (shiftChooserDown("chooserOT",-1*Delta*(OTRowHeight))) Need2DownShiftOT=false;
-    }
+  else if (Delta < 0 && CanDownShift[testid]) {
+    CanUpShift[testid] = true;
+    CanDownShift[testid] = shiftChooserDown(testid, -1*Delta*(rh));
   }
+  
   Delta=0;
 }
 
-function shiftChooserUp(myID,delta) {
+function mouseScroll(testid, offsetTop) {
+  MouseScrollTO = null;
+  if (ShowHeadingTO) window.clearTimeout(ShowHeadingTO);
+  var rh = document.getElementById("book_1").offsetTop - document.getElementById("book_0").offsetTop;
+  var testel = document.getElementById(testid);
+  if (CanDownShift[testid] && offsetTop + testel.offsetTop < 3*rh) {
+    CanUpShift[testid] = true;
+    CanDownShift[testid] = shiftChooserDown(testid, rh);
+  }
+  else if (CanUpShift[testid] && (document.getElementById("testaments").offsetHeight - (offsetTop + testel.offsetTop) < (3*rh))) {
+    CanDownShift[testid] = true;
+    CanUpShift[testid] = shiftChooserUp(testid, rh);
+  }  
+}
+
+function shiftChooserUp(myID, delta) {
   var topS = document.getElementById(myID).style.top;
-  var top = Number(topS.substring(0,topS.length-2));
+  if (!topS) topS = "0px";
+  var top = Number(topS.substr(0, topS.length-2));
   top = top - delta;
-  var finished = false;
-  if (top < (window.innerHeight - ChooserMinBottomBorder - document.getElementById(myID).offsetHeight)) {
-    top  =   window.innerHeight - ChooserMinBottomBorder - document.getElementById(myID).offsetHeight; 
-    finished = true;
-  }
-  document.getElementById(myID).style.top = String(top) + "px";
-  return finished;
+  var canshift = true;
+  var mintop = document.getElementById("testaments").offsetHeight - 
+                document.getElementById(myID).offsetHeight + 8;
+  if (top < mintop) {canshift = false; top = mintop;}
+  document.getElementById(myID).style.top = top + "px";
+  return canshift;
 }
 
-function shiftChooserDown(myID,delta) {
+function shiftChooserDown(myID, delta) {
   var topS = document.getElementById(myID).style.top;
-  var top = Number(topS.substring(0,topS.length-2));
+  if (!topS) topS = "0px";
+  var top = Number(topS.substr(0, topS.length-2));
   top = top + delta;
-  var finished = false;
-  if (top > ChooserMinTopBorder) {finished=true; top=ChooserMinTopBorder;}
-  document.getElementById(myID).style.top = String(top) + "px";
-  return finished;
-}
-
-function needAutoScroll(e, dontLeaveChapMenu) {
-  var fromTedge = e.clientY - ChooserMinTopBorder;
-  var fromBedge = window.innerHeight - ChooserMinBottomBorder - e.clientY;
-  var chapMenuBottom = 0;
-  var chapMenuTop = 0;
-  if (dontLeaveChapMenu) {
-    //Find our chapter menu
-    var elem = e.target;
-    while (elem && !(elem.id && elem.id.search("chapPD.")!=-1)) {elem = elem.parentNode;}
-    if (elem) {
-      var top = elem.parentNode.parentNode.style.top;
-      top = Number(top.substring(0,top.length-2));
-      chapMenuTop = top + elem.offsetTop;
-      chapMenuBottom = chapMenuTop + elem.offsetHeight;
-    }
-  }
-  var scrolled = true;
-  if (document.getElementById("chooserNT").style.visibility == "visible") {
-    if (fromBedge<3*NTRowHeight && Need2UpShiftNT &&
-        (!dontLeaveChapMenu || window.innerHeight-chapMenuBottom<0)) {
-      Need2DownShiftNT=true;
-      if (shiftChooserUp("chooserNT",NTRowHeight)) Need2UpShiftNT=false;
-    }
-    else if (fromTedge<3*NTRowHeight && Need2DownShiftNT &&
-        (!dontLeaveChapMenu || chapMenuTop+NTRowHeight<e.clientY)) {
-      Need2UpShiftNT=true;
-      if (shiftChooserDown("chooserNT",NTRowHeight)) Need2DownShiftNT=false;
-    }
-    else scrolled=false;
-  }
-  else {
-    if (fromBedge<3*OTRowHeight && Need2UpShiftOT &&
-        (!dontLeaveChapMenu || window.innerHeight-chapMenuBottom<0)) {
-      Need2DownShiftOT=true;
-      if (shiftChooserUp("chooserOT",2*OTRowHeight)) Need2UpShiftOT=false;
-    }
-    else if (fromTedge<3*OTRowHeight && Need2DownShiftOT &&
-        (!dontLeaveChapMenu || chapMenuTop+2*OTRowHeight<e.clientY)) {
-      Need2UpShiftOT=true;
-      if (shiftChooserDown("chooserOT",2*OTRowHeight)) Need2DownShiftOT=false;
-    }
-    else scrolled=false;
-  }
-  return scrolled;
+  var canshift = true;
+  if (top > 0) {canshift=false; top=8;}
+  document.getElementById(myID).style.top = top + "px";
+  return canshift;
 }

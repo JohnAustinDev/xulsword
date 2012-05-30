@@ -543,8 +543,12 @@ xulsword/searchSymbols.properties:QUOTESTART                             = ?sear
 xulsword/searchSymbols.properties:QUOTEEND                               = ?search-window.search_symbols.QUOTE_END
 xulsword/xsglobal/textcontext.dtd:spellAddToDictionary.label             =  "Add to Dictionary"
 xulsword/xsglobal/textcontext.dtd:spellAddToDictionary.accesskey         =  "o"
+xulsword/xsglobal/textcontext.dtd:spellUndoAddToDictionary.label         =  "Undo add to Dictionary"
+xulsword/xsglobal/textcontext.dtd:spellUndoAddToDictionary.accesskey     =  "d"
 xulsword/xsglobal/textcontext.dtd:spellCheckEnable.label                 =  "Check Spelling"
 xulsword/xsglobal/textcontext.dtd:spellCheckEnable.accesskey             =  "S"
 xulsword/xsglobal/textcontext.dtd:spellNoSuggestions.label               =  "(No Spelling Suggestions)"
 xulsword/xsglobal/textcontext.dtd:spellDictionaries.label                =  "Languages"
 xulsword/xsglobal/textcontext.dtd:spellDictionaries.accesskey            =  "l"
+
+

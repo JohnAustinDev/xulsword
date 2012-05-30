@@ -7,7 +7,7 @@
 #mainPage.tc2,
 #mainPage.tc3,
 #mainPage.tc4 {
-	width:620px;
+	width:610px;
 }
 
 /* "Home" Page */
@@ -90,7 +90,7 @@
 }
 .bcol {
 	background-position:left -252px;
-	margin-left:10px;
+	margin-left:6px;
 }
 /* disabled buttons */
 #bhdg.disabled {
@@ -151,8 +151,11 @@
 .badd.disabled:hover {
 	background-position:right -196px;
 }
-.bsub:hover, .bsub.disabled:hover {
+.bsub:hover {
 	background-position:center -224px;
+}
+.bsub.disabled:hover {
+	background-position:right -224px;
 }
 .bcol:hover {
 	background-position:center -252px;
@@ -199,8 +202,17 @@
 }
 .texthead select {
 	display:inline-block;
-	width:130px;
-	margin-left:4px;
+	margin-left:6px;
+}
+#mainPage.tc2 select,
+#mainPage.tc3 select,
+#mainPage.tc4 select {
+	width:125px;
+}
+#mainPage.flowcol2 select,
+#mainPage.flowcol3 select,
+#mainPage.flowcol4 select {
+	width:auto;
 }
 .texthead label {
 	font-size:16px;
