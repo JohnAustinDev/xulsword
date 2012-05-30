@@ -63,6 +63,8 @@
 #testaments > div > div {
   display:table-cell;
   vertical-align:middle;
+  position:relative;
+  top:0px;
   height:50%;
   width:18px;
   color:rgb(0,0,100);

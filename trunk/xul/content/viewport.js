@@ -32,6 +32,11 @@ function loadViewPort() {
     else Tabs[t].hidden = false;
   }
   
+  // set mouse wheel listeners
+  document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", wheel, false);
+  document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", wheel, false);
+  //document.getElementById("textrow").addEventListener("DOMMouseScroll", scrollwheel, false);
+  
   // update the viewport now
   window.setTimeout("updateViewPort();", 1);
 }
