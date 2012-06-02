@@ -77,6 +77,7 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/texts.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
@@ -454,7 +455,7 @@
   <vbox flex="100%">
     <deck id="appcontent" flex="100%">
       <!-- <iframe id="aboutConfig" flex="100%" class="bibleframe" src="about:config" /> !-->
-      <iframe id="viewport" flex="100%" src="viewport.html" />
+      <iframe id="xulviewport" flex="100%" src="viewport.html" />
       <hbox id="frameset" flex="100%">
         <vbox id="genBookChooser" pack="center" align="center" style="background-image: url(chrome://xulsword/skin/images/9.gif); visibility:hidden;">
           <vbox id="genBookTree" class="genbookchooser">

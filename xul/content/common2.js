@@ -22,6 +22,7 @@
  ***********************************************************************/ 
 var Bible                 = MainWindow.Bible;
 var Location              = MainWindow.Location;
+var Texts                 = MainWindow.Texts;
 
 var LocaleConfigs         = MainWindow.LocaleConfigs;
 var VersionConfigs        = MainWindow.VersionConfigs;

@@ -8,7 +8,6 @@ function loadViewPort() {
   for (var w=1; w<=3; w++) {
     getPrefOrCreate("ShowOriginal" + w, "Bool", false);
     getPrefOrCreate("IsPinned" + w, "Bool", false);
-    getPrefOrCreate("ShowNoteBox" + w, "Bool", false);
     getPrefOrCreate("NoteBoxHeight" + w, "Int", 200);
     getPrefOrCreate("MaximizeNoteBox" + w, "Bool", false);
     if (!Tab[getPrefOrCreate("Version" + w, "Char", prefs.getCharPref("DefaultVersion"))])
@@ -38,7 +37,7 @@ function loadViewPort() {
   //document.getElementById("textrow").addEventListener("DOMMouseScroll", scrollwheel, false);
   
   // update the viewport now
-  window.setTimeout("updateViewPort();", 1);
+  window.setTimeout("Texts.update(SCROLLTYPETOP, HILIGHTNONE, UPDATELOCATORS); updateViewPort();", 1);
 }
 
 // This function updates the viewport based on all previously set global
@@ -95,12 +94,14 @@ jsdump("UPDATING VIEW PORT");
   
   if (chooser != "hide") {
     var faderheight = padtop + tabheight;
-    var chooserheight = document.getElementById("biblebooks_" + (lbn >= NumOT ? "nt":"ot")).offsetHeight;
+    var chooserheight = document.getElementById("biblebooks_nt").offsetHeight;
     if (chooserheight > sbh) chooserheight = sbh;
     else faderheight += 0.3*(sbh - chooserheight);
     var rulef = getCSS("#fadetop, #fadebot {");
     rulef.style.height = faderheight + "px";
     var rulec = getCSS("#biblechooser, #bookchooser {");
+    if (rulec.style.height != chooserheight + "px") 
+        document.getElementById("biblebooks_nt").style.top = "8px";
     rulec.style.height = chooserheight + "px";
     document.getElementById("fadebot").style.height = Number(window.innerHeight - faderheight - chooserheight) + "px";
 
@@ -120,10 +121,12 @@ jsdump("UPDATING VIEW PORT");
  
   // Windows
   for (var w=1; w<=NW; w++) {
-    value = "show1";
+    var value = "show1";
     if (w > dw) value = "hide";
     else {
-      if ((w+1)<=dw && prefs.getCharPref("Version" + w) == prefs.getCharPref("Version" + Number(w+1)))
+      if ((w+1)<=dw && 
+          Tab[prefs.getCharPref("Version" + w)].modType==BIBLE && 
+          prefs.getCharPref("Version" + w) == prefs.getCharPref("Version" + Number(w+1)))
           value = "show2";
       if (value == "show2" && w+2<=dw && prefs.getCharPref("Version" + Number(w+1)) == prefs.getCharPref("Version" + Number(w+2)))
           value = "show3";
@@ -141,18 +144,22 @@ jsdump("UPDATING VIEW PORT");
       w++;
       document.getElementById("text" + w).setAttribute("value", "hide");
     }
-    
   }
+//for (w=1; w<=NW; w++) {jsdump("w=" + w + ", value=" + document.getElementById("text" + w).getAttribute("value"));}
  
   // Window pins
   for (w=1; w<=NW; w++) {
-    document.getElementById("text" + w).setAttribute("pin", (prefs.getBoolPref("IsPinned" + w) ? "pinned":"unpinned"));
+    var type = Tab[prefs.getCharPref("Version" + w)].modType;
+    if (type == BIBLE || type == COMMENTARY) {
+      document.getElementById("text" + w).setAttribute("pin", (prefs.getBoolPref("IsPinned" + w) ? "pinned":"unpinned"));
+    }
+    else document.getElementById("text" + w).setAttribute("pin", "hide");
   }
   
   // Footnote boxes
   for (w=1; w<=NW; w++) {
     value = "hide";
-    if (prefs.getBoolPref("ShowNoteBox" + w)) value = "show";
+    if (Texts && Texts.showNoteBox[w]) value = "show";
     if (value == "show" && prefs.getBoolPref("MaximizeNoteBox" + w)) value = "showmax";
     document.getElementById("text" + w).setAttribute("foot", value);
   }
@@ -170,14 +177,20 @@ jsdump("UPDATING VIEW PORT");
       normtab.setAttribute("pinned", pinattrib);
       multtab.setAttribute("pinned", pinattrib);
       
-      var selattrib = (prefs.getCharPref("Version" + w) == Tabs[t].modName ? "true":"false");
-      normtab.setAttribute("selected", selattrib);
-      multtab.setAttribute("selected", selattrib);
+      if (prefs.getCharPref("Version" + w) == Tabs[t].modName) {
+        normtab.setAttribute("selected", "selected");
+        multtab.setAttribute("selected", "selected");
+      }
+      else {
+        normtab.removeAttribute("selected"); 
+        multtab.removeAttribute("selected");   
+      }
       
       if (Tabs[t].isOrigTab) {
         normtab.style.display = "";
         multtab.style.display = "none";
-        normtab.setAttribute("selected", (prefs.getBoolPref("ShowOriginal" + w) ? "true":"false"));
+        if (prefs.getBoolPref("ShowOriginal" + w)) normtab.setAttribute("selected", "selected");
+        else normtab.removeAttribute("selected"); 
       }
       else {
         if (Tabs[t].hidden) {
@@ -205,11 +218,17 @@ jsdump("UPDATING VIEW PORT");
       document.getElementById("tab" + t + "w" + w).style.display = "none";
       document.getElementById("seltab" + t + "w" + w).style.display = "";
       document.getElementById("multitabbut" + w).className = "tab tab" + Tabs[t].tabType;
+      
+      // set multi-tab's text & style too
+      mtabs = document.getElementById("multitabbut" + w).getElementsByClassName("tab");
+      for (t=0; t<mtabs.length; t++) {
+        if (mtabs[t].style.display != "none" && mtabs[t].getAttribute("selected")) break;
+      }
+      document.getElementById("multitabbut" + w).setAttribute("selected", (t < mtabs.length ? "selected":""));
     }
   }
-  
 
-  //var d="Ndis=" + dw; for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("value");} jsdump(d);
+//var d="Ndis=" + dw; for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("value");} jsdump(d);
 
 }
 
@@ -248,7 +267,8 @@ function needBookChooser() {
   return false;
 }
 
-function tabMouse() {
+function tabMouse(e) {
+//Texts.update();  
 
 }
 

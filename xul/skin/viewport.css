@@ -91,7 +91,7 @@
   padding-top:2px;
   height:20px;
 }
-.tab[selected="true"] {
+.tab[selected="selected"] {
   color:blue;
   border-bottom:none;
   background:rgb(255,243,255);
@@ -99,7 +99,7 @@
 .tab[pinned="true"] {
   color:rgb(210,210,210);
 }
-.tab[selected="true"][pinned="true"] {
+.tab[selected="selected"][pinned="true"] {
   background:rgb(248,248,241);
 }
 .tabTexts {
@@ -141,6 +141,9 @@
 }
 .sbpin:hover {
   background:url(chrome://xulsword/skin/images/pushpin2.png);
+}
+.text[pin="hide"] .sbpin {
+  visibility:hidden;
 }
 
 .text {
