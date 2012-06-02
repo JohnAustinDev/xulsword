@@ -854,4 +854,13 @@ function isASCII(text) {
   return !notASCII;
 }
 
+function copyObj(obj) {
+  var new = {};
+  for (var m in obj) {
+    if (typeof(obj[m]) == "object") {
+      new[m] = copyObj(obj[m]);
+    }
+    else new[m] = obj[m];
+  }
+}
 

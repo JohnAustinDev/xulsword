@@ -4244,7 +4244,7 @@ function resizeWatch() {
 }
 
 function resizeWatchReal() {
-  document.getElementById("viewport").contentDocument.defaultView.updateViewPort();
+  document.getElementById("xulviewport").contentDocument.defaultView.updateViewPort();
   prefs.setIntPref("WindowHeight",window.innerHeight);
   prefs.setIntPref("WindowWidth",window.innerWidth);
   resizeScriptBoxes();
@@ -4413,11 +4413,9 @@ function toOpenWindowByType(inType, uri, features)
     topWindow.focus();
   else if (features) {
     thiswin = window.open(uri, "_blank", features);
-    AllWindows.push(thiswin);
   }
   else {
     thiswin = window.open(uri, "_blank", "chrome,extrachrome,menubar,resizable,scrollbars,status,toolbar");
-    AllWindows.push(thiswin);
   }
   
   return thiswin;

@@ -19,6 +19,7 @@
 }
 
 #fadetop, #fadebot {
+  position:relative; /* get z-index to work */
   background:url(chrome://xulsword/skin/images/b2.gif) repeat;
   width:250px;
   height:100px; /* used in viewport.js */
@@ -66,7 +67,7 @@
   position:relative;
   top:0px;
   height:50%;
-  width:18px;
+  width:20px;
   color:rgb(0,0,100);
   background:rgb(233,233,233);
   border:1px outset rgb(200,200,200);
@@ -81,9 +82,11 @@
 }
 #testament_ot {
   -moz-border-radius-topleft: 8px;
+  padding:26px 0px 8px 0px;
 }
 #testament_nt {
   -moz-border-radius-bottomleft: 8px;
+  padding:8px 0px 8px 0px;
 }
 #chbutton_close {
   background:url(chrome://xulsword/skin/images/close0.bmp);
