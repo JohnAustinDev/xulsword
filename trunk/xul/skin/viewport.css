@@ -171,7 +171,7 @@
   display:none !important;
 }
 .text[pin="pinned"] {
-  border:1px solid red;
+  background:rgb(248,248,241);
 }
 
 .sb {
