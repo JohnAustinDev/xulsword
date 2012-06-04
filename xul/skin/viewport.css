@@ -211,6 +211,14 @@
   -moz-column-gap:100px;
 }
 
+.nbc {
+  position:relative;
+  width:100%;
+}
+.text[foot="hide"] .nbc {
+  display:none;
+}
+
 .bb {
   position:relative;
   margin-bottom:10px;
@@ -231,10 +239,6 @@
   z-index:8;
 }
 
-.nbc {
-  position:relative;
-  width:100%;
-}
 .nbsizer {
   position:absolute;
   top:0px;
@@ -250,8 +254,16 @@
   position:absolute;
   bottom:0px;
   right:0px;
-  background:grey;
   z-index:20;
+  
+  font-size:12px;
+  overflow:auto;
+	background:rgb(240,235,240);
+	border:2px solid rgb(150,150,150);
+	padding:4px 20px 4px 20px; 
+  margin-right:10px;
+  margin-left:10px;
+  -moz-border-radius:8px;
 }
 #note1 {
   height:200px; /* used in viewport.js */
@@ -270,10 +282,6 @@
 }
 .text[value="show3"] .nb {
   width:33%;
-}
-
-.text[foot="hide"] .nb {
-  display:none;
 }
 .text[foot="showmax"]:not([value="show1"]) .nb {
   height:600px; /* used in viewport.js */

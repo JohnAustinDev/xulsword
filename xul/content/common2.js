@@ -22,8 +22,6 @@
  ***********************************************************************/ 
 var Bible                 = MainWindow.Bible;
 var Location              = MainWindow.Location;
-var Texts                 = MainWindow.Texts;
-var BibleTexts            = MainWindow.BibleTexts;
 
 var LocaleConfigs         = MainWindow.LocaleConfigs;
 var VersionConfigs        = MainWindow.VersionConfigs;
@@ -47,4 +45,10 @@ var BM                    = MainWindow.BM;
 var BookmarkFuns          = MainWindow.BookmarkFuns;
 
 var AllWindows            = MainWindow.AllWindows;
+
+// defined in viewport.html but used globally
+if (typeof(Texts) == "undefined")
+    var Texts             = MainWindow.Texts;
+if (typeof(BibleTexts) == "undefined")
+    var BibleTexts        = MainWindow.BibleTexts;
 

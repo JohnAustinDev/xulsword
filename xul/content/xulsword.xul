@@ -76,7 +76,6 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/texts.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
@@ -453,7 +452,7 @@
 <!-- SCRIPTURE FRAMES ARE PLACED HERE !-->
   <vbox flex="100%">
     <deck id="appcontent" flex="100%">
-      <iframe id="aboutConfig" flex="100%" class="bibleframe" src="about:config" />
+      <!-- <iframe id="aboutConfig" flex="100%" class="bibleframe" src="about:config" /> !-->
       <hbox id="frameset" flex="100%">
         <vbox id="genBookChooser" pack="center" align="center" style="background-image: url(chrome://xulsword/skin/images/9.gif); visibility:hidden;">
           <vbox id="genBookTree" class="genbookchooser">
@@ -547,6 +546,6 @@
   <label id="bookmarkTTL" value="" />
 </tooltip>
 <tooltip id="tabTT">
-  <label id="tabTTL" value="" />
+  <label value="" />
 </tooltip>
 </window>

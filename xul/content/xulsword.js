@@ -28,15 +28,19 @@ var AboutScrollTo;
 var AudioDirs = null;
 var ViewPort;
 var CopyPopup;
+var PreviousHaveGenBook;
+var Texts, BibleTexts;
 const NOMODULES="0000", NOLOCALES="0001", NEEDRESTART="0002";
 
 function loadedXUL() {
+  ViewPort = document.getElementById("xulviewport").contentDocument.defaultView;
+  Texts = ViewPort.Texts;
+  BibleTexts = ViewPort.BibleTexts;
+  
   updateCSSBasedOnCurrentLocale(["#xulsword-window", "input, button, menu, menuitem"]);
   createVersionClasses(); // needed for tooltips
   document.title = SBundle.getString("Title");
   window.name="xulsword-window";
-  
-  ViewPort = document.getlementById("xulviewport").contentDocument.defaultView;
   
   // check for newly installed modules and reset mods if necessary
   var resetUserPrefs = false;
@@ -2436,7 +2440,7 @@ function disableMissingBooks(hide) {
     for (var a=0; books && a<books.length; a++) {
       if (books[a] == Book[b].sName) {have=true; break;}
     }
-    ViewPort.document.getElementById("book." + b).setAttribute("missing", (have ? "false":(hide ? "hide":"disable")));
+    ViewPort.document.getElementById("book_" + b).setAttribute("missing", (have ? "false":(hide ? "hide":"disable")));
   }
 
   if (hide) ViewPort.updateViewPort(false);

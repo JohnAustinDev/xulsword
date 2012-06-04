@@ -37,8 +37,8 @@ function tabMouse(e) {
     p = elem.id.split(".");
   }
   
-  var w = Number(t[0].substr(1));
-  var t = Number(t[3]);} 
+  var w = Number(p[0].substr(1));
+  var t = Number(p[3]);
   
   switch (e.type) {
   case "mouseover":
@@ -62,7 +62,7 @@ function tabMouse(e) {
 //consistency). These routines allow that...
 var ShowTabToolTip, HideTabToolTip;
 function openTabToolTip(t, w, cX, cY) {
-  var tt = MainWindow.document.getElementById("tabTTL");
+  var tt = MainWindow.document.getElementById("tabTT");
   if (!tt) return;
   
   tt.hidePopup();
@@ -75,8 +75,8 @@ function openTabToolTip(t, w, cX, cY) {
   desc = desc.substr(0, TOOLTIP_LEN);
   if (desc.length==TOOLTIP_LEN) desc += "...";
   
-  tt.setAttribute("class", "vstyle" + modName);
-  tt.setAttribute("value", desc);
+  tt.firstChild.setAttribute("class", "vstyle" + modName);
+  tt.firstChild.setAttribute("value", desc);
   
   if (ShowTabToolTip) window.clearTimeout(ShowTabToolTip);
   if (HideTabToolTip) window.clearTimeout(HideTabToolTip);
@@ -213,8 +213,8 @@ function scriptMouseOver(e) {
 
 function scriptMouseOut(e) {
   if (Popup.selectOpen || Popup.ispinned) {return;}
-  if (OwnerDocument.getElementById("contextScriptBox") &&
-      OwnerDocument.getElementById("contextScriptBox").getAttribute("value") == "open") {return;}
+  if (MainWindow.document.getElementById("contextScriptBox") &&
+      MainWindow.document.getElementById("contextScriptBox").getAttribute("value") == "open") {return;}
   
   if (Popup.showPopupID) {
     window.clearTimeout(Popup.showPopupID);
@@ -308,7 +308,7 @@ function scriptClick(e) {
     case BIBLE:
     case COMMENTARY:
       var pin = (w && prefs.getBoolPref("IsPinned" + w) ? w:null);
-      if (w && document.getElementById("text" + w).getAttribute("value") != "show1") {
+      if (w && document.getElementById("text" + w).getAttribute("value") != "show1")
           MainWindow.nextPage(HILIGHTNONE, pin);
       else MainWindow.nextChapter(HILIGHTNONE, SCROLLTYPEBEG, pin);
       break;
@@ -591,7 +591,7 @@ function toggleRefText(elem) {
   }
   if (!elem || !elem.className) return;
   
-  if (/cropened/).test(elem.className) elem.className = elem.className.replace(/cropened/, "crclosed");
+  if ((/cropened/).test(elem.className)) elem.className = elem.className.replace(/cropened/, "crclosed");
   else elem.className = elem.className.replace(/crclosed/, "cropened");
 }
 

@@ -114,7 +114,6 @@ function PopupObj(popupobj) {
         var reflist = chapRefs[i].split("<bg>")[1];
         // if we've found the note which matches the id under the mouse pointer
         if (thisid == this.data) {
-          getRefHTML: function(w, mod, id, body, xsid, sepclass) 
           html += BibleTexts.getRefHTML(this.w, this.mod, thisid, reflist, "pu", "crhr");
           break;
         }
@@ -299,7 +298,7 @@ function PopupObj(popupobj) {
   };
 
   this.close = function() {
-    if (window.name == "npopup") OwnerDocument.defaultView.close();
+    if (window.name == "npopup") PopupWindow.close();
     
     this.npopupTX.scrollTop = 0;
     // Stops if preparing to open
@@ -415,7 +414,7 @@ function PopupObj(popupobj) {
 
   this.mousemove = function(e) {
     //if (!this.mouseisdown || !this.ispinned) return;
-    //OwnerDocument.defaultView.moveTo(e.screenX-this.mouseX, e.screenY-this.mouseY);
+    //PopupWindow.moveTo(e.screenX-this.mouseX, e.screenY-this.mouseY);
   }
     
   this.mouseup = function(e) {this.mouseisdown = false;}

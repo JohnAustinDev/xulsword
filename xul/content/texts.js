@@ -21,7 +21,7 @@ var Texts = {
   scrollTypeFlag:null,
   highlightFlag:null,
   
-  showNoteBox:[false, false, false, false];
+  showNoteBox:[false, false, false, false],
   
   display:[null, null, null, null],
   
@@ -62,16 +62,16 @@ var Texts = {
     
     updateCSSBasedOnVersion(firstDisplayBible(false), [".chapsubtable"]);
     
-    document.getElementById("cmd_xs_startHistoryTimer").doCommand();
+    MainWindow.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
     
-    goUpdateTargetLocation();
+    MainWindow.goUpdateTargetLocation();
     
     MainWindow.updateNavigator();
     
     updateViewPort(false);
   },
   
-  updateBible: function(w) {
+  updateBible: function(w, force) {
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
     
     if (!this.display[w] || !getPrefOrCreate("IsPinned" + w, "Bool", false)) 
@@ -86,7 +86,7 @@ var Texts = {
 
       this.footnotes[w] = ti.footnotes;
 
-      var t = document.getElementById("xulviewport").contentDocument.getElementById("text" + w);
+      var t = document.getElementById("text" + w);
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
@@ -99,12 +99,12 @@ var Texts = {
     
     // set audio icons
     if (BibleTexts.updateAudioLinksTO) window.clearTimeout();
-    BibleTexts.updateAudioLinksTO = window.setTimeout("updateAudioLinks(" + w + ");", 0);
+    BibleTexts.updateAudioLinksTO = window.setTimeout("BibleTexts.updateAudioLinks(" + w + ");", 0);
   
     // handle scrolls and highlights
   },
   
-  updateCommentary: function(w) {
+  updateCommentary: function(w, force) {
     Texts.showNoteBox[w] = false;
     
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
@@ -120,7 +120,7 @@ var Texts = {
 
       this.footnotes[w] = ti.footnotes;
 
-      var t =  document.getElementById("xulviewport").contentDocument.getElementById("text" + w);
+      var t =  document.getElementById("text" + w);
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
@@ -131,13 +131,14 @@ var Texts = {
     // handle scrolls and highlights    
   },
   
-  updateDictionary: function(w) {
+  updateDictionary: function(w, force) {
     Texts.showNoteBox[w] = true;
     prefs.setBoolPref("IsPinned" + w, false);
     prefs.setBoolPref("ShowOriginal" + w, false);
     prefs.setBoolPref("MaximizeNoteBox" + w, false);
     
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
+    this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), Location, w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "DictKey", "globalOptions"];
@@ -147,8 +148,8 @@ var Texts = {
       
       this.footnotes[w] = ti.footnotes;
       
-      var t =  document.getElementById("xulviewport").contentDocument.getElementById("text" + w);
-      var hd = dt.getElementsByClassName("hd")[0];
+      var t =  document.getElementById("text" + w);
+      var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
       var sb = t.getElementsByClassName("sb")[0];
@@ -159,25 +160,26 @@ var Texts = {
     }
     
     // highlight the selected key
-    for (var i=0; i<dictList[this.display[w].mod]; i++) {
-      var el = document.getElementById("xulviewport").contentDocument.getElementById(dictList[this.display[w].mod][i]);
+    for (var i=0; i < DictTexts.keyList[this.display[w].mod]; i++) {
+      var el = document.getElementById(DictTexts.keyList[this.display[w].mod][i]);
       if (!el) continue;
       el.className = (el.id == key ? "dictselectkey":"");
     }
   
-    document.getElementById("xulviewport").contentDocument.getElementById('keytextbox').value = ti.key;
-    prefs.setUnicodePref("DictKey_" + this.display[w].mod + "_" + w, ti.key);
+    document.getElementById("w" + w + ".keytextbox").value = ti.key;
+    setUnicodePref("DictKey_" + this.display[w].mod + "_" + w, ti.key);
    
     // handle scrolls and highlights
   },
   
-  updateGenBook: function(w) {
+  updateGenBook: function(w, force) {
     Texts.showNoteBox[w] = false;
     prefs.setBoolPref("IsPinned" + w, false);
     prefs.setBoolPref("ShowOriginal" + w, false);
     prefs.setBoolPref("MaximizeNoteBox" + w, false);
     
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
+    this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), Location, w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "GenBookKey", "globalOptions"];
@@ -187,7 +189,7 @@ var Texts = {
       
       this.footnotes[w] = ti.footnotes;
       
-      var t =  document.getElementById("xulviewport").contentDocument.getElementById("text" + w);
+      var t =  document.getElementById("text" + w);
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
@@ -286,8 +288,8 @@ var Texts = {
 
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") 
-        display.globalOptions[cmd] = prefs.getCharPref(GlobalToggleCommands[cmd]);
-      else display.globalOptions[cmd] = Bible.getGlobalOption(GlobalToggleCommands[cmd]);
+        display.globalOptions[GlobalToggleCommands[cmd]] = prefs.getCharPref(GlobalToggleCommands[cmd]);
+      else display.globalOptions[GlobalToggleCommands[cmd]] = Bible.getGlobalOption(GlobalToggleCommands[cmd]);
     }
     
     return display;
@@ -297,7 +299,7 @@ var Texts = {
     for (var i=0; i<check.length; i++) {
       if (check[i] == "globalOptions") {
         for (var cmd in GlobalToggleCommands) {
-          if (display1.globalOptions[cmd] != display2.globalOptions[cmd]) return true;
+          if (display1.globalOptions[GlobalToggleCommands[cmd]] != display2.globalOptions[GlobalToggleCommands[cmd]]) return true;
         } 
       }
       else if (display1[check[i]] != display2[check[i]]) return true;
@@ -428,8 +430,8 @@ var BibleTexts = {
     
     // For Pin feature, set "global" SWORD options for local context
     for (var cmd in GlobalToggleCommands) {
-      if (cmd == "User Notes") continue;
-      Bible.setGlobalOption(GlobalToggleCommands[cmd], d.globalOptions[cmd]);
+      if (GlobalToggleCommands[cmd] == "User Notes") continue;
+      Bible.setGlobalOption(GlobalToggleCommands[cmd], d.globalOptions[GlobalToggleCommands[cmd]]);
     }
     
     // get Bible chapter's text
@@ -445,7 +447,7 @@ var BibleTexts = {
     else {
       ret.htmlText = Bible.getChapterText(d.mod, d.bk + " " + d.ch);
       
-      if (d.globalOptions["User Notes"]) == "On") {
+      if (d.globalOptions["User Notes"] == "On") {
         un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText, w);
         ret.htmlText = un.html;
       }
@@ -767,8 +769,9 @@ var BibleTexts = {
     for (var i = 0; i < icons.length; ++i) {
       var icon = icons[i];
 //icon.style.visibility = "visible"; continue;
-      if (AudioDirs === null) AudioDirs = getAudioDirs();
-      if (getAudioForChapter(Texts.display[w].mod, Texts.display[w].bk, Number(icon.id.split(".")[1]), AudioDirs)) icon.style.visibility = "visible";
+      if (MainWindow.AudioDirs === null) MainWindow.AudioDirs = MainWindow.getAudioDirs();
+      if (MainWindow.getAudioForChapter(Texts.display[w].mod, Texts.display[w].bk, Number(icon.id.split(".")[1]), MainWindow.AudioDirs)) 
+          icon.style.visibility = "visible";
     }
   }
 
@@ -786,8 +789,8 @@ var CommTexts = {
 
     // For Pin feature, set "global" SWORD options for local context
     for (var cmd in GlobalToggleCommands) {
-      if (cmd == "User Notes") continue;
-      Bible.setGlobalOption(GlobalToggleCommands[cmd], d.globalOptions[cmd]);
+      if (GlobalToggleCommands[cmd] == "User Notes") continue;
+      Bible.setGlobalOption(GlobalToggleCommands[cmd], d.globalOptions[GlobalToggleCommands[cmd]]);
     }
     
     // get Commentary chapter's text
@@ -797,7 +800,7 @@ var CommTexts = {
       
     var un;
     if (d.globalOptions["User Notes"] == "On") {
-      un = Texts.getUserNotes(d.bk, d.ch), d.mod, ret.htmlText, w);
+      un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText, w);
       ret.htmlText = un.html;
       ret.footnotes += un.notes;
     }
@@ -820,7 +823,7 @@ var CommTexts = {
     
     // put "global" SWORD options back to their global context values
     for (var cmd in GlobalToggleCommands) {
-      if (cmd == "User Notes") continue;
+      if (GlobalToggleCommands[cmd] == "User Notes") continue;
       Bible.setGlobalOption(GlobalToggleCommands[cmd], prefs.getCharPref(GlobalToggleCommands[cmd]));
     }
     
@@ -849,7 +852,7 @@ var DictTexts = {
       if (this.sortOrder != NOTFOUND) {
         this.sortOrder += "0123456789";
         this.langSortSkipChars = Bible.getModuleInformation(d.mod, "LangSortSkipChars");
-        if (this.langSortSkipChars == NOTFOUND) this.langSortSkipChars="";
+        if (this.langSortSkipChars == NOTFOUND) this.langSortSkipChars = "";
         this.keyList[d.mod].sort(this.dictSort);
       }
     }
@@ -861,10 +864,10 @@ var DictTexts = {
     ret.htmlList = this.keysHTML[d.mod];
 
     // get actual key
-    if (key == "<none>") key = keyList[d.mod][0];
-    if (key == "DailyDevotionToday") {
+    if (d.DictKey == "<none>") d.DictKey = this.keyList[d.mod][0];
+    if (d.DictKey == "DailyDevotionToday") {
       var today = new Date();
-      key = (today.getMonth()<9 ? "0":"") + String(today.getMonth()+1) + "." + (today.getDate()<10 ? "0":"") + today.getDate();
+      d.DictKey = (today.getMonth()<9 ? "0":"") + String(today.getMonth()+1) + "." + (today.getDate()<10 ? "0":"") + today.getDate();
     }
     
     // get htmlEntry
@@ -889,7 +892,7 @@ var DictTexts = {
     html +=     "<input id=\"w" + w + ".keytextbox\" name=\"keytextbox\" class=\"vstyle" + mod + "\" onfocus=\"this.select()\" ondblclick=\"this.select()\" ";
     html +=     "onkeypress=\"DictTexts.dictionaryKeyPress('" + mod + "', " + w + ", event)\"/>";
     html +=   "</div>";
-    html +=   "<div id=\"w" + w + ".keylist\" onclick=\"DictTexts.selKey('" + mod + "', " + w + ", '" + event.target.id + "')\">";
+    html +=   "<div id=\"w" + w + ".keylist\" onclick=\"DictTexts.selKey('" + mod + "', " + w + ", event.target.id)\">";
     for (var e=0; e < list.length; e++) {
       html += "<div id=\"w" + w + "." + list[e] + "\" >" + list[e] + "</div>";
     }
@@ -900,8 +903,8 @@ var DictTexts = {
   },
   
   getDictEntryHTML: function(key, mods, dontAddParagraphIDs) {
-    if (!key || !mod) return "";
-    key = decodeOSISRef(key);
+    if (!key || !mods) return "";
+    key = this.decodeOSISRef(key);
     
     mods += ";";
     mods = mods.split(";");
@@ -951,18 +954,18 @@ var DictTexts = {
     var xa=0;
     var xb=0;
     var ca = a.charAt(xa);
-    while (ca && this.langSortSkipChars.indexOf(ca)!=-1) {ca = a.charAt(++xa);}
+    while (ca && DictTexts.langSortSkipChars.indexOf(ca)!=-1) {ca = a.charAt(++xa);}
     var cb = b.charAt(xb);
-    while (cb && this.langSortSkipChars.indexOf(cb)!=-1) {cb = b.charAt(++xb);}
+    while (cb && DictTexts.langSortSkipChars.indexOf(cb)!=-1) {cb = b.charAt(++xb);}
     while (ca || cb) {
       if (!ca) return -1;
       if (!cb) return 1;
-      if (this.sortOrder.indexOf(ca) < this.sortOrder.indexOf(cb)) return -1;
-      if (this.sortOrder.indexOf(ca) > this.sortOrder.indexOf(cb)) return 1;
+      if (DictTexts.sortOrder.indexOf(ca) < DictTexts.sortOrder.indexOf(cb)) return -1;
+      if (DictTexts.sortOrder.indexOf(ca) > DictTexts.sortOrder.indexOf(cb)) return 1;
       ca = a.charAt(++xa);
-      while (ca && this.langSortSkipChars.indexOf(ca)!=-1) {ca = a.charAt(++xa);}
+      while (ca && DictTexts.langSortSkipChars.indexOf(ca)!=-1) {ca = a.charAt(++xa);}
       cb = b.charAt(++xb);
-      while (cb && this.langSortSkipChars.indexOf(cb)!=-1) {cb = b.charAt(++xb);}
+      while (cb && DictTexts.langSortSkipChars.indexOf(cb)!=-1) {cb = b.charAt(++xb);}
     }
     return 0;
   },
@@ -1042,7 +1045,7 @@ var DictTexts = {
   },
 
   dictionaryKeyPressR: function(mod, w, charCode) {
-    var textbox = document.getElementById("keytextbox");
+    var textbox = document.getElementById("w" + w + ".keytextbox");
     var text = textbox.value;
     if (!text) {
       textbox.style.color="";
@@ -1066,7 +1069,7 @@ var DictTexts = {
     if (aKey == "keylist") return;
     setUnicodePref("DictKey_" + mod + "_" + w, aKey);
     Texts.updateDictionary(w);
-    window.setTimeout("document.getElementById('keytextbox').focus()", 1);
+    window.setTimeout("document.getElementById('w" + w + ".keytextbox').focus()", 1);
   }
 
 };

@@ -82,16 +82,17 @@ jsdump("UPDATING VIEW PORT");
   rule = getCSS(".sb {");
   rule.style.height = sbh + "px";
 
+  var bbh = 4;
   for (var w=1; w<=NW; w++) {
     var nbh = prefs.getIntPref("NoteBoxHeight" + w);
-    if (nbh > sbh-4) nbh = sbh-4;
+    if (nbh > sbh-bbh) nbh = sbh-bbh;
     
     rule = getCSS("#note" + w + " {");
     rule.style.height = nbh + "px";
   
     rule = getCSS("#text" + w + "[value=\"show1\"][foot^=\"show\"] .sb {");
-    rule.style.marginBottom = Number(nbh + 4) + "px";
-    rule.style.height = Number(sbh - nbh - 4) + "px";
+    rule.style.marginBottom = Number(nbh + bbh) + "px";
+    rule.style.height = Number(sbh - nbh - bbh) + "px";
   }
 
   rule = getCSS(".text[foot=\"showmax\"]:not([value=\"show1\"]) .nb {");
@@ -114,13 +115,15 @@ jsdump("UPDATING VIEW PORT");
     var faderheight = padtop + tabheight;
     var chooserheight = document.getElementById("biblebooks_nt").offsetHeight;
     if (chooserheight > sbh) chooserheight = sbh;
-    else faderheight += 0.3*(sbh - chooserheight);
+    else faderheight += Math.floor(0.3*(sbh - chooserheight));
     var rulef = getCSS("#fadetop, #fadebot {");
     rulef.style.height = faderheight + "px";
+
     var rulec = getCSS("#biblechooser {");
     if (rulec.style.height != chooserheight + "px") 
         document.getElementById("biblebooks_nt").style.top = "8px";
     rulec.style.height = chooserheight + "px";
+
     document.getElementById("fadebot").style.height = Number(window.innerHeight - faderheight - chooserheight) + "px";
 
     var ntw = document.getElementById("biblebooks_nt");
@@ -241,7 +244,7 @@ jsdump("UPDATING VIEW PORT");
       document.getElementById("w" + w + ".tabselect").className = "tab tab" + Tabs[t].tabType;
       
       // set multi-tab's text & style too
-      mtabs = document.getElementById("w" + w + ".tabselect").getElementsByClassName("tab");
+      var mtabs = document.getElementById("w" + w + ".tabselect").getElementsByClassName("tab");
       for (t=0; t<mtabs.length; t++) {
         if (mtabs[t].style.display != "none" && mtabs[t].getAttribute("selected")) break;
       }
