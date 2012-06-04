@@ -42,35 +42,35 @@ function PopupObj(popupobj) {
 
   // or else initialize a fresh popup object
   else {
-    this.win = Win;
-    this.footnotes = MyFootnotes;
     this.datatype = null;
     this.data = null;
     this.delay = null;
     this.yoffset = null;
-    this.defmodname = null;
+    this.mod = null;
+    this.w = null;
     this.selectOpen = null;
     this.showPopupID = null;
   }
 
-  this.activate = function(datatype, data, delay, yoffset, defmodname) {
-    if (datatype   !==null) this.datatype = datatype;
-    if (data       !==null) this.data = data;
-    if (delay      !==null) this.delay = delay;
-    if (yoffset    !==null) this.yoffset = yoffset;
-    if (defmodname !==null) this.defmodname = defmodname;
-    
-    if (datatype) this.datatype = datatype;
+  this.activate = function(w, datatype, data, delay, yoffset, mod) {
+    if (w        !== null) this.w = w;
+    if (datatype !== null) this.datatype = datatype;
+    if (data     !== null) this.data = data;
+    if (delay    !== null) this.delay = delay;
+    if (yoffset  !== null) this.yoffset = yoffset;
+    if (mod      !== null) this.mod = mod;
     
     //jsdump("datatype:" + this.datatype + " data:" + this.data + "\n");
     if (this.delay==null) {this.delay = POPUPDELAY;}
     if (!this.yoffset) {this.yoffset = 0;}
-    if (!this.defmodname) {this.defmodname = this.win.modName;}
+    if (!this.mod) {this.mod = prefs.getCharPref("Version" + this.w);}
+    
+    this.footnotes = Texts.footnotes[w];
     
     // Popup text and style:
     //  Popup Scripture reference links should appear in program's language and style
     //  Popup Scripture reference text and style should be determined correctly
-    //    according to the results of findAVerseText (using default = defmodname)
+    //    according to the results of findAVerseText (using default = mod)
     //  Popup body text should appear in Win.modname's style as inherited from ScriptBox
     
     // Get fromMod for scripture references, and style.
@@ -102,7 +102,11 @@ function PopupObj(popupobj) {
     // Cross Reference: data is elem.title
     //    data form: cr#.bk.c.v
     case "cr":
-      html += "<div class=\"popupbody vstyle" + this.win.modName + "\">" + this.twistyButton();
+      var dir = (VersionConfigs[this.mod] && VersionConfigs[this.mod].direction == "rtl" ? "rtl":"ltr");
+      html += "<div class=\"popupbody vstyle" + this.mod + " ";
+      html += (getPrefOrCreate("OpenCrossRefPopups", "Bool", true) ? "cropened":"crclosed") + "\">";
+      html += "<div class=\"twisty twisty-" + dir + "\" onclick=\"Popup.openCloseCRs();\" ></div>";
+      
       var hideEmptyCrossReferences = getPrefOrCreate("HideUnavailableCrossReferences", "Bool", false);
       var chapRefs = this.footnotes.CrossRefs.split("<nx>");
       for (var i=0; i<chapRefs.length; i++) {
@@ -110,18 +114,19 @@ function PopupObj(popupobj) {
         var reflist = chapRefs[i].split("<bg>")[1];
         // if we've found the note which matches the id under the mouse pointer
         if (thisid == this.data) {
-          html += getCRNoteHTML(this.defmodname, "pu", thisid, reflist, "<hr>", getPrefOrCreate("OpenCrossRefPopups", "Bool", true), this.win.number);
+          getRefHTML: function(w, mod, id, body, xsid, sepclass) 
+          html += BibleTexts.getRefHTML(this.w, this.mod, thisid, reflist, "pu", "crhr");
           break;
         }
       }
       html += "</div>";
-      window.setTimeout("Popup.initModuleSelect('bibles', '" + this.defmodname + "');", 1);
+      window.setTimeout("Popup.initModuleSelect('bibles', '" + this.mod + "');", 1);
       break;
 
     // Footnote: data is elem.title
     //    data form: fn#.bk.c.v
     case "fn":
-      var footnote = this.footnotes.Footnotes.split("<nx>");
+      var footnote = this.footnotes.split("<nx>");
       for (var i=0; i<footnote.length; i++) {
         var fnpart = footnote[i].split("<bg>");
         // if we've found the note which matches the id under the mouse pointer
@@ -135,7 +140,11 @@ function PopupObj(popupobj) {
     // Scripture Reference: data is elem.title unless it's "unavailable" then it's elem.innerHTML
     //    data form: reference1; reference2    
     case "sr":
-      html += "<div class=\"popupbody vstyle" + this.win.modName + "\">" + this.twistyButton();
+      var dir = (VersionConfigs[this.mod] && VersionConfigs[this.mod].direction == "rtl" ? "rtl":"ltr");
+      html += "<div class=\"popupbody vstyle" + this.mod + " ";
+      html += (getPrefOrCreate("OpenCrossRefPopups", "Bool", true) ? "cropened":"crclosed") + "\">";
+      html += "<div class=\"twisty twisty-" + dir + "\" onclick=\"Popup.openCloseCRs();\" ></div>";
+          
       // Split up data into individual passages
       var mdata = this.data + ";";
       mdata = mdata.split(";");
@@ -155,7 +164,7 @@ function PopupObj(popupobj) {
       }
       // Parse each reference into a normalized reference, convert verse system and get verse text
       var book = Location.getBookName();
-      var chapter = Location.getChapterNumber(this.win.modName);
+      var chapter = Location.getChapterNumber(this.mod);
       var verse = 1;
       var hideEmptyCrossReferences = getPrefOrCreate("HideUnavailableCrossReferences", "Bool", false);
       var reflist = "";
@@ -164,7 +173,7 @@ function PopupObj(popupobj) {
         var failed = false;
         var saveref = mdata[i];
   //jsdump(data[i]);
-        mdata[i] = normalizeOsisReference(data[i], this.win.modName);
+        mdata[i] = normalizeOsisReference(data[i], this.mod);
   //jsdump(data[i] + ", ");
         if (!mdata[i]) {
           var thisloc = parseLocation(saveref);
@@ -174,7 +183,7 @@ function PopupObj(popupobj) {
             verse = thisloc.verse ? thisloc.verse:verse;
             mdata[i] = book + "." + chapter + "." + verse;
             if (thisloc.lastVerse) {data[i] += "-" + book + "." + chapter + "." + thisloc.lastVerse;}
-            mdata[i] = normalizeOsisReference(data[i], this.win.modName);
+            mdata[i] = normalizeOsisReference(data[i], this.mod);
             if (!mdata[i]) failed = true;
           }
           else failed = true;
@@ -189,7 +198,7 @@ function PopupObj(popupobj) {
   //jsdump(mdata[i]);
         reflist += mdata[i] + ";";
       }
-      html += getCRNoteHTML(this.defmodname, "pu", "cr." + cnt++ + ".Gen.1.1", reflist, "<hr>", getPrefOrCreate("OpenCrossRefPopups", "Bool", true), this.win.number);
+      html += BibleTexts.getRefHTML(this.w, this.mod, "cr." + cnt++ + ".Gen.1.1", reflist, "pu", "crhr");
       html += failhtml;
       html += "</div>";
       break;
@@ -217,7 +226,7 @@ function PopupObj(popupobj) {
         sep = ";"
       }
       // Returns with style of dnames[0]
-      html += MainWindow.getDictionaryHTML(dword, dnames, true);
+      html += DictTexts.getEntryHTML(dword, dnames, true);
       //html = insertUserNotes("na", dword, dict, html);
       break;
       
@@ -242,15 +251,15 @@ function PopupObj(popupobj) {
     case "sn":
       // Pass data array as param1 and match-word as param2
       // Returns with style of module for data array [0]
-      html += MainWindow.getLemmaHTML(this.data.split("]-[")[1].split("."), this.data.split("]-[")[0]);
+      html += DictTexts.getLemmaHTML(this.data.split("]-[")[1].split("."), this.data.split("]-[")[0]);
       break;
       
     case "introlink":
-      html += getBookIntroduction(this.win.modName, Location.getBookName(), Bible) + "<br><br>";
+      html += BibleTexts.getBookIntroduction(this.mod, Location.getBookName()) + "<br><br>";
       break;
       
     case "noticelink":
-      html += getNoticeLink(this.win.modName, 1) + "<br>";
+      html += BibleTexts.getNoticeLink(this.mod, 1) + "<br>";
       break;
       
     default:
@@ -304,16 +313,10 @@ function PopupObj(popupobj) {
     this.npopup.style.display = "none";
   };
 
-  this.twistyButton = function() {
-    var dir = (VersionConfigs[this.win.modName] && VersionConfigs[this.win.modName].direction == "rtl" ? "rtl":"ltr");
-    var val = (getPrefOrCreate("OpenCrossRefPopups", "Bool", true) ? "close":"open");
-    return "<div class=\"twisty twisty-" + dir + "\" value=\"" + val + "\" onclick=\"Popup.openCloseCRs();\" ></div>";
-  };
-  
   this.openCloseCRs = function() {
     this.close();
     prefs.setBoolPref("OpenCrossRefPopups", !prefs.getBoolPref("OpenCrossRefPopups"));
-    this.activate(null, null, 0);
+    this.activate(this.w, null, null, 0);
   };
   
   this.initModuleSelect = function(type, selmod) {
@@ -337,7 +340,7 @@ function PopupObj(popupobj) {
   
   this.select = function(e) {
     this.selectOpen=false;
-    this.activate(null, null, null, null, e.target.value);
+    this.activate(this.w, null, null, null, null, e.target.value);
   };
   
   this.clickpin = function(pin) {
@@ -347,7 +350,7 @@ function PopupObj(popupobj) {
       if (window.name=="npopup") {X=1; Y=1;}
       else {
         // on Linux, window.innerHeight = outerHeight = height of entire window viewport, NOT including the operating system frame
-        var f = MainWindow.document.getElementById("bible" + this.win.number + "Frame");
+        var f = MainWindow.document.getElementById("xulviewport");
         X = Number(f.boxObject.x + this.npopup.offsetLeft);
         Y = Number(f.boxObject.y + this.npopup.offsetTop + 30);
         //jsdump("INFO:" + f.boxObject.y + "-" + MainWindow.outerHeight + "+" + v.height + "=" + Y);

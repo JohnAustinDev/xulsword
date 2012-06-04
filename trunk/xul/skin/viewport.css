@@ -211,9 +211,40 @@
   -moz-column-gap:100px;
 }
 
+.bb {
+  position:relative;
+  margin-bottom:10px;
+  border:1px outset rgb(150,150,150); 
+  background:rgb(233,233,233); 
+  height:4px;
+  -moz-border-radius:4px;
+  cursor:N-resize;
+  z-index:2;
+  margin-left:60px;
+  margin-right:62px;
+}
+.bb[active="true"] {
+  border:1px dashed rgb(150,150,150); 
+  background:none; 
+  height:1px;
+  cursor:N-resize;
+  z-index:8;
+}
+
 .nbc {
   position:relative;
   width:100%;
+}
+.nbsizer {
+  position:absolute;
+  top:0px;
+  right:0px;
+  background:url(chrome://xulsword/skin/images/max.bmp);
+  width:15px;
+  height:14px;
+}
+.text[value="showmax"] .nbsizer {
+  background:url(chrome://xulsword/skin/images/norm.bmp);
 }
 .nb {
   position:absolute;

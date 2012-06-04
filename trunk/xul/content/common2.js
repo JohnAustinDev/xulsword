@@ -23,6 +23,7 @@
 var Bible                 = MainWindow.Bible;
 var Location              = MainWindow.Location;
 var Texts                 = MainWindow.Texts;
+var BibleTexts            = MainWindow.BibleTexts;
 
 var LocaleConfigs         = MainWindow.LocaleConfigs;
 var VersionConfigs        = MainWindow.VersionConfigs;
@@ -46,5 +47,4 @@ var BM                    = MainWindow.BM;
 var BookmarkFuns          = MainWindow.BookmarkFuns;
 
 var AllWindows            = MainWindow.AllWindows;
-var Win                   = MainWindow.Win;
 

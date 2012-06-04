@@ -76,19 +76,40 @@
 .twisty {
   position:absolute;
   top:4px;
-  background:url('chrome://xulsword/skin/images/twisty-open.png');
+  background:url('chrome://xulsword/skin/images/twisty-close.png');
   width:9px;
   height:9px;
   -moz-margin-start:0px;
 }
-.twisty[value=open] {
-  background:url('chrome://xulsword/skin/images/twisty-close.png');
+.crclosed .twisty {
+  background:url('chrome://xulsword/skin/images/twisty-open.png');
 }
 .twisty-rtl {
   right:-15px;
 }
 .twisty-ltr {
   left:-14px;
+}
+.cropened .crref:after {
+  content:": ";
+}
+.crtext {
+  display:none;
+}
+.cropened .crtext {
+  display:inline;
+}
+.cropened .crsep {
+  display:block;
+}
+.crclosed .crsep {
+  display:inline;
+}
+.crclosed .crsep:after {
+  content:"; ";
+}
+.crhr {
+  border-top:2px solid grey;
 }
 
 .prevhtml {

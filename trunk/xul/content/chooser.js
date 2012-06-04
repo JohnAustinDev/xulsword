@@ -109,7 +109,7 @@ function chooserMouse(e) {
       
     case "click":
       Location.setLocation(firstDisplayBible(), Book[(p[1]=="ot" ? 0:NumOT)].sName + ".1.1");
-      MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, HILIGHTNONE, UPDATELOCATORS);
+      Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       break;
     }
     break;
@@ -124,7 +124,7 @@ function chooserMouse(e) {
       break;
     case "click":
       Location.setLocation(firstDisplayBible(), Book[p[1]].sName + ".1.1");
-      MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, HILIGHTNONE, UPDATELOCATORS);
+      Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       break;
     }
     break;
@@ -152,7 +152,7 @@ function chooserMouse(e) {
         
     case "click":
       Location.setLocation(firstDisplayBible(), Book[p[1]].sName + "." + p[2] + "." + p[3]);
-      MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, HILIGHTNONE, UPDATELOCATORS);
+      Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       break
     }
     break;
