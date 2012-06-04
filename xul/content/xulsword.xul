@@ -76,7 +76,6 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/texts.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
@@ -167,7 +166,7 @@
   <command id="cmd_printPreview"                 oncommand="PrintUtils.printPreview(PrintPreviewCallbacks);"/>
   <command id="cmd_pageSetup"                    oncommand="PrintUtils.showPageSetup(); restoreFocus();"/>
   <command id="cmd_xs_startHistoryTimer"
-           oncommand="try {window.clearTimeout(HistoryTimer);} catch(er){} var HistoryTimer=window.setTimeout('addToHistory()',HistoryCaptureDelay);"/>
+            oncommand="try {window.clearTimeout(History.timer);} catch(er){} History.timer=window.setTimeout('History.add()', History.delay);"/>
   <command id="cmd_xs_aboutModule"               oncommand="goDoCommand('cmd_xs_aboutModule');"/>
   
 </commandset>
@@ -396,7 +395,7 @@
       <hbox id="historyButtons" align="center" chromedir="&locale.dir;" style="margin-top:2px; min-height:34px;"> <!-- min-height is specified to allow for player's height !-->
         <button id="back" tooltip="backTT" label="  &history.back.label;" chromedir="&locale.dir;" command="cmd_xs_back" flex="40%"/>
         <button id="historymenu" tooltip="historymenuTT" type="menu">
-          <menupopup id="historypopup" onpopupshowing="createHistoryMenu(event);"/>
+          <menupopup id="historypopup" onpopupshowing="History.createMenu(event);"/>
         </button>
         <button id="forward" tooltip="forwardTT" label="&history.forward.label;  " command="cmd_xs_forward" chromedir="&locale.dir;" dir="reverse" flex="40%"/>
       </hbox>
@@ -454,8 +453,7 @@
 <!-- SCRIPTURE FRAMES ARE PLACED HERE !-->
   <vbox flex="100%">
     <deck id="appcontent" flex="100%">
-      <!-- <iframe id="aboutConfig" flex="100%" class="bibleframe" src="about:config" /> !-->
-      <iframe id="xulviewport" flex="100%" src="viewport.html" />
+      <iframe id="aboutConfig" flex="100%" class="bibleframe" src="about:config" />
       <hbox id="frameset" flex="100%">
         <vbox id="genBookChooser" pack="center" align="center" style="background-image: url(chrome://xulsword/skin/images/9.gif); visibility:hidden;">
           <vbox id="genBookTree" class="genbookchooser">
@@ -479,9 +477,7 @@
             </tree>
           </vbox>
         </vbox>
-        <iframe id="bible1Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden;"/>
-        <iframe id="bible2Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden;"/>
-        <iframe id="bible3Frame" class="bibleframe" context="contextScriptBox" src="script.html" style="visibility:hidden;"/>
+        <iframe id="xulviewport" flex="100%" src="viewport.html" />
       </hbox>
       <browser id="printPreviewBrowser"/>
       <browser id="printBrowser" type="content-primary" src="print.html" style="visibility:hidden;" />

@@ -35,7 +35,6 @@ var LocaleDirectionEntity;
 var LocaleDirectionChar;
 var Tabs = [];
 var Tab = {};
-var Win = new Array(null, {}, {}, {});
 var Book = new Array(NumBooks);
 var OrigModuleNT;
 var OrigModuleOT;

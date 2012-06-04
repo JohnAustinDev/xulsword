@@ -592,13 +592,12 @@ var BookmarkFuns = {
     BM.gTxnSvc.doTransaction(newTransaction);
   },
   
-  updateMainWindow: function (focusOnMainWindow, aUpdateNeededArray, scrollFlag) {
+  updateMainWindow: function (focusOnMainWindow, scrollFlag) {
     if (!MainWindow || Bible.paused) return;
-    if (!aUpdateNeededArray) aUpdateNeededArray = MainWindow.getUnpinnedWindows();
     if (scrollFlag == null) scrollFlag = SCROLLTYPECENTER;
     if (focusOnMainWindow) MainWindow.focus();
     for (var i=1; i<=3; i++) {MainWindow.TextCache[i].text = null;} // force reread due to changed user-notes
-    MainWindow.updateFrameScriptBoxes(aUpdateNeededArray, scrollFlag, HILIGHTVERSE, UPDATELOCATORS);
+    Texts.update(scrollFlag, HILIGHTVERSE, true);
   },
   
   getRandomString: function () {

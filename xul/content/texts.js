@@ -20,7 +20,6 @@ var Texts = {
   
   scrollTypeFlag:null,
   highlightFlag:null,
-  locatorFlag:null,
   
   showNoteBox:[false, false, false, false];
   
@@ -28,11 +27,13 @@ var Texts = {
   
   footnotes:[null, null, null, null],
 
-  update: function(scrollTypeFlag, highlightFlag, locatorFlag) {
-  
+  update: function(scrollTypeFlag, highlightFlag, force) {
+    if (scrollTypeFlag === null) scrollTypeFlag = SCROLLTYPETOP;
+    if (highlightFlag === null) highlightFlag = HILIGHTNONE;
+    if (force === null) force = false;
+    
     this.scrollTypeFlag = scrollTypeFlag;
     this.highlightFlag = highlightFlag;
-    this.locatorFlag = locatorFlag;
 
     if (this.scrollTypeFlag == SCROLLTYPETOP) Location.setVerse(mod, 1, 1);
 
@@ -65,7 +66,9 @@ var Texts = {
     
     goUpdateTargetLocation();
     
-    //if (locatorFlag != NOUPDATELOCATOR) MainWindow.updateLocators(locatorFlag);
+    MainWindow.updateNavigator();
+    
+    updateViewPort(false);
   },
   
   updateBible: function(w) {
@@ -78,7 +81,7 @@ var Texts = {
     var check = ["mod", "bk", "ch", "globalOptions", "IsPinned", "ShowOriginal", "ShowFootnotesAtBottom", 
                 "ShowCrossrefsAtBottom", "ShowUserNotesAtBottom"];
                 
-    if (!lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
+    if (force || !lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
       var ti = BibleTexts.read(w, this.display[w]);
 
       this.footnotes[w] = ti.footnotes;
@@ -93,6 +96,10 @@ var Texts = {
       var nb = t.getElementsByClassName("nb")[0];
       nb.innerHTML = ti.htmlNotes;
     }
+    
+    // set audio icons
+    if (BibleTexts.updateAudioLinksTO) window.clearTimeout();
+    BibleTexts.updateAudioLinksTO = window.setTimeout("updateAudioLinks(" + w + ");", 0);
   
     // handle scrolls and highlights
   },
@@ -108,7 +115,7 @@ var Texts = {
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "bk", "ch", "globalOptions", "IsPinned"];
      
-    if (!lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
+    if (force || !lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
       var ti = CommTexts.read(w, this.display[w]);
 
       this.footnotes[w] = ti.footnotes;
@@ -135,7 +142,7 @@ var Texts = {
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "DictKey", "globalOptions"];
     
-    if (!lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
+    if (force || !lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
       var ti = DictTexts.read(w, this.display[w]);
       
       this.footnotes[w] = ti.footnotes;
@@ -175,7 +182,7 @@ var Texts = {
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "GenBookKey", "globalOptions"];
     
-    if (!lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
+    if (force || !lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
       var ti = GenBookTexts.read(w, this.display[w]);
       
       this.footnotes[w] = ti.footnotes;
@@ -298,7 +305,27 @@ var Texts = {
 
     return false;
   },
-  
+
+  scroll2: function(outerElement, element2Scroll, offsetParentId, dontScrollIfVisible, margin) {
+    //dump ("outerElement:" + outerElement.id + "\nelement2Scroll:" + element2Scroll.id + "\noffsetParentId:" + offsetParentId + "\ndontScrollIfVisible:" + dontScrollIfVisible + "\nmargin:" + margin + "\n");
+    if (!element2Scroll || !element2Scroll.offsetParent) return;
+    //jsdump("offsetParentId:" + offsetParentId + "\n");
+    while (element2Scroll && element2Scroll.offsetParent && element2Scroll.offsetParent.id != offsetParentId) {element2Scroll = element2Scroll.parentNode;}
+    
+    var noteOffsetTop = element2Scroll.offsetTop;
+    var boxScrollHeight = outerElement.scrollHeight;
+    var boxOffsetHeight = outerElement.offsetHeight;
+    
+    //jsdump("id:" + element2Scroll.id + " outElemScrollTop: " + outerElement.scrollTop + " boxOffsetHeight:" + boxOffsetHeight + " boxScrollHeight:" + boxScrollHeight + " noteOffsetTop:" + noteOffsetTop + "\n");
+    var scrollmargin=10;
+    if (dontScrollIfVisible && noteOffsetTop > outerElement.scrollTop+scrollmargin && noteOffsetTop < outerElement.scrollTop+boxOffsetHeight-scrollmargin) return;
+    
+    // If note is near bottom then shift to note (which will be max shift)
+    if (noteOffsetTop > (boxScrollHeight - boxOffsetHeight + margin)) {outerElement.scrollTop = noteOffsetTop;}
+    // Otherwise shift to note and add a little margin above note
+    else {outerElement.scrollTop = noteOffsetTop - margin;}
+  },
+
   
 ////////////////////////////////////////////////////////////////////////
 // Paragraphs
@@ -406,6 +433,7 @@ var BibleTexts = {
     }
     
     // get Bible chapter's text
+    var un;
     if (d["ShowOriginal"]) {
       Bible.setGlobalOption("Strong's Numbers", "On");
       Bible.setGlobalOption("Morphological Tags", "On");
@@ -417,7 +445,6 @@ var BibleTexts = {
     else {
       ret.htmlText = Bible.getChapterText(d.mod, d.bk + " " + d.ch);
       
-      var un;
       if (d.globalOptions["User Notes"]) == "On") {
         un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText, w);
         ret.htmlText = un.html;
@@ -458,9 +485,13 @@ var BibleTexts = {
       ret.htmlText = this.getChapterHeading(d.bk, d.ch, d.mod, w, showBook, false, d["ShowOriginal"]) + ret.htmlText;
     }
     
+    // highlight user notes
+    if (un) BibleTexts.hilightUserNotes(un.notes, w); // uses window.setTimout()
+    
+    
     // put "global" SWORD options back to their global context values
     for (var cmd in GlobalToggleCommands) {
-      if (cmd == "User Notes") continue;
+      if (GlobalToggleCommands[cmd] == "User Notes") continue;
       Bible.setGlobalOption(GlobalToggleCommands[cmd], prefs.getCharPref(GlobalToggleCommands[cmd]));
     }
     
@@ -474,14 +505,12 @@ var BibleTexts = {
     var myVersionsBundle = getLocaleBundle(myVersionsLocale, "books.properties");
     var myConfig = LocaleConfigs[myVersionsLocale];
 
-    var chapterHeadingFloat = ((myConfig && myConfig.direction && myConfig.direction=="rtl") ? "right":"left");
-    var oppositeHeadingFloat = (chapterHeadingFloat == "left" ? "right":"left");
     var chapterHeadingFont = (myConfig && myConfig.font ? myConfig.font:DefaultFont);
     var chapterHeadingSize = (myConfig && myConfig.fontSizeAdjust ? myConfig.fontSizeAdjust:DefaultFontSizeAdjust);
     
     // book and chapter heading
-    var mtext = "<div class=\"chapterhead\">";
-    mtext += "<div class=\"chapnum\" style=\"text-align:" + chapterHeadingFloat + "; float:" + chapterHeadingFloat + "; font-family:'" + chapterHeadingFont + "'; \">";
+    var mtext = "<div class=\"chapterhead\" dirmod=\"" + ((myConfig && myConfig.direction && myConfig.direction=="rtl") ? "rtl":"ltr") + "\">";
+    mtext += "<div class=\"chapnum\" style=\"font-family:'" + chapterHeadingFont + "'; \">";
     if (showBookName) {
       mtext += "<span>" + myVersionsBundle.GetStringFromName(bk) + "</span>";
       mtext += "<br>";
@@ -491,9 +520,7 @@ var BibleTexts = {
 
     var intro = "";
     if (!showOriginal) {
-      mtext += "<div class=\"chapinfo\" style=\"" +
-        " float:" + oppositeHeadingFloat +
-        "; text-align:" + chapterHeadingFloat + "\">";
+      mtext += "<div class=\"chapinfo\">";
       mtext +=  this.getNoticeLink(mod, false, w);
       mtext += "<div class=\"audiolink\">";
       mtext += "<div class=\"listenlink\" id=\"w" + w + ".listenlink." + ch + "\"></div>";
@@ -501,7 +528,7 @@ var BibleTexts = {
 
       // introduction link and introduction
       if (ch == 1) {
-        intro = getBookIntroduction(mod, bk, Bible); 
+        intro = BibleTexts.getBookIntroduction(mod, bk); 
         var test = intro.replace(/<[^>]+>/g,"").match(/\S/); // Remove empty intros that may be generated by paratext2Osis.pl
         if (!test) intro=null;
         if (intro) {
@@ -553,15 +580,15 @@ var BibleTexts = {
           haveNotes = true;
           
           // Now display this note as a row in the main table
-          t += "<div>";
+          t += "<div class=\"" + (openCRs ? "cropened":"crclosed") + "\">";
           
           // Write cell #1: an expander link for cross references only
           t += "<div class=\"fncol1\">";
-          if (cr) {t += "<div class=\"fntwisty\" value=\"close\" id=\"w" + w + ".exp." + noteid + "\"></div>";}
+          if (cr) {t += "<div id=\"w" + w + ".exp." + noteid + "\" class=\"crtwisty\"></div>";}
           t += "</div>";
           // These are the lines for showing expanded verse refs
-          t += "<div id=\"w" + w + ".exp2." + noteid + "\" class=\"fncol2\"><div class=\"fndash\"></div></div>";
-          t += "<div id=\"w" + w + ".exp3." + noteid + "\" class=\"fncol3 " + orient + "\" >&nbsp</div>";
+          t += "<div class=\"fncol2\"><div class=\"fndash\"></div></div>";
+          t += "<div class=\"fncol3 " + orient + "\" >&nbsp</div>";
           
           // This makes the following cells part of the highlight
           t += "<div id=\"w" + w + ".ntr." + noteid + "\" class=\"normalNote\">";
@@ -569,36 +596,36 @@ var BibleTexts = {
           // Write cell #4: chapter and verse
           var xsn = new RegExp("^" + XSNOTE + "$");
           var tmp = noteid.match(xsn);
-          var lov = getLocaleOfModule(version);
+          var lov = getLocaleOfModule(mod);
           var myc = dString(tmp[4], lov);
           var myv = dString(tmp[5], lov);
-          t += "<a id=\"w" + w + ".notl." + noteid + "\" class=\"fncol4 vstyle" + version + "\" >" + "<i>" + myc + ":" + versionDirectionEntity + myv + "</i>" + " -" + "</a>";
+          t += "<a id=\"w" + w + ".notl." + noteid + "\" class=\"fncol4 vstyle" + mod + "\" >" + "<i>" + myc + ":" + versionDirectionEntity + myv + "</i>" + " -" + "</a>";
           
           // Write cell #5: note body
           t += "<div id=\"w" + w + ".body." + noteid + "\" class=\"fncol5\">";
+          
           // If this is a cross reference, then parse the note body for references and display them
-          if (cr) t += this.getCRNoteHTML(version, "nb", noteid, body, "<br>", openAllCrossReferences, frameNumber);
+          if (cr) t += this.getRefHTML(w, mod, noteid, body, "nb", "<br>");
+          
           // If this is a footnote, then just write the body
-          if (fn||un) {
-            var userNoteIdentifierOpen  = "";
-            var userNoteIdentifierClose = "";
-            if (un) {
-              var unclass = "noteBoxUserNote";
-              var de = "&lrm;";
-              try {
-                var unmod = BMDS.GetTarget(BM.RDF.GetResource(decodeUTF8(noteid.match(/un\.(.*?)\./)[1])), BM.gBmProperties[NOTELOCALE], true);
-                unmod = unmod.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-                unclass += " vstyle" + unmod;
-              }
-              catch (er) {}
-              try {
-                if (LocaleConfigs[unmod].direction == "rtl") de = "&rlm;";
-              }
-              catch (er) {}
-              userNoteIdentifierOpen  = "<span class=\"" + unclass + "\">" + de;
-              userNoteIdentifierClose = de + "</span>";
+          else if (fn) {t += body;}
+          
+          // If this is a usernote, then add direction entities  & style
+          else if (un) {
+            var unclass = "noteBoxUserNote";
+            var de = "&lrm;";
+            try {
+              var unmod = BMDS.GetTarget(BM.RDF.GetResource(decodeUTF8(noteid.match(/un\.(.*?)\./)[1])), BM.gBmProperties[NOTELOCALE], true);
+              unmod = unmod.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+              unclass += " vstyle" + unmod;
             }
-            body = userNoteIdentifierOpen + body + userNoteIdentifierClose;
+            catch (er) {}
+            try {
+              if (LocaleConfigs[unmod].direction == "rtl") de = "&rlm;";
+            }
+            catch (er) {}
+   
+            body = "<span class=\"" + unclass + "\">" + de + body + de + "</span>";
             t += body;
           }
           
@@ -640,6 +667,15 @@ var BibleTexts = {
     else if (ac < bc) return -1;
     return 1;
   },
+
+  // Turns headings on before reading introductions
+  getBookIntroduction: function(mod, bk) {
+    if (!Tab[mod] || (Tab[mod].modType != BIBLE && Tab[mod].modType != COMMENTARY)) return "";
+    Bible.setGlobalOption("Headings", "On");
+    var intro = Bible.getBookIntroduction(mod, bk);
+    Bible.setGlobalOption("Headings", prefs.getCharPref("Headings"));
+    return intro;
+  },
   
   getNoticeLink: function(mod, inner, w) {
     if (!inner) {
@@ -650,54 +686,92 @@ var BibleTexts = {
     else
       return Bible.getModuleInformation(mod, "NoticeText");
   },
-  
-  getCRNoteHTML: function(mod, id, xsID, xsNodeBody, sep, expanded, w) {
-    var html = (expanded ? "":"<span style=\"line-height:2;\" class=\"vstyleProgram\" >");
-    var versionDirectionEntity = (VersionConfigs[mod] && VersionConfigs[mod].direction == "rtl" ? "&rlm;":"&lrm;");
-    var ref = xsNodeBody.split(";");
-    var openSep="";
-    var closedSep="";
-    for (var r=0; r<ref.length; r++) {
-      if (!ref[r]) continue;
-      if (expanded) {
-        var aDiv = this.getVerseTextDiv(mod, ref[r], id, xsID, w);
-        if (!aDiv) continue;
-        html += openSep + aDiv;
-        openSep = sep;
-      }
-      else {
-        ref[r] = normalizeOsisReference(ref[r], mod);
-        if (!ref[r]) continue;
-        html += closedSep + "<a id=\"w" + w + "." + id + "l." + xsID + "\" title=\"" + mod + "." + ref[r] + "\" >" + ref2ProgramLocaleText(ref[r]) + "</a>";
-        closedSep = "; ";
-      }
+
+  getRefHTML: function(w, mod, id, body, xsid, sepclass) {
+    var ref = body.split(";");
+    var html = "<div class=\"vstyle" + mod + "\">";
+    var sep = "";
+    for (var i=0; i<ref.length; i++) {
+      if (!ref[i]) continue;
+      var r = normalizeOsisReference(ref[i], mod);
+      if (!r) continue;
+      
+      var aVerse = findAVerseText(mod, r, w);
+      if ((/^\s*$/).test(aVerse.text)) aVerse.text = "-----";
+      
+      var rmod = Tabs[aVerse.tabNum].modName;
+      html += sep;
+      html += "<a class=\"crref vstyleprogram\" id=\"w" + w + "." + id + "l." + xsid + "\" title=\"" + rmod + "." + aVerse.location + "\">";
+      html += ref2ProgramLocaleText(aVerse.location);
+      html += "</a>";
+      html += "<span id=\"w" + w + "." + id + "t." + xsid + "\" title=\"" + rmod + "." + aVerse.location + "\" class=\"crtext vstyle" + rmod + "\">";
+      html += aVerse.text + (rmod != mod ? " (" + Tab[rmod].label + ")":"");
+      html += "</span>";
+      
+      sep = "<span class=\"crsep" + (sepclass ? " " + sepclass:"") + "\"></span>";
     }
-    html += (expanded ? "":"</span>");
+    
+    html += "</div>";
+    
     return html;
   },
   
-  getVerseTextDiv: function(mod, ref, id, xsID, hideEmptyCrossReferences, w) {
-    ref = normalizeOsisReference(ref, mod);
-    if (!ref) return "";
-    var aVerse = findAVerseText(mod, ref, w);
-    if (hideEmptyCrossReferences && aVerse.text.search(/\S/)==-1) return "";
+  scroll2Note: function(w, id) {
+    //jsdump("scrolling to:" + id + "\n");
+
+    //Return previous highlighted note to normal if it can be found
+    var oldNoteElem = null;
+    try {oldNoteElem = document.getElementById(prefs.getCharPref("SelectedNote"));} catch(e) {}
+    if (oldNoteElem != null) {oldNoteElem.className = "normalNote";}
     
-    var textDirectionChar = (VersionConfigs[Tabs[aVerse.tabNum].modName] && 
-        VersionConfigs[Tabs[aVerse.tabNum].modName].direction == "rtl" ? "&rlm;":"&lrm;");
+    //Now highlight the current note
+    var theNote = document.getElementById(id);
+    if (!theNote) return;
     
-    var html = "";
-    html += "<div class=\"vstyle" + Tabs[aVerse.tabNum].modName + "\">";
-    html += "<a id=\"w" + w + "." + id + "l." + xsID + "\" title=\"" + Tabs[aVerse.tabNum].modName;
-    html += "." + aVerse.location + "\" class=\"vstyleProgram\">" + ref2ProgramLocaleText(aVerse.location) + textDirectionChar + ":</a>";
-    html += "<span id=\"w" + w + "." + id + "t." + xsID + "\" title=\"" + Tabs[aVerse.tabNum].modName;
-    html += "." + aVerse.location + "\" class=\"vstyle" + Tabs[aVerse.tabNum].modName + "\"> ";
-    html += aVerse.text + (mod != Tabs[aVerse.tabNum].modName ? " (" + Tabs[aVerse.tabNum].label + ")":"");
-    html += "</span><br>";
-    html += "</div>"
+    theNote.className = "selectedNote";
+    prefs.setCharPref("SelectedNote", id);
     
-    return html;
-  }
+    //Now set up the counters such that the note remains highlighted for at least a second
+    window.setTimeout("unhighlightNote()",1000);
+
+    var nb = document.getElementById("note" + w);
+    var note = document.getElementById(id);
+    
+    Texts.scroll2(nb, note, "w" + w + ".maintable.", true, 4);
+  },
+
+  hilightUserNotes:function (notes, w) {
+    if (!notes) return;
+    notes = notes.split("<nx>"); //UserNotes + myid + "<bg>" + note + "<nx>";
+    notes.pop();
+    for (var i=0; i<notes.length; i++) {
+      var n = notes[i].split("<bg>");
+      if (n && n[0]) {
+        window.setTimeout("BibleTexts.hilightUserNotes2(" + w + ", '" + n[0] + "');", 0);
+      }
+    }
+  },
   
+  //after user notes are collected and page is drawn, go add highlight to all usernote verses
+  hilightUserNotes2: function(w, id) {
+    var verse = id.match(/un\..*?\.([^\.]*\.\d+\.\d+)\.[^\.]+$/);
+    if (!verse) return;
+    var el = document.getElementById("vs." + verse[1]);
+    if (el) el.className += " unverse";
+  },
+  
+
+  updateAudioLinksTO:null,
+  updateAudioLinks: function(w) {
+    var icons = document.getElementById("text" + w).getElementsByClassName("listenlink");
+    for (var i = 0; i < icons.length; ++i) {
+      var icon = icons[i];
+//icon.style.visibility = "visible"; continue;
+      if (AudioDirs === null) AudioDirs = getAudioDirs();
+      if (getAudioForChapter(Texts.display[w].mod, Texts.display[w].bk, Number(icon.id.split(".")[1]), AudioDirs)) icon.style.visibility = "visible";
+    }
+  }
+
 };
 
 
@@ -860,6 +934,17 @@ var DictTexts = {
     return html;
   },
   
+  decodeOSISRef: function(aRef) {
+    var re = new RegExp(/_(\d+)_/);
+    var m = aRef.match(re);
+    while(m) {
+      var r = String.fromCharCode(Number(m[1]));
+      aRef = aRef.replace(m[0], r, "g");
+      m = aRef.match(re);
+    }
+    return aRef;
+  },
+  
   sortOrder:"",
   langSortSkipChars:"",
   dictSort: function(a,b) {
@@ -882,7 +967,76 @@ var DictTexts = {
     return 0;
   },
   
-    //The timeout below was necessary so that textbox.value included the pressed key...
+  // Builds HTML text which displays lemma information from numberList
+  //    numberList form: (S|WT|SM|RM):(G|H)#
+  getLemmaHTML: function(numberList, matchingPhrase) {
+  //dump ("numberList:" + numberList + "\n");
+    const pad="00000";
+    var styleModule = "Program";
+    var defaultBibleLanguage = Bible.getModuleInformation(prefs.getCharPref("DefaultVersion"), "Lang");
+    if (defaultBibleLanguage == NOTFOUND) defaultBibleLanguage="";
+    var defaultBibleLangBase = (defaultBibleLanguage ? defaultBibleLanguage.replace(/-.*$/, ""):"");
+    var html = "<b>" + matchingPhrase + "</b><br>";
+    var sep = "";
+    for (var i=0; i<numberList.length; i++) {
+      var parts = numberList[i].split(":");
+      if (!parts || !parts[1]) continue;
+      var module = null;
+      var key = parts[1];
+      key = key.replace(" ", "", "g");
+      var saveKey = key;
+      switch (parts[0]) {
+      case "S":
+        if (key.charAt(0)=="H") {
+          if (LanguageStudyModules["StrongsHebrew" + defaultBibleLanguage])
+            module = LanguageStudyModules["StrongsHebrew" + defaultBibleLanguage];
+          else if (LanguageStudyModules["StrongsHebrew" + defaultBibleLangBase])
+            module = LanguageStudyModules["StrongsHebrew" + defaultBibleLangBase];
+          else if (LanguageStudyModules["StrongsHebrew"])
+            module = LanguageStudyModules["StrongsHebrew"];
+        }
+        else if (key.charAt(0)=="G") {
+          if (Number(key.substr(1)) >= 5627) continue; // SWORD filters these out- not valid it says
+          if (LanguageStudyModules["StrongsGreek" + defaultBibleLanguage])
+            module = LanguageStudyModules["StrongsGreek" + defaultBibleLanguage];
+          else if (LanguageStudyModules["StrongsGreek" + defaultBibleLangBase])
+            module = LanguageStudyModules["StrongsGreek" + defaultBibleLangBase];
+          else if (LanguageStudyModules["StrongsGreek"])
+            module = LanguageStudyModules["StrongsGreek"];
+        }
+        key = pad.substr(0,5-(key.length-1)) + key.substr(1);
+        break;
+      case "RM":
+        if (LanguageStudyModules["GreekParse" + defaultBibleLanguage])
+          module = LanguageStudyModules["GreekParse" + defaultBibleLanguage];
+        else if (LanguageStudyModules["GreekParse" + defaultBibleLangBase])
+          module = LanguageStudyModules["GreekParse" + defaultBibleLangBase];
+        else if (LanguageStudyModules["GreekParse"])
+          module = LanguageStudyModules["GreekParse"];
+        break;
+      case "SM":
+        saveKey = "SM" + key;
+        break;
+      case "WT":
+        saveKey = "WT" + key;
+        break;     
+      }
+      if (module) {
+        if (styleModule == "Program") styleModule = module;
+        if (key == pad) continue; // G tags with no number
+        var entry = Bible.getDictionaryEntry(module, key);
+        if (entry) html += sep + entry;
+        else html += sep + key;
+      }
+      else html += sep + saveKey;
+      sep = "<hr>";
+      if (html && module)
+      html = "<div class=\"vstyle" + module + "\">" + html + "</div>";
+    }
+    return html;
+  },
+
+  //The timeout below was necessary so that textbox.value included the pressed key...
   dictionaryKeyPress: function(mod, w, e) {
     window.setTimeout("DictTexts.dictionaryKeyPressR('" + mod + "', " + w + ", " + e.which + ")", 0);
   },

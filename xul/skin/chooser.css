@@ -27,7 +27,7 @@
   z-index:50;
 }
 
-#biblechooser, #bookchooser {
+#biblechooser {
   display:none;
   position:relative;
   height:423px; /* used in viewport.js */
@@ -45,9 +45,6 @@
   cursor:pointer;
 }
 #viewportbody[chooser="bible"] #biblechooser {
-  display:table;
-}
-#viewportbody[chooser="book"] #bookchooser {
   display:table;
 }
 #biblechooser > div {
@@ -123,6 +120,9 @@
 .bookname {
   display:table-row;
 }
+.bookname[missing="hide"] {
+  display:none;
+}
 .bookname > div {
   display:table-cell;
   vertical-align:middle; 
@@ -139,6 +139,11 @@
 }
 .bookname > div:hover {
   background:yellow;
+}
+.bookname[missing="disable"] > div {
+  background:rgb(225,225,225);
+  color:rgb(150,150,150) ;
+  border:1px inset black;
 }
 .bookname > div > div {
   position:relative;

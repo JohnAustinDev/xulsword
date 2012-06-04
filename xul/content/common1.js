@@ -236,37 +236,6 @@ function getVersionOfLocale(alocale) {
   return "none";
 }
 
-function initializeStyleGlobals() {
-  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
-    //Save to global variables the CSS initial values of those things which may be programatically changed
-    for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
-      var myRule = document.styleSheets[ssn].cssRules[z];
-      switch (myRule.cssText.match(/^(.*?) /)[1]) {
-      case ".scriptbox": ScriptBoxFontColor = myRule.style.color; break;  
-      case ".scriptboxtext": ScriptBoxTextCSS = myRule; break;
-      case ".booknameshowing": SelectedBookBackground = myRule.style.background; break;
-      case ".booknamepoint": PointedBookBackground = myRule.style.background; break;
-      case ".hl":
-        //Save the CSS hl color for future use
-        SelectedVerseCSS = myRule;
-        SelectedVerseColor = myRule.style.color;
-        break;
-      case ".bookname":
-        //BookNameCSS = myRule;
-        NormalBookBackground = myRule.style.background;
-        ChooserBookButtonHeight = Number(myRule.style.height.match(/(\d+)/)[1]);
-        //ChooserFontSize = Number(myRule.style.fontSize.match(/(\d+)/)[1]);
-        break;
-      
-  /*    case ".testheading":
-        TestHeadingCSS = myRule;
-        TestHeadingFontSize = Number(myRule.style.fontSize.match(/(\d+)/)[1]);
-        break;*/
-      } 
-    }
-  }
-}
-
 function pullFontSizesFromCSS() {
   for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
     //Save to global variables the CSS initial values of those things which may be programatically changed
@@ -667,55 +636,12 @@ function findAVerseText(version, location, windowNum) {
   return ret;
 }
 
-// Turns headings on before reading introductions
-function getBookIntroduction(version, book, bibleObj) {
-  if (!Tab[version] || (Tab[version].modType != BIBLE && Tab[version].modType != COMMENTARY)) return "";
-  bibleObj.setGlobalOption("Headings", "On");
-  var intro = bibleObj.getBookIntroduction(version, book);
-  bibleObj.setGlobalOption("Headings", prefs.getCharPref("Headings"));
-  return intro;
-}
 
-
-/************************************************************************
- * Script and Scriptmouse functions
- ***********************************************************************/ 
-
-function scroll2(outerElement, element2Scroll, offsetParentId, dontScrollIfVisible, margin) {
-  //dump ("outerElement:" + outerElement.id + "\nelement2Scroll:" + element2Scroll.id + "\noffsetParentId:" + offsetParentId + "\ndontScrollIfVisible:" + dontScrollIfVisible + "\nmargin:" + margin + "\n");
-  if (!element2Scroll || !element2Scroll.offsetParent) return;
-  //jsdump("offsetParentId:" + offsetParentId + "\n");
-  while (element2Scroll && element2Scroll.offsetParent && element2Scroll.offsetParent.id != offsetParentId) {element2Scroll = element2Scroll.parentNode;}
-  
-  var noteOffsetTop = element2Scroll.offsetTop;
-  var boxScrollHeight = outerElement.scrollHeight;
-  var boxOffsetHeight = outerElement.offsetHeight;
-  
-  //jsdump("id:" + element2Scroll.id + " outElemScrollTop: " + outerElement.scrollTop + " boxOffsetHeight:" + boxOffsetHeight + " boxScrollHeight:" + boxScrollHeight + " noteOffsetTop:" + noteOffsetTop + "\n");
-  var scrollmargin=10;
-  if (dontScrollIfVisible && noteOffsetTop > outerElement.scrollTop+scrollmargin && noteOffsetTop < outerElement.scrollTop+boxOffsetHeight-scrollmargin) return;
-  
-  // If note is near bottom then shift to note (which will be max shift)
-  if (noteOffsetTop > (boxScrollHeight - boxOffsetHeight + margin)) {outerElement.scrollTop = noteOffsetTop;}
-  // Otherwise shift to note and add a little margin above note
-  else {outerElement.scrollTop = noteOffsetTop - margin;}
-}
-
-// Reads verse references including from-to type, it sets first verse as selected verse and any following verses are also highlighted
-function goToCrossReference(crTitle, noHighlight) {
-  if (!crTitle) return;
-  var t = crTitle.match(CROSSREFTARGET);
-  if (!t) return;
-  // Needed when chapter was clicked from chapmenu popup
-  if (Popup && typeof(Popup)!="undefined") Popup.close();
-  Location.setLocation(t[1], t[2]);
-  MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedVerseKeyWindows(), SCROLLTYPECENTER, (noHighlight ? HILIGHTNONE:HILIGHT_IFNOTV1), UPDATELOCATORS); 
-}
 /************************************************************************
  * Miscellaneous Functions
  ***********************************************************************/ 
 
-function firstDisplayBible(returnFrameNumber) {
+function firstDisplayBible(returnNumber) {
   try {var ret=prefs.getCharPref("DefaultVersion");}
   catch (er) {ret = null;}
   
@@ -727,7 +653,7 @@ function firstDisplayBible(returnFrameNumber) {
       break;
     }
   }
-  if (!returnFrameNumber) return ret;
+  if (!returnNumber) return ret;
   else {
     if (!ret || w>wn) w=1;
     return w;
@@ -735,7 +661,7 @@ function firstDisplayBible(returnFrameNumber) {
 }
 
 function firstDisplayModule() {
-  return MainWindow.Win[1].modName;
+  return prefs.getCharPref("Version1");
 }
 
 var LocaleDir;

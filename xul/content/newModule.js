@@ -817,7 +817,7 @@ function handleResetRequest() {
         var modsUsingAudio = getModsUsingAudioCode(info.basecode);
       }
       if (modsUsingAudio && modsUsingAudio[0]) MainWindow.gotoLink(encodeUTF8(info.book + "." + info.chapter + ".1"), modsUsingAudio[0]);
-      else {MainWindow.updateFrameScriptBoxes(MainWindow.getUnpinnedWindows(), SCROLLTYPETOP, HILIGHTNONE, NOUPDATELOCATOR);}
+      else {Texts.update(SCROLLTYPETOP, HILIGHTNONE);}
     }
     break;
   case SOFTRESET: // program needs to reload all SWORD modules

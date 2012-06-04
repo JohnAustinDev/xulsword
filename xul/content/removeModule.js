@@ -262,7 +262,7 @@ function deleteModules(e) {
             files.push(Tab[modName].conf);
             if (reset<SOFTRESET) reset=SOFTRESET;
             for (var w=1; w<=3; w++) {
-              if (MainWindow.Win[w].modName == modName) need2ChangeVers[w] = true;
+              if (prefs.getCharPref("Version" + w) == modName) need2ChangeVers[w] = true;
             }
           }
           else {success=false; msg+="ERROR: Module \"" + modName + "\" .conf not found.\n";}
@@ -302,9 +302,9 @@ function deleteModules(e) {
   for (var w=1; w<=3; w++) {
     if (need2ChangeVers[w]) {
       if (!MainWindow.isTabShowing(Tab[aTabMod].index, w)) {
-        MainWindow.toggleHiddenModPref(Tab[aTabMod].index, w);
+        Tab[aTabMod]["w" + w + ".hidden"] = !Tab[aTabMod]["w" + w + ".hidden"];
       }
-      MainWindow.setVersionTo(w, aTabMod);
+      MainWindow.selectTab(w, aTabMod);
     }
   }
   

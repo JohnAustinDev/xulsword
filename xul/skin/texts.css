@@ -32,6 +32,14 @@
 	margin:0px;
 	overflow:visible;
 }
+.chapterhead[dirmod="ltr"] .chapnum {
+  text-align:left;
+  float:left; 
+}
+.chapterhead[dirmod="rtl"] .chapnum {
+  text-align:right;
+  float:right; 
+}
 .chapnum span {
   white-space:nowrap;
 }
@@ -40,6 +48,14 @@
   padding:0px;
   margin:0px;
   overflow:visible;
+}
+.chapterhead[dirmod="ltr"] .chapinfo {
+  float:right;
+  text-align:left;
+}
+.chapterhead[dirmod="rtl"] .chapinfo {
+  float:left;
+  text-align:right;
 }
 .noticelink {
   display:block;
@@ -201,13 +217,13 @@
   padding-top:8px;
   padding-right:0px;
 }
-.fntwisty {
+.crtwisty {
   width:9px;
   height:9px;
-  background:url(chrome://xulsword/skin/images/twisty-close.png);
-}
-.fntwisty[value="open"] {
   background:url(chrome://xulsword/skin/images/twisty-open.png);
+}
+.cropened .crtwisty {
+  background:url(chrome://xulsword/skin/images/twisty-close.png);
 }
 .fncol2 {
   visibility:hidden;
@@ -228,6 +244,10 @@
   border-top:1px solid rgb(150,150,150);
   border-bottom:1px solid rgb(150,150,150);
 }
+.cropened .fncol2, 
+.cropened .fncol3 {
+  visibility:visible;
+}
 .fncol3LTR {
   border-left:1px solid rgb(150,150,150);
 }
@@ -242,6 +262,24 @@
 .fncol5 {
   display:table-cell;
   padding-left:4px;
+}
+.cropened .crref:after {
+  content:": ";
+}
+.crtext {
+  display:none;
+}
+.cropened .crtext {
+  display:inline;
+}
+.cropened .crsep {
+  display:block;
+}
+.crclosed .crsep {
+  display:inline;
+}
+.crclosed .crsep:after {
+  content:"; ";
 }
 .normalNote {
   padding-right:16px;

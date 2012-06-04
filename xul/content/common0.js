@@ -111,10 +111,6 @@ const SCROLLTYPECUSTOM = 7;       // scroll by running CustomScrollFunction
 const HILIGHTNONE = 0;            // highlight no verse
 const HILIGHTVERSE = 1;           // highlight selected verse in blue
 const HILIGHT_IFNOTV1 = 2;        // highlight selected verse in blue unless it is verse 1
-// visual locators
-const UPDATELOCATORS = 0          // update locators
-const FORCEREDRAW = 1             // update locators and force redraw
-const NOUPDATELOCATOR = 2         // dont update locators
 
 var CustomScrollFunction;
 /************************************************************************
