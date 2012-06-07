@@ -27,17 +27,23 @@ function tabMouse(e) {
   if (!elem) return;
   
   var p = elem.id.split(".");
+  var w = Number(p[0].substr(1));
   
   // handle wn.tab.tsel differently
   if (p[2] == "tsel") {
     e.preventDefault();
-    var ts = document.getElementById("w" + p[0] + ".tabselect");
-    if (ts.getAttribute("selected") == "selected") return;
+    var ts = document.getElementById("w" + w + ".tabselect");
     elem = ts.firstChild;
+    while(!elem.selected) {elem = elem.nextSibling;}
     p = elem.id.split(".");
   }
+  else if (p[2] == "orig") {
+    if (e.type != "click") return;
+    prefs.setBoolPref("ShowOriginal" + w, !prefs.getBoolPref("ShowOriginal" + w));
+    Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+    return;
+  }
   
-  var w = Number(p[0].substr(1));
   var t = Number(p[3]);
   
   switch (e.type) {
@@ -67,7 +73,7 @@ function openTabToolTip(t, w, cX, cY) {
   
   tt.hidePopup();
   var modName = Tabs[t].modName;
-  if (Tabs[t].isOrigTab) modName = resolveOriginalVersion(Location.getBookName());
+  if (t == -1) modName = resolveOriginalVersion(Location.getBookName());
   if (!modName) return;
   
   var desc = Bible.getModuleInformation(modName, "Description");
@@ -102,7 +108,6 @@ var ImmediateUnhighlight = false;
 var HighlightElement1 = null;
 var HighlightElement2 = null;
 var IgnoreMouseOvers = false; // Used to block mouseoverse while popup is switching
-var ClientX, ClientY;
 function scriptMouseOver(e) {
   if (IgnoreMouseOvers || Popup.ispinned || BoundaryClicked) return;
   if (MainWindow.document.getElementById("contextScriptBox") &&
@@ -111,23 +116,23 @@ function scriptMouseOver(e) {
   var w = getWindow(e.target);
   if (!w) return; // this also excludes Popup
   
-  ClientX = Number(e.clientX);
-  ClientY = Number(e.clientY);
+  var x = Number(e.clientX);
+  var y = Number(e.clientY);
   
   var elem = e.target;
-  while (elem && elem.id=="" && elem.title=="") {elem=elem.parentNode;}
+  while (elem && !elem.className) {elem = elem.parentNode;}
   if (!elem) return;
 
-  var edata = getElemType(elem);
+  //var edata = getElemType(elem);
 //jsdump("edata:" + edata + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
-  switch (edata) {
+  switch (elem.className.split(/\s+/)[0]) {
   case "cr":
     if (prefs.getBoolPref("ShowCrossrefsAtBottom")) {
       HaveLeftTarget=false;
       ImmediateUnhighlight=false;
       BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
     }
-    else if (!Popup.activate(w, edata, elem.id)) {elem.style.cursor = "default";}
+    else if (!Popup.activate(x, y, w, edata, elem.id)) {elem.style.cursor = "default";}
     break;
      
   case "fn":
@@ -136,24 +141,24 @@ function scriptMouseOver(e) {
       ImmediateUnhighlight=false;
       BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
     }
-    else Popup.activate(w, "fn", elem.id);
+    else Popup.activate(x, y, w, "fn", elem.id);
     break;
 
   case "sr":
     if (Popup.npopup.style.display != "none") return;
 //jsdump((elem.title=="unavailable" ? elem.innerHTML:elem.title) + "\n");
-    if (!Popup.activate(w, "sr", (elem.title=="unavailable" ? elem.innerHTML:elem.title)))
+    if (!Popup.activate(x, y, w, "sr", (elem.title=="unavailable" ? elem.innerHTML:elem.title)))
       elem.style.cursor = "default";
     break;
     
   case "dt":
     if (Popup.npopup.style.display != "none") return;
-    Popup.activate(w, "dt", elem.title);
+    Popup.activate(x, y, w, "dt", elem.title);
     break;
     
   case "dtl":
     if (Popup.npopup.style.display != "none") return;
-    Popup.activate(w, "dtl", elem.title);
+    Popup.activate(x, y, w, "dtl", elem.title);
     break;
     
   case "sn":
@@ -165,7 +170,7 @@ function scriptMouseOver(e) {
     }
     var isShowingOrig = (prefs.getBoolPref("ShowOriginal" + w) && aVerse.parentNode);
     if (prefs.getCharPref("Strong's Numbers")=="On")
-        Popup.activate(w, "sn", elem.innerHTML.replace(/<.*?>/g, "") + "]-[" + elem.title, POPUPDELAY, (isShowingOrig ? aVerse.parentNode.offsetHeight+10:40));
+        Popup.activate(x, y, w, "sn", elem.innerHTML.replace(/<.*?>/g, "") + "]-[" + elem.title, POPUPDELAY, (isShowingOrig ? aVerse.parentNode.offsetHeight+10:40));
     if (isShowingOrig) {
       var aVerse2 = aVerse;
       if (aVerse && aVerse.nextSibling) {
@@ -197,16 +202,15 @@ function scriptMouseOver(e) {
       ImmediateUnhighlight=false;
       BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
     }
-    else Popup.activate(w, "un", elem.id);
+    else Popup.activate(x, y, w, "un", elem.id);
     break;
     
   case "introlink":
-    if (getPrefOrCreate("ShowIntrosBeforeText", "Bool", false)) return;
-    Popup.activate(w, "introlink", elem.title);
+    Popup.activate(x, y, w, "introlink");
     break;
 
   case "noticelink":
-    Popup.activate(w, "noticelink", elem.title);
+    Popup.activate(x, y, w, "noticelink");
     break;
   }
 }
@@ -241,7 +245,7 @@ function scriptMouseOut(e) {
 function scriptClick(e) {
   var w = getWindow(e.target);
   if (w === null) return;
-  
+
   if (w && Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
     var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/");
     if (!MainWindow.isSelectedGenBook(key)) {
@@ -251,30 +255,27 @@ function scriptClick(e) {
   }
   
   var elem = e.target;
-  while (elem && elem.id=="" && elem.title=="") {elem=elem.parentNode;}
+  while (elem && !elem.className) {elem=elem.parentNode;}
   if (!elem) return;
   
   var mod = (w ? prefs.getCharPref("Version" + w):Popup.mod);
+  var x = elem.offsetLeft;
+  var y = elem.offsetTop;
   
-  var edata = getElemType(elem);
 //jsdump("edata:" + edata + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
-  switch (edata) {
+  switch (elem.className) {
     case "cr":
     var ok = toggleRefText(elem);
-    if (ok) BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
-    break;
-    
-  case "pul":
-    goToCrossReference(w, elem.title, false);
+    if (ok) BibleTexts.scroll2Note(x, y, w, "w" + w + ".ntr." + elem.id);
     break;
 
   case "sr":
-    Popup.activate(w, "sr", (elem.title=="unavailable" ? elem.innerHTML:elem.title), 0, -40);
+    Popup.activate(x, y, w, "sr", (elem.title=="unavailable" ? elem.innerHTML:elem.title), 0, -40);
     break;
     
   case "dt":
   case "dtl":
-    Popup.activate(w, "dt", elem.title, 0, -40);
+    Popup.activate(x, y, w, "dt", elem.title, 0, -40);
     break;
     
   case "prevchaplink":
@@ -288,12 +289,12 @@ function scriptClick(e) {
       break;
     case DICTIONARY:
       var currentKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
-      for (var k=0; k<DictTexts.keyList[mod].length; k++) {
-        if (DictTexts.keyList[mod][k] == currentKey) break;
+      for (var k=0; k<DictTexts.keyList[w][mod].length; k++) {
+        if (DictTexts.keyList[w][mod][k] == currentKey) break;
       }
       k--;
-      if (DictTexts.keyList[mod][k]) {
-        setUnicodePref("DictKey_" + mod + "_" + w, DictTexts.keyList[mod][k]);
+      if (DictTexts.keyList[w][mod][k]) {
+        setUnicodePref("DictKey_" + mod + "_" + w, DictTexts.keyList[w][mod][k]);
         Texts.updateDictionary(w);
       }
       break;
@@ -304,7 +305,7 @@ function scriptClick(e) {
     break;
     
   case "nextchaplink":
-    switch (Win.modType) {
+    switch (Tab[mod].modType) {
     case BIBLE:
     case COMMENTARY:
       var pin = (w && prefs.getBoolPref("IsPinned" + w) ? w:null);
@@ -314,12 +315,12 @@ function scriptClick(e) {
       break;
     case DICTIONARY:
       var currentKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
-      for (var k=0; k<DictTexts.keyList[mod].length; k++) {
-        if (DictTexts.keyList[mod][k] == currentKey) break;
+      for (var k=0; k<DictTexts.keyList[w][mod].length; k++) {
+        if (DictTexts.keyList[w][mod][k] == currentKey) break;
       }
       k++;
-      if (DictTexts.keyList[mod][k]) {
-        setUnicodePref("DictKey_" + mod + "_" + w, DictTexts.keyList[mod][k]);
+      if (DictTexts.keyList[w][mod][k]) {
+        setUnicodePref("DictKey_" + mod + "_" + w, DictTexts.keyList[w][mod][k]);
         Texts.updateDictionary(w);
       }
       break;
@@ -327,12 +328,6 @@ function scriptClick(e) {
       MainWindow.bumpSelectedIndex(false);
       break;
     }
-    break;
-    
-  case "introlink":
-    if (!getPrefOrCreate("ShowIntrosBeforeText", "Bool", false)) return;
-    var showIntro = elem.title=="hide" ? null:w;
-    Texts.update(SCROLLTYPETOP, HILIGHTNONE);
     break;
     
   case "listenlink":
@@ -343,13 +338,13 @@ function scriptClick(e) {
     MainWindow.beginAudioPlayer();
     break;
     
-  case "pin":
+  case "sbpin":
     prefs.setBoolPref("IsPinned" + w, !prefs.getBoolPref("IsPinned" + w));
     Texts.udate(SCROLLTYPETOP, HILIGHTNONE);
     break;
     
   case "popupBackLink":
-    Popup.activate(w, "html", document.getElementsByClassName("prevhtml")[0].innerHTML);
+    Popup.activate(x, y, w, "html", document.getElementsByClassName("prevhtml")[0].innerHTML);
     break;
     
   case "popupCloseLink":
@@ -385,7 +380,7 @@ function getElemType(elem) {
 // Called after  short delay so that a note will be highlighted for at least a certain amount of time
 function unhighlightNote() {
   if (HaveLeftTarget)  {
-    try {ViewPort.document.getElementById(prefs.getCharPref("SelectedNote")).className = "normalNote";} catch(er){}
+    try {document.getElementById(prefs.getCharPref("SelectedNote")).className = "normalNote";} catch(er){}
   }
   else {ImmediateUnhighlight = true;}
 }
@@ -446,68 +441,79 @@ function scriptDblClick(e) {
   
   setUnicodePref("SearchText", sel);
   prefs.setCharPref("SearchVersion", myv);
-  MainWindow.getElementById("cmd_xs_search").doCommand();
+  MainWindow.document.getElementById("cmd_xs_search").doCommand();
 }
 
 /************************************************************************
  * MOVABLE BOUNDARY BAR
  ***********************************************************************/  
 var MouseIsOver = false;
-var BoundaryClicked = false;
+var BoundaryClicked = null;
 var StartMouseY;
 
 function bbMouseDown(e) {
-  BoundaryClicked=true;
+
+  BoundaryClicked = e.target;
+  StartMouseY = e.clientY;
+  
   e.preventDefault(); //So we don't select while we're dragging the boundary bar
   
-  var w = getWindow(e.target);
-  if (!w) return; // this also excludes Popup
+  var w = BoundaryClicked;
+  while (w && (!w.id || !(/^text\d$/).test(w.id))) {w = w.parentNode;}
+  w = Number(w.id.substr(4));
   
-  e.target.setAttribute("active", "true");
+  BoundaryClicked.setAttribute("moving", "true");
   
   // If maximize is on, turn it off
   if (prefs.getBoolPref("MaximizeNoteBox" + w)) {
+    var rule = getCSS(".sb {");
+    prefs.setIntPref("NoteBoxHeight" + w, rule.style.height.match(/([\-\d]+)px/)[1]);
     prefs.setBoolPref("MaximizeNoteBox" + w, false);
-    MainWindow.ViewPort.updateViewPort(false);
+    ViewPort.update(false);
   }
   
-  StartMouseY = e.clientY;
 }
 
 function bbMouseMove(e) {
   MouseIsOver = e.target;
   
-  var w = getWindow(e.target);
-  if (!w) return; // this also excludes Popup
-  
-  if (BoundaryClicked && e.target.className && (/^bb$/).test(e.target.className)) {
+  if (BoundaryClicked) {
+    var w = BoundaryClicked;
+    while (w && (!w.id || !(/^text\d$/).test(w.id))) {w = w.parentNode;}
+    w = Number(w.id.substr(4));
     
     var top = (e.clientY - StartMouseY);
     var text = document.getElementById("text" + w);
-    
-    if (top < 20 - text.getElementsByClassName("sb")[0].offsetHeight || 
-        top > text.getElementsByClassName("nb")[0].offsetHeight - 20) {
-      e.target = text.getElementsByClassName("bb")[0];
+   
+    if (top < 70 - text.getElementsByClassName("sb")[0].offsetHeight || 
+        top > text.getElementsByClassName("nb")[0].offsetHeight - 40) {
       bbMouseUp(e);
     }
-    else e.target.style.top = top + "px";
-    
+    else  BoundaryClicked.style.top = top + "px";
   }
   
 }
 
 function bbMouseUp(e) {
-  var w = getWindow(e.target);
-  if (!w) return; // this also excludes Popup
   
-  if ((/^bb$/).test(e.target.className)) {
-    e.target.setAttribute("active", "false");
-    e.target.style.top = "0px";
-    prefs.setIntPref("NoteBoxHeight" + w, prefs.getIntPref("NoteBoxHeight" + w) - (e.clientY - StartMouseY));
-    updateViewPort();
+  if (BoundaryClicked) {
+    var w = BoundaryClicked;
+    while (w && (!w.id || !(/^text\d$/).test(w.id))) {w = w.parentNode;}
+    w = Number(w.id.substr(4));
+    
+    BoundaryClicked.setAttribute("moving", "false");
+    
+    var top = BoundaryClicked.style.top.match(/([\-\d]+)px/);
+    if (top) top = Number(top[1]);
+    else top = 0;
+    
+    BoundaryClicked.style.top = "";
+    prefs.setIntPref("NoteBoxHeight" + w, prefs.getIntPref("NoteBoxHeight" + w) - top);
+    ViewPort.update();
+    
+    BoundaryClicked = null;
   }
   
-  BoundaryClicked = false;
 }
 
 
@@ -534,7 +540,7 @@ function noteboxClick(e) {
     idpart.shift(); // drop w
     id = idpart.shift(); // get relevant id
   }
-  
+
   var w = getWindow(e.target);
   if (!w) return; // this also excludes Popup
   
@@ -569,7 +575,7 @@ function noteboxClick(e) {
     
   case "nbsizer":
     prefs.setBoolPref("MaximizeNoteBox" + w, !prefs.getBoolPref("MaximizeNoteBox" + w));
-    MainWindow.ViewPort.updateViewPort(false);
+    ViewPort.update(false);
     break;
   }
 }

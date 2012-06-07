@@ -3,30 +3,39 @@
   font-size:12px;
   padding-top:0px; /* used in viewport.js */
   -moz-padding-end:0px;
-  padding-bottom:14px; /* used in viewport.js */
+  padding-bottom:24px; /* used in viewport.js */
   -moz-padding-start:0px;
   margin:0px;
   overflow:hidden;
   background:url(chrome://xulsword/skin/images/b2.gif);
+  background-position: 0px 40px;
 }
 
 #viewport {
   display:table;
   height:600px;
+  padding-right:10px;
 }
 #viewport > div {
   display:table-cell;
   vertical-align:top;
 }
+#chooser {
+  padding-right:0px;
+}
 
 #tabrow {
   display:block;
   width:100%;
-  padding-top:14px;
+  padding-top:14px; /* used in viewport.js */
 }
 #tabrow > div {
   display:table;
   width:100%;
+  
+  /* coordinate with #textrow */
+  border-collapse:separate;
+  border-spacing:0px 0px;
 }
 .tabs {
   display:table-cell;
@@ -36,29 +45,32 @@
   z-index:2;
   text-align:right;
 }
-#tabrow[value="show1"] #tabs1 {
+#tabrow[windows="show1"] #tabs1 {
   width:100%;
+  min-width:250px;
 }
-#tabrow[value="show1"] #tabs2,
-#tabrow[value="show1"] #tabs3 {
+#tabrow[windows="show1"] #tabs2,
+#tabrow[windows="show1"] #tabs3 {
   display:none;
 }
-#tabrow[value="show2"] #tabs1, 
-#tabrow[value="show2"] #tabs2 {
+#tabrow[windows="show2"] #tabs1, 
+#tabrow[windows="show2"] #tabs2 {
   width:50%;
+  min-width:250px;
 }
-#tabrow[value="show2"] #tabs3 {
+#tabrow[windows="show2"] #tabs3 {
   display:none;
 }
-#tabrow[value="show3"] #tabs1, 
-#tabrow[value="show3"] #tabs2,
-#tabrow[value="show3"] #tabs3 {
+#tabrow[windows="show3"] #tabs1, 
+#tabrow[windows="show3"] #tabs2,
+#tabrow[windows="show3"] #tabs3 {
   width:33%;
+  min-width:250px;
 }
 .tab {
   position:relative;
   top:2px;
-  font-size:10px;
+  font-size:11px;
   color:grey;
   margin-left:3px;
   margin-right:3px;
@@ -72,26 +84,26 @@
   -moz-border-radius-topright:4px;
   -moz-border-radius-topleft:4px;
 }
+.multitab select .tab {
+  padding-top:2px;
+  margin-top:2px;
+}
 .multitab {
   position:relative;
-  display:inline;
-  border:1px solid transparent;
+  display:inline-block;
 }
 .multitab > div {
   position:absolute;
-  top:-8px;
-  height:22px;
+  top:0px;
+  left:0px;
+  width:80%;
+  height:100%;
 }
 .multitab > select {
+  padding-top:2px;
   text-align:center;
-  padding-top:2px;
 }
-.multitabTab {
-  margin:4px;
-  padding-top:2px;
-  height:20px;
-}
-.tab[selected="selected"] {
+.tab[active="true"] {
   color:blue;
   border-bottom:none;
   background:rgb(255,243,255);
@@ -99,7 +111,7 @@
 .tab[pinned="true"] {
   color:rgb(210,210,210);
 }
-.tab[selected="selected"][pinned="true"] {
+.tab[active="true"][pinned="true"] {
   background:rgb(248,248,241);
 }
 .tabTexts {
@@ -118,9 +130,34 @@
 #textrow {
   display:table;
   width:100%;
+  
+  /* coordinate with #tabrow > div*/
   border-collapse:separate;
-  border-spacing:14px 0px;
+  border-spacing:0px 0px;
 }
+#textrow > div {
+  display:table-cell;
+  vertical-align:top;
+  padding-left:10px;
+  padding-right:10px;
+  font-size: 14px;
+}
+.text[columns="show1"] {
+  width:33%;
+  min-width:250px;
+}
+.text[columns="show2"] {
+  width:66%;
+  min-width:500px;
+}
+.text[columns="show3"] {
+  width:100%;
+  min-width:750px;
+}
+.text[columns=""], .text[columns="hide"], .text:not([columns]) {
+  display:none !important;
+}
+
 
 .hd {
   position:relative;
@@ -146,143 +183,150 @@
   visibility:hidden;
 }
 
-.text {
-  display:table-cell;
-  vertical-align:top;
-  font-size: 14px;
+.text > div {
 	background:rgb(255,243,255);
-	color: black;
 	border:2px solid rgb(200,170,205);
   -moz-border-radius:8px;
 }
-.text[pin="pinned"] {
-  background:rgb(248,248,241);
-}
-.text[value="show1"] {
-  width:30%;
-}
-.text[value="show2"] {
-  width:60%;
-}
-.text[value="show3"] {
-  width:90%;
-}
-.text[value=""], .text[value="hide"], .text:not([value]) {
-  display:none !important;
-}
-.text[pin="pinned"] {
+.text[pin="pinned"] > div {
   background:rgb(248,248,241);
 }
 
 .sb {
   height:600px; /* used in viewport.js */
-}
-.text[value="show1"] .sb {
-  overflow:auto;
+  color: black;
   padding-left:30px;
   padding-right:30px;
+  overflow:auto;
 }
-#text1[value="show1"][foot^="show"] .sb {
+.text[columns="show1"] .sb {
+  overflow:auto;
+}
+.text[columns="show2"] .sb {
+  overflow:hidden;
+  -moz-columns:2;
+  
+  /* following do not effect box layout */
+  -moz-column-gap:80px;
+  -moz-column-rule:14px solid rgb(240,215,240);
+}
+.text[columns="show3"] .sb {
+  overflow:hidden;
+  -moz-columns:3;
+  
+  /* following do not effect box layout */
+  -moz-column-gap:80px; 
+  -moz-column-rule:14px solid rgb(240,215,240);
+}
+#text1[columns="show1"][foot^="show"] .sb {
   margin-bottom:200px; /* used in viewport.js */
   height:400px; /* used in viewport.js */
 }
-#text2[value="show1"][foot^="show"] .sb {
+#text2[columns="show1"][foot^="show"] .sb {
   margin-bottom:200px; /* used in viewport.js */
   height:400px; /* used in viewport.js */
 }
-#text3[value="show1"][foot^="show"] .sb {
+#text3[columns="show1"][foot^="show"] .sb {
   margin-bottom:200px;
   height:400px;
-}
-.text[value="show2"] .sb {
-  overflow:hidden;
-  padding-left:30px;
-  padding-right:30px;
-  -moz-columns:2;
-  -moz-column-rule:40px solid rgb(240,215,240);
-  -moz-column-gap:100px;
-}
-.text[value="show3"] .sb {
-  overflow:hidden;
-  padding-left:30px;
-  padding-right:30px;
-  -moz-columns:3;
-  -moz-column-rule:40px solid rgb(240,215,240);
-  -moz-column-gap:100px;
 }
 
 .nbc {
   position:relative;
   width:100%;
 }
+
 .text[foot="hide"] .nbc {
   display:none;
 }
 
+.nbc > div {
+  position:absolute;
+  bottom:0px;
+  right:0px;
+  background:rgb(255,243,255);
+  -moz-border-radius:8px;
+  z-index:20;
+}
+#text1 .nbc > div {
+  height:200px; /* used in viewport.js */
+}
+#text2 .nbc > div {
+  height:200px; /* used in viewport.js */
+}
+#text3 .nbc > div {
+  height:200px; /* used in viewport.js */
+}
+#text1[foot="showmax"]:not([columns="show1"]) .nbc > div,
+#text2[foot="showmax"]:not([columns="show1"]) .nbc > div,
+#text3[foot="showmax"]:not([columns="show1"]) .nbc > div {
+  height:600px; /* used in viewport.js */
+}
+.text[columns="show1"] .nbc > div {
+  width:100%;
+}
+.text[columns="show2"] .nbc > div {
+  width:50%;
+  padding-left:20px; /* hides columns rule */
+}
+.text[columns="show3"] .nbc > div {
+  width:33%;
+  padding-left:20px; /* hides columns rule */
+}
+
 .bb {
   position:relative;
-  margin-bottom:10px;
   border:1px outset rgb(150,150,150); 
   background:rgb(233,233,233); 
   height:4px;
   -moz-border-radius:4px;
   cursor:N-resize;
   z-index:2;
-  margin-left:60px;
-  margin-right:62px;
+  margin:10px 60px 0px 60px;
 }
-.bb[active="true"] {
+.bb[moving="true"] {
   border:1px dashed rgb(150,150,150); 
-  background:none; 
-  height:1px;
+  background:rgb(233,233,20);
   cursor:N-resize;
   z-index:8;
 }
 
 .nbsizer {
   position:absolute;
-  top:0px;
-  right:0px;
+  top:8px;
+  right:42px;
   background:url(chrome://xulsword/skin/images/max.bmp);
   width:15px;
   height:14px;
 }
-.text[value="showmax"] .nbsizer {
+.text[foot="showmax"] .nbsizer {
   background:url(chrome://xulsword/skin/images/norm.bmp);
 }
+.text[columns="show1"] .nbsizer {
+  display:none;
+}
+
 .nb {
-  position:absolute;
-  bottom:0px;
-  right:0px;
-  z-index:20;
-  
   font-size:12px;
   overflow:auto;
 	background:rgb(240,235,240);
 	border:2px solid rgb(150,150,150);
-	padding:4px 20px 4px 20px; 
-  margin-right:10px;
-  margin-left:10px;
   -moz-border-radius:8px;
 }
-#note1 {
-  height:200px; /* used in viewport.js */
+#text1 .nb {
+  height:162px; /* used in viewport.js */
+  margin:10px; /* used in viewport.js */
 }
-#note2 {
-  height:200px; /* used in viewport.js */
+#text2 .nb {
+  height:162px; /* used in viewport.js */
+  margin:10px; /* used in viewport.js */
 }
-#note3 {
-  height:200px; /* used in viewport.js */
+#text3 .nb {
+  height:162px; /* used in viewport.js */
+  margin:10px; /* used in viewport.js */
 }
-.text[value="show1"] .nb {
-  width:100%;
-}
-.text[value="show2"] .nb {
-  width:50%;
-}
-.text[value="show3"] .nb {
-  width:33%;
-}
-.text[foot="showmax"]:not([value="show1"]) .nb {
-  height:600px; /* used in viewport.js */
+#text1[foot="showmax"]:not([columns="show1"]) .nb,
+#text2[foot="showmax"]:not([columns="show1"]) .nb,
+#text3[foot="showmax"]:not([columns="show1"]) .nb {
+  height:562px; /* used in viewport.js */
 }

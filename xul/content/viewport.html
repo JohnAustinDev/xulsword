@@ -37,13 +37,13 @@
   <script src="chrome://xulsword/content/viewport.js" type="text/javascript"></script>
 
   </head>
-  <body id="viewportbody" chooser="bible" onload="loadViewPort(); initPopup();" onunload="unloadViewPort();" onmouseover="chooserMouse(event)" onmouseout="chooserMouse(event)" onclick="chooserMouse(event)">
+  <body id="viewportbody" chooser="bible" onload="ViewPort.load(); initPopup();" onunload="ViewPort.unload();" onmouseover="chooserMouse(event)" onmouseout="chooserMouse(event)" onclick="chooserMouse(event)">
   
   <div id="chbutton_open"></div>
         
   <div id="viewport">
-    <div>
-      <div id="chooser">
+    <div id="chooser">
+      <div>
         
         <div id="fadetop"></div>
         
@@ -88,7 +88,7 @@
   
 
     <div>
-      <div id="tabrow" value="show3" onmouseover="tabMouse(event);" onmouseout="tabMouse(event);" onclick="tabMouse(event);">
+      <div id="tabrow" windows="show3" onmouseover="tabMouse(event);" onmouseout="tabMouse(event);" onclick="tabMouse(event);">
         
         <div>
           <div id="tabs1" class="tabs"></div>
@@ -100,45 +100,60 @@
       <div id="textrow" ondblclick="scriptDblClick(event)" onmouseover="scriptMouseOver(event)" 
           onmouseout="scriptMouseOut(event)" onclick="scriptClick(event)" 
           onmousemove="bbMouseMove(event);" onmouseup="bbMouseUp(event);">
-        
-        <div id="text1" class="text" value="show1" pin="unpinned" foot="show">
-          <div class="hd"><div class="sbpin" id="sbpin1"></div></div>
-          <div class="sb"></div>
-          <div class="nbc" onclick="noteboxClick(event)">
-            <div class="bb" onmousedown="bbMouseDown(event);"></div>
-            <div class="nbsizer"></div>
-            <div id="note1" class="nb"></div>
+          
+        <div id="text1" class="text" columns="show1" pin="unpinned" foot="show">
+          <div>
+            <div class="hd"><div class="sbpin" id="sbpin1"></div></div>
+            <div class="sb"></div>
+            <div class="nbc" onclick="noteboxClick(event)">
+              <div>
+                <div class="bb" onmousedown="bbMouseDown(event);"></div>
+                <div class="nbsizer"></div>
+                <div id="note1" class="nb"></div>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div id="text2" class="text" value="show1" pin="unpinned" foot="show">
-          <div class="hd"><div class="sbpin" id="sbpin2"></div></div>
-          <div class="sb"></div>
-          <div class="nbc" onclick="noteboxClick(event)">
-            <div class="bb" onmousedown="bbMouseDown(event);"></div>
-            <div class="nbsizer"></div>
-            <div id="note2" class="nb"></div>
+        <div id="text2" class="text" columns="show1" pin="unpinned" foot="show">
+          <div>
+            <div class="hd"><div class="sbpin" id="sbpin2"></div></div>
+            <div class="sb"></div>
+            <div class="nbc" onclick="noteboxClick(event)">
+              <div>
+                <div class="bb" onmousedown="bbMouseDown(event);"></div>
+                <div class="nbsizer"></div>
+                <div id="note2" class="nb"></div>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div id="text3" class="text" value="hide" pin="unpinned" foot="show">
-          <div class="hd"><div class="sbpin" id="sbpin3"></div></div>
-          <div class="sb"></div>
-          <div class="nbc" onclick="noteboxClick(event)">
-            <div class="bb" onmousedown="bbMouseDown(event);"></div>
-            <div class="nbsizer"></div>
-            <div id="note3" class="nb"></div>
+        <div id="text3" class="text" columns="hide" pin="unpinned" foot="show">
+          <div>
+            <div class="hd"><div class="sbpin" id="sbpin3"></div></div>
+            <div class="sb"></div>
+            <div class="nbc" onclick="noteboxClick(event)">
+              <div>
+                <div class="bb" onmousedown="bbMouseDown(event);"></div>
+                <div class="nbsizer"></div>
+                <div id="note3" class="nb"></div>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div id="npopup" class="textpopup" value="unpinned" style="display:none;">
-          <div id="npopupTX"></div>
-        </div>
-    
       </div>
+      
+      <div id="npopup" class="textpopup" value="unpinned" style="display:none;">
+        <div id="npopupTX"></div>
+      </div>
+        
     </div>
   </div>
 
+  <div id="sizetester" style="position:absolute; visibility:hidden;"></div>
+  
 <!--  
   <label>Chooser value<label>
   <select onchange="document.getElementById('chooser').setAttribute('value', this.value);"><option value="bible" selected="selected">bible</option><option value="book">book</option><option value="none">none</option></select>

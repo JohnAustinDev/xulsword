@@ -77,7 +77,6 @@ var CheckTexts = [];
 function unlockAllModules(aBible, print) {
   var dumpMsg="";
   for (var t=0; t<Tabs.length; t++) {
-    if (Tabs[t].isOrigTab) continue;
     if (Tabs[t].modType != BIBLE) continue; // only Bible modules are encrypted
     var retkey = unlockModule(aBible, Tabs[t].modName);
     if (retkey) dumpMsg += Tabs[t].modName + "(" + retkey + ") ";
@@ -251,7 +250,9 @@ function pullFontSizesFromCSS() {
   }
 }
 
-function adjustFontSizes(delta) {
+function adjustFontSizes(delta, skipselectors) {
+  
+  RULES:
   for (var i=0; i<CssRuleHavingFontSize.length; i++) {
     var sheetNum = CssRuleHavingFontSize[i].split("><")[0];
     var ruleNum = CssRuleHavingFontSize[i].split("><")[1];
@@ -259,8 +260,13 @@ function adjustFontSizes(delta) {
     var newFontSize = InitialCssFontSize[i] + delta;
     if (newFontSize < 6) newFontSize=6;
     
-    if (myRule.cssText.match(/^(.*?) /)[1] != ".tabs")
-        document.styleSheets[sheetNum].cssRules[ruleNum].style.fontSize = newFontSize + "px";
+    if (skipselectors && skipselectors.length) {
+      for (var s=0; s<skipselectors.length; s++) {
+        if (myRule.cssText.indexOf(skipselectors[s]) != -1) continue RULES;
+      }
+    }
+    
+    document.styleSheets[sheetNum].cssRules[ruleNum].style.fontSize = newFontSize + "px";
   }
 }
 
@@ -412,6 +418,50 @@ function getBookNameParts(bname) {
   var retval = {number: number, name: name}
   return retval;
 }
+
+// Converts a short book reference into readable text in the locale language, and can handle from-to cases
+// Possible inputs: bk.c.v[.lv][-bk.c.v[.lv]]
+// Possible outputs:
+//    bk c:v
+//    bk c:v-lv
+//    bk c:v-lv, bk c:v-lv
+//    
+function ref2ProgramLocaleText(reference, notHTML) {
+  var separator="";
+  var dc = notHTML ? LocaleDirectionChar:LocaleDirectionEntity;
+  var retv=dc;
+ 
+  reference += "-";
+  var myrefs = reference.split("-");
+  myrefs.pop();
+  for (var ix=0; ix<myrefs.length; ix++) {
+    // Some ref names returned by xulsword have a leading space!! Remove it first...
+    myrefs[ix] = myrefs[ix].replace(/^\s*/,"");
+    var myrefsP = myrefs[ix].split(".");
+    if (myrefsP[2] && myrefsP[3] && myrefsP[2]==myrefsP[3]) {myrefsP.pop();}
+    if (myrefsP.length == 4) {
+      myrefsP[0] = Book[findBookNum(myrefsP[0])].bName;
+      if (myrefsP[0]==null) {jsdump("WARNING: Didn't find ref >" + myrefs[ix] + "< in ref2ProgramLocaleText\n");}
+      else {
+        if (separator != "") {retv += dc + "-" + myrefsP[3];}
+        else {retv += separator + myrefsP[0] + dc + " " + myrefsP[1] + ":" + dc + myrefsP[2] + dc + "-" + myrefsP[3];}
+      }
+      separator = ", ";
+    }
+    else if (myrefsP.length == 3) {
+      var bn = findBookNum(myrefsP[0]);
+      if (bn!=null) myrefsP[0] = Book[bn].bName;
+      if (bn==null || myrefsP[0]==null) {jsdump("WARNING: Didn't find ref >" + myrefs[ix] + "< in ref2ProgramLocaleText\n");}
+      else {
+        if (separator != "") {retv += dc + "-" + myrefsP[2];}
+        else {retv += separator + myrefsP[0] + dc + " " + myrefsP[1] + ":" + dc + myrefsP[2];}
+      }
+      separator = dc + " " + dc + "-" + dc + " ";
+    }
+  }
+  return dString(retv);
+}
+
 
 /************************************************************************
  * Some Bible Utility Functions
@@ -619,7 +669,7 @@ function findAVerseText(version, location, windowNum) {
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If
       // no visible tab match is found, this saved result will be returned
-      if (MainWindow.isTabShowing(v, windowNum)) {
+      if (!Tabs[v]["w" + windowNum + ".hidden"]) {
         ret.tabNum = v;
         ret.location = tlocation;
         ret.text = text;
@@ -703,54 +753,7 @@ function cleanDoubleClickSelection(sel) {
   return sel;
 }
 
-function getGenBookChapterText(moduleAndKey, bible, fn) {
-  var parts = moduleAndKey.match(/^\/([^\/]+)(\/.*)$/);
-  if (!parts) {
-    var mod = moduleAndKey.match(/^\/(.*)$/);
-    if (!mod) return null;
-    parts = [null, mod[1], "/"];
-  }
-  var text = bible.getGenBookChapterText(parts[1], parts[2]);
-  text = MainWindow.addParagraphIDs(text);
-  
-  if (fn) {
-    var t = insertUserNotes("na", 1, parts[1], text);
-    text = t.html;
-    fn.CrossRefs = "";
-    fn.Footnotes = "";
-    fn.Notes = "";
-    fn.UserNotes = text.notes;
-  }
-  return text;
-}
-
-var VerseNm = new RegExp("(<sup class=\"versenum\">)(\\d+)(</sup>)", "g");
-function getChapterText(bible, location, fn, vers, appendNotes) {
-  var text = bible.getChapterText(vers, Location.getLocation(vers));
-  var tl = getLocaleOfModule(vers);
-  if (!tl) {tl = getLocale();}
-  if (!DisplayNumeral[tl]) getDisplayNumerals(tl);
-  if (DisplayNumeral[tl][10])
-      text = text.replace(VerseNm, function(str, p1, p2, p3) {return p1 + dString(p2, tl) + p3;});
-  text = insertUserNotes(location.getBookName(), location.getChapterNumber(vers), vers, text);
-  
-  if (!appendNotes) {
-    fn.CrossRefs = bible.getCrossRefs();
-    fn.Footnotes = bible.getFootnotes();
-    fn.Notes = bible.getNotes();
-    fn.UserNotes = text.notes;
-  }
-  else {
-    fn.CrossRefs = (fn.CrossRefs ? fn.CrossRefs:"") + bible.getCrossRefs();
-    fn.Footnotes = (fn.Footnotes ? fn.Footnotes:"") + bible.getFootnotes();
-    fn.Notes = (fn.Notes ? fn.Notes:"") + bible.getNotes();
-    fn.UserNotes = (fn.UserNotes ? fn.UserNotes:"") + text.notes;
-  }
-
-  return text.html;
-}
-
-const delim = "[-]";
+const delim = "_._";
 function encodeUTF8(a) {
   if (!a) return null;
   var b="";

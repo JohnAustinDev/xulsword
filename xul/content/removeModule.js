@@ -38,7 +38,6 @@ function onLoad() {
       var hide=false;
       var lastType="";
       for (var t=0; t<Tabs.length; t++) {
-        if (Tabs[t].isOrigTab) continue;
         if (Tabs[t].modType==BIBLE && !firstBibleID) firstBibleID = "ch." + Tabs[t].modName;
         if (Tabs[t].modType!=lastType) {
           var cb = document.createElement("label");
@@ -301,7 +300,7 @@ function deleteModules(e) {
   if (need2ChangeLocale) rootprefs.setCharPref("general.useragent.locale", aLocale);
   for (var w=1; w<=3; w++) {
     if (need2ChangeVers[w]) {
-      if (!MainWindow.isTabShowing(Tab[aTabMod].index, w)) {
+      if (Tab[aTabMod]["w" + w + ".hidden"]) {
         Tab[aTabMod]["w" + w + ".hidden"] = !Tab[aTabMod]["w" + w + ".hidden"];
       }
       MainWindow.selectTab(w, aTabMod);

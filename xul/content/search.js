@@ -92,10 +92,9 @@ function postWindowInit() {
   //Create the search language radio buttons
   for (var shortType in SupportedModuleTypes) {NumberOfShortType[shortType] = 0;}
   for (var t=0; t<Tabs.length; t++) {
-    if (Tabs[t].isOrigTab) continue;
     var isShowing = false;
     for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-      isShowing |= MainWindow.isTabShowing(t, w);
+      isShowing |= !Tabs[t]["w" + w + ".hidden"];
     }
     if (isShowing || !getPrefOrCreate("MinimizeSearchRadios", "Bool", false)) {
       if (Tabs[t].modType==BIBLE) createAndAppendRadio(t,"sim");

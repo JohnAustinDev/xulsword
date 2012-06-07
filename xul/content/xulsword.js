@@ -26,22 +26,38 @@ var SavedWindowWithFocus;
 var NewModuleInfo;
 var AboutScrollTo;
 var AudioDirs = null;
-var ViewPort;
 var CopyPopup;
 var PreviousHaveGenBook;
-var Texts, BibleTexts;
+var ViewPortWindow, ViewPort, Texts, BibleTexts;
 const NOMODULES="0000", NOLOCALES="0001", NEEDRESTART="0002";
 
 function loadedXUL() {
-  ViewPort = document.getElementById("xulviewport").contentDocument.defaultView;
-  Texts = ViewPort.Texts;
-  BibleTexts = ViewPort.BibleTexts;
+  ViewPortWindow = document.getElementById("xulviewport").contentDocument.defaultView;
+  ViewPort = ViewPortWindow.ViewPort;
+  Texts = ViewPortWindow.Texts;
+  BibleTexts = ViewPortWindow.BibleTexts;
   
   updateCSSBasedOnCurrentLocale(["#xulsword-window", "input, button, menu, menuitem"]);
   createVersionClasses(); // needed for tooltips
   document.title = SBundle.getString("Title");
   window.name="xulsword-window";
   
+  
+  //To make the program window draw cleaner and faster, size initialization 
+  //routines use prefs to size the frames since window size is not available during 
+  //initialization. However, the first time the program is run, there are no size prefs 
+  //as yet. The solution in this case is to init everything using a timeout so that 
+  //window size is then available and can be stored into the size prefs before the frames 
+  //are initialized.
+  try {prefs.getIntPref("ViewPortHeight");}
+  catch (er) {
+    window.setTimeout("loadedXULReal()",0);
+    return;
+  }
+  loadedXULReal();
+}
+
+function loadedXULReal() {
   // check for newly installed modules and reset mods if necessary
   var resetUserPrefs = false;
   var pfile = getSpecialDirectory("xsResD");
@@ -143,7 +159,7 @@ function loadedXUL() {
     if (NewModuleInfo && NewModuleInfo.NewModules && NewModuleInfo.NewModules[0]) {
       var w=1;
       for (var m=0; m<NewModuleInfo.NewModules.length; m++) {
-        Tab[NewModuleInfo.NewModules[m]].hidden = false;
+        Tab[NewModuleInfo.NewModules[m]]["w" + w + ".hidden"] = false;
         while (w <= prefs.getIntPref("NumDisplayedWindows")) {
           prefs.setCharPref("Version" + w, NewModuleInfo.NewModules[m]);
           w++;
@@ -344,7 +360,6 @@ function identifyModuleFeatures(resetUserPrefs) {
   var f = getModuleFeatures();
   if (Bible) {
     for (var i=0; i<Tabs.length; i++) {
-      if (Tabs[i].isOrigTab) continue;
       var fthis = getModuleFeatures(Tabs[i].modName);
       for (var t in fthis) f[t] |= fthis[t];
     }
@@ -610,7 +625,7 @@ function fillModuleMenuLists() {
 function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefaultFormatting) {
   if (!forceDefaultFormatting) forceDefaultFormatting=false;
   var desc = "";
-  if (Tabs[t].isOrigTab) {
+  if (t == -1) {
     if (skipORIG) return null;
   }
   else if (!noDescription) {
@@ -618,8 +633,6 @@ function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefa
     if (desc==NOTFOUND) desc="";
     else desc = " --- " + desc;
   }
-  
-  forceDefaultFormatting |= (Tabs[t].vstyle == "program");
   
   var dirChar=String.fromCharCode(8206);
   if (!forceDefaultFormatting) {
@@ -748,7 +761,7 @@ var History = {
         this.list.shift(); 
         this.index--;
       }
-      this.list.splice(this.index, (Hthis.depth-this.index), bcvN.join("."));
+      this.list.splice(this.index, (this.depth-this.index), bcvN.join("."));
         
       //update buttons
       goUpdateCommand("cmd_xs_forward");
@@ -1011,9 +1024,9 @@ function getPassageFromWindow(pflag, onlyThisWin) {
       if (onlyThisWin && w!=onlyThisWin) continue;
       if (prefs.getBoolPref("MaximizeNoteBox" + w)) continue;
       if ((Link.isRTL && guiDirection() == "rtl") || (!Link.isRTL && guiDirection() != "rtl"))
-          text = text + ViewPort.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML;
+          text = text + ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML;
       else
-          text = ViewPort.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML + text;
+          text = ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML + text;
     }
   }
   
@@ -1055,10 +1068,10 @@ function quickSelectVerse(version, bk, ch, vs, lastvs, highlightFlag, scrollType
     else if (!Link.isLink[w] && forceNonlinkRedraw) forceRedraw[w] = true;
     else if (!Link.isLink[w]) {
       var chID = RegExp("id=\"vs\\." + Location.getBookName() + "\\." + Location.getChapterNumber(prefs.getCharPref("Version" + w)) + "\\.");
-      if (ViewPort.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML.search(chID) == -1) forceRedraw[w] = true;
+      if (ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML.search(chID) == -1) forceRedraw[w] = true;
     }
     else {
-      text += ViewPort.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML;
+      text += ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML;
       if (w==Link.finishWin) {
         // finished reading text for link or page
         var vsID = RegExp("id=\"vs\\." + Location.getBookName() + "\\." + Location.getChapterNumber(prefs.getCharPref("Version" + w)) + "\\." + Location.getVerseNumber(prefs.getCharPref("Version" + w)) + "\"");
@@ -1087,22 +1100,22 @@ function highlightSelectedVerses(highlightFlag) {
         prefs.getBoolPref("IsPinned" + w) ||
         !highlightFlag || (highlightFlag==HILIGHT_IFNOTV1 && fv==1 && lv==1)) 
     {
-      ViewPort.SelectedVerseCSS.style.color = ViewPort.ScriptBoxFontColor;
+      ViewPortWindow.SelectedVerseCSS.style.color = ViewPort.ScriptBoxFontColor;
       continue;   
     }
-    else {ViewPort.SelectedVerseCSS.style.color = ViewPort.SelectedVerseColor;}
+    else {ViewPortWindow.SelectedVerseCSS.style.color = ViewPort.SelectedVerseColor;}
 
-    var oldsel = ViewPort.getElementById("sv");
+    var oldsel = ViewPortWindow.getElementById("sv");
     if (oldsel) oldsel.removeAttribute("id");
-    var selem = ViewPort.createElement("span");
+    var selem = ViewPortWindow.createElement("span");
     selem.className="hl";
     var fv = Location.getVerseNumber(prefs.getCharPref("Version" + w));
     var lv = Location.getLastVerseNumber(prefs.getCharPref("Version" + w));
 
     var verseID = new RegExp("id=\"(vs\\.[^\\.]*\\.(\\d+)\\.(\\d+))\"");
-    verseID = ViewPort.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML.match(verseID);
+    verseID = ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML.match(verseID);
     var velem, v, c;
-    if (verseID && verseID[1]) velem = ViewPort.document.getElementById(verseID[1]);
+    if (verseID && verseID[1]) velem = ViewPortWindow.document.getElementById(verseID[1]);
     verseID = new RegExp("vs\\.[^\\.]*\\.(\\d+)\\.(\\d+)");
     while (velem) {
       if (velem.id) {
@@ -1197,14 +1210,14 @@ function scrollWheelNoLink(refWindow) {
 }
 
 function getFirstDisplayedPassage(w) {
-  var sb = ViewPort.document.getElementById("text" + w).getElementsByClassName("sb")[0];
+  var sb = ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0];
   var scrollTop = sb.scrollTop;
   var vre = new RegExp("id=\"(vs\\..*?)\"", "g");
   var verseIDs = sb.innerHTML.match(vre);
   vre = new RegExp("id=\"(vs\\..*?)\"");
   for (var i=0; i<verseIDs.length; i++) {
     verseIDs[i] = verseIDs[i].match(vre)[1];
-    var elem = ViewPort.document.getElementById(verseIDs[i]);
+    var elem = ViewPortWindow.document.getElementById(verseIDs[i]);
     if (elem && elem.offsetTop > scrollTop && elem.offsetTop < (scrollTop + (0.4*sb.offsetHeight))) return elem;
     if (elem &&             elem.offsetTop+elem.offsetHeight > (scrollTop + (0.4*sb.offsetHeight))) return elem;
   }
@@ -1212,14 +1225,14 @@ function getFirstDisplayedPassage(w) {
 }
 
 function getLastDisplayedPassage(w) {
-  var sb = ViewPort.document.getElementById("text" + w).getElementsByClassName("sb")[0];
+  var sb = ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0];
   var scrollBottom = sb.scrollTop + sb.offsetHeight;
   var vre = new RegExp("id=\"(vs\\..*?)\"", "g");
   var verseIDs = sb.innerHTML.match(vre);
   vre = new RegExp("id=\"(vs\\..*?)\"");
   for (var i=verseIDs.length-1; i>=0; i--) {
     verseIDs[i] = verseIDs[i].match(vre)[1];
-    var elem = ViewPort.document.getElementById(verseIDs[i]);
+    var elem = ViewPortWindow.document.getElementById(verseIDs[i]);
     if (elem && (elem.offsetTop + elem.offsetHeight) < scrollBottom) return elem;
   }
   return null;
@@ -1563,7 +1576,7 @@ function getMainWindowSelection() {
 function getMainWindowSelectionObject() {
   var selob=null;
   for (var w=1; w<=3; w++) {
-    selob = ViewPort.getSelection();
+    selob = ViewPortWindow.getSelection();
     if (!selob.isCollapsed) {return selob;}
   }
   return null;
@@ -1609,7 +1622,7 @@ function handleOptions(elem) {
     case "w2":
     case "w3":
       prefs.setIntPref("NumDisplayedWindows", Number(elem.id.substr(1,1)));
-      ViewPort.updateViewPort(false);
+      ViewPort.update(false);
       break;
         
     case "f0":
@@ -1617,8 +1630,8 @@ function handleOptions(elem) {
     case "f2":
     case "f3":
     case "f4":
-      prefs.setIntPref("FontSize",2*(Number(elem.id.substr(1,1)) - 2));
-      adjustFontSizes(prefs.getIntPref('FontSize'));
+      prefs.setIntPref("FontSize", 2*(Number(elem.id.substr(1,1)) - 2));
+      ViewPort.adjustFont(prefs.getIntPref('FontSize'));
       Texts.update(SCROLLTYPETOP, HILIGHTNONE);
       break;
     
@@ -1725,7 +1738,7 @@ function setAllTabs(toShowing, w) {
   }
   
   updateModuleMenuCheckmarks();
-  Texts.update(update, SCROLLTYPETOP, HILIGHTNONE);
+  Texts.update(SCROLLTYPETOP, HILIGHTNONE);
 }
 
 function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
@@ -1862,7 +1875,7 @@ function ScriptContextMenuShowing(e, winnum, popupnode) {
   var elem = PopupNode;
   while (elem && (!elem.id || elem.id != "npopup")) {elem = elem.parentNode;}
   if (!elem) {
-    ViewPort.Popup.close();
+    ViewPortWindow.Popup.close();
   }
   
   // Is this the select tab menu?
@@ -2131,7 +2144,7 @@ function ScriptContextMenuHidden(aEvent) {
   }
   // Close popup if open, otherwise if both popup and context were open, popup
   // may remain open after context closes
-  ViewPort.Popup.close();
+  ViewPortWindow.Popup.close();
   aEvent.target.setAttribute("value", "closed");
   goUpdateTargetLocation();
   goUpdateCommand("cmd_bm_properties");
@@ -2440,10 +2453,10 @@ function disableMissingBooks(hide) {
     for (var a=0; books && a<books.length; a++) {
       if (books[a] == Book[b].sName) {have=true; break;}
     }
-    ViewPort.document.getElementById("book_" + b).setAttribute("missing", (have ? "false":(hide ? "hide":"disable")));
+    ViewPortWindow.document.getElementById("book_" + b).setAttribute("missing", (have ? "false":(hide ? "hide":"disable")));
   }
 
-  if (hide) ViewPort.updateViewPort(false);
+  if (hide) ViewPort.update(false);
 }
 
 function updateModuleMenuCheckmarks() {
@@ -2542,8 +2555,10 @@ function ensureModuleShowing(version) {
 //Watch for window resize
 var ResizeWatchTimer;
 function resizeWatch() {
+  if (ViewPortWindow.innerHeight < 100) return;
   if (ResizeWatchTimer) window.clearTimeout(ResizeWatchTimer);
-  ResizeWatchTimer = window.setTimeout("ViewPort.updateViewPort();", 300);
+  ResizeWatchTimer = window.setTimeout("ViewPort.update();", 300);
+  prefs.setIntPref("ViewPortHeight", ViewPortWindow.innerHeight);
 }
 
 function unloadXUL() {
