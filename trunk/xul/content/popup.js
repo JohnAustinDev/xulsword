@@ -42,17 +42,21 @@ function PopupObj(popupobj) {
 
   // or else initialize a fresh popup object
   else {
+    this.x = null;
+    this.y = null;
+    this.w = null;
     this.datatype = null;
     this.data = null;
     this.delay = null;
     this.yoffset = null;
     this.mod = null;
-    this.w = null;
     this.selectOpen = null;
     this.showPopupID = null;
   }
 
-  this.activate = function(w, datatype, data, delay, yoffset, mod) {
+  this.activate = function(x, y, w, datatype, data, delay, yoffset, mod) {
+    if (x        !== null) this.x = x;
+    if (y        !== null) this.y = y;
     if (w        !== null) this.w = w;
     if (datatype !== null) this.datatype = datatype;
     if (data     !== null) this.data = data;
@@ -108,7 +112,7 @@ function PopupObj(popupobj) {
       html += "<div class=\"twisty twisty-" + dir + "\" onclick=\"Popup.openCloseCRs();\" ></div>";
       
       var hideEmptyCrossReferences = getPrefOrCreate("HideUnavailableCrossReferences", "Bool", false);
-      var chapRefs = this.footnotes.CrossRefs.split("<nx>");
+      var chapRefs = this.footnotes.split("<nx>");
       for (var i=0; i<chapRefs.length; i++) {
         var thisid = chapRefs[i].split("<bg>")[0];
         var reflist = chapRefs[i].split("<bg>")[1];
@@ -284,16 +288,21 @@ function PopupObj(popupobj) {
     IgnoreMouseOvers=false;
     
     // Display was set to "none" and this must be cleared before setting (or reading for sure) other style parameters
-    this.npopup.style.display = "";
+    this.npopup.style.display = "block";
     if ((/^popup/).test(window.name)) return;
     
-    var top = ClientY - 10 + yOffset;
-    var bot = top + this.npopup.offsetHeight;
+    var top = this.y - 10 + yOffset; 
+    if (top + this.npopup.offsetHeight > window.innerHeight) 
+        top = (window.innerHeight - this.npopup.offsetHeight);
+    if (top < 0) top = 0; 
     
-    if (bot > window.innerHeight) top -= (bot-window.innerHeight);
-    if (top < 0) top = 0;
+    var left = this.x - (this.npopup.offsetWidth/2);
+    if (left + this.npopup.offsetWidth > document.getElementById("viewportbody").offsetWidth)
+        left = (document.getElementById("viewportbody").offsetWidth - this.npopup.offsetWidth);
+    if (left < 0) left = 0;
     
     this.npopup.style.top = String(top) + "px";
+    this.npopup.style.left = String(left) + "px";
     
   };
 
@@ -315,7 +324,7 @@ function PopupObj(popupobj) {
   this.openCloseCRs = function() {
     this.close();
     prefs.setBoolPref("OpenCrossRefPopups", !prefs.getBoolPref("OpenCrossRefPopups"));
-    this.activate(this.w, null, null, 0);
+    this.activate(this.x, this.y, this.w, null, null, 0);
   };
   
   this.initModuleSelect = function(type, selmod) {
@@ -326,7 +335,7 @@ function PopupObj(popupobj) {
       case "bibles":
         if (Tabs[t].modType == BIBLE) {
           var selected = (Tabs[t].modName == selmod ? "selected=\"selected\" ":"");
-          html += "<option value=\"" + Tabs[t].modName + "\" class=\"vstyle" + Tabs[t].vstyle + "\" " + selected + ">" + Tabs[t].label + "</option>";
+          html += "<option value=\"" + Tabs[t].modName + "\" class=\"vstyle" + Tabs[t].modName + "\" " + selected + ">" + Tabs[t].label + "</option>";
         }
         break;
       }
@@ -339,7 +348,7 @@ function PopupObj(popupobj) {
   
   this.select = function(e) {
     this.selectOpen=false;
-    this.activate(this.w, null, null, null, null, e.target.value);
+    this.activate(this.x, this.y, this.w, null, null, null, null, e.target.value);
   };
   
   this.clickpin = function(pin) {

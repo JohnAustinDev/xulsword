@@ -298,10 +298,9 @@ function createTabs() {
   moduleInfo.pop();
   
   // Add ORIG tab if needed...
-  if (HaveOriginalTab && SBundle) {
-    moduleInfo.push(getModuleLongType(ORIGINAL) + ";" + ORIGINAL + ";" + SBundle.getString("ORIGLabelTab"));
+  if (!HaveOriginalTab) {
+    for (var w=1; w<=3; w++) {prefs.setBoolPref("ShowOriginal" + w, false);}
   }
-  else {for (var w=1; w<=3; w++) {prefs.setBoolPref("ShowOriginal" + w, false);}}
  
    // Sort tabs...
   moduleInfo = moduleInfo.sort(tabOrder);
@@ -315,7 +314,7 @@ function createTabs() {
   for (m=0; m<moduleInfo.length; m++) {
     info = moduleInfo[m].split(";");
     
-    var tab = {label:null, modName:null, modType:null, tabType:null, vstyle:null, isRTL:null, isOrigTab:null, index:null};
+    var tab = {label:null, modName:null, modType:null, tabType:null, vstyle:null, isRTL:null, index:null};
     tab.label = info[2];
     tab.modName = info[1];
     tab.modType = info[0];
@@ -325,13 +324,7 @@ function createTabs() {
     else if (UserConfFiles[info[1]]) tab.confModUnique = false;
     tab.isCommDir = (tab.conf && tab.conf.path.substring(0, tab.conf.path.lastIndexOf("\\")) == commonDir.path);
     tab.tabType = getShortTypeFromLong(tab.modType);
-    try {var isOT = (tab.label==SBundle.getString("ORIGLabelOT"));}
-    catch (er) {isOT = false;}
-    try {var isNT = (tab.label==SBundle.getString("ORIGLabelNT"));}
-    catch (er) {isNT = false;}
-    tab.vstyle = (tab.modName==ORIGINAL || isOT || isNT ? "program":tab.modName);
-    tab.isRTL = (VersionConfigs[tab.vstyle] && VersionConfigs[tab.vstyle].direction == "rtl");
-    tab.isOrigTab = (tab.modName==ORIGINAL);
+    tab.isRTL = (VersionConfigs[tab.modName] && VersionConfigs[tab.modName].direction == "rtl");
     tab.index = m;
     tab.description = Bible.getModuleInformation(info[1], "Description");
     Tabs.push(tab);
@@ -346,7 +339,7 @@ if (HaveValidLocale) createTabs();
 
 //Use first BIBLE tab or "none" if not found.
 for (var t=0; t<Tabs.length; t++) {
-  if (Tabs[t].modType==BIBLE && !Tabs[t].isOrigTab) {var defaultMod=Tabs[t].modName; break;}
+  if (Tabs[t].modType==BIBLE) {var defaultMod=Tabs[t].modName; break;}
 }
 prefs.setCharPref("DefaultVersion", (defaultMod ? defaultMod:"none"));
 

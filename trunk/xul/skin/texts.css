@@ -4,83 +4,83 @@
   color:blue;
   margin: 10px;
   text-align:center;
+  cursor:default;
 }
 .navlink span {
   font-family:ariel;
 }
+.prevchaplink, .nextchaplink {
+  cursor:pointer;
+}
+.prevchaplink:hover, .nextchaplink:hover {
+  text-decoration:underline;
+}
 
 /* Bible & Commentary chapter/page header */
-.textbr0 {
-  clear:both;
-  height:1em;
+.chapterhead {
+  padding-top:8px;
 }
-.textbr1 {
-  clear:both;
-  height:2em;
+.noticelink {
+  font-size:14px;
+  margin:0px 10px 10px 10px;
+  text-align:center;
 }
-.chapterhead > div {
-  margin-top:12px;
-  margin-bottom:12px;
+.noticelink[empty="true"] {
+  display:none;
+}
+.noticelink a {
+  text-decoration:underline;
+  color:blue;
+  cursor:pointer;
 }
 .chapnum {
+  float:left;
   font-size:28px;
   font-weight:bold;
   color:rgb(110,85,110);
-  line-height:120%;
-	width:50%;
-	padding:0px;
-	margin:0px;
-	overflow:visible;
 }
-.chapterhead[dirmod="ltr"] .chapnum {
-  text-align:left;
-  float:left; 
-}
-.chapterhead[dirmod="rtl"] .chapnum {
-  text-align:right;
-  float:right; 
-}
-.chapnum span {
+.chapbk, .chapch {
   white-space:nowrap;
 }
+.chapbk {
+  display:none;
+}
+.chapterhead.chapterfirst .chapbk {
+  display:block;
+}
+#text[pin="pinned"] .chapbk,
+#sizetester .chapbk {
+  display:block;
+}
 .chapinfo {
-  width:40%; /* 10% remaining becomes margin */
-  padding:0px;
-  margin:0px;
-  overflow:visible;
-}
-.chapterhead[dirmod="ltr"] .chapinfo {
+  position:relative;
+  top:-5px;
   float:right;
-  text-align:left;
-}
-.chapterhead[dirmod="rtl"] .chapinfo {
-  float:left;
-  text-align:right;
-}
-.noticelink {
-  display:block;
-  margin: 0px 0px 5px 0px;
-}
-.audiolink {
-  display:block;
-  width:45px;
-  height:37px;
-  margin: 0px 5px 5px 0px;
-}
-.introlink {
-  display:block;
+  min-width:60px;
   font-size:20px;
-  font-weight:normal;
-  margin: 0px 5px 0px 0px;
+  color:rgb(110,85,110);
 }
 .listenlink {
+  visibility:hidden;
+  display:inline-block;
   background:url('chrome://xulsword/skin/images/listen0.png');
   width:45px;
   height:37px;
-  visibility:hidden;
 }
 .listenlink:hover {
   background:url('chrome://xulsword/skin/images/listen1.gif');
+}
+.introlink {
+  text-decoration:underline;
+  color:blue;
+  cursor:pointer;
+}
+.introlink[empty="true"] {
+  display:none;
+}
+.headbr {
+  clear:both;
+  margin-bottom:30px;
 }
 
 /* Interlinear display */
@@ -311,7 +311,7 @@
   position:relative;
   height:100%;
 }
-.dictlist div:nth-child(1) {
+.dictlist .textboxparent {
   position:absolute;
   margin-right:20px;
   -moz-padding-start:20px;
@@ -324,7 +324,7 @@
   width:100%;
   margin-top:1em;
 }
-.dictlist div:nth-child(2) {
+.dictlist .keylist {
   position:absolute;
   left:0px;
   right:0px;
@@ -332,6 +332,9 @@
   bottom:0px;
   -moz-padding-start:20px;
   overflow:auto;
+}
+.dictlist .key {
+  cursor:pointer;
 }
 .dictselectkey {
   background:highlight;

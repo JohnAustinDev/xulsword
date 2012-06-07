@@ -161,7 +161,7 @@ function chooserMouse(e) {
   case "chbutton":
     if (e.type == "click") {
       prefs.setBoolPref("ShowChooser", (p[1]=="open"));
-      updateViewPort();
+      ViewPort.update();
     }
     break;
   }
@@ -170,7 +170,7 @@ function chooserMouse(e) {
 function showChooser(tsmt, resetchooser) {
   document.getElementById("biblechooser").setAttribute("showing", tsmt);
   if (resetchooser) document.getElementById("biblebooks_" + tsmt).style.top = "8px";
-  updateViewPort(true);
+  ViewPort.update(true);
 }
 
 function showHeadings(myid, screenY) {

@@ -74,7 +74,6 @@
         var lastType;
         var sep = "";
         for (var t=0; t<Tabs.length; t++) {
-          if (Tabs[t].isOrigTab) continue;
           if (!lastType || Tabs[t].modType!=lastType) {
             var type = window.frameElement.ownerDocument.getElementById("radio.label." + TYPES[Tabs[t].tabType]).childNodes[0].nodeValue;
             document.write(sep + "<div class=\"head1 vstyleprogram\">" + type + "</div>");
@@ -89,7 +88,6 @@
         document.write("<br><br>");
         // module information
         for (t=0; t<Tabs.length; t++) {
-          if (Tabs[t].isOrigTab) continue;
           // anchor
           document.write("<a id=\"targ." + Tabs[t].modName + "\" name=\"" + Tabs[t].modName + "\"></a><br>");
           document.write("<div id=\"modinfo." + Tabs[t].modName + "\" >");

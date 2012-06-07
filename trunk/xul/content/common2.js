@@ -46,7 +46,11 @@ var BookmarkFuns          = MainWindow.BookmarkFuns;
 
 var AllWindows            = MainWindow.AllWindows;
 
+var LanguageStudyModules  = MainWindow.LanguageStudyModules;
+
 // defined in viewport.html but used globally
+if (typeof(ViewPort) == "undefined")
+    var ViewPort          = MainWindow.ViewPort;
 if (typeof(Texts) == "undefined")
     var Texts             = MainWindow.Texts;
 if (typeof(BibleTexts) == "undefined")

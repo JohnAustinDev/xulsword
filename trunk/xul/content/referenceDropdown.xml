@@ -97,7 +97,6 @@
                     this.getAttribute("hideverse")=="true" &&
                     this.getAttribute("hidelastverse")=="true");
         for (var m=0; m<Tabs.length && Bible; m++) {
-          if (Tabs[m].isOrigTab) continue;
           if (Tabs[m].modType != BIBLE) {
             if (this.versionmenulist.getAttribute("onlybibles")=="true") continue;
             if (reqVK && Tabs[m].modType != COMMENTARY) continue;
@@ -107,7 +106,7 @@
           var description = Bible.getModuleInformation(Tabs[m].modName, "Description");
           if (description==NOTFOUND) description=null;
           var newitem = this.versionmenulist.appendItem(Tabs[m].label, Tabs[m].modName, description);
-          newitem.className = "vstyle" + Tabs[m].vstyle;
+          newitem.className = "vstyle" + Tabs[m].modName;
         }
         
         // Initialize location vars and selections

@@ -35,7 +35,7 @@ var Texts = {
     this.scrollTypeFlag = scrollTypeFlag;
     this.highlightFlag = highlightFlag;
 
-    if (this.scrollTypeFlag == SCROLLTYPETOP) Location.setVerse(mod, 1, 1);
+    if (this.scrollTypeFlag == SCROLLTYPETOP) Location.setVerse(prefs.getCharPref("DefaultVersion"), 1, 1);
 
     for (var w=1; w<=NW; w++) {
 
@@ -68,7 +68,7 @@ var Texts = {
     
     MainWindow.updateNavigator();
     
-    updateViewPort(false);
+    ViewPort.update(false);
   },
   
   updateBible: function(w, force) {
@@ -87,12 +87,13 @@ var Texts = {
       this.footnotes[w] = ti.footnotes;
 
       var t = document.getElementById("text" + w);
+     
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
       var sb = t.getElementsByClassName("sb")[0];
-      sb.innerHTML = ti.htmlText;
-      
+      sb.innerHTML = (ti.htmlText.length > 64 ? ti.htmlText:"");
+
       var nb = t.getElementsByClassName("nb")[0];
       nb.innerHTML = ti.htmlNotes;
     }
@@ -125,7 +126,7 @@ var Texts = {
       hd.innerHTML = ti.htmlHead;
       
       var sb = t.getElementsByClassName("sb")[0];
-      sb.innerHTML = ti.htmlText;
+      sb.innerHTML = (ti.htmlText.length > 64 ? ti.htmlText:"");
     }
     
     // handle scrolls and highlights    
@@ -160,12 +161,15 @@ var Texts = {
     }
     
     // highlight the selected key
-    for (var i=0; i < DictTexts.keyList[this.display[w].mod]; i++) {
-      var el = document.getElementById(DictTexts.keyList[this.display[w].mod][i]);
-      if (!el) continue;
-      el.className = (el.id == key ? "dictselectkey":"");
+    var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");
+    for (var i=0; i<k.length; i++) {k[i].className = "";}
+    k = document.getElementById("w" + w + "." + encodeUTF8(ti.key));
+    if (k) {
+      k.className = "dictselectkey";
+      k.scrollIntoView();
+      document.getElementById("viewportbody").scrollTop = 0;
     }
-  
+    
     document.getElementById("w" + w + ".keytextbox").value = ti.key;
     setUnicodePref("DictKey_" + this.display[w].mod + "_" + w, ti.key);
    
@@ -205,6 +209,24 @@ var Texts = {
   // Texts Utility functions
   //////////////////////////////////////////////////////////////////////
   
+  // Adjusts font-size of first passed HTML element,
+  // stopping at given overall offset width.
+  fitHTML: function(html, w, maxfs) {
+    var elem = document.getElementById("sizetester");
+    elem.innerHTML = html;
+    
+    var fs = (maxfs ? maxfs:20);
+    elem.firstChild.style.fontSize = fs + "px";
+jsdump("A-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
+    while (fs > 8 && elem.offsetWidth > w) {
+      fs -= 4;
+      elem.firstChild.style.fontSize = fs + "px";
+jsdump("B-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
+    }
+    
+    return elem.innerHTML;
+  },
+
   getPageLinks: function() {
     var config = LocaleConfigs[getLocale()];
     var charNext = (config.direction && config.direction == "rtl" ? String.fromCharCode(8592):String.fromCharCode(8594));
@@ -427,7 +449,7 @@ var BibleTexts = {
   
   read: function(w, d) {
     var ret = { htmlText:"", htmlNotes:"", htmlHead:Texts.getPageLinks(), footnotes:null };
-    
+
     // For Pin feature, set "global" SWORD options for local context
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") continue;
@@ -469,8 +491,8 @@ var BibleTexts = {
       }
     }
     
-    Texts.showNoteBox[w] = (ret.htmlnotes ? true:false);
-    
+    Texts.showNoteBox[w] = (ret.htmlNotes ? true:false);
+   
     // localize verse numbers
     var tl = getLocaleOfModule(d.mod);
     if (!tl) {tl = getLocale();}
@@ -483,8 +505,7 @@ var BibleTexts = {
     // add headers
     var showHeader = (d.globalOptions["Headings"]=="On");
     if (showHeader && ret.htmlText) {
-      var showBook = (d["IsPinned"] || d.ch == 1);
-      ret.htmlText = this.getChapterHeading(d.bk, d.ch, d.mod, w, showBook, false, d["ShowOriginal"]) + ret.htmlText;
+      ret.htmlText = this.getChapterHeading(d.bk, d.ch, d.mod, w, false, d["ShowOriginal"]) + ret.htmlText;
     }
     
     // highlight user notes
@@ -501,56 +522,50 @@ var BibleTexts = {
   },
   
   // This function is only for versekey modules (BIBLE, COMMENTARY)
-  getChapterHeading: function(bk, ch, mod, w, showBookName, showIntroduction, showOriginal) {
-    var myVersionsLocale = getLocaleOfModule(mod);
-    if (!myVersionsLocale) {myVersionsLocale = getLocale();}
-    var myVersionsBundle = getLocaleBundle(myVersionsLocale, "books.properties");
-    var myConfig = LocaleConfigs[myVersionsLocale];
+  getChapterHeading: function(bk, ch, mod, w) {
+    var l = getLocaleOfModule(mod);
+    if (!l) {l = getLocale();}
+    var b = getLocaleBundle(l, "books.properties");
+    var c = LocaleConfigs[l];
 
-    var chapterHeadingFont = (myConfig && myConfig.font ? myConfig.font:DefaultFont);
-    var chapterHeadingSize = (myConfig && myConfig.fontSizeAdjust ? myConfig.fontSizeAdjust:DefaultFontSizeAdjust);
+    var font = (c && c.font ? c.font:DefaultFont);
+    var size = (c && c.fontSizeAdjust ? c.fontSizeAdjust:DefaultFontSizeAdjust);
     
+    var intro = (ch != 1 ? "":BibleTexts.getBookIntroduction(mod, bk));
+    // Remove empty intros that may be generated by paratext2Osis.pl
+    if (intro && !intro.replace(/<[^>]+>/g,"").match(/\S/)) intro=null;
+    
+    var lt = Bible.getModuleInformation(mod, "NoticeLink");
+    if (lt == NOTFOUND) lt = "";
+    else lt = lt.replace("<a>", "<a id=\"w" + w + ".noticelink\">");
+    
+    var fs = getCSS(".chapnum {");
+    fs = Number(fs.style.fontSize.match(/([\-\d]+)px/)[1]);
+    var size = "";
+     
     // book and chapter heading
-    var mtext = "<div class=\"chapterhead\" dirmod=\"" + ((myConfig && myConfig.direction && myConfig.direction=="rtl") ? "rtl":"ltr") + "\">";
-    mtext += "<div class=\"chapnum\" style=\"font-family:'" + chapterHeadingFont + "'; \">";
-    if (showBookName) {
-      mtext += "<span>" + myVersionsBundle.GetStringFromName(bk) + "</span>";
-      mtext += "<br>";
-    }
-    mtext += "<span>" + getLocalizedChapterTerm(bk, ch, myVersionsBundle, myVersionsLocale) + "</span>";
-    mtext += "</div>";
-
-    var intro = "";
-    if (!showOriginal) {
-      mtext += "<div class=\"chapinfo\">";
-      mtext +=  this.getNoticeLink(mod, false, w);
-      mtext += "<div class=\"audiolink\">";
-      mtext += "<div class=\"listenlink\" id=\"w" + w + ".listenlink." + ch + "\"></div>";
-      mtext += "</div>";
-
-      // introduction link and introduction
-      if (ch == 1) {
-        intro = BibleTexts.getBookIntroduction(mod, bk); 
-        var test = intro.replace(/<[^>]+>/g,"").match(/\S/); // Remove empty intros that may be generated by paratext2Osis.pl
-        if (!test) intro=null;
-        if (intro) {
-          var linkt = showIntroduction ? myVersionsBundle.GetStringFromName("HideIntroLink"):myVersionsBundle.GetStringFromName("IntroLink");
-          var links = showIntroduction ? "hide":"show";
-          mtext += "<a class=\"introlink\" title=\"" + links + "\" id=\"w" + w + ".introlink." + ch + "\">" + linkt + "</a>";
-          mtext += "</div>";
-          if (showIntroduction) {
-            mtext += "<div class=\"textbr1\"></div><span class=\"vstyle" + mod + "\">" + intro + "</span><div class=\"textbr1\"></div>";
-          }
-        }
-        else {mtext += "</div>";}
-      }
-      else {mtext += "</div>";}
-    }
-    mtext += "</div>";
-
-    mtext += "<div class=\"textbr0\"></div>";
+    var html, size;
+    html  = "<div class=\"chapterhead" + (ch==1 ? " chapterfirst":"") + "\" dirmod=\"" + ((c && c.direction && c.direction=="rtl") ? "rtl":"ltr") + "\">";
     
-    return mtext;
+    html +=   "<div class=\"noticelink vstyle" + mod + "\" empty=\"" + (lt ? "false":"true") + "\">" + lt;
+    html +=     "<div class=\"headbr\"></div>";
+    html +=   "</div>";
+
+    size +=   "<div class=\"chapnum\" style=\"font-family:'" + font + "';\">";
+    size +=     "<div class=\"chapbk\">" + b.GetStringFromName(bk) + "</div>";
+    size +=     "<div class=\"chapch\">" + getLocalizedChapterTerm(bk, ch, b, l) + "</div>";
+    size +=   "</div>";
+    html += Texts.fitHTML(size, 170, fs);
+
+    html +=   "<div class=\"chapinfo\">";
+    html +=     "<div class=\"listenlink\"></div>";
+    html +=     "<div class=\"introlink\" empty=\"" + (intro ? "false":"true") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
+    html +=   "</div>";
+    
+    html += "</div>";
+    html += "<div class=\"headbr\"></div>";
+    
+    return html;
   },
 
   getNotesHTML: function(notes, mod, gfn, gcr, gun, openCRs, w) {
@@ -770,7 +785,7 @@ var BibleTexts = {
       var icon = icons[i];
 //icon.style.visibility = "visible"; continue;
       if (MainWindow.AudioDirs === null) MainWindow.AudioDirs = MainWindow.getAudioDirs();
-      if (MainWindow.getAudioForChapter(Texts.display[w].mod, Texts.display[w].bk, Number(icon.id.split(".")[1]), MainWindow.AudioDirs)) 
+      if (MainWindow.getAudioForChapter(Texts.display[w].mod, Texts.display[w].bk, Texts.display[w].ch, MainWindow.AudioDirs))
           icon.style.visibility = "visible";
     }
   }
@@ -817,8 +832,7 @@ var CommTexts = {
     // add headers
     var showHeader = (d.globalOptions["Headings"] == "On");
     if (showHeader && ret.htmlText) {
-      var showBook = (d["IsPinned"] || d.ch == 1);
-      ret.htmlText = BibleText.getChapterHeading(d.bk, d.ch, d.mod, w, showBook, false, false) + ret.htmlText;
+      ret.htmlText = BibleText.getChapterHeading(d.bk, d.ch, d.mod, w, false, false) + ret.htmlText;
     }
     
     // put "global" SWORD options back to their global context values
@@ -838,40 +852,40 @@ var CommTexts = {
 ////////////////////////////////////////////////////////////////////////
 
 var DictTexts = {
-  keyList: {},
-  keysHTML: {},
+  keyList: [null, {}, {}, {}],
+  keysHTML: [null, {}, {}, {}],
   
   read: function(w, d) {
     var ret = { htmlList:"", htmlHead:Texts.getPageLinks(), htmlEntry:"", footnotes:null };
     
     // get key list (is cached)
-    if (!this.keyList[d.mod]) {
-      this.keyList[d.mod] = Bible.getAllDictionaryKeys(d.mod).split("<nx>");
-      this.keyList[d.mod].pop();
+    if (!this.keyList[w][d.mod]) {
+      this.keyList[w][d.mod] = Bible.getAllDictionaryKeys(d.mod).split("<nx>");
+      this.keyList[w][d.mod].pop();
       this.sortOrder = Bible.getModuleInformation(d.mod, "LangSortOrder");
       if (this.sortOrder != NOTFOUND) {
         this.sortOrder += "0123456789";
         this.langSortSkipChars = Bible.getModuleInformation(d.mod, "LangSortSkipChars");
         if (this.langSortSkipChars == NOTFOUND) this.langSortSkipChars = "";
-        this.keyList[d.mod].sort(this.dictSort);
+        this.keyList[w][d.mod].sort(this.dictSort);
       }
     }
     
     // get html for list of keys (is cached)
-    if (!this.keysHTML[d.mod]) {
-      this.keysHTML[d.mod] = this.getDictListHTML(this.keyList[d.mod], d.mod, w);
+    if (!this.keysHTML[w][d.mod]) {
+      this.keysHTML[w][d.mod] = this.getListHTML(this.keyList[w][d.mod], d.mod, w);
     }
-    ret.htmlList = this.keysHTML[d.mod];
+    ret.htmlList = this.keysHTML[w][d.mod];
 
     // get actual key
-    if (d.DictKey == "<none>") d.DictKey = this.keyList[d.mod][0];
+    if (d.DictKey == "<none>") d.DictKey = this.keyList[w][d.mod][0];
     if (d.DictKey == "DailyDevotionToday") {
       var today = new Date();
       d.DictKey = (today.getMonth()<9 ? "0":"") + String(today.getMonth()+1) + "." + (today.getDate()<10 ? "0":"") + today.getDate();
     }
     
     // get htmlEntry
-    var de = this.getDictEntryHTML(d.DictKey, d.mod);
+    var de = this.getEntryHTML(d.DictKey, d.mod);
     var un = Texts.getUserNotes("na", d.DictKey, d.mod, de, w);
     de = un.html;
     ret.footnotes = un.notes;
@@ -885,24 +899,24 @@ var DictTexts = {
     return ret;
   },
   
-  getDictListHTML: function(list, mod, w) {
+  getListHTML: function(list, mod, w) {
     var html = "";
     html += "<div class=\"dictlist\">"
-    html +=   "<div id=\"w" + w + ".textboxparent\">";
-    html +=     "<input id=\"w" + w + ".keytextbox\" name=\"keytextbox\" class=\"vstyle" + mod + "\" onfocus=\"this.select()\" ondblclick=\"this.select()\" ";
-    html +=     "onkeypress=\"DictTexts.dictionaryKeyPress('" + mod + "', " + w + ", event)\"/>";
+    html +=   "<div class=\"textboxparent\" id=\"w" + w + ".textboxparent\">";
+    html +=     "<input id=\"w" + w + ".keytextbox\" class=\"vstyle" + mod + "\" onfocus=\"this.select()\" ondblclick=\"this.select()\" ";
+    html +=     "onkeypress=\"DictTexts.keyPress('" + mod + "', " + w + ", event)\" />";
     html +=   "</div>";
-    html +=   "<div id=\"w" + w + ".keylist\" onclick=\"DictTexts.selKey('" + mod + "', " + w + ", event.target.id)\">";
+    html +=   "<div class=\"keylist\" id=\"w" + w + ".keylist\" onclick=\"DictTexts.selKey('" + mod + "', " + w + ", event)\">";
     for (var e=0; e < list.length; e++) {
-      html += "<div id=\"w" + w + "." + list[e] + "\" >" + list[e] + "</div>";
+      html += "<div class=\"key\" id=\"w" + w + "." + encodeUTF8(list[e]) + "\" >" + list[e] + "</div>";
     }
     html +=   "</div>";
     html += "</div>";
-    
+
     return html;
   },
   
-  getDictEntryHTML: function(key, mods, dontAddParagraphIDs) {
+  getEntryHTML: function(key, mods, dontAddParagraphIDs) {
     if (!key || !mods) return "";
     key = this.decodeOSISRef(key);
     
@@ -924,7 +938,7 @@ var DictTexts = {
           dictEntry = dictEntry.replace(/^(<br>)+/,"");
           var dictTitle = Bible.getModuleInformation(mods[dw], "Description");
           dictTitle = (dictTitle != NOTFOUND ? "<b>" + dictTitle + "</b><br>":"");
-          dictHTML += "<br><br>" + dictTitle + dictEntry;
+          html += "<br><br>" + dictTitle + dictEntry;
         }
       }
     }
@@ -1040,11 +1054,13 @@ var DictTexts = {
   },
 
   //The timeout below was necessary so that textbox.value included the pressed key...
-  dictionaryKeyPress: function(mod, w, e) {
-    window.setTimeout("DictTexts.dictionaryKeyPressR('" + mod + "', " + w + ", " + e.which + ")", 0);
+  keypressOT:null,
+  keyPress: function(mod, w, e) {
+    if (this.keypressOT) window.clearTimeout(this.keypressOT);
+    this.keypressOT = window.setTimeout("DictTexts.keyPressR('" + mod + "', " + w + ", " + e.which + ")", 1000);
   },
 
-  dictionaryKeyPressR: function(mod, w, charCode) {
+  keyPressR: function(mod, w, charCode) {
     var textbox = document.getElementById("w" + w + ".keytextbox");
     var text = textbox.value;
     if (!text) {
@@ -1053,7 +1069,7 @@ var DictTexts = {
     }
     
     var matchtext = new RegExp("(^|<nx>)(" + escapeRE(text) + "[^<]*)<nx>", "i");
-    var firstMatch = matchtext(DictTexts.keyList[mod].join("<nx>") + "<nx>");
+    var firstMatch = (DictTexts.keyList[w][mod].join("<nx>") + "<nx>").match(matchtext);
     if (!firstMatch) {
       if (charCode!=8) Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       textbox.style.color="red";
@@ -1065,9 +1081,9 @@ var DictTexts = {
     }
   },
 
-  selKey: function (mod, w, aKey) {
-    if (aKey == "keylist") return;
-    setUnicodePref("DictKey_" + mod + "_" + w, aKey);
+  selKey: function (mod, w, e) {
+    if (!e.target.id || (e.target.id && (/^w\d\.keylist$/).test(e.target.id))) return;
+    setUnicodePref("DictKey_" + mod + "_" + w, decodeUTF8(e.target.id.substr(3)));
     Texts.updateDictionary(w);
     window.setTimeout("document.getElementById('w" + w + ".keytextbox').focus()", 1);
   }
@@ -1095,3 +1111,4 @@ var GenBookTexts = {
   }
   
 };
+
