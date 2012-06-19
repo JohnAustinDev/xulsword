@@ -2,6 +2,7 @@
 <?php require_once('php/Phrases_browserBible.php'); ?>
 <?php
 
+$Media = ($handheld > 0 ? "handheld":"screen");
 $MaxTexts = 2;
 $MODCLEAN     = "/[^A-Za-z0-9_]/";
 $LOCCLEAN     = "/[^A-Za-z0-9\.]/";
@@ -25,13 +26,13 @@ $Default = array('m1'=>$defaultbible[$Language], 'l'=>'Gen.1.1.1',
 					'hvp'=>'1', 'hcn'=>'1', 'stn'=>'1', 'mlt'=>'1', 'mse'=>'1',
 					'rmod'=>'', 'rtype'=>'', 'rlist'=>'');
 					
-$QuerySort = array("m", "m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9", "l", "g");
+$QuerySort = array("m", "mc1", "mc2", "mc3", "mc4", "mc5", "mc6", "mc7", "mc8", "mc9", "m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9", "l", "g");
 
 // New flags can be added to the end of this list, but the existing 
 // order should never change (or else existing links will break!).
 $Optord = array('hdg','ftn','crn','dtl','wcr','vsn','hvp','hcn','stn','mlt','mse');
 $Redirect = 0;
-			
+	
 $UpgradeBrowser = 0;
 $IsInternetExplorer = false;
 $test = array();
@@ -40,35 +41,7 @@ if (preg_match('/MSIE (\\d+)/', $_SERVER['HTTP_USER_AGENT'], $test)) {
 	$IsInternetExplorer = true;
 }
 
-// Redirect to compressed URL if this one is uncompressed
-if (isset($_GET['g'])) {$_GET = queryArrUncompress($_GET);}
-else {$Redirect = 1;}
-
-// Handle any 'mc' param for flow-columns
-for ($c=1; $c<=9; $c++) {
-	if (isset($_GET['mc'.$c])) {
-		for ($m=1; $m<=9; $m++) {
-			if ($m <= $c) $_GET['m'.$m] = $_GET['mc'.$c];
-			elseif (isset($_GET['m'.$m])) unset($_GET['m'.$m]);
-		}
-		unset($_GET['mc'.$c]);
-	}
-}
-
-// Insure all m params are sequential. Limit is 9 columns.
-if (isset($_GET['m'])) {
-	$_GET['m1'] = $_GET['m'];
-	unset($_GET['m']);
-}
-$ms = array();
-for ($c=1; $c<=9; $c++) {
-	if (isset($_GET['m'.$c])) {
-		array_push($ms, $_GET['m'.$c]);
-		unset($_GET['m'.$c]);
-	}
-}
-$NumCols = 0;
-for ($c=1; $c<=count($ms); $c++) {$_GET['m'.$c] = $ms[$c-1]; $NumCols++;}
+$_GET = internalGET($_GET);
 
 // Go to "home" page if no mod is specified
 $PromptForBook = 0;
@@ -81,7 +54,7 @@ if (!extension_loaded("phpsword")) {
 $Sword = new phpsword($REPOSITORIES);
 	
 $Modlist = $Sword->getModuleList();
-if	(!preg_match("/(^|<nx>)".$defaultbible[$Language].";Biblical Texts(<nx>|$)/", $Modlist)) {
+if (!preg_match("/(^|<nx>)".$defaultbible[$Language].";Biblical Texts(<nx>|$)/", $Modlist)) {
 	$firstbible = array();
 	preg_match("/(^|<nx>)([^;]+);Biblical Texts/", $Modlist, $firstbible);
 	if (count($firstbible)) $defaultbible[$Language] = $firstbible[2];
@@ -111,7 +84,7 @@ if (isset($_GET['lv'])) {$p[3] = $_GET['lv'];  $Redirect = 1;}
 if (!isset($p[2])) $p[2] = 1; // should work without this, but this is a libxulsword bug wrokaround
 $_GET['l'] = join(".", $p);
 
-// Remove all GET names not included in the Default lists
+// Now remove all GET names not included in the Default lists
 $del = array_diff_key($_GET, $Default);
 reset($del);
 while (list($name, $val) = each($del)) {if (!preg_match("/^m\d+$/", $name)) unset($_GET[$name]);}
@@ -132,7 +105,7 @@ while (list($name, $val) = each($_GET)) {
 	}
 	else if ($name == 'rlist') {continue;} // handled by AJAX below
 	else if ($name == 'rtype' && $val !== '') {
-		if (!preg_match("/^(reflist|dictlist|stronglist)$/", $val)) {
+		if (!preg_match("/^(chapter|reflist|dictlist|stronglist)$/", $val)) {
 			// Then cancel any un-supported AJAX requests
 			$_GET['rmod'] = '';
 			$_GET['rtype'] = '';
@@ -145,8 +118,32 @@ while (list($name, $val) = each($_GET)) {
 // The master verse system/module is the verse system of the URL location
 $MasterVsys = $Sword->getVerseSystem($_GET['m1']);
 
-// Check and normalize page location
-$_GET['l']  = $Sword->convertLocation($MasterVsys, $_GET['l'], $MasterVsys);
+// Check and normalize the page location
+$p = preg_split("/\./", $_GET['l']);
+$c = preg_split("/\./", $_GET['l']);
+if (!isset($p[3]) || !is_numeric($p[3])) $p[3] = 1;
+if (!isset($p[2]) || !is_numeric($p[2])) $p[2] = 1;
+if (!isset($p[1]) || !is_numeric($p[1])) $p[1] = 1;
+
+$maxch = $Sword->getMaxChapter($_GET['m1'], $p[0]);
+if ($p[1] < 1) $p[1] = 1;
+if ($p[1] > $maxch) $p[1] = $maxch;
+
+$maxvs = $Sword->getMaxVerse($_Get['m1'], $p[0]." ".$p[1]);
+if ($p[2] < 1) $p[2] = 1;
+if ($p[2] > $maxvs) $p[2] = $maxvs;
+
+if ($p[3] < $p[2]) $p[3] = $p[2];
+if ($p[3] > $maxvs) $p[3] = $maxvs;
+
+$_GET['l']  = $Sword->convertLocation($MasterVsys, implode(".", $p), $MasterVsys);
+
+// Redirect to the new location if the requested location did not exist
+$p = preg_split("/\./", $_GET['l']);
+if (isset($c[3]) && $c[3] != $p[3]) $Redirect = 1;
+if (isset($c[2]) && $c[2] != $p[2]) $Redirect = 1;
+if (isset($c[1]) && $c[1] != $p[1]) $Redirect = 1;
+if (isset($c[0]) && $c[0] != $p[0]) $Redirect = 1;
 
 // Apply Sword options
 $_GET['mlt'] = $_GET['stn']; // just synch these two together
@@ -183,6 +180,7 @@ if ($_GET['rmod'] && $_GET['rtype'] && $_GET['rlist']) {
 			$sep = "<br><hr>";
 		}
 		break;
+		
 	case "dictlist":
 		$sep = "";
 		$refs = preg_split("/\s+/", $_GET['rlist']);
@@ -200,8 +198,24 @@ if ($_GET['rmod'] && $_GET['rtype'] && $_GET['rlist']) {
 			$sep = "<br><hr>";
 		}
 		break;
+		
 	case "stronglist":
 		$html = getLemmaHTML(decodeutf8($_GET['rlist']));
+		break;
+		
+	case "chapter":
+		$mod = ($_GET['rmod'] != "<none>" ? $_GET['rmod']:$_GET['m1']);
+		$loc = preg_split("/\./", $_GET['l']);
+		$ch = (int)$loc[1] + (int)$_GET['rlist'];
+		if ($ch < 1 || $ch > $Sword->getMaxChapter($_GET['rmod'], $_GET['l'])) {
+			$html = "<none>";
+		}
+		else {
+			$sep = "<separator/>";
+			$html  = ($_GET['hdg']=='1' ? "<div class=\"chapnum followon\">".$ch."</div>":"").$Sword->getChapterText($_GET['rmod'], $loc[0].$ch);
+			$html .= $sep.htmlspecialchars($Sword->getFootnotes());
+			$html .= $sep.htmlspecialchars($Sword->getCrossRefs());
+		}
 		break;
 	}
 	echo $html;
@@ -212,13 +226,9 @@ unset($_GET['rlist']);
 unset($_GET['rmod']);
 
 // Redirect to canonical URL if needed
-if ($Redirect && !$PromptForBook) {
-	header ('HTTP/1.1 301 Moved Permanently');
-  header ('Location: '.currentFileName().'?'.http_build_query(queryArrCompress($_GET)))."#sv";
-  exit;
-}
+if ($Redirect && !$PromptForBook) redirect($_GET);
 
-// Now get the actual textual data from the SWORD repository
+// Now read the actual textual data from the SWORD repository
 $BookIntro = array();
 $ModInfo = array();
 $FlowCols = 1;
@@ -234,6 +244,15 @@ if (isset($_GET['m2'])) {
 	}
 	if (!$IsInternetExplorer && $FlowCols == --$c) {
 		$PageText = $Sword->getChapterText($flowmod, $_GET['l']);	
+		if (strlen($PageText) < 64) {
+			$before = $_GET['l'];
+			$_GET['l'] = validLocation($_GET['m1']);
+			if ($_GET['l'] != $before) redirect($_GET);
+		}
+		$ch = preg_split("/\./", $_GET['l']);
+		$ch = $ch[1];
+		$head = ($_GET['hdg']=='1' ? "<div class=\"chapnum\">".$ch."</div>":"");
+		$PageText = $head.$PageText;
 	}
 	else {
 		$FlowCols = 1;
@@ -243,10 +262,12 @@ if (isset($_GET['m2'])) {
 else {
 	$PageText = $Sword->getChapterText($mods, $_GET['l']);
 	if (strlen($PageText) < 64) {
+		$before = $_GET['l'];
 		$_GET['l'] = validLocation($_GET['m1']);
-		$PageText = $Sword->getChapterText($_GET['m1'], $_GET['l']);		
+		if ($_GET['l'] != $before) redirect($_GET);	
 	}
 }
+
 $PageFootnotes = htmlspecialchars($Sword->getFootnotes());
 $PageCrossrefs = htmlspecialchars($Sword->getCrossRefs());
 $c = 1;
@@ -255,16 +276,22 @@ while (isset($_GET['m'.$c])) {
 	$ModInfo[$c] = moduleInfo($_GET['m'.$c]);
 	$c++;
 }
-$P_LOC = preg_split("/\./", $_GET['l']);
+$_LOC = preg_split("/\./", $_GET['l']);
 
 
-//
+
+////////////////////////////////////////////////////////////////////////
 // Various utility functions
 //
 
+function redirect($a) {
+	header ('HTTP/1.1 301 Moved Permanently');
+  header ('Location: '.currentFileName().'?'.http_build_query(publicGET($a)))."#sv";
+  exit;	
+}
 
-// This compresses a query string into a canonical browser_bible query string.
-function queryArrCompress($a) {
+// Converts an internal GET array into a canonical GET array for use in public URLs.
+function publicGET($a) {
 	global $Optord, $Default;
 	$n = 0;
 	$b = 1;
@@ -285,9 +312,30 @@ function queryArrCompress($a) {
 
 	$a['g'] = dechex($n);
 	
+	// change identical mx entries into single mcx entry
+	if (isset($a['m1']) && isset($a['m2'])) {
+		$fmod = $a['m1'];
+		reset($a);
+		while (list($name, $val) = each($a)) {
+			if ($fmod && preg_match('/^m\d+$/', $name) && $val != $fmod) $fmod = "";
+		}
+		if ($fmod) {
+			$cnt = 0;
+			reset($a);
+			while (list($name, $val) = each($a)) {
+				if (preg_match('/^m\d+$/', $name)) {
+					$cnt++;
+					unset($a[$name]);
+				}
+			}
+			$a['mc'.$cnt] = $fmod;
+		}
+	}
+
+	// change m1 entry into m entry	
 	if (isset($a['m1'])) {
-			$a['m'] = $a['m1'];
-			unset($a['m1']);
+		$a['m'] = $a['m1'];
+		unset($a['m1']);
 	}
 
 	uksort($a, "querysort");
@@ -295,6 +343,44 @@ function queryArrCompress($a) {
 	return $a;
 }
 
+// Converts a get array into an internally correct GET array. Requests
+// a redirect if the starting get array is not in compressed form.
+function internalGET($a) {
+	global $Redirect, $NumCols, $IsInternetExplorer;
+	
+	// Request redirect to compressed URL if this one is uncompressed
+	if (isset($a['g'])) {$a = queryArrUncompress($a);}
+	else {$Redirect = 1;}
+
+	// Handle any 'mc' param for flow-columns
+	for ($c=1; $c<=9; $c++) {
+		if (isset($a['mc'.$c])) {
+			for ($m=1; $m<=9; $m++) {
+				if ($m == 1) $a['m'.$m] = $a['mc'.$c];
+				elseif ($m <= $c && !$IsInternetExplorer) $a['m'.$m] = $a['mc'.$c];
+				elseif (isset($a['m'.$m])) unset($a['m'.$m]);
+			}
+			unset($a['mc'.$c]);
+		}
+	}
+
+	// Insure all m params are sequential. Limit is 9 columns.
+	if (isset($a['m'])) {
+		$a['m1'] = $a['m'];
+		unset($a['m']);
+	}
+	$ms = array();
+	for ($c=1; $c<=9; $c++) {
+		if (isset($a['m'.$c])) {
+			array_push($ms, $a['m'.$c]);
+			unset($a['m'.$c]);
+		}
+	}
+	$NumCols = 0;
+	for ($c=1; $c<=count($ms); $c++) {$a['m'.$c] = $ms[$c-1]; $NumCols++;}
+	
+	return $a;
+}
 
 function querysort($a, $b) {
 	global $QuerySort;
@@ -437,23 +523,20 @@ function anchor($id, $new, $class, $phrase, $disable, $attribs) {
 //			form controls can never scroll to selected verse.
 //		SKIPS AJAX params
 //		SKIPS params having a value of "<unset>"
-//		SKIPS params with default values to reduce URL length,
-//			which also means that changes to defaults will apply 
-//			retro-actively to bookmarked URLS.
 function pageURL($new, $useHtmlEntities, $query) {
 	global $_GET, $Default;
-	$url = array_merge($_GET, $new);
-	$s = "";
-	$h = "";
-	while (list($name, $val) = each($url)) {
-		if ($val == "<unset>") continue;
-		if (preg_match("/^(rtype|rlist|rmod)$/", $name)) continue;
-		// Keep 'm1' because otherwise we'll go to "home" page!
-		if ($name != 'm1' && $val == $Default[$name]) continue;
-		$h .= $s.$name.'='.$val;
-		$s = "&";	
+	$a = array_merge($_GET, $new);
+	
+	reset($a);
+	while (list($name, $val) = each($a)) {
+		if ($val == "<unset>") unset($a[$name]);
+		if (preg_match("/^(rtype|rlist|rmod)$/", $name)) unset($a[$name]);
 	}
+
+	$h = http_build_query(publicGET($a));
+	
 	if ($useHtmlEntities) {$h = htmlentities($h);}
+	
 	if ($query) {return $h;}
 	else {
 		return urlencode(currentFileName())."?".$h."#sv";	
@@ -484,12 +567,12 @@ function availableBooks($mod, $incbk) {
 		$scope = preg_split("/ /", $scope);
 		for ($i=0; $i<count($scope); $i++) {
 			$bks = preg_split("/\-/", $scope[$i]);
-			$lst = 0;
+			$lst = -1;
 			for ($x=0; $x<count($bks); $x++) {
 				$bks[$x] = preg_replace("/\..*$/", "", $bks[$x]);
 				$idx = indexOfBook($vsys, $bks[$x]);
 				if ($idx == -1) continue;
-				if ($lst == 0) {$lst = $idx;}
+				if ($lst == -1) {$lst = $idx;}
 				else {
 					for ($y=$lst+1; $y<$idx; $y++) {
 						$books['b'.$y] = $Booki[$vsys][$y];	
@@ -509,6 +592,7 @@ function availableBooks($mod, $incbk) {
 			$books['b'.$i] = $Booki[$vsys][$i];	
 		}
 	}
+	
 	return $books;	
 }
 
