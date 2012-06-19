@@ -1,23 +1,83 @@
 var POPUPDELAY = 300
-var PopupElement, PopupShadowElement;
-var PopupEvent;
+var PopupElement;
+var PopupEvent, InfoElement;
 var ShowPopupID;
 var EventInProgress;
 var Selverse, Selchap, Selbook;
+var FSMargin = 40;
+var Media = "screen";
+var InitDone = false;
 
 var ajax = new XMLHttpRequest();
+var FillWin = false;
 
 function init() {
 	PopupElement = document.getElementById("npopup");
-	PopupShadowElement = document.getElementById("npopupSH");
+	InfoElement = document.getElementsByTagName("body")[0];
 	Selverse = document.getElementById("selverse");
 	Selchap = document.getElementById("selchap");
 	Selbook = document.getElementById("selbook");
+	Media = document.getElementById("media").getAttribute("value");
+	
+	if (document.getElementById("flowcolumn") && 
+			Media != "handheld" && 
+	    !(/flowcol1/).test(document.getElementsByTagName("body")[0].className)) {
+		FillWin = {addchaps:[true]};
+		
+		// allow columns to fill their fixed column height ("balance" is specified in CSS for non-Javascript browsers)
+		document.getElementById("flowcolumn").setAttribute("style", "-moz-column-fill:auto; -webkit-column-fill:auto; column-fill:auto;");
+	}
+	
+	resize();
+	InitDone = true;
+}
+
+function resize() {
+	if (FillWin === false) return;
+	
+	var w = winSize();
+	var t = document.getElementById("text");
+
+	// flowcol feature uses fixed column height of browser window.
+	document.getElementById("flowcolumn").style.height = Number(w.height - 245) + "px";
+	
+	// flowcol feature uses full browser width format
+	var maxw = Number( w.width - (2*FSMargin) );
+	t.style.width = maxw + "px";
+	t.style.left = "-" + Math.floor(85 + (t.offsetWidth - 650)/2) + "px";
+	
+	// should another chapter be added to the resulting browser window?
+	if (t.scrollWidth <= t.offsetWidth &&
+			FillWin.addchaps[FillWin.addchaps.length-1] && 
+			FillWin.addchaps.length < 12) {
+
+		FillWin.addchaps[FillWin.addchaps.length-1] = false; // never allow another addition until and unless this one finishes
+		
+		// get another chapter to fill the page
+		ajax.open("GET", getQuery() + "&rtype=chapter&rlist=" + (FillWin.addchaps.length) + "&rmod=" + document.getElementById("m1").value, true);
+		ajax.onreadystatechange = function() {
+			if (ajax.responseText != "<none>" && ajax.readyState==4 && ajax.status==200) {
+				
+				// add new data to page
+				var data = ajax.responseText.split("<separator/>");
+				document.getElementById("flowcolumn").innerHTML += data[0];
+				document.getElementById("fnnotes").innerHTML    += data[1];
+				document.getElementById("crnotes").innerHTML    += data[2];
+				
+				// schedule a new resize to occur AFTER the current addition is already displayed.
+				FillWin.addchaps.push(true);
+				window.setTimeout("resize();", 1)
+			}
+		}
+		ajax.send();		
+	}
+	
 }
 
 var classes = new RegExp("^(fn|cr|sr|dt|dtl|sn|introlink|infolink)$");
 function mouseHandler(e) {
-	if (EventInProgress || !PopupElement) return;
+	if (Media == "handheld" && e.type == "mouseover") return;
+	if (EventInProgress || !InitDone) return;
 	EventInProgress = true;
 	
 	var elem = (e.target ? e.target:e.srcElement);
@@ -56,7 +116,11 @@ function activatePopup(type, title) {
 	RNF = {doRequest:false, content:title, back:"", type:type, key:mod + "." + type + "." + title, list:title, modName:mod};
 //var a=""; for (var m in RNF) {a += m + " = " + RNF[m] + ", ";} window.alert(a);	
 	RNF.back += "<div style=\"margin-bottom:20px;\">";
-	if (PopupElement.style.visibility == "visible") {
+	if (Media == "handheld") {
+		RNF.back += "<a class=\"popupBackLink\" href=\"" + window.location + getQuery() + "\">";
+		RNF.back += document.getElementById("ui.back").innerHTML + "</a>";
+	}
+	else if (PopupElement.style.visibility == "visible") {
 		RNF.back += "<a class=\"popupBackLink\" onclick=\"popupBack(this)\">";
 		RNF.back += document.getElementById("ui.back").innerHTML + "</a>";
 		RNF.back += "<div style=\"display:none;\">" + PopupElement.innerHTML + "</div>";
@@ -72,6 +136,10 @@ function activatePopup(type, title) {
 
 	if (RNF.content) {
 //window.alert(RNF.content);
+		if (Media == "handheld") {
+
+		}
+		
 		PopupElement.innerHTML = RNF.back + RNF.content;
 		if (PopupEvent.type == "click") showPopup();
 		else ShowPopupID = window.setTimeout("showPopup();", POPUPDELAY);
@@ -96,8 +164,8 @@ function getMod(e) {
 function popupBack(elem) {
 	var tmp = elem.nextSibling.innerHTML;
 	if (!tmp) tmp = elem.nextSibling.nextSibling.innerHTML;
-	PopupElement.innerHTML = tmp;
-	showPopup(true);
+	(Media != "handheld" ? PopupElement:InfoElement).innerHTML = tmp;
+	if (Media != "handheld") showPopup(true);
 }
 
 function showPopup(keepPos) {
@@ -115,6 +183,7 @@ function showPopup(keepPos) {
 	}
 	
 	var txtarea = findPos(document.getElementById("pagebox"));
+	if (FillWin) txtarea.left = (FSMargin - 40);
 	
 	var maxY = win.height-10;
 	var minY = 0;
@@ -130,18 +199,9 @@ function showPopup(keepPos) {
 	PopupElement.style.top = top + "px";
 	PopupElement.style.left = left + "px";
 	PopupElement.style.visibility = "visible";
-	shadowPup();
-	PopupShadowElement.style.visibility = "visible";
 	EventInProgress = false;
 	
 	if (RNF.doRequest) doRequest(RNF.type, RNF.key, RNF.list, RNF.modName); 
-}
-
-function shadowPup() {
-	PopupShadowElement.style.width  = String(PopupElement.offsetWidth) + "px";
-	PopupShadowElement.style.left   = String(PopupElement.offsetLeft + 8) + "px";
-	PopupShadowElement.style.top    = String(PopupElement.offsetTop + 8) + "px";
-	PopupShadowElement.style.height = String(PopupElement.offsetHeight) + "px";	
 }
 
 function hidePopup(e, keepInProgress) {
@@ -155,7 +215,6 @@ function hidePopup(e, keepInProgress) {
 	if (PopupElement && PopupElement.style.visibility == "visible") {
 		if (ajax.readyState!=4 || ajax.status!=200) ajax.abort();
 		PopupElement.style.visibility = "hidden";
-		PopupShadowElement.style.visibility = "hidden";
 	}
 }
 
@@ -240,17 +299,7 @@ function getContent(rnf) {
 }
 
 function doRequest(type, key, list, modName) {
-	var req = window.location.pathname;
-	var set = document.getElementById("settings");
-	set = set.firstChild;
-	var sep = "?";
-	while(set) {
-		if (set.id) {
-			req += sep + set.id + "=" + set.value;
-			sep = "&";
-		}
-		set = set.nextSibling;
-	}
+	var req = getQuery();
 	req += "&rtype=" + type + "&rlist=" + list + "&rmod=" + modName;
 //window.alert(req);
 	ajax.open("GET", req, true);
@@ -265,6 +314,21 @@ function doRequest(type, key, list, modName) {
 		}
 	}
 	ajax.send();
+}
+
+function getQuery() {
+	var ret = window.location.pathname;
+	var set = document.getElementById("settings");
+	set = set.firstChild;
+	var sep = "?";
+	while(set) {
+		if (set.id) {
+			ret += sep + set.id + "=" + set.value;
+			sep = "&";
+		}
+		set = set.nextSibling;
+	}
+	return ret;
 }
 
 function decodeHTML(t) {
