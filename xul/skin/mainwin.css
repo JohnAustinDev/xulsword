@@ -175,6 +175,7 @@ textbox deck[anonid="search-icons"] {
   border-right:2px solid rgb(225,195,230);
   border-bottom:2px solid rgb(225,195,230);
   -moz-border-radius:6px;
+  border-radius:6px;
   background:white;
 }
 

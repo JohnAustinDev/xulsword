@@ -129,7 +129,7 @@ $maxch = $Sword->getMaxChapter($_GET['m1'], $p[0]);
 if ($p[1] < 1) $p[1] = 1;
 if ($p[1] > $maxch) $p[1] = $maxch;
 
-$maxvs = $Sword->getMaxVerse($_Get['m1'], $p[0]." ".$p[1]);
+$maxvs = $Sword->getMaxVerse($_GET['m1'], $p[0]." ".$p[1]);
 if ($p[2] < 1) $p[2] = 1;
 if ($p[2] > $maxvs) $p[2] = $maxvs;
 
@@ -560,7 +560,7 @@ function availableBooks($mod, $incbk) {
 	$vsys = $Sword->getVerseSystem($mod);
 	
 	$i = indexOfBook($vsys, $incbk);
-	if ($i != -1) $books['b'.$i] = $bk;
+	if ($i != -1) $books['b'.$i] = $incbk;
 
 	$scope = $Sword->getModuleInformation($mod, "Scope");
 	if ($scope != $NOT_FOUND && ($vsys == "Synodal" || $vsys == "KJV")) {

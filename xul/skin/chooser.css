@@ -45,8 +45,11 @@
   -moz-border-end:2px solid rgb(225,195,230);
   border-bottom:2px solid rgb(225,195,230);
   -moz-border-radius-topright:8px;
+  border-top-right-radius:8px;
   -moz-border-radius-bottomright:8px;
+  border-bottom-right-radius:8px;
   -moz-border-radius:8px;
+  border-radius:8px;
   background:white;
   cursor:pointer;
 }
@@ -85,10 +88,12 @@
 }
 #testament_ot {
   -moz-border-radius-topleft: 8px;
+  border-top-left-radius: 8px;
   padding:26px 0px 8px 0px;
 }
 #testament_nt {
   -moz-border-radius-bottomleft: 8px;
+  border-radius-bottomleft: 8px;
   padding:8px 0px 8px 0px;
 }
 #chbutton_close {
@@ -115,7 +120,9 @@
   padding:1px 0px 1px 0px;
   -moz-border-start:1px solid rgb(150,150,150);
   -moz-border-radius-topright:8px;
+  border-top-right-radius:8px;
   -moz-border-radius-bottomright:8px;
+  border-bottom-right-radius:8px;
 }
 #biblechooser[showing="nt"] #biblebooks_nt {
   visibility:visible;
@@ -139,6 +146,7 @@
   -moz-padding-start:10px;
   -moz-padding-end:2px;
   -moz-border-radius:6px;
+  border-radius:6px;
 }
 .bookname[selected="true"] > div {
   background:rgb(230,200,255);
@@ -224,6 +232,7 @@
   color:blue;
   -moz-box-shadow: 2px 2px 3px 2px #bbb;
   -moz-border-radius:6px;
+  border-radius:6px;
   z-index:6;
 }
 .chaptermenu[headingmenu="show"] .headingmenu {
