@@ -119,9 +119,12 @@
   font-size: 13px;
 	color: black;
 }
+.versenum {
+  vertical-align:top;
+}
 .cr:after {
   content: "\00D7 ";
-  vertical-align:super;
+  vertical-align:top;
   font-family:'Arial' !important;
   font-size-adjust:0.55 !important;
   line-height:100% !important;
@@ -131,7 +134,7 @@
 }
 .cr-x-parallel-passage:after {
   content: "\25CF ";
-  vertical-align:super;
+  vertical-align:top;
   font-family:'Arial' !important;
   font-size-adjust:0.55 !important;
   line-height:100% !important;
@@ -141,7 +144,7 @@
 }
 .cr-x-style1:after {
   content: "+ ";
-  vertical-align:super;
+  vertical-align:top;
   font-family:'Arial' !important;
   font-size-adjust:0.55 !important;
   line-height:100% !important;
@@ -151,7 +154,7 @@
 }
 .fn:after {
   content: "\00D7 ";
-  vertical-align:super;
+  vertical-align:top;
   font-family:'Arial' !important;
   font-size-adjust:0.55 !important;
   line-height:100% !important;
@@ -161,7 +164,7 @@
 }
 .un:after {
   content: "\00D7 ";
-  vertical-align:super;
+  vertical-align:top;
   font-family:'Arial' !important;
   font-size-adjust:0.55 !important;
   line-height:100% !important;
@@ -285,12 +288,14 @@
   padding-right:16px;
   border:1px solid transparent;
   -moz-border-radius:8px;
+  border-radius:8px;
 }
 .selectedNote {
   padding-right:16px;
   border:1px outset yellow;
   background:rgb(255,243,255);
   -moz-border-radius:8px;
+  border-radius:8px;
   cursor:pointer;
 }
 .noteBoxUserNote {

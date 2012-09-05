@@ -8,17 +8,20 @@
   background:rgb(220,220,220);
   border:2px grey outset;
   -moz-border-radius:8px;
+  border-radius:8px;
   opacity:0.8;
 }
 #createSearchIndexBox > hbox {
   padding:3px;
   background:rgb(200,200,200);
   -moz-border-radius:4px;
+  border-radius:4px;
 }
 
 .searchframe {
   border:2px solid rgb(200,170,205);
   -moz-border-radius:4px;
+  border-radius:4px;
 }
 
 /* SEARCH WINDOW ARROWS */

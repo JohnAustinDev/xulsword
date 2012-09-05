@@ -19,6 +19,7 @@ body.flowcol3,
 body.flowcol4  {
 	position:relative;
 	top:-109px;
+  left:-50px;
 }
 body.flowcol2 .solidorange,
 body.tc3 .solidorange,
@@ -322,6 +323,7 @@ body.tc4 img[alt="Яндекс цитирования"] {
 	margin-bottom:12px;
 }
 .versenum {
+  vertical-align:top;
 }
 .hl, .hl span {
 	color:blue; /* selected verse */

@@ -44,7 +44,7 @@ function resize() {
 	// flowcol feature uses full browser width format
 	var maxw = Number( w.width - (2*FSMargin) );
 	t.style.width = maxw + "px";
-	t.style.left = "-" + Math.floor(85 + (t.offsetWidth - 650)/2) + "px";
+	t.style.left = "-" + Math.floor(35 + (t.offsetWidth - 650)/2) + "px";
 	
 	// should another chapter be added to the resulting browser window?
 	if (t.scrollWidth <= t.offsetWidth &&
@@ -135,7 +135,7 @@ function activatePopup(type, title) {
 	getContent(RNF);
 
 	if (RNF.content) {
-//window.alert(RNF.content);
+//var a=""; for (var m in RNF) {a += m + " = " + RNF[m] + ", ";} window.alert(a);	
 		if (Media == "handheld") {
 
 		}
@@ -242,7 +242,8 @@ function getContent(rnf) {
 		for (var i=0; i<fns.length; i++) {
 			if (!fns[i]) continue;
 			var fnp = fns[i].split("<bg>");
-			if (fnp[0] == rnf.type + "." + rnf.list + "." + rnf.modName) {
+			//if (fnp[0] == rnf.type + "." + rnf.list + "." + rnf.modName) {
+      if (fnp[0] == rnf.modName + "." + rnf.type + "." + rnf.list) {
 				RequestData[rnf.key] = fnp[1];
 				rnf.content = fnp[1];
 				break;
@@ -256,7 +257,8 @@ function getContent(rnf) {
 		for (var i=0; i<fns.length; i++) {
 			if (!fns[i]) continue;
 			var fnp = fns[i].split("<bg>");
-			if (fnp[0] == rnf.type + "." + rnf.list + "." + rnf.modName) {
+			//if (fnp[0] == rnf.type + "." + rnf.list+ "." + rnf.modName) {
+      if (fnp[0] == rnf.modName + "." + rnf.type + "." + rnf.list) {
 				rnf.doRequest = true;
 				rnf.type = "reflist";
 				rnf.list = fnp[1];
