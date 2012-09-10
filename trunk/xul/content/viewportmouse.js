@@ -132,7 +132,7 @@ function scriptMouseOver(e) {
       ImmediateUnhighlight=false;
       BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
     }
-    else if (!Popup.activate(x, y, w, edata, elem.id)) {elem.style.cursor = "default";}
+    else if (!Popup.activate(x, y, w, "cr", elem.id)) {elem.style.cursor = "default";}
     break;
      
   case "fn":
@@ -283,8 +283,8 @@ function scriptClick(e) {
     case BIBLE:
     case COMMENTARY:
       var pin = (w && prefs.getBoolPref("IsPinned" + w) ? w:null);
-      if (w && document.getElementById("text" + w).getAttribute("value") != "show1") 
-          MainWindow.previousPage(HILIGHTNONE, SCROLLTYPEEND, pin);
+      if (w && document.getElementById("text" + w).getAttribute("columns") != "show1") 
+          MainWindow.previousPage(HILIGHTNONE, pin);
       else MainWindow.previousChapter(HILIGHTNONE, SCROLLTYPEBEG, pin);
       break;
     case DICTIONARY:
@@ -309,7 +309,7 @@ function scriptClick(e) {
     case BIBLE:
     case COMMENTARY:
       var pin = (w && prefs.getBoolPref("IsPinned" + w) ? w:null);
-      if (w && document.getElementById("text" + w).getAttribute("value") != "show1")
+      if (w && document.getElementById("text" + w).getAttribute("columns") != "show1")
           MainWindow.nextPage(HILIGHTNONE, pin);
       else MainWindow.nextChapter(HILIGHTNONE, SCROLLTYPEBEG, pin);
       break;
@@ -459,7 +459,7 @@ function bbMouseDown(e) {
   e.preventDefault(); //So we don't select while we're dragging the boundary bar
   
   var w = BoundaryClicked;
-  while (w && (!w.id || !(/^text\d$/).test(w.id))) {w = w.parentNode;}
+  while (w && (!w.id || !(/^text\d+$/).test(w.id))) {w = w.parentNode;}
   w = Number(w.id.substr(4));
   
   BoundaryClicked.setAttribute("moving", "true");
@@ -479,7 +479,7 @@ function bbMouseMove(e) {
   
   if (BoundaryClicked) {
     var w = BoundaryClicked;
-    while (w && (!w.id || !(/^text\d$/).test(w.id))) {w = w.parentNode;}
+    while (w && (!w.id || !(/^text\d+$/).test(w.id))) {w = w.parentNode;}
     w = Number(w.id.substr(4));
     
     var top = (e.clientY - StartMouseY);
@@ -498,7 +498,7 @@ function bbMouseUp(e) {
   
   if (BoundaryClicked) {
     var w = BoundaryClicked;
-    while (w && (!w.id || !(/^text\d$/).test(w.id))) {w = w.parentNode;}
+    while (w && (!w.id || !(/^text\d+$/).test(w.id))) {w = w.parentNode;}
     w = Number(w.id.substr(4));
     
     BoundaryClicked.setAttribute("moving", "false");
@@ -560,11 +560,8 @@ function noteboxClick(e) {
     switch (Tab[mod].modType) {
     case BIBLE:
     case COMMENTARY:
-      if (prefs.getBoolPref("IsPinned" + w)) {
-        Location.setLocation(mod, idpart[2] + "." + idpart[3] + "." + idpart[4]);
-        Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
-      }
-      else {MainWindow.quickSelectVerse(mod, null, Number(idpart[3]), v, Number(idpart[5]), HILIGHT_IFNOTV1, SCROLLTYPECENTER);}
+      Location.setLocation(mod, idpart[2] + "." + idpart[3] + "." + idpart[4]);
+      Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
       break;
      case DICTIONARY:
      case GENBOOK:
@@ -603,7 +600,7 @@ function toggleRefText(elem) {
 
 
 function getWindow(elem) {
-  while(elem && (!elem.id || (!(/^text\d$/).test(elem.id) && !(/^npopup$/).test(elem.id)))) {
+  while(elem && (!elem.id || (!(/^text\d+$/).test(elem.id) && !(/^npopup$/).test(elem.id)))) {
     elem = elem.parentNode;
   }
   if (!elem) return null;

@@ -100,17 +100,18 @@ const XSNOTE = "(fn|cr|un)\\.([^\\.]+)\\.(\\w+)\\.(\\d+)\\.(\\d+)\\.(\\w+)";
 
 // scrolling
 const SCROLLTYPENONE = 0;         // don't scroll (for links this becomes SCROLLTYPECENTER)
-const SCROLLTYPETOP = 1           // scroll to top
+const SCROLLTYPETOP = 1;           // scroll to top
 const SCROLLTYPEBEG = 2;          // put selected verse at the top of the window or link
 const SCROLLTYPECENTER = 3;       // put selected verse in the middle of the window or link, unless verse is already visible or verse 1
 const SCROLLTYPECENTERALWAYS = 4; // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
-const SCROLLTYPEEND = 5;          // put selected verse at the end of the window or link, then select first verse of link or verse 1
-const SCROLLTYPEENDSELECT = 6;    // put selected verse at the end of the window or link, and don't change selection
+const SCROLLTYPEEND = 5;          // put selected verse at the end of the window or link, and don't change selection
+const SCROLLTYPEENDSELECT = 6;    // put selected verse at the end of the window or link, then select first verse of link or verse 1
 const SCROLLTYPECUSTOM = 7;       // scroll by running CustomScrollFunction
 // highlighting
 const HILIGHTNONE = 0;            // highlight no verse
 const HILIGHTVERSE = 1;           // highlight selected verse in blue
 const HILIGHT_IFNOTV1 = 2;        // highlight selected verse in blue unless it is verse 1
+const HILIGHTSAME = 3;            // keep hilighted verse the same
 
 var CustomScrollFunction;
 /************************************************************************

@@ -27,7 +27,7 @@ var Texts = {
   
   footnotes:[null, null, null, null],
 
-  update: function(scrollTypeFlag, highlightFlag, force) {
+  update: function(scrollTypeFlag, highlightFlag, force, scrollto, wskip) {
     if (scrollTypeFlag === null) scrollTypeFlag = SCROLLTYPETOP;
     if (highlightFlag === null) highlightFlag = HILIGHTNONE;
     if (force === null) force = false;
@@ -36,17 +36,27 @@ var Texts = {
     this.highlightFlag = highlightFlag;
 
     if (this.scrollTypeFlag == SCROLLTYPETOP) Location.setVerse(prefs.getCharPref("DefaultVersion"), 1, 1);
-
+    
+    updateCSSBasedOnVersion(firstDisplayBible(false), [".chapsubtable"]);
+    
+    var wvisible = ViewPort.update(false);
+    
     for (var w=1; w<=NW; w++) {
-
+      
+      var columns = document.getElementById("text" + w).getAttribute("columns");
+      if (columns == "hide") continue;
+      if (wskip && columns=="show1" && w == wskip) continue;
+      
+      var loc = Location.getLocation(prefs.getCharPref("Version" + w));
+   
       switch(Tab[prefs.getCharPref("Version" + w)].modType) {
         
       case BIBLE:
-        this.updateBible(w);
+        this.updateBible(w, false, loc, this.highlightFlag, (scrollto ? scrollto:loc), this.scrollTypeFlag);
         break;
         
       case COMMENTARY:
-        this.updateCommentary(w);
+        this.updateCommentary(w, false, loc, this.highlightFlag, (scrollto ? scrollto:loc), this.scrollTypeFlag);
         break;
       
       case DICTIONARY:
@@ -60,58 +70,103 @@ var Texts = {
       }
     }
     
-    updateCSSBasedOnVersion(firstDisplayBible(false), [".chapsubtable"]);
-    
-    MainWindow.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
-    
     MainWindow.goUpdateTargetLocation();
     
     MainWindow.updateNavigator();
     
-    ViewPort.update(false);
+    MainWindow.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
+
   },
   
-  updateBible: function(w, force) {
+  updateBible: function(w, force, lselect, highType, lscroll, scrollType) {
+    // don't update anything if this window will not be displayed
+    if (w > prefs.getIntPref("NumDisplayedWindows")) return;
+
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
     
     if (!this.display[w] || !getPrefOrCreate("IsPinned" + w, "Bool", false)) 
-        this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), Location, w);
+        this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), (lscroll ? lscroll:lselect), w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "bk", "ch", "globalOptions", "IsPinned", "ShowOriginal", "ShowFootnotesAtBottom", 
                 "ShowCrossrefsAtBottom", "ShowUserNotesAtBottom"];
                 
     if (force || !lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
-      var ti = BibleTexts.read(w, this.display[w]);
-
-      this.footnotes[w] = ti.footnotes;
-
+jsdump("Reading text from libsword");
       var t = document.getElementById("text" + w);
-     
+      var sb = t.getElementsByClassName("sb")[0];
+      var prev = {htmlText:"", htmlNotes:""};
+      var next = {htmlText:"", htmlNotes:""};
+
+      // Get any additional chapters needed to fill multi-column Bible displays.
+      // Any verse in the display chapter should be scrollable (top, center, or bottom)
+      // while still resulting in a filled multi-column display (if chapters are available).
+      if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
+        
+        var d2 = copyObj(this.display[w]);
+  
+        // collect previous chapter(s)
+        var c = this.display[w].ch - 1;
+        while (c > 0) {
+          d2.ch = c;
+          var tip = BibleTexts.read(w, d2);
+          prev.htmlText = (tip.htmlText.length > 64 ? tip.htmlText:"") + prev.htmlText;
+          prev.htmlNotes = tip.htmlNotes + prev.htmlNotes;
+          sb.innerHTML = prev.htmlText;
+          if (sb.lastChild.offsetLeft >= sb.offsetWidth) break;
+          c--;
+        }
+      
+        // collect next chapter(s)
+        var c = this.display[w].ch + 1;
+        while (c <= Bible.getMaxChapter(d2.mod, d2.bk + "." + d2.ch)) {
+          d2.ch = c;
+          var tip = BibleTexts.read(w, d2);
+          next.htmlText = next.htmlText + (tip.htmlText.length > 64 ? tip.htmlText:"");
+          next.htmlNotes = next.htmlNotes + tip.htmlNotes;
+          sb.innerHTML = next.htmlText;
+          if (sb.lastChild.offsetLeft > sb.offsetWidth) break;
+          c++;
+        }
+        
+      }
+      
+      var ti = BibleTexts.read(w, this.display[w]);
+        
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
       var sb = t.getElementsByClassName("sb")[0];
-      sb.innerHTML = (ti.htmlText.length > 64 ? ti.htmlText:"");
+      sb.innerHTML = prev.htmlText + (ti.htmlText.length > 64 ? ti.htmlText:"") + next.htmlText;
 
       var nb = t.getElementsByClassName("nb")[0];
-      nb.innerHTML = ti.htmlNotes;
+      this.footnotes[w] = prev.htmlNotes + ti.htmlNotes + next.htmlNotes;
+      nb.innerHTML = this.footnotes[w];
+      
     }
     
+    // handle scroll
+    this.scroll2Verse(w, lscroll, scrollType);
+    
+    // handle highlights
+    this.hilightVerses(w, lselect, highType);
+    
     // set audio icons
-    if (BibleTexts.updateAudioLinksTO) window.clearTimeout();
+    if (BibleTexts.updateAudioLinksTO) window.clearTimeout(BibleTexts.updateAudioLinksTO);
     BibleTexts.updateAudioLinksTO = window.setTimeout("BibleTexts.updateAudioLinks(" + w + ");", 0);
-  
-    // handle scrolls and highlights
+    
   },
   
-  updateCommentary: function(w, force) {
-    Texts.showNoteBox[w] = false;
+  updateCommentary: function(w, force, lselect, highType, lscroll, scrollType) {
+    // don't update anything if this window will not be displayed
+    if (w > prefs.getIntPref("NumDisplayedWindows")) return;
+    
+    this.showNoteBox[w] = false;
     
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
     
     if (!this.display[w] || !getPrefOrCreate("IsPinned" + w, "Bool", false)) 
-        this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), Location, w);
+        this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), (lscroll ? lscroll:lselect), w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "bk", "ch", "globalOptions", "IsPinned"];
@@ -129,17 +184,24 @@ var Texts = {
       sb.innerHTML = (ti.htmlText.length > 64 ? ti.htmlText:"");
     }
     
-    // handle scrolls and highlights    
+    // handle scroll
+    this.scroll2Verse(w, lscroll, scrollType);
+    
+    // handle highlights
+    this.hilightVerses(w, lselect, highType);   
   },
   
   updateDictionary: function(w, force) {
-    Texts.showNoteBox[w] = true;
+    // don't update anything if this window will not be displayed
+    if (w > prefs.getIntPref("NumDisplayedWindows")) return;
+    
+    this.showNoteBox[w] = true;
     prefs.setBoolPref("IsPinned" + w, false);
     prefs.setBoolPref("ShowOriginal" + w, false);
     prefs.setBoolPref("MaximizeNoteBox" + w, false);
     
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
-    this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), Location, w);
+    this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), Location.getLocation(prefs.getCharPref("Version" + w)), w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "DictKey", "globalOptions"];
@@ -162,7 +224,7 @@ var Texts = {
     
     // highlight the selected key
     var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");
-    for (var i=0; i<k.length; i++) {k[i].className = "";}
+    while (k.length) {k[0].className = "";}
     k = document.getElementById("w" + w + "." + encodeUTF8(ti.key));
     if (k) {
       k.className = "dictselectkey";
@@ -177,13 +239,16 @@ var Texts = {
   },
   
   updateGenBook: function(w, force) {
-    Texts.showNoteBox[w] = false;
+    // don't update anything if this window will not be displayed
+    if (w > prefs.getIntPref("NumDisplayedWindows")) return;
+    
+    this.showNoteBox[w] = false;
     prefs.setBoolPref("IsPinned" + w, false);
     prefs.setBoolPref("ShowOriginal" + w, false);
     prefs.setBoolPref("MaximizeNoteBox" + w, false);
     
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
-    this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), Location, w);
+    this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), Location.getLocation(prefs.getCharPref("Version" + w)), w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "GenBookKey", "globalOptions"];
@@ -217,11 +282,11 @@ var Texts = {
     
     var fs = (maxfs ? maxfs:20);
     elem.firstChild.style.fontSize = fs + "px";
-jsdump("A-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
+//jsdump("A-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
     while (fs > 8 && elem.offsetWidth > w) {
       fs -= 4;
       elem.firstChild.style.fontSize = fs + "px";
-jsdump("B-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
+//jsdump("B-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
     }
     
     return elem.innerHTML;
@@ -282,7 +347,7 @@ jsdump("B-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
       var myid = "un." + encodedResVal + "." + bk + "." + ch + "." + verse + "." + mod;
       var newNoteHTML = "<span id=\"w" + w + "." + myid + "\" class=\"un\" title=\"un\"></span>";
       
-      // if this is a selected verse, place usernote inside the hilighted element (more like regular notes, so highlightSelectedVerses works right)
+      // if this is a selected verse, place usernote inside the hilighted element (more like regular notes)
       var idname = (usesVerseKey ? "vs." + bk + "." + ch + ".":"par.");
       var re = new RegExp("id=\"w" + w + "." + idname + verse + "\">(\\s*<span.*?>)?", "im");
       usernotes.html = usernotes.html.replace(re, "$&" + newNoteHTML);
@@ -293,12 +358,13 @@ jsdump("B-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
   },
  
   getDisplay: function(mod, loc, w) {
+    loc = loc.split(".");
     var display = {globalOptions:{}};
     display.mod = mod;
-    display.bk = loc.getBookName();
-    display.ch = loc.getChapterNumber(mod);
-    display.vs = loc.getVerseNumber(mod);
-    display.lv = loc.getLastVerseNumber(mod);
+    display.bk = loc[0];
+    display.ch = Number((loc[1] ? loc[1]:1));
+    display.vs = Number((loc[2] ? loc[2]:1));
+    display.lv = Number((loc[3] ? loc[3]:1));
     display.DictKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
     display.GenBookKey = getPrefOrCreate("GenBookKey_" + mod + "_" + w, "Unicode", "/");
     display.IsPinned = getPrefOrCreate("IsPinned" + w, "Bool", false);
@@ -330,24 +396,258 @@ jsdump("B-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
     return false;
   },
 
-  scroll2: function(outerElement, element2Scroll, offsetParentId, dontScrollIfVisible, margin) {
+  scroll2Verse: function(w, l, scrollTypeFlag) {
+    if (!l) return true;
+    
+    var t = document.getElementById("text" + w);
+    var sb = t.getElementsByClassName("sb")[0];
+    var mod = prefs.getCharPref("Version" + w);
+    
+    l = l.split(".");
+    l[1] = (l[1] ? Number(l[1]):1);
+    l[2] = (l[2] ? Number(l[2]):1);
+    l[3] = (l[3] ? Number(l[3]):l[2]);
+    
+    // find the element to scroll to
+    var av = sb.firstChild;
+    var v = null;
+    var vf = null;
+    while (av && !v) {
+
+      var re;
+      re = new RegExp("^vs" + "\\." + l[0] + "\\." + l[1] + "\\.");
+      if (!vf && av.id && re.test(av.id)) vf = av;
+      
+      re = new RegExp("^vs" + "\\." + l[0] + "\\." + l[1] + "\\." + l[2] + "$");
+      if (av.id && re.test(av.id)) v = av;
+      
+      av = av.nextSibling;
+      
+    }
+    
+    // if not found, use first verse in current chapter
+    if (!v) v = vf;
+    
+    // if neither verse nor chapter has been found, return false
+    if (!v) return false;
+
+    // perform appropriate scroll action
+jsdump("SCROLLING w" + w + " " + v.id + ": " + scrollTypeFlag);
+
+    var vOffsetTop = v.offsetTop;
+    var vt = v;
+    while (vt && vt.parentNode !== v.offsetParent) {
+      vt = vt.parentNode; 
+      if (vt) vOffsetTop -= vt.offsetTop;
+    }
+    
+    // if part of commentary element is already visible, don't rescroll
+    if (Tab[mod].modType==COMMENTARY &&
+        (vOffsetTop < sb.scrollTop) &&
+        (vOffsetTop + v.offsetHeight > sb.scrollTop + 20)) return true;
+      
+    // if this is verse 1 then SCROLLTYPEBEG and SCROLLTYPECENTER both become SCROLLTYPETOP
+    if (l[2]==1 && (scrollTypeFlag==SCROLLTYPEBEG || scrollTypeFlag==SCROLLTYPECENTER)) {
+      scrollTypeFlag = SCROLLTYPETOP;
+    }
+  
+    if (t.getAttribute("columns") == "show1") {
+      
+      // scroll single column windows...
+      switch (scrollTypeFlag) {
+      case SCROLLTYPENONE:         // don't scroll (for links this becomes SCROLLTYPECENTER)
+        break;
+      case SCROLLTYPETOP:          // scroll to top
+        sb.scrollTop = 0;
+        break;
+      case SCROLLTYPEBEG:          // put selected verse at the top of the window or link
+        sb.scrollTop = vOffsetTop;
+        break;
+      case SCROLLTYPECENTER:       // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
+        if (l[2] != 1 && ((vOffsetTop + v.offsetHeight) > (sb.scrollTop + sb.offsetHeight) || vOffsetTop < sb.scrollTop)) {
+          var middle = Math.round(vOffsetTop - (sb.offsetHeight/2) + (v.offsetHeight/2));
+          // if beginning of verse is not showing then make it show
+          if (vOffsetTop < middle) {sb.scrollTop = vOffsetTop;}
+          else {sb.scrollTop = middle;}
+        }
+        break;
+      case SCROLLTYPECENTERALWAYS: // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
+          var middle = Math.round(vOffsetTop - (sb.offsetHeight/2) + (v.offsetHeight/2));
+          if (vOffsetTop < middle) {sb.scrollTop = vOffsetTop;}
+          else {sb.scrollTop = middle;}
+        break;
+      case SCROLLTYPEEND:          // put selected verse at the end of the window or link, and don't change selection
+      case SCROLLTYPEENDSELECT:    // put selected verse at the end of the window or link, then select first verse of link or verse 1
+        sb.scrollTop = vOffsetTop + v.offsetHeight - sb.offsetHeight;
+        break;
+      case SCROLLTYPECUSTOM:       // scroll by running CustomScrollFunction
+        break;
+      }
+    }
+    
+    // scroll multi-column windows...
+    else {
+      
+      switch (scrollTypeFlag) {
+      case SCROLLTYPENONE:         // don't scroll (for links this becomes SCROLLTYPECENTER)
+        break;
+      case SCROLLTYPETOP:          // scroll to top
+        // hide all verses previous to scroll verse's chapter
+        var vs = sb.lastChild;
+        var show = true;
+        var re = new RegExp("^vs\\.[^\\.]+\\." + (Number(l[1])-1) + "\\.");
+        while(vs) {
+          if (vs.id && re.test(vs.id)) show = false;
+          vs.style.display = (show ? "":"none");
+          vs = vs.previousSibling;
+        }
+        break;
+      case SCROLLTYPEBEG:          // put selected verse at the top of the window or link
+        // Hide all verses before the scroll verse. If the scroll verse is emediately preceded by
+        // consecutive non-verse (heading) elements, then show them.
+        var vs = sb.lastChild;
+        var show = true;
+        var showhead = true;
+        while(vs) {
+          if (!show && showhead) {
+            var isverse = (vs.id && (/^vs\./).test(vs.id));
+            vs.style.display = (isverse  ? "none":"");
+            if (isverse) showhead = false;
+          }
+          else {
+            vs.style.display = (show ? "":"none");
+            if (vs == v) show = false;
+          }
+          vs = vs.previousSibling;
+        }
+        break;
+      case SCROLLTYPECENTER:       // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
+        if (l[2] == 1 || (v.style.display != "none" && v.offsetLeft < sb.offsetWidth)) break;
+      case SCROLLTYPECENTERALWAYS: // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
+        // hide all elements before verse
+        var vs = sb.firstChild;
+        var show = false;
+        while (vs) {
+          if (vs == v) show = true;
+          vs.style.display = (show ? "":"none"); 
+          vs = vs.nextSibling;
+        }
+        // show verse near middle of first column
+        vs = v.previousSibling;
+        if (vs) {
+          var h = 0;
+          do {
+            vs.style.display = "";
+            h += vs.offsetHeight;
+            vs = vs.previousSibling;
+          }
+          while (vs && h < (sb.offsetHeight/2 - 20));
+          if (vs) vs.style.display = "none";
+        }
+        break;
+      case SCROLLTYPEEND:          // put selected verse at the end of the window or link, and don't change selection
+      case SCROLLTYPEENDSELECT:    // put selected verse at the end of the window or link, then select first verse of link or verse 1
+        // show all verses
+        var vs = sb.lastChild;
+        while (vs) {
+          vs.style.display = "";
+          vs = vs.previousSibling;
+        }
+        // hide verses until last verse appears in last column
+        vs = sb.firstChild;
+        while (vs && v.offsetLeft >= sb.offsetWidth) {
+          vs.style.display = "none";
+          vs = vs.nextSibling;
+        }
+        // hide verses until last verse appears above footnotebox
+        var nb = document.getElementById("note" + w);
+        while (vs && 
+              (v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth) && v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight)) {
+          vs.style.display = "none";
+          vs = vs.nextSibling;
+        }
+        
+        if (scrollTypeFlag == SCROLLTYPEENDSELECT) {
+          var vs = sb.firstChild;
+          while(vs && (vs.style.display == "none" || !vs.id || !(/^vs\./).test(vs.id))) {vs = vs.nextSibling;}
+          if (vs) {
+            var id = vs.id.replace(/^(vs\.)/, "");
+            Location.setLocation(prefs.getCharPref("Version" + w), id);
+          }
+        }
+    
+        break;
+      case SCROLLTYPECUSTOM:       // scroll by running CustomScrollFunction
+        break;    
+      }
+      
+    }
+  
+    return true;
+  },
+  
+  scroll2Element: function(outerElement, element2Scroll, offsetParentId, dontScrollIfVisible, margin) {
     //dump ("outerElement:" + outerElement.id + "\nelement2Scroll:" + element2Scroll.id + "\noffsetParentId:" + offsetParentId + "\ndontScrollIfVisible:" + dontScrollIfVisible + "\nmargin:" + margin + "\n");
     if (!element2Scroll || !element2Scroll.offsetParent) return;
     //jsdump("offsetParentId:" + offsetParentId + "\n");
     while (element2Scroll && element2Scroll.offsetParent && element2Scroll.offsetParent.id != offsetParentId) {element2Scroll = element2Scroll.parentNode;}
     
-    var noteOffsetTop = element2Scroll.offsetTop;
+    var elemOffsetTop = element2Scroll.offsetTop;
     var boxScrollHeight = outerElement.scrollHeight;
     var boxOffsetHeight = outerElement.offsetHeight;
     
-    //jsdump("id:" + element2Scroll.id + " outElemScrollTop: " + outerElement.scrollTop + " boxOffsetHeight:" + boxOffsetHeight + " boxScrollHeight:" + boxScrollHeight + " noteOffsetTop:" + noteOffsetTop + "\n");
+    //jsdump("id:" + element2Scroll.id + " outElemScrollTop: " + outerElement.scrollTop + " boxOffsetHeight:" + boxOffsetHeight + " boxScrollHeight:" + boxScrollHeight + " elemOffsetTop:" + elemOffsetTop + "\n");
     var scrollmargin=10;
-    if (dontScrollIfVisible && noteOffsetTop > outerElement.scrollTop+scrollmargin && noteOffsetTop < outerElement.scrollTop+boxOffsetHeight-scrollmargin) return;
+    if (dontScrollIfVisible && elemOffsetTop > outerElement.scrollTop+scrollmargin && elemOffsetTop < outerElement.scrollTop+boxOffsetHeight-scrollmargin) return;
     
-    // If note is near bottom then shift to note (which will be max shift)
-    if (noteOffsetTop > (boxScrollHeight - boxOffsetHeight + margin)) {outerElement.scrollTop = noteOffsetTop;}
-    // Otherwise shift to note and add a little margin above note
-    else {outerElement.scrollTop = noteOffsetTop - margin;}
+    // If element is near bottom then shift to element (which will be max shift)
+    if (elemOffsetTop > (boxScrollHeight - boxOffsetHeight + margin)) {outerElement.scrollTop = elemOffsetTop;}
+    // Otherwise shift to element and add a little margin above
+    else {outerElement.scrollTop = elemOffsetTop - margin;}
+  },
+  
+  hilightVerses: function(w, l, hilightFlag) {
+    if (!l) return;
+    if (hilightFlag == HILIGHTSAME) return;
+    
+    var t = document.getElementById("text" + w);
+    var sb = t.getElementsByClassName("sb")[0];
+    var mod = prefs.getCharPref("Version" + w);
+    
+    l = l.split(".");
+    l[1] = (l[1] ? Number(l[1]):1);
+    l[2] = (l[2] ? Number(l[2]):1);
+    l[3] = (l[3] ? Number(l[3]):l[2]);
+  
+    // unhilight everything
+    var hl = sb.getElementsByClassName("hl");
+    while (hl.length) {hl[0].className = "";}
+  
+    // find the verse element(s) to hilight
+    var av = sb.firstChild;
+    while (av) {
+      var id = av.id;
+      if (id && (/^vs\./).test(id)) {
+        
+        id = id.split(".");
+        id.shift();
+        id[1] = Number(id[1]);
+        id[2] = Number(id[2]);
+                
+        var hi = (id[0] == l[0] && id[1] == l[1]);
+        if (hilightFlag==HILIGHTNONE) hi = false;
+        if (hilightFlag==HILIGHT_IFNOTV1 && 
+            (l[2] == 1 || id[2] < l[2] || id[2] > l[3])) hi = false;
+        if (hilightFlag==HILIGHTVERSE && 
+            (id[2] < l[2] || id[2] > l[3])) hi = false;
+     
+        if (hi) av.className = "hl";
+        
+      }
+      
+      av = av.nextSibling;
+    }
+    
   },
 
   
@@ -462,12 +762,12 @@ var BibleTexts = {
       Bible.setGlobalOption("Strong's Numbers", "On");
       Bible.setGlobalOption("Morphological Tags", "On");
       var mod2 = (findBookNum(d.bk) < NumOT ? OrigModuleOT:OrigModuleNT);
-      ret.htmlText = Bible.getChapterTextMulti(d.mod + "," + mod2, d.bk + " " + d.ch).replace("interV2", "vstyle" + mod2, "gm");
+      ret.htmlText = Bible.getChapterTextMulti(d.mod + "," + mod2, d.bk + "." + d.ch + ".1.1").replace("interV2", "vstyle" + mod2, "gm");
       Bible.setGlobalOption("Strong's Numbers", prefs.getCharPref("Strong's Numbers"));
       Bible.setGlobalOption("Morphological Tags", prefs.getCharPref("Morphological Tags"));
     }
     else {
-      ret.htmlText = Bible.getChapterText(d.mod, d.bk + " " + d.ch);
+      ret.htmlText = Bible.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");
       
       if (d.globalOptions["User Notes"] == "On") {
         un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText, w);
@@ -754,7 +1054,7 @@ var BibleTexts = {
     var nb = document.getElementById("note" + w);
     var note = document.getElementById(id);
     
-    Texts.scroll2(nb, note, "w" + w + ".maintable.", true, 4);
+    Texts.scroll2Element(nb, note, "w" + w + ".maintable.", true, 4);
   },
 
   hilightUserNotes:function (notes, w) {
@@ -809,7 +1109,7 @@ var CommTexts = {
     }
     
     // get Commentary chapter's text
-    ret.htmlText = Bible.getChapterText(d.mod, d.bk + " " + d.ch);
+    ret.htmlText = Bible.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");
     
     ret.footnotes = Bible.getNotes();
       
