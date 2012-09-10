@@ -185,7 +185,7 @@ function loadedXULReal() {
   //we're ok!
   // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
   else if (Bible) {
-    Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+    Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     window.setTimeout("postWindowInit()", 1000); 
   }
   jsdump("Initilization Complete\n");
@@ -827,13 +827,17 @@ function updateFromNavigator(numberOfSelectedVerses) {
   if (myc > Book[mybn].numChaps) {myc=Book[mybn].numChaps;}
   
   if (!fail) {Location.setLocation(myversion, Book[mybn].sName + "." + myc);}
-  
+
   //check verse is not necessary since sending Location an illegal verse number will result in return of the appropriate boundary (1 or max verse)
   Location.setVerse(myversion, myv, myv+numberOfSelectedVerses-1);
-  
   Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
 }
 
+
+/************************************************************************
+ * Navigation functions...
+ ***********************************************************************/ 
+ 
 function previousBook() {
   var bkn = findBookNum(Location.getBookName());
   bkn--;
@@ -844,75 +848,71 @@ function previousBook() {
 
 // if pin info is given, apply changes to pin window only
 function previousChapter(highlightFlag, scrollType, wpin) {
-  var vers = (pin ? prefs.getCharPref("Version" + wpin):firstDisplayBible());
-  var bkn = findBookNum(pin ? Texts.display[wpin].bk:Location.getBookName());
-  var chn = (pin ? Texts.display[wpin].ch:Location.getChapterNumber(vers));
+  var vers = (wpin ? prefs.getCharPref("Version" + wpin):firstDisplayBible());
+  var bkn = findBookNum(wpin ? Texts.display[wpin].bk:Location.getBookName());
+  var chn = (wpin ? Texts.display[wpin].ch:Location.getChapterNumber(vers));
   
   if (chn > 1) {chn--;}
   else return;
   
-  if (!wpin) {
-    if (!scrollType || scrollType==SCROLLTYPETOP || scrollType==SCROLLTYPEBEG) 
-        quickSelectVerse(vers, Book[bkn].sName, chn, 1, 1, highlightFlag, scrollType);
-    else quickSelectVerse(vers, Book[bkn].sName, chn, LAST_VERSE_IN_CHAPTER, LAST_VERSE_IN_CHAPTER, highlightFlag, scrollType);
-  }
-  else {
-    Texts.display[wpin].ch = chn;
-    Texts.update(scrollType, HILIGHTNONE);
-  }
+  if (wpin) {Texts.display[wpin].ch = chn;}
+  else {Location.setLocation(vers, Location.getBookName() + "." + chn);}
+  
+  Texts.update(scrollType, highlightFlag);
 }
 
 // if pin info is given, apply changes to pin window(s) only
 function previousPage(highlightFlag, scrollType, wpin) {
-  var firstPassageInLink = getPassageFromWindow(FIRSTPASSAGE); //FIRSTPLASTW
-  if (!firstPassageInLink) {
-    previousChapter(highlightFlag, SCROLLTYPEBEG, (wpin ? wpin:null));
-    return;
+  
+  // if a multi-column windows is visible, get its first verse
+  var vf = null;
+  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
+    var t = ViewPortWindow.document.getElementById("text" + w);
+    if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
+      var sb = t.getElementsByClassName("sb")[0];
+      var v = sb.firstChild;
+      while (v && (v.style.display == "none" || !v.id || !(/^vs\./).test(v.id))) {v = v.nextSibling;}
+      if (v) {
+        vf = v.id.split(".");
+        vf.shift();
+      }
+      if (vf) break;
+    }
   }
   
-  firstPassageInLink = firstPassageInLink.split(".");
-  var vers = firstPassageInLink[4];
-  var bk = firstPassageInLink[0];
-  var bkn = findBookNum(firstPassageInLink[0]);
-  var ch = Number(firstPassageInLink[1]);
-  var v = Number(firstPassageInLink[2]);
-  if (ch==1 && v==1) {
-    if (!wpin) {
-      Location.setLocation(vers, bk + "." + ch + "." + v);
-      previousChapter(highlightFlag, scrollType);
-      return;
-    }
-    else {
-      Texts.display[wpin].bk = bk;
-      Texts.display[wpin].ch = ch;
-      Texts.display[wpin].vs = v;
-      previousChapter(highlightFlag, scrollType, wpin);
-      return;
-    }
+  // if no multi-column window is visible, just do previousChapter
+  if (!vf) {
+    previousChapter(highlightFlag, scrollType, (wpin ? wpin:null));
+    return;
   }
+jsdump("previousPage=" + vf);  
 
-  v--;
-  if (v < 1) {
-    ch--;
-    v = Bible.getMaxVerse(vers, bk + "." + ch);
+  if (wpin) {
+    Texts.display[wpin].bk = vf[0];
+    Texts.display[wpin].ch = vf[1];
+    Texts.display[wpin].vs = vf[2];
   }
-
-  if (!wpin) quickSelectVerse(vers, bk, ch, v, v, highlightFlag, scrollType);
-  else {
-    Texts.display[wpin].bk = bk;
-    Texts.display[wpin].ch = ch;
-    Texts.display[wpin].vs = v;
-    Texts.update(scrollType, HILIGHTNONE);
-  }
+  else {Location.setLocation(prefs.getCharPref("Version" + w), vf[0] + "." + vf[1] + "." + vf[2]);}
+  
+  Texts.update((wpin ? SCROLLTYPEEND:SCROLLTYPEENDSELECT), highlightFlag);
 }
 
 function previousVerse(scrollType) {
- // Set Version/Chapter so that setVerse corresponds to the verse/versification of window1
   var vers = firstDisplayBible();
-  var v = Location.getVerseNumber(vers);
-  v--;
-  if ((v==0)&&(findBookNum(Location.getBookName()) >= 0)) previousChapter(HILIGHTVERSE, scrollType);
-  else if (v > 0) quickSelectVerse(vers, null, null, v, null, HILIGHTVERSE, scrollType);
+  var l = Location.getLocation(vers).split(".");
+  l[1] = Number(l[1]);
+  l[2] = Number(l[2]);
+  
+  l[2]--;
+  if (l[2] == 0) {
+    l[1]--;
+    if (l[1] == 0) return;
+    l[2] = Bible.getMaxVerse(vers, l[0] + "." + l[1]);
+  }
+  l[3] = l[2];
+
+  Location.setLocation(vers, l.join("."));
+  Texts.update(scrollType, HILIGHTVERSE);
 }
 
 function nextBook() {
@@ -932,373 +932,143 @@ function nextChapter(highlightFlag, scrollType, wpin) {
   if (chn < Book[bkn].numChaps) {chn++;}
   else return;
   
-  if (!wpin) {quickSelectVerse(vers, Book[bkn].sName, chn, 1, 1, highlightFlag, scrollType);}
-  else {
-    Texts.display[wpin].ch = chn;
-    Texts.update(scrollType, HILIGHTNONE);
-  }
+  if (wpin) {Texts.display[wpin].ch = chn;}
+  else {Location.setLocation(vers, Location.getBookName() + "." + chn);}
+  
+  Texts.update(scrollType, highlightFlag);
 }
 
 // if pin info is given, apply changes to pin window(s) only
 function nextPage(highlightFlag, wpin) {
-  var lastPassageOfLink = getPassageFromWindow(LASTPASSAGE); //LASTPFIRSTW
-  if (!lastPassageOfLink) {
+  
+  // if a multi-column windows is visible, get its last verse
+  var vl = null;
+  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
+    var t = ViewPortWindow.document.getElementById("text" + w);
+    if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
+      var sb = t.getElementsByClassName("sb")[0];
+      var nb = ViewPortWindow.document.getElementById("note" + w);
+      var v = sb.lastChild;
+      while (v && (
+             !v.id || !(/^vs\./).test(v.id) || 
+             v.offsetLeft >= sb.offsetWidth || 
+             (v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth) && v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight))
+             ) {
+        v = v.previousSibling;
+      }
+      if (v) {
+        vl = v.id.split(".");
+        vl.shift();
+      }
+      if (vl) break;
+    }
+  }
+  
+  // if no multi-column window is visible, just do previousChapter
+  if (!vl) {
     nextChapter(highlightFlag, SCROLLTYPEBEG, (wpin ? wpin:null));
     return;
   }
-
-  lastPassageOfLink = lastPassageOfLink.split(".");
-  var vers = lastPassageOfLink[4];
-  var bk = lastPassageOfLink[0];
-  var bkn = findBookNum(lastPassageOfLink[0]);
-  var ch = Number(lastPassageOfLink[1]);
-  var v = Number(lastPassageOfLink[2]);
-  var maxv = Bible.getMaxVerse(vers, bk + "." + ch);
-  if (ch==Book[bkn].numChaps && v==maxv) {
-    if (!wpin) {
-      Location.setLocation(vers, bk + "." + ch + "." + v);
-      nextChapter(highlightFlag, SCROLLTYPEBEG);
-      return;
-    }
-    else {
-      Texts.display[wpin].bk = bk;
-      Texts.display[wpin].ch = ch;
-      Texts.display[wpin].vs = v;
-      nextChapter(highlightFlag, SCROLLTYPEBEG, wpin);
-      return;
-    }
+jsdump("nextPage=" + vl);
+  if (wpin) {
+    Texts.display[wpin].bk = vl[0];
+    Texts.display[wpin].ch = vl[1];
+    Texts.display[wpin].vs = vl[2];
   }
-
-  v++;
-  if (v > maxv) {
-    v = 1;
-    ch++;
-  }
+  else {Location.setLocation(prefs.getCharPref("Version" + w), vl[0] + "." + vl[1] + "." + vl[2]);}
   
-  var update;
-  if (!wpin) quickSelectVerse(vers, bk, ch, v, v, highlightFlag, SCROLLTYPEBEG)
-  else {
-    Texts.display[wpin].bk = bk;
-    Texts.display[wpin].ch = ch;
-    Texts.display[wpin].vs = v;
-    Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
-  }
+  Texts.update(SCROLLTYPEBEG, highlightFlag);
 }
 
 function nextVerse(scrollType) {
- // Set Version/Chapter such that we get verse/versification of window1 set up correctly
   var vers = firstDisplayBible();
-  var cv = Location.getVerseNumber(vers);
-  if (cv < Bible.getMaxVerse(vers, Location.getLocation(vers))) {
-    cv++;
-    quickSelectVerse(vers, null, null, cv, null, HILIGHTVERSE, scrollType);
-  }
-  else if (findBookNum(Location.getBookName()) <= NumBooks-1) nextChapter(HILIGHTVERSE, scrollType);
-}
-
-// If onlyThisWin is false (or null), it reads the full text of the link and
-// returns the requested passage, or null if no link is found.
-// If onlyThisWin is given, text in this window is read.
-// Passage may be:
-//    first passage of link
-//    last passage of link
-// Return form is book.chapter.verse.verse.version
-const FIRSTPASSAGE = 0;
-const LASTPASSAGE = 1;
-function getPassageFromWindow(pflag, onlyThisWin) {
-  if (!Link.numWins && !onlyThisWin) return null; // no link and no onlyThisWin!
-  var text = "";
+  var l = Location.getLocation(vers).split(".");
+  l[1] = Number(l[1]);
+  l[2] = Number(l[2]);
   
-  if (onlyThisWin && !Link.isLink[onlyThisWin]) {
-    // if this is a single, non-linked window:
-    var elem;
-    if (pflag == LASTPASSAGE) elem = getLastDisplayedPassage(onlyThisWin);
-    else elem = getFirstDisplayedPassage(onlyThisWin);
-    if (!elem || !elem.id || !elem.id.match(/^vs\.[^\.]+\.\d+\.\d+$/)) return null;
-    return elem.id.substring(elem.id.indexOf(".")+1) + "." + prefs.getCharPref("Version" + onlyThisWin);
+  l[2]++;
+  if (l[2] > Bible.getMaxVerse(vers, l[0] + "." + l[1])) {
+    l[1]++;
+    if (l[1] > Bible.getMaxChapter(vers, l[0])) return;
+    l[2] = 1;
   }
-  else {
-    // if this is a linked window, read text from link
-    for (var w=Link.startWin; w<=Link.finishWin; w++) {
-      if (!Link.isLink[w]) continue;
-      if (onlyThisWin && w!=onlyThisWin) continue;
-      if (prefs.getBoolPref("MaximizeNoteBox" + w)) continue;
-      if ((Link.isRTL && guiDirection() == "rtl") || (!Link.isRTL && guiDirection() != "rtl"))
-          text = text + ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML;
-      else
-          text = ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML + text;
-    }
-  }
-  
-  var passage;
-  var verseID = new RegExp("id=\"vs\\.([^\\.]*)\\.(\\d+)\\.(\\d+)\"");
-  if (pflag==FIRSTPASSAGE) passage = text.match(verseID);
-  else {
-    passage = text.lastIndexOf(Vtext1);
-    passage = text.substr(passage).match(verseID);
-  }
+  l[3] = l[2];
 
-  if (!passage) return null;
-  passage.push(passage[passage.length-1]);
-  passage.push(Link.modName);
-  passage.shift();
-  return passage.join(".");
+  Location.setLocation(vers, l.join("."));
+  Texts.update(scrollType, HILIGHTVERSE);
 }
 
-// not for use with non versekey windows, or with pinned windows because they don't allow verse selections
-function quickSelectVerse(version, bk, ch, vs, lastvs, highlightFlag, scrollType) {
-  if (!bk) bk = Location.getBookName();
-  if (!ch) ch = Location.getChapterNumber(version);
-  if (!lastvs) lastvs = vs;
-  var updateNeeded = getUnpinnedVerseKeyWindows();
-  Location.setLocation(version, bk + "." + ch + "." + vs + "." + lastvs);
-  var forceNonlinkRedraw = false;
-  var forceRedraw = [false, false, false, false];
-  // if we have a link which needs scrolling, force a redraw of the link
-  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    if (!updateNeeded[w] || !Link.isLink[w]) continue;
-    if (scrollType && scrollType != SCROLLTYPECENTER) forceRedraw[w] = true;
-    if (scrollType && scrollType == SCROLLTYPEEND) forceNonlinkRedraw = true; // selected verse might change during Texts.update!
-  }
-  var forceLinkRedraw = false;
-  var text = "";
-  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    if (!updateNeeded[w] || forceRedraw[w]) continue;
-    else if (prefs.getBoolPref("ShowOriginal" + w)) forceRedraw[w] = true;
-    else if (!Link.isLink[w] && forceNonlinkRedraw) forceRedraw[w] = true;
-    else if (!Link.isLink[w]) {
-      var chID = RegExp("id=\"vs\\." + Location.getBookName() + "\\." + Location.getChapterNumber(prefs.getCharPref("Version" + w)) + "\\.");
-      if (ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML.search(chID) == -1) forceRedraw[w] = true;
-    }
-    else {
-      text += ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML;
-      if (w==Link.finishWin) {
-        // finished reading text for link or page
-        var vsID = RegExp("id=\"vs\\." + Location.getBookName() + "\\." + Location.getChapterNumber(prefs.getCharPref("Version" + w)) + "\\." + Location.getVerseNumber(prefs.getCharPref("Version" + w)) + "\"");
-        var vlID = RegExp("id=\"vs\\." + Location.getBookName() + "\\." + Location.getChapterNumber(prefs.getCharPref("Version" + w)) + "\\." + Location.getLastVerseNumber(prefs.getCharPref("Version" + w)) + "\"");
-        vsID = text.search(vsID);
-        vlID = text.search(vlID);
-        if (vsID == -1 || vlID == -1) {
-          for (var x=1; x<=3; x++) {forceRedraw[x] |= Link.isLink[w];}
-        }
-        text = "";
-      }
-    }
-  }
-  var notYetUpdated = [false];
-  for (w=1; w<=3; w++) {notYetUpdated.push(updateNeeded[w] && !forceRedraw[w]);}
-  if (scrollType) window.setTimeout("scrollScriptBoxes([" + notYetUpdated + "], " + scrollType + ");", 1);
-  Texts.update(scrollType, highlightFlag);
-  var needhl = true; // if forceRedraw was all false, we need to run highlighter here instead
-  for (w=1; w<=3; w++) {if (forceRedraw[w]) {needhl = false; break;}}
-  if (needhl) highlightSelectedVerses(highlightFlag); 
-}
-
-function highlightSelectedVerses(highlightFlag) {
-  for (var w=1; w<=3; w++) {
-    if (Tab[prefs.getCharPref("Version" + w)].modType != BIBLE || 
-        prefs.getBoolPref("IsPinned" + w) ||
-        !highlightFlag || (highlightFlag==HILIGHT_IFNOTV1 && fv==1 && lv==1)) 
-    {
-      ViewPortWindow.SelectedVerseCSS.style.color = ViewPort.ScriptBoxFontColor;
-      continue;   
-    }
-    else {ViewPortWindow.SelectedVerseCSS.style.color = ViewPort.SelectedVerseColor;}
-
-    var oldsel = ViewPortWindow.getElementById("sv");
-    if (oldsel) oldsel.removeAttribute("id");
-    var selem = ViewPortWindow.createElement("span");
-    selem.className="hl";
-    var fv = Location.getVerseNumber(prefs.getCharPref("Version" + w));
-    var lv = Location.getLastVerseNumber(prefs.getCharPref("Version" + w));
-
-    var verseID = new RegExp("id=\"(vs\\.[^\\.]*\\.(\\d+)\\.(\\d+))\"");
-    verseID = ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0].innerHTML.match(verseID);
-    var velem, v, c;
-    if (verseID && verseID[1]) velem = ViewPortWindow.document.getElementById(verseID[1]);
-    verseID = new RegExp("vs\\.[^\\.]*\\.(\\d+)\\.(\\d+)");
-    while (velem) {
-      if (velem.id) {
-        var id = velem.id.match(verseID);
-        if (id) {
-          var c = Number(id[1]);
-          var v = Number(id[2]);
-          if (v<fv || c != Location.getChapterNumber(prefs.getCharPref("Version" + w))) removeHL(velem);
-          else if (v==fv) {
-            var nelem = selem.cloneNode(true);
-            nelem.id="sv";
-            addHL(velem, nelem);
-          }
-          else if (v>fv && v<=lv) addHL(velem, selem.cloneNode(true));
-          else {removeHL(velem);}
-        }
-      }
-      velem = velem.nextSibling;
-    }
-  }
-}
-
-function removeHL(velem) {
-  var aSpan = velem.firstChild;
-  if (!aSpan || !aSpan.className || aSpan.className.search(/(^|\s)hl(\s|$)/i)==-1) return;
-  while (aSpan.firstChild) {
-    var move = aSpan.removeChild(aSpan.firstChild);
-    aSpan.parentNode.appendChild(move);
-  }
-  aSpan.parentNode.removeChild(aSpan);
-}
-
-function addHL(velem, aSpan) {
-  if (!aSpan || !velem.firstChild) return;
-  if (velem.firstChild.className && velem.firstChild.className.search(/(^|\s)hl(\s|$)/i)!=-1) return;
-  velem.insertBefore(aSpan, velem.firstChild);
-  while (velem.firstChild.nextSibling) {
-    var move = velem.firstChild.nextSibling;
-    aSpan.appendChild(move);
-  }
-}
 
 /************************************************************************
  * Scroll Wheel functions...
  ***********************************************************************/
 
 var SWcount = 0;
+var SWwin;
 var SWTO;
-function scrollwheel(event, w) {
-  if (Link.isTextLink[w]) {
-    // scrolling over linked windows
-    // Over a delay, sum up scroll wheel values, then call the scroll function at end of delay (help scroll keep up).
-    var vd = Math.round(event.detail/3);
-    SWcount = (SWcount + vd);
 
-    if (SWTO) window.clearTimeout(SWTO);
-    SWTO = window.setTimeout("scrollWheelLink();", 100);
-  }
-  else {
-    // scrolling over non-linked Bible or commentary window
-    if (prefs.getBoolPref("IsPinned" + w)) return;
-    if (Tab[prefs.getCharPref("Version" + w)].modType != BIBLE && Tab[prefs.getCharPref("Version" + w)].modType != COMMENTARY) return;
-    if (SWTO) window.clearTimeout(SWTO);
-    SWTO = window.setTimeout("scrollWheelNoLink(" + w + ");", 100);
-  }
-}
-
-function scrollWheelLink() {
-  linkVerseScroll(2*SWcount-(Math.abs(SWcount)/SWcount));
-  SWcount = 0;
-}
-
-// Should be run if user is scrolling the mouse wheel over an unlinked, unpinned, versekey window
-// Syncs other unpinned windows to this one...
-function scrollWheelNoLink(refWindow) {
-  var elem = getFirstDisplayedPassage(refWindow);
-  if (!elem) return;
-  var oloc = Location.getLocation(prefs.getCharPref("Version" + refWindow));
-  oloc = oloc.substring(0, oloc.lastIndexOf(".")); // remove lastVerse
-  var nloc = elem.id.match(/vs\.([^\.]+\.[^\.]+\.[^\.]+)/)[1];
-  if (oloc == nloc) return; // already there!
+// scroll wheel does synchronized scrolling of all visible versekey windows
+function scrollwheel(event) {
   
-  //scroll other windows to top verse
-  Location.setLocation(prefs.getCharPref("Version" + refWindow), nloc);
-  var update = [false, false, false, false];
-  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    if (Link.isTextLink[w] || w==refWindow) continue;
-    if (Tab[prefs.getCharPref("Version" + w)].modType == BIBLE || Tab[prefs.getCharPref("Version" + w)].modType == COMMENTARY) update[w] = true;
-  }
-  //scrollScriptBoxes(update, SCROLLTYPEBEG);
-  //Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+  // find window in which event occurred
+  var w = event.target;
+  while (w && (!w.id || !(/^text\d+$/).test(w.id))) {w = w.parentNode;}
+  if (!w) return;
+  SWwin = Number(w.id.replace("text", ""));
+
+  if (prefs.getBoolPref("IsPinned" + SWwin)) return;
+  if (Tab[prefs.getCharPref("Version" + SWwin)].modType != BIBLE && 
+      Tab[prefs.getCharPref("Version" + SWwin)].modType != COMMENTARY) return;
+      
+  var vd = Math.round(event.detail/3);
+  SWcount = (SWcount + vd);
+
+  if (SWTO) window.clearTimeout(SWTO);
+  SWTO = window.setTimeout("scrollwheel2();", 250);
 }
 
-function getFirstDisplayedPassage(w) {
-  var sb = ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0];
-  var scrollTop = sb.scrollTop;
-  var vre = new RegExp("id=\"(vs\\..*?)\"", "g");
-  var verseIDs = sb.innerHTML.match(vre);
-  vre = new RegExp("id=\"(vs\\..*?)\"");
-  for (var i=0; i<verseIDs.length; i++) {
-    verseIDs[i] = verseIDs[i].match(vre)[1];
-    var elem = ViewPortWindow.document.getElementById(verseIDs[i]);
-    if (elem && elem.offsetTop > scrollTop && elem.offsetTop < (scrollTop + (0.4*sb.offsetHeight))) return elem;
-    if (elem &&             elem.offsetTop+elem.offsetHeight > (scrollTop + (0.4*sb.offsetHeight))) return elem;
-  }
-  return null;
-}
+function scrollwheel2() {
 
-function getLastDisplayedPassage(w) {
-  var sb = ViewPortWindow.document.getElementById("text" + w).getElementsByClassName("sb")[0];
-  var scrollBottom = sb.scrollTop + sb.offsetHeight;
-  var vre = new RegExp("id=\"(vs\\..*?)\"", "g");
-  var verseIDs = sb.innerHTML.match(vre);
-  vre = new RegExp("id=\"(vs\\..*?)\"");
-  for (var i=verseIDs.length-1; i>=0; i--) {
-    verseIDs[i] = verseIDs[i].match(vre)[1];
-    var elem = ViewPortWindow.document.getElementById(verseIDs[i]);
-    if (elem && (elem.offsetTop + elem.offsetHeight) < scrollBottom) return elem;
-  }
-  return null;
-}
+  // get number of verses by which to scroll
+  var dv = 2*SWcount-(Math.abs(SWcount)/SWcount);
+  SWcount = 0;
+  if (!dv) return;
 
-function linkVerseScroll(numVerses) {
-  var fp = getPassageFromWindow(FIRSTPASSAGE);
-  if (!fp) {
-    var df = prefs.getCharPref("DefaultVersion");
-    fp = Location.getLocation(df) + "." + df;
-  }
-  fp = fp.split(".");
-  var b = fp[0];
-  var c = Number(fp[1]);
-  var v = Number(fp[2]);
-  var vers = fp[4];
-
-  var redrawAll = false;
-  v += numVerses;
-  if (v <= 0) {
-    redrawAll = true;
-    c--;
-    if (c <= 0) {
-      var bn = findBookNum(b);
-      bn--;
-      if (bn < 0) return;
-      b = Book[bn].sName;
-      c = Book[bn].numChaps;
-    }
-    v = Bible.getMaxVerse(vers, b + "." + c); // - (numVerses - Number(fp[2]));
-    if (v <= 0) v = 1;
-  }
-  else if (v > Bible.getMaxVerse(vers, b + "." + c)) {
-    redrawAll = true;
-    c++;
-    bn = findBookNum(b);
-    if (c > Book[bn].numChaps) {
-      bn++;
-      if (bn >= NumBooks) return;
-      b = Book[bn].sName;
-      c = 1;
-    }
-    v = 1; // + (numVerses - (Bible.getMaxVerse(vers, fp[0] + "." + Number(fp[1])) - Number(fp[2])));
-    var mv = Bible.getMaxVerse(vers, b + "." + c);
-    if (v > mv) v = mv;
-  }
-  /*
-  var update;
-  var pin = FrameDocument[Link.firstWin].defaultView.Pin;
-  if (pin.isPinned) {
-    pin.updatePin(b, c, v);
-    pin.updateLink();
-    update = copyLinkArray();
+  // get first verse which begins in window
+  var t = ViewPortWindow.document.getElementById("text" + SWwin);
+  var sb = t.getElementsByClassName("sb")[0];
+  var v = sb.firstChild;
+  if (t.getAttribute("columns") == "show1") {
+    while (v && (!v.id || !(/^vs\./).test(v.id) || (v.offsetTop - sb.offsetTop < sb.scrollTop))) {v = v.nextSibling;}
   }
   else {
-    Location.setLocation(vers, b + "." + c + "." + v);
-    if (redrawAll) update = getUnpinnedVerseKeyWindows();
-    else {
-      update = copyLinkArray();
-      var scroll = getUnpinnedVerseKeyWindows();
-      for (var w=1; w<=3; w++) {scroll[w] &= !update[w];}
-      scrollScriptBoxes(scroll, SCROLLTYPEBEG);
+    while (v && (!v.id || !(/^vs\./).test(v.id) || v.style.display == "none")) {v = v.nextSibling;}
+  }
+  if (!v) return;
+ 
+  // if this is a multi-column window, shift the verse according to scroll wheel delta
+  if (t.getAttribute("columns") != "show1") {
+    var nv = v;
+    while (dv > 0) {
+      if (nv) nv = nv.nextSibling;
+      while (nv && (!nv.id || !(/^vs\./).test(nv.id))) {nv = nv.nextSibling;}
+      dv--;
+      if (nv && nv.id && (/^vs\./).test(nv.id)) v = nv;
+    }
+    while (dv < 0) {
+      if (nv) nv = nv.previousSibling;
+      while (nv && (!nv.id || !(/^vs\./).test(nv.id))) {
+        nv = nv.previousSibling;
+      }
+      dv++;
+      if (nv && nv.id && (/^vs\./).test(nv.id)) v = nv;
     }
   }
-  Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
-  */
+ 
+  var v = v.id.split(".");
+  v.shift();
+  
+  Texts.update(SCROLLTYPEBEG, HILIGHTSAME, false, v.join("."), SWwin);
 }
 
 
@@ -1370,7 +1140,8 @@ var XulswordController = {
       break;
     case "cmd_xs_selectVerse":
       document.getElementById("verse").value = dString(CurrentTarget.verse);
-      quickSelectVerse(CurrentTarget.version, CurrentTarget.shortName, CurrentTarget.chapter, CurrentTarget.verse, CurrentTarget.lastVerse, HILIGHTVERSE, SCROLLTYPECENTER);
+      Location.setLocation(CurrentTarget.version, CurrentTarget.shortName + "." + CurrentTarget.chapter + "." + CurrentTarget.verse + "." + CurrentTarget.lastVerse);
+      Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
     case "cmd_xs_back":
       History.back();

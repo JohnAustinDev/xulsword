@@ -13,15 +13,18 @@
 
 #viewport {
   display:table;
+  width:100%;
   height:600px;
   padding-right:10px;
 }
 #viewport > div {
   display:table-cell;
   vertical-align:top;
+  width:100%;
 }
 #chooser {
   padding-right:0px;
+  float:left;
 }
 
 #tabrow {

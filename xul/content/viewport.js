@@ -51,7 +51,7 @@ var ViewPort = {
     // set mouse wheel listeners
     document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", wheel, false);
     document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", wheel, false);
-    //document.getElementById("textrow").addEventListener("DOMMouseScroll", scrollwheel, false);
+    document.getElementById("textrow").addEventListener("DOMMouseScroll", MainWindow.scrollwheel, false);
 
   },
 
@@ -148,10 +148,11 @@ var ViewPort = {
     }
     
     // Tab row
-    var dw = prefs.getIntPref("NumDisplayedWindows");
-    document.getElementById("tabrow").setAttribute("windows", "show" + dw);
+    document.getElementById("tabrow").setAttribute("windows", "show" + prefs.getIntPref("NumDisplayedWindows"));
    
     // Windows
+    var dw = prefs.getIntPref("NumDisplayedWindows");
+    
     for (var w=1; w<=NW; w++) {
       var value = "show1";
       if (w > dw) value = "hide";
@@ -180,7 +181,7 @@ var ViewPort = {
         document.getElementById("text" + w).setAttribute("columns", "hide");
       }
     }
-  //for (w=1; w<=NW; w++) {jsdump("w=" + w + ", value=" + document.getElementById("text" + w).getAttribute("value"));}
+  //for (w=1; w<=NW; w++) {jsdump("w=" + w + ", value=" + document.getElementById("text" + w).getAttribute("columns"));}
    
     // Window pins
     for (w=1; w<=NW; w++) {
@@ -281,7 +282,7 @@ var ViewPort = {
       
     }
 
-  //var d="Ndis=" + dw; for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("value");} jsdump(d);
+  //var d="Ndis=" + dw; for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("columns");} jsdump(d);
 
   },
 

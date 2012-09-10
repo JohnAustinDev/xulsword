@@ -169,7 +169,7 @@ int xulsword::locationToVerseKey(const char *locationText, VerseKey *vk) {
   VerseKey ub;
   std::string keytext = locationText;
   int dash = keytext.find('-',0);
-  if (dash != std::string::npos) {
+  if (dash != -1) {
     std::string upperbound;
     upperbound.assign(keytext, dash+1, keytext.length()-dash-1);
     keytext.assign(keytext, 0, dash);
@@ -185,23 +185,23 @@ int xulsword::locationToVerseKey(const char *locationText, VerseKey *vk) {
     // If there is no dash, look for a "." delineated lastverse location (The "last verse"
     // position is unique to xulsword and so if it exists, it needs to be parsed here before handing to verse key.)
     lastverse = 0;
-    unsigned int p=0;
+    int p=0;
     for (int i=0; i<3; i++) {
       p = keytext.find('.',p);
-      if (p == std::string::npos) {break;}
+      if (p == -1) {break;}
       p++;
     }
     // less than three "."s
-    if (p == std::string::npos) {
+    if (p == -1) {
       // check if no verse, and if not, then first verse is 1 and lastverse is maxverse
       p = keytext.find_first_not_of(" ", 0); // allow for leading spaces
       for (int i=0; i<2; i++) {
         p = keytext.find_first_of(" :.", p);
-        if (p == std::string::npos) {break;}
+        if (p == -1) {break;}
         p++;
       }
       // if less than two delimiters were found, or no number following second delimiter = no verse
-      if (p == std::string::npos || atoi(keytext.substr(p).c_str()) == 0) {
+      if (p == -1 || atoi(keytext.substr(p).c_str()) == 0) {
         firstverse = 1;
         lastverse = 200; //ends up as maxverse
       }
@@ -422,7 +422,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
       
   std::string aPath = path;
   int comma = aPath.find(", ", 0);
-  if (comma == std::string::npos) {comma = aPath.length();}
+  if (comma == -1) {comma = aPath.length();}
   SWBuf path1;
   path1.set(aPath.substr(0, comma).c_str());
   MyManager = new SWMgrXS(path1.c_str(), false, (MarkupFilterMgr *)muf, false, true);   
@@ -436,7 +436,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   while (comma != aPath.length()) {
     int beg = comma+2; // 2 is length of ", "
     comma = aPath.find(", ", beg);
-    if (comma == std::string::npos) {comma = aPath.length();}
+    if (comma == -1) {comma = aPath.length();}
     MyManager->augmentModules(aPath.substr(beg, comma-beg).c_str(), false);
   }
 
@@ -541,7 +541,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
       // add a line break to help insure titles have space above them.
       if (!verseHTML.length() && chapHTML.length() > 64) {
         int lbr = chapHTML.rfind("<br />");
-        if (lbr != std::string::npos && chapHTML.length()-1-lbr < 64) verseHTML.append("<br />");
+        if (lbr != -1 && chapHTML.length()-1-lbr < 64) verseHTML.append("<br />");
       }
       verseHTML.append("<div class=\"");
       if (module->getEntryAttributes()["Heading"][Value->first]["level"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["level"], "2")) {
@@ -623,7 +623,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   int comma = modstr.find(',',0);
   std::string thismod;
   thismod.assign(modstr.substr(0,comma));
-  if (comma == std::string::npos) {
+  if (comma == -1) {
     xsThrow("GetChapterTextMulti: module list \"%s\" does not have form 'mod1,mod2,...'.", vkeymodlist);
     return NULL;
   }
@@ -718,7 +718,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
 
       comma = modstr.find(',',0);
       thismod.assign(modstr.substr(0,comma));
-      if (comma != std::string::npos) {modstr.assign(modstr.substr(comma+1));}
+      if (comma != -1) {modstr.assign(modstr.substr(comma+1));}
 
       versemod = MyManager->getModule(thismod.c_str());
       if (!versemod) {break;}
@@ -755,7 +755,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
 
       chapText.append("</span></div>");
     
-    } while (comma != std::string::npos);
+    } while (comma != -1);
 
     if (Verse > 1) {
       if (vNum==Verse) {chapText.append("</span>");}

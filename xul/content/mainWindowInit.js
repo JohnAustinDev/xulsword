@@ -76,6 +76,9 @@ var Location = {
   setLocation: function(modname, xsref) {
     this.modname = modname;
     this.modvsys = Bible.getVerseSystem(modname);
+    
+    // dont highlight entire chapter unless specifically requested
+    if ((/^[^\s\.]+\.\d+$/).test(xsref)) xsref += ".1.1";
  
     var loc = this.convertLocation(this.modvsys, xsref, this.modvsys);
     var p = loc.split(".");

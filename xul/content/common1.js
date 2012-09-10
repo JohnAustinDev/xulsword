@@ -791,5 +791,7 @@ function copyObj(obj) {
     }
     else newobj[m] = obj[m];
   }
+  
+  return newobj;
 }
 

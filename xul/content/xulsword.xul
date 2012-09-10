@@ -72,6 +72,7 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
+
 <script>moduleInstall(true)</script>
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
@@ -81,6 +82,8 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/indexer.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
+
+<!-- <script type="application/x-javascript" src="chrome://xulsword/content/xulswordTest.js"/> !-->
 
 <!-- HOT KEY DEFINITIONS !-->
 <keyset>
