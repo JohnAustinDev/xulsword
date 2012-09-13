@@ -170,6 +170,12 @@
   text-align:center;
   height:30px; /* used in viewport.js */
 }
+.fr {
+  position:relative;
+  width:100%;
+  text-align:center;
+  height:30px; /* used in viewport.js */
+}
 .sbpin {
   position:absolute;
   top:-23px;

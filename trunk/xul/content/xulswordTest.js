@@ -13,6 +13,7 @@ getChapterText              tested
 getChapterTextMulti         tested                    
 getVerseText                tested
 getMaxVerse                 tested
+getMaxChapter               tested
 convertLocation             tested
 
 getModuleInformation        tested
@@ -212,6 +213,11 @@ test(90, Bible.getMaxVerse("UZV", "Ps 118:6-10"), 176);
 test(91, Bible.getMaxVerse("UZV", "Ps.118"), 176);
 test(92, Bible.getMaxVerse("UZV", "Ps.118.24"), 176);
 test(93, Bible.getMaxVerse("UZV", "Ps.118.100.120"), 176);
+
+test(94, Bible.getMaxChapter("ESV", "Ps"), 150);
+test(95, Bible.getMaxChapter("ESV", "Ps.49"), 150);
+test(96, Bible.getMaxChapter("UZV", "Ps"), 151);
+test(97, Bible.getMaxChapter("UZV", "Ps.49"), 151);
 
 function testLocs(tn, vers, bk, ch, vs, lv, sys) {
   test(tn + "a", Location.getChapter(vers), bk + " " + ch);

@@ -43,7 +43,7 @@ var ViewPort = {
     for (w=1; w<=NW; w++) {
       for (var t=0; t<Tabs.length; t++) {
         var inhide = new RegExp("(^|;)" + escapeRE(Tabs[t].modName) + ";");
-        if (inhide.test(prefs.getCharPref("w" + w + ".hidden"))) Tabs[t]["w" + w + ".hidden"] = true;
+        if (inhide.test(getPrefOrCreate("w" + w + ".hidden", "char", ""))) Tabs[t]["w" + w + ".hidden"] = true;
         else Tabs[t]["w" + w + ".hidden"] = false;
       }
     }
@@ -51,7 +51,10 @@ var ViewPort = {
     // set mouse wheel listeners
     document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", wheel, false);
     document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", wheel, false);
-    document.getElementById("textrow").addEventListener("DOMMouseScroll", MainWindow.scrollwheel, false);
+    var sb = document.getElementsByClassName("sb");
+    for (var i=0; i<sb.length; i++) {
+      sb[i].addEventListener("DOMMouseScroll", MainWindow.scrollwheel, false);
+    }
 
   },
 
@@ -73,10 +76,12 @@ var ViewPort = {
     var padbot = Number(rule.style.paddingBottom.match(/^(\d+)\s*px/)[1]);
     rule = getCSS(".hd {");
     var headheight = Number(rule.style.height.match(/^(\d+)\s*px/)[1]);
+    rule = getCSS(".fr {");
+    var footheight = Number(rule.style.height.match(/^(\d+)\s*px/)[1]);
 
     // Reset those CSS rules which depend on window height
     var betc = 10; //borders n stuff
-    var sbh = winh - padtop - tabheight - headheight - padbot - betc;
+    var sbh = winh - padtop - tabheight - headheight - padbot - betc - footheight;
     if (sbh < 100) sbh = 100;
 
     rule = getCSS(".sb {");
@@ -195,9 +200,23 @@ var ViewPort = {
     // Footnote boxes
     for (w=1; w<=NW; w++) {
       value = "hide";
-      if (Texts && Texts.showNoteBox[w]) value = "show";
+      var type = Tab[prefs.getCharPref("Version" + w)].modType;
+      
+      if (type == DICTIONARY) value = "show";
+      
+      if (type == BIBLE) {
+        
+        var gfn = (prefs.getCharPref("Footnotes") == "On" && prefs.getBoolPref("ShowFootnotesAtBottom"));
+        var gcr = (prefs.getCharPref("Cross-references") == "On" && prefs.getBoolPref("ShowCrossrefsAtBottom"));
+        var gun = (prefs.getCharPref("User Notes") == "On" && prefs.getBoolPref("ShowUserNotesAtBottom"));
+        
+        if ((gfn || gcr || gun)) value = "show";
+        
+      }
+      
       if (value == "show" && prefs.getBoolPref("MaximizeNoteBox" + w)) value = "showmax";
       document.getElementById("text" + w).setAttribute("foot", value);
+
     }
     
     // Individual tabs
@@ -282,7 +301,7 @@ var ViewPort = {
       
     }
 
-  //var d="Ndis=" + dw; for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("columns");} jsdump(d);
+//var d="Ndis=" + dw; for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("foot");} jsdump(d);
 
   },
 
