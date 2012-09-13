@@ -1209,6 +1209,8 @@ function installFontWin(aFontFile) {
   var vbsdata = "Const FONTS = &H14& \r\nSet objShell = CreateObject(\"Shell.Application\")\r\nSet objFolder = objShell.Namespace(FONTS)\r\nSet objFolderItem = objFolder.ParseName(\"" + aFontFile.leafName + "\")\r\nif (objFolderItem is nothing) then\r\nobjFolder.CopyHere(\"" + aFontFile.path + "\")\r\nend if";
   launchTempScript(vbsdata, "vbs");
 
+  return true;
+
 /* THE FOLLOWING DOES NOT WORK IF THERE ARE SPACES IN THE FILE PATH!!!!!!!
   // execute the vbs script using cmd.exe
   var cmdpath = Components.classes["@mozilla.org/process/environment;1"].
