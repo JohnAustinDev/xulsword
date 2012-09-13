@@ -62,7 +62,7 @@ function loadedXULReal() {
   var resetUserPrefs = false;
   var pfile = getSpecialDirectory("xsResD");
   pfile.append(NEWINSTALLFILE);
-  NewModuleInfo = (pfile.exists() ? readNewInstallsFile(pfile):null);
+  if (Bible) NewModuleInfo = (pfile.exists() ? readNewInstallsFile(pfile):null);
   if (pfile.exists()) removeFile(pfile, false);
   if (NewModuleInfo && NewModuleInfo.NewModules && NewModuleInfo.NewModules[0]) {
     resetUserPrefs = true;
@@ -118,7 +118,7 @@ function loadedXULReal() {
   
   identifyModuleFeatures(resetUserPrefs);
   if (HaveValidLocale) createLanguageMenu();
-  fillModuleMenuLists();
+  if (Bible) fillModuleMenuLists();
   
   //Some "hard-wired" access keys...
   document.getElementById("w1").setAttribute("accesskey", dString("1"));
@@ -885,7 +885,7 @@ function previousPage(highlightFlag, scrollType, wpin) {
     previousChapter(highlightFlag, scrollType, (wpin ? wpin:null));
     return;
   }
-jsdump("previousPage=" + vf);  
+
 
   if (wpin) {
     Texts.display[wpin].bk = vf[0];

@@ -66,7 +66,7 @@ DLLEXPORT char *GetVerseText(xulsword *inst, const char *vkeymod, const char *vk
 }
 
 DLLEXPORT int GetMaxChapter(xulsword *inst, const char *mod, const char *vkeytext) {
-  return inst->getMaxVerse(mod, vkeytext);
+  return inst->getMaxChapter(mod, vkeytext);
 }
 
 DLLEXPORT int GetMaxVerse(xulsword *inst, const char *mod, const char *vkeytext) {

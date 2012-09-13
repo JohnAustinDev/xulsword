@@ -21,8 +21,6 @@ var Texts = {
   scrollTypeFlag:null,
   highlightFlag:null,
   
-  showNoteBox:[false, false, false, false],
-  
   display:[null, null, null, null],
   
   footnotes:[null, null, null, null],
@@ -39,13 +37,14 @@ var Texts = {
     
     updateCSSBasedOnVersion(firstDisplayBible(false), [".chapsubtable"]);
     
-    var wvisible = ViewPort.update(false);
+    ViewPort.update(false);
     
     for (var w=1; w<=NW; w++) {
       
       var columns = document.getElementById("text" + w).getAttribute("columns");
       if (columns == "hide") continue;
       if (wskip && columns=="show1" && w == wskip) continue;
+      if (w > prefs.getIntPref("NumDisplayedWindows")) continue;
       
       var loc = Location.getLocation(prefs.getCharPref("Version" + w));
    
@@ -79,8 +78,6 @@ var Texts = {
   },
   
   updateBible: function(w, force, lselect, highType, lscroll, scrollType) {
-    // don't update anything if this window will not be displayed
-    if (w > prefs.getIntPref("NumDisplayedWindows")) return;
 
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
     
@@ -100,7 +97,7 @@ jsdump("Reading text from libsword");
 
       // Get any additional chapters needed to fill multi-column Bible displays.
       // Any verse in the display chapter should be scrollable (top, center, or bottom)
-      // while still resulting in a filled multi-column display (if chapters are available).
+      // while still resulting in a filled multi-column display, if possible.
       if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
         
         var d2 = copyObj(this.display[w]);
@@ -125,7 +122,7 @@ jsdump("Reading text from libsword");
           next.htmlText = next.htmlText + (tip.htmlText.length > 64 ? tip.htmlText:"");
           next.htmlNotes = next.htmlNotes + tip.htmlNotes;
           sb.innerHTML = next.htmlText;
-          if (sb.lastChild.offsetLeft > sb.offsetWidth) break;
+          if (sb.lastChild.offsetLeft >= sb.offsetWidth) break;
           c++;
         }
         
@@ -155,13 +152,12 @@ jsdump("Reading text from libsword");
     if (BibleTexts.updateAudioLinksTO) window.clearTimeout(BibleTexts.updateAudioLinksTO);
     BibleTexts.updateAudioLinksTO = window.setTimeout("BibleTexts.updateAudioLinks(" + w + ");", 0);
     
+    // remove notes which aren't in window, or hide notebox entirely if empty
+    BibleTexts.checkNoteBox(w);
+    
   },
   
   updateCommentary: function(w, force, lselect, highType, lscroll, scrollType) {
-    // don't update anything if this window will not be displayed
-    if (w > prefs.getIntPref("NumDisplayedWindows")) return;
-    
-    this.showNoteBox[w] = false;
     
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
     
@@ -192,10 +188,7 @@ jsdump("Reading text from libsword");
   },
   
   updateDictionary: function(w, force) {
-    // don't update anything if this window will not be displayed
-    if (w > prefs.getIntPref("NumDisplayedWindows")) return;
-    
-    this.showNoteBox[w] = true;
+
     prefs.setBoolPref("IsPinned" + w, false);
     prefs.setBoolPref("ShowOriginal" + w, false);
     prefs.setBoolPref("MaximizeNoteBox" + w, false);
@@ -239,10 +232,7 @@ jsdump("Reading text from libsword");
   },
   
   updateGenBook: function(w, force) {
-    // don't update anything if this window will not be displayed
-    if (w > prefs.getIntPref("NumDisplayedWindows")) return;
-    
-    this.showNoteBox[w] = false;
+
     prefs.setBoolPref("IsPinned" + w, false);
     prefs.setBoolPref("ShowOriginal" + w, false);
     prefs.setBoolPref("MaximizeNoteBox" + w, false);
@@ -769,29 +759,28 @@ var BibleTexts = {
     else {
       ret.htmlText = Bible.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");
       
+      ret.footnotes = Bible.getNotes();
+      
       if (d.globalOptions["User Notes"] == "On") {
         un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText, w);
-        ret.htmlText = un.html;
+        ret.htmlText = un.html; // has user notes added to text
+        ret.footnotes += un.notes;
       }
       
       // handle footnotes
-      var gfn = (d.globalOptions["Footnotes"] == "On" && d["ShowFootnotesAtBottom"]);
-      var gcr = (d.globalOptions["Cross-references"] == "On" && d["ShowCrossrefsAtBottom"]);
-      var gun = (d.globalOptions["User Notes"] == "On" && d["ShowUserNotesAtBottom"]);
-    
-      if (!(gfn || gcr || gun)) {
+      if (document.getElementById("text" + w).getAttribute("foot") == "show") {
+        
+        var gfn = (d.globalOptions["Footnotes"] == "On" && d["ShowFootnotesAtBottom"]);
+        var gcr = (d.globalOptions["Cross-references"] == "On" && d["ShowCrossrefsAtBottom"]);
+        var gun = (d.globalOptions["User Notes"] == "On" && d["ShowUserNotesAtBottom"]);
+          
+        ret.htmlNotes = this.getNotesHTML(ret.footnotes, d.mod, gfn, gcr, gun, false, w);
+      }
+      else {
         // we aren't showing footnotes in box, so turn maximize off
         prefs.setBoolPref("MaximizeNoteBox" + w, false);
       }
-      else {
-        ret.footnotes = Bible.getNotes();
-        if (gun) ret.footnotes += un.notes;
-
-        ret.htmlNotes = this.getNotesHTML(ret.footnotes, d.mod, gfn, gcr, gun, false, w);
-      }
     }
-    
-    Texts.showNoteBox[w] = (ret.htmlNotes ? true:false);
    
     // localize verse numbers
     var tl = getLocaleOfModule(d.mod);
@@ -819,6 +808,62 @@ var BibleTexts = {
     }
     
     return ret;
+  },
+  
+  checkNoteBox: function(w) {
+    var t = document.getElementById("text" + w);
+    if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
+      var sb = t.getElementsByClassName("sb")[0];
+      var nb = document.getElementById("note" + w);
+
+      // get first chapter/verse
+      var vf = sb.firstChild;
+      while (vf && (vf.style.display == "none" || !vf.id || !(/^vs\./).test(vf.id))) {
+        vf = vf.nextSibling;
+      }
+      if (vf) vf = vf.id.split(".");
+      
+      // get last chapter/verse
+      var vl = sb.lastChild;
+      while (vl && (vl.offsetLeft >= sb.offsetWidth || !vl.id || !(/^vs\./).test(vl.id))) {
+        vl = vl.previousSibling;
+      }
+      if (vl) vl = vl.id.split(".");
+      
+      // hide footnotes whose references are scrolled off the window
+      var have = false;
+      if (nb.innerHTML) {
+        // vf and vl id has form: vs.Gen.1.1
+        // note id has form: w1.body.fn.1.Gen.1.1.KJV
+        var nt = nb.getElementsByClassName("fncol5");
+        for (var i=0; i<nt.length; i++) {
+          
+          var dispattr = "";
+          var inf = nt[i].id.split(".");
+          
+          if (vf && 
+             (Number(inf[5]) < Number(vf[2]) ||
+             (Number(inf[5]) == Number(vf[2]) && Number(inf[6]) < Number(vf[3])))) {
+            dispattr = "none";
+          }
+            
+          if (vl &&
+             (Number(inf[5]) > Number(vl[2]) ||
+             (Number(inf[5]) == Number(vl[2]) && Number(inf[6]) > Number(vl[3])))) {
+            dispattr = "none";
+          }
+          
+          nt[i].parentNode.parentNode.style.display = dispattr;
+          if (!dispattr) have = true;
+        }
+      }
+    }
+    
+    // hide entire notebox if it's empty
+    if (!have) {
+      document.getElementById("text" + w).setAttribute("foot", "hide");
+    }
+
   },
   
   // This function is only for versekey modules (BIBLE, COMMENTARY)
@@ -1116,7 +1161,7 @@ var CommTexts = {
     var un;
     if (d.globalOptions["User Notes"] == "On") {
       un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText, w);
-      ret.htmlText = un.html;
+      ret.htmlText = un.html; // has user notes added to text
       ret.footnotes += un.notes;
     }
     
@@ -1187,7 +1232,7 @@ var DictTexts = {
     // get htmlEntry
     var de = this.getEntryHTML(d.DictKey, d.mod);
     var un = Texts.getUserNotes("na", d.DictKey, d.mod, de, w);
-    de = un.html;
+    de = un.html; // has user notes added to text
     ret.footnotes = un.notes;
     
     ret.htmlEntry += "<div class=\"dictentry\">";
@@ -1404,7 +1449,7 @@ var GenBookTexts = {
     ret.htmlText = Texts.addParagraphIDs(ret.htmlText);
     
     var un = Texts.getUserNotes("na", 1, d.mod, ret.htmlText, w);
-    ret.htmlText = un.html;
+    ret.htmlText = un.html; // has user notes added to text
     footnotes = un.notes;
     
     return ret;
