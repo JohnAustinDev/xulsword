@@ -242,8 +242,8 @@ function getContent(rnf) {
 		for (var i=0; i<fns.length; i++) {
 			if (!fns[i]) continue;
 			var fnp = fns[i].split("<bg>");
-			//if (fnp[0] == rnf.type + "." + rnf.list + "." + rnf.modName) {
-      if (fnp[0] == rnf.modName + "." + rnf.type + "." + rnf.list) {
+			if (fnp[0] == rnf.type + "." + rnf.list + "." + rnf.modName) {
+      //if (fnp[0] == rnf.modName + "." + rnf.type + "." + rnf.list) {
 				RequestData[rnf.key] = fnp[1];
 				rnf.content = fnp[1];
 				break;
@@ -257,8 +257,8 @@ function getContent(rnf) {
 		for (var i=0; i<fns.length; i++) {
 			if (!fns[i]) continue;
 			var fnp = fns[i].split("<bg>");
-			//if (fnp[0] == rnf.type + "." + rnf.list+ "." + rnf.modName) {
-      if (fnp[0] == rnf.modName + "." + rnf.type + "." + rnf.list) {
+			if (fnp[0] == rnf.type + "." + rnf.list+ "." + rnf.modName) {
+      //if (fnp[0] == rnf.modName + "." + rnf.type + "." + rnf.list) {
 				rnf.doRequest = true;
 				rnf.type = "reflist";
 				rnf.list = fnp[1];
