@@ -37,7 +37,7 @@
     var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/search-help.properties");
     window.frameElement.ownerDocument.title = fixWindowTitle(bundle.GetStringFromName("windowTitle"));
     document.write("<div style=\"width:100%;\">" + bundle.GetStringFromName("searchTypes") + "</div>");
-    document.write("<table style=\"width:100%; font-size:12px; border-collapse:collapse; border:2px solid rgb(200,170,205); -moz-border-radius:4px;\"><tbody>");
+    document.write("<table style=\"width:100%; font-size:12px; border-collapse:collapse; border:2px solid rgb(200,170,205); border-radius:4px;\"><tbody>");
     var grey=false;
     for (var r=0; r<9; r++) {
       var style = grey ? "background:rgb(230,230,230);":"background:rgb(245,245,245);";
@@ -61,7 +61,7 @@
   </script>
   
   <body  id="searchHelp-window" onload="{updateCSSBasedOnCurrentLocale(['#searchHelp-window']); setTimeout('htmlLoaded()',0);}" style="font-size:12px; background-image: url(chrome://xulsword/skin/images/9.gif);">
-    <div id="helpPane" style="overflow:auto; min-width:340px; min-height:300px; padding:20px; background:white; border:2px solid rgb(200,170,205); -moz-border-radius:4px;">
+    <div id="helpPane" style="overflow:auto; min-width:340px; min-height:300px; padding:20px; background:white; border:2px solid rgb(200,170,205); border-radius:4px;">
       <script>writeSearchHelp();</script>
     </div>
   </body>

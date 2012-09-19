@@ -84,9 +84,7 @@
   background:rgb(255,250,255);
   height:23px;
   vertical-align:bottom;
-  -moz-border-radius-topright:4px;
   border-top-right-radius:4px;
-  -moz-border-radius-topleft:4px;
   border-top-left-radius:4px;
 }
 .multitab select .tab {
@@ -197,7 +195,6 @@
 .text > div {
 	background:rgb(255,243,255);
 	border:2px solid rgb(200,170,205);
-  -moz-border-radius:8px;
   border-radius:8px;
 }
 .text[pin="pinned"] > div {
@@ -257,7 +254,6 @@
   bottom:0px;
   right:0px;
   background:rgb(255,243,255);
-  -moz-border-radius:8px;
   border-radius:8px;
   z-index:20;
 }
@@ -292,7 +288,6 @@
   border:1px outset rgb(150,150,150); 
   background:rgb(233,233,233); 
   height:4px;
-  -moz-border-radius:4px;
   border-radius:4px;
   cursor:N-resize;
   z-index:2;
@@ -325,19 +320,18 @@
   overflow:auto;
 	background:rgb(240,235,240);
 	border:2px solid rgb(150,150,150);
-  -moz-border-radius:8px;
   border-radius:8px;
 }
 #text1 .nb {
-  height:162px; /* used in viewport.js */
+  height:192px; /* used in viewport.js */
   margin:10px; /* used in viewport.js */
 }
 #text2 .nb {
-  height:162px; /* used in viewport.js */
+  height:192px; /* used in viewport.js */
   margin:10px; /* used in viewport.js */
 }
 #text3 .nb {
-  height:162px; /* used in viewport.js */
+  height:192px; /* used in viewport.js */
   margin:10px; /* used in viewport.js */
 }
 #text1[foot="showmax"]:not([columns="show1"]) .nb,

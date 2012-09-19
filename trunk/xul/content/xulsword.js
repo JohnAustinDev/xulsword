@@ -27,7 +27,6 @@ var NewModuleInfo;
 var AboutScrollTo;
 var AudioDirs = null;
 var CopyPopup;
-var PreviousHaveGenBook;
 var ViewPortWindow, ViewPort, Texts, BibleTexts;
 const NOMODULES="0000", NOLOCALES="0001", NEEDRESTART="0002";
 
@@ -142,13 +141,8 @@ function loadedXULReal() {
   window.controllers.appendController(BookmarksMenuController);
 
   //Initialize global options buttons and checkboxes
-  if (!Bible || !HaveValidLocale || !Tabs.length) {
-    hideGUI();
-  }
-  else {
-    document.getElementById("genbook-tree").style.display="block"; //Was not drawn to prevent endless loop if no Bible object 
-    updateXulswordButtons();
-  }
+  if (!Bible || !HaveValidLocale || !Tabs.length) hideGUI();
+  else updateXulswordButtons();
    
   BookmarkFuns.initTemplateDataSource(document.getElementById("bookmarks-menu"), BMDS); 
   
@@ -168,7 +162,6 @@ function loadedXULReal() {
       }
     }
     updateModuleMenuCheckmarks(); 
-    PreviousHaveGenBook = updateGenBooks();
     window.setTimeout("checkCipherKeys()",0);
   }
   
@@ -253,6 +246,7 @@ function postWindowInit() {
   }
   
   createHelpVideoMenu();
+
 }
 
 function useFirstAvailableBookIf() {
@@ -1393,7 +1387,7 @@ function handleOptions(elem) {
     case "w2":
     case "w3":
       prefs.setIntPref("NumDisplayedWindows", Number(elem.id.substr(1,1)));
-      ViewPort.update(false);
+      Texts.update();
       break;
         
     case "f0":
@@ -1953,6 +1947,8 @@ function searchForLemma(strongsNumber) {
 /************************************************************************
  * GenBook Control Functions
  ***********************************************************************/ 
+ 
+// return information about displayed genBooks
 function getGenBookInfo() {
   // Adjust GenBook settings as needed...
   var numUniqueGenBooks = 0;
@@ -1979,19 +1975,15 @@ function getGenBookInfo() {
   return ret;
 }
 
+// update genBookChooser based on genBook info
 var RDFChecked = {}; 
-function updateGenBooks() {  
-  var benbkinfo = getGenBookInfo();
-  var numUniqueGenBooks = benbkinfo.numUniqueGenBooks;
-  var genBookList = benbkinfo.genBookList;
-  var modsAtRoot = benbkinfo.modsAtRoot;
-  var firstGenBook = benbkinfo.firstGenBook;
-  
-  if (!firstGenBook) return false;
-  
+function updateGenBooks(gbks) {  
+
   var elem = document.getElementById("genbook-tree");
-  var GBs = genBookList.split(";");
+  var GBs = gbks.genBookList.split(";");
   GBs.pop();
+  
+  // removing data sources which are no longer being displayed
   var DSs = elem.database.GetDataSources();
   var needToRebuild=false;
   while (DSs.hasMoreElements()) {
@@ -2012,9 +2004,11 @@ function updateGenBooks() {
       needToRebuild=true;
     }
   }
+  
+  // add data sources which are not already being displayed
   for (i=0; i<GBs.length; i++) {
     needToRebuild=true; 
-    var moduleRDF = getSpecialDirectory("ProfD");
+    var moduleRDF = getSpecialDirectory("xsResD");
     moduleRDF.append(GBs[i] + ".rdf");
     if (!moduleRDF.exists() || !RDFChecked[GBs[i]]) writeFile(moduleRDF, Bible.getGenBookTableOfContents(GBs[i]));
     RDFChecked[GBs[i]] = true;
@@ -2023,18 +2017,33 @@ function updateGenBooks() {
     //jsdump("Adding: " + myURI.match(/\/([^\/]+\.rdf)/)[1] + "\n");
     elem.database.AddDataSource(BM.RDF.GetDataSourceBlocking(myURI));
   }
+  
+  // rebuild the tree if necessary
   if (needToRebuild) {
-    if (numUniqueGenBooks>1)  elem.ref = "rdf:#http://www.xulsword.com/tableofcontents/ContentsRoot";
-    if (numUniqueGenBooks==1) elem.ref = "rdf:#/" + firstGenBook;
+    if (gbks.numUniqueGenBooks>1)  elem.ref = "rdf:#http://www.xulsword.com/tableofcontents/ContentsRoot";
+    if (gbks.numUniqueGenBooks==1) elem.ref = "rdf:#/" + gbks.firstGenBook;
     elem.builder.rebuild();
   }
 
-  if (numUniqueGenBooks>0 && elem.currentIndex==-1) selectGenBook(getPrefOrCreate("ShowingKey" + firstGenBook, "Unicode", ""));
+/*
+  var DSs = elem.database.GetDataSources();
+  while (DSs.hasMoreElements()) {
+    var aDS = DSs.getNext();
+    var resources = aDS.GetAllResources();
+    while (resources.hasMoreElements()) {
+      var resource = resources.getNext();
+      resource = resource.QueryInterface(BM.kRDFRSCIID);
+      jsdump("RES=" + resource.Value);
+    }
+  }
+*/  
+
+  if (gbks.numUniqueGenBooks>0 && elem.currentIndex==-1) selectGenBook(getPrefOrCreate("ShowingKey" + gbks.firstGenBook, "Unicode", ""));
 
   //Now that database is loaded, set any root key prefs
-  for (i=0; i<modsAtRoot.length; i++) {setPrefToRoot(modsAtRoot[i]);}
+  for (i=0; i<gbks.modsAtRoot.length; i++) {setPrefToRoot(gbks.modsAtRoot[i]);}
   
-  return numUniqueGenBooks>0;
+  return gbks.numUniqueGenBooks>0;
 }
 
 function setPrefToRoot(module, elem) {

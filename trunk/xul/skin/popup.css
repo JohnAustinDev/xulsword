@@ -8,15 +8,14 @@
   padding: 22px 20px 20px 20px;
   border:1px solid black;
   background:rgb(245,220,255);
-  -moz-border-radius:5px;
   border-radius:5px;
   cursor:default;
   overflow:auto;
-  -moz-box-shadow: 3px 3px 5px 6px #ccc;
+  box-shadow: 3px 3px 5px 6px #ccc;
 }
 #npopup[value=pinned] #npopupTX {
   margin: 5px 15px 5px 5px;
-  -moz-box-shadow: 1px 1px 2px 3px #ccc;
+  box-shadow: 1px 1px 2px 3px #ccc;
 }
 
 .textpopup {
@@ -31,14 +30,13 @@
   margin:0px;
   border:1px solid black;
   background:rgb(245,220,255);
-  -moz-border-radius:5px;
   border-radius:5px;
   height:100%;
   overflow:hidden;
 }
 .windowedpup #npopupTX {
   border:none !important;
-  -moz-box-shadow:none !important;
+  box-shadow:none !important;
 }
 .windowedpup .popuppin {
   visibility:hidden;

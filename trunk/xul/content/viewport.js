@@ -43,7 +43,7 @@ var ViewPort = {
     for (w=1; w<=NW; w++) {
       for (var t=0; t<Tabs.length; t++) {
         var inhide = new RegExp("(^|;)" + escapeRE(Tabs[t].modName) + ";");
-        if (inhide.test(getPrefOrCreate("w" + w + ".hidden", "char", ""))) Tabs[t]["w" + w + ".hidden"] = true;
+        if (inhide.test(getPrefOrCreate("w" + w + ".hidden", "Char", ""))) Tabs[t]["w" + w + ".hidden"] = true;
         else Tabs[t]["w" + w + ".hidden"] = false;
       }
     }
@@ -66,7 +66,7 @@ var ViewPort = {
     var winh = getPrefOrCreate("ViewPortHeight", "Int", window.innerHeight);
     
   jsdump("UPDATING VIEW PORT h=" + winh);
-    // Read CSS constant rules
+    // Read CSS constant rules and values
     var rule = getCSS(".tab {");
     var tabheight = Number(rule.style.height.match(/^(\d+)\s*px/)[1]);
     rule = getCSS("#tabrow {");
@@ -79,11 +79,11 @@ var ViewPort = {
     rule = getCSS(".fr {");
     var footheight = Number(rule.style.height.match(/^(\d+)\s*px/)[1]);
 
-    // Reset those CSS rules which depend on window height
     var betc = 10; //borders n stuff
     var sbh = winh - padtop - tabheight - headheight - padbot - betc - footheight;
     if (sbh < 100) sbh = 100;
 
+    // Reset those CSS rules which depend on known window height
     rule = getCSS(".sb {");
     rule.style.height = sbh + "px";
 
@@ -102,7 +102,7 @@ var ViewPort = {
       rule = getCSS("#text" + w + " .nb {");
       var margt = Number(rule.style.marginTop.match(/^(\d+)\s*px/)[1]);
       var margb = Number(rule.style.marginBottom.match(/^(\d+)\s*px/)[1]);
-      rule.style.height = Number(nbh - margt - margb - bbh) + "px";
+      rule.style.height = Number(nbh - margt - margb - bbh + footheight) + "px";
     }
 
     rule = getCSS("#text1[foot=\"showmax\"]:not([columns=\"show1\"]) .nbc > div,");
@@ -115,10 +115,12 @@ var ViewPort = {
     rule.style.backgroundPosition = "0px " + Number((document.getElementById("biblechooser").offsetHeight + document.getElementById("fadetop").offsetHeight) % 55) + "px";
     
     // Bible chooser
-    var chooser = (this.needBookChooser() ? "book":(prefs.getBoolPref("ShowChooser") ? "bible":"hide"));
+    var genbkinfo = MainWindow.getGenBookInfo();
+    var chooser = (genbkinfo.numUniqueGenBooks > 0 ? "book":(prefs.getBoolPref("ShowChooser") ? "bible":"hide"));
     document.getElementById("viewportbody").setAttribute("chooser", chooser);
-    MainWindow.document.getElementById("genBookChooser").setAttribute("hidden", (chooser == "book" ? "false":"true"));
-
+    MainWindow.document.getElementById("genBookTree").style.display = (chooser == "book" ? "":"none");
+    if (genbkinfo.numUniqueGenBooks > 0) MainWindow.updateGenBooks(genbkinfo);
+  
     var lbn = findBookNum(Location.getBookName());
     if (!skipBibleChooserTest) document.getElementById("biblechooser").setAttribute("showing", (lbn >= NumOT ? "nt":"ot"));
 
@@ -147,9 +149,11 @@ var ViewPort = {
       otw.style.width = "";
       ntw.style.width = "";
       if (ntw.offsetWidth > otw.offsetWidth) otw.style.width = Number(ntw.offsetWidth - 2) + "px";
-      else ntw.style.width = Number(otw.offsetWidth - 2) + "px";
-      rulef.style.width = Number(otw.offsetLeft + otw.offsetWidth + 20) + "px";
-      rulec.style.width = Number(otw.offsetLeft + otw.offsetWidth - 6) + "px";
+      else ntw.style.width = (Number(otw.offsetWidth - 2) > 0 ? Number(otw.offsetWidth - 2):0) + "px";
+      rulef.style.width = (Number(otw.offsetLeft + otw.offsetWidth + 20) > 0 ? 
+          Number(otw.offsetLeft + otw.offsetWidth + 20):0) + "px";
+      rulec.style.width = (Number(otw.offsetLeft + otw.offsetWidth - 6) > 0 ? 
+          Number(otw.offsetLeft + otw.offsetWidth - 6):0) + "px";
     }
     
     // Tab row
@@ -343,17 +347,6 @@ var ViewPort = {
     html += "</div>";
     
     document.getElementById("tabs" + w).innerHTML = html;
-  },
-
-  needBookChooser: function() {
-    try {
-      for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-        var m = prefs.getCharPref("Version" + w);
-        if (Tab[m].modType == GENBOOK) return true;     
-      }
-    } catch(er) {}
-    
-    return false;
   },
 
   adjustFont: function(f) {

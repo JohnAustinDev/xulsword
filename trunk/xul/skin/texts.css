@@ -18,7 +18,7 @@
 
 /* Bible & Commentary chapter/page header */
 .chapterhead {
-  padding-top:8px;
+  padding-top:26px;
 }
 .noticelink {
   font-size:14px;
@@ -287,14 +287,12 @@
 .normalNote {
   padding-right:16px;
   border:1px solid transparent;
-  -moz-border-radius:8px;
   border-radius:8px;
 }
 .selectedNote {
   padding-right:16px;
   border:1px outset yellow;
   background:rgb(255,243,255);
-  -moz-border-radius:8px;
   border-radius:8px;
   cursor:pointer;
 }

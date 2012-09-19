@@ -83,7 +83,7 @@
           <checkbox id="cmd_xs_toggleCrossRefs" label="&menu.view.crossrefs;" oncommand="{this.nextSibling.checked=false; this.nextSibling.disabled=!this.checked;}"/>
           <checkbox id="crossreftext" label="&crossrefs.with.text;"/> 
         </column>
-        <column style="border:1px solid rgb(150,150,150); -moz-border-radius:6px;" hidden="true">
+        <column style="border:1px solid rgb(150,150,150); border-radius:6px;" hidden="true">
           <hbox pack="center" align="end" flex="1"><label value="&menu.options.hebrew;" /></hbox>
           <checkbox id="cmd_xs_toggleHebrewVowelPoints" label="&menu.options.hebVowel;" />
           <checkbox id="cmd_xs_toggleHebrewCantillation" label="&menu.options.hebCant;" />
