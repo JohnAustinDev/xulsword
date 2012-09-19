@@ -457,13 +457,15 @@
     <deck id="appcontent" flex="100%">
       <!-- <iframe id="aboutConfig" flex="100%" class="bibleframe" src="about:config" /> !-->
       <hbox id="frameset" flex="100%">
-        <vbox id="genBookChooser" pack="center" align="center" style="background-image: url(chrome://xulsword/skin/images/9.gif); visibility:hidden;">
-          <vbox id="genBookTree" class="genbookchooser">
-            <!-- tree starts out hidden to prevent endless loop if no Bible object is found ~-->
+        <vbox id="genBookChooser" pack="start" flex="1" align="center" style="background-image: url(chrome://xulsword/skin/images/9.gif);">
+          <spacer height="36"/>
+          <vbox id="genBookTree" class="genbookchooser" flex="1" style="display:none;">
             <tree id="genbook-tree" flex="1" class="plain" hidecolumnpicker="true" seltype="single" enableColumnDrag="false"
-                  datasources="rdf:null" ref="rdf:#http://www.xulsword.com/tableofcontents/ContentsRoot" flags="dont-build-content"
-                  onselect="onSelectGenBook();"
-                  style="display:none">
+                datasources="rdf:null" ref="rdf:#http://www.xulsword.com/tableofcontents/ContentsRoot" flags="dont-build-content"
+                onselect="onSelectGenBook();" >
+              <treecols>
+                <treecol id="chapter-column" flex="1" hideheader="true" primary="true"/>
+              </treecols>
               <template xmlns:nc="http://home.netscape.com/NC-rdf#">
                 <treechildren>
                   <treeitem uri="rdf:*">
@@ -472,12 +474,10 @@
                     </treerow>
                   </treeitem>
                 </treechildren>
-              </template>
-              <treecols id="treecols">
-                <treecol id="Name" flex="1" hideheader="true" primary="true"/>
-              </treecols>                   
+              </template>          
             </tree>
           </vbox>
+          <spacer height="22"/>
         </vbox>
         <iframe id="xulviewport" flex="100%" src="viewport.html" />
       </hbox>
@@ -486,8 +486,6 @@
     </deck>
   </vbox>
 </vbox>
-
-
 
 <!-- POPUP MENUS ARE DEFINED HERE !-->
 <popupset>

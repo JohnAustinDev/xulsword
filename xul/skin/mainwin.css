@@ -169,12 +169,16 @@ textbox deck[anonid="search-icons"] {
 }
 
 /* GENERIC BOOK CHOOSER */
+#genbook-tree {
+  width:200px;
+}
 .genbookchooser {
+  padding-top:38px;
+  padding-bottom:20px;
   border-top:2px solid rgb(175,145,180);
   border-left:2px solid rgb(175,145,180);
   border-right:2px solid rgb(225,195,230);
   border-bottom:2px solid rgb(225,195,230);
-  -moz-border-radius:6px;
   border-radius:6px;
   background:white;
 }

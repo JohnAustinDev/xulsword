@@ -599,9 +599,11 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   
   delete(testkey);
   
+  SWBuf check = assureValidUTF8(chapHTML.c_str());
+  
   char *retval;
-  retval = (char *)emalloc(chapHTML.length() + 1);
-  if (retval) {strcpy(retval, chapHTML.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
   return retval;
 }
 
@@ -778,9 +780,11 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
 
   delete(testkey1);
   
+  SWBuf check = assureValidUTF8(chapText.c_str());
+  
   char *retval;
-  retval = (char *)emalloc(chapText.length() + 1);
-  if (retval) {strcpy(retval, chapText.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -790,9 +794,10 @@ GetFootnotes
 *********************************************************************/
 char *xulsword::getFootnotes() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
+  SWBuf check = assureValidUTF8(MyFootnotes.c_str());
   char *retval;
-  retval = (char *)emalloc(MyFootnotes.length() + 1);
-  if (retval) {strcpy(retval, MyFootnotes.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -802,10 +807,10 @@ GetCrossRefs
 *********************************************************************/
 char *xulsword::getCrossRefs() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-
+  SWBuf check = assureValidUTF8(MyCrossRefs.c_str());
   char *retval;
-  retval = (char *)emalloc(MyCrossRefs.length() + 1);
-  if (retval) {strcpy(retval, MyCrossRefs.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -815,10 +820,10 @@ GetNotes
 *********************************************************************/
 char *xulsword::getNotes() {
   //NOTE: getChapterText MUST HAVE BEEN RUN BEFORE THIS IS CALLED
-
+  SWBuf check = assureValidUTF8(MyNotes.c_str());
   char *retval;
-  retval = (char *)emalloc(MyNotes.length() + 1);
-  if (retval) {strcpy(retval, MyNotes.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -877,9 +882,11 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
 
   delete(testkey);
   
+  SWBuf check = assureValidUTF8(bText.c_str());
+  
   char *retval;
-  retval = (char *)emalloc(bText.length() + 1);
-  if (retval) {strcpy(retval, bText.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -980,9 +987,11 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   module->setKey(EmptyKey);
   delete(testkey);
 
+  SWBuf check = assureValidUTF8(intro.c_str());
+
   char *retval;
-  retval = (char *)emalloc(intro.length() + 1);
-  if (retval) {strcpy(retval, intro.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -1027,9 +1036,11 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
     }
   }
 
+  SWBuf check = assureValidUTF8(xstring.c_str());
+
   char *retval;
-  retval = (char *)emalloc(xstring.length() + 1);
-  if (retval) {strcpy(retval, xstring.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -1065,9 +1076,11 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
    dmod->increment(1);
   }
 
+  SWBuf check = assureValidUTF8(keytext.c_str());
+
   char *retval;
-  retval = (char *)emalloc(keytext.length() + 1);
-  if (retval) {strcpy(retval, keytext.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -1107,10 +1120,12 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   module->SetKey(EmptyKey);
   
   delete(testkey);
+  
+  SWBuf check = assureValidUTF8(chapterText.c_str());
 
   char *retval;
-  retval = (char *)emalloc(chapterText.length() + 1);
-  if (retval) {strcpy(retval, chapterText.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -1158,9 +1173,11 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
 
   delete(testkey);
 
+  SWBuf check = assureValidUTF8(toc.c_str());
+
   char *retval;
-  retval = (char *)emalloc(toc.length() + 1);
-  if (retval) {strcpy(retval, toc.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -1354,9 +1371,11 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
   module->setKey(EmptyKey); // Overcomes the crash on Persist problem
   SearchList.Persist(savePersist);
 
+  SWBuf check = assureValidUTF8(MySearchTexts.c_str());
+
   char *retval;
-  retval = (char *)emalloc(MySearchTexts.length() + 1);
-  if (retval) {strcpy(retval, MySearchTexts.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 
@@ -1530,9 +1549,11 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
     }
   }
 
+  SWBuf check = assureValidUTF8(paramstring.c_str());
+
   char *retval;
-  retval = (char *)emalloc(paramstring.length() + 1);
-  if (retval) {strcpy(retval, paramstring.c_str());}
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
 

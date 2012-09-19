@@ -266,7 +266,7 @@ getChapterText: function(modname, vkeytext) {
     this.fdata.gct = this.Libsword.declare("GetChapterText", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.gct(this.inst, ctypes.char.array()(modname), ctypes.char.array()(vkeytext));
   this.checkerror();
-  try {var str = cdata.readString();} catch(er) {str = "";}
+  var str = cdata.readString();//} catch(er) {str = "";}
   FreeMem(cdata, ctypes.char.array()("char"));
   return str;
 },

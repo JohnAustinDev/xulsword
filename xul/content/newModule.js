@@ -416,7 +416,7 @@ function readVersion(aZip, aEntry, progVers) {
   //exceptions result in keeping the file...
   if (!temp.exists()) return null;
   temp.append("xulsword" + CONF_EXT);
-  temp.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0777);
+  temp.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
   
   var zReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(Components.interfaces.nsIZipReader);
   
@@ -853,7 +853,7 @@ function writeManifest(newLocales, newModules, newFonts, filesNotWaiting) {
     }
     
     var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-    foStream.init(pfile, 0x02 | 0x08 | 0x20, 0777, 0); 
+    foStream.init(pfile, 0x02 | 0x08 | 0x20, FPERM, 0); 
     foStream.write(modFileText, modFileText.length);
     foStream.close();
   }
@@ -1009,7 +1009,7 @@ function getConfInfo(aZip, aEntry, zReader) {
   tconf.append(MODSD);
   if (!tconf.exists()) tconf.create(tconf.DIRECTORY_TYPE, DPERM);
   tconf.append("xulsword.conf");
-  tconf.createUnique(tconf.NORMAL_FILE_TYPE, 0777);
+  tconf.createUnique(tconf.NORMAL_FILE_TYPE, FPERM);
   
   zReader.open(aZip);
   try {zReader.extract(aEntry, tconf);}
@@ -1235,10 +1235,10 @@ function launchTempScript(scriptContents, ext) {
   var script = getSpecialDirectory("TmpD");
   if (!script.exists()) return;
   script.append("xulswordScript." + ext);
-  script.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0777);
+  script.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
 
   var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-  foStream.init(script, 0x02 | 0x08 | 0x20, 0777, 0);
+  foStream.init(script, 0x02 | 0x08 | 0x20, FPERM, 0);
   var charset = (ext.match(/^vbs$/i) ? "UTF-16LE":"ASCII"); // VBS understands UTF-16LE, but BAT must be ASCII to work!
   var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
   os.init(foStream, charset, 0, 0x0000);

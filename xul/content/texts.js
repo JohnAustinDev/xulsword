@@ -26,10 +26,11 @@ var Texts = {
   footnotes:[null, null, null, null],
 
   update: function(scrollTypeFlag, highlightFlag, force, scrollto, wskip) {
-    if (scrollTypeFlag === null) scrollTypeFlag = SCROLLTYPETOP;
-    if (highlightFlag === null) highlightFlag = HILIGHTNONE;
-    if (force === null) force = false;
-    
+
+    if (scrollTypeFlag === undefined) scrollTypeFlag = SCROLLTYPETOP;
+    if (highlightFlag === undefined) highlightFlag = HILIGHTNONE;
+    if (force === undefined) force = false;
+   
     this.scrollTypeFlag = scrollTypeFlag;
     this.highlightFlag = highlightFlag;
 
@@ -80,16 +81,16 @@ var Texts = {
   updateBible: function(w, force, lselect, highType, lscroll, scrollType) {
 
     var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
-    
+  
     if (!this.display[w] || !getPrefOrCreate("IsPinned" + w, "Bool", false)) 
         this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), (lscroll ? lscroll:lselect), w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "bk", "ch", "globalOptions", "IsPinned", "ShowOriginal", "ShowFootnotesAtBottom", 
-                "ShowCrossrefsAtBottom", "ShowUserNotesAtBottom"];
+                "ShowCrossrefsAtBottom", "ShowUserNotesAtBottom", "columns"];
                 
     if (force || !lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
-jsdump("Reading text from libsword");
+jsdump("Reading text from libsword w" + w);
       var t = document.getElementById("text" + w);
       var sb = t.getElementsByClassName("sb")[0];
       var prev = {htmlText:"", htmlNotes:""};
@@ -178,6 +179,7 @@ jsdump("Reading text from libsword");
       
       var sb = t.getElementsByClassName("sb")[0];
       sb.innerHTML = (ti.htmlText.length > 64 ? ti.htmlText:"");
+
     }
     
     // handle scroll
@@ -218,15 +220,15 @@ jsdump("Reading text from libsword");
     // highlight the selected key
     var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");
     while (k.length) {k[0].className = "";}
-    k = document.getElementById("w" + w + "." + encodeUTF8(ti.key));
+    k = document.getElementById("w" + w + "." + encodeUTF8(this.display[w].DictKey));
     if (k) {
       k.className = "dictselectkey";
       k.scrollIntoView();
       document.getElementById("viewportbody").scrollTop = 0;
     }
     
-    document.getElementById("w" + w + ".keytextbox").value = ti.key;
-    setUnicodePref("DictKey_" + this.display[w].mod + "_" + w, ti.key);
+    document.getElementById("w" + w + ".keytextbox").value = this.display[w].DictKey;
+    setUnicodePref("DictKey_" + this.display[w].mod + "_" + w, this.display[w].DictKey);
    
     // handle scrolls and highlights
   },
@@ -363,6 +365,7 @@ jsdump("Reading text from libsword");
     display.ShowFootnotesAtBottom = getPrefOrCreate("ShowFootnotesAtBottom", "Bool", true);
     display.ShowCrossrefsAtBottom = getPrefOrCreate("ShowCrossrefsAtBottom", "Bool", false);
     display.ShowUserNotesAtBottom = getPrefOrCreate("ShowUserNotesAtBottom", "Bool", true);
+    display.columns = document.getElementById("text" + w).getAttribute("columns");
 
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") 
@@ -377,12 +380,19 @@ jsdump("Reading text from libsword");
     for (var i=0; i<check.length; i++) {
       if (check[i] == "globalOptions") {
         for (var cmd in GlobalToggleCommands) {
-          if (display1.globalOptions[GlobalToggleCommands[cmd]] != display2.globalOptions[GlobalToggleCommands[cmd]]) return true;
+          if (display1.globalOptions[GlobalToggleCommands[cmd]] != 
+              display2.globalOptions[GlobalToggleCommands[cmd]]) {
+//jsdump("changed=" + GlobalToggleCommands[cmd]);
+            return true;
+          }
         } 
       }
-      else if (display1[check[i]] != display2[check[i]]) return true;
+      else if (display1[check[i]] != display2[check[i]]) {
+//jsdump("changed=" + check[i]);
+        return true;
+      }
     }
-
+//jsdump("no change");
     return false;
   },
 
@@ -428,7 +438,7 @@ jsdump("SCROLLING w" + w + " " + v.id + ": " + scrollTypeFlag);
     var vt = v;
     while (vt && vt.parentNode !== v.offsetParent) {
       vt = vt.parentNode; 
-      if (vt) vOffsetTop -= vt.offsetTop;
+      if (vt && vt.offsetTop) vOffsetTop -= vt.offsetTop;
     }
     
     // if part of commentary element is already visible, don't rescroll
@@ -599,7 +609,8 @@ jsdump("SCROLLING w" + w + " " + v.id + ": " + scrollTypeFlag);
   hilightVerses: function(w, l, hilightFlag) {
     if (!l) return;
     if (hilightFlag == HILIGHTSAME) return;
-    
+    if (Tab[prefs.getCharPref("Version" + w)].modType == COMMENTARY) hilightFlag = HILIGHTNONE;
+ 
     var t = document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];
     var mod = prefs.getCharPref("Version" + w);
@@ -1154,10 +1165,9 @@ var CommTexts = {
     }
     
     // get Commentary chapter's text
-    ret.htmlText = Bible.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");
-    
+    ret.htmlText = Bible.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");   
     ret.footnotes = Bible.getNotes();
-      
+     
     var un;
     if (d.globalOptions["User Notes"] == "On") {
       un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText, w);
@@ -1177,7 +1187,7 @@ var CommTexts = {
     // add headers
     var showHeader = (d.globalOptions["Headings"] == "On");
     if (showHeader && ret.htmlText) {
-      ret.htmlText = BibleText.getChapterHeading(d.bk, d.ch, d.mod, w, false, false) + ret.htmlText;
+      ret.htmlText = BibleTexts.getChapterHeading(d.bk, d.ch, d.mod, w, false, false) + ret.htmlText;
     }
     
     // put "global" SWORD options back to their global context values
@@ -1450,7 +1460,7 @@ var GenBookTexts = {
     
     var un = Texts.getUserNotes("na", 1, d.mod, ret.htmlText, w);
     ret.htmlText = un.html; // has user notes added to text
-    footnotes = un.notes;
+    ret.footnotes = un.notes;
     
     return ret;
   }
