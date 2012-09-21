@@ -3,7 +3,6 @@
 <?php
 
 $Media = ($handheld > 0 ? "handheld":"screen");
-$MaxTexts = 2;
 $MODCLEAN     = "/[^A-Za-z0-9_]/";
 $LOCCLEAN     = "/[^A-Za-z0-9\.]/";
 $REFLISTCLEAN = "/[^A-Za-z0-9\.\;\- ]/";
@@ -31,9 +30,11 @@ $QuerySort = array("m", "mc1", "mc2", "mc3", "mc4", "mc5", "mc6", "mc7", "mc8", 
 // New flags can be added to the end of this list, but the existing 
 // order should never change (or else existing links will break!).
 $Optord = array('hdg','ftn','crn','dtl','wcr','vsn','hvp','hcn','stn','mlt','mse');
+
 $Redirect = 0;
-	
+
 $UpgradeBrowser = 0;
+
 $IsInternetExplorer = false;
 $test = array();
 if (preg_match('/MSIE (\\d+)/', $_SERVER['HTTP_USER_AGENT'], $test)) {
@@ -67,6 +68,9 @@ while(isset($_GET['m'.$c])) {
 		if (!$_GET['m'.$c]) $_GET['m'.$c] = $defaultbible[$Language];
 		$c++;
 }
+
+// If Javascript is known to be disabled, 
+// then turn off global options which are non-functional without it.
 if (isset($_GET['noj'])) {
 	$_GET['ftn'] = '0';
 	$_GET['crn'] = '0';
@@ -81,10 +85,10 @@ if (isset($_GET['bk'])) {$p[0] = $_GET['bk']; $p[3] = $p[2] = $p[1] = 1; $Redire
 if (isset($_GET['ch'])) {$p[1] = $_GET['ch']; $p[3] = $p[2] = 1;  $Redirect = 1;}
 if (isset($_GET['vs'])) {$p[2] = $_GET['vs']; $p[3] = $p[2];  $Redirect = 1;}
 if (isset($_GET['lv'])) {$p[3] = $_GET['lv'];  $Redirect = 1;}
-if (!isset($p[2])) $p[2] = 1; // should work without this, but this is a libxulsword bug wrokaround
+if (!isset($p[2])) $p[2] = 1; // should work without this, but this is a libxulsword bug workaround (bug now fixed)
 $_GET['l'] = join(".", $p);
 
-// Now remove all GET names not included in the Default lists
+// Now remove all GET names which are not included in the Default list
 $del = array_diff_key($_GET, $Default);
 reset($del);
 while (list($name, $val) = each($del)) {if (!preg_match("/^m\d+$/", $name)) unset($_GET[$name]);}
@@ -236,12 +240,19 @@ $FlowCols = 1;
 $mods = $_GET['m1'];
 $flowmod = $_GET['m1'];
 if (isset($_GET['m2'])) {
+	// ...then we have multiple columns...
+	
 	$c=2;
+	
+	// Determine if flowing columns are to be displayed, and how many
 	while (isset($_GET['m'.$c])) {
 		if ($_GET['m'.$c] == $flowmod) $FlowCols++;
 		$mods .= ",".$_GET['m'.$c];
 		$c++;
 	}
+	
+	// Activate flowing columns if we're not IE (IE can't do them) and
+	// if all columns are the same text version.
 	if (!$IsInternetExplorer && $FlowCols == --$c) {
 		$PageText = $Sword->getChapterText($flowmod, $_GET['l']);	
 		if (strlen($PageText) < 64) {
@@ -254,12 +265,16 @@ if (isset($_GET['m2'])) {
 		$head = ($_GET['hdg']=='1' ? "<div class=\"chapnum\">".$ch."</div>":"");
 		$PageText = $head.$PageText;
 	}
+	
+	// Show each text in its own column
 	else {
 		$FlowCols = 1;
 		$PageText = $Sword->getChapterTextMulti($mods, $_GET['l'], true);
 	}
 }
+
 else {
+	// ...then we have a single column
 	$PageText = $Sword->getChapterText($mods, $_GET['l']);
 	if (strlen($PageText) < 64) {
 		$before = $_GET['l'];
@@ -277,6 +292,13 @@ while (isset($_GET['m'.$c])) {
 	$c++;
 }
 $_LOC = preg_split("/\./", $_GET['l']);
+
+
+// We're done collecting all necessary data required for build a page!
+
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
 
 
