@@ -1282,7 +1282,10 @@ function removeModuleContents(aConfFile) {
   }
   try {prefs.clearUserPref("dontAskAboutSearchIndex" + modName);} catch (er) {}
   try {prefs.clearUserPref("CipherKey" + modName);} catch (er) {}
-  try {prefs.clearUserPref("ShowingKey" + modName);} catch (er) {}
+  for (var w=1; w<=NW; w++) {
+    try {prefs.clearUserPref("DictKey_" + modName + "_" + w);} catch (er) {}
+    try {prefs.clearUserPref("GenBookKey_" + modName + "_" + w);} catch (er) {}
+  }
   
   var aMod = getSwordModParent(aConfFile, true);
   if (!aMod || !aMod.file) {

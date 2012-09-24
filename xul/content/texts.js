@@ -19,20 +19,22 @@
 var Texts = {
   
   scrollTypeFlag:null,
-  highlightFlag:null,
+  hilightFlag:null,
   
   display:[null, null, null, null],
   
+  pinnedDisplay:[null, null, null, null],
+  
   footnotes:[null, null, null, null],
 
-  update: function(scrollTypeFlag, highlightFlag, force, scrollto, wskip) {
-
+  update: function(scrollTypeFlag, hilightFlag, force) {
+jsdump("scrollTypeFlag = " + scrollTypeFlag);
     if (scrollTypeFlag === undefined) scrollTypeFlag = SCROLLTYPETOP;
-    if (highlightFlag === undefined) highlightFlag = HILIGHTNONE;
+    if (hilightFlag === undefined) hilightFlag = HILIGHTNONE;
     if (force === undefined) force = false;
    
     this.scrollTypeFlag = scrollTypeFlag;
-    this.highlightFlag = highlightFlag;
+    this.hilightFlag = hilightFlag;
 
     if (this.scrollTypeFlag == SCROLLTYPETOP) Location.setVerse(prefs.getCharPref("DefaultVersion"), 1, 1);
     
@@ -42,21 +44,17 @@ var Texts = {
     
     for (var w=1; w<=NW; w++) {
       
-      var columns = document.getElementById("text" + w).getAttribute("columns");
-      if (columns == "hide") continue;
-      if (wskip && columns=="show1" && w == wskip) continue;
+      if (document.getElementById("text" + w).getAttribute("columns") == "hide") continue;
       if (w > prefs.getIntPref("NumDisplayedWindows")) continue;
-      
-      var loc = Location.getLocation(prefs.getCharPref("Version" + w));
    
       switch(Tab[prefs.getCharPref("Version" + w)].modType) {
         
       case BIBLE:
-        this.updateBible(w, false, loc, this.highlightFlag, (scrollto ? scrollto:loc), this.scrollTypeFlag);
+        this.updateBible(w, force);
         break;
         
       case COMMENTARY:
-        this.updateCommentary(w, false, loc, this.highlightFlag, (scrollto ? scrollto:loc), this.scrollTypeFlag);
+        this.updateCommentary(w, force);
         break;
       
       case DICTIONARY:
@@ -68,8 +66,10 @@ var Texts = {
         break;
         
       }
+      
+      this.pinnedDisplay[w] = copyObj(this.display[w]);
     }
-    
+        
     MainWindow.goUpdateTargetLocation();
     
     MainWindow.updateNavigator();
@@ -78,18 +78,52 @@ var Texts = {
 
   },
   
-  updateBible: function(w, force, lselect, highType, lscroll, scrollType) {
-
-    var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
-  
-    if (!this.display[w] || !getPrefOrCreate("IsPinned" + w, "Bool", false)) 
-        this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), (lscroll ? lscroll:lselect), w);
+  updateBible: function(w, force) {
     
+    var scrollTypeFlag = this.scrollTypeFlag;
+    var hilightFlag = this.hilightFlag;
+    var loc = Location.getLocation(prefs.getCharPref("Version" + w));
+    
+    // get current display params
+    var display = this.getDisplay(prefs.getCharPref("Version" + w), loc, w);
+    
+    // overwrite display and loc with any pinned values
+    if (!this.pinnedDisplay[w]) prefs.setBoolPref("IsPinned" + w, false);
+    if (getPrefOrCreate("IsPinned" + w, "Bool", false)) {
+      // then keep pinned params (which could have been changed since last display)
+      display.mod = this.pinnedDisplay[w].mod;
+      display.bk  = this.pinnedDisplay[w].bk;
+      display.ch  = this.pinnedDisplay[w].ch;
+      display.vs  = this.pinnedDisplay[w].vs;
+      loc = display.bk + "." + display.ch + "." + display.vs;
+      hilightFlag = HILIGHTNONE;
+    }
+  
+    // overwrite display and loc with any scroll values
+    if (typeof(this.scrollTypeFlag) == "object") {
+      if (this.scrollTypeFlag[w]) {
+        if (!(/\./).test(this.scrollTypeFlag[w])) {
+          scrollTypeFlag = this.scrollTypeFlag[w];
+          hilightFlag = HILIGHTNONE;
+        }
+        else {
+          var lt = this.scrollTypeFlag[w].split(".");
+          display.bk  = lt[0];
+          display.ch  = lt[1];
+          display.vs  = lt[2];
+          loc = lt[0] + "." + lt[1] + "." + lt[2];
+          scrollTypeFlag = Number(lt[3]);
+          hilightFlag = HILIGHTNONE;
+        }
+      }
+      else {scrollTypeFlag = SCROLLTYPENONE;}
+    }
+  
     // don't read new text if the results will be identical to last displayed text
-    var check = ["mod", "bk", "ch", "globalOptions", "IsPinned", "ShowOriginal", "ShowFootnotesAtBottom", 
+    var check = ["mod", "bk", "ch", "globalOptions", "ShowOriginal", "ShowFootnotesAtBottom", 
                 "ShowCrossrefsAtBottom", "ShowUserNotesAtBottom", "columns"];
                 
-    if (force || !lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
+    if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
 jsdump("Reading text from libsword w" + w);
       var t = document.getElementById("text" + w);
       var sb = t.getElementsByClassName("sb")[0];
@@ -101,10 +135,10 @@ jsdump("Reading text from libsword w" + w);
       // while still resulting in a filled multi-column display, if possible.
       if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
         
-        var d2 = copyObj(this.display[w]);
+        var d2 = copyObj(display);
   
         // collect previous chapter(s)
-        var c = this.display[w].ch - 1;
+        var c = Number(display.ch) - 1;
         while (c > 0) {
           d2.ch = c;
           var tip = BibleTexts.read(w, d2);
@@ -116,7 +150,7 @@ jsdump("Reading text from libsword w" + w);
         }
       
         // collect next chapter(s)
-        var c = this.display[w].ch + 1;
+        var c = Number(display.ch) + 1;
         while (c <= Bible.getMaxChapter(d2.mod, d2.bk + "." + d2.ch)) {
           d2.ch = c;
           var tip = BibleTexts.read(w, d2);
@@ -129,7 +163,7 @@ jsdump("Reading text from libsword w" + w);
         
       }
       
-      var ti = BibleTexts.read(w, this.display[w]);
+      var ti = BibleTexts.read(w, display);
         
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
@@ -140,14 +174,14 @@ jsdump("Reading text from libsword w" + w);
       var nb = t.getElementsByClassName("nb")[0];
       this.footnotes[w] = prev.htmlNotes + ti.htmlNotes + next.htmlNotes;
       nb.innerHTML = this.footnotes[w];
-      
+
     }
     
     // handle scroll
-    this.scroll2Verse(w, lscroll, scrollType);
+    this.scroll2Verse(w, loc, scrollTypeFlag);
     
     // handle highlights
-    this.hilightVerses(w, lselect, highType);
+    this.hilightVerses(w, loc, hilightFlag);
     
     // set audio icons
     if (BibleTexts.updateAudioLinksTO) window.clearTimeout(BibleTexts.updateAudioLinksTO);
@@ -156,20 +190,57 @@ jsdump("Reading text from libsword w" + w);
     // remove notes which aren't in window, or hide notebox entirely if empty
     BibleTexts.checkNoteBox(w);
     
+    // save display objects for this window
+    this.display[w] = copyObj(display);
+    
   },
   
-  updateCommentary: function(w, force, lselect, highType, lscroll, scrollType) {
+  updateCommentary: function(w, force) {
     
-    var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
+    var scrollTypeFlag = this.scrollTypeFlag;
+    var hilightFlag = this.hilightFlag;
+    var loc = Location.getLocation(prefs.getCharPref("Version" + w));
+        
+    // get current display params
+    var display = this.getDisplay(prefs.getCharPref("Version" + w), loc, w);
     
-    if (!this.display[w] || !getPrefOrCreate("IsPinned" + w, "Bool", false)) 
-        this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), (lscroll ? lscroll:lselect), w);
+    // overwrite display and loc with any pinned values
+    if (!this.pinnedDisplay[w]) prefs.setBoolPref("IsPinned" + w, false);
+    if (getPrefOrCreate("IsPinned" + w, "Bool", false)) {
+      // then keep pinned params (which could have been changed since last display)
+      display.mod = this.pinnedDisplay[w].mod;
+      display.bk  = this.pinnedDisplay[w].bk;
+      display.ch  = this.pinnedDisplay[w].ch;
+      display.vs  = this.pinnedDisplay[w].vs;
+      loc = display.bk + "." + display.ch + "." + display.vs;
+      hilightFlag = HILIGHTNONE;
+    }
+    
+    // overwrite display and loc with any scroll values
+    if (typeof(this.scrollTypeFlag) == "object") {
+      if (this.scrollTypeFlag[w]) {
+        if (!(/\./).test(this.scrollTypeFlag[w])) {
+          scrollTypeFlag = this.scrollTypeFlag[w];
+          hilightFlag = HILIGHTNONE;
+        }
+        else {
+          var lt = this.scrollTypeFlag[w].split(".");
+          display.bk  = lt[0];
+          display.ch  = lt[1];
+          display.vs  = lt[2];
+          loc = lt[0] + "." + lt[1] + "." + lt[2];
+          scrollTypeFlag = Number(lt[3]);
+          hilightFlag = HILIGHTNONE;
+        }
+      }
+      else {scrollTypeFlag = SCROLLTYPENONE;}
+    }
     
     // don't read new text if the results will be identical to last displayed text
-    var check = ["mod", "bk", "ch", "globalOptions", "IsPinned"];
+    var check = ["mod", "bk", "ch", "globalOptions"];
      
-    if (force || !lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
-      var ti = CommTexts.read(w, this.display[w]);
+    if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
+      var ti = CommTexts.read(w, display);
 
       this.footnotes[w] = ti.footnotes;
 
@@ -183,10 +254,14 @@ jsdump("Reading text from libsword w" + w);
     }
     
     // handle scroll
-    this.scroll2Verse(w, lscroll, scrollType);
+    this.scroll2Verse(w, loc, scrollTypeFlag);
     
     // handle highlights
-    this.hilightVerses(w, lselect, highType);   
+    this.hilightVerses(w, loc, hilightFlag); 
+    
+    // save display object for this window
+    this.display[w] = copyObj(display);
+      
   },
   
   updateDictionary: function(w, force) {
@@ -195,14 +270,14 @@ jsdump("Reading text from libsword w" + w);
     prefs.setBoolPref("ShowOriginal" + w, false);
     prefs.setBoolPref("MaximizeNoteBox" + w, false);
     
-    var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
-    this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), Location.getLocation(prefs.getCharPref("Version" + w)), w);
+    // get current display params
+    var display = this.getDisplay(prefs.getCharPref("Version" + w), Location.getLocation(prefs.getCharPref("Version" + w)), w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "DictKey", "globalOptions"];
     
-    if (force || !lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
-      var ti = DictTexts.read(w, this.display[w]);
+    if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
+      var ti = DictTexts.read(w, display);
       
       this.footnotes[w] = ti.footnotes;
       
@@ -220,34 +295,36 @@ jsdump("Reading text from libsword w" + w);
     // highlight the selected key
     var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");
     while (k.length) {k[0].className = "";}
-    k = document.getElementById("w" + w + "." + encodeUTF8(this.display[w].DictKey));
+    k = document.getElementById("w" + w + "." + encodeUTF8(display.DictKey));
     if (k) {
       k.className = "dictselectkey";
       k.scrollIntoView();
       document.getElementById("viewportbody").scrollTop = 0;
     }
     
-    document.getElementById("w" + w + ".keytextbox").value = this.display[w].DictKey;
-    setUnicodePref("DictKey_" + this.display[w].mod + "_" + w, this.display[w].DictKey);
+    document.getElementById("w" + w + ".keytextbox").value = display.DictKey;
+    setUnicodePref("DictKey_" + display.mod + "_" + w, display.DictKey);
    
     // handle scrolls and highlights
+    
+    // save display object for this window
+    this.display[w] = copyObj(display);
   },
   
   updateGenBook: function(w, force) {
 
-    prefs.setBoolPref("IsPinned" + w, false);
     prefs.setBoolPref("ShowOriginal" + w, false);
     prefs.setBoolPref("MaximizeNoteBox" + w, false);
     
-    var lastDisp = (this.display[w] ? copyObj(this.display[w]):null);
-    this.display[w] = this.getDisplay(prefs.getCharPref("Version" + w), Location.getLocation(prefs.getCharPref("Version" + w)), w);
+    // get current display params
+    var display = this.getDisplay(prefs.getCharPref("Version" + w), Location.getLocation(prefs.getCharPref("Version" + w)), w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "GenBookKey", "globalOptions"];
     
-    if (force || !lastDisp || this.isChanged(check, this.display[w], lastDisp)) {
-      var ti = GenBookTexts.read(w, this.display[w]);
-      
+    if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
+      var ti = GenBookTexts.read(w, display);
+     
       this.footnotes[w] = ti.footnotes;
       
       var t =  document.getElementById("text" + w);
@@ -259,6 +336,10 @@ jsdump("Reading text from libsword w" + w);
     }
     
     // handle scrolls and highlights    
+    
+    // save display object for this window
+    this.display[w] = copyObj(display);
+    
   },
 
 
@@ -325,7 +406,7 @@ jsdump("Reading text from libsword w" + w);
         if (book != bk) continue;
       }
       else {
-        if (chapter != getUnicodePref("ShowingKey" + mod)) continue;
+        if (chapter != getUnicodePref((Tab[mod].modType == DICTIONARY ? "DictKey_":"GenBookKey_") + mod + "_" + w)) continue;
         book = "na";
         chapter = "1";
       }
@@ -334,7 +415,7 @@ jsdump("Reading text from libsword w" + w);
         
       // We have a keeper, lets save the note and show it in the text!
       // Encode ID
-//dump ("FOUND ONE!:" + book + " " + chapter + " " + verse + " " + aModule + "\n");
+jsdump("FOUND ONE!:" + book + ", " + chapter + ", " + verse + ", " + mod + ", " + encodeUTF8(res.QueryInterface(BM.kRDFRSCIID).Value));
       var encodedResVal = encodeUTF8(res.QueryInterface(BM.kRDFRSCIID).Value);
       var myid = "un." + encodedResVal + "." + bk + "." + ch + "." + verse + "." + mod;
       var newNoteHTML = "<span id=\"w" + w + "." + myid + "\" class=\"un\" title=\"un\"></span>";
@@ -357,9 +438,8 @@ jsdump("Reading text from libsword w" + w);
     display.ch = Number((loc[1] ? loc[1]:1));
     display.vs = Number((loc[2] ? loc[2]:1));
     display.lv = Number((loc[3] ? loc[3]:1));
+    display.GenBookKey = getPrefOrCreate("GenBookKey_" + mod + "_" + w, "Unicode", "/" + mod);
     display.DictKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
-    display.GenBookKey = getPrefOrCreate("GenBookKey_" + mod + "_" + w, "Unicode", "/");
-    display.IsPinned = getPrefOrCreate("IsPinned" + w, "Bool", false);
     display.ShowOriginal = getPrefOrCreate("ShowOriginal" + w, "Bool", false);
     display.MaximizeNoteBox = getPrefOrCreate("MaximizeNoteBox" + w, "Bool", false);
     display.ShowFootnotesAtBottom = getPrefOrCreate("ShowFootnotesAtBottom", "Bool", true);
@@ -451,9 +531,9 @@ jsdump("SCROLLING w" + w + " " + v.id + ": " + scrollTypeFlag);
       scrollTypeFlag = SCROLLTYPETOP;
     }
   
+    // scroll single column windows...
     if (t.getAttribute("columns") == "show1") {
       
-      // scroll single column windows...
       switch (scrollTypeFlag) {
       case SCROLLTYPENONE:         // don't scroll (for links this becomes SCROLLTYPECENTER)
         break;
@@ -485,12 +565,11 @@ jsdump("SCROLLING w" + w + " " + v.id + ": " + scrollTypeFlag);
       }
     }
     
-    // scroll multi-column windows...
+    // or scroll multi-column windows...
     else {
       
       switch (scrollTypeFlag) {
-      case SCROLLTYPENONE:         // don't scroll (for links this becomes SCROLLTYPECENTER)
-        break;
+
       case SCROLLTYPETOP:          // scroll to top
         // hide all verses previous to scroll verse's chapter
         var vs = sb.lastChild;
@@ -521,6 +600,7 @@ jsdump("SCROLLING w" + w + " " + v.id + ": " + scrollTypeFlag);
           vs = vs.previousSibling;
         }
         break;
+      case SCROLLTYPENONE:         // don't scroll (for links this becomes SCROLLTYPECENTER)
       case SCROLLTYPECENTER:       // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
         if (l[2] == 1 || (v.style.display != "none" && v.offsetLeft < sb.offsetWidth)) break;
       case SCROLLTYPECENTERALWAYS: // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
@@ -608,6 +688,7 @@ jsdump("SCROLLING w" + w + " " + v.id + ": " + scrollTypeFlag);
   
   hilightVerses: function(w, l, hilightFlag) {
     if (!l) return;
+    
     if (hilightFlag == HILIGHTSAME) return;
     if (Tab[prefs.getCharPref("Version" + w)].modType == COMMENTARY) hilightFlag = HILIGHTNONE;
  
@@ -822,10 +903,14 @@ var BibleTexts = {
   },
   
   checkNoteBox: function(w) {
+   
+    var havefn = false;
+    
     var t = document.getElementById("text" + w);
+    var sb = t.getElementsByClassName("sb")[0];
+    var nb = document.getElementById("note" + w);
+      
     if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
-      var sb = t.getElementsByClassName("sb")[0];
-      var nb = document.getElementById("note" + w);
 
       // get first chapter/verse
       var vf = sb.firstChild;
@@ -842,7 +927,6 @@ var BibleTexts = {
       if (vl) vl = vl.id.split(".");
       
       // hide footnotes whose references are scrolled off the window
-      var have = false;
       if (nb.innerHTML) {
         // vf and vl id has form: vs.Gen.1.1
         // note id has form: w1.body.fn.1.Gen.1.1.KJV
@@ -865,13 +949,14 @@ var BibleTexts = {
           }
           
           nt[i].parentNode.parentNode.style.display = dispattr;
-          if (!dispattr) have = true;
+          if (!dispattr) havefn = true;
         }
       }
     }
+    else if (nb.innerHTML) havefn = true;
     
     // hide entire notebox if it's empty
-    if (!have) {
+    if (!havefn) {
       document.getElementById("text" + w).setAttribute("foot", "hide");
     }
 
@@ -1105,7 +1190,7 @@ var BibleTexts = {
     prefs.setCharPref("SelectedNote", id);
     
     //Now set up the counters such that the note remains highlighted for at least a second
-    window.setTimeout("unhighlightNote()",1000);
+    window.setTimeout("unhilightNote()",1000);
 
     var nb = document.getElementById("note" + w);
     var note = document.getElementById(id);
@@ -1454,8 +1539,9 @@ var GenBookTexts = {
   
   read: function(w, d) {
     var ret = { htmlHead:Texts.getPageLinks(), htmlText:"", footnotes:null };
-
-    ret.htmlText = Bible.getGenBookChapterText(d.mod, d.GenBookKey);
+    // the GenBookKey value always begins with /mod/ so that values can be directly
+    // compared to the genbook-tree's resource values.
+    ret.htmlText = Bible.getGenBookChapterText(d.mod, d.GenBookKey.replace(/^\/[^\/]+/, ""));
     ret.htmlText = Texts.addParagraphIDs(ret.htmlText);
     
     var un = Texts.getUserNotes("na", 1, d.mod, ret.htmlText, w);

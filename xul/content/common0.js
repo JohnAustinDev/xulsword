@@ -100,7 +100,7 @@ const XSNOTE = "(fn|cr|un)\\.([^\\.]+)\\.(\\w+)\\.(\\d+)\\.(\\d+)\\.(\\w+)";
 
 // scrolling
 const SCROLLTYPENONE = 0;         // don't scroll (for links this becomes SCROLLTYPECENTER)
-const SCROLLTYPETOP = 1;           // scroll to top
+const SCROLLTYPETOP = 1;          // scroll to top
 const SCROLLTYPEBEG = 2;          // put selected verse at the top of the window or link
 const SCROLLTYPECENTER = 3;       // put selected verse in the middle of the window or link, unless verse is already visible or verse 1
 const SCROLLTYPECENTERALWAYS = 4; // put selected verse in the middle of the window or link, even if verse is already visible or verse 1

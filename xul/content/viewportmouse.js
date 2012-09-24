@@ -104,7 +104,7 @@ function closeTabToolTip() {
  * TEXT SCRIPT BOX
  ***********************************************************************/  
 var HaveLeftTarget = false;
-var ImmediateUnhighlight = false;
+var ImmediateUnhilight = false;
 var HighlightElement1 = null;
 var HighlightElement2 = null;
 var IgnoreMouseOvers = false; // Used to block mouseoverse while popup is switching
@@ -129,7 +129,7 @@ function scriptMouseOver(e) {
   case "cr":
     if (prefs.getBoolPref("ShowCrossrefsAtBottom")) {
       HaveLeftTarget=false;
-      ImmediateUnhighlight=false;
+      ImmediateUnhilight=false;
       BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
     }
     else if (!Popup.activate(x, y, w, "cr", elem.id)) {elem.style.cursor = "default";}
@@ -138,7 +138,7 @@ function scriptMouseOver(e) {
   case "fn":
     if (prefs.getBoolPref("ShowFootnotesAtBottom")) {
       HaveLeftTarget=false;
-      ImmediateUnhighlight=false;
+      ImmediateUnhilight=false;
       BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
     }
     else Popup.activate(x, y, w, "fn", elem.id);
@@ -199,7 +199,7 @@ function scriptMouseOver(e) {
           (Tab[prefs.getCharPref("Version" + w)].modType == BIBLE || 
            Tab[prefs.getCharPref("Version" + w)].modType == COMMENTARY)) {
       HaveLeftTarget=false;
-      ImmediateUnhighlight=false;
+      ImmediateUnhilight=false;
       BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
     }
     else Popup.activate(x, y, w, "un", elem.id);
@@ -231,7 +231,7 @@ function scriptMouseOut(e) {
   HighlightElement2=null;
   
   HaveLeftTarget=true;
-  if (ImmediateUnhighlight) {unhighlightNote();}
+  if (ImmediateUnhilight) {unhilightNote();}
 
   var currentlyOver = e.relatedTarget;
   while (currentlyOver) {
@@ -247,7 +247,7 @@ function scriptClick(e) {
   if (w === null) return;
 
   if (w && Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
-    var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/");
+    var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/" + prefs.getCharPref("Version" + w));
     if (!MainWindow.isSelectedGenBook(key)) {
       MainWindow.openGenBookKey(key);
       MainWindow.selectGenBook(key);
@@ -282,10 +282,9 @@ function scriptClick(e) {
     switch (Tab[mod].modType) {
     case BIBLE:
     case COMMENTARY:
-      var pin = (w && prefs.getBoolPref("IsPinned" + w) ? w:null);
       if (w && document.getElementById("text" + w).getAttribute("columns") != "show1") 
-          MainWindow.previousPage(HILIGHTNONE, pin);
-      else MainWindow.previousChapter(HILIGHTNONE, SCROLLTYPEBEG, pin);
+          MainWindow.previousPage(HILIGHTNONE, w);
+      else MainWindow.previousChapter(HILIGHTNONE, SCROLLTYPEBEG, w);
       break;
     case DICTIONARY:
       var currentKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
@@ -308,10 +307,9 @@ function scriptClick(e) {
     switch (Tab[mod].modType) {
     case BIBLE:
     case COMMENTARY:
-      var pin = (w && prefs.getBoolPref("IsPinned" + w) ? w:null);
       if (w && document.getElementById("text" + w).getAttribute("columns") != "show1")
-          MainWindow.nextPage(HILIGHTNONE, pin);
-      else MainWindow.nextChapter(HILIGHTNONE, SCROLLTYPEBEG, pin);
+          MainWindow.nextPage(HILIGHTNONE, w);
+      else MainWindow.nextChapter(HILIGHTNONE, SCROLLTYPEBEG, w);
       break;
     case DICTIONARY:
       var currentKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
@@ -340,7 +338,14 @@ function scriptClick(e) {
     
   case "sbpin":
     prefs.setBoolPref("IsPinned" + w, !prefs.getBoolPref("IsPinned" + w));
-    Texts.udate(SCROLLTYPETOP, HILIGHTNONE);
+    var scroll = SCROLLTYPENONE;
+    if (!prefs.getBoolPref("IsPinned" + w)) {
+      scroll = [null];
+      for (var wt=1; wt<=NW; wt++) {
+        scroll.push(wt == w ? SCROLLTYPECENTER:null);
+      }
+    }
+    Texts.update(scroll, HILIGHTNONE);
     break;
     
   case "popupBackLink":
@@ -378,11 +383,11 @@ function getElemType(elem) {
 }
 
 // Called after  short delay so that a note will be highlighted for at least a certain amount of time
-function unhighlightNote() {
+function unhilightNote() {
   if (HaveLeftTarget)  {
     try {document.getElementById(prefs.getCharPref("SelectedNote")).className = "normalNote";} catch(er){}
   }
-  else {ImmediateUnhighlight = true;}
+  else {ImmediateUnhilight = true;}
 }
 
 function highlightStrongs(elem, strongsArray, aClass) {
