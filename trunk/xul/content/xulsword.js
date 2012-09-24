@@ -38,6 +38,8 @@ function loadedXUL() {
   
   updateCSSBasedOnCurrentLocale(["#xulsword-window", "input, button, menu, menuitem"]);
   createVersionClasses(); // needed for tooltips
+  pullFontSizesFromCSS();
+  adjustFontSizes(prefs.getIntPref('FontSize'));
   document.title = SBundle.getString("Title");
   window.name="xulsword-window";
   
@@ -842,6 +844,8 @@ function previousBook() {
 
 // if pin info is given, apply changes to pin window only
 function previousChapter(highlightFlag, scrollType, wpin) {
+  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
+  
   var vers = (wpin ? prefs.getCharPref("Version" + wpin):firstDisplayBible());
   var bkn = findBookNum(wpin ? Texts.display[wpin].bk:Location.getBookName());
   var chn = (wpin ? Texts.display[wpin].ch:Location.getChapterNumber(vers));
@@ -849,14 +853,15 @@ function previousChapter(highlightFlag, scrollType, wpin) {
   if (chn > 1) {chn--;}
   else return;
   
-  if (wpin) {Texts.display[wpin].ch = chn;}
+  if (wpin) {Texts.pinnedDisplay[wpin].ch = chn;}
   else {Location.setLocation(vers, Location.getBookName() + "." + chn);}
   
-  Texts.update(scrollType, highlightFlag);
+  Texts.update(getScrollArray(wpin, Book[bkn].sName + "." + chn + ".1." + scrollType), highlightFlag);
 }
 
 // if pin info is given, apply changes to pin window(s) only
-function previousPage(highlightFlag, scrollType, wpin) {
+function previousPage(highlightFlag, wpin) {
+  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
   
   // if a multi-column windows is visible, get its first verse
   var vf = null;
@@ -876,19 +881,11 @@ function previousPage(highlightFlag, scrollType, wpin) {
   
   // if no multi-column window is visible, just do previousChapter
   if (!vf) {
-    previousChapter(highlightFlag, scrollType, (wpin ? wpin:null));
+    previousChapter(highlightFlag, SCROLLTYPEBEG, wpin);
     return;
   }
 
-
-  if (wpin) {
-    Texts.display[wpin].bk = vf[0];
-    Texts.display[wpin].ch = vf[1];
-    Texts.display[wpin].vs = vf[2];
-  }
-  else {Location.setLocation(prefs.getCharPref("Version" + w), vf[0] + "." + vf[1] + "." + vf[2]);}
-  
-  Texts.update((wpin ? SCROLLTYPEEND:SCROLLTYPEENDSELECT), highlightFlag);
+  Texts.update(getScrollArray(wpin, vf.join(".") + "." + (wpin ? SCROLLTYPEEND:SCROLLTYPEENDSELECT)), highlightFlag);
 }
 
 function previousVerse(scrollType) {
@@ -919,6 +916,8 @@ function nextBook() {
 
 // if pin info is given, apply changes to pin window(s) only
 function nextChapter(highlightFlag, scrollType, wpin) {
+  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
+  
   var vers = (wpin ? Texts.display[wpin].mod:firstDisplayBible());
   var bkn = findBookNum(wpin ? Texts.display[wpin].bk:Location.getBookName());
   var chn = (wpin ? Texts.display[wpin].ch:Location.getChapterNumber(vers));
@@ -926,14 +925,15 @@ function nextChapter(highlightFlag, scrollType, wpin) {
   if (chn < Book[bkn].numChaps) {chn++;}
   else return;
   
-  if (wpin) {Texts.display[wpin].ch = chn;}
+  if (wpin) {Texts.pinnedDisplay[wpin].ch = chn;}
   else {Location.setLocation(vers, Location.getBookName() + "." + chn);}
   
-  Texts.update(scrollType, highlightFlag);
+  Texts.update(getScrollArray(wpin, Book[bkn].sName + "." + chn + ".1." + scrollType), highlightFlag);
 }
 
 // if pin info is given, apply changes to pin window(s) only
 function nextPage(highlightFlag, wpin) {
+  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
   
   // if a multi-column windows is visible, get its last verse
   var vl = null;
@@ -960,18 +960,18 @@ function nextPage(highlightFlag, wpin) {
   
   // if no multi-column window is visible, just do previousChapter
   if (!vl) {
-    nextChapter(highlightFlag, SCROLLTYPEBEG, (wpin ? wpin:null));
+    nextChapter(highlightFlag, SCROLLTYPEBEG, wpin);
     return;
   }
-jsdump("nextPage=" + vl);
+
   if (wpin) {
-    Texts.display[wpin].bk = vl[0];
-    Texts.display[wpin].ch = vl[1];
-    Texts.display[wpin].vs = vl[2];
+    Texts.pinnedDisplay[wpin].bk = vl[0];
+    Texts.pinnedDisplay[wpin].ch = vl[1];
+    Texts.pinnedDisplay[wpin].vs = vl[2];
   }
-  else {Location.setLocation(prefs.getCharPref("Version" + w), vl[0] + "." + vl[1] + "." + vl[2]);}
-  
-  Texts.update(SCROLLTYPEBEG, highlightFlag);
+  else {Location.setLocation(prefs.getCharPref("Version" + w), vl.join("."));}
+    
+  Texts.update(getScrollArray(wpin, vl.join(".") + "." + SCROLLTYPEBEG), highlightFlag);
 }
 
 function nextVerse(scrollType) {
@@ -992,6 +992,20 @@ function nextVerse(scrollType) {
   Texts.update(scrollType, HILIGHTVERSE);
 }
 
+function getScrollArray(wpin, scrollMember) {
+  var scroll = [null];
+  for (var w=1; w<=NW; w++) {
+    if (wpin) {
+      if (w == wpin) scroll.push(scrollMember);
+      else scroll.push(null);
+    }
+    else {
+      scroll.push(prefs.getBoolPref("IsPinned" + w) ? null:scrollMember);
+    }
+  }
+  
+  return scroll; 
+}
 
 /************************************************************************
  * Scroll Wheel functions...
@@ -1010,7 +1024,6 @@ function scrollwheel(event) {
   if (!w) return;
   SWwin = Number(w.id.replace("text", ""));
 
-  if (prefs.getBoolPref("IsPinned" + SWwin)) return;
   if (Tab[prefs.getCharPref("Version" + SWwin)].modType != BIBLE && 
       Tab[prefs.getCharPref("Version" + SWwin)].modType != COMMENTARY) return;
       
@@ -1061,8 +1074,25 @@ function scrollwheel2() {
  
   var v = v.id.split(".");
   v.shift();
+  v = v.join(".");
   
-  Texts.update(SCROLLTYPEBEG, HILIGHTSAME, false, v.join("."), SWwin);
+  // decide which windows to scroll and which to leave alone
+  var scroll = [null];
+  for (var w=1; w<=NW; w++) {
+    var s;
+    if (w == SWwin) {
+      if (t.getAttribute("columns") == "show1") s = null; // no need to scroll since UI will handle it
+      else s = v + "." + SCROLLTYPEBEG;
+    }
+    else {
+      if (prefs.getBoolPref("IsPinned" + SWwin)) s = null;
+      else if (prefs.getBoolPref("IsPinned" + w)) s = null;
+      else s = v + "." + SCROLLTYPEBEG;
+    }
+    scroll.push(s);
+  }
+
+  Texts.update(scroll, HILIGHTSAME);
 }
 
 
@@ -1116,7 +1146,7 @@ var XulswordController = {
     case "cmd_xs_searchFromTextBox":
       // override default type by setting to negative of desired type.
       var tp = (getPrefOrCreate("InitialSearchType", "Int", CONTAINS_THE_WORDS) < 0 ? Math.abs(prefs.getIntPref("InitialSearchType")):CONTAINS_THE_WORDS);
-      openSearchDialog(document.getElementById('searchText').value, firstDisplayModule(), tp);
+      openSearchDialog(document.getElementById('searchText').value, firstDisplayModule().mod, tp);
       break;
     case "cmd_xs_searchForSelection":
       // override default type by setting to negative of desired type.
@@ -1349,7 +1379,7 @@ function getMainWindowSelectionObject() {
 
 function openSearchDialog(text, version, type) {
   if (!text) text = "";
-  if (!version) version = firstDisplayModule();
+  if (!version) version = firstDisplayModule().mod;
   if (type!=0 && !type) type = CONTAINS_THE_WORDS;
   
   prefs.setIntPref("InitialSearchType", type);
@@ -1396,6 +1426,7 @@ function handleOptions(elem) {
     case "f3":
     case "f4":
       prefs.setIntPref("FontSize", 2*(Number(elem.id.substr(1,1)) - 2));
+      adjustFontSizes(prefs.getIntPref('FontSize'));
       ViewPort.adjustFont(prefs.getIntPref('FontSize'));
       Texts.update(SCROLLTYPETOP, HILIGHTNONE);
       break;
@@ -1718,9 +1749,13 @@ function ScriptContextMenuShowing(e, winnum, popupnode) {
     CurrentTarget.lastVerse = contextTargs.lastVerse;
     break;
   case DICTIONARY:
+    CurrentTarget.shortName = "";
+    CurrentTarget.chapter = getPrefOrCreate("DictKey_" + myModuleName + "_" + CurrentTarget.windowNum, "Unicode", "");
+    CurrentTarget.verse = contextTargs.paragraph;
+    CurrentTarget.lastVerse = contextTargs.paragraph;
   case GENBOOK:
     CurrentTarget.shortName = "";
-    CurrentTarget.chapter = getPrefOrCreate("ShowingKey" + myModuleName, "Unicode", "");
+    CurrentTarget.chapter = getPrefOrCreate("GenBookKey_" + myModuleName + "_" + CurrentTarget.windowNum, "Unicode", "");
     CurrentTarget.verse = contextTargs.paragraph;
     CurrentTarget.lastVerse = contextTargs.paragraph;
     break;
@@ -1916,7 +1951,7 @@ function ScriptContextMenuHidden(aEvent) {
 }
 
 function goUpdateTargetLocation() {
-  CurrentTarget.version = firstDisplayModule();
+  CurrentTarget.version = firstDisplayModule().mod;
   switch (getModuleLongType(CurrentTarget.version)) {
   case BIBLE:
   case COMMENTARY:
@@ -1926,9 +1961,13 @@ function goUpdateTargetLocation() {
     CurrentTarget.lastVerse = Location.getLastVerseNumber(CurrentTarget.version);
     break;
   case DICTIONARY:
+    CurrentTarget.shortName = "";
+    CurrentTarget.chapter = getPrefOrCreate("DictKey_" + CurrentTarget.version + "_" + CurrentTarget.windowNum , "Unicode", "/");
+    CurrentTarget.verse = 1;
+    CurrentTarget.lastVerse = 1;
   case GENBOOK:
     CurrentTarget.shortName = "";
-    CurrentTarget.chapter = getPrefOrCreate("ShowingKey" + CurrentTarget.version, "Unicode", "");
+    CurrentTarget.chapter = getPrefOrCreate("GenBookKey_" + CurrentTarget.version + "_" + CurrentTarget.windowNum , "Unicode", "/" + CurrentTarget.version);
     CurrentTarget.verse = 1;
     CurrentTarget.lastVerse = 1;
     break;
@@ -1950,7 +1989,6 @@ function searchForLemma(strongsNumber) {
  
 // return information about displayed genBooks
 function getGenBookInfo() {
-  // Adjust GenBook settings as needed...
   var numUniqueGenBooks = 0;
   var firstGenBook = null;
   var genBookList = "";
@@ -1961,7 +1999,7 @@ function getGenBookInfo() {
       if (!genBookList.match(mymodRE)) numUniqueGenBooks++;
       else continue;
       // Insure genbook has a showingkey pref!
-      var key = getPrefOrCreate("ShowingKey" + prefs.getCharPref("Version" + w), "Unicode", "/" + prefs.getCharPref("Version" + w));
+      var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/" + prefs.getCharPref("Version" + w));
       if (key == "/" + prefs.getCharPref("Version" + w)) modsAtRoot.push(prefs.getCharPref("Version" + w));
       if (!firstGenBook) firstGenBook=prefs.getCharPref("Version" + w);
       genBookList += prefs.getCharPref("Version" + w) + ";";
@@ -1983,7 +2021,7 @@ function updateGenBooks(gbks) {
   var GBs = gbks.genBookList.split(";");
   GBs.pop();
   
-  // removing data sources which are no longer being displayed
+  // remove data sources which are being displayed but are no longer needed
   var DSs = elem.database.GetDataSources();
   var needToRebuild=false;
   while (DSs.hasMoreElements()) {
@@ -2005,7 +2043,7 @@ function updateGenBooks(gbks) {
     }
   }
   
-  // add data sources which are not already being displayed
+  // add data sources which are not already being displayed but need to be
   for (i=0; i<GBs.length; i++) {
     needToRebuild=true; 
     var moduleRDF = getSpecialDirectory("xsResD");
@@ -2025,22 +2063,15 @@ function updateGenBooks(gbks) {
     elem.builder.rebuild();
   }
 
-/*
-  var DSs = elem.database.GetDataSources();
-  while (DSs.hasMoreElements()) {
-    var aDS = DSs.getNext();
-    var resources = aDS.GetAllResources();
-    while (resources.hasMoreElements()) {
-      var resource = resources.getNext();
-      resource = resource.QueryInterface(BM.kRDFRSCIID);
-      jsdump("RES=" + resource.Value);
+  if (gbks.numUniqueGenBooks>0 && elem.currentIndex==-1) {
+    for (var w=1; w<=NW; w++) {
+      if (prefs.getCharPref("Version" + w) != gbks.firstGenBook) continue;
+      selectGenBook(getPrefOrCreate("GenBookKey_" + gbks.firstGenBook + "_" + w, "Unicode", "/" + gbks.firstGenBook));
+      break;
     }
   }
-*/  
 
-  if (gbks.numUniqueGenBooks>0 && elem.currentIndex==-1) selectGenBook(getPrefOrCreate("ShowingKey" + gbks.firstGenBook, "Unicode", ""));
-
-  //Now that database is loaded, set any root key prefs
+  //Now that databases are loaded, set any root key prefs
   for (i=0; i<gbks.modsAtRoot.length; i++) {setPrefToRoot(gbks.modsAtRoot[i]);}
   
   return gbks.numUniqueGenBooks>0;
@@ -2055,7 +2086,11 @@ function setPrefToRoot(module, elem) {
   if (!child1 || notFound) {jsdump("Resource " + root.Value + " not found.\n"); return;}
   var chapter = elem.database.GetTarget(child1, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true)
                 .QueryInterface(Components.interfaces.nsIRDFLiteral);
-  setUnicodePref("ShowingKey" + module, chapter.Value.replace("rdf:#",""));
+  for (var w=1; w<=NW; w++) {
+    if (module != prefs.getCharPref("Version" + w) ||
+        prefs.getBoolPref("IsPinned" + w)) continue;
+    setUnicodePref("GenBookKey_" + module + "_" + w, chapter.Value.replace("rdf:#",""));
+  }
 }
 
 //Opens and scrolls to key, but does not select...
@@ -2113,16 +2148,17 @@ function isSelectedGenBook(key, elem) {
 
 var SkipGenBookWindow=0;
 var UpdateOnlyPin;
+var BlockOnSelect; // stop onselect event during "bumpSelectedIndex" routine
 function onSelectGenBook(elem) {
   if (BlockOnSelect) return;
   if (UpdateOnlyPin && UpdateOnlyPin.done) {
-//jsdump("5 onSelectGenBook:");
+jsdump("5 onSelectGenBook:");
     UpdateOnlyPin=null;
     SkipGenBookWindow=0;
     return;
   }
   if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) {
-//jsdump("2 onSelectGenBook:");
+jsdump("2 onSelectGenBook:");
     if (!bumpSelectedIndex((UpdateOnlyPin.shiftKey==-1), elem)) {
       UpdateOnlyPin.done = true;
       selectGenBook(UpdateOnlyPin.selectedKey, elem);
@@ -2131,27 +2167,41 @@ function onSelectGenBook(elem) {
     SkipGenBookWindow=0;
     return;
   }
-//jsdump("4 onSelectGenBook:");
+jsdump("4 onSelectGenBook:");
   if (!elem) elem=document.getElementById("genbook-tree");
   try {var selRes = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(elem.currentIndex);}
   catch (er) {}
   if (!selRes) {SkipGenBookWindow=0; UpdateOnlyPin=null; return;}
-  
+ 
   var newkey = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
   newkey = newkey.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
-  
+
   var newmod = newkey.match(/^\/([^\/]+)/);
   if (!newmod)  {SkipGenBookWindow=0; UpdateOnlyPin=null; return;}
   newmod = newmod[1];
-  
+
+  var oldkey;
   if (!UpdateOnlyPin) {
-    try {var oldkey = getUnicodePref("ShowingKey" + newmod);}
+    try {
+      for (var w=1; w<=NW; w++) {
+        if (newmod == prefs.getCharPref("Version" + w)) {
+          var oldkey = getUnicodePref("GenBookKey_" + newmod + "_" + w);
+          break;
+        }
+      }
+    }
     catch (er) {oldkey = "";}
   }
   else oldkey = UpdateOnlyPin.display.key;
-  
+
   if (newkey != oldkey) {
-    if (!UpdateOnlyPin) setUnicodePref("ShowingKey" + newmod, newkey);
+    if (!UpdateOnlyPin) {
+      for (var w=1; w<=NW; w++) {
+        if (newmod != prefs.getCharPref("Version" + w) ||
+            prefs.getBoolPref("IsPinned" + w)) continue;
+        setUnicodePref("GenBookKey_" + newmod + "_" + w, newkey);
+      }
+    }
     else UpdateOnlyPin.display.key = newkey;
     Texts.update(SCROLLTYPETOP, HILIGHTNONE);
   }
@@ -2163,7 +2213,6 @@ function onSelectGenBook(elem) {
   }
 }
 
-var BlockOnSelect;
 function bumpSelectedIndex(previousNotNext, elem) {
 //jsdump("3 bumpSelectedIndex:");
   if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) UpdateOnlyPin.shiftKey = 0;
@@ -2183,6 +2232,24 @@ function bumpSelectedIndex(previousNotNext, elem) {
   BlockOnSelect = false;
   if (newindex != index) onSelectGenBook(elem);
   return newindex != index;
+}
+
+// 1 run bumpPinnedIndex to set UpdateOnlyPin to start the process, and select pin.display.key which will trigger onSelectGenBook
+// 2 run onSelectGenBook which does nothing but call bumpSelectedIndex
+// 3 run bumpSelectedIndex to select shifted pin entry which will trigger onSelectGenBook
+// 4 run onSelectGenBook to redraw shifted pin window and then select original key again which will trigger onSelectGenBook
+// 5 run onSelectGenBook which does nothing but clear UpdateOnlyPin to stop the process.
+function bumpPinnedIndex(pin, previousNotNext, elem) {
+//jsdump("1 bumpPinnedIndex:" + previousNotNext);
+  if (!elem) elem=document.getElementById("genbook-tree");
+  var selectedKey = getPrefOrCreate("GenBookKey_" + Win[pin.number].modName + "_" + pin.number, "Unicode", "/" + Win[pin.number].modName);
+  UpdateOnlyPin = pin;
+  UpdateOnlyPin.selectedKey = selectedKey;
+  UpdateOnlyPin.shiftKey = (previousNotNext ? -1:1);
+  UpdateOnlyPin.done = false;
+  selectGenBook(pin.display.key, elem);
+  if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) onSelectGenBook(elem); // needed when pin.display.key == selectedKey
+  UpdateOnlyPin = null;
 }
 
 //NOTE: Does not open row first!
@@ -2283,13 +2350,13 @@ function gotoLinkReal(link, version, frameNum, verse2) {
     BookmarkFuns.updateMainWindow(true);
     break;
   case DICTIONARY:
-    setUnicodePref("ShowingKey" + version, link);
+    setUnicodePref("DictKey_" + version + "_" + frameNum, link);
     if (verse2) CustomScrollFunction = "Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPECENTER + ", 'par." + verse2 + "');";
     else CustomScrollFunction = "Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPETOP + ");";
     BookmarkFuns.updateMainWindow(true, SCROLLTYPECUSTOM);
     break;
   case GENBOOK:
-    setUnicodePref("ShowingKey" + version, link);
+    setUnicodePref("GenBookKey_" + version + "_" + frameNum, link);
     //This timeout is needed because RDF may not be ready until after updateScriptBoxes()
     CustomScrollFunction = "{ openGenBookKey(decodeUTF8('" + link2 + "')); selectGenBook(decodeUTF8('" + link2 + "'));";
     if (verse2) CustomScrollFunction += " Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPECENTER + ", 'par." + verse2 + "'); }";
@@ -2385,14 +2452,27 @@ function handlePrintCommand(command) {
   case "cmd_printPreview":
   case "cmd_print":
     document.getElementById('printBrowser').contentDocument.getElementById('printBox').innerHTML = getPrintHTML();
-    var mymod = firstDisplayModule();
+    var mymod = firstDisplayModule().mod;
+    var myw = firstDisplayModule().w;
     var mytype = getModuleLongType(mymod);
-    var printTitle = ((mytype==DICTIONARY || mytype==GENBOOK) ? getPrefOrCreate("ShowingKey" + mymod, "Unicode", ""):Book[findBookNum(Location.getBookName())].bNameL);
+    var printTitle;
+    switch (mytype) {
+    case DICTIONARY:
+      printTitle = getPrefOrCreate("DictKey_" + mymod + "_" + myw, "Unicode", "/");
+      break;
+    case GENBOOK:
+      printTitle = getPrefOrCreate("GenBookKey_" + mymod + "_" + myw, "Unicode", "/" + mymod);
+      break;
+    default:
+      printTitle = Book[findBookNum(Location.getBookName())].bNameL
+    }
     document.getElementById("printBrowser").contentDocument.title = SBundle.getString("Title") + ": " + printTitle;
     document.getElementById(command).doCommand();
     break;
   case "cmd_print_passage":
-    AllWindows.push(window.open("chrome://xulsword/content/printPassage.xul",document.getElementById("print.printpassage").childNodes[0].nodeValue,"chrome,resizable,centerscreen"));
+    AllWindows.push(window.open("chrome://xulsword/content/printPassage.xul",
+        document.getElementById("print.printpassage").childNodes[0]
+        .nodeValue,"chrome,resizable,centerscreen"));
     break;
   }
 }

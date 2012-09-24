@@ -118,7 +118,7 @@ var ViewPort = {
     var genbkinfo = MainWindow.getGenBookInfo();
     var chooser = (genbkinfo.numUniqueGenBooks > 0 ? "book":(prefs.getBoolPref("ShowChooser") ? "bible":"hide"));
     document.getElementById("viewportbody").setAttribute("chooser", chooser);
-    MainWindow.document.getElementById("genBookTree").style.display = (chooser == "book" ? "":"none");
+    MainWindow.document.getElementById("frameset").setAttribute("chooser", chooser);
     if (genbkinfo.numUniqueGenBooks > 0) MainWindow.updateGenBooks(genbkinfo);
   
     var lbn = findBookNum(Location.getBookName());
@@ -195,10 +195,10 @@ var ViewPort = {
     // Window pins
     for (w=1; w<=NW; w++) {
       var type = Tab[prefs.getCharPref("Version" + w)].modType;
-      if (type == BIBLE || type == COMMENTARY) {
-        document.getElementById("text" + w).setAttribute("pin", (prefs.getBoolPref("IsPinned" + w) ? "pinned":"unpinned"));
+      if (type == DICTIONARY) {
+        document.getElementById("text" + w).setAttribute("pin", "hide");
       }
-      else document.getElementById("text" + w).setAttribute("pin", "hide");
+      else document.getElementById("text" + w).setAttribute("pin", (prefs.getBoolPref("IsPinned" + w) ? "pinned":"unpinned"));
     }
     
     // Footnote boxes
@@ -220,7 +220,7 @@ var ViewPort = {
       
       if (value == "show" && prefs.getBoolPref("MaximizeNoteBox" + w)) value = "showmax";
       document.getElementById("text" + w).setAttribute("foot", value);
-
+      if (type == BIBLE) BibleTexts.checkNoteBox(w); // hide footnote box if it's empty
     }
     
     // Individual tabs

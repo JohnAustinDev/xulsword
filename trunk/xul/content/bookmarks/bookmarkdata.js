@@ -279,7 +279,10 @@ var BookmarkFuns = {
   getTextForBookmark: function (location) {
     var retval = {text:null, location:location};
     var text=null;
-    var directionChar = (VersionConfigs[location.version] && VersionConfigs[location.version].direction && VersionConfigs[location.version].direction=="rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
+    var directionChar = (VersionConfigs[location.version] && 
+        VersionConfigs[location.version].direction && VersionConfigs[location.version].direction=="rtl" ? 
+        String.fromCharCode(8207):String.fromCharCode(8206));
+        
     switch (getModuleLongType(location.version)) {
     
     case BIBLE:
@@ -298,7 +301,9 @@ var BookmarkFuns = {
       break;
       
     case DICTIONARY:
-      text = MainWindow.getDictionaryHTML(getPrefOrCreate("ShowingKey" + location.version, "Unicode", ""), location.version);
+      for (var w=1; w<=NW; w++) {if (location.version == prefs.getCharPref("Version" + w)) break;}
+      if (w > NW) return retval;
+      text = MainWindow.getDictionaryHTML(getPrefOrCreate("DictKey_" + location.version + "_" + w, "Unicode", ""), location.version);
       text = MainWindow.getParagraphWithIDTry(Number(location.verse), text);
       break;
       

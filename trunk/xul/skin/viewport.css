@@ -11,11 +11,29 @@
   background-position: 0px 40px;
 }
 
+#chbutton_open {
+  position:absolute;
+  display:none;
+  background:url(chrome://xulsword/skin/images/open0.bmp);
+  width:15px;
+  height:15px;
+  top:10px;
+  left:6px;
+  z-index:11;
+}
+#viewportbody[chooser="hide"] #chbutton_open {
+  display:block;
+}
+#chbutton_open:hover {
+  background:url(chrome://xulsword/skin/images/open1.bmp);
+}
+
 #viewport {
   display:table;
   width:100%;
   height:600px;
-  padding-right:10px;
+  padding:0px 0px 0px 0px;
+  margin:0px 0px 0px 0px;
 }
 #viewport > div {
   display:table-cell;
@@ -25,6 +43,9 @@
 #chooser {
   padding-right:0px;
   float:left;
+}
+#viewportbody:not([chooser="bible"]) #chooser {
+  display:none;
 }
 
 #tabrow {
@@ -42,7 +63,7 @@
 }
 .tabs {
   display:table-cell;
-  padding:0px 20px 0px 20px;
+  padding:0px 20px 0px 30px;
   position:relative;
   white-space:nowrap;
   z-index:2;
@@ -161,9 +182,17 @@
   display:none !important;
 }
 
+.text > div {
+	background:rgb(255,243,255);
+	border:2px solid rgb(200,170,205);
+  border-radius:8px;
+  position:relative;
+}
+.text[pin="pinned"] > div {
+  background:rgb(248,248,241);
+}
 
 .hd {
-  position:relative;
   width:100%;
   text-align:center;
   height:30px; /* used in viewport.js */
@@ -181,24 +210,16 @@
   width:28px;
   height:37px;
   background:url(chrome://xulsword/skin/images/pushpin0.png);
+  z-index:10;
+}
+.sbpin:hover {
+  background:url(chrome://xulsword/skin/images/pushpin2.png) !important;
 }
 .text[pin="pinned"] .sbpin {
   background:url(chrome://xulsword/skin/images/pushpin1.png);
 }
-.sbpin:hover {
-  background:url(chrome://xulsword/skin/images/pushpin2.png);
-}
 .text[pin="hide"] .sbpin {
   visibility:hidden;
-}
-
-.text > div {
-	background:rgb(255,243,255);
-	border:2px solid rgb(200,170,205);
-  border-radius:8px;
-}
-.text[pin="pinned"] > div {
-  background:rgb(248,248,241);
 }
 
 .sb {

@@ -711,7 +711,7 @@ function firstDisplayBible(returnNumber) {
 }
 
 function firstDisplayModule() {
-  return prefs.getCharPref("Version1");
+  return {mod:prefs.getCharPref("Version1"), w:1};
 }
 
 var LocaleDir;
@@ -753,18 +753,18 @@ function cleanDoubleClickSelection(sel) {
   return sel;
 }
 
-const delim = "_._";
+const UTF8ENCODEDELIM = "_|_";
 function encodeUTF8(a) {
   if (!a) return null;
   var b="";
   for (var i=0; i<a.length; i++) {
-    b += String(a.charCodeAt(i)) + delim;
+    b += String(a.charCodeAt(i)) + UTF8ENCODEDELIM;
   }
   return b;
 }
 function decodeUTF8(b) {
   var a = "";
-  b = b.split(delim);
+  b = b.split(UTF8ENCODEDELIM);
   b.pop();
   for (var i=0; i<b.length; i++) {
     a += String.fromCharCode(Number(b[i]));

@@ -254,7 +254,9 @@ function createTabs() {
     if (type == DICTIONARY) {
       var feature = Bible.getModuleInformation(info[0], "Feature");
       if (feature.search("DailyDevotion")!=-1) {
-        prefs.setCharPref("ShowingKey" + info[0], "DailyDevotionToday");
+        for (var w=1; w<=NW; w++) {
+          prefs.setCharPref("DictKey_" + info[0] + "_" + w, "DailyDevotionToday");
+        }
       }
       else if (feature.search("GreekDef")!=-1)  {
         if (mlang.match(/^ru/i) || !LanguageStudyModules.StrongsGreek) LanguageStudyModules.StrongsGreek = info[0];
