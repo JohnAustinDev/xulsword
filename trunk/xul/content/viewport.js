@@ -115,11 +115,11 @@ var ViewPort = {
     rule.style.backgroundPosition = "0px " + Number((document.getElementById("biblechooser").offsetHeight + document.getElementById("fadetop").offsetHeight) % 55) + "px";
     
     // Bible chooser
-    var genbkinfo = MainWindow.getGenBookInfo();
+    var genbkinfo = GenBookTexts.getGenBookInfo();
     var chooser = (genbkinfo.numUniqueGenBooks > 0 ? "book":(prefs.getBoolPref("ShowChooser") ? "bible":"hide"));
     document.getElementById("viewportbody").setAttribute("chooser", chooser);
     MainWindow.document.getElementById("frameset").setAttribute("chooser", chooser);
-    if (genbkinfo.numUniqueGenBooks > 0) MainWindow.updateGenBooks(genbkinfo);
+    if (genbkinfo.numUniqueGenBooks > 0) GenBookTexts.updateGenBookNavigator(genbkinfo);
   
     var lbn = findBookNum(Location.getBookName());
     if (!skipBibleChooserTest) document.getElementById("biblechooser").setAttribute("showing", (lbn >= NumOT ? "nt":"ot"));
