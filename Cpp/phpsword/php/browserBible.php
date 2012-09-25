@@ -294,7 +294,7 @@ while (isset($_GET['m'.$c])) {
 $_LOC = preg_split("/\./", $_GET['l']);
 
 
-// We're done collecting all necessary data required for build a page!
+// We're done collecting all necessary data required for building a page!
 
 
 ////////////////////////////////////////////////////////////////////////
