@@ -20,38 +20,48 @@
 <?php require_once('php/browserBible_common.php'); ?>
 <?php 
 
-	// YOU MUST CREATE YOUR OWN Phrases_browserBible.php AND SET ALL   
-	// THE FOLLOWING VARIABLES EITHER THERE OR SOMEWHERE PREVIOUS. 
+/*  YOU MUST CREATE YOUR OWN Phrases_browserBible.php AND SET ALL   
+		THE FOLLOWING VARIABLES EITHER THERE OR SOMEWHERE PREVIOUS. */
 	
 	require_once('php/Phrases_browserBible.php');
+
+/*  IMPORTANT: WHERE "<Language>" APPEARS BELOW, SUCH CODE MUST BE  
+		REPEATED FOR EACH LANGUAGE WHICH YOU WISH TO SUPPORT. */
 	
-	// IMPORTANT: WHERE "<Language>" APPEARS BELOW, SUCH CODE MUST BE  
-	// REPEATED FOR EACH LANGUAGE WHICH YOU WISH TO SUPPORT.
-	
-	//$Language = <Current language code to select UI language>;
+	//$Language = <Active language code>;
 	
 	//$rep1 = <full path to SWORD repository #1>;
 	//$rep2 = <full path to SWORD repository #2>;
 	
 	//$REDIRECT[<Language>] = <URL to redirect to if PHPSWORD extension does not load>;
 
-	// DEFAULT SWORD MODULES
+/*	DEFAULT SWORD MODULES: */
+
 	//$defaultbible[<Language>] = <SWORD module for default Bible>;
 	//$StrongsHebrewModule[<Language>] = <SWORD module for Strong's Hebrew descriptions>;
 	//$StrongsGreekModule[<Language>] = <SWORD module for Strong's Greek descriptions>;
 	//$GreekParseModule[<Language>] = <SWORD module for Greek Parse descriptions>;
 	
-	// INCLUDED LANGUAGE/TEXT NAMES
-	// PUSH ONE MODULE ARRAY FOR EACH SWORD BIBLE MODULE TO BE INCLUDED.
+/*	INCLUDED SWORD BIBLE MODULES: 
+		PUSH, IN THE ORDER IN WHICH THEY SHOULD BE LISTED, AN 
+		ARRAY FOR EACH BIBLE MODULE (IN EACH UI LANGUAGE). LISTED
+		MODULES MUST BE INCLUDED IN ONE OF $rep1 OR $rep2 (see above). */
+
 	//$Mlist[<Language>] = array();
 	//array_push($Mlist[<Language>], array(<Module readable name>, <Module code>));
 
-	// NOTE: SWORD'S BUILT IN LOCALE IS CURRENTLY  NOT USED FOR THE FOLLOWING BOOK 
-	// NAMES BECAUSE ICU THEN BECOMES NECESSARY, BUT ICU IS OTHERWISE NOT REQUIRED.
+/*	NOTE: SWORD'S BUILT IN LOCALE IS 
+		CURRENTLY NOT USED FOR THE FOLLOWING BOOK 
+		NAMES BECAUSE ICU THEN BECOMES NECESSARY, 
+		AND SINCE ICU IS OTHERWISE NOT REQUIRED. */
+		
 	//$Book[<Language>][<OSIS Bible book code>] = <localized name of this Bible book>;
 
-	// NOTE: SWORD'S BUILT IN VERSE SYSTEMS ARE NOT CURRENTLY USED TO RETRIEVE THE 
-	// FOLLOWING BOOK ORDER INFORMATION, TO IMPROVE SPEED. BUT DATA IS IDENTICAL.
+/*	NOTE: SWORD'S BUILT IN VERSE SYSTEMS ARE 
+		NOT CURRENTLY USED TO RETRIEVE THE 
+		FOLLOWING BOOK ORDER INFORMATION, TO 
+		IMPROVE SPEED. BUT DATA IS IDENTICAL. */
+		
 	//$Booki[<Each supported SWORD verse system>][<index (starting at 0)>] = <OSIS Bible book code>;
 	
 ?>
@@ -65,7 +75,7 @@ $LOCCLEAN     = "/[^A-Za-z0-9\.]/";
 $REFLISTCLEAN = "/[^A-Za-z0-9\.\;\- ]/";
 $OSISREFCLEAN = "/[^\w\-]/";
 
-$NOT_FOUND ="Not Found";
+$NOT_FOUND = "Not Found";
 
 $Option["hdg"] = "Headings";
 $Option["ftn"] = "Footnotes";
@@ -344,6 +354,7 @@ else {
 	}
 }
 
+// Save all footnotes, cross-references, introductions, and module infos
 $PageFootnotes = htmlspecialchars($Sword->getFootnotes());
 $PageCrossrefs = htmlspecialchars($Sword->getCrossRefs());
 $c = 1;
@@ -352,11 +363,12 @@ while (isset($_GET['m'.$c])) {
 	$ModInfo[$c] = moduleInfo($_GET['m'.$c]);
 	$c++;
 }
+
+// This is just a handy global variable for our URL's book, chap, and verse location.
 $_LOC = preg_split("/\./", $_GET['l']);
 
 
 // We're done collecting all necessary data required for building a page!
-
 
 ?>
 
