@@ -35,7 +35,9 @@
 	
 	//$REDIRECT[<Language>] = <URL to redirect to if PHPSWORD extension does not load>;
 
-/*	DEFAULT SWORD MODULES: */
+/*	DEFAULT SWORD MODULES: 
+		NULL VALUES ARE NOT ALLOWED AND LISTED MODULES MUST BE FOUND IN
+		EITHER $REP1 OR $REP2 (SEE ABOVE). */
 
 	//$defaultbible[<Language>] = <SWORD module for default Bible>;
 	//$StrongsHebrewModule[<Language>] = <SWORD module for Strong's Hebrew descriptions>;
@@ -45,7 +47,7 @@
 /*	INCLUDED SWORD BIBLE MODULES: 
 		PUSH, IN THE ORDER IN WHICH THEY SHOULD BE LISTED, AN 
 		ARRAY FOR EACH BIBLE MODULE (IN EACH UI LANGUAGE). LISTED
-		MODULES MUST BE INCLUDED IN ONE OF $rep1 OR $rep2 (see above). */
+		MODULES MUST BE INCLUDED IN EITHER $rep1 OR $rep2 (SEE ABOVE). */
 
 	//$Mlist[<Language>] = array();
 	//array_push($Mlist[<Language>], array(<Module readable name>, <Module code>));
@@ -126,10 +128,16 @@ if (!extension_loaded("phpsword")) {
 $Sword = new phpsword($rep1.", ".$rep2);
 	
 $Modlist = $Sword->getModuleList();
+$firstbible = array();
+preg_match("/(^|<nx>)([^;]+);Biblical Texts/", $Modlist, $firstbible);
+if (!count($firstbible)) {
+	echo "No SWORD Bible modules were found in:<br><br>";
+	echo "\$rep1 = ".htmlspecialchars($rep1)."/<br><br>or<br><br>";
+	echo "\$rep2 = ".htmlspecialchars($rep2)."/<br>";
+	exit;
+}
 if (!preg_match("/(^|<nx>)".$defaultbible[$Language].";Biblical Texts(<nx>|$)/", $Modlist)) {
-	$firstbible = array();
-	preg_match("/(^|<nx>)([^;]+);Biblical Texts/", $Modlist, $firstbible);
-	if (count($firstbible)) $defaultbible[$Language] = $firstbible[2];
+	$defaultbible[$Language] = $firstbible[2];
 }
 
 // Do input checking and apply defaults

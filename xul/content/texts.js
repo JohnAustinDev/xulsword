@@ -1699,148 +1699,146 @@ var GenBookTexts = {
     }
   },
 
-function isSelectedGenBook(key, elem) {
-  if (!elem) elem=document.getElementById("genbook-tree");
-  var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
-  var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
-  try {var selRes = elemTB.getResourceAtIndex(elem.currentIndex);}
-  catch (er) {return false;}
-  var chapter = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
-  chapter = chapter.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
-  return key==chapter;
-}
+  isSelectedGenBook: function(key, elem) {
+    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
+    var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
+    var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
+    try {var selRes = elemTB.getResourceAtIndex(elem.currentIndex);}
+    catch (er) {return false;}
+    var chapter = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
+    chapter = chapter.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
+    return key==chapter;
+  },
 
-var SkipGenBookWindow=0;
-var UpdateOnlyPin;
-var BlockOnSelect; // stop onselect event during "bumpSelectedIndex" routine
-function onSelectGenBook(elem) {
-  if (BlockOnSelect) return;
-  if (UpdateOnlyPin && UpdateOnlyPin.done) {
-jsdump("5 onSelectGenBook:");
-    UpdateOnlyPin=null;
-    SkipGenBookWindow=0;
-    return;
-  }
-  if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) {
-jsdump("2 onSelectGenBook:");
-    if (!bumpSelectedIndex((UpdateOnlyPin.shiftKey==-1), elem)) {
-      UpdateOnlyPin.done = true;
-      selectGenBook(UpdateOnlyPin.selectedKey, elem);
+  SkipGenBookWindow:0,
+  UpdateOnlyPin:null,
+  BlockOnSelect:null, // stop onselect event during "bumpSelectedIndex" routine
+  onSelectGenBook: function(elem) {
+    if (this.BlockOnSelect) return;
+    if (this.UpdateOnlyPin && this.UpdateOnlyPin.done) {
+//jsdump("5 onSelectGenBook:");
+      this.UpdateOnlyPin=null;
+      this.SkipGenBookWindow = 0;
+      return;
     }
-    UpdateOnlyPin=null;
-    SkipGenBookWindow=0;
-    return;
-  }
-jsdump("4 onSelectGenBook:");
-  if (!elem) elem=document.getElementById("genbook-tree");
-  try {var selRes = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(elem.currentIndex);}
-  catch (er) {}
-  if (!selRes) {SkipGenBookWindow=0; UpdateOnlyPin=null; return;}
- 
-  var newkey = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
-  newkey = newkey.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
+    if (this.UpdateOnlyPin && this.UpdateOnlyPin.shiftKey) {
+//jsdump("2 onSelectGenBook:");
+      if (!this.bumpSelectedIndex((this.UpdateOnlyPin.shiftKey==-1), elem)) {
+        this.UpdateOnlyPin.done = true;
+        this.selectGenBook(this.UpdateOnlyPin.selectedKey, elem);
+      }
+      this.UpdateOnlyPin = null;
+      this.SkipGenBookWindow = 0;
+      return;
+    }
+//jsdump("4 onSelectGenBook:");
+    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
+    try {var selRes = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(elem.currentIndex);}
+    catch (er) {}
+    if (!selRes) {this.SkipGenBookWindow = 0; this.UpdateOnlyPin = null; return;}
+   
+    var newkey = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
+    newkey = newkey.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
 
-  var newmod = newkey.match(/^\/([^\/]+)/);
-  if (!newmod)  {SkipGenBookWindow=0; UpdateOnlyPin=null; return;}
-  newmod = newmod[1];
+    var newmod = newkey.match(/^\/([^\/]+)/);
+    if (!newmod)  {this.SkipGenBookWindow = 0; this.UpdateOnlyPin = null; return;}
+    newmod = newmod[1];
 
-  var oldkey;
-  if (!UpdateOnlyPin) {
-    try {
-      for (var w=1; w<=NW; w++) {
-        if (newmod == prefs.getCharPref("Version" + w)) {
-          var oldkey = getUnicodePref("GenBookKey_" + newmod + "_" + w);
-          break;
+    var oldkey;
+    if (!this.UpdateOnlyPin) {
+      try {
+        for (var w=1; w<=NW; w++) {
+          if (newmod == prefs.getCharPref("Version" + w)) {
+            var oldkey = getUnicodePref("GenBookKey_" + newmod + "_" + w);
+            break;
+          }
         }
       }
+      catch (er) {oldkey = "";}
     }
-    catch (er) {oldkey = "";}
-  }
-  else oldkey = UpdateOnlyPin.display.key;
+    else oldkey = this.UpdateOnlyPin.display.key;
 
-  if (newkey != oldkey) {
-    if (!UpdateOnlyPin) {
-      for (var w=1; w<=NW; w++) {
-        if (newmod != prefs.getCharPref("Version" + w) ||
-            prefs.getBoolPref("IsPinned" + w)) continue;
-        setUnicodePref("GenBookKey_" + newmod + "_" + w, newkey);
+    if (newkey != oldkey) {
+      if (!this.UpdateOnlyPin) {
+        for (var w=1; w<=NW; w++) {
+          if (newmod != prefs.getCharPref("Version" + w) ||
+              prefs.getBoolPref("IsPinned" + w)) continue;
+          setUnicodePref("GenBookKey_" + newmod + "_" + w, newkey);
+        }
       }
+      else this.UpdateOnlyPin.display.key = newkey;
+      Texts.update(SCROLLTYPETOP, HILIGHTNONE);
     }
-    else UpdateOnlyPin.display.key = newkey;
-    Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+    this.SkipGenBookWindow = 0;
+    
+    if (this.UpdateOnlyPin) {
+      this.UpdateOnlyPin.done = true;
+      this.selectGenBook(this.UpdateOnlyPin.selectedKey, elem);
+    }
+  },
+
+  bumpSelectedIndex: function(previousNotNext, elem) {
+  //jsdump("3 bumpSelectedIndex:");
+    if (this.UpdateOnlyPin && this.UpdateOnlyPin.shiftKey) this.UpdateOnlyPin.shiftKey = 0;
+    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
+    var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
+    var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
+    var index = elem.currentIndex;
+    var newindex = index;
+    newindex = (previousNotNext ? --newindex:++newindex);
+    if (newindex<0) return false;
+    this.BlockOnSelect = true;
+    elem.view.selection.select(newindex);
+    try {var selRes = elemTB.getResourceAtIndex(elem.currentIndex);}
+    catch (er) {elem.view.selection.select(index); newindex = index;}
+    //dump(newindex + "\n");
+    if (elemTV.isContainer(newindex) && !elemTV.isContainerOpen(newindex)) elemTV.toggleOpenState(newindex);
+    this.BlockOnSelect = false;
+    if (newindex != index) this.onSelectGenBook(elem);
+    return newindex != index;
+  },
+/*
+  // 1 run bumpPinnedIndex to set UpdateOnlyPin to start the process, and select pin.display.key which will trigger onSelectGenBook
+  // 2 run onSelectGenBook which does nothing but call bumpSelectedIndex
+  // 3 run bumpSelectedIndex to select shifted pin entry which will trigger onSelectGenBook
+  // 4 run onSelectGenBook to redraw shifted pin window and then select original key again which will trigger onSelectGenBook
+  // 5 run onSelectGenBook which does nothing but clear UpdateOnlyPin to stop the process.
+  bumpPinnedIndex: function(pin, previousNotNext, elem) {
+  //jsdump("1 bumpPinnedIndex:" + previousNotNext);
+    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
+    var selectedKey = getPrefOrCreate("GenBookKey_" + MainWindow.Win[pin.number].modName + "_" + pin.number, "Unicode", "/" + MainWindow.Win[pin.number].modName);
+    this.UpdateOnlyPin = pin;
+    this.UpdateOnlyPin.selectedKey = selectedKey;
+    this.UpdateOnlyPin.shiftKey = (previousNotNext ? -1:1);
+    this.UpdateOnlyPin.done = false;
+    this.selectGenBook(pin.display.key, elem);
+    if (this.UpdateOnlyPin && this.UpdateOnlyPin.shiftKey) this.onSelectGenBook(elem); // needed when pin.display.key == selectedKey
+    this.UpdateOnlyPin = null;
+  },
+*/
+  //NOTE: Does not open row first!
+  scrollGenBookTo: function(resvalue, elem) {
+    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
+    var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
+    
+    var res = BM.RDF.GetResource("rdf:#" + resvalue);
+    try {var index = elemTB.getIndexOfResource(res);}
+    catch (er) {return;}
+    
+    var parentres = BM.RDF.GetResource("rdf:#" + resvalue.replace(/\/[^\/]+$/,""));
+    try {var parentindex = elemTB.getIndexOfResource(parentres);}
+    catch (er) {return;}
+    
+    if (parentindex == -1 || index == -1) return;
+    this.PassElem=elem;
+    window.setTimeout("GenBookTexts.scrollTreeNow(" + parentindex + ", " + index + ")", 0);
+  },
+
+  PassElem:null,
+  scrollTreeNow: function(pi, i) {
+    this.PassElem.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).scrollToRow(pi);
+    this.PassElem.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(i);
   }
-  SkipGenBookWindow=0;
-  
-  if (UpdateOnlyPin) {
-    UpdateOnlyPin.done = true;
-    selectGenBook(UpdateOnlyPin.selectedKey, elem);
-  }
-}
 
-function bumpSelectedIndex(previousNotNext, elem) {
-//jsdump("3 bumpSelectedIndex:");
-  if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) UpdateOnlyPin.shiftKey = 0;
-  if (!elem) elem=document.getElementById("genbook-tree");
-  var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
-  var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
-  var index = elem.currentIndex;
-  var newindex = index;
-  newindex = (previousNotNext ? --newindex:++newindex);
-  if (newindex<0) return false;
-  BlockOnSelect = true;
-  elem.view.selection.select(newindex);
-  try {var selRes = elemTB.getResourceAtIndex(elem.currentIndex);}
-  catch (er) {elem.view.selection.select(index); newindex = index;}
-  //dump(newindex + "\n");
-  if (elemTV.isContainer(newindex) && !elemTV.isContainerOpen(newindex)) elemTV.toggleOpenState(newindex);
-  BlockOnSelect = false;
-  if (newindex != index) onSelectGenBook(elem);
-  return newindex != index;
-}
-
-// 1 run bumpPinnedIndex to set UpdateOnlyPin to start the process, and select pin.display.key which will trigger onSelectGenBook
-// 2 run onSelectGenBook which does nothing but call bumpSelectedIndex
-// 3 run bumpSelectedIndex to select shifted pin entry which will trigger onSelectGenBook
-// 4 run onSelectGenBook to redraw shifted pin window and then select original key again which will trigger onSelectGenBook
-// 5 run onSelectGenBook which does nothing but clear UpdateOnlyPin to stop the process.
-function bumpPinnedIndex(pin, previousNotNext, elem) {
-//jsdump("1 bumpPinnedIndex:" + previousNotNext);
-  if (!elem) elem=document.getElementById("genbook-tree");
-  var selectedKey = getPrefOrCreate("GenBookKey_" + Win[pin.number].modName + "_" + pin.number, "Unicode", "/" + Win[pin.number].modName);
-  UpdateOnlyPin = pin;
-  UpdateOnlyPin.selectedKey = selectedKey;
-  UpdateOnlyPin.shiftKey = (previousNotNext ? -1:1);
-  UpdateOnlyPin.done = false;
-  selectGenBook(pin.display.key, elem);
-  if (UpdateOnlyPin && UpdateOnlyPin.shiftKey) onSelectGenBook(elem); // needed when pin.display.key == selectedKey
-  UpdateOnlyPin = null;
-}
-
-//NOTE: Does not open row first!
-function scrollGenBookTo(resvalue, elem) {
-  if (!elem) elem=document.getElementById("genbook-tree");
-  var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
-  
-  var res = BM.RDF.GetResource("rdf:#" + resvalue);
-  try {var index = elemTB.getIndexOfResource(res);}
-  catch (er) {return;}
-  
-  var parentres = BM.RDF.GetResource("rdf:#" + resvalue.replace(/\/[^\/]+$/,""));
-  try {var parentindex = elemTB.getIndexOfResource(parentres);}
-  catch (er) {return;}
-  
-  if (parentindex == -1 || index == -1) return;
-  PassElem=elem;
-  window.setTimeout("scrollTreeNow(" + parentindex + ", " + index + ")", 0);
-}
-
-var PassElem;
-function scrollTreeNow(pi, i) {
-  PassElem.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).scrollToRow(pi);
-  PassElem.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(i);
-}
-
-
-  
 };
 

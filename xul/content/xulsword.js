@@ -15,9 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
-/*
 
-*/
 
 /************************************************************************
  * XULSWORD INITIALIZATION
@@ -2064,7 +2062,7 @@ function gotoLinkReal(link, version, frameNum, verse2) {
   case GENBOOK:
     setUnicodePref("GenBookKey_" + version + "_" + frameNum, link);
     //This timeout is needed because RDF may not be ready until after updateScriptBoxes()
-    CustomScrollFunction = "{ openGenBookKey(decodeUTF8('" + link2 + "')); selectGenBook(decodeUTF8('" + link2 + "'));";
+    CustomScrollFunction = "{ GenBookTexts.openGenBookKey(decodeUTF8('" + link2 + "')); GenBookTexts.selectGenBook(decodeUTF8('" + link2 + "'));";
     if (verse2) CustomScrollFunction += " Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPECENTER + ", 'par." + verse2 + "'); }";
     else CustomScrollFunction += " Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPETOP + "); }";
     BookmarkFuns.updateMainWindow(true, SCROLLTYPECUSTOM);

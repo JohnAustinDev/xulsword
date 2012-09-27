@@ -248,9 +248,9 @@ function scriptClick(e) {
 
   if (w && Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
     var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/" + prefs.getCharPref("Version" + w));
-    if (!MainWindow.isSelectedGenBook(key)) {
-      MainWindow.openGenBookKey(key);
-      MainWindow.selectGenBook(key);
+    if (!GenBookTexts.isSelectedGenBook(key)) {
+      GenBookTexts.openGenBookKey(key);
+      GenBookTexts.selectGenBook(key);
     }
   }
   
@@ -298,7 +298,7 @@ function scriptClick(e) {
       }
       break;
     case GENBOOK:
-      MainWindow.bumpSelectedIndex(true);
+      GenBookTexts.bumpSelectedIndex(true);
       break;
     }
     break;
@@ -323,7 +323,7 @@ function scriptClick(e) {
       }
       break;
     case GENBOOK:
-      MainWindow.bumpSelectedIndex(false);
+      GenBookTexts.bumpSelectedIndex(false);
       break;
     }
     break;
