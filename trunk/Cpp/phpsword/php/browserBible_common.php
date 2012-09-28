@@ -1,3 +1,4 @@
+abc
 <?php /* 
 		This file is part of phpsword.
 
@@ -135,7 +136,7 @@ function simpleloc($loc) {
 	global $Sword, $_GET;
 	$p = preg_split("/\./", $loc);
 	if (isset($p[3]) && $p[3]==$p[2] || 
-			($p[2]==1 && $p[3]==$Sword->getMaxVerse($_GET['m1'], $loc))) {
+			(isset($p[3]) && $p[2]==1 && $p[3]==$Sword->getMaxVerse($_GET['m1'], $loc))) {
 		unset($p[3]);
 		if (isset($p[2]) && $p[2]==1) {
 			unset($p[2]);
