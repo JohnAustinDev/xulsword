@@ -1,4 +1,3 @@
-abc
 <?php /* 
 		This file is part of phpsword.
 
