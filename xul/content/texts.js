@@ -28,7 +28,7 @@ var Texts = {
   footnotes:[null, null, null, null],
 
   update: function(scrollTypeFlag, hilightFlag, force) {
-jsdump("scrollTypeFlag = " + scrollTypeFlag);
+
     if (scrollTypeFlag === undefined) scrollTypeFlag = SCROLLTYPETOP;
     if (hilightFlag === undefined) hilightFlag = HILIGHTNONE;
     if (force === undefined) force = false;
@@ -124,7 +124,7 @@ jsdump("scrollTypeFlag = " + scrollTypeFlag);
                 "ShowCrossrefsAtBottom", "ShowUserNotesAtBottom", "columns"];
                 
     if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
-jsdump("Reading text from libsword w" + w);
+//jsdump("Reading text from libsword w" + w);
       var t = document.getElementById("text" + w);
       var sb = t.getElementsByClassName("sb")[0];
       var prev = {htmlText:"", htmlNotes:""};
@@ -512,7 +512,7 @@ jsdump("FOUND ONE!:" + book + ", " + chapter + ", " + verse + ", " + mod + ", " 
     if (!v) return false;
 
     // perform appropriate scroll action
-jsdump("SCROLLING w" + w + " " + v.id + ": " + scrollTypeFlag);
+//jsdump("SCROLLING w" + w + " " + v.id + ": " + scrollTypeFlag);
 
     var vOffsetTop = v.offsetTop;
     var vt = v;
@@ -1549,7 +1549,7 @@ var GenBookTexts = {
     ret.footnotes = un.notes;
     
     return ret;
-  }
+  },
   
   // return information about displayed genBooks
   getGenBookInfo: function() {
@@ -1577,8 +1577,9 @@ var GenBookTexts = {
     return ret;
   },
 
-  // update genBookChooser based on genBook info
   RDFChecked: {},
+  
+  // update genBookChooser based on genBook info
   updateGenBookNavigator: function(gbks) {  
 
     var elem = MainWindow.document.getElementById("genbook-tree");
@@ -1630,7 +1631,7 @@ var GenBookTexts = {
     if (gbks.numUniqueGenBooks>0 && elem.currentIndex==-1) {
       for (var w=1; w<=NW; w++) {
         if (prefs.getCharPref("Version" + w) != gbks.firstGenBook) continue;
-        this.selectGenBook(getPrefOrCreate("GenBookKey_" + gbks.firstGenBook + "_" + w, "Unicode", "/" + gbks.firstGenBook));
+        this.navigatorSelect(getPrefOrCreate("GenBookKey_" + gbks.firstGenBook + "_" + w, "Unicode", "/" + gbks.firstGenBook));
         break;
       }
     }
@@ -1641,8 +1642,10 @@ var GenBookTexts = {
     return gbks.numUniqueGenBooks>0;
   },
 
-  setPrefToRoot: function(module, elem) {
-    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
+  // sets the pref of unpinned GenBooks showing the module to the first chapter
+  setPrefToRoot: function(module) {
+    var elem = MainWindow.document.getElementById("genbook-tree");
+    
     var root = BM.RDF.GetResource("rdf:#" + "/" + module);
     var notFound=false;
     try {var child1 = elem.database.GetTarget(root, BM.RDFCU.IndexToOrdinalResource(1), true);}
@@ -1656,10 +1659,165 @@ var GenBookTexts = {
       setUnicodePref("GenBookKey_" + module + "_" + w, chapter.Value.replace("rdf:#",""));
     }
   },
+  
+  previousChapter: function(key) {
+    var previous = null;
+    
+    var res = this.getResource(key);
+    if (!res.node || !res.ds) return null;
+    
+    var parent = this.getParentOfNode(res.node);
+    if (!parent.node || !parent.ds) return null;
+ 
+    // try previous node
+    BM.RDFC.Init(parent.ds, parent.node);
+    var siblings = BM.RDFC.GetElements();
+    if (siblings.hasMoreElements()) {
+      var prev = siblings.getNext();
+      while (siblings.hasMoreElements()) {
+        var next = siblings.getNext();
+        if (next == res.node) {
+            previous = prev;
+            break;
+        }
+        else prev = next;
+      }
+    }
+    
+    // if previous node is a folder, open it and get last child
+    if (previous && BM.RDFCU.IsContainer(parent.ds, previous)) {
+      BM.RDFC.Init(parent.ds, previous);
+      var chldrn = BM.RDFC.GetElements();
+      var last = null;
+      while(chldrn.hasMoreElements()) {last = chldrn.getNext();}
+      if (last) previous = last;
+    }
+    
+    // if there is no previous node, go to parent
+    if (!previous) previous = parent.node;
+    
+    return previous.QueryInterface(BM.kRDFRSCIID).Value.replace(/^rdf\:\#/, "");
+  },
+  
+  nextChapter: function(key, skipChildren) {
+    var next = null;
+    
+    var res = this.getResource(key);
+    if (!res.node || !res.ds) return null;
+    
+    var parent = this.getParentOfNode(res.node);
+ 
+    // try first child...
+    if (!skipChildren && BM.RDFCU.IsContainer(res.ds, res.node)) {
+      BM.RDFC.Init(res.ds, res.node);
+      var chldrn = BM.RDFC.GetElements();
+      if (chldrn.hasMoreElements()) next = chldrn.getNext();
+    }
 
-  //Opens and scrolls to key, but does not select...
-  openGenBookKey: function(key, elem) {
-    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
+    // or else try next sibling...
+    if (!next && parent.node) {
+      BM.RDFC.Init(parent.ds, parent.node);
+      chldrn = BM.RDFC.GetElements();
+      while(chldrn.hasMoreElements()) {
+        var child = chldrn.getNext();
+        if (child == res.node && chldrn.hasMoreElements()) {
+          next = chldrn.getNext();
+          break;
+        }
+      }
+    }
+
+    // or else try parent's next sibling...
+    if (!next && parent.node) {
+      next = this.nextChapter(parent.node.QueryInterface(BM.kRDFRSCIID).Value.replace(/^rdf\:\#/, ""), true);
+    }
+    else if (next) next = next.QueryInterface(BM.kRDFRSCIID).Value.replace(/^rdf\:\#/, "");
+
+    return next;
+  },
+  
+  getResource: function(key) {
+    // get our resource
+    var r = {node:null, ds:null};
+    var dss = MainWindow.document.getElementById("genbook-tree").database.GetDataSources();
+    GETNODE:
+    while (dss.hasMoreElements()) {
+      r.ds = dss.getNext().QueryInterface(Components.interfaces.nsIRDFDataSource);
+      var es = r.ds.GetAllResources();
+      while (es.hasMoreElements()) {
+        var e = es.getNext();
+        if (e.QueryInterface(BM.kRDFRSCIID).Value == "rdf:#" + key) {
+          r.node = e;
+          // if not a container, keep looking. A container resource appears also as description resource.
+          if (BM.RDFCU.IsContainer(r.ds, r.node)) break GETNODE;
+        }
+      }
+    }
+    
+    return r;
+  },
+  
+  getParentOfNode: function(res) {
+    var r = {node:null, ds:null};
+    
+    // get our resource's parent (if there is one)
+    var dss = MainWindow.document.getElementById("genbook-tree").database.GetDataSources();
+    
+    GETPARENT:
+    while (dss.hasMoreElements()) {
+      r.ds = dss.getNext().QueryInterface(Components.interfaces.nsIRDFDataSource);
+      var es = r.ds.GetAllResources();
+      while (es.hasMoreElements()) {
+        var e = es.getNext();
+        if (!BM.RDFCU.IsContainer(r.ds, e)) continue;
+        BM.RDFC.Init(r.ds, e);
+        var chds = BM.RDFC.GetElements();
+        while(chds.hasMoreElements()) {
+          var chd = chds.getNext();
+          if (chd == res) {
+            r.node = e;
+            break GETPARENT;
+          }
+        }
+      }
+    }
+    
+    return r;
+  },
+
+  isSelectedGenBook: function(key) {
+    var elem = MainWindow.document.getElementById("genbook-tree");
+    
+    var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
+    var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
+    try {var selRes = elemTB.getResourceAtIndex(elem.currentIndex);}
+    catch (er) {return false;}
+    var chapter = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
+    chapter = chapter.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
+    
+    return key==chapter;
+  },
+  
+  // opens and selects key in GenBook navigator. The selection triggers an update event.
+  navigatorSelect: function(key) {
+    
+    this.openGenBookKey(key);
+    
+    var elem = MainWindow.document.getElementById("genbook-tree");
+
+    var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
+    var selRes = BM.RDF.GetResource("rdf:#" + key);
+    try {
+      var i = elemTB.getIndexOfResource(selRes);
+      elem.view.selection.select(i);
+    }
+    catch (er) {elem.view.selection.select(0);}    
+  },
+
+  //Recursively opens key and scrolls there, but does not select...
+  openGenBookKey: function(key) {
+    var elem = MainWindow.document.getElementById("genbook-tree");
+    
     var t = (key + "/").indexOf("/", 1);
     var checkedFirstLevel = false;
     var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
@@ -1680,164 +1838,56 @@ var GenBookTexts = {
       
       t = (key + "/").indexOf("/", t+1); 
     }
-    this.scrollGenBookTo(key, elem);
+    
+    this.scrollGenBookTo(key);
   },
 
-  //Selects key, but does not open or scroll to it...
-  selectGenBook: function(key, elem) {
-    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
-    if (!elem.view) return;
-    var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
-    var selRes = BM.RDF.GetResource("rdf:#" + key);
-    try {
-      var i = elemTB.getIndexOfResource(selRes);
-      elem.view.selection.select(i);
-    }
-    catch (er) {
-      if (this.UpdateOnlyPin) this.UpdateOnlyPin = null;
-      else elem.view.selection.select(0);
-    }
-  },
-
-  isSelectedGenBook: function(key, elem) {
-    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
-    var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
-    var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
-    try {var selRes = elemTB.getResourceAtIndex(elem.currentIndex);}
-    catch (er) {return false;}
-    var chapter = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
-    chapter = chapter.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
-    return key==chapter;
-  },
-
-  SkipGenBookWindow:0,
-  UpdateOnlyPin:null,
-  BlockOnSelect:null, // stop onselect event during "bumpSelectedIndex" routine
-  onSelectGenBook: function(elem) {
-    if (this.BlockOnSelect) return;
-    if (this.UpdateOnlyPin && this.UpdateOnlyPin.done) {
-//jsdump("5 onSelectGenBook:");
-      this.UpdateOnlyPin=null;
-      this.SkipGenBookWindow = 0;
-      return;
-    }
-    if (this.UpdateOnlyPin && this.UpdateOnlyPin.shiftKey) {
-//jsdump("2 onSelectGenBook:");
-      if (!this.bumpSelectedIndex((this.UpdateOnlyPin.shiftKey==-1), elem)) {
-        this.UpdateOnlyPin.done = true;
-        this.selectGenBook(this.UpdateOnlyPin.selectedKey, elem);
-      }
-      this.UpdateOnlyPin = null;
-      this.SkipGenBookWindow = 0;
-      return;
-    }
-//jsdump("4 onSelectGenBook:");
-    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
+  // update corresponding unpinned GenBook prefs according to navigator selection, and update texts.
+  onSelectGenBook: function() {
+    var elem = MainWindow.document.getElementById("genbook-tree");
+    
     try {var selRes = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(elem.currentIndex);}
     catch (er) {}
-    if (!selRes) {this.SkipGenBookWindow = 0; this.UpdateOnlyPin = null; return;}
+    if (!selRes) return;
    
-    var newkey = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
-    newkey = newkey.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
+    var key = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
+    key = key.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
 
-    var newmod = newkey.match(/^\/([^\/]+)/);
-    if (!newmod)  {this.SkipGenBookWindow = 0; this.UpdateOnlyPin = null; return;}
-    newmod = newmod[1];
-
-    var oldkey;
-    if (!this.UpdateOnlyPin) {
-      try {
-        for (var w=1; w<=NW; w++) {
-          if (newmod == prefs.getCharPref("Version" + w)) {
-            var oldkey = getUnicodePref("GenBookKey_" + newmod + "_" + w);
-            break;
-          }
-        }
-      }
-      catch (er) {oldkey = "";}
-    }
-    else oldkey = this.UpdateOnlyPin.display.key;
-
-    if (newkey != oldkey) {
-      if (!this.UpdateOnlyPin) {
-        for (var w=1; w<=NW; w++) {
-          if (newmod != prefs.getCharPref("Version" + w) ||
-              prefs.getBoolPref("IsPinned" + w)) continue;
-          setUnicodePref("GenBookKey_" + newmod + "_" + w, newkey);
-        }
-      }
-      else this.UpdateOnlyPin.display.key = newkey;
-      Texts.update(SCROLLTYPETOP, HILIGHTNONE);
-    }
-    this.SkipGenBookWindow = 0;
+    var mod = key.match(/^\/([^\/]+)/);
+    if (!mod)  return;
+    mod = mod[1];
     
-    if (this.UpdateOnlyPin) {
-      this.UpdateOnlyPin.done = true;
-      this.selectGenBook(this.UpdateOnlyPin.selectedKey, elem);
+    for (var w=1; w<=NW; w++) {
+      if (prefs.getBoolPref("IsPinned" + w)) continue;
+      prefs.setCharPref("GenBookKey_" + mod + "_" + w, key);
     }
+
+    Texts.update();
+
   },
 
-  bumpSelectedIndex: function(previousNotNext, elem) {
-  //jsdump("3 bumpSelectedIndex:");
-    if (this.UpdateOnlyPin && this.UpdateOnlyPin.shiftKey) this.UpdateOnlyPin.shiftKey = 0;
-    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
-    var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
-    var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
-    var index = elem.currentIndex;
-    var newindex = index;
-    newindex = (previousNotNext ? --newindex:++newindex);
-    if (newindex<0) return false;
-    this.BlockOnSelect = true;
-    elem.view.selection.select(newindex);
-    try {var selRes = elemTB.getResourceAtIndex(elem.currentIndex);}
-    catch (er) {elem.view.selection.select(index); newindex = index;}
-    //dump(newindex + "\n");
-    if (elemTV.isContainer(newindex) && !elemTV.isContainerOpen(newindex)) elemTV.toggleOpenState(newindex);
-    this.BlockOnSelect = false;
-    if (newindex != index) this.onSelectGenBook(elem);
-    return newindex != index;
-  },
-/*
-  // 1 run bumpPinnedIndex to set UpdateOnlyPin to start the process, and select pin.display.key which will trigger onSelectGenBook
-  // 2 run onSelectGenBook which does nothing but call bumpSelectedIndex
-  // 3 run bumpSelectedIndex to select shifted pin entry which will trigger onSelectGenBook
-  // 4 run onSelectGenBook to redraw shifted pin window and then select original key again which will trigger onSelectGenBook
-  // 5 run onSelectGenBook which does nothing but clear UpdateOnlyPin to stop the process.
-  bumpPinnedIndex: function(pin, previousNotNext, elem) {
-  //jsdump("1 bumpPinnedIndex:" + previousNotNext);
-    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
-    var selectedKey = getPrefOrCreate("GenBookKey_" + MainWindow.Win[pin.number].modName + "_" + pin.number, "Unicode", "/" + MainWindow.Win[pin.number].modName);
-    this.UpdateOnlyPin = pin;
-    this.UpdateOnlyPin.selectedKey = selectedKey;
-    this.UpdateOnlyPin.shiftKey = (previousNotNext ? -1:1);
-    this.UpdateOnlyPin.done = false;
-    this.selectGenBook(pin.display.key, elem);
-    if (this.UpdateOnlyPin && this.UpdateOnlyPin.shiftKey) this.onSelectGenBook(elem); // needed when pin.display.key == selectedKey
-    this.UpdateOnlyPin = null;
-  },
-*/
   //NOTE: Does not open row first!
-  scrollGenBookTo: function(resvalue, elem) {
-    if (!elem) elem = MainWindow.document.getElementById("genbook-tree");
+  scrollGenBookTo: function(key) {
+    var elem = MainWindow.document.getElementById("genbook-tree");
+    
     var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
     
-    var res = BM.RDF.GetResource("rdf:#" + resvalue);
+    var res = BM.RDF.GetResource("rdf:#" + key);
     try {var index = elemTB.getIndexOfResource(res);}
     catch (er) {return;}
     
-    var parentres = BM.RDF.GetResource("rdf:#" + resvalue.replace(/\/[^\/]+$/,""));
+    var parentres = BM.RDF.GetResource("rdf:#" + key.replace(/\/[^\/]+$/,""));
     try {var parentindex = elemTB.getIndexOfResource(parentres);}
     catch (er) {return;}
     
     if (parentindex == -1 || index == -1) return;
-    this.PassElem=elem;
     window.setTimeout("GenBookTexts.scrollTreeNow(" + parentindex + ", " + index + ")", 0);
   },
 
-  PassElem:null,
   scrollTreeNow: function(pi, i) {
-    this.PassElem.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).scrollToRow(pi);
-    this.PassElem.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(i);
+    var elem = MainWindow.document.getElementById("genbook-tree");
+    //elem.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).scrollToRow(pi);
+    elem.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(i);
   }
 
 };
