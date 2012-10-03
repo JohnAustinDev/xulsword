@@ -246,12 +246,11 @@ function scriptClick(e) {
   var w = getWindow(e.target);
   if (w === null) return;
 
-  if (w && Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
+  // when an unpinned GenBook window is clicked, select its chapter in the navigator
+  if (!prefs.getBoolPref("IsPinned" + w) && 
+      Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
     var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/" + prefs.getCharPref("Version" + w));
-    if (!GenBookTexts.isSelectedGenBook(key)) {
-      GenBookTexts.openGenBookKey(key);
-      GenBookTexts.selectGenBook(key);
-    }
+    if (!GenBookTexts.isSelectedGenBook(key)) GenBookTexts.navigatorSelect(key);
   }
   
   var elem = e.target;
@@ -298,7 +297,14 @@ function scriptClick(e) {
       }
       break;
     case GENBOOK:
-      GenBookTexts.bumpSelectedIndex(true);
+      var prevchap = GenBookTexts.previousChapter(prefs.getCharPref("GenBookKey_" + mod + "_" + w));
+      if (!prevchap) return;
+      
+      if (prefs.getBoolPref("IsPinned" + w)) {
+        prefs.setCharPref("GenBookKey_" + mod + "_" + w, prevchap);
+        Texts.update();
+      }
+      else GenBookTexts.navigatorSelect(prevchap);
       break;
     }
     break;
@@ -323,7 +329,15 @@ function scriptClick(e) {
       }
       break;
     case GENBOOK:
-      GenBookTexts.bumpSelectedIndex(false);
+      var nextchap = GenBookTexts.nextChapter(prefs.getCharPref("GenBookKey_" + mod + "_" + w));
+      if (!nextchap) return;
+      
+      if (prefs.getBoolPref("IsPinned" + w)) {
+        prefs.setCharPref("GenBookKey_" + mod + "_" + w, nextchap);
+        Texts.update();
+      }
+      else GenBookTexts.navigatorSelect(nextchap);
+
       break;
     }
     break;

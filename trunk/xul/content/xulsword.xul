@@ -462,7 +462,7 @@
           <vbox id="genBookTree" flex="1">
             <tree id="genbook-tree" flex="1" class="plain" hidecolumnpicker="true" seltype="single" enableColumnDrag="false"
                 datasources="rdf:null" ref="rdf:#http://www.xulsword.com/tableofcontents/ContentsRoot" flags="dont-build-content"
-                onselect="onSelectGenBook();" >
+                onselect="ViewPortWindow.GenBookTexts.onSelectGenBook();" >
               <treecols>
                 <treecol id="chapter-column" flex="1" hideheader="true" primary="true"/>
               </treecols>

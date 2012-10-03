@@ -64,8 +64,7 @@ var ViewPort = {
   // with CSS.
   update: function(skipBibleChooserTest) {
     var winh = getPrefOrCreate("ViewPortHeight", "Int", window.innerHeight);
-    
-  jsdump("UPDATING VIEW PORT h=" + winh);
+//jsdump("UPDATING VIEW PORT h=" + winh);
     // Read CSS constant rules and values
     var rule = getCSS(".tab {");
     var tabheight = Number(rule.style.height.match(/^(\d+)\s*px/)[1]);
