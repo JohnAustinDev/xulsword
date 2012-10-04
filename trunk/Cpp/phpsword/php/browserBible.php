@@ -219,13 +219,13 @@ while (list($name, $val) = each($_GET)) {
 			// currently done piecemeal during processing(?)
 			break;
 		case "info":
-			// ????
+			$_GET['rlist'] = preg_replace($LOCCLEAN, "", $_GET['rlist']);
 			break;
 		case "intro":
-			// ????
+			$_GET['rlist'] = preg_replace($LOCCLEAN, "", $_GET['rlist']);
 			break;
 		case "foot":
-			// ????
+			$_GET['rlist'] = preg_replace($LOCCLEAN, "", $_GET['rlist']);
 			break;
 		case "chapter":
 			$_GET['rlist'] = (int)$_GET['rlist'];
@@ -234,7 +234,7 @@ while (list($name, $val) = each($_GET)) {
 			// ?????????
 			break;
 		default:
-			// Then totally cancel any un-supported types
+			// Otherwise totally cancel any un-supported types
 			$_GET['rmod'] = '';
 			$_GET['rtype'] = '';
 			$_GET['rlist'] = '';
