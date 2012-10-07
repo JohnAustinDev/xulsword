@@ -219,11 +219,7 @@ while (list($name, $val) = each($_GET)) {
 			// currently done piecemeal during processing(?)
 			break;
 		case "info":
-			$_GET['rlist'] = preg_replace($LOCCLEAN, "", $_GET['rlist']);
-			break;
 		case "intro":
-			$_GET['rlist'] = preg_replace($LOCCLEAN, "", $_GET['rlist']);
-			break;
 		case "foot":
 			$_GET['rlist'] = preg_replace($LOCCLEAN, "", $_GET['rlist']);
 			break;
@@ -318,6 +314,7 @@ if ($Redirect && !$PromptForModule) redirect($_GET);
 ////////////////////////////////////////////////////////////////////////
 $PageFootnotes = "";
 $PageCrossrefs = "";
+$FlowColIsRTL = ($Sword->getModuleInformation($_GET['m1'], "Direction") == "RtoL");
 	
 // Don't waste time if the URL is requesting SpecialHTML
 if (!$SpecialHTML) {
@@ -372,10 +369,11 @@ if (!$SpecialHTML) {
 	}
 
 	// Save all footnotes, cross-references, introductions, and module infos
-	$PageFootnotes = htmlspecialchars($Sword->getFootnotes());
-	$PageCrossrefs = htmlspecialchars($Sword->getCrossRefs());
+	$PageFootnotes = $Sword->getFootnotes();
+	$PageCrossrefs = $Sword->getCrossRefs();
 	$c = 1;
 	while (isset($_GET['m'.$c])) {
+		if ($FlowCols > 1 && $c > 1) break;
 		$BookIntro[$c]  = $Sword->getBookIntroduction($_GET['m'.$c], $_GET['l']);
 		$ModInfo[$c] = moduleInfo($_GET['m'.$c]);
 		$c++;
