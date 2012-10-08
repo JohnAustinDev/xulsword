@@ -32,6 +32,9 @@ require_once('php/Phrases_browserBible.php');
 	//$rep2 = <full path to SWORD repository #2>;
 	
 	//$REDIRECT[<Language>] = <URL to redirect to if PHPSWORD extension does not load>;
+	
+/* If dynamically loaded fonts are desired, put include them in the $Fonts array */
+	//$Fonts[<font name>] = <path or URL to font file>;
 
 /*	DEFAULT SWORD MODULES: 
 		NULL VALUES ARE NOT ALLOWED AND LISTED MODULES MUST BE FOUND IN
