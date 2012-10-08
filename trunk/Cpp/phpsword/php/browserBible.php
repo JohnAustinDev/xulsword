@@ -283,7 +283,9 @@ $_GET['mlt'] = $_GET['stn']; // just synch these two together
 reset($Option);
 while (list($var, $val) = each($Option)) {$Sword->setGlobalOption($val, ($_GET[$var] == '1' ? "On":"Off"));}
   
-  
+// Begin collection of CSS for all modules which will be displayed
+$CSS = array();
+
 ////////////////////////////////////////////////////////////////////////
 // HANDLE ANY SPECIAL HTML OR AJAX REQUESTS.
 ////////////////////////////////////////////////////////////////////////
@@ -318,6 +320,8 @@ $FlowColIsRTL = ($Sword->getModuleInformation($_GET['m1'], "Direction") == "RtoL
 	
 // Don't waste time if the URL is requesting SpecialHTML
 if (!$SpecialHTML) {
+	getCSS($_GET['m1']);
+	
 	$BookIntro = array();
 	$ModInfo = array();
 	$FlowCols = 1;
@@ -331,6 +335,7 @@ if (!$SpecialHTML) {
 		
 		// Determine if flowing columns are to be displayed, and how many
 		while (isset($_GET['m'.$c])) {
+			getCSS($_GET['m'.$c]);
 			if ($_GET['m'.$c] == $flowmod) $FlowCols++;
 			$mods .= ",".$_GET['m'.$c];
 			$c++;
@@ -380,6 +385,10 @@ if (!$SpecialHTML) {
 	}
 
 }
+
+// Remove empty CSS classes
+reset($CSS);
+//while (list($mod, $style) = each($CSS)) {if (!$style) unset($CSS[$mod]);}
 
 // This is just a handy global variable for our URL's book, chap, and verse location.
 $_LOC = preg_split("/\./", $_GET['l']);
