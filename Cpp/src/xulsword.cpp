@@ -384,7 +384,7 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
           fnV, 
           modKey->getOSISRef(), 
           module->Name(), 
-          (module->Direction() != DIRECTION_LTR ? " class=\"RTL\"":""));
+          module->Name());
         
         crossRefText->append(Outtext);
         crossRefText->append(AtIndex->second["refList"]);
@@ -394,11 +394,12 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
         noteText->append("</div>");
       }
       else {
-        sprintf(Outtext, "<div id=\"src.fn.%d.%s.%s\"><span%s>", 
+        sprintf(Outtext, "<div id=\"src.fn.%d.%s.%s\"><span class=\"cs-%s%s\">", 
           fnV, 
           modKey->getOSISRef(), 
           module->Name(),
-          (module->Direction() != DIRECTION_LTR ? " class=\"RTL\"":""));
+          module->Name(),
+          (module->Direction() != DIRECTION_LTR ? " RTL":""));
         
         footnoteText->append(Outtext);
         footnoteText->append(module->RenderText(AtIndex->second["body"]));
@@ -563,6 +564,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
       if (module->getEntryAttributes()["Heading"][Value->first]["canonical"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["canonical"], "true")) {
         verseHTML.append(" canonical");
       }
+      verseHTML.appendFormatted(" cs-%s", module->Name());
       if (isRTL) {verseHTML.append(" RTL");}
       verseHTML.append("\">");
       verseHTML.append(module->RenderText(Value->second));
@@ -572,7 +574,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     //NOW PRINT OUT THE VERSE ITSELF
     //If this is selected verse then designate as so
     //Output verse html code
-    sprintf(Outtext, "<span id=\"vs.%s.%d.%d\"%s>", bk.c_str(), ch, vNum, (isRTL ? " class=\"RTL\"":""));
+    sprintf(Outtext, "<span id=\"vs.%s.%d.%d\" class=\"cs-%s%s\">", bk.c_str(), ch, vNum, module->Name(), (isRTL ? " RTL":""));
     verseHTML.append(Outtext);
 
     if (Verse > 1) {
@@ -681,14 +683,14 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   <div class="interB>
 
     [<span class="hl" [id="sv"]>]
-    <div class="interV1">
+    <div class="interV1 mod1">
       <sup class="versnum">5</sup>
       <span id="vs.5.1">Some verse text from module 1.</span>
     </div>
 
-    <div class="interS RTL"></div>
+    <div class="interS"></div>
 
-    <div class="interV2">
+    <div class="interV2 mod2 RTL">
       <sup class="versnum">5</sup>
       <span id="vs.5.2">Some verse text from module 2.</span>
     </div>
@@ -734,7 +736,11 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
       if (versionNum > 1) {chapText.append("<div class=\"interS\"></div>");}
 
       // each version has its own unique class ID
-      chapText.appendFormatted("<div class=\"interV%d%s\"><sup class=\"versenum\">", versionNum, (versemod->Direction() != DIRECTION_LTR ? " RTL":""));
+      chapText.appendFormatted("<div class=\"interV%d cs-%s%s\"><sup class=\"versenum\">", 
+        versionNum, 
+        versemod->Name(), 
+        (versemod->Direction() != DIRECTION_LTR ? " RTL":""));
+        
       if (Versenumbers) {chapText.appendFormatted("%d",vNum);}
       chapText.appendFormatted("</sup><span id=\"vs.%s.%d.%d.%d\">", bk.c_str(), myVerseKey->getChapter(), vNum, versionNum++);
 
@@ -895,9 +901,11 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
 
   delete(testkey);
   
-  if (bText.length() && module->Direction() != DIRECTION_LTR) {
-      bText.insert(0, "<span class=\"RTL\">");
-      bText.append("</span>");
+  if (bText.length()) {
+    SWBuf css;
+    css.setFormatted("<span class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
+    bText.insert(0, css);
+    bText.append("</span>");
   }
   
   SWBuf check = assureValidUTF8(bText.c_str());
@@ -1004,9 +1012,11 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   
   module->setKey(EmptyKey);
   delete(testkey);
-
-  if (intro.length() > 16 && module->Direction() != DIRECTION_LTR) {
-    intro.insert(0, "<span class=\"RTL\">");
+  
+  if (intro.length()) {
+    SWBuf css;
+    css.setFormatted("<span class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
+    intro.insert(0, css);
     intro.append("</span>");
   }
   
@@ -1060,8 +1070,10 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
     }
   }
 
-  if (xstring.length() && dmod->Direction() != DIRECTION_LTR) {
-    xstring.insert(0, "<span class=\"RTL\">");
+  if (xstring.length()) {
+    SWBuf css;
+    css.setFormatted("<span class=\"cs-%s%s\">", dmod->Name(), (dmod->Direction() != DIRECTION_LTR ? " RTL":""));
+    xstring.insert(0, css);
     xstring.append("</span>");
   }
   
@@ -1151,8 +1163,10 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   
   delete(testkey);
   
-  if (chapterText.length() && module->Direction() != DIRECTION_LTR) {
-    chapterText.insert(0, "<span class=\"RTL\">");
+  if (chapterText.length()) {
+    SWBuf css;
+    css.setFormatted("<span class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
+    chapterText.insert(0, css);
     chapterText.append("</span>");
   }
   
