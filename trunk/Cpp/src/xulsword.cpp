@@ -901,7 +901,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
 
   delete(testkey);
   
-  if (bText.length()) {
+  if (bText.length() > 16) {
     SWBuf css;
     css.setFormatted("<span class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
     bText.insert(0, css);
@@ -1008,12 +1008,12 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   module->setKey(introkey);
 
   SWBuf intro;
-  intro.append(module->RenderText());
+  intro.set(module->RenderText());
   
   module->setKey(EmptyKey);
   delete(testkey);
   
-  if (intro.length()) {
+  if (intro.length() > 16) {
     SWBuf css;
     css.setFormatted("<span class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
     intro.insert(0, css);
@@ -1070,7 +1070,7 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
     }
   }
 
-  if (xstring.length()) {
+  if (xstring.length() >16) {
     SWBuf css;
     css.setFormatted("<span class=\"cs-%s%s\">", dmod->Name(), (dmod->Direction() != DIRECTION_LTR ? " RTL":""));
     xstring.insert(0, css);
@@ -1163,7 +1163,7 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   
   delete(testkey);
   
-  if (chapterText.length()) {
+  if (chapterText.length() > 16) {
     SWBuf css;
     css.setFormatted("<span class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
     chapterText.insert(0, css);
