@@ -18,9 +18,6 @@
 
 // as a ChromeWorker, Components is not available but ctypes is.
 if (typeof ctypes == "undefined") Components.utils.import("resource://gre/modules/ctypes.jsm");
-else {
-  function jsdump(str) {dump(str + "\n");}
-}
 
 /*
 The following is the list of libsword functions to use with Bible objects.
@@ -94,7 +91,7 @@ var Bible = {
   LibswordPath:null,
 
   initLibsword: function() {
-    jsdump("Initializing libsword...");
+    if (jsdump) jsdump("Initializing libsword...");
     
     if (this.Libsword) return;
     
@@ -140,7 +137,7 @@ var Bible = {
       this.freeLibxulsword(); //Deleting libxulsword static objects sometimes caused memory problems when library was re-opened
       this.Libsword.close();
       this.Libsword = null;
-      jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
+      if (jsdump) jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
     }
   },
   
@@ -156,8 +153,8 @@ var Bible = {
     
     var newXulsword = this.Libsword.declare("GetNewXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
     this.inst = newXulsword(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
-    jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
-    jsdump("ModuleDirectory=\"" + this.ModuleDirectory + "\""); 
+    if (jsdump) jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
+    if (jsdump) jsdump("ModuleDirectory=\"" + this.ModuleDirectory + "\""); 
   },
   
   freeInstance: function() {
@@ -219,7 +216,7 @@ var Bible = {
     if (ThrowMSG) {
       var tmp = ThrowMSG;
       ThrowMSG = "";
-      jsdump("THROW: libsword, " + tmp);
+      if (jsdump) jsdump("THROW: libsword, " + tmp);
       throw(new Error("THROW: libsword, " + tmp));
     }
   },

@@ -53,7 +53,7 @@ var ViewPort = {
     document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", wheel, false);
     var sb = document.getElementsByClassName("sb");
     for (var i=0; i<sb.length; i++) {
-      sb[i].addEventListener("DOMMouseScroll", MainWindow.scrollwheel, false);
+      sb[i].addEventListener("DOMMouseScroll", MouseWheel.scroll, false);
     }
 
   },
@@ -170,6 +170,11 @@ var ViewPort = {
             !prefs.getBoolPref("ShowOriginal" + w) && !prefs.getBoolPref("ShowOriginal" + (w+1)) &&
             prefs.getCharPref("Version" + w) == prefs.getCharPref("Version" + Number(w+1)))
             value = "show2";
+        else if ((w+1) <= dw && 
+            (Tab[prefs.getCharPref("Version" + w)].modType==COMMENTARY || Tab[prefs.getCharPref("Version" + w)].modType==GENBOOK) &&
+            prefs.getCharPref("Version" + w) == prefs.getCharPref("Version" + Number(w+1)))
+            value = "show2";
+
         if (value == "show2" && w+2 <= dw && 
             !prefs.getBoolPref("ShowOriginal" + (w+2)) &&
             prefs.getCharPref("Version" + Number(w+1)) == prefs.getCharPref("Version" + Number(w+2)))

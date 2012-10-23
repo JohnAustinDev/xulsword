@@ -601,7 +601,6 @@ var BookmarkFuns = {
     if (!MainWindow || Bible.paused) return;
     if (scrollFlag == null) scrollFlag = SCROLLTYPECENTER;
     if (focusOnMainWindow) MainWindow.focus();
-    for (var i=1; i<=3; i++) {MainWindow.TextCache[i].text = null;} // force reread due to changed user-notes
     Texts.update(scrollFlag, HILIGHTVERSE, true);
   },
   

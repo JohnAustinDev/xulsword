@@ -58,7 +58,7 @@
 
   <popupset>
     <menupopup id="contextScriptBox" value="closed" 
-        onpopupshowing="MainWindow.ScriptContextMenuShowing(event,CWIN.Win.number,document.popupNode);" 
+        onpopupshowing="MainWindow.ScriptContextMenuShowing(event, this);" 
         onpopuphidden="MainWindow.ScriptContextMenuHidden(event);">
       <menuitem id="aboutModule" label="&menu.help.about;" command="cmd_xs_aboutModule"/>
       <menuitem id="closeTab" label="&context.closeTab;" command="cmd_xs_toggleTab"/>

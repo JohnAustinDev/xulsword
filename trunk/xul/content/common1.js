@@ -531,10 +531,6 @@ function getAvailableBooks(version) {
   }
   AvailableBooks[version] = shortNames;
   
-  //CLUDGE: If a complete Bible is ever found, disable 
-  //"HideUnavailableCrossReferences" because it will WASTE A LOT OF TIME.
-  //It is unneeded since "findAVerseText" will always return text in this case.
-  if (type==BIBLE && !hasMissing) prefs.setBoolPref("HideUnavailableCrossReferences", false);
   return AvailableBooks[version];
 }
 
@@ -795,3 +791,14 @@ function copyObj(obj) {
   return newobj;
 }
 
+// Return the window in which this element resides.
+// Note: null means no window, but 0 means popup window.
+function getWindow(elem) {
+  while(elem && (!elem.id || (!(/^text\d+$/).test(elem.id) && !(/^npopup$/).test(elem.id)))) {
+    elem = elem.parentNode;
+  }
+  if (!elem) return null;
+  else if (elem.id == "npopup") return 0;
+  
+  return Number(elem.id.substr(4));
+}

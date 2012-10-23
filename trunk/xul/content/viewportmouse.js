@@ -17,7 +17,7 @@
 */
 
 /************************************************************************
- * TEXT TABS
+ * TEXT TABS MOUSE FUNCTIONS
  ***********************************************************************/  
 function tabMouse(e) {
   var elem = e.target;
@@ -101,7 +101,7 @@ function closeTabToolTip() {
 
 
 /************************************************************************
- * TEXT SCRIPT BOX
+ * TEXT SCRIPT BOX MOUSE FUNCTIONS
  ***********************************************************************/  
 var HaveLeftTarget = false;
 var ImmediateUnhilight = false;
@@ -123,8 +123,7 @@ function scriptMouseOver(e) {
   while (elem && !elem.className) {elem = elem.parentNode;}
   if (!elem) return;
 
-  //var edata = getElemType(elem);
-//jsdump("edata:" + edata + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
+//jsdump("type:" + elem.className.split(/\s+/)[0] + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
   switch (elem.className.split(/\s+/)[0]) {
   case "cr":
     if (prefs.getBoolPref("ShowCrossrefsAtBottom")) {
@@ -244,10 +243,10 @@ function scriptMouseOut(e) {
 
 function scriptClick(e) {
   var w = getWindow(e.target);
-  if (w === null) return;
+  if (w === null) return; // w=0 means popup!!
 
   // when an unpinned GenBook window is clicked, select its chapter in the navigator
-  if (!prefs.getBoolPref("IsPinned" + w) && 
+  if (w && !prefs.getBoolPref("IsPinned" + w) && 
       Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
     var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/" + prefs.getCharPref("Version" + w));
     if (!GenBookTexts.isSelectedGenBook(key)) GenBookTexts.navigatorSelect(key);
@@ -261,10 +260,10 @@ function scriptClick(e) {
   var x = elem.offsetLeft;
   var y = elem.offsetTop;
   
-//jsdump("edata:" + edata + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
+//jsdump("type:" + elem.className + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
   switch (elem.className) {
     case "cr":
-    var ok = toggleRefText(elem);
+    var ok = toggleRefText(document.getElementById("w" + w + ".exp." + elem.id));
     if (ok) BibleTexts.scroll2Note(x, y, w, "w" + w + ".ntr." + elem.id);
     break;
 
@@ -282,8 +281,8 @@ function scriptClick(e) {
     case BIBLE:
     case COMMENTARY:
       if (w && document.getElementById("text" + w).getAttribute("columns") != "show1") 
-          MainWindow.previousPage(HILIGHTNONE, w);
-      else MainWindow.previousChapter(HILIGHTNONE, SCROLLTYPEBEG, w);
+          previousPage(HILIGHTNONE, w);
+      else previousChapter(HILIGHTNONE, SCROLLTYPEBEG, w);
       break;
     case DICTIONARY:
       var currentKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
@@ -297,15 +296,30 @@ function scriptClick(e) {
       }
       break;
     case GENBOOK:
-      var prevchap = GenBookTexts.previousChapter(prefs.getCharPref("GenBookKey_" + mod + "_" + w));
-      if (!prevchap) return;
-      
-      if (prefs.getBoolPref("IsPinned" + w)) {
-        prefs.setCharPref("GenBookKey_" + mod + "_" + w, prevchap);
-        Texts.update();
+      // first see if we can scroll the window
+      var t = document.getElementById("text" + w);
+      var sb = t.getElementsByClassName("sb")[0];
+      if (sb.scrollLeft > 0) {
+        var wwin = (t.clientWidth - 4); // 4 = 2 x border-width
+        var twin = wwin*Math.floor(sb.scrollLeft/wwin);
+        if (twin >= sb.scrollLeft) twin -= wwin;
+        sb.scrollLeft = twin;
+        if (sb.scrollLeft < 0) sb.scrollLeft = 0;
       }
-      else GenBookTexts.navigatorSelect(prevchap);
-      break;
+      // if not, then load previous chapter
+      else {
+        var prevchap = GenBookTexts.previousChapter(prefs.getCharPref("GenBookKey_" + mod + "_" + w));
+        if (!prevchap) return;
+        
+        if (prefs.getBoolPref("IsPinned" + w)) {
+          prefs.setCharPref("GenBookKey_" + mod + "_" + w, prevchap);
+          Texts.update();
+        }
+        else GenBookTexts.navigatorSelect(prevchap);
+        // scroll to end if possible
+        sb.scrollLeft = sb.scrollWidth;
+        break;
+      }
     }
     break;
     
@@ -314,8 +328,8 @@ function scriptClick(e) {
     case BIBLE:
     case COMMENTARY:
       if (w && document.getElementById("text" + w).getAttribute("columns") != "show1")
-          MainWindow.nextPage(HILIGHTNONE, w);
-      else MainWindow.nextChapter(HILIGHTNONE, SCROLLTYPEBEG, w);
+          nextPage(HILIGHTNONE, w);
+      else nextChapter(HILIGHTNONE, SCROLLTYPEBEG, w);
       break;
     case DICTIONARY:
       var currentKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
@@ -329,15 +343,25 @@ function scriptClick(e) {
       }
       break;
     case GENBOOK:
-      var nextchap = GenBookTexts.nextChapter(prefs.getCharPref("GenBookKey_" + mod + "_" + w));
-      if (!nextchap) return;
-      
-      if (prefs.getBoolPref("IsPinned" + w)) {
-        prefs.setCharPref("GenBookKey_" + mod + "_" + w, nextchap);
-        Texts.update();
+      // first see if we can scroll the window
+      var t = document.getElementById("text" + w);
+      var sb = t.getElementsByClassName("sb")[0];
+      var scrollmax = sb.scrollWidth-sb.clientWidth;
+      var wwin = (t.clientWidth - 4); // 4 = 2 x border-width
+      var next = wwin*Math.floor(sb.scrollLeft/wwin) + wwin;
+      var prev = sb.scrollLeft;
+      sb.scrollLeft = next;
+      // if not, then load next chapter
+      if (sb.scrollLeft == prev) {
+        var nextchap = GenBookTexts.nextChapter(prefs.getCharPref("GenBookKey_" + mod + "_" + w));
+        if (!nextchap) return;
+        
+        if (prefs.getBoolPref("IsPinned" + w)) {
+          prefs.setCharPref("GenBookKey_" + mod + "_" + w, nextchap);
+          Texts.update();
+        }
+        else GenBookTexts.navigatorSelect(nextchap);
       }
-      else GenBookTexts.navigatorSelect(nextchap);
-
       break;
     }
     break;
@@ -537,7 +561,7 @@ function bbMouseUp(e) {
 
 
 /************************************************************************
- * FOOTNOTE BOX
+ * FOOTNOTE BOX MOUSE FUNCTIONS
  ***********************************************************************/  
 function noteboxClick(e) {
   
@@ -618,12 +642,286 @@ function toggleRefText(elem) {
 }
 
 
-function getWindow(elem) {
-  while(elem && (!elem.id || (!(/^text\d+$/).test(elem.id) && !(/^npopup$/).test(elem.id)))) {
-    elem = elem.parentNode;
-  }
-  if (!elem) return null;
-  else if (elem.id == "npopup") return 0;
+/************************************************************************
+ * Scroll Wheel functions...
+ ***********************************************************************/
+
+var MouseWheel = {
+  SWcount:0,
+  SWwin:null,
+  SWTO:null,
+
+  // scroll wheel does synchronized scrolling of all visible versekey windows
+  scroll: function(event) {
+    
+    // find window in which event occurred
+    var w = event.target;
+    while (w && (!w.id || !(/^text\d+$/).test(w.id))) {w = w.parentNode;}
+    if (!w) return;
+    MouseWheel.SWwin = Number(w.id.replace("text", ""));
+
+    // dictionaries don't do flow columns and don't sync to other windows
+    // so no special scrollwheel response is needed
+    if (Tab[prefs.getCharPref("Version" + MouseWheel.SWwin)].modType == DICTIONARY) return;
+        
+    var vd = Math.round(event.detail/3);
+    MouseWheel.SWcount = (MouseWheel.SWcount + vd);
+
+    if (MouseWheel.SWTO) window.clearTimeout(MouseWheel.SWTO);
+    MouseWheel.SWTO = window.setTimeout("MouseWheel.scroll2();", 250);
+  },
+
+  scroll2: function() {
+
+    // get number of verses by which to scroll
+    var dv = 2*MouseWheel.SWcount-(Math.abs(MouseWheel.SWcount)/MouseWheel.SWcount);
+    MouseWheel.SWcount = 0;
+    if (!dv) return;
+    
+    var t = document.getElementById("text" + MouseWheel.SWwin);
+    var sb = t.getElementsByClassName("sb")[0];
+    var v;
+    var scrollType;
+    
+    // GenBook scrolls differently that versekey modules
+    if (Tab[prefs.getCharPref("Version" + MouseWheel.SWwin)].modType == GENBOOK) {
+      scrollType = SCROLLTYPEDELTA;
+      v = dv*20; // scroll delta in pixels
+    }
   
-  return Number(elem.id.substr(4));
+    // else scroll versekey modules
+    else {
+      scrollType = SCROLLTYPEBEG;
+      
+      // get first verse which begins in window
+      v = sb.firstChild;
+      if (t.getAttribute("columns") == "show1") {
+        while (v && (!v.id || !(/^vs\./).test(v.id) || (v.offsetTop - sb.offsetTop < sb.scrollTop))) {v = v.nextSibling;}
+      }
+      else {
+        while (v && (!v.id || !(/^vs\./).test(v.id) || v.style.display == "none")) {v = v.nextSibling;}
+      }
+      if (!v) return;
+     
+      // if this is a multi-column versekey window, shift the verse according to scroll wheel delta
+      if (t.getAttribute("columns") != "show1") {
+        var nv = v;
+        while (dv > 0) {
+          if (nv) nv = nv.nextSibling;
+          while (nv && (!nv.id || !(/^vs\./).test(nv.id))) {nv = nv.nextSibling;}
+          dv--;
+          if (nv && nv.id && (/^vs\./).test(nv.id)) v = nv;
+        }
+        while (dv < 0) {
+          if (nv) nv = nv.previousSibling;
+          while (nv && (!nv.id || !(/^vs\./).test(nv.id))) {
+            nv = nv.previousSibling;
+          }
+          dv++;
+          if (nv && nv.id && (/^vs\./).test(nv.id)) v = nv;
+        }
+      }
+     
+      var v = v.id.split(".");
+      v.shift();
+      v = v.join(".");
+    }
+      
+    // decide which windows to scroll and which to leave alone
+    var scroll = [null];
+    for (var w=1; w<=NW; w++) {
+      var s;
+      if (w == MouseWheel.SWwin) {
+        if (t.getAttribute("columns") == "show1") s = null; // no need to scroll since UI will handle it
+        else s = v + "." + scrollType;
+      }
+      else {
+        if (prefs.getBoolPref("IsPinned" + MouseWheel.SWwin)) s = null;
+        else if (prefs.getBoolPref("IsPinned" + w)) s = null;
+        else s = v + "." + scrollType;
+      }
+      scroll.push(s);
+    }
+
+    Texts.update(scroll, HILIGHTSAME);
+  }
+
+}
+
+
+/************************************************************************
+ * Navigation click functions...
+ ***********************************************************************/ 
+ 
+function previousBook() {
+  var bkn = findBookNum(Location.getBookName());
+  bkn--;
+  if (bkn < 0) return;
+  Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
+  Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+}
+
+// if pin info is given, apply changes to pin window only
+function previousChapter(highlightFlag, scrollType, wpin) {
+  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
+  
+  var vers = (wpin ? prefs.getCharPref("Version" + wpin):firstDisplayBible());
+  var bkn = findBookNum(wpin ? Texts.display[wpin].bk:Location.getBookName());
+  var chn = (wpin ? Texts.display[wpin].ch:Location.getChapterNumber(vers));
+  
+  if (chn > 1) {chn--;}
+  else return;
+  
+  if (wpin) {Texts.pinnedDisplay[wpin].ch = chn;}
+  else {Location.setLocation(vers, Location.getBookName() + "." + chn);}
+  
+  Texts.update(getScrollArray(wpin, Book[bkn].sName + "." + chn + ".1." + scrollType), highlightFlag);
+}
+
+// if pin info is given, apply changes to pin window(s) only
+function previousPage(highlightFlag, wpin) {
+  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
+  
+  // if a multi-column windows is visible, get its first verse
+  var vf = null;
+  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
+    var t = document.getElementById("text" + w);
+    if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
+      var sb = t.getElementsByClassName("sb")[0];
+      var v = sb.firstChild;
+      while (v && (v.style.display == "none" || !v.id || !(/^vs\./).test(v.id))) {v = v.nextSibling;}
+      if (v) {
+        vf = v.id.split(".");
+        vf.shift();
+      }
+      if (vf) break;
+    }
+  }
+  
+  // if no multi-column window is visible, just do previousChapter
+  if (!vf) {
+    previousChapter(highlightFlag, SCROLLTYPEBEG, wpin);
+    return;
+  }
+
+  Texts.update(getScrollArray(wpin, vf.join(".") + "." + (wpin ? SCROLLTYPEEND:SCROLLTYPEENDSELECT)), highlightFlag);
+}
+
+function previousVerse(scrollType) {
+  var vers = firstDisplayBible();
+  var l = Location.getLocation(vers).split(".");
+  l[1] = Number(l[1]);
+  l[2] = Number(l[2]);
+  
+  l[2]--;
+  if (l[2] == 0) {
+    l[1]--;
+    if (l[1] == 0) return;
+    l[2] = Bible.getMaxVerse(vers, l[0] + "." + l[1]);
+  }
+  l[3] = l[2];
+
+  Location.setLocation(vers, l.join("."));
+  Texts.update(scrollType, HILIGHTVERSE);
+}
+
+function nextBook() {
+  var bkn = findBookNum(Location.getBookName());
+  bkn++;
+  if (bkn >= NumBooks) return;
+  Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
+  Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+}
+
+// if pin info is given, apply changes to pin window(s) only
+function nextChapter(highlightFlag, scrollType, wpin) {
+  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
+  
+  var vers = (wpin ? Texts.display[wpin].mod:firstDisplayBible());
+  var bkn = findBookNum(wpin ? Texts.display[wpin].bk:Location.getBookName());
+  var chn = (wpin ? Texts.display[wpin].ch:Location.getChapterNumber(vers));
+  
+  if (chn < Book[bkn].numChaps) {chn++;}
+  else return;
+  
+  if (wpin) {Texts.pinnedDisplay[wpin].ch = chn;}
+  else {Location.setLocation(vers, Location.getBookName() + "." + chn);}
+  
+  Texts.update(getScrollArray(wpin, Book[bkn].sName + "." + chn + ".1." + scrollType), highlightFlag);
+}
+
+// if pin info is given, apply changes to pin window(s) only
+function nextPage(highlightFlag, wpin) {
+  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
+  
+  // if a multi-column windows is visible, get its last verse
+  var vl = null;
+  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
+    var t = document.getElementById("text" + w);
+    if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
+      var sb = t.getElementsByClassName("sb")[0];
+      var nb = document.getElementById("note" + w);
+      var v = sb.lastChild;
+      while (v && (
+             !v.id || !(/^vs\./).test(v.id) || 
+             v.offsetLeft >= sb.offsetWidth || 
+             (v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth) && v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight))
+             ) {
+        v = v.previousSibling;
+      }
+      if (v) {
+        vl = v.id.split(".");
+        vl.shift();
+      }
+      if (vl) break;
+    }
+  }
+  
+  // if no multi-column window is visible, just do previousChapter
+  if (!vl) {
+    nextChapter(highlightFlag, SCROLLTYPEBEG, wpin);
+    return;
+  }
+
+  if (wpin) {
+    Texts.pinnedDisplay[wpin].bk = vl[0];
+    Texts.pinnedDisplay[wpin].ch = vl[1];
+    Texts.pinnedDisplay[wpin].vs = vl[2];
+  }
+  else {Location.setLocation(prefs.getCharPref("Version" + w), vl.join("."));}
+    
+  Texts.update(getScrollArray(wpin, vl.join(".") + "." + SCROLLTYPEBEG), highlightFlag);
+}
+
+function nextVerse(scrollType) {
+  var vers = firstDisplayBible();
+  var l = Location.getLocation(vers).split(".");
+  l[1] = Number(l[1]);
+  l[2] = Number(l[2]);
+  
+  l[2]++;
+  if (l[2] > Bible.getMaxVerse(vers, l[0] + "." + l[1])) {
+    l[1]++;
+    if (l[1] > Bible.getMaxChapter(vers, l[0])) return;
+    l[2] = 1;
+  }
+  l[3] = l[2];
+
+  Location.setLocation(vers, l.join("."));
+  Texts.update(scrollType, HILIGHTVERSE);
+}
+
+function getScrollArray(wpin, scrollMember) {
+  var scroll = [null];
+  for (var w=1; w<=NW; w++) {
+    if (wpin) {
+      if (w == wpin) scroll.push(scrollMember);
+      else scroll.push(null);
+    }
+    else {
+      scroll.push(prefs.getBoolPref("IsPinned" + w) ? null:scrollMember);
+    }
+  }
+  
+  return scroll; 
 }

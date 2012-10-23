@@ -829,272 +829,6 @@ function updateFromNavigator(numberOfSelectedVerses) {
 
 
 /************************************************************************
- * Navigation functions...
- ***********************************************************************/ 
- 
-function previousBook() {
-  var bkn = findBookNum(Location.getBookName());
-  bkn--;
-  if (bkn < 0) return;
-  Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
-  Texts.update(SCROLLTYPETOP, HILIGHTNONE);
-}
-
-// if pin info is given, apply changes to pin window only
-function previousChapter(highlightFlag, scrollType, wpin) {
-  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
-  
-  var vers = (wpin ? prefs.getCharPref("Version" + wpin):firstDisplayBible());
-  var bkn = findBookNum(wpin ? Texts.display[wpin].bk:Location.getBookName());
-  var chn = (wpin ? Texts.display[wpin].ch:Location.getChapterNumber(vers));
-  
-  if (chn > 1) {chn--;}
-  else return;
-  
-  if (wpin) {Texts.pinnedDisplay[wpin].ch = chn;}
-  else {Location.setLocation(vers, Location.getBookName() + "." + chn);}
-  
-  Texts.update(getScrollArray(wpin, Book[bkn].sName + "." + chn + ".1." + scrollType), highlightFlag);
-}
-
-// if pin info is given, apply changes to pin window(s) only
-function previousPage(highlightFlag, wpin) {
-  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
-  
-  // if a multi-column windows is visible, get its first verse
-  var vf = null;
-  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    var t = ViewPortWindow.document.getElementById("text" + w);
-    if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
-      var sb = t.getElementsByClassName("sb")[0];
-      var v = sb.firstChild;
-      while (v && (v.style.display == "none" || !v.id || !(/^vs\./).test(v.id))) {v = v.nextSibling;}
-      if (v) {
-        vf = v.id.split(".");
-        vf.shift();
-      }
-      if (vf) break;
-    }
-  }
-  
-  // if no multi-column window is visible, just do previousChapter
-  if (!vf) {
-    previousChapter(highlightFlag, SCROLLTYPEBEG, wpin);
-    return;
-  }
-
-  Texts.update(getScrollArray(wpin, vf.join(".") + "." + (wpin ? SCROLLTYPEEND:SCROLLTYPEENDSELECT)), highlightFlag);
-}
-
-function previousVerse(scrollType) {
-  var vers = firstDisplayBible();
-  var l = Location.getLocation(vers).split(".");
-  l[1] = Number(l[1]);
-  l[2] = Number(l[2]);
-  
-  l[2]--;
-  if (l[2] == 0) {
-    l[1]--;
-    if (l[1] == 0) return;
-    l[2] = Bible.getMaxVerse(vers, l[0] + "." + l[1]);
-  }
-  l[3] = l[2];
-
-  Location.setLocation(vers, l.join("."));
-  Texts.update(scrollType, HILIGHTVERSE);
-}
-
-function nextBook() {
-  var bkn = findBookNum(Location.getBookName());
-  bkn++;
-  if (bkn >= NumBooks) return;
-  Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
-  Texts.update(SCROLLTYPETOP, HILIGHTNONE);
-}
-
-// if pin info is given, apply changes to pin window(s) only
-function nextChapter(highlightFlag, scrollType, wpin) {
-  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
-  
-  var vers = (wpin ? Texts.display[wpin].mod:firstDisplayBible());
-  var bkn = findBookNum(wpin ? Texts.display[wpin].bk:Location.getBookName());
-  var chn = (wpin ? Texts.display[wpin].ch:Location.getChapterNumber(vers));
-  
-  if (chn < Book[bkn].numChaps) {chn++;}
-  else return;
-  
-  if (wpin) {Texts.pinnedDisplay[wpin].ch = chn;}
-  else {Location.setLocation(vers, Location.getBookName() + "." + chn);}
-  
-  Texts.update(getScrollArray(wpin, Book[bkn].sName + "." + chn + ".1." + scrollType), highlightFlag);
-}
-
-// if pin info is given, apply changes to pin window(s) only
-function nextPage(highlightFlag, wpin) {
-  if (!wpin || !prefs.getBoolPref("IsPinned" + wpin)) wpin = null;
-  
-  // if a multi-column windows is visible, get its last verse
-  var vl = null;
-  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    var t = ViewPortWindow.document.getElementById("text" + w);
-    if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
-      var sb = t.getElementsByClassName("sb")[0];
-      var nb = ViewPortWindow.document.getElementById("note" + w);
-      var v = sb.lastChild;
-      while (v && (
-             !v.id || !(/^vs\./).test(v.id) || 
-             v.offsetLeft >= sb.offsetWidth || 
-             (v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth) && v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight))
-             ) {
-        v = v.previousSibling;
-      }
-      if (v) {
-        vl = v.id.split(".");
-        vl.shift();
-      }
-      if (vl) break;
-    }
-  }
-  
-  // if no multi-column window is visible, just do previousChapter
-  if (!vl) {
-    nextChapter(highlightFlag, SCROLLTYPEBEG, wpin);
-    return;
-  }
-
-  if (wpin) {
-    Texts.pinnedDisplay[wpin].bk = vl[0];
-    Texts.pinnedDisplay[wpin].ch = vl[1];
-    Texts.pinnedDisplay[wpin].vs = vl[2];
-  }
-  else {Location.setLocation(prefs.getCharPref("Version" + w), vl.join("."));}
-    
-  Texts.update(getScrollArray(wpin, vl.join(".") + "." + SCROLLTYPEBEG), highlightFlag);
-}
-
-function nextVerse(scrollType) {
-  var vers = firstDisplayBible();
-  var l = Location.getLocation(vers).split(".");
-  l[1] = Number(l[1]);
-  l[2] = Number(l[2]);
-  
-  l[2]++;
-  if (l[2] > Bible.getMaxVerse(vers, l[0] + "." + l[1])) {
-    l[1]++;
-    if (l[1] > Bible.getMaxChapter(vers, l[0])) return;
-    l[2] = 1;
-  }
-  l[3] = l[2];
-
-  Location.setLocation(vers, l.join("."));
-  Texts.update(scrollType, HILIGHTVERSE);
-}
-
-function getScrollArray(wpin, scrollMember) {
-  var scroll = [null];
-  for (var w=1; w<=NW; w++) {
-    if (wpin) {
-      if (w == wpin) scroll.push(scrollMember);
-      else scroll.push(null);
-    }
-    else {
-      scroll.push(prefs.getBoolPref("IsPinned" + w) ? null:scrollMember);
-    }
-  }
-  
-  return scroll; 
-}
-
-/************************************************************************
- * Scroll Wheel functions...
- ***********************************************************************/
-
-var SWcount = 0;
-var SWwin;
-var SWTO;
-
-// scroll wheel does synchronized scrolling of all visible versekey windows
-function scrollwheel(event) {
-  
-  // find window in which event occurred
-  var w = event.target;
-  while (w && (!w.id || !(/^text\d+$/).test(w.id))) {w = w.parentNode;}
-  if (!w) return;
-  SWwin = Number(w.id.replace("text", ""));
-
-  if (Tab[prefs.getCharPref("Version" + SWwin)].modType != BIBLE && 
-      Tab[prefs.getCharPref("Version" + SWwin)].modType != COMMENTARY) return;
-      
-  var vd = Math.round(event.detail/3);
-  SWcount = (SWcount + vd);
-
-  if (SWTO) window.clearTimeout(SWTO);
-  SWTO = window.setTimeout("scrollwheel2();", 250);
-}
-
-function scrollwheel2() {
-
-  // get number of verses by which to scroll
-  var dv = 2*SWcount-(Math.abs(SWcount)/SWcount);
-  SWcount = 0;
-  if (!dv) return;
-
-  // get first verse which begins in window
-  var t = ViewPortWindow.document.getElementById("text" + SWwin);
-  var sb = t.getElementsByClassName("sb")[0];
-  var v = sb.firstChild;
-  if (t.getAttribute("columns") == "show1") {
-    while (v && (!v.id || !(/^vs\./).test(v.id) || (v.offsetTop - sb.offsetTop < sb.scrollTop))) {v = v.nextSibling;}
-  }
-  else {
-    while (v && (!v.id || !(/^vs\./).test(v.id) || v.style.display == "none")) {v = v.nextSibling;}
-  }
-  if (!v) return;
- 
-  // if this is a multi-column window, shift the verse according to scroll wheel delta
-  if (t.getAttribute("columns") != "show1") {
-    var nv = v;
-    while (dv > 0) {
-      if (nv) nv = nv.nextSibling;
-      while (nv && (!nv.id || !(/^vs\./).test(nv.id))) {nv = nv.nextSibling;}
-      dv--;
-      if (nv && nv.id && (/^vs\./).test(nv.id)) v = nv;
-    }
-    while (dv < 0) {
-      if (nv) nv = nv.previousSibling;
-      while (nv && (!nv.id || !(/^vs\./).test(nv.id))) {
-        nv = nv.previousSibling;
-      }
-      dv++;
-      if (nv && nv.id && (/^vs\./).test(nv.id)) v = nv;
-    }
-  }
- 
-  var v = v.id.split(".");
-  v.shift();
-  v = v.join(".");
-  
-  // decide which windows to scroll and which to leave alone
-  var scroll = [null];
-  for (var w=1; w<=NW; w++) {
-    var s;
-    if (w == SWwin) {
-      if (t.getAttribute("columns") == "show1") s = null; // no need to scroll since UI will handle it
-      else s = v + "." + SCROLLTYPEBEG;
-    }
-    else {
-      if (prefs.getBoolPref("IsPinned" + SWwin)) s = null;
-      else if (prefs.getBoolPref("IsPinned" + w)) s = null;
-      else s = v + "." + SCROLLTYPEBEG;
-    }
-    scroll.push(s);
-  }
-
-  Texts.update(scroll, HILIGHTSAME);
-}
-
-
-/************************************************************************
  * Main Command Controller...
  ***********************************************************************/
 var XulswordController = {
@@ -1301,13 +1035,13 @@ function handleNextPrev(id) {
     //NEXT
     switch(id[1]) {
     case "verse":
-      nextVerse(id[2] && id[2]=="button" ? SCROLLTYPECENTERALWAYS:SCROLLTYPECENTER);
+      ViewPortWindow.nextVerse(id[2] && id[2]=="button" ? SCROLLTYPECENTERALWAYS:SCROLLTYPECENTER);
       break;
     case "chapter":
-      nextChapter(HILIGHTNONE, SCROLLTYPEBEG);
+      ViewPortWindow.nextChapter(HILIGHTNONE, SCROLLTYPEBEG);
       break;
     case "book":
-      nextBook(false);
+      ViewPortWindow.nextBook(false);
       break;
     default:
       return;
@@ -1317,13 +1051,13 @@ function handleNextPrev(id) {
     //PREVIOUS
     switch(id[1]) {
     case "verse":
-      previousVerse(id[2] && id[2]=="button" ? SCROLLTYPECENTERALWAYS:SCROLLTYPECENTER);
+      ViewPortWindow.previousVerse(id[2] && id[2]=="button" ? SCROLLTYPECENTERALWAYS:SCROLLTYPECENTER);
       break;
     case "chapter":
-      previousChapter(HILIGHTNONE, SCROLLTYPEBEG);
+      ViewPortWindow.previousChapter(HILIGHTNONE, SCROLLTYPEBEG);
       break;
     case "book":
-      previousBook();
+      ViewPortWindow.previousBook();
       break;
     default:
       return;
@@ -1653,54 +1387,48 @@ function updateXulswordCommands() {
 /************************************************************************
  * Context Menu functions
  ***********************************************************************/ 
-var ContextMenuShowing = false;
 var CurrentTarget = {shortName:null, chapter:null, verse:null, lastVerse:null, tabNum:null, windowNum:null};
-var PopupNode;
-//var TargParagraph;
 
-function ScriptContextMenuShowing(e, winnum, popupnode) {
-//jsdump ("ScriptContextMenuShowing id:" + document.popupNode.id + ", title:" + document.popupNode.title + "\n");
-  PopupNode = popupnode;
+function ScriptContextMenuShowing(e, menupopup) {
+jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
+
+  CurrentTarget.windowNum = getWindow(menupopup.triggerNode);
   
-  closeTabToolTip()
-  CurrentTarget.windowNum = winnum;
-
+  closeTabToolTip();
+  
   // Close Script Popup if we're not over it
-  var elem = PopupNode;
+  var elem = menupopup.triggerNode;
   while (elem && (!elem.id || elem.id != "npopup")) {elem = elem.parentNode;}
-  if (!elem) {
-    ViewPortWindow.Popup.close();
-  }
+  if (!elem) ViewPortWindow.Popup.close();
   
   // Is this the select tab menu?
-  if (PopupNode.id == "seltab.menu") {
-    CurrentTarget.tabNum = Tab[PopupNode.value].index;
+  if (menupopup.triggerNode.id == "seltab.menu") {
+    CurrentTarget.tabNum = Tab[menupopup.triggerNode.value].index;
     buildPopup(e, false, false, false, true, true);
     return;
   }
   // Is this the select tab tab?
-  if (PopupNode.id == "seltab.tab") {
-    CurrentTarget.tabNum = Tab[PopupNode.nextSibling.value].index;
+  else if (menupopup.triggerNode.id == "seltab.tab") {
+    CurrentTarget.tabNum = Tab[menupopup.triggerNode.nextSibling.value].index;
     buildPopup(e, false, false, false, true, true);
     return;
   }
   // Is this a version tab?
-  if (PopupNode.id.search(/tab\d+/)!=-1) {
-    CurrentTarget.tabNum = PopupNode.id.match(/tab(\d+)/)[1];
+  else if (menupopup.triggerNode.id.search(/tab\d+/)!=-1) {
+    CurrentTarget.tabNum = menupopup.triggerNode.id.match(/tab(\d+)/)[1];
     buildPopup(e, false, false, false, true, true);
     return;
   }
   
-  // Is mouse over a word with strong's numbers?
-  var selem = PopupNode;
+  // Is mouse over a word with strong's numbers? Then add root search menu items.
+  var selem = menupopup.triggerNode;
   var strongsNum;
   while (selem && !strongsNum) {
     strongsNum = (selem.className && selem.className.search(/(^|\s)sn($|\s)/)!=-1 ? selem.title:"");
     selem = selem.parentNode;
   }
   if (strongsNum) {
-    var pup = document.getElementById("contextScriptBox");
-    var insertBefore = pup.firstChild;
+    var insertBefore = menupopup.firstChild;
     var nums = strongsNum.split(".");
     for (var i=0; i<nums.length; i++) {
       var parts = nums[i].split(":");
@@ -1712,18 +1440,18 @@ function ScriptContextMenuShowing(e, winnum, popupnode) {
       contextItem.setAttribute("id", "strongs." + i);
       contextItem.setAttribute("label", SBundle.getString("Search") + ":" + nums[i]);
       contextItem.setAttribute("onclick", "searchForLemma('" + nums[i] + "')");
-      pup.insertBefore(contextItem, insertBefore);
+      menupopup.insertBefore(contextItem, insertBefore);
     }
     if (nums.length) {
       contextItem = document.createElement("menuseparator");
       contextItem.setAttribute("id", "strongs.sep");
-      pup.insertBefore(contextItem, insertBefore);
+      menupopup.insertBefore(contextItem, insertBefore);
     }
   }
   
   // First get targets from mouse pointer or selection
   var isSelection=false;
-  var contextTargs = getTargetsFromElement(PopupNode);
+  var contextTargs = getTargetsFromElement(menupopup.triggerNode);
   if (contextTargs==null) {e.preventDefault(); return;}
   var selob = getMainWindowSelectionObject();
   if (selob) {
@@ -1735,14 +1463,14 @@ function ScriptContextMenuShowing(e, winnum, popupnode) {
 //jsdump(contextTargs.shortName + " " + contextTargs.chapter + ":" + contextTargs.verse + "-" + contextTargs.lastVerse + ", res=" + contextTargs.resource);
    
   // Set Global Target variables
-  var myModuleName = prefs.getCharPref("Version" + winnum);
+  var myModuleName = prefs.getCharPref("Version" + CurrentTarget.windowNum);
   CurrentTarget.version = contextTargs.version ? contextTargs.version:myModuleName;
   CurrentTarget.tabNum = (Tab[CurrentTarget.version] ? Tab[CurrentTarget.version].index:null);
   switch (getModuleLongType(myModuleName)) {
   case BIBLE:
   case COMMENTARY:
-    CurrentTarget.shortName = (contextTargs.shortName ? contextTargs.shortName:PopupNode.ownerDocument.defaultView.Pin.display.shortName);
-    CurrentTarget.chapter = (contextTargs.chapter ? contextTargs.chapter:PopupNode.ownerDocument.defaultView.Pin.display.chapter);
+    CurrentTarget.shortName = (contextTargs.shortName ? contextTargs.shortName:Texts.display[CurrentTarget.windowNum].bk);
+    CurrentTarget.chapter = (contextTargs.chapter ? contextTargs.chapter:Texts.display[CurrentTarget.windowNum].chapter);
     CurrentTarget.verse = contextTargs.verse;
     CurrentTarget.lastVerse = contextTargs.lastVerse;
     break;
@@ -1772,7 +1500,7 @@ function ScriptContextMenuShowing(e, winnum, popupnode) {
   var haveVerse = (CurrentTarget.verse!=null && contextTargs.paragraph==null);
   var overScriptboxVerse = (haveVerse && !contextTargs.isCrossReference);
   var overSelectedVerse = (overScriptboxVerse && CurrentTarget.verse==Location.getVerseNumber(prefs.getCharPref("Version" + CurrentTarget.windowNum)) && CurrentTarget.verse!=1);
-  var frameIsPinned = PopupNode.ownerDocument.defaultView.Pin.isPinned;
+  var frameIsPinned = prefs.getBoolPref("IsPinned" + CurrentTarget.windowNum);
   var overPopup = isOverPopup();
   var overResource = (BookmarksMenu._selection != null);
   var overParagraph = (contextTargs.paragraph != null);
@@ -1810,7 +1538,7 @@ function buildPopup(e, haveVerse, overParagraph, overResource, disableVerseSelec
 }
 
 function isOverPopup() {
-  var parent = PopupNode;
+  var parent = document.getElementById("contextScriptBox").triggerNode;
   var overPopup = false;
   while (parent) {
     if (parent.id && parent.id == "npopup") {overPopup = true;}

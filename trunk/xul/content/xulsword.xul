@@ -479,7 +479,7 @@
           </vbox>
           <spacer height="22"/>
         </vbox>
-        <iframe id="xulviewport" flex="100%" src="viewport.html" />
+        <iframe id="xulviewport" flex="100%" src="viewport.html" context="contextScriptBox" />
       </hbox>
       <browser id="printPreviewBrowser"/>
       <browser id="printBrowser" type="content-primary" src="print.html" style="visibility:hidden;" />
@@ -489,7 +489,7 @@
 
 <!-- POPUP MENUS ARE DEFINED HERE !-->
 <popupset>
-  <menupopup id="contextScriptBox" value="closed" onpopupshowing="ScriptContextMenuShowing(event,Number(document.popupNode.ownerDocument.defaultView.frameElement.id.substr(5,1)),document.popupNode)" onpopuphidden="ScriptContextMenuHidden(event)">
+  <menupopup id="contextScriptBox" value="closed" onpopupshowing="ScriptContextMenuShowing(event, this)" onpopuphidden="ScriptContextMenuHidden(event)">
     <menuitem id="aboutModule" label="&menu.help.about;" command="cmd_xs_aboutModule"/>
     <menuitem id="closeTab" label="&context.closeTab;" command="cmd_xs_toggleTab"/>
     <menuseparator />
