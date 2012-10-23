@@ -49,9 +49,6 @@ struct w2emap West2EastMap[] = {
 {"1Sam 24:7", "1Sam 24:8"},
 {"1Sam 24:8", "1Sam 24:9"},
 {"1Sam 24:9", "1Sam 24:10"},
-{"2Cor 11:33", "2Cor 11:32"},
-{"2Cor 13:13", "2Cor 13:12"},
-{"2Cor 13:14", "2Cor 13:13"},
 {"Dan 4:1", "Dan 3:31"},
 {"Dan 4:10", "Dan 4:7"},
 {"Dan 4:11", "Dan 4:8"},
@@ -2689,9 +2686,6 @@ struct w2emap West2EastMap[] = {
 {"Ps 99:7", "Ps 98:7"},
 {"Ps 99:8", "Ps 98:8"},
 {"Ps 99:9", "Ps 98:9"},
-{"Rom 16:25", "Rom 14:24"},
-{"Rom 16:26", "Rom 14:25"},
-{"Rom 16:27", "Rom 14:26"},
 {"Song 1:1", "Song 1:0"},
 {"Song 1:10", "Song 1:9"},
 {"Song 1:11", "Song 1:10"},
@@ -2722,5 +2716,11 @@ struct w2emap West2EastMap[] = {
 {"Song 7:6", "Song 7:7"},
 {"Song 7:7", "Song 7:8"},
 {"Song 7:8", "Song 7:9"},
-{"Song 7:9", "Song 7:10"}
+{"Song 7:9", "Song 7:10"},
+{"Rom 16:25", "Rom 14:24"},
+{"Rom 16:26", "Rom 14:25"},
+{"Rom 16:27", "Rom 14:26"},
+{"2Cor 11:33", "2Cor 11:32"},
+{"2Cor 13:13", "2Cor 13:12"},
+{"2Cor 13:14", "2Cor 13:13"}
 };

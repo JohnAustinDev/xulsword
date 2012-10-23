@@ -383,7 +383,6 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
         sprintf(Outtext, "<div id=\"src.cr.%d.%s.%s\">", 
           fnV, 
           modKey->getOSISRef(), 
-          module->Name(), 
           module->Name());
         
         crossRefText->append(Outtext);

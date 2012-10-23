@@ -64,10 +64,11 @@ function PopupObj(popupobj) {
     if (yoffset  !== null) this.yoffset = yoffset;
     if (mod      !== null) this.mod = mod;
     
-    //jsdump("datatype:" + this.datatype + " data:" + this.data + "\n");
     if (this.delay==null) {this.delay = POPUPDELAY;}
     if (!this.yoffset) {this.yoffset = 0;}
     if (!this.mod) {this.mod = prefs.getCharPref("Version" + this.w);}
+
+//jsdump("x=" + this.x + ", y=" + this.y + ", w=" + this.w + ", datatype=" + this.datatype + ", data=" + this.data + ", delay=" + this.delay + ", yoffset=" + this.yoffset + ", mod=" + this.mod);
     
     this.footnotes = Texts.footnotes[w];
     
@@ -111,16 +112,10 @@ function PopupObj(popupobj) {
       html += (getPrefOrCreate("OpenCrossRefPopups", "Bool", true) ? "cropened":"crclosed") + "\">";
       html += "<div class=\"twisty twisty-" + dir + "\" onclick=\"Popup.openCloseCRs();\" ></div>";
       
-      var hideEmptyCrossReferences = getPrefOrCreate("HideUnavailableCrossReferences", "Bool", false);
-      var chapRefs = this.footnotes.split("<nx>");
-      for (var i=0; i<chapRefs.length; i++) {
-        var thisid = chapRefs[i].split("<bg>")[0];
-        var reflist = chapRefs[i].split("<bg>")[1];
-        // if we've found the note which matches the id under the mouse pointer
-        if (thisid == this.data) {
-          html += BibleTexts.getRefHTML(this.w, this.mod, thisid, reflist, "pu", "crhr");
-          break;
-        }
+      var re = new RegExp("<div id=\"src\\." + escapeRE(this.data) + "\">(.*?)<\\/div>");
+      var p = this.footnotes.match(re);
+      if (p && p[1]) {
+        html += BibleTexts.getRefHTML(this.w, this.mod, this.data, p[1], "pu", "crhr");
       }
       html += "</div>";
       window.setTimeout("Popup.initModuleSelect('bibles', '" + this.mod + "');", 1);
@@ -129,15 +124,9 @@ function PopupObj(popupobj) {
     // Footnote: data is elem.title
     //    data form: fn#.bk.c.v
     case "fn":
-      var footnote = this.footnotes.split("<nx>");
-      for (var i=0; i<footnote.length; i++) {
-        var fnpart = footnote[i].split("<bg>");
-        // if we've found the note which matches the id under the mouse pointer
-        if (fnpart[0] == this.data) {
-          html += fnpart[1];
-          break;
-        }
-      }
+      var re = new RegExp("<div id=\"src\\." + escapeRE(this.data) + "\">(.*?)<\\/div>");
+      var p = this.footnotes.match(re);
+      if (p && p[1]) html += p[1];
       break;
 
     // Scripture Reference: data is elem.title unless it's "unavailable" then it's elem.innerHTML
@@ -169,7 +158,6 @@ function PopupObj(popupobj) {
       var book = Location.getBookName();
       var chapter = Location.getChapterNumber(this.mod);
       var verse = 1;
-      var hideEmptyCrossReferences = getPrefOrCreate("HideUnavailableCrossReferences", "Bool", false);
       var reflist = "";
       var failhtml = "";
       for (i=0; i<mdata.length; i++) {

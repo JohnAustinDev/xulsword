@@ -107,6 +107,7 @@ const SCROLLTYPECENTERALWAYS = 4; // put selected verse in the middle of the win
 const SCROLLTYPEEND = 5;          // put selected verse at the end of the window or link, and don't change selection
 const SCROLLTYPEENDSELECT = 6;    // put selected verse at the end of the window or link, then select first verse of link or verse 1
 const SCROLLTYPECUSTOM = 7;       // scroll by running CustomScrollFunction
+const SCROLLTYPEDELTA = 8;        // scroll by given delta in pixels
 // highlighting
 const HILIGHTNONE = 0;            // highlight no verse
 const HILIGHTVERSE = 1;           // highlight selected verse in blue
