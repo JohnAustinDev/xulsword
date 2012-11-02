@@ -34,9 +34,9 @@
 
  ***** END LICENSE BLOCK ***** !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksProperties.css" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks.css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksProperties-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks-xul.css"?>
 
 <!DOCTYPE dialog [
 <!ENTITY % bmpropsDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarksProperties.dtd">

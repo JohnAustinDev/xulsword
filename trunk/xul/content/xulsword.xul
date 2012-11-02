@@ -18,8 +18,8 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/mainwin.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/xulsword-xul.css" type="text/css"?>
 <?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
 
 <!DOCTYPE window [
@@ -455,7 +455,7 @@
 <!-- SCRIPTURE FRAMES ARE PLACED HERE !-->
   <vbox flex="100%">
     <deck id="appcontent" flex="100%">
-      <!-- <iframe id="aboutConfig" flex="100%" class="bibleframe" src="about:config" /> !-->
+      <!-- <iframe id="aboutConfig" flex="100%" src="about:config" /> !-->
       <hbox id="frameset" chooser="bible" flex="100%"> <!-- chooser attribute may be set to "bible", "book", or "hide" -->
         <vbox id="genBookChooser" pack="start" flex="1" align="end" style="background-image: url(chrome://xulsword/skin/images/9.gif);">
           <spacer height="36"/>

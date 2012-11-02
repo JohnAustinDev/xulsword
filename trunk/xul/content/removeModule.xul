@@ -18,7 +18,7 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
 <!DOCTYPE window [
 <!ENTITY % editMenuOverlayDTD SYSTEM "chrome://xulsword/locale/editMenuOverlay.dtd" >

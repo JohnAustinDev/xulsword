@@ -1874,7 +1874,6 @@ var DictTexts = {
       }
       else html += sep + saveKey;
       sep = "<hr>";
-      if (html && module)
     }
     return html;
   },

@@ -34,10 +34,10 @@
 
  ***** END LICENSE BLOCK ***** !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/xsglobal/arrow.css" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks.css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/addBookmark.css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks-xul.css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/addBookmark-xul.css"?>
 
 <!DOCTYPE dialog [
 <!ENTITY % addBookmarkDTD SYSTEM "chrome://xulsword/locale/bookmarks/addBookmark.dtd">
