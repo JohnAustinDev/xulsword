@@ -34,9 +34,9 @@
 
  ***** END LICENSE BLOCK ***** !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksManager.css" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksManager-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks-xul.css" type="text/css"?>
 
 <?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
 

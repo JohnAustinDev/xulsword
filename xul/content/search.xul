@@ -18,9 +18,8 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/mainwin.css" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/search.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/search-xul.css" type="text/css"?>
 <?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
 
 <!DOCTYPE window [

@@ -1,10 +1,6 @@
 
 /* CSS Document */
 
-.bibleframe {
-  overflow:-moz-hidden-unscrollable;
-}
-
 /* MAIN WINDOW TOGGLE BUTTONS */
 #crbutton {
   list-style-image: url("chrome://xulsword/skin/images/crossrefs.png") !important;
