@@ -195,12 +195,12 @@ function hideGUI() {
   }
 }
 
-var TreeStyleRules = [];
+var TreeModuleStyles = [];
 
 //This function is run after the MK window is built and displayed. Init functions
 //which can wait until now should do so, so that the MK window can appear faster.
 function postWindowInit() {
-  // Create TreeStyleRules used by BookmarkManager
+  // Create TreeModuleStyles used by BookmarkManager
   var modules = Bible.getModuleList().split("<nx>");
   for (var v=0; v<modules.length; v++) {
     var info = modules[v].split(";");
@@ -208,13 +208,13 @@ function postWindowInit() {
     var versionConfig = VersionConfigs[info[0]];
     var font = "font-family:\"" + (versionConfig && versionConfig.font ? versionConfig.font:DefaultFont) + "\" !important; ";
     var direction = "direction:" + (versionConfig && versionConfig.direction ? versionConfig.direction:"ltr") + " !important; ";
-    TreeStyleRules.push("treechildren::-moz-tree-cell-text(" + info[0] + ") { " + direction + font + "}");
+    TreeModuleStyles.push("treechildren::-moz-tree-cell-text(" + info[0] + ") { " + direction + font + "}");
   }
   for (var v=0; v<LocaleList.length; v++) {
     var localeConfig = LocaleConfigs[LocaleList[v]];
     var font = "font-family:\"" + (localeConfig && localeConfig.font ? localeConfig.font:DefaultFont) + "\" !important; ";
     var direction = "direction:" + (localeConfig && localeConfig.direction ? localeConfig.direction:"ltr") + " !important; ";
-    TreeStyleRules.push("treechildren::-moz-tree-cell-text(" + LocaleList[v] + ") { " + direction + font + "}");
+    TreeModuleStyles.push("treechildren::-moz-tree-cell-text(" + LocaleList[v] + ") { " + direction + font + "}");
   }
   
   // Hide disabled books on chooser
@@ -912,9 +912,11 @@ var XulswordController = {
       AllWindows.push(window.open("chrome://xulsword/content/bookmarks/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_toggleTab":
-      Tabs[CurrentTarget.tabNum]["w" + CurrentTarget.windowNum + ".hidden"] = !Tabs[CurrentTarget.tabNum]["w" + CurrentTarget.windowNum + ".hidden"];
-      updateModuleMenuCheckmarks();
-      Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+      if (CurrentTarget.windowNum) {
+        Tabs[CurrentTarget.tabNum]["w" + CurrentTarget.windowNum + ".hidden"] = !Tabs[CurrentTarget.tabNum]["w" + CurrentTarget.windowNum + ".hidden"];
+        updateModuleMenuCheckmarks();
+        Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+      }
       break;
     case "cmd_xs_aboutModule":
       AboutScrollTo = Tabs[CurrentTarget.tabNum].modName;
@@ -1390,11 +1392,11 @@ function updateXulswordCommands() {
 var CurrentTarget = {shortName:null, chapter:null, verse:null, lastVerse:null, tabNum:null, windowNum:null};
 
 function ScriptContextMenuShowing(e, menupopup) {
-jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
+//jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
 
   CurrentTarget.windowNum = getWindow(menupopup.triggerNode);
   
-  closeTabToolTip();
+  ViewPortWindow.closeTabToolTip();
   
   // Close Script Popup if we're not over it
   var elem = menupopup.triggerNode;
@@ -1402,24 +1404,24 @@ jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
   if (!elem) ViewPortWindow.Popup.close();
   
   // Is this the select tab menu?
-  if (menupopup.triggerNode.id == "seltab.menu") {
-    CurrentTarget.tabNum = Tab[menupopup.triggerNode.value].index;
-    buildPopup(e, false, false, false, true, true);
+  if ((/\.tab\.tsel/).test(menupopup.triggerNode.id)) {
+    CurrentTarget.tabNum = Tab[menupopup.triggerNode.previousSibling.value].index;
+    buildPopup(e, false, false, false, false, true, true);
     return;
   }
-  // Is this the select tab tab?
-  else if (menupopup.triggerNode.id == "seltab.tab") {
-    CurrentTarget.tabNum = Tab[menupopup.triggerNode.nextSibling.value].index;
-    buildPopup(e, false, false, false, true, true);
+  // Is this a select tab tab?
+  else if ((/\.tab\.mult/).test(menupopup.triggerNode.id)) {
+    CurrentTarget.tabNum = Tab[menupopup.triggerNode.value].index;
+    buildPopup(e, false, false, false, false, true, true);
     return;
   }
   // Is this a version tab?
-  else if (menupopup.triggerNode.id.search(/tab\d+/)!=-1) {
-    CurrentTarget.tabNum = menupopup.triggerNode.id.match(/tab(\d+)/)[1];
-    buildPopup(e, false, false, false, true, true);
+  else if (menupopup.triggerNode.id.search(/tab\.norm\.\d+/)!=-1) {
+    CurrentTarget.tabNum = menupopup.triggerNode.id.match(/tab\.norm\.(\d+)/)[1];
+    buildPopup(e, false, false, false, false, true, true);
     return;
   }
-  
+ 
   // Is mouse over a word with strong's numbers? Then add root search menu items.
   var selem = menupopup.triggerNode;
   var strongsNum;
@@ -1463,14 +1465,14 @@ jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
 //jsdump(contextTargs.shortName + " " + contextTargs.chapter + ":" + contextTargs.verse + "-" + contextTargs.lastVerse + ", res=" + contextTargs.resource);
    
   // Set Global Target variables
-  var myModuleName = prefs.getCharPref("Version" + CurrentTarget.windowNum);
+  var myModuleName = (CurrentTarget.windowNum ? prefs.getCharPref("Version" + CurrentTarget.windowNum):prefs.getCharPref("DefaultVersion"));
   CurrentTarget.version = contextTargs.version ? contextTargs.version:myModuleName;
   CurrentTarget.tabNum = (Tab[CurrentTarget.version] ? Tab[CurrentTarget.version].index:null);
   switch (getModuleLongType(myModuleName)) {
   case BIBLE:
   case COMMENTARY:
-    CurrentTarget.shortName = (contextTargs.shortName ? contextTargs.shortName:Texts.display[CurrentTarget.windowNum].bk);
-    CurrentTarget.chapter = (contextTargs.chapter ? contextTargs.chapter:Texts.display[CurrentTarget.windowNum].chapter);
+    CurrentTarget.shortName = (contextTargs.shortName ? contextTargs.shortName:(CurrentTarget.windowNum ? Texts.display[CurrentTarget.windowNum].bk:null));
+    CurrentTarget.chapter = (contextTargs.chapter ? contextTargs.chapter:(CurrentTarget.windowNum  ? Texts.display[CurrentTarget.windowNum].chapter:null));
     CurrentTarget.verse = contextTargs.verse;
     CurrentTarget.lastVerse = contextTargs.lastVerse;
     break;
@@ -1479,6 +1481,7 @@ jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
     CurrentTarget.chapter = getPrefOrCreate("DictKey_" + myModuleName + "_" + CurrentTarget.windowNum, "Unicode", "");
     CurrentTarget.verse = contextTargs.paragraph;
     CurrentTarget.lastVerse = contextTargs.paragraph;
+    break;
   case GENBOOK:
     CurrentTarget.shortName = "";
     CurrentTarget.chapter = getPrefOrCreate("GenBookKey_" + myModuleName + "_" + CurrentTarget.windowNum, "Unicode", "");
@@ -1499,16 +1502,22 @@ jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
   // Set some flags
   var haveVerse = (CurrentTarget.verse!=null && contextTargs.paragraph==null);
   var overScriptboxVerse = (haveVerse && !contextTargs.isCrossReference);
-  var overSelectedVerse = (overScriptboxVerse && CurrentTarget.verse==Location.getVerseNumber(prefs.getCharPref("Version" + CurrentTarget.windowNum)) && CurrentTarget.verse!=1);
-  var frameIsPinned = prefs.getBoolPref("IsPinned" + CurrentTarget.windowNum);
-  var overPopup = isOverPopup();
+  var overSelectedVerse = (overScriptboxVerse && CurrentTarget.windowNum && 
+      CurrentTarget.verse == Location.getVerseNumber(prefs.getCharPref("Version" + CurrentTarget.windowNum)) && 
+      CurrentTarget.verse != 1);
+  var frameIsPinned = (CurrentTarget.windowNum && prefs.getBoolPref("IsPinned" + CurrentTarget.windowNum));
+  var overPopup = (CurrentTarget.windowNum === 0);
   var overResource = (BookmarksMenu._selection != null);
   var overParagraph = (contextTargs.paragraph != null);
   var isTab = (!(haveVerse||overPopup||overParagraph||isSelection));
-  buildPopup(e, haveVerse, overParagraph, overResource, overSelectedVerse||!overScriptboxVerse||frameIsPinned, isTab);
+  buildPopup(e, haveVerse, overParagraph, overResource, overPopup, overSelectedVerse||!overScriptboxVerse||frameIsPinned, isTab);
+  
+//var t=""; for (var m in CurrentTarget) {t += m + "=" + (CurrentTarget[m] ? CurrentTarget[m]:"NULL") + ", ";} jsdump(t);
+//var t=""; for (var m in contextTargs) {t += m + "=" + (contextTargs[m] ? contextTargs[m]:"NULL") + ", ";} jsdump(t);
+
 }
 
-function buildPopup(e, haveVerse, overParagraph, overResource, disableVerseSelect, isTab) {
+function buildPopup(e, haveVerse, overParagraph, overResource, overPopup, disableVerseSelect, isTab) {
   // Enable/disable menu options accordingly
   document.getElementById("cmd_xs_selectVerse").setAttribute("disabled", disableVerseSelect);
   goUpdateCommand("cmd_copy");
@@ -1518,33 +1527,30 @@ function buildPopup(e, haveVerse, overParagraph, overResource, disableVerseSelec
   goUpdateCommand("cmd_bm_delete");
   goUpdateCommand("cmd_xs_toggleTab");
   goUpdateCommand("cmd_xs_aboutModule");
-    
+  
   // Hide menu options accordingly
+  document.getElementById("aboutModule").hidden = overPopup;
+  document.getElementById("closeTab").hidden    = overPopup;
+  
+  document.getElementById("contsep0").hidden   = (isTab || overPopup);
   document.getElementById("cMenu_copy").hidden  = isTab;
-  document.getElementById("contsep00").hidden   = isTab;
   document.getElementById("conSearch").hidden   = isTab;
-  document.getElementById("contsep0").hidden    = isTab;
-  document.getElementById("conGotoSel").hidden  = isTab;
-  document.getElementById("contsep1").hidden    = !haveVerse;
-  document.getElementById("conSelect").hidden   = !haveVerse;
-  document.getElementById("contsep2").hidden    = (!haveVerse && !overParagraph);
+  
+  document.getElementById("contsep1").hidden    = (isTab || overPopup);
+  document.getElementById("conGotoSel").hidden  = (isTab || overPopup);
+  
+  document.getElementById("contsep2").hidden    = (!haveVerse || overPopup);
+  document.getElementById("conSelect").hidden   = (!haveVerse || overPopup);
+  
+  document.getElementById("contsep3").hidden    = (!haveVerse && !overParagraph);
   document.getElementById("conBookmark").hidden = (!haveVerse && !overParagraph);
   document.getElementById("conUserNote").hidden = (!haveVerse && !overParagraph);
-  document.getElementById("contsep3").hidden    = (!haveVerse && !overParagraph && !overResource);
+  
+  document.getElementById("contsep4").hidden    = (!haveVerse && !overParagraph && !overResource);
   document.getElementById("conProps").hidden    = (!haveVerse && !overParagraph && !overResource);
   document.getElementById("delUserNote").hidden = (!haveVerse && !overParagraph && !overResource);
   //document.getElementById("closeTab").hidden    = !isTab;
   e.target.setAttribute("value","open");
-}
-
-function isOverPopup() {
-  var parent = document.getElementById("contextScriptBox").triggerNode;
-  var overPopup = false;
-  while (parent) {
-    if (parent.id && parent.id == "npopup") {overPopup = true;}
-    parent = parent.parentNode;
-  }
-  return overPopup;
 }
 
 function getTargetsFromSelection(selob) {
@@ -1595,13 +1601,14 @@ function getTargetsFromElement(element) {
   var targs = {window:null, shortName:null, chapter:null, version:null, verse:null, lastVerse:null, resource:null, paragraph:null, isCrossReference:false};
   var inScriptBox=false;
   
-  try {targs.window = Number(element.ownerDocument.defaultView.frameElement.id.substr(5,1));} catch (er) {}
-  //If we're in interlinear  original mode, return correct version of this element
+  targs.window = getWindow(element);
+ 
+  //If we're in interlinear original mode, return correct version of this element
   if (targs.window && prefs.getBoolPref("ShowOriginal" + targs.window)) {
     var elem = element.parentNode;
     while (elem) {
       if (elem.className) {
-        var styleMod = elem.className.match(/vstyle(\w+)/);
+        var styleMod = elem.className.match(/cs-(\w+)/);
         if (styleMod) {
           targs.version = styleMod[1];
           break;
@@ -1613,9 +1620,11 @@ function getTargetsFromElement(element) {
   
   while (element) {
 //jsdump("Context searching id=" + element.id);
+
+    if ((element.className && element.className == "text") || element.id=="npopup") {inScriptBox=true;}
+    if (element.className && element.className == "text" && !targs.version && targs.window) targs.version = prefs.getCharPref("Version" + targs.window);
+    
     if (element.id) {
-      if (element.id=="scriptBox" || element.id=="npopup") {inScriptBox=true;}
-      if (element.id=="scriptBox" && !targs.version) targs.version = prefs.getCharPref("Version" + element.ownerDocument.defaultView.frameElement.id.substr(5,1));
       // Are we over a cross reference?
       if (targs.verse == null && element.title) {
         // First get location data
@@ -1634,7 +1643,7 @@ function getTargetsFromElement(element) {
       // Are we over a verse?
       if (targs.verse == null) {try {var loc = element.id.match(/vs\.([^\.]*)\.(\d+)\.(\d+)/); targs.shortName = loc[1]; targs.chapter=Number(loc[2]); targs.verse = Number(loc[3]);} catch (er) {}}
       // Are we over a note body?
-      if (targs.verse == null) {try {loc = element.id.match(/body\..*([^\.]*)\.(\d+)\.(\d+)$/); targs.shortName = loc[1]; targs.chapter=Number(loc[2]); targs.verse = Number(loc[3]); targs.paragraph=targs.verse;} catch (er) {}}
+      if (targs.verse == null) {try {loc = element.id.match(/body\..*([^\.]*)\.(\d+)\.(\d+)\.([^\.])+$/); targs.shortName = loc[1]; targs.chapter=Number(loc[2]); targs.verse = Number(loc[3]); targs.paragraph=targs.verse;} catch (er) {}}
       // Are we over a user note?
       if (targs.resource == null) {try {targs.resource = decodeUTF8(element.id.match(/(^|\.)un\.(.*?)\./)[2]);} catch (er) {}}
       // Are we over a paragraph?
@@ -1656,22 +1665,20 @@ function getTargetsFromElement(element) {
     }
     element = element.parentNode;
   }
-  if (targs.verse!=null && targs.lastVerse==null) targs.lastVerse=targs.verse;
+  if (targs.verse != null && targs.lastVerse == null) targs.lastVerse=targs.verse;
   if (!inScriptBox) return null;
   return targs;
 }
 
-function ScriptContextMenuHidden(aEvent) {
-  var item = aEvent.target.firstChild;
+function ScriptContextMenuHidden(e) {
+  var item = e.target.firstChild;
+  // remove any added strongs related menu items
   while (item.id && item.id.substr(0,8)=="strongs.") {
     var remove = item;
     item = item.nextSibling;
     item.parentNode.removeChild(remove);
   }
-  // Close popup if open, otherwise if both popup and context were open, popup
-  // may remain open after context closes
-  ViewPortWindow.Popup.close();
-  aEvent.target.setAttribute("value", "closed");
+  e.target.setAttribute("value", "closed");
   goUpdateTargetLocation();
   goUpdateCommand("cmd_bm_properties");
 }

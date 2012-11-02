@@ -25,9 +25,6 @@ var Location              = MainWindow.Location;
 
 var LocaleConfigs         = MainWindow.LocaleConfigs;
 var VersionConfigs        = MainWindow.VersionConfigs;
-var StyleRules            = MainWindow.StyleRules;
-var LocaleDirectionEntity = MainWindow.LocaleDirectionEntity;
-var LocaleDirectionChar   = MainWindow.LocaleDirectionChar
 
 var Book                  = MainWindow.Book;
 var OrigModuleNT          = MainWindow.OrigModuleNT;
@@ -40,8 +37,8 @@ var HaveOriginalTab       = MainWindow.HaveOriginalTab;
 var LocaleList            = MainWindow.LocaleList;
 var LocaleDefaultVersion  = MainWindow.LocaleDefaultVersion;
 
-var BMDS                  = MainWindow.BMDS;
 var BM                    = MainWindow.BM;
+var BMDS                  = MainWindow.BMDS;
 var BookmarkFuns          = MainWindow.BookmarkFuns;
 
 var AllWindows            = MainWindow.AllWindows;
@@ -55,4 +52,10 @@ if (typeof(Texts) == "undefined")
     var Texts             = MainWindow.Texts;
 if (typeof(BibleTexts) == "undefined")
     var BibleTexts        = MainWindow.BibleTexts;
+if (typeof(DictTexts) == "undefined")
+  var DictTexts           = MainWindow.DictTexts;
+if (typeof(GenBookTexts) == "undefined")
+  var GenBookTexts        = MainWindow.GenBookTexts;
+if (typeof(CommTexts) == "undefined")
+  var CommTexts           = MainWindow.CommTexts;
 

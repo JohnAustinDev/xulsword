@@ -439,7 +439,11 @@ sub writeInstallManifest($) {
   &Log("----> Writing Install Manifest\n");
   my $platform;
   if ("$^O" =~ /MSWin32/i) {$platform = "WINNT_x86-msvc";}
-  elsif ("$^O" =~ /linux/i) {$platform = "Linux_x86-gcc3";}
+  elsif ("$^O" =~ /linux/i) {
+    $platform = "Linux_x86";
+    if (`uname -m` eq "x86_64\n") {$platform .= "_64";}
+    $platform .= "-gcc3";
+  }
   else {&Log("ERROR: Please add Firefox Extension platform identifier for your platform.\n");}
   open(INM, ">:encoding(UTF-8)", "$od/install.rdf") || die "Could not open \"$od/install.rdf\".\n";
 print INM "<?xml version=\"1.0\"?>\n";

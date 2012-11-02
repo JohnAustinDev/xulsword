@@ -629,20 +629,22 @@ var BookmarksMenuDNDObserver = {
   { 
     var newTarget;
     var bt;
-    if (aTarget && aTarget.id && aTarget.id == "bookmarks-ptf") {
-      // hit when dropping in the bt or between the last visible bookmark 
-      // and the chevron
-      newTarget = BookmarksToolbar.getLastVisibleBookmark();
-      if (newTarget)
+    if (aTarget) {
+      if (aTarget.id && aTarget.id == "bookmarks-ptf") {
+        // hit when dropping in the bt or between the last visible bookmark 
+        // and the chevron
+        newTarget = BookmarksToolbar.getLastVisibleBookmark();
+        if (newTarget)
+          newTarget.removeAttribute("dragover-right");
+      } else if (aTarget.id && aTarget.id == "bookmarks-stack") {
+        newTarget = BookmarksToolbar.getLastVisibleBookmark();
         newTarget.removeAttribute("dragover-right");
-    } else if (aTarget.id && aTarget.id == "bookmarks-stack") {
-      newTarget = BookmarksToolbar.getLastVisibleBookmark();
-      newTarget.removeAttribute("dragover-right");
-    } else {
-      aTarget.removeAttribute("dragover-left");
-      aTarget.removeAttribute("dragover-right");
-      aTarget.removeAttribute("dragover-top");
-      aTarget.removeAttribute("dragover-bottom");
+      } else {
+        aTarget.removeAttribute("dragover-left");
+        aTarget.removeAttribute("dragover-right");
+        aTarget.removeAttribute("dragover-top");
+        aTarget.removeAttribute("dragover-bottom");
+      }
     }
   },
 

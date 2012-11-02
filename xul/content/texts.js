@@ -108,12 +108,14 @@ var Texts = {
         }
         else {
           var lt = this.scrollTypeFlag[w].split(".");
-          display.bk  = lt[0];
-          display.ch  = lt[1];
-          display.vs  = lt[2];
-          loc = lt[0] + "." + lt[1] + "." + lt[2];
-          scrollTypeFlag = Number(lt[3]);
-          hilightFlag = HILIGHTNONE;
+            if (lt && lt.length==3) {
+            display.bk  = lt[0];
+            display.ch  = lt[1];
+            display.vs  = lt[2];
+            loc = lt[0] + "." + lt[1] + "." + lt[2];
+            scrollTypeFlag = Number(lt[3]);
+            hilightFlag = HILIGHTNONE;
+          }
         }
       }
       else {scrollTypeFlag = SCROLLTYPENONE;}
@@ -227,12 +229,14 @@ var Texts = {
         }
         else {
           var lt = this.scrollTypeFlag[w].split(".");
-          display.bk  = lt[0];
-          display.ch  = lt[1];
-          display.vs  = lt[2];
-          loc = lt[0] + "." + lt[1] + "." + lt[2];
-          scrollTypeFlag = Number(lt[3]);
-          hilightFlag = HILIGHTNONE;
+          if (lt && lt.length==3) {
+            display.bk  = lt[0];
+            display.ch  = lt[1];
+            display.vs  = lt[2];
+            loc = lt[0] + "." + lt[1] + "." + lt[2];
+            scrollTypeFlag = Number(lt[3]);
+            hilightFlag = HILIGHTNONE;
+          }
         }
       }
       else {scrollTypeFlag = SCROLLTYPENONE;}
@@ -381,7 +385,7 @@ var Texts = {
     var charPrev = (config.direction && config.direction == "rtl" ? String.fromCharCode(8594):String.fromCharCode(8592));
 
     var html = "";
-    html += "<div class=\"navlink vstyleProgram\">";
+    html += "<div class=\"navlink cs-Program\">";
     html +=   "&lrm;<span>" + charPrev + "</span> " + "<a class=\"prevchaplink\">" + SBundle.getString('PrevChaptext') + "</a>";
     html +=   " / ";
     html +=   "<a class=\"nextchaplink\">&lrm;" + SBundle.getString('NextChaptext') + "</a>" + " <span>" + charNext + "</span>";
@@ -755,7 +759,7 @@ var Texts = {
     var p=1;
     
     var myParType;
-    var pars = ["<p>", "<br>", "<br />"];
+    var pars = ["<br />", "<br>", "<p>"];
     for (var i=0; i<pars.length; i++) {
       if (text.indexOf(pars[i]) != -1) {
         myParType = pars[i];
@@ -785,6 +789,7 @@ var Texts = {
         r = text.indexOf(myParType, r+ins.length);
       }
     }
+
     return text;
   },
 
@@ -853,7 +858,7 @@ var BibleTexts = {
       Bible.setGlobalOption("Strong's Numbers", "On");
       Bible.setGlobalOption("Morphological Tags", "On");
       var mod2 = (findBookNum(d.bk) < NumOT ? OrigModuleOT:OrigModuleNT);
-      ret.htmlText = Bible.getChapterTextMulti(d.mod + "," + mod2, d.bk + "." + d.ch + ".1.1").replace("interV2", "vstyle" + mod2, "gm");
+      ret.htmlText = Bible.getChapterTextMulti(d.mod + "," + mod2, d.bk + "." + d.ch + ".1.1").replace("interV2", "cs-" + mod2, "gm");
       Bible.setGlobalOption("Strong's Numbers", prefs.getCharPref("Strong's Numbers"));
       Bible.setGlobalOption("Morphological Tags", prefs.getCharPref("Morphological Tags"));
     }
@@ -993,7 +998,7 @@ var BibleTexts = {
     var html, size;
     html  = "<div class=\"chapterhead" + (ch==1 ? " chapterfirst":"") + "\" dirmod=\"" + ((c && c.direction && c.direction=="rtl") ? "rtl":"ltr") + "\">";
     
-    html +=   "<div class=\"noticelink vstyle" + mod + "\" empty=\"" + (lt ? "false":"true") + "\">" + lt;
+    html +=   "<div class=\"noticelink cs-" + mod + "\" empty=\"" + (lt ? "false":"true") + "\">" + lt;
     html +=     "<div class=\"headbr\"></div>";
     html +=   "</div>";
 
@@ -1063,7 +1068,7 @@ var BibleTexts = {
           var lov = getLocaleOfModule(mod);
           var myc = dString(tmp[4], lov);
           var myv = dString(tmp[5], lov);
-          t += "<a id=\"w" + w + ".notl." + noteid + "\" class=\"fncol4 vstyle" + mod + "\" >" + "<i>" + myc + ":" + versionDirectionEntity + myv + "</i>" + " -" + "</a>";
+          t += "<a id=\"w" + w + ".notl." + noteid + "\" class=\"fncol4 cs-" + mod + "\" >" + "<i>" + myc + ":" + versionDirectionEntity + myv + "</i>" + " -" + "</a>";
           
           // Write cell #5: note body
           t += "<div id=\"w" + w + ".body." + noteid + "\" class=\"fncol5\">";
@@ -1081,7 +1086,7 @@ var BibleTexts = {
             try {
               var unmod = BMDS.GetTarget(BM.RDF.GetResource(decodeUTF8(noteid.match(/un\.(.*?)\./)[1])), BM.gBmProperties[NOTELOCALE], true);
               unmod = unmod.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-              unclass += " vstyle" + unmod;
+              unclass += " cs-" + unmod;
             }
             catch (er) {}
             try {
@@ -1145,7 +1150,7 @@ var BibleTexts = {
     if (!inner) {
       var lt = Bible.getModuleInformation(mod, "NoticeLink");
       if (lt == NOTFOUND) {return "";}
-      return "<span class=\"vstyle" + mod + " noticelink\">" + lt.replace("<a>", "<a id=\"w" + w + ".noticelink\">") + "</span>";
+      return "<span class=\"cs-" + mod + " noticelink\">" + lt.replace("<a>", "<a id=\"w" + w + ".noticelink\">") + "</span>";
     }
     else
       return Bible.getModuleInformation(mod, "NoticeText");
@@ -1153,7 +1158,7 @@ var BibleTexts = {
 
   getRefHTML: function(w, mod, id, body, xsid, sepclass) {
     var ref = body.split(";");
-    var html = "<div class=\"vstyle" + mod + "\">";
+    var html = "<div class=\"cs-" + mod + "\">";
     var sep = "";
     for (var i=0; i<ref.length; i++) {
       if (!ref[i]) continue;
@@ -1165,10 +1170,10 @@ var BibleTexts = {
       
       var rmod = Tabs[aVerse.tabNum].modName;
       html += sep;
-      html += "<a class=\"crref vstyleprogram\" id=\"w" + w + "." + id + "l." + xsid + "\" title=\"" + rmod + "." + aVerse.location + "\">";
+      html += "<a class=\"crref cs-Program\" id=\"w" + w + "." + id + "l." + xsid + "\" title=\"" + rmod + "." + aVerse.location + "\">";
       html += ref2ProgramLocaleText(aVerse.location);
       html += "</a>";
-      html += "<span id=\"w" + w + "." + id + "t." + xsid + "\" title=\"" + rmod + "." + aVerse.location + "\" class=\"crtext vstyle" + rmod + "\">";
+      html += "<span id=\"w" + w + "." + id + "t." + xsid + "\" title=\"" + rmod + "." + aVerse.location + "\" class=\"crtext cs-" + rmod + "\">";
       html += aVerse.text + (rmod != mod ? " (" + Tab[rmod].label + ")":"");
       html += "</span>";
       
@@ -1708,6 +1713,7 @@ var DictTexts = {
     
     // get htmlEntry
     var de = this.getEntryHTML(d.DictKey, d.mod);
+    de = Texts.addParagraphIDs(de);
     var un = Texts.getUserNotes("na", d.DictKey, d.mod, de, w);
     de = un.html; // has user notes added to text
     ret.footnotes = un.notes;
@@ -1725,7 +1731,7 @@ var DictTexts = {
     var html = "";
     html += "<div class=\"dictlist\">"
     html +=   "<div class=\"textboxparent\" id=\"w" + w + ".textboxparent\">";
-    html +=     "<input id=\"w" + w + ".keytextbox\" class=\"vstyle" + mod + "\" onfocus=\"this.select()\" ondblclick=\"this.select()\" ";
+    html +=     "<input id=\"w" + w + ".keytextbox\" class=\"cs-" + mod + "\" onfocus=\"this.select()\" ondblclick=\"this.select()\" ";
     html +=     "onkeypress=\"DictTexts.keyPress('" + mod + "', " + w + ", event)\" />";
     html +=   "</div>";
     html +=   "<div class=\"keylist\" id=\"w" + w + ".keylist\" onclick=\"DictTexts.selKey('" + mod + "', " + w + ", event)\">";
@@ -1769,7 +1775,6 @@ var DictTexts = {
 
     html = "<b>" + key + ":</b> " + html + "<br>";
     if (!dontAddParagraphIDs) html = Texts.addParagraphIDs(html);
-    html = "<div class=\"vstyle" + mods[0] + "\">" + html + "</div>";
     return html;
   },
   
@@ -1870,7 +1875,6 @@ var DictTexts = {
       else html += sep + saveKey;
       sep = "<hr>";
       if (html && module)
-      html = "<div class=\"vstyle" + module + "\">" + html + "</div>";
     }
     return html;
   },
@@ -1911,3 +1915,12 @@ var DictTexts = {
   }
 
 };
+
+// Make sure MainWindow has access to our objects
+if (MainWindow) {
+  if (typeof(MainWindow.Texts) == "undefined") MainWindow.Texts = Texts;
+  if (typeof(MainWindow.BibleTexts) == "undefined") MainWindow.BibleTexts = BibleTexts;
+  if (typeof(MainWindow.DictTexts) == "undefined") MainWindow.DictTexts = DictTexts;
+  if (typeof(MainWindow.CommTexts) == "undefined") MainWindow.CommTexts = CommTexts;
+  if (typeof(MainWindow.GenBookTexts) == "undefined") MainWindow.GenBookTexts = GenBookTexts;
+}

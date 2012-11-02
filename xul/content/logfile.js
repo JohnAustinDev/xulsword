@@ -147,53 +147,6 @@ var aConsoleListener =
   }
 };
 
-/*
-function getXULRuntimeInfo() {
-  jsdump("Reading nsIXULRuntime.");
-  var runTimeInfo = Components.classes["@mozilla.org/xre/app-info;1"].createInstance(Components.interfaces.nsIXULRuntime);
-  if (!runTimeInfo) return;
-  try {var inSafeMode = runTimeInfo.inSafeMode} catch(er) {jsdump("Could not read inSafeMode."); inSafeMode=null;}
-  if (inSafeMode!=null) {jsdump("inSafeMode:" + inSafeMode);}
-  try {var OS = runTimeInfo.OS} catch(er) {jsdump("Could not read OS."); OS=null;}
-  if (OS!=null) {jsdump("OS:" + OS);}
-  try {var XPCOMABI = runTimeInfo.XPCOMABI} catch(er) {jsdump("Could not read XPCOMABI."); XPCOMABI=null;}
-  if (XPCOMABI!=null) {jsdump("XPCOMABI:" + XPCOMABI);}
-  return "inSafeMode:" + inSafeMode + ", OS:" + OS + ", XPCOMABI:" + XPCOMABI + URLNEWLINE;
-}
-*/
-
-/*
-function URLencode(text) {
-  var specialChars = "$&+,/:;=?@ \"<>#{}|\\^~[]`"; // % was removed from list
-  for (var c=0; c<text.length; c++) {
-    var mc = text.charAt(c);
-    var cc = Number(text.charCodeAt(c));
-    if (cc > 255) {
-      mc = "u" + cc.toString(16).toUpperCase();
-    }
-    else if (cc<32 || cc>126) {
-      var hex = cc.toString(16).toUpperCase();
-      mc = "%" + (hex.length==1 ? "0":"") + hex;
-    }
-    else {
-      for (var sc=0; sc<specialChars.length; sc++) {
-        if (specialChars.charAt(sc) != mc) continue;
-        var hex = cc.toString(16).toUpperCase();
-        mc = "%" + (hex.length==1 ? "0":"") + hex;
-        break;
-      }
-      //if (!mc.match(/[\w\d]/)) {
-        //var hex = cc.toString(16).toUpperCase();
-        //mc = "%" + (hex.length==1 ? "0":"") + hex;
-      //}
-    }
-    text = text.substring(0, c) + mc + text.substring(c+1);
-    c = c + mc.length - 1;
-  }
-  return text;
-}
-*/
-
 function setConsoleService(addListener) {
   if (addListener) {
     var consoleService = Components.classes["@mozilla.org/consoleservice;1"]

@@ -85,7 +85,7 @@ function PopupObj(popupobj) {
     var headlinkclass = (pupAlreadyOpened ? "popupBackLink":"popupCloseLink");
     
     var html = "";
-    html += "<div class=\"popupheader vstyleprogram\">";
+    html += "<div class=\"popupheader cs-Program\">";
     html += "<div class=\"popuppin\" value=\"" + (this.ispinned ? "pinned":"unpinned") + "\" onclick=\"Popup.clickpin(this);\"></div>";
     html += "<a title=\"" + headlinkclass + "\" class=\"" + headlinkclass + "\">" + headlink + "</a>";
     html += "<div onclick=\"Popup.selectOpen=true;\" ><select onchange=\"Popup.select(event);\"></select></div>";
@@ -108,7 +108,7 @@ function PopupObj(popupobj) {
     //    data form: cr#.bk.c.v
     case "cr":
       var dir = (VersionConfigs[this.mod] && VersionConfigs[this.mod].direction == "rtl" ? "rtl":"ltr");
-      html += "<div class=\"popupbody vstyle" + this.mod + " ";
+      html += "<div class=\"popupbody cs-" + this.mod + " ";
       html += (getPrefOrCreate("OpenCrossRefPopups", "Bool", true) ? "cropened":"crclosed") + "\">";
       html += "<div class=\"twisty twisty-" + dir + "\" onclick=\"Popup.openCloseCRs();\" ></div>";
       
@@ -133,7 +133,7 @@ function PopupObj(popupobj) {
     //    data form: reference1; reference2    
     case "sr":
       var dir = (VersionConfigs[this.mod] && VersionConfigs[this.mod].direction == "rtl" ? "rtl":"ltr");
-      html += "<div class=\"popupbody vstyle" + this.mod + " ";
+      html += "<div class=\"popupbody cs-" + this.mod + " ";
       html += (getPrefOrCreate("OpenCrossRefPopups", "Bool", true) ? "cropened":"crclosed") + "\">";
       html += "<div class=\"twisty twisty-" + dir + "\" onclick=\"Popup.openCloseCRs();\" ></div>";
           
@@ -173,7 +173,7 @@ function PopupObj(popupobj) {
             chapter = thisloc.chapter ? thisloc.chapter:chapter;
             verse = thisloc.verse ? thisloc.verse:verse;
             mdata[i] = book + "." + chapter + "." + verse;
-            if (thisloc.lastVerse) {data[i] += "-" + book + "." + chapter + "." + thisloc.lastVerse;}
+            if (thisloc.lastVerse) {mdata[i] += "-" + book + "." + chapter + "." + thisloc.lastVerse;}
             mdata[i] = normalizeOsisReference(data[i], this.mod);
             if (!mdata[i]) failed = true;
           }
@@ -227,9 +227,9 @@ function PopupObj(popupobj) {
       try {
         var resVal = decodeUTF8(this.data.split(".")[1]);
         html += BMDS.GetTarget(BM.RDF.GetResource(resVal), BM.gBmProperties[NOTE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-        var unclass = "vstyleProgram";
+        var unclass = "cs-Program";
         try {
-          unclass = "vstyle" + BMDS.GetTarget(BM.RDF.GetResource(resVal), BM.gBmProperties[NOTELOCALE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+          unclass = "cs-" + BMDS.GetTarget(BM.RDF.GetResource(resVal), BM.gBmProperties[NOTELOCALE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
         } 
         catch (er) {}
         html = "<div id=\"unp." + this.data + "\" class=\"" + unclass + "\"><i>" + html + "</i></div>"; // Add an id so that context menu can find resource
@@ -323,7 +323,7 @@ function PopupObj(popupobj) {
       case "bibles":
         if (Tabs[t].modType == BIBLE) {
           var selected = (Tabs[t].modName == selmod ? "selected=\"selected\" ":"");
-          html += "<option value=\"" + Tabs[t].modName + "\" class=\"vstyle" + Tabs[t].modName + "\" " + selected + ">" + Tabs[t].label + "</option>";
+          html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].modName + "\" " + selected + ">" + Tabs[t].label + "</option>";
         }
         break;
       }

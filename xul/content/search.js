@@ -328,7 +328,7 @@ function updateSortBy(dontModifyCheck) {
 
 function updateSearchBoxStyle(svers) {
   var searchBoxBodyElem = document.getElementById("search-frame").contentDocument.getElementById("searchBoxBody");
-  searchBoxBodyElem.className = "searchres vstyle" + svers;
+  searchBoxBodyElem.className = "searchres cs-" + svers;
   // The following is a work around for a MOZILLA BUG
   searchBoxBodyElem.style.whiteSpace = (searchBoxBodyElem.style.direction == "rtl" ? "normal":"");
 }
@@ -606,7 +606,7 @@ function getHTMLSearchResults(firstMatchToWrite, numMatchesToWrite, wordsToHighl
     if (!matchText || matchText.length < 4) {matchText = versionDirectionEntity;} //Unicode control mark insures blank rtl lines do not become ltr or vice versa...
     matchid = encodeUTF8(matchid);
     matchText = matchText.replace(/<br[^>]*>/g, "");
-    var tline = "<div class=\"matchverse\"><a id=\"vl." + matchid + "\" href=\"javascript:MainWindowRef.gotoLink('" + matchid + "','" + displayVersion + "');\" class=\"vstyleProgram\">" + matchLink + " - " + "</a><span id=\"vt." + matchid + "\">" + matchText + "</span><br></div>";
+    var tline = "<div class=\"matchverse\"><a id=\"vl." + matchid + "\" href=\"javascript:MainWindowRef.gotoLink('" + matchid + "','" + displayVersion + "');\" class=\"cs-Program\">" + matchLink + " - " + "</a><span id=\"vt." + matchid + "\">" + matchText + "</span><br></div>";
     html += tline;
   }
   if (isStrongsSearch) {
@@ -993,7 +993,7 @@ function handlePrintCommand(command) {
  
 function getSearchPrintHTML() {
   var myversion = prefs.getCharPref("SearchVersion");
-  var p = "<div style=\"position:relative;\" class=\"page vstyle" + myversion + "\">";
+  var p = "<div style=\"position:relative;\" class=\"page cs-" + myversion + "\">";
   // print max of 100 results...
   p += getHTMLSearchResults(StartVerse, 100, TR);
   if (Matches>100) p += "<br><hr><hr><hr><hr>";

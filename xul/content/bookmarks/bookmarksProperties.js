@@ -86,8 +86,8 @@ function Init()
   document.title = fixWindowTitle(gSaveEmptyTitle.replace(/\*\*bm_title\*\*/gi, gInfoResource[NAME]));
   gName.value = gInfoResource[NAME];
   gNote.value = gInfoResource[NOTE];
-  if (gInfoResource[NAMELOCALE]) gName.className="vstyle" + gInfoResource[NAMELOCALE]; // due to a xulrunner 1.9.1.3 bug, this does not work on single line textboxes!
-  if (gInfoResource[NOTELOCALE]) gNote.className="vstyle" + gInfoResource[NOTELOCALE];
+  if (gInfoResource[NAMELOCALE]) gName.className="cs-" + gInfoResource[NAMELOCALE]; // due to a xulrunner 1.9.1.3 bug, this does not work on single line textboxes!
+  if (gInfoResource[NOTELOCALE]) gNote.className="cs-" + gInfoResource[NOTELOCALE];
 
   if (gIsContainer) {
     gDropDownRow.setAttribute("hidden", "true");
@@ -95,7 +95,7 @@ function Init()
   }
   else {
     gVerseText.value = gInfoResource[BMTEXT];
-    gVerseText.className = "vstyle" + gInfoResource[MODULE];
+    gVerseText.className = "cs-" + gInfoResource[MODULE];
     switch (getModuleLongType(gInfoResource[MODULE])) {
     case DICTIONARY:
     case GENBOOK:
@@ -107,7 +107,7 @@ function Init()
       var location = gInfoResource[BOOK] + "." + gInfoResource[CHAPTER] + "." + gInfoResource[VERSE] + "." + gInfoResource[LASTVERSE];
       gDropDown.version  = gInfoResource[MODULE];
       gDropDown.location = location;
-      document.getAnonymousElementByAttribute(gDropDown, "anonid", "version").className = "vstyle" + gInfoResource[MODULE];
+      document.getAnonymousElementByAttribute(gDropDown, "anonid", "version").className = "cs-" + gInfoResource[MODULE];
       break;
     }
   }
@@ -131,17 +131,17 @@ function onRefUserUpdate(e, location, version) {
     var aVerse = findAVerseText(version, location);
     gVerseText.value = aVerse.text.replace(/^\s*/,"");
     if (version != Tabs[aVerse.tabNum].modName) gVerseText.value += " (" + Tabs[aVerse.tabNum].label + ")";
-    gVerseText.className = "vstyle" + Tabs[aVerse.tabNum].modName;
+    gVerseText.className = "cs-" + Tabs[aVerse.tabNum].modName;
     break;
   case COMMENTARY:
     gVerseText.value = Bible.getVerseText(version, location).replace(/^\s*/,"").replace(/\n/g, " ");
-    gVerseText.className = "vstyle" + version;
+    gVerseText.className = "cs-" + version;
     break;
   }
-  document.getAnonymousElementByAttribute(gDropDown, "anonid", "version").className = "vstyle" + version;
+  document.getAnonymousElementByAttribute(gDropDown, "anonid", "version").className = "cs-" + version;
   location = dotStringLoc2ObjectLoc(location, version);
   gName.value = BookmarkFuns.getNameForBookmark(location);
-  gName.className = "vstyleProgram";
+  gName.className = "cs-Program";
   document.title = fixWindowTitle(gSaveEmptyTitle.replace(/\*\*bm_title\*\*/gi, gName.value));
   window.setTimeout("sizeToContent();", 0);
 }

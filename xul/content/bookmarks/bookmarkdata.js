@@ -301,15 +301,18 @@ var BookmarkFuns = {
       break;
       
     case DICTIONARY:
-      for (var w=1; w<=NW; w++) {if (location.version == prefs.getCharPref("Version" + w)) break;}
-      if (w > NW) return retval;
-      text = MainWindow.getDictionaryHTML(getPrefOrCreate("DictKey_" + location.version + "_" + w, "Unicode", ""), location.version);
-      text = MainWindow.getParagraphWithIDTry(Number(location.verse), text);
+      text = DictTexts.getEntryHTML(location.chapter, location.version);
+      text = Texts.addParagraphIDs(text);
+      text = Texts.getParagraphWithIDTry(Number(location.verse), text);
       break;
       
     case GENBOOK:
-      text = getGenBookChapterText(location.chapter, Bible);
-      text = MainWindow.getParagraphWithIDTry(Number(location.verse), text);
+      var i = location.chapter.indexOf("/", 2);
+      if (i != -1) {
+        text = Bible.getGenBookChapterText(location.version, location.chapter.substring(i+1));
+        text = Texts.addParagraphIDs(text);
+        text = Texts.getParagraphWithIDTry(Number(location.verse), text);
+      }
       break;
     }
     retval.text = text;
@@ -430,7 +433,7 @@ var BookmarkFuns = {
       else {
         var tooltip = document.getElementById("bookmarkTTL");
         tooltip.setAttribute("value", text);
-        tooltip.setAttribute("class", "vstyle" + info[MODULE]);
+        tooltip.setAttribute("class", "cs-" + info[MODULE]);
         bmelem.setAttribute("tooltip", "bookmarkTT");
       }
     }
@@ -712,7 +715,7 @@ var BookmarkFuns = {
   },
   
   getFormattedBMdata: function(afolder, isHTML) {
-    var data= (isHTML ? "<div class=\"page vstyleProgram\">":"");
+    var data= (isHTML ? "<div class=\"page cs-Program\">":"");
     var ret = (isHTML ? "<br>":TextFileReturn);
     var h1s = (isHTML ? "<span class=\"phead1\">":"");
     var h1e = (isHTML ? "</span>":"");
@@ -768,7 +771,7 @@ var BookmarkFuns = {
         try {aNote = replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,BM.gBmProperties[NOTE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);} catch (er) {}
         if (aNote) data += "[" +  aNote + "]" + ret;
         try {
-          if (isHTML) data += "<div class=\"vstyle" + BMDS.GetTarget(thisElem,BM.gBmProperties[MODULE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value + "\">";
+          if (isHTML) data += "<div class=\"cs-" + BMDS.GetTarget(thisElem,BM.gBmProperties[MODULE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value + "\">";
           data += replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,BM.gBmProperties[BMTEXT],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);
           data += sms + "[" + getCopyright(replaceASCIIcontrolChars(BMDS.GetTarget(thisElem,BM.gBmProperties[MODULE],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value)) + "]" + sme;
           data += ret;

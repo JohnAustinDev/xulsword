@@ -48,7 +48,7 @@ function writeChapterMenu(bk) {
       document.write("<div class=\"chaptermenurow\">");
       dend="</div>";
     }
-    document.write("<div id=\"chmenucell_" + bk + "_" + ch + "\" class=\"vstyleprogram\">");
+    document.write("<div id=\"chmenucell_" + bk + "_" + ch + "\" class=\"cs-Program\">");
     document.write(dString(ch));
     document.write("</div>");
     col++; 
@@ -199,7 +199,7 @@ function showHeadings(myid, screenY) {
       var heading=head[h].match(hd)[1].replace(re, "");
       var verse=head[h].match(vs)[1];
       if (heading != "") {
-        html += hr + "<a id=\"lnk." + Book[p[1]].sName + "." + p[2] + "." + verse + "\" class=\"vstyle" + biblemod + "\" >" + heading + "</a>" + "<br>"; 
+        html += hr + "<a id=\"lnk." + Book[p[1]].sName + "." + p[2] + "." + verse + "\" class=\"cs-" + biblemod + "\" >" + heading + "</a>" + "<br>"; 
         hr="<hr>";
       }
     }

@@ -81,7 +81,7 @@ function openTabToolTip(t, w, cX, cY) {
   desc = desc.substr(0, TOOLTIP_LEN);
   if (desc.length==TOOLTIP_LEN) desc += "...";
   
-  tt.firstChild.setAttribute("class", "vstyle" + modName);
+  tt.firstChild.setAttribute("class", "cs-" + modName);
   tt.firstChild.setAttribute("value", desc);
   
   if (ShowTabToolTip) window.clearTimeout(ShowTabToolTip);
@@ -467,11 +467,11 @@ function scriptDblClick(e) {
   var targ = e.target.parentNode;
   while (targ) {
     if (targ.className) {
-      if      (targ.className.search("vstyle" + OrigModuleNT)!=-1) {
+      if      (targ.className.search("cs-" + OrigModuleNT)!=-1) {
         myv = OrigModuleNT;
         break;
       }
-      else if (targ.className.search("vstyle" + OrigModuleOT)!=-1) {
+      else if (targ.className.search("cs-" + OrigModuleOT)!=-1) {
         myv = OrigModuleOT;
         break;
       }

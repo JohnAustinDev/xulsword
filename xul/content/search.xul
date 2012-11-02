@@ -240,7 +240,7 @@
 
 <!-- TOOLTIPS DEFINED HERE !-->
 <tooltip id="searchTextTT">
-  <label class="vstyleProgram" value="&searchbox.tooltip;" />
+  <label class="cs-Program" value="&searchbox.tooltip;" />
 </tooltip>
 
 </window>

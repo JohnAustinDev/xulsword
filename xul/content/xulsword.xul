@@ -81,7 +81,7 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/indexer.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/mainWindowInit.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/xulswordInit.js"/>
 
 <!-- <script type="application/x-javascript" src="chrome://xulsword/content/xulswordTest.js"/> !-->
 
@@ -353,14 +353,14 @@
         </rule>
         <rule iscontainer="true">
           <menupopup>
-            <menu uri="rdf:*" class="menu-iconic bookmark-item vstylerdf:http://www.xulsword.com/bookmarks/rdf#NameLocale" label="rdf:http://www.xulsword.com/bookmarks/rdf#Name">
+            <menu uri="rdf:*" class="menu-iconic bookmark-item cs-rdf:http://www.xulsword.com/bookmarks/rdf#NameLocale" label="rdf:http://www.xulsword.com/bookmarks/rdf#Name">
             <menupopup contextmenu="bookmarks-context-menu"/>
             </menu>
           </menupopup>
         </rule>
         <rule>
           <menupopup>
-            <menuitem uri="rdf:*" class="menuitem-iconic bookmark-item vstylerdf:http://www.xulsword.com/bookmarks/rdf#NameLocale" 
+            <menuitem uri="rdf:*" class="menuitem-iconic bookmark-item cs-rdf:http://www.xulsword.com/bookmarks/rdf#NameLocale" 
             image="rdf:http://www.xulsword.com/bookmarks/rdf#Icon" 
             label="rdf:http://www.xulsword.com/bookmarks/rdf#Name" 
             oncommand="BookmarkFuns.gotoBookMark(this.id)" 
@@ -379,7 +379,7 @@
     <menu id="help-menu" label="&menu.help;" accesskey="&menu.help.sc;">
       <menupopup id="help-popup">
         <menuseparator id="help-popup-sep1" hidden="true" />
-        <menuitem id="emailus" label="" class="vstyleen-US" hidden="true" oncommand="handleOptions(this)"/>
+        <menuitem id="emailus" label="" class="cs-en-US" hidden="true" oncommand="handleOptions(this)"/>
         <menuseparator id="emailus-sep" hidden="true"/>
         <menuitem id="about" label="&menu.help.about;" accesskey="&menu.help.about.sc;" oncommand="handleOptions(this)"/>
       </menupopup>
@@ -492,20 +492,17 @@
   <menupopup id="contextScriptBox" value="closed" onpopupshowing="ScriptContextMenuShowing(event, this)" onpopuphidden="ScriptContextMenuHidden(event)">
     <menuitem id="aboutModule" label="&menu.help.about;" command="cmd_xs_aboutModule"/>
     <menuitem id="closeTab" label="&context.closeTab;" command="cmd_xs_toggleTab"/>
-    <menuseparator />
-    <menuitem id="allTabs.context" label="&menu.view.showAll;" accesskey="&menu.view.showAll.sc;" oncommand="setAllTabs(true, CurrentTarget.windowNum)"/>
-    <menuitem id="noTabs.context" label="&menu.view.hideAll;" accesskey="&menu.view.hideAll.sc;" oncommand="setAllTabs(false, CurrentTarget.windowNum)"/>
-    <menuseparator id="contsep00"/>
+    <menuseparator id="contsep0"/>
     <menuitem id="cMenu_copy"/>
     <menuitem id="conSearch" label="&searchBut.label;" command="cmd_xs_searchForSelection"/>
-    <menuseparator id="contsep0"/>
-    <menuitem id="conGotoSel" label="&context.gotoReference;" command="cmd_xs_openFromSelection"/>
     <menuseparator id="contsep1"/>
-    <menuitem id="conSelect" label="&context.hilight;" command="cmd_xs_selectVerse"/>
+    <menuitem id="conGotoSel" label="&context.gotoReference;" command="cmd_xs_openFromSelection"/>
     <menuseparator id="contsep2"/>
+    <menuitem id="conSelect" label="&context.hilight;" command="cmd_xs_selectVerse"/>
+    <menuseparator id="contsep3"/>
     <menuitem id="conBookmark" label="&menuitem.newBookmark.label;" command="cmd_xs_newBookmark"/>
     <menuitem id="conUserNote" label="&menu.usernote.add;" command="cmd_xs_newUserNote"/>
-    <menuseparator id="contsep3"/>
+    <menuseparator id="contsep4"/>
     <menuitem id="conProps" label="&context.editUserNote;" command="cmd_bm_properties"/>
     <menuitem id="delUserNote" label="&context.deleteUserNote;" command="cmd_bm_delete"/>
   </menupopup>
@@ -517,31 +514,31 @@
 
 <!-- TOOLTIPS DEFINED HERE !-->
 <tooltip id="backTT">
-  <label class="vstyleProgram" value="&history.back.tooltip;" />
+  <label class="cs-Program" value="&history.back.tooltip;" />
 </tooltip>
 <tooltip id="historymenuTT">
-  <label class="vstyleProgram" value="&history.all.tooltip;" />
+  <label class="cs-Program" value="&history.all.tooltip;" />
 </tooltip>
 <tooltip id="forwardTT">
-  <label class="vstyleProgram" value="&history.forward.tooltip;" />
+  <label class="cs-Program" value="&history.forward.tooltip;" />
 </tooltip>
 <tooltip id="searchTextTT">
-  <label class="vstyleProgram" value="&searchbox.tooltip;" />
+  <label class="cs-Program" value="&searchbox.tooltip;" />
 </tooltip>
 <tooltip id="searchButtonTT">
-  <label class="vstyleProgram" value="&search.tooltip;" />
+  <label class="cs-Program" value="&search.tooltip;" />
 </tooltip>
 <tooltip id="hdbuttonTT">
-  <label class="vstyleProgram" value="&headingsButton.tooltip;" />
+  <label class="cs-Program" value="&headingsButton.tooltip;" />
 </tooltip>
 <tooltip id="fnbuttonTT">
-  <label class="vstyleProgram" value="&notesButton.tooltip;" />
+  <label class="cs-Program" value="&notesButton.tooltip;" />
 </tooltip>
 <tooltip id="crbuttonTT">
-  <label class="vstyleProgram" value="&crossrefsButton.tooltip;" />
+  <label class="cs-Program" value="&crossrefsButton.tooltip;" />
 </tooltip>
 <tooltip id="dtbuttonTT">
-  <label class="vstyleProgram" value="&dictButton.tooltip;" />
+  <label class="cs-Program" value="&dictButton.tooltip;" />
 </tooltip>
 <tooltip id="bookmarkTT">
   <label id="bookmarkTTL" value="" />
