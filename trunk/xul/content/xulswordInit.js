@@ -26,13 +26,9 @@
 
 var RestartToChangeLocale;
 var HaveValidLocale;
-var Progvers = prefs.getCharPref("Version");
-var Enginevers; try {Enginevers = prefs.getCharPref("EngineVersion");} catch (er) {Enginevers = NOTFOUND;}
 var LocaleConfigs = {};
 var VersionConfigs = {};
-var StyleRules = [];
-var LocaleDirectionEntity;
-var LocaleDirectionChar;
+var ModuleStyles = [];
 var Tabs = [];
 var Tab = {};
 var Book = new Array(NumBooks);
@@ -42,6 +38,13 @@ var HaveOriginalTab;
 var LocaleList = [];
 var LocaleDefaultVersion = [];
 var AllWindows = [];
+
+// Global text objects defined in text.js
+var Texts;
+var BibleTexts; 
+var CommTexts; 
+var DictTexts; 
+var GenBookTexts;
 
 var Location = {
   modname:null,
@@ -167,10 +170,10 @@ function initLocales() {
       try {localeConfig.lineHeight = bundle.GetStringFromName("LineHeight");} catch (er) {}
     }
     LocaleConfigs[LocaleList[lc]] = localeConfig;
-    StyleRules.push(getStyleRule(".vstyle" + LocaleList[lc], localeConfig));
+    ModuleStyles.push(getStyleRule(".cs-" + LocaleList[lc], localeConfig));
   }
   localeConfig = {direction:"ltr", font:DefaultFont, fontSizeAdjust:null, lineHeight:null};
-  StyleRules.push(getStyleRule(".vstyle" + "ASCII", localeConfig));
+  ModuleStyles.push(getStyleRule(".cs-" + "ASCII", localeConfig));
   
   LocaleDefaultVersion = LocaleDefaultVersionString.split(";");
 //dump ("LocaleDefaultVersion:" + LocaleDefaultVersion + "\n");
@@ -200,11 +203,13 @@ HaveValidLocale = initLocales();
 //  XXXXX-v2.12: 2 Tab label from a loaded locale which lists this module as its default
 //  1 Tab label from .conf file's TabLabel entry
 //  2 module name
-var UserConfFiles = {};
-var CommConfFiles = {};
 var LanguageStudyModules = {};
 function createTabs() {
   if (!Bible) return;
+  
+  var userConfFiles = {};
+  var commConfFiles = {};
+
   // Gets list of available modules
   var moduleInfo = "";
   var modules = Bible.getModuleList().split("<nx>");
@@ -229,12 +234,13 @@ function createTabs() {
     if (comparator.compare(xsversion, modminxsvers) < 0) continue;
     var xminprogvers = Bible.getModuleInformation(info[0], MINPVERPAR);
     xminprogvers = (xminprogvers!=NOTFOUND ? xminprogvers:MINVERSION);
-    if (comparator.compare(Progvers, xminprogvers) < 0) continue;
+    if (comparator.compare(prefs.getCharPref("Version"), xminprogvers) < 0) continue;
     var xsengvers = Bible.getModuleInformation(info[0], "MinimumVersion");
     xsengvers = (xsengvers!=NOTFOUND ? xsengvers:0);
-    if (Enginevers != NOTFOUND && comparator.compare(Enginevers, xsengvers) < 0) continue;
+    var enginevers; try {enginevers = prefs.getCharPref("EngineVersion");} catch (er) {enginevers = NOTFOUND;}
+    if (enginevers != NOTFOUND && comparator.compare(enginevers, xsengvers) < 0) continue;
     
-    //Use this opportunity to init the StyleRules and version configs...
+    //Use this opportunity to init the ModuleStyles and version configs...
     var versionConfig = {direction:"ltr", font:DefaultFont, fontSizeAdjust:null, lineHeight:null};
     var dir = Bible.getModuleInformation(info[0], "Direction");
     var font = Bible.getModuleInformation(info[0], "Font")
@@ -247,7 +253,7 @@ function createTabs() {
     if (fontSA != NOTFOUND) versionConfig.fontSizeAdjust = fontSA;
     if (fontLH != NOTFOUND) versionConfig.lineHeight = fontLH;
     VersionConfigs[info[0]] = versionConfig;
-    StyleRules.push(getStyleRule(".vstyle" + info[0], versionConfig));
+    ModuleStyles.push(getStyleRule(".cs-" + info[0], versionConfig));
 
     // Language glossaries don't currently work (too big??) and so aren't supported.
     if (Bible.getModuleInformation(info[0], "GlossaryFrom") != NOTFOUND) continue;
@@ -295,8 +301,8 @@ function createTabs() {
     moduleInfo += (moduleLabel!=NOTFOUND ? moduleLabel:info[0]) + "<nx>";
   }
   
-  //Finish the StyleRules init...
-  StyleRules.push(getStyleRule(".vstyleProgram", LocaleConfigs[getLocale()], false, true));
+  //Finish the ModuleStyles init...
+  ModuleStyles.push(getStyleRule(".cs-Program", LocaleConfigs[getLocale()], false, true));
   
   
   moduleInfo = moduleInfo.split("<nx>");
@@ -311,22 +317,22 @@ function createTabs() {
   moduleInfo = moduleInfo.sort(tabOrder);
  
   var commonDir = getSpecialDirectory("xsModsCommon");
-  getConfFiles(getSpecialDirectory("xsModsUser"), UserConfFiles);
-  getConfFiles(commonDir, CommConfFiles);
+  getConfFiles(getSpecialDirectory("xsModsUser"), userConfFiles);
+  getConfFiles(commonDir, commConfFiles);
   commonDir.append(MODSD);
 
   // Create global arrays
   for (m=0; m<moduleInfo.length; m++) {
     info = moduleInfo[m].split(";");
     
-    var tab = {label:null, modName:null, modType:null, tabType:null, vstyle:null, isRTL:null, index:null};
+    var tab = {label:null, modName:null, modType:null, tabType:null, isRTL:null, index:null};
     tab.label = info[2];
     tab.modName = info[1];
     tab.modType = info[0];
     tab.confModUnique = true;
-    tab.conf = CommConfFiles[info[1]]; // Sword looks at common directory first...
-    if (!tab.conf) tab.conf = UserConfFiles[info[1]];
-    else if (UserConfFiles[info[1]]) tab.confModUnique = false;
+    tab.conf = commConfFiles[info[1]]; // Sword looks at common directory first...
+    if (!tab.conf) tab.conf = userConfFiles[info[1]];
+    else if (userConfFiles[info[1]]) tab.confModUnique = false;
     tab.isCommDir = (tab.conf && tab.conf.path.substring(0, tab.conf.path.lastIndexOf("\\")) == commonDir.path);
     tab.tabType = getShortTypeFromLong(tab.modType);
     tab.isRTL = (VersionConfigs[tab.modName] && VersionConfigs[tab.modName].direction == "rtl");
@@ -422,208 +428,209 @@ function initBooks() {
 
   var bundle = getCurrentLocaleBundle("books.properties");
 
-Book[Number(bundle.GetStringFromName("Geni"))].sName = "Gen";
-Book[Number(bundle.GetStringFromName("Geni"))].numChaps = 50;
+  Book[Number(bundle.GetStringFromName("Geni"))].sName = "Gen";
+  Book[Number(bundle.GetStringFromName("Geni"))].numChaps = 50;
 
-Book[Number(bundle.GetStringFromName("Exodi"))].sName = "Exod";
-Book[Number(bundle.GetStringFromName("Exodi"))].numChaps = 40;
+  Book[Number(bundle.GetStringFromName("Exodi"))].sName = "Exod";
+  Book[Number(bundle.GetStringFromName("Exodi"))].numChaps = 40;
 
-Book[Number(bundle.GetStringFromName("Levi"))].sName = "Lev";
-Book[Number(bundle.GetStringFromName("Levi"))].numChaps = 27;
+  Book[Number(bundle.GetStringFromName("Levi"))].sName = "Lev";
+  Book[Number(bundle.GetStringFromName("Levi"))].numChaps = 27;
 
-Book[Number(bundle.GetStringFromName("Numi"))].sName = "Num";
-Book[Number(bundle.GetStringFromName("Numi"))].numChaps = 36;
+  Book[Number(bundle.GetStringFromName("Numi"))].sName = "Num";
+  Book[Number(bundle.GetStringFromName("Numi"))].numChaps = 36;
 
-Book[Number(bundle.GetStringFromName("Deuti"))].sName = "Deut";
-Book[Number(bundle.GetStringFromName("Deuti"))].numChaps = 34;
+  Book[Number(bundle.GetStringFromName("Deuti"))].sName = "Deut";
+  Book[Number(bundle.GetStringFromName("Deuti"))].numChaps = 34;
 
-Book[Number(bundle.GetStringFromName("Joshi"))].sName = "Josh";
-Book[Number(bundle.GetStringFromName("Joshi"))].numChaps = 24;
+  Book[Number(bundle.GetStringFromName("Joshi"))].sName = "Josh";
+  Book[Number(bundle.GetStringFromName("Joshi"))].numChaps = 24;
 
-Book[Number(bundle.GetStringFromName("Judgi"))].sName = "Judg";
-Book[Number(bundle.GetStringFromName("Judgi"))].numChaps = 21;
+  Book[Number(bundle.GetStringFromName("Judgi"))].sName = "Judg";
+  Book[Number(bundle.GetStringFromName("Judgi"))].numChaps = 21;
 
-Book[Number(bundle.GetStringFromName("Ruthi"))].sName = "Ruth";
-Book[Number(bundle.GetStringFromName("Ruthi"))].numChaps = 4;
+  Book[Number(bundle.GetStringFromName("Ruthi"))].sName = "Ruth";
+  Book[Number(bundle.GetStringFromName("Ruthi"))].numChaps = 4;
 
-Book[Number(bundle.GetStringFromName("1Sami"))].sName = "1Sam";
-Book[Number(bundle.GetStringFromName("1Sami"))].numChaps = 31;
+  Book[Number(bundle.GetStringFromName("1Sami"))].sName = "1Sam";
+  Book[Number(bundle.GetStringFromName("1Sami"))].numChaps = 31;
 
-Book[Number(bundle.GetStringFromName("2Sami"))].sName = "2Sam";
-Book[Number(bundle.GetStringFromName("2Sami"))].numChaps = 24;
+  Book[Number(bundle.GetStringFromName("2Sami"))].sName = "2Sam";
+  Book[Number(bundle.GetStringFromName("2Sami"))].numChaps = 24;
 
-Book[Number(bundle.GetStringFromName("1Kgsi"))].sName = "1Kgs";
-Book[Number(bundle.GetStringFromName("1Kgsi"))].numChaps = 22;
+  Book[Number(bundle.GetStringFromName("1Kgsi"))].sName = "1Kgs";
+  Book[Number(bundle.GetStringFromName("1Kgsi"))].numChaps = 22;
 
-Book[Number(bundle.GetStringFromName("2Kgsi"))].sName = "2Kgs";
-Book[Number(bundle.GetStringFromName("2Kgsi"))].numChaps = 25;
+  Book[Number(bundle.GetStringFromName("2Kgsi"))].sName = "2Kgs";
+  Book[Number(bundle.GetStringFromName("2Kgsi"))].numChaps = 25;
 
-Book[Number(bundle.GetStringFromName("1Chri"))].sName = "1Chr";
-Book[Number(bundle.GetStringFromName("1Chri"))].numChaps = 29;
+  Book[Number(bundle.GetStringFromName("1Chri"))].sName = "1Chr";
+  Book[Number(bundle.GetStringFromName("1Chri"))].numChaps = 29;
 
-Book[Number(bundle.GetStringFromName("2Chri"))].sName = "2Chr";
-Book[Number(bundle.GetStringFromName("2Chri"))].numChaps = 36;
+  Book[Number(bundle.GetStringFromName("2Chri"))].sName = "2Chr";
+  Book[Number(bundle.GetStringFromName("2Chri"))].numChaps = 36;
 
-Book[Number(bundle.GetStringFromName("Ezrai"))].sName = "Ezra";
-Book[Number(bundle.GetStringFromName("Ezrai"))].numChaps = 10;
+  Book[Number(bundle.GetStringFromName("Ezrai"))].sName = "Ezra";
+  Book[Number(bundle.GetStringFromName("Ezrai"))].numChaps = 10;
 
-Book[Number(bundle.GetStringFromName("Nehi"))].sName = "Neh";
-Book[Number(bundle.GetStringFromName("Nehi"))].numChaps = 13;
+  Book[Number(bundle.GetStringFromName("Nehi"))].sName = "Neh";
+  Book[Number(bundle.GetStringFromName("Nehi"))].numChaps = 13;
 
-Book[Number(bundle.GetStringFromName("Esthi"))].sName = "Esth";
-Book[Number(bundle.GetStringFromName("Esthi"))].numChaps = 10;
+  Book[Number(bundle.GetStringFromName("Esthi"))].sName = "Esth";
+  Book[Number(bundle.GetStringFromName("Esthi"))].numChaps = 10;
 
-Book[Number(bundle.GetStringFromName("Jobi"))].sName = "Job";
-Book[Number(bundle.GetStringFromName("Jobi"))].numChaps = 42;
+  Book[Number(bundle.GetStringFromName("Jobi"))].sName = "Job";
+  Book[Number(bundle.GetStringFromName("Jobi"))].numChaps = 42;
 
-Book[Number(bundle.GetStringFromName("Psi"))].sName = "Ps";
-Book[Number(bundle.GetStringFromName("Psi"))].numChaps = 150;
+  Book[Number(bundle.GetStringFromName("Psi"))].sName = "Ps";
+  Book[Number(bundle.GetStringFromName("Psi"))].numChaps = 150;
 
-Book[Number(bundle.GetStringFromName("Provi"))].sName = "Prov";
-Book[Number(bundle.GetStringFromName("Provi"))].numChaps = 31;
+  Book[Number(bundle.GetStringFromName("Provi"))].sName = "Prov";
+  Book[Number(bundle.GetStringFromName("Provi"))].numChaps = 31;
 
-Book[Number(bundle.GetStringFromName("Eccli"))].sName = "Eccl";
-Book[Number(bundle.GetStringFromName("Eccli"))].numChaps = 12;
+  Book[Number(bundle.GetStringFromName("Eccli"))].sName = "Eccl";
+  Book[Number(bundle.GetStringFromName("Eccli"))].numChaps = 12;
 
-Book[Number(bundle.GetStringFromName("Songi"))].sName = "Song";
-Book[Number(bundle.GetStringFromName("Songi"))].numChaps = 8;
+  Book[Number(bundle.GetStringFromName("Songi"))].sName = "Song";
+  Book[Number(bundle.GetStringFromName("Songi"))].numChaps = 8;
 
-Book[Number(bundle.GetStringFromName("Isai"))].sName = "Isa";
-Book[Number(bundle.GetStringFromName("Isai"))].numChaps = 66;
+  Book[Number(bundle.GetStringFromName("Isai"))].sName = "Isa";
+  Book[Number(bundle.GetStringFromName("Isai"))].numChaps = 66;
 
-Book[Number(bundle.GetStringFromName("Jeri"))].sName = "Jer";
-Book[Number(bundle.GetStringFromName("Jeri"))].numChaps = 52;
+  Book[Number(bundle.GetStringFromName("Jeri"))].sName = "Jer";
+  Book[Number(bundle.GetStringFromName("Jeri"))].numChaps = 52;
 
-Book[Number(bundle.GetStringFromName("Lami"))].sName = "Lam";
-Book[Number(bundle.GetStringFromName("Lami"))].numChaps = 5;
+  Book[Number(bundle.GetStringFromName("Lami"))].sName = "Lam";
+  Book[Number(bundle.GetStringFromName("Lami"))].numChaps = 5;
 
-Book[Number(bundle.GetStringFromName("Ezeki"))].sName = "Ezek";
-Book[Number(bundle.GetStringFromName("Ezeki"))].numChaps = 48;
+  Book[Number(bundle.GetStringFromName("Ezeki"))].sName = "Ezek";
+  Book[Number(bundle.GetStringFromName("Ezeki"))].numChaps = 48;
 
-Book[Number(bundle.GetStringFromName("Dani"))].sName = "Dan";
-Book[Number(bundle.GetStringFromName("Dani"))].numChaps = 12;
+  Book[Number(bundle.GetStringFromName("Dani"))].sName = "Dan";
+  Book[Number(bundle.GetStringFromName("Dani"))].numChaps = 12;
 
-Book[Number(bundle.GetStringFromName("Hosi"))].sName = "Hos";
-Book[Number(bundle.GetStringFromName("Hosi"))].numChaps = 14;
+  Book[Number(bundle.GetStringFromName("Hosi"))].sName = "Hos";
+  Book[Number(bundle.GetStringFromName("Hosi"))].numChaps = 14;
 
-Book[Number(bundle.GetStringFromName("Joeli"))].sName = "Joel";
-Book[Number(bundle.GetStringFromName("Joeli"))].numChaps = 3;
+  Book[Number(bundle.GetStringFromName("Joeli"))].sName = "Joel";
+  Book[Number(bundle.GetStringFromName("Joeli"))].numChaps = 3;
 
-Book[Number(bundle.GetStringFromName("Amosi"))].sName = "Amos";
-Book[Number(bundle.GetStringFromName("Amosi"))].numChaps = 9;
+  Book[Number(bundle.GetStringFromName("Amosi"))].sName = "Amos";
+  Book[Number(bundle.GetStringFromName("Amosi"))].numChaps = 9;
 
-Book[Number(bundle.GetStringFromName("Obadi"))].sName = "Obad";
-Book[Number(bundle.GetStringFromName("Obadi"))].numChaps = 1;
+  Book[Number(bundle.GetStringFromName("Obadi"))].sName = "Obad";
+  Book[Number(bundle.GetStringFromName("Obadi"))].numChaps = 1;
 
-Book[Number(bundle.GetStringFromName("Jonahi"))].sName = "Jonah";
-Book[Number(bundle.GetStringFromName("Jonahi"))].numChaps = 4;
+  Book[Number(bundle.GetStringFromName("Jonahi"))].sName = "Jonah";
+  Book[Number(bundle.GetStringFromName("Jonahi"))].numChaps = 4;
 
-Book[Number(bundle.GetStringFromName("Mici"))].sName = "Mic";
-Book[Number(bundle.GetStringFromName("Mici"))].numChaps = 7;
+  Book[Number(bundle.GetStringFromName("Mici"))].sName = "Mic";
+  Book[Number(bundle.GetStringFromName("Mici"))].numChaps = 7;
 
-Book[Number(bundle.GetStringFromName("Nahi"))].sName = "Nah";
-Book[Number(bundle.GetStringFromName("Nahi"))].numChaps = 3;
+  Book[Number(bundle.GetStringFromName("Nahi"))].sName = "Nah";
+  Book[Number(bundle.GetStringFromName("Nahi"))].numChaps = 3;
 
-Book[Number(bundle.GetStringFromName("Habi"))].sName = "Hab";
-Book[Number(bundle.GetStringFromName("Habi"))].numChaps = 3;
+  Book[Number(bundle.GetStringFromName("Habi"))].sName = "Hab";
+  Book[Number(bundle.GetStringFromName("Habi"))].numChaps = 3;
 
-Book[Number(bundle.GetStringFromName("Zephi"))].sName = "Zeph";
-Book[Number(bundle.GetStringFromName("Zephi"))].numChaps = 3;
+  Book[Number(bundle.GetStringFromName("Zephi"))].sName = "Zeph";
+  Book[Number(bundle.GetStringFromName("Zephi"))].numChaps = 3;
 
-Book[Number(bundle.GetStringFromName("Hagi"))].sName = "Hag";
-Book[Number(bundle.GetStringFromName("Hagi"))].numChaps = 2;
+  Book[Number(bundle.GetStringFromName("Hagi"))].sName = "Hag";
+  Book[Number(bundle.GetStringFromName("Hagi"))].numChaps = 2;
 
-Book[Number(bundle.GetStringFromName("Zechi"))].sName = "Zech";
-Book[Number(bundle.GetStringFromName("Zechi"))].numChaps = 14;
+  Book[Number(bundle.GetStringFromName("Zechi"))].sName = "Zech";
+  Book[Number(bundle.GetStringFromName("Zechi"))].numChaps = 14;
 
-Book[Number(bundle.GetStringFromName("Mali"))].sName = "Mal";
-Book[Number(bundle.GetStringFromName("Mali"))].numChaps = 4;
+  Book[Number(bundle.GetStringFromName("Mali"))].sName = "Mal";
+  Book[Number(bundle.GetStringFromName("Mali"))].numChaps = 4;
 
-Book[Number(bundle.GetStringFromName("Matti"))].sName = "Matt";
-Book[Number(bundle.GetStringFromName("Matti"))].numChaps = 28;
+  Book[Number(bundle.GetStringFromName("Matti"))].sName = "Matt";
+  Book[Number(bundle.GetStringFromName("Matti"))].numChaps = 28;
 
-Book[Number(bundle.GetStringFromName("Marki"))].sName = "Mark";
-Book[Number(bundle.GetStringFromName("Marki"))].numChaps = 16;
+  Book[Number(bundle.GetStringFromName("Marki"))].sName = "Mark";
+  Book[Number(bundle.GetStringFromName("Marki"))].numChaps = 16;
 
-Book[Number(bundle.GetStringFromName("Lukei"))].sName = "Luke";
-Book[Number(bundle.GetStringFromName("Lukei"))].numChaps = 24;
+  Book[Number(bundle.GetStringFromName("Lukei"))].sName = "Luke";
+  Book[Number(bundle.GetStringFromName("Lukei"))].numChaps = 24;
 
-Book[Number(bundle.GetStringFromName("Johni"))].sName = "John";
-Book[Number(bundle.GetStringFromName("Johni"))].numChaps = 21;
+  Book[Number(bundle.GetStringFromName("Johni"))].sName = "John";
+  Book[Number(bundle.GetStringFromName("Johni"))].numChaps = 21;
 
-Book[Number(bundle.GetStringFromName("Actsi"))].sName = "Acts";
-Book[Number(bundle.GetStringFromName("Actsi"))].numChaps = 28;
+  Book[Number(bundle.GetStringFromName("Actsi"))].sName = "Acts";
+  Book[Number(bundle.GetStringFromName("Actsi"))].numChaps = 28;
 
-Book[Number(bundle.GetStringFromName("Jasi"))].sName = "Jas";
-Book[Number(bundle.GetStringFromName("Jasi"))].numChaps = 5;
+  Book[Number(bundle.GetStringFromName("Jasi"))].sName = "Jas";
+  Book[Number(bundle.GetStringFromName("Jasi"))].numChaps = 5;
 
-Book[Number(bundle.GetStringFromName("1Peti"))].sName = "1Pet";
-Book[Number(bundle.GetStringFromName("1Peti"))].numChaps = 5;
+  Book[Number(bundle.GetStringFromName("1Peti"))].sName = "1Pet";
+  Book[Number(bundle.GetStringFromName("1Peti"))].numChaps = 5;
 
-Book[Number(bundle.GetStringFromName("2Peti"))].sName = "2Pet";
-Book[Number(bundle.GetStringFromName("2Peti"))].numChaps = 3;
+  Book[Number(bundle.GetStringFromName("2Peti"))].sName = "2Pet";
+  Book[Number(bundle.GetStringFromName("2Peti"))].numChaps = 3;
 
-Book[Number(bundle.GetStringFromName("1Johni"))].sName = "1John";
-Book[Number(bundle.GetStringFromName("1Johni"))].numChaps = 5;
+  Book[Number(bundle.GetStringFromName("1Johni"))].sName = "1John";
+  Book[Number(bundle.GetStringFromName("1Johni"))].numChaps = 5;
 
-Book[Number(bundle.GetStringFromName("2Johni"))].sName = "2John";
-Book[Number(bundle.GetStringFromName("2Johni"))].numChaps = 1;
+  Book[Number(bundle.GetStringFromName("2Johni"))].sName = "2John";
+  Book[Number(bundle.GetStringFromName("2Johni"))].numChaps = 1;
 
-Book[Number(bundle.GetStringFromName("3Johni"))].sName = "3John";
-Book[Number(bundle.GetStringFromName("3Johni"))].numChaps = 1;
+  Book[Number(bundle.GetStringFromName("3Johni"))].sName = "3John";
+  Book[Number(bundle.GetStringFromName("3Johni"))].numChaps = 1;
 
-Book[Number(bundle.GetStringFromName("Judei"))].sName = "Jude";
-Book[Number(bundle.GetStringFromName("Judei"))].numChaps = 1;
+  Book[Number(bundle.GetStringFromName("Judei"))].sName = "Jude";
+  Book[Number(bundle.GetStringFromName("Judei"))].numChaps = 1;
 
-Book[Number(bundle.GetStringFromName("Romi"))].sName = "Rom";
-Book[Number(bundle.GetStringFromName("Romi"))].numChaps = 16;
+  Book[Number(bundle.GetStringFromName("Romi"))].sName = "Rom";
+  Book[Number(bundle.GetStringFromName("Romi"))].numChaps = 16;
 
-Book[Number(bundle.GetStringFromName("1Cori"))].sName = "1Cor";
-Book[Number(bundle.GetStringFromName("1Cori"))].numChaps = 16;
+  Book[Number(bundle.GetStringFromName("1Cori"))].sName = "1Cor";
+  Book[Number(bundle.GetStringFromName("1Cori"))].numChaps = 16;
 
-Book[Number(bundle.GetStringFromName("2Cori"))].sName = "2Cor";
-Book[Number(bundle.GetStringFromName("2Cori"))].numChaps = 13;
+  Book[Number(bundle.GetStringFromName("2Cori"))].sName = "2Cor";
+  Book[Number(bundle.GetStringFromName("2Cori"))].numChaps = 13;
 
-Book[Number(bundle.GetStringFromName("Gali"))].sName = "Gal";
-Book[Number(bundle.GetStringFromName("Gali"))].numChaps = 6;
+  Book[Number(bundle.GetStringFromName("Gali"))].sName = "Gal";
+  Book[Number(bundle.GetStringFromName("Gali"))].numChaps = 6;
 
-Book[Number(bundle.GetStringFromName("Ephi"))].sName = "Eph";
-Book[Number(bundle.GetStringFromName("Ephi"))].numChaps = 6;
+  Book[Number(bundle.GetStringFromName("Ephi"))].sName = "Eph";
+  Book[Number(bundle.GetStringFromName("Ephi"))].numChaps = 6;
 
-Book[Number(bundle.GetStringFromName("Phili"))].sName = "Phil";
-Book[Number(bundle.GetStringFromName("Phili"))].numChaps = 4;
+  Book[Number(bundle.GetStringFromName("Phili"))].sName = "Phil";
+  Book[Number(bundle.GetStringFromName("Phili"))].numChaps = 4;
 
-Book[Number(bundle.GetStringFromName("Coli"))].sName = "Col";
-Book[Number(bundle.GetStringFromName("Coli"))].numChaps = 4;
+  Book[Number(bundle.GetStringFromName("Coli"))].sName = "Col";
+  Book[Number(bundle.GetStringFromName("Coli"))].numChaps = 4;
 
-Book[Number(bundle.GetStringFromName("1Thessi"))].sName = "1Thess";
-Book[Number(bundle.GetStringFromName("1Thessi"))].numChaps = 5;
+  Book[Number(bundle.GetStringFromName("1Thessi"))].sName = "1Thess";
+  Book[Number(bundle.GetStringFromName("1Thessi"))].numChaps = 5;
 
-Book[Number(bundle.GetStringFromName("2Thessi"))].sName = "2Thess";
-Book[Number(bundle.GetStringFromName("2Thessi"))].numChaps = 3;
+  Book[Number(bundle.GetStringFromName("2Thessi"))].sName = "2Thess";
+  Book[Number(bundle.GetStringFromName("2Thessi"))].numChaps = 3;
 
-Book[Number(bundle.GetStringFromName("1Timi"))].sName = "1Tim";
-Book[Number(bundle.GetStringFromName("1Timi"))].numChaps = 6;
+  Book[Number(bundle.GetStringFromName("1Timi"))].sName = "1Tim";
+  Book[Number(bundle.GetStringFromName("1Timi"))].numChaps = 6;
 
-Book[Number(bundle.GetStringFromName("2Timi"))].sName = "2Tim";
-Book[Number(bundle.GetStringFromName("2Timi"))].numChaps = 4;
+  Book[Number(bundle.GetStringFromName("2Timi"))].sName = "2Tim";
+  Book[Number(bundle.GetStringFromName("2Timi"))].numChaps = 4;
 
-Book[Number(bundle.GetStringFromName("Titusi"))].sName = "Titus";
-Book[Number(bundle.GetStringFromName("Titusi"))].numChaps = 3;
+  Book[Number(bundle.GetStringFromName("Titusi"))].sName = "Titus";
+  Book[Number(bundle.GetStringFromName("Titusi"))].numChaps = 3;
 
-Book[Number(bundle.GetStringFromName("Phlmi"))].sName = "Phlm";
-Book[Number(bundle.GetStringFromName("Phlmi"))].numChaps = 1;
+  Book[Number(bundle.GetStringFromName("Phlmi"))].sName = "Phlm";
+  Book[Number(bundle.GetStringFromName("Phlmi"))].numChaps = 1;
 
-Book[Number(bundle.GetStringFromName("Hebi"))].sName = "Heb";
-Book[Number(bundle.GetStringFromName("Hebi"))].numChaps = 13;
+  Book[Number(bundle.GetStringFromName("Hebi"))].sName = "Heb";
+  Book[Number(bundle.GetStringFromName("Hebi"))].numChaps = 13;
 
-Book[Number(bundle.GetStringFromName("Revi"))].sName = "Rev";
-Book[Number(bundle.GetStringFromName("Revi"))].numChaps = 22;
+  Book[Number(bundle.GetStringFromName("Revi"))].sName = "Rev";
+  Book[Number(bundle.GetStringFromName("Revi"))].numChaps = 22;
 
   for (var b=0; b < NumBooks; b++) {
     Book[b].bName  = bundle.GetStringFromName(Book[b].sName);
     Book[b].bNameL = bundle.GetStringFromName(Book[b].sName);
   }
+  
 }
 
 function initLongNames() {
@@ -643,13 +650,6 @@ function initLongNames() {
     }
   }
 }
-
-LocaleDirectionEntity = "&rlm;";
-if (HaveValidLocale) {
-  LocaleDirectionEntity = ((LocaleConfigs[getLocale()].direction && 
-                        LocaleConfigs[getLocale()].direction=="rtl") ? "&rlm;":"&lrm;");
-}
-LocaleDirectionChar = (guiDirection=="rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
 
 initBooks();
 initLongNames();

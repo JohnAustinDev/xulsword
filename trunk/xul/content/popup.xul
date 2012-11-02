@@ -62,20 +62,17 @@
         onpopuphidden="MainWindow.ScriptContextMenuHidden(event);">
       <menuitem id="aboutModule" label="&menu.help.about;" command="cmd_xs_aboutModule"/>
       <menuitem id="closeTab" label="&context.closeTab;" command="cmd_xs_toggleTab"/>
-      <menuseparator />
-      <menuitem id="allTabs.context" label="&menu.view.showAll;" accesskey="&menu.view.showAll.sc;" oncommand="MainWindow.setAllTabs(true, CurrentTarget.windowNum)"/>
-      <menuitem id="noTabs.context" label="&menu.view.hideAll;" accesskey="&menu.view.hideAll.sc;" oncommand="MainWindow.setAllTabs(false, CurrentTarget.windowNum)"/>
-      <menuseparator id="contsep00"/>
+      <menuseparator id="contsep0"/>
       <menuitem id="cMenu_copy"/>
       <menuitem id="conSearch" label="&searchBut.label;" command="cmd_xs_searchForSelection"/>
-      <menuseparator id="contsep0"/>
-      <menuitem id="conGotoSel" label="&context.gotoReference;" command="cmd_xs_openFromSelection"/>
       <menuseparator id="contsep1"/>
-      <menuitem id="conSelect" label="&context.hilight;" command="cmd_xs_selectVerse"/>
+      <menuitem id="conGotoSel" label="&context.gotoReference;" command="cmd_xs_openFromSelection"/>
       <menuseparator id="contsep2"/>
+      <menuitem id="conSelect" label="&context.hilight;" command="cmd_xs_selectVerse"/>
+      <menuseparator id="contsep3"/>
       <menuitem id="conBookmark" label="&menuitem.newBookmark.label;" command="cmd_xs_newBookmark"/>
       <menuitem id="conUserNote" label="&menu.usernote.add;" command="cmd_xs_newUserNote"/>
-      <menuseparator id="contsep3"/>
+      <menuseparator id="contsep4"/>
       <menuitem id="conProps" label="&context.editUserNote;" command="cmd_bm_properties"/>
       <menuitem id="delUserNote" label="&context.deleteUserNote;" command="cmd_bm_delete"/>
     </menupopup>

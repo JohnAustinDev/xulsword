@@ -100,7 +100,7 @@ function onRefUserUpdate(e, location, version) {
     if (!isLocationAbeforeB(FromChooser.location, location)) ToChooser.location = FromChooser.location;
     break;
   }
-  document.getAnonymousElementByAttribute(elem, "anonid", "version").className = "vstyle" + version;
+  document.getAnonymousElementByAttribute(elem, "anonid", "version").className = "cs-" + version;
 }
 
 
@@ -196,8 +196,8 @@ function getChapterHTML() {
     var textWithUserNotes = insertUserNotes(Location.getBookName(), Location.getChapterNumber(Version), Version, chap);
     PrintHTML += PageBreak;
     if (!PageBreak) PageBreak = "<div class=\"pagebreak\"></div><br>";
-    PrintHTML += "<div class=\"scripture vstyle" + Version + "\">" + getScriptBoxHeader(Location.getBookName(), Location.getChapterNumber(Version), Version, true, Introduction.checked, false) + "</div>";
-    PrintHTML += "<div class=\"scripture vstyle" + Version + "\">" + textWithUserNotes.html + "</div>";
+    PrintHTML += "<div class=\"scripture cs-" + Version + "\">" + getScriptBoxHeader(Location.getBookName(), Location.getChapterNumber(Version), Version, true, Introduction.checked, false) + "</div>";
+    PrintHTML += "<div class=\"scripture cs-" + Version + "\">" + textWithUserNotes.html + "</div>";
     var allNotes = Bible.getNotes();
     allNotes += textWithUserNotes.notes;
     var showFootnotes = (Bible.getGlobalOption("Footnotes")=="On");
@@ -207,7 +207,7 @@ function getChapterHTML() {
       var notes = getNotesHTML(allNotes, Version, showFootnotes, showCrossRefs, showUserNotes, Crossreftexts.checked);
       if (notes) {
         PrintHTML += "<br><hr><br>";
-        PrintHTML += "<div class=\"footnotes vstyle" + Version + "\">" + notes + "</div>";
+        PrintHTML += "<div class=\"footnotes cs-" + Version + "\">" + notes + "</div>";
       }
     }
   }

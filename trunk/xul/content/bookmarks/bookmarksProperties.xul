@@ -88,11 +88,11 @@
         <row id="namerow" align="center">
           <label value="&treecol.name.label;:" control="bmname"/>
           <!-- <textbox id="bmname" /> !-->
-          <textbox id="bmname" multiline="true" height="26px;" style="padding-top:5px;" onkeydown="this.className='vstyleProgram';" />
+          <textbox id="bmname" multiline="true" height="26px;" style="padding-top:5px;" onkeydown="this.className='cs-Program';" />
         </row>
         <row id="noterow" align="center">
           <label value="&treecol.note.label;:" control="note"/>
-          <textbox multiline="true" wrap="virtual" id="note" onkeydown="this.className='vstyleProgram';" flex="1"/>
+          <textbox multiline="true" wrap="virtual" id="note" onkeydown="this.className='cs-Program';" flex="1"/>
         </row>
         <row id="verserow" align="center">
           <!-- <label id="verseLabel" value="&treecol.versetext.label;:" control="verse"/> !-->

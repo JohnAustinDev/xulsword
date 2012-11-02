@@ -1543,6 +1543,7 @@ void xulsword::setCipherKey(const char *mod, const char *cipherkey, bool useSecM
   #endif
 
   // Set the new Cipher Key. IF WRONG CIPHER KEY IS GIVEN, IT CANNOT BE CHANGED WITHOUT RELOAD (SWORD BUG)
+//SWLog::getSystemLog()->logDebug("Actual CipherKey=%s\n", Outtext);
   MyManager->setCipherKey(mod, Outtext);
 }
 

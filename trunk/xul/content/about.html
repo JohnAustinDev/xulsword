@@ -76,12 +76,12 @@
         for (var t=0; t<Tabs.length; t++) {
           if (!lastType || Tabs[t].modType!=lastType) {
             var type = window.frameElement.ownerDocument.getElementById("radio.label." + TYPES[Tabs[t].tabType]).childNodes[0].nodeValue;
-            document.write(sep + "<div class=\"head1 vstyleprogram\">" + type + "</div>");
+            document.write(sep + "<div class=\"head1 cs-Program\">" + type + "</div>");
             sep = "<br><br>";
           }
           lastType = Tabs[t].modType;
           var desc = Bible.getModuleInformation(Tabs[t].modName, "Description");
-          document.write("<div class=\"vstyle" + (isASCII(desc) ? "ASCII":Tabs[t].modName) + "\" >");
+          document.write("<div class=\"cs-" + (isASCII(desc) ? "ASCII":Tabs[t].modName) + "\" >");
           document.write("<a href=\"#" + Tabs[t].modName + "\">" + Tabs[t].label + " - " + desc + "</a><hr>");
           document.write("</div>");
         }
@@ -114,12 +114,12 @@
           info = Bible.getModuleInformation(Tabs[t].modName,"DistributionLicense");
           if (info && info!=NOTFOUND) mdata3 += comma + info;
           mdata3 += "</div>";
-          mdata1 = "<div class=\"vstyle" + (isASCII(mdata3) ? "ASCII":Tabs[t].modName) + "\" >";
+          mdata1 = "<div class=\"cs-" + (isASCII(mdata3) ? "ASCII":Tabs[t].modName) + "\" >";
           document.write(mdata1 + mdata2 + mdata3);
 
           // more link and conf file area
-          document.write("<a id=\"more." + Tabs[t].modName + "\" class=\"vstyleProgram\" href=\"javascript:toggleConfInfo('" + t + "');\">" + SBundle.getString("More") + "</a>");
-          document.write("<textarea id=\"conf." + Tabs[t].modName + "\" class=\"moreinfo vstyleen-US\" readonly=\"readonly\" ></textarea>");
+          document.write("<a id=\"more." + Tabs[t].modName + "\" class=\"cs-Program\" href=\"javascript:toggleConfInfo('" + t + "');\">" + SBundle.getString("More") + "</a>");
+          document.write("<textarea id=\"conf." + Tabs[t].modName + "\" class=\"moreinfo cs-en-US\" readonly=\"readonly\" ></textarea>");
           document.write("</div>");
         }
       </script>

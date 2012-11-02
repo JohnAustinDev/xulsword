@@ -127,7 +127,7 @@ function Startup()
   }
   
   gVerseText.value = gArg.text.text;
-  gVerseText.className = "vstyle" + gArg.text.location.version;
+  gVerseText.className = "cs-" + gArg.text.location.version;
   
   // Select the specified folder after the window is made visible
   function initMenulist() {

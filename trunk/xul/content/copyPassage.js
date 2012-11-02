@@ -73,7 +73,7 @@ function onRefUserUpdate(e, location, version) {
   var elem = e.target;
   while (!elem.id) {elem=elem.parentNode;}
   if (!elem) return;
-  document.getAnonymousElementByAttribute(elem, "anonid", "version").className = "vstyle" + version;
+  document.getAnonymousElementByAttribute(elem, "anonid", "version").className = "cs-" + version;
 }
 
 function initCheckBoxes(module, checkboxes) {

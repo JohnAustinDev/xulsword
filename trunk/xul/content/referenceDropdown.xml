@@ -106,7 +106,7 @@
           var description = Bible.getModuleInformation(Tabs[m].modName, "Description");
           if (description==NOTFOUND) description=null;
           var newitem = this.versionmenulist.appendItem(Tabs[m].label, Tabs[m].modName, description);
-          newitem.className = "vstyle" + Tabs[m].modName;
+          newitem.className = "cs-" + Tabs[m].modName;
         }
         
         // Initialize location vars and selections
@@ -181,7 +181,7 @@
           
           for (var v=0; v<this.versions.length; v++) {if (this.versions[v]==val) break;}
           if (v==this.versions.length) return current;
-          this.versionmenulist.className = "vstyle" + val; //this does not work after first pass!
+          this.versionmenulist.className = "cs-" + val; //this does not work after first pass!
           if (!this.versionmenulist.hidden)
             this.versionmenulist.selectedIndex = v;
           else this._version=val;

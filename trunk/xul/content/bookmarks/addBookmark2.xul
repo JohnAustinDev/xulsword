@@ -130,7 +130,7 @@
 
 <!-- TOOLTIPS DEFINED HERE !-->
 <tooltip id="expanderTT">
-  <label id="expanderTTL" class="vstyleProgram" value="" />
+  <label id="expanderTTL" class="cs-Program" value="" />
 </tooltip>
 
 </dialog>

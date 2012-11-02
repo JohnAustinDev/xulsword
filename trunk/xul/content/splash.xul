@@ -92,11 +92,7 @@
   <![CDATA[
     window.screenX = window.screen.width/2-50;
     window.screenY = window.screen.height/2-50;
-  ]]>
-  </script>
-  
-  <script>
-  <![CDATA[
+
     // Scripts or programs that need to block while MK installs stuff will get confused if MK needs to restart, hence we need xsInstallOnlyMutex.
     // If the script or program does not have a blocking feature, it will need to create the xsInstallOnlyMutex file itself.
     var installOnly = false;

@@ -155,6 +155,9 @@ var ViewPort = {
           Number(otw.offsetLeft + otw.offsetWidth - 6):0) + "px";
     }
     
+    // fix viewport width to fill parent with no overflow
+    document.getElementById("viewportbody").style.width = MainWindow.innerWidth - MainWindow.document.getElementById("genBookChooser").boxObject.width + "px";
+   
     // Tab row
     document.getElementById("tabrow").setAttribute("windows", "show" + prefs.getIntPref("NumDisplayedWindows"));
    

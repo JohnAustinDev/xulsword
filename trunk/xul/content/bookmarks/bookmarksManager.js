@@ -37,7 +37,7 @@ function createVersionTreeClasses(sheetNum) {
   var sheet = document.styleSheets[sheetNum];
   if (!sheet) return;
   var sheetLength = sheet.cssRules.length;
-  var styleRules = MainWindow.TreeStyleRules;
+  var styleRules = MainWindow.TreeModuleStyles;
   for (var r=0; r<styleRules.length; r++) {
     sheet.insertRule(styleRules[r], sheetLength);
   }

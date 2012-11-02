@@ -106,16 +106,6 @@ function usesSecurityModule(aXSobj, version) {
 /************************************************************************
  * Style Globals
  ***********************************************************************/ 
-var ScriptBoxFontColor;
-var ScriptBoxTextCSS;
-var SelectedBookBackground;
-var PointedBookBackground;
-var ChooserStartMargin;
-var SelectedVerseCSS;
-var SelectedVerseColor;
-var ChooserBookButtonHeight;
-var NormalBookBackground;
-var ChapterArrowCSS;
 var InitialCssFontSize = [];
 var CssRuleHavingFontSize = [];
 var DefaultFont = "Arial";
@@ -139,8 +129,8 @@ function createVersionClasses() {
   var sheet = document.styleSheets[document.styleSheets.length-1];
   if (!sheet) return;
   var sheetLength = sheet.cssRules.length;
-  for (var r=0; r<StyleRules.length; r++) {
-    sheet.insertRule(StyleRules[r], sheetLength);
+  for (var r=0; r<MainWindow.ModuleStyles.length; r++) {
+    sheet.insertRule(MainWindow.ModuleStyles[r], sheetLength);
   }
 }
 
@@ -428,7 +418,14 @@ function getBookNameParts(bname) {
 //    
 function ref2ProgramLocaleText(reference, notHTML) {
   var separator="";
-  var dc = notHTML ? LocaleDirectionChar:LocaleDirectionEntity;
+  
+  var entity = "&rlm;";
+  entity = ((LocaleConfigs[getLocale()].direction && 
+                          LocaleConfigs[getLocale()].direction=="rtl") ? "&rlm;":"&lrm;");
+  var char = (guiDirection=="rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
+
+
+  var dc = notHTML ? char:entity;
   var retv=dc;
  
   reference += "-";
