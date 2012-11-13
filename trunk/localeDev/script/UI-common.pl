@@ -8,35 +8,35 @@ use File::Compare;
 $MKDEV = "$MK/localeDev";
 $MKSDEV = "$MKS/localeDev";
 $MAPFILE   = "$MKDEV/UI-MAP.txt";
-$LOCALEDIR = ($locale ne "en-US" ? "$MKSDEV/$locale":"$MKDEV/$locale");
+$LOCALEDIR = ($LOCALE ne "en-US" ? "$MKSDEV/$LOCALE":"$MKDEV/$LOCALE");
 $LOCALECODE = "$LOCALEDIR/locale";
-$FIREFOX = "$MKSDEV/$firefoxDirName";
+$SHORTCUT = "(\\.accesskey|\\.commandkey|\\.keybinding|\\.key|\\.sc|\\.sh|\\:LanguageMenuAccKey|\\:SearchAccKey)\$";
 
 if (!-e $LOCALEDIR) {make_path($LOCALEDIR);}
 
 # Get locale information
-$ignoreShortCutKeys = 0;
-if ($locale && $version && $localeALT) {}
-elsif ($locale) {
-  my $ui = &UI_File($locale, 1);
+$IGNORE_SHORTCUT_KEYS = 0;
+if ($LOCALE && $VERSION && $LOCALE_ALT) {}
+elsif ($LOCALE) {
+  my $ui = &UI_File($LOCALE, 1);
   if (!open(INF, "<:encoding(UTF-8)", $ui)) {&Log("\n\nERROR UI-common.pl: could not open UI file \"$ui\".\n"); die;}
   while(<INF>) {
     if ($_ =~ /\s*\#?\s*Locale=([^,]+),\s*Version=([^,]+),\s*Alternate_locale=([^,]+),\s*Firefox_locale=([^,]+)(,\s*Ignore_shortCut_keys=([^,\s]+))?\s*$/i) {
       $ltmp = $1;
-      $version = $2;
-      $localeALT = $3;
-      $firefox = $4;
-      $ignoreShortCutKeys = ($6 eq "true" ? 1:0);
-      if ($ltmp ne $locale) {&Log("\n\nERROR UI-common.pl: Locale \"$locale\" is different than UI listing locale \"$ltmp\"!\n");}
+      $VERSION = $2;
+      $LOCALE_ALT = $3;
+      $LOCALE_FF = $4;
+      $IGNORE_SHORTCUT_KEYS = ($6 eq "true" ? 1:0);
+      if ($ltmp ne $LOCALE) {&Log("\n\nERROR UI-common.pl: Locale \"$LOCALE\" is different than UI listing locale \"$ltmp\"!\n");}
       last;
     }
   }
   close(INF);
-  if (!$version || !$localeALT || !$firefox) {&Log("\n\nERROR UI-common.pl: List file \"$ui\" header information is missing or malformed.\n"); die;}
+  if (!$VERSION || !$LOCALE_ALT || !$LOCALE_ALT) {&Log("\n\nERROR UI-common.pl: List file \"$ui\" header information is missing or malformed.\n"); die;}
 }
 else {&Log("ERROR UI-common.pl: Locale name was not provided.\n"); die;}
 
-$locinfo = "# Locale=$locale, Version=$version, Alternate_locale=$localeALT, Firefox_locale=$locale, Ignore_shortCut_keys=$ignoreShortCutKeys\n";
+$LOCINFO = "# Locale=$LOCALE, Version=$VERSION, Alternate_locale=$LOCALE_ALT, Firefox_locale=$LOCALE_FF, Ignore_shortCut_keys=$IGNORE_SHORTCUT_KEYS\n";
 
 sub UI_File($$) {
   my $loc = shift;
@@ -112,7 +112,6 @@ sub correlateUItoMAP(\%\%\%\%\%\%) {
   my $mayBeMissingP = shift;
   my $mayBeEmptyP = shift;
   my $codeFileEntryValuesP = shift;
-  my $isShortcutKeyP = shift;
   my $matchedDescriptionsP = shift;
 
   my %isFEWild;
@@ -129,7 +128,6 @@ sub correlateUItoMAP(\%\%\%\%\%\%) {
         $matchedDescriptionsP->{$d}++;
         if ($fe2 !~ /^(.+?)\:(.+)\s*$/) {&Log("ERROR: Malformed file:entry \"$fe2\"\n"); next;}
         $codeFileEntryValuesP->{$fe2} = $uiDescValueP->{$d};
-        $isShortcutKeyP->{$fe2} = ($d =~ /\.(ak|ck)$/ ? 1:0);
         if (exists($isFEWild{$fe})) {next;}
         if ($uiDescValueP->{$d} =~ /^\s*$/ && !exists($mayBeEmptyP->{$fileEntryDescP->{$fe}})) {
           &Log("WARNING $fe2: Value is empty.\n");
@@ -139,22 +137,25 @@ sub correlateUItoMAP(\%\%\%\%\%\%) {
     }
   }
   
-  # handle MAP file-entries which need to exist, but which are not used by the UI (and so are not in the UI files)
+  # insure every code file entry has a value
   for my $fe (keys %{$fileEntryDescP}) {
+    # handle MAP file-entries which need to exist, but which are not used by the UI (and so are not in the UI files)
     if ($fileEntryDescP->{$fe} =~ /^"(.*)"$/) {
       $codeFileEntryValuesP->{$fe} = $1;
       $fileEntryDescP->{$fe} = "<uSEd>";
     }
+    elsif (!exists($codeFileEntryValuesP->{$fe})) {$codeFileEntryValuesP->{$fe} = "";}
   }
   
   # clear and report any ERRORS
-  &clearErrors($uiDescValueP, $fileEntryDescP, $mayBeMissingP, $matchedDescriptionsP);
+  &clearErrors($uiDescValueP, $fileEntryDescP, $mayBeMissingP, $mayBeEmptyP, $matchedDescriptionsP);
 }
 
 sub clearErrors(\%\%\%\%\%) {
   my $uiDescValueP = shift;
   my $fileEntryDescP = shift;
   my $mayBeMissingP = shift;
+  my $mayBeEmptyP = shift;
   my $matchedDescriptionsP = shift;
   
   # report any UI listing phrases which were not in MAP, and remove them.
@@ -170,37 +171,42 @@ sub clearErrors(\%\%\%\%\%) {
     if (exists($mayBeMissingP->{$fileEntryDescP->{$fe}})) {next;}
     if (&isWild($fe, 1)) {next;}
     if ($fileEntryDescP->{$fe} ne "<uSEd>") {
-      &Log("ERROR: MAP file entry was not matched: \"$fe = ".$fileEntryDescP->{$fe}."\".\n");
+      
       $uiDescValueP->{$fileEntryDescP->{$fe}} = "";
+      
+      if (!( $mayBeEmptyP->{$fileEntryDescP->{$fe}} || ($IGNORE_SHORTCUT_KEYS && ($fe =~ /$SHORTCUT/)) )) {
+        &Log("ERROR: MAP file entry was not matched: \"$fe = ".$fileEntryDescP->{$fe}."\".\n");
+      }
     }
   }
 }
 
-sub translateValue($$$) {
+sub translateValue($$$$) {
   my $v = shift;
   my $floc = shift;
   my $tloc = shift;
+  my $ffdir = shift;
 
   # look for a matching value in from-locale and return its file-entry
-  if (!-e "$FIREFOX/$floc") {
-    &Log("Cannot translate: No Firefox locale: \"$FIREFOX/$floc\".\n");
+  if (!-e "$ffdir/$floc") {
+    &Log("Cannot translate: No Firefox locale: \"$ffdir/$floc\".\n");
     return "";
   }
   
-  if (!-e "$FIREFOX/$tloc") {
-    &Log("Cannot translate: No Firefox locale: \"$FIREFOX/$tloc\".\n");
+  if (!-e "$ffdir/$tloc") {
+    &Log("Cannot translate: No Firefox locale: \"$ffdir/$tloc\".\n");
     return "";
   }
   
   my $elps = decode("utf8", "…");
   $v =~ s/\.\.\./$elps/g;
   
-  my $v2 =           &xtrans($v, "$FIREFOX/$floc", 0, $floc, $tloc);
-  if (!$v2) {$v2 =   &xtrans($v, "$FIREFOX/$floc", 1, $floc, $tloc);}
+  my $v2 =           &xtrans($v, "$ffdir/$floc", 0, $floc, $tloc, $ffdir);
+  if (!$v2) {$v2 =   &xtrans($v, "$ffdir/$floc", 1, $floc, $tloc, $ffdir);}
   if (!$v2 && $v =~ s/($elps)$// || $v =~ s/(\W+)$//) {
     my $nw = $1;
-    $v2 =            &xtrans($v, "$FIREFOX/$floc", 0, $floc, $tloc);
-    if (!$v2) {$v2 = &xtrans($v, "$FIREFOX/$floc", 1, $floc, $tloc);}
+    $v2 =            &xtrans($v, "$ffdir/$floc", 0, $floc, $tloc, $ffdir);
+    if (!$v2) {$v2 = &xtrans($v, "$ffdir/$floc", 1, $floc, $tloc, $ffdir);}
     if ($v2) {&Log("GOTONE=$nw !!!!!!!!!!\n"); $v2 .= $nw;}
   }
   
@@ -208,12 +214,13 @@ sub translateValue($$$) {
 }
 
 my %Entry, %Value;
-sub xtrans($$$$$) {
+sub xtrans($$$$$$) {
   my $v = shift;
   my $dir = shift;
   my $nocase = shift;
   my $floc = shift;
   my $tloc = shift;
+  my $ffdir = shift;
 
   my $v2 = "";
   if (!opendir(CDIR, $dir)) {&Log("ERROR: Could not open \"$dir\".\n"); die;}
@@ -226,12 +233,12 @@ sub xtrans($$$$$) {
   
     # skip if this file is not in alternate locale
     my $np = $p;
-    $np =~ s/\Q$FIREFOX\E//;
+    $np =~ s/\Q$ffdir\E//;
     $np =~ s/\/\Q$floc\E(\/|$)/\/$tloc\//g;
-    $np = "$FIREFOX$np";
+    $np = "$ffdir$np";
     if (!-e $np) {next;}
     
-    if (-d $p) {$v2 = &xtrans($v, $p, $nocase, $floc, $tloc);}
+    if (-d $p) {$v2 = &xtrans($v, $p, $nocase, $floc, $tloc, $ffdir);}
     else {
       my $e;
       

@@ -6,7 +6,7 @@ if (!@ARGV) {print "usage: UI-code.pl MK MKS locale\n"; exit;}
 
 $MK = shift;
 $MKS = shift;
-$locale = shift;
+$LOCALE = shift;
 
 $MK  =~ s/\\/\//g;
 $MKS =~ s/\\/\//g;
@@ -23,16 +23,16 @@ if (-e $LOGFILE) {unlink($LOGFILE);}
 if (!-e $LOCALEDIR) {&Log("ERROR: Locale \"$LOCALEDIR\" was not found"); die;}
 if (-e $LOCALECODE) {remove_tree($LOCALECODE);}
 
-&Log($locinfo);
+&Log($LOCINFO);
 
 # read UI file(s).
-&read_UI_Files($locale, \%UIDescValue);
+&read_UI_Files($LOCALE, \%UIDescValue);
 
 # read the MAP contents into memory
 &readMAP($MAPFILE, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%MapLine);
 
 # correlate UI descriptions to MAP entries
-&correlateUItoMAP(\%UIDescValue, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%CodeFileEntryValues, \%IsShortcutKey, \%MatchedDescriptions);
+&correlateUItoMAP(\%UIDescValue, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%CodeFileEntryValues, \%MatchedDescriptions);
 
 # write code files
 for my $fe2 (sort keys %CodeFileEntryValues) {
@@ -40,7 +40,7 @@ for my $fe2 (sort keys %CodeFileEntryValues) {
   my $f = "$LOCALECODE/$1";
   my $e = $2;
   my $v = $CodeFileEntryValues{$fe2};
-  if ($ignoreShortCutKeys && $IsShortcutKey{$fe2}) {$FilteredShortcuts = 1; $v = "";}
+  if ($IGNORE_SHORTCUT_KEYS && $fe2 =~ /$SHORTCUT/) {$FilteredShortcuts = 1; $v = "";}
 
   my $dir = $f;
   $dir =~ s/\/[^\/]+$//;

@@ -5,9 +5,9 @@ if (!@ARGV) {print "usage UI-listing.pl MK MKS locale alternateLocale version fi
 
 $MK = shift;
 $MKS = shift;
-$locale = shift;
-$localeALT = shift;
-$version = shift;
+$LOCALE = shift;
+$LOCALE_ALT = shift;
+$VERSION = shift;
 $firefoxDirName = shift;
 
 $MK  =~ s/\\/\//g;
@@ -22,7 +22,7 @@ require "$MK/localeDev/script/UI-common.pl";
 $LOGFILE = "$LOCALEDIR/listing_log.txt";
 if (-e $LOGFILE) {unlink($LOGFILE);}
 
-&Log($locinfo);
+&Log($LOCINFO);
 
 # read the MAP contents into memory
 &readMAP($MAPFILE, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%MapLine);
@@ -31,21 +31,21 @@ if (-e $LOGFILE) {unlink($LOGFILE);}
 &read_UI_Files("en-US", \%UIDescValueEN);
 
 # read existing locale files
-if ($locale eq "en-US") {&Log("ERROR: Cannot run on en-US.\n"); die;}
-&read_UI_Files($locale, \%UIDescValue);
-&saveLocaleCode($locale, "xulsword/splash.png", "text-skin/xulsword");
-&saveLocaleCode($locale, "skin/NT.png", "text-skin/skin");
-&saveLocaleCode($locale, "skin/OT.png", "text-skin/skin"); 
+if ($LOCALE eq "en-US") {&Log("ERROR: Cannot run on en-US.\n"); die;}
+&read_UI_Files($LOCALE, \%UIDescValue);
+&saveLocaleCode($LOCALE, "xulsword/splash.png", "text-skin/xulsword");
+&saveLocaleCode($LOCALE, "skin/NT.png", "text-skin/skin");
+&saveLocaleCode($LOCALE, "skin/OT.png", "text-skin/skin"); 
 
 # read the alternate locale UI to use if a translation not found
-&read_UI_Files($localeALT, \%UIDescValueALT);
+&read_UI_Files($LOCALE_ALT, \%UIDescValueALT);
 
 # now scour the firefox locale, translating all matching phrases
 for my $d (keys %UIDescValueEN) {
   if (exists($UIDescValue{$d}) && $UIDescValue{$d} ne "" && $UIDescValue{$d} ne "_NOT_FOUND_") {next;}
   my $v = $UIDescValueEN{$d};
   if (&isSecondary($v, $d, \%MayBeMissing, \%MayBeEmpty)) {next;} # Don't try to translate secondary elements
-  my $tv = &translateValue($v, "en-US", $locale);
+  my $tv = &translateValue($v, "en-US", $LOCALE_FF, "$MKSDEV/$firefoxDirName");
   if ($tv) {
     $UIDescValue{$d} = $tv;
     $MapLine{$d} += 100000; # Move translated phrases to end of file
@@ -61,13 +61,13 @@ for my $d (keys %UIDescValueEN) {
 }
 
 # correlate UI descriptions to MAP entries
-&correlateUItoMAP(\%UIDescValue, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%CodeFileEntryValues, \%IsShortcutKey, \%MatchedDescriptions);
+&correlateUItoMAP(\%UIDescValue, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%CodeFileEntryValues, \%MatchedDescriptions);
 
 # write the UI files
 # file1
-my $listfile1 = &UI_File($locale, 1);
+my $listfile1 = &UI_File($LOCALE, 1);
 if (!open(OUTF, ">:encoding(UTF-8)", $listfile1)) {&Log("ERROR: Could not open output file $listfile1.\n"); die;}
-print OUTF $locinfo;
+print OUTF $LOCINFO;
 my $f2 = "";
 foreach my $d (sort {$MapLine{$a} <=> $MapLine{$b}} keys %UIDescValue) {
   my $v = $UIDescValue{$d};
@@ -81,7 +81,7 @@ close(OUTF);
 
 # file2
 if ($f2) {
-  my $listfile2 = &UI_File($locale, 2);
+  my $listfile2 = &UI_File($LOCALE, 2);
   if (!open(OUTF, ">:encoding(UTF-8)", $listfile2)) {&Log("ERROR: Could not open output file $listfile2.\n"); die;}
   print OUTF $f2;
   close(OUTF);

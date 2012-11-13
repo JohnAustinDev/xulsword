@@ -87,18 +87,18 @@
 
 <!-- HOT KEY DEFINITIONS !-->
 <keyset>
-  <key keycode="VK_F7"                         oncommand="handleNextPrev('prev.verse.key.VK_F7');"/>
-  <key keycode="VK_F8"                         oncommand="handleNextPrev('next.chapter.key.VK_F8');"/>
-  <key keycode="VK_F9"                         oncommand="handleNextPrev('next.verse.key.VK_F9');"/>
-  <key keycode="VK_F7"   modifiers="control"   oncommand="handleNextPrev('prev.verse.key.VK_F7');"/>
-  <key keycode="VK_F8"   modifiers="control"   oncommand="handleNextPrev('prev.chapter.key.VK_F8');"/>
-  <key keycode="VK_F9"   modifiers="control"   oncommand="handleNextPrev('next.verse.key.VK_F9');"/>
-  <key keycode="VK_DOWN"                       oncommand="handleNextPrev('next.verse.key.VK_DOWN');"/>
-  <key keycode="VK_DOWN" modifiers="alt"       oncommand="handleNextPrev('next.chapter.key.VK_DOWN.alt');"/>
-  <key keycode="VK_DOWN" modifiers="alt shift" oncommand="handleNextPrev('next.book.key.VK_DOWN.alt-shift');"/>
-  <key keycode="VK_UP"                         oncommand="handleNextPrev('prev.verse.key.VK_UP');"/>
-  <key keycode="VK_UP"   modifiers="alt"       oncommand="handleNextPrev('prev.chapter.key.VK_UP.alt');"/>
-  <key keycode="VK_UP"   modifiers="alt shift" oncommand="handleNextPrev('prev.book.key.VK_UP.alt-shift');"/>
+  <key keycode="VK_F7"                         command="cmd_xs_previousVerse"/>
+  <key keycode="VK_F8"                         command="cmd_xs_nextChapter"/>
+  <key keycode="VK_F9"                         command="cmd_xs_nextVerse"/>
+  <key keycode="VK_F7"   modifiers="control"   command="cmd_xs_previousVerse"/>
+  <key keycode="VK_F8"   modifiers="control"   command="cmd_xs_previousChapter"/>
+  <key keycode="VK_F9"   modifiers="control"   command="cmd_xs_nextVerse"/>
+  <key keycode="VK_DOWN"                       command="cmd_xs_nextVerse"/>
+  <key keycode="VK_DOWN" modifiers="alt"       command="cmd_xs_nextChapter"/>
+  <key keycode="VK_DOWN" modifiers="alt shift" command="cmd_xs_nextBook"/>
+  <key keycode="VK_UP"                         command="cmd_xs_previousVerse"/>
+  <key keycode="VK_UP"   modifiers="alt"       command="cmd_xs_previousChapter"/>
+  <key keycode="VK_UP"   modifiers="alt shift" command="cmd_xs_previousBook"/>
   <key keycode="VK_LEFT"   command="cmd_xs_back"/>
   <key keycode="VK_RIGHT"  command="cmd_xs_forward"/>
   <key keycode="VK_F1"     oncommand="openLanguageMenu();"/>
@@ -170,6 +170,12 @@
   <command id="cmd_xs_startHistoryTimer"
             oncommand="try {window.clearTimeout(History.timer);} catch(er){} History.timer=window.setTimeout('History.add()', History.delay);"/>
   <command id="cmd_xs_aboutModule"               oncommand="goDoCommand('cmd_xs_aboutModule');"/>
+  <command id="cmd_xs_nextVerse"                 oncommand="goDoCommand('cmd_xs_nextVerse');"/>
+  <command id="cmd_xs_previousVerse"             oncommand="goDoCommand('cmd_xs_previousVerse');"/>
+  <command id="cmd_xs_nextChapter"               oncommand="goDoCommand('cmd_xs_nextChapter');"/>
+  <command id="cmd_xs_previousChapter"           oncommand="goDoCommand('cmd_xs_previousChapter');"/>
+  <command id="cmd_xs_nextBook"                  oncommand="goDoCommand('cmd_xs_nextBook');"/>
+  <command id="cmd_xs_previousBook"              oncommand="goDoCommand('cmd_xs_previousBook');"/>  
   
 </commandset>
              
@@ -389,12 +395,12 @@
   
   
 <!-- TOOL BAR STARTS HERE!--> 
-  <hbox id="main-controlbar" class="controlbar" style="background-image: url(chrome://xulsword/skin/images/b2.gif)">
+  <hbox id="main-controlbar" class="controlbar">
   
     <spacer width="17px" orient="vertical"/>
     
-    <vbox pack="start" style="min-width:346px"> <!-- min-width is specified to allow for player's width !-->
-      <hbox id="historyButtons" align="center" chromedir="&locale.dir;" style="margin-top:2px; min-height:34px;"> <!-- min-height is specified to allow for player's height !-->
+    <vbox id="navigator-tool" pack="start">
+      <hbox id="historyButtons" align="center" chromedir="&locale.dir;">
         <button id="back" tooltip="backTT" label="  &history.back.label;" chromedir="&locale.dir;" command="cmd_xs_back" flex="40%"/>
         <button id="historymenu" tooltip="historymenuTT" type="menu">
           <menupopup id="historypopup" onpopupshowing="History.createMenu(event);"/>
@@ -402,30 +408,30 @@
         <button id="forward" tooltip="forwardTT" label="&history.forward.label;  " command="cmd_xs_forward" chromedir="&locale.dir;" dir="reverse" flex="40%"/>
       </hbox>
       
-      <hbox id="player" flex="1" align="center" pack="end" hidden="true" style="margin-top:2px; min-height:32px;"> <!-- height is specified because player's actual height is large (for showing video) !-->
-        <iframe id="playerFrame" style="width:218px; height:34px; overflow:hidden;" src="chrome://xulsword/content/player.html"/>
-        <button id="closeplayer" label="&closeCmd.label;" style="width:98px; -moz-margin-end:14px;" oncommand="endAudioPlayer()"/>
+      <hbox id="player" flex="1" align="center" pack="end" hidden="true">
+        <iframe id="playerFrame" src="chrome://xulsword/content/player.html"/>
+        <button id="closeplayer" label="&closeCmd.label;" oncommand="endAudioPlayer()"/>
       </hbox>
       
-      <hbox id="textnav" align="center" style="margin-left:10px; margin-right:10px;">
+      <hbox id="textnav" align="center">
         <reference-dropdown id="book" sizetopopup="none" flex="1" hidechapter="true" hideverse="true" hidelastverse="true" hideversion="true" />
-        <textbox  id="chapter" type="search" timeout="300" command="cmd_xs_navigatorUpdate" onclick="this.select()" width="35px" style="-moz-margin-start:-3px;" />
+        <textbox  id="chapter" type="search" timeout="300" command="cmd_xs_navigatorUpdate" onclick="this.select()" width="35px" />
         <vbox>
-          <image  id="nextchap"  class="smallButtons" onclick="handleNextPrev('next.chapter.button');"/>
-          <image  id="prevchap"  class="smallButtons" onclick="handleNextPrev('prev.chapter.button');"/>
+          <image  id="nextchap" class="smallButtons" onclick="goDoCommand('cmd_xs_nextChapter')"/>
+          <image  id="prevchap" class="smallButtons" onclick="goDoCommand('cmd_xs_previousChapter')"/>
         </vbox>
         <textbox  id="verse" type="search" timeout="300" command="cmd_xs_navigatorUpdate" onclick="this.select()" width="35px"/>
         <vbox>
-          <image  id="nextverse" class="smallButtons" onclick="handleNextPrev('next.verse.button');"/>
-          <image  id="prevverse" class="smallButtons" onclick="handleNextPrev('prev.verse.button');"/>
+          <image  id="nextverse" class="smallButtons" onclick="goDoCommand('cmd_xs_nextVerse')"/>
+          <image  id="prevverse" class="smallButtons" onclick="goDoCommand('cmd_xs_previousVerse')"/>
         </vbox>
       </hbox>
     </vbox>
     
     <spacer flex="14%"  orient="vertical"/>
     
-    <hbox style="padding-bottom:0px;">
-      <vbox style="padding-top:2px; margin-left:0px;">
+    <hbox id="search-tool">
+      <vbox>
         <textbox id="searchText" tooltip="searchTextTT" maxlength="24" oninput="goUpdateCommand('cmd_xs_searchFromTextBox')"/>
         <button id="searchButton" tooltip="searchButtonTT" label="&searchBut.label;  " command="cmd_xs_searchFromTextBox" dir="reverse" orient="horizontal" />
       </vbox>
@@ -433,7 +439,7 @@
     
     <spacer flex="14%"  orient="vertical"/>
     
-    <hbox hidden="false" id="optionButtons" align="start" style="padding-top:2px;">
+    <hbox id="optionButtons" hidden="false" align="start">
       <toolbarbutton id="hdbutton" class="togglebutton" label="&headingsButton.label;"  tooltip="hdbuttonTT"  command="cmd_xs_toggleHeadings"/>
       <toolbarbutton id="fnbutton" class="togglebutton" label="&notesButton.label;"     tooltip="fnbuttonTT"  command="cmd_xs_toggleFootnotes"/>
       <toolbarbutton id="crbutton" class="togglebutton" label="&crossrefsButton.label;" tooltip="crbuttonTT"  command="cmd_xs_toggleCrossRefs"/>
@@ -442,8 +448,8 @@
 
     <spacer id="rightspacer"  flex="72%" orient="vertical"/>
     
-    <!-- DEBUG STUFF FROM debug-overlay.xul!-->
-    <html:div onclick="document.getElementById('debug').hidden=!document.getElementById('debug').hidden" style="width:20px;"></html:div>
+    <!-- DEBUG STUFF FROM debug-overlay.xul !-->
+    <html:div id="debug-tool" onclick="document.getElementById('debug').hidden=!document.getElementById('debug').hidden"></html:div>
     <hbox id="debug" hidden="true">
       <vbox>
         <hbox id="debug-row1"></hbox>
@@ -452,12 +458,14 @@
     </hbox>
   </hbox>
   
-<!-- SCRIPTURE FRAMES ARE PLACED HERE !-->
+<!-- VIEWPORT DECK PLACED HERE !-->
   <vbox flex="100%">
     <deck id="appcontent" flex="100%">
+      
       <!-- <iframe id="aboutConfig" flex="100%" src="about:config" /> !-->
+      
       <hbox id="frameset" chooser="bible" flex="100%"> <!-- chooser attribute may be set to "bible", "book", or "hide" -->
-        <vbox id="genBookChooser" pack="start" flex="1" align="end" style="background-image: url(chrome://xulsword/skin/images/9.gif);">
+        <vbox id="genBookChooser" pack="start" flex="1" align="end">
           <spacer height="36"/>
           <vbox id="genBookTree" flex="1">
             <tree id="genbook-tree" flex="1" class="plain" hidecolumnpicker="true" seltype="single" enableColumnDrag="false"
@@ -481,10 +489,14 @@
         </vbox>
         <iframe id="xulviewport" flex="100%" src="viewport.html" context="contextScriptBox" />
       </hbox>
+      
       <browser id="printPreviewBrowser"/>
+      
       <browser id="printBrowser" type="content-primary" src="print.html" style="visibility:hidden;" />
+      
     </deck>
   </vbox>
+  
 </vbox>
 
 <!-- POPUP MENUS ARE DEFINED HERE !-->
@@ -546,4 +558,5 @@
 <tooltip id="tabTT">
   <label value="" />
 </tooltip>
+
 </window>

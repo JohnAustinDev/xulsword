@@ -481,7 +481,7 @@ function writeLocaleElem(elem, lc, id, noAccessKey) {
   var bundle = getLocaleBundle(LocaleList[lc], "xulsword.properties");
   if (!bundle) return null;
   var myLabel = bundle.GetStringFromName("LanguageMenuLabel");
-  var myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");
+  var myAccKey = ""; try {myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");} catch (er) {};
   var myLocale = LocaleList[lc];
 
   elem.setAttribute("label", myLabel);
@@ -728,7 +728,7 @@ var History = {
       popup.removeChild(popup.firstChild);
     // Show history in verse system of firstDisplayBible(), save current Bible location and restore it after creating menu
     var vers = firstDisplayBible();
-    for (var i=0; i<History.length; i++) {
+    for (var i=0; i<this.list.length; i++) {
       var xulElement = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "menuitem");
       xulElement.setAttribute("oncommand", "History.toSelection('" + i + "')");
       var aref = Location.convertLocation(WESTERNVS, this.list[i], Bible.getVerseSystem(vers));
@@ -937,6 +937,68 @@ var XulswordController = {
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
       if (!importAudio(null, null, false)) ModuleCopyMutex=false;
       break;
+    case "cmd_xs_nextVerse":
+      var vers = firstDisplayBible();
+      var l = Location.getLocation(vers).split(".");
+      l[1] = Number(l[1]);
+      l[2] = Number(l[2]);
+      l[2]++;
+      if (l[2] > Bible.getMaxVerse(vers, l[0] + "." + l[1])) {
+        l[1]++;
+        if (l[1] > Bible.getMaxChapter(vers, l[0])) return;
+        l[2] = 1;
+      }
+      l[3] = l[2];
+      Location.setLocation(vers, l.join("."));
+      Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
+      break;
+    case "cmd_xs_previousVerse":
+      var vers = firstDisplayBible();
+      var l = Location.getLocation(vers).split(".");
+      l[1] = Number(l[1]);
+      l[2] = Number(l[2]);
+      l[2]--;
+      if (l[2] == 0) {
+        l[1]--;
+        if (l[1] == 0) return;
+        l[2] = Bible.getMaxVerse(vers, l[0] + "." + l[1]);
+      }
+      l[3] = l[2];
+      Location.setLocation(vers, l.join("."));
+      Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
+      break;
+    case "cmd_xs_nextChapter":
+      var vers = firstDisplayBible();
+      var bkn = findBookNum(Location.getBookName());
+      var chn = Location.getChapterNumber(vers);
+      if (chn < Book[bkn].numChaps) {chn++;}
+      else return;
+      Location.setLocation(vers, Location.getBookName() + "." + chn);
+      Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+      break;
+    case "cmd_xs_previousChapter":
+      var vers = firstDisplayBible();
+      var bkn = findBookNum(Location.getBookName());
+      var chn = Location.getChapterNumber(vers);
+      if (chn > 1) {chn--;}
+      else return;
+      Location.setLocation(vers, Location.getBookName() + "." + chn);
+      Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+      break;
+    case "cmd_xs_nextBook":
+      var bkn = findBookNum(Location.getBookName());
+      bkn++;
+      if (bkn >= NumBooks) return;
+      Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
+      Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+      break;
+    case "cmd_xs_previousBook":
+      var bkn = findBookNum(Location.getBookName());
+      bkn--;
+      if (bkn < 0) return;
+      Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
+      Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+      break;
     }
   },
   
@@ -985,7 +1047,16 @@ var XulswordController = {
     case "cmd_xs_importAudio":
       if (ModuleCopyMutex) return false;
       break;
+    case "cmd_xs_nextVerse":
+    case "cmd_xs_previousVerse":
+    case "cmd_xs_nextChapter":
+    case "cmd_xs_previousChapter":
+    case "cmd_xs_nextBook":
+    case "cmd_xs_previousBook":
+      return isNextPrevEnabled();
+      break;
     }
+
     return true;
   },
       
@@ -1023,46 +1094,15 @@ var XulswordController = {
     case "cmd_xs_removeModule":
     case "cmd_xs_exportAudio":
     case "cmd_xs_importAudio":
+    case "cmd_xs_nextVerse":
+    case "cmd_xs_previousVerse":
+    case "cmd_xs_nextChapter":
+    case "cmd_xs_previousChapter":
+    case "cmd_xs_nextBook":
+    case "cmd_xs_previousBook":
       return true;
     default:
       return false;
-    }
-  }
-}
-      
-function handleNextPrev(id) {
-  if (!id || !isNextPrevEnabled()) return;
-  id = id.split(".");
-  if (id[0] == "next") {
-    //NEXT
-    switch(id[1]) {
-    case "verse":
-      ViewPortWindow.nextVerse(id[2] && id[2]=="button" ? SCROLLTYPECENTERALWAYS:SCROLLTYPECENTER);
-      break;
-    case "chapter":
-      ViewPortWindow.nextChapter(HILIGHTNONE, SCROLLTYPEBEG);
-      break;
-    case "book":
-      ViewPortWindow.nextBook(false);
-      break;
-    default:
-      return;
-    }
-  }
-  else {
-    //PREVIOUS
-    switch(id[1]) {
-    case "verse":
-      ViewPortWindow.previousVerse(id[2] && id[2]=="button" ? SCROLLTYPECENTERALWAYS:SCROLLTYPECENTER);
-      break;
-    case "chapter":
-      ViewPortWindow.previousChapter(HILIGHTNONE, SCROLLTYPEBEG);
-      break;
-    case "book":
-      ViewPortWindow.previousBook();
-      break;
-    default:
-      return;
     }
   }
 }

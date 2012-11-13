@@ -1,5 +1,49 @@
+#main-controlbar {
+  background-image: url(chrome://xulsword/skin/images/b2.gif);
+}
+#navigator-tool {
+  min-width:346px; /* specified to allow for player's width */
+}
+#historyButtons {
+  margin-top:2px; 
+  min-height:34px; /* specified to allow for player's height */
+}
+#player {
+  margin-top:2px; 
+  min-height:32px; /* specified because player's actual height is large (for showing video) */
+}
+#playerFrame {
+  width:218px; 
+  height:34px; 
+  overflow:hidden;
+}
+#closeplayer {
+  width:98px; 
+  -moz-margin-end:14px;
+}
+#textnav {
+  margin-left:10px; 
+  margin-right:10px;
+}
+#chapter {
+  -moz-margin-start:-3px;
+}
 
-/* CSS Document */
+#search-tool {
+  padding-bottom:0px;
+}
+#search-tool > vbox {
+  padding-top:2px; 
+  margin-left:0px;
+}
+
+#optionButtons {
+  padding-top:2px;
+}
+
+#debug-tool {
+  width:20px;
+}
 
 /* MAIN WINDOW TOGGLE BUTTONS */
 #crbutton {
@@ -165,6 +209,9 @@ textbox deck[anonid="search-icons"] {
 }
 
 /* GENERIC BOOK CHOOSER */
+#genBookChooser {
+  background-image: url(chrome://xulsword/skin/images/9.gif);
+}
 #genbook-tree {
   width:200px;
   font-size:12px;
@@ -175,7 +222,6 @@ textbox deck[anonid="search-icons"] {
   border-radius:6px;
   background:white;
 }
-
 #frameset:not([chooser="book"]) #genBookChooser,
 #frameset:not([chooser="book"]) #genBookTree {
   display:none;

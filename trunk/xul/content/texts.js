@@ -20,6 +20,7 @@ var Texts = {
   
   scrollTypeFlag:null,
   hilightFlag:null,
+  scrollDelta:null,
   
   display:[null, null, null, null],
   
@@ -27,11 +28,19 @@ var Texts = {
   
   footnotes:[null, null, null, null],
 
+  // The force parameter is an array of values, one for each window, 
+  // beginning with index 1 (0 is null). Each value has the following
+  // possibilities:
+  // -1 means don't update
+  // 0 means update if a watched value has changed
+  // 1 means update always
   update: function(scrollTypeFlag, hilightFlag, force) {
 
     if (scrollTypeFlag === undefined) scrollTypeFlag = SCROLLTYPETOP;
     if (hilightFlag === undefined) hilightFlag = HILIGHTNONE;
-    if (force === undefined) force = false;
+    if (force === undefined) force = [null, 0, 0, 0];
+    
+//jsdump("scrollTypeFlag=" + scrollTypeFlag + ", hilightFlag=" + hilightFlag + ", force=" + force);
    
     this.scrollTypeFlag = scrollTypeFlag;
     this.hilightFlag = hilightFlag;
@@ -46,23 +55,24 @@ var Texts = {
       
       if (document.getElementById("text" + w).getAttribute("columns") == "hide") continue;
       if (w > prefs.getIntPref("NumDisplayedWindows")) continue;
+      if (force[w] == -1) continue;
    
       switch(Tab[prefs.getCharPref("Version" + w)].modType) {
         
       case BIBLE:
-        this.updateBible(w, force);
+        this.updateBible(w, force[w]);
         break;
         
       case COMMENTARY:
-        this.updateCommentary(w, force);
+        this.updateCommentary(w, force[w]);
         break;
       
       case DICTIONARY:
-        this.updateDictionary(w);
+        this.updateDictionary(w, force[w]);
         break;
         
       case GENBOOK:
-        this.updateGenBook(w);
+        this.updateGenBook(w, force[w]);
         break;
         
       }
@@ -98,34 +108,14 @@ var Texts = {
       loc = display.bk + "." + display.ch + "." + display.vs;
       hilightFlag = HILIGHTNONE;
     }
-  
-    // overwrite display and location with any scroll values
-    if (typeof(this.scrollTypeFlag) == "object") {
-      if (this.scrollTypeFlag[w]) {
-        if (!(/\./).test(this.scrollTypeFlag[w])) {
-          scrollTypeFlag = this.scrollTypeFlag[w];
-          hilightFlag = HILIGHTNONE;
-        }
-        else {
-          var lt = this.scrollTypeFlag[w].split(".");
-            if (lt && lt.length==3) {
-            display.bk  = lt[0];
-            display.ch  = lt[1];
-            display.vs  = lt[2];
-            loc = lt[0] + "." + lt[1] + "." + lt[2];
-            scrollTypeFlag = Number(lt[3]);
-            hilightFlag = HILIGHTNONE;
-          }
-        }
-      }
-      else {scrollTypeFlag = SCROLLTYPENONE;}
-    }
-  
+
     // don't read new text if the results will be identical to the last displayed text
+    var textUpdated = false;
     var check = ["mod", "bk", "ch", "globalOptions", "ShowOriginal", "ShowFootnotesAtBottom", 
                 "ShowCrossrefsAtBottom", "ShowUserNotesAtBottom", "columns"];
                 
     if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
+      textUpdated = true;
 //jsdump("Reading text from libsword w" + w);
       var t = document.getElementById("text" + w);
       var sb = t.getElementsByClassName("sb")[0];
@@ -144,7 +134,8 @@ var Texts = {
         while (c > 0) {
           d2.ch = c;
           var tip = BibleTexts.read(w, d2);
-          prev.htmlText = (tip.htmlText.length > 64 ? tip.htmlText:"") + prev.htmlText;
+          if (tip.htmlText.length <= 32) break; // stop if chapter is missing
+          prev.htmlText = tip.htmlText + prev.htmlText;
           prev.htmlNotes = tip.htmlNotes + prev.htmlNotes;
           prev.footnotes = tip.footnotes + prev.footnotes;
           sb.innerHTML = prev.htmlText;
@@ -157,7 +148,8 @@ var Texts = {
         while (c <= Bible.getMaxChapter(d2.mod, d2.bk + "." + d2.ch)) {
           d2.ch = c;
           var tip = BibleTexts.read(w, d2);
-          next.htmlText = next.htmlText + (tip.htmlText.length > 64 ? tip.htmlText:"");
+          if (tip.htmlText.length <= 32) break; // stop if chapter is missing
+          next.htmlText = next.htmlText + tip.htmlText;
           next.htmlNotes = next.htmlNotes + tip.htmlNotes;
           next.footnotes = next.footnotes + tip.footnotes;
           sb.innerHTML = next.htmlText;
@@ -166,7 +158,7 @@ var Texts = {
         }
         
       }
-      
+     
       var ti = BibleTexts.read(w, display);
         
       var hd = t.getElementsByClassName("hd")[0];
@@ -178,21 +170,22 @@ var Texts = {
       var nb = t.getElementsByClassName("nb")[0];
       this.footnotes[w] = prev.footnotes + ti.footnotes + next.footnotes;
       nb.innerHTML = prev.htmlNotes + ti.htmlNotes + next.htmlNotes;
-
     }
     
-    // handle scroll
-    this.scroll2Verse(w, loc, scrollTypeFlag);
-    
-    // handle highlights
-    this.hilightVerses(w, loc, hilightFlag);
-    
-    // set audio icons
-    if (BibleTexts.updateAudioLinksTO) window.clearTimeout(BibleTexts.updateAudioLinksTO);
-    BibleTexts.updateAudioLinksTO = window.setTimeout("BibleTexts.updateAudioLinks(" + w + ");", 0);
-    
-    // remove notes which aren't in window, or hide notebox entirely if empty
-    BibleTexts.checkNoteBox(w);
+    if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
+      // handle scroll
+      this.scroll2Verse(w, loc, scrollTypeFlag);
+      
+      // handle highlights
+      this.hilightVerses(w, loc, hilightFlag);
+      
+      // set audio icons
+      if (BibleTexts.updateAudioLinksTO) window.clearTimeout(BibleTexts.updateAudioLinksTO);
+      BibleTexts.updateAudioLinksTO = window.setTimeout("BibleTexts.updateAudioLinks(" + w + ");", 0);
+      
+      // remove notes which aren't in window, or hide notebox entirely if empty
+      BibleTexts.checkNoteBox(w);
+    }
     
     // save display objects for this window
     this.display[w] = copyObj(display);
@@ -219,33 +212,13 @@ var Texts = {
       loc = display.bk + "." + display.ch + "." + display.vs;
       hilightFlag = HILIGHTNONE;
     }
-    
-    // overwrite display and loc with any scroll values
-    if (typeof(this.scrollTypeFlag) == "object") {
-      if (this.scrollTypeFlag[w]) {
-        if (!(/\./).test(this.scrollTypeFlag[w])) {
-          scrollTypeFlag = this.scrollTypeFlag[w];
-          hilightFlag = HILIGHTNONE;
-        }
-        else {
-          var lt = this.scrollTypeFlag[w].split(".");
-          if (lt && lt.length==3) {
-            display.bk  = lt[0];
-            display.ch  = lt[1];
-            display.vs  = lt[2];
-            loc = lt[0] + "." + lt[1] + "." + lt[2];
-            scrollTypeFlag = Number(lt[3]);
-            hilightFlag = HILIGHTNONE;
-          }
-        }
-      }
-      else {scrollTypeFlag = SCROLLTYPENONE;}
-    }
-    
+
     // don't read new text if the results will be identical to last displayed text
+    var textUpdated = false;
     var check = ["mod", "bk", "ch", "globalOptions"];
      
     if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
+      textUpdated = true;
       var ti = CommTexts.read(w, display);
 
       this.footnotes[w] = ti.footnotes;
@@ -256,15 +229,16 @@ var Texts = {
       
       var sb = t.getElementsByClassName("sb")[0];
       sb.innerHTML = (ti.htmlText.length > 64 ? ti.htmlText:"");
-
     }
     
-    // handle scroll
-    this.scroll2Verse(w, loc, scrollTypeFlag);
-    
-    // handle highlights
-    this.hilightVerses(w, loc, hilightFlag); 
-    
+    if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
+      // handle scroll
+      this.scroll2Verse(w, loc, scrollTypeFlag);
+      
+      // handle highlights
+      this.hilightVerses(w, loc, hilightFlag);
+    }
+  
     // save display object for this window
     this.display[w] = copyObj(display);
       
@@ -295,17 +269,8 @@ var Texts = {
     }
     
     // handle scroll
-    var scrollTypeFlag = SCROLLTYPENONE;
-    var delta = 0;
-    if (typeof(this.scrollTypeFlag) == "object" && this.scrollTypeFlag[w]) {
-      var lt = this.scrollTypeFlag[w].split(".");
-      if (lt && lt.length == 2) {
-        delta = lt[0];
-        scrollTypeFlag = lt[1];
-      }
-    }  
-    if (scrollTypeFlag == SCROLLTYPEDELTA) GenBookTexts.scrollDelta(w, delta);
-    
+    if (this.scrollTypeFlag == SCROLLTYPEDELTA) GenBookTexts.scrollDelta(w, this.scrollDelta);
+      
     // save display object for this window
     this.display[w] = copyObj(display);
     
@@ -337,21 +302,22 @@ var Texts = {
       
       var nb = t.getElementsByClassName("nb")[0];
       nb.innerHTML = ti.htmlList;
+    
+      // highlight the selected key
+      var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");
+      while (k.length) {k[0].className = "";}
+      k = document.getElementById("w" + w + "." + encodeUTF8(display.DictKey));
+      if (k) {
+        k.className = "dictselectkey";
+        k.scrollIntoView();
+        document.getElementById("viewportbody").scrollTop = 0;
+      }
+      
+      document.getElementById("w" + w + ".keytextbox").value = display.DictKey;
+      setUnicodePref("DictKey_" + display.mod + "_" + w, display.DictKey);
+      
     }
-    
-    // highlight the selected key
-    var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");
-    while (k.length) {k[0].className = "";}
-    k = document.getElementById("w" + w + "." + encodeUTF8(display.DictKey));
-    if (k) {
-      k.className = "dictselectkey";
-      k.scrollIntoView();
-      document.getElementById("viewportbody").scrollTop = 0;
-    }
-    
-    document.getElementById("w" + w + ".keytextbox").value = display.DictKey;
-    setUnicodePref("DictKey_" + display.mod + "_" + w, display.DictKey);
-    
+  
     // save display object for this window
     this.display[w] = copyObj(display);
   },
@@ -451,6 +417,7 @@ var Texts = {
     display.ch = Number((loc[1] ? loc[1]:1));
     display.vs = Number((loc[2] ? loc[2]:1));
     display.lv = Number((loc[3] ? loc[3]:1));
+    display.scrollTypeFlag = this.scrollTypeFlag;
     display.GenBookKey = getPrefOrCreate("GenBookKey_" + mod + "_" + w, "Unicode", "/" + mod);
     display.DictKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
     display.ShowOriginal = getPrefOrCreate("ShowOriginal" + w, "Bool", false);

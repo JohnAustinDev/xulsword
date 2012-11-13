@@ -34,7 +34,7 @@ Set GeckoMinVersion=7.0
 Set GeckoMaxVersion=30.*
 Set (buildprefs.js):xulsword.EngineVersion=1.6.2
 Set (buildprefs.js):xulsword.MinXSMversion=1.0
-Set (buildprefs.js):xulsword.MinUIversion=2.7
+Set (buildprefs.js):xulsword.MinUIversion=3.5
 Set (buildprefs.js):xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
 # CHOOSE SECURITY SETTINGS
