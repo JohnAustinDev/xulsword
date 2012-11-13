@@ -16,11 +16,6 @@ treecol {
   text-align:start;
 }
 
-/* Make tree hiearchy lines visible again */
-treechildren::-moz-tree-line {
-  visibility:visible;
-  border: 1px dotted ThreeDShadow;
-}
 treechildren::-moz-tree-twisty {
   padding-right: 4px;
 }

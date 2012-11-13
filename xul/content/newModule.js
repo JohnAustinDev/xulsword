@@ -292,7 +292,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
       if (entryArray[f][e].match(manifest) || entryArray[f][e].match(conf)) {
         var remove = false;
         var versioninfo = readVersion(fileArray[f], entryArray[f][e], progVersion);
-//jsdump("compVers:" + versioninfo.compversion + ", minProgVers:" + versioninfo.minprogversion + ", type:" + versioninfo.type + ", path:" + versioninfo.path, + ", minCompVers:" + versioninfo.mincompversion);
+//window.alert("compVers:" + versioninfo.compversion + ", minProgVers:" + versioninfo.minprogversion + ", type:" + versioninfo.type + ", path:" + versioninfo.path, + ", minCompVers:" + versioninfo.mincompversion);
         // Check version info
         if (!versioninfo) jsdump("Problem checking \"" + entryArray[f][e] + "\", retained file.");
         else if (versioninfo.error) entryArray[f].splice(e--, 1);

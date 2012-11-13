@@ -1,21 +1,17 @@
 @import url(chrome://global/skin/);
 @import url(chrome://xsplatform/skin/xul.css);
 
+/* button.xml in omni.ja */
 .button-box {
   background-color:rgb(255,255,255);
 }
 
+/* loads global print preview interface */
 toolbar[printpreview="true"] {
   -moz-binding: url("chrome://global/content/printPreviewBindings.xml#printpreviewtoolbar");
 }
 
-/* Make tree hiearchy lines visible again */
-treechildren::-moz-tree-line {
-  visibility:visible;
-  border: 1px dotted ThreeDShadow;
-}
-
-/* XML Bindings */
+/* referenceDropDown.xml */
 reference-dropdown {
   -moz-binding: url("chrome://xulsword/content/referenceDropdown.xml#reference-dropdown");
 }
@@ -88,7 +84,7 @@ groupbox > * {
   margin:0px 4px 4px 4px;
 }
 
-/* MENU ICONS (hidden by default on Linux) */
+/* MENU ICONS (hidden by default on Linux so make visible always) */
 .menu-iconic-left {
   visibility:visible !important;
 }

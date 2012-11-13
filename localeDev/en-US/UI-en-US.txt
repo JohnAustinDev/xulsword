@@ -199,7 +199,6 @@
 [bookmark-window.menu-file.import]: Import...
 [bookmark-window.menu-file.import.file-chooser.import]: Import bookmark file:
 [bookmark-window.menu-file.save-as]: Save As...
-[bookmark-window.menu-file.save-as.file-chooser.save_as]: Save As
 [bookmark-window.menu-edit.delete]: Delete
 [bookmark-window.menu-edit.move-bookmark]: Move Bookmark(s)...
 [bookmark-window.menu-edit.move-bookmark.move_to]: Move to:
@@ -262,7 +261,7 @@
 [search-window.first_search_prompt]: This text was installed without a search index.\nA search index will now be created for you.
 [search-window.more-less-button.less]: Less
 [search-window.more-less-button.more]: More
-[search-window.search-button.tooltip]: Match any word ending with ' * '. Match any single character with ' ? '.
+[search-window.searchbox.tooltip]: Match any word ending with ' * '. Match any single character with ' ? '.
 [search-window.search-status.found_showing_all]: Verses found: %1$S
 [search-window.search-status.found_showing_some]: Found %3$S verses (showing %1$S to %2$S)
 [search-window.search_label]: Search word or phrase:

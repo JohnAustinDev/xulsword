@@ -118,7 +118,7 @@
         <button id="moreless" label="&more.label;" oncommand="clickHandler(this)"/>
         <label value="&searchwhat.label;" control="searchText"/>
         <textbox id="searchText" tooltip="searchTextTT" style="width:20em;" maxlength="60"/>
-        <button id="searchButton" label="&searchBut.label;  " dir="reverse" orient="horizontal" oncommand="clickHandler(this)"/>
+        <button id="searchButton" tooltip="searchButtonTT" label="&searchBut.label;  " dir="reverse" orient="horizontal" oncommand="clickHandler(this)"/>
         <spacer width="14px" orient="horizontal"/>
         <image id="question" class="question" onclick="clickHandler(this)"/>
       </hbox>
@@ -240,6 +240,9 @@
 <!-- TOOLTIPS DEFINED HERE !-->
 <tooltip id="searchTextTT">
   <label class="cs-Program" value="&searchbox.tooltip;" />
+</tooltip>
+<tooltip id="searchButtonTT">
+  <label class="cs-Program" value="&search.tooltip;" />
 </tooltip>
 
 </window>
