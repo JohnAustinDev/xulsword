@@ -27,7 +27,7 @@ const CBMAXHEIGHT = 500;
 function onLoad() {
   var audioDir = getSpecialDirectory("xsAudio");
   updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createVersionClasses();
+  createModuleClasses();
   for (var g=0; g<GROUPS.length; g++) {
     var checkBoxes = [];
     var hide=true;

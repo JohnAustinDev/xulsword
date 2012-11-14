@@ -30,7 +30,7 @@ var SavedCharPrefs = [];
 
 function onLoad() {
   updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createVersionClasses();
+  createModuleClasses();
   document.title = fixWindowTitle(getWindowTitle("print.printpassage"));
   
   ProgressMeter = document.getElementById("progress");

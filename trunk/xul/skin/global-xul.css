@@ -1,6 +1,14 @@
 @import url(chrome://global/skin/);
 @import url(chrome://xsplatform/skin/xul.css);
 
+/* UI classes which is dynamically updated from locale's own CSS */
+.localeUI {
+  font-family:'Arial';
+  font-size-adjust:0.55;
+  line-height:100%;
+  direction:ltr;
+}
+
 /* button.xml in omni.ja */
 .button-box {
   background-color:rgb(255,255,255);

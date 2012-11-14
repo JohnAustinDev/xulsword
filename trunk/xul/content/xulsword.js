@@ -34,10 +34,13 @@ function loadedXUL() {
   Texts = ViewPortWindow.Texts;
   BibleTexts = ViewPortWindow.BibleTexts;
   
+  // CSS dynamic updates
   updateCSSBasedOnCurrentLocale(["#xulsword-window", "input, button, menu, menuitem"]);
-  createVersionClasses(); // needed for tooltips
+  updateUIClasses();
+  createModuleClasses(); // needed for tooltips
   pullFontSizesFromCSS();
   adjustFontSizes(prefs.getIntPref('FontSize'));
+  
   document.title = SBundle.getString("Title");
   window.name="xulsword-window";
   
