@@ -125,7 +125,7 @@ function getCSS(searchText) {
   return null;
 }
 
-function createVersionClasses() {
+function createModuleClasses() {
   var sheet = document.styleSheets[document.styleSheets.length-1];
   if (!sheet) return;
   var sheetLength = sheet.cssRules.length;
@@ -158,6 +158,29 @@ function updateCSSBasedOnVersion(version, cssRuleNameArray) {
     else {
       var sheet = document.styleSheets[document.styleSheets.length-1];
       sheet.insertRule(getStyleRule(cssRuleNameArray[i], versionConfig), sheet.cssRules.length);
+    }
+  }
+}
+
+// Updates specific UI classes based on the chosen locale's built in CSS rules
+function updateUIClasses() {
+  var currentLocale = getLocale();
+  var localeConfig = LocaleConfigs[currentLocale];
+  var cssRuleNameArray = [".localeUI"];
+  for (var i=0; i<cssRuleNameArray.length; i++) {
+    var thisRule = getCSS(cssRuleNameArray[i]);
+    if (!thisRule) continue;
+    if (localeConfig && localeConfig.font)
+        thisRule.style.fontFamily = "\"" + localeConfig.font + "\"";
+    if (localeConfig && localeConfig.direction)
+        thisRule.style.direction = localeConfig.direction;
+    if (localeConfig && localeConfig.fontSizeAdjust) 
+        thisRule.style.fontSizeAdjust = localeConfig.fontSizeAdjust;
+    if (localeConfig && localeConfig.lineHeight)
+        thisRule.style.lineHeight = localeConfig.lineHeight;    
+    if (localeConfig && localeConfig.direction && localeConfig.direction == "rtl") {
+      if (thisRule.style.cssText.search("float: left") == -1) thisRule.style.cssText = thisRule.style.cssText.replace("float: right", "float: left");
+      else thisRule.style.cssText = thisRule.style.cssText.replace("float: left", "float: right");
     }
   }
 }
