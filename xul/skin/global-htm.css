@@ -1,0 +1,11 @@
+/* UI classes which are dynamically updated */
+.cs-Program {
+  font-family:'Arial';
+}
+.userFontSize {
+  font-size:12px;
+}
+
+.fixedFontSize {
+  font-size:12px;
+}

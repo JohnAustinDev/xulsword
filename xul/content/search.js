@@ -137,13 +137,13 @@ function createAndAppendRadio(tabNum, id) {
   
   if (!forceDefaultFormatting) {
     var versionConfig = VersionConfigs[Tabs[tabNum].modName];
-    var myfont = (versionConfig && versionConfig.font && !isASCII(Tabs[tabNum].label) ? versionConfig.font:DefaultFont);
+    var myfont = (versionConfig && versionConfig.fontFamily && !isASCII(Tabs[tabNum].label) ? versionConfig.fontFamily:DefaultFont);
     var myfontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust && !isASCII(Tabs[tabNum].label) ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
-    xulElement.style.fontFamily = "\"" + myfont + "\"";
+    xulElement.style.fontFamily = myfont;
     xulElement.style.fontSizeAdjust = myfontSizeAdjust;
   }
   else {
-    xulElement.style.fontFamily = "\"" + DefaultFont + "\"";
+    xulElement.style.fontFamily = DefaultFont;
     xulElement.style.fontSizeAdjust = DefaultFontSizeAdjust;  
   }
   

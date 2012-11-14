@@ -51,7 +51,7 @@ var bookmarksView, bookmarksFolder;
 function Startup()
 {
   updateCSSBasedOnCurrentLocale(["#bookmark-window", "input, button, menu, menuitem"]);
-  createModuleClasses();
+  createDynamicClasses();
   createVersionTreeClasses(0);
   //pullFontSizesFromCSS();
   //adjustFontSizes(prefs.getIntPref('FontSize'));

@@ -946,7 +946,7 @@ var BibleTexts = {
     var b = getLocaleBundle(l, "books.properties");
     var c = LocaleConfigs[l];
 
-    var font = (c && c.font ? c.font:DefaultFont);
+    var font = (c && c.fontFamily ? c.fontFamily:DefaultFont);
     var size = (c && c.fontSizeAdjust ? c.fontSizeAdjust:DefaultFontSizeAdjust);
     
     var intro = (ch != 1 ? "":BibleTexts.getBookIntroduction(mod, bk));
@@ -969,7 +969,7 @@ var BibleTexts = {
     html +=     "<div class=\"headbr\"></div>";
     html +=   "</div>";
 
-    size +=   "<div class=\"chapnum\" style=\"font-family:'" + font + "';\">";
+    size +=   "<div class=\"chapnum\" style=\"font-family:" + font + ";\">";
     size +=     "<div class=\"chapbk\">" + b.GetStringFromName(bk) + "</div>";
     size +=     "<div class=\"chapch\">" + getLocalizedChapterTerm(bk, ch, b, l) + "</div>";
     size +=   "</div>";

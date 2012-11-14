@@ -74,7 +74,7 @@ var WSucks;
 function Startup()
 {
   updateCSSBasedOnCurrentLocale(["#addBookmarkDialog", "input, button, menu, menuitem"]);
-  createModuleClasses();
+  createDynamicClasses();
   AllWindows.push(window);
 
   BookmarkFuns.initTemplateDataSource(document.getElementById("folderPopup"), BMDS);
@@ -103,7 +103,7 @@ function Startup()
  
   var title = BookmarksUtils.getLocaleString("ile_newbookmark");
   var loc = LocaleConfigs[getLocale()];
-  if (!loc || !loc.font || loc.font == DefaultFont) title += " \"" + gName.value + "\"";
+  if (!loc || !loc.fontFamily || loc.fontFamily == DefaultFont) title += " \"" + gName.value + "\"";
   document.title = fixWindowTitle(title);
   
   gExpanderTTL.setAttribute("value", gExpander.getAttribute("tooltiptextdown"));

@@ -34,7 +34,6 @@ var ViewPort = {
     }
     
     // set font sizes
-    pullFontSizesFromCSS();
     this.adjustFont(getPrefOrCreate('FontSize', "Int", 0));
 
     // draw tabs
@@ -237,9 +236,9 @@ var ViewPort = {
       
       // orig tab
       if (prefs.getBoolPref("ShowOriginal" + w)) 
-          document.getElementById("w" + w + ".tab.orig").setAttribute("active", "true");
+          try {document.getElementById("w" + w + ".tab.orig").setAttribute("active", "true");} catch (er) {}
       else
-          document.getElementById("w" + w + ".tab.orig").setAttribute("active", "false");
+          try {document.getElementById("w" + w + ".tab.orig").setAttribute("active", "false");} catch (er) {}
        
       // all other tabs
       document.getElementById("w" + w + ".multitab").style.display = "";
@@ -357,7 +356,7 @@ var ViewPort = {
   },
 
   adjustFont: function(f) {
-    adjustFontSizes(f, [".tab {"]);
+    adjustFontSizes(f);
   },
 
   unload: function() {

@@ -46,7 +46,7 @@ var gUnknownModule = false;
 function Init()
 {
   updateCSSBasedOnCurrentLocale(["#bmPropsWindow", "input, button, menu, menuitem"]);
-  createModuleClasses();
+  createDynamicClasses();
   AllWindows.push(window);
   
   gResource = BM.RDF.GetResource(window.arguments[0]);

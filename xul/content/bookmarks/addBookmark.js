@@ -98,7 +98,7 @@ var gCreateInFolder = BM.AllBookmarksID;
 function Startup()
 {
   updateCSSBasedOnCurrentLocale(["#moveBookmarkDialog", "input, button, menu, menuitem"]);
-  createModuleClasses();
+  createDynamicClasses();
   AllWindows.push(window);
 
   document.title = fixWindowTitle(document.title);

@@ -27,7 +27,7 @@ const CBMAXHEIGHT = 500;
 function onLoad() {
   var audioDir = getSpecialDirectory("xsAudio");
   updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createModuleClasses();
+  createDynamicClasses();
   for (var g=0; g<GROUPS.length; g++) {
     var checkBoxes = [];
     var hide=true;
@@ -172,7 +172,7 @@ function getChildLabel(aModname, control, forceLabel, forceDefaultFormatting) {
   else {
     ne.setAttribute("value", forceLabel);
     if (forceDefaultFormatting) {
-      ne.style.fontFamily = "\"" + DefaultFont + "\"";
+      ne.style.fontFamily = DefaultFont;
       ne.style.fontSizeAdjust = DefaultFontSizeAdjust;
     }
   }

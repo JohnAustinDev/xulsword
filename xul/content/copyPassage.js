@@ -24,7 +24,7 @@ var FirstDisplayBible;
 
 function onLoad() {
   updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createModuleClasses();
+  createDynamicClasses();
   PassageChooser = document.getElementById("passage");
   PassageTextBox = document.getAnonymousElementByAttribute(PassageChooser, "anonid", "book");
   VerseNumCheckbox = document.getElementById("cmd_xs_toggleVerseNums");
@@ -202,8 +202,8 @@ function prepVerseHtml4Clipboard(html, version, location) {
   if (aConfig) {
     //dir attribute is not needed because ambiguous punctuation character direction is defined by ref2ProgramLocaleText dir chars and embeded Unicode dir control chars
     var emdir = (aConfig.direction && aConfig.direction=="rtl" ? RTE:LRE);
-    var font = (aConfig.font ? aConfig.font:DefaultFont);
-    html += "<span style=\"font-family:'" + font + "';\">" + emdir + " (" + ref2ProgramLocaleText(location) + ")" + PDF + "</span>";
+    var font = (aConfig.fontFamily ? aConfig.fontFamily:DefaultFont);
+    html += "<span style=\"font-family:" + font + ";\">" + emdir + " (" + ref2ProgramLocaleText(location) + ")" + PDF + "</span>";
   }
   else html += "<span> (" + ref2ProgramLocaleText(location) + ")</span>";
   
@@ -211,9 +211,9 @@ function prepVerseHtml4Clipboard(html, version, location) {
   aConfig = VersionConfigs[version];
   if (aConfig) {
     emdir = (aConfig.direction && aConfig.direction=="rtl" ? RTE:LRE);
-    font = (aConfig.font ? aConfig.font:DefaultFont);
+    font = (aConfig.fontFamily ? aConfig.fontFamily:DefaultFont);
     var dir = (aConfig.direction && aConfig.direction=="rtl" ? "rtl":"ltr");
-    html = "<div style=\"font-family:'" + font + "'; dir:" + dir + ";\">" + emdir + html + PDF + "</div>";
+    html = "<div style=\"font-family:" + font + "; dir:" + dir + ";\">" + emdir + html + PDF + "</div>";
   }
   else html = "<div>" + html + "</div>";
 

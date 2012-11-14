@@ -48,7 +48,8 @@
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#"
-    class="localeUI" >
+    chromedir="&locale.dir;"
+    class="cs-Program userFontSize" >
     
 <data id="print.printpassage">&print.printpassage;</data>
 <data id="menu.copypassage">&menu.copypassage;</data>
@@ -68,7 +69,7 @@
 <script>var MainWindow = window;</script>
 <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkdata.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkfuncs.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
@@ -184,7 +185,7 @@
 <!-- MENU BAR BEGINS HERE !-->
   <toolbox>
   <menubar id="mainbar"> 
-    <menu id="file-menu" label="&fileMenu.label;" accesskey="&fileMenu.accesskey;">
+    <menu id="file-menu" label="&fileMenu.label;" accesskey="&fileMenu.accesskey;" >
       <menupopup id="file-popup" onpopupshowing="goUpdateFileMenu();">
         <menuitem id="keep-newmodule" label="&menu.addNewModule.label;" accesskey="&menu.addNewModule.sc;" command="cmd_xs_addNewModule" />
         <menuitem id="removemodule" label="&menu.removeModule.label;" accesskey="&menu.removeModule.sc;" command="cmd_xs_removeModule" />

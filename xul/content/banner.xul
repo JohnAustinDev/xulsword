@@ -45,12 +45,12 @@
   <script>
     function onLoad() {
       LocaleConfigs = [];
-      var localeConfig = {direction:null, font:null, fontSizeAdjust:null, lineHeight:null};
+      var localeConfig = {};
       var locale = getLocale();
       var bundle = getLocaleBundle(locale, "config.properties");
       if (bundle) {
         try {localeConfig.direction = bundle.GetStringFromName("Direction");} catch (er) {}
-        try {localeConfig.font = bundle.GetStringFromName("Font");} catch (er) {}
+        try {localeConfig.fontFamily = "'" + bundle.GetStringFromName("Font") + "'";} catch (er) {}
         try {localeConfig.fontSizeAdjust = bundle.GetStringFromName("FontSizeAdjust");} catch (er) {}
         try {localeConfig.lineHeight = bundle.GetStringFromName("LineHeight");} catch (er) {}
       }

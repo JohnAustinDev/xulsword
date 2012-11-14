@@ -35,10 +35,7 @@ function loadedXUL() {
   BibleTexts = ViewPortWindow.BibleTexts;
   
   // CSS dynamic updates
-  updateCSSBasedOnCurrentLocale(["#xulsword-window", "input, button, menu, menuitem"]);
-  updateUIClasses();
-  createModuleClasses(); // needed for tooltips
-  pullFontSizesFromCSS();
+  createDynamicClasses(); // needed for tooltips
   adjustFontSizes(prefs.getIntPref('FontSize'));
   
   document.title = SBundle.getString("Title");
@@ -209,13 +206,13 @@ function postWindowInit() {
     var info = modules[v].split(";");
     if (info[1].search("Biblical Texts") == -1) continue;
     var versionConfig = VersionConfigs[info[0]];
-    var font = "font-family:\"" + (versionConfig && versionConfig.font ? versionConfig.font:DefaultFont) + "\" !important; ";
+    var font = "font-family:" + (versionConfig && versionConfig.fontFamily ? versionConfig.fontFamily:DefaultFont) + " !important; ";
     var direction = "direction:" + (versionConfig && versionConfig.direction ? versionConfig.direction:"ltr") + " !important; ";
     TreeModuleStyles.push("treechildren::-moz-tree-cell-text(" + info[0] + ") { " + direction + font + "}");
   }
   for (var v=0; v<LocaleList.length; v++) {
     var localeConfig = LocaleConfigs[LocaleList[v]];
-    var font = "font-family:\"" + (localeConfig && localeConfig.font ? localeConfig.font:DefaultFont) + "\" !important; ";
+    var font = "font-family:" + (localeConfig && localeConfig.fontFamily ? localeConfig.fontFamily:DefaultFont) + " !important; ";
     var direction = "direction:" + (localeConfig && localeConfig.direction ? localeConfig.direction:"ltr") + " !important; ";
     TreeModuleStyles.push("treechildren::-moz-tree-cell-text(" + LocaleList[v] + ") { " + direction + font + "}");
   }
@@ -490,7 +487,9 @@ function writeLocaleElem(elem, lc, id, noAccessKey) {
   elem.setAttribute("label", myLabel);
   if (!noAccessKey) elem.setAttribute("accesskey", myAccKey);
   elem.setAttribute("id", myID);
-  if (LocaleConfigs[myLocale]) addConfigStyleToElem(LocaleConfigs[myLocale], elem, myLabel);
+  var mclass = elem.getAttribute("class");
+  mclass = (mclass ? mclass + " ":"");
+  elem.setAttribute("class", mclass + "cs-" + myLocale);
   return elem;
 }
 
@@ -564,19 +563,8 @@ function writeHelpVideoElem(elem, v) {
   elem.setAttribute("id", v.id);
   elem.setAttribute("label", v.label);
   elem.setAttribute("oncommand", "AllVideos[" + v.index + "].file.launch()");
-  elem.setAttribute("class", "menuitem-iconic videoHelpMenuItem");
-  var localeConfig = (!v.locale || !LocaleConfigs[v.locale] ? LocaleConfigs[getLocale()]:LocaleConfigs[v.locale]);
-  if (localeConfig) addConfigStyleToElem(localeConfig, elem, v.label);
+  elem.setAttribute("class", "menuitem-iconic videoHelpMenuItem" + (v.locale ? " cs-" + v.locale:""));
   return elem;
-}
-
-function addConfigStyleToElem(config, elem, label) {
-  var myfont = (config && config.font && (!label || !isASCII(label)) ? config.font:DefaultFont);
-  var myfontSizeAdjust = (config && config.fontSizeAdjust && (!label || !isASCII(label)) ? config.fontSizeAdjust:DefaultFontSizeAdjust);
-  var mylineHeight = (config && config.lineHeight ? config.lineHeight:DefaultLocaleLineHeight);
-  elem.style.fontFamily = "\"" + myfont + "\"";
-  elem.style.fontSizeAdjust = myfontSizeAdjust;
-  elem.style.lineHeight = mylineHeight;
 }
 
 function fillModuleMenuLists() {
@@ -634,7 +622,7 @@ function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefa
   var dirChar=String.fromCharCode(8206);
   if (!forceDefaultFormatting) {
     var versionConfig = VersionConfigs[Tabs[t].modName];
-    var myfont = (versionConfig && versionConfig.font && !isASCII(Tabs[t].label) ? versionConfig.font:DefaultFont);
+    var myfont = (versionConfig && versionConfig.fontFamily && !isASCII(Tabs[t].label) ? versionConfig.fontFamily:DefaultFont);
     var myfontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust && !isASCII(Tabs[t].label) ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
     dirChar = (versionConfig && versionConfig.direction && versionConfig.direction == "rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
   }
@@ -643,7 +631,7 @@ function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefa
     myfontSizeAdjust = DefaultFontSizeAdjust;
     dirChar = String.fromCharCode(8206);  
   }
-  elem.style.fontFamily = "\"" + myfont + "\"";
+  elem.style.fontFamily = myfont;
   elem.style.fontSizeAdjust = myfontSizeAdjust;
   
   elem.setAttribute(attrib, Tabs[t].label + desc + dirChar);
