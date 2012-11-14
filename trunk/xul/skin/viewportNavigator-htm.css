@@ -51,7 +51,7 @@
   color:rgb(0,0,100);
   background:rgb(233,233,233);
   border:1px outset rgb(200,200,200);
-  font-size:13px;
+  font-size:1.3em;
   text-align:center;
 }
 #biblechooser[showing="ot"] #testament_ot {
@@ -131,7 +131,7 @@
 .bookname > div > div {
   position:relative;
   white-space:nowrap;
-  font-size:13px;
+  font-size:1.3em;
   color:rgb(0,0,100);
   -moz-padding-end:20px;
 }
@@ -171,7 +171,7 @@
 .chaptermenu > div > div {
   display:table-cell;
   width:26px;
-  font-size:12px;
+  font-size:14px;
   text-align:center;
   background:rgb(233,233,233);
   border:1px outset rgb(255,243,255);
@@ -189,9 +189,10 @@
 .headingmenu {
   position:absolute;
   top:0px;
+  min-width:100%;
   visibility:hidden;
   white-space:nowrap;
-  font-size:13px;
+  font-size:14px;
   -moz-padding-start:20px;
   -moz-padding-end:20px;
   padding-top:10px;
@@ -203,6 +204,13 @@
   border-radius:6px;
   z-index:6;
 }
-.chaptermenu[headingmenu="show"] .headingmenu {
+.headingmenu[direction="rtl"] {
+  text-align:right;
+}
+.headingmenu a:hover {
+  text-decoration:underline;
+  cursor:pointer;
+}
+.bookname:hover .chaptermenu[headingmenu="show"] .headingmenu {
   visibility:visible;
 }

@@ -214,7 +214,7 @@ textbox deck[anonid="search-icons"] {
 }
 #genbook-tree {
   width:200px;
-  font-size:12px;
+  font-size:1.2em;
   border-top:2px solid rgb(175,145,180);
   border-left:2px solid rgb(175,145,180);
   border-right:2px solid rgb(225,195,230);

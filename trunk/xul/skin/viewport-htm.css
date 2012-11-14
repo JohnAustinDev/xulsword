@@ -1,6 +1,5 @@
 #viewportbody {
   font-family:'arial';
-  font-size:12px;
   padding-top:0px; /* used in viewport.js */
   -moz-padding-end:0px;
   padding-bottom:24px; /* used in viewport.js */
@@ -94,7 +93,7 @@
 .tab {
   position:relative;
   top:2px;
-  font-size:11px;
+  font-size:1em;
   color:grey;
   margin-left:3px;
   margin-right:3px;
@@ -164,7 +163,7 @@
   vertical-align:top;
   padding-left:10px;
   padding-right:10px;
-  font-size: 14px;
+  font-size: 1.1em;
 }
 .text[columns="show1"] {
   width:33%;
@@ -337,7 +336,7 @@
 }
 
 .nb {
-  font-size:12px;
+  font-size:0.9em;
   overflow:auto;
 	background:rgb(240,235,240);
 	border:2px solid rgb(150,150,150);

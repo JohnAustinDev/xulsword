@@ -17,14 +17,14 @@ a {
 
 }
 .phead1 {
-  font-size:18px;
+  font-size:1.8em;
   text-decoration:underline;
 }
 .phead2 {
-  font-size:18px;
+  font-size:1.8em;
 }
 .psmall {
-  font-size:10px;
+  font-size:1em;
 }
 .cr {
   display:none !important;

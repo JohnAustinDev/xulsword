@@ -1,12 +1,22 @@
 @import url(chrome://global/skin/);
 @import url(chrome://xsplatform/skin/xul.css);
 
-/* UI classes which is dynamically updated from locale's own CSS */
-.localeUI {
+/* UI classes which are dynamically updated */
+.cs-Program {
   font-family:'Arial';
-  font-size-adjust:0.55;
-  line-height:100%;
-  direction:ltr;
+}
+.userFontSize {
+  font-size:14px;
+}
+
+.fixedFontSize {
+  font-size:14px;
+}
+
+menu, menuitem, button, textbox, 
+toolbarbutton, menulist, label {
+  font-family:inherit;
+  font-size:inherit;
 }
 
 /* button.xml in omni.ja */

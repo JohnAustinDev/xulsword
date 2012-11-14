@@ -164,6 +164,14 @@ function chooserMouse(e) {
       ViewPort.update();
     }
     break;
+    
+  case "headlink":
+    if (e.type == "click") {
+      Location.setLocation(p[4], p[1] + "." + p[2] + "." + p[3]);
+      Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+    }
+    break;
+    
   }
 }
 
@@ -185,10 +193,10 @@ function showHeadings(myid, screenY) {
   var chtxt = Bible.getChapterText(biblemod, Book[p[1]].sName + "." + p[2] + ".1.1");
   
   // Find all headings and their following verses
-  var hdplus = /class="head1".*?>.*?<\/div>.*?<sup.*?>\d+<\/sup>/gim; // Get Array of head + next verse's
-  var hd = /class="head1".*?>(.*?)<\/div>/i;                          // Get heading from above
-  var vs = /<sup.*?>(\d+)<\/sup>/i;                                   // Get verse from above
-  var re = /(<.+?>)/gim;                                              // Used to remove all tags
+  var hdplus = /<div[^>]*class="head1.*?>.*?<\/div>.*?<sup.*?>\d+<\/sup>/gim; // Get Array of head + next verse's
+  var hd = /(<div[^>]*class="head1.*?>.*?<\/div>)/i;                          // Get heading from above
+  var vs = /<sup.*?>(\d+)<\/sup>/i;                                           // Get verse from above
+  var re = /(<\/?span[^>]*>)/gim;                                             // Used to remove all spans
   
   //  Find each heading and write it and its link to HTML
   var head = chtxt.match(hdplus);
@@ -196,10 +204,10 @@ function showHeadings(myid, screenY) {
   var hr="";
   if (head != null) {
     for (var h=0; h < head.length; h++) {
-      var heading=head[h].match(hd)[1].replace(re, "");
+      var heading=head[h].match(hd)[1].replace(re, "").replace(/head1/, "nohead");
       var verse=head[h].match(vs)[1];
       if (heading != "") {
-        html += hr + "<a id=\"lnk." + Book[p[1]].sName + "." + p[2] + "." + verse + "\" class=\"cs-" + biblemod + "\" >" + heading + "</a>" + "<br>"; 
+        html += hr + "<a id=\"headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod + "\" >" + heading + "</a>"; 
         hr="<hr>";
       }
     }
@@ -211,6 +219,7 @@ function showHeadings(myid, screenY) {
     var hm = document.getElementById("headingmenu_" + p[1]);
     hm.style.top = Number((1 + Math.floor((p[2]-1)/10)) * cm.firstChild.offsetHeight) + "px";
     hm.innerHTML = html;
+    hm.setAttribute("direction", (VersionConfigs[biblemod].direction ? VersionConfigs[biblemod].direction:"ltr"));
     cm.setAttribute("headingmenu", "show");
   }
   
@@ -251,7 +260,6 @@ function wheelScroll(testid) {
 
 function mouseScroll(testid, offsetTop) {
   MouseScrollTO = null;
-  if (ShowHeadingTO) window.clearTimeout(ShowHeadingTO);
   var rh = document.getElementById("book_1").offsetTop - document.getElementById("book_0").offsetTop;
   var testel = document.getElementById(testid);
   if (CanDownShift[testid] && offsetTop + testel.offsetTop < 3*rh) {

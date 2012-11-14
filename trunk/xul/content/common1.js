@@ -108,7 +108,7 @@ function usesSecurityModule(aXSobj, version) {
  ***********************************************************************/ 
 var InitialCssFontSize = [];
 var CssRuleHavingFontSize = [];
-var DefaultFont = "Arial";
+var DefaultFont = "'Arial'";
 var DefaultFontSizeAdjust = "0.55";
 var DefaultVersionLineHeight = "135%";
 var DefaultLocaleLineHeight = "100%";
@@ -125,22 +125,24 @@ function getCSS(searchText) {
   return null;
 }
 
-function createModuleClasses() {
+// Will create CSS classes for locales and modules using DynamicStyles
+function createDynamicClasses() {
   var sheet = document.styleSheets[document.styleSheets.length-1];
   if (!sheet) return;
   var sheetLength = sheet.cssRules.length;
-  for (var r=0; r<MainWindow.ModuleStyles.length; r++) {
-    sheet.insertRule(MainWindow.ModuleStyles[r], sheetLength);
+  for (var r=0; r<MainWindow.DynamicStyles.length; r++) {
+    sheet.insertRule(MainWindow.DynamicStyles[r], sheetLength);
   }
 }
 
-function getStyleRule(selector, config, notImportant, sizeNotImportant) {
+function createStyleRule(selector, config, notImportant, sizeNotImportant) {
   var importance = (notImportant ? "":" !important");
-  var font = "font-family:\"" + (config && config.font ? config.font:DefaultFont) + "\"" + importance + "; ";
-  var direction = "direction:" + (config && config.direction ? config.direction:"ltr") + importance + "; ";
+  var font = (config && config.fontFamily ? "font-family:" + config.fontFamily + importance + "; ":"");
+  var direction = (config && config.direction ? "direction:" + config.direction + importance + "; ":"");
+  
   importance = (notImportant || sizeNotImportant ? "":" !important");
-  var fontSizeAdjust = "font-size-adjust:" + (config && config.fontSizeAdjust ? config.fontSizeAdjust:DefaultFontSizeAdjust) + importance + "; ";
-  var lineHeight = "line-height:" + (config && config.lineHeight ? config.lineHeight:DefaultVersionLineHeight) + importance + "; ";
+  var fontSizeAdjust = (config && config.fontSizeAdjust ? "font-size-adjust:" + config.fontSizeAdjust + importance + "; ":"");
+  var lineHeight = (config && config.lineHeight ? "line-height:" + config.lineHeight + importance + "; ":"");
   return selector + " {" + direction + font + fontSizeAdjust + lineHeight + " }";
 }
 
@@ -150,49 +152,28 @@ function updateCSSBasedOnVersion(version, cssRuleNameArray) {
   for (var i=0; i<cssRuleNameArray.length; i++) {
     var thisRule = getCSS(cssRuleNameArray[i]);
     if (thisRule) {
-      thisRule.style.fontFamily = (versionConfig && versionConfig.font ? "\"" + versionConfig.font + "\"":"\"" + DefaultFont + "\"");
+      thisRule.style.fontFamily = (versionConfig && versionConfig.fontFamily ? versionConfig.fontFamily:DefaultFont);
       thisRule.style.direction = (versionConfig && versionConfig.direction ? versionConfig.direction:"ltr");
       thisRule.style.fontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
       thisRule.style.lineHeight = (versionConfig && versionConfig.lineHeight ? versionConfig.lineHeight:DefaultVersionLineHeight);
     }
     else {
       var sheet = document.styleSheets[document.styleSheets.length-1];
-      sheet.insertRule(getStyleRule(cssRuleNameArray[i], versionConfig), sheet.cssRules.length);
+      sheet.insertRule(createStyleRule(cssRuleNameArray[i], versionConfig), sheet.cssRules.length);
     }
   }
 }
 
-// Updates specific UI classes based on the chosen locale's built in CSS rules
-function updateUIClasses() {
-  var currentLocale = getLocale();
-  var localeConfig = LocaleConfigs[currentLocale];
-  var cssRuleNameArray = [".localeUI"];
-  for (var i=0; i<cssRuleNameArray.length; i++) {
-    var thisRule = getCSS(cssRuleNameArray[i]);
-    if (!thisRule) continue;
-    if (localeConfig && localeConfig.font)
-        thisRule.style.fontFamily = "\"" + localeConfig.font + "\"";
-    if (localeConfig && localeConfig.direction)
-        thisRule.style.direction = localeConfig.direction;
-    if (localeConfig && localeConfig.fontSizeAdjust) 
-        thisRule.style.fontSizeAdjust = localeConfig.fontSizeAdjust;
-    if (localeConfig && localeConfig.lineHeight)
-        thisRule.style.lineHeight = localeConfig.lineHeight;    
-    if (localeConfig && localeConfig.direction && localeConfig.direction == "rtl") {
-      if (thisRule.style.cssText.search("float: left") == -1) thisRule.style.cssText = thisRule.style.cssText.replace("float: right", "float: left");
-      else thisRule.style.cssText = thisRule.style.cssText.replace("float: left", "float: right");
-    }
-  }
-}
 
 // Adjusts rtl related styles for listed CSS rules or creates the rule if it doesn't exist
 function updateCSSBasedOnCurrentLocale(cssRuleNameArray) {
+  return; /*
   var currentLocale = getLocale();
   var localeConfig = LocaleConfigs[currentLocale];
   for (var i=0; i<cssRuleNameArray.length; i++) {
     var thisRule = getCSS(cssRuleNameArray[i]);
     if (thisRule) {
-      thisRule.style.fontFamily = (localeConfig && localeConfig.font ? "\"" + localeConfig.font + "\"":"\"" + DefaultFont + "\"");
+      thisRule.style.fontFamily = (localeConfig && localeConfig.fontFamily ? localeConfig.fontFamily:DefaultFont);
       thisRule.style.direction = (localeConfig && localeConfig.direction ? localeConfig.direction:"ltr");
       if (!thisRule.style.fontSizeAdjust) 
           thisRule.style.fontSizeAdjust = (localeConfig && localeConfig.fontSizeAdjust ? localeConfig.fontSizeAdjust:DefaultFontSizeAdjust);
@@ -205,10 +186,11 @@ function updateCSSBasedOnCurrentLocale(cssRuleNameArray) {
     }
     else {
       var sheet = document.styleSheets[document.styleSheets.length-1];
-      sheet.insertRule(getStyleRule(cssRuleNameArray[i], localeConfig, true), sheet.cssRules.length);
+      sheet.insertRule(createStyleRule(cssRuleNameArray[i], localeConfig, true), sheet.cssRules.length);
     }
-  }
+  }*/
 }
+
 
 // Return a locale (if any) to associate with the module:
 //    Return a Locale which lists the module as its default
@@ -249,6 +231,7 @@ function getVersionOfLocale(alocale) {
 }
 
 function pullFontSizesFromCSS() {
+  return; /*
   for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
     //Save to global variables the CSS initial values of those things which may be programatically changed
     for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
@@ -260,26 +243,20 @@ function pullFontSizesFromCSS() {
         CssRuleHavingFontSize.push(ssn + "><" + z);
       }
     }
-  }
+  }*/
 }
 
-function adjustFontSizes(delta, skipselectors) {
-  
-  RULES:
-  for (var i=0; i<CssRuleHavingFontSize.length; i++) {
-    var sheetNum = CssRuleHavingFontSize[i].split("><")[0];
-    var ruleNum = CssRuleHavingFontSize[i].split("><")[1];
-    var myRule = document.styleSheets[sheetNum].cssRules[ruleNum];
-    var newFontSize = InitialCssFontSize[i] + delta;
-    if (newFontSize < 6) newFontSize=6;
-    
-    if (skipselectors && skipselectors.length) {
-      for (var s=0; s<skipselectors.length; s++) {
-        if (myRule.cssText.indexOf(skipselectors[s]) != -1) continue RULES;
+var StartingFont = {};
+function adjustFontSizes(delta) {
+  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
+    for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
+      var myRule = document.styleSheets[ssn].cssRules[z];
+      if (myRule.cssText.search(".userFontSize") == -1) continue;
+      if (!StartingFont["ssn" + ssn + "z" + z]) {
+          StartingFont["ssn" + ssn + "z" + z] = Number(myRule.style.fontSize.match(/(\d+)/)[0]);
       }
+      myRule.style.fontSize = Number(StartingFont["ssn" + ssn + "z" + z] + delta) + "px";
     }
-    
-    document.styleSheets[sheetNum].cssRules[ruleNum].style.fontSize = newFontSize + "px";
   }
 }
 
@@ -714,7 +691,7 @@ function firstDisplayBible(returnNumber) {
   var wn = prefs.getIntPref("NumDisplayedWindows");
   for (var w=1; w<=wn; w++) {
     var amod = prefs.getCharPref("Version" + w);
-    if (Tab[amod].tabType == BIBLE) {
+    if (Tab[amod].modType == BIBLE) {
       ret = amod;
       break;
     }

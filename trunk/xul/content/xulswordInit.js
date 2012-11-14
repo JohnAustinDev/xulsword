@@ -28,7 +28,7 @@ var RestartToChangeLocale;
 var HaveValidLocale;
 var LocaleConfigs = {};
 var VersionConfigs = {};
-var ModuleStyles = [];
+var DynamicStyles = [];
 var Tabs = [];
 var Tab = {};
 var Book = new Array(NumBooks);
@@ -162,18 +162,25 @@ function initLocales() {
     catch (er) {defaultModule="none";}
     LocaleDefaultVersionString += sep + defaultModule;
     sep = ";";
-    var localeConfig = {direction:"ltr", font:DefaultFont, fontSizeAdjust:null, lineHeight:null};
+    
+    var locEntries = ["Direction", "Font", "FontSizeAdjust", "LineHeight"];
+    var cssProps = ["direction", "fontFamily", "fontSizeAdjust", "lineHeight"];
+    var localeConfig = {};
     if (bundle) {
-      try {localeConfig.direction = bundle.GetStringFromName("Direction");} catch (er) {}
-      try {localeConfig.font = bundle.GetStringFromName("Font");} catch (er) {}
-      try {localeConfig.fontSizeAdjust = bundle.GetStringFromName("FontSizeAdjust");} catch (er) {}
-      try {localeConfig.lineHeight = bundle.GetStringFromName("LineHeight");} catch (er) {}
+      for (var i=0; i<locEntries.length; i++) {
+        try {var entVal = bundle.GetStringFromName(locEntries[i]);} catch (er) {entVal = null;}
+        if (!entVal || (/^\s*$/).test(entVal)) continue;
+        localeConfig[cssProps[i]] = entVal;
+      }
+      if (localeConfig.fontFamily) localeConfig.fontFamily = "'" + localeConfig.fontFamily + "'";
     }
     LocaleConfigs[LocaleList[lc]] = localeConfig;
-    ModuleStyles.push(getStyleRule(".cs-" + LocaleList[lc], localeConfig));
+    DynamicStyles.push(createStyleRule(".cs-" + LocaleList[lc], localeConfig));
+    
   }
-  localeConfig = {direction:"ltr", font:DefaultFont, fontSizeAdjust:null, lineHeight:null};
-  ModuleStyles.push(getStyleRule(".cs-" + "ASCII", localeConfig));
+  
+  localeConfig = {};
+  DynamicStyles.push(createStyleRule(".cs-ASCII", localeConfig));
   
   LocaleDefaultVersion = LocaleDefaultVersionString.split(";");
 //dump ("LocaleDefaultVersion:" + LocaleDefaultVersion + "\n");
@@ -240,8 +247,8 @@ function createTabs() {
     var enginevers; try {enginevers = prefs.getCharPref("EngineVersion");} catch (er) {enginevers = NOTFOUND;}
     if (enginevers != NOTFOUND && comparator.compare(enginevers, xsengvers) < 0) continue;
     
-    //Use this opportunity to init the ModuleStyles and version configs...
-    var versionConfig = {direction:"ltr", font:DefaultFont, fontSizeAdjust:null, lineHeight:null};
+    //Use this opportunity to init the DynamicStyles and version configs...
+    var versionConfig = {};
     var dir = Bible.getModuleInformation(info[0], "Direction");
     var font = Bible.getModuleInformation(info[0], "Font")
     var fontSA = Bible.getModuleInformation(info[0], "FontSizeAdjust");
@@ -249,11 +256,11 @@ function createTabs() {
     var mlang = Bible.getModuleInformation(info[0], "Lang");
     var mlangs = mlang.replace(/-.*$/, "");
     if (dir.search("RtoL","i")!=-1) versionConfig.direction = "rtl";
-    if (font != NOTFOUND) versionConfig.font = font;
-    if (fontSA != NOTFOUND) versionConfig.fontSizeAdjust = fontSA;
-    if (fontLH != NOTFOUND) versionConfig.lineHeight = fontLH;
+    if (font != NOTFOUND && !(/^\s*$/).test(font)) versionConfig.fontFamily = "\"" + font + "\"";
+    if (fontSA != NOTFOUND && !(/^\s*$/).test(fontSA)) versionConfig.fontSizeAdjust = fontSA;
+    if (fontLH != NOTFOUND && !(/^\s*$/).test(fontLH)) versionConfig.lineHeight = fontLH;
     VersionConfigs[info[0]] = versionConfig;
-    ModuleStyles.push(getStyleRule(".cs-" + info[0], versionConfig));
+    DynamicStyles.push(createStyleRule(".cs-" + info[0], versionConfig));
 
     // Language glossaries don't currently work (too big??) and so aren't supported.
     if (Bible.getModuleInformation(info[0], "GlossaryFrom") != NOTFOUND) continue;
@@ -301,8 +308,8 @@ function createTabs() {
     moduleInfo += (moduleLabel!=NOTFOUND ? moduleLabel:info[0]) + "<nx>";
   }
   
-  //Finish the ModuleStyles init...
-  ModuleStyles.push(getStyleRule(".cs-Program", LocaleConfigs[getLocale()], false, true));
+  //Finish the DynamicStyles init...
+  DynamicStyles.push(createStyleRule(".cs-Program", LocaleConfigs[getLocale()], false, true));
   
   
   moduleInfo = moduleInfo.split("<nx>");
@@ -335,7 +342,7 @@ function createTabs() {
     else if (userConfFiles[info[1]]) tab.confModUnique = false;
     tab.isCommDir = (tab.conf && tab.conf.path.substring(0, tab.conf.path.lastIndexOf("\\")) == commonDir.path);
     tab.tabType = getShortTypeFromLong(tab.modType);
-    tab.isRTL = (VersionConfigs[tab.modName] && VersionConfigs[tab.modName].direction == "rtl");
+    tab.isRTL = (VersionConfigs[tab.modName] && VersionConfigs[tab.modName].direction && VersionConfigs[tab.modName].direction == "rtl");
     tab.index = m;
     tab.description = Bible.getModuleInformation(info[1], "Description");
     Tabs.push(tab);

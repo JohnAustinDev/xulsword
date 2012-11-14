@@ -21,7 +21,7 @@
   padding-top:26px;
 }
 .noticelink {
-  font-size:14px;
+  font-size:1.4em;
   margin:0px 10px 10px 10px;
   text-align:center;
 }
@@ -35,7 +35,7 @@
 }
 .chapnum {
   float:left;
-  font-size:28px;
+  font-size:28px; /* dynamically changed by js */
   font-weight:bold;
   color:rgb(110,85,110);
 }
@@ -57,7 +57,7 @@
   top:-5px;
   float:right;
   min-width:60px;
-  font-size:20px;
+  font-size:2em;
   color:rgb(110,85,110);
 }
 .listenlink {
@@ -97,7 +97,7 @@
 
 /* Script box styles */
 .head1 {
-  font-size:18px;
+  font-size:1.8em;
   color:rgb(110,85,110);
   font-weight:bold;
   text-align:center;
@@ -106,7 +106,7 @@
   clear:both;
 }
 .head2 {
-  font-size:16px;
+  font-size:1.6em;
   color:rgb(110,85,110);
   font-weight:bold;
   margin-bottom:0.5em;
@@ -116,7 +116,7 @@
   font-style:italic;
 }
 .divine {
-  font-size: 13px;
+  font-size: 1.3em;
 	color: black;
 }
 .versenum {
