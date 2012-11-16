@@ -198,6 +198,36 @@ function initLocales() {
   }
 }
 
+var StyleProps = {"fontFamily":null, "direction":null, "fontSizeAdjust":null, "lineHeight":null};
+var PropNames =  {"fontFamily":"font-family", 
+                  "direction":"direction", 
+                  "fontSizeAdjust":"font-size-adjust", 
+                  "lineHeight":"line-height"};
+function createStyleRule(selector, config) {
+  var rule = selector + " {";
+  for (var p in PropNames) {
+    var val = (config && config[p] ? PropNames[p] + ":" + config[p] + "; ":"");
+    
+    // All these properties must have a default value because these styles 
+    // should never fall back to an unknown style.
+    if (!val) {
+      if (!StyleProps[p]) {
+        var r = getCSS(".cs-Program");
+        if (r.style[p]) {
+          StyleProps[p] = PropNames[p] + ":" + r.style[p] + "; ";
+        }
+      }
+      val = StyleProps[p];
+    }
+    
+    if (val) rule += val;
+  }
+  rule += "}";
+
+//jsdump(rule); 
+  return rule;
+}
+
 HaveValidLocale = initLocales();
 //jsdump("LocaleList:" + LocaleList + "\n");
 
@@ -309,7 +339,7 @@ function createTabs() {
   }
   
   //Finish the DynamicStyles init...
-  DynamicStyles.push(createStyleRule(".cs-Program", LocaleConfigs[getLocale()], false, true));
+  DynamicStyles.push(createStyleRule(".cs-Program", LocaleConfigs[getLocale()]));
   
   
   moduleInfo = moduleInfo.split("<nx>");

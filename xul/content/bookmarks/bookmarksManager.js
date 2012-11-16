@@ -50,11 +50,10 @@ var bookmarksView, bookmarksFolder;
 // window title state, etc. 
 function Startup()
 {
-  updateCSSBasedOnCurrentLocale(["#bookmark-window", "input, button, menu, menuitem"]);
+//  updateCSSBasedOnCurrentLocale(["#bookmark-window", "input, button, menu, menuitem"]);
   createDynamicClasses();
   createVersionTreeClasses(0);
-  //pullFontSizesFromCSS();
-  //adjustFontSizes(prefs.getIntPref('FontSize'));
+  adjustFontSizes(prefs.getIntPref('FontSize'));
   
   const windowNode = document.getElementById("bookmark-window");
   bookmarksView = document.getElementById("bookmarks-view");

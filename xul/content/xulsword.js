@@ -613,28 +613,14 @@ function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefa
   if (t == -1) {
     if (skipORIG) return null;
   }
-  else if (!noDescription) {
-    desc = Bible.getModuleInformation(Tabs[t].modName, "Description");
-    if (desc==NOTFOUND) desc="";
-    else desc = " --- " + desc;
-  }
   
-  var dirChar=String.fromCharCode(8206);
-  if (!forceDefaultFormatting) {
-    var versionConfig = VersionConfigs[Tabs[t].modName];
-    var myfont = (versionConfig && versionConfig.fontFamily && !isASCII(Tabs[t].label) ? versionConfig.fontFamily:DefaultFont);
-    var myfontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust && !isASCII(Tabs[t].label) ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
-    dirChar = (versionConfig && versionConfig.direction && versionConfig.direction == "rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
-  }
-  else {
-    myfont = DefaultFont;
-    myfontSizeAdjust = DefaultFontSizeAdjust;
-    dirChar = String.fromCharCode(8206);  
-  }
-  elem.style.fontFamily = myfont;
-  elem.style.fontSizeAdjust = myfontSizeAdjust;
-  
-  elem.setAttribute(attrib, Tabs[t].label + desc + dirChar);
+  // Module class is from the module unless description is ASCII, in which case
+  // "en-US" class is used.
+  var mclass = "cs-" + (isASCII(Tabs[t].description) ? "en-US":Tabs[t].modName);
+  var eclass = elem.getAttribute("class");
+  elem.setAttribute("class", (eclass ? eclass + " ":"") + mclass);
+
+  elem.setAttribute(attrib, Tabs[t].label + (Tabs[t].description ? " --- " + Tabs[t].description:""));
   elem.setAttribute("id", id + "." + String(t));
   
   return elem;

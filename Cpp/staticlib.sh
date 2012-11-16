@@ -3,12 +3,14 @@
 # Static lib requires that sword-svn and clucene are 
 # compiled locally to provide necessary object files
 
+security=.libs/security.o 
+
 if [ `uname -m` == "x86_64" ]
 then
 echo compiling for 64 bit kernal with gcc 4.6
 g++ -shared \
 .libs/libxulsword.o \
-.libs/xulsword.o \
+.libs/xulsword.o $security \
 -pthread  \
 clucene-core-0.9.21b/src/.libs/*.o \
 sword-svn/lib/.libs/*.o \
@@ -26,7 +28,7 @@ else
 echo compiling for 32 bit kernal with gcc 4.6
 g++ -shared \
 .libs/libxulsword.o \
-.libs/xulsword.o \
+.libs/xulsword.o $security \
 -pthread  \
 clucene-core-0.9.21b/src/.libs/*.o \
 sword-svn/lib/.libs/*.o \

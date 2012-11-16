@@ -18,7 +18,11 @@
   height:15px;
   top:10px;
   left:6px;
-  z-index:11;
+  z-index:40;
+}
+body[chromedir="rtl"] #chbutton_open {
+  left:auto;
+  right:6px;
 }
 #viewportbody[chooser="hide"] #chbutton_open {
   display:block;
@@ -65,8 +69,11 @@
   padding:0px 20px 0px 30px;
   position:relative;
   white-space:nowrap;
-  z-index:2;
+  z-index:10;
   text-align:right;
+}
+body[chromedir="rtl"] .tabs {
+  text-align:left;
 }
 #tabrow[windows="show1"] #tabs1 {
   width:100%;
@@ -209,7 +216,7 @@
   width:28px;
   height:37px;
   background:url(chrome://xulsword/skin/images/pushpin0.png);
-  z-index:10;
+  z-index:20;
 }
 .sbpin:hover {
   background:url(chrome://xulsword/skin/images/pushpin2.png) !important;
@@ -277,6 +284,10 @@
   border-radius:8px;
   z-index:20;
 }
+body[chromedir="rtl"] .nbc > div {
+  right:auto;
+  left:0px;
+}
 #text1 .nbc > div {
   height:200px; /* used in viewport.js */
 }
@@ -302,6 +313,11 @@
   width:33%;
   padding-left:20px; /* hides columns rule */
 }
+body[chromedir="rtl"] .text[columns="show2"] .nbc > div,
+body[chromedir="rtl"] .text[columns="show3"] .nbc > div {
+  padding-left:0px;
+  padding-right:20px; /* hides columns rule */
+}
 
 .bb {
   position:relative;
@@ -310,14 +326,14 @@
   height:4px;
   border-radius:4px;
   cursor:N-resize;
-  z-index:2;
+  z-index:10;
   margin:10px 60px 0px 60px;
 }
 .bb[moving="true"] {
   border:1px dashed rgb(150,150,150); 
   background:rgb(233,233,20);
   cursor:N-resize;
-  z-index:8;
+  z-index:80;
 }
 
 .nbsizer {
@@ -327,6 +343,10 @@
   background:url(chrome://xulsword/skin/images/max.bmp);
   width:15px;
   height:14px;
+}
+body[chromedir="rtl"] .nbsizer {
+  right:auto;
+  left:42px;
 }
 .text[foot="showmax"] .nbsizer {
   background:url(chrome://xulsword/skin/images/norm.bmp);

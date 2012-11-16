@@ -45,7 +45,7 @@ var gUnknownModule = false;
 
 function Init()
 {
-  updateCSSBasedOnCurrentLocale(["#bmPropsWindow", "input, button, menu, menuitem"]);
+//  updateCSSBasedOnCurrentLocale(["#bmPropsWindow", "input, button, menu, menuitem"]);
   createDynamicClasses();
   AllWindows.push(window);
   

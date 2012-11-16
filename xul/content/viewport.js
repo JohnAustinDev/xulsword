@@ -19,6 +19,10 @@
 var ViewPort = {
   
   load: function() {
+    // set direction and dynamic styles
+    document.getElementById("viewportbody").setAttribute("chromedir", guiDirection());
+    createDynamicClasses();
+    
     // set default prefs
     getPrefOrCreate("NumDisplayedWindows", "Int", 2);
     
@@ -62,6 +66,7 @@ var ViewPort = {
   // implements them in the viewport. Ideally, updates should be implemented
   // with CSS.
   update: function(skipBibleChooserTest) {
+    
     var winh = getPrefOrCreate("ViewPortHeight", "Int", window.innerHeight);
 //jsdump("UPDATING VIEW PORT h=" + winh);
     // Read CSS constant rules and values
@@ -127,7 +132,7 @@ var ViewPort = {
       if (chel) chel.setAttribute("selected", (b==lbn ? "true":"false"));
     }
     
-    if (chooser != "hide") {
+    if (chooser == "bible") {
       var faderheight = padtop + tabheight;
       var chooserheight = document.getElementById("biblebooks_nt").offsetHeight;
       if (chooserheight > sbh) chooserheight = sbh;
@@ -148,10 +153,11 @@ var ViewPort = {
       ntw.style.width = "";
       if (ntw.offsetWidth > otw.offsetWidth) otw.style.width = Number(ntw.offsetWidth - 2) + "px";
       else ntw.style.width = (Number(otw.offsetWidth - 2) > 0 ? Number(otw.offsetWidth - 2):0) + "px";
-      rulef.style.width = (Number(otw.offsetLeft + otw.offsetWidth + 20) > 0 ? 
-          Number(otw.offsetLeft + otw.offsetWidth + 20):0) + "px";
-      rulec.style.width = (Number(otw.offsetLeft + otw.offsetWidth - 6) > 0 ? 
-          Number(otw.offsetLeft + otw.offsetWidth - 6):0) + "px";
+      var offset = (guiDirection() == "ltr" ? otw.offsetLeft:(otw.offsetParent.offsetWidth - otw.offsetLeft - otw.offsetWidth));
+      rulef.style.width = (Number(offset + otw.offsetWidth + 20) > 0 ? 
+          Number(offset + otw.offsetWidth + 20):0) + "px";
+      rulec.style.width = (Number(offset + otw.offsetWidth - 6) > 0 ? 
+          Number(offset + otw.offsetWidth - 6):0) + "px";
     }
     
     // fix viewport width to fill parent with no overflow
@@ -183,7 +189,9 @@ var ViewPort = {
             value = "show3";
       }
       
-      document.getElementById("text" + w).setAttribute("columns", value);
+      var t = document.getElementById("text" + w);
+      t.setAttribute("columns", value);
+      t.className = t.className.replace(/\s*cs\-\S+/, "") + " cs-" + prefs.getCharPref("Version" + w);
        
       if (value == "show2") {
         w++;
@@ -209,10 +217,15 @@ var ViewPort = {
     
     // Footnote boxes
     for (w=1; w<=NW; w++) {
+      var nb = document.getElementById("note" + w);
+      
       value = "hide";
       var type = Tab[prefs.getCharPref("Version" + w)].modType;
       
-      if (type == DICTIONARY) value = "show";
+      if (type == DICTIONARY) {
+        value = "show";
+        nb.className = nb.className.replace(/\s*cs\-\S+/, "") + " cs-Program";
+      }
       
       if (type == BIBLE) {
         
@@ -221,6 +234,7 @@ var ViewPort = {
         var gun = (prefs.getCharPref("User Notes") == "On" && prefs.getBoolPref("ShowUserNotesAtBottom"));
         
         if ((gfn || gcr || gun)) value = "show";
+        nb.className = nb.className.replace(/\s*cs\-\S+/, "") + " cs-" + prefs.getCharPref("Version" + w);
         
       }
       

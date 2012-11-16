@@ -55,7 +55,7 @@
         try {localeConfig.lineHeight = bundle.GetStringFromName("LineHeight");} catch (er) {}
       }
       LocaleConfigs[locale] = localeConfig;
-      updateCSSBasedOnCurrentLocale(['window']);
+//      updateCSSBasedOnCurrentLocale(['window']);
       
       setGlobalDirectionPrefs();
       sizeToContent();

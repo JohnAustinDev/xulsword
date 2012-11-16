@@ -23,7 +23,7 @@ var CheckBoxes = ["cmd_xs_toggleVerseNums", "cmd_xs_toggleHeadings", "cmd_xs_tog
 var FirstDisplayBible;
 
 function onLoad() {
-  updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
+//  updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
   createDynamicClasses();
   PassageChooser = document.getElementById("passage");
   PassageTextBox = document.getAnonymousElementByAttribute(PassageChooser, "anonid", "book");

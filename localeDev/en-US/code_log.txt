@@ -2,4 +2,7 @@
 INFO: Reading UI file: "UI-en-US.txt"
 INFO: Reading UI file: "UI-en-US_2.txt"
 WARNING xulsword/branding.dtd:producedby: Value is empty.
+
+ERROR: Description "configuration.text_direction = "" was not found in the MAP.
+
 Finished.

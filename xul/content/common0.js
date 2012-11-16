@@ -512,10 +512,16 @@ function getDisplayNumerals(locale) {
   DisplayNumeral[locale][10] = false;
   var bundle = getLocaleBundle(locale, "numbers.properties");
   for (var i=0; i<=9; i++) {
-    var n = String(i);
-    if (bundle) {try {n = bundle.GetStringFromName("n" + i);} catch(er) {}}
-    if (n != String(i)) DisplayNumeral[locale][10] = true;
-    DisplayNumeral[locale][i] = n;
+    var n = null;
+    if (bundle) {
+      try {
+        n = bundle.GetStringFromName("n" + i);
+        if (!n || test(/^\s*$/).test(n)) throw "No UI digit";
+      } 
+      catch(er) {n = null;}
+    }
+    if (n) DisplayNumeral[locale][10] = true;
+    DisplayNumeral[locale][i] = (n ? n:i);
   }
 }
 

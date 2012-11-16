@@ -47,8 +47,6 @@ var Texts = {
 
     if (this.scrollTypeFlag == SCROLLTYPETOP) Location.setVerse(prefs.getCharPref("DefaultVersion"), 1, 1);
     
-    updateCSSBasedOnVersion(firstDisplayBible(false), [".chapsubtable"]);
-    
     ViewPort.update(false);
     
     for (var w=1; w<=NW; w++) {
