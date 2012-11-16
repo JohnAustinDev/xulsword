@@ -24,18 +24,12 @@ var Bible                 = MainWindow.Bible;
 var Location              = MainWindow.Location;
 
 var LocaleConfigs         = MainWindow.LocaleConfigs;
-var VersionConfigs        = MainWindow.VersionConfigs;
+var ModuleConfigs         = MainWindow.ModuleConfigs;
 
 var Book                  = MainWindow.Book;
-var OrigModuleNT          = MainWindow.OrigModuleNT;
-var OrigModuleOT          = MainWindow.OrigModuleOT;
 
 var Tabs                  = MainWindow.Tabs;
 var Tab                   = MainWindow.Tab;
-var HaveOriginalTab       = MainWindow.HaveOriginalTab;
-
-var LocaleList            = MainWindow.LocaleList;
-var LocaleDefaultVersion  = MainWindow.LocaleDefaultVersion;
 
 var BM                    = MainWindow.BM;
 var BMDS                  = MainWindow.BMDS;

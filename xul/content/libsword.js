@@ -89,6 +89,8 @@ var Bible = {
   ModuleDirectory:null,
 
   LibswordPath:null,
+  
+  ModNeedsCipherKey:[],
 
   initLibsword: function() {
     if (jsdump) jsdump("Initializing libsword...");
@@ -182,9 +184,30 @@ var Bible = {
   },
 
   unlock: function() {
-    var mlist=this.getModuleList();
-    if (mlist=="No Modules" || mlist.search(BIBLE)==-1) return false;
-    unlockAllModules(this, true);
+    var mlist = this.getModuleList();
+    if (mlist == "No Modules" || mlist.search(BIBLE) == -1) return false;
+    
+    var msg = "";
+    var mods = mlist.split("<nx>");
+    for (var m=0; m<mods.length; m++) {
+      var mod = mods[m].split(";")[0];
+      var type = mods[m].split(";")[1];
+      
+      if (type != BIBLE) continue; // only Bible modules are encrypted
+      if (!(/^\s*$/).test.(this.getModuleInformation(mod, "CipherKey"))) continue; // not encrypted without cipherkey
+      
+      // module is encrypted but CipherKey is not supplied in .conf
+      var cipherkey;
+      try {cipherkey = getPrefOrCreate("CipherKey" + mod, "Char", prefs.getCharPref("DefaultCK"));}
+      catch (er) {cipherkey = "0";}
+      var useSecurityModule = usesSecurityModule(this, mod);
+      this.setCipherKey(mod, cipherkey, useSecurityModule);
+      if (!useSecurityModule) this.ModNeedsCipherKey.push(mod);
+      
+      if (cipherkey) msg += mod + "(" + cipherkey + ") ";
+    }
+    if (msg != "") {jsdump("Opening:" + msg + "\n");}
+    
     return true;
   },
 
@@ -696,4 +719,5 @@ getModuleInformation: function(modname, paramname) {
   return str;
 }
 }; 
+
 

@@ -202,20 +202,16 @@ function prepVerseHtml4Clipboard(html, version, location) {
   if (aConfig) {
     //dir attribute is not needed because ambiguous punctuation character direction is defined by ref2ProgramLocaleText dir chars and embeded Unicode dir control chars
     var emdir = (aConfig.direction && aConfig.direction=="rtl" ? RTE:LRE);
-    var font = (aConfig.fontFamily ? aConfig.fontFamily:DefaultFont);
+    var font = aConfig.fontFamily;
     html += "<span style=\"font-family:" + font + ";\">" + emdir + " (" + ref2ProgramLocaleText(location) + ")" + PDF + "</span>";
   }
   else html += "<span> (" + ref2ProgramLocaleText(location) + ")</span>";
   
   // add config file info
-  aConfig = VersionConfigs[version];
-  if (aConfig) {
-    emdir = (aConfig.direction && aConfig.direction=="rtl" ? RTE:LRE);
-    font = (aConfig.fontFamily ? aConfig.fontFamily:DefaultFont);
-    var dir = (aConfig.direction && aConfig.direction=="rtl" ? "rtl":"ltr");
-    html = "<div style=\"font-family:" + font + "; dir:" + dir + ";\">" + emdir + html + PDF + "</div>";
-  }
-  else html = "<div>" + html + "</div>";
+  aConfig = ModuleConfigs[version];
+  emdir = (aConfig.direction=="rtl" ? RTE:LRE);
+  var dir = (aConfig.direction=="rtl" ? "rtl":"ltr");
+  html = "<div style=\"font-family:" + aConfig.fontFamily + "; dir:" + dir + ";\">" + emdir + html + PDF + "</div>";
 
   return html;
 }

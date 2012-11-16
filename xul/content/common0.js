@@ -98,6 +98,10 @@ const PMNORMAL=0, PMSTOP=1;
 const APPLICATIONID="xulsword@xulsword.org";
 const XSNOTE = "(fn|cr|un)\\.([^\\.]+)\\.(\\w+)\\.(\\d+)\\.(\\d+)\\.(\\w+)";
 
+const NumBooks=66;
+const NumOT=39;
+const NumNT=27;
+
 // scrolling
 const SCROLLTYPENONE = 0;         // don't scroll (for links this becomes SCROLLTYPECENTER)
 const SCROLLTYPETOP = 1;          // scroll to top
@@ -396,6 +400,11 @@ function getPrefOrCreate(prefName, prefType, defaultValue) {
   return prefVal;
 }
 
+
+/************************************************************************
+ * Locale Functions
+ ***********************************************************************/
+
 function getLocale() {
   var loc = rootprefs.getCharPref("general.useragent.locale");
   if (loc.indexOf("chrome")==0) {
@@ -403,14 +412,10 @@ function getLocale() {
       loc = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService).createBundle(loc);
       loc = GetStringFromName("general.useragent.locale");
     }
-    catch(er) {loc = "en-US";}
+    catch(er) {loc = DEFAULTLOCALE;}
   }
   return loc;
 }
-
-/************************************************************************
- * Locale Functions
- ***********************************************************************/
 
 // THERE MAY BE A BETTER WAY TO IMPLEMENT THIS IMPORTANT FUNCTION!!!!
 function getLocaleBundle(locale, file) {

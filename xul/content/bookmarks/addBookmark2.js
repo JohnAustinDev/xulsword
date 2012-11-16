@@ -102,8 +102,7 @@ function Startup()
   sizeToContent();
  
   var title = BookmarksUtils.getLocaleString("ile_newbookmark");
-  var loc = LocaleConfigs[getLocale()];
-  if (!loc || !loc.fontFamily || loc.fontFamily == DefaultFont) title += " \"" + gName.value + "\"";
+  if (getLocale() == DEFAULTLOCALE) title += " \"" + gName.value + "\"";
   document.title = fixWindowTitle(title);
   
   gExpanderTTL.setAttribute("value", gExpander.getAttribute("tooltiptextdown"));

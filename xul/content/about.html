@@ -82,7 +82,7 @@
           }
           lastType = Tabs[t].modType;
           var desc = Bible.getModuleInformation(Tabs[t].modName, "Description");
-          document.write("<div class=\"cs-" + (isASCII(desc) ? "ASCII":Tabs[t].modName) + "\" >");
+          document.write("<div class=\"cs-" + (isASCII(desc) ? DEFAULTLOCALE:Tabs[t].modName) + "\" >");
           document.write("<a href=\"#" + Tabs[t].modName + "\">" + Tabs[t].label + " - " + desc + "</a><hr>");
           document.write("</div>");
         }
@@ -115,12 +115,12 @@
           info = Bible.getModuleInformation(Tabs[t].modName,"DistributionLicense");
           if (info && info!=NOTFOUND) mdata3 += comma + info;
           mdata3 += "</div>";
-          mdata1 = "<div class=\"cs-" + (isASCII(mdata3) ? "ASCII":Tabs[t].modName) + "\" >";
+          mdata1 = "<div class=\"cs-" + (isASCII(mdata3) ? DEFAULTLOCALE:Tabs[t].modName) + "\" >";
           document.write(mdata1 + mdata2 + mdata3);
 
           // more link and conf file area
           document.write("<a id=\"more." + Tabs[t].modName + "\" class=\"cs-Program\" href=\"javascript:toggleConfInfo('" + t + "');\">" + SBundle.getString("More") + "</a>");
-          document.write("<textarea id=\"conf." + Tabs[t].modName + "\" class=\"moreinfo cs-en-US\" readonly=\"readonly\" ></textarea>");
+          document.write("<textarea id=\"conf." + Tabs[t].modName + "\" class=\"moreinfo cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\" ></textarea>");
           document.write("</div>");
         }
       </script>

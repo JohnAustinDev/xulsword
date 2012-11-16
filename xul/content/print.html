@@ -21,7 +21,7 @@
     createDynamicClasses();
     
     var localeConfig = LocaleConfigs[getLocale()];
-    document.styleSheets[0].insertRule(".bmfolderindent { margin-" + (localeConfig && localeConfig.direction=="rtl" ? "right":"left") + ": 3em; }", document.styleSheets[0].cssRules.length);
+    document.styleSheets[0].insertRule(".bmfolderindent { margin-" + (localeConfig.direction=="rtl" ? "right":"left") + ": 3em; }", document.styleSheets[0].cssRules.length);
     
   </script>
   

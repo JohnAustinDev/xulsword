@@ -279,8 +279,8 @@ var BookmarkFuns = {
   getTextForBookmark: function (location) {
     var retval = {text:null, location:location};
     var text=null;
-    var directionChar = (VersionConfigs[location.version] && 
-        VersionConfigs[location.version].direction && VersionConfigs[location.version].direction=="rtl" ? 
+    var directionChar = (ModuleConfigs[location.version] && 
+        ModuleConfigs[location.version].direction=="rtl" ? 
         String.fromCharCode(8207):String.fromCharCode(8206));
         
     switch (getModuleLongType(location.version)) {
@@ -425,7 +425,7 @@ var BookmarkFuns = {
     var info, text;
     try {
       info = this.BmGetInfo(bmelem.id);
-      var directionChar = (VersionConfigs[info[MODULE]] && VersionConfigs[info[MODULE]].direction && VersionConfigs[info[MODULE]].direction=="rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
+      var directionChar = (ModuleConfigs[info[MODULE]] && ModuleConfigs[info[MODULE]].direction=="rtl" ? String.fromCharCode(8207):String.fromCharCode(8206));
       text = info[BMTEXT].substr(0, TOOLTIP_LEN);
       text += (text.length==TOOLTIP_LEN ? "...":"");
       text = directionChar + text + directionChar;
