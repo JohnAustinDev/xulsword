@@ -29,7 +29,7 @@ var SavedGlobalOptions = [];
 var SavedCharPrefs = [];
 
 function onLoad() {
-  updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
+//  updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
   createDynamicClasses();
   document.title = fixWindowTitle(getWindowTitle("print.printpassage"));
   

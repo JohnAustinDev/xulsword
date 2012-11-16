@@ -3,20 +3,33 @@
 
 /* UI classes which are dynamically updated */
 .cs-Program {
+  /* These values serve as defaults for all 
+  dynamically generated .cs- classes */
   font-family:'Arial';
+  direction:ltr;
+  font-size-adjust:none;
+  line-height:normal;
 }
 .userFontSize {
   font-size:14px;
 }
 
+/*like userFontSize but NOT dynamically updated */
 .fixedFontSize {
   font-size:14px;
+}
+
+.RTL {
+  direction:rtl;
 }
 
 menu, menuitem, button, textbox, 
 toolbarbutton, menulist, label {
   font-family:inherit;
   font-size:inherit;
+  line-height:inherit;
+  font-size-adjust:inherit;
+  direction:inherit;
 }
 
 /* button.xml in omni.ja */

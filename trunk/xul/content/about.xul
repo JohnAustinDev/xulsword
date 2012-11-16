@@ -49,7 +49,7 @@
   
   <script>
   function loaded() {
-    updateCSSBasedOnCurrentLocale(["window", "button", "label"]);
+//    updateCSSBasedOnCurrentLocale(["window", "button", "label"]);
     var SBundle = document.getElementById("strings");
     document.getElementById("info").value = SBundle.getFormattedString('Version',[prefs.getCharPref("Version"), prefs.getCharPref("BuildID")]);
     window.sizeToContent();

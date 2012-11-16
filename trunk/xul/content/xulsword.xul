@@ -49,7 +49,7 @@
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#"
     chromedir="&locale.dir;"
-    class="cs-Program userFontSize" >
+    class="cs-Program fixedFontSize" >
     
 <data id="print.printpassage">&print.printpassage;</data>
 <data id="menu.copypassage">&menu.copypassage;</data>

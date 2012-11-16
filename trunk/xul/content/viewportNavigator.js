@@ -206,8 +206,8 @@ function showHeadings(myid, screenY) {
     for (var h=0; h < head.length; h++) {
       var heading=head[h].match(hd)[1].replace(re, "").replace(/head1/, "nohead");
       var verse=head[h].match(vs)[1];
-      if (heading != "") {
-        html += hr + "<a id=\"headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod + "\" >" + heading + "</a>"; 
+      if (!(/^<div[^>]*>\s*<\/div>$/).test(heading)) {
+        html += hr + "<a class=\"cs-" + biblemod + "\" id=\"headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod + "\" >" + heading + "</a>"; 
         hr="<hr>";
       }
     }
@@ -219,7 +219,6 @@ function showHeadings(myid, screenY) {
     var hm = document.getElementById("headingmenu_" + p[1]);
     hm.style.top = Number((1 + Math.floor((p[2]-1)/10)) * cm.firstChild.offsetHeight) + "px";
     hm.innerHTML = html;
-    hm.setAttribute("direction", (VersionConfigs[biblemod].direction ? VersionConfigs[biblemod].direction:"ltr"));
     cm.setAttribute("headingmenu", "show");
   }
   

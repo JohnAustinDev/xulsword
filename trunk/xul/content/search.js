@@ -61,7 +61,7 @@ var SearchTypeRadio;
  * Loading and Unloading of the search window
  ***********************************************************************/ 
 function loadSearchWindow() {
-  updateCSSBasedOnCurrentLocale(["#search-window", "input, button, menu, menuitem"]);
+//  updateCSSBasedOnCurrentLocale(["#search-window", "input, button, menu, menuitem"]);
   SearchTypeRadio = document.getElementById("searchType");
   SearchTypeRadio.selectedIndex = getPrefOrCreate("InitialSearchType", "Int", CONTAINS_THE_WORDS);
   

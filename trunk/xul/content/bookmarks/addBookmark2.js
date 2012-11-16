@@ -73,7 +73,7 @@ var WSucks;
 
 function Startup()
 {
-  updateCSSBasedOnCurrentLocale(["#addBookmarkDialog", "input, button, menu, menuitem"]);
+//  updateCSSBasedOnCurrentLocale(["#addBookmarkDialog", "input, button, menu, menuitem"]);
   createDynamicClasses();
   AllWindows.push(window);
 

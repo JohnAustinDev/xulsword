@@ -655,7 +655,7 @@ sub createLocale($) {
   if (-e "$TRUNK/build-files/locales/$locale.jar") {unlink("$TRUNK/build-files/locales/$locale.jar");}
   &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$ldir/locale/*");
   if (-e "$ldir/text-skin") {
-    &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$ldir/text-skin/xulsword", 1);
+    &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$ldir/text-skin/*", 1);
   }
   
 }

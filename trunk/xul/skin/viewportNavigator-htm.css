@@ -4,7 +4,7 @@
   width:250px;
   height:100px; /* used in viewport.js */
   opacity:0.5;
-  z-index:50;
+  z-index:30;
 }
 #fadetop {
   background-position: 0px 40px;
@@ -24,8 +24,6 @@
   border-top:2px solid rgb(175,145,180);
   -moz-border-end:2px solid rgb(225,195,230);
   border-bottom:2px solid rgb(225,195,230);
-  border-top-right-radius:8px;
-  border-bottom-right-radius:8px;
   border-radius:8px;
   background:white;
   cursor:pointer;
@@ -51,7 +49,7 @@
   color:rgb(0,0,100);
   background:rgb(233,233,233);
   border:1px outset rgb(200,200,200);
-  font-size:1.3em;
+  font-size:1.2em;
   text-align:center;
 }
 #biblechooser[showing="ot"] #testament_ot {
@@ -68,6 +66,12 @@
   border-bottom-left-radius: 8px;
   padding:8px 0px 8px 0px;
 }
+body[chromedir="rtl"] #testament_ot {
+  border-top-right-radius: 8px;
+}
+body[chromedir="rtl"] #testament_nt {
+  border-bottom-right-radius: 8px;
+}
 #chbutton_close {
   background:url(chrome://xulsword/skin/images/close0.bmp);
   width:15px;
@@ -75,6 +79,10 @@
   position:absolute;
   top:16px;
   left:11px;
+}
+body[chromedir="rtl"] #chbutton_close {
+  left:auto;
+  right:11px;
 }
 #chbutton_close:hover {
   background:url(chrome://xulsword/skin/images/close1.bmp);
@@ -93,6 +101,12 @@
   -moz-border-start:1px solid rgb(150,150,150);
   border-top-right-radius:8px;
   border-bottom-right-radius:8px;
+}
+body[chromedir="rtl"] .biblebooks {
+  left:auto;
+  right:28px;
+  border-top-left-radius:8px;
+  border-bottom-left-radius:8px;
 }
 #biblechooser[showing="nt"] #biblebooks_nt {
   visibility:visible;
@@ -131,7 +145,7 @@
 .bookname > div > div {
   position:relative;
   white-space:nowrap;
-  font-size:1.3em;
+  font-size:1.2em;
   color:rgb(0,0,100);
   -moz-padding-end:20px;
 }
@@ -144,8 +158,16 @@
   width:15px;
   height:12px;
 }
+body[chromedir="rtl"] .charrow {
+  right:auto;
+  left:2px;
+  background:url(chrome://xulsword/skin/images/arrow-rtl.png);
+}
 .charrow:hover {
   background:url(chrome://xulsword/skin/images/arrow2.png);
+}
+body[chromedir="rtl"] .charrow:hover {
+  background:url(chrome://xulsword/skin/images/arrow2-rtl.png);
 }
 
 .chaptermenu {
@@ -158,7 +180,11 @@
   border-collapse:separate;
   border-spacing:3px 1px;
   border-spacing:0px 0px;
-  z-index:3;
+  z-index:50;
+}
+body[chromedir="rtl"] .chaptermenu {
+  left:auto;
+  right:100%;
 }
 .bookname:hover .chaptermenu {
   visibility:visible;
@@ -166,17 +192,15 @@
 .chaptermenurow {
   display:table-row;
   background:transparent;
-  z-index:3;
 }
 .chaptermenu > div > div {
   display:table-cell;
   width:26px;
-  font-size:14px;
+  font-size:13px;
   text-align:center;
   background:rgb(233,233,233);
   border:1px outset rgb(255,243,255);
   color:blue;
-  z-index:3;
   padding:2px;
 }
 .chaptermenu > div > div:hover {
@@ -202,7 +226,7 @@
   color:blue;
   box-shadow: 2px 2px 3px 2px #bbb;
   border-radius:6px;
-  z-index:6;
+  z-index:60;
 }
 .headingmenu[direction="rtl"] {
   text-align:right;

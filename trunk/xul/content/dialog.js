@@ -37,7 +37,7 @@ function Unload() {}
 
 function Load() {
   AllWindows.push(window);
-  updateCSSBasedOnCurrentLocale(["#dlg", "label, button"]);
+//  updateCSSBasedOnCurrentLocale(["#dlg", "label, button"]);
   document.title = fixWindowTitle(Title);
   
   RetVal.ok=false;

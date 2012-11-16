@@ -113,19 +113,22 @@ var DefaultFontSizeAdjust = "0.55";
 var DefaultVersionLineHeight = "135%";
 var DefaultLocaleLineHeight = "100%";
 
-function getCSS(searchText) {
-  searchText = new RegExp("^" + escapeRE(searchText));
+// This function returns the FIRST rule matching the selector.
+function getCSS(selector) {
+  selector = new RegExp("^" + escapeRE(selector));
   var myRule = null;
   for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
-    for (var z=0; z!=document.styleSheets[ssn].cssRules.length; z++) {
+    try {var zend = document.styleSheets[ssn].cssRules.length;} catch (er) {zend = 0;}
+    for (var z=0; z<zend; z++) {
       var myRule = document.styleSheets[ssn].cssRules[z];
-      if (myRule.cssText.search(searchText) != -1) return myRule;
+      if (myRule.cssText.search(selector) != -1) return myRule;
     }
   }
   return null;
 }
 
 // Will create CSS classes for locales and modules using DynamicStyles
+// This must be a global function so that any window can create our classes.
 function createDynamicClasses() {
   var sheet = document.styleSheets[document.styleSheets.length-1];
   if (!sheet) return;
@@ -133,62 +136,6 @@ function createDynamicClasses() {
   for (var r=0; r<MainWindow.DynamicStyles.length; r++) {
     sheet.insertRule(MainWindow.DynamicStyles[r], sheetLength);
   }
-}
-
-function createStyleRule(selector, config, notImportant, sizeNotImportant) {
-  var importance = (notImportant ? "":" !important");
-  var font = (config && config.fontFamily ? "font-family:" + config.fontFamily + importance + "; ":"");
-  var direction = (config && config.direction ? "direction:" + config.direction + importance + "; ":"");
-  
-  importance = (notImportant || sizeNotImportant ? "":" !important");
-  var fontSizeAdjust = (config && config.fontSizeAdjust ? "font-size-adjust:" + config.fontSizeAdjust + importance + "; ":"");
-  var lineHeight = (config && config.lineHeight ? "line-height:" + config.lineHeight + importance + "; ":"");
-  return selector + " {" + direction + font + fontSizeAdjust + lineHeight + " }";
-}
-
-function updateCSSBasedOnVersion(version, cssRuleNameArray) {
-  var versionConfig = VersionConfigs[version];
-  var rules = [];
-  for (var i=0; i<cssRuleNameArray.length; i++) {
-    var thisRule = getCSS(cssRuleNameArray[i]);
-    if (thisRule) {
-      thisRule.style.fontFamily = (versionConfig && versionConfig.fontFamily ? versionConfig.fontFamily:DefaultFont);
-      thisRule.style.direction = (versionConfig && versionConfig.direction ? versionConfig.direction:"ltr");
-      thisRule.style.fontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
-      thisRule.style.lineHeight = (versionConfig && versionConfig.lineHeight ? versionConfig.lineHeight:DefaultVersionLineHeight);
-    }
-    else {
-      var sheet = document.styleSheets[document.styleSheets.length-1];
-      sheet.insertRule(createStyleRule(cssRuleNameArray[i], versionConfig), sheet.cssRules.length);
-    }
-  }
-}
-
-
-// Adjusts rtl related styles for listed CSS rules or creates the rule if it doesn't exist
-function updateCSSBasedOnCurrentLocale(cssRuleNameArray) {
-  return; /*
-  var currentLocale = getLocale();
-  var localeConfig = LocaleConfigs[currentLocale];
-  for (var i=0; i<cssRuleNameArray.length; i++) {
-    var thisRule = getCSS(cssRuleNameArray[i]);
-    if (thisRule) {
-      thisRule.style.fontFamily = (localeConfig && localeConfig.fontFamily ? localeConfig.fontFamily:DefaultFont);
-      thisRule.style.direction = (localeConfig && localeConfig.direction ? localeConfig.direction:"ltr");
-      if (!thisRule.style.fontSizeAdjust) 
-          thisRule.style.fontSizeAdjust = (localeConfig && localeConfig.fontSizeAdjust ? localeConfig.fontSizeAdjust:DefaultFontSizeAdjust);
-      if (!thisRule.style.lineHeight)
-          thisRule.style.lineHeight = (localeConfig && localeConfig.lineHeight ? localeConfig.lineHeight:DefaultLocaleLineHeight);    
-      if (localeConfig && localeConfig.direction && localeConfig.direction == "rtl") {
-        if (thisRule.style.cssText.search("float: left") == -1) thisRule.style.cssText = thisRule.style.cssText.replace("float: right", "float: left");
-        else thisRule.style.cssText = thisRule.style.cssText.replace("float: left", "float: right");
-      }
-    }
-    else {
-      var sheet = document.styleSheets[document.styleSheets.length-1];
-      sheet.insertRule(createStyleRule(cssRuleNameArray[i], localeConfig, true), sheet.cssRules.length);
-    }
-  }*/
 }
 
 
@@ -228,22 +175,6 @@ function getVersionOfLocale(alocale) {
     if (LocaleList[i] == alocale) return LocaleDefaultVersion[i];
   }
   return "none";
-}
-
-function pullFontSizesFromCSS() {
-  return; /*
-  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
-    //Save to global variables the CSS initial values of those things which may be programatically changed
-    for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
-      var myRule = document.styleSheets[ssn].cssRules[z];
-      if (myRule.style && myRule.style.fontSize) {
-        var fontSize = myRule.style.fontSize.match(/(\d+)\s*px/);
-        if (!fontSize || !fontSize[1]) continue;
-        InitialCssFontSize.push(Number(fontSize[1]));
-        CssRuleHavingFontSize.push(ssn + "><" + z);
-      }
-    }
-  }*/
 }
 
 var StartingFont = {};

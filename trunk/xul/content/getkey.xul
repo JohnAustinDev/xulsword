@@ -48,7 +48,7 @@
   }
   
   function loaded() {
-    updateCSSBasedOnCurrentLocale(["#key-window"]);
+//    updateCSSBasedOnCurrentLocale(["#key-window"]);
     sizeToContent();
     var ktlabel = document.getElementById("ktlabel").value;
     //document.getElementById("ktlabel").value = window.arguments[0] + ": " + ktlabel; 
