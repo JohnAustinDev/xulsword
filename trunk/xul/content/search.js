@@ -136,15 +136,15 @@ function createAndAppendRadio(tabNum, id) {
   var forceDefaultFormatting = (Bible.getModuleInformation(Tabs[tabNum].modName, "OriginalTabTestament")!=NOTFOUND);
   
   if (!forceDefaultFormatting) {
-    var versionConfig = VersionConfigs[Tabs[tabNum].modName];
-    var myfont = (versionConfig && versionConfig.fontFamily && !isASCII(Tabs[tabNum].label) ? versionConfig.fontFamily:DefaultFont);
-    var myfontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust && !isASCII(Tabs[tabNum].label) ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
-    xulElement.style.fontFamily = myfont;
-    xulElement.style.fontSizeAdjust = myfontSizeAdjust;
+    var versionConfig = ModuleConfigs[Tabs[tabNum].modName];
+    //var myfont = (versionConfig && versionConfig.fontFamily && !isASCII(Tabs[tabNum].label) ? versionConfig.fontFamily:DefaultFont);
+    //var myfontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust && !isASCII(Tabs[tabNum].label) ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
+    //xulElement.style.fontFamily = myfont;
+    //xulElement.style.fontSizeAdjust = myfontSizeAdjust;
   }
   else {
-    xulElement.style.fontFamily = DefaultFont;
-    xulElement.style.fontSizeAdjust = DefaultFontSizeAdjust;  
+    //xulElement.style.fontFamily = DefaultFont;
+    //xulElement.style.fontSizeAdjust = DefaultFontSizeAdjust;  
   }
   
   // Place the new radio button
@@ -294,12 +294,12 @@ function updateSearchWindow() {
   var radioIDs = ["searchAll","searchOT","searchNT","searchSelect","sg1","sg2","sg3","sg4","sg5","sg6"];
   if (document.getElementById("scopeRadio").selectedIndex == 3) {document.getElementById("scopeMenu").disabled = false;}
   else {document.getElementById("scopeMenu").disabled = true;}
-  if (svers == OrigModuleNT) {
+  if (Tab.ORIG_NT && svers == Tab.ORIG_NT.modName) {
     radioDisabled = [true,true,false,false,true,true,true,true,false,false];
     document.getElementById("scopeMenu").selectedIndex = 4;
     if (document.getElementById("scopeRadio").selectedIndex < 2) {document.getElementById("scopeRadio").selectedIndex = 2;}
   }
-  else if (svers == OrigModuleOT) {
+  else if (Tab.ORIG_OT && svers == Tab.ORIG_OT.modName) {
     radioDisabled = [true,false,true,false,false,false,false,false,true,true];
     document.getElementById("scopeMenu").selectedIndex = 0;
     if (document.getElementById("scopeRadio").selectedIndex < 3) {document.getElementById("scopeRadio").selectedIndex = 1;}
@@ -552,7 +552,7 @@ function getHTMLSearchResults(firstMatchToWrite, numMatchesToWrite, wordsToHighl
     return html;
   }
 
-  try {var versionDirectionEntity = (VersionConfigs[displayVersion].direction == "rtl" ? "&rlm;":"&lrm;");}
+  try {var versionDirectionEntity = (ModuleConfigs[displayVersion].direction == "rtl" ? "&rlm;":"&lrm;");}
   catch (er) {versionDirectionEntity = "&lrm";}
   
   // Build result HTML

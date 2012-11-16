@@ -107,7 +107,7 @@ function PopupObj(popupobj) {
     // Cross Reference: data is elem.title
     //    data form: cr#.bk.c.v
     case "cr":
-      var dir = (VersionConfigs[this.mod] && VersionConfigs[this.mod].direction == "rtl" ? "rtl":"ltr");
+      var dir = (ModuleConfigs[this.mod] && ModuleConfigs[this.mod].direction == "rtl" ? "rtl":"ltr");
       html += "<div class=\"popupbody cs-" + this.mod + " ";
       html += (getPrefOrCreate("OpenCrossRefPopups", "Bool", true) ? "cropened":"crclosed") + "\">";
       html += "<div class=\"twisty twisty-" + dir + "\" onclick=\"Popup.openCloseCRs();\" ></div>";
@@ -132,7 +132,7 @@ function PopupObj(popupobj) {
     // Scripture Reference: data is elem.title unless it's "unavailable" then it's elem.innerHTML
     //    data form: reference1; reference2    
     case "sr":
-      var dir = (VersionConfigs[this.mod] && VersionConfigs[this.mod].direction == "rtl" ? "rtl":"ltr");
+      var dir = (ModuleConfigs[this.mod] && ModuleConfigs[this.mod].direction == "rtl" ? "rtl":"ltr");
       html += "<div class=\"popupbody cs-" + this.mod + " ";
       html += (getPrefOrCreate("OpenCrossRefPopups", "Bool", true) ? "cropened":"crclosed") + "\">";
       html += "<div class=\"twisty twisty-" + dir + "\" onclick=\"Popup.openCloseCRs();\" ></div>";

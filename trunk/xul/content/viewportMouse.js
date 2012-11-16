@@ -466,12 +466,12 @@ function scriptDblClick(e) {
   var targ = e.target.parentNode;
   while (targ) {
     if (targ.className) {
-      if      (targ.className.search("cs-" + OrigModuleNT)!=-1) {
-        myv = OrigModuleNT;
+      if      (Tab.ORIG_NT && targ.className.search("cs-" + Tab.ORIG_NT.modName) != -1) {
+        myv = Tab.ORIG_NT.modName;
         break;
       }
-      else if (targ.className.search("cs-" + OrigModuleOT)!=-1) {
-        myv = OrigModuleOT;
+      else if (Tab.ORIG_OT && targ.className.search("cs-" + Tab.ORIG_OT.modName) != -1) {
+        myv = Tab.ORIG_OT.modName;
         break;
       }
     }

@@ -71,7 +71,7 @@ function loadedXULReal() {
   }
   else resetUserPrefs=false;
 
-  if (Bible && HaveValidLocale) {
+  if (Bible) {
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") continue;
       Bible.setGlobalOption(GlobalToggleCommands[cmd], getPrefOrCreate(GlobalToggleCommands[cmd], "Char", "On"));
@@ -116,7 +116,7 @@ function loadedXULReal() {
   document.getElementById("searchText").value = st;
   
   identifyModuleFeatures(resetUserPrefs);
-  if (HaveValidLocale) createLanguageMenu();
+  createLanguageMenu();
   if (Bible) fillModuleMenuLists();
   
   //Some "hard-wired" access keys...
@@ -141,7 +141,7 @@ function loadedXULReal() {
   window.controllers.appendController(BookmarksMenuController);
 
   //Initialize global options buttons and checkboxes
-  if (!Bible || !HaveValidLocale || !Tabs.length) hideGUI();
+  if (!Bible || !Tabs.length) hideGUI();
   else updateXulswordButtons();
    
   BookmarkFuns.initTemplateDataSource(document.getElementById("bookmarks-menu"), BMDS); 
@@ -149,7 +149,7 @@ function loadedXULReal() {
   // Cludge to get history button the right height, must happen after updating locale configuration
   document.getElementById("historymenu").style.height = String(document.getElementById("back").boxObject.height) + "px";
   
-  if (Bible && HaveValidLocale) {
+  if (Bible) {
     if (NewModuleInfo && NewModuleInfo.NewModules && NewModuleInfo.NewModules[0]) {
       var w=1;
       for (var m=0; m<NewModuleInfo.NewModules.length; m++) {
@@ -170,10 +170,8 @@ function loadedXULReal() {
       window.opener.close(); //Close splash and opener window
   
   //handle error states...
-  if (HaveValidLocale && (!Bible || !Tabs.length)) window.setTimeout("errorHandler(NOMODULES)",0);
-  else if (!HaveValidLocale && !RestartToChangeLocale) window.setTimeout("errorHandler(NOLOCALES)",0);
-  else if (RestartToChangeLocale) window.setTimeout("errorHandler(NEEDRESTART)",0);
-  else if (prefs.getCharPref("DefaultVersion")=="none") window.setTimeout("errorHandler(NOMODULES)",0);
+  if (!Bible || !Tabs.length) window.setTimeout("errorHandler(NOMODULES)",0);
+  else if (prefs.getCharPref("DefaultVersion") == NOTFOUND) window.setTimeout("errorHandler(NOMODULES)",0);
   
   //we're ok!
   // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
@@ -195,6 +193,20 @@ function hideGUI() {
   }
 }
 
+function checkCipherKeys() {
+  var gotKey = false;
+  for (var t=0; t<Bible.ModNeedsCipherKey.length; t++) {
+    if (Bible.getVerseText(Bible.ModNeedsCipherKey[t], "Gen 1:1").length < 64 && 
+        Bible.getVerseText(Bible.ModNeedsCipherKey[t], "Matt 1:1").length < 64 &&
+        !getAvailableBooks(Bible.ModNeedsCipherKey[t])[0]) {
+      var retVals = {gotKey: false};
+      AllWindows.push(window.openDialog("chrome://xulsword/content/getkey.xul","getkey","chrome, dependent, alwaysRaised, centerscreen, modal", Bible.ModNeedsCipherKey[t], retVals));
+      gotKey |= retVals.gotKey;
+    }
+  }
+  if (gotKey) windowLocationReload();
+}
+
 var TreeModuleStyles = [];
 
 //This function is run after the MK window is built and displayed. Init functions
@@ -205,16 +217,16 @@ function postWindowInit() {
   for (var v=0; v<modules.length; v++) {
     var info = modules[v].split(";");
     if (info[1].search("Biblical Texts") == -1) continue;
-    var versionConfig = VersionConfigs[info[0]];
-    var font = "font-family:" + (versionConfig && versionConfig.fontFamily ? versionConfig.fontFamily:DefaultFont) + " !important; ";
-    var direction = "direction:" + (versionConfig && versionConfig.direction ? versionConfig.direction:"ltr") + " !important; ";
+    var versionConfig = ModuleConfigs[info[0]];
+    var font = "font-family:" + versionConfig.fontFamily + " !important; ";
+    var direction = "direction:" + versionConfig.direction + " !important; ";
     TreeModuleStyles.push("treechildren::-moz-tree-cell-text(" + info[0] + ") { " + direction + font + "}");
   }
-  for (var v=0; v<LocaleList.length; v++) {
-    var localeConfig = LocaleConfigs[LocaleList[v]];
-    var font = "font-family:" + (localeConfig && localeConfig.fontFamily ? localeConfig.fontFamily:DefaultFont) + " !important; ";
-    var direction = "direction:" + (localeConfig && localeConfig.direction ? localeConfig.direction:"ltr") + " !important; ";
-    TreeModuleStyles.push("treechildren::-moz-tree-cell-text(" + LocaleList[v] + ") { " + direction + font + "}");
+  for (var lc in LocaleConfigs) {
+    var localeConfig = LocaleConfigs[lc];
+    var font = "font-family:" + localeConfig.fontFamily + " !important; ";
+    var direction = "direction:" + localeConfig.direction + " !important; ";
+    TreeModuleStyles.push("treechildren::-moz-tree-cell-text(" + lc + ") { " + direction + font + "}");
   }
   
   // Hide disabled books on chooser
@@ -278,9 +290,9 @@ function readNewInstallsFile(aFile) {
       }
       switch(reading) {
       case "NewLocales":
-        for (var m=0; m<LocaleList.length; m++) {
+        for (var lc in LocaleConfigs) {
           // check that we have a valid locale before saving it
-          if (filedata[n] == DEFAULTLOCALE || LocaleList[m] == filedata[n]) {
+          if (filedata[n] == DEFAULTLOCALE || filedata[n] == lc) {
             modInfo[reading].push(filedata[n]);
             break;
           }
@@ -432,27 +444,15 @@ function getModuleFeatures(module) {
   return features;
 }
 
-function checkCipherKeys() {
-  var gotKey = false;
-  for (var t=0; t<CheckTexts.length; t++) {
-    if (Bible.getVerseText(CheckTexts[t], "Gen 1:1").length < 2 && 
-        Bible.getVerseText(CheckTexts[t], "Matt 1:1").length < 2 &&
-        !getAvailableBooks(CheckTexts[t])[0]) {
-      var retVals = {gotKey: false};
-      AllWindows.push(window.openDialog("chrome://xulsword/content/getkey.xul","getkey","chrome, dependent, alwaysRaised, centerscreen, modal", CheckTexts[t], retVals));
-      gotKey |= retVals.gotKey;
-    }
-  }
-  if (gotKey) windowLocationReload();
-}
-
 function createLanguageMenu() {
-  if (LocaleList.length <= 1) {
+  var numlocs = 0;
+  for (var lc in LocaleConfigs) {numlocs++;}
+  if (numlocs <= 1) {
     document.getElementById("sub-lang").setAttribute("disabled", "true");
     return;
   }
   var menuItems = [];
-  for (var lc=0; lc<LocaleList.length; lc++) {
+  for (var lc in LocaleConfigs) {
     var xulElement = document.createElement("menuitem");
     xulElement = writeLocaleElem(xulElement, lc, "", false);
     if (!xulElement) continue;
@@ -475,21 +475,20 @@ function localeElemSort(a,b) {
 }
 
 function writeLocaleElem(elem, lc, id, noAccessKey) {
-  var myID = LocaleList[lc];
+  var myID = lc;
   if (id) myID = id + "." + myID;
 
-  var bundle = getLocaleBundle(LocaleList[lc], "xulsword.properties");
+  var bundle = getLocaleBundle(lc, "xulsword.properties");
   if (!bundle) return null;
   var myLabel = bundle.GetStringFromName("LanguageMenuLabel");
   var myAccKey = ""; try {myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");} catch (er) {};
-  var myLocale = LocaleList[lc];
 
   elem.setAttribute("label", myLabel);
   if (!noAccessKey) elem.setAttribute("accesskey", myAccKey);
   elem.setAttribute("id", myID);
   var mclass = elem.getAttribute("class");
   mclass = (mclass ? mclass + " ":"");
-  elem.setAttribute("class", mclass + "cs-" + myLocale);
+  elem.setAttribute("class", mclass + "cs-" + lc);
   return elem;
 }
 
@@ -615,8 +614,8 @@ function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefa
   }
   
   // Module class is from the module unless description is ASCII, in which case
-  // "en-US" class is used.
-  var mclass = "cs-" + (isASCII(Tabs[t].description) ? "en-US":Tabs[t].modName);
+  // DEFAULTLOCALE class is used.
+  var mclass = "cs-" + (isASCII(Tabs[t].description) ? DEFAULTLOCALE:Tabs[t].modName);
   var eclass = elem.getAttribute("class");
   elem.setAttribute("class", (eclass ? eclass + " ":"") + mclass);
 
@@ -643,7 +642,7 @@ var History = {
     this.list = getPrefOrCreate("History", "Char", this.delim).split(this.delim);
     this.index = getPrefOrCreate("HistoryIndex", "Int", 0);
     this.list.pop(); // History pref should always end with HistoryDelimeter
-    if (Bible && HaveValidLocale && prefs.getCharPref("DefaultVersion") != "none") {
+    if (Bible && prefs.getCharPref("DefaultVersion") != NOTFOUND) {
       var aVersion = prefs.getCharPref("DefaultVersion");
       var loc = Location.convertLocation(Bible.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
       this.list[this.index] = loc[0] + "." + loc[1] + "." + loc[2];
@@ -1236,8 +1235,8 @@ function handleOptions(elem) {
       break;
       
     default:
-      for (var lc=0; lc<LocaleList.length; lc++) {
-        if (elem.id == LocaleList[lc]) {
+      for (var lc in LocaleConfigs) {
+        if (elem.id == lc) {
           changeLocaleTo(elem.id);
           return;
         }
@@ -1359,8 +1358,8 @@ function updateXulswordButtons() {
   // Menu Checkboxes
   var myLocale = getLocale();
   if (document.getElementById("sub-lang").getAttribute("disabled") != "true") {
-    for (var lc=0; lc<LocaleList.length; lc++) {
-      document.getElementById(LocaleList[lc]).setAttribute("checked",(LocaleList[lc] == myLocale ? true:false));
+    for (var lc in LocaleConfigs) {
+      document.getElementById(lc).setAttribute("checked",(lc == myLocale ? true:false));
     }
   }
   document.getElementById("f0").setAttribute("checked",(prefs.getIntPref("FontSize")==-4 ? true:false));

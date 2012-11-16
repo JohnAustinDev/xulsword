@@ -35,8 +35,9 @@ var ViewPort = {
       getPrefOrCreate("MaximizeNoteBox" + w, "Bool", false);
       if (!Tab[getPrefOrCreate("Version" + w, "Char", prefs.getCharPref("DefaultVersion"))])
           prefs.setCharPref("Version" + w, prefs.getCharPref("DefaultVersion"));
+      if (!Tab.ORIG_NT && !Tab.ORIG_OT) prefs.setBoolPref("ShowOriginal" + w, false);
     }
-    
+  
     // set font sizes
     this.adjustFont(getPrefOrCreate('FontSize', "Int", 0));
 
@@ -335,7 +336,7 @@ var ViewPort = {
     var orig = "";
     orig += "<input type=\"button\" class=\"tab tabTexts\" ";
     orig += "id=\"w" + w + ".tab.orig\" value=\"" + SBundle.getString("ORIGLabelTab") + "\" ";
-    orig += "title=\"\"" + (!MainWindow.HaveOriginalTab ? " style=\"display:none;\"":"") + "></button>";
+    orig += "title=\"\"" + (!Tab.ORIG_NT && !Tab.ORIG_OT ? " style=\"display:none;\"":"") + "></button>";
 
     var html = "";
     for (var t=0; t<Tabs.length; t++) {

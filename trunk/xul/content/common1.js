@@ -37,15 +37,6 @@ try {SBundle = MainWindow.document.getElementById("strings");}
 catch (er) {}
 if (!SBundle) jsdump("WARNING: Unable to initialize string SBundle: (" + window.name + " " + MainWindow.name + ")\n");
 
-// This was added to allow backward compatibility <2.12 while also allowing unique terms
-// to be used for window titles (since Windows can't display window titles in necessary fonts).
-function getWindowTitle(term) {
-  var title;
-  try {title = SBundle.getString(term + ".window.title");} catch (er) {title=null;}
-  if (!title) title = document.getElementById(term).childNodes[0].nodeValue;
-  return title; 
-}
-
 
 /************************************************************************
  * Create Bible Instance, Versions, Tabs and their globals
@@ -63,55 +54,11 @@ var GlobalToggleCommands = {
   cmd_xs_toggleHebrewVowelPoints:   "Hebrew Vowel Points",
   cmd_xs_toggleRedWords:  "Words of Christ in Red"
 };
-    
-const NumBooks=66;
-const NumOT=39;
-const NumNT=27;
 
 
 /************************************************************************
- * Unlock all texts
+ * DYNAMIC CSS FUNCTIONS
  ***********************************************************************/ 
-
-var CheckTexts = [];
-function unlockAllModules(aBible, print) {
-  var dumpMsg="";
-  for (var t=0; t<Tabs.length; t++) {
-    if (Tabs[t].modType != BIBLE) continue; // only Bible modules are encrypted
-    var retkey = unlockModule(aBible, Tabs[t].modName);
-    if (retkey) dumpMsg += Tabs[t].modName + "(" + retkey + ") ";
-  }
-  if (print && dumpMsg != "") {jsdump("Opening:" + dumpMsg + "\n");}
-}
-
-function unlockModule(myBible, version) {
-  // If key is specified in conf file, don't do anything.
-  if (myBible.getModuleInformation(version, "CipherKey")) return null;
-  try {var mykey = getPrefOrCreate("CipherKey" + version, "Char", prefs.getCharPref("DefaultCK"));}
-  catch (er) {mykey="0";}
-  var useSecurityModule = usesSecurityModule(myBible, version);
-  myBible.setCipherKey(version, mykey, useSecurityModule);
-  if (!useSecurityModule) CheckTexts.push(version);
-  return mykey
-}
-
-function usesSecurityModule(aXSobj, version) {
-  if (aXSobj.getModuleInformation(version, "CipherKey") != "") return false;
-  //checking "ProducedFor" is for backward compatibility to modules before version 2.7
-  var usesSecurityModule = ((aXSobj.getModuleInformation(version, MainWindow.VERSIONPAR)!=NOTFOUND || 
-      aXSobj.getModuleInformation(version, "ProducedFor")=="xulsword") ? true:false);
-  return usesSecurityModule;
-}
-
-/************************************************************************
- * Style Globals
- ***********************************************************************/ 
-var InitialCssFontSize = [];
-var CssRuleHavingFontSize = [];
-var DefaultFont = "'Arial'";
-var DefaultFontSizeAdjust = "0.55";
-var DefaultVersionLineHeight = "135%";
-var DefaultLocaleLineHeight = "100%";
 
 // This function returns the FIRST rule matching the selector.
 function getCSS(selector) {
@@ -127,56 +74,20 @@ function getCSS(selector) {
   return null;
 }
 
-// Will create CSS classes for locales and modules using DynamicStyles
+// Will create CSS classes for locales and modules and append to a stylesheet.
 // This must be a global function so that any window can create our classes.
 function createDynamicClasses() {
   var sheet = document.styleSheets[document.styleSheets.length-1];
   if (!sheet) return;
+  
   var sheetLength = sheet.cssRules.length;
-  for (var r=0; r<MainWindow.DynamicStyles.length; r++) {
-    sheet.insertRule(MainWindow.DynamicStyles[r], sheetLength);
-  }
+  
+  for (var lc in LocaleConfigs) {sheet.insertRule(LocaleConfigs[lc].StyleRule, sheetLength)}
+  
+  for (var m in ModuleConfigs) {sheet.insertRule(ModuleConfigs[m].StyleRule, sheetLength)}
 }
 
-
-// Return a locale (if any) to associate with the module:
-//    Return a Locale which lists the module as its default
-//    Return a Locale with exact same language code as module
-//    Return a Locale having same base language code as module, prefering current Locale over any others
-//    Return null if no match
-function getLocaleOfModule(module) {
-  var myLocale=null;
-  for (var lc=0; lc<LocaleDefaultVersion.length; lc++) {
-    var regex = new RegExp("(^|\s|,)+" + module + "(,|\s|$)+");
-    if (LocaleDefaultVersion[lc] && LocaleDefaultVersion[lc].match(regex)) myLocale = LocaleList[lc];
-  }
-  if (Bible && !myLocale) {
-    for (lc=0; lc<LocaleList.length; lc++) {
-      var lcs, ms;
-      try {
-        lcs = LocaleList[lc].toLowerCase();
-        ms = Bible.getModuleInformation(module, "Lang").toLowerCase();
-      }
-			catch(er) {lcs=null; ms==null;}
-      
-			if (ms && ms == lcs) {myLocale = LocaleList[lc]; break;}
-			if (ms && lcs && ms.replace(/-.*$/, "") == lcs.replace(/-.*$/, "")) {
-				myLocale = LocaleList[lc];
-				if (myLocale == getLocale()) break;
-			}
-    }
-  }
-  return myLocale;
-}
-
-function getVersionOfLocale(alocale) {
-  if (!alocale) alocale = getLocale();
-  for (var i=0; i<LocaleList.length; i++) {
-    if (LocaleList[i] == alocale) return LocaleDefaultVersion[i];
-  }
-  return "none";
-}
-
+// The userFontSize class in all stylesheets is dynamically updated by this routine.
 var StartingFont = {};
 function adjustFontSizes(delta) {
   for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
@@ -268,12 +179,12 @@ function identifyBook(book) {
 var BookNameCache = {};
 // cycle through each book name (including short, long, + variations) of each locale
 function compareAgainstLocales(inbook, exact, bookInfo) {
-  for (var lc=0; lc<LocaleList.length; lc++) {
+  for (var lc in LocaleConfigs) {
     var bundle = null;
     for (var i=0; i<NumBooks; i++) {
-      var key = LocaleList[lc] + "-" + Book[i].sName;
+      var key = lc + "-" + Book[i].sName;
       if (!BookNameCache[key]) {
-        if (!bundle) bundle = getLocaleBundle(LocaleList[lc], "books.properties");
+        if (!bundle) bundle = getLocaleBundle(lc, "books.properties");
         BookNameCache[key] = bundle.GetStringFromName(Book[i].sName);
         try {var add = "," + bundle.GetStringFromName("Long" + Book[i].sName);}
         catch (er) {add = "";}
@@ -286,8 +197,8 @@ function compareAgainstLocales(inbook, exact, bookInfo) {
       variation.pop();
       if (compareAgainstList(inbook, variation, exact)) {
         bookInfo.shortName = Book[i].sName;
-        bookInfo.version = LocaleDefaultVersion[lc];
-        bookInfo.locale = LocaleList[lc];
+        bookInfo.version = LocaleConfigs[lc].AssociatedModules.replace(/\s*,.*$/, "");
+        bookInfo.locale = lc;
 //jsdump("Matched book with exact = " + exact);
         return true;
       }
@@ -431,8 +342,8 @@ function getShortTypeFromLong(longType) {
 // Find "original" version name corresponding to book's short name "bsName"
 function resolveOriginalVersion(bookShortName) {
   var bnum = (bookShortName ? findBookNum(bookShortName):0);
-  if (bnum>=0 && bnum<NumOT) {return OrigModuleOT;}
-  else if (bnum < NumBooks)  {return OrigModuleNT;}
+  if (bnum>=0 && bnum<NumOT) {return Tab.ORIG_OT ? Tab.ORIG_OT.modName:null;}
+  else if (bnum < NumBooks)  {return Tab.ORIG_NT ? Tab.ORIG_NT.modName:null;}
   else return null;
 }
 
@@ -539,6 +450,14 @@ function normalizeOsisReference(ref, bibleMod) {
   return null;
 }
 
+function usesSecurityModule(aXSobj, version) {
+  if (aXSobj.getModuleInformation(version, "CipherKey") != "") return false;
+  //checking "ProducedFor" is for backward compatibility to modules before version 2.7
+  var usesSecurityModule = ((aXSobj.getModuleInformation(version, MainWindow.VERSIONPAR)!=NOTFOUND || 
+      aXSobj.getModuleInformation(version, "ProducedFor")=="xulsword") ? true:false);
+  return usesSecurityModule;
+}
+
 
 /************************************************************************
  * Bible Text Display Routines
@@ -582,7 +501,7 @@ function findAVerseText(version, location, windowNum) {
   //Passed version does not yield verse text. So now look at tabs...
   var book = location.match(/^\W*(\w+)/)[1];
   for (var v=0; v<Tabs.length; v++) {
-    if (Tabs[v].modName==ORIGINAL || Tabs[v].modName==OrigModuleNT || Tabs[v].modName==OrigModuleOT) continue;
+    if (Tab.ORIG_NT && Tabs[v].modName == Tab.ORIG_NT.modName || Tab.ORIG_OT && Tabs[v].modName == Tab.ORIG_NT.modName) continue;
     if (Tabs[v].modType!=BIBLE) continue;
     var abooks = getAvailableBooks(Tabs[v].modName);
     for (var ab=0; ab<abooks.length; ab++) {if (abooks[ab]==book) break;}

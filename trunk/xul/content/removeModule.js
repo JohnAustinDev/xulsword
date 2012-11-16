@@ -56,15 +56,15 @@ function onLoad() {
       break;
     case LOCALESID:
       var cnt=0;
-      for (var lc=0; lc<LocaleList.length; lc++) {
-        if (LocaleList[lc]==DEFAULTLOCALE) continue;
+      for (var lc LocaleConfigs) {
+        if (lc == DEFAULTLOCALE) continue;
         var aFile = getSpecialDirectory("xsExtension");
-        aFile.append(LocaleList[lc] + "@xulsword.org");
+        aFile.append(lc + "@xulsword.org");
         if (!aFile.exists()) continue;
         var cb = document.createElement("checkbox");
         cb = MainWindow.writeLocaleElem(cb, lc, GROUPS[g], true);
         if (!cb) continue;
-        cb.setAttribute("id", "lc." + LocaleList[lc]);
+        cb.setAttribute("id", "lc." + lc);
         checkBoxes.push(cb);
         if (++cnt > 0) hide=false;
       }
@@ -172,8 +172,8 @@ function getChildLabel(aModname, control, forceLabel, forceDefaultFormatting) {
   else {
     ne.setAttribute("value", forceLabel);
     if (forceDefaultFormatting) {
-      ne.style.fontFamily = DefaultFont;
-      ne.style.fontSizeAdjust = DefaultFontSizeAdjust;
+      //ne.style.fontFamily = DefaultFont;
+      //ne.style.fontSizeAdjust = DefaultFontSizeAdjust;
     }
   }
   ne.setAttribute("onclick", "document.getElementById('" + control + "').click();");

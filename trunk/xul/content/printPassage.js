@@ -31,7 +31,6 @@ var SavedCharPrefs = [];
 function onLoad() {
 //  updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
   createDynamicClasses();
-  document.title = fixWindowTitle(getWindowTitle("print.printpassage"));
   
   ProgressMeter = document.getElementById("progress");
   FromChooser = document.getElementById("from-dropdown");
