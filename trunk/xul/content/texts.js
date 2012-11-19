@@ -116,6 +116,7 @@ var Texts = {
       textUpdated = true;
 //jsdump("Reading text from libsword w" + w);
       var t = document.getElementById("text" + w);
+      var ltr = (t.getAttribute("textdir") == "ltr");
       var sb = t.getElementsByClassName("sb")[0];
       var prev = {htmlText:"", htmlNotes:"", footnotes:""};
       var next = {htmlText:"", htmlNotes:"", footnotes:""};
@@ -130,6 +131,7 @@ var Texts = {
         // collect previous chapter(s)
         var c = Number(display.ch) - 1;
         while (c > 0) {
+//jsdump("reading w" + w + ": " + c);
           d2.ch = c;
           var tip = BibleTexts.read(w, d2);
           if (tip.htmlText.length <= 32) break; // stop if chapter is missing
@@ -137,13 +139,15 @@ var Texts = {
           prev.htmlNotes = tip.htmlNotes + prev.htmlNotes;
           prev.footnotes = tip.footnotes + prev.footnotes;
           sb.innerHTML = prev.htmlText;
-          if (sb.lastChild.offsetLeft >= sb.offsetWidth) break;
+          if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
+               (!ltr && sb.firstChild.offsetLeft >= sb.offsetWidth) ) break;
           c--;
         }
       
         // collect next chapter(s)
         var c = Number(display.ch) + 1;
         while (c <= Bible.getMaxChapter(d2.mod, d2.bk + "." + d2.ch)) {
+//jsdump("reading w" + w + ": " + c);
           d2.ch = c;
           var tip = BibleTexts.read(w, d2);
           if (tip.htmlText.length <= 32) break; // stop if chapter is missing
@@ -151,12 +155,13 @@ var Texts = {
           next.htmlNotes = next.htmlNotes + tip.htmlNotes;
           next.footnotes = next.footnotes + tip.footnotes;
           sb.innerHTML = next.htmlText;
-          if (sb.lastChild.offsetLeft >= sb.offsetWidth) break;
+          if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
+               (!ltr && sb.firstChild.offsetLeft >= sb.offsetWidth) ) break;
           c++;
         }
         
       }
-     
+//jsdump("reading w" + w + ": " + display.ch);     
       var ti = BibleTexts.read(w, display);
         
       var hd = t.getElementsByClassName("hd")[0];
@@ -350,9 +355,9 @@ var Texts = {
 
     var html = "";
     html += "<div class=\"navlink cs-Program\">";
-    html +=   "&lrm;<span>" + charPrev + "</span> " + "<a class=\"prevchaplink\">" + SBundle.getString('PrevChaptext') + "</a>";
+    html +=   "&lrm;<span class=\"navlink-span\">" + charPrev + "</span> " + "<a class=\"prevchaplink\">" + SBundle.getString('PrevChaptext') + "</a>";
     html +=   " / ";
-    html +=   "<a class=\"nextchaplink\">&lrm;" + SBundle.getString('NextChaptext') + "</a>" + " <span>" + charNext + "</span>";
+    html +=   "<a class=\"nextchaplink\">&lrm;" + SBundle.getString('NextChaptext') + "</a>" + " <span class=\"navlink-span\">" + charNext + "</span>";
     html += "</div>";
     
     return html;
@@ -456,7 +461,7 @@ var Texts = {
 
   scroll2Verse: function(w, l, scrollTypeFlag) {
     if (!l) return true;
-    
+//jsdump("SCROLLING w=" + w + ", l=" + l +", type=" + scrollTypeFlag);    
     var t = document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];
     var mod = prefs.getCharPref("Version" + w);
@@ -485,7 +490,7 @@ var Texts = {
     
     // if not found, use first verse in current chapter
     if (!v) v = vf;
-    
+  
     // if neither verse nor chapter has been found, return false
     if (!v) return false;
 
@@ -545,7 +550,7 @@ var Texts = {
     
     // or scroll multi-column windows...
     else {
-      
+
       switch (scrollTypeFlag) {
 
       case SCROLLTYPETOP:          // scroll to top
@@ -580,7 +585,15 @@ var Texts = {
         break;
       case SCROLLTYPENONE:         // don't scroll (for links this becomes SCROLLTYPECENTER)
       case SCROLLTYPECENTER:       // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
-        if (l[2] == 1 || (v.style.display != "none" && v.offsetLeft < sb.offsetWidth)) break;
+        var ltr = (t.getAttribute("textdir") == "ltr");
+        var rtl_pageOffsetLeft;
+        var tv = sb.firstChild;
+        if(!ltr && tv) {
+          rtl_pageOffsetLeft= tv.offsetLeft + tv.offsetWidth - sb.offsetWidth;
+        }
+        if (l[2] == 1 || (v.style.display != "none" && 
+            ( (ltr && v.offsetLeft < sb.offsetWidth) || 
+              (!ltr && v.offsetLeft >= rtl_pageOffsetLeft) ))) break;
       case SCROLLTYPECENTERALWAYS: // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
         // hide all elements before verse
         var vs = sb.firstChild;
@@ -612,7 +625,6 @@ var Texts = {
           vs = vs.previousSibling;
         }
         // hide verses until last verse appears in last column
-        vs = sb.firstChild;
         while (vs && v.offsetLeft >= sb.offsetWidth) {
           vs.style.display = "none";
           vs = vs.nextSibling;
@@ -620,7 +632,8 @@ var Texts = {
         // hide verses until last verse appears above footnotebox
         var nb = document.getElementById("note" + w);
         while (vs && 
-              (v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth) && v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight)) {
+              ((ltr && v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth)) && 
+              v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight)) {
           vs.style.display = "none";
           vs = vs.nextSibling;
         }
@@ -638,7 +651,6 @@ var Texts = {
       case SCROLLTYPECUSTOM:       // scroll by running CustomScrollFunction
         break;    
       }
-      
     }
   
     return true;
@@ -859,7 +871,7 @@ var BibleTexts = {
     }
    
     // localize verse numbers
-    var tl = getLocaleOfModule(d.mod);
+    var tl = ModuleConfigs[d.mod].AssociatedLocale;
     if (!tl) {tl = getLocale();}
     if (!DisplayNumeral[tl]) getDisplayNumerals(tl);
     if (DisplayNumeral[tl][10]) {
@@ -901,13 +913,18 @@ var BibleTexts = {
       while (vf && (vf.style.display == "none" || !vf.id || !(/^vs\./).test(vf.id))) {
         vf = vf.nextSibling;
       }
-      if (vf) vf = vf.id.split(".");
       
       // get last chapter/verse
-      var vl = sb.lastChild;
-      while (vl && (vl.offsetLeft >= sb.offsetWidth || !vl.id || !(/^vs\./).test(vl.id))) {
-        vl = vl.previousSibling;
-      }
+      var ltr = (t.getAttribute("textdir") == "ltr");
+      var vl = vf;
+      while (vl && 
+              ( vl.offsetLeft < sb.offsetWidth || 
+                !vl.id || 
+                !(/^vs\./).test(vl.id) )
+            ) {vl = vl.nextSibling;}
+      if (vl) vl = vl.previousSibling;
+      
+      if (vf) vf = vf.id.split(".");
       if (vl) vl = vl.id.split(".");
       
       // hide footnotes whose references are scrolled off the window
@@ -938,18 +955,16 @@ var BibleTexts = {
       }
     }
     else if (nb.innerHTML) havefn = true;
-    
+  
     // hide entire notebox if it's empty
-    if (!havefn) {
-      document.getElementById("text" + w).setAttribute("foot", "hide");
-      prefs.setBoolPref("MaximizeNoteBox" + w, false);
-    }
+    document.getElementById("text" + w).setAttribute("foot", (havefn ? "show":"hide"));
+    if (!havefn) prefs.setBoolPref("MaximizeNoteBox" + w, false);
 
   },
   
   // This function is only for versekey modules (BIBLE, COMMENTARY)
   getChapterHeading: function(bk, ch, mod, w) {
-    var l = getLocaleOfModule(mod); // find an installed locale associated with module
+    var l = ModuleConfigs[mod].AssociatedLocale;
     if (!l) {l = getLocale();} // otherwise use current program locale
     var b = getLocaleBundle(l, "books.properties");
 
@@ -1041,7 +1056,7 @@ var BibleTexts = {
           // Write cell #4: chapter and verse
           var xsn = new RegExp("^" + XSNOTE + "$");
           var tmp = noteid.match(xsn);
-          var lov = getLocaleOfModule(mod);
+          var lov = ModuleConfigs[mod].AssociatedLocale;
           var myc = dString(tmp[4], lov);
           var myv = dString(tmp[5], lov);
           t += "<a id=\"w" + w + ".notl." + noteid + "\" class=\"fncol4 cs-" + mod + "\" >" + "<i>" + myc + ":" + versionDirectionEntity + myv + "</i>" + " -" + "</a>";
@@ -1248,7 +1263,7 @@ var CommTexts = {
     }
     
     // localize verse numbers
-    var tl = getLocaleOfModule(d.mod);
+    var tl = ModuleConfigs[d.mod].AssociatedLocale;
     if (!tl) {tl = getLocale();}
     if (!DisplayNumeral[tl]) getDisplayNumerals(tl);
     if (DisplayNumeral[tl][10]) {

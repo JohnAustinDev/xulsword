@@ -60,6 +60,97 @@ var GlobalToggleCommands = {
  * DYNAMIC CSS FUNCTIONS
  ***********************************************************************/ 
 
+function getLocaleConfig(lc) {
+  // Assign localeConfig members from all config.properties entries (see UI-MAP.txt)
+  // These must properly map to ConfigProps members (most of which are CSS properties)
+  var localeProps = ["Direction", "Font", "FontSizeAdjust", "LineHeight", "DefaultModule"];
+
+  var localeConfig = {};
+  
+  var programCSS = getCSS(".cs-Program {");
+  var b = getLocaleBundle(lc, "config.properties");
+
+  for (var i=0; i<localeProps.length; i++) {
+    var val = b.GetStringFromName(localeProps[i]);
+    if ((/^\s*$/).test(val)) val = NOTFOUND;
+    
+    // All localeconfig members should have a valid value, and it must not be null.
+    if (val == NOTFOUND && i < 4) {
+      if (programCSS.style[ConfigProps[i]]) {
+        val = programCSS.style[ConfigProps[i]];
+      }
+    }
+    
+    localeConfig[ConfigProps[i]] = val;
+  }
+ 
+  localeConfig["AssociatedLocale"] = lc;
+  
+  // Insure there are single quotes around font names
+  localeConfig.fontFamily = localeConfig.fontFamily.replace(/\"/g, "'");
+  if (localeConfig.fontFamily != NOTFOUND && !(/'.*'/).test(localeConfig.fontFamily)) 
+      localeConfig.fontFamily = "'" + localeConfig.fontFamily + "'";
+
+  // Save the CSS style rule for this locale, which can be appended to CSS stylesheets
+  localeConfig.StyleRule = createStyleRule(".cs-" + lc, localeConfig);
+  
+  return localeConfig;
+}
+
+function getModuleConfig(mod) {
+  // Create and populate ModuleConfigs
+  var moduleConfig = {};
+  
+  var programCSS = getCSS(".cs-Program {");
+  
+  // Assign ModuleConfigs members from module .conf entries.
+  // These must properly map to ConfigProps members (most of which are CSS properties)
+  var confProps = ["Direction", "Font", "FontSizeAdjust", "LineHeight"];
+  for (var i=0; i<confProps.length; i++) {
+    var val = Bible.getModuleInformation(mod, confProps[i]);
+    if ((/^\s*$/).test(val)) val = NOTFOUND;
+    
+    // All versionconfig members should have a valid value, and it must not be null.
+    if (val == NOTFOUND && i < 4) {
+      if (programCSS.style[ConfigProps[i]]) {
+        val = programCSS.style[ConfigProps[i]];
+      }
+    }
+    
+    moduleConfig[ConfigProps[i]] = val;
+  }
+  
+  // Assign associated locale and modules
+  moduleConfig["AssociatedLocale"] = getLocaleOfModule(mod);
+  if (!moduleConfig["AssociatedLocale"]) moduleConfig["AssociatedLocale"] = NOTFOUND;
+  
+  if (moduleConfig["AssociatedLocale"] != NOTFOUND && LocaleConfigs.hasOwnProperty(moduleConfig["AssociatedLocale"]))
+      moduleConfig["AssociatedModules"] = LocaleConfigs[moduleConfig["AssociatedLocale"]].AssociatedModules;
+  else moduleConfig["AssociatedModules"] = NOTFOUND;
+  
+  // Normalize direction value
+  moduleConfig.direction = (moduleConfig.direction.search("RtoL", "i") != -1 ? "rtl":"ltr");
+  
+  // Insure there are single quotes around font names
+  moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/\"/g, "'");
+  if (moduleConfig.fontFamily != NOTFOUND && !(/'.*'/).test(moduleConfig.fontFamily)) 
+      moduleConfig.fontFamily = "'" + moduleConfig.fontFamily + "'";
+
+  // Save the CSS style rule for this module, which can be appended to CSS stylesheets
+  moduleConfig.StyleRule = createStyleRule(".cs-" + mod, moduleConfig);
+  
+  return moduleConfig;
+}
+
+function createStyleRule(selector, config) {
+  var rule = selector + " {";
+  for (var i=0; i<ConfigCSS.length; i++) {rule += ConfigCSS[i] + ":" + config[ConfigProps[i]] + "; ";}
+  rule += "}";
+
+//jsdump(rule); 
+  return rule;
+}
+
 // This function returns the FIRST rule matching the selector.
 function getCSS(selector) {
   selector = new RegExp("^" + escapeRE(selector));

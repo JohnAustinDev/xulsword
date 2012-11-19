@@ -28,7 +28,7 @@
   background:white;
   cursor:pointer;
 }
-#biblechooser > div {
+.biblechooser-cell {
   display:table-cell;
 }
 
@@ -36,10 +36,10 @@
   display:table;
   height:100%;
 }
-#testaments > div {
+.testaments-row {
   display:table-row;
 }
-#testaments > div > div {
+.testament {
   display:table-cell;
   vertical-align:middle;
   position:relative;
@@ -120,7 +120,7 @@ body[chromedir="rtl"] .biblebooks {
 .bookname[missing="hide"] {
   display:none;
 }
-.bookname > div {
+.bookname-div1 {
   display:table-cell;
   vertical-align:middle; 
   background:rgb(233,233,233);
@@ -131,18 +131,18 @@ body[chromedir="rtl"] .biblebooks {
   -moz-padding-end:2px;
   border-radius:6px;
 }
-.bookname[selected="true"] > div {
+.bookname[selected="true"] .bookname-div1 {
   background:rgb(230,200,255);
 }
-.bookname > div:hover {
+.bookname .bookname-div1:hover {
   background:yellow;
 }
-.bookname[missing="disable"] > div {
+.bookname[missing="disable"] .bookname-div1 {
   background:rgb(225,225,225);
   color:rgb(150,150,150) ;
   border:1px inset black;
 }
-.bookname > div > div {
+.bookname-div2 {
   position:relative;
   white-space:nowrap;
   font-size:1.2em;
@@ -193,7 +193,7 @@ body[chromedir="rtl"] .chaptermenu {
   display:table-row;
   background:transparent;
 }
-.chaptermenu > div > div {
+.chaptermenucell {
   display:table-cell;
   width:26px;
   font-size:13px;
@@ -203,7 +203,7 @@ body[chromedir="rtl"] .chaptermenu {
   color:blue;
   padding:2px;
 }
-.chaptermenu > div > div:hover {
+.chaptermenucell:hover {
   background:yellow;
   border:1px inset rgb(255,243,255);
 }
@@ -231,7 +231,7 @@ body[chromedir="rtl"] .chaptermenu {
 .headingmenu[direction="rtl"] {
   text-align:right;
 }
-.headingmenu a:hover {
+.heading-link:hover {
   text-decoration:underline;
   cursor:pointer;
 }

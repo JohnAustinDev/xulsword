@@ -56,7 +56,7 @@ body[chromedir="rtl"] #chbutton_open {
   width:100%;
   padding-top:14px; /* used in viewport.js */
 }
-#tabrow > div {
+#tabrowf {
   display:table;
   width:100%;
   
@@ -72,7 +72,7 @@ body[chromedir="rtl"] #chbutton_open {
   z-index:10;
   text-align:right;
 }
-body[chromedir="rtl"] .tabs {
+.tabs[chromedir="rtl"] {
   text-align:left;
 }
 #tabrow[windows="show1"] #tabs1 {
@@ -122,14 +122,16 @@ body[chromedir="rtl"] .tabs {
   position:relative;
   display:inline-block;
 }
-.multitab > div {
+.multitab-clicker {
   position:absolute;
   top:0px;
   left:0px;
   width:80%;
   height:100%;
 }
-.multitab > select {
+#w1\.tabselect,
+#w2\.tabselect,
+#w3\.tabselect {
   padding-top:2px;
   text-align:center;
 }
@@ -165,7 +167,7 @@ body[chromedir="rtl"] .tabs {
   border-collapse:separate;
   border-spacing:0px 0px;
 }
-#textrow > div {
+.text {
   display:table-cell;
   vertical-align:top;
   padding-left:10px;
@@ -188,13 +190,13 @@ body[chromedir="rtl"] .tabs {
   display:none !important;
 }
 
-.text > div {
+.textf {
 	background:rgb(255,243,255);
 	border:2px solid rgb(200,170,205);
   border-radius:8px;
   position:relative;
 }
-.text[pin="pinned"] > div {
+.text[pin="pinned"] .textf {
   background:rgb(248,248,241);
 }
 
@@ -233,7 +235,6 @@ body[chromedir="rtl"] .tabs {
   color: black;
   padding-left:30px;
   padding-right:30px;
-  overflow:auto;
 }
 .text[columns="show1"] .sb {
   overflow:auto;
@@ -276,7 +277,7 @@ body[chromedir="rtl"] .tabs {
   display:none;
 }
 
-.nbc > div {
+.nbf {
   position:absolute;
   bottom:0px;
   right:0px;
@@ -284,37 +285,37 @@ body[chromedir="rtl"] .tabs {
   border-radius:8px;
   z-index:20;
 }
-body[chromedir="rtl"] .nbc > div {
+.text[textdir="rtl"] .nbf {
   right:auto;
   left:0px;
 }
-#text1 .nbc > div {
+#text1 .nbf {
   height:200px; /* used in viewport.js */
 }
-#text2 .nbc > div {
+#text2 .nbf {
   height:200px; /* used in viewport.js */
 }
-#text3 .nbc > div {
+#text3 .nbf {
   height:200px; /* used in viewport.js */
 }
-#text1[foot="showmax"]:not([columns="show1"]) .nbc > div,
-#text2[foot="showmax"]:not([columns="show1"]) .nbc > div,
-#text3[foot="showmax"]:not([columns="show1"]) .nbc > div {
+#text1[foot="showmax"]:not([columns="show1"]) .nbf,
+#text2[foot="showmax"]:not([columns="show1"]) .nbf,
+#text3[foot="showmax"]:not([columns="show1"]) .nbf {
   height:600px; /* used in viewport.js */
 }
-.text[columns="show1"] .nbc > div {
+.text[columns="show1"] .nbf {
   width:100%;
 }
-.text[columns="show2"] .nbc > div {
+.text[columns="show2"] .nbf {
   width:50%;
   padding-left:20px; /* hides columns rule */
 }
-.text[columns="show3"] .nbc > div {
+.text[columns="show3"] .nbf {
   width:33%;
   padding-left:20px; /* hides columns rule */
 }
-body[chromedir="rtl"] .text[columns="show2"] .nbc > div,
-body[chromedir="rtl"] .text[columns="show3"] .nbc > div {
+.text[textdir="rtl"][columns="show2"] .nbf,
+.text[textdir="rtl"][columns="show3"] .nbf {
   padding-left:0px;
   padding-right:20px; /* hides columns rule */
 }
@@ -344,7 +345,7 @@ body[chromedir="rtl"] .text[columns="show3"] .nbc > div {
   width:15px;
   height:14px;
 }
-body[chromedir="rtl"] .nbsizer {
+.text[textdir="rtl"] .nbsizer {
   right:auto;
   left:42px;
 }

@@ -176,7 +176,7 @@ function loadedXULReal() {
   //we're ok!
   // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
   else if (Bible) {
-    Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+    Texts.update(SCROLLTYPEBEG, HILIGHT_IFNOTV1);
     window.setTimeout("postWindowInit()", 1000); 
   }
   jsdump("Initilization Complete\n");
@@ -794,7 +794,7 @@ function updateFromNavigator(numberOfSelectedVerses) {
   
   //force chapter to boundary if over in either direction
   if (myc < 1) {myc=1;}
-  if (myc > Book[mybn].numChaps) {myc=Book[mybn].numChaps;}
+  if (myc > Bible.getMaxChapter("KJV", myb)) {myc = Bible.getMaxChapter("KJV", myb);}
   
   if (!fail) {Location.setLocation(myversion, Book[mybn].sName + "." + myc);}
 
@@ -947,7 +947,7 @@ var XulswordController = {
       var vers = firstDisplayBible();
       var bkn = findBookNum(Location.getBookName());
       var chn = Location.getChapterNumber(vers);
-      if (chn < Book[bkn].numChaps) {chn++;}
+      if (chn < Bible.getMaxChapter("KJV", Book[bkn].sName)) {chn++;}
       else return;
       Location.setLocation(vers, Location.getBookName() + "." + chn);
       Texts.update(SCROLLTYPEBEG, HILIGHTNONE);

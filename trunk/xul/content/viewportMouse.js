@@ -801,7 +801,7 @@ function nextChapterPinned(w) {
   var bkn = findBookNum(Texts.display[w].bk);
   var chn = Texts.display[w].ch;
   
-  if (chn < Book[bkn].numChaps) {chn++;}
+  if (chn < Bible.getMaxChapter("KJV", Texts.display[w].bk)) {chn++;}
   else return;
   
   Texts.pinnedDisplay[w].ch = chn;
