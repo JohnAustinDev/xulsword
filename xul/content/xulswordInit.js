@@ -32,8 +32,6 @@ var LanguageStudyModules = {};
 var Book = new Array(NumBooks);
 var AllWindows = [];
 
-const ConfigProps = ["direction", "fontFamily", "fontSizeAdjust", "lineHeight", "AssociatedModules", "AssociatedLocale", "StyleRule"];
-
 // Global text objects defined in text.js
 var Texts;
 var BibleTexts; 
@@ -152,51 +150,16 @@ function initLocales() {
 	var toolkitChromeReg = chromeRegService.QueryInterface(Components.interfaces.nsIToolkitChromeRegistry);
 	var availableLocales = toolkitChromeReg.getLocalesForPackage("xulsword");
   
-  // Create LocaleConfigs
-	while(availableLocales.hasMore()) {
-		var locale = availableLocales.getNext();
-		LocaleConfigs[locale] = {};
-	}
-  
   var currentLocale = getLocale();
   rootprefs.setCharPref("general.useragent.locale", currentLocale);
-  var programCSS = getCSS(".cs-Program");
-
-  // Populate LocaleConfigs
-  for (var lc in LocaleConfigs) {
+  
+  // Create LocaleConfigs
+	while(availableLocales.hasMore()) {
+		var lc = availableLocales.getNext();
+    
     if (lc == currentLocale) currentLocaleIsValid=true;
-    
-    var b = getLocaleBundle(lc, "config.properties");
-    
-    // Assign LocaleConfigs members from all config.properties entries (see UI-MAP.txt)
-    // These must properly map to ConfigProps members (most of which are CSS properties)
-    var localeProps = ["Direction", "Font", "FontSizeAdjust", "LineHeight", "DefaultModule"];
-
-    for (var i=0; i<localeProps.length; i++) {
-      var val = b.GetStringFromName(localeProps[i]);
-      if ((/^\s*$/).test(val)) val = NOTFOUND;
-      
-      // All localeconfig members should have a valid value, and it must not be null.
-      if (val == NOTFOUND && i < 4) {
-        if (programCSS.style[ConfigProps[i]]) {
-          val = programCSS.style[ConfigProps[i]];
-        }
-      }
-      
-      LocaleConfigs[lc][ConfigProps[i]] = val;
-    }
-    
-    LocaleConfigs[lc]["AssociatedLocale"] = lc;
-    
-    // Insure there are single quotes around font names
-    LocaleConfigs[lc].fontFamily = LocaleConfigs[lc].fontFamily.replace(/\"/g, "'");
-    if (LocaleConfigs[lc].fontFamily != NOTFOUND && !(/'.*'/).test(LocaleConfigs[lc].fontFamily)) 
-        LocaleConfigs[lc].fontFamily = "'" + LocaleConfigs[lc].fontFamily + "'";
-
-    // Save the CSS style rule for this locale, which can be appended to CSS stylesheets
-    LocaleConfigs[lc].StyleRule = createStyleRule(".cs-" + lc, LocaleConfigs[lc]);
-    
-  }
+    LocaleConfigs[lc] = getLocaleConfig(lc);
+	}
   
   if (!currentLocaleIsValid) jsdump("Current locale is not valid: " + currentLocale + "\n");
   else {
@@ -206,15 +169,6 @@ function initLocales() {
   }
   
   return currentLocaleIsValid;
-}
-
-function createStyleRule(selector, config) {
-  var rule = selector + " {";
-  for (var p in config) {rule += p + ":" + config[p] + "; ";}
-  rule += "}";
-
-//jsdump(rule); 
-  return rule;
 }
 
 
@@ -256,46 +210,7 @@ function initModules() {
     // Language glossaries don't currently work (too big??) and so aren't supported.
     if (Bible.getModuleInformation(mod, "GlossaryFrom") != NOTFOUND) continue;
     
-    // Create and populate ModuleConfigs
-    var ModuleConfigs[mod] = {};
-    
-    var programCSS = getCSS(".cs-Program");
-    
-    // Assign ModuleConfigs members from module .conf entries.
-    // These must properly map to ConfigProps members (most of which are CSS properties)
-    var confProps = ["Direction", "Font", "FontSizeAdjust", "LineHeight"];
-    for (var i=0; i<confProps.length; i++) {
-      var val = Bible.getModuleInformation(mod, confProps[i]);
-      if ((/^\s*$/).test(val)) val = NOTFOUND;
-      
-      // All versionconfig members should have a valid value, and it must not be null.
-      if (val == NOTFOUND && i < 4) {
-        if (programCSS.style[ConfigProps[i]]) {
-          val = programCSS.style[ConfigProps[i]];
-        }
-      }
-      
-      ModuleConfigs[mod][ConfigProps[i]] = val;
-    }
-    
-    // Assign associated locale and modules
-    ModuleConfigs[mod]["AssociatedLocale"] = getLocaleOfModule(mod);
-    if (!ModuleConfigs[mod]["AssociatedLocale"]) ModuleConfigs[mod]["AssociatedLocale"] = NOTFOUND;
-    
-    if (ModuleConfigs[mod]["AssociatedLocale"] != NOTFOUND)
-        ModuleConfigs[mod]["AssociatedModules"] = LocaleConfigs[ModuleConfigs[mod]["AssociatedLocale"]].AssociatedModules;
-    else ModuleConfigs[mod]["AssociatedModules"] = NOTFOUND;
-    
-    // Normalize direction value
-    ModuleConfigs[mod].direction = (ModuleConfigs[mod].direction.search("RtoL", "i") != -1 ? "rtl":"ltr");
-    
-    // Insure there are single quotes around font names
-    ModuleConfigs[mod].fontFamily = ModuleConfigs[mod].fontFamily.replace(/\"/g, "'");
-    if (ModuleConfigs[mod].fontFamily != NOTFOUND && !(/'.*'/).test(ModuleConfigs[mod].fontFamily)) 
-        ModuleConfigs[mod].fontFamily = "'" + ModuleConfigs[mod].fontFamily + "'";
-
-    // Save the CSS style rule for this module, which can be appended to CSS stylesheets
-    ModuleConfigs[mod].StyleRule = createStyleRule(".cs-" + mod, ModuleConfigs[mod]);
+    ModuleConfigs[mod] = getModuleConfig(mod);
   }
   
   return true;
@@ -351,8 +266,8 @@ function initTabGlobals() {
 
   for (var mod in ModuleConfigs) {
     var typeRE = new RegExp("(^|<nx>)" + mod + ";(.*?)(<nx>|$)");
-    var type = modlist.match(typeRE)[1];
-    
+    var type = modlist.match(typeRE)[2];
+   
     if (type == DICTIONARY) {
     
       // Set Global dictionary module params
@@ -421,7 +336,7 @@ function initTabGlobals() {
   // Create Global Tab and Tabs
   Tab.ORIG_OT = null;
   Tab.ORIG_NT = null;
-  for (m=0; m<modarray.length; m++) {
+  for (var m=0; m<modarray.length; m++) {
     mod   = modarray[m].mod;
     type  = modarray[m].type;
     label = modarray[m].label;
@@ -450,6 +365,7 @@ function initTabGlobals() {
   }
 
 //jsdump("StrongsGreek=" + LanguageStudyModules.StrongsGreek + ", StrongsHebrew=" + LanguageStudyModules.StrongsHebrew + ", Robinson=" + LanguageStudyModules.Robinson);
+  return true;
 }
 
 
@@ -465,11 +381,12 @@ function initTabGlobals() {
 //        c) remaining tabs
 //        d) ORIG tab
 //    3) Alphabetically
+var ModuleTypeOrder = {}
+ModuleTypeOrder[BIBLE] = 1;
+ModuleTypeOrder[COMMENTARY] = 2;
+ModuleTypeOrder[GENBOOK] = 3;
+ModuleTypeOrder[DICTIONARY] = 4;
 function tabOrder(a,b) {
-
-  // First sort by tap type
-  var moduleTypeOrder = {BIBLE:1, COMMENTARY:2, GENBOOK:3, DICTIONARY:4};
-  
   if (a.type == b.type) {
     // Tab type is the same.
     if (Tab.ORIG_NT && a.mod==Tab.ORIG_NT.modName) return 1;
@@ -479,8 +396,8 @@ function tabOrder(a,b) {
 
     // Priority: 1) Modules matching current locale, 2) Other tabs that have
     // locales installed, 3) remaining tabs.
-    var aLocale = getLocaleOfModule(a.mod);
-    var bLocale = getLocaleOfModule(b.mod);
+    var aLocale = ModuleConfigs[a.mod].AssociatedLocale;
+    var bLocale = ModuleConfigs[b.mod].AssociatedLocale;
     var currentLocale = getLocale();
     var aPriority = (aLocale ? (aLocale==currentLocale ? 1:2):3);
     var bPriority = (bLocale ? (bLocale==currentLocale ? 1:2):3);
@@ -488,7 +405,7 @@ function tabOrder(a,b) {
     // Type and Priority are same. Sort by label's alpha.
     return (a.label > b.label ? 1:-1);
   }
-  else return (moduleTypeOrder[a.type] > moduleTypeOrder[b.type] ? 1:-1);
+  else return (ModuleTypeOrder[a.type] > ModuleTypeOrder[b.type] ? 1:-1);
 }
 
 function getConfFiles(dir, aObj) {
@@ -537,7 +454,7 @@ function initBooks() {
     
     Book[x].sName = allBooks[i];
     
-    var localName = bundle.GetStringFromName(Book[x].sName);
+    var localName = b.GetStringFromName(Book[x].sName);
     Book[x].bName  = localName;
     Book[x].bNameL = localName;
     
@@ -586,9 +503,11 @@ function xulswordInit() {
   if (initModules()) {
   
     // log our modules
+    /*
     var s = "";
     for (var m in ModuleConfigs) {s += m + "; ";}
     jsdump("Loaded modules:" + s);
+    */
     
     initTabGlobals();
 

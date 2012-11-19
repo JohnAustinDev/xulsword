@@ -49,10 +49,10 @@
         <div id="fadetop"></div>
         
         <div id="biblechooser" showing="nt">
-          <div>
+          <div class="biblechooser-cell">
             <div id="testaments">
-              <div>
-                <div id="testament_ot">
+              <div class="testaments-row">
+                <div id="testament_ot" class="testament">
                   <div id="chbutton_close"></div>
                   <script>
                   var text = SBundle.getString('OTtext');
@@ -61,8 +61,8 @@
                   </script>
                 </div>
               </div>
-              <div>
-                <div id="testament_nt">
+              <div class="testaments-row">
+                <div id="testament_nt" class="testament">
                   <script>
                   var text = SBundle.getString('NTtext');
                   if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
@@ -72,7 +72,7 @@
               </div>
             </div>
           </div>
-          <div>
+          <div class="biblechooser-cell">
             <div id="biblebooks_ot" class="biblebooks">
               <script>drawOTbooks();</script>         
             </div>
@@ -91,7 +91,7 @@
     <div>
       <div id="tabrow" windows="show2" onmouseover="tabMouse(event);" onmouseout="tabMouse(event);" onclick="tabMouse(event);">
         
-        <div>
+        <div id="tabrowf">
           <div id="tabs1" class="tabs"></div>
           <div id="tabs2" class="tabs"></div>
           <div id="tabs3" class="tabs"></div>
@@ -102,13 +102,13 @@
           onmouseout="scriptMouseOut(event)" onclick="scriptClick(event)" 
           onmousemove="bbMouseMove(event);" onmouseup="bbMouseUp(event);">
           
-        <div id="text1" class="text" columns="show1" pin="unpinned" foot="show">
-          <div>
+        <div id="text1" class="text" textdir="ltr" columns="show1" pin="unpinned" foot="show">
+          <div class="textf">
             <div class="sbpin" id="sbpin1"></div>
             <div class="hd"></div>
             <div class="sb"></div>
             <div class="nbc" onclick="noteboxClick(event)">
-              <div>
+              <div class="nbf">
                 <div class="bb" onmousedown="bbMouseDown(event);"></div>
                 <div class="nbsizer"></div>
                 <div id="note1" class="nb"></div>
@@ -118,13 +118,13 @@
           </div>
         </div>
         
-        <div id="text2" class="text" columns="show1" pin="unpinned" foot="show">
-          <div>
+        <div id="text2" class="text" textdir="ltr" columns="show1" pin="unpinned" foot="show">
+          <div class="textf">
             <div class="sbpin" id="sbpin2"></div>
             <div class="hd"></div>
             <div class="sb"></div>
             <div class="nbc" onclick="noteboxClick(event)">
-              <div>
+              <div class="nbf">
                 <div class="bb" onmousedown="bbMouseDown(event);"></div>
                 <div class="nbsizer"></div>
                 <div id="note2" class="nb"></div>
@@ -134,13 +134,13 @@
           </div>
         </div>
         
-        <div id="text3" class="text" columns="hide" pin="unpinned" foot="show">
-          <div>
+        <div id="text3" class="text" textdir="ltr" columns="hide" pin="unpinned" foot="show">
+          <div class="textf">
             <div class="sbpin" id="sbpin3"></div>
             <div class="hd"></div>
             <div class="sb"></div>
             <div class="nbc" onclick="noteboxClick(event)">
-              <div>
+              <div class="nbf">
                 <div class="bb" onmousedown="bbMouseDown(event);"></div>
                 <div class="nbsizer"></div>
                 <div id="note3" class="nb"></div>

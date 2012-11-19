@@ -167,11 +167,11 @@ function buttonPress(cmd) {
   TotalChaps = 0;
   if (From.bookNumber==To.bookNumber) TotalChaps = To.chapter-From.chapter;
   else {
-    TotalChaps = Book[From.bookNumber].numChaps - From.chapter
+    TotalChaps = Bible.getMaxChapter("KJV", Book[From.bookNumber].sName) - From.chapter
     for (var bknum=From.bookNumber+1; bknum<=To.bookNumber; bknum++) {
       var add=0;
       if (bknum==To.bookNumber) add = To.chapter;
-      else add = Book[bknum].numChaps;
+      else add = Bible.getMaxChapter("KJV", Book[bknum].sName);
       TotalChaps += add;
     }
   }
@@ -217,7 +217,7 @@ function getChapterHTML() {
     doPrintCommand(PrintCommand, PrintHTML);
     return;
   }
-  if (Now.chapter == Book[Now.bookNumber].numChaps) {
+  if (Now.chapter == Bible.getMaxChapter("KJV", Book[Now.bookNumber].sName);) {
     Now.bookNumber++;
     Now.chapter=1;
   }

@@ -97,6 +97,8 @@ const PMMODAL="alwaysRaised,centerscreen,modal";
 const PMNORMAL=0, PMSTOP=1;
 const APPLICATIONID="xulsword@xulsword.org";
 const XSNOTE = "(fn|cr|un)\\.([^\\.]+)\\.(\\w+)\\.(\\d+)\\.(\\d+)\\.(\\w+)";
+const ConfigProps = ["direction", "fontFamily", "fontSizeAdjust", "lineHeight", "AssociatedModules", "AssociatedLocale", "StyleRule"];
+const ConfigCSS   = ["direction", "font-family", "font-size-adjust", "line-height"];
 
 const NumBooks=66;
 const NumOT=39;

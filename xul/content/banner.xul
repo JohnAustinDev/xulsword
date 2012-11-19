@@ -43,21 +43,18 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
   
   <script>
+    var LocaleConfigs = {};
+    var ModuleConfigs = {};
+    
     function onLoad() {
-      LocaleConfigs = [];
-      var localeConfig = {};
-      var locale = getLocale();
-      var bundle = getLocaleBundle(locale, "config.properties");
-      if (bundle) {
-        try {localeConfig.direction = bundle.GetStringFromName("Direction");} catch (er) {}
-        try {localeConfig.fontFamily = "'" + bundle.GetStringFromName("Font") + "'";} catch (er) {}
-        try {localeConfig.fontSizeAdjust = bundle.GetStringFromName("FontSizeAdjust");} catch (er) {}
-        try {localeConfig.lineHeight = bundle.GetStringFromName("LineHeight");} catch (er) {}
-      }
-      LocaleConfigs[locale] = localeConfig;
-//      updateCSSBasedOnCurrentLocale(['window']);
+
+      var lc = getLocale();
+      LocaleConfigs[lc] = getLocaleConfig(lc);
+
+      createDynamicClasses();
       
       setGlobalDirectionPrefs();
+      
       sizeToContent();
     }
   </script>

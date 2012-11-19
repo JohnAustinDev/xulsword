@@ -475,7 +475,7 @@ function searchBible() {
     Step = 0;  
     Matches = 0;
     document.getElementById("statusbar-text").label = "";
-    for (var sl=Start; sl<=End; sl++) {Slength = Slength + Book[sl].numChaps;}
+    for (var sl=Start; sl<=End; sl++) {Slength = Slength + Bible.getMaxChapter("KJV", Book[sl].sName);}
   
     document.getElementById("progressbox").style.visibility = "visible";
     document.getElementById("searchmsg").value = SBundle.getFormattedString("Searching",[Book[Start].bName]);
@@ -630,7 +630,7 @@ function searchBook() {
       SearchBoxElement.innerHTML = getHTMLSearchResults(StartVerse, VersesPerPage, TR);
     }
     Newsearch=false;
-    Step = Step + Book[Start].numChaps;
+    Step = Step + Bible.getMaxChapter("KJV", Book[Start].sName);
     var progress = 100*Step/Slength;
     document.getElementById("progress").value = progress;
   }

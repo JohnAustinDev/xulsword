@@ -100,7 +100,7 @@ var ViewPort = {
       rule.style.marginBottom = Number(nbh) + "px";
       rule.style.height = Number(sbh - nbh) + "px";
       
-      rule = getCSS("#text" + w + " .nbc > div {");
+      rule = getCSS("#text" + w + " .nbf {");
       rule.style.height = nbh + "px";
       
       rule = getCSS("#text" + w + " .nb {");
@@ -109,7 +109,7 @@ var ViewPort = {
       rule.style.height = Number(nbh - margt - margb - bbh + footheight) + "px";
     }
 
-    rule = getCSS("#text1[foot=\"showmax\"]:not([columns=\"show1\"]) .nbc > div,");
+    rule = getCSS("#text1[foot=\"showmax\"]:not([columns=\"show1\"]) .nbf,");
     rule.style.height = sbh + "px";
     rule = getCSS("#text1[foot=\"showmax\"]:not([columns=\"show1\"]) .nb,");
     rule.style.height = Number(sbh - margt - margb - bbh) + "px"; // margt & margb set above (all windows are same)
@@ -190,9 +190,17 @@ var ViewPort = {
             value = "show3";
       }
       
+      // Firefox 16 has a bug where RTL column CSS does not scroll. The work
+      // around at this time is to prohibit RTL columns.
+      if (ModuleConfigs[prefs.getCharPref("Version" + w)].direction == "rtl") value = "show1";
+      
+      // Set this window's number of columns
       var t = document.getElementById("text" + w);
       t.setAttribute("columns", value);
+      
+      // Set this window's CSS info
       t.className = t.className.replace(/\s*cs\-\S+/, "") + " cs-" + prefs.getCharPref("Version" + w);
+      t.setAttribute("textdir", ModuleConfigs[prefs.getCharPref("Version" + w)].direction);
        
       if (value == "show2") {
         w++;
@@ -363,7 +371,7 @@ var ViewPort = {
     html +=   "</select>";
     
     // a div is needed to capture tab selection clicks and prevent activation of pulldown menu
-    html +=   "<div id=\"w" + w + ".tab.tsel\"></div>";
+    html +=   "<div class=\"multitab-clicker\" id=\"w" + w + ".tab.tsel\"></div>";
     
     html += "</div>";
     

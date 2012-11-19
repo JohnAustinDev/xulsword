@@ -246,7 +246,7 @@
           
           var book = this.book;
           
-          if (val<1 || val>Book[findBookNum(book)].numChaps) return current;
+          if (val<1 || val>Bible.getMaxChapter("KJV", book)) return current;
           if (!this.chaptermenulist.hidden) {
             if (val > this.chaptermenulist.menupopup.childNodes.length) 
               this.addMenuItems(this.chaptermenulist, val, MAXCHAPTER);
@@ -403,7 +403,7 @@
         <parameter name="aEvent"/>
         <body><![CDATA[
           if (!this.chaptermenulist.hidden) {
-            var maxChapter = Book[findBookNum(this.book)].numChaps;
+            var maxChapter = Bible.getMaxChapter("KJV", this.book);
             var menuItem = this.chaptermenulist.menupopup.firstChild;
             while (menuItem) {
               menuItem.hidden=true;

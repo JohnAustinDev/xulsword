@@ -28,8 +28,8 @@ function drawNTbooks() {for (var b=NumOT; b<=NumBooks-1; b++) {drawBook(b);}}
 
 function drawBook(b) {
   document.write("<div id=\"book_" + b + "\" class=\"bookname\">");
-  document.write("<div>");
-  document.write("<div>");
+  document.write("<div class=\"bookname-div1\">");
+  document.write("<div class=\"bookname-div2\">");
   document.write(Book[b].bName);
   document.write("<div class=\"charrow\"></div>");
   writeChapterMenu(b);
@@ -43,12 +43,12 @@ function writeChapterMenu(bk) {
   var dend;
   var row=1; 
   var col=1;
-  for (var ch=1; ch<=Book[bk].numChaps;ch++) {
+  for (var ch=1; ch<=Bible.getMaxChapter("KJV", Book[bk].sName); ch++) {
     if (col == 1) {
       document.write("<div class=\"chaptermenurow\">");
       dend="</div>";
     }
-    document.write("<div id=\"chmenucell_" + bk + "_" + ch + "\" class=\"cs-Program\">");
+    document.write("<div id=\"chmenucell_" + bk + "_" + ch + "\" class=\"chaptermenucell cs-Program\">");
     document.write(dString(ch));
     document.write("</div>");
     col++; 
@@ -207,7 +207,7 @@ function showHeadings(myid, screenY) {
       var heading=head[h].match(hd)[1].replace(re, "").replace(/head1/, "nohead");
       var verse=head[h].match(vs)[1];
       if (!(/^<div[^>]*>\s*<\/div>$/).test(heading)) {
-        html += hr + "<a class=\"cs-" + biblemod + "\" id=\"headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod + "\" >" + heading + "</a>"; 
+        html += hr + "<a class=\"heading-link cs-" + biblemod + "\" id=\"headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod + "\" >" + heading + "</a>"; 
         hr="<hr>";
       }
     }
