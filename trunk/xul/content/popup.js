@@ -115,7 +115,7 @@ function PopupObj(popupobj) {
       var re = new RegExp("<div id=\"src\\." + escapeRE(this.data) + "\">(.*?)<\\/div>");
       var p = this.footnotes.match(re);
       if (p && p[1]) {
-        html += BibleTexts.getRefHTML(this.w, this.mod, this.data, p[1], "pu", "crhr");
+        html += BibleTexts.getRefHTML(this.w, this.mod, p[1]);
       }
       html += "</div>";
       window.setTimeout("Popup.initModuleSelect('bibles', '" + this.mod + "');", 1);
@@ -189,7 +189,7 @@ function PopupObj(popupobj) {
   //jsdump(mdata[i]);
         reflist += mdata[i] + ";";
       }
-      html += BibleTexts.getRefHTML(this.w, this.mod, "cr." + cnt++ + ".Gen.1.1", reflist, "pu", "crhr");
+      html += BibleTexts.getRefHTML(this.w, this.mod, reflist);
       html += failhtml;
       html += "</div>";
       break;

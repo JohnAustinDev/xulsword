@@ -11,44 +11,56 @@
 .prevchaplink, .nextchaplink {
   cursor:pointer;
 }
+#textrow[CanDoPreviousChapter="false"] .prevchaplink,
+#textrow[CanDoNextChapter="false"] .nextchaplink {
+  color:grey;
+  cursor:default;
+}
 .prevchaplink:hover, .nextchaplink:hover {
   text-decoration:underline;
+}
+#textrow[CanDoPreviousChapter="false"] .prevchaplink:hover,
+#textrow[CanDoNextChapter="false"] .nextchaplink:hover {
+  text-decoration:none;
 }
 
 /* Bible & Commentary chapter/page header */
 .chapterhead {
   padding-top:26px;
 }
-.noticelink {
+.noticelink-c {
   font-size:1.4em;
   margin:0px 10px 10px 10px;
   text-align:center;
 }
-.noticelink[empty="true"] {
+.noticelink-c[empty="true"] {
   display:none;
 }
-.noticelink a {
+.noticelink {
   text-decoration:underline;
   color:blue;
   cursor:pointer;
 }
 .chaptitle {
   float:left;
-  font-size:28px; /* dynamically changed by js; must be in px */
+  font-size:2em;
   font-weight:bold;
   color:rgb(110,85,110);
+}
+.chapterhead[headdir="rtl"] .chaptitle {
+  float:right;
 }
 .chapbk, .chapch {
   white-space:nowrap;
 }
 .chapbk {
   display:none;
+  margin-bottom:0.5em;
 }
 .chapterhead.chapterfirst .chapbk {
   display:block;
 }
-#text[pin="pinned"] .chapbk,
-#sizetester .chapbk {
+#text[pin="pinned"] .chapbk {
   display:block;
 }
 .chapinfo {
@@ -56,8 +68,10 @@
   position:relative;
   top:-5px;
   min-width:60px;
-  font-size:2em;
   color:rgb(110,85,110);
+}
+.chapterhead[headdir="rtl"] .chapinfo {
+  float:left;
 }
 .listenlink {
   visibility:hidden;
@@ -70,6 +84,7 @@
   background:url('chrome://xulsword/skin/images/listen1.gif');
 }
 .introlink {
+  font-size:1.4em;
   text-decoration:underline;
   color:blue;
   cursor:pointer;
@@ -96,7 +111,7 @@
 
 /* Script box styles */
 .head1 {
-  font-size:1.8em;
+  font-size:1.6em;
   color:rgb(110,85,110);
   font-weight:bold;
   text-align:center;
@@ -105,7 +120,7 @@
   clear:both;
 }
 .head2 {
-  font-size:1.6em;
+  font-size:1.3em;
   color:rgb(110,85,110);
   font-weight:bold;
   margin-bottom:0.5em;
@@ -121,58 +136,38 @@
 .versenum {
   vertical-align:top;
 }
-.cr:after {
-  content: "\00D7 ";
+.cr:after, 
+.cr-x-parallel-passage:after,
+.cr-x-style1:after,
+.fn:after,
+.un:after {
   vertical-align:top;
   font-family:'Arial' !important;
   font-size-adjust:0.55 !important;
   line-height:100% !important;
-  color:rgb(255,0,0);
   cursor:pointer;
-  z-index:7;
+}
+.cr:after {
+  content: "\00D7 ";
+  color:rgb(255,0,0);
 }
 .cr-x-parallel-passage:after {
   content: "\25CF ";
-  vertical-align:top;
-  font-family:'Arial' !important;
-  font-size-adjust:0.55 !important;
-  line-height:100% !important;
   color:rgb(255,0,0);
-  cursor:pointer;
-  z-index:7;
 }
 .cr-x-style1:after {
   content: "+ ";
-  vertical-align:top;
-  font-family:'Arial' !important;
-  font-size-adjust:0.55 !important;
-  line-height:100% !important;
   color:rgb(255,0,0);
-  cursor:pointer;
-  z-index:7;
 }
 .fn:after {
   content: "\00D7 ";
-  vertical-align:top;
-  font-family:'Arial' !important;
-  font-size-adjust:0.55 !important;
-  line-height:100% !important;
   color:rgb(0,200,250);
-  cursor:pointer;
-  z-index:7;
 }
 .un:after {
   content: "\00D7 ";
-  vertical-align:top;
-  font-family:'Arial' !important;
-  font-size-adjust:0.55 !important;
-  line-height:100% !important;
   color:rgb(0,0,200);
-  cursor:pointer;
-  z-index:7;
 }
 .sr {
-  color:inherit;
 	text-decoration:underline;
   cursor:pointer;
 }
@@ -183,7 +178,6 @@
 .dt {
   text-decoration:underline;
   cursor:pointer;
-  z-index:7;
 }
 .genbknote {
   color:blue;
@@ -191,6 +185,7 @@
 /* Words with Strong's number attached */
 .sn {
   border-bottom: 1px solid rgb(220,195,220); /*(240,215,240);*/
+  cursor:pointer;
 }
 .matchingStrongs {
   background:yellow;
@@ -208,8 +203,9 @@
   display:table;
   border-collapse:separate;
   border-spacing:0px 1px;
+  margin:10px;
 }
-.fntable > div {
+.cropened, .crclosed {
   display:table-row;
 }
 .fncol1 {
@@ -217,7 +213,6 @@
   width:10px;
   vertical-align:top;
   padding-top:8px;
-  padding-right:0px;
 }
 .crtwisty {
   width:9px;
@@ -232,7 +227,6 @@
   display:table-cell; 
   vertical-align:top;
   padding-top:12px;
-  padding-right:0px;
 }
 .fndash {
   width:10px; 
@@ -250,10 +244,11 @@
 .cropened .fncol3 {
   visibility:visible;
 }
-.fncol3LTR {
+.fncol3 {
   border-left:1px solid rgb(150,150,150);
 }
-.fncol3RTL {
+.text[textdir="rtl"] .fncol3 {
+  border-left:none;
   border-right:1px solid rgb(150,150,150);
 }
 .fncol4 {
@@ -261,9 +256,31 @@
   display:table-cell;
   white-space:nowrap;
 }
+.text[textdir="rtl"] .fncol4 {
+  padding-left:0px;
+  padding-right:4px;
+}
+.fnlink {
+  color:blue;
+}
+.fnlink:hover {
+  text-decoration:underline;
+  cursor:pointer;
+}
 .fncol5 {
   display:table-cell;
   padding-left:4px;
+}
+.text[textdir="rtl"] .fncol5 {
+  padding-left:0px;
+  padding-right:4px;
+}
+.crref {
+  color:blue;
+  cursor:pointer;
+}
+.crref:hover {
+  text-decoration:underline;
 }
 .cropened .crref:after {
   content:": ";
@@ -283,17 +300,18 @@
 .crclosed .crsep:after {
   content:"; ";
 }
-.normalNote {
+.fncontainer {
   padding-right:16px;
   border:1px solid transparent;
   border-radius:8px;
 }
-.selectedNote {
-  padding-right:16px;
+.text[textdir="rtl"] .fncontainer {
+  padding-right:0px;
+  padding-left:16px;
+}
+.fnselected {
   border:1px outset yellow;
   background:rgb(255,243,255);
-  border-radius:8px;
-  cursor:pointer;
 }
 .noteBoxUserNote {
   font-style:italic;

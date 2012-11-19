@@ -78,7 +78,7 @@ const Vtext2 = "<div class=\"interB\">";
 const Titles = "<div class=\"head";
 const NewChapter = "<div class=\"chapterhead\"";
 const NOTFOUND = "Not Found";
-const CROSSREFTARGET = new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+)(\.(\d+)|\s*-\s*[^\.]+\.\d+\.(\d+))?)$/);
+const CROSSREFTITLE = new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+)(\.(\d+)|\s*-\s*[^\.]+\.\d+\.(\d+))?)$/);
 const REDWORDS = new RegExp(/<font color="red">/i);
 const NEWLINE = "\r\n"; //Only valid for Windows operating systems!!!
 const DEFAULTLOCALE = "en-US";

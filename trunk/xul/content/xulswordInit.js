@@ -26,6 +26,7 @@
 
 var LocaleConfigs = {};
 var ModuleConfigs = {};
+var ProgramConfig = {};
 var Tabs = [];
 var Tab = {};
 var LanguageStudyModules = {};
@@ -163,9 +164,9 @@ function initLocales() {
   
   if (!currentLocaleIsValid) jsdump("Current locale is not valid: " + currentLocale + "\n");
   else {
-    // Copy current locale's config to "Program" locale.
-    LocaleConfigs["Program"] = copyObj(LocaleConfigs[currentLocale]);
-    LocaleConfigs["Program"].StyleRule = createStyleRule(".cs-Program", LocaleConfigs["Program"]);
+    // Copy current locale's config to ProgramConfig.
+    ProgramConfig = copyObj(LocaleConfigs[currentLocale]);
+    ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
   }
   
   return currentLocaleIsValid;
@@ -399,8 +400,8 @@ function tabOrder(a,b) {
     var aLocale = ModuleConfigs[a.mod].AssociatedLocale;
     var bLocale = ModuleConfigs[b.mod].AssociatedLocale;
     var currentLocale = getLocale();
-    var aPriority = (aLocale ? (aLocale==currentLocale ? 1:2):3);
-    var bPriority = (bLocale ? (bLocale==currentLocale ? 1:2):3);
+    var aPriority = (aLocale != NOTFOUND ? (aLocale==currentLocale ? 1:2):3);
+    var bPriority = (bLocale != NOTFOUND ? (bLocale==currentLocale ? 1:2):3);
     if (aPriority != bPriority) return (aPriority > bPriority);
     // Type and Priority are same. Sort by label's alpha.
     return (a.label > b.label ? 1:-1);
