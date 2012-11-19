@@ -8,7 +8,7 @@
   font-family:'Arial';
   direction:ltr;
   font-size-adjust:none;
-  line-height:normal;
+  line-height:150%;
 }
 .userFontSize {
   font-size:14px;

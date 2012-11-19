@@ -116,6 +116,7 @@ body[chromedir="rtl"] .biblebooks {
 }
 .bookname {
   display:table-row;
+  color:rgb(0,0,100);
 }
 .bookname[missing="hide"] {
   display:none;
@@ -139,14 +140,14 @@ body[chromedir="rtl"] .biblebooks {
 }
 .bookname[missing="disable"] .bookname-div1 {
   background:rgb(225,225,225);
-  color:rgb(150,150,150) ;
+  color:rgb(160,160,160);
   border:1px inset black;
+  cursor:default;
 }
 .bookname-div2 {
   position:relative;
   white-space:nowrap;
   font-size:1.2em;
-  color:rgb(0,0,100);
   -moz-padding-end:20px;
 }
 .charrow {
@@ -186,7 +187,7 @@ body[chromedir="rtl"] .chaptermenu {
   left:auto;
   right:100%;
 }
-.bookname:hover .chaptermenu {
+.bookname[missing="false"]:hover .chaptermenu {
   visibility:visible;
 }
 .chaptermenurow {

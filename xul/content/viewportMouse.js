@@ -129,7 +129,7 @@ function scriptMouseOver(e) {
     if (prefs.getBoolPref("ShowCrossrefsAtBottom")) {
       HaveLeftTarget=false;
       ImmediateUnhilight=false;
-      BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
+      BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
     else if (!Popup.activate(x, y, w, "cr", elem.id)) {elem.style.cursor = "default";}
     break;
@@ -138,7 +138,7 @@ function scriptMouseOver(e) {
     if (prefs.getBoolPref("ShowFootnotesAtBottom")) {
       HaveLeftTarget=false;
       ImmediateUnhilight=false;
-      BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
+      BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
     else Popup.activate(x, y, w, "fn", elem.id);
     break;
@@ -199,7 +199,7 @@ function scriptMouseOver(e) {
            Tab[prefs.getCharPref("Version" + w)].modType == COMMENTARY)) {
       HaveLeftTarget=false;
       ImmediateUnhilight=false;
-      BibleTexts.scroll2Note(w, "w" + w + ".ntr." + elem.id);
+      BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
     else Popup.activate(x, y, w, "un", elem.id);
     break;
@@ -263,8 +263,8 @@ function scriptClick(e) {
 //jsdump("type:" + elem.className + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
   switch (elem.className) {
     case "cr":
-    var ok = toggleRefText(document.getElementById("w" + w + ".exp." + elem.id));
-    if (ok) BibleTexts.scroll2Note(x, y, w, "w" + w + ".ntr." + elem.id);
+    var ok = toggleRefText(document.getElementById("w" + w + ".footnote." + elem.id));
+    if (ok) BibleTexts.scroll2Note(x, y, w, "w" + w + ".footnote." + elem.id);
     break;
 
   case "sr":
@@ -374,9 +374,9 @@ function scriptClick(e) {
     
   case "listenlink":
     MainWindow.Player.w = w;
-    MainWindow.Player.version = mod;
-    MainWindow.Player.chapter = Number(elem.id.split(".")[1]);
-    MainWindow.Player.book = Texts.display[w].mod;
+    MainWindow.Player.version = Texts.display[w].mod;
+    MainWindow.Player.chapter = Texts.display[w].ch;
+    MainWindow.Player.book = Texts.display[w].bk;
     MainWindow.beginAudioPlayer();
     break;
     
@@ -422,7 +422,10 @@ function getElemType(elem) {
 // Called after  short delay so that a note will be highlighted for at least a certain amount of time
 function unhilightNote() {
   if (HaveLeftTarget)  {
-    try {document.getElementById(prefs.getCharPref("SelectedNote")).className = "normalNote";} catch(er){}
+    try {
+      var nt = document.getElementById(prefs.getCharPref("SelectedNote"));
+      nt.className = nt.className.replace(/\s*fnselected/, "");
+    } catch(er){}
   }
   else {ImmediateUnhilight = true;}
 }
@@ -563,51 +566,38 @@ function bbMouseUp(e) {
  * FOOTNOTE BOX MOUSE FUNCTIONS
  ***********************************************************************/  
 function noteboxClick(e) {
-  
-  // find relavent target id
-  var id = null;
-  var idpart = null;
-  var elem = e.target;
-  if (elem.className && (/^nbsizer$/).test(elem.className)) {
-    id = "nbsizer";
-  }
-  else {
-    while (!elem.id) {elem = elem.parentNode;}
-  }
-  if (!elem) return;
-  
-  if (!id) {
-    id = elem.id
-    idpart = elem.id.split(".");
-    idpart.shift(); // drop w
-    id = idpart.shift(); // get relevant id
-  }
 
   var w = getWindow(e.target);
   if (!w) return; // this also excludes Popup
+
+  // Get an element to handle
+  var handledClasses = /(crtwisty|fnlink|crref|nbsizer)/;
+  var elem = e.target;
+  while (elem && (!elem.className || !(handledClasses).test(elem.className))) {
+    elem = elem.parentNode;
+  }
+  if (!elem) return;
   
-  var mod = prefs.getCharPref("Version" + w);
+  var type = elem.className.match(handledClasses)[1];
+  var t = (elem.title ? elem.title.split("."):"");
   
-  switch (id) {
-  case "exp":
+jsdump("noteboxClick: class=" + type + ", title=" + t);
+ 
+  switch (type) {
+  case "crtwisty":
     toggleRefText(elem);
     break;
-    
-  case "nbl": //Cross reference link
-    goToCrossReference(elem.title, false);
-    break;
 
-  case "notl": //Note reference link
-    var v = Number(idpart[4]);
-    switch (Tab[mod].modType) {
+  case "fnlink": //Note reference link
+    switch (Tab[t[0]].modType) {
     case BIBLE:
     case COMMENTARY:
-      Location.setLocation(mod, idpart[2] + "." + idpart[3] + "." + idpart[4]);
+      Location.setLocation(t.shift(), t.join("."));
       Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
       break;
      case DICTIONARY:
      case GENBOOK:
-      scrollScriptBox(w, SCROLLTYPECENTER, "par." + v);
+      scrollScriptBox(w, SCROLLTYPECENTER, "par." + t[2]);
       break;
     } 
     break;
@@ -616,20 +606,17 @@ function noteboxClick(e) {
     prefs.setBoolPref("MaximizeNoteBox" + w, !prefs.getBoolPref("MaximizeNoteBox" + w));
     ViewPort.update(false);
     break;
+    
+  case "crref":
+    if (t && t.length >= 2 ) {
+      Location.setLocation(t.shift(), t.join("."));
+      Texts.update();
+    }
+    break;
   }
 }
 
-// Reads verse references including from-to type, it sets first verse as selected verse and any following verses are also highlighted
-function goToCrossReference(crTitle, noHighlight) {
-  if (!crTitle) return;
-  var t = crTitle.match(CROSSREFTARGET);
-  if (!t) return;
-  // Needed when chapter was clicked from chapmenu popup
-  if (Popup && typeof(Popup )!= "undefined") Popup.close();
-  Location.setLocation(t[1], t[2]);
-  Texts.update(SCROLLTYPECENTER, (noHighlight ? HILIGHTNONE:HILIGHT_IFNOTV1)); 
-}
-
+// Will search parents for cr(opened|closed) class and toggle it if found
 function toggleRefText(elem) {
   while(elem && (!elem.className || !(/(^|\s+)(cropened|crclosed)(\s+|$)/).test(elem.className))) {
     elem = elem.parentNode;

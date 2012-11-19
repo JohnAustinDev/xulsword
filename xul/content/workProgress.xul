@@ -27,7 +27,7 @@
 
 <window id="work-progress" xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   onload="Load();"
-  onunload="if (OnUnload) OnUnload();"
+  onunload="if (typeof(OnUnload) != 'undefined') OnUnload();"
   style="border:2px solid rgb(200,170,205); background-image: url(chrome://xulsword/skin/images/9.gif);">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>

@@ -1,12 +1,4 @@
 /* UI classes which are dynamically updated */
-.cs-Program {
-  /* These values serve as defaults for all 
-  dynamically generated .cs- classes */
-  font-family:'Arial';
-  direction:ltr;
-  font-size-adjust:none;
-  line-height:normal;
-}
 .userFontSize {
   font-size:12px;
 }

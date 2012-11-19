@@ -83,6 +83,9 @@ var Texts = {
     MainWindow.updateNavigator();
     
     MainWindow.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
+    
+    document.getElementById("textrow").setAttribute("CanDoNextChapter", MainWindow.XulswordController.isCommandEnabled("cmd_xs_nextChapter"));
+    document.getElementById("textrow").setAttribute("CanDoPreviousChapter", MainWindow.XulswordController.isCommandEnabled("cmd_xs_previousChapter"));
 
   },
   
@@ -106,6 +109,10 @@ var Texts = {
       loc = display.bk + "." + display.ch + "." + display.vs;
       hilightFlag = HILIGHTNONE;
     }
+    
+    var t = document.getElementById("text" + w);
+    var ltr = (t.getAttribute("textdir") == "ltr");
+    var sb = t.getElementsByClassName("sb")[0];
 
     // don't read new text if the results will be identical to the last displayed text
     var textUpdated = false;
@@ -115,9 +122,6 @@ var Texts = {
     if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
       textUpdated = true;
 //jsdump("Reading text from libsword w" + w);
-      var t = document.getElementById("text" + w);
-      var ltr = (t.getAttribute("textdir") == "ltr");
-      var sb = t.getElementsByClassName("sb")[0];
       var prev = {htmlText:"", htmlNotes:"", footnotes:""};
       var next = {htmlText:"", htmlNotes:"", footnotes:""};
 
@@ -182,14 +186,13 @@ var Texts = {
       // handle highlights
       this.hilightVerses(w, loc, hilightFlag);
       
-      // set audio icons
-      if (BibleTexts.updateAudioLinksTO) window.clearTimeout(BibleTexts.updateAudioLinksTO);
-      BibleTexts.updateAudioLinksTO = window.setTimeout("BibleTexts.updateAudioLinks(" + w + ");", 0);
-      
       // remove notes which aren't in window, or hide notebox entirely if empty
       BibleTexts.checkNoteBox(w);
     }
     
+    // set audio icons
+    window.setTimeout("BibleTexts.updateAudioLinks(" + w + ");", 0);
+  
     // save display objects for this window
     this.display[w] = copyObj(display);
     
@@ -329,23 +332,24 @@ var Texts = {
   //////////////////////////////////////////////////////////////////////
   // Texts Utility functions
   //////////////////////////////////////////////////////////////////////
+
+  // Dynamically resize the chapter heading, starting from stylesheet's value
+  //var chaptitle = sb.getElementsByClassName("chaptitle")[0];
+  //Texts.fitHTML(chaptitle, sb.offsetWidth/2, this.ChapTitleFontSize);
+  //ChapTitleFontSize: getCSS(".chaptitle {").style.fontSize.match(/([\-\d]+)px/)[1],
   
-  // Adjusts font-size of first passed HTML element,
+  // Adjusts font-size of passed HTML element,
   // stopping at given overall offset width.
-  fitHTML: function(html, w, maxfs) {
-    var elem = document.getElementById("sizetester");
-    elem.innerHTML = html;
-    
+  fitHTML: function(elem, w, maxfs) {
     var fs = (maxfs ? maxfs:20);
-    elem.firstChild.style.fontSize = fs + "px";
+    elem.style.fontSize = fs + "px";
 //jsdump("A-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
     while (fs > 8 && elem.offsetWidth > w) {
-      fs -= 4;
-      elem.firstChild.style.fontSize = fs + "px";
+      fs -= 2;
+      elem.style.fontSize = fs + "px";
 //jsdump("B-" + w + ":" + fs + ", " + elem.offsetWidth + ", " + w);
     }
-    
-    return elem.innerHTML;
+  
   },
 
   getPageLinks: function() {
@@ -872,7 +876,7 @@ var BibleTexts = {
    
     // localize verse numbers
     var tl = ModuleConfigs[d.mod].AssociatedLocale;
-    if (!tl) {tl = getLocale();}
+    if (tl == NOTFOUND) {tl = getLocale();}
     if (!DisplayNumeral[tl]) getDisplayNumerals(tl);
     if (DisplayNumeral[tl][10]) {
       var verseNm = new RegExp("(<sup class=\"versenum\">)(\\d+)(</sup>)", "g");
@@ -915,14 +919,11 @@ var BibleTexts = {
       }
       
       // get last chapter/verse
-      var ltr = (t.getAttribute("textdir") == "ltr");
-      var vl = vf;
-      while (vl && 
-              ( vl.offsetLeft < sb.offsetWidth || 
-                !vl.id || 
-                !(/^vs\./).test(vl.id) )
-            ) {vl = vl.nextSibling;}
-      if (vl) vl = vl.previousSibling;
+      var vl = sb.lastChild;
+      while (vl && (vl.offsetLeft >= sb.offsetWidth || !vl.id || !(/^vs\./).test(vl.id))) {
+        vl = vl.previousSibling;
+      }
+
       
       if (vf) vf = vf.id.split(".");
       if (vl) vl = vl.id.split(".");
@@ -965,7 +966,7 @@ var BibleTexts = {
   // This function is only for versekey modules (BIBLE, COMMENTARY)
   getChapterHeading: function(bk, ch, mod, w) {
     var l = ModuleConfigs[mod].AssociatedLocale;
-    if (!l) {l = getLocale();} // otherwise use current program locale
+    if (l == NOTFOUND) {l = getLocale();} // otherwise use current program locale
     var b = getLocaleBundle(l, "books.properties");
 
     var intro = (ch != 1 ? "":BibleTexts.getBookIntroduction(mod, bk));
@@ -975,28 +976,22 @@ var BibleTexts = {
     
     var lt = Bible.getModuleInformation(mod, "NoticeLink");
     if (lt == NOTFOUND) lt = "";
-    else lt = lt.replace("<a>", "<a id=\"w" + w + ".noticelink\">");
+    else lt = lt.replace("<a>", "<a class='noticelink' id='w" + w + ".noticelink'>");
     
-    // Dynamically resize the chapter heading, starting from stylesheet's value
-    var fs = getCSS(".chaptitle {");
-    fs = Number(fs.style.fontSize.match(/([\-\d]+)px/)[1]);
-     
     // Chapter heading has style of the locale associated with the module, or else
     // current program locale if no associated locale is installed. But notice-link 
     // is always cs-module style.
     var html = "";
     html  = "<div class=\"chapterhead" + (ch==1 ? " chapterfirst":"") + " cs-" + l + "\" headdir=\"" + (LocaleConfigs[l].direction) + "\">";
     
-    html +=   "<div class=\"noticelink cs-" + mod + "\" empty=\"" + (lt ? "false":"true") + "\">" + lt;
+    html +=   "<div class=\"noticelink-c cs-" + mod + "\" empty=\"" + (lt ? "false":"true") + "\">" + lt;
     html +=     "<div class=\"head-line-break\"></div>";
     html +=   "</div>";
 
-    var resize = "";
-    resize += "<div class=\"chaptitle\" >";
-    resize +=   "<div class=\"chapbk\">" + b.GetStringFromName(bk) + "</div>";
-    resize +=   "<div class=\"chapch\">" + getLocalizedChapterTerm(bk, ch, b, l) + "</div>";
-    resize += "</div>";
-    html += Texts.fitHTML(resize, 170, fs);
+    html +=   "<div class=\"chaptitle\" >";
+    html +=     "<div class=\"chapbk\">" + b.GetStringFromName(bk) + "</div>";
+    html +=     "<div class=\"chapch\">" + getLocalizedChapterTerm(bk, ch, b, l) + "</div>";
+    html +=   "</div>";
 
     html +=   "<div class=\"chapinfo\">";
     html +=     "<div class=\"listenlink\"></div>";
@@ -1013,16 +1008,13 @@ var BibleTexts = {
   getNotesHTML: function(notes, mod, gfn, gcr, gun, openCRs, w) {
     if (!notes) return "";
     
-    //Start building notebox contents
-    var haveNotes=false;
-    var versionDirectionEntity = (ModuleConfigs[mod] && ModuleConfigs[mod].direction == "rtl" ? "&rlm;":"&lrm;");
-    var orient = (ModuleConfigs[mod] && ModuleConfigs[mod].direction == "rtl" ? "fncol3RTL":"fncol3LTR");
-    var t = "<div id=\"w" + w + ".maintable.\" class=\"fntable\">";
     var note = notes.split(/(<div [^>]*>.*?<\/div>)/);
     note = note.sort(this.ascendingVerse);
+    
+    // Start building our html
+    var t = ""; 
+    
     if (note) {
-      var te = "";
-      var thiscv="";
 
       // Now parse each note in the chapter separately
       for (var n=0; n < note.length; n++) {
@@ -1030,75 +1022,118 @@ var BibleTexts = {
         var p = note[n].match(/<div id="src\.([^"]+)">(.*?)<\/div>/);
         var noteid = p[1];
         var body = p[2];
-        if (noteid && noteid != "undefined") {    // sometimes this is "undefined" - why?
-          // Check if this note should be displayed at bottom, and if not then get next note
-          var noteType = noteid.substr(0,2);
-          var fn = ((noteType == "fn") && gfn);
-          var cr = ((noteType == "cr") && gcr);
-          var un = ((noteType == "un") && gun);
-          if (!(fn||cr||un)) {continue;}
-          haveNotes = true;
-          
-          // Now display this note as a row in the main table
-          t += "<div class=\"" + (openCRs ? "cropened":"crclosed") + "\">";
-          
-          // Write cell #1: an expander link for cross references only
-          t += "<div class=\"fncol1\">";
-          if (cr) {t += "<div id=\"w" + w + ".exp." + noteid + "\" class=\"crtwisty\"></div>";}
-          t += "</div>";
-          // These are the lines for showing expanded verse refs
-          t += "<div class=\"fncol2\"><div class=\"fndash\"></div></div>";
-          t += "<div class=\"fncol3 " + orient + "\" >&nbsp</div>";
-          
-          // This makes the following cells part of the highlight
-          t += "<div id=\"w" + w + ".ntr." + noteid + "\" class=\"normalNote\">";
-          
-          // Write cell #4: chapter and verse
-          var xsn = new RegExp("^" + XSNOTE + "$");
-          var tmp = noteid.match(xsn);
-          var lov = ModuleConfigs[mod].AssociatedLocale;
-          var myc = dString(tmp[4], lov);
-          var myv = dString(tmp[5], lov);
-          t += "<a id=\"w" + w + ".notl." + noteid + "\" class=\"fncol4 cs-" + mod + "\" >" + "<i>" + myc + ":" + versionDirectionEntity + myv + "</i>" + " -" + "</a>";
-          
-          // Write cell #5: note body
-          t += "<div id=\"w" + w + ".body." + noteid + "\" class=\"fncol5\">";
-          
-          // If this is a cross reference, then parse the note body for references and display them
-          if (cr) t += this.getRefHTML(w, mod, noteid, body, "nb", "<br>");
-          
-          // If this is a footnote, then just write the body
-          else if (fn) {t += body;}
-          
-          // If this is a usernote, then add direction entities  & style
-          else if (un) {
-            var unclass = "noteBoxUserNote";
-            var de = "&lrm;";
-            try {
-              var unmod = BMDS.GetTarget(BM.RDF.GetResource(decodeUTF8(noteid.match(/un\.(.*?)\./)[1])), BM.gBmProperties[NOTELOCALE], true);
-              unmod = unmod.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-              unclass += " cs-" + unmod;
-            }
-            catch (er) {}
-            try {
-              if (LocaleConfigs[unmod].direction == "rtl") de = "&rlm;";
-            }
-            catch (er) {}
-   
-            body = "<span class=\"" + unclass + "\">" + de + body + de + "</span>";
-            t += body;
-          }
-          
-          // Finish this body and this row
-          t += "</div></div></div>";
+        
+        // Check if this note should be displayed here, and if not then continue
+        var noteType = noteid.substr(0,2);
+        switch (noteType) {
+        case "fn":
+          if (!gfn) noteType = null;
+          break;
+        case "cr":
+          if (!gcr) noteType = null;
+          break;
+        case "un":
+          if (!gun) noteType = null;
         }
+        if (!noteType) {continue;}
+        
+        // Now display this note as a row in the main table
+        t += "<div class=\"" + (openCRs ? "cropened":"crclosed") + "\">";
+        
+        // Write cell #1: an expander link for cross references only
+        t += "<div class=\"fncol1\">";
+        if (noteType == "cr") {
+          t += "<div class=\"crtwisty\"></div>";
+        }
+        t += "</div>";
+        // These are the lines for showing expanded verse refs
+        t += "<div class=\"fncol2\"><div class=\"fndash\"></div></div>";
+        t += "<div class=\"fncol3\">&nbsp</div>";
+        
+        // This makes the following cells part of the highlight
+        // The id is required to note can be located for scrolling and hilighting
+        t += "<div id=\"w" + w + ".footnote." + noteid + "\" class=\"fncontainer\">";
+        
+        // Write cell #4: chapter and verse
+        var xsn = new RegExp("^" + XSNOTE + "$");
+        var p = noteid.match(xsn);
+        var lov = ModuleConfigs[mod].AssociatedLocale;
+        if (lov == NOTFOUND) lov = getLocale();
+        var modDirectionEntity = (ModuleConfigs[mod] && ModuleConfigs[mod].direction == "rtl" ? "&rlm;":"&lrm;");
+        t += "<div class=\"fncol4 cs-" + mod + "\"><a class=\"fnlink\" title=\"" + mod + "." + p[3] + "." + p[4] + "." + p[5] + "\">";
+        t += "<i>" + dString(p[4], lov) + ":" + modDirectionEntity + dString(p[5], lov) + "</i>";
+        t += "</a> -</div>";
+        
+        // Write cell #5: note body
+        t += "<div class=\"fncol5\">";
+        
+        switch(noteType) {
+        case "cr":
+          // If this is a cross reference, then parse the note body for references and display them
+          t += this.getRefHTML(w, mod, body);
+          break;
+        
+        case "fn":
+          // If this is a footnote, then just write the body
+          t += body;
+          break;
+        
+        case "un":
+          // If this is a usernote, then add direction entities and style
+          var unmod = null;
+          try {
+            unmod = BMDS.GetTarget(BM.RDF.GetResource(decodeUTF8(noteid.match(/un\.(.*?)\./)[1])), BM.gBmProperties[NOTELOCALE], true);
+            unmod = unmod.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+          }
+          catch (er) {}
+          var de = (unmod && ModuleConfigs[unmod] && ModuleConfigs[unmod].direction == "rtl" ? "&rlm;":"&lrm;");
+          body = "<span class=\"noteBoxUserNote" + (unmod ? " cs-" + unmod:"") + "\">" + de + body + de + "</span>";
+          t += body;
+          break;
+        }
+        
+        // Finish this body and this row
+        t += "</div></div></div>";
+      
       }
-      // End the main table
-      t += "</div>";
+      
+      // Finish html
+      if (t) t = "<div class=\"fntable\">" + t + "</div>";
+      
     }
     
-    if (!haveNotes) return "";
     return t
+  },
+  
+  getRefHTML: function(w, mod, body) {
+    var ref = body.split(";");
+    var html = "<div class=\"cs-" + mod + "\">";
+    var sep = "";
+    
+    for (var i=0; i<ref.length; i++) {
+      if (!ref[i]) continue;
+      
+      var r = normalizeOsisReference(ref[i], mod);
+      if (!r) continue;
+      
+      var aVerse = findAVerseText(mod, r, w);
+      if ((/^\s*$/).test(aVerse.text)) aVerse.text = "-----";
+      
+      var rmod = Tabs[aVerse.tabNum].modName;
+      html += sep;
+      html += "<a class=\"crref cs-Program\" title=\"" + rmod + "." + aVerse.location + "\">";
+      html += ref2ProgramLocaleText(aVerse.location);
+      html += "</a>";
+      html += "<span class=\"crtext cs-" + rmod + "\">";
+      html += aVerse.text + (rmod != mod ? " (" + Tab[rmod].label + ")":"");
+      html += "</span>";
+      
+      sep = "<span class=\"crsep\"></span>";
+    }
+    
+    html += "</div>";
+    
+    return html;
   },
   
   ascendingVerse: function(a,b) {
@@ -1146,35 +1181,6 @@ var BibleTexts = {
     else
       return Bible.getModuleInformation(mod, "NoticeText");
   },
-
-  getRefHTML: function(w, mod, id, body, xsid, sepclass) {
-    var ref = body.split(";");
-    var html = "<div class=\"cs-" + mod + "\">";
-    var sep = "";
-    for (var i=0; i<ref.length; i++) {
-      if (!ref[i]) continue;
-      var r = normalizeOsisReference(ref[i], mod);
-      if (!r) continue;
-      
-      var aVerse = findAVerseText(mod, r, w);
-      if ((/^\s*$/).test(aVerse.text)) aVerse.text = "-----";
-      
-      var rmod = Tabs[aVerse.tabNum].modName;
-      html += sep;
-      html += "<a class=\"crref cs-Program\" id=\"w" + w + "." + id + "l." + xsid + "\" title=\"" + rmod + "." + aVerse.location + "\">";
-      html += ref2ProgramLocaleText(aVerse.location);
-      html += "</a>";
-      html += "<span id=\"w" + w + "." + id + "t." + xsid + "\" title=\"" + rmod + "." + aVerse.location + "\" class=\"crtext cs-" + rmod + "\">";
-      html += aVerse.text + (rmod != mod ? " (" + Tab[rmod].label + ")":"");
-      html += "</span>";
-      
-      sep = "<span class=\"crsep" + (sepclass ? " " + sepclass:"") + "\"></span>";
-    }
-    
-    html += "</div>";
-    
-    return html;
-  },
   
   scroll2Note: function(w, id) {
     //jsdump("scrolling to:" + id + "\n");
@@ -1182,13 +1188,13 @@ var BibleTexts = {
     //Return previous highlighted note to normal if it can be found
     var oldNoteElem = null;
     try {oldNoteElem = document.getElementById(prefs.getCharPref("SelectedNote"));} catch(e) {}
-    if (oldNoteElem != null) {oldNoteElem.className = "normalNote";}
+    if (oldNoteElem) {oldNoteElem.className = oldNoteElem.className.replace(/\s*fnselected/, "");}
     
     //Now highlight the current note
     var theNote = document.getElementById(id);
     if (!theNote) return;
     
-    theNote.className = "selectedNote";
+    theNote.className += " fnselected";
     prefs.setCharPref("SelectedNote", id);
     
     //Now set up the counters such that the note remains highlighted for at least a second
@@ -1220,8 +1226,6 @@ var BibleTexts = {
     if (el) el.className += " unverse";
   },
   
-
-  updateAudioLinksTO:null,
   updateAudioLinks: function(w) {
     var icons = document.getElementById("text" + w).getElementsByClassName("listenlink");
     for (var i = 0; i < icons.length; ++i) {
@@ -1264,7 +1268,7 @@ var CommTexts = {
     
     // localize verse numbers
     var tl = ModuleConfigs[d.mod].AssociatedLocale;
-    if (!tl) {tl = getLocale();}
+    if (tl == NOTFOUND) {tl = getLocale();}
     if (!DisplayNumeral[tl]) getDisplayNumerals(tl);
     if (DisplayNumeral[tl][10]) {
       var verseNm = new RegExp("(<sup class=\"versenum\">)(\\d+)(</sup>)", "g");

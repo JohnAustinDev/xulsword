@@ -60,6 +60,36 @@ var GlobalToggleCommands = {
  * DYNAMIC CSS FUNCTIONS
  ***********************************************************************/ 
 
+// Will create CSS classes for locales and modules and append to a stylesheet.
+// This must be a global function so that any window can create our classes.
+function createDynamicClasses() {
+  var sheet = document.styleSheets[document.styleSheets.length-1];
+  if (!sheet) return;
+  
+  var sheetLength = sheet.cssRules.length;
+  
+  for (var lc in LocaleConfigs) {sheet.insertRule(LocaleConfigs[lc].StyleRule, sheetLength)}
+  
+  for (var m in ModuleConfigs) {sheet.insertRule(ModuleConfigs[m].StyleRule, sheetLength)}
+  
+  if (ProgramConfig) sheet.insertRule(ProgramConfig.StyleRule, sheetLength);
+}
+
+// The userFontSize class in all stylesheets is dynamically updated by this routine.
+var StartingFont = {};
+function adjustFontSizes(delta) {
+  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
+    for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
+      var myRule = document.styleSheets[ssn].cssRules[z];
+      if (myRule.cssText.search(".userFontSize") == -1) continue;
+      if (!StartingFont["ssn" + ssn + "z" + z]) {
+          StartingFont["ssn" + ssn + "z" + z] = Number(myRule.style.fontSize.match(/(\d+)/)[0]);
+      }
+      myRule.style.fontSize = Number(StartingFont["ssn" + ssn + "z" + z] + delta) + "px";
+    }
+  }
+}
+
 function getLocaleConfig(lc) {
   // Assign localeConfig members from all config.properties entries (see UI-MAP.txt)
   // These must properly map to ConfigProps members (most of which are CSS properties)
@@ -163,34 +193,6 @@ function getCSS(selector) {
     }
   }
   return null;
-}
-
-// Will create CSS classes for locales and modules and append to a stylesheet.
-// This must be a global function so that any window can create our classes.
-function createDynamicClasses() {
-  var sheet = document.styleSheets[document.styleSheets.length-1];
-  if (!sheet) return;
-  
-  var sheetLength = sheet.cssRules.length;
-  
-  for (var lc in LocaleConfigs) {sheet.insertRule(LocaleConfigs[lc].StyleRule, sheetLength)}
-  
-  for (var m in ModuleConfigs) {sheet.insertRule(ModuleConfigs[m].StyleRule, sheetLength)}
-}
-
-// The userFontSize class in all stylesheets is dynamically updated by this routine.
-var StartingFont = {};
-function adjustFontSizes(delta) {
-  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
-    for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
-      var myRule = document.styleSheets[ssn].cssRules[z];
-      if (myRule.cssText.search(".userFontSize") == -1) continue;
-      if (!StartingFont["ssn" + ssn + "z" + z]) {
-          StartingFont["ssn" + ssn + "z" + z] = Number(myRule.style.fontSize.match(/(\d+)/)[0]);
-      }
-      myRule.style.fontSize = Number(StartingFont["ssn" + ssn + "z" + z] + delta) + "px";
-    }
-  }
 }
 
 

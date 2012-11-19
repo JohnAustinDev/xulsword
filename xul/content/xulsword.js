@@ -1024,13 +1024,21 @@ var XulswordController = {
       if (ModuleCopyMutex) return false;
       break;
     case "cmd_xs_nextVerse":
+      var mod = firstDisplayBible();
+      return Location.getVerseNumber(mod) < Bible.getMaxVerse(mod, Location.getLocation());
     case "cmd_xs_previousVerse":
+      var mod = firstDisplayBible();
+      return Location.getVerseNumber(mod) > 1;
     case "cmd_xs_nextChapter":
+      var mod = firstDisplayBible();
+      return Location.getChapterNumber(mod) < Bible.getMaxChapter(mod, Location.getLocation(mod));
     case "cmd_xs_previousChapter":
+      var mod = firstDisplayBible();
+      return Location.getChapterNumber(mod) > 1;
     case "cmd_xs_nextBook":
+      return findBookNum(Location.getBookName()) < Book.length-1;
     case "cmd_xs_previousBook":
-      return isNextPrevEnabled();
-      break;
+      return findBookNum(Location.getBookName()) > 1;
     }
 
     return true;
@@ -1408,7 +1416,7 @@ function updateXulswordCommands() {
 var CurrentTarget = {shortName:null, chapter:null, verse:null, lastVerse:null, tabNum:null, windowNum:null};
 
 function ScriptContextMenuShowing(e, menupopup) {
-//jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
+jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
 
   CurrentTarget.windowNum = getWindow(menupopup.triggerNode);
   
@@ -1637,14 +1645,14 @@ function getTargetsFromElement(element) {
   while (element) {
 //jsdump("Context searching id=" + element.id);
 
-    if ((element.className && element.className == "text") || element.id=="npopup") {inScriptBox=true;}
-    if (element.className && element.className == "text" && !targs.version && targs.window) targs.version = prefs.getCharPref("Version" + targs.window);
+    if ((element.className && (/(^|\s)text(\s|$)/).test(element.className)) || element.id=="npopup") {inScriptBox=true;}
+    if (element.className && (/(^|\s)text(\s|$)/).test(element.className) && !targs.version && targs.window) targs.version = prefs.getCharPref("Version" + targs.window);
     
     if (element.id) {
       // Are we over a cross reference?
       if (targs.verse == null && element.title) {
         // First get location data
-        var crloc = element.title.match(CROSSREFTARGET);
+        var crloc = element.title.match(CROSSREFTITLE);
         if (crloc) {
           targs.version = crloc[1];
           targs.shortName = crloc[3];
