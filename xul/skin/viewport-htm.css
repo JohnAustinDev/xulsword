@@ -196,7 +196,7 @@ body[chromedir="rtl"] #chbutton_open {
   border-radius:8px;
   position:relative;
 }
-.text[pin="pinned"] .textf {
+.text[pinned="true"] .textf {
   background:rgb(248,248,241);
 }
 
@@ -223,10 +223,10 @@ body[chromedir="rtl"] #chbutton_open {
 .sbpin:hover {
   background:url(chrome://xulsword/skin/images/pushpin2.png) !important;
 }
-.text[pin="pinned"] .sbpin {
+.text[pinned="true"] .sbpin {
   background:url(chrome://xulsword/skin/images/pushpin1.png);
 }
-.text[pin="hide"] .sbpin {
+.text[moduleType="Dicts"] .sbpin {
   visibility:hidden;
 }
 
@@ -255,15 +255,18 @@ body[chromedir="rtl"] #chbutton_open {
   -moz-column-gap:80px; 
   -moz-column-rule:14px solid rgb(240,215,240);
 }
-#text1[columns="show1"][foot^="show"] .sb {
+#text1[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb, 
+#text1[moduleType="Dicts"] .sb {
   margin-bottom:200px; /* used in viewport.js */
   height:400px; /* used in viewport.js */
 }
-#text2[columns="show1"][foot^="show"] .sb {
+#text2[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb, 
+#text2[moduleType="Dicts"] .sb {
   margin-bottom:200px; /* used in viewport.js */
   height:400px; /* used in viewport.js */
 }
-#text3[columns="show1"][foot^="show"] .sb {
+#text3[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb, 
+#text3[moduleType="Dicts"] .sb {
   margin-bottom:200px;
   height:400px;
 }
@@ -273,7 +276,9 @@ body[chromedir="rtl"] #chbutton_open {
   width:100%;
 }
 
-.text[foot="hide"] .nbc {
+.text[moduleType="Texts"][footnotesEmpty="true"] .nbc,
+.text[moduleType="Genbks"] .nbc,
+.text[moduleType="Comms"] .nbc {
   display:none;
 }
 
@@ -298,9 +303,9 @@ body[chromedir="rtl"] #chbutton_open {
 #text3 .nbf {
   height:200px; /* used in viewport.js */
 }
-#text1[foot="showmax"]:not([columns="show1"]) .nbf,
-#text2[foot="showmax"]:not([columns="show1"]) .nbf,
-#text3[foot="showmax"]:not([columns="show1"]) .nbf {
+#text1[footnotesMaximized="true"]:not([columns="show1"]) .nbf,
+#text2[footnotesMaximized="true"]:not([columns="show1"]) .nbf,
+#text3[footnotesMaximized="true"]:not([columns="show1"]) .nbf {
   height:600px; /* used in viewport.js */
 }
 .text[columns="show1"] .nbf {
@@ -349,7 +354,7 @@ body[chromedir="rtl"] #chbutton_open {
   right:auto;
   left:42px;
 }
-.text[foot="showmax"] .nbsizer {
+.text[footnotesMaximized="true"] .nbsizer {
   background:url(chrome://xulsword/skin/images/norm.bmp);
 }
 .text[columns="show1"] .nbsizer {
@@ -375,8 +380,8 @@ body[chromedir="rtl"] #chbutton_open {
   height:192px; /* used in viewport.js */
   margin:10px; /* used in viewport.js */
 }
-#text1[foot="showmax"]:not([columns="show1"]) .nb,
-#text2[foot="showmax"]:not([columns="show1"]) .nb,
-#text3[foot="showmax"]:not([columns="show1"]) .nb {
+#text1[footnotesMaximized="true"]:not([columns="show1"]) .nb,
+#text2[footnotesMaximized="true"]:not([columns="show1"]) .nb,
+#text3[footnotesMaximized="true"]:not([columns="show1"]) .nb {
   height:562px; /* used in viewport.js */
 }

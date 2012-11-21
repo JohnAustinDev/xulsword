@@ -18,9 +18,11 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/xulsword-xul.css" type="text/css"?>
-<?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
+<?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css" ?>
+<?xml-stylesheet href="chrome://xulsword/skin/xulsword-xul.css" type="text/css" ?>
+
+<?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul" ?>
+<?xul-overlay href="chrome://xulsword/content/contextMenu-overlay.xul" ?>
 
 <!DOCTYPE window [
 <!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
@@ -153,6 +155,7 @@
   <command id="cmd_xs_search"                    oncommand="goDoCommand('cmd_xs_search');"/>
   <command id="cmd_xs_searchForSelection"        oncommand="goDoCommand('cmd_xs_searchForSelection');"/>
   <command id="cmd_xs_searchFromTextBox"         oncommand="goDoCommand('cmd_xs_searchFromTextBox');"/>
+  <command id="cmd_xs_searchForLemma"            oncommand="goDoCommand('cmd_xs_searchForLemma');"/>
   <command id="cmd_xs_newBookmark"               oncommand="goDoCommand('cmd_xs_newBookmark');"/>
   <command id="cmd_xs_newUserNote"               oncommand="goDoCommand('cmd_xs_newUserNote');"/>
   <command id="cmd_xs_selectVerse"               oncommand="goDoCommand('cmd_xs_selectVerse');"/>
@@ -502,24 +505,7 @@
 </vbox>
 
 <!-- POPUP MENUS ARE DEFINED HERE !-->
-<popupset>
-  <menupopup id="contextScriptBox" value="closed" onpopupshowing="ScriptContextMenuShowing(event, this)" onpopuphidden="ScriptContextMenuHidden(event)">
-    <menuitem id="aboutModule" label="&menu.help.about;" command="cmd_xs_aboutModule"/>
-    <menuitem id="closeTab" label="&context.closeTab;" command="cmd_xs_toggleTab"/>
-    <menuseparator id="contsep0"/>
-    <menuitem id="cMenu_copy"/>
-    <menuitem id="conSearch" label="&searchBut.label;" command="cmd_xs_searchForSelection"/>
-    <menuseparator id="contsep1"/>
-    <menuitem id="conGotoSel" label="&context.gotoReference;" command="cmd_xs_openFromSelection"/>
-    <menuseparator id="contsep2"/>
-    <menuitem id="conSelect" label="&context.hilight;" command="cmd_xs_selectVerse"/>
-    <menuseparator id="contsep3"/>
-    <menuitem id="conBookmark" label="&menuitem.newBookmark.label;" command="cmd_xs_newBookmark"/>
-    <menuitem id="conUserNote" label="&menu.usernote.add;" command="cmd_xs_newUserNote"/>
-    <menuseparator id="contsep4"/>
-    <menuitem id="conProps" label="&context.editUserNote;" command="cmd_bm_properties"/>
-    <menuitem id="delUserNote" label="&context.deleteUserNote;" command="cmd_bm_delete"/>
-  </menupopup>
+<popupset id="main-popupset">
   
   <menupopup id="bookmarks-context-menu" 
                onpopupshowing="return BookmarksMenu.createContextMenu(event);"

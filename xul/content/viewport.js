@@ -96,7 +96,7 @@ var ViewPort = {
       var nbh = prefs.getIntPref("NoteBoxHeight" + w);
       if (nbh > sbh) nbh = sbh;
       
-      rule = getCSS("#text" + w + "[columns=\"show1\"][foot^=\"show\"] .sb {");
+      rule = getCSS("#text" + w + "[moduleType=\"Texts\"][columns=\"show1\"][footnotesEmpty=\"false\"] .sb");
       rule.style.marginBottom = Number(nbh) + "px";
       rule.style.height = Number(sbh - nbh) + "px";
       
@@ -109,10 +109,10 @@ var ViewPort = {
       rule.style.height = Number(nbh - margt - margb - bbh + footheight) + "px";
     }
 
-    rule = getCSS("#text1[foot=\"showmax\"]:not([columns=\"show1\"]) .nbf,");
+    rule = getCSS("#text1[footnotesMaximized=\"true\"]:not([columns=\"show1\"]) .nbf,");
     rule.style.height = sbh + "px";
-    rule = getCSS("#text1[foot=\"showmax\"]:not([columns=\"show1\"]) .nb,");
-    rule.style.height = Number(sbh - margt - margb - bbh) + "px"; // margt & margb set above (all windows are same)
+    rule = getCSS("#text1[footnotesMaximized=\"true\"]:not([columns=\"show1\"]) .nb,");
+    rule.style.height = Number(sbh - margt - margb - bbh + 30) + "px"; // margt & margb set above (all windows are same)
 
     // this is not so important, but line up CA background pattern:
     rule = getCSS("#fadebot {");
@@ -198,9 +198,35 @@ var ViewPort = {
       var t = document.getElementById("text" + w);
       t.setAttribute("columns", value);
       
+      // Set window's type
+      t.setAttribute("moduleType",  getShortTypeFromLong(Tab[prefs.getCharPref("Version" + w)].modType));
+      
+      // Set window's next/prev links
+      var prev = true;
+      var next = true;
+      switch(Tab[prefs.getCharPref("Version" + w)].modType) {
+        case BIBLE:
+        case COMMENTARY:
+          if ((/^show1$/).test(t.getAttribute("columns"))) {
+            prev = MainWindow.XulswordController.isCommandEnabled("cmd_xs_previousChapter");
+            next = MainWindow.XulswordController.isCommandEnabled("cmd_xs_nextChapter");
+          }
+          break
+        case DICTIONARY:
+        case GENBOOK:
+          prev = true;
+          next = true;
+          break;
+      }
+      t.setAttribute("CanDoNextPage", next);
+      t.setAttribute("CanDoPreviousPage", prev);
+      
       // Set this window's CSS info
       t.className = t.className.replace(/\s*cs\-\S+/, "") + " cs-" + prefs.getCharPref("Version" + w);
       t.setAttribute("textdir", ModuleConfigs[prefs.getCharPref("Version" + w)].direction);
+      
+      // Pins
+      t.setAttribute("pinned", (prefs.getBoolPref("IsPinned" + w) ? "true":"false"));
        
       if (value == "show2") {
         w++;
@@ -214,42 +240,18 @@ var ViewPort = {
       }
     }
   //for (w=1; w<=NW; w++) {jsdump("w=" + w + ", value=" + document.getElementById("text" + w).getAttribute("columns"));}
-   
-    // Window pins
-    for (w=1; w<=NW; w++) {
-      var type = Tab[prefs.getCharPref("Version" + w)].modType;
-      if (type == DICTIONARY) {
-        document.getElementById("text" + w).setAttribute("pin", "hide");
-      }
-      else document.getElementById("text" + w).setAttribute("pin", (prefs.getBoolPref("IsPinned" + w) ? "pinned":"unpinned"));
-    }
     
     // Footnote boxes
     for (w=1; w<=NW; w++) {
       var nb = document.getElementById("note" + w);
       
-      value = "hide";
-      var type = Tab[prefs.getCharPref("Version" + w)].modType;
-      
-      if (type == DICTIONARY) {
-        value = "show";
-        nb.className = nb.className.replace(/\s*cs\-\S+/, "") + " cs-Program";
-      }
-      
-      if (type == BIBLE) {
-        
-        var gfn = (prefs.getCharPref("Footnotes") == "On" && prefs.getBoolPref("ShowFootnotesAtBottom"));
-        var gcr = (prefs.getCharPref("Cross-references") == "On" && prefs.getBoolPref("ShowCrossrefsAtBottom"));
-        var gun = (prefs.getCharPref("User Notes") == "On" && prefs.getBoolPref("ShowUserNotesAtBottom"));
-        
-        if ((gfn || gcr || gun)) value = "show";
-        nb.className = nb.className.replace(/\s*cs\-\S+/, "") + " cs-" + prefs.getCharPref("Version" + w);
-        
-      }
-      
-      if (value == "show" && prefs.getBoolPref("MaximizeNoteBox" + w)) value = "showmax";
-      document.getElementById("text" + w).setAttribute("foot", value);
-      if (type == BIBLE) BibleTexts.checkNoteBox(w); // hide footnote box if it's empty
+      if (Tab[prefs.getCharPref("Version" + w)].modType == DICTIONARY)
+          nb.className = nb.className.replace(/\s*cs\-\S+/, "") + " cs-Program";
+      else 
+          nb.className = nb.className.replace(/\s*cs\-\S+/, "") + " cs-" + prefs.getCharPref("Version" + w);
+  
+      document.getElementById("text" + w).setAttribute("footnotesEmpty", !BibleTexts.checkNoteBox(w));
+      document.getElementById("text" + w).setAttribute("footnotesMaximized", prefs.getBoolPref("MaximizeNoteBox" + w));
     }
     
     // Individual tabs

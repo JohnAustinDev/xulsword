@@ -1,10 +1,14 @@
 #npopup {
+  display:none;
   z-index:100;
   position:absolute;
 }
+#npopup:hover {
+  display:block;
+}
 #npopupTX {
   margin: 0px 20px 10px 0px;
-  font-size: 1.3em;
+  font-size: 1.1em;
   padding: 22px 20px 20px 20px;
   border:1px solid black;
   background:rgb(245,220,255);
@@ -42,7 +46,7 @@
   visibility:hidden;
 }
 
-/* FOR INTERNAL POPUP STYLES */
+/* FOR REGULAR (NON-WINDOW) POPUP STYLES */
 .popupheader {
   position:relative;
   margin:0px 0px 20px 0px;

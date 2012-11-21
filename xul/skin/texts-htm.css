@@ -11,16 +11,16 @@
 .prevchaplink, .nextchaplink {
   cursor:pointer;
 }
-#textrow[CanDoPreviousChapter="false"] .prevchaplink,
-#textrow[CanDoNextChapter="false"] .nextchaplink {
+.text[CanDoPreviousPage="false"] .prevchaplink,
+.text[CanDoNextPage="false"] .nextchaplink {
   color:grey;
   cursor:default;
 }
 .prevchaplink:hover, .nextchaplink:hover {
   text-decoration:underline;
 }
-#textrow[CanDoPreviousChapter="false"] .prevchaplink:hover,
-#textrow[CanDoNextChapter="false"] .nextchaplink:hover {
+.text[CanDoPreviousPage="false"] .prevchaplink:hover,
+.text[CanDoNextPage="false"] .nextchaplink:hover {
   text-decoration:none;
 }
 
@@ -203,7 +203,7 @@
   display:table;
   border-collapse:separate;
   border-spacing:0px 1px;
-  margin:10px;
+  margin:0px 10px 0px 10px;
 }
 .cropened, .crclosed {
   display:table-row;

@@ -17,14 +17,11 @@
     You should have received a copy of the GNU General Public License
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
+
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
-<!DOCTYPE window [
-<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
-%xulswordDTD;
-<!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd" >
-%bookmarksDTD;
-]>
+<?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul" ?>
+<?xul-overlay href="chrome://xulsword/content/contextMenu-overlay.xul" ?>
 
 <window 
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -33,15 +30,18 @@
    
   <script>var MainWindow = window.opener;</script>
   <script><![CDATA[
-    var CWIN;
+    var PopupFrame;
     function load() {
-      CWIN = document.getElementById('npopup').contentDocument.defaultView;
-      CWIN.initPopup();
-      CWIN.load();
+      PopupFrame = document.getElementById('npopup').contentDocument.defaultView;
+      PopupFrame.initPopup();
+      PopupFrame.load();
     }
   ]]></script>
   
   <commandset id="popupCommandSet">
+    
+    <command id="cmd_xs_searchForLemma"            oncommand="MainWindow.goDoCommand('cmd_xs_searchForLemma');"/>
+    <command id="cmd_xs_aboutModule"               oncommand="MainWindow.goDoCommand('cmd_xs_aboutModule');"/>
     <command id="cmd_xs_search"                    oncommand="MainWindow.goDoCommand('cmd_xs_search');"/>
     <command id="cmd_xs_aboutModule"               oncommand="MainWindow.goDoCommand('cmd_xs_aboutModule');"/>
     <command id="cmd_xs_toggleTab"                 oncommand="MainWindow.goDoCommand('cmd_xs_toggleTab');"/>
@@ -52,30 +52,12 @@
     <command id="cmd_xs_newUserNote"               oncommand="MainWindow.goDoCommand('cmd_xs_newUserNote');"/>
     <command id="cmd_bm_properties"                oncommand="MainWindow.goDoCommand('cmd_bm_properties');"/>
     <command id="cmd_bm_delete"                    oncommand="MainWindow.goDoCommand('cmd_bm_delete')" valueDefault="Delete;" disabled="true"/>
+    
   </commandset>
   
   <iframe id="npopup" flex="1" src="popup.html" context="contextScriptBox"/>
 
-  <popupset>
-    <menupopup id="contextScriptBox" value="closed" 
-        onpopupshowing="MainWindow.ScriptContextMenuShowing(event, this);" 
-        onpopuphidden="MainWindow.ScriptContextMenuHidden(event);">
-      <menuitem id="aboutModule" label="&menu.help.about;" command="cmd_xs_aboutModule"/>
-      <menuitem id="closeTab" label="&context.closeTab;" command="cmd_xs_toggleTab"/>
-      <menuseparator id="contsep0"/>
-      <menuitem id="cMenu_copy"/>
-      <menuitem id="conSearch" label="&searchBut.label;" command="cmd_xs_searchForSelection"/>
-      <menuseparator id="contsep1"/>
-      <menuitem id="conGotoSel" label="&context.gotoReference;" command="cmd_xs_openFromSelection"/>
-      <menuseparator id="contsep2"/>
-      <menuitem id="conSelect" label="&context.hilight;" command="cmd_xs_selectVerse"/>
-      <menuseparator id="contsep3"/>
-      <menuitem id="conBookmark" label="&menuitem.newBookmark.label;" command="cmd_xs_newBookmark"/>
-      <menuitem id="conUserNote" label="&menu.usernote.add;" command="cmd_xs_newUserNote"/>
-      <menuseparator id="contsep4"/>
-      <menuitem id="conProps" label="&context.editUserNote;" command="cmd_bm_properties"/>
-      <menuitem id="delUserNote" label="&context.deleteUserNote;" command="cmd_bm_delete"/>
-    </menupopup>
-  </popupset>
+  <!-- for contextMenu-overlay.xul to fill !-->
+  <popupset id="main-popupset"></popupset>
 
 </window>

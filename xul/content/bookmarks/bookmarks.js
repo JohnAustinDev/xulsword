@@ -475,14 +475,11 @@ var BookmarksCommand = {
 
   createNewBookmark: function (aTarget)
   {
-    var resource = BookmarkFuns.createNewResource(["Bookmark", 
-      null, 
-      null, 
-      MainWindow.CurrentTarget.shortName, 
-      MainWindow.CurrentTarget.chapter, 
-      MainWindow.CurrentTarget.verse, 
-      MainWindow.CurrentTarget.lastVerse, 
-      MainWindow.CurrentTarget.version]);
+    var t = MainWindow.getDefaultTarget();
+    
+    var resource = BookmarkFuns.createNewResource(
+      ["Bookmark", null, null, t.bk, t.ch, t.vs, t.lv, t.mod]
+    );
 
     this.addNewResource(resource, aTarget, "newbookmark");
   },
@@ -839,7 +836,7 @@ var BookmarksController = {
 
   doCommand: function (aCommand, aSelection, aTarget, aDS)
   {
-    jsdump("Entering BookmarksController.doCommand:" + aCommand + "\n");
+//jsdump("Entering BookmarksController.doCommand:" + aCommand + "\n");
     var resource0, type0, realTarget;
     if (aSelection && aSelection.length == 1) {
       resource0 = aSelection.item[0];

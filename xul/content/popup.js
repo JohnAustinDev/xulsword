@@ -16,8 +16,9 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Interactive popup window for use in the text box
-
+// A new Popup object will be created to handle Popup functions in this
+// context. If this popup is a separate window, it needs to be initialized
+// with all the settings and data of the regular popup from which it came.
 var Popup;
 function initPopup() {
   if (window.name == "npopup") {
@@ -80,7 +81,7 @@ function PopupObj(popupobj) {
     
     // Get fromMod for scripture references, and style.
     var hrule = "";
-    var pupAlreadyOpened = (this.npopup.style.display != "none");
+    var pupAlreadyOpened = window.getComputedStyle(Popup.npopup).display != "none";
     var headlink = MainWindow.SBundle.getString(pupAlreadyOpened ? "back":"close");
     var headlinkclass = (pupAlreadyOpened ? "popupBackLink":"popupCloseLink");
     
@@ -96,8 +97,6 @@ function PopupObj(popupobj) {
     }
     html += "</div>";
 
-    IgnoreMouseOvers = true; // This should happen after "close()" because close() changes it to false!
-    
     switch (this.datatype) {
     
     case "html":
@@ -266,17 +265,18 @@ function PopupObj(popupobj) {
     }
     
     return html ? true:false;
-  }
+  };
 
 
   // show() must be called AFTER the popup content has been written to popup.
   this.show = function(yOffset) {
     if (!yOffset) yOffset=0;
     
-    IgnoreMouseOvers=false;
+    // Display the popup for a short time so that CSS :hover selector(s)
+    // can properly take over display control.
+    Popup.npopup.style.display = "block";
+    window.setTimeout("Popup.npopup.style.display = ''", this.delay);
     
-    // Display was set to "none" and this must be cleared before setting (or reading for sure) other style parameters
-    this.npopup.style.display = "block";
     if ((/^popup/).test(window.name)) return;
     
     var top = this.y - 10 + yOffset; 
@@ -291,7 +291,7 @@ function PopupObj(popupobj) {
     
     this.npopup.style.top = String(top) + "px";
     this.npopup.style.left = String(left) + "px";
-    
+
   };
 
   this.close = function() {
@@ -299,14 +299,12 @@ function PopupObj(popupobj) {
     
     this.npopupTX.scrollTop = 0;
     // Stops if preparing to open
-    if (this.showPopupID) {
-      window.clearTimeout(this.showPopupID);
-      IgnoreMouseOvers = false;
-    }
+    if (this.showPopupID) window.clearTimeout(this.showPopupID);
     // Clear any note popup
     this.npopupTX.innerHTML="Empty";
     // This prevents the ScriptBox scroll smoothness from being messed up
-    this.npopup.style.display = "none";
+    Popup.npopup.style.display = "none";
+    window.setTimeout("Popup.npopup.style.display = ''", this.delay);
   };
 
   this.openCloseCRs = function() {
@@ -365,7 +363,6 @@ function PopupObj(popupobj) {
   this.keydown = function(e) {
     if (e.keyCode == 16) {
       this.pindown();
-      IgnoreMouseOvers = true;
     }
   };
   
@@ -377,7 +374,6 @@ function PopupObj(popupobj) {
       elem = elem.parentNode;
     }
     this.pinup(!elem || !elem.id || (elem.id && elem.id != "npopup"));
-    IgnoreMouseOvers = false;
   };
   
   this.pindown = function() {
