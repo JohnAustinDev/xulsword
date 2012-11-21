@@ -132,11 +132,9 @@ function loadedXULReal() {
   
   //Listen for keypresses on search textbox (for return key)
   document.getElementById("searchText").addEventListener("keypress", 
-      function(event) {if ((e.target.id=="searchText") && (e.keyCode==13)) {goDoCommand("cmd_xs_searchFromTextBox");}}, 
+      function(event) {if ((event.target.id=="searchText") && (event.keyCode==13)) {goDoCommand("cmd_xs_searchFromTextBox");}}, 
       false);
 
-  //BookmarksMenuController must be appended to window since no element is necessarily 
-  //focused during bookmark menu pulldown operations and so commandDispatcher doesn't help any
   window.controllers.appendController(XulswordController);
   window.controllers.appendController(BookmarksMenuController);
 
@@ -810,7 +808,13 @@ function updateFromNavigator(numberOfSelectedVerses) {
 var XulswordController = {
   parsedLocation: {},
  
-  doCommand: function (aCommand) {
+  doCommand: function (aCommand, target) {
+    
+    // If no target is passed, or it's incomplete, fill in with defaults
+    if (!target) target = {};
+    var def = getDefaultTarget();
+    for (var m in def) {if (!target.hasOwnProperty(m) || target[m]===null) {target[m] = def[m];}}
+    
     switch (aCommand) {
     case "cmd_undo":
       BookmarksCommand.undoBookmarkTransaction();
@@ -846,33 +850,29 @@ var XulswordController = {
       Texts.update(SCROLLTYPETOP, HILIGHTNONE);
       break;
     case "cmd_xs_search":
-      // override default type by setting to negative of desired type.
-      var tp = (getPrefOrCreate("InitialSearchType", "Int", CONTAINS_THE_WORDS) < 0 ? Math.abs(prefs.getIntPref("InitialSearchType")):CONTAINS_THE_WORDS);
-      prefs.setIntPref("InitialSearchType", tp);
+      if (target.searchType) prefs.setIntPref("InitialSearchType", target.searchType);
       AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchFromTextBox":
-      // override default type by setting to negative of desired type.
-      var tp = (getPrefOrCreate("InitialSearchType", "Int", CONTAINS_THE_WORDS) < 0 ? Math.abs(prefs.getIntPref("InitialSearchType")):CONTAINS_THE_WORDS);
-      openSearchDialog(document.getElementById('searchText').value, firstDisplayModule().mod, tp);
+      openSearchDialog(target.searchText, firstDisplayModule().mod, target.searchType);
       break;
     case "cmd_xs_searchForSelection":
-      // override default type by setting to negative of desired type.
-      var tp = (getPrefOrCreate("InitialSearchType", "Int", EXACT_TEXT) < 0 ? Math.abs(prefs.getIntPref("InitialSearchType")):EXACT_TEXT);
-      openSearchDialog(getMainWindowSelection(), CurrentTarget.version, tp);
+      openSearchDialog(target.selection, target.mod, target.searchType);
+      break;
+    case "cmd_xs_searchForLemma":
+      openSearchDialog(target.lemma, target.mod, USING_SEARCH_TERMS);
       break;
     case "cmd_xs_openFromSelection":
       updateToReference(this.parsedLocation);
       break;
     case "cmd_xs_newBookmark":
-      BookmarkFuns.addBookmarkAs(CurrentTarget, false);
+      BookmarkFuns.addBookmarkAs({shortName:target.bk, chapter:target.ch, verse:target.vs, lastVerse:target.lv, version:target.mod}, false);
       break;
     case "cmd_xs_newUserNote":
-      BookmarkFuns.addBookmarkAs(CurrentTarget, true);
+      BookmarkFuns.addBookmarkAs({shortName:target.bk, chapter:target.ch, verse:target.vs, lastVerse:target.lv, version:target.mod}, true);
       break;
     case "cmd_xs_selectVerse":
-      document.getElementById("verse").value = dString(CurrentTarget.verse);
-      Location.setLocation(CurrentTarget.version, CurrentTarget.shortName + "." + CurrentTarget.chapter + "." + CurrentTarget.verse + "." + CurrentTarget.lastVerse);
+      Location.setLocation(target.mod, target.bk + "." + target.ch + "." + target.vs + "." + target.lv);
       Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
     case "cmd_xs_back":
@@ -888,14 +888,14 @@ var XulswordController = {
       AllWindows.push(window.open("chrome://xulsword/content/bookmarks/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_toggleTab":
-      if (CurrentTarget.windowNum) {
-        Tabs[CurrentTarget.tabNum]["w" + CurrentTarget.windowNum + ".hidden"] = !Tabs[CurrentTarget.tabNum]["w" + CurrentTarget.windowNum + ".hidden"];
+      if (target.w) {
+        Tab[target.mod]["w" + target.w + ".hidden"] = !Tab[target.mod]["w" + target.w + ".hidden"];
         updateModuleMenuCheckmarks();
         Texts.update(SCROLLTYPETOP, HILIGHTNONE);
       }
       break;
     case "cmd_xs_aboutModule":
-      AboutScrollTo = Tabs[CurrentTarget.tabNum].modName;
+      AboutScrollTo = target.mod;
       AllWindows.push(window.open("chrome://xulsword/content/about.xul","splash","chrome,modal,centerscreen"));
       break;
     case "cmd_xs_addNewModule":
@@ -914,62 +914,54 @@ var XulswordController = {
       if (!importAudio(null, null, false)) ModuleCopyMutex=false;
       break;
     case "cmd_xs_nextVerse":
-      var vers = firstDisplayBible();
-      var l = Location.getLocation(vers).split(".");
+      var l = Location.getLocation(target.mod).split(".");
       l[1] = Number(l[1]);
       l[2] = Number(l[2]);
       l[2]++;
-      if (l[2] > Bible.getMaxVerse(vers, l[0] + "." + l[1])) {
+      if (l[2] > Bible.getMaxVerse(target.mod, l[0] + "." + l[1])) {
         l[1]++;
-        if (l[1] > Bible.getMaxChapter(vers, l[0])) return;
+        if (l[1] > Bible.getMaxChapter(target.mod, l[0])) return;
         l[2] = 1;
       }
       l[3] = l[2];
-      Location.setLocation(vers, l.join("."));
+      Location.setLocation(target.mod, l.join("."));
       Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
     case "cmd_xs_previousVerse":
-      var vers = firstDisplayBible();
-      var l = Location.getLocation(vers).split(".");
+      var l = Location.getLocation(target.mod).split(".");
       l[1] = Number(l[1]);
       l[2] = Number(l[2]);
       l[2]--;
       if (l[2] == 0) {
         l[1]--;
         if (l[1] == 0) return;
-        l[2] = Bible.getMaxVerse(vers, l[0] + "." + l[1]);
+        l[2] = Bible.getMaxVerse(target.mod, l[0] + "." + l[1]);
       }
       l[3] = l[2];
-      Location.setLocation(vers, l.join("."));
+      Location.setLocation(target.mod, l.join("."));
       Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
     case "cmd_xs_nextChapter":
-      var vers = firstDisplayBible();
-      var bkn = findBookNum(Location.getBookName());
-      var chn = Location.getChapterNumber(vers);
-      if (chn < Bible.getMaxChapter("KJV", Book[bkn].sName)) {chn++;}
+      if (target.ch < Bible.getMaxChapter(target.mod, target.bk)) {target.ch++;}
       else return;
-      Location.setLocation(vers, Location.getBookName() + "." + chn);
+      Location.setLocation(target.mod, target.bk + "." + target.ch);
       Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
       break;
     case "cmd_xs_previousChapter":
-      var vers = firstDisplayBible();
-      var bkn = findBookNum(Location.getBookName());
-      var chn = Location.getChapterNumber(vers);
-      if (chn > 1) {chn--;}
+      if (target.ch > 1) {target.ch--;}
       else return;
-      Location.setLocation(vers, Location.getBookName() + "." + chn);
+      Location.setLocation(target.mod, target.bk + "." + target.ch);
       Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
       break;
     case "cmd_xs_nextBook":
-      var bkn = findBookNum(Location.getBookName());
+      var bkn = findBookNum(target.bk);
       bkn++;
       if (bkn >= NumBooks) return;
       Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
       Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
       break;
     case "cmd_xs_previousBook":
-      var bkn = findBookNum(Location.getBookName());
+      var bkn = findBookNum(target.bk);
       bkn--;
       if (bkn < 0) return;
       Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
@@ -978,30 +970,35 @@ var XulswordController = {
     }
   },
   
-  isCommandEnabled: function (aCommand) {
+  isCommandEnabled: function (aCommand, target) {
+    
+    // If no target is passed, or it's incomplete, fill in with defaults
+    if (!target) target = {};
+    var def = getDefaultTarget();
+    for (var m in def) {if (!target.hasOwnProperty(m)) {target[m] = def[m];}}
+    
     switch (aCommand) {
     case "cmd_undo":
       return (BM.gTxnSvc.numberOfUndoItems > 0);
     case "cmd_redo":
       return (BM.gTxnSvc.numberOfRedoItems > 0);
     case "cmd_xs_searchFromTextBox":
-      var ct = document.getElementById('searchText').value
-      return (ct.length > 0);
+      return (target.searchText.length > 0);
     case "cmd_xs_searchForSelection":
-      return (getMainWindowSelection()!="" && CurrentTarget.version!="");
+      return (target.selection ? true:false);
+    case "cmd_xs_searchForLemma":
+      return (target.lemma && target.mod ? true:false);
     case "cmd_xs_forward":
       return (History.index < History.list.length-1);
     case "cmd_xs_back":
       return (History.index > 0);
     case "cmd_xs_openFromSelection":
-      var selt = getMainWindowSelection();
-      this.parsedLocation = parseLocation(selt.substr(0,64));
+      this.parsedLocation = null;
+      var s = target.selection;
+      if (s) this.parsedLocation = parseLocation(s.substr(0,64));
       return this.parsedLocation ? true:false;
     case "cmd_xs_toggleTab":
-      if (CurrentTarget.windowNum && prefs.getBoolPref("IsPinned" + CurrentTarget.windowNum)) return false;
-      return true;
-    case "cmd_xs_aboutModule":
-      break;
+      return (target.w && target.mod && !prefs.getBoolPref("IsPinned" + target.w) ? true:false);
     case "cmd_xs_exportAudio":
       if (ModuleCopyMutex) return false;
       if (AudioDirs === null) AudioDirs = getAudioDirs();
@@ -1025,22 +1022,19 @@ var XulswordController = {
       break;
     case "cmd_xs_nextVerse":
       var mod = firstDisplayBible();
-      return Location.getVerseNumber(mod) < Bible.getMaxVerse(mod, Location.getLocation());
+      return (target.vs < Bible.getMaxVerse(target.mod, Location.getLocation(target.mod)));
     case "cmd_xs_previousVerse":
-      var mod = firstDisplayBible();
-      return Location.getVerseNumber(mod) > 1;
+      return (target.vs > 1);
     case "cmd_xs_nextChapter":
-      var mod = firstDisplayBible();
-      return Location.getChapterNumber(mod) < Bible.getMaxChapter(mod, Location.getLocation(mod));
+      return (target.ch < Bible.getMaxChapter(target.mod, Location.getLocation(target.mod)));
     case "cmd_xs_previousChapter":
-      var mod = firstDisplayBible();
-      return Location.getChapterNumber(mod) > 1;
+      return (target.ch > 1);
     case "cmd_xs_nextBook":
-      return findBookNum(Location.getBookName()) < Book.length-1;
+      return (findBookNum(target.bk) < Book.length-1);
     case "cmd_xs_previousBook":
-      return findBookNum(Location.getBookName()) > 1;
+      return (findBookNum(target.mod) > 1);
     }
-
+    
     return true;
   },
       
@@ -1064,6 +1058,7 @@ var XulswordController = {
     case "cmd_xs_search":
     case "cmd_xs_searchFromTextBox":
     case "cmd_xs_searchForSelection":
+    case "cmd_xs_searchForLemma":
     case "cmd_xs_newBookmark":
     case "cmd_xs_newUserNote":
     case "cmd_xs_selectVerse":
@@ -1091,6 +1086,48 @@ var XulswordController = {
   }
 }
 
+// This is the default target for the main command controller. This 
+// default target is returned each time the controller is used, unless
+// a target was supplied in the call.
+function getDefaultTarget() {
+  var target = {};
+  target.searchText = document.getElementById('searchText').value;
+  target.searchType = null;
+  target.lemma = null;
+  target.bookmark = null;
+  target.w = null;
+  target.mod = firstDisplayBible();
+
+  switch (Tab[target.mod].modType) {
+  case BIBLE:
+  case COMMENTARY:
+    target.bk = Location.getBookName();
+    target.ch = Location.getChapterNumber(target.mod);
+    target.vs = Location.getVerseNumber(target.mod);
+    target.lv = Location.getLastVerseNumber(target.mod);
+    break;
+  case DICTIONARY:
+    target.bk = "";
+    target.ch = getPrefOrCreate("DictKey_" + target.mod + "_" + firstDisplayBible(true) , "Unicode", "/");
+    target.vs = 1;
+    target.lv = 1;
+  case GENBOOK:
+    target.bk = "";
+    target.ch = getPrefOrCreate("GenBookKey_" + target.mod + "_" + firstDisplayBible(true) , "Unicode", "/" + target.mod);
+    target.vs = 1;
+    target.lv = 1;
+    break;
+  }
+  
+  var s = ViewPortWindow.getSelection();
+  if (s && s.isCollapsed) {s = null;}
+  if (s) s = replaceASCIIcontrolChars(s.toString())
+  target.selection = s;
+  
+  return target;
+}
+
+/*
 function isNextPrevEnabled() {
   // disable if genbook-tree is focused (it has its own handler)
   var cd = document.commandDispatcher;
@@ -1102,15 +1139,7 @@ function isNextPrevEnabled() {
   }
   return haveVK;
 }
-
-function getFocusedElemID() {
-  var f = document.commandDispatcher;
-  if (!f) return null;
-  f = f.focusedElement;
-  while(f && !f.id) {f = f.parentNode;}
-  if (!f) return null;
-  return f.id;
-}
+*/
 
 function goUpdateFileMenu () {
   goUpdateCommand('cmd_xs_exportAudio');
@@ -1119,30 +1148,14 @@ function goUpdateFileMenu () {
   goUpdateCommand('cmd_xs_importAudio');
 }
 
-function getMainWindowSelection() {
-  var selectedText="";
-  var selectionObject = getMainWindowSelectionObject();
-  if (selectionObject) {selectedText = replaceASCIIcontrolChars(selectionObject.toString());}
-  return selectedText;
-}
-
-function getMainWindowSelectionObject() {
-  var selob=null;
-  for (var w=1; w<=3; w++) {
-    selob = ViewPortWindow.getSelection();
-    if (!selob.isCollapsed) {return selob;}
-  }
-  return null;
-}
-
-function openSearchDialog(text, version, type) {
-  if (!text) text = "";
-  if (!version) version = firstDisplayModule().mod;
-  if (type!=0 && !type) type = CONTAINS_THE_WORDS;
+function openSearchDialog(search, mod, type) {
+  if (!search) search = "";
+  if (!mod) mod = firstDisplayModule().mod;
+  if (type === null) type = CONTAINS_THE_WORDS;
   
   prefs.setIntPref("InitialSearchType", type);
-  prefs.setCharPref("SearchVersion", version);
-  setUnicodePref("SearchText", text);
+  prefs.setCharPref("SearchVersion", mod);
+  setUnicodePref("SearchText", search);
   AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
 }
 
@@ -1406,339 +1419,7 @@ function updateXulswordCommands() {
   goUpdateCommand("cmd_bm_properties");
   goUpdateCommand("cmd_xs_searchFromTextBox");
   goUpdateCommand("cmd_xs_searchForSelection");
-  goUpdateTargetLocation();
 }
-
-
-/************************************************************************
- * Context Menu functions
- ***********************************************************************/ 
-var CurrentTarget = {shortName:null, chapter:null, verse:null, lastVerse:null, tabNum:null, windowNum:null};
-
-function ScriptContextMenuShowing(e, menupopup) {
-jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
-
-  CurrentTarget.windowNum = getWindow(menupopup.triggerNode);
-  
-  ViewPortWindow.closeTabToolTip();
-  
-  // Close Script Popup if we're not over it
-  var elem = menupopup.triggerNode;
-  while (elem && (!elem.id || elem.id != "npopup")) {elem = elem.parentNode;}
-  if (!elem) ViewPortWindow.Popup.close();
-  
-  // Is this the select tab menu?
-  if ((/\.tab\.tsel/).test(menupopup.triggerNode.id)) {
-    CurrentTarget.tabNum = Tab[menupopup.triggerNode.previousSibling.value].index;
-    buildPopup(e, false, false, false, false, true, true);
-    return;
-  }
-  // Is this a select tab tab?
-  else if ((/\.tab\.mult/).test(menupopup.triggerNode.id)) {
-    CurrentTarget.tabNum = Tab[menupopup.triggerNode.value].index;
-    buildPopup(e, false, false, false, false, true, true);
-    return;
-  }
-  // Is this a version tab?
-  else if (menupopup.triggerNode.id.search(/tab\.norm\.\d+/)!=-1) {
-    CurrentTarget.tabNum = menupopup.triggerNode.id.match(/tab\.norm\.(\d+)/)[1];
-    buildPopup(e, false, false, false, false, true, true);
-    return;
-  }
- 
-  // Is mouse over a word with strong's numbers? Then add root search menu items.
-  var selem = menupopup.triggerNode;
-  var strongsNum;
-  while (selem && !strongsNum) {
-    strongsNum = (selem.className && selem.className.search(/(^|\s)sn($|\s)/)!=-1 ? selem.title:"");
-    selem = selem.parentNode;
-  }
-  if (strongsNum) {
-    var insertBefore = menupopup.firstChild;
-    var nums = strongsNum.split(".");
-    for (var i=0; i<nums.length; i++) {
-      var parts = nums[i].split(":");
-      if (parts[0] != "S") continue;
-      // SWORD filters these out- not valid it says
-      if (parts[1].substr(0,1)=="G" && Number(parts[1].substr(1)) >= 5627) continue;
-      nums[i] = parts[1];
-      var contextItem = document.createElement("menuitem");
-      contextItem.setAttribute("id", "strongs." + i);
-      contextItem.setAttribute("label", SBundle.getString("Search") + ":" + nums[i]);
-      contextItem.setAttribute("onclick", "searchForLemma('" + nums[i] + "')");
-      menupopup.insertBefore(contextItem, insertBefore);
-    }
-    if (nums.length) {
-      contextItem = document.createElement("menuseparator");
-      contextItem.setAttribute("id", "strongs.sep");
-      menupopup.insertBefore(contextItem, insertBefore);
-    }
-  }
-  
-  // First get targets from mouse pointer or selection
-  var isSelection=false;
-  var contextTargs = getTargetsFromElement(menupopup.triggerNode);
-  if (contextTargs==null) {e.preventDefault(); return;}
-  var selob = getMainWindowSelectionObject();
-  if (selob) {
-    contextTargs = getTargetsFromSelection(selob);
-    if (contextTargs==null) {e.preventDefault(); return;}
-    isSelection=true;
-  }
-  
-//jsdump(contextTargs.shortName + " " + contextTargs.chapter + ":" + contextTargs.verse + "-" + contextTargs.lastVerse + ", res=" + contextTargs.resource);
-   
-  // Set Global Target variables
-  var myModuleName = (CurrentTarget.windowNum ? prefs.getCharPref("Version" + CurrentTarget.windowNum):prefs.getCharPref("DefaultVersion"));
-  CurrentTarget.version = contextTargs.version ? contextTargs.version:myModuleName;
-  CurrentTarget.tabNum = (Tab[CurrentTarget.version] ? Tab[CurrentTarget.version].index:null);
-  switch (getModuleLongType(myModuleName)) {
-  case BIBLE:
-  case COMMENTARY:
-    CurrentTarget.shortName = (contextTargs.shortName ? contextTargs.shortName:(CurrentTarget.windowNum ? Texts.display[CurrentTarget.windowNum].bk:null));
-    CurrentTarget.chapter = (contextTargs.chapter ? contextTargs.chapter:(CurrentTarget.windowNum  ? Texts.display[CurrentTarget.windowNum].chapter:null));
-    CurrentTarget.verse = contextTargs.verse;
-    CurrentTarget.lastVerse = contextTargs.lastVerse;
-    break;
-  case DICTIONARY:
-    CurrentTarget.shortName = "";
-    CurrentTarget.chapter = getPrefOrCreate("DictKey_" + myModuleName + "_" + CurrentTarget.windowNum, "Unicode", "");
-    CurrentTarget.verse = contextTargs.paragraph;
-    CurrentTarget.lastVerse = contextTargs.paragraph;
-    break;
-  case GENBOOK:
-    CurrentTarget.shortName = "";
-    CurrentTarget.chapter = getPrefOrCreate("GenBookKey_" + myModuleName + "_" + CurrentTarget.windowNum, "Unicode", "");
-    CurrentTarget.verse = contextTargs.paragraph;
-    CurrentTarget.lastVerse = contextTargs.paragraph;
-    break;
-  }
-  
-  BookmarksMenu._selection = null;
-  if (contextTargs.resource) {
-    var aItem = BM.RDF.GetResource(contextTargs.resource);
-    var aParent = BookmarkFuns.getParentOfResource(aItem, BMDS);
-    if (aParent) {
-      BookmarksMenu._selection = BookmarksUtils.getSelectionFromResource(aItem, aParent);
-    }
-  }
-    
-  // Set some flags
-  var haveVerse = (CurrentTarget.verse!=null && contextTargs.paragraph==null);
-  var overScriptboxVerse = (haveVerse && !contextTargs.isCrossReference);
-  var overSelectedVerse = (overScriptboxVerse && CurrentTarget.windowNum && 
-      CurrentTarget.verse == Location.getVerseNumber(prefs.getCharPref("Version" + CurrentTarget.windowNum)) && 
-      CurrentTarget.verse != 1);
-  var frameIsPinned = (CurrentTarget.windowNum && prefs.getBoolPref("IsPinned" + CurrentTarget.windowNum));
-  var overPopup = (CurrentTarget.windowNum === 0);
-  var overResource = (BookmarksMenu._selection != null);
-  var overParagraph = (contextTargs.paragraph != null);
-  var isTab = (!(haveVerse||overPopup||overParagraph||isSelection));
-  buildPopup(e, haveVerse, overParagraph, overResource, overPopup, overSelectedVerse||!overScriptboxVerse||frameIsPinned, isTab);
-  
-//var t=""; for (var m in CurrentTarget) {t += m + "=" + (CurrentTarget[m] ? CurrentTarget[m]:"NULL") + ", ";} jsdump(t);
-//var t=""; for (var m in contextTargs) {t += m + "=" + (contextTargs[m] ? contextTargs[m]:"NULL") + ", ";} jsdump(t);
-
-}
-
-function buildPopup(e, haveVerse, overParagraph, overResource, overPopup, disableVerseSelect, isTab) {
-  // Enable/disable menu options accordingly
-  document.getElementById("cmd_xs_selectVerse").setAttribute("disabled", disableVerseSelect);
-  goUpdateCommand("cmd_copy");
-  goUpdateCommand("cmd_xs_searchForSelection");
-  goUpdateCommand("cmd_xs_openFromSelection");
-  goUpdateCommand("cmd_bm_properties");
-  goUpdateCommand("cmd_bm_delete");
-  goUpdateCommand("cmd_xs_toggleTab");
-  goUpdateCommand("cmd_xs_aboutModule");
-  
-  // Hide menu options accordingly
-  document.getElementById("aboutModule").hidden = overPopup;
-  document.getElementById("closeTab").hidden    = overPopup;
-  
-  document.getElementById("contsep0").hidden   = (isTab || overPopup);
-  document.getElementById("cMenu_copy").hidden  = isTab;
-  document.getElementById("conSearch").hidden   = isTab;
-  
-  document.getElementById("contsep1").hidden    = (isTab || overPopup);
-  document.getElementById("conGotoSel").hidden  = (isTab || overPopup);
-  
-  document.getElementById("contsep2").hidden    = (!haveVerse || overPopup);
-  document.getElementById("conSelect").hidden   = (!haveVerse || overPopup);
-  
-  document.getElementById("contsep3").hidden    = (!haveVerse && !overParagraph);
-  document.getElementById("conBookmark").hidden = (!haveVerse && !overParagraph);
-  document.getElementById("conUserNote").hidden = (!haveVerse && !overParagraph);
-  
-  document.getElementById("contsep4").hidden    = (!haveVerse && !overParagraph && !overResource);
-  document.getElementById("conProps").hidden    = (!haveVerse && !overParagraph && !overResource);
-  document.getElementById("delUserNote").hidden = (!haveVerse && !overParagraph && !overResource);
-  //document.getElementById("closeTab").hidden    = !isTab;
-  e.target.setAttribute("value","open");
-}
-
-function getTargetsFromSelection(selob) {
-  var retval = {window:null, shortName:null, chapter:null, version:null, verse:null, lastVerse:null, resource:null, paragraph:null, isCrossReference:false};
-  var targs1 = getTargetsFromElement(selob.focusNode);
-  if (targs1 == null) return null;
-  var targs2 = getTargetsFromElement(selob.anchorNode);
-  if (targs2 == null) return null;
-  
-  if (targs1.shortName!=targs2.shortName || targs1.chapter!=targs2.chapter) return retval;
-  
-  // Only return a value for these if targs1 matches targs2
-  if (targs1.window==targs2.window) retval.window=targs1.window;
-  if (targs1.version==targs2.version) retval.version=targs1.version;
-  if (targs1.shortName==targs2.shortName) retval.shortName=targs1.shortName;
-  if (targs1.chapter==targs2.chapter) retval.chapter=targs1.chapter;
-  if (targs1.verse==targs2.verse && targs1.paragraph==targs2.paragraph) retval.resource = targs1.resource ? targs1.resource:targs2.resource;
-  if (targs1.paragraph==targs2.paragraph) retval.paragraph=targs1.paragraph;
-  
-  // If this is a cross-reference
-  if (targs1.isCrossReference) {
-    retval.shortName=targs1.shortName;
-    retval.chapter=targs1.chapter;
-    retval.verse=targs1.verse;
-    retval.lastVerse=targs1.lastVerse;
-    retval.version=targs1.version;
-    retval.isCrossReference = true;
-    return retval;
-  }
-  // Return smaller verse number as "verse" and larger verse number as "lastVerse"
-  if (targs2.verse > targs1.verse) {
-    retval.verse = targs1.verse;
-    retval.lastVerse = targs2.verse;
-  }
-  else {
-    retval.verse = targs2.verse;
-    retval.lastVerse = targs1.verse;
-  }
-  
-  return retval;
-}
-
-// Searches for information associated with an element or its parents, 
-// and searches for a resource attached to an element by searching children
-// If the element is not a child of "scriptBox" or "npopup" then null is returned
-function getTargetsFromElement(element) {
-//jsdump("ID:" + element.id + ", CLASS:" + element.className + ", TITLE:" + element.className + "\n");
-  var targs = {window:null, shortName:null, chapter:null, version:null, verse:null, lastVerse:null, resource:null, paragraph:null, isCrossReference:false};
-  var inScriptBox=false;
-  
-  targs.window = getWindow(element);
- 
-  //If we're in interlinear original mode, return correct version of this element
-  if (targs.window && prefs.getBoolPref("ShowOriginal" + targs.window)) {
-    var elem = element.parentNode;
-    while (elem) {
-      if (elem.className) {
-        var styleMod = elem.className.match(/cs-(\w+)/);
-        if (styleMod) {
-          targs.version = styleMod[1];
-          break;
-        }
-      }
-      elem = elem.parentNode;
-    }
-  }
-  
-  while (element) {
-//jsdump("Context searching id=" + element.id);
-
-    if ((element.className && (/(^|\s)text(\s|$)/).test(element.className)) || element.id=="npopup") {inScriptBox=true;}
-    if (element.className && (/(^|\s)text(\s|$)/).test(element.className) && !targs.version && targs.window) targs.version = prefs.getCharPref("Version" + targs.window);
-    
-    if (element.id) {
-      // Are we over a cross reference?
-      if (targs.verse == null && element.title) {
-        // First get location data
-        var crloc = element.title.match(CROSSREFTITLE);
-        if (crloc) {
-          targs.version = crloc[1];
-          targs.shortName = crloc[3];
-          targs.chapter = Number(crloc[4]);
-          targs.verse = Number(crloc[5]);
-          if (crloc[7]) targs.lastVerse = Number(crloc[7]);
-          else if (crloc[8]) targs.lastVerse = Number(crloc[8]);
-          else targs.lastVerse = targs.verse;
-          targs.isCrossReference = true;
-        }
-      }
-      // Are we over a verse?
-      if (targs.verse == null) {try {var loc = element.id.match(/vs\.([^\.]*)\.(\d+)\.(\d+)/); targs.shortName = loc[1]; targs.chapter=Number(loc[2]); targs.verse = Number(loc[3]);} catch (er) {}}
-      // Are we over a note body?
-      if (targs.verse == null) {try {loc = element.id.match(/body\..*([^\.]*)\.(\d+)\.(\d+)\.([^\.])+$/); targs.shortName = loc[1]; targs.chapter=Number(loc[2]); targs.verse = Number(loc[3]); targs.paragraph=targs.verse;} catch (er) {}}
-      // Are we over a user note?
-      if (targs.resource == null) {try {targs.resource = decodeUTF8(element.id.match(/(^|\.)un\.(.*?)\./)[2]);} catch (er) {}}
-      // Are we over a paragraph?
-      if (targs.paragraph == null) {try {targs.paragraph = Number(element.id.match(/par\.(\d+)/)[1]);} catch (er) {}}
-      // If we don't have a resource, search applicable children...
-      if (targs.resource == null && element.hasChildNodes() && element.id.match(/^(vs|sv|npopup)/)) {
-        var child = element.firstChild;
-        while (child) {
-//jsdump("Context searching child=" + child.id);
-          if (targs.resource == null) {
-            if (child.id) {
-              var resname = child.id.match(/\un\.(.*?)\./);
-              if (resname) {targs.resource = decodeUTF8(resname[1]);}
-            }
-          }
-          child = child.nextSibling;
-        }
-      }
-    }
-    element = element.parentNode;
-  }
-  if (targs.verse != null && targs.lastVerse == null) targs.lastVerse=targs.verse;
-  if (!inScriptBox) return null;
-  return targs;
-}
-
-function ScriptContextMenuHidden(e) {
-  var item = e.target.firstChild;
-  // remove any added strongs related menu items
-  while (item.id && item.id.substr(0,8)=="strongs.") {
-    var remove = item;
-    item = item.nextSibling;
-    item.parentNode.removeChild(remove);
-  }
-  e.target.setAttribute("value", "closed");
-  goUpdateTargetLocation();
-  goUpdateCommand("cmd_bm_properties");
-}
-
-function goUpdateTargetLocation() {
-  CurrentTarget.version = firstDisplayModule().mod;
-  switch (getModuleLongType(CurrentTarget.version)) {
-  case BIBLE:
-  case COMMENTARY:
-    CurrentTarget.shortName = Location.getBookName();
-    CurrentTarget.chapter = Location.getChapterNumber(CurrentTarget.version);
-    CurrentTarget.verse = Location.getVerseNumber(CurrentTarget.version);
-    CurrentTarget.lastVerse = Location.getLastVerseNumber(CurrentTarget.version);
-    break;
-  case DICTIONARY:
-    CurrentTarget.shortName = "";
-    CurrentTarget.chapter = getPrefOrCreate("DictKey_" + CurrentTarget.version + "_" + CurrentTarget.windowNum , "Unicode", "/");
-    CurrentTarget.verse = 1;
-    CurrentTarget.lastVerse = 1;
-  case GENBOOK:
-    CurrentTarget.shortName = "";
-    CurrentTarget.chapter = getPrefOrCreate("GenBookKey_" + CurrentTarget.version + "_" + CurrentTarget.windowNum , "Unicode", "/" + CurrentTarget.version);
-    CurrentTarget.verse = 1;
-    CurrentTarget.lastVerse = 1;
-    break;
-  }
-  CurrentTarget.tabNum=null;
-  CurrentTarget.windowNum=1;
-}
-
-function searchForLemma(strongsNumber) {
-  prefs.setCharPref("SearchVersion", CurrentTarget.version);
-  setUnicodePref("SearchText","lemma:" + strongsNumber);
-  goDoCommand('cmd_xs_search');
-}
-
 
 /************************************************************************
  * Version and Tab Control Functions

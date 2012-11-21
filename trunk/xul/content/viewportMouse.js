@@ -107,9 +107,8 @@ var HaveLeftTarget = false;
 var ImmediateUnhilight = false;
 var HighlightElement1 = null;
 var HighlightElement2 = null;
-var IgnoreMouseOvers = false; // Used to block mouseoverse while popup is switching
 function scriptMouseOver(e) {
-  if (IgnoreMouseOvers || Popup.ispinned || BoundaryClicked) return;
+  if (Popup.ispinned || BoundaryClicked) return;
   if (MainWindow.document.getElementById("contextScriptBox") &&
       MainWindow.document.getElementById("contextScriptBox").getAttribute("value") == "open") {return;}
 
@@ -215,6 +214,10 @@ function scriptMouseOver(e) {
 }
 
 function scriptMouseOut(e) {
+  
+  if (Popup.showPopupID && Popup.npopup.style.display=='') window.clearTimeout(Popup.showPopupID);
+  
+  /*
   if (Popup.selectOpen || Popup.ispinned) {return;}
   if (MainWindow.document.getElementById("contextScriptBox") &&
       MainWindow.document.getElementById("contextScriptBox").getAttribute("value") == "open") {return;}
@@ -239,6 +242,7 @@ function scriptMouseOut(e) {
   }
   
   Popup.close();
+  */
 }
 
 function scriptClick(e) {

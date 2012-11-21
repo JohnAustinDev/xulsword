@@ -23,8 +23,8 @@
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="chrome://xulsword/skin/global-htm.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/viewport-htm.css" type="text/css">
-  <link rel="stylesheet" href="chrome://xulsword/skin/texts-htm.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/viewportNavigator-htm.css" type="text/css">
+  <link rel="stylesheet" href="chrome://xulsword/skin/texts-htm.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/popup-htm.css" type="text/css">
   
   <script>var MainWindow = (window.frameElement.ownerDocument.defaultView.MainWindow ? window.frameElement.ownerDocument.defaultView.MainWindow:null)</script>
@@ -100,10 +100,10 @@
       </div>
       <div id="textrow" ondblclick="scriptDblClick(event)" onmouseover="scriptMouseOver(event)" 
           onmouseout="scriptMouseOut(event)" onclick="scriptClick(event)" 
-          onmousemove="bbMouseMove(event);" onmouseup="bbMouseUp(event);"
-          CanDoNextChapter="false" CanDoPreviousChapter="false">
+          onmousemove="bbMouseMove(event);" onmouseup="bbMouseUp(event);">
           
-        <div id="text1" class="text" textdir="ltr" columns="show1" pin="unpinned" foot="show">
+        <div id="text1" class="text" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
+            footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
           <div class="textf">
             <div class="sbpin" id="sbpin1"></div>
             <div class="hd"></div>
@@ -119,7 +119,8 @@
           </div>
         </div>
         
-        <div id="text2" class="text" textdir="ltr" columns="show1" pin="unpinned" foot="show">
+        <div id="text2" class="text" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
+            footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
           <div class="textf">
             <div class="sbpin" id="sbpin2"></div>
             <div class="hd"></div>
@@ -135,7 +136,8 @@
           </div>
         </div>
         
-        <div id="text3" class="text" textdir="ltr" columns="hide" pin="unpinned" foot="show">
+        <div id="text3" class="text" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
+            footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
           <div class="textf">
             <div class="sbpin" id="sbpin3"></div>
             <div class="hd"></div>
@@ -153,7 +155,7 @@
         
       </div>
       
-      <div id="npopup" class="textpopup" value="unpinned" style="display:none;">
+      <div id="npopup" class="textpopup" value="unpinned">
         <div id="npopupTX"></div>
       </div>
         

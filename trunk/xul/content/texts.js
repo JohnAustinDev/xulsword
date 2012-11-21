@@ -77,16 +77,11 @@ var Texts = {
       
       this.pinnedDisplay[w] = copyObj(this.display[w]);
     }
-        
-    MainWindow.goUpdateTargetLocation();
-    
+
     MainWindow.updateNavigator();
     
     MainWindow.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
     
-    document.getElementById("textrow").setAttribute("CanDoNextChapter", MainWindow.XulswordController.isCommandEnabled("cmd_xs_nextChapter"));
-    document.getElementById("textrow").setAttribute("CanDoPreviousChapter", MainWindow.XulswordController.isCommandEnabled("cmd_xs_previousChapter"));
-
   },
   
   updateBible: function(w, force) {
@@ -187,7 +182,7 @@ var Texts = {
       this.hilightVerses(w, loc, hilightFlag);
       
       // remove notes which aren't in window, or hide notebox entirely if empty
-      BibleTexts.checkNoteBox(w);
+      t.setAttribute("footnotesEmpty", !BibleTexts.checkNoteBox(w))
     }
     
     // set audio icons
@@ -660,26 +655,6 @@ var Texts = {
     return true;
   },
   
-  scroll2Element: function(outerElement, element2Scroll, offsetParentId, dontScrollIfVisible, margin) {
-    //dump ("outerElement:" + outerElement.id + "\nelement2Scroll:" + element2Scroll.id + "\noffsetParentId:" + offsetParentId + "\ndontScrollIfVisible:" + dontScrollIfVisible + "\nmargin:" + margin + "\n");
-    if (!element2Scroll || !element2Scroll.offsetParent) return;
-    //jsdump("offsetParentId:" + offsetParentId + "\n");
-    while (element2Scroll && element2Scroll.offsetParent && element2Scroll.offsetParent.id != offsetParentId) {element2Scroll = element2Scroll.parentNode;}
-    
-    var elemOffsetTop = element2Scroll.offsetTop;
-    var boxScrollHeight = outerElement.scrollHeight;
-    var boxOffsetHeight = outerElement.offsetHeight;
-    
-    //jsdump("id:" + element2Scroll.id + " outElemScrollTop: " + outerElement.scrollTop + " boxOffsetHeight:" + boxOffsetHeight + " boxScrollHeight:" + boxScrollHeight + " elemOffsetTop:" + elemOffsetTop + "\n");
-    var scrollmargin=10;
-    if (dontScrollIfVisible && elemOffsetTop > outerElement.scrollTop+scrollmargin && elemOffsetTop < outerElement.scrollTop+boxOffsetHeight-scrollmargin) return;
-    
-    // If element is near bottom then shift to element (which will be max shift)
-    if (elemOffsetTop > (boxScrollHeight - boxOffsetHeight + margin)) {outerElement.scrollTop = elemOffsetTop;}
-    // Otherwise shift to element and add a little margin above
-    else {outerElement.scrollTop = elemOffsetTop - margin;}
-  },
-  
   hilightVerses: function(w, l, hilightFlag) {
     if (!l) return;
     
@@ -924,7 +899,6 @@ var BibleTexts = {
         vl = vl.previousSibling;
       }
 
-      
       if (vf) vf = vf.id.split(".");
       if (vl) vl = vl.id.split(".");
       
@@ -932,35 +906,32 @@ var BibleTexts = {
       if (nb.innerHTML) {
         // vf and vl id has form: vs.Gen.1.1
         // note id has form: w1.body.fn.1.Gen.1.1.KJV
-        var nt = nb.getElementsByClassName("fncol5");
+        var nt = nb.getElementsByClassName("fncontainer");
         for (var i=0; i<nt.length; i++) {
           
-          var dispattr = "";
+          var value = "";
           var inf = nt[i].id.split(".");
-          
+    
           if (vf && 
              (Number(inf[5]) < Number(vf[2]) ||
              (Number(inf[5]) == Number(vf[2]) && Number(inf[6]) < Number(vf[3])))) {
-            dispattr = "none";
+            value = "none";
           }
             
           if (vl &&
              (Number(inf[5]) > Number(vl[2]) ||
              (Number(inf[5]) == Number(vl[2]) && Number(inf[6]) > Number(vl[3])))) {
-            dispattr = "none";
+            value = "none";
           }
-          
-          nt[i].parentNode.parentNode.style.display = dispattr;
-          if (!dispattr) havefn = true;
+         
+          nt[i].parentNode.style.display = value;
+          if (!value) havefn = true;
         }
       }
     }
     else if (nb.innerHTML) havefn = true;
   
-    // hide entire notebox if it's empty
-    document.getElementById("text" + w).setAttribute("foot", (havefn ? "show":"hide"));
-    if (!havefn) prefs.setBoolPref("MaximizeNoteBox" + w, false);
-
+    return havefn;
   },
   
   // This function is only for versekey modules (BIBLE, COMMENTARY)
@@ -1199,11 +1170,9 @@ var BibleTexts = {
     
     //Now set up the counters such that the note remains highlighted for at least a second
     window.setTimeout("unhilightNote()",1000);
-
-    var nb = document.getElementById("note" + w);
-    var note = document.getElementById(id);
     
-    Texts.scroll2Element(nb, note, "w" + w + ".maintable.", true, 4);
+    document.getElementById(id).scrollIntoView();
+    document.getElementsByTagName("body")[0].scrollTop = 0;
   },
 
   hilightUserNotes:function (notes, w) {

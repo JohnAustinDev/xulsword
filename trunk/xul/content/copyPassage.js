@@ -43,7 +43,7 @@ function onLoad() {
 
   var sel = null;  
   var selob = MainWindow.getMainWindowSelectionObject();
-  if (selob) sel = MainWindow.getTargetsFromSelection(selob);
+  if (selob) sel = MainWindow.ContextMenu.getTargetsFromSelection(selob);
   if (sel && sel.version && sel.verse && sel.lastVerse) {
     PassageChooser.version = sel.version;
     PassageChooser.location = savedLocation.split(".")[0] + "." + savedLocation.split(".")[1] + "." + sel.verse + "." + sel.lastVerse;
