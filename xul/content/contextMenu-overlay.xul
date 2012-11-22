@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of xulSword.
+
+    Copyright 2009 John Austin (gpl.programs.info@gmail.com)
+
+    xulSword is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    xulSword is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<!DOCTYPE window [
+<!ENTITY % contextMenuOverlayDTD SYSTEM "chrome://xulsword/locale/contextMenu-overlay.dtd" >
+%contextMenuOverlayDTD;
+]>
+
+<overlay id="text-contextMenu" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  
+  <popupset id="main-popupset">
+    
+    <script type="application/x-javascript" src="chrome://xulsword/content/contextMenu-overlay.js"/>
+    
+    <menupopup id="contextScriptBox" value="closed" 
+        onpopupshowing="ContextMenu.showing(event, this)" 
+        onpopuphidden="ContextMenu.hidden(event, this)" >
+      
+      <menuitem id="ctx_xs_searchForLemma" label="&xs_searchForLemma;" command="cmd_xs_searchForLemma"/>
+      <menuseparator/>
+      <menuitem id="ctx_xs_aboutModule" label="&xs_aboutModule;" command="cmd_xs_aboutModule"/>
+      <menuitem id="ctx_xs_toggleTab" label="&xs_toggleTab;" command="cmd_xs_toggleTab"/>
+      <menuseparator/>
+      <menuitem id="cMenu_copy"/>
+      <menuitem id="ctx_xs_searchForSelection" label="&xs_searchForSelection;" command="cmd_xs_searchForSelection"/>
+      <menuseparator/>
+      <menuitem id="ctx_xs_openFromSelection" label="&xs_openFromSelection;" command="cmd_xs_openFromSelection"/>
+      <menuseparator/>
+      <menuitem id="ctx_xs_selectVerse" label="&xs_selectVerse;" command="cmd_xs_selectVerse"/>
+      <menuseparator/>
+      <menuitem id="ctx_xs_newBookmark" label="&xs_newBookmark;" command="cmd_xs_newBookmark"/>
+      <menuitem id="ctx_xs_newUserNote" label="&xs_newUserNote;" command="cmd_xs_newUserNote"/>
+      <menuseparator/>
+      <menuitem id="ctx_bm_properties" label="&bm_properties;" command="cmd_bm_properties"/>
+      <menuitem id="ctx_bm_delete" label="&bm_delete;" command="cmd_bm_delete"/>
+      
+    </menupopup>
+    
+  </popupset>
+  
+</overlay>

@@ -73,6 +73,9 @@ function PopupObj(popupobj) {
     
     this.footnotes = Texts.footnotes[w];
     
+    var myDisplay = window.getComputedStyle(Popup.npopup).display;
+    var myVisibility = window.getComputedStyle(Popup.npopup).visibility;
+    
     // Popup text and style:
     //  Popup Scripture reference links should appear in program's language and style
     //  Popup Scripture reference text and style should be determined correctly
@@ -81,7 +84,7 @@ function PopupObj(popupobj) {
     
     // Get fromMod for scripture references, and style.
     var hrule = "";
-    var pupAlreadyOpened = window.getComputedStyle(Popup.npopup).display != "none";
+    //var pupAlreadyOpened = window.getComputedStyle(Popup.npopup).display != "none";
     var headlink = MainWindow.SBundle.getString(pupAlreadyOpened ? "back":"close");
     var headlinkclass = (pupAlreadyOpened ? "popupBackLink":"popupCloseLink");
     

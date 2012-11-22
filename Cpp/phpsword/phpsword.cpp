@@ -366,7 +366,7 @@ PHP_METHOD(phpsword, search)
     int l3;
     int type, flags;
     bool newsearch;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssllb", &mod, &l1, &srchstr, &l2, &scope, &l3, type, flags, newsearch) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssllb", &mod, &l1, &srchstr, &l2, &scope, &l3, &type, &flags, &newsearch) == FAILURE) {
       RETURN_LONG(0);
     }
     RETURN_LONG(sword->search(mod, srchstr, scope, type, flags, newsearch));

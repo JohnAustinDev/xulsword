@@ -106,8 +106,8 @@ function getLocaleConfig(lc) {
     
     // All localeconfig members should have a valid value, and it must not be null.
     if (val == NOTFOUND && i < 4) {
-      if (programCSS.style[ConfigProps[i]]) {
-        val = programCSS.style[ConfigProps[i]];
+      if (programCSS.rule.style[ConfigProps[i]]) {
+        val = programCSS.rule.style[ConfigProps[i]];
       }
     }
     
@@ -142,8 +142,8 @@ function getModuleConfig(mod) {
     
     // All versionconfig members should have a valid value, and it must not be null.
     if (val == NOTFOUND && i < 4) {
-      if (programCSS.style[ConfigProps[i]]) {
-        val = programCSS.style[ConfigProps[i]];
+      if (programCSS.rule.style[ConfigProps[i]]) {
+        val = programCSS.rule.style[ConfigProps[i]];
       }
     }
     
@@ -189,7 +189,7 @@ function getCSS(selector) {
     try {var zend = document.styleSheets[ssn].cssRules.length;} catch (er) {zend = 0;}
     for (var z=0; z<zend; z++) {
       var myRule = document.styleSheets[ssn].cssRules[z];
-      if (myRule.cssText.search(selector) != -1) return myRule;
+      if (myRule.cssText.search(selector) != -1) return {rule:myRule, sheet:ssn, index:z};
     }
   }
   return null;
