@@ -1,12 +1,39 @@
 #npopup {
   display:none;
   z-index:100;
-  position:absolute;
+  width:0px;
+  height:0px;
+  position:relative;
 }
-#npopup:hover {
+.fn:hover #npopup,
+.un:hover #npopup,
+.sn:hover #npopup,
+.cr:hover #npopup,
+.cr-x-parallel-passage:hover #npopup,
+.cr-x-style1:hover #npopup {
+  /* So that once npopup is moved into one of these hovered elements 
+  by Javascript mouseover, then it stays open until the element and 
+  its children are no longer hovered by the mouse. */
   display:block;
 }
+.fn #npopupTX,
+.un #npopupTX,
+.cr #npopupTX,
+.cr-x-parallel-passage #npopupTX,
+.cr-x-style1 #npopupTX {
+  /* popup appears above the element, covering it. */
+  top:0px;
+  left:0px;
+}
+.sn #npopupTX {
+  /* popup appears away from the element so that 
+  the text of the element can still be read */
+  top:200px;
+}
 #npopupTX {
+  position:absolute;
+  top:0px;
+  left:0px;
   margin: 0px 20px 10px 0px;
   font-size: 1.1em;
   padding: 22px 20px 20px 20px;

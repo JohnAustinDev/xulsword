@@ -72,16 +72,16 @@ var ViewPort = {
 //jsdump("UPDATING VIEW PORT h=" + winh);
     // Read CSS constant rules and values
     var rule = getCSS(".tab {");
-    var tabheight = Number(rule.style.height.match(/^(\d+)\s*px/)[1]);
+    var tabheight = Number(rule.rule.style.height.match(/^(\d+)\s*px/)[1]);
     rule = getCSS("#tabrow {");
-    tabheight += Number(rule.style.paddingTop.match(/^(\d+)\s*px/)[1]);
+    tabheight += Number(rule.rule.style.paddingTop.match(/^(\d+)\s*px/)[1]);
     rule = getCSS("#viewportbody {");
-    var padtop = Number(rule.style.paddingTop.match(/^(\d+)\s*px/)[1]);
-    var padbot = Number(rule.style.paddingBottom.match(/^(\d+)\s*px/)[1]);
+    var padtop = Number(rule.rule.style.paddingTop.match(/^(\d+)\s*px/)[1]);
+    var padbot = Number(rule.rule.style.paddingBottom.match(/^(\d+)\s*px/)[1]);
     rule = getCSS(".hd {");
-    var headheight = Number(rule.style.height.match(/^(\d+)\s*px/)[1]);
+    var headheight = Number(rule.rule.style.height.match(/^(\d+)\s*px/)[1]);
     rule = getCSS(".fr {");
-    var footheight = Number(rule.style.height.match(/^(\d+)\s*px/)[1]);
+    var footheight = Number(rule.rule.style.height.match(/^(\d+)\s*px/)[1]);
 
     var betc = 10; //borders n stuff
     var sbh = winh - padtop - tabheight - headheight - padbot - betc - footheight;
@@ -89,7 +89,7 @@ var ViewPort = {
 
     // Reset those CSS rules which depend on known window height
     rule = getCSS(".sb {");
-    rule.style.height = sbh + "px";
+    rule.rule.style.height = sbh + "px";
 
     var bbh = 18; // boundary bar's height+borders+margin
     for (var w=1; w<=NW; w++) {
@@ -97,26 +97,26 @@ var ViewPort = {
       if (nbh > sbh) nbh = sbh;
       
       rule = getCSS("#text" + w + "[moduleType=\"Texts\"][columns=\"show1\"][footnotesEmpty=\"false\"] .sb");
-      rule.style.marginBottom = Number(nbh) + "px";
-      rule.style.height = Number(sbh - nbh) + "px";
+      rule.rule.style.marginBottom = Number(nbh) + "px";
+      rule.rule.style.height = Number(sbh - nbh) + "px";
       
       rule = getCSS("#text" + w + " .nbf {");
-      rule.style.height = nbh + "px";
+      rule.rule.style.height = nbh + "px";
       
       rule = getCSS("#text" + w + " .nb {");
       var margt = Number(rule.style.marginTop.match(/^(\d+)\s*px/)[1]);
       var margb = Number(rule.style.marginBottom.match(/^(\d+)\s*px/)[1]);
-      rule.style.height = Number(nbh - margt - margb - bbh + footheight) + "px";
+      rule.rule.style.height = Number(nbh - margt - margb - bbh + footheight) + "px";
     }
 
     rule = getCSS("#text1[footnotesMaximized=\"true\"]:not([columns=\"show1\"]) .nbf,");
-    rule.style.height = sbh + "px";
+    rule.rule.style.height = sbh + "px";
     rule = getCSS("#text1[footnotesMaximized=\"true\"]:not([columns=\"show1\"]) .nb,");
     rule.style.height = Number(sbh - margt - margb - bbh + 30) + "px"; // margt & margb set above (all windows are same)
 
     // this is not so important, but line up CA background pattern:
     rule = getCSS("#fadebot {");
-    rule.style.backgroundPosition = "0px " + Number((document.getElementById("biblechooser").offsetHeight + document.getElementById("fadetop").offsetHeight) % 55) + "px";
+    rule.rule.style.backgroundPosition = "0px " + Number((document.getElementById("biblechooser").offsetHeight + document.getElementById("fadetop").offsetHeight) % 55) + "px";
     
     // Bible chooser
     var genbkinfo = GenBookTexts.getGenBookInfo();
@@ -139,12 +139,12 @@ var ViewPort = {
       if (chooserheight > sbh) chooserheight = sbh;
       else faderheight += Math.floor(0.3*(sbh - chooserheight));
       var rulef = getCSS("#fadetop, #fadebot {");
-      rulef.style.height = faderheight + "px";
+      rulef.rule.style.height = faderheight + "px";
 
       var rulec = getCSS("#biblechooser {");
-      if (rulec.style.height != chooserheight + "px") 
+      if (rulec.rule.style.height != chooserheight + "px") 
           document.getElementById("biblebooks_nt").style.top = "8px";
-      rulec.style.height = chooserheight + "px";
+      rulec.rule.style.height = chooserheight + "px";
 
       document.getElementById("fadebot").style.height = Number(winh - faderheight - chooserheight) + "px";
 
@@ -155,9 +155,9 @@ var ViewPort = {
       if (ntw.offsetWidth > otw.offsetWidth) otw.style.width = Number(ntw.offsetWidth - 2) + "px";
       else ntw.style.width = (Number(otw.offsetWidth - 2) > 0 ? Number(otw.offsetWidth - 2):0) + "px";
       var offset = (guiDirection() == "ltr" ? otw.offsetLeft:(otw.offsetParent.offsetWidth - otw.offsetLeft - otw.offsetWidth));
-      rulef.style.width = (Number(offset + otw.offsetWidth + 20) > 0 ? 
+      rulef.rule.style.width = (Number(offset + otw.offsetWidth + 20) > 0 ? 
           Number(offset + otw.offsetWidth + 20):0) + "px";
-      rulec.style.width = (Number(offset + otw.offsetWidth - 6) > 0 ? 
+      rulec.rule.style.width = (Number(offset + otw.offsetWidth - 6) > 0 ? 
           Number(offset + otw.offsetWidth - 6):0) + "px";
     }
     

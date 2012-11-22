@@ -103,146 +103,89 @@ function closeTabToolTip() {
 /************************************************************************
  * TEXT SCRIPT BOX MOUSE FUNCTIONS
  ***********************************************************************/  
-var HaveLeftTarget = false;
-var ImmediateUnhilight = false;
-var HighlightElement1 = null;
-var HighlightElement2 = null;
 function scriptMouseOver(e) {
-  if (Popup.ispinned || BoundaryClicked) return;
-  if (MainWindow.document.getElementById("contextScriptBox") &&
-      MainWindow.document.getElementById("contextScriptBox").getAttribute("value") == "open") {return;}
+  
+  // Bail if another mouse operation is already taking place...
+  var mainContextMenu = MainWindow.document.getElementById("contextScriptBox");
+  if (BoundaryClicked || 
+      (mainContextMenu && mainContextMenu.getAttribute("value") == "open")
+      ) return;
 
   var w = getWindow(e.target);
-  if (!w) return; // this also excludes Popup
+  if (!w) return; // this also excludes Popup which is w==0
   
-  var x = Number(e.clientX);
-  var y = Number(e.clientY);
-  
+  var handledClasses = /(^|\s)(cr|fn|sr|dt|dtl|sn|un|introlink|noticelink)(\-|\s|$)/;
   var elem = e.target;
-  while (elem && !elem.className) {elem = elem.parentNode;}
+  while (elem && (!elem.className || !handledClasses.test(elem.className))) {
+    elem = elem.parentNode;
+  }
   if (!elem) return;
+  
+  var type = elem.className.match(handledClasses)[2];
 
-//jsdump("type:" + elem.className.split(/\s+/)[0] + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
-  switch (elem.className.split(/\s+/)[0]) {
+//jsdump("type:" + type + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
+  switch (type) {
   case "cr":
     if (prefs.getBoolPref("ShowCrossrefsAtBottom")) {
-      HaveLeftTarget=false;
-      ImmediateUnhilight=false;
       BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
-    else if (!Popup.activate(x, y, w, "cr", elem.id)) {elem.style.cursor = "default";}
+    else if (!Popup.activate(type, elem)) elem.style.cursor = "default";
     break;
      
   case "fn":
     if (prefs.getBoolPref("ShowFootnotesAtBottom")) {
-      HaveLeftTarget=false;
-      ImmediateUnhilight=false;
       BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
-    else Popup.activate(x, y, w, "fn", elem.id);
+    else if (!Popup.activate(type, elem)) elem.style.cursor = "default";
+    break;
+    
+  case "un":
+    var modType = Tab[prefs.getCharPref("Version" + w)].modType;
+    if (prefs.getBoolPref("ShowUserNotesAtBottom") && 
+          (modType == BIBLE || modType == COMMENTARY)) {
+      BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
+    }
+    else if (!Popup.activate(type, elem)) elem.style.cursor = "default";
     break;
 
   case "sr":
-    if (Popup.npopup.style.display != "none") return;
-//jsdump((elem.title=="unavailable" ? elem.innerHTML:elem.title) + "\n");
-    if (!Popup.activate(x, y, w, "sr", (elem.title=="unavailable" ? elem.innerHTML:elem.title)))
-      elem.style.cursor = "default";
-    break;
-    
   case "dt":
-    if (Popup.npopup.style.display != "none") return;
-    Popup.activate(x, y, w, "dt", elem.title);
-    break;
-    
   case "dtl":
-    if (Popup.npopup.style.display != "none") return;
-    Popup.activate(x, y, w, "dtl", elem.title);
+  case "introlink":
+  case "noticelink":
+    if (!Popup.activate(type, elem)) elem.style.cursor = "default";
     break;
     
   case "sn":
-    // See if interlinear display and if so process...
-    var aVerse = elem;
-    while (aVerse.parentNode && (!aVerse.parentNode.className || 
-            aVerse.parentNode.className!="interB" && aVerse.parentNode.className!="hl")) {
-      aVerse = aVerse.parentNode;
-    }
-    var isShowingOrig = (prefs.getBoolPref("ShowOriginal" + w) && aVerse.parentNode);
-    if (prefs.getCharPref("Strong's Numbers")=="On")
-        Popup.activate(x, y, w, "sn", elem.innerHTML.replace(/<.*?>/g, "") + "]-[" + elem.title, POPUPDELAY, (isShowingOrig ? aVerse.parentNode.offsetHeight+10:40));
-    if (isShowingOrig) {
-      var aVerse2 = aVerse;
-      if (aVerse && aVerse.nextSibling) {
-        aVerse = aVerse.nextSibling;
-        if (aVerse.className == "interS") aVerse = aVerse.nextSibling;
-      }
-      else if (aVerse && aVerse.previousSibling) {
-        aVerse = aVerse.previousSibling;
-        if (aVerse.className == "interS") aVerse = aVerse.previousSibling;
-      }
-      if (HighlightElement1) unhighlightStrongs(HighlightElement1, "matchingStrongs");
-      if (HighlightElement2) unhighlightStrongs(HighlightElement2, "matchingStrongs");
-      if (aVerse) {
-        highlightStrongs(aVerse, elem.title.split("."), "matchingStrongs");
-        HighlightElement1 = aVerse;
-      }
-      if (aVerse2) {
-        highlightStrongs(aVerse2, elem.title.split("."), "matchingStrongs");
-        HighlightElement2 = aVerse2;
-      }
-    }
-    break;
-            
-  case "un":
-    if (prefs.getBoolPref("ShowUserNotesAtBottom") && 
-          (Tab[prefs.getCharPref("Version" + w)].modType == BIBLE || 
-           Tab[prefs.getCharPref("Version" + w)].modType == COMMENTARY)) {
-      HaveLeftTarget=false;
-      ImmediateUnhilight=false;
-      BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
-    }
-    else Popup.activate(x, y, w, "un", elem.id);
-    break;
+    if (!Popup.activate(type, elem)) elem.style.cursor = "default";
     
-  case "introlink":
-    Popup.activate(x, y, w, "introlink");
+    if (!prefs.getBoolPref("ShowOriginal" + w)) return;
+    
+    // Add elem's strong's classes to stylesheet for highlighting
+    var classes = elem.className.split(/\s*/);
+    classes.shift(); // remove sn base class
+    for (var i=0; i<classes.length(); i++) {
+      var sheet = document.styleSheets[document.styleSheets.length-1];
+      if (!sheet) return;
+      var sheetLength = sheet.cssRules.length;
+      sheet.insertRule("." + classes[i] + " {color:yellow;}", sheetLength);
+    }
     break;
-
-  case "noticelink":
-    Popup.activate(x, y, w, "noticelink");
-    break;
-  }
 }
 
 function scriptMouseOut(e) {
   
-  if (Popup.showPopupID && Popup.npopup.style.display=='') window.clearTimeout(Popup.showPopupID);
+  if (Popup.showPopupID) window.clearTimeout(Popup.showPopupID);
   
-  /*
-  if (Popup.selectOpen || Popup.ispinned) {return;}
-  if (MainWindow.document.getElementById("contextScriptBox") &&
-      MainWindow.document.getElementById("contextScriptBox").getAttribute("value") == "open") {return;}
+  if (!prefs.getBoolPref("ShowOriginal" + w)) return;
   
-  if (Popup.showPopupID) {
-    window.clearTimeout(Popup.showPopupID);
-    IgnoreMouseOvers = false;
+  // Remove any previously added CSS stylesheet strong's classes
+  var sRule = getCSS(".cs-s-");
+  while (sRule && (/\{color\:yellow\;\}/).test(sRule.rule.cssText)) {
+    document.styleSheets[sRule.sheet].deleteRule(sRule.index);
+    sRule = getCSS(".cs-s-");
   }
-  
-  if (HighlightElement1) unhighlightStrongs(HighlightElement1, "matchingStrongs");
-  if (HighlightElement2) unhighlightStrongs(HighlightElement2, "matchingStrongs");
-  HighlightElement1=null;
-  HighlightElement2=null;
-  
-  HaveLeftTarget=true;
-  if (ImmediateUnhilight) {unhilightNote();}
 
-  var currentlyOver = e.relatedTarget;
-  while (currentlyOver) {
-    if (currentlyOver.id && currentlyOver.id == "npopupTX") return;
-    currentlyOver = currentlyOver.parentNode;
-  }
-  
-  Popup.close();
-  */
 }
 
 function scriptClick(e) {
@@ -400,62 +343,6 @@ function scriptClick(e) {
   }
 }
 
-//Various types of elements are identified in different ways: some by their id, 
-//others by their title and others by their className. This function identifies the
-//element type.
-function getElemType(elem) {
-  var id = null;
-  
-  // if id begins with window number, remove that
-  if (elem.id) {
-    if ((/^w\d\./).test(elem.id)) {id = elem.id.substr(3);}
-    else id = elem.id;
-  }
-  
-  var aType=null;
-  if (id) {
-    aType = id.match(/^([^\.]+)\./);
-    if (aType) aType = aType[1];
-    if (aType && (aType.substr(0,2)=="pu" || aType.substr(0,2)=="nb")) return aType;
-  }
-  if (!aType && id) aType = id; 
-  aType = (elem.title ? elem.className.split("-")[0]:aType);
-  return aType;
-}
-
-// Called after  short delay so that a note will be highlighted for at least a certain amount of time
-function unhilightNote() {
-  if (HaveLeftTarget)  {
-    try {
-      var nt = document.getElementById(prefs.getCharPref("SelectedNote"));
-      nt.className = nt.className.replace(/\s*fnselected/, "");
-    } catch(er){}
-  }
-  else {ImmediateUnhilight = true;}
-}
-
-function highlightStrongs(elem, strongsArray, aClass) {
-  for (var i=0; i<strongsArray.length; i++) {
-    if (strongsArray[i].split(":")[0] != "S") continue;
-    var aStrongs = new RegExp(strongsArray[i] + "(\\D|$)", "i");
-    if (elem.title && elem.title.search(aStrongs) != -1 && (!elem.className || elem.className.search(aClass)==-1)) 
-        elem.className = elem.className + " " + aClass;
-  }
-  elem = elem.firstChild;
-  while (elem) {
-    highlightStrongs(elem, strongsArray, aClass);
-    elem = elem.nextSibling;
-  }
-}
-
-function unhighlightStrongs(elem, aClass) {
-  if (elem.className) elem.className = elem.className.replace(" " + aClass, "");
-  elem = elem.firstChild;
-  while (elem) {
-    unhighlightStrongs(elem, aClass);
-    elem = elem.nextSibling;
-  }
-}
 
 /************************************************************************
  * TEXT DOUBLE CLICK
@@ -516,7 +403,7 @@ function bbMouseDown(e) {
   // If maximize is on, turn it off
   if (prefs.getBoolPref("MaximizeNoteBox" + w)) {
     var rule = getCSS(".sb {");
-    prefs.setIntPref("NoteBoxHeight" + w, rule.style.height.match(/([\-\d]+)px/)[1]);
+    prefs.setIntPref("NoteBoxHeight" + w, rule.rule.style.height.match(/([\-\d]+)px/)[1]);
     prefs.setBoolPref("MaximizeNoteBox" + w, false);
     ViewPort.update(false);
   }
