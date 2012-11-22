@@ -52,7 +52,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       }
       SWCATCH ( ... ) {	}
       if (vkey) {
-      	char stag[35]="<span class='sn' title='S:G%s'>";
+      	char stag[35]="<span class='sn S:G%s'>";
         int p2 = buf.length();
         int p1 = p2;
         bool p2fixed = true;
@@ -92,7 +92,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         if (!p2fixed) {p2 = 0;}
         char opentag[64];
 		    if (append) {
-          sprintf(opentag, ".S:G%s", token+2);
+          sprintf(opentag, " S:G%s", token+2);
           p1 = p1-2;
         }
         else {sprintf(opentag, stag, token+2);}
@@ -123,7 +123,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       }
       SWCATCH ( ... ) {	}
       if (vkey) {
-      	char stag[35]="<span class='sn' title='S:H%s'>";
+      	char stag[35]="<span class='sn S:H%s'>";
         int p2 = buf.length();
         int p1 = p2;
         bool p2fixed = true;
@@ -163,7 +163,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         if (!p2fixed) {p2 = 0;}
         char opentag[64];
 		    if (append) {
-          sprintf(opentag, ".S:H%s", token+2);
+          sprintf(opentag, " S:H%s", token+2);
           p1 = p1-2;
         }
         else {sprintf(opentag, stag, token+2);}
@@ -194,7 +194,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       }
       SWCATCH ( ... ) {	}
       if (vkey) {
-      	char stag[36]="<span class='sn' title='WT:G%s'>";
+      	char stag[36]="<span class='sn WT:G%s'>";
         int p2 = buf.length();
         int p1 = p2;
         bool p2fixed = true;
@@ -234,7 +234,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         if (!p2fixed) {p2 = 0;}
         char opentag[64];
 		    if (append) {
-          sprintf(opentag, ".WT:G%s", token+3);
+          sprintf(opentag, " WT:G%s", token+3);
           p1 = p1-2;
         }
         else {sprintf(opentag, stag, token+3);}
@@ -265,7 +265,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       }
       SWCATCH ( ... ) {	}
       if (vkey) {
-      	char stag[36]="<span class='sn' title='WT:H%s'>";
+      	char stag[36]="<span class='sn WT:H%s'>";
         int p2 = buf.length();
         int p1 = p2;
         bool p2fixed = true;
@@ -305,7 +305,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         if (!p2fixed) {p2 = 0;}
         char opentag[64];
 		    if (append) {
-          sprintf(opentag, ".WT:H%s", token+3);
+          sprintf(opentag, " WT:H%s", token+3);
           p1 = p1-2;
         }
         else {sprintf(opentag, stag, token+3);}

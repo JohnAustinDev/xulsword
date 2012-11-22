@@ -105,15 +105,17 @@ function closeTabToolTip() {
  ***********************************************************************/  
 function scriptMouseOver(e) {
   
-  // Bail if another mouse operation is already taking place...
+  // Bail if another mouse operation is already happening...
   var mainContextMenu = MainWindow.document.getElementById("contextScriptBox");
   if (BoundaryClicked || 
       (mainContextMenu && mainContextMenu.getAttribute("value") == "open")
       ) return;
 
+  // Get the text window of this event
   var w = getWindow(e.target);
   if (!w) return; // this also excludes Popup which is w==0
   
+  // Filter out events without mousover functionality
   var handledClasses = /(^|\s)(cr|fn|sr|dt|dtl|sn|un|introlink|noticelink)(\-|\s|$)/;
   var elem = e.target;
   while (elem && (!elem.className || !handledClasses.test(elem.className))) {
@@ -164,34 +166,48 @@ function scriptMouseOver(e) {
     // Add elem's strong's classes to stylesheet for highlighting
     var classes = elem.className.split(/\s*/);
     classes.shift(); // remove sn base class
+    
     for (var i=0; i<classes.length(); i++) {
       var sheet = document.styleSheets[document.styleSheets.length-1];
       if (!sheet) return;
       var sheetLength = sheet.cssRules.length;
-      sheet.insertRule("." + classes[i] + " {color:yellow;}", sheetLength);
+      sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), sheetLength);
+      AddedRules.push( { sheet:sheet, index:sheetLength } );
     }
     break;
 }
 
+
+var MatchingStrongs = getCSS(".matchingStrongs {"); // Read from CSS stylesheet
 function scriptMouseOut(e) {
   
   if (Popup.showPopupID) window.clearTimeout(Popup.showPopupID);
   
   if (!prefs.getBoolPref("ShowOriginal" + w)) return;
   
-  // Remove any previously added CSS stylesheet strong's classes
-  var sRule = getCSS(".cs-s-");
-  while (sRule && (/\{color\:yellow\;\}/).test(sRule.rule.cssText)) {
-    document.styleSheets[sRule.sheet].deleteRule(sRule.index);
-    sRule = getCSS(".cs-s-");
-  }
+  // Remove any CSS stylesheet Strong's classes
+  removeAddedRules();
 
 }
 
+var AddedRules = [];
+function removeAddedRules() {
+  
+  for (var i = (AddedRules.length-1); i>=0; i--) {
+    document.styleSheets[AddedRules[i].sheet].deleteRule(AddedRules[i].index);
+  }
+  
+  AddedRules = [];
+  
+}
+
 function scriptClick(e) {
+  
+  // Get the text window of this event
   var w = getWindow(e.target);
   if (w === null) return; // w=0 means popup!!
-
+  var mod = prefs.getCharPref("Version" + (w == 0 ? getWindow(Popup.elem):w));
+  
   // when an unpinned GenBook window is clicked, select its chapter in the navigator
   if (w && !prefs.getBoolPref("IsPinned" + w) && 
       Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
@@ -199,30 +215,50 @@ function scriptClick(e) {
     if (!GenBookTexts.isSelectedGenBook(key)) GenBookTexts.navigatorSelect(key);
   }
   
+  // Filter out events without click functionality
+  var handledClasses = /(^|\s)(sr|dt|dtl|cr|sbpin|crtwisty|fnlink|nbsizer|crref|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
   var elem = e.target;
-  while (elem && !elem.className) {elem=elem.parentNode;}
+  while (elem && (!elem.className || !handledClasses.test(elem.className))) {
+    elem = elem.parentNode;
+  }
   if (!elem) return;
   
-  var mod = (w ? prefs.getCharPref("Version" + w):Popup.mod);
-  var x = elem.offsetLeft;
-  var y = elem.offsetTop;
+  var type = elem.className.match(handledClasses)[2];
   
-//jsdump("type:" + elem.className + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
-  switch (elem.className) {
-    case "cr":
-    var ok = toggleRefText(document.getElementById("w" + w + ".footnote." + elem.id));
-    if (ok) BibleTexts.scroll2Note(x, y, w, "w" + w + ".footnote." + elem.id);
-    break;
-
-  case "sr":
-    Popup.activate(x, y, w, "sr", (elem.title=="unavailable" ? elem.innerHTML:elem.title), 0, -40);
-    break;
+//jsdump("type:" + type + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
+  switch (type) {
     
+  // Text box clicks
+  case "sr":
   case "dt":
   case "dtl":
-    Popup.activate(x, y, w, "dt", elem.title, 0, -40);
+  case "popupBackLink":
+    Popup.activate(type, elem);
     break;
     
+  case "popupCloseLink":
+    if (Popup.isPopupPinned) Popup.pinup();
+    Popup.close();
+    break;
+    
+  case "cr":
+    var ok = toggleRefText(document.getElementById("w" + w + ".footnote." + elem.id));
+    if (ok) BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
+    break;
+    
+  case "listenlink":
+    MainWindow.Player.w = w;
+    MainWindow.Player.version = Texts.display[w].mod;
+    MainWindow.Player.chapter = Texts.display[w].ch;
+    MainWindow.Player.book = Texts.display[w].bk;
+    MainWindow.beginAudioPlayer();
+    break;
+    
+  case "sbpin":
+    prefs.setBoolPref("IsPinned" + w, !prefs.getBoolPref("IsPinned" + w));
+    Texts.update((prefs.getBoolPref("IsPinned" + w) ? SCROLLTYPENONE:SCROLLTYPECENTER), HILIGHTNONE);
+    break;
+
   case "prevchaplink":
     switch (Tab[mod].modType) {
     case BIBLE:
@@ -319,29 +355,53 @@ function scriptClick(e) {
     }
     break;
     
-  case "listenlink":
-    MainWindow.Player.w = w;
-    MainWindow.Player.version = Texts.display[w].mod;
-    MainWindow.Player.chapter = Texts.display[w].ch;
-    MainWindow.Player.book = Texts.display[w].bk;
-    MainWindow.beginAudioPlayer();
+
+  // Note box and Popup clicks
+  case "crtwisty":
+    toggleRefText(elem);
+    break;
+
+  case "fnlink": //Note reference link
+    switch (Tab[t[0]].modType) {
+    case BIBLE:
+    case COMMENTARY:
+      Location.setLocation(t.shift(), t.join("."));
+      Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+      break;
+     case DICTIONARY:
+     case GENBOOK:
+      scrollScriptBox(w, SCROLLTYPECENTER, "par." + t[2]);
+      break;
+    } 
     break;
     
-  case "sbpin":
-    prefs.setBoolPref("IsPinned" + w, !prefs.getBoolPref("IsPinned" + w));
-    Texts.update((prefs.getBoolPref("IsPinned" + w) ? SCROLLTYPENONE:SCROLLTYPECENTER), HILIGHTNONE);
+  case "nbsizer":
+    prefs.setBoolPref("MaximizeNoteBox" + w, !prefs.getBoolPref("MaximizeNoteBox" + w));
+    ViewPort.update(false);
     break;
     
-  case "popupBackLink":
-    Popup.activate(x, y, w, "html", document.getElementsByClassName("prevhtml")[0].innerHTML);
+  case "crref":
+    if (t && t.length >= 2 ) {
+      Location.setLocation(t.shift(), t.join("."));
+      Texts.update();
+    }
     break;
     
-  case "popupCloseLink":
-    if (Popup.ispinned) Popup.pinup(true);
-    else Popup.close();
-    break;
   }
+  
 }
+
+// Will search parents for cr(opened|closed) class and toggle it if found
+function toggleRefText(elem) {
+  while(elem && (!elem.className || !(/(^|\s+)(cropened|crclosed)(\s+|$)/).test(elem.className))) {
+    elem = elem.parentNode;
+  }
+  if (!elem || !elem.className) return;
+  
+  if ((/cropened/).test(elem.className)) elem.className = elem.className.replace(/cropened/, "crclosed");
+  else elem.className = elem.className.replace(/crclosed/, "cropened");
+}
+
 
 
 /************************************************************************
@@ -349,34 +409,36 @@ function scriptClick(e) {
  ***********************************************************************/  
 function scriptDblClick(e) {
   var w = getWindow(e.target);
-  if (w === null) return;
+  if (w === null) return; // w=0 means popup!!
+  var mod = prefs.getCharPref("Version" + (w == 0 ? getWindow(Popup.elem):w));
   
   var selob = window.getSelection();
   var sel = selob.toString();
   
   sel = cleanDoubleClickSelection(sel);
-  
-  var myv = null;
-  var targ = e.target.parentNode;
-  while (targ) {
-    if (targ.className) {
-      if      (Tab.ORIG_NT && targ.className.search("cs-" + Tab.ORIG_NT.modName) != -1) {
-        myv = Tab.ORIG_NT.modName;
-        break;
-      }
-      else if (Tab.ORIG_OT && targ.className.search("cs-" + Tab.ORIG_OT.modName) != -1) {
-        myv = Tab.ORIG_OT.modName;
-        break;
-      }
-    }
-    targ = targ.parentNode;
-  }
-  if (!myv) myv = prefs.getCharPref("Version" + w);
-
   if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
   
+  // If this is interlinear, we need to see which version was clicked.
+  if (w && prefs.getBoolPref("ShowOriginal" + w)) {
+    var targ = e.target.parentNode;
+    while (targ) {
+      if (targ.className) {
+        if (Tab.ORIG_NT && targ.className.search("cs-" + Tab.ORIG_NT.modName) != -1) {
+          mod = Tab.ORIG_NT.modName;
+          break;
+        }
+        else if (Tab.ORIG_OT && targ.className.search("cs-" + Tab.ORIG_OT.modName) != -1) {
+          mod = Tab.ORIG_OT.modName;
+          break;
+        }
+      }
+      
+      targ = targ.parentNode;
+    }
+  }
+
   setUnicodePref("SearchText", sel);
-  prefs.setCharPref("SearchVersion", myv);
+  prefs.setCharPref("SearchVersion", mod);
   MainWindow.document.getElementById("cmd_xs_search").doCommand();
 }
 
@@ -450,72 +512,6 @@ function bbMouseUp(e) {
     BoundaryClicked = null;
   }
   
-}
-
-
-/************************************************************************
- * FOOTNOTE BOX MOUSE FUNCTIONS
- ***********************************************************************/  
-function noteboxClick(e) {
-
-  var w = getWindow(e.target);
-  if (!w) return; // this also excludes Popup
-
-  // Get an element to handle
-  var handledClasses = /(crtwisty|fnlink|crref|nbsizer)/;
-  var elem = e.target;
-  while (elem && (!elem.className || !(handledClasses).test(elem.className))) {
-    elem = elem.parentNode;
-  }
-  if (!elem) return;
-  
-  var type = elem.className.match(handledClasses)[1];
-  var t = (elem.title ? elem.title.split("."):"");
-  
-jsdump("noteboxClick: class=" + type + ", title=" + t);
- 
-  switch (type) {
-  case "crtwisty":
-    toggleRefText(elem);
-    break;
-
-  case "fnlink": //Note reference link
-    switch (Tab[t[0]].modType) {
-    case BIBLE:
-    case COMMENTARY:
-      Location.setLocation(t.shift(), t.join("."));
-      Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
-      break;
-     case DICTIONARY:
-     case GENBOOK:
-      scrollScriptBox(w, SCROLLTYPECENTER, "par." + t[2]);
-      break;
-    } 
-    break;
-    
-  case "nbsizer":
-    prefs.setBoolPref("MaximizeNoteBox" + w, !prefs.getBoolPref("MaximizeNoteBox" + w));
-    ViewPort.update(false);
-    break;
-    
-  case "crref":
-    if (t && t.length >= 2 ) {
-      Location.setLocation(t.shift(), t.join("."));
-      Texts.update();
-    }
-    break;
-  }
-}
-
-// Will search parents for cr(opened|closed) class and toggle it if found
-function toggleRefText(elem) {
-  while(elem && (!elem.className || !(/(^|\s+)(cropened|crclosed)(\s+|$)/).test(elem.className))) {
-    elem = elem.parentNode;
-  }
-  if (!elem || !elem.className) return;
-  
-  if ((/cropened/).test(elem.className)) elem.className = elem.className.replace(/cropened/, "crclosed");
-  else elem.className = elem.className.replace(/crclosed/, "cropened");
 }
 
 

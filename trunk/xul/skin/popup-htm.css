@@ -11,9 +11,9 @@
 .cr:hover #npopup,
 .cr-x-parallel-passage:hover #npopup,
 .cr-x-style1:hover #npopup {
-  /* So that once npopup is moved into one of these hovered elements 
-  by Javascript mouseover, then it stays open until the element and 
-  its children are no longer hovered by the mouse. */
+  /* This is so that once npopup is moved into one of these hovered  
+  elements by Javascript mouseover, then it stays open until the element  
+  and its children are no longer hovered by the mouse. */
   display:block;
 }
 .fn #npopupTX,
@@ -44,20 +44,20 @@
   overflow:auto;
   box-shadow: 3px 3px 5px 6px #ccc;
 }
-#npopup[value=pinned] #npopupTX {
+#npopup[pinned=true] #npopupTX {
   margin: 5px 15px 5px 5px;
   box-shadow: 1px 1px 2px 3px #ccc;
 }
 
-.textpopup {
+#npopup[isWindow="false"] {
   min-width:300px;
-  max-width:600px;
+  max-width:400px;
   min-height:60px;
   max-height:100%;
 }
 
 /* FOR WINDOW PINNED POPUP */
-.windowedpup {
+#npopup[isWindow="true"] {
   margin:0px;
   border:1px solid black;
   background:rgb(245,220,255);
@@ -65,11 +65,11 @@
   height:100%;
   overflow:hidden;
 }
-.windowedpup #npopupTX {
+#npopup[isWindow="true"] #npopupTX {
   border:none !important;
   box-shadow:none !important;
 }
-.windowedpup .popuppin {
+#npopup[isWindow="true"] .popuppin {
   visibility:hidden;
 }
 
@@ -80,7 +80,6 @@
 }
 
 .popupheader select {
-  visibility:hidden;
   position:absolute;
   top:-10px;
   right:0px;
@@ -101,47 +100,8 @@
 .popuppin:hover {
   background: url('chrome://xulsword/skin/images/pushpin2.png');
 }
-.popuppin[value=pinned] {
+.popuppin[pinned=true] {
   background: url('chrome://xulsword/skin/images/pushpin1.png');
-}
-
-.twisty {
-  position:absolute;
-  top:4px;
-  background:url('chrome://xulsword/skin/images/twisty-close.png');
-  width:9px;
-  height:9px;
-  -moz-margin-start:0px;
-}
-.crclosed .twisty {
-  background:url('chrome://xulsword/skin/images/twisty-open.png');
-}
-.twisty-rtl {
-  right:-15px;
-}
-.twisty-ltr {
-  left:-14px;
-}
-.cropened .crref:after {
-  content:": ";
-}
-.crtext {
-  display:none;
-}
-.cropened .crtext {
-  display:inline;
-}
-.cropened .crsep {
-  display:block;
-}
-.crclosed .crsep {
-  display:inline;
-}
-.crclosed .crsep:after {
-  content:"; ";
-}
-.crhr {
-  border-top:2px solid grey;
 }
 
 .prevhtml {

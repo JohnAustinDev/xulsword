@@ -24,7 +24,6 @@ var SavedWindowWithFocus;
 var NewModuleInfo;
 var AboutScrollTo;
 var AudioDirs = null;
-var CopyPopup;
 var ViewPortWindow, ViewPort, Texts, BibleTexts;
 const NOMODULES="0000", NOLOCALES="0001", NEEDRESTART="0002";
 

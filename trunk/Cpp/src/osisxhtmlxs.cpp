@@ -117,8 +117,9 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 						  sep = true;
             } while (++i < count);
           }
+	  snumbers.replaceBytes(".", ' '); // Changed in xulsword 3+
           if (tag.getAttribute("lemma") || tag.getAttribute("morph")) {
-            buf.appendFormatted("<span class=\"sn\" title=\"%s\">", snumbers.c_str());
+            buf.appendFormatted("<span class=\"sn %s\">", snumbers.c_str());
 						u->w = "keep";
 					}
         }
