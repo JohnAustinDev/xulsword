@@ -75,11 +75,11 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         else {error=2;}
 		    if (stopChar == '>') {
           insertIndex -= 2;
-          sprintf(opentag, ".%s:%s", mytype, tag.getAttribute("value"));
+          sprintf(opentag, " %s:%s", mytype, tag.getAttribute("value"));
           if (!error) {buf.insert(insertIndex, opentag);}
         }
         else {
-          sprintf(opentag, "<span class='sn' title='%s:%s'>", mytype, tag.getAttribute("value"));
+          sprintf(opentag, "<span class='sn %s:%s'>", mytype, tag.getAttribute("value"));
           if (!error) {
             buf.insert(insertIndex, opentag);
             buf.append("</span>");

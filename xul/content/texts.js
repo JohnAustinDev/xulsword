@@ -410,6 +410,63 @@ var Texts = {
     
     return usernotes;
   },
+  
+  function: getScriptureReferences(scripRefList) {
+    
+    // Split up data into individual passages
+    mdata = scripRefList.split(";");
+
+    // If subreferences exist which are separated by "," then split them out as well
+    for (var i=0; i<mdata.length; i++) {
+      var verses = mdata[i].split(",");
+      if (verses.length == 1) continue;
+      var r = 1;
+      for (var v=0; v<verses.length; v++) {
+        mdata.splice(i+1-r, r, verses[v]);
+        i++;
+        i -= r;
+        r = 0;
+      }
+    }
+    
+    // Parse each reference into a normalized reference in a list
+    var reflist = "";
+    var failhtml = "";
+    
+    var book = Location.getBookName();
+    var chapter = Location.getChapterNumber(this.mod);
+    var verse = 1;
+    
+    for (i=0; i<mdata.length; i++) {
+      var failed = false;
+      var saveref = mdata[i];
+//jsdump(data[i]);
+      mdata[i] = normalizeOsisReference(data[i], this.mod);
+//jsdump(data[i] + ", ");
+      if (!mdata[i]) {
+        var thisloc = parseLocation(saveref);
+        if (thisloc) {
+          book = thisloc.shortName ? thisloc.shortName:book;
+          chapter = thisloc.chapter ? thisloc.chapter:chapter;
+          verse = thisloc.verse ? thisloc.verse:verse;
+          mdata[i] = book + "." + chapter + "." + verse;
+          if (thisloc.lastVerse) {mdata[i] += "-" + book + "." + chapter + "." + thisloc.lastVerse;}
+          mdata[i] = normalizeOsisReference(data[i], this.mod);
+          if (!mdata[i]) failed = true;
+        }
+        else failed = true;
+      }
+      if (failed) {
+        book = null;
+        chapter = null;
+        verse = null;
+        //failhtml += "<hr>" + saveref + ": <b>????</b><br>";
+        continue;
+      }
+//jsdump(mdata[i]);
+      reflist += mdata[i] + ";";
+    }
+  },
  
   getDisplay: function(mod, loc, w) {
     loc = loc.split(".");
@@ -1031,9 +1088,14 @@ var BibleTexts = {
         var lov = ModuleConfigs[mod].AssociatedLocale;
         if (lov == NOTFOUND) lov = getLocale();
         var modDirectionEntity = (ModuleConfigs[mod] && ModuleConfigs[mod].direction == "rtl" ? "&rlm;":"&lrm;");
-        t += "<div class=\"fncol4 cs-" + mod + "\"><a class=\"fnlink\" title=\"" + mod + "." + p[3] + "." + p[4] + "." + p[5] + "\">";
-        t += "<i>" + dString(p[4], lov) + ":" + modDirectionEntity + dString(p[5], lov) + "</i>";
-        t += "</a> -</div>";
+        t += "<div class=\"fncol4 cs-" + mod + "\">";
+        if (p[3] && p[4] && p[5]) {
+          t += "<a class=\"fnlink\" title=\"" + mod + "." + p[3] + "." + p[4] + "." + p[5] + "\">";
+          t +=   "<i>" + dString(p[4], lov) + ":" + modDirectionEntity + dString(p[5], lov) + "</i>";
+          t += "</a>":
+          t += " -";
+        }
+        t += "</div>";
         
         // Write cell #5: note body
         t += "<div class=\"fncol5\">";

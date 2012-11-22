@@ -15,16 +15,23 @@
     You should have received a copy of the GNU General Public License
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
+const POPUPDELAY = 250;
 
-// A new Popup object will be created to handle Popup functions in this
-// context. If this popup is a separate window, it needs to be initialized
-// with all the settings and data of the regular popup from which it came.
 var Popup;
+
+// During initPopup, a new Popup object will be created to handle Popup  
+// functions in this context. If this popup is a separate window, it 
+// needs to be initialized with all the settings and data of the regular 
+// popup from which it came.
 function initPopup() {
   if (window.name == "npopup") {
-    Popup = new PopupObj(MainWindow.CopyPopup);
-    document.getElementById("npopupTX").innerHTML = MainWindow.CopyPopup.npopupTX.innerHTML;
-    MainWindow.CopyPopup.close();
+    
+    // This is a windowed popup, so copy the original popup
+    Popup = new PopupObj(MainWindow.Popup);
+    document.getElementById("npopupTX").innerHTML = MainWindow.Popup.npopupTX.innerHTML;
+    
+    // Close the original popup and pin the new one
+    MainWindow.Popup.close();
     Popup.pindown();
   }
   else {Popup = new PopupObj();}
@@ -43,166 +50,69 @@ function PopupObj(popupobj) {
 
   // or else initialize a fresh popup object
   else {
-    this.x = null;
-    this.y = null;
-    this.w = null;
-    this.datatype = null;
-    this.data = null;
-    this.delay = null;
-    this.yoffset = null;
+    this.type = null;
+    this.elem = null;
     this.mod = null;
-    this.selectOpen = null;
+    
     this.showPopupID = null;
+    this.isPopupPinned = false;
   }
 
-  this.activate = function(x, y, w, datatype, data, delay, yoffset, mod) {
-    if (x        !== null) this.x = x;
-    if (y        !== null) this.y = y;
-    if (w        !== null) this.w = w;
-    if (datatype !== null) this.datatype = datatype;
-    if (data     !== null) this.data = data;
-    if (delay    !== null) this.delay = delay;
-    if (yoffset  !== null) this.yoffset = yoffset;
-    if (mod      !== null) this.mod = mod;
+  this.activate = function(type, elem, mod) {
+    if (type !== null) this.type = type;
+    if (elem !== null) this.elem = elem;
+    if (mod  !== null) this.mod = mod;
     
-    if (this.delay==null) {this.delay = POPUPDELAY;}
-    if (!this.yoffset) {this.yoffset = 0;}
-    if (!this.mod) {this.mod = prefs.getCharPref("Version" + this.w);}
-
-//jsdump("x=" + this.x + ", y=" + this.y + ", w=" + this.w + ", datatype=" + this.datatype + ", data=" + this.data + ", delay=" + this.delay + ", yoffset=" + this.yoffset + ", mod=" + this.mod);
+    var w = getWindow(elem);
+    if (!this.mod) this.mod = (w ? prefs.getCharPref("Version" + w):null);
     
-    this.footnotes = Texts.footnotes[w];
-    
-    var myDisplay = window.getComputedStyle(Popup.npopup).display;
-    var myVisibility = window.getComputedStyle(Popup.npopup).visibility;
-    
-    // Popup text and style:
-    //  Popup Scripture reference links should appear in program's language and style
-    //  Popup Scripture reference text and style should be determined correctly
-    //    according to the results of findAVerseText (using default = mod)
-    //  Popup body text should appear in Win.modname's style as inherited from ScriptBox
-    
-    // Get fromMod for scripture references, and style.
-    var hrule = "";
-    //var pupAlreadyOpened = window.getComputedStyle(Popup.npopup).display != "none";
-    var headlink = MainWindow.SBundle.getString(pupAlreadyOpened ? "back":"close");
-    var headlinkclass = (pupAlreadyOpened ? "popupBackLink":"popupCloseLink");
-    
+    // Begin building HTML for the popup
     var html = "";
+    
+    var alreadyOpened = window.getComputedStyle(this.npopup).display != "none";
+    var headlink = MainWindow.SBundle.getString(alreadyOpened ? "back":"close");
+    var headlinkclass = (alreadyOpened ? "popupBackLink":"popupCloseLink");
+    
     html += "<div class=\"popupheader cs-Program\">";
-    html += "<div class=\"popuppin\" value=\"" + (this.ispinned ? "pinned":"unpinned") + "\" onclick=\"Popup.clickpin(this);\"></div>";
-    html += "<a title=\"" + headlinkclass + "\" class=\"" + headlinkclass + "\">" + headlink + "</a>";
-    html += "<div onclick=\"Popup.selectOpen=true;\" ><select onchange=\"Popup.select(event);\"></select></div>";
-    // If popup is already open, save the current popup in the "back" link of the new one...
-    if (pupAlreadyOpened) {
-      html += "<div class=\"prevhtml\">" + this.npopupTX.innerHTML + "</div>";
-      this.close();
+    html +=   "<div class=\"popuppin\" pinned=\"" + (this.isPopupPinned ? "true":"false") + "\" onclick=\"Popup.clickpin(this);\"></div>";
+    html +=   "<a class=\"" + headlinkclass + "\">" + headlink + "</a>";
+    
+    html +=   "<select onchange=\"Popup.select(this.value);\">";
+    for (var t=0; t<Tabs.length; t++) {
+      if (Tabs[0].modType != BIBLE) continue;
+      var selected = (Tabs[t].modName == this.mod ? "selected=\"selected\" ":"");
+      html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].modName + "\" " + selected + ">" + Tabs[t].label + "</option>";
     }
+    html +=   "</select>";
+    
     html += "</div>";
+    
+    // If popup is already open, then save the current popup inside the "back" link of this new popup...
+    html += "<div class=\"prevhtml\">" + (alreadyOpened ? this.npopupTX.innerHTML:"") + "</div>";
 
-    switch (this.datatype) {
+    switch (this.type) {
     
-    case "html":
-      html = this.data;
+    case "popupBackLink":
+      html = this.npopup.getElementsByClassName("prevhtml")[0].innerHTML;
       break;
-    
-    // Cross Reference: data is elem.title
-    //    data form: cr#.bk.c.v
-    case "cr":
-      var dir = (ModuleConfigs[this.mod] && ModuleConfigs[this.mod].direction == "rtl" ? "rtl":"ltr");
-      html += "<div class=\"popupbody cs-" + this.mod + " ";
-      html += (getPrefOrCreate("OpenCrossRefPopups", "Bool", true) ? "cropened":"crclosed") + "\">";
-      html += "<div class=\"twisty twisty-" + dir + "\" onclick=\"Popup.openCloseCRs();\" ></div>";
       
-      var re = new RegExp("<div id=\"src\\." + escapeRE(this.data) + "\">(.*?)<\\/div>");
-      var p = this.footnotes.match(re);
-      if (p && p[1]) {
-        html += BibleTexts.getRefHTML(this.w, this.mod, p[1]);
-      }
-      html += "</div>";
-      window.setTimeout("Popup.initModuleSelect('bibles', '" + this.mod + "');", 1);
-      break;
-
-    // Footnote: data is elem.title
-    //    data form: fn#.bk.c.v
+    case "cr":
     case "fn":
-      var re = new RegExp("<div id=\"src\\." + escapeRE(this.data) + "\">(.*?)<\\/div>");
-      var p = this.footnotes.match(re);
-      if (p && p[1]) html += p[1];
+    case "un":
+      var n = new RegExp("<div id=\"src\\." + this.type + "\\." + this.elem.title + "\\." + this.mod + "\">.*?<\\/div>");
+      html += BibleTexts.getNotesHTML(Texts[w].footnotes.match(n)[0], this.mod, true, true, true, true, w);
       break;
 
-    // Scripture Reference: data is elem.title unless it's "unavailable" then it's elem.innerHTML
-    //    data form: reference1; reference2    
     case "sr":
-      var dir = (ModuleConfigs[this.mod] && ModuleConfigs[this.mod].direction == "rtl" ? "rtl":"ltr");
-      html += "<div class=\"popupbody cs-" + this.mod + " ";
-      html += (getPrefOrCreate("OpenCrossRefPopups", "Bool", true) ? "cropened":"crclosed") + "\">";
-      html += "<div class=\"twisty twisty-" + dir + "\" onclick=\"Popup.openCloseCRs();\" ></div>";
-          
-      // Split up data into individual passages
-      var mdata = this.data + ";";
-      mdata = mdata.split(";");
-      mdata.pop();
-      var cnt = 1;
-      // If subreferences exist which are separated by "," then split them out as well
-      for (var i=0; i<mdata.length; i++) {
-        var verses = mdata[i].split(",");
-        if (verses.length == 1) continue;
-        var r = 1;
-        for (var v=0; v<verses.length; v++) {
-          mdata.splice(i+1-r, r, verses[v]);
-          i++;
-          i -= r;
-          r = 0;
-        }
-      }
-      // Parse each reference into a normalized reference, convert verse system and get verse text
-      var book = Location.getBookName();
-      var chapter = Location.getChapterNumber(this.mod);
-      var verse = 1;
-      var reflist = "";
-      var failhtml = "";
-      for (i=0; i<mdata.length; i++) {
-        var failed = false;
-        var saveref = mdata[i];
-  //jsdump(data[i]);
-        mdata[i] = normalizeOsisReference(data[i], this.mod);
-  //jsdump(data[i] + ", ");
-        if (!mdata[i]) {
-          var thisloc = parseLocation(saveref);
-          if (thisloc) {
-            book = thisloc.shortName ? thisloc.shortName:book;
-            chapter = thisloc.chapter ? thisloc.chapter:chapter;
-            verse = thisloc.verse ? thisloc.verse:verse;
-            mdata[i] = book + "." + chapter + "." + verse;
-            if (thisloc.lastVerse) {mdata[i] += "-" + book + "." + chapter + "." + thisloc.lastVerse;}
-            mdata[i] = normalizeOsisReference(data[i], this.mod);
-            if (!mdata[i]) failed = true;
-          }
-          else failed = true;
-        }
-        if (failed) {
-          book = null;
-          chapter = null;
-          verse = null;
-          failhtml += "<hr>" + saveref + ": <b>????</b><br>";
-          continue;
-        }
-  //jsdump(mdata[i]);
-        reflist += mdata[i] + ";";
-      }
-      html += BibleTexts.getRefHTML(this.w, this.mod, reflist);
-      html += failhtml;
-      html += "</div>";
+      var reflist = Texts.getScriptureReferences(this.elem.title != "unavailable" ? this.elem.title:this.elem.innerHTML);
+      html += BibleTexts.getNotesHTML("<div id=\"src.cr.1...." + this.mod + "\">" + reflist + "</div>", this.mod, true, true, true, true, w);
       break;
     
-    // Glossary Word: data is elem.title
-    //    data form: mod1.wrd; mod2.wrd (Backward Compatibility to <2.23)
-    //      or form: mod1:wrd mod2:wrd
     case "dtl":
     case "dt":
+      var mdata = this.elem.title;
+      
       // Backward Compatibility to < 2.23
-      var mdata = this.data;
       if (mdata.indexOf(":") == -1) {
         mdata = mdata.replace(" ", "_32_", "g");
         mdata = mdata.replace(";", " ", "g");
@@ -218,131 +128,55 @@ function PopupObj(popupobj) {
         if (!dword) dword = t[i].split(":")[1];
         sep = ";"
       }
-      // Returns with style of dnames[0]
+      
       html += DictTexts.getEntryHTML(dword, dnames, true);
-      //html = insertUserNotes("na", dword, dict, html);
       break;
       
-    // User Note: data is elem.id
-    //    data form: un.encodedResVal.bk.c.v
-    case "un":
-      try {
-        var resVal = decodeUTF8(this.data.split(".")[1]);
-        html += BMDS.GetTarget(BM.RDF.GetResource(resVal), BM.gBmProperties[NOTE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-        var unclass = "cs-Program";
-        try {
-          unclass = "cs-" + BMDS.GetTarget(BM.RDF.GetResource(resVal), BM.gBmProperties[NOTELOCALE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-        } 
-        catch (er) {}
-        html = "<div id=\"unp." + this.data + "\" class=\"" + unclass + "\"><i>" + html + "</i></div>"; // Add an id so that context menu can find resource
-      }
-      catch (er) {html = "";}
-      break;
-      
-    // Strongs Number or Morphology: data is elem.title
-    //    data form: (S|WT|SM|RM):(G|H)#.(S|WT|SM|RM):(G|H)#
     case "sn":
-      // Pass data array as param1 and match-word as param2
-      // Returns with style of module for data array [0]
-      html += DictTexts.getLemmaHTML(this.data.split("]-[")[1].split("."), this.data.split("]-[")[0]);
+      html += DictTexts.getLemmaHTML(this.elem.className.split(" ").shift(), this.elem.innerHTML);
       break;
       
     case "introlink":
-      html += BibleTexts.getBookIntroduction(this.mod, Location.getBookName()) + "<br><br>";
+      html += BibleTexts.getBookIntroduction(this.mod, Location.getBookName());
       break;
       
     case "noticelink":
-      html += BibleTexts.getNoticeLink(this.mod, 1) + "<br>";
+      html += BibleTexts.getNoticeLink(this.mod, 1);
       break;
       
     default:
-      jsdump("Unhandled popup datatype \"" + this.datatype + "\".\n");
+      jsdump("Unhandled popup type \"" + this.type + "\".\n");
     }
     
     if (html) {
       this.npopupTX.innerHTML = html;
-      this.showPopupID = window.setTimeout("Popup.show(" + this.yoffset + ")", this.delay);
-    }
-    else {
-      IgnoreMouseOvers = false;
+      this.showPopupID = window.setTimeout("Popup.elem.appendChild(Popup.npopup)", POPUPDELAY);
     }
     
     return html ? true:false;
   };
 
-
-  // show() must be called AFTER the popup content has been written to popup.
-  this.show = function(yOffset) {
-    if (!yOffset) yOffset=0;
-    
-    // Display the popup for a short time so that CSS :hover selector(s)
-    // can properly take over display control.
-    Popup.npopup.style.display = "block";
-    window.setTimeout("Popup.npopup.style.display = ''", this.delay);
-    
-    if ((/^popup/).test(window.name)) return;
-    
-    var top = this.y - 10 + yOffset; 
-    if (top + this.npopup.offsetHeight > window.innerHeight) 
-        top = (window.innerHeight - this.npopup.offsetHeight);
-    if (top < 0) top = 0; 
-    
-    var left = this.x - (this.npopup.offsetWidth/2);
-    if (left + this.npopup.offsetWidth > document.getElementById("viewportbody").offsetWidth)
-        left = (document.getElementById("viewportbody").offsetWidth - this.npopup.offsetWidth);
-    if (left < 0) left = 0;
-    
-    this.npopup.style.top = String(top) + "px";
-    this.npopup.style.left = String(left) + "px";
-
-  };
-
   this.close = function() {
-    if (window.name == "npopup") PopupWindow.close();
+    if (window.name == "npopup") {
+      PopupWindow.close();
+      return;
+    }
     
-    this.npopupTX.scrollTop = 0;
-    // Stops if preparing to open
-    if (this.showPopupID) window.clearTimeout(this.showPopupID);
-    // Clear any note popup
-    this.npopupTX.innerHTML="Empty";
-    // This prevents the ScriptBox scroll smoothness from being messed up
-    Popup.npopup.style.display = "none";
-    window.setTimeout("Popup.npopup.style.display = ''", this.delay);
-  };
-
-  this.openCloseCRs = function() {
-    this.close();
-    prefs.setBoolPref("OpenCrossRefPopups", !prefs.getBoolPref("OpenCrossRefPopups"));
-    this.activate(this.x, this.y, this.w, null, null, 0);
+    // Moving the Popup will cause CSS to hide it
+    document.getElementsByTagName("body").appendChild(this.npopup);
   };
   
-  this.initModuleSelect = function(type, selmod) {
-    var sel = this.npopupTX.getElementsByTagName("select")[0];
-    var html = "";
-    for (var t=0; t<Tabs.length; t++) {
-      switch (type) {
-      case "bibles":
-        if (Tabs[t].modType == BIBLE) {
-          var selected = (Tabs[t].modName == selmod ? "selected=\"selected\" ":"");
-          html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].modName + "\" " + selected + ">" + Tabs[t].label + "</option>";
-        }
-        break;
-      }
-    }
-    if (html && sel) {
-      sel.innerHTML = html;
-      sel.style.visibility = "visible";
-    }
-  };
-  
-  this.select = function(e) {
-    this.selectOpen=false;
-    this.activate(this.x, this.y, this.w, null, null, null, null, e.target.value);
+  this.select = function(mod) {
+    Popup.activate(Popup.type, Popup.elem, mod);
   };
   
   this.clickpin = function(pin) {
-    if (pin.getAttribute("value") == "unpinned") {
-      MainWindow.CopyPopup = this;
+    
+    // If we just clicked an unpinned Popup, then pin it
+    if (pin.getAttribute("pinned") == "false") {
+      
+      // Open a pinned Popup as a separate xul window
+      // Get X and Y coordinates for where to create the new xul window
       var X,Y;
       if (window.name=="npopup") {X=1; Y=1;}
       else {
@@ -352,6 +186,8 @@ function PopupObj(popupobj) {
         Y = Number(f.boxObject.y + this.npopup.offsetTop + 30);
         //jsdump("INFO:" + f.boxObject.y + "-" + MainWindow.outerHeight + "+" + v.height + "=" + Y);
       }
+      
+      // Open the new xul Popup window.
       var p = "chrome,resizable,dependant";
       p += ",left=" + Number(MainWindow.screenX + X);
       p += ",top=" + Number(MainWindow.screenY + Y);
@@ -359,59 +195,32 @@ function PopupObj(popupobj) {
       p += ",height=" + this.npopup.offsetHeight;
       AllWindows.push(MainWindow.open("chrome://xulsword/content/popup.xul", "popup" + String(Math.random()), p));
     }
+    
+    // If we just clicked a pinned windowed Popup, then just close the window
     else if (window.name == "npopup") this.close();
-    else pinup();
+    
+    // If we just clicked a pinned regular Popup
+    else this.pinup();
   };
   
   this.keydown = function(e) {
-    if (e.keyCode == 16) {
-      this.pindown();
-    }
+    if (e.keyCode != 16) return;
+    this.pindown();
   };
   
   this.keyup = function(e) {
     if (e.keyCode != 16) return;
-    var elem = MouseIsOver;
-    while(elem) {
-      if (elem.id && elem.id == "npopup") break; 
-      elem = elem.parentNode;
-    }
-    this.pinup(!elem || !elem.id || (elem.id && elem.id != "npopup"));
+    this.pinup();
   };
   
   this.pindown = function() {
-    var pin = document.getElementsByClassName("popuppin");
-    if (pin.length) pin[0].setAttribute("value", "pinned");
-    this.npopup.setAttribute("value", "pinned");
-    this.ispinned = true;
+    this.npopup.getElementsByClassName("popuppin")[0].setAttribute("pinned", "true");
+    this.isPopupPinned = true;
   };
   
-  this.pinup = function(thenclose) {
-    var pin = document.getElementsByClassName("popuppin");
-    if (pin.length) pin[0].setAttribute("value", "unpinned");
-    this.npopup.setAttribute("value", "unpinned");
-    this.ispinned = false;
-    if (thenclose) Popup.close();
+  this.pinup = function() {
+    this.npopup.getElementsByClassName("popuppin")[0].setAttribute("pinned", "false");
+    this.isPopupPinned = false;
   };
   
 }
-
-
-/*
-  this.mouseisdown = false;
-  this.mouseX = null;
-  this.mouseY = null;
-  
-  this.mousedown = function(e) {
-    this.mouseisdown = true;
-    this.mouseX = e.screenX - e.screenX;
-    this.mouseY = e.screenY - e.screenY;
-  }
-
-  this.mousemove = function(e) {
-    //if (!this.mouseisdown || !this.ispinned) return;
-    //PopupWindow.moveTo(e.screenX-this.mouseX, e.screenY-this.mouseY);
-  }
-    
-  this.mouseup = function(e) {this.mouseisdown = false;}
-*/

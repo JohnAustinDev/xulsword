@@ -98,9 +98,13 @@
         </div>
         
       </div>
-      <div id="textrow" ondblclick="scriptDblClick(event)" onmouseover="scriptMouseOver(event)" 
-          onmouseout="scriptMouseOut(event)" onclick="scriptClick(event)" 
-          onmousemove="bbMouseMove(event);" onmouseup="bbMouseUp(event);">
+      <div id="textrow"
+          onclick="scriptClick(event)" 
+          ondblclick="scriptDblClick(event)" 
+          onmouseover="scriptMouseOver(event)" 
+          onmouseout="scriptMouseOut(event)" 
+          onmousemove="bbMouseMove(event);" 
+          onmouseup="bbMouseUp(event);">
           
         <div id="text1" class="text" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
             footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
@@ -108,7 +112,7 @@
             <div class="sbpin" id="sbpin1"></div>
             <div class="hd"></div>
             <div class="sb"></div>
-            <div class="nbc" onclick="noteboxClick(event)">
+            <div class="nbc">
               <div class="nbf">
                 <div class="bb" onmousedown="bbMouseDown(event);"></div>
                 <div class="nbsizer"></div>
@@ -125,7 +129,7 @@
             <div class="sbpin" id="sbpin2"></div>
             <div class="hd"></div>
             <div class="sb"></div>
-            <div class="nbc" onclick="noteboxClick(event)">
+            <div class="nbc">
               <div class="nbf">
                 <div class="bb" onmousedown="bbMouseDown(event);"></div>
                 <div class="nbsizer"></div>
@@ -142,7 +146,7 @@
             <div class="sbpin" id="sbpin3"></div>
             <div class="hd"></div>
             <div class="sb"></div>
-            <div class="nbc" onclick="noteboxClick(event)">
+            <div class="nbc">
               <div class="nbf">
                 <div class="bb" onmousedown="bbMouseDown(event);"></div>
                 <div class="nbsizer"></div>
@@ -154,14 +158,18 @@
         </div>
         
       </div>
-      
-      <div id="npopup" class="textpopup" value="unpinned">
-        <div id="npopupTX"></div>
-      </div>
         
     </div>
   </div>
 
+  <div id="npopup" isWindow="false" pinned="false">
+    <div id="npopupTX"
+      onmouseover="scriptMouseOver(event)" 
+      onmouseout="scriptMouseOut(event)" 
+      onclick="scriptClick(event)" 
+      ondblclick="scriptDblClick(event)">
+    </div>
+  </div>
   
 <!--  
   <label>Chooser value<label>

@@ -69,7 +69,6 @@ const BIBLE = "Biblical Texts";
 const DICTIONARY = "Lexicons / Dictionaries";
 const COMMENTARY = "Commentaries";
 const GENBOOK = "Generic Books";
-const POPUPDELAY = 250;
 const CONTAINS_THE_WORDS=0, EXACT_TEXT=1, USING_SEARCH_TERMS=2, SIMILAR_WORDS=3;
 const highlt = "<span id=\"sv\" class=\"hl\">";
 const indnt = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
