@@ -1,8 +1,7 @@
 #viewportbody {
   font-family:'arial';
-  padding-top:0px; /* used in viewport.js */
   -moz-padding-end:0px;
-  padding-bottom:24px; /* used in viewport.js */
+  padding-bottom:24px;
   -moz-padding-start:0px;
   margin:0px;
   overflow:hidden;
@@ -35,8 +34,6 @@ body[chromedir="rtl"] #chbutton_open {
   display:table;
   width:100%;
   height:600px;
-  padding:0px 0px 0px 0px;
-  margin:0px 0px 0px 0px;
 }
 #viewport > div {
   display:table-cell;
@@ -54,7 +51,7 @@ body[chromedir="rtl"] #chbutton_open {
 #tabrow {
   display:block;
   width:100%;
-  padding-top:14px; /* used in viewport.js */
+  padding-top:14px;
 }
 #tabrowf {
   display:table;
@@ -175,7 +172,9 @@ body[chromedir="rtl"] #chbutton_open {
   font-size: 1.1em;
 }
 .text[columns="show1"] {
-  width:33%;
+  /* max-width:250px somehow forces width 
+  to 33% even when contents are very wide */ 
+  max-width:250px;
   min-width:250px;
 }
 .text[columns="show2"] {
@@ -201,15 +200,13 @@ body[chromedir="rtl"] #chbutton_open {
 }
 
 .hd {
-  width:100%;
   text-align:center;
-  height:30px; /* used in viewport.js */
+  height:30px;
 }
 .fr {
   position:relative;
-  width:100%;
   text-align:center;
-  height:30px; /* used in viewport.js */
+  height:30px;
 }
 .sbpin {
   position:absolute;
@@ -231,7 +228,7 @@ body[chromedir="rtl"] #chbutton_open {
 }
 
 .sb {
-  height:600px; /* used in viewport.js */
+  height:600px; /* dynamic in viewport.js */
   color: black;
   padding-left:30px;
   padding-right:30px;
@@ -257,13 +254,13 @@ body[chromedir="rtl"] #chbutton_open {
 }
 #text1[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb, 
 #text1[moduleType="Dicts"] .sb {
-  margin-bottom:200px; /* used in viewport.js */
-  height:400px; /* used in viewport.js */
+  margin-bottom:200px; /* dynamic in viewport.js */
+  height:400px; /* dynamic in viewport.js */
 }
 #text2[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb, 
 #text2[moduleType="Dicts"] .sb {
-  margin-bottom:200px; /* used in viewport.js */
-  height:400px; /* used in viewport.js */
+  margin-bottom:200px; /* dynamic in viewport.js */
+  height:400px; /* dynamic in viewport.js */
 }
 #text3[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb, 
 #text3[moduleType="Dicts"] .sb {
@@ -295,18 +292,18 @@ body[chromedir="rtl"] #chbutton_open {
   left:0px;
 }
 #text1 .nbf {
-  height:200px; /* used in viewport.js */
+  height:200px; /* dynamic in viewport.js */
 }
 #text2 .nbf {
-  height:200px; /* used in viewport.js */
+  height:200px; /* dynamic in viewport.js */
 }
 #text3 .nbf {
-  height:200px; /* used in viewport.js */
+  height:200px; /* dynamic in viewport.js */
 }
 #text1[footnotesMaximized="true"]:not([columns="show1"]) .nbf,
 #text2[footnotesMaximized="true"]:not([columns="show1"]) .nbf,
 #text3[footnotesMaximized="true"]:not([columns="show1"]) .nbf {
-  height:600px; /* used in viewport.js */
+  height:600px; /* dynamic in viewport.js */
 }
 .text[columns="show1"] .nbf {
   width:100%;
@@ -338,7 +335,6 @@ body[chromedir="rtl"] #chbutton_open {
 .bb[moving="true"] {
   border:1px dashed rgb(150,150,150); 
   background:rgb(233,233,20);
-  cursor:N-resize;
   z-index:80;
 }
 
@@ -369,19 +365,19 @@ body[chromedir="rtl"] #chbutton_open {
   border-radius:8px;
 }
 #text1 .nb {
-  height:192px; /* used in viewport.js */
-  margin:10px; /* used in viewport.js */
+  height:192px; /* dynamic in viewport.js */
+  margin:10px;
 }
 #text2 .nb {
-  height:192px; /* used in viewport.js */
-  margin:10px; /* used in viewport.js */
+  height:192px; /* dynamic in viewport.js */
+  margin:10px;
 }
 #text3 .nb {
-  height:192px; /* used in viewport.js */
-  margin:10px; /* used in viewport.js */
+  height:192px; /* dynamic in viewport.js */
+  margin:10px;
 }
 #text1[footnotesMaximized="true"]:not([columns="show1"]) .nb,
 #text2[footnotesMaximized="true"]:not([columns="show1"]) .nb,
 #text3[footnotesMaximized="true"]:not([columns="show1"]) .nb {
-  height:562px; /* used in viewport.js */
+  height:562px; /* dynamic in viewport.js */
 }

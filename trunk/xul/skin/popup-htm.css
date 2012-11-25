@@ -1,16 +1,14 @@
-#npopup {
-  display:none;
-  z-index:100;
-  width:0px;
-  height:0px;
-  position:relative;
-}
 .fn:hover #npopup,
 .un:hover #npopup,
 .sn:hover #npopup,
 .cr:hover #npopup,
 .cr-x-parallel-passage:hover #npopup,
-.cr-x-style1:hover #npopup {
+.cr-x-style1:hover #npopup,
+.sr:hover #npopup,
+.dtl:hover #npopup,
+.dt:hover #npopup,
+.introlink:hover #npopup,
+.noticelink:hover #npopup {
   /* This is so that once npopup is moved into one of these hovered  
   elements by Javascript mouseover, then it stays open until the element  
   and its children are no longer hovered by the mouse. */
@@ -20,45 +18,64 @@
 .un #npopupTX,
 .cr #npopupTX,
 .cr-x-parallel-passage #npopupTX,
-.cr-x-style1 #npopupTX {
+.cr-x-style1 #npopupTX,
+.sr #npopupTX,
+.dtl #npopupTX,
+.dt #npopupTX,
+.introlink #npopupTX,
+.noticelink #npopupTX {
   /* popup appears above the element, covering it. */
-  top:0px;
-  left:0px;
+  top:-20px;
+  left:5px;
 }
 .sn #npopupTX {
   /* popup appears away from the element so that 
   the text of the element can still be read */
-  top:200px;
+  top:100px;
+  left:5px;
 }
-#npopupTX {
+
+/* FOR REGULAR (NON-WINDOW) POPUP STYLES */
+#npopup[isWindow="false"] {
+  display:none;
+  z-index:100;
   position:absolute;
-  top:0px;
   left:0px;
+  overflow:visible;
+  width:100%;
+  
+  /* Make shure these styles are NOT inherited from container! */
+  color:black;
+  text-align:left;
+}
+#npopup[isWindow="false"] #npopupTX {
+  position:relative;
+  overflow:auto;
+  max-height:300px;
   margin: 0px 20px 10px 0px;
   font-size: 1.1em;
-  padding: 22px 20px 20px 20px;
+  padding: 22px 20px 20px 14px;
   border:1px solid black;
   background:rgb(245,220,255);
   border-radius:5px;
   cursor:default;
-  overflow:auto;
   box-shadow: 3px 3px 5px 6px #ccc;
 }
-#npopup[pinned=true] #npopupTX {
+#npopup[pinned="true"][isWindow="false"] #npopupTX {
   margin: 5px 15px 5px 5px;
   box-shadow: 1px 1px 2px 3px #ccc;
 }
 
-#npopup[isWindow="false"] {
-  min-width:300px;
-  max-width:400px;
-  min-height:60px;
-  max-height:100%;
-}
-
 /* FOR WINDOW PINNED POPUP */
-#npopup[isWindow="true"] {
+.windowedpup {
+  padding:0px;
   margin:0px;
+  overflow:hidden;
+}
+#npopup[isWindow="true"] {
+  display:block;
+  margin:0px;
+  padding:0px;
   border:1px solid black;
   background:rgb(245,220,255);
   border-radius:5px;
@@ -66,36 +83,25 @@
   overflow:hidden;
 }
 #npopup[isWindow="true"] #npopupTX {
-  border:none !important;
-  box-shadow:none !important;
+  padding: 22px 20px 20px 14px;
 }
 #npopup[isWindow="true"] .popuppin {
   visibility:hidden;
 }
 
-/* FOR REGULAR (NON-WINDOW) POPUP STYLES */
+/* FOR ALL POPUPS */
 .popupheader {
   position:relative;
-  margin:0px 0px 20px 0px;
+  margin:0px 0px 30px 0px;
 }
-
-.popupheader select {
-  position:absolute;
-  top:-10px;
-  right:0px;
-}
-
-.popupbody {
-  position:relative;
-}
-
 .popuppin {
-  position:absolute;
+  position:relative;
+  float:left;
   background: url('chrome://xulsword/skin/images/pushpin0.png');
   width: 28px;
   height: 37px;
   top:-19px;
-  left:-18px;
+  left:-5px;
 }
 .popuppin:hover {
   background: url('chrome://xulsword/skin/images/pushpin2.png');
@@ -103,7 +109,55 @@
 .popuppin[pinned=true] {
   background: url('chrome://xulsword/skin/images/pushpin1.png');
 }
-
+body[chromedir="rtl"] .popuppin {
+  transform:scaleX(-1);
+  background: url('chrome://xulsword/skin/images/pushpin0.png');
+  width: 28px;
+  height: 37px;
+  top:-19px;
+  left:auto;
+  right:-18px;
+}
+body[chromedir="rtl"] .popuppin:hover {
+  transform:scaleX(-1);
+  background: url('chrome://xulsword/skin/images/pushpin2.png');
+}
+body[chromedir="rtl"] .popuppin[pinned=true] {
+  transform:scaleX(-1);
+  background: url('chrome://xulsword/skin/images/pushpin1.png');
+}
+.popupBackLink, .popupCloseLink {
+  position:relative;
+  left:-5px;
+  color:blue;
+  cursor:default;
+  float:left;
+}
+body[chromedir="rtl"] .popupBackLink,
+body[chromedir="rtl"] .popupCloseLink {
+  float:right;
+}
+.popupBackLink:hover, .popupCloseLink:hover {
+  border-bottom:1px solid blue;
+  cursor:pointer;
+}
+.popup-mod-select {
+  display:none;
+  position:relative;
+  top:-10px;
+  float:right;
+}
+body[chromedir="rtl"] .popup-mod-select {
+  float:left;
+}
+.cr .popup-mod-select,
+.sr .popup-mod-select {
+  display:block;
+}
 .prevhtml {
   display:none;
+}
+.popup-text {
+  width:100%;
+  clear:both;
 }

@@ -96,7 +96,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
               val = (val) ? (val + 1) : attrib;
               if (sep) {snumbers += ".";}
               snumbers += "S";
-              snumbers += ":";
+              snumbers += "_";
 						  snumbers += val;
 						  sep = true;
             } while (++i < count);
@@ -112,7 +112,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
               if (sep) {snumbers += ".";}
               if (!strncmp(attrib, "robinson", 8)) {snumbers += "RM";}
               else {snumbers += "SM";}
-              snumbers += ":";
+              snumbers += "_";
 						  snumbers += val;
 						  sep = true;
             } while (++i < count);
@@ -237,12 +237,12 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				    referenceInfo = (tag.getAttribute("osisRef")) ? tag.getAttribute("osisRef"):"";
 				  }
 				  else if (tag.getAttribute("type") && !strcmp("x-glosslink", tag.getAttribute("type"))) {
-				    referenceTag = "a";
+				    referenceTag = "span";
 				    referenceClass = "dtl";
 				    referenceInfo = (tag.getAttribute("osisRef")) ? tag.getAttribute("osisRef"):"";				  
 				  }
 				  else {
-				    referenceTag = "a";
+				    referenceTag = "span";
 				    referenceClass = "sr";
 				    if (tag.getAttribute("osisRef")) {
 				      referenceInfo = tag.getAttribute("osisRef");
@@ -251,24 +251,24 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				      referenceInfo = tag.getAttribute("passage");
 				    }
 				    else {referenceInfo = "";}
-				    // Do we need to append this to the last <a class="sr"... tag??
-				    if (buf.endsWith("</a>")) {
+				    // Do we need to append this to the last <span class="sr"... tag??
+				    if (buf.endsWith("</span>")) {
 				      int stag = -1;
 				      int etag = -1;
 				      int insertpoint = -1;
-				      char match[14]="<a class=\"sr\"";
-				      int mi = 12;
-				      for (int i=buf.length()-5; i>=0 && stag==-1; i--) {
+				      char match[17]="<span class=\"sr\"";
+				      int mi = 15;
+				      for (int i=buf.length()-8; i>=0 && stag==-1; i--) {
 				        char mychar = buf.charAt(i);
 				        if      (etag==-1 && mychar=='>') {etag=i;}
 				        else if (etag!=-1 && insertpoint==-1 && mychar=='"') {insertpoint=i;}
 				        else if (etag!=-1 && insertpoint!=-1 && mychar==match[mi]) {mi--;} 
-				        else {mi = 12;}
+				        else {mi = 15;}
 				        if (mychar=='<') {stag=i;}
 				      }
 				      if (mi==-1) {
 				        // Append current data to last tag
-				        buf.setSize(buf.length()-4); // Strip off last <\a> tag
+				        buf.setSize(buf.length()-7); // Strip off last <\span> tag
 				        buf.insert(insertpoint, "; ");
 				        buf.insert(insertpoint+2, referenceInfo.c_str());
 				        return true;
@@ -537,10 +537,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			filepath += src;
       filepath.replaceBytes("\\", '/');
       
-      outText("<div style=\"text-align:center;\">", buf, u);
+      outText("<div class=\"dict-image-container\">", buf, u);
 			outText("<img src=\"File://", buf, u);
 			outText(filepath, buf, u);
-			outText("\" />", buf, u);
+			outText("\">", buf, u);
 			outText("</div>", buf, u);
 		}
 

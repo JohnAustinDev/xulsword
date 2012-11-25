@@ -19,22 +19,34 @@ const POPUPDELAY = 250;
 
 var Popup;
 
+function initWindowedPopup() {
+  createDynamicClasses();
+  adjustFontSizes(prefs.getIntPref('FontSize'));
+  
+  document.getElementsByTagName("body")[0].setAttribute("chromedir", ProgramConfig.direction);
+  
+  initPopup();
+}
+    
 // During initPopup, a new Popup object will be created to handle Popup  
 // functions in this context. If this popup is a separate window, it 
 // needs to be initialized with all the settings and data of the regular 
 // popup from which it came.
 function initPopup() {
+  
+  // Create our Popup
   if (window.name == "npopup") {
-    
+  
     // This is a windowed popup, so copy the original popup
-    Popup = new PopupObj(MainWindow.Popup);
-    document.getElementById("npopupTX").innerHTML = MainWindow.Popup.npopupTX.innerHTML;
+    Popup = new PopupObj(MainWindow.ViewPortWindow.Popup);
+    document.getElementById("npopupTX").innerHTML = MainWindow.ViewPortWindow.Popup.npopupTX.innerHTML;
     
     // Close the original popup and pin the new one
-    MainWindow.Popup.close();
+    MainWindow.ViewPortWindow.Popup.close();
     Popup.pindown();
   }
   else {Popup = new PopupObj();}
+
 }
     
 function PopupObj(popupobj) {
@@ -59,53 +71,61 @@ function PopupObj(popupobj) {
   }
 
   this.activate = function(type, elem, mod) {
-    if (type !== null) this.type = type;
-    if (elem !== null) this.elem = elem;
-    if (mod  !== null) this.mod = mod;
-    
     var w = getWindow(elem);
-    if (!this.mod) this.mod = (w ? prefs.getCharPref("Version" + w):null);
+    if (w === null) return false;
+   
+    if (type) this.type = type;
+    if (elem) this.elem = elem;
+    if (mod) this.mod = mod;
+    else if (w) this.mod = prefs.getCharPref("Version" + w);
+    //else the elem came from this popup, so keep old mod...
     
     // Begin building HTML for the popup
     var html = "";
     
-    var alreadyOpened = window.getComputedStyle(this.npopup).display != "none";
-    var headlink = MainWindow.SBundle.getString(alreadyOpened ? "back":"close");
-    var headlinkclass = (alreadyOpened ? "popupBackLink":"popupCloseLink");
+    var alreadyInPopup = (w == 0);
+
+    var headlink = MainWindow.SBundle.getString(alreadyInPopup ? "back":"close");
+    var headlinkclass = (alreadyInPopup ? "popupBackLink":"popupCloseLink");
     
     html += "<div class=\"popupheader cs-Program\">";
     html +=   "<div class=\"popuppin\" pinned=\"" + (this.isPopupPinned ? "true":"false") + "\" onclick=\"Popup.clickpin(this);\"></div>";
     html +=   "<a class=\"" + headlinkclass + "\">" + headlink + "</a>";
     
-    html +=   "<select onchange=\"Popup.select(this.value);\">";
-    for (var t=0; t<Tabs.length; t++) {
-      if (Tabs[0].modType != BIBLE) continue;
-      var selected = (Tabs[t].modName == this.mod ? "selected=\"selected\" ":"");
-      html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].modName + "\" " + selected + ">" + Tabs[t].label + "</option>";
+    html +=   "<select class=\"popup-mod-select\" onchange=\"Popup.select(this.value);\" >";
+    if ((/^(cr|sr)$/).test(type)) {
+      for (var t=0; t<Tabs.length; t++) {
+        if (Tabs[0].modType != BIBLE) continue;
+        var selected = (Tabs[t].modName == this.mod ? "selected=\"selected\" ":"");
+        html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].modName + "\" " + selected + ">" + Tabs[t].label + "</option>";
+      }
     }
     html +=   "</select>";
     
     html += "</div>";
     
     // If popup is already open, then save the current popup inside the "back" link of this new popup...
-    html += "<div class=\"prevhtml\">" + (alreadyOpened ? this.npopupTX.innerHTML:"") + "</div>";
+    html += "<div class=\"prevhtml\">" + (alreadyInPopup ? this.npopupTX.innerHTML:"") + "</div>";
 
+    html += "<div class=\"popup-text\" textdir=\"" + ModuleConfigs[this.mod].direction + "\" moduleType=\"" + Tab[this.mod].tabType + "\">";
+    
     switch (this.type) {
     
     case "popupBackLink":
-      html = this.npopup.getElementsByClassName("prevhtml")[0].innerHTML;
+      this.npopupTX.innerHTML = this.npopup.getElementsByClassName("prevhtml")[0].innerHTML;
+      return true;
       break;
       
     case "cr":
     case "fn":
     case "un":
-      var n = new RegExp("<div id=\"src\\." + this.type + "\\." + this.elem.title + "\\." + this.mod + "\">.*?<\\/div>");
-      html += BibleTexts.getNotesHTML(Texts[w].footnotes.match(n)[0], this.mod, true, true, true, true, w);
+      var n = new RegExp("<div id=\"src\\." + this.type + "\\." + this.elem.title + "\\.[^\.]+\">.*?<\\/div>");
+      html += BibleTexts.getNotesHTML(Texts.footnotes[w].match(n)[0], this.mod, true, true, true, true, w);
       break;
 
     case "sr":
-      var reflist = Texts.getScriptureReferences(this.elem.title != "unavailable" ? this.elem.title:this.elem.innerHTML);
-      html += BibleTexts.getNotesHTML("<div id=\"src.cr.1...." + this.mod + "\">" + reflist + "</div>", this.mod, true, true, true, true, w);
+      var reflist = Texts.getScriptureReferences(this.elem.title != "unavailable" ? this.elem.title:this.elem.innerHTML, this.mod);
+      html += BibleTexts.getNotesHTML("<div id=\"src.cr.1.0.0.0." + this.mod + "\">" + reflist + "</div>", this.mod, true, true, true, true, w);
       break;
     
     case "dtl":
@@ -128,12 +148,14 @@ function PopupObj(popupobj) {
         if (!dword) dword = t[i].split(":")[1];
         sep = ";"
       }
-      
+    
       html += DictTexts.getEntryHTML(dword, dnames, true);
       break;
       
     case "sn":
-      html += DictTexts.getLemmaHTML(this.elem.className.split(" ").shift(), this.elem.innerHTML);
+      var snlist = this.elem.className.split(" ");
+      snlist.shift(); // remove base class: sn
+      html += DictTexts.getLemmaHTML(snlist, this.elem.innerHTML);
       break;
       
     case "introlink":
@@ -148,22 +170,27 @@ function PopupObj(popupobj) {
       jsdump("Unhandled popup type \"" + this.type + "\".\n");
     }
     
-    if (html) {
-      this.npopupTX.innerHTML = html;
+    html += "</div>";
+    
+//jsdump(html); 
+//window.setTimeout("debugStyle(document.getElementById('npopup'))", 1000);
+
+    this.npopupTX.innerHTML = html;
+    if (!alreadyInPopup) {
       this.showPopupID = window.setTimeout("Popup.elem.appendChild(Popup.npopup)", POPUPDELAY);
     }
     
-    return html ? true:false;
+    return true;
   };
 
   this.close = function() {
     if (window.name == "npopup") {
-      PopupWindow.close();
+      window.frameElement.ownerDocument.defaultView.close();
       return;
     }
     
     // Moving the Popup will cause CSS to hide it
-    document.getElementsByTagName("body").appendChild(this.npopup);
+    document.getElementsByTagName("body")[0].appendChild(this.npopup);
   };
   
   this.select = function(mod) {
@@ -172,18 +199,19 @@ function PopupObj(popupobj) {
   
   this.clickpin = function(pin) {
     
-    // If we just clicked an unpinned Popup, then pin it
+    // If we just clicked to pin the Popup...
     if (pin.getAttribute("pinned") == "false") {
       
       // Open a pinned Popup as a separate xul window
       // Get X and Y coordinates for where to create the new xul window
       var X,Y;
-      if (window.name=="npopup") {X=1; Y=1;}
+      if (window.name == "npopup") {X=1; Y=1;}
       else {
         // on Linux, window.innerHeight = outerHeight = height of entire window viewport, NOT including the operating system frame
         var f = MainWindow.document.getElementById("xulviewport");
-        X = Number(f.boxObject.x + this.npopup.offsetLeft);
-        Y = Number(f.boxObject.y + this.npopup.offsetTop + 30);
+        var offset = getOffset(this.npopup);
+        X = Number(f.boxObject.x + offset.left);
+        Y = Number(f.boxObject.y + offset.top - 16);
         //jsdump("INFO:" + f.boxObject.y + "-" + MainWindow.outerHeight + "+" + v.height + "=" + Y);
       }
       
@@ -191,15 +219,13 @@ function PopupObj(popupobj) {
       var p = "chrome,resizable,dependant";
       p += ",left=" + Number(MainWindow.screenX + X);
       p += ",top=" + Number(MainWindow.screenY + Y);
-      p += ",width=" + this.npopup.offsetWidth;
-      p += ",height=" + this.npopup.offsetHeight;
+      p += ",width=" + this.npopupTX.offsetWidth;
+      p += ",height=" + this.npopupTX.offsetHeight;
       AllWindows.push(MainWindow.open("chrome://xulsword/content/popup.xul", "popup" + String(Math.random()), p));
     }
     
-    // If we just clicked a pinned windowed Popup, then just close the window
     else if (window.name == "npopup") this.close();
     
-    // If we just clicked a pinned regular Popup
     else this.pinup();
   };
   
@@ -223,4 +249,11 @@ function PopupObj(popupobj) {
     this.isPopupPinned = false;
   };
   
+}
+
+function debugStyle(elem) {
+  var s = window.getComputedStyle(elem);
+  for (var m in s) {
+    jsdump(m + " = " + s[m]);
+  }
 }

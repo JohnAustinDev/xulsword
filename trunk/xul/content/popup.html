@@ -26,26 +26,18 @@
   <link rel="stylesheet" href="chrome://xulsword/skin/texts-htm.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/popup-htm.css" type="text/css">
   
-  <script>var MainWindow = (window.frameElement.ownerDocument.defaultView.MainWindow ? window.frameElement.ownerDocument.defaultView.MainWindow:null)</script>
+  <script>var MainWindow = (window.frameElement.ownerDocument.defaultView.MainWindow);</script>
   <script src="chrome://xulsword/content/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common1.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/viewportMouse.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/popup.js" type="text/javascript"></script>
-  <script>
-    var PopupWindow;
-    
-    function load() {
-      PopupWindow = window.frameElement.ownerDocument;
-      createDynamicClasses();
-      adjustFontSizes(prefs.getIntPref('FontSize'));
-    }
-    </script>
+
   </head>
   
-  <body class="windowedpup cs-Program userFontSize">
+  <body class="windowedpup" chromedir="ltr">
   
-    <div id="npopup" isWindow="true" pinned="false">
+    <div id="npopup" class="userFontSize cs-Program" isWindow="true" pinned="false">
       <div id="npopupTX"
         onmouseover="scriptMouseOver(event)" 
         onmouseout="scriptMouseOut(event)" 
