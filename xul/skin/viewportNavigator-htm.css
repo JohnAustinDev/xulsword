@@ -1,8 +1,8 @@
 #fadetop, #fadebot {
   position:relative; /* get z-index to work */
   background:url(chrome://xulsword/skin/images/b2.gif) repeat;
-  width:250px;
-  height:100px; /* used in viewport.js */
+  width:180px;
+  height:100px; /* dynamic in viewport.js */
   opacity:0.5;
   z-index:30;
 }
@@ -16,8 +16,8 @@
 #biblechooser {
   display:table;
   position:relative;
-  height:423px; /* used in viewport.js */
-  width:224px; /* used in viewport.js */
+  height:423px; /* dynamic in viewport.js */
+  width:180px; /* dynamic in viewport.js */
   -moz-margin-start:10px;
   padding:6px;
   -moz-border-start:2px solid rgb(175,145,180);
@@ -176,7 +176,7 @@ body[chromedir="rtl"] .charrow:hover {
   position:absolute;
   display:table;
   left:100%;
-  top:0px;
+  top:-4px;
   width:260px;
   border-collapse:separate;
   border-spacing:3px 1px;

@@ -17,11 +17,11 @@
   cursor:default;
 }
 .prevchaplink:hover, .nextchaplink:hover {
-  text-decoration:underline;
+  border-bottom:1px solid blue;
 }
 .text[CanDoPreviousPage="false"] .prevchaplink:hover,
 .text[CanDoNextPage="false"] .nextchaplink:hover {
-  text-decoration:none;
+  border-bottom:none;
 }
 
 /* Bible & Commentary chapter/page header */
@@ -37,7 +37,7 @@
   display:none;
 }
 .noticelink {
-  text-decoration:underline;
+  border-bottom:1px solid blue;
   color:blue;
   cursor:pointer;
 }
@@ -65,8 +65,6 @@
 }
 .chapinfo {
   float:right;
-  position:relative;
-  top:-5px;
   min-width:60px;
   color:rgb(110,85,110);
 }
@@ -82,10 +80,11 @@
 }
 .listenlink:hover {
   background:url('chrome://xulsword/skin/images/listen1.gif');
+  cursor:pointer;
 }
 .introlink {
   font-size:1.4em;
-  text-decoration:underline;
+  border-bottom:1px solid blue;
   color:blue;
   cursor:pointer;
 }
@@ -168,7 +167,7 @@
   color:rgb(0,0,200);
 }
 .sr {
-	text-decoration:underline;
+	border-bottom:1px solid blue;
   cursor:pointer;
 }
 /* user note highlight */
@@ -176,7 +175,7 @@
   background:rgb(255,255,140);
 }
 .dt {
-  text-decoration:underline;
+  border-bottom:1px solid black;
   cursor:pointer;
 }
 .genbknote {
@@ -194,7 +193,7 @@
   color:red;
 }
 /* selected verse highlight */
-.hl {
+.sb .hl {
   color:blue;
 }
 
@@ -203,14 +202,22 @@
   display:table;
   border-collapse:separate;
   border-spacing:0px 1px;
-  margin:0px 10px 0px 10px;
+  margin:0px 0px 0px 10px;
 }
-.cropened, .crclosed {
+.popup-text .fntable {
+  width:100%;
+}
+.fnrow {
   display:table-row;
+  padding-right:16px;
+}
+.text[textdir="rtl"] .fnrow {
+  padding-right:0px;
+  padding-left:16px;
 }
 .fncol1 {
   display:table-cell; 
-  width:10px;
+  width:6px;
   vertical-align:top;
   padding-top:8px;
 }
@@ -218,69 +225,78 @@
   width:9px;
   height:9px;
   background:url(chrome://xulsword/skin/images/twisty-open.png);
+  position:relative;
+  top:-2px;
 }
 .cropened .crtwisty {
   background:url(chrome://xulsword/skin/images/twisty-close.png);
 }
 .fncol2 {
-  visibility:hidden;
   display:table-cell; 
+  visibility:hidden;
   vertical-align:top;
   padding-top:12px;
 }
 .fndash {
-  width:10px; 
+  width:6px; 
   height:2px; 
   border-top:1px solid rgb(150,150,150);
 }
 .fncol3 {
+  display:table-cell;
   visibility:hidden;
   width:6px;
-  display:table-cell;
   border-top:1px solid rgb(150,150,150);
+  border-left:1px solid rgb(150,150,150);
   border-bottom:1px solid rgb(150,150,150);
 }
 .cropened .fncol2, 
 .cropened .fncol3 {
   visibility:visible;
 }
-.fncol3 {
-  border-left:1px solid rgb(150,150,150);
-}
-.text[textdir="rtl"] .fncol3 {
+.text[textdir="rtl"] .fncol3,
+.popup-text[textdir="rtl"] .fncol3 {
   border-left:none;
   border-right:1px solid rgb(150,150,150);
 }
 .fncol4 {
-  padding-left:4px;
   display:table-cell;
+  text-align:right;
   white-space:nowrap;
 }
-.text[textdir="rtl"] .fncol4 {
-  padding-left:0px;
-  padding-right:4px;
+.text[textdir="rtl"] .fncol4,
+.popup-text[textdir="rtl"] .fncol4 {
+  text-align:left;
 }
 .fnlink {
   color:blue;
 }
 .fnlink:hover {
-  text-decoration:underline;
+  border-bottom:1px solid blue;
   cursor:pointer;
+}
+#npopup .fntable {
+  margin:0px 0px 0px 0px;
+}
+#npopup .fndash {
+  border-top:none;
+}
+#npopup .fncol3,
+#npopup .fncol4 {
+  display:none;
 }
 .fncol5 {
   display:table-cell;
-  padding-left:4px;
-}
-.text[textdir="rtl"] .fncol5 {
-  padding-left:0px;
-  padding-right:4px;
+  padding:0px 4px 0px 4px;
+  border:1px solid transparent;
+  border-radius:8px;
 }
 .crref {
   color:blue;
-  cursor:pointer;
 }
 .crref:hover {
-  text-decoration:underline;
+  border-bottom:1px solid blue;
+  cursor:pointer;
 }
 .cropened .crref:after {
   content:": ";
@@ -300,16 +316,7 @@
 .crclosed .crsep:after {
   content:"; ";
 }
-.fncontainer {
-  padding-right:16px;
-  border:1px solid transparent;
-  border-radius:8px;
-}
-.text[textdir="rtl"] .fncontainer {
-  padding-right:0px;
-  padding-left:16px;
-}
-.fnselected {
+.fnselected .fncol5 {
   border:1px outset yellow;
   background:rgb(255,243,255);
 }
@@ -317,6 +324,13 @@
   font-style:italic;
 }
 
+/* Strong's numbers dictionary entry display */
+.lemma-header {
+  font-weight:bold;
+}
+.lemma-sep {
+  border-top:3px outset black;
+}
 /* Dictionary styles */
 .dictentry {
   display:table;
@@ -359,4 +373,20 @@
 .dictselectkey {
   background:highlight;
   color:white;
+}
+.dtl, .sr {
+  color:blue;
+}
+.dtl:hover, .sr:hover {
+  border-bottom:1px solid blue;
+  cursor:pointer;
+}
+.dict-description {
+  font-weight:bold;
+}
+.dict-key-heading {
+  font-weight:bold;
+}
+.dict-image-container {
+  text-align:center;
 }

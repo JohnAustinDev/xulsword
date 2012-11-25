@@ -36,7 +36,7 @@ var Texts = {
   // 1 means update always
   update: function(scrollTypeFlag, hilightFlag, force) {
 
-    if (scrollTypeFlag === undefined) scrollTypeFlag = SCROLLTYPETOP;
+    if (scrollTypeFlag === undefined) scrollTypeFlag = SCROLLTYPEBEG;
     if (hilightFlag === undefined) hilightFlag = HILIGHTNONE;
     if (force === undefined) force = [null, 0, 0, 0];
     
@@ -411,10 +411,12 @@ var Texts = {
     return usernotes;
   },
   
-  function: getScriptureReferences(scripRefList) {
+  getScriptureReferences: function(scripRefList, mod) {
     
     // Split up data into individual passages
-    mdata = scripRefList.split(";");
+    scripRefList += ";"
+    var mdata = scripRefList.split(";");
+    mdata.pop();
 
     // If subreferences exist which are separated by "," then split them out as well
     for (var i=0; i<mdata.length; i++) {
@@ -428,21 +430,21 @@ var Texts = {
         r = 0;
       }
     }
-    
+
     // Parse each reference into a normalized reference in a list
     var reflist = "";
     var failhtml = "";
     
     var book = Location.getBookName();
-    var chapter = Location.getChapterNumber(this.mod);
+    var chapter = Location.getChapterNumber(mod);
     var verse = 1;
     
     for (i=0; i<mdata.length; i++) {
       var failed = false;
       var saveref = mdata[i];
-//jsdump(data[i]);
-      mdata[i] = normalizeOsisReference(data[i], this.mod);
-//jsdump(data[i] + ", ");
+
+      mdata[i] = normalizeOsisReference(mdata[i], mod);
+
       if (!mdata[i]) {
         var thisloc = parseLocation(saveref);
         if (thisloc) {
@@ -451,7 +453,7 @@ var Texts = {
           verse = thisloc.verse ? thisloc.verse:verse;
           mdata[i] = book + "." + chapter + "." + verse;
           if (thisloc.lastVerse) {mdata[i] += "-" + book + "." + chapter + "." + thisloc.lastVerse;}
-          mdata[i] = normalizeOsisReference(data[i], this.mod);
+          mdata[i] = normalizeOsisReference(mdata[i], mod);
           if (!mdata[i]) failed = true;
         }
         else failed = true;
@@ -463,9 +465,11 @@ var Texts = {
         //failhtml += "<hr>" + saveref + ": <b>????</b><br>";
         continue;
       }
-//jsdump(mdata[i]);
+
       reflist += mdata[i] + ";";
     }
+    
+    return reflist;
   },
  
   getDisplay: function(mod, loc, w) {
@@ -963,7 +967,7 @@ var BibleTexts = {
       if (nb.innerHTML) {
         // vf and vl id has form: vs.Gen.1.1
         // note id has form: w1.body.fn.1.Gen.1.1.KJV
-        var nt = nb.getElementsByClassName("fncontainer");
+        var nt = nb.getElementsByClassName("fnrow");
         for (var i=0; i<nt.length; i++) {
           
           var value = "";
@@ -981,7 +985,7 @@ var BibleTexts = {
             value = "none";
           }
          
-          nt[i].parentNode.style.display = value;
+          nt[i].style.display = value;
           if (!value) havefn = true;
         }
       }
@@ -1047,6 +1051,7 @@ var BibleTexts = {
       // Now parse each note in the chapter separately
       for (var n=0; n < note.length; n++) {
         if (!note[n]) continue;
+
         var p = note[n].match(/<div id="src\.([^"]+)">(.*?)<\/div>/);
         var noteid = p[1];
         var body = p[2];
@@ -1066,21 +1071,17 @@ var BibleTexts = {
         if (!noteType) {continue;}
         
         // Now display this note as a row in the main table
-        t += "<div class=\"" + (openCRs ? "cropened":"crclosed") + "\">";
+        t += "<div id=\"w" + w + ".footnote." + noteid + "\" class=\"fnrow " + (openCRs ? "cropened":"crclosed") + "\">";
         
         // Write cell #1: an expander link for cross references only
-        t += "<div class=\"fncol1\">";
+        t +=   "<div class=\"fncol1\">";
         if (noteType == "cr") {
-          t += "<div class=\"crtwisty\"></div>";
+          t +=   "<div class=\"crtwisty\"></div>";
         }
-        t += "</div>";
+        t +=   "</div>";
         // These are the lines for showing expanded verse refs
-        t += "<div class=\"fncol2\"><div class=\"fndash\"></div></div>";
-        t += "<div class=\"fncol3\">&nbsp</div>";
-        
-        // This makes the following cells part of the highlight
-        // The id is required to note can be located for scrolling and hilighting
-        t += "<div id=\"w" + w + ".footnote." + noteid + "\" class=\"fncontainer\">";
+        t +=   "<div class=\"fncol2\"><div class=\"fndash\"></div></div>";
+        t +=   "<div class=\"fncol3\">&nbsp;</div>";
         
         // Write cell #4: chapter and verse
         var xsn = new RegExp("^" + XSNOTE + "$");
@@ -1088,17 +1089,17 @@ var BibleTexts = {
         var lov = ModuleConfigs[mod].AssociatedLocale;
         if (lov == NOTFOUND) lov = getLocale();
         var modDirectionEntity = (ModuleConfigs[mod] && ModuleConfigs[mod].direction == "rtl" ? "&rlm;":"&lrm;");
-        t += "<div class=\"fncol4 cs-" + mod + "\">";
-        if (p[3] && p[4] && p[5]) {
-          t += "<a class=\"fnlink\" title=\"" + mod + "." + p[3] + "." + p[4] + "." + p[5] + "\">";
-          t +=   "<i>" + dString(p[4], lov) + ":" + modDirectionEntity + dString(p[5], lov) + "</i>";
-          t += "</a>":
-          t += " -";
+        t +=   "<div class=\"fncol4 cs-" + mod + "\">";
+        if (Number(p[4]) && Number(p[5])) {
+          t +=   "<a class=\"fnlink\" title=\"" + mod + "." + p[3] + "." + p[4] + "." + p[5] + "\">";
+          t +=     "<i>" + dString(p[4], lov) + ":" + modDirectionEntity + dString(p[5], lov) + "</i>";
+          t +=   "</a>";
+          t +=   " -";
         }
-        t += "</div>";
+        t +=   "</div>";
         
         // Write cell #5: note body
-        t += "<div class=\"fncol5\">";
+        t +=   "<div class=\"fncol5\">";
         
         switch(noteType) {
         case "cr":
@@ -1126,7 +1127,8 @@ var BibleTexts = {
         }
         
         // Finish this body and this row
-        t += "</div></div></div>";
+        t +=   "</div>";
+        t += "</div>";
       
       }
       
@@ -1215,26 +1217,20 @@ var BibleTexts = {
       return Bible.getModuleInformation(mod, "NoticeText");
   },
   
+  SelectedNote:null,
+  
   scroll2Note: function(w, id) {
-    //jsdump("scrolling to:" + id + "\n");
-
-    //Return previous highlighted note to normal if it can be found
-    var oldNoteElem = null;
-    try {oldNoteElem = document.getElementById(prefs.getCharPref("SelectedNote"));} catch(e) {}
-    if (oldNoteElem) {oldNoteElem.className = oldNoteElem.className.replace(/\s*fnselected/, "");}
+    // unhilight any hilighted note
+    if (BibleTexts.SelectedNote) BibleTexts.SelectedNote.className = BibleTexts.SelectedNote.className.replace(" fnselected", "");
     
-    //Now highlight the current note
-    var theNote = document.getElementById(id);
-    if (!theNote) return;
+    // hilight new note
+    this.SelectedNote = document.getElementById(id);
+    if (!this.SelectedNote) return;
+    this.SelectedNote.className += " fnselected";
     
-    theNote.className += " fnselected";
-    prefs.setCharPref("SelectedNote", id);
-    
-    //Now set up the counters such that the note remains highlighted for at least a second
-    window.setTimeout("unhilightNote()",1000);
-    
+    // scroll to new note
     document.getElementById(id).scrollIntoView();
-    document.getElementsByTagName("body")[0].scrollTop = 0;
+    document.getElementsByTagName("body")[0].scrollTop = 0; // prevent scrollIntoView from scrolling body too!
   },
 
   hilightUserNotes:function (notes, w) {
@@ -1773,7 +1769,7 @@ var DictTexts = {
   getEntryHTML: function(key, mods, dontAddParagraphIDs) {
     if (!key || !mods) return "";
     key = this.decodeOSISRef(key);
-    
+   
     mods += ";";
     mods = mods.split(";");
     mods.pop();
@@ -1781,26 +1777,29 @@ var DictTexts = {
     var html = "";
     if (mods.length == 1) {
       try {html = Bible.getDictionaryEntry(mods[0], key);}
-      catch (er) {html = "";}
+      catch (er) {jsdump("e1"); html = "";}
     }
     else if (mods.length > 1) {
       for (var dw=0; dw<mods.length; dw++) {
         var dictEntry="";
         try {dictEntry = Bible.getDictionaryEntry(mods[dw], key);}
-        catch (er) {dictEntry = "";}
+        catch (er) {jsdump("e2"); dictEntry = "";}
         if (dictEntry) {
-          dictEntry = dictEntry.replace(/^(<br>)+/,"");
+          dictEntry = dictEntry.replace(/^(<br>)+/, "");
           var dictTitle = Bible.getModuleInformation(mods[dw], "Description");
-          dictTitle = (dictTitle != NOTFOUND ? "<b>" + dictTitle + "</b><br>":"");
-          html += "<br><br>" + dictTitle + dictEntry;
+          dictTitle = (dictTitle != NOTFOUND ? "<div class=\"dict-description\"" + dictTitle + "</div>":"");
+          html += dictTitle + dictEntry;
         }
       }
     }
     
     if (!html) return "";
 
-    html = "<b>" + key + ":</b> " + html + "<br>";
+    // Add a heading
+    html = "<div class=\"dict-key-heading cd-" + mods[0] + "\">" + key + ":</div>" + html;
+   
     if (!dontAddParagraphIDs) html = Texts.addParagraphIDs(html);
+   
     return html;
   },
   
@@ -1838,18 +1837,19 @@ var DictTexts = {
   },
   
   // Builds HTML text which displays lemma information from numberList
-  //    numberList form: (S|WT|SM|RM):(G|H)#
+  //    numberList form: (S|WT|SM|RM)_(G|H)#
   getLemmaHTML: function(numberList, matchingPhrase) {
-  //dump ("numberList:" + numberList + "\n");
+
     const pad="00000";
-    var styleModule = "Program";
     var defaultBibleLanguage = Bible.getModuleInformation(prefs.getCharPref("DefaultVersion"), "Lang");
     if (defaultBibleLanguage == NOTFOUND) defaultBibleLanguage="";
     var defaultBibleLangBase = (defaultBibleLanguage ? defaultBibleLanguage.replace(/-.*$/, ""):"");
-    var html = "<b>" + matchingPhrase + "</b><br>";
+    
+    // Start building html
+    var html = "";
     var sep = "";
     for (var i=0; i<numberList.length; i++) {
-      var parts = numberList[i].split(":");
+      var parts = numberList[i].split("_");
       if (!parts || !parts[1]) continue;
       var module = null;
       var key = parts[1];
@@ -1889,18 +1889,27 @@ var DictTexts = {
         break;
       case "WT":
         saveKey = "WT" + key;
-        break;     
+        break;
+        
+      default:
+        key = null;
+        break;
       }
-      if (module) {
-        if (styleModule == "Program") styleModule = module;
+      
+      if (key && module) {
         if (key == pad) continue; // G tags with no number
         var entry = Bible.getDictionaryEntry(module, key);
         if (entry) html += sep + entry;
         else html += sep + key;
       }
-      else html += sep + saveKey;
-      sep = "<hr>";
+      else if (key) html += sep + saveKey;
+      
+      sep = "<div class=\"lemma-sep\"></div>";
     }
+    
+    // Add heading now that we know module styling
+    html = "<div class=\"lemma-header cs-" + module + "\">" + matchingPhrase + "</div>" + html;
+   
     return html;
   },
 

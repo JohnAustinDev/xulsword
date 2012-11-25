@@ -742,3 +742,15 @@ function getWindow(elem) {
   
   return Number(elem.id.substr(4));
 }
+
+function getOffset(elem) {
+  var offset = {left:elem.offsetLeft, top:elem.offsetTop};
+  
+  while(elem.offsetParent) {
+    elem = elem.offsetParent;
+    offset.left += elem.offsetLeft;
+    offset.top += elem.offsetTop;
+  }
+  
+  return offset;
+}

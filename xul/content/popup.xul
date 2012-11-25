@@ -23,20 +23,22 @@
 <?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul" ?>
 <?xul-overlay href="chrome://xulsword/content/contextMenu-overlay.xul" ?>
 
+<!DOCTYPE window [
+<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/global.dtd" >
+%globalDTD;
+]>
+
 <window 
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:html="http://www.w3.org/1999/xhtml"
-    onload="load();">
+    onload="document.getElementById('npopup').contentDocument.defaultView.initWindowedPopup();"
+    chromedir="&locale.dir;"
+    class="cs-Program fixedFontSize">
    
   <script>var MainWindow = window.opener;</script>
-  <script><![CDATA[
-    var PopupFrame;
-    function load() {
-      PopupFrame = document.getElementById('npopup').contentDocument.defaultView;
-      PopupFrame.initPopup();
-      PopupFrame.load();
-    }
-  ]]></script>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
   
   <commandset id="popupCommandSet">
     

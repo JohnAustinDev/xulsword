@@ -103,6 +103,7 @@ function closeTabToolTip() {
 /************************************************************************
  * TEXT SCRIPT BOX MOUSE FUNCTIONS
  ***********************************************************************/  
+var scriptMouseOverClasses = /(^|\s)(cr|fn|sr|dt|dtl|sn|un|introlink|noticelink)(\-|\s|$)/;
 function scriptMouseOver(e) {
   
   // Bail if another mouse operation is already happening...
@@ -116,14 +117,13 @@ function scriptMouseOver(e) {
   if (!w) return; // this also excludes Popup which is w==0
   
   // Filter out events without mousover functionality
-  var handledClasses = /(^|\s)(cr|fn|sr|dt|dtl|sn|un|introlink|noticelink)(\-|\s|$)/;
   var elem = e.target;
-  while (elem && (!elem.className || !handledClasses.test(elem.className))) {
+  while (elem && (!elem.className || !scriptMouseOverClasses.test(elem.className))) {
     elem = elem.parentNode;
   }
   if (!elem) return;
   
-  var type = elem.className.match(handledClasses)[2];
+  var type = elem.className.match(scriptMouseOverClasses)[2];
 
 //jsdump("type:" + type + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
   switch (type) {
@@ -162,51 +162,47 @@ function scriptMouseOver(e) {
     if (!Popup.activate(type, elem)) elem.style.cursor = "default";
     
     if (!prefs.getBoolPref("ShowOriginal" + w)) return;
-    
+   
     // Add elem's strong's classes to stylesheet for highlighting
-    var classes = elem.className.split(/\s*/);
+    var classes = elem.className.split(" ");
     classes.shift(); // remove sn base class
     
-    for (var i=0; i<classes.length(); i++) {
+    for (var i=0; i<classes.length; i++) {
       var sheet = document.styleSheets[document.styleSheets.length-1];
-      if (!sheet) return;
-      var sheetLength = sheet.cssRules.length;
-      sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), sheetLength);
-      AddedRules.push( { sheet:sheet, index:sheetLength } );
+      var index = sheet.cssRules.length;
+      sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
+      AddedRules.push( { sheet:sheet, index:index } );
     }
     break;
+  }
+  
+  e.stopPropagation(); // block any higher handlers
 }
-
 
 var MatchingStrongs = getCSS(".matchingStrongs {"); // Read from CSS stylesheet
+var AddedRules = [];
 function scriptMouseOut(e) {
-  
+ 
   if (Popup.showPopupID) window.clearTimeout(Popup.showPopupID);
   
-  if (!prefs.getBoolPref("ShowOriginal" + w)) return;
+  // Remove any footnote hilighting
+  if (BibleTexts.SelectedNote) BibleTexts.SelectedNote.className = BibleTexts.SelectedNote.className.replace(" fnselected", "");
   
-  // Remove any CSS stylesheet Strong's classes
-  removeAddedRules();
-
-}
-
-var AddedRules = [];
-function removeAddedRules() {
-  
+  // Remove any dynamically added Strong's classes from CSS stylesheet 
   for (var i = (AddedRules.length-1); i>=0; i--) {
-    document.styleSheets[AddedRules[i].sheet].deleteRule(AddedRules[i].index);
+    AddedRules[i].sheet.deleteRule(AddedRules[i].index);
   }
   
   AddedRules = [];
-  
+
 }
 
+const scriptClickClasses = /(^|\s)(sr|dt|dtl|cr|sbpin|crtwisty|fnlink|nbsizer|crref|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
 function scriptClick(e) {
   
   // Get the text window of this event
   var w = getWindow(e.target);
   if (w === null) return; // w=0 means popup!!
-  var mod = prefs.getCharPref("Version" + (w == 0 ? getWindow(Popup.elem):w));
   
   // when an unpinned GenBook window is clicked, select its chapter in the navigator
   if (w && !prefs.getBoolPref("IsPinned" + w) && 
@@ -215,20 +211,20 @@ function scriptClick(e) {
     if (!GenBookTexts.isSelectedGenBook(key)) GenBookTexts.navigatorSelect(key);
   }
   
-  // Filter out events without click functionality
-  var handledClasses = /(^|\s)(sr|dt|dtl|cr|sbpin|crtwisty|fnlink|nbsizer|crref|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
+  // Only proceed for events with click functionality
+  
   var elem = e.target;
-  while (elem && (!elem.className || !handledClasses.test(elem.className))) {
+  while (elem && (!elem.className || !scriptClickClasses.test(elem.className))) {
     elem = elem.parentNode;
   }
   if (!elem) return;
   
-  var type = elem.className.match(handledClasses)[2];
+  var type = elem.className.match(scriptClickClasses)[2];
   
 //jsdump("type:" + type + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
   switch (type) {
     
-  // Text box clicks
+  // Text box and Popup clicks
   case "sr":
   case "dt":
   case "dtl":
@@ -260,6 +256,7 @@ function scriptClick(e) {
     break;
 
   case "prevchaplink":
+    var mod = prefs.getCharPref("Version" + w);
     switch (Tab[mod].modType) {
     case BIBLE:
     case COMMENTARY:
@@ -310,6 +307,7 @@ function scriptClick(e) {
     break;
     
   case "nextchaplink":
+    var mod = prefs.getCharPref("Version" + w);
     switch (Tab[mod].modType) {
     case BIBLE:
     case COMMENTARY:
@@ -362,11 +360,12 @@ function scriptClick(e) {
     break;
 
   case "fnlink": //Note reference link
+    var t = elem.title.split(".");
     switch (Tab[t[0]].modType) {
     case BIBLE:
     case COMMENTARY:
       Location.setLocation(t.shift(), t.join("."));
-      Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+      Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
      case DICTIONARY:
      case GENBOOK:
@@ -381,17 +380,28 @@ function scriptClick(e) {
     break;
     
   case "crref":
-    if (t && t.length >= 2 ) {
-      Location.setLocation(t.shift(), t.join("."));
-      Texts.update();
+    var t = elem.title.split(".");
+    var mod = t.shift();
+    
+    // Turn normalized OSIS ref into standard xulsword reference
+    if (t.length > 3) {
+      t[2] = t[2].split("-")[0];
+      t[3] = t[4];
+      t.pop();
     }
+    else t[3] = t[2];
+
+    Location.setLocation(mod, t.join("."));
+
+    Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     break;
     
   }
   
+  e.stopPropagation(); // block any higher handlers
 }
 
-// Will search parents for cr(opened|closed) class and toggle it if found
+// Will search element and parents for cr(opened|closed) class and toggle it if found
 function toggleRefText(elem) {
   while(elem && (!elem.className || !(/(^|\s+)(cropened|crclosed)(\s+|$)/).test(elem.className))) {
     elem = elem.parentNode;
@@ -440,6 +450,8 @@ function scriptDblClick(e) {
   setUnicodePref("SearchText", sel);
   prefs.setCharPref("SearchVersion", mod);
   MainWindow.document.getElementById("cmd_xs_search").doCommand();
+  
+  e.stopPropagation(); // block any higher handlers
 }
 
 /************************************************************************
