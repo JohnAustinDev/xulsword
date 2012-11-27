@@ -38,10 +38,10 @@ function initPopup() {
   
     // This is a windowed popup, so copy the original popup
     Popup = new PopupObj(MainWindow.ViewPortWindow.Popup);
-    document.getElementById("npopupTX").innerHTML = MainWindow.ViewPortWindow.Popup.npopupTX.innerHTML;
     
     // Close the original popup
     MainWindow.ViewPortWindow.Popup.close();
+    
   }
   else {Popup = new PopupObj();}
 
@@ -49,66 +49,49 @@ function initPopup() {
     
 function PopupObj(popupobj) {
 
-  // copy the calling popupobj
+  this.npopup = document.getElementById("npopup");
+  this.npopupTX = document.getElementById("npopupTX");
+  this.showPopupID = null;
+    
   if (popupobj) {
-    for (var m in popupobj) {
-      this[m] = popupobj[m];
-    }
-    
-    this.npopup = document.getElementById("npopup");
-    this.npopupTX = document.getElementById("npopupTX");
-    this.npopup.setAttribute("puptype", this.type);
+    this.npopup.setAttribute("puptype", popupobj.npopup.getAttribute("puptype"));
+    this.npopupTX.innerHTML = popupobj.npopupTX.innerHTML;
+    this.crnote = popupobj.crnote;
+    this.srnote = popupobj.srnote;
   }
 
-  // or else initialize a fresh popup object
-  else {
-    this.type = null;
-    this.elem = null;
-    this.e = null;
-    this.mod = null;
-    
-    this.npopup = document.getElementById("npopup");
-    this.npopupTX = document.getElementById("npopupTX");
-    this.showPopupID = null;
-  }
-
-  this.activate = function(type, elem, e, mod) {
+  this.activate = function(elem, e) {
     
     // completely ignore further activations if this popup is pinned
     if (this.npopup.getAttribute("pinned") == "true") return false;
     
     // if popup is already assigned to this element, do nothing
-    if (this.npopup.parentNode === elem && !mod) return true;
+    if (this.npopup.parentNode === elem) return true;
     
-    // save any supplied input params to this popup
-    var w = (window.name == "npopup" ? 0:getWindow(elem));
-    if (w === null) return false;
+    this.crnote = null; // for module select feature
+    this.srnote = null; // for module select feature
+    
+    var w = getWindow(elem);
+    var mod = (w ? prefs.getCharPref("Version" + w):null);
+    try {var type = elem.className.match(/^([^\-\s]+)/)[1];}
+    catch (er) {type = null;}
    
-    if (type) this.type = type;
-    if (elem) this.elem = elem;
-    if (e) this.e = e;
-    if (mod) this.mod = mod;
-    else if (w) this.mod = prefs.getCharPref("Version" + w);
-    //else the elem came from this popup, so keep old mod...
+    var keepHistory = (w == 0); // means our target is in an existing popup
     
     // Begin building HTML for the popup
     var html = "";
-    
-    var alreadyInPopup = (w == 0);
-
-    var headlink = MainWindow.SBundle.getString(alreadyInPopup ? "back":"close");
-    var headlinkclass = (alreadyInPopup ? "popupBackLink":"popupCloseLink");
-    
     html += "<div class=\"popupheader cs-Program\">";
-    html +=   "<div class=\"popuppin\" pinned=\"" + (this.npopup.getAttribute("pinned")) + "\"";
+    html +=   "<div class=\"popuppin\" pinned=\"" + (this.npopup.getAttribute("pinned")) + "\" ";
     html +=       "onclick=\"Popup.clickpin(" + this.npopup.getAttribute("pinned") + ");\"></div>";
-    html +=   "<a class=\"" + headlinkclass + "\">" + headlink + "</a>";
+    html +=   "<a class=\"" + (keepHistory ? "popupBackLink":"popupCloseLink") + "\">";
+    html +=     MainWindow.SBundle.getString(keepHistory ? "back":"close");
+    html +=   "</a>";
     
-    html +=   "<select class=\"popup-mod-select\" onchange=\"Popup.select(this.value);\" >";
-    if ((/^(cr|sr)$/).test(type)) {
+    html +=   "<select class=\"popup-mod-select\" onchange=\"Popup.select(this.value, " + (w ? w:1) + ");\" >";
+    if (mod && (/^(cr|sr)$/).test(type)) {
       for (var t=0; t<Tabs.length; t++) {
         if (Tabs[t].modType != BIBLE) continue;
-        var selected = (Tabs[t].modName == this.mod ? "selected=\"selected\" ":"");
+        var selected = (Tabs[t].modName == mod ? "selected=\"selected\" ":"");
         html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].locName + "\" " + selected + ">" + Tabs[t].label + "</option>";
       }
     }
@@ -117,11 +100,11 @@ function PopupObj(popupobj) {
     html += "</div>";
     
     // If popup is already open, then save the current popup inside the "back" link of this new popup...
-    html += "<div class=\"prevhtml\">" + (alreadyInPopup ? this.npopupTX.innerHTML:"") + "</div>";
+    html += "<div class=\"prevhtml\">" + (keepHistory ? this.npopupTX.innerHTML:"") + "</div>";
 
-    html += "<div class=\"popup-text cs-Program\" moduleType=\"" + Tab[this.mod].tabType + "\">";
+    html += "<div class=\"popup-text cs-Program\">";
     
-    switch (this.type) {
+    switch (type) {
     
     case "popupBackLink":
       this.npopupTX.innerHTML = this.npopup.getElementsByClassName("prevhtml")[0].innerHTML;
@@ -131,57 +114,63 @@ function PopupObj(popupobj) {
     case "cr":
     case "fn":
     case "un":
-      var n = new RegExp("<div id=\"src\\." + this.type + "\\." + this.elem.title + "\\.[^\.]+\">.*?<\\/div>");
-      if (mod) var note = this.lastNote;
-      else note = Texts.footnotes[w].match(n)[0];
-      html += BibleTexts.getNotesHTML(note, this.mod, true, true, true, true, w);
+      if (mod && w) {
+        var n = new RegExp("<div id=\"src\\." + type + "\\." + elem.title + "\\.[^\.]+\">.*?<\\/div>");
+        this.crnote = Texts.footnotes[w].match(n)[0];
+        html += BibleTexts.getNotesHTML(this.crnote, mod, true, true, true, true, w);
+      }
       break;
 
     case "sr":
-      var reflist = Texts.getScriptureReferences(this.elem.title != "unavailable" ? this.elem.title:this.elem.innerHTML, this.mod);
-      html += BibleTexts.getNotesHTML("<div id=\"src.cr.1.0.0.0." + this.mod + "\">" + reflist + "</div>", this.mod, true, true, true, true, w);
+      if (mod && w) {
+        this.srnote = Texts.getScriptureReferences(elem.title != "unavailable" ? elem.title:elem.innerHTML, mod);
+        this.srnote = "<div id=\"src.cr.1.0.0.0." + mod + "\">" + this.srnote + "</div>"
+        html += BibleTexts.getNotesHTML(this.srnote, mod, true, true, true, true, w);
+      }
       break;
     
     case "dtl":
     case "dt":
-      var mdata = this.elem.title;
+      if (elem.title) {
+        var mdata = elem.title;
+        
+        // Backward Compatibility to < 2.23
+        if (mdata.indexOf(":") == -1) {
+          mdata = mdata.replace(" ", "_32_", "g");
+          mdata = mdata.replace(";", " ", "g");
+          mdata = mdata.replace(/((^|\s)\w+)\./g, "$1:");
+        }
+        
+        var t = mdata.split(" ");
+        if (!t || !t[0]) break;
+        var dnames="", dword="", sep="";
+        for (var i=0; i<t.length; i++) {
+          if (!t[i]) continue;
+          dnames += sep + t[i].split(":")[0];
+          if (!dword) dword = t[i].split(":")[1];
+          sep = ";"
+        }
       
-      // Backward Compatibility to < 2.23
-      if (mdata.indexOf(":") == -1) {
-        mdata = mdata.replace(" ", "_32_", "g");
-        mdata = mdata.replace(";", " ", "g");
-        mdata = mdata.replace(/((^|\s)\w+)\./g, "$1:");
+        html += DictTexts.getEntryHTML(dword, dnames, true);
       }
-      
-      var t = mdata.split(" ");
-      if (!t || !t[0]) break;
-      var dnames="", dword="", sep="";
-      for (var i=0; i<t.length; i++) {
-        if (!t[i]) continue;
-        dnames += sep + t[i].split(":")[0];
-        if (!dword) dword = t[i].split(":")[1];
-        sep = ";"
-      }
-    
-      html += DictTexts.getEntryHTML(dword, dnames, true);
       break;
       
     case "sn":
-      var snlist = this.elem.className.split(" ");
-      snlist.shift(); // remove base class: sn
-      html += DictTexts.getLemmaHTML(snlist, this.elem.innerHTML);
+      var snlist = elem.className.split(" ");
+      if (snlist) snlist.shift(); // remove base class: sn
+      if (snlist) html += DictTexts.getLemmaHTML(snlist, elem.innerHTML);
       break;
       
     case "introlink":
-      html += BibleTexts.getBookIntroduction(this.mod, Location.getBookName());
+      if (mod) html += BibleTexts.getBookIntroduction(mod, Location.getBookName());
       break;
       
     case "noticelink":
-      html += BibleTexts.getNoticeLink(this.mod, 1);
+      if (mod) html += BibleTexts.getNoticeLink(mod, 1);
       break;
       
     default:
-      jsdump("Unhandled popup type \"" + this.type + "\".\n");
+      jsdump("Unhandled popup type \"" + type + "\".\n");
     }
     
     html += "</div>";
@@ -190,20 +179,22 @@ function PopupObj(popupobj) {
 //window.setTimeout("debugStyle(document.getElementById('npopup'))", 1000);
 
     this.npopupTX.innerHTML = html;
-    if (!alreadyInPopup) {
-      this.showPopupID = window.setTimeout("Popup.open();", POPUPDELAY);
+    if (w) {
+      this.elem = elem;
+      this.e = e;
+      this.showPopupID = window.setTimeout("Popup.open('" + type + "');", POPUPDELAY);
     }
     
     return true;
   };
   
-  this.open = function() {
+  this.open = function(type) {
     
     // set max height of popup
     this.npopup.style.maxHeight = (window.innerHeight/2) + "px";
     
     // assign type to popup for CSS
-    this.npopup.setAttribute("puptype", this.type);
+    this.npopup.setAttribute("puptype", type);
     
     // make popup appear (via CSS)
     this.elem.appendChild(this.npopup);
@@ -223,8 +214,13 @@ function PopupObj(popupobj) {
     document.getElementsByTagName("body")[0].appendChild(this.npopup);
   };
   
-  this.select = function(mod) {
-    Popup.activate(Popup.type, Popup.elem, Popup.e, mod);
+  this.select = function(mod, w) {
+    var pt = this.npopupTX.getElementsByClassName("popup-text");
+    if (!pt) return;
+    pt = pt[0];
+    
+    if (this.crnote) pt.innerHTML = BibleTexts.getNotesHTML(this.crnote, mod, true, true, true, true, w);
+    else if (this.srnote) pt.innerHTML = BibleTexts.getNotesHTML(this.srnote, mod, true, true, true, true, w);
   };
   
   this.clickpin = function(pinned) {
@@ -279,9 +275,11 @@ function PopupObj(popupobj) {
   
 }
 
+/*
 function debugStyle(elem) {
   var s = window.getComputedStyle(elem);
   for (var m in s) {
     jsdump(m + " = " + s[m]);
   }
 }
+*/

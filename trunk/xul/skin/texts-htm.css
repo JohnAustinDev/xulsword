@@ -292,23 +292,30 @@ body[chromedir="rtl"] .fncol4 {
 .cropened .crref:after {
   content:": ";
 }
-.crclosed .crtext {
+.crtext {
   display:none;
+}
+.cropened .crtext {
+  display:inline;
 }
 .cropened .crtext.opposing-directions {
   display:inline-block;
+}
+.cr-sep {
+  display:inline;
+}
+.cr-sep:after {
+  content:";";
+  -moz-padding-end:0.5em;
 }
 .cropened .cr-sep {
   display:block;
   border-top:1px solid grey;
   margin:10px;
 }
-.crclosed .cr-sep {
-  display:inline;
-}
-.crclosed .cr-sep:after {
-  content:";";
-  -moz-padding-end:0.5em;
+.cropened .cr-sep:after {
+  content:"";
+  -moz-padding-end:0em;
 }
 .fnselected .fncol5 {
   border:1px outset yellow;
