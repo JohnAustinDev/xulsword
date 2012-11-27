@@ -96,8 +96,22 @@ const PMMODAL="alwaysRaised,centerscreen,modal";
 const PMNORMAL=0, PMSTOP=1;
 const APPLICATIONID="xulsword@xulsword.org";
 const XSNOTE = "(fn|cr|un)\\.([^\\.]+)\\.(\\w+)\\.(\\d+)\\.(\\d+)\\.(\\w+)";
-const ConfigProps = ["direction", "fontFamily", "fontSizeAdjust", "lineHeight", "AssociatedModules", "AssociatedLocale", "StyleRule"];
-const ConfigCSS   = ["direction", "font-family", "font-size-adjust", "line-height"];
+
+// Config's properties are all the properties which Config type objects will have. 
+// The Config property objects map the property for its various uses:
+//  modConf = Name of a possible entry in a module's .conf file
+//  localeConf = Name of a possible property in a locale's config.properties file
+//  CSS = Name of a possible corresponding CSS property (should also be specified in cs-Program style)
+const Config = {
+  direction:        { modConf:"Direction", localeConf:"Direction", CSS:"direction" },
+  fontFamily:       { modConf:"Font", localeConf:"Font", CSS:"font-family" },
+  fontSizeAdjust:   { modConf:"FontSizeAdjust", localeConf:"FontSizeAdjust", CSS:"font-size-adjust" },
+  lineHeight:       { modConf:"LineHeight", localeConf:"LineHeight", CSS:"line-height" },
+  textAlign:        { modConf:null, localeConf:null, CSS:"text-align" },
+  AssociatedModules:{ modConf:null, localeConf:"DefaultModule", CSS:null },
+  AssociatedLocale: { modConf:null, localeConf:null, CSS:null },
+  StyleRule:        { modConf:null, localeConf:null, CSS:null },
+};
 
 const NumBooks=66;
 const NumOT=39;

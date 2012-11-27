@@ -38,7 +38,10 @@
   <script src="chrome://xulsword/content/viewport.js" type="text/javascript"></script>
 
   </head>
-  <body id="viewportbody" class="userFontSize" chromedir="ltr" chooser="bible" onload="ViewPort.load(); initPopup();" onunload="ViewPort.unload();" onmouseover="chooserMouse(event)" onmouseout="chooserMouse(event)" onclick="chooserMouse(event)">
+  <body id="viewportbody" class="userFontSize" chromedir="ltr" chooser="bible" onload="ViewPort.load(); initPopup();" onunload="ViewPort.unload();" 
+      onmouseover="chooserMouse(event)" 
+      onmouseout="chooserMouse(event)" 
+      onclick="chooserMouse(event)">
   
   <div id="chbutton_open"></div>
         
@@ -173,35 +176,6 @@
       </div>
     </div>
   </div>
-  
-<!--  
-  <label>Chooser value<label>
-  <select onchange="document.getElementById('chooser').setAttribute('value', this.value);"><option value="bible" selected="selected">bible</option><option value="book">book</option><option value="none">none</option></select>
-  <br>
-  <label>Tabrow value<label>
-  <select onchange="document.getElementById('tabrow').setAttribute('value', this.value);"><option value="show1">show1</option><option value="show2">show2</option><option value="show3" selected="selected">show3</option></select>
-  <br>
-  <label>Text1 value</label>
-  <select onchange="document.getElementById('text1').setAttribute('value', this.value);"><option value="show1" selected="selected">show1</option><option value="show2">show2</option><option value="show3">show3</option><option value="hide">hide</option><select>
-  <label>Text2 value<label>
-  <select onchange="document.getElementById('text2').setAttribute('value', this.value);"><option value="show1" selected="selected">show1</option><option value="show2">show2</option><option value="show3">show3</option><option value="hide">hide</option><select>
-  <label>Text3 value<label>
-  <select onchange="document.getElementById('text3').setAttribute('value', this.value);"><option value="show1" selected="selected">show1</option><option value="show2">show2</option><option value="show3">show3</option><option value="hide">hide</option><select>
-  <br>
-  <label>Foot1 value<label>
-  <select onchange="document.getElementById('note1').setAttribute('value', this.value);"><option value="show">show</option><option value="hide" selected="selected">hide</option><option value="max">max</option></select>
-  <label>Foot2 value<label>
-  <select onchange="document.getElementById('note2').setAttribute('value', this.value);"><option value="show" selected="selected">show</option><option value="hide">hide</option><option value="max">max</option></select>
-  <label>Foot3 value<label>
-  <select onchange="document.getElementById('note3').setAttribute('value', this.value);"><option value="show">show</option><option value="hide">hide</option><option value="max" selected="selected">max</option></select>
-  <br>
-  <label>Pin1 value<label>
-  <select onchange="document.getElementById('text1').setAttribute('title', this.value);"><option value="pinned">pinned</option><option value="unpinned" selected="selected">unpinned</option></select>
-  <label>Pin2 value<label>
-  <select onchange="document.getElementById('text2').setAttribute('title', this.value);"><option value="pinned">pinned</option><option value="unpinned" selected="selected">unpinned</option></select>
-  <label>Pin3 value<label>
-  <select onchange="document.getElementById('text3').setAttribute('title', this.value);"><option value="pinned" selected="selected">pinned</option><option value="unpinned">unpinned</option></select>
-!-->
 
   </body>
 </html>

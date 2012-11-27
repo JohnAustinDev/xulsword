@@ -91,30 +91,31 @@ function adjustFontSizes(delta) {
 }
 
 function getLocaleConfig(lc) {
-  // Assign localeConfig members from all config.properties entries (see UI-MAP.txt)
-  // These must properly map to ConfigProps members (most of which are CSS properties)
-  var localeProps = ["Direction", "Font", "FontSizeAdjust", "LineHeight", "DefaultModule"];
-
   var localeConfig = {};
   
   var programCSS = getCSS(".cs-Program {");
   var b = getLocaleBundle(lc, "config.properties");
 
-  for (var i=0; i<localeProps.length; i++) {
-    var val = b.GetStringFromName(localeProps[i]);
+  // All config properties should have a valid value, and it must not be null.
+  // Read values from locale's config.properties file
+  for (var p in Config) {
+    if (!Config[p].localeConf) continue;
+    var val = b.GetStringFromName(Config[p].localeConf);
     if ((/^\s*$/).test(val)) val = NOTFOUND;
     
-    // All localeconfig members should have a valid value, and it must not be null.
-    if (val == NOTFOUND && i < 4) {
-      if (programCSS.rule.style[ConfigProps[i]]) {
-        val = programCSS.rule.style[ConfigProps[i]];
+    
+    if (val == NOTFOUND && Config[p].CSS) {
+      if (programCSS.rule.style[p]) {
+        val = programCSS.rule.style[p];
       }
     }
     
-    localeConfig[ConfigProps[i]] = val;
+    localeConfig[p] = val;
   }
  
   localeConfig["AssociatedLocale"] = lc;
+  
+  localeConfig["textAlign"] = (localeConfig["direction"] == "rtl" ? "right":"left");
   
   // Insure there are single quotes around font names
   localeConfig.fontFamily = localeConfig.fontFamily.replace(/\"/g, "'");
@@ -128,26 +129,24 @@ function getLocaleConfig(lc) {
 }
 
 function getModuleConfig(mod) {
-  // Create and populate ModuleConfigs
   var moduleConfig = {};
   
   var programCSS = getCSS(".cs-Program {");
   
-  // Assign ModuleConfigs members from module .conf entries.
-  // These must properly map to ConfigProps members (most of which are CSS properties)
-  var confProps = ["Direction", "Font", "FontSizeAdjust", "LineHeight"];
-  for (var i=0; i<confProps.length; i++) {
-    var val = Bible.getModuleInformation(mod, confProps[i]);
+  // All versionconfig members should have a valid value, and it must not be null.
+  // Read values from module's .conf file
+  for (var p in Config) {
+    if (!Config[p].modConf) continue;
+    var val = Bible.getModuleInformation(mod, Config[p].modConf);
     if ((/^\s*$/).test(val)) val = NOTFOUND;
     
-    // All versionconfig members should have a valid value, and it must not be null.
-    if (val == NOTFOUND && i < 4) {
-      if (programCSS.rule.style[ConfigProps[i]]) {
-        val = programCSS.rule.style[ConfigProps[i]];
+    if (val == NOTFOUND && Config[p].CSS) {
+      if (programCSS.rule.style[p]) {
+        val = programCSS.rule.style[p];
       }
     }
     
-    moduleConfig[ConfigProps[i]] = val;
+    moduleConfig[p] = val;
   }
   
   // Assign associated locale and modules
@@ -160,7 +159,9 @@ function getModuleConfig(mod) {
   
   // Normalize direction value
   moduleConfig.direction = (moduleConfig.direction.search("RtoL", "i") != -1 ? "rtl":"ltr");
-  
+
+  moduleConfig["textAlign"] = (moduleConfig["direction"] == "rtl" ? "right":"left");
+    
   // Insure there are single quotes around font names
   moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/\"/g, "'");
   if (moduleConfig.fontFamily != NOTFOUND && !(/'.*'/).test(moduleConfig.fontFamily)) 
@@ -174,7 +175,10 @@ function getModuleConfig(mod) {
 
 function createStyleRule(selector, config) {
   var rule = selector + " {";
-  for (var i=0; i<ConfigCSS.length; i++) {rule += ConfigCSS[i] + ":" + config[ConfigProps[i]] + "; ";}
+  for (var p in Config) {
+    if (!Config[p].CSS) continue;
+    rule += Config[p].CSS + ":" + config[p] + "; ";
+  }
   rule += "}";
 
 //jsdump(rule); 

@@ -145,7 +145,7 @@ var Location = {
  ***********************************************************************/ 
 
 function initLocales() {
-  var currentLocaleIsValid=false;
+  var validLocale = null;
   
   var chromeRegService = Components.classes["@mozilla.org/chrome/chrome-registry;1"].getService();
 	var toolkitChromeReg = chromeRegService.QueryInterface(Components.interfaces.nsIToolkitChromeRegistry);
@@ -158,18 +158,13 @@ function initLocales() {
 	while(availableLocales.hasMore()) {
 		var lc = availableLocales.getNext();
     
-    if (lc == currentLocale) currentLocaleIsValid=true;
+    if (lc == currentLocale) validLocale = lc;
     LocaleConfigs[lc] = getLocaleConfig(lc);
 	}
   
-  if (!currentLocaleIsValid) jsdump("Current locale is not valid: " + currentLocale + "\n");
-  else {
-    // Copy current locale's config to ProgramConfig.
-    ProgramConfig = copyObj(LocaleConfigs[currentLocale]);
-    ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
-  }
-  
-  return currentLocaleIsValid;
+  if (!validLocale) jsdump("Current locale is not valid: " + currentLocale + "\n");
+
+  return validLocale;
 }
 
 
@@ -356,6 +351,7 @@ function initTabGlobals() {
     tab.isRTL = (ModuleConfigs[mod].direction == "rtl");
     tab.index = m;
     tab.description = Bible.getModuleInformation(mod, "Description");
+    tab.locName = (isASCII(tab.description) ? DEFAULTLOCALE:mod);
     
     // Save Global tab objects
     Tabs.push(tab);
@@ -484,7 +480,8 @@ function initBooks() {
 
 function xulswordInit() {
 
-  if (!initLocales()) {
+  var currentLocale = initLocales();
+  if (!currentLocale) {
   
     // Present locale not valid? Change to DEFAULTLOCALE and restart.
     rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
@@ -493,12 +490,16 @@ function xulswordInit() {
     appStartup.quit(Components.interfaces.nsIAppStartup.eRestart | Components.interfaces.nsIAppStartup.eForceQuit);
     return;
   }
-    
+
   // log our locales
   var s = "";
   for (var l in LocaleConfigs) {s += l + "; ";}
   jsdump("Loaded locales:" + s);
     
+  // Copy current locale's config to ProgramConfig.
+  ProgramConfig = copyObj(LocaleConfigs[currentLocale]);
+  ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
+  
   var defaultMod = NOTFOUND;
   
   if (initModules()) {

@@ -129,8 +129,7 @@ var ViewPort = {
       t.setAttribute("CanDoNextPage", next);
       t.setAttribute("CanDoPreviousPage", prev);
       
-      // Set this window's CSS info
-      t.className = t.className.replace(/\s*cs\-\S+/, "") + " cs-" + prefs.getCharPref("Version" + w);
+      // Set this window's textdir
       t.setAttribute("textdir", ModuleConfigs[prefs.getCharPref("Version" + w)].direction);
       
       // Pins
@@ -152,12 +151,6 @@ var ViewPort = {
     // Footnote boxes
     for (w=1; w<=NW; w++) {
       var nb = document.getElementById("note" + w);
-      
-      if (Tab[prefs.getCharPref("Version" + w)].modType == DICTIONARY)
-          nb.className = nb.className.replace(/\s*cs\-\S+/, "") + " cs-Program";
-      else 
-          nb.className = nb.className.replace(/\s*cs\-\S+/, "") + " cs-" + prefs.getCharPref("Version" + w);
-  
       document.getElementById("text" + w).setAttribute("footnotesEmpty", !BibleTexts.checkNoteBox(w));
       document.getElementById("text" + w).setAttribute("footnotesMaximized", prefs.getBoolPref("MaximizeNoteBox" + w));
     }
@@ -314,7 +307,6 @@ var ViewPort = {
   footheight:30,
   padbot:24,
   bbheight:18,
-  tmp:55,
   hackedResizing: function(skipBibleChooserTest) {
     
     var winh = getPrefOrCreate("ViewPortHeight", "Int", window.innerHeight);
