@@ -65,7 +65,7 @@ function goQuitApplication()
 function goUpdateCommand(aCommand)
 {
   try {
-    var controller = top.document.commandDispatcher
+    var controller = MainWindow.document.commandDispatcher
                         .getControllerForCommand(aCommand);
 
     var enabled = false;
@@ -83,7 +83,7 @@ function goUpdateCommand(aCommand)
 function goDoCommand(aCommand)
 {
   try {
-    var controller = top.document.commandDispatcher
+    var controller = MainWindow.document.commandDispatcher
                         .getControllerForCommand(aCommand);
     if (controller && controller.isCommandEnabled(aCommand))
       controller.doCommand(aCommand);

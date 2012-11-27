@@ -81,7 +81,7 @@ function openTabToolTip(t, w, cX, cY) {
   desc = desc.substr(0, TOOLTIP_LEN);
   if (desc.length==TOOLTIP_LEN) desc += "...";
   
-  tt.firstChild.setAttribute("class", "cs-" + modName);
+  tt.firstChild.setAttribute("class", "cs-" + Tab[modName].locName);
   tt.firstChild.setAttribute("value", desc);
   
   if (ShowTabToolTip) window.clearTimeout(ShowTabToolTip);
@@ -214,7 +214,6 @@ function scriptClick(e) {
   }
   
   // Only proceed for events with click functionality
-  
   var elem = e.target;
   while (elem && (!elem.className || !scriptClickClasses.test(elem.className))) {
     elem = elem.parentNode;
@@ -542,10 +541,9 @@ var MouseWheel = {
   scroll: function(event) {
     
     // find window in which event occurred
-    var w = event.target;
-    while (w && (!w.id || !(/^text\d+$/).test(w.id))) {w = w.parentNode;}
-    if (!w) return;
-    MouseWheel.SWwin = Number(w.id.replace("text", ""));
+    var w = getWindow(event.target);
+    if (!w) return; // also returns if event is in Popup
+    MouseWheel.SWwin = w;
 
     // dictionaries don't do flow columns and don't sync to other windows
     // so no special scrollwheel response is needed

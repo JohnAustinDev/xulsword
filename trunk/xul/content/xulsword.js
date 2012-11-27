@@ -610,9 +610,7 @@ function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefa
     if (skipORIG) return null;
   }
   
-  // Module class is from the module unless description is ASCII, in which case
-  // DEFAULTLOCALE class is used.
-  var mclass = "cs-" + (isASCII(Tabs[t].description) ? DEFAULTLOCALE:Tabs[t].modName);
+  var mclass = "cs-" + Tabs[t].locName;
   var eclass = elem.getAttribute("class");
   elem.setAttribute("class", (eclass ? eclass + " ":"") + mclass);
 

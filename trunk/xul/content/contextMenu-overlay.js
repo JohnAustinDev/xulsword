@@ -332,7 +332,7 @@ var ContextMenuController = {
         return MainWindow.BookmarksController.isCommandEnabled(cmd, ContextMenu.target.bookmark);
         break;
     }
-  
+
     return MainWindow.XulswordController.isCommandEnabled(cmd, ContextMenu.target);
   },
   

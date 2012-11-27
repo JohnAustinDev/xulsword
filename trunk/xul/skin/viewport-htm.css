@@ -346,10 +346,6 @@ body[chromedir="rtl"] #chbutton_open {
   width:15px;
   height:14px;
 }
-.text[textdir="rtl"] .nbsizer {
-  right:auto;
-  left:42px;
-}
 .text[footnotesMaximized="true"] .nbsizer {
   background:url(chrome://xulsword/skin/images/norm.bmp);
 }
@@ -363,6 +359,7 @@ body[chromedir="rtl"] #chbutton_open {
 	background:rgb(240,235,240);
 	border:2px solid rgb(150,150,150);
   border-radius:8px;
+  padding:0px 5px 0px 5px;
 }
 #text1 .nb {
   height:192px; /* dynamic in viewport.js */

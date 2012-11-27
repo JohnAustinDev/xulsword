@@ -235,28 +235,5 @@ textbox deck[anonid="search-icons"] {
 .videoHelpMenuItem {
   list-style-image: url("chrome://xulsword/skin/images/videohelp.png") !important;
 }
- 
-/* Drag and Drop feedback */
-/*#bookmarks-menu menu > hbox[align="center"]{
-  border-top:1px solid transparent;
-  border-bottom:1px solid transparent;
-}
-#bookmarks-menu menu[dragover-top="true"]{
-  padding-top:2em;
-}
-#bookmarks-menu menu[dragover-bottom="true"]{
-  padding-bottom:2em;
-}
-#bookmarks-menu menuitem[dragover-top="true"] {
-  border-top:1px solid black !important;
-}
-#bookmarks-menu menuitem[dragover-bottom="true"] {
-  border-bottom:1px solid black !important;
-}
-#bookmarks-menu menuseparator[dragover-top="true"] {
-  border-top:1px solid black !important;
-}
-#bookmarks-menu menuseparator[dragover-bottom="true"] {
-  border-bottom:1px solid black !important;
-}*/
+
 

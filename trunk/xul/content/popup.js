@@ -34,7 +34,6 @@ function initWindowedPopup() {
 // popup from which it came.
 function initPopup() {
   
-  // Create our Popup
   if (window.name == "npopup") {
   
     // This is a windowed popup, so copy the original popup
@@ -49,14 +48,16 @@ function initPopup() {
 }
     
 function PopupObj(popupobj) {
-  this.npopup = document.getElementById("npopup");
-  this.npopupTX = document.getElementById("npopupTX");
-  
+
   // copy the calling popupobj
   if (popupobj) {
     for (var m in popupobj) {
       this[m] = popupobj[m];
     }
+    
+    this.npopup = document.getElementById("npopup");
+    this.npopupTX = document.getElementById("npopupTX");
+    this.npopup.setAttribute("puptype", this.type);
   }
 
   // or else initialize a fresh popup object
@@ -66,6 +67,8 @@ function PopupObj(popupobj) {
     this.e = null;
     this.mod = null;
     
+    this.npopup = document.getElementById("npopup");
+    this.npopupTX = document.getElementById("npopupTX");
     this.showPopupID = null;
   }
 
@@ -74,11 +77,11 @@ function PopupObj(popupobj) {
     // completely ignore further activations if this popup is pinned
     if (this.npopup.getAttribute("pinned") == "true") return false;
     
-    // if popup is already under this element, do nothing
+    // if popup is already assigned to this element, do nothing
     if (this.npopup.parentNode === elem && !mod) return true;
     
     // save any supplied input params to this popup
-    var w = getWindow(elem);
+    var w = (window.name == "npopup" ? 0:getWindow(elem));
     if (w === null) return false;
    
     if (type) this.type = type;
@@ -104,9 +107,9 @@ function PopupObj(popupobj) {
     html +=   "<select class=\"popup-mod-select\" onchange=\"Popup.select(this.value);\" >";
     if ((/^(cr|sr)$/).test(type)) {
       for (var t=0; t<Tabs.length; t++) {
-        if (Tabs[0].modType != BIBLE) continue;
+        if (Tabs[t].modType != BIBLE) continue;
         var selected = (Tabs[t].modName == this.mod ? "selected=\"selected\" ":"");
-        html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].modName + "\" " + selected + ">" + Tabs[t].label + "</option>";
+        html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].locName + "\" " + selected + ">" + Tabs[t].label + "</option>";
       }
     }
     html +=   "</select>";
@@ -116,7 +119,7 @@ function PopupObj(popupobj) {
     // If popup is already open, then save the current popup inside the "back" link of this new popup...
     html += "<div class=\"prevhtml\">" + (alreadyInPopup ? this.npopupTX.innerHTML:"") + "</div>";
 
-    html += "<div class=\"popup-text\" textdir=\"" + ModuleConfigs[this.mod].direction + "\" moduleType=\"" + Tab[this.mod].tabType + "\">";
+    html += "<div class=\"popup-text cs-Program\" moduleType=\"" + Tab[this.mod].tabType + "\">";
     
     switch (this.type) {
     
@@ -129,7 +132,9 @@ function PopupObj(popupobj) {
     case "fn":
     case "un":
       var n = new RegExp("<div id=\"src\\." + this.type + "\\." + this.elem.title + "\\.[^\.]+\">.*?<\\/div>");
-      html += BibleTexts.getNotesHTML(Texts.footnotes[w].match(n)[0], this.mod, true, true, true, true, w);
+      if (mod) var note = this.lastNote;
+      else note = Texts.footnotes[w].match(n)[0];
+      html += BibleTexts.getNotesHTML(note, this.mod, true, true, true, true, w);
       break;
 
     case "sr":

@@ -106,7 +106,7 @@ var Texts = {
     }
     
     var t = document.getElementById("text" + w);
-    var ltr = (t.getAttribute("textdir") == "ltr");
+    var ltr = (ModuleConfigs[display.mod].direction == "ltr");
     var sb = t.getElementsByClassName("sb")[0];
 
     // don't read new text if the results will be identical to the last displayed text
@@ -167,6 +167,7 @@ var Texts = {
       hd.innerHTML = ti.htmlHead;
       
       var sb = t.getElementsByClassName("sb")[0];
+      sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = prev.htmlText + (ti.htmlText.length > 64 ? ti.htmlText:"") + next.htmlText;
 
       var nb = t.getElementsByClassName("nb")[0];
@@ -229,6 +230,7 @@ var Texts = {
       hd.innerHTML = ti.htmlHead;
       
       var sb = t.getElementsByClassName("sb")[0];
+      sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = (ti.htmlText.length > 64 ? ti.htmlText:"");
     }
     
@@ -266,6 +268,7 @@ var Texts = {
       hd.innerHTML = ti.htmlHead;
       
       var sb = t.getElementsByClassName("sb")[0];
+      sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = ti.htmlText;
     }
     
@@ -299,6 +302,7 @@ var Texts = {
       hd.innerHTML = ti.htmlHead;
       
       var sb = t.getElementsByClassName("sb")[0];
+      sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = ti.htmlEntry;
       
       var nb = t.getElementsByClassName("nb")[0];
@@ -353,7 +357,7 @@ var Texts = {
     var charPrev = (config.direction && config.direction == "rtl" ? String.fromCharCode(8594):String.fromCharCode(8592));
 
     var html = "";
-    html += "<div class=\"navlink cs-Program\">";
+    html += "<div class=\"navlink\">";
     html +=   "&lrm;<span class=\"navlink-span\">" + charPrev + "</span> " + "<a class=\"prevchaplink\">" + SBundle.getString('PrevChaptext') + "</a>";
     html +=   " / ";
     html +=   "<a class=\"nextchaplink\">&lrm;" + SBundle.getString('NextChaptext') + "</a>" + " <span class=\"navlink-span\">" + charNext + "</span>";
@@ -645,7 +649,7 @@ var Texts = {
         break;
       case SCROLLTYPENONE:         // don't scroll (for links this becomes SCROLLTYPECENTER)
       case SCROLLTYPECENTER:       // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
-        var ltr = (t.getAttribute("textdir") == "ltr");
+        var ltr = (ModuleConfigs[mod].direction == "ltr");
         var rtl_pageOffsetLeft;
         var tv = sb.firstChild;
         if(!ltr && tv) {
@@ -1089,7 +1093,7 @@ var BibleTexts = {
         var lov = ModuleConfigs[mod].AssociatedLocale;
         if (lov == NOTFOUND) lov = getLocale();
         var modDirectionEntity = (ModuleConfigs[mod] && ModuleConfigs[mod].direction == "rtl" ? "&rlm;":"&lrm;");
-        t +=   "<div class=\"fncol4 cs-" + mod + "\">";
+        t +=   "<div class=\"fncol4\">";
         if (Number(p[4]) && Number(p[5])) {
           t +=   "<a class=\"fnlink\" title=\"" + mod + "." + p[3] + "." + p[4] + "." + p[5] + "\">";
           t +=     "<i>" + dString(p[4], lov) + ":" + modDirectionEntity + dString(p[5], lov) + "</i>";
@@ -1142,7 +1146,7 @@ var BibleTexts = {
   
   getRefHTML: function(w, mod, body) {
     var ref = body.split(";");
-    var html = "<div class=\"cs-" + mod + "\">";
+    var html = "";
     var sep = "";
     
     for (var i=0; i<ref.length; i++) {
@@ -1156,17 +1160,15 @@ var BibleTexts = {
       
       var rmod = Tabs[aVerse.tabNum].modName;
       html += sep;
-      html += "<a class=\"crref cs-Program\" title=\"" + rmod + "." + aVerse.location + "\">";
+      html += "<a class=\"crref\" title=\"" + rmod + "." + aVerse.location + "\">";
       html += ref2ProgramLocaleText(aVerse.location);
       html += "</a>";
-      html += "<span class=\"crtext cs-" + rmod + "\">";
+      html += "<span class=\"crtext cs-" + rmod + (ProgramConfig.direction != ModuleConfigs[rmod].direction ? " opposing-directions":"") + "\">";
       html += aVerse.text + (rmod != mod ? " (" + Tab[rmod].label + ")":"");
       html += "</span>";
       
       sep = "<span class=\"cr-sep\"></span>";
     }
-    
-    html += "</div>";
     
     return html;
   },

@@ -9,6 +9,7 @@
   direction:ltr;
   font-size-adjust:none;
   line-height:150%;
+  text-align:left;
 }
 .userFontSize {
   font-size:14px;

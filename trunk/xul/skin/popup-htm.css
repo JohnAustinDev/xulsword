@@ -178,3 +178,23 @@ body[chromedir="rtl"] .popup-mod-select {
   width:100%;
   clear:both;
 }
+
+/* dictionary styles */
+#npopup .dtl,
+#npopup .sr {
+  border-bottom:none;
+}
+#npopup .dtl:hover,
+#npopup .sr:hover {
+  border-bottom:1px solid;
+}
+
+/* footnote styles */
+#npopup .fntable {
+  margin:0px;
+}
+#npopup .fncol2,
+#npopup .fncol3,
+#npopup .fncol4 {
+  display:none;
+}

@@ -514,31 +514,31 @@
 
 <!-- TOOLTIPS DEFINED HERE !-->
 <tooltip id="backTT">
-  <label class="cs-Program" value="&history.back.tooltip;" />
+  <label value="&history.back.tooltip;" />
 </tooltip>
 <tooltip id="historymenuTT">
-  <label class="cs-Program" value="&history.all.tooltip;" />
+  <label value="&history.all.tooltip;" />
 </tooltip>
 <tooltip id="forwardTT">
-  <label class="cs-Program" value="&history.forward.tooltip;" />
+  <label value="&history.forward.tooltip;" />
 </tooltip>
 <tooltip id="searchTextTT">
-  <label class="cs-Program" value="&searchbox.tooltip;" />
+  <label value="&searchbox.tooltip;" />
 </tooltip>
 <tooltip id="searchButtonTT">
-  <label class="cs-Program" value="&search.tooltip;" />
+  <label value="&search.tooltip;" />
 </tooltip>
 <tooltip id="hdbuttonTT">
-  <label class="cs-Program" value="&headingsButton.tooltip;" />
+  <label value="&headingsButton.tooltip;" />
 </tooltip>
 <tooltip id="fnbuttonTT">
-  <label class="cs-Program" value="&notesButton.tooltip;" />
+  <label value="&notesButton.tooltip;" />
 </tooltip>
 <tooltip id="crbuttonTT">
-  <label class="cs-Program" value="&crossrefsButton.tooltip;" />
+  <label value="&crossrefsButton.tooltip;" />
 </tooltip>
 <tooltip id="dtbuttonTT">
-  <label class="cs-Program" value="&dictButton.tooltip;" />
+  <label value="&dictButton.tooltip;" />
 </tooltip>
 <tooltip id="bookmarkTT">
   <label id="bookmarkTTL" value="" />
