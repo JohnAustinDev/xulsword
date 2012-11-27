@@ -10,7 +10,7 @@
   background-position: 0px 40px;
 }
 #fadebot {
-  background-position: 0px 40px;
+  background-position: 0px 0px;
 }
 
 #biblechooser {
@@ -91,7 +91,7 @@ body[chromedir="rtl"] #chbutton_close {
 .biblebooks {
   display:table;
   visibility:hidden;
-  border-spacing:1;
+  border-spacing:1px;
   position:absolute;
   top:8px;
   left:28px;
@@ -176,7 +176,7 @@ body[chromedir="rtl"] .charrow:hover {
   position:absolute;
   display:table;
   left:100%;
-  top:-4px;
+  top:0px;
   width:260px;
   border-collapse:separate;
   border-spacing:3px 1px;
@@ -213,7 +213,7 @@ body[chromedir="rtl"] .chaptermenu {
 }
 .headingmenu {
   position:absolute;
-  top:0px;
+  top:0px; /* dynamic in viewport.js */
   min-width:100%;
   visibility:hidden;
   white-space:nowrap;

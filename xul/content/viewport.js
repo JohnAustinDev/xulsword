@@ -314,6 +314,7 @@ var ViewPort = {
   footheight:30,
   padbot:24,
   bbheight:18,
+  tmp:55,
   hackedResizing: function(skipBibleChooserTest) {
     
     var winh = getPrefOrCreate("ViewPortHeight", "Int", window.innerHeight);
@@ -349,10 +350,6 @@ var ViewPort = {
     r = getCSS("#text1[footnotesMaximized=\"true\"]:not([columns=\"show1\"]) .nb,");
     r.rule.style.height = Number(sb_maxH - margt - margb - this.bbheight + this.footheight) + "px"; // margt & margb set above (all windows are same)
 
-    // this is not so important, but line up CA background pattern:
-    r = getCSS("#fadebot {");
-    r.rule.style.backgroundPosition = "0px " + Number((document.getElementById("biblechooser").offsetHeight + document.getElementById("fadetop").offsetHeight) % 55) + "px";
-    
     // Bible chooser
     var genbkinfo = GenBookTexts.getGenBookInfo();
     var chooser = (genbkinfo.numUniqueGenBooks > 0 ? "book":(prefs.getBoolPref("ShowChooser") ? "bible":"hide"));
@@ -400,10 +397,15 @@ var ViewPort = {
       rc.rule.style.width = (Number(offset + otw.offsetWidth - 6) > 0 ? 
           Number(offset + otw.offsetWidth - 6):0) + "px";
     }
+    
+    // this is not so important, but line up CA background pattern:
+    r = getCSS("#fadebot {");
+    var os = getOffset(document.getElementById("fadebot"));
+    r.rule.style.backgroundPosition = "0px " + (40 - os.top) + "px";
 
     // fix viewport width to fill parent with no overflow
     document.getElementById("viewportbody").style.width = MainWindow.innerWidth - MainWindow.document.getElementById("genBookChooser").boxObject.width + "px";
-    
+
   }
 
 }

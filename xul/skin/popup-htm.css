@@ -34,59 +34,73 @@
   top:100px;
   left:5px;
 }
+#npopup[nearBottom="true"] #npopupTX {
+  top:auto;
+  bottom:-20px;
+}
+
+#npopupRL {
+  /* relative container for popupTX to be absolute */
+  position:relative;
+}
+
+#npopupTX {
+  font-size: 1.1em;
+  cursor:default;
+  background:rgb(245,220,255);
+}
 
 /* FOR REGULAR (NON-WINDOW) POPUP STYLES */
 #npopup[isWindow="false"] {
   display:none;
   z-index:100;
-  position:absolute;
+  position:absolute; /* insure popup falls out of page layout */
   left:0px;
   overflow:visible;
   width:100%;
-  
-  /* Make shure these styles are NOT inherited from container! */
+  height:0px;
+
+  /* Make sure these styles are NOT inherited from container! */
   color:black;
   text-align:left;
 }
+#npopup[pinned="true"] {
+  display:block;
+}
 #npopup[isWindow="false"] #npopupTX {
-  position:relative;
+  position:absolute;
   overflow:auto;
-  max-height:300px;
-  margin: 0px 20px 10px 0px;
-  font-size: 1.1em;
-  padding: 22px 20px 20px 14px;
+  width:calc(100% - 60px);
+  max-height:300px; /* dynamic in popup.js */
   border:1px solid black;
-  background:rgb(245,220,255);
   border-radius:5px;
-  cursor:default;
+  margin: 0px 20px 10px 0px;
+  padding: 22px 20px 20px 14px;
   box-shadow: 3px 3px 5px 6px #ccc;
 }
 #npopup[pinned="true"][isWindow="false"] #npopupTX {
-  margin: 5px 15px 5px 5px;
-  box-shadow: 1px 1px 2px 3px #ccc;
+  margin: 2px 18px 8px 2px;
+  box-shadow: none;
 }
 
 /* FOR WINDOW PINNED POPUP */
 .windowedpup {
+  background:rgb(245,220,255);
   padding:0px;
   margin:0px;
-  overflow:hidden;
+  overflow:auto;
 }
 #npopup[isWindow="true"] {
   display:block;
   margin:0px;
   padding:0px;
-  border:1px solid black;
-  background:rgb(245,220,255);
-  border-radius:5px;
   height:100%;
-  overflow:hidden;
 }
 #npopup[isWindow="true"] #npopupTX {
   padding: 22px 20px 20px 14px;
 }
 #npopup[isWindow="true"] .popuppin {
-  visibility:hidden;
+  display:none;
 }
 
 /* FOR ALL POPUPS */
@@ -106,7 +120,7 @@
 .popuppin:hover {
   background: url('chrome://xulsword/skin/images/pushpin2.png');
 }
-.popuppin[pinned=true] {
+#npopup[pinned="true"] .popuppin {
   background: url('chrome://xulsword/skin/images/pushpin1.png');
 }
 body[chromedir="rtl"] .popuppin {
@@ -122,7 +136,7 @@ body[chromedir="rtl"] .popuppin:hover {
   transform:scaleX(-1);
   background: url('chrome://xulsword/skin/images/pushpin2.png');
 }
-body[chromedir="rtl"] .popuppin[pinned=true] {
+body[chromedir="rtl"] #npopup[pinned="true"] .popuppin {
   transform:scaleX(-1);
   background: url('chrome://xulsword/skin/images/pushpin1.png');
 }
@@ -146,12 +160,15 @@ body[chromedir="rtl"] .popupCloseLink {
   position:relative;
   top:-10px;
   float:right;
+  font-size:0.8em;
+  text-align:center;
+  padding-top:3px;
 }
 body[chromedir="rtl"] .popup-mod-select {
   float:left;
 }
-.cr .popup-mod-select,
-.sr .popup-mod-select {
+#npopup[puptype="cr"] .popup-mod-select,
+#npopup[puptype="sr"] .popup-mod-select {
   display:block;
 }
 .prevhtml {
