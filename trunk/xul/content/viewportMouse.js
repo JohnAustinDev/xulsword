@@ -131,14 +131,14 @@ function scriptMouseOver(e) {
     if (prefs.getBoolPref("ShowCrossrefsAtBottom")) {
       BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
-    else if (!Popup.activate(type, elem)) elem.style.cursor = "default";
+    else if (!Popup.activate(type, elem, e)) elem.style.cursor = "default";
     break;
      
   case "fn":
     if (prefs.getBoolPref("ShowFootnotesAtBottom")) {
       BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
-    else if (!Popup.activate(type, elem)) elem.style.cursor = "default";
+    else if (!Popup.activate(type, elem, e)) elem.style.cursor = "default";
     break;
     
   case "un":
@@ -147,7 +147,7 @@ function scriptMouseOver(e) {
           (modType == BIBLE || modType == COMMENTARY)) {
       BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
-    else if (!Popup.activate(type, elem)) elem.style.cursor = "default";
+    else if (!Popup.activate(type, elem, e)) elem.style.cursor = "default";
     break;
 
   case "sr":
@@ -155,12 +155,13 @@ function scriptMouseOver(e) {
   case "dtl":
   case "introlink":
   case "noticelink":
-    if (!Popup.activate(type, elem)) elem.style.cursor = "default";
+    if (!Popup.activate(type, elem, e)) elem.style.cursor = "default";
     break;
     
   case "sn":
-    if (!Popup.activate(type, elem)) elem.style.cursor = "default";
-    
+    if (prefs.getCharPref("Strong's Numbers") == "On") {
+      if (!Popup.activate(type, elem, e)) elem.style.cursor = "default";
+    }
     if (!prefs.getBoolPref("ShowOriginal" + w)) return;
    
     // Add elem's strong's classes to stylesheet for highlighting
@@ -168,6 +169,7 @@ function scriptMouseOver(e) {
     classes.shift(); // remove sn base class
     
     for (var i=0; i<classes.length; i++) {
+      if (!(/^S_/).test(classes[i])) continue;
       var sheet = document.styleSheets[document.styleSheets.length-1];
       var index = sheet.cssRules.length;
       sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
@@ -229,11 +231,11 @@ function scriptClick(e) {
   case "dt":
   case "dtl":
   case "popupBackLink":
-    Popup.activate(type, elem);
+    Popup.activate(type, elem, e);
     break;
     
   case "popupCloseLink":
-    if (Popup.isPopupPinned) Popup.pinup();
+    if (Popup.npopup.getAttribute("pinned") == "true") Popup.pinup();
     Popup.close();
     break;
     

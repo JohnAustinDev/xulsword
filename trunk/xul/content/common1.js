@@ -748,8 +748,8 @@ function getOffset(elem) {
   
   while(elem.offsetParent) {
     elem = elem.offsetParent;
-    offset.left += elem.offsetLeft;
-    offset.top += elem.offsetTop;
+    offset.left += elem.offsetLeft || 0;
+    offset.top += elem.offsetTop || 0;
   }
   
   return offset;

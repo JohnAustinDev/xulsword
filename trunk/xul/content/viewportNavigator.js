@@ -217,7 +217,7 @@ function showHeadings(myid, screenY) {
   if (html) {
     var cm = document.getElementById("chmenu_" + p[1]);
     var hm = document.getElementById("headingmenu_" + p[1]);
-    hm.style.top = Number((1 + Math.floor((p[2]-1)/10)) * cm.firstChild.offsetHeight) + "px";
+    hm.style.top = Number(-2 + (1 + Math.floor((p[2]-1)/10)) * cm.firstChild.offsetHeight) + "px";
     hm.innerHTML = html;
     cm.setAttribute("headingmenu", "show");
   }

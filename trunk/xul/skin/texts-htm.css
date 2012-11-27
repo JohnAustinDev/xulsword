@@ -307,13 +307,15 @@
 .cropened .crtext {
   display:inline;
 }
-.cropened .crsep {
+.cropened .cr-sep {
   display:block;
+  border-top:1px solid grey;
+  margin:10px;
 }
-.crclosed .crsep {
+.crclosed .cr-sep {
   display:inline;
 }
-.crclosed .crsep:after {
+.crclosed .cr-sep:after {
   content:"; ";
 }
 .fnselected .fncol5 {
@@ -329,7 +331,8 @@
   font-weight:bold;
 }
 .lemma-sep {
-  border-top:3px outset black;
+  border-top:3px solid grey;
+  margin:10px;
 }
 /* Dictionary styles */
 .dictentry {
@@ -383,6 +386,10 @@
 }
 .dict-description {
   font-weight:bold;
+}
+.dict-sep {
+  border-top:3px solid grey;
+  margin:10px;
 }
 .dict-key-heading {
   font-weight:bold;

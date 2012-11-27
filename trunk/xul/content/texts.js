@@ -1163,7 +1163,7 @@ var BibleTexts = {
       html += aVerse.text + (rmod != mod ? " (" + Tab[rmod].label + ")":"");
       html += "</span>";
       
-      sep = "<span class=\"crsep\"></span>";
+      sep = "<span class=\"cr-sep\"></span>";
     }
     
     html += "</div>";
@@ -1780,6 +1780,7 @@ var DictTexts = {
       catch (er) {jsdump("e1"); html = "";}
     }
     else if (mods.length > 1) {
+      var sep = "";
       for (var dw=0; dw<mods.length; dw++) {
         var dictEntry="";
         try {dictEntry = Bible.getDictionaryEntry(mods[dw], key);}
@@ -1787,8 +1788,9 @@ var DictTexts = {
         if (dictEntry) {
           dictEntry = dictEntry.replace(/^(<br>)+/, "");
           var dictTitle = Bible.getModuleInformation(mods[dw], "Description");
-          dictTitle = (dictTitle != NOTFOUND ? "<div class=\"dict-description\"" + dictTitle + "</div>":"");
-          html += dictTitle + dictEntry;
+          dictTitle = (dictTitle != NOTFOUND ? "<div class=\"dict-description\">" + dictTitle + "</div>":"");
+          html += sep + dictTitle + dictEntry;
+          sep = "<div class=\"dict-sep\"></div>";
         }
       }
     }

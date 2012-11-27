@@ -41,9 +41,8 @@ function initPopup() {
     Popup = new PopupObj(MainWindow.ViewPortWindow.Popup);
     document.getElementById("npopupTX").innerHTML = MainWindow.ViewPortWindow.Popup.npopupTX.innerHTML;
     
-    // Close the original popup and pin the new one
+    // Close the original popup
     MainWindow.ViewPortWindow.Popup.close();
-    Popup.pindown();
   }
   else {Popup = new PopupObj();}
 
@@ -64,18 +63,27 @@ function PopupObj(popupobj) {
   else {
     this.type = null;
     this.elem = null;
+    this.e = null;
     this.mod = null;
     
     this.showPopupID = null;
-    this.isPopupPinned = false;
   }
 
-  this.activate = function(type, elem, mod) {
+  this.activate = function(type, elem, e, mod) {
+    
+    // completely ignore further activations if this popup is pinned
+    if (this.npopup.getAttribute("pinned") == "true") return false;
+    
+    // if popup is already under this element, do nothing
+    if (this.npopup.parentNode === elem && !mod) return true;
+    
+    // save any supplied input params to this popup
     var w = getWindow(elem);
     if (w === null) return false;
    
     if (type) this.type = type;
     if (elem) this.elem = elem;
+    if (e) this.e = e;
     if (mod) this.mod = mod;
     else if (w) this.mod = prefs.getCharPref("Version" + w);
     //else the elem came from this popup, so keep old mod...
@@ -89,7 +97,8 @@ function PopupObj(popupobj) {
     var headlinkclass = (alreadyInPopup ? "popupBackLink":"popupCloseLink");
     
     html += "<div class=\"popupheader cs-Program\">";
-    html +=   "<div class=\"popuppin\" pinned=\"" + (this.isPopupPinned ? "true":"false") + "\" onclick=\"Popup.clickpin(this);\"></div>";
+    html +=   "<div class=\"popuppin\" pinned=\"" + (this.npopup.getAttribute("pinned")) + "\"";
+    html +=       "onclick=\"Popup.clickpin(" + this.npopup.getAttribute("pinned") + ");\"></div>";
     html +=   "<a class=\"" + headlinkclass + "\">" + headlink + "</a>";
     
     html +=   "<select class=\"popup-mod-select\" onchange=\"Popup.select(this.value);\" >";
@@ -177,10 +186,26 @@ function PopupObj(popupobj) {
 
     this.npopupTX.innerHTML = html;
     if (!alreadyInPopup) {
-      this.showPopupID = window.setTimeout("Popup.elem.appendChild(Popup.npopup)", POPUPDELAY);
+      this.showPopupID = window.setTimeout("Popup.open();", POPUPDELAY);
     }
     
     return true;
+  };
+  
+  this.open = function() {
+    
+    // set max height of popup
+    this.npopup.style.maxHeight = (window.innerHeight/2) + "px";
+    
+    // assign type to popup for CSS
+    this.npopup.setAttribute("puptype", this.type);
+    
+    // make popup appear (via CSS)
+    this.elem.appendChild(this.npopup);
+  
+    // if popup is overflowing bottom of window, style it differently
+    var pupbot = this.e.clientY + this.npopupTX.offsetTop + this.npopupTX.offsetHeight;
+    this.npopup.setAttribute("nearBottom", (pupbot > window.innerHeight ? "true":"false"));
   };
 
   this.close = function() {
@@ -194,13 +219,13 @@ function PopupObj(popupobj) {
   };
   
   this.select = function(mod) {
-    Popup.activate(Popup.type, Popup.elem, mod);
+    Popup.activate(Popup.type, Popup.elem, Popup.e, mod);
   };
   
-  this.clickpin = function(pin) {
+  this.clickpin = function(pinned) {
     
     // If we just clicked to pin the Popup...
-    if (pin.getAttribute("pinned") == "false") {
+    if (!pinned) {
       
       // Open a pinned Popup as a separate xul window
       // Get X and Y coordinates for where to create the new xul window
@@ -210,8 +235,8 @@ function PopupObj(popupobj) {
         // on Linux, window.innerHeight = outerHeight = height of entire window viewport, NOT including the operating system frame
         var f = MainWindow.document.getElementById("xulviewport");
         var offset = getOffset(this.npopup);
-        X = Number(f.boxObject.x + offset.left);
-        Y = Number(f.boxObject.y + offset.top - 16);
+        X = Number(f.boxObject.x + offset.left + 8);
+        Y = Number(f.boxObject.y + offset.top - 8);
         //jsdump("INFO:" + f.boxObject.y + "-" + MainWindow.outerHeight + "+" + v.height + "=" + Y);
       }
       
@@ -240,13 +265,11 @@ function PopupObj(popupobj) {
   };
   
   this.pindown = function() {
-    this.npopup.getElementsByClassName("popuppin")[0].setAttribute("pinned", "true");
-    this.isPopupPinned = true;
+    this.npopup.setAttribute("pinned", true);
   };
   
   this.pinup = function() {
-    this.npopup.getElementsByClassName("popuppin")[0].setAttribute("pinned", "false");
-    this.isPopupPinned = false;
+    this.npopup.setAttribute("pinned", false);
   };
   
 }
