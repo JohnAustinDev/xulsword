@@ -124,21 +124,21 @@ function scriptMouseOver(e) {
   if (!elem) return;
   
   var type = elem.className.match(scriptMouseOverClasses)[2];
-
+  
 //jsdump("type:" + type + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
   switch (type) {
   case "cr":
     if (prefs.getBoolPref("ShowCrossrefsAtBottom")) {
       BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
-    else if (!Popup.activate(type, elem, e)) elem.style.cursor = "default";
+    else if (!Popup.activate(elem, e)) elem.style.cursor = "default";
     break;
      
   case "fn":
     if (prefs.getBoolPref("ShowFootnotesAtBottom")) {
       BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
-    else if (!Popup.activate(type, elem, e)) elem.style.cursor = "default";
+    else if (!Popup.activate(elem, e)) elem.style.cursor = "default";
     break;
     
   case "un":
@@ -147,7 +147,7 @@ function scriptMouseOver(e) {
           (modType == BIBLE || modType == COMMENTARY)) {
       BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
     }
-    else if (!Popup.activate(type, elem, e)) elem.style.cursor = "default";
+    else if (!Popup.activate(elem, e)) elem.style.cursor = "default";
     break;
 
   case "sr":
@@ -155,12 +155,12 @@ function scriptMouseOver(e) {
   case "dtl":
   case "introlink":
   case "noticelink":
-    if (!Popup.activate(type, elem, e)) elem.style.cursor = "default";
+    if (!Popup.activate(elem, e)) elem.style.cursor = "default";
     break;
     
   case "sn":
     if (prefs.getCharPref("Strong's Numbers") == "On") {
-      if (!Popup.activate(type, elem, e)) elem.style.cursor = "default";
+      if (!Popup.activate(elem, e)) elem.style.cursor = "default";
     }
     if (!prefs.getBoolPref("ShowOriginal" + w)) return;
    
@@ -230,7 +230,7 @@ function scriptClick(e) {
   case "dt":
   case "dtl":
   case "popupBackLink":
-    Popup.activate(type, elem, e);
+    Popup.activate(elem, e);
     break;
     
   case "popupCloseLink":
