@@ -107,7 +107,6 @@ const Config = {
   fontFamily:       { modConf:"Font", localeConf:"Font", CSS:"font-family" },
   fontSizeAdjust:   { modConf:"FontSizeAdjust", localeConf:"FontSizeAdjust", CSS:"font-size-adjust" },
   lineHeight:       { modConf:"LineHeight", localeConf:"LineHeight", CSS:"line-height" },
-  textAlign:        { modConf:null, localeConf:null, CSS:"text-align" },
   AssociatedModules:{ modConf:null, localeConf:"DefaultModule", CSS:null },
   AssociatedLocale: { modConf:null, localeConf:null, CSS:null },
   StyleRule:        { modConf:null, localeConf:null, CSS:null },
