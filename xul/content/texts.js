@@ -1044,6 +1044,8 @@ var BibleTexts = {
   getNotesHTML: function(notes, mod, gfn, gcr, gun, openCRs, w) {
     if (!notes) return "";
     
+    if (!w) w = 0;
+    
     var note = notes.split(/(<div [^>]*>.*?<\/div>)/);
     note = note.sort(this.ascendingVerse);
     
@@ -1113,7 +1115,7 @@ var BibleTexts = {
         
         case "fn":
           // If this is a footnote, then just write the body
-          t += body;
+          t += "<span class=\"fntext cs-" + mod + (ModuleConfigs[mod].direction != ProgramConfig.direction ? " opposing-program-direction":"") + "\">" + body + "</span>";
           break;
         
         case "un":
@@ -1163,7 +1165,7 @@ var BibleTexts = {
       html += "<a class=\"crref\" title=\"" + rmod + "." + aVerse.location + "\">";
       html += ref2ProgramLocaleText(aVerse.location);
       html += "</a>";
-      html += "<span class=\"crtext cs-" + rmod + (ProgramConfig.direction != ModuleConfigs[rmod].direction ? " opposing-directions":"") + "\">";
+      html += "<span class=\"crtext cs-" + rmod + (ModuleConfigs[rmod].direction != ProgramConfig.direction ? " opposing-program-direction":"") + "\">";
       html += aVerse.text + (rmod != mod ? " (" + Tab[rmod].label + ")":"");
       html += "</span>";
       
@@ -1800,7 +1802,7 @@ var DictTexts = {
     if (!html) return "";
 
     // Add a heading
-    html = "<div class=\"dict-key-heading cd-" + mods[0] + "\">" + key + ":</div>" + html;
+    html = "<div class=\"cs-" + mods[0] + "\"><div class=\"dict-key-heading cd-" + mods[0] + "\">" + key + ":</div>" + html + "</div>";
    
     if (!dontAddParagraphIDs) html = Texts.addParagraphIDs(html);
    

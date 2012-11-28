@@ -34,10 +34,6 @@
   top:100px;
   left:5px;
 }
-#npopup[nearBottom="true"] #npopupTX {
-  top:auto;
-  bottom:-20px;
-}
 
 #npopupRL {
   /* relative container for popupTX to be absolute */
@@ -50,6 +46,15 @@
   background:rgb(245,220,255);
 }
 
+/* Make sure these npopup styles are NOT inherited from container! */
+#npopup {
+  text-align:left;
+  color:black;
+}
+body[chromedir="rtl"] #npopup {
+  text-align:right;
+}
+
 /* FOR REGULAR (NON-WINDOW) POPUP STYLES */
 #npopup[isWindow="false"] {
   display:none;
@@ -59,10 +64,6 @@
   overflow:visible;
   width:100%;
   height:0px;
-
-  /* Make sure these styles are NOT inherited from container! */
-  color:black;
-  text-align:left;
 }
 #npopup[pinned="true"] {
   display:block;

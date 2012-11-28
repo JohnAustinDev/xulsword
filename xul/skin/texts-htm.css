@@ -2,7 +2,6 @@
 .navlink {
   color:blue;
   margin: 10px;
-  text-align:center !important;
   cursor:default;
 }
 .navlink-span {
@@ -265,6 +264,8 @@ body[chromedir="rtl"] .fncol3 {
   display:table-cell;
   text-align:right;
   white-space:nowrap;
+  vertical-align:top;
+  padding-top:2px;
 }
 body[chromedir="rtl"] .fncol4 {
   text-align:left;
@@ -282,6 +283,10 @@ body[chromedir="rtl"] .fncol4 {
   border:1px solid transparent;
   border-radius:8px;
 }
+.fnselected .fncol5 {
+  border:1px outset yellow;
+  background:rgb(255,243,255);
+}
 .crref {
   color:blue;
 }
@@ -298,7 +303,7 @@ body[chromedir="rtl"] .fncol4 {
 .cropened .crtext {
   display:inline;
 }
-.cropened .crtext.opposing-directions {
+.cropened .crtext.opposing-program-direction {
   display:inline-block;
 }
 .cr-sep {
@@ -317,9 +322,8 @@ body[chromedir="rtl"] .fncol4 {
   content:"";
   -moz-padding-end:0em;
 }
-.fnselected .fncol5 {
-  border:1px outset yellow;
-  background:rgb(255,243,255);
+.fntext.opposing-program-direction {
+  display:inline-block;
 }
 .noteBoxUserNote {
   font-style:italic;
