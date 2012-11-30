@@ -20,30 +20,14 @@ const POPUPDELAY = 250;
 var Popup;
 
 function initWindowedPopup() {
-  createDynamicClasses();
-  adjustFontSizes(prefs.getIntPref('FontSize'));
+
+  initCSS(true);
   
-  document.getElementsByTagName("body")[0].setAttribute("chromedir", ProgramConfig.direction);
+  // This is a windowed popup, so copy the original popup
+  Popup = new PopupObj(MainWindow.ViewPortWindow.Popup);
   
-  initPopup();
-}
-    
-// During initPopup, a new Popup object will be created to handle Popup  
-// functions in this context. If this popup is a separate window, it 
-// needs to be initialized with all the settings and data of the regular 
-// popup from which it came.
-function initPopup() {
-  
-  if (window.name == "npopup") {
-  
-    // This is a windowed popup, so copy the original popup
-    Popup = new PopupObj(MainWindow.ViewPortWindow.Popup);
-    
-    // Close the original popup
-    MainWindow.ViewPortWindow.Popup.close();
-    
-  }
-  else {Popup = new PopupObj();}
+  // Close the original popup
+  MainWindow.ViewPortWindow.Popup.close();
 
 }
     
@@ -61,21 +45,19 @@ function PopupObj(popupobj) {
   }
 
   this.activate = function(elem, e) {
-    
+//jsdump("Activating Popup in " + window.name + ":" + elem.className + ", " + e.type);    
+
     // completely ignore further activations if this popup is pinned
     if (this.npopup.getAttribute("pinned") == "true") return false;
     
-    // if popup is already assigned to this element, just adjust position
-    if (this.npopup.parentNode === elem) {
-      this.npopup.style.top = "";
-      this.checkPopupPosition(e);
-      return true;
-    }
+    // get our event element's type
+    try {var type = elem.className.match(/^([^\-\s]+)/)[1];}
+    catch (er) {type = null;}
     
     this.crnote = null; // for module select feature
     this.srnote = null; // for module select feature
     
-    // get a module associated with this event
+    // see if a module is associated with this event's element
     var mod = elem;
     while (mod) {
       if (mod.className) {
@@ -88,21 +70,17 @@ function PopupObj(popupobj) {
       mod = mod.parentNode;
     }
    
-    // get our event element's type
-    try {var type = elem.className.match(/^([^\-\s]+)/)[1];}
-    catch (er) {type = null;}
-   
-    // did this event originate from within this popup
-    var myPopupNode = elem;
-    while (myPopupNode && myPopupNode !== this.npopup) {myPopupNode = myPopupNode.parentNode;}
+    // did this event originate from inside this popup?
+    var updatingPopup = elem;
+    while (updatingPopup && updatingPopup !== this.npopup) {updatingPopup = updatingPopup.parentNode;}
     
     // Begin building HTML for the popup
     var html = "";
     html += "<div class=\"popupheader cs-Program\">";
     html +=   "<div class=\"popuppin\" pinned=\"" + (this.npopup.getAttribute("pinned")) + "\" ";
     html +=       "onclick=\"Popup.clickpin(" + this.npopup.getAttribute("pinned") + ");\"></div>";
-    html +=   "<a class=\"" + (myPopupNode ? "popupBackLink":"popupCloseLink") + "\">";
-    html +=     MainWindow.SBundle.getString(myPopupNode ? "back":"close");
+    html +=   "<a class=\"" + (updatingPopup ? "popupBackLink":"popupCloseLink") + "\">";
+    html +=     MainWindow.SBundle.getString(updatingPopup ? "back":"close");
     html +=   "</a>";
     
     html +=   "<select class=\"popup-mod-select\" onchange=\"Popup.select(this.value);\" >";
@@ -118,7 +96,7 @@ function PopupObj(popupobj) {
     html += "</div>";
     
     // If popup is already open, then save the current popup inside the "back" link of this new popup...
-    html += "<div class=\"prevhtml\">" + (myPopupNode ? this.npopupTX.innerHTML:"") + "</div>";
+    html += "<div class=\"prevhtml\">" + (updatingPopup ? this.npopupTX.innerHTML:"") + "</div>";
 
     html += "<div class=\"popup-text cs-Program\">";
     
@@ -136,7 +114,7 @@ function PopupObj(popupobj) {
       if (mod) {
         var w = getWindow(elem);
         if (w) {
-          var n = new RegExp("<div id=\"src\\." + type + "\\." + elem.title + "\\.[^\.]+\">.*?<\\/div>");
+          var n = new RegExp("<div title=\"src\\." + type + "\\." + elem.title + "\">.*?<\\/div>");
           this.crnote = Texts.footnotes[w].match(n)[0];
           html += BibleTexts.getNotesHTML(this.crnote, mod, true, true, true, true, 1);
         }
@@ -145,8 +123,17 @@ function PopupObj(popupobj) {
 
     case "sr":
       if (mod) {
-        this.srnote = Texts.getScriptureReferences(elem.title != "unavailable" ? elem.title:elem.innerHTML, mod);
-        this.srnote = "<div id=\"src.cr.1.0.0.0." + mod + "\">" + this.srnote + "</div>"
+        var entry = elem.innerHTML;
+        // elem may have npopup as an appended child! So we need to remove it to get real innerHTML.
+        // Note: A RegExp does not seem to be able to match innerHTML for some reason.
+        var i = entry.indexOf("id=\"npopup\"");
+        if (i != -1) {
+          i = entry.lastIndexOf("<", i);
+          entry = entry.substring(0, i);
+        }
+        var mtitle = elem.title.replace(/\.[^\.]+$/, "");
+        this.srnote = Texts.getScriptureReferences((mtitle != "unavailable" ? mtitle:entry), mod);
+        this.srnote = "<div title=\"src.cr.1.0.0.0." + mod + "\">" + this.srnote + "</div>"
         html += BibleTexts.getNotesHTML(this.srnote, mod, true, true, true, true, 1);
       }
       break;
@@ -154,7 +141,7 @@ function PopupObj(popupobj) {
     case "dtl":
     case "dt":
       if (elem.title) {
-        var mdata = elem.title;
+        var mdata = elem.title.replace(/\.[^\.]+$/, "");
         
         // Backward Compatibility to < 2.23
         if (mdata.indexOf(":") == -1) {
@@ -180,7 +167,15 @@ function PopupObj(popupobj) {
     case "sn":
       var snlist = elem.className.split(" ");
       if (snlist) snlist.shift(); // remove base class: sn
-      if (snlist) html += DictTexts.getLemmaHTML(snlist, elem.innerHTML);
+      var entry = elem.innerHTML;
+      // elem may have npopup as an appended child! So we need to remove it to get real innerHTML.
+      // Note: A RegExp does not seem to be able to match innerHTML for some reason.
+      var i = entry.indexOf("id=\"npopup\"");
+      if (i != -1) {
+        i = entry.lastIndexOf("<", i);
+        entry = entry.substring(0, i);
+      }
+      if (snlist) html += DictTexts.getLemmaHTML(snlist, entry);
       break;
       
     case "introlink":
@@ -188,7 +183,7 @@ function PopupObj(popupobj) {
       break;
       
     case "noticelink":
-      if (mod) html += BibleTexts.getNoticeLink(mod, 1);
+      if (mod) html += Bible.getModuleInformation(mod, "NoticeText");
       break;
       
     default:
@@ -197,35 +192,36 @@ function PopupObj(popupobj) {
     
     html += "</div>";
     
-//jsdump(html); 
-//window.setTimeout("debugStyle(document.getElementById('npopup'))", 1000);
+    this.npopup.setAttribute("puptype", type);
+    this.npopupTX.innerHTML = html;
+  
+    // Windowed popup...
+    if (window.name == "npopup") return true;
     
-    if (!myPopupNode) {
-      this.elem = elem;
-      this.e = e;
-      this.showPopupID = window.setTimeout("Popup.open('" + type + "');", POPUPDELAY);
-    }
-    else {
+    // Normal popup updating itself...
+    if (updatingPopup) {
       // move popup to insure it's under the mouse
       this.npopup.style.top = this.YmouseDelta + e.clientY + "px";
       this.checkPopupPosition(e);
+      return true;
     }
     
-    this.npopupTX.innerHTML = html;
-    
+    // Normal popup opening anew...
+    this.elem = elem;
+    this.e = e;
+    this.showPopupID = window.setTimeout("Popup.open();", POPUPDELAY);
     return true;
+    
   };
   
-  this.open = function(type) {
-    
+  this.open = function() {
+
     // set max height of popup
     this.npopup.style.maxHeight = (window.innerHeight/2) + "px";
     
-    // assign type to popup for CSS
-    this.npopup.setAttribute("puptype", type);
-    
     // make popup appear (via CSS)
-    this.elem.appendChild(this.npopup);
+    if (this.npopup.parentNode !== this.elem)
+        this.elem.appendChild(this.npopup);
   
     // store current location relative to mouse
     this.npopup.style.top = ""; // reset so that CSS always controls initial location!
@@ -233,18 +229,26 @@ function PopupObj(popupobj) {
     
     this.checkPopupPosition(this.e);
 
+//jsdump(this.npopupTX.innerHTML);
+//window.setTimeout("debugStyle(document.getElementById('npopup'))", 1000);
+
   };
   
-  // if popup is overflowing bottom of window, then move it
+  // if popup is overflowing bottom of window, then move it up
   this.checkPopupPosition = function(e) {
     var pupbot = e.clientY + this.npopupTX.offsetTop + this.npopupTX.offsetHeight;
     if (pupbot > window.innerHeight) {
       var currentTop = Number(window.getComputedStyle(this.npopup).top.replace("px", ""));
-      this.npopup.style.top = currentTop - pupbot + window.innerHeight - 30 + "px";
+      if (isNaN(currentTop)) return;
+      var newTop = currentTop - pupbot + window.innerHeight - 30;
+      if (newTop < 0) newTop = 0;
+      this.npopup.style.top = newTop + "px";
     }
   };
 
   this.close = function() {
+  
+    // If we're a windowed popup, close the window
     if (window.name == "npopup") {
       window.frameElement.ownerDocument.defaultView.close();
       return;
@@ -314,12 +318,3 @@ function PopupObj(popupobj) {
   };
   
 }
-
-/*
-function debugStyle(elem) {
-  var s = window.getComputedStyle(elem);
-  for (var m in s) {
-    jsdump(m + " = " + s[m]);
-  }
-}
-*/

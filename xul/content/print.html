@@ -18,7 +18,7 @@
   <script src="chrome://xulsword/content/common1.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
   <script type="text/javascript">
-    createDynamicClasses();
+    createDynamicCssClasses();
     
     var localeConfig = LocaleConfigs[getLocale()];
     document.styleSheets[0].insertRule(".bmfolderindent { margin-" + (localeConfig.direction=="rtl" ? "right":"left") + ": 3em; }", document.styleSheets[0].cssRules.length);

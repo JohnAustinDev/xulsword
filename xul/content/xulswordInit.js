@@ -33,7 +33,7 @@ var LanguageStudyModules = {};
 var Book = new Array(NumBooks);
 var AllWindows = [];
 
-// Global text objects defined in text.js
+// Global text objects defined in texts.js and -Texts.js files
 var Texts;
 var BibleTexts; 
 var CommTexts; 
@@ -273,7 +273,7 @@ function initTabGlobals() {
       var feature = Bible.getModuleInformation(mod, "Feature");
       if (feature.search("DailyDevotion") != -1) {
         for (var w=1; w<=NW; w++) {
-          prefs.setCharPref("DictKey_" + mod + "_" + w, "DailyDevotionToday");
+          setUnicodePref("DictKey_" + mod + "_" + w, "DailyDevotionToday");
         }
       }
       else if (feature.search("GreekDef") != -1)  {
@@ -499,6 +499,7 @@ function xulswordInit() {
   // Copy current locale's config to ProgramConfig.
   ProgramConfig = copyObj(LocaleConfigs[currentLocale]);
   ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
+  ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   
   var defaultMod = NOTFOUND;
   

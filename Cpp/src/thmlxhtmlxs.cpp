@@ -134,14 +134,16 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					SWCATCH ( ... ) {	}
 					if (vkey) {
 					   if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
-								buf.appendFormatted("<sup class=\"cr\" title=\"%s.%s\"></sup>",
+								buf.appendFormatted("<sup class=\"cr\" title=\"%s.%s.%s\"></sup>",
 								footnoteNumber.c_str(), 
-								vkey->getOSISRef());
+								vkey->getOSISRef(),
+                userData->module->Name());
 					   }
 					   else {
-								buf.appendFormatted("<sup class=\"fn\" title=\"%s.%s\"></sup>",
+								buf.appendFormatted("<sup class=\"fn\" title=\"%s.%s.%s\"></sup>",
 								footnoteNumber.c_str(), 
-								vkey->getOSISRef());
+								vkey->getOSISRef(),
+                userData->module->Name());
 					   }
 					   u->suspendTextPassThru = true;
 					}
@@ -172,10 +174,10 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			if (!tag.isEndTag()) {
 				if (!tag.isEmpty()) {
 					if (tag.getAttribute("passage")) {
-            buf.appendFormatted("<a class=\"sr\" title=\"%s\">", tag.getAttribute("passage"));
+            buf.appendFormatted("<a class=\"sr\" title=\"%s.%s\">", tag.getAttribute("passage"), userData->module->Name());
 					}
 					else {
-            buf.append("<a class=\"sr\" title=\"unavailable\">");
+            buf.appendFormatted("<a class=\"sr\" title=\"unavailable.%s\">", userData->module->Name());
           }
 				}
 			}

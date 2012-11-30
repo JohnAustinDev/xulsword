@@ -163,22 +163,18 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
                   mclass.append("-");
                   mclass.append(tag.getAttribute("subType"));
                 }
-								buf.appendFormatted("<span class=\"%s\" id=\"cr.%s.%s.%s\" title=\"%s.%s\"></span>",
+								buf.appendFormatted("<span class=\"%s\" title=\"%s.%s.%s\"></span>",
 								mclass.c_str(),
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
-                userData->module->Name(),
-								footnoteNumber.c_str(), 
-								vkey->getOSISRef());
+                userData->module->Name());
 							}
 							else {
                 u->inXRefNote = false;
-								buf.appendFormatted("<span class=\"fn\" id=\"fn.%s.%s.%s\" title=\"%s.%s\"></span>",
+								buf.appendFormatted("<span class=\"fn\" title=\"%s.%s.%s\"></span>",
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
-                userData->module->Name(),
-								footnoteNumber.c_str(), 
-								vkey->getOSISRef());
+                userData->module->Name());
 							}
 						}
 						else {
@@ -275,7 +271,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				      }
 				    }
 				  }
-				  buf.appendFormatted("<%s class=\"%s\" title=\"%s\">", referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str());
+				  buf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->Name());
         }
 				if (tag.isEndTag()) {buf.appendFormatted("</%s>", referenceTag.c_str());}
 			}

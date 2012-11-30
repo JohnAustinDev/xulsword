@@ -118,25 +118,22 @@ function scriptMouseOver(e) {
   
   // Filter out events without mousover functionality
   var elem = e.target;
-  while (elem && (!elem.className || !scriptMouseOverClasses.test(elem.className))) {
-    elem = elem.parentNode;
-  }
-  if (!elem) return;
+  var type = elem.className.match(scriptMouseOverClasses);
+  if (!type) return;
+  type = type[2];
   
-  var type = elem.className.match(scriptMouseOverClasses)[2];
-  
-//jsdump("type:" + type + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
+//jsdump("type:" + type + " title:" + elem.title + " class:" + elem.className + "\n");
   switch (type) {
   case "cr":
     if (prefs.getBoolPref("ShowCrossrefsAtBottom")) {
-      BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
+      BibleTexts.scroll2Note("w" + w + ".footnote." + elem.title);
     }
     else if (!Popup.activate(elem, e)) elem.style.cursor = "default";
     break;
      
   case "fn":
     if (prefs.getBoolPref("ShowFootnotesAtBottom")) {
-      BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
+      BibleTexts.scroll2Note("w" + w + ".footnote." + elem.title);
     }
     else if (!Popup.activate(elem, e)) elem.style.cursor = "default";
     break;
@@ -145,7 +142,7 @@ function scriptMouseOver(e) {
     var modType = Tab[prefs.getCharPref("Version" + w)].modType;
     if (prefs.getBoolPref("ShowUserNotesAtBottom") && 
           (modType == BIBLE || modType == COMMENTARY)) {
-      BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
+      BibleTexts.scroll2Note("w" + w + ".footnote." + elem.title);
     }
     else if (!Popup.activate(elem, e)) elem.style.cursor = "default";
     break;
@@ -215,12 +212,9 @@ function scriptClick(e) {
   
   // Only proceed for events with click functionality
   var elem = e.target;
-  while (elem && (!elem.className || !scriptClickClasses.test(elem.className))) {
-    elem = elem.parentNode;
-  }
-  if (!elem) return;
-  
-  var type = elem.className.match(scriptClickClasses)[2];
+  var type = elem.className.match(scriptClickClasses);
+  if (!type) return;
+  type = type[2];
   
 //jsdump("type:" + type + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
   switch (type) {
@@ -239,8 +233,8 @@ function scriptClick(e) {
     break;
     
   case "cr":
-    var ok = toggleRefText(document.getElementById("w" + w + ".footnote." + elem.id));
-    if (ok) BibleTexts.scroll2Note(w, "w" + w + ".footnote." + elem.id);
+    var ok = toggleRefText(document.getElementById("w" + w + ".footnote." + elem.title));
+    if (ok) BibleTexts.scroll2Note("w" + w + ".footnote." + elem.title);
     break;
     
   case "listenlink":
@@ -292,11 +286,11 @@ function scriptClick(e) {
       }
       // if not, then load previous chapter
       else {
-        var prevchap = GenBookTexts.previousChapter(prefs.getCharPref("GenBookKey_" + mod + "_" + w));
+        var prevchap = GenBookTexts.previousChapter(getUnicodePref("GenBookKey_" + mod + "_" + w));
         if (!prevchap) return;
         
         if (prefs.getBoolPref("IsPinned" + w)) {
-          prefs.setCharPref("GenBookKey_" + mod + "_" + w, prevchap);
+          setUnicodePref("GenBookKey_" + mod + "_" + w, prevchap);
           Texts.update();
         }
         else GenBookTexts.navigatorSelect(prevchap);
@@ -341,11 +335,11 @@ function scriptClick(e) {
       sb.scrollLeft = next;
       // if not, then load next chapter
       if (sb.scrollLeft == prev) {
-        var nextchap = GenBookTexts.nextChapter(prefs.getCharPref("GenBookKey_" + mod + "_" + w));
+        var nextchap = GenBookTexts.nextChapter(getUnicodePref("GenBookKey_" + mod + "_" + w));
         if (!nextchap) return;
         
         if (prefs.getBoolPref("IsPinned" + w)) {
-          prefs.setCharPref("GenBookKey_" + mod + "_" + w, nextchap);
+          setUnicodePref("GenBookKey_" + mod + "_" + w, nextchap);
           Texts.update();
         }
         else GenBookTexts.navigatorSelect(nextchap);
@@ -361,16 +355,16 @@ function scriptClick(e) {
     break;
 
   case "fnlink": //Note reference link
-    var t = elem.title.split(".");
-    switch (Tab[t[0]].modType) {
+    var t = getElementInfo(elem);
+    switch (Tab[t.mod].modType) {
     case BIBLE:
     case COMMENTARY:
-      Location.setLocation(t.shift(), t.join("."));
+      Location.setLocation(t.mod, t.bk + "." + t.ch + "." + t.vs);
       Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
      case DICTIONARY:
      case GENBOOK:
-      scrollScriptBox(w, SCROLLTYPECENTER, "par." + t[2]);
+      //scrollScriptBox(w, SCROLLTYPECENTER, "par." + t.vs);
       break;
     } 
     break;
@@ -381,19 +375,8 @@ function scriptClick(e) {
     break;
     
   case "crref":
-    var t = elem.title.split(".");
-    var mod = t.shift();
-    
-    // Turn normalized OSIS ref into standard xulsword reference
-    if (t.length > 3) {
-      t[2] = t[2].split("-")[0];
-      t[3] = t[4];
-      t.pop();
-    }
-    else t[3] = t[2];
-
-    Location.setLocation(mod, t.join("."));
-
+    var t = getElementInfo(elem);
+    Location.setLocation(t.mod, t.bk + "." + t.ch + "." + t.vs + "." + t.lv);
     Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     break;
     
@@ -419,35 +402,22 @@ function toggleRefText(elem) {
  * TEXT DOUBLE CLICK
  ***********************************************************************/  
 function scriptDblClick(e) {
-  var w = getWindow(e.target);
-  if (w === null) return; // w=0 means popup!!
-  var mod = prefs.getCharPref("Version" + (w == 0 ? getWindow(Popup.elem):w));
   
+  // Get module this event occurred in
+  var elem = e.target;
+  while (elem && (!elem.className || !(/(^|\s)vs(\s|$)/).test(elem.className))) {
+    elem = elem.parentNode;
+  }
+  if (!elem) return;
+  var mod = getElementInfo(elem).mod;
+  
+  // Get selected text
   var selob = window.getSelection();
   var sel = selob.toString();
-  
   sel = cleanDoubleClickSelection(sel);
   if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
-  
-  // If this is interlinear, we need to see which version was clicked.
-  if (w && prefs.getBoolPref("ShowOriginal" + w)) {
-    var targ = e.target.parentNode;
-    while (targ) {
-      if (targ.className) {
-        if (Tab.ORIG_NT && targ.className.search("cs-" + Tab.ORIG_NT.modName) != -1) {
-          mod = Tab.ORIG_NT.modName;
-          break;
-        }
-        else if (Tab.ORIG_OT && targ.className.search("cs-" + Tab.ORIG_OT.modName) != -1) {
-          mod = Tab.ORIG_OT.modName;
-          break;
-        }
-      }
-      
-      targ = targ.parentNode;
-    }
-  }
 
+  // Do a search for selected text in mod
   setUnicodePref("SearchText", sel);
   prefs.setCharPref("SearchVersion", mod);
   MainWindow.document.getElementById("cmd_xs_search").doCommand();
@@ -581,10 +551,14 @@ var MouseWheel = {
       // get first verse which begins in window
       v = sb.firstChild;
       if (t.getAttribute("columns") == "show1") {
-        while (v && (!v.id || !(/^vs\./).test(v.id) || (v.offsetTop - sb.offsetTop < sb.scrollTop))) {v = v.nextSibling;}
+        while (v && (!v.className || !(/(^|\s)vs(\s|$)/).test(v.className) || (v.offsetTop - sb.offsetTop < sb.scrollTop))) {
+        v = v.nextSibling;
+        }
       }
       else {
-        while (v && (!v.id || !(/^vs\./).test(v.id) || v.style.display == "none")) {v = v.nextSibling;}
+        while (v && (!v.className || !(/(^|\s)vs(\s|$)/).test(v.className) || v.style.display == "none")) {
+        v = v.nextSibling;
+      }
       }
       if (!v) return;
      
@@ -593,25 +567,22 @@ var MouseWheel = {
         var nv = v;
         while (dv > 0) {
           if (nv) nv = nv.nextSibling;
-          while (nv && (!nv.id || !(/^vs\./).test(nv.id))) {nv = nv.nextSibling;}
+          while (nv && (!nv.className || !(/(^|\s)vs(\s|$)/).test(nv.className))) {nv = nv.nextSibling;}
           dv--;
-          if (nv && nv.id && (/^vs\./).test(nv.id)) v = nv;
+          if (nv && nv.className && (/(^|\s)vs(\s|$)/).test(nv.className)) v = nv;
         }
         while (dv < 0) {
           if (nv) nv = nv.previousSibling;
-          while (nv && (!nv.id || !(/^vs\./).test(nv.id))) {
+          while (nv && (!nv.className || !(/(^|\s)vs(\s|$)/).test(nv.className))) {
             nv = nv.previousSibling;
           }
           dv++;
-          if (nv && nv.id && (/^vs\./).test(nv.id)) v = nv;
+          if (nv && nv.className && (/(^|\s)vs(\s|$)/).test(nv.className)) v = nv;
         }
       }
      
-      var v = v.id.split(".");
-      v.shift();
-      v = v.join(".");
-      
-      Location.setLocation(prefs.getCharPref("Version" + MouseWheel.SWwin), v);
+      var p = getElementInfo(v);
+      Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
     }
       
     // decide which windows to scroll and which to leave alone
@@ -658,22 +629,21 @@ function previousPage(w) {
   if (!(/^show(2|3)$/).test(t.getAttribute("columns"))) return;
   var sb = t.getElementsByClassName("sb")[0];
   var v = sb.firstChild;
-  while (v && (v.style.display == "none" || !v.id || !(/^vs\./).test(v.id))) {
+  while (v && (v.style.display == "none" || !v.title || !(/^vs\./).test(v.title))) {
     v = v.nextSibling;
   }
   if (!v) return;
   
-  var vf = v.id.split(".");
-  vf.shift();
+  var p = getElementInfo(v);
   
   if (prefs.getBoolPref("IsPinned" + w)) {
-    Texts.pinnedDisplay[w].bk = vf[0];
-    Texts.pinnedDisplay[w].ch = vf[1];
-    Texts.pinnedDisplay[w].vs = vf[2];
+    Texts.pinnedDisplay[w].bk = p.bk;
+    Texts.pinnedDisplay[w].ch = p.ch;
+    Texts.pinnedDisplay[w].vs = p.vs;
     Texts.update(SCROLLTYPEEND, HILIGHTNONE);
   }
   else {
-    Location.setLocation(prefs.getCharPref("Version" + w), vf.join("."));
+    Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
     Texts.update(SCROLLTYPEENDSELECT, HILIGHTNONE);
   }
 
@@ -706,7 +676,7 @@ function nextPage(w) {
   var nb = document.getElementById("note" + w);
   var v = sb.lastChild;
   while (v && (
-         !v.id || !(/^vs\./).test(v.id) || 
+         !v.title || !(/^vs\./).test(v.title) || 
          v.offsetLeft >= sb.offsetWidth || 
          (v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth) && v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight))
          ) {
@@ -714,15 +684,14 @@ function nextPage(w) {
   }
   if (!v) return;
 
-  vl = v.id.split(".");
-  vl.shift();
+  var p = getElementInfo(v);
 
   if (prefs.getBoolPref("IsPinned" + w)) {
-    Texts.pinnedDisplay[wpin].bk = vl[0];
-    Texts.pinnedDisplay[wpin].ch = vl[1];
-    Texts.pinnedDisplay[wpin].vs = vl[2];
+    Texts.pinnedDisplay[wpin].bk = v.bk;
+    Texts.pinnedDisplay[wpin].ch = v.ch;
+    Texts.pinnedDisplay[wpin].vs = v.vs;
   }
-  else {Location.setLocation(prefs.getCharPref("Version" + w), vl.join("."));}
+  else {Location.setLocation(v.mod, p.bk + "." + p.ch + "." + p.vs);}
     
   Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
 }

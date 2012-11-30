@@ -60,24 +60,49 @@ var GlobalToggleCommands = {
  * DYNAMIC CSS FUNCTIONS
  ***********************************************************************/ 
 
+function initCSS(adjustableFontSize) {
+
+  // Create and append module and locale specific CSS rules to stylesheet
+  createDynamicCssClasses("StyleRule");
+  
+  setUserFontSize(getPrefOrCreate('FontSize', "Int", 0));
+  
+  // If this is an HTML document...
+  var body = document.getElementsByTagName("body");
+  if (body && body.length) {
+    body[0].setAttribute("chromedir", ProgramConfig.direction);
+    body[0].className += (body[0].className ? " ":"") + "cs-Program" + (adjustableFontSize ? " userFontSize":" fixedFontSize");
+  }
+  
+  // If this is a XUL document...
+  var win = document.getElementsByTagName("window");
+  if (win && win.length) {
+    // XUL windows get chromedir automagicaly
+    var c = win[0].getAttribute("class");
+    win[0].setAttribute("class", (c ? c + " " :"") + "cs-Program" + (adjustableFontSize ? " userFontSize":" fixedFontSize"));
+  }
+
+}
+
 // Will create CSS classes for locales and modules and append to a stylesheet.
 // This must be a global function so that any window can create our classes.
-function createDynamicClasses() {
+function createDynamicCssClasses(configProp) {
   var sheet = document.styleSheets[document.styleSheets.length-1];
   if (!sheet) return;
+  if (!configProp) configProp = "StyleRule";
   
   var sheetLength = sheet.cssRules.length;
   
-  for (var lc in LocaleConfigs) {sheet.insertRule(LocaleConfigs[lc].StyleRule, sheetLength)}
+  for (var lc in LocaleConfigs) {sheet.insertRule(LocaleConfigs[lc][configProp], sheetLength);}
   
-  for (var m in ModuleConfigs) {sheet.insertRule(ModuleConfigs[m].StyleRule, sheetLength)}
+  for (var m in ModuleConfigs) {sheet.insertRule(ModuleConfigs[m][configProp], sheetLength);}
   
-  if (ProgramConfig) sheet.insertRule(ProgramConfig.StyleRule, sheetLength);
+  if (ProgramConfig) sheet.insertRule(ProgramConfig[configProp], sheetLength);
 }
 
 // The userFontSize class in all stylesheets is dynamically updated by this routine.
 var StartingFont = {};
-function adjustFontSizes(delta) {
+function setUserFontSize(delta) {
   for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
     for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
       var myRule = document.styleSheets[ssn].cssRules[z];
@@ -122,8 +147,9 @@ function getLocaleConfig(lc) {
   if (localeConfig.fontFamily != NOTFOUND && !(/'.*'/).test(localeConfig.fontFamily)) 
       localeConfig.fontFamily = "'" + localeConfig.fontFamily + "'";
 
-  // Save the CSS style rule for this locale, which can be appended to CSS stylesheets
+  // Save the CSS style rules for this locale, which can be appended to CSS stylesheets
   localeConfig.StyleRule = createStyleRule(".cs-" + lc, localeConfig);
+  localeConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(" + lc + ")", localeConfig);
   
   return localeConfig;
 }
@@ -167,8 +193,9 @@ function getModuleConfig(mod) {
   if (moduleConfig.fontFamily != NOTFOUND && !(/'.*'/).test(moduleConfig.fontFamily)) 
       moduleConfig.fontFamily = "'" + moduleConfig.fontFamily + "'";
 
-  // Save the CSS style rule for this module, which can be appended to CSS stylesheets
+  // Save the CSS style rules for this module, which can be appended to CSS stylesheets
   moduleConfig.StyleRule = createStyleRule(".cs-" + mod, moduleConfig);
+  moduleConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(" + mod + ")", moduleConfig);
   
   return moduleConfig;
 }
@@ -422,7 +449,7 @@ function findBookNumL(bText) {
 
 function getModuleLongType(aModule) {
   if (!Bible) return null;
-  if (aModule==ORIGINAL) return BIBLE;
+  if (aModule == ORIGINAL) return BIBLE;
   var typeRE = new RegExp("(^|<nx>)\\s*" + escapeRE(aModule) + "\\s*;\\s*(.*?)\\s*(<nx>|$)");
   var type = Bible.getModuleList().match(typeRE);
   if (type) type = type[2];
@@ -589,8 +616,9 @@ function findAVerseText(version, location, windowNum) {
     try {var text = Bible.getVerseText(bibleVersion, bibleLocation).replace(/\n/g, " ");}
     catch (er) {text = "";}
     if (text && text.length > 7) {
+      var vsys = Bible.getVerseSystem(bibleVersion);
       ret.tabNum = Tab[bibleVersion].index;
-      ret.location = bibleLocation;
+      ret.location = Location.convertLocation(vsys, bibleLocation, vsys);
       ret.text = text; 
       return ret;
     }
@@ -609,15 +637,16 @@ function findAVerseText(version, location, windowNum) {
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If
       // no visible tab match is found, this saved result will be returned
+      var vsys = Bible.getVerseSystem(Tabs[v].modName);
       if (!Tabs[v]["w" + windowNum + ".hidden"]) {
         ret.tabNum = v;
-        ret.location = tlocation;
+        ret.location = Location.convertLocation(vsys, tlocation, vsys);
         ret.text = text;
         return ret;
       }
       else if (!ret.text) {
         ret.tabNum = v;
-        ret.location = tlocation;
+        ret.location = Location.convertLocation(vsys, tlocation, vsys);
         ret.text = text;      
       }
     }
@@ -684,12 +713,8 @@ function cleanDoubleClickSelection(sel) {
   punctuation += ",!\":;\\-\\?\\(\\)";
   
   sel = sel.replace(/\s+/g,""); //remove white-space
-  var regexp = new RegExp("^([" + String.fromCharCode(FootnoteMarker) + "\\d\\s" + punctuation + "]+)(.*)");
-  var parse = sel.match(regexp);
-  if (parse) {sel = parse[2];} // Remove leading stuff
-  regexp = new RegExp("(.*)([" + String.fromCharCode(FootnoteMarker) + "\\s" + punctuation + "]+$)");
-  parse = sel.match(regexp);
-  if (parse) {sel = parse[1];} // Remove trailing stuff
+  sel = sel.replace(/^\d+/, ""); // remove verse numbers
+
   return sel;
 }
 
@@ -726,7 +751,9 @@ function isASCII(text) {
 function copyObj(obj) {
   var newobj = {};
   for (var m in obj) {
-    if (typeof(obj[m]) == "object") {
+    if (obj[m] === null) newobj[m] = null;
+    else if (obj[m] === NaN) newobj[m] = NaN;
+    else if (typeof(obj[m]) == "object") {
       newobj[m] = copyObj(obj[m]);
     }
     else newobj[m] = obj[m];

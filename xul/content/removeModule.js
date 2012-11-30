@@ -27,7 +27,7 @@ const CBMAXHEIGHT = 500;
 function onLoad() {
   var audioDir = getSpecialDirectory("xsAudio");
 //  updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createDynamicClasses();
+  createDynamicCssClasses();
   for (var g=0; g<GROUPS.length; g++) {
     var checkBoxes = [];
     var hide=true;
@@ -62,7 +62,7 @@ function onLoad() {
         aFile.append(lc + "@xulsword.org");
         if (!aFile.exists()) continue;
         var cb = document.createElement("checkbox");
-        cb = MainWindow.writeLocaleElem(cb, lc, GROUPS[g], true);
+        cb = MainWindow.writeLocaleElem(cb, lc, GROUPS[g] + "." + lc, true);
         if (!cb) continue;
         cb.setAttribute("id", "lc." + lc);
         checkBoxes.push(cb);

@@ -51,7 +51,7 @@
       var lc = getLocale();
       LocaleConfigs[lc] = getLocaleConfig(lc);
 
-      createDynamicClasses();
+      createDynamicCssClasses();
       
       setGlobalDirectionPrefs();
       

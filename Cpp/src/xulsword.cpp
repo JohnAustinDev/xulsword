@@ -380,7 +380,7 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
   AttributeList::iterator AtIndex;
   for (AtIndex = module->getEntryAttributes()["Footnote"].begin(); AtIndex != module->getEntryAttributes()["Footnote"].end(); AtIndex++) {
     if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
-        sprintf(Outtext, "<div id=\"src.cr.%d.%s.%s\">", 
+        sprintf(Outtext, "<div title=\"src.cr.%d.%s.%s\">", 
           fnV, 
           modKey->getOSISRef(), 
           module->Name());
@@ -393,7 +393,7 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
         noteText->append("</div>");
       }
       else {
-        sprintf(Outtext, "<div id=\"src.fn.%d.%s.%s\"><span class=\"cs-%s%s\">", 
+        sprintf(Outtext, "<div title=\"src.fn.%d.%s.%s\"><span class=\"cs-%s%s\">", 
           fnV, 
           modKey->getOSISRef(), 
           module->Name(),
@@ -573,12 +573,11 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     //NOW PRINT OUT THE VERSE ITSELF
     //If this is selected verse then designate as so
     //Output verse html code
-    sprintf(Outtext, "<span id=\"vs.%s.%d.%d\" class=\"cs-%s%s\">", bk.c_str(), ch, vNum, module->Name(), (isRTL ? " RTL":""));
+    sprintf(Outtext, "<span title=\"%s.%d.%d.%s\" class=\"vs cs-%s%s\">", bk.c_str(), ch, vNum, module->Name(), module->Name(), (isRTL ? " RTL":""));
     verseHTML.append(Outtext);
 
     if (Verse > 1) {
-      if (vNum==Verse) {verseHTML.append("<span id=\"sv\" class=\"hl\">");}
-      else if ((vNum > Verse)&&(vNum <= LastVerse)) {verseHTML.append("<span class=\"hl\">");}
+      if ((vNum >= Verse)&&(vNum <= LastVerse)) {verseHTML.append("<span class=\"hl\">");}
     }
     
     if (verseStartsWithIndent) {verseHTML.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");}
@@ -681,17 +680,17 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
 /*
   <div class="interB>
 
-    [<span class="hl" [id="sv"]>]
-    <div class="interV1 mod1">
-      <sup class="versnum">5</sup>
-      <span id="vs.5.1">Some verse text from module 1.</span>
+    [<span class="hl">]
+    <div class="interV1 cs-KJV">
+      <sup class="versnum">1</sup>
+      <span title="vs.Gen.5.1.KJV">Some verse text from module 1.</span>
     </div>
 
     <div class="interS"></div>
 
-    <div class="interV2 mod2 RTL">
-      <sup class="versnum">5</sup>
-      <span id="vs.5.2">Some verse text from module 2.</span>
+    <div class="interV2 cs-KYROH RTL">
+      <sup class="versnum">2</sup>
+      <span title="vs.Gen.5.2.KYROH">Some verse text from module 2.</span>
     </div>
     [</span>]
 
@@ -717,8 +716,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
 
     //If this is the selected verse group then designate as so
     if (Verse > 1) {
-      if(vNum==Verse) {chapText.append("<span id=\"sv\" class=\"hl\">");}
-      else if ((vNum > Verse)&&(vNum <= LastVerse)) {chapText.append("<span class=\"hl\">");}
+      if ((vNum >= Verse)&&(vNum <= LastVerse)) {chapText.append("<span class=\"hl\">");}
     }
     
     int versionNum = 1;
@@ -741,8 +739,9 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
         (versemod->Direction() != DIRECTION_LTR ? " RTL":""));
         
       if (Versenumbers) {chapText.appendFormatted("%d",vNum);}
-      chapText.appendFormatted("</sup><span id=\"vs.%s.%d.%d.%d\">", bk.c_str(), myVerseKey->getChapter(), vNum, versionNum++);
-
+      chapText.appendFormatted("</sup><span title=\"vs.%s.%d.%d.%s\">", bk.c_str(), myVerseKey->getChapter(), vNum, versemod->Name());
+      versionNum++;
+      
       SWKey *testkey2 = versemod->CreateKey();
       VerseKey *mainkey = SWDYNAMIC_CAST(VerseKey, testkey2);
       if (!mainkey) {
