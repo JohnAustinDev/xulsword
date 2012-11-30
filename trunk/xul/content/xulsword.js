@@ -33,9 +33,7 @@ function loadedXUL() {
   Texts = ViewPortWindow.Texts;
   BibleTexts = ViewPortWindow.BibleTexts;
   
-  // CSS dynamic updates
-  createDynamicClasses(); // needed for tooltips
-  adjustFontSizes(prefs.getIntPref('FontSize'));
+  initCSS(false);
   
   document.title = SBundle.getString("Title");
   window.name="xulsword-window";
@@ -204,27 +202,9 @@ function checkCipherKeys() {
   if (gotKey) windowLocationReload();
 }
 
-var TreeModuleStyles = [];
-
 //This function is run after the MK window is built and displayed. Init functions
 //which can wait until now should do so, so that the MK window can appear faster.
 function postWindowInit() {
-  // Create TreeModuleStyles used by BookmarkManager
-  var modules = Bible.getModuleList().split("<nx>");
-  for (var v=0; v<modules.length; v++) {
-    var info = modules[v].split(";");
-    if (info[1].search("Biblical Texts") == -1) continue;
-    var versionConfig = ModuleConfigs[info[0]];
-    var font = "font-family:" + versionConfig.fontFamily + " !important; ";
-    var direction = "direction:" + versionConfig.direction + " !important; ";
-    TreeModuleStyles.push("treechildren::-moz-tree-cell-text(" + info[0] + ") { " + direction + font + "}");
-  }
-  for (var lc in LocaleConfigs) {
-    var localeConfig = LocaleConfigs[lc];
-    var font = "font-family:" + localeConfig.fontFamily + " !important; ";
-    var direction = "direction:" + localeConfig.direction + " !important; ";
-    TreeModuleStyles.push("treechildren::-moz-tree-cell-text(" + lc + ") { " + direction + font + "}");
-  }
   
   // Hide disabled books on chooser
   useFirstAvailableBookIf();
@@ -451,7 +431,7 @@ function createLanguageMenu() {
   var menuItems = [];
   for (var lc in LocaleConfigs) {
     var xulElement = document.createElement("menuitem");
-    xulElement = writeLocaleElem(xulElement, lc, "", false);
+    xulElement = writeLocaleElem(xulElement, lc, "langMenu." + lc, false);
     if (!xulElement) continue;
     xulElement.setAttribute("type", "radio");
     xulElement.setAttribute("name", "lng");
@@ -471,10 +451,7 @@ function localeElemSort(a,b) {
   return 0;
 }
 
-function writeLocaleElem(elem, lc, id, noAccessKey) {
-  var myID = lc;
-  if (id) myID = id + "." + myID;
-
+function writeLocaleElem(elem, lc, myID, noAccessKey) {
   var bundle = getLocaleBundle(lc, "xulsword.properties");
   if (!bundle) return null;
   var myLabel = bundle.GetStringFromName("LanguageMenuLabel");
@@ -1194,8 +1171,24 @@ function handleOptions(elem) {
     case "f3":
     case "f4":
       prefs.setIntPref("FontSize", 2*(Number(elem.id.substr(1,1)) - 2));
-      adjustFontSizes(prefs.getIntPref('FontSize'));
-      ViewPort.adjustFont(prefs.getIntPref('FontSize'));
+      
+      // change font for MainWindow
+      setUserFontSize(prefs.getIntPref('FontSize'));
+      ViewPortWindow.setUserFontSize(prefs.getIntPref('FontSize'));
+      
+      // change font for all other windows
+      for (var i=0; i<AllWindows.length; i++) {
+        if (!AllWindows[i]) next;
+        if (typeof(AllWindows[i].setUserFontSize) != "undefined") 
+            AllWindows[i].setUserFontSize(prefs.getIntPref('FontSize'));
+        var iframe = AllWindows[i].document.getElementsByTagName("iframe");
+        for (var j=0; j<iframe.length; j++) {
+          if (typeof(iframe[j].contentDocument.defaultView.setUserFontSize) != "undefined") {
+            iframe[j].contentDocument.defaultView.setUserFontSize(prefs.getIntPref('FontSize'));
+          }
+        }
+      }
+      
       Texts.update(SCROLLTYPETOP, HILIGHTNONE);
       break;
     
@@ -1252,13 +1245,16 @@ function handleOptions(elem) {
       else setAllTabs(false);
       break;
       
-    default:
+    case "langMenu":
       for (var lc in LocaleConfigs) {
-        if (elem.id == lc) {
-          changeLocaleTo(elem.id);
+        if (elem.id == "langMenu." + lc) {
+          changeLocaleTo(lc);
           return;
         }
       }
+      break;
+    
+    default:
       jsdump("WARNING: No handler found for: " + elem.parentNode.id + " " + elem.id + "\n");
       break;
   }
@@ -1377,7 +1373,7 @@ function updateXulswordButtons() {
   var myLocale = getLocale();
   if (document.getElementById("sub-lang").getAttribute("disabled") != "true") {
     for (var lc in LocaleConfigs) {
-      document.getElementById(lc).setAttribute("checked",(lc == myLocale ? true:false));
+      document.getElementById("langMenu." + lc).setAttribute("checked",(lc == myLocale ? true:false));
     }
   }
   document.getElementById("f0").setAttribute("checked",(prefs.getIntPref("FontSize")==-4 ? true:false));
@@ -1492,16 +1488,16 @@ function gotoLinkReal(link, version, frameNum, verse2) {
     break;
   case DICTIONARY:
     setUnicodePref("DictKey_" + version + "_" + frameNum, link);
-    if (verse2) CustomScrollFunction = "Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPECENTER + ", 'par." + verse2 + "');";
-    else CustomScrollFunction = "Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPETOP + ");";
+    //if (verse2) CustomScrollFunction = "Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPECENTER + ", 'par." + verse2 + "');";
+    //else CustomScrollFunction = "Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPETOP + ");";
     BookmarkFuns.updateMainWindow(true, SCROLLTYPECUSTOM);
     break;
   case GENBOOK:
     setUnicodePref("GenBookKey_" + version + "_" + frameNum, link);
     //This timeout is needed because RDF may not be ready until after updateScriptBoxes()
     CustomScrollFunction = "{ GenBookTexts.navigatorSelect(decodeUTF8('" + link2 + "'));";
-    if (verse2) CustomScrollFunction += " Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPECENTER + ", 'par." + verse2 + "'); }";
-    else CustomScrollFunction += " Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPETOP + "); }";
+    //if (verse2) CustomScrollFunction += " Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPECENTER + ", 'par." + verse2 + "'); }";
+    //else CustomScrollFunction += " Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPETOP + "); }";
     BookmarkFuns.updateMainWindow(true, SCROLLTYPECUSTOM);
     break;
   }

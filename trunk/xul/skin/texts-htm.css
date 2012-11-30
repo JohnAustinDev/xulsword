@@ -192,8 +192,12 @@
   color:red;
 }
 /* selected verse highlight */
-.sb .hl {
+.sb .hl,
+.hl .wordsOfJesus {
   color:blue;
+}
+.un-hilight {
+  background:yellow;
 }
 
 /* Bible footnotes */

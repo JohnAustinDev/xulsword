@@ -12,3 +12,10 @@
   direction:rtl;
   text-align:right;
 }
+
+.opposing-program-direction {
+  text-align:right !important;
+}
+body[chromedir="rtl"] .opposing-program-direction {
+  text-align:left !important;
+}

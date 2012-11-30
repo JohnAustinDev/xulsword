@@ -24,7 +24,7 @@ var FirstDisplayBible;
 
 function onLoad() {
 //  updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createDynamicClasses();
+  createDynamicCssClasses();
   PassageChooser = document.getElementById("passage");
   PassageTextBox = document.getAnonymousElementByAttribute(PassageChooser, "anonid", "book");
   VerseNumCheckbox = document.getElementById("cmd_xs_toggleVerseNums");

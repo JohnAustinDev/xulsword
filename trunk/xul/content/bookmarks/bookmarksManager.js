@@ -32,17 +32,6 @@
  *
  * ***** END LICENSE BLOCK ***** */
  
-
-function createVersionTreeClasses(sheetNum) {
-  var sheet = document.styleSheets[sheetNum];
-  if (!sheet) return;
-  var sheetLength = sheet.cssRules.length;
-  var styleRules = MainWindow.TreeModuleStyles;
-  for (var r=0; r<styleRules.length; r++) {
-    sheet.insertRule(styleRules[r], sheetLength);
-  }
-}
-
 var gSearchBox;
 var bookmarksView, bookmarksFolder;
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,9 +40,8 @@ var bookmarksView, bookmarksFolder;
 function Startup()
 {
 //  updateCSSBasedOnCurrentLocale(["#bookmark-window", "input, button, menu, menuitem"]);
-  createDynamicClasses();
-  createVersionTreeClasses(0);
-  adjustFontSizes(prefs.getIntPref('FontSize'));
+  initCSS(false);
+  createDynamicCssClasses("TreeStyleRule");
   
   const windowNode = document.getElementById("bookmark-window");
   bookmarksView = document.getElementById("bookmarks-view");

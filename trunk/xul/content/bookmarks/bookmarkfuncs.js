@@ -302,16 +302,16 @@ var BookmarkFuns = {
       
     case DICTIONARY:
       text = DictTexts.getEntryHTML(location.chapter, location.version);
-      text = Texts.addParagraphIDs(text);
-      text = Texts.getParagraphWithIDTry(Number(location.verse), text);
+      text = Texts.addParagraphIDs(text, location.version);
+      text = Texts.getParagraphWithIDTry(Number(location.verse), text, location.version);
       break;
       
     case GENBOOK:
       var i = location.chapter.indexOf("/", 2);
       if (i != -1) {
         text = Bible.getGenBookChapterText(location.version, location.chapter.substring(i+1));
-        text = Texts.addParagraphIDs(text);
-        text = Texts.getParagraphWithIDTry(Number(location.verse), text);
+        text = Texts.addParagraphIDs(text, location.version);
+        text = Texts.getParagraphWithIDTry(Number(location.verse), text, location.version);
       }
       break;
     }

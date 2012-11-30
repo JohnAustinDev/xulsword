@@ -20,9 +20,7 @@ var ViewPort = {
   
   load: function() {
 
-    // set direction and dynamic styles
-    document.getElementById("viewportbody").setAttribute("chromedir", guiDirection());
-    createDynamicClasses();
+    initCSS(true);
     
     // set default prefs
     getPrefOrCreate("NumDisplayedWindows", "Int", 2);
@@ -39,9 +37,6 @@ var ViewPort = {
       if (!Tab.ORIG_NT && !Tab.ORIG_OT) prefs.setBoolPref("ShowOriginal" + w, false);
     }
   
-    // set font sizes
-    this.adjustFont(getPrefOrCreate('FontSize', "Int", 0));
-
     // draw tabs
     for (w=1; w<=NW; w++) {this.drawTabs(w);}
     
@@ -279,10 +274,6 @@ var ViewPort = {
     html += "</div>";
     
     document.getElementById("tabs" + w).innerHTML = html;
-  },
-
-  adjustFont: function(f) {
-    adjustFontSizes(f);
   },
   
   unload: function() {

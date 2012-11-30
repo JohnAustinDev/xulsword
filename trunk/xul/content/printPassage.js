@@ -30,7 +30,7 @@ var SavedCharPrefs = [];
 
 function onLoad() {
 //  updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createDynamicClasses();
+  createDynamicCssClasses();
   
   ProgressMeter = document.getElementById("progress");
   FromChooser = document.getElementById("from-dropdown");
