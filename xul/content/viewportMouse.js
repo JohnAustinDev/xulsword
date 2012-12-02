@@ -544,7 +544,7 @@ var MouseWheel = {
       Texts.scrollDelta = dv*20; // scroll delta in pixels
     }
   
-    // else scroll versekey modules
+    // else scrolling versekey modules
     else {
       scrollType = SCROLLTYPEBEG;
       

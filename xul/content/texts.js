@@ -49,7 +49,7 @@ var Texts = {
     
     Popup.close();
     
-    ViewPort.update(false);
+    ViewPort.update(false, force);
     
     for (var w=1; w<=NW; w++) {
       
@@ -525,8 +525,6 @@ var Texts = {
   },
 
   scroll2Verse: function(w, l, scrollTypeFlag) {
-    var verse = new RegExp(/^vs(\s|$)/);
-    
     if (!l) return true;
 //jsdump("SCROLLING w=" + w + ", l=" + l +", type=" + scrollTypeFlag);    
     var t = document.getElementById("text" + w);
@@ -534,27 +532,23 @@ var Texts = {
     var mod = prefs.getCharPref("Version" + w);
     
     l = l.split(".");
-    l[1] = (l[1] ? Number(l[1]):1);
-    l[2] = (l[2] ? Number(l[2]):1);
-    l[3] = (l[3] ? Number(l[3]):l[2]);
+    var bk = l[0];
+    var ch = (l[1] ? Number(l[1]):1);
+    var vs = (l[2] ? Number(l[2]):1);
+    var lv = (l[3] ? Number(l[3]):l[2]);
     
     // find the element to scroll to
     var av = sb.firstChild;
     var v = null;
     var vf = null;
     while (av && !v) {
-      
-      if ((verse).test(av.className)) {
-        var re;
-        re = new RegExp("^" + l[0] + "\\." + l[1] + "\\.");
-        if (!vf && re.test(av.title)) vf = av;
-        
-        re = new RegExp("^" + l[0] + "\\." + l[1] + "\\." + l[2] + "$");
-        if (re.test(av.title)) v = av;
+      var p = getElementInfo(av);
+      if (p && p.type == "vs") {
+        if (!vf && p.bk == bk && p.ch == ch) vf = av;
+          
+        if (p.bk == bk && p.ch == ch && p.vs == vs) v = av;
       }
-      
       av = av.nextSibling;
-      
     }
     
     // if not found, use first verse in current chapter
@@ -564,8 +558,7 @@ var Texts = {
     if (!v) return false;
 
     // perform appropriate scroll action
-//jsdump("SCROLLING w" + w + " " + v.title + ": " + scrollTypeFlag);
-
+//
     var vOffsetTop = v.offsetTop;
     var vt = v;
     while (vt && vt.parentNode !== v.offsetParent) {
@@ -579,7 +572,7 @@ var Texts = {
         (vOffsetTop + v.offsetHeight > sb.scrollTop + 20)) return true;
       
     // if this is verse 1 then SCROLLTYPEBEG and SCROLLTYPECENTER both become SCROLLTYPETOP
-    if (l[2]==1 && (scrollTypeFlag==SCROLLTYPEBEG || scrollTypeFlag==SCROLLTYPECENTER)) {
+    if (vs == 1 && (scrollTypeFlag == SCROLLTYPEBEG || scrollTypeFlag == SCROLLTYPECENTER)) {
       scrollTypeFlag = SCROLLTYPETOP;
     }
   
@@ -596,7 +589,7 @@ var Texts = {
         sb.scrollTop = vOffsetTop;
         break;
       case SCROLLTYPECENTER:       // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
-        if (l[2] != 1 && ((vOffsetTop + v.offsetHeight) > (sb.scrollTop + sb.offsetHeight) || vOffsetTop < sb.scrollTop)) {
+        if (vs != 1 && ((vOffsetTop + v.offsetHeight) > (sb.scrollTop + sb.offsetHeight) || vOffsetTop < sb.scrollTop)) {
           var middle = Math.round(vOffsetTop - (sb.offsetHeight/2) + (v.offsetHeight/2));
           // if beginning of verse is not showing then make it show
           if (vOffsetTop < middle) {sb.scrollTop = vOffsetTop;}
@@ -626,9 +619,9 @@ var Texts = {
         // hide all verses previous to scroll verse's chapter
         var vs = sb.lastChild;
         var show = true;
-        var re = new RegExp("^[^\\.]+\\." + (Number(l[1])-1) + "\\.");
         while(vs) {
-          if ((verse).test(vs.className) && re.test(vs.title)) show = false;
+          var p = getElementInfo(vs);
+          if (p && p.type == "vs" && p.ch == (ch-1)) show = false;
           vs.style.display = (show ? "":"none");
           vs = vs.previousSibling;
         }
@@ -641,7 +634,8 @@ var Texts = {
         var showhead = true;
         while(vs) {
           if (!show && showhead) {
-            var isverse = ((verse).test(vs.className));
+            var p = getElementInfo(vs);
+            var isverse = (p && p.type == "vs");
             vs.style.display = (isverse  ? "none":"");
             if (isverse) showhead = false;
           }
@@ -660,7 +654,7 @@ var Texts = {
         if(!ltr && tv) {
           rtl_pageOffsetLeft= tv.offsetLeft + tv.offsetWidth - sb.offsetWidth;
         }
-        if (l[2] == 1 || (v.style.display != "none" && 
+        if (vs == 1 || (v.style.display != "none" && 
             ( (ltr && v.offsetLeft < sb.offsetWidth) || 
               (!ltr && v.offsetLeft >= rtl_pageOffsetLeft) ))) break;
       case SCROLLTYPECENTERALWAYS: // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
@@ -709,10 +703,13 @@ var Texts = {
         
         if (scrollTypeFlag == SCROLLTYPEENDSELECT) {
           var vs = sb.firstChild;
-          while(vs && (vs.style.display == "none" || !(verse).test(vs.className))) {vs = vs.nextSibling;}
-          if (vs) {
+          while(vs) {
             var p = getElementInfo(vs);
-            Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
+            if (p && p.type == "vs" && vs.style.display != "none") {
+              Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
+              break;
+            }
+            vs = vs.nextSibling;
           }
         }
     
@@ -748,9 +745,8 @@ var Texts = {
     // find the verse element(s) to hilight
     var av = sb.firstChild;
     while (av) {
-      if ((/^vs(\s|$)/).test(av.className)) {
-        var v = getElementInfo(av);
-                
+      var v = getElementInfo(av);
+      if (v && v.type == "vs") {
         var hi = (v.bk == bk && v.ch == ch);
         if (hilightFlag == HILIGHTNONE) hi = false;
         if (hilightFlag == HILIGHT_IFNOTV1 && 
