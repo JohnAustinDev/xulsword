@@ -252,93 +252,46 @@ var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.targ
   // on the module type of "mod". If "mod" is specified, these same four 
   // params should be set to something non null.
   readDataFromElement: function(targs, element) {
-    if (!element.className || !element.title) return false;
 
-jsdump("readDataFromElement: class=" + element.className + ", title=" + element.title);
-
-    var type = element.className.match(/^([^\-\s]*)/)[1];
+    var info = getElementInfo(element);
+    if (!info) return false;
+var p=""; for (var m in info) {p += m + "=" + info[m] + " ";} jsdump("readDataFromElement: class=" + element.className + ", title=" + element.title + ", " + p);
     
-    if (!TextClasses.hasOwnProperty(type)) return false;
-    
-    // we have a TextClasses element, so now get its data
-    for (var i=0; i<TextClasses[type].length; i++) {
-      var m = element.title.match(TextClasses[type][i].re);
-      if (!m) continue;
+    for (var p in info) {
       
-      // we've matched some data so save what we found in our return object
-      for (var p in TextClasses[type][i]) {
-        if (p == "re") continue;
-      
-        // first come, first served- don't overwrite existing data
-        if (!targs.hasOwnProperty(p) || targs[p] !== null) continue; 
+      // first come, first served- don't overwrite existing data
+      if (p != "res" && (!targs.hasOwnProperty(p) || targs[p] !== null)) continue; 
         
-        var val = m[TextClasses[type][i][p]];
-        
-        // report any missing data fields
-        if (!val) {
-          jsdump("Context menu: skipping element field \"" + p + "\" with invalid data: class=" + element.className + ", title=" +  element.title);
-          continue;
-        }
-        
-        // handle some special cases where raw data is processed or handled
-        // contextually.
-        switch(p) {
-        case "res":
-          if (!targs.bookmark) {
-            var aItem = BM.RDF.GetResource(decodeUTF8(val));
-            var aParent = BookmarkFuns.getParentOfResource(aItem, BMDS);
-            if (aParent) {
-              targs.bookmark = BookmarksUtils.getSelectionFromResource(aItem, aParent);
-            }
-          }
-          val = null;
-          break;
-        
-        // Some matches do not return a full compliment of values
-        // for bk, ch, vs, and lv. Setting missing params to NOTFOUND 
-        // allows us to complete them contextually at the end of the 
-        // whole process.
-      
-        // references to other non-bible OSIS texts
-        case "osistext":
-          if (targs.ch === null) {
-            val = val.replace(/^(\S+).*?$/, "$1"); // drop all but first osisRef
-            val = val.split(":"); // split osis-word and reference
-            
-            // handles only osisRef's to dictionary modules right now
-            if ((!targs.mod || targs.mod == val[0]) && 
-                Tab.hasOwnProperty(val[0]) && Tab[val[0]].modType == DICTIONARY) {
-              targs.mod = val[0];
-              targs.bk = NOTFOUND;
-              targs.ch = val[1];
-              targs.vs = NOTFOUND;
-              targs.lv = NOTFOUND;
-            }
-          }
-          val = null;
-          break;
-          
-        case "par":
-          if (targs.vs === null) {
-            targs.bk = NOTFOUND;
-            targs.ch = NOTFOUND;
-            targs.vs = val;
-            targs.lv = val;
-          } 
-          val = null;
-          break;
-        }
-        
-        if (val) targs[p] = val; // got it!
+      if (info[p] === null) {
+        targs[p] = NOTFOUND;
+        continue;
       }
       
-      break;
-    }
-    
-    // if we didn't match expected data then we have a problem, so report it
-    if (i == TextClasses[type].length) {
-      jsdump("Context menu unhandled text-class element: class=" +  element.className + ", title=" +  element.title);
-      return false;
+     var val = info[p];
+      
+      // report any "", 0 etc. data fields
+      if (!val) {
+        jsdump("Context menu: skipping element field \"" + p + "\" with invalid data: class=" + element.className + ", title=" +  element.title);
+        continue;
+      }
+      
+      // handle special cases where raw data is processed or handled
+      // contextually.
+      switch(p) {
+      case "res":
+        if (!targs.bookmark) {
+          var aItem = BM.RDF.GetResource(decodeUTF8(val));
+          var aParent = BookmarkFuns.getParentOfResource(aItem, BMDS);
+          if (aParent) {
+            targs.bookmark = BookmarksUtils.getSelectionFromResource(aItem, aParent);
+          }
+        }
+        val = null;
+        break;
+      }
+      
+      if (val) targs[p] = val; // got it!
+
     }
       
     return true;

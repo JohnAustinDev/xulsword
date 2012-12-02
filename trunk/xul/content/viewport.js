@@ -51,10 +51,7 @@ var ViewPort = {
     // set mouse wheel listeners
     document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", wheel, false);
     document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", wheel, false);
-    var sb = document.getElementsByClassName("sb");
-    for (var i=0; i<sb.length; i++) {
-      sb[i].addEventListener("DOMMouseScroll", MouseWheel.scroll, false);
-    }
+    document.getElementById("textrow").addEventListener("DOMMouseScroll", MouseWheel.scroll, false);
 
   },
 
