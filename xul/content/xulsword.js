@@ -834,7 +834,9 @@ var XulswordController = {
       openSearchDialog(target.selection, target.mod, target.searchType);
       break;
     case "cmd_xs_searchForLemma":
-      openSearchDialog(target.lemma, target.mod, USING_SEARCH_TERMS);
+      var inf = target.lemma.match(/^mod:(\S+)\s+(.*?)$/);
+      if (!inf) break;
+      openSearchDialog(inf[0], inf[1], USING_SEARCH_TERMS);
       break;
     case "cmd_xs_openFromSelection":
       updateToReference(this.parsedLocation);
@@ -1574,48 +1576,50 @@ function unloadXUL() {
  ***********************************************************************/ 
 
 function copyPassageDialog() {
-  AllWindows.push(window.open("chrome://xulsword/content/copyPassage.xul",document.getElementById("menu.copypassage").childNodes[0].nodeValue,"chrome,resizable,centerscreen"));
+  AllWindows.push(window.open("chrome://xulsword/content/copyPassage.xul",
+      document.getElementById("menu.copypassage").childNodes[0].nodeValue,
+      "chrome,resizable,centerscreen"));
 }
- 
-var PrintPassageHTML;
-function handlePrintCommand(command) {
-  var topWindow = WindowWatcher.getWindowByName("xulsword-window",window);
-  //Fixes a Gecko print preview bug where scroll bar was not appearing
-  document.getElementById("printBrowser").style.overflow="auto";
+
+var PrintTarget = null;
+function handlePrintCommand(command, target) {
+  
+  // default print target is viewport
+  PrintTarget = {
+    uri:(target && target.uri ? target.uri:"chrome://xulsword/content/viewport.html"), 
+    document:(target && target.document ? target.document:document.getElementById('xulviewport').contentDocument), 
+    command:command
+  };
+  
   switch (command) {
   case "cmd_pageSetup":
     document.getElementById("cmd_pageSetup").doCommand();
     break;
+    
   case "cmd_printPreview":
   case "cmd_print":
-    document.getElementById('printBrowser').contentDocument.getElementById('printBox').innerHTML = getPrintHTML();
-    var mymod = firstDisplayModule().mod;
-    var myw = firstDisplayModule().w;
-    var mytype = getModuleLongType(mymod);
-    var printTitle;
-    switch (mytype) {
-    case DICTIONARY:
-      printTitle = getPrefOrCreate("DictKey_" + mymod + "_" + myw, "Unicode", "/");
-      break;
-    case GENBOOK:
-      printTitle = getPrefOrCreate("GenBookKey_" + mymod + "_" + myw, "Unicode", "/" + mymod);
-      break;
-    default:
-      printTitle = Book[findBookNum(Location.getBookName())].bNameL
-    }
-    document.getElementById("printBrowser").contentDocument.title = SBundle.getString("Title") + ": " + printTitle;
-    document.getElementById(command).doCommand();
+    // The loaded URI must check for PrintTarget and call printBrowserLoaded if it's found.
+    document.getElementById('printBrowser').loadURI(PrintTarget.uri);
     break;
+    
   case "cmd_print_passage":
     AllWindows.push(window.open("chrome://xulsword/content/printPassage.xul",
-        document.getElementById("print.printpassage").childNodes[0]
-        .nodeValue,"chrome,resizable,centerscreen"));
+        document.getElementById("print.printpassage").childNodes[0].nodeValue,
+        "chrome,resizable,centerscreen"));
     break;
   }
 }
 
-function getPrintHTML() {
+function printBrowserLoaded() {
+  var from = PrintTarget.document.getElementsByTagName("body")[0];
+  var to  = document.getElementById('printBrowser').contentDocument.getElementsByTagName("body")[0];
+  
+  to.innerHTML = from.innerHTML;
 
+  document.getElementById("printBrowser").contentDocument.title = "";
+  document.getElementById(PrintTarget.command).doCommand(); 
+  
+  PrintTarget = null; 
 }
 
 function restoreFocus() {
@@ -1625,16 +1629,16 @@ function restoreFocus() {
 
 var PrintPreviewCallbacks = {
   onEnter: function() {
-    document.getElementById("mainbar").hidden=true;
-    document.getElementById("main-controlbar").hidden=true;
-    document.getElementById("appcontent").selectedIndex=1;
+    document.getElementById("mainbar").hidden = true;
+    document.getElementById("main-controlbar").hidden = true;
+    document.getElementById("appcontent").selectedIndex = 1;
   },
   
   onExit: function() {
     restoreFocus();
-    document.getElementById("mainbar").hidden=false;
-    document.getElementById("main-controlbar").hidden=false;
-    document.getElementById("appcontent").selectedIndex=0;
+    document.getElementById("mainbar").hidden = false;
+    document.getElementById("main-controlbar").hidden = false;
+    document.getElementById("appcontent").selectedIndex = 0;
   },
   
   getSourceBrowser: function() {

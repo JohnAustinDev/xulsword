@@ -196,12 +196,12 @@
         <menuseparator/>
         <menuitem label="&printSetupCmd.label;" accesskey="&printSetupCmd.accesskey;" oncommand="handlePrintCommand('cmd_pageSetup');"/>
         <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" 
-        oncommand="handlePrintCommand('cmd_printPreview');"/>
+            oncommand="handlePrintCommand('cmd_printPreview');"/>
         <menuitem label="&printCmd.label;" accesskey="&printCmd.accesskey;" key="printKb" 
-        oncommand="handlePrintCommand('cmd_print');"/>
+            oncommand="handlePrintCommand('cmd_print');"/>
         <menuseparator/>
         <menuitem label="&print.printpassage;" accesskey="&print.printpassage.sc;"
-        oncommand="handlePrintCommand('cmd_print_passage');"/>
+            oncommand="handlePrintCommand('cmd_print_passage');"/>
         <menuseparator/>
         <menuitem id="keep-quit" label="&quitApplicationCmdWin.label;" accesskey="&quitApplicationCmdWin.accesskey;" oncommand="window.close()"/>
       </menupopup>
@@ -495,7 +495,7 @@
       
       <browser id="printPreviewBrowser"/>
       
-      <browser id="printBrowser" type="content-primary" src="print.html" style="visibility:hidden;" />
+      <browser id="printBrowser" type="content-primary" src="print.html" />
       
     </deck>
   </vbox>

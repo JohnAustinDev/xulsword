@@ -214,7 +214,7 @@ textbox deck[anonid="search-icons"] {
 }
 #genbook-tree {
   width:200px;
-  font-size:1.2em;
+  font-size:0.8em;
   border-top:2px solid rgb(175,145,180);
   border-left:2px solid rgb(175,145,180);
   border-right:2px solid rgb(225,195,230);
@@ -227,13 +227,14 @@ textbox deck[anonid="search-icons"] {
   display:none;
 }
 
-
-.sharedCheckBox:before {
-  content: "\00D7 ";
-}
-
 .videoHelpMenuItem {
   list-style-image: url("chrome://xulsword/skin/images/videohelp.png") !important;
+}
+
+#printBrowser {
+  /*Fixes a Gecko print preview bug where 
+  scroll bar was not appearing*/
+  overflow:auto;
 }
 
 

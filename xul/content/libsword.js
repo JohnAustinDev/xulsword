@@ -93,7 +93,7 @@ var Bible = {
   ModNeedsCipherKey:[],
 
   initLibsword: function() {
-    if (jsdump) jsdump("Initializing libsword...");
+    if (typeof(jsdump) != "undefined") jsdump("Initializing libsword...");
     
     if (this.Libsword) return;
     
@@ -139,7 +139,7 @@ var Bible = {
       this.freeLibxulsword(); //Deleting libxulsword static objects sometimes caused memory problems when library was re-opened
       this.Libsword.close();
       this.Libsword = null;
-      if (jsdump) jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
+      if (typeof(jsdump) != "undefined") jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
     }
   },
   
@@ -155,8 +155,8 @@ var Bible = {
     
     var newXulsword = this.Libsword.declare("GetNewXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
     this.inst = newXulsword(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
-    if (jsdump) jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
-    if (jsdump) jsdump("ModuleDirectory=\"" + this.ModuleDirectory + "\""); 
+    if (typeof(jsdump) != "undefined") jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
+    if (typeof(jsdump) != "undefined") jsdump("ModuleDirectory=\"" + this.ModuleDirectory + "\""); 
   },
   
   freeInstance: function() {
@@ -206,7 +206,7 @@ var Bible = {
       
       if (cipherkey) msg += mod + "(" + cipherkey + ") ";
     }
-    if (msg != "") {jsdump("Opening:" + msg + "\n");}
+    if (typeof(jsdump) != "undefined" && msg != "") {jsdump("Opening:" + msg + "\n");}
     
     return true;
   },
@@ -239,7 +239,7 @@ var Bible = {
     if (ThrowMSG) {
       var tmp = ThrowMSG;
       ThrowMSG = "";
-      if (jsdump) jsdump("THROW: libsword, " + tmp);
+      if (typeof(jsdump) != "undefined") jsdump("THROW: libsword, " + tmp);
       throw(new Error("THROW: libsword, " + tmp));
     }
   },

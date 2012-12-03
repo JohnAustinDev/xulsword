@@ -160,7 +160,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
                 u->inXRefNote = true;
                 SWBuf mclass = "cr";
                 if (tag.getAttribute("subType")) {
-                  mclass.append("-");
+                  mclass.append(" ");
                   mclass.append(tag.getAttribute("subType"));
                 }
 								buf.appendFormatted("<span class=\"%s\" title=\"%s.%s.%s\"></span>",
@@ -265,6 +265,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				      if (mi==-1) {
 				        // Append current data to last tag
 				        buf.setSize(buf.length()-7); // Strip off last <\span> tag
+					insertpoint = insertpoint - 1 - strlen(userData->module->Name()); // .module name was appended to ref
 				        buf.insert(insertpoint, "; ");
 				        buf.insert(insertpoint+2, referenceInfo.c_str());
 				        return true;

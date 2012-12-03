@@ -404,13 +404,12 @@ var Texts = {
       // We have a keeper, lets save the note and show it in the text!
       // Encode ID
       var encodedResVal = encodeUTF8(res.QueryInterface(BM.kRDFRSCIID).Value);
-      var myid = "un." + encodedResVal + "." + bk + "." + ch + "." + verse + "." + mod;
-      var newNoteHTML = "<span class=\"un\" title=\"" + myid + "\" ></span>";
+      var newNoteHTML = "<span class=\"un\" title=\"" + encodedResVal + "." + bk + "." + ch + "." + verse + "." + mod + "\" ></span>";
       
       // if this is a selected verse, place usernote inside the hilighted element (more like regular notes)
-      var re = new RegExp("(title=\"" + (usesVerseKey ? "vs." + bk + "." + ch:"par") + "." + verse + "\" class=\")([^>]*>)(\\s*<span.*?>)?", "im");
-      usernotes.html = usernotes.html.replace(re, "$1un-hilight $2$3" + newNoteHTML);
-      usernotes.notes += "<div title=\"src." + myid + "\">" + note + "</div>";
+      var re = new RegExp("(title=\"" + (usesVerseKey ? bk + "." + ch + ".":"") + verse + "." + mod + "\" class=\"vs)([^>]*>)(\\s*<span.*?>)?", "im");
+      usernotes.html = usernotes.html.replace(re, "$1 un-hilight$2$3" + newNoteHTML);
+      usernotes.notes += "<div class=\"nlist\" title=\"un." + encodedResVal + "." + bk + "." + ch + "." + verse + "." + mod + "\">" + note + "</div>";
     }
     
     return usernotes;
@@ -558,7 +557,6 @@ var Texts = {
     if (!v) return false;
 
     // perform appropriate scroll action
-//
     var vOffsetTop = v.offsetTop;
     var vt = v;
     while (vt && vt.parentNode !== v.offsetParent) {
@@ -688,6 +686,7 @@ var Texts = {
           vs = vs.previousSibling;
         }
         // hide verses until last verse appears in last column
+        vs = sb.firstChild;
         while (vs && v.offsetLeft >= sb.offsetWidth) {
           vs.style.display = "none";
           vs = vs.nextSibling;
@@ -695,7 +694,7 @@ var Texts = {
         // hide verses until last verse appears above footnotebox
         var nb = document.getElementById("note" + w);
         while (vs && 
-              ((ltr && v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth)) && 
+              ((v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth)) && 
               v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight)) {
           vs.style.display = "none";
           vs = vs.nextSibling;

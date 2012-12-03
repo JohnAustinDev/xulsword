@@ -22,6 +22,12 @@ var ViewPort = {
 
     initCSS(true);
     
+    // If we're printing, then just call back and return.
+    if (MainWindow.PrintTarget) {
+      MainWindow.printBrowserLoaded();
+      return;
+    }
+    
     // set default prefs
     getPrefOrCreate("NumDisplayedWindows", "Int", 2);
     

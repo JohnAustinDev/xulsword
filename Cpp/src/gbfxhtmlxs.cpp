@@ -366,7 +366,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
 			if (vkey) {
 				// leave this special osis type in for crossReference notes types?  Might thml use this some day? Doesn't hurt.
 				//char ch = ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref")))) ? 'x':'n');
-				buf.appendFormatted("<sup class=\"fn\" title=\"%s.%s.%s\"></sup>",
+				buf.appendFormatted("<span class=\"fn\" title=\"%s.%s.%s\"></span>",
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
                 userData->module->Name());

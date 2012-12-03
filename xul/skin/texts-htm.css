@@ -28,7 +28,7 @@
   padding-top:26px;
 }
 .noticelink-c {
-  font-size:1.4em;
+  font-size:1.0em;
   margin:0px 10px 10px 10px;
   text-align:center;
 }
@@ -134,26 +134,28 @@
 .versenum {
   vertical-align:top;
 }
+.cr, 
+.fn,
+.un {
+  cursor:pointer;
+}
 .cr:after, 
-.cr-x-parallel-passage:after,
-.cr-x-style1:after,
 .fn:after,
 .un:after {
   vertical-align:top;
   font-family:'Arial' !important;
   font-size-adjust:0.55 !important;
   line-height:100% !important;
-  cursor:pointer;
 }
 .cr:after {
   content: "\00D7 ";
   color:rgb(255,0,0);
 }
-.cr-x-parallel-passage:after {
+.x-parallel-passage:after {
   content: "\25CF ";
   color:rgb(255,0,0);
 }
-.cr-x-style1:after {
+.x-style1:after {
   content: "+ ";
   color:rgb(255,0,0);
 }
@@ -196,7 +198,7 @@
 .hl .wordsOfJesus {
   color:blue;
 }
-.un-hilight {
+.text[moduleType="Texts"] .un-hilight {
   background:yellow;
 }
 
