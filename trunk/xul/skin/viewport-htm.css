@@ -379,3 +379,14 @@ body[chromedir="rtl"] #chbutton_open {
 #text3[footnotesMaximized="true"]:not([columns="show1"]) .nb {
   height:562px; /* dynamic in viewport.js */
 }
+
+
+/* PRINTING STYLES */
+@media print {
+
+#chooser,
+#tabrow {
+  display:none !important;
+}
+
+}

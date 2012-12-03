@@ -380,7 +380,7 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
   AttributeList::iterator AtIndex;
   for (AtIndex = module->getEntryAttributes()["Footnote"].begin(); AtIndex != module->getEntryAttributes()["Footnote"].end(); AtIndex++) {
     if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
-        sprintf(Outtext, "<div title=\"src.cr.%d.%s.%s\">", 
+        sprintf(Outtext, "<div class=\"nlist\" title=\"cr.%d.%s.%s\">", 
           fnV, 
           modKey->getOSISRef(), 
           module->Name());
@@ -393,7 +393,7 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
         noteText->append("</div>");
       }
       else {
-        sprintf(Outtext, "<div title=\"src.fn.%d.%s.%s\"><span class=\"cs-%s%s\">", 
+        sprintf(Outtext, "<div class=\"nlist\" title=\"fn.%d.%s.%s\"><span class=\"cs-%s%s\">", 
           fnV, 
           modKey->getOSISRef(), 
           module->Name(),
@@ -683,14 +683,14 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     [<span class="hl">]
     <div class="interV1 cs-KJV">
       <sup class="versnum">1</sup>
-      <span title="vs.Gen.5.1.KJV">Some verse text from module 1.</span>
+      <span title="Gen.5.1.KJV" class="vs">Some verse text from module 1.</span>
     </div>
 
     <div class="interS"></div>
 
     <div class="interV2 cs-KYROH RTL">
       <sup class="versnum">2</sup>
-      <span title="vs.Gen.5.2.KYROH">Some verse text from module 2.</span>
+      <span title="Gen.5.2.KYROH" class="vs">Some verse text from module 2.</span>
     </div>
     [</span>]
 
@@ -739,7 +739,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
         (versemod->Direction() != DIRECTION_LTR ? " RTL":""));
         
       if (Versenumbers) {chapText.appendFormatted("%d",vNum);}
-      chapText.appendFormatted("</sup><span title=\"vs.%s.%d.%d.%s\">", bk.c_str(), myVerseKey->getChapter(), vNum, versemod->Name());
+      chapText.appendFormatted("</sup><span title=\"%s.%d.%d.%s\" class=\"vs\">", bk.c_str(), myVerseKey->getChapter(), vNum, versemod->Name());
       versionNum++;
       
       SWKey *testkey2 = versemod->CreateKey();

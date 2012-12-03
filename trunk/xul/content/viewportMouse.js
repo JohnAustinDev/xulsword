@@ -103,7 +103,7 @@ function closeTabToolTip() {
 /************************************************************************
  * TEXT SCRIPT BOX MOUSE FUNCTIONS
  ***********************************************************************/  
-var scriptMouseOverClasses = /(^|\s)(cr|fn|sr|dt|dtl|sn|un|introlink|noticelink)(\-|\s|$)/;
+var scriptMouseOverClasses = /^(cr|fn|sr|dt|dtl|sn|un|introlink|noticelink)(\-|\s|$)/;
 function scriptMouseOver(e) {
   
   // Bail if another mouse operation is already happening...
@@ -111,40 +111,52 @@ function scriptMouseOver(e) {
   if (BoundaryClicked || 
       (mainContextMenu && mainContextMenu.getAttribute("value") == "open")
       ) return;
+      
+  // Filter out events without mousover functionality, but move up the
+  // DOM tree to catch mousovers inside interesting elements.
+  var elem = e.target;
+  var type;
+  while(elem) {
+    if (elem.id && (/^(npopup|text\d)$/).test(elem.id)) break; // don't go higher than certain containers
+    if (elem.className) {
+      type = elem.className.match(scriptMouseOverClasses);
+      if (type) break;
+    }
+    elem = elem.parentNode;
+  }
+  if (!elem || !type) return;
+  type = type[1];
 
   // Get the text window of this event
-  var w = getWindow(e.target);
+  var w = getWindow(elem);
   if (!w) return; // this also excludes Popup which is w==0
-  
-  // Filter out events without mousover functionality
-  var elem = e.target;
-  var type = elem.className.match(scriptMouseOverClasses);
-  if (!type) return;
-  type = type[2];
+
+  var p = getElementInfo(elem);
   
 //jsdump("type:" + type + " title:" + elem.title + " class:" + elem.className + "\n");
+  var okay = false;
   switch (type) {
   case "cr":
-    if (prefs.getBoolPref("ShowCrossrefsAtBottom")) {
-      BibleTexts.scroll2Note("w" + w + ".footnote." + elem.title);
+    if (p && prefs.getBoolPref("ShowCrossrefsAtBottom")) {
+      okay = BibleTexts.scroll2Note("w" + w + ".footnote." + p.type + "." + p.nid + "." + p.osisref + "." + p.mod);
     }
-    else if (!Popup.activate(elem, e)) elem.style.cursor = "default";
+    else okay = Popup.activate(elem, e);
     break;
      
   case "fn":
-    if (prefs.getBoolPref("ShowFootnotesAtBottom")) {
-      BibleTexts.scroll2Note("w" + w + ".footnote." + elem.title);
+    if (p && prefs.getBoolPref("ShowFootnotesAtBottom")) {
+      okay = BibleTexts.scroll2Note("w" + w + ".footnote." + p.type + "." + p.nid + "." + p.osisref + "." + p.mod);
     }
-    else if (!Popup.activate(elem, e)) elem.style.cursor = "default";
+    else okay = Popup.activate(elem, e);
     break;
     
   case "un":
     var modType = Tab[prefs.getCharPref("Version" + w)].modType;
-    if (prefs.getBoolPref("ShowUserNotesAtBottom") && 
+    if (p && prefs.getBoolPref("ShowUserNotesAtBottom") && 
           (modType == BIBLE || modType == COMMENTARY)) {
-      BibleTexts.scroll2Note("w" + w + ".footnote." + elem.title);
+      okay = BibleTexts.scroll2Note("w" + w + ".footnote." + p.type + "." + p.nid + "." + p.osisref + "." + p.mod);
     }
-    else if (!Popup.activate(elem, e)) elem.style.cursor = "default";
+    else okay = Popup.activate(elem, e);
     break;
 
   case "sr":
@@ -152,16 +164,16 @@ function scriptMouseOver(e) {
   case "dtl":
   case "introlink":
   case "noticelink":
-    if (!Popup.activate(elem, e)) elem.style.cursor = "default";
+    okay = Popup.activate(elem, e);
     break;
     
   case "sn":
     if (prefs.getCharPref("Strong's Numbers") == "On") {
-      if (!Popup.activate(elem, e)) elem.style.cursor = "default";
+      okay = Popup.activate(elem, e);
     }
-    if (!prefs.getBoolPref("ShowOriginal" + w)) return;
    
     // Add elem's strong's classes to stylesheet for highlighting
+    if (!prefs.getBoolPref("ShowOriginal" + w)) return;
     var classes = elem.className.split(" ");
     classes.shift(); // remove sn base class
     
@@ -174,6 +186,7 @@ function scriptMouseOver(e) {
     }
     break;
   }
+  if (!okay) elem.style.cursor = "help";
   
   e.stopPropagation(); // block any higher handlers
 }
@@ -196,11 +209,28 @@ function scriptMouseOut(e) {
 
 }
 
-const scriptClickClasses = /(^|\s)(sr|dt|dtl|cr|sbpin|crtwisty|fnlink|nbsizer|crref|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
+const scriptClickClasses = /^(sr|dt|dtl|cr|sbpin|crtwisty|fnlink|nbsizer|crref|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
 function scriptClick(e) {
+
+  // Only proceed for events with click functionality, but move up the
+  // DOM tree to catch clicks inside interesting elements.
+  var elem = e.target;
+  var type;
+  while(elem) {
+    if (elem.id && (/^(npopup|text\d)$/).test(elem.id)) break; // don't go higher than certain containers
+    if (elem.className) {
+      type = elem.className.match(scriptClickClasses);
+      if (type) break;
+    }
+    elem = elem.parentNode;
+  }
+  if (!elem || !type) return;
+  type = type[1];
+  
+//jsdump("type:" + type + " title:" + elem.title + " class:" + elem.className + "\n");
   
   // Get the text window of this event
-  var w = getWindow(e.target);
+  var w = getWindow(elem);
   if (w === null) return; // w=0 means popup!!
   
   // when an unpinned GenBook window is clicked, select its chapter in the navigator
@@ -210,13 +240,8 @@ function scriptClick(e) {
     if (!GenBookTexts.isSelectedGenBook(key)) GenBookTexts.navigatorSelect(key);
   }
   
-  // Only proceed for events with click functionality
-  var elem = e.target;
-  var type = elem.className.match(scriptClickClasses);
-  if (!type) return;
-  type = type[2];
-  
-//jsdump("type:" + type + " id:" + elem.id + " title:" + elem.title + " class:" + elem.className + "\n");
+  var p = getElementInfo(elem);
+
   switch (type) {
     
   // Text box and Popup clicks
@@ -233,8 +258,8 @@ function scriptClick(e) {
     break;
     
   case "cr":
-    var ok = toggleRefText(document.getElementById("w" + w + ".footnote." + elem.title));
-    if (ok) BibleTexts.scroll2Note("w" + w + ".footnote." + elem.title);
+    var ok = toggleRefText(document.getElementById("w" + w + ".footnote."  + p.type + "." + p.nid + "." + p.osisref + "." + p.mod));
+    if (ok) BibleTexts.scroll2Note("w" + w + ".footnote."  + p.type + "." + p.nid + "." + p.osisref + "." + p.mod);
     break;
     
   case "listenlink":
@@ -251,11 +276,11 @@ function scriptClick(e) {
     break;
 
   case "prevchaplink":
+    if (!w) break;
     var mod = prefs.getCharPref("Version" + w);
     switch (Tab[mod].modType) {
     case BIBLE:
     case COMMENTARY:
-      if (!w) break;
       if ((/^show(2|3)$/).test(document.getElementById("text" + w).getAttribute("columns"))) 
           previousPage(w);
       else if (prefs.getBoolPref("IsPinned" + w))
@@ -302,11 +327,11 @@ function scriptClick(e) {
     break;
     
   case "nextchaplink":
+    if (!w) break;
     var mod = prefs.getCharPref("Version" + w);
     switch (Tab[mod].modType) {
     case BIBLE:
     case COMMENTARY:
-      if (!w) break;
       if ((/^show(2|3)$/).test(document.getElementById("text" + w).getAttribute("columns")))
           nextPage(w);
       else if (prefs.getBoolPref("IsPinned" + w)) 
@@ -355,11 +380,10 @@ function scriptClick(e) {
     break;
 
   case "fnlink": //Note reference link
-    var t = getElementInfo(elem);
-    switch (Tab[t.mod].modType) {
+    switch (Tab[p.mod].modType) {
     case BIBLE:
     case COMMENTARY:
-      Location.setLocation(t.mod, t.bk + "." + t.ch + "." + t.vs);
+      Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
       Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
      case DICTIONARY:
@@ -375,8 +399,7 @@ function scriptClick(e) {
     break;
     
   case "crref":
-    var t = getElementInfo(elem);
-    Location.setLocation(t.mod, t.bk + "." + t.ch + "." + t.vs + "." + t.lv);
+    Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs + "." + p.lv);
     Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     break;
     
@@ -629,21 +652,21 @@ function previousPage(w) {
   if (!(/^show(2|3)$/).test(t.getAttribute("columns"))) return;
   var sb = t.getElementsByClassName("sb")[0];
   var v = sb.firstChild;
-  while (v && (v.style.display == "none" || !v.title || !(/^vs\./).test(v.title))) {
+  while (v && (v.style.display == "none" || !v.className || !(/^vs(\s|$)/).test(v.className))) {
     v = v.nextSibling;
   }
   if (!v) return;
   
-  var p = getElementInfo(v);
+  v = getElementInfo(v);
   
   if (prefs.getBoolPref("IsPinned" + w)) {
-    Texts.pinnedDisplay[w].bk = p.bk;
-    Texts.pinnedDisplay[w].ch = p.ch;
-    Texts.pinnedDisplay[w].vs = p.vs;
+    Texts.pinnedDisplay[w].bk = v.bk;
+    Texts.pinnedDisplay[w].ch = v.ch;
+    Texts.pinnedDisplay[w].vs = v.vs;
     Texts.update(SCROLLTYPEEND, HILIGHTNONE);
   }
   else {
-    Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
+    Location.setLocation(v.mod, v.bk + "." + v.ch + "." + v.vs);
     Texts.update(SCROLLTYPEENDSELECT, HILIGHTNONE);
   }
 
@@ -676,22 +699,22 @@ function nextPage(w) {
   var nb = document.getElementById("note" + w);
   var v = sb.lastChild;
   while (v && (
-         !v.title || !(/^vs\./).test(v.title) || 
-         v.offsetLeft >= sb.offsetWidth || 
-         (v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth) && v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight))
-         ) {
+          !v.className || !(/^vs(\s|$)/).test(v.className) || 
+          v.offsetLeft >= sb.offsetWidth || 
+          (v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth) && v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight)
+         )) {
     v = v.previousSibling;
   }
   if (!v) return;
 
-  var p = getElementInfo(v);
+  v = getElementInfo(v);
 
   if (prefs.getBoolPref("IsPinned" + w)) {
     Texts.pinnedDisplay[wpin].bk = v.bk;
     Texts.pinnedDisplay[wpin].ch = v.ch;
     Texts.pinnedDisplay[wpin].vs = v.vs;
   }
-  else {Location.setLocation(v.mod, p.bk + "." + p.ch + "." + p.vs);}
+  else {Location.setLocation(v.mod, v.bk + "." + v.ch + "." + v.vs);}
     
   Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
 }

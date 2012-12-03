@@ -134,13 +134,13 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					SWCATCH ( ... ) {	}
 					if (vkey) {
 					   if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
-								buf.appendFormatted("<sup class=\"cr\" title=\"%s.%s.%s\"></sup>",
+								buf.appendFormatted("<span class=\"cr\" title=\"%s.%s.%s\"></span>",
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
                 userData->module->Name());
 					   }
 					   else {
-								buf.appendFormatted("<sup class=\"fn\" title=\"%s.%s.%s\"></sup>",
+								buf.appendFormatted("<span class=\"fn\" title=\"%s.%s.%s\"></span>",
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
                 userData->module->Name());
@@ -149,10 +149,14 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					}
 					else {
 					   if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
-								buf.append("<sup class=\"cr\"></sup><span class=\"genbknote\">[");
+								buf.appendFormatted("<span class=\"cr\" title=\"%s.unavailable.%s\"></span><span class=\"genbknote\">[",
+								footnoteNumber.c_str(), 
+                userData->module->Name());
 					   }
 					   else {
-								buf.append("<sup class=\"fn\"></sup><span class=\"genbknote\">[");
+								buf.appendFormatted("<span class=\"fn\" title=\"%s.unavailable.%s\"></span><span class=\"genbknote\">[",
+								footnoteNumber.c_str(), 
+                userData->module->Name());
 					   }
 					   u->suspendTextPassThru = false;
 					}

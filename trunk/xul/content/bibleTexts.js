@@ -200,7 +200,7 @@ var BibleTexts = {
     
     if (!w) w = 0;
     
-    var note = notes.split(/(<div [^>]*>.*?<\/div>)/);
+    var note = notes.split(/(<div class="nlist" [^>]*>.*?<\/div>)/);
     note = note.sort(this.ascendingVerse);
     
     // Start building our html
@@ -212,30 +212,30 @@ var BibleTexts = {
       for (var n=0; n < note.length; n++) {
         if (!note[n]) continue;
 
-        var p = note[n].match(/<div title="(src\.[^"]+)">(.*?)<\/div>/);
-        var body = p[2];
-        var noteid = p[1].match(XSNOTE);
+        var m = note[n].match(/(<div class="nlist" [^>]*>(.*?)<\/div>)/);
+        var body = m[2];
+        
+        var p = getElementInfo(note[n]);
         
         // Check if this note should be displayed here, and if not then continue
-        var noteType = noteid[1];
-        switch (noteType) {
+        switch (p.ntype) {
         case "fn":
-          if (!gfn) noteType = null;
+          if (!gfn) p.ntype = null;
           break;
         case "cr":
-          if (!gcr) noteType = null;
+          if (!gcr) p.ntype = null;
           break;
         case "un":
-          if (!gun) noteType = null;
+          if (!gun) p.ntype = null;
         }
-        if (!noteType) {continue;}
+        if (!p.ntype) continue;
         
         // Now display this note as a row in the main table
-        t += "<div id=\"w" + w + ".footnote." + noteid[1] + "." + noteid[2] + "\" class=\"fnrow " + (openCRs ? "cropened":"crclosed") + "\">";
+        t += "<div id=\"w" + w + ".footnote." + p.ntype + "." + p.nid + "." + p.osisref + "." + p.mod + "\" class=\"fnrow " + (openCRs ? "cropened":"crclosed") + "\">";
         
         // Write cell #1: an expander link for cross references only
         t +=   "<div class=\"fncol1\">";
-        if (noteType == "cr") {
+        if (p.ntype == "cr") {
           t +=   "<div class=\"crtwisty\"></div>";
         }
         t +=   "</div>";
@@ -248,9 +248,9 @@ var BibleTexts = {
         if (lov == NOTFOUND) lov = getLocale();
         var modDirectionEntity = (ModuleConfigs[mod] && ModuleConfigs[mod].direction == "rtl" ? "&rlm;":"&lrm;");
         t +=   "<div class=\"fncol4\">";
-        if (Number(noteid[5]) && Number(noteid[6])) {
-          t +=   "<a class=\"fnlink\" title=\"" + noteid[2] + "\">";
-          t +=     "<i>" + dString(noteid[5], lov) + ":" + modDirectionEntity + dString(noteid[6], lov) + "</i>";
+        if (p.ch && p.vs) {
+          t +=   "<a class=\"fnlink\" title=\"" + p.nid + "." + p.osisref + "." + p.mod + "\">";
+          t +=     "<i>" + dString(p.ch, lov) + ":" + modDirectionEntity + dString(p.vs, lov) + "</i>";
           t +=   "</a>";
           t +=   " -";
         }
@@ -259,7 +259,7 @@ var BibleTexts = {
         // Write cell #5: note body
         t +=   "<div class=\"fncol5\">";
         
-        switch(noteType) {
+        switch(p.ntype) {
         case "cr":
           // If this is a cross reference, then parse the note body for references and display them
           t += this.getRefHTML(w, mod, body);
@@ -274,7 +274,7 @@ var BibleTexts = {
           // If this is a usernote, then add direction entities and style
           var unmod = null;
           try {
-            unmod = BMDS.GetTarget(BM.RDF.GetResource(decodeUTF8(noteid.match(/un\.(.*?)\./)[1])), BM.gBmProperties[NOTELOCALE], true);
+            unmod = BMDS.GetTarget(BM.RDF.GetResource(decodeUTF8(p.nid)), BM.gBmProperties[NOTELOCALE], true);
             unmod = unmod.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
           }
           catch (er) {}
@@ -294,7 +294,7 @@ var BibleTexts = {
       if (t) t = "<div class=\"fntable\">" + t + "</div>";
       
     }
-    
+  
     return t
   },
   
@@ -328,29 +328,26 @@ var BibleTexts = {
   },
   
   ascendingVerse: function(a,b) {
-    var res=null;
-    var t1="un"; 
-    var t2="fn"; 
-    var t3="cr";
-    if (a==null || a=="") return 1;
-    if (b==null || b=="") return -1;
+    var t1 = "un"; 
+    var t2 = "fn"; 
+    var t3 = "cr";
+    if (!a) return 1;
+    if (!b) return -1;
+    
+    var pa = getElementInfo(a);
+    var pb = getElementInfo(b);
 
-    var av = Number(a.match(XSNOTE)[6]);
-    var bv = Number(b.match(XSNOTE)[6]);
-    var ac = Number(a.match(XSNOTE)[5]);
-    var bc = Number(b.match(XSNOTE)[5]);
-    if (ac == bc) {
-      if (av == bv) {
-        var at = a.match(/title="src\.(\w\w)/)[1];
-        var bt = b.match(/title="src\.(\w\w)/)[1];
-        if (at == bt) return 0;
-        if (at == t1) return -1;
-        if (at == t2 && bt == t3) return -1;
+    if (pa.ch == pb.ch) {
+      if (pa.vs == pb.vs) {
+        if (pa.ntype == pb.ntype) return 0;
+        if (pa.ntype == t1) return -1;
+        if (pa.ntype == t2 && pb.ntype == t3) return -1;
         else return 1
       }
-      return av > bv ? 1:-1
+      return pa.vs > pb.vs ? 1:-1
     }
-    else if (ac < bc) return -1;
+    else if (pa.ch < pb.ch) return -1;
+    
     return 1;
   },
 
@@ -365,18 +362,20 @@ var BibleTexts = {
   
   SelectedNote:null,
   
+  // returns false if element does not exist
   scroll2Note: function(id) {
     // unhilight any hilighted note
     if (BibleTexts.SelectedNote) BibleTexts.SelectedNote.className = BibleTexts.SelectedNote.className.replace(" fnselected", "");
     
     // hilight new note
     this.SelectedNote = document.getElementById(id);
-    if (!this.SelectedNote) return;
+    if (!this.SelectedNote) return false;
     this.SelectedNote.className += " fnselected";
     
     // scroll to new note
     document.getElementById(id).scrollIntoView();
     document.getElementsByTagName("body")[0].scrollTop = 0; // prevent scrollIntoView from scrolling body too!
+    return true;
   },
   
   updateAudioLinks: function(w) {

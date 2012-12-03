@@ -44,31 +44,19 @@ function PopupObj(popupobj) {
     this.srnote = popupobj.srnote;
   }
 
+  // returns false if popup cannot open for any reason
   this.activate = function(elem, e) {
 //jsdump("Activating Popup in " + window.name + ":" + elem.className + ", " + e.type);    
 
     // completely ignore further activations if this popup is pinned
     if (this.npopup.getAttribute("pinned") == "true") return false;
     
-    // get our event element's type
-    try {var type = elem.className.match(/^([^\-\s]+)/)[1];}
-    catch (er) {type = null;}
+    // get our event element's type and mod etc.
+    var type = elem.className.match(/^([^\s\-]+)?/)[0];
+    var p = getElementInfo(elem); // p may be null because not all handled elements are in TextClasses
     
     this.crnote = null; // for module select feature
     this.srnote = null; // for module select feature
-    
-    // see if a module is associated with this event's element
-    var mod = elem;
-    while (mod) {
-      if (mod.className) {
-        var cs = mod.className.match(/(^|\s)cs-(\S+)/);
-        if (cs && Tab.hasOwnProperty(cs[2])) {
-          mod = cs[2];
-          break;
-        }
-      }
-      mod = mod.parentNode;
-    }
    
     // did this event originate from inside this popup?
     var updatingPopup = elem;
@@ -84,10 +72,10 @@ function PopupObj(popupobj) {
     html +=   "</a>";
     
     html +=   "<select class=\"popup-mod-select\" onchange=\"Popup.select(this.value);\" >";
-    if (mod && (/^(cr|sr)$/).test(type)) {
+    if (p && p.mod && (/^(cr|sr)$/).test(p.type)) {
       for (var t=0; t<Tabs.length; t++) {
         if (Tabs[t].modType != BIBLE) continue;
-        var selected = (Tabs[t].modName == mod ? "selected=\"selected\" ":"");
+        var selected = (Tabs[t].modName == p.mod ? "selected=\"selected\" ":"");
         html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].locName + "\" " + selected + ">" + Tabs[t].label + "</option>";
       }
     }
@@ -111,62 +99,64 @@ function PopupObj(popupobj) {
     case "cr":
     case "fn":
     case "un":
-      if (mod) {
-        var w = getWindow(elem);
-        if (w) {
-          var n = new RegExp("<div title=\"src\\." + type + "\\." + elem.title + "\">.*?<\\/div>");
-          this.crnote = Texts.footnotes[w].match(n)[0];
-          html += BibleTexts.getNotesHTML(this.crnote, mod, true, true, true, true, 1);
-        }
-      }
+      var w = getWindow(elem);
+      if (!p || !p.mod || !w || !Texts.footnotes[w]) return false;
+      var re = "<div class=\"nlist\" title=\"" + type + "\\.";
+      re += (typeof(p.nid) == "string" ? escapeRE(p.nid):p.nid) + "\\.";
+      re += escapeRE(p.osisref) + "\\.";
+      re += p.mod + "\">.*?<\\/div>";
+      re = new RegExp(re);
+      this.crnote = Texts.footnotes[w].match(re);
+      if (!this.crnote) return false;
+      this.crnote = this.crnote[0];
+      html += BibleTexts.getNotesHTML(this.crnote, p.mod, true, true, true, true, 1);
+
       break;
 
     case "sr":
-      if (mod) {
-        var entry = elem.innerHTML;
-        // elem may have npopup as an appended child! So we need to remove it to get real innerHTML.
-        // Note: A RegExp does not seem to be able to match innerHTML for some reason.
-        var i = entry.indexOf("id=\"npopup\"");
-        if (i != -1) {
-          i = entry.lastIndexOf("<", i);
-          entry = entry.substring(0, i);
-        }
-        var mtitle = elem.title.replace(/\.[^\.]+$/, "");
-        this.srnote = Texts.getScriptureReferences((mtitle != "unavailable" ? mtitle:entry), mod);
-        this.srnote = "<div title=\"src.cr.1.0.0.0." + mod + "\">" + this.srnote + "</div>"
-        html += BibleTexts.getNotesHTML(this.srnote, mod, true, true, true, true, 1);
+      if (!p || !p.mod) return false;
+      var entry = elem.innerHTML;
+      // elem may have npopup as an appended child! So we need to remove it to get real innerHTML.
+      // Note: A RegExp does not seem to be able to match innerHTML for some reason (needed escapeRE!?).
+      var i = entry.indexOf("id=\"npopup\"");
+      if (i != -1) {
+        i = entry.lastIndexOf("<", i);
+        entry = entry.substring(0, i);
       }
+      this.srnote = Texts.getScriptureReferences((p.reflist != "unavailable" ? p.reflist:entry), p.mod);
+      this.srnote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + p.mod + "\">" + this.srnote + "</div>"
+      html += BibleTexts.getNotesHTML(this.srnote, p.mod, true, true, true, true, 1);
       break;
     
     case "dtl":
     case "dt":
-      if (elem.title) {
-        var mdata = elem.title.replace(/\.[^\.]+$/, "");
-        
-        // Backward Compatibility to < 2.23
-        if (mdata.indexOf(":") == -1) {
-          mdata = mdata.replace(" ", "_32_", "g");
-          mdata = mdata.replace(";", " ", "g");
-          mdata = mdata.replace(/((^|\s)\w+)\./g, "$1:");
-        }
-        
-        var t = mdata.split(" ");
-        if (!t || !t[0]) break;
-        var dnames="", dword="", sep="";
-        for (var i=0; i<t.length; i++) {
-          if (!t[i]) continue;
-          dnames += sep + t[i].split(":")[0];
-          if (!dword) dword = t[i].split(":")[1];
-          sep = ";"
-        }
-      
-        html += DictTexts.getEntryHTML(dword, dnames, true);
+      if (!p || !p.reflist) return false;
+
+      // Backward Compatibility to < 2.23
+      if (p.reflist.indexOf(":") == -1) {
+        p.reflist = p.reflist.replace(" ", "_32_", "g");
+        p.reflist = p.reflist.replace(";", " ", "g");
+        p.reflist = p.reflist.replace(/((^|\s)\w+)\./g, "$1:");
       }
+      
+      var t = p.reflist.split(" ");
+      if (!t || !t[0]) break;
+      var dnames="", dword="", sep="";
+      for (var i=0; i<t.length; i++) {
+        if (!t[i]) continue;
+        dnames += sep + t[i].split(":")[0];
+        if (!dword) dword = t[i].split(":")[1];
+        sep = ";"
+      }
+    
+      html += DictTexts.getEntryHTML(dword, dnames, true);
       break;
       
     case "sn":
       var snlist = elem.className.split(" ");
-      if (snlist) snlist.shift(); // remove base class: sn
+      if (snlist && snlist.length > 1) snlist.shift(); // remove base class: sn
+      else return false;
+      
       var entry = elem.innerHTML;
       // elem may have npopup as an appended child! So we need to remove it to get real innerHTML.
       // Note: A RegExp does not seem to be able to match innerHTML for some reason.
@@ -175,19 +165,22 @@ function PopupObj(popupobj) {
         i = entry.lastIndexOf("<", i);
         entry = entry.substring(0, i);
       }
-      if (snlist) html += DictTexts.getLemmaHTML(snlist, entry);
+      html += DictTexts.getLemmaHTML(snlist, entry);
       break;
       
     case "introlink":
-      if (mod) html += BibleTexts.getBookIntroduction(mod, Location.getBookName());
+      if (!p || !p.mod) return false;
+      html += BibleTexts.getBookIntroduction(p.mod, Location.getBookName());
       break;
       
     case "noticelink":
-      if (mod) html += Bible.getModuleInformation(mod, "NoticeText");
+      if (!p || !p.mod) return false;
+      html += Bible.getModuleInformation(p.mod, "NoticeText");
       break;
       
     default:
       jsdump("Unhandled popup type \"" + type + "\".\n");
+      return false;
     }
     
     html += "</div>";
@@ -201,6 +194,7 @@ function PopupObj(popupobj) {
     // Normal popup updating itself...
     if (updatingPopup) {
       // move popup to insure it's under the mouse
+      this.npopupTX.scrollTop = 0;
       this.npopup.style.top = this.YmouseDelta + e.clientY + "px";
       this.checkPopupPosition(e);
       return true;

@@ -25,7 +25,7 @@ var ContextMenu = {
   lemmaLabel:null,
 
   showing: function(e, menupopup) {
-  //jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
+//jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
 
     // init our target info
     this.target = copyObj(NEWTARGET);
@@ -60,8 +60,8 @@ var ContextMenu = {
         return;
       }
       // Is this a version tab?
-      else if (menupopup.triggerNode.id.search(/tab\.norm\.\d+/)!=-1) {
-        this.target.mod = Tab[menupopup.triggerNode.id.match(/tab\.norm\.(\d+)/)[1]].modName;
+      else if (menupopup.triggerNode.id.search(/tab\.norm\.\d+/) != -1) {
+        this.target.mod = Tabs[menupopup.triggerNode.id.match(/tab\.norm\.(\d+)/)[1]].modName;
         this.build(false, true, false, false, false, false);
         return;
       }
@@ -73,14 +73,21 @@ var ContextMenu = {
     else this.lemmaLabel = document.getElementById("ctx_xs_searchForLemma").label;
     
     // Is mouse over a word with strong's numbers? Then get lemma information.
+    // Strong's numbers are encoded in an elements class, not its title. For this
+    // reason getElementInfo is not used here.
     var selem = menupopup.triggerNode;
     var strongsNum;
+    var strongsMod;
     var canHaveLemma = false;
-    while (selem && !strongsNum) {
-      strongsNum = (selem.className && selem.className.search(/(^|\s)sn($|\s)/)!=-1 ? selem.className:"");
+    while (selem && (!strongsNum || !strongsMod)) {
+      if (!strongsNum) strongsNum = (selem.className && selem.className.search(/(^|\s)sn($|\s)/)!=-1 ? selem.className:"");
+      if (!strongsMod) {
+        var p = getElementInfo(selem);
+        if (p && p.type == "vs") strongsMod = p.mod;
+      }
       selem = selem.parentNode;
     }
-    if (strongsNum) {
+    if (strongsNum && strongsMod) {
       this.target.lemma = ""; 
       var nums = strongsNum.split(" ");
       nums.shift(); // remove base style
@@ -94,6 +101,7 @@ var ContextMenu = {
       if (this.target.lemma) {
         canHaveLemma = true;
         document.getElementById("ctx_xs_searchForLemma").label += " - " + this.target.lemma;
+        this.target.lemma = "mod:" + strongsMod + " " + this.target.lemma;
       }
     }
     
@@ -118,9 +126,9 @@ var ContextMenu = {
     if (!this.target.w) this.target.w = 1;
     
     if (!this.target.mod) {
-      this.target.mod = prefs.getCharPref("Version", this.target.w); 
+      this.target.mod = prefs.getCharPref("Version" + this.target.w); 
     }
-    
+  
     var defTexts = {bk:Location.getBookName(), 
             ch:Location.getChapterNumber(this.target.mod), 
             vs:Location.getVerseNumber(this.target.mod), 
@@ -226,6 +234,7 @@ var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.targ
     return true;
   },
 
+  // Read target info from an element and its parents.
   getTargetsFromElement: function(targs, element) {
 //{ bk:null, ch:null, vs:null, lv:null, mod:null, w:null, lemma:null, bookmark:null, selection:null }
 
@@ -247,10 +256,9 @@ var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.targ
     return targs;
   },
   
-  // Returns target information associated with an element or its parents.
+  // Returns target information associated with an element.
   // NOTE: bk, ch, vs, and lv may be interpreted differently depending
-  // on the module type of "mod". If "mod" is specified, these same four 
-  // params should be set to something non null.
+  // on the module type of "mod".
   readDataFromElement: function(targs, element) {
 
     var info = getElementInfo(element);
@@ -260,7 +268,7 @@ var p=""; for (var m in info) {p += m + "=" + info[m] + " ";} jsdump("readDataFr
     for (var p in info) {
       
       // first come, first served- don't overwrite existing data
-      if (p != "res" && (!targs.hasOwnProperty(p) || targs[p] !== null)) continue; 
+      if (p != "nid" && (!targs.hasOwnProperty(p) || targs[p] !== null)) continue; 
         
       if (info[p] === null) {
         targs[p] = NOTFOUND;
@@ -278,7 +286,7 @@ var p=""; for (var m in info) {p += m + "=" + info[m] + " ";} jsdump("readDataFr
       // handle special cases where raw data is processed or handled
       // contextually.
       switch(p) {
-      case "res":
+      case "nid":
         if (!targs.bookmark) {
           var aItem = BM.RDF.GetResource(decodeUTF8(val));
           var aParent = BookmarkFuns.getParentOfResource(aItem, BMDS);
