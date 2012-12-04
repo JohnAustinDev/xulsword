@@ -384,9 +384,19 @@ body[chromedir="rtl"] #chbutton_open {
 /* PRINTING STYLES */
 @media print {
 
-#chooser,
-#tabrow {
+#chooser {
   display:none !important;
+}
+#viewport {
+  height:auto !important;
+}
+.sb, .nbf, .nb {
+  height:auto !important;
+}
+.nbf {
+  position:relative !important;
+  bottom:auto !important;
+  right:auto !important;
 }
 
 }

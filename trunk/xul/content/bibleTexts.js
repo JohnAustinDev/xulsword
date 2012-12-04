@@ -104,47 +104,43 @@ var BibleTexts = {
     var sb = t.getElementsByClassName("sb")[0];
     var nb = document.getElementById("note" + w);
       
+    // single column displays always show notes for the whole chapter.
     if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
 
       // get first chapter/verse
       var vf = sb.firstChild;
-      while (vf && (vf.style.display == "none" || !vf.title || !(/^vs\./).test(vf.title))) {
+      while (vf && (vf.style.display == "none" || !vf.className || !(/^vs(\s|$)/).test(vf.className))) {
         vf = vf.nextSibling;
       }
       
       // get last chapter/verse
       var vl = sb.lastChild;
-      while (vl && (vl.offsetLeft >= sb.offsetWidth || !vl.title || !(/^vs\./).test(vl.title))) {
+      while (vl && (vl.offsetLeft >= sb.offsetWidth || !vl.className || !(/^vs(\s|$)/).test(vl.className))) {
         vl = vl.previousSibling;
       }
-
-      if (vf) vf = vf.title.split(".");
-      if (vl) vl = vl.title.split(".");
+      
+      if (vf) vf = getElementInfo(vf);
+      if (vl) vl = getElementInfo(vl);
       
       // hide footnotes whose references are scrolled off the window
       if (nb.innerHTML) {
-        // vf and vl id has form: vs.Gen.1.1
-        // note id has form: w1.body.fn.1.Gen.1.1.KJV
+      
         var nt = nb.getElementsByClassName("fnrow");
         for (var i=0; i<nt.length; i++) {
+        
+          var v = getElementInfo(nt[i]);
+          if (!v) continue;
           
-          var value = "";
-          var inf = nt[i].id.split(".");
-    
-          if (vf && 
-             (Number(inf[5]) < Number(vf[2]) ||
-             (Number(inf[5]) == Number(vf[2]) && Number(inf[6]) < Number(vf[3])))) {
-            value = "none";
-          }
+          var display = "";
+          if (vf && (v.ch < vf.ch || (v.ch == vf.ch && v.vs < vf.vs)))
+              display = "none";
             
-          if (vl &&
-             (Number(inf[5]) > Number(vl[2]) ||
-             (Number(inf[5]) == Number(vl[2]) && Number(inf[6]) > Number(vl[3])))) {
-            value = "none";
-          }
+          if (vl && (v.ch > vl.ch || (v.ch == vl.ch && v.vs > vl.vs)))
+              display = "none";
          
-          nt[i].style.display = value;
-          if (!value) havefn = true;
+          nt[i].style.display = display;
+          if (!display) havefn = true;
+          
         }
       }
     }
@@ -231,7 +227,9 @@ var BibleTexts = {
         if (!p.ntype) continue;
         
         // Now display this note as a row in the main table
-        t += "<div id=\"w" + w + ".footnote." + p.ntype + "." + p.nid + "." + p.osisref + "." + p.mod + "\" class=\"fnrow " + (openCRs ? "cropened":"crclosed") + "\">";
+        t += "<div id=\"w" + w + ".footnote." + p.ntype + "." + p.nid + "." + p.osisref + "." + p.mod + "\" ";
+        t += "title=\"" + p.nid + "." + p.osisref + "." + p.mod + "\" ";
+        t += "class=\"fnrow " + (openCRs ? "cropened":"crclosed") + "\">";
         
         // Write cell #1: an expander link for cross references only
         t +=   "<div class=\"fncol1\">";

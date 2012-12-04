@@ -404,3 +404,28 @@ body[chromedir="rtl"] .fncol4 {
 .dict-image-container {
   text-align:center;
 }
+
+
+/* PRINTING STYLES */
+@media print {
+
+.crref:after {
+  content:": ";
+}
+.crtext {
+  display:inline;
+}
+.crtext.opposing-program-direction {
+  display:inline-block;
+}
+.cr-sep {
+  display:block;
+  border-top:1px solid grey;
+  margin:10px;
+}
+.cr-sep:after {
+  content:"";
+  -moz-padding-end:0em;
+}
+
+}

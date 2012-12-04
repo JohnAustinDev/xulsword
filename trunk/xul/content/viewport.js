@@ -22,12 +22,6 @@ var ViewPort = {
 
     initCSS(true);
     
-    // If we're printing, then just call back and return.
-    if (MainWindow.PrintTarget) {
-      MainWindow.printBrowserLoaded();
-      return;
-    }
-    
     // set default prefs
     getPrefOrCreate("NumDisplayedWindows", "Int", 2);
     
@@ -54,6 +48,14 @@ var ViewPort = {
       }
     }
     
+    // If we're printing, then update the viewport and skip adding any event listeners.
+    if (MainWindow.PrintTarget) {
+      document.getElementsByTagName("body")[0].setAttribute("print", "true");
+      Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+      MainWindow.printBrowserLoaded();
+      return;
+    }
+    
     // set mouse wheel listeners
     document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", wheel, false);
     document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", wheel, false);
@@ -69,13 +71,13 @@ var ViewPort = {
 
     // Size layout correctly
     this.hackedResizing(skipBibleChooserTest);
-   
-    // Tab row attribute
-    document.getElementById("tabrow").setAttribute("windows", "show" + prefs.getIntPref("NumDisplayedWindows"));
-   
-    // Windows
+    
     var dw = prefs.getIntPref("NumDisplayedWindows");
     
+    // Tab row attribute
+    document.getElementById("tabrow").setAttribute("windows", "show" + dw);
+    
+    // Windows
     for (var w=1; w<=NW; w++) {
       var value = "show1";
       if (w > dw) value = "hide";
@@ -100,9 +102,31 @@ var ViewPort = {
       // around at this time is to prohibit RTL columns.
       if (ModuleConfigs[prefs.getCharPref("Version" + w)].direction == "rtl") value = "show1";
       
+      // As of Firefox 17, CSS columns are not supported in print. For this
+      // reason a WYSIWYG print routine is impossible. The workaround is to
+      // change all multi-column windows into single column windows for print.
+      var valueThis = value;
+      if ((/^show(2|3)$/).test(value) && document.getElementsByTagName("body")[0].getAttribute("print") == "true") {
+        var n = Number(value.match(/\d+/)[0]);
+        valueThis = "show1";
+        var sw = Number(document.getElementById("tabrow").getAttribute("windows").match(/\d+/)[0]);
+        document.getElementById("tabrow").setAttribute("windows", "show" + (sw - n + 1));
+      }
+      
       // Set this window's number of columns
       var t = document.getElementById("text" + w);
-      t.setAttribute("columns", value);
+      t.setAttribute("columns", valueThis);
+      
+      if (value == "show2") {
+        w++;
+        document.getElementById("text" + w).setAttribute("columns", "hide");
+      }
+      if (value == "show3") {
+        w++;
+        document.getElementById("text" + w).setAttribute("columns", "hide");
+        w++;
+        document.getElementById("text" + w).setAttribute("columns", "hide");
+      }
       
       // Set window's type
       t.setAttribute("moduleType",  getShortTypeFromLong(Tab[prefs.getCharPref("Version" + w)].modType));
@@ -133,16 +157,6 @@ var ViewPort = {
       // Pins
       t.setAttribute("pinned", (prefs.getBoolPref("IsPinned" + w) ? "true":"false"));
        
-      if (value == "show2") {
-        w++;
-        document.getElementById("text" + w).setAttribute("columns", "hide");
-      }
-      if (value == "show3") {
-        w++;
-        document.getElementById("text" + w).setAttribute("columns", "hide");
-        w++;
-        document.getElementById("text" + w).setAttribute("columns", "hide");
-      }
     }
   //for (w=1; w<=NW; w++) {jsdump("w=" + w + ", value=" + document.getElementById("text" + w).getAttribute("columns"));}
     

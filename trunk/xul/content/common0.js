@@ -110,6 +110,7 @@ const TextClasses = {
   dt:     [ { re:new RegExp(/^((\S+)\:(\S+)[^\.]*)\.([^\.]+)$/),                                        reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
   dtl:    [ { re:new RegExp(/^((\S+)\:(\S+)[^\.]*)\.([^\.]+)$/),                                        reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
   par:    [ { re:new RegExp(/^(\d+)\.([^\.]+)$/),                                                           par:1, bk:null, ch:null, vs:1,    lv:1,     mod:2 } ],
+  fnrow:  [ { re:new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   fnlink: [ { re:new RegExp(/^([^\.]*)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   crref:  [ { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 },
             { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                        bk:2,    ch:3,     vs:4,    lv:5,     mod:6, osisref:1 } ],
@@ -186,11 +187,14 @@ const SCROLLTYPEEND = 5;          // put selected verse at the end of the window
 const SCROLLTYPEENDSELECT = 6;    // put selected verse at the end of the window or link, then select first verse of link or verse 1
 const SCROLLTYPECUSTOM = 7;       // scroll by running CustomScrollFunction
 const SCROLLTYPEDELTA = 8;        // scroll by given delta in pixels
+const SCROLLTYPEPREVIOUS = 9;     // scroll exactly as previous
+
 // highlighting
 const HILIGHTNONE = 0;            // highlight no verse
 const HILIGHTVERSE = 1;           // highlight selected verse in blue
 const HILIGHT_IFNOTV1 = 2;        // highlight selected verse in blue unless it is verse 1
-const HILIGHTSAME = 3;            // keep hilighted verse the same
+const HILIGHTPREVIOUS = 3;        // keep hilighted verse the same
+const HILIGHTSKIP = 4             // skip hilighting step- any previously hilighted verse will remain so
 
 var CustomScrollFunction;
 /************************************************************************

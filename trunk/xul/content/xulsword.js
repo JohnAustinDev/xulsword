@@ -30,8 +30,6 @@ const NOMODULES="0000", NOLOCALES="0001", NEEDRESTART="0002";
 function loadedXUL() {
   ViewPortWindow = document.getElementById("xulviewport").contentDocument.defaultView;
   ViewPort = ViewPortWindow.ViewPort;
-  Texts = ViewPortWindow.Texts;
-  BibleTexts = ViewPortWindow.BibleTexts;
   
   initCSS(false);
   
@@ -238,6 +236,8 @@ function postWindowInit() {
 
 }
 
+// Will switch to an available book IF the current book is not available
+// in the first displayed Bible.
 function useFirstAvailableBookIf() {
   var vers = firstDisplayBible();
   var availableBooks = getAvailableBooks(vers);
@@ -809,7 +809,7 @@ var XulswordController = {
     case "cmd_xs_toggleHebrewVowelPoints":
       prefs.setCharPref(GlobalToggleCommands[aCommand],(prefs.getCharPref(GlobalToggleCommands[aCommand])=="Off") ? "On":"Off");
       updateXulswordButtons();
-      Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+      Texts.update();
       break;
     case "cmd_xs_allTogglesOn":
     case "cmd_xs_allTogglesOff":
@@ -821,7 +821,7 @@ var XulswordController = {
         }
       }
       updateXulswordButtons();
-      Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+      Texts.update();
       break;
     case "cmd_xs_search":
       if (target.searchType) prefs.setIntPref("InitialSearchType", target.searchType);
@@ -867,7 +867,7 @@ var XulswordController = {
       if (target.w) {
         Tab[target.mod]["w" + target.w + ".hidden"] = !Tab[target.mod]["w" + target.w + ".hidden"];
         updateModuleMenuCheckmarks();
-        Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+        Texts.update();
       }
       break;
     case "cmd_xs_aboutModule":
@@ -1145,7 +1145,7 @@ function handleViewPopup(elem) {
   var val=elem.getAttribute('value');
   var vals=val.split("_");
   prefs.setBoolPref(vals[0],(vals[1]=="1" ? true:false));
-  Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+  Texts.update();
 }
 
 var OptionsElement;
@@ -1611,11 +1611,6 @@ function handlePrintCommand(command, target) {
 }
 
 function printBrowserLoaded() {
-  var from = PrintTarget.document.getElementsByTagName("body")[0];
-  var to  = document.getElementById('printBrowser').contentDocument.getElementsByTagName("body")[0];
-  
-  to.innerHTML = from.innerHTML;
-
   document.getElementById("printBrowser").contentDocument.title = "";
   document.getElementById(PrintTarget.command).doCommand(); 
   
