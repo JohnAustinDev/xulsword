@@ -73,25 +73,25 @@ body[chromedir="rtl"] #chbutton_open {
 .tabs[chromedir="rtl"] {
   text-align:left;
 }
-#tabrow[windows="show1"] #tabs1 {
+#textarea[windows="show1"] #tabs1 {
   width:100%;
   min-width:250px;
 }
-#tabrow[windows="show1"] #tabs2,
-#tabrow[windows="show1"] #tabs3 {
+#textarea[windows="show1"] #tabs2,
+#textarea[windows="show1"] #tabs3 {
   display:none;
 }
-#tabrow[windows="show2"] #tabs1, 
-#tabrow[windows="show2"] #tabs2 {
+#textarea[windows="show2"] #tabs1, 
+#textarea[windows="show2"] #tabs2 {
   width:50%;
   min-width:250px;
 }
-#tabrow[windows="show2"] #tabs3 {
+#textarea[windows="show2"] #tabs3 {
   display:none;
 }
-#tabrow[windows="show3"] #tabs1, 
-#tabrow[windows="show3"] #tabs2,
-#tabrow[windows="show3"] #tabs3 {
+#textarea[windows="show3"] #tabs1, 
+#textarea[windows="show3"] #tabs2,
+#textarea[windows="show3"] #tabs3 {
   width:33%;
   min-width:250px;
 }
@@ -172,18 +172,34 @@ body[chromedir="rtl"] #chbutton_open {
   padding-right:10px;
   font-size: 1.1em;
 }
-.text[columns="show1"] {
+#textarea[windows="show3"] .text[columns="show1"] {
+  width:33%;
   /* max-width:250px somehow forces width 
   to 33% even when contents are very wide */ 
   max-width:250px;
   min-width:250px;
 }
-.text[columns="show2"] {
+#textarea[windows="show2"] .text[columns="show1"] {
+  width:50%;
+  /* max-width:250px somehow forces width 
+  to 50% even when contents are very wide */ 
+  max-width:250px;
+  min-width:250px;
+}
+#textarea[windows="show3"] .text[columns="show2"] {
   width:66%;
+  /* max-width:500px somehow forces width 
+  to 66% even when contents are very wide */ 
+  max-width:500px;
   min-width:500px;
 }
-.text[columns="show3"] {
+#textarea[windows="show1"] .text[columns="show1"],
+#textarea[windows="show2"] .text[columns="show2"],
+#textarea[windows="show3"] .text[columns="show3"] {
   width:100%;
+  /* max-width:750px somehow forces width 
+  to 100% even when contents are very wide */ 
+  max-width:750px;
   min-width:750px;
 }
 .text[columns=""], .text[columns="hide"], .text:not([columns]) {
@@ -384,19 +400,37 @@ body[chromedir="rtl"] #chbutton_open {
 /* PRINTING STYLES */
 @media print {
 
-#chooser {
+#chooser,
+#tabrow {
   display:none !important;
 }
 #viewport {
-  height:auto !important;
+  height:auto;
+}
+.text {
+  max-width:none !important;
 }
 .sb, .nbf, .nb {
   height:auto !important;
 }
+.sb {
+  margin-bottom:20px !important;
+}
+.bb {
+  display:none;
+}
 .nbf {
-  position:relative !important;
-  bottom:auto !important;
-  right:auto !important;
+  position:relative;
+  bottom:auto;
+  right:auto;
+}
+.nb {
+  background:transparent;
+	border:none;
+  padding-top:20px;
+}
+.fr {
+  height:0px;
 }
 
 }

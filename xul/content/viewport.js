@@ -75,7 +75,7 @@ var ViewPort = {
     var dw = prefs.getIntPref("NumDisplayedWindows");
     
     // Tab row attribute
-    document.getElementById("tabrow").setAttribute("windows", "show" + dw);
+    document.getElementById("textarea").setAttribute("windows", "show" + dw);
     
     // Windows
     for (var w=1; w<=NW; w++) {
@@ -106,17 +106,19 @@ var ViewPort = {
       // reason a WYSIWYG print routine is impossible. The workaround is to
       // change all multi-column windows into single column windows for print.
       var valueThis = value;
+      var wThis = w;
       if ((/^show(2|3)$/).test(value) && document.getElementsByTagName("body")[0].getAttribute("print") == "true") {
         var n = Number(value.match(/\d+/)[0]);
         valueThis = "show1";
-        var sw = Number(document.getElementById("tabrow").getAttribute("windows").match(/\d+/)[0]);
-        document.getElementById("tabrow").setAttribute("windows", "show" + (sw - n + 1));
+        var sw = Number(document.getElementById("textarea").getAttribute("windows").match(/\d+/)[0]);
+        document.getElementById("textarea").setAttribute("windows", "show" + (sw - n + 1));
       }
       
       // Set this window's number of columns
-      var t = document.getElementById("text" + w);
+      var t = document.getElementById("text" + wThis);
       t.setAttribute("columns", valueThis);
       
+      // Set linked window's to hide
       if (value == "show2") {
         w++;
         document.getElementById("text" + w).setAttribute("columns", "hide");
@@ -128,13 +130,13 @@ var ViewPort = {
         document.getElementById("text" + w).setAttribute("columns", "hide");
       }
       
-      // Set window's type
-      t.setAttribute("moduleType",  getShortTypeFromLong(Tab[prefs.getCharPref("Version" + w)].modType));
+      // Set this window's type
+      t.setAttribute("moduleType",  getShortTypeFromLong(Tab[prefs.getCharPref("Version" + wThis)].modType));
       
-      // Set window's next/prev links
+      // Set this window's next/prev links
       var prev = true;
       var next = true;
-      switch(Tab[prefs.getCharPref("Version" + w)].modType) {
+      switch(Tab[prefs.getCharPref("Version" + wThis)].modType) {
         case BIBLE:
         case COMMENTARY:
           if ((/^show1$/).test(t.getAttribute("columns"))) {
@@ -152,10 +154,10 @@ var ViewPort = {
       t.setAttribute("CanDoPreviousPage", prev);
       
       // Set this window's textdir
-      t.setAttribute("textdir", ModuleConfigs[prefs.getCharPref("Version" + w)].direction);
+      t.setAttribute("textdir", ModuleConfigs[prefs.getCharPref("Version" + wThis)].direction);
       
-      // Pins
-      t.setAttribute("pinned", (prefs.getBoolPref("IsPinned" + w) ? "true":"false"));
+      // Set this window's pin
+      t.setAttribute("pinned", (prefs.getBoolPref("IsPinned" + wThis) ? "true":"false"));
        
     }
   //for (w=1; w<=NW; w++) {jsdump("w=" + w + ", value=" + document.getElementById("text" + w).getAttribute("columns"));}
@@ -404,7 +406,8 @@ var ViewPort = {
     r.rule.style.backgroundPosition = "0px " + (40 - os.top) + "px";
 
     // fix viewport width to fill parent with no overflow
-    document.getElementById("viewportbody").style.width = MainWindow.innerWidth - MainWindow.document.getElementById("genBookChooser").boxObject.width + "px";
+    if (document.getElementsByTagName("body")[0].getAttribute("print") != "true")
+        document.getElementById("viewportbody").style.width = MainWindow.innerWidth - MainWindow.document.getElementById("genBookChooser").boxObject.width + "px";
 
   }
 

@@ -171,10 +171,6 @@
 	border-bottom:1px solid blue;
   cursor:pointer;
 }
-/* user note highlight */
-.unverse {
-  background:rgb(255,255,140);
-}
 .dt {
   border-bottom:1px solid black;
   cursor:pointer;
@@ -409,6 +405,37 @@ body[chromedir="rtl"] .fncol4 {
 /* PRINTING STYLES */
 @media print {
 
+.navlink,
+.noticelink-c,
+.chapinfo {
+  display:none !important;
+}
+.interS {
+  border-top:1px solid black;
+}
+.dt {
+  border-bottom:none;
+}
+.sn {
+  border-bottom:none;
+}
+.dtl, .sr {
+  color:inherit;
+  border-bottom:none;
+}
+.sb .hl,
+.hl .wordsOfJesus {
+  color:inherit;
+}
+.text[moduleType="Texts"] .un-hilight {
+  background:transparent;
+}
+.fnlink {
+  color:inherit;
+}
+.crref {
+  color:inherit;
+}
 .crref:after {
   content:": ";
 }
@@ -420,7 +447,7 @@ body[chromedir="rtl"] .fncol4 {
 }
 .cr-sep {
   display:block;
-  border-top:1px solid grey;
+  border-top:none;
   margin:10px;
 }
 .cr-sep:after {
@@ -429,3 +456,8 @@ body[chromedir="rtl"] .fncol4 {
 }
 
 }
+
+
+
+
+
