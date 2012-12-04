@@ -535,13 +535,22 @@ var MouseWheel = {
     
     // find window in which event occurred
     var w = getWindow(event.target);
-    if (!w) return; // also returns if event is in Popup
-    MouseWheel.SWwin = w;
+    if (!w) return; // if we're over a popup don't do anything
 
     // dictionaries don't do flow columns and don't sync to other windows
     // so no special scrollwheel response is needed
-    if (Tab[prefs.getCharPref("Version" + MouseWheel.SWwin)].modType == DICTIONARY) return;
+    if (Tab[prefs.getCharPref("Version" + w)].modType == DICTIONARY) return;
         
+    // if we're over a notebox, do nothing
+    var el = event.target;
+    while(el) {
+      if (el.id && (/^note\d+$/).test(el.id)) return;
+      el = el.parentNode;
+    }
+       
+    // then initiate a window scroll...
+    MouseWheel.SWwin = w;
+    
     var vd = Math.round(event.detail/3);
     MouseWheel.SWcount = (MouseWheel.SWcount + vd);
 
@@ -574,14 +583,14 @@ var MouseWheel = {
       // get first verse which begins in window
       v = sb.firstChild;
       if (t.getAttribute("columns") == "show1") {
-        while (v && (!v.className || !(/(^|\s)vs(\s|$)/).test(v.className) || (v.offsetTop - sb.offsetTop < sb.scrollTop))) {
-        v = v.nextSibling;
+        while (v && (!v.className || !(/^vs(\s|$)/).test(v.className) || (v.offsetTop - sb.offsetTop < sb.scrollTop))) {
+          v = v.nextSibling;
         }
       }
       else {
-        while (v && (!v.className || !(/(^|\s)vs(\s|$)/).test(v.className) || v.style.display == "none")) {
-        v = v.nextSibling;
-      }
+        while (v && (!v.className || !(/^vs(\s|$)/).test(v.className) || v.style.display == "none")) {
+          v = v.nextSibling;
+        }
       }
       if (!v) return;
      
@@ -618,7 +627,7 @@ var MouseWheel = {
       force.push(s);
     }
 
-    Texts.update(scrollType, HILIGHTSAME, force);
+    Texts.update(scrollType, HILIGHTSKIP, force);
   }
 
 }

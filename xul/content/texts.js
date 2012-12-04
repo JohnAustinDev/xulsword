@@ -36,15 +36,18 @@ var Texts = {
   // 1 means update always
   update: function(scrollTypeFlag, hilightFlag, force) {
 
-    if (scrollTypeFlag === undefined) scrollTypeFlag = SCROLLTYPEBEG;
-    if (hilightFlag === undefined) hilightFlag = HILIGHTNONE;
+    if (scrollTypeFlag === undefined) scrollTypeFlag = SCROLLTYPEPREVIOUS;
+    if (hilightFlag === undefined) hilightFlag = HILIGHTPREVIOUS;
     if (force === undefined) force = [null, 0, 0, 0];
+    
+    if (scrollTypeFlag == SCROLLTYPEPREVIOUS) scrollTypeFlag = this.scrollTypeFlag;
+    else {this.scrollTypeFlag = scrollTypeFlag;}
+    
+    if (hilightFlag == HILIGHTPREVIOUS) hilightFlag = this.hilightFlag;
+    else {this.hilightFlag = hilightFlag;}
     
 //jsdump("scrollTypeFlag=" + scrollTypeFlag + ", hilightFlag=" + hilightFlag + ", force=" + force);
    
-    this.scrollTypeFlag = scrollTypeFlag;
-    this.hilightFlag = hilightFlag;
-
     if (this.scrollTypeFlag == SCROLLTYPETOP) Location.setVerse(prefs.getCharPref("DefaultVersion"), 1, 1);
     
     Popup.close();
@@ -79,6 +82,11 @@ var Texts = {
       
       this.pinnedDisplay[w] = copyObj(this.display[w]);
     }
+    
+    // If scrollTypeFlag is SCROLLTYPEENDSELECT, then the selection has been changed to the
+    // the first visible verse. To maintain subsequent SCROLLTYPEPREVIOUS functionality, we
+    // need to also change our current scrollTypeFlag to SCROLLTYPEBEG
+    if (this.scrollTypeFlag == SCROLLTYPEENDSELECT) this.scrollTypeFlag = SCROLLTYPEBEG;
 
     MainWindow.updateNavigator();
     
@@ -179,7 +187,7 @@ var Texts = {
     
     if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
       // handle scroll
-      this.scroll2Verse(w, loc, scrollTypeFlag);
+      //this.scroll2Verse(w, loc, scrollTypeFlag);
       
       // handle highlights
       this.hilightVerses(w, loc, hilightFlag);
@@ -722,9 +730,8 @@ var Texts = {
   },
   
   hilightVerses: function(w, l, hilightFlag) {
-    if (!l) return;
+    if (!l || hilightFlag == HILIGHTSKIP) return;
     
-    if (hilightFlag == HILIGHTSAME) return;
     if (Tab[prefs.getCharPref("Version" + w)].modType == COMMENTARY) hilightFlag = HILIGHTNONE;
  
     var t = document.getElementById("text" + w);
