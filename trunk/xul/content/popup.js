@@ -88,6 +88,7 @@ function PopupObj(popupobj) {
 
     html += "<div class=\"popup-text cs-Program\">";
     
+    var res = "";
     switch (type) {
     
     case "popupBackLink":
@@ -109,8 +110,7 @@ function PopupObj(popupobj) {
       this.crnote = Texts.footnotes[w].match(re);
       if (!this.crnote) return false;
       this.crnote = this.crnote[0];
-      html += BibleTexts.getNotesHTML(this.crnote, p.mod, true, true, true, true, 1);
-
+      res = BibleTexts.getNotesHTML(this.crnote, p.mod, true, true, true, true, 1);
       break;
 
     case "sr":
@@ -125,7 +125,7 @@ function PopupObj(popupobj) {
       }
       this.srnote = Texts.getScriptureReferences((p.reflist != "unavailable" ? p.reflist:entry), p.mod);
       this.srnote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + p.mod + "\">" + this.srnote + "</div>"
-      html += BibleTexts.getNotesHTML(this.srnote, p.mod, true, true, true, true, 1);
+      res = BibleTexts.getNotesHTML(this.srnote, p.mod, true, true, true, true, 1);
       break;
     
     case "dtl":
@@ -149,7 +149,7 @@ function PopupObj(popupobj) {
         sep = ";"
       }
     
-      html += DictTexts.getEntryHTML(dword, dnames, true);
+      res = DictTexts.getEntryHTML(dword, dnames, true);
       break;
       
     case "sn":
@@ -165,25 +165,25 @@ function PopupObj(popupobj) {
         i = entry.lastIndexOf("<", i);
         entry = entry.substring(0, i);
       }
-      html += DictTexts.getLemmaHTML(snlist, entry);
+      res = DictTexts.getLemmaHTML(snlist, entry);
       break;
       
     case "introlink":
       if (!p || !p.mod) return false;
-      html += BibleTexts.getBookIntroduction(p.mod, Location.getBookName());
+      res = BibleTexts.getBookIntroduction(p.mod, Location.getBookName());
       break;
       
     case "noticelink":
       if (!p || !p.mod) return false;
-      html += Bible.getModuleInformation(p.mod, "NoticeText");
+      res = Bible.getModuleInformation(p.mod, "NoticeText");
       break;
       
     default:
       jsdump("Unhandled popup type \"" + type + "\".\n");
       return false;
     }
-    
-    html += "</div>";
+    if (!res) return false;
+    html += res + "</div>";
     
     this.npopup.setAttribute("puptype", type);
     this.npopupTX.innerHTML = html;

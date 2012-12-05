@@ -21,48 +21,56 @@
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
 <!DOCTYPE window [
-<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
-%xulswordDTD;
-<!ENTITY % passageDTD SYSTEM "chrome://xulsword/locale/passage.dtd" >
-%passageDTD;
-<!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
-%browserDTD;
+<!ENTITY % printPassageDTD SYSTEM "chrome://xulsword/locale/printPassage.dtd" >
+%printPassageDTD;
 ]>
 
-
 <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-  id="modal"
-  onload="onLoad();"
-  onunload="onUnload(CheckBoxes);"
+  onload="PrintPassage.init();"
   persist="screenX screenY"
   screenX="24" screenY="24">
-
-  <data id="print.printpassage">&print.printpassage;</data>
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/texts.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bibleTexts.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/printPassage.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  
   <vbox flex="1">
+  
     <groupbox>
       <caption label="&frompageInput.label;"/>
       <hbox pack="start" style="-moz-padding-start:20px;">
-        <reference-dropdown id="from-dropdown" onlybibles="true" onlyavailablebooks="true" hidelastverse="true" hideverse="true" style="width:400px;" />
+        <reference-dropdown id="from-dropdown" 
+            onlybibles="true" 
+            onlyavailablebooks="true" 
+            hidelastverse="true" 
+            hideverse="true" 
+            style="width:400px;" />
       </hbox>
     </groupbox>
   
     <groupbox id="to-input">
       <caption label="&topageInput.label;" />
       <vbox align="start" style="-moz-padding-start:20px;">
-        <reference-dropdown id="to-dropdown" onlybibles="true" onlyavailablebooks="true" hidelastverse="true" hideverse="true" hideversion="true" style="width:400px;" />
+        <reference-dropdown id="to-dropdown" 
+            onlybibles="true" 
+            onlyavailablebooks="true" 
+            hidelastverse="true" 
+            hideverse="true" 
+            hideversion="true" 
+            style="width:400px;" />
       </vbox>
     </groupbox>
-  </vbox>                            
+    
+  </vbox>
+                              
   <groupbox>
     <caption label="&term.include;:" />
     <grid>
+    
       <rows>
         <row />
         <row />
@@ -72,30 +80,36 @@
   
       <columns>
         <column>
-          <checkbox id="introduction" label="" />
-          <checkbox id="cmd_xs_toggleHeadings" label="&menu.view.headings;" />
-          <checkbox id="cmd_xs_toggleVerseNums" label="&menu.view.versenums;" />          
-          <checkbox id="cmd_xs_toggleRedWords" label="&menu.view.redwords;" />
+          <checkbox persist="checked" id="introduction" label="&IntroLink;" />
+          <checkbox persist="checked" id="cmd_xs_toggleHeadings" label="&menu.view.headings;" />
+          <checkbox persist="checked" id="cmd_xs_toggleVerseNums" label="&menu.view.versenums;" />          
+          <checkbox persist="checked" id="cmd_xs_toggleRedWords" label="&menu.view.redwords;" />
         </column>
         <column>
-          <checkbox id="cmd_xs_toggleUserNotes" label="&menu.view.usernotes;" /> 
-          <checkbox id="cmd_xs_toggleFootnotes" label="&menu.view.footnotes;" />
-          <checkbox id="cmd_xs_toggleCrossRefs" label="&menu.view.crossrefs;" oncommand="{this.nextSibling.checked=false; this.nextSibling.disabled=!this.checked;}"/>
-          <checkbox id="crossreftext" label="&crossrefs.with.text;"/> 
+          <checkbox persist="checked" id="cmd_xs_toggleUserNotes" label="&menu.view.usernotes;" /> 
+          <checkbox persist="checked" id="cmd_xs_toggleFootnotes" label="&menu.view.footnotes;" />
+          <checkbox persist="checked" id="cmd_xs_toggleCrossRefs" label="&menu.view.crossrefs;" 
+              oncommand="{this.nextSibling.checked=false; this.nextSibling.disabled=!this.checked;}"/>
+          <checkbox persist="checked" id="crossreftext" label="&crossrefs.with.text;"/> 
         </column>
         <column style="border:1px solid rgb(150,150,150); border-radius:6px;" hidden="true">
           <hbox pack="center" align="end" flex="1"><label value="&menu.options.hebrew;" /></hbox>
-          <checkbox id="cmd_xs_toggleHebrewVowelPoints" label="&menu.options.hebVowel;" />
-          <checkbox id="cmd_xs_toggleHebrewCantillation" label="&menu.options.hebCant;" />
+          <checkbox persist="checked" id="cmd_xs_toggleHebrewVowelPoints" label="&menu.options.hebVowel;" />
+          <checkbox persist="checked" id="cmd_xs_toggleHebrewCantillation" label="&menu.options.hebCant;" />
         </column>
       </columns>
+      
     </grid>
   </groupbox>
+  
   <hbox align="center" class="dialogbuttons">
-    <button label="&printCmd.label;" oncommand="buttonPress('cmd_print');" />
-    <button label="&printPreviewCmd.label;" oncommand="buttonPress('cmd_printPreview')" />
-    <hbox flex="1"><progressmeter height="26" flex="1" id="progress" mode="determined" value="0" hidden="true" /></hbox>
+    <button label="&printCmd.label;" oncommand="PrintPassage.handlePrintCommand('cmd_print');" />
+    <button label="&printPreviewCmd.label;" oncommand="PrintPassage.handlePrintCommand('cmd_printPreview')" />
+    <hbox flex="1">
+      <progressmeter height="26" flex="1" id="progress" mode="determined" value="0" hidden="true" />
+    </hbox>
     <button id="close" label="&cancelButton.label;" oncommand="window.close()" />
   </hbox>
+  
 </window>
 

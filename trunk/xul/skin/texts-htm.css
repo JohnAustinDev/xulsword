@@ -410,6 +410,9 @@ body[chromedir="rtl"] .fncol4 {
 .chapinfo {
   display:none !important;
 }
+.chapterhead .chapbk {
+  display:block;
+}
 .interS {
   border-top:1px solid black;
 }

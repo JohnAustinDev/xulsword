@@ -1586,9 +1586,9 @@ function handlePrintCommand(command, target) {
   
   // default print target is viewport
   PrintTarget = {
+    command:command,
     uri:(target && target.uri ? target.uri:"chrome://xulsword/content/viewport.html"), 
-    document:(target && target.document ? target.document:document.getElementById('xulviewport').contentDocument), 
-    command:command
+    bodyHTML:(target && target.bodyHTML ? target.bodyHTML:null)
   };
   
   switch (command) {
