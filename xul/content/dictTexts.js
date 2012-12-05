@@ -56,7 +56,7 @@ var DictTexts = {
     // get htmlEntry
     var de = this.getEntryHTML(d.DictKey, d.mod);
     de = Texts.addParagraphIDs(de, d.mod);
-    var un = Texts.getUserNotes("na", d.DictKey, d.mod, de, w);
+    var un = Texts.getUserNotes("na", d.DictKey, d.mod, de);
     de = un.html; // has user notes added to text
     ret.footnotes = un.notes;
     

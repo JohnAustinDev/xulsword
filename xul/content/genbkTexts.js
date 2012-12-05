@@ -30,8 +30,8 @@ var GenBookTexts = {
     // compared to the genbook-tree's resource values.
     ret.htmlText = Bible.getGenBookChapterText(d.mod, d.GenBookKey.replace(/^\/[^\/]+/, ""));
     ret.htmlText = Texts.addParagraphIDs(ret.htmlText, d.mod);
-    
-    var un = Texts.getUserNotes("na", 1, d.mod, ret.htmlText, w);
+getUnicodePref((Tab[mod].modType == DICTIONARY ? "DictKey_":"GenBookKey_") + mod + "_" + w)    
+    var un = Texts.getUserNotes("na", d.GenBookKey, d.mod, ret.htmlText);
     ret.htmlText = un.html; // has user notes added to text
     ret.footnotes = un.notes;
     

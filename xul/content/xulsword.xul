@@ -495,7 +495,7 @@
       
       <browser id="printPreviewBrowser"/>
       
-      <browser id="printBrowser" type="content-primary" src="print.html" />
+      <browser id="printBrowser" type="content-primary" src="printPassage.html" />
       
     </deck>
   </vbox>

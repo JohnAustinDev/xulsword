@@ -37,7 +37,7 @@ var CommTexts = {
      
     var un;
     if (d.globalOptions["User Notes"] == "On") {
-      un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText, w);
+      un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText);
       ret.htmlText = un.html; // has user notes added to text
       ret.footnotes += un.notes;
     }
@@ -54,7 +54,7 @@ var CommTexts = {
     // add headers
     var showHeader = (d.globalOptions["Headings"] == "On");
     if (showHeader && ret.htmlText) {
-      ret.htmlText = BibleTexts.getChapterHeading(d.bk, d.ch, d.mod, w, false, false) + ret.htmlText;
+      ret.htmlText = BibleTexts.getChapterHeading(d.bk, d.ch, d.mod) + ret.htmlText;
     }
     
     // put "global" SWORD options back to their global context values

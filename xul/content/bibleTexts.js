@@ -23,6 +23,8 @@
 var BibleTexts = {
   
   read: function(w, d) {
+    // w is only needed for creating unique ids
+  
     var ret = { htmlText:"", htmlNotes:"", htmlHead:Texts.getPageLinks(), footnotes:null };
 
     // For Pin feature, set "global" SWORD options for local context
@@ -57,7 +59,7 @@ var BibleTexts = {
       ret.footnotes = Bible.getNotes();
       
       if (d.globalOptions["User Notes"] == "On") {
-        un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText, w);
+        un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText);
         ret.htmlText = un.html; // has user notes added to text
         ret.footnotes += un.notes;
       }
@@ -84,7 +86,7 @@ var BibleTexts = {
     // add headers
     var showHeader = (d.globalOptions["Headings"]=="On");
     if (showHeader && ret.htmlText) {
-      ret.htmlText = this.getChapterHeading(d.bk, d.ch, d.mod, w, false, d["ShowOriginal"]) + ret.htmlText;
+      ret.htmlText = this.getChapterHeading(d.bk, d.ch, d.mod) + ret.htmlText;
     }
     
     // put "global" SWORD options back to their global context values
@@ -150,7 +152,7 @@ var BibleTexts = {
   },
   
   // This function is only for versekey modules (BIBLE, COMMENTARY)
-  getChapterHeading: function(bk, ch, mod, w) {
+  getChapterHeading: function(bk, ch, mod) {
     var l = ModuleConfigs[mod].AssociatedLocale;
     if (l == NOTFOUND) {l = getLocale();} // otherwise use current program locale
     var b = getLocaleBundle(l, "books.properties");
@@ -194,7 +196,7 @@ var BibleTexts = {
   getNotesHTML: function(notes, mod, gfn, gcr, gun, openCRs, w) {
     if (!notes) return "";
     
-    if (!w) w = 0;
+    if (!w) w = 0; // w is only needed for unique id creation 
     
     var note = notes.split(/(<div class="nlist" [^>]*>.*?<\/div>)/);
     note = note.sort(this.ascendingVerse);

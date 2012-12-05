@@ -50,7 +50,12 @@ var ViewPort = {
     
     // If we're printing, then update the viewport and skip adding any event listeners.
     if (MainWindow.PrintTarget) {
+    
       document.getElementsByTagName("body")[0].setAttribute("print", "true");
+      
+      // use our pin info from MainWindow.Texts
+      Texts.pinnedDisplay = MainWindow.Texts.pinnedDisplay;
+      
       Texts.update(SCROLLTYPETOP, HILIGHTNONE);
       MainWindow.printBrowserLoaded();
       return;

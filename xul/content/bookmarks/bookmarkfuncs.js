@@ -604,7 +604,7 @@ var BookmarkFuns = {
     if (!MainWindow || Bible.paused) return;
     if (scrollFlag == null) scrollFlag = SCROLLTYPECENTER;
     if (focusOnMainWindow) MainWindow.focus();
-    Texts.update(scrollFlag, HILIGHTVERSE, [null, 1, ,1 ,1]);
+    Texts.update(scrollFlag, HILIGHTVERSE, [null,1,1,1]);
   },
   
   getRandomString: function () {

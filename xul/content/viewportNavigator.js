@@ -151,7 +151,7 @@ function chooserMouse(e) {
       break;
         
     case "click":
-      Location.setLocation(firstDisplayBible(), Book[p[1]].sName + "." + p[2] + "." + p[3]);
+      Location.setLocation(firstDisplayBible(), Book[p[1]].sName + "." + p[2] + ".1.1");
       Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       break
     }

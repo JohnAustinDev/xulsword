@@ -16,267 +16,186 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+var PrintPassage = {
 
-var ProgressMeter, FromChooser, ToChooser, FromTextBox, ToTextBox, Introduction, Crossreftexts;
-var CheckBoxes = [];
-var Now = {bookNumber:null, chapter:null};
-var From;
-var To;
-var Count, TotalChaps;
-var Version;
-var PrintCommand;
-var SavedGlobalOptions = [];
-var SavedCharPrefs = [];
+  ProgressMeter:null,
+  FromChooser:null, 
+  ToChooser:null, 
+  
+  init: function() {
+    initCSS();
 
-function onLoad() {
-//  updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createDynamicCssClasses();
+    this.ProgressMeter = document.getElementById("progress");
+    this.FromChooser = document.getElementById("from-dropdown");
+    this.ToChooser = document.getElementById("to-dropdown");
   
-  ProgressMeter = document.getElementById("progress");
-  FromChooser = document.getElementById("from-dropdown");
-  ToChooser = document.getElementById("to-dropdown");
-  FromTextBox = document.getAnonymousElementByAttribute(FromChooser, "anonid", "book");
-  ToTextBox = document.getAnonymousElementByAttribute(ToChooser, "anonid", "book");
-  Introduction = document.getElementById("introduction");
-  Crossreftexts = document.getElementById("crossreftext");
-  
-  Introduction.label = getCurrentLocaleBundle("books.properties").GetStringFromName("IntroLink");
-  
-  var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-  try {var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/dialog.properties");} catch(er) {bundle=null;}
-  if (bundle) document.getElementById("close").label = bundle.GetStringFromName("Cancel");
-  
-  saveProgramSettings(SavedGlobalOptions, SavedCharPrefs);
-
-  // Collect array of checkboxes...
-  for (var tcmd in GlobalToggleCommands) {
-    var elem = document.getElementById(tcmd);
-    if (!elem) continue;
-    CheckBoxes.push(tcmd);
-  }
-  CheckBoxes.push(Introduction.id);
-  CheckBoxes.push(Crossreftexts.id);
-
-  var startBible = firstDisplayBible();
-  initCheckBoxes(startBible, CheckBoxes);
-  var startLocation = MainWindow.Location.getLocation(startBible);
-  FromChooser.version = startBible;
-  ToChooser.version = startBible;
-  FromChooser.location = startLocation;
-  ToChooser.location = startLocation;
-  //document.getElementById("to-input").hidden = !allowPrintAll(SavedBible);
+    var startBible = firstDisplayBible();
+    var startLocation = MainWindow.Location.getLocation(startBible);
     
-  FromTextBox.focus();
-  FromTextBox.select();
-}
+    this.FromChooser.location = startLocation;
+    this.FromChooser.version = startBible;
+    this.ToChooser.location = startLocation;
+    this.ToChooser.version = startBible;
+      
+    var fromBk = document.getAnonymousElementByAttribute(this.FromChooser, "anonid", "book")
+    fromBk.focus();
+    fromBk.select();
+  },
 
-/*
-function allowPrintAll(version) {
-  if (!usesSecurityModule(Bible, version)) return true;
-  var allowed = ALLOWPRINT.split(",");
-  for (var i=0; i<allowed.length; i++) {
-    if (allowed[i] == version) return true;
-  }
-  return false;
-}
-*/
-
-function onRefUserUpdate(e, location, version) {
-  var elem = e.target;
-  while (!elem.id) {elem=elem.parentNode;}
-  if (!elem) return;
-//jsdump("A:" + FromChooser.location + " B:" + ToChooser.location + " " + isLocationAbeforeB(FromChooser.location, ToChooser.location) + "\n");
-  switch (elem.id) {
-  case FromChooser.id:
-    ToChooser.version = version;
-    if (!isLocationAbeforeB(location, ToChooser.location)) ToChooser.location = location;
-    //var printAll = allowPrintAll(version);
-    //if (!isLocationAbeforeB(location, ToChooser.location) || !printAll) ToChooser.location = location;
-    //document.getElementById("to-input").hidden = !printAll;
-    initCheckBoxes(version, CheckBoxes);
-    break;
-  case ToChooser.id:
-    if (!isLocationAbeforeB(FromChooser.location, location)) ToChooser.location = FromChooser.location;
-    break;
-  }
-  document.getAnonymousElementByAttribute(elem, "anonid", "version").className = "cs-" + version;
-}
-
-
-function initCheckBoxes(module, checkboxes) {
-  var f = MainWindow.getModuleFeatures(module);
-  f.enabled = true;
-  var feature = {
-    introduction:"enabled",
-    crossreftext:"haveCrossRefs",
-    cmd_xs_toggleHeadings:"haveHeadings",
-    cmd_xs_toggleVerseNums:"enabled",
-    cmd_xs_toggleFootnotes:"haveFootnotes",
-    cmd_xs_toggleUserNotes:"enabled",
-    cmd_xs_toggleRedWords:"haveRedWords",
-    cmd_xs_toggleHebrewVowelPoints:"haveHebrewVowels",
-    cmd_xs_toggleHebrewCantillation:"haveHebrewCant",
-    cmd_xs_toggleCrossRefs:"haveCrossRefs"
-  }
-  for (var cb=0; cb<checkboxes.length; cb++) {
-    document.getElementById(checkboxes[cb]).checked = f[feature[checkboxes[cb]]] && getPrefOrCreate("printPassage." + checkboxes[cb], "Bool", checkboxes[cb]!="crossreftext");
-    if (getPrefOrCreate("HideDisabledCopyPrintIncludes", "Bool", false)) {
-      document.getElementById(checkboxes[cb]).hidden = !f[feature[checkboxes[cb]]];
-    }
-    else document.getElementById(checkboxes[cb]).disabled = !f[feature[checkboxes[cb]]];
-  }
-  if (!document.getElementById("cmd_xs_toggleCrossRefs").checked) {
-    if (getPrefOrCreate("HideDisabledCopyPrintIncludes", "Bool", false)) {
-      document.getElementById("crossreftext").hidden=true;
-    }
-    else document.getElementById("crossreftext").disabled=true;
-  }
-  window.setTimeout("sizeToContent()", 0);
-}
-
-function onUnload(checkboxes) {
-  // Return global options and save checkbox prefs
-  for (var c=0; c<checkboxes.length; c++) {
-    var cbelem = document.getElementById(checkboxes[c]);
-    if (cbelem.disabled) continue;
-    prefs.setBoolPref("printPassage." + checkboxes[c], cbelem.checked);
-  }
-  returnProgramSettings(SavedGlobalOptions, SavedCharPrefs);
-  MainWindow.updateXulswordButtons();
-}
-
-var PrintHTML;
-function buttonPress(cmd) {
-  updateFromCheckBoxes(CheckBoxes);
+  textHTML:"",
+  creatingTextHTML:false,
   
-  PrintCommand = cmd;
+  handlePrintCommand: function(command) {
   
-  // Get From and To location
-  // Note: lastVerse is NOT used by the print routine, but rather
-  //    From.verse and To.verse are used.
-  var loc = FromChooser.location.split(".");
-  From = {shortName:loc[0], bookNumber:findBookNum(loc[0]), chapter:Number(loc[1]), verse:Number(loc[2]), lastVerse:Number(loc[2]), version:FromChooser.version};
-  loc = ToChooser.location.split(".");
-  To = {shortName:loc[0], bookNumber:findBookNum(loc[0]), chapter:Number(loc[1]), verse:Number(loc[2]), lastVerse:Number(loc[2]), version:FromChooser.version};
-  From.bookNumber = findBookNum(From.shortName);
-  To.bookNumber = findBookNum(To.shortName);
-  Version = From.version;
-  
-//jsdump("Version" + ", " + From.shortName + " " + From.chapter + ":" + From.verse + " - " + To.shortName + " " + To.chapter + ":" + To.verse + "\n");
-  Count = 0;
-  TotalChaps = 0;
-  if (From.bookNumber==To.bookNumber) TotalChaps = To.chapter-From.chapter;
-  else {
-    TotalChaps = Bible.getMaxChapter("KJV", Book[From.bookNumber].sName) - From.chapter
-    for (var bknum=From.bookNumber+1; bknum<=To.bookNumber; bknum++) {
-      var add=0;
-      if (bknum==To.bookNumber) add = To.chapter;
-      else add = Bible.getMaxChapter("KJV", Book[bknum].sName);
-      TotalChaps += add;
+    // Wait until our HTML data is ready before printing
+    if (!this.textHTML) {
+    
+      // Start the creation process if it's not already started
+      if (!this.creatingTextHTML) {
+        this.creatingTextHTML = true;
+        this.createTextHTML();
+      }
+      
+      window.setTimeout("PrintPassage.handlePrintCommand('" + command + "');", 100);
+      return;
     }
-  }
-  if (TotalChaps > 0) ProgressMeter.setAttribute("hidden", false);
-  PrintHTML = "";
-  Now.bookNumber = From.bookNumber;
-  Now.chapter = From.chapter;
-//jsdump("TotalChaps:" + TotalChaps + "\n");
-  window.setTimeout("getChapterHTML()",0);
-}
-
-var OldChap;
-var PageBreak = "";
-function getChapterHTML() {
-  Count++;
-  Location.setLocation(Version, Book[Now.bookNumber].sName + " " + Now.chapter);
-  Location.setVerse(Version, 0, 0);
-  var chap = Bible.getChapterText(Version, Location.getLocation(Version));
-  if (chap && chap!=OldChap) {
-    OldChap = chap;
-    var textWithUserNotes = insertUserNotes(Location.getBookName(), Location.getChapterNumber(Version), Version, chap);
-    PrintHTML += PageBreak;
-    if (!PageBreak) PageBreak = "<div class=\"pagebreak\"></div><br>";
-    PrintHTML += "<div class=\"scripture cs-" + Version + "\">" + getScriptBoxHeader(Location.getBookName(), Location.getChapterNumber(Version), Version, true, Introduction.checked, false) + "</div>";
-    PrintHTML += "<div class=\"scripture cs-" + Version + "\">" + textWithUserNotes.html + "</div>";
-    var allNotes = Bible.getNotes();
-    allNotes += textWithUserNotes.notes;
-    var showFootnotes = (Bible.getGlobalOption("Footnotes")=="On");
-    var showCrossRefs = (Bible.getGlobalOption("Cross-references")=="On");
-    var showUserNotes = (prefs.getCharPref("User Notes")=="On");
-    if (showFootnotes || showUserNotes || showCrossRefs) {
-      var notes = getNotesHTML(allNotes, Version, showFootnotes, showCrossRefs, showUserNotes, Crossreftexts.checked);
-      if (notes) {
-        PrintHTML += "<br><hr><br>";
-        PrintHTML += "<div class=\"footnotes cs-" + Version + "\">" + notes + "</div>";
+    this.creatingTextHTML = false;
+    
+    // prepare our target to send to main print routine
+    var target = { 
+          uri:"chrome://xulsword/content/printPassage.html", 
+          bodyHTML:this.textHTML
+        }
+      
+    MainWindow.handlePrintCommand(command, target);
+    
+    this.textHTML = "";
+  },
+  
+  From:null,
+  To:null,
+  Next:null,
+  Count:null,
+  TotalChaps:null,
+  tmpHTML:null,
+  
+  createTextHTML: function() {
+    
+    // set up our start and end counters
+    var loc = this.FromChooser.location.split(".");
+    this.From = { 
+        bk:loc[0], 
+        bn:findBookNum(loc[0]), 
+        ch:Number(loc[1]), 
+        vs:Number(loc[2]), 
+        lv:Number(loc[2]), 
+        mod:this.FromChooser.version };
+    
+    loc = this.ToChooser.location.split(".");
+    this.To = { 
+        bk:loc[0], 
+        bn:findBookNum(loc[0]), 
+        ch:Number(loc[1]), 
+        vs:Number(loc[2]), 
+        lv:Number(loc[2]), 
+        mod:this.FromChooser.version };
+    
+    this.Count = 0;
+    this.TotalChaps = 0;
+    if (this.From.bn == this.To.bn) this.TotalChaps = this.To.ch - this.From.ch;
+    else {
+      this.TotalChaps = Bible.getMaxChapter(this.From.mod, this.From.bk) - this.From.ch
+      for (var n=this.From.bn+1; n<=this.To.bn; n++) {
+        var add=0;
+        if (n == this.To.bn) add = this.To.ch;
+        else add = Bible.getMaxChapter(this.From.mod, Book[n].sName);
+        this.TotalChaps += add;
       }
     }
-  }
+    if (this.TotalChaps > 0) this.ProgressMeter.setAttribute("hidden", false);
+
+    // initialize loop variables
+    this.tmpHTML  = "<div "; // begin single outer container
+    this.tmpHTML += "showIntros=\"" + (document.getElementById("introduction").checked ? "true":"false") + "\" ";
+    this.tmpHTML += "showNoteText=\"" + (document.getElementById("crossreftext").checked  ? "true":"false") + "\">"; 
+    this.display = this.getDisplay(this.From.mod, this.From.bk + "." + this.From.ch + ".1.1");
+    this.Next = { bn:this.From.bn, ch:this.From.ch };
+    
+    // start the creation loop which will create a chapter's HTML, update
+    // the progress bar, and then either quit (if counters are complete) or
+    // else schedule a timeout to get the next chapter.
+    window.setTimeout("PrintPassage.getChapterHTML();",1);
+    
+  },
+
+  // Add a single chapter to tmpHTML and then decide what to do next
+  getChapterHTML: function() {
   
-//jsdump(PrintHTML + "\n");
-  ProgressMeter.value = 100*(Count/TotalChaps);
-  if (Now.bookNumber==To.bookNumber && Now.chapter==To.chapter) {
-    doPrintCommand(PrintCommand, PrintHTML);
-    return;
-  }
-  if (Now.chapter == Bible.getMaxChapter("KJV", Book[Now.bookNumber].sName);) {
-    Now.bookNumber++;
-    Now.chapter=1;
-  }
-  else Now.chapter++;
-  window.setTimeout("getChapterHTML()", 0);
-}
-
-function updateFromCheckBoxes(checkboxes) {
-  // Set Global Options and prefs according to check boxes...
-  for (var cb=0; cb<checkboxes.length; cb++) {
-dump(checkboxes[cb] + " " + document.getElementById(checkboxes[cb]).checked + "\n");
-    var elem = document.getElementById(checkboxes[cb]);
-    if (!GlobalToggleCommands[elem.id]) continue;
-    if (elem.id=="cmd_xs_toggleUserNotes") {
-      prefs.setCharPref(GlobalToggleCommands[elem.id], (elem.checked ? "On":"Off"));
+    this.display.bk = Book[this.Next.bn].sName;
+    this.display.ch = this.Next.ch;
+    
+    var ti = BibleTexts.read(1, this.display);
+    
+    this.tmpHTML += "<div class='sb'>" + ti.htmlText + "</div>";
+    this.tmpHTML += "<div class='nb'>" + ti.htmlNotes + "</div>";
+    this.tmpHTML += "<div class=\"pagebreak\"></div>";
+    
+    // update the progress meter
+    this.Count++;
+    this.ProgressMeter.value = 100*(this.Count/this.TotalChaps);
+    
+    // decide what to do next
+    if (this.Next.bn == this.To.bn && this.Next.ch == this.To.ch) {
+      this.textHTML = this.tmpHTML + "</div>"; // end single outer container
+      return;
     }
-    else {
-      try {Bible.setGlobalOption(GlobalToggleCommands[elem.id], (elem.checked ? "On":"Off"));}
-      catch (er) {}
+    if (this.Next.ch == Bible.getMaxChapter(this.From.mod, Book[this.Next.bn].sName)) {
+      this.Next.bn++;
+      this.Next.ch = 1;
     }
+    else this.Next.ch++;
+    
+    window.setTimeout("PrintPassage.getChapterHTML();", 1);
+  },
+  
+  getDisplay: function(mod, loc) {
+    
+    // Get default display from current Global settings
+    var d = Texts.getDisplay(mod, loc, 1);
+    
+    // Overwrite our display with values from checkboxes
+    for (var tcmd in GlobalToggleCommands) {
+      var elem = document.getElementById(tcmd);
+      if (!elem) continue;
+      d.globalOptions[GlobalToggleCommands[elem.id]] = (elem.checked ? "On":"Off");
+    }
+    
+    return d;
   }
-}
 
-function saveProgramSettings(savedGlobalOptions, savedCharPrefs) {
-  savedGlobalOptions  = {
-    cmd_xs_toggleHeadings:null,
-    cmd_xs_toggleFootnotes:null,
-    cmd_xs_toggleVerseNums:null,
-    cmd_xs_toggleRedWords:null,
-    cmd_xs_toggleHebrewVowelPoints:null,
-    cmd_xs_toggleHebrewCantillation:null,
-    cmd_xs_toggleCrossRefs:null
-  };
-  savedCharPrefs = {
-    cmd_xs_toggleUserNotes:null,
-  };
-  for (var go in savedGlobalOptions) {savedGlobalOptions[go] = Bible.getGlobalOption(GlobalToggleCommands[go]);}
-  for (var pr in savedCharPrefs) {savedCharPrefs[pr] = prefs.getCharPref(GlobalToggleCommands[pr]);}
-}
+};
 
-function returnProgramSettings(savedGlobalOptions, savedCharPrefs) {
-  for (var go in savedGlobalOptions) {
-    Bible.setGlobalOption(go, savedGlobalOptions[go]);
+
+// This function is called by reference-dropdowns when they're updated
+function onRefUserUpdate(e, location, version) {
+  var elem = e.target;
+  while (!elem.id) {elem = elem.parentNode;}
+  if (!elem) return;
+  
+//jsdump("A:" + FromChooser.location + " B:" + ToChooser.location + " " + isLocationAbeforeB(FromChooser.location, ToChooser.location) + "\n");
+  switch (elem.id) {
+  
+  case PrintPassage.FromChooser.id:
+    PrintPassage.ToChooser.version = version;
+    if (!isLocationAbeforeB(location, PrintPassage.ToChooser.location)) 
+        PrintPassage.ToChooser.location = location;
+    break;
+    
+  case PrintPassage.ToChooser.id:
+    if (!isLocationAbeforeB(PrintPassage.FromChooser.location, location)) 
+        PrintPassage.ToChooser.location = PrintPassage.FromChooser.location;
+    break;
+    
   }
-  for (var pr in savedCharPrefs) {
-    prefs.setCharPref(GlobalToggleCommands[pr], savedCharPrefs[pr]);
-  }
-}
 
-function doPrintCommand(cmd, html) {
-  if (!html) window.close();
-  ProgressMeter.setAttribute("hidden", true);
-  var mytype = getModuleLongType(Version);
-  var printBrowser = MainWindow.document.getElementById('printBrowser').contentDocument;
-  var printTitle = FromTextBox.value + " - " + ToTextBox.value;
-  printBrowser.title = SBundle.getString("Title") + ": " + printTitle;
-  PrintHTML = window.unescape(html);
-//dump(html + "\n");
-  printBrowser.getElementById('printBox').innerHTML = html;
-  MainWindow.setTimeout("MainWindow.document.getElementById('" + cmd + "').doCommand();", 0);
-  window.close();
 }

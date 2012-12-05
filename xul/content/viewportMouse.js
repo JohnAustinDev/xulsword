@@ -212,6 +212,17 @@ function scriptMouseOut(e) {
 const scriptClickClasses = /^(sr|dt|dtl|cr|sbpin|crtwisty|fnlink|nbsizer|crref|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
 function scriptClick(e) {
 
+  // Get the text window of this event
+  var w = getWindow(e.target);
+  if (w === null) return; // w=0 means popup!!
+  
+  // when an unpinned GenBook window is clicked, select its chapter in the navigator
+  if (w && !prefs.getBoolPref("IsPinned" + w) && 
+      Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
+    var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/" + prefs.getCharPref("Version" + w));
+    if (!GenBookTexts.isSelectedGenBook(key)) GenBookTexts.navigatorSelect(key);
+  }
+  
   // Only proceed for events with click functionality, but move up the
   // DOM tree to catch clicks inside interesting elements.
   var elem = e.target;
@@ -228,17 +239,6 @@ function scriptClick(e) {
   type = type[1];
   
 //jsdump("type:" + type + " title:" + elem.title + " class:" + elem.className + "\n");
-  
-  // Get the text window of this event
-  var w = getWindow(elem);
-  if (w === null) return; // w=0 means popup!!
-  
-  // when an unpinned GenBook window is clicked, select its chapter in the navigator
-  if (w && !prefs.getBoolPref("IsPinned" + w) && 
-      Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
-    var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/" + prefs.getCharPref("Version" + w));
-    if (!GenBookTexts.isSelectedGenBook(key)) GenBookTexts.navigatorSelect(key);
-  }
   
   var p = getElementInfo(elem);
 

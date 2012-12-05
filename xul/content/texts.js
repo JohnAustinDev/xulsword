@@ -187,7 +187,7 @@ var Texts = {
     
     if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
       // handle scroll
-      //this.scroll2Verse(w, loc, scrollTypeFlag);
+      this.scroll2Verse(w, loc, scrollTypeFlag);
       
       // handle highlights
       this.hilightVerses(w, loc, hilightFlag);
@@ -287,7 +287,7 @@ var Texts = {
       
     // save display object for this window
     this.display[w] = copyObj(display);
-    
+ 
   },
   
   updateDictionary: function(w, force) {
@@ -376,7 +376,7 @@ var Texts = {
     return html;
   },
   
-  getUserNotes: function(bk, ch, mod, text, w) {
+  getUserNotes: function(bk, ch, mod, text) {
     var usernotes = {html:text, notes:""};
       
     var usesVerseKey = (Tab[mod].modType == BIBLE || Tab[mod].modType == COMMENTARY);
@@ -402,7 +402,7 @@ var Texts = {
         if (book != bk) continue;
       }
       else {
-        if (chapter != getUnicodePref((Tab[mod].modType == DICTIONARY ? "DictKey_":"GenBookKey_") + mod + "_" + w)) continue;
+        if (chapter != ch) continue;
         book = "na";
         chapter = "1";
       }
@@ -415,8 +415,8 @@ var Texts = {
       var newNoteHTML = "<span class=\"un\" title=\"" + encodedResVal + "." + bk + "." + ch + "." + verse + "." + mod + "\" ></span>";
       
       // if this is a selected verse, place usernote inside the hilighted element (more like regular notes)
-      var re = new RegExp("(title=\"" + (usesVerseKey ? bk + "." + ch + ".":"") + verse + "." + mod + "\" class=\"vs)([^>]*>)(\\s*<span.*?>)?", "im");
-      usernotes.html = usernotes.html.replace(re, "$1 un-hilight$2$3" + newNoteHTML);
+      var re = new RegExp("(title=\"" + (usesVerseKey ? bk + "." + ch + ".":"") + verse + "." + mod + "\" class=\"(vs|par))([^>]*>)(\\s*<span.*?>)?", "im");
+      usernotes.html = usernotes.html.replace(re, "$1 un-hilight$3$4" + newNoteHTML);
       usernotes.notes += "<div class=\"nlist\" title=\"un." + encodedResVal + "." + bk + "." + ch + "." + verse + "." + mod + "\">" + note + "</div>";
     }
     
@@ -500,7 +500,8 @@ var Texts = {
     display.ShowFootnotesAtBottom = getPrefOrCreate("ShowFootnotesAtBottom", "Bool", true);
     display.ShowCrossrefsAtBottom = getPrefOrCreate("ShowCrossrefsAtBottom", "Bool", false);
     display.ShowUserNotesAtBottom = getPrefOrCreate("ShowUserNotesAtBottom", "Bool", true);
-    display.columns = document.getElementById("text" + w).getAttribute("columns");
+    var c = document.getElementById("text" + w);
+    display.columns = (c ? c.getAttribute("columns"):null);
 
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") 
@@ -794,11 +795,11 @@ var Texts = {
   //jsdump("myParType=" + myParType + ", r=" + r + "\n");
     
     if (myParType != "<p>") {
-      text = "<div class=\"par\" title=\"1." + mod + "\">" + text;
+      text = "<div title=\"1." + mod + "\" class=\"par\">" + text;
       p++;
       r = text.indexOf(myParType);
       while (r != -1) {
-        var ins = myParType + "</div><div class=\"par\" title=\"" + p++ + "." + mod + "\">";
+        var ins = myParType + "</div><div title=\"" + p++ + "." + mod + "\" class=\"par\">";
         text = text.substring(0, r) + ins + text.substring(r + myParType.length);
         r = text.indexOf(myParType, r+ins.length);
       }
@@ -806,7 +807,7 @@ var Texts = {
     }
     else {
       while (r != -1) {
-        ins = " class=\"par\" title=\"" + p++ + "." + mod + "\"";
+        ins = " title=\"" + p++ + "." + mod + "\" class=\"par\"";
         r += 2;
         text = text.substring(0, r) + ins + text.substr(r);
         r = text.indexOf(myParType, r+ins.length);
@@ -819,14 +820,14 @@ var Texts = {
   getParagraphWithID: function (p, text, mod) {
     if (p==null || !text) return text;
     var origtext = text;
-    var ins = "class=\"par\" title=\"" + p + "." + mod + "\">";
+    var ins = "title=\"" + p + "." + mod + "\" class=\"par";
     var s = text.indexOf(ins);
   //jsdump("Looking for:" + ins + "\n" + p + " " + s + "\norigtext:" + origtext.substr(0,128) + "\n");
     if (s == -1) return -1;
-    s += ins.length;
+    s = text.indexOf(">", s) + 1;
     
     p++;
-    ins = "class=\"par\" title=\"" + p + "." + mod + "\">";
+    ins = "title=\"" + p + "." + mod + "\" class=\"par";
     var e = text.indexOf(ins, s);
     if (e == -1) e = text.length;
     else {e = text.lastIndexOf("<", e);}
