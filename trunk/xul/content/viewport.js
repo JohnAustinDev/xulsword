@@ -49,7 +49,7 @@ var ViewPort = {
     }
     
     // If we're printing, then update the viewport and skip adding any event listeners.
-    if (MainWindow.PrintTarget) {
+    if (MainWindow.document.getElementById("printBrowser").contentDocument === document) {
     
       document.getElementsByTagName("body")[0].setAttribute("print", "true");
       

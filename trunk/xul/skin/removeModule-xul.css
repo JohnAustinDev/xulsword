@@ -1,0 +1,35 @@
+#body {
+  font-size:0.9em;
+}
+#modules {
+  width:500px;
+  height:500px;
+  overflow:auto;
+}
+#locales, #audio {
+  min-width:160px;
+  max-width:260px;
+  height:500px;
+  overflow:auto;
+}
+.module-heading {
+  margin-top:20px;
+}
+#modules checkbox {
+  -moz-margin-end:-5px;
+}
+#modgroup checkbox .checkbox-label-box {
+  /* modgroup uses separate labels (not the checkbox's) so that each
+  label can be localized according to its script etc. without
+  effecting label orientation (which should be cs-Program). */
+  display:none;
+}
+hbox.module-container > hbox {
+  width:16px;
+}
+hbox.module-container image {
+  list-style-image: url("chrome://xulsword/skin/images/shared.png");
+}
+hbox.module-container[isLocalModule="true"] image {
+  visibility:hidden;
+}

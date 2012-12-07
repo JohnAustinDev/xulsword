@@ -114,7 +114,7 @@ var Texts = {
       loc = display.bk + "." + display.ch + "." + display.vs;
       hilightFlag = HILIGHTNONE;
     }
-    
+  
     var t = document.getElementById("text" + w);
     var ltr = (ModuleConfigs[display.mod].direction == "ltr");
     var sb = t.getElementsByClassName("sb")[0];
@@ -283,7 +283,13 @@ var Texts = {
     }
     
     // handle scroll
-    if (this.scrollTypeFlag == SCROLLTYPEDELTA) GenBookTexts.scrollDelta(w, this.scrollDelta);
+    if (this.scrollTypeFlag != SCROLLTYPENONE) {
+      if (this.scrollTypeFlag == SCROLLTYPEDELTA) GenBookTexts.scrollDelta(w, this.scrollDelta);
+      else {
+        sb.scrollTop = 0;
+        sb.scrollLeft = 0;
+      }
+    }
       
     // save display object for this window
     this.display[w] = copyObj(display);
@@ -331,6 +337,12 @@ var Texts = {
       document.getElementById("w" + w + ".keytextbox").value = display.DictKey;
       setUnicodePref("DictKey_" + display.mod + "_" + w, display.DictKey);
       
+    }
+    
+    // handle scroll
+    if (this.scrollTypeFlag != SCROLLTYPENONE) {
+      sb.scrollTop = 0;
+      sb.scrollLeft = 0;
     }
   
     // save display object for this window

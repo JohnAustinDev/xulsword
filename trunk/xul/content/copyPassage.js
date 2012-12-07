@@ -17,249 +17,158 @@
 */
  
 
-var PassageChooser, PassageTextBox, VerseNumCheckbox, HeadingsCheckBox, RedWordsCheckBox;
-var SavedGlobalOptions, SavedCharPrefs;
-var CheckBoxes = ["cmd_xs_toggleVerseNums", "cmd_xs_toggleHeadings", "cmd_xs_toggleRedWords"];
-var FirstDisplayBible;
+var PassageChooser, PassageTextBox;
+const STYLES = new RegExp(/^[^\{]*\{([^\}]*)\}/);
 
 function onLoad() {
-//  updateCSSBasedOnCurrentLocale(["#modal", "input, button, menu, menuitem"]);
-  createDynamicCssClasses();
-  PassageChooser = document.getElementById("passage");
-  PassageTextBox = document.getAnonymousElementByAttribute(PassageChooser, "anonid", "book");
-  VerseNumCheckbox = document.getElementById("cmd_xs_toggleVerseNums");
-  HeadingsCheckBox = document.getElementById("cmd_xs_toggleHeadings");
-  RedWordsCheckBox = document.getElementById("cmd_xs_toggleRedWords");
-  
-  var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-  try {var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/dialog.properties");} catch(er) {bundle=null;}
-  if (bundle) document.getElementById("close").label = bundle.GetStringFromName("Cancel");
+  initCSS();
   
   document.title = fixWindowTitle(document.title);
   
-  var savedBible = firstDisplayBible();
-  var savedLocation = MainWindow.Location.getLocation(savedBible);
-  saveProgramSettings(SavedGlobalOptions, SavedCharPrefs);
-
-  var sel = null;  
-  var selob = MainWindow.getMainWindowSelectionObject();
-  if (selob) sel = MainWindow.ContextMenu.getTargetsFromSelection(selob);
-  if (sel && sel.version && sel.verse && sel.lastVerse) {
-    PassageChooser.version = sel.version;
-    PassageChooser.location = savedLocation.split(".")[0] + "." + savedLocation.split(".")[1] + "." + sel.verse + "." + sel.lastVerse;
+  PassageChooser = document.getElementById("passage");
+  PassageTextBox = document.getAnonymousElementByAttribute(PassageChooser, "anonid", "book");
+  
+  // Set passage to selection if there is one
+  var sel = false;  
+  var selob = MainWindow.document.getElementById("xulviewport").contentDocument.defaultView.getSelection();
+  if (selob && !selob.isCollapsed && !(/^\s*$/).test(selob.toString())) {
+    var t = copyObj(MainWindow.ContextMenu.NEWTARGET);
+    sel = MainWindow.ContextMenu.getTargetsFromSelection(t, selob);
   }
+  if (sel && t.mod && t.bk && t.ch && t.vs && t.lv) {
+    PassageChooser.version = t.mod;
+    PassageChooser.location = t.bk + "." + t.ch + "." + t.vs + "." + t.lv;
+  }
+  
+  // otherwise use the global location
   else {
-    PassageChooser.version = savedBible;
-    PassageChooser.location = savedLocation;
+    PassageChooser.version = firstDisplayBible();
+    PassageChooser.location = MainWindow.Location.getLocation(firstDisplayBible());
   }
   
-  for (var c=0; c<CheckBoxes.length; c++) {document.getElementById(CheckBoxes[c]).checked = getPrefOrCreate("copyPassage." + CheckBoxes[c], "Bool", true);}
-  
-  initCheckBoxes(PassageChooser.version, CheckBoxes);
-    
   PassageTextBox.focus();
   PassageTextBox.select();
-  PassageTextBox.setAttribute("onkeyup", "{this.parentNode.parentNode.onbookkeyup(event); if (event.which==13) onRefUserUpdate();}");
-}
-
-function onRefUserUpdate(e, location, version) {
-  if (!e || !location || !version || e.which==13) {
-    if (!location) location = PassageChooser.location;
-    if (!version) version = PassageChooser.version;
-    document.getElementById("copy").click();
-  }
-  initCheckBoxes(version, CheckBoxes);
   
-  var elem = e.target;
-  while (!elem.id) {elem=elem.parentNode;}
-  if (!elem) return;
-  document.getAnonymousElementByAttribute(elem, "anonid", "version").className = "cs-" + version;
-}
-
-function initCheckBoxes(module, checkboxes) {
-  var f = MainWindow.getModuleFeatures(module);
-  f.enabled = true;
-  var feature = {
-    introduction:"enabled",
-    crossreftext:"haveCrossRefs",
-    cmd_xs_toggleHeadings:"haveHeadings",
-    cmd_xs_toggleVerseNums:"enabled",
-    cmd_xs_toggleFootnotes:"haveFootnotes",
-    cmd_xs_toggleUserNotes:"enabled",
-    cmd_xs_toggleRedWords:"haveRedWords",
-    cmd_xs_toggleHebrewVowelPoints:"haveHebrewVowels",
-    cmd_xs_toggleHebrewCantillation:"haveHebrewCant",
-    cmd_xs_toggleCrossRefs:"haveCrossRefs"
-  }
-  for (var cb=0; cb<checkboxes.length; cb++) {
-    document.getElementById(checkboxes[cb]).checked = f[feature[checkboxes[cb]]] && getPrefOrCreate("printPassage." + checkboxes[cb], "Bool", checkboxes[cb]!="crossreftext");
-    if (getPrefOrCreate("HideDisabledCopyPrintIncludes", "Bool", false)) {
-      document.getElementById(checkboxes[cb]).hidden = !f[feature[checkboxes[cb]]];
-    }
-    else document.getElementById(checkboxes[cb]).disabled = !f[feature[checkboxes[cb]]];
-  }
-  window.sizeToContent();
+  // Allow return key to copy and close the window
+  PassageTextBox.setAttribute("onkeyup", "if (event.which==13) { document.getElementById('copy').click(); }");
 }
 
 function copyPassage(e) {
-  // turn off text features
+  
+  // Get display from current settings
+  var d = Texts.getDisplay(PassageChooser.version, PassageChooser.location, 1);
+  
+  // Overwrite our display with desired values
   for (var tcmd in GlobalToggleCommands) {
-    //try{Bible.setGlobalOption(GlobalToggleCommands[tcmd], "Off");} catch(er) {jsdump("Could not setGlobalOption:" + GlobalToggleCommands[tcmd]);}
+    var m = tcmd.match(/^(cmd_xs_toggleVerseNums|cmd_xs_toggleHeadings|cmd_xs_toggleRedWords)$/);
+    
+    if (!m) d.globalOptions[GlobalToggleCommands[tcmd]] = "Off";
+    else d.globalOptions[GlobalToggleCommands[tcmd]] = (document.getElementById(m[1]).checked ? "On":"Off");
   }
-  // set versenums to checkbox
-  Bible.setGlobalOption(GlobalToggleCommands["cmd_xs_toggleVerseNums"], (VerseNumCheckbox.checked ? "On":"Off"));
-  Bible.setGlobalOption(GlobalToggleCommands["cmd_xs_toggleHeadings"], (HeadingsCheckBox.checked ? "On":"Off"));
-  Bible.setGlobalOption(GlobalToggleCommands["cmd_xs_toggleRedWords"], (RedWordsCheckBox.checked ? "On":"Off"));
   
-  var loc = PassageChooser.location.split(".");
-  Location.setLocation(PassageChooser.version, loc[0] + " " + loc[1]);
-  Location.setVerse(PassageChooser.version, 0, 0);
-  var verseHtml = Bible.getChapterText(PassageChooser.version, Location.getLocation(PassageChooser.version));
-//jsdump(verseHtml); 
-  verseHtml = trimVerses(loc[2], loc[3], verseHtml);
-//jsdump(verseHtml);
-//NOTE: MSWord 2003 doesn't display &rln; and &lrm; correctly
-  verseHtml = prepVerseHtml4Clipboard(verseHtml, PassageChooser.version, PassageChooser.location);
-  var verseUnicode = html2text(verseHtml);
+  // Get our text...
+  var html = BibleTexts.read(1, d).htmlText;
+//jsdump(html); 
+   
+  // Create the html and plain-text versions of our text for the clipboard
+  var t_html = htmlVerses(d, html, false); // keeps verses and headings
+  var t_text = html2text(htmlVerses(d, html, true)); // keeps only verses
   
-//jsdump(verseHtml);
-//jsdump(verseUnicode);
+//jsdump(t_html);
+//jsdump(t_text);
   
-  var str = Components.classes["@mozilla.org/supports-string;1"].  
-                          createInstance(Components.interfaces.nsISupportsString);  
-  if (!str) return false; // couldn't get string obj  
-  str.data = verseUnicode; // unicode string?  
+  // Write our text to the clipboard
+  var textstr = Components.classes["@mozilla.org/supports-string;1"].
+      createInstance(Components.interfaces.nsISupportsString);  
+  textstr.data = t_text;
 
   var htmlstring = Components.classes["@mozilla.org/supports-string;1"].  
-                          createInstance(Components.interfaces.nsISupportsString);  
-  if (!htmlstring) return false; // couldn't get string obj  
-  htmlstring.data = verseHtml;           
+      createInstance(Components.interfaces.nsISupportsString);  
+  htmlstring.data = t_html;           
 
   var trans = Components.classes["@mozilla.org/widget/transferable;1"].  
-                         createInstance(Components.interfaces.nsITransferable);  
-  if (!trans) return false; //no transferable widget found  
+      createInstance(Components.interfaces.nsITransferable);
   
   trans.addDataFlavor("text/unicode");  
-  trans.setTransferData("text/unicode", str, verseUnicode.length * 2); // *2 because it's unicode  
+  trans.setTransferData("text/unicode", textstr, t_text.length * 2); // *2 because it's unicode  
     
   trans.addDataFlavor("text/html");  
-  trans.setTransferData("text/html", htmlstring, verseHtml.length * 2); // *2 because it's unicode   
+  trans.setTransferData("text/html", htmlstring, t_html.length * 2); // *2 because it's unicode   
 
   var clipboard = Components.classes["@mozilla.org/widget/clipboard;1"].  
-                         getService(Components.interfaces.nsIClipboard);  
-  if (!clipboard) return false; // couldn't get the clipboard  
-  clipboard.setData(trans, null, Components.interfaces.nsIClipboard.kGlobalClipboard);  
+      getService(Components.interfaces.nsIClipboard);  
+  clipboard.setData(trans, null, Components.interfaces.nsIClipboard.kGlobalClipboard);
+    
   window.close();
 }
 
-function trimVerses(v1, v2, chapterHTML) {
-  var elem = document.getElementById("chaptertext").contentDocument.body;
-  elem.innerHTML = chapterHTML;
-  elem = elem.firstChild;
-  var html="";
-  var rethtml="";
-  while (elem) {
-    if (elem.id.match(/vs\.[^\.]*\.\d+\.(\d+)/)) {
-      var v = elem.id ? elem.id.match(/vs\.[^\.]*\.\d+\.(\d+)/):null;
-      if (Number(v[1])==v2) elem.innerHTML = elem.innerHTML.replace(/(<br>|&nbsp;|\s)+$/i, ""); //remove formatting after last verse
-      if (Number(v[1])>=v1 && Number(v[1])<=v2) {
-        rethtml += html + "<" + elem.tagName + ">" +  elem.innerHTML + "</" + elem.tagName + ">";
-      }
-      html="";
-    }
-    else if (elem.tagName && elem.className) {
-      html += "<" + elem.tagName + " class=\"" + elem.className + "\">" + elem.innerHTML + "</" + elem.tagName + ">";
-    }
-    else {
-      html += elem.innerHTML;
-    }
+// Loads html text into a temporary DOM element where it can be manipulated 
+// with DOM functions to remove un-needed verses etc.
+function htmlVerses(d, html, versesOnly) {
+  var parent = document.getElementById("chaptertext").contentDocument.body;
+  parent.innerHTML = html;
+
+  var elem = parent.lastChild;
+  
+  // Remove children which are outside of the requested verses
+  var remove = true;
+  while(elem) {
+    var p = getElementInfo(elem);
+
+    if (p && p.type == "vs") remove = (p.vs >= d.vs && p.vs <= d.lv ? false:true);
+
+    var r = (remove ? elem:null);
+
+    // keep only if its a verse or possibly a heading
+    if (!(/(^|\s)(vs|head\d|canonical)/).test(elem.className)) r = elem;
+    if (versesOnly && (!p || p.type != "vs")) r = elem;
     
-    elem = elem.nextSibling;
+    elem = elem.previousSibling;
+    
+    if (r) parent.removeChild(r);
   }
-  return rethtml;
-}
 
-function prepVerseHtml4Clipboard(html, version, location) {
-  //The folowing seem to cause problems for WordPad
-  const LRE = ""; //"&#8235;"; //String.fromCharCode(8235);
-  const RTE = ""; //"&#8236;"; //String.fromCharCode(8236);
-  const PDF = ""; //"&#8237;"; //String.fromCharCode(8237);
+  // replace class attributes by inline styles and remove all other attributes.
+  html = parent.innerHTML.replace(/<(\w+)\s[^>]*class\s*=\s*[\"\']([^\"\']*)[\"\'][^>]*>/g, classToStyle);
   
-  // headings
-  html = html.replace(/class="[^"]*canonical[^"]*"/g, "style=\"font-weight:bold; font-style:italic;\"");
-  html = html.replace(/class="[^"]*head1[^"]*"/g, "style=\"font-weight:bold; text-align:center;\"");
-  html = html.replace(/class="[^"]*head2[^"]*"/g, "style=\"font-weight:bold;\"");
+  // add reference designation
+  html += "<br><span style=\"" + ProgramConfig.StyleRule.match(STYLES)[1] + "\">";
+  html += "(" + ref2ProgramLocaleText(d.bk + "." + d.ch + "." + d.vs + "." + d.lv) + ")";
+  html += "</span>";
   
-/*  // make verse numbers bold
-  html = html.replace(/<sup/g, "<b><sup");
-  html = html.replace(/<\/sup>/g, "</sup></b>");*/
-  
-  // add verse number style (Open Office does not recognize sup tags)
-  //html = html.replace(/<sup class="versenum">(\d+)<\/sup>/g, "<sup style=\"font-size:8px;\">$1<\/sup>");
-  
-  // add reference
-  var aConfig = LocaleConfigs[getLocale()];
-  if (aConfig) {
-    //dir attribute is not needed because ambiguous punctuation character direction is defined by ref2ProgramLocaleText dir chars and embeded Unicode dir control chars
-    var emdir = (aConfig.direction && aConfig.direction=="rtl" ? RTE:LRE);
-    var font = aConfig.fontFamily;
-    html += "<span style=\"font-family:" + font + ";\">" + emdir + " (" + ref2ProgramLocaleText(location) + ")" + PDF + "</span>";
-  }
-  else html += "<span> (" + ref2ProgramLocaleText(location) + ")</span>";
-  
-  // add config file info
-  aConfig = ModuleConfigs[version];
-  emdir = (aConfig.direction=="rtl" ? RTE:LRE);
-  var dir = (aConfig.direction=="rtl" ? "rtl":"ltr");
-  html = "<div style=\"font-family:" + aConfig.fontFamily + "; dir:" + dir + ";\">" + emdir + html + PDF + "</div>";
-
   return html;
 }
 
+function classToStyle(match, p1, p2, offset, string) {
+  var style = "";
+ 
+  var modloc = p2.match(/(^|\s)cs-(.*?)(\s|$)/);
+  if (modloc) modloc = modloc[2];
+  
+  // titles
+  if ((/(^|\s)canonical(\s|$)/).test(p2)) style += "font-weight:bold; font-style:italic; ";
+  if ((/(^|\s)head1(\s|$)/).test(p2)) style += "font-weight:bold; text-align:center; ";
+  if ((/(^|\s)head2(\s|$)/).test(p2)) style += "font-weight:bold; ";
+  
+  // module and locale styles
+  if (modloc && ModuleConfigs.hasOwnProperty(modloc)) 
+      style += ModuleConfigs[modloc].StyleRule.match(STYLES)[1];
+      
+  else if (modloc && LocaleConfigs.hasOwnProperty(modloc)) 
+      style += LocaleConfigs[modloc].StyleRule.match(STYLES)[1];
+      
+  else if (modloc == "Program") 
+      style += ProgramConfig.StyleRule.match(STYLES)[1];
+  
+  return "<" + p1 + (style ? " style=\"" + style + "\"":"") + ">";
+}
+
 function html2text(html) {
-  var text = html;
-  text = text.replace(/(<\/span>)(<span><sup class=\"versenum\">)/ig, "$1 $2"); // add " " before verse number
-  text = text.replace(/<sup class=\"versenum\">(\d+)<\/sup>\s*/g, "$1)"); // add ")" after verse number
-  text = text.replace("&nbsp;", " ", "gi");
-  text = text.replace("&rlm;", "", "gi"); //String.fromCharCode(8207)
-  text = text.replace("&lrm;", "", "gi");
-  text = text.replace("&#8235;", String.fromCharCode(8235), "gi");
-  text = text.replace("&#8236;", String.fromCharCode(8236), "gi");
-  text = text.replace("&#8237;", String.fromCharCode(8237), "gi");
-  text = text.replace(/<br>/gi, NEWLINE);
-  text = text.replace(/<\/div>/gi, NEWLINE);
-  text = text.replace(/<[^>]+>/g,"");
-  return text
-}
-
-function onUnload() {
-  returnProgramSettings(SavedGlobalOptions, SavedCharPrefs);
-  for (var c=0; c<CheckBoxes.length; c++) {prefs.setBoolPref("copyPassage." + CheckBoxes[c], document.getElementById(CheckBoxes[c]).checked);}
-  MainWindow.updateXulswordButtons();
-}
-
-function saveProgramSettings(savedGlobalOptions, savedCharPrefs) {
-  savedGlobalOptions  = {
-    cmd_xs_toggleHeadings:null,
-    cmd_xs_toggleFootnotes:null,
-    cmd_xs_toggleVerseNums:null,
-    cmd_xs_toggleRedWords:null,
-    cmd_xs_toggleHebrewVowelPoints:null,
-    cmd_xs_toggleHebrewCantillation:null,
-    cmd_xs_toggleCrossRefs:null
-  };
-  savedCharPrefs = {
-    cmd_xs_toggleUserNotes:null,
-  };
-  for (var go in savedGlobalOptions) {savedGlobalOptions[go] = Bible.getGlobalOption(GlobalToggleCommands[go]);}
-  for (var pr in savedGlobalOptions) {savedCharPrefs[pr] = prefs.getCharPref(GlobalToggleCommands[pr]);}
-}
-
-function returnProgramSettings(savedGlobalOptions, savedCharPrefs) {
-  for (var go in savedGlobalOptions) {
-    Bible.setGlobalOption(go, savedGlobalOptions[go]);
-  }
-  for (var pr in savedCharPrefs) {
-    prefs.setCharPref(GlobalToggleCommands[pr], savedCharPrefs[pr]);
-  }
+  html = html.replace(/(<sup>)(\d+)(<\/sup>)/ig, "$1[$2]$3"); // class was removed by classToStyle
+  html = html.replace(/<br>/gi, NEWLINE);
+  html = html.replace(/<\/div>/gi, NEWLINE);
+  html = html.replace(/<[^>]+>/g,"");
+  html = html.replace("&nbsp;", " ", "gi");
+  html = html.replace(/(\&rlm\;|\&lrm\;)/g, "");
+  return html
 }

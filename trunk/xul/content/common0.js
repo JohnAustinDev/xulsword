@@ -120,24 +120,32 @@ const TextClasses = {
 // Accepts either raw HTML or a DOM element
 function getElementInfo(elem) {
   
-  // If elem is string HTML, convert to DOM element first...
+  // Info is parsed only from className and title, so start by getting each
+  var className, title;
   if (typeof(elem) == "string") {
-    var telem = document.createElement("div");
-    telem.innerHTML = elem;
-    return getElementInfo(telem.firstChild);
+    // If elem is string HTML, parse first tag
+    try {
+      title = elem.match(/^[^<]*<[^>]+title\s*=\s*["']([^"']*)["']/)[1];
+      className = elem.match(/^[^<]*<[^>]+class\s*=\s*["']([^"']*)["']/)[1];
+    }
+    catch (er) {return null;}
+  }
+  else {
+    if (!elem.className || !elem.title) return null;
+    className = elem.className;
+    title = elem.title;
   }
 
-//jsdump("getElementInfo class=" + elem.className + ", title=" + elem.title);
+//jsdump("getElementInfo class=" + className + ", title=" + title);
   
-  // Read info from DOM element...
-  if (!elem.className || !elem.title) return null;
+  // Read info using TextClasses...
   var r = {};
-  var type = elem.className.match(/^([^\-\s]*)/)[1];
+  var type = className.match(/^([^\-\s]*)/)[1];
   if (!TextClasses.hasOwnProperty(type)) return null;
   r.type = type;
   
   for (var i=0; i<TextClasses[type].length; i++) {
-    var m = elem.title.match(TextClasses[type][i].re);
+    var m = title.match(TextClasses[type][i].re);
     if (!m) continue;
     r.i = i;
     
@@ -178,7 +186,7 @@ const NumOT=39;
 const NumNT=27;
 
 // scrolling
-const SCROLLTYPENONE = 0;         // don't scroll (for links this becomes SCROLLTYPECENTER)
+const SCROLLTYPENONE = 0;         // don't scroll
 const SCROLLTYPETOP = 1;          // scroll to top
 const SCROLLTYPEBEG = 2;          // put selected verse at the top of the window or link
 const SCROLLTYPECENTER = 3;       // put selected verse in the middle of the window or link, unless verse is already visible or verse 1
@@ -615,9 +623,20 @@ function isProgramPortable() {
 var ProgramIsPortable = isProgramPortable();
 
 // DEBUG helps
+/*
 function debugStyle(elem) {
   var s = window.getComputedStyle(elem);
   for (var m in s) {
     jsdump(m + " = " + s[m]);
   }
 }
+
+function printGLobOps() {
+  var m = "";
+  for (var cmd in GlobalToggleCommands) {
+    if (GlobalToggleCommands[cmd] == "User Notes") continue;
+    m += GlobalToggleCommands[cmd] + "=" + Bible.getGlobalOption(GlobalToggleCommands[cmd]) + " ";
+  }
+  jsdump(m);
+}
+*/

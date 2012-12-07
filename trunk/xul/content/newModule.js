@@ -816,7 +816,9 @@ function handleResetRequest() {
         var info = decodeAudioFileName(GotoAudioFile.path);
         var modsUsingAudio = getModsUsingAudioCode(info.basecode);
       }
-      if (modsUsingAudio && modsUsingAudio[0]) MainWindow.gotoLink(encodeUTF8(info.book + "." + info.chapter + ".1"), modsUsingAudio[0]);
+      if (modsUsingAudio && modsUsingAudio[0]) {
+        MainWindow.showLocation(modsUsingAudio[0], info.book, Number(info.chapter), 1, 1);
+      }
       else {Texts.update(SCROLLTYPETOP, HILIGHTNONE);}
     }
     break;
@@ -828,7 +830,7 @@ function handleResetRequest() {
       window.setTimeout("restartApplication();", 500);
     }
     break;
-  case HARDRESET: // program needs to quite and restart from nothing
+  case HARDRESET: // program needs to quit and restart from nothing
     jsdump("Initiating HARDRESET");
     WillRestart = true;
     window.setTimeout("restartApplication();", 500);

@@ -74,6 +74,11 @@ reference-dropdown menulist[anonid="lastVerse"] {
 reference-dropdown[hidebook="true"][hidechapter="true"][hideverse="true"][hidelastverse="true"] spacer {
   display:none;
 }
+reference-dropdown menulist menupopup {
+  /* fixes a problem where dynamically written
+  menupopups were to narrow to read anything */
+  min-width:4em;
+}
 
 /* ::::: bookmark items FROM browser.css ::::: */
 .bookmark-item  {

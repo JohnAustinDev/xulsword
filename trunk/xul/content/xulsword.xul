@@ -167,9 +167,9 @@
   <command id="cmd_xs_removeModule"              oncommand="goDoCommand('cmd_xs_removeModule');"/>
   <command id="cmd_xs_exportAudio"               oncommand="goDoCommand('cmd_xs_exportAudio');"/>
   <command id="cmd_xs_importAudio"               oncommand="goDoCommand('cmd_xs_importAudio');"/>
-  <command id="cmd_print"                        oncommand="PrintUtils.print(); restoreFocus();"/>
+  <command id="cmd_print"                        oncommand="PrintUtils.print();"/>
   <command id="cmd_printPreview"                 oncommand="PrintUtils.printPreview(PrintPreviewCallbacks);"/>
-  <command id="cmd_pageSetup"                    oncommand="PrintUtils.showPageSetup(); restoreFocus();"/>
+  <command id="cmd_pageSetup"                    oncommand="PrintUtils.showPageSetup();"/>
   <command id="cmd_xs_startHistoryTimer"
             oncommand="try {window.clearTimeout(History.timer);} catch(er){} History.timer=window.setTimeout('History.add()', History.delay);"/>
   <command id="cmd_xs_aboutModule"               oncommand="goDoCommand('cmd_xs_aboutModule');"/>
@@ -495,7 +495,7 @@
       
       <browser id="printPreviewBrowser"/>
       
-      <browser id="printBrowser" type="content-primary" src="printPassage.html" />
+      <browser id="printBrowser" type="content-primary" />
       
     </deck>
   </vbox>

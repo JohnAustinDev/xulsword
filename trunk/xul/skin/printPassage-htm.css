@@ -1,0 +1,40 @@
+@media print {
+
+.sb .hl,
+.hl .wordsOfJesus {
+  color:red;
+}
+#print-passage-container[showHeadings="false"] .pagebreak {
+  page-break-after:auto;
+}
+.nb {
+  border-top:1px solid grey;
+  margin-top:40px;
+  padding-top:40px;
+}
+.nb[empty="true"] {
+  display:none;
+}
+#print-passage-container[showIntros="true"] .introtext {
+  display:block;
+  margin-bottom:40px;
+}
+#print-passage-container[showCrossRefText="false"] .crref:after {
+  content:none;
+}
+#print-passage-container[showCrossRefText="false"] .crtext {
+  display:none;
+}
+#print-passage-container[showCrossRefText="false"] .crtext.opposing-program-direction {
+  display:none;
+}
+#print-passage-container[showCrossRefText="false"] .cr-sep {
+  display:inline;
+  margin:0px;
+}
+#print-passage-container[showCrossRefText="false"] .cr-sep:after {
+  content:";";
+  -moz-padding-end:0.5em;
+}
+
+}

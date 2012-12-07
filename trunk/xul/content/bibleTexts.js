@@ -57,7 +57,7 @@ var BibleTexts = {
       ret.htmlText = Bible.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");
       
       ret.footnotes = Bible.getNotes();
-      
+     
       if (d.globalOptions["User Notes"] == "On") {
         un = Texts.getUserNotes(d.bk, d.ch, d.mod, ret.htmlText);
         ret.htmlText = un.html; // has user notes added to text
@@ -71,7 +71,6 @@ var BibleTexts = {
       var gun = (d.globalOptions["User Notes"] == "On" && d["ShowUserNotesAtBottom"]);
         
       if (gfn || gcr || gun) ret.htmlNotes = this.getNotesHTML(ret.footnotes, d.mod, gfn, gcr, gun, false, w);
-
     }
    
     // localize verse numbers
@@ -172,7 +171,9 @@ var BibleTexts = {
     var html = "";
     html  = "<div class=\"chapterhead" + (ch==1 ? " chapterfirst":"") + " cs-" + l + "\" headdir=\"" + (LocaleConfigs[l].direction) + "\">";
     
-    html +=   "<div class=\"noticelink-c cs-" + mod + "\" empty=\"" + (lt ? "false":"true") + "\">" + lt;
+    html +=   "<div class=\"chapnotice cs-" + mod + "\" empty=\"" + (lt ? "false":"true") + "\">";
+    html +=     "<div class=\"noticelink-c\">" + lt + "</div>";
+    html +=     "<div class=\"noticetext\">" + (lt ? Bible.getModuleInformation(mod, "NoticeText"):"") + "</div>";
     html +=     "<div class=\"head-line-break\"></div>";
     html +=   "</div>";
 
@@ -189,6 +190,8 @@ var BibleTexts = {
     html += "</div>";
     
     html += "<div class=\"head-line-break\"></div>";
+    
+    html += "<div class=\"introtext\" empty=\"" + (intro ? "false":"true") + "\">" + intro + "</div>";
     
     return html;
   },

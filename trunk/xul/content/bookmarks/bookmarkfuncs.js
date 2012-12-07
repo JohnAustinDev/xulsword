@@ -456,44 +456,39 @@ var BookmarkFuns = {
 
   gotoBookMark: function (bmelemID) {
     var info = this.BmGetInfo(bmelemID);
-    var version = info[MODULE];
-    var type = getModuleLongType(version);
-    var failed = false;
-    var link, lastvOrpar;
+    var mod = info[MODULE];
+    var type = Tab[mod].modType;
+    var loc;
+
     if (!type) {
       if (!info[LOCATION]) failed = true;
       else {
-        var aVersion = prefs.getCharPref("DefaultVersion");
+        mod = prefs.getCharPref("DefaultVersion");
         // for backward compatibility...
         // this try is because pre V2.8, LOCATION was undefined and old BMs may cause problems here.
         // NOTE that even with garbage in LOCATION, xulsword will likely return a valid location to somewhere...
-        try {var loc = Location.convertLocation(WESTERNVS, info[LOCATION], Bible.getVerseSystem(aVersion)).split(".");}
-        catch (er) {failed = true;}
-        if (!failed) {
-          prefs.setBoolPref("HighlightVerse", true); //type==BIBLE
-          lastvOrpar = loc.pop();
-          link = loc.join(".");
-          version = aVersion;
-        }
+        try {var loc = Location.convertLocation(WESTERNVS, info[LOCATION], Bible.getVerseSystem(mod));}
+        catch (er) {loc = null;}
       }
     }
     else {
       switch (type) {
       case BIBLE:
       case COMMENTARY:
-        link = info[BOOK] + "." + info[CHAPTER] + "." + info[VERSE];
-        prefs.setBoolPref("HighlightVerse", true); //type==BIBLE
-        lastvOrpar = (info[LASTVERSE] ? info[LASTVERSE]:null);
+        loc = info[BOOK] + "." + info[CHAPTER] + "." + info[VERSE] + "." + (info[LASTVERSE] ? info[LASTVERSE]:info[VERSE]);
         break;
       case DICTIONARY:
       case GENBOOK:
-        link = info[CHAPTER];
-        lastvOrpar = info[VERSE];
+        loc = ".." + info[CHAPTER] + "." + info[VERSE] + "." + info[VERSE];
         break;
       }
     }
-    if (failed) Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
-    else MainWindow.gotoLink(encodeUTF8(link), version, lastvOrpar);
+    
+    if (!loc) Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
+    else {
+      loc = loc.split(".");
+      MainWindow.showLocation(mod, loc[0], loc[1], loc[2], loc[3]);
+    }
   },
   
   removeEmptyResFrom: function (folderID) {

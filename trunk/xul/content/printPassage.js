@@ -21,13 +21,27 @@ var PrintPassage = {
   ProgressMeter:null,
   FromChooser:null, 
   ToChooser:null, 
+  FromBook:null,
+  PrintPassageWindow:window,
   
   init: function() {
     initCSS();
+    
+    // Our checkbox settings are persisted by xul, but initial values
+    // must be set with Javascript on only the very first run.
+    try {prefs.getBoolPref("HaveAlreadyRunPrintPassage");}
+    catch (er) {
+      var setIDs = ["introduction", "cmd_xs_toggleHeadings", "cmd_xs_toggleVerseNums", "cmd_xs_toggleUserNotes", "cmd_xs_toggleFootnotes", "cmd_xs_toggleCrossRefs"];
+      for (var i=0; i<setIDs.length; i++) {
+        document.getElementById(setIDs[i]).checked = true;
+      }
+      prefs.setBoolPref("HaveAlreadyRunPrintPassage", true);
+    }
 
     this.ProgressMeter = document.getElementById("progress");
     this.FromChooser = document.getElementById("from-dropdown");
     this.ToChooser = document.getElementById("to-dropdown");
+    this.FromBook = document.getAnonymousElementByAttribute(this.FromChooser, "anonid", "book");
   
     var startBible = firstDisplayBible();
     var startLocation = MainWindow.Location.getLocation(startBible);
@@ -36,10 +50,18 @@ var PrintPassage = {
     this.FromChooser.version = startBible;
     this.ToChooser.location = startLocation;
     this.ToChooser.version = startBible;
-      
-    var fromBk = document.getAnonymousElementByAttribute(this.FromChooser, "anonid", "book")
-    fromBk.focus();
-    fromBk.select();
+    
+    var cr = document.getElementById("cmd_xs_toggleCrossRefs");
+    cr.nextSibling.disabled = !cr.checked;
+    
+    this.focus();
+  },
+  
+  focus: function() {
+    this.ProgressMeter.setAttribute("hidden", true);
+    this.PrintPassageWindow.focus();
+    this.FromBook.focus();
+    this.FromBook.select();
   },
 
   textHTML:"",
@@ -64,12 +86,17 @@ var PrintPassage = {
     // prepare our target to send to main print routine
     var target = { 
           uri:"chrome://xulsword/content/printPassage.html", 
-          bodyHTML:this.textHTML
+          bodyHTML:this.textHTML,
+          callback:this
         }
       
     MainWindow.handlePrintCommand(command, target);
     
     this.textHTML = "";
+  },
+  
+  onPrintPreviewDone: function() {
+    this.focus();
   },
   
   From:null,
@@ -115,9 +142,10 @@ var PrintPassage = {
     if (this.TotalChaps > 0) this.ProgressMeter.setAttribute("hidden", false);
 
     // initialize loop variables
-    this.tmpHTML  = "<div "; // begin single outer container
+    this.tmpHTML  = "<div id=\"print-passage-container\" "; // begin single outer container
     this.tmpHTML += "showIntros=\"" + (document.getElementById("introduction").checked ? "true":"false") + "\" ";
-    this.tmpHTML += "showNoteText=\"" + (document.getElementById("crossreftext").checked  ? "true":"false") + "\">"; 
+    this.tmpHTML += "showCrossRefText=\"" + (document.getElementById("crossreftext").checked  ? "true":"false") + "\" ";
+    this.tmpHTML += "showHeadings=\"" + (document.getElementById("cmd_xs_toggleHeadings").checked  ? "true":"false") + "\">"; 
     this.display = this.getDisplay(this.From.mod, this.From.bk + "." + this.From.ch + ".1.1");
     this.Next = { bn:this.From.bn, ch:this.From.ch };
     
@@ -136,8 +164,8 @@ var PrintPassage = {
     
     var ti = BibleTexts.read(1, this.display);
     
-    this.tmpHTML += "<div class='sb'>" + ti.htmlText + "</div>";
-    this.tmpHTML += "<div class='nb'>" + ti.htmlNotes + "</div>";
+    this.tmpHTML += "<div class='sb cs-" + this.From.mod + "'>" + ti.htmlText + "</div>";
+    this.tmpHTML += "<div class='nb' empty=\"" + (ti.htmlNotes ? "false":"true") + "\">" + ti.htmlNotes + "</div>";
     this.tmpHTML += "<div class=\"pagebreak\"></div>";
     
     // update the progress meter
@@ -163,13 +191,19 @@ var PrintPassage = {
     // Get default display from current Global settings
     var d = Texts.getDisplay(mod, loc, 1);
     
+    // Insure footnotes may appear
+    d["ShowFootnotesAtBottom"] = true;
+    d["ShowCrossrefsAtBottom"] = true;
+    d["ShowUserNotesAtBottom"] = true;
+    
     // Overwrite our display with values from checkboxes
     for (var tcmd in GlobalToggleCommands) {
       var elem = document.getElementById(tcmd);
       if (!elem) continue;
+
       d.globalOptions[GlobalToggleCommands[elem.id]] = (elem.checked ? "On":"Off");
     }
-    
+ 
     return d;
   }
 
