@@ -26,11 +26,12 @@ var GenBookTexts = {
   
   read: function(w, d) {
     var ret = { htmlHead:Texts.getPageLinks(), htmlText:"", footnotes:null };
+    
     // the GenBookKey value always begins with /mod/ so that values can be directly
     // compared to the genbook-tree's resource values.
     ret.htmlText = Bible.getGenBookChapterText(d.mod, d.GenBookKey.replace(/^\/[^\/]+/, ""));
     ret.htmlText = Texts.addParagraphIDs(ret.htmlText, d.mod);
-getUnicodePref((Tab[mod].modType == DICTIONARY ? "DictKey_":"GenBookKey_") + mod + "_" + w)    
+      
     var un = Texts.getUserNotes("na", d.GenBookKey, d.mod, ret.htmlText);
     ret.htmlText = un.html; // has user notes added to text
     ret.footnotes = un.notes;

@@ -20,7 +20,6 @@
 /************************************************************************
  * XULSWORD INITIALIZATION
  ***********************************************************************/
-var SavedWindowWithFocus;
 var NewModuleInfo;
 var AboutScrollTo;
 var AudioDirs = null;
@@ -65,13 +64,6 @@ function loadedXULReal() {
     }
   }
   else resetUserPrefs=false;
-
-  if (Bible) {
-    for (var cmd in GlobalToggleCommands) {
-      if (GlobalToggleCommands[cmd] == "User Notes") continue;
-      Bible.setGlobalOption(GlobalToggleCommands[cmd], getPrefOrCreate(GlobalToggleCommands[cmd], "Char", "On"));
-    }
-  }
   
   // Adjust some prefs for host computer screen size
   getPrefOrCreate("ShowChooser","Bool",true);
@@ -430,9 +422,15 @@ function createLanguageMenu() {
   }
   var menuItems = [];
   for (var lc in LocaleConfigs) {
+    
+    var bundle = getLocaleBundle(lc, "xulsword.properties");
+    var myAccKey = ""; try {myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");} catch (er) {};
+
     var xulElement = document.createElement("menuitem");
-    xulElement = writeLocaleElem(xulElement, lc, "langMenu." + lc, false);
-    if (!xulElement) continue;
+    xulElement.setAttribute("label", bundle.GetStringFromName("LanguageMenuLabel"));
+    if (myAccKey) xulElement.setAttribute("accesskey", myAccKey);
+    xulElement.setAttribute("id", "langMenu." + lc);
+    xulElement.setAttribute("class", "cs-" + lc);
     xulElement.setAttribute("type", "radio");
     xulElement.setAttribute("name", "lng");
     xulElement.setAttribute("oncommand", "handleOptions(this)");
@@ -450,22 +448,6 @@ function localeElemSort(a,b) {
   if (la > lb) return 1;
   return 0;
 }
-
-function writeLocaleElem(elem, lc, myID, noAccessKey) {
-  var bundle = getLocaleBundle(lc, "xulsword.properties");
-  if (!bundle) return null;
-  var myLabel = bundle.GetStringFromName("LanguageMenuLabel");
-  var myAccKey = ""; try {myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");} catch (er) {};
-
-  elem.setAttribute("label", myLabel);
-  if (!noAccessKey) elem.setAttribute("accesskey", myAccKey);
-  elem.setAttribute("id", myID);
-  var mclass = elem.getAttribute("class");
-  mclass = (mclass ? mclass + " ":"");
-  elem.setAttribute("class", mclass + "cs-" + lc);
-  return elem;
-}
-
 
 var AllVideos = [];
 function createHelpVideoMenu() {
@@ -544,8 +526,9 @@ function fillModuleMenuLists() {
   var moduleTypeCounts = {}
   for (var t=0; t<Tabs.length; t++) {
     var xulElement = document.createElement("menuitem");
-    xulElement = writeModuleElem(xulElement, t, "label", "modulemenu", false, false, false)
-    if (!xulElement) continue;
+    xulElement.setAttribute("class", "cs-" + Tabs[t].locName);
+    xulElement.setAttribute("label", Tabs[t].label + (Tabs[t].description ? " --- " + Tabs[t].description:""));
+    xulElement.setAttribute("id", "modulemenu." + String(t));
     xulElement.setAttribute("type", "checkbox");
     xulElement.setAttribute("oncommand", "holdMenuAndHandleOptions(this)");
     xulElement.setAttribute("autocheck","false");
@@ -578,23 +561,6 @@ function fillModuleMenuLists() {
       document.getElementById(showNoTabs).hidden=true;
     }
   }
-}
-
-function writeModuleElem(elem, t, attrib, id, skipORIG, noDescription, forceDefaultFormatting) {
-  if (!forceDefaultFormatting) forceDefaultFormatting=false;
-  var desc = "";
-  if (t == -1) {
-    if (skipORIG) return null;
-  }
-  
-  var mclass = "cs-" + Tabs[t].locName;
-  var eclass = elem.getAttribute("class");
-  elem.setAttribute("class", (eclass ? eclass + " ":"") + mclass);
-
-  elem.setAttribute(attrib, Tabs[t].label + (Tabs[t].description ? " --- " + Tabs[t].description:""));
-  elem.setAttribute("id", id + "." + String(t));
-  
-  return elem;
 }
 
 
@@ -1357,7 +1323,6 @@ function changeLocaleTo(newLocale) {
 }
 
 function updateXulswordButtons() {
-
   var checkboxes = ["cmd_xs_toggleHebrewCantillation", "cmd_xs_toggleHebrewVowelPoints"];
   for (var cmd in GlobalToggleCommands) {
     var checkbox=false;
@@ -1470,39 +1435,44 @@ function updateModuleMenuCheckmarks() {
   }
 }
 
-//BIBLE/COMM: link="book.chapter.verse", DICT/GENBK: link="key"
-//verse2 is lastVerse for versekeys and paragraph number for others
-function gotoLink(link, version, verse2) {
-  var frameNum = ensureModuleShowing(version);
-  if (!frameNum) return;
-  window.setTimeout("gotoLinkReal('" + link + "', '" + version + "', " + frameNum + (verse2 ? ", '" + verse2 + "'":"") + ")", 0);
+var GotoLocation;
+function showLocation(mod, bk, ch, vs, lv) {
+  
+  var w = ensureModuleShowing(mod);
+  if (!w) return;
+  
+  if (!bk) bk = null;
+  if (!ch) return; // must be either Bible chapter or key!
+  if (!vs) vs = 1;
+  if (!lv) lv = vs;
+  
+  GotoLocation = { w:w, mod:mod, bk:bk, ch:ch, vs:vs, lv:lv };
+  window.setTimeout("showLocation2()", 1);
+  
 }
-function gotoLinkReal(link, version, frameNum, verse2) {
-  if (!verse2) verse2=false;
-  var link2 = link;
-  link = decodeUTF8(link);
-  switch (getModuleLongType(version)) {
+
+function showLocation2() {
+
+  var l = GotoLocation; // always set by showLocation()
+ 
+  switch (Tab[l.mod].modType) {
+    
   case BIBLE:
   case COMMENTARY:
-    link += (verse2 ? "." + verse2:"");
-    Location.setLocation(version, link);
-    BookmarkFuns.updateMainWindow(true);
+    Location.setLocation(l.mod, l.bk + "." + l.ch + "." + l.vs + "." + l.lv);
+    MainWindow.focus();
+    Texts.update(SCROLLTYPECENTER, HILIGHTVERSE, [null,1,1,1]);
     break;
-  case DICTIONARY:
-    setUnicodePref("DictKey_" + version + "_" + frameNum, link);
-    //if (verse2) CustomScrollFunction = "Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPECENTER + ", 'par." + verse2 + "');";
-    //else CustomScrollFunction = "Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPETOP + ");";
-    BookmarkFuns.updateMainWindow(true, SCROLLTYPECUSTOM);
-    break;
+    
   case GENBOOK:
-    setUnicodePref("GenBookKey_" + version + "_" + frameNum, link);
-    //This timeout is needed because RDF may not be ready until after updateScriptBoxes()
-    CustomScrollFunction = "{ GenBookTexts.navigatorSelect(decodeUTF8('" + link2 + "'));";
-    //if (verse2) CustomScrollFunction += " Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPECENTER + ", 'par." + verse2 + "'); }";
-    //else CustomScrollFunction += " Texts.scrollScriptBox(" + frameNum + ", " + SCROLLTYPETOP + "); }";
-    BookmarkFuns.updateMainWindow(true, SCROLLTYPECUSTOM);
+  case DICTIONARY:
+    setUnicodePref((Tab[l.mod].modType == GENBOOK ? "GenBook":"DictKey") + "_" + l.mod + "_" + l.w, l.ch);
+    MainWindow.focus();
+    Texts.update(SCROLLTYPETOP, null, [null,1,1,1]);
     break;
+    
   }
+  
 }
 
 // This routine returns the number of the first window which is showing the desired version.
@@ -1583,12 +1553,14 @@ function copyPassageDialog() {
 
 var PrintTarget = null;
 function handlePrintCommand(command, target) {
+  if (!command) return;
   
   // default print target is viewport
   PrintTarget = {
     command:command,
     uri:(target && target.uri ? target.uri:"chrome://xulsword/content/viewport.html"), 
-    bodyHTML:(target && target.bodyHTML ? target.bodyHTML:null)
+    bodyHTML:(target && target.bodyHTML ? target.bodyHTML:null),
+    callback:(target && target.callback ? target.callback:null)
   };
   
   switch (command) {
@@ -1598,7 +1570,7 @@ function handlePrintCommand(command, target) {
     
   case "cmd_printPreview":
   case "cmd_print":
-    // The loaded URI must check for PrintTarget and call printBrowserLoaded if it's found.
+    // NOTE: The loaded URI must call MainWindow.printBrowserLoaded() after it has loaded!
     document.getElementById('printBrowser').loadURI(PrintTarget.uri);
     break;
     
@@ -1611,15 +1583,8 @@ function handlePrintCommand(command, target) {
 }
 
 function printBrowserLoaded() {
-  document.getElementById("printBrowser").contentDocument.title = "";
-  document.getElementById(PrintTarget.command).doCommand(); 
-  
-  PrintTarget = null; 
-}
-
-function restoreFocus() {
-  if (SavedWindowWithFocus) SavedWindowWithFocus.focus();
-  SavedWindowWithFocus = null;
+  document.getElementById("printBrowser").contentDocument.title = ".";
+  document.getElementById(PrintTarget.command).doCommand();  
 }
 
 var PrintPreviewCallbacks = {
@@ -1630,10 +1595,16 @@ var PrintPreviewCallbacks = {
   },
   
   onExit: function() {
-    restoreFocus();
     document.getElementById("mainbar").hidden = false;
     document.getElementById("main-controlbar").hidden = false;
     document.getElementById("appcontent").selectedIndex = 0;
+    
+    // Allow original caller to do something (like refocus their window) 
+    // after print preview is done.
+    if (PrintTarget.callback && PrintTarget.callback.onPrintPreviewDone) {
+      PrintTarget.callback.onPrintPreviewDone();
+    }
+    
   },
   
   getSourceBrowser: function() {

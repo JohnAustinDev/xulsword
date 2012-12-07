@@ -312,9 +312,9 @@ function importAudio(fromDir, toDir, doNotCopyFiles) {
       }
       kFilePicker.init(window, kTitle, kFilePickerIID.modeGetFolder);
       kFilePicker.show();
+      if (kFilePicker.file) fromDir = kFilePicker.file;
     }
-    catch (e) {}
-    if (kFilePicker.file) fromDir = kFilePicker.file;
+    catch (e) {fromDir = null;}
   }
   
   if (!toDir) toDir = importAudioTo();

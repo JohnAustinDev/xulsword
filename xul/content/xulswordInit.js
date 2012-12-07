@@ -351,7 +351,7 @@ function initTabGlobals() {
     tab.isRTL = (ModuleConfigs[mod].direction == "rtl");
     tab.index = m;
     tab.description = Bible.getModuleInformation(mod, "Description");
-    tab.locName = (isASCII(tab.description) ? DEFAULTLOCALE:mod);
+    tab.locName = (isASCII(tab.label) ? DEFAULTLOCALE:mod);
     
     // Save Global tab objects
     Tabs.push(tab);

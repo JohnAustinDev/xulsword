@@ -27,18 +27,23 @@
 .chapterhead {
   padding-top:26px;
 }
-.noticelink-c {
+.chapnotice {
   font-size:1.0em;
   margin:0px 10px 10px 10px;
-  text-align:center;
 }
-.noticelink-c[empty="true"] {
+.chapnotice[empty="true"] {
   display:none;
+}
+.noticelink-c {
+  text-align:center;
 }
 .noticelink {
   border-bottom:1px solid blue;
   color:blue;
   cursor:pointer;
+}
+.noticetext {
+  display:none;
 }
 .chaptitle {
   float:left;
@@ -93,6 +98,9 @@
 .head-line-break {
   clear:both;
   margin-bottom:30px;
+}
+.introtext {
+  display:none;
 }
 
 /* Interlinear display */
@@ -405,10 +413,19 @@ body[chromedir="rtl"] .fncol4 {
 /* PRINTING STYLES */
 @media print {
 
+.pagebreak {
+  page-break-after: always;
+  margin:40px;
+}
 .navlink,
-.noticelink-c,
 .chapinfo {
   display:none !important;
+}
+.noticelink {
+  display:none;
+}
+.noticetext {
+  display:block;
 }
 .chapterhead .chapbk {
   display:block;

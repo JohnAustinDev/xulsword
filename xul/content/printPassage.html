@@ -25,7 +25,10 @@
   <link rel="stylesheet" href="chrome://xulsword/skin/texts-htm.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/printPassage-htm.css" type="text/css">
   
-  <script> var MainWindow = top.window; window.alert(MainWindow.name);</script>
+  <script>
+    var Watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
+    var MainWindow = Watcher.getWindowByName("xulsword-window", window);
+  </script>
   <script src="chrome://xulsword/content/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common1.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
@@ -36,7 +39,8 @@
     
       initCSS();
       
-      if (MainWindow.PrintTarget) {
+      if (MainWindow.document.getElementById("printBrowser").contentDocument === document) {
+        
         if (MainWindow.PrintTarget.bodyHTML) {
           document.getElementsByTagName("body")[0].innerHTML = MainWindow.PrintTarget.bodyHTML;
         }

@@ -169,13 +169,15 @@ function PopupObj(popupobj) {
       break;
       
     case "introlink":
-      if (!p || !p.mod) return false;
-      res = BibleTexts.getBookIntroduction(p.mod, Location.getBookName());
+      var w = getWindow(elem);
+      if (!w) return false;
+      res = document.getElementById("text" + w).getElementsByClassName("introtext")[0].innerHTML;
       break;
       
     case "noticelink":
-      if (!p || !p.mod) return false;
-      res = Bible.getModuleInformation(p.mod, "NoticeText");
+      var w = getWindow(elem);
+      if (!w) return false;
+      res = document.getElementById("text" + w).getElementsByClassName("noticetext")[0].innerHTML;
       break;
       
     default:

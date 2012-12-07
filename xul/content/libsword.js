@@ -125,15 +125,26 @@ var Bible = {
 
     this.initInstance();
     
+    // When starting, read our xulsword prefs...
     if (typeof(prefs) != "undefined" && prefs && Location && Location.setLocation) {
-      Location.setLocation(WESTERNVS, prefs.getCharPref("Location"));
+      Location.setLocation(WESTERNVS, getPrefOrCreate("Location", "Char", "Gen.1.1.1"));
+      for (var cmd in GlobalToggleCommands) {
+        if (GlobalToggleCommands[cmd] == "User Notes") continue;
+        Bible.setGlobalOption(GlobalToggleCommands[cmd], getPrefOrCreate(GlobalToggleCommands[cmd], "Char", "On"));
+      }
     }
   },
 
   quitLibsword: function() {
     if (this.Libsword) {
+      
+      // When quiting, save our xulsword prefs...
       if (typeof(prefs) != "undefined" && prefs && Location) {
         prefs.setCharPref("Location", Location.getLocation(WESTERNVS));
+        for (var cmd in GlobalToggleCommands) {
+          if (GlobalToggleCommands[cmd] == "User Notes") continue;
+          prefs.setCharPref(GlobalToggleCommands[cmd], Bible.getGlobalOption(GlobalToggleCommands[cmd]));
+        }
       }
       this.freeInstance(); //Deleting xulsword sometimes caused memory problems when library was re-opened
       this.freeLibxulsword(); //Deleting libxulsword static objects sometimes caused memory problems when library was re-opened

@@ -16,19 +16,19 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const NEWTARGET = { bk:null, ch:null, vs:null, lv:null, mod:null, w:null, lemma:null, bookmark:null, selection:null };
-
 var ContextMenu = {
   
   target: {},
   
   lemmaLabel:null,
+  
+  NEWTARGET:{ bk:null, ch:null, vs:null, lv:null, mod:null, w:null, lemma:null, bookmark:null, selection:null },
 
   showing: function(e, menupopup) {
 //jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
 
     // init our target info
-    this.target = copyObj(NEWTARGET);
+    this.target = copyObj(this.NEWTARGET);
     
     this.target.w = getWindow(menupopup.triggerNode);
     
@@ -203,10 +203,10 @@ var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.targ
   // Read two targets, one from each end of the selection, merge the two and return the results.
   getTargetsFromSelection: function(target, selob) {
   
-    var targs1 = copyObj(NEWTARGET);
+    var targs1 = copyObj(this.NEWTARGET);
     if (!this.getTargetsFromElement(targs1, selob.focusNode)) return false;
     
-    var targs2 = copyObj(NEWTARGET);
+    var targs2 = copyObj(this.NEWTARGET);
     if (!this.getTargetsFromElement(targs2, selob.anchorNode)) return false;
     
     // merge bookmarks
@@ -227,7 +227,7 @@ var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.targ
     }
     
     // save merged targ1 to target
-    for (var p in NEWTARGET) {
+    for (var p in this.NEWTARGET) {
       if (target[p] === null && targs1[p] !== null) target[p] = targs1[p];
     }
     

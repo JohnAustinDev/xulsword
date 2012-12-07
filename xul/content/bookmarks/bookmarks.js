@@ -914,7 +914,7 @@ var BookmarksController = {
     case "cmd_bm_print":
     case "cmd_bm_printPreview":
       var topWindow = WindowWatcher.getWindowByName("xulsword-window",window);
-      topWindow.SavedWindowWithFocus = window;
+      //topWindow.SavedWindowWithFocus = window;
       topWindow.focus();
       topWindow.document.getElementById("printBrowser").contentDocument.getElementById("printBox").innerHTML = BookmarkFuns.getFormattedBMdata(resource0, true);
       topWindow.document.getElementById("printBrowser").contentDocument.title = SBundle.getString("Title") + ": " + document.title;

@@ -606,7 +606,7 @@ function getHTMLSearchResults(firstMatchToWrite, numMatchesToWrite, wordsToHighl
     if (!matchText || matchText.length < 4) {matchText = versionDirectionEntity;} //Unicode control mark insures blank rtl lines do not become ltr or vice versa...
     matchid = encodeUTF8(matchid);
     matchText = matchText.replace(/<br[^>]*>/g, "");
-    var tline = "<div class=\"matchverse\"><a id=\"vl." + matchid + "\" href=\"javascript:MainWindowRef.gotoLink('" + matchid + "','" + displayVersion + "');\" class=\"cs-Program\">" + matchLink + " - " + "</a><span id=\"vt." + matchid + "\">" + matchText + "</span><br></div>";
+    //var tline = "<div class=\"matchverse\"><a id=\"vl." + matchid + "\" href=\"javascript:MainWindowRef.gotoLink('" + matchid + "','" + displayVersion + "');\" class=\"cs-Program\">" + matchLink + " - " + "</a><span id=\"vt." + matchid + "\">" + matchText + "</span><br></div>";
     html += tline;
   }
   if (isStrongsSearch) {
@@ -825,7 +825,7 @@ var XulswordSearchController = {
       BookmarksCommand.redoBookmarkTransaction();
       break;
     case "cmd_bm_open":
-      MainWindow.gotoLink(TargLink, TargetLocation.version);
+      //MainWindow.showLocation(TargetLocation.version, TargLink);
       break;
     case "cmd_xs_searchForSelection":
       setUnicodePref("SearchText",getSearchWindowSelection());
@@ -975,7 +975,7 @@ function indexerFinished() {
  ***********************************************************************/ 
 function handlePrintCommand(command) {
   var topWindow = WindowWatcher.getWindowByName("xulsword-window",window);
-  topWindow.SavedWindowWithFocus = window;
+  //topWindow.SavedWindowWithFocus = window;
   topWindow.focus();
   
   switch (command) {
