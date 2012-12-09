@@ -96,13 +96,13 @@ const APPLICATIONID="xulsword@xulsword.org";
 // The TextClasses class must always be the first class in the element's 
 // class list, and only the part before any "-" defines its TextClasses class.
 // If a null parameter value exists for a particular class expression, this 
-// value may be provided later according to context.
+// signifies the value should be provided by context.
 const TextClasses = {
   vs:     [ { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 } ],
   fn:     [ { re:new RegExp(/^(\d+)\.(unavailable)\.([^\.]+)$/),                                            nid:1, bk:null, ch:null, vs:null, lv:null, mod:3, osisref:2 },
             { re:new RegExp(/^(\d+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                 nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   cr:     [ { re:new RegExp(/^(\d+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                 nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
-  un:     [ { re:new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
+  un:     [ { re:new RegExp(/^([^\.]+)\.(([^\.]+)\.([^\.]+)\.(\d+))\.([^\.]+)$/),                           nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   sr:     [ { re:new RegExp(/^(unavailable)\.([^\.]+)$/),                                               reflist:1, bk:null, ch:null, vs:null, lv:null, mod:2, osisref:1 },
             { re:new RegExp(/^((([^\.]+)\.(\d+)\.(\d+))(\;.*?)?)\.([^\.]+)$/),                          reflist:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:7, osisref:2 },
             { re:new RegExp(/^((([^\.]+)\.(\d+)\.(\d+)\s*-\s*[^\.]+\.\d+\.(\d+))(\;.*?)?)\.([^\.]+)$/), reflist:1, bk:3,    ch:4,     vs:5,    lv:6,     mod:8, osisref:2 },
@@ -114,7 +114,7 @@ const TextClasses = {
   fnlink: [ { re:new RegExp(/^([^\.]*)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   crref:  [ { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 },
             { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                        bk:2,    ch:3,     vs:4,    lv:5,     mod:6, osisref:1 } ],
-  nlist:  [ { re:new RegExp(/^(\w+)\.([^\.]*)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),              ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,     mod:7, osisref:3 } ]
+  nlist:  [ { re:new RegExp(/^(\w+)\.([^\.]*)\.(([^\.]+)\.([^\.]+)\.(\d+))\.([^\.]+)$/),           ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,     mod:7, osisref:3 } ]
 };
 
 // Accepts either raw HTML or a DOM element

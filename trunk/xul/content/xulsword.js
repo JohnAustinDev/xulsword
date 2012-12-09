@@ -93,9 +93,11 @@ function loadedXULReal() {
   //Initialize xulsword module choices
   for (var w=1; w<=3; w++) {
     if (!Tab[getPrefOrCreate("Version" + w, "Char", prefs.getCharPref("DefaultVersion"))])
-    prefs.setCharPref("Version" + w, prefs.getCharPref("DefaultVersion"));
+        prefs.setCharPref("Version" + w, prefs.getCharPref("DefaultVersion"));
+    ViewPort.IsPinned[w] = false;
   }
-  
+  if (!Tab.ORIG_NT && !Tab.ORIG_OT) ViewPort.ShowOriginal[w] = false;
+
   History.init();
   
   var st = "";;
@@ -139,7 +141,7 @@ function loadedXULReal() {
       var w=1;
       for (var m=0; m<NewModuleInfo.NewModules.length; m++) {
         Tab[NewModuleInfo.NewModules[m]]["w" + w + ".hidden"] = false;
-        while (w <= prefs.getIntPref("NumDisplayedWindows")) {
+        while (w <= ViewPort.NumDisplayedWindows) {
           prefs.setCharPref("Version" + w, NewModuleInfo.NewModules[m]);
           w++;
           if (Tab[NewModuleInfo.NewModules[m]].modType != BIBLE) break;
@@ -231,7 +233,7 @@ function postWindowInit() {
 // Will switch to an available book IF the current book is not available
 // in the first displayed Bible.
 function useFirstAvailableBookIf() {
-  var vers = firstDisplayBible();
+  var vers = ViewPort.firstDisplayBible();
   var availableBooks = getAvailableBooks(vers);
   if (!availableBooks || !availableBooks.length) return;
   var book = Location.getBookName();
@@ -612,7 +614,7 @@ var History = {
   },
 
   toHistory: function (index) {
-    var refBible = firstDisplayBible();
+    var refBible = ViewPort.firstDisplayBible();
     var loc = Location.convertLocation(WESTERNVS, this.list[index] + ".1", Bible.getVerseSystem(refBible));
     Location.setLocation(refBible, loc);
     document.getElementById("book").book = Location.getBookName();
@@ -641,7 +643,7 @@ var History = {
     while (popup.hasChildNodes()) 
       popup.removeChild(popup.firstChild);
     // Show history in verse system of firstDisplayBible(), save current Bible location and restore it after creating menu
-    var vers = firstDisplayBible();
+    var vers = ViewPort.firstDisplayBible();
     for (var i=0; i<this.list.length; i++) {
       var xulElement = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "menuitem");
       xulElement.setAttribute("oncommand", "History.toSelection('" + i + "')");
@@ -688,7 +690,7 @@ var History = {
  function updateNavigator() {
   if (!Bible) return;
   
-  var myvers = firstDisplayBible();
+  var myvers = ViewPort.firstDisplayBible();
 
   document.getElementById("book").book = Location.getBookName();
   document.getElementById("book").version = myvers;
@@ -707,7 +709,7 @@ function updateToReference(loc) {
   var numberOfSelectedVerses=1;
   if (loc.shortName) {
     document.getElementById("book").book = loc.shortName;
-    document.getElementById("book").version = firstDisplayBible();
+    document.getElementById("book").version = ViewPort.firstDisplayBible();
   }
   if (loc.chapter)   {document.getElementById("chapter").value = dString(loc.chapter);}
   if (loc.verse)     {document.getElementById("verse").value = dString(loc.verse);}
@@ -794,7 +796,7 @@ var XulswordController = {
       AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchFromTextBox":
-      openSearchDialog(target.searchText, firstDisplayModule().mod, target.searchType);
+      openSearchDialog(target.searchText, ViewPort.firstDisplayModule().mod, target.searchType);
       break;
     case "cmd_xs_searchForSelection":
       openSearchDialog(target.selection, target.mod, target.searchType);
@@ -940,7 +942,7 @@ var XulswordController = {
       if (s) this.parsedLocation = parseLocation(s.substr(0,64));
       return this.parsedLocation ? true:false;
     case "cmd_xs_toggleTab":
-      return (target.w && target.mod && !prefs.getBoolPref("IsPinned" + target.w) ? true:false);
+      return (target.w && target.mod && !ViewPort.IsPinned[target.w] ? true:false);
     case "cmd_xs_exportAudio":
       if (ModuleCopyMutex) return false;
       if (AudioDirs === null) AudioDirs = getAudioDirs();
@@ -963,7 +965,7 @@ var XulswordController = {
       if (ModuleCopyMutex) return false;
       break;
     case "cmd_xs_nextVerse":
-      var mod = firstDisplayBible();
+      var mod = ViewPort.firstDisplayBible();
       return (target.vs < Bible.getMaxVerse(target.mod, Location.getLocation(target.mod)));
     case "cmd_xs_previousVerse":
       return (target.vs > 1);
@@ -1038,7 +1040,7 @@ function getDefaultTarget() {
   target.lemma = null;
   target.bookmark = null;
   target.w = null;
-  target.mod = firstDisplayBible();
+  target.mod = ViewPort.firstDisplayBible();
 
   switch (Tab[target.mod].modType) {
   case BIBLE:
@@ -1050,12 +1052,12 @@ function getDefaultTarget() {
     break;
   case DICTIONARY:
     target.bk = "";
-    target.ch = getPrefOrCreate("DictKey_" + target.mod + "_" + firstDisplayBible(true) , "Unicode", "/");
+    target.ch = getPrefOrCreate("DictKey_" + target.mod + "_" + ViewPort.firstDisplayBible(true) , "Unicode", "/");
     target.vs = 1;
     target.lv = 1;
   case GENBOOK:
     target.bk = "";
-    target.ch = getPrefOrCreate("GenBookKey_" + target.mod + "_" + firstDisplayBible(true) , "Unicode", "/" + target.mod);
+    target.ch = getPrefOrCreate("GenBookKey_" + target.mod + "_" + ViewPort.firstDisplayBible(true) , "Unicode", "/" + target.mod);
     target.vs = 1;
     target.lv = 1;
     break;
@@ -1069,20 +1071,6 @@ function getDefaultTarget() {
   return target;
 }
 
-/*
-function isNextPrevEnabled() {
-  // disable if genbook-tree is focused (it has its own handler)
-  var cd = document.commandDispatcher;
-  if (cd && cd.focusedElement && cd.focusedElement.id && cd.focusedElement.id=="genbook-tree") return false;
-  // disable if no Bibles or commentaries
-  var haveVK = false;
-  for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-    if (Tab[prefs.getCharPref("Version" + w)].modType==BIBLE || Tab[prefs.getCharPref("Version" + w)].modType==COMMENTARY) haveVK=true;
-  }
-  return haveVK;
-}
-*/
-
 function goUpdateFileMenu () {
   goUpdateCommand('cmd_xs_exportAudio');
   goUpdateCommand('cmd_xs_removeModule');
@@ -1092,7 +1080,7 @@ function goUpdateFileMenu () {
 
 function openSearchDialog(search, mod, type) {
   if (!search) search = "";
-  if (!mod) mod = firstDisplayModule().mod;
+  if (!mod) mod = ViewPort.firstDisplayModule().mod;
   if (type === null) type = CONTAINS_THE_WORDS;
   
   prefs.setIntPref("InitialSearchType", type);
@@ -1129,7 +1117,7 @@ function handleOptions(elem) {
     case "w1":
     case "w2":
     case "w3":
-      prefs.setIntPref("NumDisplayedWindows", Number(elem.id.substr(1,1)));
+      ViewPort.NumDisplayedWindows = Number(elem.id.substr(1,1));
       Texts.update();
       break;
         
@@ -1354,9 +1342,9 @@ function updateXulswordButtons() {
   document.getElementById("note3").setAttribute("checked",(prefs.getBoolPref("ShowCrossrefsAtBottom") ? true:false));
   document.getElementById("note4").setAttribute("checked",(prefs.getBoolPref("ShowUserNotesAtBottom") ? false:true));
   document.getElementById("note5").setAttribute("checked",(prefs.getBoolPref("ShowUserNotesAtBottom") ? true:false));
-  document.getElementById("w1").setAttribute("checked",(prefs.getIntPref("NumDisplayedWindows")==1 ? true:false));
-  document.getElementById("w2").setAttribute("checked",(prefs.getIntPref("NumDisplayedWindows")==2 ? true:false));
-  document.getElementById("w3").setAttribute("checked",(prefs.getIntPref("NumDisplayedWindows")==3 ? true:false));
+  document.getElementById("w1").setAttribute("checked",(ViewPort.NumDisplayedWindows==1 ? true:false));
+  document.getElementById("w2").setAttribute("checked",(ViewPort.NumDisplayedWindows==2 ? true:false));
+  document.getElementById("w3").setAttribute("checked",(ViewPort.NumDisplayedWindows==3 ? true:false));
   
   for (var shortType in SupportedModuleTypes) {
     document.getElementById("winRadio." + getPrefOrCreate("ModuleMenuRadioSetting", "Char", "all") + "." + shortType).setAttribute("checked", true);
@@ -1385,20 +1373,20 @@ function updateXulswordCommands() {
  * Version and Tab Control Functions
  ***********************************************************************/ 
 function selectTab(w, version) {
-  var fdb = firstDisplayBible(true); // capture before changing prefs...
+  var fdb = ViewPort.firstDisplayBible(true); // capture before changing prefs...
   if (version == ORIGINAL) {
-    prefs.setBoolPref("ShowOriginal" + w,!prefs.getBoolPref("ShowOriginal" + w));
+    ViewPort.ShowOriginal[w] = !ViewPort.ShowOriginal[w];
   }
   else {
-    prefs.setBoolPref("ShowOriginal" + w, false);
-    prefs.setCharPref("Version" + w, version);
-    if (w == fdb || fdb != firstDisplayBible(true))
+    ViewPort.ShowOriginal[w] = false;
+    ViewPort.Module[w] = version;
+    if (w == fdb || fdb != ViewPort.firstDisplayBible(true))
         window.setTimeout("disableMissingBooks(" + getPrefOrCreate("HideDisabledBooks", "Bool", false) + ")", 200);
   }
 }
 
 function disableMissingBooks(hide) {
-  var books = getAvailableBooks(firstDisplayBible());
+  var books = getAvailableBooks(ViewPort.firstDisplayBible());
   for (var b=0; b<NumBooks; b++) {
     var have = false;
     for (var a=0; books && a<books.length; a++) {
@@ -1428,7 +1416,7 @@ function updateModuleMenuCheckmarks() {
   
   // insure each window has a selected tab
   for (var w=1; w<=NW; w++) {
-    if (Tab[prefs.getCharPref("Version" + w)]["w" + w + ".hidden"]) {
+    if (Tab[ViewPort.Module[w]]["w" + w + ".hidden"]) {
       for (var t=1; t<Tabs.length; t++) {if (!Tabs[t]["w" + w + ".hidden"]) break;} 
       if (t<Tabs.length) selectTab(w, Tabs[t].modName);
     }
@@ -1437,11 +1425,11 @@ function updateModuleMenuCheckmarks() {
 
 var GotoLocation;
 function showLocation(mod, bk, ch, vs, lv) {
-  
+jsdump("showLocation:" + mod + ", " + bk + ", " + ch + ", " + vs + ", " + lv);  
   var w = ensureModuleShowing(mod);
   if (!w) return;
   
-  if (!bk) bk = null;
+  if (!bk) bk = "Gen";
   if (!ch) return; // must be either Bible chapter or key!
   if (!vs) vs = 1;
   if (!lv) lv = vs;
@@ -1466,9 +1454,9 @@ function showLocation2() {
     
   case GENBOOK:
   case DICTIONARY:
-    setUnicodePref((Tab[l.mod].modType == GENBOOK ? "GenBook":"DictKey") + "_" + l.mod + "_" + l.w, l.ch);
+    setUnicodePref((Tab[l.mod].modType == GENBOOK ? "GenBookKey":"DictKey") + "_" + l.mod + "_" + l.w, l.ch);
     MainWindow.focus();
-    Texts.update(SCROLLTYPETOP, null, [null,1,1,1]);
+    Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null,1,1,1]);
     break;
     
   }
@@ -1485,10 +1473,10 @@ function ensureModuleShowing(version) {
   if (!Tab[version]) return 0;
   var aWindow = 0;
   var firstUnPinnedWin;
-  for (var w=1; w <= prefs.getIntPref("NumDisplayedWindows"); w++) {
-    if (prefs.getBoolPref("IsPinned" + w)) continue;
+  for (var w=1; w <= ViewPort.NumDisplayedWindows; w++) {
+    if (ViewPort.IsPinned[w]) continue;
     if (!firstUnPinnedWin) firstUnPinnedWin = w;
-    if (prefs.getCharPref("Version" + w) == version) return w;
+    if (ViewPort.Module[w] == version) return w;
     if (!aWindow && !Tab[version]["w" + w + ".hidden"]) {aWindow = w;}
   }
   if (aWindow == 0) {
@@ -1520,6 +1508,8 @@ function resizeWatch() {
 function unloadXUL() {
   try {window.controllers.removeController(XulswordController);} catch(er) {}
   try {window.controllers.removeController(BookmarksMenuController);} catch(er) {}
+  
+  prefs.setIntPref("ViewPortHeight", ViewPortWindow.innerHeight);
   
   //Close search windows and other windows
   for (var i=0; i<AllWindows.length; i++) {
@@ -1650,11 +1640,11 @@ function toOpenWindowByType(inType, uri, features)
  
 // This is for debugging purposes only
 function saveHTML () {
-  for (var i=1; i<=prefs.getIntPref("NumDisplayedWindows"); i++) {
+  for (var i=1; i <= ViewPort.NumDisplayedWindows; i++) {
     var data = "";
 
     try {
-      var tmp = Bible.getChapterText(prefs.getCharPref("Version" + i), Location.getLocation(prefs.getCharPref("Version" + i)));
+      var tmp = Bible.getChapterText(ViewPort.Module[i], Location.getLocation(ViewPort.Module[i]));
       data += "\n\nCROSSREFS\n" + Bible.getCrossRefs();
     }
     catch (er) {}

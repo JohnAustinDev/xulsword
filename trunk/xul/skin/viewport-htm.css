@@ -304,6 +304,9 @@ body[chromedir="rtl"] #chbutton_open {
   border-radius:8px;
   z-index:20;
 }
+.text[pinned="true"] .nbf {
+  background:rgb(248,248,241);
+}
 .text[textdir="rtl"] .nbf {
   right:auto;
   left:0px;
@@ -413,6 +416,11 @@ body[chromedir="rtl"] #chbutton_open {
 .sb, .nbf, .nb {
   height:auto !important;
 }
+/*
+.textf {
+  border:none;
+}
+*/
 .sb {
   margin-bottom:20px !important;
 }

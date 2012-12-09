@@ -45,16 +45,16 @@ var GenBookTexts = {
     var firstGenBook = null;
     var genBookList = "";
     var modsAtRoot = [];
-    for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
-      if (Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
-        var mymodRE = new RegExp("(^|;)(" + escapeRE(prefs.getCharPref("Version" + w)) + ");");
+    for (var w=1; w<=ViewPort.NumDisplayedWindows; w++) {
+      if (Tab[ViewPort.Module[w]].modType == GENBOOK) {
+        var mymodRE = new RegExp("(^|;)(" + escapeRE(ViewPort.Module[w]) + ");");
         if (!genBookList.match(mymodRE)) numUniqueGenBooks++;
         else continue;
         // Insure genbook has a showingkey pref!
-        var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/" + prefs.getCharPref("Version" + w));
-        if (key == "/" + prefs.getCharPref("Version" + w)) modsAtRoot.push(prefs.getCharPref("Version" + w));
-        if (!firstGenBook) firstGenBook=prefs.getCharPref("Version" + w);
-        genBookList += prefs.getCharPref("Version" + w) + ";";
+        var key = getPrefOrCreate("GenBookKey_" + ViewPort.Module[w] + "_" + w, "Unicode", "/" + ViewPort.Module[w]);
+        if (key == "/" + ViewPort.Module[w]) modsAtRoot.push(ViewPort.Module[w]);
+        if (!firstGenBook) firstGenBook = ViewPort.Module[w];
+        genBookList += ViewPort.Module[w] + ";";
       }
     }
     var ret = {};
@@ -118,7 +118,7 @@ var GenBookTexts = {
 
     if (gbks.numUniqueGenBooks>0 && elem.currentIndex==-1) {
       for (var w=1; w<=NW; w++) {
-        if (prefs.getCharPref("Version" + w) != gbks.firstGenBook) continue;
+        if (ViewPort.Module[w] != gbks.firstGenBook) continue;
         this.navigatorSelect(getPrefOrCreate("GenBookKey_" + gbks.firstGenBook + "_" + w, "Unicode", "/" + gbks.firstGenBook));
         break;
       }
@@ -142,8 +142,8 @@ var GenBookTexts = {
     var chapter = elem.database.GetTarget(child1, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true)
                   .QueryInterface(Components.interfaces.nsIRDFLiteral);
     for (var w=1; w<=NW; w++) {
-      if (module != prefs.getCharPref("Version" + w) ||
-          prefs.getBoolPref("IsPinned" + w)) continue;
+      if (module != ViewPort.Module[w] ||
+          ViewPort.IsPinned[w]) continue;
       setUnicodePref("GenBookKey_" + module + "_" + w, chapter.Value.replace("rdf:#",""));
     }
   },
@@ -346,10 +346,10 @@ var GenBookTexts = {
     mod = mod[1];
     
     for (var w=1; w<=NW; w++) {
-      if (prefs.getBoolPref("IsPinned" + w)) continue;
+      if (ViewPort.IsPinned[w]) continue;
       setUnicodePref("GenBookKey_" + mod + "_" + w, key);
       // scroll corresponding genbook to beginning of chapter
-      if (prefs.getCharPref("Version" + w) == mod) {
+      if (ViewPort.Module[w] == mod) {
         var t = document.getElementById("text" + w);
         var sb = t.getElementsByClassName("sb")[0];
         sb.scrollLeft = 0;

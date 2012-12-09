@@ -39,7 +39,7 @@ function tabMouse(e) {
   }
   else if (p[2] == "orig") {
     if (e.type != "click") return;
-    prefs.setBoolPref("ShowOriginal" + w, !prefs.getBoolPref("ShowOriginal" + w));
+    ViewPort.ShowOriginal[w] = !ViewPort.ShowOriginal[w];
     Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     return;
   }
@@ -55,7 +55,7 @@ function tabMouse(e) {
     break;
   case "click":
     closeTabToolTip();
-    if (prefs.getBoolPref("IsPinned" + w)) return;
+    if (ViewPort.IsPinned[w]) return;
     MainWindow.selectTab(w, Tabs[t].modName);
     MainWindow.updateNavigator();
     Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);    
@@ -151,7 +151,7 @@ function scriptMouseOver(e) {
     break;
     
   case "un":
-    var modType = Tab[prefs.getCharPref("Version" + w)].modType;
+    var modType = Tab[ViewPort.Module[w]].modType;
     if (p && prefs.getBoolPref("ShowUserNotesAtBottom") && 
           (modType == BIBLE || modType == COMMENTARY)) {
       okay = BibleTexts.scroll2Note("w" + w + ".footnote." + p.type + "." + p.nid + "." + p.osisref + "." + p.mod);
@@ -173,7 +173,7 @@ function scriptMouseOver(e) {
     }
    
     // Add elem's strong's classes to stylesheet for highlighting
-    if (!prefs.getBoolPref("ShowOriginal" + w)) return;
+    if (!ViewPort.ShowOriginal[w]) return;
     var classes = elem.className.split(" ");
     classes.shift(); // remove sn base class
     
@@ -217,9 +217,9 @@ function scriptClick(e) {
   if (w === null) return; // w=0 means popup!!
   
   // when an unpinned GenBook window is clicked, select its chapter in the navigator
-  if (w && !prefs.getBoolPref("IsPinned" + w) && 
-      Tab[prefs.getCharPref("Version" + w)].modType == GENBOOK) {
-    var key = getPrefOrCreate("GenBookKey_" + prefs.getCharPref("Version" + w) + "_" + w, "Unicode", "/" + prefs.getCharPref("Version" + w));
+  if (w && !ViewPort.IsPinned[w] && 
+      Tab[ViewPort.Module[w]].modType == GENBOOK) {
+    var key = getPrefOrCreate("GenBookKey_" + ViewPort.Module[w] + "_" + w, "Unicode", "/" + ViewPort.Module[w]);
     if (!GenBookTexts.isSelectedGenBook(key)) GenBookTexts.navigatorSelect(key);
   }
   
@@ -271,19 +271,19 @@ function scriptClick(e) {
     break;
     
   case "sbpin":
-    prefs.setBoolPref("IsPinned" + w, !prefs.getBoolPref("IsPinned" + w));
-    Texts.update((prefs.getBoolPref("IsPinned" + w) ? SCROLLTYPENONE:SCROLLTYPECENTER), HILIGHTNONE);
+    ViewPort.IsPinned[w] = !ViewPort.IsPinned[w];
+    Texts.update((ViewPort.IsPinned[w] ? SCROLLTYPENONE:SCROLLTYPECENTER), HILIGHTNONE);
     break;
 
   case "prevchaplink":
     if (!w) break;
-    var mod = prefs.getCharPref("Version" + w);
+    var mod = ViewPort.Module[w];
     switch (Tab[mod].modType) {
     case BIBLE:
     case COMMENTARY:
       if ((/^show(2|3)$/).test(document.getElementById("text" + w).getAttribute("columns"))) 
           previousPage(w);
-      else if (prefs.getBoolPref("IsPinned" + w))
+      else if (ViewPort.IsPinned[w])
           previousChapterPinned(w);
       else MainWindow.goDoCommand('cmd_xs_previousChapter');
       break;
@@ -314,7 +314,7 @@ function scriptClick(e) {
         var prevchap = GenBookTexts.previousChapter(getUnicodePref("GenBookKey_" + mod + "_" + w));
         if (!prevchap) return;
         
-        if (prefs.getBoolPref("IsPinned" + w)) {
+        if (ViewPort.IsPinned[w]) {
           setUnicodePref("GenBookKey_" + mod + "_" + w, prevchap);
           Texts.update();
         }
@@ -328,13 +328,13 @@ function scriptClick(e) {
     
   case "nextchaplink":
     if (!w) break;
-    var mod = prefs.getCharPref("Version" + w);
+    var mod = ViewPort.Module[w];
     switch (Tab[mod].modType) {
     case BIBLE:
     case COMMENTARY:
       if ((/^show(2|3)$/).test(document.getElementById("text" + w).getAttribute("columns")))
           nextPage(w);
-      else if (prefs.getBoolPref("IsPinned" + w)) 
+      else if (ViewPort.IsPinned[w]) 
           nextChapterPinned(w);
       else MainWindow.goDoCommand('cmd_xs_nextChapter');
       break;
@@ -363,7 +363,7 @@ function scriptClick(e) {
         var nextchap = GenBookTexts.nextChapter(getUnicodePref("GenBookKey_" + mod + "_" + w));
         if (!nextchap) return;
         
-        if (prefs.getBoolPref("IsPinned" + w)) {
+        if (ViewPort.IsPinned[w]) {
           setUnicodePref("GenBookKey_" + mod + "_" + w, nextchap);
           Texts.update();
         }
@@ -394,7 +394,7 @@ function scriptClick(e) {
     break;
     
   case "nbsizer":
-    prefs.setBoolPref("MaximizeNoteBox" + w, !prefs.getBoolPref("MaximizeNoteBox" + w));
+    ViewPort.MaximizeNoteBox[w] = !ViewPort.NoteBoxHeight[w];
     ViewPort.update(false);
     break;
     
@@ -469,10 +469,10 @@ function bbMouseDown(e) {
   BoundaryClicked.setAttribute("moving", "true");
   
   // If maximize is on, turn it off
-  if (prefs.getBoolPref("MaximizeNoteBox" + w)) {
+  if (ViewPort.MaximizeNoteBox[w]) {
     var rule = getCSS(".sb {");
-    prefs.setIntPref("NoteBoxHeight" + w, rule.rule.style.height.match(/([\-\d]+)px/)[1]);
-    prefs.setBoolPref("MaximizeNoteBox" + w, false);
+    ViewPort.NoteBoxHeight[w] = rule.rule.style.height.match(/([\-\d]+)px/)[1]);
+    ViewPort.MaximizeNoteBox[w] = false;
     ViewPort.update(false);
   }
   
@@ -512,7 +512,7 @@ function bbMouseUp(e) {
     else top = 0;
     
     BoundaryClicked.style.top = "";
-    prefs.setIntPref("NoteBoxHeight" + w, prefs.getIntPref("NoteBoxHeight" + w) - top);
+    ViewPort.NoteBoxHeight[w] = ViewPort.NoteBoxHeight[w] - top;
     ViewPort.update();
     
     BoundaryClicked = null;
@@ -539,7 +539,7 @@ var MouseWheel = {
 
     // dictionaries don't do flow columns and don't sync to other windows
     // so no special scrollwheel response is needed
-    if (Tab[prefs.getCharPref("Version" + w)].modType == DICTIONARY) return;
+    if (Tab[ViewPort.Module[w]].modType == DICTIONARY) return;
         
     // if we're over a notebox, do nothing
     var el = event.target;
@@ -571,7 +571,7 @@ var MouseWheel = {
     var scrollType;
     
     // GenBook scrolls differently that versekey modules
-    if (Tab[prefs.getCharPref("Version" + MouseWheel.SWwin)].modType == GENBOOK) {
+    if (Tab[ViewPort.Module[MouseWheel.SWwin]].modType == GENBOOK) {
       scrollType = SCROLLTYPEDELTA;
       Texts.scrollDelta = dv*20; // scroll delta in pixels
     }
@@ -638,10 +638,10 @@ var MouseWheel = {
  ***********************************************************************/ 
  
 function previousChapterPinned(w) {
-  try {if (!prefs.getBoolPref("IsPinned" + w)) return;}
+  try {if (!ViewPort.IsPinned[w]) return;}
   catch(er) {return;}
   
-  var vers = prefs.getCharPref("Version" + w);
+  var vers = ViewPort.Module[w];
   var bkn = findBookNum(Texts.display[w].bk);
   var chn = Texts.display[w].ch;
   
@@ -668,7 +668,7 @@ function previousPage(w) {
   
   v = getElementInfo(v);
   
-  if (prefs.getBoolPref("IsPinned" + w)) {
+  if (ViewPort.IsPinned[w]) {
     Texts.pinnedDisplay[w].bk = v.bk;
     Texts.pinnedDisplay[w].ch = v.ch;
     Texts.pinnedDisplay[w].vs = v.vs;
@@ -682,7 +682,7 @@ function previousPage(w) {
 }
 
 function nextChapterPinned(w) {
-  try {if (!prefs.getBoolPref("IsPinned" + w)) return;}
+  try {if (!ViewPort.IsPinned[w]) return;}
   catch(er) {return;}
   
   var vers = Texts.display[w].mod;
@@ -718,7 +718,7 @@ function nextPage(w) {
 
   v = getElementInfo(v);
 
-  if (prefs.getBoolPref("IsPinned" + w)) {
+  if (ViewPort.IsPinned[w]) {
     Texts.pinnedDisplay[wpin].bk = v.bk;
     Texts.pinnedDisplay[wpin].ch = v.ch;
     Texts.pinnedDisplay[wpin].vs = v.vs;

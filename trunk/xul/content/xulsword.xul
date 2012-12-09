@@ -224,26 +224,27 @@
         <!-- NOTE: the observes attributes on menuitems below are redundant but they fix a bug in the nightly build of xulrunner 1.9 !-->
         <menuitem id="hdmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.headings.sc;"  label="  &menu.view.headings;"  command="cmd_xs_toggleHeadings" observes="cmd_xs_toggleHeadings"/>
         <menuitem id="fnmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.footnotes.sc;" label="  &menu.view.footnotes;" command="cmd_xs_toggleFootnotes" observes="cmd_xs_toggleFootnotes"/>
-        <menu id="sub-fn" label="&menu.view.fnlocation;" accesskey="&menu.view.fnlocation.sc;"><menupopup>
-          <menuitem id="note0" type="radio" accesskey="&menu.view.popups.sc;" name="fnab" value="ShowFootnotesAtBottom_0" label="&menu.view.popups;" oncommand="handleViewPopup(this)"/>
-          <menuitem id="note1" type="radio" accesskey="&menu.view.notebox.sc;" name="fnab" value="ShowFootnotesAtBottom_1" label="&menu.view.notebox;" oncommand="handleViewPopup(this)"/>
-        </menupopup></menu>
         <menuitem id="crmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.crossrefs.sc;" label="  &menu.view.crossrefs;" command="cmd_xs_toggleCrossRefs" observes="cmd_xs_toggleCrossRefs"/>
-        <menu id="sub-cr" label="&menu.view.crlocation;" accesskey="&menu.view.crlocation.sc;"><menupopup>
-          <menuitem id="note2" type="radio" accesskey="&menu.view.popups.sc;" name="crab" value="ShowCrossrefsAtBottom_0" label="&menu.view.popups;" oncommand="handleViewPopup(this)"/>
-          <menuitem id="note3" type="radio" accesskey="&menu.view.notebox.sc;" name="crab" value="ShowCrossrefsAtBottom_1" label="&menu.view.notebox;" oncommand="handleViewPopup(this)"/>
-        </menupopup></menu>
         <menuitem id="unmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.usernotes.sc;" label="  &menu.view.usernotes;" command="cmd_xs_toggleUserNotes" observes="cmd_xs_toggleUserNotes"/>
-        <menu id="sub-un" label="&menu.view.unlocation;" accesskey="&menu.view.unlocation.sc;"><menupopup>
-          <menuitem id="note4" type="radio" accesskey="&menu.view.popups.sc;" name="unab" value="ShowUserNotesAtBottom_0" label="&menu.view.popups;" oncommand="handleViewPopup(this)"/>
-          <menuitem id="note5" type="radio" accesskey="&menu.view.notebox.sc;" name="unab" value="ShowUserNotesAtBottom_1" label="&menu.view.notebox;" oncommand="handleViewPopup(this)"/>
-        </menupopup></menu>
         <menuitem id="dtmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.dict.sc;"      label="  &menu.view.dict;"      command="cmd_xs_toggleDictionary" observes="cmd_xs_toggleDictionary"/>
         <menuitem id="lnmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.langnotes.sc;" label="  &menu.view.langnotes;" command="cmd_xs_toggleStrongsTags" observes="cmd_xs_toggleStrongsTags"/>
         <menuitem id="vnmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.versenums.sc;" label="  &menu.view.versenums;" command="cmd_xs_toggleVerseNums" observes="cmd_xs_toggleVerseNums"/>
         <menuitem id="rwmitem" class="menuitem-iconic togglemenuitem" accesskey="&menu.view.redwords.sc;"  label="  &menu.view.redwords;"  command="cmd_xs_toggleRedWords" observes="cmd_xs_toggleRedWords"/>
         <menuitem accesskey="&menu.view.showAll.sc;" label="  &menu.view.showAll;" command="cmd_xs_allTogglesOn"/>
         <menuitem accesskey="&menu.view.hideAll.sc;" label="  &menu.view.hideAll;" command="cmd_xs_allTogglesOff"/>
+        <menuseparator/>
+        <menu id="sub-fn" label="&menu.view.fnlocation;" accesskey="&menu.view.fnlocation.sc;"><menupopup>
+          <menuitem id="note0" type="radio" accesskey="&menu.view.popups.sc;" name="fnab" value="ShowFootnotesAtBottom_0" label="&menu.view.popups;" oncommand="handleViewPopup(this)"/>
+          <menuitem id="note1" type="radio" accesskey="&menu.view.notebox.sc;" name="fnab" value="ShowFootnotesAtBottom_1" label="&menu.view.notebox;" oncommand="handleViewPopup(this)"/>
+        </menupopup></menu>
+        <menu id="sub-cr" label="&menu.view.crlocation;" accesskey="&menu.view.crlocation.sc;"><menupopup>
+          <menuitem id="note2" type="radio" accesskey="&menu.view.popups.sc;" name="crab" value="ShowCrossrefsAtBottom_0" label="&menu.view.popups;" oncommand="handleViewPopup(this)"/>
+          <menuitem id="note3" type="radio" accesskey="&menu.view.notebox.sc;" name="crab" value="ShowCrossrefsAtBottom_1" label="&menu.view.notebox;" oncommand="handleViewPopup(this)"/>
+        </menupopup></menu>
+        <menu id="sub-un" label="&menu.view.unlocation;" accesskey="&menu.view.unlocation.sc;"><menupopup>
+          <menuitem id="note4" type="radio" accesskey="&menu.view.popups.sc;" name="unab" value="ShowUserNotesAtBottom_0" label="&menu.view.popups;" oncommand="handleViewPopup(this)"/>
+          <menuitem id="note5" type="radio" accesskey="&menu.view.notebox.sc;" name="unab" value="ShowUserNotesAtBottom_1" label="&menu.view.notebox;" oncommand="handleViewPopup(this)"/>
+        </menupopup></menu>
         <menuseparator/>
         <menu id="sub-Texts" class="menu-iconic" label="  &menu.view.showtexttabs;" accesskey="&menu.view.showtexttabs.sc;">
           <menupopup id="sub-Texts-pup">

@@ -126,7 +126,7 @@ var ContextMenu = {
     if (!this.target.w) this.target.w = 1;
     
     if (!this.target.mod) {
-      this.target.mod = prefs.getCharPref("Version" + this.target.w); 
+      this.target.mod = ViewPort.Module[this.target.w]; 
     }
   
     var defTexts = {bk:Location.getBookName(), 

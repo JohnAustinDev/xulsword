@@ -93,7 +93,7 @@ function postWindowInit() {
   for (var shortType in SupportedModuleTypes) {NumberOfShortType[shortType] = 0;}
   for (var t=0; t<Tabs.length; t++) {
     var isShowing = false;
-    for (var w=1; w<=prefs.getIntPref("NumDisplayedWindows"); w++) {
+    for (var w=1; w <= ViewPort.NumDisplayedWindows; w++) {
       isShowing |= !Tabs[t]["w" + w + ".hidden"];
     }
     if (isShowing || !getPrefOrCreate("MinimizeSearchRadios", "Bool", false)) {
