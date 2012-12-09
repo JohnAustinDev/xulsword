@@ -42,8 +42,8 @@ function onLoad() {
   
   // otherwise use the global location
   else {
-    PassageChooser.version = firstDisplayBible();
-    PassageChooser.location = MainWindow.Location.getLocation(firstDisplayBible());
+    PassageChooser.version = ViewPort.firstDisplayBible();
+    PassageChooser.location = MainWindow.Location.getLocation(ViewPort.firstDisplayBible());
   }
   
   PassageTextBox.focus();
@@ -65,6 +65,7 @@ function copyPassage(e) {
     if (!m) d.globalOptions[GlobalToggleCommands[tcmd]] = "Off";
     else d.globalOptions[GlobalToggleCommands[tcmd]] = (document.getElementById(m[1]).checked ? "On":"Off");
   }
+  d.ShowOriginal = false;
   
   // Get our text...
   var html = BibleTexts.read(1, d).htmlText;
@@ -131,10 +132,15 @@ function htmlVerses(d, html, versesOnly) {
   // replace class attributes by inline styles and remove all other attributes.
   html = parent.innerHTML.replace(/<(\w+)\s[^>]*class\s*=\s*[\"\']([^\"\']*)[\"\'][^>]*>/g, classToStyle);
   
+  html = html.replace(/<\![^>]*>/g, "");
+  
   // add reference designation
   html += "<br><span style=\"" + ProgramConfig.StyleRule.match(STYLES)[1] + "\">";
   html += "(" + ref2ProgramLocaleText(d.bk + "." + d.ch + "." + d.vs + "." + d.lv) + ")";
   html += "</span>";
+  
+  // wrap everything in a container so headings are centered correctly
+  html = "<div>" + html + "</div>";
   
   return html;
 }
@@ -147,8 +153,9 @@ function classToStyle(match, p1, p2, offset, string) {
   
   // titles
   if ((/(^|\s)canonical(\s|$)/).test(p2)) style += "font-weight:bold; font-style:italic; ";
-  if ((/(^|\s)head1(\s|$)/).test(p2)) style += "font-weight:bold; text-align:center; ";
+  if ((/(^|\s)head1(\s|$)/).test(p2)) style += "font-size:20px; font-weight:bold; text-align:center; ";
   if ((/(^|\s)head2(\s|$)/).test(p2)) style += "font-weight:bold; ";
+  if ((/(^|\s)wordsOfJesus(\s|$)/).test(p2)) style += "color:red ";
   
   // module and locale styles
   if (modloc && ModuleConfigs.hasOwnProperty(modloc)) 

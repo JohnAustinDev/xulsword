@@ -660,29 +660,6 @@ function findAVerseText(version, location, windowNum) {
  * Miscellaneous Functions
  ***********************************************************************/ 
 
-function firstDisplayBible(returnNumber) {
-  try {var ret=prefs.getCharPref("DefaultVersion");}
-  catch (er) {ret = null;}
-  
-  var wn = prefs.getIntPref("NumDisplayedWindows");
-  for (var w=1; w<=wn; w++) {
-    var amod = prefs.getCharPref("Version" + w);
-    if (Tab[amod].modType == BIBLE) {
-      ret = amod;
-      break;
-    }
-  }
-  if (!returnNumber) return ret;
-  else {
-    if (!ret || w>wn) w=1;
-    return w;
-  }
-}
-
-function firstDisplayModule() {
-  return {mod:prefs.getCharPref("Version1"), w:1};
-}
-
 var LocaleDir;
 function guiDirection() {
   if (LocaleDir) return LocaleDir;
@@ -749,6 +726,8 @@ function isASCII(text) {
 }
 
 function copyObj(obj) {
+  return eval(uneval(obj));
+/*
   var newobj = {};
   for (var m in obj) {
     if (obj[m] === null) newobj[m] = null;
@@ -760,6 +739,7 @@ function copyObj(obj) {
   }
   
   return newobj;
+*/
 }
 
 // Return the window in which this element resides.

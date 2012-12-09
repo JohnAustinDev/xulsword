@@ -57,10 +57,10 @@ var Texts = {
     for (var w=1; w<=NW; w++) {
       
       if (document.getElementById("text" + w).getAttribute("columns") == "hide") continue;
-      if (w > prefs.getIntPref("NumDisplayedWindows")) continue;
+      if (w > ViewPort.NumDisplayedWindows) continue;
       if (force[w] == -1) continue;
    
-      switch(Tab[prefs.getCharPref("Version" + w)].modType) {
+      switch(Tab[ViewPort.Module[w]].modType) {
         
       case BIBLE:
         this.updateBible(w, force[w]);
@@ -98,14 +98,14 @@ var Texts = {
     
     var scrollTypeFlag = this.scrollTypeFlag;
     var hilightFlag = this.hilightFlag;
-    var loc = Location.getLocation(prefs.getCharPref("Version" + w));
+    var loc = Location.getLocation(ViewPort.Module[w]);
     
     // get current display params
-    var display = this.getDisplay(prefs.getCharPref("Version" + w), loc, w);
+    var display = this.getDisplay(ViewPort.Module[w], loc, w);
     
     // overwrite display and location with any pinned values
-    if (!this.pinnedDisplay[w]) prefs.setBoolPref("IsPinned" + w, false);
-    if (getPrefOrCreate("IsPinned" + w, "Bool", false)) {
+    if (!this.pinnedDisplay[w]) ViewPort.IsPinned[w] = false;
+    if (ViewPort.IsPinned[w]) {
       // then keep pinned params (which could have been changed since last display)
       display.mod = this.pinnedDisplay[w].mod;
       display.bk  = this.pinnedDisplay[w].bk;
@@ -208,14 +208,14 @@ var Texts = {
     
     var scrollTypeFlag = this.scrollTypeFlag;
     var hilightFlag = this.hilightFlag;
-    var loc = Location.getLocation(prefs.getCharPref("Version" + w));
+    var loc = Location.getLocation(ViewPort.Module[w]);
         
     // get current display params
-    var display = this.getDisplay(prefs.getCharPref("Version" + w), loc, w);
+    var display = this.getDisplay(ViewPort.Module[w], loc, w);
     
     // overwrite display and loc with any pinned values
-    if (!this.pinnedDisplay[w]) prefs.setBoolPref("IsPinned" + w, false);
-    if (getPrefOrCreate("IsPinned" + w, "Bool", false)) {
+    if (!this.pinnedDisplay[w]) ViewPort.IsPinned[w] = false;
+    if (ViewPort.IsPinned[w]) {
       // then keep pinned params (which could have been changed since last display)
       display.mod = this.pinnedDisplay[w].mod;
       display.bk  = this.pinnedDisplay[w].bk;
@@ -259,11 +259,14 @@ var Texts = {
   
   updateGenBook: function(w, force) {
 
-    prefs.setBoolPref("ShowOriginal" + w, false);
-    prefs.setBoolPref("MaximizeNoteBox" + w, false);
+    ViewPort.ShowOriginal[w] = false;
+    ViewPort.MaximizeNoteBox[w] = false;
+    
+    var t =  document.getElementById("text" + w);
+    var sb = t.getElementsByClassName("sb")[0];
     
     // get current display params
-    var display = this.getDisplay(prefs.getCharPref("Version" + w), Location.getLocation(prefs.getCharPref("Version" + w)), w);
+    var display = this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "GenBookKey", "globalOptions"];
@@ -273,11 +276,9 @@ var Texts = {
      
       this.footnotes[w] = ti.footnotes;
       
-      var t =  document.getElementById("text" + w);
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
-      var sb = t.getElementsByClassName("sb")[0];
       sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = ti.htmlText;
     }
@@ -298,12 +299,12 @@ var Texts = {
   
   updateDictionary: function(w, force) {
 
-    prefs.setBoolPref("IsPinned" + w, false);
-    prefs.setBoolPref("ShowOriginal" + w, false);
-    prefs.setBoolPref("MaximizeNoteBox" + w, false);
+    ViewPort.IsPinned[w] = false;
+    ViewPort.ShowOriginal[w] = false;
+    ViewPort.MaximizeNoteBox[w] = false;
     
     // get current display params
-    var display = this.getDisplay(prefs.getCharPref("Version" + w), Location.getLocation(prefs.getCharPref("Version" + w)), w);
+    var display = this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), w);
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "DictKey", "globalOptions"];
@@ -507,8 +508,8 @@ var Texts = {
     display.scrollTypeFlag = this.scrollTypeFlag;
     display.GenBookKey = getPrefOrCreate("GenBookKey_" + mod + "_" + w, "Unicode", "/" + mod);
     display.DictKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
-    display.ShowOriginal = getPrefOrCreate("ShowOriginal" + w, "Bool", false);
-    display.MaximizeNoteBox = getPrefOrCreate("MaximizeNoteBox" + w, "Bool", false);
+    display.ShowOriginal = ViewPort.ShowOriginal[w];
+    display.MaximizeNoteBox = ViewPort.MaximizeNoteBox[w];
     display.ShowFootnotesAtBottom = getPrefOrCreate("ShowFootnotesAtBottom", "Bool", true);
     display.ShowCrossrefsAtBottom = getPrefOrCreate("ShowCrossrefsAtBottom", "Bool", false);
     display.ShowUserNotesAtBottom = getPrefOrCreate("ShowUserNotesAtBottom", "Bool", true);
@@ -549,7 +550,7 @@ var Texts = {
 //jsdump("SCROLLING w=" + w + ", l=" + l +", type=" + scrollTypeFlag);    
     var t = document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];
-    var mod = prefs.getCharPref("Version" + w);
+    var mod = ViewPort.Module[w];
     
     l = l.split(".");
     var bk = l[0];
@@ -745,11 +746,11 @@ var Texts = {
   hilightVerses: function(w, l, hilightFlag) {
     if (!l || hilightFlag == HILIGHTSKIP) return;
     
-    if (Tab[prefs.getCharPref("Version" + w)].modType == COMMENTARY) hilightFlag = HILIGHTNONE;
+    if (Tab[ViewPort.Module[[w]].modType == COMMENTARY) hilightFlag = HILIGHTNONE;
  
     var t = document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];
-    var mod = prefs.getCharPref("Version" + w);
+    var mod = ViewPort.Module[w];
     
     l = l.split(".");
     var bk = l[0];

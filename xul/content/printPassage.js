@@ -43,7 +43,7 @@ var PrintPassage = {
     this.ToChooser = document.getElementById("to-dropdown");
     this.FromBook = document.getAnonymousElementByAttribute(this.FromChooser, "anonid", "book");
   
-    var startBible = firstDisplayBible();
+    var startBible = ViewPort.firstDisplayBible();
     var startLocation = MainWindow.Location.getLocation(startBible);
     
     this.FromChooser.location = startLocation;

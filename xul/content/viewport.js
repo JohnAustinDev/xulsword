@@ -16,26 +16,45 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var ViewPort = {
+var ViewPort;
+function initViewPort() {
+  initCSS(true);
   
-  load: function() {
+  // If this is the main ViewPort, use prefs as initial settings
+  if (window.frameElement && window.frameElement.id == "xulviewport")
+      ViewPort = new ViewPortObj();
+  
+  ViewPort.init();
+}
 
-    initCSS(true);
-    
-    // set default prefs
-    getPrefOrCreate("NumDisplayedWindows", "Int", 2);
-    
-    getPrefOrCreate("ShowChooser", "Bool", true);
-    
+function ViewPortObj(viewPortObj) {
+  
+  // If we have a passed viewPortObj, then copy it. Otherwise create 
+  // a ViewPortObj from global preferences.
+  if (viewPortObj) {
+    this.NumDisplayedWindows = viewPortObj.NumDisplayedWindows;
+    this.ShowChooser = viewPortObj.ShowChooser;
     for (var w=1; w<=3; w++) {
-      getPrefOrCreate("ShowOriginal" + w, "Bool", false);
-      getPrefOrCreate("IsPinned" + w, "Bool", false);
-      getPrefOrCreate("NoteBoxHeight" + w, "Int", 200);
-      getPrefOrCreate("MaximizeNoteBox" + w, "Bool", false);
-      if (!Tab[getPrefOrCreate("Version" + w, "Char", prefs.getCharPref("DefaultVersion"))])
-          prefs.setCharPref("Version" + w, prefs.getCharPref("DefaultVersion"));
-      if (!Tab.ORIG_NT && !Tab.ORIG_OT) prefs.setBoolPref("ShowOriginal" + w, false);
+      this.ShowOriginal[w] = viewPortObj.ShowOriginal[w];
+      this.IsPinned[w] = viewPortObj.IsPinned[w];
+      this.NoteBoxHeight[w] = viewPortObj.NoteBoxHeight[w];
+      this.MaximizeNoteBox[w] = viewPortObj.MaximizeNoteBox[w];
+      this.Module[w] = viewPortObj.Module[w];
     }
+  }
+  else {
+    this.NumDisplayedWindows = getPrefOrCreate("NumDisplayedWindows", "Int", 2);
+    this.ShowChooser = getPrefOrCreate("ShowChooser", "Bool", true);
+    for (var w=1; w<=3; w++) {
+      this.ShowOriginal[w] = getPrefOrCreate("ShowOriginal" + w, "Bool", false);
+      this.IsPinned[w] = getPrefOrCreate("IsPinned" + w, "Bool", false);
+      this.NoteBoxHeight[w] = getPrefOrCreate("NoteBoxHeight" + w, "Int", 200);
+      this.MaximizeNoteBox[w] = getPrefOrCreate("MaximizeNoteBox" + w, "Bool", false);
+      this.Module[w] = getPrefOrCreate("Version" + w, "Char", prefs.getCharPref("DefaultVersion"));
+    }
+  }
+  
+  init: function() {
   
     // draw tabs
     for (w=1; w<=NW; w++) {this.drawTabs(w);}
@@ -72,40 +91,43 @@ var ViewPort = {
   // user settings. It does not set/change any global paramters, but only
   // implements them in the viewport. Ideally, updates should be implemented
   // with CSS.
-  update: function(skipBibleChooserTest) {
+  this.update = function(skipBibleChooserTest) {
 
     // Size layout correctly
     this.hackedResizing(skipBibleChooserTest);
     
-    var dw = prefs.getIntPref("NumDisplayedWindows");
-    
     // Tab row attribute
-    document.getElementById("textarea").setAttribute("windows", "show" + dw);
+    document.getElementById("textarea").setAttribute("windows", "show" + this.NumDisplayedWindows);
     
     // Windows
     for (var w=1; w<=NW; w++) {
       var value = "show1";
-      if (w > dw) value = "hide";
+      if (w > this.NumDisplayedWindows) value = "hide";
       else {
-        if ((w+1) <= dw && 
-            Tab[prefs.getCharPref("Version" + w)].modType==BIBLE &&
-            !prefs.getBoolPref("ShowOriginal" + w) && !prefs.getBoolPref("ShowOriginal" + (w+1)) &&
-            prefs.getCharPref("Version" + w) == prefs.getCharPref("Version" + Number(w+1)))
+        
+        if ((w+1) <= this.NumDisplayedWindows && 
+            Tab[this.Module[w]].modType == BIBLE &&
+            !this.ShowOriginal[w] && !this.ShowOriginal[(w+1)] &&
+            this.IsPinned[w] == this.IsPinned[(w+1)] && 
+            this.Module[w] == this.Module[Number(w+1)])
             value = "show2";
-        else if ((w+1) <= dw && 
-            (Tab[prefs.getCharPref("Version" + w)].modType==COMMENTARY || Tab[prefs.getCharPref("Version" + w)].modType==GENBOOK) &&
-            prefs.getCharPref("Version" + w) == prefs.getCharPref("Version" + Number(w+1)))
+            
+        else if ((w+1) <= this.NumDisplayedWindows && 
+            (Tab[this.Module[w]].modType == COMMENTARY || Tab[this.Module[w]].modType == GENBOOK) &&
+            this.IsPinned[w] == this.IsPinned[(w+1)] && 
+            this.Module[w] == this.Module[Number(w+1)])
             value = "show2";
 
-        if (value == "show2" && w+2 <= dw && 
-            !prefs.getBoolPref("ShowOriginal" + (w+2)) &&
-            prefs.getCharPref("Version" + Number(w+1)) == prefs.getCharPref("Version" + Number(w+2)))
+        if (value == "show2" && w+2 <= this.NumDisplayedWindows && 
+            !this.ShowOriginal[(w+2)] &&
+            this.IsPinned[Number(w+1)] == this.IsPinned[Number(w+2)] &&
+            this.Module[Number(w+1)] == this.Module[Number(w+2)])
             value = "show3";
       }
       
       // Firefox 16 has a bug where RTL column CSS does not scroll. The work
       // around at this time is to prohibit RTL columns.
-      if (ModuleConfigs[prefs.getCharPref("Version" + w)].direction == "rtl") value = "show1";
+      if (ModuleConfigs[this.Module[w]].direction == "rtl") value = "show1";
       
       // As of Firefox 17, CSS columns are not supported in print. For this
       // reason a WYSIWYG print routine is impossible. The workaround is to
@@ -136,12 +158,12 @@ var ViewPort = {
       }
       
       // Set this window's type
-      t.setAttribute("moduleType",  getShortTypeFromLong(Tab[prefs.getCharPref("Version" + wThis)].modType));
+      t.setAttribute("moduleType",  getShortTypeFromLong(Tab[this.Module[wThis]].modType));
       
       // Set this window's next/prev links
       var prev = true;
       var next = true;
-      switch(Tab[prefs.getCharPref("Version" + wThis)].modType) {
+      switch(Tab[this.Module[wThis]].modType) {
         case BIBLE:
         case COMMENTARY:
           if ((/^show1$/).test(t.getAttribute("columns"))) {
@@ -159,10 +181,10 @@ var ViewPort = {
       t.setAttribute("CanDoPreviousPage", prev);
       
       // Set this window's textdir
-      t.setAttribute("textdir", ModuleConfigs[prefs.getCharPref("Version" + wThis)].direction);
+      t.setAttribute("textdir", ModuleConfigs[this.Module[wThis]].direction);
       
       // Set this window's pin
-      t.setAttribute("pinned", (prefs.getBoolPref("IsPinned" + wThis) ? "true":"false"));
+      t.setAttribute("pinned", (this.IsPinned[wThis] ? "true":"false"));
        
     }
   //for (w=1; w<=NW; w++) {jsdump("w=" + w + ", value=" + document.getElementById("text" + w).getAttribute("columns"));}
@@ -171,7 +193,7 @@ var ViewPort = {
     for (w=1; w<=NW; w++) {
       var nb = document.getElementById("note" + w);
       document.getElementById("text" + w).setAttribute("footnotesEmpty", !BibleTexts.checkNoteBox(w));
-      document.getElementById("text" + w).setAttribute("footnotesMaximized", prefs.getBoolPref("MaximizeNoteBox" + w));
+      document.getElementById("text" + w).setAttribute("footnotesMaximized", this.MaximizeNoteBox[w]);
     }
     
     // Individual tabs
@@ -180,7 +202,7 @@ var ViewPort = {
     for (w=1; w<=NW; w++) {
       
       // orig tab
-      if (prefs.getBoolPref("ShowOriginal" + w)) 
+      if (this.ShowOriginal[w])) 
           try {document.getElementById("w" + w + ".tab.orig").setAttribute("active", "true");} catch (er) {}
       else
           try {document.getElementById("w" + w + ".tab.orig").setAttribute("active", "false");} catch (er) {}
@@ -188,7 +210,7 @@ var ViewPort = {
       // all other tabs
       document.getElementById("w" + w + ".multitab").style.display = "";
       document.getElementById("w" + w + ".multitab").style.visibility = "";
-      var pinattrib = (prefs.getBoolPref("IsPinned" + w) ? "true":"false");
+      var pinattrib = (this.IsPinned[w] ? "true":"false");
       for (var t=0; t<Tabs.length; t++) {
         var normtab = document.getElementById("w" + w + ".tab.norm." + t);
         var multtab = document.getElementById("w" + w + ".tab.mult." + t);
@@ -199,7 +221,7 @@ var ViewPort = {
         normtab.setAttribute("pinned", pinattrib);
         multtab.setAttribute("pinned", pinattrib);
         
-        if (Tabs[t].modName == prefs.getCharPref("Version" + w)) {
+        if (Tabs[t].modName == this.Module[w]) {
           normtab.setAttribute("active", "true");
         }
         else {
@@ -242,7 +264,7 @@ var ViewPort = {
           if (tt.style.display == "none") continue;
           if (!st) st = tt;
           if (oldmts[w] && t == oldmts[w]) st = tt;
-          if (Tabs[t].modName == prefs.getCharPref("Version" + w)) {
+          if (Tabs[t].modName == this.Module[w]) {
             st = tt;
             break;
           }
@@ -256,11 +278,11 @@ var ViewPort = {
       
     }
 
-//var d="Ndis=" + dw; for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("foot");} jsdump(d);
+//var d="Ndis=" + this.NumDisplayedWindows; for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("foot");} jsdump(d);
 
-  },
+  };
 
-  drawTabs: function(w) {
+  this.drawTabs = function(w) {
     
     // special ORIG tab
     var orig = "";
@@ -298,20 +320,7 @@ var ViewPort = {
     html += "</div>";
     
     document.getElementById("tabs" + w).innerHTML = html;
-  },
-  
-  unload: function() {
-    
-    // save hidden tab prefs
-    for (var w=1; w<=NW; w++) {
-      var hide = "";
-      for (var t=0; t<Tabs.length; t++) {
-        if (Tabs[t]["w" + w + ".hidden"]) hide += Tabs[t].modName + ";";
-      }
-      prefs.setCharPref("w" + w + ".hidden", hide);
-    }
-    
-  },
+  };
   
   // Some layouts, like the Navigator dimensions and variable height
   // footnote boxes, are too complex for HTML/CSS to implement without 
@@ -322,9 +331,13 @@ var ViewPort = {
   footheight:30,
   padbot:24,
   bbheight:18,
-  hackedResizing: function(skipBibleChooserTest) {
+  this.hackedResizing = function(skipBibleChooserTest) {
     
-    var winh = getPrefOrCreate("ViewPortHeight", "Int", window.innerHeight);
+    try {
+      var winh = getIntPref("ViewPortHeight");
+      prefs.clearUserPref("ViewPortHeight");
+    }
+    catch {winh = window.innerHeight;}
 //jsdump("UPDATING VIEW PORT h=" + winh);
 
     // Get max height of script box
@@ -336,7 +349,7 @@ var ViewPort = {
     r.rule.style.height = sb_maxH + "px";
 
     for (var w=1; w<=NW; w++) {
-      var nbf_H = prefs.getIntPref("NoteBoxHeight" + w);
+      var nbf_H = this.NoteBoxHeight[w];
       if (nbf_H > sb_maxH) nbf_H = sb_maxH;
       
       r = getCSS("#text" + w + "[moduleType=\"Texts\"][columns=\"show1\"][footnotesEmpty=\"false\"] .sb");
@@ -359,7 +372,7 @@ var ViewPort = {
 
     // Bible chooser
     var genbkinfo = GenBookTexts.getGenBookInfo();
-    var chooser = (genbkinfo.numUniqueGenBooks > 0 ? "book":(prefs.getBoolPref("ShowChooser") ? "bible":"hide"));
+    var chooser = (genbkinfo.numUniqueGenBooks > 0 ? "book":(this.ShowChooser ? "bible":"hide"));
     document.getElementById("viewportbody").setAttribute("chooser", chooser);
     MainWindow.document.getElementById("frameset").setAttribute("chooser", chooser);
     if (genbkinfo.numUniqueGenBooks > 0) GenBookTexts.updateGenBookNavigator(genbkinfo);
@@ -414,6 +427,54 @@ var ViewPort = {
     if (document.getElementsByTagName("body")[0].getAttribute("print") != "true")
         document.getElementById("viewportbody").style.width = MainWindow.innerWidth - MainWindow.document.getElementById("genBookChooser").boxObject.width + "px";
 
-  }
+  };
+  
+  this.firstDisplayBible = function(returnNumber) {
+    try {var ret = prefs.getCharPref("DefaultVersion");}
+    catch (er) {ret = null;}
+    
+    var wn = this.NumDisplayedWindows;
+    for (var w=1; w<=wn; w++) {
+      var amod = this.Module[w];
+      if (Tab[amod].modType == BIBLE) {
+        ret = amod;
+        break;
+      }
+    }
+    if (!returnNumber) return ret;
+    else {
+      if (!ret || w>wn) w=1;
+      return w;
+    }
+  };
 
+  this.firstDisplayModule = function() {
+    return {mod:this.Module[1], w:1};
+  };
+
+}
+
+function unloadViewPort() {
+  
+  // save hidden tab prefs
+  for (var w=1; w<=NW; w++) {
+    var hide = "";
+    for (var t=0; t<Tabs.length; t++) {
+      if (Tabs[t]["w" + w + ".hidden"]) hide += Tabs[t].modName + ";";
+    }
+    prefs.setCharPref("w" + w + ".hidden", hide);
+  }
+  
+  // save other ViewPort params
+  prefs.setIntPref("NumDisplayedWindows", this.NumDisplayedWindows);
+  prefs.setBoolPref("ShowChooser", this.ShowChooser);
+  
+  for (var w=1; w<=NW; w++) {
+    prefs.setBoolPref("ShowOriginal" + w, this.ShowOriginal[w]);
+    prefs.setBoolPref("IsPinned" + w, this.IsPinned[w]);
+    prefs.setIntPref("NoteBoxHeight" + w, this.NoteBoxHeight[w]);
+    prefs.setBoolPref("MaximizeNoteBox" + w, this.MaximizeNoteBox[w]);
+    prefs.setCharPref("Version" + w, this.Module[w]);
+  }
+  
 }

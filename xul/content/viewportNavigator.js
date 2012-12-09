@@ -108,7 +108,7 @@ function chooserMouse(e) {
       break;
       
     case "click":
-      Location.setLocation(firstDisplayBible(), Book[(p[1]=="ot" ? 0:NumOT)].sName + ".1.1");
+      Location.setLocation(ViewPort.firstDisplayBible(), Book[(p[1]=="ot" ? 0:NumOT)].sName + ".1.1");
       Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       break;
     }
@@ -123,7 +123,7 @@ function chooserMouse(e) {
       }
       break;
     case "click":
-      Location.setLocation(firstDisplayBible(), Book[p[1]].sName + ".1.1");
+      Location.setLocation(ViewPort.firstDisplayBible(), Book[p[1]].sName + ".1.1");
       Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       break;
     }
@@ -151,7 +151,7 @@ function chooserMouse(e) {
       break;
         
     case "click":
-      Location.setLocation(firstDisplayBible(), Book[p[1]].sName + "." + p[2] + ".1.1");
+      Location.setLocation(ViewPort.firstDisplayBible(), Book[p[1]].sName + "." + p[2] + ".1.1");
       Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       break
     }
@@ -160,7 +160,7 @@ function chooserMouse(e) {
   // Open/Close buttons on the Bible Navigator
   case "chbutton":
     if (e.type == "click") {
-      prefs.setBoolPref("ShowChooser", (p[1]=="open"));
+      ViewPort.ShowChooser = (p[1] == "open");
       ViewPort.update();
     }
     break;
@@ -182,7 +182,7 @@ function showChooser(tsmt, resetchooser) {
 }
 
 function showHeadings(myid, screenY) {
-  var biblemod = firstDisplayBible();
+  var biblemod = ViewPort.firstDisplayBible();
   if (!biblemod) return;
   
   //Set Bible params and read chapter

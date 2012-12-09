@@ -479,7 +479,7 @@ var BookmarkFuns = {
         break;
       case DICTIONARY:
       case GENBOOK:
-        loc = ".." + info[CHAPTER] + "." + info[VERSE] + "." + info[VERSE];
+        loc = "Gen." + info[CHAPTER] + "." + info[VERSE] + "." + info[VERSE];
         break;
       }
     }

@@ -13,7 +13,7 @@
   display:block;
 }
 #npopupRL {
-  /* relative container for popupTX to be absolute */
+  /* relative container so that popupTX can be absolute */
   position:relative;
 }
 #npopupTX {
@@ -33,39 +33,67 @@ body[chromedir="rtl"] #npopup {
 }
 
 /* FOR REGULAR (NON-WINDOW) POPUP STYLES */
-#npopup[isWindow="false"] {
+.text #npopup {
   display:none;
   z-index:100;
   position:absolute; /* insure popup falls out of page layout */
-  left:0px;
-  overflow:visible;
-  width:100%;
   height:0px;
+  overflow:visible;
 }
-#npopup[isWindow="false"][pinned="true"] {
+.text[columns="show1"] #npopup {
+  width:100%;
+}
+.text[columns="show2"]  #npopup {
+  width:50%;
+}
+.text[columns="show3"]  #npopup {
+  width:33%;
+}
+.text .noticelink #npopup,
+.text .introlink #npopup {
+  /* These non inline text elements have undesireable left:auto 
+  values. So they need explicit left alignment and 100% width so
+  that the mouse is guaranteed to always be above the popup. */
+  left:30px;
+  width:100%;
+}
+.text[textdir="rtl"] .noticelink #npopup,
+.text[textdir="rtl"] .introlink #npopup {
+  left:auto;
+  right:30px;
+}
+.text #npopup[pinned="true"] {
   display:block;
 }
-#npopup[isWindow="false"] #npopupTX {
+.text #npopup #npopupTX {
   position:absolute;
   overflow:auto;
   width:calc(100% - 60px);
   max-height:300px; /* dynamic in popup.js */
   border:1px solid black;
   border-radius:5px;
+  
+  box-shadow: 3px 3px 5px 6px #ccc;
   margin: 0px 20px 10px 0px;
   padding: 22px 20px 20px 14px;
-  box-shadow: 3px 3px 5px 6px #ccc;
   
   /* popup appears above the element, covering it. */
   top:-20px;
-  left:5px;
+  left:-20px;
 }
-.sn #npopup[isWindow="false"] #npopupTX {
+.text[textdir="rtl"] #npopup #npopupTX {
+  margin: 0px 0px 10px 20px;
+  padding: 22px 14px 20px 20px;
+  
+  left:auto;
+  right:-20px;
+}
+.text .sn #npopup #npopupTX {
   /* popup appears away from the element so that 
   the text of the element can still be read */
   top:100px;
 }
-#npopup[isWindow="false"][pinned="true"] #npopupTX {
+.text #npopup[pinned="true"] #npopupTX {
   margin: 2px 18px 8px 2px;
   box-shadow: none;
 }

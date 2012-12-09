@@ -193,7 +193,7 @@ function deleteCheckedResources(e) {
       filesToDelete.push(Tab[mod].conf);
       if (reset < SOFTRESET) reset = SOFTRESET;
       for (var w=1; w<=NW; w++) {
-        if (prefs.getCharPref("Version" + w) == mod) need2ChangeVers[w] = true;
+        if (ViewPort.Module[w] == mod) need2ChangeVers[w] = true;
       }
     }
     else {success = false; errormsg += "ERROR: Module \"" + mod + "\" .conf not found.\n";}
