@@ -90,7 +90,7 @@ var Bible = {
 
   LibswordPath:null,
   
-  ModNeedsCipherKey:[],
+  CheckTheseCipherKeys:[],
 
   initLibsword: function() {
     if (typeof(jsdump) != "undefined") jsdump("Initializing libsword...");
@@ -205,7 +205,9 @@ var Bible = {
       var type = mods[m].split(";")[1];
       
       if (type != BIBLE) continue; // only Bible modules are encrypted
-      if (!(/^\s*$/).test(this.getModuleInformation(mod, "CipherKey"))) continue; // not encrypted without cipherkey
+      // We don't need to supply a  cipher key if the CipherKey conf
+      // entry is not present (=NOTFOUND) or else non-empty.
+      if (!(/^\s*$/).test(this.getModuleInformation(mod, "CipherKey"))) continue;
       
       // module is encrypted but CipherKey is not supplied in .conf
       var cipherkey;
@@ -213,7 +215,7 @@ var Bible = {
       catch (er) {cipherkey = "0";}
       var useSecurityModule = usesSecurityModule(this, mod);
       this.setCipherKey(mod, cipherkey, useSecurityModule);
-      if (!useSecurityModule) this.ModNeedsCipherKey.push(mod);
+      if (!useSecurityModule) this.CheckTheseCipherKeys.push(mod);
       
       if (cipherkey) msg += mod + "(" + cipherkey + ") ";
     }

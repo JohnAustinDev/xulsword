@@ -48,16 +48,16 @@ var DictTexts = {
     ret.htmlList = this.keysHTML[w][d.mod];
 
     // get actual key
-    if (d.DictKey == "<none>") d.DictKey = this.keyList[w][d.mod][0];
-    if (d.DictKey == "DailyDevotionToday") {
+    if (!d.Key) d.Key = this.keyList[w][d.mod][0];
+    if (d.Key == "DailyDevotionToday") {
       var today = new Date();
-      d.DictKey = (today.getMonth()<9 ? "0":"") + String(today.getMonth()+1) + "." + (today.getDate()<10 ? "0":"") + today.getDate();
+      d.Key = (today.getMonth()<9 ? "0":"") + String(today.getMonth()+1) + "." + (today.getDate()<10 ? "0":"") + today.getDate();
     }
     
     // get htmlEntry
-    var de = this.getEntryHTML(d.DictKey, d.mod);
+    var de = this.getEntryHTML(d.Key, d.mod);
     de = Texts.addParagraphIDs(de, d.mod);
-    var un = Texts.getUserNotes("na", d.DictKey, d.mod, de);
+    var un = Texts.getUserNotes("na", d.Key, d.mod, de);
     de = un.html; // has user notes added to text
     ret.footnotes = un.notes;
     
@@ -65,7 +65,7 @@ var DictTexts = {
     ret.htmlEntry +=  "<div>" + de + "</div>";
     ret.htmlEntry += "</div>";
   
-    ret.key = d.DictKey;
+    ret.key = d.Key;
   
     return ret;
   },
@@ -259,21 +259,17 @@ var DictTexts = {
     }
     else {
       textbox.style.color="";
-      setUnicodePref("DictKey_" + mod + "_" + w, firstMatch[2]);
+      ViewPort.Key[w] = firstMatch[2];
       Texts.updateDictionary(w);
     }
   },
 
   selKey: function (mod, w, e) {
     if (!e.target.id || (e.target.id && (/^w\d\.keylist$/).test(e.target.id))) return;
-    setUnicodePref("DictKey_" + mod + "_" + w, decodeUTF8(e.target.id.substr(3)));
+    ViewPort.Key[w] = decodeUTF8(e.target.id.substr(3));
     Texts.updateDictionary(w);
     window.setTimeout("document.getElementById('w" + w + ".keytextbox').focus()", 1);
   }
 
 };
 
-// Make sure MainWindow has access to our objects
-if (MainWindow) {
-  if (typeof(MainWindow.DictTexts) == "undefined") MainWindow.DictTexts = DictTexts;
-}

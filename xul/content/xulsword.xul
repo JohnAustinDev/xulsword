@@ -43,8 +43,8 @@
     persist="width height screenX screenY sizemode"
     onload="loadedXUL()"
     onunload="unloadXUL()"
-    onkeydown="ViewPortWindow.Popup.keydown(event);" 
-    onkeyup="ViewPortWindow.Popup.keyup(event);"
+    onkeydown="ViewPort.ownerDocument.defaultView.Popup.keydown(event);" 
+    onkeyup="ViewPort.ownerDocument.defaultView.Popup.keyup(event);"
     ondragover="nsDragAndDrop.dragOver(event,fileObserver)"
     ondragdrop="nsDragAndDrop.drop(event,fileObserver)"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -182,7 +182,7 @@
   
 </commandset>
              
-<vbox flex="100%">
+<vbox id="topbox" hasBible="true" flex="100%">
 <!-- MENU BAR BEGINS HERE !-->
   <toolbox>
   <menubar id="mainbar"> 
@@ -203,7 +203,7 @@
         <menuitem label="&print.printpassage;" accesskey="&print.printpassage.sc;"
             oncommand="handlePrintCommand('cmd_print_passage');"/>
         <menuseparator/>
-        <menuitem id="keep-quit" label="&quitApplicationCmdWin.label;" accesskey="&quitApplicationCmdWin.accesskey;" oncommand="window.close()"/>
+        <menuitem id="keep-quit" alwaysShow="true" label="&quitApplicationCmdWin.label;" accesskey="&quitApplicationCmdWin.accesskey;" oncommand="window.close()"/>
       </menupopup>
     </menu>
     <menu id="edit-menu" label="&editMenu.label;" accesskey="&editMenu.accesskey;">
@@ -474,7 +474,7 @@
           <vbox id="genBookTree" flex="1">
             <tree id="genbook-tree" flex="1" class="plain" hidecolumnpicker="true" seltype="single" enableColumnDrag="false"
                 datasources="rdf:null" ref="rdf:#http://www.xulsword.com/tableofcontents/ContentsRoot" flags="dont-build-content"
-                onselect="ViewPortWindow.GenBookTexts.onSelectGenBook();" >
+                onselect="ViewPort.ownerDocument.defaultView.GenBookTexts.onSelectGenBook();" >
               <treecols>
                 <treecol id="chapter-column" flex="1" hideheader="true" primary="true"/>
               </treecols>

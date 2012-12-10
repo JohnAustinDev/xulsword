@@ -33,14 +33,14 @@ var ContextMenu = {
     this.target.w = getWindow(menupopup.triggerNode);
     
     // Do some viewport specific cleanup
-    if (typeof(ViewPortWindow) != "undefined") {
+    if (typeof(ViewPort) != "undefined") {
       
-      ViewPortWindow.closeTabToolTip();
+      ViewPort.ownerDocument.defaultView.closeTabToolTip();
       
       // Close Script Popup if we're not over it
       var elem = menupopup.triggerNode;
       while (elem && (!elem.id || elem.id != "npopup")) {elem = elem.parentNode;}
-      if (!elem) ViewPortWindow.Popup.close();
+      if (!elem) ViewPort.ownerDocument.defaultView.Popup.close();
       
     }
     
@@ -134,10 +134,10 @@ var ContextMenu = {
             vs:Location.getVerseNumber(this.target.mod), 
             lv:Location.getLastVerseNumber(this.target.mod)};
     var defDicts = {bk:null, 
-            ch:getPrefOrCreate("DictKey_" + this.target.mod + "_" + this.target.w, "Unicode", ""), 
+            ch:ViewPort.Key[this.target.w], 
             vs:1, lv:1};
     var defGenbks = {bk:null, 
-            ch:getPrefOrCreate("GenBookKey_" + this.target.mod + "_" + this.target.w, "Unicode", ""), 
+            ch:ViewPort.Key[this.target.w], 
             vs:1, lv:1};
     
     var defaults = {Texts:defTexts, Comms:defTexts, Dicts:defDicts, Genbks:defGenbks};

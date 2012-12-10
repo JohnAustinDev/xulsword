@@ -394,7 +394,3 @@ var BibleTexts = {
 
 };
 
-// Make sure MainWindow has access to our objects
-if (MainWindow) {
-  if (typeof(MainWindow.BibleTexts) == "undefined") MainWindow.BibleTexts = BibleTexts;
-}

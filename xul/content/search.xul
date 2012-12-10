@@ -20,39 +20,31 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/search-xul.css" type="text/css"?>
+
 <?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
+<?xul-overlay href="chrome://xulsword/content/contextMenu-overlay.xul" ?>
 
 <!DOCTYPE window [
-<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
-%xulswordDTD;
-<!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd" >
-%bookmarksDTD;
-<!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
-%browserDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/global.dtd" >
-%globalDTD;
+<!ENTITY % searchDTD SYSTEM "chrome://xulsword/locale/search.dtd" >
+%searchDTD;
 ]>
 
-<window 
-    id="search-window" xmlns:html="http://www.w3.org/1999/xhtml"
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+    id="search"
     title="&search.title; &quot;**search_title**&quot;"
     width="800" height="630" screenX="50" screenY="50"
     persist="width height screenX screenY sizemode"
-    style="background-image: url(chrome://xulsword/skin/images/9.gif);"
     onload="loadSearchWindow()"
     onunload="unloadSearchWindow();"
-    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+    oncommand="commandHandler(event);">
 
 <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
 
 <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
 <script src="chrome://xulsword/content/common0.js"/>
-<script src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
 <script src="chrome://xulsword/content/common1.js"/>
 <script src="chrome://xulsword/content/common2.js"/>
-<script src="chrome://xulsword/content/textHTML.js"/>
-<script src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
-<script src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
+<script src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
 <script src="chrome://xulsword/content/search.js"/>
 
 <keyset>
@@ -62,22 +54,6 @@
 </keyset>
 
 <keyset id="editMenuKeys"/>
-
-<commandset>
-  <command id="cmd_close"                        oncommand="closeWindow(true);"/>
-</commandset>
-
-<commandset id="contextCommands">
-  <command id="cmd_bm_open"                      oncommand="goDoCommand('cmd_bm_open');"/>
-  <command id="cmd_copy"                         oncommand="goDoCommand('cmd_copy');"/>
-  <command id="cmd_xs_searchForSelection"        oncommand="goDoCommand('cmd_xs_searchForSelection');"/>
-  <command id="cmd_xs_newBookmark"               oncommand="goDoCommand('cmd_xs_newBookmark');"/>
-  <command id="cmd_xs_newUserNote"               oncommand="goDoCommand('cmd_xs_newUserNote');"/>
-  <command id="cmd_print"                        oncommand="handlePrintCommand('cmd_print');"/>
-  <command id="cmd_printPreview"                 oncommand="handlePrintCommand('cmd_printPreview');"/>
-  <command id="cmd_pageSetup"                    oncommand="handlePrintCommand('cmd_pageSetup');"/>
-</commandset>
-
 <commandset id="editMenuCommands"/>
 
 <!-- Search Results Controls !-->
@@ -89,8 +65,7 @@
         <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" command="cmd_printPreview"/>
         <menuitem label="&printCmd.label;" accesskey="&printCmd.accesskey;" key="printKb" command="cmd_print"/>
         <menuseparator/>
-        <menuitem label="&closeCmd.label;" command="cmd_close"
-                    key="key_close" accesskey="&closeCmd.accesskey;"/>
+        <menuitem label="&closeCmd.label;" key="key_close" accesskey="&closeCmd.accesskey;" oncommand="window.close()"/>
       </menupopup>
     </menu>
     <menu id="menu_edit">
@@ -112,12 +87,13 @@
     </menu>
   </menubar>
   
-  <toolbar>
+  <toolbar showAdvanced="false">
     <vbox flex="1">
-      <hbox id="searchrow" pack="center" align="center" style="padding:4px;">
-        <button id="moreless" label="&more.label;" oncommand="clickHandler(this)"/>
+      <hbox id="searchrow" pack="center" align="center">
+        <button id="more" label="&more.label;" oncommand="clickHandler(this)"/>
+        <button id="less" label="&less.label;" oncommand="clickHandler(this)"/>
         <label value="&searchwhat.label;" control="searchText"/>
-        <textbox id="searchText" tooltip="searchTextTT" style="width:20em;" maxlength="60"/>
+        <textbox id="searchText" tooltip="searchTextTT" maxlength="60"/>
         <button id="searchButton" tooltip="searchButtonTT" label="&searchBut.label;  " dir="reverse" orient="horizontal" oncommand="clickHandler(this)"/>
         <spacer width="14px" orient="horizontal"/>
         <image id="question" class="question" onclick="clickHandler(this)"/>
@@ -126,68 +102,96 @@
       <hbox id="modulePanel">
         <spacer flex="1" />
 
-        <radiogroup id="sversion.sim" hidden="false" pack="center" align="center" orient="horizontal" oncommand="clickHandler(this)" style="max-width:800px; max-height:90px; overflow-x:hidden; overflow-y:auto; padding:6px;">
+        <radiogroup id="search-module" pack="begin" align="center" orient="horizontal" oncommand="clickHandler(this)">
+        
           <grid>
-            <columns>
-              <column />
-              <column flex="1"/>
+          
+            <columns id="module-columns">
+              <column id="modtype-labels"/>
             </columns>
-            <rows id="allModRadios.sim">
-            <row id="row.Texts.0.sim" align="center">
-              <label value="" id="label.Texts.0.sim"/>
-            </row>
+            
+            <rows>
+              <row id="Texts-row" hidden="true" pack="end" align="center">
+                <label value="&search.Texts"/>
+              </row>
+              <row id="Comms-row" hidden="true" pack="end" align="center">
+                <label value="&search.Comms"/>
+              </row>
+              <row id="Dicts-row" hidden="true" pack="end" align="center">
+                <label value="&search.Dicts"/>
+              </row>
+              <row id="Genbks-row" hidden="true" pack="end" align="center">
+                <label value="&search.Genbks"/>
+              </row>
             </rows>
+            
           </grid>
+          
         </radiogroup>
+        
         <spacer flex="1" />
+        
       </hbox>
     
       <vbox align="center">
-        <hbox id="advanced" hidden="true">
+        <hbox id="advanced">
+        
           <groupbox>
-            <caption label="&scope;" />    
+            <caption label="&scope;"/>  
+              
             <reference-dropdown id="moddropdown" menuheight="400px" onlybibles="false" hidebook="true" hidechapter="true" hideverse="true" hidelastverse="true" />
+            
             <radiogroup id="scopeRadio" orient="horizontal" oncommand="clickHandler(this)">
+            
               <vbox>
                 <radio id="searchAll" selected="true" label="&search.all;" value="Gen-Rev"/>
                 <radio id="searchOT" label="&search.old;" value="Gen-Mal"/>
                 <radio id="searchNT" label="&search.new;" value="Matt-Rev"/>
               </vbox>
+              
               <vbox>
                 <radio id="searchCB" label="&search.currentbook;"/>
                 <radio id="searchSelect" label="&search.groups;" value=""/>
-                <menulist id="scopeMenu"><menupopup>
-                  <menuitem id="sg1" selected="true" label="&search.torah;" value="&search.torah.books;"/>
-                  <menuitem id="sg2" label="&search.history;" value="&search.history.books;"/>
-                  <menuitem id="sg3" label="&search.wisdom;" value="&search.wisdom.books;"/>
-                  <menuitem id="sg4" label="&search.prophets;" value="&search.prophets.books;"/>
-                  <menuitem id="sg5" label="&search.gospels;" value="&search.gospels.books;"/>
-                  <menuitem id="sg6" label="&search.letters;" value="&search.letters.books;"/>
-                </menupopup></menulist>
+                <menulist id="scopeMenu">
+                  <menupopup>
+                    <menuitem id="sg1" selected="true" label="&search.torah;" value="&search.torah.books;"/>
+                    <menuitem id="sg2" label="&search.history;" value="&search.history.books;"/>
+                    <menuitem id="sg3" label="&search.wisdom;" value="&search.wisdom.books;"/>
+                    <menuitem id="sg4" label="&search.prophets;" value="&search.prophets.books;"/>
+                    <menuitem id="sg5" label="&search.gospels;" value="&search.gospels.books;"/>
+                    <menuitem id="sg6" label="&search.letters;" value="&search.letters.books;"/>
+                  </menupopup>
+                </menulist>
               </vbox>
+              
             </radiogroup>
+            
           </groupbox>
+          
           <stack id="searchTypeStack">
+          
           <groupbox>
-            <caption label="&type;" /> 
+            <caption label="&type;"/> 
+            
             <radiogroup id="searchType">
               <radio id="hasthewords" selected="true" label="&hasthewords;" oncommand="clickHandler(this)"/>
               <radio id="hasthistext" label="&hasthistext;" oncommand="clickHandler(this)"/>
               <radio id="advancedmatch" label="&advancedmatch;" oncommand="clickHandler(this)"/>
               <radio id="matchsimilar" label="&matchparts;" oncommand="clickHandler(this)"/>
             </radiogroup>
-            <hbox>
-              <checkbox id="sort" label="&search.sortorder;" oncommand="clickHandler(this)" style="margin-left:2em;"/>
-            </hbox>
-          </groupbox>
-          <vbox id="dividerBox" hidden="true">
-          </vbox>
-          <vbox pack="center" align="center" id="createSearchIndexBox" hidden="true">
-            <hbox>
-              <button id="createIndexButton" label="Create Search Index" oncommand="clickHandler(this)"/>
-            </hbox>
-          </vbox>
+            
+            </groupbox>
+            
+            <vbox id="dividerBox" hidden="true"></vbox>
+            
+            <vbox pack="center" align="center" id="createSearchIndexBox" hidden="true">
+              <hbox>
+                <button id="createIndexButton" label="&createIndex;" oncommand="clickHandler(this)"/>
+              </hbox>
+            </vbox>
+            
           </stack>
+          
         </hbox>
       </vbox>
     
@@ -196,12 +200,12 @@
 </toolbox>
 
 <!-- Search Results Window !-->
-<vbox flex="1" style="padding:10px;">
+<vbox id="searchframe-cont" flex="1">
   <hbox flex="100%">
     <vbox  flex="100%">
       <iframe flex="100%" class="searchframe" context="contextSearchBox" id="search-frame" src="search.html"></iframe>
     </vbox>
-    <vbox id="resultsnav" width="35px" pack="center" style="margin-left:10px;" hidden="true">
+    <vbox id="resultsnav" width="35px" pack="center" hidden="true">
       <image id="first" class="searchArrow" onclick="clickHandler(this)"/>
       <spacer flex="50%" orient="horizontal"/>
       <image id="prev" class="searchArrow" onclick="clickHandler(this)"/>
@@ -212,37 +216,22 @@
     </vbox>
   </hbox>
 </vbox>
-<statusbar id="statusbar" chromedir="&locale.dir;">
-  <statusbarpanel id="statusbar-text" flex="1"/>
-  <hbox id="progressbox" pack="end" align="center" style="visibility:hidden;">
-    <label id="searchmsg" value=""/>
-    <progressmeter id="progress" mode="determined" value="3" style="margin-right:10px;"/>
-  </hbox>
-  <button id="stopButton" label="&stop.label;" style="margin-top:4px;" hidden="true" oncommand="clickHandler(this)"/>
-</statusbar>
 
-<popupset>
-  <menupopup id="contextSearchBox" onpopupshowing="SearchContextMenuShowing(event)" onpopuphidden="SearchContextMenuHidden(event)">
-    <menuitem id="conOpen" label="&openLinkInWindowCmd.label;" command="cmd_bm_open" default="true"/>
-    <menuseparator id="contsep0"/>
-    <menuitem id="cMenu_copy" label="&copyCmd.label;" command="cmd_copy"/>
-    <menuitem id="conSearch" label="&searchBut.label;" command="cmd_xs_searchForSelection"/>
-    <menuseparator id="contsep1"/>
-    <menuitem id="conBookmark" label="&menuitem.newBookmark.label;" command="cmd_xs_newBookmark"/>
-    <menuitem id="conUserNote" label="&menu.usernote.add;" command="cmd_xs_newUserNote"/>
-  </menupopup>
-  
-  <menupopup id="bookmarks-context-menu" 
-               onpopupshowing="return BookmarksMenu.createContextMenu(event);"
-               onpopuphidden ="BookmarksMenu.destroyContextMenu(event);"/>
-</popupset>
+<statusbar id="statusbar">
+  <statusbarpanel id="statusbar-text" flex="1"/>
+  <hbox id="progressbox" pack="end" align="center">
+    <label id="searchmsg" value=""/>
+    <progressmeter id="progress" mode="determined" value="3"/>
+  </hbox>
+  <button id="stopButton" label="&stop.label;" hidden="true" oncommand="clickHandler(this)"/>
+</statusbar>
 
 <!-- TOOLTIPS DEFINED HERE !-->
 <tooltip id="searchTextTT">
-  <label class="cs-Program" value="&searchbox.tooltip;" />
+  <label value="&searchbox.tooltip;" />
 </tooltip>
 <tooltip id="searchButtonTT">
-  <label class="cs-Program" value="&search.tooltip;" />
+  <label value="&search.tooltip;" />
 </tooltip>
 
 </window>

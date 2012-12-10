@@ -24,10 +24,10 @@ function initWindowedPopup() {
   initCSS(true);
   
   // This is a windowed popup, so copy the original popup
-  Popup = new PopupObj(MainWindow.ViewPortWindow.Popup);
+  Popup = new PopupObj(ViewPort.ownerDocument.defaultView.Popup);
   
   // Close the original popup
-  MainWindow.ViewPortWindow.Popup.close();
+  ViewPort.ownerDocument.defaultView.Popup.close();
 
 }
     

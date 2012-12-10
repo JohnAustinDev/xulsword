@@ -40,7 +40,7 @@ var AllWindows            = MainWindow.AllWindows;
 
 var LanguageStudyModules  = MainWindow.LanguageStudyModules;
 
-// defined in viewport.html but used globally
+// defined in viewport.html but may used globally.
 if (typeof(ViewPort) == "undefined")
     var ViewPort          = MainWindow.ViewPort;
 if (typeof(Texts) == "undefined")

@@ -217,9 +217,8 @@ function scriptClick(e) {
   if (w === null) return; // w=0 means popup!!
   
   // when an unpinned GenBook window is clicked, select its chapter in the navigator
-  if (w && !ViewPort.IsPinned[w] && 
-      Tab[ViewPort.Module[w]].modType == GENBOOK) {
-    var key = getPrefOrCreate("GenBookKey_" + ViewPort.Module[w] + "_" + w, "Unicode", "/" + ViewPort.Module[w]);
+  if (w && !ViewPort.IsPinned[w] && Tab[ViewPort.Module[w]].modType == GENBOOK) {
+    var key = ViewPort.Key[w];
     if (!GenBookTexts.isSelectedGenBook(key)) GenBookTexts.navigatorSelect(key);
   }
   
@@ -288,13 +287,13 @@ function scriptClick(e) {
       else MainWindow.goDoCommand('cmd_xs_previousChapter');
       break;
     case DICTIONARY:
-      var currentKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
+      var currentKey = ViewPort.Key[w];
       for (var k=0; k<DictTexts.keyList[w][mod].length; k++) {
         if (DictTexts.keyList[w][mod][k] == currentKey) break;
       }
       k--;
       if (DictTexts.keyList[w][mod][k]) {
-        setUnicodePref("DictKey_" + mod + "_" + w, DictTexts.keyList[w][mod][k]);
+        ViewPort.Key[w] = DictTexts.keyList[w][mod][k];
         Texts.updateDictionary(w);
       }
       break;
@@ -311,11 +310,11 @@ function scriptClick(e) {
       }
       // if not, then load previous chapter
       else {
-        var prevchap = GenBookTexts.previousChapter(getUnicodePref("GenBookKey_" + mod + "_" + w));
+        var prevchap = GenBookTexts.previousChapter(ViewPort.Key[w]);
         if (!prevchap) return;
         
         if (ViewPort.IsPinned[w]) {
-          setUnicodePref("GenBookKey_" + mod + "_" + w, prevchap);
+          ViewPort.Key[w] = prevchap;
           Texts.update();
         }
         else GenBookTexts.navigatorSelect(prevchap);
@@ -339,13 +338,13 @@ function scriptClick(e) {
       else MainWindow.goDoCommand('cmd_xs_nextChapter');
       break;
     case DICTIONARY:
-      var currentKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
+      var currentKey = ViewPort.Key[w];
       for (var k=0; k<DictTexts.keyList[w][mod].length; k++) {
         if (DictTexts.keyList[w][mod][k] == currentKey) break;
       }
       k++;
       if (DictTexts.keyList[w][mod][k]) {
-        setUnicodePref("DictKey_" + mod + "_" + w, DictTexts.keyList[w][mod][k]);
+        ViewPort.Key[w] = DictTexts.keyList[w][mod][k];
         Texts.updateDictionary(w);
       }
       break;
@@ -360,11 +359,11 @@ function scriptClick(e) {
       sb.scrollLeft = next;
       // if not, then load next chapter
       if (sb.scrollLeft == prev) {
-        var nextchap = GenBookTexts.nextChapter(getUnicodePref("GenBookKey_" + mod + "_" + w));
+        var nextchap = GenBookTexts.nextChapter(ViewPort.Key[w]);
         if (!nextchap) return;
         
         if (ViewPort.IsPinned[w]) {
-          setUnicodePref("GenBookKey_" + mod + "_" + w, nextchap);
+          ViewPort.Key[w] = nextchap;
           Texts.update();
         }
         else GenBookTexts.navigatorSelect(nextchap);

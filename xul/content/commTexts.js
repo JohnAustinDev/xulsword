@@ -68,7 +68,3 @@ var CommTexts = {
   
 };
 
-// Make sure MainWindow has access to our objects
-if (MainWindow) {
-  if (typeof(MainWindow.CommTexts) == "undefined") MainWindow.CommTexts = CommTexts;
-}
