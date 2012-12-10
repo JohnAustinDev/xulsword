@@ -35,8 +35,6 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/texts.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/bibleTexts.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/printPassage.js"/>
 
   

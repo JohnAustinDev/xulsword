@@ -33,12 +33,13 @@ var LanguageStudyModules = {};
 var Book = new Array(NumBooks);
 var AllWindows = [];
 
-// Global text objects defined in texts.js and -Texts.js files
-var Texts;
-var BibleTexts; 
-var CommTexts; 
-var DictTexts; 
-var GenBookTexts;
+// Global text objects defined in vewport.js and texts.js files
+var ViewPort = null;
+var Texts = null;
+var BibleTexts = null; 
+var CommTexts = null; 
+var DictTexts = null; 
+var GenBookTexts = null;
 
 
 /************************************************************************
@@ -273,7 +274,7 @@ function initTabGlobals() {
       var feature = Bible.getModuleInformation(mod, "Feature");
       if (feature.search("DailyDevotion") != -1) {
         for (var w=1; w<=NW; w++) {
-          setUnicodePref("DictKey_" + mod + "_" + w, "DailyDevotionToday");
+          ViewPort.Key[w] = "DailyDevotionToday";
         }
       }
       else if (feature.search("GreekDef") != -1)  {

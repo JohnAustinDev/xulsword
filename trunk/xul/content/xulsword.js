@@ -23,13 +23,9 @@
 var NewModuleInfo;
 var AboutScrollTo;
 var AudioDirs = null;
-var ViewPortWindow, ViewPort, Texts, BibleTexts;
-const NOMODULES="0000", NOLOCALES="0001", NEEDRESTART="0002";
 
 function loadedXUL() {
-  ViewPortWindow = document.getElementById("xulviewport").contentDocument.defaultView;
-  ViewPort = ViewPortWindow.ViewPort;
-  
+
   initCSS(false);
   
   document.title = SBundle.getString("Title");
@@ -57,58 +53,46 @@ function loadedXULReal() {
   pfile.append(NEWINSTALLFILE);
   if (Bible) NewModuleInfo = (pfile.exists() ? readNewInstallsFile(pfile):null);
   if (pfile.exists()) removeFile(pfile, false);
+  
   if (NewModuleInfo && NewModuleInfo.NewModules && NewModuleInfo.NewModules[0]) {
+    
     resetUserPrefs = true;
     for (var m=0; m<NewModuleInfo.NewModules.length; m++) {
       resetSearchIndex(NewModuleInfo.NewModules[m]);
     }
-  }
-  else resetUserPrefs=false;
-  
-  // Adjust some prefs for host computer screen size
-  getPrefOrCreate("ShowChooser","Bool",true);
-  if (window.screen.width <= 800) {
-    //in script.js initializeScript(), ScriptBox padding is also decreased in this case
-    getPrefOrCreate("NumDisplayedWindows","Int",2);
-    getPrefOrCreate("NoteboxHeight1","Int",70);
-    getPrefOrCreate("NoteboxHeight2","Int",70);
-    getPrefOrCreate("NoteboxHeight3","Int",70);
-    getPrefOrCreate("FontSize","Int",-4);
-  }
-  else if (window.screen.width <= 1024) {
-    getPrefOrCreate("NumDisplayedWindows","Int",2);
-    getPrefOrCreate("NoteboxHeight1","Int",100);
-    getPrefOrCreate("NoteboxHeight2","Int",100);
-    getPrefOrCreate("NoteboxHeight3","Int",100);
-    getPrefOrCreate("FontSize","Int",-2);
-  } 
-  else {
-    getPrefOrCreate("NumDisplayedWindows","Int",2);
-    getPrefOrCreate("NoteboxHeight1","Int",200);
-    getPrefOrCreate("NoteboxHeight2","Int",200);
-    getPrefOrCreate("NoteboxHeight3","Int",200);
-    getPrefOrCreate("FontSize","Int",0);
-  }
-  
-  //Initialize xulsword module choices
-  for (var w=1; w<=3; w++) {
-    if (!Tab[getPrefOrCreate("Version" + w, "Char", prefs.getCharPref("DefaultVersion"))])
-        prefs.setCharPref("Version" + w, prefs.getCharPref("DefaultVersion"));
-    ViewPort.IsPinned[w] = false;
-  }
-  if (!Tab.ORIG_NT && !Tab.ORIG_OT) ViewPort.ShowOriginal[w] = false;
 
+    var w=1;
+    for (var m=0; m<NewModuleInfo.NewModules.length; m++) {
+      Tab[NewModuleInfo.NewModules[m]]["w" + w + ".hidden"] = false;
+      while (w <= ViewPort.NumDisplayedWindows) {
+        prefs.setCharPref("Version" + w, NewModuleInfo.NewModules[m]);
+        w++;
+        if (Tab[NewModuleInfo.NewModules[m]].modType != BIBLE) break;
+      }
+    }
+      
+  }
+  
+  identifyModuleFeatures(resetUserPrefs);
+  
   History.init();
   
   var st = "";;
   try {st = getUnicodePref("SearchText");} catch(er) {}
   document.getElementById("searchText").value = st;
   
-  identifyModuleFeatures(resetUserPrefs);
-  createLanguageMenu();
-  if (Bible) fillModuleMenuLists();
   
-  //Some "hard-wired" access keys...
+  if (Bible && Tabs.length) {
+    createLanguageMenu();
+    fillModuleMenuLists();
+    updateXulswordButtons();
+    window.onresize = resizeWatch;
+  }
+  else {
+    document.getElementByID("topbox").setAttribute("hasBible", "false");
+  }
+    
+  // Some "hard-wired" access keys...
   document.getElementById("w1").setAttribute("accesskey", dString("1"));
   document.getElementById("w2").setAttribute("accesskey", dString("2"));
   document.getElementById("w3").setAttribute("accesskey", dString("3"));
@@ -118,76 +102,40 @@ function loadedXULReal() {
   document.getElementById("f3").setAttribute("accesskey", dString("4"));
   document.getElementById("f4").setAttribute("accesskey", dString("5"));
   
-  
-  //Listen for keypresses on search textbox (for return key)
+  // Listen for keypresses on search textbox (for return key)
   document.getElementById("searchText").addEventListener("keypress", 
       function(event) {if ((event.target.id=="searchText") && (event.keyCode==13)) {goDoCommand("cmd_xs_searchFromTextBox");}}, 
       false);
 
+  // Get our command handlers (context menus may append their own controllers)
   window.controllers.appendController(XulswordController);
   window.controllers.appendController(BookmarksMenuController);
-
-  //Initialize global options buttons and checkboxes
-  if (!Bible || !Tabs.length) hideGUI();
-  else updateXulswordButtons();
    
   BookmarkFuns.initTemplateDataSource(document.getElementById("bookmarks-menu"), BMDS); 
   
   // Cludge to get history button the right height, must happen after updating locale configuration
   document.getElementById("historymenu").style.height = String(document.getElementById("back").boxObject.height) + "px";
   
-  if (Bible) {
-    if (NewModuleInfo && NewModuleInfo.NewModules && NewModuleInfo.NewModules[0]) {
-      var w=1;
-      for (var m=0; m<NewModuleInfo.NewModules.length; m++) {
-        Tab[NewModuleInfo.NewModules[m]]["w" + w + ".hidden"] = false;
-        while (w <= ViewPort.NumDisplayedWindows) {
-          prefs.setCharPref("Version" + w, NewModuleInfo.NewModules[m]);
-          w++;
-          if (Tab[NewModuleInfo.NewModules[m]].modType != BIBLE) break;
-        }
-      }
-    }
-    updateModuleMenuCheckmarks(); 
-    window.setTimeout("checkCipherKeys()",0);
-  }
-  
-  if (Bible) window.onresize = resizeWatch;
-  if (window.opener && window.opener.document && window.opener.document.title=="Splash")
+  // close splash window
+  if (window.opener && window.opener.document && window.opener.document.title == "Splash")
       window.opener.close(); //Close splash and opener window
-  
-  //handle error states...
-  if (!Bible || !Tabs.length) window.setTimeout("errorHandler(NOMODULES)",0);
-  else if (prefs.getCharPref("DefaultVersion") == NOTFOUND) window.setTimeout("errorHandler(NOMODULES)",0);
   
   //we're ok!
   // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
-  else if (Bible) {
+  if (Bible && Tabs.length) {
     Texts.update(SCROLLTYPEBEG, HILIGHT_IFNOTV1);
     window.setTimeout("postWindowInit()", 1000); 
   }
-  jsdump("Initilization Complete\n");
-}
-    
-function hideGUI() {
-  var ids=["edit-menu", "view-menu", "options-menu", "bookmarks-menu", "window-menu", "help-menu", "main-controlbar", "xulviewport"];
-  for (var i=0; i<ids.length; i++) {document.getElementById(ids[i]).style.display="none";}
   
-  var filemenu = document.getElementById("file-popup").firstChild;
-  while (filemenu) {
-    if (!filemenu.id || filemenu.id.search("keep")==-1) filemenu.style.display="none";
-    filemenu = filemenu.nextSibling;
-  }
+  jsdump("Initilization Complete\n");
 }
 
 function checkCipherKeys() {
   var gotKey = false;
-  for (var t=0; t<Bible.ModNeedsCipherKey.length; t++) {
-    if (Bible.getVerseText(Bible.ModNeedsCipherKey[t], "Gen 1:1").length < 64 && 
-        Bible.getVerseText(Bible.ModNeedsCipherKey[t], "Matt 1:1").length < 64 &&
-        !getAvailableBooks(Bible.ModNeedsCipherKey[t])[0]) {
+  for (var t=0; t<Bible.CheckTheseCipherKeys.length; t++) {
+    if (!getAvailableBooks(Bible.CheckTheseCipherKeys[t])[0]) {
       var retVals = {gotKey: false};
-      AllWindows.push(window.openDialog("chrome://xulsword/content/getkey.xul","getkey","chrome, dependent, alwaysRaised, centerscreen, modal", Bible.ModNeedsCipherKey[t], retVals));
+      AllWindows.push(window.openDialog("chrome://xulsword/content/getkey.xul","getkey","chrome, dependent, alwaysRaised, centerscreen, modal", Bible.CheckTheseCipherKeys[t], retVals));
       gotKey |= retVals.gotKey;
     }
   }
@@ -195,13 +143,14 @@ function checkCipherKeys() {
 }
 
 //This function is run after the MK window is built and displayed. Init functions
-//which can wait until now should do so, so that the MK window can appear faster.
+//which can wait until now should do so, so that the xulsword window can appear faster.
 function postWindowInit() {
   
   // Hide disabled books on chooser
   useFirstAvailableBookIf();
   disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));
   
+  // Open language menu if a new locale was just installed
   if (NewModuleInfo && NewModuleInfo.NewLocales && NewModuleInfo.NewLocales[0] && !document.getElementById("sub-lang").disabled) {
     var opmenu = document.getElementById("menu.options").childNodes[0].nodeValue;
     var lamenu = document.getElementById("menu.options.language").childNodes[0].nodeValue;
@@ -213,7 +162,6 @@ function postWindowInit() {
         DLGOK);
     openLanguageMenu();
   }
-  prefs.setBoolPref("PreviousRestart", false)
   
   // Enable help email address
   var email = null;
@@ -227,6 +175,8 @@ function postWindowInit() {
   }
   
   createHelpVideoMenu();
+  
+  checkCipherKeys();
 
 }
 
@@ -303,34 +253,6 @@ function resetSearchIndex(modName) {
   try {Bible.searchIndexDelete(modName);} catch(er) {return false;}
   prefs.setBoolPref("dontAskAboutSearchIndex" + modName, false);
   return true;
-}
-
-function errorHandler(error) {
-  switch (error) {
-  case NOMODULES:
-    jsdump ("No modules to load. Please add valid config file to mods.d directory.\n");
-    return; //allow user to install some modules
-    break;
-  case NOLOCALES:
-    jsdump("No locale to load. Please install a valid locale.\n");
-    break;
-  case NEEDRESTART:
-    jsdump("Program restart is needed.\n");
-    var pr = getPrefOrCreate("PreviousRestart", "Bool", false);
-    if (!pr) {
-      prefs.setBoolPref("PreviousRestart", true);
-      restartApplication(false);
-    }
-    error = SBundle.getString("RestartMsg");
-    break;
-  }
-  var result={};
-  var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
-      fixWindowTitle(SBundle.getString("Title")),
-      error, 
-      DLGALERT,
-      DLGOK);
-  window.close();
 }
 
 function identifyModuleFeatures(resetUserPrefs) {
@@ -1051,19 +973,15 @@ function getDefaultTarget() {
     target.lv = Location.getLastVerseNumber(target.mod);
     break;
   case DICTIONARY:
-    target.bk = "";
-    target.ch = getPrefOrCreate("DictKey_" + target.mod + "_" + ViewPort.firstDisplayBible(true) , "Unicode", "/");
-    target.vs = 1;
-    target.lv = 1;
   case GENBOOK:
     target.bk = "";
-    target.ch = getPrefOrCreate("GenBookKey_" + target.mod + "_" + ViewPort.firstDisplayBible(true) , "Unicode", "/" + target.mod);
+    target.ch = ViewPort.Key[target.w];
     target.vs = 1;
     target.lv = 1;
     break;
   }
   
-  var s = ViewPortWindow.getSelection();
+  var s = ViewPort.ownerDocument.defaultView.getSelection();
   if (s && s.isCollapsed) {s = null;}
   if (s) s = replaceASCIIcontrolChars(s.toString())
   target.selection = s;
@@ -1130,7 +1048,7 @@ function handleOptions(elem) {
       
       // change font for MainWindow
       setUserFontSize(prefs.getIntPref('FontSize'));
-      ViewPortWindow.setUserFontSize(prefs.getIntPref('FontSize'));
+      ViewPort.ownerDocument.defaultView.setUserFontSize(prefs.getIntPref('FontSize'));
       
       // change font for all other windows
       for (var i=0; i<AllWindows.length; i++) {
@@ -1392,7 +1310,7 @@ function disableMissingBooks(hide) {
     for (var a=0; books && a<books.length; a++) {
       if (books[a] == Book[b].sName) {have=true; break;}
     }
-    ViewPortWindow.document.getElementById("book_" + b).setAttribute("missing", (have ? "false":(hide ? "hide":"disable")));
+    ViewPort.ownerDocument.getElementById("book_" + b).setAttribute("missing", (have ? "false":(hide ? "hide":"disable")));
   }
 
   if (hide) ViewPort.update(false);
@@ -1454,7 +1372,7 @@ function showLocation2() {
     
   case GENBOOK:
   case DICTIONARY:
-    setUnicodePref((Tab[l.mod].modType == GENBOOK ? "GenBookKey":"DictKey") + "_" + l.mod + "_" + l.w, l.ch);
+    ViewPort.Key[l.w] = l.ch;
     MainWindow.focus();
     Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null,1,1,1]);
     break;
@@ -1499,17 +1417,17 @@ function ensureModuleShowing(version) {
 //Watch for window resize
 var ResizeWatchTimer;
 function resizeWatch() {
-  if (ViewPortWindow.innerHeight < 100) return;
+  if (ViewPort.ownerDocument.defaultView.innerHeight < 100) return;
   if (ResizeWatchTimer) window.clearTimeout(ResizeWatchTimer);
   ResizeWatchTimer = window.setTimeout("ViewPort.update();", 300);
-  prefs.setIntPref("ViewPortHeight", ViewPortWindow.innerHeight);
+  prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
 }
 
 function unloadXUL() {
   try {window.controllers.removeController(XulswordController);} catch(er) {}
   try {window.controllers.removeController(BookmarksMenuController);} catch(er) {}
   
-  prefs.setIntPref("ViewPortHeight", ViewPortWindow.innerHeight);
+  prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
   
   //Close search windows and other windows
   for (var i=0; i<AllWindows.length; i++) {

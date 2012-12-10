@@ -16,13 +16,23 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var ViewPort;
 function initViewPort() {
   initCSS(true);
   
-  // If this is the main ViewPort, use prefs as initial settings
-  if (window.frameElement && window.frameElement.id == "xulviewport")
-      ViewPort = new ViewPortObj();
+  // If this is the main xulsword ViewPort, use prefs as initial settings
+  if (window.frameElement && window.frameElement.id == "xulviewport") {
+    
+    ViewPort = new ViewPortObj(); // uses prefs
+    
+    // this context's text objects here become program-wide globals.
+    MainWindow.ViewPort = ViewPort;
+    MainWindow.Texts = Texts;
+    MainWindow.BibleTexts = BibleTexts;
+    MainWindow.DictTexts = DictTexts;
+    MainWindow.CommTexts = CommTexts;
+    MainWindow.GenBookTexts = GenBookTexts;
+    
+  }
   
   ViewPort.init();
 }
@@ -40,18 +50,55 @@ function ViewPortObj(viewPortObj) {
       this.NoteBoxHeight[w] = viewPortObj.NoteBoxHeight[w];
       this.MaximizeNoteBox[w] = viewPortObj.MaximizeNoteBox[w];
       this.Module[w] = viewPortObj.Module[w];
+      this.Key[w] = viewPortObj.Key[w];
     }
   }
   else {
-    this.NumDisplayedWindows = getPrefOrCreate("NumDisplayedWindows", "Int", 2);
-    this.ShowChooser = getPrefOrCreate("ShowChooser", "Bool", true);
+
+    // First time startup defaults:
+    getPrefOrCreate("ShowChooser","Bool",true);
+    if (window.screen.width <= 800) {
+      //in script.js initializeScript(), ScriptBox padding is also decreased in this case
+      getPrefOrCreate("NumDisplayedWindows","Int",2);
+      getPrefOrCreate("NoteboxHeight1","Int",70);
+      getPrefOrCreate("NoteboxHeight2","Int",70);
+      getPrefOrCreate("NoteboxHeight3","Int",70);
+      getPrefOrCreate("FontSize","Int",-4);
+    }
+    else if (window.screen.width <= 1024) {
+      getPrefOrCreate("NumDisplayedWindows","Int",2);
+      getPrefOrCreate("NoteboxHeight1","Int",100);
+      getPrefOrCreate("NoteboxHeight2","Int",100);
+      getPrefOrCreate("NoteboxHeight3","Int",100);
+      getPrefOrCreate("FontSize","Int",-2);
+    } 
+    else {
+      getPrefOrCreate("NumDisplayedWindows","Int",2);
+      getPrefOrCreate("NoteboxHeight1","Int",200);
+      getPrefOrCreate("NoteboxHeight2","Int",200);
+      getPrefOrCreate("NoteboxHeight3","Int",200);
+      getPrefOrCreate("FontSize","Int",0);
+    }
+    
+    this.NumDisplayedWindows = prefs.getIntPref("NumDisplayedWindows");
+    this.ShowChooser = prefs.getBoolPRef("ShowChooser");
+    
     for (var w=1; w<=3; w++) {
       this.ShowOriginal[w] = getPrefOrCreate("ShowOriginal" + w, "Bool", false);
-      this.IsPinned[w] = getPrefOrCreate("IsPinned" + w, "Bool", false);
+      this.IsPinned[w] = false;
       this.NoteBoxHeight[w] = getPrefOrCreate("NoteBoxHeight" + w, "Int", 200);
       this.MaximizeNoteBox[w] = getPrefOrCreate("MaximizeNoteBox" + w, "Bool", false);
       this.Module[w] = getPrefOrCreate("Version" + w, "Char", prefs.getCharPref("DefaultVersion"));
+      this.Key[w] = getPrefOrCreate("Key" + w, "Unicode", "");
     }
+    
+    //Check xulsword module choices
+    for (var w=1; w<=NW; w++) {
+      if (!Tab.hasOwnProperty(prefs.getCharPref("Version" + w)))
+          prefs.setCharPref("Version" + w, prefs.getCharPref("DefaultVersion"));
+      if (!Tab.ORIG_NT && !Tab.ORIG_OT) ViewPort.ShowOriginal[w] = false;
+    }
+
   }
   
   init: function() {
@@ -456,6 +503,9 @@ function ViewPortObj(viewPortObj) {
 
 function unloadViewPort() {
   
+  // global prefs should only be saved by xulsword's main viewport
+  if (!window.frameElement || !window.frameElement.id != "xulviewport") return;
+  
   // save hidden tab prefs
   for (var w=1; w<=NW; w++) {
     var hide = "";
@@ -471,10 +521,10 @@ function unloadViewPort() {
   
   for (var w=1; w<=NW; w++) {
     prefs.setBoolPref("ShowOriginal" + w, this.ShowOriginal[w]);
-    prefs.setBoolPref("IsPinned" + w, this.IsPinned[w]);
     prefs.setIntPref("NoteBoxHeight" + w, this.NoteBoxHeight[w]);
     prefs.setBoolPref("MaximizeNoteBox" + w, this.MaximizeNoteBox[w]);
     prefs.setCharPref("Version" + w, this.Module[w]);
+    prefs.setUnicodePref("Key" + w, this.Key[w]);
   }
   
 }

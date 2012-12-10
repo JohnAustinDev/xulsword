@@ -20,7 +20,7 @@
 // GenBookTexts
 ////////////////////////////////////////////////////////////////////////
 
-// IMPORTANT: GenBookKey_ has the form: /modName/etc/etc/etc.
+// IMPORTANT: Key for GenBook has the form: /modName/etc/etc/etc.
 
 var GenBookTexts = {
   
@@ -29,10 +29,10 @@ var GenBookTexts = {
     
     // the GenBookKey value always begins with /mod/ so that values can be directly
     // compared to the genbook-tree's resource values.
-    ret.htmlText = Bible.getGenBookChapterText(d.mod, d.GenBookKey.replace(/^\/[^\/]+/, ""));
+    ret.htmlText = Bible.getGenBookChapterText(d.mod, d.Key.replace(/^\/[^\/]+/, ""));
     ret.htmlText = Texts.addParagraphIDs(ret.htmlText, d.mod);
       
-    var un = Texts.getUserNotes("na", d.GenBookKey, d.mod, ret.htmlText);
+    var un = Texts.getUserNotes("na", d.Key, d.mod, ret.htmlText);
     ret.htmlText = un.html; // has user notes added to text
     ret.footnotes = un.notes;
     
@@ -50,9 +50,10 @@ var GenBookTexts = {
         var mymodRE = new RegExp("(^|;)(" + escapeRE(ViewPort.Module[w]) + ");");
         if (!genBookList.match(mymodRE)) numUniqueGenBooks++;
         else continue;
-        // Insure genbook has a showingkey pref!
-        var key = getPrefOrCreate("GenBookKey_" + ViewPort.Module[w] + "_" + w, "Unicode", "/" + ViewPort.Module[w]);
-        if (key == "/" + ViewPort.Module[w]) modsAtRoot.push(ViewPort.Module[w]);
+        
+        // Insure genbook has a key
+        var key = ViewPort.Key[w];
+        if (!key || key == "/" + ViewPort.Module[w]) modsAtRoot.push(ViewPort.Module[w]);
         if (!firstGenBook) firstGenBook = ViewPort.Module[w];
         genBookList += ViewPort.Module[w] + ";";
       }
@@ -98,7 +99,7 @@ var GenBookTexts = {
     
     // add data sources which are not already being displayed but need to be
     for (i=0; i<GBs.length; i++) {
-      needToRebuild=true; 
+      needToRebuild = true; 
       var moduleRDF = getSpecialDirectory("xsResD");
       moduleRDF.append(GBs[i] + ".rdf");
       if (!moduleRDF.exists() || !this.RDFChecked[GBs[i]]) writeFile(moduleRDF, Bible.getGenBookTableOfContents(GBs[i]));
@@ -111,15 +112,15 @@ var GenBookTexts = {
     
     // rebuild the tree if necessary
     if (needToRebuild) {
-      if (gbks.numUniqueGenBooks>1)  elem.ref = "rdf:#http://www.xulsword.com/tableofcontents/ContentsRoot";
-      if (gbks.numUniqueGenBooks==1) elem.ref = "rdf:#/" + gbks.firstGenBook;
+      if (gbks.numUniqueGenBooks > 1)  elem.ref = "rdf:#http://www.xulsword.com/tableofcontents/ContentsRoot";
+      if (gbks.numUniqueGenBooks == 1) elem.ref = "rdf:#/" + gbks.firstGenBook;
       elem.builder.rebuild();
     }
 
-    if (gbks.numUniqueGenBooks>0 && elem.currentIndex==-1) {
+    if (gbks.numUniqueGenBooks > 0 && elem.currentIndex == -1) {
       for (var w=1; w<=NW; w++) {
         if (ViewPort.Module[w] != gbks.firstGenBook) continue;
-        this.navigatorSelect(getPrefOrCreate("GenBookKey_" + gbks.firstGenBook + "_" + w, "Unicode", "/" + gbks.firstGenBook));
+        this.navigatorSelect(ViewPort.Key[w]);
         break;
       }
     }
@@ -135,16 +136,16 @@ var GenBookTexts = {
     var elem = MainWindow.document.getElementById("genbook-tree");
     
     var root = BM.RDF.GetResource("rdf:#" + "/" + module);
-    var notFound=false;
+    var notFound = false;
     try {var child1 = elem.database.GetTarget(root, BM.RDFCU.IndexToOrdinalResource(1), true);}
     catch (er) {notFound=true;}
     if (!child1 || notFound) {jsdump("Resource " + root.Value + " not found.\n"); return;}
+    
     var chapter = elem.database.GetTarget(child1, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true)
                   .QueryInterface(Components.interfaces.nsIRDFLiteral);
     for (var w=1; w<=NW; w++) {
-      if (module != ViewPort.Module[w] ||
-          ViewPort.IsPinned[w]) continue;
-      setUnicodePref("GenBookKey_" + module + "_" + w, chapter.Value.replace("rdf:#",""));
+      if (module != ViewPort.Module[w] || ViewPort.IsPinned[w]) continue;
+      ViewPort.Key[w] = chapter.Value.replace("rdf:#","");
     }
   },
   
@@ -283,7 +284,7 @@ var GenBookTexts = {
     var chapter = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
     chapter = chapter.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
     
-    return key==chapter;
+    return key == chapter;
   },
   
   // opens and selects key in GenBook navigator. The selection triggers an update event.
@@ -346,14 +347,13 @@ var GenBookTexts = {
     mod = mod[1];
     
     for (var w=1; w<=NW; w++) {
-      if (ViewPort.IsPinned[w]) continue;
-      setUnicodePref("GenBookKey_" + mod + "_" + w, key);
+      if (ViewPort.IsPinned[w] || ViewPort.Module[w] != mod) continue;
+      ViewPort.Key[w] = key;
+      
       // scroll corresponding genbook to beginning of chapter
-      if (ViewPort.Module[w] == mod) {
-        var t = document.getElementById("text" + w);
-        var sb = t.getElementsByClassName("sb")[0];
-        sb.scrollLeft = 0;
-      }
+      var t = document.getElementById("text" + w);
+      var sb = t.getElementsByClassName("sb")[0];
+      sb.scrollLeft = 0;
     }
 
     Texts.update();
@@ -392,7 +392,3 @@ var GenBookTexts = {
 
 };
 
-// Make sure MainWindow has access to our objects
-if (MainWindow) {
-  if (typeof(MainWindow.DictTexts) == "undefined") MainWindow.DictTexts = DictTexts;
-}

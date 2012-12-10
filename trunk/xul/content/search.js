@@ -23,264 +23,128 @@
  * Global Variables used during searches
  ***********************************************************************/ 
 
-const MINRADIOCOLS=3; 
 var StartVerse=0;
 var VersesPerPage=30;
 var Matches = 0;
 
 //Globals for current settings
-var sText = "";
-var rawText = "";
-var sScope = 0;
-var sType = 0;
-var sFlags = 0;
+//var sText = "";
+//var rawText = "";
+//var sScope = 0;
+//var sType = 0;
+//var sFlags = 0;
 
 //Globals for scope and progress meter implementation
-var Start = 0;
-var End = 0;
-var Slength = 0;
-var Step = 0;
+//var Start = 0;
+//var End = 0;
+//var Slength = 0;
+//var Step = 0;
 
 //Globals for search routine
-var Newsearch=true;
-var SearchedVersion="";
-var ModuleUsesVerseKey;
-var TR = []; //new Array(6);
+//var Newsearch=true;
+//var SearchedVersion="";
+//var ModuleUsesVerseKey;
+//var TR = []; //new Array(6);
 //for (var itr=0; itr<TR.length; itr++) {TR[itr] = new Object;}
 
-var SearchIntervalID;
-var Searching;
-var SearchBoxElement;
-var OriginalWindowTitle="";
-var noPs = false;   //No Psalms in Wisdom books (Psalms has own category)
+//var SearchIntervalID;
+//var Searching;
+//var SearchBoxElement;
+//var OriginalWindowTitle="";
+//var noPs = false;   //No Psalms in Wisdom books (Psalms has own category)
 
 const REGEX=0, PHRASE=-1, MULTIWORD=-2, ENTRY_ATTRIBUTE=-3, LUCENE=-4, COMPOUND=-5;  
-var SearchTypeRadio;
+//var SearchTypeRadio;
+
+var Search;
+
+function initSearch() {
+  
+  initCSS();
+  
+  Search = new SearchObj();
+  
+  Search.init();
+  
+}
+
+function SearchObj(searchObj) {
+
+  if (searchObj) {
+  
+    this.searchText = searchObj.searchText;
+    this.originalTitle = 
+    this.showAdvanced = 
+    this.SearchModule = 
+  
+  }
+  else {
+  
+  }
   
 /************************************************************************
  * Loading and Unloading of the search window
  ***********************************************************************/ 
-function loadSearchWindow() {
-//  updateCSSBasedOnCurrentLocale(["#search-window", "input, button, menu, menuitem"]);
-  SearchTypeRadio = document.getElementById("searchType");
-  SearchTypeRadio.selectedIndex = getPrefOrCreate("InitialSearchType", "Int", CONTAINS_THE_WORDS);
-  
-  // Fix createIndexButton label (should be in DTD, but to allow backward compatibility is being done here)
-  try {document.getElementById("createIndexButton").label = SBundle.getString("CreateIndexButton");}
-  catch (er) {}
-  
-  //Init Search text
-  document.getElementById("searchText").value = getUnicodePref("SearchText");
-  
-  OriginalWindowTitle = document.title;
-  document.title = fixWindowTitle(OriginalWindowTitle.replace("**search_title**", getUnicodePref("SearchText",prefs)));
-  SearchBoxElement = document.getElementById("search-frame").contentDocument.getElementById("searchBox");
-  
-  var scopes = ["sg1","sg2","sg3","sg4","sg5","sg6"];
-  for (var i=0; i<scopes.length; i++) {
-    var elem = document.getElementById(scopes[i]);
-    if (elem.label=="") {elem.hidden=true;}
-  }
-  
-  window.controllers.appendController(XulswordSearchController);
-  window.controllers.appendController(BookmarksMenuController);
-  window.setTimeout("postWindowInit()", 0);
-}
+  this.init = function() {
 
-var NumberOfShortType = {};
-function postWindowInit() {
-  //Create the search language radio buttons
-  for (var shortType in SupportedModuleTypes) {NumberOfShortType[shortType] = 0;}
-  for (var t=0; t<Tabs.length; t++) {
-    var isShowing = false;
-    for (var w=1; w <= ViewPort.NumDisplayedWindows; w++) {
-      isShowing |= !Tabs[t]["w" + w + ".hidden"];
+    // init Search text
+    document.getElementById("searchText").value = this.searchText;
+
+    this.originalTitle = document.title;
+    document.title = fixWindowTitle(this.originalTitle.replace("**search_title**", this.searchText));
+    
+    // hide scope labels which are not supplied by the UI
+    var scopes = ["sg1","sg2","sg3","sg4","sg5","sg6"];
+    for (var i=0; i<scopes.length; i++) {
+      var elem = document.getElementById(scopes[i]);
+      if (elem.label == "") {elem.hidden = true;}
     }
-    if (isShowing || !getPrefOrCreate("MinimizeSearchRadios", "Bool", false)) {
-      if (Tabs[t].modType==BIBLE) createAndAppendRadio(t,"sim");
-      NumberOfShortType[Tabs[t].tabType]++;
-    }
-  }
-  updatePanel();
-  updateSearchWindow();
-  updateSortBy();
 
-  if (document.getElementById("searchText").value != "") {
-    if (SearchTypeRadio.selectedIndex==EXACT_TEXT || !Bible.luceneEnabled(prefs.getCharPref("SearchVersion")))
-      window.setTimeout("searchBible()", 500); // Timeout is for non-Lucene search
-    else searchBible();
-  }
-}
-
-// Updates between simple/advanced panel according to user pref.
-function updatePanel() {
-  // Hide/Show advanced search features according to pref
-  document.getElementById("advanced").hidden = !prefs.getBoolPref("AdvSearchFlag");
-  document.getElementById("moreless").label = (prefs.getBoolPref("AdvSearchFlag") ? SBundle.getString("Less"):SBundle.getString("More"));
-  document.getElementById("sversion.sim").hidden = prefs.getBoolPref("AdvSearchFlag");
-  
-  fitModuleRadiosToWindow();
-  
-  // Hide empty rows
-  if (!prefs.getBoolPref("AdvSearchFlag")) {
-    document.getElementById("modulePanel").hidden = (document.getElementById("row.Texts.0.sim").childNodes.length==2);
-  }
-}
-
-function createAndAppendRadio(tabNum, id) {
-  // Create a new radio button
-  var xulElement = document.createElement("radio");
-  xulElement.setAttribute("label", Tabs[tabNum].label);
-  xulElement.setAttribute("id", Tabs[tabNum].modName + "." + id);
-  
-  var forceDefaultFormatting = (Bible.getModuleInformation(Tabs[tabNum].modName, "OriginalTabTestament")!=NOTFOUND);
-  
-  if (!forceDefaultFormatting) {
-    var versionConfig = ModuleConfigs[Tabs[tabNum].modName];
-    //var myfont = (versionConfig && versionConfig.fontFamily && !isASCII(Tabs[tabNum].label) ? versionConfig.fontFamily:DefaultFont);
-    //var myfontSizeAdjust = (versionConfig && versionConfig.fontSizeAdjust && !isASCII(Tabs[tabNum].label) ? versionConfig.fontSizeAdjust:DefaultFontSizeAdjust);
-    //xulElement.style.fontFamily = myfont;
-    //xulElement.style.fontSizeAdjust = myfontSizeAdjust;
-  }
-  else {
-    //xulElement.style.fontFamily = DefaultFont;
-    //xulElement.style.fontSizeAdjust = DefaultFontSizeAdjust;  
-  }
-  
-  // Place the new radio button
-  //var subRow = 0;
-  var myRow = document.getElementById("row." + Tabs[tabNum].tabType + ".0." + id);
-  myRow.appendChild(xulElement);
-}
-
-function fitModuleRadiosToWindow() {
-  var aRow = document.getElementById("allModRadios.sim").firstChild;
-  var cols = 0;
-  while (aRow) {
-    var mycol = aRow.childNodes.length-1;
-    cols = (mycol > cols ? mycol:cols);
-    aRow = aRow.nextSibling;
-  }
-
-  var windowWidth = 800; // max-width of sversion.sim
-  var sversion = document.getElementById("allModRadios.sim");
-  // IF RADIO GROUP NEEDS TO BE WIDER
-  if (sversion.boxObject.width < windowWidth) {
-    while (!isRadioGridFlat() && (sversion.boxObject.width < windowWidth)) {
-      cols++;
-      var aRow = document.getElementById("allModRadios.sim").firstChild;
-      while (aRow) {
-        if (!aRow.id) {aRow = aRow.nextSibling; continue;}
-        var myCol = getOptimumColForRow(aRow, cols);
-        var myShortType = aRow.id.split(".")[1];
-        var nextRow = aRow.nextSibling;
-        var result = 0;
-        while (result==0 && aRow.childNodes.length-1 < myCol) {
-          result = moveFirstRadioToPrevRow(nextRow);
+    // add module radio buttons according to type
+    var numcols = 1;
+    for (var rowtype in SupportedModuleTypes) {
+      for (var t=0; t<Tabs.length; t++) {
+        if (getShortTypeFromLong(Tabs[t].modType) != rowtype) continue;
+        
+        var row = document.getElementById(rowtype + "-row");
+        row.setAttribute("hidden", "false");
+        
+        var radio = document.createElement("radio");
+        radio.setAttribute("class", "radio cs-" + Tabs[t].locName);
+        radio.setAttribute("id", "radio."+ Tabs[t].modName);
+        radio.setAttribute("label", Tabs[t].label);
+        
+        // do we need to add another column now?
+        if (row.childNodes.length + 1 > numcols) {
+          document.getElementById("module-columns").appendChild(document.createElement("column");
+          numcols++;
         }
-        aRow = aRow.nextSibling;
+      
+        row.appendChild(radio);
       }
     }
-  }
+    
+    document.getElementsByTagName("toolbar")[0].setAttribute("showAdvanced", (this.showAdvanced ? "true":"false"));
 
-  // IF RADIO GROUP NEEDS TO BE NARROWER
-  if (sversion.boxObject.width > windowWidth) {
-    while ((cols >= MINRADIOCOLS) && (sversion.boxObject.width > windowWidth)) {
-      cols--;
-      var aRow = document.getElementById("allModRadios.sim").firstChild;
-      while (aRow) {
-        myCol = getOptimumColForRow(aRow, cols);
-        result = 0
-        while (result==0 && aRow.childNodes.length-1 > myCol) {
-          result = moveLastRadioToNextRow(aRow);
-        }
-        aRow = aRow.nextSibling;
-      }
+    // select our module to search
+    var item = document.getElementById("radio." + this.SearchModule);
+    document.getElementById("search-module").selectedItem = item; 
+
+    // do a search if we have text to search for
+    if (this.searchText != "") {
+    
+      if (document.getElementById("searchType").selectedIndex == EXACT_TEXT || !Bible.luceneEnabled(this.SearchModule))
+        window.setTimeout("searchBible()", 500); // Timeout is for non-Lucene search
+      else searchBible();
+      
     }
-  }
-}
+  };
 
-function isRadioGridFlat() {
-  var aRow = document.getElementById("row.Texts.0.sim");
-  while (aRow) {
-    if (!aRow.id || aRow.id.split(".")[2] != "0") {aRow = aRow.nextSibling; continue;}
-    if (aRow.childNodes.length-1 != NumberOfShortType[aRow.id.split(".")[1]]) return false;
-    aRow = aRow.nextSibling;
-  }
-  return true;
-}
-
-function getOptimumColForRow(aRow, col) {
-if (!aRow.id) return col;
-var num = NumberOfShortType[aRow.id.split(".")[1]];
-
-var cLastRow = Math.round((num/col - Math.floor(num/col))*col);
-var nRows = Math.ceil(num/col);
-var csub;
-if (nRows > 1) {
-  if (cLastRow == 0) csub = col - num/nRows;
-  else csub = Math.floor((col-cLastRow)/nRows);
-}
-else csub = 0;
-
-//jsdump("col:" + col + " num:" + num + " nRows:" + nRows + " cLastRow:" + cLastRow + " csub:" + csub + "\n");
-
-col -= csub;
-col = (col < MINRADIOCOLS ? MINRADIOCOLS:col); // Min col
-
-//jsdump("Adjusting " + aRow.id.split(".")[1] + " down by " + csub + " rows.\n\n");
-return col;
-}
-
-// return: 0=no problem; 1=row empty; -1=error;
-function moveFirstRadioToPrevRow(aRow) {
-  if (!aRow || !aRow.id) return -1;
-  var parts = aRow.id.split(".");
-  var mymoduletype = parts[1];
-  var mysubRow = parts[2];
-  var id = parts[3];
-  var parent = aRow.parentNode;
-  var firstRadio = aRow.firstChild.nextSibling;
-  if (!firstRadio) return 1;
-  var prevRow = aRow.previousSibling;
-  if (!prevRow || !prevRow.id || prevRow.id.split(".")[1]!=mymoduletype) return -1;
-  firstRadio = aRow.removeChild(firstRadio);
-  firstRadio = prevRow.appendChild(firstRadio);
-  return firstRadio ? 0:-1;
-}
-
-// return: 0=no problem; 1=row empty; -1=error;
-function moveLastRadioToNextRow(aRow) {
-  if (!aRow || !aRow.id) return -1;
-  var parts = aRow.id.split(".");
-  if (parts[0] != "row") return -1;
-  var mymoduletype = parts[1];
-  var mysubRow = parts[2];
-  var id = parts[3];
-  var parent = aRow.parentNode;
-  var lastRadio = aRow.lastChild;
-  if (!lastRadio || !lastRadio.id || lastRadio.id.substr(0,5)=="label") return 1;
-  var nextRow = aRow.nextSibling;
-  if (!nextRow || !nextRow.id || nextRow.id.split(".")[1]!=mymoduletype) {
-    nextRow = parent.insertBefore(createNewRow(mymoduletype, Number(mysubRow)+1, id), nextRow);
-  }
-  if (!nextRow) return -1;
-  lastRadio = aRow.removeChild(lastRadio);
-  lastRadio = nextRow.insertBefore(lastRadio, nextRow.firstChild.nextSibling);
-  return lastRadio ? 0:-1;
-}
-
-function createNewRow(moduletype, subRow, id) {
-  var newRow = document.createElement("row");
-  newRow.setAttribute("id", "row." + moduletype + "." + subRow + "." + id);
-  newRow.setAttribute("align", "center");
-  var blankLabel = document.createElement("label");
-  blankLabel.setAttribute("id", "label." + subRow + "." + id);
-  newRow.appendChild(blankLabel);
-  return newRow;
-}
 
 function updateSearchWindow() {
+// here we want to assume the searchText and searchModule have been selected and are correct! So just update other stuff...
+
+
   // Set version selection according to pref
   var svers = getPrefOrCreate("SearchVersion", "Char", prefs.getCharPref("DefaultVersion"));
   document.getElementById("moddropdown").version = svers;
@@ -320,19 +184,14 @@ function updateSearchWindow() {
 
 }
 
-function updateSortBy(dontModifyCheck) {
-  var sort = document.getElementById("sort");
-  if (!dontModifyCheck) sort.checked = (SearchTypeRadio.selectedIndex!=SIMILAR_WORDS);
-  sort.disabled = (SearchTypeRadio.selectedIndex!=SIMILAR_WORDS && SearchTypeRadio.selectedIndex!=USING_SEARCH_TERMS);
-}
-
+/*
 function updateSearchBoxStyle(svers) {
   var searchBoxBodyElem = document.getElementById("search-frame").contentDocument.getElementById("searchBoxBody");
   searchBoxBodyElem.className = "searchres cs-" + svers;
   // The following is a work around for a MOZILLA BUG
   searchBoxBodyElem.style.whiteSpace = (searchBoxBodyElem.style.direction == "rtl" ? "normal":"");
 }
-
+*/
 /************************************************************************
  * The Actual Search routine implementation
  ***********************************************************************/ 

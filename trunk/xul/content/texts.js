@@ -269,7 +269,7 @@ var Texts = {
     var display = this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), w);
     
     // don't read new text if the results will be identical to last displayed text
-    var check = ["mod", "GenBookKey", "globalOptions"];
+    var check = ["mod", "Key", "globalOptions"];
     
     if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
       var ti = GenBookTexts.read(w, display);
@@ -307,7 +307,7 @@ var Texts = {
     var display = this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), w);
     
     // don't read new text if the results will be identical to last displayed text
-    var check = ["mod", "DictKey", "globalOptions"];
+    var check = ["mod", "Key", "globalOptions"];
     
     if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
       var ti = DictTexts.read(w, display);
@@ -328,15 +328,15 @@ var Texts = {
       // highlight the selected key
       var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");
       while (k.length) {k[0].className = "";}
-      k = document.getElementById("w" + w + "." + encodeUTF8(display.DictKey));
+      k = document.getElementById("w" + w + "." + encodeUTF8(display.Key));
       if (k) {
         k.className = "dictselectkey";
         k.scrollIntoView();
         document.getElementById("viewportbody").scrollTop = 0;
       }
       
-      document.getElementById("w" + w + ".keytextbox").value = display.DictKey;
-      setUnicodePref("DictKey_" + display.mod + "_" + w, display.DictKey);
+      document.getElementById("w" + w + ".keytextbox").value = display.Key;
+      ViewPort.Key[w] = display.Key;
       
     }
     
@@ -506,8 +506,7 @@ var Texts = {
     display.vs = Number((loc[2] ? loc[2]:1));
     display.lv = Number((loc[3] ? loc[3]:1));
     display.scrollTypeFlag = this.scrollTypeFlag;
-    display.GenBookKey = getPrefOrCreate("GenBookKey_" + mod + "_" + w, "Unicode", "/" + mod);
-    display.DictKey = getPrefOrCreate("DictKey_" + mod + "_" + w, "Unicode", "<none>");
+    display.Key = ViewPort.Key[w];
     display.ShowOriginal = ViewPort.ShowOriginal[w];
     display.MaximizeNoteBox = ViewPort.MaximizeNoteBox[w];
     display.ShowFootnotesAtBottom = getPrefOrCreate("ShowFootnotesAtBottom", "Bool", true);
@@ -873,7 +872,3 @@ var Texts = {
 
 };
 
-// Make sure MainWindow has access to our objects
-if (MainWindow) {
-  if (typeof(MainWindow.Texts) == "undefined") MainWindow.Texts = Texts;
-}
