@@ -77,11 +77,6 @@ function loadedXULReal() {
   
   History.init();
   
-  var st = "";;
-  try {st = getUnicodePref("SearchText");} catch(er) {}
-  document.getElementById("searchText").value = st;
-  
-  
   if (Bible && Tabs.length) {
     createLanguageMenu();
     fillModuleMenuLists();
