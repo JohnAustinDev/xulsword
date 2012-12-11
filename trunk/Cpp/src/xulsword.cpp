@@ -1384,11 +1384,13 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
         mapVersifications(&fromkey, &tokey);
       }
       else {tokey.copyFrom(fromkey);}
-
-      MySearchTexts.append(tokey.getOSISRef());
-      MySearchTexts.append("<bg>");
-      keepStrongs ? MySearchTexts.append(module->RenderText()):MySearchTexts.append(module->StripText());
-      MySearchTexts.append("<nx>");
+      
+      MySearchTexts.appendFormatted("<div class=\"slist\" title=\"%s.%s\">", tokey.getOSISRef(), mod);
+      MySearchTexts.appendFormatted("<span class=\"cs-%s%s\">%s</span>", 
+          mod,
+          (module->Direction() != DIRECTION_LTR ? " RTL":""),
+          (keepStrongs ? module->RenderText():module->StripText()));
+      MySearchTexts.append("</div>");
 
       MySearchVerses.append(tokey.getOSISRef());
       MySearchVerses.append("<nx>");
@@ -1402,10 +1404,17 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
     SearchList.Persist(1);
     module->setKey(SearchList);
     while (!SearchList.Error()&&(written<num)) {
-      MySearchTexts.append(module->getKeyText());
-      MySearchTexts.append("<bg>");
-      keepStrongs ? MySearchTexts.append(module->RenderText()):MySearchTexts.append(module->StripText());
-      MySearchTexts.append("<nx>");
+      
+      SWBuf keyTextEN;
+      const char *keyText = module->getKeyText();
+      while (*keyText) {keyTextEN.appendFormatted("\%%x", *keyText++);}
+
+      MySearchTexts.appendFormatted("<div class=\"slist\" title=\"%s:%s.%s\">", mod, keyTextEN.c_str(), mod);
+      MySearchTexts.appendFormatted("<span class=\"cs-%s%s\">%s</span>", 
+          mod,
+          (module->Direction() != DIRECTION_LTR ? " RTL":""),
+          (keepStrongs ? module->RenderText():module->StripText()));
+      MySearchTexts.append("</div>");
 
       MySearchVerses.append(module->getKeyText());
       MySearchVerses.append("<nx>");
