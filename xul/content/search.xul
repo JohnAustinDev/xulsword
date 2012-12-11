@@ -203,7 +203,7 @@
 <vbox id="searchframe-cont" flex="1">
   <hbox flex="100%">
     <vbox  flex="100%">
-      <iframe flex="100%" class="searchframe" context="contextSearchBox" id="search-frame" src="search.html"></iframe>
+      <iframe flex="100%" id="search-frame" class="searchframe" context="contextSearchBox" src="search.html"></iframe>
     </vbox>
     <vbox id="resultsnav" width="35px" pack="center" hidden="true">
       <image id="first" class="searchArrow" onclick="clickHandler(this)"/>
