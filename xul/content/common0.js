@@ -114,7 +114,9 @@ const TextClasses = {
   fnlink: [ { re:new RegExp(/^([^\.]*)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   crref:  [ { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 },
             { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                        bk:2,    ch:3,     vs:4,    lv:5,     mod:6, osisref:1 } ],
-  nlist:  [ { re:new RegExp(/^(\w+)\.([^\.]*)\.(([^\.]+)\.([^\.]+)\.(\d+))\.([^\.]+)$/),           ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,     mod:7, osisref:3 } ]
+  nlist:  [ { re:new RegExp(/^(\w+)\.([^\.]*)\.(([^\.]+)\.([^\.]+)\.(\d+))\.([^\.]+)$/),           ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,     mod:7, osisref:3 } ],
+  slist:  [ { re:new RegExp(/^(([^\.\:]*)\:([^\.]*))\.([^\.]*)$/),                                                 bk:null, ch:3,    vs:null, lv:null,  mod:4, osisref:1 },
+            { re:new RegExp(/^(([^\.]*)\.(\d+)\.(\d+))\.([^\.]*)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 } ]
 };
 
 // Accepts either raw HTML or a DOM element

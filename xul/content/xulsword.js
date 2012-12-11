@@ -1338,7 +1338,7 @@ function updateModuleMenuCheckmarks() {
 
 var GotoLocation;
 function showLocation(mod, bk, ch, vs, lv) {
-jsdump("showLocation:" + mod + ", " + bk + ", " + ch + ", " + vs + ", " + lv);  
+//jsdump("showLocation:" + mod + ", " + bk + ", " + ch + ", " + vs + ", " + lv);  
   var w = ensureModuleShowing(mod);
   if (!w) return;
   
