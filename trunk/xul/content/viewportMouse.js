@@ -470,7 +470,7 @@ function bbMouseDown(e) {
   // If maximize is on, turn it off
   if (ViewPort.MaximizeNoteBox[w]) {
     var rule = getCSS(".sb {");
-    ViewPort.NoteBoxHeight[w] = rule.rule.style.height.match(/([\-\d]+)px/)[1]);
+    ViewPort.NoteBoxHeight[w] = rule.rule.style.height.match(/([\-\d]+)px/)[1];
     ViewPort.MaximizeNoteBox[w] = false;
     ViewPort.update(false);
   }

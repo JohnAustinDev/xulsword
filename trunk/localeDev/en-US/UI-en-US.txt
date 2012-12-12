@@ -257,6 +257,7 @@
 [search-window.more-options.search-type.show_results_in_order]: Show results in order
 [search-window.more-options.search-type.using_special_search_terms]: Advanced matching using special search terms.
 [search-window.more-options.text_group_label]: Bibles:
+[search-window.more-options.create_search_index]: Create search index
 [search-window.build_index_progress_label]: Building Search Index...
 [search-window.first_search_prompt]: This text was installed without a search index.\nA search index will now be created for you.
 [search-window.more-less-button.less]: Less

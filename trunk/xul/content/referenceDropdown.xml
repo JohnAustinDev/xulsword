@@ -180,7 +180,7 @@
           
           for (var v=0; v<this.versions.length; v++) {if (this.versions[v]==val) break;}
           if (v==this.versions.length) return current;
-          this.versionmenulist.className = "cs-" + Tab[val].locName; //this does not work after first pass!
+          this.versionmenulist.setAttribute("class", "cs-" + Tab[val].locName);
           if (!this.versionmenulist.hidden)
             this.versionmenulist.selectedIndex = v;
           else this._version=val;
@@ -606,8 +606,8 @@
         
         <menulist anonid="version" 
           sizetopopup="never" 
-          oncommand="this.parentNode.parentNode.updateMenuBook(event);" 
-          onlybibles="false" hidden="false" xbl:inherits="hidden=hideversion, onlybibles, disabled" />
+          oncommand="this.setAttribute('class', 'cs-' + Tab[this.value].locName); this.parentNode.parentNode.updateMenuBook(event);" 
+          onlybibles="false" hidden="false" xbl:inherits="hidden=hideversion, flex, onlybibles, disabled" />
       </hbox>
     </xbl:content>
   </binding>

@@ -30,6 +30,7 @@ var ProgramConfig = {};
 var Tabs = [];
 var Tab = {};
 var LanguageStudyModules = {};
+var DailyDevotionModules = {};
 var Book = new Array(NumBooks);
 var AllWindows = [];
 
@@ -273,9 +274,7 @@ function initTabGlobals() {
 
       var feature = Bible.getModuleInformation(mod, "Feature");
       if (feature.search("DailyDevotion") != -1) {
-        for (var w=1; w<=NW; w++) {
-          ViewPort.Key[w] = "DailyDevotionToday";
-        }
+        DailyDevotionModules[mod] = "DailyDevotionToday";
       }
       else if (feature.search("GreekDef") != -1)  {
         if (mlang.match(/^ru/i) || !LanguageStudyModules.StrongsGreek) LanguageStudyModules.StrongsGreek = mod;

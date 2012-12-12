@@ -22,7 +22,7 @@ var ContextMenu = {
   
   lemmaLabel:null,
   
-  NEWTARGET:{ bk:null, ch:null, vs:null, lv:null, mod:null, w:null, lemma:null, bookmark:null, selection:null },
+  NEWTARGET:{ bk:null, ch:null, vs:null, lv:null, mod:null, w:null, bookmark:null, selection:null, search:{mod:null, searchtext:null, type:null} },
 
   showing: function(e, menupopup) {
 //jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
@@ -88,7 +88,7 @@ var ContextMenu = {
       selem = selem.parentNode;
     }
     if (strongsNum && strongsMod) {
-      this.target.lemma = ""; 
+      var lemma = ""; 
       var nums = strongsNum.split(" ");
       nums.shift(); // remove base style
       for (var i=0; i<nums.length; i++) {
@@ -96,12 +96,14 @@ var ContextMenu = {
         if (parts[0] != "S") continue;
         // SWORD filters these out- not valid it says
         if (parts[1].substr(0,1)=="G" && Number(parts[1].substr(1)) >= 5627) continue;
-        this.target.lemma += "lemma:" + parts[1] + " ";
+        lemma += "lemma:" + parts[1] + " ";
       }
-      if (this.target.lemma) {
+      if (lemma) {
         canHaveLemma = true;
-        document.getElementById("ctx_xs_searchForLemma").label += " - " + this.target.lemma;
-        this.target.lemma = "mod:" + strongsMod + " " + this.target.lemma;
+        document.getElementById("ctx_xs_searchForLemma").label += " - " + lemma;
+        this.target.search.searchtext = lemma;
+        this.target.search.mod = strongsMod;
+        this.target.search.type = "advancedmatch";
       }
     }
     

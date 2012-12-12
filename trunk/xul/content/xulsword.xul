@@ -111,7 +111,7 @@
   <key id="copyPassageKb" key="&menu.copypassage.sc;"       modifiers="accel" oncommand="copyPassageDialog();"/>
   <key keycode="VK_DOWN"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').select();"/>
   <key key="B"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').select();"/> <!-- Like Paratext !-->
-  <key id="openSearchDialog" key="" modifiers="accel" oncommand="openSearchDialog();"/> <!-- key set in script to allow backward compatibility to old UIs !-->
+  <key id="openSearchDialog" key="&SearchAccKey;" modifiers="accel" oncommand="XulswordController.doCommand('cmd_xs_search', '{search:{searchtext:null}}');"/>
 </keyset>
 
 <keyset id="editMenuKeys"/>
@@ -214,7 +214,7 @@
         <menuitem id="menu_copy"/>
         <menuitem id="menu_paste"/>
         <menuseparator/>
-        <menuitem id="edit.search" label="&searchBut.label;" oncommand="openSearchDialog();" key="openSearchDialog"/>
+        <menuitem id="edit.search" label="&searchBut.label;" oncommand="XulswordController.doCommand('cmd_xs_search', '{search:{searchtext:null}}');" key="openSearchDialog"/>
         <menuseparator/>
         <menuitem label="&menu.copypassage;" accesskey="&menu.copypassage.sc;" oncommand="copyPassageDialog();" key="copyPassageKb"/>
       </menupopup>

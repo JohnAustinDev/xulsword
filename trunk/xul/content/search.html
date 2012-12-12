@@ -33,26 +33,40 @@
   
   <script>
 
-  function init() {
-    initCSS(true);
-  }
-
-  function searchboxDblClick(e) {
-    var targ = e.target.parentNode;
+  function scriptDblClick(e) {
+    
+    // Get module this event occurred in
+    var elem = e.target;
+    while (elem && (!elem.className || !(/(^|\s)vs(\s|$)/).test(elem.className))) {
+      elem = elem.parentNode;
+    }
+    if (!elem) return;
+    var mod = getElementInfo(elem).mod;
+    
+    // Get selected text
     var selob = window.getSelection();
     var sel = selob.toString();
     sel = cleanDoubleClickSelection(sel);
     if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
-    setUnicodePref("SearchText",sel);
+
+    // Do a search for selected text in mod
+    //setUnicodePref("SearchText", sel);
+    //prefs.setCharPref("SearchVersion", mod);
     MainWindow.document.getElementById("cmd_xs_search").doCommand();
+    
+    e.stopPropagation(); // block any higher handlers
   }
-  
+
   </script>
 
   </head>
-  <body class="searchres" id="searchBoxBody" onload="init()" ondblclick="searchboxDblClick(event);">
+  
+  <body class="searchres" hasLexicon="false" onload="initCSS(true)" ondblclick="scriptDblClick(event);">
+  
     <div id="lexiconBox"></div>
+    
     <div id="searchBox"></div>
+    
   </body>
   
 </html>
