@@ -1409,7 +1409,7 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
       const char *keyText = module->getKeyText();
       while (*keyText) {keyTextEN.appendFormatted("\%%x", *keyText++);}
 
-      MySearchTexts.appendFormatted("<div class=\"slist\" title=\"%s:%s.%s\">", mod, keyTextEN.c_str(), mod);
+      MySearchTexts.appendFormatted("<div class=\"slist\" title=\"%s.%s\">", keyTextEN.c_str(), mod);
       MySearchTexts.appendFormatted("<span class=\"cs-%s%s\">%s</span>", 
           mod,
           (module->Direction() != DIRECTION_LTR ? " RTL":""),

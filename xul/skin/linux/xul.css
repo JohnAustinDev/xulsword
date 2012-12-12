@@ -13,8 +13,3 @@ groupbox caption {
   border-bottom-right-radius:5px;
   padding:2px 6px 2px 6px;
 }
-
-/* search windows */
-toolbar groupbox, #dividerBox {
-  margin:0px 14px 0px 0px;
-}

@@ -115,7 +115,7 @@ const TextClasses = {
   crref:  [ { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 },
             { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                        bk:2,    ch:3,     vs:4,    lv:5,     mod:6, osisref:1 } ],
   nlist:  [ { re:new RegExp(/^(\w+)\.([^\.]*)\.(([^\.]+)\.([^\.]+)\.(\d+))\.([^\.]+)$/),           ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,     mod:7, osisref:3 } ],
-  slist:  [ { re:new RegExp(/^(([^\.\:]*)\:([^\.]*))\.([^\.]*)$/),                                                 bk:null, ch:3,    vs:null, lv:null,  mod:4, osisref:1 },
+  slist:  [ { re:new RegExp(/^([^\.]*)\.([^\.]*)$/),                                                               bk:null, ch:1,    vs:null, lv:null,  mod:2 },
             { re:new RegExp(/^(([^\.]*)\.(\d+)\.(\d+))\.([^\.]*)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 } ]
 };
 

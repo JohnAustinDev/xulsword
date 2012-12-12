@@ -34,12 +34,13 @@
     title="&search.title; &quot;**search_title**&quot;"
     width="800" height="630" screenX="50" screenY="50"
     persist="width height screenX screenY sizemode"
-    onload="loadSearchWindow()"
+    onload="initSearch()"
     onunload="unloadSearchWindow();"
     oncommand="commandHandler(event);"
-    onclick="commandHandler(event);">
+    onclick="commandHandler(event);"
+    onresize="document.getElementById('search-module').style.width = window.innerWidth + 'px';">
 
-<stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+<stringbundle id="strings" src="chrome://xulsword/locale/search.properties"/>
 
 <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
 <script src="chrome://xulsword/content/common0.js"/>
@@ -59,12 +60,13 @@
 
 <!-- Search Results Controls !-->
 <toolbox>
+
   <menubar>
     <menu label="&fileMenu.label;" accesskey="&fileMenu.accesskey;">
       <menupopup>
-        <menuitem label="&printSetupCmd.label;" accesskey="&printSetupCmd.accesskey;" command="cmd_pageSetup"/>
-        <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" command="cmd_printPreview"/>
-        <menuitem label="&printCmd.label;" accesskey="&printCmd.accesskey;" key="printKb" command="cmd_print"/>
+        <menuitem label="&printSetupCmd.label;" accesskey="&printSetupCmd.accesskey;" command="handlePrintCommand('cmd_pageSetup')"/>
+        <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" command="handlePrintCommand('cmd_printPreview')"/>
+        <menuitem label="&printCmd.label;" accesskey="&printCmd.accesskey;" key="printKb" command="handlePrintCommand('cmd_print')"/>
         <menuseparator/>
         <menuitem label="&closeCmd.label;" key="key_close" accesskey="&closeCmd.accesskey;" oncommand="window.close()"/>
       </menupopup>
@@ -88,8 +90,10 @@
     </menu>
   </menubar>
   
+  
   <toolbar showAdvanced="false">
     <vbox flex="1">
+    
       <hbox id="searchrow" pack="center" align="center">
         <button id="more" label="&more.label;"/>
         <button id="less" label="&less.label;"/>
@@ -99,9 +103,10 @@
         <spacer width="14px" orient="horizontal"/>
         <image id="question" class="question"/>
       </hbox>
+      
       <separator class="groove" />
+      
       <hbox id="modulePanel">
-        <spacer flex="1" />
 
         <radiogroup id="search-module" pack="begin" align="center" orient="horizontal">
         
@@ -113,16 +118,16 @@
             
             <rows>
               <row id="Texts-row" hidden="true" pack="end" align="center">
-                <label value="&search.Texts"/>
+                <label value="&search.Texts;"/>
               </row>
               <row id="Comms-row" hidden="true" pack="end" align="center">
-                <label value="&search.Comms"/>
+                <label value="&search.Comms;"/>
               </row>
               <row id="Dicts-row" hidden="true" pack="end" align="center">
-                <label value="&search.Dicts"/>
+                <label value="&search.Dicts;"/>
               </row>
               <row id="Genbks-row" hidden="true" pack="end" align="center">
-                <label value="&search.Genbks"/>
+                <label value="&search.Genbks;"/>
               </row>
             </rows>
             
@@ -130,13 +135,11 @@
           
         </radiogroup>
         
-        <spacer flex="1" />
-        
       </hbox>
     
       <vbox align="center">
-        <hbox id="advanced">
-        
+        <hbox id="advanced" pack="start">
+          
           <stack id="searchTypeStack">
           
           <groupbox>
@@ -161,35 +164,40 @@
             
           </stack>
           
-          <groupbox>
-            <caption label="&scope;"/>  
+          <vbox>
+            <groupbox>
+              <caption label="&scope;"/>  
+                  
+              <radiogroup id="scopeRadio" orient="horizontal">
+              
+                <vbox>
+                  <radio id="searchAll" label="&search.all;" value="Gen-Rev" selected="true"/>
+                  <radio id="searchOT" label="&search.old;" value="Gen-Mal"/>
+                  <radio id="searchNT" label="&search.new;" value="Matt-Rev"/>
+                </vbox>
                 
-            <radiogroup id="scopeRadio" orient="horizontal">
-            
-              <vbox>
-                <radio id="searchAll" label="&search.all;" value="Gen-Rev" selected="true"/>
-                <radio id="searchOT" label="&search.old;" value="Gen-Mal"/>
-                <radio id="searchNT" label="&search.new;" value="Matt-Rev"/>
-              </vbox>
+                <vbox>
+                  <radio id="searchCB" label="&search.currentbook;"/>
+                  <radio id="searchSelect" label="&search.groups;" value=""/>
+                  <menulist id="scopeMenu">
+                    <menupopup>
+                      <menuitem id="sg1" label="&search.torah;" value="&search.torah.books;"/>
+                      <menuitem id="sg2" label="&search.history;" value="&search.history.books;"/>
+                      <menuitem id="sg3" label="&search.wisdom;" value="&search.wisdom.books;"/>
+                      <menuitem id="sg4" label="&search.prophets;" value="&search.prophets.books;"/>
+                      <menuitem id="sg5" label="&search.gospels;" value="&search.gospels.books;"/>
+                      <menuitem id="sg6" label="&search.letters;" value="&search.letters.books;"/>
+                    </menupopup>
+                  </menulist>
+                </vbox>
+                
+              </radiogroup>
               
-              <vbox>
-                <radio id="searchCB" label="&search.currentbook;"/>
-                <radio id="searchSelect" label="&search.groups;" value=""/>
-                <menulist id="scopeMenu">
-                  <menupopup>
-                    <menuitem id="sg1" label="&search.torah;" value="&search.torah.books;" selected="true"/>
-                    <menuitem id="sg2" label="&search.history;" value="&search.history.books;"/>
-                    <menuitem id="sg3" label="&search.wisdom;" value="&search.wisdom.books;"/>
-                    <menuitem id="sg4" label="&search.prophets;" value="&search.prophets.books;"/>
-                    <menuitem id="sg5" label="&search.gospels;" value="&search.gospels.books;"/>
-                    <menuitem id="sg6" label="&search.letters;" value="&search.letters.books;"/>
-                  </menupopup>
-                </menulist>
-              </vbox>
-              
-            </radiogroup>
+            </groupbox>
             
-          </groupbox>
+            <reference-dropdown flex="1" disabled="true" id="moddropdown" menuheight="400px" onlybibles="false" hidebook="true" hidechapter="true" hideverse="true" hidelastverse="true" />
+          
+          </vbox>
           
         </hbox>
       </vbox>

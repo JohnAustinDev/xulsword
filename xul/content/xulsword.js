@@ -664,6 +664,8 @@ function updateFromNavigator(numberOfSelectedVerses) {
 /************************************************************************
  * Main Command Controller...
  ***********************************************************************/
+var GlobalTarget;
+
 var XulswordController = {
   parsedLocation: {},
  
@@ -673,6 +675,8 @@ var XulswordController = {
     if (!target) target = {};
     var def = getDefaultTarget();
     for (var m in def) {if (!target.hasOwnProperty(m) || target[m]===null) {target[m] = def[m];}}
+
+    GlobalTarget = target;
     
     switch (aCommand) {
     case "cmd_undo":
@@ -709,19 +713,20 @@ var XulswordController = {
       Texts.update();
       break;
     case "cmd_xs_search":
-      if (target.searchType) prefs.setIntPref("InitialSearchType", target.searchType);
       AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchFromTextBox":
-      openSearchDialog(target.searchText, ViewPort.firstDisplayModule().mod, target.searchType);
+      target.search.searchtext = document.getElementById("searchText").value;
+      AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchForSelection":
-      openSearchDialog(target.selection, target.mod, target.searchType);
+      target.search.searchtext = target.selection;
+      AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchForLemma":
-      var inf = target.lemma.match(/^mod:(\S+)\s+(.*?)$/);
-      if (!inf) break;
-      openSearchDialog(inf[0], inf[1], USING_SEARCH_TERMS);
+      if (!(/lemma\:/).test(target.search.searchtext)) break;
+      target.search.type = "advancedmatch";
+      AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_openFromSelection":
       updateToReference(this.parsedLocation);
@@ -844,11 +849,11 @@ var XulswordController = {
     case "cmd_redo":
       return (BM.gTxnSvc.numberOfRedoItems > 0);
     case "cmd_xs_searchFromTextBox":
-      return (target.searchText.length > 0);
+      return (document.getElementById("searchText").value.length > 0);
     case "cmd_xs_searchForSelection":
       return (target.selection ? true:false);
     case "cmd_xs_searchForLemma":
-      return (target.lemma && target.mod ? true:false);
+      return ((/lemma\:/).test(target.search.searchtext) && target.mod ? true:false);
     case "cmd_xs_forward":
       return (History.index < History.list.length-1);
     case "cmd_xs_back":
@@ -950,11 +955,15 @@ var XulswordController = {
 // This is the default target for the main command controller. This 
 // default target is returned each time the controller is used, unless
 // a target was supplied in the call.
+ 
 function getDefaultTarget() {
   var target = {};
-  target.searchText = document.getElementById('searchText').value;
-  target.searchType = null;
-  target.lemma = null;
+  target.search = { 
+      mod:prefs.getCharPref("DefaultVersion"), 
+      searchtext:document.getElementById('searchText').value, 
+      type:"hasthewords", 
+      scope:"searchAll" 
+  };
   target.bookmark = null;
   target.w = null;
   target.mod = ViewPort.firstDisplayBible();
@@ -970,7 +979,7 @@ function getDefaultTarget() {
   case DICTIONARY:
   case GENBOOK:
     target.bk = "";
-    target.ch = ViewPort.Key[target.w];
+    target.ch = (target.w ? ViewPort.Key[target.w]:null);
     target.vs = 1;
     target.lv = 1;
     break;
@@ -991,16 +1000,6 @@ function goUpdateFileMenu () {
   goUpdateCommand('cmd_xs_importAudio');
 }
 
-function openSearchDialog(search, mod, type) {
-  if (!search) search = "";
-  if (!mod) mod = ViewPort.firstDisplayModule().mod;
-  if (type === null) type = CONTAINS_THE_WORDS;
-  
-  prefs.setIntPref("InitialSearchType", type);
-  prefs.setCharPref("SearchVersion", mod);
-  setUnicodePref("SearchText", search);
-  AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
-}
 
 
 /************************************************************************

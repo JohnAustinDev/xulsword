@@ -745,7 +745,7 @@ var Texts = {
   hilightVerses: function(w, l, hilightFlag) {
     if (!l || hilightFlag == HILIGHTSKIP) return;
     
-    if (Tab[ViewPort.Module[[w]].modType == COMMENTARY) hilightFlag = HILIGHTNONE;
+    if (Tab[ViewPort.Module[w]].modType == COMMENTARY) hilightFlag = HILIGHTNONE;
  
     var t = document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];

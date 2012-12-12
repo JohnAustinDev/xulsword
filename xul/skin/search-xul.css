@@ -4,6 +4,9 @@ window {
   background-image:url(chrome://xulsword/skin/images/9.gif);
 }
 
+toolbar {
+  font-size:0.8em;
+}
 #searchrow {
   padding:4px;
 }
@@ -29,10 +32,15 @@ image#question {
 }
 
 #search-module { 
-  overflow:auto; 
-  padding:6px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:6px 10px 20px 10px;
 }
-
+groupbox {
+  margin-bottom:0px;
+  margin-left:10px;
+  margin-right:10px;
+}
 #dividerBox {
   background:rgb(220,220,220);
   border:2px grey outset;
@@ -46,9 +54,10 @@ image#question {
 }
 #moddropdown menulist[anonid="version"] {
   min-width:100px;
-}
-#sort {
-  margin-left:2em;
+  width:100%;
+  margin:10px 10px 0px 10px;
+  padding:0px;
+  
 }
 
 #searchframe-cont {
@@ -81,7 +90,7 @@ image#next {
 }
 
 statusbar[chromedir="rtl"] > statusbarpanel > resizer {
-  display: none;
+  display:none;
 }
 #progressbox {
   visibility:hidden;

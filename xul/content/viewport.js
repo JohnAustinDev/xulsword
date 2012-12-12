@@ -39,18 +39,26 @@ function initViewPort() {
 
 function ViewPortObj(viewPortObj) {
   
+  this.ownerDocument = document;
+  this.ShowOriginal = [];
+  this.IsPinned = [];
+  this.NoteBoxHeight = [];
+  this.MaximizeNoteBox = [];
+  this.Module = [];
+  this.Key = [];
+  
   // If we have a passed viewPortObj, then copy it. Otherwise create 
   // a ViewPortObj from global preferences.
   if (viewPortObj) {
     this.NumDisplayedWindows = viewPortObj.NumDisplayedWindows;
     this.ShowChooser = viewPortObj.ShowChooser;
     for (var w=1; w<=3; w++) {
-      this.ShowOriginal[w] = viewPortObj.ShowOriginal[w];
-      this.IsPinned[w] = viewPortObj.IsPinned[w];
-      this.NoteBoxHeight[w] = viewPortObj.NoteBoxHeight[w];
+      this.ShowOriginal[w]    = viewPortObj.ShowOriginal[w];
+      this.IsPinned[w]        = viewPortObj.IsPinned[w];
+      this.NoteBoxHeight[w]   = viewPortObj.NoteBoxHeight[w];
       this.MaximizeNoteBox[w] = viewPortObj.MaximizeNoteBox[w];
-      this.Module[w] = viewPortObj.Module[w];
-      this.Key[w] = viewPortObj.Key[w];
+      this.Module[w]          = viewPortObj.Module[w];
+      this.Key[w]             = viewPortObj.Key[w];
     }
   }
   else {
@@ -81,7 +89,7 @@ function ViewPortObj(viewPortObj) {
     }
     
     this.NumDisplayedWindows = prefs.getIntPref("NumDisplayedWindows");
-    this.ShowChooser = prefs.getBoolPRef("ShowChooser");
+    this.ShowChooser = prefs.getBoolPref("ShowChooser");
     
     for (var w=1; w<=3; w++) {
       this.ShowOriginal[w] = getPrefOrCreate("ShowOriginal" + w, "Bool", false);
@@ -94,14 +102,14 @@ function ViewPortObj(viewPortObj) {
     
     //Check xulsword module choices
     for (var w=1; w<=NW; w++) {
-      if (!Tab.hasOwnProperty(prefs.getCharPref("Version" + w)))
-          prefs.setCharPref("Version" + w, prefs.getCharPref("DefaultVersion"));
+      if (!Tab.hasOwnProperty(this.Module[w])) this.Module[w] = prefs.getCharPref("DefaultVersion");
+      if (MainWindow.DailyDevotionModules.hasOwnProperty(this.Module[w])) this.Key[w] = "DailyDevotionToday";
       if (!Tab.ORIG_NT && !Tab.ORIG_OT) ViewPort.ShowOriginal[w] = false;
     }
 
   }
   
-  init: function() {
+  this.init = function() {
   
     // draw tabs
     for (w=1; w<=NW; w++) {this.drawTabs(w);}
@@ -132,7 +140,7 @@ function ViewPortObj(viewPortObj) {
     document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", wheel, false);
     document.getElementById("textrow").addEventListener("DOMMouseScroll", MouseWheel.scroll, false);
 
-  },
+  };
 
   // This function updates the viewport based on all previously set global
   // user settings. It does not set/change any global paramters, but only
@@ -249,7 +257,7 @@ function ViewPortObj(viewPortObj) {
     for (w=1; w<=NW; w++) {
       
       // orig tab
-      if (this.ShowOriginal[w])) 
+      if (this.ShowOriginal[w]) 
           try {document.getElementById("w" + w + ".tab.orig").setAttribute("active", "true");} catch (er) {}
       else
           try {document.getElementById("w" + w + ".tab.orig").setAttribute("active", "false");} catch (er) {}
@@ -372,19 +380,19 @@ function ViewPortObj(viewPortObj) {
   // Some layouts, like the Navigator dimensions and variable height
   // footnote boxes, are too complex for HTML/CSS to implement without 
   // some Javascript help. So that is all done here.
-  padtop:0,
-  tabheight:38,
-  headheight:30,
-  footheight:30,
-  padbot:24,
-  bbheight:18,
+  this.padtop = 0;
+  this.tabheight = 38;
+  this.headheight = 30;
+  this.footheight = 30;
+  this.padbot = 24;
+  this.bbheight = 18;
   this.hackedResizing = function(skipBibleChooserTest) {
     
     try {
       var winh = getIntPref("ViewPortHeight");
       prefs.clearUserPref("ViewPortHeight");
     }
-    catch {winh = window.innerHeight;}
+    catch (er) {winh = window.innerHeight;}
 //jsdump("UPDATING VIEW PORT h=" + winh);
 
     // Get max height of script box
@@ -499,7 +507,7 @@ function ViewPortObj(viewPortObj) {
     return {mod:this.Module[1], w:1};
   };
 
-}
+};
 
 function unloadViewPort() {
   
