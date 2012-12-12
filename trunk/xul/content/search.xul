@@ -36,7 +36,8 @@
     persist="width height screenX screenY sizemode"
     onload="loadSearchWindow()"
     onunload="unloadSearchWindow();"
-    oncommand="commandHandler(event);">
+    oncommand="commandHandler(event);"
+    onclick="commandHandler(event);">
 
 <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
 
@@ -82,7 +83,7 @@
     </menu>
     <menu id="help-menu" label="&menu.help;" accesskey="&menu.help.sc;">
       <menupopup id="help-popup">
-        <menuitem id="searchHelp" label="&search.title; &menu.help;" accesskey="&menu.help.sc;" oncommand="clickHandler(this)"/>
+        <menuitem id="searchHelp" label="&search.title; &menu.help;" accesskey="&menu.help.sc;"/>
       </menupopup>
     </menu>
   </menubar>
@@ -90,19 +91,19 @@
   <toolbar showAdvanced="false">
     <vbox flex="1">
       <hbox id="searchrow" pack="center" align="center">
-        <button id="more" label="&more.label;" oncommand="clickHandler(this)"/>
-        <button id="less" label="&less.label;" oncommand="clickHandler(this)"/>
+        <button id="more" label="&more.label;"/>
+        <button id="less" label="&less.label;"/>
         <label value="&searchwhat.label;" control="searchText"/>
         <textbox id="searchText" tooltip="searchTextTT" maxlength="60"/>
-        <button id="searchButton" tooltip="searchButtonTT" label="&searchBut.label;  " dir="reverse" orient="horizontal" oncommand="clickHandler(this)"/>
+        <button id="searchButton" tooltip="searchButtonTT" label="&searchBut.label;  " dir="reverse" orient="horizontal"/>
         <spacer width="14px" orient="horizontal"/>
-        <image id="question" class="question" onclick="clickHandler(this)"/>
+        <image id="question" class="question"/>
       </hbox>
       <separator class="groove" />
       <hbox id="modulePanel">
         <spacer flex="1" />
 
-        <radiogroup id="search-module" pack="begin" align="center" orient="horizontal" oncommand="clickHandler(this)">
+        <radiogroup id="search-module" pack="begin" align="center" orient="horizontal">
         
           <grid>
           
@@ -136,15 +137,37 @@
       <vbox align="center">
         <hbox id="advanced">
         
+          <stack id="searchTypeStack">
+          
+          <groupbox>
+            <caption label="&type;"/> 
+            
+            <radiogroup id="searchType">
+              <radio id="hasthewords" selected="true" label="&hasthewords;"/>
+              <radio id="hasthistext" label="&hasthistext;"/>
+              <radio id="advancedmatch" label="&advancedmatch;"/>
+              <radio id="matchsimilar" label="&matchparts;"/>
+            </radiogroup>
+            
+            </groupbox>
+            
+            <vbox id="dividerBox" hidden="true"></vbox>
+            
+            <vbox pack="center" align="center" id="createSearchIndexBox" hidden="true">
+              <hbox>
+                <button id="createIndexButton" label="&createIndex;"/>
+              </hbox>
+            </vbox>
+            
+          </stack>
+          
           <groupbox>
             <caption label="&scope;"/>  
-              
-            <reference-dropdown id="moddropdown" menuheight="400px" onlybibles="false" hidebook="true" hidechapter="true" hideverse="true" hidelastverse="true" />
-            
-            <radiogroup id="scopeRadio" orient="horizontal" oncommand="clickHandler(this)">
+                
+            <radiogroup id="scopeRadio" orient="horizontal">
             
               <vbox>
-                <radio id="searchAll" selected="true" label="&search.all;" value="Gen-Rev"/>
+                <radio id="searchAll" label="&search.all;" value="Gen-Rev" selected="true"/>
                 <radio id="searchOT" label="&search.old;" value="Gen-Mal"/>
                 <radio id="searchNT" label="&search.new;" value="Matt-Rev"/>
               </vbox>
@@ -154,7 +177,7 @@
                 <radio id="searchSelect" label="&search.groups;" value=""/>
                 <menulist id="scopeMenu">
                   <menupopup>
-                    <menuitem id="sg1" selected="true" label="&search.torah;" value="&search.torah.books;"/>
+                    <menuitem id="sg1" label="&search.torah;" value="&search.torah.books;" selected="true"/>
                     <menuitem id="sg2" label="&search.history;" value="&search.history.books;"/>
                     <menuitem id="sg3" label="&search.wisdom;" value="&search.wisdom.books;"/>
                     <menuitem id="sg4" label="&search.prophets;" value="&search.prophets.books;"/>
@@ -168,30 +191,6 @@
             
           </groupbox>
           
-          <stack id="searchTypeStack">
-          
-          <groupbox>
-            <caption label="&type;"/> 
-            
-            <radiogroup id="searchType">
-              <radio id="hasthewords" selected="true" label="&hasthewords;" oncommand="clickHandler(this)"/>
-              <radio id="hasthistext" label="&hasthistext;" oncommand="clickHandler(this)"/>
-              <radio id="advancedmatch" label="&advancedmatch;" oncommand="clickHandler(this)"/>
-              <radio id="matchsimilar" label="&matchparts;" oncommand="clickHandler(this)"/>
-            </radiogroup>
-            
-            </groupbox>
-            
-            <vbox id="dividerBox" hidden="true"></vbox>
-            
-            <vbox pack="center" align="center" id="createSearchIndexBox" hidden="true">
-              <hbox>
-                <button id="createIndexButton" label="&createIndex;" oncommand="clickHandler(this)"/>
-              </hbox>
-            </vbox>
-            
-          </stack>
-          
         </hbox>
       </vbox>
     
@@ -203,16 +202,21 @@
 <vbox id="searchframe-cont" flex="1">
   <hbox flex="100%">
     <vbox  flex="100%">
-      <iframe flex="100%" id="search-frame" class="searchframe" context="contextSearchBox" src="search.html"></iframe>
+      <iframe flex="100%" 
+          id="search-frame" 
+          class="searchframe" 
+          context="contextSearchBox" 
+          src="search.html">
+      </iframe>
     </vbox>
     <vbox id="resultsnav" width="35px" pack="center" hidden="true">
-      <image id="first" class="searchArrow" onclick="clickHandler(this)"/>
+      <image id="first" class="searchArrow"/>
       <spacer flex="50%" orient="horizontal"/>
-      <image id="prev" class="searchArrow" onclick="clickHandler(this)"/>
+      <image id="prev" class="searchArrow"/>
       <spacer flex="10%" orient="horizontal"/>
-      <image id="next" class="searchArrow" onclick="clickHandler(this)"/>
+      <image id="next" class="searchArrow"/>
       <spacer flex="50%" orient="horizontal"/>
-      <image id="last" class="searchArrow" onclick="clickHandler(this)"/>
+      <image id="last" class="searchArrow"/>
     </vbox>
   </hbox>
 </vbox>
@@ -223,7 +227,7 @@
     <label id="searchmsg" value=""/>
     <progressmeter id="progress" mode="determined" value="3"/>
   </hbox>
-  <button id="stopButton" label="&stop.label;" hidden="true" oncommand="clickHandler(this)"/>
+  <button id="stopButton" label="&stop.label;" hidden="true"/>
 </statusbar>
 
 <!-- TOOLTIPS DEFINED HERE !-->

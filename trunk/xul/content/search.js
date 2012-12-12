@@ -76,6 +76,7 @@ function initSearch() {
   
 }
 
+
 function SearchObj(searchObj) {
 
   if (searchObj) {
@@ -86,7 +87,7 @@ function SearchObj(searchObj) {
     this.showAdvanced = 
     this.progress = {timeout:, books:, index:, searchedchaps, totalchaps: };
     this.result = { matchterms:, list:, count:, index:, results_per_page: }
-    this.s = {query:, scope:, type:, flags: isnew:}
+    this.s = {mod:, query:, scope:, type:, flags: isnew:}
   
   }
   else {
@@ -95,7 +96,7 @@ function SearchObj(searchObj) {
   }
   
   // Initialize our search object according to the object's "this" parameters,
-  // available Tabs, etc. Also initiates a search upon completion
+  // available Tabs, etc. Also may initiate a search upon completion
   this.init = function() {
 
     // init Search textbox & window title
@@ -122,7 +123,7 @@ function SearchObj(searchObj) {
         
         var radio = document.createElement("radio");
         radio.setAttribute("class", "radio cs-" + Tabs[t].locName);
-        radio.setAttribute("id", "radio."+ Tabs[t].modName);
+        radio.setAttribute("id", "mod-radio."+ Tabs[t].modName);
         radio.setAttribute("label", Tabs[t].label);
         
         // do we need to add another column now?
@@ -145,17 +146,16 @@ function SearchObj(searchObj) {
 
     // now do a search if we have text to search for
     if (this.searchText != "") {
-    
       if (document.getElementById("searchType").selectedIndex == EXACT_TEXT || !Bible.luceneEnabled(this.searchModule))
         window.setTimeout("Search.search()", 500); // Timeout is for non-Lucene search
       else this.search();
-      
     }
+    
   };
 
 
   // The update function assumes our "this" parameters are updated already, 
-  // and it just uses them to update the search UI.
+  // and it just uses them to update the advanced search UI.
   this.update = function() {
 
     // update the choose-book dropdown
@@ -187,14 +187,6 @@ function SearchObj(searchObj) {
 
   };
 
-/*
-function updateSearchBoxStyle(svers) {
-  var searchBoxBodyElem = document.getElementById("search-frame").contentDocument.getElementById("searchBoxBody");
-  searchBoxBodyElem.className = "searchres cs-" + svers;
-  // The following is a work around for a MOZILLA BUG
-  searchBoxBodyElem.style.whiteSpace = (searchBoxBodyElem.style.direction == "rtl" ? "normal":"");
-}
-*/
 
   // Initiates a search using the Search object's previously set parameters.
   // It is possible to search using a Worker thread for progress feedback. But 
@@ -206,28 +198,30 @@ function updateSearchBoxStyle(svers) {
     if (this.progress && this.progress.timeout) this.quitProgress(true);
     if (!this.searchText) return;
     
-    // Remove any dynamically previously added Strong's lemma classes from CSS stylesheet 
+    // Remove any previously added Strong's lemma classes from CSS stylesheet 
     for (var i = (AddedStrongsCSSRules.length-1); i>=0; i--) {
       AddedStrongsCSSRules[i].sheet.deleteRule(AddedStrongsCSSRules[i].index);
     }
     
     this.s = {};
+    this.result = {};
+    this.progress = null;
+    
     this.s.isnew = true;
+    this.s.mod = this.searchModule;
     
     // change window title to new search
     document.title = fixWindowTitle(this.originalTitle.replace("**search_title**", this.searchText);
     
     // prepare search results window for new results
     SearchResults.innerHTML = "";
-    SearchResults.className = SearchResults.className.replace(/(\s*cs\-\S+)?\s*?$/, " cs-" + this.searchModule);
-    //SearchResults.style.whiteSpace = (ModuleConfigs[this.searchModule].direction == "rtl" ? "normal":""); // FF bug workaround
+    //SearchResults.style.whiteSpace = (ModuleConfigs[this.s.mod].direction == "rtl" ? "normal":""); // FF bug workaround
     LexiconResults.innerHTML = "";
-    LexiconResults.className = LexiconResults.className.replace(/(\s*cs\-\S+)?\s*?$/, " cs-" + this.searchModule);
     
     // ask user if search index may be created now?
-    if (!Bible.luceneEnabled(this.searchModule)) {
+    if (!Bible.luceneEnabled(this.s.mod)) {
       try {
-        var dontAsk = (prefs.getBoolPref("dontAskAboutSearchIndex." + this.searchModule) && 
+        var dontAsk = (prefs.getBoolPref("dontAskAboutSearchIndex." + this.s.mod) && 
             document.getElementById("searchText").value.search("lemma:") == -1);
       }
       catch (er) {dontAsk = false;}
@@ -239,7 +233,7 @@ function updateSearchBoxStyle(svers) {
             SBundle.getString("NeedSearchIndex"), 
             DLGINFO,
             DLGOKCANCEL);
-        prefs.setBoolPref("dontAskAboutSearchIndex." + this.searchModule, true);
+        prefs.setBoolPref("dontAskAboutSearchIndex." + this.s.mod, true);
         if (result.ok) startIndexer(true)
         return;
       }
@@ -262,7 +256,7 @@ function updateSearchBoxStyle(svers) {
     var rawText = this.s.query; // save query at this point for use later
 
     // prepare search text based on search type
-    if (Bible.luceneEnabled(this.searchModule)) {
+    if (Bible.luceneEnabled(this.s.mod)) {
       this.s.type = LUCENE; //Lucene search
       
       // if Lucene special chars/operators are present then take string literally without any modification
@@ -293,7 +287,7 @@ function updateSearchBoxStyle(svers) {
     
     // get Search scope
     this.s.scope = ""; // default scope is all
-    if (Tab[this.searchModule].modType == BIBLE || Tab[this.searchModule].modType == COMMENTARY) {
+    if (Tab[this.s.mod].modType == BIBLE || Tab[this.s.mod].modType == COMMENTARY) {
       
       if (document.getElementById("scopeRadio").selectedItem == document.getElementById("searchCB"))
           this.s.scope = document.getElementById("scopeMenu").selectedItem.value; // value comes from UI!
@@ -302,7 +296,6 @@ function updateSearchBoxStyle(svers) {
     }
     
     // to highlight results, build regular expressions for matching them
-    this.result = {};
     switch (document.getElementById("searchType").selectedIndex) {
     case CONTAINS_THE_WORDS:
     case SIMILAR_WORDS:
@@ -347,10 +340,9 @@ function updateSearchBoxStyle(svers) {
     // book by book, using timeouts to update a progress bar and 
     // initiate search on another piece of the full search scope. 2) 
     // search the entire scope at once without any progress bar.
-    this.progress = null;
     if (this.s.type != LUCENE && 
-        (Tab[this.searchModule].modType == BIBLE || 
-        Tab[this.searchModule].modType == COMMENTARY)) {
+        (Tab[this.s.mod].modType == BIBLE || 
+        Tab[this.s.mod].modType == COMMENTARY)) {
           
       // search book by book...
       this.progress = {};
@@ -391,13 +383,14 @@ function updateSearchBoxStyle(svers) {
     else {
       
       // Search all in one go...
-      this.result.count = Bible.search(this.searchModule, this.s.query, "", this.s.scope, this.s.flags, this.s.isnew);
+      this.result.count = Bible.search(this.s.mod, this.s.query, "", this.s.scope, this.s.flags, this.s.isnew);
 
       this.updateStatusBar(this.result);
       
-      this.showSearchResults(this.result, this.s);
+      this.showSearchResults(this.s.mod, this.result, this.s);
     }
   };
+  
   
   this.getTermsArray = function(terms) {
     var tr = [];
@@ -420,6 +413,7 @@ function updateSearchBoxStyle(svers) {
     return tr;
   };
 
+
   this.updateStatusBar = function(result) {
     
     // don't show navigation arrows if they're not needed
@@ -434,12 +428,18 @@ function updateSearchBoxStyle(svers) {
     
   };
 
-  // Display the current page of results for the last search
-  this.showSearchResults = function(result, s) {
+
+  // Display the current page of results for the last search. NOTE:
+  // the module (mod) is not always the same as that which generated
+  // the search results.
+  this.showSearchResults = function(mod, result, s) {
     if (!result || !s) return;
+    
+    // only allow translation if both mod and s.mod are BIBLEs
+    if (mod != s.mod && (Tab[mod].modType != BIBLE || Tab[s.mod].modType != BIBLE)) return;
 
     // read our search results
-    var r = Bible.getSearchResults(this.searchModule, result.index, result.results_per_page, (/lemma\:/).test(s.query));
+    var r = Bible.getSearchResults(mod, result.index, result.results_per_page, (/lemma\:/).test(s.query));
     if (!r) return;
     
     SearchResults.innerHTML = r;
@@ -450,16 +450,19 @@ function updateSearchBoxStyle(svers) {
       
       // add a reference link to each result
       var l = document.createElement("a");
-      
-      if (Tab[this.searchModule].modType == BIBLE || Tab[this.searchModule].modType == COMMENTARY) {
-        l.innerHTML = ref2ProgramLocaleText(p.osisref);
+      if (Tab[s.mod].modType == BIBLE || Tab[s.mod].modType == COMMENTARY) {
+        // translate from s.mod to mod...
+        var loc = Bible.convertLocation(Bible.getVerseSystem(s.mod), p.osisref, Bible.getVerseSystem(mod));
+        l.innerHTML = ref2ProgramLocaleText(loc);
         l.className = "cs-Program";
+        loc = loc.split(".");
+        l.setAttribute("href", "javascript:MainWindow.showLocation('" + mod + "','" + loc[0] + "','" + loc[1] + "','" + loc[2] + "','" + loc[3] + "');");
       }
       else {
         l.innerHTML = p.ch;
-        l.className = "cs-" + this.searchModule;
+        l.className = "cs-" + mod;
+        l.setAttribute("href", "javascript:MainWindow.showLocation('" + mod + "','na','" + p.ch + "','" + p.vs + "','" + p.lv + "');");
       }
-      l.setAttribute("href", "javascript:MainWindow.showLocation('" + this.searchModule + "','" + p.bk + "','" + p.ch + "','" + p.vs + "','" + p.lv + "');");
       
       var reftext = r;
       r.insertBefore(l, r.firstChild);
@@ -500,13 +503,15 @@ function updateSearchBoxStyle(svers) {
       
       if (!LexiconResults.innerHTML) {
         
-        LexiconResults.innerHTML = Bible.getSearchResults(this.searchModule, 0, 0, true);
+        LexiconResults.innerHTML = Bible.getSearchResults(mod, 0, 0, true);
         
-        var lexicon = [];
+        var html = "";
         for (var i=0; i<classes.length; i++) {
           if (!(/^S_/).test(classes[i])) continue;
           
-          // iterate through all elements with this Strong's number
+          var lexicon = [];
+          
+          // iterate through all elements having this Strong's number
           var els = LexiconResults.getElementsByClassName(classes[i]);
           for (var el=0; el<els.length; el++) {
             
@@ -518,95 +523,39 @@ function updateSearchBoxStyle(svers) {
                 break;
               }
             }
-            if (j == lexicon.length) lexicon.push( {text:els[el].innerHTML, count:1} );
             
+            if (j == lexicon.length) lexicon.push( {text:els[el].innerHTML, count:1} );
+          }
+          
+          // sort the results 
+          lexicon.sort(function(a,b) {return b.count - a.count;});
+          
+          // format and save the results
+          html += "<span class=\"lex-link\">" + classes[i] + "</span>";
+          for (var j=0; j<lexicon.length; j++) {
+            html += "<span class=\"lex-text\">" + lexicon[j].text + "</span><span class=\"lex-count\">" + lexicon[j].count + "</span>";
           }
           
         }
         
-        // sort the results 
-        
-        // display the results
+        LexiconResults.innerHTML = (html ? html:"<span style=\"display:none\"></span>"); // must not be left empty!
          
       }
-      
     }
     
   };
     
-    
-    
-    
-    // Build result HTML
-    var isStrongsSearch = document.getElementById("searchText").value.search("lemma:")!=-1;
-    var strongsArray = [];
-    for (var r=0; r<wordsToHighlight.length; r++) {
-      if (!wordsToHighlight[r]) continue;
-      if (wordsToHighlight[r].type=="lemma") {
-        var firstChar = wordsToHighlight[r].term.indexOf("G");
-        if (firstChar == -1) firstChar = wordsToHighlight[r].term.indexOf("H");
-        if (firstChar != -1) {
-          var sterm = "'S:" + wordsToHighlight[r].term.substr(firstChar) + "'";
-          strongsArray.push(sterm);
-        }
-      }
-    }
-  //dump(strongsArray + "\n");
-    var matchid, matchLink, matchText; 
-    var match = matches.split("<nx>");
-    match.pop(); //remove last value which is always empty
-    for (var i=0; i<match.length; i++) {
-      var parts = match[i].split("<bg>");
-      if (ModuleUsesVerseKey) {
-        try {var bname = Book[findBookNum(parts[0].split(".")[0])].bName;}
-        catch (er) {jsdump("WARNING: getHTMLSearchResults, NO BNUM!!: " + parts[0] + "\n"); continue;}
-        matchLink = ref2ProgramLocaleText(parts[0]);
-      }
-      else matchLink = parts[0];
-      switch (getModuleLongType(displayVersion)) {
-      case BIBLE:
-      case COMMENTARY:
-      case DICTIONARY:
-        matchid = parts[0];
-        break;
-      case GENBOOK:
-        matchid = "/" + displayVersion  + parts[0];
-        break;
-      }
-      matchText = parts[1];
-      // Highlight the search word(s)
-      for (var r=0; r<wordsToHighlight.length; r++) {
-        if (!wordsToHighlight[r]) continue;
-        if (wordsToHighlight[r].type=="RegExp") {
-          var regex = new RegExp(wordsToHighlight[r].term,"gim");
-          matchText = matchText.replace(regex, "$1<span class=\"searchterm\">$2</span>$3");
-        }
-        else if (wordsToHighlight[r].type=="string") {
-          matchText = matchText.replace(wordsToHighlight[r].term, "<span class=\"searchterm\">$&</span>", "gim");
-        }
-      }
-      if (!matchText || matchText.length < 4) {matchText = versionDirectionEntity;} //Unicode control mark insures blank rtl lines do not become ltr or vice versa...
-      matchid = encodeUTF8(matchid);
-      matchText = matchText.replace(/<br[^>]*>/g, "");
-      //var tline = "<div class=\"matchverse\"><a id=\"vl." + matchid + "\" href=\"javascript:MainWindowRef.gotoLink('" + matchid + "','" + displayVersion + "');\" class=\"cs-Program\">" + matchLink + " - " + "</a><span id=\"vt." + matchid + "\">" + matchText + "</span><br></div>";
-      html += tline;
-    }
-    if (isStrongsSearch) {
-      window.setTimeout("MainWindow.highlightStrongs(document.getElementById('search-frame').contentDocument.getElementById('searchBox'), [" + strongsArray + "], 'searchterm')", 0); 
-    }
-    return html;
-  };
 
   // This routine is only used by non-indexed search.
   this.searchNextBook = function() {
-    if (!Search.progress) return; // quitProgress set's this to null
+    if (!Search.progress) return; // quitProgress sets this to null
     
     var progress = Search.progress;
     var result = Search.result;
     var s = Search.s;
 
     var sScope = Book[progress.book[progress.index]].sName;
-    result.count += Bible.search(this.searchModule, s.query, sScope, s.type, s.flags, s.isnew);
+    result.count += Bible.search(s.mod, s.query, sScope, s.type, s.flags, s.isnew);
     s.isnew = false;
     
     progress.index++;
@@ -628,14 +577,48 @@ function updateSearchBoxStyle(svers) {
     
     this.quitProgress();
     
-    this.updateStatusBar(this.result);
+    this.updateStatusBar(result);
       
-    this.showSearchResults(this.result, this.s);
+    this.showSearchResults(s.mod, result, s);
     
   };
 
-function changeToModule(mod) {
-  if (Searching) this.quitProgress(true);
+}
+
+
+function commandHandler(e) {
+  if (!e.target.id) return;
+  
+  switch (e.target.id.split(".")[0]) {
+  case "advancedmatch":
+  case "hasthewords":
+  case "matchsimilar":
+  case "hasthistext":
+  case "scopeRadio":
+    Search.update();
+    break;
+        
+  case "mod-radio":
+    Search.searchModule = e.target.id.split(".")[1];
+    if (Search.progress.timeout) Search.quitProgress(true);
+    // IMPORTANT!: Or else user may unknowingly get a partial search without his choosing:
+    document.getElementById("scopeRadio").selectedIndex = 0;
+    
+    Search.update();
+    if (Tab[Search.searchModule].modType == BIBLE && getModuleLongType(mod) == BIBLE) {
+      updateSearchBoxStyle(mod);
+      SearchBoxElement.innerHTML = getHTMLSearchResults(StartVerse, VersesPerPage, TR);
+    }
+    break;    
+    
+  
+    var svers = document.getElementById(myId).selectedItem;
+    if (svers && svers.id) {
+      svers = svers.id.split(".")[0];
+      changeToModule(svers);
+    }
+    
+      if (Searching) this.quitProgress(true);
   document.getElementById("scopeRadio").selectedIndex=0; // IMPORTANT!: Or else user may unknowingly get a partial search without his choosing!
   if (prefs.getCharPref("SearchVersion") != mod) {
     prefs.setCharPref("SearchVersion", mod);
@@ -646,30 +629,8 @@ function changeToModule(mod) {
       SearchBoxElement.innerHTML = getHTMLSearchResults(StartVerse, VersesPerPage, TR);
     }
   }
-}
-
-var SearchHelpWindow;
-function commandHandler(e) {
-  var myId;
-  try {myId = e.id;}
-  catch (er) {myId = e.target.id;}
   
-  switch (myId) {
-  case "advancedmatch":
-  case "hasthewords":
-  case "matchsimilar":
-  case "hasthistext":
-  case "scopeRadio":
-    updateSearchWindow();
-    updateSortBy();
-    break;
-        
-  case "sversion.sim":
-    var svers = document.getElementById(myId).selectedItem;
-    if (svers && svers.id) {
-      svers = svers.id.split(".")[0];
-      changeToModule(svers);
-    }
+  
     break;
     
   case "moreless":
@@ -824,8 +785,4 @@ function getSearchPrintHTML() {
   p += "</div>";
   
   return p;
-}
-
-function onRefUserUpdate() {
-  changeToModule(document.getElementById("moddropdown").version);
 }
