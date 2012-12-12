@@ -1,3 +1,14 @@
 #lexiconBox {
   display:none;
 }
+body[hasLexicon="true"] #lexiconBox {
+  display:block;
+}
+.matchingStrongs {
+  /* this rule is copied by Javascript 
+  and applied to Strong's classes */
+  color:red;
+}
+.searchTerm {
+  color:red;
+}

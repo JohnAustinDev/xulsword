@@ -205,6 +205,7 @@ var Bible = {
       var type = mods[m].split(";")[1];
       
       if (type != BIBLE) continue; // only Bible modules are encrypted
+      
       // We don't need to supply a  cipher key if the CipherKey conf
       // entry is not present (=NOTFOUND) or else non-empty.
       if (!(/^\s*$/).test(this.getModuleInformation(mod, "CipherKey"))) continue;

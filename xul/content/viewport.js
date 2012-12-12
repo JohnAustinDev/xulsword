@@ -389,7 +389,7 @@ function ViewPortObj(viewPortObj) {
   this.hackedResizing = function(skipBibleChooserTest) {
     
     try {
-      var winh = getIntPref("ViewPortHeight");
+      var winh = prefs.getIntPref("ViewPortHeight");
       prefs.clearUserPref("ViewPortHeight");
     }
     catch (er) {winh = window.innerHeight;}
