@@ -37,9 +37,7 @@ image#question {
   padding:6px 10px 20px 10px;
 }
 groupbox {
-  margin-bottom:0px;
-  margin-left:10px;
-  margin-right:10px;
+  margin:5px 10px 0px 10px;
 }
 #dividerBox {
   background:rgb(220,220,220);
@@ -61,7 +59,7 @@ groupbox {
 }
 
 #searchframe-cont {
-  padding:10px;
+  padding:5px 10px 10px 10px;
 }
 .searchframe {
   border:2px solid rgb(200,170,205);

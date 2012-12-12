@@ -17,6 +17,9 @@
 */
 
 var Indexer = {
+  
+  moduleName:prefs.getCharPref("DefaultVersion"),
+  
   inprogress:false,
   
   progressMeter:null,
@@ -31,13 +34,12 @@ var Indexer = {
   },
 
   create: function() {
-    var modname = prefs.getCharPref("SearchVersion");
     var cipherkey = null;
     var usesecurity = null;
-    if (!Bible.getModuleInformation(modname, "CipherKey")) {
-      try {cipherkey = getPrefOrCreate("CipherKey" + modname, "Char", prefs.getCharPref("DefaultCK"));}
-      catch(er) {cipherkey = null;}
-      usesecurity = usesSecurityModule(Bible, modname);
+    if (!Bible.getModuleInformation(this.moduleName, "CipherKey")) {
+      try {cipherkey = getPrefOrCreate("CipherKey" + this.moduleName, "Char", prefs.getCharPref("DefaultCK"));}
+      catch(er) {cipherkey = "0";}
+      usesecurity = usesSecurityModule(Bible, this.moduleName);
     }
     Bible.pause();
 
@@ -47,8 +49,8 @@ var Indexer = {
       this.indexer.onmessage = this.progress;
     }
 
-    this.indexer.postMessage({modname:modname, moddir:Bible.ModuleDirectory, libpath:Bible.LibswordPath, cipherkey:cipherkey, usesecurity:usesecurity});
-    this.inprogress = modname;
+    this.indexer.postMessage({modname:this.moduleName, moddir:Bible.ModuleDirectory, libpath:Bible.LibswordPath, cipherkey:cipherkey, usesecurity:usesecurity});
+    this.inprogress = this.moduleName;
   },
 
   terminate: function() {

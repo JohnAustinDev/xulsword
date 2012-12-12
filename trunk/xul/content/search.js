@@ -37,12 +37,12 @@ function initSearch() {
   Search = new SearchObj(searchInits);
   SearchResults = document.getElementById("search-frame").contentDocument.getElementById("searchBox");
   LexiconResults = document.getElementById("search-frame").contentDocument.getElementById("lexiconBox");
-  MatchingStrongs = getCSS(".matchingStrongs {"); // Read from CSS stylesheet
+  MatchingStrongs = document.getElementById("search-frame").contentDocument.defaultView.getCSS(".matchingStrongs {"); // Read from CSS stylesheet
   AddedStrongsCSSRules = [];
   UI_bundle = document.getElementById("strings");
   
-  Search.init();
-  
+  window.setTimeout("Search.init();", 1); // timeout needed for DOM changes to take effect
+
 }
 
 
@@ -54,19 +54,43 @@ function SearchObj(searchObj) {
 
   this.s = {};
   
-  // these parameters may be passed to a new Search window using searchObj
+  // These parameters may be passed to a new Search window using searchObj.
+  // The type and scope params are search.xul IDs for the desired selections.
   this.s.mod        = (searchObj.hasOwnProperty("mod") ? searchObj.mod:search_defaults.mod);
   this.s.searchtext = (searchObj.hasOwnProperty("searchtext") ? searchObj.searchtext:search_defaults.searchtext);
   this.s.type       = (searchObj.hasOwnProperty("type") ? searchObj.type:search_defaults.type);
   this.s.scope      = (searchObj.hasOwnProperty("scope") ? searchObj.scope:search_defaults.scope);
 
-  this.result = null;
+  this.result = {};
   this.progress = null;
   this.originalTitle = document.title;
   
+  // add module radio buttons according to type
+  var numcols = 1;
+  for (var rowtype in SupportedModuleTypes) {
+    for (var t=0; t<Tabs.length; t++) {
+      if (getShortTypeFromLong(Tabs[t].modType) != rowtype) continue;
+      
+      var row = document.getElementById(rowtype + "-row");
+      row.removeAttribute("hidden");
+      
+      var radio = document.createElement("radio");
+      radio.setAttribute("class", "radio cs-" + Tabs[t].locName);
+      radio.setAttribute("id", "mod-radio."+ Tabs[t].modName);
+      radio.setAttribute("label", Tabs[t].label);
+      
+      // do we need to add another column now?
+      if (row.childNodes.length + 1 > numcols) {
+        document.getElementById("module-columns").appendChild(document.createElement("column"));
+        numcols++;
+      }
+    
+      row.appendChild(radio);
+    }
+  }
   
-  // Initialize our search UI according to the object's initial "this" parameters,
-  // available Tabs, etc. Initiates a search upon completion.
+  // Initialize our search UI according to the object's initial "this" parameters.
+  // Initiates a search upon completion.
   this.init = function() {
   
     var s = this.s;
@@ -75,7 +99,7 @@ function SearchObj(searchObj) {
     document.getElementById("searchText").value = s.searchtext;
     document.title = fixWindowTitle(this.originalTitle.replace("**search_title**", s.searchtext));
     
-    // hide any scope labels which are not supplied by the UI and select the proper one
+    // hide any scope labels which are not supplied by the UI and select the proper scope
     var scopes = ["sg1","sg2","sg3","sg4","sg5","sg6"];
     for (var i=0; i<scopes.length; i++) {
       var elem = document.getElementById(scopes[i]);
@@ -87,31 +111,7 @@ function SearchObj(searchObj) {
     document.getElementById("scopeRadio").selectedItem = document.getElementById(s.scope);
     
     document.getElementById("searchType").selectedItem = document.getElementById(s.type);
-
-    // add module radio buttons according to type
-    var numcols = 1;
-    for (var rowtype in SupportedModuleTypes) {
-      for (var t=0; t<Tabs.length; t++) {
-        if (getShortTypeFromLong(Tabs[t].modType) != rowtype) continue;
-        
-        var row = document.getElementById(rowtype + "-row");
-        row.removeAttribute("hidden");
-        
-        var radio = document.createElement("radio");
-        radio.setAttribute("class", "radio cs-" + Tabs[t].locName);
-        radio.setAttribute("id", "mod-radio."+ Tabs[t].modName);
-        radio.setAttribute("label", Tabs[t].label);
-        
-        // do we need to add another column now?
-        if (row.childNodes.length + 1 > numcols) {
-          document.getElementById("module-columns").appendChild(document.createElement("column"));
-          numcols++;
-        }
-      
-        row.appendChild(radio);
-      }
-    }
-    
+   
     // select our module to search in the radiogroup
     var item = document.getElementById("mod-radio." + s.mod);
     document.getElementById("search-module").selectedItem = item;
@@ -160,20 +160,28 @@ function SearchObj(searchObj) {
 
     if ((/^\s*$/).test(document.getElementById("searchText").value)) return;
 
-    var s = this.s;
-    var result = this.result;
-    
     if (this.progress && this.progress.timeout) this.quitProgress(true);
     this.progress = null;
     
-    s = { mod:null, searchtext:null, query:null, scope:null, type:null, flags:null, isnew:null };
-    result = { matchterms:null, count:null, index:null, results_per_page:null };
+    // initialize search from scratch...
+    this.s = {};
+    this.result = {};
     
-    s.isnew = true;
+    var s = this.s; // save some typing
+    var result = this.result;
+    
     s.mod = document.getElementById("search-module").selectedItem.id.match(/^mod-radio\.(.*)$/)[1];
     s.searchtext = document.getElementById("searchText").value;
+    s.query = null;
+    s.scope = null;
+    s.type = null;
+    s.flags = null;
+    s.isnew = true;
+    
+    result.matchterms = null;
+    result.count = null;
+    result.index = 0; 
     result.results_per_page = MaxResultsPerPage;
-    result.index = 0;
         
     // change window title to new search
     document.title = fixWindowTitle(this.originalTitle.replace("**search_title**", s.searchtext));
@@ -189,6 +197,7 @@ function SearchObj(searchObj) {
     for (var i = (AddedStrongsCSSRules.length-1); i>=0; i--) {
       AddedStrongsCSSRules[i].sheet.deleteRule(AddedStrongsCSSRules[i].index);
     }
+    AddedStrongsCSSRules = [];
     
     // ask user if search index may be created now?
     if (!Bible.luceneEnabled(s.mod)) {
@@ -319,26 +328,23 @@ function SearchObj(searchObj) {
       
       // get array of books to search from scope param
       // example Scope=Gen Ps.0-Ps.150 Matt-Rev
-      this.progress.books = [];
-      var s = (s.scope + " ").split(/\s+/);
-      for (var x=0; x<s.length; x++) {
-        if (!s[x]) continue;
-        var b = (s[x] + "-").split("-");
-        for (var y=0; y<b.length; y++) {
-          if (!b[y]) continue;
-          b[y] = b[y].replace(/^([^\.]*)\..*$/, "$1");
-          var bn = findBookNum(b[y]);
-          if (bn === null) continue; // unrecognized book in scope
-          this.progress.books[bn] = true;
-        }
+      // NOTE: scope params must be in KJV book order!
+      this.progress.book = [];
+      var b = 0;
+      var sc = s.scope.split(/\s+/);
+      for (var x=0; x<sc.length; x++) {
+        var bk = sc[x].split("-");
+        var beg = findBookNum(bk[0].replace(/\..*$/, ""));
+        var end = (bk.length == 2 ? findBookNum(bk[1].replace(/\..*$/, "")):beg);
+        for (i=beg; i<=end; i++) {this.progress.book[i] = true;}
       }
 
       // show and init progress meter
       this.progress.searchedchaps = 0;
       this.progress.totalchaps = 0;
-      for (var x=0; x<this.progress.books.length; x++) {
-        if (!this.progress.books[x]) continue;
-        if (!this.progress.hasOwnProperty("index")) this.progress.index = x;
+      for (var x=0; x<this.progress.book.length; x++) {
+        if (!this.progress.book[x]) continue;
+        if (this.progress.index === null) this.progress.index = x;
         this.progress.totalchaps += Bible.getMaxChapter("KJV", Book[x].sName);
       }
       document.getElementById("statusbar-text").label = "";    
@@ -352,13 +358,56 @@ function SearchObj(searchObj) {
     else {
       
       // Search all in one go with no progress meter...
-//var p=""; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(p);
+//var p="Lucene Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(p);
       result.count = Bible.search(s.mod, s.query, s.scope, s.type, s.flags, s.isnew);
 
       this.updateStatusBar(result);
       
       this.showSearchResults(result, s);
     }
+  };
+  
+
+  // This routine is only used by non-indexed search.
+  this.searchNextBook = function() {
+    if (!Search.progress) return; // quitProgress sets this to null
+    
+    var progress = Search.progress;
+    var result = Search.result;
+    var s = Search.s;
+
+    // Search a single book...
+    var sScope = Book[progress.index].sName;
+    if (!result.count) result.count = 0;
+//var p="RegExp Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(p + "scope=" + sScope);
+    result.count += Bible.search(s.mod, s.query, sScope, s.type, s.flags, s.isnew);
+    s.isnew = false;
+    
+    progress.searchedchaps += Bible.getMaxChapter("KJV", sScope);
+    
+    progress.index++;
+    
+    document.getElementById("progress").value = 100*(progress.searchedchaps/progress.totalchaps);
+
+    // get next book on list to search
+    while(progress.index <= progress.book.length-1 && !progress.book[progress.index]) {
+      progress.index++;
+    }
+    
+    // search another book, or are we done?
+    if (progress.index < progress.book.length) {
+      document.getElementById("searchmsg").value = UI_bundle.getFormattedString("Searching", [Book[progress.index].bName]);
+      progress.timeout = window.setTimeout("Search.searchNextBook();", 1);
+      return;
+    }
+    
+    // Were DONE, so close up and display results
+    this.quitProgress();
+    
+    this.updateStatusBar(result);
+      
+    this.showSearchResults(result, s);
+    
   };
   
   
@@ -411,6 +460,10 @@ function SearchObj(searchObj) {
     var r = Bible.getSearchResults(mod, result.index, result.results_per_page, (/lemma\:/).test(s.query));
     if (!r) return;
     
+    // workaround for a FF 17 bug where innerHTML could not be added to
+    // an anchor which was created using createElement...
+    r = r.replace(/<span /g, "<a></a><span ");
+    
     SearchResults.innerHTML = r;
     
     r = SearchResults.firstChild;
@@ -418,7 +471,7 @@ function SearchObj(searchObj) {
       var p = getElementInfo(r);
       
       // add a reference link to each result
-      var l = document.createElement("a");
+      var l = r.firstChild;
       if (Tab[s.mod].modType == BIBLE || Tab[s.mod].modType == COMMENTARY) {
         // translate from s.mod to mod...
         var loc = Bible.convertLocation(Bible.getVerseSystem(s.mod), p.osisref, Bible.getVerseSystem(mod));
@@ -433,11 +486,8 @@ function SearchObj(searchObj) {
         l.setAttribute("href", "javascript:MainWindow.showLocation('" + mod + "','na','" + p.ch + "',1,1);");
       }
       
-      var reftext = r;
-      r.insertBefore(l, r.firstChild);
-      
       // apply hilights to search result matches
-      var html = reftext.innerHTML;
+      var html = r.lastChild.innerHTML;
       for (var m=0; m<result.matchterms.length; m++) {
         if (!result.matchterms[m]) continue;
         if (result.matchterms[m].type == "RegExp") {
@@ -448,10 +498,8 @@ function SearchObj(searchObj) {
           html = html.replace(result.matchterms[m].term, "<span class=\"searchterm\">$&</span>", "gim");
         }
       }
-      
       html = html.replace(/<br[^>]*>/g, "");
-      
-      reftext.innerHTML = html;
+      r.lastChild.innerHTML = html;
       
       r = r.nextSibling;
     }
@@ -460,11 +508,11 @@ function SearchObj(searchObj) {
     // Also, create and show the lexicon window for those Strong's numbers.
     if ((/lemma\:/).test(s.query)) {
       
-      var classes = s.query.match(/lemma\:(\S+)/g);
+      var classes = s.query.match(/lemma\:\S+/g);
       
       for (var i=0; i<classes.length; i++) {
-        if (!(/^S_/).test(classes[i])) continue;
-        var sheet = document.styleSheets[document.styleSheets.length-1];
+        classes[i] = "S_" + classes[i].replace(/lemma\:/, "");
+        var sheet = document.getElementById("search-frame").contentDocument.styleSheets[document.styleSheets.length-1];
         var index = sheet.cssRules.length;
         sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
         AddedStrongsCSSRules.push( { sheet:sheet, index:index } );
@@ -473,7 +521,7 @@ function SearchObj(searchObj) {
       if (!LexiconResults.innerHTML) {
         
         LexiconResults.style.display = "none"; // might speed things up??
-        LexiconResults.innerHTML = Bible.getSearchResults(mod, 0, 0, true);
+        LexiconResults.innerHTML = Bible.getSearchResults(mod, 0, 100, true);
         
         var html = "";
         for (var i=0; i<classes.length; i++) {
@@ -517,47 +565,14 @@ function SearchObj(searchObj) {
     }
     else LexiconResults.parentNode.setAttribute("hasLexicon", "false");
     
-  };
-    
-
-  // This routine is only used by non-indexed search.
-  this.searchNextBook = function() {
-    if (!Search.progress) return; // quitProgress sets this to null
-    
-    var progress = Search.progress;
-    var result = Search.result;
-    var s = Search.s;
-
-    var sScope = Book[progress.book[progress.index]].sName;
-//var p=""; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump("scope=" + sScope + " " + p);
-    result.count += Bible.search(s.mod, s.query, sScope, s.type, s.flags, s.isnew);
-    s.isnew = false;
-    
-    progress.index++;
-    progress.searchedchaps += Bible.getMaxChapter("KJV", sScope);
-    
-    document.getElementById("progress").value = 100*(progress.searchedchaps/progress.totalchaps);
-
-    // get next book on list to search
-    while(progress.index <= progress.books.length-1 && !progress.books[progress.index]) {
-      progress.index++;
-    }
-    
-    // search another book, or are we done?
-    if (progress.index < progress.books.length) {
-      document.getElementById("searchmsg").value = UI_bundle.getFormattedString("Searching", [Book[progress.book[progress.index]].bName]);
-      progress.timeout = window.setTimeout("Search.searchNextBook();", 1);
-      return;
-    }
-    
-    // Were DONE, so close up and display results
-    this.quitProgress();
-    
     this.updateStatusBar(result);
-      
-    this.showSearchResults(result, s);
     
+    // enable translator module dropdown if searched displayed module is a BIBLE
+    document.getElementById("moddropdown").setAttribute("disabled", (Tab[mod].modType == BIBLE ? "false":"true"));
+   
   };
+    
+
   
   
   this.quitProgress = function(invalidateResults) {
@@ -569,8 +584,8 @@ function SearchObj(searchObj) {
     
     // if we aborted, invalidate any partial results
     if (invalidateResults) {
-      this.result = null;
-      this.s = null;
+      this.result = {};
+      this.s = {};
     }
     
     document.getElementById("progressbox").style.visibility = "hidden";
@@ -704,6 +719,7 @@ function startIndexer(searchAfterCreate) {
   document.getElementById("stopButton").hidden = true;
   
   if (!MainWindow.Indexer.inprogress) {
+    MainWindow.Indexer.moduleName = document.getElementById("search-module").selectedItem.id.match(/^mod-radio\.(.*)$/)[1];
     MainWindow.Indexer.progressMeter = document.getElementById("progress");
     MainWindow.Indexer.exitfunc = indexerFinished;
     Bible.allWindowsModal(true); // prevent triggering of Bible ops
@@ -718,6 +734,8 @@ function indexerFinished() {
   document.getElementById("progress").value = 0;
   document.getElementById("searchmsg").value = "";
   document.getElementById("stopButton").hidden = true;
+  
+  Search.update();
   
   if (SearchAfterCreate) Search.search();
 }

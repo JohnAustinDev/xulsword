@@ -959,7 +959,7 @@ var XulswordController = {
 function getDefaultTarget() {
   var target = {};
   target.search = { 
-      mod:prefs.getCharPref("DefaultVersion"), 
+      mod:ViewPort.firstDisplayBible(), 
       searchtext:document.getElementById('searchText').value, 
       type:"hasthewords", 
       scope:"searchAll" 

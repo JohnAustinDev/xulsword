@@ -440,8 +440,7 @@ function scriptDblClick(e) {
   if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
 
   // Do a search for selected text in mod
-  //setUnicodePref("SearchText", sel);
-  //prefs.setCharPref("SearchVersion", mod);
+  MainWindow.GlobalTarget.search = {mod:mod, searchtext:sel, type:"hasthistext"};
   MainWindow.document.getElementById("cmd_xs_search").doCommand();
   
   e.stopPropagation(); // block any higher handlers

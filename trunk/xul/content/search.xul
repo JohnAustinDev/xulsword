@@ -58,7 +58,6 @@
 <keyset id="editMenuKeys"/>
 <commandset id="editMenuCommands"/>
 
-<!-- Search Results Controls !-->
 <toolbox>
 
   <menubar>
@@ -195,7 +194,14 @@
               
             </groupbox>
             
-            <reference-dropdown flex="1" disabled="true" id="moddropdown" menuheight="400px" onlybibles="false" hidebook="true" hidechapter="true" hideverse="true" hidelastverse="true" />
+            <reference-dropdown flex="1" disabled="true" 
+                id="moddropdown" 
+                menuheight="400px" 
+                onlybibles="false" 
+                hidebook="true" 
+                hidechapter="true" 
+                hideverse="true" 
+                hidelastverse="true" />
           
           </vbox>
           
@@ -210,8 +216,8 @@
 <vbox id="searchframe-cont" flex="1">
   <hbox flex="100%">
     <vbox  flex="100%">
-      <iframe flex="100%" 
-          id="search-frame" 
+      <iframe id="search-frame" 
+          flex="100%" 
           class="searchframe" 
           context="contextSearchBox" 
           src="search.html">
