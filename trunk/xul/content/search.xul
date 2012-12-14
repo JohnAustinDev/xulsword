@@ -22,10 +22,10 @@
 <?xml-stylesheet href="chrome://xulsword/skin/search-xul.css" type="text/css"?>
 
 <?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
-<?xul-overlay href="chrome://xulsword/content/contextMenu-overlay.xul" ?>
+<?xul-overlay href="chrome://xulsword/content/contextMenu-overlay.xul"?>
 
 <!DOCTYPE window [
-<!ENTITY % searchDTD SYSTEM "chrome://xulsword/locale/search.dtd" >
+<!ENTITY % searchDTD SYSTEM "chrome://xulsword/locale/search.dtd">
 %searchDTD;
 ]>
 
@@ -36,7 +36,6 @@
     persist="width height screenX screenY sizemode"
     onload="initSearch()"
     onunload="unloadSearchWindow();"
-    oncommand="commandHandler(event);"
     onclick="commandHandler(event);"
     onresize="document.getElementById('search-module').style.width = window.innerWidth + 'px';">
 
@@ -90,7 +89,7 @@
   </menubar>
   
   
-  <toolbar showAdvanced="false">
+  <toolbar showAdvanced="true">
     <vbox flex="1">
     
       <hbox id="searchrow" pack="center" align="center">
@@ -145,10 +144,10 @@
             <caption label="&type;"/> 
             
             <radiogroup id="searchType">
-              <radio id="hasthewords" selected="true" label="&hasthewords;"/>
-              <radio id="hasthistext" label="&hasthistext;"/>
-              <radio id="advancedmatch" label="&advancedmatch;"/>
-              <radio id="matchsimilar" label="&matchparts;"/>
+              <radio id="SearchAnyWord"   label="&hasthewords;" selected="true" />
+              <radio id="SearchExactText" label="&hasthistext;"/>
+              <radio id="SearchAdvanced"  label="&advancedmatch;"/>
+              <radio id="SearchSimilar"   label="&matchparts;"/>
             </radiogroup>
             
             </groupbox>
@@ -170,21 +169,21 @@
               <radiogroup id="scopeRadio" orient="horizontal">
               
                 <vbox>
-                  <radio id="searchAll" label="&search.all;" value="Gen-Rev" selected="true"/>
-                  <radio id="searchOT" label="&search.old;" value="Gen-Mal"/>
-                  <radio id="searchNT" label="&search.new;" value="Matt-Rev"/>
+                  <radio id="SearchAll" label="&search.all;" value="Gen-Rev" selected="true"/>
+                  <radio id="SearchOT" label="&search.old;" value="Gen-Mal"/>
+                  <radio id="SearchNT" label="&search.new;" value="Matt-Rev"/>
                 </vbox>
                 
                 <vbox>
-                  <radio id="searchCB" label="&search.currentbook;"/>
-                  <radio id="searchSelect" label="&search.groups;" value=""/>
+                  <radio id="SearchBook" label="&search.currentbook;" value="Gen-Rev"/>
+                  <radio id="SearchGroup" label="&search.groups;" value="Gen-Rev"/>
                   <menulist id="scopeMenu">
                     <menupopup>
                       <menuitem id="sg1" label="&search.torah;" value="&search.torah.books;"/>
                       <menuitem id="sg2" label="&search.history;" value="&search.history.books;"/>
                       <menuitem id="sg3" label="&search.wisdom;" value="&search.wisdom.books;"/>
                       <menuitem id="sg4" label="&search.prophets;" value="&search.prophets.books;"/>
-                      <menuitem id="sg5" label="&search.gospels;" value="&search.gospels.books;"/>
+                      <menuitem id="sg5" label="&search.gospels;" value="&search.gospels.books;" selected="true"/>
                       <menuitem id="sg6" label="&search.letters;" value="&search.letters.books;"/>
                     </menupopup>
                   </menulist>
@@ -194,14 +193,14 @@
               
             </groupbox>
             
-            <reference-dropdown flex="1" disabled="true" 
-                id="moddropdown" 
-                menuheight="400px" 
-                onlybibles="false" 
+            <reference-dropdown id="bible-translator" 
+                disabled="true" flex="1" 
+                onlybibles="true" 
                 hidebook="true" 
                 hidechapter="true" 
                 hideverse="true" 
-                hidelastverse="true" />
+                hidelastverse="true" 
+                menuheight="400px"/>
           
           </vbox>
           

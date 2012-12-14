@@ -16,23 +16,30 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+// This script is used to create a XUL ChromeWorker object which runs
+// in on it's own thread in the background.
+
 importScripts("chrome://xulsword/content/libsword.js");
 
 onmessage = function(event) {
   var data = event.data;
 
-  Bible.ModuleDirectory = data.moddir;
-  Bible.LibswordPath = data.libpath;
+  LibSword.ModuleDirectory = data.moddir;
+  LibSword.LibswordPath = data.libpath;
 
   var re = new RegExp("(^|<nx>)" + data.modname + ";");
-  if (re.test(Bible.getModuleList())) {
-    if (data.cipherkey) Bible.setCipherKey(data.modname, data.cipherkey, data.usesecurity);
-
-    Bible.searchIndexDelete(data.modname);
-    if (data.cipherKey) {Bible.setCipherKey(data.modname, data.cipherkey, data.usesecurity);}
-    Bible.searchIndexBuild(data.modname);
+  if (re.test(LibSword.getModuleList())) {
+    
+    if (data.cipherKey) LibSword.setCipherKey(data.modname, data.cipherKey, data.usesSecurity);
+    
+    if (LibSword.luceneEnabled(data.modname)) LibSword.searchIndexDelete(data.modname);
+        
+    LibSword.searchIndexBuild(data.modname);
+    
   }
   
-  Bible.quitLibsword();
+  LibSword.quitLibsword(); // LibSword.getModuleList started libsword earlier
+
   postMessage(-1);
 }

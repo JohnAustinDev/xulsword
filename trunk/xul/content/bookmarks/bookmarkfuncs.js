@@ -216,7 +216,7 @@ var BookmarkFuns = {
       if (!bmInfo[BMTEXT]) bmInfo[BMTEXT] = BookmarkFuns.getTextForBookmark(loc).text;
       if (!bmInfo[NAME]) bmInfo[NAME] = BookmarkFuns.getNameForBookmark(loc);
       if (!bmInfo[LOCATION] && loc.shortName)
-          bmInfo[LOCATION] = Location.convertLocation(Bible.getVerseSystem(loc.version), loc.shortName + "." + loc.chapter + "." + loc.verse + "." + loc.lastVerse, WESTERNVS);
+          bmInfo[LOCATION] = Location.convertLocation(LibSword.getVerseSystem(loc.version), loc.shortName + "." + loc.chapter + "." + loc.verse + "." + loc.lastVerse, WESTERNVS);
       break;
       
     case "Folder":
@@ -265,7 +265,7 @@ var BookmarkFuns = {
       break;
     }
     
-    // Add a module indicator if not a Bible...
+    // Add a module indicator if not a LibSword...
     if (Tab[location.version] && Tab[location.version].modType!=BIBLE)
       bmname = Tab[location.version].label + ": " + bmname;
     
@@ -297,7 +297,7 @@ var BookmarkFuns = {
     case COMMENTARY:
       var bkChap = location.shortName + " " + location.chapter + ":";
       location.lastVerse = location.lastVerse ? location.lastVerse:location.verse;
-      text = Bible.getVerseText(location.version, bkChap + location.verse + "-" + bkChap + location.lastVerse).replace(/^\s*/,"");
+      text = LibSword.getVerseText(location.version, bkChap + location.verse + "-" + bkChap + location.lastVerse).replace(/^\s*/,"");
       break;
       
     case DICTIONARY:
@@ -309,7 +309,7 @@ var BookmarkFuns = {
     case GENBOOK:
       var i = location.chapter.indexOf("/", 2);
       if (i != -1) {
-        text = Bible.getGenBookChapterText(location.version, location.chapter.substring(i+1));
+        text = LibSword.getGenBookChapterText(location.version, location.chapter.substring(i+1));
         text = Texts.addParagraphIDs(text, location.version);
         text = Texts.getParagraphWithIDTry(Number(location.verse), text, location.version);
       }
@@ -467,7 +467,7 @@ var BookmarkFuns = {
         // for backward compatibility...
         // this try is because pre V2.8, LOCATION was undefined and old BMs may cause problems here.
         // NOTE that even with garbage in LOCATION, xulsword will likely return a valid location to somewhere...
-        try {var loc = Location.convertLocation(WESTERNVS, info[LOCATION], Bible.getVerseSystem(mod));}
+        try {var loc = Location.convertLocation(WESTERNVS, info[LOCATION], LibSword.getVerseSystem(mod));}
         catch (er) {loc = null;}
       }
     }
@@ -596,7 +596,7 @@ var BookmarkFuns = {
   },
   
   updateMainWindow: function (focusOnMainWindow, scrollFlag) {
-    if (!MainWindow || Bible.paused) return;
+    if (!MainWindow || LibSword.paused) return;
     if (scrollFlag == null) scrollFlag = SCROLLTYPECENTER;
     if (focusOnMainWindow) MainWindow.focus();
     Texts.update(scrollFlag, HILIGHTVERSE, [null,1,1,1]);

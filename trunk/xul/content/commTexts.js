@@ -28,12 +28,12 @@ var CommTexts = {
     // For Pin feature, set "global" SWORD options for local context
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") continue;
-      Bible.setGlobalOption(GlobalToggleCommands[cmd], d.globalOptions[GlobalToggleCommands[cmd]]);
+      LibSword.setGlobalOption(GlobalToggleCommands[cmd], d.globalOptions[GlobalToggleCommands[cmd]]);
     }
     
     // get Commentary chapter's text
-    ret.htmlText = Bible.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");   
-    ret.footnotes = Bible.getNotes();
+    ret.htmlText = LibSword.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");   
+    ret.footnotes = LibSword.getNotes();
      
     var un;
     if (d.globalOptions["User Notes"] == "On") {
@@ -60,7 +60,7 @@ var CommTexts = {
     // put "global" SWORD options back to their global context values
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") continue;
-      Bible.setGlobalOption(GlobalToggleCommands[cmd], prefs.getCharPref(GlobalToggleCommands[cmd]));
+      LibSword.setGlobalOption(GlobalToggleCommands[cmd], prefs.getCharPref(GlobalToggleCommands[cmd]));
     }
     
     return ret;

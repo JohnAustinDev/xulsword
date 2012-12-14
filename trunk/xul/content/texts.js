@@ -155,7 +155,7 @@ var Texts = {
       
         // collect next chapter(s)
         var c = Number(display.ch) + 1;
-        while (c <= Bible.getMaxChapter(d2.mod, d2.bk + "." + d2.ch)) {
+        while (c <= LibSword.getMaxChapter(d2.mod, d2.bk + "." + d2.ch)) {
 //jsdump("reading w" + w + ": " + c);
           d2.ch = c;
           var tip = BibleTexts.read(w, d2);
@@ -518,7 +518,7 @@ var Texts = {
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") 
         display.globalOptions[GlobalToggleCommands[cmd]] = prefs.getCharPref(GlobalToggleCommands[cmd]);
-      else display.globalOptions[GlobalToggleCommands[cmd]] = Bible.getGlobalOption(GlobalToggleCommands[cmd]);
+      else display.globalOptions[GlobalToggleCommands[cmd]] = LibSword.getGlobalOption(GlobalToggleCommands[cmd]);
     }
     
     return display;

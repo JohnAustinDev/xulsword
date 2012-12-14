@@ -39,7 +39,7 @@ if (!SBundle) jsdump("WARNING: Unable to initialize string SBundle: (" + window.
 
 
 /************************************************************************
- * Create Bible Instance, Versions, Tabs and their globals
+ * GlobalToggleCommands globals
  ***********************************************************************/
 var GlobalToggleCommands = {
   cmd_xs_toggleHeadings:   "Headings",
@@ -163,7 +163,7 @@ function getModuleConfig(mod) {
   // Read values from module's .conf file
   for (var p in Config) {
     if (!Config[p].modConf) continue;
-    var val = Bible.getModuleInformation(mod, Config[p].modConf);
+    var val = LibSword.getModuleInformation(mod, Config[p].modConf);
     if ((/^\s*$/).test(val)) val = NOTFOUND;
     
     if (val == NOTFOUND && Config[p].CSS) {
@@ -448,10 +448,10 @@ function findBookNumL(bText) {
 }
 
 function getModuleLongType(aModule) {
-  if (!Bible) return null;
+  if (!LibSword) return null;
   if (aModule == ORIGINAL) return BIBLE;
   var typeRE = new RegExp("(^|<nx>)\\s*" + escapeRE(aModule) + "\\s*;\\s*(.*?)\\s*(<nx>|$)");
-  var type = Bible.getModuleList().match(typeRE);
+  var type = LibSword.getModuleList().match(typeRE);
   if (type) type = type[2];
   return type;
 }
@@ -483,8 +483,8 @@ function getAvailableBooks(version) {
   if (type!=BIBLE && type!=COMMENTARY) return null;
   for (var b=0; b<Book.length; b++) {
     if (type==BIBLE) {
-      var v1 = Bible.getVerseText(version, Book[b].sName + " 1:1");
-      var v2 = Bible.getVerseText(version, Book[b].sName + " 1:2");
+      var v1 = LibSword.getVerseText(version, Book[b].sName + " 1:1");
+      var v2 = LibSword.getVerseText(version, Book[b].sName + " 1:2");
       if ((!v1 && !v2) || (v1.match(/^\s*-\s*$/) && v2.match(/^\s*-\s*$/))) {
         hasMissing=true;
         continue;
@@ -499,11 +499,11 @@ function getAvailableBooks(version) {
 
 function getModsWithConfigEntry(param, value, biblesOnly, ignoreCase, matchValueBase) {
   var ret = [];
-  if (!Bible || !Tabs || !value) return ret;
+  if (!LibSword || !Tabs || !value) return ret;
   value = new RegExp("^" + value + (matchValueBase ? "(-.*)?":"") + "$", (ignoreCase ? "i":""));
   for (var t=0; t<Tabs.length; t++) {
     if (biblesOnly && Tabs[t].modType!=BIBLE) continue;
-    var tparam = Bible.getModuleInformation(Tabs[t].modName, param);
+    var tparam = LibSword.getModuleInformation(Tabs[t].modName, param);
     if (!tparam ||  tparam==NOTFOUND) continue;
     if (tparam.search(value) != -1) ret.push(Tabs[t].modName);
   }
@@ -568,7 +568,7 @@ function normalizeOsisReference(ref, bibleMod) {
   if (ref.search(/^[^\.]+\.\d+\.\d+-[^\.]+\.\d+\.\d+$/) != -1)  // bk.c.v-bk.c.v
     return ref; 
   if (ref.search(/^[^\.]+\.\d+$/) != -1)                        // bk.c
-    return  ref + ".1-" + ref + "." + Bible.getMaxVerse(bibleMod, ref);
+    return  ref + ".1-" + ref + "." + LibSword.getMaxVerse(bibleMod, ref);
     
   //else {jsdump("WARNING: Unrecognized Osis Cross Reference " + "\"" + saveref + ", " + ref + "\" found in " + Location.getLocation(bibleMod) + "\n");}
   return null;
@@ -607,16 +607,16 @@ function findAVerseText(version, location, windowNum) {
   var bibleLocation = location;
   if (getModuleLongType(version)==BIBLE) bibleVersion = version;
   else if (!getPrefOrCreate("DontReadReferenceBible", "Bool", false)) {
-    bibleVersion = Bible.getModuleInformation(version, "ReferenceBible");
+    bibleVersion = LibSword.getModuleInformation(version, "ReferenceBible");
     bibleVersion = (bibleVersion==NOTFOUND || !Tab[bibleVersion] ? null:bibleVersion);
-    if (bibleVersion) bibleLocation = Location.convertLocation(Bible.getVerseSystem(version), location, Bible.getVerseSystem(bibleVersion));
+    if (bibleVersion) bibleLocation = Location.convertLocation(LibSword.getVerseSystem(version), location, LibSword.getVerseSystem(bibleVersion));
   }
   //If we have a Bible, try it first.
   if (bibleVersion && Tab[bibleVersion]) {
-    try {var text = Bible.getVerseText(bibleVersion, bibleLocation).replace(/\n/g, " ");}
+    try {var text = LibSword.getVerseText(bibleVersion, bibleLocation).replace(/\n/g, " ");}
     catch (er) {text = "";}
     if (text && text.length > 7) {
-      var vsys = Bible.getVerseSystem(bibleVersion);
+      var vsys = LibSword.getVerseSystem(bibleVersion);
       ret.tabNum = Tab[bibleVersion].index;
       ret.location = Location.convertLocation(vsys, bibleLocation, vsys);
       ret.text = text; 
@@ -631,13 +631,13 @@ function findAVerseText(version, location, windowNum) {
     var abooks = getAvailableBooks(Tabs[v].modName);
     for (var ab=0; ab<abooks.length; ab++) {if (abooks[ab]==book) break;}
     if (ab==abooks.length) continue;
-    var tlocation = Location.convertLocation(Bible.getVerseSystem(version), location, Bible.getVerseSystem(Tabs[v].modName));
-    text = Bible.getVerseText(Tabs[v].modName, tlocation).replace(/\n/g, " ");
+    var tlocation = Location.convertLocation(LibSword.getVerseSystem(version), location, LibSword.getVerseSystem(Tabs[v].modName));
+    text = LibSword.getVerseText(Tabs[v].modName, tlocation).replace(/\n/g, " ");
     if (text && text.length > 7) {
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If
       // no visible tab match is found, this saved result will be returned
-      var vsys = Bible.getVerseSystem(Tabs[v].modName);
+      var vsys = LibSword.getVerseSystem(Tabs[v].modName);
       if (!Tabs[v]["w" + windowNum + ".hidden"]) {
         ret.tabNum = v;
         ret.location = Location.convertLocation(vsys, tlocation, vsys);

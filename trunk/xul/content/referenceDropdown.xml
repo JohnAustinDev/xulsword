@@ -96,14 +96,14 @@
                     this.getAttribute("hidechapter")=="true" &&
                     this.getAttribute("hideverse")=="true" &&
                     this.getAttribute("hidelastverse")=="true");
-        for (var m=0; m<Tabs.length && Bible; m++) {
+        for (var m=0; m<Tabs.length && LibSword; m++) {
           if (Tabs[m].modType != BIBLE) {
             if (this.versionmenulist.getAttribute("onlybibles")=="true") continue;
             if (reqVK && Tabs[m].modType != COMMENTARY) continue;
           }
           this.versions.push(Tabs[m].modName);
           if (Tabs[m].modName == this._defversion) defVersionIndex=this.versions.length-1;
-          var description = Bible.getModuleInformation(Tabs[m].modName, "Description");
+          var description = LibSword.getModuleInformation(Tabs[m].modName, "Description");
           if (description==NOTFOUND) description=null;
           var newitem = this.versionmenulist.appendItem(Tabs[m].label, Tabs[m].modName, description);
           newitem.className = "cs-" + Tabs[m].locName;
@@ -180,6 +180,7 @@
           
           for (var v=0; v<this.versions.length; v++) {if (this.versions[v]==val) break;}
           if (v==this.versions.length) return current;
+
           this.versionmenulist.setAttribute("class", "cs-" + Tab[val].locName);
           if (!this.versionmenulist.hidden)
             this.versionmenulist.selectedIndex = v;
@@ -245,7 +246,7 @@
           
           var book = this.book;
           
-          if (val<1 || val>Bible.getMaxChapter("KJV", book)) return current;
+          if (val<1 || val>LibSword.getMaxChapter("KJV", book)) return current;
           if (!this.chaptermenulist.hidden) {
             if (val > this.chaptermenulist.menupopup.childNodes.length) 
               this.addMenuItems(this.chaptermenulist, val, MAXCHAPTER);
@@ -272,7 +273,7 @@
         <setter><![CDATA[
           var current = this.verse;
           if (val == current && !this._isInit) return current;
-          if (!Bible || val<1 || val>this.getMaxVerse(this.version, this.book + " " + this.chapter)) return current;
+          if (!LibSword || val<1 || val>this.getMaxVerse(this.version, this.book + " " + this.chapter)) return current;
           
           if (!this.versemenulist.hidden) {
             if (val > this.versemenulist.menupopup.childNodes.length) 
@@ -352,8 +353,8 @@
         <parameter name="version"/>
         <parameter name="bkch"/>
         <body><![CDATA[
-          if (!Bible) {return 1;}
-          try {var retval = Bible.getMaxVerse(version, bkch);}
+          if (!LibSword) {return 1;}
+          try {var retval = LibSword.getMaxVerse(version, bkch);}
           catch(er) {retval = 1;}
           return retval;
         ]]></body>
@@ -376,7 +377,7 @@
           if (a == showBooks.length) currentBookIsAvailable=false;
           
           if (currentBookIsAvailable) {
-            var convertedLocation = Bible ? Location.convertLocation(Bible.getVerseSystem(this._preversion), this.location, Bible.getVerseSystem(this.version)):this.location;
+            var convertedLocation = LibSword ? Location.convertLocation(LibSword.getVerseSystem(this._preversion), this.location, LibSword.getVerseSystem(this.version)):this.location;
             this._preversion = this.version;
           }
           
@@ -394,7 +395,7 @@
           
           if (currentBookIsAvailable) this.location = convertedLocation;
           else this.book = showBooks[0];
-          if (aEvent && typeof(onRefUserUpdate)!="undefined" && onRefUserUpdate) onRefUserUpdate(aEvent, this.location, this.version);
+          if (aEvent && typeof(onRefUserUpdate)!="undefined") onRefUserUpdate(aEvent, this.location, this.version);
         ]]></body>
       </method>
       
@@ -402,7 +403,7 @@
         <parameter name="aEvent"/>
         <body><![CDATA[
           if (!this.chaptermenulist.hidden) {
-            var maxChapter = Bible.getMaxChapter("KJV", this.book);
+            var maxChapter = LibSword.getMaxChapter("KJV", this.book);
             var menuItem = this.chaptermenulist.menupopup.firstChild;
             while (menuItem) {
               menuItem.hidden=true;
@@ -468,7 +469,7 @@
           }
           else this._lastVerse=this.verse;
           
-          if (aEvent && typeof(onRefUserUpdate)!="undefined" && onRefUserUpdate) onRefUserUpdate(aEvent, this.location, this.version);
+          if (aEvent && typeof(onRefUserUpdate)!="undefined") onRefUserUpdate(aEvent, this.location, this.version);
         ]]></body>
       </method>
       
@@ -503,7 +504,7 @@
           if (newloc.verse!=null) {this.verse = newloc.verse; needUpdate = true;}
           if (newloc.lastVerse!=null && newloc.lastVerse > this.verse) {this.lastVerse = newloc.lastVerse; needUpdate = true;}
           this._maskHiddenFields = false; // Tell this.location getter NOT to maks hidden params
-          if (needUpdate && aEvent && typeof(onRefUserUpdate)!="undefined" && onRefUserUpdate) onRefUserUpdate(aEvent, this.location, this.version);
+          if (needUpdate && aEvent && typeof(onRefUserUpdate)!="undefined") onRefUserUpdate(aEvent, this.location, this.version);
           this._maskHiddenFields = true;
         ]]></body>
       </method>
@@ -599,7 +600,7 @@
           
         <menulist anonid="lastVerse"
           sizetopopup="never" 
-          oncommand="if (typeof(onRefUserUpdate)!='undefined') {if (onRefUserUpdate) onRefUserUpdate(event, this.parentNode.parentNode.location, this.parentNode.parentNode.version);}" 
+          oncommand="if (typeof(onRefUserUpdate)!='undefined') {onRefUserUpdate(event, this.parentNode.parentNode.location, this.parentNode.parentNode.version);}" 
           hidden="false" xbl:inherits="hidden=hidelastverse, disabled" />
           
         <spacer width="27px" />

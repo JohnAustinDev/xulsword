@@ -48,8 +48,8 @@ function jsdump(str)
 }
 
 var NumFailed = 0;
-if (Bible.getModuleList() == "No Modules") Bible = null;
-jsdump("Need ESV and UZV, have " + Bible.getModuleList());
+if (LibSword.getModuleList() == "No Modules") LibSword = null;
+jsdump("Need ESV and UZV, have " + LibSword.getModuleList());
 
 Location.setLocation("ESV", "Matt.4");
 testLocs(1, "ESV", "Matt", 4, 1, 25, "KJV");
@@ -111,7 +111,7 @@ Location.setLocation("UZV", "Ps 113:10-Ps 113:20");
 testLocs(15, "ESV", "Ps", 115, 2, 12, "KJV");
 jsdump("\n");
 
-test (16, Bible.getModuleInformation("UZV", "GlobalOptionFilter"), "OSISFootnotes<nx>OSISHeadings<nx>OSISScripref<nx>OSISDictionary");
+test (16, LibSword.getModuleInformation("UZV", "GlobalOptionFilter"), "OSISFootnotes<nx>OSISHeadings<nx>OSISScripref<nx>OSISDictionary");
 
 test(46, Location.convertLocation("KJV", "Matt.4", "Synodal"), "Matt.4.1.25");
 jsdump("\n");
@@ -201,23 +201,23 @@ test(80, Location.getVerseNumber("ESV"), "3");
 test(81, Location.getLastVerseNumber("ESV"), "9");
 jsdump("\n");
 
-test(82, Bible.getMaxVerse("ESV", "Ps 119"), 176);
-test(83, Bible.getMaxVerse("ESV", "Ps 119:4"), 176);
-test(84, Bible.getMaxVerse("ESV", "Ps 119:6-10"), 176);
-test(85, Bible.getMaxVerse("ESV", "Ps.119"), 176);
-test(86, Bible.getMaxVerse("ESV", "Ps.119.24"), 176);
-test(87, Bible.getMaxVerse("ESV", "Ps.119.100.120"), 176);
-test(88, Bible.getMaxVerse("UZV", "Ps 118"), 176);
-test(89, Bible.getMaxVerse("UZV", "Ps 118:4"), 176);
-test(90, Bible.getMaxVerse("UZV", "Ps 118:6-10"), 176);
-test(91, Bible.getMaxVerse("UZV", "Ps.118"), 176);
-test(92, Bible.getMaxVerse("UZV", "Ps.118.24"), 176);
-test(93, Bible.getMaxVerse("UZV", "Ps.118.100.120"), 176);
+test(82, LibSword.getMaxVerse("ESV", "Ps 119"), 176);
+test(83, LibSword.getMaxVerse("ESV", "Ps 119:4"), 176);
+test(84, LibSword.getMaxVerse("ESV", "Ps 119:6-10"), 176);
+test(85, LibSword.getMaxVerse("ESV", "Ps.119"), 176);
+test(86, LibSword.getMaxVerse("ESV", "Ps.119.24"), 176);
+test(87, LibSword.getMaxVerse("ESV", "Ps.119.100.120"), 176);
+test(88, LibSword.getMaxVerse("UZV", "Ps 118"), 176);
+test(89, LibSword.getMaxVerse("UZV", "Ps 118:4"), 176);
+test(90, LibSword.getMaxVerse("UZV", "Ps 118:6-10"), 176);
+test(91, LibSword.getMaxVerse("UZV", "Ps.118"), 176);
+test(92, LibSword.getMaxVerse("UZV", "Ps.118.24"), 176);
+test(93, LibSword.getMaxVerse("UZV", "Ps.118.100.120"), 176);
 
-test(94, Bible.getMaxChapter("ESV", "Ps"), 150);
-test(95, Bible.getMaxChapter("ESV", "Ps.49"), 150);
-test(96, Bible.getMaxChapter("UZV", "Ps"), 151);
-test(97, Bible.getMaxChapter("UZV", "Ps.49"), 151);
+test(94, LibSword.getMaxChapter("ESV", "Ps"), 150);
+test(95, LibSword.getMaxChapter("ESV", "Ps.49"), 150);
+test(96, LibSword.getMaxChapter("UZV", "Ps"), 151);
+test(97, LibSword.getMaxChapter("UZV", "Ps.49"), 151);
 
 function testLocs(tn, vers, bk, ch, vs, lv, sys) {
   test(tn + "a", Location.getChapter(vers), bk + " " + ch);
@@ -226,7 +226,7 @@ function testLocs(tn, vers, bk, ch, vs, lv, sys) {
   test(tn + "d", Location.getVerseNumber(vers), vs);
   test(tn + "e", Location.getLastVerseNumber(vers), lv);
   test(tn + "f", Location.getLocation(vers), bk + "." + ch + "." + vs + "." +lv);
-  test(tn + "g", Bible.getVerseSystem(vers), sys);
+  test(tn + "g", LibSword.getVerseSystem(vers), sys);
 }
 
 function test(testNum, result, expectedResult) {
@@ -246,11 +246,11 @@ else {
   window.alert("CONGRATS!!!! ITS WORKING PERFECTLY!!!!");
 }
 
-jsdump("getModuleList=" + Bible.getModuleList());
-jsdump("getBookIntroduction=" + Bible.getBookIntroduction("UZV", "Matt"));
-jsdump("getDictionaryEntry БАШАН=" + Bible.getDictionaryEntry("UZDOT", "БАШАН"));
-jsdump("getAllDictionaryKeys=" + Bible.getAllDictionaryKeys("UZDOT"));
-jsdump("getGenBookTableOfContents=" + Bible.getGenBookTableOfContents("Pilgrim"));
-jsdump("getGenBookChapterText=" + Bible.getGenBookChapterText("Pilgrim", "/Pilgrim/PART II/PREFACE"));
+jsdump("getModuleList=" + LibSword.getModuleList());
+jsdump("getBookIntroduction=" + LibSword.getBookIntroduction("UZV", "Matt"));
+jsdump("getDictionaryEntry БАШАН=" + LibSword.getDictionaryEntry("UZDOT", "БАШАН"));
+jsdump("getAllDictionaryKeys=" + LibSword.getAllDictionaryKeys("UZDOT"));
+jsdump("getGenBookTableOfContents=" + LibSword.getGenBookTableOfContents("Pilgrim"));
+jsdump("getGenBookChapterText=" + LibSword.getGenBookChapterText("Pilgrim", "/Pilgrim/PART II/PREFACE"));
 
-Bible.quitLibsword();
+LibSword.quitLibsword();
