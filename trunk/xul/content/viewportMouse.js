@@ -439,8 +439,10 @@ function scriptDblClick(e) {
   sel = cleanDoubleClickSelection(sel);
   if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
 
-  // Do a search for selected text in mod
-  MainWindow.XulswordController.doCommand("cmd_xs_searchForSelection", { mod:mod, selection:sel });
+  // Do a search for selected word in mod. Use cmd_xs_search because 
+  // its much faster than cmd_xs_searchForSelection and can be used
+  // because our selection is only a single word.
+  MainWindow.XulswordController.doCommand("cmd_xs_search", { search:{ mod:mod, searchtext:sel, type:"SearchAnyWord" }});
   
   e.stopPropagation(); // block any higher handlers
 }

@@ -1407,7 +1407,7 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
       
       SWBuf keyTextEN;
       const char *keyText = module->getKeyText();
-      while (*keyText) {keyTextEN.appendFormatted("%%%x", *keyText++);}
+      while (*keyText) {keyTextEN.appendFormatted("%%%x", (unsigned char)*keyText++);}
 
       MySearchTexts.appendFormatted("<div class=\"slist\" title=\"%s.%s\">", keyTextEN.c_str(), mod);
       MySearchTexts.appendFormatted("<span class=\"cs-%s%s\">%s</span>", 

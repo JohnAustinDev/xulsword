@@ -16,7 +16,8 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const REGEX=0, PHRASE=-1, MULTIWORD=-2, ENTRY_ATTRIBUTE=-3, LUCENE=-4, COMPOUND=-5; // LIBXULSWORD API's search types
+// LIBXULSWORD API's search types. Warning: only REGEX and LUCENE are used or are debugged...
+const REGEX=0, PHRASE=-1, MULTIWORD=-2, ENTRY_ATTRIBUTE=-3, LUCENE=-4, COMPOUND=-5; 
 const LOCALE_SEARCH_SYMBOLS = ["SINGLECharWildCard", "MULTICharWildCard", "AND", "OR", "NOT", "SIMILAR", "GROUPSTART", "GROUPEND", "QUOTESTART", "QUOTEEND"];
 const ACTUAL_SEARCH_SYMBOLS = ["?", "*", "&&", "||", "!", "~", "(", ")", "\"", "\""];
 const MAX_RESULTS_PER_PAGE = 30;
@@ -264,11 +265,11 @@ function SearchObj(searchObj) {
         break;
         
       case "SearchExactText":
-        s.type = MULTIWORD; //MULTIWORD and REGEX ARE CASE SENSETIVE! COMPOUND DOES NOT WORK!!!!
+        s.type = REGEX; //MULTIWORD and REGEX ARE CASE SENSETIVE!
         break;
         
       case "SearchAdvanced":
-        // Lucene
+        // already Lucene
         break;
       }
     }
@@ -276,7 +277,6 @@ function SearchObj(searchObj) {
     else {s.type = REGEX;}
     
     // get Search scope
-    s.scope = ""; // default scope is all
     // scope radio buttons are meaningful only for versekey modules...
     if (Tab[s.mod].modType == BIBLE || Tab[s.mod].modType == COMMENTARY) {
       
@@ -292,6 +292,7 @@ function SearchObj(searchObj) {
       }
       
     }
+    else s.scope = ""; // scope is only used by LibSword for versekey modules
     
     // to highlight results, build regular expressions for matching them
     switch (document.getElementById("searchType").selectedItem.id) {
@@ -469,6 +470,7 @@ var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(
     if (result.translate != s.mod && Tab[result.translate].modType == BIBLE && Tab[s.mod].modType == BIBLE) {
       mod = result.translate;
     }
+    else result.translate = mod;
 
     // read search results to display
     var r = LibSword.getSearchResults(mod, result.index, result.results_per_page, (/lemma\:/).test(s.query));
@@ -486,18 +488,26 @@ var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(
       
       // add a reference link to each result
       var l = r.firstChild;
-      if (Tab[s.mod].modType == BIBLE || Tab[s.mod].modType == COMMENTARY) {
+      switch(Tab[p.mod].modType) {
+        
+      case BIBLE:
+      case COMMENTARY:
         // translate from s.mod to mod...
         var loc = LibSword.convertLocation(LibSword.getVerseSystem(s.mod), p.osisref, LibSword.getVerseSystem(mod));
         l.innerHTML = ref2ProgramLocaleText(loc);
         l.className = "cs-Program";
         loc = loc.split(".");
         l.setAttribute("href", "javascript:MainWindow.showLocation('" + mod + "','" + loc[0] + "','" + loc[1] + "','" + loc[2] + "','" + loc[3] + "');");
-      }
-      else {
-        l.innerHTML = decodeURI(p.ch);
+        break;
+        
+      case GENBOOK:
+      case DICTIONARY:
+        l.innerHTML = decodeURIComponent(p.ch);
         l.className = "cs-" + mod;
-        l.setAttribute("href", "javascript:MainWindow.showLocation('" + mod + "','na','" + p.ch + "',1,1);");
+        var ch = (Tab[p.mod].modType == GENBOOK ? "/" + mod:"") + p.ch;
+        l.setAttribute("href", "javascript:MainWindow.showLocation('" + mod + "','na','" + ch + "',1,1);");
+        break;
+        
       }
       
       // apply hilight class to search result matches
@@ -567,11 +577,15 @@ var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(
           lexicon.sort(function(a,b) {return b.count - a.count;});
           
           // format and save the results
-          html += "<span class=\"lex-link\">" + classes[i] + "</span>";
+          html += "<span class=\"lex-body\">";
+          html +=   "<span class=\"lex-link\">" + classes[i].replace(/^S_/, "") + "</span>";
+          html +=   "<span class=\"lex-total\">" + (result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS + "+":result.count) + "</span>";
           for (var j=0; j<lexicon.length; j++) {
             html += "<span class=\"lex-text\">" + lexicon[j].text + "</span><span class=\"lex-count\">" + lexicon[j].count + "</span>";
           }
-          
+          html += "</span>";
+          html +=   "<div class=\"lex-sep\"></div>";
+                    
         }
         
         LexiconResults.innerHTML = (html ? html:"<span style=\"display:none\"></span>"); // should not be left empty
