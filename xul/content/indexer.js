@@ -19,38 +19,62 @@
 var Indexer = {
   
   moduleName:prefs.getCharPref("DefaultVersion"),
-  
+  cipherKey:null,
+  usesSecurity:false,
   inprogress:false,
-  
   progressMeter:null,
-
-  exitfunc:null,
-
-  error: function(error) {throw error;},
-
-  progress: function(event) {
-    if (Indexer.progressMeter) Indexer.progressMeter.value = event.data;
-    if (event.data == -1) {Indexer.finished();}
-  },
+  callback:null,
+  indexer:null,
 
   create: function() {
-    var cipherkey = null;
-    var usesecurity = null;
-    if (!Bible.getModuleInformation(this.moduleName, "CipherKey")) {
-      try {cipherkey = getPrefOrCreate("CipherKey" + this.moduleName, "Char", prefs.getCharPref("DefaultCK"));}
-      catch(er) {cipherkey = "0";}
-      usesecurity = usesSecurityModule(Bible, this.moduleName);
-    }
-    Bible.pause();
-
-    if (!this.indexer) {
-      this.indexer = ChromeWorker("chrome://xulsword/content/indexWorker.js");
-      this.indexer.onerror = this.error;
-      this.indexer.onmessage = this.progress;
-    }
-
-    this.indexer.postMessage({modname:this.moduleName, moddir:Bible.ModuleDirectory, libpath:Bible.LibswordPath, cipherkey:cipherkey, usesecurity:usesecurity});
+    if (this.inprogress) return;
+    
     this.inprogress = this.moduleName;
+
+    // Check if our module needs xulsword to supply a cipherKey.
+    // Params cipherKey and usesSecurity must be saved now before
+    // LibSword is paused, because afterwards they are inaccesible.
+    if (!LibSword.getModuleInformation(this.moduleName, "CipherKey")) {
+      // a cipher key is needed, so get it...
+      this.cipherKey = getPrefOrCreate("CipherKey" + this.moduleName, "Char", prefs.getCharPref("DefaultCK"));
+      this.usesSecurity = usesSecurityModule(LibSword, this.moduleName);
+    }
+    
+    // Must pause LibSword before indexer thread can be started because 
+    // there can only be one instance of libsword in existence at a time.
+    LibSword.pause(this);
+
+  },
+  
+  libswordPauseComplete: function() {
+        
+    this.indexer = ChromeWorker("chrome://xulsword/content/indexWorker.js");
+    this.indexer.onerror = this.error;
+    this.indexer.onmessage = this.postMessage;
+    
+    // Worker threads cannot access the functions necessary to 
+    // aquire the following data, so we just pass the data.
+    // Calling postMessage starts the indexer...
+    this.indexer.postMessage({ 
+        modname:this.moduleName, 
+        moddir:LibSword.ModuleDirectory, 
+        libpath:LibSword.LibswordPath, 
+        cipherKey:this.cipherKey, 
+        usesSecurity:this.usesSecurity });
+        
+  },
+  
+  // will be invoked by indexer as a function (this = global context!)
+  error: function(error) {throw error;},
+
+  // will be invoked by indexer as a function (this = global context!)
+  postMessage: function(event) {
+//if ((/^jsdump/).test(event.data)) {jsdump(event.data); return;}
+    if (event.data == -1) {
+      Indexer.finished(); 
+      return;
+    }
+    if (Indexer.progressMeter) Indexer.progressMeter.value = event.data;
   },
 
   terminate: function() {
@@ -58,17 +82,24 @@ var Indexer = {
       if (Indexer.indexer) {
         //Indexer.indexer.terminate(); causes crash...
       }
-      //Indexer.finished(); calling while indexing causes crash at Bible.resume...
+      //Indexer.finished(); calling while indexing causes crash at LibSword.resume...
     }
   },
 
   finished: function() {
-    Indexer.inprogress = false;
+    LibSword.resume();
+    
+    // set up vars for next "create()"
     this.indexer = null;
-    Bible.resume();
-    if (Indexer.exitfunc) Indexer.exitfunc();
-  },
-
-
-  indexer:null
+    this.progressMeter = null;
+    this.cipherKey = null;
+    this.usessecurity = false;
+    
+    this.inprogress = false;
+    
+    if (this.callback && this.callback.onIndexerDone) this.callback.onIndexerDone();
+    this.callback = null;
+    
+  }
+  
 };

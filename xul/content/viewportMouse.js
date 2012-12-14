@@ -76,7 +76,7 @@ function openTabToolTip(t, w, cX, cY) {
   if (t == -1) modName = resolveOriginalVersion(Location.getBookName());
   if (!modName) return;
   
-  var desc = Bible.getModuleInformation(modName, "Description");
+  var desc = LibSword.getModuleInformation(modName, "Description");
   if (!desc || desc==NOTFOUND) return;
   desc = desc.substr(0, TOOLTIP_LEN);
   if (desc.length==TOOLTIP_LEN) desc += "...";
@@ -440,8 +440,7 @@ function scriptDblClick(e) {
   if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
 
   // Do a search for selected text in mod
-  MainWindow.GlobalTarget.search = {mod:mod, searchtext:sel, type:"hasthistext"};
-  MainWindow.document.getElementById("cmd_xs_search").doCommand();
+  MainWindow.XulswordController.doCommand("cmd_xs_searchForSelection", { mod:mod, selection:sel });
   
   e.stopPropagation(); // block any higher handlers
 }
@@ -687,7 +686,7 @@ function nextChapterPinned(w) {
   var bkn = findBookNum(Texts.display[w].bk);
   var chn = Texts.display[w].ch;
   
-  if (chn < Bible.getMaxChapter("KJV", Texts.display[w].bk)) {chn++;}
+  if (chn < LibSword.getMaxChapter("KJV", Texts.display[w].bk)) {chn++;}
   else return;
   
   Texts.pinnedDisplay[w].ch = chn;

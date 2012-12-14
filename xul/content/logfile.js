@@ -62,7 +62,7 @@ var aConsoleListener =
           file += "Version3:" + prefs.getCharPref("Version3") + URLNEWLINE;
           file += "DefaultVersion:" + prefs.getCharPref("DefaultVersion") + URLNEWLINE;
           file += "Location:" + Location.getLocation(prefs.getCharPref("DefaultVersion")) + URLNEWLINE;
-          file += "Module List:" + Bible.getModuleList() + URLNEWLINE;
+          file += "Module List:" + LibSword.getModuleList() + URLNEWLINE;
         }
         catch(er) {file += "ERROR: Could not read b-object." + URLNEWLINE;}
 

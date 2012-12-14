@@ -43,7 +43,7 @@ function writeChapterMenu(bk) {
   var dend;
   var row=1; 
   var col=1;
-  for (var ch=1; ch<=Bible.getMaxChapter("KJV", Book[bk].sName); ch++) {
+  for (var ch=1; ch<=LibSword.getMaxChapter("KJV", Book[bk].sName); ch++) {
     if (col == 1) {
       document.write("<div class=\"chaptermenurow\">");
       dend="</div>";
@@ -187,10 +187,10 @@ function showHeadings(myid, screenY) {
   
   //Set Bible params and read chapter
   var p = myid.split("_");
-  Bible.setGlobalOption("Headings", "On");
-  Bible.setGlobalOption("Verse Numbers", "On");
+  LibSword.setGlobalOption("Headings", "On");
+  LibSword.setGlobalOption("Verse Numbers", "On");
 
-  var chtxt = Bible.getChapterText(biblemod, Book[p[1]].sName + "." + p[2] + ".1.1");
+  var chtxt = LibSword.getChapterText(biblemod, Book[p[1]].sName + "." + p[2] + ".1.1");
   
   // Find all headings and their following verses
   var hdplus = /<div[^>]*class="head1.*?>.*?<\/div>.*?<sup.*?>\d+<\/sup>/gim; // Get Array of head + next verse's
@@ -223,8 +223,8 @@ function showHeadings(myid, screenY) {
   }
   
   //Return Bible to original state
-  Bible.setGlobalOption("Headings", prefs.getCharPref("Headings"));
-  Bible.setGlobalOption("Verse Numbers", prefs.getCharPref("Verse Numbers"));
+  LibSword.setGlobalOption("Headings", prefs.getCharPref("Headings"));
+  LibSword.setGlobalOption("Verse Numbers", prefs.getCharPref("Verse Numbers"));
 }
 
 

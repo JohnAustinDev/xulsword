@@ -475,7 +475,7 @@ var BookmarksCommand = {
 
   createNewBookmark: function (aTarget)
   {
-    var t = MainWindow.getDefaultTarget();
+    var t = MainWindow.getCommandTarget();
     
     var resource = BookmarkFuns.createNewResource(
       ["Bookmark", null, null, t.bk, t.ch, t.vs, t.lv, t.mod]

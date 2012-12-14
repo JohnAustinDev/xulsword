@@ -134,7 +134,7 @@ function onRefUserUpdate(e, location, version) {
     gVerseText.className = "cs-" + Tabs[aVerse.tabNum].modName;
     break;
   case COMMENTARY:
-    gVerseText.value = Bible.getVerseText(version, location).replace(/^\s*/,"").replace(/\n/g, " ");
+    gVerseText.value = LibSword.getVerseText(version, location).replace(/^\s*/,"").replace(/\n/g, " ");
     gVerseText.className = "cs-" + version;
     break;
   }

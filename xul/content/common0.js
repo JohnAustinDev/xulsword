@@ -44,7 +44,7 @@ const TYPE=0, NAME=1, NOTE=2, BOOK=3, CHAPTER=4, VERSE=5, LASTVERSE=6, MODULE=7,
 
 
 /************************************************************************
- * Functions in this file may NOT access any Bible objects!
+ * Functions in this file may NOT access any LibSword objects!
  ***********************************************************************/ 
 
 var OPSYS="Unknown OS";
@@ -67,7 +67,6 @@ const BIBLE = "Biblical Texts";
 const DICTIONARY = "Lexicons / Dictionaries";
 const COMMENTARY = "Commentaries";
 const GENBOOK = "Generic Books";
-const CONTAINS_THE_WORDS=0, EXACT_TEXT=1, USING_SEARCH_TERMS=2, SIMILAR_WORDS=3;
 const NOTFOUND = "Not Found";
 const NEWLINE = "\r\n"; //Only valid for Windows operating systems!!!
 const DEFAULTLOCALE = "en-US";
@@ -637,7 +636,7 @@ function printGLobOps() {
   var m = "";
   for (var cmd in GlobalToggleCommands) {
     if (GlobalToggleCommands[cmd] == "User Notes") continue;
-    m += GlobalToggleCommands[cmd] + "=" + Bible.getGlobalOption(GlobalToggleCommands[cmd]) + " ";
+    m += GlobalToggleCommands[cmd] + "=" + LibSword.getGlobalOption(GlobalToggleCommands[cmd]) + " ";
   }
   jsdump(m);
 }

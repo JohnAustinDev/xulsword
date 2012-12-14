@@ -102,9 +102,14 @@ function ViewPortObj(viewPortObj) {
     
     //Check xulsword module choices
     for (var w=1; w<=NW; w++) {
+      // modules may have been manually uninstalled since xulsword's last 
+      // shutdown, so "Version" prefs must be checked on startup
       if (!Tab.hasOwnProperty(this.Module[w])) this.Module[w] = prefs.getCharPref("DefaultVersion");
+      
       if (MainWindow.DailyDevotionModules.hasOwnProperty(this.Module[w])) this.Key[w] = "DailyDevotionToday";
+      
       if (!Tab.ORIG_NT && !Tab.ORIG_OT) ViewPort.ShowOriginal[w] = false;
+      
     }
 
   }
@@ -507,32 +512,29 @@ function ViewPortObj(viewPortObj) {
     return {mod:this.Module[1], w:1};
   };
 
-};
 
-function unloadViewPort() {
-  
-  // global prefs should only be saved by xulsword's main viewport
-  if (!window.frameElement || !window.frameElement.id != "xulviewport") return;
-  
-  // save hidden tab prefs
-  for (var w=1; w<=NW; w++) {
-    var hide = "";
-    for (var t=0; t<Tabs.length; t++) {
-      if (Tabs[t]["w" + w + ".hidden"]) hide += Tabs[t].modName + ";";
+  this.unload = function() {
+
+    // save hidden tab prefs
+    for (var w=1; w<=NW; w++) {
+      var hide = "";
+      for (var t=0; t<Tabs.length; t++) {
+        if (Tabs[t]["w" + w + ".hidden"]) hide += Tabs[t].modName + ";";
+      }
+      prefs.setCharPref("w" + w + ".hidden", hide);
     }
-    prefs.setCharPref("w" + w + ".hidden", hide);
-  }
+    
+    // save other ViewPort params
+    prefs.setIntPref("NumDisplayedWindows", this.NumDisplayedWindows);
+    prefs.setBoolPref("ShowChooser", this.ShowChooser);
+    
+    for (var w=1; w<=NW; w++) {
+      prefs.setBoolPref("ShowOriginal" + w, this.ShowOriginal[w]);
+      prefs.setIntPref("NoteBoxHeight" + w, this.NoteBoxHeight[w]);
+      prefs.setBoolPref("MaximizeNoteBox" + w, this.MaximizeNoteBox[w]);
+      prefs.setCharPref("Version" + w, this.Module[w]);
+      setUnicodePref("Key" + w, this.Key[w]);
+    }
+  };
   
-  // save other ViewPort params
-  prefs.setIntPref("NumDisplayedWindows", this.NumDisplayedWindows);
-  prefs.setBoolPref("ShowChooser", this.ShowChooser);
-  
-  for (var w=1; w<=NW; w++) {
-    prefs.setBoolPref("ShowOriginal" + w, this.ShowOriginal[w]);
-    prefs.setIntPref("NoteBoxHeight" + w, this.NoteBoxHeight[w]);
-    prefs.setBoolPref("MaximizeNoteBox" + w, this.MaximizeNoteBox[w]);
-    prefs.setCharPref("Version" + w, this.Module[w]);
-    prefs.setUnicodePref("Key" + w, this.Key[w]);
-  }
-  
-}
+};

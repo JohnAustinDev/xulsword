@@ -20,7 +20,7 @@
 /************************************************************************
  * Globals defined in MainWindow to be re-used everywhere else
  ***********************************************************************/ 
-var Bible                 = MainWindow.Bible;
+var LibSword              = MainWindow.LibSword;
 var Location              = MainWindow.Location;
 
 var LocaleConfigs         = MainWindow.LocaleConfigs;

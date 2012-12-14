@@ -255,7 +255,7 @@ jsdump("STARTING startImport");
     }
   }
 
-  if (typeof(Bible) != "undefined" && Bible) Bible.pause();
+  if (typeof(LibSword) != "undefined") LibSword.pause();
  
   if (ZipFiles && ZipFiles.length) CopyZipFun();
   else if (RegularFiles && RegularFiles.length) CopyRegularFun();
@@ -324,7 +324,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
           var matchingXSmoduleTextVersion = null;
           if (versioninfo.type == CONF_EXT) {
             if (!versioninfo.xsmodulename) remove = true;
-            // must read conf file directly because Bible object is not necessarily available...
+            // must read conf file directly because LibSword object is not necessarily available...
             else {
               var instconf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
               var xsModsUser = getSpecialDirectory("xsModsUser");
@@ -567,7 +567,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
   //Try and copy this file to destination...
   switch (type) {
   case AUDIO:
-    // this doesn't access the Bible object, unless files have localized names which they should not.
+    // this doesn't access the LibSword object, unless files have localized names which they should not.
     inflated = getAudioDestination(AudioDestination, aEntry);
     if (!inflated) return {reset:NORESET, success:false, remove:true};
     if (!inflated.leafName.match(AUDIOEXT)) return {reset:NORESET, success:true, remove:true};
@@ -733,7 +733,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     break;
     
   case BOOKMARKS:
-    // this doesn't access the Bible object in this case.
+    // this doesn't access the LibSword object in this case.
     if (!BookmarkFuns.importBMFile(inflated, false, true)) {
       removeFile(inflated, false);
       return {reset:NORESET, success:false, remove:true};
@@ -773,7 +773,7 @@ function finishAndStartXulSword2() {
 }
 
 function finish(isFinalPass) {
-  if (typeof(Bible) != "undefined" && Bible && Bible.paused) Bible.resume();
+  if (typeof(LibSword) != "undefined" && LibSword.paused) LibSword.resume();
   if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
   if (ProgressMeter) window.setTimeout("ProgressMeter.close();", 100);
   if (NewPlugin) {
@@ -802,7 +802,7 @@ function handleResetRequest() {
   case NORESET: // program continues running and needs no reload or restart
     if (PreMainWin) writeManifest(NewLocales, NewModules, NewFonts, true);
     else {
-      if (!MainWindow || !MainWindow.Bible || !MainWindow.Tabs.length) {
+      if (!MainWindow || !MainWindow.LibSword || !MainWindow.Tabs.length) {
         restartApplication(false);
         break;
       }
@@ -1451,7 +1451,7 @@ function restartApplication(promptBefore) {
       DLGOK);
   }
   
-  if (Bible && Bible.paused) Bible.resume(); // window unload accesses Bible object
+  if (LibSword && LibSword.paused) LibSword.resume(); // window unload accesses LibSword object
   
 	var appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                    .getService(Components.interfaces.nsIAppStartup);

@@ -27,6 +27,7 @@ var AudioDirs = null;
 function loadedXUL() {
 
   initCSS(false);
+  AllWindows.push(window);
   
   document.title = SBundle.getString("Title");
   window.name="xulsword-window";
@@ -40,18 +41,19 @@ function loadedXUL() {
   //are initialized.
   try {prefs.getIntPref("ViewPortHeight");}
   catch (er) {
-    window.setTimeout("loadedXULReal()",0);
+    window.setTimeout("loadedXUL2()",0);
     return;
   }
-  loadedXULReal();
+  
+  loadedXUL2();
 }
 
-function loadedXULReal() {
+function loadedXUL2() {
   // check for newly installed modules and reset mods if necessary
   var resetUserPrefs = false;
   var pfile = getSpecialDirectory("xsResD");
   pfile.append(NEWINSTALLFILE);
-  if (Bible) NewModuleInfo = (pfile.exists() ? readNewInstallsFile(pfile):null);
+  if (LibSword) NewModuleInfo = (pfile.exists() ? readNewInstallsFile(pfile):null);
   if (pfile.exists()) removeFile(pfile, false);
   
   if (NewModuleInfo && NewModuleInfo.NewModules && NewModuleInfo.NewModules[0]) {
@@ -65,7 +67,7 @@ function loadedXULReal() {
     for (var m=0; m<NewModuleInfo.NewModules.length; m++) {
       Tab[NewModuleInfo.NewModules[m]]["w" + w + ".hidden"] = false;
       while (w <= ViewPort.NumDisplayedWindows) {
-        prefs.setCharPref("Version" + w, NewModuleInfo.NewModules[m]);
+        ViewPort.Module[w] = NewModuleInfo.NewModules[m];
         w++;
         if (Tab[NewModuleInfo.NewModules[m]].modType != BIBLE) break;
       }
@@ -77,7 +79,7 @@ function loadedXULReal() {
   
   History.init();
   
-  if (Bible && Tabs.length) {
+  if (LibSword && Tabs.length) {
     createLanguageMenu();
     fillModuleMenuLists();
     updateXulswordButtons();
@@ -117,7 +119,7 @@ function loadedXULReal() {
   
   //we're ok!
   // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
-  if (Bible && Tabs.length) {
+  if (LibSword && Tabs.length) {
     Texts.update(SCROLLTYPEBEG, HILIGHT_IFNOTV1);
     window.setTimeout("postWindowInit()", 1000); 
   }
@@ -127,10 +129,10 @@ function loadedXULReal() {
 
 function checkCipherKeys() {
   var gotKey = false;
-  for (var t=0; t<Bible.CheckTheseCipherKeys.length; t++) {
-    if (!getAvailableBooks(Bible.CheckTheseCipherKeys[t])[0]) {
+  for (var t=0; t<LibSword.CheckTheseCipherKeys.length; t++) {
+    if (!getAvailableBooks(LibSword.CheckTheseCipherKeys[t])[0]) {
       var retVals = {gotKey: false};
-      AllWindows.push(window.openDialog("chrome://xulsword/content/getkey.xul","getkey","chrome, dependent, alwaysRaised, centerscreen, modal", Bible.CheckTheseCipherKeys[t], retVals));
+      AllWindows.push(window.openDialog("chrome://xulsword/content/getkey.xul","getkey","chrome, dependent, alwaysRaised, centerscreen, modal", LibSword.CheckTheseCipherKeys[t], retVals));
       gotKey |= retVals.gotKey;
     }
   }
@@ -176,7 +178,7 @@ function postWindowInit() {
 }
 
 // Will switch to an available book IF the current book is not available
-// in the first displayed Bible.
+// in the first displayed LibSword.
 function useFirstAvailableBookIf() {
   var vers = ViewPort.firstDisplayBible();
   var availableBooks = getAvailableBooks(vers);
@@ -215,7 +217,7 @@ function readNewInstallsFile(aFile) {
         }
         break;
       case "NewModules":
-        var modules = Bible.getModuleList();
+        var modules = LibSword.getModuleList();
         if (modules) {
           modules = modules.split("<nx>");
           if (modules && modules.length) {
@@ -245,14 +247,14 @@ function openLanguageMenu(selectLocale) {
 }
 
 function resetSearchIndex(modName) {
-  try {Bible.searchIndexDelete(modName);} catch(er) {return false;}
+  try {LibSword.searchIndexDelete(modName);} catch(er) {return false;}
   prefs.setBoolPref("dontAskAboutSearchIndex" + modName, false);
   return true;
 }
 
 function identifyModuleFeatures(resetUserPrefs) {
   var f = getModuleFeatures();
-  if (Bible) {
+  if (LibSword) {
     for (var i=0; i<Tabs.length; i++) {
       var fthis = getModuleFeatures(Tabs[i].modName);
       for (var t in fthis) f[t] |= fthis[t];
@@ -306,7 +308,7 @@ function getModuleFeatures(module) {
   };
   if (!module) return features;
   
-  var globalOptionFilters = Bible.getModuleInformation(module, "GlobalOptionFilter");
+  var globalOptionFilters = LibSword.getModuleInformation(module, "GlobalOptionFilter");
   features.haveHeadings      = (globalOptionFilters.search("Headings")  != -1);
   features.haveFootnotes     = (globalOptionFilters.search("Footnotes") != -1);
   features.haveCrossRefs     = (globalOptionFilters.search("Scripref")  != -1);
@@ -316,12 +318,12 @@ function getModuleFeatures(module) {
   features.haveStrongs       = (globalOptionFilters.search("Strongs")  != -1);
   features.haveMorph         = (globalOptionFilters.search("Morph")  != -1);
   
-  var feature = Bible.getModuleInformation(module, "Feature");
+  var feature = LibSword.getModuleInformation(module, "Feature");
   features.isStrongs         = (feature.search("GreekDef")!=-1 || feature.search("HebrewDef")!=-1);
       
   if (globalOptionFilters.search("Dictionary")!= -1) {
     features.haveDictionary = false;
-    var dmods = Bible.getModuleInformation(module, "DictionaryModule");
+    var dmods = LibSword.getModuleInformation(module, "DictionaryModule");
     dmods = dmods.split("<nx>");
     for (var m=0; m<dmods.length && !features.haveDictionary; m++) {
       for (var t=0; t<Tabs.length; t++) {
@@ -499,9 +501,9 @@ var History = {
     this.list = getPrefOrCreate("History", "Char", this.delim).split(this.delim);
     this.index = getPrefOrCreate("HistoryIndex", "Int", 0);
     this.list.pop(); // History pref should always end with HistoryDelimeter
-    if (Bible && prefs.getCharPref("DefaultVersion") != NOTFOUND) {
+    if (LibSword && prefs.getCharPref("DefaultVersion") != NOTFOUND) {
       var aVersion = prefs.getCharPref("DefaultVersion");
-      var loc = Location.convertLocation(Bible.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
+      var loc = Location.convertLocation(LibSword.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
       this.list[this.index] = loc[0] + "." + loc[1] + "." + loc[2];
     } 
   },
@@ -532,7 +534,7 @@ var History = {
 
   toHistory: function (index) {
     var refBible = ViewPort.firstDisplayBible();
-    var loc = Location.convertLocation(WESTERNVS, this.list[index] + ".1", Bible.getVerseSystem(refBible));
+    var loc = Location.convertLocation(WESTERNVS, this.list[index] + ".1", LibSword.getVerseSystem(refBible));
     Location.setLocation(refBible, loc);
     document.getElementById("book").book = Location.getBookName();
     document.getElementById("book").version = refBible;
@@ -564,7 +566,7 @@ var History = {
     for (var i=0; i<this.list.length; i++) {
       var xulElement = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "menuitem");
       xulElement.setAttribute("oncommand", "History.toSelection('" + i + "')");
-      var aref = Location.convertLocation(WESTERNVS, this.list[i], Bible.getVerseSystem(vers));
+      var aref = Location.convertLocation(WESTERNVS, this.list[i], LibSword.getVerseSystem(vers));
       xulElement.setAttribute("label", ref2ProgramLocaleText(aref, true));
       //if (i == this.index) {xulElement.style.background="rgb(230,200,255)";}
       popup.appendChild(xulElement);  
@@ -576,7 +578,7 @@ var History = {
     var bcvN = new Array(3);
     // Always store as SAME versification!
     var aVersion = prefs.getCharPref("DefaultVersion");
-    var loc = Location.convertLocation(Bible.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
+    var loc = Location.convertLocation(LibSword.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
     bcvN[0] = loc[0];
     bcvN[1] = loc[1];
     bcvN[2] = loc[2];
@@ -605,7 +607,7 @@ var History = {
  * Bible Navagator...
  ***********************************************************************/ 
  function updateNavigator() {
-  if (!Bible) return;
+  if (!LibSword) return;
   
   var myvers = ViewPort.firstDisplayBible();
 
@@ -651,7 +653,7 @@ function updateFromNavigator(numberOfSelectedVerses) {
   
   //force chapter to boundary if over in either direction
   if (myc < 1) {myc=1;}
-  if (myc > Bible.getMaxChapter("KJV", myb)) {myc = Bible.getMaxChapter("KJV", myb);}
+  if (myc > LibSword.getMaxChapter("KJV", myb)) {myc = LibSword.getMaxChapter("KJV", myb);}
   
   if (!fail) {Location.setLocation(myversion, Book[mybn].sName + "." + myc);}
 
@@ -664,20 +666,16 @@ function updateFromNavigator(numberOfSelectedVerses) {
 /************************************************************************
  * Main Command Controller...
  ***********************************************************************/
-var GlobalTarget;
 
+var CommandTarget = {};
 var XulswordController = {
   parsedLocation: {},
  
   doCommand: function (aCommand, target) {
     
     // If no target is passed, or it's incomplete, fill in with defaults
-    if (!target) target = {};
-    var def = getDefaultTarget();
-    for (var m in def) {if (!target.hasOwnProperty(m) || target[m]===null) {target[m] = def[m];}}
+    CommandTarget = getCommandTarget(target);
 
-    GlobalTarget = target;
-    
     switch (aCommand) {
     case "cmd_undo":
       BookmarksCommand.undoBookmarkTransaction();
@@ -716,29 +714,31 @@ var XulswordController = {
       AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchFromTextBox":
-      target.search.searchtext = document.getElementById("searchText").value;
+      CommandTarget.search.searchtext = document.getElementById("searchText").value;
       AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchForSelection":
-      target.search.searchtext = target.selection;
+      CommandTarget.search.mod = CommandTarget.mod;
+      CommandTarget.search.searchtext = CommandTarget.selection;
+      CommandTarget.search.type = "SearchExactText";
       AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchForLemma":
-      if (!(/lemma\:/).test(target.search.searchtext)) break;
-      target.search.type = "advancedmatch";
+      if (!(/lemma\:/).test(CommandTarget.search.searchtext)) break;
+      CommandTarget.search.type = "SearchAdvanced";
       AllWindows.push(window.open("chrome://xulsword/content/search.xul","_blank","chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_openFromSelection":
       updateToReference(this.parsedLocation);
       break;
     case "cmd_xs_newBookmark":
-      BookmarkFuns.addBookmarkAs({shortName:target.bk, chapter:target.ch, verse:target.vs, lastVerse:target.lv, version:target.mod}, false);
+      BookmarkFuns.addBookmarkAs({shortName:CommandTarget.bk, chapter:CommandTarget.ch, verse:CommandTarget.vs, lastVerse:CommandTarget.lv, version:CommandTarget.mod}, false);
       break;
     case "cmd_xs_newUserNote":
-      BookmarkFuns.addBookmarkAs({shortName:target.bk, chapter:target.ch, verse:target.vs, lastVerse:target.lv, version:target.mod}, true);
+      BookmarkFuns.addBookmarkAs({shortName:CommandTarget.bk, chapter:CommandTarget.ch, verse:CommandTarget.vs, lastVerse:CommandTarget.lv, version:CommandTarget.mod}, true);
       break;
     case "cmd_xs_selectVerse":
-      Location.setLocation(target.mod, target.bk + "." + target.ch + "." + target.vs + "." + target.lv);
+      Location.setLocation(CommandTarget.mod, CommandTarget.bk + "." + CommandTarget.ch + "." + CommandTarget.vs + "." + CommandTarget.lv);
       Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
     case "cmd_xs_back":
@@ -754,14 +754,14 @@ var XulswordController = {
       AllWindows.push(window.open("chrome://xulsword/content/bookmarks/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_toggleTab":
-      if (target.w) {
-        Tab[target.mod]["w" + target.w + ".hidden"] = !Tab[target.mod]["w" + target.w + ".hidden"];
+      if (CommandTarget.w) {
+        Tab[CommandTarget.mod]["w" + CommandTarget.w + ".hidden"] = !Tab[CommandTarget.mod]["w" + CommandTarget.w + ".hidden"];
         updateModuleMenuCheckmarks();
         Texts.update();
       }
       break;
     case "cmd_xs_aboutModule":
-      AboutScrollTo = target.mod;
+      AboutScrollTo = CommandTarget.mod;
       AllWindows.push(window.open("chrome://xulsword/content/about.xul","splash","chrome,modal,centerscreen"));
       break;
     case "cmd_xs_addNewModule":
@@ -780,54 +780,54 @@ var XulswordController = {
       if (!importAudio(null, null, false)) ModuleCopyMutex=false;
       break;
     case "cmd_xs_nextVerse":
-      var l = Location.getLocation(target.mod).split(".");
+      var l = Location.getLocation(CommandTarget.mod).split(".");
       l[1] = Number(l[1]);
       l[2] = Number(l[2]);
       l[2]++;
-      if (l[2] > Bible.getMaxVerse(target.mod, l[0] + "." + l[1])) {
+      if (l[2] > LibSword.getMaxVerse(CommandTarget.mod, l[0] + "." + l[1])) {
         l[1]++;
-        if (l[1] > Bible.getMaxChapter(target.mod, l[0])) return;
+        if (l[1] > LibSword.getMaxChapter(CommandTarget.mod, l[0])) return;
         l[2] = 1;
       }
       l[3] = l[2];
-      Location.setLocation(target.mod, l.join("."));
+      Location.setLocation(CommandTarget.mod, l.join("."));
       Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
     case "cmd_xs_previousVerse":
-      var l = Location.getLocation(target.mod).split(".");
+      var l = Location.getLocation(CommandTarget.mod).split(".");
       l[1] = Number(l[1]);
       l[2] = Number(l[2]);
       l[2]--;
       if (l[2] == 0) {
         l[1]--;
         if (l[1] == 0) return;
-        l[2] = Bible.getMaxVerse(target.mod, l[0] + "." + l[1]);
+        l[2] = LibSword.getMaxVerse(CommandTarget.mod, l[0] + "." + l[1]);
       }
       l[3] = l[2];
-      Location.setLocation(target.mod, l.join("."));
+      Location.setLocation(CommandTarget.mod, l.join("."));
       Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
     case "cmd_xs_nextChapter":
-      if (target.ch < Bible.getMaxChapter(target.mod, target.bk)) {target.ch++;}
+      if (CommandTarget.ch < LibSword.getMaxChapter(CommandTarget.mod, CommandTarget.bk)) {CommandTarget.ch++;}
       else return;
-      Location.setLocation(target.mod, target.bk + "." + target.ch);
+      Location.setLocation(CommandTarget.mod, CommandTarget.bk + "." + CommandTarget.ch);
       Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
       break;
     case "cmd_xs_previousChapter":
-      if (target.ch > 1) {target.ch--;}
+      if (CommandTarget.ch > 1) {CommandTarget.ch--;}
       else return;
-      Location.setLocation(target.mod, target.bk + "." + target.ch);
+      Location.setLocation(CommandTarget.mod, CommandTarget.bk + "." + CommandTarget.ch);
       Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
       break;
     case "cmd_xs_nextBook":
-      var bkn = findBookNum(target.bk);
+      var bkn = findBookNum(CommandTarget.bk);
       bkn++;
       if (bkn >= NumBooks) return;
       Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
       Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
       break;
     case "cmd_xs_previousBook":
-      var bkn = findBookNum(target.bk);
+      var bkn = findBookNum(CommandTarget.bk);
       bkn--;
       if (bkn < 0) return;
       Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
@@ -838,10 +838,7 @@ var XulswordController = {
   
   isCommandEnabled: function (aCommand, target) {
     
-    // If no target is passed, or it's incomplete, fill in with defaults
-    if (!target) target = {};
-    var def = getDefaultTarget();
-    for (var m in def) {if (!target.hasOwnProperty(m)) {target[m] = def[m];}}
+    target = getCommandTarget(target);
     
     switch (aCommand) {
     case "cmd_undo":
@@ -888,11 +885,11 @@ var XulswordController = {
       break;
     case "cmd_xs_nextVerse":
       var mod = ViewPort.firstDisplayBible();
-      return (target.vs < Bible.getMaxVerse(target.mod, Location.getLocation(target.mod)));
+      return (target.vs < LibSword.getMaxVerse(target.mod, Location.getLocation(target.mod)));
     case "cmd_xs_previousVerse":
       return (target.vs > 1);
     case "cmd_xs_nextChapter":
-      return (target.ch < Bible.getMaxChapter(target.mod, Location.getLocation(target.mod)));
+      return (target.ch < LibSword.getMaxChapter(target.mod, Location.getLocation(target.mod)));
     case "cmd_xs_previousChapter":
       return (target.ch > 1);
     case "cmd_xs_nextBook":
@@ -955,42 +952,52 @@ var XulswordController = {
 // This is the default target for the main command controller. This 
 // default target is returned each time the controller is used, unless
 // a target was supplied in the call.
- 
-function getDefaultTarget() {
-  var target = {};
-  target.search = { 
+function getCommandTarget(target) {
+  
+  // first get all default target parameters
+  var deftarg = {};
+  deftarg.search = { 
       mod:ViewPort.firstDisplayBible(), 
       searchtext:document.getElementById('searchText').value, 
-      type:"hasthewords", 
-      scope:"searchAll" 
+      type:"SearchAnyWord", 
+      scope:"SearchAll" 
   };
-  target.bookmark = null;
-  target.w = null;
-  target.mod = ViewPort.firstDisplayBible();
+  deftarg.bookmark = null;
+  deftarg.w = null;
+  deftarg.mod = ViewPort.firstDisplayBible();
 
-  switch (Tab[target.mod].modType) {
+  switch (Tab[deftarg.mod].modType) {
   case BIBLE:
   case COMMENTARY:
-    target.bk = Location.getBookName();
-    target.ch = Location.getChapterNumber(target.mod);
-    target.vs = Location.getVerseNumber(target.mod);
-    target.lv = Location.getLastVerseNumber(target.mod);
+    deftarg.bk = Location.getBookName();
+    deftarg.ch = Location.getChapterNumber(deftarg.mod);
+    deftarg.vs = Location.getVerseNumber(deftarg.mod);
+    deftarg.lv = Location.getLastVerseNumber(deftarg.mod);
     break;
   case DICTIONARY:
   case GENBOOK:
-    target.bk = "";
-    target.ch = (target.w ? ViewPort.Key[target.w]:null);
-    target.vs = 1;
-    target.lv = 1;
+    deftarg.bk = "";
+    deftarg.ch = (deftarg.w ? ViewPort.Key[deftarg.w]:null);
+    deftarg.vs = 1;
+    deftarg.lv = 1;
     break;
   }
   
   var s = ViewPort.ownerDocument.defaultView.getSelection();
   if (s && s.isCollapsed) {s = null;}
   if (s) s = replaceASCIIcontrolChars(s.toString())
-  target.selection = s;
+  deftarg.selection = s;
   
-  return target;
+  // now overwrite defaults with any provided target parameters
+  if (target) {
+    for (var m in target) {
+      if (target[m] !== null) {
+        deftarg[m] = (typeof(target[m]) == "object" ? copyObj(target[m]):target[m]);
+      }
+    }
+  }
+  
+  return deftarg;
 }
 
 function goUpdateFileMenu () {
@@ -1039,16 +1046,15 @@ function handleOptions(elem) {
     case "f3":
     case "f4":
       prefs.setIntPref("FontSize", 2*(Number(elem.id.substr(1,1)) - 2));
-      
-      // change font for MainWindow
-      setUserFontSize(prefs.getIntPref('FontSize'));
-      ViewPort.ownerDocument.defaultView.setUserFontSize(prefs.getIntPref('FontSize'));
-      
-      // change font for all other windows
+
+      // change font for all those windows and all their iframes which
+      // have a setUserFontSize function
       for (var i=0; i<AllWindows.length; i++) {
         if (!AllWindows[i]) next;
+        
         if (typeof(AllWindows[i].setUserFontSize) != "undefined") 
             AllWindows[i].setUserFontSize(prefs.getIntPref('FontSize'));
+            
         var iframe = AllWindows[i].document.getElementsByTagName("iframe");
         for (var j=0; j<iframe.length; j++) {
           if (typeof(iframe[j].contentDocument.defaultView.setUserFontSize) != "undefined") {
@@ -1233,7 +1239,7 @@ function updateXulswordButtons() {
       catch (er) {}
     }
     if (GlobalToggleCommands[cmd] != "User Notes")
-      Bible.setGlobalOption(GlobalToggleCommands[cmd], prefs.getCharPref(GlobalToggleCommands[cmd]));
+      LibSword.setGlobalOption(GlobalToggleCommands[cmd], prefs.getCharPref(GlobalToggleCommands[cmd]));
   }
   
   // Menu Checkboxes
@@ -1263,9 +1269,9 @@ function updateXulswordButtons() {
    } 
   
   // Enabled/Disable some menus based on settings
-  if (Bible.getGlobalOption("Footnotes") == "On") {document.getElementById("sub-fn").setAttribute("disabled",false);}
+  if (LibSword.getGlobalOption("Footnotes") == "On") {document.getElementById("sub-fn").setAttribute("disabled",false);}
   else {document.getElementById("sub-fn").setAttribute("disabled",true);}
-  if (Bible.getGlobalOption("Cross-references") == "On")  {document.getElementById("sub-cr").setAttribute("disabled",false);}
+  if (LibSword.getGlobalOption("Cross-references") == "On")  {document.getElementById("sub-cr").setAttribute("disabled",false);}
   else {document.getElementById("sub-cr").setAttribute("disabled",true);}
   if (prefs.getCharPref("User Notes") == "On")  {document.getElementById("sub-un").setAttribute("disabled",false);}
   else {document.getElementById("sub-un").setAttribute("disabled",true);}
@@ -1418,6 +1424,17 @@ function resizeWatch() {
 }
 
 function unloadXUL() {
+  
+  ViewPort.unload();
+  
+  prefs.setCharPref("Location", Location.getLocation(WESTERNVS));
+  
+  // save our xulsword global option prefs...
+  for (var cmd in GlobalToggleCommands) {
+    if (GlobalToggleCommands[cmd] == "User Notes") continue;
+    prefs.setCharPref(GlobalToggleCommands[cmd], LibSword.getGlobalOption(GlobalToggleCommands[cmd]));
+  }
+  
   try {window.controllers.removeController(XulswordController);} catch(er) {}
   try {window.controllers.removeController(BookmarksMenuController);} catch(er) {}
   
@@ -1425,6 +1442,7 @@ function unloadXUL() {
   
   //Close search windows and other windows
   for (var i=0; i<AllWindows.length; i++) {
+    if (AllWindows[i] === window) continue;
     if (!AllWindows[i]) next;
     try {AllWindows[i].close();} catch(er) {}
   }
@@ -1432,9 +1450,9 @@ function unloadXUL() {
   //Clear Transactions
   BM.gTxnSvc.clear();
   
-  if (Bible) {
+  if (LibSword) {
     History.save();
-    Bible.quitLibsword();
+    LibSword.quitLibsword();
   }
   
   //Purge UserData data source
@@ -1556,8 +1574,8 @@ function saveHTML () {
     var data = "";
 
     try {
-      var tmp = Bible.getChapterText(ViewPort.Module[i], Location.getLocation(ViewPort.Module[i]));
-      data += "\n\nCROSSREFS\n" + Bible.getCrossRefs();
+      var tmp = LibSword.getChapterText(ViewPort.Module[i], Location.getLocation(ViewPort.Module[i]));
+      data += "\n\nCROSSREFS\n" + LibSword.getCrossRefs();
     }
     catch (er) {}
   

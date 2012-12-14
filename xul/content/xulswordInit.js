@@ -68,7 +68,7 @@ var Location = {
       xsref = p.join(".");
     }
  
-    var loc = Bible.convertLocation(vsys1, xsref, vsys2);
+    var loc = LibSword.convertLocation(vsys1, xsref, vsys2);
     if (!vzero) return loc;
     
     p = loc.split(".");
@@ -79,7 +79,7 @@ var Location = {
   
   setLocation: function(modname, xsref) {
     this.modname = modname;
-    this.modvsys = Bible.getVerseSystem(modname);
+    this.modvsys = LibSword.getVerseSystem(modname);
 /*    
     // dont highlight entire chapter unless specifically requested
     if ((/^[^\s\.]+\.\d+$/).test(xsref)) xsref += ".1.1";
@@ -98,7 +98,7 @@ var Location = {
   setVerse: function(modname, verse, lastverse) {
     var loc = this.getLocation(modname);
     var p = loc.split(".");
-    var maxv = Bible.getMaxVerse(modname, loc);
+    var maxv = LibSword.getMaxVerse(modname, loc);
     
     if (verse == -1 || verse > maxv) p[2] = maxv;
     else if (verse < 0) p[2] = 0;
@@ -115,7 +115,7 @@ var Location = {
   
   getLocation: function(modname) {
     if (!this.modname) {setLocation(WESTERNVS, "Gen.1.1.1");}
-    var r = this.convertLocation(Bible.getVerseSystem(this.modname), this.book + "." + this.chapter + "." + this.verse + "." + this.lastverse, Bible.getVerseSystem(modname));
+    var r = this.convertLocation(LibSword.getVerseSystem(this.modname), this.book + "." + this.chapter + "." + this.verse + "." + this.lastverse, LibSword.getVerseSystem(modname));
     return r;
   },
   
@@ -175,10 +175,10 @@ function initLocales() {
  ***********************************************************************/ 
 
 function initModules() {
-  if (!Bible) return false;
+  if (!LibSword) return false;
 
   // Gets list of available modules
-  var modules = Bible.getModuleList().split("<nx>");
+  var modules = LibSword.getModuleList().split("<nx>");
   for (var m=0; m<modules.length; m++) {
   
     var mod = modules[m].split(";")[0];
@@ -192,21 +192,21 @@ function initModules() {
     // Weed out incompatible module versions. The module installer shouldn't 
     // allow bad mods, but this is just in case.
     var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
-    var xsversion = Bible.getModuleInformation(mod, VERSIONPAR);
+    var xsversion = LibSword.getModuleInformation(mod, VERSIONPAR);
     xsversion = (xsversion != NOTFOUND ? xsversion:MINVERSION);
     var modminxsvers;
     try {modminxsvers = prefs.getCharPref("MinXSMversion");} catch (er) {modminxsvers = MINVERSION;}
     if (comparator.compare(xsversion, modminxsvers) < 0) continue;
-    var xminprogvers = Bible.getModuleInformation(mod, MINPVERPAR);
+    var xminprogvers = LibSword.getModuleInformation(mod, MINPVERPAR);
     xminprogvers = (xminprogvers != NOTFOUND ? xminprogvers:MINVERSION);
     if (comparator.compare(prefs.getCharPref("Version"), xminprogvers) < 0) continue;
-    var xsengvers = Bible.getModuleInformation(mod, "MinimumVersion");
+    var xsengvers = LibSword.getModuleInformation(mod, "MinimumVersion");
     xsengvers = (xsengvers!=NOTFOUND ? xsengvers:0);
     var enginevers; try {enginevers = prefs.getCharPref("EngineVersion");} catch (er) {enginevers = NOTFOUND;}
     if (enginevers != NOTFOUND && comparator.compare(enginevers, xsengvers) < 0) continue;
     
     // Language glossaries don't currently work (too big??) and so aren't supported.
-    if (Bible.getModuleInformation(mod, "GlossaryFrom") != NOTFOUND) continue;
+    if (LibSword.getModuleInformation(mod, "GlossaryFrom") != NOTFOUND) continue;
     
     ModuleConfigs[mod] = getModuleConfig(mod);
   }
@@ -222,7 +222,7 @@ function initModules() {
 function getLocaleOfModule(module) {
   var myLocale=null;
   
-  if (!Bible) return null;
+  if (!LibSword) return null;
   
   for (var lc in LocaleConfigs) {
     var regex = new RegExp("(^|\s|,)+" + module + "(,|\s|$)+");
@@ -235,7 +235,7 @@ function getLocaleOfModule(module) {
     var lcs, ms;
     try {
       lcs = lc.toLowerCase();
-      ms = Bible.getModuleInformation(module, "Lang").toLowerCase();
+      ms = LibSword.getModuleInformation(module, "Lang").toLowerCase();
     }
     catch(er) {lcs=null; ms==null;}
     
@@ -255,9 +255,9 @@ function getLocaleOfModule(module) {
  ***********************************************************************/  
 
 function initTabGlobals() {
-  if (!Bible) return false;
+  if (!LibSword) return false;
   
-  var modlist = Bible.getModuleList();
+  var modlist = LibSword.getModuleList();
   var modarray = [];
   var origModuleOT = null;
   var origModuleNT = null;
@@ -269,10 +269,10 @@ function initTabGlobals() {
     if (type == DICTIONARY) {
     
       // Set Global dictionary module params
-      var mlang = Bible.getModuleInformation(mod, "Lang");
+      var mlang = LibSword.getModuleInformation(mod, "Lang");
       var mlangs = mlang.replace(/-.*$/, "");
 
-      var feature = Bible.getModuleInformation(mod, "Feature");
+      var feature = LibSword.getModuleInformation(mod, "Feature");
       if (feature.search("DailyDevotion") != -1) {
         DailyDevotionModules[mod] = "DailyDevotionToday";
       }
@@ -294,11 +294,11 @@ function initTabGlobals() {
     }
     
     // Get tab label
-    var label = Bible.getModuleInformation(mod, "TabLabel");
-    if (label == NOTFOUND) label = Bible.getModuleInformation(mod, "Abbreviation");
+    var label = LibSword.getModuleInformation(mod, "TabLabel");
+    if (label == NOTFOUND) label = LibSword.getModuleInformation(mod, "Abbreviation");
     
     // Set up Original tab Globals
-    var isORIG = Bible.getModuleInformation(mod, "OriginalTabTestament");
+    var isORIG = LibSword.getModuleInformation(mod, "OriginalTabTestament");
     if (isORIG == "OT") {
       origModuleOT = mod;
       try {label = SBundle.getString("ORIGLabelOT");}
@@ -350,7 +350,7 @@ function initTabGlobals() {
     tab.tabType = getShortTypeFromLong(tab.modType);
     tab.isRTL = (ModuleConfigs[mod].direction == "rtl");
     tab.index = m;
-    tab.description = Bible.getModuleInformation(mod, "Description");
+    tab.description = LibSword.getModuleInformation(mod, "Description");
     tab.locName = (isASCII(tab.label) ? DEFAULTLOCALE:mod);
     
     // Save Global tab objects
@@ -525,7 +525,7 @@ function xulswordInit() {
   
   initBooks();
 
-  if (Bible && !Bible.unlock()) Bible=null;
+  if (LibSword && !LibSword.unlock()) LibSword = null;
   
 }
 

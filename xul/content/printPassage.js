@@ -131,11 +131,11 @@ var PrintPassage = {
     this.TotalChaps = 0;
     if (this.From.bn == this.To.bn) this.TotalChaps = this.To.ch - this.From.ch;
     else {
-      this.TotalChaps = Bible.getMaxChapter(this.From.mod, this.From.bk) - this.From.ch
+      this.TotalChaps = LibSword.getMaxChapter(this.From.mod, this.From.bk) - this.From.ch
       for (var n=this.From.bn+1; n<=this.To.bn; n++) {
         var add=0;
         if (n == this.To.bn) add = this.To.ch;
-        else add = Bible.getMaxChapter(this.From.mod, Book[n].sName);
+        else add = LibSword.getMaxChapter(this.From.mod, Book[n].sName);
         this.TotalChaps += add;
       }
     }
@@ -177,7 +177,7 @@ var PrintPassage = {
       this.textHTML = this.tmpHTML + "</div>"; // end single outer container
       return;
     }
-    if (this.Next.ch == Bible.getMaxChapter(this.From.mod, Book[this.Next.bn].sName)) {
+    if (this.Next.ch == LibSword.getMaxChapter(this.From.mod, Book[this.Next.bn].sName)) {
       this.Next.bn++;
       this.Next.ch = 1;
     }

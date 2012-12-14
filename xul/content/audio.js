@@ -88,13 +88,13 @@ function getAudioForChapter(version, bookShortName, chapterNumber, audioDirs) {
   var ret = getAudioFile(version, bookShortName, chapterNumber, audioDirs);
   if (ret) return ret;
     
-  var audioCode = Bible.getModuleInformation(version, "AudioCode");
+  var audioCode = LibSword.getModuleInformation(version, "AudioCode");
   if (audioCode!=NOTFOUND) {
     ret = getAudioFile(audioCode, bookShortName, chapterNumber, audioDirs);
     if (ret) return ret;
   }
   
-  var mLang = Bible.getModuleInformation(version, "Lang");
+  var mLang = LibSword.getModuleInformation(version, "Lang");
   if (mLang) mLang = mLang.replace(/-.*$/, "");
   ret = getAudioFile(mLang, bookShortName, chapterNumber, audioDirs);
   if (ret) return ret;

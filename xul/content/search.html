@@ -50,8 +50,7 @@
     if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
 
     // Do a search for selected text in mod
-    MainWindow.GlobalTarget.search = {mod:mod, searchtext:sel, type:"hasthistext"};
-    MainWindow.document.getElementById("cmd_xs_search").doCommand();
+    MainWindow.XulswordController.doCommand("cmd_xs_searchForSelection", { mod:mod, selection:sel });
     
     e.stopPropagation(); // block any higher handlers
   }

@@ -81,7 +81,7 @@
             sep = "<br><br>";
           }
           lastType = Tabs[t].modType;
-          var desc = Bible.getModuleInformation(Tabs[t].modName, "Description");
+          var desc = LibSword.getModuleInformation(Tabs[t].modName, "Description");
           document.write("<div class=\"cs-" + (isASCII(desc) ? DEFAULTLOCALE:Tabs[t].modName) + "\" >");
           document.write("<a href=\"#" + Tabs[t].modName + "\">" + Tabs[t].label + " - " + desc + "</a><hr>");
           document.write("</div>");
@@ -95,7 +95,7 @@
           // tab label, version, and back arrow
           // collect module data first, and if data is ASCII, overwrite version class style to force LTR.
           var mdata1, mdata2, mdata3;
-          var modvers = Bible.getModuleInformation(Tabs[t].modName, "Version");
+          var modvers = LibSword.getModuleInformation(Tabs[t].modName, "Version");
           if (modvers == NOTFOUND) modvers="";
           if (modvers) modvers = " (" + modvers + ")";
           mdata2 = "<span class=\"head1\">" + Tabs[t].label + (modvers ? modvers:"") + "</span><a href=\"#top\" style=\"font-family:ariel;\"> &#8593;</a><br>";
@@ -103,16 +103,16 @@
           //    Description
           //    About, DistributionLicense
           mdata3 = "";
-          var info = Bible.getModuleInformation(Tabs[t].modName,"Description");
+          var info = LibSword.getModuleInformation(Tabs[t].modName,"Description");
           if (info && info!=NOTFOUND) mdata3 = info + "<br>";
-          info = Bible.getModuleInformation(Tabs[t].modName,"About").replace("\\par", "<br>", "g");
+          info = LibSword.getModuleInformation(Tabs[t].modName,"About").replace("\\par", "<br>", "g");
           var comma="";
           if (info && info!=NOTFOUND) {
             mdata3 += info;
             if (info.search(/[\.\?,:;!]\s*$/)==-1) {comma=",";}
             comma += " ";
           }
-          info = Bible.getModuleInformation(Tabs[t].modName,"DistributionLicense");
+          info = LibSword.getModuleInformation(Tabs[t].modName,"DistributionLicense");
           if (info && info!=NOTFOUND) mdata3 += comma + info;
           mdata3 += "</div>";
           mdata1 = "<div class=\"cs-" + (isASCII(mdata3) ? DEFAULTLOCALE:Tabs[t].modName) + "\" >";

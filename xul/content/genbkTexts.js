@@ -29,7 +29,7 @@ var GenBookTexts = {
     
     // the GenBookKey value always begins with /mod/ so that values can be directly
     // compared to the genbook-tree's resource values.
-    ret.htmlText = Bible.getGenBookChapterText(d.mod, d.Key.replace(/^\/[^\/]+/, ""));
+    ret.htmlText = LibSword.getGenBookChapterText(d.mod, d.Key.replace(/^\/[^\/]+/, ""));
     ret.htmlText = Texts.addParagraphIDs(ret.htmlText, d.mod);
       
     var un = Texts.getUserNotes("na", d.Key, d.mod, ret.htmlText);
@@ -102,7 +102,7 @@ var GenBookTexts = {
       needToRebuild = true; 
       var moduleRDF = getSpecialDirectory("xsResD");
       moduleRDF.append(GBs[i] + ".rdf");
-      if (!moduleRDF.exists() || !this.RDFChecked[GBs[i]]) writeFile(moduleRDF, Bible.getGenBookTableOfContents(GBs[i]));
+      if (!moduleRDF.exists() || !this.RDFChecked[GBs[i]]) writeFile(moduleRDF, LibSword.getGenBookTableOfContents(GBs[i]));
       this.RDFChecked[GBs[i]] = true;
     
       var myURI = encodeURI("File://" + moduleRDF.path.replace("\\","/","g"));

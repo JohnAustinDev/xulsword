@@ -30,12 +30,12 @@ var DictTexts = {
     
     // get key list (is cached)
     if (!this.keyList[w][d.mod]) {
-      this.keyList[w][d.mod] = Bible.getAllDictionaryKeys(d.mod).split("<nx>");
+      this.keyList[w][d.mod] = LibSword.getAllDictionaryKeys(d.mod).split("<nx>");
       this.keyList[w][d.mod].pop();
-      this.sortOrder = Bible.getModuleInformation(d.mod, "LangSortOrder");
+      this.sortOrder = LibSword.getModuleInformation(d.mod, "LangSortOrder");
       if (this.sortOrder != NOTFOUND) {
         this.sortOrder += "0123456789";
-        this.langSortSkipChars = Bible.getModuleInformation(d.mod, "LangSortSkipChars");
+        this.langSortSkipChars = LibSword.getModuleInformation(d.mod, "LangSortSkipChars");
         if (this.langSortSkipChars == NOTFOUND) this.langSortSkipChars = "";
         this.keyList[w][d.mod].sort(this.dictSort);
       }
@@ -97,18 +97,18 @@ var DictTexts = {
     
     var html = "";
     if (mods.length == 1) {
-      try {html = Bible.getDictionaryEntry(mods[0], key);}
+      try {html = LibSword.getDictionaryEntry(mods[0], key);}
       catch (er) {jsdump("e1"); html = "";}
     }
     else if (mods.length > 1) {
       var sep = "";
       for (var dw=0; dw<mods.length; dw++) {
         var dictEntry="";
-        try {dictEntry = Bible.getDictionaryEntry(mods[dw], key);}
+        try {dictEntry = LibSword.getDictionaryEntry(mods[dw], key);}
         catch (er) {jsdump("e2"); dictEntry = "";}
         if (dictEntry) {
           dictEntry = dictEntry.replace(/^(<br>)+/, "");
-          var dictTitle = Bible.getModuleInformation(mods[dw], "Description");
+          var dictTitle = LibSword.getModuleInformation(mods[dw], "Description");
           dictTitle = (dictTitle != NOTFOUND ? "<div class=\"dict-description\">" + dictTitle + "</div>":"");
           html += sep + dictTitle + dictEntry;
           sep = "<div class=\"dict-sep\"></div>";
@@ -164,7 +164,7 @@ var DictTexts = {
   getLemmaHTML: function(numberList, matchingPhrase) {
 
     const pad="00000";
-    var defaultBibleLanguage = Bible.getModuleInformation(prefs.getCharPref("DefaultVersion"), "Lang");
+    var defaultBibleLanguage = LibSword.getModuleInformation(prefs.getCharPref("DefaultVersion"), "Lang");
     if (defaultBibleLanguage == NOTFOUND) defaultBibleLanguage="";
     var defaultBibleLangBase = (defaultBibleLanguage ? defaultBibleLanguage.replace(/-.*$/, ""):"");
     
@@ -221,7 +221,7 @@ var DictTexts = {
       
       if (key && module) {
         if (key == pad) continue; // G tags with no number
-        var entry = Bible.getDictionaryEntry(module, key);
+        var entry = LibSword.getDictionaryEntry(module, key);
         if (entry) html += sep + entry;
         else html += sep + key;
       }

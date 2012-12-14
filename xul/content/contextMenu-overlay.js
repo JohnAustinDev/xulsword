@@ -103,7 +103,7 @@ var ContextMenu = {
         document.getElementById("ctx_xs_searchForLemma").label += " - " + lemma;
         this.target.search.searchtext = lemma;
         this.target.search.mod = strongsMod;
-        this.target.search.type = "advancedmatch";
+        this.target.search.type = "SearchAdvanced";
       }
     }
     

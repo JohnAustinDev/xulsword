@@ -4,6 +4,9 @@
 body[hasLexicon="true"] #lexiconBox {
   display:block;
 }
+.slist {
+  white-space:nowrap;
+}
 .matchingStrongs {
   /* this rule is copied by Javascript 
   and applied to Strong's classes */
