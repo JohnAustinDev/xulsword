@@ -29,7 +29,7 @@
 %searchDTD;
 ]>
 
-<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"
     id="search"
     title="&search.title; &quot;**search_title**&quot;"
     width="800" height="630" screenX="50" screenY="50"
@@ -55,7 +55,10 @@
 </keyset>
 
 <keyset id="editMenuKeys"/>
+
 <commandset id="editMenuCommands"/>
+<commandset id="xulswordCommandSet"/>
+<commandset id="BookmarksMenuCommandSet"/>
 
 <toolbox>
 
@@ -215,12 +218,7 @@
 <vbox id="searchframe-cont" flex="1">
   <hbox flex="100%">
     <vbox  flex="100%">
-      <iframe id="search-frame" 
-          flex="100%" 
-          class="searchframe" 
-          context="contextSearchBox" 
-          src="search.html">
-      </iframe>
+      <iframe id="search-frame" src="search.html" flex="100%" class="searchframe" context="contextScriptBox" />
     </vbox>
     <vbox id="resultsnav" width="35px" pack="center" hidden="true">
       <image id="first" class="searchArrow"/>
@@ -242,6 +240,9 @@
   </hbox>
   <button id="stopButton" label="&stop.label;" hidden="true"/>
 </statusbar>
+
+<!-- For contextMenu-overlay to bind to !-->
+<popupset id="main-popupset"></popupset>
 
 <!-- TOOLTIPS DEFINED HERE !-->
 <tooltip id="searchTextTT">

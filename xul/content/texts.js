@@ -281,6 +281,10 @@ var Texts = {
       
       sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = ti.htmlText;
+      
+      // insure navigator shows correct chapter (even though this will 
+      // sometimes initiate a second call to Text.update)
+      GenBookTexts.navigatorSelect(display.Key);
     }
     
     // handle scroll
@@ -294,7 +298,7 @@ var Texts = {
       
     // save display object for this window
     this.display[w] = copyObj(display);
- 
+
   },
   
   updateDictionary: function(w, force) {

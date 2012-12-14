@@ -125,14 +125,12 @@
   <command id="cmd_bm_newfolder"                 oncommand="goDoCommand('cmd_bm_newfolder');"/>
   <command id="cmd_bm_newbookmark"               oncommand="goDoCommand('cmd_bm_newbookmark');"/>
   <command id="cmd_bm_newseparator"              oncommand="goDoCommand('cmd_bm_newseparator');"/>
-  <command id="cmd_bm_properties"                oncommand="goDoCommand('cmd_bm_properties');"/>
   <command id="cmd_bm_rename"                    oncommand="goDoCommand('cmd_bm_rename');"/>
   <command id="cmd_bm_moveBookmark"              oncommand="goDoCommand('cmd_bm_moveBookmark');"/>
   <command id="cmd_bm_sortbyname"                oncommand="goDoCommand('cmd_bm_sortbyname');"/>
   <command id="cmd_bm_cut"                       oncommand="goDoCommand('cmd_bm_cut')"/>
   <command id="cmd_bm_copy"                      oncommand="goDoCommand('cmd_bm_copy')"/>
   <command id="cmd_bm_paste"                     oncommand="goDoCommand('cmd_bm_paste')"/>
-  <command id="cmd_bm_delete"                    oncommand="goDoCommand('cmd_bm_delete')" valueDefault="Delete;" disabled="true"/>
 </commandset>
 
 <commandset id="editMenuCommands"/>
@@ -151,18 +149,18 @@
   <command id="cmd_xs_allTogglesOn"              oncommand="holdPopupAndDo('cmd_xs_allTogglesOn');"/>
   <command id="cmd_xs_allTogglesOff"             oncommand="holdPopupAndDo('cmd_xs_allTogglesOff');"/>
   <command id="cmd_xs_search"                    oncommand="goDoCommand('cmd_xs_search');"/>
-  <command id="cmd_xs_searchForSelection"        oncommand="goDoCommand('cmd_xs_searchForSelection');"/>
+  
   <command id="cmd_xs_searchFromTextBox"         oncommand="goDoCommand('cmd_xs_searchFromTextBox');"/>
-  <command id="cmd_xs_searchForLemma"            oncommand="goDoCommand('cmd_xs_searchForLemma');"/>
-  <command id="cmd_xs_newBookmark"               oncommand="goDoCommand('cmd_xs_newBookmark');"/>
-  <command id="cmd_xs_newUserNote"               oncommand="goDoCommand('cmd_xs_newUserNote');"/>
-  <command id="cmd_xs_selectVerse"               oncommand="goDoCommand('cmd_xs_selectVerse');"/>
+  
+  
+  
+  
   <command id="cmd_xs_back"                      oncommand="goDoCommand('cmd_xs_back');"/>
   <command id="cmd_xs_forward"                   oncommand="goDoCommand('cmd_xs_forward');"/>
   <command id="cmd_xs_navigatorUpdate"           oncommand="goDoCommand('cmd_xs_navigatorUpdate');"/>
   <command id="cmd_xs_openManager"               oncommand="goDoCommand('cmd_xs_openManager');"/>
-  <command id="cmd_xs_openFromSelection"         oncommand="goDoCommand('cmd_xs_openFromSelection');"/>
-  <command id="cmd_xs_toggleTab"                 oncommand="goDoCommand('cmd_xs_toggleTab');"/>
+  
+  
   <command id="cmd_xs_addNewModule"              oncommand="goDoCommand('cmd_xs_addNewModule');"/>
   <command id="cmd_xs_removeModule"              oncommand="goDoCommand('cmd_xs_removeModule');"/>
   <command id="cmd_xs_exportAudio"               oncommand="goDoCommand('cmd_xs_exportAudio');"/>
@@ -172,7 +170,7 @@
   <command id="cmd_pageSetup"                    oncommand="PrintUtils.showPageSetup();"/>
   <command id="cmd_xs_startHistoryTimer"
             oncommand="try {window.clearTimeout(History.timer);} catch(er){} History.timer=window.setTimeout('History.add()', History.delay);"/>
-  <command id="cmd_xs_aboutModule"               oncommand="goDoCommand('cmd_xs_aboutModule');"/>
+  
   <command id="cmd_xs_nextVerse"                 oncommand="goDoCommand('cmd_xs_nextVerse');"/>
   <command id="cmd_xs_previousVerse"             oncommand="goDoCommand('cmd_xs_previousVerse');"/>
   <command id="cmd_xs_nextChapter"               oncommand="goDoCommand('cmd_xs_nextChapter');"/>

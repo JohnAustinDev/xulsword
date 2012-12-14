@@ -1,16 +1,54 @@
+/* this selector is copied by Javascript 
+and applied to Strong's classes */
+.matchingStrongs {
+  color:red;
+}
 #lexiconBox {
   display:none;
 }
 body[hasLexicon="true"] #lexiconBox {
   display:block;
 }
+.lex-body {
+  white-space:nowrap;
+}
+.lex-body > span:nth-child(3):before {
+  content:'-';
+  padding-left:4px;
+  padding-right:4px;  
+}
+.lex-total:before {
+  content:'(';
+}
+.lex-total:after {
+  content:')';
+}
+.lex-link {
+  color:blue;
+}
+.lex-count:before {
+  content:'(';
+}
+.lex-count:after {
+  content:'), ';
+}
+.lex-sep {
+  border-top:1px solid grey;
+  margin:10px;
+}
 .slist {
   white-space:nowrap;
 }
-.matchingStrongs {
-  /* this rule is copied by Javascript 
-  and applied to Strong's classes */
-  color:red;
+.slist > a {
+  color:blue;
+}
+.slist > a:hover {
+  border-bottom:1px solid blue;
+}
+.slist > span:before {
+  content:'-';
+  padding-left:4px;
+  padding-right:4px;
 }
 .searchTerm {
   color:red;

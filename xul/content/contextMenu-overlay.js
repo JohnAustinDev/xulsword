@@ -125,10 +125,10 @@ var ContextMenu = {
     }
     
     // Finish by filling in any null or NOTFOUND values with local context
-    if (!this.target.w) this.target.w = 1;
+    if (!this.target.w) this.target.w = 0;
     
     if (!this.target.mod) {
-      this.target.mod = ViewPort.Module[this.target.w]; 
+      this.target.mod = prefs.getCharPref("DefaultVersion"); 
     }
   
     var defTexts = {bk:Location.getBookName(), 
@@ -152,7 +152,7 @@ var ContextMenu = {
     
     this.build(canHaveLemma, (this.target.w ? true:false), true, true, true, true);
     
-var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.target[m]:"NULL") + ", ";} jsdump(t);
+//var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.target[m]:"NULL") + ", ";} jsdump(t);
 //var t=""; for (var m in contextTargs) {t += m + "=" + (contextTargs[m] ? contextTargs[m]:"NULL") + ", ";} jsdump(t);
 
   },
@@ -163,17 +163,17 @@ var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.targ
     document.getElementById("contextScriptBox").setAttribute("value", "open");
     
     // Enable/disable menu options accordingly
-    goUpdateCommand("cmd_xs_searchForLemma");
-    goUpdateCommand("cmd_xs_aboutModule");
-    goUpdateCommand("cmd_xs_toggleTab");
-    goUpdateCommand("cmd_copy");
-    goUpdateCommand("cmd_xs_searchForSelection");
-    goUpdateCommand("cmd_xs_openFromSelection");
-    goUpdateCommand("cmd_xs_selectVerse");
-    goUpdateCommand("cmd_xs_newBookmark");
-    goUpdateCommand("cmd_xs_newUserNote");
-    goUpdateCommand("cmd_bm_properties");
-    goUpdateCommand("cmd_bm_delete");
+    goUpdateCommand("cmd_xs_searchForLemma", ContextMenuController);
+    goUpdateCommand("cmd_xs_aboutModule", ContextMenuController);
+    goUpdateCommand("cmd_xs_toggleTab", ContextMenuController);
+    goUpdateCommand("cmd_copy", ContextMenuController);
+    goUpdateCommand("cmd_xs_searchForSelection", ContextMenuController);
+    goUpdateCommand("cmd_xs_openFromSelection", ContextMenuController);
+    goUpdateCommand("cmd_xs_selectVerse", ContextMenuController);
+    goUpdateCommand("cmd_xs_newBookmark", ContextMenuController);
+    goUpdateCommand("cmd_xs_newUserNote", ContextMenuController);
+    goUpdateCommand("cmd_bm_properties", ContextMenuController);
+    goUpdateCommand("cmd_bm_delete", ContextMenuController);
     
     // Hide menu options accordingly
     document.getElementById("ctx_xs_searchForLemma").hidden                    = !canHaveLemma;
@@ -361,14 +361,4 @@ var ContextMenuController = {
     
     return false;
   }
-};
-
-// Add our controller to MainWindow
-MainWindow.controllers.appendController(ContextMenuController);
-
-// Remove our controller from MainWindow when this window closes
-var Oldonunload = window.onunload;
-window.onunload = function () {
-  if (Oldonunload) Oldonunload();
-  MainWindow.controllers.removeController(ContextMenuController);
 };
