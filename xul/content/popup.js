@@ -16,6 +16,7 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 const POPUPDELAY = 250;
+const POPUPDELAY_STRONGS = 1000;
 
 var Popup;
 
@@ -48,9 +49,6 @@ function PopupObj(popupobj) {
   this.activate = function(elem, e) {
 //jsdump("Activating Popup in " + window.name + ":" + elem.className + ", " + e.type);    
 
-    // completely ignore further activations if this popup is pinned
-    if (this.npopup.getAttribute("pinned") == "true") return false;
-    
     // get our event element's type and mod etc.
     var type = elem.className.match(/^([^\s\-]+)?/)[0];
     var p = getElementInfo(elem); // p may be null because not all handled elements are in TextClasses
@@ -65,8 +63,7 @@ function PopupObj(popupobj) {
     // Begin building HTML for the popup
     var html = "";
     html += "<div class=\"popupheader cs-Program\">";
-    html +=   "<div class=\"popuppin\" pinned=\"" + (this.npopup.getAttribute("pinned")) + "\" ";
-    html +=       "onclick=\"Popup.clickpin(" + this.npopup.getAttribute("pinned") + ");\"></div>";
+    html +=   "<div class=\"towindow\" onclick=\"Popup.towindow();\"></div>";
     html +=   "<a class=\"" + (updatingPopup ? "popupBackLink":"popupCloseLink") + "\">";
     html +=     MainWindow.SBundle.getString(updatingPopup ? "back":"close");
     html +=   "</a>";
@@ -100,7 +97,7 @@ function PopupObj(popupobj) {
     case "cr":
     case "fn":
     case "un":
-      var w = getWindow(elem);
+      var w = getContextWindow(elem);
       if (!p || !p.mod || !w || !Texts.footnotes[w]) return false;
       var re = "<div class=\"nlist\" title=\"" + type + "\\.";
       re += (typeof(p.nid) == "string" ? escapeRE(p.nid):p.nid) + "\\.";
@@ -153,6 +150,9 @@ function PopupObj(popupobj) {
       break;
       
     case "sn":
+      var mod = getContextModule(elem);
+      if (!mod) return false;
+      
       var snlist = elem.className.split(" ");
       if (snlist && snlist.length > 1) snlist.shift(); // remove base class: sn
       else return false;
@@ -165,17 +165,17 @@ function PopupObj(popupobj) {
         i = entry.lastIndexOf("<", i);
         entry = entry.substring(0, i);
       }
-      res = DictTexts.getLemmaHTML(snlist, entry);
+      res = DictTexts.getLemmaHTML(snlist, entry, mod);
       break;
       
     case "introlink":
-      var w = getWindow(elem);
+      var w = getContextWindow(elem);
       if (!w) return false;
       res = document.getElementById("text" + w).getElementsByClassName("introtext")[0].innerHTML;
       break;
       
     case "noticelink":
-      var w = getWindow(elem);
+      var w = getContextWindow(elem);
       if (!w) return false;
       res = document.getElementById("text" + w).getElementsByClassName("noticetext")[0].innerHTML;
       break;
@@ -197,7 +197,7 @@ function PopupObj(popupobj) {
     if (updatingPopup) {
       // move popup to insure it's under the mouse
       this.npopupTX.scrollTop = 0;
-      this.npopup.style.top = this.YmouseDelta + e.clientY + "px";
+      this.npopupTX.style.top = this.YmouseDelta + e.clientY + "px";
       this.checkPopupPosition(e);
       return true;
     }
@@ -205,7 +205,7 @@ function PopupObj(popupobj) {
     // Normal popup opening anew...
     this.elem = elem;
     this.e = e;
-    this.showPopupID = window.setTimeout("Popup.open();", POPUPDELAY);
+    this.showPopupID = window.setTimeout("Popup.open();", (type == "sn" ? POPUPDELAY_STRONGS:POPUPDELAY));
     return true;
     
   };
@@ -220,7 +220,7 @@ function PopupObj(popupobj) {
         this.elem.appendChild(this.npopup);
   
     // store current location relative to mouse
-    this.npopup.style.top = ""; // reset so that CSS always controls initial location!
+    this.npopupTX.style.top = ""; // reset so that CSS always controls initial location!
     this.YmouseDelta = (Number(window.getComputedStyle(this.npopup).top.replace("px", "")) - this.e.clientY);
     
     this.checkPopupPosition(this.e);
@@ -234,11 +234,11 @@ function PopupObj(popupobj) {
   this.checkPopupPosition = function(e) {
     var pupbot = e.clientY + this.npopupTX.offsetTop + this.npopupTX.offsetHeight;
     if (pupbot > window.innerHeight) {
-      var currentTop = Number(window.getComputedStyle(this.npopup).top.replace("px", ""));
+      var currentTop = Number(window.getComputedStyle(this.npopupTX).top.replace("px", ""));
       if (isNaN(currentTop)) return;
       var newTop = currentTop - pupbot + window.innerHeight - 30;
-      if (newTop < 0) newTop = 0;
-      this.npopup.style.top = newTop + "px";
+      if (newTop < -1*this.npopupTX.offsetHeight) newTop = -1*this.npopupTX.offsetHeight;
+      this.npopupTX.style.top = newTop + "px";
     }
   };
 
@@ -263,54 +263,26 @@ function PopupObj(popupobj) {
     else if (this.srnote) pt.innerHTML = BibleTexts.getNotesHTML(this.srnote, mod, true, true, true, true, 1);
   };
   
-  this.clickpin = function(pinned) {
+  this.towindow = function() {
     
-    // If we just clicked to pin the Popup...
-    if (!pinned) {
-      
-      // Open a pinned Popup as a separate xul window
-      // Get X and Y coordinates for where to create the new xul window
-      var X,Y;
-      if (window.name == "npopup") {X=1; Y=1;}
-      else {
-        // on Linux, window.innerHeight = outerHeight = height of entire window viewport, NOT including the operating system frame
-        var f = MainWindow.document.getElementById("xulviewport");
-        var offset = getOffset(this.npopup);
-        X = Number(f.boxObject.x + offset.left + 8);
-        Y = Number(f.boxObject.y + offset.top - 8);
-        //jsdump("INFO:" + f.boxObject.y + "-" + MainWindow.outerHeight + "+" + v.height + "=" + Y);
-      }
-      
-      // Open the new xul Popup window.
-      var p = "chrome,resizable,dependant";
-      p += ",left=" + Number(MainWindow.screenX + X);
-      p += ",top=" + Number(MainWindow.screenY + Y);
-      p += ",width=" + this.npopupTX.offsetWidth;
-      p += ",height=" + this.npopupTX.offsetHeight;
-      AllWindows.push(MainWindow.open("chrome://xulsword/content/popup.xul", "popup" + String(Math.random()), p));
-    }
-    
-    else if (window.name == "npopup") this.close();
-    
-    else this.pinup();
-  };
+    // Open a pinned Popup as a separate xul window
+    // Get X and Y coordinates for where to create the new xul window
+    var X,Y;
+    // on Linux, window.innerHeight = outerHeight = height of entire window viewport, NOT including the operating system frame
+    var f = MainWindow.document.getElementById("main-viewport");
+    var offset = getOffset(this.npopup);
+    X = Number(f.boxObject.x + offset.left + 8);
+    Y = Number(f.boxObject.y + offset.top - 8);
+    //jsdump("INFO:" + f.boxObject.y + "-" + MainWindow.outerHeight + "+" + v.height + "=" + Y);
   
-  this.keydown = function(e) {
-    if (e.keyCode != 16) return;
-    this.pindown();
-  };
-  
-  this.keyup = function(e) {
-    if (e.keyCode != 16) return;
-    this.pinup();
-  };
-  
-  this.pindown = function() {
-    this.npopup.setAttribute("pinned", true);
-  };
-  
-  this.pinup = function() {
-    this.npopup.setAttribute("pinned", false);
+    // Open the new xul Popup window.
+    var p = "chrome,resizable,dependant";
+    p += ",left=" + Number(MainWindow.screenX + X);
+    p += ",top=" + Number(MainWindow.screenY + Y);
+    p += ",width=" + this.npopupTX.offsetWidth;
+    p += ",height=" + this.npopupTX.offsetHeight;
+    AllWindows.push(MainWindow.open("chrome://xulsword/content/popup.xul", "popup" + String(Math.random()), p));
+
   };
   
 }

@@ -27,6 +27,9 @@ body[chromedir="rtl"] #chbutton_open {
 #viewportbody[chooser="hide"] #chbutton_open {
   display:block;
 }
+body[isWindow="true"] #chbutton_open {
+  display:none !important;
+}
 #chbutton_open:hover {
   background:url(chrome://xulsword/skin/images/open1.bmp);
 }
@@ -225,12 +228,16 @@ body[chromedir="rtl"] #chbutton_open {
   text-align:center;
   height:30px;
 }
-.sbpin {
+.sbcontrols {
   position:absolute;
-  top:-23px;
-  left:0px;
+}
+.sbpin {
+  float:left;
   width:28px;
   height:37px;
+  position:relative;
+  top:-22px;
+  -moz-margin-end:-10px;
   background:url(chrome://xulsword/skin/images/pushpin0.png);
   z-index:20;
 }
@@ -241,7 +248,18 @@ body[chromedir="rtl"] #chbutton_open {
   background:url(chrome://xulsword/skin/images/pushpin1.png);
 }
 .text[moduleType="Dicts"] .sbpin {
-  visibility:hidden;
+  display:none;
+}
+.sbwin {
+  float:left;
+  width:20px;
+  height:20px;
+  margin:5px;
+  background:url(chrome://xulsword/skin/images/towindow.png);
+  z-index:20;
+}
+.sbwin:hover {
+  background-position:20px;
 }
 
 .sb {

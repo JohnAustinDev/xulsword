@@ -20,9 +20,11 @@
   font-size: 1.1em;
   cursor:default;
   background:rgb(245,220,255);
+  padding: 10px 20px 20px 14px;
 }
 /* Make sure these npopup styles are NOT inherited from container! */
 #npopup {
+  display:none;
   text-align:left;
   color:black;
   font-weight:normal;
@@ -34,7 +36,6 @@ body[chromedir="rtl"] #npopup {
 
 /* FOR REGULAR (NON-WINDOW) POPUP STYLES */
 .text #npopup {
-  display:none;
   z-index:100;
   position:absolute; /* insure popup falls out of page layout */
   height:0px;
@@ -62,8 +63,8 @@ body[chromedir="rtl"] #npopup {
   left:auto;
   right:30px;
 }
-.text #npopup[pinned="true"] {
-  display:block;
+.text .sn #npopup {
+  height:100px;
 }
 .text #npopup #npopupTX {
   position:absolute;
@@ -72,10 +73,8 @@ body[chromedir="rtl"] #npopup {
   max-height:300px; /* dynamic in popup.js */
   border:1px solid black;
   border-radius:5px;
-  
   box-shadow: 3px 3px 5px 6px #ccc;
   margin: 0px 20px 10px 0px;
-  padding: 22px 20px 20px 14px;
   
   /* popup appears above the element, covering it. */
   top:-20px;
@@ -88,18 +87,21 @@ body[chromedir="rtl"] #npopup {
   left:auto;
   right:-20px;
 }
-.text .sn #npopup #npopupTX {
-  /* popup appears away from the element so that 
-  the text of the element can still be read */
-  top:100px;
+/* Strong's popups are offset so that their underlying textdir
+can be read even when the popup is open */
+.text .sn #npopup {
+  height:100px;
 }
-.text #npopup[pinned="true"] #npopupTX {
-  margin: 2px 18px 8px 2px;
-  box-shadow: none;
+.text .sn #npopupRL {
+  top:-1em;
+  height:calc(100px + 1em);
+}
+.text .sn #npopup #npopupTX {
+  top:100px;
 }
 
 /* FOR WINDOW PINNED POPUP */
-.windowedpup {
+body.windowedpup {
   background:rgb(245,220,255);
   padding:0px;
   margin:0px;
@@ -111,47 +113,31 @@ body[chromedir="rtl"] #npopup {
   padding:0px;
   height:100%;
 }
-#npopup[isWindow="true"] #npopupTX {
-  padding: 22px 20px 20px 14px;
-}
-#npopup[isWindow="true"] .popuppin {
+#npopup[isWindow="true"] .towindow {
   display:none;
 }
 
 /* FOR ALL POPUPS */
 .popupheader {
-  position:relative;
-  margin:0px 0px 30px 0px;
+  margin:0px 0px 40px 0px;
 }
-.popuppin {
-  position:relative;
+.towindow {
   float:left;
-  background: url('chrome://xulsword/skin/images/pushpin0.png');
-  width: 28px;
-  height: 37px;
-  top:-19px;
-  left:-5px;
+  -moz-margin-end:10px;
+  background: url('chrome://xulsword/skin/images/towindow.png');
+  width: 20px;
+  height: 20px;
 }
-.popuppin:hover {
-  background: url('chrome://xulsword/skin/images/pushpin2.png');
+.towindow:hover {
+  background-position:20px;
 }
-#npopup[pinned="true"] .popuppin {
-  background: url('chrome://xulsword/skin/images/pushpin1.png');
-}
-body[chromedir="rtl"] .popuppin {
+body[chromedir="rtl"] .towindow {
   float:right;
 }
-body[chromedir="rtl"] .popuppin,
-body[chromedir="rtl"] .popuppin:hover,
-body[chromedir="rtl"] #npopup[pinned="true"] .popuppin {
-  transform:scaleX(-1);
-}
 .popupBackLink, .popupCloseLink {
-  position:relative;
-  left:-5px;
+  float:left;
   color:blue;
   cursor:default;
-  float:left;
 }
 body[chromedir="rtl"] .popupBackLink,
 body[chromedir="rtl"] .popupCloseLink {
@@ -163,8 +149,6 @@ body[chromedir="rtl"] .popupCloseLink {
 }
 .popup-mod-select {
   display:none;
-  position:relative;
-  top:-10px;
   float:right;
   font-size:0.8em;
   text-align:center;

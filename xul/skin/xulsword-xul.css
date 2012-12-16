@@ -51,7 +51,7 @@
 #topbox[hasBible="false"] #window-menu, 
 #topbox[hasBible="false"] #help-menu, 
 #topbox[hasBible="false"] #main-controlbar, 
-#topbox[hasBible="false"] #xulviewport,
+#topbox[hasBible="false"] #main-viewport,
 #topbox[hasBible="false"] #file-menu menuitem, 
 #topbox[hasBible="false"] #file-menu menuseparator {
   display:none;

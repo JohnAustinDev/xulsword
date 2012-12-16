@@ -340,6 +340,22 @@ body[chromedir="rtl"] .fncol4 {
 }
 
 /* Strong's numbers dictionary entry display */
+.snbut {
+  float:right;
+  margin:5px 0px 5px 10px;
+}
+body[chromedir="rtl"] .snbut {
+  float:left;
+  margin:5px 10px 5px 0px;
+}
+.snbut:after {
+  display:inline-block;
+  content:url(chrome://xulsword/skin/images/search.png);
+  width:30px;
+  height:18px;
+  overflow:hidden;
+  -moz-margin-start:16px;
+}
 .lemma-header {
   font-weight:bold;
 }

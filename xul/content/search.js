@@ -532,11 +532,11 @@ var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(
     // Also, create and show the lexicon window for those Strong's numbers.
     if ((/lemma\:/).test(s.query)) {
       
-      var classes = s.query.match(/lemma\:\S+/g);
+      var classes = s.query.match(/lemma\:\s*\S+/g);
       
       for (var i=0; i<classes.length; i++) {
         
-        classes[i] = "S_" + classes[i].replace(/lemma\:/, "");
+        classes[i] = "S_" + classes[i].replace(/lemma\:\s*/, "");
         
         var sheet = document.getElementById("search-frame").contentDocument.styleSheets[document.styleSheets.length-1];
         var index = sheet.cssRules.length;
@@ -577,15 +577,22 @@ var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(
           lexicon.sort(function(a,b) {return b.count - a.count;});
           
           // format and save the results
-          html += "<span class=\"lex-body\">";
-          html +=   "<span class=\"lex-link\">" + classes[i].replace(/^S_/, "") + "</span>";
+          var dictinfo = DictTexts.getStrongsModAndKey(classes[i]);
+          html += "<span class=\"slist\" title=\"" + encodeURIComponent(dictinfo.key) + "." + dictinfo.mod + "\">";
+          html +=   "<a class=\"cs-\"" + DEFAULTLOCALE + "\" ";
+          html +=       "href=\"javascript:MainWindow.showLocation('" + dictinfo.mod + "', '','" + dictinfo.key + "', 1, 1);\">";
+          html +=     classes[i].replace(/^S_/, "");
+          html +=   "</a>";
           html +=   "<span class=\"lex-total\">" + (result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS + "+":result.count) + "</span>";
+          html +=   "<span class=\"cs-\"" + DEFAULTLOCALE + "\">";
           for (var j=0; j<lexicon.length; j++) {
-            html += "<span class=\"lex-text\">" + lexicon[j].text + "</span><span class=\"lex-count\">" + lexicon[j].count + "</span>";
+            html +=   "<span class=\"lex-text\">" + lexicon[j].text + "</span>";
+            html +=   "<span class=\"lex-count\">" + lexicon[j].count + "</span>";
           }
+          html +=   "</span>";
           html += "</span>";
           html +=   "<div class=\"lex-sep\"></div>";
-                    
+          
         }
         
         LexiconResults.innerHTML = (html ? html:"<span style=\"display:none\"></span>"); // should not be left empty

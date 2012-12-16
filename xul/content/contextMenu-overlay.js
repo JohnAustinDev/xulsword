@@ -25,12 +25,12 @@ var ContextMenu = {
   NEWTARGET:{ bk:null, ch:null, vs:null, lv:null, mod:null, w:null, bookmark:null, selection:null, search:{mod:null, searchtext:null, type:null} },
 
   showing: function(e, menupopup) {
-//jsdump((menupopup.triggerNode.id ? menupopup.triggerNode.id:"noid"));
+//var p=""; for (var m in menupopup.triggerNode) {p += m + "=" + menupopup.triggerNode[m] + " ";} jsdump(p);
 
     // init our target info
     this.target = copyObj(this.NEWTARGET);
     
-    this.target.w = getWindow(menupopup.triggerNode);
+    this.target.w = getContextWindow(menupopup.triggerNode);
     
     // Do some viewport specific cleanup
     if (typeof(ViewPort) != "undefined") {
@@ -75,35 +75,33 @@ var ContextMenu = {
     // Is mouse over a word with strong's numbers? Then get lemma information.
     // Strong's numbers are encoded in an elements class, not its title. For this
     // reason getElementInfo is not used here.
+    var canHaveLemma = false;
     var selem = menupopup.triggerNode;
     var strongsNum;
-    var strongsMod;
-    var canHaveLemma = false;
-    while (selem && (!strongsNum || !strongsMod)) {
-      if (!strongsNum) strongsNum = (selem.className && selem.className.search(/(^|\s)sn($|\s)/)!=-1 ? selem.className:"");
-      if (!strongsMod) {
-        var p = getElementInfo(selem);
-        if (p && p.type == "vs") strongsMod = p.mod;
-      }
+    while (selem && !strongsNum) {
+      if (!strongsNum) strongsNum = (selem.className && selem.className.search(/(^|\s)sn($|\s)/) != -1 ? selem.className:"");
       selem = selem.parentNode;
     }
-    if (strongsNum && strongsMod) {
-      var lemma = ""; 
-      var nums = strongsNum.split(" ");
-      nums.shift(); // remove base style
-      for (var i=0; i<nums.length; i++) {
-        var parts = nums[i].split("_");
-        if (parts[0] != "S") continue;
-        // SWORD filters these out- not valid it says
-        if (parts[1].substr(0,1)=="G" && Number(parts[1].substr(1)) >= 5627) continue;
-        lemma += "lemma:" + parts[1] + " ";
-      }
-      if (lemma) {
-        canHaveLemma = true;
-        document.getElementById("ctx_xs_searchForLemma").label += " - " + lemma;
-        this.target.search.searchtext = lemma;
-        this.target.search.mod = strongsMod;
-        this.target.search.type = "SearchAdvanced";
+    if (selem) {
+      var strongsMod = getContextModule(menupopup.triggerNode);
+      if (strongsMod) {
+        var lemma = ""; 
+        var nums = strongsNum.split(" ");
+        nums.shift(); // remove base style
+        for (var i=0; i<nums.length; i++) {
+          var parts = nums[i].split("_");
+          if (parts[0] != "S") continue;
+          // SWORD filters these out- not valid it says
+          if (parts[1].substr(0,1)=="G" && Number(parts[1].substr(1)) >= 5627) continue;
+          lemma += "lemma: " + parts[1] + " ";
+        }
+        if (lemma) {
+          canHaveLemma = true;
+          document.getElementById("ctx_xs_searchForLemma").label += " - " + lemma;
+          this.target.search.searchtext = lemma;
+          this.target.search.mod = strongsMod;
+          this.target.search.type = "SearchAdvanced";
+        }
       }
     }
     
@@ -240,7 +238,7 @@ var ContextMenu = {
   getTargetsFromElement: function(targs, element) {
 //{ bk:null, ch:null, vs:null, lv:null, mod:null, w:null, lemma:null, bookmark:null, selection:null }
 
-    if (targs.w === null) targs.w = getWindow(element);
+    if (targs.w === null) targs.w = getContextWindow(element);
     
     while (element) {
       

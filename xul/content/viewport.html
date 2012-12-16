@@ -45,7 +45,7 @@
   <script src="chrome://xulsword/content/viewport.js" type="text/javascript"></script>
   
   </head>
-  <body id="viewportbody" chooser="bible" print="false" onload="Popup = new PopupObj(); initViewPort();" 
+  <body id="viewportbody" chooser="bible" print="false" isWindow="false" onload="Popup = new PopupObj(); initViewPort();" 
       onmouseover="chooserMouse(event)" 
       onmouseout="chooserMouse(event)" 
       onclick="chooserMouse(event)">
@@ -120,7 +120,10 @@
         <div id="text1" class="text" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
             footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
           <div class="textf">
-            <div class="sbpin" id="sbpin1"></div>
+            <div class="sbcontrols">
+              <div class="sbpin" id="sbpin1"></div>
+              <div class="sbwin" id="sbwin1"></div>
+            </div>
             <div class="hd"></div>
             <div class="sb"></div>
             <div class="nbc">
@@ -137,7 +140,10 @@
         <div id="text2" class="text" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
             footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
           <div class="textf">
-            <div class="sbpin" id="sbpin2"></div>
+            <div class="sbcontrols">
+              <div class="sbpin" id="sbpin2"></div>
+              <div class="sbwin" id="sbwin2"></div>
+            </div>
             <div class="hd"></div>
             <div class="sb"></div>
             <div class="nbc">
@@ -154,7 +160,10 @@
         <div id="text3" class="text" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
             footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
           <div class="textf">
-            <div class="sbpin" id="sbpin3"></div>
+            <div class="sbcontrols">
+              <div class="sbpin" id="sbpin3"></div>
+              <div class="sbwin" id="sbwin3"></div>
+            </div>
             <div class="hd"></div>
             <div class="sb"></div>
             <div class="nbc">
@@ -173,7 +182,7 @@
     </div>
   </div>
 
-  <div id="npopup" class="userFontSize cs-Program" isWindow="false" pinned="false" puptype="fn">
+  <div id="npopup" class="userFontSize cs-Program" isWindow="false" puptype="fn">
     <div id="npopupRL">
       <div id="npopupTX"
         onmouseover="scriptMouseOver(event)" 
