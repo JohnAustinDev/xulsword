@@ -20,7 +20,7 @@ function initViewPort() {
   initCSS(true);
   
   // If this is the main xulsword ViewPort, use prefs as initial settings
-  if (window.frameElement && window.frameElement.id == "xulviewport") {
+  if (window.frameElement && window.frameElement.id == "main-viewport") {
     
     ViewPort = new ViewPortObj(); // uses prefs
     
@@ -32,9 +32,24 @@ function initViewPort() {
     MainWindow.CommTexts = CommTexts;
     MainWindow.GenBookTexts = GenBookTexts;
     
+    ViewPort.init();
+    
+  }
+  else {
+ 
+    // for windowed viewport, use settings of MainWindow.ViewPort, but
+    // show only the window whose towindow button was clicked
+    
+    document.getElementsByTagName("body")[0].setAttribute("isWindow", "true");
+    
+    ViewPort = new ViewPortObj(MainWindow.ViewPort);
+    
+    ViewPort.init();
+    
+    Texts.update();
+    
   }
   
-  ViewPort.init();
 }
 
 function ViewPortObj(viewPortObj) {
@@ -50,6 +65,7 @@ function ViewPortObj(viewPortObj) {
   // If we have a passed viewPortObj, then copy it. Otherwise create 
   // a ViewPortObj from global preferences.
   if (viewPortObj) {
+    
     this.NumDisplayedWindows = viewPortObj.NumDisplayedWindows;
     this.ShowChooser = viewPortObj.ShowChooser;
     for (var w=1; w<=3; w++) {
@@ -60,6 +76,10 @@ function ViewPortObj(viewPortObj) {
       this.Module[w]          = viewPortObj.Module[w];
       this.Key[w]             = viewPortObj.Key[w];
     }
+    
+    // make this ViewPort show only a single text
+    this.ShowChooser = false;
+    
   }
   else {
 
@@ -147,8 +167,8 @@ function ViewPortObj(viewPortObj) {
 
   };
 
-  // This function updates the viewport based on all previously set global
-  // user settings. It does not set/change any global paramters, but only
+  // This function updates the viewport based on all previously set ViewPort
+  // user settings. It does not set/change any such paramters, but only
   // implements them in the viewport. Ideally, updates should be implemented
   // with CSS.
   this.update = function(skipBibleChooserTest) {
@@ -484,7 +504,7 @@ function ViewPortObj(viewPortObj) {
     r.rule.style.backgroundPosition = "0px " + (40 - os.top) + "px";
 
     // fix viewport width to fill parent with no overflow
-    if (document.getElementsByTagName("body")[0].getAttribute("print") != "true")
+    if (window.frameElement && window.frameElement.id == "main-viewport")
         document.getElementById("viewportbody").style.width = MainWindow.innerWidth - MainWindow.document.getElementById("genBookChooser").boxObject.width + "px";
 
   };
@@ -510,6 +530,14 @@ function ViewPortObj(viewPortObj) {
 
   this.firstDisplayModule = function() {
     return {mod:this.Module[1], w:1};
+  };
+  
+  
+  this.resizeTimer = null;
+  this.resize = function() {
+    if (window.innerHeight < 100) return;
+    if (this.resizeTimer) window.clearTimeout(this.resizeTimer);
+    this.resizeTimer = window.setTimeout("ViewPort.update();", 300);
   };
 
 

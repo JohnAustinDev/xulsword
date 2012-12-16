@@ -9,33 +9,6 @@ and applied to Strong's classes */
 body[hasLexicon="true"] #lexiconBox {
   display:block;
 }
-.lex-body {
-  white-space:nowrap;
-}
-.lex-body > span:nth-child(3):before {
-  content:'-';
-  padding-left:4px;
-  padding-right:4px;  
-}
-.lex-total:before {
-  content:'(';
-}
-.lex-total:after {
-  content:')';
-}
-.lex-link {
-  color:blue;
-}
-.lex-count:before {
-  content:'(';
-}
-.lex-count:after {
-  content:'), ';
-}
-.lex-sep {
-  border-top:1px solid grey;
-  margin:10px;
-}
 .slist {
   white-space:nowrap;
 }
@@ -49,6 +22,23 @@ body[hasLexicon="true"] #lexiconBox {
   content:'-';
   padding-left:4px;
   padding-right:4px;
+}
+.slist > .lex-total:before {
+  content:'(';
+  padding:0px;
+}
+.lex-total:after {
+  content:')';
+}
+.lex-count:before {
+  content:'(';
+}
+.lex-count:after {
+  content:'), ';
+}
+.lex-sep {
+  border-top:1px solid grey;
+  margin:10px;
 }
 .searchTerm {
   color:red;

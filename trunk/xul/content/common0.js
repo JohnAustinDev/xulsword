@@ -108,6 +108,7 @@ const TextClasses = {
             { re:new RegExp(/^(.*?)\.([^\.]+)$/),                                                       reflist:1, bk:null, ch:null, vs:null, lv:null, mod:2 } ],
   dt:     [ { re:new RegExp(/^((\S+)\:(\S+)[^\.]*)\.([^\.]+)$/),                                        reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
   dtl:    [ { re:new RegExp(/^((\S+)\:(\S+)[^\.]*)\.([^\.]+)$/),                                        reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
+  snbut:  [ { re:new RegExp(/^((\S+)\:(\S+))\.([^\.]+)$/),                                                         bk:null, ch:3,    vs:null, lv:null, mod:4, osisref:1 } ],
   par:    [ { re:new RegExp(/^(\d+)\.([^\.]+)$/),                                                           par:1, bk:null, ch:null, vs:1,    lv:1,     mod:2 } ],
   fnrow:  [ { re:new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   fnlink: [ { re:new RegExp(/^([^\.]*)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],

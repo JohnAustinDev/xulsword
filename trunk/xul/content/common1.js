@@ -744,7 +744,7 @@ function copyObj(obj) {
 
 // Return the window in which this element resides.
 // Note: null means no window, but 0 means popup window.
-function getWindow(elem) {
+function getContextWindow(elem) {
   while(elem && (!elem.id || (!(/^text\d+$/).test(elem.id) && !(/^npopup$/).test(elem.id)))) {
     elem = elem.parentNode;
   }
@@ -752,6 +752,32 @@ function getWindow(elem) {
   else if (elem.id == "npopup") return 0;
   
   return Number(elem.id.substr(4));
+}
+
+// Return the module context in which the element resides, NOT the
+// module associated with the data of the element itself.
+function getContextModule(elem) {
+  
+  // first let's see if we're in a verse
+  var telem = elem;
+  while (telem && (!telem.className || !(/^vs(\s|$)/).test(telem.className))) {
+    telem = telem.parentNode;
+  }
+  if (telem) return getElementInfo(telem).mod;
+  
+  // then see if we're in a viewport window, and use its module
+  var w = getContextWindow(elem);
+  if (w) return ViewPort.Module[w];
+  
+  // then see if we're in a search results list
+  var telem = elem;
+  while (telem && (!telem.className || !(/^slist(\s|$)/).test(telem.className))) {
+    telem = telem.parentNode;
+  }
+  if (telem) return getElementInfo(telem).mod;
+  
+  return null;
+  
 }
 
 function getOffset(elem) {

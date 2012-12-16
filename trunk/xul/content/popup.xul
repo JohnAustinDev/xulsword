@@ -20,7 +20,6 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
-<?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul" ?>
 <?xul-overlay href="chrome://xulsword/content/contextMenu-overlay.xul" ?>
 
 <!DOCTYPE window [
@@ -31,9 +30,7 @@
 <window 
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:html="http://www.w3.org/1999/xhtml"
-    onload="document.getElementById('npopup').contentDocument.defaultView.initWindowedPopup();"
-    chromedir="&locale.dir;"
-    class="cs-Program fixedFontSize">
+    onload="initCSS(); document.getElementById('npopup').contentDocument.defaultView.initWindowedPopup();">
    
   <script>var MainWindow = window.opener;</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
@@ -41,22 +38,8 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
   
-  <commandset id="popupCommandSet">
-    
-    <command id="cmd_xs_searchForLemma"            oncommand="MainWindow.goDoCommand('cmd_xs_searchForLemma');"/>
-    <command id="cmd_xs_aboutModule"               oncommand="MainWindow.goDoCommand('cmd_xs_aboutModule');"/>
-    <command id="cmd_xs_search"                    oncommand="MainWindow.goDoCommand('cmd_xs_search');"/>
-    <command id="cmd_xs_aboutModule"               oncommand="MainWindow.goDoCommand('cmd_xs_aboutModule');"/>
-    <command id="cmd_xs_toggleTab"                 oncommand="MainWindow.goDoCommand('cmd_xs_toggleTab');"/>
-    <command id="cmd_xs_searchForSelection"        oncommand="MainWindow.goDoCommand('cmd_xs_searchForSelection');"/>
-    <command id="cmd_xs_openFromSelection"         oncommand="MainWindow.goDoCommand('cmd_xs_openFromSelection');"/>
-    <command id="cmd_xs_selectVerse"               oncommand="MainWindow.goDoCommand('cmd_xs_selectVerse');"/>
-    <command id="cmd_xs_newBookmark"               oncommand="MainWindow.goDoCommand('cmd_xs_newBookmark');"/>
-    <command id="cmd_xs_newUserNote"               oncommand="MainWindow.goDoCommand('cmd_xs_newUserNote');"/>
-    <command id="cmd_bm_properties"                oncommand="MainWindow.goDoCommand('cmd_bm_properties');"/>
-    <command id="cmd_bm_delete"                    oncommand="MainWindow.goDoCommand('cmd_bm_delete')" valueDefault="Delete;" disabled="true"/>
-    
-  </commandset>
+  <commandset id="xulswordCommandSet"></commandset>
+  <commandset id="BookmarksMenuCommandSet"></commandset>
   
   <iframe id="npopup" flex="1" src="popup.html" context="contextScriptBox"/>
 

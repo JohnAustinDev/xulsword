@@ -87,8 +87,8 @@ function openTabToolTip(t, w, cX, cY) {
   if (ShowTabToolTip) window.clearTimeout(ShowTabToolTip);
   if (HideTabToolTip) window.clearTimeout(HideTabToolTip);
   
-  cX += MainWindow.document.getElementById("xulviewport").boxObject.x;
-  ShowTabToolTip = window.setTimeout("MainWindow.document.getElementById('tabTT').openPopup(MainWindow.document.getElementById('xulviewport'), 'after_pointer', " + cX + ", " + cY + ");", 500);
+  cX += MainWindow.document.getElementById("main-viewport").boxObject.x;
+  ShowTabToolTip = window.setTimeout("MainWindow.document.getElementById('tabTT').openPopup(MainWindow.document.getElementById('main-viewport'), 'after_pointer', " + cX + ", " + cY + ");", 500);
   HideTabToolTip = window.setTimeout("MainWindow.document.getElementById('tabTT').hidePopup();", 5000);
 }
 
@@ -128,7 +128,7 @@ function scriptMouseOver(e) {
   type = type[1];
 
   // Get the text window of this event
-  var w = getWindow(elem);
+  var w = getContextWindow(elem);
   if (!w) return; // this also excludes Popup which is w==0
 
   var p = getElementInfo(elem);
@@ -173,7 +173,6 @@ function scriptMouseOver(e) {
     }
    
     // Add elem's strong's classes to stylesheet for highlighting
-    if (!ViewPort.ShowOriginal[w]) return;
     var classes = elem.className.split(" ");
     classes.shift(); // remove sn base class
     
@@ -200,7 +199,12 @@ function scriptMouseOut(e) {
   // Remove any footnote hilighting
   if (BibleTexts.SelectedNote) BibleTexts.SelectedNote.className = BibleTexts.SelectedNote.className.replace(" fnselected", "");
   
-  // Remove any dynamically added Strong's classes from CSS stylesheet 
+  // Remove any dynamically added Strong's classes from CSS stylesheet,
+  // unless we're now over npopup
+  var over = e.relatedTarget;
+  while(over && (!over.id || !(/^npopup$/).test(over.id))) {over = over.parentNode;}
+  if (over) return;
+  
   for (var i = (AddedRules.length-1); i>=0; i--) {
     AddedRules[i].sheet.deleteRule(AddedRules[i].index);
   }
@@ -209,11 +213,11 @@ function scriptMouseOut(e) {
 
 }
 
-const scriptClickClasses = /^(sr|dt|dtl|cr|sbpin|crtwisty|fnlink|nbsizer|crref|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
+const scriptClickClasses = /^(sr|dt|dtl|cr|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
 function scriptClick(e) {
 
   // Get the text window of this event
-  var w = getWindow(e.target);
+  var w = getContextWindow(e.target);
   if (w === null) return; // w=0 means popup!!
   
   // when an unpinned GenBook window is clicked, select its chapter in the navigator
@@ -252,7 +256,6 @@ function scriptClick(e) {
     break;
     
   case "popupCloseLink":
-    if (Popup.npopup.getAttribute("pinned") == "true") Popup.pinup();
     Popup.close();
     break;
     
@@ -272,6 +275,19 @@ function scriptClick(e) {
   case "sbpin":
     ViewPort.IsPinned[w] = !ViewPort.IsPinned[w];
     Texts.update((ViewPort.IsPinned[w] ? SCROLLTYPENONE:SCROLLTYPECENTER), HILIGHTNONE);
+    break;
+    
+  case "sbwin":
+    ViewPort.towindow = w;
+    // Open the new xul Popup window.
+    var X = 0;
+    var Y = 0;
+    var p = "chrome,resizable,dependant";
+    p += ",left=" + Number(MainWindow.screenX + X);
+    p += ",top=" + Number(MainWindow.screenY + Y);
+    p += ",width=" + document.getElementById("text" + w).offsetWidth;
+    p += ",height=" + document.getElementById("text" + w).offsetHeight;
+    AllWindows.push(MainWindow.open("chrome://xulsword/content/viewport.xul", "viewport" + String(Math.random()), p));
     break;
 
   case "prevchaplink":
@@ -400,6 +416,10 @@ function scriptClick(e) {
   case "crref":
     Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs + "." + p.lv);
     Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+    break;
+    
+  case "snbut":
+    MainWindow.XulswordController.doCommand("cmd_xs_search", { search:{ mod:p.mod, searchtext:"lemma: " + p.ch, type:"SearchAdvanced" }});
     break;
     
   }
@@ -533,7 +553,7 @@ var MouseWheel = {
   scroll: function(event) {
     
     // find window in which event occurred
-    var w = getWindow(event.target);
+    var w = getContextWindow(event.target);
     if (!w) return; // if we're over a popup don't do anything
 
     // dictionaries don't do flow columns and don't sync to other windows

@@ -46,6 +46,7 @@
 <script src="chrome://xulsword/content/common1.js"/>
 <script src="chrome://xulsword/content/common2.js"/>
 <script src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
+<script src="chrome://xulsword/content/dictTexts.js"/>
 <script src="chrome://xulsword/content/search.js"/>
 
 <keyset>
@@ -92,7 +93,7 @@
   </menubar>
   
   
-  <toolbar showAdvanced="true">
+  <toolbar showAdvanced="false">
     <vbox flex="1">
     
       <hbox id="searchrow" pack="center" align="center">

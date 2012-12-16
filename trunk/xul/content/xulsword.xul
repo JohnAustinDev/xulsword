@@ -47,6 +47,7 @@
     onkeyup="ViewPort.ownerDocument.defaultView.Popup.keyup(event);"
     ondragover="nsDragAndDrop.dragOver(event,fileObserver)"
     ondragdrop="nsDragAndDrop.drop(event,fileObserver)"
+    onresize="if (ViewPort) ViewPort.resize();"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#">
@@ -149,18 +150,11 @@
   <command id="cmd_xs_allTogglesOn"              oncommand="holdPopupAndDo('cmd_xs_allTogglesOn');"/>
   <command id="cmd_xs_allTogglesOff"             oncommand="holdPopupAndDo('cmd_xs_allTogglesOff');"/>
   <command id="cmd_xs_search"                    oncommand="goDoCommand('cmd_xs_search');"/>
-  
   <command id="cmd_xs_searchFromTextBox"         oncommand="goDoCommand('cmd_xs_searchFromTextBox');"/>
-  
-  
-  
-  
   <command id="cmd_xs_back"                      oncommand="goDoCommand('cmd_xs_back');"/>
   <command id="cmd_xs_forward"                   oncommand="goDoCommand('cmd_xs_forward');"/>
   <command id="cmd_xs_navigatorUpdate"           oncommand="goDoCommand('cmd_xs_navigatorUpdate');"/>
   <command id="cmd_xs_openManager"               oncommand="goDoCommand('cmd_xs_openManager');"/>
-  
-  
   <command id="cmd_xs_addNewModule"              oncommand="goDoCommand('cmd_xs_addNewModule');"/>
   <command id="cmd_xs_removeModule"              oncommand="goDoCommand('cmd_xs_removeModule');"/>
   <command id="cmd_xs_exportAudio"               oncommand="goDoCommand('cmd_xs_exportAudio');"/>
@@ -170,14 +164,12 @@
   <command id="cmd_pageSetup"                    oncommand="PrintUtils.showPageSetup();"/>
   <command id="cmd_xs_startHistoryTimer"
             oncommand="try {window.clearTimeout(History.timer);} catch(er){} History.timer=window.setTimeout('History.add()', History.delay);"/>
-  
   <command id="cmd_xs_nextVerse"                 oncommand="goDoCommand('cmd_xs_nextVerse');"/>
   <command id="cmd_xs_previousVerse"             oncommand="goDoCommand('cmd_xs_previousVerse');"/>
   <command id="cmd_xs_nextChapter"               oncommand="goDoCommand('cmd_xs_nextChapter');"/>
   <command id="cmd_xs_previousChapter"           oncommand="goDoCommand('cmd_xs_previousChapter');"/>
   <command id="cmd_xs_nextBook"                  oncommand="goDoCommand('cmd_xs_nextBook');"/>
   <command id="cmd_xs_previousBook"              oncommand="goDoCommand('cmd_xs_previousBook');"/>  
-  
 </commandset>
              
 <vbox id="topbox" hasBible="true" flex="100%">
@@ -489,7 +481,7 @@
           </vbox>
           <spacer height="22"/>
         </vbox>
-        <iframe id="xulviewport" flex="100%" src="viewport.html" context="contextScriptBox" />
+        <iframe id="main-viewport" flex="100%" src="viewport.html" context="contextScriptBox" />
       </hbox>
       
       <browser id="printPreviewBrowser"/>

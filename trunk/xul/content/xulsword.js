@@ -83,7 +83,6 @@ function loadedXUL2() {
     createLanguageMenu();
     fillModuleMenuLists();
     updateXulswordButtons();
-    window.onresize = resizeWatch;
   }
   else {
     document.getElementByID("topbox").setAttribute("hasBible", "false");
@@ -1413,15 +1412,6 @@ function ensureModuleShowing(version) {
 /************************************************************************
  * XUL Window Unload
  ***********************************************************************/ 
-
-//Watch for window resize
-var ResizeWatchTimer;
-function resizeWatch() {
-  if (ViewPort.ownerDocument.defaultView.innerHeight < 100) return;
-  if (ResizeWatchTimer) window.clearTimeout(ResizeWatchTimer);
-  ResizeWatchTimer = window.setTimeout("ViewPort.update();", 300);
-  prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
-}
 
 function unloadXUL() {
   

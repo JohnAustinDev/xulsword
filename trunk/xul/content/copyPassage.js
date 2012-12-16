@@ -30,7 +30,7 @@ function onLoad() {
   
   // Set passage to selection if there is one
   var sel = false;  
-  var selob = MainWindow.document.getElementById("xulviewport").contentDocument.defaultView.getSelection();
+  var selob = MainWindow.document.getElementById("main-viewport").contentDocument.defaultView.getSelection();
   if (selob && !selob.isCollapsed && !(/^\s*$/).test(selob.toString())) {
     var t = copyObj(MainWindow.ContextMenu.NEWTARGET);
     sel = MainWindow.ContextMenu.getTargetsFromSelection(t, selob);

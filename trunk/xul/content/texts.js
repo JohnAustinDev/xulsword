@@ -307,6 +307,8 @@ var Texts = {
     ViewPort.ShowOriginal[w] = false;
     ViewPort.MaximizeNoteBox[w] = false;
     
+    var sb = t.getElementsByClassName("sb")[0];
+    
     // get current display params
     var display = this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), w);
     
@@ -322,7 +324,6 @@ var Texts = {
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
-      var sb = t.getElementsByClassName("sb")[0];
       sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = ti.htmlEntry;
       

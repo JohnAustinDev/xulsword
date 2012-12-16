@@ -161,79 +161,103 @@ var DictTexts = {
   
   // Builds HTML text which displays lemma information from numberList
   //    numberList form: (S|WT|SM|RM)_(G|H)#
-  getLemmaHTML: function(numberList, matchingPhrase) {
-
-    const pad="00000";
-    var defaultBibleLanguage = LibSword.getModuleInformation(prefs.getCharPref("DefaultVersion"), "Lang");
-    if (defaultBibleLanguage == NOTFOUND) defaultBibleLanguage="";
-    var defaultBibleLangBase = (defaultBibleLanguage ? defaultBibleLanguage.replace(/-.*$/, ""):"");
+  getLemmaHTML: function(strongsClassList, matchingPhrase, sourcemod) {
     
     // Start building html
     var html = "";
     var sep = "";
-    for (var i=0; i<numberList.length; i++) {
-      var parts = numberList[i].split("_");
-      if (!parts || !parts[1]) continue;
-      var module = null;
-      var key = parts[1];
-      key = key.replace(" ", "", "g");
-      var saveKey = key;
-      switch (parts[0]) {
-      case "S":
-        if (key.charAt(0)=="H") {
-          if (LanguageStudyModules["StrongsHebrew" + defaultBibleLanguage])
-            module = LanguageStudyModules["StrongsHebrew" + defaultBibleLanguage];
-          else if (LanguageStudyModules["StrongsHebrew" + defaultBibleLangBase])
-            module = LanguageStudyModules["StrongsHebrew" + defaultBibleLangBase];
-          else if (LanguageStudyModules["StrongsHebrew"])
-            module = LanguageStudyModules["StrongsHebrew"];
-        }
-        else if (key.charAt(0)=="G") {
-          if (Number(key.substr(1)) >= 5627) continue; // SWORD filters these out- not valid it says
-          if (LanguageStudyModules["StrongsGreek" + defaultBibleLanguage])
-            module = LanguageStudyModules["StrongsGreek" + defaultBibleLanguage];
-          else if (LanguageStudyModules["StrongsGreek" + defaultBibleLangBase])
-            module = LanguageStudyModules["StrongsGreek" + defaultBibleLangBase];
-          else if (LanguageStudyModules["StrongsGreek"])
-            module = LanguageStudyModules["StrongsGreek"];
-        }
-        key = pad.substr(0,5-(key.length-1)) + key.substr(1);
-        break;
-      case "RM":
-        if (LanguageStudyModules["GreekParse" + defaultBibleLanguage])
-          module = LanguageStudyModules["GreekParse" + defaultBibleLanguage];
-        else if (LanguageStudyModules["GreekParse" + defaultBibleLangBase])
-          module = LanguageStudyModules["GreekParse" + defaultBibleLangBase];
-        else if (LanguageStudyModules["GreekParse"])
-          module = LanguageStudyModules["GreekParse"];
-        break;
-      case "SM":
-        saveKey = "SM" + key;
-        break;
-      case "WT":
-        saveKey = "WT" + key;
-        break;
-        
-      default:
-        key = null;
-        break;
-      }
+    for (var i=0; i<strongsClassList.length; i++) {
       
-      if (key && module) {
-        if (key == pad) continue; // G tags with no number
-        var entry = LibSword.getDictionaryEntry(module, key);
-        if (entry) html += sep + entry;
-        else html += sep + key;
+      var info = this.getStrongsModAndKey(strongsClassList[i]);
+      
+      if (info.key && info.mod) {
+        if (info.key == "00000") continue; // skip G tags with no number
+        var entry = LibSword.getDictionaryEntry(info.mod, info.key);
+        if (entry) {
+          html   += sep;
+          if ((/^S_/).test(strongsClassList[i])) { // add button for Strong number search
+            html += "<button type=\"button\" class=\"snbut\" ";
+            html +=     "title=\"" + info.mod + ":" + strongsClassList[i].replace(/^[^_]+_/, "") + "." + sourcemod + "\">";
+            html +=   strongsClassList[i].replace(/^[^_]+_/, "");
+            html += "</button>";
+          }
+          html   += entry;
+        }
+        else html += sep + info.key;
       }
-      else if (key) html += sep + saveKey;
+      else html += sep + strongsClassList[i];
       
       sep = "<div class=\"lemma-sep\"></div>";
     }
     
     // Add heading now that we know module styling
-    html = "<div class=\"lemma-header cs-" + module + "\">" + matchingPhrase + "</div>" + html;
+    html = "<div class=\"lemma-header cs-" + info.mod + "\">" + matchingPhrase + "</div>" + html;
    
     return html;
+  },
+  
+  getStrongsModAndKey: function(snclass) {
+    var res = { mod:null, key:null };
+    
+    const pad="00000";
+    var defaultBibleLanguage = LibSword.getModuleInformation(prefs.getCharPref("DefaultVersion"), "Lang");
+    if (defaultBibleLanguage == NOTFOUND) defaultBibleLanguage = "";
+    var defaultBibleLangBase = (defaultBibleLanguage ? defaultBibleLanguage.replace(/-.*$/, ""):"");
+    
+    var parts = snclass.split("_");
+    if (!parts || !parts[1]) return res;
+    
+    res.key = parts[1];
+    res.key = res.key.replace(" ", "", "g"); // why?
+
+    var type = parts[0];
+    switch (type) {
+      
+    case "S":
+      // Strongs Hebrew or Greek tags
+      if (res.key.charAt(0)=="H") {
+        if (LanguageStudyModules["StrongsHebrew" + defaultBibleLanguage])
+          res.mod = LanguageStudyModules["StrongsHebrew" + defaultBibleLanguage];
+        else if (LanguageStudyModules["StrongsHebrew" + defaultBibleLangBase])
+          res.mod = LanguageStudyModules["StrongsHebrew" + defaultBibleLangBase];
+        else if (LanguageStudyModules["StrongsHebrew"])
+          res.mod = LanguageStudyModules["StrongsHebrew"];
+      }
+      else if (res.key.charAt(0)=="G") {
+        if (Number(res.key.substr(1)) >= 5627) return res; // SWORD filters these out- not valid it says
+        if (LanguageStudyModules["StrongsGreek" + defaultBibleLanguage])
+          res.mod = LanguageStudyModules["StrongsGreek" + defaultBibleLanguage];
+        else if (LanguageStudyModules["StrongsGreek" + defaultBibleLangBase])
+          res.mod = LanguageStudyModules["StrongsGreek" + defaultBibleLangBase];
+        else if (LanguageStudyModules["StrongsGreek"])
+          res.mod = LanguageStudyModules["StrongsGreek"];
+      }
+      res.key = pad.substr(0, 5-(res.key.length-1)) + res.key.substr(1);
+      break;
+      
+    case "RM":
+      // Greek parts of speech tags
+      if (LanguageStudyModules["GreekParse" + defaultBibleLanguage])
+        res.mod = LanguageStudyModules["GreekParse" + defaultBibleLanguage];
+      else if (LanguageStudyModules["GreekParse" + defaultBibleLangBase])
+        res.mod = LanguageStudyModules["GreekParse" + defaultBibleLangBase];
+      else if (LanguageStudyModules["GreekParse"])
+        res.mod = LanguageStudyModules["GreekParse"];
+      break;
+      
+    case "SM":
+    case "WT":
+      // no lookup module available for these
+      break;
+      
+    default:
+      // meaning of tag is unknown
+      key = null;
+      break;
+      
+    }
+    
+    return res;
   },
 
   //The timeout below was necessary so that textbox.value included the pressed key...
