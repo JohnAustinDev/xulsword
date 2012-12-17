@@ -1065,7 +1065,7 @@ function handleOptions(elem) {
       break;
     
     case "about":
-      GlobalTarget.mod = null; // show logo, not modules info
+      CommandTarget = { mod:null }; // show logo, not modules info
       AllWindows.push(window.open("chrome://xulsword/content/about.xul","splash","chrome,modal,centerscreen"));
       break;
       
