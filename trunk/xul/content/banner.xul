@@ -21,12 +21,8 @@
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
 <!DOCTYPE window [
-<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
-%xulswordDTD;
-<!ENTITY % brandingDTD SYSTEM "chrome://xulsword/locale/branding.dtd" >
-%brandingDTD;
-<!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
-%browserDTD;
+<!ENTITY % aboutDTD SYSTEM "chrome://xulsword/locale/about.dtd" >
+%aboutDTD;
 ]>
 
 <window 
@@ -43,6 +39,8 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
   
   <script>
+    // Configs are populated in xulswordInit after LibSword is loaded, so
+    // in this pre-LibSword window we must create our own Configs.
     var LocaleConfigs = {};
     var ModuleConfigs = {};
     
@@ -51,19 +49,25 @@
       var lc = getLocale();
       LocaleConfigs[lc] = getLocaleConfig(lc);
 
-      createDynamicCssClasses();
+      initCSS();
       
       setGlobalDirectionPrefs();
       
       sizeToContent();
+      
     }
   </script>
+  
   <vbox flex="1" style="background-color:transparent; background-image: url(chrome://xulsword/locale/splash.png); background-repeat:no-repeat;">
+  
     <stack style="height:375px; width:500px;">
+    
       <vbox style="margin:7px;" pack="end" align="center">
         <label id="producedBy" value="&producedby;" style="font-size:14px; color:rgb(77,37,143);"/>
       </vbox>
+      
     </stack>
+    
   </vbox>
     
 </window>

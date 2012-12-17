@@ -20,7 +20,7 @@ function initViewPort() {
   initCSS(true);
   
   // If this is the main xulsword ViewPort, use prefs as initial settings
-  if (window.frameElement && window.frameElement.id == "main-viewport") {
+  if (document === MainWindow.document.getElementById("main-viewport").contentDocument) {
     
     ViewPort = new ViewPortObj(); // uses prefs
     
@@ -35,6 +35,26 @@ function initViewPort() {
     ViewPort.init();
     
   }
+  
+  // Else if this is the printing viewport
+  else if (document === MainWindow.document.getElementById("printBrowser").contentDocument) {
+  
+    document.getElementsByTagName("body")[0].setAttribute("print", "true");
+  
+    ViewPort = new ViewPortObj(MainWindow.ViewPort);
+    
+    ViewPort.init();
+    
+    // use our pin info from MainWindow.Texts
+    Texts.pinnedDisplay = MainWindow.Texts.pinnedDisplay;
+      
+    Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+    
+    MainWindow.printBrowserLoaded();
+    
+  }
+  
+  // Otherwise it's a windowed viewport
   else {
  
     // for windowed viewport, use settings of MainWindow.ViewPort, but
@@ -43,6 +63,25 @@ function initViewPort() {
     document.getElementsByTagName("body")[0].setAttribute("isWindow", "true");
     
     ViewPort = new ViewPortObj(MainWindow.ViewPort);
+    
+    // our copied viewport will only have one text window showing: towindow...
+    // also pin towindow so it becomes independant from MainWindow.ViewPort
+    var towindow;
+    if (!MainWindow.ViewPort.hasOwnProperty("towindow") || !MainWindow.ViewPort.towindow)
+        towindow = 1;
+    else towindow = MainWindow.ViewPort.towindow;
+        
+    for (var w=1; w<=NW; w++) {
+      if (w == towindow) {
+        var wl = MainWindow.ViewPort.ownerDocument.getElementById("text" + w).getAttribute("columns").match(/^show(\d+)$/);
+        if (wl) {wl = Number(wl[1]);}
+        else wl = towindow;
+        for (var wt=towindow; wt<towindow+wl; wt++) {ViewPort.IsPinned[wt] = true;}
+        continue;
+      }
+      document.getElementById("text" + w).style.display = "none";
+      document.getElementById("tabs" + w).style.display = "none";
+    }
     
     ViewPort.init();
     
@@ -69,22 +108,9 @@ function ViewPortObj(viewPortObj) {
     
     this.ShowChooser = false;
     this.NumDisplayedWindows = viewPortObj.NumDisplayedWindows;
-    
+        
+    // copy viewport properties from old to new
     const copyWinProps = ["ShowOriginal", "IsPinned", "NoteBoxHeight", "MaximizeNoteBox", "Module", "Key"];
-    const copyWinDefs = ["false", "false", 100, "false", prefs.getCharPref("DefaultVersion"), ""];
-    const copyTextProps = ["scrollTypeFlag", "hilightFlag", "scrollDelta", "pinnedDisplay"];
-    
-    // our copied viewport will only have one text window showing: towindow...
-    if (!viewPortObj.hasOwnProperty("towindow") || !viewPortObj.towindow)
-        viewPortObj.towindow = 1;
-        
-    for (var w=1; w<=NW; w++) {
-      if (w == viewPortObj.towindow) continue;
-      document.getElementById("text" + w).style.display = "none";
-      document.getElementById("tabs" + w).style.display = "none";
-    }
-        
-    // copy viewport params from old to new
     for (var w=1; w<=NW; w++) {
       for (var c=0; c<copyWinProps.length; c++) {
         this[copyWinProps[c]][w] = viewPortObj[copyWinProps[c]][w];
@@ -92,6 +118,7 @@ function ViewPortObj(viewPortObj) {
     }
     
     // copy viewport text properties from old to new
+    const copyTextProps = ["scrollTypeFlag", "hilightFlag", "scrollDelta", "pinnedDisplay"];
     for (var t=0; t<copyTextProps.length; t++) {
       if (typeof(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]) == "object") {
         Texts[copyTextProps[t]] = copyObj(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]);
@@ -103,7 +130,7 @@ function ViewPortObj(viewPortObj) {
   
   else {
 
-    // First time startup defaults:
+    // Insure we have first time startup defaults in prefs:
     getPrefOrCreate("ShowChooser","Bool",true);
     if (window.screen.width <= 800) {
       //in script.js initializeScript(), ScriptBox padding is also decreased in this case
@@ -143,7 +170,7 @@ function ViewPortObj(viewPortObj) {
     //Check xulsword module choices
     for (var w=1; w<=NW; w++) {
       // modules may have been manually uninstalled since xulsword's last 
-      // shutdown, so "Version" prefs must be checked on startup
+      // shutdown, so "Version" prefs must always be checked on startup
       if (!Tab.hasOwnProperty(this.Module[w])) this.Module[w] = prefs.getCharPref("DefaultVersion");
       
       if (MainWindow.DailyDevotionModules.hasOwnProperty(this.Module[w])) this.Key[w] = "DailyDevotionToday";
@@ -165,19 +192,6 @@ function ViewPortObj(viewPortObj) {
         if (inhide.test(getPrefOrCreate("w" + w + ".hidden", "Char", ""))) Tabs[t]["w" + w + ".hidden"] = true;
         else Tabs[t]["w" + w + ".hidden"] = false;
       }
-    }
-    
-    // If we're printing, then update the viewport and skip adding any event listeners.
-    if (MainWindow.document.getElementById("printBrowser").contentDocument === document) {
-    
-      document.getElementsByTagName("body")[0].setAttribute("print", "true");
-      
-      // use our pin info from MainWindow.Texts
-      Texts.pinnedDisplay = MainWindow.Texts.pinnedDisplay;
-      
-      Texts.update(SCROLLTYPETOP, HILIGHTNONE);
-      MainWindow.printBrowserLoaded();
-      return;
     }
     
     // set mouse wheel listeners
@@ -282,12 +296,15 @@ function ViewPortObj(viewPortObj) {
       
       // Set this window's textdir
       t.setAttribute("textdir", ModuleConfigs[this.Module[wThis]].direction);
-      
-      // Set this window's pin
-      t.setAttribute("pinned", (this.IsPinned[wThis] ? "true":"false"));
-       
+
     }
 //for (w=1; w<=NW; w++) {jsdump("w=" + w + ", value=" + document.getElementById("text" + w).getAttribute("columns"));}
+    
+    // Pins
+    for (w=1; w<=NW; w++) {
+      document.getElementById("text" + w).setAttribute("pinned", (this.IsPinned[w] ? "true":"false"));
+      document.getElementById("tabs" + w).setAttribute("pinned", (this.IsPinned[w] ? "true":"false"));
+    }
     
     // Footnote boxes
     for (w=1; w<=NW; w++) {
@@ -310,16 +327,12 @@ function ViewPortObj(viewPortObj) {
       // all other tabs
       document.getElementById("w" + w + ".multitab").style.display = "";
       document.getElementById("w" + w + ".multitab").style.visibility = "";
-      var pinattrib = (this.IsPinned[w] ? "true":"false");
       for (var t=0; t<Tabs.length; t++) {
         var normtab = document.getElementById("w" + w + ".tab.norm." + t);
         var multtab = document.getElementById("w" + w + ".tab.mult." + t);
      
         if (multtab.selected) oldmts[w] = t;
         multtab.selected = false;
-        
-        normtab.setAttribute("pinned", pinattrib);
-        multtab.setAttribute("pinned", pinattrib);
         
         if (Tabs[t].modName == this.Module[w]) {
           normtab.setAttribute("active", "true");
@@ -527,6 +540,27 @@ function ViewPortObj(viewPortObj) {
     if (window.frameElement && window.frameElement.id == "main-viewport")
         document.getElementById("viewportbody").style.width = MainWindow.innerWidth - MainWindow.document.getElementById("genBookChooser").boxObject.width + "px";
 
+  };
+  
+  this.selectTab = function(w, version) {
+    var fdb = this.firstDisplayBible(true); // capture before changing prefs...
+    ViewPort.ShowOriginal[w] = false;
+    ViewPort.Module[w] = version;
+    if (w == fdb || fdb != this.firstDisplayBible(true))
+        window.setTimeout("ViewPort.disableMissingBooks(" + getPrefOrCreate("HideDisabledBooks", "Bool", false) + ")", 200);
+  };
+
+  this.disableMissingBooks = function(hide) {
+    var books = getAvailableBooks(this.firstDisplayBible());
+    for (var b=0; b<NumBooks; b++) {
+      var have = false;
+      for (var a=0; books && a<books.length; a++) {
+        if (books[a] == Book[b].sName) {have=true; break;}
+      }
+      document.getElementById("book_" + b).setAttribute("missing", (have ? "false":(hide ? "hide":"disable")));
+    }
+
+    if (hide) this.update(false);
   };
   
   this.firstDisplayBible = function(returnNumber) {

@@ -25,105 +25,120 @@
   <link rel="stylesheet" href="chrome://xulsword/skin/global-htm.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/about-htm.css" type="text/css">
   
-  <script>var MainWindow = (window.frameElement.ownerDocument.defaultView.MainWindow ? window.frameElement.ownerDocument.defaultView.MainWindow:null)</script>
+  <script>var MainWindow = window.frameElement.ownerDocument.defaultView.MainWindow;</script>
   <script type="text/javascript" src="chrome://xulsword/content/common0.js"></script>
   <script type="text/javascript" src="chrome://xulsword/content/common1.js"></script>
   <script type="text/javascript" src="chrome://xulsword/content/common2.js"></script>
   
   <script>
   
-  function scrollToModule() {
-    if (!MainWindow || !MainWindow.AboutScrollTo) return;
-    var targ = document.getElementById("targ." + MainWindow.AboutScrollTo);
-    if (targ) document.getElementById("scrollbox").scrollTop = targ.offsetTop;
-    MainWindow.AboutScrollTo = null;
-  }
-  
-  function toggleConfInfo(tabNum) {
-    var textbox = document.getElementById("conf." + Tabs[tabNum].modName);
-    var link = document.getElementById("more." + Tabs[tabNum].modName);
-    if (textbox.style.display != "block") {
-      link.innerHTML = SBundle.getString("Less");
-      textbox.innerHTML = getConfFileContents(tabNum);
-      textbox.style.display = "block";
-    }
-    else {
-      textbox.style.display = "none";
-      link.innerHTML = SBundle.getString("More");
-    }
-  }
-    
-  function getConfFileContents(tabNum) {
-    if (!Tabs[tabNum].conf) return "-----";
-    return readFile(Tabs[tabNum].conf) + NEWLINE + "(" + Tabs[tabNum].conf.path + ")\nconfModUnique=" + Tabs[tabNum].confModUnique;
-  }
-  
   function onLoad() {
-    createDynamicCssClasses();
-    window.setTimeout('scrollToModule();', 0);
+    initCSS();
+    
+    if (!MainWindow.GlobalTarget.mod) return;
+    
+    // show our module's info rather than the logo
+    document.getElementById("mainbox").setAttribute("showingModules", "true");
+    document.getElementById("mod." + MainWindow.GlobalTarget.mod).scrollIntoView();
+  }
+  
+  function toggleInfo(elem) {
+    var showInfo = elem.getAttribute("showInfo");
+    var mod = elem.id.match(\.([^\.]+)$)[1];
+    
+    if (showInfo == "false") {
+      var confinfo = "-----";
+      if (Tab[mod].conf) {
+        confinfo  = readFile(Tab[mod].conf) + NEWLINE;
+        confinfo += "(" + Tab[mod].conf.path + ")" + NEWLINE;
+        confinfo += "confModUnique=" + Tab[mod].confModUnique;
+      }
+      elem.getElementsByTagName("textarea")[0].innerHTML = confinfo;
+    }
+    
+    elem.setAttribute("showInfo", (showInfo == "true" ? "false":"true"));
+  }
+  
+  function getUI(id) {
+    return window.frameElement.ownerDocument.getElementById(id).childNodes[0].nodeValue;
   }
     
   </script>
   
   </head>
   
-  <body id="scrollbox" onload="onLoad();" style="background-color:rgb(220,220,220)">
-    <div style="padding:20px;" class="moduleinfo" >
-      <script>
-        document.write("<a href=\"#top\"></a>");
-        // module list
-        var lastType;
-        var sep = "";
-        for (var t=0; t<Tabs.length; t++) {
-          if (!lastType || Tabs[t].modType!=lastType) {
-            var type = window.frameElement.ownerDocument.getElementById("radio.label." + TYPES[Tabs[t].tabType]).childNodes[0].nodeValue;
-            document.write(sep + "<div class=\"head1 cs-Program\">" + type + "</div>");
-            sep = "<br><br>";
-          }
-          lastType = Tabs[t].modType;
-          var desc = LibSword.getModuleInformation(Tabs[t].modName, "Description");
-          document.write("<div class=\"cs-" + (isASCII(desc) ? DEFAULTLOCALE:Tabs[t].modName) + "\" >");
-          document.write("<a href=\"#" + Tabs[t].modName + "\">" + Tabs[t].label + " - " + desc + "</a><hr>");
-          document.write("</div>");
+  <body id="scrollbox" onload="onLoad();">
+    <script>
+    
+      document.write("<a href=\"#top\"></a>");
+      
+      // begin with quick module list
+      var lastType;
+      document.write("<div id=\"quick-list\">");
+      for (var t=0; t<Tabs.length; t++) {
+      
+        if (!lastType || Tabs[t].modType != lastType) {
+          var type = getUI("radio.label." + TYPES[Tabs[t].tabType]);
+          document.write(sep + "<div class=\"mod-heading cs-Program\">" + type + "</div>");
         }
-        document.write("<br><br>");
-        // module information
-        for (t=0; t<Tabs.length; t++) {
-          // anchor
-          document.write("<a id=\"targ." + Tabs[t].modName + "\" name=\"" + Tabs[t].modName + "\"></a><br>");
-          document.write("<div id=\"modinfo." + Tabs[t].modName + "\" >");
-          // tab label, version, and back arrow
-          // collect module data first, and if data is ASCII, overwrite version class style to force LTR.
-          var mdata1, mdata2, mdata3;
-          var modvers = LibSword.getModuleInformation(Tabs[t].modName, "Version");
-          if (modvers == NOTFOUND) modvers="";
-          if (modvers) modvers = " (" + modvers + ")";
-          mdata2 = "<span class=\"head1\">" + Tabs[t].label + (modvers ? modvers:"") + "</span><a href=\"#top\" style=\"font-family:ariel;\"> &#8593;</a><br>";
-          // Data for each module:
-          //    Description
-          //    About, DistributionLicense
-          mdata3 = "";
-          var info = LibSword.getModuleInformation(Tabs[t].modName,"Description");
-          if (info && info!=NOTFOUND) mdata3 = info + "<br>";
-          info = LibSword.getModuleInformation(Tabs[t].modName,"About").replace("\\par", "<br>", "g");
-          var comma="";
-          if (info && info!=NOTFOUND) {
-            mdata3 += info;
-            if (info.search(/[\.\?,:;!]\s*$/)==-1) {comma=",";}
-            comma += " ";
-          }
-          info = LibSword.getModuleInformation(Tabs[t].modName,"DistributionLicense");
-          if (info && info!=NOTFOUND) mdata3 += comma + info;
-          mdata3 += "</div>";
-          mdata1 = "<div class=\"cs-" + (isASCII(mdata3) ? DEFAULTLOCALE:Tabs[t].modName) + "\" >";
-          document.write(mdata1 + mdata2 + mdata3);
+        lastType = Tabs[t].modType;
+        
+        document.write("<a class=\"quick-link cs-" + Tabs[t].locName + "\" href=\"#" + Tabs[t].modName + "\">");
+        document.write(Tabs[t].label + " - " + Tabs[t].description);
+        document.write("</a>");
+        
+      }
+      document.write("</div>"); // end quick-list
+      
+      
+      // now show detailed module listing
+      document.write("<div id=\"detailed-list\">");
+      for (t=0; t<Tabs.length; t++) {
+        
+        // Target link
+        document.write("<a id=\"mod." + Tabs[t].modName + "\" name=\"" + Tabs[t].modName + "\"></a>");
+        
+        // Heading and version
+        var vers = LibSword.getModuleInformation(Tabs[t].modName, "Version");
+        document.write("<div class=\"module-detail cs-" + Tabs[t].locName + "\">");
+        document.write(  "<span class=\"mod-heading\">");
+        document.write(    Tabs[t].label + (vers != NOTFOUND ? "(" + vers + ")":""));
+        document.write(  "</span>");
+        document.write(  "<a href=\"#top\" class=\"return-link\"></a>");
+        
+        // Descripton
+        if (Tabs[t].description) 
+            document.write("<div class=\"description\">" + Tabs[t].description + "</div>");
+ 
+        // About
+        var about = LibSword.getModuleInformation(Tabs[t].modName,"About");
+        if (about == Tabs[t].description || about == NOTFOUND) about = "";
+        if (about) {
+          about = about.replace(/\\par/g, "<br>");
+          document.write("<div class=\"about\">" + about + "</div>");
+        }
+        
+        // Copyright
+        var copyright = LibSword.getModuleInformation(Tabs[t].modName, "DistributionLicense");
+        if (copyright == NOTFOUND) copyright = "";
+        if (copyright)
+             document.write("<div class=\"copyright\">" + copyright + "</div>");
+             
+        document.write("</div>"); // end module-detail
+             
+        // Conf contents
+        document.write("<div id=\"conf." + Tabs[t].modName + "\" class=\"conf-listing cs-" + DEFAULTLOCALE + "\">");
+        document.write(  "<a class=\"more-less\" href=\"javascript:toggleInfo(this.parentNode);\">");
+        document.write(    "<span class=\"more-label\">" + getUI(more.label) + "</span>");
+        document.write(    "<span class=\"less-label\">" + getUI(less.label) + "</span>");
+        document.write(  "</a>");
+        document.write(  "<textarea class=\"conf-file\" readonly=\"readonly\"></textarea>");
+        document.write("</div>");
 
-          // more link and conf file area
-          document.write("<a id=\"more." + Tabs[t].modName + "\" class=\"cs-Program\" href=\"javascript:toggleConfInfo('" + t + "');\">" + SBundle.getString("More") + "</a>");
-          document.write("<textarea id=\"conf." + Tabs[t].modName + "\" class=\"moreinfo cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\" ></textarea>");
-          document.write("</div>");
-        }
-      </script>
-    </div>
+      }
+      document.write("</div>"); // end detailed-list
+      
+    </script>
+    
   </body>
 </html>

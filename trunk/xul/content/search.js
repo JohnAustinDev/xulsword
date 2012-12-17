@@ -30,7 +30,6 @@ var LexiconResults;
 var MatchingStrongs;
 var AddedStrongsCSSRules;
 var SearchHelpWindow;
-var UI_bundle;
 
 function initSearch() {
   
@@ -40,7 +39,6 @@ function initSearch() {
   LexiconResults = document.getElementById("search-frame").contentDocument.getElementById("lexiconBox");
   MatchingStrongs = document.getElementById("search-frame").contentDocument.defaultView.getCSS(".matchingStrongs {"); // Read from CSS stylesheet
   AddedStrongsCSSRules = [];
-  UI_bundle = document.getElementById("strings");
   
   // add module radio buttons in rows according to type
   var numcols = 1;
@@ -220,8 +218,8 @@ function SearchObj(searchObj) {
       if (!dontAsk) {
         var myresult = {};
         var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, myresult, 
-            fixWindowTitle(UI_bundle.getString("BuildingIndex")),
-            UI_bundle.getString("NeedSearchIndex"), 
+            fixWindowTitle(SBundle.getString("BuildingIndex")),
+            SBundle.getString("NeedSearchIndex"), 
             DLGINFO,
             DLGOKCANCEL);
         prefs.setBoolPref("dontAskAboutSearchIndex." + s.mod, true);
@@ -239,7 +237,7 @@ function SearchObj(searchObj) {
     
     // replace UI search symbols with internally recognized search symbols
     for (var i=0; i<LOCALE_SEARCH_SYMBOLS.length; i++) {
-      try {var sym = UI_bundle.GetStringFromName(LOCALE_SEARCH_SYMBOLS[i]);} catch (er) {continue;}
+      try {var sym = SBundle.GetStringFromName(LOCALE_SEARCH_SYMBOLS[i]);} catch (er) {continue;}
       if (!sym || (/^\s*$/).test(sym)) continue;
       s.query = s.query.replace(sym, ACTUAL_SEARCH_SYMBOLS[i], "g");
     }
@@ -367,7 +365,7 @@ function SearchObj(searchObj) {
       }
       document.getElementById("statusbar-text").label = "";    
       document.getElementById("progressbox").style.visibility = "visible";
-      document.getElementById("searchmsg").value = UI_bundle.getFormattedString("Searching", [Book[this.progress.index].bName]);
+      document.getElementById("searchmsg").value = SBundle.getFormattedString("Searching", [Book[this.progress.index].bName]);
       document.getElementById("stopButton").hidden = false;
       
       this.progress.timeout = window.setTimeout("Search.searchNextBook();" , 500); // 500 gives progressbar time to appear
@@ -413,7 +411,7 @@ var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(
     
     // search another book, or are we done?
     if (progress.index < progress.book.length) {
-      document.getElementById("searchmsg").value = UI_bundle.getFormattedString("Searching", [Book[progress.index].bName]);
+      document.getElementById("searchmsg").value = SBundle.getFormattedString("Searching", [Book[progress.index].bName]);
       progress.timeout = window.setTimeout("Search.searchNextBook();", 1);
       return;
     }
@@ -452,9 +450,9 @@ var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(
     // display info about results which are currently being shown
     var lastMatchShown = (result.count - result.index < result.results_per_page ? result.count:result.index + result.results_per_page);
     if (result.count > result.results_per_page) {
-      document.getElementById("statusbar-text").label = UI_bundle.getFormattedString("FoundMult", [dString(result.index + 1), dString(lastMatchShown), dString(result.count)]);
+      document.getElementById("statusbar-text").label = SBundle.getFormattedString("FoundMult", [dString(result.index + 1), dString(lastMatchShown), dString(result.count)]);
     }
-    else document.getElementById("statusbar-text").label = UI_bundle.getFormattedString("Found", [dString(result.count)]);
+    else document.getElementById("statusbar-text").label = SBundle.getFormattedString("Found", [dString(result.count)]);
     
   };
 
@@ -775,7 +773,7 @@ function startIndexer() {
   // use progress bar to show indexer progress
   document.getElementById("progressbox").style.visibility = "visible";
   document.getElementById("progress").value = 0;
-  document.getElementById("searchmsg").value = UI_bundle.getString("BuildingIndex");
+  document.getElementById("searchmsg").value = SBundle.getString("BuildingIndex");
   document.getElementById("stopButton").hidden = true;
   
   if (!MainWindow.Indexer.inprogress) {

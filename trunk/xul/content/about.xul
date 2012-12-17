@@ -21,12 +21,8 @@
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
 <!DOCTYPE window [
-<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
-%xulswordDTD;
-<!ENTITY % brandingDTD SYSTEM "chrome://xulsword/locale/branding.dtd" >
-%brandingDTD;
-<!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
-%browserDTD;
+<!ENTITY % aboutDTD SYSTEM "chrome://xulsword/locale/about.dtd"> %aboutDTD;
+<!ENTITY % searchDTD SYSTEM "chrome://xulsword/locale/search.dtd"> %searchDTD;
 ]>
 
 <window 
@@ -37,36 +33,53 @@
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
     
   <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+  
   <data id="radio.label.text">&radio.label.text;</data>
   <data id="radio.label.comm">&radio.label.comm;</data>
   <data id="radio.label.book">&radio.label.book;</data>
   <data id="radio.label.dict">&radio.label.dict;</data>
+  <data id="more.label">&more.label;</data>
+  <data id="less.label">&less.label;</data>
   
-  <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
+  <script>var MainWindow = window.opener;</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
   
   <script>
   function loaded() {
-//    updateCSSBasedOnCurrentLocale(["window", "button", "label"]);
-    var SBundle = document.getElementById("strings");
-    document.getElementById("info").value = SBundle.getFormattedString('Version',[prefs.getCharPref("Version"), prefs.getCharPref("BuildID")]);
+    initCSS();
+    document.getElementById("info").value = SBundle.getFormattedString('Version', [prefs.getCharPref("Version"), prefs.getCharPref("BuildID")]);
     window.sizeToContent();
   }
   </script>
-  <vbox flex="1" style="background-image: url(chrome://xulsword/locale/splash.png); background-repeat:no-repeat;">
-    <stack style="width:500px; height:375px;">
-      <vbox pack="end" align="center">
-        <label id="info" value="" style="font-size:12px; color:black;"/>
-        <label id="producedBy" value="&producedby;" style="font-size:12px; color:rgb(77,37,143);"/>
-      </vbox>
-      <vbox flex="1" pack="end" align="end" style="-moz-padding-end:8px; margin-bottom:8px;" >
-        <button id="close"  label="&closeCmd.label;" oncommand="window.close();"/>
-      </vbox>
-    </stack>
+  
+  <vbox id="mainbox" flex="1" showingModules="false">
+  
+    <vbox id="logo" pack="end" align="center">
     
-    <iframe id="about" style="width:500px; height:300px; border:2px solid rgb(77,37,143); border-radius:8px;" src="chrome://xulsword/content/about.html"/>
+      <hbox pack="center">
+      
+        <hbox flex="33">
+          <button id="show-modules"  label="&more.label;"
+            oncommand="document.getElementById('mainbox').setAttribute('showingModules', 'true');"/>
+        </hbox>
+        
+        <hbox flex="33">
+          <label id="info" value=""/>
+          <label id="producedBy" value="&producedby;"/>
+        </hbox>
+        
+        <hbox flex="33">
+          <button id="close"  label="&closeCmd.label;" oncommand="window.close();"/>
+        </hbox>
+        
+      </hbox>
+      
+    </vbox>
+    
+    <iframe id="modules" src="chrome://xulsword/content/about.html"/>
+    
   </vbox>
     
 </window>

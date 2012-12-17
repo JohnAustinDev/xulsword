@@ -38,7 +38,7 @@ function tabMouse(e) {
     p = elem.id.split(".");
   }
   else if (p[2] == "orig") {
-    if (e.type != "click") return;
+    if (e.type != "click" || ViewPort.IsPinned[w] || Tab[ViewPort.Module[w]].modType != BIBLE) return;
     ViewPort.ShowOriginal[w] = !ViewPort.ShowOriginal[w];
     Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     return;
@@ -56,8 +56,7 @@ function tabMouse(e) {
   case "click":
     closeTabToolTip();
     if (ViewPort.IsPinned[w]) return;
-    MainWindow.selectTab(w, Tabs[t].modName);
-    MainWindow.updateNavigator();
+    ViewPort.selectTab(w, Tabs[t].modName);
     Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);    
     break;
   }
@@ -282,15 +281,24 @@ function scriptClick(e) {
     
   case "sbwin":
     ViewPort.towindow = w;
-    // Open the new xul Popup window.
+    var t = document.getElementById("text" + w);
+    var chromeH = 40;
+    
+    // Open the new xul viewport window.
     var X = 0;
     var Y = 0;
+    var f = window.frameElement;
+    var wintop = f.ownerDocument.defaultView;
+    var offset = getOffset(t);
+    X = Number(f.boxObject.x + offset.left);
+    Y = Number(f.boxObject.y + offset.top - chromeH);
+    
     var p = "chrome,resizable,dependant";
-    p += ",left=" + Number(MainWindow.screenX + X);
-    p += ",top=" + Number(MainWindow.screenY + Y);
-    p += ",width=" + document.getElementById("text" + w).offsetWidth;
-    p += ",height=" + document.getElementById("text" + w).offsetHeight;
-    AllWindows.push(MainWindow.open("chrome://xulsword/content/viewport.xul", "viewport" + String(Math.random()), p));
+    p += ",left=" + Number(wintop.screenX + X);
+    p += ",top=" + Number(wintop.screenY + Y);
+    p += ",width=" + t.offsetWidth;
+    p += ",height=" + (t.offsetHeight + chromeH);
+    AllWindows.push(wintop.open("chrome://xulsword/content/viewport.xul", "viewport" + String(Math.random()), p));
     break;
 
   case "prevchaplink":
@@ -402,7 +410,7 @@ function scriptClick(e) {
     case BIBLE:
     case COMMENTARY:
       Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
-      Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
+      MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
      case DICTIONARY:
      case GENBOOK:
@@ -418,7 +426,7 @@ function scriptClick(e) {
     
   case "crref":
     Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs + "." + p.lv);
-    Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+    MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     break;
     
   case "snbut":
@@ -649,7 +657,7 @@ var MouseWheel = {
       force.push(s);
     }
 
-    Texts.update(scrollType, HILIGHTSKIP, force);
+    MainWindow.Texts.update(scrollType, HILIGHTSKIP, force);
   }
 
 }
@@ -698,7 +706,7 @@ function previousPage(w) {
   }
   else {
     Location.setLocation(v.mod, v.bk + "." + v.ch + "." + v.vs);
-    Texts.update(SCROLLTYPEENDSELECT, HILIGHTNONE);
+    MainWindow.Texts.update(SCROLLTYPEENDSELECT, HILIGHTNONE);
   }
 
 }
@@ -741,12 +749,12 @@ function nextPage(w) {
   v = getElementInfo(v);
 
   if (ViewPort.IsPinned[w]) {
-    Texts.pinnedDisplay[wpin].bk = v.bk;
-    Texts.pinnedDisplay[wpin].ch = v.ch;
-    Texts.pinnedDisplay[wpin].vs = v.vs;
+    Texts.pinnedDisplay[w].bk = v.bk;
+    Texts.pinnedDisplay[w].ch = v.ch;
+    Texts.pinnedDisplay[w].vs = v.vs;
   }
   else {Location.setLocation(v.mod, v.bk + "." + v.ch + "." + v.vs);}
     
-  Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+  MainWindow.Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
 }
 

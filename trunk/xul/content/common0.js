@@ -206,6 +206,21 @@ const HILIGHT_IFNOTV1 = 2;        // highlight selected verse in blue unless it 
 const HILIGHTPREVIOUS = 3;        // keep hilighted verse the same
 const HILIGHTSKIP = 4             // skip hilighting step- any previously hilighted verse will remain so
 
+var GlobalToggleCommands = {
+  cmd_xs_toggleHeadings:   "Headings",
+  cmd_xs_toggleFootnotes:  "Footnotes",
+  cmd_xs_toggleCrossRefs:  "Cross-references",
+  cmd_xs_toggleDictionary: "Dictionary",
+  cmd_xs_toggleStrongsTags: "Strong's Numbers",
+  cmd_xs_toggleMorphTags: "Morphological Tags",
+  cmd_xs_toggleVerseNums:  "Verse Numbers",
+  cmd_xs_toggleUserNotes:  "User Notes",
+  cmd_xs_toggleHebrewCantillation:  "Hebrew Cantillation",
+  cmd_xs_toggleHebrewVowelPoints:   "Hebrew Vowel Points",
+  cmd_xs_toggleRedWords:  "Words of Christ in Red"
+};
+
+
 var CustomScrollFunction;
 /************************************************************************
  * THESE FUNCTIONS NEEDED BEFORE XPCOM BIBLE OBJECTS ARE CREATED! This is 

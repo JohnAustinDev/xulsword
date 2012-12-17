@@ -109,7 +109,7 @@ function chooserMouse(e) {
       
     case "click":
       Location.setLocation(ViewPort.firstDisplayBible(), Book[(p[1]=="ot" ? 0:NumOT)].sName + ".1.1");
-      Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+      MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       break;
     }
     break;
@@ -124,7 +124,7 @@ function chooserMouse(e) {
       break;
     case "click":
       Location.setLocation(ViewPort.firstDisplayBible(), Book[p[1]].sName + ".1.1");
-      Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+      MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       break;
     }
     break;
@@ -152,7 +152,7 @@ function chooserMouse(e) {
         
     case "click":
       Location.setLocation(ViewPort.firstDisplayBible(), Book[p[1]].sName + "." + p[2] + ".1.1");
-      Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+      MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       break
     }
     break;
@@ -168,7 +168,7 @@ function chooserMouse(e) {
   case "headlink":
     if (e.type == "click") {
       Location.setLocation(p[4], p[1] + "." + p[2] + "." + p[3]);
-      Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+      MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
     }
     break;
     

@@ -37,8 +37,8 @@
   </commandset>
   
   <commandset id="BookmarksMenuCommandSet">
-    <command id="cmd_bm_properties"                oncommand="goDoCommand('cmd_bm_properties');"/>
-    <command id="cmd_bm_delete"                    oncommand="goDoCommand('cmd_bm_delete')" valueDefault="Delete;" disabled="true"/>
+    <command id="cmd_bm_properties"                oncommand="goDoCommand('cmd_bm_properties', ContextMenuController);"/>
+    <command id="cmd_bm_delete"                    oncommand="goDoCommand('cmd_bm_delete', ContextMenuController)" valueDefault="Delete;" disabled="true"/>
   </commandset>
   
   <popupset id="main-popupset">
