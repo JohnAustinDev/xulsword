@@ -19,6 +19,7 @@
 !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/about-xul.css" type="text/css"?>
 
 <!DOCTYPE window [
 <!ENTITY % aboutDTD SYSTEM "chrome://xulsword/locale/about.dtd"> %aboutDTD;
@@ -29,15 +30,15 @@
     id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"
     title="&menu.help.about;"
     hidechrome="true"
-    onload="loaded()"
+    onload="initCSS; loaded()"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
     
   <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
   
-  <data id="radio.label.text">&radio.label.text;</data>
-  <data id="radio.label.comm">&radio.label.comm;</data>
-  <data id="radio.label.book">&radio.label.book;</data>
-  <data id="radio.label.dict">&radio.label.dict;</data>
+  <data id="search.Texts">&search.Texts;</data>
+  <data id="search.Comms">&search.Comms;</data>
+  <data id="search.Genbks">&search.Genbks;</data>
+  <data id="search.Dicts">&search.Dicts;</data>
   <data id="more.label">&more.label;</data>
   <data id="less.label">&less.label;</data>
   
@@ -48,37 +49,36 @@
   
   <script>
   function loaded() {
-    initCSS();
     document.getElementById("info").value = SBundle.getFormattedString('Version', [prefs.getCharPref("Version"), prefs.getCharPref("BuildID")]);
     window.sizeToContent();
   }
   </script>
   
-  <vbox id="mainbox" flex="1" showingModules="false">
+  <vbox id="mainbox" showingModules="false">
   
-    <vbox id="logo" pack="end" align="center">
+    <vbox id="logo" pack="end" width="500" height="375">
     
-      <hbox pack="center">
+      <iframe flex="1" id="modules" src="chrome://xulsword/content/about.html"/>
+    
+      <hbox align="center">
       
-        <hbox flex="33">
-          <button id="show-modules"  label="&more.label;"
-            oncommand="document.getElementById('mainbox').setAttribute('showingModules', 'true');"/>
-        </hbox>
+        <button id="show-modules-button" label="&more.label;" flex="1"
+          oncommand="document.getElementById('mainbox').setAttribute('showingModules', 'true');"/>
+          
+        <spacer flex="1" orient="horizontal"/>
         
-        <hbox flex="33">
+        <hbox flex="1" pack="center">
           <label id="info" value=""/>
           <label id="producedBy" value="&producedby;"/>
         </hbox>
         
-        <hbox flex="33">
-          <button id="close"  label="&closeCmd.label;" oncommand="window.close();"/>
-        </hbox>
+        <spacer flex="1" orient="horizontal"/>
+        
+        <button id="close-button" label="&closeCmd.label;" flex="1" oncommand="window.close();"/>
         
       </hbox>
       
     </vbox>
-    
-    <iframe id="modules" src="chrome://xulsword/content/about.html"/>
     
   </vbox>
     

@@ -1,21 +1,62 @@
 #scrollbox {
   background-color:rgb(220,220,220);
 }
-
-.quick-list
-
-.mod-heading
-
-.quick-link
-
-
-.detailed-list
-
-.module-detail
-
-.return-link:after {
-  content:&#8593;
-  font-family:ariel;
+.mod-heading,
+.mod-detail-heading {
+  font-size:1.4em;
+  margin-top:20px;
 }
-
-.conf-listing
+.link {
+  color:blue;
+  display:block;
+  margin-bottom:3px;
+}
+.link:hover {
+  text-decoration:underline;
+}
+#separator {
+  border-top:4px double grey;
+  border-bottom:4px double grey;
+  height:6px;
+  margin:50px;
+}
+.mod-anchor {
+  display:block;
+  padding-top:10px;
+}
+.description,
+.about,
+.copyright {
+  margin-bottom:1em;
+}
+.return-link:after {
+  content:'\2191';
+  font-family:ariel;
+  font-size:1.4em;
+  color:blue;
+}
+.return-link:hover {
+  text-decoration:underline;
+}
+.conf-info {
+  padding-bottom:6px;
+  border-bottom:1px solid grey;
+  margin-bottom:20px;
+}
+.conf-info textarea {
+  width:100%;
+  height:250px;
+}
+.conf-info textarea,
+.less-label {
+  display:none;
+}
+.conf-info[showInfo="true"] textarea {
+  display:block;
+}
+.conf-info[showInfo="true"] .less-label {
+  display:inline;
+}
+.conf-info[showInfo="true"] .more-label {
+  display:none;
+}

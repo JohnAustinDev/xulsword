@@ -35,28 +35,29 @@
   function onLoad() {
     initCSS();
     
-    if (!MainWindow.GlobalTarget.mod) return;
+    if (!MainWindow.CommandTarget.mod) return;
     
     // show our module's info rather than the logo
-    document.getElementById("mainbox").setAttribute("showingModules", "true");
-    document.getElementById("mod." + MainWindow.GlobalTarget.mod).scrollIntoView();
+    window.frameElement.ownerDocument.getElementById("mainbox").setAttribute("showingModules", "true");
+    window.setTimeout("document.getElementById('mod." + MainWindow.CommandTarget.mod + "').scrollIntoView(true);", 1);
   }
   
-  function toggleInfo(elem) {
+  function toggleInfo(mod) {
+    var elem = document.getElementById("conf." + mod);
     var showInfo = elem.getAttribute("showInfo");
-    var mod = elem.id.match(\.([^\.]+)$)[1];
-    
+   
     if (showInfo == "false") {
-      var confinfo = "-----";
+      var confInfo = "-----";
       if (Tab[mod].conf) {
-        confinfo  = readFile(Tab[mod].conf) + NEWLINE;
-        confinfo += "(" + Tab[mod].conf.path + ")" + NEWLINE;
-        confinfo += "confModUnique=" + Tab[mod].confModUnique;
+        confInfo  = readFile(Tab[mod].conf) + NEWLINE;
+        confInfo += "(" + Tab[mod].conf.path + ")" + NEWLINE;
+        confInfo += "confModUnique=" + Tab[mod].confModUnique;
       }
-      elem.getElementsByTagName("textarea")[0].innerHTML = confinfo;
+      elem.getElementsByTagName("textarea")[0].innerHTML = confInfo;
     }
-    
+   
     elem.setAttribute("showInfo", (showInfo == "true" ? "false":"true"));
+
   }
   
   function getUI(id) {
@@ -78,30 +79,31 @@
       for (var t=0; t<Tabs.length; t++) {
       
         if (!lastType || Tabs[t].modType != lastType) {
-          var type = getUI("radio.label." + TYPES[Tabs[t].tabType]);
-          document.write(sep + "<div class=\"mod-heading cs-Program\">" + type + "</div>");
+          var type = getUI("search." + Tabs[t].tabType);
+          document.write("<div class=\"mod-heading cs-Program\">" + type + "</div>");
         }
         lastType = Tabs[t].modType;
         
-        document.write("<a class=\"quick-link cs-" + Tabs[t].locName + "\" href=\"#" + Tabs[t].modName + "\">");
+        document.write("<a class=\"quick-link link cs-" + Tabs[t].locName + "\" href=\"#" + Tabs[t].modName + "\">");
         document.write(Tabs[t].label + " - " + Tabs[t].description);
         document.write("</a>");
         
       }
       document.write("</div>"); // end quick-list
       
+      document.write("<div id=\"separator\"></div>");
       
       // now show detailed module listing
       document.write("<div id=\"detailed-list\">");
       for (t=0; t<Tabs.length; t++) {
         
         // Target link
-        document.write("<a id=\"mod." + Tabs[t].modName + "\" name=\"" + Tabs[t].modName + "\"></a>");
+        document.write("<a class=\"mod-anchor\" id=\"mod." + Tabs[t].modName + "\" name=\"" + Tabs[t].modName + "\"></a>");
         
         // Heading and version
         var vers = LibSword.getModuleInformation(Tabs[t].modName, "Version");
         document.write("<div class=\"module-detail cs-" + Tabs[t].locName + "\">");
-        document.write(  "<span class=\"mod-heading\">");
+        document.write(  "<span class=\"mod-detail-heading\">");
         document.write(    Tabs[t].label + (vers != NOTFOUND ? "(" + vers + ")":""));
         document.write(  "</span>");
         document.write(  "<a href=\"#top\" class=\"return-link\"></a>");
@@ -114,7 +116,7 @@
         var about = LibSword.getModuleInformation(Tabs[t].modName,"About");
         if (about == Tabs[t].description || about == NOTFOUND) about = "";
         if (about) {
-          about = about.replace(/\\par/g, "<br>");
+          about = about.replace(/(\\par)/g, "<br>");
           document.write("<div class=\"about\">" + about + "</div>");
         }
         
@@ -127,12 +129,12 @@
         document.write("</div>"); // end module-detail
              
         // Conf contents
-        document.write("<div id=\"conf." + Tabs[t].modName + "\" class=\"conf-listing cs-" + DEFAULTLOCALE + "\">");
-        document.write(  "<a class=\"more-less\" href=\"javascript:toggleInfo(this.parentNode);\">");
-        document.write(    "<span class=\"more-label\">" + getUI(more.label) + "</span>");
-        document.write(    "<span class=\"less-label\">" + getUI(less.label) + "</span>");
+        document.write("<div id=\"conf." + Tabs[t].modName + "\" class=\"conf-info cs-" + DEFAULTLOCALE + "\" showInfo=\"false\">");
+        document.write(  "<a class=\"link\" href=\"javascript:toggleInfo('" + Tabs[t].modName + "');\">");
+        document.write(    "<span class=\"more-label\">" + getUI("more.label") + "</span>");
+        document.write(    "<span class=\"less-label\">" + getUI("less.label") + "</span>");
         document.write(  "</a>");
-        document.write(  "<textarea class=\"conf-file\" readonly=\"readonly\"></textarea>");
+        document.write(  "<textarea readonly=\"readonly\"></textarea>");
         document.write("</div>");
 
       }

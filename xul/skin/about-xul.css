@@ -1,11 +1,11 @@
+#mainbox {
+  border:2px solid rgb(230,200,255);
+  border-radius:8px;
+}
 #logo {
   background-image: url(chrome://xulsword/locale/splash.png); 
   background-repeat:no-repeat;
 }
-#mainbox[showingModules="true"] #logo {
-  display:none;
-}
-
 #info {
   font-size:12px; 
   color:black;
@@ -14,14 +14,16 @@
   font-size:12px; 
   color:rgb(77,37,143);
 }
-
 #modules {
   display:none;
-  width:500px; 
-  height:300px; 
-  border:2px solid rgb(77,37,143); 
-  border-radius:8px;
 }
 #mainbox[showingModules="true"] #modules {
   display:block;
+}
+#show-modules-button,
+#close-button {
+  margin:4px 6px 6px 6px;
+}
+#mainbox[showingModules="true"] #show-modules-button {
+  visibility:hidden;
 }
