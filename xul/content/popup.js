@@ -269,19 +269,20 @@ function PopupObj(popupobj) {
     // Get X and Y coordinates for where to create the new xul window
     var X,Y;
     // on Linux, window.innerHeight = outerHeight = height of entire window viewport, NOT including the operating system frame
-    var f = MainWindow.document.getElementById("main-viewport");
-    var offset = getOffset(this.npopup);
-    X = Number(f.boxObject.x + offset.left + 8);
-    Y = Number(f.boxObject.y + offset.top - 8);
+    var f = window.frameElement;
+    var wintop = f.ownerDocument.defaultView;
+    var offset = getOffset(this.npopupTX);
+    X = Number(f.boxObject.x + offset.left);
+    Y = Number(f.boxObject.y + offset.top);
     //jsdump("INFO:" + f.boxObject.y + "-" + MainWindow.outerHeight + "+" + v.height + "=" + Y);
   
     // Open the new xul Popup window.
     var p = "chrome,resizable,dependant";
-    p += ",left=" + Number(MainWindow.screenX + X);
-    p += ",top=" + Number(MainWindow.screenY + Y);
+    p += ",left=" + Number(wintop.screenX + X);
+    p += ",top=" + Number(wintop.screenY + Y);
     p += ",width=" + this.npopupTX.offsetWidth;
     p += ",height=" + this.npopupTX.offsetHeight;
-    AllWindows.push(MainWindow.open("chrome://xulsword/content/popup.xul", "popup" + String(Math.random()), p));
+    AllWindows.push(wintop.open("chrome://xulsword/content/popup.xul", "popup" + String(Math.random()), p));
 
   };
   

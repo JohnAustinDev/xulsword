@@ -39,24 +39,6 @@ if (!SBundle) jsdump("WARNING: Unable to initialize string SBundle: (" + window.
 
 
 /************************************************************************
- * GlobalToggleCommands globals
- ***********************************************************************/
-var GlobalToggleCommands = {
-  cmd_xs_toggleHeadings:   "Headings",
-  cmd_xs_toggleFootnotes:  "Footnotes",
-  cmd_xs_toggleCrossRefs:  "Cross-references",
-  cmd_xs_toggleDictionary: "Dictionary",
-  cmd_xs_toggleStrongsTags: "Strong's Numbers",
-  cmd_xs_toggleMorphTags: "Morphological Tags",
-  cmd_xs_toggleVerseNums:  "Verse Numbers",
-  cmd_xs_toggleUserNotes:  "User Notes",
-  cmd_xs_toggleHebrewCantillation:  "Hebrew Cantillation",
-  cmd_xs_toggleHebrewVowelPoints:   "Hebrew Vowel Points",
-  cmd_xs_toggleRedWords:  "Words of Christ in Red"
-};
-
-
-/************************************************************************
  * DYNAMIC CSS FUNCTIONS
  ***********************************************************************/ 
 
@@ -672,9 +654,9 @@ function guiDirection() {
 
 function setGlobalDirectionPrefs() {
   // Set scrollbar location (left side for RTL locale)
-  var progdir = guiDirection();
-  rootprefs.setIntPref("layout.scrollbar.side", (progdir=="rtl" ? 4:0));
-  rootprefs.setIntPref("bidi.direction", (progdir=="rtl" ? 2:1));
+  //var progdir = guiDirection();
+  //rootprefs.setIntPref("layout.scrollbar.side", (progdir=="rtl" ? 4:0));
+  //rootprefs.setIntPref("bidi.direction", (progdir=="rtl" ? 2:1));
 }
 
 function windowLocationReload() {

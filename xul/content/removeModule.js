@@ -204,7 +204,7 @@ function deleteCheckedResources(e) {
   for (var w=1; w<=NW; w++) {
     if (need2ChangeVers[w]) {
       Tab[aGoodModule]["w" + w + ".hidden"] = false;
-      MainWindow.selectTab(w, aGoodModule);
+      ViewPort.selectTab(w, aGoodModule);
     }
   }
   

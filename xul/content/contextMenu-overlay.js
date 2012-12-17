@@ -301,7 +301,7 @@ var p=""; for (var m in info) {p += m + "=" + info[m] + " ";} jsdump("readDataFr
       if (val) targs[p] = val; // got it!
 
     }
-      
+//var p=""; for (var m in targs) {p += m + "=" + targs[m] + " ";} jsdump("targs:" + p);      
     return true;
   },
 

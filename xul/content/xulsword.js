@@ -144,7 +144,7 @@ function postWindowInit() {
   
   // Hide disabled books on chooser
   useFirstAvailableBookIf();
-  disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));
+  ViewPort.disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));
   
   // Open language menu if a new locale was just installed
   if (NewModuleInfo && NewModuleInfo.NewLocales && NewModuleInfo.NewLocales[0] && !document.getElementById("sub-lang").disabled) {
@@ -760,7 +760,6 @@ var XulswordController = {
       }
       break;
     case "cmd_xs_aboutModule":
-      AboutScrollTo = CommandTarget.mod;
       AllWindows.push(window.open("chrome://xulsword/content/about.xul","splash","chrome,modal,centerscreen"));
       break;
     case "cmd_xs_addNewModule":
@@ -991,7 +990,7 @@ function getCommandTarget(target) {
   if (target) {
     for (var m in target) {
       if (target[m] !== null) {
-        deftarg[m] = (typeof(target[m]) == "object" ? copyObj(target[m]):target[m]);
+        deftarg[m] = target[m];
       }
     }
   }
@@ -1066,6 +1065,7 @@ function handleOptions(elem) {
       break;
     
     case "about":
+      GlobalTarget.mod = null; // show logo, not modules info
       AllWindows.push(window.open("chrome://xulsword/content/about.xul","splash","chrome,modal,centerscreen"));
       break;
       
@@ -1289,31 +1289,6 @@ function updateXulswordCommands() {
 /************************************************************************
  * Version and Tab Control Functions
  ***********************************************************************/ 
-function selectTab(w, version) {
-  var fdb = ViewPort.firstDisplayBible(true); // capture before changing prefs...
-  if (version == ORIGINAL) {
-    ViewPort.ShowOriginal[w] = !ViewPort.ShowOriginal[w];
-  }
-  else {
-    ViewPort.ShowOriginal[w] = false;
-    ViewPort.Module[w] = version;
-    if (w == fdb || fdb != ViewPort.firstDisplayBible(true))
-        window.setTimeout("disableMissingBooks(" + getPrefOrCreate("HideDisabledBooks", "Bool", false) + ")", 200);
-  }
-}
-
-function disableMissingBooks(hide) {
-  var books = getAvailableBooks(ViewPort.firstDisplayBible());
-  for (var b=0; b<NumBooks; b++) {
-    var have = false;
-    for (var a=0; books && a<books.length; a++) {
-      if (books[a] == Book[b].sName) {have=true; break;}
-    }
-    ViewPort.ownerDocument.getElementById("book_" + b).setAttribute("missing", (have ? "false":(hide ? "hide":"disable")));
-  }
-
-  if (hide) ViewPort.update(false);
-}
 
 function updateModuleMenuCheckmarks() {
 //jsdump("RUNNING UPDATE MODULE MENU CHECKMARKS");
@@ -1335,7 +1310,7 @@ function updateModuleMenuCheckmarks() {
   for (var w=1; w<=NW; w++) {
     if (Tab[ViewPort.Module[w]]["w" + w + ".hidden"]) {
       for (var t=1; t<Tabs.length; t++) {if (!Tabs[t]["w" + w + ".hidden"]) break;} 
-      if (t<Tabs.length) selectTab(w, Tabs[t].modName);
+      if (t<Tabs.length) ViewPort.selectTab(w, Tabs[t].modName);
     }
   }
 }
@@ -1403,7 +1378,7 @@ function ensureModuleShowing(version) {
     updateModuleMenuCheckmarks();
   }
 
-  selectTab(aWindow, version);
+  ViewPort.selectTab(aWindow, version);
  
   return aWindow;
 }

@@ -356,7 +356,7 @@ GenBookTexts = {
       sb.scrollLeft = 0;
     }
 
-    Texts.update();
+    MainWindow.Texts.update();
 
   },
 

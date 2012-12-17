@@ -142,11 +142,13 @@ body[isWindow="true"] #chbutton_open {
   border-bottom:none;
   background:rgb(255,243,255);
 }
-.tab[pinned="true"] {
-  color:rgb(210,210,210);
+.tabs[pinned="true"] .tab {
+  visibility:hidden;
 }
-.tab[active="true"][pinned="true"] {
-  background:rgb(248,248,241);
+.tabs[pinned="true"] .tab[active="true"] {
+  color:blue;
+  background:white; /*rgb(248,248,241);*/
+  visibility:visible;
 }
 .tabTexts {
   -moz-border-top-colors:   rgb(200,170,205) rgb(235,50,80) transparent;
@@ -217,7 +219,7 @@ body[isWindow="true"] #chbutton_open {
   position:relative;
 }
 .text[pinned="true"] .textf {
-  background:rgb(248,248,241);
+  background:white; /*rgb(248,248,241);*/
 }
 
 .hd {
@@ -237,10 +239,15 @@ body[isWindow="true"] #chbutton_open {
   width:28px;
   height:37px;
   position:relative;
-  top:-22px;
-  -moz-margin-end:-10px;
+  top:-15px;
+  left:-8px;
+  -moz-margin-end:-8px;
   background:url(chrome://xulsword/skin/images/pushpin0.png);
   z-index:20;
+}
+body[chromedir="rtl"] .sbpin {
+  left:auto;
+  right:-8px;
 }
 .sbpin:hover {
   background:url(chrome://xulsword/skin/images/pushpin2.png) !important;
@@ -251,6 +258,12 @@ body[isWindow="true"] #chbutton_open {
 .text[moduleType="Dicts"] .sbpin {
   display:none;
 }
+body[chromedir="ltr"] .sbpin,
+body[chromedir="ltr"] .sbpin:hover,
+body[chromedir="ltr"] .text[pinned="true"] .sbpin {
+  transform:scaleX(-1);
+}
+
 .sbwin {
   float:left;
   width:20px;
@@ -425,9 +438,15 @@ body[isWindow="true"] .sbwin {
 /* PRINTING STYLES */
 @media print {
 
-#chooser,
-#tabrow {
+#chooser {
   display:none !important;
+}
+.tab {
+  background-color:white !important;
+  color:black !important;
+}
+.tab[active="false"] {
+  display:none;
 }
 #viewport {
   height:auto;

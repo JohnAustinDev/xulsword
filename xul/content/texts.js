@@ -35,6 +35,7 @@ Texts = {
   // 0 means update if a watched value has changed
   // 1 means update always
   update: function(scrollTypeFlag, hilightFlag, force) {
+    var save = { p1:scrollTypeFlag, p2:hilightFlag, p3:force };
 
     if (scrollTypeFlag === undefined) scrollTypeFlag = SCROLLTYPEPREVIOUS;
     if (hilightFlag === undefined) hilightFlag = HILIGHTPREVIOUS;
@@ -88,11 +89,21 @@ Texts = {
     // the first visible verse. To maintain subsequent SCROLLTYPEPREVIOUS functionality, we
     // need to also change our current scrollTypeFlag to SCROLLTYPEBEG
     if (this.scrollTypeFlag == SCROLLTYPEENDSELECT) this.scrollTypeFlag = SCROLLTYPEBEG;
+    
+    // If this is the MainWindow.Text object that we're updating, then go and update any
+    // other viewport.xul Text objects as well.
+    if (this === MainWindow.Texts) {
+      for (var w=0; w<MainWindow.AllWindows.length; w++) {
+        if (!(/^viewport/).test(MainWindow.AllWindows[w].name)) continue;
+        MainWindow.AllWindows[w].Texts.update(save.p1, save.p2, save.p3);
+      }
+      
+      MainWindow.updateNavigator();
+    
+      MainWindow.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
+    
+    }
 
-    MainWindow.updateNavigator();
-    
-    MainWindow.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
-    
   },
   
   updateBible: function(w, force) {

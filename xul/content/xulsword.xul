@@ -43,8 +43,6 @@
     persist="width height screenX screenY sizemode"
     onload="loadedXUL()"
     onunload="unloadXUL()"
-    onkeydown="ViewPort.ownerDocument.defaultView.Popup.keydown(event);" 
-    onkeyup="ViewPort.ownerDocument.defaultView.Popup.keyup(event);"
     ondragover="nsDragAndDrop.dragOver(event,fileObserver)"
     ondragdrop="nsDragAndDrop.drop(event,fileObserver)"
     onresize="if (ViewPort) ViewPort.resize();"
