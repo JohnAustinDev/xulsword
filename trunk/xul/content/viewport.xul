@@ -29,7 +29,7 @@
 <window
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:html="http://www.w3.org/1999/xhtml"
-    onload="initCSS();"
+    onload="getLocalObjects(); initCSS();"
     onresize="if (ViewPort) ViewPort.resize();">
    
   <script>var MainWindow = window.opener;</script>
@@ -37,6 +37,22 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
+  <script>
+    
+    // Overwrite these global objects (assigned by default in common2.js)
+    // with the local objects that were just created within our iframe.
+    function getLocalObjects() {
+      var localViewportWindow = document.getElementById("viewport").contentDocument.defaultView;
+      
+      ViewPort = localViewportWindow.ViewPort;
+      Texts = localViewportWindow.Texts;
+      BibleTexts = localViewportWindow.BibleTexts;
+      DictTexts = localViewportWindow.DictTexts;
+      GenBookTexts = localViewportWindow.GenBookTexts;
+      CommTexts = localViewportWindow.CommTexts;
+      
+    }
+  </script>
   
   <commandset id="xulswordCommandSet"></commandset>
   <commandset id="BookmarksMenuCommandSet"></commandset>

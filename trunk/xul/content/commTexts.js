@@ -20,7 +20,7 @@
 // CommTexts
 ////////////////////////////////////////////////////////////////////////
 
-var CommTexts = {
+CommTexts = {
   
   read: function(w, d) {
     var ret = { htmlText:"", htmlHead:Texts.getPageLinks(), footnotes:null };

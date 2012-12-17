@@ -574,11 +574,11 @@ function normalizeOsisReference(ref, bibleMod) {
   return null;
 }
 
-function usesSecurityModule(aXSobj, version) {
-  if (aXSobj.getModuleInformation(version, "CipherKey") != "") return false;
+function usesSecurityModule(aLSobj, version) {
+  if (aLSobj.getModuleInformation(version, "CipherKey") != "") return false;
   //checking "ProducedFor" is for backward compatibility to modules before version 2.7
-  var usesSecurityModule = ((aXSobj.getModuleInformation(version, MainWindow.VERSIONPAR)!=NOTFOUND || 
-      aXSobj.getModuleInformation(version, "ProducedFor")=="xulsword") ? true:false);
+  var usesSecurityModule = ((aLSobj.getModuleInformation(version, MainWindow.VERSIONPAR)!=NOTFOUND || 
+      aLSobj.getModuleInformation(version, "ProducedFor")=="xulsword") ? true:false);
   return usesSecurityModule;
 }
 
@@ -726,6 +726,7 @@ function isASCII(text) {
 }
 
 function copyObj(obj) {
+//jsdump(uneval(obj));
   return eval(uneval(obj));
 /*
   var newobj = {};

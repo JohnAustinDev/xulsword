@@ -54,6 +54,7 @@ function initViewPort() {
 
 function ViewPortObj(viewPortObj) {
   
+  this.windowName = window.name;
   this.ownerDocument = document;
   this.ShowOriginal = [];
   this.IsPinned = [];
@@ -66,21 +67,40 @@ function ViewPortObj(viewPortObj) {
   // a ViewPortObj from global preferences.
   if (viewPortObj) {
     
+    this.ShowChooser = false;
     this.NumDisplayedWindows = viewPortObj.NumDisplayedWindows;
-    this.ShowChooser = viewPortObj.ShowChooser;
-    for (var w=1; w<=3; w++) {
-      this.ShowOriginal[w]    = viewPortObj.ShowOriginal[w];
-      this.IsPinned[w]        = viewPortObj.IsPinned[w];
-      this.NoteBoxHeight[w]   = viewPortObj.NoteBoxHeight[w];
-      this.MaximizeNoteBox[w] = viewPortObj.MaximizeNoteBox[w];
-      this.Module[w]          = viewPortObj.Module[w];
-      this.Key[w]             = viewPortObj.Key[w];
+    
+    const copyWinProps = ["ShowOriginal", "IsPinned", "NoteBoxHeight", "MaximizeNoteBox", "Module", "Key"];
+    const copyWinDefs = ["false", "false", 100, "false", prefs.getCharPref("DefaultVersion"), ""];
+    const copyTextProps = ["scrollTypeFlag", "hilightFlag", "scrollDelta", "pinnedDisplay"];
+    
+    // our copied viewport will only have one text window showing: towindow...
+    if (!viewPortObj.hasOwnProperty("towindow") || !viewPortObj.towindow)
+        viewPortObj.towindow = 1;
+        
+    for (var w=1; w<=NW; w++) {
+      if (w == viewPortObj.towindow) continue;
+      document.getElementById("text" + w).style.display = "none";
+      document.getElementById("tabs" + w).style.display = "none";
+    }
+        
+    // copy viewport params from old to new
+    for (var w=1; w<=NW; w++) {
+      for (var c=0; c<copyWinProps.length; c++) {
+        this[copyWinProps[c]][w] = viewPortObj[copyWinProps[c]][w];
+      }
     }
     
-    // make this ViewPort show only a single text
-    this.ShowChooser = false;
-    
+    // copy viewport text properties from old to new
+    for (var t=0; t<copyTextProps.length; t++) {
+      if (typeof(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]) == "object") {
+        Texts[copyTextProps[t]] = copyObj(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]);
+      }
+      else Texts[copyTextProps[t]] = viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]];
+    }
+        
   }
+  
   else {
 
     // First time startup defaults:
@@ -267,7 +287,7 @@ function ViewPortObj(viewPortObj) {
       t.setAttribute("pinned", (this.IsPinned[wThis] ? "true":"false"));
        
     }
-  //for (w=1; w<=NW; w++) {jsdump("w=" + w + ", value=" + document.getElementById("text" + w).getAttribute("columns"));}
+//for (w=1; w<=NW; w++) {jsdump("w=" + w + ", value=" + document.getElementById("text" + w).getAttribute("columns"));}
     
     // Footnote boxes
     for (w=1; w<=NW; w++) {

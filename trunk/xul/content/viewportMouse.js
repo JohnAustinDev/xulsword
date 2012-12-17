@@ -273,7 +273,10 @@ function scriptClick(e) {
     break;
     
   case "sbpin":
-    ViewPort.IsPinned[w] = !ViewPort.IsPinned[w];
+    var ws = document.getElementById("text" + w).getAttribute("columns").match(/^show(\d)$/);
+    if (!ws) return;
+    ws = Number(ws[1]);
+    for (var wp=w; wp<(w+ws); wp++) {ViewPort.IsPinned[wp] = !ViewPort.IsPinned[wp];}
     Texts.update((ViewPort.IsPinned[w] ? SCROLLTYPENONE:SCROLLTYPECENTER), HILIGHTNONE);
     break;
     

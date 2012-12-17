@@ -20,7 +20,7 @@
 // DictTexts
 ////////////////////////////////////////////////////////////////////////
 
-var DictTexts = {
+DictTexts = {
   
   keyList: [null, {}, {}, {}],
   keysHTML: [null, {}, {}, {}],

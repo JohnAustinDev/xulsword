@@ -40,17 +40,12 @@ var AllWindows            = MainWindow.AllWindows;
 
 var LanguageStudyModules  = MainWindow.LanguageStudyModules;
 
-// defined in viewport.html but may used globally.
-if (typeof(ViewPort) == "undefined")
-    var ViewPort          = MainWindow.ViewPort;
-if (typeof(Texts) == "undefined")
-    var Texts             = MainWindow.Texts;
-if (typeof(BibleTexts) == "undefined")
-    var BibleTexts        = MainWindow.BibleTexts;
-if (typeof(DictTexts) == "undefined")
-  var DictTexts           = MainWindow.DictTexts;
-if (typeof(GenBookTexts) == "undefined")
-  var GenBookTexts        = MainWindow.GenBookTexts;
-if (typeof(CommTexts) == "undefined")
-  var CommTexts           = MainWindow.CommTexts;
+// The following objects may intentionally be overwritten by loading the
+// corresponding .js file after this .js file is loaded. 
+var ViewPort              = MainWindow.ViewPort;
+var Texts                 = MainWindow.Texts;
+var BibleTexts            = MainWindow.BibleTexts;
+var DictTexts             = MainWindow.DictTexts;
+var GenBookTexts          = MainWindow.GenBookTexts;
+var CommTexts             = MainWindow.CommTexts;
 
