@@ -22,7 +22,7 @@
 
 // IMPORTANT: Key for GenBook has the form: /modName/etc/etc/etc.
 
-var GenBookTexts = {
+GenBookTexts = {
   
   read: function(w, d) {
     var ret = { htmlHead:Texts.getPageLinks(), htmlText:"", footnotes:null };

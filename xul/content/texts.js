@@ -16,7 +16,7 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var Texts = {
+Texts = {
   
   scrollTypeFlag:null,
   hilightFlag:null,
@@ -57,6 +57,7 @@ var Texts = {
     for (var w=1; w<=NW; w++) {
       
       if (document.getElementById("text" + w).getAttribute("columns") == "hide") continue;
+      if (document.getElementById("text" + w).style.display == "none") continue; // used in windowed viewports
       if (w > ViewPort.NumDisplayedWindows) continue;
       if (force[w] == -1) continue;
    
@@ -307,6 +308,7 @@ var Texts = {
     ViewPort.ShowOriginal[w] = false;
     ViewPort.MaximizeNoteBox[w] = false;
     
+    var t =  document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];
     
     // get current display params
@@ -320,7 +322,6 @@ var Texts = {
       
       this.footnotes[w] = ti.footnotes;
       
-      var t =  document.getElementById("text" + w);
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       

@@ -20,7 +20,7 @@
 // BibleTexts
 ////////////////////////////////////////////////////////////////////////
 
-var BibleTexts = {
+BibleTexts = {
   
   read: function(w, d) {
     // w is only needed for creating unique ids

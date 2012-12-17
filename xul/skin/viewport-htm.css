@@ -8,6 +8,7 @@
   background:url(chrome://xulsword/skin/images/b2.gif);
   background-position: 0px 40px;
   float:left;
+  width:100%;
 }
 
 #chbutton_open {
@@ -260,6 +261,9 @@ body[isWindow="true"] #chbutton_open {
 }
 .sbwin:hover {
   background-position:20px;
+}
+body[isWindow="true"] .sbwin {
+  display:none;
 }
 
 .sb {
