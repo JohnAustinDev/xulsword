@@ -50,6 +50,8 @@
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#">
     
+<stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+
 <data id="print.printpassage">&print.printpassage;</data>
 <data id="menu.copypassage">&menu.copypassage;</data>
 <data id="history.back.label">&history.back.label;</data>
@@ -63,28 +65,30 @@
 <data id="savingSource">&dlgFrom;</data>
 <data id="savingTarget">&dlgTo;</data>
 <data id="localeDir">&locale.dir;</data>
-<stringbundle id="strings"   src="chrome://xulsword/locale/xulsword.properties"/>
 
 <script>var MainWindow = window;</script>
-<script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkfuncs.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
 
-<script>moduleInstall(true)</script>
+<script>moduleInstall(true);</script>
+
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/indexer.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/search/indexer.js"/>
+
 <script type="application/x-javascript" src="chrome://xulsword/content/xulswordInit.js"/>
 
-<!-- <script type="application/x-javascript" src="chrome://xulsword/content/xulswordTest.js"/> !-->
+<!-- <script type="application/x-javascript" src="chrome://xulsword/content/test/xulswordTest.js"/> !-->
 
 <!-- HOT KEY DEFINITIONS !-->
 <keyset>
@@ -118,6 +122,8 @@
   <key id="bm_key_properties" key="&edit.properties.keybinding;" modifiers="accel" command="cmd_bm_properties"/>
 </keyset>
 
+<commandset id="editMenuCommands"/>
+
 <commandset id="BookmarksMenuCommandSet">
   <command id="cmd_bm_open"                      oncommand="goDoCommand('cmd_bm_open');"/>
   <command id="cmd_bm_openfolder"                oncommand="goDoCommand('cmd_bm_openfolder');"/>
@@ -131,8 +137,6 @@
   <command id="cmd_bm_copy"                      oncommand="goDoCommand('cmd_bm_copy')"/>
   <command id="cmd_bm_paste"                     oncommand="goDoCommand('cmd_bm_paste')"/>
 </commandset>
-
-<commandset id="editMenuCommands"/>
 
 <commandset id="xulswordCommandSet">
   <command id="cmd_xs_toggleHeadings"            oncommand="holdPopupAndDo('cmd_xs_toggleHeadings');"/>
@@ -323,6 +327,7 @@
       </menupopup>
     </menu>
 
+    <!-- NOTE: menu drag-and-drop does not work on Linux !-->
     <menu id="bookmarks-menu" label="&bookmarksMenu.label;" accesskey="&bookmarksMenu.accesskey;"
                   datasources="rdf:null" 
                   ref="http://www.xulsword.com/bookmarks/AllBookmarks" flags="dont-test-empty"
@@ -401,7 +406,7 @@
       </hbox>
       
       <hbox id="player" flex="1" align="center" pack="end" hidden="true">
-        <iframe id="playerFrame" src="chrome://xulsword/content/player.html"/>
+        <iframe id="playerFrame" src="chrome://xulsword/content/audio/player.html"/>
         <button id="closeplayer" label="&closeCmd.label;" oncommand="endAudioPlayer()"/>
       </hbox>
       
@@ -479,7 +484,7 @@
           </vbox>
           <spacer height="22"/>
         </vbox>
-        <iframe id="main-viewport" flex="100%" src="viewport.html" context="contextScriptBox" />
+        <iframe id="main-viewport" flex="100%" src="viewport/viewport.html" context="contextScriptBox" />
       </hbox>
       
       <browser id="printPreviewBrowser"/>
@@ -495,41 +500,52 @@
 <popupset id="main-popupset">
   
   <menupopup id="bookmarks-context-menu" 
-               onpopupshowing="return BookmarksMenu.createContextMenu(event);"
-               onpopuphidden ="BookmarksMenu.destroyContextMenu(event);"/>
+      onpopupshowing="return BookmarksMenu.createContextMenu(event);" 
+      onpopuphidden ="BookmarksMenu.destroyContextMenu(event);"/>
+  
 </popupset>
 
 <!-- TOOLTIPS DEFINED HERE !-->
 <tooltip id="backTT">
   <label value="&history.back.tooltip;" />
 </tooltip>
+
 <tooltip id="historymenuTT">
   <label value="&history.all.tooltip;" />
 </tooltip>
+
 <tooltip id="forwardTT">
   <label value="&history.forward.tooltip;" />
 </tooltip>
+
 <tooltip id="searchTextTT">
   <label value="&searchbox.tooltip;" />
 </tooltip>
+
 <tooltip id="searchButtonTT">
   <label value="&search.tooltip;" />
 </tooltip>
+
 <tooltip id="hdbuttonTT">
   <label value="&headingsButton.tooltip;" />
 </tooltip>
+
 <tooltip id="fnbuttonTT">
   <label value="&notesButton.tooltip;" />
 </tooltip>
+
 <tooltip id="crbuttonTT">
   <label value="&crossrefsButton.tooltip;" />
 </tooltip>
+
 <tooltip id="dtbuttonTT">
   <label value="&dictButton.tooltip;" />
 </tooltip>
+
 <tooltip id="bookmarkTT">
   <label id="bookmarkTTL" value="" />
 </tooltip>
+
 <tooltip id="tabTT">
   <label value="" />
 </tooltip>

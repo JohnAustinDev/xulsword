@@ -48,7 +48,7 @@ var Indexer = {
   
   libswordPauseComplete: function() {
         
-    this.indexer = ChromeWorker("chrome://xulsword/content/indexWorker.js");
+    this.indexer = ChromeWorker("chrome://xulsword/content/search/indexWorker.js");
     this.indexer.onerror = this.error;
     this.indexer.onmessage = this.postMessage;
     
@@ -64,12 +64,13 @@ var Indexer = {
         
   },
   
-  // will be invoked by indexer as a function (this = global context!)
+  // NOTE: will be invoked by indexer as a function (this = global context!)
   error: function(error) {throw error;},
 
-  // will be invoked by indexer as a function (this = global context!)
+  // NOTE: will be invoked by indexer as a function (this = global context!)
   postMessage: function(event) {
-//if ((/^jsdump/).test(event.data)) {jsdump(event.data); return;}
+    if ((/^jsdump/).test(event.data)) {jsdump(event.data); return;}
+    
     if (event.data == -1) {
       Indexer.finished(); 
       return;

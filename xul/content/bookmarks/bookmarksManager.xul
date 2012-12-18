@@ -59,24 +59,31 @@
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         width="630" height="400" screenX="20" screenY="20"
         persist="width height screenX screenY sizemode"
-        onload="Startup();" onunload="Shutdown();"
+        onload="initCSS(); Startup();" onunload="Shutdown();"
         onclose="{var remote=BMDS.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource); if (remote) remote.Flush(); return closeWindow(false);}">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
-  <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/textHTML.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksManager.js"/>
 
-  <stringbundleset id="stringbundleset"/>
   <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
 
+  <keyset id="editMenuKeys"/>
+  
+  <keyset id="bookmarksManagerKeys">
+    <key id="key_close" key="&closeCmd.commandkey;" modifiers="accel" command="cmd_close"/>
+    <key keycode="VK_ESCAPE" command="cmd_close"/>
+    <key id="bm_key_find" key="&edit.find.keybinding;" modifiers="accel" command="cmd_bm_find"/>
+    <key id="bm_key_properties" key="&edit.properties.keybinding;" modifiers="accel" command="cmd_bm_properties"/>
+  </keyset>
+  
   <commandset id="editMenuCommands"/>
+  
   <commandset id="CommandUpdate_Bookmarks"
               events="focus,tree-select"
               oncommandupdate="document.getElementById('bookmarks-view').onCommandUpdate();">
@@ -110,17 +117,6 @@
     <command id="cmd_bm_paste"                     oncommand="goDoCommand('cmd_bm_paste')"/>
     <command id="cmd_bm_delete"                    oncommand="goDoCommand('cmd_bm_delete')"/>
   </commandset>
-
-  <keyset id="editMenuKeys"/>
-  <keyset id="bookmarksManagerKeys">
-    <key id="key_close" key="&closeCmd.commandkey;" modifiers="accel" command="cmd_close"/>
-    <key keycode="VK_ESCAPE" command="cmd_close"/>
-    <key id="bm_key_find" key="&edit.find.keybinding;" modifiers="accel" command="cmd_bm_find"/>
-    <key id="bm_key_properties" key="&edit.properties.keybinding;" modifiers="accel" command="cmd_bm_properties"/>
-  </keyset>
-
-  <commandset id="baseMenuCommandSet" />
-  <keyset id="baseMenuKeyset" />
 
   <toolbox id="bookmarks-toolbox">
     <menubar id="main-menubar">

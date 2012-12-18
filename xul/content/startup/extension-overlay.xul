@@ -2,7 +2,7 @@
 <!DOCTYPE window [<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" > %xulswordDTD;]>
 <overlay id="xulsword-overlay" xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-<script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
 <script type="text/javascript">
 
 <![CDATA[

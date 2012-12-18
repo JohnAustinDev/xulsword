@@ -86,11 +86,11 @@
     ]]>
   </script>
     
-  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/logfile.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkfuncs.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
   
   <!-- Creates program's special directories if needed !-->
   <script>createAppDirectories();</script>

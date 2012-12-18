@@ -8,12 +8,12 @@
 .introlink:hover #npopup,
 .noticelink:hover #npopup {
   /* Once npopup is moved into one of these hovered elements
-  by Javascript mouseover, then it stays open until the element  
-  and its children are no longer hovered by the mouse. */
+  after a Javascript mouseover event, then it stays open until the  
+  element and its children are no longer hovered by the mouse. */
   display:block;
 }
 #npopupRL {
-  /* relative container so that popupTX can be absolute */
+  /* just a relative container so that popupTX can be absolute */
   position:relative;
 }
 #npopupTX {
@@ -34,20 +34,28 @@ body[chromedir="rtl"] #npopup {
   text-align:right;
 }
 
-/* FOR REGULAR (NON-WINDOW) POPUP STYLES */
+/* REGULAR (NON-WINDOW) POPUP STYLES */
 .text #npopup {
   z-index:100;
   position:absolute; /* insure popup falls out of page layout */
   height:0px;
   overflow:visible;
 }
-.text[columns="show1"] #npopup {
+.nb #npopup {
+  width:100%;
+  left:40px;
+}
+body[chromedir="rtl"] .nb #npopup {
+  left:auto;
+  right:40px;
+}
+.text[columns="show1"] .sb #npopup {
   width:100%;
 }
-.text[columns="show2"]  #npopup {
+.text[columns="show2"] .sb #npopup {
   width:50%;
 }
-.text[columns="show3"]  #npopup {
+.text[columns="show3"] .sb #npopup {
   width:33%;
 }
 .text .noticelink #npopup,
@@ -100,7 +108,7 @@ can be read even when the popup is open */
   top:100px;
 }
 
-/* FOR WINDOW PINNED POPUP */
+/* WINDOWED POPUP STYLES */
 body.windowedpup {
   background:rgb(245,220,255);
   padding:0px;

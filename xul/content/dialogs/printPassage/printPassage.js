@@ -85,7 +85,7 @@ var PrintPassage = {
     
     // prepare our target to send to main print routine
     var target = { 
-          uri:"chrome://xulsword/content/printPassage.html", 
+          uri:"chrome://xulsword/content/dialogs/printPassage/printPassage.html", 
           bodyHTML:this.textHTML,
           callback:this
         }

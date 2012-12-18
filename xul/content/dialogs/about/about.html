@@ -26,20 +26,21 @@
   <link rel="stylesheet" href="chrome://xulsword/skin/about-htm.css" type="text/css">
   
   <script>var MainWindow = window.frameElement.ownerDocument.defaultView.MainWindow;</script>
-  <script type="text/javascript" src="chrome://xulsword/content/common0.js"></script>
-  <script type="text/javascript" src="chrome://xulsword/content/common1.js"></script>
-  <script type="text/javascript" src="chrome://xulsword/content/common2.js"></script>
+  <script type="text/javascript" src="chrome://xulsword/content/common/common0.js"></script>
+  <script type="text/javascript" src="chrome://xulsword/content/common/common1.js"></script>
+  <script type="text/javascript" src="chrome://xulsword/content/common/common2.js"></script>
   
   <script>
   
   function onLoad() {
     initCSS();
     
-    if (!MainWindow.CommandTarget.mod) return;
+    if (!CommandTarget.mod) return;
     
-    // show our module's info rather than the logo
+    // show the CommandTarget module info...
     window.frameElement.ownerDocument.getElementById("mainbox").setAttribute("showingModules", "true");
-    window.setTimeout("document.getElementById('mod." + MainWindow.CommandTarget.mod + "').scrollIntoView(true);", 1);
+    window.setTimeout("document.getElementById('mod." + CommandTarget.mod + "').scrollIntoView(true);", 1);
+    
   }
   
   function toggleInfo(mod) {
@@ -73,9 +74,8 @@
     
       document.write("<a href=\"#top\"></a>");
       
-      // begin with quick module list
+      // begin with a basic module listing
       var lastType;
-      document.write("<div id=\"quick-list\">");
       for (var t=0; t<Tabs.length; t++) {
       
         if (!lastType || Tabs[t].modType != lastType) {
@@ -84,25 +84,24 @@
         }
         lastType = Tabs[t].modType;
         
-        document.write("<a class=\"quick-link link cs-" + Tabs[t].locName + "\" href=\"#" + Tabs[t].modName + "\">");
+        document.write("<a class=\"link cs-" + Tabs[t].locName + "\" href=\"#" + Tabs[t].modName + "\">");
         document.write(Tabs[t].label + " - " + Tabs[t].description);
         document.write("</a>");
         
       }
-      document.write("</div>"); // end quick-list
       
       document.write("<div id=\"separator\"></div>");
       
       // now show detailed module listing
-      document.write("<div id=\"detailed-list\">");
       for (t=0; t<Tabs.length; t++) {
         
-        // Target link
+        // Module's target link
         document.write("<a class=\"mod-anchor\" id=\"mod." + Tabs[t].modName + "\" name=\"" + Tabs[t].modName + "\"></a>");
+        
+        document.write("<div class=\"module-detail cs-" + Tabs[t].locName + "\">");
         
         // Heading and version
         var vers = LibSword.getModuleInformation(Tabs[t].modName, "Version");
-        document.write("<div class=\"module-detail cs-" + Tabs[t].locName + "\">");
         document.write(  "<span class=\"mod-detail-heading\">");
         document.write(    Tabs[t].label + (vers != NOTFOUND ? "(" + vers + ")":""));
         document.write(  "</span>");
@@ -138,7 +137,6 @@
         document.write("</div>");
 
       }
-      document.write("</div>"); // end detailed-list
       
     </script>
     

@@ -28,28 +28,19 @@
 <window 
     id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"
     title="&menu.help.about;"
-    onload="onLoad();"
+    onload="initCSS(); onLoad();"
     hidechrome="true"
     centerscreen="true"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   
   <script>
-    // Configs are populated in xulswordInit after LibSword is loaded, so
-    // in this pre-LibSword window we must create our own Configs.
-    var LocaleConfigs = {};
-    var ModuleConfigs = {};
     
     function onLoad() {
-
-      var lc = getLocale();
-      LocaleConfigs[lc] = getLocaleConfig(lc);
-
-      initCSS();
       
       setGlobalDirectionPrefs();
       

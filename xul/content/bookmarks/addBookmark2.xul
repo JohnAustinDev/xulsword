@@ -62,14 +62,14 @@
         buttoniconextra2="open"
         title-selectFolder="&selectFolder.label;"
         style="width:35em;"
-        onload="Startup();"
+        onload="initCSS(); Startup();"
         onunload="setFolderTreeHeight();"
-        persist="screenX screenY width">
+        persist="screenX screenY width height">
    
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/addBookmark2.js"/>
 

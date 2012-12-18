@@ -27,24 +27,20 @@
 #define DLLEXPORT extern "C"
 #endif
 
-#define MAXINST 4
-static xulsword *keep[MAXINST] = {};
+static xulsword *my_xulsword;
+
 /********************************************************************
 EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
 DLLEXPORT xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
-  int i;
   
-  // NOTE: Although this is currently set up to provide multiple instances 
-  // of xulsword, the SWORD engine runs as a service and so there must not
-  // be multiple instances of xulsword in existence at the same time
-  // without risking data corrution and/or crashes!
+  if (my_xulsword) return my_xulsword;
   
-  for (i=0; i<MAXINST; i++) {if (!keep[i]) {break;}}
-  if (i == MAXINST) return NULL;
-  keep[i] = new xulsword(path, toUpperCase, throwJS, reportProgress);
-  SWLog::getSystemLog()->logDebug("CREATED xulsword[%i]", i);
-  return keep[i];
+  my_xulsword = new xulsword(path, toUpperCase, throwJS, reportProgress);
+  
+  SWLog::getSystemLog()->logDebug("CREATED xulsword object");
+  
+  return my_xulsword;
 }
 
 DLLEXPORT char *GetChapterText(xulsword *inst, const char *vkeymod, const char *vkeytext) {
@@ -152,12 +148,13 @@ DLLEXPORT void FreeMemory(void *tofree, char *type) {
   if (!strcmp(type, "char")) free(tofree);
   
   else if (!strcmp(type, "xulsword")) {
-    for (int i=0; i<MAXINST; i++) {
-      if (keep[i] == (xulsword *)tofree) {
-        SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING xulsword[%i]", i);
-        delete keep[i];
-        keep[i] = NULL;
-      }
+    if (my_xulsword == (xulsword *)tofree) {
+      
+      SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING xulsword");
+      
+      delete my_xulsword;
+      my_xulsword = NULL;
+      
     }
   }
 
@@ -166,12 +163,13 @@ DLLEXPORT void FreeMemory(void *tofree, char *type) {
 DLLEXPORT void FreeLibxulsword() {
   std::cerr << "LIBXULSWORD DESTRUCTOR" << std::endl;
 
-  for (int i=0; i<MAXINST; i++) {
-    if (keep[i]) {
-      SWLog::getSystemLog()->logDebug("(FreeLibxulsword) FREEING xulsword[%i]", i);
-      delete keep[i];
-      keep[i] = NULL;
-    }
+  if (my_xulsword) {
+    
+    SWLog::getSystemLog()->logDebug("(FreeLibxulsword) FREEING xulsword");
+    
+    delete my_xulsword;
+    my_xulsword = NULL;
+    
   }
  
   SWLog::setSystemLog(NULL);

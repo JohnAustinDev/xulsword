@@ -357,7 +357,7 @@ var BookmarksMenuDNDObserver = {
     // c) on Windows, there is no hang or crash associated with this, so we'll leave 
     // the functionality there. 
     if (navigator.platform != "Win32" && target.localName != "toolbarbutton")
-      return false;
+      //return false;
 
     if (this.isContainer(target)) {
       if (this.isPlatformNotSupported) 

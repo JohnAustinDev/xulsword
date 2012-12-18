@@ -22,7 +22,7 @@ const LOCALE_SEARCH_SYMBOLS = ["SINGLECharWildCard", "MULTICharWildCard", "AND",
 const ACTUAL_SEARCH_SYMBOLS = ["?", "*", "&&", "||", "!", "~", "(", ")", "\"", "\""];
 const MAX_RESULTS_PER_PAGE = 30;
 const MAX_LEXICON_SEARCH_RESULTS = 500;
-const MAX_PRINT_SEARCH_RESULTS = 100;
+const MAX_PRINT_SEARCH_RESULTS = 30;
 
 var Search;
 var SearchResults;
@@ -65,7 +65,7 @@ function initSearch() {
   }
   
   // get our Search object
-  var searchInits = (MainWindow.CommandTarget && MainWindow.CommandTarget.search ? MainWindow.CommandTarget.search:null);
+  var searchInits = (CommandTarget && CommandTarget.search ? CommandTarget.search:null);
   Search = new SearchObj(searchInits);
   
   // timeout needed to allow DOM changes to take full effect before continuing
@@ -272,7 +272,10 @@ function SearchObj(searchObj) {
       }
     }
     // no Lucene
-    else {s.type = REGEX;}
+    else {
+      s.type = REGEX;
+      document.getElementById("searchType").selectedItem = document.getElementById("SearchExactText");
+    }
     
     // get Search scope
     // scope radio buttons are meaningful only for versekey modules...
@@ -374,7 +377,8 @@ function SearchObj(searchObj) {
     else {
       
       // Search all in one go with no progress meter...
-var p="Single Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(p);
+      
+//var p="Single Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(p);
       result.count = LibSword.search(s.mod, s.query, s.scope, s.type, s.flags, s.isnew);
 
       this.updateStatusBar(result);
@@ -394,7 +398,8 @@ var p="Single Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(p)
 
     // Search a single book. NOTE: when isnew==true, the count returned
     // by LibSword is the total count, not the count for a particular call.
-var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(p + "scope=" + Book[progress.index].sName);
+    
+//var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(p + "scope=" + Book[progress.index].sName);
     result.count = LibSword.search(s.mod, s.query, Book[progress.index].sName, s.type, s.flags, s.isnew);
     s.isnew = false; // causes subsequent search results to be appended to result buffer rather than overwriting it
     
@@ -589,7 +594,7 @@ var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(
           }
           html +=   "</span>";
           html += "</span>";
-          html +=   "<div class=\"lex-sep\"></div>";
+          html += "<div class=\"lex-sep\"></div>";
           
         }
         
@@ -631,7 +636,7 @@ var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(
   };
   
   this.onPrintPreviewDone = function() {
-    this.focus();
+    window.focus();
   };
 
   this.searchOnIndexerDone = null,
@@ -643,7 +648,10 @@ var p="Multiple Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(
     
     this.update();
     
-    if (this.searchOnIndexerDone) this.search();
+    if (this.searchOnIndexerDone) {
+      document.getElementById("searchType").selectedItem = document.getElementById("SearchAdvanced");
+      this.search();
+    }
   }
 
 };
@@ -746,20 +754,19 @@ function handlePrintCommand(command) {
 
   var result = copyObj(Search.result);
   
-  result.index = 0;
   result.results_per_page = MAX_PRINT_SEARCH_RESULTS;
   Search.showSearchResults(result, Search.s);
-  var bodyhtml = SearchResults.parentNode.innerHTML;
-  
+  var bodyHTML = document.getElementById("search-frame").contentDocument.getElementsByTagName("body")[0].innerHTML; 
   Search.showSearchResults(Search.result, Search.s); // return to original
     
   var target = {
     command:command,
-    uri:"chrome://xulsword/content/search.html", 
-    bodyHTML:bodyhtml,
+    uri:"chrome://xulsword/content/search/search.html", 
+    bodyHTML:bodyHTML,
     callback:Search
   };
   
+
   MainWindow.handlePrintCommand(command, target);
 }
 

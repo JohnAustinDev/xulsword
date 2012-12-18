@@ -21,7 +21,6 @@
  * XULSWORD INITIALIZATION
  ***********************************************************************/
 var NewModuleInfo;
-var AboutScrollTo;
 var AudioDirs = null;
 
 function loadedXUL() {
@@ -131,7 +130,7 @@ function checkCipherKeys() {
   for (var t=0; t<LibSword.CheckTheseCipherKeys.length; t++) {
     if (!getAvailableBooks(LibSword.CheckTheseCipherKeys[t])[0]) {
       var retVals = {gotKey: false};
-      AllWindows.push(window.openDialog("chrome://xulsword/content/dialogs/getkey.xul","getkey","chrome, dependent, alwaysRaised, centerscreen, modal", LibSword.CheckTheseCipherKeys[t], retVals));
+      AllWindows.push(window.openDialog("chrome://xulsword/content/dialogs/getkey/getkey.xul", "getkey", "chrome, dependent, alwaysRaised, centerscreen, modal", LibSword.CheckTheseCipherKeys[t], retVals));
       gotKey |= retVals.gotKey;
     }
   }
@@ -672,7 +671,7 @@ var XulswordController = {
  
   doCommand: function (aCommand, target) {
     
-    // If no target is passed, or it's incomplete, fill in with defaults
+    // If no target is passed, or it's incomplete, this fills in the defaults
     CommandTarget = getCommandTarget(target);
 
     switch (aCommand) {
@@ -710,22 +709,22 @@ var XulswordController = {
       Texts.update();
       break;
     case "cmd_xs_search":
-      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul","_blank","chrome,resizable,centerscreen"));
+      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchFromTextBox":
       CommandTarget.search.searchtext = document.getElementById("searchText").value;
-      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul","_blank","chrome,resizable,centerscreen"));
+      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchForSelection":
       CommandTarget.search.mod = CommandTarget.mod;
       CommandTarget.search.searchtext = CommandTarget.selection;
       CommandTarget.search.type = "SearchExactText";
-      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul","_blank","chrome,resizable,centerscreen"));
+      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_searchForLemma":
       if (!(/lemma\:/).test(CommandTarget.search.searchtext)) break;
       CommandTarget.search.type = "SearchAdvanced";
-      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul","_blank","chrome,resizable,centerscreen"));
+      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_openFromSelection":
       updateToReference(this.parsedLocation);
@@ -760,14 +759,14 @@ var XulswordController = {
       }
       break;
     case "cmd_xs_aboutModule":
-      AllWindows.push(window.open("chrome://xulsword/content/dialogs/about.xul","splash","chrome,modal,centerscreen"));
+      AllWindows.push(window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen"));
       break;
     case "cmd_xs_addNewModule":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
       if (!addNewModule()) ModuleCopyMutex=false;
       break;
     case "cmd_xs_removeModule":
-      AllWindows.push(window.open("chrome://xulsword/content/dialogs/removeModule.xul", document.getElementById("menu.removeModule.label").childNodes[0].nodeValue, "chrome,resizable,centerscreen"));
+      AllWindows.push(window.open("chrome://xulsword/content/dialogs/removeModule/removeModule.xul", document.getElementById("menu.removeModule.label").childNodes[0].nodeValue, "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_exportAudio":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
@@ -1066,7 +1065,7 @@ function handleOptions(elem) {
     
     case "about":
       CommandTarget = { mod:null }; // show logo, not modules info
-      AllWindows.push(window.open("chrome://xulsword/content/dialogs/about.xul","splash","chrome,modal,centerscreen"));
+      AllWindows.push(window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen"));
       break;
       
     case "modulemenu":
@@ -1400,10 +1399,17 @@ function unloadXUL() {
     prefs.setCharPref(GlobalToggleCommands[cmd], LibSword.getGlobalOption(GlobalToggleCommands[cmd]));
   }
   
+
+  while(true) {
+    try {window.controllers.removeControllerAt(0);}
+    catch (er) {break;}
+  }
+  
   try {window.controllers.removeController(XulswordController);} catch(er) {}
   try {window.controllers.removeController(BookmarksMenuController);} catch(er) {}
   
   prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
+  prefs.setIntPref("ViewPortWidth", ViewPort.ownerDocument.defaultView.innerWidth);
   
   //Close search windows and other windows
   for (var i=0; i<AllWindows.length; i++) {
@@ -1431,7 +1437,7 @@ function unloadXUL() {
  ***********************************************************************/ 
 
 function copyPassageDialog() {
-  AllWindows.push(window.open("chrome://xulsword/content/dialogs/copyPassage.xul",
+  AllWindows.push(window.open("chrome://xulsword/content/dialogs/copyPassage/copyPassage.xul",
       document.getElementById("menu.copypassage").childNodes[0].nodeValue,
       "chrome,resizable,centerscreen"));
 }
@@ -1439,11 +1445,11 @@ function copyPassageDialog() {
 var PrintTarget = null;
 function handlePrintCommand(command, target) {
   if (!command) return;
-  
+ 
   // default print target is viewport
   PrintTarget = {
     command:command,
-    uri:(target && target.uri ? target.uri:"chrome://xulsword/content/viewport.html"), 
+    uri:(target && target.uri ? target.uri:"chrome://xulsword/content/viewport/viewport.html"), 
     bodyHTML:(target && target.bodyHTML ? target.bodyHTML:null),
     callback:(target && target.callback ? target.callback:null)
   };
@@ -1460,7 +1466,7 @@ function handlePrintCommand(command, target) {
     break;
     
   case "cmd_print_passage":
-    AllWindows.push(window.open("chrome://xulsword/content/dialogs/printPassage.xul",
+    AllWindows.push(window.open("chrome://xulsword/content/dialogs/printPassage/printPassage.xul",
         document.getElementById("print.printpassage").childNodes[0].nodeValue,
         "chrome,resizable,centerscreen"));
     break;
@@ -1468,7 +1474,16 @@ function handlePrintCommand(command, target) {
 }
 
 function printBrowserLoaded() {
-  document.getElementById("printBrowser").contentDocument.title = ".";
+  var pbDoc = document.getElementById("printBrowser").contentDocument;
+  
+  pbDoc.title = ".";
+
+  if (PrintTarget.bodyHTML) {
+    // NOTE: this copies the body HTML but not any body attributes. So
+    // body attributes will remain what they were when the doc was loaded.
+    pbDoc.getElementsByTagName("body")[0].innerHTML = PrintTarget.bodyHTML;
+  }
+  
   document.getElementById(PrintTarget.command).doCommand();  
 }
 

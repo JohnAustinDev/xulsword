@@ -156,22 +156,22 @@ var ContextMenu = {
   },
 
   build: function(canHaveLemma, canHaveTab, canSelect, canHaveVerse, canHaveParagraph, canHaveBookmark) {
-    
+
     // Enable command controller
     document.getElementById("contextScriptBox").setAttribute("value", "open");
     
     // Enable/disable menu options accordingly
-    goUpdateCommand("cmd_xs_searchForLemma", ContextMenuController);
-    goUpdateCommand("cmd_xs_aboutModule", ContextMenuController);
-    goUpdateCommand("cmd_xs_toggleTab", ContextMenuController);
-    goUpdateCommand("cmd_copy", ContextMenuController);
-    goUpdateCommand("cmd_xs_searchForSelection", ContextMenuController);
-    goUpdateCommand("cmd_xs_openFromSelection", ContextMenuController);
-    goUpdateCommand("cmd_xs_selectVerse", ContextMenuController);
-    goUpdateCommand("cmd_xs_newBookmark", ContextMenuController);
-    goUpdateCommand("cmd_xs_newUserNote", ContextMenuController);
-    goUpdateCommand("cmd_bm_properties", ContextMenuController);
-    goUpdateCommand("cmd_bm_delete", ContextMenuController);
+    goUpdateCommand("cmd_xs_searchForLemma");
+    goUpdateCommand("cmd_xs_aboutModule");
+    goUpdateCommand("cmd_xs_toggleTab");
+    goUpdateCommand("cmd_copy");
+    goUpdateCommand("cmd_xs_searchForSelection");
+    goUpdateCommand("cmd_xs_openFromSelection");
+    goUpdateCommand("cmd_xs_selectVerse");
+    goUpdateCommand("cmd_xs_newBookmark");
+    goUpdateCommand("cmd_xs_newUserNote");
+    goUpdateCommand("cmd_bm_properties");
+    goUpdateCommand("cmd_bm_delete");
     
     // Hide menu options accordingly
     document.getElementById("ctx_xs_searchForLemma").hidden                    = !canHaveLemma;
@@ -314,7 +314,9 @@ var p=""; for (var m in info) {p += m + "=" + info[m] + " ";} jsdump("readDataFr
 var ContextMenuController = {
   
   doCommand: function(cmd) {
+
     switch(cmd) {
+
       case "cmd_bm_properties":
       case "cmd_bm_delete":
         MainWindow.BookmarksController.doCommand(cmd, ContextMenu.target.bookmark);
@@ -326,6 +328,7 @@ var ContextMenuController = {
   },
   
   isCommandEnabled: function(cmd) {
+
     switch(cmd) {
       case "cmd_bm_properties":
       case "cmd_bm_delete":
@@ -338,7 +341,7 @@ var ContextMenuController = {
   },
   
   supportsCommand: function(cmd) {
-    
+  
     // Only handle commands when context menu is open
     if (document.getElementById("contextScriptBox").getAttribute("value") == "closed") 
         return false;
@@ -360,3 +363,7 @@ var ContextMenuController = {
     return false;
   }
 };
+
+window.controllers.insertControllerAt(0, ContextMenuController);
+
+

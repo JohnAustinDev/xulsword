@@ -21,17 +21,17 @@
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
 <dialog id="dlg" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"
-        onload="Load()"
+        onload="initCSS(); Load()"
         onunload="Unload()"
         buttons="accept,cancel"
         ondialogaccept="accept();"
         ondialogcancel="cancel();">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/dialog.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/dialog.js"/>
   
   <vbox id="whole" style="overflow:visible; min-width:326px;">
     <hbox pack="start" align="start" style="margin:4px;">

@@ -45,7 +45,7 @@ if (typeof ctypes == "undefined") Components.utils.import("resource://gre/module
 
 var LibSword = {
   libsword:null,        // reference to the libxulsword dynamic library
-  inst:null,            // the LibSword instance returned by libxulsword
+  inst:null,            // the LibSword (xulsword) instance returned by libxulsword
   callback:null,        // an object used to implement callbacks from Javascript
   fdata:null,
   paused:false,
@@ -85,10 +85,10 @@ var LibSword = {
       if (OPSYS == "Linux") {window.alert("These Linux libraries must be installed:	libz, libm, libc, libstdc++, libgcc_s, libpthread");}
     }
     
-    // assign global function for freeing memory allocated by LibSword
+    // assign a function for freeing memory allocated by LibSword
     this.freeMemory = this.libsword.declare("FreeMemory", ctypes.default_abi, ctypes.void_t, ctypes.voidptr_t, ctypes.PointerType(ctypes.char));
     
-    // assign function for freeing memory allocated to LibSword itself
+    // assign a function for freeing memory allocated to LibSword itself
     this.freeLibxulsword = this.libsword.declare("FreeLibxulsword", ctypes.default_abi, ctypes.void_t);
 
     this.initInstance();
@@ -121,11 +121,12 @@ var LibSword = {
   },
   
   freeInstance: function() {
-    // deleting xulsword seems to cause memory problems when library is re-opened!
+    
     if (this.inst) {
       this.freeMemory(this.inst, ctypes.char.array()("xulsword"));
       this.inst = null;
     }
+    
   },
   
   quitLibsword: function() {
@@ -174,10 +175,14 @@ var LibSword = {
 
   resume: function() {
     if (!this.paused) return;
+    
     this.paused = false;
+    
     if (!this.unlock())
         throw(new Error("libsword, resumed with no Bible modules."));
+        
     this.allWindowsModal(false);
+    
   },
 
   // unlock encrypted SWORD modules
@@ -193,16 +198,23 @@ var LibSword = {
       
       if (type != BIBLE) continue; // only Bible modules are encrypted
       
-      // We don't need to supply a  cipher key if the CipherKey conf
-      // entry is not present (=NOTFOUND) or else non-empty.
+      // We don't need to supply a cipher key if the CipherKey conf
+      // entry is not present (the module is not encrypted) or else if 
+      // it is present with a value (cipher key is supplied in conf file).
       if (!(/^\s*$/).test(this.getModuleInformation(mod, "CipherKey"))) continue;
       
-      // module is encrypted but CipherKey is not supplied in .conf
+      // The module is encrypted but the CipherKey is not supplied in the
+      // .conf file. So we need to get a key from prefs or from the 
+      // xulsword security module.
       var cipherKey;
       try {cipherKey = getPrefOrCreate("CipherKey" + mod, "Char", prefs.getCharPref("DefaultCK"));}
       catch (er) {cipherKey = "0";}
       var useSecurityModule = usesSecurityModule(this, mod);
       this.setCipherKey(mod, cipherKey, useSecurityModule);
+      
+      // If our key is from prefs, then later on check that it works,
+      // and if it does not, the user should be asked to enter a 
+      // different key.
       if (!useSecurityModule) this.CheckTheseCipherKeys.push(mod);
       
       if (cipherKey) msg += mod + "(" + cipherKey + ") ";
@@ -272,7 +284,7 @@ ThrowJSError: function(charPtr) {
 
 ReportProgress: function(intgr) {
   // NOTE: postMessage is a ChromeWorker function
-  if (typeof(postMessage) == "object") postMessage(intgr);
+  if (typeof(postMessage) == "function") postMessage(intgr);
 },
 
 

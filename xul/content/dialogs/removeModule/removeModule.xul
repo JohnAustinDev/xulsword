@@ -36,12 +36,12 @@
   screenX="24" screenY="24">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/audio.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/newModule.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/removeModule.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/removeModule/removeModule.js"/>
 
   <data id="radio.label.Texts">&radio.label.Texts;</data>
   <data id="radio.label.Comms">&radio.label.Comms;</data>

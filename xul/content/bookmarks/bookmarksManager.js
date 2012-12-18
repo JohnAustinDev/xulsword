@@ -39,8 +39,7 @@ var bookmarksView, bookmarksFolder;
 // window title state, etc. 
 function Startup()
 {
-//  updateCSSBasedOnCurrentLocale(["#bookmark-window", "input, button, menu, menuitem"]);
-  initCSS(false);
+
   createDynamicCssClasses("TreeStyleRule");
   
   const windowNode = document.getElementById("bookmark-window");

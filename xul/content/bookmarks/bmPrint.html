@@ -21,39 +21,35 @@
 <html>
   <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="PSPad editor, www.pspad.com">
+  <title>Bookmarks Print Frame</title>
   <link rel="stylesheet" href="chrome://xulsword/skin/global-htm.css" type="text/css">
-  <link rel="stylesheet" href="chrome://xulsword/skin/texts-htm.css" type="text/css">
-  <link rel="stylesheet" href="chrome://xulsword/skin/printPassage-htm.css" type="text/css">
-  
+
   <script>
     var Watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
     var MainWindow = Watcher.getWindowByName("xulsword-window", window);
   </script>
+  
   <script src="chrome://xulsword/content/common/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common/common1.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common/common2.js" type="text/javascript"></script>
   
   <script>
-
-    function init() {
     
-      initCSS();
-      
-      if (MainWindow.document.getElementById("printBrowser").contentDocument === document) {
-        
-        if (MainWindow.PrintTarget.bodyHTML) {
-          document.getElementsByTagName("body")[0].innerHTML = MainWindow.PrintTarget.bodyHTML;
-        }
-        
-        MainWindow.printBrowserLoaded();
-      }
-      
-    }
-    
-  </script>
+  function load() {
+    if (document !== MainWindow.document.getElementById("printBrowser").contentDocument) return;
   
+    // then we are printing...
+    document.getElementsByTagName("body")[0].setAttribute("print", "true");
+    MainWindow.printBrowserLoaded();
+  }
+
+  </script>
+
   </head>
   
-  <body onload="init();"></body>
+  <body print="false" onload="initCSS(); load();">
+    
+  </body>
   
 </html>

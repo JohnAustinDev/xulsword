@@ -26,14 +26,14 @@
 ]>
 
 <window id="work-progress" xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-  onload="Load();"
+  onload="initCSS(); Load();"
   onunload="if (typeof(OnUnload) != 'undefined') OnUnload();"
   style="border:2px solid rgb(200,170,205); background-image: url(chrome://xulsword/skin/images/9.gif);">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   <script>
   
   var UserObj = window.arguments[0];
@@ -46,7 +46,7 @@
   var Progress, LabelElem, ButtonElem;
 
   function Load() {
-//    updateCSSBasedOnCurrentLocale(["#work-progress", "label, button, progressmeter"]);
+
     AllWindows.push(window);
     document.title = fixWindowTitle(Title);
     

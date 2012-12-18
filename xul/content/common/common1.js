@@ -33,8 +33,12 @@ if (!MainWindow) MainWindow = window.QueryInterface(Components.interfaces.nsIInt
 if (!MainWindow) jsdump("WARNING: Unable to initialize MainWindow: (" + window.name + ")\n");
 
 var SBundle;
-try {SBundle = MainWindow.document.getElementById("strings");}
-catch (er) {}
+try {SBundle = document.getElementById("strings");}
+catch (er) {SBundle = null;}
+if (!SBundle) {
+  try {SBundle = MainWindow.document.getElementById("strings");}
+  catch (er) {SBundle = null;}
+}
 if (!SBundle) jsdump("WARNING: Unable to initialize string SBundle: (" + window.name + " " + MainWindow.name + ")\n");
 
 
@@ -43,6 +47,13 @@ if (!SBundle) jsdump("WARNING: Unable to initialize string SBundle: (" + window.
  ***********************************************************************/ 
 
 function initCSS(adjustableFontSize) {
+  
+  // If we don't have LocaleConfigs yet, set LocaleConfigs of current locale.
+  if (typeof(LocaleConfigs) == "undefined") {
+    var lc = getLocale();
+    this.LocaleConfigs = {};
+    this.LocaleConfigs[lc] = getLocaleConfig(lc);
+  }
 
   // Create and append module and locale specific CSS rules to stylesheet
   createDynamicCssClasses("StyleRule");
@@ -75,11 +86,17 @@ function createDynamicCssClasses(configProp) {
   
   var sheetLength = sheet.cssRules.length;
   
-  for (var lc in LocaleConfigs) {sheet.insertRule(LocaleConfigs[lc][configProp], sheetLength);}
+  if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
+    for (var lc in LocaleConfigs) {sheet.insertRule(LocaleConfigs[lc][configProp], sheetLength);}
+  }
   
-  for (var m in ModuleConfigs) {sheet.insertRule(ModuleConfigs[m][configProp], sheetLength);}
+  if (typeof(ModuleConfigs) != "undefined" && ModuleConfigs) {
+    for (var m in ModuleConfigs) {sheet.insertRule(ModuleConfigs[m][configProp], sheetLength);}
+  }
   
-  if (ProgramConfig) sheet.insertRule(ProgramConfig[configProp], sheetLength);
+  if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {
+    sheet.insertRule(ProgramConfig[configProp], sheetLength);
+  }
 }
 
 // The userFontSize class in all stylesheets is dynamically updated by this routine.

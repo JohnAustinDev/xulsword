@@ -45,7 +45,7 @@ toolbar[printpreview="true"] {
 
 /* referenceDropDown.xml */
 reference-dropdown {
-  -moz-binding: url("chrome://xulsword/content/referenceDropdown.xml#reference-dropdown");
+  -moz-binding: url("chrome://xulsword/content/common/referenceDropdown.xml#reference-dropdown");
 }
 reference-textbox, reference-textbox[type="textbox"] {
   -moz-binding: url("chrome://xulsword/content/scriprefTextbox.xml#scripref-textbox");

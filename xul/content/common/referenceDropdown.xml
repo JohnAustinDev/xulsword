@@ -567,7 +567,7 @@
   <!-- onlyavailablebooks !-->
 
   <!-- Reference Dropdown -->
-  <binding id="reference-dropdown" extends="chrome://xulsword/content/referenceDropdown.xml#reference-dropdown-main">
+  <binding id="reference-dropdown" extends="chrome://xulsword/content/common/referenceDropdown.xml#reference-dropdown-main">
     <xbl:content xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:xbl="http://www.mozilla.org/xbl">
       <hbox flex="" xbl:inherits="flex">
         <menulist anonid="book"

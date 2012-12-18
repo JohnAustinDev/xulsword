@@ -73,8 +73,7 @@ var WSucks;
 
 function Startup()
 {
-//  updateCSSBasedOnCurrentLocale(["#addBookmarkDialog", "input, button, menu, menuitem"]);
-  createDynamicCssClasses();
+
   AllWindows.push(window);
 
   BookmarkFuns.initTemplateDataSource(document.getElementById("folderPopup"), BMDS);

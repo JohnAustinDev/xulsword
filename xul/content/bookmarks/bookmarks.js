@@ -577,7 +577,7 @@ var BookmarksCommand = {
     
     if (BMDS) BookmarkFuns.purgeDataSource(BMDS);
     
-    resources = BMDS.GetAllResources();
+    var resources = BMDS.GetAllResources();
     var data="";
     var resourceDelim="";
     while (resources.hasMoreElements()) {
@@ -594,7 +594,7 @@ var BookmarksCommand = {
       resourceDelim = BM.kExportResourceDelimiter;
       for (var i=0; i<BM.gBmProperties.length; i++) {
         try {
-        value = replaceASCIIcontrolChars(BMDS.GetTarget(myres,BM.gBmProperties[i],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);}
+        var value = replaceASCIIcontrolChars(BMDS.GetTarget(myres,BM.gBmProperties[i],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);}
         catch (er) {value="";}
         data = data + BM.kExportDelimiter + value;
       }
@@ -696,7 +696,9 @@ var BookmarksCommand = {
     }
 
     BMDS.endUpdateBatch();
-  }
+  },
+  
+  onPrintPreviewDone: function() {window.focus();}
 
 }
 
@@ -803,7 +805,8 @@ var BookmarksController = {
     case "cmd_bm_newbookmark":
     case "cmd_bm_newfolder":
     case "cmd_bm_newseparator":
-      return (aSelection.item[0]==BM.BmEmptyRes || BookmarksUtils.isValidTargetContainer(aTarget.parent));
+      return (aSelection && aSelection.item.length && aSelection.item[0]==BM.BmEmptyRes || 
+          BookmarksUtils.isValidTargetContainer(aTarget.parent));
     case "cmd_bm_properties":
     case "cmd_bm_rename":
       if (length != 1 || aSelection.containsImmutable ||
@@ -913,12 +916,14 @@ var BookmarksController = {
       break;
     case "cmd_bm_print":
     case "cmd_bm_printPreview":
-      var topWindow = WindowWatcher.getWindowByName("xulsword-window",window);
-      //topWindow.SavedWindowWithFocus = window;
-      topWindow.focus();
-      topWindow.document.getElementById("printBrowser").contentDocument.getElementById("printBox").innerHTML = BookmarkFuns.getFormattedBMdata(resource0, true);
-      topWindow.document.getElementById("printBrowser").contentDocument.title = SBundle.getString("Title") + ": " + document.title;
-      topWindow.document.getElementById(aCommand.replace("bm_","")).doCommand();
+      aCommand = aCommand.replace("bm_","");
+      var target = {
+        command:aCommand,
+        uri:"chrome://xulsword/content/bookmarks/bmPrint.html",
+        bodyHTML:BookmarkFuns.getFormattedBMdata(resource0, true),
+        callback:BookmarksCommand
+      };
+      MainWindow.handlePrintCommand(aCommand, target);
       break;
     default: 
       jsdump("Bookmark command "+aCommand+" not handled!\n");
@@ -1011,7 +1016,7 @@ var BookmarksUtils = {
       else
         bundle = this._bundle.formatStringFromName(aStringKey, aReplaceString, aReplaceString.length);
     } catch (e) {
-      jsdump("Bookmark bundle "+aStringKey+" not found!\n");
+      //jsdump("Bookmark bundle "+aStringKey+" not found!\n");
       bundle = "";
     }
 
