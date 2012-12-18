@@ -810,6 +810,7 @@
         {
           //jsdump("ONSELECTION CHANGED\n");
           var selection = this.mOuter.getTreeSelection();
+          if (!selection || !selection.item.length) return;
           this.mOuter._selection = selection;
           this.mOuter._target    = this.mOuter.getTreeTarget(selection.item[0], selection.parent[0], BookmarksUtils.DROP_BEFORE);
           this.mOuter.onCommandUpdate();

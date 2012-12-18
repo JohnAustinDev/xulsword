@@ -6,7 +6,7 @@ and applied to Strong's classes */
 #lexiconBox {
   display:none;
 }
-body[hasLexicon="true"] #lexiconBox {
+#search-content[hasLexicon="true"] #lexiconBox {
   display:block;
 }
 .slist {
@@ -42,4 +42,14 @@ body[hasLexicon="true"] #lexiconBox {
 }
 .searchTerm {
   color:red;
+}
+
+
+/* PRINTING STYLES */
+@media print {
+
+.slist {
+  white-space:normal;
+}
+
 }

@@ -81,7 +81,7 @@ function PopupObj(popupobj) {
     html += "</div>";
     
     // If popup is already open, then save the current popup inside the "back" link of this new popup...
-    html += "<div class=\"prevhtml\">" + (updatingPopup ? this.npopupTX.innerHTML:"") + "</div>";
+    html += "<div class=\"prevhtml\" title=\"" + this.npopup.getAttribute("puptype") + "\">" + (updatingPopup ? this.npopupTX.innerHTML:"") + "</div>";
 
     html += "<div class=\"popup-text cs-Program\">";
     
@@ -89,7 +89,9 @@ function PopupObj(popupobj) {
     switch (type) {
     
     case "popupBackLink":
-      this.npopupTX.innerHTML = this.npopup.getElementsByClassName("prevhtml")[0].innerHTML;
+      var old = this.npopup.getElementsByClassName("prevhtml")[0];
+      this.npopup.setAttribute("puptype", old.getAttribute("title"));
+      this.npopupTX.innerHTML = old.innerHTML;
       this.checkPopupPosition(e);
       return true;
       break;
@@ -195,7 +197,7 @@ function PopupObj(popupobj) {
     
     // Normal popup updating itself...
     if (updatingPopup) {
-      // move popup to insure it's under the mouse
+      // move popup to insure it's under the current mouse position
       this.npopupTX.scrollTop = 0;
       this.npopupTX.style.top = this.YmouseDelta + e.clientY + "px";
       this.checkPopupPosition(e);
@@ -221,7 +223,7 @@ function PopupObj(popupobj) {
   
     // store current location relative to mouse
     this.npopupTX.style.top = ""; // reset so that CSS always controls initial location!
-    this.YmouseDelta = (Number(window.getComputedStyle(this.npopup).top.replace("px", "")) - this.e.clientY);
+    this.YmouseDelta = (Number(window.getComputedStyle(this.npopupTX).top.replace("px", "")) - this.e.clientY);
     
     this.checkPopupPosition(this.e);
 
@@ -232,19 +234,18 @@ function PopupObj(popupobj) {
   
   // if popup is overflowing bottom of window, then move it up
   this.checkPopupPosition = function(e) {
-    var pupbot = e.clientY + this.npopupTX.offsetTop + this.npopupTX.offsetHeight;
+    var pupbot = e.clientY + this.npopupTX.offsetHeight;
     if (pupbot > window.innerHeight) {
-      var currentTop = Number(window.getComputedStyle(this.npopupTX).top.replace("px", ""));
-      if (isNaN(currentTop)) return;
-      var newTop = currentTop - pupbot + window.innerHeight - 30;
-      if (newTop < -1*this.npopupTX.offsetHeight) newTop = -1*this.npopupTX.offsetHeight;
-      this.npopupTX.style.top = newTop + "px";
+      var puptop = Number(window.getComputedStyle(this.npopupTX).top.replace("px", ""));
+      if (isNaN(puptop)) return;
+      puptop -= (pupbot - window.innerHeight);
+      this.npopupTX.style.top = puptop + "px";
     }
   };
 
   this.close = function() {
   
-    // If we're a windowed popup, close the window
+    // If we're a windowed popup, just close the window
     if (window.name == "npopup") {
       window.frameElement.ownerDocument.defaultView.close();
       return;
@@ -257,8 +258,8 @@ function PopupObj(popupobj) {
   this.select = function(mod) {
     var pt = this.npopupTX.getElementsByClassName("popup-text");
     if (!pt) return;
-    pt = pt[0];
-    
+    pt = pt[pt.length-1]; // the pt we want is the last in the tree
+
     if (this.crnote) pt.innerHTML = BibleTexts.getNotesHTML(this.crnote, mod, true, true, true, true, 1);
     else if (this.srnote) pt.innerHTML = BibleTexts.getNotesHTML(this.srnote, mod, true, true, true, true, 1);
   };

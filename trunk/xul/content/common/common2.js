@@ -40,8 +40,10 @@ var AllWindows            = MainWindow.AllWindows;
 
 var LanguageStudyModules  = MainWindow.LanguageStudyModules;
 
-// The following objects may intentionally be overwritten by loading the
-// corresponding .js file after this .js file is loaded. 
+var CommandTarget         = MainWindow.CommandTarget;
+
+// The following objects are sometimes intentionally overwritten by 
+// loading a corresponding js file after common2.js has loaded. 
 var ViewPort              = MainWindow.ViewPort;
 var Texts                 = MainWindow.Texts;
 var BibleTexts            = MainWindow.BibleTexts;

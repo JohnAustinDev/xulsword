@@ -28,9 +28,9 @@
   </head>
   
   <script>var MainWindow = (window.frameElement.ownerDocument.defaultView.MainWindow ? window.frameElement.ownerDocument.defaultView.MainWindow:null)</script>
-  <script src="chrome://xulsword/content/common0.js" type="text/javascript"></script>
-  <script src="chrome://xulsword/content/common1.js" type="text/javascript"></script>
-  <script src="chrome://xulsword/content/common2.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/common/common0.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/common/common1.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/common/common2.js" type="text/javascript"></script>
 
   <script>
   function writeSearchHelp() {
@@ -61,7 +61,7 @@
   
   </script>
   
-  <body  id="searchHelp-window" onload="{setTimeout('htmlLoaded()',0);}" style="font-size:12px; background-image: url(chrome://xulsword/skin/images/9.gif);">
+  <body  id="searchHelp-window" onload="initCSS(); setTimeout('htmlLoaded()',0);" style="font-size:12px; background-image: url(chrome://xulsword/skin/images/9.gif);">
     <div id="helpPane" style="overflow:auto; min-width:340px; min-height:300px; padding:20px; background:white; border:2px solid rgb(200,170,205); border-radius:4px;">
       <script>writeSearchHelp();</script>
     </div>

@@ -24,13 +24,16 @@
 <window
     id="searchHelp-window" xmlns:html="http://www.w3.org/1999/xhtml"
     width="800" height="600"
+    onload="initCSS();"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
+  
   <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+  
   <iframe flex="1" id="helpFrame" src="searchHelp.html" style="overflow:hidden;"/>
   
 </window>

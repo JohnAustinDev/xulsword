@@ -49,15 +49,16 @@
 
 <dialog id="bmPropsWindow" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         title="&bookmarks.windowtitle.label;"
-        onload="Init()" style="width: 45em;"
+        onload="initCSS(); Init()" style="width: 45em;"
         onunload="Unload()"
+        persist="screenX screenY width height"
         ondialogaccept="return Commit();"
         ondialogcancel="return Cancel();">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksProperties.js"/>
 
@@ -88,7 +89,7 @@
         <row id="namerow" align="center">
           <label value="&treecol.name.label;:" control="bmname"/>
           <!-- <textbox id="bmname" /> !-->
-          <textbox id="bmname" multiline="true" height="26px;" style="padding-top:5px;" onkeydown="this.className='cs-Program';" />
+          <textbox id="bmname" multiline="false" style="padding-top:5px;" onkeydown="this.className='cs-Program';" />
         </row>
         <row id="noterow" align="center">
           <label value="&treecol.note.label;:" control="note"/>

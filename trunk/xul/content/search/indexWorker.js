@@ -39,7 +39,7 @@ onmessage = function(event) {
     
   }
   
-  LibSword.quitLibsword(); // LibSword.getModuleList started libsword earlier
+  LibSword.quitLibsword(); // the call to LibSword.getModuleList started libsword
 
-  postMessage(-1);
+  postMessage(-1); // this means we're done!
 }

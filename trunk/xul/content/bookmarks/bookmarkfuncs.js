@@ -233,7 +233,7 @@ var BookmarkFuns = {
     var text = BookmarkFuns.getTextForBookmark(location);
     var dialogArgs = {name:name, text:text, selectNoteFlag: selectNoteFlag};
     var retVal = {name:null, note: null, chosenFolderID: null, ok: false};
-    openDialog("chrome://xulsword/content/bookmarks/addBookmark2.xul", "",BROWSER_ADD_BM_FEATURES, dialogArgs, retVal);
+    openDialog("chrome://xulsword/content/bookmarks/addBookmark2.xul", "", BROWSER_ADD_BM_FEATURES, dialogArgs, retVal);
     if (!retVal.ok) return;
     // Create the new bookmark now...
     var myprops = ["Bookmark", retVal.name, retVal.note, location.shortName, location.chapter, location.verse, location.lastVerse, location.version, null, text.text];
@@ -315,6 +315,9 @@ var BookmarkFuns = {
       }
       break;
     }
+    
+    text = text.replace(/^<span[^>]*>/, "");
+    text = text.replace(/<\/span>$/, "");
     retval.text = text;
     return retval;
   },
@@ -416,7 +419,9 @@ var BookmarkFuns = {
   },
   
   showPropertiesWindow: function (resourceID, editNote) {
-    var value = {};
+    var value = {ok:false};
+    // NOTE: this window MUST be modal (even if it screws with window 
+    // focus) so that bookmark transactions work properly.
     openDialog("chrome://xulsword/content/bookmarks/bookmarksProperties.xul", "", "centerscreen,chrome,modal,resizable=no", resourceID, value, editNote);
     return value.ok;
   },
@@ -667,7 +672,7 @@ var BookmarkFuns = {
       else
         bundle = this._bundle.formatStringFromName(aStringKey, aReplaceString, aReplaceString.length);
     } catch (e) {
-      jsdump("Bookmark bundle "+aStringKey+" not found!\n");
+      //jsdump("Bookmark bundle "+aStringKey+" not found!\n");
       bundle = "";
     }
 

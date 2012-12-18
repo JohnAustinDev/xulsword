@@ -42,12 +42,12 @@
 <stringbundle id="strings" src="chrome://xulsword/locale/search.properties"/>
 
 <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
-<script src="chrome://xulsword/content/common0.js"/>
-<script src="chrome://xulsword/content/common1.js"/>
-<script src="chrome://xulsword/content/common2.js"/>
+<script src="chrome://xulsword/content/common/common0.js"/>
+<script src="chrome://xulsword/content/common/common1.js"/>
+<script src="chrome://xulsword/content/common/common2.js"/>
 <script src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
-<script src="chrome://xulsword/content/dictTexts.js"/>
-<script src="chrome://xulsword/content/search.js"/>
+<script src="chrome://xulsword/content/viewport/texts/dictTexts.js"/>
+<script src="chrome://xulsword/content/search/search.js"/>
 
 <keyset>
   <key keycode="VK_RETURN"                 oncommand="document.getElementById('searchButton').click()"/>
@@ -66,9 +66,9 @@
   <menubar>
     <menu label="&fileMenu.label;" accesskey="&fileMenu.accesskey;">
       <menupopup>
-        <menuitem label="&printSetupCmd.label;" accesskey="&printSetupCmd.accesskey;" command="handlePrintCommand('cmd_pageSetup')"/>
-        <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" command="handlePrintCommand('cmd_printPreview')"/>
-        <menuitem label="&printCmd.label;" accesskey="&printCmd.accesskey;" key="printKb" command="handlePrintCommand('cmd_print')"/>
+        <menuitem label="&printSetupCmd.label;" accesskey="&printSetupCmd.accesskey;" oncommand="handlePrintCommand('cmd_pageSetup')"/>
+        <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" oncommand="handlePrintCommand('cmd_printPreview')"/>
+        <menuitem label="&printCmd.label;" accesskey="&printCmd.accesskey;" key="printKb" oncommand="handlePrintCommand('cmd_print')"/>
         <menuseparator/>
         <menuitem label="&closeCmd.label;" key="key_close" accesskey="&closeCmd.accesskey;" oncommand="window.close()"/>
       </menupopup>

@@ -240,8 +240,8 @@ function ViewPortObj(viewPortObj) {
       }
       
       // Firefox 16 has a bug where RTL column CSS does not scroll. The work
-      // around at this time is to prohibit RTL columns.
-      if (ModuleConfigs[this.Module[w]].direction == "rtl") value = "show1";
+      // around at this time is to prohibit RTL multi-columns.
+      if (ModuleConfigs[this.Module[w]].direction == "rtl" && (/^show(2|3)$/).test(value)) value = "show1";
       
       // As of Firefox 17, CSS columns are not supported in print. For this
       // reason a WYSIWYG print routine is impossible. The workaround is to
@@ -370,7 +370,7 @@ function ViewPortObj(viewPortObj) {
         document.getElementById("w" + w + ".tab.norm." + t).style.display = "none";
         document.getElementById("w" + w + ".tab.mult." + t).style.display = "";
         
-        // select milti-tab text and style etc.
+        // select multi-tab text and style etc.
         var st = null;
         for (t=0; t<Tabs.length; t++) {
           var tt = document.getElementById("w" + w + ".tab.mult." + t);
@@ -391,7 +391,7 @@ function ViewPortObj(viewPortObj) {
       
     }
 
-//var d="Ndis=" + this.NumDisplayedWindows; for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("foot");} jsdump(d);
+//var d="NumDisplayedWindows=" + document.getElementById("textarea").getAttribute("windows"); for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("columns");} jsdump(d);
 
   };
 
@@ -448,9 +448,14 @@ function ViewPortObj(viewPortObj) {
     
     try {
       var winh = prefs.getIntPref("ViewPortHeight");
+      var winw = prefs.getIntPref("ViewPortWidth");
       prefs.clearUserPref("ViewPortHeight");
+      prefs.clearUserPref("ViewPortWidth");
     }
-    catch (er) {winh = window.innerHeight;}
+    catch (er) {
+      winh = window.innerHeight;
+      winw = null;
+    }
 //jsdump("UPDATING VIEW PORT h=" + winh);
 
     // Get max height of script box
@@ -536,9 +541,11 @@ function ViewPortObj(viewPortObj) {
     var os = getOffset(document.getElementById("fadebot"));
     r.rule.style.backgroundPosition = "0px " + (40 - os.top) + "px";
 
-    // fix viewport width to fill parent with no overflow
-    if (window.frameElement && window.frameElement.id == "main-viewport")
-        document.getElementById("viewportbody").style.width = MainWindow.innerWidth - MainWindow.document.getElementById("genBookChooser").boxObject.width + "px";
+    // fix main-viewport width to fill parent with no overflow
+    if (window.frameElement && window.frameElement.id == "main-viewport") {
+      var width = (winw ? winw:MainWindow.innerWidth - MainWindow.document.getElementById("genBookChooser").boxObject.width) + "px";
+      document.getElementById("viewportbody").style.width = width;
+    }
 
   };
   

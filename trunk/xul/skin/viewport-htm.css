@@ -10,6 +10,9 @@
   float:left;
   width:100%;
 }
+#viewportbody[chromedir="rtl"] {
+  float:right;
+}
 
 #chbutton_open {
   position:absolute;
@@ -46,8 +49,11 @@ body[isWindow="true"] #chbutton_open {
   width:100%;
 }
 #chooser {
-  padding-right:0px;
+  -moz-padding-end:0px;
   float:left;
+}
+body[chromedir="rtl"] #chooser {
+  float:right;
 }
 #viewportbody:not([chooser="bible"]) #chooser {
   display:none;
@@ -76,6 +82,7 @@ body[isWindow="true"] #chbutton_open {
 }
 .tabs[chromedir="rtl"] {
   text-align:left;
+  padding:0px 30px 0px 20px;
 }
 #textarea[windows="show1"] #tabs1 {
   width:100%;
@@ -104,8 +111,7 @@ body[isWindow="true"] #chbutton_open {
   top:2px;
   font-size:1em;
   color:grey;
-  margin-left:3px;
-  margin-right:3px;
+  margin:0px 3px 0px 3px;
   border:3px solid;
   border-bottom:2px solid rgb(200,170,205);
   -moz-border-left-colors:  rgb(200,170,205) rgb(200,170,205) transparent;
@@ -130,6 +136,10 @@ body[isWindow="true"] #chbutton_open {
   left:0px;
   width:80%;
   height:100%;
+}
+body[chromedir="rtl"] .multitab-clicker {
+  left:auto;
+  right:0px;
 }
 #w1\.tabselect,
 #w2\.tabselect,
@@ -174,8 +184,7 @@ body[isWindow="true"] #chbutton_open {
 .text {
   display:table-cell;
   vertical-align:top;
-  padding-left:10px;
-  padding-right:10px;
+  padding:0px 10px 0px 10px;
   font-size: 1.1em;
 }
 #textarea[windows="show3"] .text[columns="show1"] {
@@ -246,6 +255,7 @@ body[isWindow="true"] #chbutton_open {
   z-index:20;
 }
 body[chromedir="rtl"] .sbpin {
+  float:right;
   left:auto;
   right:-8px;
 }
@@ -263,7 +273,6 @@ body[chromedir="ltr"] .sbpin:hover,
 body[chromedir="ltr"] .text[pinned="true"] .sbpin {
   transform:scaleX(-1);
 }
-
 .sbwin {
   float:left;
   width:20px;
@@ -271,6 +280,9 @@ body[chromedir="ltr"] .text[pinned="true"] .sbpin {
   margin:5px;
   background:url(chrome://xulsword/skin/images/towindow.png);
   z-index:20;
+}
+body[chromedir="rtl"] .sbwin {
+  float:right;
 }
 .sbwin:hover {
   background-position:20px;
@@ -282,8 +294,7 @@ body[isWindow="true"] .sbwin {
 .sb {
   height:600px; /* dynamic in viewport.js */
   color: black;
-  padding-left:30px;
-  padding-right:30px;
+  padding:0px 30px 0px 30px;
 }
 .text[columns="show1"] .sb {
   overflow:auto;
@@ -340,7 +351,7 @@ body[isWindow="true"] .sbwin {
   z-index:20;
 }
 .text[pinned="true"] .nbf {
-  background:rgb(248,248,241);
+  background:white;
 }
 .text[textdir="rtl"] .nbf {
   right:auto;
@@ -365,16 +376,11 @@ body[isWindow="true"] .sbwin {
 }
 .text[columns="show2"] .nbf {
   width:50%;
-  padding-left:20px; /* hides columns rule */
+  -moz-padding-start:20px; /* hides columns rule */
 }
 .text[columns="show3"] .nbf {
   width:33%;
-  padding-left:20px; /* hides columns rule */
-}
-.text[textdir="rtl"][columns="show2"] .nbf,
-.text[textdir="rtl"][columns="show3"] .nbf {
-  padding-left:0px;
-  padding-right:20px; /* hides columns rule */
+  -moz-padding-start:20px; /* hides columns rule */
 }
 
 .bb {

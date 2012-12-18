@@ -43,9 +43,9 @@
   <data id="less.label">&less.label;</data>
   
   <script>var MainWindow = window.opener;</script>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common0.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common2.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   
   <script>
   function loaded() {
@@ -58,7 +58,7 @@
   
     <vbox id="logo" pack="end" width="500" height="375">
     
-      <iframe flex="1" id="modules" src="chrome://xulsword/content/about.html"/>
+      <iframe flex="1" id="modules" src="chrome://xulsword/content/dialogs/about/about.html"/>
     
       <hbox align="center">
       

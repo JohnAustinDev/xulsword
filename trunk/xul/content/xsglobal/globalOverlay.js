@@ -62,14 +62,11 @@ function goQuitApplication()
 //
 // Command Updater functions
 //
-function goUpdateCommand(aCommand, controller)
+function goUpdateCommand(aCommand)
 {
   try {
-    
-    if (!controller) {
-      controller = MainWindow.document.commandDispatcher
+    var controller = top.document.commandDispatcher
                         .getControllerForCommand(aCommand);
-    }
     
     var enabled = false;
     if (controller)
@@ -83,14 +80,12 @@ function goUpdateCommand(aCommand, controller)
   }
 }
 
-function goDoCommand(aCommand, controller)
+function goDoCommand(aCommand)
 {
 
   try {
-    if (!controller) {
-      controller = MainWindow.document.commandDispatcher
+    var controller = top.document.commandDispatcher
                         .getControllerForCommand(aCommand);
-    }
     
     if (controller && controller.isCommandEnabled(aCommand))
       controller.doCommand(aCommand);
