@@ -282,7 +282,7 @@ function PopupObj(popupobj) {
     p += ",top=" + Number(wintop.screenY + Y);
     p += ",width=" + this.npopupTX.offsetWidth;
     p += ",height=" + this.npopupTX.offsetHeight;
-    AllWindows.push(wintop.open("chrome://xulsword/content/popup.xul", "popup" + String(Math.random()), p));
+    AllWindows.push(wintop.open("chrome://xulsword/content/viewport/popup/popup.xul", "popup" + String(Math.random()), p));
 
   };
   

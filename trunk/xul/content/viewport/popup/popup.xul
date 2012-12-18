@@ -20,7 +20,7 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
-<?xul-overlay href="chrome://xulsword/content/contextMenu-overlay.xul" ?>
+<?xul-overlay href="chrome://xulsword/content/common/contextMenu-overlay.xul" ?>
 
 <!DOCTYPE window [
 <!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/global.dtd" >

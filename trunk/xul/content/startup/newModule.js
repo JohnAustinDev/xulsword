@@ -202,7 +202,7 @@ jsdump("STARTING startImport");
   if (!blocking && (ZipFiles.length || RegularFiles.length>5)) {
     var result = {};
     ProgressMeterLoaded = false;
-    ProgressMeter = window.openDialog("chrome://xulsword/content/workProgress.xul", "work-progress", PMSPLASH, result,
+    ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
       fixWindowTitle(document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue),
       "", 
       (allowStop ? PMSTOP:PMNORMAL),
@@ -247,7 +247,7 @@ jsdump("STARTING startImport");
       if (ProgressMeter) ProgressMeter.close();
       Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       var result = {};
-      var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
+      var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
           fixWindowTitle(document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue),
           msg,
           DLGALERT,
@@ -1444,7 +1444,7 @@ function prefFileArray(files, aPref, exts, dontCheckExists) {
 function restartApplication(promptBefore) {
   if (promptBefore) {
     var result = {};
-    var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
+    var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
       fixWindowTitle(SBundle.getString("Title")),
       SBundle.getString("RestartMsg"), 
       DLGINFO,
