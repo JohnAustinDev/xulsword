@@ -22,7 +22,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/search-xul.css" type="text/css"?>
 
 <?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
-<?xul-overlay href="chrome://xulsword/content/contextMenu-overlay.xul"?>
+<?xul-overlay href="chrome://xulsword/content/common/contextMenu-overlay.xul"?>
 
 <!DOCTYPE window [
 <!ENTITY % searchDTD SYSTEM "chrome://xulsword/locale/search.dtd">

@@ -32,8 +32,14 @@ static xulsword *keep[MAXINST] = {};
 /********************************************************************
 EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
-DLLEXPORT xulsword *GetNewXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
+DLLEXPORT xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
   int i;
+  
+  // NOTE: Although this is currently set up to provide multiple instances 
+  // of xulsword, the SWORD engine runs as a service and so there must not
+  // be multiple instances of xulsword in existence at the same time
+  // without risking data corrution and/or crashes!
+  
   for (i=0; i<MAXINST; i++) {if (!keep[i]) {break;}}
   if (i == MAXINST) return NULL;
   keep[i] = new xulsword(path, toUpperCase, throwJS, reportProgress);

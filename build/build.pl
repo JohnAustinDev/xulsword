@@ -58,7 +58,7 @@ if ($MakeDevelopment =~ /true/i) {
   my @manifest;
   &copyExtensionFiles($DEVELOPMENT, \@manifest, $IncludeLocales, 1);
   if ("$^O" =~ /MSWin32/i) {&copyXulRunnerFiles($DEVELOPMENT);}
-  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/splash.xul";
+  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
   &writePreferences($DEVELOPMENT, \%Prefs, 1);
   &writeApplicationINI($DEVELOPMENT);
   &includeModules($IncludeModules, \@ModRepos, $RESOURCES, $IncludeSearchIndexes);
@@ -74,7 +74,7 @@ if ($MakeFFextension =~ /true/i) {
   else {make_path($FFEXTENSION);}
   &compileLibSword($FFEXTENSION, 1);
   my @manifest;
-  push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/extension-overlay.xul");
+  push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/startup/extension-overlay.xul");
   &copyExtensionFiles($FFEXTENSION, \@manifest, $IncludeLocales, 0, 1);
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "";
   $Prefs{"(prefs.js):xulsword.DontShowExceptionDialog"} = "true";
@@ -100,7 +100,7 @@ if ($MakePortable =~ /true/i) {
   my @manifest;
   &copyExtensionFiles("$PORTABLE/$Name", \@manifest, $IncludeLocales);
   &copyXulRunnerFiles("$PORTABLE/$Name");
-  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/splash.xul";
+  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
   &writePreferences("$PORTABLE/$Name", \%Prefs);
   &writeApplicationINI("$PORTABLE/$Name", "P");
   &compileStartup($PORTABLE);
@@ -123,7 +123,7 @@ if ($MakeSetup =~ /true/i) {
   my @manifest;
   &copyExtensionFiles($INSTALLER, \@manifest, $IncludeLocales);
   &copyXulRunnerFiles($INSTALLER);
-  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/splash.xul";
+  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
   &writePreferences($INSTALLER, \%Prefs);
   &writeApplicationINI($INSTALLER);
   &compileStartup($INSTALLER);
@@ -303,7 +303,7 @@ sub copyExtensionFiles($\@$$$) {
     push(@{$manifestP}, "skin xulsword skin file:../../../xul/skin/");
     push(@{$manifestP}, "content branding file:../../../xul/content/branding/");
     push(@{$manifestP}, "locale branding en-US file:../../../xul/locale/branding/");
-    push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/debug-overlay.xul");
+    push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/test/debug-overlay.xul");
     push(@{$manifestP}, "skin xsplatform skin file:../../../xul/skin/linux/ os=Linux");
     push(@{$manifestP}, "skin xsplatform skin file:../../../xul/skin/windows/ os=WINNT");
     &copy_dir("$TRUNK/xul/distribution", "$do/distribution", "", "\\.svn");

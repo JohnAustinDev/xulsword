@@ -217,7 +217,7 @@ function SearchObj(searchObj) {
       
       if (!dontAsk) {
         var myresult = {};
-        var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, myresult, 
+        var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, myresult, 
             fixWindowTitle(SBundle.getString("BuildingIndex")),
             SBundle.getString("NeedSearchIndex"), 
             DLGINFO,
@@ -713,7 +713,7 @@ function commandHandler(e) {
     
   case "question":
   case "searchHelp":
-    SearchHelpWindow = window.open("chrome://xulsword/content/searchHelp.xul","searchHelp","chrome,resizable");
+    SearchHelpWindow = window.open("chrome://xulsword/content/search/searchHelp.xul", "searchHelp", "chrome,resizable");
     AllWindows.push(SearchHelpWindow);
     break;
   }

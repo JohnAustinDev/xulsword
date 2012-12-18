@@ -181,7 +181,7 @@ function checkQuickTime() {
       for (var k=0; k<PLUGINLINKS.length; k++) {msg += PLUGINLINKS[k] + "\n";}
       msg += "\n";
       var result = {};
-      var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
+      var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
           fixWindowTitle(SBundle.getString("Title")),
           msg,
           DLGINFO,
@@ -196,7 +196,7 @@ function checkQuickTime() {
     try {var msg = SBundle.getString("QuickTimeUpdateNeeded2");}
     catch (er) {msg = SBundle.getString("QuickTimeUpdateNeeded");} //BACKWARD COMPATIBILITY
     var result = {};
-    var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
+    var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
         fixWindowTitle(SBundle.getString("Title")),
         msg,
         DLGINFO,
@@ -239,7 +239,7 @@ function installQT(installerFile) {
 	if (!installerFile || !installerFile.exists()) return false;
 	
   var result = {};
-  var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result, 
+  var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
       fixWindowTitle(SBundle.getString("Title")),
       SBundle.getString("Want2InstallQuickTime"), 
       DLGQUEST,
@@ -345,7 +345,7 @@ function diskSpaceMessage(fromLeafName) {
   }
   catch (er) {msg = "Not enough disk space for this operation.";}
   var result = {};
-  var dlg = window.openDialog("chrome://xulsword/content/dialog.xul", "dlg", DLGSTD, result,
+  var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
       fixWindowTitle(document.getElementById("menu.importAudio.label").childNodes[0].nodeValue),
       msg,
       DLGALERT,
@@ -434,7 +434,7 @@ function exportAudio(exportFileFormat) {
   if (!Files || !Files.length) return false;
   
   var result = {};
-  ProgressMeter = window.openDialog("chrome://xulsword/content/workProgress.xul", "work-progress", PMSTD, result, 
+  ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSTD, result, 
       fixWindowTitle(document.getElementById("menu.exportAudio.label").childNodes[0].nodeValue),
       "", 
       PMSTOP,

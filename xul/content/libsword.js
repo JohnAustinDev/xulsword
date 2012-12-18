@@ -16,22 +16,13 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// as a ChromeWorker, Components is not available but ctypes is.
-if (typeof ctypes == "undefined") Components.utils.import("resource://gre/modules/ctypes.jsm");
-
 /*
-The following is the list of libsword functions to use with LibSword objects.
-IMPORTANT NOTE: Bibles may have different verse systems. Therefore, when
-setting the Book, Chapter and Verse variables, the Version (and thereby the
-verse system) must also be provided. Psalm 10 in Synodal is not the same text
-as Psalm 10 in KJV for instance.
-
-
-SPECIAL MODULE CONFIGURATION PARAMETERS (OPTIONAL):
+SPECIAL SWORD MODULE CONFIGURATION FILE PARAMETERS (OPTIONAL):
 Valid for all modules:
   "Font" - The font to use for the module
   "FontSizeAdjust" - The relative size of the module's font
   "LineHeight" - The relative line height of the module's font
+  "xulswordVersion" - Min version of xulsword this SWORD mod is compatible with
 
 Valid for Bible modules:
   "OriginalTabTestament" - If set to "OT" or "NT", an ORIG tab will be available,
@@ -40,48 +31,26 @@ Valid for Bible modules:
       more than one DictionaryModule entry.
   "AudioCode" - Audio files located in this directory (within the Audio dir) will
       be avaialble in this Bible module.
+  "NoticeLink" and "NoticeText" - Used to display a prominent message about a Bible.
 
 Valid for Dictionary modules:
-  "LangSortOrder" - Allows to sort entries alphabetically
-  "ReferenceBible" - Bible module to use for Scripture references.
-
-
-DEFINITION OF A "XULSWORD REFERENCE":
-  "xulsword reference"s never cross chapter boundaries. The smallest reference
-  is to a single verse, and the largest is to a whole chapter. "xulsword reference"s
-  take one of the following forms:
-
-  Preffered forms (because most MK subroutines use these forms). These forms are
-  often refered to as "location"s in MK:
-    Gen.5             --> Genesis chapter 5 (in this case Verse=1 and LastVerse=maxverse)
-    Gen.5.6           --> Genesis chapter 5 verse 6 (in this case LastVerse=Verse)
-    Gen.5.6.7         --> Genesis chapter 5 verses 6 through 7
-
-  Other valid forms (but may need subsequent conversion for use by some subroutines in MK):
-    Gen 5             --> same as Gen.5
-    Gen 5:6           --> same as Gen.5.6
-    Gen 5:6-7         --> same as Gen.5.6.7
-
-  Valid form, but may not always return what is expected:
-    Gen 5:6 - Gen 5:7 --> same as Gen.5.6.7 but note that the book and chapter
-                          number mentioned after the "-" are completely ignored,
-                          and only the verse is used (because xulsword references
-                          never cross chapter boundaries).
-
-LISTS OF VERSES OR NOTES ARE RETURNED IN THE FOLLOWING FORMAT:
-  identifier<bg>body<nx>
-  Note: the identifier and <bg> tag are not returned with getSearchVerses()
-
+  "LangSortOrder" - Allows for sorting entries alphabetically in any language.
+  "LangSortSkipChars" - Used in conjunction with LangSortOrder
+  "ReferenceBible" - Preffered Bible module to use for Scripture references.
 */
 
-var ThrowMSG, FreeMem, UpperCaseResult; // must be globals, not LibSword members
+// as a ChromeWorker, Components is not available but ctypes is.
+if (typeof ctypes == "undefined") Components.utils.import("resource://gre/modules/ctypes.jsm");
+
+
 var LibSword = {
+  libsword:null,        // reference to the libxulsword dynamic library
+  inst:null,            // the LibSword instance returned by libxulsword
+  callback:null,        // an object used to implement callbacks from Javascript
   fdata:null,
-  inst:null,
   paused:false,
-  freeLibxulsword:null,
-  libsword:null,
-  callback:null,
+  freeMemory:null,      // free memory allocated by libxulsword
+  freeLibxulsword:null, // free memory allocated to libxulsword
   
   ModuleDirectory:null,
   LibswordPath:null,
@@ -94,33 +63,37 @@ var LibSword = {
     
     this.fdata = {};
 
+    // get paths to local directories in which SWORD modules are (or will be) located
     if (!this.ModuleDirectory) {
-      // can't call this in indexWorker...
+      // NOTE: getSpecialDirectory is not available from within indexWorker...
       this.ModuleDirectory = getSpecialDirectory("xsResD").path;
       if (IsExtension) this.ModuleDirectory += ", " + getSpecialDirectory("xsExtResource").path;
     }
 
+    // get path to libxulsword dynamic library built from C++ SWORD engine
     if (!this.LibswordPath) {
       var dll = (OPSYS == "Windows" ? "xulsword.dll":"libxulsword.so");
       if (!IsExtension) {this.LibswordPath = getSpecialDirectory("CurProcD").path + "/" + dll;}
       else {
-        // can't call this in indexWorker...
+        // NOTE: getSpecialDirectory is not available from within indexWorker...
         this.LibswordPath = getSpecialDirectory("xsExtension").path + "/" + APPLICATIONID + "/" + dll;
       }
     }
     try {this.libsword = ctypes.open(this.LibswordPath);}
     catch (er) {
       window.alert("Could not load " + this.LibswordPath);
-      if (OPSYS == "Linux") {window.alert("These Linux libraries must be installed:	linux-gate, libz, libstdc++, libgcc_s, libm, libc, libpthread, ld-linux");}
+      if (OPSYS == "Linux") {window.alert("These Linux libraries must be installed:	libz, libm, libc, libstdc++, libgcc_s, libpthread");}
     }
     
-    FreeMem = this.libsword.declare("FreeMemory", ctypes.default_abi, ctypes.void_t, ctypes.voidptr_t, ctypes.PointerType(ctypes.char));
+    // assign global function for freeing memory allocated by LibSword
+    this.freeMemory = this.libsword.declare("FreeMemory", ctypes.default_abi, ctypes.void_t, ctypes.voidptr_t, ctypes.PointerType(ctypes.char));
     
+    // assign function for freeing memory allocated to LibSword itself
     this.freeLibxulsword = this.libsword.declare("FreeLibxulsword", ctypes.default_abi, ctypes.void_t);
 
     this.initInstance();
     
-    // When starting, read our xulsword prefs...
+    // when starting, read our xulsword prefs if they're available...
     if (typeof(prefs) != "undefined" && prefs && Location && Location.setLocation) {
       Location.setLocation(WESTERNVS, getPrefOrCreate("Location", "Char", "Gen.1.1.1"));
       for (var cmd in GlobalToggleCommands) {
@@ -129,16 +102,6 @@ var LibSword = {
       }
     }
     
-  },
-
-  quitLibsword: function() {
-    if (this.libsword) {
-      this.freeInstance(); //Deleting xulsword sometimes caused memory problems when library was re-opened
-      this.freeLibxulsword(); //Deleting libxulsword static objects sometimes caused memory problems when library was re-opened
-      this.libsword.close();
-      this.libsword = null;
-      if (typeof(jsdump) != "undefined") jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
-    }
   },
   
   initInstance: function() {
@@ -151,7 +114,7 @@ var LibSword = {
     var funcTypeReportProgressPtr = ctypes.FunctionType(ctypes.default_abi, ctypes.void_t, [ctypes.int]).ptr;
     this.ReportProgressPtr = funcTypeReportProgressPtr(this.ReportProgress);
     
-    var newXulsword = this.libsword.declare("GetNewXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
+    var newXulsword = this.libsword.declare("GetXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
     this.inst = newXulsword(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
     if (typeof(jsdump) != "undefined") jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
     if (typeof(jsdump) != "undefined") jsdump("ModuleDirectory=\"" + this.ModuleDirectory + "\""); 
@@ -160,12 +123,22 @@ var LibSword = {
   freeInstance: function() {
     // deleting xulsword seems to cause memory problems when library is re-opened!
     if (this.inst) {
-      FreeMem(this.inst, ctypes.char.array()("xulsword"));
+      this.freeMemory(this.inst, ctypes.char.array()("xulsword"));
       this.inst = null;
     }
   },
   
-  // Save LibSword info and free up libsword for another thread to use.
+  quitLibsword: function() {
+    if (this.libsword) {
+      this.freeInstance();
+      this.freeLibxulsword();
+      this.libsword.close();
+      this.libsword = null;
+      if (typeof(jsdump) != "undefined") jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window-name>") + ")");
+    }
+  },
+  
+  // Save LibSword info and free up libsword for use by another thread.
   // This should always be called at the end of a thread. Any required
   // processing after pausing should be initiated by callback.libswordPauseComplete()
   pause: function(callback) {
@@ -184,9 +157,10 @@ var LibSword = {
       }
     }
     
-    // prevent UI events from calling LibSword functions when libsword is paused!
+    // prevent UI events from calling LibSword functions when LibSword is paused!
     this.allWindowsModal(true);
     
+    // after the UI is blocked, then quitLibsword and callback if needed
     var to = "";
     to += "LibSword.quitLibsword(); ";
     to += "LibSword.paused = true; ";
@@ -206,6 +180,7 @@ var LibSword = {
     this.allWindowsModal(false);
   },
 
+  // unlock encrypted SWORD modules
   unlock: function() {
     var mlist = this.getModuleList();
     if (mlist == "No Modules" || mlist.search(BIBLE) == -1) return false;
@@ -261,10 +236,11 @@ var LibSword = {
   
   stopevent: function(event) {event.stopPropagation(); event.preventDefault();},
 
+  // reports last error logged by previous LibSword call
   checkerror: function() {
-    if (ThrowMSG) {
-      var tmp = ThrowMSG;
-      ThrowMSG = "";
+    if (this.throwMsg) {
+      var tmp = this.throwMsg;
+      this.throwMsg = "";
       if (typeof(jsdump) != "undefined") jsdump("THROW: libsword, " + tmp);
       throw(new Error("THROW: libsword, " + tmp));
     }
@@ -274,33 +250,59 @@ var LibSword = {
  * Callback functions available to libsword binary
  ******************************************************************************/
  
-// NOTE: these functions must NOT use "this." because they are used as callbacks
+// NOTE: these are invoked as functions by libsword, so "this" will refer to global context!
+
+upperCaseResult:"",
 UpperCase: function(charPtr) {
   var aString = charPtr.readString();
   if (aString) {
-    UpperCaseResult = ctypes.char.array()(aString.toUpperCase());
-    return UpperCaseResult; // global keeps pointer alive
+    LibSword.upperCaseResult = ctypes.char.array()(aString.toUpperCase());
+    return LibSword.upperCaseResult; // assigning to LibSword member keeps pointer alive
   }
   else return null;
 },
 
+throwMsg:"",
 ThrowJSError: function(charPtr) {
   var aString = charPtr.readString();
-  FreeMem(charPtr, ctypes.char.array()("char"));
-  if (aString) ThrowMSG = aString;
-  else ThrowMSG = "Uknown libsword exception"; 
+  LibSword.freeMemory(charPtr, ctypes.char.array()("char"));
+  if (aString) LibSword.throwMsg = aString;
+  else LibSword.throwMsg = "An unknown libsword exception occurred."; 
 },
 
 ReportProgress: function(intgr) {
-  // postMessage is a ChromeWorker function
-  if (postMessage) postMessage(intgr);
+  // NOTE: postMessage is a ChromeWorker function
+  if (typeof(postMessage) == "object") postMessage(intgr);
 },
 
 
 /*******************************************************************************
 * GETTING BIBLE TEXT AND BIBLE LOCATION INFORMATION:
 *******************************************************************************/
+/*
+DEFINITION OF A "XULSWORD REFERENCE":
+  Xulsword references don't cross chapter boundaries. The smallest reference
+  is to a single verse, and the largest is to a whole chapter. Xulsword references
+  take one of the following forms:
 
+  Preffered forms (because most MK subroutines use these forms). These forms are
+  often refered to as locations:
+    Gen.5             --> Genesis chapter 5 (in this case Verse=1 and LastVerse=maxverse)
+    Gen.5.6           --> Genesis chapter 5 verse 6 (in this case LastVerse=Verse)
+    Gen.5.6.7         --> Genesis chapter 5 verses 6 through 7
+
+  Other valid forms (but may need subsequent conversion for use by some subroutines in MK):
+    Gen 5             --> same as Gen.5
+    Gen 5:6           --> same as Gen.5.6
+    Gen 5:6-7         --> same as Gen.5.6.7
+
+  Valid form, but may not always return what is expected:
+    Gen 5:6 - Gen 5:7 --> same as Gen.5.6.7 but note that the book and chapter
+                          number mentioned after the "-" are completely ignored,
+                          and only the verse is used (because xulsword references
+                          never cross chapter boundaries).
+*/
+                          
 // getChapterText
 //Will return a chapter of text with footnote markers from module Vkeymod.
 //Vkeymod must be a module having a key type of versekey (Bibles & commentaries),
@@ -314,7 +316,7 @@ getChapterText: function(modname, vkeytext) {
   var cdata = this.fdata.gct(this.inst, ctypes.char.array()(modname), ctypes.char.array()(vkeytext));
   this.checkerror();
   var str = cdata.readString();//} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -336,7 +338,7 @@ getChapterTextMulti: function(modstrlist, vkeytext) {
   var cdata = this.fdata.ctm(this.inst, ctypes.char.array()(modstrlist), ctypes.char.array()(vkeytext));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -354,7 +356,7 @@ getFootnotes:function() {
   var cdata = this.fdata.gfn(this.inst);
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -370,7 +372,7 @@ getCrossRefs:function() {
   var cdata = this.fdata.gcr(this.inst);
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -387,7 +389,7 @@ getNotes:function() {
   var cdata = this.fdata.gns(this.inst);
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -407,7 +409,7 @@ getVerseText: function(vkeymod, vkeytext) {
   var cdata = this.fdata.vtx(this.inst, ctypes.char.array()(vkeymod), ctypes.char.array()(vkeytext));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -450,7 +452,7 @@ getVerseSystem: function(modname) {
   var cdata = this.fdata.gsy(this.inst, ctypes.char.array()(modname));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -469,7 +471,7 @@ convertLocation: function(fromVerseSystem, vkeytext, toVerseSystem) {
   var cdata = this.fdata.clo(this.inst, ctypes.char.array()(fromVerseSystem), ctypes.char.array()(vkeytext), ctypes.char.array()(toVerseSystem));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -490,7 +492,7 @@ getBookIntroduction: function(vkeymod, bname) {
   var cdata = this.fdata.git(this.inst, ctypes.char.array()(vkeymod), ctypes.char.array()(bname));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -507,7 +509,7 @@ getDictionaryEntry: function(lexdictmod, key) {
   var cdata = this.fdata.gdi(this.inst, ctypes.char.array()(lexdictmod), ctypes.char.array()(key));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -523,7 +525,7 @@ getAllDictionaryKeys: function(lexdictmod) {
   var cdata = this.fdata.gdk(this.inst, ctypes.char.array()(lexdictmod));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -539,7 +541,7 @@ getGenBookChapterText:function(gbmod, treekey) {
   var cdata = this.fdata.gbt(this.inst, ctypes.char.array()(gbmod), ctypes.char.array()(treekey));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -555,7 +557,7 @@ getGenBookTableOfContents: function(gbmod) {
   var cdata = this.fdata.gtc(this.inst, ctypes.char.array()(gbmod));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -622,7 +624,7 @@ getSearchResults: function(modname, first, num, keepStrongs) {
   var cdata = this.fdata.gst(this.inst, ctypes.char.array()(modname), first, num, keepStrongs);
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -687,7 +689,7 @@ getGlobalOption: function(option) {
   var cdata = this.fdata.ggo(this.inst, ctypes.char.array()(option));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -723,7 +725,7 @@ getModuleList: function() {
   var cdata = this.fdata.gml(this.inst);
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 },
 
@@ -742,7 +744,7 @@ getModuleInformation: function(modname, paramname) {
   var cdata = this.fdata.gmi(this.inst, ctypes.char.array()(modname), ctypes.char.array()(paramname));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
-  FreeMem(cdata, ctypes.char.array()("char"));
+  this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 }
 }; 
