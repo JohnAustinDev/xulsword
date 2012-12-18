@@ -948,7 +948,7 @@ var XulswordController = {
 
 // This is the default target for the main command controller. This 
 // default target is returned each time the controller is used, unless
-// a target was supplied in the call.
+// a target is supplied, which will overwrite defaults.
 function getCommandTarget(target) {
   
   // first get all default target parameters
@@ -1398,27 +1398,23 @@ function unloadXUL() {
     if (GlobalToggleCommands[cmd] == "User Notes") continue;
     prefs.setCharPref(GlobalToggleCommands[cmd], LibSword.getGlobalOption(GlobalToggleCommands[cmd]));
   }
-  
 
   while(true) {
     try {window.controllers.removeControllerAt(0);}
     catch (er) {break;}
   }
   
-  try {window.controllers.removeController(XulswordController);} catch(er) {}
-  try {window.controllers.removeController(BookmarksMenuController);} catch(er) {}
-  
+  // set these so xulsword viewport can draw cleaner and faster upon next startup
   prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
   prefs.setIntPref("ViewPortWidth", ViewPort.ownerDocument.defaultView.innerWidth);
   
-  //Close search windows and other windows
+  // close all windows
   for (var i=0; i<AllWindows.length; i++) {
     if (AllWindows[i] === window) continue;
-    if (!AllWindows[i]) next;
     try {AllWindows[i].close();} catch(er) {}
   }
     
-  //Clear Transactions
+  // clear Transactions
   BM.gTxnSvc.clear();
   
   if (LibSword) {
@@ -1426,7 +1422,7 @@ function unloadXUL() {
     LibSword.quitLibsword();
   }
   
-  //Purge UserData data source
+  // purge UserData data source
   if (BMDS) BookmarkFuns.purgeDataSource(BMDS);
   
   jsdump("Finished unloading xulsword.js");
@@ -1501,7 +1497,7 @@ var PrintPreviewCallbacks = {
     
     // Allow original caller to do something (like refocus their window) 
     // after print preview is done.
-    if (PrintTarget.callback && PrintTarget.callback.onPrintPreviewDone) {
+    if (PrintTarget.callback && typeof(PrintTarget.callback.onPrintPreviewDone) == "function") {
       PrintTarget.callback.onPrintPreviewDone();
     }
     
