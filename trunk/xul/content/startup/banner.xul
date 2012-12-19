@@ -20,10 +20,7 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
-<!DOCTYPE window [
-<!ENTITY % aboutDTD SYSTEM "chrome://xulsword/locale/about.dtd" >
-%aboutDTD;
-]>
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
 
 <window 
     id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"

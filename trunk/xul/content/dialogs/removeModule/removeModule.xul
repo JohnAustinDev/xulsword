@@ -21,10 +21,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/removeModule-xul.css" type="text/css"?>
 
-<!DOCTYPE window [
-<!ENTITY % removeModuleDTD SYSTEM "chrome://xulsword/locale/removeModule.dtd" >
-%removeModuleDTD;
-]>
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/dialogs/removeModule/removeModule.dtd">
 
 <window 
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -43,13 +40,13 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/removeModule/removeModule.js"/>
 
-  <data id="radio.label.Texts">&radio.label.Texts;</data>
-  <data id="radio.label.Comms">&radio.label.Comms;</data>
-  <data id="radio.label.Genbks">&radio.label.Genbks;</data>
-  <data id="radio.label.Dicts">&radio.label.Dicts;</data>
-  <data id="deleteCmd.label">&deleteCmd.label;</data>
-  <data id="menu.removeModule.label">&menu.removeModule.label;</data>
-  <data id="deleteconfirm.title">&deleteconfirm.title;</data>
+  <data id="ui.radio.label.Texts">&radio.label.Texts;</data>
+  <data id="ui.radio.label.Comms">&radio.label.Comms;</data>
+  <data id="ui.radio.label.Genbks">&radio.label.Genbks;</data>
+  <data id="ui.radio.label.Dicts">&radio.label.Dicts;</data>
+  <data id="ui.deleteCmd.label">&deleteCmd.label;</data>
+  <data id="ui.menu.removeModule.label">&menu.removeModule.label;</data>
+  <data id="ui.deleteconfirm.title">&deleteconfirm.title;</data>
 
   <vbox id="body">
     

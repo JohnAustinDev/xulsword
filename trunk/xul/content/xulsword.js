@@ -25,12 +25,11 @@ var AudioDirs = null;
 
 function loadedXUL() {
 
-  initCSS(false);
+  initCSS();
   AllWindows.push(window);
   
-  document.title = SBundle.getString("Title");
+  document.title = XSBundle.getString("Title");
   window.name="xulsword-window";
-  
   
   //To make the program window draw cleaner and faster, size initialization 
   //routines use prefs to size the frames since window size is not available during 
@@ -147,12 +146,12 @@ function postWindowInit() {
   
   // Open language menu if a new locale was just installed
   if (NewModuleInfo && NewModuleInfo.NewLocales && NewModuleInfo.NewLocales[0] && !document.getElementById("sub-lang").disabled) {
-    var opmenu = document.getElementById("menu.options").childNodes[0].nodeValue;
-    var lamenu = document.getElementById("menu.options.language").childNodes[0].nodeValue;
+    var opmenu = getDataUI("menu.options");
+    var lamenu = getDataUI("menu.options.language");
     var result={};
     var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
-        fixWindowTitle(document.getElementById("menu.options.language").childNodes[0].nodeValue),
-        SBundle.getFormattedString("LangSelectMsg", [opmenu, lamenu]), 
+        fixWindowTitle(getDataUI("menu.options.language")),
+        XSBundle.getFormattedString("LangSelectMsg", [opmenu, lamenu]), 
         DLGINFO,
         DLGOK);
     openLanguageMenu();
@@ -766,7 +765,7 @@ var XulswordController = {
       if (!addNewModule()) ModuleCopyMutex=false;
       break;
     case "cmd_xs_removeModule":
-      AllWindows.push(window.open("chrome://xulsword/content/dialogs/removeModule/removeModule.xul", document.getElementById("menu.removeModule.label").childNodes[0].nodeValue, "chrome,resizable,centerscreen"));
+      AllWindows.push(window.open("chrome://xulsword/content/dialogs/removeModule/removeModule.xul", getDataUI("menu.removeModule.label"), "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_exportAudio":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
@@ -1060,7 +1059,7 @@ function handleOptions(elem) {
         }
       }
       
-      Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+      Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null, true, true, true]);
       break;
     
     case "about":
@@ -1433,8 +1432,8 @@ function unloadXUL() {
  ***********************************************************************/ 
 
 function copyPassageDialog() {
-  AllWindows.push(window.open("chrome://xulsword/content/dialogs/copyPassage/copyPassage.xul",
-      document.getElementById("menu.copypassage").childNodes[0].nodeValue,
+  AllWindows.push(window.open("chrome://xulsword/content/dialogs/copyPassage/copyPassage.xul", 
+      getDataUI("menu.copypassage"),
       "chrome,resizable,centerscreen"));
 }
 
@@ -1463,7 +1462,7 @@ function handlePrintCommand(command, target) {
     
   case "cmd_print_passage":
     AllWindows.push(window.open("chrome://xulsword/content/dialogs/printPassage/printPassage.xul",
-        document.getElementById("print.printpassage").childNodes[0].nodeValue,
+        getDataUI("print.printpassage"),
         "chrome,resizable,centerscreen"));
     break;
   }

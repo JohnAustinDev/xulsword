@@ -644,15 +644,26 @@ var MouseWheel = {
       }
      
       var p = getElementInfo(v);
-      Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
+      
+      if (ViewPort.IsPinned[MouseWheel.SWwin]) {
+        Texts.pinnedDisplay[MouseWheel.SWwin].mod = p.mod;
+        Texts.pinnedDisplay[MouseWheel.SWwin].bk = p.bk;
+        Texts.pinnedDisplay[MouseWheel.SWwin].ch = p.ch;
+        Texts.pinnedDisplay[MouseWheel.SWwin].vs = p.vs;
+        Texts.pinnedDisplay[MouseWheel.SWwin].lv = p.vs;
+      }
+      else Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
     }
       
     // decide which windows to scroll and which to leave alone
     var force = [null];
     for (var w=1; w<=NW; w++) {
       var s = 0;
-      if (w == MouseWheel.SWwin && t.getAttribute("columns") == "show1") {
-        s = -1; // no need to scroll since UI will handle it
+      if (w == MouseWheel.SWwin) {
+        if (t.getAttribute("columns") == "show1") s = -1; // no need to scroll since UI will handle it
+      }
+      else {
+        if (ViewPort.IsPinned[MouseWheel.SWwin]) s = -1;
       }
       force.push(s);
     }

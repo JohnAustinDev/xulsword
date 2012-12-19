@@ -35,7 +35,7 @@
   <script>
   function writeSearchHelp() {
     var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-    var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/search-help.properties");
+    var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/search/search-help.properties");
     window.frameElement.ownerDocument.title = fixWindowTitle(bundle.GetStringFromName("windowTitle"));
     document.write("<div style=\"width:100%;\">" + bundle.GetStringFromName("searchTypes") + "</div>");
     document.write("<table style=\"width:100%; font-size:12px; border-collapse:collapse; border:2px solid rgb(200,170,205); border-radius:4px;\"><tbody>");

@@ -35,12 +35,7 @@
  ***** END LICENSE BLOCK ***** !-->
 
  
-<!DOCTYPE window [
-<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
-%xulswordDTD;
-<!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd" >
-%bookmarksDTD;
-]>
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
 
 <bindings id="bookmarksBindings" 
           xmlns="http://www.mozilla.org/xbl" 

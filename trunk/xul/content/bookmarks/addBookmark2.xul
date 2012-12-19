@@ -39,16 +39,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks-xul.css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/addBookmark-xul.css"?>
 
-<!DOCTYPE dialog [
-<!ENTITY % addBookmarkDTD SYSTEM "chrome://xulsword/locale/bookmarks/addBookmark.dtd">
-%addBookmarkDTD;
-<!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
-%bookmarksDTD;
-<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
-%xulswordDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/global.dtd" >
-%globalDTD;
-]>
+<!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
 
 <dialog id="addBookmarkDialog"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -72,8 +63,6 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/addBookmark2.js"/>
-
-  <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
 
   <separator id="nameseparator" class="thin"/>
   

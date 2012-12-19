@@ -508,6 +508,17 @@ function getPrefOrCreate(prefName, prefType, defaultValue) {
  * Locale Functions
  ***********************************************************************/
 
+function getDataUI(prop) {
+  var d = document.getElementById("ui." + prop);
+  
+  if (!d) {
+    if (typeof("jsdump") != "undefined") jsdump("WARNING: getDataUI() failed to locate data.");
+    return "";
+  }
+  
+  return d.childNodes[0].nodeValue;
+}
+
 function getLocale() {
   var loc = rootprefs.getCharPref("general.useragent.locale");
   if (loc.indexOf("chrome")==0) {
@@ -573,10 +584,10 @@ function fixWindowTitle(title) {
 function getLocalizedChapterTerm(shortBookName, chapternumber, bookbundle, locale) {
   var chapTerm;
   if (shortBookName=="Ps") {
-    try {chapTerm = bookbundle.formatStringFromName("PsalmTerm",[dString(chapternumber, locale)],1);}
+    try {chapTerm = bookbundle.formatStringFromName("PsalmTerm",[dString(chapternumber, locale)], 1);}
     catch (er) {chapTerm=null;}
   }
-  if (!chapTerm) chapTerm = bookbundle.formatStringFromName("Chaptext",[dString(chapternumber, locale)],1);
+  if (!chapTerm) chapTerm = bookbundle.formatStringFromName("Chaptext",[dString(chapternumber, locale)], 1);
   return chapTerm;
 }
 
@@ -618,7 +629,7 @@ var DisplayNumeral = new Object();
 function getDisplayNumerals(locale) {
   DisplayNumeral[locale] = new Array(11);
   DisplayNumeral[locale][10] = false;
-  var bundle = getLocaleBundle(locale, "numbers.properties");
+  var bundle = getLocaleBundle(locale, "common/numbers.properties");
   for (var i=0; i<=9; i++) {
     var n = null;
     if (bundle) {

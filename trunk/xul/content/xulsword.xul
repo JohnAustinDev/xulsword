@@ -24,18 +24,7 @@
 <?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul" ?>
 <?xul-overlay href="chrome://xulsword/content/common/contextMenu-overlay.xul" ?>
 
-<!DOCTYPE window [
-<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
-%xulswordDTD;
-<!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd" >
-%bookmarksDTD;
-<!ENTITY % browserDTD SYSTEM "chrome://xulsword/locale/bookmarks/browser.dtd" >
-%browserDTD;
-<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/global.dtd" >
-%globalDTD;
-<!ENTITY % nsProgressDialogDTD SYSTEM "chrome://xulsword/locale/dialog.dtd" >
-%nsProgressDialogDTD;
-]>
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/xulsword.dtd">
 
 <window
     id="xulsword-window" xmlns:html="http://www.w3.org/1999/xhtml"
@@ -52,19 +41,19 @@
     
 <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
 
-<data id="print.printpassage">&print.printpassage;</data>
-<data id="menu.copypassage">&menu.copypassage;</data>
-<data id="history.back.label">&history.back.label;</data>
-<data id="menu.addNewModule.label">&menu.addNewModule.label;</data>
-<data id="menu.removeModule.label">&menu.removeModule.label;</data>
-<data id="menu.importAudio.label">&menu.importAudio.label;</data>
-<data id="menu.exportAudio.label">&menu.exportAudio.label;</data>
-<data id="menu.options.language">&menu.options.language;</data>
-<data id="menu.options">&menu.options;</data>
-<data id="menu.removeModule.label">&menu.removeModule.label;</data>
-<data id="savingSource">&dlgFrom;</data>
-<data id="savingTarget">&dlgTo;</data>
-<data id="localeDir">&locale.dir;</data>
+<data id="ui.print.printpassage">&print.printpassage;</data>
+<data id="ui.menu.copypassage">&menu.copypassage;</data>
+<data id="ui.history.back.label">&history.back.label;</data>
+<data id="ui.menu.addNewModule.label">&menu.addNewModule.label;</data>
+<data id="ui.menu.removeModule.label">&menu.removeModule.label;</data>
+<data id="ui.menu.importAudio.label">&menu.importAudio.label;</data>
+<data id="ui.menu.exportAudio.label">&menu.exportAudio.label;</data>
+<data id="ui.menu.options.language">&menu.options.language;</data>
+<data id="ui.menu.options">&menu.options;</data>
+<data id="ui.menu.removeModule.label">&menu.removeModule.label;</data>
+<data id="ui.savingSource">&dlgFrom;</data>
+<data id="ui.savingTarget">&dlgTo;</data>
+<data id="ui.localeDir">&locale.dir;</data>
 
 <script>var MainWindow = window;</script>
 
@@ -487,9 +476,9 @@
         <iframe id="main-viewport" flex="100%" src="viewport/viewport.html" context="contextScriptBox" />
       </hbox>
       
-      <browser id="printPreviewBrowser"/>
+      <browser id="printPreviewBrowser" disablehistory="true"/>
       
-      <browser id="printBrowser" type="content-primary" />
+      <browser id="printBrowser" type="content-primary" disablehistory="true"/>
       
     </deck>
   </vbox>

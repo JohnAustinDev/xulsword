@@ -128,7 +128,10 @@ function SearchObj(searchObj) {
   this.progress = null; // holds progress related params if progress bar is used
   this.originalTitle = document.title;
 
-
+  this.bundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
+      .getService(Components.interfaces.nsIStringBundleService)
+      .createBundle("chrome://xulsword/locale/search/search.properties"),
+      
   // Updates bits of the UI based on how other UI bits are set.
   this.update = function() {
 
@@ -218,8 +221,8 @@ function SearchObj(searchObj) {
       if (!dontAsk) {
         var myresult = {};
         var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, myresult, 
-            fixWindowTitle(SBundle.getString("BuildingIndex")),
-            SBundle.getString("NeedSearchIndex"), 
+            fixWindowTitle(getDataUI("BuildingIndex")),
+            getDataUI("NeedSearchIndex"), 
             DLGINFO,
             DLGOKCANCEL);
         prefs.setBoolPref("dontAskAboutSearchIndex." + s.mod, true);
@@ -237,7 +240,7 @@ function SearchObj(searchObj) {
     
     // replace UI search symbols with internally recognized search symbols
     for (var i=0; i<LOCALE_SEARCH_SYMBOLS.length; i++) {
-      try {var sym = SBundle.GetStringFromName(LOCALE_SEARCH_SYMBOLS[i]);} catch (er) {continue;}
+      try {var sym = this.bundle.GetStringFromName(LOCALE_SEARCH_SYMBOLS[i]);} catch (er) {continue;}
       if (!sym || (/^\s*$/).test(sym)) continue;
       s.query = s.query.replace(sym, ACTUAL_SEARCH_SYMBOLS[i], "g");
     }
@@ -368,7 +371,7 @@ function SearchObj(searchObj) {
       }
       document.getElementById("statusbar-text").label = "";    
       document.getElementById("progressbox").style.visibility = "visible";
-      document.getElementById("searchmsg").value = SBundle.getFormattedString("Searching", [Book[this.progress.index].bName]);
+      document.getElementById("searchmsg").value = this.bundle.formatStringFromName("Searching", [Book[this.progress.index].bName], 1);
       document.getElementById("stopButton").hidden = false;
       
       this.progress.timeout = window.setTimeout("Search.searchNextBook();" , 500); // 500 gives progressbar time to appear
@@ -416,7 +419,7 @@ function SearchObj(searchObj) {
     
     // search another book, or are we done?
     if (progress.index < progress.book.length) {
-      document.getElementById("searchmsg").value = SBundle.getFormattedString("Searching", [Book[progress.index].bName]);
+      document.getElementById("searchmsg").value = this.bundle.formatStringFromName("Searching", [Book[progress.index].bName], 1);
       progress.timeout = window.setTimeout("Search.searchNextBook();", 1);
       return;
     }
@@ -455,9 +458,9 @@ function SearchObj(searchObj) {
     // display info about results which are currently being shown
     var lastMatchShown = (result.count - result.index < result.results_per_page ? result.count:result.index + result.results_per_page);
     if (result.count > result.results_per_page) {
-      document.getElementById("statusbar-text").label = SBundle.getFormattedString("FoundMult", [dString(result.index + 1), dString(lastMatchShown), dString(result.count)]);
+      document.getElementById("statusbar-text").label = this.bundle.formatStringFromName("FoundMult", [dString(result.index + 1), dString(lastMatchShown), dString(result.count)], 3);
     }
-    else document.getElementById("statusbar-text").label = SBundle.getFormattedString("Found", [dString(result.count)]);
+    else document.getElementById("statusbar-text").label = this.bundle.formatStringFromName("Found", [dString(result.count)], 1);
     
   };
 
@@ -780,7 +783,7 @@ function startIndexer() {
   // use progress bar to show indexer progress
   document.getElementById("progressbox").style.visibility = "visible";
   document.getElementById("progress").value = 0;
-  document.getElementById("searchmsg").value = SBundle.getString("BuildingIndex");
+  document.getElementById("searchmsg").value = getDataUI("BuildingIndex");
   document.getElementById("stopButton").hidden = true;
   
   if (!MainWindow.Indexer.inprogress) {

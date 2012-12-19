@@ -22,7 +22,12 @@ const MAXLENGTH = 1966; //2006 is absolute max;
 const URLNEWLINE = "%0A";
 var aConsoleListener =
 {
+  bundle:Components.classes["@mozilla.org/intl/stringbundle;1"]
+      .getService(Components.interfaces.nsIStringBundleService)
+      .createBundle("chrome://xulsword/locale/startup/startup.properties"),
+  
   haveException:false,
+  
   observe:function( aMessage ){
     if (this.haveException) return;
     try {aMessage = aMessage.QueryInterface(Components.interfaces.nsIScriptError);}
@@ -75,18 +80,15 @@ var aConsoleListener =
         }
         
         // EMAIL REPORT FILE
-        var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-        var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/logfile.properties");
-        var SBundle = (document ? document.getElementById("strings"):null);
         if (window.opener) {window.opener.close();} // Don't let splash screen obscure dialogs...
  
         var result={};
         var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
-            (SBundle ? SBundle.getString("Title"):"xulsword"),
-            (SBundle ? SBundle.getFormattedString("SendErrorReport", [bundle.GetStringFromName("OK")]):"Error Report"),
+            this.bundle.getString("Title"),
+            this.bundle.getFormattedString("SendErrorReport", [this.bundle.GetStringFromName("dialog.OK")]),
             DLGALERT,
             DLGOKCANCEL,
-            bundle.GetStringFromName("browsewithcaret.checkMsg"));
+            this.bundle.GetStringFromName("dontShowAgain"));
           
         if (result.checked) {
           var dsed = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService); 
