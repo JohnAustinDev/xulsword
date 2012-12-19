@@ -20,10 +20,7 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
-<!DOCTYPE window [
-<!ENTITY % copyPassageDTD SYSTEM "chrome://xulsword/locale/copyPassage.dtd" >
-%copyPassageDTD;
-]>
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/dialogs/copyPassage/copyPassage.dtd">
 
 <window 
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -40,7 +37,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/copyPassage/copyPassage.js"/>
 
-  <data id="cancelButton.label">&cancelButton.label;</data>
+  <data id="ui.cancelButton.label">&cancelButton.label;</data>
 
   <groupbox>
     <caption label="&term.passage;" />

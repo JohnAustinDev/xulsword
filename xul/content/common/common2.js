@@ -42,8 +42,12 @@ var LanguageStudyModules  = MainWindow.LanguageStudyModules;
 
 var CommandTarget         = MainWindow.CommandTarget;
 
+var XSBundle              = MainWindow.XSBundle;
+
+
 // The following objects are sometimes intentionally overwritten by 
-// loading a corresponding js file after common2.js has loaded. 
+// loading a corresponding js file after common2.js has loaded. This
+// allows multiple copies of these objects to be used.
 var ViewPort              = MainWindow.ViewPort;
 var Texts                 = MainWindow.Texts;
 var BibleTexts            = MainWindow.BibleTexts;

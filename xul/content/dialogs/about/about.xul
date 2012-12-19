@@ -21,10 +21,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/about-xul.css" type="text/css"?>
 
-<!DOCTYPE window [
-<!ENTITY % aboutDTD SYSTEM "chrome://xulsword/locale/about.dtd"> %aboutDTD;
-<!ENTITY % searchDTD SYSTEM "chrome://xulsword/locale/search.dtd"> %searchDTD;
-]>
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/dialogs/about/about.dtd">
 
 <window 
     id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"
@@ -32,15 +29,13 @@
     hidechrome="true"
     onload="initCSS; loaded()"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-    
-  <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
   
-  <data id="search.Texts">&search.Texts;</data>
-  <data id="search.Comms">&search.Comms;</data>
-  <data id="search.Genbks">&search.Genbks;</data>
-  <data id="search.Dicts">&search.Dicts;</data>
-  <data id="more.label">&more.label;</data>
-  <data id="less.label">&less.label;</data>
+  <data id="ui.search.Texts">&search.Texts;</data>
+  <data id="ui.search.Comms">&search.Comms;</data>
+  <data id="ui.search.Genbks">&search.Genbks;</data>
+  <data id="ui.search.Dicts">&search.Dicts;</data>
+  <data id="ui.more.label">&more.label;</data>
+  <data id="ui.less.label">&less.label;</data>
   
   <script>var MainWindow = window.opener;</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
@@ -49,7 +44,7 @@
   
   <script>
   function loaded() {
-    document.getElementById("info").value = SBundle.getFormattedString('Version', [prefs.getCharPref("Version"), prefs.getCharPref("BuildID")]);
+    document.getElementById("info").value = XSBundle.getFormattedString('Version', [prefs.getCharPref("Version"), prefs.getCharPref("BuildID")]);
     window.sizeToContent();
   }
   </script>

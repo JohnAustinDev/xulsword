@@ -38,14 +38,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksProperties-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks-xul.css"?>
 
-<!DOCTYPE dialog [
-<!ENTITY % bmpropsDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarksProperties.dtd">
-%bmpropsDTD;
-<!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
-%bookmarksDTD;
-<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
-%xulswordDTD;
-]>
+<!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
 
 <dialog id="bmPropsWindow" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         title="&bookmarks.windowtitle.label;"
@@ -61,8 +54,6 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksProperties.js"/>
-
-  <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
   
   <vbox id="description-box" hidden="true">
     <separator class="thin"/>

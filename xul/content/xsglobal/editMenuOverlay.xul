@@ -1,6 +1,6 @@
 <?xml version="1.0"?> <!-- -*- Mode: HTML -*- --> 
 
-<!DOCTYPE overlay SYSTEM "chrome://xulsword/locale/editMenuOverlay.dtd">
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/xsglobal/xsglobal.dtd">
 
 <overlay id="editMenuOverlay"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">

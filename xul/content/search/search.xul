@@ -24,10 +24,7 @@
 <?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
 <?xul-overlay href="chrome://xulsword/content/common/contextMenu-overlay.xul"?>
 
-<!DOCTYPE window [
-<!ENTITY % searchDTD SYSTEM "chrome://xulsword/locale/search.dtd">
-%searchDTD;
-]>
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/search/search.dtd">
 
 <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"
     id="search"
@@ -39,7 +36,8 @@
     onclick="commandHandler(event);"
     onresize="document.getElementById('search-module').style.width = window.innerWidth + 'px';">
 
-<stringbundle id="strings" src="chrome://xulsword/locale/search.properties"/>
+<data id="ui.BuildingIndex">&BuildingIndex;</data>
+<data id="ui.NeedSearchIndex">&NeedSearchIndex;</data>
 
 <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
 <script src="chrome://xulsword/content/common/common0.js"/>

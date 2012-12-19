@@ -44,23 +44,20 @@ function Load() {
   Checkbox = document.getElementById("checkbox");
   Textbox = document.getElementById("textbox");
 
-  var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-  try {var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/dialog.properties");}
-  catch (er) {bundle=null; jsdump("Could not find string bundle.");}
   var acceptLabel, cancelLabel;
   if (bundle) {
     switch (Buttons) {
     case DLGOK:
-      acceptLabel = bundle.GetStringFromName("OK");
+      acceptLabel = getDataUI("dialog.OK");
       document.getElementById("dlg").getButton("cancel").hidden=true;
       break;
     case DLGOKCANCEL:
-      acceptLabel = bundle.GetStringFromName("OK");
-      cancelLabel = bundle.GetStringFromName("Cancel");
+      acceptLabel = getDataUI("dialog.OK");
+      cancelLabel = getDataUI("dialog.Cancel");
       break;
     case DLGYESNO:
-      acceptLabel = bundle.GetStringFromName("Yes");
-      cancelLabel = bundle.GetStringFromName("No");
+      acceptLabel = getDataUI("dialog.Yes");
+      cancelLabel = getDataUI("dialog.No");
       break;
     }
   }
@@ -96,8 +93,8 @@ function Load() {
     parent.appendChild(newElem);
   }
   document.getElementById("icon").setAttribute("src", imgSrc);
-  if (bundle) document.getElementById("dlg").getButton("accept").setAttribute("label", acceptLabel);
-  if (bundle) document.getElementById("dlg").getButton("cancel").setAttribute("label", cancelLabel);
+  document.getElementById("dlg").getButton("accept").setAttribute("label", acceptLabel);
+  document.getElementById("dlg").getButton("cancel").setAttribute("label", cancelLabel);
   
   if (CheckBoxText) {
     Checkbox.setAttribute("hidden", "false");

@@ -20,7 +20,8 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
-<!DOCTYPE window SYSTEM "chrome://xulsword/locale/">
+<!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/dialogs/getkey/getkey.dtd">
+
 <dialog 
     id="key-window" 
     title=""

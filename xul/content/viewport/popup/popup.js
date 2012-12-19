@@ -65,7 +65,7 @@ function PopupObj(popupobj) {
     html += "<div class=\"popupheader cs-Program\">";
     html +=   "<div class=\"towindow\" onclick=\"Popup.towindow();\"></div>";
     html +=   "<a class=\"" + (updatingPopup ? "popupBackLink":"popupCloseLink") + "\">";
-    html +=     MainWindow.SBundle.getString(updatingPopup ? "back":"close");
+    html +=     XSBundle.getString(updatingPopup ? "back":"close");
     html +=   "</a>";
     
     html +=   "<select class=\"popup-mod-select\" onchange=\"Popup.select(this.value);\" >";

@@ -22,10 +22,6 @@
 
 <?xul-overlay href="chrome://xulsword/content/common/contextMenu-overlay.xul" ?>
 
-<!DOCTYPE window [
-<!ENTITY % globalDTD SYSTEM "chrome://xulsword/locale/global.dtd"> %globalDTD;
-]>
-
 <window
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:html="http://www.w3.org/1999/xhtml"

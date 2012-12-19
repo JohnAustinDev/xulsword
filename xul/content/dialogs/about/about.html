@@ -62,7 +62,7 @@
   }
   
   function getUI(id) {
-    return window.frameElement.ownerDocument.getElementById(id).childNodes[0].nodeValue;
+    return window.frameElement.ownerDocument.defaultView.getDataUI(id);
   }
     
   </script>

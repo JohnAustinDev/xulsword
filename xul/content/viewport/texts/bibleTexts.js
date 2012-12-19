@@ -154,7 +154,7 @@ BibleTexts = {
   getChapterHeading: function(bk, ch, mod) {
     var l = ModuleConfigs[mod].AssociatedLocale;
     if (l == NOTFOUND) {l = getLocale();} // otherwise use current program locale
-    var b = getLocaleBundle(l, "books.properties");
+    var b = getLocaleBundle(l, "common/books.properties");
 
     var intro = (ch != 1 ? "":BibleTexts.getBookIntroduction(mod, bk));
     
@@ -172,7 +172,7 @@ BibleTexts = {
     html  = "<div class=\"chapterhead" + (ch==1 ? " chapterfirst":"") + " cs-" + l + "\" headdir=\"" + (LocaleConfigs[l].direction) + "\">";
     
     html +=   "<div class=\"chapnotice cs-" + mod + "\" empty=\"" + (lt ? "false":"true") + "\">";
-    html +=     "<div class=\"noticelink-c\">" + lt + "</div>";
+    html +=     "<div class=\"noticelink-c\">" + (lt ? lt:"") + "</div>";
     html +=     "<div class=\"noticetext\">" + (lt ? LibSword.getModuleInformation(mod, "NoticeText"):"") + "</div>";
     html +=     "<div class=\"head-line-break\"></div>";
     html +=   "</div>";
@@ -191,7 +191,7 @@ BibleTexts = {
     
     html += "<div class=\"head-line-break\"></div>";
     
-    html += "<div class=\"introtext\" empty=\"" + (intro ? "false":"true") + "\">" + intro + "</div>";
+    html += "<div class=\"introtext\" empty=\"" + (intro ? "false":"true") + "\">" + (intro ? intro :"") + "</div>";
     
     return html;
   },

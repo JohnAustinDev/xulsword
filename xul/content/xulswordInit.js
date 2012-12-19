@@ -33,6 +33,7 @@ var LanguageStudyModules = {};
 var DailyDevotionModules = {};
 var Book = new Array(NumBooks);
 var AllWindows = [];
+var XSBundle = document.getElementById("strings");
 
 // Global text objects defined in vewport.js and texts.js files
 var ViewPort = null;
@@ -301,12 +302,12 @@ function initTabGlobals() {
     var isORIG = LibSword.getModuleInformation(mod, "OriginalTabTestament");
     if (isORIG == "OT") {
       origModuleOT = mod;
-      try {label = SBundle.getString("ORIGLabelOT");}
+      try {label = XSBundle.getString("ORIGLabelOT");}
       catch (er) {}
     }
     else if (isORIG == "NT") {
       origModuleNT = mod;
-      try {label = SBundle.getString("ORIGLabelNT");}
+      try {label = XSBundle.getString("ORIGLabelNT");}
       catch (er) {}
     }
     
@@ -435,7 +436,7 @@ function initBooks() {
       "Jude", "Rom", "1Cor", "2Cor", "Gal", "Eph", "Phil", "Col", "1Thess", 
       "2Thess", "1Tim", "2Tim", "Titus", "Phlm", "Heb", "Rev"];
       
-  var b = getCurrentLocaleBundle("books.properties");
+  var b = getCurrentLocaleBundle("common/books.properties");
   
   for (var i=0; i < NumBooks; i++) {
     Book[i] = new Object();

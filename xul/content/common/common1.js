@@ -32,15 +32,6 @@ if (!MainWindow) MainWindow = window.QueryInterface(Components.interfaces.nsIInt
                    .getInterface(Components.interfaces.nsIDOMWindow);
 if (!MainWindow) jsdump("WARNING: Unable to initialize MainWindow: (" + window.name + ")\n");
 
-var SBundle;
-try {SBundle = document.getElementById("strings");}
-catch (er) {SBundle = null;}
-if (!SBundle) {
-  try {SBundle = MainWindow.document.getElementById("strings");}
-  catch (er) {SBundle = null;}
-}
-if (!SBundle) jsdump("WARNING: Unable to initialize string SBundle: (" + window.name + " " + MainWindow.name + ")\n");
-
 
 /************************************************************************
  * DYNAMIC CSS FUNCTIONS
@@ -118,7 +109,7 @@ function getLocaleConfig(lc) {
   var localeConfig = {};
   
   var programCSS = getCSS(".cs-Program {");
-  var b = getLocaleBundle(lc, "config.properties");
+  var b = getLocaleBundle(lc, "common/config.properties");
 
   // All config properties should have a valid value, and it must not be null.
   // Read values from locale's config.properties file
@@ -307,7 +298,7 @@ function compareAgainstLocales(inbook, exact, bookInfo) {
     for (var i=0; i<NumBooks; i++) {
       var key = lc + "-" + Book[i].sName;
       if (!BookNameCache[key]) {
-        if (!bundle) bundle = getLocaleBundle(lc, "books.properties");
+        if (!bundle) bundle = getLocaleBundle(lc, "common/books.properties");
         BookNameCache[key] = bundle.GetStringFromName(Book[i].sName);
         try {var add = "," + bundle.GetStringFromName("Long" + Book[i].sName);}
         catch (er) {add = "";}

@@ -18,10 +18,7 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
-<!DOCTYPE window [
-<!ENTITY % contextMenuOverlayDTD SYSTEM "chrome://xulsword/locale/contextMenu-overlay.dtd" >
-%contextMenuOverlayDTD;
-]>
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/common/common.dtd">
 
 <overlay id="text-contextMenu" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   

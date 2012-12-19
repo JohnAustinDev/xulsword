@@ -398,9 +398,9 @@ Texts = {
 
     var html = "";
     html += "<div class=\"navlink\">";
-    html +=   "&lrm;<span class=\"navlink-span\">" + charPrev + "</span> " + "<a class=\"prevchaplink\">" + SBundle.getString('PrevChaptext') + "</a>";
+    html +=   "&lrm;<span class=\"navlink-span\">" + charPrev + "</span> " + "<a class=\"prevchaplink\">" + XSBundle.getString('PrevChaptext') + "</a>";
     html +=   " / ";
-    html +=   "<a class=\"nextchaplink\">&lrm;" + SBundle.getString('NextChaptext') + "</a>" + " <span class=\"navlink-span\">" + charNext + "</span>";
+    html +=   "<a class=\"nextchaplink\">&lrm;" + XSBundle.getString('NextChaptext') + "</a>" + " <span class=\"navlink-span\">" + charNext + "</span>";
     html += "</div>";
     
     return html;

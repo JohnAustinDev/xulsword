@@ -27,7 +27,7 @@ function onLoad() {
     // add label when module type changes
     if (Tabs[t].modType != lastType) {
       var cb = document.createElement("label");
-      cb.setAttribute("value", document.getElementById("radio.label." + Tabs[t].tabType).childNodes[0].nodeValue);
+      cb.setAttribute("value", getDataUI("radio.label." + Tabs[t].tabType));
       cb.setAttribute("class", "module-heading");
       checkBoxes.push(cb);
     }
@@ -165,8 +165,8 @@ function deleteCheckedResources(e) {
   // Ask confirmation that we really want to delete.
   var result = {};
   var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
-      fixWindowTitle(document.getElementById("menu.removeModule.label").childNodes[0].nodeValue),
-      document.getElementById("deleteconfirm.title").childNodes[0].nodeValue, 
+      fixWindowTitle(getDataUI("menu.removeModule.label")),
+      getDataUI("deleteconfirm.title"), 
       DLGQUEST,
       DLGYESNO);
   if (!result.ok) return;

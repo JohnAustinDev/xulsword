@@ -20,10 +20,7 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
-<!DOCTYPE window [
-<!ENTITY % xulswordDTD SYSTEM "chrome://xulsword/locale/xulsword.dtd" >
-%xulswordDTD;
-]>
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/common/common.dtd">
 
 <window id="work-progress" xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   onload="initCSS(); Load();"

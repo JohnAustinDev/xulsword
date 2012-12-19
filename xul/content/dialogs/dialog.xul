@@ -18,6 +18,8 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
+<!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/dialog/dialog.dtd">
+
 <?xml-stylesheet href="chrome://xulsword/skin/global-xul.css" type="text/css"?>
 
 <dialog id="dlg" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"
@@ -26,6 +28,11 @@
         buttons="accept,cancel"
         ondialogaccept="accept();"
         ondialogcancel="cancel();">
+        
+  <data id="ui.dialog.OK">&dialog.OK;</data>
+  <data id="ui.dialog.Yes">&dialog.Yes;</data>
+  <data id="ui.dialog.No">&dialog.No;</data>
+  <data id="ui.dialog.Cancel">&dialog.Cancel;</data>
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>

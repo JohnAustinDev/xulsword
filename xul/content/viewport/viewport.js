@@ -400,7 +400,7 @@ function ViewPortObj(viewPortObj) {
     // special ORIG tab
     var orig = "";
     orig += "<input type=\"button\" class=\"tab tabTexts\" ";
-    orig += "id=\"w" + w + ".tab.orig\" value=\"" + SBundle.getString("ORIGLabelTab") + "\" ";
+    orig += "id=\"w" + w + ".tab.orig\" value=\"" + XSBundle.getString("ORIGLabelTab") + "\" ";
     orig += "title=\"\"" + (!Tab.ORIG_NT && !Tab.ORIG_OT ? " style=\"display:none;\"":"") + "></button>";
 
     var html = "";

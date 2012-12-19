@@ -62,7 +62,7 @@ if ($MakeDevelopment =~ /true/i) {
   &writePreferences($DEVELOPMENT, \%Prefs, 1);
   &writeApplicationINI($DEVELOPMENT);
   &includeModules($IncludeModules, \@ModRepos, $RESOURCES, $IncludeSearchIndexes);
-  &processLocales($IncludeLocales, \@manifest, $DEVELOPMENT);
+  &processLocales($IncludeLocales, \@manifest, $DEVELOPMENT, 1);
   &writeManifest(\@manifest, $DEVELOPMENT);
   &writeRunScript($Name, $DEVELOPMENT, "dev");
 }
@@ -81,7 +81,7 @@ if ($MakeFFextension =~ /true/i) {
   $Prefs{"(language.js):general.useragent.locale"} = ""; # default takes precendence after each startup in Firefox!
   &writePreferences($FFEXTENSION, \%Prefs);
   &includeModules($IncludeModules, \@ModRepos, "$FFEXTENSION/resources", $IncludeSearchIndexes);
-  &processLocales($IncludeLocales, \@manifest, $FFEXTENSION);
+  &processLocales($IncludeLocales, \@manifest, $FFEXTENSION, 1);
   &writeManifest(\@manifest, $FFEXTENSION);
   &writeInstallManifest($FFEXTENSION);
   &packageFFExtension("$FFEXTENSION/*", "$OutputDirectory/$Name-Extension-$Version");
@@ -105,7 +105,7 @@ if ($MakePortable =~ /true/i) {
   &writeApplicationINI("$PORTABLE/$Name", "P");
   &compileStartup($PORTABLE);
   &includeModules($IncludeModules, \@ModRepos, "$PORTABLE/resources", $IncludeSearchIndexes);
-  &processLocales($IncludeLocales, \@manifest, "$PORTABLE/$Name");
+  &processLocales($IncludeLocales, \@manifest, "$PORTABLE/$Name", 0);
   &writeManifest(\@manifest, "$PORTABLE/$Name");
   open(NIN, ">:encoding(UTF-8)", "$PORTABLE/resources/newInstalls.txt") || die;
   print NIN "NewLocales;en-US\n"; # this opens language menu on first run
@@ -136,7 +136,7 @@ if ($MakeSetup =~ /true/i) {
     remove_tree("$RESOURCES/modules");
   }
   &includeModules($IncludeModules, \@ModRepos, $RESOURCES, $IncludeSearchIndexes);
-  &processLocales($IncludeLocales, \@manifest, $INSTALLER);
+  &processLocales($IncludeLocales, \@manifest, $INSTALLER, 0);
   &writeManifest(\@manifest, $INSTALLER);
   &writeRunScript($Name, $INSTALLER, "install");
 
@@ -599,10 +599,11 @@ sub writeWindowsRegistryScript() {
   print REG "\"Version\"=\"$Version\"\n";
 }
 
-sub processLocales($\@$) {
+sub processLocales($\@$$) {
   my @locales = split(/\s*,\s*/, shift);
   my $manifestP = shift;
   my $od = shift;
+  my $no_xul_overrides = shift;
   
   &Log("----> Processing requested locales.\n");
   foreach my $loc (@locales) {
@@ -626,9 +627,12 @@ sub processLocales($\@$) {
     }
   }
   
-  push(@{$manifestP}, "override chrome://global/locale/textcontext.dtd chrome://xulsword/locale/xsglobal/textcontext.dtd");
-  push(@{$manifestP}, "override chrome://global/locale/tree.dtd chrome://xulsword/locale/xsglobal/tree.dtd");
-  
+  # do not override anything if this is a FireFox extension, as this may break FireFox!
+  if (!$no_xul_overrides) {
+    push(@{$manifestP}, "override chrome://global/locale/textcontext.dtd chrome://xulsword/locale/xsglobal/textcontext.dtd");
+    push(@{$manifestP}, "override chrome://global/locale/tree.dtd chrome://xulsword/locale/xsglobal/tree.dtd");
+  }
+
   push(@{$manifestP}, "\n# xulswordVersion=3.0\n");
   push(@{$manifestP}, "# minMKVersion=3.0\n"); # locales no longer have security codes and aren't backward compatible
 }

@@ -58,7 +58,7 @@ function addNewModule(e) {
   try {
     const kFilePickerContractID = "@mozilla.org/filepicker;1";
     const kFilePickerIID = Components.interfaces.nsIFilePicker;
-    const kTitle = fixWindowTitle(document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue);
+    const kTitle = fixWindowTitle(getDataUI("menu.addNewModule.label"));
     var kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
     kFilePicker.init(window, kTitle, kFilePickerIID.modeOpenMultiple);
     kFilePicker.appendFilter("XSM, ZIP", "*.xsm; *.zip");
@@ -203,7 +203,7 @@ jsdump("STARTING startImport");
     var result = {};
     ProgressMeterLoaded = false;
     ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
-      fixWindowTitle(document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue),
+      fixWindowTitle(getDataUI("menu.addNewModule.label")),
       "", 
       (allowStop ? PMSTOP:PMNORMAL),
       (allowStop ? stopImport:null));
@@ -223,20 +223,20 @@ jsdump("STARTING startImport");
     jsdump("There were incompatible components:");
     for (bf=0; bf<incomp.oldmodule.length; bf++) {jsdump("oldmodule:" + incomp.oldmodule[bf].leafName + ", minmodversion:" + incomp.minmodversion);}
     for (bf=0; bf<incomp.newmodule.length; bf++) {jsdump("newmodule:" + incomp.newmodule[bf].leafName + ", minprogversion:" + incomp.minprogversion);}
-    try {var showPrompt = (!PreMainWin && SBundle);} catch (er) {showPrompt = false;}
+    try {var showPrompt = (!PreMainWin && XSBundle);} catch (er) {showPrompt = false;}
     if (showPrompt) {
-      var msg = SBundle.getString("InstalIncomplete") + "\n";
+      var msg = XSBundle.getString("InstalIncomplete") + "\n";
       if (incomp.oldmodule.length) {
-        msg += SBundle.getString("OutOfDate") + "\n\n";
+        msg += XSBundle.getString("OutOfDate") + "\n\n";
         for (var bf=0; bf<incomp.oldmodule.length; bf++) {msg+="\"" + incomp.oldmodule[bf].leafName + "\"\n";}
-        msg += "\n" + SBundle.getFormattedString("MinModVersion2", [(incomp.minmodversion ? incomp.minmodversion:"?")]) + "\n\n";
+        msg += "\n" + XSBundle.getFormattedString("MinModVersion2", [(incomp.minmodversion ? incomp.minmodversion:"?")]) + "\n\n";
       }
       if (incomp.newmodule.length) {
         // Try is for Backward Compatibility to previous UI. May be removed when new UI is released.
         try {
-          msg += SBundle.getString("TooNew") + "\n\n";
+          msg += XSBundle.getString("TooNew") + "\n\n";
           for (var bf=0; bf<incomp.newmodule.length; bf++) {msg+="\"" + incomp.newmodule[bf].leafName + "\"\n";}
-          msg += "\n" + SBundle.getFormattedString("NeedUpgrade2", [(incomp.minprogversion ? incomp.minprogversion:"?")]) + "\n\n";
+          msg += "\n" + XSBundle.getFormattedString("NeedUpgrade2", [(incomp.minprogversion ? incomp.minprogversion:"?")]) + "\n\n";
         }
         catch (er) {
           msg += "The following module(s) have components which are not supported:\n\n";
@@ -248,7 +248,7 @@ jsdump("STARTING startImport");
       Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       var result = {};
       var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
-          fixWindowTitle(document.getElementById("menu.addNewModule.label").childNodes[0].nodeValue),
+          fixWindowTitle(getDataUI("menu.addNewModule.label")),
           msg,
           DLGALERT,
           DLGOK);
@@ -1445,8 +1445,8 @@ function restartApplication(promptBefore) {
   if (promptBefore) {
     var result = {};
     var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
-      fixWindowTitle(SBundle.getString("Title")),
-      SBundle.getString("RestartMsg"), 
+      fixWindowTitle(XSBundle.getString("Title")),
+      XSBundle.getString("RestartMsg"), 
       DLGINFO,
       DLGOK);
   }

@@ -686,7 +686,7 @@ var BookmarkFuns = {
       const kFilePickerIID = Components.interfaces.nsIFilePicker;
       const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
       
-      const kTitle = fixWindowTitle(SBundle.getString("SaveAs"));
+      const kTitle = fixWindowTitle(XSBundle.getString("SaveAs"));
       kFilePicker.init(window, kTitle, kFilePickerIID["modeSave"]);
       kFilePicker.appendFilters(kFilePickerIID.filterText);
       kFilePicker.defaultString = "bookmarks.txt";

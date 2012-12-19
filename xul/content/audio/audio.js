@@ -176,13 +176,13 @@ function checkQuickTime() {
       if (installer) break;
     }
     if (!installer) {
-      try {var msg = SBundle.getString("MustInstallQuickTime") + "\n\n";}
-      catch (er) {msg = SBundle.getString("Want2InstallQuickTime") + "\n\n";} //BACKWARD COMPATIBILITY
+      try {var msg = XSBundle.getString("MustInstallQuickTime") + "\n\n";}
+      catch (er) {msg = XSBundle.getString("Want2InstallQuickTime") + "\n\n";} //BACKWARD COMPATIBILITY
       for (var k=0; k<PLUGINLINKS.length; k++) {msg += PLUGINLINKS[k] + "\n";}
       msg += "\n";
       var result = {};
       var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
-          fixWindowTitle(SBundle.getString("Title")),
+          fixWindowTitle(XSBundle.getString("Title")),
           msg,
           DLGINFO,
           DLGOK);
@@ -193,11 +193,11 @@ function checkQuickTime() {
   }
   
   if (haveQT && !haveOKQT && !AlreadyPrompted) {
-    try {var msg = SBundle.getString("QuickTimeUpdateNeeded2");}
-    catch (er) {msg = SBundle.getString("QuickTimeUpdateNeeded");} //BACKWARD COMPATIBILITY
+    try {var msg = XSBundle.getString("QuickTimeUpdateNeeded2");}
+    catch (er) {msg = XSBundle.getString("QuickTimeUpdateNeeded");} //BACKWARD COMPATIBILITY
     var result = {};
     var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
-        fixWindowTitle(SBundle.getString("Title")),
+        fixWindowTitle(XSBundle.getString("Title")),
         msg,
         DLGINFO,
         DLGOK);
@@ -240,8 +240,8 @@ function installQT(installerFile) {
 	
   var result = {};
   var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
-      fixWindowTitle(SBundle.getString("Title")),
-      SBundle.getString("Want2InstallQuickTime"), 
+      fixWindowTitle(XSBundle.getString("Title")),
+      XSBundle.getString("Want2InstallQuickTime"), 
       DLGQUEST,
       DLGYESNO);
   if (!result.ok) return false;
@@ -303,7 +303,7 @@ function importAudio(fromDir, toDir, doNotCopyFiles) {
   const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
   if (!fromDir || doNotCopyFiles) {
     try {
-      var kTitle = fixWindowTitle(document.getElementById("savingSource").childNodes[0].nodeValue);
+      var kTitle = fixWindowTitle(getDataUI("savingSource"));
       for (var i=0; i<audioDirs.length; i++) {
         if (audioDirs[i].isInstallDir && audioDirs[i].dir.exists()) {
           kFilePicker.displayDirectory = audioDirs[i].dir;
@@ -340,13 +340,13 @@ function diskSpaceMessage(fromLeafName) {
   try {
     msg = Components.classes["@mozilla.org/intl/stringbundle;1"]
     .getService(Components.interfaces.nsIStringBundleService)
-    .createBundle("chrome://xulsword/locale/module.properties")
+    .createBundle("chrome://xulsword/locale/audio/audio.properties")
     .formatStringFromName("diskFull", [fromLeafName], 1);
   }
   catch (er) {msg = "Not enough disk space for this operation.";}
   var result = {};
   var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
-      fixWindowTitle(document.getElementById("menu.importAudio.label").childNodes[0].nodeValue),
+      fixWindowTitle(getDataUI("menu.importAudio.label")),
       msg,
       DLGALERT,
       DLGOK);
@@ -357,7 +357,7 @@ function importAudioTo() {
   const kFilePickerIID = Components.interfaces.nsIFilePicker;
   const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
   try {
-    var kTitle = fixWindowTitle(document.getElementById("savingTarget").childNodes[0].nodeValue);
+    var kTitle = fixWindowTitle(getDataUI("savingTarget"));
     kFilePicker.init(window, kTitle, kFilePickerIID.modeGetFolder);
     if (kFilePicker.show() == kFilePickerIID.returnCancel) return false;
   }
@@ -408,7 +408,7 @@ function exportAudio(exportFileFormat) {
     const kFilePickerIID = Components.interfaces.nsIFilePicker;
     const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
     
-    const kTitle = fixWindowTitle(document.getElementById("menu.exportAudio.label").childNodes[0].nodeValue);
+    const kTitle = fixWindowTitle(getDataUI("menu.exportAudio.label"));
     kFilePicker.init(window, kTitle, kFilePickerIID.modeGetFolder);
     if (kFilePicker.show() == kFilePickerIID.returnCancel) return false;
   }
@@ -435,7 +435,7 @@ function exportAudio(exportFileFormat) {
   
   var result = {};
   ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSTD, result, 
-      fixWindowTitle(document.getElementById("menu.exportAudio.label").childNodes[0].nodeValue),
+      fixWindowTitle(getDataUI("menu.exportAudio.label")),
       "", 
       PMSTOP,
       stopExport);
@@ -515,7 +515,7 @@ function exportThisFile(aFile, aDestFolder, localized) {
 
 function getLocalizedAudioFile(aDir, basecode, shortName, chapter, ext, locale) {
   chapter = Number(chapter);
-  var localeBundle = getLocaleBundle(locale, "books.properties");
+  var localeBundle = getLocaleBundle(locale, "common/books.properties");
   try {var ok = (localeBundle && localeBundle.GetStringFromName("Matt"))} catch (er) {ok=false;}
   if (!ok) return null;
   var bnl = Number(localeBundle.GetStringFromName(shortName + "i"));
@@ -579,7 +579,7 @@ function padChapterLocalized(shortName, chapterNumber, atLeast2Digits) {
 }
 
 function findBookNumPreMainWin(shortName) {
-  var bundle = getCurrentLocaleBundle("books.properties");
+  var bundle = getCurrentLocaleBundle("common/books.properties");
   try {var bnum = bundle.GetStringFromName(shortName + "i");}
   catch (er) {bnum = null; jsdump("Book \"" + shortName + "\" is not in books.properties.");}
   if (bnum !== null) bnum = Number(bnum);
