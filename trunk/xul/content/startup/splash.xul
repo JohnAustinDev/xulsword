@@ -38,66 +38,38 @@
   <data id="ui.savingTarget">&dlgTo;</data>
   <data id="ui.localeDir">&locale.dir;</data>
   
-  <script>
-    <![CDATA[
-    var WindowWatcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
-    var MainWindow = WindowWatcher.getWindowByName("xulsword-window", window);
-    var SplashScreen;
-    var InstallOnly;
-    
-    // endInstall is called in newModule.js when module installation is done
-    function endInstall() {
-      if (WillRestart) return;
-      try {
-        InstallOnly = prefs.getBoolPref("xsInstallOnly");
-        prefs.setBoolPref("xsInstallOnly", false);
-        prefs.clearUserPref("xsInstallOnly");
-      }
-      catch(er) {InstallOnly = false;} // if pref did not exist
-      
-      // Are we just installing modules, but not starting xulsword?
-      if (InstallOnly || MainWindow) window.close();
-      
-      // Open the visible splash screen and start the main xulsword window
-      SplashScreen = window.open("chrome://xulsword/content/startup/banner.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable");
-      window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul', 'xulsword-window', 'chrome,resizable')", 300);
-
-      // xulsword.xul will close this window (Splash) during its init.
-      
-    }
-    
-    var XSBundle;
-    function unload() {
-      XSBundle = document.getElementById("strings");
-      if (SplashScreen) {SplashScreen.close();}
-      if (InstallOnly) {
-        jsdump("Quiting... xsInstallOnly command line flag was set.");
-        // scripts or programs that need to block while MK installs stuff will get confused if MK needs to restart, 
-        // hence we need xsInstallOnlyMutex, file which the caller can monitor until it is deleted by xulsword.
-        var mutex = getSpecialDirectory("TmpD");
-        mutex.append("xsInstallOnlyMutex");
-        if (mutex.exists()) mutex.remove(false);
-      }
-    }
-    ]]>
-  </script>
-    
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkfuncs.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/BookmarkDataInit.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
   
-  <!-- Creates program's special directories if needed !-->
-  <script>createAppDirectories();</script>
-  
   <script>
   <![CDATA[
+  
+    // This hidden window installs modules, creates xulsword profile directories,
+    // and then either quits (if xsInstallOnly is set) or opens the main 
+    // xulsword window (the usual occurence). The main xulsword window closes
+    // this hidden window (if it exists) during its init sequence.
+  
+    // xulsword may already be running when another instance is started. So
+    // check for the MainWindow and if it exists, don't open another.
+    var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
+    var MainWindow = watcher.getWindowByName("xulsword-window", window);
+    
+    var AudioDirs = getAudioDirs();
+    var XSBundle = document.getElementById("strings");
+    
+    createAppDirectories();
+  
     window.screenX = window.screen.width/2-50;
     window.screenY = window.screen.height/2-50;
 
-    // Scripts or programs that need to block while MK installs stuff will get confused if MK needs to restart, hence we need xsInstallOnlyMutex.
-    // If the script or program does not have a blocking feature, it will need to create the xsInstallOnlyMutex file itself.
+    // Scripts or programs that need to block while MK installs stuff 
+    // will get confused if MK needs to restart, hence we need xsInstallOnlyMutex.
+    // If the script or program does not have a blocking feature, it will 
+    // need to create the xsInstallOnlyMutex file itself.
     var installOnly = false;
     try {installOnly = prefs.getBoolPref("xsInstallOnly");} catch (er) {}
     if (installOnly) {
@@ -105,9 +77,53 @@
       mutex.append("xsInstallOnlyMutex");
       if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
     }
+    
+    moduleInstall(false); // will call endInstall() when complete...
+    
+    // endInstall is called in newModule.js when module installation is complete
+    function endInstall() {
+      if (WillRestart) return;
+      
+      var installOnly = false;
+      try {
+        installOnly = prefs.getBoolPref("xsInstallOnly");
+        prefs.setBoolPref("xsInstallOnly", false);
+        prefs.clearUserPref("xsInstallOnly");
+      }
+      catch(er) {installOnly = false;} // if pref did not exist
+      
+      // Are we just installing modules, but not starting xulsword?
+      // Or is MainWindow already open? Then we're done...
+      if (installOnly || MainWindow) window.close();
+      
+      // Open the visible splash screen and start the main xulsword window
+      SplashScreen = window.open("chrome://xulsword/content/startup/banner.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable");
+      window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul', 'xulsword-window', 'chrome,resizable')", 300);
+
+      // xulsword.xul will close this window (Splash) during MainWindow init,
+      // and then this window's onunload will close the visible splash screen.
+      
+    }
+    
+    var SplashScreen;
+    function unload() {
+      if (SplashScreen) {SplashScreen.close();}
+      
+      try {var installOnly = prefs.getBoolPref("xsInstallOnly");}
+      catch (er) {installOnly = false;}
+      
+      if (installOnly) {
+        jsdump("Quiting... xsInstallOnly command line flag was set.");
+        // scripts or programs that need to block while MK installs stuff will get confused if MK needs to restart, 
+        // hence we need xsInstallOnlyMutex, file which the caller can monitor until it is deleted by xulsword.
+        var mutex = getSpecialDirectory("TmpD");
+        mutex.append("xsInstallOnlyMutex");
+        if (mutex.exists()) mutex.remove(false); // siginify to caller that we're done installing
+      }
+      
+    }
+    
   ]]>
   </script>
-
-  <script>moduleInstall(false);</script>
   
  </window> 

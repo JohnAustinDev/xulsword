@@ -37,8 +37,7 @@
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/dialog.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/dialog/dialog.js"/>
   
   <vbox id="whole" style="overflow:visible; min-width:326px;">
     <hbox pack="start" align="start" style="margin:4px;">

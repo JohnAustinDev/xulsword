@@ -45,11 +45,8 @@ CommTexts = {
     // localize verse numbers
     var tl = ModuleConfigs[d.mod].AssociatedLocale;
     if (tl == NOTFOUND) {tl = getLocale();}
-    if (!DisplayNumeral[tl]) getDisplayNumerals(tl);
-    if (DisplayNumeral[tl][10]) {
-      var verseNm = new RegExp("(<sup class=\"versenum\">)(\\d+)(</sup>)", "g");
-      ret.htmlText = ret.htmlText.replace(verseNm, function(str, p1, p2, p3) {return p1 + dString(p2, tl) + p3;});
-    }
+    var verseNm = new RegExp("(<sup class=\"versenum\">)(\\d+)(</sup>)", "g");
+    ret.htmlText = ret.htmlText.replace(verseNm, function(str, p1, p2, p3) {return p1 + dString(p2, tl) + p3;});
 
     // add headers
     var showHeader = (d.globalOptions["Headings"] == "On");

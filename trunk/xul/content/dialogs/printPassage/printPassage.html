@@ -26,12 +26,11 @@
   <link rel="stylesheet" href="chrome://xulsword/skin/dialogs/printPassage/printPassage-htm.css" type="text/css">
   
   <script>
-    var Watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
-    var MainWindow = Watcher.getWindowByName("xulsword-window", window);
+    var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
+    var MainWindow = watcher.getWindowByName("xulsword-window", window);
   </script>
   <script src="chrome://xulsword/content/common/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common/common1.js" type="text/javascript"></script>
-  <script src="chrome://xulsword/content/common/common2.js" type="text/javascript"></script>
   
   <script>
 

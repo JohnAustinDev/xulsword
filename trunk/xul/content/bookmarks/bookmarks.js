@@ -458,11 +458,11 @@ var BookmarksCommand = {
     if (BookmarksUtils.resolveType(aSelection.item[0], BMDS) != "Bookmark") return;
     // Update Last Visited...
     var currentDate = new Date().toLocaleDateString();
-    var parent = BookmarkFuns.getParentOfResource(aSelection.item[0], BMDS);
+    var parent = ResourceFuns.getParentOfResource(aSelection.item[0], BMDS);
     var visited = [aSelection.item[0]];
     if (parent && parent.Value!=BM.AllBookmarksID) visited.push(parent);
     for (var i=0; i<visited.length; i++) {
-      BookmarkFuns.updateAttribute(visited[i], BM.gBmProperties[VISITEDDATE], BMDS.GetTarget(visited[i], BM.gBmProperties[VISITEDDATE], true), BM.RDF.GetLiteral(currentDate));
+      ResourceFuns.updateAttribute(visited[i], BM.gBmProperties[VISITEDDATE], BMDS.GetTarget(visited[i], BM.gBmProperties[VISITEDDATE], true), BM.RDF.GetLiteral(currentDate));
     }
     BookmarkFuns.gotoBookMark(aSelection.item[0].Value);
   },
@@ -477,7 +477,7 @@ var BookmarksCommand = {
   {
     var t = MainWindow.getCommandTarget();
     
-    var resource = BookmarkFuns.createNewResource(
+    var resource = ResourceFuns.createNewResource(
       ["Bookmark", null, null, t.bk, t.ch, t.vs, t.lv, t.mod]
     );
 
@@ -486,7 +486,7 @@ var BookmarksCommand = {
 
   createNewFolder: function (aTarget)
   {
-    var resource = BookmarkFuns.createNewResource(["Folder", BookmarksUtils.getLocaleString("ile_newfolder")]);
+    var resource = ResourceFuns.createNewResource(["Folder", BookmarksUtils.getLocaleString("ile_newfolder")]);
     
     this.addNewResource(resource, aTarget, "newfolder");
     // temporary hack...
@@ -495,7 +495,7 @@ var BookmarksCommand = {
 
   createNewSeparator: function (aTarget)
   {
-    var newSeparator = BookmarkFuns.createNewResource(["BookmarkSeparator"]);
+    var newSeparator = ResourceFuns.createNewResource(["BookmarkSeparator"]);
 
     this.addNewResource(newSeparator, aTarget, "newseparator");
   },
@@ -539,7 +539,7 @@ var BookmarksCommand = {
       return;
     }
     
-    BookmarkFuns.importBMFile(kFilePicker.file, aTarget.parent);
+    ResourceFuns.importBMFile(kFilePicker.file, aTarget.parent);
   },
 
   exportBookmarks: function ()
@@ -575,14 +575,14 @@ var BookmarksCommand = {
     }
     var selection = BM.RDF.GetResource(BM.AllBookmarksID);
     
-    if (BMDS) BookmarkFuns.purgeDataSource(BMDS);
+    if (BMDS) ResourceFuns.purgeDataSource(BMDS);
     
     var resources = BMDS.GetAllResources();
     var data="";
     var resourceDelim="";
     while (resources.hasMoreElements()) {
       var myres = resources.getNext().QueryInterface(BM.kRDFRSCIID);
-      var myparent = BookmarkFuns.getParentOfResource(myres, BMDS);
+      var myparent = ResourceFuns.getParentOfResource(myres, BMDS);
       if (!myparent || 
       (myparent == BM.FoundResultsRes) || 
       (myres == BM.BmEmptyRes) || 
@@ -912,7 +912,7 @@ var BookmarksController = {
       BookmarksCommand.sortByName(aSelection);
       break;
     case "cmd_bm_pageSetup":
-      WindowWatcher.getWindowByName("xulsword-window",window).document.getElementById("cmd_pageSetup").doCommand();
+      MainWindow.document.getElementById("cmd_pageSetup").doCommand();
       break;
     case "cmd_bm_print":
     case "cmd_bm_printPreview":
@@ -1144,7 +1144,7 @@ var BookmarksUtils = {
   },
   
   getParent: function (resource, ds) {
-    return BookmarkFuns.getParentOfResource(resource, ds);
+    return ResourceFuns.getParentOfResource(resource, ds);
   },
 
   /////////////////////////////////////////////////////////////////////////////
@@ -1227,7 +1227,7 @@ var BookmarksUtils = {
 
         var proplength = propArray ? propArray.length : 0;
 
-        BookmarkFuns.createAndCommitTxn("remove", aAction, 
+        ResourceFuns.createAndCommitTxn("remove", aAction, 
                                        aSelection.item[i], 
                                        BM.RDFC.IndexOf(aSelection.item[i]),
                                        aSelection.parent[i], 
@@ -1301,8 +1301,8 @@ var BookmarksUtils = {
     for (var i=0; i<aSelection.length; ++i) {
       var rSource = aSelection.item[i];
 
-      if (BookmarkFuns.isItemChildOf(rSource, BM.AllBookmarksRes, BMDS))
-          rSource = BookmarkFuns.cloneResource(rSource); 
+      if (ResourceFuns.isItemChildOf(rSource, BM.AllBookmarksRes, BMDS))
+          rSource = ResourceFuns.cloneResource(rSource); 
 
       item = rSource;
       
@@ -1312,7 +1312,7 @@ var BookmarksUtils = {
       if (!startedEmpty || i!=1) {index = brokenIndex++;}
       
       var proplength = removedProps ? removedProps.length : 0;
-      BookmarkFuns.createAndCommitTxn("insert", aAction, item, index, aTarget.parent, proplength, removedProps);
+      ResourceFuns.createAndCommitTxn("insert", aAction, item, index, aTarget.parent, proplength, removedProps);
     }
     if (aSelection.length > 1)
       BM.gTxnSvc.endBatch();

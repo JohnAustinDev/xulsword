@@ -35,7 +35,6 @@
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/removeModule/removeModule.js"/>

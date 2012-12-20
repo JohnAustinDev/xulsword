@@ -30,7 +30,6 @@
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
   
   <iframe flex="1" id="helpFrame" src="searchHelp.html" style="overflow:hidden;"/>
   

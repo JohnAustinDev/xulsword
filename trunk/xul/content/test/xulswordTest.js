@@ -48,7 +48,11 @@ function jsdump(str)
 }
 
 var NumFailed = 0;
-if (LibSword.getModuleList() == "No Modules") LibSword = null;
+if (LibSword.getModuleList() == "No Modules") {
+  LibSword.quitLibsword();
+  throw("No Modules loaded.");
+}
+
 jsdump("Need ESV and UZV, have " + LibSword.getModuleList());
 
 Location.setLocation("ESV", "Matt.4");

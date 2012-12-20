@@ -17,204 +17,72 @@
 */
 
 
-// VAR AND FUNCTION DECLARATIONS WHICH MAY BE USED BY ALL XUL AND HTML DOCUMENTS
+// IMPORTANT INFO ABOUT THIS FILE:
+// The functions in common1.js may use and rely on the MainWindow as 
+// well as the global LibSword object and the other program wide globals. 
+// NOTE: this is unlike common0.js whose functions cannot rely on 
+// MainWindow or other MainWindow globals, and can not even try to 
+// access LibSword.
 
-/************************************************************************
- * String Bundle used for script locality
- ***********************************************************************/  
-var WindowWatcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
-if (!MainWindow) MainWindow = WindowWatcher.getWindowByName("xulsword-window", window);
-if (!MainWindow) MainWindow = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-                   .getInterface(Components.interfaces.nsIWebNavigation)
-                   .QueryInterface(Components.interfaces.nsIDocShellTreeItem)
-                   .rootTreeItem
-                   .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-                   .getInterface(Components.interfaces.nsIDOMWindow);
+// MainWindow is often assigned before any scripts are loaded, but we
+// check it again here, just in case...
+if (!MainWindow) {
+  var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
+  MainWindow = watcher.getWindowByName("xulsword-window", window);
+}
+
+if (!MainWindow) {
+  MainWindow = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+      .getInterface(Components.interfaces.nsIWebNavigation)
+      .QueryInterface(Components.interfaces.nsIDocShellTreeItem)
+      .rootTreeItem
+      .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+      .getInterface(Components.interfaces.nsIDOMWindow);
+}
+
 if (!MainWindow) jsdump("WARNING: Unable to initialize MainWindow: (" + window.name + ")\n");
 
-
 /************************************************************************
- * DYNAMIC CSS FUNCTIONS
+ * Program-wide Globals defined in MainWindow to be used anywhere
  ***********************************************************************/ 
+var LibSword              = MainWindow.LibSword;
+var Location              = MainWindow.Location;
 
-function initCSS(adjustableFontSize) {
-  
-  // If we don't have LocaleConfigs yet, set LocaleConfigs of current locale.
-  if (typeof(LocaleConfigs) == "undefined") {
-    var lc = getLocale();
-    this.LocaleConfigs = {};
-    this.LocaleConfigs[lc] = getLocaleConfig(lc);
-  }
+var LocaleConfigs         = MainWindow.LocaleConfigs;
+var ModuleConfigs         = MainWindow.ModuleConfigs;
+var ProgramConfig         = MainWindow.ProgramConfig;
 
-  // Create and append module and locale specific CSS rules to stylesheet
-  createDynamicCssClasses("StyleRule");
-  
-  setUserFontSize(getPrefOrCreate('FontSize', "Int", 0));
-  
-  // If this is an HTML document...
-  var body = document.getElementsByTagName("body");
-  if (body && body.length) {
-    body[0].setAttribute("chromedir", ProgramConfig.direction);
-    body[0].className += (body[0].className ? " ":"") + "cs-Program" + (adjustableFontSize ? " userFontSize":" fixedFontSize");
-  }
-  
-  // If this is a XUL document...
-  var win = document.getElementsByTagName("window");
-  if (win && win.length) {
-    // XUL windows get chromedir automagicaly
-    var c = win[0].getAttribute("class");
-    win[0].setAttribute("class", (c ? c + " " :"") + "cs-Program" + (adjustableFontSize ? " userFontSize":" fixedFontSize"));
-  }
+var AudioDirs             = MainWindow.AudioDirs;
 
-}
+var Book                  = MainWindow.Book;
 
-// Will create CSS classes for locales and modules and append to a stylesheet.
-// This must be a global function so that any window can create our classes.
-function createDynamicCssClasses(configProp) {
-  var sheet = document.styleSheets[document.styleSheets.length-1];
-  if (!sheet) return;
-  if (!configProp) configProp = "StyleRule";
-  
-  var sheetLength = sheet.cssRules.length;
-  
-  if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
-    for (var lc in LocaleConfigs) {sheet.insertRule(LocaleConfigs[lc][configProp], sheetLength);}
-  }
-  
-  if (typeof(ModuleConfigs) != "undefined" && ModuleConfigs) {
-    for (var m in ModuleConfigs) {sheet.insertRule(ModuleConfigs[m][configProp], sheetLength);}
-  }
-  
-  if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {
-    sheet.insertRule(ProgramConfig[configProp], sheetLength);
-  }
-}
+var Tabs                  = MainWindow.Tabs;
+var Tab                   = MainWindow.Tab;
 
-// The userFontSize class in all stylesheets is dynamically updated by this routine.
-var StartingFont = {};
-function setUserFontSize(delta) {
-  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
-    for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
-      var myRule = document.styleSheets[ssn].cssRules[z];
-      if (myRule.cssText.search(".userFontSize") == -1) continue;
-      if (!StartingFont["ssn" + ssn + "z" + z]) {
-          StartingFont["ssn" + ssn + "z" + z] = Number(myRule.style.fontSize.match(/(\d+)/)[0]);
-      }
-      myRule.style.fontSize = Number(StartingFont["ssn" + ssn + "z" + z] + delta) + "px";
-    }
-  }
-}
+var BM                    = MainWindow.BM;
+var BMDS                  = MainWindow.BMDS;
+var BookmarkFuns          = MainWindow.BookmarkFuns;
+var ResourceFuns          = MainWindow.ResourceFuns;
 
-function getLocaleConfig(lc) {
-  var localeConfig = {};
-  
-  var programCSS = getCSS(".cs-Program {");
-  var b = getLocaleBundle(lc, "common/config.properties");
+var AllWindows            = MainWindow.AllWindows;
 
-  // All config properties should have a valid value, and it must not be null.
-  // Read values from locale's config.properties file
-  for (var p in Config) {
-    if (!Config[p].localeConf) continue;
-    var val = b.GetStringFromName(Config[p].localeConf);
-    if ((/^\s*$/).test(val)) val = NOTFOUND;
-    
-    
-    if (val == NOTFOUND && Config[p].CSS) {
-      if (programCSS.rule.style[p]) {
-        val = programCSS.rule.style[p];
-      }
-    }
-    
-    localeConfig[p] = val;
-  }
- 
-  localeConfig["AssociatedLocale"] = lc;
-  
-  localeConfig["textAlign"] = (localeConfig["direction"] == "rtl" ? "right":"left");
-  
-  // Insure there are single quotes around font names
-  localeConfig.fontFamily = localeConfig.fontFamily.replace(/\"/g, "'");
-  if (localeConfig.fontFamily != NOTFOUND && !(/'.*'/).test(localeConfig.fontFamily)) 
-      localeConfig.fontFamily = "'" + localeConfig.fontFamily + "'";
+var LanguageStudyModules  = MainWindow.LanguageStudyModules;
 
-  // Save the CSS style rules for this locale, which can be appended to CSS stylesheets
-  localeConfig.StyleRule = createStyleRule(".cs-" + lc, localeConfig);
-  localeConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(" + lc + ")", localeConfig);
-  
-  return localeConfig;
-}
+var CommandTarget         = MainWindow.CommandTarget;
 
-function getModuleConfig(mod) {
-  var moduleConfig = {};
-  
-  var programCSS = getCSS(".cs-Program {");
-  
-  // All versionconfig members should have a valid value, and it must not be null.
-  // Read values from module's .conf file
-  for (var p in Config) {
-    if (!Config[p].modConf) continue;
-    var val = LibSword.getModuleInformation(mod, Config[p].modConf);
-    if ((/^\s*$/).test(val)) val = NOTFOUND;
-    
-    if (val == NOTFOUND && Config[p].CSS) {
-      if (programCSS.rule.style[p]) {
-        val = programCSS.rule.style[p];
-      }
-    }
-    
-    moduleConfig[p] = val;
-  }
-  
-  // Assign associated locale and modules
-  moduleConfig["AssociatedLocale"] = getLocaleOfModule(mod);
-  if (!moduleConfig["AssociatedLocale"]) moduleConfig["AssociatedLocale"] = NOTFOUND;
-  
-  if (moduleConfig["AssociatedLocale"] != NOTFOUND && LocaleConfigs.hasOwnProperty(moduleConfig["AssociatedLocale"]))
-      moduleConfig["AssociatedModules"] = LocaleConfigs[moduleConfig["AssociatedLocale"]].AssociatedModules;
-  else moduleConfig["AssociatedModules"] = NOTFOUND;
-  
-  // Normalize direction value
-  moduleConfig.direction = (moduleConfig.direction.search("RtoL", "i") != -1 ? "rtl":"ltr");
+var XSBundle              = MainWindow.XSBundle;
 
-  moduleConfig["textAlign"] = (moduleConfig["direction"] == "rtl" ? "right":"left");
-    
-  // Insure there are single quotes around font names
-  moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/\"/g, "'");
-  if (moduleConfig.fontFamily != NOTFOUND && !(/'.*'/).test(moduleConfig.fontFamily)) 
-      moduleConfig.fontFamily = "'" + moduleConfig.fontFamily + "'";
 
-  // Save the CSS style rules for this module, which can be appended to CSS stylesheets
-  moduleConfig.StyleRule = createStyleRule(".cs-" + mod, moduleConfig);
-  moduleConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(" + mod + ")", moduleConfig);
-  
-  return moduleConfig;
-}
-
-function createStyleRule(selector, config) {
-  var rule = selector + " {";
-  for (var p in Config) {
-    if (!Config[p].CSS) continue;
-    rule += Config[p].CSS + ":" + config[p] + "; ";
-  }
-  rule += "}";
-
-//jsdump(rule); 
-  return rule;
-}
-
-// This function returns the FIRST rule matching the selector.
-function getCSS(selector) {
-  selector = new RegExp("^" + escapeRE(selector));
-  var myRule = null;
-  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
-    try {var zend = document.styleSheets[ssn].cssRules.length;} catch (er) {zend = 0;}
-    for (var z=0; z<zend; z++) {
-      var myRule = document.styleSheets[ssn].cssRules[z];
-      if (myRule.cssText.search(selector) != -1) return {rule:myRule, sheet:ssn, index:z};
-    }
-  }
-  return null;
-}
+// The following objects are sometimes intentionally overwritten by 
+// loading a corresponding js file after common1.js has loaded. This
+// allows multiple copies of these objects to be used (a MainWindow
+// object as well as others located in other viweports).
+var ViewPort              = MainWindow.ViewPort;
+var Texts                 = MainWindow.Texts;
+var BibleTexts            = MainWindow.BibleTexts;
+var DictTexts             = MainWindow.DictTexts;
+var GenBookTexts          = MainWindow.GenBookTexts;
+var CommTexts             = MainWindow.CommTexts;
 
 
 /************************************************************************
@@ -564,14 +432,51 @@ function normalizeOsisReference(ref, bibleMod) {
   return null;
 }
 
-function usesSecurityModule(aLSobj, version) {
-  if (aLSobj.getModuleInformation(version, "CipherKey") != "") return false;
-  //checking "ProducedFor" is for backward compatibility to modules before version 2.7
-  var usesSecurityModule = ((aLSobj.getModuleInformation(version, MainWindow.VERSIONPAR)!=NOTFOUND || 
-      aLSobj.getModuleInformation(version, "ProducedFor")=="xulsword") ? true:false);
-  return usesSecurityModule;
-}
+function getModuleConfig(mod) {
+  var moduleConfig = {};
+  
+  var programCSS = getCSS(".cs-Program {");
+  
+  // All versionconfig members should have a valid value, and it must not be null.
+  // Read values from module's .conf file
+  for (var p in Config) {
+    if (!Config[p].modConf) continue;
+    var val = LibSword.getModuleInformation(mod, Config[p].modConf);
+    if ((/^\s*$/).test(val)) val = NOTFOUND;
+    
+    if (val == NOTFOUND && Config[p].CSS) {
+      if (programCSS.rule.style[p]) {
+        val = programCSS.rule.style[p];
+      }
+    }
+    
+    moduleConfig[p] = val;
+  }
+  
+  // Assign associated locale and modules
+  moduleConfig["AssociatedLocale"] = getLocaleOfModule(mod);
+  if (!moduleConfig["AssociatedLocale"]) moduleConfig["AssociatedLocale"] = NOTFOUND;
+  
+  if (moduleConfig["AssociatedLocale"] != NOTFOUND && LocaleConfigs.hasOwnProperty(moduleConfig["AssociatedLocale"]))
+      moduleConfig["AssociatedModules"] = LocaleConfigs[moduleConfig["AssociatedLocale"]].AssociatedModules;
+  else moduleConfig["AssociatedModules"] = NOTFOUND;
+  
+  // Normalize direction value
+  moduleConfig.direction = (moduleConfig.direction.search("RtoL", "i") != -1 ? "rtl":"ltr");
 
+  moduleConfig["textAlign"] = (moduleConfig["direction"] == "rtl" ? "right":"left");
+    
+  // Insure there are single quotes around font names
+  moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/\"/g, "'");
+  if (moduleConfig.fontFamily != NOTFOUND && !(/'.*'/).test(moduleConfig.fontFamily)) 
+      moduleConfig.fontFamily = "'" + moduleConfig.fontFamily + "'";
+
+  // Save the CSS style rules for this module, which can be appended to CSS stylesheets
+  moduleConfig.StyleRule = createStyleRule(".cs-" + mod, moduleConfig);
+  moduleConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(" + mod + ")", moduleConfig);
+  
+  return moduleConfig;
+}
 
 /************************************************************************
  * Bible Text Display Routines
@@ -760,13 +665,14 @@ function getContextModule(elem) {
   var w = getContextWindow(elem);
   if (w) return ViewPort.Module[w];
   
-  // then see if we're in a search results list
+  // otherwise see if we're in a search results list
   var telem = elem;
   while (telem && (!telem.className || !(/^slist(\s|$)/).test(telem.className))) {
     telem = telem.parentNode;
   }
   if (telem) return getElementInfo(telem).mod;
   
+  // oh well, I tried...
   return null;
   
 }

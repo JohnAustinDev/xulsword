@@ -29,7 +29,6 @@ const NORESET = 0;
 const SOFTRESET = 1;
 const HARDRESET = 2;
 const NEWINSTALLFILE = "newInstalls.txt";
-const VERSIONPAR = "xulswordVersion";
 const MINPVERPAR = "minMKVersion";
 const VERSIONTAG = new RegExp (VERSIONPAR + "\\s*=\\s*(.*)\\s*", "im");
 const MINPROGVERSTAG = new RegExp(MINPVERPAR + "\\s*=\\s*(.*)\\s*", "im");
@@ -247,7 +246,7 @@ jsdump("STARTING startImport");
       if (ProgressMeter) ProgressMeter.close();
       Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       var result = {};
-      var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
+      var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result,
           fixWindowTitle(getDataUI("menu.addNewModule.label")),
           msg,
           DLGALERT,
@@ -548,7 +547,7 @@ function getAudioDestination(aOutDir, audioFilePath) {
 
 function installBookmarkFile(aFile) {
   if (!aFile.leafName.match(XSBOOKMARKEXT)) return {reset:NORESET, success:false, remove:true};
-  if (!BookmarkFuns.importBMFile(aFile, false, true)) return {reset:NORESET, success:false, remove:true};
+  if (!ResourceFuns.importBMFile(aFile, false, true)) return {reset:NORESET, success:false, remove:true};
   GotoBookmarkFile = aFile;
   return {reset:NORESET, success:true, remove:true};
 }
@@ -597,47 +596,64 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     break;
 
   case CHROME:
-    if (entryFileName.search(/\.jar$/i) == -1) {
-      // ignore everything in Chrome the jar files
+    if (!(/\.jar$/i/).test(entryFileName)) {
+      // completely ignores everything in Chrome except jar files
       return {reset:NORESET, success:true, remove:true};
     }
+    
+    // this .jar file will be copied to the extensions directory
     var localeName = entryFileName.match(/^([^\.]*)/)[1];
-    var localeDir = localeName + "@xulsword.org";
+    var localeDir = localeName + APPLICATIONID.replace(/(\@.*)$/, "$1");
     var inflated = getSpecialDirectory("xsExtension");
     inflated.append(localeDir);
     inflated.append(CHROME);
     inflated.append(entryFileName);
 
-    // create extension package for our locale jar file
+    // create a chrome.manifest for our new locale extension
     var file = getSpecialDirectory("xsExtension");
     file.append(localeDir);
     file.append("chrome.manifest");
     if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
     var str = "locale xulsword " + localeName + " jar:chrome/" + localeName + ".jar!/xulsword/ \n";
-    str    += "locale xsglobal " + localeName + " jar:chrome/" + localeName + ".jar!/xsglobal/ \n";
     writeFile(file, str, true);
+    
+    // create an install.rdf file to initiate this locale extension's 
+    // installation by Firefox's install manager upon next startup.
     file = getSpecialDirectory("xsExtension");
     file.append(localeDir);
     file.append("install.rdf");
-    str  = "<?xml version=\"1.0\"?><RDF xmlns=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" \n";
-    str += "xmlns:em=\"http://www.mozilla.org/2004/em-rdf#\">\n";
-    str += "<Description about=\"urn:mozilla:install-manifest\">\n";
-    str += "<em:id>" + localeName + "@xulsword.org</em:id><em:version>1.0</em:version>\n";
-    str += "<em:type>8</em:type><em:name>" + localeName + " xulsword locale</em:name>\n";
-    if (!IsExtension) {
-      str += "<em:targetApplication><Description>\n";
-      str += "<em:id>xulsword@xulsword.org</em:id><em:minVersion>1.0</em:minVersion>\n";
-      str += "<em:maxVersion>99.0</em:maxVersion></Description>\n";
-      str += "</em:targetApplication></Description></RDF>\n";
+    
+    // install.rdf: the version of this locale extension and that of the
+    // target application is not important because version control is 
+    // already handled by xulsword code. Firefox's installation manager 
+    // should always simply install without complaining.
+    str  =   "<?xml version=\"1.0\"?>" + NEWLINE;
+    str +=   "<RDF xmlns=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:em=\"http://www.mozilla.org/2004/em-rdf#\">" + NEWLINE;
+    str +=   "  <Description about=\"urn:mozilla:install-manifest\">" + NEWLINE;
+    str +=   "    <em:id>" + localeDir + "</em:id>" + NEWLINE;
+    str +=   "    <em:version>" + prefs.getCharPref("Version") + "</em:version>" NEWLINE;
+    str +=   "    <em:type>8</em:type>" + NEWLINE;
+    str +=   "    <em:name>" + localeName + " xulsword locale</em:name>" + NEWLINE;
+    str +=   "    <em:targetApplication>" + NEWLINE;
+    str +=   "      <Description>" + NEWLINE;
+    if (IsExtension) {
+      str += "        <em:id>{" + FIREFOXUID + "}</em:id>" + NEWLINE;
+      str += "        <em:minVersion>1.0</em:minVersion>" + NEWLINE;
+      str += "        <em:maxVersion>99.0</em:maxVersion>" + NEWLINE;
     }
     else {
-      str += "<em:targetApplication><Description>\n";
-      str += "<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id><em:minVersion>1.0</em:minVersion>\n";
-      str += "<em:maxVersion>99.0</em:maxVersion></Description>\n";
-      str += "</em:targetApplication></Description></RDF>\n";
+      str += "        <em:id>" + APPLICATIONID + "</em:id>" + NEWLINE;
+      str += "        <em:minVersion>1.0</em:minVersion>" + NEWLINE;
+      str += "        <em:maxVersion>99.0</em:maxVersion>" + NEWLINE;
     }
+    str +=   "      </Description>" + NEWLINE;
+    str +=   "    </em:targetApplication>" + NEWLINE;
+    str +=     "</Description>" + NEWLINE;
+    str +=   "</RDF>" + NEWLINE;
+    
     if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
     writeFile(file, str, true);
+    
     NewLocales = pushIf(NewLocales, localeName);
     var rootprefs = Components.classes["@mozilla.org/preferences-service;1"].
         getService(Components.interfaces.nsIPrefBranch);
@@ -734,7 +750,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     
   case BOOKMARKS:
     // this doesn't access the LibSword object in this case.
-    if (!BookmarkFuns.importBMFile(inflated, false, true)) {
+    if (!ResourceFuns.importBMFile(inflated, false, true)) {
       removeFile(inflated, false);
       return {reset:NORESET, success:false, remove:true};
     }
@@ -1031,7 +1047,7 @@ function getConfInfo(aZip, aEntry, zReader) {
 }
 /*
 function isConfCommon(aConf) {
-  if (ProgramIsPortable) return false; // install all mods as user if Portable Version
+  if (IsPortable) return false; // install all mods as user if Portable Version
   var data = readParamFromConf(aConf, "Versification");
   if (data && data == "EASTERN") return false; // must be user mod (not supported by other front-ends)
   data = readParamFromConf(aConf, "CipherKey");
@@ -1444,7 +1460,7 @@ function prefFileArray(files, aPref, exts, dontCheckExists) {
 function restartApplication(promptBefore) {
   if (promptBefore) {
     var result = {};
-    var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
+    var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result, 
       fixWindowTitle(XSBundle.getString("Title")),
       XSBundle.getString("RestartMsg"), 
       DLGINFO,

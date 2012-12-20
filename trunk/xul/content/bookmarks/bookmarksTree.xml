@@ -575,13 +575,13 @@
           if (!aInput) {
             this.tree.setAttribute("ref", this.originalRef);
             selectedColor = null;
-            BookmarkFuns.emptySearchResultsFolder();
+            ResourceFuns.emptySearchResultsFolder();
           }
           else
             {
               selectedColor = "blue";
               var oldresults = BM.RDF.GetResource(BM.FoundResultsID);
-              BookmarkFuns.emptySearchResultsFolder();
+              ResourceFuns.emptySearchResultsFolder();
               var allres = BMDS.GetAllResources();
               var srcontainer = BM.RDFC;
               srcontainer.Init(BMDS, BM.FoundResultsRes);
@@ -590,7 +590,7 @@
                 var et = allres.getNext();
                 if (BM.RDFCU.IsContainer(BMDS,et)) {continue;}
                 if (et == BM.BmEmptyRes) {continue;}
-                if (!BookmarkFuns.isItemChildOf(et, BM.AllBookmarksRes, BMDS)) {continue;}
+                if (!ResourceFuns.isItemChildOf(et, BM.AllBookmarksRes, BMDS)) {continue;}
                 for (i = 0; i < columns.length; ++i) {
                   if (!prefs.getBoolPref("searchFlag-" + columns[i].resource)) {continue;}
                   var columnRes = BM.RDF.GetResource(columns[i].resource.substring(4));

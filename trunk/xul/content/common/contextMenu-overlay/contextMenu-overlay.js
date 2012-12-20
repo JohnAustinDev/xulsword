@@ -287,9 +287,9 @@ var p=""; for (var m in info) {p += m + "=" + info[m] + " ";} jsdump("readDataFr
       // contextually.
       switch(p) {
       case "nid":
-        if (!targs.bookmark) {
+        if (!targs.bookmark && BM && BookmarkFuns && BookmarksUtils) {
           var aItem = BM.RDF.GetResource(decodeUTF8(val));
-          var aParent = BookmarkFuns.getParentOfResource(aItem, BMDS);
+          var aParent = ResourceFuns.getParentOfResource(aItem, BMDS);
           if (aParent) {
             targs.bookmark = BookmarksUtils.getSelectionFromResource(aItem, aParent);
           }

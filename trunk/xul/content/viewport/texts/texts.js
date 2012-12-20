@@ -437,7 +437,7 @@ Texts = {
         chapter = "1";
       }
       try {var verse = BMDS.GetTarget(res, BM.gBmProperties[VERSE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
-      if (!BookmarkFuns.isItemChildOf(res, BM.AllBookmarksRes, BMDS)) continue;
+      if (!ResourceFuns.isItemChildOf(res, BM.AllBookmarksRes, BMDS)) continue;
        
       // We have a keeper, lets save the note and show it in the text!
       // Encode ID
