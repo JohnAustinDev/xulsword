@@ -20,127 +20,20 @@
 // INITIALIZES GLOBAL COMMON VARS WHICH ONLY NEED TO BE EVALUATED ONCE
 
 /************************************************************************
- * Initialize global locale information
+ * Initialize program-wide global variables
  ***********************************************************************/ 
  
-
-var LocaleConfigs = {};
-var ModuleConfigs = {};
-var ProgramConfig = {};
-var Tabs = [];
-var Tab = {};
-var LanguageStudyModules = {};
-var DailyDevotionModules = {};
-var Book = new Array(NumBooks);
-var AllWindows = [];
-var XSBundle = document.getElementById("strings");
-
-// Global text objects defined in vewport.js and texts.js files
-var ViewPort = null;
-var Texts = null;
-var BibleTexts = null; 
-var CommTexts = null; 
-var DictTexts = null; 
-var GenBookTexts = null;
-
-
-/************************************************************************
- * GLOBAL Location
- ***********************************************************************/ 
-
-var Location = {
-  modname:null,
-  modvsys:null,
-  book:null,
-  chapter:null,
-  verse:null,
-  lastverse:null,
-
-  convertLocation: function(vsys1, xsref, vsys2) {
-    var p = xsref.split(".");
-    var vzero = false;
-    if (p && (p.length==3 || p.length==4) && p[2]==0) {
-      // libxulsword convertLocation was changed to always return valid
-      // references (verse=0 is never returned any more). So the old 
-      // behaviour is enforced here to keep xulsword happy.
-      vzero = true;
-      p[2] = 1;
-      p[3] = 1;
-      xsref = p.join(".");
-    }
- 
-    var loc = LibSword.convertLocation(vsys1, xsref, vsys2);
-    if (!vzero) return loc;
-    
-    p = loc.split(".");
-    p[2] = 0;
-    p[3] = 0;
-    return p.join(".");
-  },
-  
-  setLocation: function(modname, xsref) {
-    this.modname = modname;
-    this.modvsys = LibSword.getVerseSystem(modname);
-/*    
-    // dont highlight entire chapter unless specifically requested
-    if ((/^[^\s\.]+\.\d+$/).test(xsref)) xsref += ".1.1";
-*/ 
-    var loc = this.convertLocation(this.modvsys, xsref, this.modvsys);
-    var p = loc.split(".");
-
-    this.book = p[0];
-    this.chapter = p[1];
-    this.verse = p[2];
-    this.lastverse = p[3];
-
-    return this.modvsys;
-  },
-  
-  setVerse: function(modname, verse, lastverse) {
-    var loc = this.getLocation(modname);
-    var p = loc.split(".");
-    var maxv = LibSword.getMaxVerse(modname, loc);
-    
-    if (verse == -1 || verse > maxv) p[2] = maxv;
-    else if (verse < 0) p[2] = 0;
-    else p[2] = verse;
-    
-    if (lastverse == -1 || lastverse > maxv) p[3] = maxv;
-    else if (lastverse < verse) p[3] = verse;
-    else p[3] = lastverse;
-  
-    this.setLocation(modname, p.join("."));
-
-    return this.modvsys;
-  },
-  
-  getLocation: function(modname) {
-    if (!this.modname) {setLocation(WESTERNVS, "Gen.1.1.1");}
-    var r = this.convertLocation(LibSword.getVerseSystem(this.modname), this.book + "." + this.chapter + "." + this.verse + "." + this.lastverse, LibSword.getVerseSystem(modname));
-    return r;
-  },
-  
-  getChapter: function(modname) {
-    var p = this.getLocation(modname).split(".");
-    return p[0] + " " + p[1];
-  },
-    
-  getBookName: function() {
-    return this.getLocation(this.modname).split(".")[0];
-  },
-
-  getChapterNumber: function(modname) {
-    return this.getLocation(modname).split(".")[1];
-  },
-  
-  getVerseNumber: function(modname) {
-    return this.getLocation(modname).split(".")[2];
-  },
-  
-  getLastVerseNumber: function(modname) {
-    return this.getLocation(modname).split(".")[3];
-  }
-};
+LocaleConfigs = {};
+ModuleConfigs = {};
+ProgramConfig = {};
+Tabs = [];
+Tab = {};
+LanguageStudyModules = {};
+DailyDevotionModules = {};
+Book = new Array(NumBooks);
+AllWindows = [];
+XSBundle = document.getElementById("strings");
+AudioDirs = getAudioDirs();
 
 
 /************************************************************************
@@ -526,7 +419,10 @@ function xulswordInit() {
   
   initBooks();
 
-  if (LibSword && !LibSword.unlock()) LibSword = null;
+  if (LibSword && !LibSword.unlock()) {
+    LibSword.quitLibsword();
+    LibSword = null;
+  }
   
 }
 

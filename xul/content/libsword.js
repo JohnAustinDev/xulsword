@@ -39,11 +39,13 @@ Valid for Dictionary modules:
   "ReferenceBible" - Preffered Bible module to use for Scripture references.
 */
 
+const VERSIONPAR = "xulswordVersion";
+
 // as a ChromeWorker, Components is not available but ctypes is.
 if (typeof ctypes == "undefined") Components.utils.import("resource://gre/modules/ctypes.jsm");
 
 
-var LibSword = {
+LibSword = {
   libsword:null,        // reference to the libxulsword dynamic library
   inst:null,            // the LibSword (xulsword) instance returned by libxulsword
   callback:null,        // an object used to implement callbacks from Javascript
@@ -209,7 +211,7 @@ var LibSword = {
       var cipherKey;
       try {cipherKey = getPrefOrCreate("CipherKey" + mod, "Char", prefs.getCharPref("DefaultCK"));}
       catch (er) {cipherKey = "0";}
-      var useSecurityModule = usesSecurityModule(this, mod);
+      var useSecurityModule = this.usesSecurityModule(mod);
       this.setCipherKey(mod, cipherKey, useSecurityModule);
       
       // If our key is from prefs, then later on check that it works,
@@ -222,6 +224,14 @@ var LibSword = {
     if (typeof(jsdump) != "undefined" && msg != "") {jsdump("Opening:" + msg + "\n");}
     
     return true;
+  },
+  
+  usesSecurityModule: function(mod) {
+    if (this.getModuleInformation(mod, "CipherKey") != "") return false;
+    
+    //checking "ProducedFor" is for backward compatibility to modules before version 2.7
+    return ((this.getModuleInformation(mod, VERSIONPAR) != NOTFOUND || 
+        this.getModuleInformation(mod, "ProducedFor") == "xulsword") ? true:false);
   },
 
   allWindowsModal: function(setModal) {

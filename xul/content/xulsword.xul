@@ -21,7 +21,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css" ?>
 <?xml-stylesheet href="chrome://xulsword/skin/xulsword-xul.css" type="text/css" ?>
 
-<?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul" ?>
+<?xul-overlay href="chrome://xulsword/content/common/editMenu-overlay/editMenu-overlay.xul" ?>
 <?xul-overlay href="chrome://xulsword/content/common/contextMenu-overlay.xul" ?>
 
 <!DOCTYPE window SYSTEM "chrome://xulsword/locale/xulsword.dtd">
@@ -55,25 +55,34 @@
 <data id="ui.savingTarget">&dlgTo;</data>
 <data id="ui.localeDir">&locale.dir;</data>
 
-<script>var MainWindow = window;</script>
+<script>
+  // xulsword's program-wide globals...
+  var MainWindow = window;
+  var LibSword, Location, AudioDirs, LocaleConfigs, ModuleConfigs, ProgramConfig;
+  var Book, Tabs, Tab, AllWindows, LanguageStudyModules, XSBundle, BM, BMDS, BookmarkFuns, ResourceFuns;
+  var CommandTarget, ViewPort, Texts, BibleTexts, DictTexts, GenBookTexts, CommTexts;
+</script>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkfuncs.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkDataInit.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/location.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
 
 <script>moduleInstall(true);</script>
 
-<script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/common/nsDragAndDrop.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkFuns.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/search/indexer.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/xulswordInit.js"/>
 

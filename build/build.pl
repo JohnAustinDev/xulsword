@@ -627,10 +627,12 @@ sub processLocales($\@$$) {
     }
   }
   
-  # do not override anything if this is a FireFox extension, as this may break FireFox!
+  # Do not override anything if this is a FireFox extension, as this may 
+  # break FireFox if its version is different that from which the override 
+  # files were taken.
   if (!$no_xul_overrides) {
-    push(@{$manifestP}, "override chrome://global/locale/textcontext.dtd chrome://xulsword/locale/xsglobal/textcontext.dtd");
-    push(@{$manifestP}, "override chrome://global/locale/tree.dtd chrome://xulsword/locale/xsglobal/tree.dtd");
+    push(@{$manifestP}, "override chrome://global/locale/textcontext.dtd chrome://xulsword/locale/override/ff17/textcontext.dtd");
+    push(@{$manifestP}, "override chrome://global/locale/tree.dtd chrome://xulsword/locale/override/ff17/tree.dtd");
   }
 
   push(@{$manifestP}, "\n# xulswordVersion=3.0\n");

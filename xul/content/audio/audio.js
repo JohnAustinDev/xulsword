@@ -181,7 +181,7 @@ function checkQuickTime() {
       for (var k=0; k<PLUGINLINKS.length; k++) {msg += PLUGINLINKS[k] + "\n";}
       msg += "\n";
       var result = {};
-      var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
+      var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result,
           fixWindowTitle(XSBundle.getString("Title")),
           msg,
           DLGINFO,
@@ -196,7 +196,7 @@ function checkQuickTime() {
     try {var msg = XSBundle.getString("QuickTimeUpdateNeeded2");}
     catch (er) {msg = XSBundle.getString("QuickTimeUpdateNeeded");} //BACKWARD COMPATIBILITY
     var result = {};
-    var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
+    var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result,
         fixWindowTitle(XSBundle.getString("Title")),
         msg,
         DLGINFO,
@@ -239,7 +239,7 @@ function installQT(installerFile) {
 	if (!installerFile || !installerFile.exists()) return false;
 	
   var result = {};
-  var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
+  var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result, 
       fixWindowTitle(XSBundle.getString("Title")),
       XSBundle.getString("Want2InstallQuickTime"), 
       DLGQUEST,
@@ -345,7 +345,7 @@ function diskSpaceMessage(fromLeafName) {
   }
   catch (er) {msg = "Not enough disk space for this operation.";}
   var result = {};
-  var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result,
+  var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result,
       fixWindowTitle(getDataUI("menu.importAudio.label")),
       msg,
       DLGALERT,
@@ -377,7 +377,7 @@ function audioDirPref(aDir) {
   prefs.setComplexValue("AudioImportDir" + n, Components.interfaces.nsILocalFile, aDir);
   n++;
   prefs.setIntPref("NumAudioImportDirs", n);
-  if (MainWindow) MainWindow.AudioDirs = null; // invalidate so that it will be refreshed when next used
+  if (MainWindow) MainWindow.AudioDirs = getAudioDirs();
 }
 
 function getFileSize(aFile) {

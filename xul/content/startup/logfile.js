@@ -83,7 +83,7 @@ var aConsoleListener =
         if (window.opener) {window.opener.close();} // Don't let splash screen obscure dialogs...
  
         var result={};
-        var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
+        var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result, 
             this.bundle.getString("Title"),
             this.bundle.getFormattedString("SendErrorReport", [this.bundle.GetStringFromName("dialog.OK")]),
             DLGALERT,

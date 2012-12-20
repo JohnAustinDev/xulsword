@@ -30,8 +30,7 @@
   <script>var MainWindow = window.opener;</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
   
   <commandset id="xulswordCommandSet"></commandset>
   <commandset id="BookmarksMenuCommandSet"></commandset>

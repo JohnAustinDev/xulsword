@@ -186,7 +186,7 @@ function Commit() {
     if (newValue)
       newValue = BM.RDF.GetLiteral(newValue);
 
-    changed |= BookmarkFuns.updateAttribute(gResource, BM.gBmProperties[i], oldValue, newValue);
+    changed |= ResourceFuns.updateAttribute(gResource, BM.gBmProperties[i], oldValue, newValue);
     
     if (!newValue) newValue = "";
     if (!oldValue) oldValue = "";

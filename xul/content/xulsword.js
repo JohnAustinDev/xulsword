@@ -21,7 +21,6 @@
  * XULSWORD INITIALIZATION
  ***********************************************************************/
 var NewModuleInfo;
-var AudioDirs = null;
 
 function loadedXUL() {
 
@@ -149,7 +148,7 @@ function postWindowInit() {
     var opmenu = getDataUI("menu.options");
     var lamenu = getDataUI("menu.options.language");
     var result={};
-    var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, result, 
+    var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result, 
         fixWindowTitle(getDataUI("menu.options.language")),
         XSBundle.getFormattedString("LangSelectMsg", [opmenu, lamenu]), 
         DLGINFO,
@@ -664,7 +663,7 @@ function updateFromNavigator(numberOfSelectedVerses) {
  * Main Command Controller...
  ***********************************************************************/
 
-var CommandTarget = {};
+CommandTarget = {};
 var XulswordController = {
   parsedLocation: {},
  
@@ -860,7 +859,6 @@ var XulswordController = {
       return (target.w && target.mod && !ViewPort.IsPinned[target.w] ? true:false);
     case "cmd_xs_exportAudio":
       if (ModuleCopyMutex) return false;
-      if (AudioDirs === null) AudioDirs = getAudioDirs();
       if (!AudioDirs.length) return false;
       for (var i=0; i<AudioDirs.length; i++) {
         if (AudioDirs[i].isExportable && AudioDirs[i].dir.exists()) {
@@ -1422,7 +1420,7 @@ function unloadXUL() {
   }
   
   // purge UserData data source
-  if (BMDS) BookmarkFuns.purgeDataSource(BMDS);
+  if (BMDS) ResourceFuns.purgeDataSource(BMDS);
   
   jsdump("Finished unloading xulsword.js");
 }

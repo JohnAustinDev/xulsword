@@ -220,7 +220,7 @@ function SearchObj(searchObj) {
       
       if (!dontAsk) {
         var myresult = {};
-        var dlg = window.openDialog("chrome://xulsword/content/common/dialog.xul", "dlg", DLGSTD, myresult, 
+        var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, myresult, 
             fixWindowTitle(getDataUI("BuildingIndex")),
             getDataUI("NeedSearchIndex"), 
             DLGINFO,

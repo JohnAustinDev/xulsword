@@ -37,7 +37,7 @@ var Indexer = {
     if (!LibSword.getModuleInformation(this.moduleName, "CipherKey")) {
       // a cipher key is needed, so get it...
       this.cipherKey = getPrefOrCreate("CipherKey" + this.moduleName, "Char", prefs.getCharPref("DefaultCK"));
-      this.usesSecurity = usesSecurityModule(LibSword, this.moduleName);
+      this.usesSecurity = LibSword.usesSecurityModule(this.moduleName);
     }
     
     // Must pause LibSword before indexer thread can be started because 

@@ -38,7 +38,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksManager-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks-xul.css" type="text/css"?>
 
-<?xul-overlay href="chrome://xulsword/content/xsglobal/editMenuOverlay.xul"?>
+<?xul-overlay href="chrome://xulsword/content/common/editMenu-overlay/editMenu-overlay.xul"?>
 
 <!DOCTYPE window SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
 
@@ -54,9 +54,8 @@
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/common/common2.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/globalOverlay.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/xsglobal/nsDragAndDrop.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/nsDragAndDrop.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksManager.js"/>
 
