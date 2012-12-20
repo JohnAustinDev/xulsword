@@ -304,8 +304,8 @@ sub copyExtensionFiles($\@$$$) {
     push(@{$manifestP}, "content branding file:../../../xul/content/branding/");
     push(@{$manifestP}, "locale branding en-US file:../../../xul/locale/branding/");
     push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/test/debug-overlay.xul");
-    push(@{$manifestP}, "skin xsplatform skin file:../../../xul/skin/linux/ os=Linux");
-    push(@{$manifestP}, "skin xsplatform skin file:../../../xul/skin/windows/ os=WINNT");
+    push(@{$manifestP}, "skin xsplatform skin file:../../../xul/skin/common/linux/ os=Linux");
+    push(@{$manifestP}, "skin xsplatform skin file:../../../xul/skin/common/windows/ os=WINNT");
     &copy_dir("$TRUNK/xul/distribution", "$do/distribution", "", "\\.svn");
   }
   else {
@@ -315,8 +315,8 @@ sub copyExtensionFiles($\@$$$) {
       push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
       push(@{$manifestP}, "locale branding en-US jar:chrome/en-US.jar!/branding/");
     }
-    push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/linux/ os=Linux");
-    push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/windows/ os=WINNT");
+    push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/common/linux/ os=Linux");
+    push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/common/windows/ os=WINNT");
 
     &Log("----> Creating content and skin JAR files.\n");
     &makeZIP("$do/chrome/content.jar", "$TRUNK/xul/content/*");
