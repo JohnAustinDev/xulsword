@@ -2,7 +2,7 @@
   font-size:1em;
 }
 #bookmark-window toolbarbutton {
-  list-style-image: url("chrome://xulsword/skin/bookmarks/Bookmarks-toolbar.png");
+  list-style-image: url("chrome://xulsword/skin/images/Bookmarks-toolbar.png");
   -moz-box-orient: vertical;
   min-width: 57px;
   padding: 5px;
