@@ -1,8 +1,0 @@
-/* search windows */
-toolbar groupbox caption {
-  background:rgb(211,218,237);
-}
-
-toolbar groupbox, #dividerBox {
-  margin:0px 14px 10px 0px;
-}
