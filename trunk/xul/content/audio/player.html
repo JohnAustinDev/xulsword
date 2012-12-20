@@ -44,7 +44,7 @@ function checkAndEmbedPlayer() {
     return;
   }
   
-  var audiofile = MainWindow.getAudioForChapter(player.version, player.book, player.chapter, AudioDirs);
+  var audiofile = MainWindow.getAudioForChapter(player.version, player.book, player.chapter);
   
   if (!audiofile) {
     MainWindow.endAudioPlayer(); 

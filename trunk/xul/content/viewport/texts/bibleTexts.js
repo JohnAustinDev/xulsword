@@ -383,7 +383,7 @@ BibleTexts = {
     for (var i = 0; i < icons.length; ++i) {
       var icon = icons[i];
 //icon.style.visibility = "visible"; continue;
-      if (MainWindow.getAudioForChapter(Texts.display[w].mod, Texts.display[w].bk, Texts.display[w].ch, AudioDirs))
+      if (AudioDirs.length && MainWindow.getAudioForChapter(Texts.display[w].mod, Texts.display[w].bk, Texts.display[w].ch))
           icon.style.visibility = "visible";
     }
   }

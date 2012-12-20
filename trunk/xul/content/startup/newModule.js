@@ -36,6 +36,8 @@ const MINVERSION = "1.0";
 
 var ModuleCopyMutex = false;
 
+XSBundle = document.getElementById("strings");
+
 /************************************************************************
  * Module install functions
  ***********************************************************************/ 
@@ -750,12 +752,9 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     
   case BOOKMARKS:
     // this doesn't access the LibSword object in this case.
-    if (!ResourceFuns.importBMFile(inflated, false, true)) {
-      removeFile(inflated, false);
-      return {reset:NORESET, success:false, remove:true};
-    }
+    var ret = installBookmarkFile(inflated);
     removeFile(inflated, false);
-    GotoBookmarkFile = inflated;
+    if (!ret.success) return ret;
     break;
   }
   
@@ -822,6 +821,7 @@ function handleResetRequest() {
         restartApplication(false);
         break;
       }
+      
       //NOTE: In this case a manifest file for new mods etc. will not be written!
       if (GotoVideoFile) MainWindow.createHelpVideoMenu();
       if (GotoBookmarkFile) {
@@ -1382,9 +1382,12 @@ var fileObserver = {
 
 function moduleInstall(isMainWindow) {
 jsdump("STARTING moduleInstall, isMainWindow:" + isMainWindow);
+
   var result = retrieveFileArrays();
+  
   // Delete any files still scheduled to be deleted
   if (result.files2Delete) deleteFiles(result.deleteFiles);
+  
   // Install any files waiting from a previous install!
   if (result.filesWaiting) {
     if (isMainWindow)
@@ -1398,6 +1401,7 @@ jsdump("STARTING moduleInstall, isMainWindow:" + isMainWindow);
     if (!isMainWindow) installCommandLineModules();
   }
   else if (!isMainWindow) installCommandLineModules();
+  
 }
 
 function installCommandLineModules() {

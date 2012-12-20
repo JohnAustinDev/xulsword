@@ -25,6 +25,7 @@ var NewModuleInfo;
 function loadedXUL() {
 
   initCSS();
+  AllWindows = [];
   AllWindows.push(window);
   
   document.title = XSBundle.getString("Title");
