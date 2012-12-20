@@ -59,7 +59,7 @@
   // xulsword's program-wide globals...
   var MainWindow = window;
   var LibSword, Location, AudioDirs, LocaleConfigs, ModuleConfigs, ProgramConfig;
-  var Book, Tabs, Tab, AllWindows, LanguageStudyModules, XSBundle, BM, BMDS, BookmarkFuns, ResourceFuns;
+  var Book, Tabs, Tab, LanguageStudyModules, AllWindows, XSBundle, BM, BMDS, ResourceFuns, BookmarkFuns;
   var CommandTarget, ViewPort, Texts, BibleTexts, DictTexts, GenBookTexts, CommTexts;
 </script>
 

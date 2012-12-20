@@ -83,33 +83,31 @@ function getAudioDirs() {
 //    2) If not found, get audio matching the module's "AudioCode" if it exists.
 //    3) If still not found, look for audio matching the module's base "Lang" attribute.
 //    4) If still not found, there is no audio...
-function getAudioForChapter(version, bookShortName, chapterNumber, audioDirs) {
-  if (!audioDirs) audioDirs = getAudioDirs();
-  var ret = getAudioFile(version, bookShortName, chapterNumber, audioDirs);
+function getAudioForChapter(version, bookShortName, chapterNumber) {
+  var ret = getAudioFile(version, bookShortName, chapterNumber);
   if (ret) return ret;
     
   var audioCode = LibSword.getModuleInformation(version, "AudioCode");
   if (audioCode!=NOTFOUND) {
-    ret = getAudioFile(audioCode, bookShortName, chapterNumber, audioDirs);
+    ret = getAudioFile(audioCode, bookShortName, chapterNumber);
     if (ret) return ret;
   }
   
   var mLang = LibSword.getModuleInformation(version, "Lang");
   if (mLang) mLang = mLang.replace(/-.*$/, "");
-  ret = getAudioFile(mLang, bookShortName, chapterNumber, audioDirs);
+  ret = getAudioFile(mLang, bookShortName, chapterNumber);
   if (ret) return ret;
   
   return null;
 }
 
-function getAudioFile(code, shortName, chapter, audioDirs) {
-  if (!audioDirs) audioDirs = getAudioDirs();
+function getAudioFile(code, shortName, chapter) {
   var dcode;
   var dlocale;
-  for (var d=0; d<audioDirs.length; d++) {
-    try {var ok = (audioDirs[d].dir.exists() && audioDirs[d].dir.directoryEntries)} catch (er) {continue;}
+  for (var d=0; d<AudioDirs.length; d++) {
+    try {var ok = (AudioDirs[d].dir.exists() && AudioDirs[d].dir.directoryEntries)} catch (er) {continue;}
     if (!ok) continue;
-    var files = audioDirs[d].dir.directoryEntries;
+    var files = AudioDirs[d].dir.directoryEntries;
     while (files.hasMoreElements()) {
       var file = files.getNext().QueryInterface(Components.interfaces.nsILocalFile);
       if (!file || !file.isDirectory()) continue;
@@ -118,9 +116,9 @@ function getAudioFile(code, shortName, chapter, audioDirs) {
       if (fcode) {
         for (var e=0; e<AUDEXT.length; e++) {
           if (fcode[2]) {
-            var aFile = getLocalizedAudioFile(audioDirs[d].dir, file.leafName.replace(/_.*$/, ""), shortName, chapter, AUDEXT[e], fcode[2]);
+            var aFile = getLocalizedAudioFile(AudioDirs[d].dir, file.leafName.replace(/_.*$/, ""), shortName, chapter, AUDEXT[e], fcode[2]);
           }
-          else aFile = getThisAudioFile(audioDirs[d].dir, file.leafName.replace(/_.*$/, ""), shortName, chapter, AUDEXT[e]);
+          else aFile = getThisAudioFile(AudioDirs[d].dir, file.leafName.replace(/_.*$/, ""), shortName, chapter, AUDEXT[e]);
           if (aFile && aFile.exists()) return aFile;
         }
       }
@@ -129,11 +127,10 @@ function getAudioFile(code, shortName, chapter, audioDirs) {
   return null;
 }
 
-function getAudioRelatedFile(dirName, fileName, audioDirs) {
-  if (!audioDirs) audioDirs = getAudioDirs();
+function getAudioRelatedFile(dirName, fileName) {
   var aFile;
-  for (var d=0; d<audioDirs.length; d++) {
-    aFile = audioDirs[d].dir.clone();
+  for (var d=0; d<AudioDirs.length; d++) {
+    aFile = AudioDirs[d].dir.clone();
     if (dirName) aFile.append(dirName);
     aFile.append(fileName);
     if (aFile.exists()) return aFile;
@@ -297,16 +294,15 @@ function isQTInstallDone() {
  * Audio import functions
  ***********************************************************************/  
 function importAudio(fromDir, toDir, doNotCopyFiles) {
-  var audioDirs = getAudioDirs();
   const kFilePickerContractID = "@mozilla.org/filepicker;1";
   const kFilePickerIID = Components.interfaces.nsIFilePicker;
   const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
   if (!fromDir || doNotCopyFiles) {
     try {
       var kTitle = fixWindowTitle(getDataUI("savingSource"));
-      for (var i=0; i<audioDirs.length; i++) {
-        if (audioDirs[i].isInstallDir && audioDirs[i].dir.exists()) {
-          kFilePicker.displayDirectory = audioDirs[i].dir;
+      for (var i=0; i<AudioDirs.length; i++) {
+        if (AudioDirs[i].isInstallDir && AudioDirs[i].dir.exists()) {
+          kFilePicker.displayDirectory = AudioDirs[i].dir;
           kFilePicker.defaultString = "Audio";
         }
       }
@@ -367,17 +363,20 @@ function importAudioTo() {
 }
 
 function audioDirPref(aDir) {
-  var audioDirs = getAudioDirs();
   var n = getPrefOrCreate("NumAudioImportDirs", "Int", 0);
   aDir = aDir.QueryInterface(Components.interfaces.nsILocalFile);
   if (aDir.equals(getSpecialDirectory("xsAudio"))) return;
-  for (var i=0; i<audioDirs.length; i++) {if (aDir.equals(audioDirs[i].dir)) return;}
+  
+  for (var i=0; i<AudioDirs.length; i++) {if (aDir.equals(AudioDirs[i].dir)) return;}
+  
   // prefs may not be same as audioDirs so check them too...
   for (i=0; i<n; i++) {if (aDir.equals(prefs.getComplexValue("AudioImportDir" + i, Components.interfaces.nsILocalFile))) return;}
+  
   prefs.setComplexValue("AudioImportDir" + n, Components.interfaces.nsILocalFile, aDir);
   n++;
   prefs.setIntPref("NumAudioImportDirs", n);
-  if (MainWindow) MainWindow.AudioDirs = getAudioDirs();
+  
+  AudioDirs = getAudioDirs();
 }
 
 function getFileSize(aFile) {
@@ -423,11 +422,10 @@ function exportAudio(exportFileFormat) {
   if (!ADestFolder.exists()) ADestFolder.create(ADestFolder.DIRECTORY_TYPE, DPERM);
   ExportFileFormat = exportFileFormat;
   jsdump("Beginnig audio export to: " + kFilePicker.file.path);
-  var audioDirs = getAudioDirs();
-  if (ADestFolder && ADestFolder.isDirectory() && audioDirs.length) {
-    for (var d=audioDirs.length-1; d>=0; d--) {
-      if (!audioDirs[d].isExportable || !audioDirs[d].dir.exists() || !audioDirs[d].dir.isDirectory()) continue;
-      exportThisFolder(audioDirs[d].dir, ADestFolder);
+  if (ADestFolder && ADestFolder.isDirectory() && AudioDirs.length) {
+    for (var d=AudioDirs.length-1; d>=0; d--) {
+      if (!AudioDirs[d].isExportable || !AudioDirs[d].dir.exists() || !AudioDirs[d].dir.isDirectory()) continue;
+      exportThisFolder(AudioDirs[d].dir, ADestFolder);
     }
   }
   
@@ -586,3 +584,5 @@ function findBookNumPreMainWin(shortName) {
 
   return bnum;
 }
+
+AudioDirs = getAudioDirs();

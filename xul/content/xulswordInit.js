@@ -31,9 +31,6 @@ Tab = {};
 LanguageStudyModules = {};
 DailyDevotionModules = {};
 Book = new Array(NumBooks);
-AllWindows = [];
-XSBundle = document.getElementById("strings");
-AudioDirs = getAudioDirs();
 
 
 /************************************************************************

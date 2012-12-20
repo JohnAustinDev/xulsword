@@ -41,7 +41,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/BookmarkDataInit.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkDataInit.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
   
@@ -57,9 +57,6 @@
     // check for the MainWindow and if it exists, don't open another.
     var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
     var MainWindow = watcher.getWindowByName("xulsword-window", window);
-    
-    var AudioDirs = getAudioDirs();
-    var XSBundle = document.getElementById("strings");
     
     createAppDirectories();
   
