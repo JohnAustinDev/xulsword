@@ -75,7 +75,7 @@ BookmarkFuns = {
     var text = BookmarkFuns.getTextForBookmark(location);
     var dialogArgs = {name:name, text:text, selectNoteFlag: selectNoteFlag};
     var retVal = {name:null, note: null, chosenFolderID: null, ok: false};
-    openDialog("chrome://xulsword/content/bookmarks/addBookmark2.xul", "", BROWSER_ADD_BM_FEATURES, dialogArgs, retVal);
+    openDialog("chrome://xulsword/content/bookmarks/addBookmark/addBookmark.xul", "", BROWSER_ADD_BM_FEATURES, dialogArgs, retVal);
     if (!retVal.ok) return;
     // Create the new bookmark now...
     var myprops = ["Bookmark", retVal.name, retVal.note, location.shortName, location.chapter, location.verse, location.lastVerse, location.version, null, text.text];
@@ -164,7 +164,7 @@ BookmarkFuns = {
     var value = {ok:false};
     // NOTE: this window MUST be modal (even if it screws with window 
     // focus) so that bookmark transactions work properly.
-    openDialog("chrome://xulsword/content/bookmarks/bookmarksProperties.xul", "", "centerscreen,chrome,modal,resizable=no", resourceID, value, editNote);
+    openDialog("chrome://xulsword/content/bookmarks/bookmarksProperties/bookmarksProperties.xul", "", "centerscreen,chrome,modal,resizable=no", resourceID, value, editNote);
     return value.ok;
   },
     

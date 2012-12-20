@@ -748,7 +748,7 @@ var XulswordController = {
       updateFromNavigator();
       break;
     case "cmd_xs_openManager":
-      AllWindows.push(window.open("chrome://xulsword/content/bookmarks/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen"));
+      AllWindows.push(window.open("chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_toggleTab":
       if (CommandTarget.w) {

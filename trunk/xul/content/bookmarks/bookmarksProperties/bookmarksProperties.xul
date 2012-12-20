@@ -35,8 +35,8 @@
  ***** END LICENSE BLOCK ***** !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksProperties-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks-xul.css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksProperties/bookmarksProperties-xul.css" type="text/css"?>
 
 <!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
 
@@ -52,7 +52,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksProperties.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksProperties/bookmarksProperties.js"/>
   
   <vbox id="description-box" hidden="true">
     <separator class="thin"/>

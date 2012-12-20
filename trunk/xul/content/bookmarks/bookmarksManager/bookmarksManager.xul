@@ -35,8 +35,8 @@
  ***** END LICENSE BLOCK ***** !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
-<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksManager-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksManager/bookmarksManager-xul.css" type="text/css"?>
 
 <?xul-overlay href="chrome://xulsword/content/common/editMenu-overlay/editMenu-overlay.xul"?>
 
@@ -57,7 +57,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/nsDragAndDrop.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksManager.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.js"/>
 
   <keyset id="editMenuKeys"/>
   
