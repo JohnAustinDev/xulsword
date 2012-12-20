@@ -284,7 +284,7 @@ var BookmarksCommand = {
 
   manageFolder: function (aSelection)
   {
-    //openDialog("chrome://browser/content/bookmarks/bookmarksManager.xul","", "chrome,all,dialog=no", aSelection.item[0].Value);
+    //openDialog("chrome://browser/content/bookmarks/bookmarksManager/bookmarksManager.xul","", "chrome,all,dialog=no", aSelection.item[0].Value);
   },
   
   cutBookmark: function (aSelection)
@@ -445,7 +445,7 @@ var BookmarksCommand = {
   moveBookmark: function (aSelection)
   {
     var rv = { selectedFolder: null };      
-    openDialog("chrome://xulsword/content/bookmarks/addBookmark.xul", "", 
+    openDialog("chrome://xulsword/content/bookmarks/moveBookmark/moveBookmark.xul", "", 
                "centerscreen,chrome,modal=yes,dialog=yes,resizable=yes", null, 
                null, null, null, "selectFolder", rv);
     if (!rv.target)
@@ -919,7 +919,7 @@ var BookmarksController = {
       aCommand = aCommand.replace("bm_","");
       var target = {
         command:aCommand,
-        uri:"chrome://xulsword/content/bookmarks/bmPrint.html",
+        uri:"chrome://xulsword/content/bookmarks/bookmarkPrint.html",
         bodyHTML:BookmarkFuns.getFormattedBMdata(resource0, true),
         callback:BookmarksCommand
       };

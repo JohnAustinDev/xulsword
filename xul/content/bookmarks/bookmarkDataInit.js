@@ -46,8 +46,8 @@ function initBMServices(bm) {
   bm.gIcon = {};
   bm.gIconWithNote = {};
   for (var type in SupportedModuleTypes) {
-    bm.gIcon[type]          = "chrome://xulsword/skin/bookmarks/" + type + ".png";
-    bm.gIconWithNote[type]  = "chrome://xulsword/skin/bookmarks/" + type + "WithNote.png";
+    bm.gIcon[type]          = "chrome://xulsword/skin/images/" + type + ".png";
+    bm.gIconWithNote[type]  = "chrome://xulsword/skin/images/" + type + "WithNote.png";
   }
   
   bm.BmEmptyRes       = bm.RDF.GetResource(bm.BmEmptyID);
@@ -143,26 +143,26 @@ function initBookmarksLocale(rdf, aDS, allBookmarksRes, bmProperties, bmEmptyRes
 function getEmptyUserData() {
 var data = "\
 <?xml version=\"1.0\"?>\n\
-<RDF:RDF xmlns:BOOKMARKS=\"http://www.xulsword.com/bookmarks/rdf#\"\n\
-         xmlns:NC=\"http://home.netscape.com/NC-rdf#\"\n\
-         xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n\
-\n\
-  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/BookmarksRoot\">\n\
-    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/AllBookmarks\"/>\n\
-  </RDF:Seq>\n\
-\n\
-  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/AllBookmarks\">\n\
-    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/emptyBookmark\"/>\n\
-  </RDF:Seq>\n\
-\n\
-  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/FoundResults\">\n\
-    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/emptyBookmark\"/>\n\
-  </RDF:Seq>\n\
-\n\
-  <Description RDF:about=\"http://www.xulsword.com/bookmarks/BookmarksRoot\" BOOKMARKS:Type=\"Folder\" BOOKMARKS:Name=\"Bookmarks Root\"/>\n\
-  <Description RDF:about=\"http://www.xulsword.com/bookmarks/AllBookmarks\" BOOKMARKS:Type=\"Folder\"/>\n\
-  <Description RDF:about=\"http://www.xulsword.com/bookmarks/emptyBookmark\" BOOKMARKS:Type=\"EmptyBookmark\"/>\n\
-</RDF:RDF>\n\
+<RDF:RDF xmlns:BOOKMARKS=\"http://www.xulsword.com/bookmarks/rdf#\"" + NEWLINE + "\
+         xmlns:NC=\"http://home.netscape.com/NC-rdf#\"" + NEWLINE + "\
+         xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">" + NEWLINE + "\
+" + NEWLINE + "\
+  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/BookmarksRoot\">" + NEWLINE + "\
+    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/AllBookmarks\"/>" + NEWLINE + "\
+  </RDF:Seq>" + NEWLINE + "\
+" + NEWLINE + "\
+  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/AllBookmarks\">" + NEWLINE + "\
+    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/emptyBookmark\"/>" + NEWLINE + "\
+  </RDF:Seq>" + NEWLINE + "\
+" + NEWLINE + "\
+  <RDF:Seq RDF:about=\"http://www.xulsword.com/bookmarks/FoundResults\">" + NEWLINE + "\
+    <RDF:li RDF:resource=\"http://www.xulsword.com/bookmarks/emptyBookmark\"/>" + NEWLINE + "\
+  </RDF:Seq>" + NEWLINE + "\
+" + NEWLINE + "\
+  <Description RDF:about=\"http://www.xulsword.com/bookmarks/BookmarksRoot\" BOOKMARKS:Type=\"Folder\" BOOKMARKS:Name=\"Bookmarks Root\"/>" + NEWLINE + "\
+  <Description RDF:about=\"http://www.xulsword.com/bookmarks/AllBookmarks\" BOOKMARKS:Type=\"Folder\"/>" + NEWLINE + "\
+  <Description RDF:about=\"http://www.xulsword.com/bookmarks/emptyBookmark\" BOOKMARKS:Type=\"EmptyBookmark\"/>" + NEWLINE + "\
+</RDF:RDF>" + NEWLINE + "\
 ";
 return data;
 }

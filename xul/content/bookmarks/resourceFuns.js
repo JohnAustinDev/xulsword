@@ -289,6 +289,21 @@ ResourceFuns = {
       if (!index && index != 0) continue; // weed out junk data
       if (parentName == BM.AllBookmarksID) {parentName = aParentResVal;}
       else {parentName = parentName + suffix;}
+      
+      // for backward compatibility to < version 3.5, change icon image URLs
+      var icon = BM.gIcon.Texts; // default
+      if (propertyValues[ICON]) {
+        var type = propertyValues[ICON].match(/\/([^\/]+)\.png$/);
+        if (type) {
+          type = type[1];
+          if ((/^(Texts|Comms|Dicts|Genbks)(WithNote)?$/).test(type) {
+            icon = icon.replace(/\/[^\/]+\.png$/, "/" + type + ".png"); // path changed but file names did not
+          }
+          else if (type == "Bookmarks-Note") icon = BM.gIconWithNote.Texts; // ancient variation
+        }
+      }
+      propertyValues[ICON] = icon;
+      
       if (overwrite) {
         var todelete = BM.RDF.GetResource(resourceName);
         BookmarkFuns.removeResource(todelete, BMDS);
@@ -301,6 +316,7 @@ ResourceFuns = {
           }
         }
       }
+      
       var newResource = this.createNewResource(propertyValues, true, resourceName, true);
       var newParent = BM.RDF.GetResource(parentName);
       if (!BM.RDFCU.IsContainer(BMDS, newParent)) {BM.RDFCU.MakeSeq(BMDS,newParent);}

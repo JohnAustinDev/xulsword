@@ -57,7 +57,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>  
-  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/addBookmark.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/moveBookmark/moveBookmark.js"/>
 
   <broadcaster id="showaddgroup" hidden="true"/>
 
