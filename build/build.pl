@@ -617,7 +617,8 @@ sub processLocales($\@$$) {
       $haveLocale{$loc} = 1;
     }
     &copy_file("$TRUNK/build-files/locales/$loc.jar", "$od/chrome");
-    &copy_file("$ldir/$loc.rdf", "$od/defaults/");
+    if (-e "$ldir/$loc.rdf") {&copy_file("$ldir/$loc.rdf", "$od/defaults/");}
+    else {&Log("WARNING: No bookmarks.rdf file found for locale \"$loc\".\n");}
     
     # write locale manifest info
     push(@{$manifestP}, "\nlocale xulsword $loc jar:chrome/$loc.jar!/xulsword/");

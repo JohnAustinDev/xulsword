@@ -1,24 +1,6 @@
-# Locale=en-US, Version=3.0, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_shortCut_keys=0
+# Locale=en-US, Version=3.5, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_shortCut_keys=0
 INFO: Reading UI file: "UI-en-US.txt"
 INFO: Reading UI file: "UI-en-US_2.txt"
 WARNING xulsword/dialogs/about/about.dtd:producedby: Value is empty.
 WARNING xulsword/startup/startup.dtd:producedby: Value is empty.
-
-ERROR: Description "configuration.text_direction = "" was not found in the MAP.
-
-
-ERROR: Description "dialog-window.select = "Select" was not found in the MAP.
-
-
-ERROR: Description "main-window.menu-bookmarks.new-bookmark.name.ak = "N" was not found in the MAP.
-
-
-ERROR: Description "main-window.menu-bookmarks.new-bookmark.url.ak = "L" was not found in the MAP.
-
-
-ERROR: Description "search-window.more-options.search-scope.choose-books.psalms = "Psalms" was not found in the MAP.
-
-
-ERROR: Description "search-window.more-options.search-type.show_results_in_order = "Show results in order" was not found in the MAP.
-
 Finished.

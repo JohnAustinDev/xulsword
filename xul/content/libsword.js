@@ -31,7 +31,7 @@ Valid for Bible modules:
       more than one DictionaryModule entry.
   "AudioCode" - Audio files located in this directory (within the Audio dir) will
       be avaialble in this Bible module.
-  "NoticeLink" and "NoticeText" - Used to display a prominent message about a Bible.
+  "NoticeLink" and "NoticeText" - Used to display a prominent message about a text.
 
 Valid for Dictionary modules:
   "LangSortOrder" - Allows for sorting entries alphabetically in any language.
@@ -39,10 +39,9 @@ Valid for Dictionary modules:
   "ReferenceBible" - Preffered Bible module to use for Scripture references.
 */
 
-const VERSIONPAR = "xulswordVersion";
-
-// as a ChromeWorker, Components is not available but ctypes is.
-if (typeof ctypes == "undefined") Components.utils.import("resource://gre/modules/ctypes.jsm");
+// as a ChromeWorker, Components is not available but ctypes automatically is,
+// so don't import ctypes again in that case...
+if (typeof(ctypes) == "undefined") Components.utils.import("resource://gre/modules/ctypes.jsm");
 
 
 LibSword = {
@@ -51,12 +50,13 @@ LibSword = {
   callback:null,        // an object used to implement callbacks from Javascript
   fdata:null,
   paused:false,
-  freeMemory:null,      // free memory allocated by libxulsword
-  freeLibxulsword:null, // free memory allocated to libxulsword
+  freeMemory:null,      // to free memory allocated by libxulsword
+  freeLibxulsword:null, // to free memory allocated to libxulsword
   
   ModuleDirectory:null,
   LibswordPath:null,
   CheckTheseCipherKeys:[],
+  hasBible:null,
 
   initLibsword: function() {
     if (typeof(jsdump) != "undefined") jsdump("Initializing libsword...");
@@ -67,7 +67,8 @@ LibSword = {
 
     // get paths to local directories in which SWORD modules are (or will be) located
     if (!this.ModuleDirectory) {
-      // NOTE: getSpecialDirectory is not available from within indexWorker...
+      // NOTE: getSpecialDirectory is not available from within a ChromeWorker, so 
+      // ModuleDirectory must be explicitly set on the LibSword object in such case.
       this.ModuleDirectory = getSpecialDirectory("xsResD").path;
       if (IsExtension) this.ModuleDirectory += ", " + getSpecialDirectory("xsExtResource").path;
     }
@@ -77,10 +78,13 @@ LibSword = {
       var dll = (OPSYS == "Windows" ? "xulsword.dll":"libxulsword.so");
       if (!IsExtension) {this.LibswordPath = getSpecialDirectory("CurProcD").path + "/" + dll;}
       else {
-        // NOTE: getSpecialDirectory is not available from within indexWorker...
+        // NOTE: getSpecialDirectory is not available from within a ChromeWorker, so 
+        // LibswordPath must be explicitly set on the LibSword object in such case.
         this.LibswordPath = getSpecialDirectory("xsExtension").path + "/" + APPLICATIONID + "/" + dll;
       }
     }
+    
+    // get our libxulsword instance
     try {this.libsword = ctypes.open(this.LibswordPath);}
     catch (er) {
       window.alert("Could not load " + this.LibswordPath);
@@ -143,7 +147,7 @@ LibSword = {
   
   // Save LibSword info and free up libsword for use by another thread.
   // This should always be called at the end of a thread. Any required
-  // processing after pausing should be initiated by callback.libswordPauseComplete()
+  // processing after pausing should be initiated by a callback.libswordPauseComplete()
   pause: function(callback) {
     if (this.paused) {
       if (callback && callback.libswordPauseComplete)
@@ -169,7 +173,7 @@ LibSword = {
     to += "LibSword.paused = true; ";
     if (callback && callback.libswordPauseComplete) {
       this.callback = callback;
-      to += "LibSword.callback.libswordPauseComplete(); ";
+      to += "if (LibSword.callback) LibSword.callback.libswordPauseComplete(); ";
       to += "LibSword.callback = null;"
     }
     window.setTimeout(to, 1);
@@ -180,8 +184,8 @@ LibSword = {
     
     this.paused = false;
     
-    if (!this.unlock())
-        throw(new Error("libsword, resumed with no Bible modules."));
+    if (!this.unlock() && typeof(jsdump) != "undefined")
+        jsdump("LibSword resumed with no Bible modules.");
         
     this.allWindowsModal(false);
     
@@ -190,7 +194,11 @@ LibSword = {
   // unlock encrypted SWORD modules
   unlock: function() {
     var mlist = this.getModuleList();
-    if (mlist == "No Modules" || mlist.search(BIBLE) == -1) return false;
+    if (mlist == "No Modules" || mlist.search(BIBLE) == -1) {
+      this.hasBible = false;
+      return false;
+    }
+    this.hasBible = true;
     
     var msg = "";
     var mods = mlist.split("<nx>");
@@ -307,13 +315,13 @@ DEFINITION OF A "XULSWORD REFERENCE":
   is to a single verse, and the largest is to a whole chapter. Xulsword references
   take one of the following forms:
 
-  Preffered forms (because most MK subroutines use these forms). These forms are
+  Preffered forms (because most xulsword subroutines use these forms). These forms are
   often refered to as locations:
     Gen.5             --> Genesis chapter 5 (in this case Verse=1 and LastVerse=maxverse)
     Gen.5.6           --> Genesis chapter 5 verse 6 (in this case LastVerse=Verse)
     Gen.5.6.7         --> Genesis chapter 5 verses 6 through 7
 
-  Other valid forms (but may need subsequent conversion for use by some subroutines in MK):
+  Other valid forms (but may need subsequent conversion for use by some subroutines in xulsword):
     Gen 5             --> same as Gen.5
     Gen 5:6           --> same as Gen.5.6
     Gen 5:6-7         --> same as Gen.5.6.7

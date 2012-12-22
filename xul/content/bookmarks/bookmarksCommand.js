@@ -31,7 +31,9 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
- 
+
+// BookmarksCommand and BookmarksUtils objects are used to perform bookmark
+// commands relating to DOM elements in this context.
 var BookmarksCommand = {
 
   /////////////////////////////////////////////////////////////////////////////

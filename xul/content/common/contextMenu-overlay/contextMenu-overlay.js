@@ -287,11 +287,11 @@ var p=""; for (var m in info) {p += m + "=" + info[m] + " ";} jsdump("readDataFr
       // contextually.
       switch(p) {
       case "nid":
-        if (!targs.bookmark && BM && BookmarkFuns && BookmarksUtils) {
+        if (!targs.bookmark && BM && typeof(BookmarkFuns) != "undefined") {
           var aItem = BM.RDF.GetResource(decodeUTF8(val));
           var aParent = ResourceFuns.getParentOfResource(aItem, BMDS);
           if (aParent) {
-            targs.bookmark = BookmarksUtils.getSelectionFromResource(aItem, aParent);
+            targs.bookmark = MainWindow.BookmarksUtils.getSelectionFromResource(aItem, aParent);
           }
         }
         val = null;

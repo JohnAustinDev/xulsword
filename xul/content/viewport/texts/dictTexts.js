@@ -22,33 +22,44 @@
 
 DictTexts = {
   
-  keyList: [null, {}, {}, {}],
-  keysHTML: [null, {}, {}, {}],
+  keyList: {},
+  keysHTML: {},
   
   read: function(w, d) {
     var ret = { htmlList:"", htmlHead:Texts.getPageLinks(), htmlEntry:"", footnotes:null };
     
-    // get key list (is cached)
-    if (!this.keyList[w][d.mod]) {
-      this.keyList[w][d.mod] = LibSword.getAllDictionaryKeys(d.mod).split("<nx>");
-      this.keyList[w][d.mod].pop();
-      this.sortOrder = LibSword.getModuleInformation(d.mod, "LangSortOrder");
-      if (this.sortOrder != NOTFOUND) {
-        this.sortOrder += "0123456789";
-        this.langSortSkipChars = LibSword.getModuleInformation(d.mod, "LangSortSkipChars");
-        if (this.langSortSkipChars == NOTFOUND) this.langSortSkipChars = "";
-        this.keyList[w][d.mod].sort(this.dictSort);
+    // the key list is cached because it can take several seconds to
+    // process large dictionaries!
+    if (!this.keyList[d.mod]) {
+      if (this !== MainWindow.DictTexts && 
+          MainWindow.DictTexts.keyList.hasOwnProperty(d.mod)) {
+        this.keyList[d.mod] = MainWindow.DictTexts.keyList[d.mod];
+      }
+      else {
+        this.keyList[d.mod] = LibSword.getAllDictionaryKeys(d.mod).split("<nx>");
+        this.keyList[d.mod].pop();
+        this.sortOrder = LibSword.getModuleInformation(d.mod, "LangSortOrder");
+        if (this.sortOrder != NOTFOUND) {
+          this.sortOrder += "0123456789";
+          this.langSortSkipChars = LibSword.getModuleInformation(d.mod, "LangSortSkipChars");
+          if (this.langSortSkipChars == NOTFOUND) this.langSortSkipChars = "";
+          this.keyList[d.mod].sort(this.dictSort);
+        }
       }
     }
     
     // get html for list of keys (is cached)
-    if (!this.keysHTML[w][d.mod]) {
-      this.keysHTML[w][d.mod] = this.getListHTML(this.keyList[w][d.mod], d.mod, w);
+    if (!this.keysHTML[d.mod]) {
+      if (this !== MainWindow.DictTexts && 
+          MainWindow.DictTexts.keysHTML.hasOwnProperty(d.mod)) {
+        this.keysHTML[d.mod] = MainWindow.DictTexts.keysHTML[d.mod];
+      }
+      else this.keysHTML[d.mod] = this.getListHTML(d.mod);
     }
-    ret.htmlList = this.keysHTML[w][d.mod];
+    ret.htmlList = this.keysHTML[d.mod];
 
     // get actual key
-    if (!d.Key) d.Key = this.keyList[w][d.mod][0];
+    if (!d.Key) d.Key = this.keyList[d.mod][0];
     if (d.Key == "DailyDevotionToday") {
       var today = new Date();
       d.Key = (today.getMonth()<9 ? "0":"") + String(today.getMonth()+1) + "." + (today.getDate()<10 ? "0":"") + today.getDate();
@@ -70,16 +81,18 @@ DictTexts = {
     return ret;
   },
   
-  getListHTML: function(list, mod, w) {
+  getListHTML: function(mod) {
+    var list = this.keyList[mod];
+    
     var html = "";
     html += "<div class=\"dictlist\">"
-    html +=   "<div class=\"textboxparent\" id=\"w" + w + ".textboxparent\">";
-    html +=     "<input id=\"w" + w + ".keytextbox\" class=\"cs-" + mod + "\" onfocus=\"this.select()\" ondblclick=\"this.select()\" ";
-    html +=     "onkeypress=\"DictTexts.keyPress('" + mod + "', " + w + ", event)\" />";
+    html +=   "<div class=\"textboxparent\">";
+    html +=     "<input class=\"cs-" + mod + " keytextbox\" onfocus=\"this.select()\" ondblclick=\"this.select()\" ";
+    html +=     "onkeypress=\"DictTexts.keyPress(event)\" />";
     html +=   "</div>";
-    html +=   "<div class=\"keylist\" id=\"w" + w + ".keylist\" onclick=\"DictTexts.selKey('" + mod + "', " + w + ", event)\">";
+    html +=   "<div class=\"keylist\" onclick=\"DictTexts.selKey(event)\">";
     for (var e=0; e < list.length; e++) {
-      html += "<div class=\"key\" id=\"w" + w + "." + encodeUTF8(list[e]) + "\" >" + list[e] + "</div>";
+      html += "<div class=\"key\" title=\"" + encodeUTF8(list[e]) + "\" >" + list[e] + "</div>";
     }
     html +=   "</div>";
     html += "</div>";
@@ -216,33 +229,33 @@ DictTexts = {
     case "S":
       // Strongs Hebrew or Greek tags
       if (res.key.charAt(0)=="H") {
-        if (LanguageStudyModules["StrongsHebrew" + defaultBibleLanguage])
-          res.mod = LanguageStudyModules["StrongsHebrew" + defaultBibleLanguage];
-        else if (LanguageStudyModules["StrongsHebrew" + defaultBibleLangBase])
-          res.mod = LanguageStudyModules["StrongsHebrew" + defaultBibleLangBase];
-        else if (LanguageStudyModules["StrongsHebrew"])
-          res.mod = LanguageStudyModules["StrongsHebrew"];
+        if (SpecialModules.LanguageStudy["StrongsHebrew" + defaultBibleLanguage])
+          res.mod = SpecialModules.LanguageStudy["StrongsHebrew" + defaultBibleLanguage];
+        else if (SpecialModules.LanguageStudy["StrongsHebrew" + defaultBibleLangBase])
+          res.mod = SpecialModules.LanguageStudy["StrongsHebrew" + defaultBibleLangBase];
+        else if (SpecialModules.LanguageStudy["StrongsHebrew"])
+          res.mod = SpecialModules.LanguageStudy["StrongsHebrew"];
       }
       else if (res.key.charAt(0)=="G") {
         if (Number(res.key.substr(1)) >= 5627) return res; // SWORD filters these out- not valid it says
-        if (LanguageStudyModules["StrongsGreek" + defaultBibleLanguage])
-          res.mod = LanguageStudyModules["StrongsGreek" + defaultBibleLanguage];
-        else if (LanguageStudyModules["StrongsGreek" + defaultBibleLangBase])
-          res.mod = LanguageStudyModules["StrongsGreek" + defaultBibleLangBase];
-        else if (LanguageStudyModules["StrongsGreek"])
-          res.mod = LanguageStudyModules["StrongsGreek"];
+        if (SpecialModules.LanguageStudy["StrongsGreek" + defaultBibleLanguage])
+          res.mod = SpecialModules.LanguageStudy["StrongsGreek" + defaultBibleLanguage];
+        else if (SpecialModules.LanguageStudy["StrongsGreek" + defaultBibleLangBase])
+          res.mod = SpecialModules.LanguageStudy["StrongsGreek" + defaultBibleLangBase];
+        else if (SpecialModules.LanguageStudy["StrongsGreek"])
+          res.mod = SpecialModules.LanguageStudy["StrongsGreek"];
       }
       res.key = pad.substr(0, 5-(res.key.length-1)) + res.key.substr(1);
       break;
       
     case "RM":
       // Greek parts of speech tags
-      if (LanguageStudyModules["GreekParse" + defaultBibleLanguage])
-        res.mod = LanguageStudyModules["GreekParse" + defaultBibleLanguage];
-      else if (LanguageStudyModules["GreekParse" + defaultBibleLangBase])
-        res.mod = LanguageStudyModules["GreekParse" + defaultBibleLangBase];
-      else if (LanguageStudyModules["GreekParse"])
-        res.mod = LanguageStudyModules["GreekParse"];
+      if (SpecialModules.LanguageStudy["GreekParse" + defaultBibleLanguage])
+        res.mod = SpecialModules.LanguageStudy["GreekParse" + defaultBibleLanguage];
+      else if (SpecialModules.LanguageStudy["GreekParse" + defaultBibleLangBase])
+        res.mod = SpecialModules.LanguageStudy["GreekParse" + defaultBibleLangBase];
+      else if (SpecialModules.LanguageStudy["GreekParse"])
+        res.mod = SpecialModules.LanguageStudy["GreekParse"];
       break;
       
     case "SM":
@@ -262,13 +275,22 @@ DictTexts = {
 
   //The timeout below was necessary so that textbox.value included the pressed key...
   keypressOT:null,
-  keyPress: function(mod, w, e) {
+  keypressEvent:null,
+  keyPress: function(e) {
     if (this.keypressOT) window.clearTimeout(this.keypressOT);
-    this.keypressOT = window.setTimeout("DictTexts.keyPressR('" + mod + "', " + w + ", " + e.which + ")", 1000);
+    this.keypressEvent = e;
+    this.keypressOT = window.setTimeout("DictTexts.keyPressR()", 500);
   },
 
-  keyPressR: function(mod, w, charCode) {
-    var textbox = document.getElementById("w" + w + ".keytextbox");
+  keyPressR: function() {
+    var e = this.keypressEvent;
+    this.keypressEvent = null;
+    
+    var charCode = e.which;
+    var w = getContextWindow(e.target);
+    var mod = ViewPort.Module[w];
+    
+    var textbox = document.getElementById("note" + w).getElementsByClassName("keytextbox")[0];
     var text = textbox.value;
     if (!text) {
       textbox.style.color="";
@@ -276,9 +298,9 @@ DictTexts = {
     }
     
     var matchtext = new RegExp("(^|<nx>)(" + escapeRE(text) + "[^<]*)<nx>", "i");
-    var firstMatch = (DictTexts.keyList[w][mod].join("<nx>") + "<nx>").match(matchtext);
+    var firstMatch = (DictTexts.keyList[mod].join("<nx>") + "<nx>").match(matchtext);
     if (!firstMatch) {
-      if (charCode!=8) Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
+      if (charCode != 8) Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       textbox.style.color="red";
     }
     else {
@@ -288,11 +310,14 @@ DictTexts = {
     }
   },
 
-  selKey: function (mod, w, e) {
-    if (!e.target.id || (e.target.id && (/^w\d\.keylist$/).test(e.target.id))) return;
-    ViewPort.Key[w] = decodeUTF8(e.target.id.substr(3));
+  selKey: function (e) {
+    if (!e.target.title) return;
+    
+    var w = getContextWindow(e.target);
+    
+    ViewPort.Key[w] = decodeUTF8(e.target.title);
     Texts.updateDictionary(w);
-    window.setTimeout("document.getElementById('w" + w + ".keytextbox').focus()", 1);
+    window.setTimeout("document.getElementById('note" + w + "').getElementsByClassName('keytextbox')[0].focus();", 1);
   }
 
 };

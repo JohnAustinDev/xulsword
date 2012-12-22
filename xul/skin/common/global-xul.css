@@ -1,8 +1,7 @@
 @import url(chrome://global/skin/);
 @import url(chrome://xsplatform/skin/xul.css);
 
-/* UI classes which are dynamically updated */
-.cs-Program {
+.cs-en-US {
   /* These values serve as defaults for all 
   dynamically generated .cs- classes */
   font-family:'Arial';
@@ -10,6 +9,8 @@
   font-size-adjust:none;
   line-height:1.6em;
 }
+
+/* UI class which is dynamically updated */
 .userFontSize {
   font-size:14px;
 }

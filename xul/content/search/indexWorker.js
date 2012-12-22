@@ -17,8 +17,8 @@
 */
 
 
-// This script is used to create a XUL ChromeWorker object which runs
-// in on it's own thread in the background.
+// This script is used to create a ChromeWorker object which runs
+// on its own thread in the background.
 
 importScripts("chrome://xulsword/content/libsword.js");
 

@@ -79,7 +79,7 @@
       
         if (!lastType || Tabs[t].modType != lastType) {
           var type = getUI("search." + Tabs[t].tabType);
-          document.write("<div class=\"mod-heading cs-Program\">" + type + "</div>");
+          document.write("<div class=\"mod-heading\">" + type + "</div>");
         }
         lastType = Tabs[t].modType;
         
@@ -127,12 +127,12 @@
         document.write("</div>"); // end module-detail
              
         // Conf contents
-        document.write("<div id=\"conf." + Tabs[t].modName + "\" class=\"conf-info cs-" + DEFAULTLOCALE + "\" showInfo=\"false\">");
+        document.write("<div id=\"conf." + Tabs[t].modName + "\" class=\"conf-info\" showInfo=\"false\">");
         document.write(  "<a class=\"link\" href=\"javascript:toggleInfo('" + Tabs[t].modName + "');\">");
         document.write(    "<span class=\"more-label\">" + getUI("more.label") + "</span>");
         document.write(    "<span class=\"less-label\">" + getUI("less.label") + "</span>");
         document.write(  "</a>");
-        document.write(  "<textarea readonly=\"readonly\"></textarea>");
+        document.write(  "<textarea class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>");
         document.write("</div>");
 
       }

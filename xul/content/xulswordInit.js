@@ -28,9 +28,9 @@ ModuleConfigs = {};
 ProgramConfig = {};
 Tabs = [];
 Tab = {};
-LanguageStudyModules = {};
-DailyDevotionModules = {};
+SpecialModules = {DailyDevotion:{}, LanguageStudy:{}};
 Book = new Array(NumBooks);
+AllWindows = []; // this is needed by viewport...
 
 
 /************************************************************************
@@ -165,46 +165,48 @@ function initTabGlobals() {
 
       var feature = LibSword.getModuleInformation(mod, "Feature");
       if (feature.search("DailyDevotion") != -1) {
-        DailyDevotionModules[mod] = "DailyDevotionToday";
+        SpecialModules.DailyDevotion[mod] = "DailyDevotionToday";
       }
       else if (feature.search("GreekDef") != -1)  {
-        if (mlang.match(/^ru/i) || !LanguageStudyModules.StrongsGreek) LanguageStudyModules.StrongsGreek = mod;
-        LanguageStudyModules["StrongsGreek" + mlang] = mod;
-        LanguageStudyModules["StrongsGreek" + mlangs] = mod;
+        if (mlang.match(/^ru/i) || !SpecialModules.LanguageStudy.StrongsGreek) SpecialModules.LanguageStudy.StrongsGreek = mod;
+        SpecialModules.LanguageStudy["StrongsGreek" + mlang] = mod;
+        SpecialModules.LanguageStudy["StrongsGreek" + mlangs] = mod;
       }
       else if (feature.search("HebrewDef") != -1) {
-        if (mlang.match(/^ru/i) || !LanguageStudyModules.StrongsHebrew) LanguageStudyModules.StrongsHebrew = mod;
-        LanguageStudyModules["StrongsHebrew" + mlang] = mod;
-        LanguageStudyModules["StrongsHebrew" + mlangs] = mod;
+        if (mlang.match(/^ru/i) || !SpecialModules.LanguageStudy.StrongsHebrew) SpecialModules.LanguageStudy.StrongsHebrew = mod;
+        SpecialModules.LanguageStudy["StrongsHebrew" + mlang] = mod;
+        SpecialModules.LanguageStudy["StrongsHebrew" + mlangs] = mod;
       }
       else if (feature.search("GreekParse") != -1) {
-        if (mlang.match(/^ru/i) || !LanguageStudyModules.GreekParse) LanguageStudyModules.GreekParse = mod;
-        LanguageStudyModules["GreekParse" + mlang] = mod;
-        LanguageStudyModules["GreekParse" + mlangs] = mod;
+        if (mlang.match(/^ru/i) || !SpecialModules.LanguageStudy.GreekParse) SpecialModules.LanguageStudy.GreekParse = mod;
+        SpecialModules.LanguageStudy["GreekParse" + mlang] = mod;
+        SpecialModules.LanguageStudy["GreekParse" + mlangs] = mod;
       }
     }
     
     // Get tab label
     var label = LibSword.getModuleInformation(mod, "TabLabel");
     if (label == NOTFOUND) label = LibSword.getModuleInformation(mod, "Abbreviation");
+    var labelFromUI = null;
     
     // Set up Original tab Globals
     var isORIG = LibSword.getModuleInformation(mod, "OriginalTabTestament");
     if (isORIG == "OT") {
       origModuleOT = mod;
-      try {label = XSBundle.getString("ORIGLabelOT");}
+      try {labelFromUI = XSBundle.getString("ORIGLabelOT");}
       catch (er) {}
     }
     else if (isORIG == "NT") {
       origModuleNT = mod;
-      try {label = XSBundle.getString("ORIGLabelNT");}
+      try {labelFromUI = XSBundle.getString("ORIGLabelNT");}
       catch (er) {}
     }
     
     label = (label != NOTFOUND ? label:mod);
+    labelFromUI = (labelFromUI != NOTFOUND ? labelFromUI:null);
     
     // Save now for sorting after this loop is complete
-    var amod = {mod:mod, type:type, label:label};
+    var amod = {mod:mod, type:type, label:label, labelFromUI:labelFromUI };
     modarray.push(amod);
 
   }
@@ -227,10 +229,12 @@ function initTabGlobals() {
     mod   = modarray[m].mod;
     type  = modarray[m].type;
     label = modarray[m].label;
+    labelFromUI = modarray[m].labelFromUI;
     
-    var tab = {label:null, modName:null, modType:null, tabType:null, isRTL:null, index:null, description:null, 
-        conf:null, confModUnique:null, isCommDir:null};
+    var tab = {label:null, labelFromUI:null, modName:null, modType:null, tabType:null, isRTL:null, index:null,  
+        description:null, conf:null, confModUnique:null, isCommDir:null};
     tab.label = label;
+    tab.labelFromUI = labelFromUI;
     tab.modName = mod;
     tab.modType = type;
     tab.confModUnique = true;
@@ -252,7 +256,7 @@ function initTabGlobals() {
     if (origModuleNT && mod == origModuleNT) Tab.ORIG_NT = tab;
   }
 
-//jsdump("StrongsGreek=" + LanguageStudyModules.StrongsGreek + ", StrongsHebrew=" + LanguageStudyModules.StrongsHebrew + ", Robinson=" + LanguageStudyModules.Robinson);
+//jsdump("StrongsGreek=" + SpecialModules.LanguageStudy.StrongsGreek + ", StrongsHebrew=" + SpecialModules.LanguageStudy.StrongsHebrew + ", Robinson=" + SpecialModules.LanguageStudy.Robinson);
   return true;
 }
 
@@ -416,10 +420,7 @@ function xulswordInit() {
   
   initBooks();
 
-  if (LibSword && !LibSword.unlock()) {
-    LibSword.quitLibsword();
-    LibSword = null;
-  }
+  if (LibSword) LibSword.unlock();
   
 }
 

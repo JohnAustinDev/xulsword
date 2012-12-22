@@ -189,39 +189,25 @@ BookmarkFuns = {
 
   gotoBookMark: function (bmelemID) {
     var info = ResourceFuns.BmGetInfo(bmelemID);
+    
     var mod = info[MODULE];
-    var type = Tab[mod].modType;
-    var loc;
-
-    if (!type) {
-      if (!info[LOCATION]) failed = true;
-      else {
-        mod = prefs.getCharPref("DefaultVersion");
-        // for backward compatibility...
-        // this try is because pre V2.8, LOCATION was undefined and old BMs may cause problems here.
-        // NOTE that even with garbage in LOCATION, xulsword will likely return a valid location to somewhere...
-        try {var loc = Location.convertLocation(WESTERNVS, info[LOCATION], LibSword.getVerseSystem(mod));}
-        catch (er) {loc = null;}
-      }
+    if (!Tab.hasOwnProperty(mod)) {
+      jsdump("Module \"" + mod + "\" is not installed. Cannot gotoBookMark.")
+      return;
     }
-    else {
-      switch (type) {
-      case BIBLE:
-      case COMMENTARY:
-        loc = info[BOOK] + "." + info[CHAPTER] + "." + info[VERSE] + "." + (info[LASTVERSE] ? info[LASTVERSE]:info[VERSE]);
-        break;
-      case DICTIONARY:
-      case GENBOOK:
-        loc = "Gen." + info[CHAPTER] + "." + info[VERSE] + "." + info[VERSE];
-        break;
-      }
+
+    switch (Tab[mod].modType) {
+    case BIBLE:
+    case COMMENTARY:
+      var loc = { bk:info[BOOK], ch:info[CHAPTER], vs:info[VERSE], lv:(info[LASTVERSE] ? info[LASTVERSE]:info[VERSE]) };
+      break;
+    case DICTIONARY:
+    case GENBOOK:
+      var loc = { bk:"na.", ch:info[CHAPTER], vs:info[VERSE], lv:info[VERSE] };
+      break;
     }
     
-    if (!loc) Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
-    else {
-      loc = loc.split(".");
-      MainWindow.showLocation(mod, loc[0], loc[1], loc[2], loc[3]);
-    }
+    MainWindow.showLocation(mod, loc.bk, loc.ch, loc.vs, loc.lv);
   },
 
   

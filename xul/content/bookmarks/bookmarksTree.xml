@@ -595,8 +595,10 @@
                   if (!prefs.getBoolPref("searchFlag-" + columns[i].resource)) {continue;}
                   var columnRes = BM.RDF.GetResource(columns[i].resource.substring(4));
                   var tliteral;
-                  try {tliteral=BMDS.GetTarget(et,columnRes,true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
-                  if (tliteral.search(aInput,"i") == -1) {continue;}
+                  try {tliteral=BMDS.GetTarget(et,columnRes,true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} 
+                  catch (er) {continue;}
+                  try {if (tliteral.search(aInput,"i") == -1) {continue;}}
+                  catch (er) {continue;}
                   srcontainer.AppendElement(et);
                   continue ALLELEMENTS;
                 }

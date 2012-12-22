@@ -45,21 +45,19 @@ function Load() {
   Textbox = document.getElementById("textbox");
 
   var acceptLabel, cancelLabel;
-  if (bundle) {
-    switch (Buttons) {
-    case DLGOK:
-      acceptLabel = getDataUI("dialog.OK");
-      document.getElementById("dlg").getButton("cancel").hidden=true;
-      break;
-    case DLGOKCANCEL:
-      acceptLabel = getDataUI("dialog.OK");
-      cancelLabel = getDataUI("dialog.Cancel");
-      break;
-    case DLGYESNO:
-      acceptLabel = getDataUI("dialog.Yes");
-      cancelLabel = getDataUI("dialog.No");
-      break;
-    }
+  switch (Buttons) {
+  case DLGOK:
+    acceptLabel = getDataUI("dialog.OK");
+    document.getElementById("dlg").getButton("cancel").hidden=true;
+    break;
+  case DLGOKCANCEL:
+    acceptLabel = getDataUI("dialog.OK");
+    cancelLabel = getDataUI("dialog.Cancel");
+    break;
+  case DLGYESNO:
+    acceptLabel = getDataUI("dialog.Yes");
+    cancelLabel = getDataUI("dialog.No");
+    break;
   }
   
   var imgSrc;

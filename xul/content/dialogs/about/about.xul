@@ -61,10 +61,10 @@
           
         <spacer flex="1" orient="horizontal"/>
         
-        <hbox flex="1" pack="center">
+        <vbox flex="1" pack="start" align="center">
           <label id="info" value=""/>
           <label id="producedBy" value="&producedby;"/>
-        </hbox>
+        </vbox>
         
         <spacer flex="1" orient="horizontal"/>
         

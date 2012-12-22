@@ -24,20 +24,20 @@ getDictionaryEntry          tested
 getAllDictionaryKeys        tested
 getGenBookTableOfContents   tested
 getGenBookChapterText       tested
-getFootnotes                test with MK
-getCrossRefs                test with MK
-getNotes                    test with MK
+getFootnotes                test with xulsword
+getCrossRefs                test with xulsword
+getNotes                    test with xulsword
 
-search                      test with MK
-searchIndexBuild            test with MK
-getSearchResults            test with MK
-searchIndexDelete           test with MK (close search window during index creation, and lucene folder should be deleted)
-luceneEnabled               test with MK (does "create index" button appear when it should?)
+search                      test with xulsword
+searchIndexBuild            test with xulsword
+getSearchResults            test with xulsword
+searchIndexDelete           test with xulsword (close search window during index creation, and lucene folder should be deleted)
+luceneEnabled               test with xulsword (does "create index" button appear when it should?)
 
-setGlobalOption             test with MK
-getGlobalOption             test with MK
+setGlobalOption             test with xulsword
+getGlobalOption             test with xulsword
 
-setCipherKey                test with MK
+setCipherKey                test with xulsword
 */
 
 function jsdump(str)
