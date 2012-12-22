@@ -1,0 +1,22 @@
+Version 3.5 release ToDos:
+
+Look at multi-column Bible view chapter looping problem.
+
+Test and fix startup scenarios: No-modules->install-non-Bible-mod->install-Bible-mod. No-LibSword->????. First-time-startup.
+
+Complete IBT locales.
+
+Check bookmark module styles, figure out styles for user-text and boomark names (use isASCII?).
+
+Do a thorough use-test of all program corners needed by IBT release.
+
+Compile for Windows and update Windows installer. 
+
+Assemble new Windows-programs using FireFox-Portable instead of XulRunner
+
+Do a thorough use-test of all program corners on Windows, including Windows-8. Especially test locale installation and uninstallation.
+
+Upload MK 3.5 to IBT along with modules having udpated UIs.
+
+Update the xulsword website with version 3.5 changes in mind.
+
