@@ -19,7 +19,7 @@
 
 // IMPORTANT INFO ABOUT THIS FILE:
 // The functions in common1.js may use and rely on the MainWindow as 
-// well as the global LibSword object and the other program wide globals. 
+// well as the global LibSword object and the other program-wide globals. 
 // NOTE: this is unlike common0.js whose functions cannot rely on 
 // MainWindow or other MainWindow globals, and can not even try to 
 // access LibSword.
@@ -40,7 +40,7 @@ if (!MainWindow) {
       .getInterface(Components.interfaces.nsIDOMWindow);
 }
 
-if (!MainWindow) jsdump("WARNING: Unable to initialize MainWindow: (" + window.name + ")\n");
+if (!MainWindow) jsdump("WARNING: Unable to locate MainWindow in: (" + window.name + ")\n");
 
 /************************************************************************
  * Program-wide Globals defined in MainWindow to be used anywhere
@@ -66,7 +66,7 @@ var ResourceFuns          = MainWindow.ResourceFuns;
 
 var AllWindows            = MainWindow.AllWindows;
 
-var LanguageStudyModules  = MainWindow.LanguageStudyModules;
+var SpecialModules        = MainWindow.SpecialModules;
 
 var CommandTarget         = MainWindow.CommandTarget;
 
@@ -435,7 +435,7 @@ function normalizeOsisReference(ref, bibleMod) {
 function getModuleConfig(mod) {
   var moduleConfig = {};
   
-  var programCSS = getCSS(".cs-Program {");
+  var defaultCSS = getCSS(".cs-en-US {");
   
   // All versionconfig members should have a valid value, and it must not be null.
   // Read values from module's .conf file
@@ -445,8 +445,8 @@ function getModuleConfig(mod) {
     if ((/^\s*$/).test(val)) val = NOTFOUND;
     
     if (val == NOTFOUND && Config[p].CSS) {
-      if (programCSS.rule.style[p]) {
-        val = programCSS.rule.style[p];
+      if (defaultCSS.rule.style[p]) {
+        val = defaultCSS.rule.style[p];
       }
     }
     
@@ -478,10 +478,6 @@ function getModuleConfig(mod) {
   return moduleConfig;
 }
 
-/************************************************************************
- * Bible Text Display Routines
- ***********************************************************************/ 
-
 // "location" may have forms: "Matt 3:5", "John 3:16-John 3:21", "John.3", "John.3.5", "John.3.16-John.3.16.21"
 // If "location" has "John.3.7.10" form, then it must be normalized BEFORE calling this function.
 // If "version" is not a Bible, or does not have the book where "location" is, then an alternate 
@@ -491,7 +487,6 @@ function getModuleConfig(mod) {
 // Is module a Bible, or does module specify another reference Bible in its config file? Then use that.
 // If version does not yield verse text, then look at visible tabs in their order.
 // If visible tabs do not yield verse text, then look at hidden tabs in their order.
-
 function findAVerseText(version, location, windowNum) {
   if (!windowNum) windowNum = 1;
   if (!Tab[version]) return null;
@@ -638,8 +633,8 @@ function copyObj(obj) {
 */
 }
 
-// Return the window in which this element resides.
-// Note: null means no window, but 0 means popup window.
+// Return the viewport window in which this element resides.
+// Note: null means unknown window, but 0 means popup window.
 function getContextWindow(elem) {
   while(elem && (!elem.id || (!(/^text\d+$/).test(elem.id) && !(/^npopup$/).test(elem.id)))) {
     elem = elem.parentNode;

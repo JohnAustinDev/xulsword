@@ -40,7 +40,7 @@
   
   <popupset id="main-popupset">
     
-    <script type="application/x-javascript" src="chrome://xulsword/content/common/contextMenu-overlay.js"/>
+    <script type="application/x-javascript" src="chrome://xulsword/content/common/contextMenu-overlay/contextMenu-overlay.js"/>
     
     <menupopup id="contextScriptBox" value="closed" 
         onpopupshowing="ContextMenu.showing(event, this)" 

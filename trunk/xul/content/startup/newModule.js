@@ -248,7 +248,7 @@ jsdump("STARTING startImport");
       if (ProgressMeter) ProgressMeter.close();
       Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       var result = {};
-      var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result,
+      var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result,
           fixWindowTitle(getDataUI("menu.addNewModule.label")),
           msg,
           DLGALERT,
@@ -256,11 +256,20 @@ jsdump("STARTING startImport");
     }
   }
 
-  if (typeof(LibSword) != "undefined") LibSword.pause();
- 
+  // start the import after a possible timeout needed to pause LibSword
+  if (typeof(LibSword) != "undefined") {
+    LibSword.pause( { libswordPauseComplete:startImport2 } );
+  }
+  else startImport2();
+  
+  return true;
+}
+
+function startImport2() {
+  
   if (ZipFiles && ZipFiles.length) CopyZipFun();
   else if (RegularFiles && RegularFiles.length) CopyRegularFun();
-  // module is MK module, but contained nothing that needed to be, or could be, installed. Show progress meter so user knows it at least tried!
+  // module is xulsword module, but contained nothing that needed to be, or could be, installed. Show progress meter so user knows it at least tried!
   else {
     if (ProgressMeter) {
       window.setTimeout("if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute('value', 90);", 500);
@@ -268,9 +277,8 @@ jsdump("STARTING startImport");
       window.setTimeout("ProgressMeter.close();", 2000);
     }
     ModuleCopyMutex=false;
-  }
+  } 
   
-  return true;
 }
 
 // Checks compatibility of all sword modules and locales
@@ -390,24 +398,24 @@ function removeIncompatibleFiles(fileArray, entryArray) {
   return incomp;
 }
 
-// Each MK program has two version related params: MinXSMversion, MinUIversion
-// Each MK module has five version related params: MKMversion, UIversion, XSMversion, MinProgversionForUI, MinProgversionForXSM
+// Each xulsword program has two version related params: MinXSMversion, MinUIversion
+// Each xulsword module has five version related params: MKMversion, UIversion, XSMversion, MinProgversionForUI, MinProgversionForXSM
 // These params are used as follows:
 // 1) program's MinXSMversion > XSMversion of module  = Don't install module, report: module version MinXSMversion is needed
 // 2) program's MinUIversion > UIversion of module    = Don't install locale, report: module version MinUIversion is needed
 // 3) module's MinProgversionForXSM > program version = Don't install module, report: program version MinProgversionForXSM is needed
 // 4) module's MinProgversionForUI > program version  = Don't install locale, report: program version MinProgversionForUI is needed
 //
-// For reporting to work properly, the following should be identical for a given MK module:
+// For reporting to work properly, the following should be identical for a given xulsword module:
 // 1) XSMversion
 // 2) UIversion
 // 3) MKMversion
 //
-// However, in order to be backward compatible to the first major MK release (2.7), an exception is allowed:
+// However, in order to be backward compatible to the first major xulsword release (2.7), an exception is allowed:
 // If the program's MinXSMversion=1.0 & MinUIversion=2.7, and the module's MinProgversionForXSM=2.7, XSMversion=2.7 & UIversion=MKMversion, the following should also be met:
 // 1) MKMversion: 2.7 <= (MKMversion=UIversion) < 3.0.
-// 2) Module's MinProgversionForUI: 2.9 >= MinProgversionForUI < 3.0. (but still THE UI MUST NOT CAUSE EXCEPTIONS WHEN INSTALLED ON MK 2.7, because it will not be blocked! MK 2.8 will block it and give an update message, but it (and only it) needs to block, because it has a slightly different security mod which would trip.)
-// 3) MK program's version: version < 3.0. 
+// 2) Module's MinProgversionForUI: 2.9 >= MinProgversionForUI < 3.0. (but still THE UI MUST NOT CAUSE EXCEPTIONS WHEN INSTALLED ON XULSWORD 2.7, because it will not be blocked! XULSWORD 2.8 will block it and give an update message, but it (and only it) needs to block, because it has a slightly different security mod which would trip.)
+// 3) xulsword program's version: version < 3.0. 
 // 4) When either program's MinXSMversion or MinUIversion are finally changed, THEY MUST START AT 3.0 OR GREATER.
 // The above rules allow modules to be created with new version numbers, which are still backward compatible to at least 2.7.
 function readVersion(aZip, aEntry, progVers) {
@@ -598,7 +606,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     break;
 
   case CHROME:
-    if (!(/\.jar$/i/).test(entryFileName)) {
+    if (!(/\.jar$/i).test(entryFileName)) {
       // completely ignores everything in Chrome except jar files
       return {reset:NORESET, success:true, remove:true};
     }
@@ -633,7 +641,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     str +=   "<RDF xmlns=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:em=\"http://www.mozilla.org/2004/em-rdf#\">" + NEWLINE;
     str +=   "  <Description about=\"urn:mozilla:install-manifest\">" + NEWLINE;
     str +=   "    <em:id>" + localeDir + "</em:id>" + NEWLINE;
-    str +=   "    <em:version>" + prefs.getCharPref("Version") + "</em:version>" NEWLINE;
+    str +=   "    <em:version>" + prefs.getCharPref("Version") + "</em:version>" + NEWLINE;
     str +=   "    <em:type>8</em:type>" + NEWLINE;
     str +=   "    <em:name>" + localeName + " xulsword locale</em:name>" + NEWLINE;
     str +=   "    <em:targetApplication>" + NEWLINE;
@@ -1464,7 +1472,7 @@ function prefFileArray(files, aPref, exts, dontCheckExists) {
 function restartApplication(promptBefore) {
   if (promptBefore) {
     var result = {};
-    var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result, 
+    var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
       fixWindowTitle(XSBundle.getString("Title")),
       XSBundle.getString("RestartMsg"), 
       DLGINFO,

@@ -62,7 +62,7 @@ function Init()
 
   gEditNote = window.arguments[2];
   
-  gInfoResource = BookmarkFuns.BmGetInfo(gResource.Value);
+  gInfoResource = ResourceFuns.BmGetInfo(gResource.Value);
   // If the module for this bookmark is no longer available, then display the bookmark
   // but it cannot be edited, and may "beep" if opened. It also needs to show 
   // module name, and location if available.

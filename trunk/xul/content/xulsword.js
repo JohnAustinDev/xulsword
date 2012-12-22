@@ -25,11 +25,12 @@ var NewModuleInfo;
 function loadedXUL() {
 
   initCSS();
-  AllWindows = [];
   AllWindows.push(window);
   
+  if (!LibSword.hasBible) document.getElementById("topbox").setAttribute("hasBible", "false");
+  
   document.title = XSBundle.getString("Title");
-  window.name="xulsword-window";
+  window.name = "xulsword-window";
   
   //To make the program window draw cleaner and faster, size initialization 
   //routines use prefs to size the frames since window size is not available during 
@@ -51,7 +52,7 @@ function loadedXUL2() {
   var resetUserPrefs = false;
   var pfile = getSpecialDirectory("xsResD");
   pfile.append(NEWINSTALLFILE);
-  if (LibSword) NewModuleInfo = (pfile.exists() ? readNewInstallsFile(pfile):null);
+  if (LibSword.hasBible) NewModuleInfo = (pfile.exists() ? readNewInstallsFile(pfile):null);
   if (pfile.exists()) removeFile(pfile, false);
   
   if (NewModuleInfo && NewModuleInfo.NewModules && NewModuleInfo.NewModules[0]) {
@@ -73,17 +74,18 @@ function loadedXUL2() {
       
   }
   
-  identifyModuleFeatures(resetUserPrefs);
-  
-  History.init();
-  
-  if (LibSword && Tabs.length) {
+  if (LibSword.hasBible) {
+    
+    identifyModuleFeatures(resetUserPrefs);
+    
+    History.init();
+    
     createLanguageMenu();
+    
     fillModuleMenuLists();
+    
     updateXulswordButtons();
-  }
-  else {
-    document.getElementByID("topbox").setAttribute("hasBible", "false");
+    
   }
     
   // Some "hard-wired" access keys...
@@ -101,7 +103,7 @@ function loadedXUL2() {
       function(event) {if ((event.target.id=="searchText") && (event.keyCode==13)) {goDoCommand("cmd_xs_searchFromTextBox");}}, 
       false);
 
-  // Get our command handlers (context menus may append their own controllers)
+  // Get our command handlers (context menus may insert their own controllers)
   window.controllers.appendController(XulswordController);
   window.controllers.appendController(BookmarksMenuController);
    
@@ -111,12 +113,12 @@ function loadedXUL2() {
   document.getElementById("historymenu").style.height = String(document.getElementById("back").boxObject.height) + "px";
   
   // close splash window
-  if (window.opener && window.opener.document && window.opener.document.title == "Splash")
-      window.opener.close(); //Close splash and opener window
+  if (window.opener && window.opener.document.title == "Splash")
+      window.opener.close(); // Close hidden startup window (which in turn closes visible splash window)
   
   //we're ok!
   // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
-  if (LibSword && Tabs.length) {
+  if (LibSword.hasBible) {
     Texts.update(SCROLLTYPEBEG, HILIGHT_IFNOTV1);
     window.setTimeout("postWindowInit()", 1000); 
   }
@@ -136,7 +138,7 @@ function checkCipherKeys() {
   if (gotKey) windowLocationReload();
 }
 
-//This function is run after the MK window is built and displayed. Init functions
+//This function is run after the xulsword window is built and displayed. Init functions
 //which can wait until now should do so, so that the xulsword window can appear faster.
 function postWindowInit() {
   
@@ -149,7 +151,7 @@ function postWindowInit() {
     var opmenu = getDataUI("menu.options");
     var lamenu = getDataUI("menu.options.language");
     var result={};
-    var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result, 
+    var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
         fixWindowTitle(getDataUI("menu.options.language")),
         XSBundle.getFormattedString("LangSelectMsg", [opmenu, lamenu]), 
         DLGINFO,
@@ -498,7 +500,7 @@ var History = {
     this.list = getPrefOrCreate("History", "Char", this.delim).split(this.delim);
     this.index = getPrefOrCreate("HistoryIndex", "Int", 0);
     this.list.pop(); // History pref should always end with HistoryDelimeter
-    if (LibSword && prefs.getCharPref("DefaultVersion") != NOTFOUND) {
+    if (prefs.getCharPref("DefaultVersion") != NOTFOUND) {
       var aVersion = prefs.getCharPref("DefaultVersion");
       var loc = Location.convertLocation(LibSword.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
       this.list[this.index] = loc[0] + "." + loc[1] + "." + loc[2];
@@ -507,7 +509,7 @@ var History = {
   
   save: function() {
     var newhist="";
-    for (var i=0; i<this.list.length; i++) {
+    for (var i=0; this.list && i<this.list.length; i++) {
       newhist += this.list[i] + this.delim;
     }
     prefs.setCharPref("History", newhist);
@@ -946,8 +948,9 @@ var XulswordController = {
 
 // This is the default target for the main command controller. This 
 // default target is returned each time the controller is used, unless
-// a target is supplied, which will overwrite defaults.
+// a target is supplied, which will overwrite the defaults.
 function getCommandTarget(target) {
+  if (!LibSword.hasBible) {return {};}
   
   // first get all default target parameters
   var deftarg = {};
@@ -1283,10 +1286,6 @@ function updateXulswordCommands() {
   goUpdateCommand("cmd_xs_searchForSelection");
 }
 
-/************************************************************************
- * Version and Tab Control Functions
- ***********************************************************************/ 
-
 function updateModuleMenuCheckmarks() {
 //jsdump("RUNNING UPDATE MODULE MENU CHECKMARKS");
   for (var t=0; t<Tabs.length; t++) {
@@ -1389,6 +1388,8 @@ function unloadXUL() {
   
   ViewPort.unload();
   
+  if (!LibSword.hasBible) return;
+  
   prefs.setCharPref("Location", Location.getLocation(WESTERNVS));
   
   // save our xulsword global option prefs...
@@ -1397,15 +1398,20 @@ function unloadXUL() {
     prefs.setCharPref(GlobalToggleCommands[cmd], LibSword.getGlobalOption(GlobalToggleCommands[cmd]));
   }
 
+  // remove ALL command controllers because window.location.reload otherwise 
+  // allows them to pile up, causing very strange effects during debugging (like 
+  // xulsword running old versions of commands).
   while(true) {
     try {window.controllers.removeControllerAt(0);}
     catch (er) {break;}
   }
   
   // set these so xulsword viewport can draw cleaner and faster upon next startup
-  prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
-  prefs.setIntPref("ViewPortWidth", ViewPort.ownerDocument.defaultView.innerWidth);
-  
+  if (ViewPort.ownerDocument.defaultView.innerHeight) {
+    prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
+    prefs.setIntPref("ViewPortWidth", ViewPort.ownerDocument.defaultView.innerWidth);
+  }
+
   // close all windows
   for (var i=0; i<AllWindows.length; i++) {
     if (AllWindows[i] === window) continue;
@@ -1415,10 +1421,8 @@ function unloadXUL() {
   // clear Transactions
   BM.gTxnSvc.clear();
   
-  if (LibSword) {
-    History.save();
-    LibSword.quitLibsword();
-  }
+  History.save();
+  LibSword.quitLibsword();
   
   // purge UserData data source
   if (BMDS) ResourceFuns.purgeDataSource(BMDS);
@@ -1436,6 +1440,9 @@ function copyPassageDialog() {
       "chrome,resizable,centerscreen"));
 }
 
+// To print, you must pass a print-target to this handlePrintCommand
+// function. Then, the file which was asked to load in the printBrowser 
+// must call printBrowserLoaded() when it's done loading.
 var PrintTarget = null;
 function handlePrintCommand(command, target) {
   if (!command) return;

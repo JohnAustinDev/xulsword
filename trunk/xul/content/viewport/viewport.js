@@ -73,10 +73,15 @@ function initViewPort() {
         
     for (var w=1; w<=NW; w++) {
       if (w == towindow) {
-        var wl = MainWindow.ViewPort.ownerDocument.getElementById("text" + w).getAttribute("columns").match(/^show(\d+)$/);
-        if (wl) {wl = Number(wl[1]);}
-        else wl = towindow;
-        for (var wt=towindow; wt<towindow+wl; wt++) {ViewPort.IsPinned[wt] = true;}
+        
+        // pinning is not supported for Dict modules, but others should be pinned
+        if (Tab[ViewPort.Module[w]].modType != DICTIONARY) {
+          var wl = MainWindow.ViewPort.ownerDocument.getElementById("text" + w).getAttribute("columns").match(/^show(\d+)$/);
+          if (wl) {wl = Number(wl[1]);}
+          else wl = towindow;
+          for (var wt=towindow; wt<towindow+wl; wt++) {ViewPort.IsPinned[wt] = true;}
+        }
+        
         continue;
       }
       document.getElementById("text" + w).style.display = "none";
@@ -173,9 +178,9 @@ function ViewPortObj(viewPortObj) {
       // shutdown, so "Version" prefs must always be checked on startup
       if (!Tab.hasOwnProperty(this.Module[w])) this.Module[w] = prefs.getCharPref("DefaultVersion");
       
-      if (MainWindow.DailyDevotionModules.hasOwnProperty(this.Module[w])) this.Key[w] = "DailyDevotionToday";
+      if (SpecialModules.DailyDevotion.hasOwnProperty(this.Module[w])) this.Key[w] = "DailyDevotionToday";
       
-      if (!Tab.ORIG_NT && !Tab.ORIG_OT) ViewPort.ShowOriginal[w] = false;
+      if (!Tab.ORIG_NT && !Tab.ORIG_OT) this.ShowOriginal[w] = false;
       
     }
 
@@ -241,7 +246,7 @@ function ViewPortObj(viewPortObj) {
       
       // Firefox 16 has a bug where RTL column CSS does not scroll. The work
       // around at this time is to prohibit RTL multi-columns.
-      if (ModuleConfigs[this.Module[w]].direction == "rtl" && (/^show(2|3)$/).test(value)) value = "show1";
+      if ((ModuleConfigs[this.Module[w]].direction == "rtl" || ProgramConfig.direction == "rtl" )&& (/^show(2|3)$/).test(value)) value = "show1";
       
       // As of Firefox 17, CSS columns are not supported in print. For this
       // reason a WYSIWYG print routine is impossible. The workaround is to
@@ -551,10 +556,10 @@ function ViewPortObj(viewPortObj) {
   
   this.selectTab = function(w, version) {
     var fdb = this.firstDisplayBible(true); // capture before changing prefs...
-    ViewPort.ShowOriginal[w] = false;
-    ViewPort.Module[w] = version;
+    this.ShowOriginal[w] = false;
+    this.Module[w] = version;
     if (w == fdb || fdb != this.firstDisplayBible(true))
-        window.setTimeout("ViewPort.disableMissingBooks(" + getPrefOrCreate("HideDisabledBooks", "Bool", false) + ")", 200);
+        window.setTimeout(function() {ViewPort.disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));}, 200);
   };
 
   this.disableMissingBooks = function(hide) {
@@ -598,7 +603,7 @@ function ViewPortObj(viewPortObj) {
   this.resize = function() {
     if (window.innerHeight < 100) return;
     if (this.resizeTimer) window.clearTimeout(this.resizeTimer);
-    this.resizeTimer = window.setTimeout("ViewPort.update();", 300);
+    this.resizeTimer = window.setTimeout(function() {ViewPort.update();}, 300);
   };
 
 

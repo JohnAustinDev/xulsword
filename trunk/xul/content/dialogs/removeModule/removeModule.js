@@ -164,7 +164,7 @@ function deleteCheckedResources(e) {
 
   // Ask confirmation that we really want to delete.
   var result = {};
-  var dlg = window.openDialog("chrome://xulsword/content/common/dialog/dialog.xul", "dlg", DLGSTD, result, 
+  var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
       fixWindowTitle(getDataUI("menu.removeModule.label")),
       getDataUI("deleteconfirm.title"), 
       DLGQUEST,

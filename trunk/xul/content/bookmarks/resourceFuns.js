@@ -18,8 +18,9 @@
 
 ResourceFuns = {
   
+  // skipComplete must be true if this function is called before the MainWindow loads!
   createNewResource: function(propertyValues, keepTimeStamp, resourceName, skipComplete) {
-    if (!skipComplete) this.completeBMInfo(propertyValues);
+    if (!skipComplete) BookmarkFuns.completeBMInfo(propertyValues);
     var newResource = resourceName ? BM.RDF.GetResource(resourceName):BM.RDF.GetAnonymousResource();
     var skipProps = keepTimeStamp ? 0:2;
      
@@ -291,12 +292,12 @@ ResourceFuns = {
       else {parentName = parentName + suffix;}
       
       // for backward compatibility to < version 3.5, change icon image URLs
-      var icon = BM.gIcon.Texts; // default
+      var icon = (propertyValues[0] && propertyValues[0] == "Folder" ? "":BM.gIcon.Texts); // default
       if (propertyValues[ICON]) {
         var type = propertyValues[ICON].match(/\/([^\/]+)\.png$/);
         if (type) {
           type = type[1];
-          if ((/^(Texts|Comms|Dicts|Genbks)(WithNote)?$/).test(type) {
+          if ((/^(Texts|Comms|Dicts|Genbks)(WithNote)?$/).test(type)) {
             icon = icon.replace(/\/[^\/]+\.png$/, "/" + type + ".png"); // path changed but file names did not
           }
           else if (type == "Bookmarks-Note") icon = BM.gIconWithNote.Texts; // ancient variation
@@ -306,7 +307,7 @@ ResourceFuns = {
       
       if (overwrite) {
         var todelete = BM.RDF.GetResource(resourceName);
-        BookmarkFuns.removeResource(todelete, BMDS);
+        ResourceFuns.removeResource(todelete, BMDS);
         var arcsIn = BMDS.ArcLabelsIn(todelete);
         while (arcsIn.hasMoreElements()) {
           var thisarc = arcsIn.getNext();
@@ -334,7 +335,7 @@ ResourceFuns = {
     });
         
     for (var i=0; i<importedResources.length; i++) {
-      BookmarkFuns.createAndCommitTxn("import", "import", importedResources[i].child, null, importedResources[i].parent, 0, null);
+      ResourceFuns.createAndCommitTxn("import", "import", importedResources[i].child, null, importedResources[i].parent, 0, null);
     }
     BM.gTxnSvc.endBatch();
 
@@ -366,19 +367,20 @@ nsITransaction.prototype = {
   doTransaction: function () {
     switch (this.type) {
     case "insert":
-      BookmarkFuns.addResourceToFolder(this.item, this.parent.Value, this.index);
+      ResourceFuns.addResourceToFolder(this.item, this.parent.Value, this.index);
       break;
     
     case "remove":
-      BookmarkFuns.deleteItemById(this.item.Value, this.parent.Value);
+      ResourceFuns.deleteItemById(this.item.Value, this.parent.Value);
       break;
     
     case "import":
-      BookmarkFuns.appendResourceToFolder(this.item, this.parent.Value);
+      ResourceFuns.appendResourceToFolder(this.item, this.parent.Value);
       break;
     }
     try {window.clearTimeout(TransactionTO);} catch (er) {}
-    TransactionTO = window.setTimeout("BookmarkFuns.updateMainWindow()",0);
+    if (typeof(BookmarkFuns) != "undefined") 
+        TransactionTO = window.setTimeout("BookmarkFuns.updateMainWindow()",0);
   },
   
   merge: function () {
@@ -391,18 +393,19 @@ nsITransaction.prototype = {
   undoTransaction: function () {
     switch (this.type) {
     case "insert":
-      BookmarkFuns.deleteItemById(this.item.Value, this.parent.Value);
+      ResourceFuns.deleteItemById(this.item.Value, this.parent.Value);
       break;
     
     case "remove":
-      BookmarkFuns.addResourceToFolder(this.item, this.parent.Value, this.index);
+      ResourceFuns.addResourceToFolder(this.item, this.parent.Value, this.index);
       break;
       
     case "import":
-      BookmarkFuns.deleteItemById(this.item.Value, this.parent.Value);
+      ResourceFuns.deleteItemById(this.item.Value, this.parent.Value);
       break;
     }
     try {window.clearTimeout(TransactionTO);} catch (er) {}
-    TransactionTO = window.setTimeout("BookmarkFuns.updateMainWindow()",0);
+    if (typeof(BookmarkFuns) != "undefined") 
+        TransactionTO = window.setTimeout("BookmarkFuns.updateMainWindow()",0);
   }
 };

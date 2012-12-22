@@ -142,8 +142,6 @@
 [main-window.menu-bookmarks.context-menu.new_separator.ak]: t
 [main-window.menu-bookmarks.new-bookmark.ak]: B
 [main-window.menu-bookmarks.new-bookmark.ck]: d
-[main-window.menu-bookmarks.new-bookmark.name.ak]: N
-[main-window.menu-bookmarks.new-bookmark.url.ak]: L
 [main-window.menu-bookmarks.organize_bookmarks.ak]: M
 [main-window.menu-windows.ak]: W
 [main-window.menu-help.about.ak]: A
@@ -185,7 +183,6 @@
 [configuration.font]: 
 [configuration.font_size_adjust]: 
 [configuration.line_height]: 
-[configuration.text_direction]: 
 [numeral-0]: 0
 [numeral-1]: 1
 [numeral-2]: 2

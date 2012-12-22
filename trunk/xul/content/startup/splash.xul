@@ -22,12 +22,9 @@
 
 <!DOCTYPE window SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
 
-<window id="pre-splash" xmlns:html="http://www.w3.org/1999/xhtml"
+<window id="hidden-startup" xmlns:html="http://www.w3.org/1999/xhtml"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-  title="Splash"
-  hidechrome="true"
-  onunload="unload()"
-  width="0" height="0"
+  title="Splash" hidechrome="true" onunload="unload()" width="0" height="0"
   style="background:transparent;"> 
   
   <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
@@ -38,6 +35,13 @@
   <data id="ui.savingTarget">&dlgTo;</data>
   <data id="ui.localeDir">&locale.dir;</data>
   
+  <script>
+    var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+        .getService(Components.interfaces.nsIWindowWatcher);
+    var MainWindow = watcher.getWindowByName("xulsword-window", window);
+    var ResourceFuns, BM, BMDS, AudioDirs, XSBundle;
+  </script>
+    
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
@@ -48,34 +52,33 @@
   <script>
   <![CDATA[
   
-    // This hidden window installs modules, creates xulsword profile directories,
-    // and then either quits (if xsInstallOnly is set) or opens the main 
-    // xulsword window (the usual occurence). The main xulsword window closes
-    // this hidden window (if it exists) during its init sequence.
+    // This hidden window creates xulsword profile directories, installs modules, 
+    // and then either quits (if xsInstallOnly is set) or opens the splash window
+    // and main xulsword window (the usual occurence). The main xulsword window 
+    // closes this hidden window during its init sequence, which in turn closes the
+    // visible splash window.
   
-    // xulsword may already be running when another instance is started. So
-    // check for the MainWindow and if it exists, don't open another.
-    var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
-    var MainWindow = watcher.getWindowByName("xulsword-window", window);
-    
     createAppDirectories();
   
     window.screenX = window.screen.width/2-50;
     window.screenY = window.screen.height/2-50;
 
-    // Scripts or programs that need to block while MK installs stuff 
-    // will get confused if MK needs to restart, hence we need xsInstallOnlyMutex.
-    // If the script or program does not have a blocking feature, it will 
-    // need to create the xsInstallOnlyMutex file itself.
-    var installOnly = false;
-    try {installOnly = prefs.getBoolPref("xsInstallOnly");} catch (er) {}
+    // Scripts or programs that need to block while xulsword performs
+    // command line module installation (the xsInstallOnly command line 
+    // option), will get confused if xulsword needs to restart. Hence 
+    // we need xsInstallOnlyMutex. Xulsword will delete the mutex file 
+    // when it is done installing to signify to the caller that 
+    // installation is complete. The xsInstallOnly pref is set by
+    // xulsword's command line handler component: xscommandline.js.
+    try {var installOnly = prefs.getBoolPref("xsInstallOnly");} 
+    catch (er) {installOnly = false;}
     if (installOnly) {
       var mutex = getSpecialDirectory("TmpD");
       mutex.append("xsInstallOnlyMutex");
       if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
     }
     
-    moduleInstall(false); // will call endInstall() when complete...
+    moduleInstall(false); // this will call endInstall() when complete...
     
     // endInstall is called in newModule.js when module installation is complete
     function endInstall() {
@@ -93,13 +96,12 @@
       // Or is MainWindow already open? Then we're done...
       if (installOnly || MainWindow) window.close();
       
-      // Open the visible splash screen and start the main xulsword window
+      // Otherwise open the visible splash screen and start the main xulsword window
       SplashScreen = window.open("chrome://xulsword/content/startup/banner.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable");
       window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul', 'xulsword-window', 'chrome,resizable')", 300);
 
-      // xulsword.xul will close this window (Splash) during MainWindow init,
+      // xulsword.xul will close this hidden window during MainWindow init,
       // and then this window's onunload will close the visible splash screen.
-      
     }
     
     var SplashScreen;
@@ -111,8 +113,6 @@
       
       if (installOnly) {
         jsdump("Quiting... xsInstallOnly command line flag was set.");
-        // scripts or programs that need to block while MK installs stuff will get confused if MK needs to restart, 
-        // hence we need xsInstallOnlyMutex, file which the caller can monitor until it is deleted by xulsword.
         var mutex = getSpecialDirectory("TmpD");
         mutex.append("xsInstallOnlyMutex");
         if (mutex.exists()) mutex.remove(false); // siginify to caller that we're done installing

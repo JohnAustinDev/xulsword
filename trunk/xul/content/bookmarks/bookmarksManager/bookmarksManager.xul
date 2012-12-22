@@ -56,7 +56,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/nsDragAndDrop.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksCommand.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.js"/>
 
   <keyset id="editMenuKeys"/>

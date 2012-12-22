@@ -340,7 +340,10 @@ Texts = {
       sb.innerHTML = ti.htmlEntry;
       
       var nb = t.getElementsByClassName("nb")[0];
-      nb.innerHTML = ti.htmlList;
+      display.htmlList = ti.htmlList;
+      if (!this.display[w] || !this.display[w].hasOwnProperty("htmlList") || 
+          this.display[w].htmlList != ti.htmlList)
+        nb.innerHTML = ti.htmlList;
     
       // highlight the selected key
       var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");
@@ -351,8 +354,8 @@ Texts = {
         k.scrollIntoView();
         document.getElementById("viewportbody").scrollTop = 0;
       }
-      
-      document.getElementById("w" + w + ".keytextbox").value = display.Key;
+
+      document.getElementById("note" + w).getElementsByClassName("keytextbox")[0].value = display.Key;
       ViewPort.Key[w] = display.Key;
       
     }

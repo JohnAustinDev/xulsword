@@ -72,11 +72,11 @@ function openTabToolTip(t, w, cX, cY) {
   
   tt.hidePopup();
   var modName = Tabs[t].modName;
-  if (t == -1) modName = resolveOriginalVersion(Location.getBookName());
   if (!modName) return;
   
-  var desc = LibSword.getModuleInformation(modName, "Description");
-  if (!desc || desc==NOTFOUND) return;
+  var desc = Tabs[t].description;
+  if (!desc) return;
+  
   desc = desc.substr(0, TOOLTIP_LEN);
   if (desc.length==TOOLTIP_LEN) desc += "...";
   
@@ -315,12 +315,12 @@ function scriptClick(e) {
       break;
     case DICTIONARY:
       var currentKey = ViewPort.Key[w];
-      for (var k=0; k<DictTexts.keyList[w][mod].length; k++) {
-        if (DictTexts.keyList[w][mod][k] == currentKey) break;
+      for (var k=0; k<DictTexts.keyList[mod].length; k++) {
+        if (DictTexts.keyList[mod][k] == currentKey) break;
       }
       k--;
-      if (DictTexts.keyList[w][mod][k]) {
-        ViewPort.Key[w] = DictTexts.keyList[w][mod][k];
+      if (DictTexts.keyList[mod][k]) {
+        ViewPort.Key[w] = DictTexts.keyList[mod][k];
         Texts.updateDictionary(w);
       }
       break;
@@ -366,12 +366,12 @@ function scriptClick(e) {
       break;
     case DICTIONARY:
       var currentKey = ViewPort.Key[w];
-      for (var k=0; k<DictTexts.keyList[w][mod].length; k++) {
-        if (DictTexts.keyList[w][mod][k] == currentKey) break;
+      for (var k=0; k<DictTexts.keyList[mod].length; k++) {
+        if (DictTexts.keyList[mod][k] == currentKey) break;
       }
       k++;
-      if (DictTexts.keyList[w][mod][k]) {
-        ViewPort.Key[w] = DictTexts.keyList[w][mod][k];
+      if (DictTexts.keyList[mod][k]) {
+        ViewPort.Key[w] = DictTexts.keyList[mod][k];
         Texts.updateDictionary(w);
       }
       break;

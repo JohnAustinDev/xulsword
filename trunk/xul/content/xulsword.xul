@@ -18,11 +18,38 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
+<!--
+  XULSWORD LOCALIZATION:
+  There are two types of files used to localize the user interface into
+  various lanugages:
+  
+  - .dtd files contain xml entities to localize XUL files.
+  
+  - .properties files contain named phrases for use by Javascript files.
+  
+  There are three methods xulsword provides to allow Javascript to access 
+  localized data:
+  
+  - getDataUI(<name>) reads an XML entity from a XUL <data> element. This
+    keeps the localized data within the .dtd file (no .properties needed).
+    
+  - XSBundle program-wide global string bundle allows easy access to the
+    named phrases within the xulsword.properties file. The XSBundle has
+    .getString(<name>) and .getFormattedString(<name>, [<param-array]) 
+    methods.
+    
+  - getLocaleBundle(<locale>, file.properties) retrieves a bundle object
+    from any installed locale and .properties file. The data within the
+    .properties file is accessed with these its two methods:
+    .formatStringFromName(<name>, [<param-array], param-array-length) and
+    .GetStringFromName(<name>)
+!-->
+
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css" ?>
 <?xml-stylesheet href="chrome://xulsword/skin/xulsword-xul.css" type="text/css" ?>
 
 <?xul-overlay href="chrome://xulsword/content/common/editMenu-overlay/editMenu-overlay.xul" ?>
-<?xul-overlay href="chrome://xulsword/content/common/contextMenu-overlay.xul" ?>
+<?xul-overlay href="chrome://xulsword/content/common/contextMenu-overlay/contextMenu-overlay.xul" ?>
 
 <!DOCTYPE window SYSTEM "chrome://xulsword/locale/xulsword.dtd">
 
@@ -56,11 +83,12 @@
 <data id="ui.localeDir">&locale.dir;</data>
 
 <script>
-  // xulsword's program-wide globals...
+  // xulsword's program-wide global objects...
   var MainWindow = window;
   var LibSword, Location, AudioDirs, LocaleConfigs, ModuleConfigs, ProgramConfig;
-  var Book, Tabs, Tab, LanguageStudyModules, AllWindows, XSBundle, BM, BMDS, ResourceFuns, BookmarkFuns;
-  var CommandTarget, ViewPort, Texts, BibleTexts, DictTexts, GenBookTexts, CommTexts;
+  var Book, Tab, Tabs, SpecialModules, AllWindows, XSBundle;
+  var BM, BMDS, ResourceFuns, BookmarkFuns, CommandTarget;
+  var ViewPort, Texts, BibleTexts, DictTexts, GenBookTexts, CommTexts;
 </script>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
@@ -79,7 +107,7 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common/nsDragAndDrop.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkFuns.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarks.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksCommand.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/search/indexer.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
@@ -177,8 +205,8 @@
   <toolbox>
   <menubar id="mainbar"> 
     <menu id="file-menu" label="&fileMenu.label;" accesskey="&fileMenu.accesskey;" >
-      <menupopup id="file-popup" onpopupshowing="goUpdateFileMenu();">
-        <menuitem id="keep-newmodule" label="&menu.addNewModule.label;" accesskey="&menu.addNewModule.sc;" command="cmd_xs_addNewModule" />
+      <menupopup id="file-popup" onpopupshowing="if (LibSword.hasBible) goUpdateFileMenu();">
+        <menuitem id="newmodule" alwaysShow="true" label="&menu.addNewModule.label;" accesskey="&menu.addNewModule.sc;" command="cmd_xs_addNewModule" />
         <menuitem id="removemodule" label="&menu.removeModule.label;" accesskey="&menu.removeModule.sc;" command="cmd_xs_removeModule" />
         <menuseparator/>
         <menuitem id="exportAudio" label="&menu.exportAudio.label;" accesskey="&menu.exportAudio.sc;" command="cmd_xs_exportAudio" />
@@ -193,7 +221,7 @@
         <menuitem label="&print.printpassage;" accesskey="&print.printpassage.sc;"
             oncommand="handlePrintCommand('cmd_print_passage');"/>
         <menuseparator/>
-        <menuitem id="keep-quit" alwaysShow="true" label="&quitApplicationCmdWin.label;" accesskey="&quitApplicationCmdWin.accesskey;" oncommand="window.close()"/>
+        <menuitem id="quit" alwaysShow="true" label="&quitApplicationCmdWin.label;" accesskey="&quitApplicationCmdWin.accesskey;" oncommand="window.close()"/>
       </menupopup>
     </menu>
     <menu id="edit-menu" label="&editMenu.label;" accesskey="&editMenu.accesskey;">
@@ -460,7 +488,7 @@
       <!-- <iframe id="aboutConfig" flex="100%" src="about:config" /> !-->
       
       <hbox id="frameset" chooser="bible" flex="100%"> <!-- chooser attribute may be set to "bible", "book", or "hide" -->
-        <vbox id="genBookChooser" pack="start" flex="1" align="end">
+        <vbox id="genBookChooser" class="cs-en-US" pack="start" flex="1" align="end">
           <spacer height="36"/>
           <vbox id="genBookTree" flex="1">
             <tree id="genbook-tree" flex="1" class="plain" hidecolumnpicker="true" seltype="single" enableColumnDrag="false"
