@@ -66,8 +66,10 @@
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#">
     
+<!-- the stringbundle element is used for script UI localization !-->
 <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
 
+<!-- data elements are used by the getDataUI Javascript function for script UI localization !-->
 <data id="ui.print.printpassage">&print.printpassage;</data>
 <data id="ui.menu.copypassage">&menu.copypassage;</data>
 <data id="ui.history.back.label">&history.back.label;</data>
@@ -82,7 +84,7 @@
 <data id="ui.savingTarget">&dlgTo;</data>
 <data id="ui.localeDir">&locale.dir;</data>
 
-<script>
+<script>  
   // xulsword's program-wide global objects...
   var MainWindow = window;
   var LibSword, Location, AudioDirs, LocaleConfigs, ModuleConfigs, ProgramConfig;
@@ -91,16 +93,23 @@
   var ViewPort, Texts, BibleTexts, DictTexts, GenBookTexts, CommTexts;
 </script>
 
+<script>XSBundle = document.getElementById("strings");</script>
+
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
+<script>initLogging();</script>
+
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkDataInit.js"/>
+<script>BM = {}; BMDS = initBMServices(BM);</script>
+
 <script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
+<script>AudioDirs = getAudioDirs();</script>
+
 <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/location.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/libsword.js"/>
-
 <script>moduleInstall(true);</script>
 
 <script type="application/x-javascript" src="chrome://global/content/printUtils.js"/>
@@ -113,6 +122,7 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/xulswordInit.js"/>
+<script>xulswordInit();</script>
 
 <!-- <script type="application/x-javascript" src="chrome://xulsword/content/test/xulswordTest.js"/> !-->
 
@@ -200,13 +210,13 @@
   <command id="cmd_xs_previousBook"              oncommand="goDoCommand('cmd_xs_previousBook');"/>  
 </commandset>
              
-<vbox id="topbox" hasBible="true" flex="100%">
+<vbox id="topbox" hasBible="true" libSwordLoadFailed="false" flex="100%">
 <!-- MENU BAR BEGINS HERE !-->
   <toolbox>
   <menubar id="mainbar"> 
     <menu id="file-menu" label="&fileMenu.label;" accesskey="&fileMenu.accesskey;" >
       <menupopup id="file-popup" onpopupshowing="if (LibSword.hasBible) goUpdateFileMenu();">
-        <menuitem id="newmodule" alwaysShow="true" label="&menu.addNewModule.label;" accesskey="&menu.addNewModule.sc;" command="cmd_xs_addNewModule" />
+        <menuitem id="newmodule" label="&menu.addNewModule.label;" accesskey="&menu.addNewModule.sc;" command="cmd_xs_addNewModule" />
         <menuitem id="removemodule" label="&menu.removeModule.label;" accesskey="&menu.removeModule.sc;" command="cmd_xs_removeModule" />
         <menuseparator/>
         <menuitem id="exportAudio" label="&menu.exportAudio.label;" accesskey="&menu.exportAudio.sc;" command="cmd_xs_exportAudio" />
@@ -221,7 +231,7 @@
         <menuitem label="&print.printpassage;" accesskey="&print.printpassage.sc;"
             oncommand="handlePrintCommand('cmd_print_passage');"/>
         <menuseparator/>
-        <menuitem id="quit" alwaysShow="true" label="&quitApplicationCmdWin.label;" accesskey="&quitApplicationCmdWin.accesskey;" oncommand="window.close()"/>
+        <menuitem id="quit" label="&quitApplicationCmdWin.label;" accesskey="&quitApplicationCmdWin.accesskey;" oncommand="window.close()"/>
       </menupopup>
     </menu>
     <menu id="edit-menu" label="&editMenu.label;" accesskey="&editMenu.accesskey;">
@@ -383,7 +393,7 @@
         <rule iscontainer="true">
           <menupopup>
             <menu uri="rdf:*" class="menu-iconic bookmark-item cs-rdf:http://www.xulsword.com/bookmarks/rdf#NameLocale" label="rdf:http://www.xulsword.com/bookmarks/rdf#Name">
-            <menupopup contextmenu="bookmarks-context-menu"/>
+              <menupopup contextmenu="bookmarks-context-menu"/>
             </menu>
           </menupopup>
         </rule>
@@ -488,7 +498,7 @@
       <!-- <iframe id="aboutConfig" flex="100%" src="about:config" /> !-->
       
       <hbox id="frameset" chooser="bible" flex="100%"> <!-- chooser attribute may be set to "bible", "book", or "hide" -->
-        <vbox id="genBookChooser" class="cs-en-US" pack="start" flex="1" align="end">
+        <vbox id="genBookChooser" pack="start" flex="1" align="end">
           <spacer height="36"/>
           <vbox id="genBookTree" flex="1">
             <tree id="genbook-tree" flex="1" class="plain" hidecolumnpicker="true" seltype="single" enableColumnDrag="false"
@@ -501,7 +511,10 @@
                 <treechildren>
                   <treeitem uri="rdf:*">
                     <treerow >
-                      <treecell label="rdf:http://www.xulsword.com/tableofcontents/rdf#Name"/>
+                      <!-- the "properties" attribute is used to style xul trees, in conjunction with  
+                      treechildren CSS selectors (which are dynamically created by initCSS()) !-->
+                      <treecell label="rdf:http://www.xulsword.com/tableofcontents/rdf#Name" 
+                          properties="rdf:http://www.xulsword.com/tableofcontents/rdf#Module"/>
                     </treerow>
                   </treeitem>
                 </treechildren>

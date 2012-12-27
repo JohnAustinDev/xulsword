@@ -1,3 +1,6 @@
+#topbox[hasBible="false"] {
+  background-image: url(chrome://xulsword/skin/images/b2.gif);
+}
 #main-controlbar {
   background-image: url(chrome://xulsword/skin/images/b2.gif);
 }
@@ -56,8 +59,12 @@
 #topbox[hasBible="false"] #file-menu menuseparator {
   display:none;
 }
-#topbox[hasBible="false"] #file-menu menuitem[alwaysShow="true"] {
+#topbox[hasBible="false"] #file-menu menuitem[hasNoBibleShow="true"] {
   display:block;
+}
+#quit,
+#topbox[libSwordLoadFailed="false"] #newmodule {
+  display:block !important;
 }
 
 /* MAIN WINDOW TOGGLE BUTTONS */

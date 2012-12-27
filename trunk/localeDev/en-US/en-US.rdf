@@ -178,7 +178,7 @@
                    BOOKMARKS:CreationDate="2008"
                    BOOKMARKS:Location="Gen.1.1"
                    BOOKMARKS:VerseText="In the  beginning, God created the heavens and the earth. "
-                   BOOKMARKS:Icon="chrome://xulsword/skin/bookmarks/TextsWithNote.png"
+                   BOOKMARKS:Icon="chrome://xulsword/skin/images/TextsWithNote.png"
                    BOOKMARKS:Note="You may create your own personal notes and bookmarks." BOOKMARKS:NoteLocale="en-US"
                    BOOKMARKS:ModifiedDate="-----" />
   <RDF:Description RDF:about="rdf:#$KY7Ci1"

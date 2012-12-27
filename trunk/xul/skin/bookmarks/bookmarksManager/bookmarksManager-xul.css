@@ -134,6 +134,6 @@ statusbar[chromedir="rtl"] > statusbarpanel > resizer {
   display: none;
 }
 
-#bookmark-folders-view[chromedir="rtl"], #bookmarks-view[chromedir="rtl"] {
-  text-align: right;
+#bookmark-folders-view, #bookmarks-view {
+  text-align: start;
 }

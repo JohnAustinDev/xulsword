@@ -262,13 +262,19 @@ void xulsword::getFolderContents(TreeKey *key, const char *modname, SWBuf *retva
     isChild=true;
     retval->appendFormatted("\t\t<RDF:li RDF:resource=\"rdf:#/%s%s\" />\n", modname, key->getText());
 
-    descriptions.appendFormatted("\t<RDF:Description RDF:about=\"rdf:#/%s%s\" \n\t\t\tTABLEOFCONTENTS:Chapter=\"rdf:#/%s%s\" \n\t\t\tTABLEOFCONTENTS:Type=\"%s\" \n\t\t\tTABLEOFCONTENTS:Name=\"%s\" />\n",
+    descriptions.appendFormatted("\
+    \t<RDF:Description RDF:about=\"rdf:#/%s%s\" \
+    \n\t\t\tTABLEOFCONTENTS:Chapter=\"rdf:#/%s%s\" \
+    \n\t\t\tTABLEOFCONTENTS:Type=\"%s\" \
+    \n\t\t\tTABLEOFCONTENTS:Name=\"%s\" \
+    \n\t\t\tTABLEOFCONTENTS:Module=\"%s\" />\n",
           modname,
           key->getText(),
           modname,
           key->getText(),
           (key->hasChildren() ? "folder":"key"),
-          key->getLocalName());
+          key->getLocalName(),
+          modname);
 
     if (key->hasChildren()) {
       SWBuf save = key->getLocalName();

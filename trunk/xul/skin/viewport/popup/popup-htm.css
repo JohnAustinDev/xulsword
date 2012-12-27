@@ -25,13 +25,10 @@
 /* Make sure these npopup styles are NOT inherited from container! */
 #npopup {
   display:none;
-  text-align:left;
+  text-align:start;
   color:black;
   font-weight:normal;
   font-style:normal;
-}
-body[chromedir="rtl"] #npopup {
-  text-align:right;
 }
 
 /* REGULAR (NON-WINDOW) POPUP STYLES */
@@ -58,15 +55,13 @@ body[chromedir="rtl"] .nb #npopup {
 .text[columns="show3"] .sb #npopup {
   width:33%;
 }
-.text .noticelink #npopup,
 .text .introlink #npopup {
-  /* These non inline text elements have undesireable left:auto 
-  values. So they need explicit left alignment and 100% width so
+  /* This non inline text element has undesireable an left:auto 
+  value. So it needs explicit left alignment and 100% width so
   that the mouse is guaranteed to always be above the popup. */
   left:30px;
   width:100%;
 }
-.text[textdir="rtl"] .noticelink #npopup,
 .text[textdir="rtl"] .introlink #npopup {
   left:auto;
   right:30px;

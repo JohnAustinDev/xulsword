@@ -66,10 +66,12 @@ function initLocales() {
  ***********************************************************************/ 
 
 function initModules() {
-  if (!LibSword) return false;
 
   // Gets list of available modules
-  var modules = LibSword.getModuleList().split("<nx>");
+  var modules = LibSword.getModuleList();
+  if (!modules) return false;
+  modules = modules.split("<nx>");
+  
   for (var m=0; m<modules.length; m++) {
   
     var mod = modules[m].split(";")[0];
@@ -113,8 +115,6 @@ function initModules() {
 function getLocaleOfModule(module) {
   var myLocale=null;
   
-  if (!LibSword) return null;
-  
   for (var lc in LocaleConfigs) {
     var regex = new RegExp("(^|\s|,)+" + module + "(,|\s|$)+");
     if (LocaleConfigs[lc].AssociatedModules.match(regex)) myLocale = lc;
@@ -146,7 +146,6 @@ function getLocaleOfModule(module) {
  ***********************************************************************/  
 
 function initTabGlobals() {
-  if (!LibSword) return false;
   
   var modlist = LibSword.getModuleList();
   var modarray = [];
@@ -397,7 +396,7 @@ function xulswordInit() {
   ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   
   var defaultMod = NOTFOUND;
-  
+ 
   if (initModules()) {
   
     // log our modules
@@ -420,8 +419,6 @@ function xulswordInit() {
   
   initBooks();
 
-  if (LibSword) LibSword.unlock();
+  if (!LibSword.loadFailed) LibSword.unlock();
   
 }
-
-xulswordInit();

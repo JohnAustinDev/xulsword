@@ -179,5 +179,3 @@ function initLogging() {
 
   setConsoleService(!dsed);
 }
-
-initLogging();

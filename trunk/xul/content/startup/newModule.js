@@ -16,8 +16,6 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-
 const SEP = ",";
 const TIMEOUT = 25;
 const AUDEXT = ["mp3", "wav", "aif"];
@@ -34,9 +32,26 @@ const VERSIONTAG = new RegExp (VERSIONPAR + "\\s*=\\s*(.*)\\s*", "im");
 const MINPROGVERSTAG = new RegExp(MINPVERPAR + "\\s*=\\s*(.*)\\s*", "im");
 const MINVERSION = "1.0";
 
-var ModuleCopyMutex = false;
+/*
+  MODULE INSTALLATION
+  Functions in this file install all xulsword module components. A xulsword
+  module consists of a zip compressed folder containing subdirectories
+  corresponding to the type of module component contained within each
+  subdirectory. Individual audio or bookmark files may also be installed 
+  according to each file's name. An entire directory of such audio files 
+  may also be installed at once. Installation may be initiated by command 
+  line, drag-and-drop, or dialog interface.
+  
+  Installation may require restarting xulsword, or reloading the main window.
+  A non-blocking install, showing a progress meter and using a callback is
+  available, as well as a blocking installation (but blocking installation 
+  requires that LibSword is either null, uninitialized, or paused before  
+  the install process begins). Module components which are incompatible 
+  with the current version of xulsword are rejected and a message with 
+  details is displayed.
+*/
 
-XSBundle = document.getElementById("strings");
+var ModuleCopyMutex = false;
 
 /************************************************************************
  * Module install functions
@@ -78,10 +93,11 @@ function addNewModule(e) {
     if (!aFile) break;
     fileArray.push(aFile);
   }
-  return installModuleArray(false, false, finishAndHandleReset, fileArray);
+  
+  return installModuleArray(finishAndHandleReset, fileArray);
 }
 
-function installModuleArray(blocking, allowStop, exitFunction, fileArray, audioDestination) {
+function installModuleArray(exitFunction, fileArray, audioDestination) {
   var zipFiles = [];
   var zipEntry = [];
   var regularFiles = [];
@@ -99,7 +115,7 @@ function installModuleArray(blocking, allowStop, exitFunction, fileArray, audioD
     else if (fileArray[f].isDirectory()) pushAudioFilesInFolder(fileArray[f], regularFiles);
   }
 
-  return startImport(blocking, allowStop, exitFunction, regularFiles, zipFiles, zipEntry, [], [], [], audioDestination);
+  return startImport(false, exitFunction, regularFiles, zipFiles, zipEntry, [], [], [], audioDestination);
 }
 
 function pushAudioFilesInFolder(aFolder, audioFiles) {
@@ -144,12 +160,6 @@ function sortFiles(a,b) {
   return 0;
 }
 
-function stopImport() {
-  try {if (CopyAnotherFile) window.clearTimeout(CopyAnotherFile);} catch (er) {}
-  ResetNeeded = NORESET;
-  ExitFunction();
-}
-
 var ResetNeeded;
 var Success;
 var GotoAudioFile;
@@ -175,7 +185,7 @@ var CountTotal, CountCurrent;
 var ProgressMeter, ProgressMeterLoaded;
 var WillRestart = false;
 var AudioDestination;
-function startImport(blocking, allowStop, exitFunction, regularFiles, zipFiles, zipEntry, newLocales, newModules, newFonts, audioDestination) {
+function startImport(blocking, exitFunction, regularFiles, zipFiles, zipEntry, newLocales, newModules, newFonts, audioDestination) {
 jsdump("STARTING startImport");
   GotoAudioFile = null;
   GotoBookmarkFile = null;
@@ -200,18 +210,21 @@ jsdump("STARTING startImport");
 
   setPreMainWin();
   
+  // show the progress meter?
   if (!blocking && (ZipFiles.length || RegularFiles.length>5)) {
     var result = {};
     ProgressMeterLoaded = false;
-    ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
+    AllWindows.push(window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
       fixWindowTitle(getDataUI("menu.addNewModule.label")),
       "", 
-      (allowStop ? PMSTOP:PMNORMAL),
-      (allowStop ? stopImport:null));
+      PMNORMAL,
+      null));
+    ProgressMeter = AllWindows[AllWindows.length-1];
   }
   CountTotal = (ZipFiles ? ZipFiles.length:0) + (RegularFiles ? RegularFiles.length:0);
   CountCurrent = 0;
   
+  // beep because there's nothing to install?
   if ((!ZipFiles || !ZipFiles.length) && (!RegularFiles || !RegularFiles.length)) {
     Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
     jsdump("MODULE WAS EMPTY");
@@ -219,6 +232,7 @@ jsdump("STARTING startImport");
     return false;  
   }
 
+  // remove incompatible components from the install lists
   var incomp = removeIncompatibleFiles(ZipFiles, ZipEntry);
   if (incomp.oldmodule.length || incomp.newmodule.length) {
     jsdump("There were incompatible components:");
@@ -256,12 +270,20 @@ jsdump("STARTING startImport");
     }
   }
 
-  // start the import after a possible timeout needed to pause LibSword
-  if (typeof(LibSword) != "undefined") {
+  // LibSword may be in any state at this point: non-existant, uninitialized, 
+  // failed, paused, or ready. If LibSword is initialized then it must be paused 
+  // beyond this point so that new modules may be installed or deleted.
+  if (typeof(LibSword) == "object") {
+    
+    // we need to bail under the following condition because LibSword.pause
+    // does not support blocking.
+    if (blocking && LibSword.libsword && !LibSword.paused) return false;
+    
     LibSword.pause( { libswordPauseComplete:startImport2 } );
+    
   }
   else startImport2();
-  
+
   return true;
 }
 
@@ -271,7 +293,7 @@ function startImport2() {
   else if (RegularFiles && RegularFiles.length) CopyRegularFun();
   // module is xulsword module, but contained nothing that needed to be, or could be, installed. Show progress meter so user knows it at least tried!
   else {
-    if (ProgressMeter) {
+    if (typeof(ProgressMeter) != "undefined") {
       window.setTimeout("if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute('value', 90);", 500);
       window.setTimeout("if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute('value', 100);", 1500);
       window.setTimeout("ProgressMeter.close();", 2000);
@@ -479,7 +501,7 @@ function readVersion(aZip, aEntry, progVers) {
 
 var CopyAnotherFile;
 function copyZipFilesTO() {
-  CopyAnotherFile = window.setTimeout("copyZipFiles();", TIMEOUT);
+  CopyAnotherFile = window.setTimeout(copyZipFiles, TIMEOUT);
 }
 
 function copyZipFiles() {
@@ -490,13 +512,14 @@ function copyZipFiles() {
   Success &= result.success;
   
   var pc = 100*((CountCurrent+EntIndex/ZipEntry[ZipIndex].length)/CountTotal);
-  if (CountTotal<=3 && ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", pc);
+  if (CountTotal<=3 && ProgressMeterLoaded && typeof(ProgressMeter) != "undefined" && ProgressMeter.Progress) 
+      ProgressMeter.Progress.setAttribute("value", pc);
   
   EntIndex++;
   if (EntIndex == ZipEntry[ZipIndex].length) {
     EntIndex = 0;
     ZipIndex++;
-    if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100*(++CountCurrent/CountTotal));
+    if (ProgressMeterLoaded && typeof(ProgressMeter) != "undefined" && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100*(++CountCurrent/CountTotal));
   }
   if (ZipIndex == ZipFiles.length) {
     if (RegularFiles && RegularFiles.length) CopyRegularFun();
@@ -519,7 +542,8 @@ function copyRegularFiles() {
   if (result.remove) RegularFiles[RegIndex] = null;
   Success &= result.success;
 
-  if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100*(++CountCurrent/CountTotal));
+  if (ProgressMeterLoaded && typeof(ProgressMeter) != "undefined" && ProgressMeter.Progress) 
+      ProgressMeter.Progress.setAttribute("value", 100*(++CountCurrent/CountTotal));
     
   RegIndex++;
   if (RegIndex == RegularFiles.length) ExitFunction();
@@ -796,9 +820,9 @@ function finishAndStartXulSword2() {
 }
 
 function finish(isFinalPass) {
-  if (typeof(LibSword) != "undefined" && LibSword.paused) LibSword.resume();
-  if (ProgressMeterLoaded && ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
-  if (ProgressMeter) window.setTimeout("ProgressMeter.close();", 100);
+  if (typeof(LibSword) != "undefined" && !LibSword.loadFailed && LibSword.paused) LibSword.resume();
+  if (ProgressMeterLoaded && typeof(ProgressMeter) != "undefined" && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
+  if (typeof(ProgressMeter) != "undefined") window.setTimeout("ProgressMeter.close();", 100);
   if (NewPlugin) {
     window.setTimeout("checkQuickTime();", 1000);
     NewPlugin = false;
@@ -864,7 +888,7 @@ function handleResetRequest() {
 
 function writeManifest(newLocales, newModules, newFonts, filesNotWaiting) {
   // write a module install file if needed. example- NewLocales;uz;NewModules;uzv;uzdot;uzdnt
-  if (ProgressMeter) ProgressMeter.close();
+  if (typeof(ProgressMeter) != "undefined") ProgressMeter.close();
   
   newLocales = (newLocales ? newLocales:NewLocales);
   newModules = (newModules ? newModules:NewModules);
@@ -1373,7 +1397,7 @@ var fileObserver = {
       files.push(transferData.dataList[i].first.data)
     }
     ModuleCopyMutex=true; //insures other module functions are blocked during this operation
-    if (!installModuleArray(false, false, finishAndHandleReset, files)) ModuleCopyMutex=false;
+    if (!installModuleArray(finishAndHandleReset, files)) ModuleCopyMutex=false;
   },
   
   onDragOver : function (event, flavour, session) {},
@@ -1388,36 +1412,46 @@ var fileObserver = {
  * Startup functions
  ***********************************************************************/ 
 
+// If isMainWindow == false, then this function must insure that 
+// installCommandLineModules is called, which in turn must insure
+// that endInstall is called.
 function moduleInstall(isMainWindow) {
 jsdump("STARTING moduleInstall, isMainWindow:" + isMainWindow);
 
   var result = retrieveFileArrays();
   
-  // Delete any files still scheduled to be deleted
+  // delete any files still scheduled to be deleted
   if (result.files2Delete) deleteFiles(result.deleteFiles);
   
-  // Install any files waiting from a previous install!
+  // install any files waiting from a previous install
   if (result.filesWaiting) {
-    if (isMainWindow)
-      startImport(true, false, finishAndWriteManifest, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts);
-    else
-      startImport(false, false, finishAndStartXulsword, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts);
+    var blocking = (isMainWindow ? true:false);
+    
+    // NOTE: finishAndStartXulsword calls installCommandLineModules
+    var exitfunc = (isMainWindow ? finishAndWriteManifest:finishAndStartXulsword);
+    
+    startImport(blocking, exitfunc, result.audioFiles, result.installFiles, result.installEntry, result.newLocales, result.newModules, result.newFonts);
+    
+    return; 
   }
   else if (result.haveNew) {
     writeManifest(result.newLocales, result.newModules, result.newFonts, true);
     jsdump("ALL FILES WERE SUCCESSFULLY INSTALLED!");
-    if (!isMainWindow) installCommandLineModules();
   }
-  else if (!isMainWindow) installCommandLineModules();
   
+  if (!isMainWindow) installCommandLineModules();
 }
 
+// check the command-line prefs for requested installation of module 
+// files, and if any are found perform the installation. This function
+// must insure endInstall() is called when finished.
 function installCommandLineModules() {
   var files = [];
   var mods = prefFileArray(files, "xsModule", XSMODULEEXT);
   var bms = prefFileArray(files, "xsBookmark", XSBOOKMARKEXT);
   var audio = prefFileArray(files, "xsAudio", "directory");
   var toFile;
+  
   if (audio.haveFiles) {
     var audioPath = [];
     var audiop = prefFileArray(audioPath, "xsAudioPath", "directory", true);
@@ -1439,13 +1473,17 @@ function installCommandLineModules() {
         return;
       }
     }
-    installModuleArray(false, (!mods.haveFiles && (bms.haveFiles || audio.haveFiles)), finishAndStartXulSword2, files, toFile);
+    
+    // NOTE: finishAndStartXulSword2 calls endInstall
+    installModuleArray(finishAndStartXulSword2, files, toFile);
     return;
   }
 
   endInstall();
 }
 
+// see if xulsword's commandline handler has saved to prefs a given 
+// type of file for subsequent installation.
 function prefFileArray(files, aPref, exts, dontCheckExists) {
   var haveFiles = false;
   var totalsize = 0;

@@ -866,6 +866,8 @@
               <treechildren>
                 <treeitem uri="rdf:*">
                   <treerow >
+                    <!-- the "properties" attribute is used to style xul trees, in conjunction with  
+                      treechildren CSS selectors (some of which are dynamically created by initCSS()) !-->
                     <treecell label="rdf:http://www.xulsword.com/bookmarks/rdf#Name" properties="rdf:http://www.xulsword.com/bookmarks/rdf#NameLocale" src="rdf:http://www.xulsword.com/bookmarks/rdf#Icon"/>
                     <treecell label="rdf:http://www.xulsword.com/bookmarks/rdf#Note" properties="rdf:http://www.xulsword.com/bookmarks/rdf#NoteLocale" />
                     <treecell label="rdf:http://www.xulsword.com/bookmarks/rdf#VerseText" properties="rdf:http://www.xulsword.com/bookmarks/rdf#Version" />
@@ -970,6 +972,8 @@
             <treechildren>
               <treeitem uri="rdf:*">
                 <treerow>
+                  <!-- the "properties" attribute is used to style xul trees, in conjunction with  
+                      treechildren CSS selectors (some of which are dynamically created by initCSS()) !-->
                   <treecell label="rdf:http://www.xulsword.com/bookmarks/rdf#Name" properties="rdf:http://www.xulsword.com/bookmarks/rdf#NameLocale" />
                 </treerow>
               </treeitem>

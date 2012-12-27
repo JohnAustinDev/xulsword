@@ -78,10 +78,9 @@ body[chromedir="rtl"] #chooser {
   position:relative;
   white-space:nowrap;
   z-index:10;
-  text-align:right;
+  text-align:end;
 }
 .tabs[chromedir="rtl"] {
-  text-align:left;
   padding:0px 30px 0px 20px;
 }
 #textarea[windows="show1"] #tabs1 {
