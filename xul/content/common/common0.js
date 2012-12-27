@@ -692,6 +692,7 @@ function initCSS(adjustableFontSize) {
 
   // Create and append module and locale specific CSS rules to stylesheet
   createDynamicCssClasses("StyleRule");
+  createDynamicCssClasses("TreeStyleRule");
   
   setUserFontSize(getPrefOrCreate('FontSize', "Int", 0));
   
@@ -704,8 +705,11 @@ function initCSS(adjustableFontSize) {
   
   // If this is a XUL document...
   var win = document.getElementsByTagName("window");
+  if (!win) win = document.getElementsByTagName("dialog");
   if (win && win.length) {
     // XUL windows get chromedir automagicaly
+    //win[0].setAttribute("chromedir", ProgramConfig.direction);
+    window.alert(win[0].getAttribute("chromedir"));
     var c = win[0].getAttribute("class");
     win[0].setAttribute("class", (c ? c + " " :"") + "cs-Program" + (adjustableFontSize ? " userFontSize":" fixedFontSize"));
   }
@@ -721,16 +725,35 @@ function createDynamicCssClasses(configProp) {
   var sheetLength = sheet.cssRules.length;
   
   if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
-    for (var lc in LocaleConfigs) {sheet.insertRule(LocaleConfigs[lc][configProp], sheetLength);}
+    for (var lc in LocaleConfigs) {
+      sheet.insertRule(LocaleConfigs[lc][configProp], sheetLength);
+//jsdump(LocaleConfigs[lc][configProp]);
+      }
   }
   
   if (typeof(ModuleConfigs) != "undefined" && ModuleConfigs) {
-    for (var m in ModuleConfigs) {sheet.insertRule(ModuleConfigs[m][configProp], sheetLength);}
+    for (var m in ModuleConfigs) {
+      sheet.insertRule(ModuleConfigs[m][configProp], sheetLength);
+//jsdump(ModuleConfigs[m][configProp]);
+      }
   }
   
   if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {
     sheet.insertRule(ProgramConfig[configProp], sheetLength);
+//jsdump(ProgramConfig[configProp]);
   }
+}
+
+function createStyleRule(selector, config) {
+  var rule = selector + " {";
+  for (var p in Config) {
+    if (!Config[p].CSS) continue;
+    rule += Config[p].CSS + ":" + config[p] + "; ";
+  }
+  rule += "}";
+
+//jsdump(rule); 
+  return rule;
 }
 
 // The userFontSize class in all stylesheets is dynamically updated by this routine.
@@ -785,18 +808,6 @@ function getLocaleConfig(lc) {
   localeConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(" + lc + ")", localeConfig);
   
   return localeConfig;
-}
-
-function createStyleRule(selector, config) {
-  var rule = selector + " {";
-  for (var p in Config) {
-    if (!Config[p].CSS) continue;
-    rule += Config[p].CSS + ":" + config[p] + "; ";
-  }
-  rule += "}";
-
-//jsdump(rule); 
-  return rule;
 }
 
 // This function returns the FIRST rule matching the selector.

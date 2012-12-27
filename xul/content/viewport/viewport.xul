@@ -26,6 +26,7 @@
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:html="http://www.w3.org/1999/xhtml"
     onload="getLocalObjects(); initCSS();"
+    onunload="ViewPort.unload();"
     onresize="if (ViewPort) ViewPort.resize();">
    
   <script>var MainWindow = window.opener;</script>
@@ -34,8 +35,8 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
   <script>
     
-    // Overwrite these global objects (assigned by default in common2.js)
-    // with the local objects that were just created within our iframe.
+    // Overwrite these global objects (assigned to MainWindow objects in common1.js)
+    // with the local objects that have been created within our iframe.
     function getLocalObjects() {
       var localViewportWindow = document.getElementById("viewport").contentDocument.defaultView;
       

@@ -321,7 +321,7 @@ function importAudio(fromDir, toDir, doNotCopyFiles) {
       diskSpaceMessage(fromDir.leafName);
       return false;
     }
-    else return installModuleArray(false, true, finishAndHandleReset, [fromDir], toDir);
+    else return installModuleArray(finishAndHandleReset, [fromDir], toDir);
   }
 
   // no fromDir or doNotCopyFiles...
@@ -584,5 +584,3 @@ function findBookNumPreMainWin(shortName) {
 
   return bnum;
 }
-
-AudioDirs = getAudioDirs();

@@ -176,6 +176,3 @@ function getDefaultUserData(fileName) {
   
   return filedata;
 }
-
-BM = {};
-BMDS = initBMServices(BM);

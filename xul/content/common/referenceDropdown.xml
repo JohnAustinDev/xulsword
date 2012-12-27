@@ -353,7 +353,7 @@
         <parameter name="version"/>
         <parameter name="bkch"/>
         <body><![CDATA[
-          if (!LibSword) {return 1;}
+          if (typeof(LibSword) != "object" || LibSword.loadFailed) {return 1;}
           try {var retval = LibSword.getMaxVerse(version, bkch);}
           catch(er) {retval = 1;}
           return retval;

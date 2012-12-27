@@ -39,7 +39,7 @@ function saveFileArgs(arg, cmdLine, prefs) {
     }
   }
   catch (e) {
-    Components.utils.reportError("incorrect parameter passed to -" + arg + " on the command line.");
+    Components.utils.reportError("incorrect parameter passed to -" + arg + " on the command line." + filestr);
   }
 }
   

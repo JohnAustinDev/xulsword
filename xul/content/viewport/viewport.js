@@ -45,7 +45,7 @@ function initViewPort() {
     
     ViewPort.init();
     
-    // use our pin info from MainWindow.Texts
+    // use our pin info from MainWindow.Texts in case some windows are pinned
     Texts.pinnedDisplay = MainWindow.Texts.pinnedDisplay;
       
     Texts.update(SCROLLTYPETOP, HILIGHTNONE);
@@ -74,7 +74,7 @@ function initViewPort() {
     for (var w=1; w<=NW; w++) {
       if (w == towindow) {
         
-        // pinning is not supported for Dict modules, but others should be pinned
+        // pinning is not supported for Dict modules, but others should be pinned (at least to start with, though user may unpin it)
         if (Tab[ViewPort.Module[w]].modType != DICTIONARY) {
           var wl = MainWindow.ViewPort.ownerDocument.getElementById("text" + w).getAttribute("columns").match(/^show(\d+)$/);
           if (wl) {wl = Number(wl[1]);}
@@ -208,8 +208,9 @@ function ViewPortObj(viewPortObj) {
 
   // This function updates the viewport based on all previously set ViewPort
   // user settings. It does not set/change any such paramters, but only
-  // implements them in the viewport. Ideally, updates should be implemented
-  // with CSS.
+  // implements them in the viewport. Ideally, all presentation code
+  // should be done using CSS, and here we only set applicable attributes
+  // classes, values etc.
   this.update = function(skipBibleChooserTest) {
 
     // Size layout correctly
@@ -608,6 +609,9 @@ function ViewPortObj(viewPortObj) {
 
 
   this.unload = function() {
+    
+    // no unload stuff is necessary except for main-viewport
+    if (document !== MainWindow.document.getElementById("main-viewport").contentDocument) return;
 
     // save hidden tab prefs
     for (var w=1; w<=NW; w++) {

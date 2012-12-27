@@ -306,7 +306,6 @@ function findBookNumL(bText) {
 }
 
 function getModuleLongType(aModule) {
-  if (!LibSword) return null;
   if (aModule == ORIGINAL) return BIBLE;
   var typeRE = new RegExp("(^|<nx>)\\s*" + escapeRE(aModule) + "\\s*;\\s*(.*?)\\s*(<nx>|$)");
   var type = LibSword.getModuleList().match(typeRE);

@@ -43,10 +43,9 @@
 <dialog id="bmPropsWindow" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         title="&bookmarks.windowtitle.label;"
         onload="initCSS(); Init()" style="width: 45em;"
-        onunload="Unload()"
         persist="screenX screenY width height"
         ondialogaccept="return Commit();"
-        ondialogcancel="return Cancel();">
+        ondialogcancel="return true;">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>

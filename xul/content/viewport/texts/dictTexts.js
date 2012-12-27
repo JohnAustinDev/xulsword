@@ -204,7 +204,7 @@ DictTexts = {
     }
     
     // Add heading now that we know module styling
-    html = "<div class=\"lemma-header cs-" + info.mod + "\">" + matchingPhrase + "</div>" + html;
+    html = "<div class=\"lemma-html cs-" + info.mod + "\"><div class=\"lemma-header\">" + matchingPhrase + "</div>" + html + "<div>";
    
     return html;
   },

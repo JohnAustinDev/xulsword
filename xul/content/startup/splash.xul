@@ -39,14 +39,22 @@
     var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
         .getService(Components.interfaces.nsIWindowWatcher);
     var MainWindow = watcher.getWindowByName("xulsword-window", window);
-    var ResourceFuns, BM, BMDS, AudioDirs, XSBundle;
+    var AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs;
   </script>
+  
+  <script>XSBundle = document.getElementById("strings"); AllWindows = [];</script>
     
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
+  <script>initLogging();</script>
+  
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkDataInit.js"/>
+  <script>BM = {}; BMDS = initBMServices(BM);</script>
+  
   <script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
+  <script>AudioDirs = getAudioDirs();</script>
+  
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
   
   <script>
@@ -80,7 +88,7 @@
     
     moduleInstall(false); // this will call endInstall() when complete...
     
-    // endInstall is called in newModule.js when module installation is complete
+    // endInstall is called by newModule.js when module installation is complete
     function endInstall() {
       if (WillRestart) return;
       

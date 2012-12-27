@@ -57,8 +57,11 @@ LibSword = {
   LibswordPath:null,
   CheckTheseCipherKeys:[],
   hasBible:null,
+  loadFailed:null,
 
   initLibsword: function() {
+    if (this.loadFailed) return; // if we already failed to load don't keep trying
+    
     if (typeof(jsdump) != "undefined") jsdump("Initializing libsword...");
     
     if (this.libsword) return;
@@ -89,6 +92,9 @@ LibSword = {
     catch (er) {
       window.alert("Could not load " + this.LibswordPath);
       if (OPSYS == "Linux") {window.alert("These Linux libraries must be installed:	libz, libm, libc, libstdc++, libgcc_s, libpthread");}
+      this.loadFailed = true;
+      this.libsword = null;
+      return;
     }
     
     // assign a function for freeing memory allocated by LibSword
@@ -108,6 +114,7 @@ LibSword = {
       }
     }
     
+    this.loadFailed = false;
   },
   
   initInstance: function() {
@@ -140,17 +147,29 @@ LibSword = {
       this.freeInstance();
       this.freeLibxulsword();
       this.libsword.close();
-      this.libsword = null;
-      if (typeof(jsdump) != "undefined") jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window-name>") + ")");
     }
+    
+    this.libsword = null;
+    this.loadFailed = null;
+    this.hasBible = null;
+    this.fdata = null;
+    
+    if (typeof(jsdump) != "undefined") 
+        jsdump("CLOSED libsword (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window-name>") + ")");
+  
   },
   
-  // Save LibSword info and free up libsword for use by another thread.
-  // This should always be called at the end of a thread. Any required
-  // processing after pausing should be initiated by a callback.libswordPauseComplete()
+  // pause() saves LibSword info and closes LibSword so that it may be 
+  // re-opened by another thread. pause() should only be called at the 
+  // end of a thread if LibSword has already been initialized. In this 
+  // case, any required processing after pausing should be initiated 
+  // by callback.libswordPauseComplete().
   pause: function(callback) {
-    if (this.paused) {
-      if (callback && callback.libswordPauseComplete)
+    
+    // already paused, or not yet initialized? then just callback now...
+    if (this.paused || !this.libsword) {
+      this.paused = true;
+      if (callback && typeof(callback.libswordPauseComplete) == "function")
           callback.libswordPauseComplete();
       return;
     }
@@ -164,19 +183,22 @@ LibSword = {
       }
     }
     
-    // prevent UI events from calling LibSword functions when LibSword is paused!
+    // prevent UI events from calling LibSword functions while LibSword is paused!
     this.allWindowsModal(true);
     
-    // after the UI is blocked, then quitLibsword and callback if needed
-    var to = "";
-    to += "LibSword.quitLibsword(); ";
-    to += "LibSword.paused = true; ";
-    if (callback && callback.libswordPauseComplete) {
-      this.callback = callback;
-      to += "if (LibSword.callback) LibSword.callback.libswordPauseComplete(); ";
-      to += "LibSword.callback = null;"
-    }
-    window.setTimeout(to, 1);
+    // save our callback if requested
+    this.callback = (callback && typeof(callback.libswordPauseComplete) == "function" ? callback:null);
+
+    // call quitLibsword only after any currently pending calls to LibSword have been handled
+    window.setTimeout(function() {
+      LibSword.quitLibsword(); 
+      LibSword.paused = true;
+      if (LibSword.callback) {
+        LibSword.callback.libswordPauseComplete();
+      }
+      LibSword.callback = null;
+    }, 1);
+    
   },
 
   resume: function() {
@@ -184,7 +206,9 @@ LibSword = {
     
     this.paused = false;
     
-    if (!this.unlock() && typeof(jsdump) != "undefined")
+    this.unlock();
+    
+    if (!this.hasBible && typeof(jsdump) != "undefined")
         jsdump("LibSword resumed with no Bible modules.");
         
     this.allWindowsModal(false);
@@ -194,9 +218,9 @@ LibSword = {
   // unlock encrypted SWORD modules
   unlock: function() {
     var mlist = this.getModuleList();
-    if (mlist == "No Modules" || mlist.search(BIBLE) == -1) {
+    if (!mlist || mlist == "No Modules" || mlist.search(BIBLE) == -1) {
       this.hasBible = false;
-      return false;
+      return;
     }
     this.hasBible = true;
     
@@ -230,8 +254,7 @@ LibSword = {
       if (cipherKey) msg += mod + "(" + cipherKey + ") ";
     }
     if (typeof(jsdump) != "undefined" && msg != "") {jsdump("Opening:" + msg + "\n");}
-    
-    return true;
+
   },
   
   usesSecurityModule: function(mod) {
@@ -274,6 +297,18 @@ LibSword = {
       if (typeof(jsdump) != "undefined") jsdump("THROW: libsword, " + tmp);
       throw(new Error("THROW: libsword, " + tmp));
     }
+  },
+  
+  libSwordReady: function(caller) {
+    if (this.paused) throw(new Error("libsword paused, \"" + caller + "\" inaccessible."));
+    
+    if (!this.libsword) this.initLibsword();
+    if (this.loadFailed) return false;
+    
+    if (!this.inst) this.initInstance();
+    if (!this.inst) return false;
+    
+    return true;
   },
 
 /*******************************************************************************
@@ -338,9 +373,7 @@ DEFINITION OF A "XULSWORD REFERENCE":
 //Vkeymod must be a module having a key type of versekey (Bibles & commentaries),
 //  otherwise null is returned.
 getChapterText: function(modname, vkeytext) {
-  if (this.paused) throw(new Error("libsword paused, getChapterText inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getChapterText")) return null;
   if (!this.fdata.gct)
     this.fdata.gct = this.libsword.declare("GetChapterText", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.gct(this.inst, ctypes.char.array()(modname), ctypes.char.array()(vkeytext));
@@ -360,9 +393,7 @@ getChapterText: function(modname, vkeytext) {
 //  that returned by the first, even though it may have come from a different
 //  chapter or verse number than did the first.
 getChapterTextMulti: function(modstrlist, vkeytext) {
-  if (this.paused) throw(new Error("libsword paused, getChapterTextMulti inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getChapterTextMulti")) return null;
   if (!this.fdata.ctm)
     this.fdata.ctm = this.libsword.declare("GetChapterTextMulti", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.ctm(this.inst, ctypes.char.array()(modstrlist), ctypes.char.array()(vkeytext));
@@ -378,9 +409,7 @@ getChapterTextMulti: function(modstrlist, vkeytext) {
 //Will return the footnotes (or empty string if there aren't any).
 //See * below.
 getFootnotes:function() {
-  if (this.paused) throw(new Error("libsword paused, getFootnotes inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getFootnotes")) return null;
   if (!this.fdata.gfn)
     this.fdata.gfn = this.libsword.declare("GetFootnotes", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
   var cdata = this.fdata.gfn(this.inst);
@@ -394,9 +423,7 @@ getFootnotes:function() {
 //Will return the cross references (or empty string if there aren't any).
 //See * below.
 getCrossRefs:function() {
-  if (this.paused) throw(new Error("libsword paused, getCrossRefs inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getCrossRefs")) return null;
   if (!this.fdata.gcr)
     this.fdata.gcr = this.libsword.declare("GetCrossRefs", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
   var cdata = this.fdata.gcr(this.inst);
@@ -411,9 +438,7 @@ getCrossRefs:function() {
 //See * below.
 //order is: v1-footnotes, v1-crossrefs, v2-footnotes, v2-crossrefs, etc
 getNotes:function() {
-  if (this.paused) throw(new Error("libsword paused, getNotes inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getNotes")) return null;
   if (!this.fdata.gns)
     this.fdata.gns = this.libsword.declare("GetNotes", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
   var cdata = this.fdata.gns(this.inst);
@@ -431,9 +456,7 @@ getNotes:function() {
 //Vkeytext is the "xulsword reference" (see definition above) from which to
 //  return the text.
 getVerseText: function(vkeymod, vkeytext) {
-  if (this.paused) throw(new Error("libsword paused, getVerseText inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getVerseText")) return null;
   if (!this.fdata.vtx)
     this.fdata.vtx = this.libsword.declare("GetVerseText", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.vtx(this.inst, ctypes.char.array()(vkeymod), ctypes.char.array()(vkeytext));
@@ -447,9 +470,7 @@ getVerseText: function(vkeymod, vkeytext) {
 //Returns the maximum chapter number of the chapter refered to by the
 //  xulsword reference Vkeytext, when using the verse system of Mod.
 getMaxChapter: function(modname, vkeytext) {
-  if (this.paused) throw(new Error("libsword paused, getMaxChapter inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getMaxChapter")) return null;
   if (!this.fdata.gmc)
     this.fdata.gmc = this.libsword.declare("GetMaxChapter", ctypes.default_abi, ctypes.int, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var intgr = this.fdata.gmc(this.inst, ctypes.char.array()(modname), ctypes.char.array()(vkeytext));
@@ -461,9 +482,7 @@ getMaxChapter: function(modname, vkeytext) {
 //Returns the maximum verse number of the chapter refered to by the
 //  xulsword reference Vkeytext, when using the verse system of Mod.
 getMaxVerse: function(modname, vkeytext) {
-  if (this.paused) throw(new Error("libsword paused, getMaxVerse inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getMaxVerse")) return null;
   if (!this.fdata.gmv)
     this.fdata.gmv = this.libsword.declare("GetMaxVerse", ctypes.default_abi, ctypes.int, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var intgr = this.fdata.gmv(this.inst, ctypes.char.array()(modname), ctypes.char.array()(vkeytext));
@@ -474,9 +493,7 @@ getMaxVerse: function(modname, vkeytext) {
 // getVerseSystem
 //Returns the verse system of module Mod.
 getVerseSystem: function(modname) {
-  if (this.paused) throw(new Error("libsword paused, getVerseSystem inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getVerseSystem")) return null;
   if (!this.fdata.gsy)
     this.fdata.gsy = this.libsword.declare("GetVerseSystem", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.gsy(this.inst, ctypes.char.array()(modname));
@@ -493,9 +510,7 @@ getVerseSystem: function(modname) {
 //  "Synodal" or "EASTERN" verse systems).
 //Returned value is always of the form shortBook.chapter.verse.lastVerse
 convertLocation: function(fromVerseSystem, vkeytext, toVerseSystem) {
-  if (this.paused) throw(new Error("libsword paused, convertLocation inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("convertLocation")) return null;
   if (!this.fdata.clo)
     this.fdata.clo = this.libsword.declare("ConvertLocation", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.clo(this.inst, ctypes.char.array()(fromVerseSystem), ctypes.char.array()(vkeytext), ctypes.char.array()(toVerseSystem));
@@ -514,9 +529,7 @@ convertLocation: function(fromVerseSystem, vkeytext, toVerseSystem) {
 //  if one exists in the version. If there is not introduction, "" is returned.
 //If Vkeymod is not a versekey type module, an error is returned.
 getBookIntroduction: function(vkeymod, bname) {
-  if (this.paused) throw(new Error("libsword paused, getBookIntroduction inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getBookIntroduction")) return null;
   if (!this.fdata.git)
     this.fdata.git = this.libsword.declare("GetBookIntroduction", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.git(this.inst, ctypes.char.array()(vkeymod), ctypes.char.array()(bname));
@@ -531,9 +544,7 @@ getBookIntroduction: function(vkeymod, bname) {
 //An exception is thrown if the dictionary itself is not found, or if the
 //  Lexdictmod is not of type StrKey.
 getDictionaryEntry: function(lexdictmod, key) {
-  if (this.paused) throw(new Error("libsword paused, getDictionaryEntry inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getDictionaryEntry")) return null;
   if (!this.fdata.gdi)
     this.fdata.gdi = this.libsword.declare("GetDictionaryEntry", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.gdi(this.inst, ctypes.char.array()(lexdictmod), ctypes.char.array()(key));
@@ -547,9 +558,7 @@ getDictionaryEntry: function(lexdictmod, key) {
 //Returns all keys in form key1<nx>key2<nx>key3<nx>
 //Returns an error is module Lexdictmod is not of type StrKey
 getAllDictionaryKeys: function(lexdictmod) {
-  if (this.paused) throw(new Error("libsword paused, getAllDictionaryKeys inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getAllDictionaryKeys")) return null;
   if (!this.fdata.gdk)
     this.fdata.gdk = this.libsword.declare("GetAllDictionaryKeys", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.gdk(this.inst, ctypes.char.array()(lexdictmod));
@@ -563,9 +572,7 @@ getAllDictionaryKeys: function(lexdictmod) {
 //Returns chapter text for key Treekey in GenBook module Gbmod.
 //Returns an error if module Gbmod is not a TreeKey mod.
 getGenBookChapterText:function(gbmod, treekey) {
-  if (this.paused) throw(new Error("libsword paused, getGenBookChapterText inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getGenBookChapterText")) return null;
   if (!this.fdata.gbt)
     this.fdata.gbt = this.libsword.declare("GetGenBookChapterText", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.gbt(this.inst, ctypes.char.array()(gbmod), ctypes.char.array()(treekey));
@@ -579,9 +586,7 @@ getGenBookChapterText:function(gbmod, treekey) {
 //Returns table of contents RDF code for GenBook module Gbmod.
 //Returns an error if module Gbmod is not a TreeKey mod.
 getGenBookTableOfContents: function(gbmod) {
-  if (this.paused) throw(new Error("libsword paused, getGenBookTableOfContents inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getGenBookTableOfContents")) return null;
   if (!this.fdata.gtc)
     this.fdata.gtc = this.libsword.declare("GetGenBookTableOfContents", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.gtc(this.inst, ctypes.char.array()(gbmod));
@@ -598,9 +603,7 @@ getGenBookTableOfContents: function(gbmod) {
 // luceneEnabled
 //Will return true if indexed searching is available for the current module, false otherwise.
 luceneEnabled: function(modname) {
-  if (this.paused) throw(new Error("libsword paused, luceneEnabled inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("luceneEnabled")) return null;
   if (!this.fdata.lce)
     this.fdata.lce = this.libsword.declare("LuceneEnabled", ctypes.default_abi, ctypes.bool, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
   var bool = this.fdata.lce(this.inst, ctypes.char.array()(modname));
@@ -623,9 +626,7 @@ luceneEnabled: function(modname) {
 //flags are many useful flags as defined in regex.h
 //newsearch should be set to false if you want the search results added to the previous results
 search: function(modname, srchstr, scope, type, flags, newsearch) {
-  if (this.paused) throw(new Error("libsword paused, search inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("search")) return null;
   if (!this.fdata.sch)
     this.fdata.sch = this.libsword.declare("Search", ctypes.default_abi, ctypes.int, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char), ctypes.int, ctypes.int, ctypes.bool);
   var intgr = this.fdata.sch(this.inst, ctypes.char.array()(modname), ctypes.char.array()(srchstr), ctypes.char.array()(scope), type, flags, newsearch);
@@ -636,9 +637,6 @@ search: function(modname, srchstr, scope, type, flags, newsearch) {
 // getSearchVerses
 //UNEMPLEMENTED AS YET. Returns a list of verse addresses which matched the previous search.
 getSearchVerses: function(modname) {
-  if (this.paused) throw(new Error("libsword paused, getSearchVerses inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
   return null;
 },
 
@@ -646,9 +644,7 @@ getSearchVerses: function(modname) {
 //Will return the verse texts from previous search.
 //See * below
 getSearchResults: function(modname, first, num, keepStrongs) {
-  if (this.paused) throw(new Error("libsword paused, getSearchResults inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getSearchResults")) return null;
   if (!this.fdata.gst)
     this.fdata.gst = this.libsword.declare("GetSearchResults", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.int, ctypes.int, ctypes.bool);
   var cdata = this.fdata.gst(this.inst, ctypes.char.array()(modname), first, num, keepStrongs);
@@ -661,8 +657,7 @@ getSearchResults: function(modname, first, num, keepStrongs) {
 // searchIndexDelete
 //Deletes the search index of modname.
 searchIndexDelete: function(modname) {
-  if (this.paused) throw(new Error("libsword paused, searchIndexDelete inaccessible."));
-  if (!this.libsword) this.initLibsword();
+  if (!this.libSwordReady("searchIndexDelete")) return;
   if (!this.inst) this.initInstance();
   if (!this.fdata.sid)
     this.fdata.sid = this.libsword.declare("SearchIndexDelete", ctypes.default_abi, ctypes.void_t, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
@@ -676,9 +671,7 @@ searchIndexDelete: function(modname) {
 //CAUTION: Do not call any LibSword functions other than getPercentComplete until
 //getPercentComplete returns 100!
 searchIndexBuild: function(modname) {
-  if (this.paused) throw(new Error("libsword paused, searchIndexBuild inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("searchIndexBuild")) return;
   if (!this.fdata.sib)
     this.fdata.sib = this.libsword.declare("SearchIndexBuild", ctypes.default_abi, ctypes.void_t, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
   this.fdata.sib(this.inst, ctypes.char.array()(modname));
@@ -699,9 +692,7 @@ searchIndexBuild: function(modname) {
 //  "Hebrew Cantillation"
 //  "Hebrew Vowel Points"
 setGlobalOption: function(option, setting) {
-  if (this.paused) throw(new Error("libsword paused, setGlobalOption inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("setGlobalOption")) return;
   if (!this.fdata.sgo)
     this.fdata.sgo = this.libsword.declare("SetGlobalOption", ctypes.default_abi, ctypes.void_t, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   this.fdata.sgo(this.inst, option, setting);
@@ -711,9 +702,7 @@ setGlobalOption: function(option, setting) {
 // getGlobalOption
 //Option must one of the above option strings. Either "Off" or "On" will be returned.
 getGlobalOption: function(option) {
-  if (this.paused) throw(new Error("libsword paused, getGlobalOption inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getGlobalOption")) return null;
   if (!this.fdata.ggo)
     this.fdata.ggo = this.libsword.declare("GetGlobalOption", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.ggo(this.inst, ctypes.char.array()(option));
@@ -730,9 +719,7 @@ getGlobalOption: function(option) {
 // setCipherKey
 //Will set the module's key. Key can only be set once.
 setCipherKey: function(modname, cipherKey, useSecModule) {
-  if (this.paused) throw(new Error("libsword paused, setCipherKey inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("setCipherKey")) return;
   if (!this.fdata.sck)
     this.fdata.sck = this.libsword.declare("SetCipherKey", ctypes.default_abi, ctypes.void_t, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char), ctypes.bool);
   this.fdata.sck(this.inst, ctypes.char.array()(modname), ctypes.char.array()(cipherKey), useSecModule);
@@ -747,9 +734,7 @@ setCipherKey: function(modname, cipherKey, useSecModule) {
 //Returns a string of form: name1;type1<nx>name2;type2<nx> etc...
 //Returns "No Modules" if there are no modules available.
 getModuleList: function() {
-  if (this.paused) throw(new Error("libsword paused, getModuleList inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getModuleList")) return null;
   if (!this.fdata.gml)
     this.fdata.gml = this.libsword.declare("GetModuleList", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t));
   var cdata = this.fdata.gml(this.inst);
@@ -766,9 +751,7 @@ getModuleList: function() {
 //Returns empty string if the module Mod does not exist.
 //Returns val1<nx>val2<nx>val3 if there is more than one entry of type infotype (eg. GlobalOptionFilter)
 getModuleInformation: function(modname, paramname) {
-  if (this.paused) throw(new Error("libsword paused, getModuleInformation inaccessible."));
-  if (!this.libsword) this.initLibsword();
-  if (!this.inst) this.initInstance();
+  if (!this.libSwordReady("getModuleInformation")) return null;
   if (!this.fdata.gmi)
     this.fdata.gmi = this.libsword.declare("GetModuleInformation", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.gmi(this.inst, ctypes.char.array()(modname), ctypes.char.array()(paramname));

@@ -272,13 +272,10 @@ body[chromedir="rtl"] .fncol3 {
 }
 .fncol4 {
   display:table-cell;
-  text-align:right;
+  text-align:end;
   white-space:nowrap;
   vertical-align:top;
   padding-top:2px;
-}
-body[chromedir="rtl"] .fncol4 {
-  text-align:left;
 }
 .fnlink {
   color:blue;
@@ -342,11 +339,10 @@ body[chromedir="rtl"] .fncol4 {
 /* Strong's numbers dictionary entry display */
 .snbut {
   float:right;
-  margin:5px 0px 5px 10px;
-}
-body[chromedir="rtl"] .snbut {
-  float:left;
-  margin:5px 10px 5px 0px;
+  margin-top:5px;
+  margin-bottom:5px;
+  -moz-margin-start:10px;
+  -moz-margin-end:0px;
 }
 .snbut:after {
   display:inline-block;

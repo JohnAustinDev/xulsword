@@ -35,8 +35,9 @@ Texts = {
   // 0 means update if a watched value has changed
   // 1 means update always
   update: function(scrollTypeFlag, hilightFlag, force) {
-    var save = { p1:scrollTypeFlag, p2:hilightFlag, p3:force };
+    var save = { p1:scrollTypeFlag, p2:hilightFlag, p3:force }; // save for passing on to other ViewPorts later
 
+    // default intput params...
     if (scrollTypeFlag === undefined) scrollTypeFlag = SCROLLTYPEPREVIOUS;
     if (hilightFlag === undefined) hilightFlag = HILIGHTPREVIOUS;
     if (force === undefined) force = [null, 0, 0, 0];
@@ -58,7 +59,7 @@ Texts = {
     for (var w=1; w<=NW; w++) {
       
       if (document.getElementById("text" + w).getAttribute("columns") == "hide") continue;
-      if (document.getElementById("text" + w).style.display == "none") continue; // used in windowed viewports
+      if (document.getElementById("text" + w).style.display == "none") continue; // used by windowed viewports
       if (w > ViewPort.NumDisplayedWindows) continue;
       if (force[w] == -1) continue;
    
@@ -90,8 +91,8 @@ Texts = {
     // need to also change our current scrollTypeFlag to SCROLLTYPEBEG
     if (this.scrollTypeFlag == SCROLLTYPEENDSELECT) this.scrollTypeFlag = SCROLLTYPEBEG;
     
-    // If this is the MainWindow.Text object that we're updating, then go and update any
-    // other viewport.xul Text objects as well.
+    // If this is the MainWindow.Text object which we just updated, then go and update any
+    // other windowed ViewPort Text objects as well now. Plus update navigator and history.
     if (this === MainWindow.Texts) {
       for (var w=0; w<MainWindow.AllWindows.length; w++) {
         if (!(/^viewport/).test(MainWindow.AllWindows[w].name)) continue;

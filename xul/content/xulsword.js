@@ -23,11 +23,13 @@
 var NewModuleInfo;
 
 function loadedXUL() {
+  //start_venkman();
 
   initCSS();
   AllWindows.push(window);
   
-  if (!LibSword.hasBible) document.getElementById("topbox").setAttribute("hasBible", "false");
+  document.getElementById("topbox").setAttribute("libSwordLoadFailed", LibSword.loadFailed ? "true":"false");
+  document.getElementById("topbox").setAttribute("hasBible", LibSword.hasBible ? "true":"false");
   
   document.title = XSBundle.getString("Title");
   window.name = "xulsword-window";
@@ -116,12 +118,15 @@ function loadedXUL2() {
   if (window.opener && window.opener.document.title == "Splash")
       window.opener.close(); // Close hidden startup window (which in turn closes visible splash window)
   
-  //we're ok!
-  // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
   if (LibSword.hasBible) {
+    //we're ok!
+    // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
     Texts.update(SCROLLTYPEBEG, HILIGHT_IFNOTV1);
     window.setTimeout("postWindowInit()", 1000); 
   }
+  else if (LibSword.loadFailed) window.close(); // nothing we can to here...
+  
+  // otherwise, no Bibles loaded leaves user with choice to exit or install a module.
   
   jsdump("Initilization Complete\n");
 }
@@ -253,11 +258,9 @@ function resetSearchIndex(modName) {
 
 function identifyModuleFeatures(resetUserPrefs) {
   var f = getModuleFeatures();
-  if (LibSword) {
-    for (var i=0; i<Tabs.length; i++) {
-      var fthis = getModuleFeatures(Tabs[i].modName);
-      for (var t in fthis) f[t] |= fthis[t];
-    }
+  for (var i=0; i<Tabs.length; i++) {
+    var fthis = getModuleFeatures(Tabs[i].modName);
+    for (var t in fthis) f[t] |= fthis[t];
   }
   
   var hide = getPrefOrCreate("HideDisabledViewMenuItems", "Bool", false);
@@ -606,7 +609,6 @@ var History = {
  * Bible Navagator...
  ***********************************************************************/ 
  function updateNavigator() {
-  if (!LibSword) return;
   
   var myvers = ViewPort.firstDisplayBible();
 

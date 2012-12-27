@@ -1,15 +1,21 @@
 Version 3.5 release ToDos:
 
+ON LINUX:
 Look at multi-column Bible view chapter looping problem.
 
-Test and fix startup scenarios: No-modules->install-non-Bible-mod->install-Bible-mod. No-LibSword->????. First-time-startup.
+DONE!: Test and fix startup scenarios: No-modules->install-non-Bible-mod->install-Bible-mod. No-LibSword->????. First-time-startup.
 
 Complete IBT locales.
 
 Check bookmark module styles, figure out styles for user-text and boomark names (use isASCII?).
 
+DONE!: (revisit when new Module Manager is added) Consider carefully the newModule.js flow: blocking vs. non-blocking: what does it really mean?
+
+Look at pinned GenBook text functionality, esp. with windowed viewports.
+
 Do a thorough use-test of all program corners needed by IBT release.
 
+ON WINDOWS:
 Compile for Windows and update Windows installer. 
 
 Assemble new Windows-programs using FireFox-Portable instead of XulRunner

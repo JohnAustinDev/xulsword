@@ -39,8 +39,6 @@ var bookmarksView, bookmarksFolder;
 // window title state, etc. 
 function Startup()
 {
-
-  createDynamicCssClasses("TreeStyleRule");
   
   const windowNode = document.getElementById("bookmark-window");
   bookmarksView = document.getElementById("bookmarks-view");

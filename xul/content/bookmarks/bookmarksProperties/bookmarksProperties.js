@@ -201,14 +201,7 @@ function Commit() {
 
   window.arguments[1].ok = true;
   window.close();
+  
   return true;
-}
-
-function Cancel()
-{
-  return true;
-}
-
-function Unload() {
 }
 
