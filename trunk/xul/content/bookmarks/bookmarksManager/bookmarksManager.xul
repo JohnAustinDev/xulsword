@@ -234,15 +234,15 @@
   </toolbox>
 
   <hbox flex="1" id="bmtrees" style="background-image: url(chrome://xulsword/skin/images/9.gif); padding:10px;">
-    <bookmarks-tree id="bookmark-folders-view" type="folders" flex="1" chromedir="&locale.dir;"
+    <bookmarks-tree id="bookmark-folders-view" type="folders" flex="1" 
                     persist="width" onselect="onViewSelected(event);"/>
     <splitter id="bookmark-views-splitter" collapse="before" persist="state">
       <grippy/>
     </splitter>
     <bookmarks-tree id="bookmarks-view" flex="4" persist="width"
-                    chromedir="&locale.dir;" onselect="onViewSelected(event);"/>
+                    onselect="onViewSelected(event);"/>
   </hbox>
-  <statusbar id="statusbar" chromedir="&locale.dir;">
+  <statusbar id="statusbar">
     <statusbarpanel id="statusbar-text" flex="1"/>
   </statusbar>
 

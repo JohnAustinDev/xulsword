@@ -75,13 +75,12 @@ body[chromedir="rtl"] #chooser {
 .tabs {
   display:table-cell;
   padding:0px 20px 0px 30px;
+  -moz-padding-start:30px;
+  -moz-padding-end:20px;
   position:relative;
   white-space:nowrap;
   z-index:10;
   text-align:end;
-}
-.tabs[chromedir="rtl"] {
-  padding:0px 30px 0px 20px;
 }
 #textarea[windows="show1"] #tabs1 {
   width:100%;

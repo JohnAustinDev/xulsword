@@ -33,7 +33,6 @@
   <data id="ui.menu.importAudio.label">&menu.importAudio.label;</data>
   <data id="ui.savingSource">&dlgFrom;</data>
   <data id="ui.savingTarget">&dlgTo;</data>
-  <data id="ui.localeDir">&locale.dir;</data>
   
   <script>
     var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]

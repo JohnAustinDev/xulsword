@@ -49,6 +49,7 @@
   font-family:Courier;
   font-size:12px;
   line-height:100%;
+  background-color:rgb(240,240,240);
 }
 .conf-info textarea,
 .less-label {

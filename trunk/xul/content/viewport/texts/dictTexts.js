@@ -72,9 +72,7 @@ DictTexts = {
     de = un.html; // has user notes added to text
     ret.footnotes = un.notes;
     
-    ret.htmlEntry += "<div class=\"dictentry\">";
-    ret.htmlEntry +=  "<div>" + de + "</div>";
-    ret.htmlEntry += "</div>";
+    ret.htmlEntry += "<div class=\"dictentry\">" + de + "</div>";
   
     ret.key = d.Key;
   

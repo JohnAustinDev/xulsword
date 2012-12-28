@@ -45,7 +45,7 @@ elsif ("$^O" =~ /linux/i) {
 }
 else {&Log("ERROR: Please add assignment to application directory of your platform\n");}
 @d = localtime(time);
-$BuildID = sprintf("%02d%02d%02d", ($d[5]%100), ($d[4]+1), $d[3]);
+$BuildID = sprintf("%02d%02d%02d_%d", ($d[5]%100), ($d[4]+1), $d[3], &get_SVN_rev());
 
 &writeCompileDeps();
 

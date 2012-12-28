@@ -211,21 +211,14 @@
   display:table;
   border-collapse:separate;
   border-spacing:0px 1px;
-  margin:0px 0px 0px 10px;
-}
-body[chromedir="rtl"] .fntable {
-  margin:0px 10px 0px 0px;
+  -moz-margin-start:10px
 }
 .popup-text .fntable {
   width:100%;
 }
 .fnrow {
   display:table-row;
-  padding-right:16px;
-}
-body[chromedir="rtl"] .fnrow {
-  padding-right:0px;
-  padding-left:16px;
+  -moz-padding-end:16px;
 }
 .fncol1 {
   display:table-cell; 

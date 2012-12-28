@@ -42,8 +42,10 @@
 
 <dialog id="bmPropsWindow" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         title="&bookmarks.windowtitle.label;"
-        onload="initCSS(); Init()" style="width: 45em;"
+        onload="initCSS(); Init();" style="width: 45em;"
         persist="screenX screenY width height"
+        buttonlabelaccept="&okButton.label;"
+        buttonlabelcancel="&cancelButton.label;"
         ondialogaccept="return Commit();"
         ondialogcancel="return true;">
 

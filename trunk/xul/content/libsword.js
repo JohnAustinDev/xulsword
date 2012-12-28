@@ -46,7 +46,7 @@ if (typeof(ctypes) == "undefined") Components.utils.import("resource://gre/modul
 
 LibSword = {
   libsword:null,        // reference to the libxulsword dynamic library
-  inst:null,            // the LibSword (xulsword) instance returned by libxulsword
+  inst:null,            // the LibSword (Cpp xulsword class) instance returned by libxulsword
   callback:null,        // an object used to implement callbacks from Javascript
   fdata:null,
   paused:false,
@@ -186,7 +186,7 @@ LibSword = {
     // prevent UI events from calling LibSword functions while LibSword is paused!
     this.allWindowsModal(true);
     
-    // save our callback if requested
+    // save our callback if it exists
     this.callback = (callback && typeof(callback.libswordPauseComplete) == "function" ? callback:null);
 
     // call quitLibsword only after any currently pending calls to LibSword have been handled

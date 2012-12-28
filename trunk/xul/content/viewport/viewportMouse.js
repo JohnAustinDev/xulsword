@@ -420,7 +420,7 @@ function scriptClick(e) {
     break;
     
   case "nbsizer":
-    ViewPort.MaximizeNoteBox[w] = !ViewPort.NoteBoxHeight[w];
+    ViewPort.MaximizeNoteBox[w] = !(ViewPort.MaximizeNoteBox[w]);
     ViewPort.update(false);
     break;
     

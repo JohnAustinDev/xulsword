@@ -614,7 +614,9 @@ function SearchObj(searchObj) {
     
     // enable translator module dropdown only if searched module is a BIBLE
     document.getElementById("bible-translator").setAttribute("disabled", (Tab[mod].modType == BIBLE ? "false":"true"));
-      
+
+//jsdump(LexiconResults.innerHTML); 
+//jsdump(SearchResults.innerHTML);      
   };
     
   
