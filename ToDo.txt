@@ -3,11 +3,13 @@ Version 3.5 release ToDos:
 ON LINUX:
 Look at multi-column Bible view chapter looping problem.
 
+AGL introductions with RTL interface does not display correct text-alignment.
+
 DONE!: Test and fix startup scenarios: No-modules->install-non-Bible-mod->install-Bible-mod. No-LibSword->????. First-time-startup.
 
 Complete IBT locales.
 
-Check bookmark module styles, figure out styles for user-text and boomark names (use isASCII?).
+DONE!: Check bookmark module styles, figure out styles for user-text and boomark names (use isASCII?).
 
 DONE!: (revisit when new Module Manager is added) Consider carefully the newModule.js flow: blocking vs. non-blocking: what does it really mean?
 

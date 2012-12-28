@@ -1019,9 +1019,10 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   
   if (intro.length() > 16) {
     SWBuf css;
-    css.setFormatted("<span class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
+    // use <div> rather than <span> because this needs block not inline display
+    css.setFormatted("<div class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
     intro.insert(0, css);
-    intro.append("</span>");
+    intro.append("</div>");
   }
   
   SWBuf check = assureValidUTF8(intro.c_str());
@@ -1064,21 +1065,22 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
   else {
     xstring.append(dmod->RenderText());
     //Now add any footnotes
+    xstring.append("<div class=\"dfnlist\">");
     int footnoteNum = 1;
     AttributeList::iterator AtIndex;
     for (AtIndex = dmod->getEntryAttributes()["Footnote"].begin(); AtIndex != dmod->getEntryAttributes()["Footnote"].end(); AtIndex++) {
-      if (footnoteNum == 1) {xstring.append("<br><br><br><hr>");}
-      xstring.appendFormatted("<sup>%i</sup>", footnoteNum++);
-      xstring.append(dmod->RenderText(AtIndex->second["body"]));
-      xstring.append("<br><br>");
+      xstring.appendFormatted("<sup>%i</sup><span class=\"dfnote\">%s</span>", 
+          footnoteNum++, 
+          dmod->RenderText(AtIndex->second["body"]));
     }
+    xstring.append("</div>");
   }
 
-  if (xstring.length() >16) {
-    SWBuf css;
-    css.setFormatted("<span class=\"cs-%s%s\">", dmod->Name(), (dmod->Direction() != DIRECTION_LTR ? " RTL":""));
-    xstring.insert(0, css);
-    xstring.append("</span>");
+  if (xstring.length() > 16) {
+    SWBuf cssclass;
+    cssclass.setFormatted("<div class=\"cs-%s%s\">", dmod->Name(), (dmod->Direction() != DIRECTION_LTR ? " RTL":""));
+    xstring.insert(0, cssclass);
+    xstring.append("</div>");
   }
   
   SWBuf check = assureValidUTF8(xstring.c_str());

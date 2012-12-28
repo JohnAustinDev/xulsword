@@ -687,7 +687,15 @@ function initCSS(adjustableFontSize) {
   if (typeof(LocaleConfigs) == "undefined") {
     var lc = getLocale();
     this.LocaleConfigs = {};
-    this.LocaleConfigs[lc] = getLocaleConfig(lc);
+    LocaleConfigs[lc] = getLocaleConfig(lc);
+  }
+  
+  // If we don't have ProgramConfig, make it. If we don't have ModuleConfigs
+  // that's perfectly ok to leave empty
+  if (typeof(ProgramConfig) == "undefined") {
+    this.ProgramConfig = copyObj(LocaleConfigs[getLocale()]);
+    ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
+    ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   }
 
   // Create and append module and locale specific CSS rules to stylesheet
@@ -696,22 +704,30 @@ function initCSS(adjustableFontSize) {
   
   setUserFontSize(getPrefOrCreate('FontSize', "Int", 0));
   
+  // Both XUL and HTML documents are given cs-Program class. Also, the  
+  // chromedir attribute is added to each document's root element. The  
+  // chromedir attribute can be used in CSS selectors to select according 
+  // to the the program locale's direction. Although Firefox provides the
+  // :-moz-locale-dir CSS pseudoclass for selecting by locale direction,
+  // this should usually NOT be used for xulsword CSS. Since some parts
+  // of xulsword may come from the Firefox locale (ie. print functions)
+  // we need to use chromedir, which is independent of the Firefox method.
+  // NOTE: Firefox did use chromedir for CSS selection in the past, but 
+  // modern versions do not use it anymore.
+  
   // If this is an HTML document...
-  var body = document.getElementsByTagName("body");
-  if (body && body.length) {
-    body[0].setAttribute("chromedir", ProgramConfig.direction);
-    body[0].className += (body[0].className ? " ":"") + "cs-Program" + (adjustableFontSize ? " userFontSize":" fixedFontSize");
+  var root = document.getElementsByTagName("body");
+  if (root.length) {
+    root[0].setAttribute("chromedir", ProgramConfig.direction);
+    root[0].className += (root[0].className ? " ":"") + "cs-Program" + (adjustableFontSize ? " userFontSize":" fixedFontSize");
   }
   
   // If this is a XUL document...
-  var win = document.getElementsByTagName("window");
-  if (!win) win = document.getElementsByTagName("dialog");
-  if (win && win.length) {
-    // XUL windows get chromedir automagicaly
-    //win[0].setAttribute("chromedir", ProgramConfig.direction);
-    window.alert(win[0].getAttribute("chromedir"));
-    var c = win[0].getAttribute("class");
-    win[0].setAttribute("class", (c ? c + " " :"") + "cs-Program" + (adjustableFontSize ? " userFontSize":" fixedFontSize"));
+  if (!root.length) {
+    root = document.getElementsByTagName('*')[0];
+    root.setAttribute("chromedir", ProgramConfig.direction);
+    var c = root.getAttribute("class");
+    root.setAttribute("class", (c ? c + " " :"") + "cs-Program" + (adjustableFontSize ? " userFontSize":" fixedFontSize"));
   }
 
 }

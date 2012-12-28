@@ -15,13 +15,16 @@ and applied to Strong's classes */
 .slist > a {
   color:blue;
 }
-.slist > a:hover {
-  border-bottom:1px solid blue;
-}
-.slist > span:before {
+.slist > a:after {
   content:'-';
   padding-left:4px;
   padding-right:4px;
+}
+.slist > a:hover {
+  border-bottom:1px solid blue;
+}
+.slist > span {
+  display:inline-block;
 }
 .slist > .lex-total:before {
   content:'(';
@@ -29,6 +32,7 @@ and applied to Strong's classes */
 }
 .lex-total:after {
   content:')';
+  -moz-padding-end:4px;
 }
 .lex-count:before {
   content:'(';

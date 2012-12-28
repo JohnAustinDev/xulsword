@@ -41,7 +41,16 @@ toolbarbutton, menulist, label {
 
 /* loads global print preview interface */
 toolbar[printpreview="true"] {
+  /* overwrite anything inherited from cs-Program class */
+  direction:ltr;
+  font-family: Arial, sans-serif;
+  font-size-adjust:none;
+  line-height:100%;
+  
   -moz-binding: url("chrome://global/content/printPreviewBindings.xml#printpreviewtoolbar");
+}
+toolbar[printpreview="true"]:-moz-locale-dir(rtl) {
+  direction:rtl;
 }
 
 /* referenceDropDown.xml */

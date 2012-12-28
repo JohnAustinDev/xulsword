@@ -72,7 +72,15 @@ function PopupObj(popupobj) {
     if (p && p.mod && (/^(cr|sr)$/).test(p.type)) {
       for (var t=0; t<Tabs.length; t++) {
         if (Tabs[t].modType != BIBLE) continue;
-        var selected = (Tabs[t].modName == p.mod ? "selected=\"selected\" ":"");
+        
+        // dictionary modules may have a "ReferenceBible" conf entry
+        var referenceBible = p.mod;
+        if (Tab[referenceBible].modType == DICTIONARY) {
+          var aref = LibSword.getModuleInformation(referenceBible, "ReferenceBible");
+          if (aref && aref != NOTFOUND && Tab.hasOwnProperty(aref)) referenceBible = aref;
+        }
+        
+        var selected = (Tabs[t].modName == referenceBible ? "selected=\"selected\" ":"");
         html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].locName + "\" " + selected + ">" + Tabs[t].label + "</option>";
       }
     }
@@ -113,7 +121,8 @@ function PopupObj(popupobj) {
       break;
 
     case "sr":
-      if (!p || !p.mod) return false;
+      if ((!p || !p.mod) && !referenceBible) return false;
+      referenceBible = (referenceBible ? referenceBible:p.mod);
       var entry = elem.innerHTML;
       // elem may have npopup as an appended child! So we need to remove it to get real innerHTML.
       // Note: A RegExp does not seem to be able to match innerHTML for some reason (needed escapeRE!?).
@@ -122,9 +131,9 @@ function PopupObj(popupobj) {
         i = entry.lastIndexOf("<", i);
         entry = entry.substring(0, i);
       }
-      this.srnote = Texts.getScriptureReferences((p.reflist != "unavailable" ? p.reflist:entry), p.mod);
-      this.srnote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + p.mod + "\">" + this.srnote + "</div>"
-      res = BibleTexts.getNotesHTML(this.srnote, p.mod, true, true, true, true, 1);
+      this.srnote = Texts.getScriptureReferences((p.reflist != "unavailable" ? p.reflist:entry), referenceBible);
+      this.srnote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + referenceBible + "\">" + this.srnote + "</div>"
+      res = BibleTexts.getNotesHTML(this.srnote, referenceBible, true, true, true, true, 1);
       break;
     
     case "dtl":

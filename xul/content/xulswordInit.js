@@ -240,7 +240,7 @@ function initTabGlobals() {
     tab.conf = commConfFiles[mod]; // Sword looks at common directory first...
     if (!tab.conf) tab.conf = userConfFiles[mod];
     else if (userConfFiles[mod]) tab.confModUnique = false;
-    tab.isCommDir = (tab.conf && tab.conf.path.substring(0, tab.conf.path.lastIndexOf("\\")) == commonDir.path);
+    tab.isCommDir = (tab.conf && tab.conf.path.indexOf(commonDir.path) == 0 ? true:false);
     tab.tabType = getShortTypeFromLong(tab.modType);
     tab.isRTL = (ModuleConfigs[mod].direction == "rtl");
     tab.index = m;

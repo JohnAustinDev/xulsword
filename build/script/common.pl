@@ -169,6 +169,25 @@ sub escfile($) {
   return $n;
 }
 
+sub get_SVN_rev() {
+  # Get our current osis-converters revision number
+  my $rev;
+  if ("$^O" =~ /MSWin32/i) {
+    $rev = "SubWCRev \"".__FILE__."\" 2>&1";
+    $rev = `$rev`;
+    if ($rev && $rev =~ /^Updated to revision\s*(\d+)\s*$/mi) {$rev = $1;}
+    else {$rev = "";} 
+  }
+  else {
+    $rev = "svn info ".__FILE__." 2>&1";
+    $rev = `$rev`;
+    if ($rev && $rev =~ /^Revision:\s*(\d+)\s*$/mi) {$rev = $1;}
+    else {$rev = "";}
+  }
+  
+  return $rev;
+}
+
 sub Log($$) {
   my $p = shift; # log message
   my $h = shift; # -1 = hide from console, 1 = show in console, 2 = only console

@@ -48,6 +48,8 @@
         ondialogaccept="return onOK(event)"
         ondialogcancel="return onCancel(event)"
         buttons="accept,cancel" 
+        buttonlabelaccept="&okButton.label;"
+        buttonlabelcancel="&cancelButton.label;"
         buttonlabelextra2="&button.newfolder.label;" buttonaccesskeyextra2="&button.newfolder.accesskey;"
         buttoniconaccept="add"
         buttoniconextra2="open"
@@ -113,7 +115,7 @@
   <separator class="thin"/>
 
   <bookmarks-tree id="folder-tree" flex="1" type="folders" collapsed="true"
-                  seltype="single" persist="height" rows="6" chromedir="&locale.dir;"
+                  seltype="single" persist="height" rows="6" 
                   onselect="selectTreeFolder();"/>
 
 <!-- TOOLTIPS DEFINED HERE !-->

@@ -13,6 +13,7 @@
   overflow:auto;
 }
 .module-heading {
+  font-weight:bold;
   margin-top:20px;
 }
 #modules checkbox {
