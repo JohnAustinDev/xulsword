@@ -94,9 +94,9 @@ Texts = {
     // If this is the MainWindow.Text object which we just updated, then go and update any
     // other windowed ViewPort Text objects as well now. Plus update navigator and history.
     if (this === MainWindow.Texts) {
-      for (var w=0; w<MainWindow.AllWindows.length; w++) {
-        if (!(/^viewport/).test(MainWindow.AllWindows[w].name)) continue;
-        MainWindow.AllWindows[w].Texts.update(save.p1, save.p2, save.p3);
+      for (var x=0; x<MainWindow.AllWindows.length; x++) {
+        if (!(/^viewport/).test(MainWindow.AllWindows[x].name)) continue;
+        MainWindow.AllWindows[x].Texts.update(save.p1, save.p2, save.p3);
       }
       
       MainWindow.updateNavigator();
@@ -131,6 +131,9 @@ Texts = {
     var t = document.getElementById("text" + w);
     var ltr = (ModuleConfigs[display.mod].direction == "ltr");
     var sb = t.getElementsByClassName("sb")[0];
+    
+    // the class of sb must be that of the module
+    sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
 
     // don't read new text if the results will be identical to the last displayed text
     var textUpdated = false;
@@ -162,7 +165,7 @@ Texts = {
           prev.footnotes = tip.footnotes + prev.footnotes;
           sb.innerHTML = prev.htmlText;
           if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
-               (!ltr && sb.firstChild.offsetLeft >= sb.offsetWidth) ) break;
+               (!ltr && sb.lastChild.offsetLeft < 0) ) break;
           c--;
         }
       
@@ -177,8 +180,9 @@ Texts = {
           next.htmlNotes = next.htmlNotes + tip.htmlNotes;
           next.footnotes = next.footnotes + tip.footnotes;
           sb.innerHTML = next.htmlText;
+//window.alert(c + ":" + sb.firstChild.offsetLeft + ", " + sb.lastChild.offsetLeft + ", " + sb.offsetWidth);
           if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
-               (!ltr && sb.firstChild.offsetLeft >= sb.offsetWidth) ) break;
+               (!ltr && sb.lastChild.offsetLeft < 0) ) break;
           c++;
         }
         
@@ -189,8 +193,6 @@ Texts = {
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
-      var sb = t.getElementsByClassName("sb")[0];
-      sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = prev.htmlText + (ti.htmlText.length > 64 ? ti.htmlText:"") + next.htmlText;
 
       var nb = t.getElementsByClassName("nb")[0];
@@ -226,6 +228,12 @@ Texts = {
     // get current display params
     var display = this.getDisplay(ViewPort.Module[w], loc, w);
     
+    var t =  document.getElementById("text" + w);
+    var sb = t.getElementsByClassName("sb")[0];
+    
+    // the class of sb must be that of the module
+    sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
+
     // overwrite display and loc with any pinned values
     if (!this.pinnedDisplay[w]) ViewPort.IsPinned[w] = false;
     if (ViewPort.IsPinned[w]) {
@@ -248,12 +256,9 @@ Texts = {
 
       this.footnotes[w] = ti.footnotes;
 
-      var t =  document.getElementById("text" + w);
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
-      var sb = t.getElementsByClassName("sb")[0];
-      sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = (ti.htmlText.length > 64 ? ti.htmlText:"");
     }
     
@@ -275,11 +280,20 @@ Texts = {
     ViewPort.ShowOriginal[w] = false;
     ViewPort.MaximizeNoteBox[w] = false;
     
+    // get current display params
+    var display = this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), w);
+    
     var t =  document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];
     
-    // get current display params
-    var display = this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), w);
+    // the class of sb must be that of the module
+    sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
+
+    if (!this.pinnedDisplay[w]) ViewPort.IsPinned[w] = false;
+    if (ViewPort.IsPinned[w]) {
+      // then keep pinned params (which could have been changed since last display)
+      display.Key = this.pinnedDisplay[w].Key;
+    }
     
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "Key", "globalOptions"];
@@ -292,12 +306,11 @@ Texts = {
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
-      sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = ti.htmlText;
       
       // insure navigator shows correct chapter (even though this will 
       // sometimes initiate a second call to Text.update)
-      GenBookTexts.navigatorSelect(display.Key);
+      if (!ViewPort.IsPinned[w]) GenBookTexts.navigatorSelect(display.Key);
     }
     
     // handle scroll
@@ -320,12 +333,15 @@ Texts = {
     ViewPort.ShowOriginal[w] = false;
     ViewPort.MaximizeNoteBox[w] = false;
     
-    var t =  document.getElementById("text" + w);
-    var sb = t.getElementsByClassName("sb")[0];
-    
     // get current display params
     var display = this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), w);
     
+    var t =  document.getElementById("text" + w);
+    var sb = t.getElementsByClassName("sb")[0];
+    
+    // the class of sb must be that of the module
+    sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
+
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "Key", "globalOptions"];
     
@@ -337,7 +353,6 @@ Texts = {
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
-      sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
       sb.innerHTML = ti.htmlEntry;
       
       var nb = t.getElementsByClassName("nb")[0];
@@ -423,16 +438,16 @@ Texts = {
       if (!note) continue;
       note = note.QueryInterface(Components.interfaces.nsIRDFLiteral);
       if (!note) continue;
-      note=note.Value;
+      note=note.ValueUTF8;
       if (!note) {continue;}
       if (BM.RDFCU.IsContainer(BMDS, res)) {continue;}
        
-      try {var module = BMDS.GetTarget(res, BM.gBmProperties[MODULE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
+      try {var module = BMDS.GetTarget(res, BM.gBmProperties[MODULE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).ValueUTF8;} catch (er) {continue;}
       if (module != mod) continue;
-      try {var chapter = BMDS.GetTarget(res, BM.gBmProperties[CHAPTER], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}      
+      try {var chapter = BMDS.GetTarget(res, BM.gBmProperties[CHAPTER], true).QueryInterface(Components.interfaces.nsIRDFLiteral).ValueUTF8;} catch (er) {continue;}      
       if (usesVerseKey) {
         if (chapter != String(ch)) continue;
-        try {var book = BMDS.GetTarget(res, BM.gBmProperties[BOOK], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
+        try {var book = BMDS.GetTarget(res, BM.gBmProperties[BOOK], true).QueryInterface(Components.interfaces.nsIRDFLiteral).ValueUTF8;} catch (er) {continue;}
         if (book != bk) continue;
       }
       else {
@@ -440,12 +455,12 @@ Texts = {
         book = "na";
         chapter = "1";
       }
-      try {var verse = BMDS.GetTarget(res, BM.gBmProperties[VERSE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
+      try {var verse = BMDS.GetTarget(res, BM.gBmProperties[VERSE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).ValueUTF8;} catch (er) {continue;}
       if (!ResourceFuns.isItemChildOf(res, BM.AllBookmarksRes, BMDS)) continue;
        
       // We have a keeper, lets save the note and show it in the text!
       // Encode ID
-      var encodedResVal = encodeUTF8(res.QueryInterface(BM.kRDFRSCIID).Value);
+      var encodedResVal = encodeUTF8(res.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8);
       var newNoteHTML = "<span class=\"un\" title=\"" + encodedResVal + "." + bk + "." + ch + "." + verse + "." + mod + "\" ></span>";
       
       // if this is a selected verse, place usernote inside the hilighted element (more like regular notes)
@@ -645,8 +660,6 @@ Texts = {
       case SCROLLTYPEENDSELECT:    // put selected verse at the end of the window or link, then select first verse of link or verse 1
         sb.scrollTop = vOffsetTop + v.offsetHeight - sb.offsetHeight;
         break;
-      case SCROLLTYPECUSTOM:       // scroll by running CustomScrollFunction
-        break;
       }
     }
     
@@ -667,7 +680,7 @@ Texts = {
         }
         break;
       case SCROLLTYPEBEG:          // put selected verse at the top of the window or link
-        // Hide all verses before the scroll verse. If the scroll verse is emediately preceded by
+        // Hide all verses before the scroll verse. If the scroll verse is emmediately preceded by
         // consecutive non-verse (heading) elements, then show them.
         var vs = sb.lastChild;
         var show = true;
@@ -689,14 +702,8 @@ Texts = {
       case SCROLLTYPENONE:         // don't scroll (for links this becomes SCROLLTYPECENTER)
       case SCROLLTYPECENTER:       // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
         var ltr = (ModuleConfigs[mod].direction == "ltr");
-        var rtl_pageOffsetLeft;
         var tv = sb.firstChild;
-        if(!ltr && tv) {
-          rtl_pageOffsetLeft= tv.offsetLeft + tv.offsetWidth - sb.offsetWidth;
-        }
-        if (vs == 1 || (v.style.display != "none" && 
-            ( (ltr && v.offsetLeft < sb.offsetWidth) || 
-              (!ltr && v.offsetLeft >= rtl_pageOffsetLeft) ))) break;
+        if (vs == 1 || this.isVisibleVerse(v, w)) break;
       case SCROLLTYPECENTERALWAYS: // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
         // hide all elements before verse
         var vs = sb.firstChild;
@@ -721,23 +728,17 @@ Texts = {
         break;
       case SCROLLTYPEEND:          // put selected verse at the end of the window or link, and don't change selection
       case SCROLLTYPEENDSELECT:    // put selected verse at the end of the window or link, then select first verse of link or verse 1
+        var ltr = (ModuleConfigs[mod].direction == "ltr");
+      
         // show all verses
         var vs = sb.lastChild;
         while (vs) {
           vs.style.display = "";
           vs = vs.previousSibling;
         }
-        // hide verses until last verse appears in last column
+        // hide verses until last verse is visible
         vs = sb.firstChild;
-        while (vs && v.offsetLeft >= sb.offsetWidth) {
-          vs.style.display = "none";
-          vs = vs.nextSibling;
-        }
-        // hide verses until last verse appears above footnotebox
-        var nb = document.getElementById("note" + w);
-        while (vs && 
-              ((v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth)) && 
-              v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight)) {
+        while (vs && !this.isVisibleVerse(v, w)) {
           vs.style.display = "none";
           vs = vs.nextSibling;
         }
@@ -753,14 +754,68 @@ Texts = {
             vs = vs.nextSibling;
           }
         }
-    
-        break;
-      case SCROLLTYPECUSTOM:       // scroll by running CustomScrollFunction
+
         break;    
       }
     }
   
     return true;
+  },
+  
+  // returns true if velem is a visible verse element in window w, false otherwise
+  isVisibleVerse: function(velem, w) {
+    
+    // return false if we're not a verse
+    if (!velem || !velem.className || !(/^vs(\s|$)/).test(velem.className)) return false;
+    
+    // return false if we're not visible or being displayed
+    var style = window.getComputedStyle(velem);
+    if (style.display == "none" || style.visibility == "hidden") return false;
+    
+    // return false if we're not in the window
+    var t = document.getElementById("text" + w);
+    var test = velem;
+    while(test && test !== t) {test = test.parentNode;}
+    if (!test) return false;
+    
+    var sb = t.getElementsByClassName("sb")[0];
+    var nb = document.getElementById("note" + w);
+    
+    // are we a single column window?
+    if (t.getAttribute("columns") == "show1") {
+      return ((velem.offsetTop - sb.offsetTop >= sb.scrollTop) &&
+          velem.offsetTop - sb.offsetTop < sb.scrollTop + sb.offsetHeight - 30);
+    }
+    
+    // multi-column windows...
+    if (ModuleConfigs[ViewPort.Module[w]].direction == "ltr") {
+      // we are LTR
+      // are we outside the visible columns?
+      if (velem.offsetLeft > sb.offsetWidth) return false;
+      
+      // are we in the last visible column but under the footnote box?
+      if (velem.offsetLeft > sb.offsetWidth-(1.1*nb.offsetWidth) && 
+          velem.offsetTop+velem.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight) {
+        return false;
+      }
+      
+      // then we must be visible
+      return true;
+    }
+
+    // we are RTL
+    // are we outside the visible columns?
+    if (velem.offsetLeft < 0) return false;
+    
+    // are we in the last visible column but under the footnote box?
+    if (velem.offsetLeft < 0.9*nb.offsetWidth && 
+        velem.offsetTop+velem.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight) {
+      return false;
+    }
+    
+    // then we must be visible
+    return true; 
+
   },
   
   hilightVerses: function(w, l, hilightFlag) {

@@ -118,17 +118,14 @@ function ViewPortObj(viewPortObj) {
     const copyWinProps = ["ShowOriginal", "IsPinned", "NoteBoxHeight", "MaximizeNoteBox", "Module", "Key"];
     for (var w=1; w<=NW; w++) {
       for (var c=0; c<copyWinProps.length; c++) {
-        this[copyWinProps[c]][w] = viewPortObj[copyWinProps[c]][w];
+        this[copyWinProps[c]][w] = copyObj(viewPortObj[copyWinProps[c]][w]);
       }
     }
     
     // copy viewport text properties from old to new
     const copyTextProps = ["scrollTypeFlag", "hilightFlag", "scrollDelta", "pinnedDisplay"];
     for (var t=0; t<copyTextProps.length; t++) {
-      if (typeof(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]) == "object") {
-        Texts[copyTextProps[t]] = copyObj(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]);
-      }
-      else Texts[copyTextProps[t]] = viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]];
+      Texts[copyTextProps[t]] = copyObj(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]);
     }
         
   }
@@ -247,7 +244,7 @@ function ViewPortObj(viewPortObj) {
       
       // Firefox 16 has a bug where RTL column CSS does not scroll. The work
       // around at this time is to prohibit RTL multi-columns.
-      if ((ModuleConfigs[this.Module[w]].direction == "rtl" || ProgramConfig.direction == "rtl" )&& (/^show(2|3)$/).test(value)) value = "show1";
+      //if ((ModuleConfigs[this.Module[w]].direction == "rtl" || ProgramConfig.direction == "rtl" )&& (/^show(2|3)$/).test(value)) value = "show1";
       
       // As of Firefox 17, CSS columns are not supported in print. For this
       // reason a WYSIWYG print routine is impossible. The workaround is to
@@ -494,6 +491,12 @@ function ViewPortObj(viewPortObj) {
     r = getCSS("#text1[footnotesMaximized=\"true\"]:not([columns=\"show1\"]) .nb,");
     r.rule.style.height = Number(sb_maxH - margt - margb - this.bbheight + this.footheight) + "px"; // margt & margb set above (all windows are same)
 
+    // If this is not MainWindow.ViewPort, then we're done hacking...
+    if (document !== MainWindow.document.getElementById("main-viewport").contentDocument) {
+      document.getElementById("viewportbody").setAttribute("chooser", "hide");
+      return;
+    }
+    
     // Bible chooser
     var genbkinfo = GenBookTexts.getGenBookInfo();
     var chooser = (genbkinfo.numUniqueGenBooks > 0 ? "book":(this.ShowChooser ? "bible":"hide"));

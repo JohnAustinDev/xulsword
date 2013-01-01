@@ -139,7 +139,7 @@ GenBookTexts = {
     var notFound = false;
     try {var child1 = elem.database.GetTarget(root, BM.RDFCU.IndexToOrdinalResource(1), true);}
     catch (er) {notFound=true;}
-    if (!child1 || notFound) {jsdump("Resource " + root.Value + " not found.\n"); return;}
+    if (!child1 || notFound) {jsdump("Resource " + root.ValueUTF8 + " not found.\n"); return;}
     
     var chapter = elem.database.GetTarget(child1, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true)
                   .QueryInterface(Components.interfaces.nsIRDFLiteral);
@@ -185,7 +185,7 @@ GenBookTexts = {
     // if there is no previous node, go to parent
     if (!previous) previous = parent.node;
     
-    return previous.QueryInterface(BM.kRDFRSCIID).Value.replace(/^rdf\:\#/, "");
+    return previous.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8.replace(/^rdf\:\#/, "");
   },
   
   nextChapter: function(key, skipChildren) {
@@ -218,9 +218,9 @@ GenBookTexts = {
 
     // or else try parent's next sibling...
     if (!next && parent.node) {
-      next = this.nextChapter(parent.node.QueryInterface(BM.kRDFRSCIID).Value.replace(/^rdf\:\#/, ""), true);
+      next = this.nextChapter(parent.node.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8.replace(/^rdf\:\#/, ""), true);
     }
-    else if (next) next = next.QueryInterface(BM.kRDFRSCIID).Value.replace(/^rdf\:\#/, "");
+    else if (next) next = next.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8.replace(/^rdf\:\#/, "");
 
     return next;
   },
@@ -235,7 +235,7 @@ GenBookTexts = {
       var es = r.ds.GetAllResources();
       while (es.hasMoreElements()) {
         var e = es.getNext();
-        if (e.QueryInterface(BM.kRDFRSCIID).Value == "rdf:#" + key) {
+        if (e.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8 == "rdf:#" + key) {
           r.node = e;
           // if not a container, keep looking. A container resource appears also as description resource.
           if (BM.RDFCU.IsContainer(r.ds, r.node)) break GETNODE;
@@ -346,18 +346,27 @@ GenBookTexts = {
     if (!mod)  return;
     mod = mod[1];
     
-    for (var w=1; w<=NW; w++) {
-      if (ViewPort.IsPinned[w] || ViewPort.Module[w] != mod) continue;
-      ViewPort.Key[w] = key;
-      
-      // scroll corresponding genbook to beginning of chapter
-      var t = document.getElementById("text" + w);
-      var sb = t.getElementsByClassName("sb")[0];
-      sb.scrollLeft = 0;
+    this.selectionToGenBooks(MainWindow.ViewPort.ownerDocument.defaultView, mod, key);
+    for (var x=0; x<MainWindow.AllWindows.length; x++) {
+      if (!(/^viewport/).test(MainWindow.AllWindows[x].name)) continue;
+      this.selectionToGenBooks(MainWindow.AllWindows[x].ViewPort.ownerDocument.defaultView, mod, key);
     }
 
     MainWindow.Texts.update();
 
+  },
+  
+  selectionToGenBooks: function(aWindow, aMod, aKey) {
+    for (var w=1; w<=NW; w++) {
+      if (aWindow.ViewPort.IsPinned[w] || aWindow.ViewPort.Module[w] != aMod) continue;
+          
+      aWindow.ViewPort.Key[w] = aKey;
+      
+      // scroll corresponding genbook to beginning of chapter
+      var t = aWindow.document.getElementById("text" + w);
+      var sb = t.getElementsByClassName("sb")[0];
+      sb.scrollLeft = 0;
+    }
   },
 
   //NOTE: Does not open row first!

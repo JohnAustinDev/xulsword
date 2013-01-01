@@ -86,7 +86,7 @@ var BookmarksCommand = {
     // Now that we should have generated a list of commands that is valid
     // for the entire selection, build a context menu.
     for (i = 0; i < commonCommands.length; ++i) {
-      var currCommand = commonCommands[i].QueryInterface(BM.kRDFRSCIID).Value;
+      var currCommand = commonCommands[i].QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8;
       var element = null;
       if (currCommand != BM.gNC_NS_CMD + "bm_separator") {
         var commandName = this.getCommandName(currCommand);
@@ -286,7 +286,7 @@ var BookmarksCommand = {
 
   manageFolder: function (aSelection)
   {
-    //openDialog("chrome://browser/content/bookmarks/bookmarksManager/bookmarksManager.xul","", "chrome,all,dialog=no", aSelection.item[0].Value);
+    //openDialog("chrome://browser/content/bookmarks/bookmarksManager/bookmarksManager.xul","", "chrome,all,dialog=no", aSelection.item[0].ValueUTF8);
   },
   
   cutBookmark: function (aSelection)
@@ -309,7 +309,7 @@ var BookmarksCommand = {
   
     var sBookmarkItem = ""; var sTextUnicode = ""; var sTextHTML = ""; var tmpBmItem = [];
     for (var i = 0; i < aSelection.length; ++i) {
-      sBookmarkItem += aSelection.item[i].Value + "\n";
+      sBookmarkItem += aSelection.item[i].ValueUTF8 + "\n";
 
       // save the selection property into text string that we will use later in paste function
       // and in INSERT tranasactions
@@ -318,7 +318,7 @@ var BookmarksCommand = {
          for (var j = 0; j < BM.gBmProperties.length; ++j) {
             var itemValue = BMDS.GetTarget(aSelection.item[i], BM.gBmProperties[j], true);
             if (itemValue)
-                sBookmarkItem += itemValue.QueryInterface(BM.kRDFLITIID).Value + "\n";
+                sBookmarkItem += itemValue.QueryInterface(Components.interfaces.nsIRDFLiteral).Value + "\n";
             else
                 sBookmarkItem += "\n";
          }
@@ -329,7 +329,7 @@ var BookmarksCommand = {
          for (var k = 0; k < propArray.length; ++k) {
             for (var j = 0; j < BM.gBmProperties.length + 1; ++j) {
                if (propArray[k][j])
-                   sBookmarkItem += propArray[k][j].Value + "\n";
+                   sBookmarkItem += propArray[k][j].ValueUTF8 + "\n";
                else
                    sBookmarkItem += "\n";
             }
@@ -471,7 +471,7 @@ var BookmarksCommand = {
   
   openBookmarkProperties: function (aSelection) 
   {
-    var bookmark = aSelection.item[0].Value;
+    var bookmark = aSelection.item[0].ValueUTF8;
     return BookmarkFuns.showPropertiesWindow(bookmark, false);
   },
 
@@ -583,15 +583,15 @@ var BookmarksCommand = {
     var data="";
     var resourceDelim="";
     while (resources.hasMoreElements()) {
-      var myres = resources.getNext().QueryInterface(BM.kRDFRSCIID);
+      var myres = resources.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
       var myparent = ResourceFuns.getParentOfResource(myres, BMDS);
       if (!myparent || 
       (myparent == BM.FoundResultsRes) || 
       (myres == BM.BmEmptyRes) || 
       (myres == BM.AllBookmarksRes) ||
       (myres == BM.BookmarksRootRes)) {continue;}
-      data = data + resourceDelim + myparent.Value;
-      data = data + BM.kExportDelimiter + myres.Value;
+      data = data + resourceDelim + myparent.ValueUTF8;
+      data = data + BM.kExportDelimiter + myres.ValueUTF8;
       data = data + BM.kExportDelimiter + BM.RDFCU.indexOf(BMDS,myparent,myres);
       resourceDelim = BM.kExportResourceDelimiter;
       for (var i=0; i<BM.gBmProperties.length; i++) {
@@ -646,7 +646,7 @@ var BookmarksCommand = {
     BM.RDFC.Init(BMDS, theFolder);
     var folderContents = BM.RDFC.GetElements();
     while (folderContents.hasMoreElements()) {
-        var rsrc = folderContents.getNext().QueryInterface(BM.kRDFRSCIID);
+        var rsrc = folderContents.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
         var rtype = BookmarksUtils.resolveType(rsrc);
         if (rtype == "BookmarkSeparator")
           continue;
@@ -675,8 +675,8 @@ var BookmarksCommand = {
                      return 1;
 
                    // then sort by name
-                   var aname = BMDS.GetTarget(a, kName, true).QueryInterface(BM.kRDFLITIID).Value;
-                   var bname = BMDS.GetTarget(b, kName, true).QueryInterface(BM.kRDFLITIID).Value;
+                   var aname = BMDS.GetTarget(a, kName, true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+                   var bname = BMDS.GetTarget(b, kName, true).QueryInterface(Components.interfaces.nsIRDFLiteralD).Value;
 
                    return collation.compareString(0, aname, bname);
                  });
@@ -756,7 +756,7 @@ var BookmarksController = {
     var length = 0;
     if (aSelection && aSelection.length != 0) {
       length = aSelection.length;
-      item0 = aSelection.item[0].Value;
+      item0 = aSelection.item[0].ValueUTF8;
       type0 = aSelection.type[0];
       parent0 =  (aSelection.parent[0] != null) ? aSelection.parent[0] : BookmarksUtils.getParent(aSelection.item[0],BMDS);
       ptype0 = BookmarksUtils.resolveType(parent0);
@@ -992,7 +992,7 @@ var BookmarksUtils = {
       if (this.FolderSelection>=folderTree.tree.view.rowCount) this.FolderSelection=0;
       folderTree.treeBoxObject.view.selection.select(this.FolderSelection);
       var sel = folderTree.getTreeSelection();
-      bmTree.tree.setAttribute("ref",sel.item[0].Value);
+      bmTree.tree.setAttribute("ref",sel.item[0].ValueUTF8);
     }
   },
 
@@ -1039,10 +1039,10 @@ var BookmarksUtils = {
     else
       node = aDS .GetTarget(aInput, arc, true);
     try {
-      return node.QueryInterface(BM.kRDFRSCIID).Value;
+      return node.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8;
     }
     catch (e) {
-      return node? node.QueryInterface(BM.kRDFLITIID).Value : "";
+      return node? node.QueryInterface(Components.interfaces.nsIRDFLiteral).Value : "";
     }    
   },
 
@@ -1134,7 +1134,7 @@ var BookmarksUtils = {
     var folder = aContainer;
     do {
       for (var i=0; i<aSelection.length; ++i) {
-        if (aSelection.isContainer[i] && aSelection.item[i].Value == folder.Value)
+        if (aSelection.isContainer[i] && aSelection.item[i].ValueUTF8 == folder.ValueUTF8)
           return true;
       }
       folder = this.getParent(folder,BMDS);
@@ -1220,7 +1220,7 @@ var BookmarksUtils = {
                for (var j = 0; j < BM.gBmProperties.length; ++j) {
                   var oldValue = BMDS.GetTarget(aSelection.item[i], BM.gBmProperties[j], true);
                   if (oldValue)
-                      propArray[j] = oldValue.QueryInterface(BM.kRDFLITIID);
+                      propArray[j] = oldValue.QueryInterface(Components.interfaces.nsIRDFLiteral);
                }
             //}
             if (aType == "Folder" || aType == "Livemark")
@@ -1253,14 +1253,14 @@ var BookmarksUtils = {
       var child = children.getNext() ;
       if (child instanceof Components.interfaces.nsIRDFResource){
          var aType = BookmarksUtils.resolveType(child);
-         var childResource = child.QueryInterface(BM.kRDFRSCIID);
+         var childResource = child.QueryInterface(Components.interfaces.nsIRDFResource);
          var props = new Array(BM.gBmProperties.length);
          // don't change livemark properties
          //if (aType != "Livemark") {
             for (var j = 0; j < BM.gBmProperties.length; ++j) {
                var oldValue = BMDS.GetTarget(childResource, BM.gBmProperties[j], true);
                if (oldValue)
-                   props[(j)] = oldValue.QueryInterface(BM.kRDFLITIID);
+                   props[(j)] = oldValue.QueryInterface(Components.interfaces.nsIRDFLiteral);
             }
          //}
          propArray.push(props);
@@ -1378,9 +1378,9 @@ var BookmarksUtils = {
     var data, item, itemUrl, itemName, parent, name;
     for (var i=0; i<aSelection.length; ++i) {
       data     = new TransferData();
-      item     = aSelection.item[i].Value;
+      item     = aSelection.item[i].ValueUTF8;
       itemName = this.getProperty(item, BM.gNC_NS+"Name");
-      parent   = aSelection.parent[i].Value;
+      parent   = aSelection.parent[i].ValueUTF8;
       data.addDataForFlavour("moz/rdfitem",    item+"\n"+(parent?parent:""));
       dataSet.push(data);
     }

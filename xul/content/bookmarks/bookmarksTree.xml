@@ -82,10 +82,10 @@
           for (i = 0; i < mycolumns.length; ++i) {
             try {var test = myprefs.getBoolPref("searchFlag-" + mycolumns[i].resource);} 
             catch (er) {
-              var searchableDef = mycolumns[i].resource.substring(4) == BM.gBmProperties[NAME].Value ||
-                                  mycolumns[i].resource.substring(4) == BM.gBmProperties[NOTE].Value ||
-                                  mycolumns[i].resource.substring(4) == BM.gBmProperties[LOCATION].Value ||
-                                  mycolumns[i].resource.substring(4) == BM.gBmProperties[BMTEXT].Value;
+              var searchableDef = mycolumns[i].resource.substring(4) == BM.gBmProperties[NAME].ValueUTF8 ||
+                                  mycolumns[i].resource.substring(4) == BM.gBmProperties[NOTE].ValueUTF8 ||
+                                  mycolumns[i].resource.substring(4) == BM.gBmProperties[LOCATION].ValueUTF8 ||
+                                  mycolumns[i].resource.substring(4) == BM.gBmProperties[BMTEXT].ValueUTF8;
               myprefs.setBoolPref("searchFlag-" + mycolumns[i].resource, searchableDef);
             } 
           }
@@ -334,7 +334,7 @@
           thisDS = BMDS;
           allElems = thisDS.GetAllResources();
           while (allElems.hasMoreElements()) {
-            rParent = allElems.getNext().QueryInterface(BM.kRDFRSCIID);
+            rParent = allElems.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
             if (!BM.RDFCU.IsContainer(BMDS,rParent)) {continue;}
             index = this.treeBuilder.getIndexOfResource(rParent);
             if (index == -1) {continue;}

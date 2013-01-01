@@ -1,21 +1,22 @@
 Version 3.5 release ToDos:
 
 ON LINUX:
-Look at multi-column Bible view chapter looping problem.
+DONE!: Look at multi-column Bible view chapter looping problem.
 
-AGL introductions with RTL interface does not display correct text-alignment.
+DONE!: AGL introductions with RTL interface does not display correct text-alignment.
 
 DONE!: Test and fix startup scenarios: No-modules->install-non-Bible-mod->install-Bible-mod. No-LibSword->????. First-time-startup.
-
-Complete IBT locales.
 
 DONE!: Check bookmark module styles, figure out styles for user-text and boomark names (use isASCII?).
 
 DONE!: (revisit when new Module Manager is added) Consider carefully the newModule.js flow: blocking vs. non-blocking: what does it really mean?
 
-Look at pinned GenBook text functionality, esp. with windowed viewports.
+DONE!: Look at pinned GenBook text functionality, esp. with windowed viewports.
+
+Complete IBT locales: en-US,kum,ky,ky-ar,ru,tt,uz,uz-lat
 
 Do a thorough use-test of all program corners needed by IBT release.
+
 
 ON WINDOWS:
 Compile for Windows and update Windows installer. 

@@ -616,7 +616,7 @@ sub processLocales($\@$$) {
       &createLocale($loc);
       $haveLocale{$loc} = 1;
     }
-    &copy_file("$TRUNK/build-files/locales/$loc.jar", "$od/chrome");
+    &copy_file("$TRUNK/build-files/locales/$loc/$loc.jar", "$od/chrome");
     if (-e "$ldir/$loc.rdf") {&copy_file("$ldir/$loc.rdf", "$od/defaults/");}
     else {&Log("WARNING: No bookmarks.rdf file found for locale \"$loc\".\n");}
     
@@ -636,7 +636,7 @@ sub processLocales($\@$$) {
     push(@{$manifestP}, "override chrome://global/locale/tree.dtd chrome://xulsword/locale/override/ff17/tree.dtd");
   }
 
-  push(@{$manifestP}, "\n# xulswordVersion=3.0\n");
+  push(@{$manifestP}, "\n# xulswordVersion=$Version\n");
   push(@{$manifestP}, "# minMKVersion=3.0\n"); # locales no longer have security codes and aren't backward compatible
 }
 
@@ -659,11 +659,26 @@ sub createLocale($) {
   unlink("$ldir/code_log-bak.txt");
   
   # make locale jar file
-  if (-e "$TRUNK/build-files/locales/$locale.jar") {unlink("$TRUNK/build-files/locales/$locale.jar");}
-  &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$ldir/locale/*");
+  if (-e "$TRUNK/build-files/locales/$locale/$locale.jar") {unlink("$TRUNK/build-files/locales/$locale/$locale.jar");}
+  &makeZIP("$TRUNK/build-files/locales/$locale/$locale.jar", "$ldir/locale/*");
   if (-e "$ldir/text-skin") {
-    &makeZIP("$TRUNK/build-files/locales/$locale.jar", "$ldir/text-skin/*", 1);
+    &makeZIP("$TRUNK/build-files/locales/$locale/$locale.jar", "$ldir/text-skin/*", 1);
   }
+  
+  # make locale manifest file
+  if (open(MANF, ">:encoding(UTF-8)", "$TRUNK/build-files/locales/$locale/$locale.locale.manifest")) {
+    print MANF "locale xulsword $locale jar:chrome/$locale.jar!/xulsword/\n";
+
+    if (-e "$ldir/text-skin/skin") {
+      print MANF "skin localeskin $locale jar:chrome/$locale.jar!/skin/\n"
+    }
+    
+    print MANF "\n# xulswordVersion=$Version\n";
+    print MANF "# minMKVersion=3.0\n"; # locales no longer have security codes and aren't backward compatible
+    
+    close(MANF);
+  }
+  else {&Log("ERROR: Could not open .manifest file: \"$TRUNK/build-files/locales/$locale/$locale.locale.manifest\"\n");}
   
 }
 

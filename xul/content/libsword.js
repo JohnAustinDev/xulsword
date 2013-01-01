@@ -17,7 +17,13 @@
 */
 
 /*
-SPECIAL SWORD MODULE CONFIGURATION FILE PARAMETERS (OPTIONAL):
+This LibSword object is used to access all SWORD engine capabilities
+and information- including texts, searches etc. This object utilizes 
+Firefox's ctypes component to access the libxulsword dynamic library.
+The libxulsword dynamic library was compiled from The SWORD Project's 
+C++ SWORD engine. 
+
+NON-STANDARD SWORD MODULE CONFIGURATION FILE PARAMETERS (OPTIONAL):
 Valid for all modules:
   "Font" - The font to use for the module
   "FontSizeAdjust" - The relative size of the module's font
@@ -118,6 +124,12 @@ LibSword = {
   },
   
   initInstance: function() {
+    
+    // These functions are used by C++ to call, and receive results from, 
+    // Javascript functions. This method provides a way for special tasks, 
+    // such as Unicode processing, or progress reporting, to be performed by 
+    // Mozilla Javascript rather than by libxulsword C++ (which otherwise 
+    // would create troublesome library dependencies).
     var funcTypeUpperCasePtr = ctypes.FunctionType(ctypes.default_abi, ctypes.PointerType(ctypes.char), [ctypes.ArrayType(ctypes.char)]).ptr;
     this.UpperCasePtr = funcTypeUpperCasePtr(this.UpperCase);
 
@@ -127,6 +139,7 @@ LibSword = {
     var funcTypeReportProgressPtr = ctypes.FunctionType(ctypes.default_abi, ctypes.void_t, [ctypes.int]).ptr;
     this.ReportProgressPtr = funcTypeReportProgressPtr(this.ReportProgress);
     
+    // Get our xulsword instance...
     var newXulsword = this.libsword.declare("GetXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
     this.inst = newXulsword(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
     if (typeof(jsdump) != "undefined") jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
@@ -161,9 +174,9 @@ LibSword = {
   
   // pause() saves LibSword info and closes LibSword so that it may be 
   // re-opened by another thread. pause() should only be called at the 
-  // end of a thread if LibSword has already been initialized. In this 
+  // end of a thread, if LibSword has already been initialized. In this 
   // case, any required processing after pausing should be initiated 
-  // by callback.libswordPauseComplete().
+  // by providing a callback.libswordPauseComplete() function.
   pause: function(callback) {
     
     // already paused, or not yet initialized? then just callback now...
@@ -760,6 +773,7 @@ getModuleInformation: function(modname, paramname) {
   this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
 }
+
 }; 
 
 

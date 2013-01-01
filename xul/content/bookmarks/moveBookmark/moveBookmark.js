@@ -199,7 +199,7 @@ function onOK()
     var bookmarkView = document.getElementById("bookmarks-view");
     var currentIndex = bookmarkView.currentIndex;
     if (currentIndex != -1)
-      gCreateInFolder = bookmarkView.treeBuilder.getResourceAtIndex(currentIndex).Value;
+      gCreateInFolder = bookmarkView.treeBuilder.getResourceAtIndex(currentIndex).ValueUTF8;
   }
   // In Select Folder Mode, do nothing but tell our caller what
   // folder was selected. 

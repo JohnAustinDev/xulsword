@@ -33,7 +33,7 @@ if (-e $LOGFILE) {unlink($LOGFILE);}
 # read existing locale files
 if ($LOCALE eq "en-US") {&Log("ERROR: Cannot run on en-US.\n"); die;}
 &read_UI_Files($LOCALE, \%UIDescValue);
-&saveLocaleCode($LOCALE, "xulsword/splash.png", "text-skin/xulsword");
+&saveLocaleCode($LOCALE, "xulsword/splash.jpg", "text-skin/xulsword");
 &saveLocaleCode($LOCALE, "skin/NT.png", "text-skin/skin");
 &saveLocaleCode($LOCALE, "skin/OT.png", "text-skin/skin"); 
 
