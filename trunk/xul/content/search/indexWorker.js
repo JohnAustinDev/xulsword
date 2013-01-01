@@ -18,7 +18,10 @@
 
 
 // This script is used to create a ChromeWorker object which runs
-// on its own thread in the background.
+// on its own thread in the background. It creates new search indexes 
+// for SWORD modules.
+
+var LibSword;
 
 importScripts("chrome://xulsword/content/libsword.js");
 

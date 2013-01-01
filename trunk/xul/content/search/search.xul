@@ -91,7 +91,7 @@
   
   
   <toolbar showAdvanced="false">
-    <vbox flex="1">
+    <vbox id="search-controls" flex="1">
     
       <hbox id="searchrow" pack="center" align="center">
         <button id="more" label="&more.label;"/>
@@ -105,7 +105,7 @@
       
       <separator class="groove" />
       
-      <hbox id="modulePanel">
+      <vbox id="modulePanel">
 
         <radiogroup id="search-module" pack="begin" align="center" orient="horizontal">
         
@@ -134,7 +134,9 @@
           
         </radiogroup>
         
-      </hbox>
+      </vbox>
+      
+      <separator class="groove"/>
     
       <vbox align="center">
         <hbox id="advanced" pack="start">
@@ -215,7 +217,7 @@
 <!-- Search Results Window !-->
 <vbox id="searchframe-cont" flex="1">
   <hbox flex="100%">
-    <vbox  flex="100%">
+    <vbox flex="100%">
       <iframe id="search-frame" src="search.html" flex="100%" class="searchframe" context="contextScriptBox" />
     </vbox>
     <vbox id="resultsnav" width="35px" pack="center" hidden="true">

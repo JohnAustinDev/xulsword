@@ -337,11 +337,11 @@ function scriptClick(e) {
       }
       // if not, then load previous chapter
       else {
-        var prevchap = GenBookTexts.previousChapter(ViewPort.Key[w]);
+        var prevchap = GenBookTexts.previousChapter(ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]);
         if (!prevchap) return;
         
         if (ViewPort.IsPinned[w]) {
-          ViewPort.Key[w] = prevchap;
+          Texts.pinnedDisplay[w].Key = prevchap;
           Texts.update();
         }
         else GenBookTexts.navigatorSelect(prevchap);
@@ -386,11 +386,11 @@ function scriptClick(e) {
       sb.scrollLeft = next;
       // if not, then load next chapter
       if (sb.scrollLeft == prev) {
-        var nextchap = GenBookTexts.nextChapter(ViewPort.Key[w]);
+        var nextchap = GenBookTexts.nextChapter(ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]);
         if (!nextchap) return;
         
         if (ViewPort.IsPinned[w]) {
-          ViewPort.Key[w] = nextchap;
+          Texts.pinnedDisplay[w].Key = nextchap;
           Texts.update();
         }
         else GenBookTexts.navigatorSelect(nextchap);
@@ -612,16 +612,7 @@ var MouseWheel = {
       
       // get first verse which begins in window
       v = sb.firstChild;
-      if (t.getAttribute("columns") == "show1") {
-        while (v && (!v.className || !(/^vs(\s|$)/).test(v.className) || (v.offsetTop - sb.offsetTop < sb.scrollTop))) {
-          v = v.nextSibling;
-        }
-      }
-      else {
-        while (v && (!v.className || !(/^vs(\s|$)/).test(v.className) || v.style.display == "none")) {
-          v = v.nextSibling;
-        }
-      }
+      while (v && !Texts.isVisibleVerse(v, MouseWheel.SWwin)) {v = v.nextSibling;}
       if (!v) return;
      
       // if this is a multi-column versekey window, shift the verse according to scroll wheel delta
@@ -668,7 +659,7 @@ var MouseWheel = {
       force.push(s);
     }
 
-    MainWindow.Texts.update(scrollType, HILIGHTSKIP, force);
+    Texts.update(scrollType, HILIGHTSKIP, force);
   }
 
 }
@@ -700,6 +691,7 @@ function previousPage(w) {
   // get first verse
   var t = document.getElementById("text" + w);
   if (!(/^show(2|3)$/).test(t.getAttribute("columns"))) return;
+  
   var sb = t.getElementsByClassName("sb")[0];
   var v = sb.firstChild;
   while (v && (v.style.display == "none" || !v.className || !(/^vs(\s|$)/).test(v.className))) {
@@ -745,14 +737,10 @@ function nextPage(w) {
   var vl = null;
   var t = document.getElementById("text" + w);
   if (!(/^show(2|3)$/).test(t.getAttribute("columns"))) return;
+  
   var sb = t.getElementsByClassName("sb")[0];
-  var nb = document.getElementById("note" + w);
   var v = sb.lastChild;
-  while (v && (
-          !v.className || !(/^vs(\s|$)/).test(v.className) || 
-          v.offsetLeft >= sb.offsetWidth || 
-          (v.offsetLeft > sb.offsetWidth-(1.5*nb.offsetWidth) && v.offsetTop+v.offsetHeight > t.offsetHeight-nb.parentNode.offsetHeight)
-         )) {
+  while (v && !Texts.isVisibleVerse(v, w)) {
     v = v.previousSibling;
   }
   if (!v) return;

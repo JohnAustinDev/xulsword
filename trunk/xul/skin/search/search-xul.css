@@ -34,10 +34,13 @@ image#question {
 #search-module { 
   overflow-x:auto;
   overflow-y:hidden;
-  padding:6px 10px 20px 10px;
 }
-toolbar[showAdvanced="false"] #search-module {
-  padding-bottom:4px;
+#search-module row label:nth-child(1) {
+  font-weight:bold;
+  text-align:end;
+}
+#modulePanel grid {
+  padding-bottom:10px; /* for possible scroll-bar */
 }
 groupbox {
   margin:5px 10px 0px 10px;
@@ -63,10 +66,12 @@ groupbox {
 
 #searchframe-cont {
   padding:5px 10px 10px 10px;
+  background-image:url("chrome://xulsword/skin/images/b2.gif");
 }
 .searchframe {
   border:2px solid rgb(200,170,205);
   border-radius:4px;
+  background:white;
 }
 #resultsnav {
   margin-left:10px; 

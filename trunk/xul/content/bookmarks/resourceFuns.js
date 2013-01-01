@@ -139,7 +139,7 @@ ResourceFuns = {
   },
   
   getParentOfResource: function (aResource, aDS) {
-    try {aResource = aResource.QueryInterface(BM.kRDFRSCIID);} catch(er) {return null;}
+    try {aResource = aResource.QueryInterface(Components.interfaces.nsIRDFResource);} catch(er) {return null;}
     var arcsIn = aDS.ArcLabelsIn(aResource);
     var parents = [];
     var myParent = null;    
@@ -159,8 +159,8 @@ ResourceFuns = {
     
     if ((parents.length > 2) || (parents.length == 2 && !inFoundResults)) {
       var str="";
-      for (i=0; i<parents.length; i++) {str += i + ":" + parents[i].Value + "\n";}
-      jsdump("WARNING: getParentOfResource, resource " + aResource.Value + " has more than one parent:\n" + str + "\n");
+      for (i=0; i<parents.length; i++) {str += i + ":" + parents[i].ValueUTF8 + "\n";}
+      jsdump("WARNING: getParentOfResource, resource " + aResource.ValueUTF8 + " has more than one parent:\n" + str + "\n");
     }
     
     return myParent;
@@ -172,12 +172,12 @@ ResourceFuns = {
     if (type == "ImmutableBookmark" || type == "ImmutableFolder") return aResource;
     if (aResource == BM.BmEmptyRes) return aResource;
         
-    aResource = aResource.QueryInterface(BM.kRDFRSCIID);
-    var myprops = this.BmGetInfo(aResource.Value);
+    aResource = aResource.QueryInterface(Components.interfaces.nsIRDFResource);
+    var myprops = this.BmGetInfo(aResource.ValueUTF8);
     var newResource = this.createNewResource(myprops,true);
     if (BM.RDFCU.IsContainer(BMDS, aResource) && BookmarksUtils.resolveType(aResource, BMDS)=="Folder") {
       BM.RDFCU.MakeSeq(BMDS, newResource);
-      this.removeEmptyResFrom(newResource.Value);
+      this.removeEmptyResFrom(newResource.ValueUTF8);
       var container = BM.RDFC;
       var newContainer = BM.RDFC;
       container.Init(BMDS, aResource);

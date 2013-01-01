@@ -34,17 +34,17 @@ const MINVERSION = "1.0";
 
 /*
   MODULE INSTALLATION
-  Functions in this file install all xulsword module components. A xulsword
-  module consists of a zip compressed folder containing subdirectories
-  corresponding to the type of module component contained within each
-  subdirectory. Individual audio or bookmark files may also be installed 
-  according to each file's name. An entire directory of such audio files 
-  may also be installed at once. Installation may be initiated by command 
+  Functions in this file install xulsword module components. A xulsword
+  module consists of a zip compressed folder containing subdirectories.
+  The subdirectory names correspond to the type of module component cont-
+  ained within. Individual audio or bookmark files may also be installed 
+  according to the file's name. An entire directory of audio files may
+  also be installed at once. Installation may be initiated by command 
   line, drag-and-drop, or dialog interface.
   
   Installation may require restarting xulsword, or reloading the main window.
-  A non-blocking install, showing a progress meter and using a callback is
-  available, as well as a blocking installation (but blocking installation 
+  A non-blocking install, showing a progress meter and using a callback, is
+  available. So is a blocking installation (but blocking installation 
   requires that LibSword is either null, uninitialized, or paused before  
   the install process begins). Module components which are incompatible 
   with the current version of xulsword are rejected and a message with 
@@ -630,69 +630,72 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     break;
 
   case CHROME:
-    if (!(/\.jar$/i).test(entryFileName)) {
-      // completely ignores everything in Chrome except jar files
-      return {reset:NORESET, success:true, remove:true};
-    }
-    
-    // this .jar file will be copied to the extensions directory
-    var localeName = entryFileName.match(/^([^\.]*)/)[1];
-    var localeDir = localeName + APPLICATIONID.replace(/(\@.*)$/, "$1");
-    var inflated = getSpecialDirectory("xsExtension");
-    inflated.append(localeDir);
-    inflated.append(CHROME);
-    inflated.append(entryFileName);
-
-    // create a chrome.manifest for our new locale extension
-    var file = getSpecialDirectory("xsExtension");
-    file.append(localeDir);
-    file.append("chrome.manifest");
-    if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
-    var str = "locale xulsword " + localeName + " jar:chrome/" + localeName + ".jar!/xulsword/ \n";
-    writeFile(file, str, true);
-    
-    // create an install.rdf file to initiate this locale extension's 
-    // installation by Firefox's install manager upon next startup.
-    file = getSpecialDirectory("xsExtension");
-    file.append(localeDir);
-    file.append("install.rdf");
-    
-    // install.rdf: the version of this locale extension and that of the
-    // target application is not important because version control is 
-    // already handled by xulsword code. Firefox's installation manager 
-    // should always simply install without complaining.
-    str  =   "<?xml version=\"1.0\"?>" + NEWLINE;
-    str +=   "<RDF xmlns=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:em=\"http://www.mozilla.org/2004/em-rdf#\">" + NEWLINE;
-    str +=   "  <Description about=\"urn:mozilla:install-manifest\">" + NEWLINE;
-    str +=   "    <em:id>" + localeDir + "</em:id>" + NEWLINE;
-    str +=   "    <em:version>" + prefs.getCharPref("Version") + "</em:version>" + NEWLINE;
-    str +=   "    <em:type>8</em:type>" + NEWLINE;
-    str +=   "    <em:name>" + localeName + " xulsword locale</em:name>" + NEWLINE;
-    str +=   "    <em:targetApplication>" + NEWLINE;
-    str +=   "      <Description>" + NEWLINE;
-    if (IsExtension) {
-      str += "        <em:id>{" + FIREFOXUID + "}</em:id>" + NEWLINE;
-      str += "        <em:minVersion>1.0</em:minVersion>" + NEWLINE;
-      str += "        <em:maxVersion>99.0</em:maxVersion>" + NEWLINE;
+    if ((/\.(jar|manifest)$/i).test(entryFileName)) {
+      // .manifest files will be copied to the extension's top directory,
+      // not inside the chrome directory.
+      
+      // this .jar or .manifest file will be copied to the extensions directory
+      var localeName = entryFileName.match(/^([^\.]*)/)[1];
+      var localeDir = localeName + APPLICATIONID.replace(/^.*?(\@.*)$/, "$1");
+      var inflated = getSpecialDirectory("xsExtension");
+      inflated.append(localeDir);
+      
+      if ((/\.jar$/i).test(entryFileName)) {
+        inflated.append(CHROME);
+        inflated.append(entryFileName);
+              
+        // create an install.rdf file to initiate this locale extension's 
+        // installation by Firefox's install manager upon next startup.
+        var file = getSpecialDirectory("xsExtension");
+        file.append(localeDir);
+        file.append("install.rdf");
+        
+        // install.rdf: the version of this locale extension and that of the
+        // target application is not important because version control is 
+        // already handled by xulsword code. Firefox's installation manager 
+        // should always simply install without complaining.
+        var str;
+        str  =   "<?xml version=\"1.0\"?>" + NEWLINE;
+        str +=   "<RDF xmlns=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:em=\"http://www.mozilla.org/2004/em-rdf#\">" + NEWLINE;
+        str +=   "  <Description about=\"urn:mozilla:install-manifest\">" + NEWLINE;
+        str +=   "    <em:id>" + localeDir + "</em:id>" + NEWLINE;
+        str +=   "    <em:version>" + prefs.getCharPref("Version") + "</em:version>" + NEWLINE;
+        str +=   "    <em:type>8</em:type>" + NEWLINE;
+        str +=   "    <em:name>" + localeName + " xulsword locale</em:name>" + NEWLINE;
+        str +=   "    <em:targetApplication>" + NEWLINE;
+        str +=   "      <Description>" + NEWLINE;
+        if (IsExtension) {
+          str += "        <em:id>{" + FIREFOXUID + "}</em:id>" + NEWLINE;
+          str += "        <em:minVersion>1.0</em:minVersion>" + NEWLINE;
+          str += "        <em:maxVersion>99.0</em:maxVersion>" + NEWLINE;
+        }
+        else {
+          str += "        <em:id>" + APPLICATIONID + "</em:id>" + NEWLINE;
+          str += "        <em:minVersion>1.0</em:minVersion>" + NEWLINE;
+          str += "        <em:maxVersion>99.0</em:maxVersion>" + NEWLINE;
+        }
+        str +=   "      </Description>" + NEWLINE;
+        str +=   "    </em:targetApplication>" + NEWLINE;
+        str +=     "</Description>" + NEWLINE;
+        str +=   "</RDF>" + NEWLINE;
+        
+        if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
+        writeFile(file, str, true);
+        
+        NewLocales = pushIf(NewLocales, localeName);
+        var rootprefs = Components.classes["@mozilla.org/preferences-service;1"].
+            getService(Components.interfaces.nsIPrefBranch);
+        if (localeName[1] == getLocale()) {
+          rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
+        }
+      }
+      else if ((/\.manifest$/i).test(entryFileName)) {
+        inflated.append("chrome.manifest");
+      }
     }
     else {
-      str += "        <em:id>" + APPLICATIONID + "</em:id>" + NEWLINE;
-      str += "        <em:minVersion>1.0</em:minVersion>" + NEWLINE;
-      str += "        <em:maxVersion>99.0</em:maxVersion>" + NEWLINE;
-    }
-    str +=   "      </Description>" + NEWLINE;
-    str +=   "    </em:targetApplication>" + NEWLINE;
-    str +=     "</Description>" + NEWLINE;
-    str +=   "</RDF>" + NEWLINE;
-    
-    if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
-    writeFile(file, str, true);
-    
-    NewLocales = pushIf(NewLocales, localeName);
-    var rootprefs = Components.classes["@mozilla.org/preferences-service;1"].
-        getService(Components.interfaces.nsIPrefBranch);
-    if (localeName[1] == getLocale()) {
-      rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
+      // completely ignore everything in Chrome except jar and manifest files
+      return {reset:NORESET, success:true, remove:true};
     }
 
     break;

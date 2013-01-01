@@ -334,7 +334,7 @@ function onViewSelected(aEvent)
     aEvent.target.treeBoxObject.view.selection.getRangeAt(0, rangeMin, rangeMax);
     var mysel = rangeMin.value;
     window.setTimeout("BookmarksUtils.FolderSelection = " + mysel + ";", 0); //Save selection as late as possible in thread
-    bookmarksView.tree.setAttribute("ref",selection.item[0].Value);
+    bookmarksView.tree.setAttribute("ref",selection.item[0].ValueUTF8);
   }
   
   if (statusBar && selection.length == 1) {
