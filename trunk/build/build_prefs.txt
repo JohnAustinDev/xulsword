@@ -1,41 +1,15 @@
 # INSURE LINUX VERSION CAN SWITCH LOCALES
-Set (buildprefs.js):intl.locale.matchOS=false
-
-# DEFAULT SETTINGS (On or Off)
-Set (globalops.js):xulsword.Headings=On
-Set (globalops.js):xulsword.Footnotes=On
-Set (globalops.js):xulsword.CrossRefs=On
-Set (globalops.js):xulsword.Dictionary=On
-Set (globalops.js):xulsword.StrongsTags=On
-Set (globalops.js):xulsword.MorphTags=On
-Set (globalops.js):xulsword.VerseNums=On
-Set (globalops.js):xulsword.UserNotes=On
-Set (globalops.js):xulsword.HebrewCantillation=On
-Set (globalops.js):xulsword.HebrewVowelPoints=On
-Set (globalops.js):xulsword.RedWords=On
+Set (prefs.js):intl.locale.matchOS=false
   
 # OTHER OPTIONS (true or false)
-Set (buildprefs.js):xulsword.ShowAllBibleTabsByDefault=true
-Set (buildprefs.js):xulsword.ShowDictionaryTabsByDefault=false
-Set (buildprefs.js):xulsword.ShowCommentaryTabsByDefault=false
-Set (buildprefs.js):xulsword.HideUnavailableCrossReferences=false
-Set (buildprefs.js):xulsword.ShowOriginalTextTabs=false
-Set (buildprefs.js):xulsword.MinimizeSearchRadios=false
-Set (buildprefs.js):xulsword.HideDisabledBooks=false
-Set (buildprefs.js):xulsword.ShowIntrosBeforeText=false
-Set (buildprefs.js):xulsword.AlwaysHideHebrewOptions=false
-Set (buildprefs.js):xulsword.HideDisabledViewMenuItems=false
-Set (buildprefs.js):xulsword.HideDisabledCopyPrintIncludes=false
-Set (buildprefs.js):xulsword.DontReadReferenceBible=false
-Set (buildprefs.js):xulsword.useUYGskin=false
-
-# SHOULD THE INSTALLER INSTALL THE HEBREW FONT? (true or false)
-Set IncludeHebrewFont=false
+Set (prefs.js):extensions.xulsword.HideDisabledBooks=false
+Set (prefs.js):extensions.xulsword.HideDisabledViewMenuItems=false
+Set (prefs.js):extensions.xulsword.DontReadReferenceBible=false
 
 # MODULES FOR EACH WINDOW WHOSE TABS SHOULD BE INITIALLY HIDDEN
-Set (buildprefs.js):xulsword.HiddenTexts1=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
-Set (buildprefs.js):xulsword.HiddenTexts2=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
-Set (buildprefs.js):xulsword.HiddenTexts3=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+Set (prefs.js):extensions.xulsword.HiddenTexts1=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+Set (prefs.js):extensions.xulsword.HiddenTexts2=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+Set (prefs.js):extensions.xulsword.HiddenTexts3=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
 
 # DEBUG PREFERENCES (USED ONLY WHEN: MakeDevelopmentOnly=true)
 Set (debug.js):javascript.options.strict=true
@@ -47,33 +21,26 @@ Set (debug.js):dom.report_all_js_exceptions=true
 Set (debug.js):browser.dom.window.dump.enabled=true
 
 # MISC INITIAL PROGRAM SETTINGS
-Set (xulsword.js):xulsword.Footnotes=On
-Set (xulsword.js):xulsword.Headings=On
-Set (xulsword.js):xulsword.Cross-references=On
-Set (xulsword.js):xulsword.Dictionary=On
-Set (xulsword.js):xulsword.Verse Numbers=On
-Set (xulsword.js):xulsword.User Notes=On
-Set (xulsword.js):xulsword.Hebrew Cantillation=On
-Set (xulsword.js):xulsword.Hebrew Vowel Points=On
-Set (xulsword.js):xulsword.Location=Matt.1.1
-Set (xulsword.js):xulsword.SearchText=""
-Set (xulsword.js):xulsword.SearchVersion=""
-Set (xulsword.js):xulsword.AdvSearchFlag=false
-Set (xulsword.js):xulsword.ShowCrossrefsAtBottom=false
-Set (xulsword.js):xulsword.ShowFootnotesAtBottom=true
-Set (xulsword.js):xulsword.ShowUserNotesAtBottom=true
-Set (xulsword.js):xulsword.SelectedNote=none
-Set (xulsword.js):xulsword.MaximizeNoteBox1=false
-Set (xulsword.js):xulsword.MaximizeNoteBox2=false
-Set (xulsword.js):xulsword.MaximizeNoteBox3=false
-Set (xulsword.js):xulsword.DefaultVersion=none
+Set (prefs.js):extensions.xulsword.Footnotes=On
+Set (prefs.js):extensions.xulsword.Headings=On
+Set (prefs.js):extensions.xulsword.Cross-references=On
+Set (prefs.js):extensions.xulsword.Dictionary=On
+Set (prefs.js):extensions.xulsword.Strong's Numbers=On
+Set (prefs.js):extensions.xulsword.Morphological Tags=On
+Set (prefs.js):extensions.xulsword.Verse Numbers=On
+Set (prefs.js):extensions.xulsword.User Notes=On
+Set (prefs.js):extensions.xulsword.Hebrew Cantillation=On
+Set (prefs.js):extensions.xulsword.Hebrew Vowel Points=On
+Set (prefs.js):extensions.xulsword.Words of Christ in Red=On
+Set (prefs.js):extensions.xulsword.Location=Matt.1.1
+Set (prefs.js):extensions.xulsword.ShowCrossrefsAtBottom=false
+Set (prefs.js):extensions.xulsword.ShowFootnotesAtBottom=true
+Set (prefs.js):extensions.xulsword.ShowUserNotesAtBottom=true
+Set (prefs.js):extensions.xulsword.MaximizeNoteBox1=false
+Set (prefs.js):extensions.xulsword.MaximizeNoteBox2=false
+Set (prefs.js):extensions.xulsword.MaximizeNoteBox3=false
+Set (prefs.js):extensions.xulsword.DefaultVersion=none
 
 # PRINT AND BOOKMARKS INITIAL SETTINGS
-Set (xulsword.js):browser.bookmarks.sort.resource=direction
-Set (xulsword.js):browser.bookmarks.sort.direction=natural
-Set (xulsword.js):print.print_headerright=""
-Set (xulsword.js):print.print_headercenter=""
-Set (xulsword.js):print.print_headerleft=""
-Set (xulsword.js):print.print_footerright=""
-Set (xulsword.js):print.print_footercenter=&P
-Set (xulsword.js):print.print_footerleft=""
+Set (prefs.js):browser.bookmarks.sort.resource=direction
+Set (prefs.js):browser.bookmarks.sort.direction=natural

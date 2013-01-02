@@ -253,10 +253,10 @@ sub writePreferences($\%$) {
 
   &Log("----> Writing preferences.\n");
   
-  $pP->{"(prefs.js):xulsword.Vendor"} = $Vendor;
-  $pP->{"(prefs.js):xulsword.Name"} = $Name;
-  $pP->{"(prefs.js):xulsword.Version"} = $Version;
-  $pP->{"(prefs.js):xulsword.BuildID"} = $BuildID;
+  $pP->{"(prefs.js):extensions.xulsword.Vendor"} = $Vendor;
+  $pP->{"(prefs.js):extensions.xulsword.Name"} = $Name;
+  $pP->{"(prefs.js):extensions.xulsword.Version"} = $Version;
+  $pP->{"(prefs.js):extensions.xulsword.BuildID"} = $BuildID;
   
   foreach my $p (sort keys %{$pP}) {
     if (!$pP->{$p}) {next;}
@@ -301,8 +301,8 @@ sub copyExtensionFiles($\@$$$) {
   if ($makeDevelopment) {
     push(@{$manifestP}, "content xulsword file:../../../xul/content/");
     push(@{$manifestP}, "skin xulsword skin file:../../../xul/skin/");
+    # branding is NECESSARY for the Extension Manager to work
     push(@{$manifestP}, "content branding file:../../../xul/content/branding/");
-    push(@{$manifestP}, "locale branding en-US file:../../../xul/locale/branding/");
     push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/test/debug-overlay.xul");
     push(@{$manifestP}, "skin xsplatform skin file:../../../xul/skin/common/linux/ os=Linux");
     push(@{$manifestP}, "skin xsplatform skin file:../../../xul/skin/common/windows/ os=WINNT");
@@ -311,10 +311,8 @@ sub copyExtensionFiles($\@$$$) {
   else {
     push(@{$manifestP}, "content xulsword jar:chrome/content.jar!/");
     push(@{$manifestP}, "skin xulsword skin jar:chrome/skin.jar!/");
-    if (!$isFFextension) {
-      push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
-      push(@{$manifestP}, "locale branding en-US jar:chrome/en-US.jar!/branding/");
-    }
+    # branding is NECESSARY for the Extension Manager to work
+    push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/common/linux/ os=Linux");
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/common/windows/ os=WINNT");
 
@@ -558,7 +556,7 @@ sub writeRunScript($$$) {
   if ("$^O" =~ /MSWin32/i) {
     if ($type eq "dev") {
       print SCR "chdir(\"".$DEVELOPMENT."\");\n";
-      print SCR "`start /wait $Name-srv$EXE --app application.ini -jsconsole -console`;\n";
+      print SCR "`start /wait $Name-srv$EXE --app application.ini -jsconsole -console -no-remote`;\n";
     }
     elsif ($type eq "port") {
       print SCR "chdir(\"".$PORTABLE."\");\n";
@@ -571,7 +569,7 @@ sub writeRunScript($$$) {
   }
   elsif ("$^O" =~ /linux/i) {
     if ($type eq "dev") {
-      print SCR "`firefox --app $DEVELOPMENT/application.ini -jsconsole`;\n";
+      print SCR "`firefox --app $DEVELOPMENT/application.ini -jsconsole -no-remote`;\n";
     }
     elsif ($type eq "port") {
       &Log("NOTE: Portable run script not implemented for linux.\n");
@@ -621,7 +619,9 @@ sub processLocales($\@$$) {
     else {&Log("WARNING: No bookmarks.rdf file found for locale \"$loc\".\n");}
     
     # write locale manifest info
+    # NOTE: these entries must also be included in the .manifest files of locale extensions
     push(@{$manifestP}, "\nlocale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
+    push(@{$manifestP}, "locale branding $loc jar:chrome/$loc.jar!/branding/");
 
     if (-e "$ldir/text-skin/skin") {
       push(@{$manifestP}, "skin localeskin $loc jar:chrome/$loc.jar!/skin/");
@@ -658,6 +658,34 @@ sub createLocale($) {
   }
   unlink("$ldir/code_log-bak.txt");
   
+  # add branding files which are NECESSARY for the Extension Manager to work
+  make_path("$ldir/locale/branding");
+  
+  # these branding entries were taken from Firefox 17
+  my $brandf = "$ldir/locale/branding/brand.dtd";
+  if (open(BRANDF, ">:encoding(UTF-8)", $brandf)) {
+    print BRANDF "<!ENTITY brandShortName \"$Name\">\n";
+    print BRANDF "<!ENTITY brandFullName \"$Name\">\n";
+    print BRANDF "<!ENTITY vendorShortName \"$Vendor\">\n";
+    print BRANDF "<!ENTITY trademarkInfo.part1 \"trademark info\">\n";
+    close(BRANDF);
+  }
+  else {&Log("ERROR: Could not open locale branding file:\"$brandf\"\n");}
+  
+  $brandf = "$ldir/locale/branding/brand.properties";
+  if (open(BRANDF, ">:encoding(UTF-8)", $brandf)) {
+    print BRANDF "brandShortName=$Name\n";
+    print BRANDF "brandFullName=$Name\n";
+    print BRANDF "vendorShortName=$Vendor\n";
+    print BRANDF "homePageSingleStartMain=Start Page\n";
+    print BRANDF "homePageImport=Import your home page from %S\n";
+    print BRANDF "homePageMigrationPageTitle=Home Page Selection\n";
+    print BRANDF "homePageMigrationDescription=Please select the home page you wish to use:\n";
+    print BRANDF "syncBrandShortName=Sync\n";
+    close(BRANDF);
+  }
+  else {&Log("ERROR: Could not open locale branding file:\"$brandf\"\n");}
+  
   # make locale jar file
   if (-e "$TRUNK/build-files/locales/$locale/$locale.jar") {unlink("$TRUNK/build-files/locales/$locale/$locale.jar");}
   &makeZIP("$TRUNK/build-files/locales/$locale/$locale.jar", "$ldir/locale/*");
@@ -665,9 +693,11 @@ sub createLocale($) {
     &makeZIP("$TRUNK/build-files/locales/$locale/$locale.jar", "$ldir/text-skin/*", 1);
   }
   
-  # make locale manifest file
+  # make locale manifest file for locale extensions
+  # NOTE: these entries must also be included in xulsword's own chrome.manifest file
   if (open(MANF, ">:encoding(UTF-8)", "$TRUNK/build-files/locales/$locale/$locale.locale.manifest")) {
     print MANF "locale xulsword $locale jar:chrome/$locale.jar!/xulsword/\n";
+    print MANF "locale branding $locale jar:chrome/$locale.jar!/branding/\n";
 
     if (-e "$ldir/text-skin/skin") {
       print MANF "skin localeskin $locale jar:chrome/$locale.jar!/skin/\n"

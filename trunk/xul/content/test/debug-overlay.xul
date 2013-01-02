@@ -1,33 +1,46 @@
 <?xml version="1.0"?> <!-- -*- Mode: HTML -*- -->
 
-<overlay id="debug-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<overlay id="debug-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml">
+  
   <script src="chrome://venkman/content/venkman-overlay.js" />
+  
   <script>
-  function showPlugins() {
-    document.getElementById("printBrowser").setAttribute("src", "about:plugins");
-    document.getElementById("appcontent").selectedIndex=1;
-  }
-  function showConfig() {
-    document.getElementById("printBrowser").setAttribute("src", "about:config");
-    document.getElementById("appcontent").selectedIndex=1;
-  }
-  function showExtMan() {
-    document.getElementById("printBrowser").setAttribute("src", "chrome://mozapps/content/extensions/extensions.xul?type=extensions");
-    document.getElementById("appcontent").selectedIndex=1;
+  function showPage(url) {
+    document.getElementById("debug-view").setAttribute("src", url);
+    document.getElementById("viewport-deck").selectedIndex = 3;
   }
   </script>
-
-  <hbox id="debug-row1">
-    <button id="config"       label="config"     oncommand="showConfig();"/>
-    <button id="reloadButton" label="Reload"     oncommand="window.location.reload();"/>
-    <button id="saveButton"   label="Save HTML"  oncommand="saveHTML();"/>
-  </hbox>
   
-  <hbox id="debug-row2">
-    <button id="debugger"     label="Debug"      oncommand="start_venkman()"/>
-    <button id="throw"        label="Throw"      oncommand="throw 'The user has thrown an exception.';"/>
-    <button id="plugins"      label="Plugins"    oncommand="showPlugins();"/>
-    <button id="extman"       label="Extensions" oncommand="showExtMan();"/>
+  <hbox id="debug-overlay">
+    
+    <!-- the invisible button !-->
+    <html:div id="debug-tool" style="width:20px;" onclick="document.getElementById('debug-panel').hidden = false;"></html:div>
+    
+    <vbox id="debug-panel" hidden="true" style="font-size:10px;">
+      
+      <hbox>
+        <button id="config"       label="config"       oncommand="showPage('about:config');"/>
+        <button id="memory"       label="memory"       oncommand="showPage('about:memory');"/>
+        <button id="compartments" label="compartments" oncommand="showPage('about:compartments');"/>
+        <button id="plugins"      label="Plugins"      oncommand="showPage('about:plugins');"/>
+      </hbox>
+      
+      <hbox>
+        <button id="reloadButton" label="Reload"       oncommand="window.location.reload();"/>
+        <button id="extman"       label="Extensions"   oncommand="showPage('chrome://mozapps/content/extensions/extensions.xul?type=extensions');"/>
+        <button id="debugger"     label="Debug"        oncommand="start_venkman()"/>
+        <button id="throw"        label="Throw"        oncommand="throw 'The user has thrown an exception.';"/>
+      </hbox>
+      
+    </vbox>
+    
   </hbox>
+    
+    
+  <deck id="viewport-deck">
+    
+    <iframe id="debug-view" type="content-primary" />
+    
+  </deck>
 
 </overlay>

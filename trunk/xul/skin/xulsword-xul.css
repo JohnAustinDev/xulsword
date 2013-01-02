@@ -44,9 +44,6 @@
   padding-top:2px;
 }
 
-#debug-tool {
-  width:20px;
-}
 #topbox[hasBible="false"] #edit-menu, 
 #topbox[hasBible="false"] #view-menu, 
 #topbox[hasBible="false"] #options-menu, 
