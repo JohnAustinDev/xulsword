@@ -483,19 +483,14 @@
 
     <spacer id="rightspacer"  flex="72%" orient="vertical"/>
     
-    <!-- DEBUG STUFF FROM debug-overlay.xul !-->
-    <html:div id="debug-tool" onclick="document.getElementById('debug').hidden=!document.getElementById('debug').hidden"></html:div>
-    <hbox id="debug" hidden="true">
-      <vbox>
-        <hbox id="debug-row1"></hbox>
-        <hbox id="debug-row2"></hbox>
-      </vbox>
-    </hbox>
+    <!-- DEBUG hook for debug-overlay.xul, if present !-->
+    <hbox id="debug-overlay"></hbox>
+
   </hbox>
   
 <!-- VIEWPORT DECK PLACED HERE !-->
   <vbox flex="100%">
-    <deck id="appcontent" flex="100%">
+    <deck id="viewport-deck" flex="100%">
       
       <!-- <iframe id="aboutConfig" flex="100%" src="about:config" /> !-->
       

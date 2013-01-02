@@ -137,23 +137,23 @@ function ViewPortObj(viewPortObj) {
     if (window.screen.width <= 800) {
       //in script.js initializeScript(), ScriptBox padding is also decreased in this case
       getPrefOrCreate("NumDisplayedWindows","Int",2);
-      getPrefOrCreate("NoteboxHeight1","Int",70);
-      getPrefOrCreate("NoteboxHeight2","Int",70);
-      getPrefOrCreate("NoteboxHeight3","Int",70);
+      getPrefOrCreate("NoteBoxHeight1","Int",70);
+      getPrefOrCreate("NoteBoxHeight2","Int",70);
+      getPrefOrCreate("NoteBoxHeight3","Int",70);
       getPrefOrCreate("FontSize","Int",-4);
     }
     else if (window.screen.width <= 1024) {
       getPrefOrCreate("NumDisplayedWindows","Int",2);
-      getPrefOrCreate("NoteboxHeight1","Int",100);
-      getPrefOrCreate("NoteboxHeight2","Int",100);
-      getPrefOrCreate("NoteboxHeight3","Int",100);
+      getPrefOrCreate("NoteBoxHeight1","Int",100);
+      getPrefOrCreate("NoteBoxHeight2","Int",100);
+      getPrefOrCreate("NoteBoxHeight3","Int",100);
       getPrefOrCreate("FontSize","Int",-2);
     } 
     else {
       getPrefOrCreate("NumDisplayedWindows","Int",2);
-      getPrefOrCreate("NoteboxHeight1","Int",200);
-      getPrefOrCreate("NoteboxHeight2","Int",200);
-      getPrefOrCreate("NoteboxHeight3","Int",200);
+      getPrefOrCreate("NoteBoxHeight1","Int",200);
+      getPrefOrCreate("NoteBoxHeight2","Int",200);
+      getPrefOrCreate("NoteBoxHeight3","Int",200);
       getPrefOrCreate("FontSize","Int",0);
     }
     

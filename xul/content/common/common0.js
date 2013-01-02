@@ -456,7 +456,7 @@ function createAppDirectories() {
 // files.
 prefs = Components.classes["@mozilla.org/preferences-service;1"].
                     getService(Components.interfaces.nsIPrefService);  
-prefs = prefs.getBranch("xulsword.");
+prefs = prefs.getBranch("extensions.xulsword.");
 
 rootprefs = Components.classes["@mozilla.org/preferences-service;1"].
                     getService(Components.interfaces.nsIPrefBranch); 

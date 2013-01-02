@@ -1,13 +1,5 @@
 #----------------------------------------------------------------
 #----------------------------------------------------------------
-#NOTES...
-# Version -                This should only include numbers and period(s).
-# MinXSMversion -          The minimum XSMversion required for compatible MK modules' text modules.
-# MinUIversion -           The minimum UIversion required for compatible MK modules' UI modules.
-# UseSecurityModule -      Set to true to include the security module compiles in
-#                          your key generator to decrypt your texts automatically.
-# HelpEmailAddress -       Set to en email address which will appear under "Help"
-#                          menu, or leave blank and no email menu element will appear.
 
 # BUILD WHAT?
 Set MakeDevelopment=true
@@ -16,14 +8,14 @@ Set MakeSetup=false
 Set MakeFFextension=true
 
 # SPECIFY PATHS
-Set OutputDirectory=..\build-out
-Set XULRunner=..\xulrunner
 Set CluceneSource=..\Cpp\clucene-core-0.9.21b
 Set SwordSource=..\Cpp\sword-svn
-Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v6.1
+Set OutputDirectory=..\build-out
 Set ModuleRepository1=X:\repository\modsword\raw
 Set ModuleRepository2=C:\home\dev\repository
 Set XulswordExtras=C:\home\dev\sup-dev
+Set XULRunner=..\xulrunner
+Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v6.1
 
 # SPECIFY BUILD INFORMATION
 Set Version=3.3
@@ -32,18 +24,18 @@ Set Vendor=CrossWire
 Set Executable=xulsword
 Set GeckoMinVersion=7.0
 Set GeckoMaxVersion=30.*
-Set (buildprefs.js):xulsword.EngineVersion=1.6.2
-Set (buildprefs.js):xulsword.MinXSMversion=1.0
-Set (buildprefs.js):xulsword.MinUIversion=3.5
-Set (buildprefs.js):xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
+Set (prefs.js):extensions.xulsword.EngineVersion=1.6.2
+Set (prefs.js):extensions.xulsword.MinXSMversion=1.0
+Set (prefs.js):extensions.xulsword.MinUIversion=3.5
+Set (prefs.js):extensions.xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
 # CHOOSE SECURITY SETTINGS
 Set UseSecurityModule=false
 Set KeyGenPath=
-Set (buildprefs.js):xulsword.DefaultCK=defaultKey
+Set (prefs.js):extensions.xulsword.DefaultCK=defaultKey
 
 # DEFAULT LOCALE (en-US, ru, etc.)
-Set (language.js):general.useragent.locale=en-US
+Set (prefs.js):general.useragent.locale=en-US
 
 # LOCALES TO INCLUDE IN BUILD (Must include at least one locale. Example:en-US, or ru,ar)
 Set IncludeLocales=en-US
@@ -54,3 +46,6 @@ Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
 
 # INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
 Set IncludeIndexes=false
+
+# SHOULD THE INSTALLER INSTALL THE HEBREW FONT? (true or false)
+Set IncludeHebrewFont=false

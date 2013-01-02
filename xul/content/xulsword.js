@@ -50,6 +50,11 @@ function loadedXUL() {
 }
 
 function loadedXUL2() {
+  
+  // don't automatically disable new extensions appearing in the user's profile directory
+  // this pref cannot be overwritten by prefs.js so it's set here
+  rootprefs.setIntPref("extensions.autoDisableScopes", 14);
+  
   // check for newly installed modules and reset mods if necessary
   var resetUserPrefs = false;
   var pfile = getSpecialDirectory("xsResD");
@@ -1494,13 +1499,13 @@ var PrintPreviewCallbacks = {
   onEnter: function() {
     document.getElementById("mainbar").hidden = true;
     document.getElementById("main-controlbar").hidden = true;
-    document.getElementById("appcontent").selectedIndex = 1;
+    document.getElementById("viewport-deck").selectedIndex = 1;
   },
   
   onExit: function() {
     document.getElementById("mainbar").hidden = false;
     document.getElementById("main-controlbar").hidden = false;
-    document.getElementById("appcontent").selectedIndex = 0;
+    document.getElementById("viewport-deck").selectedIndex = 0;
     
     // Allow original caller to do something (like refocus their window) 
     // after print preview is done.
@@ -1546,40 +1551,6 @@ function toOpenWindowByType(inType, uri, features)
   
   return thiswin;
 }
-  
-/************************************************************************
- * Debugging Functions
- ***********************************************************************/ 
- 
-// This is for debugging purposes only
-function saveHTML () {
-  for (var i=1; i <= ViewPort.NumDisplayedWindows; i++) {
-    var data = "";
 
-    try {
-      var tmp = LibSword.getChapterText(ViewPort.Module[i], Location.getLocation(ViewPort.Module[i]));
-      data += "\n\nCROSSREFS\n" + LibSword.getCrossRefs();
-    }
-    catch (er) {}
-  
-    var file = getSpecialDirectory("xsResD");
-    file.append("ScriptBox" + i + ".txt");
-  
-    if (!file.exists()) {file.create(file.NORMAL_FILE_TYPE, FPERM);}
-  
-    var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-    foStream.init(file, 0x02 | 0x08 | 0x20, -1, 0);
-
-    var charset = "UTF-16"; // Can be any character encoding name that Mozilla supports
-    var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
-    // This assumes that fos is the nsIOutputStream you want to write to
-    os.init(foStream, charset, 0, 0x0000);
-    os.writeString(data);
-    os.close();
-
-    foStream.close();
-  }
-  window.alert("ScriptBox HTML has been written to ScriptBox.txt files in C:");
-}
 
 

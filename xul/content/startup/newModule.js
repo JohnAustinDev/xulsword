@@ -636,7 +636,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
       
       // this .jar or .manifest file will be copied to the extensions directory
       var localeName = entryFileName.match(/^([^\.]*)/)[1];
-      var localeDir = localeName + APPLICATIONID.replace(/^.*?(\@.*)$/, "$1");
+      var localeDir = localeName + "_locale" + APPLICATIONID.replace(/^.*?(\@.*)$/, "$1");
       var inflated = getSpecialDirectory("xsExtension");
       inflated.append(localeDir);
       
@@ -662,6 +662,9 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
         str +=   "    <em:version>" + prefs.getCharPref("Version") + "</em:version>" + NEWLINE;
         str +=   "    <em:type>8</em:type>" + NEWLINE;
         str +=   "    <em:name>" + localeName + " xulsword locale</em:name>" + NEWLINE;
+        str +=   "    <em:description>A Bible reading and study tool.</em:description>" + NEWLINE;
+        str +=   "    <em:homepageURL>http://code.google.com/p/xulsword</em:homepageURL>" + NEWLINE;
+        str +=   "    <em:iconURL>chrome://xulsword/skin/icon.png</em:iconURL>" + NEWLINE;
         str +=   "    <em:targetApplication>" + NEWLINE;
         str +=   "      <Description>" + NEWLINE;
         if (IsExtension) {
