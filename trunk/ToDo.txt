@@ -13,7 +13,7 @@ DONE!: (revisit when new Module Manager is added) Consider carefully the newModu
 
 DONE!: Look at pinned GenBook text functionality, esp. with windowed viewports.
 
-Complete IBT locales: en-US,kum,ky,ky-ar,ru,tt,uz,uz-lat
+DONE!: Complete IBT locales: en-US,kum,ky,ky-ar,ru,tt,uz,uz-lat
 
 Do a thorough use-test of all program corners needed by IBT release.
 

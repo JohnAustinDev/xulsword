@@ -270,7 +270,6 @@ sub writePreferences($\%$) {
     my $q = '"';
     if ($pP->{$p} =~ s/^.*?(true|false).*?$/my $b=$1; $b=lc($b);/ie) {$q = "";}
     if ($pP->{$p} =~ /^""$/) {$q = "";} # let Set pref="" pass as is
-    if ($pref =~ /^HiddenTexts/) {$pP->{$p} =~ s/,/\;/; $pP->{$p} =~ s/\s+//; $pP->{$p}.=";"}
     print PREF "pref(\"$pref\", $q".$pP->{$p}."$q);\n";
     close(PREF);
     $prefFiles{$pfile}++;
