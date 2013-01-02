@@ -1,25 +1,6 @@
 # INSURE LINUX VERSION CAN SWITCH LOCALES
 Set (prefs.js):intl.locale.matchOS=false
   
-# OTHER OPTIONS (true or false)
-Set (prefs.js):extensions.xulsword.HideDisabledBooks=false
-Set (prefs.js):extensions.xulsword.HideDisabledViewMenuItems=false
-Set (prefs.js):extensions.xulsword.DontReadReferenceBible=false
-
-# MODULES FOR EACH WINDOW WHOSE TABS SHOULD BE INITIALLY HIDDEN
-Set (prefs.js):extensions.xulsword.HiddenTexts1=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
-Set (prefs.js):extensions.xulsword.HiddenTexts2=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
-Set (prefs.js):extensions.xulsword.HiddenTexts3=TR,HEB,StrongsGreek,StrongsHebrew,Robinson
-
-# DEBUG PREFERENCES (USED ONLY WHEN: MakeDevelopmentOnly=true)
-Set (debug.js):javascript.options.strict=true
-Set (debug.js):nglayout.debug.disable_xul_cache=true
-Set (debug.js):nglayout.debug.disable_xul_fastload=true
-Set (debug.js):extensions.logging.enabled=true
-Set (debug.js):javascript.options.showInConsole=true
-Set (debug.js):dom.report_all_js_exceptions=true
-Set (debug.js):browser.dom.window.dump.enabled=true
-
 # MISC INITIAL PROGRAM SETTINGS
 Set (prefs.js):extensions.xulsword.Footnotes=On
 Set (prefs.js):extensions.xulsword.Headings=On
@@ -40,7 +21,20 @@ Set (prefs.js):extensions.xulsword.MaximizeNoteBox1=false
 Set (prefs.js):extensions.xulsword.MaximizeNoteBox2=false
 Set (prefs.js):extensions.xulsword.MaximizeNoteBox3=false
 Set (prefs.js):extensions.xulsword.DefaultVersion=none
+Set (prefs.js):extensions.xulsword.HideDisabledBooks=false
+Set (prefs.js):extensions.xulsword.HideDisabledViewMenuItems=false
+Set (prefs.js):extensions.xulsword.DontReadReferenceBible=false
 
-# PRINT AND BOOKMARKS INITIAL SETTINGS
-Set (prefs.js):browser.bookmarks.sort.resource=direction
-Set (prefs.js):browser.bookmarks.sort.direction=natural
+# MODULES FOR EACH WINDOW WHOSE TABS SHOULD BE INITIALLY HIDDEN
+Set (prefs.js):extensions.xulsword.w1.hidden=TR;HEB;StrongsGreek;StrongsHebrew;Robinson;
+Set (prefs.js):extensions.xulsword.w2.hidden=TR;HEB;StrongsGreek;StrongsHebrew;Robinson;
+Set (prefs.js):extensions.xulsword.w3.hidden=TR;HEB;StrongsGreek;StrongsHebrew;Robinson;
+
+# DEBUG PREFERENCES (USED ONLY WITH DEVELOPMENT ENVIRONMENT)
+Set (debug.js):javascript.options.strict=true
+Set (debug.js):nglayout.debug.disable_xul_cache=true
+Set (debug.js):nglayout.debug.disable_xul_fastload=true
+Set (debug.js):extensions.logging.enabled=true
+Set (debug.js):javascript.options.showInConsole=true
+Set (debug.js):dom.report_all_js_exceptions=true
+Set (debug.js):browser.dom.window.dump.enabled=true

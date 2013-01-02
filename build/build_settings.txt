@@ -3,9 +3,9 @@
 
 # BUILD WHAT?
 Set MakeDevelopment=true
+Set MakeFFextension=true
 Set MakePortable=false
 Set MakeSetup=false
-Set MakeFFextension=true
 
 # SPECIFY PATHS
 Set CluceneSource=..\Cpp\clucene-core-0.9.21b

@@ -1211,7 +1211,6 @@ function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
   
   Texts.update(SCROLLTYPETOP, HILIGHTNONE);
 
-//jsdump("Texts:" + prefs.getCharPref("HiddenTexts1") + "\n");
 }
 
 function getRadioSelection(type) {
