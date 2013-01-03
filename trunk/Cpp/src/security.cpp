@@ -26,7 +26,7 @@
 #define KEYLEN 16
 #define NOTFOUND "Not Found"
 
-#include "appInfo.h"
+#include "keygen.h"
 
 bool security::PassedIntegrityCheck = true;
 
