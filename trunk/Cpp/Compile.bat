@@ -60,8 +60,4 @@ mt.exe -manifest "Release\xulsword.dll.manifest" -outputresource:"Release\xulswo
 echo off
 if not exist Release\xulsword.dll echo COMPILE FAILED& goto FINISH
 
-ECHO Moving new xulsword.dll to xulrunner dir...
-if not exist "..\build-files\%Name%\development" mkdir "..\build-files\%Name%\development"
-copy /Y ".\Release\xulsword.dll" ..\build-files\%Name%\development\
-
 :FINISH

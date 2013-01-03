@@ -60,10 +60,10 @@ if ($MakeDevelopment =~ /true/i) {
   &compileLibSword("$DEVELOPMENT/xulsword", ("$^O" =~ /MSWin32/i ? 1:0));
   my @manifest;
   &copyXulswordFiles("$DEVELOPMENT/xulsword", \@manifest, $IncludeLocales, 1, 0);
-  # Windows uses a custom local XULRunner installation, but Linux is assumed to
-  # have a recent Firefox installation already available to use at runtime by
-  # using the -app command line flag. Newer versions of Windows Firefox do not
-  # support the -app flag, requiring a XULRunner runtime to be installed.
+  # Windows uses a custom local XULRunner installation, but Linux is assumed 
+  # to have a recent Firefox installation available to use at runtime with
+  # the -app command line flag. Newer versions of Windows Firefox do not
+  # support the -app flag, so a XULRunner runtime is required.
   if ("$^O" =~ /MSWin32/i) {
     make_path("$DEVELOPMENT/xulrunner");
     &copyFirefoxFiles("$DEVELOPMENT/xulrunner");
