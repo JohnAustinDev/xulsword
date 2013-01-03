@@ -724,7 +724,7 @@ function commandHandler(e) {
     startIndexer();
     break;
     
-  case "question":
+  case "helpButton":
   case "searchHelp":
     SearchHelpWindow = window.open("chrome://xulsword/content/search/searchHelp.xul", "searchHelp", "chrome,resizable");
     AllWindows.push(SearchHelpWindow);

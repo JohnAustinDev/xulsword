@@ -100,7 +100,7 @@
         <textbox id="searchText" tooltip="searchTextTT" maxlength="60"/>
         <button id="searchButton" tooltip="searchButtonTT" label="&searchBut.label;  " dir="reverse" orient="horizontal"/>
         <spacer width="14px" orient="horizontal"/>
-        <image id="question" class="question"/>
+        <image id="helpButton"/>
       </hbox>
       
       <separator class="groove" />
