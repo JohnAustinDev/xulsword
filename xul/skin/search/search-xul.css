@@ -21,13 +21,13 @@ toolbar[showAdvanced="false"] #advanced {
 #searchText {
   width:20em; 
 }
-image#question {
-  list-style-image: url("chrome://xulsword/skin/images/question.png") !important;
+#helpButton {
+  list-style-image: url("chrome://xulsword/skin/images/help.png") !important;
 }
-.question {
+#helpButton {
   -moz-image-region: rect(0px, 27px, 27px, 0px) !important;
 }
-.question:hover {
+#helpButton:hover {
   -moz-image-region: rect(0px, 54px, 27px, 27px) !important;
 }
 
