@@ -12,6 +12,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
+  // convert command-line into Unicode
   WCHAR wlpCmdLine[BUFSIZE];
   mbstowcs(wlpCmdLine, lpCmdLine, sizeof(WCHAR)*(BUFSIZE-1));
   wlpCmdLine[BUFSIZE-1] = NULL; // insure null termination

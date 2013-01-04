@@ -801,7 +801,7 @@ function getLocaleConfig(lc) {
     
     
     if (val == NOTFOUND && Config[p].CSS) {
-      if (defaultCSS.rule.style[p]) {
+      if (defaultCSS && defaultCSS.rule.style[p]) {
         val = defaultCSS.rule.style[p];
       }
     }
