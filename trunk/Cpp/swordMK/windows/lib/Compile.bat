@@ -1,14 +1,19 @@
-@ECHO USAGE: Compile.bat [fileName] [exe/dll] (NOTE: fileName is not used; exe or dll selects the type of library to create; dll is default)
+@ECHO USAGE: Compile.bat
+
 @echo off
-Set arg2=%2
-if defined arg2 (Set arg1=%arg2%) else Set arg1=%1
-if not defined arg1 Set arg1=dll
+cd "%MK%\Cpp\swordMK\windows\lib"
+call "%MK%\Cpp\windows\Versions.bat"
+
+:: Make sure our compiler environment is configured
+if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
+set INCLUDE=%INCLUDE%;%microsoftsdk%\Include
+set LIB=%LIB%;%microsoftsdk%\Lib
+
 if exist .\Release rmdir /S /Q .\Release
 mkdir .\Release
 
 ::set cdbg=d /Zi /DEBUG
 set cdbg= /O2
-set CPPD=Cpp
 set cFlags=
 set lFlags=
 set cFiles1=
@@ -16,28 +21,20 @@ set cFiles2=
 set lFiles1=
 set lFiles2=
 
-call "..\..\versions.bat"
-
 Set cFlags=/nologo /EHsc /W0^
- /I "..\..\\"^
+ /I "%MK%\Cpp\src\windows"^
  /I "%clucene%\src"^
  /I "%sword%\include"^
  /I "%sword%\include\internal\regex"^
  /FI "fileops.h"^
  /FI "windefs_sword.h"^
- /D WIN32 /D "_WINDOWS" /D "USELUCENE" /D REGEX_MALLOC /D "_CL_HAVE_DIRENT_H" /D "WIN32_LEAN_AND_MEAN" /D "UNICODE" /D "_UNICODE" /D "_LIB" /Zm200 /c
+ /D WIN32 /D _WINDOWS /D USELUCENE /D REGEX_MALLOC /D _CL_HAVE_DIRENT_H /D WIN32_LEAN_AND_MEAN /D UNICODE /D _UNICODE /D _LIB /Zm200 /c
 
-Set cFlags=/MT%cdbg% /Fo"Release\libsword/" %cFlags%
-Set lFlags=/nologo /out:"Release\libsword.lib"
+Set cFlags=/MT%cdbg% /Fo".\Release\libsword/" %cFlags%
+Set lFlags=/nologo /out:".\Release\libsword.lib"
 Set objDIR=Release\libsword
 
 mkdir "%objDIR%"
-
-if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
-set INCLUDE=%INCLUDE%;%microsoftsdk%\Include
-set LIB=%LIB%;%microsoftsdk%\Lib
-
-::cl.exe /FI "demo\stdafx.h" %cFlags% "%sword%\src\modules\swmodule.cpp"
 
 Set cFiles1=^
  "%sword%\src\utilfuns\zlib\adler32.c"^
@@ -198,8 +195,7 @@ Set cFiles1=^
  "%sword%\src\mgr\versemgr.cpp"^
  "%sword%\src\utilfuns\zlib\untgz.c"^
  "%sword%\src\mgr\stringmgr.cpp"^
- "%sword%\src\utilfuns\utilstr.cpp"^
- "..\..\swordMK\filemgr.cpp"
+ "%sword%\src\utilfuns\utilstr.cpp"
  
 cl.exe %cFlags% %cFiles1%
 
@@ -212,7 +208,6 @@ Set lFiles1=^
  ".\%objDIR%\echomod.obj"^
  ".\%objDIR%\encfiltmgr.obj"^
  ".\%objDIR%\entriesblk.obj"^
- ".\%objDIR%\filemgr.obj"^
  ".\%objDIR%\ftpparse.obj"^
  ".\%objDIR%\ftptrans.obj"^
  ".\%objDIR%\gbffootnotes.obj"^
@@ -358,7 +353,9 @@ Set lFiles2=^
  ".\%objDIR%\gbfxhtml.obj"^
  ".\%objDIR%\thmlxhtml.obj"
 
-:: ".\%objDIR%\swmodule.obj"
-
 link.exe -lib %lFlags% %lFiles1% %lFiles2%
+
+echo.
+if exist ".\Release\libsword.lib" (echo ----------- libsword.lib SUCCESS!) else (echo ----------- libsword.lib COMPILE FAILED...)
+echo.
 
