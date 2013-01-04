@@ -21,8 +21,7 @@ $WINprocess = "$Executable-srv.exe";
 @ModRepos = ($ModuleRepository1, $ModuleRepository2);
 
 # assign our build ID
-@d = localtime(time);
-$BuildID = sprintf("%02d%02d%02d_%d", ($d[5]%100), ($d[4]+1), $d[3], &get_SVN_rev());
+@D = localtime(time);
 
 &Log("----> Getting file paths.\n");
 if ($OutputDirectory =~ /^\./) {
@@ -44,15 +43,15 @@ else {&Log("ERROR: Please add assignment to application directory of your platfo
 
 # assign the output root path for each type of build
 $DEVELOPMENT="$TRUNK/build-files/$Name/development";
-$INSTALLER="$TRUNK/build-files/$Name/installer";
+$INSTALLER="$TRUNK/build-files/$Name/setup";
 $FFEXTENSION="$TRUNK/build-files/$Name/xulsword\@xulsword.org";
 $PORTABLE="$TRUNK/build-files/$Name/portable/$Name";
-
-&writeCompileDeps();
 
 # DEVELOPMENT ENVIRONMENT
 if ($MakeDevelopment =~ /true/i) {
   &Log("\n----> BUILDING DEVELOPMENT ENVIRONMENT\n");
+  # "D" in BuildID identifies this as being a development version
+  $BuildID = sprintf("%02d%02d%02d_%dD", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
   if (-e $DEVELOPMENT) {&cleanDir($DEVELOPMENT);}
   else {make_path($DEVELOPMENT);}
   make_path("$DEVELOPMENT/xulsword");
@@ -81,6 +80,8 @@ if ($MakeDevelopment =~ /true/i) {
 # FIREFOX EXTENSION
 if ($MakeFFextension =~ /true/i) {
   &Log("\n----> BUILDING FIREFOX EXTENSION\n");
+  # "E" in BuildID identifies this as being a Firefox extension
+  $BuildID = sprintf("%02d%02d%02d_%dE", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
   if (-e $FFEXTENSION) {&cleanDir($FFEXTENSION);}
   else {make_path($FFEXTENSION);}
   &compileLibSword($FFEXTENSION, 1);
@@ -100,12 +101,14 @@ if ($MakeFFextension =~ /true/i) {
 }
 
 # WINDOWS PORTABLE VERSION
-if ($MakePortable =~ /true/i || $MakeSetup =~ /true/i) {
+if ($MakePortable =~ /true/i) {
   &Log("\n----> BUILDING PORTABLE VERSION\n");
   if ("$^O" !~ /MSWin32/i) {
     &Log("ERROR: Portable has not been implemented for your platform.\n");
      die;
   }
+  # "P" in BuildID identifies this as being a portable version
+  $BuildID = sprintf("%02d%02d%02d_%dP", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
   if (-e $PORTABLE) {&cleanDir($PORTABLE);}
   else {make_path("$PORTABLE/$Name");}
   make_path("$PORTABLE/$Name/xulsword");
@@ -119,7 +122,7 @@ if ($MakePortable =~ /true/i || $MakeSetup =~ /true/i) {
   # Set our startup location...
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
   &writePreferences("$PORTABLE/$Name/xulsword", \%Prefs);
-  &writeApplicationINI("$PORTABLE/$Name/xulsword", "P");
+  &writeApplicationINI("$PORTABLE/$Name/xulsword");
   &compileWindowsStartup($PORTABLE, "runPortable");
   &includeModules("$PORTABLE/$Name/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
   &includeLocales("$PORTABLE/$Name/xulsword", $IncludeLocales, \@manifest, 0);
@@ -138,6 +141,8 @@ if ($MakeSetup =~ /true/i) {
     &Log("ERROR: Setup Installer has not been implemented for your platform.\n");
      die;
   }
+  # "S" in BuildID identifies this as being Setup Installer version
+  $BuildID = sprintf("%02d%02d%02d_%dS", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
   if (-e $INSTALLER) {&cleanDir($INSTALLER);}
   else {make_path($INSTALLER);}
   make_path("$INSTALLER/xulsword");
@@ -151,7 +156,7 @@ if ($MakeSetup =~ /true/i) {
   &writePreferences("$INSTALLER/xulsword", \%Prefs);
   &writeApplicationINI("$INSTALLER/xulsword");
   &compileWindowsStartup($INSTALLER, "runMK");
-  # Delete modules from RESOURCES or else they will be copied into Setup
+  # Delete modules from RESOURCES or else they will be copied into Setup by the setup compiler
   if (-e "$RESOURCES/mods.d") {
     &Log("----> Deleting ...resources/mods.d\n");
     remove_tree("$RESOURCES/mods.d");
@@ -164,7 +169,7 @@ if ($MakeSetup =~ /true/i) {
   &includeLocales("$INSTALLER/xulsword", $IncludeLocales, \@manifest, 0);
   &writeManifest("$INSTALLER/xulsword", \@manifest);
   &writeRunScript($INSTALLER, "setup");
-
+if (0) {
   # package everything into the Setup Installer
   my $autogen = "$XulswordExtras/installer/autogen";
   if (-e $autogen) {&cleanDir($autogen);}
@@ -174,6 +179,7 @@ if ($MakeSetup =~ /true/i) {
   &writeInstallerModuleUninstall("$autogen/uninstall.iss", $RESOURCES, $IncludeModules, $IncludeLocales);
   &packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
 }
+}
 
 &Log("FINISHED BUILDING\n");
 print "Press enter to close...\n";
@@ -182,7 +188,9 @@ $p = <>;
 ################################################################################
 ################################################################################
 
-sub writeCompileDeps() {
+sub writeCompileDeps($) {
+  my $isPortable = shift;
+  
   # remove any previously generated compile deps
   if (-e "$TRUNK/Cpp/src/include/appInfo.h") {unlink("$TRUNK/Cpp/src/include/appInfo.h");}
   if (-e "$TRUNK/Cpp/src/include/keygen.h") {unlink("$TRUNK/Cpp/src/include/keygen.h");}
@@ -206,8 +214,14 @@ sub writeCompileDeps() {
   &Log("----> Writing application info for C++ compiler.\n");
   if (!-e "$TRUNK/Cpp/windows/Release") {mkdir "$TRUNK/Cpp/windows/Release";}
   open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/src/include/appInfo.h") || die;
-  print INFO "#define PORTABLE_DIR L\".\\\\$Name\"\n";
-  print INFO "#define KEYADDRESS L\"Software\\\\$Vendor\\\\$Name\"\n";
+  print INFO "#define PORTABLE_DIR L\".\\\\$Name\\\\xulrunner\"\n";
+  if (!$isPortable) {
+    print INFO "#define COMMAND_LINE L\"\\\"%s\\\\%s\\\" --app ..\\\\xulsword\\\\application.ini -no-remote %s\"\n";
+  }
+  else {
+    # portable version uses local profile directory
+    print INFO "#define COMMAND_LINE L\"\\\"%s\\\\%s\\\" --app ..\\\\xulsword\\\\application.ini -no-remote -profile \\\"..\\\\profile\\\" %s\"\n";
+  }
   print INFO "#define PROC_NAME L\"$WINprocess\"\n";
   close(INFO);
   
@@ -229,26 +243,28 @@ sub compileLibSword($$) {
   my $staticLinkToSWORD = shift;
   
   &Log("----> Compiling libsword binary.\n");
+  
+  &writeCompileDeps();
+  
   if ("$^O" =~ /MSWin32/i) {
     if (!$staticLinkToSWORD) {
       &Log("WARNING: staticLinkToSWORD=false, but MS-Windows will get static link anyway.\n");
     }
     if (!$CompiledAlready) {
       if (!-e "$TRUNK/Cpp/cluceneMK/windows/lib/Release/libclucene.lib") {
-        chdir("$TRUNK/Cpp/cluceneMK/windows/lib");
-        `call Compile.bat >> $LOGFILE`;
+        `call "$TRUNK/Cpp/cluceneMK/windows/lib/Compile.bat" >> $LOGFILE`;
       }
       if (!-e "$TRUNK/Cpp/swordMK/windows/lib/Release/libsword.lib") {
-        chdir("$TRUNK/Cpp/swordMK/windows/lib");
-        `call Compile.bat >> $LOGFILE`;
+        `call "$TRUNK/Cpp/swordMK/windows/lib/Compile.bat" >> $LOGFILE`;
       }
-      chdir("$TRUNK/Cpp/windows");
+
       if ($UseSecurityModule =~ /true/i) {
-        `call Compile.bat >> $LOGFILE`;
+        `call "$TRUNK/Cpp/windows/Compile.bat" >> $LOGFILE`;
       }
       else {
-        `call Compile.bat NOSECURITY >> $LOGFILE`;
+        `call "$TRUNK/Cpp/windows/Compile.bat" NOSECURITY >> $LOGFILE`;
       }
+      
       if (!-e "$TRUNK/Cpp/windows/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); die;}
     }
     &copy_file("$TRUNK/Cpp/windows/Release/xulsword.dll", $do);
@@ -389,6 +405,9 @@ sub writePreferences($\%$) {
 
   &Log("----> Writing preferences.\n");
 
+  # NOTE: although nsIXULAppInfo would be the prefered method for xulsword to
+  # obtain the following info, prefs must be used instead because extensions 
+  # reading nsIXULAppInfo would return info about Firefox rather than xulsword.
   $pP->{"(prefs.js):extensions.xulsword.Vendor"} = $Vendor;
   $pP->{"(prefs.js):extensions.xulsword.Name"} = $Name;
   $pP->{"(prefs.js):extensions.xulsword.Version"} = $Version;
@@ -414,9 +433,8 @@ sub writePreferences($\%$) {
   }
 }
 
-sub writeApplicationINI($$) {
+sub writeApplicationINI($) {
   my $do = shift;
-  my $buildTypeID = shift;
   
   &Log("----> Writing application.ini.\n");
   open(INI, ">:encoding(UTF-8)", "$do/application.ini") || die;
@@ -425,7 +443,7 @@ sub writeApplicationINI($$) {
   print INI "Name=$Name\n";
   print INI "Version=$Version\n";
   print INI "ID=xulsword\@xulsword.org\n";
-  print INI "BuildID=$BuildID".$buildTypeID."\n\n";
+  print INI "BuildID=$BuildID\n\n";
   print INI "[Gecko]\n";
   print INI "MinVersion=$GeckoMinVersion\n";
   print INI "MaxVersion=$GeckoMaxVersion\n\n";
@@ -663,7 +681,7 @@ sub writeRunScript($$) {
     }
     else {
       print SCR "chdir(\"".$rd."\");\n";
-      print SCR "`$Name.exe`;\n";
+      print SCR "`$Executable.exe`;\n";
     }
   }
   elsif ("$^O" =~ /linux/i) {
@@ -681,15 +699,19 @@ sub writeRunScript($$) {
 
 sub compileWindowsStartup($$) {
   my $do = shift;
-  my $compiledir = shift;
+  my $isPortable = shift;
 
-  &Log("----> Compiling startup stub.\n");
-  remove_tree("$TRUNK/Cpp/$compiledir/Release");
-  chdir("$TRUNK/Cpp/$compiledir");
-  `call Compile.bat >> $LOGFILE`;
-  chdir("$TRUNK/build");
+  &Log("----> Compiling startup executable.\n");
+  
+  &writeCompileDeps($isPortable);
+  
+  `call "$TRUNK/Cpp/windows/startup/Compile.bat" >> $LOGFILE`;
 
-  &copy_file("$TRUNK/Cpp/$compiledir/Release/$compiledir.exe", "$do/$Executable.exe");
+  if (!-e "$TRUNK/Cpp/windows/startup/Release/startup.exe") {
+    &Log("ERROR: startup.exe did not compile.\n");
+    die;
+  }
+  &copy_file("$TRUNK/Cpp/windows/startup/Release/startup.exe", "$do/$Executable.exe");
 }
 
 sub writeInstallerAppInfo($) {
@@ -777,7 +799,6 @@ sub packagePortable($$) {
   $of = "$od/$Name Portable-$Version.zip";
   
   &Log("----> Making portable zip package.\n");
-  if (-e $of) {unlink($of);}
   &makeZIP($of, $id, 0, "file_log.txt");
 }
 
