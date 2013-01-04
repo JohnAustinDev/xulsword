@@ -1,3 +1,6 @@
+.fixedFontSize {
+  font-size:11px !important;
+}
 /* search windows */
 toolbar groupbox caption {
   background:rgb(211,218,237);
