@@ -370,28 +370,16 @@ sub copyFirefoxFiles($) {
   my $DLL = ".dll";
   
   &Log("----> Copying XULRunner files.\n");
-  # skip undeeded stuff: 2+1.9+1.9+0.6+0.4+0.36+0.25+0.12+0.1++0.1 ~ 8MB
+
   my $skip = "(";
-  $skip .= "xulrunner\-stub\$EXE|";
-  $skip .= "dictionaries|";
-  $skip .= "D3DCompiler_43$DLL|";
-  $skip .= "d3dx9_43$DLL|";
-  $skip .= "js$EXE|";
-  $skip .= "libGLESv2$DLL|";
-  $skip .= "nssckbi$DLL|";
-  $skip .= "freebl3$DLL|";
-  $skip .= "updater$EXE|";
-  $skip .= "crashreporter$EXE|";
-  $skip .= "nssdbm3$DLL|";
-  $skip .= "libEGL$DLL|";
-  $skip .= "xpcshell$EXE|";
-  $skip .= "IA2Marshal$DLL";
+  $skip .= "\\S+$EXE|";
+  $skip .= "dictionaries";
   $skip .= ")";
-   
+
   if (!-e $XULRunner) {&Log("ERROR: No Firefox directory: \"$XULRunner\".\n"); die;}
   
   &copy_dir($XULRunner, $do, "", $skip);
-  mv("$do/xulrunner.exe", "$do/$WINprocess");
+  &cp("$XULRunner/xulrunner.exe", "$do/$WINprocess");
 
 }
 

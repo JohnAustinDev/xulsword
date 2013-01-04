@@ -39,7 +39,7 @@
     
   <deck id="viewport-deck">
     
-    <iframe id="debug-view" type="content-primary" />
+    <iframe id="debug-view"/>
     
   </deck>
 
