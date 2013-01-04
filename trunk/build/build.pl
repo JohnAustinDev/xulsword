@@ -61,7 +61,7 @@ if ($MakeDevelopment =~ /true/i) {
   &copyXulswordFiles("$DEVELOPMENT/xulsword", \@manifest, $IncludeLocales, 1, 0);
   # Windows uses a custom local XULRunner installation, but Linux is assumed 
   # to have a recent Firefox installation available to use at runtime with
-  # the -app command line flag. Newer versions of Windows Firefox do not
+  # the -app command line flag. Some versions of Windows Firefox do not
   # support the -app flag, so a XULRunner runtime is required.
   if ("$^O" =~ /MSWin32/i) {
     make_path("$DEVELOPMENT/xulrunner");
@@ -123,7 +123,7 @@ if ($MakePortable =~ /true/i) {
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
   &writePreferences("$PORTABLE/$Name/xulsword", \%Prefs);
   &writeApplicationINI("$PORTABLE/$Name/xulsword");
-  &compileWindowsStartup($PORTABLE, "runPortable");
+  &compileWindowsStartup($PORTABLE, 1);
   &includeModules("$PORTABLE/$Name/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
   &includeLocales("$PORTABLE/$Name/xulsword", $IncludeLocales, \@manifest, 0);
   &writeManifest("$PORTABLE/$Name/xulsword", \@manifest);
@@ -143,8 +143,13 @@ if ($MakeSetup =~ /true/i) {
   }
   # "S" in BuildID identifies this as being Setup Installer version
   $BuildID = sprintf("%02d%02d%02d_%dS", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
+  
   if (-e $INSTALLER) {&cleanDir($INSTALLER);}
   else {make_path($INSTALLER);}
+  # Delete RESOURCES because this dir is copied into Setup by the setup compiler
+  if (-e $RESOURCES) {&cleanDir($RESOURCES);}
+  else {make_path($RESOURCES);}
+  
   make_path("$INSTALLER/xulsword");
   make_path("$INSTALLER/xulrunner");
   &compileLibSword("$INSTALLER/xulsword", 1);
@@ -155,21 +160,12 @@ if ($MakeSetup =~ /true/i) {
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
   &writePreferences("$INSTALLER/xulsword", \%Prefs);
   &writeApplicationINI("$INSTALLER/xulsword");
-  &compileWindowsStartup($INSTALLER, "runMK");
-  # Delete modules from RESOURCES or else they will be copied into Setup by the setup compiler
-  if (-e "$RESOURCES/mods.d") {
-    &Log("----> Deleting ...resources/mods.d\n");
-    remove_tree("$RESOURCES/mods.d");
-  }
-  if (-e "$RESOURCES/modules") {
-    &Log("----> Deleting ...resources/modules\n");
-    remove_tree("$RESOURCES/modules");
-  }
+  &compileWindowsStartup($INSTALLER, 0);
   &includeModules($RESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
   &includeLocales("$INSTALLER/xulsword", $IncludeLocales, \@manifest, 0);
   &writeManifest("$INSTALLER/xulsword", \@manifest);
   &writeRunScript($INSTALLER, "setup");
-if (0) {
+
   # package everything into the Setup Installer
   my $autogen = "$XulswordExtras/installer/autogen";
   if (-e $autogen) {&cleanDir($autogen);}
@@ -178,7 +174,7 @@ if (0) {
   &writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales)
   &writeInstallerModuleUninstall("$autogen/uninstall.iss", $RESOURCES, $IncludeModules, $IncludeLocales);
   &packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
-}
+
 }
 
 &Log("FINISHED BUILDING\n");
@@ -214,11 +210,12 @@ sub writeCompileDeps($) {
   &Log("----> Writing application info for C++ compiler.\n");
   if (!-e "$TRUNK/Cpp/windows/Release") {mkdir "$TRUNK/Cpp/windows/Release";}
   open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/src/include/appInfo.h") || die;
-  print INFO "#define PORTABLE_DIR L\".\\\\$Name\\\\xulrunner\"\n";
   if (!$isPortable) {
+    print INFO "#define RUN_DIR L\".\\\\xulrunner\"\n";
     print INFO "#define COMMAND_LINE L\"\\\"%s\\\\%s\\\" --app ..\\\\xulsword\\\\application.ini -no-remote %s\"\n";
   }
   else {
+    print INFO "#define RUN_DIR L\".\\\\$Name\\\\xulrunner\"\n";
     # portable version uses local profile directory
     print INFO "#define COMMAND_LINE L\"\\\"%s\\\\%s\\\" --app ..\\\\xulsword\\\\application.ini -no-remote -profile \\\"..\\\\profile\\\" %s\"\n";
   }
@@ -242,9 +239,9 @@ sub compileLibSword($$) {
   my $do = shift;
   my $staticLinkToSWORD = shift;
   
-  &Log("----> Compiling libsword binary.\n");
-  
   &writeCompileDeps();
+    
+  &Log("----> Compiling libsword binary.\n");
   
   if ("$^O" =~ /MSWin32/i) {
     if (!$staticLinkToSWORD) {
@@ -701,9 +698,9 @@ sub compileWindowsStartup($$) {
   my $do = shift;
   my $isPortable = shift;
 
-  &Log("----> Compiling startup executable.\n");
-  
   &writeCompileDeps($isPortable);
+  
+  &Log("----> Compiling startup executable.\n");
   
   `call "$TRUNK/Cpp/windows/startup/Compile.bat" >> $LOGFILE`;
 
@@ -737,7 +734,7 @@ sub writeInstallerLocaleinfo($$) {
   my @locales = split(/\s*,\s*/, shift);
   &Log("----> Writing installer locale script.\n");
   open(OUTF, ">:encoding(UTF-8)", $of) || die;
-  # this script use to write =false for all possible locales (needed??)
+  # set any included locales to true
   foreach my $locale (@locales) {
     my $pl = $locale; $pl =~ s/-//g; # iss defines can't use "-"
     print OUTF "#define $pl \"true\"\n";
@@ -776,7 +773,7 @@ sub packageWindowsSetup($) {
   $id =~ s/[\\\/][^\\\/]+$//;
   if (!-e $is) {&Log("ERROR: installer script $is not found.\n"); return;}
 
-  my $resdir = "$OutputDirectory/$Name-Install-$Version";
+  my $resdir = "$OutputDirectory/$Name-Setup-$Version";
   if (!-e $resdir) {make_path($resdir);}
 
   if (!chdir($id)) {&Log("ERROR: Could not cd into \"$id\".\n"); die;}
@@ -787,7 +784,9 @@ sub packageWindowsSetup($) {
     &Log("ERROR: Inno Setup 5 (Unicode) is not installed.\n");
     die;
   }
+  
   `"%ProgramFiles%/Inno Setup 5/ISCC.exe" "$is" > "$resdir/file_log.txt"`;
+  
   chdir("$TRUNK/build");
 }
 

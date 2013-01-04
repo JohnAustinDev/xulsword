@@ -68,6 +68,7 @@ sub copy_file($$) {
   }
 }
 
+# removes all contents of the specified directory without removing the directory itself
 sub cleanDir($) {
   my $id = shift;
   if (!-e $id || !-d $id) {return;}

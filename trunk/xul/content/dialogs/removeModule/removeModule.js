@@ -89,7 +89,7 @@ function onLoad() {
     // locales which were installed with the install manager. Those which 
     // are installed in the program's chrome directory cannot be uninstalled.
     var aFile = getSpecialDirectory("xsExtension");
-    aFile.append(lc + "_locale" + APPLICATIONID.replace(/^.*?(\@.*)$/, "$1"));
+    aFile.append(lc + ".locale" + APPLICATIONID.replace(/^.*?(\@.*)$/, "$1"));
     if (!aFile.exists()) continue;
     
     var bundle = getLocaleBundle(lc, "xulsword.properties");
@@ -242,7 +242,7 @@ function deleteCheckedResources(e) {
       rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
     }
     if (typeof(AddonManager) == "undefined") Components.utils.import("resource://gre/modules/AddonManager.jsm");
-    AddonManager.getAddonByID(loc + "_locale" + APPLICATIONID.replace(/^.*?(\@.*)$/, "$1"), function(addon) {addon.uninstall();});
+    AddonManager.getAddonByID(loc + ".locale" + APPLICATIONID.replace(/^.*?(\@.*)$/, "$1"), function(addon) {addon.uninstall();});
     //if (reset < HARDRESET) reset = HARDRESET; HARDRESET may accur before addon.uninstall happens!
     
   }
