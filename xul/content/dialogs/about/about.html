@@ -50,8 +50,7 @@
       var confInfo = "-----";
       if (Tab[mod].conf) {
         confInfo  = readFile(Tab[mod].conf) + NEWLINE;
-        confInfo += "(" + Tab[mod].conf.path + ")" + NEWLINE;
-        confInfo += "confModUnique=" + Tab[mod].confModUnique;
+        confInfo += "SWORD_module_path=" + Tab[mod].conf.path + NEWLINE;
       }
       elem.getElementsByTagName("textarea")[0].innerHTML = confInfo;
     }
