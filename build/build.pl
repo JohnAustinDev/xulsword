@@ -186,7 +186,7 @@ sub writeCompileDeps() {
   # remove any previously generated compile deps
   if (-e "$TRUNK/Cpp/src/include/appInfo.h") {unlink("$TRUNK/Cpp/src/include/appInfo.h");}
   if (-e "$TRUNK/Cpp/src/include/keygen.h") {unlink("$TRUNK/Cpp/src/include/keygen.h");}
-  if (-e "$TRUNK/Cpp/Versions.bat") {unlink("$TRUNK/Cpp/Versions.bat");}
+  if (-e "$TRUNK/Cpp/windows/Versions.bat") {unlink("$TRUNK/Cpp/windows/Versions.bat");}
   
   if ($UseSecurityModule =~ /true/i) {
     if (!-e $KeyGenPath) {
@@ -204,7 +204,7 @@ sub writeCompileDeps() {
   if ("$^O" !~ /MSWin32/i) {return;}
   
   &Log("----> Writing application info for C++ compiler.\n");
-  if (!-e "$TRUNK/Cpp/Release") {mkdir "$TRUNK/Cpp/Release";}
+  if (!-e "$TRUNK/Cpp/windows/Release") {mkdir "$TRUNK/Cpp/windows/Release";}
   open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/src/include/appInfo.h") || die;
   print INFO "#define PORTABLE_DIR L\".\\\\$Name\"\n";
   print INFO "#define KEYADDRESS L\"Software\\\\$Vendor\\\\$Name\"\n";
@@ -215,7 +215,7 @@ sub writeCompileDeps() {
   if (!-e $SwordSource) {&Log("ERROR: No SWORD source code.\n"); die;}
   if (!-e $CluceneSource) {&Log("ERROR: No Clucene source code.\n"); die;}
   if (!-e $MicrosoftSDK) {&Log("ERROR: No Microsoft SDK.\n"); die;}
-  open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/Versions.bat") || die;
+  open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/windows/Versions.bat") || die;
   print INFO "Set clucene=$CluceneSource\n";
   print INFO "Set sword=$SwordSource\n";
   print INFO "Set microsoftsdk=$MicrosoftSDK\n";
@@ -234,24 +234,24 @@ sub compileLibSword($$) {
       &Log("WARNING: staticLinkToSWORD=false, but MS-Windows will get static link anyway.\n");
     }
     if (!$CompiledAlready) {
-      if (!-e "$TRUNK/Cpp/cluceneMK/lib/Release/libclucene.lib") {
-        chdir("$TRUNK/Cpp/cluceneMK/lib");
+      if (!-e "$TRUNK/Cpp/cluceneMK/windows/lib/Release/libclucene.lib") {
+        chdir("$TRUNK/Cpp/cluceneMK/windows/lib");
         `call Compile.bat >> $LOGFILE`;
       }
-      if (!-e "$TRUNK/Cpp/swordMK/lib/Release/libsword.lib") {
-        chdir("$TRUNK/Cpp/swordMK/lib");
+      if (!-e "$TRUNK/Cpp/swordMK/windows/lib/Release/libsword.lib") {
+        chdir("$TRUNK/Cpp/swordMK/windows/lib");
         `call Compile.bat >> $LOGFILE`;
       }
-      chdir("$TRUNK/Cpp");
+      chdir("$TRUNK/Cpp/windows");
       if ($UseSecurityModule =~ /true/i) {
         `call Compile.bat >> $LOGFILE`;
       }
       else {
         `call Compile.bat NOSECURITY >> $LOGFILE`;
       }
-      if (!-e "$TRUNK/Cpp/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); die;}
+      if (!-e "$TRUNK/Cpp/windows/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); die;}
     }
-    &copy_file("$TRUNK/Cpp/Release/xulsword.dll", $do);
+    &copy_file("$TRUNK/Cpp/windows/Release/xulsword.dll", $do);
   }
   elsif ("$^O" =~ /linux/i) {
     if (!$CompiledAlready) {

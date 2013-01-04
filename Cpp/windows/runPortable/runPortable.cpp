@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-#include "..\appInfo.h"
+#include "appInfo.h"
 
 #define BUFSIZE 1024
 

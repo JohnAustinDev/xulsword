@@ -8,14 +8,14 @@ Set MakePortable=false
 Set MakeSetup=false
 
 # SPECIFY PATHS
-Set CluceneSource=..\Cpp\clucene-core-0.9.21b
-Set SwordSource=..\Cpp\sword-svn
-Set OutputDirectory=..\build-out
+Set CluceneSource=C:\home\dev\mk-dev\Cpp\clucene-core-0.9.21b
+Set SwordSource=C:\home\dev\mk-dev\Cpp\sword-svn
+Set OutputDirectory=C:\home\dev\mk-dev\build-out
 Set ModuleRepository1=X:\repository\modsword\raw
 Set ModuleRepository2=C:\home\dev\repository
 Set XulswordExtras=C:\home\dev\sup-dev
 # FOR PORTABLE & INSTALLER VERSIONS FOR WINDOWS
-Set XULRunner=..\xulrunner
+Set XULRunner=C:\home\dev\mk-dev\xulrunner
 Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v6.1
 
 # SPECIFY BUILD INFORMATION

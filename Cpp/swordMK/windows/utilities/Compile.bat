@@ -1,45 +1,54 @@
 @ECHO USAGE: Compile.bat utilityName
 
-Set CPPD=Cpp
-
 @echo off
-Set utilityName=%1
-Set objDIR=tmp
-if not defined utilityName Set goto EOF
+cd "%MK%\Cpp\swordMK\windows\utilities"
+call "%MK%\Cpp\windows\Versions.bat"
 
-cd "%MK%\%CPPD%\swordMK\utilities"
-call "%MK%\%CPPD%\versions.bat"
-
-mkdir %objDIR%
-
-Set cFlags=/nologo /W0 /EHsc /O2^
- /I "%MK%\%CPPD%\%clucene%\src"^
- /I "%MK%\%CPPD%\swordMK\src\utilfuns\win32"^
- /I "%MK%\%CPPD%\%sword%\include"^
- /I "%MK%\%CPPD%\%sword%\include\internal\regex"^
- /FI "fileops.h"^
- /FI "redefs_sword.h"^
- /D "WIN32_LEAN_AND_MEAN" /D "USELUCENE" /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "XP_WIN" /D WIN32 /D "_WINDOWS" /D "_LIB" /D "XULSWORD_EXPORTS" /D "_AFXDLL" /D "REGEX_MALLOC" /Zm200 /Fo"%objDIR%/" /c
-
-if exist "%MK%\%CPPD%\swordMK\utilities\%utilityName%.cpp" (Set cFiles="%MK%\%CPPD%\swordMK\utilities\%utilityName%.cpp") else Set cFiles="%MK%\%CPPD%\%sword%\utilities\%utilityName%.cpp"
-Set cFiles=%cFiles%^
- "%MK%\%CPPD%\swordMK\src\utilfuns\win32\dirent.cpp"^
- "%MK%\%CPPD%\swordMK\src\utilfuns\win32\fileops.cpp"
-
-Set lFlags=libsword.lib libclucene.lib /libpath:"%MK%\%CPPD%\swordMK\lib\Release" /libpath:"%MK%\%CPPD%\cluceneMK\lib\Release" /nologo /SUBSYSTEM:CONSOLE /MACHINE:X86 /out:"bin\%utilityName%.exe"
-Set lFiles=%objDIR%\%utilityName%.obj^
- "%objDIR%\dirent.obj"^
- "%objDIR%\fileops.obj"
-
+:: Make sure our compiler environment is configured
 if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
 set INCLUDE=%INCLUDE%;%microsoftsdk%\Include
 set LIB=%LIB%;%microsoftsdk%\Lib
 
+Set utilityName=%1
+if not defined utilityName goto FINISH
+
+if exist .\Release rmdir /S /Q .\Release
+mkdir .\Release
+
+Set cFlags=/nologo /W0 /EHsc /O2^
+ /I "%MK%\Cpp\src\include"^
+ /I "%MK%\Cpp\src\windows"^
+ /I "%clucene%\src"^
+ /I "%sword%\include"^
+ /I "%sword%\include\internal\regex"^
+ /FI "fileops.h"^
+ /FI "windefs_sword.h"^
+ /D WIN32 /D "_WINDOWS" /D "USELUCENE" /D REGEX_MALLOC /D "WIN32_LEAN_AND_MEAN" /D "UNICODE" /D "_UNICODE" /D "_CRT_SECURE_NO_DEPRECATE" /D "XP_WIN" /D "_LIB" /D "_AFXDLL" /Zm200 /Fo".\Release\\" /c
+
+if exist "%MK%\Cpp\swordMK\windows\utilities\%utilityName%.cpp" (Set cFiles="%MK%\Cpp\swordMK\windows\utilities\%utilityName%.cpp") else Set cFiles="%sword%\utilities\%utilityName%.cpp"
+Set cFiles=%cFiles%^
+ "%MK%\Cpp\src\windows\dirent.cpp"^
+ "%MK%\Cpp\src\windows\fileops.cpp"^
+ "%MK%\Cpp\swordMK\swmodule.cpp"^
+ "%MK%\Cpp\swordMK\filemgr.cpp"
+
+Set lFlags=libsword.lib libclucene.lib /libpath:"%MK%\Cpp\swordMK\windows\lib\Release" /libpath:"%MK%\Cpp\cluceneMK\windows\lib\Release" /nologo /SUBSYSTEM:CONSOLE /MACHINE:X86 /out:".\bin\%utilityName%.exe"
+Set lFiles=^
+ ".\Release\%utilityName%.obj"^
+ ".\Release\dirent.obj"^
+ ".\Release\fileops.obj"^
+ ".\Release\swmodule.obj"^
+ ".\Release\filemgr.obj"
+
+if exist ".\bin\%utilityName%.exe" del ".\bin\%utilityName%.exe"
+
 echo on
 cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
+@echo off
 
-rmdir /S /Q %objDIR%
+echo.
+if exist ".\bin\%utilityName%.exe" (echo ----------- %utilityName%.exe SUCCESS!) else (echo ----------- %utilityName%.exe COMPILE FAILED...)
+echo.
 
-:EOF
-exit
+:FINISH
