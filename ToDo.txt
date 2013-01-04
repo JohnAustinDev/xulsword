@@ -1,5 +1,10 @@
 Version 3.5 release ToDos:
 
+Bugs to fix before release:
+Exception reporter isn't working
+Firefox 17 bug causes locale extension to fail: http://dxr.mozilla.org/mozilla-central/toolkit/mozapps/extensions/XPIProvider.jsm.html line 860
+Window's UI font size is HUGE- reduce it
+
 ON LINUX:
 DONE!: Look at multi-column Bible view chapter looping problem.
 
@@ -19,9 +24,9 @@ Do a thorough use-test of all program corners needed by IBT release.
 
 
 ON WINDOWS:
-Compile for Windows and update Windows installer. 
+DONE!: Compile for Windows and update Windows installer.
 
-Assemble new Windows-programs using FireFox-Portable instead of XulRunner
+WON'T DO: Assemble new Windows-programs using FireFox-Portable instead of XulRunner
 
 Do a thorough use-test of all program corners on Windows, including Windows-8. Especially test locale installation and uninstallation.
 

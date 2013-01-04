@@ -1,7 +1,5 @@
 Please report bugs, suggestions or comments to:
 gpl.programs.info@gmail.com 
-Source code:
-http://code.google.com/p/xulsword/source/checkout
 ----------------------------------------------------------------------------
 GNU General Public License
 Version 2, June 1991

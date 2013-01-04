@@ -154,6 +154,7 @@ BibleTexts = {
     var b = getLocaleBundle(l, "common/books.properties");
 
     var intro = (ch == 1 ? BibleTexts.getBookIntroduction(mod, bk):"");
+    if (intro && (intro.length < 10 || (/^\s*$/).test(intro))) intro = "";
     
     var lt = LibSword.getModuleInformation(mod, "NoticeLink");
     if (lt == NOTFOUND) lt = "";

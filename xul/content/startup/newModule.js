@@ -636,7 +636,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
       
       // this .jar or .manifest file will be copied to the extensions directory
       var localeName = entryFileName.match(/^([^\.]*)/)[1];
-      var localeDir = localeName + "_locale" + APPLICATIONID.replace(/^.*?(\@.*)$/, "$1");
+      var localeDir = localeName + ".locale" + APPLICATIONID.replace(/^.*?(\@.*)$/, "$1");
       var inflated = getSpecialDirectory("xsExtension");
       inflated.append(localeDir);
       
@@ -681,7 +681,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
         str +=   "    </em:targetApplication>" + NEWLINE;
         str +=     "</Description>" + NEWLINE;
         str +=   "</RDF>" + NEWLINE;
-        
+
         if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
         writeFile(file, str, true);
         
