@@ -19,8 +19,8 @@
 // IMPORTANT INFO ABOUT THIS FILE:
 // The functions in common0.js may be used even before the MainWindow has 
 // loaded. But NO FUNCTION IN THIS FILE may use LibSword or call another 
-// function which uses LibSword. Otherwise unhandled exceptions will 
-// arise! This file also assigns global constants and it should be loaded
+// function which uses LibSword. Otherwise there will be unhandled excep-
+// tions. This file also assigns global constants and it should be loaded
 // into every scope which uses any common Javascript code. Naturally, 
 // functions in this file must properly handle any exceptions which may
 // arise from unset MainWindow globals.
@@ -195,7 +195,6 @@ const Config = {
   TreeStyleRule:    { modConf:null, localeConf:null, CSS:null }
 };
 
-const NumBooks = 66;
 const NumOT = 39;
 const NumNT = 27;
 const NW = 3; // max number of text windows a single viewport supports
@@ -469,13 +468,14 @@ function getUnicodePref(prefName) {
 function setUnicodePref(prefName,prefValue) {
   var sString = Components.classes["@mozilla.org/supports-string;1"].createInstance(Components.interfaces.nsISupportsString);
   sString.data = prefValue;
-  prefs.setComplexValue(prefName,Components.interfaces.nsISupportsString,sString);
+  prefs.setComplexValue(prefName, Components.interfaces.nsISupportsString, sString);
 }
 
 // Reading a pref which does not exist causes an exception, so this
 // function (or else a try block) must be used the first time a user 
 // pref is accessed or created.
 function getPrefOrCreate(prefName, prefType, defaultValue) {
+  
   var prefVal;
   try {
     switch (prefType) {
@@ -513,6 +513,7 @@ function getPrefOrCreate(prefName, prefType, defaultValue) {
       break;
     }
   }
+
   return prefVal;
 }
 
@@ -700,9 +701,9 @@ function initCSS(adjustableFontSize) {
   // Create and append module and locale specific CSS rules to stylesheet
   createDynamicCssClasses("StyleRule");
   createDynamicCssClasses("TreeStyleRule");
-  
+
   setUserFontSize(getPrefOrCreate('FontSize', "Int", 0));
-  
+
   // Both XUL and HTML documents are given cs-Program class. Also, the  
   // chromedir attribute is added to each document's root element. The  
   // chromedir attribute can be used in CSS selectors to select according 
@@ -774,8 +775,10 @@ function createStyleRule(selector, config) {
 // The userFontSize class in all stylesheets is dynamically updated by this routine.
 var StartingFont = {};
 function setUserFontSize(delta) {
+  if (!document || !document.styleSheets || !document.styleSheets.length) return;
+  
   for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
-    for (var z=0; z<document.styleSheets[ssn].cssRules.length; z++) {
+    for (var z=0; document.styleSheets[ssn].cssRules && z<document.styleSheets[ssn].cssRules.length; z++) {
       var myRule = document.styleSheets[ssn].cssRules[z];
       if (myRule.cssText.search(".userFontSize") == -1) continue;
       if (!StartingFont["ssn" + ssn + "z" + z]) {
@@ -839,6 +842,28 @@ function getCSS(selector) {
   return null;
 }
 
+
+/************************************************************************
+ * MISC FUNCTIONS
+ ***********************************************************************/ 
+
+// Returns the number of a given short book name
+function findBookNum(bText) {
+  var retv=null;
+  for (var b=0; typeof(Book) != "undefined" && b < Book.length; b++)  {
+    if (Book[b].sName == bText) {retv = b;}
+  }
+  return retv;
+}
+
+// Returns the number of a given long book name
+function findBookNumL(bText) {
+  var retv=null;
+  for (var b=0; typeof(Book) != "undefined" && b < Book.length; b++)  {
+    if (Book[b].bNameL == bText) {retv = b;}
+  }
+  return retv;
+}
 
 function isProgramPortable() {
   var appInfo = prefs.getCharPref("BuildID");

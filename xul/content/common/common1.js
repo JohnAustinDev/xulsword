@@ -163,7 +163,7 @@ var BookNameCache = {};
 function compareAgainstLocales(inbook, exact, bookInfo) {
   for (var lc in LocaleConfigs) {
     var bundle = null;
-    for (var i=0; i<NumBooks; i++) {
+    for (var i=0; i<Book.length; i++) {
       var key = lc + "-" + Book[i].sName;
       if (!BookNameCache[key]) {
         if (!bundle) bundle = getLocaleBundle(lc, "common/books.properties");
@@ -287,23 +287,6 @@ function ref2ProgramLocaleText(reference, notHTML) {
 /************************************************************************
  * Some Bible Utility Functions
  ***********************************************************************/ 
-// Returns the number of a given short book name
-function findBookNum(bText) {
-  var retv=null;
-  for (var b=0; b < NumBooks; b++)  {
-    if (Book[b].sName == bText) {retv = b;}
-  }
-  return retv;
-}
-
-// Returns the number of a given long book name
-function findBookNumL(bText) {
-  var retv=null;
-  for (var b=0; b < NumBooks; b++)  {
-    if (Book[b].bNameL == bText) {retv = b;}
-  }
-  return retv;
-}
 
 function getModuleLongType(aModule) {
   if (aModule == ORIGINAL) return BIBLE;
@@ -320,17 +303,17 @@ function getShortTypeFromLong(longType) {
   return null;
 }
 
-// Find "original" version name corresponding to book's short name "bsName"
+// Find "original" version name corresponding to book's short name
 function resolveOriginalVersion(bookShortName) {
   var bnum = (bookShortName ? findBookNum(bookShortName):0);
   if (bnum>=0 && bnum<NumOT) {return Tab.ORIG_OT ? Tab.ORIG_OT.modName:null;}
-  else if (bnum < NumBooks)  {return Tab.ORIG_NT ? Tab.ORIG_NT.modName:null;}
+  else if (bnum < Book.length)  {return Tab.ORIG_NT ? Tab.ORIG_NT.modName:null;}
   else return null;
 }
 
 // Returns an array containing available books (shortName) for version
-// Cash available books for speedup...
-// This currently does nothing for commentaries, all books are said to be available.
+// Cache available books for speedup...
+// This currently does nothing for commentaries- all books are said to be available.
 var AvailableBooks = {};
 function getAvailableBooks(version) {
   if (AvailableBooks[version]) return AvailableBooks[version];

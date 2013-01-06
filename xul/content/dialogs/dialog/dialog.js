@@ -16,7 +16,6 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 var RetVal = window.arguments[0];
 var Title = window.arguments[1];
 var Text = window.arguments[2];
@@ -27,20 +26,24 @@ var TextBoxText = (window.arguments[6] ? window.arguments[6]:null);
 var Checkbox, Textbox;
 
 function accept() {
-  RetVal.ok=true; 
-  if (CheckBoxText) RetVal.checked=Checkbox.checked;
+  RetVal.ok = true; 
+  if (CheckBoxText) RetVal.checked = Checkbox.checked;
   if (TextBoxText && Textbox.value) RetVal.value = Textbox.value;
   return true;
 }
-function cancel() {RetVal.ok=false; if (CheckBoxText) RetVal.checked=Checkbox.checked; return true;}
-function Unload() {}
 
-function Load() {
+function cancel() {
+  RetVal.ok = false; 
+  if (CheckBoxText) RetVal.checked = Checkbox.checked; 
+  return true;
+}
+
+function loadDialog() {
   AllWindows.push(window);
   document.title = fixWindowTitle(Title);
-  
-  RetVal.ok=false;
-  RetVal.checked=null;
+
+  RetVal.ok = false;
+  RetVal.checked = null;
   Checkbox = document.getElementById("checkbox");
   Textbox = document.getElementById("textbox");
 
@@ -59,7 +62,7 @@ function Load() {
     cancelLabel = getDataUI("dialog.No");
     break;
   }
-  
+ 
   var imgSrc;
   switch (Type) {
   case DLGALERT:
@@ -72,7 +75,7 @@ function Load() {
     imgSrc = "chrome://xulsword/skin/images/information-32.png";
     break;      
   }
-  
+   
   var parent = document.getElementById("text");
   while (Text) {
     var firstNL = Text.indexOf("\n");
@@ -85,11 +88,13 @@ function Load() {
       aLine = Text.substring(0,firstNL);
       Text = Text.substring(firstNL+1);
     }
+    
     var newElem = document.createElement("label");
     newElem.setAttribute("value", aLine);
     newElem.setAttribute("style", "margin-top:-1px; margin-bottom:-1px;");
     parent.appendChild(newElem);
   }
+
   document.getElementById("icon").setAttribute("src", imgSrc);
   document.getElementById("dlg").getButton("accept").setAttribute("label", acceptLabel);
   document.getElementById("dlg").getButton("cancel").setAttribute("label", cancelLabel);
@@ -103,9 +108,7 @@ function Load() {
     Textbox.setAttribute("hidden", "false");
     Textbox.setAttribute("label", TextBoxText);
   }
-  
-  var height = document.getElementById("whole").boxObject.height;
-  var width = document.getElementById("whole").boxObject.width;
 
-  window.setTimeout("sizeToContent()", 0);
+  // this causes strange exceptions when run at the top of loadDialog (why??)
+  initCSS();
 }

@@ -29,7 +29,6 @@ ProgramConfig = {};
 Tabs = [];
 Tab = {};
 SpecialModules = {DailyDevotion:{}, LanguageStudy:{}};
-Book = new Array(NumBooks);
 AllWindows = []; // this is needed by viewport...
 
 
@@ -313,59 +312,6 @@ function getConfFiles(dir, aObj) {
     }
   }
 }
-  
-
-/************************************************************************
- * INITIALIZE LOCALE BOOK NAMES
- ***********************************************************************/ 
-function initBooks() {
-
-  var allBooks = ["Gen", "Exod", "Lev", "Num", "Deut", "Josh", "Judg", 
-      "Ruth", "1Sam", "2Sam", "1Kgs", "2Kgs", "1Chr", "2Chr", "Ezra", 
-      "Neh", "Esth", "Job", "Ps", "Prov", "Eccl", "Song", "Isa", "Jer", 
-      "Lam", "Ezek", "Dan", "Hos", "Joel", "Amos", "Obad", "Jonah", "Mic", 
-      "Nah", "Hab", "Zeph", "Hag", "Zech", "Mal", "Matt", "Mark", "Luke", 
-      "John", "Acts", "Jas", "1Pet", "2Pet", "1John", "2John", "3John", 
-      "Jude", "Rom", "1Cor", "2Cor", "Gal", "Eph", "Phil", "Col", "1Thess", 
-      "2Thess", "1Tim", "2Tim", "Titus", "Phlm", "Heb", "Rev"];
-      
-  var b = getCurrentLocaleBundle("common/books.properties");
-  
-  for (var i=0; i < NumBooks; i++) {
-    Book[i] = new Object();
-    Book[i].sName  = "";
-    Book[i].bName  = "";
-    Book[i].bNameL = "";
-  }
-
-  for (i=0; i < NumBooks; i++) {
-  
-    // implement book order from xulsword locale
-    var x = Number(b.GetStringFromName(allBooks[i] + "i"));
-    
-    Book[x].sName = allBooks[i];
-    
-    var localName = b.GetStringFromName(Book[x].sName);
-    Book[x].bName  = localName;
-    Book[x].bNameL = localName;
-    
-  }
-  
-  // Search locale for long books names, and save them
-  var strings = b.getSimpleEnumeration();
-  while (strings.hasMoreElements()) {
-    var s = strings.getNext();
-    s = s.QueryInterface(Components.interfaces.nsIPropertyElement);
-    var isLong = s.key.match(/Long(.*?)\s*$/);
-    if (!isLong) continue;
-    
-    var bookNum = findBookNum(isLong[1]);
-    if (bookNum == null) continue;
-    
-    Book[bookNum].bNameL = b.GetStringFromName(s.key);
-  }
-  
-}
 
 
 /************************************************************************
@@ -399,13 +345,6 @@ function xulswordInit() {
  
   if (initModules()) {
   
-    // log our modules
-    /*
-    var s = "";
-    for (var m in ModuleConfigs) {s += m + "; ";}
-    jsdump("Loaded modules:" + s);
-    */
-    
     initTabGlobals();
 
     // Assign default Bible from first Bible tab
@@ -416,8 +355,6 @@ function xulswordInit() {
   }
   
   prefs.setCharPref("DefaultVersion", defaultMod);
-  
-  initBooks();
 
   if (!LibSword.loadFailed) LibSword.unlock();
   

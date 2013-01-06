@@ -507,7 +507,7 @@ function ViewPortObj(viewPortObj) {
     var lbn = findBookNum(Location.getBookName());
     if (!skipBibleChooserTest) document.getElementById("biblechooser").setAttribute("showing", (lbn >= NumOT ? "nt":"ot"));
 
-    for (var b=0; b<NumBooks; b++) {
+    for (var b=0; b<Book.length; b++) {
       var chel = document.getElementById("book_" + b);
       if (chel) chel.setAttribute("selected", (b==lbn ? "true":"false"));
     }
@@ -568,7 +568,7 @@ function ViewPortObj(viewPortObj) {
 
   this.disableMissingBooks = function(hide) {
     var books = getAvailableBooks(this.firstDisplayBible());
-    for (var b=0; b<NumBooks; b++) {
+    for (var b=0; b<Book.length; b++) {
       var have = false;
       for (var a=0; books && a<books.length; a++) {
         if (books[a] == Book[b].sName) {have=true; break;}
