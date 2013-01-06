@@ -126,6 +126,9 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/xulswordInit.js"/>
 <script>xulswordInit();</script> <!-- init must be done before viewport iframe loads !-->
 
+<script type="application/x-javascript" src="chrome://xulsword/content/bibleBooks.js"/>
+<script>Book = getBibleBooks();</script>
+
 <!-- <script type="application/x-javascript" src="chrome://xulsword/content/test/xulswordTest.js"/> !-->
 
 <!-- HOT KEY DEFINITIONS !-->

@@ -1124,11 +1124,12 @@ function decodeAudioFileName(path) {
     ret.dir =       path[1];
     ret.basecode =  path[2];
     ret.book =      path[3];
+    if (isNaN(Number(path[4]))) {jsdump("A: Bad chapter \"" + path[4] + "\""); return null;}
     ret.chapter =   padChapterNum(path[4]);
     ret.ext =       path[5];
     for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(AUDEXT[e], "i")!=-1) break;}
     if (e==AUDEXT.length) {jsdump("A: Bad audio ext:" + ret.ext); return null;}
-    if (!validateChapter(ret.book, ret.chapter)) {jsdump("A: Bad book/chapter:" + ret.book + ", " + ret.chapter); return null;}
+    if (findBookNum(ret.book) === null) {jsdump("A: Bad book \"" + ret.book + "\""); return null;}
     return ret;
   }
   
@@ -1148,11 +1149,12 @@ function decodeAudioFileName(path) {
     if (!bkinfo || !bkinfo.shortName) {jsdump("B: Could not identify book:" + path[3]); return null;}
     ret.book = bkinfo.shortName;
     ret.locale = (inloc ? inloc:bkinfo.locale);
+    if (isNaN(Number(path[4]))) {jsdump("B: Bad chapter \"" + path[4] + "\""); return null;}
     ret.chapter =   padChapterNum(path[4]);
     ret.ext =       path[5];
     for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(AUDEXT[e], "i")!=-1) break;}
     if (e==AUDEXT.length) {jsdump("B: Bad audio ext:" + ret.ext); return null;}
-    if (!validateChapter(ret.book, ret.chapter)) {jsdump("B: Bad book/chapter:" + ret.book + ", " + ret.chapter); return null;}
+    if (findBookNum(ret.book) === null) {jsdump("B: Bad book \"" + ret.book + "\""); return null;}
     return ret;  
   }
   
@@ -1163,88 +1165,17 @@ function decodeAudioFileName(path) {
     ret.dir =       path[1];
     ret.basecode =  path[2];
     ret.book =      path[3];
+    if (isNaN(Number(path[4]))) {jsdump("C: Bad chapter \"" + path[4] + "\""); return null;}
     ret.chapter =   padChapterNum(path[4]);
     ret.ext =       path[5];
     for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(AUDEXT[e], "i")!=-1) break;}
     if (e==AUDEXT.length) {jsdump("C: Bad audio ext:" + ret.ext); return null;}
-    if (!validateChapter(ret.book, ret.chapter)) {jsdump("C: Bad book/chapter:" + ret.book + ", " + ret.chapter); return null;}
+    if (findBookNum(ret.book) === null) {jsdump("C: Bad book \"" + ret.book + "\""); return null;}
     return ret;  
   }
   
   jsdump("Audio path did not match any pattern:" + savepath);
   return null;
-}
-
-function validateChapter(book, chapter) {
-  var maxchaps = {};
-	maxchaps.xGen = 50;
-	maxchaps.xExod = 40;
-	maxchaps.xLev = 27;
-	maxchaps.xNum = 36;
-	maxchaps.xDeut = 34;
-	maxchaps.xJosh = 24;
-	maxchaps.xJudg = 21;
-	maxchaps.xRuth = 4;
-	maxchaps.x1Sam = 31;
-	maxchaps.x2Sam = 24;
-	maxchaps.x1Kgs = 22;
-	maxchaps.x2Kgs = 25;
-	maxchaps.x1Chr = 29;
-	maxchaps.x2Chr = 36;
-	maxchaps.xEzra = 10;
-	maxchaps.xNeh = 13;
-	maxchaps.xEsth = 10;
-	maxchaps.xJob = 42;
-	maxchaps.xPs = 150;
-	maxchaps.xProv = 31;
-	maxchaps.xEccl = 12;
-	maxchaps.xSong = 8;
-	maxchaps.xIsa = 66;
-	maxchaps.xJer = 52;
-	maxchaps.xLam = 5;
-	maxchaps.xEzek = 48;
-	maxchaps.xDan = 12;
-	maxchaps.xHos = 14;
-	maxchaps.xJoel = 3;
-	maxchaps.xAmos = 9;
-	maxchaps.xObad = 1;
-	maxchaps.xJonah = 4;
-	maxchaps.xMic = 7;
-	maxchaps.xNah = 3;
-	maxchaps.xHab = 3;
-	maxchaps.xZeph = 3;
-	maxchaps.xHag = 2;
-	maxchaps.xZech = 14;
-	maxchaps.xMal = 4;
-	maxchaps.xMatt = 28;
-	maxchaps.xMark = 16;
-	maxchaps.xLuke = 24;
-	maxchaps.xJohn = 21;
-	maxchaps.xActs = 28;
-	maxchaps.xJas = 5;
-	maxchaps.x1Pet = 5;
-	maxchaps.x2Pet = 3;
-	maxchaps.x1John = 5;
-	maxchaps.x2John = 1;
-	maxchaps.x3John = 1;
-	maxchaps.xJude = 1;
-	maxchaps.xRom = 16;
-	maxchaps.x1Cor = 16;
-	maxchaps.x2Cor = 13;
-	maxchaps.xGal = 6;
-	maxchaps.xEph = 6;
-	maxchaps.xPhil = 4;
-	maxchaps.xCol = 4;
-	maxchaps.x1Thess = 5;
-	maxchaps.x2Thess = 3;
-	maxchaps.x1Tim = 6;
-	maxchaps.x2Tim = 4;
-	maxchaps.xTitus = 3;
-	maxchaps.xPhlm = 1;
-	maxchaps.xHeb = 13;
-	maxchaps.xRev = 22;
-
-  return !(!maxchaps["x" + book] || maxchaps["x" + book] < chapter);
 }
 
 function padChapterNum(ch) {

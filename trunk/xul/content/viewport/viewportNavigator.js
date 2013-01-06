@@ -24,7 +24,7 @@
 
 function drawOTbooks() {for (var b=0; b<=NumOT-1; b++) {drawBook(b);}}
 
-function drawNTbooks() {for (var b=NumOT; b<=NumBooks-1; b++) {drawBook(b);}}
+function drawNTbooks() {for (var b=NumOT; b<=Book.length-1; b++) {drawBook(b);}}
 
 function drawBook(b) {
   document.write("<div id=\"book_" + b + "\" class=\"bookname\">");

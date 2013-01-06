@@ -38,7 +38,7 @@
     var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
         .getService(Components.interfaces.nsIWindowWatcher);
     var MainWindow = watcher.getWindowByName("xulsword-window", window);
-    var AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs;
+    var AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs, Book;
   </script>
   
   <script>XSBundle = document.getElementById("strings"); AllWindows = [];</script>
@@ -53,6 +53,9 @@
   
   <script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
   <script>AudioDirs = getAudioDirs();</script>
+  
+  <script type="application/x-javascript" src="chrome://xulsword/content/bibleBooks.js"/>
+  <script>Book = getBibleBooks();</script>
   
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
   

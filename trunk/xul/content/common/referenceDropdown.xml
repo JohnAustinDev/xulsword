@@ -82,7 +82,7 @@
         this._prebook = this._defbook;  // Used during "esc" on book textbox, or when text box input is not an allowable reference
         
         // All books are on list
-        for (var b=0; b<NumBooks; b++) {this.bookmenulist.appendItem(Book[b].bNameL, Book[b].sName);}
+        for (var b=0; b<Book.length; b++) {this.bookmenulist.appendItem(Book[b].bNameL, Book[b].sName);}
         
         // Only one chapter, verse, lastVerse for speed (one is needed so that xxx.1.1.1 will work as default!)
         this.addMenuItems(this.chaptermenulist, 1, 1);
@@ -539,7 +539,7 @@
           var found=false;
           var cnt=0;
           this._finishedAutoComplete=false;
-          for (var b=0; b<NumBooks; b++) {
+          for (var b=0; b<Book.length; b++) {
             var tv = this._saveTextBoxValue.toLowerCase();
             var ms = Book[b].bName.substr(0,this._saveTextBoxValue.length).toLowerCase();
             var ml = Book[b].bNameL.substr(0,this._saveTextBoxValue.length).toLowerCase();

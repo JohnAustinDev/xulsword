@@ -69,6 +69,7 @@ if ($MakeDevelopment =~ /true/i) {
   }
   # Set our startup location...
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
+  $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
   &writePreferences("$DEVELOPMENT/xulsword", \%Prefs, 1);
   &writeApplicationINI("$DEVELOPMENT/xulsword");
   &includeModules($RESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
@@ -90,7 +91,7 @@ if ($MakeFFextension =~ /true/i) {
   push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/startup/extension-overlay.xul");
   &copyXulswordFiles($FFEXTENSION, \@manifest, $IncludeLocales, 0, 1);
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = ""; # undo any previous setting
-  $Prefs{"(prefs.js):xulsword.DontShowExceptionDialog"} = "true";
+  $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "true";
   $Prefs{"(language.js):general.useragent.locale"} = ""; # can't overwrite the Firefox setting
   &writePreferences($FFEXTENSION, \%Prefs);
   &includeModules("$FFEXTENSION/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
@@ -121,6 +122,7 @@ if ($MakePortable =~ /true/i) {
   &copyFirefoxFiles("$PORTABLE/$Name/xulrunner");
   # Set our startup location...
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
+  $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
   &writePreferences("$PORTABLE/$Name/xulsword", \%Prefs);
   &writeApplicationINI("$PORTABLE/$Name/xulsword");
   &compileWindowsStartup($PORTABLE, 1);
@@ -158,6 +160,7 @@ if ($MakeSetup =~ /true/i) {
   &copyFirefoxFiles("$INSTALLER/xulrunner");
   # Set our startup location...
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
+  $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
   &writePreferences("$INSTALLER/xulsword", \%Prefs);
   &writeApplicationINI("$INSTALLER/xulsword");
   &compileWindowsStartup($INSTALLER, 0);

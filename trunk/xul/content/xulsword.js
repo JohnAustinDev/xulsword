@@ -827,7 +827,7 @@ var XulswordController = {
     case "cmd_xs_nextBook":
       var bkn = findBookNum(CommandTarget.bk);
       bkn++;
-      if (bkn >= NumBooks) return;
+      if (bkn >= Book.length) return;
       Location.setLocation(prefs.getCharPref("DefaultVersion"), Book[bkn].sName + ".1.1.1");
       Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
       break;

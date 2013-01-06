@@ -297,4 +297,4 @@
 [dialog-window.ok]: OK
 [dialog-window.yes]: Yes
 [error-reporter.dont_show_this_again]: Do not show me this dialog box again.
-[error-reporter.error_detection_message]: A problem may have been detected. To report this problem press \"%1$S\".
+[error-reporter.error_detection_message]: A problem may have been detected.\nTo report this problem press \"%1$S\".
