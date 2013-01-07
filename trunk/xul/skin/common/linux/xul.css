@@ -1,15 +1,9 @@
 /* GROUPBOX STYLING */
 groupbox {
-  background:white;
   border:1px solid rgb(200,200,200);
-  border-radius:8px;
+  border-radius:4px;
 }
 
 groupbox caption {
-  background:white;
-  border-top:1px solid rgb(200,200,200);
-  border-top-left-radius:5px;
-  border-top-right-radius:5px;
-  border-bottom-right-radius:5px;
-  padding:2px 6px 2px 6px;
+  background:-moz-Dialog;
 }
