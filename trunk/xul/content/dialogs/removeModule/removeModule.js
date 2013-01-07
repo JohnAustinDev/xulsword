@@ -105,12 +105,13 @@ function onLoad() {
   
   // Place LOCALES checkboxes
   if (checkBoxes.length) {
+    document.getElementById("locgroup").removeAttribute("hidden");
+    document.getElementById("locgroup-spacer").removeAttribute("hidden");
     checkBoxes.sort(MainWindow.localeElemSort);
     for (var c=0; c<checkBoxes.length; c++) {
       document.getElementById("locales").appendChild(checkBoxes[c]);
     }
   }
-  else document.getElementById("locgroup").setAttribute("hidden", "true");
   
   // Create AUDIO checkboxes
   var checkBoxes = [];
@@ -131,6 +132,8 @@ function onLoad() {
   
   // Place AUDIO checkboxes
   if (checkBoxes.length) {
+    document.getElementById("audgroup").removeAttribute("hidden");
+    document.getElementById("audgroup-spacer").removeAttribute("hidden");
     checkBoxes.sort(MainWindow.localeElemSort);
     for (var c=0; c<checkBoxes.length; c++) {
 
@@ -155,9 +158,14 @@ function onLoad() {
       document.getElementById("audio").appendChild(checkBoxes[c]);
     }
   }
-  else document.getElementById("audgroup").setAttribute("hidden", "true");
   
   disableBibleIfLast();
+  
+  window.setTimeout(function() {
+    var w = document.getElementById("checkboxes").offsetWidth;
+    window.innerWidth = Number(w + 20) + "px";
+  }, 1);
+  
 }
 
 function deleteCheckedResources(e) {

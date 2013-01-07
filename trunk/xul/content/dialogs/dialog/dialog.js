@@ -110,5 +110,5 @@ function loadDialog() {
   }
 
   // this causes strange exceptions when run at the top of loadDialog (why??)
-  initCSS();
+  window.setTimeout(function() {initCSS(); window.sizeToContent();}, 1);
 }

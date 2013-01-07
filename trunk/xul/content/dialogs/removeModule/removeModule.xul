@@ -29,7 +29,7 @@
   id="removeModule"
   onload="onLoad();"
   title="&menu.removeModule.label;"
-  persist="screenX screenY"
+  persist="screenX screenY width height"
   screenX="24" screenY="24">
 
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
@@ -48,24 +48,34 @@
   <data id="ui.menu.removeModule.label">&menu.removeModule.label;</data>
   <data id="ui.deleteconfirm.title">&deleteconfirm.title;</data>
 
-  <vbox id="body">
+  <vbox id="body" flex="1">
     
-    <hbox id="checkboxes" flex="1">
-      
-      <groupbox id="modgroup" flex="1" >
+    <hbox id="checkboxes" flex="1" align="start">
+
+      <hbox>
+      <groupbox id="modgroup">
         <caption label="&deleteModules.label;:" />
         <vbox flex="1" id="modules"></vbox>
       </groupbox>
+      </hbox>
       
-      <groupbox id="locgroup">
+      <spacer id="locgroup-spacer" hidden="true"/>
+      
+      <hbox>
+      <groupbox id="locgroup" hidden="true">
         <caption label="&deleteLocales.label;:" />
         <vbox flex="1" id="locales"></vbox>
       </groupbox>
+      </hbox>
       
-      <groupbox id="audgroup">
+      <spacer id="audgroup-spacer" hidden="true"/>
+      
+      <hbox>
+      <groupbox id="audgroup" hidden="true">
         <caption label="&deleteAudio.label;:" />
         <vbox flex="1" id="audio"></vbox>
       </groupbox>
+      </hbox>
       
     </hbox>
     

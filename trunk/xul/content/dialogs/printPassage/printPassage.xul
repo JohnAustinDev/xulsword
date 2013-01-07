@@ -19,6 +19,7 @@
 !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/dialogs/printPassage/printPassage-xul.css" type="text/css"?>
 
 <!DOCTYPE window SYSTEM "chrome://xulsword/locale/dialogs/printPassage/printPassage.dtd">
 
@@ -36,29 +37,27 @@
   
   <vbox flex="1">
   
-    <groupbox>
+    <groupbox id="from-input">
       <caption label="&frompageInput.label;"/>
-      <hbox pack="start" style="-moz-padding-start:20px;">
-        <reference-dropdown id="from-dropdown" 
+      <hbox pack="start">
+        <reference-dropdown id="from-dropdown"
             onlybibles="true" 
             onlyavailablebooks="true" 
             hidelastverse="true" 
-            hideverse="true" 
-            style="width:400px;" />
+            hideverse="true"/>
       </hbox>
     </groupbox>
   
     <groupbox id="to-input">
       <caption label="&topageInput.label;" />
-      <vbox align="start" style="-moz-padding-start:20px;">
+      <hbox align="start">
         <reference-dropdown id="to-dropdown" 
             onlybibles="true" 
             onlyavailablebooks="true" 
             hidelastverse="true" 
             hideverse="true" 
-            hideversion="true" 
-            style="width:400px;" />
-      </vbox>
+            hideversion="true"/>
+      </hbox>
     </groupbox>
     
   </vbox>
@@ -88,7 +87,7 @@
               oncommand="{this.nextSibling.checked=false; this.nextSibling.disabled=!this.checked;}"/>
           <checkbox persist="checked" id="crossreftext" label="&crossrefs.with.text;"/> 
         </column>
-        <column style="border:1px solid rgb(150,150,150); border-radius:6px;" hidden="true">
+        <column id="hebrewOptions" hidden="true">
           <hbox pack="center" align="end" flex="1"><label value="&menu.options.hebrew;" /></hbox>
           <checkbox persist="checked" id="cmd_xs_toggleHebrewVowelPoints" label="&menu.options.hebVowel;" />
           <checkbox persist="checked" id="cmd_xs_toggleHebrewCantillation" label="&menu.options.hebCant;" />

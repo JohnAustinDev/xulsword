@@ -1271,7 +1271,7 @@ function removeModuleContents(aConfFile) {
   try {prefs.clearUserPref("CipherKey" + modName);} catch (er) {}
   
   var aMod = getSwordModParent(aConfFile, true);
-  if (!aMod || !aMod.file) {
+  if (!aMod.file) {
     jsdump("Possible problem with DataPath in conf: " + aConfFile.path);
     return {modName:null, success:false};
   }
@@ -1296,14 +1296,26 @@ jsdump("NO CLEAN REMOVE");
 
 function getSwordModParent(aConfFile, willDelete) {
   var pathFromConf = readParamFromConf(aConfFile, "DataPath");
-  if (!pathFromConf) return {pathFromConf:null, file:null};
+  if (!pathFromConf) {
+    jsdump("Could not read DataPath from:" + aConfFile.path);
+    return {pathFromConf:null, file:null};
+  }
   
   pathFromConf = pathFromConf.replace("\\", "/", "g").replace(/(^\s*\.\/|\s*$)/, "", "g");
   var realdir = cleanDataPathDir(pathFromConf);
-  if (!realdir) return {pathFromConf:pathFromConf, file:null};
-  var modulePath = aConfFile.path.substring(0, aConfFile.path.lastIndexOf("/" + MODSD)+1) + realdir;
+  if (!realdir) {
+    jsdump("Could not get real path from:" + pathFromConf);
+    return {pathFromConf:pathFromConf, file:null};
+  }
+  
+  var modulePath = aConfFile.path.substring(0, aConfFile.path.lastIndexOf(MODSD)+1) + realdir;
   var aMod = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  try {aMod.initWithPath(lpath(modulePath));} catch (er) {return {pathFromConf:pathFromConf, file:null};}
+  try {aMod.initWithPath(lpath(modulePath));}
+  catch (er) {
+    jsdump("Could not initWithPath:" + modulePath);
+    return {pathFromConf:pathFromConf, file:null};
+  }
+  
   return {pathFromConf:pathFromConf, file:aMod};
 }
     

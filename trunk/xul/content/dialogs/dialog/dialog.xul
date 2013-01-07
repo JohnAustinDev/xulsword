@@ -23,7 +23,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
 
 <dialog id="dlg" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"
-        onload="window.setTimeout('initCSS();', 1); loadDialog();"
+        onload="loadDialog();"
         buttons="accept,cancel"
         ondialogaccept="accept();"
         ondialogcancel="cancel();">

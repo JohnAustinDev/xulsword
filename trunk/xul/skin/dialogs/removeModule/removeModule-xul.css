@@ -1,25 +1,38 @@
 #body {
   font-size:0.9em;
+  background-image: url(chrome://xulsword/skin/images/b2.gif);
+  padding:10px;
+}
+#checkboxes > hbox {
+  height:500px;
+  background-color:-moz-Dialog;
+  color:-moz-DialogText;
+  border-radius:4px;
+}
+#checkboxes > spacer {
+  width:10px;
 }
 #modules {
-  width:500px;
-  height:500px;
+  min-width:200px;
+  max-width:400px;
   overflow:auto;
 }
 #locales, #audio {
-  min-width:160px;
-  max-width:260px;
-  height:500px;
+  min-width:100px;
+  max-width:200px;
   overflow:auto;
 }
 .module-heading {
   font-weight:bold;
   margin-top:20px;
 }
+.module-heading:nth-child(1) {
+  margin-top:0px;
+}
 #modules checkbox {
   -moz-margin-end:-5px;
 }
-#modgroup checkbox .checkbox-label-box {
+#modgroup .checkbox-label-box {
   /* modgroup uses separate labels (not the checkbox's) so that each
   label can be localized according to its script etc. without
   effecting label orientation (which should be cs-Program). */
@@ -28,9 +41,12 @@
 hbox.module-container > hbox {
   width:16px;
 }
-hbox.module-container image {
+hbox.module-container > hbox > image {
   list-style-image: url("chrome://xulsword/skin/images/shared.png");
 }
-hbox.module-container[isLocalModule="true"] image {
+hbox.module-container[isLocalModule="true"] > hbox > image {
   visibility:hidden;
+}
+.dialogbuttons {
+  margin-bottom:0px;
 }

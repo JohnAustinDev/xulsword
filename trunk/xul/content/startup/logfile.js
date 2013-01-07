@@ -42,7 +42,7 @@ var aConsoleListener =
       return;
     }
     
-    //this.skipExceptions = true;
+    this.skipExceptions = true;
    
     // BUILD REPORT FILE
     var file = "";
