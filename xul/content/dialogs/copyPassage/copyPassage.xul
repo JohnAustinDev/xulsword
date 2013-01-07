@@ -19,6 +19,7 @@
 !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/dialogs/copyPassage/copyPassage-xul.css" type="text/css"?>
 
 <!DOCTYPE window SYSTEM "chrome://xulsword/locale/dialogs/copyPassage/copyPassage.dtd">
 
@@ -44,17 +45,17 @@
       <reference-dropdown id="passage" flex="1" onlybibles="true" onlyavailablebooks="true" />
     </vbox>
   </groupbox>
-  
-  <iframe flex="1" id="chaptertext" style="height:1px; visibility:hidden;"/>
+
+  <iframe flex="1" id="chaptertext"/>
     
-  <hbox style="margin-bottom:10px;">
+  <hbox id="options">
                     
-    <groupbox>
+    <groupbox id="includes">
       <caption label="&term.include;:" />
       <grid>
         
         <rows>
-          <row style="margin-bottom:5px;"/>
+          <row />
           <row />
         </rows>
   

@@ -69,13 +69,18 @@ function loadedXUL2() {
       resetSearchIndex(NewModuleInfo.NewModules[m]);
     }
 
+    NewModuleInfo.NewModules = NewModuleInfo.NewModules.sort(
+    function(a,b) {
+      var order = [BIBLE, COMMENTARY, DICTIONARY, GENBOOK];
+      return order.indexOf(Tab[a].modType) > order.indexOf(Tab[b].modType);
+    });
+    
     var w=1;
     for (var m=0; m<NewModuleInfo.NewModules.length; m++) {
       Tab[NewModuleInfo.NewModules[m]]["w" + w + ".hidden"] = false;
-      while (w <= ViewPort.NumDisplayedWindows) {
+      if (w <= ViewPort.NumDisplayedWindows) {
         ViewPort.Module[w] = NewModuleInfo.NewModules[m];
         w++;
-        if (Tab[NewModuleInfo.NewModules[m]].modType != BIBLE) break;
       }
     }
       
@@ -1062,6 +1067,7 @@ function handleOptions(elem) {
             
         var iframe = AllWindows[i].document.getElementsByTagName("iframe");
         for (var j=0; j<iframe.length; j++) {
+          if (typeof(iframe[j].contentDocument) == "undefined") continue;
           if (typeof(iframe[j].contentDocument.defaultView.setUserFontSize) != "undefined") {
             iframe[j].contentDocument.defaultView.setUserFontSize(prefs.getIntPref('FontSize'));
           }

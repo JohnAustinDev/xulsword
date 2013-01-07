@@ -123,12 +123,12 @@ reference-dropdown menulist menupopup {
 }
 
 /* GROUPBOX GLOBAL */
-groupbox {
-  margin:16px;
+.groupbox-title {
+  margin-bottom:4px;
+  font-weight:bold;
 }
-
-groupbox > * {
-  margin:0px 4px 4px 4px;
+groupbox {
+  margin:-6px 0px 0px 0px;
 }
 
 /* MENU ICONS (hidden by default on Linux so make visible always) */
