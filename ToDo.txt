@@ -1,7 +1,7 @@
 Version 3.5 release ToDos:
 
 Bugs to fix before release:
-Exception reporter isn't working
+DONE!: Exception reporter isn't working
 WON'T DO (to many complcations): Use SWORD Locale for book list and book names, rather than internal list
 DONE!: Print feature prints blank page
 DONE! (caused by removal of XR dlls!): Firefox 17 bug causes locale extension to fail: http://dxr.mozilla.org/mozilla-central/toolkit/mozapps/extensions/XPIProvider.jsm.html line 860
