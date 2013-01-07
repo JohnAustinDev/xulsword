@@ -3,6 +3,12 @@ groupbox {
   border:1px solid rgb(200,200,200);
   border-radius:4px;
 }
+groupbox > hbox,
+groupbox > vbox,
+groupbox > grid {
+  margin-bottom:10px;
+  -moz-margin-end:10px;
+}
 
 groupbox caption {
   background:-moz-Dialog;

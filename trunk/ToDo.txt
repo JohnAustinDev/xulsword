@@ -36,3 +36,7 @@ Upload MK 3.5 to IBT along with modules having udpated UIs.
 
 Update the xulsword website with version 3.5 changes in mind.
 
+FIXES FOR LATER:
+Linux and Windows builds should include swordMK .cpp files the same way.
+Linux static library script needs to handle security based on ./configure
+
