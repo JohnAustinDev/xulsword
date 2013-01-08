@@ -103,7 +103,7 @@ function handler_handle(cmdLine)
 {
     var prefs = Components.classes["@mozilla.org/preferences-service;1"].
                     getService(Components.interfaces.nsIPrefService);
-    prefs = prefs.getBranch("xulsword.");
+    prefs = prefs.getBranch("extensions.xulsword.");
 
     saveFileArgs("xsModule", cmdLine, prefs);
     saveFileArgs("xsBookmark", cmdLine, prefs);

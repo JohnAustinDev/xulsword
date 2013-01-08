@@ -75,18 +75,20 @@
         
         // Check column search prefs and create if necessary
         var hasbmview = true;
+        prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                    getService(Components.interfaces.nsIPrefService);
+        prefs = prefs.getBranch("extensions.xulsword.");
+
         try {var mycolumns = document.getElementById("bookmarks-view").columns;} catch (er) {hasbmview = false;}
         if (hasbmview) {
-          var myprefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-          myprefs = myprefs.getBranch("xulsword.");
           for (i = 0; i < mycolumns.length; ++i) {
-            try {var test = myprefs.getBoolPref("searchFlag-" + mycolumns[i].resource);} 
+            try {var test = prefs.getBoolPref("searchFlag-" + mycolumns[i].resource);}
             catch (er) {
               var searchableDef = mycolumns[i].resource.substring(4) == BM.gBmProperties[NAME].ValueUTF8 ||
                                   mycolumns[i].resource.substring(4) == BM.gBmProperties[NOTE].ValueUTF8 ||
                                   mycolumns[i].resource.substring(4) == BM.gBmProperties[LOCATION].ValueUTF8 ||
                                   mycolumns[i].resource.substring(4) == BM.gBmProperties[BMTEXT].ValueUTF8;
-              myprefs.setBoolPref("searchFlag-" + mycolumns[i].resource, searchableDef);
+              prefs.setBoolPref("searchFlag-" + mycolumns[i].resource, searchableDef);
             } 
           }
         }
@@ -177,17 +179,15 @@
       <method name="refreshSort">
         <body>
         <![CDATA[
-          const kPrefSvcContractID = "@mozilla.org/preferences-service;1";
-          const kPrefSvcIID = Components.interfaces.nsIPrefService;
-          var prefSvc = Components.classes[kPrefSvcContractID].getService(kPrefSvcIID);
-          var bookmarksSortPrefs = prefSvc.getBranch("browser.bookmarks.sort.");
-          
           // This ensures that we don't sort twice in the tree that is clicked on 
           // as a result of 1) the click and 2) the pref listener. 
+          prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                    getService(Components.interfaces.nsIPrefService);
+          prefs = prefs.getBranch("extensions.xulsword.");
           if (!this.sorted) {
             try {
-              var sortResource = bookmarksSortPrefs.getCharPref("resource");
-              var sortDirection = bookmarksSortPrefs.getCharPref("direction");
+              var sortResource = prefs.getCharPref("bmtree.resource");
+              var sortDirection = prefs.getCharPref("bmtree.direction");
           
               // Walk the columns, when we find a column with a sort resource that matches the supplied
               // data, stop and make sure it's sort active. 
@@ -791,16 +791,15 @@
         
         onCycleHeader: function (aColumnID, aHeaderElement)
         {
-          const kPrefSvcContractID = "@mozilla.org/preferences-service;1";
-          const kPrefSvcIID = Components.interfaces.nsIPrefService;
-          var prefSvc = Components.classes[kPrefSvcContractID].getService(kPrefSvcIID);
-          var bookmarksSortPrefs = prefSvc.getBranch("browser.bookmarks.sort.");
-          
           // Sorted! http://www.sorted.org.nz/
           this.mOuter.sorted = true;
 
-          bookmarksSortPrefs.setCharPref("resource", aHeaderElement.getAttribute("sort"));
-          bookmarksSortPrefs.setCharPref("direction", aHeaderElement.getAttribute("sortDirection"));
+          prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                              getService(Components.interfaces.nsIPrefService);
+          prefs = prefs.getBranch("extensions.xulsword.");
+
+          prefs.setCharPref("bmtree.resource", aHeaderElement.getAttribute("sort"));
+          prefs.setCharPref("bmtree.direction", aHeaderElement.getAttribute("sortDirection"));
         },
     
         onSelectionChanged: function ()
