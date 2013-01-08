@@ -1497,7 +1497,13 @@ function printBrowserLoaded() {
     pbDoc.getElementsByTagName("body")[0].innerHTML = PrintTarget.bodyHTML;
   }
   
-  document.getElementById(PrintTarget.command).doCommand();  
+  document.getElementById(PrintTarget.command).doCommand();
+  
+  if (PrintTarget.command == "cmd_print" && PrintTarget.callback && 
+      typeof(PrintTarget.callback.onPrintDone) == "function") {
+    PrintTarget.callback.onPrintDone(); 
+  }
+  
 }
 
 var PrintPreviewCallbacks = {

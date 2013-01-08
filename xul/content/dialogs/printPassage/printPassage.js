@@ -96,7 +96,11 @@ var PrintPassage = {
   },
   
   onPrintPreviewDone: function() {
-    this.focus();
+    window.close();
+  },
+  
+  onPrintDone: function() {
+    window.close();
   },
   
   From:null,
