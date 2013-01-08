@@ -87,7 +87,7 @@ reference-dropdown[hidebook="true"][hidechapter="true"][hideverse="true"][hidela
 reference-dropdown menulist menupopup {
   /* fixes a problem where dynamically written
   menupopups were to narrow to read anything */
-  min-width:4em;
+  min-width:6em;
 }
 
 /* ::::: bookmark items FROM browser.css ::::: */

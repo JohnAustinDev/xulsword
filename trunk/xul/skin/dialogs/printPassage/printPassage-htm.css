@@ -4,7 +4,9 @@
 .hl .wordsOfJesus {
   color:red;
 }
-#print-passage-container[showHeadings="false"] .pagebreak {
+#print-passage-container .pagebreak {
+  /* Don't force page breaks in multi-chapter printouts. 
+  This leads to masses of wasted paper */
   page-break-after:auto;
 }
 .nb {
