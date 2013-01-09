@@ -119,7 +119,8 @@ const TextClasses = {
             { re:new RegExp(/^((([^\.]+)\.(\d+)\.(\d+)\s*-\s*[^\.]+\.\d+\.(\d+))(\;.*?)?)\.([^\.]+)$/), reflist:1, bk:3,    ch:4,     vs:5,    lv:6,     mod:8, osisref:2 },
             { re:new RegExp(/^(.*?)\.([^\.]+)$/),                                                       reflist:1, bk:null, ch:null, vs:null, lv:null, mod:2 } ],
   dt:     [ { re:new RegExp(/^((\S+)\:(\S+)[^\.]*)\.([^\.]+)$/),                                        reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
-  dtl:    [ { re:new RegExp(/^((\S+)\:(\S+)[^\.]*)\.([^\.]+)$/),                                        reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
+  // dtl allows [:.] as delineator for backward compatibility < 2.23 ([:] is correct)
+  dtl:    [ { re:new RegExp(/^((\S+)[\:\.](\S+)[^\.]*)\.([^\.]+)$/),                                        reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
   snbut:  [ { re:new RegExp(/^((\S+)\:(\S+))\.([^\.]+)$/),                                                         bk:null, ch:3,    vs:null, lv:null, mod:4, osisref:1 } ],
   par:    [ { re:new RegExp(/^(\d+)\.([^\.]+)$/),                                                           par:1, bk:null, ch:null, vs:1,    lv:1,     mod:2 } ],
   fnrow:  [ { re:new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
@@ -775,7 +776,7 @@ function createStyleRule(selector, config) {
   }
   rule += "}";
 
-//jsdump(rule); 
+//jsdump(rule);
   return rule;
 }
 
@@ -817,8 +818,6 @@ function getLocaleConfig(lc) {
   }
  
   localeConfig["AssociatedLocale"] = lc;
-  
-  localeConfig["textAlign"] = (localeConfig["direction"] == "rtl" ? "right":"left");
   
   // Insure there are single quotes around font names
   localeConfig.fontFamily = localeConfig.fontFamily.replace(/\"/g, "'");

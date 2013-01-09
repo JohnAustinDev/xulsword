@@ -163,7 +163,7 @@ function PopupObj(popupobj) {
     case "sn":
       var mod = getContextModule(elem);
       if (!mod) return false;
-      
+
       var snlist = elem.className.split(" ");
       if (snlist && snlist.length > 1) snlist.shift(); // remove base class: sn
       else return false;

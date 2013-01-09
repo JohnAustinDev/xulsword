@@ -160,10 +160,12 @@ function fillViewMenu(aEvent)
   var bookmarksSortPrefs = prefSvc.getBranch("browser.bookmarks.sort.");
 
   if (gConstructedViewMenuSortItems) {
-    var resource = bookmarksSortPrefs.getCharPref("resource");
-    var element = document.getElementById("sortMenuItem:" + resource);
-    if (element)
-      element.setAttribute("checked", "true");
+    try {var resource = bookmarksSortPrefs.getCharPref("resource");}
+    catch (er) {resource = null;}
+    if (resource) {
+      var element = document.getElementById("sortMenuItem:" + resource);
+      if (element) element.setAttribute("checked", "true");
+    }
   }  
 
   var sortAscendingMenu = document.getElementById("ascending");
@@ -173,7 +175,8 @@ function fillViewMenu(aEvent)
   sortAscendingMenu.setAttribute("checked", "false");
   sortDescendingMenu.setAttribute("checked", "false");
   noSortMenu.setAttribute("checked", "false");
-  var direction = bookmarksSortPrefs.getCharPref("direction");
+  try {var direction = bookmarksSortPrefs.getCharPref("direction");}
+  catch (er) {direction = "unknown";}
   if (direction == "natural")
     sortAscendingMenu.setAttribute("checked", "true");
   else if (direction == "ascending") 
@@ -195,7 +198,6 @@ function onViewMenuSortItemSelected(aEvent)
   case "":
     break;
   case "direction":
-    var dirn = bookmarksSortPrefs.getCharPref("direction");
     if (aEvent.target.id == "ascending")
       bookmarksSortPrefs.setCharPref("direction", "natural");
     else if (aEvent.target.id == "descending")
@@ -205,7 +207,11 @@ function onViewMenuSortItemSelected(aEvent)
     break;
   default:
     bookmarksSortPrefs.setCharPref("resource", resource);
-    var direction = bookmarksSortPrefs.getCharPref("direction");
+    try {var direction = bookmarksSortPrefs.getCharPref("direction");}
+    catch (er) {
+      bookmarksSortPrefs.setCharPref("direction", "natural");
+      direction = "natural";
+    }
     if (direction == "descending")
       bookmarksSortPrefs.setCharPref("direction", "natural");
     break;

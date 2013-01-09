@@ -442,8 +442,6 @@ function getModuleConfig(mod) {
   // Normalize direction value
   moduleConfig.direction = (moduleConfig.direction.search("RtoL", "i") != -1 ? "rtl":"ltr");
 
-  moduleConfig["textAlign"] = (moduleConfig["direction"] == "rtl" ? "right":"left");
-    
   // Insure there are single quotes around font names
   moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/\"/g, "'");
   if (moduleConfig.fontFamily != NOTFOUND && !(/'.*'/).test(moduleConfig.fontFamily)) 

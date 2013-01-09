@@ -168,7 +168,9 @@ BibleTexts = {
     
     html +=   "<div class=\"chapnotice cs-" + mod + "\" empty=\"" + (lt ? "false":"true") + "\">";
     html +=     "<div class=\"noticelink-c\">" + (lt ? lt:"") + "</div>";
-    html +=     "<div class=\"noticetext\">" + (lt ? LibSword.getModuleInformation(mod, "NoticeText"):"") + "</div>";
+    html +=     "<div class=\"noticetext\">"; // contains a span with class cs-mod because LibSword.getModuleInformation doesn't supply the class
+    html +=       "<div class=\"cs-" + mod + "\">" + (lt ? LibSword.getModuleInformation(mod, "NoticeText"):"") + "</div>";
+    html +=     "</div>";
     html +=     "<div class=\"head-line-break\"></div>";
     html +=   "</div>";
 
