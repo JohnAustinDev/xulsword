@@ -195,6 +195,13 @@ const Config = {
   TreeStyleRule:    { modConf:null, localeConf:null, CSS:null }
 };
 
+const ConfigDefaultCSS = {
+  fontFamily:"'Arial'",
+  direction:"ltr",
+  fontSizeAdjust:"none",
+  lineHeight:"1.6em"
+};
+
 const NumOT = 39;
 const NumNT = 27;
 const NW = 3; // max number of text windows a single viewport supports
@@ -742,6 +749,7 @@ function createDynamicCssClasses(configProp) {
   
   if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
     for (var lc in LocaleConfigs) {
+      if (lc == "en-US") continue; // en-US already exists in all docs
       sheet.insertRule(LocaleConfigs[lc][configProp], sheetLength);
 //jsdump(LocaleConfigs[lc][configProp]);
       }
@@ -791,8 +799,7 @@ function setUserFontSize(delta) {
 
 function getLocaleConfig(lc) {
   var localeConfig = {};
-  
-  var defaultCSS = getCSS(".cs-en-US {");
+
   var b = getLocaleBundle(lc, "common/config.properties");
 
   // All config properties should have a valid value, and it must not be null.
@@ -803,10 +810,8 @@ function getLocaleConfig(lc) {
     if ((/^\s*$/).test(val)) val = NOTFOUND;
     
     
-    if (val == NOTFOUND && Config[p].CSS) {
-      if (defaultCSS && defaultCSS.rule.style[p]) {
-        val = defaultCSS.rule.style[p];
-      }
+    if (val == NOTFOUND && Config[p].CSS && ConfigDefaultCSS[p]) {
+      val = ConfigDefaultCSS[p];
     }
     
     localeConfig[p] = val;

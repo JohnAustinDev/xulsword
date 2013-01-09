@@ -45,7 +45,7 @@ else {&Log("ERROR: Please add assignment to application directory of your platfo
 $DEVELOPMENT="$TRUNK/build-files/$Name/development";
 $INSTALLER="$TRUNK/build-files/$Name/setup";
 $FFEXTENSION="$TRUNK/build-files/$Name/xulsword\@xulsword.org";
-$PORTABLE="$TRUNK/build-files/$Name/portable/$Name";
+$PORTABLE="$TRUNK/build-files/$Name/portable";
 
 # DEVELOPMENT ENVIRONMENT
 if ($MakeDevelopment =~ /true/i) {
@@ -110,35 +110,36 @@ if ($MakePortable =~ /true/i) {
   }
   # "P" in BuildID identifies this as being a portable version
   $BuildID = sprintf("%02d%02d%02d_%dP", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
+  my $rundir = "$PORTABLE/$Name-Portable-$Version";
   if (-e $PORTABLE) {&cleanDir($PORTABLE);}
-  else {make_path("$PORTABLE/$Name");}
-  make_path("$PORTABLE/$Name/xulsword");
-  make_path("$PORTABLE/$Name/xulrunner");
-  make_path("$PORTABLE/$Name/resources");
-  make_path("$PORTABLE/$Name/profile");
-  &compileLibSword("$PORTABLE/$Name/xulsword", 1);
+  else {make_path("$rundir/$Name");}
+  make_path("$rundir/$Name/xulsword");
+  make_path("$rundir/$Name/xulrunner");
+  make_path("$rundir/$Name/resources");
+  make_path("$rundir/$Name/profile");
+  &compileLibSword("$rundir/$Name/xulsword", 1);
   my @manifest;
-  &copyXulswordFiles("$PORTABLE/$Name/xulsword", \@manifest, $IncludeLocales, 0, 0);
-  &copyFirefoxFiles("$PORTABLE/$Name/xulrunner");
+  &copyXulswordFiles("$rundir/$Name/xulsword", \@manifest, $IncludeLocales, 0, 0);
+  &copyFirefoxFiles("$rundir/$Name/xulrunner");
   # Set our startup location...
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
   $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
-  &writePreferences("$PORTABLE/$Name/xulsword", \%Prefs);
-  &writeApplicationINI("$PORTABLE/$Name/xulsword");
-  &compileWindowsStartup($PORTABLE, 1);
-  &includeModules("$PORTABLE/$Name/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
-  &includeLocales("$PORTABLE/$Name/xulsword", $IncludeLocales, \@manifest, 0);
-  &writeManifest("$PORTABLE/$Name/xulsword", \@manifest);
-  open(NIN, ">:encoding(UTF-8)", "$PORTABLE/$Name/resources/newInstalls.txt") || die;
+  &writePreferences("$rundir/$Name/xulsword", \%Prefs);
+  &writeApplicationINI("$rundir/$Name/xulsword");
+  &compileWindowsStartup($rundir, 1);
+  &includeModules("$rundir/$Name/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
+  &includeLocales("$rundir/$Name/xulsword", $IncludeLocales, \@manifest, 0);
+  &writeManifest("$rundir/$Name/xulsword", \@manifest);
+  open(NIN, ">:encoding(UTF-8)", "$rundir/$Name/resources/newInstalls.txt") || die;
   print NIN "NewLocales;en-US\n"; # this opens language menu on first run
   close(NIN);
   &packagePortable("$PORTABLE/*", "$OutputDirectory/$Name-Portable-$Version");
-  &writeRunScript($PORTABLE, "portable");
+  &writeRunScript($rundir, "portable");
 }
 
 # WINDOWS INSTALLER VERSION
 if ($MakeSetup =~ /true/i) {
-  &Log("\n----> BUILDING PROGRAM INSTALLER\n");
+  &Log("\n----> BUILDING PROGRAM SETUP INSTALLER\n");
   if ("$^O" !~ /MSWin32/i) {
     &Log("ERROR: Setup Installer has not been implemented for your platform.\n");
      die;
@@ -215,12 +216,14 @@ sub writeCompileDeps($) {
   open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/src/include/appInfo.h") || die;
   if (!$isPortable) {
     print INFO "#define RUN_DIR L\".\\\\xulrunner\"\n";
-    print INFO "#define COMMAND_LINE L\"\\\"%s\\\\%s\\\" --app ..\\\\xulsword\\\\application.ini -no-remote %s\"\n";
+    # don't use -no-remote because otherwise .xsm and .xsb onclick installation won't work!
+    print INFO "#define COMMAND_LINE L\"\\\"%s\\\\%s\\\" --app ..\\\\xulsword\\\\application.ini %s\"\n";
   }
   else {
     print INFO "#define RUN_DIR L\".\\\\$Name\\\\xulrunner\"\n";
     # portable version uses local profile directory
-    print INFO "#define COMMAND_LINE L\"\\\"%s\\\\%s\\\" --app ..\\\\xulsword\\\\application.ini -no-remote -profile \\\"..\\\\profile\\\" %s\"\n";
+    # don't use -no-remote because otherwise .xsm and .xsb onclick installation won't work!
+    print INFO "#define COMMAND_LINE L\"\\\"%s\\\\%s\\\" --app ..\\\\xulsword\\\\application.ini -profile \\\"..\\\\profile\\\" %s\"\n";
   }
   print INFO "#define PROC_NAME L\"$WINprocess\"\n";
   close(INFO);
@@ -375,14 +378,14 @@ sub copyFirefoxFiles($) {
   &Log("----> Copying XULRunner files.\n");
 
   my $skip = "(";
-  $skip .= "\\S+$EXE|";
+  #$skip .= "\\S+$EXE|";
   $skip .= "dictionaries";
   $skip .= ")";
 
-  if (!-e $XULRunner) {&Log("ERROR: No Firefox directory: \"$XULRunner\".\n"); die;}
+  if (!-e $XULRunner) {&Log("ERROR: No directory: \"$XULRunner\".\n"); die;}
   
   &copy_dir($XULRunner, $do, "", $skip);
-  &cp("$XULRunner/xulrunner.exe", "$do/$WINprocess");
+  &mv("$do/xulrunner.exe", "$do/$WINprocess");
 
 }
 
@@ -432,6 +435,11 @@ sub writeApplicationINI($) {
   print INI "Version=$Version\n";
   print INI "ID=xulsword\@xulsword.org\n";
   print INI "BuildID=$BuildID\n\n";
+  # Although it seems better to specify an exact profile directory so that an
+  # installer/uninstaller will always know where it is (or will be), this cannot
+  # be done with "Profile=<path-to-profile>" because this directory is only the
+  # parent of the profile while the the actual child profile directory still has
+  # a random name!
   print INI "[Gecko]\n";
   print INI "MinVersion=$GeckoMinVersion\n";
   print INI "MaxVersion=$GeckoMaxVersion\n\n";

@@ -39,7 +39,7 @@ function saveFileArgs(arg, cmdLine, prefs) {
     }
   }
   catch (e) {
-    Components.utils.reportError("incorrect parameter passed to -" + arg + " on the command line." + filestr);
+    Components.utils.reportError("incorrect parameter passed to -" + arg + " on the command line: \"" + filestr + "\"");
   }
 }
   
@@ -113,8 +113,9 @@ function handler_handle(cmdLine)
     if (cmdLine.handleFlag("xsInstallOnly", false)) prefs.setBoolPref("xsInstallOnly", true);
 }
 
-CLineService.prototype.helpInfo = "  -xsModule <path>     Install a xulSword module\n" +
-            "  -xsBookmark <path>   Install bookmark from file\n" +
+CLineService.prototype.helpInfo =
+            "  -xsModule <path>     Install a xulSword module\n" +
+            "  -xsBookmark <path>   Install bookmarks from a file\n" +
             "  -xsAudio <path>      Install audio from this directory\n" +
             "  -xsAudioPath         Install audio to this directory\n" +
             "  -xsInstallOnly       Don't open xulSword, just install\n"

@@ -20,7 +20,7 @@
  * Audio driver functions
  ***********************************************************************/ 
 const QTIMEINS = ["qtlite270.exe", "qtalt.exe"];
-const PLUGINLINKS = ["http://www.ibt.org.ru/russian/bible/info_bible.htm", "http://www.ibt.org.ru/english/bible/info_bible_en.htm", "http://www.apple.com/quicktime/download/"];
+const PLUGINLINKS = ["http://www.ibt.org.ru/ru/pc.htm", "http://www.apple.com/quicktime/download/"];
 var Player = {};
 Player.volume = 128;
 // The first audio dir is the user profile's audio dir.

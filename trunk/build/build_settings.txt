@@ -37,7 +37,10 @@ Set KeyGenPath=
 Set (prefs.js):extensions.xulsword.DefaultCK=defaultKey
 
 # DEFAULT LOCALE (en-US, ru, etc.)
-Set (prefs.js):general.useragent.locale=en-US
+# The separate pref filename "language.js" is used here because this allows
+# the setup installer to overwrite this file (and pref) if the user selects
+# a different langauge during install.
+Set (language.js):general.useragent.locale=en-US
 
 # LOCALES TO INCLUDE IN BUILD (Must include at least one locale. Example:en-US, or ru,ar)
 Set IncludeLocales=en-US

@@ -571,7 +571,6 @@ xulsword/dialogs/dialog/dialog.dtd:dialog.OK                             =  dial
 xulsword/startup/startup.properties:dialog.OK                            =  dialog-window.ok
 xulsword/bookmarks/bookmarks.dtd:okButton.label                          =  dialog-window.ok
 xulsword/dialogs/dialog/dialog.dtd:dialog.Yes                            =  dialog-window.yes
-xulsword/override/ff17/tree.dtd:restoreColumnOrder.label                 =  bookmark-window.tree.restore-column-order
 xulsword/startup/startup.properties:dontShowAgain                        =  error-reporter.dont_show_this_again
 xulsword/startup/startup.properties:SendErrorReport                      =  error-reporter.error_detection_message
 xulsword/common/config.properties:DefaultModule                          = ?configuration.default_modules
@@ -599,10 +598,27 @@ xulsword/search/search.properties:GROUPSTART                             = ?sear
 xulsword/search/search.properties:GROUPEND                               = ?search-window.search_symbols.GROUP_END
 xulsword/search/search.properties:QUOTESTART                             = ?search-window.search_symbols.QUOTE_START
 xulsword/search/search.properties:QUOTEEND                               = ?search-window.search_symbols.QUOTE_END
+
+# The following are XULRunner/Firefox locale overrides, so all 
+# entities or properties present in the target files must be present
+# in this MAP as well, or else runtime errors will occur.
+xulsword/override/ff17/tree.dtd:restoreColumnOrder.label                 =  bookmark-window.tree.restore-column-order
+xulsword/override/ff17/textcontext.dtd:cutCmd.label                      =  main-window.menu-edit.cut
+xulsword/override/ff17/textcontext.dtd:cutCmd.accesskey                  =  main-window.menu-edit.cut.ak
+xulsword/override/ff17/textcontext.dtd:copyCmd.label                     =  main-window.menu-edit.copy
+xulsword/override/ff17/textcontext.dtd:copyCmd.accesskey                 =  main-window.menu-edit.copy.ak
+xulsword/override/ff17/textcontext.dtd:pasteCmd.label                    =  main-window.menu-edit.paste
+xulsword/override/ff17/textcontext.dtd:pasteCmd.accesskey                =  main-window.menu-edit.paste.ak
+xulsword/override/ff17/textcontext.dtd:undoCmd.label                     =  main-window.menu-edit.undo
+xulsword/override/ff17/textcontext.dtd:undoCmd.accesskey                 =  main-window.menu-edit.undo.ak
+xulsword/override/ff17/textcontext.dtd:selectAllCmd.label                =  bookmark-window.menu-edit.select_all
+xulsword/override/ff17/textcontext.dtd:selectAllCmd.accesskey            =  bookmark-window.menu-edit.select_all.ak
+xulsword/override/ff17/textcontext.dtd:deleteCmd.label                   =  bookmark-window.menu-edit.delete
+xulsword/override/ff17/textcontext.dtd:deleteCmd.accesskey               =  bookmark-window.menu-edit.delete.ak
 xulsword/override/ff17/textcontext.dtd:spellAddToDictionary.label        =  "Add to Dictionary"
 xulsword/override/ff17/textcontext.dtd:spellAddToDictionary.accesskey    =  "o"
-xulsword/override/ff17/textcontext.dtd:spellUndoAddToDictionary.label    =  "Undo add to Dictionary"
-xulsword/override/ff17/textcontext.dtd:spellUndoAddToDictionary.accesskey =  "d"
+xulsword/override/ff17/textcontext.dtd:spellUndoAddToDictionary.label    =  "Undo Add To Dictionary"
+xulsword/override/ff17/textcontext.dtd:spellUndoAddToDictionary.accesskey=  "n"
 xulsword/override/ff17/textcontext.dtd:spellCheckEnable.label            =  "Check Spelling"
 xulsword/override/ff17/textcontext.dtd:spellCheckEnable.accesskey        =  "S"
 xulsword/override/ff17/textcontext.dtd:spellNoSuggestions.label          =  "(No Spelling Suggestions)"

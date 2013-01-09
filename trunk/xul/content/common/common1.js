@@ -416,20 +416,16 @@ function normalizeOsisReference(ref, bibleMod) {
 
 function getModuleConfig(mod) {
   var moduleConfig = {};
-  
-  var defaultCSS = getCSS(".cs-en-US {");
-  
+
   // All versionconfig members should have a valid value, and it must not be null.
   // Read values from module's .conf file
   for (var p in Config) {
     if (!Config[p].modConf) continue;
     var val = LibSword.getModuleInformation(mod, Config[p].modConf);
     if ((/^\s*$/).test(val)) val = NOTFOUND;
-    
-    if (val == NOTFOUND && Config[p].CSS) {
-      if (defaultCSS && defaultCSS.rule.style[p]) {
-        val = defaultCSS.rule.style[p];
-      }
+
+    if (val == NOTFOUND && Config[p].CSS && ConfigDefaultCSS[p]) {
+      val = ConfigDefaultCSS[p];
     }
     
     moduleConfig[p] = val;
