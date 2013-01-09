@@ -229,9 +229,6 @@ body[chromedir="rtl"] .chaptermenu {
   border-radius:6px;
   z-index:60;
 }
-.headingmenu[direction="rtl"] {
-  text-align:right;
-}
 .heading-link:hover {
   text-decoration:underline;
   cursor:pointer;

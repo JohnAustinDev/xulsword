@@ -4,16 +4,18 @@
 /* UI class which is dynamically updated */
 .userFontSize {
   font-size:14px;
+  text-align:start;
 }
 
 /*like userFontSize but NOT dynamically updated */
 .fixedFontSize {
   font-size:14px;
+  text-align:start;
 }
 
 .RTL {
   direction:rtl;
-  text-align:right;
+  text-align:start;
 }
 
 menu, menuitem, button, textbox, 
