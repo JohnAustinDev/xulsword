@@ -112,7 +112,7 @@ var aConsoleListener =
     var bundle = getCurrentLocaleBundle("startup/startup.properties");
     var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
       bundle.GetStringFromName("Title"),
-      bundle.formatStringFromName("SendErrorReport", [bundle.GetStringFromName("dialog.OK")], 1),
+      bundle.formatStringFromName("SendErrorReport", [bundle.GetStringFromName("dialog.OK")], 1) + "\n\n" + aMessage.message,
       DLGALERT,
       DLGOKCANCEL,
       bundle.GetStringFromName("dontShowAgain")

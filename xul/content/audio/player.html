@@ -71,7 +71,7 @@ jsdump("Now embedding: File://" + audiofile.path + "\n");
   else vol = "";
   
   // NOTE: setting wmode="transparent" seems to fix a QuickTime plugin bug which permanently hid the controller...
-  document.write("<embed src=\"File://" + audiofile.path + "\" width=\"210\" height=\"24\" name=\"player\" autoplay=\"True\" postdomevents=\"True\" enablejavascript=\"True\" type=\"audio/x-mp3\" controller=\"True\" wmode=\"transparent\" kioskmode=\"True\" SHOWLOGO=\"False\"" + vol + "></embed>");
+  document.write("<embed src=\"File://" + audiofile.path + "\" width=\"210\" height=\"24\" name=\"player\" autoplay=\"True\" postdomevents=\"True\" enablejavascript=\"True\" type=\"audio/x-mp3\" controller=\"True\" kioskmode=\"True\" SHOWLOGO=\"False\"" + vol + "></embed>");
   document.getElementById("playerDiv").addEventListener("qt_load", playerHasLoaded, false);
   document.getElementById("playerDiv").addEventListener("qt_volumechange", volumeChanged, false);
   document.getElementById("playerDiv").addEventListener("qt_ended", finishedAudioFile, false);

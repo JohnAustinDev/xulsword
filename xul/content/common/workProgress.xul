@@ -41,9 +41,11 @@
     
   var Progress, LabelElem, ButtonElem;
 
+  // workProgress.xul can be displayed before the MainWindow, so
+  // program-wide globals CANNOT be assumed to be defined!
   function Load() {
 
-    AllWindows.push(window);
+    if (typeof(AllWindows) != "undefined") AllWindows.push(window);
     document.title = fixWindowTitle(Title);
     
     UserObj.ok=false;
@@ -62,8 +64,8 @@
     
     LabelElem.setAttribute("label", Label);
   
-    window.setTimeout("sizeToContent()", 0);
-    window.setTimeout("finishedLoading()", 0);
+    window.setTimeout("sizeToContent()", 1);
+    window.setTimeout("finishedLoading()", 1);
     
     if (UserObj.afterload) window.setTimeout(UserObj.afterload, 1);
   }

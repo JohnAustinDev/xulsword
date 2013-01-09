@@ -16,8 +16,8 @@
   min-height:32px; /* specified because player's actual height is large (for showing video) */
 }
 #playerFrame {
-  width:218px; 
-  height:34px; 
+  width:218px;
+  height:34px;
   overflow:hidden;
 }
 #closeplayer {

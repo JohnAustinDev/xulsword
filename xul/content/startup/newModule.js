@@ -1396,9 +1396,9 @@ jsdump("STARTING moduleInstall, isMainWindow:" + isMainWindow);
 // must insure endInstall() is called when finished.
 function installCommandLineModules() {
   var files = [];
-  var mods = prefFileArray(files, "xsModule", XSMODULEEXT);
-  var bms = prefFileArray(files, "xsBookmark", XSBOOKMARKEXT);
-  var audio = prefFileArray(files, "xsAudio", "directory");
+  var mods = prefFileArray(files, "xsModule", XSMODULEEXT, false);
+  var bms = prefFileArray(files, "xsBookmark", XSBOOKMARKEXT, false);
+  var audio = prefFileArray(files, "xsAudio", "directory", false);
   var toFile;
   
   if (audio.haveFiles) {
@@ -1466,7 +1466,7 @@ function restartApplication(promptBefore) {
       DLGOK);
   }
   
-  if (LibSword && LibSword.paused) LibSword.resume(); // window unload accesses LibSword object
+  if (typeof(LibSword) != "undefined" && LibSword.paused) LibSword.resume(); // window unload accesses LibSword object
   
 	var appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                    .getService(Components.interfaces.nsIAppStartup);
