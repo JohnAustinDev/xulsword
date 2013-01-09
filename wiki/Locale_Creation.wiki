@@ -1,29 +1,20 @@
 #labels Featured,Phase-Implementation
-=Create Your Own Locale for xulSword=
+=Create a new user interface locale for xulsword=
 
-==What must be translated?==
-The entire User Interface source is listed in two files. But only one of these contains words and phrases which must be translated. The English listing can be found in [Locale_Phrases]. There are many entries to translate, but don't despair because if there is a Firefox translation in your language, then half the work has already been done for you (read on...)
+===What must be translated?===
+The phrases of xulsword's user interface are found in [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/en-US/UI-en-US.txt this file].
 
-==Let Firefox translate half the UI for you==
-Set an environment variable called "`MKS`" to a directory of your choice. Create a `localeDev` directory there, and in `localeDev` create a directory named with your [http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes ISO 639-1] language code, such as `es-MX` for Mexican Spanish.
+===Let Firefox translate xulsword for you===
+There is a [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/UI-listing.pl perl script] which takes a Firefox locale in some language and creates a partially completed xulsword user interface in that language.
 
-Download a Firefox 3 language pack in your target language, or the next best language which you can find. Inside the language pack is a jar file such as `es-MX.jar`. Create a directory `%MKS%\localeDev\Firefox3` and unzip the contents of the jar file there.
-
-==Building a new UI==
-To do this properly, you need a Subversion (SVN) client installed on your computer. A good one is TortoiseSVN: http://tortoisesvn.net/downloads.html. After installing TortoiseSVN you should create a folder for the code somewhere. Right click on this folder and click on the context menu where it should show "`SVN Checkout...`". Then enter "https://xulsword.googlecode.com/svn/trunk/" as the repository URL and click ok. It should then download the code for you. Finally, you need to set another Windows environment variable called "`MK`" to this directory.
-
-Now, assuming you have Perl installed and in your path, then you need to edit the `%MK%\localeDev\makeUI.bat` file to replace "`ex`" with your langauge code where "`ex`" appears in the argument lists for the Perl scripts. Also, if your Firefox language pack is something other than 'en-US', you need to replace the second 'en-US', on the line beginning with UI-listing.pl, with the locale code of your Firefox language pack. Then run `makeUI.bat` and you should have two new files in the `%MKS%\localeDev\locales` directory. These two files constitute the new xulsword locale. Copy them into the chrome directory of your xulsword installation and restart xulsword. Your new language should now appear in the `Options->Languages` menu.
-
-Of course, you will want to finish translating the locale listing file of the new UI (which was just created in `%MKS%\localeDev\<your-locale>`), and then rerun `makeUI.bat` again- but this time COMMENT OUT the `UI-listing.pl` line, because you do not want to overwrite the listing file which you have translated. 
-
-==Add a locale to the xulSword build==
-Add the locale's [http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes ISO 639-1] code to the "`%MK%\build\Appinfo.bat`" file's `AllLocales` line. Also add it to the `IncludeLocales` line to include it in your build. After rebuilding xulSword, you should see a language menu item corresponding to the new locale under the `Options->Languages` menu.
+===Add a new locale to xulsword===
+Locales are automatically packaged when xulsword is built. Place the new [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/#localeDev%2Fen-US locale files] under a directory somewhere called `localeDev`. Then update the [http://code.google.com/p/xulsword/source/browse/trunk/build/build_settings.txt build settings file] by adding the code of the new locale to `IncludeLocales`, and assign the path of your new `localeDev` parent directory to `XulswordExtras`. Rebuild and start xulsword. A new user interface choice will appear in the `Options` -> `Language` menu of xulsword.
 
 -----
 
-==Checklist for Finishing a New Locale==
-  * Check that `config.properties` has the proper parameters for your target language.
-  * Add a localized splash screen to `%MKS%\localeDev\<your-locale>\text-skin\xulsword\splash.png`.
-  * Add localized bookmarks to `%MKS%\localeDev\<your-locale>\<your-locale>.rdf`. Check that the `Created` and `Modified` dates in the rdf are all `ModifiedDate="----"` and `CreationDate="2010"`.
-  * Add a localized skin to `%MKS%\localeDev\<your-locale>\locale-skin`. These files will be merged onto the existing skin, so you need only include files which you have changed (not necessarily a whole skin). 
-  * Check that the OT/NT terms, which appear on the Bible location chooser at the left end of the main program window, are not so long as to make the chooser undesirably tall. Also, some scripts (like Arabic), which cannot simply be printed vertically, will need images for these vertical texts. These images should be placed under a `%MKS%\localeDev\<your-locale>\text-skin\skin` directory and named `NT.png` and `OT.png`.
+===Checklist for finishing a new user interface locale===
+  * Many optional locale configuration settings are found in [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/en-US/UI-en-US_2.txt this file] including the order of Bible books, short-cut keys for menu commands, CSS font-family, font-size, etc., and localization of numerals and search symbols, among other things. 
+  * Include a [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/#localeDev%2Fen-US%2Ftext-skin%2Fxulsword localized splash screen].
+  * Include [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/en-US/en-US.rdf localized bookmarks].
+  * Add a `locale-skin` subdirectory containing files which will overwrite the default skin. This can be used to provide your locale with a custom skin. 
+  * Some scripts (like Arabic), which cannot simply be printed vertically, will need images for vertical texts. These images should be placed under a `text-skin\skin` directory.
