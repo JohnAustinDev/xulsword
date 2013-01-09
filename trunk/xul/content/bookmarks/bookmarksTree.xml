@@ -181,13 +181,15 @@
         <![CDATA[
           // This ensures that we don't sort twice in the tree that is clicked on 
           // as a result of 1) the click and 2) the pref listener. 
-          prefs = Components.classes["@mozilla.org/preferences-service;1"].
-                    getService(Components.interfaces.nsIPrefService);
-          prefs = prefs.getBranch("extensions.xulsword.");
+          const kPrefSvcContractID = "@mozilla.org/preferences-service;1";
+          const kPrefSvcIID = Components.interfaces.nsIPrefService;
+          var prefSvc = Components.classes[kPrefSvcContractID].getService(kPrefSvcIID);
+          var bookmarksSortPrefs = prefSvc.getBranch("browser.bookmarks.sort.");
+
           if (!this.sorted) {
             try {
-              var sortResource = prefs.getCharPref("bmtree.resource");
-              var sortDirection = prefs.getCharPref("bmtree.direction");
+              var sortResource = bookmarksSortPrefs.getCharPref("resource");
+              var sortDirection = bookmarksSortPrefs.getCharPref("direction");
           
               // Walk the columns, when we find a column with a sort resource that matches the supplied
               // data, stop and make sure it's sort active. 
@@ -290,7 +292,8 @@
     
       <property name="currentResource">
         <getter><![CDATA[
-          return this.treeBuilder.getResourceAtIndex(this.currentIndex);
+          try {return this.treeBuilder.getResourceAtIndex(this.currentIndex);}
+          catch (er) {return null;}
         ]]></getter>
       </property>
 
@@ -299,7 +302,7 @@
         <body><![CDATA[
           if (aRow != -1) {
             try {return this.treeBuilder.getResourceAtIndex(aRow);}
-            catch (er) {return this.getRootResource();}
+            catch (er) {return null;}
           }
           else
             return this.getRootResource();
@@ -310,8 +313,11 @@
         <parameter name="aRow"/>
         <body><![CDATA[
           if (aRow != -1) {
-            var parentIndex = this.treeBoxObject.view.getParentIndex(aRow);
-            return this.getRowResource(parentIndex);
+            try {
+              var parentIndex = this.treeBoxObject.view.getParentIndex(aRow);
+              return this.getRowResource(parentIndex);
+            }
+            catch (er) {return null;}
           }
           return this.getRootResource(); // assume its parent is the root
         ]]></body>
@@ -372,7 +378,9 @@
             this.treeBoxObject.view.selection.getRangeAt(k, rangeMin, rangeMax);
             for (var i = rangeMin.value; i <= rangeMax.value; ++i) {
               var selectedItem   = this.getRowResource(i);
+              if (selectedItem === null) continue;
               var selectedParent = this.getParentResource(i);
+              if (selectedParent === null) continue;
               var isExpanded     = this.treeBoxObject.view.isContainerOpen(i);
               selection.item  .push(selectedItem);
               selection.parent.push(selectedParent);
@@ -716,7 +724,9 @@
             return true;
           
           var rsrc = this.mOuter.getRowResource(index);
+          if (rsrc === null) return false;
           var rsrcParent = this.mOuter.getParentResource(index);
+          if (rsrcParent === null) return false;
 
           var rtype = BookmarksUtils.resolveType(rsrc);
           var rptype = BookmarksUtils.resolveType(rsrcParent);
@@ -740,6 +750,7 @@
           var selection = BookmarksUtils.getSelectionFromXferData(dragSession);
           var rItem     = this.mOuter.getRowResource(row);
           var rParent   = this.mOuter.getParentResource(row);
+          if (rParent === null) return;
           var target;
           if (orientation == BookmarksUtils.DROP_AFTER            &&
               this.mOuter.treeBoxObject.view.isContainer(row)     &&
@@ -796,12 +807,13 @@
           // Sorted! http://www.sorted.org.nz/
           this.mOuter.sorted = true;
 
-          prefs = Components.classes["@mozilla.org/preferences-service;1"].
-                              getService(Components.interfaces.nsIPrefService);
-          prefs = prefs.getBranch("extensions.xulsword.");
+          const kPrefSvcContractID = "@mozilla.org/preferences-service;1";
+          const kPrefSvcIID = Components.interfaces.nsIPrefService;
+          var prefSvc = Components.classes[kPrefSvcContractID].getService(kPrefSvcIID);
+          var bookmarksSortPrefs = prefSvc.getBranch("browser.bookmarks.sort.");
 
-          prefs.setCharPref("bmtree.resource", aHeaderElement.getAttribute("sort"));
-          prefs.setCharPref("bmtree.direction", aHeaderElement.getAttribute("sortDirection"));
+          bookmarksSortPrefs.setCharPref("resource", aHeaderElement.getAttribute("sort"));
+          bookmarksSortPrefs.setCharPref("direction", aHeaderElement.getAttribute("sortDirection"));
         },
     
         onSelectionChanged: function ()

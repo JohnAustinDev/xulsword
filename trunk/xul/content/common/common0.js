@@ -749,7 +749,6 @@ function createDynamicCssClasses(configProp) {
   
   if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
     for (var lc in LocaleConfigs) {
-      if (lc == "en-US") continue; // en-US already exists in all docs
       sheet.insertRule(LocaleConfigs[lc][configProp], sheetLength);
 //jsdump(LocaleConfigs[lc][configProp]);
       }
