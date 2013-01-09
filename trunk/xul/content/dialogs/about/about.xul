@@ -26,7 +26,6 @@
 <window 
     id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"
     title="&menu.help.about;"
-    hidechrome="true"
     onload="initCSS(); loaded();"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   

@@ -1400,6 +1400,29 @@ function unloadXUL() {
   
   ViewPort.unload();
   
+  // remove the exception reporter
+  setConsoleService(false);
+  
+  // remove ALL command controllers because window.location.reload otherwise
+  // allows them to pile up, causing very strange effects during debugging (like
+  // xulsword running old versions of commands).
+  while(true) {
+    try {window.controllers.removeControllerAt(0);}
+    catch (er) {break;}
+  }
+  
+  // close all windows
+  for (var i=0; i<AllWindows.length; i++) {
+    if (AllWindows[i] === window) continue;
+    try {AllWindows[i].close();} catch(er) {}
+  }
+
+  // clear Transactions
+  BM.gTxnSvc.clear();
+
+  // purge UserData data source
+  if (BMDS) ResourceFuns.purgeDataSource(BMDS);
+
   if (!LibSword.hasBible) return;
   
   prefs.setCharPref("Location", Location.getLocation(WESTERNVS));
@@ -1410,35 +1433,15 @@ function unloadXUL() {
     prefs.setCharPref(GlobalToggleCommands[cmd], LibSword.getGlobalOption(GlobalToggleCommands[cmd]));
   }
 
-  // remove ALL command controllers because window.location.reload otherwise 
-  // allows them to pile up, causing very strange effects during debugging (like 
-  // xulsword running old versions of commands).
-  while(true) {
-    try {window.controllers.removeControllerAt(0);}
-    catch (er) {break;}
-  }
-  
   // set these so xulsword viewport can draw cleaner and faster upon next startup
   if (ViewPort.ownerDocument.defaultView.innerHeight) {
     prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
     prefs.setIntPref("ViewPortWidth", ViewPort.ownerDocument.defaultView.innerWidth);
   }
 
-  // close all windows
-  for (var i=0; i<AllWindows.length; i++) {
-    if (AllWindows[i] === window) continue;
-    try {AllWindows[i].close();} catch(er) {}
-  }
-    
-  // clear Transactions
-  BM.gTxnSvc.clear();
-  
   History.save();
   LibSword.quitLibsword();
-  
-  // purge UserData data source
-  if (BMDS) ResourceFuns.purgeDataSource(BMDS);
-  
+
   jsdump("Finished unloading xulsword.js");
 }
 

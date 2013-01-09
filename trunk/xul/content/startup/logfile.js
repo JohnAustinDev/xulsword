@@ -36,8 +36,9 @@ var aConsoleListener =
       return;
     }
 
+    // only alert about exceptions in xulsword code- ignore exceptions in Firefox code
     var isException = aMessage.flags & aMessage.exceptionFlag;
-    if (!isException) {
+    if (!isException || !(/chrome\:\/\/xulsword\/content/).test(aMessage.message)) {
       this.processingException = false;
       return;
     }

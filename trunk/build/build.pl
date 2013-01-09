@@ -217,15 +217,14 @@ sub writeCompileDeps($) {
   if (!$isPortable) {
     print INFO "#define RUN_DIR L\".\\\\xulrunner\"\n";
     # don't use -no-remote because otherwise .xsm and .xsb onclick installation won't work!
-    print INFO "#define COMMAND_LINE L\"\\\"%s\\\\%s\\\" --app ..\\\\xulsword\\\\application.ini %s\"\n";
+    print INFO "#define COMMAND_LINE L\"\\\".\\\\xulrunner\\\\$WINprocess\\\" -app ..\\\\xulsword\\\\application.ini %s\"\n";
   }
   else {
     print INFO "#define RUN_DIR L\".\\\\$Name\\\\xulrunner\"\n";
     # portable version uses local profile directory
-    # don't use -no-remote because otherwise .xsm and .xsb onclick installation won't work!
-    print INFO "#define COMMAND_LINE L\"\\\"%s\\\\%s\\\" --app ..\\\\xulsword\\\\application.ini -profile \\\"..\\\\profile\\\" %s\"\n";
+    # don't use -no-remote because otherwise .xsm and .xsb onclick installation won't work.
+    print INFO "#define COMMAND_LINE L\"\\\".\\\\$Name\\\\xulrunner\\\\$WINprocess\\\" -app ..\\\\xulsword\\\\application.ini -profile ..\\\\profile %s\"\n";
   }
-  print INFO "#define PROC_NAME L\"$WINprocess\"\n";
   close(INFO);
   
   &Log("----> Writing path info for C++ compiler.\n");
@@ -660,7 +659,7 @@ sub writeExtensionInstallManifest($) {
 }
 
 sub writeRunScript($$) {
-  my $rd = shift;
+  my $xulswordsd = shift;
   my $type = shift;
 
   &Log("----> Writing run script.\n");
@@ -672,17 +671,17 @@ sub writeRunScript($$) {
 
   if ("$^O" =~ /MSWin32/i) {
     if ($type eq "dev") {
-      print SCR "chdir(\"".$rd."\");\n";
-      print SCR "`start /wait ../xulrunner/$Name-srv.exe --app application.ini -jsconsole -console -no-remote`;\n";
+      print SCR "chdir(\"".$xulswordsd."\");\n";
+      print SCR "`start /wait ../xulrunner/$Name-srv.exe -app application.ini -jsconsole -console -no-remote`;\n";
     }
     else {
-      print SCR "chdir(\"".$rd."\");\n";
+      print SCR "chdir(\"".$xulswordsd."\");\n";
       print SCR "`$Executable.exe`;\n";
     }
   }
   elsif ("$^O" =~ /linux/i) {
     if ($type eq "dev") {
-      print SCR "`firefox --app $rd/application.ini -jsconsole -no-remote`;\n";
+      print SCR "`firefox --app $xulswordsd/application.ini -jsconsole -no-remote`;\n";
     }
     else {
       &Log("NOTE: \"$type\" run script not currently implemented for linux.\n");
