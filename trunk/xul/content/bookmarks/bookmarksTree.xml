@@ -297,8 +297,10 @@
       <method name="getRowResource">
         <parameter name="aRow"/>
         <body><![CDATA[
-          if (aRow != -1)
-            return this.treeBuilder.getResourceAtIndex(aRow);
+          if (aRow != -1) {
+            try {return this.treeBuilder.getResourceAtIndex(aRow);}
+            catch (er) {return this.getRootResource();}
+          }
           else
             return this.getRootResource();
         ]]></body>
