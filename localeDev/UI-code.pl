@@ -2,11 +2,43 @@
 use File::Spec;
 $NOCONSOLELOG = 1;
 
-if (!@ARGV) {print "usage: UI-code.pl MK MKS locale\n"; exit;}
+if (!@ARGV) {
+  print "Creates a xulsword locale from UI text files and Firefox files.\n";
+  print "\n";
+  print "usage: UI-code.pl MK MKS xulswordLocale XULToolkitVersion\n"; 
+  print "\n";
+  print "MK is the path to xulsword svn\n";
+  print "\n";
+  print "MKS is the path to a xulsword extras directory. This directory\n";
+  print "  should contain the following files needed to build a new locale:\n";
+  print "  <MKS-top-directory>\n";
+  print "  ---->  localeDev\n";
+  print "         ----> Firefox17 (where 17 is XULToolkitVersion number)\n";
+  print "               ----> <locale-code1> (a Firefox 17 locale)\n";
+  print "               ----> <locale-code2> (another Firefox 17 locale)\n";
+  print "         ----> <locale-code1> (a xulsword locale)\n";
+  print "               ----> UI-<locale-code1>.txt\n";
+  print "               ----> UI-<locale-code1>_2.txt\n";
+  print "               ----> skin-files (contains any xulsword skin files)\n";
+  print "               ----> locale-files (contains xulsword locale files)\n";
+  print "               ----> <locale-code1>.rdf (contains localized bookmarks)\n";
+  print "         ----> <locale-code2> (another xulsword locale)\n";
+  print "\n";
+  print "xulswordLocale is the ISO code of the xulsword locale to create\n";
+  print "\n";
+  print "XULToolkitVersion is the version of Firefox/XULRunner used in\n";
+  print "  the xulsword build. Some files from this version of Firefox\n";
+  print "  will be copied to the xulsword locale to override the en-US\n";
+  print "  XULRunner locale so that print and other toolkit features will\n";
+  print "  also be localized.\n";
+  print "\n";
+  exit;
+}
 
 $MK = shift;
 $MKS = shift;
 $LOCALE = shift;
+$XULToolkitVersion = shift;
 
 $MK  =~ s/\\/\//g;
 $MKS =~ s/\\/\//g;
@@ -58,5 +90,20 @@ for my $fe2 (sort keys %CodeFileEntryValues) {
 }
 close(OUTF);
 if ($FilteredShortcuts) {&Log("WARNING: All access and command keys have been filtered out (Ignore_shortCut_keys=true).\n");}
+
+# copy locale-files to new locale
+my $localeFiles = "$LOCALEDIR/locale-files";
+if (-e $localeFiles || -d $localeFiles) {
+  &Log("INFO: Copying locale-files of \"$LOCALE\", $localeFiles\n");
+  dircopy("$localeFiles", "$LOCALECODE/xulsword");
+}
+
+# add the Firefox override locale files:
+# these same files must be included in the override manifest created by build.pl
+if (%OVERRIDES && $LOCALE ne "en-US") {
+  foreach my $override (keys %OVERRIDES) {
+    &addLocaleOverrideFile($LOCALE, $LOCALE_FF, $XULToolkitVersion, $override, $OVERRIDES{$override});
+  }
+}
 
 &Log("Finished.\n");

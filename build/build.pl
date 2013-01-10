@@ -73,7 +73,7 @@ if ($MakeDevelopment =~ /true/i) {
   &writePreferences("$DEVELOPMENT/xulsword", \%Prefs, 1);
   &writeApplicationINI("$DEVELOPMENT/xulsword");
   &includeModules($RESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
-  &includeLocales("$DEVELOPMENT/xulsword", $IncludeLocales, \@manifest, 1);
+  &includeLocales("$DEVELOPMENT/xulsword", $IncludeLocales, \@manifest, 0);
   &writeManifest("$DEVELOPMENT/xulsword", \@manifest);
   &writeRunScript("$DEVELOPMENT/xulsword", "dev");
 }
@@ -306,11 +306,6 @@ sub copyXulswordFiles($\@$$$) {
   my $skip = "(\\.svn".($isFFextension ? "|main-window.ico\$":"").")";
   &copy_dir("$TRUNK/xul/installation", $do, "", $skip);
 
-  # copy debugger distribution if this is a development build
-  if ($makeDevelopment) {
-    &copy_dir("$TRUNK/xul/distribution", "$do/distribution", "", "\\.svn");
-  }
-
   # add any copied components to the manifest file
   if (opendir(COMP, "$do/components")) {
     my @comps = readdir(COMP);
@@ -322,33 +317,76 @@ sub copyXulswordFiles($\@$$$) {
     }
   }
   
+  # copy debugger distribution if this is a development build
+  if ($makeDevelopment) {
+    &copy_dir("$TRUNK/xul/distribution", "$do/distribution", "", "\\.svn");
+  }
+
   # create and copy skin and content jar files (development accesses these  
   # files directly, so these jars aren't necessary for development)
   if (!$makeDevelopment) {
     &Log("----> Creating content and skin JAR files.\n");
     &makeZIP("$do/chrome/content.jar", "$TRUNK/xul/content/*");
     &makeZIP("$do/chrome/skin.jar", "$TRUNK/xul/skin/*");
-  }
   
-  # add any locale specific skin files to skin.jar
-  for my $loc (@locales) {
-    my $ldir = "$XulswordExtras/localeDev/$loc";
-    if ($loc eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
-    
-    if (-e "$ldir/locale-skin") {
-      &Log("----> Including $loc locale-skin in skin.jar.\n");
-      &makeZIP("$do/chrome/skin.jar", "$ldir/locale-skin/*", 1);
+    # add any locale specific skin files to skin.jar
+    # NOTE: locale specific skins cannot be used in the Development setup
+    # because they override regular skin code files which are accessed
+    # directly in the Development setup.
+    for my $loc (@locales) {
+      my $ldir = "$XulswordExtras/localeDev/$loc";
+      if ($loc eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
+      
+      if (-e "$ldir/skin-files") {
+        &Log("----> Overwriting skin.jar with $loc skin-files.\n");
+        &makeZIP("$do/chrome/skin.jar", "$ldir/skin-files/*", 1);
+      }
     }
   }
   
-  # add the content, skin, etc. to the manifest file
+  # branding is necessary for the install manager to work, 
+  # but Firefox extensions should never incude branding
+  if (!$isFFextension) {
+    my $brandDir = "$TRUNK/build-files/$Name/branding";
+    make_path($brandDir);
+
+    # these branding files were copied from Firefox 17
+    my $brandFile = "$brandDir/brand.dtd";
+    if (open(BRANDF, ">:encoding(UTF-8)", $brandFile)) {
+      print BRANDF "<!ENTITY brandShortName \"$Name\">\n";
+      print BRANDF "<!ENTITY brandFullName \"$Name\">\n";
+      print BRANDF "<!ENTITY vendorShortName \"$Vendor\">\n";
+      print BRANDF "<!ENTITY trademarkInfo.part1 \"trademark info\">\n";
+      close(BRANDF);
+    }
+    else {&Log("ERROR: Could not open locale branding file:\"".$brandFile."\"\n");}
+
+    $brandFile = "$brandDir/brand.properties";
+    if (open(BRANDF, ">:encoding(UTF-8)", $brandFile)) {
+      print BRANDF "brandShortName=$Name\n";
+      print BRANDF "brandFullName=$Name\n";
+      print BRANDF "vendorShortName=$Vendor\n";
+      print BRANDF "homePageSingleStartMain=Start Page\n";
+      print BRANDF "homePageImport=Import your home page from %S\n";
+      print BRANDF "homePageMigrationPageTitle=Home Page Selection\n";
+      print BRANDF "homePageMigrationDescription=Please select the home page you wish to use:\n";
+      print BRANDF "syncBrandShortName=Sync\n";
+      close(BRANDF);
+    }
+    else {&Log("ERROR: Could not open locale branding file:\"".$brandFile."\"\n");}
+    &Log("----> Creating branding.jar file.\n");
+    &makeZIP("$do/chrome/branding.jar", "$brandDir/*", 1);
+  }
+
+  # add the content, skin, branding etc. to the manifest file
+  if (!$isFFextension) {
+    push(@{$manifestP}, "content branding jar:chrome/branding.jar!/");
+  }
   if ($makeDevelopment) {
     push(@{$manifestP}, "content xulsword file:../../../../xul/content/");
     push(@{$manifestP}, "skin xulsword skin file:../../../../xul/skin/");
     push(@{$manifestP}, "skin xsplatform skin file:../../../../xul/skin/common/linux/ os=Linux");
     push(@{$manifestP}, "skin xsplatform skin file:../../../../xul/skin/common/windows/ os=WINNT");
-    # branding is NECESSARY for the Extension Manager to work
-    push(@{$manifestP}, "content branding file:../../../../xul/content/branding/");
     # development includes the hidden debug overlay
     push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/test/debug-overlay.xul");
   }
@@ -357,8 +395,6 @@ sub copyXulswordFiles($\@$$$) {
     push(@{$manifestP}, "skin xulsword skin jar:chrome/skin.jar!/");
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/common/linux/ os=Linux");
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/common/windows/ os=WINNT");
-    # branding is NECESSARY for the Extension Manager to work
-    push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
   }
 
 }
@@ -506,25 +542,58 @@ sub includeLocales($$\@$) {
     else {&Log("WARNING: No bookmarks.rdf file found for locale \"$loc\".\n");}
 
     # write locale manifest info
-    # NOTE: these entries must also be included in the .manifest files of locale extensions
-    push(@{$manifestP}, "\nlocale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
-    push(@{$manifestP}, "locale branding $loc jar:chrome/$loc.jar!/branding/");
+    # NOTE: this registers the locale in the xulsword build, but each 
+    # locale extension also has its own manifest file
+    push(@{$manifestP}, "locale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
 
-    if (-e "$ldir/text-skin/skin") {
-      push(@{$manifestP}, "skin localeskin $loc jar:chrome/$loc.jar!/skin/");
-    }
   }
 
   # Do not override anything if this is a FireFox extension, as this may
-  # break FireFox if its version is different that from which the override
+  # break FireFox if its version is different than that from which the override
   # files were taken.
   if (!$no_xul_overrides) {
-    push(@{$manifestP}, "override chrome://global/locale/textcontext.dtd chrome://xulsword/locale/override/ff17/textcontext.dtd");
-    push(@{$manifestP}, "override chrome://global/locale/tree.dtd chrome://xulsword/locale/override/ff17/tree.dtd");
+    
+    # these override files are included in xulsword's UI-MAP and are generated along with the xulsword locale
+    my $targetdir = "chrome://xulsword/locale/override/ff$XULToolkitVersion";
+    push(@{$manifestP}, "override chrome://global/locale/textcontext.dtd $targetdir/textcontext.dtd");
+    push(@{$manifestP}, "override chrome://global/locale/tree.dtd $targetdir/tree.dtd");
+    
+    # override files are copied from a Firefox locale and added to the xulsword locale by UI-code.pl
+    # first get override files from UI-MAP
+    open(UIMAP, "<:encoding(UTF-8)", "$TRUNK/localeDev/UI-MAP.txt") || die "Cold not open \"$TRUNK/localeDev/UI-MAP.txt\"\n";
+    my %OVERRIDES;
+    while(<UIMAP>) {
+      if ($_ =~ /^([^\:]+\.(dtd|properties))\s*=\s*(chrome\:\/\/.*?)\s*$/) {
+        my $xsFile = $1;
+        my $ffFile = $3;
+        $OVERRIDES{$3} = $1;
+      }
+    }
+    close(UIMAP);
+    
+    # next check each override and enter it into the manifest
+    foreach my $override (keys %OVERRIDES) {
+      
+      # never override a file unless the target exists for every locale, 
+      # or else the program will break when using any incomplete locale.
+      my $haveAllTargets = 1;
+      my $loc;
+      foreach $loc (@locales) {
+        my $ldir = "$XulswordExtras/localeDev/$loc";
+        if ($loc eq "en-US") {next;}
+        if (!-e "$ldir/locale/".$OVERRIDES{$override}) {$haveAllTargets = 0; last;}
+      }
+      if ($haveAllTargets) {
+        my $lp = $OVERRIDES{$override};
+        $lp =~ s/^xulsword\///;
+        push(@{$manifestP}, "override $override chrome://xulsword/locale/$lp");
+      }
+      else {&Log("WARNING: override target \"".$OVERRIDES{$override}."\" does not exist in \"$loc\". Skipping override of \"$override\".\n");}
+
+    }
+    
   }
 
-  push(@{$manifestP}, "\n# xulswordVersion=$Version\n");
-  push(@{$manifestP}, "# minMKVersion=3.0\n"); # locales no longer have security codes and aren't backward compatible
 }
 
 sub createLocale($) {
@@ -538,57 +607,20 @@ sub createLocale($) {
   # recreate xulsword locale from UI source and report if the log file changes
   mv("$ldir/code_log.txt", "$ldir/code_log-bak.txt");
 
-  system("$TRUNK/localeDev/UI-code.pl", $TRUNK, $XulswordExtras, $locale);
+  system("$TRUNK/localeDev/UI-code.pl", $TRUNK, $XulswordExtras, $locale, $XULToolkitVersion);
 
   if (compare("$ldir/code_log.txt", "$ldir/code_log-bak.txt") != 0) {
     &Log("WARNING: $locale LOG FILE HAS CHANGED. PLEASE CHECK IT: \"$ldir/code_log.txt\".\n");
   }
   unlink("$ldir/code_log-bak.txt");
-
-  # add branding files which are NECESSARY for the Extension Manager to work
-  make_path("$ldir/locale/branding");
-
-  # these branding entries were taken from Firefox 17
-  my $brandf = "$ldir/locale/branding/brand.dtd";
-  if (open(BRANDF, ">:encoding(UTF-8)", $brandf)) {
-    print BRANDF "<!ENTITY brandShortName \"$Name\">\n";
-    print BRANDF "<!ENTITY brandFullName \"$Name\">\n";
-    print BRANDF "<!ENTITY vendorShortName \"$Vendor\">\n";
-    print BRANDF "<!ENTITY trademarkInfo.part1 \"trademark info\">\n";
-    close(BRANDF);
-  }
-  else {&Log("ERROR: Could not open locale branding file:\"$brandf\"\n");}
-
-  $brandf = "$ldir/locale/branding/brand.properties";
-  if (open(BRANDF, ">:encoding(UTF-8)", $brandf)) {
-    print BRANDF "brandShortName=$Name\n";
-    print BRANDF "brandFullName=$Name\n";
-    print BRANDF "vendorShortName=$Vendor\n";
-    print BRANDF "homePageSingleStartMain=Start Page\n";
-    print BRANDF "homePageImport=Import your home page from %S\n";
-    print BRANDF "homePageMigrationPageTitle=Home Page Selection\n";
-    print BRANDF "homePageMigrationDescription=Please select the home page you wish to use:\n";
-    print BRANDF "syncBrandShortName=Sync\n";
-    close(BRANDF);
-  }
-  else {&Log("ERROR: Could not open locale branding file:\"$brandf\"\n");}
-
+  
   # make locale jar file
   if (-e "$TRUNK/build-files/locales/$locale/$locale.jar") {unlink("$TRUNK/build-files/locales/$locale/$locale.jar");}
   &makeZIP("$TRUNK/build-files/locales/$locale/$locale.jar", "$ldir/locale/*");
-  if (-e "$ldir/text-skin") {
-    &makeZIP("$TRUNK/build-files/locales/$locale/$locale.jar", "$ldir/text-skin/*", 1);
-  }
 
-  # make locale manifest file for locale extensions
-  # NOTE: these entries must also be included in xulsword's own chrome.manifest file
+  # make locale manifest file used for locale extensions
   if (open(MANF, ">:encoding(UTF-8)", "$TRUNK/build-files/locales/$locale/$locale.locale.manifest")) {
     print MANF "locale xulsword $locale jar:chrome/$locale.jar!/xulsword/\n";
-    print MANF "locale branding $locale jar:chrome/$locale.jar!/branding/\n";
-
-    if (-e "$ldir/text-skin/skin") {
-      print MANF "skin localeskin $locale jar:chrome/$locale.jar!/skin/\n"
-    }
 
     print MANF "\n# xulswordVersion=$Version\n";
     print MANF "# minMKVersion=3.0\n"; # locales no longer have security codes and aren't backward compatible

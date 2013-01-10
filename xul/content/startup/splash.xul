@@ -20,7 +20,12 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
 
-<!DOCTYPE window SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
+<!DOCTYPE window [
+  <!ENTITY % startupDTD SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
+  %startupDTD;
+  <!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+  %globalDTD;
+]>
 
 <window id="hidden-startup" xmlns:html="http://www.w3.org/1999/xhtml"
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -33,6 +38,8 @@
   <data id="ui.menu.importAudio.label">&menu.importAudio.label;</data>
   <data id="ui.savingSource">&dlgFrom;</data>
   <data id="ui.savingTarget">&dlgTo;</data>
+  <data id="ui.savingTarget">&dlgTo;</data>
+  <data id="ui.locale.dir">&locale.dir;</data>
   
   <script>
     var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
@@ -44,6 +51,8 @@
   <script>XSBundle = document.getElementById("strings"); AllWindows = [];</script>
     
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script>rootprefs.setCharPref("intl.uidirection." + getLocale(), getDataUI("locale.dir"));</script>
+  
   <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
   <script>initLogging();</script>
   

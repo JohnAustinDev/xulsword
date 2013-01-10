@@ -2,6 +2,7 @@
 
 use Encode;
 use File::Copy "cp", "mv";
+use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
 use File::Path qw(make_path remove_tree);
 use File::Compare;
 
@@ -94,6 +95,12 @@ sub readMAP($\%\%\%\%\%) {
     $line++;
     if ($_ =~ /^\s*$/) {next;}
     if ($_ =~ /^\s*\#/) {next;}
+    if ($_ =~ /^([^\:]+\.(dtd|properties))\s*=\s*(chrome\:\/\/.*?)\s*$/) {
+      my $xsFile = $1;
+      my $ffFile = $3;
+      $OVERRIDES{$3} = $1;
+      next;
+    }
     if ($_ !~ /^\s*([^=]+?)\s*\=\s*(.*?)\s*$/) {&Log("ERROR line $line: Could not parse UI-MAP entry \"$_\"\n"); next;}
     my $fe = $1;
     my $d = $2;
@@ -268,7 +275,7 @@ sub xtrans($$$$$$) {
   return $v2;
 }
 
-sub readCode($\%$) {
+sub readCode($\%\%) {
   my $f = shift;
   my $feP = shift;
   my $vP = shift;
@@ -288,7 +295,7 @@ sub readCode($\%$) {
         else {next;}
       }
 
-      if ($e && $v) {
+      if ($e) {
         $feP->{$f}{$v} = $e;
         $vP->{$f}{$e} = $v;
       }
@@ -385,6 +392,56 @@ sub getWilds() {
     }
   }
   close(WLD);
+}
+
+sub addLocaleOverrideFile($$$$) {
+  my $localeXS = shift;
+  my $localeFF = shift;
+  my $versionFF = shift;
+  my $chrome = shift;
+  my $target = shift;
+  
+  &Log("INFO: Adding chrome locale override file \"$chrome\"\n");
+  
+  # get the Firefox file's path
+  if (!-e "$MKSDEV/Firefox$versionFF") {
+    &Log("WARNING: Missing directory \"$MKSDEV/Firefox$versionFF\". Skipping locale override.\n");
+    return;
+  }
+  if ($chrome !~ /^chrome\:\/\/([^\/]+)\/locale\/(.*?)$/) {
+    &Log("ERROR: Malformed chrome URL \"$chrome\". Skipping locale override.\n"); 
+    return;
+  }
+  my $tkdir = $1;
+  my $tkpath = $2;
+  my $override = "$MKSDEV/Firefox$versionFF/$localeFF/$tkdir/$tkpath";
+  if (!-e $override) {
+    &Log("WARNING: Chrome override file not found \"$override\". Skipping locale override.\n");
+    return;
+  }
+  my $defoverride = "$MKSDEV/Firefox$versionFF/en-US/$tkdir/$tkpath";
+  if (!-e $defoverride) {
+    &Log("WARNING: Chrome en-US override file not found \"$defoverride\". Skipping locale override.\n");
+    return;
+  }
+    
+  # compare contents of this override with en-US because missing entries
+  # could cause Firefox or xulsword to malfunction in some circumstances
+  my %entries, %defentries, %values, %defvalues;
+  &readCode($override, \%values, \%entries);
+  &readCode($defoverride, \%defvalues, \%defentries);
+  foreach my $e (keys %{$defentries{$defoverride}}) {
+    if (!exists(${$entries{$override}}{$e})) {
+      &Log("ERROR: entry \"$e\" was not found in \"$override\". Skipping locale override.\n");
+    }
+  }
+  
+  # copy the override file to the xulsword locale
+  my $dest = "$MKSDEV/$localeXS/locale/$target";
+  my $parent = $dest;
+  $parent =~ s/^.*?\/([^\/]+)$/$1/;
+  if (!-e $parent) {make_path($parent);}
+  cp($override, $dest);
 }
 
 sub escfile($) {
