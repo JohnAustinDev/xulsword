@@ -3,4 +3,5 @@ INFO: Reading UI file: "UI-en-US.txt"
 INFO: Reading UI file: "UI-en-US_2.txt"
 WARNING xulsword/dialogs/about/about.dtd:producedby: Value is empty.
 WARNING xulsword/startup/startup.dtd:producedby: Value is empty.
+INFO: Copying locale-files of "en-US", /localeDev/en-US/locale-files
 Finished.

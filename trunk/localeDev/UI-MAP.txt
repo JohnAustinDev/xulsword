@@ -1,3 +1,4 @@
+# VERSION 3.5
 # A "*" in a file-entry and/or description is wildcard.
 # ?? description prefix means file-entry and value are optional.
 # ? description prefix means value is optional
@@ -599,9 +600,10 @@ xulsword/search/search.properties:GROUPEND                               = ?sear
 xulsword/search/search.properties:QUOTESTART                             = ?search-window.search_symbols.QUOTE_START
 xulsword/search/search.properties:QUOTEEND                               = ?search-window.search_symbols.QUOTE_END
 
-# The following are XULRunner/Firefox locale overrides, so all 
-# entities or properties present in the target files must be present
-# in this MAP as well, or else runtime errors will occur.
+# XULRunner/Firefox locale overrides:
+# NOTE: these are not used for Firefox extension installs.
+# All entities or properties present in the Firefox target files must  
+# be present in this MAP as well, or else runtime errors will occur.
 xulsword/override/ff17/tree.dtd:restoreColumnOrder.label                 =  bookmark-window.tree.restore-column-order
 xulsword/override/ff17/textcontext.dtd:cutCmd.label                      =  main-window.menu-edit.cut
 xulsword/override/ff17/textcontext.dtd:cutCmd.accesskey                  =  main-window.menu-edit.cut.ak
@@ -624,3 +626,12 @@ xulsword/override/ff17/textcontext.dtd:spellCheckEnable.accesskey        =  "S"
 xulsword/override/ff17/textcontext.dtd:spellNoSuggestions.label          =  "(No Spelling Suggestions)"
 xulsword/override/ff17/textcontext.dtd:spellDictionaries.label           =  "Languages"
 xulsword/override/ff17/textcontext.dtd:spellDictionaries.accesskey       =  "l"
+xulsword/override/ff17/global.dtd                                        =  chrome://global/locale/global.dtd
+xulsword/override/ff17/printPageSetup.dtd                                =  chrome://global/locale/printPageSetup.dtd
+xulsword/override/ff17/printPreview.dtd                                  =  chrome://global/locale/printPreview.dtd 
+xulsword/override/ff17/printPreviewProgress.dtd                          =  chrome://global/locale/printPreviewProgress.dtd
+xulsword/override/ff17/printProgress.dtd                                 =  chrome://global/locale/printProgress.dtd
+xulsword/override/ff17/tree.dtd                                          =  chrome://global/locale/tree.dtd
+xulsword/override/ff17/handling.properties                               =  chrome://mozapps/locale/handling/handling.properties
+xulsword/override/ff17/handling.dtd                                      =  chrome://mozapps/locale/handling/handling.dtd
+

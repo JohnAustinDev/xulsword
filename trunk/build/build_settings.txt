@@ -26,6 +26,7 @@ Set Vendor=CrossWire
 Set Executable=xulsword
 Set GeckoMinVersion=7.0
 Set GeckoMaxVersion=30.*
+Set XULToolkitVersion=17
 Set (prefs.js):extensions.xulsword.EngineVersion=1.6.2
 Set (prefs.js):extensions.xulsword.MinXSMversion=1.0
 Set (prefs.js):extensions.xulsword.MinUIversion=3.5

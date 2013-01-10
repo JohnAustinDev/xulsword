@@ -30,6 +30,9 @@ Set (prefs.js):extensions.xulsword.w1.hidden=TR;HEB;StrongsGreek;StrongsHebrew;R
 Set (prefs.js):extensions.xulsword.w2.hidden=TR;HEB;StrongsGreek;StrongsHebrew;Robinson;
 Set (prefs.js):extensions.xulsword.w3.hidden=TR;HEB;StrongsGreek;StrongsHebrew;Robinson;
 
+# OTHER SETTINGS
+Set (prefs.js):extensions.xulsword.DontShowExceptionDialog=false
+
 # DEBUG PREFERENCES (USED ONLY WITH DEVELOPMENT ENVIRONMENT)
 Set (debug.js):javascript.options.strict=true
 Set (debug.js):nglayout.debug.disable_xul_cache=true

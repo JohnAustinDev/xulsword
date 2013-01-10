@@ -1,4 +1,19 @@
 # Locale=en-US, Version=3.5, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_shortCut_keys=false
+#
+# This page holds the words and phrases in xulsword's user interface. 
+# Only the word or phrase after the semicolon on each line needs to be 
+# translated to create an interface in a new language. The text between 
+# brackets on the left of each line is a coded description of where the 
+# phrase appears in the program.
+#
+# NOTES:
+# Special symbols like "%1$S", "%2$S", "%3$S" etc. are place holders for 
+# numbers which are supplied when the program is actually run. The 
+# symbols can be moved or re-ordered, but the symbols themselves should 
+# not be changed. Some entries may contain HTML tags, like "<b>" and 
+# "</b>". These add formatting to the text. But most entries cannot 
+# contain HTML. 
+    
 [books.Genesis]: Genesis
 [books.Exodus]: Exodus
 [books.Leviticus]: Leviticus
