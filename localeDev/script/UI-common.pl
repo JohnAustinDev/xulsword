@@ -2,7 +2,6 @@
 
 use Encode;
 use File::Copy "cp", "mv";
-use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
 use File::Path qw(make_path remove_tree);
 use File::Compare;
 
@@ -20,7 +19,7 @@ $IGNORE_SHORTCUT_KEYS = 0;
 if ($LOCALE && $VERSION && $LOCALE_ALT) {}
 elsif ($LOCALE) {
   my $ui = &UI_File($LOCALE, 1);
-  if (!open(INF, "<:encoding(UTF-8)", $ui)) {&Log("\n\nERROR UI-common.pl: could not open UI file \"$ui\".\n"); die;}
+  if (!open(INF, "<:encoding(UTF-8)", $ui)) {&Log("ERROR UI-common.pl: could not open UI file \"$ui\".\n"); die;}
   while(<INF>) {
     if ($_ =~ /\s*\#?\s*Locale=([^,]+),\s*Version=([^,]+),\s*Alternate_locale=([^,]+),\s*Firefox_locale=([^,]+)(,\s*Ignore_shortCut_keys=([^,\s]+))?\s*$/i) {
       $ltmp = $1;
@@ -38,6 +37,19 @@ elsif ($LOCALE) {
 else {&Log("ERROR UI-common.pl: Locale name was not provided.\n"); die;}
 
 $LOCINFO = "# Locale=$LOCALE, Version=$VERSION, Alternate_locale=$LOCALE_ALT, Firefox_locale=$LOCALE_FF, Ignore_shortCut_keys=$IGNORE_SHORTCUT_KEYS\n";
+
+# Get MAP file max and min xulsword versions
+if (!open(INF, "<:encoding(UTF-8)", "$MKDEV/UI-MAP.txt")) {&Log("ERROR: UI-common.pl: could not open UI-MAP.txt file \"$MKDEV/UI-MAP.txt\".\n"); die;}
+while (<INF>) {
+  if ($_ !~ /^\# MIN_XULSWORD_VERSION:(.*?), MAX_XULSWORD_VERSION:(.*?)\s*$/) {
+    &Log("ERROR: UI-MAP.txt versions not found.\n");
+    die;
+  }
+  $MAP_MIN_VERSION = $1;
+  $MAP_MAX_VERSION = $2;
+  last;
+}
+close(INF);
 
 sub UI_File($$) {
   my $loc = shift;
@@ -95,7 +107,7 @@ sub readMAP($\%\%\%\%\%) {
     $line++;
     if ($_ =~ /^\s*$/) {next;}
     if ($_ =~ /^\s*\#/) {next;}
-    if ($_ =~ /^([^\:]+\.(dtd|properties))\s*=\s*(chrome\:\/\/.*?)\s*$/) {
+    if ($_ =~ /^([^\:]+\.([^\.\:\s]+))\s*=\s*(chrome\:\/\/.*?)\s*$/) {
       my $xsFile = $1;
       my $ffFile = $3;
       $OVERRIDES{$3} = $1;
@@ -394,18 +406,22 @@ sub getWilds() {
   close(WLD);
 }
 
-sub addLocaleOverrideFile($$$$) {
+sub readLocaleOverrideFile($$$$\%) {
   my $localeXS = shift;
   my $localeFF = shift;
-  my $versionFF = shift;
   my $chrome = shift;
   my $target = shift;
+  my $codeFileEntryValuesP = shift;
   
-  &Log("INFO: Adding chrome locale override file \"$chrome\"\n");
+  &Log("INFO: Reading chrome locale override file \"$chrome\"\n");
+  
+  my $versionFF = $target;
+  if ($versionFF !~ /\/ff([^\/]+)\//) {die "Bad override target \"$target\"\n";}
+  $versionFF = $1;
   
   # get the Firefox file's path
   if (!-e "$MKSDEV/Firefox$versionFF") {
-    &Log("WARNING: Missing directory \"$MKSDEV/Firefox$versionFF\". Skipping locale override.\n");
+    &Log("ERROR: Missing directory \"$MKSDEV/Firefox$versionFF\". Skipping locale override.\n");
     return;
   }
   if ($chrome !~ /^chrome\:\/\/([^\/]+)\/locale\/(.*?)$/) {
@@ -416,12 +432,12 @@ sub addLocaleOverrideFile($$$$) {
   my $tkpath = $2;
   my $override = "$MKSDEV/Firefox$versionFF/$localeFF/$tkdir/$tkpath";
   if (!-e $override) {
-    &Log("WARNING: Chrome override file not found \"$override\". Skipping locale override.\n");
+    &Log("ERROR: Chrome override file not found \"$override\". Skipping locale override.\n");
     return;
   }
   my $defoverride = "$MKSDEV/Firefox$versionFF/en-US/$tkdir/$tkpath";
   if (!-e $defoverride) {
-    &Log("WARNING: Chrome en-US override file not found \"$defoverride\". Skipping locale override.\n");
+    &Log("ERROR: Chrome en-US override file not found \"$defoverride\". Skipping locale override.\n");
     return;
   }
     
@@ -430,19 +446,125 @@ sub addLocaleOverrideFile($$$$) {
   my %entries, %defentries, %values, %defvalues;
   &readCode($override, \%values, \%entries);
   &readCode($defoverride, \%defvalues, \%defentries);
+  my $ok = 1;
   foreach my $e (keys %{$defentries{$defoverride}}) {
     if (!exists(${$entries{$override}}{$e})) {
       &Log("ERROR: entry \"$e\" was not found in \"$override\". Skipping locale override.\n");
+      $ok = 0;
     }
   }
-  
-  # copy the override file to the xulsword locale
-  my $dest = "$MKSDEV/$localeXS/locale/$target";
-  my $parent = $dest;
-  $parent =~ s/^.*?\/([^\/]+)$/$1/;
-  if (!-e $parent) {make_path($parent);}
-  cp($override, $dest);
+  if (!$ok) {return;}
+
+  # now save .dtd and .properties override file contents
+  if ($target =~ /\.(dtd|properties)$/) {
+    foreach my $e (keys %{$entries{$override}}) {
+      if ($e eq "<rEAd>") {next;}
+      $codeFileEntryValuesP->{"$target:$e"} = $entries{$override}{$e};
+    }
+  }
+  else {
+    # then just copy the whole file to destination
+    my $dest = ($localeXS ne "en-US" ? "$MKSDEV":"$MKDEV")."/$localeXS/locale/$target";
+    my $parent = $dest;
+    $parent =~ s/^(.*?)\/[^\/]+$/$1/;
+    if (!-e $parent) {make_path($parent);}
+    cp($override, $dest);
+  }
+
 }
+
+# copies a directory recursively
+sub copy_dir($$$$) {
+  my $id = shift;
+  my $od = shift;
+  my $incl = shift;
+  my $skip = shift;
+
+  if (!-e $id || !-d $id) {
+    &Log("ERROR copy_dir: Source does not exist or is not a direcory: $id\n");
+    return 0;
+  }
+
+  opendir(DIR, $id) || die "Could not open dir $id\n";
+  my @fs = readdir(DIR);
+  closedir(DIR);
+
+  if (!-e $od) {make_path($od);}
+
+  for(my $i=0; $i < @fs; $i++) {
+    if ($fs[$i] =~ /^\.+$/) {next;}
+    my $if = "$id/".$fs[$i];
+    my $of = "$od/".$fs[$i];
+    if ($incl && $if !~ /$incl/i) {next;}
+    if ($skip && $if =~ /$skip/i) {next;}
+    if (-d $if) {
+      &copy_dir($if, $of, $incl, $skip);
+    }
+    else {
+      &copy_file($if, $of);
+    }
+  }
+  return 1;
+}
+
+sub copy_file($$) {
+  my $if = shift;
+  my $of = shift;
+  if ("$^O" =~ /MSWin32/i) {cp($if, $of);}
+  elsif ("$^O" =~ /linux/i) {
+    my $cmd = "cp -p ".&escfile($if)." ".&escfile($of);
+    `$cmd`;
+  }
+}
+
+sub makeZIP($$$$) {
+  my $zf = shift;
+  my $di = shift;
+  my $updateExisting = shift;
+  my $logfile = shift;
+
+  my $cmd = "";
+  my $cwd = "";
+  my $zd = $zf;
+  $zd =~ s/[\/\\][^\/\\]+$//;
+  if (!-e $zd) {make_path($zd);}
+  if ("$^O" =~ /MSWin32/i) {
+    $zf =~ s/[\/]/\\/g;
+    $di =~ s/[\/]/\\/g;
+    my $a = ($updateExisting ? "u":"a");
+    $cmd = "7za $a -tzip ".&escfile($zf)." -r ".&escfile($di)." -x!.svn";
+    if ($logfile) {
+      my $lf = $zf;
+      $lf =~ s/[^\/\\]+$/$logfile/;
+      $cmd .= " > $lf";
+    }
+    #&Log("$cmd\n");
+    `$cmd`;
+  }
+  elsif ("$^O" =~ /linux/i) {
+    $cwd = `echo $PWD`; $cwd =~ s/\s*$//;
+    my $dip = $di;
+    $dip =~ s/\/([^\/]*)$//;
+    $d = $1;
+    if (!$d || $d =~ /^\s*\*\s*$/) {$d = "*";}
+    chdir($dip);
+    my $a = ($updateExisting ? "-u ":"");
+    $cmd = "zip -r ".$a.&escfile($zf)." ".$d." -x '*/.svn/*'";
+  }
+  else {
+    &Log("ERROR: Please update common.pl->makeZIP() to include your platform.\n");
+  }
+
+  if ($cmd && $logfile) {
+    my $lf = $zf;
+    $lf =~ s/[^\/\\]+$/$logfile/;
+    $cmd .= " > $lf";
+  }
+  #&Log("$cmd\n");
+  if ($cmd) {`$cmd`;}
+  if ($cwd) {chdir($cwd);}
+}
+
 
 sub escfile($) {
   my $n = shift;

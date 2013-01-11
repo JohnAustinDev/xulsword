@@ -5,7 +5,7 @@ $NOCONSOLELOG = 1;
 if (!@ARGV) {
   print "Creates a xulsword locale from UI text files and Firefox files.\n";
   print "\n";
-  print "usage: UI-code.pl MK MKS xulswordLocale XULToolkitVersion\n"; 
+  print "usage: UI-code.pl MK MKS xulswordLocale\n"; 
   print "\n";
   print "MK is the path to xulsword svn\n";
   print "\n";
@@ -13,7 +13,7 @@ if (!@ARGV) {
   print "  should contain the following files needed to build a new locale:\n";
   print "  <MKS-top-directory>\n";
   print "  ---->  localeDev\n";
-  print "         ----> Firefox17 (where 17 is XULToolkitVersion number)\n";
+  print "         ----> Firefox17 (where 17 is Firefox version number)\n";
   print "               ----> <locale-code1> (a Firefox 17 locale)\n";
   print "               ----> <locale-code2> (another Firefox 17 locale)\n";
   print "         ----> <locale-code1> (a xulsword locale)\n";
@@ -26,19 +26,12 @@ if (!@ARGV) {
   print "\n";
   print "xulswordLocale is the ISO code of the xulsword locale to create\n";
   print "\n";
-  print "XULToolkitVersion is the version of Firefox/XULRunner used in\n";
-  print "  the xulsword build. Some files from this version of Firefox\n";
-  print "  will be copied to the xulsword locale to override the en-US\n";
-  print "  XULRunner locale so that print and other toolkit features will\n";
-  print "  also be localized.\n";
-  print "\n";
   exit;
 }
 
 $MK = shift;
 $MKS = shift;
 $LOCALE = shift;
-$XULToolkitVersion = shift;
 
 $MK  =~ s/\\/\//g;
 $MKS =~ s/\\/\//g;
@@ -63,11 +56,20 @@ if (-e $LOCALECODE) {remove_tree($LOCALECODE);}
 # read the MAP contents into memory
 &readMAP($MAPFILE, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%MapLine);
 
+# read the Firefox override locale files:
+# these same files must be included in the override manifest created by build.pl
+if (%OVERRIDES) {
+  foreach my $override (sort keys %OVERRIDES) {
+    &readLocaleOverrideFile($LOCALE, $LOCALE_FF, $override, $OVERRIDES{$override}, \%CodeFileEntryValues);
+  }
+}
+
 # correlate UI descriptions to MAP entries
 &correlateUItoMAP(\%UIDescValue, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%CodeFileEntryValues, \%MatchedDescriptions);
 
 # write code files
 for my $fe2 (sort keys %CodeFileEntryValues) {
+
   $fe2 =~ /^(.+?)\:(.+)\s*$/;
   my $f = "$LOCALECODE/$1";
   my $e = $2;
@@ -87,6 +89,7 @@ for my $fe2 (sort keys %CodeFileEntryValues) {
   if ($f =~ /\.properties$/i) {print OUTF $e."=".$v."\n";}
   elsif ($f =~ /\.dtd$/i) {print OUTF "<!ENTITY ".$e." \"".$v."\">\n";}
   else {&Log("ERROR FileEntry=\"".$fe2."\": Unknown file type \"".$f."\"\n");}
+  
 }
 close(OUTF);
 if ($FilteredShortcuts) {&Log("WARNING: All access and command keys have been filtered out (Ignore_shortCut_keys=true).\n");}
@@ -95,15 +98,5 @@ if ($FilteredShortcuts) {&Log("WARNING: All access and command keys have been fi
 my $localeFiles = "$LOCALEDIR/locale-files";
 if (-e $localeFiles || -d $localeFiles) {
   &Log("INFO: Copying locale-files of \"$LOCALE\", $localeFiles\n");
-  dircopy("$localeFiles", "$LOCALECODE/xulsword");
+  &copy_dir("$localeFiles", "$LOCALECODE/xulsword", "", "\.svn");
 }
-
-# add the Firefox override locale files:
-# these same files must be included in the override manifest created by build.pl
-if (%OVERRIDES && $LOCALE ne "en-US") {
-  foreach my $override (keys %OVERRIDES) {
-    &addLocaleOverrideFile($LOCALE, $LOCALE_FF, $XULToolkitVersion, $override, $OVERRIDES{$override});
-  }
-}
-
-&Log("Finished.\n");

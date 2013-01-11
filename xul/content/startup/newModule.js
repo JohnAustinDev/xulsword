@@ -306,7 +306,6 @@ function startImport2() {
 // Checks compatibility of all sword modules and locales
 function removeIncompatibleFiles(fileArray, entryArray) {
   var incomp = {newmodule:[], minprogversion:null, oldmodule:[], minmodversion:null};
-  var manifest = new RegExp(CHROME + "\/[^\/]+" + MANIFEST_EXT + "$");
   var conf = new RegExp(MODSD + "\/[^\/]+" + CONF_EXT + "$");
   var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
   var progVersion = prefs.getCharPref("Version");
@@ -314,13 +313,13 @@ function removeIncompatibleFiles(fileArray, entryArray) {
   var engineVersion; try {engineVersion = prefs.getCharPref("EngineVersion");} catch (er) {engineVersion = NOTFOUND;}
 
   var incompModsPath = [];
-  var incompGUIs = [];
   for (var f=0; f<entryArray.length; f++) {
     var modHasIncompatibleNewComponents=false;
     var modHasIncompatibleOldComponents=false;
     for (var e=0; e<entryArray[f].length; e++) {
-      // Manifest & Conf files
-      if (entryArray[f][e].match(manifest) || entryArray[f][e].match(conf)) {
+    
+      // Conf files
+      if (entryArray[f][e].match(conf)) {
         var remove = false;
         var versioninfo = readVersion(fileArray[f], entryArray[f][e], progVersion);
 //window.alert("compVers:" + versioninfo.compversion + ", minProgVers:" + versioninfo.minprogversion + ", type:" + versioninfo.type + ", path:" + versioninfo.path, + ", minCompVers:" + versioninfo.mincompversion);
@@ -375,15 +374,6 @@ function removeIncompatibleFiles(fileArray, entryArray) {
 							}
             }
           }
-          else if (versioninfo.type == MANIFEST_EXT) {
-            var locmanifest = getSpecialDirectory("AChrom");
-            locmanifest.append(versioninfo.localename + ".locale.manifest");
-            if (locmanifest.exists()) {
-              var locfiledata = readFile(locmanifest);
-              if (locfiledata) overwriteInstalledVersion = locfiledata.match(VERSIONTAG);
-              if (overwriteInstalledVersion) overwriteInstalledVersion = overwriteInstalledVersion[1];
-            }
-          }
           if (!remove && overwriteInstalledVersion) {
             var comp = comparator.compare(versioninfo.compversion, overwriteInstalledVersion);
             if (comp < 0) {
@@ -398,7 +388,6 @@ function removeIncompatibleFiles(fileArray, entryArray) {
           if (remove) {
             entryArray[f].splice(e--, 1);
             if (versioninfo.type==CONF_EXT) incompModsPath.push(versioninfo.path);
-            if (versioninfo.type==MANIFEST_EXT) incompGUIs.push(versioninfo.path);
           }
         }
       }
@@ -407,9 +396,6 @@ function removeIncompatibleFiles(fileArray, entryArray) {
         remove = false;
         for (var bm=0; bm<incompModsPath.length; bm++) {
           remove |= (entryArray[f][e].match(escapeRE(incompModsPath[bm])) ? true:false);
-        }
-        for (bm=0; bm<incompGUIs.length; bm++) {
-          remove |= (entryArray[f][e].match(escapeRE(incompGUIs[bm])) ? true:false);
         }
         if (remove) entryArray[f].splice(e--, 1);
       }
@@ -441,7 +427,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
 // 4) When either program's MinXSMversion or MinUIversion are finally changed, THEY MUST START AT 3.0 OR GREATER.
 // The above rules allow modules to be created with new version numbers, which are still backward compatible to at least 2.7.
 function readVersion(aZip, aEntry, progVers) {
-  var info = {compversion:"1.0", minprogversion:null, type:null, path:null, mincompversion:null, error:false, localename:null, xsmodulename:null, xsmoduletext:null};
+  var info = {compversion:"1.0", minprogversion:null, type:null, path:null, mincompversion:null, error:false, xsmodulename:null, xsmoduletext:null};
   var temp = getSpecialDirectory("TmpD");
     
   //exceptions result in keeping the file...
@@ -469,18 +455,6 @@ function readVersion(aZip, aEntry, progVers) {
     info.xsmoduletext = readParamFromConf(temp, "Version");
     info.xsmodulemineng = readParamFromConf(temp, "MinimumVersion");
     if (!info.xsmoduletext) info.xsmoduletext = 0;
-  }
-  else if (aEntry.search("." + MANIFEST_EXT, "i")!=-1) {
-    info.type = MANIFEST_EXT;
-    try {info.mincompversion = prefs.getCharPref("MinUIversion");} catch (er) {info.mincompversion = progVers;}
-    var locale = aEntry.match(/(^|\/)([^\.\/]+)[^\/]+$/);
-    // If the manifest is not a locale manifest, remove it.
-    if (!locale) {
-      info.error = true;
-      return info;
-    }
-    info.path = CHROME + "/" + locale[2] + ".";
-    info.localename = locale[2];
   }
   
   var filedata = readFile(temp);
@@ -628,80 +602,21 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
 //    for (var s=0; s<CommonList.length; s++) {if (aEntry.match(CommonList[s], "i")) dest = "xsModsCommon";}
     inflated.initWithPath(lpath(getSpecialDirectory(dest).path + "/" + aEntry));
     break;
-
+    
   case CHROME:
-    if ((/\.(jar|manifest)$/i).test(entryFileName)) {
-      // .manifest files will be copied to the extension's top directory,
-      // not inside the chrome directory.
-      
-      // this .jar or .manifest file will be copied to the extensions directory
-      var localeName = entryFileName.match(/^([^\.]*)/)[1];
-      var localeDir = localeName + ".locale" + APPLICATIONID.replace(/^.*?(\@.*)$/, "$1");
-      var inflated = getSpecialDirectory("xsExtension");
-      inflated.append(localeDir);
-      
-      if ((/\.jar$/i).test(entryFileName)) {
-        inflated.append(CHROME);
-        inflated.append(entryFileName);
-              
-        // create an install.rdf file to initiate this locale extension's 
-        // installation by Firefox's install manager upon next startup.
-        var file = getSpecialDirectory("xsExtension");
-        file.append(localeDir);
-        file.append("install.rdf");
-        
-        // install.rdf: the version of this locale extension and that of the
-        // target application is not important because version control is 
-        // already handled by xulsword code. Firefox's installation manager 
-        // should always simply install without complaining.
-        var str;
-        str  =   "<?xml version=\"1.0\"?>" + NEWLINE;
-        str +=   "<RDF xmlns=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:em=\"http://www.mozilla.org/2004/em-rdf#\">" + NEWLINE;
-        str +=   "  <Description about=\"urn:mozilla:install-manifest\">" + NEWLINE;
-        str +=   "    <em:id>" + localeDir + "</em:id>" + NEWLINE;
-        str +=   "    <em:version>" + prefs.getCharPref("Version") + "</em:version>" + NEWLINE;
-        str +=   "    <em:type>8</em:type>" + NEWLINE;
-        str +=   "    <em:name>" + localeName + " xulsword locale</em:name>" + NEWLINE;
-        str +=   "    <em:description>A Bible reading and study tool.</em:description>" + NEWLINE;
-        str +=   "    <em:homepageURL>http://code.google.com/p/xulsword</em:homepageURL>" + NEWLINE;
-        str +=   "    <em:iconURL>chrome://xulsword/skin/icon.png</em:iconURL>" + NEWLINE;
-        str +=   "    <em:targetApplication>" + NEWLINE;
-        str +=   "      <Description>" + NEWLINE;
-        if (IsExtension) {
-          str += "        <em:id>{" + FIREFOXUID + "}</em:id>" + NEWLINE;
-          str += "        <em:minVersion>1.0</em:minVersion>" + NEWLINE;
-          str += "        <em:maxVersion>99.0</em:maxVersion>" + NEWLINE;
-        }
-        else {
-          str += "        <em:id>" + APPLICATIONID + "</em:id>" + NEWLINE;
-          str += "        <em:minVersion>1.0</em:minVersion>" + NEWLINE;
-          str += "        <em:maxVersion>99.0</em:maxVersion>" + NEWLINE;
-        }
-        str +=   "      </Description>" + NEWLINE;
-        str +=   "    </em:targetApplication>" + NEWLINE;
-        str +=     "</Description>" + NEWLINE;
-        str +=   "</RDF>" + NEWLINE;
+    // No longer supported, just ignore without error...
+    return {reset:NORESET, success:true, remove:true};
 
-        if (!file.exists()) file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
-        writeFile(file, str, true);
+  case LOCALE:
+    var localeName = entryFileName.match(/^([^\.]+)\./);
+    if (localeName) localeName = localeName[1];
+    if (!localeName || !(RegExp(escapeRE(EXTENSION_EXT) + "$")).test(entryFileName))
+        return {reset:NORESET, success:false, remove:true};
         
-        NewLocales = pushIf(NewLocales, localeName);
-        var rootprefs = Components.classes["@mozilla.org/preferences-service;1"].
-            getService(Components.interfaces.nsIPrefBranch);
-        if (localeName[1] == getLocale()) {
-          rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
-        }
-      }
-      else if ((/\.manifest$/i).test(entryFileName)) {
-        inflated.append("chrome.manifest");
-      }
-    }
-    else {
-      // completely ignore everything in Chrome except jar and manifest files
-      return {reset:NORESET, success:true, remove:true};
-    }
-
+    inflated.initWithPath(lpath(getSpecialDirectory("xsExtension").path + "/" + entryFileName));
+    NewLocales = pushIf(NewLocales, localeName);
     break;
+    
   case AUDIOPLUGIN:
     inflated.initWithPath(lpath(getSpecialDirectory("xsAudioPI").path + "/" + entryFileName));
     break;
@@ -762,7 +677,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     return {reset:(PreMainWin ? NORESET:SOFTRESET), success:success, remove:true};
     break;
     
-  case CHROME:
+  case LOCALE:
     return {reset:HARDRESET, success:true, remove:true};
     break;
     

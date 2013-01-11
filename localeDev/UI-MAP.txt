@@ -1,4 +1,5 @@
-# VERSION 3.5
+# MIN_XULSWORD_VERSION:3.5, MAX_XULSWORD_VERSION:3.8
+# 
 # A "*" in a file-entry and/or description is wildcard.
 # ?? description prefix means file-entry and value are optional.
 # ? description prefix means value is optional
@@ -602,8 +603,10 @@ xulsword/search/search.properties:QUOTEEND                               = ?sear
 
 # XULRunner/Firefox locale overrides:
 # NOTE: these are not used for Firefox extension installs.
-# All entities or properties present in the Firefox target files must  
-# be present in this MAP as well, or else runtime errors will occur.
+xulsword/override/ff17/dialog.properties:button-accept                   =  dialog-window.ok
+xulsword/override/ff17/dialog.properties:button-cancel                   =  dialog-window.cancel
+xulsword/override/ff17/dialog.properties:button-help                     =  main-window.menu-help
+xulsword/override/ff17/dialog.properties:button-disclosure               =  search-window.more-less-button.more
 xulsword/override/ff17/tree.dtd:restoreColumnOrder.label                 =  bookmark-window.tree.restore-column-order
 xulsword/override/ff17/textcontext.dtd:cutCmd.label                      =  main-window.menu-edit.cut
 xulsword/override/ff17/textcontext.dtd:cutCmd.accesskey                  =  main-window.menu-edit.cut.ak
@@ -617,21 +620,22 @@ xulsword/override/ff17/textcontext.dtd:selectAllCmd.label                =  book
 xulsword/override/ff17/textcontext.dtd:selectAllCmd.accesskey            =  bookmark-window.menu-edit.select_all.ak
 xulsword/override/ff17/textcontext.dtd:deleteCmd.label                   =  bookmark-window.menu-edit.delete
 xulsword/override/ff17/textcontext.dtd:deleteCmd.accesskey               =  bookmark-window.menu-edit.delete.ak
-xulsword/override/ff17/textcontext.dtd:spellAddToDictionary.label        =  "Add to Dictionary"
-xulsword/override/ff17/textcontext.dtd:spellAddToDictionary.accesskey    =  "o"
-xulsword/override/ff17/textcontext.dtd:spellUndoAddToDictionary.label    =  "Undo Add To Dictionary"
-xulsword/override/ff17/textcontext.dtd:spellUndoAddToDictionary.accesskey=  "n"
-xulsword/override/ff17/textcontext.dtd:spellCheckEnable.label            =  "Check Spelling"
-xulsword/override/ff17/textcontext.dtd:spellCheckEnable.accesskey        =  "S"
-xulsword/override/ff17/textcontext.dtd:spellNoSuggestions.label          =  "(No Spelling Suggestions)"
-xulsword/override/ff17/textcontext.dtd:spellDictionaries.label           =  "Languages"
-xulsword/override/ff17/textcontext.dtd:spellDictionaries.accesskey       =  "l"
+xulsword/override/ff17/intl.css                                          =  chrome://global/locale/intl.css
+xulsword/override/ff17/dialog.properties                                 =  chrome://global/locale/dialog.properties
+xulsword/override/ff17/tree.dtd                                          =  chrome://global/locale/tree.dtd
+xulsword/override/ff17/textcontext.dtd                                   =  chrome://global/locale/textcontext.dtd
 xulsword/override/ff17/global.dtd                                        =  chrome://global/locale/global.dtd
+xulsword/override/ff17/appstrings.properties                             =  chrome://global/locale/appstrings.properties
+xulsword/override/ff17/handling.properties                               =  chrome://mozapps/locale/handling/handling.properties
+xulsword/override/ff17/handling.dtd                                      =  chrome://mozapps/locale/handling/handling.dtd
+xulsword/override/ff17/printdialog.dtd                                   =  chrome://global/locale/printdialog.dtd
+xulsword/override/ff17/printdialog.properties                            =  chrome://global/locale/printdialog.properties
+xulsword/override/ff17/printing.properties                               =  chrome://global/locale/printing.properties
+xulsword/override/ff17/printjoboptions.properties                        =  chrome://global/locale/printjoboptions.dtd
 xulsword/override/ff17/printPageSetup.dtd                                =  chrome://global/locale/printPageSetup.dtd
 xulsword/override/ff17/printPreview.dtd                                  =  chrome://global/locale/printPreview.dtd 
 xulsword/override/ff17/printPreviewProgress.dtd                          =  chrome://global/locale/printPreviewProgress.dtd
 xulsword/override/ff17/printProgress.dtd                                 =  chrome://global/locale/printProgress.dtd
-xulsword/override/ff17/tree.dtd                                          =  chrome://global/locale/tree.dtd
-xulsword/override/ff17/handling.properties                               =  chrome://mozapps/locale/handling/handling.properties
-xulsword/override/ff17/handling.dtd                                      =  chrome://mozapps/locale/handling/handling.dtd
-
+xulsword/override/ff17/appPicker.dtd                                     =  chrome://global/locale/appPicker.dtd
+xulsword/override/ff17/filepicker.dtd                                    =  chrome://global/locale/filepicker.dtd
+xulsword/override/ff17/filepicker.properties                             =  chrome://global/locale/filepicker.properties

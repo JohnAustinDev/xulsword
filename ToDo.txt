@@ -5,8 +5,18 @@ Linux and Windows builds should include swordMK .cpp files the same way.
 Linux static library script needs to handle security based on ./configure
 
 Bugs to fix before release:
-Implement overrides for print and other XULRunner features.
-WONT'T DO (locale extensions do not yet exist in the wild, and future versions
+DONE!: Remove chrome installer and add extension installer (Installer ignores chrome dir silently now).
+DONE!: Language menu should check installed module langs and un-disable matching menu options, and open the menu when it does so.
+DONE!: Choose proper overrides for MK 3.5
+WON'T DO (Not worth all the effort to save 364kb): Make splash into two images to reduce UI size (58kb -> 27kb ug, 62kb -> 32kb, total 14 UIs 812bk -> 448kb
+DONE!: Change build to create .xpi locale extensions.
+DONE!: Add minvers and maxverse so UI-MAP.txt
+WON'T DO (Don't need other UIs right now?): Add all presentable UIs into build, along with prefs to hide them initially.
+Insure xulsword extension manager only installs locale extensions and not other types.
+
+
+DONE!: Implement overrides for print and other XULRunner features.
+WON'T DO (locale extensions do not yet exist in the wild, and future versions
 of xulsword are not going to break locale extension compatibility until it's 
 deemed beneficial to do so. At that time the setup installer can be made to 
 delete previous locale extensions): Figure out how to do locale versioning with Extension Manager!

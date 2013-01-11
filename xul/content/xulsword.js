@@ -162,7 +162,9 @@ function postWindowInit() {
   ViewPort.disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));
   
   // Open language menu if a new locale was just installed
-  if (NewModuleInfo && NewModuleInfo.NewLocales && NewModuleInfo.NewLocales[0] && !document.getElementById("sub-lang").disabled) {
+  if (NewModuleInfo && !document.getElementById("sub-lang").disabled &&
+      (NewModuleInfo.hasOwnProperty("showLangMenu") && NewModuleInfo.showLangMenu ||
+      NewModuleInfo.NewLocales && NewModuleInfo.NewLocales[0])) {
     var opmenu = getDataUI("menu.options");
     var lamenu = getDataUI("menu.options.language");
     var result={};
@@ -345,7 +347,7 @@ function getModuleFeatures(module) {
   }
   return features;
 }
-
+  
 function createLanguageMenu() {
   var numlocs = 0;
   for (var lc in LocaleConfigs) {numlocs++;}
@@ -356,6 +358,31 @@ function createLanguageMenu() {
   var menuItems = [];
   for (var lc in LocaleConfigs) {
     
+    // check for hideUntilModuleInstalled pref
+    try {var hideUntilModuleInstalled = prefs.getBoolPref("hideUntilModuleInstalled." + lc);}
+    catch (er) {hideUntilModuleInstalled = false;}
+    
+    // is a corresponding module now installed?
+    if (hideUntilModuleInstalled) {
+      for (var t=0; t<Tabs.length; t++) {
+        var modlang = LibSword.getModuleInformation(Tabs[t].modName, "Lang");
+        if (!modlang) continue;
+        modlang = modlang.match(/^([^\.\-]*)/)[0];
+        var loclang = lc.match(/^([^\.\-]*)/)[0];
+        if (modlang.toLowerCase() != loclang.toLowerCase()) continue;
+        prefs.setBoolPref("hideUntilModuleInstalled." + lc, false);
+        hideUntilModuleInstalled = false;
+        if (!NewModuleInfo) NewModuleInfo = {};
+        NewModuleInfo.showLangMenu = true;
+      }
+    }
+    
+    // is this locale an extension?
+    var isExtension = getSpecialDirectory("xsExtension");
+    isExtension.append(lc + "." + APPLICATIONID + ".xpi");
+    
+    if (!isExtension.exists() && hideUntilModuleInstalled) continue;
+  
     var bundle = getLocaleBundle(lc, "xulsword.properties");
     var myAccKey = ""; try {myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");} catch (er) {};
 
@@ -1114,8 +1141,9 @@ function handleOptions(elem) {
                     .getService(Components.interfaces.nsIIOService);
         aURI = ios.newURI(aURI, null, null);
         aURI = aURI.asciiSpec;
-        window.location = aURI;
-        jsdump("Launched mailto URI of " + aURI.length + " chars.");
+        jsdump("Launching mailto URI of " + aURI.length + " chars.");
+        try {window.location = aURI;}
+        catch(er) {jsdump("Unable to launch email client.");}
       }
       break;
       
@@ -1257,7 +1285,9 @@ function updateXulswordButtons() {
   var myLocale = getLocale();
   if (document.getElementById("sub-lang").getAttribute("disabled") != "true") {
     for (var lc in LocaleConfigs) {
-      document.getElementById("langMenu." + lc).setAttribute("checked",(lc == myLocale ? true:false));
+      var lmenu = document.getElementById("langMenu." + lc);
+      if (!lmenu) continue; // due to hideUntilModuleInstalled not all locales may have menu items
+      lmenu.setAttribute("checked",(lc == myLocale ? true:false));
     }
   }
   document.getElementById("f0").setAttribute("checked",(prefs.getIntPref("FontSize")==-4 ? true:false));
