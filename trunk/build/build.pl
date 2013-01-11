@@ -380,7 +380,7 @@ sub copyXulswordFiles($\@$$$) {
 
   # add the content, skin, branding etc. to the manifest file
   if (!$isFFextension) {
-    push(@{$manifestP}, "content branding jar:chrome/branding.jar!/");
+    push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
   }
   if ($makeDevelopment) {
     push(@{$manifestP}, "content xulsword file:../../../../xul/content/");
@@ -545,6 +545,7 @@ sub includeLocales($$\@$) {
     # NOTE: this registers the locale in the xulsword build, but each 
     # locale extension also has its own manifest file
     push(@{$manifestP}, "locale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
+    push(@{$manifestP}, "locale branding $loc jar:chrome/branding.jar!/");
 
   }
 
@@ -552,18 +553,13 @@ sub includeLocales($$\@$) {
   # break FireFox if its version is different than that from which the override
   # files were taken.
   if (!$no_xul_overrides) {
-    
-    # these override files are included in xulsword's UI-MAP and are generated along with the xulsword locale
-    my $targetdir = "chrome://xulsword/locale/override/ff$XULToolkitVersion";
-    push(@{$manifestP}, "override chrome://global/locale/textcontext.dtd $targetdir/textcontext.dtd");
-    push(@{$manifestP}, "override chrome://global/locale/tree.dtd $targetdir/tree.dtd");
-    
+
     # override files are copied from a Firefox locale and added to the xulsword locale by UI-code.pl
     # first get override files from UI-MAP
     open(UIMAP, "<:encoding(UTF-8)", "$TRUNK/localeDev/UI-MAP.txt") || die "Cold not open \"$TRUNK/localeDev/UI-MAP.txt\"\n";
     my %OVERRIDES;
     while(<UIMAP>) {
-      if ($_ =~ /^([^\:]+\.(dtd|properties))\s*=\s*(chrome\:\/\/.*?)\s*$/) {
+      if ($_ =~ /^([^\:]+\.([^\.\:\s]+))\s*=\s*(chrome\:\/\/.*?)\s*$/) {
         my $xsFile = $1;
         my $ffFile = $3;
         $OVERRIDES{$3} = $1;
@@ -571,29 +567,36 @@ sub includeLocales($$\@$) {
     }
     close(UIMAP);
     
-    # next check each override and enter it into the manifest
-    foreach my $override (keys %OVERRIDES) {
+    # next check each override and enter allowable overrides into the manifest
+    foreach my $override (sort keys %OVERRIDES) {
       
       # never override a file unless the target exists for every locale, 
       # or else the program will break when using any incomplete locale.
       my $haveAllTargets = 1;
-      my $loc;
-      foreach $loc (@locales) {
-        my $ldir = "$XulswordExtras/localeDev/$loc";
-        if ($loc eq "en-US") {next;}
-        if (!-e "$ldir/locale/".$OVERRIDES{$override}) {$haveAllTargets = 0; last;}
+      my $loc2;
+      foreach $loc2 (@locales) {
+        my $ldir = "$XulswordExtras/localeDev/$loc2";
+        if ($loc2 eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
+        if (!-e "$ldir/locale/".$OVERRIDES{$override}) {
+          $haveAllTargets = 0;
+          &Log("WARNING: override target \"".$OVERRIDES{$override}."\" does not exist in \"$loc2\". Skipping override of \"$override\".\n");
+          last;
+        }
       }
       if ($haveAllTargets) {
-        my $lp = $OVERRIDES{$override};
-        $lp =~ s/^xulsword\///;
-        push(@{$manifestP}, "override $override chrome://xulsword/locale/$lp");
+        # don't allow overrides with an incompatible version
+        my $version = $OVERRIDES{$override};
+        if ($version =~ /\/ff([^\/]+)\//) {
+          $version = $1;
+          if ($version eq $XULToolkitVersion) {
+            my $lp = $OVERRIDES{$override};
+            $lp =~ s/^xulsword\///;
+            push(@{$manifestP}, "override $override chrome://xulsword/locale/$lp");
+          }
+        }
       }
-      else {&Log("WARNING: override target \"".$OVERRIDES{$override}."\" does not exist in \"$loc\". Skipping override of \"$override\".\n");}
-
     }
-    
   }
-
 }
 
 sub createLocale($) {
@@ -607,7 +610,7 @@ sub createLocale($) {
   # recreate xulsword locale from UI source and report if the log file changes
   mv("$ldir/code_log.txt", "$ldir/code_log-bak.txt");
 
-  system("$TRUNK/localeDev/UI-code.pl", $TRUNK, $XulswordExtras, $locale, $XULToolkitVersion);
+  system("$TRUNK/localeDev/UI-code.pl", $TRUNK, $XulswordExtras, $locale);
 
   if (compare("$ldir/code_log.txt", "$ldir/code_log-bak.txt") != 0) {
     &Log("WARNING: $locale LOG FILE HAS CHANGED. PLEASE CHECK IT: \"$ldir/code_log.txt\".\n");
@@ -617,17 +620,9 @@ sub createLocale($) {
   # make locale jar file
   if (-e "$TRUNK/build-files/locales/$locale/$locale.jar") {unlink("$TRUNK/build-files/locales/$locale/$locale.jar");}
   &makeZIP("$TRUNK/build-files/locales/$locale/$locale.jar", "$ldir/locale/*");
-
-  # make locale manifest file used for locale extensions
-  if (open(MANF, ">:encoding(UTF-8)", "$TRUNK/build-files/locales/$locale/$locale.locale.manifest")) {
-    print MANF "locale xulsword $locale jar:chrome/$locale.jar!/xulsword/\n";
-
-    print MANF "\n# xulswordVersion=$Version\n";
-    print MANF "# minMKVersion=3.0\n"; # locales no longer have security codes and aren't backward compatible
-
-    close(MANF);
-  }
-  else {&Log("ERROR: Could not open .manifest file: \"$TRUNK/build-files/locales/$locale/$locale.locale.manifest\"\n");}
+  
+  # make the locale extension
+  system("$TRUNK/localeDev/UI-extension.pl", $TRUNK, $XulswordExtras, $locale);
 
 }
 
