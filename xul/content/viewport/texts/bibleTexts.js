@@ -65,7 +65,6 @@ BibleTexts = {
       }
       
       // handle footnotes
-        
       var gfn = (d.globalOptions["Footnotes"] == "On" && d["ShowFootnotesAtBottom"]);
       var gcr = (d.globalOptions["Cross-references"] == "On" && d["ShowCrossrefsAtBottom"]);
       var gun = (d.globalOptions["User Notes"] == "On" && d["ShowUserNotesAtBottom"]);
@@ -95,25 +94,28 @@ BibleTexts = {
   },
   
   checkNoteBox: function(w) {
-   
+ 
     var havefn = false;
     
     var t = document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];
     var nb = document.getElementById("note" + w);
+    
+    if (t.getAttribute("moduleType") != "Texts")
+      return (nb.innerHTML ? true:false);
       
     // single column displays always show notes for the whole chapter.
     if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
 
       // get first chapter/verse
       var vf = sb.firstChild;
-      while (vf && (vf.style.display == "none" || !vf.className || !(/^vs(\s|$)/).test(vf.className))) {
+      while (vf && !Texts.isVisibleVerse(vf, w)) {
         vf = vf.nextSibling;
       }
       
       // get last chapter/verse
       var vl = sb.lastChild;
-      while (vl && (vl.offsetLeft >= sb.offsetWidth || !vl.className || !(/^vs(\s|$)/).test(vl.className))) {
+      while (vl && !Texts.isVisibleVerse(vl, w)) {
         vl = vl.previousSibling;
       }
       
@@ -229,8 +231,8 @@ BibleTexts = {
         if (!p.ntype) continue;
         
         // Now display this note as a row in the main table
-        t += "<div id=\"w" + w + ".footnote." + p.ntype + "." + p.nid + "." + p.osisref + "." + p.mod + "\" ";
-        t += "title=\"" + p.nid + "." + p.osisref + "." + p.mod + "\" ";
+        t += "<div id=\"w" + w + ".footnote." + p.title + "\" ";
+        t += "title=\"" + p.nid + "." + p.bk + "." + p.ch + "." + p.vs + "." + p.mod + "\" ";
         t += "class=\"fnrow " + (openCRs ? "cropened":"crclosed") + "\">";
         
         // Write cell #1: an expander link for cross references only
@@ -249,7 +251,7 @@ BibleTexts = {
         var modDirectionEntity = (ModuleConfigs[mod] && ModuleConfigs[mod].direction == "rtl" ? "&rlm;":"&lrm;");
         t +=   "<div class=\"fncol4\">";
         if (p.ch && p.vs) {
-          t +=   "<a class=\"fnlink\" title=\"" + p.nid + "." + p.osisref + "." + p.mod + "\">";
+          t +=   "<a class=\"fnlink\" title=\"" + p.nid + "." + p.bk + "." + p.ch + "." + p.vs + "." + p.mod + "\">";
           t +=     "<i>" + dString(p.ch, lov) + ":" + modDirectionEntity + dString(p.vs, lov) + "</i>";
           t +=   "</a>";
           t +=   " -";
@@ -274,7 +276,7 @@ BibleTexts = {
           // If this is a usernote, then add direction entities and style
           var unmod = null;
           try {
-            unmod = BMDS.GetTarget(BM.RDF.GetResource(decodeUTF8(p.nid)), BM.gBmProperties[NOTELOCALE], true);
+            unmod = BMDS.GetTarget(BM.RDF.GetResource(decodeURIComponent(p.nid)), BM.gBmProperties[NOTELOCALE], true);
             unmod = unmod.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
           }
           catch (er) {}

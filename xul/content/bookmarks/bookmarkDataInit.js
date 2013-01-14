@@ -60,7 +60,7 @@ function initBMServices(bm) {
                         bm.RDF.GetResource(bm.gNC_NS+"Chapter"),
                         bm.RDF.GetResource(bm.gNC_NS+"Verse"),
                         bm.RDF.GetResource(bm.gNC_NS+"LastVerse"),
-                        bm.RDF.GetResource(bm.gNC_NS+"Version"),
+                        bm.RDF.GetResource(bm.gNC_NS+"ModuleName"),
                         bm.RDF.GetResource(bm.gNC_NS+"Location"),
                         bm.RDF.GetResource(bm.gNC_NS+"VerseText"),
                         bm.RDF.GetResource(bm.gNC_NS+"Icon"),

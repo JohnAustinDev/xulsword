@@ -143,7 +143,8 @@ function scriptMouseOver(e) {
     break;
      
   case "fn":
-    if (p && prefs.getBoolPref("ShowFootnotesAtBottom")) {
+    if (w && Tab[ViewPort.Module[w]].modType == GENBOOK) okay = null; // genbk fn are embedded in text
+    else if (p && prefs.getBoolPref("ShowFootnotesAtBottom")) {
       okay = BibleTexts.scroll2Note("w" + w + ".footnote." + p.type + "." + p.nid + "." + p.osisref + "." + p.mod);
     }
     else okay = Popup.activate(elem, e);
@@ -184,7 +185,7 @@ function scriptMouseOver(e) {
     }
     break;
   }
-  if (!okay) elem.style.cursor = "help";
+  if (!okay) elem.style.cursor = (okay === false ? "help":"default");
   
   e.stopPropagation(); // block any higher handlers
 }
@@ -222,7 +223,8 @@ function scriptClick(e) {
   // when an unpinned GenBook window is clicked, select its chapter in the navigator
   if (w && !ViewPort.IsPinned[w] && Tab[ViewPort.Module[w]].modType == GENBOOK) {
     var key = ViewPort.Key[w];
-    if (!GenBookTexts.isSelectedGenBook(key)) GenBookTexts.navigatorSelect(key);
+    if (!GenBookTexts.isSelectedGenBook(ViewPort.Module[w], key)) 
+        GenBookTexts.navigatorSelect(ViewPort.Module[w], key);
   }
   
   // Only proceed for events with click functionality, but move up the
@@ -306,11 +308,9 @@ function scriptClick(e) {
     var mod = ViewPort.Module[w];
     switch (Tab[mod].modType) {
     case BIBLE:
-    case COMMENTARY:
       if ((/^show(2|3)$/).test(document.getElementById("text" + w).getAttribute("columns"))) 
           previousPage(w);
-      else if (ViewPort.IsPinned[w])
-          previousChapterPinned(w);
+      else if (ViewPort.IsPinned[w]) previousChapterPinned(w);
       else MainWindow.goDoCommand('cmd_xs_previousChapter');
       break;
     case DICTIONARY:
@@ -323,6 +323,20 @@ function scriptClick(e) {
         ViewPort.Key[w] = DictTexts.keyList[mod][k];
         Texts.updateDictionary(w);
       }
+      break;
+    case COMMENTARY:
+      // first see if we can scroll the window
+      var t = document.getElementById("text" + w);
+      var sb = t.getElementsByClassName("sb")[0];
+      if (sb.scrollLeft > 0) {
+        var wwin = (t.clientWidth - 4); // 4 = 2 x border-width
+        var twin = wwin*Math.floor(sb.scrollLeft/wwin);
+        if (twin >= sb.scrollLeft) twin -= wwin;
+        sb.scrollLeft = twin;
+        if (sb.scrollLeft < 0) sb.scrollLeft = 0;
+      }
+      else if (ViewPort.IsPinned[w]) previousChapterPinned(w);
+      else MainWindow.goDoCommand('cmd_xs_previousChapter');
       break;
     case GENBOOK:
       // first see if we can scroll the window
@@ -337,14 +351,14 @@ function scriptClick(e) {
       }
       // if not, then load previous chapter
       else {
-        var prevchap = GenBookTexts.previousChapter(ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]);
+        var prevchap = GenBookTexts.previousChapter(mod, (ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]));
         if (!prevchap) return;
         
         if (ViewPort.IsPinned[w]) {
           Texts.pinnedDisplay[w].Key = prevchap;
           Texts.update();
         }
-        else GenBookTexts.navigatorSelect(prevchap);
+        else GenBookTexts.navigatorSelect(mod, prevchap);
         // scroll to end if possible
         sb.scrollLeft = sb.scrollWidth;
         break;
@@ -357,12 +371,25 @@ function scriptClick(e) {
     var mod = ViewPort.Module[w];
     switch (Tab[mod].modType) {
     case BIBLE:
-    case COMMENTARY:
       if ((/^show(2|3)$/).test(document.getElementById("text" + w).getAttribute("columns")))
           nextPage(w);
-      else if (ViewPort.IsPinned[w]) 
-          nextChapterPinned(w);
+      else if (ViewPort.IsPinned[w]) nextChapterPinned(w);
       else MainWindow.goDoCommand('cmd_xs_nextChapter');
+      break;
+    case COMMENTARY:
+      // first see if we can scroll the window
+      var t = document.getElementById("text" + w);
+      var sb = t.getElementsByClassName("sb")[0];
+      var scrollmax = sb.scrollWidth-sb.clientWidth;
+      var wwin = (t.clientWidth - 4); // 4 = 2 x border-width
+      var next = wwin*Math.floor(sb.scrollLeft/wwin) + wwin;
+      var prev = sb.scrollLeft;
+      sb.scrollLeft = next;
+      // if not, then load next chapter
+      if (sb.scrollLeft == prev) {
+        if (ViewPort.IsPinned[w])  nextChapterPinned(w);
+        else MainWindow.goDoCommand('cmd_xs_nextChapter');
+      }
       break;
     case DICTIONARY:
       var currentKey = ViewPort.Key[w];
@@ -386,14 +413,14 @@ function scriptClick(e) {
       sb.scrollLeft = next;
       // if not, then load next chapter
       if (sb.scrollLeft == prev) {
-        var nextchap = GenBookTexts.nextChapter(ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]);
+        var nextchap = GenBookTexts.nextChapter(mod, (ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]));
         if (!nextchap) return;
         
         if (ViewPort.IsPinned[w]) {
           Texts.pinnedDisplay[w].Key = nextchap;
           Texts.update();
         }
-        else GenBookTexts.navigatorSelect(nextchap);
+        else GenBookTexts.navigatorSelect(mod, nextchap);
       }
       break;
     }
@@ -457,12 +484,7 @@ function toggleRefText(elem) {
 function scriptDblClick(e) {
   
   // Get module this event occurred in
-  var elem = e.target;
-  while (elem && (!elem.className || !(/(^|\s)vs(\s|$)/).test(elem.className))) {
-    elem = elem.parentNode;
-  }
-  if (!elem) return;
-  var mod = getElementInfo(elem).mod;
+  var mod = getContextModule(e.target);
   
   // Get selected text
   var selob = window.getSelection();

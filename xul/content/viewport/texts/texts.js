@@ -31,8 +31,8 @@ Texts = {
   // The force parameter is an array of values, one for each window, 
   // beginning with index 1 (0 is null). Each value has the following
   // possibilities:
-  // -1 means don't update
-  // 0 means update if a watched value has changed
+  // -1 means don't update this window
+  // 0 means update if a watched value has changed (as normal)
   // 1 means update always
   update: function(scrollTypeFlag, hilightFlag, force) {
     var save = { p1:scrollTypeFlag, p2:hilightFlag, p3:force }; // save for passing on to other ViewPorts later
@@ -248,18 +248,21 @@ Texts = {
 
     // don't read new text if the results will be identical to last displayed text
     var textUpdated = false;
-    var check = ["mod", "bk", "ch", "globalOptions"];
+    var check = ["mod", "bk", "ch", "globalOptions", "ShowFootnotesAtBottom", 
+                "ShowCrossrefsAtBottom", "ShowUserNotesAtBottom", "columns"]
      
     if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
       textUpdated = true;
       var ti = CommTexts.read(w, display);
 
-      this.footnotes[w] = ti.footnotes;
-
       var hd = t.getElementsByClassName("hd")[0];
       hd.innerHTML = ti.htmlHead;
       
       sb.innerHTML = (ti.htmlText.length > 64 ? ti.htmlText:"");
+      
+      var nb = t.getElementsByClassName("nb")[0];
+      this.footnotes[w] = ti.footnotes;
+      nb.innerHTML = ti.htmlNotes;
     }
     
     if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
@@ -268,6 +271,10 @@ Texts = {
       
       // handle highlights
       this.hilightVerses(w, loc, hilightFlag);
+      
+      // hide notebox entirely if empty
+      t.setAttribute("footnotesEmpty", !BibleTexts.checkNoteBox(w))
+  
     }
   
     // save display object for this window
@@ -295,6 +302,10 @@ Texts = {
       display.Key = this.pinnedDisplay[w].Key;
     }
     
+    // reset key if the module has changed since last read
+    if (!this.display[w] || this.display[w].mod != display.mod) 
+        display.Key = GenBookTexts.getGenBkRoot(display.mod);
+  
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "Key", "globalOptions"];
     
@@ -310,9 +321,9 @@ Texts = {
       
       // insure navigator shows correct chapter (even though this will 
       // sometimes initiate a second call to Text.update)
-      if (!ViewPort.IsPinned[w]) GenBookTexts.navigatorSelect(display.Key);
+      if (!ViewPort.IsPinned[w]) GenBookTexts.navigatorSelect(display.mod, display.Key);
     }
-    
+  
     // handle scroll
     if (this.scrollTypeFlag != SCROLLTYPENONE) {
       if (this.scrollTypeFlag == SCROLLTYPEDELTA) GenBookTexts.scrollDelta(w, this.scrollDelta);
@@ -341,6 +352,11 @@ Texts = {
     
     // the class of sb must be that of the module
     sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
+    
+    // reset key if the module has changed since last read
+    if (!this.display[w] || this.display[w].mod != display.mod) {
+      display.Key = (SpecialModules.DailyDevotion.hasOwnProperty(display.mod) ? "DailyDevotionToday":"");
+    }
 
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "Key", "globalOptions"];
@@ -357,18 +373,19 @@ Texts = {
       
       var nb = t.getElementsByClassName("nb")[0];
       display.htmlList = ti.htmlList;
-      if (!this.display[w] || !this.display[w].hasOwnProperty("htmlList") || 
+      if (force || !this.display[w] || 
+          !this.display[w].hasOwnProperty("htmlList") || 
           this.display[w].htmlList != ti.htmlList)
         nb.innerHTML = ti.htmlList;
     
       // highlight the selected key
       var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");
-      while (k.length) {k[0].className = "";}
-      k = document.getElementById("w" + w + "." + encodeUTF8(display.Key));
-      if (k) {
-        k.className = "dictselectkey";
-        k.scrollIntoView();
-        document.getElementById("viewportbody").scrollTop = 0;
+      while (k.length) {k[0].className = k[0].className.replace(" dictselectkey", "");}
+      k = document.getElementById("note" + w).getElementsByClassName(encodeURIComponent(display.Key));
+      if (k && k.length) {
+        k[0].className += " dictselectkey";
+        k[0].scrollIntoView();
+        document.getElementById("viewportbody").scrollTop = 0; // fix scrollIntoView issue
       }
 
       document.getElementById("note" + w).getElementsByClassName("keytextbox")[0].value = display.Key;
@@ -434,20 +451,26 @@ Texts = {
     var recs = BMDS.GetAllResources();
     while (recs.hasMoreElements()) {
       var res = recs.getNext();
+      if (!ResourceFuns.isItemChildOf(res, BM.AllBookmarksRes, BMDS)) continue;
+      if (BM.RDFCU.IsContainer(BMDS, res)) {continue;}
+      
+      // only show bookmarks which are usernotes
       var note = BMDS.GetTarget(res, BM.gBmProperties[NOTE], true);
       if (!note) continue;
       note = note.QueryInterface(Components.interfaces.nsIRDFLiteral);
       if (!note) continue;
-      note=note.ValueUTF8;
+      note=note.Value;
       if (!note) {continue;}
-      if (BM.RDFCU.IsContainer(BMDS, res)) {continue;}
-       
-      try {var module = BMDS.GetTarget(res, BM.gBmProperties[MODULE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).ValueUTF8;} catch (er) {continue;}
+      
+      // is this note in the module?
+      try {var module = BMDS.GetTarget(res, BM.gBmProperties[MODULE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
       if (module != mod) continue;
-      try {var chapter = BMDS.GetTarget(res, BM.gBmProperties[CHAPTER], true).QueryInterface(Components.interfaces.nsIRDFLiteral).ValueUTF8;} catch (er) {continue;}      
+      
+      // is this note in the chapter?
+      try {var chapter = BMDS.GetTarget(res, BM.gBmProperties[CHAPTER], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;} 
       if (usesVerseKey) {
         if (chapter != String(ch)) continue;
-        try {var book = BMDS.GetTarget(res, BM.gBmProperties[BOOK], true).QueryInterface(Components.interfaces.nsIRDFLiteral).ValueUTF8;} catch (er) {continue;}
+        try {var book = BMDS.GetTarget(res, BM.gBmProperties[BOOK], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
         if (book != bk) continue;
       }
       else {
@@ -455,18 +478,29 @@ Texts = {
         book = "na";
         chapter = "1";
       }
-      try {var verse = BMDS.GetTarget(res, BM.gBmProperties[VERSE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).ValueUTF8;} catch (er) {continue;}
-      if (!ResourceFuns.isItemChildOf(res, BM.AllBookmarksRes, BMDS)) continue;
+      
+      // get the verse where the note is
+      try {var verse = BMDS.GetTarget(res, BM.gBmProperties[VERSE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
        
       // We have a keeper, lets save the note and show it in the text!
       // Encode ID
-      var encodedResVal = encodeUTF8(res.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8);
-      var newNoteHTML = "<span class=\"un\" title=\"" + encodedResVal + "." + bk + "." + ch + "." + verse + "." + mod + "\" ></span>";
+      var resval = res.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8;
+      var title =  encodeURIComponent(resval) + "." + bk + "." + encodeURIComponent(ch) + "." + verse + "." + mod;
+      var newNoteHTML = "<span class=\"un\" title=\"" + title + "\" ></span>";
       
-      // if this is a selected verse, place usernote inside the hilighted element (more like regular notes)
-      var re = new RegExp("(title=\"" + (usesVerseKey ? bk + "." + ch + ".":"") + verse + "." + mod + "\" class=\"(vs|par))([^>]*>)(\\s*<span.*?>)?", "im");
-      usernotes.html = usernotes.html.replace(re, "$1 un-hilight$3$4" + newNoteHTML);
-      usernotes.notes += "<div class=\"nlist\" title=\"un." + encodedResVal + "." + bk + "." + ch + "." + verse + "." + mod + "\">" + note + "</div>";
+      // if this is a selected verse, place usernote inside the verse element (like regular notes)
+      if (usesVerseKey) {
+        var re = new RegExp("(title=\"" + bk + "." + ch + "." + verse + "." + mod + "\" class=\"vs)([^>]*>)(\\s*<span.*?>)?", "im");
+        usernotes.html = usernotes.html.replace(re, "$1 un-hilight$2$3" + newNoteHTML);
+      }
+      else {
+        // All non-versekey usernotes are placed at the beginning of the HTML container
+        re = new RegExp("(class=\"cs-" + mod + ")([^>]*>\\s*)", "im");
+        usernotes.html = usernotes.html.replace(re, "$1 un-hilight$2" + newNoteHTML);
+      }
+      
+      usernotes.notes += "<div class=\"nlist\" title=\"un." + title + "\">" + note + "</div>";
+
     }
     
     return usernotes;
@@ -587,6 +621,8 @@ Texts = {
     var sb = t.getElementsByClassName("sb")[0];
     var mod = ViewPort.Module[w];
     
+    sb.scrollLeft = 0; // commentary may have been non-zero
+    
     l = l.split(".");
     var bk = l[0];
     var ch = (l[1] ? Number(l[1]):1);
@@ -621,10 +657,18 @@ Texts = {
       if (vt && vt.offsetTop) vOffsetTop -= vt.offsetTop;
     }
     
-    // if part of commentary element is already visible, don't rescroll
-    if (Tab[mod].modType==COMMENTARY &&
-        (vOffsetTop < sb.scrollTop) &&
-        (vOffsetTop + v.offsetHeight > sb.scrollTop + 20)) return true;
+    // some special rules for commentaries
+    if (Tab[mod].modType == COMMENTARY) {
+      
+      // if part of commentary element is already visible, don't rescroll
+      if ((vOffsetTop < sb.scrollTop) &&
+          (vOffsetTop + v.offsetHeight > sb.scrollTop + 20)) return true;
+          
+      // commentaries should never scroll verse to middle, only to top
+      if (scrollTypeFlag == SCROLLTYPECENTER || scrollTypeFlag == SCROLLTYPECENTERALWAYS)
+          scrollTypeFlag = SCROLLTYPEBEG;
+          
+    }
       
     // if this is verse 1 then SCROLLTYPEBEG and SCROLLTYPECENTER both become SCROLLTYPETOP
     if (vs == 1 && (scrollTypeFlag == SCROLLTYPEBEG || scrollTypeFlag == SCROLLTYPECENTER)) {
@@ -856,87 +900,6 @@ Texts = {
       av = av.nextSibling;
     }
     
-  },
-
-  
-////////////////////////////////////////////////////////////////////////
-// Paragraphs
-
-// The behaviour of these functions should not be changed, to maintain 
-// compatibility of bookmarks.
-  addParagraphIDs: function(text, mod) {
-    text = text.replace("<P>", "<p>","g");
-    text = text.replace(/<BR/g, "<br");
-    var p=1;
-    
-    var myParType;
-    var pars = ["<br />", "<br>", "<p>"];
-    for (var i=0; i<pars.length; i++) {
-      if (text.indexOf(pars[i]) != -1) {
-        myParType = pars[i];
-        break;
-      }
-    }
-    if (!myParType) myParType="<br>";
-    
-    var r = text.indexOf(myParType);
-  //jsdump("myParType=" + myParType + ", r=" + r + "\n");
-    
-    if (myParType != "<p>") {
-      text = "<div title=\"1." + mod + "\" class=\"par\">" + text;
-      p++;
-      r = text.indexOf(myParType);
-      while (r != -1) {
-        var ins = myParType + "</div><div title=\"" + p++ + "." + mod + "\" class=\"par\">";
-        text = text.substring(0, r) + ins + text.substring(r + myParType.length);
-        r = text.indexOf(myParType, r+ins.length);
-      }
-      text += "</div>";
-    }
-    else {
-      while (r != -1) {
-        ins = " title=\"" + p++ + "." + mod + "\" class=\"par\"";
-        r += 2;
-        text = text.substring(0, r) + ins + text.substr(r);
-        r = text.indexOf(myParType, r+ins.length);
-      }
-    }
-
-    return text;
-  },
-
-  getParagraphWithID: function (p, text, mod) {
-    if (p==null || !text) return text;
-    var origtext = text;
-    var ins = "title=\"" + p + "." + mod + "\" class=\"par";
-    var s = text.indexOf(ins);
-  //jsdump("Looking for:" + ins + "\n" + p + " " + s + "\norigtext:" + origtext.substr(0,128) + "\n");
-    if (s == -1) return -1;
-    s = text.indexOf(">", s) + 1;
-    
-    p++;
-    ins = "title=\"" + p + "." + mod + "\" class=\"par";
-    var e = text.indexOf(ins, s);
-    if (e == -1) e = text.length;
-    else {e = text.lastIndexOf("<", e);}
-    text = text.substring(s, e);
-    text = this.HTML2text(text);
-
-    return text;
-  },
-
-  getParagraphWithIDTry: function(p, text, mod) {
-    var par = this.getParagraphWithID(p, text, mod);
-    if (par == -1) {
-      for (var tp=1; tp<=4; tp++) {
-        par = this.getParagraphWithID(tp, text, mod);
-        if (par != -1) return par;
-      }
-    }
-    else {return par;}
-    
-    jsdump("WARNING: Paragraph not found: " + p + ", " + text.substr(0,128) + "\n");
-    return this.HTML2text(text);
   },
 
   HTML2text: function(html) {

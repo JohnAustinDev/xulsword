@@ -598,6 +598,19 @@ var BookmarksCommand = {
         try {
         var value = replaceASCIIcontrolChars(BMDS.GetTarget(myres,BM.gBmProperties[i],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);}
         catch (er) {value="";}
+        
+        // for backward compatibility to < version 3.5, the module name 
+        // is put at the start of GenBk chapter paths but versions >= 3.5 
+        // do not expect it internally, so it's again removed on import.
+        if (i == CHAPTER) {
+          try {var mod = BMDS.GetTarget(myres, BM.gBmProperties[MODULE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;}
+          catch (er) {mod = null;}
+          
+          if (mod && Tab.hasOwnProperty(mod) && Tab[mod].modType == GENBOOK) {
+            value = "/" + mod + value;
+          }
+        }
+      
         data = data + BM.kExportDelimiter + value;
       }
     }

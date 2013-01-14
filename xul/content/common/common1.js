@@ -561,25 +561,6 @@ function cleanDoubleClickSelection(sel) {
   return sel;
 }
 
-const UTF8ENCODEDELIM = "_|_";
-function encodeUTF8(a) {
-  if (!a) return null;
-  var b="";
-  for (var i=0; i<a.length; i++) {
-    b += String(a.charCodeAt(i)) + UTF8ENCODEDELIM;
-  }
-  return b;
-}
-function decodeUTF8(b) {
-  var a = "";
-  b = b.split(UTF8ENCODEDELIM);
-  b.pop();
-  for (var i=0; i<b.length; i++) {
-    a += String.fromCharCode(Number(b[i]));
-  }
-  return a;
-}
-
 function isASCII(text) {
   var notASCII = false;
   for (var c=0; c<text.length; c++) {

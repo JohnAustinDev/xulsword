@@ -5,29 +5,37 @@ Linux and Windows builds should include swordMK .cpp files the same way.
 Linux static library script needs to handle security based on ./configure
 
 Bugs to fix before release:
+DONE!: Previous/Next with commentaries does not work.
+DONE!: Usernotes and footnotes do not show up in the text at all
+DONE!: Daily devotional doesn't select today.
+DONE!: Dictionary module key select is broken.
+DONE!: Dictionaries don't select anything when they are first displayed
+DONE!: GenBk texts select nothing when first viewed.
+DONE!: ORIG tab should disappear if there are not Bible tabs showing
+DONE!: Got "WARNING not copying: /home/dale/.crosswire/xulsword/resources/audio/ky/1Cor/012.mp3" when exporting audio
+DONE!: Fix Linux font install (at don't do Windows type for Linux?)
+DONE!: Why message: Module directory did not exist: /home/dale/.crosswire/xulsword/resources/mmodules/lexdict/zld/mufhh"
 DONE!: Remove chrome installer and add extension installer (Installer ignores chrome dir silently now).
 DONE!: Language menu should check installed module langs and un-disable matching menu options, and open the menu when it does so.
 DONE!: Choose proper overrides for MK 3.5
-WON'T DO (Not worth all the effort to save 364kb): Make splash into two images to reduce UI size (58kb -> 27kb ug, 62kb -> 32kb, total 14 UIs 812bk -> 448kb
 DONE!: Change build to create .xpi locale extensions.
 DONE!: Add minvers and maxverse so UI-MAP.txt
+DONE!: Implement overrides for print and other XULRunner features.
+DONE!: UI's need delete and select_all fixed and how to do overrides??
+DONE!: Font classes change after module installation with location.reload
+DONE!: Check overrides that they match xulrunner 17
+DONE!: Exception reporter isn't working
+DONE!: Print feature prints blank page
+DONE! (caused by removal of XR dlls!): Firefox 17 bug causes locale extension to fail: http://dxr.mozilla.org/mozilla-central/toolkit/mozapps/extensions/XPIProvider.jsm.html line 860
+DONE!: Window's UI font size is HUGE- reduce it
 WON'T DO (Don't need other UIs right now?): Add all presentable UIs into build, along with prefs to hide them initially.
 Insure xulsword extension manager only installs locale extensions and not other types.
-
-
-DONE!: Implement overrides for print and other XULRunner features.
+WON'T DO (Not worth all the effort to save 364kb): Make splash into two images to reduce UI size (58kb -> 27kb ug, 62kb -> 32kb, total 14 UIs 812bk -> 448kb
 WON'T DO (locale extensions do not yet exist in the wild, and future versions
 of xulsword are not going to break locale extension compatibility until it's 
 deemed beneficial to do so. At that time the setup installer can be made to 
 delete previous locale extensions): Figure out how to do locale versioning with Extension Manager!
-DONE!:UI's need delete and select_all fixed and how to do overrides??
-DONE!:Font classes change after module installation with location.reload
-DONE!: Check overrides that they match xulrunner 17
-DONE!: Exception reporter isn't working
 WON'T DO (to many complcations): Use SWORD Locale for book list and book names, rather than internal list
-DONE!: Print feature prints blank page
-DONE! (caused by removal of XR dlls!): Firefox 17 bug causes locale extension to fail: http://dxr.mozilla.org/mozilla-central/toolkit/mozapps/extensions/XPIProvider.jsm.html line 860
-DONE!: Window's UI font size is HUGE- reduce it
 
 ON LINUX:
 DONE!: Look at multi-column Bible view chapter looping problem.
