@@ -107,32 +107,37 @@ const VERSIONPAR = "xulswordVersion";
 // If a null parameter value exists for a particular class expression, this 
 // signifies the value should be provided by context. NOTE: the sr, 
 // dt, and dtl class may have multiple ";" or " " separated references 
-// in their titles. 
+// in their titles.
 const TextClasses = {
   vs:     [ { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 } ],
   fn:     [ { re:new RegExp(/^(\d+)\.(unavailable)\.([^\.]+)$/),                                            nid:1, bk:null, ch:null, vs:null, lv:null, mod:3, osisref:2 },
             { re:new RegExp(/^(\d+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                 nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   cr:     [ { re:new RegExp(/^(\d+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                 nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
-  un:     [ { re:new RegExp(/^([^\.]+)\.(([^\.]+)\.([^\.]+)\.(\d+))\.([^\.]+)$/),                           nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
+  un:     [ { re:new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 },
+            { re:new RegExp(/^([^\.]+)\.[^\.]+\.(.*)\.(\d+)\.([^\.]+)$/),                                   nid:1, bk:null, ch:2,     vs:3,    lv:3,    mod:4 } ],
   sr:     [ { re:new RegExp(/^(unavailable)\.([^\.]+)$/),                                               reflist:1, bk:null, ch:null, vs:null, lv:null, mod:2, osisref:1 },
             { re:new RegExp(/^((([^\.]+)\.(\d+)\.(\d+))(\;.*?)?)\.([^\.]+)$/),                          reflist:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:7, osisref:2 },
             { re:new RegExp(/^((([^\.]+)\.(\d+)\.(\d+)\s*-\s*[^\.]+\.\d+\.(\d+))(\;.*?)?)\.([^\.]+)$/), reflist:1, bk:3,    ch:4,     vs:5,    lv:6,     mod:8, osisref:2 },
             { re:new RegExp(/^(.*?)\.([^\.]+)$/),                                                       reflist:1, bk:null, ch:null, vs:null, lv:null, mod:2 } ],
   dt:     [ { re:new RegExp(/^((\S+)\:(\S+)[^\.]*)\.([^\.]+)$/),                                        reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
   // dtl allows [:.] as delineator for backward compatibility < 2.23 ([:] is correct)
-  dtl:    [ { re:new RegExp(/^((\S+)[\:\.](\S+)[^\.]*)\.([^\.]+)$/),                                        reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
+  dtl:    [ { re:new RegExp(/^((\S+)[\:\.](\S+)[^\.]*)\.([^\.]+)$/),                                    reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
   snbut:  [ { re:new RegExp(/^((\S+)\:(\S+))\.([^\.]+)$/),                                                         bk:null, ch:3,    vs:null, lv:null, mod:4, osisref:1 } ],
-  par:    [ { re:new RegExp(/^(\d+)\.([^\.]+)$/),                                                           par:1, bk:null, ch:null, vs:1,    lv:1,     mod:2 } ],
   fnrow:  [ { re:new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   fnlink: [ { re:new RegExp(/^([^\.]*)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   crref:  [ { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 },
             { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                        bk:2,    ch:3,     vs:4,    lv:5,     mod:6, osisref:1 } ],
-  nlist:  [ { re:new RegExp(/^(\w+)\.([^\.]*)\.(([^\.]+)\.([^\.]+)\.(\d+))\.([^\.]+)$/),           ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,     mod:7, osisref:3 } ],
+  nlist:  [ { re:new RegExp(/^(\w+)\.([^\.]*)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),              ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,     mod:7, osisref:3 },
+            { re:new RegExp(/^(un)\.([^\.]*)\.[^\.]*\.(.*)\.(\d+)\.([^\.]+)$/),                    ntype:1, nid:2, bk:null, ch:3,    vs:4,     lv:4,     mod:5 } ],
   slist:  [ { re:new RegExp(/^([^\.]*)\.([^\.]*)$/),                                                               bk:null, ch:1,    vs:null, lv:null,  mod:2 },
             { re:new RegExp(/^(([^\.]*)\.(\d+)\.(\d+))\.([^\.]*)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 } ]
 };
 
 // This function will accept either raw HTML or a DOM element as "elem"
+// NOTES ABOUT ENCODING:
+// - osisref and reflist: UTF8 (and some other chars) are encoded with _cp_ encoding necessary for osisRef attributes
+// - nid: UTF8 (and some other chars) are encoded with encodeURIComponent for use in HTML tags
+// - ch: is UTF8 encoded (may be a number or a key)
 function getElementInfo(elem) {
   
   // Info is parsed from className and title, so start by getting each
@@ -157,7 +162,9 @@ function getElementInfo(elem) {
   var r = {};
   var type = className.match(/^([^\-\s]*)/)[1];
   if (!TextClasses.hasOwnProperty(type)) return null;
+  
   r.type = type;
+  r.title = title;
   
   for (var i=0; i<TextClasses[type].length; i++) {
     var m = title.match(TextClasses[type][i].re);
@@ -168,7 +175,11 @@ function getElementInfo(elem) {
       if (p == "re") continue;
       if (TextClasses[type][i][p] === null) r[p] = null;
       else r[p] = m[TextClasses[type][i][p]];
-      r[p] = (Number(r[p]) ? Number(r[p]):r[p]);
+      r[p] = (r[p] && r[p].indexOf(".") == -1 && Number(r[p]) ? Number(r[p]):r[p]);
+      
+      // decode ch to UTF8 if it needs decoding
+      if ((/(dtl_0_ch|dt_0_ch|snbut_0_ch|slist_0_ch|un_1_ch|nlist_1_ch)/).test(type + "_" + i + "_" + p)) 
+          r[p] = decodeURIComponent(r[p]);
     }
     break;
     

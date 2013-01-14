@@ -1355,7 +1355,6 @@ function updateModuleMenuCheckmarks() {
 
 var GotoLocation;
 function showLocation(mod, bk, ch, vs, lv) {
-//jsdump("showLocation:" + mod + ", " + bk + ", " + ch + ", " + vs + ", " + lv);  
   var w = ensureModuleShowing(mod);
   if (!w) return;
   
@@ -1365,6 +1364,8 @@ function showLocation(mod, bk, ch, vs, lv) {
   if (!lv) lv = vs;
   
   GotoLocation = { w:w, mod:mod, bk:bk, ch:ch, vs:vs, lv:lv };
+  
+//jsdump("showLocation:" + w + ", " + mod + ", " + bk + ", " + ch + ", " + vs + ", " + lv);  
   window.setTimeout("showLocation2()", 1);
   
 }
@@ -1417,6 +1418,7 @@ function ensureModuleShowing(version) {
   }
 
   ViewPort.selectTab(aWindow, version);
+  Texts.update(SCROLLTYPETOP, HILIGHTNONE);
  
   return aWindow;
 }

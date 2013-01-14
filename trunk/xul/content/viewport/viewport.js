@@ -48,7 +48,7 @@ function initViewPort() {
     // use our pin info from MainWindow.Texts in case some windows are pinned
     Texts.pinnedDisplay = MainWindow.Texts.pinnedDisplay;
       
-    Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+    Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null, true, true, true]);
     
     MainWindow.printBrowserLoaded();
     
@@ -90,7 +90,7 @@ function initViewPort() {
     
     ViewPort.init();
     
-    Texts.update();
+    Texts.update(null, null, [null, true, true, true]);
     
   }
   
@@ -115,15 +115,15 @@ function ViewPortObj(viewPortObj) {
     this.NumDisplayedWindows = viewPortObj.NumDisplayedWindows;
         
     // copy viewport properties from old to new
-    const copyWinProps = ["ShowOriginal", "IsPinned", "NoteBoxHeight", "MaximizeNoteBox", "Module", "Key"];
+    const copyViewProps = ["ShowOriginal", "IsPinned", "NoteBoxHeight", "MaximizeNoteBox", "Module", "Key"];
     for (var w=1; w<=NW; w++) {
-      for (var c=0; c<copyWinProps.length; c++) {
-        this[copyWinProps[c]][w] = copyObj(viewPortObj[copyWinProps[c]][w]);
+      for (var c=0; c<copyViewProps.length; c++) {
+        this[copyViewProps[c]][w] = copyObj(viewPortObj[copyViewProps[c]][w]);
       }
     }
     
-    // copy viewport text properties from old to new
-    const copyTextProps = ["scrollTypeFlag", "hilightFlag", "scrollDelta", "pinnedDisplay"];
+    // copy text properties from old to new
+    const copyTextProps = ["scrollTypeFlag", "hilightFlag", "scrollDelta", "display", "pinnedDisplay", "footnotes"];
     for (var t=0; t<copyTextProps.length; t++) {
       Texts[copyTextProps[t]] = copyObj(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]);
     }
@@ -330,6 +330,7 @@ function ViewPortObj(viewPortObj) {
       // all other tabs
       document.getElementById("w" + w + ".multitab").style.display = "";
       document.getElementById("w" + w + ".multitab").style.visibility = "";
+      var noBibleTabs = true;
       for (var t=0; t<Tabs.length; t++) {
         var normtab = document.getElementById("w" + w + ".tab.norm." + t);
         var multtab = document.getElementById("w" + w + ".tab.mult." + t);
@@ -351,9 +352,13 @@ function ViewPortObj(viewPortObj) {
         else {
           normtab.style.display = "none";
           multtab.style.display = "";
+          if (Tabs[t].modType == BIBLE) noBibleTabs = false;
         }
 
       }
+      
+      document.getElementById("tabs" + w).setAttribute("noBibleTabs", noBibleTabs);
+      
     }
 
     // move tabs into the tab row until it is full

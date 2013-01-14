@@ -479,7 +479,8 @@ function exportThisFolder(aFolder, aDestFolder) {
 
 function exportThisFile(aFile, aDestFolder, localized) {
   var sep = "";
-  var re = AUDIO + "\\\\([^\\\\]+)\\\\([^\\\\]+)\\\\(\\d+)\\.(";
+  // all the slashes are to match both linux and Windows type path separators
+  var re = AUDIO + "[\\\\\\/]([^\\\\\\/]+)[\\\\\\/]([^\\\\\\/]+)[\\\\\\/](\\d+)\\.(";
   for (var e=0; e<AUDEXT.length; e++) {re += sep + AUDEXT[e]; sep = "|";}
   re += ")$";
   var re = new RegExp(re);

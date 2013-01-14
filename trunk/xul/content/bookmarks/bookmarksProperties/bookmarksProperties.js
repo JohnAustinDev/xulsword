@@ -125,21 +125,14 @@ function Init()
 }
 
 function onRefUserUpdate(e, location, version) {
-  switch (getModuleLongType(version)) {
-  case BIBLE:
-    var aVerse = findAVerseText(version, location);
-    gVerseText.value = aVerse.text.replace(/^\s*/,"");
-    if (version != Tabs[aVerse.tabNum].modName) gVerseText.value += " (" + Tabs[aVerse.tabNum].label + ")";
-    gVerseText.className = "cs-" + Tabs[aVerse.tabNum].modName;
-    break;
-  case COMMENTARY:
-    gVerseText.value = LibSword.getVerseText(version, location).replace(/^\s*/,"").replace(/\n/g, " ");
-    gVerseText.className = "cs-" + version;
-    break;
-  }
-  document.getAnonymousElementByAttribute(gDropDown, "anonid", "version").className = "cs-" + version;
-  location = dotStringLoc2ObjectLoc(location, version);
-  gName.value = BookmarkFuns.getNameForBookmark(location);
+  var loc = location.split(".");
+  
+  var vtext = BookmarkFuns.getTextForBookmark( {version:version, shortName:loc[0], chapter:Number(loc[1]), verse:Number(loc[2]), lastVerse:Number(loc[3])} );
+  gVerseText.value = vtext.text;
+  gVerseText.className = "cs-" + vtext.location.version;
+  document.getAnonymousElementByAttribute(gDropDown, "anonid", "version").className = "cs-" + vtext.location.version;
+  
+  gName.value = BookmarkFuns.getNameForBookmark(vtext.location);
   gName.className = "cs-Program";
   document.title = fixWindowTitle(gSaveEmptyTitle.replace(/\*\*bm_title\*\*/gi, gName.value));
   window.setTimeout("sizeToContent();", 0);

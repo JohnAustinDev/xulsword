@@ -109,10 +109,7 @@ function PopupObj(popupobj) {
     case "un":
       var w = getContextWindow(elem);
       if (!p || !p.mod || !w || !Texts.footnotes[w]) return false;
-      var re = "<div class=\"nlist\" title=\"" + type + "\\.";
-      re += (typeof(p.nid) == "string" ? escapeRE(p.nid):p.nid) + "\\.";
-      re += escapeRE(p.osisref) + "\\.";
-      re += p.mod + "\">.*?<\\/div>";
+      var re = "<div class=\"nlist\" title=\"" + type + "." + escapeRE(p.title) + "\">.*?<\\/div>";
       re = new RegExp(re);
       this.crnote = Texts.footnotes[w].match(re);
       if (!this.crnote) return false;
@@ -157,7 +154,7 @@ function PopupObj(popupobj) {
         sep = ";"
       }
     
-      res = DictTexts.getEntryHTML(dword, dnames, true);
+      res = DictTexts.getEntryHTML(DictTexts.decodeOSISRef(dword), dnames);
       break;
       
     case "sn":

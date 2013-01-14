@@ -24,13 +24,13 @@
 
 GenBookTexts = {
   
+  RDFChecked: {},
+  RDFMODULE: new RegExp(/^rdf\:\#\/([^\/]+)/),
+    
   read: function(w, d) {
     var ret = { htmlHead:Texts.getPageLinks(), htmlText:"", footnotes:null };
     
-    // the GenBookKey value always begins with /mod/ so that values can be directly
-    // compared to the genbook-tree's resource values.
-    ret.htmlText = LibSword.getGenBookChapterText(d.mod, d.Key.replace(/^\/[^\/]+/, ""));
-    ret.htmlText = Texts.addParagraphIDs(ret.htmlText, d.mod);
+    ret.htmlText = LibSword.getGenBookChapterText(d.mod, d.Key);
       
     var un = Texts.getUserNotes("na", d.Key, d.mod, ret.htmlText);
     ret.htmlText = un.html; // has user notes added to text
@@ -53,7 +53,7 @@ GenBookTexts = {
         
         // Insure genbook has a key
         var key = ViewPort.Key[w];
-        if (!key || key == "/" + ViewPort.Module[w]) modsAtRoot.push(ViewPort.Module[w]);
+        if (!key) modsAtRoot.push(ViewPort.Module[w]);
         if (!firstGenBook) firstGenBook = ViewPort.Module[w];
         genBookList += ViewPort.Module[w] + ";";
       }
@@ -65,8 +65,6 @@ GenBookTexts = {
     ret.firstGenBook = firstGenBook;
     return ret;
   },
-
-  RDFChecked: {},
   
   // update genBookChooser based on genBook info
   updateGenBookNavigator: function(gbks) {  
@@ -120,39 +118,45 @@ GenBookTexts = {
     if (gbks.numUniqueGenBooks > 0 && elem.currentIndex == -1) {
       for (var w=1; w<=NW; w++) {
         if (ViewPort.Module[w] != gbks.firstGenBook) continue;
-        this.navigatorSelect(ViewPort.Key[w]);
+        this.navigatorSelect(ViewPort.Module[w], ViewPort.Key[w]);
         break;
       }
     }
 
-    //Now that databases are loaded, set any root key prefs
-    for (i=0; i<gbks.modsAtRoot.length; i++) {this.setPrefToRoot(gbks.modsAtRoot[i]);}
+    //Now that databases are loaded, set keys to root if needed
+    for (i=0; i<gbks.modsAtRoot.length; i++) {
+      var root = this.getGenBkRoot(gbks.modsAtRoot[i]);
+      
+      for (var w=1; w<=NW; w++) {
+        if (gbks.modsAtRoot[i] != ViewPort.Module[w] || ViewPort.IsPinned[w]) continue;
+        ViewPort.Key[w] = root;
+      }
+    }
     
     return gbks.numUniqueGenBooks>0;
   },
 
   // sets the pref of unpinned GenBooks showing the module to the first chapter
-  setPrefToRoot: function(module) {
+  getGenBkRoot: function(module) {
     var elem = MainWindow.document.getElementById("genbook-tree");
     
     var root = BM.RDF.GetResource("rdf:#" + "/" + module);
     var notFound = false;
     try {var child1 = elem.database.GetTarget(root, BM.RDFCU.IndexToOrdinalResource(1), true);}
     catch (er) {notFound=true;}
-    if (!child1 || notFound) {jsdump("Resource " + root.ValueUTF8 + " not found.\n"); return;}
+    
+    if (!child1 || notFound) {jsdump("Resource " + root.ValueUTF8 + " not found.\n"); return "";}
     
     var chapter = elem.database.GetTarget(child1, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true)
                   .QueryInterface(Components.interfaces.nsIRDFLiteral);
-    for (var w=1; w<=NW; w++) {
-      if (module != ViewPort.Module[w] || ViewPort.IsPinned[w]) continue;
-      ViewPort.Key[w] = chapter.Value.replace("rdf:#","");
-    }
+                
+    return chapter.Value.replace(this.RDFMODULE, "");
   },
   
-  previousChapter: function(key) {
+  previousChapter: function(mod, key) {
     var previous = null;
     
-    var res = this.getResource(key);
+    var res = this.getResource(mod, key);
     if (!res.node || !res.ds) return null;
     
     var parent = this.getParentOfNode(res.node);
@@ -185,13 +189,13 @@ GenBookTexts = {
     // if there is no previous node, go to parent
     if (!previous) previous = parent.node;
     
-    return previous.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8.replace(/^rdf\:\#/, "");
+    return previous.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8.replace(this.RDFMODULE, "");
   },
   
-  nextChapter: function(key, skipChildren) {
+  nextChapter: function(mod, key, skipChildren) {
     var next = null;
     
-    var res = this.getResource(key);
+    var res = this.getResource(mod, key);
     if (!res.node || !res.ds) return null;
     
     var parent = this.getParentOfNode(res.node);
@@ -218,14 +222,14 @@ GenBookTexts = {
 
     // or else try parent's next sibling...
     if (!next && parent.node) {
-      next = this.nextChapter(parent.node.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8.replace(/^rdf\:\#/, ""), true);
+      next = this.nextChapter(mod, parent.node.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8.replace(this.RDFMODULE, ""), true);
     }
-    else if (next) next = next.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8.replace(/^rdf\:\#/, "");
+    else if (next) next = next.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8.replace(this.RDFMODULE, "");
 
     return next;
   },
   
-  getResource: function(key) {
+  getResource: function(mod, key) {
     // get our resource
     var r = {node:null, ds:null};
     var dss = MainWindow.document.getElementById("genbook-tree").database.GetDataSources();
@@ -235,7 +239,7 @@ GenBookTexts = {
       var es = r.ds.GetAllResources();
       while (es.hasMoreElements()) {
         var e = es.getNext();
-        if (e.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8 == "rdf:#" + key) {
+        if (e.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8 == "rdf:#/" + mod + key) {
           r.node = e;
           // if not a container, keep looking. A container resource appears also as description resource.
           if (BM.RDFCU.IsContainer(r.ds, r.node)) break GETNODE;
@@ -274,44 +278,53 @@ GenBookTexts = {
     return r;
   },
 
-  isSelectedGenBook: function(key) {
+  isSelectedGenBook: function(mod, key) {
     var elem = MainWindow.document.getElementById("genbook-tree");
     
     var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
     var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
     try {var selRes = elemTB.getResourceAtIndex(elem.currentIndex);}
     catch (er) {return false;}
-    var chapter = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
-    chapter = chapter.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
     
-    return key == chapter;
+    var chapter = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
+    chapter = chapter.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+    var selmod = chapter.match(this.RDFMODULE)[1];
+    chapter = chapter.replace(this.RDFMODULE, "");
+    
+    return (mod == selmod && key == chapter);
   },
   
   // opens and selects key in GenBook navigator. The selection triggers an update event.
-  navigatorSelect: function(key) {
+  navigatorSelect: function(mod, key) {
     
-    this.openGenBookKey(key);
+    this.openGenBookKey(mod, key);
     
     var elem = MainWindow.document.getElementById("genbook-tree");
 
     var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
-    var selRes = BM.RDF.GetResource("rdf:#" + key);
+    var selRes = BM.RDF.GetResource("rdf:#/" + mod + key);
     try {
       var i = elemTB.getIndexOfResource(selRes);
-      elem.view.selection.select(i);
+      if (i == -1) return false;
+      else elem.view.selection.select(i);
     }
-    catch (er) {elem.view.selection.select(0);}    
+    catch (er) {return false;}   
+    
+    return true; 
   },
 
   //Recursively opens key and scrolls there, but does not select...
-  openGenBookKey: function(key) {
+  openGenBookKey: function(mod, key) {
     var elem = MainWindow.document.getElementById("genbook-tree");
     
-    var t = (key + "/").indexOf("/", 1);
     var checkedFirstLevel = false;
     var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
     var elemTV = elem.view.QueryInterface(Components.interfaces.nsITreeView);
     
+    var rdfpath = "/" + mod + key + "/";
+    
+    var t = 0;
+    t = (rdfpath).indexOf("/", t+1);
     while (t != -1) {
       var resvalue = "rdf:#" + key.substring(0,t);
       var res = BM.RDF.GetResource(resvalue);
@@ -319,16 +332,16 @@ GenBookTexts = {
       catch (er) {return;}
       if (index == -1) {
         if (checkedFirstLevel) return;
-        checkedFirstLevel=true;
+        checkedFirstLevel = true;
       }
       else {
         if (elemTV.isContainer(index) && !elemTV.isContainerOpen(index)) elemTV.toggleOpenState(index);
       }
       
-      t = (key + "/").indexOf("/", t+1); 
+      t = (rdfpath).indexOf("/", t+1); 
     }
     
-    this.scrollGenBookTo(key);
+    this.scrollGenBookTo(mod, key);
   },
 
   // update corresponding unpinned GenBook prefs according to navigator selection, and update texts.
@@ -340,11 +353,10 @@ GenBookTexts = {
     if (!selRes) return;
    
     var key = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
-    key = key.QueryInterface(Components.interfaces.nsIRDFLiteral).Value.replace("rdf:#","");
-
-    var mod = key.match(/^\/([^\/]+)/);
-    if (!mod)  return;
-    mod = mod[1];
+    key = key.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+    
+    var mod = key.match(this.RDFMODULE)[1];
+    key = key.replace(this.RDFMODULE, "");
     
     this.selectionToGenBooks(MainWindow.ViewPort.ownerDocument.defaultView, mod, key);
     for (var x=0; x<MainWindow.AllWindows.length; x++) {
@@ -370,16 +382,16 @@ GenBookTexts = {
   },
 
   //NOTE: Does not open row first!
-  scrollGenBookTo: function(key) {
+  scrollGenBookTo: function(mod, key) {
     var elem = MainWindow.document.getElementById("genbook-tree");
     
     var elemTB = elem.view.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
     
-    var res = BM.RDF.GetResource("rdf:#" + key);
+    var res = BM.RDF.GetResource("rdf:#/" + mod + key);
     try {var index = elemTB.getIndexOfResource(res);}
     catch (er) {return;}
     
-    var parentres = BM.RDF.GetResource("rdf:#" + key.replace(/\/[^\/]+$/,""));
+    var parentres = BM.RDF.GetResource("rdf:#/" + mod + key.replace(/\/[^\/]+$/, ""));
     try {var parentindex = elemTB.getIndexOfResource(parentres);}
     catch (er) {return;}
     

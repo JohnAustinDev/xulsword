@@ -42,6 +42,13 @@ CommTexts = {
       ret.footnotes += un.notes;
     }
     
+   // handle footnotes
+    var gfn = (d.globalOptions["Footnotes"] == "On" && d["ShowFootnotesAtBottom"]);
+    var gcr = (d.globalOptions["Cross-references"] == "On" && d["ShowCrossrefsAtBottom"]);
+    var gun = (d.globalOptions["User Notes"] == "On" && d["ShowUserNotesAtBottom"]);
+      
+    if (gfn || gcr || gun) ret.htmlNotes = BibleTexts.getNotesHTML(ret.footnotes, d.mod, gfn, gcr, gun, false, w);
+    
     // localize verse numbers
     var tl = ModuleConfigs[d.mod].AssociatedLocale;
     if (tl == NOTFOUND) {tl = getLocale();}

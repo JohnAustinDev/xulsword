@@ -305,6 +305,11 @@ ResourceFuns = {
       }
       propertyValues[ICON] = icon;
       
+      // for backward compatibility to < version 3.5, the module name is at 
+      // the start of GenBk chapter paths but it should be removed now
+      // because internally, versions >= 3.5 do not expect it there.
+      propertyValues[CHAPTER] = propertyValues[CHAPTER].replace(new RegExp("^\\/" + escapeRE(propertyValues[MODULE]) + "\\/"), "/");
+     
       if (overwrite) {
         var todelete = BM.RDF.GetResource(resourceName);
         ResourceFuns.removeResource(todelete, BMDS);

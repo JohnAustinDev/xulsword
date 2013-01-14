@@ -150,6 +150,11 @@ body[chromedir="rtl"] .multitab-clicker {
   border-bottom:none;
   background:rgb(255,243,255);
 }
+#tabs1[noBibleTabs="true"] #w1\.tab\.orig, 
+#tabs2[noBibleTabs="true"] #w2\.tab\.orig, 
+#tabs3[noBibleTabs="true"] #w3\.tab\.orig {
+  display:none;
+}
 .tabs[pinned="true"] .tab {
   visibility:hidden;
 }
@@ -335,8 +340,8 @@ body[isWindow="true"] .sbwin {
 }
 
 .text[moduleType="Texts"][footnotesEmpty="true"] .nbc,
-.text[moduleType="Genbks"] .nbc,
-.text[moduleType="Comms"] .nbc {
+.text[moduleType="Comms"][footnotesEmpty="true"] .nbc,
+.text[moduleType="Genbks"] .nbc {
   display:none;
 }
 

@@ -126,7 +126,8 @@ var ContextMenu = {
     if (!this.target.w) this.target.w = 0;
     
     if (!this.target.mod) {
-      this.target.mod = prefs.getCharPref("DefaultVersion"); 
+      if (this.target.w) this.target.mod = ViewPort.Module[this.target.w];
+      else this.target.mod = prefs.getCharPref("DefaultVersion"); 
     }
   
     var defTexts = {bk:Location.getBookName(), 
@@ -150,7 +151,7 @@ var ContextMenu = {
     
     this.build(canHaveLemma, (this.target.w ? true:false), true, true, true, true);
     
-//var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.target[m]:"NULL") + ", ";} jsdump(t);
+var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.target[m]:"NULL") + ", ";} jsdump(t);
 //var t=""; for (var m in contextTargs) {t += m + "=" + (contextTargs[m] ? contextTargs[m]:"NULL") + ", ";} jsdump(t);
 
   },
@@ -288,7 +289,7 @@ var p=""; for (var m in info) {p += m + "=" + info[m] + " ";} jsdump("readDataFr
       switch(p) {
       case "nid":
         if (!targs.bookmark && BM && typeof(BookmarkFuns) != "undefined") {
-          var aItem = BM.RDF.GetResource(decodeUTF8(val));
+          var aItem = BM.RDF.GetResource(decodeURIComponent(val));
           var aParent = ResourceFuns.getParentOfResource(aItem, BMDS);
           if (aParent) {
             targs.bookmark = MainWindow.BookmarksUtils.getSelectionFromResource(aItem, aParent);

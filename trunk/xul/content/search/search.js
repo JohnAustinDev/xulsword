@@ -68,6 +68,10 @@ function initSearch() {
   var searchInits = (CommandTarget && CommandTarget.search ? CommandTarget.search:null);
   Search = new SearchObj(searchInits);
   
+  // open in advanced mode if searching non-BIBLE so that its radio button will show up
+  if (Tab[Search.init.mod].modType != BIBLE)
+    document.getElementsByTagName("toolbar")[0].setAttribute("showAdvanced", "true");
+  
   // timeout needed to allow DOM changes to take full effect before continuing
   window.setTimeout("initSearch2();", 1); 
 
@@ -508,7 +512,7 @@ function SearchObj(searchObj) {
         
       case GENBOOK:
       case DICTIONARY:
-        l.innerHTML = decodeURIComponent(p.ch);
+        l.innerHTML = p.ch;
         l.className = "cs-" + mod;
         var ch = (Tab[p.mod].modType == GENBOOK ? "/" + mod:"") + p.ch;
         l.setAttribute("href", "javascript:MainWindow.showLocation('" + mod + "','na','" + ch + "',1,1);");

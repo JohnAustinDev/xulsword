@@ -255,6 +255,6 @@ jsdump("getBookIntroduction=" + LibSword.getBookIntroduction("UZV", "Matt"));
 jsdump("getDictionaryEntry БАШАН=" + LibSword.getDictionaryEntry("UZDOT", "БАШАН"));
 jsdump("getAllDictionaryKeys=" + LibSword.getAllDictionaryKeys("UZDOT"));
 jsdump("getGenBookTableOfContents=" + LibSword.getGenBookTableOfContents("Pilgrim"));
-jsdump("getGenBookChapterText=" + LibSword.getGenBookChapterText("Pilgrim", "/Pilgrim/PART II/PREFACE"));
+jsdump("getGenBookChapterText=" + LibSword.getGenBookChapterText("Pilgrim", "/PART II/PREFACE"));
 
 LibSword.quitLibsword();

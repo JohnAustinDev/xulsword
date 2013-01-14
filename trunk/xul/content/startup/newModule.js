@@ -682,8 +682,10 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     break;
     
   case FONTS:
-    installFontWin(inflated);
+    installFont(inflated);
     NewFonts = pushIf(NewFonts, inflated.leafName);
+    // Linux font install requires a restart
+    if (OPSYS == "Linux") return {reset:HARDRESET, success:true, remove:true};
     break;
     
   case AUDIO:
@@ -1099,38 +1101,35 @@ function padChapterNum(ch) {
   return ch;
 }
 
-function installFontWin(aFontFile) {
+function installFont(aFontFile) {
   var type = aFontFile.leafName.match(/\.([^\.]+)$/);
   if (!type) return false;
   type = type[1];
   var validTypes = ["ttf", "otf", "fon"];
   for (var f=0; f<validTypes.length; f++) {if (type.search(validTypes[f], "i")!=-1) break;}
-  if (f==validTypes.length) return false;
+  if (f == validTypes.length) return false;
   
-  jsdump("Installing font file \"" + aFontFile.leafName + "\":");
-  var vbsdata = "Const FONTS = &H14& \r\nSet objShell = CreateObject(\"Shell.Application\")\r\nSet objFolder = objShell.Namespace(FONTS)\r\nSet objFolderItem = objFolder.ParseName(\"" + aFontFile.leafName + "\")\r\nif (objFolderItem is nothing) then\r\nobjFolder.CopyHere(\"" + aFontFile.path + "\")\r\nend if";
-  launchTempScript(vbsdata, "vbs");
+  if (OPSYS == "Windows") {
+    jsdump("Installing Windows font file \"" + aFontFile.leafName + "\":");
+    var vbsdata = "";
+    vbsdata += "Const FONTS = &H14& " + NEWLINE;
+    vbsdata += "Set objShell = CreateObject(\"Shell.Application\")" + NEWLINE;
+    vbsdata += "Set objFolder = objShell.Namespace(FONTS)" + NEWLINE;
+    vbsdata += "Set objFolderItem = objFolder.ParseName(\"" + aFontFile.leafName + "\")" + NEWLINE;
+    vbsdata += "if (objFolderItem is nothing) then" + NEWLINE;
+    vbsdata += "objFolder.CopyHere(\"" + aFontFile.path + "\")" + NEWLINE;
+    vbsdata += "end if";
+    launchTempScript(vbsdata, "vbs");
+  }
+  else if (OPSYS == "Linux") {
+    jsdump("Installing Linux font file \"" + aFontFile.leafName + "\":");
+    var fonts = getSpecialDirectory("Home");
+    fonts.append(".fonts");
+    if (!fonts.exists()) fonts.create(fonts.DIRECTORY_TYPE, DPERM);
+    aFontFile.copyTo(fonts, null);
+  }
 
   return true;
-
-/* THE FOLLOWING DOES NOT WORK IF THERE ARE SPACES IN THE FILE PATH!!!!!!!
-  // execute the vbs script using cmd.exe
-  var cmdpath = Components.classes["@mozilla.org/process/environment;1"].
-      getService(Components.interfaces.nsIEnvironment).get("ComSpec");
-  var cmdexe = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  cmdexe.initWithPath(lpath(cmdpath));
-
-  var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);  
-  process.init(cmdexe);
-  var args = [];
-  var argt = "/C " + vbsfile.path;
-  args.push(argt);
-  var result = process.run(true, args, args.length);
-
-  removeFile(aTempFolder, true);
-  jsdump((result==0 ? "Success!":"FAILURE!!!") + "\n");  
-  return result==0;
-*/
 }
 
 function launchTempScript(scriptContents, ext) {
@@ -1141,7 +1140,7 @@ function launchTempScript(scriptContents, ext) {
 
   var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
   foStream.init(script, 0x02 | 0x08 | 0x20, FPERM, 0);
-  var charset = (ext.match(/^vbs$/i) ? "UTF-16LE":"ASCII"); // VBS understands UTF-16LE, but BAT must be ASCII to work!
+  var charset = (ext.match(/^vbs$/i) ? "UTF-16LE":"UTF8"); // VBS understands UTF-16LE, but BAT must be ASCII to work!
   var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
   os.init(foStream, charset, 0, 0x0000);
   os.writeString(scriptContents);
@@ -1193,7 +1192,7 @@ function removeModuleContents(aConfFile) {
   aMod = aMod.file;
   
   jsdump("Attempting to remove directory: " + aMod.path);
-  if (aMod && aMod.path.search(MODS)!=-1 && aMod.exists() && aMod.isDirectory()) {
+  if (aMod.path.search(MODS) != -1 && aMod.exists() && aMod.isDirectory()) {
     try {aMod.remove(true);}
     catch (er) {
 jsdump("NO CLEAN REMOVE");
@@ -1204,7 +1203,7 @@ jsdump("NO CLEAN REMOVE");
       }
     }
   }
-  else jsdump("Module directory did not exist: " + aMod.path);
+  else if (aMod.path.search(MODS) != -1 && !aMod.exists()) jsdump("Module directory does not exist: " + aMod.path);
   
   return {modName:modName, success:true};
 }

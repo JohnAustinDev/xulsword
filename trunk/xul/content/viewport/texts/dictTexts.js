@@ -67,7 +67,6 @@ DictTexts = {
     
     // get htmlEntry
     var de = this.getEntryHTML(d.Key, d.mod);
-    de = Texts.addParagraphIDs(de, d.mod);
     var un = Texts.getUserNotes("na", d.Key, d.mod, de);
     de = un.html; // has user notes added to text
     ret.footnotes = un.notes;
@@ -75,7 +74,7 @@ DictTexts = {
     ret.htmlEntry += "<div class=\"dictentry\">" + de + "</div>";
   
     ret.key = d.Key;
-  
+ 
     return ret;
   },
   
@@ -90,7 +89,7 @@ DictTexts = {
     html +=   "</div>";
     html +=   "<div class=\"keylist\" onclick=\"DictTexts.selKey(event)\">";
     for (var e=0; e < list.length; e++) {
-      html += "<div class=\"key\" title=\"" + encodeUTF8(list[e]) + "\" >" + list[e] + "</div>";
+      html += "<div class=\"key " + encodeURIComponent(list[e]) + "\" title=\"" + encodeURIComponent(list[e]) + "\" >" + list[e] + "</div>";
     }
     html +=   "</div>";
     html += "</div>";
@@ -98,9 +97,8 @@ DictTexts = {
     return html;
   },
   
-  getEntryHTML: function(key, mods, dontAddParagraphIDs) {
+  getEntryHTML: function(key, mods) {
     if (!key || !mods) return "";
-    key = this.decodeOSISRef(key);
    
     mods += ";";
     mods = mods.split(";");
@@ -131,8 +129,6 @@ DictTexts = {
 
     // Add a heading
     html = "<div class=\"cs-" + mods[0] + "\"><div class=\"dict-key-heading cd-" + mods[0] + "\">" + key + ":</div>" + html + "</div>";
-   
-    if (!dontAddParagraphIDs) html = Texts.addParagraphIDs(html, mods[0]);
    
     return html;
   },
@@ -313,7 +309,7 @@ DictTexts = {
     
     var w = getContextWindow(e.target);
     
-    ViewPort.Key[w] = decodeUTF8(e.target.title);
+    ViewPort.Key[w] = decodeURIComponent(e.target.title);
     Texts.updateDictionary(w);
     window.setTimeout("document.getElementById('note" + w + "').getElementsByClassName('keytextbox')[0].focus();", 1);
   }
