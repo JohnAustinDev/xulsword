@@ -1234,7 +1234,7 @@ function getSwordModParent(aConfFile, willDelete) {
     return {pathFromConf:pathFromConf, file:null};
   }
   
-  var modulePath = aConfFile.path.substring(0, aConfFile.path.lastIndexOf(MODSD)+1) + realdir;
+  var modulePath = aConfFile.path.replace(new RegExp("[\\\\\\/]" + escapeRE(MODSD) + "[\\\\\\/].*$"), "/") + realdir;
   var aMod = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   try {aMod.initWithPath(lpath(modulePath));}
   catch (er) {

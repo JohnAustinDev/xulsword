@@ -3,6 +3,7 @@ Version 3.5 release ToDos:
 FIXES FOR LATER:
 Linux and Windows builds should include swordMK .cpp files the same way.
 Linux static library script needs to handle security based on ./configure
+ky-ar XUL UI font is too small in Windows
 
 Bugs to fix before release:
 DONE!: Insure bookmarks.rdf and .xsb import/export are backward compatible to < 3.5
