@@ -101,7 +101,10 @@ function initBookmarksDataFile(useEmptyDataSet) {
 function getUserData(rdf) {
   var myDS=null;
   var DSisGood=false;
-  try {myDS = rdf.GetDataSourceBlocking(UserDataURI); DSisGood = true;}
+  try {
+    myDS = rdf.GetDataSourceBlocking(UserDataURI); 
+    DSisGood = true;
+  }
   catch (er) {
     var badRDF = getSpecialDirectory("xsBookmarks");
     badRDF.append(kUserDataFileName);
@@ -111,8 +114,34 @@ function getUserData(rdf) {
       myDS = rdf.GetDataSourceBlocking(UserDataURI);
     }
   }
-  
+
   if (DSisGood) {
+    
+    // For backward compatibility, convert Version < 3.5 .rdf contents
+    var resources = myDS.GetAllResources();
+    while (resources.hasMoreElements()) {
+      var res = resources.getNext();
+      
+      // change icon paths
+      if (myDS.hasArcOut(res, BM.RDF.GetResource(BM.gNC_NS+"Icon"))) {
+        var oldval = myDS.GetTarget(res, BM.RDF.GetResource(BM.gNC_NS+"Icon"), true);
+        var newval = oldval.QueryInterface(Components.interfaces.nsIRDFLiteral).
+            Value.replace("chrome://xulsword/skin/bookmarks/", "chrome://xulsword/skin/images/");
+        if (newval != oldval.QueryInterface(Components.interfaces.nsIRDFLiteral).Value) {
+          newval = BM.RDF.GetLiteral(newval);
+          myDS.Change(res, BM.RDF.GetResource(BM.gNC_NS+"Icon"), oldval, newval);
+        }
+      }
+      
+      // change "Version" attribute to "ModuleName"
+      if (myDS.hasArcOut(res, BM.RDF.GetResource(BM.gNC_NS+"Version"))) {
+        var val = myDS.GetTarget(res, BM.RDF.GetResource(BM.gNC_NS+"Version"), true);
+        myDS.Unassert(res, BM.RDF.GetResource(BM.gNC_NS+"Version"), val);
+        myDS.Assert(res, BM.gBmProperties[MODULE], val, true);
+      }
+      
+    }
+    
     // Back up this DS now
     var bmdir = getSpecialDirectory("xsBookmarks");
     var goodDS = bmdir.clone(); goodDS.append(kUserDataFileName);

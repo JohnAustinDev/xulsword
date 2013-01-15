@@ -506,13 +506,8 @@ Texts = {
     return usernotes;
   },
   
-  getScriptureReferences: function(scripRefList, mod) {
+  getScriptureReferences: function(mdata, mod) {
     
-    // Split up data into individual passages
-    scripRefList += ";"
-    var mdata = scripRefList.split(";");
-    mdata.pop();
-
     // If subreferences exist which are separated by "," then split them out as well
     for (var i=0; i<mdata.length; i++) {
       var verses = mdata[i].split(",");

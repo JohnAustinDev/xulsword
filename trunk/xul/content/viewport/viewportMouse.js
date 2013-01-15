@@ -185,7 +185,11 @@ function scriptMouseOver(e) {
     }
     break;
   }
-  if (!okay) elem.style.cursor = (okay === false ? "help":"default");
+  if (!okay) {
+    // report the problem for debugging
+    if (okay === false) {var t = "w=" + (w !== null ? w:"null") + "\nclass=" + elem.className; for (var m in p) {t += "\n" + m + "=" + (p[m] ? p[m]:"null");} jsdump(t);}
+    elem.style.cursor = (okay === false ? "help":"default");
+  }
   
   e.stopPropagation(); // block any higher handlers
 }

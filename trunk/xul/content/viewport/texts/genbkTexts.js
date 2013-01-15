@@ -97,7 +97,9 @@ GenBookTexts = {
     
     // add data sources which are not already being displayed but need to be
     for (i=0; i<GBs.length; i++) {
-      needToRebuild = true; 
+      needToRebuild = true;
+      
+      // write a table of contents .rdf for this GenBook which is deleted at unload
       var moduleRDF = getSpecialDirectory("xsResD");
       moduleRDF.append(GBs[i] + ".rdf");
       if (!moduleRDF.exists() || !this.RDFChecked[GBs[i]]) writeFile(moduleRDF, LibSword.getGenBookTableOfContents(GBs[i]));

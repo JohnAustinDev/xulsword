@@ -5,6 +5,7 @@
 # ? description prefix means value is optional
 # "<some-text>" description means value not used in the UI but the file-entry is required
 
+xulsword/xulsword.properties:AssociatedLanguageCodes                     =??languageCodes
 xulsword/common/books.properties:Long*                                   =??books.*_long_form
 xulsword/common/books.properties:*Variations                             =??books.*_variations
 xulsword/common/books.properties:Gen                                     =  books.Genesis

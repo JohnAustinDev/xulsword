@@ -23,7 +23,7 @@
 CommTexts = {
   
   read: function(w, d) {
-    var ret = { htmlText:"", htmlHead:Texts.getPageLinks(), footnotes:null };
+    var ret = { htmlText:"", htmlNotes:"", htmlHead:Texts.getPageLinks(), footnotes:null };
 
     // For Pin feature, set "global" SWORD options for local context
     for (var cmd in GlobalToggleCommands) {

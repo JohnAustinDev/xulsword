@@ -357,33 +357,49 @@ function createLanguageMenu() {
   }
   var menuItems = [];
   for (var lc in LocaleConfigs) {
+    var bundle = getLocaleBundle(lc, "xulsword.properties");
     
     // check for hideUntilModuleInstalled pref
     try {var hideUntilModuleInstalled = prefs.getBoolPref("hideUntilModuleInstalled." + lc);}
     catch (er) {hideUntilModuleInstalled = false;}
     
-    // is a corresponding module now installed?
     if (hideUntilModuleInstalled) {
+      // let's see of a corresponding module is now installed...
+      
+      // get language base codes to associate with the current lc
+      var associatedLocales = lc.match(/^([^\.\-]*)/)[0];
+      try {
+        var morelocs = bundle.GetStringFromName("AssociatedLanguageCodes");
+        if (morelocs && !(/^\s*$/).test(morelocs)) 
+            associatedLocales += " " + morelocs;
+      }
+      catch (er) {}
+      associatedLocales = associatedLocales.replace(/\s+/g, "|");
+      var locs = new RegExp("(^|,|\\s)(" +  associatedLocales + ")(\\s|,|$)", "i");
+
+      // does any module have one of our associated language base codes?
       for (var t=0; t<Tabs.length; t++) {
         var modlang = LibSword.getModuleInformation(Tabs[t].modName, "Lang");
         if (!modlang) continue;
         modlang = modlang.match(/^([^\.\-]*)/)[0];
-        var loclang = lc.match(/^([^\.\-]*)/)[0];
-        if (modlang.toLowerCase() != loclang.toLowerCase()) continue;
+        if (!(locs).test(modlang)) continue;
+        
+        // if so, then show this locale now and cancel the pref
         prefs.setBoolPref("hideUntilModuleInstalled." + lc, false);
         hideUntilModuleInstalled = false;
         if (!NewModuleInfo) NewModuleInfo = {};
         NewModuleInfo.showLangMenu = true;
+        break;
       }
     }
     
-    // is this locale an extension?
+    // is this locale an extension? if so then never hide it...
     var isExtension = getSpecialDirectory("xsExtension");
     isExtension.append(lc + "." + APPLICATIONID + ".xpi");
     
     if (!isExtension.exists() && hideUntilModuleInstalled) continue;
   
-    var bundle = getLocaleBundle(lc, "xulsword.properties");
+    // now show this lc in the language menu!
     var myAccKey = ""; try {myAccKey = bundle.GetStringFromName("LanguageMenuAccKey");} catch (er) {};
 
     var xulElement = document.createElement("menuitem");

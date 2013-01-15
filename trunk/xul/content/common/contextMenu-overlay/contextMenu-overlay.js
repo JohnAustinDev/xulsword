@@ -49,13 +49,17 @@ var ContextMenu = {
       
       // Is this a select tab menu?
       if ((/\.tab\.tsel/).test(menupopup.triggerNode.id)) {
-        this.target.mod = menupopup.triggerNode.previousSibling.value;
-        this.build(false, true, false, false, false, false);
+        var label = menupopup.triggerNode.previousSibling.value;
+        for (var t=0; t<Tabs.length; t++) {if (Tabs[t].label == label) break;}
+        if (t < Tabs.length) {
+          this.target.mod = Tabs[t].modName;
+          this.build(false, true, false, false, false, false);
+        }
         return;
       }
       // Is this a select tab tab?
       else if ((/\.tab\.mult/).test(menupopup.triggerNode.id)) {
-        this.target.mod = menupopup.triggerNode.value;
+        this.target.mod = Tabs[menupopup.triggerNode.id.match(/tab\.mult\.(\d+)/)[1]].modName;
         this.build(false, true, false, false, false, false);
         return;
       }
@@ -151,12 +155,12 @@ var ContextMenu = {
     
     this.build(canHaveLemma, (this.target.w ? true:false), true, true, true, true);
     
-var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.target[m]:"NULL") + ", ";} jsdump(t);
 //var t=""; for (var m in contextTargs) {t += m + "=" + (contextTargs[m] ? contextTargs[m]:"NULL") + ", ";} jsdump(t);
 
   },
 
   build: function(canHaveLemma, canHaveTab, canSelect, canHaveVerse, canHaveParagraph, canHaveBookmark) {
+  var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.target[m]:"NULL") + ", ";} jsdump(t);
 
     // Enable command controller
     document.getElementById("contextScriptBox").setAttribute("value", "open");

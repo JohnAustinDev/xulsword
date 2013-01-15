@@ -318,20 +318,23 @@ body[isWindow="true"] .sbwin {
   -moz-column-gap:80px; 
   -moz-column-rule:14px solid rgb(240,215,240);
 }
-#text1[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb, 
+#text1[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb,
+#text1[moduleType="Comms"][columns="show1"][footnotesEmpty="false"] .sb, 
 #text1[moduleType="Dicts"] .sb {
   margin-bottom:200px; /* dynamic in viewport.js */
   height:400px; /* dynamic in viewport.js */
 }
 #text2[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb, 
+#text2[moduleType="Comms"][columns="show1"][footnotesEmpty="false"] .sb,
 #text2[moduleType="Dicts"] .sb {
   margin-bottom:200px; /* dynamic in viewport.js */
   height:400px; /* dynamic in viewport.js */
 }
 #text3[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb, 
+#text3[moduleType="Comms"][columns="show1"][footnotesEmpty="false"] .sb,
 #text3[moduleType="Dicts"] .sb {
-  margin-bottom:200px;
-  height:400px;
+  margin-bottom:200px; /* dynamic in viewport.js */
+  height:400px; /* dynamic in viewport.js */
 }
 
 .nbc {
@@ -379,11 +382,19 @@ body[isWindow="true"] .sbwin {
 }
 .text[columns="show2"] .nbf {
   width:50%;
-  -moz-padding-start:20px; /* hides columns rule */
+  padding-left:20px; /* hides columns rule */
 }
 .text[columns="show3"] .nbf {
   width:33%;
-  -moz-padding-start:20px; /* hides columns rule */
+  padding-left:20px; /* hides columns rule */
+}
+.text[columns="show2"][textdir="rtl"] .nbf {
+  padding-left:0px;
+  padding-right:20px; /* hides columns rule */
+}
+.text[columns="show3"][textdir="rtl"] .nbf { 
+  padding-left:0px;
+  padding-right:20px; /* hides columns rule */
 }
 
 .bb {

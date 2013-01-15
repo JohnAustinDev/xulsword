@@ -5,6 +5,7 @@ Linux and Windows builds should include swordMK .cpp files the same way.
 Linux static library script needs to handle security based on ./configure
 
 Bugs to fix before release:
+DONE!: Insure bookmarks.rdf and .xsb import/export are backward compatible to < 3.5
 DONE!: Previous/Next with commentaries does not work.
 DONE!: Usernotes and footnotes do not show up in the text at all
 DONE!: Daily devotional doesn't select today.
@@ -31,10 +32,6 @@ DONE!: Window's UI font size is HUGE- reduce it
 WON'T DO (Don't need other UIs right now?): Add all presentable UIs into build, along with prefs to hide them initially.
 Insure xulsword extension manager only installs locale extensions and not other types.
 WON'T DO (Not worth all the effort to save 364kb): Make splash into two images to reduce UI size (58kb -> 27kb ug, 62kb -> 32kb, total 14 UIs 812bk -> 448kb
-WON'T DO (locale extensions do not yet exist in the wild, and future versions
-of xulsword are not going to break locale extension compatibility until it's 
-deemed beneficial to do so. At that time the setup installer can be made to 
-delete previous locale extensions): Figure out how to do locale versioning with Extension Manager!
 WON'T DO (to many complcations): Use SWORD Locale for book list and book names, rather than internal list
 
 ON LINUX:

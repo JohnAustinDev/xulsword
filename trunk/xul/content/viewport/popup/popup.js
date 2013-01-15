@@ -128,7 +128,7 @@ function PopupObj(popupobj) {
         i = entry.lastIndexOf("<", i);
         entry = entry.substring(0, i);
       }
-      this.srnote = Texts.getScriptureReferences((p.reflist != "unavailable" ? p.reflist:entry), referenceBible);
+      this.srnote = Texts.getScriptureReferences((p.reflist[0] != "unavailable" ? p.reflist:entry.split(";")), referenceBible);
       this.srnote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + referenceBible + "\">" + this.srnote + "</div>"
       res = BibleTexts.getNotesHTML(this.srnote, referenceBible, true, true, true, true, 1);
       break;
@@ -136,25 +136,16 @@ function PopupObj(popupobj) {
     case "dtl":
     case "dt":
       if (!p || !p.reflist) return false;
-
-      // Backward Compatibility to < 2.23
-      if (p.reflist.indexOf(":") == -1) {
-        p.reflist = p.reflist.replace(" ", "_32_", "g");
-        p.reflist = p.reflist.replace(";", " ", "g");
-        p.reflist = p.reflist.replace(/((^|\s)\w+)\./g, "$1:");
-      }
       
-      var t = p.reflist.split(" ");
-      if (!t || !t[0]) break;
       var dnames="", dword="", sep="";
-      for (var i=0; i<t.length; i++) {
-        if (!t[i]) continue;
-        dnames += sep + t[i].split(":")[0];
-        if (!dword) dword = t[i].split(":")[1];
+      for (var i=0; i<p.reflist.length; i++) {
+        if (!p.reflist[i]) continue;
+        dnames += sep + p.reflist[i].split(":")[0];
+        if (!dword) dword = p.reflist[i].split(":")[1];
         sep = ";"
       }
     
-      res = DictTexts.getEntryHTML(DictTexts.decodeOSISRef(dword), dnames);
+      res = DictTexts.getEntryHTML(dword, dnames);
       break;
       
     case "sn":

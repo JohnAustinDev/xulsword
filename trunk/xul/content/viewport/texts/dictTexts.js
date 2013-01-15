@@ -99,22 +99,28 @@ DictTexts = {
   
   getEntryHTML: function(key, mods) {
     if (!key || !mods) return "";
-   
-    mods += ";";
+
     mods = mods.split(";");
-    mods.pop();
     
     var html = "";
     if (mods.length == 1) {
       try {html = LibSword.getDictionaryEntry(mods[0], key);}
-      catch (er) {jsdump("e1"); html = "";}
+      catch (er) {jsdump("e1: missing key, trying uppercase..."); html = "";}
+      if (!html) {
+        try {html = LibSword.getDictionaryEntry(mods[0], key.toUpperCase());}
+        catch (er) {jsdump("e1: missing key, skipping."); html = "";}
+      }
     }
     else if (mods.length > 1) {
       var sep = "";
       for (var dw=0; dw<mods.length; dw++) {
         var dictEntry="";
         try {dictEntry = LibSword.getDictionaryEntry(mods[dw], key);}
-        catch (er) {jsdump("e2"); dictEntry = "";}
+        catch (er) {jsdump("e2: missing key, trying uppercase..."); dictEntry = "";}
+        if (!dictEntry) {
+          try {dictEntry = LibSword.getDictionaryEntry(mods[dw], key.toUpperCase());}
+          catch (er) {jsdump("e2: missing key, skipping."); dictEntry = "";}
+        }
         if (dictEntry) {
           dictEntry = dictEntry.replace(/^(<br>)+/, "");
           var dictTitle = LibSword.getModuleInformation(mods[dw], "Description");
@@ -131,17 +137,6 @@ DictTexts = {
     html = "<div class=\"cs-" + mods[0] + "\"><div class=\"dict-key-heading cd-" + mods[0] + "\">" + key + ":</div>" + html + "</div>";
    
     return html;
-  },
-  
-  decodeOSISRef: function(aRef) {
-    var re = new RegExp(/_(\d+)_/);
-    var m = aRef.match(re);
-    while(m) {
-      var r = String.fromCharCode(Number(m[1]));
-      aRef = aRef.replace(m[0], r, "g");
-      m = aRef.match(re);
-    }
-    return aRef;
   },
   
   sortOrder:"",
