@@ -14,7 +14,7 @@ Locales are automatically packaged when xulsword is built. Place the new [http:/
 
 ===Checklist for finishing a new user interface locale===
   * Many optional locale configuration settings are found in [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/en-US/UI-en-US_2.txt this file] including the order of Bible books, short-cut keys for menu commands, CSS font-family, font-size, etc., and localization of numerals and search symbols, among other things. 
-  * Include a [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/#localeDev%2Fen-US%2Ftext-skin%2Fxulsword localized splash screen].
+  * Include a [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/#localeDev%2Fen-US%2Flocale-files localized splash screen].
   * Include [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/en-US/en-US.rdf localized bookmarks].
-  * Add a `locale-skin` subdirectory containing files which will overwrite the default skin. This can be used to provide your locale with a custom skin. 
-  * Some scripts (like Arabic), which cannot simply be printed vertically, will need images for vertical texts. These images should be placed under a `text-skin\skin` directory.
+  * Add a `skin-files` subdirectory containing files which will overwrite the default skin. This can be used to provide your locale with a custom skin. 
+  * Some scripts (like Arabic), which cannot simply be printed vertically, will need images for vertical texts. These images should be placed under a `skin-files` directory.
