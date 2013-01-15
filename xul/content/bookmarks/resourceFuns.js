@@ -46,8 +46,8 @@ ResourceFuns = {
     }
     
     if (propertyValues[TYPE] == "Bookmark" || propertyValues[TYPE] == "Folder") {
-      BMDS.Assert(newResource,BM.gBmProperties[NAMELOCALE],BM.RDF.GetLiteral(replaceASCIIcontrolChars(getLocale())),true);
-      BMDS.Assert(newResource,BM.gBmProperties[NOTELOCALE],BM.RDF.GetLiteral(replaceASCIIcontrolChars(getLocale())),true);
+      BMDS.Assert(newResource,BM.gBmProperties[NAMELOCALE],BM.RDF.GetLiteral(getLocale()),true);
+      BMDS.Assert(newResource,BM.gBmProperties[NOTELOCALE],BM.RDF.GetLiteral(getLocale()),true);
     }
     return newResource;
   },
@@ -269,13 +269,16 @@ ResourceFuns = {
     }
     var filedata = readFile(aFile);
     if (!filedata) return 0;
+    
+    filedata = filedata.replace(BM.kExportResourceDelimiter, "<bMRet>", "g");
+    filedata = replaceASCIIcontrolChars(filedata);
+    filedata = filedata.replace("<bMRet>", BM.kExportResourceDelimiter, "g");
 
     var suffix = (overwrite ? "":String(Math.round(10000*Math.random())));
     
     BM.gTxnSvc.beginBatch();
     
     var importedResources = [];
-    filedata = replaceASCIIcontrolChars(filedata);
     var textBookmarks = filedata.split(BM.kExportResourceDelimiter);
     //Next 2 lines are for backward compatibility to pre V2.8 code
     var tmp = filedata.split("<nx/>\n");

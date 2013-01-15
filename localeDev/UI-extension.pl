@@ -98,4 +98,5 @@ make_path("$TEMPDIR/locale");
 cp("$OUTDIR/$ExtensionID.xpi", "$TEMPDIR/locale");
 &makeZIP("$OUTDIR/$LOCALE-$VERSION.xsm", "$TEMPDIR/locale");
 
+chdir("..");
 remove_tree($TEMPDIR)

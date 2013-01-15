@@ -593,7 +593,7 @@ function copyObj(obj) {
 // Return the viewport window in which this element resides.
 // Note: null means unknown window, but 0 means popup window.
 function getContextWindow(elem) {
-  while(elem && (!elem.id || (!(/^text\d+$/).test(elem.id) && !(/^npopup$/).test(elem.id)))) {
+  while(elem && (!elem.id || (!(/^(text|tabs)\d+$/).test(elem.id) && !(/^npopup$/).test(elem.id)))) {
     elem = elem.parentNode;
   }
   if (!elem) return null;

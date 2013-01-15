@@ -119,9 +119,9 @@ const TextClasses = {
             { re:new RegExp(/^((([^\.]+)\.(\d+)\.(\d+))(\;.*?)?)\.([^\.]+)$/),                          reflist:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:7, osisref:2 },
             { re:new RegExp(/^((([^\.]+)\.(\d+)\.(\d+)\s*-\s*[^\.]+\.\d+\.(\d+))(\;.*?)?)\.([^\.]+)$/), reflist:1, bk:3,    ch:4,     vs:5,    lv:6,     mod:8, osisref:2 },
             { re:new RegExp(/^(.*?)\.([^\.]+)$/),                                                       reflist:1, bk:null, ch:null, vs:null, lv:null, mod:2 } ],
-  dt:     [ { re:new RegExp(/^((\S+)\:(\S+)[^\.]*)\.([^\.]+)$/),                                        reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
-  // dtl allows [:.] as delineator for backward compatibility < 2.23 ([:] is correct)
-  dtl:    [ { re:new RegExp(/^((\S+)[\:\.](\S+)[^\.]*)\.([^\.]+)$/),                                    reflist:1, bk:null, ch:3,    vs:null, lv:null, mod:2 } ],
+  // dt and dtl allow [:.] as delineator for backward compatibility < 2.23 ([:] is correct)
+  dt:     [ { re:new RegExp(/^((([^\:\.]+)[\:\.]([^\.]+))(\s+[^\:\.]+[\:\.][^\.]+)?)\.([^\.]+)$/),      reflist:1, bk:null, ch:4,    vs:null, lv:null, mod:3, osisref:2 } ],
+  dtl:    [ { re:new RegExp(/^((([^\:\.]+)[\:\.]([^\.]+))(\s+[^\:\.]+[\:\.][^\.]+)?)\.([^\.]+)$/),      reflist:1, bk:null, ch:4,    vs:null, lv:null, mod:3, osisref:2 } ],
   snbut:  [ { re:new RegExp(/^((\S+)\:(\S+))\.([^\.]+)$/),                                                         bk:null, ch:3,    vs:null, lv:null, mod:4, osisref:1 } ],
   fnrow:  [ { re:new RegExp(/^([^\.]+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
   fnlink: [ { re:new RegExp(/^([^\.]*)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                              nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
@@ -135,9 +135,11 @@ const TextClasses = {
 
 // This function will accept either raw HTML or a DOM element as "elem"
 // NOTES ABOUT ENCODING:
-// - osisref and reflist: UTF8 (and some other chars) are encoded with _cp_ encoding necessary for osisRef attributes
-// - nid: UTF8 (and some other chars) are encoded with encodeURIComponent for use in HTML tags
-// - ch: is UTF8 encoded (may be a number or a key)
+// - nid: encoded with encodeURIComponent (for use in HTML tags)
+// - osisref: encoded with _cp_ encoding (UTF8, and some other chars, require encoding in osisRef attributes)
+// - reflist: is an array of UTF8 strings
+// - ch: is UTF8 (may be a number or a key)
+// - all other properties: are ASCII
 function getElementInfo(elem) {
   
   // Info is parsed from className and title, so start by getting each
@@ -175,20 +177,61 @@ function getElementInfo(elem) {
       if (p == "re") continue;
       if (TextClasses[type][i][p] === null) r[p] = null;
       else r[p] = m[TextClasses[type][i][p]];
-      r[p] = (r[p] && r[p].indexOf(".") == -1 && Number(r[p]) ? Number(r[p]):r[p]);
       
-      // decode ch to UTF8 if it needs decoding
-      if ((/(dtl_0_ch|dt_0_ch|snbut_0_ch|slist_0_ch|un_1_ch|nlist_1_ch)/).test(type + "_" + i + "_" + p)) 
-          r[p] = decodeURIComponent(r[p]);
+      // convert integers into Number type, rather than String type
+      if (r[p] && r[p].indexOf(".") == -1 && Number(r[p])) {
+         r[p] = Number(r[p]);
+        continue;
+      }
+     
+      // decode properties which need decodeURIComponent
+      if ((/^(osisref|reflist|ch)$/).test(p)) r[p] = decodeURIComponent(r[p]);
+      
+      // convert reflist into arrays
+      if (p == "reflist") {
+        
+        if ((/^(dtl|dt)$/).test(type)) {
+          // Backward Compatibility to < 2.23
+          if (r[p].indexOf(":") == -1) {
+            r[p] = r[p].replace(" ", "_32_", "g");
+            r[p] = r[p].replace(";", " ", "g");
+            r[p] = r[p].replace(/((^|\s)\w+)\./g, "$1:");
+          }
+          r[p] = r[p].split(/ +/);
+        }
+        
+        else if (type == "sr") r[p] = r[p].split(";");
+        
+        else {throw("Unknown type of reflist:" + type);}
+        
+      }
+      
+      // decode properties which need decodeOSISRef
+      if (p == "reflist") {
+        for (var x=0; x<r[p].length; x++) {r[p][x] = decodeOSISRef(r[p][x]);}
+      }
+      if (p == "ch") r[p] = decodeOSISRef(r[p]);
+      
     }
-    break;
     
+    break;
   }
   if (i == TextClasses[type].length) return null;
 
 //var msg=""; for (var m in r) {msg += m + "=" + r[m] + " ";} jsdump(msg);
 
   return r;
+}
+
+function decodeOSISRef(aRef) {
+  var re = new RegExp(/_(\d+)_/);
+  var m = aRef.match(re);
+  while(m) {
+    var r = String.fromCharCode(Number(m[1]));
+    aRef = aRef.replace(m[0], r, "g");
+    m = aRef.match(re);
+  }
+  return aRef;
 }
 
 // Config's properties are all the properties which Config type objects will have. 
@@ -339,16 +382,15 @@ function readParamFromConf(nsIFileConf, param) {
   return retval;
 }
 
-// Replaces certain character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
+// Replaces character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
 function replaceASCIIcontrolChars(string) {
   for (var i=0; i<string.length; i++) {
+    
     var c = string.charCodeAt(i);
-    //don't replace space, tab, newline, or return,
-    if (c<32 && c!=9 && c!=10 && c!=13) {
-      jsdump("Illegal character code " + string.charCodeAt(i) + " found in string: " + string.substr(0,10) + "\n");
-      string = string.substring(0,i) + " " + string.substring(i+1);
-    }
+    if (c<32) string = string.substring(0,i) + " " + string.substring(i+1);
+
   }
+  
   return string;
 }
 

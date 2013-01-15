@@ -1101,9 +1101,11 @@ function padChapterNum(ch) {
   return ch;
 }
 
+// returns true if the new font was installed, returns false otherwise
 function installFont(aFontFile) {
   var type = aFontFile.leafName.match(/\.([^\.]+)$/);
   if (!type) return false;
+  
   type = type[1];
   var validTypes = ["ttf", "otf", "fon"];
   for (var f=0; f<validTypes.length; f++) {if (type.search(validTypes[f], "i")!=-1) break;}
@@ -1125,8 +1127,14 @@ function installFont(aFontFile) {
     jsdump("Installing Linux font file \"" + aFontFile.leafName + "\":");
     var fonts = getSpecialDirectory("Home");
     fonts.append(".fonts");
+    
     if (!fonts.exists()) fonts.create(fonts.DIRECTORY_TYPE, DPERM);
-    aFontFile.copyTo(fonts, null);
+    
+    var newfont = fonts.clone();
+    newfont.append(aFontFile.leafName);
+    if (newfont.exists()) return false;
+    
+    aFontFile.copyTo(fonts, newfont);
   }
 
   return true;
@@ -1183,6 +1191,10 @@ function removeModuleContents(aConfFile) {
   }
   try {prefs.clearUserPref("dontAskAboutSearchIndex" + modName);} catch (er) {}
   try {prefs.clearUserPref("CipherKey" + modName);} catch (er) {}
+  
+  var tocRDF = getSpecialDirectory("xsResD");
+  tocRDF.append(modName + ".rdf");
+  if (tocRDF.exists()) tocRDF.remove(false);
   
   var aMod = getSwordModParent(aConfFile, true);
   if (!aMod.file) {
