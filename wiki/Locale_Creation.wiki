@@ -8,13 +8,15 @@ The phrases of xulsword's user interface are found in [http://code.google.com/p/
 There is a [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/UI-listing.pl perl script] which takes a Firefox locale in some language and creates a partially completed xulsword user interface in that language.
 
 ===Add a new locale to xulsword===
-Locales are automatically packaged when xulsword is built. Place the new [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/#localeDev%2Fen-US locale files] under a directory somewhere called `localeDev`. Then update the [http://code.google.com/p/xulsword/source/browse/trunk/build/build_settings.txt build settings file] by adding the code of the new locale to `IncludeLocales`, and assign the path of your new `localeDev` parent directory to `XulswordExtras`. Rebuild and start xulsword. A new user interface choice will appear in the `Options` -> `Language` menu of xulsword.
+Locales are automatically packaged when xulsword is built. Place the new [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/#localeDev%2Fen-US locale files] under a directory somewhere called `localeDev`. Then configure the [http://code.google.com/p/xulsword/source/browse/trunk/build/build_settings.txt build settings file] by setting the `IncludeLocales` parameter to include the new locale's ISO code, and by setting `XulswordExtras` to the path of your `localeDev`'s parent directory. Rebuild and start xulsword.
+
+A new user interface choice will appear in the `Options` -> `Language` menu of xulsword. Also, a locale extension module will be created under `build-out` which can be used to install the new locale into other versions of xulsword.
 
 -----
 
 ===Checklist for finishing a new user interface locale===
   * Many optional locale configuration settings are found in [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/en-US/UI-en-US_2.txt this file] including the order of Bible books, short-cut keys for menu commands, CSS font-family, font-size, etc., and localization of numerals and search symbols, among other things. 
-  * Include a [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/#localeDev%2Fen-US%2Flocale-files localized splash screen] (required).
+  * Include a [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/#localeDev%2Fen-US%2Flocale-files localized splash screen] (required) under the `locale-files` subdirectory.
   * Include [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/en-US/en-US.rdf localized bookmarks] (optional).
-  * Add a `skin-files` subdirectory (optional) containing files which will overwrite the default skin. This can be used to provide your locale with a custom skin. 
-  * Some scripts (like Arabic), which cannot simply be printed vertically, will need images for vertical texts. These images should be placed under a `skin-files` directory.
+  * Add a `skin-files` subdirectory (optional) containing files which will overwrite the default skin. This can be used to build xulsword with a custom skin matching the included locale(s).
+  * Some scripts (like Arabic), which cannot simply be printed vertically, will need images for vertical texts. These images should be placed under the `locale-files` subdirectory.
