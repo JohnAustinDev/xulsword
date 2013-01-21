@@ -20,6 +20,14 @@ if (!$SETTING) {$SETTING = "build_settings.txt";}
 $WINprocess = "$Executable-srv.exe";
 @ModRepos = ($ModuleRepository1, $ModuleRepository2);
 
+if ("$^O" =~ /MSWin32/i) {$PLATFORM = "WINNT_x86-msvc";}
+elsif ("$^O" =~ /linux/i) {
+  $PLATFORM = "Linux_x86";
+  if (`uname -m` eq "x86_64\n") {$PLATFORM .= "_64";}
+  $PLATFORM .= "-gcc3";
+}
+else {&Log("ERROR: Please add Firefox Extension platform identifier for your platform.\n");}
+
 # assign our build ID
 @D = localtime(time);
 
@@ -101,40 +109,37 @@ if ($MakeFFextension =~ /true/i) {
   &packageFFExtension("$FFEXTENSION/*", "$OutputDirectory/$Name-Extension-$Version");
 }
 
-# WINDOWS PORTABLE VERSION
+# PORTABLE VERSION
 if ($MakePortable =~ /true/i) {
   &Log("\n----> BUILDING PORTABLE VERSION\n");
-  if ("$^O" !~ /MSWin32/i) {
-    &Log("ERROR: Portable has not been implemented for your platform.\n");
-     die;
-  }
   # "P" in BuildID identifies this as being a portable version
   $BuildID = sprintf("%02d%02d%02d_%dP", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
-  my $rundir = "$PORTABLE/$Name-Portable-$Version";
+  my $intdir = ("$^O" =~ /linux/i ? "":"/$Name-Portable-$Version");
+  my $rundir = $PORTABLE.$intdir;
   if (-e $PORTABLE) {&cleanDir($PORTABLE);}
   else {make_path("$rundir/$Name");}
   make_path("$rundir/$Name/xulsword");
-  make_path("$rundir/$Name/xulrunner");
+  if ("$^O" =~ /MSWin32/i) {make_path("$rundir/$Name/xulrunner");}
   make_path("$rundir/$Name/resources");
   make_path("$rundir/$Name/profile");
   &compileLibSword("$rundir/$Name/xulsword", 1);
   my @manifest;
   &copyXulswordFiles("$rundir/$Name/xulsword", \@manifest, $IncludeLocales, 0, 0);
-  &copyFirefoxFiles("$rundir/$Name/xulrunner");
+  if ("$^O" =~ /MSWin32/i) {&copyFirefoxFiles("$rundir/$Name/xulrunner");}
   # Set our startup location...
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
   $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
   &writePreferences("$rundir/$Name/xulsword", \%Prefs);
   &writeApplicationINI("$rundir/$Name/xulsword");
-  &compileWindowsStartup($rundir, 1);
+  if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup($rundir, 1);}
   &includeModules("$rundir/$Name/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
   &includeLocales("$rundir/$Name/xulsword", $IncludeLocales, \@manifest, 0);
   &writeManifest("$rundir/$Name/xulsword", \@manifest);
   open(NIN, ">:encoding(UTF-8)", "$rundir/$Name/resources/newInstalls.txt") || die;
   print NIN "NewLocales;en-US\n"; # this opens language menu on first run
   close(NIN);
-  &packagePortable("$PORTABLE/*", "$OutputDirectory/$Name-Portable-$Version");
   &writeRunScript($rundir, "portable");
+  &packagePortable("$PORTABLE/*", "$OutputDirectory/$Name-Portable-$Version");
 }
 
 # WINDOWS INSTALLER VERSION
@@ -545,8 +550,9 @@ sub includeLocales($$\@$) {
     # NOTE: this registers the locale in the xulsword build, but each 
     # locale extension also has its own manifest file
     push(@{$manifestP}, "locale xulsword $loc jar:chrome/$loc.jar!/xulsword/");
-    push(@{$manifestP}, "locale branding $loc jar:chrome/branding.jar!/");
-
+    if (!$no_xul_overrides) {
+      push(@{$manifestP}, "locale branding $loc jar:chrome/branding.jar!/");
+    }
   }
 
   # Do not override anything if this is a FireFox extension, as this may
@@ -645,14 +651,7 @@ sub writeExtensionInstallManifest($) {
   my $od = shift;
   
   &Log("----> Writing Install Manifest\n");
-  my $platform;
-  if ("$^O" =~ /MSWin32/i) {$platform = "WINNT_x86-msvc";}
-  elsif ("$^O" =~ /linux/i) {
-    $platform = "Linux_x86";
-    if (`uname -m` eq "x86_64\n") {$platform .= "_64";}
-    $platform .= "-gcc3";
-  }
-  else {&Log("ERROR: Please add Firefox Extension platform identifier for your platform.\n");}
+
   open(INM, ">:encoding(UTF-8)", "$od/install.rdf") || die "Could not open \"$od/install.rdf\".\n";
   print INM "<?xml version=\"1.0\"?>\n";
   print INM "\n";
@@ -679,14 +678,14 @@ sub writeExtensionInstallManifest($) {
   print INM "    <em:homepageURL>http://code.google.com/p/xulsword</em:homepageURL>\n";
   print INM "    <em:iconURL>chrome://xulsword/skin/icon.png</em:iconURL>\n";
   print INM "    <em:unpack>true</em:unpack>\n";
-  print INM "    <em:targetPlatform>$platform</em:targetPlatform>\n";
+  print INM "    <em:targetPlatform>$PLATFORM</em:targetPlatform>\n";
   print INM "  </Description>\n";
   print INM "</RDF>\n";
   close(INM);
 }
 
 sub writeRunScript($$) {
-  my $xulswordsd = shift;
+  my $rundir = shift;
   my $type = shift;
 
   &Log("----> Writing run script.\n");
@@ -698,25 +697,38 @@ sub writeRunScript($$) {
 
   if ("$^O" =~ /MSWin32/i) {
     if ($type eq "dev") {
-      print SCR "chdir(\"".$xulswordsd."\");\n";
+      print SCR "chdir(\"".$rundir."\");\n";
       print SCR "`start /wait ../xulrunner/$Name-srv.exe -app application.ini -jsconsole -console -no-remote`;\n";
     }
     else {
-      print SCR "chdir(\"".$xulswordsd."\");\n";
+      print SCR "chdir(\"".$rundir."\");\n";
       print SCR "`$Executable.exe`;\n";
     }
   }
   elsif ("$^O" =~ /linux/i) {
     if ($type eq "dev") {
-      print SCR "`firefox --app $xulswordsd/application.ini -jsconsole -no-remote`;\n";
+      print SCR "`firefox --app $rundir/application.ini -jsconsole -no-remote`;\n";
     }
     else {
-      &Log("NOTE: \"$type\" run script not currently implemented for linux.\n");
+      print SCR "chdir(\"".$rundir."\");\n";
+      print SCR "`./start-$Name.sh`;\n";
+      
+      # write the start script too
+      my $profile = ($type eq "portable" ? " -profile ./$Name/profile":"");
+      if (open(PRUN, ">:encoding(UTF-8)", "$rundir/start-$Name.sh")) {
+        print PRUN "#!/bin/bash\n";
+        print PRUN "firefox --app ./$Name/xulsword/application.ini$profile -no-remote\n";
+        close(PRUN);
+        `chmod ug+x "$rundir/start-$Name.sh"`;
+      }
+      else {&Log("ERROR: Could not open file \"$rundir/start-$Name.sh\"\n");}
+      
     }
   }
   else {&Log("ERROR: Please add run scripts for your platform.\n");}
   
   close(SCR);
+  if ("$^O" =~ /linux/i) {`chmod ug+x "$s"`}
 }
 
 sub compileWindowsStartup($$) {
@@ -820,7 +832,8 @@ sub packagePortable($$) {
   my $od = shift;
 
   &cleanDir($od);
-  $of = "$od/$Name Portable-$Version.zip";
+  my $fname = ("$^O" =~ /linux/i ? "$Name-$PLATFORM-$Version.zip":"$Name Portable-$Version.zip");
+  $of = "$od/$fname";
   
   &Log("----> Making portable zip package.\n");
   &makeZIP($of, $id, 0, "file_log.txt");
@@ -830,13 +843,8 @@ sub packageFFExtension($$) {
   my $id = shift;
   my $od = shift;
   
-  my $type = "";
-  if ("$^O" =~ /MSWin32/i) {$type = "win";}
-  elsif ("$^O" =~ /linux/i) {$type = "linux";}
-  else {&Log("ERROR: Please add extension type for your platform.\n");}
-  
   &cleanDir($od);
-  $of = "$od/$Name"."_Firefox".($type ? "($type)":"")."-$Version.xpi";
+  $of = "$od/$Name"."_Firefox(".$PLATFORM.")-".$Version.".xpi";
   
   &Log("----> Making extension xpt package.\n");
   if (-e $of) {unlink($of);}

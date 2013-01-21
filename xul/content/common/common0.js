@@ -187,6 +187,11 @@ function getElementInfo(elem) {
       // decode properties which need decodeURIComponent
       if ((/^(osisref|reflist|ch)$/).test(p)) r[p] = decodeURIComponent(r[p]);
       
+      // fix incorrect dictionary osisRefs for backward compatibility to <2.23
+      if (p == "osisref" && (/^(dtl|dt)$/).test(type)) {
+        r[p] = r[p].replace(/(^|\s)([^\.\:]+)\./g, "$1$2:");
+      }
+      
       // convert reflist into arrays
       if (p == "reflist") {
         

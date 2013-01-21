@@ -4,6 +4,7 @@
 # compiled locally to provide necessary object files
 
 security=.libs/security.o 
+#security=
 
 if [ `uname -m` == "x86_64" ]
 then
