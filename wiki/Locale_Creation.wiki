@@ -10,7 +10,7 @@ There is a [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/UI-l
 ===Add a new locale to xulsword===
 Locales are automatically packaged when xulsword is built. Place the new [http://code.google.com/p/xulsword/source/browse/trunk/localeDev/#localeDev%2Fen-US locale files] under a directory somewhere called `localeDev`. Then configure the [http://code.google.com/p/xulsword/source/browse/trunk/build/build_settings.txt build settings file] by setting the `IncludeLocales` parameter to include the new locale's ISO code, and by setting `XulswordExtras` to the path of your `localeDev`'s parent directory. Rebuild and start xulsword.
 
-A new user interface choice will appear in the `Options` -> `Language` menu of xulsword. Also, a locale extension module will be created under `build-out` which can be used to install the new locale into other versions of xulsword.
+A new user interface choice will appear in the `Options` -> `Language` menu of xulsword. Also, a locale extension module will be created under `build-out` which can be used to install the new locale into other compatible versions of xulsword.
 
 -----
 
