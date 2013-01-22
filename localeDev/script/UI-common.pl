@@ -57,7 +57,7 @@ sub UI_File($$) {
   if ($n == 1) {$n = "";}
   else {$n = "_$n";}
   my $ldir = ($loc ne "en-US" ? "$MKSDEV/$loc":"$MKDEV/$loc");
-  return "$ldir/UI-$loc$n.txt"; 
+  return "$ldir/UI-$loc$n.txt";
 }
 
 sub read_UI_Files($%) {
@@ -100,7 +100,7 @@ sub readMAP($\%\%\%\%\%) {
   my $mayBeMissingP = shift;
   my $mayBeEmptyP = shift;
   my $mapLineP = shift;
-  
+
   if (!open(INF, "<:encoding(UTF-8)", $f)) {&Log("Could not open MAP file $f.\nFinished.\n"); die;}
   my $line = 0;
   while(<INF>) {
@@ -116,7 +116,7 @@ sub readMAP($\%\%\%\%\%) {
     if ($_ !~ /^\s*([^=]+?)\s*\=\s*(.*?)\s*$/) {&Log("ERROR line $line: Could not parse UI-MAP entry \"$_\"\n"); next;}
     my $fe = $1;
     my $d = $2;
-    
+
     if ($d =~ s/^\?\?//) {$mayBeMissingP->{$d}++;}
     if ($d =~ s/^\?//) {$mayBeEmptyP->{$d}++;}
     $fileEntryDescP->{$fe} = $d;
@@ -155,7 +155,7 @@ sub correlateUItoMAP(\%\%\%\%\%\%) {
       }
     }
   }
-  
+
   # insure every code file entry has a value
   for my $fe (keys %{$fileEntryDescP}) {
     # handle MAP file-entries which need to exist, but which are not used by the UI (and so are not in the UI files)
@@ -165,7 +165,7 @@ sub correlateUItoMAP(\%\%\%\%\%\%) {
     }
     elsif (!exists($codeFileEntryValuesP->{$fe})) {$codeFileEntryValuesP->{$fe} = "";}
   }
-  
+
   # clear and report any ERRORS
   &clearErrors($uiDescValueP, $fileEntryDescP, $mayBeMissingP, $mayBeEmptyP, $matchedDescriptionsP);
 }
@@ -176,7 +176,7 @@ sub clearErrors(\%\%\%\%\%) {
   my $mayBeMissingP = shift;
   my $mayBeEmptyP = shift;
   my $matchedDescriptionsP = shift;
-  
+
   # report any UI listing phrases which were not in MAP, and remove them.
   for my $d (sort keys %{$uiDescValueP}) {
     if (!exists($matchedDescriptionsP->{$d})) {
@@ -190,9 +190,9 @@ sub clearErrors(\%\%\%\%\%) {
     if (exists($mayBeMissingP->{$fileEntryDescP->{$fe}})) {next;}
     if (&isWild($fe, 1)) {next;}
     if ($fileEntryDescP->{$fe} ne "<uSEd>") {
-      
+
       $uiDescValueP->{$fileEntryDescP->{$fe}} = "";
-      
+
       if (!( $mayBeEmptyP->{$fileEntryDescP->{$fe}} || ($IGNORE_SHORTCUT_KEYS && ($fe =~ /$SHORTCUT/)) )) {
         &Log("ERROR: MAP file entry was not matched: \"$fe = ".$fileEntryDescP->{$fe}."\".\n");
       }
@@ -206,32 +206,37 @@ sub translateValue($$$$) {
   my $tloc = shift;
   my $ffdir = shift;
 
+  my $f_ffpath = ($floc eq "en-US" ? "$MKDEV":"$MKSDEV").$ffdir;
+  my $t_ffpath = ($tloc eq "en-US" ? "$MKDEV":"$MKSDEV").$ffdir;
+
   # look for a matching value in from-locale and return its file-entry
-  if (!-e "$ffdir/$floc") {
-    &Log("Cannot translate: No Firefox locale: \"$ffdir/$floc\".\n");
+  if (!-e "$f_ffpath/$floc") {
+    &Log("Cannot translate: No Firefox locale: \"$f_ffpath/$floc\".\n");
     return "";
   }
-  
-  if (!-e "$ffdir/$tloc") {
-    &Log("Cannot translate: No Firefox locale: \"$ffdir/$tloc\".\n");
+
+  if (!-e "$t_ffpath/$tloc") {
+    &Log("Cannot translate: No Firefox locale: \"$t_ffpath/$tloc\".\n");
     return "";
   }
-  
+
   my $elps = decode("utf8", "…");
   $v =~ s/\.\.\./$elps/g;
-  
-  my $v2 =           &xtrans($v, "$ffdir/$floc", 0, $floc, $tloc, $ffdir);
-  if (!$v2) {$v2 =   &xtrans($v, "$ffdir/$floc", 1, $floc, $tloc, $ffdir);}
+
+  my $v2 =           &xtrans($v, "$f_ffpath/$floc", 0, $floc, $tloc, $ffdir);
+  if (!$v2) {$v2 =   &xtrans($v, "$f_ffpath/$floc", 1, $floc, $tloc, $ffdir);}
   if (!$v2 && $v =~ s/($elps)$// || $v =~ s/(\W+)$//) {
     my $nw = $1;
-    $v2 =            &xtrans($v, "$ffdir/$floc", 0, $floc, $tloc, $ffdir);
-    if (!$v2) {$v2 = &xtrans($v, "$ffdir/$floc", 1, $floc, $tloc, $ffdir);}
+    $v2 =            &xtrans($v, "$f_ffpath/$floc", 0, $floc, $tloc, $ffdir);
+    if (!$v2) {$v2 = &xtrans($v, "$f_ffpath/$floc", 1, $floc, $tloc, $ffdir);}
     if ($v2) {&Log("GOTONE=$nw !!!!!!!!!!\n"); $v2 .= $nw;}
   }
-  
+
   return $v2;
 }
 
+# Translates value $v by locating it in any locale file under $dir, and
+# returning the corresponding value from another locale: $tloc.
 my %Entry, %Value;
 sub xtrans($$$$$$) {
   my $v = shift;
@@ -241,28 +246,31 @@ sub xtrans($$$$$$) {
   my $tloc = shift;
   my $ffdir = shift;
 
+  my $f_ffpath = ($floc eq "en-US" ? "$MKDEV":"$MKSDEV").$ffdir;
+  my $t_ffpath = ($tloc eq "en-US" ? "$MKDEV":"$MKSDEV").$ffdir;
+
   my $v2 = "";
   if (!opendir(CDIR, $dir)) {&Log("ERROR: Could not open \"$dir\".\n"); die;}
   my @files = readdir(CDIR);
   closedir(CDIR);
-  
+
   foreach my $f (@files) {
     if ($f =~ /^\./) {next;}
     my $p = "$dir/$f";
-  
+
     # skip if this file is not in alternate locale
     my $np = $p;
-    $np =~ s/\Q$ffdir\E//;
+    $np =~ s/\Q$f_ffpath\E//;
     $np =~ s/\/\Q$floc\E(\/|$)/\/$tloc\//g;
-    $np = "$ffdir$np";
+    $np = "$t_ffpath$np";
     if (!-e $np) {next;}
-    
+
     if (-d $p) {$v2 = &xtrans($v, $p, $nocase, $floc, $tloc, $ffdir);}
     else {
       my $e;
-      
+
       if (!$Entry{$p}{"<rEAd>"}) {&readCode($p, \%Entry, \%Value);}
-      
+
       if (!$nocase) {if ($Entry{$p}{$v}) {$e = $Entry{$p}{$v};}}
       else {
         foreach my $mv (keys %{$Entry{$p}}) {
@@ -273,17 +281,17 @@ sub xtrans($$$$$$) {
           }
         }
       }
-      
+
       if ($e) {
         if (!$Value{$np}{"<rEAd>"}) {&readCode($np, \%Entry, \%Value);}
         if ($Value{$np}{$e}) {$v2 = $Value{$np}{$e};}
       }
-      
+
     }
-    
+
     if ($v2) {last;}
   }
- 
+
   return $v2;
 }
 
@@ -313,7 +321,7 @@ sub readCode($\%\%) {
       }
     }
     close(INF);
-    
+
     $feP->{$f}{"<rEAd>"}++;
     $vP->{$f}{"<rEAd>"}++;
   }
@@ -324,26 +332,26 @@ sub saveLocaleCode($$) {
   my $loc = shift;
   my $srcf = shift;
   my $destd = shift;
-  
+
   $srcf = "$MKSDEV/$loc/$srcf";
   $destd = "$MKSDEV/$loc/$destd";
   $destf = "$MKSDEV/$loc/$srcf";
   $destf =~ s/^.*?\/([^\/]+)$/$1/;
   $destf = "$destd/$destf";
-  
+
   if (-e $srcf) {
     my $in;
     if (-e $destf) {
-      print "\n\nFile Exists:\nsrc =$srcf\ndest=$destf:\n\tOverwrite existing? (Y/N):"; 
+      print "\n\nFile Exists:\nsrc =$srcf\ndest=$destf:\n\tOverwrite existing? (Y/N):";
       $in = <>;
     }
     else {$in = "y";}
-      
+
     if ($in =~ /^\s*y\s*$/i) {
       if (!-e $destd) {make_path($destd);}
       cp($srcf, $destd);
     }
-    
+
   }
 }
 
@@ -352,7 +360,7 @@ sub isSecondary($$\%\%) {
   my $d = shift;
   my $mayBeMissingP = shift;
   my $mayBeEmptyP = shift;
-  
+
   my $s = 0;
   if ($v =~ /^\s*$/)                              {$s = 1;}
   elsif ($d =~ /^search\-help\-window\..*_term$/) {$s = 1;}
@@ -363,14 +371,14 @@ sub isSecondary($$\%\%) {
   elsif ($mayBeMissingP->{$d})                    {$s = 1;}
   elsif ($mayBeEmptyP->{$d})                      {$s = 1;}
   elsif (&isWild($d, 0))                          {$s = 1;}
-  
+
   return $s;
 }
 
 sub isWild($$) {
   my $t = shift;
   my $isfe = shift;
-  
+
   if ($t =~ /\*/) {return 1;}
   if ($isfe) {
     if (!keys(%WildFE)) {&getWilds();}
@@ -378,7 +386,7 @@ sub isWild($$) {
   }
   else {
     if (!keys(%WildD)) {&getWilds();}
-    foreach my $w (keys %WildD) {if ($t =~ /^($w)$/) {return $1;}}  
+    foreach my $w (keys %WildD) {if ($t =~ /^($w)$/) {return $1;}}
   }
   return 0;
 }
@@ -412,35 +420,37 @@ sub readLocaleOverrideFile($$$$\%) {
   my $chrome = shift;
   my $target = shift;
   my $codeFileEntryValuesP = shift;
-  
+
   &Log("INFO: Reading chrome locale override file \"$chrome\"\n");
-  
+
   my $versionFF = $target;
   if ($versionFF !~ /\/ff([^\/]+)\//) {die "Bad override target \"$target\"\n";}
   $versionFF = $1;
-  
+
   # get the Firefox file's path
-  if (!-e "$MKSDEV/Firefox$versionFF") {
-    &Log("ERROR: Missing directory \"$MKSDEV/Firefox$versionFF\". Skipping locale override.\n");
+  my $FirefoxPath = "$MKSDEV/Firefox$versionFF";
+  if ($localeFF eq "en-US") {$FirefoxPath = "$MKDEV/Firefox$versionFF";}
+  if (!-e "$FirefoxPath") {
+    &Log("ERROR: Missing directory \"$FirefoxPath\". Skipping locale override.\n");
     return;
   }
   if ($chrome !~ /^chrome\:\/\/([^\/]+)\/locale\/(.*?)$/) {
-    &Log("ERROR: Malformed chrome URL \"$chrome\". Skipping locale override.\n"); 
+    &Log("ERROR: Malformed chrome URL \"$chrome\". Skipping locale override.\n");
     return;
   }
   my $tkdir = $1;
   my $tkpath = $2;
-  my $override = "$MKSDEV/Firefox$versionFF/$localeFF/$tkdir/$tkpath";
+  my $override = "$FirefoxPath/$localeFF/$tkdir/$tkpath";
   if (!-e $override) {
     &Log("ERROR: Chrome override file not found \"$override\". Skipping locale override.\n");
     return;
   }
-  my $defoverride = "$MKSDEV/Firefox$versionFF/en-US/$tkdir/$tkpath";
+  my $defoverride = "$MKDEV/Firefox$versionFF/en-US/$tkdir/$tkpath";
   if (!-e $defoverride) {
     &Log("ERROR: Chrome en-US override file not found \"$defoverride\". Skipping locale override.\n");
     return;
   }
-    
+
   # compare contents of this override with en-US because missing entries
   # could cause Firefox or xulsword to malfunction in some circumstances
   my %entries, %defentries, %values, %defvalues;
@@ -568,7 +578,7 @@ sub makeZIP($$$$) {
 
 sub escfile($) {
   my $n = shift;
-  
+
   if ("$^O" =~ /MSWin32/i) {$n = "\"".$n."\"";}
   elsif ("$^O" =~ /linux/i) {$n =~ s/([ \(\)])/\\$1/g;}
   else {&Log("Please add file escape function for your platform.\n");}

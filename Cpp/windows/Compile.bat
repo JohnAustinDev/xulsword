@@ -1,8 +1,8 @@
 @ECHO USAGE: Compile.bat [NOSECURITY]
 
 @echo off
-cd "%MK%\Cpp\windows"
-call "%MK%\Cpp\windows\Versions.bat"
+cd %~dp0
+call Versions.bat
 
 :: Make sure our compiler environment is configured
 if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
