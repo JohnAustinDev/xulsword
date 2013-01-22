@@ -45,7 +45,7 @@ for my $d (keys %UIDescValueEN) {
   if (exists($UIDescValue{$d}) && $UIDescValue{$d} ne "" && $UIDescValue{$d} ne "_NOT_FOUND_") {next;}
   my $v = $UIDescValueEN{$d};
   if (&isSecondary($v, $d, \%MayBeMissing, \%MayBeEmpty)) {next;} # Don't try to translate secondary elements
-  my $tv = &translateValue($v, "en-US", $LOCALE_FF, "$MKSDEV/$firefoxDirName");
+  my $tv = &translateValue($v, "en-US", $LOCALE_FF, $firefoxDirName);
   if ($tv) {
     $UIDescValue{$d} = $tv;
     $MapLine{$d} += 100000; # Move translated phrases to end of file

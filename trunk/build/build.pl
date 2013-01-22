@@ -235,12 +235,16 @@ sub writeCompileDeps($) {
   &Log("----> Writing path info for C++ compiler.\n");
   if (!-e $SwordSource) {&Log("ERROR: No SWORD source code.\n"); die;}
   if (!-e $CluceneSource) {&Log("ERROR: No Clucene source code.\n"); die;}
-  if (!-e $MicrosoftSDK) {&Log("ERROR: No Microsoft SDK.\n"); die;}
+  #if (!-e $MicrosoftSDK) {&Log("ERROR: No Microsoft SDK.\n"); die;}
   open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/windows/Versions.bat") || die;
   print INFO "Set clucene=$CluceneSource\n";
   print INFO "Set sword=$SwordSource\n";
   print INFO "Set microsoftsdk=$MicrosoftSDK\n";
   print INFO "Set Name=$Name\n";
+  print INFO "Set MKS=$XulswordExtras\n";
+  my $t = $TRUNK;
+  $t =~ s/\//\\/g;
+  print INFO "Set MK=$t\n";
   close(INFO);
 
 }
@@ -808,7 +812,7 @@ sub packageWindowsSetup($) {
 
   my $id = $is;
   $id =~ s/[\\\/][^\\\/]+$//;
-  if (!-e $is) {&Log("ERROR: installer script $is not found.\n"); return;}
+  if (!-e $is) {&Log("ERROR: installer script $is was not found.\n"); return;}
 
   my $resdir = "$OutputDirectory/$Name-Setup-$Version";
   if (!-e $resdir) {make_path($resdir);}
@@ -818,7 +822,7 @@ sub packageWindowsSetup($) {
   chomp($isp);
   
   if (!-e $isp) {
-    &Log("ERROR: Inno Setup 5 (Unicode) is not installed.\n");
+    &Log("ERROR: Inno Setup 5 (Unicode) is not installed (did not find: \"%ProgramFiles%/Inno Setup 5/ISCC.exe\").\n");
     die;
   }
   

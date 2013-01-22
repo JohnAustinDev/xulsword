@@ -20,7 +20,7 @@ Set XULRunner=C:\home\dev\mk-dev\xulrunner
 Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v6.1
 
 # SPECIFY BUILD INFORMATION
-Set Version=3.3
+Set Version=3.51
 Set Name=xulsword
 Set Vendor=CrossWire
 Set Executable=xulsword
