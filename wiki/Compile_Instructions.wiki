@@ -6,7 +6,7 @@ The following programs need to be in your command path:
   * [http://www.7-zip.org/download.html 7-zip] (command line version)
   * [http://www.activestate.com/activeperl/downloads/ Perl]
   * [http://www.softpedia.com/get/Programming/Other-Programming-Files/Microsoft-Visual-C-Toolkit.shtml MSVC8 C++ Compiler] (the Express Edition works great)
-  * [http://www.microsoft.com/downloads/details.aspx?familyid=0baf2b35-c656-4969-ace8-e4c0c0716adb&displaylang=en Windows SDK]. Install the "Windows Core SDK" and you may choose not to install Sample Code and Documentation to save space and download time.
+  * [http://www.microsoft.com/downloads/details.aspx?familyid=0baf2b35-c656-4969-ace8-e4c0c0716adb&displaylang=en Windows SDK]. Old SDK versions like [http://www.microsoft.com/en-us/download/details.aspx?id=6510 Windows Server 2003 SP1 Platform SDK] work just fine. For quickest install, use the web-install and choose what parts you want to download. All that is required to build xulsword is the `Include` and `Lib` subdirectories. 
 
 -----
 
