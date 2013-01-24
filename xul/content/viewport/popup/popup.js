@@ -128,8 +128,7 @@ function PopupObj(popupobj) {
         i = entry.lastIndexOf("<", i);
         entry = entry.substring(0, i);
       }
-      this.srnote = Texts.getScriptureReferences((p.reflist[0] != "unavailable" ? p.reflist:entry.split(";")), referenceBible);
-      this.srnote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + referenceBible + "\">" + this.srnote + "</div>"
+      this.srnote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + referenceBible + "\">" + (p.reflist[0] != "unavailable" ? p.reflist.join(";"):entry) + "</div>"
       res = BibleTexts.getNotesHTML(this.srnote, referenceBible, true, true, true, true, 1);
       break;
     

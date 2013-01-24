@@ -387,33 +387,6 @@ function isLocationAbeforeB(locA, locB) {
   return true;
 }
 
-// Takes a "." delineated Scripture reference, checks, and normalizes it.
-// Returns null if it reference format is wrong or incomplete.
-// Converts book.c to book.c.vfirst-book.c.vlast
-// And returns one of the following forms:
-// a)   book.c.v
-// b)   book.c.v-book.c.v
-function normalizeOsisReference(ref, bibleMod) {
-//dump(ref + "\n");
-  var saveref = ref;
-  if (ref.search("null")!=-1) return null;
-  ref = ref.replace(/^\s+/,""); // remove beginning white space
-  ref = ref.replace(/\s+$/,""); // remove trailing white space
-  if (ref.search(/^[^\.]+\.\d+\.\d+$/) != -1)                   // bk.c.v
-    return ref;
-  if (ref.search(/^[^\.]+\.\d+\.\d+-\d+$/) != -1) {             // bk.c.v1-v2
-    var p = ref.match(/(^[^\.]+\.\d+\.)(\d+)-(\d+)$/);
-    return p[1] + p[2] + "-" + p[1] + p[3];
-  }
-  if (ref.search(/^[^\.]+\.\d+\.\d+-[^\.]+\.\d+\.\d+$/) != -1)  // bk.c.v-bk.c.v
-    return ref; 
-  if (ref.search(/^[^\.]+\.\d+$/) != -1)                        // bk.c
-    return  ref + ".1-" + ref + "." + LibSword.getMaxVerse(bibleMod, ref);
-    
-  //else {jsdump("WARNING: Unrecognized Osis Cross Reference " + "\"" + saveref + ", " + ref + "\" found in " + Location.getLocation(bibleMod) + "\n");}
-  return null;
-}
-
 function getModuleConfig(mod) {
   var moduleConfig = {};
 
@@ -454,8 +427,8 @@ function getModuleConfig(mod) {
   return moduleConfig;
 }
 
-// "location" may have forms: "Matt 3:5", "John 3:16-John 3:21", "John.3", "John.3.5", "John.3.16-John.3.16.21"
-// If "location" has "John.3.7.10" form, then it must be normalized BEFORE calling this function.
+// "location" may have the forms: 
+// "Matt 3:5", "John 3:16-John 3:21", "John.3", "John.3.5", "John.3.16-John.3.16.21", or "John.3.7.10".
 // If "version" is not a Bible, or does not have the book where "location" is, then an alternate 
 // Bible version is used and the location is converted to the new verse system. NOTE! returned 
 // location is "." delimited type! Returns "" if verse text cannot be found in any Bible module.
