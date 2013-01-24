@@ -505,62 +505,6 @@ Texts = {
     
     return usernotes;
   },
-  
-  getScriptureReferences: function(mdata, mod) {
-    
-    // If subreferences exist which are separated by "," then split them out as well
-    for (var i=0; i<mdata.length; i++) {
-      var verses = mdata[i].split(",");
-      if (verses.length == 1) continue;
-      var r = 1;
-      for (var v=0; v<verses.length; v++) {
-        mdata.splice(i+1-r, r, verses[v]);
-        i++;
-        i -= r;
-        r = 0;
-      }
-    }
-
-    // Parse each reference into a normalized reference in a list
-    var reflist = "";
-    var failhtml = "";
-    
-    var book = Location.getBookName();
-    var chapter = Location.getChapterNumber(mod);
-    var verse = 1;
-    
-    for (i=0; i<mdata.length; i++) {
-      var failed = false;
-      var saveref = mdata[i];
-
-      mdata[i] = normalizeOsisReference(mdata[i], mod);
-
-      if (!mdata[i]) {
-        var thisloc = parseLocation(saveref);
-        if (thisloc) {
-          book = thisloc.shortName ? thisloc.shortName:book;
-          chapter = thisloc.chapter ? thisloc.chapter:chapter;
-          verse = thisloc.verse ? thisloc.verse:verse;
-          mdata[i] = book + "." + chapter + "." + verse;
-          if (thisloc.lastVerse) {mdata[i] += "-" + book + "." + chapter + "." + thisloc.lastVerse;}
-          mdata[i] = normalizeOsisReference(mdata[i], mod);
-          if (!mdata[i]) failed = true;
-        }
-        else failed = true;
-      }
-      if (failed) {
-        book = null;
-        chapter = null;
-        verse = null;
-        //failhtml += "<hr>" + saveref + ": <b>????</b><br>";
-        continue;
-      }
-
-      reflist += mdata[i] + ";";
-    }
-    
-    return reflist;
-  },
  
   getDisplay: function(mod, loc, w) {
     loc = loc.split(".");

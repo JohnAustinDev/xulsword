@@ -299,17 +299,76 @@ BibleTexts = {
   
     return t
   },
-  
+    
+  // This function tries to read a ";" separated list of Scripture
+  // references and return HTML which describes the references and their
+  // texts. It looks for OSIS type references as well as free
+  // hand references which may include ","s. It will supply missing
+  // book, chapter, and verse information using context and/or
+  // previously read information (as is often the case after a ",").
+  // This function also may look through multiple Bible texts until it
+  // finds the passage. It also takes care of verse system
+  // conversions (KJV and Synodal only, right now).
   getRefHTML: function(w, mod, body) {
+
     var ref = body.split(";");
+    
+    // are there any commas? then add the sub refs to the list...
+    for (var i=0; i<ref.length; i++) {
+      var verses = ref[i].split(",");
+      if (verses.length == 1) continue;
+      
+      var r = 1;
+      for (var v=0; v<verses.length; v++) {
+        ref.splice(i+1-r, r, verses[v]);
+        i++;
+        i -= r;
+        r = 0;
+      }
+    }
+    
+    // set default starting values, which may be used to fill in missing 
+    // values which were intended to be assumed from context
+    var bk = Location.getBookName();
+    var ch = Location.getChapterNumber(mod);
+    var vs = 1;
+    
     var html = "";
     var sep = "";
-    
     for (var i=0; i<ref.length; i++) {
       if (!ref[i]) continue;
+      var failed = false;
       
-      var r = normalizeOsisReference(ref[i], mod);
-      if (!r) continue;
+      var r = ref[i];
+      
+      // is this ref an osisRef type reference?
+      r = this.normalizeOsisReference(r, mod);
+      
+      // if not, then parse it and fill in any missing values from context
+      if (!r) {
+        var loc = parseLocation(ref[i]);
+        if (loc) {
+          bk = loc.shortName ? loc.shortName:bk;
+          ch = loc.chapter ? loc.chapter:ch;
+          vs = loc.verse ? loc.verse:vs;
+          
+          r = bk + "." + ch + "." + vs;
+          
+          if (loc.lastVerse) {r += "-" + bk + "." + ch + "." + loc.lastVerse;}
+          
+          r = this.normalizeOsisReference(r, mod);
+          
+          if (!r) failed = true;
+        }
+        else failed = true;
+      }
+      if (failed) {
+        // then reset our context, since we may have missed something along the way
+        bk = null;
+        ch = null;
+        vs = null;
+        continue;
+      }
       
       var aVerse = findAVerseText(mod, r, w);
       if ((/^\s*$/).test(aVerse.text)) aVerse.text = "-----";
@@ -327,6 +386,42 @@ BibleTexts = {
     }
     
     return html;
+  },
+  
+  // Looks for a "." delineated OSIS Scripture reference, checks, and normalizes it.
+  // Returns null if this is not an OSIS type reference.
+  // Converts book.c to book.c.vfirst-book.c.vlast
+  // And returns one of the following forms:
+  // a)   book.c.v
+  // b)   book.c.v-book.c.v
+  normalizeOsisReference: function(ref, bibleMod) {
+  //dump(ref + "\n");
+    var saveref = ref;
+    if (ref.search("null")!=-1) return null;
+    
+    ref = ref.replace(/^\s+/,""); // remove beginning white space
+    ref = ref.replace(/\s+$/,""); // remove trailing white space
+    
+    if ((/^[^\.]+\.\d+$/).test(ref))                              // bk.c
+      return  ref + ".1-" + ref + "." + LibSword.getMaxVerse(bibleMod, ref);
+      
+    if ((/^[^\.]+\.\d+\.\d+$/).test(ref))                         // bk.c.v
+      return ref;
+      
+    if ((/^[^\.]+\.\d+\.\d+\.\d+$/).test(ref)) {                  // bk.c.v1.v2
+      var p = ref.match(/^(([^\.]+\.\d+)\.\d+)\.(\d+)$/);
+      return p[1] + "-" + p[2] + "." + p[3];
+    }
+    
+    if ((/^[^\.]+\.\d+\.\d+-\d+$/).test(ref)) {                   // bk.c.v1-v2
+      var p = ref.match(/(^[^\.]+\.\d+\.)(\d+)-(\d+)$/);
+      return p[1] + p[2] + "-" + p[1] + p[3];
+    }
+    
+    if ((/^[^\.]+\.\d+\.\d+-[^\.]+\.\d+\.\d+$/).test(ref))        // bk.c.v-bk.c.v
+      return ref; 
+      
+    return null;
   },
   
   ascendingVerse: function(a,b) {
