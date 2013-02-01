@@ -583,7 +583,8 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     verseHTML.append(Outtext);
 
     if (Verse > 1) {
-      if ((vNum >= Verse)&&(vNum <= LastVerse)) {verseHTML.append("<span class=\"hl\">");}
+      if (vNum == Verse) {verseHTML.append("<span class=\"hl\" id=\"sv\">");}
+      if ((vNum > Verse)&&(vNum <= LastVerse)) {verseHTML.append("<span class=\"hl\">");}
     }
     
     if (verseStartsWithIndent) {verseHTML.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");}
@@ -722,7 +723,8 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
 
     //If this is the selected verse group then designate as so
     if (Verse > 1) {
-      if ((vNum >= Verse)&&(vNum <= LastVerse)) {chapText.append("<span class=\"hl\">");}
+      if (vNum == Verse) {chapText.append("<span class=\"hl\" id=\"sv\">");}
+      if ((vNum > Verse)&&(vNum <= LastVerse)) {chapText.append("<span class=\"hl\">");}
     }
     
     int versionNum = 1;
