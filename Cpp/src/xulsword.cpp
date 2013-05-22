@@ -449,6 +449,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   
   MyManager->Load();
   
+  MyManager->augmentModules(path1.c_str(), false); // override any "home" modules
   while (comma != aPath.length()) {
     int beg = comma+2; // 2 is length of ", "
     comma = aPath.find(", ", beg);
