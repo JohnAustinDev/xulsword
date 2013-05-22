@@ -34,6 +34,9 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/printPassage/printPassage.js"/>
 
+  <keyset>
+    <key keycode="VK_ESCAPE"                 oncommand="window.close();"/>
+  </keyset>
   
   <vbox flex="1">
   

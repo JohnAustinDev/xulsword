@@ -36,6 +36,10 @@
   <data id="ui.more.label">&more.label;</data>
   <data id="ui.less.label">&less.label;</data>
   
+  <keyset>
+    <key keycode="VK_ESCAPE"                 oncommand="window.close();"/>
+  </keyset>
+  
   <script>var MainWindow = window.opener;</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
