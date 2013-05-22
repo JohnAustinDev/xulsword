@@ -38,6 +38,10 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/copyPassage/copyPassage.js"/>
 
   <data id="ui.cancelButton.label">&cancelButton.label;</data>
+  
+  <keyset>
+    <key keycode="VK_ESCAPE"                 oncommand="window.close();"/>
+  </keyset>
 
   <groupbox>
     <caption label="&term.passage;" />

@@ -47,6 +47,10 @@
   <data id="ui.deleteCmd.label">&deleteCmd.label;</data>
   <data id="ui.menu.removeModule.label">&menu.removeModule.label;</data>
   <data id="ui.deleteconfirm.title">&deleteconfirm.title;</data>
+  
+  <keyset>
+    <key keycode="VK_ESCAPE"                 oncommand="window.close();"/>
+  </keyset>
 
   <vbox id="body" flex="1">
     
