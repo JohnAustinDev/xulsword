@@ -276,7 +276,7 @@ function deleteCheckedResources(e) {
   window.close();
 }
 
-// Don't allow all Bibles to be deleted. At least one must remain in
+// Don't allow all xulsword's Bibles to be deleted. At least one must remain in
 // order for xulsword to properly function.
 function disableBibleIfLast() {
 
@@ -287,6 +287,7 @@ function disableBibleIfLast() {
   var mods = document.getElementsByClassName("module-checkbox");
   for (var m=0; m<mods.length; m++) {
     if (Tab[mods[m].getAttribute("modName")].modType != BIBLE) continue;
+    if (Tab[mods[m].getAttribute("modName")].isCommDir) continue;
     
     if (!mods[m].checked) {
       aBible = mods[m];

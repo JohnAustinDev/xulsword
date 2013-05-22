@@ -231,9 +231,10 @@ function initTabGlobals() {
     tab.modName = mod;
     tab.modType = type;
     tab.conf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-    tab.conf.initWithPath(LibSword.getModuleInformation(mod, "AbsoluteDataPath").replace(/[\\\/]modules[\\\/].*?$/, DIRSEP + "mods.d" + DIRSEP + mod.toLowerCase() + ".conf"));
+    var p = LibSword.getModuleInformation(mod, "AbsoluteDataPath").replace(/[\\\/]/g, DIRSEP);
+    tab.conf.initWithPath(p.replace(/[\\\/]modules[\\\/].*?$/, DIRSEP + "mods.d" + DIRSEP + mod.toLowerCase() + ".conf"));
     if (!tab.conf.exists()) jsdump("WARNING: tab.conf bad path \"" + tab.conf.path + "\"");
-    tab.isCommDir = (tab.conf && tab.conf.path.indexOf(commonDir.path) == 0 ? true:false);
+    tab.isCommDir = (tab.conf && tab.conf.path.toLowerCase().indexOf(commonDir.path.toLowerCase()) == 0 ? true:false);
     tab.tabType = getShortTypeFromLong(tab.modType);
     tab.isRTL = (ModuleConfigs[mod].direction == "rtl");
     tab.index = m;
