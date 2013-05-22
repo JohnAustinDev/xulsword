@@ -61,6 +61,7 @@ function onLoad() {
     hbox1.setAttribute("class", "module-container");
     hbox1.setAttribute("align", "center");
     if (!Tab[mod].isCommDir) hbox1.setAttribute("isLocalModule", "true");
+    else checkBoxes[c].setAttribute("disabled", true);
     var hbox2 = hbox1.appendChild(document.createElement("hbox"));
     hbox2.setAttribute("align", "center");
     hbox2.appendChild(document.createElement("image"));

@@ -212,12 +212,7 @@ function initTabGlobals() {
    // Sort tabs...
   modarray = modarray.sort(tabOrder);
  
-  // Get module source directory info
-  var userConfFiles = {};
-  var commConfFiles = {};
   var commonDir = getSpecialDirectory("xsModsCommon");
-  getConfFiles(getSpecialDirectory("xsModsUser"), userConfFiles);
-  getConfFiles(commonDir, commConfFiles);
   commonDir.append(MODSD);
 
   // Create Global Tab and Tabs
@@ -230,15 +225,14 @@ function initTabGlobals() {
     labelFromUI = modarray[m].labelFromUI;
     
     var tab = {label:null, labelFromUI:null, modName:null, modType:null, tabType:null, isRTL:null, index:null,  
-        description:null, conf:null, confModUnique:null, isCommDir:null};
+        description:null, conf:null, isCommDir:null};
     tab.label = label;
     tab.labelFromUI = labelFromUI;
     tab.modName = mod;
     tab.modType = type;
-    tab.confModUnique = true;
-    tab.conf = commConfFiles[mod]; // Sword looks at common directory first...
-    if (!tab.conf) tab.conf = userConfFiles[mod];
-    else if (userConfFiles[mod]) tab.confModUnique = false;
+    tab.conf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+    tab.conf.initWithPath(LibSword.getModuleInformation(mod, "AbsoluteDataPath").replace(/[\\\/]modules[\\\/].*?$/, DIRSEP + "mods.d" + DIRSEP + mod.toLowerCase() + ".conf"));
+    if (!tab.conf.exists()) jsdump("WARNING: tab.conf bad path \"" + tab.conf.path + "\"");
     tab.isCommDir = (tab.conf && tab.conf.path.indexOf(commonDir.path) == 0 ? true:false);
     tab.tabType = getShortTypeFromLong(tab.modType);
     tab.isRTL = (ModuleConfigs[mod].direction == "rtl");
@@ -296,21 +290,6 @@ function tabOrder(a,b) {
     return (a.label > b.label ? 1:-1);
   }
   else return (ModuleTypeOrder[a.type] > ModuleTypeOrder[b.type] ? 1:-1);
-}
-
-function getConfFiles(dir, aObj) {
-  var aDir = dir.clone();
-  aDir.append(MODSD);
-  if (!aDir.exists()) return;
-  var re = new RegExp(CONF_EXT + "$");
-  var files = aDir.directoryEntries;
-  while (files.hasMoreElements()) {
-    var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
-    if (file.leafName.match(re)) {
-      var mname = readParamFromConf(file, "ModuleName");
-      if (mname) aObj[mname] = file;
-    }
-  }
 }
 
 
