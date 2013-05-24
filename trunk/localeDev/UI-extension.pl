@@ -69,7 +69,8 @@ if (open(INSF, ">:encoding(UTF-8)", "$TEMPDIR/install.rdf")) {
   print INSF "      <Description>\n";
   print INSF "        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>\n";
   print INSF "        <em:minVersion>1.0</em:minVersion>\n";
-  print INSF "        <em:maxVersion>99.0</em:maxVersion>\n";
+  # UI-MAP.txt as of 4/13 supports up to FF18 only...
+  print INSF "        <em:maxVersion>18.*</em:maxVersion>\n";
   print INSF "      </Description>\n";
   print INSF "    </em:targetApplication>\n";
   print INSF "    <em:targetApplication>\n";

@@ -1,4 +1,4 @@
-# MIN_XULSWORD_VERSION:3.5, MAX_XULSWORD_VERSION:3.8
+# MIN_XULSWORD_VERSION:3.5, MAX_XULSWORD_VERSION:3.50
 # 
 # A "*" in a file-entry and/or description is wildcard.
 # ?? description prefix means file-entry and value are optional.
