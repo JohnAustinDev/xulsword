@@ -618,7 +618,7 @@ var History = {
       popup.removeChild(popup.firstChild);
     // Show history in verse system of firstDisplayBible(), save current Bible location and restore it after creating menu
     var vers = ViewPort.firstDisplayBible();
-    for (var i=0; i<this.list.length; i++) {
+    for (var i=this.list.length-1; i>=0; i--) {
       var xulElement = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "menuitem");
       xulElement.setAttribute("oncommand", "History.toSelection('" + i + "')");
       var aref = Location.convertLocation(WESTERNVS, this.list[i], LibSword.getVerseSystem(vers));
@@ -674,6 +674,9 @@ var History = {
 function onRefUserUpdate(event, location, version) {
   location = location.split(".");
   var newloc = {shortName:location[0], chapter:location[1], verse:location[2], lastVerse:location[3]}
+  if (!newloc.chapter) newloc.chapter = 1;
+  if (!newloc.verse) newloc.verse = 1;
+  if (!newloc.lastVerse || newloc.lastVerse < newloc.verse) newloc.lastVerse = newloc.verse;
   updateToReference(newloc);
 }
  
