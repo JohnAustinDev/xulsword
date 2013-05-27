@@ -85,7 +85,24 @@ Texts = {
       
       this.pinnedDisplay[w] = copyObj(this.display[w]);
     }
-    
+/*    
+    // scroll notebox to text always. SHOULD THIS BE IN VIEWPORT UPDATE?
+    for (var w=1; w<=NW; w++) {
+      //if (Tab[ViewPort.Module[w]].modType != BIBLE) continue;
+      if (document.getElementById("text" + w).getAttribute("columns") == "hide") continue;
+      if (document.getElementById("text" + w).style.display == "none") continue; // used by windowed viewports
+      if (w > ViewPort.NumDisplayedWindows) continue;
+      var aoref = this.display[w].bk + "." + this.display[w].ch + "." + this.display[w].vs;
+      var t = document.getElementById("text" + w);
+      var sb = t.getElementsByClassName("sb")[0];
+      var firstVerse = sb.innerHTML.indexOf("title=\"" + aoref + ".");
+      if (firstVerse != -1) {
+        var nre = new RegExp("class=\"(fn|cr|un)\" title=\"([^\"]+)\"");
+        var firstNote = sb.innerHTML.substr(firstVerse).match(nre);
+        if (firstNote) BibleTexts.scroll2Note("w" + w + ".footnote." + firstNote[1] +"." + firstNote[2]);
+      }
+    }
+*/    
     // If scrollTypeFlag is SCROLLTYPEENDSELECT, then the selection has been changed to the
     // the first visible verse. To maintain subsequent SCROLLTYPEPREVIOUS functionality, we
     // need to also change our current scrollTypeFlag to SCROLLTYPEBEG
