@@ -576,7 +576,7 @@
           onkeydown="if (event.which==13 || event.which==27) {event.preventDefault();}"
           onkeyup="this.parentNode.parentNode.onbookkeyup(event);"
           ondblclick="this.select();"
-          onclick="this.parentNode.parentNode._finishedAutoComplete=false;"
+          onclick="this.select(); this.parentNode.parentNode._finishedAutoComplete=false;"
           sizetopopup="always" editable="true" flex="" onlyavailablebooks="false" hidden="false"
           xbl:inherits="onlyavailablebooks, flex, sizetopopup, editable, hidden=hidebook, disabled" />
           
