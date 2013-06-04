@@ -154,8 +154,8 @@
   <key id="manBookmarkKb" key="&manBookmarksCmd.accesskey;" modifiers="accel" command="cmd_xs_openManager"/>
   <key id="printKb"       key="&printCmd.accesskey;"        modifiers="accel" command="cmd_print"/>
   <key id="copyPassageKb" key="&menu.copypassage.sc;"       modifiers="accel" oncommand="copyPassageDialog();"/>
-  <key keycode="VK_DOWN"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').select();"/>
-  <key key="B"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').select();"/> <!-- Like Paratext !-->
+  <key keycode="VK_DOWN"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').focus();"/>
+  <key key="B"            modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').focus();"/> <!-- Like Paratext !-->
   <key id="openSearchDialog" key="&SearchAccKey;" modifiers="accel" oncommand="XulswordController.doCommand('cmd_xs_search', '{search:{searchtext:null}}');"/>
 </keyset>
 

@@ -109,6 +109,12 @@
         if (Tabs[t].description) 
             document.write("<div class=\"description\">" + Tabs[t].description + "</div>");
  
+        // Copyright
+        var copyright = LibSword.getModuleInformation(Tabs[t].modName, "DistributionLicense");
+        if (copyright == NOTFOUND) copyright = "";
+        if (copyright)
+             document.write("<div class=\"copyright\">" + copyright + "</div>");
+             
         // About
         var about = LibSword.getModuleInformation(Tabs[t].modName,"About");
         if (about == Tabs[t].description || about == NOTFOUND) about = "";
@@ -116,12 +122,6 @@
           about = about.replace(/(\\par)/g, "<br>");
           document.write("<div class=\"about\">" + about + "</div>");
         }
-        
-        // Copyright
-        var copyright = LibSword.getModuleInformation(Tabs[t].modName, "DistributionLicense");
-        if (copyright == NOTFOUND) copyright = "";
-        if (copyright)
-             document.write("<div class=\"copyright\">" + copyright + "</div>");
              
         document.write("</div>"); // end module-detail
              

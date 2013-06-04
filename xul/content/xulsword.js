@@ -301,7 +301,7 @@ function updateFeature(info, f, resetUserPrefs, hideDisabledItems) {
     if (info.e) prefs.setCharPref(GlobalToggleCommands[info.e], "Off");
     if (info.e) document.getElementById(info.e).setAttribute("disabled", "true");
     if (hideDisabledItems && info.e) document.getElementById(info.e).hidden = true;
-    if (info.b) document.getElementById(info.b).hidden = true;
+    //if (info.b) document.getElementById(info.b).hidden = true; THIS WAS CONFUSING TO USERS WITH LITTLE BENEFIT
     if (info.s) document.getElementById(info.s).setAttribute("disabled", "true");
   }
   else if (resetUserPrefs && info.e) prefs.setCharPref(GlobalToggleCommands[info.e], "On");

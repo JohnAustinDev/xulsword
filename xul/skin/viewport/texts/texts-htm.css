@@ -142,6 +142,10 @@
 .versenum {
   vertical-align:top;
 }
+.versenum:before,
+.versenum:after {
+  content:' ';
+}
 .cr, 
 .fn,
 .un {
