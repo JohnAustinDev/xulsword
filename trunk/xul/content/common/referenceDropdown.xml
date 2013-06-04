@@ -516,7 +516,7 @@
           // the book is autocompleted and letter keys are ignored until "space" or "backspace"
           // is pressed. Pressing "escape" restores original value and pressing "enter" runs
           // updateFromTextBox.
-
+jsdump("onbookkeyup:" + aEvent.which + ", " + this._finishedAutoComplete + ", " + this._saveTextBoxValue + ", " + this.bookmenulist.value); 
           //control+down-arrow (sometimes used to select text box)
           if (aEvent.which==40 || aEvent.which==17) return;
           
@@ -534,7 +534,7 @@
           
           //letter keys
           if ((aEvent.which<48 || aEvent.which>58) && this._finishedAutoComplete) {this.bookmenulist.value = this._saveTextBoxValue; return;}
-
+jsdump(this.bookmenulist.value);
           this._saveTextBoxValue = this.bookmenulist.value;
           var found=false;
           var cnt=0;
@@ -548,7 +548,9 @@
               var bname = Book[b].bNameL;
             }
           }
-          if (cnt==1) {
+          // don't set new value unless it needs setting because this has the consequence of removing any selection
+          var value = this.bookmenulist.value.replace(/(^\s*|\s*$)/g, "");
+          if (cnt==1 && bname != value) {
             this._finishedAutoComplete=true; 
             this.bookmenulist.value = bname + " "; 
             this._saveTextBoxValue = bname + " ";
@@ -575,8 +577,9 @@
           onchange="this.parentNode.parentNode.updateFromTextBox(event);"
           onkeydown="if (event.which==13 || event.which==27) {event.preventDefault();}"
           onkeyup="this.parentNode.parentNode.onbookkeyup(event);"
-          ondblclick="this.select();"
-          onclick="this.select(); this.parentNode.parentNode._finishedAutoComplete=false;"
+          ondblclick="this.select(); this.parentNode.parentNode._finishedAutoComplete=false;"
+          onclick   ="this.select(); this.parentNode.parentNode._finishedAutoComplete=false;"
+          onfocus   ="this.select(); this.parentNode.parentNode._finishedAutoComplete=false;"
           sizetopopup="always" editable="true" flex="" onlyavailablebooks="false" hidden="false"
           xbl:inherits="onlyavailablebooks, flex, sizetopopup, editable, hidden=hidebook, disabled" />
           
