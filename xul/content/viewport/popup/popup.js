@@ -22,7 +22,7 @@ var Popup;
 
 function initWindowedPopup() {
 
-  initCSS(true);
+  initCSS();
   
   // This is a windowed popup, so copy the original popup
   Popup = new PopupObj(ViewPort.ownerDocument.defaultView.Popup);

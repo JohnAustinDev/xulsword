@@ -27,7 +27,7 @@
   
   - .properties files contain named phrases for use by Javascript files.
   
-  There are three methods xulsword provides to allow Javascript to access 
+  There are four methods xulsword provides to allow Javascript to access 
   localized data:
   
   - getDataUI(<name>) reads an XML entity from a XUL <data> element. This
@@ -43,6 +43,12 @@
     .properties file is accessed with these its two methods:
     .formatStringFromName(<name>, [<param-array], param-array-length) and
     .GetStringFromName(<name>)
+    
+  - safeFormatStringFromName(default, <locale>, file.properties, <name>, 
+    [<param-array], param-array-length) and 
+    safeGetStringFromName(default, <locale>, file.properties, <name>)  
+    should be used to prevent necessitating a new revision of the UI.
+    A default value must always be provided for these two functions.
 !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css" ?>

@@ -188,7 +188,6 @@ body[chromedir="rtl"] .multitab-clicker {
   display:table-cell;
   vertical-align:top;
   padding:0px 10px 0px 10px;
-  font-size: 1.1em;
 }
 #textarea[windows="show3"] .text[columns="show1"] {
   width:33%;
@@ -225,6 +224,7 @@ body[chromedir="rtl"] .multitab-clicker {
 }
 
 .textf {
+  font-size: 1.1em;
 	background:rgb(255,243,255);
 	border:2px solid rgb(200,170,205);
   border-radius:8px;

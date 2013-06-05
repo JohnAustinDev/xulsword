@@ -614,6 +614,7 @@ function getLocale() {
 
 function getLocaleBundle(locale, file) {
   var bundle;
+  if (!locale || !file) return null;
   
   var saveLocale = getLocale();
   rootprefs.setCharPref("general.useragent.locale", locale);
@@ -631,6 +632,36 @@ function getCurrentLocaleBundle(file) {
   try {var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/" + file);}
   catch (er) {bundle = null;}
   return bundle;
+}
+
+function safeGetStringFromName(defvalue, locale, filename, value) {
+  var b = getLocaleBundle(locale, filename);
+  if (!b) b = getCurrentLocaleBundle(filename);
+  if (!b) return defvalue;
+  
+  try {var v = b.GetStringFromName(value);}
+  catch (er) {return defvalue;}
+  
+  if (v == "" || v === null) return defvalue;
+  
+  return v;
+}
+
+function safeFormatStringFromName(defvalue, locale, filename, value, paramArray, paramArrayLength) {
+  throw "safeFormatStringFromName is not yet fully implemented";
+  
+  defvalue = defvalue; // TODO: replace markers!
+  
+  var b = getLocaleBundle(locale, filename);
+  if (!b) b = getCurrentLocaleBundle(filename);
+  if (!b) return defvalue; 
+  
+  try {var v = b.formatStringFromName(value, paramArray, paramArrayLength);}
+  catch (er) {return defvalue;}
+  
+  if (v == "" || v === null) return defvalue;
+  
+  return v;
 }
 
 // This function is needed because window titles are NOT Unicode and so must fit into the operating system's code-page
@@ -842,6 +873,8 @@ function createStyleRule(selector, config) {
 // The userFontSize class in all stylesheets is dynamically updated by this routine.
 var StartingFont = {};
 function setUserFontSize(delta) {
+  // Don't let font get too small
+  if (delta < -2) delta = -3;
   if (!document || !document.styleSheets || !document.styleSheets.length) return;
   
   for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
