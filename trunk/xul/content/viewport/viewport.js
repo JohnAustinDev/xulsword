@@ -17,7 +17,7 @@
 */
 
 function initViewPort() {
-  initCSS(true);
+  initCSS();
   
   // If this is the main xulsword ViewPort, use prefs as initial settings
   if (document === MainWindow.document.getElementById("main-viewport").contentDocument) {

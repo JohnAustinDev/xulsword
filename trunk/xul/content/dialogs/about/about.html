@@ -31,6 +31,8 @@
   
   <script>
   
+  const EOF = NEWLINE + "<END_OF_FILE>";
+  
   function onLoad() {
     initCSS();
    
@@ -46,17 +48,37 @@
     var elem = document.getElementById("conf." + mod);
     var showInfo = elem.getAttribute("showInfo");
    
+   setEditable(mod, false);
+   
     if (showInfo == "false") {
       var confInfo = "-----";
       if (Tab[mod].conf) {
-        confInfo  = readFile(Tab[mod].conf) + NEWLINE;
-        confInfo += "SWORD_module_path=" + Tab[mod].conf.path + NEWLINE;
+        confInfo  = readFile(Tab[mod].conf) + EOF + "\nSWORD_module_path=" + Tab[mod].conf.path + NEWLINE;
       }
-      elem.getElementsByTagName("textarea")[0].innerHTML = confInfo;
+      elem.getElementsByTagName("textarea")[0].value = confInfo;
     }
-   
+
     elem.setAttribute("showInfo", (showInfo == "true" ? "false":"true"));
 
+  }
+  
+  function setEditable(mod, editable) {
+    if (editable) {
+      document.getElementById('conftext.' + mod).removeAttribute('readonly');
+      document.getElementById('conf.' + mod).removeAttribute('readonly');
+    }
+    else {
+      document.getElementById('conftext.' + mod).setAttribute('readonly', 'readonly');
+      document.getElementById('conf.' + mod).setAttribute('readonly', 'readonly');
+    }
+  }
+  
+  function saveConfText(mod) {
+    var elem = document.getElementById("conf." + mod);
+    var conftext = elem.getElementsByTagName("textarea")[0].value + EOF; // insure indexOf EOF is never -1
+    conftext = conftext.substr(0, conftext.indexOf(EOF));
+    writeFile(Tab[mod].conf, conftext, true);
+    setEditable(mod, false);
   }
   
   function getUI(id) {
@@ -126,12 +148,18 @@
         document.write("</div>"); // end module-detail
              
         // Conf contents
-        document.write("<div id=\"conf." + Tabs[t].modName + "\" class=\"conf-info\" showInfo=\"false\">");
+        document.write("<div id=\"conf." + Tabs[t].modName + "\" class=\"conf-info\" showInfo=\"false\" readonly=\"readonly\">");
         document.write(  "<a class=\"link\" href=\"javascript:toggleInfo('" + Tabs[t].modName + "');\">");
         document.write(    "<span class=\"more-label\">" + getUI("more.label") + "</span>");
         document.write(    "<span class=\"less-label\">" + getUI("less.label") + "</span>");
         document.write(  "</a>");
-        document.write(  "<textarea class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>");
+        document.write(  "<a class=\"link edit-link\" href=\"javascript:setEditable('" + Tabs[t].modName + "', true);\">");
+        document.write(    "<span class=\"less-label\">" + safeGetStringFromName("edit", null, "common/additional.properties", "edit.label") + "</span>");
+        document.write(  "</a>");
+        document.write(  "<a class=\"link save-link\" href=\"javascript:saveConfText('" + Tabs[t].modName + "');\">");
+        document.write(    "<span class=\"less-label\">" + safeGetStringFromName("save", null, "common/additional.properties", "save.label") + "</span>");
+        document.write(  "</a>");
+        document.write(  "<textarea id=\"conftext." + Tabs[t].modName + "\" class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>");
         document.write("</div>");
 
       }

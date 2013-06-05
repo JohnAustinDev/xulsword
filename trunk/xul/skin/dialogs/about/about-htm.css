@@ -8,8 +8,8 @@
 }
 .link {
   color:blue;
-  display:block;
-  margin-bottom:3px;
+  display:inline-block;
+  margin:0px 10px 3px 0px;
 }
 .link:hover {
   text-decoration:underline;
@@ -49,6 +49,9 @@
   font-family:Courier;
   font-size:12px;
   line-height:100%;
+  background-color:white;
+}
+.conf-info textarea[readonly="readonly"] {
   background-color:rgb(240,240,240);
 }
 .conf-info textarea,
@@ -63,4 +66,12 @@
 }
 .conf-info[showInfo="true"] .more-label {
   display:none;
+}
+.save-link,
+.conf-info[readonly="readonly"] .save-link, 
+.conf-info:not([readonly="readonly"]) .edit-link {
+  display:none;
+}
+.conf-info:not([readonly="readonly"]) .save-link {
+  display:inline;
 }
