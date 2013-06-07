@@ -31,8 +31,6 @@
   
   <script>
   
-  const EOF = NEWLINE + "<END_OF_FILE>";
-  
   function onLoad() {
     initCSS();
    
@@ -51,9 +49,10 @@
    setEditable(mod, false);
    
     if (showInfo == "false") {
+      elem.getElementsByClassName("confpath")[0].innerHTML = Tab[mod].conf.path;
       var confInfo = "-----";
       if (Tab[mod].conf) {
-        confInfo  = readFile(Tab[mod].conf) + EOF + "\nSWORD_module_path=" + Tab[mod].conf.path + NEWLINE;
+        confInfo  = readFile(Tab[mod].conf);
       }
       elem.getElementsByTagName("textarea")[0].value = confInfo;
     }
@@ -75,8 +74,7 @@
   
   function saveConfText(mod) {
     var elem = document.getElementById("conf." + mod);
-    var conftext = elem.getElementsByTagName("textarea")[0].value + EOF; // insure indexOf EOF is never -1
-    conftext = conftext.substr(0, conftext.indexOf(EOF));
+    var conftext = elem.getElementsByTagName("textarea")[0].value;
     writeFile(Tab[mod].conf, conftext, true);
     setEditable(mod, false);
   }
@@ -159,6 +157,7 @@
         document.write(  "<a class=\"link save-link\" href=\"javascript:saveConfText('" + Tabs[t].modName + "');\">");
         document.write(    "<span class=\"less-label\">" + safeGetStringFromName("save", null, "common/additional.properties", "save.label") + "</span>");
         document.write(  "</a>");
+        document.write(  "<div class=\"confpath\"></div>");
         document.write(  "<textarea id=\"conftext." + Tabs[t].modName + "\" class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>");
         document.write("</div>");
 
