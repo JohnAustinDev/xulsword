@@ -38,6 +38,15 @@
 .return-link:hover {
   text-decoration:underline;
 }
+.confpath {
+  display:none;
+  border:2px outset rgb(240,240,240);
+  border-bottom:none;
+  background-color:rgb(240,240,240);
+}
+.conf-info[showInfo="true"] .confpath {
+  display:block;
+}
 .conf-info {
   padding-bottom:6px;
   border-bottom:1px solid grey;
