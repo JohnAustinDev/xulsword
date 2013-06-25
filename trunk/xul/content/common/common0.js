@@ -82,7 +82,7 @@ const NEWLINE = (OPSYS == "Windows" ? "\r\n":(OPSYS == "MacOS" ? "\r":"\n"));
 const DIRSEP = (OPSYS == "Windows" ? "\\":"/");
 const BMFileReturn="\r\n"; // used in imported/exported bookmarks file
 const DEFAULTLOCALE = "en-US";
-const DLGSTD="centerscreen, modal, resizable";
+const DLGSTD="centerscreen,modal,resizable";
 const DLGALERT=0, DLGQUEST=1, DLGINFO=2;
 const DLGOK=0, DLGOKCANCEL=1, DLGYESNO=2;
 const WESTERNVS = "KJV";

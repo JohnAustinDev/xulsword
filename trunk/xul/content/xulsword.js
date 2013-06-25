@@ -820,9 +820,12 @@ var XulswordController = {
     case "cmd_xs_aboutModule":
       AllWindows.push(window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen"));
       break;
-    case "cmd_xs_addNewModule":
+    case "cmd_xs_addLocalModule":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
       if (!addNewModule()) ModuleCopyMutex=false;
+      break;
+    case "cmd_xs_addRepositoryModule":
+      AllWindows.push(window.open("chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.xul", getDataUI("menu.addNewModule.label"), "chrome,resizable,centerscreen"));
       break;
     case "cmd_xs_removeModule":
       AllWindows.push(window.open("chrome://xulsword/content/dialogs/removeModule/removeModule.xul", getDataUI("menu.removeModule.label"), "chrome,resizable,centerscreen"));
@@ -933,7 +936,8 @@ var XulswordController = {
       }
       return false;
       break;
-    case "cmd_xs_addNewModule":
+    case "cmd_xs_addLocalModule":
+    case "cmd_xs_addRepositoryModule":
     case "cmd_xs_removeModule":
     case "cmd_xs_importAudio":
       if (ModuleCopyMutex) return false;
@@ -987,7 +991,8 @@ var XulswordController = {
     case "cmd_xs_openFromSelection":
     case "cmd_xs_toggleTab":
     case "cmd_xs_aboutModule":
-    case "cmd_xs_addNewModule":
+    case "cmd_xs_addLocalModule":
+    case "cmd_xs_addRepositoryModule":
     case "cmd_xs_removeModule":
     case "cmd_xs_exportAudio":
     case "cmd_xs_importAudio":
@@ -1061,6 +1066,14 @@ function goUpdateFileMenu () {
   goUpdateCommand('cmd_xs_removeModule');
   goUpdateCommand('cmd_xs_exportAudio');
   goUpdateCommand('cmd_xs_importAudio');
+}
+
+// This is needed for UI backward compatibility only
+function goUpdateNewModuleMenu() {
+  document.getElementById("newLocalModule").label = safeGetStringFromName("Install from File", null, null, "newmodule.fromFile");
+  document.getElementById("newInternetModule").label = safeGetStringFromName("Download from Internet", null, null, "newmodule.fromInternet");
+  document.getElementById("newLocalModule").accesskey = safeGetStringFromName("F", null, null, "newmodule.fromFile.sc");
+  document.getElementById("newInternetModule").accesskey = safeGetStringFromName("I", null, null, "newmodule.fromInternet.sc");
 }
 
 
