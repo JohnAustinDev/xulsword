@@ -205,7 +205,8 @@
   <command id="cmd_xs_forward"                   oncommand="goDoCommand('cmd_xs_forward');"/>
   <command id="cmd_xs_navigatorUpdate"           oncommand="goDoCommand('cmd_xs_navigatorUpdate');"/>
   <command id="cmd_xs_openManager"               oncommand="goDoCommand('cmd_xs_openManager');"/>
-  <command id="cmd_xs_addNewModule"              oncommand="goDoCommand('cmd_xs_addNewModule');"/>
+  <command id="cmd_xs_addLocalModule"            oncommand="goDoCommand('cmd_xs_addLocalModule');"/>
+  <command id="cmd_xs_addRepositoryModule"       oncommand="goDoCommand('cmd_xs_addRepositoryModule');"/>
   <command id="cmd_xs_removeModule"              oncommand="goDoCommand('cmd_xs_removeModule');"/>
   <command id="cmd_xs_exportAudio"               oncommand="goDoCommand('cmd_xs_exportAudio');"/>
   <command id="cmd_xs_importAudio"               oncommand="goDoCommand('cmd_xs_importAudio');"/>
@@ -228,7 +229,12 @@
   <menubar id="mainbar"> 
     <menu id="file-menu" label="&fileMenu.label;" accesskey="&fileMenu.accesskey;" >
       <menupopup id="file-popup" onpopupshowing="if (LibSword.hasBible) goUpdateFileMenu();">
-        <menuitem id="newmodule" label="&menu.addNewModule.label;" accesskey="&menu.addNewModule.sc;" command="cmd_xs_addNewModule" />
+        <menu id="newmodule" label="&menu.addNewModule.label;" accesskey="&menu.addNewModule.sc;" onclick="goDoCommand('cmd_xs_addLocalModule');" onpopupshowing="goUpdateNewModuleMenu();">
+          <menupopup>
+            <menuitem id="newLocalModule" label="" accesskey="" command="cmd_xs_addLocalModule" />
+            <menuitem id="newInternetModule" label="" accesskey="" command="cmd_xs_addRepositoryModule" onclick="event.stopPropagation();"/>
+          </menupopup>
+        </menu>
         <menuitem id="removemodule" label="&menu.removeModule.label;" accesskey="&menu.removeModule.sc;" command="cmd_xs_removeModule" />
         <menuseparator/>
         <menuitem id="exportAudio" label="&menu.exportAudio.label;" accesskey="&menu.exportAudio.sc;" command="cmd_xs_exportAudio" />
