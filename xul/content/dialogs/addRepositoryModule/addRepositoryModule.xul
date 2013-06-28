@@ -192,7 +192,7 @@
                           sort="rdf:http://www.xulsword.com/repository/rdf#Status" />
           </treecols>
           <template>
-            <rule REPOSITORY:Lang="en" id="dynamicLanguageRule" >
+            <rule id="dynamicLanguageRule" REPOSITORY:Lang="en" >
               <treechildren>
                 <treeitem uri="rdf:*">
                   <treerow>
