@@ -80,6 +80,8 @@ function onLoad() {
   RP.ModuleType       = RDF.GetLiteral("module");
   RP.LanguageListType = RDF.GetLiteral("language");
   RP.RepositoryType   = RDF.GetLiteral("repository");
+  RP.True             = RDF.GetLiteral("true");
+  RP.False            = RDF.GetLiteral("false");
   
   var data = "\
 <?xml version=\"1.0\"?>" + NEWLINE + "\
@@ -91,6 +93,7 @@ function onLoad() {
                    REPOSITORY:Name=\"IBT\"" + NEWLINE + "\
                    REPOSITORY:Site=\"ftp.ibt.org.ru\"" + NEWLINE + "\
                    REPOSITORY:Path=\"/pub/modsword/raw\"" + NEWLINE + "\
+                   REPOSITORY:Url=\"ftp://ftp.ibt.org.ru/pub/modsword/raw\"" + NEWLINE + "\
                    REPOSITORY:Enabled=\"true\" />" + NEWLINE + "\
                    REPOSITORY:Status=\"0%\" />" + NEWLINE + "\
                    REPOSITORY:Style=\"yellow\" />" + NEWLINE + "\
@@ -99,6 +102,7 @@ function onLoad() {
                    REPOSITORY:Name=\"CrossWire\"" + NEWLINE + "\
                    REPOSITORY:Site=\"ftp.crosswire.org\"" + NEWLINE + "\
                    REPOSITORY:Path=\"/pub/sword/raw\"" + NEWLINE + "\
+                   REPOSITORY:Url=\"ftp://ftp.crosswire.org/pub/sword/raw\"" + NEWLINE + "\
                    REPOSITORY:Enabled=\"true\" />" + NEWLINE + "\
                    REPOSITORY:Status=\"0%\" />" + NEWLINE + "\
                    REPOSITORY:Style=\"yellow\" />" + NEWLINE + "\
@@ -119,14 +123,15 @@ function onLoad() {
 <RDF:RDF xmlns:REPOSITORY=\"" + RP.REPOSITORY + "\"" + NEWLINE + "\
          xmlns:NC=\"http://home.netscape.com/NC-rdf#\"" + NEWLINE + "\
          xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">" + NEWLINE + "\
+  <RDF:Seq RDF:about=\"" + RP.LanguageListID + "\">" + NEWLINE + "\
+  </RDF:Seq>" + NEWLINE + "\
+  <RDF:Seq RDF:about=\"" + RP.ModuleListID + "\">" + NEWLINE + "\
+  </RDF:Seq>" + NEWLINE + "\
 </RDF:RDF>";
-  MLDS = initDataSource(data, ModuleRDF, true);
+  MLDS = initDataSource(data, ModuleRDF);
   
-  RDFCU.MakeSeq(MLDS, RDF.GetResource(RP.LanguageListID));
-  RDFCU.MakeSeq(MLDS, RDF.GetResource(RP.ModuleListID));
-  
-  if (!RPDS) {
-    throw("ERROR: Failed to load Repository Data Source!");
+  if (!RPDS || !MLDS) {
+    throw("ERROR: Failed to load a Data Source!");
   }
   
   // init the status of all database repositories to 0%
@@ -141,32 +146,73 @@ function onLoad() {
     }
   }
   
-  // add our datasource to the trees
-  document.getElementById("repoListTree").database.AddDataSource(RPDS);
-  document.getElementById("repoListTree").builder.rebuild();
+  // add our datasource to the repository tree
+  treeDataSource([false], ["repoListTree"]);
 
-  loadMasterRepoList(); // will call masterRepoListLoaded() when loaded
+  loadMasterRepoList(); // will call masterRepoListLoaded() when finished
 }
 
 function masterRepoListLoaded() {
   
-    initRepositoryArray();
+  // get all enabled repositories
+  var repoArray = [];
+  
+  RDFC.Init(RPDS, RDF.GetResource(RP.XulswordRepoListID));
+  var repos = RDFC.GetElements();
+  
+  while(repos.hasMoreElements()) {
+    var res = repos.getNext();
     
-    // get number of repositories which will be loaded
-    RepositoriesLoading = 0;
-    for (var i=0; i<RepositoryArray.length; i++) {
-      var enabled = RPDS.GetTarget(RepositoryArray[i].resource, RP.Enabled, true);
-      enabled = enabled.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-      if (enabled == "true") RepositoriesLoading++;
-    }
-    RepositoryCheckInterval = window.setInterval("checkAllRepositoriesLoaded();", 200);
+    if (RPDS.GetTarget(res, RP.Enabled, true) != RP.True) continue;
     
-    startProcessingNextRepository();
-    
-    // now we're done with onLoad and we turn things over to the user!
-    return;
-    
+    repoArray.push(res);
+  }
+
+  loadRepositories(repoArray);
 }
+
+function loadRepositories(resourceArray, moduleDataAlreadyDeleted) {
+  
+  // init repository array
+  RepositoryArray = [];
+  RepositoryIndex = -1; // begin sequence
+  RepositoriesLoading = 0;
+  
+  var repoUrlArray = [];
+  
+  for (var i=0; i<resourceArray.length; i++) {
+    
+    repoUrlArray.push(RPDS.GetTarget(resourceArray[i], RP.Url, true));
+    
+    RepositoriesLoading++;
+    var obj = { resource:resourceArray[i], manifest:null };
+    RepositoryArray.push(obj);
+  }
+
+  if (!moduleDataAlreadyDeleted) deleteModuleData(repoUrlArray);
+  
+  RepositoryCheckInterval = window.setInterval("checkAllRepositoriesLoaded();", 200);
+  
+  // now begin to process each repository asynchronously while 
+  // checkAllRepositoriesLoaded will watch for final completion
+  startProcessingNextRepository()
+}
+
+function checkAllRepositoriesLoaded() {
+  if (RepositoriesLoading !== 0) return;
+
+  window.clearInterval(RepositoryCheckInterval);
+  
+  buildLanguageList();
+  
+  treeDataSource([false, false], ["languageListTree", "moduleListTree"]);
+  
+  document.getElementById("languageListTree").view.selection.select(0);
+  
+  // now we're done with onLoad and we turn things over to the user!
+  return;
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 // onLoad subroutines
@@ -189,12 +235,10 @@ function requestInternetPermission() {
   return result;
 }
 
-function initDataSource(data, fileName, startClean) {
+function initDataSource(data, fileName) {
 
   var rdfFile = getSpecialDirectory("ProfD");
   rdfFile.append(fileName);
-  
-  if (startClean) rdfFile.remove(false);
 
   var ds = null;
   if (rdfFile.exists()) {
@@ -207,7 +251,7 @@ function initDataSource(data, fileName, startClean) {
     writeFile(rdfFile, data, 1);
     ds = RDF.GetDataSourceBlocking(encodeURI("File://" + rdfFile.path.replace("\\", "/", "g")));
   }
-  
+
   return ds;
 }
 
@@ -245,7 +289,7 @@ function waitForMasterRepoList(to_ms) {
     for (var i=0; list && i < list.length; i++) {
       var r = list[i].match(/^\d+=FTPSource=(.*?)\|(.*?)\|(.*?)\s*$/i);
       
-      var nres = { Type:"repository", Enabled:"false", Name:r[1], Site:r[2], Path:r[3], Status:"Off", Style:"red" };
+      var nres = { Type:"repository", Enabled:"false", Name:r[1], Site:r[2], Path:r[3], Status:"Off", Style:"red", Url:"ftp://" + r[2] + r[3] };
       if (!existsRepository(nres)) addRepository(nres)
     }
     
@@ -259,97 +303,67 @@ function waitForMasterRepoList(to_ms) {
   window.setTimeout("waitForMasterRepoList(" + (to_ms - 300) + ");", 300);
 }
 
-// Load a global array which lists all repositories in the database at this moment
-function initRepositoryArray() {
-
-    RepositoryArray = [];
-    RepositoryIndex = -1; // begin sequence
-    
-    var ress = RPDS.GetAllResources();
-    while(ress.hasMoreElements()) {
-      var res = ress.getNext();
-      var type = RPDS.GetTarget(res, RP.Type, true);
-      if (!type) continue;
-      type = type.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-      if (type != "repository") continue;
-      
-      var obj = { resource:res, manifest:null };
-      RepositoryArray.push(obj);
-    }
-}
-
 // Fetch and process the manifest of the next repository on the global list.
 // This can (does) occur asyncronously with other repositories at the same time.
 function startProcessingNextRepository() {
   RepositoryIndex++;
   if (RepositoryIndex == RepositoryArray.length) return;
   
-  // get basic repository data strings
-  var rdata = {};
-  var info = ["Enabled", "Site", "Path"];
-  for (var i=0; i<info.length; i++) {
-    var val = RPDS.GetTarget(RepositoryArray[RepositoryIndex].resource, RP[info[i]], true);
-    if (!val) val = "";
-    else val = val.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-    
-    rdata[info[i]] = val;
-  }
+  var myURL = RPDS.GetTarget(RepositoryArray[RepositoryIndex].resource, RP.Url, true);
+  myURL = myURL.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+  myURL += "/" + ManifestFile;
   
-  // read repository manifest only if repo is enabled!
-  if (rdata.Enabled != "false") {
-    
-    var myURL = "ftp://" + rdata.Site + rdata.Path + "/" + ManifestFile;
-    RPDS.Assert(RepositoryArray[RepositoryIndex].resource, RP.Url, RDF.GetLiteral(myURL), true);
-    
-    var file = TEMP.clone();
-    file.append(myURL.replace(/^ftp:\/\//, "").replace(/[\\\/]/g, "_"));
-    RepositoryArray[RepositoryIndex].manifest = file;
-    if (file.exists()) file.remove(false);
+  var file = TEMP.clone();
+  file.append(myURL.replace(/^ftp:\/\//, "").replace(/[\\\/]/g, "_"));
+  RepositoryArray[RepositoryIndex].manifest = file;
+  if (file.exists()) file.remove(false);
 
-    var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
-    var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);  
-    var uri = ios.newURI(myURL, null, null); 
+  var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+  var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);  
+  var uri = ios.newURI(myURL, null, null); 
 
-    var target = ios.newFileURI(file);
-    persist.progressListener = 
-    {
-      myResource:RepositoryArray[RepositoryIndex].resource,
-      myManifestFile:RepositoryArray[RepositoryIndex].manifest,
-      myURL:myURL,
-       
-      onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
-        var perc = Math.round(100*(aCurSelfProgress/aMaxSelfProgress));
-        setResourceAttribute(RPDS, this.myResource, "Status", perc + "%");
-        setResourceAttribute(RPDS, this.myResource, "Style", "yellow");
-      },
+  var target = ios.newFileURI(file);
+  persist.progressListener = 
+  {
+    myResource:RepositoryArray[RepositoryIndex].resource,
+    myManifestFile:RepositoryArray[RepositoryIndex].manifest,
+    myURL:myURL,
+     
+    onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
+      var perc = Math.round(100*(aCurSelfProgress/aMaxSelfProgress));
+      setResourceAttribute(RPDS, this.myResource, "Status", perc + "%");
+      setResourceAttribute(RPDS, this.myResource, "Style", "yellow");
+    },
+    
+    onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
+      if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
       
-      onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
-        if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
-        if (aStatus == 0) {
-          setResourceAttribute(RPDS, this.myResource, "Status", "On");
-          setResourceAttribute(RPDS, this.myResource, "Style", "green");
-          applyRepositoryManifest(this.myResource, this.myManifestFile);
-          RepositoriesLoading--;
-        }
-        else {
-          setResourceAttribute(RPDS, this.myResource, "Status", "Error");
-          setResourceAttribute(RPDS, this.myResource, "Style", "red");
-        }
-      },
+      // it's all done!!
+      RepositoriesLoading--;
       
-      onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
+      if (aStatus == 0) {
+        setResourceAttribute(RPDS, this.myResource, "Status", "On");
+        setResourceAttribute(RPDS, this.myResource, "Style", "green");
+        applyRepositoryManifest(this.myResource, this.myManifestFile);
+      }
+      else {
         setResourceAttribute(RPDS, this.myResource, "Status", "Error");
         setResourceAttribute(RPDS, this.myResource, "Style", "red");
-        if (aMessage) alert(myURL + ": " + aMessage);
-      },
-      
-      onLocationChange: function(aWebProgress, aRequest, aLocation) {},
-      
-      onSecurityChange: function(aWebProgress, aRequest, aState) {}
-    };
+      }
+    },
     
-    persist.saveURI(uri, null, null, null, null, file, null);
-  }
+    onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
+      setResourceAttribute(RPDS, this.myResource, "Status", "Error");
+      setResourceAttribute(RPDS, this.myResource, "Style", "red");
+      if (aMessage) alert(this.myURL + ": " + aMessage);
+    },
+    
+    onLocationChange: function(aWebProgress, aRequest, aLocation) {},
+    
+    onSecurityChange: function(aWebProgress, aRequest, aState) {}
+  };
+  
+  persist.saveURI(uri, null, null, null, null, file, null);
   
   startProcessingNextRepository();
 }
@@ -357,30 +371,14 @@ function startProcessingNextRepository() {
 // Unzips the manifest file, reads the .conf files within it, and populates
 // the database with the language and module information contained therein.
 function applyRepositoryManifest(resource, manifest) {
-  
-/*
-  var waited = 0;
-  if (!manifest.exists()) {
-    var date = new Date();
-    var timeMS = date.getTime();
-    while (!manifest.exists()) {
-      date = new Date();
-      waited = date.getTime() - timeMS;
-      if (waited > 1000) break;
-    }
-  }
-  jsdump("waited " + waited + "ms, file.exists() = " + manifest.exists());
-*/
-  
-  var repoUrl = RPDS.GetTarget(resource, RP.Url, true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-  deleteModuleData(repoUrl);
-  
-  // uncompress manifest to a TEMP subdir (nsIZipReader only handles ZIP!)
+
+  // uncompress manifest to a TEMP subdir
   var tmpDir = TEMP.clone();
   tmpDir.append(manifest.path.match(/^.*?([^\\\/]+)\.tar\.gz$/)[1]);
   if (tmpDir.exists()) tmpDir.remove(true);
   tmpDir.create(tmpDir.DIRECTORY_TYPE, DPERM);
   
+  // nsIZipReader only handles ZIP- ARGGGG!
   unCompress(manifest, tmpDir);
   
   tmpDir.append("mods.d");
@@ -396,8 +394,12 @@ function applyRepositoryManifest(resource, manifest) {
     
     // create a new module resource and add it to the modlist
     var newModRes = RDF.GetAnonymousResource();
+    
+    // add Type
     MLDS.Assert(newModRes, RP.Type, RP.ModuleType, true);
-    MLDS.Assert(newModRes, RP.Url, RDF.GetLiteral(repoUrl), true);
+    // add Url
+    MLDS.Assert(newModRes, RP.Url, RPDS.GetTarget(resource, RP.Url, true), true);
+    
     RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
     RDFC.AppendElement(newModRes);
     
@@ -429,21 +431,6 @@ function applyRepositoryManifest(resource, manifest) {
       MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + p), RDF.GetLiteral(confres), true);
     }
   }
-}
-
-function checkAllRepositoriesLoaded() {
-  if (RepositoriesLoading !== 0) return;
-
-  window.clearInterval(RepositoryCheckInterval);
-  
-  refreshLanguageList();
-   
-  document.getElementById("languageListTree").database.AddDataSource(MLDS);
-  document.getElementById("languageListTree").builder.rebuild();
-  
-  document.getElementById("moduleListTree").database.AddDataSource(MLDS);
-  document.getElementById("moduleListTree").builder.rebuild();
-  
 }
 
 
@@ -532,106 +519,145 @@ function addRepository(newRepoInfo) {
 
 // Remove a repository resource entirely from the database. This does
 // no Type checking to insure repoResouce is actually a repository.
-function deleteRepository(repoResource) {
-  
-  var repoUrl = RPDS.GetTarget(repoResource, RP.Url, true);
-  if (repoUrl) deleteModuleData(repoUrl.QueryInterface(Components.interfaces.nsIRDFLiteral).Value);
+function deleteRepository(repoResourceArray) {
+
+  // collect url info before beginning to delete (to filter modules with)
+  var urls = [];
+  for (var i=0; i<repoResourceArray.length; i++) {
+    urls.push(RPDS.GetTarget(repoResourceArray[i], RP.Url, true));
+  }
   
   // remove from database's xulswordRepo list
   RDFC.Init(RPDS, RDF.GetResource(RP.XulswordRepoListID));
-  RDFC.RemoveElement(repoResource, false);
-  
-  // remove attributes from resource
-  var arcsOut = RPDS.ArcLabelsOut(repoResource);
-  while (arcsOut.hasMoreElements()) {
-    var thisarc = arcsOut.getNext();
-    var targs = RPDS.GetTargets(repoResource, thisarc, true);
-    while (targs.hasMoreElements()) {
-      RPDS.Unassert(repoResource, thisarc, targs.getNext());
-    }
+  for (var i=0; i<repoResourceArray.length; i++) {
+    RDFC.RemoveElement(repoResourceArray[i], (i==(repoResourceArray.length-1) ? true:false));
   }
-}
-
-function deleteModuleData(repoUrl) {
-  RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-  var ress = RDFC.GetElements();
-  while (ress.hasMoreElements()) {
-    var aRes = ress.getNext();
-    
-    var url = MLDS.GetTarget(aRes, RP.Url, true);
-    if (url && url.QueryInterface(Components.interfaces.nsIRDFLiteral).Value != repoUrl) {
-      continue;
-    }
-    
-    // delete aRes attributes
-    var arcsOut = MLDS.ArcLabelsOut(aRes);
+  
+  // remove attributes from repository resource
+  for (var i=0; i<repoResourceArray.length; i++) {
+    var arcsOut = RPDS.ArcLabelsOut(repoResourceArray[i]);
     while (arcsOut.hasMoreElements()) {
       var thisarc = arcsOut.getNext();
-      var targs = MLDS.GetTargets(aRes, thisarc, true);
+      var targs = RPDS.GetTargets(repoResourceArray[i], thisarc, true);
       while (targs.hasMoreElements()) {
-        MLDS.Unassert(aRes, thisarc, targs.getNext());
+        RPDS.Unassert(repoResourceArray[i], thisarc, targs.getNext());
       }
     }
+  }
+
+  deleteModuleData(urls);
+  
+}
+
+function deleteModuleData(repoUrlArray) {
+
+  RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+  var mods = RDFC.GetElements();
+  while (mods.hasMoreElements()) {
+    var mod = mods.getNext();
     
-    // remove aRes from ModuleList
-    RDFC.RemoveElement(aRes, false);
+    var url = MLDS.GetTarget(mod, RP.Url, true);
+    for (var i=0; i<repoUrlArray.length; i++) {if (url == repoUrlArray[i]) break;}
+    if (i == repoUrlArray.length) continue;
+    
+    // remove mod from ModuleList
+    RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+    RDFC.RemoveElement(mod, (mods.hasMoreElements() ? false:true));
+    
+    // delete mod attributes
+    var arcsOut = MLDS.ArcLabelsOut(mod);
+    while (arcsOut.hasMoreElements()) {
+      var thisarc = arcsOut.getNext();
+      var targs = MLDS.GetTargets(mod, thisarc, true);
+      while (targs.hasMoreElements()) {
+        MLDS.Unassert(mod, thisarc, targs.getNext());
+      }
+    }
   }
 }
 
-function refreshLanguageList() {
+function buildLanguageList() {
 
-  // remove all LanguageList contents
+  // delete all LanguageList resources
   RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
   var langs = RDFC.GetElements();
   while (langs.hasMoreElements()) {
-    RDFC.RemoveElement(langs.getNext(), false);
-  }
-  
-  // delete all LanguageList resources
-  var llrs = MLDS.GetAllResources();
-  while (llrs.hasMoreElements()) {
-    var llr = llrs.getNext();
-    var type = MLDS.GetTarget(llr, RP.Type, true);
-    if (!type || type != RP.LanguageListType) continue;
+    var lang = langs.getNext();
     
     // delete llr attributes
-    var arcsOut = MLDS.ArcLabelsOut(llr);
+    var arcsOut = MLDS.ArcLabelsOut(lang);
     while (arcsOut.hasMoreElements()) {
       var thisarc = arcsOut.getNext();
-      var targs = MLDS.GetTargets(llr, thisarc, true);
+      var targs = MLDS.GetTargets(lang, thisarc, true);
       while (targs.hasMoreElements()) {
-        MLDS.Unassert(llr, thisarc, targs.getNext());
+        MLDS.Unassert(lang, thisarc, targs.getNext());
       }
     }
-  }
-
-//TODO: this does not handle Enabled!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-  // add a resource for each language in the repository database, 
-  // with NO DUPLICATES
-  var langs = [];
-  var resources = MLDS.GetAllResources();
-  
-  NextResource:
-  while (resources.hasMoreElements()) {
-    var res = resources.getNext();
-    var type = MLDS.GetTarget(res, RP.Type, true);
-    if (!type || type != RP.ModuleType) continue;
     
-    var lang = MLDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY + "Lang"), true);
+    RDFC.RemoveElement(lang, (langs.hasMoreElements() ? false:true));
+  }
+  
+  // add a resource for each language in the enabled repository database, 
+  // with NO DUPLICATES
+  RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+  var mods = RDFC.GetElements();
+  
+  // get url of each enabled repository
+  var urls = [];
+  RDFC.Init(RPDS, RDF.GetResource(RP.XulswordRepoListID));
+  var repos = RDFC.GetElements();
+  while (repos.hasMoreElements()) {
+    var repo = repos.getNext();
+    if (RPDS.GetTarget(repo, RP.Enabled, true) == RP.False) continue;
+    urls.push(RPDS.GetTarget(repo, RP.Url, true));
+  }
+  
+  var langs = [];
+  NextResource:
+  while (mods.hasMoreElements()) {
+    var mod = mods.getNext();
+    
+    var url = MLDS.GetTarget(mod, RP.Url, true);
+    
+    // if url is not on enabled repo list then don't include this mod
+    for (var i=0; i<urls.length; i++) {if (urls[i] == url) break;}
+    if (i == urls.length) continue;
+    
+    var lang = MLDS.GetTarget(mod, RDF.GetResource(RP.REPOSITORY + "Lang"), true);
     lang = lang.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
     if (lang == "") continue;
     
     for (var i=0; i<langs.length; i++) {
       if (langs[i] == lang) continue NextResource;
     }
-    langs.push(lang);
     
+    langs.push(lang);
+  }
+  
+  RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
+  for (var i=0; i<langs.length; i++) {
     var newLangRes = RDF.GetAnonymousResource();
     MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Type"), RP.LanguageListType, true);
-    MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Lang"), RDF.GetLiteral(lang), true);
-    MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral("Readable: " + lang), true);
+    MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Lang"), RDF.GetLiteral(langs[i]), true);
+    MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral("Readable: " + langs[i]), true);
     RDFC.AppendElement(newLangRes);
+  }
+  
+}
+
+function treeDataSource(disconnectArray, idArray) {
+
+  for (var i=0; i<idArray.length; i++) {
+    if (!disconnectArray[i]) {
+      document.getElementById(idArray[i]).database.AddDataSource(idArray[i]=="repoListTree" ? RPDS:MLDS);
+      document.getElementById(idArray[i]).builder.rebuild();
+    }
+    else {
+      var tree = document.getElementById(idArray[i]);
+      var ss = tree.database.GetDataSources();
+      while (ss.hasMoreElements()) {tree.database.RemoveDataSource(ss.getNext());}
+      tree.builder.rebuild();
+    }
   }
   
 }
@@ -651,6 +677,27 @@ function getConfEntry(filedata, param) {
   return retval;
 }
 
+function getSelectedResources(tree) {
+  var resourceArray = [];
+  
+  var start = new Object();
+  var end = new Object();
+  var numRanges = tree.view.selection.getRangeCount();
+
+  for (var i=0; i<numRanges; i++) {
+    tree.view.selection.getRangeAt(i, start, end);
+    for (var v=start.value; v<=end.value; v++) {
+      try {
+        var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(v);
+      }
+      catch (er) {continue;}
+      resourceArray.push(res);
+    }
+  }
+  
+  return resourceArray;
+}
+
 function dbFlush(aDS) {
   // make it permanent
   aDS = aDS.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource);
@@ -661,6 +708,99 @@ function dbFlush(aDS) {
 ////////////////////////////////////////////////////////////////////////
 // Mouse and Selection functions
 ////////////////////////////////////////////////////////////////////////
+
+function deleteSelectedRepositories() {
+  var selectedResources = getSelectedResources(document.getElementById("repoListTree"));
+  if (!selectedResources.length) return;
+  
+  treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
+  
+  deleteRepository(selectedResources);
+  
+  buildLanguageList();
+  
+  treeDataSource([false, false], ["languageListTree", "moduleListTree"]);
+  
+  document.getElementById("languageListTree").view.selection.select(0);
+}
+
+function toggleReposOnOff(tree, e) {
+  var selectedResources = getSelectedResources(document.getElementById("repoListTree"));
+  if (!selectedResources.length) return;
+  
+  // disconnect large trees to speed things up. loadRepositories reconnects them
+  treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
+
+  // set enable/disable etc. attributes
+  var nowOnRes = [];
+  var deleteModDataUrl = [];
+  for (var i=0; i<selectedResources.length; i++) {
+    
+    deleteModDataUrl.push(RPDS.GetTarget(selectedResources[i], RP.Url, true));
+  
+    var enabled = RPDS.GetTarget(selectedResources[i], RP.Enabled, true);
+    
+    var newval = (enabled ? null:"true");
+    if (!newval) {
+      enabled = enabled.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+      newval = (enabled == "true" ? "false":"true");
+    }
+    
+    setResourceAttribute(RPDS, selectedResources[i], "Enabled", newval);
+    
+    if (newval == "true") {
+      setResourceAttribute(RPDS, selectedResources[i], "Status", "0%");
+      setResourceAttribute(RPDS, selectedResources[i], "Style", "yellow");
+      nowOnRes.push(selectedResources[i]);
+    }
+    else {
+      setResourceAttribute(RPDS, selectedResources[i], "Status", "Off");
+      setResourceAttribute(RPDS, selectedResources[i], "Style", "red");
+    }
+  }
+  
+  deleteModuleData(deleteModDataUrl);
+  loadRepositories(nowOnRes, true);
+}
+
+function changeModuleListLanguage() {
+  var tree = document.getElementById("languageListTree");
+  
+  var selIndex = tree.view.selection.currentIndex;
+  
+  var lang = "none";
+  try {
+    if (selIndex != -1) {
+      var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(selIndex);
+      res = MLDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY + "Lang"), true);
+      lang = res.QueryInterface(Components.interfaces.nsIRDFLiteral).Value
+    }
+  } catch (er) {}
+
+  document.getElementById("dynamicLanguageRule").setAttribute("REPOSITORY:Lang", lang);
+  document.getElementById("moduleListTree").builder.rebuild(); 
+}
+
+function writeModuleInfos() {
+  
+}
+
+function toggleModuleBox() {
+  var cont = document.getElementById("moduleDialog");
+  var showModuleInfo = cont.getAttribute("showModuleInfo");
+  showModuleInfo = (showModuleInfo == "false" ? "true":"false");
+  cont.setAttribute("showModuleInfo", showModuleInfo);
+}
+
+function initiateModuleDownloads() {
+  
+}
+
+// Install any downloaded modules
+function installModules() {
+
+  
+}
 
 function updateRepoListButtons(e) {
   var buttons  = ["toggle", "edit", "add", "delete"];
@@ -694,7 +834,8 @@ function updateModuleButtons(e) {
   
   if (sel.currentIndex != -1) {
     disabled[0] = false; // install
-    disabled[1] = false; // showInfo
+    var selectedResources = getSelectedResources(tree);
+    if (selectedResources.length == 1) disabled[1] = false; // showInfo
   }
   
   // apply disabled attribute
@@ -704,119 +845,6 @@ function updateModuleButtons(e) {
   }
 }
 
-function getSelectedResources(tree) {
-  var resourceArray = [];
-  
-  var start = new Object();
-  var end = new Object();
-  var numRanges = tree.view.selection.getRangeCount();
-
-  for (var i=0; i<numRanges; i++) {
-    tree.view.selection.getRangeAt(i, start, end);
-    for (var v=start.value; v<=end.value; v++) {
-      var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(v);
-      resourceArray.push(res);
-    }
-  }
-  
-  return resourceArray;
-}
-
-function deleteSelectedRepositories() {
-  var selectedResources = getSelectedResources(document.getElementById("repoListTree"));
-  
-  for (var i=0; i<selectedResources.length; i++) {
-    deleteRepository(selectedResources[i]);
-  }
-  
-  refreshLanguageList();
-}
-
-function toggleReposOnOff(tree, e) {
-  var selectedResources = getSelectedResources(document.getElementById("repoListTree"));
-  if (!selectedResources.length) return;
-  
-  var treex = document.getElementById("repoListTree");
-  var ss = treex.database.GetDataSources();
-  while (ss.hasMoreElements()) {treex.database.RemoveDataSource(ss.getNext());}
-  treex.builder.rebuild();
-  
-  treex = document.getElementById("languageListTree");
-  ss = treex.database.GetDataSources();
-  while (ss.hasMoreElements()) {treex.database.RemoveDataSource(ss.getNext());}
-  treex.builder.rebuild();
-  
-  treex = document.getElementById("moduleListTree");
-  ss = treex.database.GetDataSources();
-  while (ss.hasMoreElements()) {treex.database.RemoveDataSource(ss.getNext());}
-  treex.builder.rebuild();
-  
-  window.alert("sdfs");
-
-  for (var i=0; i<selectedResources.length; i++) {
-  
-    var enabled = RPDS.GetTarget(selectedResources[i], RP.Enabled, true);
-    
-    var newval = (enabled ? null:"true");
-    if (!newval) {
-      enabled = enabled.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-      newval = (enabled == "true" ? "false":"true");
-    }
-    
-    setResourceAttribute(RPDS, selectedResources[i], "Enabled", newval);
-  }
-  
-  refreshLanguageList();
-  
-  treex = document.getElementById("repoListTree");
-  treex.database.AddDataSource(RPDS);
-  treex.builder.rebuild();
-  
-  treex = document.getElementById("languageListTree");
-  treex.database.AddDataSource(MLDS);
-  treex.builder.rebuild();
-  
-  treex = document.getElementById("moduleListTree");
-  treex.database.AddDataSource(MLDS);
-  treex.builder.rebuild();
-}
-
-function changeModuleListLanguage() {
-  var tree = document.getElementById("languageListTree");
-  
-  var selIndex = tree.view.selection.currentIndex;
-  
-  var lang = "none";
-  if (selIndex != -1) {
-    var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(selIndex);
-    res = MLDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY + "Lang"), true);
-    lang = res.QueryInterface(Components.interfaces.nsIRDFLiteral).Value
-  }
-
-  document.getElementById("dynamicLanguageRule").setAttribute("REPOSITORY:Lang", lang);
-  document.getElementById("moduleListTree").builder.rebuild(); 
-}
-
-function writeModuleInfos() {
-  
-}
-
-function toggleModuleBox() {
-  var cont = document.getElementById("moduleDialog");
-  var showModuleInfo = cont.getAttribute("showModuleInfo");
-  showModuleInfo = (showModuleInfo == "false" ? "true":"false");
-  cont.setAttribute("showModuleInfo", showModuleInfo);
-}
-
-function initiateModuleDownloads() {
-  
-}
-
-// Install any downloaded modules
-function installModules() {
-
-  
-}
 
 ////////////////////////////////////////////////////////////////////////
 // onUnload routines
@@ -830,4 +858,15 @@ function onUnload() {
   dbFlush(RPDS);
   dbFlush(MLDS);
   
+}
+
+////////////////////////////////////////////////////////////////////////
+// Debug
+////////////////////////////////////////////////////////////////////////
+
+function getCount(aDS) {
+  var ress = aDS.GetAllResources();
+  var c = 0;
+  while (ress.hasMoreElements()) {c++; ress.getNext();}
+  return c;
 }
