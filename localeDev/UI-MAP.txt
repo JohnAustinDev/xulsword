@@ -642,3 +642,7 @@ xulsword/override/ff17/printProgress.dtd                                 =  chro
 xulsword/override/ff17/appPicker.dtd                                     =  chrome://global/locale/appPicker.dtd
 xulsword/override/ff17/filepicker.dtd                                    =  chrome://global/locale/filepicker.dtd
 xulsword/override/ff17/filepicker.properties                             =  chrome://global/locale/filepicker.properties
+
+# Hacks to get development version working on latest Firefox
+xulsword/override/ff17/textcontext.dtd:spellCheckToggle.label            =  "tog"
+xulsword/override/ff17/textcontext.dtd:spellCheckToggle.accesskey        =  "t"
