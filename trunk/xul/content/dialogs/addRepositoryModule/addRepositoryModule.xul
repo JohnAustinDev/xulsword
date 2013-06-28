@@ -26,8 +26,10 @@
 <window 
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   xmlns:html="http://www.w3.org/1999/xhtml"
+  xmlns:REPOSITORY="http://www.xulsword.com/repository/rdf#"
   id="addRepositoryModule"
   onload="onLoad();"
+  onunload="onUnload();"
   persist="screenX screenY width height"
   screenX="24" screenY="24">
   
@@ -39,26 +41,197 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.js"/>
   
-  <vbox>
+  <vbox id="body" flex="1">
   
-    <hbox>
-      <vbox id="repoList">
-        <label id="repoListLabel"></label>
-        <tree hidecolumnpicker="true" flags="dont-build-content" seltype="single"
-              datasources="rdf:null" ref="http://www.xulsword.com/repositories">
+    <hbox id="repoDialog" persist="height" >
+      <vbox id="repoList" flex="1">
+        <label id="repoListLabel">Repositories</label>
+        <tree id="repoListTree" flex="1" datasources="rdf:null" ondblclick="toggleReposOnOff()" onselect="updateRepoListButtons(event)"
+                ref="http://www.xulsword.com/repository/xulswordRepoList" flags="dont-build-content">
+          <treecols>
+            <treecol id="Name" label="Name" flex="1" primary="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Name"
+                          sortActive="true" sortDirection="none" />
+            <splitter class="tree-splitter"/>
+            <treecol id="Site" label="Site" flex="1" 
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Site" />
+            <splitter class="tree-splitter"/>
+            <treecol id="Path" label="Path" flex="1" hidden="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Path" />
+            <splitter class="tree-splitter"/>
+            <treecol id="Status" label="Status" flex="1" 
+                          class="sortDirectionIndicator"
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Status" />
+          </treecols>
           <template>
+            <rule REPOSITORY:Type="repository">
+              <treechildren>
+                <treeitem uri="rdf:*">
+                  <treerow>
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Name"/>
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Site" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Path" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Status" properties="rdf:http://www.xulsword.com/repository/rdf#Style" /> 
+                  </treerow>
+                </treeitem>
+              </treechildren>
+            </rule>
           </template>
         </tree>
       </vbox>
-      <vbox id="repoControls">
-        <button id="edit"/>
-        <button id="add"/>
+      
+      <vbox id="repoControls" pack="center" >
+        <button disabled="true" id="toggle" label="On/Off" oncommand="toggleReposOnOff()" />
+        <button disabled="true" id="edit" label="Edit" />
+        <button id="add" label="Add" />
+        <button disabled="true" id="delete" label="Delete" oncommand="deleteSelectedRepositories();" />
       </vbox>
+      
     </hbox>
-  
-    <vbox id="languageList">
-    </vbox>
-  
+    
+    <splitter></splitter>
+
+    <hbox id="moduleDialog" flex="1" showModuleInfo="false" persist="height">
+      
+      <vbox id="languageListContainer" persist="width" >
+        <label id="languageListLabel">Languages</label>
+        <tree id="languageListTree" flex="1" flags="dont-build-content" seltype="single" hidecolumnpicker="true" 
+                onselect="changeModuleListLanguage();"
+                datasources="rdf:null" ref="http://www.xulsword.com/repository/LanguageList" >
+          <treecols>
+            <treecol id="Language" label="Language" flex="1" primary="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#LangReadable"
+                          sortActive="true" sortDirection="ascending" />
+          </treecols>
+          <template>
+            <rule>
+              <treechildren>
+                <treeitem uri="rdf:*">
+                  <treerow>
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#LangReadable" />
+                  </treerow>
+                </treeitem>
+              </treechildren>
+            </rule>
+          </template>
+        </tree>
+      </vbox>
+      
+      <splitter></splitter>
+      
+      <vbox id="moduleListContainer" flex="1" persist="width" >
+        <label id="moduleListLabel">Modules</label>
+        <tree id="moduleListTree" flex="1" flags="dont-build-content"
+                datasources="rdf:null" ref="http://www.xulsword.com/repository/ModuleList" 
+                onselect="updateModuleButtons(event);" >
+          <treecols>
+            <treecol id="ModName" label="Name" flex="1" primary="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Name"
+                          sortActive="true" sortDirection="none" />
+            <splitter class="tree-splitter"/>
+            <treecol id="ModVersion" label="Version" flex="1"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Version"
+                          sortActive="true" sortDirection="none" />
+            <splitter class="tree-splitter"/>
+            <treecol id="ModAbbreviation" label="Abbreviation" flex="1"  hidden="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Abbreviation" />
+            <splitter class="tree-splitter"/>
+            <treecol id="ModDescription" label="Description" flex="1"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Description" />
+            <splitter class="tree-splitter"/>
+            <treecol id="ModSize" label="Size" flex="1" hidden="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#InstallSize" />
+            <splitter class="tree-splitter"/>
+            <treecol id="ModVersification" label="Verse System" flex="1" hidden="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Versification" />
+            <splitter class="tree-splitter"/>
+            <treecol id="ModScope" label="Scope" flex="1" hidden="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Scope" />
+            <splitter class="tree-splitter"/>
+            <treecol id="ModCopyright" label="Copyright" flex="1" hidden="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Copyright" />
+            <splitter class="tree-splitter"/>
+            <treecol id="ModDistributionLicense" label="Distribution License" flex="1" hidden="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#DistributionLicense" />
+            <splitter class="tree-splitter"/>
+            <treecol id="ModURL" label="Repository URL" flex="1" hidden="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Url" />
+            <splitter class="tree-splitter"/>
+            <treecol id="ModStatus" label="Status" flex="1" 
+                          class="sortDirectionIndicator"
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#Status" />
+          </treecols>
+          <template>
+            <rule REPOSITORY:Lang="en" id="dynamicLanguageRule" >
+              <treechildren>
+                <treeitem uri="rdf:*">
+                  <treerow>
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Name" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Version" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Abbreviation" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Description" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#InstallSize" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Versification" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Scope" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Copyright" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#DistributionLicense" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Url" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Status" properties="rdf:http://www.xulsword.com/repository/rdf#Style" /> 
+                  </treerow>
+                </treeitem>
+              </treechildren>
+            </rule>
+          </template>
+        </tree>
+      </vbox>
+      
+      <vbox id="moduleInfoContainer" flex="1">
+        <label id="moduleInfoLabel">Module Information</label>
+        <html:div></html:div>
+      </vbox>
+        
+      <vbox id="moduleControls" pack="center" >
+        <button disabled="true" id="install" label="Download" oncommand="initiateModuleDownloads();" />
+        <button disabled="true" id="showInfo" label="More Info" oncommand="writeModuleInfos(); toggleModuleBox();" />
+        <button id="showModules" label="Back" oncommand="toggleModuleBox();" />
+      </vbox>
+      
+    </hbox>
+    
+    <hbox id="windowControl" pack="end"><button id="apply" label="Apply" oncommand="installModules(); window.close();" /></hbox>
+    
   </vbox>
+  
+  <iframe id="iframe" src="" flex="1" />
   
 </window>
