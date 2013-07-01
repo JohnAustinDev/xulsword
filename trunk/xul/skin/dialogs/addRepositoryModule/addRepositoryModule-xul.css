@@ -35,6 +35,15 @@
 #languageListTree {
   width:160px;
 }
+#moduleListTree treechildren::-moz-tree-cell(red) {
+  background:rgb(255,200,200);
+}
+#moduleListTree treechildren::-moz-tree-cell(yellow) {
+  background:rgb(255,255,200);
+}
+#moduleListTree treechildren::-moz-tree-cell(green) {
+  background:rgb(200,255,200);
+}
 
 #windowControl {
   margin-top:20px;
