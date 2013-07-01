@@ -137,7 +137,7 @@
             <treecol id="ModName" label="Name" flex="1" primary="true"
                           class="sortDirectionIndicator" 
                           persist="hidden width ordinal value"
-                          sort="rdf:http://www.xulsword.com/repository/rdf#Name"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#ModuleName"
                           sortActive="true" sortDirection="none" />
             <splitter class="tree-splitter"/>
             <treecol id="ModVersion" label="Version" flex="1"
@@ -196,7 +196,7 @@
               <treechildren>
                 <treeitem uri="rdf:*">
                   <treerow>
-                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#Name" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#ModuleName" />
                     <treecell label="rdf:http://www.xulsword.com/repository/rdf#Version" />
                     <treecell label="rdf:http://www.xulsword.com/repository/rdf#Abbreviation" />
                     <treecell label="rdf:http://www.xulsword.com/repository/rdf#Description" />
