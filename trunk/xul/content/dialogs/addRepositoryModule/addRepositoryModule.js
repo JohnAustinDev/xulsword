@@ -29,6 +29,8 @@ var TEMP, TEMP_Install;
 var DownloadsInProgress = [];
 
 function onLoad() {
+
+  ModulesLoading = 0;
   
   // Create clean temp directories
   TEMP = getSpecialDirectory("TmpD");
@@ -75,16 +77,17 @@ function onLoad() {
   RP.IBTRepoID          = RP.ROOT + "/IBT";
   RP.CrossWireRepoID    = RP.ROOT + "/CrossWire";
   
-  RP.Enabled = RDF.GetResource(RP.REPOSITORY+"Enabled");
-  RP.Name    = RDF.GetResource(RP.REPOSITORY+"Name");
-  RP.Site    = RDF.GetResource(RP.REPOSITORY+"Site");
-  RP.Path    = RDF.GetResource(RP.REPOSITORY+"Path");
-  RP.Status  = RDF.GetResource(RP.REPOSITORY+"Status");
-  RP.Style   = RDF.GetResource(RP.REPOSITORY+"Style");
-  RP.Url     = RDF.GetResource(RP.REPOSITORY+"Url");
-  RP.Type    = RDF.GetResource(RP.REPOSITORY+"Type");
+  RP.Enabled    = RDF.GetResource(RP.REPOSITORY+"Enabled");
+  RP.Name       = RDF.GetResource(RP.REPOSITORY+"Name");
+  RP.Site       = RDF.GetResource(RP.REPOSITORY+"Site");
+  RP.Path       = RDF.GetResource(RP.REPOSITORY+"Path");
+  RP.Status     = RDF.GetResource(RP.REPOSITORY+"Status");
+  RP.Style      = RDF.GetResource(RP.REPOSITORY+"Style");
+  RP.Url        = RDF.GetResource(RP.REPOSITORY+"Url");
+  RP.ModuleType = RDF.GetResource(RP.REPOSITORY+"ModuleType");
+  RP.Type       = RDF.GetResource(RP.REPOSITORY+"Type");
   
-  RP.ModuleType       = RDF.GetLiteral("module");
+  RP.TypeModule       = RDF.GetLiteral("module");
   RP.LanguageListType = RDF.GetLiteral("language");
   RP.RepositoryType   = RDF.GetLiteral("repository");
   RP.True             = RDF.GetLiteral("true");
@@ -156,7 +159,10 @@ function onLoad() {
   // add our datasource to the repository tree
   treeDataSource([false], ["repoListTree"]);
 
-  loadMasterRepoList(); // will call masterRepoListLoaded() when finished
+  if (getResourceLiteral(RPDS, RDF.GetResource(RP.CrossWireRepoID), "Enabled") == "true") {
+    loadMasterRepoList(); // will call masterRepoListLoaded() when finished
+  }
+  else masterRepoListLoaded();
 }
 
 function masterRepoListLoaded() {
@@ -274,40 +280,71 @@ function loadMasterRepoList() {
   path = RPDS.GetTarget(path, RP.Path, true);
   path = path.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
   
-  // download masterRepoList.conf
-  document.getElementById("iframe").setAttribute("src", "ftp://" + site + path);
+  var url = "ftp://" + site + path;
+  var destFile = TEMP.clone();
+  destFile.append("masterRepoList.conf");
+  if (destFile.exists()) destFile.remove(false);
   
-  waitForMasterRepoList(DownloadTimeOut);
+  // download masterRepoList.conf
+  var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService); 
+  var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+  persist.progressListener = 
+  {
+    myDestFile:destFile,
+    myURL:url,
+    myPersist:persist,
+    crosswire:RDF.GetResource(RP.CrossWireRepoID),
+    
+    onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
+      var perc = Math.round(100*(aCurSelfProgress/aMaxSelfProgress))/10;
+      setResourceAttribute(RPDS, this.crosswire, "Status", perc + "%");
+      setResourceAttribute(RPDS, this.crosswire, "Style", "yellow");
+    },
+    
+    onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
+      if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
+      
+      // it's all done!!
+      removeProgress(this.myPersist);
+      readMasterRepoList(this.myDestFile);
+    },
+    
+    onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
+      setResourceAttribute(RPDS, this.crosswire, "Status", "Error");
+      setResourceAttribute(RPDS, this.crosswire, "Style", "red");
+      if (aMessage) alert(this.myURL + ": " + aMessage);
+    },
+    
+    onLocationChange: function(aWebProgress, aRequest, aLocation) {},
+    
+    onSecurityChange: function(aWebProgress, aRequest, aState) {}
+  };
+  persist.saveURI(ios.newURI(url, null, null), null, null, null, null, destFile, null);
+  DownloadsInProgress.push(persist);
   
 }
 
-// Keep checking for the masterRepoList information to arrive
-function waitForMasterRepoList(to_ms) {
+function readMasterRepoList(aFile) {
+  if (aFile) {
   
-  // only wait for a certain period
-  if (to_ms <= 0) {
-    masterRepoListLoaded();
-    return;
-  }
-  
-  var list = document.getElementById("iframe").contentDocument.getElementsByTagName("body");
-  if (list && list[0] && list[0].firstChild && list[0].firstChild.innerHTML) {
-    list = list[0].firstChild.innerHTML.match(/^\d+=FTPSource=.*?\|.*?\|.*?\s*$/img);
-    for (var i=0; list && i < list.length; i++) {
-      var r = list[i].match(/^\d+=FTPSource=(.*?)\|(.*?)\|(.*?)\s*$/i);
-      
-      var nres = { Type:"repository", Enabled:"false", Name:r[1], Site:r[2], Path:r[3], Status:"Off", Style:"red", Url:"ftp://" + r[2] + r[3] };
-      if (!existsRepository(nres)) addRepository(nres)
-    }
+    var list = readFile(aFile);
     
     if (list) {
-      masterRepoListLoaded();
-      return;
+
+      list = list.match(/^\d+=FTPSource=.*?\|.*?\|.*?\s*$/img);
+      
+      // add each repository on the list
+      for (var i=0; list && i < list.length; i++) {
+        var r = list[i].match(/^\d+=FTPSource=(.*?)\|(.*?)\|(.*?)\s*$/i);
+        
+        var nres = { Type:"repository", Enabled:"false", Name:r[1], Site:r[2], Path:r[3], Status:"Off", Style:"red", Url:"ftp://" + r[2] + r[3] };
+        if (!existsRepository(nres)) addRepository(nres);
+      }
+      
     }
-    
   }
   
-  window.setTimeout("waitForMasterRepoList(" + (to_ms - 300) + ");", 300);
+  masterRepoListLoaded();
 }
 
 // Fetch and process the manifest of the next repository on the global list.
@@ -402,7 +439,17 @@ function applyRepositoryManifest(resource, manifest) {
     var newModRes = RDF.GetAnonymousResource();
     
     // add Type
-    MLDS.Assert(newModRes, RP.Type, RP.ModuleType, true);
+    MLDS.Assert(newModRes, RP.Type, RP.TypeModule, true);
+    // add ModuleType
+    var moduleType = getConfEntry(filedata, "ModDrv");
+    if ((/^(RawText|zText)$/i).test(moduleType)) moduleType = "Bible";
+    else if ((/^(RawCom|RawCom4|zCom)$/i).test(moduleType)) moduleType = "Commentary";
+    else if ((/^(RawLD|RawLD4|zLD)$/i).test(moduleType)) moduleType = "Dictionary";
+    else if ((/^(RawGenBook)$/i).test(moduleType)) moduleType = "General Book";
+    else if ((/^(RawFiles)$/i).test(moduleType)) moduleType = "Simple Text";
+    else if ((/^(HREFCom)$/i).test(moduleType)) moduleType = "URL";
+    else {jsdump("ERROR: Unrecognized module ModDrv \"" + moduleType + "\"");}
+    MLDS.Assert(newModRes, RP.ModuleType, RDF.GetLiteral(moduleType), true);
     // add Url
     MLDS.Assert(newModRes, RP.Url, RPDS.GetTarget(resource, RP.Url, true), true);
     
@@ -738,6 +785,18 @@ function removeProgress(progress) {
   }
 }
 
+function getInstallableModules() {
+  var installDir = TEMP_Install.clone();
+  var zips = installDir.directoryEntries;
+  var installableModules = [];
+  while (zips.hasMoreElements()) {
+    var zip = zips.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+    if (zip.isDirectory() || !(/\.zip$/).test(zip.leafName)) continue;
+    installableModules.push(zip);
+  }
+  return installableModules;
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 // Mouse and Selection functions
@@ -797,21 +856,24 @@ function toggleReposOnOff(tree, e) {
   loadRepositories(nowOnRes, true);
 }
 
-function changeModuleListLanguage() {
+function changeModuleListLanguage(lang) {
   var tree = document.getElementById("languageListTree");
   
-  var selIndex = tree.view.selection.currentIndex;
-  
-  var lang = "none";
-  try {
-    if (selIndex != -1) {
-      var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(selIndex);
-      res = MLDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY + "Lang"), true);
-      lang = res.QueryInterface(Components.interfaces.nsIRDFLiteral).Value
-    }
-  } catch (er) {}
+  if (!lang) {
+    var selIndex = tree.view.selection.currentIndex;
+    
+    lang = "none";
+    try {
+      if (selIndex != -1) {
+        var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(selIndex);
+        res = MLDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY + "Lang"), true);
+        lang = res.QueryInterface(Components.interfaces.nsIRDFLiteral).Value
+      }
+    } catch (er) {}
+  }
 
-  document.getElementById("dynamicLanguageRule").setAttribute("REPOSITORY:Lang", lang);
+  if (lang == "all") document.getElementById("dynamicLanguageRule").setAttribute("REPOSITORY:Lang", null);
+  else document.getElementById("dynamicLanguageRule").setAttribute("REPOSITORY:Lang", lang);
   document.getElementById("moduleListTree").builder.rebuild(); 
 }
 
@@ -826,10 +888,8 @@ function initiateModuleDownloads() {
   var mods = getSelectedResources(document.getElementById("moduleListTree"));
   if (!mods.length) return;
   
-  document.getElementById("apply").setAttribute("disabled", "true");
-  
-  ModulesLoading = mods.length;
-  ModuleCheckInterval = window.setInterval("checkAllModulesLoaded();", 200);
+  ModulesLoading += mods.length;
+  if (!ModuleCheckInterval) ModuleCheckInterval = window.setInterval("checkAllModulesLoaded();", 200);
   
   // fetch files into separate module directories so that in the end, 
   // only complete downloads will be installed.
@@ -859,12 +919,21 @@ function initiateModuleDownloads() {
     confSource.append("mods.d");
     confSource.append(modName.toLowerCase() + ".conf");
     if (!confSource.exists()) {
-      jsdump("ERROR: Conf file doesn't exist \"" + confSource.path + "\".");
-      continue;
+      // try regular case
+      confSource = getTempDirOfUrl(repoUrl);
+      confSource.append("mods.d");
+      confSource.append(modName + ".conf");
+      if (!confSource.exists()) {
+        jsdump("ERROR: Conf file doesn't exist \"" + confSource.path + "\".");
+        continue;
+      }
     }
     confSource.copyTo(modsdDir, null);
     
     // now copy the module contents from the Url to "downloads/modName/modules/..."
+    setResourceAttribute(MLDS, mods[m], "Status", "0%");
+    setResourceAttribute(MLDS, mods[m], "Style", "yellow");
+        
     var mpath = getResourceLiteral(MLDS, mods[m], "DataPath");
     mpath = mpath.replace(/^\.\//, "").replace(/[\\\/][^\\\/]*$/, "");
     
@@ -890,8 +959,19 @@ function getModContentUrls(modResource, modPath, data) {
       myURL:repoUrl + "/" + modPath,
       myDestFile:destFile,
       myPersist:persist,
+      myMaxPerc:2,
+      myApproxFileSize:2000,
       
-      onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {},
+      onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
+        // add this download's progress to the existing percentage, but add a maximum myMaxPerc for this download
+        var oldperc = getResourceLiteral(MLDS, this.modResource, "Status");
+        if (!(/^\d+\s*\%$/).test(oldperc)) oldperc = 0;
+        else oldperc = Number(oldperc.match(/^(\d+)\s*\%$/)[1]);
+        if (aCurSelfProgress > this.myApproxFileSize) aCurSelfProgress = this.aCurSelfProgress;
+        var perc = oldperc + Math.round(this.myMaxPerc*(aCurSelfProgress/this.myApproxFileSize));
+        setResourceAttribute(MLDS, this.modResource, "Status", perc + "%");
+        setResourceAttribute(MLDS, this.modResource, "Style", "yellow");
+      },
       
       onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
         if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
@@ -907,6 +987,8 @@ function getModContentUrls(modResource, modPath, data) {
           for (var i=0; dirs && i<dirs.length; i++) {
             var dir = dirs[i].match(/201\: \"(.*?)\" \d+ .*? DIRECTORY\s*$/)[1];
             this.data.count++;
+            
+            // start another download to read the subdirectory contents
             getModContentUrls(this.modResource, this.modPath + "/" + dir, this.data);
           }
           
@@ -917,7 +999,7 @@ function getModContentUrls(modResource, modPath, data) {
           
           this.data.count--;
           if (this.data.count == 0) {
-            // this entire module is now done!
+            // this entire module's contents is now known!
             downloadModule(this.modResource, this.data.mpath, this.data.dest, this.data.modContentData);
           }
           
@@ -965,8 +1047,31 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
   var total = 0;
   for (var c=0; c<modContentData.length; c++) {total += Number(modContentData[c].size);}
   
+  // the .conf file was already downloaded during repository loading
+  var modConf = modDest.clone();
+  modConf.append("mods.d");
+  modConf.append(getResourceLiteral(MLDS, modResource, "ModuleName").toLowerCase() + ".conf");
+  if (!modConf.exists()) {
+    modConf = modDest.clone();
+    modConf.append("mods.d");
+    modConf.append(getResourceLiteral(MLDS, modResource, "ModuleName") + ".conf");
+    if (!modConf.exists()) {
+      jsdump("ERROR: Can't install module without finding its .conf file");
+      setResourceAttribute(RPDS, modResource, "Status", "Error");
+      setResourceAttribute(RPDS, modResource, "Style", "red");
+      ModulesLoading--;
+      return;
+    }
+  }
+
   // data object is shared by all this module's downloads
-  var data = { total:total, current:0, count:1, status:0, downloadedFiles:[] }; 
+  var data = { total:total, current:0, count:1, status:0, downloadedFiles:[modConf] }; 
+  
+  // progress has already been started when the module contents were read
+  // so add new progress to this starting value
+  var startPerc = getResourceLiteral(MLDS, modResource, "Status");
+  if (!(/^\d+\s*\%$/).test(startPerc)) startPerc = 0;
+  else startPerc = Number(startPerc.match(/^(\d+)\s*\%$/)[1]);
   
   for (var c=0; c<modContentData.length; c++) {
 
@@ -991,11 +1096,13 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
       myLast:0,
       data:data,
       myPersist:persist,
+      startPerc:startPerc,
       
       onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
         this.data.current += this.mySize*aCurSelfProgress/aMaxSelfProgress - this.myLast;
         this.myLast = this.mySize*aCurSelfProgress/aMaxSelfProgress;
-        var perc = Math.round(100*(this.data.current/this.data.total));
+        
+        var perc = this.startPerc + Math.round((100-this.startPerc)*(this.data.current/this.data.total));
         setResourceAttribute(MLDS, this.myResource, "Status", perc + "%");
         setResourceAttribute(MLDS, this.myResource, "Style", "yellow");
       },
@@ -1013,21 +1120,35 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
         if (this.data.count == 0) {
           
           // then entire module is also complete...
-          ModulesLoading--;
           
           if (!this.data.status) {
             setResourceAttribute(MLDS, this.myResource, "Status", "Done");
             setResourceAttribute(MLDS, this.myResource, "Style", "green");
             
             // copy the completed module to our install directory
-            var install = TEMP_Install.clone();
+            var modName = getResourceLiteral(MLDS, this.myResource, "ModuleName");
+            var zipFile = TEMP_Install.clone();
+            zipFile.append(modName + ".zip");
             
+            var zipRoot = TEMP.clone();
+            zipRoot.append("downloads");
+            zipRoot.append(modName);
+            
+            var zipWriter = Components.classes["@mozilla.org/zipwriter;1"].createInstance(Components.interfaces.nsIZipWriter);
+            zipWriter.open(zipFile, 0x02 | 0x08 | 0x20); // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
+            for (var i=0; i<this.data.downloadedFiles.length; i++) {
+              var zipEntry = this.data.downloadedFiles[i].path.replace(zipRoot.path + "/", "");
+              zipWriter.addEntryFile(zipEntry, zipWriter.COMPRESSION_NONE, this.data.downloadedFiles[i], false);
+            }
+            zipWriter.close();
             
           }
           else {
             setResourceAttribute(MLDS, this.myResource, "Status", "Error");
             setResourceAttribute(MLDS, this.myResource, "Style", "red");
           }
+          
+          ModulesLoading--;
         
         }
       },
@@ -1052,17 +1173,26 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
 }
 
 function checkAllModulesLoaded() {
-  if (ModulesLoading !== 0) return;
-
-  window.clearInterval(ModuleCheckInterval);
+  if (ModulesLoading !== 0) {
+    document.getElementById("apply").setAttribute("disabled", "true");
+    return;
+  }
   
-  document.getElementById("apply").removeAttribute("disabled");
+  window.clearInterval(ModuleCheckInterval);
+  ModuleCheckInterval = null;
+  
+  var mods = getInstallableModules();
+  if (mods.length) document.getElementById("apply").removeAttribute("disabled");
+  else document.getElementById("apply").setAttribute("disabled", "true");
 }
 
-// Install any downloaded modules
 function installModules() {
 
+  MainWindow.AddRepositoryModules = getInstallableModules();
   
+  MainWindow.installModuleArray(MainWindow.finishAndHandleReset, MainWindow.AddRepositoryModules);
+  
+  window.close();
 }
 
 function writeModuleInfos() {
@@ -1124,7 +1254,7 @@ function onUnload() {
     DownloadsInProgress[i].cancelSave();
   }
 
-  // remove all temporary files
+  // remove all temporary files (but install files will remain)
   if (TEMP.exists()) TEMP.remove(true);
   
   dbFlush(RPDS);

@@ -21,6 +21,7 @@
  * XULSWORD INITIALIZATION
  ***********************************************************************/
 var NewModuleInfo;
+var AddRepositoryModules;
 
 function loadedXUL() {
   //start_venkman();
