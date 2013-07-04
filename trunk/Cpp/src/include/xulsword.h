@@ -70,6 +70,9 @@ class StringMgrXS : public StringMgr {
   ~StringMgrXS();
   char *upperUTF8(char *text, unsigned int max = 0) const;
   char *(*ToUpperCase)(char *);
+  
+  protected:
+  virtual bool supportsUnicode() const;
 };
 
 //MarkupFilterMgrXS - to implement xulsword's own OSIS markup filters
@@ -178,6 +181,7 @@ class xulsword {
   void  setCipherKey(const char *mod, const char *cipherkey, bool useSecModule);
   char *getModuleList();
   char *getModuleInformation(const char *mod, const char *paramname);
+  char *translate(const char *text, const char *localeName);
 
 };
 

@@ -143,6 +143,10 @@ DLLEXPORT char *GetModuleInformation(xulsword *inst, const char *mod, const char
   return inst->getModuleInformation(mod, paramname);
 }
 
+DLLEXPORT char *Translate(xulsword *inst, const char *text, const char *localeName) {
+  return inst->translate(text, localeName);
+}
+
 DLLEXPORT void FreeMemory(void *tofree, char *type) {
 
   if (!strcmp(type, "char")) free(tofree);
