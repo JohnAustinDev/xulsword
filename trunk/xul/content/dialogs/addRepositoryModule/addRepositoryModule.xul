@@ -195,13 +195,18 @@
                           persist="hidden width ordinal value"
                           sort="rdf:http://www.xulsword.com/repository/rdf#Url" />
             <splitter class="tree-splitter"/>
+            <treecol id="ModLang" label="Language" flex="1" hidden="true"
+                          class="sortDirectionIndicator" 
+                          persist="hidden width ordinal value"
+                          sort="rdf:http://www.xulsword.com/repository/rdf#LangReadable" />
+            <splitter class="tree-splitter"/>
             <treecol id="ModStatus" label="Status" flex="1" 
                           class="sortDirectionIndicator"
                           persist="hidden width ordinal value"
                           sort="rdf:http://www.xulsword.com/repository/rdf#Status" />
           </treecols>
           <template>
-            <rule id="dynamicLanguageRule" REPOSITORY:Lang="en" >
+            <rule id="dynamicLanguageRule" REPOSITORY:Show="true" >
               <treechildren>
                 <treeitem uri="rdf:*">
                   <treerow>
@@ -216,6 +221,7 @@
                     <treecell label="rdf:http://www.xulsword.com/repository/rdf#Copyright" />
                     <treecell label="rdf:http://www.xulsword.com/repository/rdf#DistributionLicense" />
                     <treecell label="rdf:http://www.xulsword.com/repository/rdf#Url" />
+                    <treecell label="rdf:http://www.xulsword.com/repository/rdf#LangReadable" />
                     <treecell label="rdf:http://www.xulsword.com/repository/rdf#Status" 
                               properties="rdf:http://www.xulsword.com/repository/rdf#Style" /> 
                   </treerow>

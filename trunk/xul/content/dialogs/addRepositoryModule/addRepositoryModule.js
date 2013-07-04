@@ -85,6 +85,7 @@ function onLoad() {
   RP.Style      = RDF.GetResource(RP.REPOSITORY+"Style");
   RP.Url        = RDF.GetResource(RP.REPOSITORY+"Url");
   RP.ModuleType = RDF.GetResource(RP.REPOSITORY+"ModuleType");
+  RP.Show       = RDF.GetResource(RP.REPOSITORY+"Show");
   RP.Type       = RDF.GetResource(RP.REPOSITORY+"Type");
   
   RP.TypeModule       = RDF.GetLiteral("module");
@@ -438,21 +439,6 @@ function applyRepositoryManifest(resource, manifest) {
     // create a new module resource and add it to the modlist
     var newModRes = RDF.GetAnonymousResource();
     
-    // add Type
-    MLDS.Assert(newModRes, RP.Type, RP.TypeModule, true);
-    // add ModuleType
-    var moduleType = getConfEntry(filedata, "ModDrv");
-    if ((/^(RawText|zText)$/i).test(moduleType)) moduleType = "Bible";
-    else if ((/^(RawCom|RawCom4|zCom)$/i).test(moduleType)) moduleType = "Commentary";
-    else if ((/^(RawLD|RawLD4|zLD)$/i).test(moduleType)) moduleType = "Dictionary";
-    else if ((/^(RawGenBook)$/i).test(moduleType)) moduleType = "General Book";
-    else if ((/^(RawFiles)$/i).test(moduleType)) moduleType = "Simple Text";
-    else if ((/^(HREFCom)$/i).test(moduleType)) moduleType = "URL";
-    else {jsdump("ERROR: Unrecognized module ModDrv \"" + moduleType + "\"");}
-    MLDS.Assert(newModRes, RP.ModuleType, RDF.GetLiteral(moduleType), true);
-    // add Url
-    MLDS.Assert(newModRes, RP.Url, RPDS.GetTarget(resource, RP.Url, true), true);
-    
     RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
     RDFC.AppendElement(newModRes);
     
@@ -484,6 +470,23 @@ function applyRepositoryManifest(resource, manifest) {
       if (confres === null) confres = "";
       MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + p), RDF.GetLiteral(confres), true);
     }
+    
+    // add Type
+    MLDS.Assert(newModRes, RP.Type, RP.TypeModule, true);
+    // add ModuleType
+    var moduleType = getConfEntry(filedata, "ModDrv");
+    if ((/^(RawText|zText)$/i).test(moduleType)) moduleType = "Bible";
+    else if ((/^(RawCom|RawCom4|zCom)$/i).test(moduleType)) moduleType = "Commentary";
+    else if ((/^(RawLD|RawLD4|zLD)$/i).test(moduleType)) moduleType = "Dictionary";
+    else if ((/^(RawGenBook)$/i).test(moduleType)) moduleType = "General Book";
+    else if ((/^(RawFiles)$/i).test(moduleType)) moduleType = "Simple Text";
+    else if ((/^(HREFCom)$/i).test(moduleType)) moduleType = "URL";
+    else {jsdump("ERROR: Unrecognized module ModDrv \"" + moduleType + "\"");}
+    MLDS.Assert(newModRes, RP.ModuleType, RDF.GetLiteral(moduleType), true);
+    // add Url
+    MLDS.Assert(newModRes, RP.Url, RPDS.GetTarget(resource, RP.Url, true), true);
+    // add LangReadable
+    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral("Readable: " + getConfEntry(filedata, "Lang")), true);
   }
 }
 
@@ -871,10 +874,17 @@ function changeModuleListLanguage(lang) {
       }
     } catch (er) {}
   }
-
-  if (lang == "all") document.getElementById("dynamicLanguageRule").setAttribute("REPOSITORY:Lang", null);
-  else document.getElementById("dynamicLanguageRule").setAttribute("REPOSITORY:Lang", lang);
-  document.getElementById("moduleListTree").builder.rebuild(); 
+  
+  // setting the rule's REPOSITORY:Lang attribute filters well, but once it's  
+  // removed (to show all) the tree is never rebuilt again once it is re-added
+  RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+  var mods = RDFC.GetElements();
+  while (mods.hasMoreElements()) {
+    var mod = mods.getNext();
+    var mlang = getResourceLiteral(MLDS, mod, "Lang");
+    var show = (lang == mlang || lang == "all" ? "true":"false");
+    setResourceAttribute(MLDS, mod, "Show", show);
+  }
 }
 
 function toggleModuleBox() {
