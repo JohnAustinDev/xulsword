@@ -42,6 +42,19 @@ function onLoad() {
   TEMP_Install.append("xs_addRepositoryModule_Install");
   if (TEMP_Install.exists()) TEMP_Install.remove(true);
   TEMP_Install.create(TEMP_Install.DIRECTORY_TYPE, DPERM);
+  
+  // add style sheets to InfoBox
+  var infoBox = document.getElementById("infoBox").contentDocument;
+  var element = infoBox.createElement('link');
+  element.type = 'text/css';
+  element.rel = 'stylesheet';
+  element.href = "chrome://xulsword/skin/common/global-xul.css";
+  infoBox.getElementsByTagName('head')[0].appendChild(element);
+  element = infoBox.createElement('link');
+  element.type = 'text/css';
+  element.rel = 'stylesheet';
+  element.href = "chrome://xulsword/skin/dialogs/about/about-htm.css";
+  infoBox.getElementsByTagName('head')[0].appendChild(element);
 
 //prefs.clearUserPref("HaveInternetPermission");
 
@@ -221,7 +234,7 @@ function checkAllRepositoriesLoaded() {
   
   treeDataSource([false, false], ["languageListTree", "moduleListTree"]);
   
-  document.getElementById("languageListTree").view.selection.select(0);
+  selectDefaultLanguage();
   
   // now we're done with onLoad and we turn things over to the user!
   return;
@@ -465,9 +478,30 @@ function applyRepositoryManifest(resource, manifest) {
       TextSource:"TextSource"
     };
     
+    var confDefault = {
+      ModuleName:"?",
+      DataPath:"?",
+      Version:"?",
+      Lang:"?",
+      Abbreviation:"",
+      Description:"",
+      About:"",
+      InstallSize:"?",
+      Versification:"KJV",
+      Scope:"?",
+      DistributionLicense:"",
+      ShortPromo:"",
+      CopyrightHolder:"",
+      CopyrightContactAddress:"",
+      CopyrightContactEmail:"",
+      Copyright:"",
+      CopyrightDate:"",
+      TextSource:""    
+    }
+    
     for (var p in confInfo) {
       var confres = getConfEntry(filedata, confInfo[p]);
-      if (confres === null) confres = "";
+      if (!confres || (/^\s*$/).test(confres)) confres = confDefault[p];
       MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + p), RDF.GetLiteral(confres), true);
     }
     
@@ -486,7 +520,9 @@ function applyRepositoryManifest(resource, manifest) {
     // add Url
     MLDS.Assert(newModRes, RP.Url, RPDS.GetTarget(resource, RP.Url, true), true);
     // add LangReadable
-    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral("Readable: " + getConfEntry(filedata, "Lang")), true);
+    var langReadable = getLangReadable(getConfEntry(filedata, "Lang"));
+
+    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langReadable), true);
   }
 }
 
@@ -692,7 +728,7 @@ function buildLanguageList() {
     
     var lang = MLDS.GetTarget(mod, RDF.GetResource(RP.REPOSITORY + "Lang"), true);
     lang = lang.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-    if (lang == "") continue;
+    if (!lang || lang == "") lang="?";
     
     for (var i=0; i<langs.length; i++) {
       if (langs[i] == lang) continue NextResource;
@@ -706,7 +742,7 @@ function buildLanguageList() {
     var newLangRes = RDF.GetAnonymousResource();
     MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Type"), RP.LanguageListType, true);
     MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Lang"), RDF.GetLiteral(langs[i]), true);
-    MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral("Readable: " + langs[i]), true);
+    MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(getLangReadable(langs[i])), true);
     RDFC.AppendElement(newLangRes);
   }
   
@@ -800,6 +836,23 @@ function getInstallableModules() {
   return installableModules;
 }
 
+function getLangReadable(lang) {
+  if (!lang || (/^\s*$/).test(lang)) lang="?";
+  
+  var langReadable = "?";
+  if (lang != "?" && (/^en(\-*|\_*)$/).test(getLocale())) {
+    langReadable = LibSword.translate(lang + ".en", "locales");
+    if (langReadable == lang + ".en") langReadable = "?";
+  }
+  if (langReadable == "?") langReadable = LibSword.translate(lang, "locales");
+  
+  return langReadable;
+}
+
+function selectDefaultLanguage() {
+  document.getElementById("languageListTree").view.selection.select(0);
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 // Mouse and Selection functions
@@ -817,7 +870,7 @@ function deleteSelectedRepositories() {
   
   treeDataSource([false, false], ["languageListTree", "moduleListTree"]);
   
-  document.getElementById("languageListTree").view.selection.select(0);
+  selectDefaultLanguage();
 }
 
 function toggleReposOnOff(tree, e) {
@@ -1205,9 +1258,6 @@ function installModules() {
   window.close();
 }
 
-function writeModuleInfos() {
-  
-}
 
 function updateRepoListButtons(e) {
   var buttons  = ["toggle", "edit", "add", "delete"];
@@ -1251,6 +1301,89 @@ function updateModuleButtons(e) {
     else document.getElementById(buttons[i]).removeAttribute("disabled");
   }
 }
+
+
+////////////////////////////////////////////////////////////////////////
+// Module Info routines
+////////////////////////////////////////////////////////////////////////
+
+function writeModuleInfos() {
+  var mods = getSelectedResources(document.getElementById("moduleListTree"));
+  if (!mods.length) return;
+  
+  var html = "";
+  
+  var separator = "";
+  
+  for (var m=0; m<mods.length; m++) {
+    var modName = getResourceLiteral(MLDS, mods[m], "ModuleName");
+  
+    html += separator;
+    separator = "<div id=\"separator\"></div>";
+    
+    html += "<div class=\"module-detail cs-Program\">";
+    
+    // Heading and version
+    var vers = getResourceLiteral(MLDS, mods[m], "Version");
+    var modAbbr = getResourceLiteral(MLDS, mods[m], "Abbreviation");
+    if (!modAbbr || modAbbr == "?") modAbbr = modName; 
+    html +=  "<span class=\"mod-detail-heading\">";
+    html +=    modAbbr + (vers != "?" ? "(" + vers + ")":"");
+    html +=  "</span>";
+    
+    // Descripton
+    var description = getResourceLiteral(MLDS, mods[m], "Description");
+    if (description) 
+        html += "<div class=\"description\">" + description + "</div>";
+
+    // Copyright
+    var copyright = getResourceLiteral(MLDS, mods[m], "DistributionLicense");
+    if (copyright)
+         html += "<div class=\"copyright\">" + copyright + "</div>";
+         
+    // About
+    var about = getResourceLiteral(MLDS, mods[m], "About");
+    if (about) {
+      about = about.replace(/(\\par)/g, "<br>");
+      html += "<div class=\"about\">" + about + "</div>";
+    }
+         
+    html += "</div>"; // end module-detail
+         
+    // Conf contents
+    html += "<div id=\"conf." + modName + "\" class=\"conf-info\" showInfo=\"false\" readonly=\"readonly\">";
+    html +=   "<a class=\"link\" href=\"javascript:toggleInfo('" + modName + "');\">";
+    html +=     "<span class=\"more-label\">" + getUI("more.label") + "</span>";
+    html +=     "<span class=\"less-label\">" + getUI("less.label") + "</span>";
+    html +=   "</a>";
+    html +=   "<textarea id=\"conftext." + modName + "\" class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>";
+    html += "</div>";
+  }
+  
+  var body = document.getElementById("infoBox").contentDocument.getElementsByTagName("body")[0];
+  body.innerHTML = html;
+}
+
+function getUI(id) {
+  return getDataUI(id);
+}
+
+function toggleInfo(mod) {
+    var doc = document.getElementById("infoBox").contentDocument;
+    var elem = doc.getElementById("conf." + mod);
+    var showInfo = elem.getAttribute("showInfo");
+   
+    if (showInfo == "false") {
+      var confInfo = "-----";
+      //if (Tab[mod].conf) {
+      //  confInfo  = readFile(Tab[mod].conf);
+      //}
+      elem.getElementsByTagName("textarea")[0].value = confInfo;
+    }
+
+    elem.setAttribute("showInfo", (showInfo == "true" ? "false":"true"));
+
+  }
 
 
 ////////////////////////////////////////////////////////////////////////

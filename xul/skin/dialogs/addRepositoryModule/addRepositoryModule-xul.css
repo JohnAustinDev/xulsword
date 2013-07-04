@@ -19,10 +19,11 @@
   background:rgb(200,255,200);
 }
 
-#moduleInfoContainer,
-#moduleDialog[showModuleInfo="true"] #moduleListContainer {
+#moduleDialog[showModuleInfo="false"] .moduleInfo,
+#moduleDialog[showModuleInfo="true"] .moduleList {
   display:none;
 }
+
 #showInfo,
 #moduleDialog[showModuleInfo="true"] #showModules {
   display:block;
@@ -43,6 +44,11 @@
 }
 #moduleListTree treechildren::-moz-tree-cell(green) {
   background:rgb(200,255,200);
+}
+
+#infoBox {
+  width:100%;
+  height:100%;
 }
 
 #windowControl {

@@ -3,8 +3,11 @@
 # Static lib requires that sword-svn and clucene are 
 # compiled locally to provide necessary object files
 
-security=.libs/security.o 
-#security=
+#security=.libs/security.o 
+security=
+
+#icu=-licui18n\ -licudata\ -licuuc
+icu=
 
 if [ `uname -m` == "x86_64" ]
 then
@@ -15,7 +18,7 @@ g++ -shared \
 -pthread  \
 clucene-core-0.9.21b/src/.libs/*.o \
 sword-svn/lib/.libs/*.o \
--lz \
+-lz $icu \
 -L/usr/lib \
 -L/usr/lib/gcc/x86_64-linux-gnu/4.6 \
 -lstdc++ \
@@ -33,7 +36,7 @@ g++ -shared \
 -pthread  \
 clucene-core-0.9.21b/src/.libs/*.o \
 sword-svn/lib/.libs/*.o \
--lz \
+-lz $icu \
 -L/usr/lib \
 -L/usr/lib/gcc/i386-linux-gnu/4.6 \
 -lstdc++ \

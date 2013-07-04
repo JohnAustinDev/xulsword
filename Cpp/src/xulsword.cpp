@@ -1625,6 +1625,22 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
 	return retval;
 }
 
+/********************************************************************
+Translate
+*********************************************************************/
+char *xulsword::translate(const char *text, const char *localeName) {
+
+  SWBuf langReadable;
+  langReadable.set(LocaleMgr::getSystemLocaleMgr()->translate(text, localeName));
+
+  SWBuf check = assureValidUTF8(langReadable.c_str());
+
+  char *retval;
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
+	return retval;
+}
+
 // END class xulsword
 
 /********************************************************************
@@ -1763,6 +1779,8 @@ char *StringMgrXS::upperUTF8(char *text, unsigned int max) const {
   
   return text;
 }
+
+bool StringMgrXS::supportsUnicode() const {return true;}
 
 
 /********************************************************************

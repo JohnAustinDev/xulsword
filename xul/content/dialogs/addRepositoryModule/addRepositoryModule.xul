@@ -21,7 +21,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/dialogs/addRepositoryModule/addRepositoryModule-xul.css" type="text/css"?>
 
-<!DOCTYPE window SYSTEM "chrome://xulsword/locale/dialogs/addRepositoryModule/addRepositoryModule.dtd">
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/dialogs/about/about.dtd">
 
 <window 
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -35,6 +35,13 @@
   
   <!-- the stringbundle element is used for script UI localization !-->
   <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+  
+  <data id="ui.search.Texts">&search.Texts;</data>
+  <data id="ui.search.Comms">&search.Comms;</data>
+  <data id="ui.search.Genbks">&search.Genbks;</data>
+  <data id="ui.search.Dicts">&search.Dicts;</data>
+  <data id="ui.more.label">&more.label;</data>
+  <data id="ui.less.label">&less.label;</data>
   
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
@@ -131,9 +138,9 @@
       
       <splitter></splitter>
       
-      <vbox id="moduleListContainer" flex="1" persist="width" >
+      <vbox flex="1" persist="width" >
         <label id="moduleListLabel">Modules</label>
-        <tree id="moduleListTree" flex="1" flags="dont-build-content"
+        <tree class="moduleList" id="moduleListTree" flex="1" flags="dont-build-content"
                 datasources="rdf:null" ref="http://www.xulsword.com/repository/ModuleList" 
                 onselect="updateModuleButtons(event);" >
           <treecols>
@@ -230,11 +237,9 @@
             </rule>
           </template>
         </tree>
-      </vbox>
+        
+        <iframe class="moduleInfo" flex="1" id="infoBox" src=""></iframe>
       
-      <vbox id="moduleInfoContainer" flex="1">
-        <label id="moduleInfoLabel">Module Information</label>
-        <html:div></html:div>
       </vbox>
         
       <vbox id="moduleControls" pack="center" >

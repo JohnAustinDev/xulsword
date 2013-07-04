@@ -772,6 +772,23 @@ getModuleInformation: function(modname, paramname) {
   try {var str = cdata.readString();} catch(er) {str = "";}
   this.freeMemory(cdata, ctypes.char.array()("char"));
   return str;
+},
+
+/******************************************************************************
+* LOCALE RELATED INFORMATION:
+******************************************************************************/
+// getLanguageName
+//Returns a localized readable utf8 string correpsonding to the language code.
+//Returns null if the information is not available
+translate: function(text, localeName) {
+  if (!this.libSwordReady("translate")) return null;
+  if (!this.fdata.gln)
+    this.fdata.gln = this.libsword.declare("Translate", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char)); 
+  var cdata = this.fdata.gln(this.inst, ctypes.char.array()(text), ctypes.char.array()(localeName));
+  this.checkerror();
+  try {var str = cdata.readString();} catch(er) {str = "";}
+  this.freeMemory(cdata, ctypes.char.array()("char"));
+  return str;
 }
 
 }; 

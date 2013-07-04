@@ -483,6 +483,26 @@ PHP_METHOD(phpsword, getModuleInformation)
   RETURN_EMPTY_STRING();
 }
 
+PHP_METHOD(phpsword, translate)
+{
+  xulsword *sword;
+  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword = obj->sword;
+  if (sword != NULL) {
+    char *text;
+    int l1;
+    char *localeName;
+    int l2;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &text, &l1, &localeName, &l2) == FAILURE) {
+      RETURN_EMPTY_STRING();
+    }
+    char *ret = sword->getLanguageName(text, localeName);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
+  }
+  RETURN_EMPTY_STRING();
+}
+
 
 /********************************************************************
 More PHPSWORD Extension Glue
@@ -513,6 +533,7 @@ function_entry sword_methods[] = {
     PHP_ME(phpsword,  setCipherKey,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getModuleList,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getModuleInformation,   NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  translate,   NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
 
