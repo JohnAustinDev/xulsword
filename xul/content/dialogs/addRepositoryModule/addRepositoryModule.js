@@ -16,10 +16,16 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+TODO:
+  CSS and Locale
+  Fix xulsword's handling of non-lower-case .conf file names
+  Incorporate locales.conf file into xulsword
+*/
+
 const RepositoryRDF = "repository.rdf"; // located in xulsword's profile dir
 const ModuleRDF = "swordmods.rdf";
 const ManifestFile = "mods.d.tar.gz";
-const DownloadTimeOut = 5000; // in milliseconds
 
 var HaveInternetPermission = false;
 var RP, RPDS, MLDS, RDF, RDFC, RDFCU;
@@ -30,7 +36,7 @@ var DownloadsInProgress = [];
 
 function onLoad() {
 
-  ModulesLoading = 0;
+  ModulesLoading = 0; // global to track total number of modules downloading at any given time
   
   // Create clean temp directories
   TEMP = getSpecialDirectory("TmpD");
@@ -43,7 +49,7 @@ function onLoad() {
   if (TEMP_Install.exists()) TEMP_Install.remove(true);
   TEMP_Install.create(TEMP_Install.DIRECTORY_TYPE, DPERM);
   
-  // add style sheets to InfoBox
+  // add About dialog's style sheets to InfoBox
   var infoBox = document.getElementById("infoBox").contentDocument;
   var element = infoBox.createElement('link');
   element.type = 'text/css';
@@ -74,7 +80,8 @@ function onLoad() {
     window.close();
     return;
   }
-    
+  
+  // init Data Source utility globals
   RP = {};
   RDF = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService);
   RDFC = Components.classes["@mozilla.org/rdf/container;1"].createInstance(Components.interfaces.nsIRDFContainer);
@@ -107,52 +114,40 @@ function onLoad() {
   RP.True             = RDF.GetLiteral("true");
   RP.False            = RDF.GetLiteral("false");
   
+  // initialize RPDS Data Source
   var data = "\
 <?xml version=\"1.0\"?>" + NEWLINE + "\
 <RDF:RDF xmlns:REPOSITORY=\"" + RP.REPOSITORY + "\"" + NEWLINE + "\
          xmlns:NC=\"http://home.netscape.com/NC-rdf#\"" + NEWLINE + "\
          xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">" + NEWLINE + "\
-  <RDF:Description RDF:about=\"" + RP.IBTRepoID + "\"" + NEWLINE + "\
-                   REPOSITORY:Type=\"repository\"" + NEWLINE + "\
-                   REPOSITORY:Name=\"IBT\"" + NEWLINE + "\
-                   REPOSITORY:Site=\"ftp.ibt.org.ru\"" + NEWLINE + "\
-                   REPOSITORY:Path=\"/pub/modsword/raw\"" + NEWLINE + "\
-                   REPOSITORY:Url=\"ftp://ftp.ibt.org.ru/pub/modsword/raw\"" + NEWLINE + "\
-                   REPOSITORY:Enabled=\"true\" />" + NEWLINE + "\
-                   REPOSITORY:Status=\"0%\" />" + NEWLINE + "\
-                   REPOSITORY:Style=\"yellow\" />" + NEWLINE + "\
-  <RDF:Description RDF:about=\"" + RP.CrossWireRepoID + "\"" + NEWLINE + "\
-                   REPOSITORY:Type=\"repository\"" + NEWLINE + "\
-                   REPOSITORY:Name=\"CrossWire\"" + NEWLINE + "\
-                   REPOSITORY:Site=\"ftp.crosswire.org\"" + NEWLINE + "\
-                   REPOSITORY:Path=\"/pub/sword/raw\"" + NEWLINE + "\
-                   REPOSITORY:Url=\"ftp://ftp.crosswire.org/pub/sword/raw\"" + NEWLINE + "\
-                   REPOSITORY:Enabled=\"true\" />" + NEWLINE + "\
-                   REPOSITORY:Status=\"0%\" />" + NEWLINE + "\
-                   REPOSITORY:Style=\"yellow\" />" + NEWLINE + "\
   <RDF:Description RDF:about=\"" + RP.masterRepoListID + "\"" + NEWLINE + "\
                    REPOSITORY:Type=\"masterRepoList\"" + NEWLINE + "\
                    REPOSITORY:Name=\"CrossWire\"" + NEWLINE + "\
                    REPOSITORY:Site=\"ftp.crosswire.org\"" + NEWLINE + "\
                    REPOSITORY:Path=\"/pub/sword/masterRepoList.conf\" />" + NEWLINE + "\
   <RDF:Seq RDF:about=\"" + RP.XulswordRepoListID + "\">" + NEWLINE + "\
-    <RDF:li RDF:resource=\"" + RP.CrossWireRepoID + "\"/>" + NEWLINE + "\
-    <RDF:li RDF:resource=\"" + RP.IBTRepoID + "\"/>" + NEWLINE + "\
   </RDF:Seq>" + NEWLINE + "\
 </RDF:RDF>";
   RPDS = initDataSource(data, RepositoryRDF);
+  var nres = { Type:"repository", Enabled:"true", Name:"IBT", 
+      Site:"ftp.ibt.org.ru", Path:"/pub/modsword/raw", Status:"0%", 
+      Style:"red", Url:"ftp://ftp.ibt.org.ru/pub/modsword/raw" };
+  if (!existsRepository(nres)) createRepository(nres, RP.IBTRepoID);
+  var nres = { Type:"repository", Enabled:"true", Name:"CrossWire", 
+      Site:"ftp.crosswire.org", Path:"/pub/sword/raw", Status:"0%", 
+      Style:"red", Url:"ftp://ftp.crosswire.org/pub/sword/raw" };
+  if (!existsRepository(nres)) createRepository(nres, RP.CrossWireRepoID);
   
+  // initialize MLDS Data Source
   data = "\
 <?xml version=\"1.0\"?>" + NEWLINE + "\
 <RDF:RDF xmlns:REPOSITORY=\"" + RP.REPOSITORY + "\"" + NEWLINE + "\
          xmlns:NC=\"http://home.netscape.com/NC-rdf#\"" + NEWLINE + "\
          xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">" + NEWLINE + "\
-  <RDF:Seq RDF:about=\"" + RP.LanguageListID + "\">" + NEWLINE + "\
-  </RDF:Seq>" + NEWLINE + "\
-  <RDF:Seq RDF:about=\"" + RP.ModuleListID + "\">" + NEWLINE + "\
-  </RDF:Seq>" + NEWLINE + "\
 </RDF:RDF>";
   MLDS = initDataSource(data, ModuleRDF);
+  RDFCU.MakeSeq(MLDS, RDF.GetResource(RP.LanguageListID));
+  RDFCU.MakeSeq(MLDS, RDF.GetResource(RP.ModuleListID));
   
   if (!RPDS || !MLDS) {
     throw("ERROR: Failed to load a Data Source!");
@@ -172,6 +167,43 @@ function onLoad() {
   
   // add our datasource to the repository tree
   treeDataSource([false], ["repoListTree"]);
+  
+  // add an event handler to allow repoListTree editing
+  document.getElementById("repoListTree").stopEditing = 
+  function(accept) {
+    if (!this._editingColumn)
+      return;
+    var input = this.inputField;
+    var editingRow = this._editingRow;
+    var editingColumn = this._editingColumn;
+    this._editingRow = -1;
+    this._editingColumn = null;
+    if (accept) {
+      var repoResource = this.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(editingRow);
+      var oldUrl = getResourceLiteral(RPDS, repoResource, "Url");
+      var oldValue = getResourceLiteral(RPDS, repoResource, editingColumn.id);
+      var newValue = (!(/^\s*$/).test(input.value) ? input.value:"?");
+      
+      if (newValue != "?") {
+      
+        // save new value
+        setResourceAttribute(RPDS, repoResource, editingColumn.id, newValue);
+        
+        // reload repo if necessary
+        var site = getResourceLiteral(RPDS, repoResource, "Site");
+        var path = getResourceLiteral(RPDS, repoResource, "Path");
+        if (editingColumn.id != "Name" && oldValue != newValue && site != "?" && path != "?") {
+          deleteModuleData([oldUrl]);
+          setResourceAttribute(RPDS, repoResource, "Url", "ftp://" + site + path);
+          loadRepositories([repoResource]);
+        }
+      }
+      
+    }
+    input.hidden = true;
+    input.value = "";
+    this.removeAttribute("editing");
+  };
 
   if (getResourceLiteral(RPDS, RDF.GetResource(RP.CrossWireRepoID), "Enabled") == "true") {
     loadMasterRepoList(); // will call masterRepoListLoaded() when finished
@@ -208,6 +240,9 @@ function loadRepositories(resourceArray, moduleDataAlreadyDeleted) {
   var repoUrlArray = [];
   
   for (var i=0; i<resourceArray.length; i++) {
+    
+    // don't load unknown or uninitialized Urls
+    if ((/^(\s*|\?)$/).test(getResourceLiteral(RPDS, resourceArray[i], "Url"))) continue;
     
     repoUrlArray.push(RPDS.GetTarget(resourceArray[i], RP.Url, true));
     
@@ -326,7 +361,7 @@ function loadMasterRepoList() {
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
       setResourceAttribute(RPDS, this.crosswire, "Status", "Error");
       setResourceAttribute(RPDS, this.crosswire, "Style", "red");
-      if (aMessage) alert(this.myURL + ": " + aMessage);
+      if (aMessage) jsdump(this.myURL + ": " + aMessage);
     },
     
     onLocationChange: function(aWebProgress, aRequest, aLocation) {},
@@ -352,7 +387,7 @@ function readMasterRepoList(aFile) {
         var r = list[i].match(/^\d+=FTPSource=(.*?)\|(.*?)\|(.*?)\s*$/i);
         
         var nres = { Type:"repository", Enabled:"false", Name:r[1], Site:r[2], Path:r[3], Status:"Off", Style:"red", Url:"ftp://" + r[2] + r[3] };
-        if (!existsRepository(nres)) addRepository(nres);
+        if (!existsRepository(nres)) createRepository(nres);
       }
       
     }
@@ -414,7 +449,7 @@ function startProcessingNextRepository() {
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
       setResourceAttribute(RPDS, this.myResource, "Status", "Error");
       setResourceAttribute(RPDS, this.myResource, "Style", "red");
-      if (aMessage) alert(this.myURL + ": " + aMessage);
+      if (aMessage) jsdump(this.myURL + ": " + aMessage);
     },
     
     onLocationChange: function(aWebProgress, aRequest, aLocation) {},
@@ -440,6 +475,13 @@ function applyRepositoryManifest(resource, manifest) {
   unCompress(manifest, tmpDir);
   
   tmpDir.append("mods.d");
+  
+  if (!tmpDir.exists()) {
+    setResourceAttribute(RPDS, resource, "Status", "Error");
+    setResourceAttribute(RPDS, resource, "Style", "red");
+    jsdump("ERROR: could not read repository manifest in \"" + tmpDir.path + "\"");
+    return;
+  }
   
   var confs = tmpDir.directoryEntries;
   while (confs.hasMoreElements()) {
@@ -521,9 +563,263 @@ function applyRepositoryManifest(resource, manifest) {
     MLDS.Assert(newModRes, RP.Url, RPDS.GetTarget(resource, RP.Url, true), true);
     // add LangReadable
     var langReadable = getLangReadable(getConfEntry(filedata, "Lang"));
+    // add Status
+    MLDS.Assert(newModRes, RP.Status, RDF.GetLiteral("0%"), true);
 
     MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langReadable), true);
   }
+}
+
+
+////////////////////////////////////////////////////////////////////////
+// Download related subroutines
+////////////////////////////////////////////////////////////////////////
+
+// fill a data object with information about the contents of a module
+function getModContentUrls(modResource, modPath, data) {
+  var repoUrl = getResourceLiteral(MLDS, modResource, "Url");
+  
+  var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+  var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);
+  var destFile = getTempDirOfUrl(repoUrl);
+  if (!destFile.exists()) destFile.create(destFile.DIRECTORY_TYPE, DPERM);
+  destFile.append("listing_" + modPath.replace(/\//g, "_"));
+  persist.progressListener = 
+    {
+      modResource:modResource,
+      modPath:modPath,
+      data:data,
+      myURL:repoUrl + "/" + modPath,
+      myDestFile:destFile,
+      myPersist:persist,
+      myMaxPerc:2,
+      myApproxFileSize:2000,
+      
+      onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
+        // add this download's progress to the existing percentage, but add a maximum myMaxPerc for this download
+        var oldperc = getResourceLiteral(MLDS, this.modResource, "Status");
+        if (!(/^\d+\s*\%$/).test(oldperc)) oldperc = 0;
+        else oldperc = Number(oldperc.match(/^(\d+)\s*\%$/)[1]);
+        if (aCurSelfProgress > this.myApproxFileSize) aCurSelfProgress = this.aCurSelfProgress;
+        var perc = oldperc + Math.round(this.myMaxPerc*(aCurSelfProgress/this.myApproxFileSize));
+        setResourceAttribute(MLDS, this.modResource, "Status", perc + "%");
+        setResourceAttribute(MLDS, this.modResource, "Style", "yellow");
+      },
+      
+      onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
+        if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
+
+        if (aStatus == 0) {
+          removeProgress(this.myPersist);
+          
+          var data = readFile(this.myDestFile);
+          
+          var files = data.match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/gm);
+          var dirs = data.match(/201\: \"(.*?)\" \d+ .*? DIRECTORY\s*$/gm);
+          
+          for (var i=0; dirs && i<dirs.length; i++) {
+            var dir = dirs[i].match(/201\: \"(.*?)\" \d+ .*? DIRECTORY\s*$/)[1];
+            this.data.count++;
+            
+            // start another download to read the subdirectory contents
+            getModContentUrls(this.modResource, this.modPath + "/" + dir, this.data);
+          }
+          
+          for(i=0; files && i<files.length; i++) {
+            var file = files[i].match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/);
+            this.data.modContentData.push({ url:this.myURL + "/" + file[1], size:file[2] });
+          }
+          
+          this.data.count--;
+          if (this.data.count == 0) {
+            // this entire module's contents is now known!
+            downloadModule(this.modResource, this.data.mpath, this.data.dest, this.data.modContentData);
+          }
+          
+        }
+        else {
+          setResourceAttribute(MLDS, this.modResource, "Status", "Error");
+          setResourceAttribute(MLDS, this.modResource, "Style", "red");
+          jsdump("ERROR: getModContentUrls failed for \"" + this.myURL + "\"");
+        }
+      },
+      
+      onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
+        setResourceAttribute(MLDS, this.modResource, "Status", "Error");
+        setResourceAttribute(MLDS, this.modResource, "Style", "red");
+        if (aMessage) jsdump(this.myURL + ": " + aMessage);
+      },
+      
+      onLocationChange: function(aWebProgress, aRequest, aLocation) {},
+      
+      onSecurityChange: function(aWebProgress, aRequest, aState) {}
+    };
+  persist.saveURI(ios.newURI(repoUrl + "/" + modPath, null, null), null, null, null, null, destFile, null);
+  DownloadsInProgress.push(persist);
+}
+
+function downloadModule(modResource, modPath, modDest, modContentData) {
+  
+  // don't fetch lucene directory or its contents
+  for (var i=0; i<modContentData.length; i++) {
+    if ((/\/lucene(\/|$)/i).test(modContentData[i].url)) {
+      modContentData.splice(i, 1);
+      i--;
+    }
+  }
+    
+  var repoUrl = getResourceLiteral(MLDS, modResource, "Url");
+  
+  var moduleDir = modDest.clone();
+  var p = modPath.split("/");
+
+  for (var i=0; i<p.length; i++) {
+    if (!p[i]) continue; // case of dir//subdir
+    moduleDir.append(p[i]);
+    moduleDir.create(moduleDir.DIRECTORY_TYPE, DPERM);
+  }
+    
+  var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService); 
+  
+  var total = 0;
+  for (var c=0; c<modContentData.length; c++) {total += Number(modContentData[c].size);}
+  
+  // the .conf file was already downloaded during repository loading
+  var modConf = modDest.clone();
+  modConf.append("mods.d");
+  modConf.append(getResourceLiteral(MLDS, modResource, "ModuleName").toLowerCase() + ".conf");
+  if (!modConf.exists()) {
+    modConf = modDest.clone();
+    modConf.append("mods.d");
+    modConf.append(getResourceLiteral(MLDS, modResource, "ModuleName") + ".conf");
+    if (!modConf.exists()) {
+      jsdump("ERROR: Can't install module without finding its .conf file");
+      setResourceAttribute(RPDS, modResource, "Status", "Error");
+      setResourceAttribute(RPDS, modResource, "Style", "red");
+      ModulesLoading--;
+      return;
+    }
+  }
+
+  // this data object is shared by all this module's downloads
+  var data = { total:total, current:0, count:1, status:0, downloadedFiles:[modConf] }; 
+  
+  // progress has already been started when the module contents were read
+  // so add new progress to this starting value
+  var startPerc = getResourceLiteral(MLDS, modResource, "Status");
+  if (!(/^\d+\s*\%$/).test(startPerc)) startPerc = 0;
+  else startPerc = Number(startPerc.match(/^(\d+)\s*\%$/)[1]);
+  
+  for (var c=0; c<modContentData.length; c++) {
+
+    var destFile = moduleDir.clone();
+
+    var sub = modContentData[c].url.replace(repoUrl + "/" + modPath + "/", "");
+    sub = sub.split("/");
+    for (var sd=0; sd<sub.length-1; sd++) {
+      if (!sub[sd]) continue; // handle dir//subdir
+      destFile.append(sub[sd]);
+      if (!destFile.exists()) destFile.create(moduleDir.DIRECTORY_TYPE, DPERM);
+    }
+    destFile.append(sub[sub.length-1]);
+
+    var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+    persist.progressListener = 
+    {
+      myResource:modResource,
+      myURL:modContentData[c].url,
+      myDestFile:destFile,
+      mySize:Number(modContentData[c].size),
+      myLast:0,
+      data:data,
+      myPersist:persist,
+      startPerc:startPerc,
+      
+      onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
+        this.data.current += this.mySize*aCurSelfProgress/aMaxSelfProgress - this.myLast;
+        this.myLast = this.mySize*aCurSelfProgress/aMaxSelfProgress;
+        
+        var perc = this.startPerc + Math.round((100-this.startPerc)*(this.data.current/this.data.total));
+        setResourceAttribute(MLDS, this.myResource, "Status", perc + "%");
+        setResourceAttribute(MLDS, this.myResource, "Style", "yellow");
+      },
+      
+      onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
+        if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
+        
+        // download finished
+        this.data.count--;
+        removeProgress(this.myPersist);
+        
+        this.data.status = (this.data.status | aStatus);
+        this.data.downloadedFiles.push(this.myDestFile);
+        
+        if (this.data.count == 0) {
+          
+          // then entire module is also complete...
+          if (!this.data.status) {
+            setResourceAttribute(MLDS, this.myResource, "Status", "100%");
+            setResourceAttribute(MLDS, this.myResource, "Style", "green");
+            
+            // copy the completed module to our install directory
+            var modName = getResourceLiteral(MLDS, this.myResource, "ModuleName");
+            var zipFile = TEMP_Install.clone();
+            zipFile.append(modName + ".zip");
+            
+            var zipRoot = TEMP.clone();
+            zipRoot.append("downloads");
+            zipRoot.append(modName);
+            
+            var zipWriter = Components.classes["@mozilla.org/zipwriter;1"].createInstance(Components.interfaces.nsIZipWriter);
+            zipWriter.open(zipFile, 0x02 | 0x08 | 0x20); // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
+            for (var i=0; i<this.data.downloadedFiles.length; i++) {
+              var zipEntry = this.data.downloadedFiles[i].path.replace(zipRoot.path + "/", "");
+              zipWriter.addEntryFile(zipEntry, zipWriter.COMPRESSION_NONE, this.data.downloadedFiles[i], false);
+            }
+            zipWriter.close();
+            
+          }
+          else {
+            setResourceAttribute(MLDS, this.myResource, "Status", "Error");
+            setResourceAttribute(MLDS, this.myResource, "Style", "red");
+          }
+          
+          ModulesLoading--;
+        
+        }
+      },
+      
+      onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
+        setResourceAttribute(RPDS, this.myResource, "Status", "Error");
+        setResourceAttribute(RPDS, this.myResource, "Style", "red");
+        if (aMessage) jsdump(this.myURL + ": " + aMessage);
+      },
+      
+      onLocationChange: function(aWebProgress, aRequest, aLocation) {},
+      
+      onSecurityChange: function(aWebProgress, aRequest, aState) {}
+    };
+      
+    persist.saveURI(ios.newURI(modContentData[c].url, null, null), null, null, null, null, destFile, null);
+    DownloadsInProgress.push(persist);
+    
+    if (c<modContentData.length-1) data.count++; // don't increment for last file because count started as "1"
+  }
+  
+}
+
+function checkAllModulesAreDownloaded() {
+  if (ModulesLoading !== 0) {
+    document.getElementById("apply").setAttribute("disabled", "true");
+    return;
+  }
+  
+  window.clearInterval(ModuleCheckInterval);
+  ModuleCheckInterval = null;
+  
+  var mods = getInstallableModules();
+  if (mods.length) document.getElementById("apply").removeAttribute("disabled");
+  else document.getElementById("apply").setAttribute("disabled", "true");
 }
 
 
@@ -567,6 +863,7 @@ function setResourceAttribute(aDS, resource, attribute, value) {
   return false;
 }
 
+// Get a string value of a resources string attribute
 function getResourceLiteral(aDS, resource, attribute) {
   
   attribute = RDF.GetResource(RP.REPOSITORY + attribute);
@@ -587,7 +884,7 @@ function existsRepository(repoInfo) {
     var res = ress.getNext();
     
     // if these resource attributes match repoInfo, this repo already exists
-    var check = ["Type", "Name", "Site", "Path"];
+    var check = ["Type", "Site", "Path", "Url"];
      
     for (var i=0; i<check.length; i++) {
       var val = RPDS.GetTarget(res, RP[check[i]], true);
@@ -603,11 +900,11 @@ function existsRepository(repoInfo) {
 }
 
 // Add a repository to the database. If such a repository happens to 
-// exist already, then a duplicate one will be created and added!
-function addRepository(newRepoInfo) {
+// exist already, then a duplicate one will be created and added.
+function createRepository(newRepoInfo, resourceID) {
   
   // create a new resource
-  var res = RDF.GetAnonymousResource();
+  var res = (resourceID ? RDF.GetResource(resourceID):RDF.GetAnonymousResource());
   for (var p in newRepoInfo) {
     RPDS.Assert(res, RP[p], RDF.GetLiteral(replaceASCIIcontrolChars(newRepoInfo[p])), true);
   }
@@ -621,7 +918,7 @@ function addRepository(newRepoInfo) {
 }
 
 // Remove a repository resource entirely from the database. This does
-// no Type checking to insure repoResouce is actually a repository.
+// no Type checking to ensure repoResouce is actually a repository.
 function deleteRepository(repoResourceArray) {
 
   // collect url info before beginning to delete (to filter modules with)
@@ -649,9 +946,9 @@ function deleteRepository(repoResourceArray) {
   }
 
   deleteModuleData(urls);
-  
 }
 
+// Delete all modules associated with a list of repository Urls 
 function deleteModuleData(repoUrlArray) {
 
   RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
@@ -679,6 +976,7 @@ function deleteModuleData(repoUrlArray) {
   }
 }
 
+// Populate the language tree's data from enabled repository modules
 function buildLanguageList() {
 
   // delete all LanguageList resources
@@ -748,6 +1046,7 @@ function buildLanguageList() {
   
 }
 
+// Connect and disconnect tree data sources
 function treeDataSource(disconnectArray, idArray) {
 
   for (var i=0; i<idArray.length; i++) {
@@ -824,6 +1123,7 @@ function removeProgress(progress) {
   }
 }
 
+// Search the install TEMP directory for modules which can be installed
 function getInstallableModules() {
   var installDir = TEMP_Install.clone();
   var zips = installDir.directoryEntries;
@@ -850,7 +1150,33 @@ function getLangReadable(lang) {
 }
 
 function selectDefaultLanguage() {
-  document.getElementById("languageListTree").view.selection.select(0);
+  var tree = document.getElementById("languageListTree");
+  
+  var progLang = getLocale();
+  if (!progLang) progLang = DEFAULTLOCALE;
+  
+  RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
+  var defRes = null;
+  var langs = RDFC.GetElements();
+  while (langs.hasMoreElements()) {
+    var lang = langs.getNext();
+    var lcode = getResourceLiteral(MLDS, lang, "Lang");
+    if (!lcode) continue;
+    if (lcode == progLang) {
+      defRes = lang;
+      break;
+    }
+    if (lcode.replace(/\-.*$/, "") == progLang.replace(/\-.*$/, "")) defRes = lang;
+  }
+  
+  var index = 0;
+  if (defRes) {
+    index = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getIndexOfResource(defRes);
+    if (!index || index < 0) index = 0;
+  }
+  
+  tree.view.selection.select(index);
+  tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).scrollToRow(index);
 }
 
 
@@ -928,13 +1254,15 @@ function changeModuleListLanguage(lang) {
     } catch (er) {}
   }
   
-  // setting the rule's REPOSITORY:Lang attribute filters well, but once it's  
-  // removed (to show all) the tree is never rebuilt again once it is re-added
+  lang = lang.replace(/\-.*$/, ""); // match all root language modules
+  
+  // setting the rule's REPOSITORY:Lang attribute filters okay, but once it's  
+  // removed (to show all) the tree is never rebuilt if it is re-added
   RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
   var mods = RDFC.GetElements();
   while (mods.hasMoreElements()) {
     var mod = mods.getNext();
-    var mlang = getResourceLiteral(MLDS, mod, "Lang");
+    var mlang = getResourceLiteral(MLDS, mod, "Lang").replace(/\-.*$/, "");
     var show = (lang == mlang || lang == "all" ? "true":"false");
     setResourceAttribute(MLDS, mod, "Show", show);
   }
@@ -944,15 +1272,20 @@ function toggleModuleBox() {
   var cont = document.getElementById("moduleDialog");
   var showModuleInfo = cont.getAttribute("showModuleInfo");
   showModuleInfo = (showModuleInfo == "false" ? "true":"false");
+  
   cont.setAttribute("showModuleInfo", showModuleInfo);
+  document.getElementById("moduleDeck").setAttribute("selectedIndex", (showModuleInfo=="true" ? 1:0));
 }
 
 function initiateModuleDownloads() {
   var mods = getSelectedResources(document.getElementById("moduleListTree"));
   if (!mods.length) return;
   
+  if (document.getElementById("moduleDialog").getAttribute("showModuleInfo") == "true")
+      toggleModuleBox();
+  
   ModulesLoading += mods.length;
-  if (!ModuleCheckInterval) ModuleCheckInterval = window.setInterval("checkAllModulesLoaded();", 200);
+  if (!ModuleCheckInterval) ModuleCheckInterval = window.setInterval("checkAllModulesAreDownloaded();", 200);
   
   // fetch files into separate module directories so that in the end, 
   // only complete downloads will be installed.
@@ -987,6 +1320,8 @@ function initiateModuleDownloads() {
       confSource.append("mods.d");
       confSource.append(modName + ".conf");
       if (!confSource.exists()) {
+        setResourceAttribute(MLDS, mods[m], "Status", "Error");
+        setResourceAttribute(MLDS, mods[m], "Style", "red");
         jsdump("ERROR: Conf file doesn't exist \"" + confSource.path + "\".");
         continue;
       }
@@ -1000,253 +1335,12 @@ function initiateModuleDownloads() {
     var mpath = getResourceLiteral(MLDS, mods[m], "DataPath");
     mpath = mpath.replace(/^\.\//, "").replace(/[\\\/][^\\\/]*$/, "");
     
+    // getModContentUrls will asyncronously call downloadModule when all 
+    // module content files are known. Then checkAllModulesAreDownloaded 
+    // will finish up once all downloads have completed
     var data = { repoUrl:repoUrl, mpath:mpath, dest:dest, count:1, modContentData:[] };
-    // getModContentUrls will asyncronously call downloadModule when finished (when count == 0)
     getModContentUrls(mods[m], mpath, data); 
   }
-}
-
-function getModContentUrls(modResource, modPath, data) {
-  var repoUrl = getResourceLiteral(MLDS, modResource, "Url");
-  
-  var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
-  var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);
-  var destFile = getTempDirOfUrl(repoUrl);
-  if (!destFile.exists()) destFile.create(destFile.DIRECTORY_TYPE, DPERM);
-  destFile.append("listing_" + modPath.replace(/\//g, "_"));
-  persist.progressListener = 
-    {
-      modResource:modResource,
-      modPath:modPath,
-      data:data,
-      myURL:repoUrl + "/" + modPath,
-      myDestFile:destFile,
-      myPersist:persist,
-      myMaxPerc:2,
-      myApproxFileSize:2000,
-      
-      onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
-        // add this download's progress to the existing percentage, but add a maximum myMaxPerc for this download
-        var oldperc = getResourceLiteral(MLDS, this.modResource, "Status");
-        if (!(/^\d+\s*\%$/).test(oldperc)) oldperc = 0;
-        else oldperc = Number(oldperc.match(/^(\d+)\s*\%$/)[1]);
-        if (aCurSelfProgress > this.myApproxFileSize) aCurSelfProgress = this.aCurSelfProgress;
-        var perc = oldperc + Math.round(this.myMaxPerc*(aCurSelfProgress/this.myApproxFileSize));
-        setResourceAttribute(MLDS, this.modResource, "Status", perc + "%");
-        setResourceAttribute(MLDS, this.modResource, "Style", "yellow");
-      },
-      
-      onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
-        if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
-
-        if (aStatus == 0) {
-          removeProgress(this.myPersist);
-          
-          var data = readFile(this.myDestFile);
-          
-          var files = data.match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/gm);
-          var dirs = data.match(/201\: \"(.*?)\" \d+ .*? DIRECTORY\s*$/gm);
-          
-          for (var i=0; dirs && i<dirs.length; i++) {
-            var dir = dirs[i].match(/201\: \"(.*?)\" \d+ .*? DIRECTORY\s*$/)[1];
-            this.data.count++;
-            
-            // start another download to read the subdirectory contents
-            getModContentUrls(this.modResource, this.modPath + "/" + dir, this.data);
-          }
-          
-          for(i=0; files && i<files.length; i++) {
-            var file = files[i].match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/);
-            this.data.modContentData.push({ url:this.myURL + "/" + file[1], size:file[2] });
-          }
-          
-          this.data.count--;
-          if (this.data.count == 0) {
-            // this entire module's contents is now known!
-            downloadModule(this.modResource, this.data.mpath, this.data.dest, this.data.modContentData);
-          }
-          
-        }
-        else {
-          jsdump("ERROR: getModContentUrls failed for \"" + this.myURL + "\"");
-        }
-      },
-      
-      onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
-        if (aMessage) alert(this.myURL + ": " + aMessage);
-      },
-      
-      onLocationChange: function(aWebProgress, aRequest, aLocation) {},
-      
-      onSecurityChange: function(aWebProgress, aRequest, aState) {}
-    };
-  persist.saveURI(ios.newURI(repoUrl + "/" + modPath, null, null), null, null, null, null, destFile, null);
-  DownloadsInProgress.push(persist);
-}
-
-function downloadModule(modResource, modPath, modDest, modContentData) {
-  
-  // remove lucene directory and its contents
-  for (var i=0; i<modContentData.length; i++) {
-    if ((/\/lucene(\/|$)/i).test(modContentData[i].url)) {
-      modContentData.splice(i, 1);
-      i--;
-    }
-  }
-    
-  var repoUrl = getResourceLiteral(MLDS, modResource, "Url");
-  
-  var moduleDir = modDest.clone();
-  var p = modPath.split("/");
-
-  for (var i=0; i<p.length; i++) {
-    if (!p[i]) continue; // case of dir//subdir
-    moduleDir.append(p[i]);
-    moduleDir.create(moduleDir.DIRECTORY_TYPE, DPERM);
-  }
-    
-  var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService); 
-  
-  var total = 0;
-  for (var c=0; c<modContentData.length; c++) {total += Number(modContentData[c].size);}
-  
-  // the .conf file was already downloaded during repository loading
-  var modConf = modDest.clone();
-  modConf.append("mods.d");
-  modConf.append(getResourceLiteral(MLDS, modResource, "ModuleName").toLowerCase() + ".conf");
-  if (!modConf.exists()) {
-    modConf = modDest.clone();
-    modConf.append("mods.d");
-    modConf.append(getResourceLiteral(MLDS, modResource, "ModuleName") + ".conf");
-    if (!modConf.exists()) {
-      jsdump("ERROR: Can't install module without finding its .conf file");
-      setResourceAttribute(RPDS, modResource, "Status", "Error");
-      setResourceAttribute(RPDS, modResource, "Style", "red");
-      ModulesLoading--;
-      return;
-    }
-  }
-
-  // data object is shared by all this module's downloads
-  var data = { total:total, current:0, count:1, status:0, downloadedFiles:[modConf] }; 
-  
-  // progress has already been started when the module contents were read
-  // so add new progress to this starting value
-  var startPerc = getResourceLiteral(MLDS, modResource, "Status");
-  if (!(/^\d+\s*\%$/).test(startPerc)) startPerc = 0;
-  else startPerc = Number(startPerc.match(/^(\d+)\s*\%$/)[1]);
-  
-  for (var c=0; c<modContentData.length; c++) {
-
-    var destFile = moduleDir.clone();
-
-    var sub = modContentData[c].url.replace(repoUrl + "/" + modPath + "/", "");
-    sub = sub.split("/");
-    for (var sd=0; sd<sub.length-1; sd++) {
-      if (!sub[sd]) continue; // handle dir//subdir
-      destFile.append(sub[sd]);
-      if (!destFile.exists()) destFile.create(moduleDir.DIRECTORY_TYPE, DPERM);
-    }
-    destFile.append(sub[sub.length-1]);
-
-    var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
-    persist.progressListener = 
-    {
-      myResource:modResource,
-      myURL:modContentData[c].url,
-      myDestFile:destFile,
-      mySize:Number(modContentData[c].size),
-      myLast:0,
-      data:data,
-      myPersist:persist,
-      startPerc:startPerc,
-      
-      onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
-        this.data.current += this.mySize*aCurSelfProgress/aMaxSelfProgress - this.myLast;
-        this.myLast = this.mySize*aCurSelfProgress/aMaxSelfProgress;
-        
-        var perc = this.startPerc + Math.round((100-this.startPerc)*(this.data.current/this.data.total));
-        setResourceAttribute(MLDS, this.myResource, "Status", perc + "%");
-        setResourceAttribute(MLDS, this.myResource, "Style", "yellow");
-      },
-      
-      onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
-        if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
-        
-        // download finished
-        this.data.count--;
-        removeProgress(this.myPersist);
-        
-        this.data.status = (this.data.status | aStatus);
-        this.data.downloadedFiles.push(this.myDestFile);
-        
-        if (this.data.count == 0) {
-          
-          // then entire module is also complete...
-          
-          if (!this.data.status) {
-            setResourceAttribute(MLDS, this.myResource, "Status", "Done");
-            setResourceAttribute(MLDS, this.myResource, "Style", "green");
-            
-            // copy the completed module to our install directory
-            var modName = getResourceLiteral(MLDS, this.myResource, "ModuleName");
-            var zipFile = TEMP_Install.clone();
-            zipFile.append(modName + ".zip");
-            
-            var zipRoot = TEMP.clone();
-            zipRoot.append("downloads");
-            zipRoot.append(modName);
-            
-            var zipWriter = Components.classes["@mozilla.org/zipwriter;1"].createInstance(Components.interfaces.nsIZipWriter);
-            zipWriter.open(zipFile, 0x02 | 0x08 | 0x20); // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
-            for (var i=0; i<this.data.downloadedFiles.length; i++) {
-              var zipEntry = this.data.downloadedFiles[i].path.replace(zipRoot.path + "/", "");
-              zipWriter.addEntryFile(zipEntry, zipWriter.COMPRESSION_NONE, this.data.downloadedFiles[i], false);
-            }
-            zipWriter.close();
-            
-          }
-          else {
-            setResourceAttribute(MLDS, this.myResource, "Status", "Error");
-            setResourceAttribute(MLDS, this.myResource, "Style", "red");
-          }
-          
-          ModulesLoading--;
-        
-        }
-      },
-      
-      onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
-        setResourceAttribute(RPDS, this.myResource, "Status", "Error");
-        setResourceAttribute(RPDS, this.myResource, "Style", "red");
-        if (aMessage) alert(this.myURL + ": " + aMessage);
-      },
-      
-      onLocationChange: function(aWebProgress, aRequest, aLocation) {},
-      
-      onSecurityChange: function(aWebProgress, aRequest, aState) {}
-    };
-      
-    persist.saveURI(ios.newURI(modContentData[c].url, null, null), null, null, null, null, destFile, null);
-    DownloadsInProgress.push(persist);
-    
-    if (c<modContentData.length-1) data.count++; // don't increment for last file because count started as "1"
-  }
-  
-}
-
-function checkAllModulesLoaded() {
-  if (ModulesLoading !== 0) {
-    document.getElementById("apply").setAttribute("disabled", "true");
-    return;
-  }
-  
-  window.clearInterval(ModuleCheckInterval);
-  ModuleCheckInterval = null;
-  
-  var mods = getInstallableModules();
-  if (mods.length) document.getElementById("apply").removeAttribute("disabled");
-  else document.getElementById("apply").setAttribute("disabled", "true");
 }
 
 function installModules() {
@@ -1260,8 +1354,8 @@ function installModules() {
 
 
 function updateRepoListButtons(e) {
-  var buttons  = ["toggle", "edit", "add", "delete"];
-  var disabled = [true, true, false, true];
+  var buttons  = ["toggle", "add", "delete"];
+  var disabled = [true, false, true];
   
   // button states depend on selection
   var tree = document.getElementById("repoListTree");
@@ -1269,9 +1363,7 @@ function updateRepoListButtons(e) {
   
   if (sel.currentIndex != -1) {
     disabled[0] = false; // toggle
-    disabled[3] = false; // delete
-    var selectedResources = getSelectedResources(tree);
-    if (selectedResources.length == 1) disabled[1] = false; // edit
+    disabled[2] = false; // delete
   }
   
   // apply disabled attribute
@@ -1282,7 +1374,7 @@ function updateRepoListButtons(e) {
 }
 
 function updateModuleButtons(e) {
-  var buttons  = ["install", "showInfo", "showModules"];
+  var buttons  = ["installButton", "showInfoButton", "showModulesButton"];
   var disabled = [true, true, false];
   
   // button states depend on selection
@@ -1291,8 +1383,7 @@ function updateModuleButtons(e) {
   
   if (sel.currentIndex != -1) {
     disabled[0] = false; // install
-    var selectedResources = getSelectedResources(tree);
-    if (selectedResources.length == 1) disabled[1] = false; // showInfo
+    disabled[1] = false; // showInfo
   }
   
   // apply disabled attribute
@@ -1302,25 +1393,39 @@ function updateModuleButtons(e) {
   }
 }
 
+function addRepository() {
+  
+  // ensure user sees the columns which will need updating
+  document.getElementById("Name").removeAttribute("hidden");
+  document.getElementById("Site").removeAttribute("hidden");
+  document.getElementById("Path").removeAttribute("hidden");
+  
+  var nres = { Type:"repository", Enabled:"false", Name:"?", Site:"?", Path:"?", Status:"Off", Style:"red", Url:"?" };
+  var res = createRepository(nres);
+  
+  // scroll to the new repository and select and focus it
+  var tree = document.getElementById("repoListTree");
+  var index = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getIndexOfResource(res);
+  tree.view.selection.select(index);
+  tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(index);
+  tree.focus();
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 // Module Info routines
 ////////////////////////////////////////////////////////////////////////
 
+// Taken from dialogs/about.html
 function writeModuleInfos() {
   var mods = getSelectedResources(document.getElementById("moduleListTree"));
   if (!mods.length) return;
   
   var html = "";
   
-  var separator = "";
-  
   for (var m=0; m<mods.length; m++) {
     var modName = getResourceLiteral(MLDS, mods[m], "ModuleName");
   
-    html += separator;
-    separator = "<div id=\"separator\"></div>";
-    
     html += "<div class=\"module-detail cs-Program\">";
     
     // Heading and version
@@ -1352,7 +1457,7 @@ function writeModuleInfos() {
          
     // Conf contents
     html += "<div id=\"conf." + modName + "\" class=\"conf-info\" showInfo=\"false\" readonly=\"readonly\">";
-    html +=   "<a class=\"link\" href=\"javascript:toggleInfo('" + modName + "');\">";
+    html +=   "<a class=\"link\" href=\"javascript:frameElement.ownerDocument.defaultView.toggleInfo('" + modName + "', '" + getResourceLiteral(MLDS, mods[m], "Url") + "');\">";
     html +=     "<span class=\"more-label\">" + getUI("more.label") + "</span>";
     html +=     "<span class=\"less-label\">" + getUI("less.label") + "</span>";
     html +=   "</a>";
@@ -1368,16 +1473,24 @@ function getUI(id) {
   return getDataUI(id);
 }
 
-function toggleInfo(mod) {
+function toggleInfo(mod, url) {
     var doc = document.getElementById("infoBox").contentDocument;
     var elem = doc.getElementById("conf." + mod);
     var showInfo = elem.getAttribute("showInfo");
    
     if (showInfo == "false") {
       var confInfo = "-----";
-      //if (Tab[mod].conf) {
-      //  confInfo  = readFile(Tab[mod].conf);
-      //}
+      var confDir = getTempDirOfUrl(url);
+      confDir.append("mods.d");
+      var confFile = confDir.clone();
+      confFile.append(mod.toLowerCase() + ".conf");
+      if (!confFile.exists()) {
+        confFile = confDir.clone();
+        confFile.append(mod + ".conf");
+      }
+
+      confInfo  = readFile(confFile);
+
       elem.getElementsByTagName("textarea")[0].value = confInfo;
     }
 
@@ -1392,17 +1505,33 @@ function toggleInfo(mod) {
 
 function onUnload() {
   
-  // abort any downloads still in progress
+  // disconnect each data source
+  treeDataSource([true, true, true], ["repoListTree", "languageListTree", "moduleListTree"]);
+  
+  // abort any downloads which are still in progress
   for (var i=0; i<DownloadsInProgress.length; i++) {
     DownloadsInProgress[i].cancelSave();
   }
 
-  // remove all temporary files (but install files will remain)
+  // remove all temporary files (but install temp files will remain)
   if (TEMP.exists()) TEMP.remove(true);
+  
+  // delete all module and language data (since it's reloaded anew every time)
+  var ress = MLDS.GetAllResources();
+  while (ress.hasMoreElements()) {
+    var res = ress.getNext();
+    var arcsOut = MLDS.ArcLabelsOut(res);
+    while (arcsOut.hasMoreElements()) {
+      var arcOut = arcsOut.getNext();
+      var targs = MLDS.GetTargets(res, arcOut, true);
+      while (targs.hasMoreElements()) {
+        MLDS.Unassert(res, arcOut, targs.getNext());
+      }
+    }
+  }
   
   dbFlush(RPDS);
   dbFlush(MLDS);
-  
 }
 
 ////////////////////////////////////////////////////////////////////////

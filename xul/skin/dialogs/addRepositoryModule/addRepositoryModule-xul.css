@@ -9,41 +9,27 @@
 #Status, #ModStatus {
   text-align:center;
 }
-#repoListTree treechildren::-moz-tree-cell(red) {
+
+#repoListTree treechildren::-moz-tree-cell(red),
+#moduleListTree treechildren::-moz-tree-cell(red) {
   background:rgb(255,200,200);
 }
-#repoListTree treechildren::-moz-tree-cell(yellow) {
+#repoListTree treechildren::-moz-tree-cell(yellow),
+#moduleListTree treechildren::-moz-tree-cell(yellow) {
   background:rgb(255,255,200);
 }
-#repoListTree treechildren::-moz-tree-cell(green) {
+#repoListTree treechildren::-moz-tree-cell(green),
+#moduleListTree treechildren::-moz-tree-cell(green) {
   background:rgb(200,255,200);
 }
 
-#moduleDialog[showModuleInfo="false"] .moduleInfo,
-#moduleDialog[showModuleInfo="true"] .moduleList {
-  display:none;
-}
-
-#showInfo,
-#moduleDialog[showModuleInfo="true"] #showModules {
-  display:block;
-}
-#showModules,
-#moduleDialog[showModuleInfo="true"] #showInfo {
+#moduleDialog[showModuleInfo="false"] #showModulesButton,
+#moduleDialog[showModuleInfo="true"] #showInfoButton {
   display:none;
 }
 
 #languageListTree {
   width:160px;
-}
-#moduleListTree treechildren::-moz-tree-cell(red) {
-  background:rgb(255,200,200);
-}
-#moduleListTree treechildren::-moz-tree-cell(yellow) {
-  background:rgb(255,255,200);
-}
-#moduleListTree treechildren::-moz-tree-cell(green) {
-  background:rgb(200,255,200);
 }
 
 #infoBox {
@@ -51,6 +37,6 @@
   height:100%;
 }
 
-#windowControl {
+#windowButtons {
   margin-top:20px;
 }

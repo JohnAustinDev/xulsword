@@ -357,7 +357,10 @@ GenBookTexts = {
     var key = elem.database.GetTarget(selRes, BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"), true);
     key = key.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
     
-    var mod = key.match(this.RDFMODULE)[1];
+    var mod = key.match(this.RDFMODULE);
+    if (!mod) return;
+    mod = mod[1];
+    
     key = key.replace(this.RDFMODULE, "");
     
     this.selectionToGenBooks(MainWindow.ViewPort.ownerDocument.defaultView, mod, key);
