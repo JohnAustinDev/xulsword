@@ -94,7 +94,6 @@ function onLoad() {
   RP.XulswordRepoListID = RP.ROOT + "/xulswordRepoList";
   RP.LanguageListID     = RP.ROOT + "/LanguageList";
   RP.ModuleListID       = RP.ROOT + "/ModuleList";
-  RP.IBTRepoID          = RP.ROOT + "/IBT";
   RP.CrossWireRepoID    = RP.ROOT + "/CrossWire";
   
   RP.Enabled    = RDF.GetResource(RP.REPOSITORY+"Enabled");
@@ -107,38 +106,42 @@ function onLoad() {
   RP.ModuleType = RDF.GetResource(RP.REPOSITORY+"ModuleType");
   RP.Show       = RDF.GetResource(RP.REPOSITORY+"Show");
   RP.Type       = RDF.GetResource(RP.REPOSITORY+"Type");
+  RP.ModuleUrl  = RDF.GetResource(RP.REPOSITORY+"ModuleUrl");
   
-  RP.TypeModule       = RDF.GetLiteral("module");
+  RP.XSM_ModuleType   = RDF.GetLiteral("xsm_module");
+  RP.SWORD_ModuleType = RDF.GetLiteral("sword_module");
   RP.LanguageListType = RDF.GetLiteral("language");
   RP.RepositoryType   = RDF.GetLiteral("repository");
+  
   RP.True             = RDF.GetLiteral("true");
   RP.False            = RDF.GetLiteral("false");
   
-  // initialize RPDS Data Source
+  // initialize RPDS Data Source with CrossWire info...
   var data = "\
 <?xml version=\"1.0\"?>" + NEWLINE + "\
 <RDF:RDF xmlns:REPOSITORY=\"" + RP.REPOSITORY + "\"" + NEWLINE + "\
          xmlns:NC=\"http://home.netscape.com/NC-rdf#\"" + NEWLINE + "\
          xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">" + NEWLINE + "\
+  <RDF:Description RDF:about=\"http://www.xulsword.com/repository/CrossWire\"" + NEWLINE + "\
+           REPOSITORY:Type=\"repository\"" + NEWLINE + "\
+           REPOSITORY:Name=\"CrossWire\"" + NEWLINE + "\
+           REPOSITORY:Site=\"ftp.crosswire.org\"" + NEWLINE + "\
+           REPOSITORY:Path=\"/pub/sword/raw\"" + NEWLINE + "\
+           REPOSITORY:Url=\"ftp://ftp.crosswire.org/pub/sword/raw\"" + NEWLINE + "\
+           REPOSITORY:Enabled=\"false\" />" + NEWLINE + "\
   <RDF:Description RDF:about=\"" + RP.masterRepoListID + "\"" + NEWLINE + "\
                    REPOSITORY:Type=\"masterRepoList\"" + NEWLINE + "\
                    REPOSITORY:Name=\"CrossWire\"" + NEWLINE + "\
                    REPOSITORY:Site=\"ftp.crosswire.org\"" + NEWLINE + "\
                    REPOSITORY:Path=\"/pub/sword/masterRepoList.conf\" />" + NEWLINE + "\
   <RDF:Seq RDF:about=\"" + RP.XulswordRepoListID + "\">" + NEWLINE + "\
+    <RDF:li RDF:resource=\"http://www.xulsword.com/repository/CrossWire\"/>" + NEWLINE + "\
   </RDF:Seq>" + NEWLINE + "\
 </RDF:RDF>";
   RPDS = initDataSource(data, RepositoryRDF);
-  var nres = { Type:"repository", Enabled:"true", Name:"IBT", 
-      Site:"ftp.ibt.org.ru", Path:"/pub/modsword/raw", Status:"0%", 
-      Style:"red", Url:"ftp://ftp.ibt.org.ru/pub/modsword/raw" };
-  if (!existsRepository(nres)) createRepository(nres, RP.IBTRepoID);
-  var nres = { Type:"repository", Enabled:"true", Name:"CrossWire", 
-      Site:"ftp.crosswire.org", Path:"/pub/sword/raw", Status:"0%", 
-      Style:"red", Url:"ftp://ftp.crosswire.org/pub/sword/raw" };
-  if (!existsRepository(nres)) createRepository(nres, RP.CrossWireRepoID);
-  
-  // initialize MLDS Data Source
+
+  // initialize MLDS Data Source from scratch each time (all this data is  
+  // wiped when the window is closed)
   data = "\
 <?xml version=\"1.0\"?>" + NEWLINE + "\
 <RDF:RDF xmlns:REPOSITORY=\"" + RP.REPOSITORY + "\"" + NEWLINE + "\
@@ -151,6 +154,48 @@ function onLoad() {
   
   if (!RPDS || !MLDS) {
     throw("ERROR: Failed to load a Data Source!");
+  }
+  
+  // look for a default data source, load it, and augment other data sources
+  var defDS = null;
+  var defRDF = getSpecialDirectory("DefRt");
+  defRDF.append(RepositoryRDF);
+  if (defRDF.exists()) {
+
+    defDS = RDF.GetDataSourceBlocking(encodeURI("File://" + defRDF.path.replace("\\", "/", "g")));
+    
+    if (defDS) {
+      // add any repositories
+      RDFC.Init(defDS, RDF.GetResource(RP.XulswordRepoListID));
+      var repos = RDFC.GetElements();
+      while (repos.hasMoreElements()) {
+        var repo = repos.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
+        var rinfo = {};
+        var arcsOut = defDS.ArcLabelsOut(repo);
+        while (arcsOut.hasMoreElements()) {
+          var arc = arcsOut.getNext();
+          var attrib = arc.ValueUTF8.replace(RP.REPOSITORY, "");
+          var val = getResourceLiteral(defDS, repo, attrib);
+          rinfo[attrib] = val;
+        }
+        if (!existsRepository(rinfo)) createRepository(rinfo);
+      }
+      // add any modules
+      RDFC.Init(defDS, RDF.GetResource(RP.ModuleListID));
+      var mods = RDFC.GetElements();
+      while (mods.hasMoreElements()) {
+        var mod = mods.getNext();
+        RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+        RDFC.AppendElement(mod);
+        arcsOut = defDS.ArcLabelsOut(mod);
+        while (arcsOut.hasMoreElements()) {
+          arc = arcsOut.getNext();
+          var targ = defDS.GetTarget(mod, arc, true);
+          MLDS.Assert(mod, arc, targ, true);
+        }
+      }
+    }
+    
   }
   
   // init the status of all database repositories to 0%
@@ -205,10 +250,7 @@ function onLoad() {
     this.removeAttribute("editing");
   };
 
-  if (getResourceLiteral(RPDS, RDF.GetResource(RP.CrossWireRepoID), "Enabled") == "true") {
-    loadMasterRepoList(); // will call masterRepoListLoaded() when finished
-  }
-  else masterRepoListLoaded();
+  loadMasterRepoList(); // will call masterRepoListLoaded() when finished
 }
 
 function masterRepoListLoaded() {
@@ -269,7 +311,7 @@ function checkAllRepositoriesLoaded() {
   
   treeDataSource([false, false], ["languageListTree", "moduleListTree"]);
   
-  selectDefaultLanguage();
+  selectLanguage(getPrefOrCreate("addRepositoryModuleLang", "Char", getLocale()));
   
   // now we're done with onLoad and we turn things over to the user!
   return;
@@ -355,6 +397,14 @@ function loadMasterRepoList() {
       
       // it's all done!!
       removeProgress(this.myPersist);
+      if (getResourceLiteral(RPDS, this.crosswire, "Enabled") == "true") {
+        setResourceAttribute(RPDS, this.crosswire, "Status", "5%");
+        setResourceAttribute(RPDS, this.crosswire, "Style", "yellow");
+      }
+      else {
+        setResourceAttribute(RPDS, this.crosswire, "Status", "Off");
+        setResourceAttribute(RPDS, this.crosswire, "Style", "red");
+      }
       readMasterRepoList(this.myDestFile);
     },
     
@@ -485,8 +535,8 @@ function applyRepositoryManifest(resource, manifest) {
   
   var confs = tmpDir.directoryEntries;
   while (confs.hasMoreElements()) {
-    var file = confs.getNext();
-    if (!(/\.conf$/).test(file.QueryInterface(Components.interfaces.nsILocalFile).leafName)) continue; 
+    var file = confs.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+    if (!(/\.conf$/).test(file.leafName)) continue; 
     
     // read the extracted file
     var filedata = readFile(file);
@@ -497,9 +547,31 @@ function applyRepositoryManifest(resource, manifest) {
     RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
     RDFC.AppendElement(newModRes);
     
+    var type, confInfo, confDefault;
+    var datapath = getConfEntry(filedata, "DataPath");
+    var is_XSM_module = ((/\.(zip|xsm)$/).test(datapath) || (/\/audio\.htm(\?|$)/).test(datapath));
+    if (is_XSM_module) {
+      MLDS.Assert(newModRes, RP.Type, RP.XSM_ModuleType, true);
+    }
+    else {
+      MLDS.Assert(newModRes, RP.Type, RP.SWORD_ModuleType, true);
+    }
+    
+    // add ModuleType
+    var moduleType = getConfEntry(filedata, "ModDrv");
+    if ((/^(RawText|zText)$/i).test(moduleType)) moduleType = "Bible";
+    else if ((/^(RawCom|RawCom4|zCom)$/i).test(moduleType)) moduleType = "Commentary";
+    else if ((/^(RawLD|RawLD4|zLD)$/i).test(moduleType)) moduleType = "Dictionary";
+    else if ((/^(RawGenBook)$/i).test(moduleType)) moduleType = "General Book";
+    else if ((/^(RawFiles)$/i).test(moduleType)) moduleType = "Simple Text";
+    else if ((/^(HREFCom)$/i).test(moduleType)) moduleType = "URL";
+    else if ((/^(audio)$/i).test(moduleType)) moduleType = "Audio";
+    if (is_XSM_module && moduleType != "Audio") {moduleType = "XSM (" + moduleType + ")";}
+    MLDS.Assert(newModRes, RP.ModuleType, RDF.GetLiteral(moduleType), true);
+    
     // write the new .conf info to new module resource
     // RDF-Attribute:"Conf-Entry"
-    var confInfo = {
+    confInfo = {
       ModuleName:"ModuleName",
       DataPath:"DataPath",
       Version:"Version",
@@ -517,10 +589,17 @@ function applyRepositoryManifest(resource, manifest) {
       CopyrightContactEmail:"CopyrightContactEmail",
       Copyright:"Copyright",
       CopyrightDate:"CopyrightDate",
-      TextSource:"TextSource"
+      TextSource:"TextSource",
+      
+      NameXSM:"NameXSM",
+      SwordModules:"SwordModules",
+      SwordVersions:"SwordVersions",
+      HasXulswordUI:"UI",
+      HasFont:"Font",
+      HasXulswordBookmark:"Bookmark",
     };
     
-    var confDefault = {
+    confDefault = {
       ModuleName:"?",
       DataPath:"?",
       Version:"?",
@@ -538,8 +617,15 @@ function applyRepositoryManifest(resource, manifest) {
       CopyrightContactEmail:"",
       Copyright:"",
       CopyrightDate:"",
-      TextSource:""    
-    }
+      TextSource:"",
+      
+      NameXSM:"",
+      SwordModules:"",
+      SwordVersions:"",
+      HasXulswordUI:"",
+      HasFont:"",
+      HasXulswordBookmark:"",
+    };
     
     for (var p in confInfo) {
       var confres = getConfEntry(filedata, confInfo[p]);
@@ -547,26 +633,22 @@ function applyRepositoryManifest(resource, manifest) {
       MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + p), RDF.GetLiteral(confres), true);
     }
     
-    // add Type
-    MLDS.Assert(newModRes, RP.Type, RP.TypeModule, true);
-    // add ModuleType
-    var moduleType = getConfEntry(filedata, "ModDrv");
-    if ((/^(RawText|zText)$/i).test(moduleType)) moduleType = "Bible";
-    else if ((/^(RawCom|RawCom4|zCom)$/i).test(moduleType)) moduleType = "Commentary";
-    else if ((/^(RawLD|RawLD4|zLD)$/i).test(moduleType)) moduleType = "Dictionary";
-    else if ((/^(RawGenBook)$/i).test(moduleType)) moduleType = "General Book";
-    else if ((/^(RawFiles)$/i).test(moduleType)) moduleType = "Simple Text";
-    else if ((/^(HREFCom)$/i).test(moduleType)) moduleType = "URL";
-    else {jsdump("ERROR: Unrecognized module ModDrv \"" + moduleType + "\"");}
-    MLDS.Assert(newModRes, RP.ModuleType, RDF.GetLiteral(moduleType), true);
-    // add Url
+    // add .conf file name
+    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "ConfFileName"), RDF.GetLiteral(file.leafName), true);
+    // add Url (of repository)
     MLDS.Assert(newModRes, RP.Url, RPDS.GetTarget(resource, RP.Url, true), true);
     // add LangReadable
     var langReadable = getLangReadable(getConfEntry(filedata, "Lang"));
+    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langReadable), true);
     // add Status
     MLDS.Assert(newModRes, RP.Status, RDF.GetLiteral("0%"), true);
+    // ModuleUrl
+    var moduleUrl = getResourceLiteral(MLDS, newModRes, "DataPath");
+    if ((/^(\.|\/)/).test(moduleUrl)) {
+      moduleUrl = getResourceLiteral(MLDS, newModRes, "Url") + "/" + moduleUrl.replace(/^\.*\//, "");
+    }
+    MLDS.Assert(newModRes, RP.ModuleUrl, RDF.GetLiteral(moduleUrl), true);
 
-    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langReadable), true);
   }
 }
 
@@ -659,7 +741,6 @@ function getModContentUrls(modResource, modPath, data) {
 }
 
 function downloadModule(modResource, modPath, modDest, modContentData) {
-  
   // don't fetch lucene directory or its contents
   for (var i=0; i<modContentData.length; i++) {
     if ((/\/lucene(\/|$)/i).test(modContentData[i].url)) {
@@ -667,16 +748,20 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
       i--;
     }
   }
+  
+  var is_XSM_module = (MLDS.GetTarget(modResource, RP.Type, true) == RP.XSM_ModuleType);
     
   var repoUrl = getResourceLiteral(MLDS, modResource, "Url");
   
   var moduleDir = modDest.clone();
-  var p = modPath.split("/");
+  var p = (modPath ? modPath.split("/"):null);
 
-  for (var i=0; i<p.length; i++) {
-    if (!p[i]) continue; // case of dir//subdir
-    moduleDir.append(p[i]);
-    moduleDir.create(moduleDir.DIRECTORY_TYPE, DPERM);
+  if (!is_XSM_module) {
+    for (var i=0; p && i<p.length; i++) {
+      if (!p[i]) continue; // case of dir//subdir
+      moduleDir.append(p[i]);
+      moduleDir.create(moduleDir.DIRECTORY_TYPE, DPERM);
+    }
   }
     
   var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService); 
@@ -684,25 +769,17 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
   var total = 0;
   for (var c=0; c<modContentData.length; c++) {total += Number(modContentData[c].size);}
   
-  // the .conf file was already downloaded during repository loading
-  var modConf = modDest.clone();
-  modConf.append("mods.d");
-  modConf.append(getResourceLiteral(MLDS, modResource, "ModuleName").toLowerCase() + ".conf");
-  if (!modConf.exists()) {
-    modConf = modDest.clone();
+  var downloadedFiles = [];
+  if (!is_XSM_module) {
+    // the .conf file was already downloaded during repository loading so just copy it
+    var modConf = modDest.clone(); 
     modConf.append("mods.d");
-    modConf.append(getResourceLiteral(MLDS, modResource, "ModuleName") + ".conf");
-    if (!modConf.exists()) {
-      jsdump("ERROR: Can't install module without finding its .conf file");
-      setResourceAttribute(RPDS, modResource, "Status", "Error");
-      setResourceAttribute(RPDS, modResource, "Style", "red");
-      ModulesLoading--;
-      return;
-    }
+    modConf.append(getResourceLiteral(MLDS, modResource, "ConfFileName"));
+    downloadedFiles.push(modConf);
   }
 
   // this data object is shared by all this module's downloads
-  var data = { total:total, current:0, count:1, status:0, downloadedFiles:[modConf] }; 
+  var data = { total:total, current:0, count:1, status:0, downloadedFiles:downloadedFiles }; 
   
   // progress has already been started when the module contents were read
   // so add new progress to this starting value
@@ -714,19 +791,39 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
 
     var destFile = moduleDir.clone();
 
-    var sub = modContentData[c].url.replace(repoUrl + "/" + modPath + "/", "");
-    sub = sub.split("/");
-    for (var sd=0; sd<sub.length-1; sd++) {
-      if (!sub[sd]) continue; // handle dir//subdir
-      destFile.append(sub[sd]);
-      if (!destFile.exists()) destFile.create(moduleDir.DIRECTORY_TYPE, DPERM);
+    var statusArray = [];
+    if (is_XSM_module) {
+      var myKey = getResourceLiteral(MLDS, modResource, "ModuleUrl");
+      RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+      var elems = RDFC.GetElements();
+      while (elems.hasMoreElements()) {
+        var elem = elems.getNext();
+        var key = getResourceLiteral(MLDS, elem, "ModuleUrl");
+        if (key == myKey) statusArray.push(elem);
+      }
+      
+      var destFileName = modContentData[c].url.replace(/^.*?([^\/]+)$/, "$1");
+      if (!(/\.(zip|xsm)$/).test(destFileName)) destFileName += ".xsm";
+      destFileName = destFileName.replace(/[\&=]+/g, "");
+      destFile.append(destFileName);
     }
-    destFile.append(sub[sub.length-1]);
+    else {
+      statusArray.push(modResource);
+      var sub = modContentData[c].url.replace(repoUrl + "/" + modPath + "/", "");
+      sub = sub.split("/");
+      for (var sd=0; sd<sub.length-1; sd++) {
+        if (!sub[sd]) continue; // handle dir//subdir
+        destFile.append(sub[sd]);
+        if (!destFile.exists()) destFile.create(moduleDir.DIRECTORY_TYPE, DPERM);
+      }
+      destFile.append(sub[sub.length-1]);
+    }
 
     var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
     persist.progressListener = 
     {
       myResource:modResource,
+      myStatusArray:statusArray,
       myURL:modContentData[c].url,
       myDestFile:destFile,
       mySize:Number(modContentData[c].size),
@@ -740,8 +837,10 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
         this.myLast = this.mySize*aCurSelfProgress/aMaxSelfProgress;
         
         var perc = this.startPerc + Math.round((100-this.startPerc)*(this.data.current/this.data.total));
-        setResourceAttribute(MLDS, this.myResource, "Status", perc + "%");
-        setResourceAttribute(MLDS, this.myResource, "Style", "yellow");
+        for (var s=0; s<this.myStatusArray.length; s++) {
+          setResourceAttribute(MLDS, this.myStatusArray[s], "Status", perc + "%");
+          setResourceAttribute(MLDS, this.myStatusArray[s], "Style", "yellow");
+        }
       },
       
       onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
@@ -756,42 +855,55 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
         
         if (this.data.count == 0) {
           
+          var is_XSM_module = (MLDS.GetTarget(this.myResource, RP.Type, true) == RP.XSM_ModuleType);
+          
           // then entire module is also complete...
           if (!this.data.status) {
-            setResourceAttribute(MLDS, this.myResource, "Status", "100%");
-            setResourceAttribute(MLDS, this.myResource, "Style", "green");
+            for (var s=0; s<this.myStatusArray.length; s++) {
+              setResourceAttribute(MLDS, this.myStatusArray[s], "Status", "100%");
+              setResourceAttribute(MLDS, this.myStatusArray[s], "Style", "green");
+            }
             
             // copy the completed module to our install directory
-            var modName = getResourceLiteral(MLDS, this.myResource, "ModuleName");
-            var zipFile = TEMP_Install.clone();
-            zipFile.append(modName + ".zip");
-            
-            var zipRoot = TEMP.clone();
-            zipRoot.append("downloads");
-            zipRoot.append(modName);
-            
-            var zipWriter = Components.classes["@mozilla.org/zipwriter;1"].createInstance(Components.interfaces.nsIZipWriter);
-            zipWriter.open(zipFile, 0x02 | 0x08 | 0x20); // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
-            for (var i=0; i<this.data.downloadedFiles.length; i++) {
-              var zipEntry = this.data.downloadedFiles[i].path.replace(zipRoot.path + "/", "");
-              zipWriter.addEntryFile(zipEntry, zipWriter.COMPRESSION_NONE, this.data.downloadedFiles[i], false);
+            if (is_XSM_module) {
+jsdump("Done XSM, copying \"" + this.data.downloadedFiles[0].path + "\" to \"" + TEMP_Install.clone().path + "\"");
+              this.data.downloadedFiles[0].copyTo(TEMP_Install.clone(), null);
             }
-            zipWriter.close();
+            else {
+              var modName = getResourceLiteral(MLDS, this.myResource, "ModuleName");
+              var zipFile = TEMP_Install.clone();
+              zipFile.append(modName + ".zip");
+              
+              var zipRoot = getModuleDownloadDirectory(this.myResource, is_XSM_module);
+              
+              var zipWriter = Components.classes["@mozilla.org/zipwriter;1"].createInstance(Components.interfaces.nsIZipWriter);
+              zipWriter.open(zipFile, 0x02 | 0x08 | 0x20); // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
+              for (var i=0; i<this.data.downloadedFiles.length; i++) {
+                var zipEntry = this.data.downloadedFiles[i].path.replace(zipRoot.path + "/", "");
+                zipWriter.addEntryFile(zipEntry, zipWriter.COMPRESSION_NONE, this.data.downloadedFiles[i], false);
+              }
+              zipWriter.close();
+            }
             
           }
           else {
-            setResourceAttribute(MLDS, this.myResource, "Status", "Error");
-            setResourceAttribute(MLDS, this.myResource, "Style", "red");
+            for (var s=0; s<this.myStatusArray.length; s++) {
+              setResourceAttribute(MLDS, this.myStatusArray[s], "Status", "Error");
+              setResourceAttribute(MLDS, this.myStatusArray[s], "Style", "red");
+            }
           }
           
+          getModuleDownloadDirectory(this.myResource, is_XSM_module).remove(true);
           ModulesLoading--;
         
         }
       },
       
       onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
-        setResourceAttribute(RPDS, this.myResource, "Status", "Error");
-        setResourceAttribute(RPDS, this.myResource, "Style", "red");
+        for (var s=0; s<this.myStatusArray.length; s++) {
+          setResourceAttribute(RPDS, this.myStatusArray[s], "Status", "Error");
+          setResourceAttribute(RPDS, this.myStatusArray[s], "Style", "red");
+        }
         if (aMessage) jsdump(this.myURL + ": " + aMessage);
       },
       
@@ -799,7 +911,6 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
       
       onSecurityChange: function(aWebProgress, aRequest, aState) {}
     };
-      
     persist.saveURI(ios.newURI(modContentData[c].url, null, null), null, null, null, null, destFile, null);
     DownloadsInProgress.push(persist);
     
@@ -1086,13 +1197,14 @@ function getConfEntry(filedata, param) {
   return retval;
 }
 
-function getSelectedResources(tree) {
+function getSelectedResources(tree, noDuplicateXSMs) {
   var resourceArray = [];
   
   var start = new Object();
   var end = new Object();
   var numRanges = tree.view.selection.getRangeCount();
-
+  
+  var selInfo = [];
   for (var i=0; i<numRanges; i++) {
     tree.view.selection.getRangeAt(i, start, end);
     for (var v=start.value; v<=end.value; v++) {
@@ -1100,13 +1212,33 @@ function getSelectedResources(tree) {
         var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(v);
       }
       catch (er) {continue;}
-      resourceArray.push(res);
+      var is_XSM_module = (MLDS.GetTarget(res, RP.Type, true) == RP.XSM_ModuleType);
+      selInfo.push( 
+        { resource:res, 
+          isXSM:is_XSM_module, 
+          xsmUrl:(is_XSM_module ? getResourceLiteral(MLDS, res, "ModuleUrl"):"")
+        }
+      );
     }
   }
   
+  for (var i=0; i<selInfo.length; i++) {
+    if (!selInfo[i].resource) continue;
+    if (noDuplicateXSMs && selInfo[i].isXSM) {
+      for (var j=i+1; j<selInfo.length; j++) {
+        if (!selInfo[j].resource) continue;
+        if (selInfo[j].xsmUrl == selInfo[i].xsmUrl) {
+          selInfo[j].resource = null;
+        }
+      }
+    }
+    
+    resourceArray.push(selInfo[i].resource);
+  }
+
   return resourceArray;
 }
-
+        
 function dbFlush(aDS) {
   // make it permanent
   aDS = aDS.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource);
@@ -1126,12 +1258,12 @@ function removeProgress(progress) {
 // Search the install TEMP directory for modules which can be installed
 function getInstallableModules() {
   var installDir = TEMP_Install.clone();
-  var zips = installDir.directoryEntries;
+  var files = installDir.directoryEntries;
   var installableModules = [];
-  while (zips.hasMoreElements()) {
-    var zip = zips.getNext().QueryInterface(Components.interfaces.nsILocalFile);
-    if (zip.isDirectory() || !(/\.zip$/).test(zip.leafName)) continue;
-    installableModules.push(zip);
+  while (files.hasMoreElements()) {
+    var file = files.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+    if (file.isDirectory() || !(/\.(zip|xsm)$/).test(file.leafName)) continue;
+    installableModules.push(file);
   }
   return installableModules;
 }
@@ -1149,26 +1281,48 @@ function getLangReadable(lang) {
   return langReadable;
 }
 
-function selectDefaultLanguage() {
+function selectLanguage(language) {
   var tree = document.getElementById("languageListTree");
   
-  var progLang = getLocale();
-  if (!progLang) progLang = DEFAULTLOCALE;
-  
-  RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
   var defRes = null;
-  var langs = RDFC.GetElements();
-  while (langs.hasMoreElements()) {
-    var lang = langs.getNext();
-    var lcode = getResourceLiteral(MLDS, lang, "Lang");
-    if (!lcode) continue;
-    if (lcode == progLang) {
-      defRes = lang;
-      break;
+  
+  // try selecting language
+  if (language) {
+    RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
+    var defRes = null;
+    var langs = RDFC.GetElements();
+    while (langs.hasMoreElements()) {
+      var lang = langs.getNext();
+      var lcode = getResourceLiteral(MLDS, lang, "Lang");
+      if (!lcode) continue;
+      if (lcode == language) {
+        defRes = lang;
+        break;
+      }
+      if (lcode.replace(/\-.*$/, "") == language.replace(/\-.*$/, "")) defRes = lang;
     }
-    if (lcode.replace(/\-.*$/, "") == progLang.replace(/\-.*$/, "")) defRes = lang;
   }
   
+  // otherwise select program language
+  if (!defRes) {
+    var progLang = getLocale();
+    if (!progLang) progLang = DEFAULTLOCALE;
+    
+    RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
+    var langs = RDFC.GetElements();
+    while (langs.hasMoreElements()) {
+      var lang = langs.getNext();
+      var lcode = getResourceLiteral(MLDS, lang, "Lang");
+      if (!lcode) continue;
+      if (lcode == progLang) {
+        defRes = lang;
+        break;
+      }
+      if (lcode.replace(/\-.*$/, "") == progLang.replace(/\-.*$/, "")) defRes = lang;
+    }
+  }
+  
+  // otherwise select first language on list
   var index = 0;
   if (defRes) {
     index = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getIndexOfResource(defRes);
@@ -1176,9 +1330,18 @@ function selectDefaultLanguage() {
   }
   
   tree.view.selection.select(index);
-  tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).scrollToRow(index);
+  tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(index);
 }
 
+function getModuleDownloadDirectory(modResource, is_XSM_module) {
+  var dest = TEMP.clone();
+  dest.append("downloads");
+  if (!dest.exists()) dest.create(dest.DIRECTORY_TYPE, DPERM);
+  var modName = (is_XSM_module ? getResourceLiteral(MLDS, modResource, "NameXSM"):getResourceLiteral(MLDS, modResource, "ModuleName"));
+  dest.append(modName);
+  
+  return dest;
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Mouse and Selection functions
@@ -1196,7 +1359,7 @@ function deleteSelectedRepositories() {
   
   treeDataSource([false, false], ["languageListTree", "moduleListTree"]);
   
-  selectDefaultLanguage();
+  selectLanguage(getPrefOrCreate("addRepositoryModuleLang", "Char", getLocale()));
 }
 
 function toggleReposOnOff(tree, e) {
@@ -1239,7 +1402,10 @@ function toggleReposOnOff(tree, e) {
 }
 
 function changeModuleListLanguage(lang) {
+  treeDataSource([true], ["moduleListTree"]);
   var tree = document.getElementById("languageListTree");
+  
+  if (lang == "all") {tree.view.selection.clearSelection();}
   
   if (!lang) {
     var selIndex = tree.view.selection.currentIndex;
@@ -1256,16 +1422,55 @@ function changeModuleListLanguage(lang) {
   
   lang = lang.replace(/\-.*$/, ""); // match all root language modules
   
+  if (lang != "none") prefs.setCharPref("addRepositoryModuleLang", lang);
+  
   // setting the rule's REPOSITORY:Lang attribute filters okay, but once it's  
   // removed (to show all) the tree is never rebuilt if it is re-added
+  var inxsm = [];
+  var swordShowing = {};
   RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
   var mods = RDFC.GetElements();
   while (mods.hasMoreElements()) {
+    
     var mod = mods.getNext();
     var mlang = getResourceLiteral(MLDS, mod, "Lang").replace(/\-.*$/, "");
     var show = (lang == mlang || lang == "all" ? "true":"false");
+    
     setResourceAttribute(MLDS, mod, "Show", show);
+    
+    if (show == "true") {
+      var is_XSM_module = (MLDS.GetTarget(mod, RP.Type, true) == RP.XSM_ModuleType);
+      if (is_XSM_module) {
+        mname = getResourceLiteral(MLDS, mod, "SwordModules").split(";");
+        mvers = getResourceLiteral(MLDS, mod, "SwordVersions").split(";");
+        for (var i=0; i<mname.length; i++) {
+          key = mname[i] + mvers[i];
+          key = key.replace(/\./g, "_");
+          inxsm.push(key);
+        }
+      }
+      else {
+        var mname = getResourceLiteral(MLDS, mod, "ModuleName");
+        var mvers = getResourceLiteral(MLDS, mod, "Version");
+        var key = mname + mvers;
+        key = key.replace(/\./g, "_");
+        if (!swordShowing[key]) swordShowing[key] = [mod];
+        else swordShowing[key].push(mod);
+      }
+    }
+  
+    // if a .xsm module is showing, hide the SWORD modules
+    // which are contained within it.
+    for (var i=0; i<inxsm.length; i++) {
+      var key = inxsm[i];
+      for (var m=0; swordShowing[key] && m<swordShowing[key].length; m++) {
+        setResourceAttribute(MLDS, swordShowing[key][m], "Show", "false");
+      }
+    }
+  
   }
+  
+  treeDataSource([false], ["moduleListTree"]);
 }
 
 function toggleModuleBox() {
@@ -1278,7 +1483,7 @@ function toggleModuleBox() {
 }
 
 function initiateModuleDownloads() {
-  var mods = getSelectedResources(document.getElementById("moduleListTree"));
+  var mods = getSelectedResources(document.getElementById("moduleListTree"), true);
   if (!mods.length) return;
   
   if (document.getElementById("moduleDialog").getAttribute("showModuleInfo") == "true")
@@ -1290,56 +1495,78 @@ function initiateModuleDownloads() {
   // fetch files into separate module directories so that in the end, 
   // only complete downloads will be installed.
   for (var m=0; m<mods.length; m++) {
-    
-    setResourceAttribute(MLDS, mods[m], "Status", "0%");
-    setResourceAttribute(MLDS, mods[m], "Style", "yellow");
+    var is_XSM_module = (MLDS.GetTarget(mods[m], RP.Type, true) == RP.XSM_ModuleType);
     
     // all module downloads will go under "downloads/modName"
-    var dest = TEMP.clone();
-    dest.append("downloads");
-    if (!dest.exists()) dest.create(dest.DIRECTORY_TYPE, DPERM);
-    var modName = getResourceLiteral(MLDS, mods[m], "ModuleName");
-    dest.append(modName);
+    // this directory will be deleted once download is copied away
+    // don't allow another download until this one is done
+    var dest = getModuleDownloadDirectory(mods[m], is_XSM_module);
     
     // start with a clean module directory each time
-    if (dest.exists()) dest.remove(true);
+    if (dest.exists()) {
+      ModulesLoading--;
+      continue;
+    }
     dest.create(dest.DIRECTORY_TYPE, DPERM);
     
-    // first, copy .conf file from local dir to "downloads/modName/mods.d"
-    var modsdDir = dest.clone();
-    modsdDir.append("mods.d");
-    if (!modsdDir.exists()) modsdDir.create(modsdDir.DIRECTORY_TYPE, DPERM);
-    
-    var repoUrl = getResourceLiteral(MLDS, mods[m], "Url");
-    var confSource = getTempDirOfUrl(repoUrl);
-    confSource.append("mods.d");
-    confSource.append(modName.toLowerCase() + ".conf");
-    if (!confSource.exists()) {
-      // try regular case
-      confSource = getTempDirOfUrl(repoUrl);
-      confSource.append("mods.d");
-      confSource.append(modName + ".conf");
-      if (!confSource.exists()) {
-        setResourceAttribute(MLDS, mods[m], "Status", "Error");
-        setResourceAttribute(MLDS, mods[m], "Style", "red");
-        jsdump("ERROR: Conf file doesn't exist \"" + confSource.path + "\".");
-        continue;
+    if (is_XSM_module) {
+      // install a .xsm module
+      var xsm_url = getResourceLiteral(MLDS, mods[m], "ModuleUrl");
+      if ((/\.(zip|xsm)$/).test(xsm_url)) {
+        downloadModule(mods[m], "", dest, 
+          [ { url:xsm_url, size:1 } ]
+        );
+      }
+      else {
+        // get audio book and chapters
+        var modConf = getTempDirOfUrl(getResourceLiteral(MLDS, mods[m], "Url"));
+        modConf.append("mods.d");
+        modConf.append(getResourceLiteral(MLDS, mods[m], "ConfFileName"));
+        var data = { ok:false, bk:null, ch:null, cl:null, audio:eval(getConfEntry(readFile(modConf), "AudioChapters")) };
+        var dlg = window.openDialog("chrome://xulsword/content/dialogs/addRepositoryModule/audioDialog.xul", "dlg", DLGSTD, data);
+        if (!data.ok || !data.bk || !data.ch || !data.cl) {
+          ModulesLoading--;
+          continue;
+        }
+        downloadModule(mods[m], "", dest, 
+            [{ url:xsm_url + "&bk=" + data.bk + "&ch=" + data.ch + "&cl=" + data.cl, size:1 }] );
       }
     }
-    confSource.copyTo(modsdDir, null);
+    else {
+      // install a SWORD module
     
-    // now copy the module contents from the Url to "downloads/modName/modules/..."
-    setResourceAttribute(MLDS, mods[m], "Status", "0%");
-    setResourceAttribute(MLDS, mods[m], "Style", "yellow");
-        
-    var mpath = getResourceLiteral(MLDS, mods[m], "DataPath");
-    mpath = mpath.replace(/^\.\//, "").replace(/[\\\/][^\\\/]*$/, "");
+      // first, copy .conf file from local dir to "downloads/modName/mods.d"
+      var modsdDir = dest.clone();
+      modsdDir.append("mods.d");
+      if (!modsdDir.exists()) modsdDir.create(modsdDir.DIRECTORY_TYPE, DPERM);
+      
+      var repoUrl = getResourceLiteral(MLDS, mods[m], "Url");
+      var confSource = getTempDirOfUrl(repoUrl);
+      confSource.append("mods.d");
+      confSource.append(getResourceLiteral(MLDS, mods[m], "ConfFileName"));
+      if (!confSource.exists()) {
+        jsdump("ERROR: Conf file doesn't exist \"" + confSource.path + "\".");
+        ModulesLoading--;
+        continue;
+      }
+      confSource.copyTo(modsdDir, null);
+      
+      // now copy the module contents from the Url to "downloads/modName/modules/..."
+      setResourceAttribute(MLDS, mods[m], "Status", "0%");
+      setResourceAttribute(MLDS, mods[m], "Style", "yellow");
+          
+      var mpath = getResourceLiteral(MLDS, mods[m], "DataPath");
+      mpath = mpath.replace(/^\.\//, "").replace(/[\\\/][^\\\/]*$/, "");
+      
+      setResourceAttribute(MLDS, mods[m], "Status", "0%");
+      setResourceAttribute(MLDS, mods[m], "Style", "yellow");
     
-    // getModContentUrls will asyncronously call downloadModule when all 
-    // module content files are known. Then checkAllModulesAreDownloaded 
-    // will finish up once all downloads have completed
-    var data = { repoUrl:repoUrl, mpath:mpath, dest:dest, count:1, modContentData:[] };
-    getModContentUrls(mods[m], mpath, data); 
+      // getModContentUrls will asyncronously call downloadModule when all 
+      // module content files are known. Then checkAllModulesAreDownloaded 
+      // will finish up once all downloads have completed
+      var data = { repoUrl:repoUrl, mpath:mpath, dest:dest, count:1, modContentData:[] };
+      getModContentUrls(mods[m], mpath, data);
+    }
   }
 }
 
@@ -1373,7 +1600,43 @@ function updateRepoListButtons(e) {
   }
 }
 
-function updateModuleButtons(e) {
+function onModuleListTreeSelect() {
+  var mods = getSelectedResources(document.getElementById("moduleListTree"));
+
+  var xsmUrls = [];
+  for (var m=0; m < mods.length; m++) {
+    var mod = mods[m];
+    var is_XSM_module = (MLDS.GetTarget(mod, RP.Type, true) == RP.XSM_ModuleType);
+    if (!is_XSM_module) continue;
+    var url = getResourceLiteral(MLDS, mod, "ModuleUrl");
+    if (!url) continue;
+    xsmUrls.push();
+  }
+  
+  // if an XSM module is selected, select its other members as well
+  if (xsmUrls.length) {
+    var tree = document.getElementById("moduleListTree");
+    var treeBuilder = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
+    var selection = tree.view.selection;
+    for (var i=0; i<tree.view.rowCount; i++) {
+      var res = treeBuilder.getResourceAtIndex(i);
+      var is_XSM_module = (MLDS.GetTarget(res, RP.Type, true) == RP.XSM_ModuleType);
+      if (!is_XSM_module) continue;
+      var url = getResourceLiteral(MLDS, res, "ModuleUrl");
+      if (!url) continue;
+      for (var m=0; m<xsmUrls.length; m++) {if (xsmUrls[m] == url) break;}
+      if (m == xsmUrls.length) continue;
+      
+      // this index should be selected
+      if (selection.isSelected(i)) continue;
+      selection.toggleSelect(i);
+    }
+  }
+  
+  updateModuleButtons();
+}
+
+function updateModuleButtons() {
   var buttons  = ["installButton", "showInfoButton", "showModulesButton"];
   var disabled = [true, true, false];
   
@@ -1418,51 +1681,81 @@ function addRepository() {
 
 // Taken from dialogs/about.html
 function writeModuleInfos() {
-  var mods = getSelectedResources(document.getElementById("moduleListTree"));
+  var mods = getSelectedResources(document.getElementById("moduleListTree"), true);
   if (!mods.length) return;
   
   var html = "";
   
   for (var m=0; m<mods.length; m++) {
-    var modName = getResourceLiteral(MLDS, mods[m], "ModuleName");
-  
-    html += "<div class=\"module-detail cs-Program\">";
+    var submods = [];
     
-    // Heading and version
-    var vers = getResourceLiteral(MLDS, mods[m], "Version");
-    var modAbbr = getResourceLiteral(MLDS, mods[m], "Abbreviation");
-    if (!modAbbr || modAbbr == "?") modAbbr = modName; 
-    html +=  "<span class=\"mod-detail-heading\">";
-    html +=    modAbbr + (vers != "?" ? "(" + vers + ")":"");
-    html +=  "</span>";
+    var is_XSM_module = (MLDS.GetTarget(mods[m], RP.Type, true) == RP.XSM_ModuleType);
     
-    // Descripton
-    var description = getResourceLiteral(MLDS, mods[m], "Description");
-    if (description) 
-        html += "<div class=\"description\">" + description + "</div>";
-
-    // Copyright
-    var copyright = getResourceLiteral(MLDS, mods[m], "DistributionLicense");
-    if (copyright)
-         html += "<div class=\"copyright\">" + copyright + "</div>";
-         
-    // About
-    var about = getResourceLiteral(MLDS, mods[m], "About");
-    if (about) {
-      about = about.replace(/(\\par)/g, "<br>");
-      html += "<div class=\"about\">" + about + "</div>";
+    if (is_XSM_module) {
+      // include all SWORD modules within this XSM module
+      var myXSM = getResourceLiteral(MLDS, mods[m], "ModuleUrl");
+      if (myXSM) {
+        RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+        var mls = RDFC.GetElements();
+        while (mls.hasMoreElements()) {
+          var ml = mls.getNext();
+          var xsm = getResourceLiteral(MLDS, ml, "ModuleUrl");
+          if (myXSM == xsm) {
+            submods.push(ml);
+          }
+        }
+      }
+      else submods.push(mods[m]);
     }
+    else submods.push(mods[m]);
+    
+    for (var s=0; s<submods.length; s++) {
+      var aModRes = submods[s];
+      
+      var modName = getResourceLiteral(MLDS, aModRes, "ModuleName");
+    
+      html += "<div class=\"module-detail cs-Program\">";
+      
+      // Heading and version
+      var vers = getResourceLiteral(MLDS, aModRes, "Version");
+      var modAbbr = getResourceLiteral(MLDS, aModRes, "Abbreviation");
+      if (!modAbbr || modAbbr == "?") modAbbr = modName; 
+      html +=  "<span class=\"mod-detail-heading\">";
+      html +=    modAbbr + (vers != "?" ? "(" + vers + ")":"");
+      html +=  "</span>";
+      
+      // Descripton
+      var description = getResourceLiteral(MLDS, aModRes, "Description");
+      if (description) 
+          html += "<div class=\"description\">" + description + "</div>";
+
+      // Copyright
+      var copyright = getResourceLiteral(MLDS, aModRes, "DistributionLicense");
+      if (copyright)
+           html += "<div class=\"copyright\">" + copyright + "</div>";
+           
+      // About
+      var about = getResourceLiteral(MLDS, aModRes, "About");
+      if (about) {
+        about = about.replace(/(\\par)/g, "<br>");
+        html += "<div class=\"about\">" + about + "</div>";
+      }
+           
+      html += "</div>"; // end module-detail
          
-    html += "</div>"; // end module-detail
-         
-    // Conf contents
-    html += "<div id=\"conf." + modName + "\" class=\"conf-info\" showInfo=\"false\" readonly=\"readonly\">";
-    html +=   "<a class=\"link\" href=\"javascript:frameElement.ownerDocument.defaultView.toggleInfo('" + modName + "', '" + getResourceLiteral(MLDS, mods[m], "Url") + "');\">";
-    html +=     "<span class=\"more-label\">" + getUI("more.label") + "</span>";
-    html +=     "<span class=\"less-label\">" + getUI("less.label") + "</span>";
-    html +=   "</a>";
-    html +=   "<textarea id=\"conftext." + modName + "\" class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>";
-    html += "</div>";
+      // Conf contents
+      var confFile = getResourceLiteral(MLDS, aModRes, "ConfFileName");
+      if (confFile) {
+        html += "<div id=\"conf." + modName + "\" class=\"conf-info\" showInfo=\"false\" readonly=\"readonly\">";
+        html +=   "<a class=\"link\" href=\"javascript:frameElement.ownerDocument.defaultView";
+        html +=     ".toggleInfo('" + modName + "', '" + getResourceLiteral(MLDS, aModRes, "Url") + "', '" + confFile + "');\">";
+        html +=     "<span class=\"more-label\">" + getUI("more.label") + "</span>";
+        html +=     "<span class=\"less-label\">" + getUI("less.label") + "</span>";
+        html +=   "</a>";
+        html +=   "<textarea id=\"conftext." + modName + "\" class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>";
+        html += "</div>";
+      }
+    }
   }
   
   var body = document.getElementById("infoBox").contentDocument.getElementsByTagName("body")[0];
@@ -1473,30 +1766,27 @@ function getUI(id) {
   return getDataUI(id);
 }
 
-function toggleInfo(mod, url) {
-    var doc = document.getElementById("infoBox").contentDocument;
-    var elem = doc.getElementById("conf." + mod);
-    var showInfo = elem.getAttribute("showInfo");
-   
-    if (showInfo == "false") {
-      var confInfo = "-----";
-      var confDir = getTempDirOfUrl(url);
-      confDir.append("mods.d");
-      var confFile = confDir.clone();
-      confFile.append(mod.toLowerCase() + ".conf");
-      if (!confFile.exists()) {
-        confFile = confDir.clone();
-        confFile.append(mod + ".conf");
-      }
-
-      confInfo  = readFile(confFile);
-
-      elem.getElementsByTagName("textarea")[0].value = confInfo;
+function toggleInfo(mod, url, conf) {
+  var doc = document.getElementById("infoBox").contentDocument;
+  var elem = doc.getElementById("conf." + mod);
+  var showInfo = elem.getAttribute("showInfo");
+ 
+  if (showInfo == "false") {
+    var confInfo = "-----";
+    var confFile = getTempDirOfUrl(url);
+    confFile.append("mods.d");
+    confFile.append(conf);
+    if (!confFile.exists()) {
+      jsdump("ERROR: Missing .conf file \"" + confFile.path + "\"");
     }
+    else {confInfo  = readFile(confFile);}
 
-    elem.setAttribute("showInfo", (showInfo == "true" ? "false":"true"));
-
+    elem.getElementsByTagName("textarea")[0].value = confInfo;
   }
+
+  elem.setAttribute("showInfo", (showInfo == "true" ? "false":"true"));
+
+}
 
 
 ////////////////////////////////////////////////////////////////////////

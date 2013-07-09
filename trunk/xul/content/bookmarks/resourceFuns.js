@@ -276,7 +276,8 @@ ResourceFuns = {
 
     var suffix = (overwrite ? "":String(Math.round(10000*Math.random())));
     
-    BM.gTxnSvc.beginBatch();
+    try {BM.gTxnSvc.beginBatch(null);}
+    catch (er) {BM.gTxnSvc.beginBatch();}
     
     var importedResources = [];
     var textBookmarks = filedata.split(BM.kExportResourceDelimiter);
@@ -345,7 +346,8 @@ ResourceFuns = {
     for (var i=0; i<importedResources.length; i++) {
       ResourceFuns.createAndCommitTxn("import", "import", importedResources[i].child, null, importedResources[i].parent, 0, null);
     }
-    BM.gTxnSvc.endBatch();
+    try {BM.gTxnSvc.endBatch(false);}
+    catch (er) {BM.gTxnSvc.endBatch();}
 
     var remoteDS = BMDS.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource);
     setTimeout(function () {try {remoteDS.Flush();} catch (er) {}}, 100);

@@ -1208,8 +1208,10 @@ var BookmarksUtils = {
   removeSelection: function (aAction, aSelection)
   {
 
-    if (aSelection.length > 1)
-      BM.gTxnSvc.beginBatch();
+    if (aSelection.length > 1) {
+      try {BM.gTxnSvc.beginBatch(null);}
+      catch (er) {BM.gTxnSvc.beginBatch();}
+    }
     if (aSelection.length > BM.kBATCH_LIMIT && aAction != "move")
       BMDS.beginUpdateBatch();
 
@@ -1249,8 +1251,10 @@ var BookmarksUtils = {
                                        proplength, propArray);
       }
     }
-    if (aSelection.length > 1)
-      BM.gTxnSvc.endBatch();
+    if (aSelection.length > 1) {
+      try {BM.gTxnSvc.endBatch(false);}
+      catch (er) {BM.gTxnSvc.endBatch();}
+    }
     if (aSelection.length > BM.kBATCH_LIMIT && aAction != "move")
       BMDS.endUpdateBatch();
     return true;
@@ -1308,8 +1312,10 @@ var BookmarksUtils = {
     BM.RDFC.Init(BMDS, aTarget.parent);
     var startedEmpty = (BM.RDFC.IndexOf(BM.BmEmptyRes) != -1);
 
-    if (aSelection.length > 1)
-      BM.gTxnSvc.beginBatch();
+    if (aSelection.length > 1) {
+      try {BM.gTxnSvc.beginBatch(null);}
+      catch (er) {BM.gTxnSvc.beginBatch();}
+    }
     if (aSelection.length > BM.kBATCH_LIMIT && aAction != "move")
       BMDS.beginUpdateBatch();
 
@@ -1329,8 +1335,10 @@ var BookmarksUtils = {
       var proplength = removedProps ? removedProps.length : 0;
       ResourceFuns.createAndCommitTxn("insert", aAction, item, index, aTarget.parent, proplength, removedProps);
     }
-    if (aSelection.length > 1)
-      BM.gTxnSvc.endBatch();
+    if (aSelection.length > 1) {
+      try {BM.gTxnSvc.endBatch(false);}
+      catch (er) {BM.gTxnSvc.endBatch();}
+    }
     if (aSelection.length > BM.kBATCH_LIMIT && aAction != "move")
       BMDS.endUpdateBatch();
   },
@@ -1353,14 +1361,15 @@ var BookmarksUtils = {
     if (aSelection.length > BM.kBATCH_LIMIT)
       BMDS.beginUpdateBatch();
 
-    BM.gTxnSvc.beginBatch();
+    try {BM.gTxnSvc.beginBatch(null);}
+    catch (er) {BM.gTxnSvc.beginBatch();}
     // ORDER OF THE NEXT STATEMENTS IS CRITICAL FOR DROP-N-DRAG BUT MAY MESS SOMETHING ELSE UP ??
     //BookmarksUtils.removeSelection("move", aSelection);
     BookmarksUtils.insertSelection("move", aSelection, aTarget);
     BookmarksUtils.removeSelection("move", aSelection);
     
-    //gBkmkTxnSvc.endBatch();
-    BM.gTxnSvc.endBatch();
+    try {BM.gTxnSvc.endBatch(false);}
+    catch (er) {BM.gTxnSvc.endBatch();}
     if (aSelection.length > BM.kBATCH_LIMIT)
       BMDS.endUpdateBatch();
   }, 

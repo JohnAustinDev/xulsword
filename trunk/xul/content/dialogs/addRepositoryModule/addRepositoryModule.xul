@@ -142,7 +142,7 @@
           <label>Modules</label>
           <tree id="moduleListTree" flex="1" flags="dont-build-content"
                   datasources="rdf:null" ref="http://www.xulsword.com/repository/ModuleList" 
-                  onselect="updateModuleButtons(event);" >
+                  onselect="onModuleListTreeSelect();" >
             <treecols>
               <treecol id="ModType" label="Type" flex="1"
                             class="sortDirectionIndicator" 
