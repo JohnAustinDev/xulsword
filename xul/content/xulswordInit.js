@@ -230,10 +230,29 @@ function initTabGlobals() {
     tab.labelFromUI = labelFromUI;
     tab.modName = mod;
     tab.modType = type;
+    
+    // find .conf file. Try usual guesses first, then do a rote search if necessary
     tab.conf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
     var p = LibSword.getModuleInformation(mod, "AbsoluteDataPath").replace(/[\\\/]/g, DIRSEP);
-    tab.conf.initWithPath(p.replace(/[\\\/]modules[\\\/].*?$/, DIRSEP + "mods.d" + DIRSEP + mod.toLowerCase() + ".conf"));
-    if (!tab.conf.exists()) jsdump("WARNING: tab.conf bad path \"" + tab.conf.path + "\"");
+    p = p.replace(/[\\\/]modules[\\\/].*?$/, DIRSEP + "mods.d");
+    tab.conf.initWithPath(p + DIRSEP + mod.toLowerCase() + ".conf");
+    if (!tab.conf.exists()) {
+      tab.conf.initWithPath(p + DIRSEP + mod + ".conf");
+      if (!tab.conf.exists()) {
+        var modRE = new RegExp("^\\[" + mod + "\\]");
+        tab.conf.initWithPath(p);
+        var files = tab.conf.directoryEntries;
+        while (files.hasMoreElements()) {
+          var file = files.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+          var cdata = readFile(file);
+          if (!(modRE.test(cdata))) continue;
+          tab.conf = file;
+          break;
+        }
+      }
+    }
+    if (!tab.conf.exists()) jsdump("WARNING: tab.conf bad path \"" + p + DIRSEP + mod.toLowerCase() + ".conf\"");
+    
     tab.isCommDir = (tab.conf && tab.conf.path.toLowerCase().indexOf(commonDir.path.toLowerCase()) == 0 ? true:false);
     tab.tabType = getShortTypeFromLong(tab.modType);
     tab.isRTL = (ModuleConfigs[mod].direction == "rtl");
