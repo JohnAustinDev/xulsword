@@ -1213,6 +1213,8 @@ function onModuleListTreeSelect() {
     xsmUrls.push();
   }
   
+  // this doesn't work on Windows, and is perhaps a bit annoying anyway
+  /*
   // if an XSM module is selected, select its other members as well
   if (xsmUrls.length) {
     var tree = document.getElementById("moduleListTree");
@@ -1232,6 +1234,7 @@ function onModuleListTreeSelect() {
       selection.toggleSelect(i);
     }
   }
+  */
   
   updateModuleButtons();
 }
@@ -1393,6 +1396,7 @@ function toggleInfo(mod, url, conf) {
 // Utility functions
 ////////////////////////////////////////////////////////////////////////
 
+// this function blocks (is not intended for asynchronous use)
 function unCompress(aTarGz, aDir) {
   if (OPSYS == "Linux") {
 
@@ -1411,12 +1415,15 @@ tar -xf \"" + aTarGz.path + "\"" + NEWLINE;
   }
   else if (OPSYS == "Windows") {
     var w7z = getSpecialDirectory("CurProcD");
-    w7z.append("7sa.exe");
+    w7z.append("7za.exe");
+    
     var script = "\
-\"" + w7z.path + "\" x \"" + aTarGz.path + "\" -o\"" + aDir.path + "\"" + NEWLINE;
+Set objShell = CreateObject(\"WScript.Shell\")" + NEWLINE + "\
+objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aTarGz.path + "\"\" -o\"\"" + aDir.path + "\"\"\", 0, True" + NEWLINE + "\
+objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.leafName.replace(".gz", "") + "\"\" -o\"\"" + aDir.path + "\"\"\", 0, True" + NEWLINE;
 
     var sfile = aDir.clone();
-    sfile.append("untargz.bat");
+    sfile.append("untargz.vbs");
     writeFile(sfile, script, true);
     
     var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);
