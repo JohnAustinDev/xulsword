@@ -1,6 +1,9 @@
 Please report bugs, suggestions or comments to:
 gpl.programs.info@gmail.com 
 ----------------------------------------------------------------------------
+This program includes the 7-zip program which is licensed under the GNU 
+LGPL license. The code for 7-zip is available at www.7-zip.org.
+ 
 GNU General Public License
 Version 2, June 1991
 
