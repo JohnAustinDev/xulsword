@@ -33,6 +33,7 @@ var RepositoryArray, RepositoryIndex, RepositoriesLoading, RepositoryCheckInterv
 var ModulesLoading, ModuleCheckInterval;
 var TEMP, TEMP_Install;
 var DownloadsInProgress = [];
+var CompletedDownloads = [];
 
 function onLoad() {
 
@@ -866,7 +867,6 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
             
             // copy the completed module to our install directory
             if (is_XSM_module) {
-jsdump("Done XSM, copying \"" + this.data.downloadedFiles[0].path + "\" to \"" + TEMP_Install.clone().path + "\"");
               this.data.downloadedFiles[0].copyTo(TEMP_Install.clone(), null);
             }
             else {
@@ -893,7 +893,9 @@ jsdump("Done XSM, copying \"" + this.data.downloadedFiles[0].path + "\" to \"" +
             }
           }
           
-          getModuleDownloadDirectory(this.myResource, is_XSM_module).remove(true);
+          var downDir = getModuleDownloadDirectory(this.myResource, is_XSM_module);
+          downDir.remove(true);
+          CompletedDownloads.push(downDir.path);
           ModulesLoading--;
         
         }
@@ -935,6 +937,459 @@ function checkAllModulesAreDownloaded() {
 
 
 ////////////////////////////////////////////////////////////////////////
+// Mouse and Selection functions
+////////////////////////////////////////////////////////////////////////
+
+function deleteSelectedRepositories() {
+  var selectedResources = getSelectedResources(document.getElementById("repoListTree"));
+  if (!selectedResources.length) return;
+  
+  treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
+  
+  deleteRepository(selectedResources);
+  
+  buildLanguageList();
+  
+  treeDataSource([false, false], ["languageListTree", "moduleListTree"]);
+  
+  selectLanguage(getPrefOrCreate("addRepositoryModuleLang", "Char", getLocale()));
+}
+
+function toggleReposOnOff(tree, e) {
+  var selectedResources = getSelectedResources(document.getElementById("repoListTree"));
+  if (!selectedResources.length) return;
+  
+  // disconnect large trees to speed things up. loadRepositories reconnects them
+  treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
+
+  // set enable/disable etc. attributes
+  var nowOnRes = [];
+  var deleteModDataUrl = [];
+  for (var i=0; i<selectedResources.length; i++) {
+    
+    deleteModDataUrl.push(RPDS.GetTarget(selectedResources[i], RP.Url, true));
+  
+    var enabled = RPDS.GetTarget(selectedResources[i], RP.Enabled, true);
+    
+    var newval = (enabled ? null:"true");
+    if (!newval) {
+      enabled = enabled.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+      newval = (enabled == "true" ? "false":"true");
+    }
+    
+    setResourceAttribute(RPDS, selectedResources[i], "Enabled", newval);
+    
+    if (newval == "true") {
+      setResourceAttribute(RPDS, selectedResources[i], "Status", "0%");
+      setResourceAttribute(RPDS, selectedResources[i], "Style", "yellow");
+      nowOnRes.push(selectedResources[i]);
+    }
+    else {
+      setResourceAttribute(RPDS, selectedResources[i], "Status", "Off");
+      setResourceAttribute(RPDS, selectedResources[i], "Style", "red");
+    }
+  }
+  
+  deleteModuleData(deleteModDataUrl);
+  loadRepositories(nowOnRes, true);
+}
+
+function changeModuleListLanguage(lang) {
+  treeDataSource([true], ["moduleListTree"]);
+  var tree = document.getElementById("languageListTree");
+  
+  if (lang == "all") {tree.view.selection.clearSelection();}
+  
+  if (!lang) {
+    var selIndex = tree.view.selection.currentIndex;
+    
+    lang = "none";
+    try {
+      if (selIndex != -1) {
+        var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(selIndex);
+        res = MLDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY + "Lang"), true);
+        lang = res.QueryInterface(Components.interfaces.nsIRDFLiteral).Value
+      }
+    } catch (er) {}
+  }
+  
+  lang = lang.replace(/\-.*$/, ""); // match all root language modules
+  
+  if (lang != "none") prefs.setCharPref("addRepositoryModuleLang", lang);
+  
+  // setting the rule's REPOSITORY:Lang attribute filters okay, but once it's  
+  // removed (to show all) the tree is never rebuilt if it is re-added
+  var inxsm = [];
+  var swordShowing = {};
+  RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+  var mods = RDFC.GetElements();
+  while (mods.hasMoreElements()) {
+    
+    var mod = mods.getNext();
+    var mlang = getResourceLiteral(MLDS, mod, "Lang").replace(/\-.*$/, "");
+    var show = (lang == mlang || lang == "all" ? "true":"false");
+    
+    setResourceAttribute(MLDS, mod, "Show", show);
+    
+    if (show == "true") {
+      var is_XSM_module = (MLDS.GetTarget(mod, RP.Type, true) == RP.XSM_ModuleType);
+      if (is_XSM_module) {
+        mname = getResourceLiteral(MLDS, mod, "SwordModules").split(";");
+        mvers = getResourceLiteral(MLDS, mod, "SwordVersions").split(";");
+        for (var i=0; i<mname.length; i++) {
+          key = mname[i] + mvers[i];
+          key = key.replace(/\./g, "_");
+          inxsm.push(key);
+        }
+      }
+      else {
+        var mname = getResourceLiteral(MLDS, mod, "ModuleName");
+        var mvers = getResourceLiteral(MLDS, mod, "Version");
+        var key = mname + mvers;
+        key = key.replace(/\./g, "_");
+        if (!swordShowing[key]) swordShowing[key] = [mod];
+        else swordShowing[key].push(mod);
+      }
+    }
+  
+    // if a .xsm module is showing, hide the SWORD modules
+    // which are contained within it.
+    for (var i=0; i<inxsm.length; i++) {
+      var key = inxsm[i];
+      for (var m=0; swordShowing[key] && m<swordShowing[key].length; m++) {
+        setResourceAttribute(MLDS, swordShowing[key][m], "Show", "false");
+      }
+    }
+  
+  }
+  
+  treeDataSource([false], ["moduleListTree"]);
+}
+
+function toggleModuleBox() {
+  var cont = document.getElementById("moduleDialog");
+  var showModuleInfo = cont.getAttribute("showModuleInfo");
+  showModuleInfo = (showModuleInfo == "false" ? "true":"false");
+  
+  cont.setAttribute("showModuleInfo", showModuleInfo);
+  document.getElementById("moduleDeck").setAttribute("selectedIndex", (showModuleInfo=="true" ? 1:0));
+}
+
+function initiateModuleDownloads() {
+  var mods = getSelectedResources(document.getElementById("moduleListTree"), true);
+  if (!mods.length) return;
+  
+  if (document.getElementById("moduleDialog").getAttribute("showModuleInfo") == "true")
+      toggleModuleBox();
+  
+  ModulesLoading += mods.length;
+  if (!ModuleCheckInterval) ModuleCheckInterval = window.setInterval("checkAllModulesAreDownloaded();", 200);
+  
+  // fetch files into separate module directories so that in the end, 
+  // only complete downloads will be installed.
+  for (var m=0; m<mods.length; m++) {
+    var is_XSM_module = (MLDS.GetTarget(mods[m], RP.Type, true) == RP.XSM_ModuleType);
+    
+    // all module downloads will go under "downloads/modName"
+    // this directory will be deleted once download is copied away
+    // don't allow another download until this one is done
+    var dest = getModuleDownloadDirectory(mods[m], is_XSM_module);
+    
+    // start with a clean module directory each time
+    if (dest.exists()) {
+      ModulesLoading--;
+      continue;
+    }
+    dest.create(dest.DIRECTORY_TYPE, DPERM);
+    
+    // don't download something that has already been succesfully downloaded!
+    for (var x=0; x<CompletedDownloads.length; x++) {if (CompletedDownloads[x] == dest.path) break;}
+    if (x < CompletedDownloads.length) {
+      ModulesLoading--;
+      continue;
+    }
+    
+    if (is_XSM_module) {
+      // install a .xsm module
+      var xsm_url = getResourceLiteral(MLDS, mods[m], "ModuleUrl");
+      if ((/\.(zip|xsm)$/).test(xsm_url)) {
+        downloadModule(mods[m], "", dest, 
+          [ { url:xsm_url, size:1 } ]
+        );
+      }
+      else {
+        // get audio book and chapters
+        var modConf = getTempDirOfUrl(getResourceLiteral(MLDS, mods[m], "Url"));
+        modConf.append("mods.d");
+        modConf.append(getResourceLiteral(MLDS, mods[m], "ConfFileName"));
+        var data = { ok:false, bk:null, ch:null, cl:null, audio:eval(getConfEntry(readFile(modConf), "AudioChapters")) };
+        var dlg = window.openDialog("chrome://xulsword/content/dialogs/addRepositoryModule/audioDialog.xul", "dlg", DLGSTD, data);
+        if (!data.ok || !data.bk || !data.ch || !data.cl) {
+          ModulesLoading--;
+          continue;
+        }
+        downloadModule(mods[m], "", dest, 
+            [{ url:xsm_url + "&bk=" + data.bk + "&ch=" + data.ch + "&cl=" + data.cl, size:1 }] );
+      }
+    }
+    else {
+      // install a SWORD module
+    
+      // first, copy .conf file from local dir to "downloads/modName/mods.d"
+      var modsdDir = dest.clone();
+      modsdDir.append("mods.d");
+      if (!modsdDir.exists()) modsdDir.create(modsdDir.DIRECTORY_TYPE, DPERM);
+      
+      var repoUrl = getResourceLiteral(MLDS, mods[m], "Url");
+      var confSource = getTempDirOfUrl(repoUrl);
+      confSource.append("mods.d");
+      confSource.append(getResourceLiteral(MLDS, mods[m], "ConfFileName"));
+      if (!confSource.exists()) {
+        jsdump("ERROR: Conf file doesn't exist \"" + confSource.path + "\".");
+        ModulesLoading--;
+        continue;
+      }
+      confSource.copyTo(modsdDir, null);
+      
+      // now copy the module contents from the Url to "downloads/modName/modules/..."
+      setResourceAttribute(MLDS, mods[m], "Status", "0%");
+      setResourceAttribute(MLDS, mods[m], "Style", "yellow");
+          
+      var mpath = getResourceLiteral(MLDS, mods[m], "DataPath");
+      mpath = mpath.replace(/^\.\//, "").replace(/[\\\/][^\\\/]*$/, "");
+      
+      setResourceAttribute(MLDS, mods[m], "Status", "0%");
+      setResourceAttribute(MLDS, mods[m], "Style", "yellow");
+    
+      // getModContentUrls will asyncronously call downloadModule when all 
+      // module content files are known. Then checkAllModulesAreDownloaded 
+      // will finish up once all downloads have completed
+      var data = { repoUrl:repoUrl, mpath:mpath, dest:dest, count:1, modContentData:[] };
+      getModContentUrls(mods[m], mpath, data);
+    }
+  }
+}
+
+function installModules() {
+
+  MainWindow.AddRepositoryModules = getInstallableModules();
+  
+  MainWindow.installModuleArray(MainWindow.finishAndHandleReset, MainWindow.AddRepositoryModules);
+  
+  window.close();
+}
+
+
+function updateRepoListButtons(e) {
+  var buttons  = ["toggle", "add", "delete"];
+  var disabled = [true, false, true];
+  
+  // button states depend on selection
+  var tree = document.getElementById("repoListTree");
+  var sel = tree.view.selection;
+  
+  if (sel.currentIndex != -1) {
+    disabled[0] = false; // toggle
+    disabled[2] = false; // delete
+  }
+  
+  // apply disabled attribute
+  for (var i=0; i<buttons.length; i++) {
+    if (disabled[i]) document.getElementById(buttons[i]).setAttribute("disabled", "true");
+    else document.getElementById(buttons[i]).removeAttribute("disabled");
+  }
+}
+
+function onModuleListTreeSelect() {
+  var mods = getSelectedResources(document.getElementById("moduleListTree"));
+
+  var xsmUrls = [];
+  for (var m=0; m < mods.length; m++) {
+    var mod = mods[m];
+    var is_XSM_module = (MLDS.GetTarget(mod, RP.Type, true) == RP.XSM_ModuleType);
+    if (!is_XSM_module) continue;
+    var url = getResourceLiteral(MLDS, mod, "ModuleUrl");
+    if (!url) continue;
+    xsmUrls.push();
+  }
+  
+  // if an XSM module is selected, select its other members as well
+  if (xsmUrls.length) {
+    var tree = document.getElementById("moduleListTree");
+    var treeBuilder = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
+    var selection = tree.view.selection;
+    for (var i=0; i<tree.view.rowCount; i++) {
+      var res = treeBuilder.getResourceAtIndex(i);
+      var is_XSM_module = (MLDS.GetTarget(res, RP.Type, true) == RP.XSM_ModuleType);
+      if (!is_XSM_module) continue;
+      var url = getResourceLiteral(MLDS, res, "ModuleUrl");
+      if (!url) continue;
+      for (var m=0; m<xsmUrls.length; m++) {if (xsmUrls[m] == url) break;}
+      if (m == xsmUrls.length) continue;
+      
+      // this index should be selected
+      if (selection.isSelected(i)) continue;
+      selection.toggleSelect(i);
+    }
+  }
+  
+  updateModuleButtons();
+}
+
+function updateModuleButtons() {
+  var buttons  = ["installButton", "showInfoButton", "showModulesButton"];
+  var disabled = [true, true, false];
+  
+  // button states depend on selection
+  var tree = document.getElementById("moduleListTree");
+  var sel = tree.view.selection;
+  
+  if (sel.currentIndex != -1) {
+    disabled[0] = false; // install
+    disabled[1] = false; // showInfo
+  }
+  
+  // apply disabled attribute
+  for (var i=0; i<buttons.length; i++) {
+    if (disabled[i]) document.getElementById(buttons[i]).setAttribute("disabled", "true");
+    else document.getElementById(buttons[i]).removeAttribute("disabled");
+  }
+}
+
+function addRepository() {
+  
+  // ensure user sees the columns which will need updating
+  document.getElementById("Name").removeAttribute("hidden");
+  document.getElementById("Site").removeAttribute("hidden");
+  document.getElementById("Path").removeAttribute("hidden");
+  
+  var nres = { Type:"repository", Enabled:"false", Name:"?", Site:"?", Path:"?", Status:"Off", Style:"red", Url:"?" };
+  var res = createRepository(nres);
+  
+  // scroll to the new repository and select and focus it
+  var tree = document.getElementById("repoListTree");
+  var index = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getIndexOfResource(res);
+  tree.view.selection.select(index);
+  tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(index);
+  tree.focus();
+}
+
+
+////////////////////////////////////////////////////////////////////////
+// Module Info routines
+////////////////////////////////////////////////////////////////////////
+
+// Taken from dialogs/about.html
+function writeModuleInfos() {
+  var mods = getSelectedResources(document.getElementById("moduleListTree"), true);
+  if (!mods.length) return;
+  
+  var html = "";
+  
+  for (var m=0; m<mods.length; m++) {
+    var submods = [];
+    
+    var is_XSM_module = (MLDS.GetTarget(mods[m], RP.Type, true) == RP.XSM_ModuleType);
+    
+    if (is_XSM_module) {
+      // include all SWORD modules within this XSM module
+      var myXSM = getResourceLiteral(MLDS, mods[m], "ModuleUrl");
+      if (myXSM) {
+        RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+        var mls = RDFC.GetElements();
+        while (mls.hasMoreElements()) {
+          var ml = mls.getNext();
+          var xsm = getResourceLiteral(MLDS, ml, "ModuleUrl");
+          if (myXSM == xsm) {
+            submods.push(ml);
+          }
+        }
+      }
+      else submods.push(mods[m]);
+    }
+    else submods.push(mods[m]);
+    
+    for (var s=0; s<submods.length; s++) {
+      var aModRes = submods[s];
+      
+      var modName = getResourceLiteral(MLDS, aModRes, "ModuleName");
+    
+      html += "<div class=\"module-detail cs-Program\">";
+      
+      // Heading and version
+      var vers = getResourceLiteral(MLDS, aModRes, "Version");
+      var modAbbr = getResourceLiteral(MLDS, aModRes, "Abbreviation");
+      if (!modAbbr || modAbbr == "?") modAbbr = modName; 
+      html +=  "<span class=\"mod-detail-heading\">";
+      html +=    modAbbr + (vers != "?" ? "(" + vers + ")":"");
+      html +=  "</span>";
+      
+      // Descripton
+      var description = getResourceLiteral(MLDS, aModRes, "Description");
+      if (description) 
+          html += "<div class=\"description\">" + description + "</div>";
+
+      // Copyright
+      var copyright = getResourceLiteral(MLDS, aModRes, "DistributionLicense");
+      if (copyright)
+           html += "<div class=\"copyright\">" + copyright + "</div>";
+           
+      // About
+      var about = getResourceLiteral(MLDS, aModRes, "About");
+      if (about) {
+        about = about.replace(/(\\par)/g, "<br>");
+        html += "<div class=\"about\">" + about + "</div>";
+      }
+           
+      html += "</div>"; // end module-detail
+         
+      // Conf contents
+      var confFile = getResourceLiteral(MLDS, aModRes, "ConfFileName");
+      if (confFile) {
+        html += "<div id=\"conf." + modName + "\" class=\"conf-info\" showInfo=\"false\" readonly=\"readonly\">";
+        html +=   "<a class=\"link\" href=\"javascript:frameElement.ownerDocument.defaultView";
+        html +=     ".toggleInfo('" + modName + "', '" + getResourceLiteral(MLDS, aModRes, "Url") + "', '" + confFile + "');\">";
+        html +=     "<span class=\"more-label\">" + getUI("more.label") + "</span>";
+        html +=     "<span class=\"less-label\">" + getUI("less.label") + "</span>";
+        html +=   "</a>";
+        html +=   "<textarea id=\"conftext." + modName + "\" class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>";
+        html += "</div>";
+      }
+    }
+  }
+  
+  var body = document.getElementById("infoBox").contentDocument.getElementsByTagName("body")[0];
+  body.innerHTML = html;
+}
+
+function getUI(id) {
+  return getDataUI(id);
+}
+
+function toggleInfo(mod, url, conf) {
+  var doc = document.getElementById("infoBox").contentDocument;
+  var elem = doc.getElementById("conf." + mod);
+  var showInfo = elem.getAttribute("showInfo");
+ 
+  if (showInfo == "false") {
+    var confInfo = "-----";
+    var confFile = getTempDirOfUrl(url);
+    confFile.append("mods.d");
+    confFile.append(conf);
+    if (!confFile.exists()) {
+      jsdump("ERROR: Missing .conf file \"" + confFile.path + "\"");
+    }
+    else {confInfo  = readFile(confFile);}
+
+    elem.getElementsByTagName("textarea")[0].value = confInfo;
+  }
+
+  elem.setAttribute("showInfo", (showInfo == "true" ? "false":"true"));
+
+}
+
+
+////////////////////////////////////////////////////////////////////////
 // Utility functions
 ////////////////////////////////////////////////////////////////////////
 
@@ -948,6 +1403,20 @@ tar -xf \"" + aTarGz.path + "\"" + NEWLINE;
 
     var sfile = aDir.clone();
     sfile.append("untargz.sh");
+    writeFile(sfile, script, true);
+    
+    var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);
+    process.init(sfile);
+    process.run(true, [], 0);
+  }
+  else if (OPSYS == "Windows") {
+    var w7z = getSpecialDirectory("CurProcD");
+    w7z.append("7sa.exe");
+    var script = "\
+\"" + w7z.path + "\" x \"" + aTarGz.path + "\" -o\"" + aDir.path + "\"" + NEWLINE;
+
+    var sfile = aDir.clone();
+    sfile.append("untargz.bat");
     writeFile(sfile, script, true);
     
     var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);
@@ -1271,6 +1740,8 @@ function getInstallableModules() {
 function getLangReadable(lang) {
   if (!lang || (/^\s*$/).test(lang)) lang="?";
   
+return lang;
+  
   var langReadable = "?";
   if (lang != "?" && (/^en(\-*|\_*)$/).test(getLocale())) {
     langReadable = LibSword.translate(lang + ".en", "locales");
@@ -1341,451 +1812,6 @@ function getModuleDownloadDirectory(modResource, is_XSM_module) {
   dest.append(modName);
   
   return dest;
-}
-
-////////////////////////////////////////////////////////////////////////
-// Mouse and Selection functions
-////////////////////////////////////////////////////////////////////////
-
-function deleteSelectedRepositories() {
-  var selectedResources = getSelectedResources(document.getElementById("repoListTree"));
-  if (!selectedResources.length) return;
-  
-  treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
-  
-  deleteRepository(selectedResources);
-  
-  buildLanguageList();
-  
-  treeDataSource([false, false], ["languageListTree", "moduleListTree"]);
-  
-  selectLanguage(getPrefOrCreate("addRepositoryModuleLang", "Char", getLocale()));
-}
-
-function toggleReposOnOff(tree, e) {
-  var selectedResources = getSelectedResources(document.getElementById("repoListTree"));
-  if (!selectedResources.length) return;
-  
-  // disconnect large trees to speed things up. loadRepositories reconnects them
-  treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
-
-  // set enable/disable etc. attributes
-  var nowOnRes = [];
-  var deleteModDataUrl = [];
-  for (var i=0; i<selectedResources.length; i++) {
-    
-    deleteModDataUrl.push(RPDS.GetTarget(selectedResources[i], RP.Url, true));
-  
-    var enabled = RPDS.GetTarget(selectedResources[i], RP.Enabled, true);
-    
-    var newval = (enabled ? null:"true");
-    if (!newval) {
-      enabled = enabled.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-      newval = (enabled == "true" ? "false":"true");
-    }
-    
-    setResourceAttribute(RPDS, selectedResources[i], "Enabled", newval);
-    
-    if (newval == "true") {
-      setResourceAttribute(RPDS, selectedResources[i], "Status", "0%");
-      setResourceAttribute(RPDS, selectedResources[i], "Style", "yellow");
-      nowOnRes.push(selectedResources[i]);
-    }
-    else {
-      setResourceAttribute(RPDS, selectedResources[i], "Status", "Off");
-      setResourceAttribute(RPDS, selectedResources[i], "Style", "red");
-    }
-  }
-  
-  deleteModuleData(deleteModDataUrl);
-  loadRepositories(nowOnRes, true);
-}
-
-function changeModuleListLanguage(lang) {
-  treeDataSource([true], ["moduleListTree"]);
-  var tree = document.getElementById("languageListTree");
-  
-  if (lang == "all") {tree.view.selection.clearSelection();}
-  
-  if (!lang) {
-    var selIndex = tree.view.selection.currentIndex;
-    
-    lang = "none";
-    try {
-      if (selIndex != -1) {
-        var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(selIndex);
-        res = MLDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY + "Lang"), true);
-        lang = res.QueryInterface(Components.interfaces.nsIRDFLiteral).Value
-      }
-    } catch (er) {}
-  }
-  
-  lang = lang.replace(/\-.*$/, ""); // match all root language modules
-  
-  if (lang != "none") prefs.setCharPref("addRepositoryModuleLang", lang);
-  
-  // setting the rule's REPOSITORY:Lang attribute filters okay, but once it's  
-  // removed (to show all) the tree is never rebuilt if it is re-added
-  var inxsm = [];
-  var swordShowing = {};
-  RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-  var mods = RDFC.GetElements();
-  while (mods.hasMoreElements()) {
-    
-    var mod = mods.getNext();
-    var mlang = getResourceLiteral(MLDS, mod, "Lang").replace(/\-.*$/, "");
-    var show = (lang == mlang || lang == "all" ? "true":"false");
-    
-    setResourceAttribute(MLDS, mod, "Show", show);
-    
-    if (show == "true") {
-      var is_XSM_module = (MLDS.GetTarget(mod, RP.Type, true) == RP.XSM_ModuleType);
-      if (is_XSM_module) {
-        mname = getResourceLiteral(MLDS, mod, "SwordModules").split(";");
-        mvers = getResourceLiteral(MLDS, mod, "SwordVersions").split(";");
-        for (var i=0; i<mname.length; i++) {
-          key = mname[i] + mvers[i];
-          key = key.replace(/\./g, "_");
-          inxsm.push(key);
-        }
-      }
-      else {
-        var mname = getResourceLiteral(MLDS, mod, "ModuleName");
-        var mvers = getResourceLiteral(MLDS, mod, "Version");
-        var key = mname + mvers;
-        key = key.replace(/\./g, "_");
-        if (!swordShowing[key]) swordShowing[key] = [mod];
-        else swordShowing[key].push(mod);
-      }
-    }
-  
-    // if a .xsm module is showing, hide the SWORD modules
-    // which are contained within it.
-    for (var i=0; i<inxsm.length; i++) {
-      var key = inxsm[i];
-      for (var m=0; swordShowing[key] && m<swordShowing[key].length; m++) {
-        setResourceAttribute(MLDS, swordShowing[key][m], "Show", "false");
-      }
-    }
-  
-  }
-  
-  treeDataSource([false], ["moduleListTree"]);
-}
-
-function toggleModuleBox() {
-  var cont = document.getElementById("moduleDialog");
-  var showModuleInfo = cont.getAttribute("showModuleInfo");
-  showModuleInfo = (showModuleInfo == "false" ? "true":"false");
-  
-  cont.setAttribute("showModuleInfo", showModuleInfo);
-  document.getElementById("moduleDeck").setAttribute("selectedIndex", (showModuleInfo=="true" ? 1:0));
-}
-
-function initiateModuleDownloads() {
-  var mods = getSelectedResources(document.getElementById("moduleListTree"), true);
-  if (!mods.length) return;
-  
-  if (document.getElementById("moduleDialog").getAttribute("showModuleInfo") == "true")
-      toggleModuleBox();
-  
-  ModulesLoading += mods.length;
-  if (!ModuleCheckInterval) ModuleCheckInterval = window.setInterval("checkAllModulesAreDownloaded();", 200);
-  
-  // fetch files into separate module directories so that in the end, 
-  // only complete downloads will be installed.
-  for (var m=0; m<mods.length; m++) {
-    var is_XSM_module = (MLDS.GetTarget(mods[m], RP.Type, true) == RP.XSM_ModuleType);
-    
-    // all module downloads will go under "downloads/modName"
-    // this directory will be deleted once download is copied away
-    // don't allow another download until this one is done
-    var dest = getModuleDownloadDirectory(mods[m], is_XSM_module);
-    
-    // start with a clean module directory each time
-    if (dest.exists()) {
-      ModulesLoading--;
-      continue;
-    }
-    dest.create(dest.DIRECTORY_TYPE, DPERM);
-    
-    if (is_XSM_module) {
-      // install a .xsm module
-      var xsm_url = getResourceLiteral(MLDS, mods[m], "ModuleUrl");
-      if ((/\.(zip|xsm)$/).test(xsm_url)) {
-        downloadModule(mods[m], "", dest, 
-          [ { url:xsm_url, size:1 } ]
-        );
-      }
-      else {
-        // get audio book and chapters
-        var modConf = getTempDirOfUrl(getResourceLiteral(MLDS, mods[m], "Url"));
-        modConf.append("mods.d");
-        modConf.append(getResourceLiteral(MLDS, mods[m], "ConfFileName"));
-        var data = { ok:false, bk:null, ch:null, cl:null, audio:eval(getConfEntry(readFile(modConf), "AudioChapters")) };
-        var dlg = window.openDialog("chrome://xulsword/content/dialogs/addRepositoryModule/audioDialog.xul", "dlg", DLGSTD, data);
-        if (!data.ok || !data.bk || !data.ch || !data.cl) {
-          ModulesLoading--;
-          continue;
-        }
-        downloadModule(mods[m], "", dest, 
-            [{ url:xsm_url + "&bk=" + data.bk + "&ch=" + data.ch + "&cl=" + data.cl, size:1 }] );
-      }
-    }
-    else {
-      // install a SWORD module
-    
-      // first, copy .conf file from local dir to "downloads/modName/mods.d"
-      var modsdDir = dest.clone();
-      modsdDir.append("mods.d");
-      if (!modsdDir.exists()) modsdDir.create(modsdDir.DIRECTORY_TYPE, DPERM);
-      
-      var repoUrl = getResourceLiteral(MLDS, mods[m], "Url");
-      var confSource = getTempDirOfUrl(repoUrl);
-      confSource.append("mods.d");
-      confSource.append(getResourceLiteral(MLDS, mods[m], "ConfFileName"));
-      if (!confSource.exists()) {
-        jsdump("ERROR: Conf file doesn't exist \"" + confSource.path + "\".");
-        ModulesLoading--;
-        continue;
-      }
-      confSource.copyTo(modsdDir, null);
-      
-      // now copy the module contents from the Url to "downloads/modName/modules/..."
-      setResourceAttribute(MLDS, mods[m], "Status", "0%");
-      setResourceAttribute(MLDS, mods[m], "Style", "yellow");
-          
-      var mpath = getResourceLiteral(MLDS, mods[m], "DataPath");
-      mpath = mpath.replace(/^\.\//, "").replace(/[\\\/][^\\\/]*$/, "");
-      
-      setResourceAttribute(MLDS, mods[m], "Status", "0%");
-      setResourceAttribute(MLDS, mods[m], "Style", "yellow");
-    
-      // getModContentUrls will asyncronously call downloadModule when all 
-      // module content files are known. Then checkAllModulesAreDownloaded 
-      // will finish up once all downloads have completed
-      var data = { repoUrl:repoUrl, mpath:mpath, dest:dest, count:1, modContentData:[] };
-      getModContentUrls(mods[m], mpath, data);
-    }
-  }
-}
-
-function installModules() {
-
-  MainWindow.AddRepositoryModules = getInstallableModules();
-  
-  MainWindow.installModuleArray(MainWindow.finishAndHandleReset, MainWindow.AddRepositoryModules);
-  
-  window.close();
-}
-
-
-function updateRepoListButtons(e) {
-  var buttons  = ["toggle", "add", "delete"];
-  var disabled = [true, false, true];
-  
-  // button states depend on selection
-  var tree = document.getElementById("repoListTree");
-  var sel = tree.view.selection;
-  
-  if (sel.currentIndex != -1) {
-    disabled[0] = false; // toggle
-    disabled[2] = false; // delete
-  }
-  
-  // apply disabled attribute
-  for (var i=0; i<buttons.length; i++) {
-    if (disabled[i]) document.getElementById(buttons[i]).setAttribute("disabled", "true");
-    else document.getElementById(buttons[i]).removeAttribute("disabled");
-  }
-}
-
-function onModuleListTreeSelect() {
-  var mods = getSelectedResources(document.getElementById("moduleListTree"));
-
-  var xsmUrls = [];
-  for (var m=0; m < mods.length; m++) {
-    var mod = mods[m];
-    var is_XSM_module = (MLDS.GetTarget(mod, RP.Type, true) == RP.XSM_ModuleType);
-    if (!is_XSM_module) continue;
-    var url = getResourceLiteral(MLDS, mod, "ModuleUrl");
-    if (!url) continue;
-    xsmUrls.push();
-  }
-  
-  // if an XSM module is selected, select its other members as well
-  if (xsmUrls.length) {
-    var tree = document.getElementById("moduleListTree");
-    var treeBuilder = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder);
-    var selection = tree.view.selection;
-    for (var i=0; i<tree.view.rowCount; i++) {
-      var res = treeBuilder.getResourceAtIndex(i);
-      var is_XSM_module = (MLDS.GetTarget(res, RP.Type, true) == RP.XSM_ModuleType);
-      if (!is_XSM_module) continue;
-      var url = getResourceLiteral(MLDS, res, "ModuleUrl");
-      if (!url) continue;
-      for (var m=0; m<xsmUrls.length; m++) {if (xsmUrls[m] == url) break;}
-      if (m == xsmUrls.length) continue;
-      
-      // this index should be selected
-      if (selection.isSelected(i)) continue;
-      selection.toggleSelect(i);
-    }
-  }
-  
-  updateModuleButtons();
-}
-
-function updateModuleButtons() {
-  var buttons  = ["installButton", "showInfoButton", "showModulesButton"];
-  var disabled = [true, true, false];
-  
-  // button states depend on selection
-  var tree = document.getElementById("moduleListTree");
-  var sel = tree.view.selection;
-  
-  if (sel.currentIndex != -1) {
-    disabled[0] = false; // install
-    disabled[1] = false; // showInfo
-  }
-  
-  // apply disabled attribute
-  for (var i=0; i<buttons.length; i++) {
-    if (disabled[i]) document.getElementById(buttons[i]).setAttribute("disabled", "true");
-    else document.getElementById(buttons[i]).removeAttribute("disabled");
-  }
-}
-
-function addRepository() {
-  
-  // ensure user sees the columns which will need updating
-  document.getElementById("Name").removeAttribute("hidden");
-  document.getElementById("Site").removeAttribute("hidden");
-  document.getElementById("Path").removeAttribute("hidden");
-  
-  var nres = { Type:"repository", Enabled:"false", Name:"?", Site:"?", Path:"?", Status:"Off", Style:"red", Url:"?" };
-  var res = createRepository(nres);
-  
-  // scroll to the new repository and select and focus it
-  var tree = document.getElementById("repoListTree");
-  var index = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getIndexOfResource(res);
-  tree.view.selection.select(index);
-  tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(index);
-  tree.focus();
-}
-
-
-////////////////////////////////////////////////////////////////////////
-// Module Info routines
-////////////////////////////////////////////////////////////////////////
-
-// Taken from dialogs/about.html
-function writeModuleInfos() {
-  var mods = getSelectedResources(document.getElementById("moduleListTree"), true);
-  if (!mods.length) return;
-  
-  var html = "";
-  
-  for (var m=0; m<mods.length; m++) {
-    var submods = [];
-    
-    var is_XSM_module = (MLDS.GetTarget(mods[m], RP.Type, true) == RP.XSM_ModuleType);
-    
-    if (is_XSM_module) {
-      // include all SWORD modules within this XSM module
-      var myXSM = getResourceLiteral(MLDS, mods[m], "ModuleUrl");
-      if (myXSM) {
-        RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-        var mls = RDFC.GetElements();
-        while (mls.hasMoreElements()) {
-          var ml = mls.getNext();
-          var xsm = getResourceLiteral(MLDS, ml, "ModuleUrl");
-          if (myXSM == xsm) {
-            submods.push(ml);
-          }
-        }
-      }
-      else submods.push(mods[m]);
-    }
-    else submods.push(mods[m]);
-    
-    for (var s=0; s<submods.length; s++) {
-      var aModRes = submods[s];
-      
-      var modName = getResourceLiteral(MLDS, aModRes, "ModuleName");
-    
-      html += "<div class=\"module-detail cs-Program\">";
-      
-      // Heading and version
-      var vers = getResourceLiteral(MLDS, aModRes, "Version");
-      var modAbbr = getResourceLiteral(MLDS, aModRes, "Abbreviation");
-      if (!modAbbr || modAbbr == "?") modAbbr = modName; 
-      html +=  "<span class=\"mod-detail-heading\">";
-      html +=    modAbbr + (vers != "?" ? "(" + vers + ")":"");
-      html +=  "</span>";
-      
-      // Descripton
-      var description = getResourceLiteral(MLDS, aModRes, "Description");
-      if (description) 
-          html += "<div class=\"description\">" + description + "</div>";
-
-      // Copyright
-      var copyright = getResourceLiteral(MLDS, aModRes, "DistributionLicense");
-      if (copyright)
-           html += "<div class=\"copyright\">" + copyright + "</div>";
-           
-      // About
-      var about = getResourceLiteral(MLDS, aModRes, "About");
-      if (about) {
-        about = about.replace(/(\\par)/g, "<br>");
-        html += "<div class=\"about\">" + about + "</div>";
-      }
-           
-      html += "</div>"; // end module-detail
-         
-      // Conf contents
-      var confFile = getResourceLiteral(MLDS, aModRes, "ConfFileName");
-      if (confFile) {
-        html += "<div id=\"conf." + modName + "\" class=\"conf-info\" showInfo=\"false\" readonly=\"readonly\">";
-        html +=   "<a class=\"link\" href=\"javascript:frameElement.ownerDocument.defaultView";
-        html +=     ".toggleInfo('" + modName + "', '" + getResourceLiteral(MLDS, aModRes, "Url") + "', '" + confFile + "');\">";
-        html +=     "<span class=\"more-label\">" + getUI("more.label") + "</span>";
-        html +=     "<span class=\"less-label\">" + getUI("less.label") + "</span>";
-        html +=   "</a>";
-        html +=   "<textarea id=\"conftext." + modName + "\" class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>";
-        html += "</div>";
-      }
-    }
-  }
-  
-  var body = document.getElementById("infoBox").contentDocument.getElementsByTagName("body")[0];
-  body.innerHTML = html;
-}
-
-function getUI(id) {
-  return getDataUI(id);
-}
-
-function toggleInfo(mod, url, conf) {
-  var doc = document.getElementById("infoBox").contentDocument;
-  var elem = doc.getElementById("conf." + mod);
-  var showInfo = elem.getAttribute("showInfo");
- 
-  if (showInfo == "false") {
-    var confInfo = "-----";
-    var confFile = getTempDirOfUrl(url);
-    confFile.append("mods.d");
-    confFile.append(conf);
-    if (!confFile.exists()) {
-      jsdump("ERROR: Missing .conf file \"" + confFile.path + "\"");
-    }
-    else {confInfo  = readFile(confFile);}
-
-    elem.getElementsByTagName("textarea")[0].value = confInfo;
-  }
-
-  elem.setAttribute("showInfo", (showInfo == "true" ? "false":"true"));
-
 }
 
 
