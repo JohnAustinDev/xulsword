@@ -60,6 +60,7 @@ LibSword = {
   freeLibxulsword:null, // to free memory allocated to libxulsword
   
   ModuleDirectory:null,
+  LocaleDirectory:null,
   LibswordPath:null,
   CheckTheseCipherKeys:[],
   hasBible:null,
@@ -80,6 +81,23 @@ LibSword = {
       // ModuleDirectory must be explicitly set on the LibSword object in such case.
       this.ModuleDirectory = getSpecialDirectory("xsResD").path;
       if (IsExtension) this.ModuleDirectory += ", " + getSpecialDirectory("xsExtResource").path;
+    }
+    
+    // get path to locale directory
+    if (!this.LocaleDirectory) {
+      if (typeof(getSpecialDirectory) != "undefined") {
+        var locale = getSpecialDirectory("xsLocale");
+        this.LocaleDirectory = locale.path;
+        
+        // initialize to defaults if needed
+        locale.append("locales.conf");
+        if (!locale.exists()) {
+          var def = getSpecialDirectory("DefRt");
+          def.append("locales.conf");
+          if (def.exists()) {def.copyTo(locale.parent, null);}
+        }
+      }
+      else this.LocaleDirectory = "";
     }
 
     // get path to libxulsword dynamic library built from C++ SWORD engine
@@ -140,8 +158,8 @@ LibSword = {
     this.ReportProgressPtr = funcTypeReportProgressPtr(this.ReportProgress);
     
     // Get our xulsword instance...
-    var newXulsword = this.libsword.declare("GetXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr);
-    this.inst = newXulsword(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr);
+    var newXulsword = this.libsword.declare("GetXulsword", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), funcTypeUpperCasePtr, funcTypeThrowJSErrorPtr, funcTypeReportProgressPtr, ctypes.PointerType(ctypes.char));
+    this.inst = newXulsword(ctypes.char.array()(this.ModuleDirectory), this.UpperCasePtr, this.ThrowJSErrorPtr, this.ReportProgressPtr, ctypes.char.array()(this.LocaleDirectory));
     if (typeof(jsdump) != "undefined") jsdump("CREATED new xulsword object (window.name=" + (typeof(window)!="undefined" && window ? window.name:"<no-window>") + ")");
     if (typeof(jsdump) != "undefined") jsdump("ModuleDirectory=\"" + this.ModuleDirectory + "\""); 
   },

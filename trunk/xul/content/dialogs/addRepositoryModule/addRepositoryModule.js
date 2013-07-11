@@ -19,8 +19,6 @@
 /*
 TODO:
   CSS and Locale
-  Fix xulsword's handling of non-lower-case .conf file names
-  Incorporate locales.conf file into xulsword
 */
 
 const RepositoryRDF = "repository.rdf"; // located in xulsword's profile dir
@@ -523,7 +521,7 @@ function applyRepositoryManifest(resource, manifest) {
   if (!tmpDir.exists()) tmpDir.create(tmpDir.DIRECTORY_TYPE, DPERM);
   
   // nsIZipReader only handles ZIP- ARGGGG!
-  unCompress(manifest, tmpDir);
+  unCompressTarGz(manifest, tmpDir);
   
   tmpDir.append("mods.d");
   
@@ -1037,18 +1035,24 @@ function changeModuleListLanguage(lang) {
         mname = getResourceLiteral(MLDS, mod, "SwordModules").split(";");
         mvers = getResourceLiteral(MLDS, mod, "SwordVersions").split(";");
         for (var i=0; i<mname.length; i++) {
-          key = mname[i] + mvers[i];
-          key = key.replace(/\./g, "_");
-          inxsm.push(key);
+          try {
+            key = mname[i] + mvers[i];
+            key = key.replace(/\./g, "_");
+            inxsm.push(key);
+          }
+          catch (er) {}
         }
       }
       else {
         var mname = getResourceLiteral(MLDS, mod, "ModuleName");
         var mvers = getResourceLiteral(MLDS, mod, "Version");
-        var key = mname + mvers;
-        key = key.replace(/\./g, "_");
-        if (!swordShowing[key]) swordShowing[key] = [mod];
-        else swordShowing[key].push(mod);
+        try {
+          var key = mname + mvers;
+          key = key.replace(/\./g, "_");
+          if (!swordShowing[key]) swordShowing[key] = [mod];
+          else swordShowing[key].push(mod);
+        }
+        catch (er) {}
       }
     }
   
@@ -1397,7 +1401,7 @@ function toggleInfo(mod, url, conf) {
 ////////////////////////////////////////////////////////////////////////
 
 // this function blocks (is not intended for asynchronous use)
-function unCompress(aTarGz, aDir) {
+function unCompressTarGz(aTarGz, aDir) {
   if (OPSYS == "Linux") {
 
     var script = "\
@@ -1413,6 +1417,8 @@ tar -xf \"" + aTarGz.path + "\"" + NEWLINE;
     process.init(sfile);
     process.run(true, [], 0);
   }
+  
+  // for Windows, 7za.exe must be included with xulsword (250kb compressed)
   else if (OPSYS == "Windows") {
     var w7z = getSpecialDirectory("CurProcD");
     w7z.append("7za.exe");
@@ -1430,7 +1436,7 @@ objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.lea
     process.init(sfile);
     process.run(true, [], 0);
   }
-  else throw ("ERROR: unCompress not implemented for this op-sys");
+  else throw ("ERROR: unCompressTarGz not implemented for this op-sys");
 }
 
 // Set a resource's attribute (a string) to value (also a string)
@@ -1585,11 +1591,6 @@ function buildLanguageList() {
     RDFC.RemoveElement(lang, (langs.hasMoreElements() ? false:true));
   }
   
-  // add a resource for each language in the enabled repository database, 
-  // with NO DUPLICATES
-  RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-  var mods = RDFC.GetElements();
-  
   // get url of each enabled repository
   var urls = [];
   RDFC.Init(RPDS, RDF.GetResource(RP.XulswordRepoListID));
@@ -1600,7 +1601,11 @@ function buildLanguageList() {
     urls.push(RPDS.GetTarget(repo, RP.Url, true));
   }
   
+  // add a resource for each language in the enabled repository database, 
+  // with NO DUPLICATES
   var langs = [];
+  RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+  var mods = RDFC.GetElements();
   NextResource:
   while (mods.hasMoreElements()) {
     var mod = mods.getNext();
@@ -1613,24 +1618,93 @@ function buildLanguageList() {
     
     var lang = MLDS.GetTarget(mod, RDF.GetResource(RP.REPOSITORY + "Lang"), true);
     lang = lang.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-    if (!lang || lang == "") lang="?";
+    var rlang = getLangReadable(lang);
     
     for (var i=0; i<langs.length; i++) {
-      if (langs[i] == lang) continue NextResource;
+      if (langs[i].rlang == rlang) continue NextResource;
     }
     
-    langs.push(lang);
+    langs.push( { lang:lang, rlang:rlang } );
   }
   
   RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
   for (var i=0; i<langs.length; i++) {
     var newLangRes = RDF.GetAnonymousResource();
     MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Type"), RP.LanguageListType, true);
-    MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Lang"), RDF.GetLiteral(langs[i]), true);
-    MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(getLangReadable(langs[i])), true);
+    MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Lang"), RDF.GetLiteral(langs[i].lang), true);
+    MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langs[i].rlang), true);
     RDFC.AppendElement(newLangRes);
   }
   
+}
+
+function getLangReadable(lang) {
+  if ((/^en(\-*|\_*)$/).test(lang)) return "English";
+  
+  if (!lang || lang == "?" || (/^\s*$/).test(lang)) return "?";
+
+  var rlang = LibSword.translate(lang, "locales");
+  
+  var renlang = null;
+  if (rlang == lang || (/^en(\-|$)/).test(getLocale())) {
+    var enlang = lang.match(/^([^\-]+).*?$/)[1]; // remove extensions since this is in English
+    renlang = LibSword.translate(enlang + ".en", "locales");
+    if (renlang == enlang + ".en") renlang = null;
+  }
+
+  return (renlang ? renlang:rlang);
+}
+
+function selectLanguage(language) {
+  var tree = document.getElementById("languageListTree");
+  
+  var defRes = null;
+  
+  // try selecting language
+  if (language) {
+    RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
+    var defRes = null;
+    var langs = RDFC.GetElements();
+    while (langs.hasMoreElements()) {
+      var lang = langs.getNext();
+      var lcode = getResourceLiteral(MLDS, lang, "Lang");
+      if (!lcode) continue;
+      if (lcode == language) {
+        defRes = lang;
+        break;
+      }
+      if (lcode.replace(/\-.*$/, "") == language.replace(/\-.*$/, "")) defRes = lang;
+    }
+  }
+  
+  // otherwise select program language
+  if (!defRes) {
+    var progLang = getLocale();
+    if (!progLang) progLang = DEFAULTLOCALE;
+    
+    RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
+    var langs = RDFC.GetElements();
+    while (langs.hasMoreElements()) {
+      var lang = langs.getNext();
+      var lcode = getResourceLiteral(MLDS, lang, "Lang");
+      if (!lcode) continue;
+      if (lcode == progLang) {
+        defRes = lang;
+        break;
+      }
+      if (lcode.replace(/\-.*$/, "") == progLang.replace(/\-.*$/, "")) defRes = lang;
+    }
+  }
+  
+  // otherwise select first language on list
+  var index = 0;
+  if (defRes) {
+    index = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getIndexOfResource(defRes);
+    if (!index || index < 0) index = 0;
+  }
+  
+  tree.view.selection.select(index);
+  tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(index);
 }
 
 // Connect and disconnect tree data sources
@@ -1742,73 +1816,6 @@ function getInstallableModules() {
     installableModules.push(file);
   }
   return installableModules;
-}
-
-function getLangReadable(lang) {
-  if (!lang || (/^\s*$/).test(lang)) lang="?";
-  
-return lang;
-  
-  var langReadable = "?";
-  if (lang != "?" && (/^en(\-*|\_*)$/).test(getLocale())) {
-    langReadable = LibSword.translate(lang + ".en", "locales");
-    if (langReadable == lang + ".en") langReadable = "?";
-  }
-  if (langReadable == "?") langReadable = LibSword.translate(lang, "locales");
-  
-  return langReadable;
-}
-
-function selectLanguage(language) {
-  var tree = document.getElementById("languageListTree");
-  
-  var defRes = null;
-  
-  // try selecting language
-  if (language) {
-    RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
-    var defRes = null;
-    var langs = RDFC.GetElements();
-    while (langs.hasMoreElements()) {
-      var lang = langs.getNext();
-      var lcode = getResourceLiteral(MLDS, lang, "Lang");
-      if (!lcode) continue;
-      if (lcode == language) {
-        defRes = lang;
-        break;
-      }
-      if (lcode.replace(/\-.*$/, "") == language.replace(/\-.*$/, "")) defRes = lang;
-    }
-  }
-  
-  // otherwise select program language
-  if (!defRes) {
-    var progLang = getLocale();
-    if (!progLang) progLang = DEFAULTLOCALE;
-    
-    RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
-    var langs = RDFC.GetElements();
-    while (langs.hasMoreElements()) {
-      var lang = langs.getNext();
-      var lcode = getResourceLiteral(MLDS, lang, "Lang");
-      if (!lcode) continue;
-      if (lcode == progLang) {
-        defRes = lang;
-        break;
-      }
-      if (lcode.replace(/\-.*$/, "") == progLang.replace(/\-.*$/, "")) defRes = lang;
-    }
-  }
-  
-  // otherwise select first language on list
-  var index = 0;
-  if (defRes) {
-    index = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getIndexOfResource(defRes);
-    if (!index || index < 0) index = 0;
-  }
-  
-  tree.view.selection.select(index);
-  tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(index);
 }
 
 function getModuleDownloadDirectory(modResource, is_XSM_module) {

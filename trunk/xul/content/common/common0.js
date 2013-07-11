@@ -417,6 +417,7 @@ function lpath(path) {
 // xsModsUser   = user SWORD module directory (contains mods.d & modules)
 // xsModsCommon = shared SWORD module directory (contains mods.d & modules)
 // xsExtension  = profile extensions directory
+// xsLocale     = libsword locale directory
 function getSpecialDirectory(name) {
   var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
   if (name.substr(0,2) == "xs") {
@@ -445,6 +446,9 @@ function getSpecialDirectory(name) {
       break;
     case "xsVideo":
       retval.append(VIDEO);
+      break;
+    case "xsLocale":
+      retval.append("locales.d");
       break;
     case "xsExtension":
       retval = profile.clone();
@@ -504,6 +508,7 @@ function createAppDirectories() {
   checkdir = getSpecialDirectory("xsBookmarks");  if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
   checkdir = getSpecialDirectory("xsAudioPI");    if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
   checkdir = getSpecialDirectory("xsVideo");      if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+  checkdir = getSpecialDirectory("xsLocale");     if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
 }
 
 /************************************************************************
