@@ -422,7 +422,7 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
 PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
-xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
+xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localedir) {
   if (!MySWLogXS) {
     MySWLogXS = new SWLogXS();
     SWLog::setSystemLog(MySWLogXS);
@@ -460,8 +460,12 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   if (ToUpperCase) {
     if (!MyStringMgrXS) {
       MyStringMgrXS = new StringMgrXS(ToUpperCase);
-      StringMgr::setSystemStringMgr(MyStringMgrXS);
+      StringMgr::setSystemStringMgr(MyStringMgrXS); // this also resets localeMgr
     }
+  }
+  
+  if (localedir && strlen(localedir) > 0) {
+    LocaleMgr::getSystemLocaleMgr()->loadConfigDir(localedir);
   }
 }
 

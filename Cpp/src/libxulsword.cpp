@@ -32,11 +32,11 @@ static xulsword *my_xulsword;
 /********************************************************************
 EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
-DLLEXPORT xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int)) {
+DLLEXPORT xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir) {
   
   if (my_xulsword) return my_xulsword;
   
-  my_xulsword = new xulsword(path, toUpperCase, throwJS, reportProgress);
+  my_xulsword = new xulsword(path, toUpperCase, throwJS, reportProgress, localeDir);
   
   SWLog::getSystemLog()->logDebug("CREATED xulsword object");
   
