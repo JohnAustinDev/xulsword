@@ -25,19 +25,17 @@ const RepositoryRDF = "repository.rdf"; // located in xulsword's profile dir
 const ModuleRDF = "swordmods.rdf";
 const ManifestFile = "mods.d.tar.gz";
 
-var HaveInternetPermission = false;
 var RP, RPDS, MLDS, RDF, RDFC, RDFCU;
 var RepositoryArray, RepositoryIndex, RepositoriesLoading, RepositoryCheckInterval;
 var ModulesLoading, ModuleCheckInterval;
-var TEMP, TEMP_Install;
 var DownloadsInProgress = [];
-var CompletedDownloads = [];
+var TEMP, TEMP_Install;
 
 function onLoad() {
 
   ModulesLoading = 0; // global to track total number of modules downloading at any given time
   
-  // Create clean temp directories
+  // start with totally clean temp directories
   TEMP = getSpecialDirectory("TmpD");
   TEMP.append("xs_addRepositoryModule");
   if (TEMP.exists()) TEMP.remove(true);
@@ -48,7 +46,7 @@ function onLoad() {
   if (TEMP_Install.exists()) TEMP_Install.remove(true);
   TEMP_Install.create(TEMP_Install.DIRECTORY_TYPE, DPERM);
   
-  // add About dialog's style sheets to InfoBox
+  // add About dialog's style sheets to the InfoBox
   var infoBox = document.getElementById("infoBox").contentDocument;
   var element = infoBox.createElement('link');
   element.type = 'text/css';
@@ -63,19 +61,16 @@ function onLoad() {
 
 //prefs.clearUserPref("HaveInternetPermission");
 
-  // Don't allow access to internet until we have express permission!
-  try {
-    HaveInternetPermission = prefs.getBoolPref("HaveInternetPermission");
-  }
-  catch(er) {HaveInternetPermission = false;}
+  // don't allow access to internet until we have express permission!
+  var haveInternetPermission = getPrefOrCreate("HaveInternetPermission", "Bool", false);
   
-  if (!HaveInternetPermission) {
+  if (!haveInternetPermission) {
     var result = requestInternetPermission();
-    HaveInternetPermission = result.ok;
-    if (result.checked) prefs.setBoolPref("HaveInternetPermission", HaveInternetPermission);
+    haveInternetPermission = result.ok;
+    if (result.checked) prefs.setBoolPref("HaveInternetPermission", haveInternetPermission);
   }
   
-  if (!HaveInternetPermission) {
+  if (!haveInternetPermission) {
     window.close();
     return;
   }
@@ -127,7 +122,7 @@ function onLoad() {
            REPOSITORY:Site=\"ftp.crosswire.org\"" + NEWLINE + "\
            REPOSITORY:Path=\"/pub/sword/raw\"" + NEWLINE + "\
            REPOSITORY:Url=\"ftp://ftp.crosswire.org/pub/sword/raw\"" + NEWLINE + "\
-           REPOSITORY:Enabled=\"false\" />" + NEWLINE + "\
+           REPOSITORY:Enabled=\"true\" />" + NEWLINE + "\
   <RDF:Description RDF:about=\"" + RP.masterRepoListID + "\"" + NEWLINE + "\
                    REPOSITORY:Type=\"masterRepoList\"" + NEWLINE + "\
                    REPOSITORY:Name=\"CrossWire\"" + NEWLINE + "\
@@ -140,7 +135,7 @@ function onLoad() {
   RPDS = initDataSource(data, RepositoryRDF);
 
   // initialize MLDS Data Source from scratch each time (all this data is  
-  // wiped when the window is closed)
+  // wiped every time the window is closed)
   data = "\
 <?xml version=\"1.0\"?>" + NEWLINE + "\
 <RDF:RDF xmlns:REPOSITORY=\"" + RP.REPOSITORY + "\"" + NEWLINE + "\
@@ -155,7 +150,8 @@ function onLoad() {
     throw("ERROR: Failed to load a Data Source!");
   }
   
-  // look for a default data source, load it, and augment other data sources
+  // look for a default data source, load it, using it to augment other 
+  // data sources. This is used to apply installation specific repos and modules. 
   var defDS = null;
   var defRDF = getSpecialDirectory("DefRt");
   defRDF.append(RepositoryRDF);
@@ -204,7 +200,7 @@ function onLoad() {
     var enabled = RPDS.GetTarget(res, RP.Enabled, true);
     if (enabled) {
       enabled = enabled.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-      setResourceAttribute(RPDS, res, "Status", (enabled == "false" ? "Off":"0%"));
+      setResourceAttribute(RPDS, res, "Status", (enabled == "false" ? "Off":"1%"));
       setResourceAttribute(RPDS, res, "Style", (enabled == "false" ? "red":"yellow"));
     }
   }
@@ -249,10 +245,10 @@ function onLoad() {
     this.removeAttribute("editing");
   };
 
-  loadMasterRepoList(); // will call masterRepoListLoaded() when finished
+  loadMasterRepoList(true); // will call masterRepoListLoaded() when finished
 }
 
-function masterRepoListLoaded() {
+function masterRepoListLoaded(moduleDataAlreadyDeleted) {
   
   // get all enabled repositories
   var repoArray = [];
@@ -268,7 +264,7 @@ function masterRepoListLoaded() {
     repoArray.push(res);
   }
 
-  loadRepositories(repoArray);
+  loadRepositories(repoArray, moduleDataAlreadyDeleted);
 }
 
 function loadRepositories(resourceArray, moduleDataAlreadyDeleted) {
@@ -312,7 +308,7 @@ function checkAllRepositoriesLoaded() {
   
   selectLanguage(getPrefOrCreate("addRepositoryModuleLang", "Char", getLocale()));
   
-  // now we're done with onLoad and we turn things over to the user!
+  // now we're finally done with onLoad and we turn things over to the user!
   return;
 }
 
@@ -359,7 +355,7 @@ function initDataSource(data, fileName) {
 }
 
 // Download the masterRepoList from CrossWire's designated source
-function loadMasterRepoList() {
+function loadMasterRepoList(moduleDataAlreadyDeleted) {
   
   // get URL for masterRepoList.conf
   var site = RDF.GetResource(RP.masterRepoListID);
@@ -384,6 +380,7 @@ function loadMasterRepoList() {
     myURL:url,
     myPersist:persist,
     crosswire:RDF.GetResource(RP.CrossWireRepoID),
+    moduleDataAlreadyDeleted:moduleDataAlreadyDeleted,
     
     onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
       var perc = Math.round(100*(aCurSelfProgress/aMaxSelfProgress))/10;
@@ -395,7 +392,7 @@ function loadMasterRepoList() {
       if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
       
       // it's all done!!
-      removeProgress(this.myPersist);
+      downloadsInProgressRemove(this.myPersist);
       if (getResourceLiteral(RPDS, this.crosswire, "Enabled") == "true") {
         setResourceAttribute(RPDS, this.crosswire, "Status", "5%");
         setResourceAttribute(RPDS, this.crosswire, "Style", "yellow");
@@ -404,7 +401,8 @@ function loadMasterRepoList() {
         setResourceAttribute(RPDS, this.crosswire, "Status", "Off");
         setResourceAttribute(RPDS, this.crosswire, "Style", "red");
       }
-      readMasterRepoList(this.myDestFile);
+      
+      readMasterRepoList(this.myDestFile, this.moduleDataAlreadyDeleted);
     },
     
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
@@ -422,7 +420,7 @@ function loadMasterRepoList() {
   
 }
 
-function readMasterRepoList(aFile) {
+function readMasterRepoList(aFile, moduleDataAlreadyDeleted) {
   if (aFile) {
   
     var list = readFile(aFile);
@@ -442,7 +440,7 @@ function readMasterRepoList(aFile) {
     }
   }
   
-  masterRepoListLoaded();
+  masterRepoListLoaded(moduleDataAlreadyDeleted);
 }
 
 // Fetch and process the manifest of the next repository on the global list.
@@ -453,17 +451,15 @@ function startProcessingNextRepository() {
   
   var myURL = getResourceLiteral(RPDS, RepositoryArray[RepositoryIndex].resource, "Url");
    
-  var file = getTempDirOfUrl(myURL);
+  var file = getRepositoryUrlTempDir(myURL);
   if (file.exists()) file.remove(true);
   file.create(file.DIRECTORY_TYPE, DPERM);
   file.append(ManifestFile);
 
   RepositoryArray[RepositoryIndex].manifest = file;
 
+  var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);
   var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
-  var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);  
-  var uri = ios.newURI(myURL + "/" + ManifestFile, null, null); 
-
   persist.progressListener = 
   {
     myResource:RepositoryArray[RepositoryIndex].resource,
@@ -482,7 +478,7 @@ function startProcessingNextRepository() {
       
       // it's all done!!
       RepositoriesLoading--;
-      removeProgress(this.myPersist);
+      downloadsInProgressRemove(this.myPersist);
       
       if (aStatus == 0) {
         setResourceAttribute(RPDS, this.myResource, "Status", "On");
@@ -506,7 +502,7 @@ function startProcessingNextRepository() {
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
   };
   
-  persist.saveURI(uri, null, null, null, null, file, null);
+  persist.saveURI(ios.newURI(myURL + "/" + ManifestFile, null, null), null, null, null, null, file, null);
   DownloadsInProgress.push(persist);
   
   startProcessingNextRepository();
@@ -517,7 +513,7 @@ function startProcessingNextRepository() {
 function applyRepositoryManifest(resource, manifest) {
 
   // uncompress manifest to a TEMP subdir
-  var tmpDir = getTempDirOfUrl(getResourceLiteral(RPDS, resource, "Url"));
+  var tmpDir = getRepositoryUrlTempDir(getResourceLiteral(RPDS, resource, "Url"));
   if (!tmpDir.exists()) tmpDir.create(tmpDir.DIRECTORY_TYPE, DPERM);
   
   // nsIZipReader only handles ZIP- ARGGGG!
@@ -547,8 +543,8 @@ function applyRepositoryManifest(resource, manifest) {
     RDFC.AppendElement(newModRes);
     
     var type, confInfo, confDefault;
-    var datapath = getConfEntry(filedata, "DataPath");
-    var is_XSM_module = ((/\.(zip|xsm)$/).test(datapath) || (/\/audio\.htm(\?|$)/).test(datapath));
+    var dataPath = getConfEntry(filedata, "DataPath");
+    var is_XSM_module = ((/\.(zip|xsm)$/).test(dataPath) || (/\/audio\.htm(\?|$)/).test(dataPath));
     if (is_XSM_module) {
       MLDS.Assert(newModRes, RP.Type, RP.XSM_ModuleType, true);
     }
@@ -568,11 +564,10 @@ function applyRepositoryManifest(resource, manifest) {
     if (is_XSM_module && moduleType != "Audio") {moduleType = "XSM (" + moduleType + ")";}
     MLDS.Assert(newModRes, RP.ModuleType, RDF.GetLiteral(moduleType), true);
     
-    // write the new .conf info to new module resource
+    // write this .conf info to the new module resource
     // RDF-Attribute:"Conf-Entry"
     confInfo = {
       ModuleName:"ModuleName",
-      DataPath:"DataPath",
       Version:"Version",
       Lang:"Lang",
       Abbreviation:"Abbreviation",
@@ -590,6 +585,7 @@ function applyRepositoryManifest(resource, manifest) {
       CopyrightDate:"CopyrightDate",
       TextSource:"TextSource",
       
+      // these are specific to the .confs of modules located within .xsm files
       NameXSM:"NameXSM",
       SwordModules:"SwordModules",
       SwordVersions:"SwordVersions",
@@ -600,7 +596,6 @@ function applyRepositoryManifest(resource, manifest) {
     
     confDefault = {
       ModuleName:"?",
-      DataPath:"?",
       Version:"?",
       Lang:"?",
       Abbreviation:"",
@@ -632,21 +627,25 @@ function applyRepositoryManifest(resource, manifest) {
       MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + p), RDF.GetLiteral(confres), true);
     }
     
-    // add .conf file name
-    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "ConfFileName"), RDF.GetLiteral(file.leafName), true);
-    // add Url (of repository)
+    // fix up and add DataPath and add ModuleUrl
+    var moduleUrl;
+    if ((/^(\.|\/)/).test(dataPath)) {
+      dataPath = dataPath.replace(/^\.*\//, "");
+      dataPath = dataPath.replace(/\/[^\/]*$/, "");
+      moduleUrl = getResourceLiteral(MLDS, newModRes, "Url") + "/" + dataPath;
+    }
+    else moduleUrl = dataPath;
+    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "DataPath"), RDF.GetLiteral(dataPath), true);
+    MLDS.Assert(newModRes, RP.ModuleUrl, RDF.GetLiteral(moduleUrl), true);
+    // add Url (of module's repository)
     MLDS.Assert(newModRes, RP.Url, RPDS.GetTarget(resource, RP.Url, true), true);
-    // add LangReadable
+    // add .conf file name (NOT always lower case of module name!)
+    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "ConfFileName"), RDF.GetLiteral(file.leafName), true);
+    // add LangReadable (so language can be read in moduleListTree)
     var langReadable = getLangReadable(getConfEntry(filedata, "Lang"));
     MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langReadable), true);
     // add Status
     MLDS.Assert(newModRes, RP.Status, RDF.GetLiteral("0%"), true);
-    // ModuleUrl
-    var moduleUrl = getResourceLiteral(MLDS, newModRes, "DataPath");
-    if ((/^(\.|\/)/).test(moduleUrl)) {
-      moduleUrl = getResourceLiteral(MLDS, newModRes, "Url") + "/" + moduleUrl.replace(/^\.*\//, "");
-    }
-    MLDS.Assert(newModRes, RP.ModuleUrl, RDF.GetLiteral(moduleUrl), true);
 
   }
 }
@@ -656,90 +655,110 @@ function applyRepositoryManifest(resource, manifest) {
 // Download related subroutines
 ////////////////////////////////////////////////////////////////////////
 
-// fill a data object with information about the contents of a module
-function getModContentUrls(modResource, modPath, data) {
-  var repoUrl = getResourceLiteral(MLDS, modResource, "Url");
+// Recursively fetches and saves the file and directory url information 
+// of a SWORD module. This data is saved in the moduledata object.
+function fetchSwordModuleUrls(moduledata, subdirectory) {
+  if (!subdirectory) subdirectory = "";
+
+  var directoryUrl = getResourceLiteral(MLDS, moduledata.modResource, "Url") + "/" + getResourceLiteral(MLDS, moduledata.modResource, "DataPath");
+  directoryUrl += subdirectory;
   
-  var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+  var directoryListingFile = getModuleListingDirectory(moduledata.modResource);
+  directoryListingFile.append(getModuleInstallerZipFile(moduledata.modResource).leafName.replace(/\.(zip|xsm)$/, "") + "_" + subdirectory.replace(/\//g, "_"));
+  
   var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);
-  var destFile = getTempDirOfUrl(repoUrl);
-  if (!destFile.exists()) destFile.create(destFile.DIRECTORY_TYPE, DPERM);
-  destFile.append("listing_" + modPath.replace(/\//g, "_"));
+  var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
   persist.progressListener = 
     {
-      modResource:modResource,
-      modPath:modPath,
-      data:data,
-      myURL:repoUrl + "/" + modPath,
-      myDestFile:destFile,
-      myPersist:persist,
-      myMaxPerc:2,
-      myApproxFileSize:2000,
+      moduledata:moduledata,
+      subdirectory:(subdirectory ? subdirectory:""),
+      
+      persist:persist,
+      directoryListingFile:directoryListingFile,
+      directoryUrl:directoryUrl,
+      
+      maxPerc:2,
+      approxFileSize:2000,
       
       onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
-        // add this download's progress to the existing percentage, but add a maximum myMaxPerc for this download
-        var oldperc = getResourceLiteral(MLDS, this.modResource, "Status");
+        // add this download's progress to the existing percentage, but add a maximum maxPerc for this download
+        var oldperc = getResourceLiteral(MLDS, this.moduledata.modResource, "Status");
         if (!(/^\d+\s*\%$/).test(oldperc)) oldperc = 0;
         else oldperc = Number(oldperc.match(/^(\d+)\s*\%$/)[1]);
-        if (aCurSelfProgress > this.myApproxFileSize) aCurSelfProgress = this.aCurSelfProgress;
-        var perc = oldperc + Math.round(this.myMaxPerc*(aCurSelfProgress/this.myApproxFileSize));
-        setResourceAttribute(MLDS, this.modResource, "Status", perc + "%");
-        setResourceAttribute(MLDS, this.modResource, "Style", "yellow");
+        if (aCurSelfProgress > this.approxFileSize) aCurSelfProgress = this.approxFileSize;
+        var perc = oldperc + Math.round(this.maxPerc*(aCurSelfProgress/this.approxFileSize));
+        setResourceAttribute(MLDS, this.moduledata.modResource, "Status", perc + "%");
+        setResourceAttribute(MLDS, this.moduledata.modResource, "Style", "yellow");
       },
       
       onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
         if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
 
+        downloadsInProgressRemove(this.persist);
+
         if (aStatus == 0) {
-          removeProgress(this.myPersist);
           
-          var data = readFile(this.myDestFile);
+          var data = readFile(this.directoryListingFile);
           
           var files = data.match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/gm);
           var dirs = data.match(/201\: \"(.*?)\" \d+ .*? DIRECTORY\s*$/gm);
           
           for (var i=0; dirs && i<dirs.length; i++) {
-            var dir = dirs[i].match(/201\: \"(.*?)\" \d+ .*? DIRECTORY\s*$/)[1];
-            this.data.count++;
-            
-            // start another download to read the subdirectory contents
-            getModContentUrls(this.modResource, this.modPath + "/" + dir, this.data);
+            // initiate another directory listing
+            var subdir = dirs[i].match(/201\: \"(.*?)\" \d+ .*? DIRECTORY\s*$/)[1];
+            this.moduledata.directoriesBeingRead++;
+            fetchSwordModuleUrls(this.moduledata, this.subdirectory + "/" + subdir);
           }
           
           for(i=0; files && i<files.length; i++) {
+            // save our file data read from the listing
             var file = files[i].match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/);
-            this.data.modContentData.push({ url:this.myURL + "/" + file[1], size:file[2] });
+            this.moduledata.modContentData.push( { url:this.directoryUrl + "/" + file[1], size:file[2] } );
           }
           
-          this.data.count--;
-          if (this.data.count == 0) {
-            // this entire module's contents is now known!
-            downloadModule(this.modResource, this.data.mpath, this.data.dest, this.data.modContentData);
+          this.moduledata.directoriesBeingRead--; // must decrement after previous increment possibility
+          if (this.moduledata.directoriesBeingRead == 0) {
+         
+            var dirListingDir = getModuleListingDirectory(this.moduledata.modResource);
+            if (dirListingDir.exists()) dirListingDir.remove(true);
+
+            if (this.moduledata.status == 0) {
+              // this entire module's contents are now known!
+              downloadModule(this.moduledata.modResource, this.moduledata.modContentData);
+            }
           }
           
         }
         else {
-          setResourceAttribute(MLDS, this.modResource, "Status", "Error");
-          setResourceAttribute(MLDS, this.modResource, "Style", "red");
-          jsdump("ERROR: getModContentUrls failed for \"" + this.myURL + "\"");
+          this.moduledata.status = 1;
+          this.moduledata.directoriesBeingRead--; // must decrement after previous increment possibility
+          setResourceAttribute(MLDS, this.moduledata.modResource, "Status", "Error");
+          setResourceAttribute(MLDS, this.moduledata.modResource, "Style", "red");
+          jsdump("ERROR: fetchSwordModuleUrls failed for \"" + this.directoryUrl + "\"");
         }
+        
       },
       
       onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
-        setResourceAttribute(MLDS, this.modResource, "Status", "Error");
-        setResourceAttribute(MLDS, this.modResource, "Style", "red");
-        if (aMessage) jsdump(this.myURL + ": " + aMessage);
+        setResourceAttribute(MLDS, this.moduledata.modResource, "Status", "Error");
+        setResourceAttribute(MLDS, this.moduledata.modResource, "Style", "red");
+        if (aMessage) jsdump("ERROR: fetchSwordModuleUrls failed for " + this.directoryUrl + ": " + aMessage);
       },
       
       onLocationChange: function(aWebProgress, aRequest, aLocation) {},
       
       onSecurityChange: function(aWebProgress, aRequest, aState) {}
     };
-  persist.saveURI(ios.newURI(repoUrl + "/" + modPath, null, null), null, null, null, null, destFile, null);
+  persist.saveURI(ios.newURI(directoryUrl, null, null), null, null, null, null, directoryListingFile, null);
   DownloadsInProgress.push(persist);
 }
 
-function downloadModule(modResource, modPath, modDest, modContentData) {
+// Download a module whose contents are listed in modContentData 
+// as [ { url:url, size:size } ]. Size is not needed unless there
+// are multiple modContentData objects.
+function downloadModule(modResource, modContentData) {
+//for (var i=0; i<modContentData.length; i++) {jsdump(uneval(modContentData[i]));}
+
   // don't fetch lucene directory or its contents
   for (var i=0; i<modContentData.length; i++) {
     if ((/\/lucene(\/|$)/i).test(modContentData[i].url)) {
@@ -747,67 +766,64 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
       i--;
     }
   }
-  
-  var is_XSM_module = (MLDS.GetTarget(modResource, RP.Type, true) == RP.XSM_ModuleType);
     
   var repoUrl = getResourceLiteral(MLDS, modResource, "Url");
-  
-  var moduleDir = modDest.clone();
-  var p = (modPath ? modPath.split("/"):null);
+  var moduleDir = getModuleDownloadDirectory(modResource);
+  var is_XSM_module = (MLDS.GetTarget(modResource, RP.Type, true) == RP.XSM_ModuleType);
 
+  var modPath = "";
   if (!is_XSM_module) {
-    for (var i=0; p && i<p.length; i++) {
+    var modPath = getResourceLiteral(MLDS, modResource, "DataPath");
+    var p = modPath.split("/");
+    for (var i=0; i<p.length; i++) {
       if (!p[i]) continue; // case of dir//subdir
       moduleDir.append(p[i]);
       moduleDir.create(moduleDir.DIRECTORY_TYPE, DPERM);
     }
   }
-    
-  var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService); 
-  
-  var total = 0;
-  for (var c=0; c<modContentData.length; c++) {total += Number(modContentData[c].size);}
   
   var downloadedFiles = [];
   if (!is_XSM_module) {
     // the .conf file was already downloaded during repository loading so just copy it
-    var modConf = modDest.clone(); 
+    var modConf = getRepositoryUrlTempDir(repoUrl);
     modConf.append("mods.d");
     modConf.append(getResourceLiteral(MLDS, modResource, "ConfFileName"));
     downloadedFiles.push(modConf);
   }
 
-  // this data object is shared by all this module's downloads
-  var data = { total:total, current:0, count:1, status:0, downloadedFiles:downloadedFiles }; 
-  
   // progress has already been started when the module contents were read
   // so add new progress to this starting value
   var startPerc = getResourceLiteral(MLDS, modResource, "Status");
   if (!(/^\d+\s*\%$/).test(startPerc)) startPerc = 0;
   else startPerc = Number(startPerc.match(/^(\d+)\s*\%$/)[1]);
   
+  var statusArray = [];
+  if (is_XSM_module) {
+    // update status of all modules included in this XSM file
+    var myKey = getResourceLiteral(MLDS, modResource, "ModuleUrl");
+    RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+    var elems = RDFC.GetElements();
+    while (elems.hasMoreElements()) {
+      var elem = elems.getNext();
+      var key = getResourceLiteral(MLDS, elem, "ModuleUrl");
+      if (key == myKey) statusArray.push(elem);
+    }
+  }
+  else statusArray.push(modResource);
+  
+  var total = 0;
+  for (var c=0; c<modContentData.length; c++) {total += Number(modContentData[c].size);}
+  
+  // this data object is shared by all this module's downloads
+  var data = { total:total, current:0, count:1, status:0, downloadedFiles:downloadedFiles }; 
+  
+  // begin separate download of each module content file
   for (var c=0; c<modContentData.length; c++) {
 
     var destFile = moduleDir.clone();
 
-    var statusArray = [];
-    if (is_XSM_module) {
-      var myKey = getResourceLiteral(MLDS, modResource, "ModuleUrl");
-      RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-      var elems = RDFC.GetElements();
-      while (elems.hasMoreElements()) {
-        var elem = elems.getNext();
-        var key = getResourceLiteral(MLDS, elem, "ModuleUrl");
-        if (key == myKey) statusArray.push(elem);
-      }
-      
-      var destFileName = modContentData[c].url.replace(/^.*?([^\/]+)$/, "$1");
-      if (!(/\.(zip|xsm)$/).test(destFileName)) destFileName += ".xsm";
-      destFileName = destFileName.replace(/[\&=]+/g, "");
-      destFile.append(destFileName);
-    }
+    if (is_XSM_module) destFile.append(getModuleInstallerZipFile(modResource).leafName);
     else {
-      statusArray.push(modResource);
       var sub = modContentData[c].url.replace(repoUrl + "/" + modPath + "/", "");
       sub = sub.split("/");
       for (var sd=0; sd<sub.length-1; sd++) {
@@ -818,16 +834,19 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
       destFile.append(sub[sub.length-1]);
     }
 
+    var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService); 
     var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
     persist.progressListener = 
     {
+      data:data,
+          
       myResource:modResource,
       myStatusArray:statusArray,
       myURL:modContentData[c].url,
       myDestFile:destFile,
       mySize:Number(modContentData[c].size),
       myLast:0,
-      data:data,
+
       myPersist:persist,
       startPerc:startPerc,
       
@@ -847,40 +866,39 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
         
         // download finished
         this.data.count--;
-        removeProgress(this.myPersist);
+        downloadsInProgressRemove(this.myPersist);
         
-        this.data.status = (this.data.status | aStatus);
-        this.data.downloadedFiles.push(this.myDestFile);
+        if (aStatus == 0) this.data.downloadedFiles.push(this.myDestFile);
+        else this.data.status = 1;
         
         if (this.data.count == 0) {
           
           var is_XSM_module = (MLDS.GetTarget(this.myResource, RP.Type, true) == RP.XSM_ModuleType);
           
-          // then entire module is also complete...
           if (!this.data.status) {
+          
+            // then entire module is also complete...
             for (var s=0; s<this.myStatusArray.length; s++) {
               setResourceAttribute(MLDS, this.myStatusArray[s], "Status", "100%");
               setResourceAttribute(MLDS, this.myStatusArray[s], "Style", "green");
             }
             
+            var installerZipFile = getModuleInstallerZipFile(this.myResource);
+            
             // copy the completed module to our install directory
             if (is_XSM_module) {
-              this.data.downloadedFiles[0].copyTo(TEMP_Install.clone(), null);
+              this.data.downloadedFiles[0].copyTo(installerZipFile.parent, installerZipFile.leafName);
             }
             else {
-              var modName = getResourceLiteral(MLDS, this.myResource, "ModuleName");
-              var zipFile = TEMP_Install.clone();
-              zipFile.append(modName + ".zip");
-              
-              var zipRoot = getModuleDownloadDirectory(this.myResource, is_XSM_module);
-              
               var zipWriter = Components.classes["@mozilla.org/zipwriter;1"].createInstance(Components.interfaces.nsIZipWriter);
-              zipWriter.open(zipFile, 0x02 | 0x08 | 0x20); // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
+              
+              zipWriter.open(installerZipFile, 0x02 | 0x08 | 0x20); // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
               for (var i=0; i<this.data.downloadedFiles.length; i++) {
-                var zipEntry = this.data.downloadedFiles[i].path.replace(zipRoot.path + "/", "");
+                var zipEntry = this.data.downloadedFiles[i].path.replace(/^.*\/(mods\.d|modules)(\/.*?)$/, "$1$2");
                 zipWriter.addEntryFile(zipEntry, zipWriter.COMPRESSION_NONE, this.data.downloadedFiles[i], false);
               }
               zipWriter.close();
+              
             }
             
           }
@@ -891,9 +909,8 @@ function downloadModule(modResource, modPath, modDest, modContentData) {
             }
           }
           
-          var downDir = getModuleDownloadDirectory(this.myResource, is_XSM_module);
+          var downDir = getModuleDownloadDirectory(this.myResource);
           downDir.remove(true);
-          CompletedDownloads.push(downDir.path);
           ModulesLoading--;
         
         }
@@ -953,7 +970,7 @@ function deleteSelectedRepositories() {
   selectLanguage(getPrefOrCreate("addRepositoryModuleLang", "Char", getLocale()));
 }
 
-function toggleReposOnOff(tree, e) {
+function toggleReposOnOff() {
   var selectedResources = getSelectedResources(document.getElementById("repoListTree"));
   if (!selectedResources.length) return;
   
@@ -978,7 +995,7 @@ function toggleReposOnOff(tree, e) {
     setResourceAttribute(RPDS, selectedResources[i], "Enabled", newval);
     
     if (newval == "true") {
-      setResourceAttribute(RPDS, selectedResources[i], "Status", "0%");
+      setResourceAttribute(RPDS, selectedResources[i], "Status", "1%");
       setResourceAttribute(RPDS, selectedResources[i], "Style", "yellow");
       nowOnRes.push(selectedResources[i]);
     }
@@ -1094,12 +1111,29 @@ function initiateModuleDownloads() {
   for (var m=0; m<mods.length; m++) {
     var is_XSM_module = (MLDS.GetTarget(mods[m], RP.Type, true) == RP.XSM_ModuleType);
     
-    // all module downloads will go under "downloads/modName"
-    // this directory will be deleted once download is copied away
-    // don't allow another download until this one is done
-    var dest = getModuleDownloadDirectory(mods[m], is_XSM_module);
+    var moduleUrl = getResourceLiteral(MLDS, mods[m], "ModuleUrl");
     
-    // start with a clean module directory each time
+    // prompt for audio book and chapters if needed
+    if (is_XSM_module && !(/\.(zip|xsm)$/).test(moduleUrl)) {
+      var modConf = getRepositoryUrlTempDir(getResourceLiteral(MLDS, mods[m], "Url"));
+      modConf.append("mods.d");
+      modConf.append(getResourceLiteral(MLDS, mods[m], "ConfFileName"));
+      var data = { ok:false, bk:null, ch:null, cl:null, audio:eval(getConfEntry(readFile(modConf), "AudioChapters")) };
+      var dlg = window.openDialog("chrome://xulsword/content/dialogs/addRepositoryModule/audioDialog.xul", "dlg", DLGSTD, data);
+      
+      if (!data.ok || !data.bk || !data.ch || !data.cl) {
+        ModulesLoading--;
+        continue;
+      }
+      
+      moduleUrl = getResourceLiteral(MLDS, mods[m], "DataPath") + "&bk=" + data.bk + "&ch=" + data.ch + "&cl=" + data.cl;
+      setResourceAttribute(MLDS, mods[m], "ModuleUrl", moduleUrl);
+    }
+    
+    // all module downloads will go under "downloads/subdir/"
+    // this directory will be deleted once download is copied so
+    // don't allow another download until this one is done
+    var dest = getModuleDownloadDirectory(mods[m]);
     if (dest.exists()) {
       ModulesLoading--;
       continue;
@@ -1107,34 +1141,14 @@ function initiateModuleDownloads() {
     dest.create(dest.DIRECTORY_TYPE, DPERM);
     
     // don't download something that has already been succesfully downloaded!
-    for (var x=0; x<CompletedDownloads.length; x++) {if (CompletedDownloads[x] == dest.path) break;}
-    if (x < CompletedDownloads.length) {
+    if (getModuleInstallerZipFile(mods[m]).exists()) {
       ModulesLoading--;
       continue;
     }
     
     if (is_XSM_module) {
       // install a .xsm module
-      var xsm_url = getResourceLiteral(MLDS, mods[m], "ModuleUrl");
-      if ((/\.(zip|xsm)$/).test(xsm_url)) {
-        downloadModule(mods[m], "", dest, 
-          [ { url:xsm_url, size:1 } ]
-        );
-      }
-      else {
-        // get audio book and chapters
-        var modConf = getTempDirOfUrl(getResourceLiteral(MLDS, mods[m], "Url"));
-        modConf.append("mods.d");
-        modConf.append(getResourceLiteral(MLDS, mods[m], "ConfFileName"));
-        var data = { ok:false, bk:null, ch:null, cl:null, audio:eval(getConfEntry(readFile(modConf), "AudioChapters")) };
-        var dlg = window.openDialog("chrome://xulsword/content/dialogs/addRepositoryModule/audioDialog.xul", "dlg", DLGSTD, data);
-        if (!data.ok || !data.bk || !data.ch || !data.cl) {
-          ModulesLoading--;
-          continue;
-        }
-        downloadModule(mods[m], "", dest, 
-            [{ url:xsm_url + "&bk=" + data.bk + "&ch=" + data.ch + "&cl=" + data.cl, size:1 }] );
-      }
+      downloadModule(mods[m], [ { url:moduleUrl, size:1 } ]);
     }
     else {
       // install a SWORD module
@@ -1144,8 +1158,7 @@ function initiateModuleDownloads() {
       modsdDir.append("mods.d");
       if (!modsdDir.exists()) modsdDir.create(modsdDir.DIRECTORY_TYPE, DPERM);
       
-      var repoUrl = getResourceLiteral(MLDS, mods[m], "Url");
-      var confSource = getTempDirOfUrl(repoUrl);
+      var confSource = getRepositoryUrlTempDir(getResourceLiteral(MLDS, mods[m], "Url"));
       confSource.append("mods.d");
       confSource.append(getResourceLiteral(MLDS, mods[m], "ConfFileName"));
       if (!confSource.exists()) {
@@ -1154,22 +1167,21 @@ function initiateModuleDownloads() {
         continue;
       }
       confSource.copyTo(modsdDir, null);
-      
-      // now copy the module contents from the Url to "downloads/modName/modules/..."
-      setResourceAttribute(MLDS, mods[m], "Status", "0%");
-      setResourceAttribute(MLDS, mods[m], "Style", "yellow");
-          
-      var mpath = getResourceLiteral(MLDS, mods[m], "DataPath");
-      mpath = mpath.replace(/^\.\//, "").replace(/[\\\/][^\\\/]*$/, "");
-      
-      setResourceAttribute(MLDS, mods[m], "Status", "0%");
-      setResourceAttribute(MLDS, mods[m], "Style", "yellow");
     
-      // getModContentUrls will asyncronously call downloadModule when all 
-      // module content files are known. Then checkAllModulesAreDownloaded 
-      // will finish up once all downloads have completed
-      var data = { repoUrl:repoUrl, mpath:mpath, dest:dest, count:1, modContentData:[] };
-      getModContentUrls(mods[m], mpath, data);
+      var moduleListingDir = getModuleListingDirectory(mods[m]);
+      if (moduleListingDir.exists()) {
+        ModulesLoading--;
+        continue;
+      }
+      moduleListingDir.create(moduleListingDir.DIRECTORY_TYPE, DPERM);
+    
+      // now copy the module contents from the Url to "downloads/modName/modules/..."
+      setResourceAttribute(MLDS, mods[m], "Status", "1%");
+      setResourceAttribute(MLDS, mods[m], "Style", "yellow");
+      
+      // fetchSwordModuleUrls will asyncronously call downloadModule 
+      // when all module content files are finally known.
+      fetchSwordModuleUrls( { modResource:mods[m], modContentData:[], directoriesBeingRead:1 , status:0} );
     }
   }
 }
@@ -1188,13 +1200,36 @@ function updateRepoListButtons(e) {
   var buttons  = ["toggle", "add", "delete"];
   var disabled = [true, false, true];
   
-  // button states depend on selection
+  // button states depend on selection and downloads status
   var tree = document.getElementById("repoListTree");
   var sel = tree.view.selection;
   
   if (sel.currentIndex != -1) {
     disabled[0] = false; // toggle
     disabled[2] = false; // delete
+  }
+  if (DownloadsInProgress.length) {
+    disabled = [true, true, true];
+  }
+  
+  // apply disabled attribute
+  for (var i=0; i<buttons.length; i++) {
+    if (disabled[i]) document.getElementById(buttons[i]).setAttribute("disabled", "true");
+    else document.getElementById(buttons[i]).removeAttribute("disabled");
+  }
+}
+
+function updateModuleButtons() {
+  var buttons  = ["installButton", "showInfoButton", "showModulesButton"];
+  var disabled = [true, true, false];
+  
+  // button states depend on selection
+  var tree = document.getElementById("moduleListTree");
+  var sel = tree.view.selection;
+  
+  if (sel.currentIndex != -1) {
+    disabled[0] = false; // install
+    disabled[1] = false; // showInfo
   }
   
   // apply disabled attribute
@@ -1241,26 +1276,6 @@ function onModuleListTreeSelect() {
   */
   
   updateModuleButtons();
-}
-
-function updateModuleButtons() {
-  var buttons  = ["installButton", "showInfoButton", "showModulesButton"];
-  var disabled = [true, true, false];
-  
-  // button states depend on selection
-  var tree = document.getElementById("moduleListTree");
-  var sel = tree.view.selection;
-  
-  if (sel.currentIndex != -1) {
-    disabled[0] = false; // install
-    disabled[1] = false; // showInfo
-  }
-  
-  // apply disabled attribute
-  for (var i=0; i<buttons.length; i++) {
-    if (disabled[i]) document.getElementById(buttons[i]).setAttribute("disabled", "true");
-    else document.getElementById(buttons[i]).removeAttribute("disabled");
-  }
 }
 
 function addRepository() {
@@ -1380,7 +1395,7 @@ function toggleInfo(mod, url, conf) {
  
   if (showInfo == "false") {
     var confInfo = "-----";
-    var confFile = getTempDirOfUrl(url);
+    var confFile = getRepositoryUrlTempDir(url);
     confFile.append("mods.d");
     confFile.append(conf);
     if (!confFile.exists()) {
@@ -1437,6 +1452,55 @@ objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.lea
     process.run(true, [], 0);
   }
   else throw ("ERROR: unCompressTarGz not implemented for this op-sys");
+}
+
+function getRepositoryUrlTempDir(url) {
+  var file = TEMP.clone();
+  file.append(url.replace(/^ftp:\/\//, "").replace(/[\\\/]/g, "_"));
+
+  return file;
+}
+
+// gets, but does not create, the module listing directory of a module
+function getModuleListingDirectory(modResource) {
+  var dest = TEMP.clone();
+  dest.append("listings");
+  if (!dest.exists()) dest.create(dest.DIRECTORY_TYPE, DPERM);
+  
+  dest.append(getModuleInstallerZipFile(modResource).leafName.replace(/\.(zip|xsm)$/, ""));
+  
+  return dest;
+}
+
+// gets, but does not create, the module download directory of a module
+function getModuleDownloadDirectory(modResource) {
+  var dest = TEMP.clone();
+  dest.append("downloads");
+  if (!dest.exists()) dest.create(dest.DIRECTORY_TYPE, DPERM);
+
+  dest.append(getModuleInstallerZipFile(modResource).leafName.replace(/\.(zip|xsm)$/, ""));
+  
+  return dest;
+}
+
+// return the final nsILocalFile this module resource will download into
+function getModuleInstallerZipFile(modResource) {
+  var installZipFile = TEMP_Install.clone();
+
+  var is_XSM_module = (MLDS.GetTarget(modResource, RP.Type, true) == RP.XSM_ModuleType);
+  
+  if (is_XSM_module) {
+    // get leafName of ModuleUrl
+    var zipFileName = getResourceLiteral(MLDS, modResource, "ModuleUrl").replace(/^.*?([^\/]+)$/, "$1");
+    if (!(/\.(zip|xsm)$/).test(zipFileName)) zipFileName += ".xsm";
+    zipFileName = zipFileName.replace(/[\&=]+/g, "");
+    installZipFile.append(zipFileName);
+  }
+  else {
+    installZipFile.append(getResourceLiteral(MLDS, modResource, "ModuleName") + "_" + getResourceLiteral(MLDS, modResource, "Version") + ".zip");
+  }
+  
+  return installZipFile
 }
 
 // Set a resource's attribute (a string) to value (also a string)
@@ -1722,14 +1786,6 @@ function treeDataSource(disconnectArray, idArray) {
       tree.builder.rebuild();
     }
   }
-  
-}
-
-function getTempDirOfUrl(url) {
-  var file = TEMP.clone();
-  file.append(url.replace(/^ftp:\/\//, "").replace(/[\\\/]/g, "_"));
-
-  return file;
 }
 
 function getConfEntry(filedata, param) {
@@ -1796,7 +1852,7 @@ function dbFlush(aDS) {
 }
 
 // each file download is controlled by a progress object
-function removeProgress(progress) {
+function downloadsInProgressRemove(progress) {
   for (var i=0; i<DownloadsInProgress.length; i++) {
     if (progress == DownloadsInProgress[i]) {
       DownloadsInProgress.splice(i,1);
@@ -1818,16 +1874,6 @@ function getInstallableModules() {
   return installableModules;
 }
 
-function getModuleDownloadDirectory(modResource, is_XSM_module) {
-  var dest = TEMP.clone();
-  dest.append("downloads");
-  if (!dest.exists()) dest.create(dest.DIRECTORY_TYPE, DPERM);
-  var modName = (is_XSM_module ? getResourceLiteral(MLDS, modResource, "NameXSM"):getResourceLiteral(MLDS, modResource, "ModuleName"));
-  dest.append(modName);
-  
-  return dest;
-}
-
 
 ////////////////////////////////////////////////////////////////////////
 // onUnload routines
@@ -1843,10 +1889,10 @@ function onUnload() {
     DownloadsInProgress[i].cancelSave();
   }
 
-  // remove all temporary files (but install temp files will remain)
+  // remove all temporary files (except install temp files will remain)
   if (TEMP.exists()) TEMP.remove(true);
   
-  // delete all module and language data (since it's reloaded anew every time)
+  // delete all module and language data (it's regenerated every time the window is opened)
   var ress = MLDS.GetAllResources();
   while (ress.hasMoreElements()) {
     var res = ress.getNext();
