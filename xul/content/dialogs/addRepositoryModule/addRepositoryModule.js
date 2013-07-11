@@ -417,6 +417,7 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
   };
   persist.saveURI(ios.newURI(url, null, null), null, null, null, null, destFile, null);
   DownloadsInProgress.push(persist);
+  updateRepoListButtons();
   
 }
 
@@ -504,6 +505,7 @@ function startProcessingNextRepository() {
   
   persist.saveURI(ios.newURI(myURL + "/" + ManifestFile, null, null), null, null, null, null, file, null);
   DownloadsInProgress.push(persist);
+  updateRepoListButtons();
   
   startProcessingNextRepository();
 }
@@ -627,7 +629,9 @@ function applyRepositoryManifest(resource, manifest) {
       MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + p), RDF.GetLiteral(confres), true);
     }
     
-    // fix up and add DataPath and add ModuleUrl
+    // add Url (of module's repository)
+    MLDS.Assert(newModRes, RP.Url, RPDS.GetTarget(resource, RP.Url, true), true);
+    // fix up and add DataPath and add ModuleUrl (of module)
     var moduleUrl;
     if ((/^(\.|\/)/).test(dataPath)) {
       dataPath = dataPath.replace(/^\.*\//, "");
@@ -637,8 +641,6 @@ function applyRepositoryManifest(resource, manifest) {
     else moduleUrl = dataPath;
     MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "DataPath"), RDF.GetLiteral(dataPath), true);
     MLDS.Assert(newModRes, RP.ModuleUrl, RDF.GetLiteral(moduleUrl), true);
-    // add Url (of module's repository)
-    MLDS.Assert(newModRes, RP.Url, RPDS.GetTarget(resource, RP.Url, true), true);
     // add .conf file name (NOT always lower case of module name!)
     MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "ConfFileName"), RDF.GetLiteral(file.leafName), true);
     // add LangReadable (so language can be read in moduleListTree)
@@ -751,6 +753,7 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
     };
   persist.saveURI(ios.newURI(directoryUrl, null, null), null, null, null, null, directoryListingFile, null);
   DownloadsInProgress.push(persist);
+  updateRepoListButtons();
 }
 
 // Download a module whose contents are listed in modContentData 
@@ -894,7 +897,7 @@ function downloadModule(modResource, modContentData) {
               
               zipWriter.open(installerZipFile, 0x02 | 0x08 | 0x20); // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
               for (var i=0; i<this.data.downloadedFiles.length; i++) {
-                var zipEntry = this.data.downloadedFiles[i].path.replace(/^.*\/(mods\.d|modules)(\/.*?)$/, "$1$2");
+                var zipEntry = this.data.downloadedFiles[i].path.replace(/\\/g, "/").replace(/^.*\/(mods\.d|modules)(\/.*?)$/, "$1$2");
                 zipWriter.addEntryFile(zipEntry, zipWriter.COMPRESSION_NONE, this.data.downloadedFiles[i], false);
               }
               zipWriter.close();
@@ -930,6 +933,7 @@ function downloadModule(modResource, modContentData) {
     };
     persist.saveURI(ios.newURI(modContentData[c].url, null, null), null, null, null, null, destFile, null);
     DownloadsInProgress.push(persist);
+    updateRepoListButtons();
     
     if (c<modContentData.length-1) data.count++; // don't increment for last file because count started as "1"
   }
@@ -1196,7 +1200,7 @@ function installModules() {
 }
 
 
-function updateRepoListButtons(e) {
+function updateRepoListButtons() {
   var buttons  = ["toggle", "add", "delete"];
   var disabled = [true, false, true];
   
@@ -1859,6 +1863,7 @@ function downloadsInProgressRemove(progress) {
       i--;
     }
   }
+  updateRepoListButtons();
 }
 
 // Search the install TEMP directory for modules which can be installed
