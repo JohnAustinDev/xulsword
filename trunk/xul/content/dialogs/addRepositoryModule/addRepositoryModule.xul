@@ -98,7 +98,7 @@
       
       <vbox id="repoControls" pack="center" >
         <button disabled="true" id="toggle" label="On/Off" oncommand="toggleReposOnOff()" />
-        <button id="add" label="Add" oncommand="addRepository()" />
+        <button disabled="true" id="add" label="Add" oncommand="addRepository()" />
         <button disabled="true" id="delete" label="Delete" oncommand="deleteSelectedRepositories();" />
       </vbox>
       
