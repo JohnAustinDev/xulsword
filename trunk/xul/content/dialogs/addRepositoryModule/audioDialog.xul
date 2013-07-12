@@ -21,16 +21,19 @@
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/dialogs/addRepositoryModule/addRepositoryModule-xul.css" type="text/css"?>
 
-<!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/dialogs/about/about.dtd">
+<!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/xulsword.dtd">
 
 <dialog
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   xmlns:html="http://www.w3.org/1999/xhtml"
   id="audioDialog"
-  onload="onLoad();"
-  persist="screenX screenY width height"
-  screenX="24" screenY="24">
-        
+  onload="onLoad();">
+  
+  <!-- the stringbundle element is used for script UI localization !-->
+  <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+  
+  <data id="ui.menu.importAudio.label">&menu.importAudio.label;</data>
+  
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
@@ -41,6 +44,10 @@
     var bookList, chapterList, lastChapterList;
     
     function onLoad() {
+      initCSS();
+
+      document.title = getDataUI("menu.importAudio.label");
+  
       bookList = document.getElementById("book");
       chapterList = document.getElementById("chapter");
       lastChapterList = document.getElementById("lastChapter");
@@ -149,6 +156,8 @@
       <menulist id="lastChapter" sizetopopup="always" style="width:60px;" /> 
       
     </hbox>
+    
+    <separator />
     
     <hbox id="buttons" pack="end">
       <button dlgtype="accept" oncommand="accept();" />

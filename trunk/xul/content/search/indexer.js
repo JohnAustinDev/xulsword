@@ -58,6 +58,7 @@ var Indexer = {
     this.indexer.postMessage({ 
         modname:this.moduleName, 
         moddir:LibSword.ModuleDirectory, 
+        localedir:LibSword.LocaleDirectory,
         libpath:LibSword.LibswordPath, 
         cipherKey:this.cipherKey, 
         usesSecurity:this.usesSecurity });

@@ -1,5 +1,8 @@
 # INSURE LINUX VERSION CAN SWITCH LOCALES
 Set (prefs.js):intl.locale.matchOS=false
+
+# UBUNTU SPECIFIC PREFS
+Set (prefs.js):ui.use_unity_menubar=false
   
 # MISC INITIAL PROGRAM SETTINGS
 Set (prefs.js):extensions.xulsword.Footnotes=On

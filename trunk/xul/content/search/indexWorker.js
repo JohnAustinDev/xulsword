@@ -30,6 +30,7 @@ onmessage = function(event) {
 
   LibSword.ModuleDirectory = data.moddir;
   LibSword.LibswordPath = data.libpath;
+  LibSword.LocaleDirectory = data.localedir;
 
   var re = new RegExp("(^|<nx>)" + data.modname + ";");
   if (re.test(LibSword.getModuleList())) {
