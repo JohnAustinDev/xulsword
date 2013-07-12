@@ -52,6 +52,9 @@
   border-bottom:1px solid grey;
   margin-bottom:20px;
 }
+.conf-info:last-child {
+  border-bottom:none;
+}
 .conf-info textarea {
   width:100%;
   height:250px;

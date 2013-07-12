@@ -1,12 +1,31 @@
 #body {
+  background-image:url(chrome://xulsword/skin/images/9.gif) !important;
+  padding:10px;
+}
+.arm-label {}
+
+#body {
   min-height:400px;
 }
 
+#showLanguagesButCont button {
+  min-width:30px;
+}
+#languageListTree {
+  width:160px;
+}
+#moduleListTree {
+  width:440px;
+}
 #repoListTree {
   min-width:600px;
+  height:150px;
+}
+#windowButtons > hbox > button {
+  width:160px;
 }
 
-#Status, #ModStatus {
+#Status, #ModStatus, #ModVersion {
   text-align:center;
 }
 
@@ -28,13 +47,40 @@
   display:none;
 }
 
-#languageListTree {
-  width:160px;
+#moduleDialog[showLanguageList="true"] #showLanguagesButCont {
+  display:none;
+}
+#moduleDialog[showLanguageList="false"] #languageListContainer,
+#moduleDialog[showLanguageList="false"] #langListSplitter,
+#moduleDialog[showLanguageList="true"] .defhide {
+  display:none;
+}
+#showLanguagesButton {
+  width:30px;
+}
+
+#body[showRepositoryList="false"] #repoDialog,
+#body[showRepositoryList="false"] #repoSplitter,
+#body[showRepositoryList="false"] #hideRepoButton {
+  display:none;
+}
+#body[showRepositoryList="true"] #showRepoButton,
+#body[showRepositoryList="true"] #repoProgress {
+  display:none;
 }
 
 #infoBox {
   width:100%;
   height:100%;
+  margin: 0px 4px;
+  border: 2px solid;
+  -moz-border-top-colors: ThreeDShadow ThreeDDarkShadow;
+  -moz-border-right-colors: ThreeDHighlight ThreeDLightShadow;
+  -moz-border-bottom-colors: ThreeDHighlight ThreeDLightShadow;
+  -moz-border-left-colors: ThreeDShadow ThreeDDarkShadow;
+  background-color: -moz-Field;
+  color: -moz-FieldText;
+  -moz-appearance: listbox;
 }
 
 #windowButtons {

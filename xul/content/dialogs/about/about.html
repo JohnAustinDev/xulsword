@@ -34,7 +34,7 @@
   function onLoad() {
     initCSS();
    
-    if (!CommandTarget.mod) return;
+    if (!CommandTarget.mod || !window.frameElement.ownerDocument.getElementById("mainbox")) return;
     
     // show the CommandTarget module info...
     window.frameElement.ownerDocument.getElementById("mainbox").setAttribute("showingModules", "true");

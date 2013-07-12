@@ -516,7 +516,7 @@
           // the book is autocompleted and letter keys are ignored until "space" or "backspace"
           // is pressed. Pressing "escape" restores original value and pressing "enter" runs
           // updateFromTextBox.
-jsdump("onbookkeyup:" + aEvent.which + ", " + this._finishedAutoComplete + ", " + this._saveTextBoxValue + ", " + this.bookmenulist.value); 
+
           //control+down-arrow (sometimes used to select text box)
           if (aEvent.which==40 || aEvent.which==17) return;
           
@@ -534,7 +534,7 @@ jsdump("onbookkeyup:" + aEvent.which + ", " + this._finishedAutoComplete + ", " 
           
           //letter keys
           if ((aEvent.which<48 || aEvent.which>58) && this._finishedAutoComplete) {this.bookmenulist.value = this._saveTextBoxValue; return;}
-jsdump(this.bookmenulist.value);
+
           this._saveTextBoxValue = this.bookmenulist.value;
           var found=false;
           var cnt=0;
