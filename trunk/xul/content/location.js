@@ -38,9 +38,20 @@ Location = {
       vzero = true;
       p[2] = 1;
       p[3] = 1;
-      xsref = p.join(".");
     }
- 
+    
+    // SWORD crashes for some null inputs, so filter them out
+    var p2 = [];
+    for (var i=0; i<p.length; i++) {
+      if (p[i]) {
+        p2.push(p[i]); 
+        continue;
+      }
+      break;
+    }
+    if (!p2.length) return null;
+    xsref = p2.join(".");
+
     var loc = LibSword.convertLocation(vsys1, xsref, vsys2);
     if (!vzero) return loc;
     

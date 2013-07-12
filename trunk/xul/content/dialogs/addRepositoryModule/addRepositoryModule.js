@@ -1353,6 +1353,8 @@ function writeModuleInfos() {
     }
     else submods.push(mods[m]);
     
+    var html = "";
+    
     for (var s=0; s<submods.length; s++) {
       var aModRes = submods[s];
       
