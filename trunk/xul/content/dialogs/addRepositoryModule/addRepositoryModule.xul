@@ -28,6 +28,8 @@
   %aboutDTD;
   <!ENTITY % dialogDTD SYSTEM "chrome://xulsword/locale/dialogs/dialog/dialog.dtd">
   %dialogDTD;
+  <!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
+  %bookmarksDTD;
 ]>
 
 <window 
@@ -50,6 +52,7 @@
   <data id="ui.less.label">&less.label;</data>
   <data id="ui.more.label">&more.label;</data>
   <data id="ui.menu.addNewModule.label">&menu.addNewModule.label;</data>
+  <data id="ui.treecol.name.label">&treecol.name.label;</data>
   
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
