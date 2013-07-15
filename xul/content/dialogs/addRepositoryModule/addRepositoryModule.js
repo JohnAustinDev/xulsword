@@ -27,6 +27,8 @@ const ManifestFile = "mods.d.tar.gz";
 const ON = String.fromCharCode(9745);
 const OFF =  String.fromCharCode(9746);
 const EmptyRepoSite = "file://";
+const SCRIPT_PROPS = "addRepositoryModule.properties";
+const ERROR = safeGetStringFromName("Ошибка", null, SCRIPT_PROPS, "arm.error");
 
 var RP, RPDS, MLDS, RDF, RDFC, RDFCU;
 var RepositoryArray, RepositoryIndex, RepositoriesLoading, RepositoryCheckInterval;
@@ -44,7 +46,7 @@ function onLoad() {
   ModulesLoading = 0; // global to track total number of modules downloading at any given time
   RepoProgress = document.getElementById("repoProgress");
   
-  document.getElementById("repoListLabel").value = safeGetStringFromName("Text Sources", null, null, "repositories");
+  document.getElementById("repoListLabel").value = safeGetStringFromName("Источники Модулей", null, SCRIPT_PROPS, "arm.repositoryTreeTitle");
   
   // start with totally clean temp directories
   TEMP = getSpecialDirectory("TmpD");
@@ -63,9 +65,11 @@ function onLoad() {
   var haveInternetPermission = getPrefOrCreate("HaveInternetPermission", "Bool", false);
   
   if (!haveInternetPermission) {
-    var title = safeGetStringFromName("Download From Internet", null, null, "InternetWarning.title");
-    var msg = safeGetStringFromName("This will access Bible related websites on the Internet.\n\nDo you wish to continue?", null, null, "InternetWarning.message");
-    var cbText = safeGetStringFromName("Remember my choice", null, null, "RememberMyChoice");
+    var title = safeGetStringFromName("Скачать Библию с Интернета?", null, SCRIPT_PROPS, "arm.internetPromptTitle");
+    var msg = safeGetStringFromName("This will access Bible related websites on the Internet. Such internet access is closely monitored by authorities in some countries. If this is a concern for you, you should click \"No\".", null, SCRIPT_PROPS, "arm.internetPromptMessage");
+    msg += "\n\n";
+    msg += safeGetStringFromName("Вы действительно хотите это сделать?", null, SCRIPT_PROPS, "arm.wishToContinue");
+    var cbText = safeGetStringFromName("Запомнить мой выбор?", null, SCRIPT_PROPS, "arm.rememberMyChoice");
     
     var result = {};
     var dlg = window.opener.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result,
@@ -403,7 +407,7 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
     },
     
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
-      ARMU.setResourceAttribute(RPDS, this.crosswire, "Status", "Error");
+      ARMU.setResourceAttribute(RPDS, this.crosswire, "Status", (aMessage ? aMessage:ERROR));
       ARMU.setResourceAttribute(RPDS, this.crosswire, "Style", "red");
       if (aMessage) jsdump(this.myURL + ": " + aMessage);
     },
@@ -498,13 +502,13 @@ function startProcessingNextRepository() {
         applyRepositoryManifest(this.myResource, this.myManifestFile);
       }
       else {
-        ARMU.setResourceAttribute(RPDS, this.myResource, "Status", "Error");
+        ARMU.setResourceAttribute(RPDS, this.myResource, "Status", ERROR);
         ARMU.setResourceAttribute(RPDS, this.myResource, "Style", "red");
       }
     },
     
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
-      ARMU.setResourceAttribute(RPDS, this.myResource, "Status", "Error");
+      ARMU.setResourceAttribute(RPDS, this.myResource, "Status", (aMessage ? aMessage:ERROR));
       ARMU.setResourceAttribute(RPDS, this.myResource, "Style", "red");
       if (aMessage) jsdump(this.myURL + ": " + aMessage);
     },
@@ -529,7 +533,7 @@ function applyRepositoryLocalConfs(resource) {
   localDir.append("mods.d");
   
   if (!localDir.exists()) {
-    ARMU.setResourceAttribute(RPDS, resource, "Status", "Error");
+    ARMU.setResourceAttribute(RPDS, resource, "Status", ERROR);
     ARMU.setResourceAttribute(RPDS, resource, "Style", "red");
     jsdump("ERROR: could not read local repository directory in \"" + localDir.path + "\"");
     return;
@@ -555,7 +559,7 @@ function applyRepositoryManifest(resource, manifest) {
   tmpDir.append("mods.d");
   
   if (!tmpDir.exists()) {
-    ARMU.setResourceAttribute(RPDS, resource, "Status", "Error");
+    ARMU.setResourceAttribute(RPDS, resource, "Status", ERROR);
     ARMU.setResourceAttribute(RPDS, resource, "Style", "red");
     jsdump("ERROR: could not read repository manifest in \"" + tmpDir.path + "\"");
     return;
@@ -592,13 +596,13 @@ function applyConfFile(file, repoUrl) {
   
   // add ModuleType
   var moduleType = ARMU.getConfEntry(filedata, "ModDrv");
-  if ((/^(RawText|zText)$/i).test(moduleType)) moduleType = getDataUI("search.Texts");
-  else if ((/^(RawCom|RawCom4|zCom)$/i).test(moduleType)) moduleType = getDataUI("search.Comms");
-  else if ((/^(RawLD|RawLD4|zLD)$/i).test(moduleType)) moduleType = getDataUI("search.Dicts");
-  else if ((/^(RawGenBook)$/i).test(moduleType)) moduleType = getDataUI("search.Genbks");
-  else if ((/^(RawFiles)$/i).test(moduleType)) moduleType = safeGetStringFromName("Simple Text", null, null, "sword.type.simpleText");
+  if ((/^(RawText|zText)$/i).test(moduleType)) moduleType = safeGetStringFromName("Библия", null, SCRIPT_PROPS, "arm.moduleType.Texts");
+  else if ((/^(RawCom|RawCom4|zCom)$/i).test(moduleType)) moduleType = safeGetStringFromName("Комментарий", null, SCRIPT_PROPS, "arm.moduleType.Comms");
+  else if ((/^(RawLD|RawLD4|zLD)$/i).test(moduleType)) moduleType = safeGetStringFromName("Словарь", null, SCRIPT_PROPS, "arm.moduleType.Dicts");
+  else if ((/^(RawGenBook)$/i).test(moduleType)) moduleType = safeGetStringFromName("Общие Книги", null, SCRIPT_PROPS, "arm.moduleType.Genbks");
+  else if ((/^(RawFiles)$/i).test(moduleType)) moduleType = safeGetStringFromName("Текст", null, SCRIPT_PROPS, "arm.moduleType.SimpleText");
   else if ((/^(HREFCom)$/i).test(moduleType)) moduleType = "URL"; 
-  else if ((/^(audio)$/i).test(moduleType)) moduleType = safeGetStringFromName("Audio", null, null, "xsm.type.audio");
+  else if ((/^(audio)$/i).test(moduleType)) moduleType = safeGetStringFromName("Аудио", null, SCRIPT_PROPS, "arm.moduleType.Audio");
   moduleType = moduleType.replace(/\:$/, ""); // previous UI option had ":" at the end...
   if (is_XSM_module && moduleType != "Audio") {moduleType = moduleType + " XSM";}
   MLDS.Assert(newModRes, RP.ModuleType, RDF.GetLiteral(moduleType), true);
@@ -770,7 +774,7 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
         else {
           this.moduledata.status = 1;
           this.moduledata.directoriesBeingRead--; // must decrement after previous increment possibility
-          ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Status", "Error");
+          ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Status", ERROR);
           ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Style", "red");
           jsdump("ERROR: fetchSwordModuleUrls failed for \"" + this.directoryUrl + "\"");
         }
@@ -778,7 +782,7 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
       },
       
       onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
-        ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Status", "Error");
+        ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Status", (aMessage ? aMessage:ERROR));
         ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Style", "red");
         if (aMessage) jsdump("ERROR: fetchSwordModuleUrls failed for " + this.directoryUrl + ": " + aMessage);
       },
@@ -943,7 +947,7 @@ function downloadModule(modResource, modContentData) {
           }
           else {
             for (var s=0; s<this.myStatusArray.length; s++) {
-              ARMU.setResourceAttribute(MLDS, this.myStatusArray[s], "Status", "Error");
+              ARMU.setResourceAttribute(MLDS, this.myStatusArray[s], "Status", ERROR);
               ARMU.setResourceAttribute(MLDS, this.myStatusArray[s], "Style", "red");
             }
           }
@@ -957,7 +961,7 @@ function downloadModule(modResource, modContentData) {
       
       onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
         for (var s=0; s<this.myStatusArray.length; s++) {
-          ARMU.setResourceAttribute(RPDS, this.myStatusArray[s], "Status", "Error");
+          ARMU.setResourceAttribute(RPDS, this.myStatusArray[s], "Status", (aMessage ? aMessage:ERROR));
           ARMU.setResourceAttribute(RPDS, this.myStatusArray[s], "Style", "red");
         }
         if (aMessage) jsdump(this.myURL + ": " + aMessage);

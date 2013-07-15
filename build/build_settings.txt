@@ -3,7 +3,7 @@
 
 # BUILD WHAT?
 Set MakeDevelopment=true
-Set MakeFFextension=true
+Set MakeFFextension=false
 Set MakePortable=false
 Set MakeSetup=false
 
@@ -20,16 +20,16 @@ Set XULRunner=C:\home\dev\mk-dev\xulrunner
 Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v6.1
 
 # SPECIFY BUILD INFORMATION
-Set Version=3.51
+Set Version=3.6
 Set Name=xulsword
 Set Vendor=CrossWire
 Set Executable=xulsword
 Set GeckoMinVersion=7.0
 Set GeckoMaxVersion=30.*
-Set XULToolkitVersion=17
+Set XULToolkitVersion=22
 Set (prefs.js):extensions.xulsword.EngineVersion=1.6.2
 Set (prefs.js):extensions.xulsword.MinXSMversion=1.0
-Set (prefs.js):extensions.xulsword.MinUIversion=3.5
+Set (prefs.js):extensions.xulsword.MinUIversion=3.6
 Set (prefs.js):extensions.xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
 # CHOOSE SECURITY SETTINGS

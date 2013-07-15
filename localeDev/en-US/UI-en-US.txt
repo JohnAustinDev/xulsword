@@ -314,3 +314,16 @@
 [dialog-window.yes]: Yes
 [error-reporter.dont_show_this_again]: Do not show me this dialog box again.
 [error-reporter.error_detection_message]: A problem may have been detected.\nTo report this problem press \"%1$S\".
+[add-repository-module.error]: Error
+[add-repository-module.repositoryTreeTitle]: Module Sources
+[add-repository-module.internetPromptTitle]: Download a Bible from the internet?
+[add-repository-module.internetMessage]: This will access Bible related websites on the Internet. Such internet access is closely monitored by authorities in some countries. If this is a concern for you, you should click "No".
+[add-repository-module.rememberMyChoice]: Remember my choice?
+[add-repository-module.wishToContinue]: Are you sure you want to continue?
+[add-repository-module.moduleType_SimpleText]: Text
+[add-repository-module.moduleType_Audio]: Audio
+[add-repository-module.moduleType_Texts]: Bible
+[add-repository-module.moduleType_Comms]: Commentary
+[add-repository-module.moduleType_Dicts]: Dictionary
+[add-repository-module.moduleType_Genbks]: Book
+
