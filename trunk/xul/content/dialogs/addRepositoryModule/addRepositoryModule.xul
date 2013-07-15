@@ -36,7 +36,7 @@
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   xmlns:html="http://www.w3.org/1999/xhtml"
   xmlns:REPOSITORY="http://www.xulsword.com/repository/rdf#"
-  id="addRepositoryModule"
+  id="add-repository-module"
   onload="onLoad();"
   onunload="onUnload();"
   persist="screenX screenY width height"
@@ -45,14 +45,15 @@
   <!-- the stringbundle element is used for script UI localization !-->
   <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
   
-  <data id="ui.search.Texts">&search.Texts;</data>
-  <data id="ui.search.Comms">&search.Comms;</data>
-  <data id="ui.search.Genbks">&search.Genbks;</data>
-  <data id="ui.search.Dicts">&search.Dicts;</data>
   <data id="ui.less.label">&less.label;</data>
   <data id="ui.more.label">&more.label;</data>
   <data id="ui.menu.addNewModule.label">&menu.addNewModule.label;</data>
   <data id="ui.treecol.name.label">&treecol.name.label;</data>
+  <!-- the following are used by about.html loaded in an iframe !-->
+  <data id="ui.search.Texts">&search.Texts;</data>
+  <data id="ui.search.Comms">&search.Comms;</data>
+  <data id="ui.search.Dicts">&search.Dicts;</data>
+  <data id="ui.search.Genbks">&search.Genbks;</data>
   
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>

@@ -604,6 +604,20 @@ xulsword/search/search.properties:GROUPEND                               = ?sear
 xulsword/search/search.properties:QUOTESTART                             = ?search-window.search_symbols.QUOTE_START
 xulsword/search/search.properties:QUOTEEND                               = ?search-window.search_symbols.QUOTE_END
 
+# New addRepositoryModule UI (xulsword 3.6+)
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.error                 = add-repository-module.error
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.repositoryTreeTitle   = add-repository-module.repositoryTreeTitle
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.internetPromptTitle   = add-repository-module.internetPromptTitle
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.internetPromptMessage = add-repository-module.internetMessage
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.wishToContinue        = add-repository-module.wishToContinue
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.rememberMyChoice      = add-repository-module.rememberMyChoice
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.moduleType.SimpleText = add-repository-module.moduleType_SimpleText
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.moduleType.Audio      = add-repository-module.moduleType_Audio
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.moduleType.Texts      = add-repository-module.moduleType_Texts
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.moduleType.Comms      = add-repository-module.moduleType_Comms
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.moduleType.Dicts      = add-repository-module.moduleType_Dicts
+xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.moduleType.Genbks     = add-repository-module.moduleType_Genbks
+
 # XULRunner/Firefox locale overrides:
 # NOTE: these are not used for Firefox extension installs.
 xulsword/override/ff17/dialog.properties:button-accept                   =  dialog-window.ok
@@ -643,6 +657,45 @@ xulsword/override/ff17/appPicker.dtd                                     =  chro
 xulsword/override/ff17/filepicker.dtd                                    =  chrome://global/locale/filepicker.dtd
 xulsword/override/ff17/filepicker.properties                             =  chrome://global/locale/filepicker.properties
 
-# Hacks to get development version working on latest Firefox
-xulsword/override/ff17/textcontext.dtd:spellCheckToggle.label            =  "tog"
-xulsword/override/ff17/textcontext.dtd:spellCheckToggle.accesskey        =  "t"
+# NOTE: these are not used for Firefox extension installs.
+xulsword/override/ff22/dialog.properties:button-accept                   =  dialog-window.ok
+xulsword/override/ff22/dialog.properties:button-cancel                   =  dialog-window.cancel
+xulsword/override/ff22/dialog.properties:button-help                     =  main-window.menu-help
+xulsword/override/ff22/dialog.properties:button-disclosure               =  search-window.more-less-button.more
+xulsword/override/ff22/tree.dtd:restoreColumnOrder.label                 =  bookmark-window.tree.restore-column-order
+xulsword/override/ff22/textcontext.dtd:cutCmd.label                      =  main-window.menu-edit.cut
+xulsword/override/ff22/textcontext.dtd:cutCmd.accesskey                  =  main-window.menu-edit.cut.ak
+xulsword/override/ff22/textcontext.dtd:copyCmd.label                     =  main-window.menu-edit.copy
+xulsword/override/ff22/textcontext.dtd:copyCmd.accesskey                 =  main-window.menu-edit.copy.ak
+xulsword/override/ff22/textcontext.dtd:pasteCmd.label                    =  main-window.menu-edit.paste
+xulsword/override/ff22/textcontext.dtd:pasteCmd.accesskey                =  main-window.menu-edit.paste.ak
+xulsword/override/ff22/textcontext.dtd:undoCmd.label                     =  main-window.menu-edit.undo
+xulsword/override/ff22/textcontext.dtd:undoCmd.accesskey                 =  main-window.menu-edit.undo.ak
+xulsword/override/ff22/textcontext.dtd:selectAllCmd.label                =  bookmark-window.menu-edit.select_all
+xulsword/override/ff22/textcontext.dtd:selectAllCmd.accesskey            =  bookmark-window.menu-edit.select_all.ak
+xulsword/override/ff22/textcontext.dtd:deleteCmd.label                   =  bookmark-window.menu-edit.delete
+xulsword/override/ff22/textcontext.dtd:deleteCmd.accesskey               =  bookmark-window.menu-edit.delete.ak
+xulsword/override/ff22/textcontext.dtd:spellCheckToggle.label            =  "toggle"
+xulsword/override/ff22/textcontext.dtd:spellCheckToggle.accesskey        =  "t"
+xulsword/override/ff22/nsWebBrowserPersist.properties                    =  chrome://global/locale/nsWebBrowserPersist.properties
+xulsword/override/ff22/intl.css                                          =  chrome://global/locale/intl.css
+xulsword/override/ff22/dialog.properties                                 =  chrome://global/locale/dialog.properties
+xulsword/override/ff22/tree.dtd                                          =  chrome://global/locale/tree.dtd
+xulsword/override/ff22/textcontext.dtd                                   =  chrome://global/locale/textcontext.dtd
+xulsword/override/ff22/global.dtd                                        =  chrome://global/locale/global.dtd
+xulsword/override/ff22/appstrings.properties                             =  chrome://global/locale/appstrings.properties
+xulsword/override/ff22/handling.properties                               =  chrome://mozapps/locale/handling/handling.properties
+xulsword/override/ff22/handling.dtd                                      =  chrome://mozapps/locale/handling/handling.dtd
+xulsword/override/ff22/printdialog.dtd                                   =  chrome://global/locale/printdialog.dtd
+xulsword/override/ff22/printdialog.properties                            =  chrome://global/locale/printdialog.properties
+xulsword/override/ff22/printing.properties                               =  chrome://global/locale/printing.properties
+xulsword/override/ff22/printjoboptions.properties                        =  chrome://global/locale/printjoboptions.dtd
+xulsword/override/ff22/printPageSetup.dtd                                =  chrome://global/locale/printPageSetup.dtd
+xulsword/override/ff22/printPreview.dtd                                  =  chrome://global/locale/printPreview.dtd 
+xulsword/override/ff22/printPreviewProgress.dtd                          =  chrome://global/locale/printPreviewProgress.dtd
+xulsword/override/ff22/printProgress.dtd                                 =  chrome://global/locale/printProgress.dtd
+xulsword/override/ff22/appPicker.dtd                                     =  chrome://global/locale/appPicker.dtd
+xulsword/override/ff22/filepicker.dtd                                    =  chrome://global/locale/filepicker.dtd
+xulsword/override/ff22/filepicker.properties                             =  chrome://global/locale/filepicker.properties
+
+
