@@ -44,7 +44,7 @@ function onLoad() {
   ModulesLoading = 0; // global to track total number of modules downloading at any given time
   RepoProgress = document.getElementById("repoProgress");
   
-  document.getElementById("repoListLabel").value = safeGetStringFromName("Repositories", null, null, "repositories");
+  document.getElementById("repoListLabel").value = safeGetStringFromName("Text Sources", null, null, "repositories");
   
   // start with totally clean temp directories
   TEMP = getSpecialDirectory("TmpD");
@@ -1309,7 +1309,7 @@ function addRepository() {
   document.getElementById("Site").removeAttribute("hidden");
   document.getElementById("Path").removeAttribute("hidden");
   
-  var nres = { Type:"repository", Enabled:"false", Name:"?", Site:EmptyRepoSite, Path:"?", Status:OFF, Style:"red", Url:"?" };
+  var nres = { Type:"repository", Enabled:"false", Name:getDataUI("treecol.name.label"), Site:EmptyRepoSite, Path:"?", Status:OFF, Style:"red", Url:"?" };
   var res = ARMU.createRepository(nres);
   
   // scroll to the new repository and select and focus it
