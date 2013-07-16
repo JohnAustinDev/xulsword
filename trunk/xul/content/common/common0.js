@@ -642,12 +642,21 @@ function getCurrentLocaleBundle(file) {
 function safeGetStringFromName(defvalue, locale, filename, value) {
   var b = getLocaleBundle(locale, filename);
   if (!b) b = getCurrentLocaleBundle(filename);
-  if (!b) return defvalue;
+  if (!b) {
+    jsdump("WARN: No string bundle for: " + filename + ":" + value);
+    return defvalue;
+  }
   
   try {var v = b.GetStringFromName(value);}
-  catch (er) {return defvalue;}
+  catch (er) {
+    jsdump("ERROR: while reading: " + filename + ":" + value);
+    return defvalue;
+  }
   
-  if (v == "" || v === null) return defvalue;
+  if (v == "" || v === null) {
+    jsdump("WARN: Missing value: " + filename + ":" + value);
+    return defvalue;
+  }
   
   return v;
 }

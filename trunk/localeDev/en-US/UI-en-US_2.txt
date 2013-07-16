@@ -89,6 +89,8 @@
 [books.Revelation_index]: 65
 [main-window.menu-file.ak]: F
 [main-window.menu-file.add_new_module.ak]: A
+[main-window.menu-file.add_new_module.from_file.ak]: f
+[main-window.menu-file.add_new_module.from_internet.ak]: I
 [main-window.menu-file.exit.ak]: x
 [main-window.menu-file.export_audio.ak]: E
 [main-window.menu-file.import-audio.ak]: I
