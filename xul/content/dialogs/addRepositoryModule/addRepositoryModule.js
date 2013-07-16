@@ -16,18 +16,13 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
-TODO:
-  CSS and Locale
-*/
-
 const RepositoryRDF = "repository.rdf"; // located in xulsword's profile dir
 const ModuleRDF = "swordmods.rdf";
 const ManifestFile = "mods.d.tar.gz";
 const ON = String.fromCharCode(9745);
 const OFF =  String.fromCharCode(9746);
 const EmptyRepoSite = "file://";
-const SCRIPT_PROPS = "addRepositoryModule.properties";
+const SCRIPT_PROPS = "dialogs/addRepositoryModule/addRepositoryModule.properties";
 const ERROR = safeGetStringFromName("Ошибка", null, SCRIPT_PROPS, "arm.error");
 
 var RP, RPDS, MLDS, RDF, RDFC, RDFCU;
@@ -242,13 +237,17 @@ function onLoad() {
         // save new value
         ARMU.setResourceAttribute(RPDS, repoResource, editingColumn.id, newValue);
         
-        // reload repo if necessary
+        var name = ARMU.getResourceLiteral(RPDS, repoResource, "Name");
         var site = ARMU.getResourceLiteral(RPDS, repoResource, "Site");
         var path = ARMU.getResourceLiteral(RPDS, repoResource, "Path");
+        
+        // delete old repo and create a new one if it has been changed
         if (editingColumn.id != "Name" && oldValue != newValue && site != "?" && path != "?") {
-          ARMU.deleteModuleData([oldUrl]);
-          ARMU.setResourceAttribute(RPDS, repoResource, "Url", ARMU.guessProtocol(site + path));
-          loadRepositories([repoResource]);
+          ARMU.treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
+          ARMU.deleteRepository([repoResource]);
+          var nres = { Type:"repository", Enabled:"true", Name:name, Site:site, Path:path, Status:dString(0) + "%", Style:"yellow", Url:ARMU.guessProtocol(site + path) };
+          var res = ARMU.createRepository(nres);
+          loadRepositoryArray([res], true);
         }
       }
       
@@ -259,10 +258,10 @@ function onLoad() {
   };
 
   RepoProgress.value = "10";
-  loadMasterRepoList(true); // will call masterRepoListLoaded() when finished
+  loadMasterRepoList(true); // will call loadXulswordRepositories() when successfully finished
 }
 
-function masterRepoListLoaded(moduleDataAlreadyDeleted) {
+function loadXulswordRepositories(moduleDataAlreadyDeleted) {
   
   // get all enabled repositories
   var repoArray = [];
@@ -278,12 +277,12 @@ function masterRepoListLoaded(moduleDataAlreadyDeleted) {
     repoArray.push(res);
   }
 
-  loadRepositories(repoArray, moduleDataAlreadyDeleted);
+  loadRepositoryArray(repoArray, moduleDataAlreadyDeleted);
 }
 
-function loadRepositories(resourceArray, moduleDataAlreadyDeleted) {
+function loadRepositoryArray(resourceArray, moduleDataAlreadyDeleted) {
   
-  // init repository array
+  // init global repository array for new loading
   RepositoryArray = [];
   RepositoryIndex = -1; // begin sequence
   RepositoriesLoading = 0;
@@ -394,22 +393,28 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
       
       // it's all done!!
       ARMU.downloadsInProgressRemove(this.myPersist);
+
       if (ARMU.getResourceLiteral(RPDS, this.crosswire, "Enabled") == "true") {
         ARMU.setResourceAttribute(RPDS, this.crosswire, "Status", dString(5) + "%");
         ARMU.setResourceAttribute(RPDS, this.crosswire, "Style", "yellow");
       }
       else {
-        ARMU.setResourceAttribute(RPDS, this.crosswire, "Status", OFF);
+        ARMU.retainStatusMessage(RPDS, this.crosswire, OFF);
         ARMU.setResourceAttribute(RPDS, this.crosswire, "Style", "red");
       }
       
-      readMasterRepoList(this.myDestFile, this.moduleDataAlreadyDeleted);
+      if (aStatus == 0) readMasterRepoList(this.myDestFile, this.moduleDataAlreadyDeleted);
+      else loadXulswordRepositories(true);
+
     },
     
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
       ARMU.setResourceAttribute(RPDS, this.crosswire, "Status", (aMessage ? aMessage:ERROR));
       ARMU.setResourceAttribute(RPDS, this.crosswire, "Style", "red");
-      if (aMessage) jsdump(this.myURL + ": " + aMessage);
+      if (aMessage) {
+        jsdump(this.myURL + ": " + aMessage);
+        document.getElementById('body').setAttribute('showRepositoryList', 'true');
+      }
     },
     
     onLocationChange: function(aWebProgress, aRequest, aLocation) {},
@@ -442,7 +447,7 @@ function readMasterRepoList(aFile, moduleDataAlreadyDeleted) {
     }
   }
   
-  masterRepoListLoaded(moduleDataAlreadyDeleted);
+  loadXulswordRepositories(moduleDataAlreadyDeleted);
 }
 
 // Fetch and process the manifest of the next repository on the global list.
@@ -459,7 +464,7 @@ function startProcessingNextRepository() {
     ARMU.setResourceAttribute(RPDS, res, "Status", ON);
     ARMU.setResourceAttribute(RPDS, res, "Style", "green");
     applyRepositoryLocalConfs(res);
-    RepositoriesLoading--;
+    window.setTimeout("RepositoriesLoading--;", 1);
     RepoProgress.value = Math.round(Number(RepoProgress.value) + (50/RepositoryArray.length));
 
     startProcessingNextRepository();
@@ -502,7 +507,7 @@ function startProcessingNextRepository() {
         applyRepositoryManifest(this.myResource, this.myManifestFile);
       }
       else {
-        ARMU.setResourceAttribute(RPDS, this.myResource, "Status", ERROR);
+        ARMU.retainStatusMessage(RPDS, this.myResource, ERROR);
         ARMU.setResourceAttribute(RPDS, this.myResource, "Style", "red");
       }
     },
@@ -510,7 +515,10 @@ function startProcessingNextRepository() {
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
       ARMU.setResourceAttribute(RPDS, this.myResource, "Status", (aMessage ? aMessage:ERROR));
       ARMU.setResourceAttribute(RPDS, this.myResource, "Style", "red");
-      if (aMessage) jsdump(this.myURL + ": " + aMessage);
+      if (aMessage) {
+        jsdump(this.myURL + ": " + aMessage);
+        document.getElementById('body').setAttribute('showRepositoryList', 'true');
+      }
     },
     
     onLocationChange: function(aWebProgress, aRequest, aLocation) {},
@@ -573,10 +581,15 @@ function applyConfFile(file, repoUrl) {
   if (!file) return;
   file = file.QueryInterface(Components.interfaces.nsILocalFile);
   if (!file) return;
-  if (!(/\.conf$/).test(file.leafName)) return; 
+  if (file.isDirectory() || !(/\.conf$/).test(file.leafName)) return; 
    
   // read the extracted file
   var filedata = readFile(file);
+  
+  // do any module filtering
+  var category = ARMU.getConfEntry(filedata, "Category");
+  if (getPrefOrCreate("filterQuestionableTexts", "Bool", true) && category 
+      && (/(Cults|Unorthodox|Questionable)/i).test(category)) return;
   
   // create a new module resource and add it to the modlist
   var newModRes = RDF.GetAnonymousResource();
@@ -774,7 +787,7 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
         else {
           this.moduledata.status = 1;
           this.moduledata.directoriesBeingRead--; // must decrement after previous increment possibility
-          ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Status", ERROR);
+          ARMU.retainStatusMessage(MLDS, this.moduledata.modResource, ERROR);
           ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Style", "red");
           jsdump("ERROR: fetchSwordModuleUrls failed for \"" + this.directoryUrl + "\"");
         }
@@ -947,7 +960,7 @@ function downloadModule(modResource, modContentData) {
           }
           else {
             for (var s=0; s<this.myStatusArray.length; s++) {
-              ARMU.setResourceAttribute(MLDS, this.myStatusArray[s], "Status", ERROR);
+              ARMU.retainStatusMessage(MLDS, this.myStatusArray[s], ERROR);
               ARMU.setResourceAttribute(MLDS, this.myStatusArray[s], "Style", "red");
             }
           }
@@ -1018,7 +1031,7 @@ function toggleReposOnOff() {
   var selectedResources = ARMU.getSelectedResources(document.getElementById("repoListTree"));
   if (!selectedResources.length) return;
   
-  // disconnect large trees to speed things up. loadRepositories reconnects them
+  // disconnect large trees to speed things up. loadRepositoryArray reconnects them
   ARMU.treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
 
   // set enable/disable etc. attributes
@@ -1050,7 +1063,7 @@ function toggleReposOnOff() {
   }
   
   ARMU.deleteModuleData(deleteModDataUrl);
-  loadRepositories(nowOnRes, true);
+  loadRepositoryArray(nowOnRes, true);
 }
 
 function changeModuleListLanguage(lang) {
@@ -1251,15 +1264,16 @@ function updateRepoListButtons() {
   
   // button states depend on selection and downloads status
   var tree = document.getElementById("repoListTree");
-  if (!tree || !tree.view) return;
-  var sel = tree.view.selection;
-  
-  if (sel.currentIndex != -1) {
-    disabled[0] = false; // toggle
-    disabled[2] = false; // delete
-  }
-  if (DownloadsInProgress.length) {
-    disabled = [true, true, true];
+  if (tree && tree.view) {
+    var sel = tree.view.selection;
+    
+    if (sel.currentIndex != -1) {
+      disabled[0] = false; // toggle
+      disabled[2] = false; // delete
+    }
+    if (DownloadsInProgress.length) {
+      disabled = [true, true, true];
+    }
   }
   
   // apply disabled attribute
@@ -1909,6 +1923,14 @@ objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.lea
     else if (!(/^[^\:]+\:\/\//).test(url)) url = "http://" + url;
     
     return url;
+  },
+  
+  // try to apply new status to aRes but DON'T overwrite any existing status message
+  retainStatusMessage: function(aDS, aRes, status) {
+    var existingStatus = ARMU.getResourceLiteral(aDS, aRes, "Status");
+    if (!existingStatus || existingStatus.length < 16) existingStatus = null;
+    
+    ARMU.setResourceAttribute(aDS, aRes, "Status", (existingStatus ? existingStatus:status));
   }
 
 };

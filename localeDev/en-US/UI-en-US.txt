@@ -83,6 +83,8 @@
 [main-window.title]: Holy Bible
 [main-window.menu-file]: File
 [main-window.menu-file.add_new_module]: Add New Modules
+[main-window.menu-file.add_new_module.from_file]: xsm or zip file
+[main-window.menu-file.add_new_module.from_internet]: Download from Internet
 [main-window.menu-file.add_new_module.components_not_supported]: The following module(s) have components which are not supported:
 [main-window.menu-file.add_new_module.components_out_of_date]: The following module(s) have components which are out of date:
 [main-window.menu-file.add_new_module.installation_incomplete]: Module installation incomplete.
@@ -317,7 +319,7 @@
 [add-repository-module.error]: Error
 [add-repository-module.repositoryTreeTitle]: Module Sources
 [add-repository-module.internetPromptTitle]: Download a Bible from the internet?
-[add-repository-module.internetMessage]: This will access Bible related websites on the Internet. Such internet access is closely monitored by authorities in some countries. If this is a concern for you, you should click "No".
+[add-repository-module.internetMessage]: This will access Bible related websites on the Internet.\nSuch internet access is monitored by authorities in some areas.\nIf this is a concern for you, you should click "No".
 [add-repository-module.rememberMyChoice]: Remember my choice?
 [add-repository-module.wishToContinue]: Are you sure you want to continue?
 [add-repository-module.moduleType_SimpleText]: Text

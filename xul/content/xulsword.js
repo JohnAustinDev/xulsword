@@ -1069,15 +1069,6 @@ function goUpdateFileMenu () {
   goUpdateCommand('cmd_xs_importAudio');
 }
 
-// This is needed for UI backward compatibility only
-function goUpdateNewModuleMenu() {
-  document.getElementById("newLocalModule").label = safeGetStringFromName("Install from File", null, null, "newmodule.fromFile");
-  document.getElementById("newInternetModule").label = safeGetStringFromName("Download from Internet", null, null, "newmodule.fromInternet");
-  document.getElementById("newLocalModule").accesskey = safeGetStringFromName("F", null, null, "newmodule.fromFile.sc");
-  document.getElementById("newInternetModule").accesskey = safeGetStringFromName("I", null, null, "newmodule.fromInternet.sc");
-}
-
-
 
 /************************************************************************
  * XULSWORD Window click handlers

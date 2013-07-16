@@ -307,6 +307,7 @@ function startImport2() {
 function removeIncompatibleFiles(fileArray, entryArray) {
   var incomp = {newmodule:[], minprogversion:null, oldmodule:[], minmodversion:null};
   var conf = new RegExp(MODSD + "\/[^\/]+" + CONF_EXT + "$");
+  var xpi = new RegExp("\\.xpi$", "i");
   var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
   var progVersion = prefs.getCharPref("Version");
   // cannot read directly from engine because it's not loaded yet!
@@ -391,6 +392,73 @@ function removeIncompatibleFiles(fileArray, entryArray) {
           }
         }
       }
+      
+      // Firefox extensions (locales)
+      if (entryArray[f][e].match(xpi)) {
+        var remove = false;
+        
+        // get this locale's version
+        var UIvers = 0;
+        
+        // first unzip the xsm module
+        var zReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(Components.interfaces.nsIZipReader);
+        zReader.open(fileArray[f]);
+        var tempXSM = getSpecialDirectory("TmpD");
+        tempXSM.append("xs_locale.xpi");
+        if (tempXSM.exists()) tempXSM.remove();
+        tempXSM.create(tempXSM.NORMAL_FILE_TYPE, FPERM);
+        try {zReader.extract(entryArray[f][e], tempXSM);}
+        catch (er) {
+          zReader.close(fileArray[f]);
+          remove = true;
+        }
+        zReader.close(fileArray[f]);
+        
+        // then unzip the extension to get install.rdf
+        if (!remove) {
+          zReader.open(tempXSM);
+          var tempInstallRDF = getSpecialDirectory("TmpD");
+          tempInstallRDF.append("xs_install.rdf");
+          if (tempInstallRDF.exists()) tempInstallRDF.remove();
+          tempInstallRDF.create(tempInstallRDF.NORMAL_FILE_TYPE, FPERM);
+          try {zReader.extract("install.rdf", tempInstallRDF);}
+          catch (er) {
+            zReader.close(tempXSM);
+            remove = true;
+          }
+          zReader.close(tempXSM);
+        }
+        
+        // finally read the install.rdf to get the version
+        if (!remove) {
+          var installRDF = readFile(tempInstallRDF);
+          UIvers = installRDF.match(/<em\:version>(.*?)<\/em\:version>/mi);
+          if (UIvers === null) {
+            UIvers = 0;
+            remove = true;
+          }
+          else UIvers = UIvers[1];
+        }
+        
+        // compare UIvers to this program's MinUIversion
+        // NOTE: Yes, the extension has a xulsword maxVersion value, but it is   
+        // set to an arbitrary high value because forward compatibility was 
+        // not known at the time of extension creation.
+        try {
+          var programMinUIvers = rootprefs.getCharPref("extensions.xulsword.MinUIversion");
+        }
+        catch (er) {programMinUIvers = 0;}
+        
+        var isIncompatible = (comparator.compare(UIvers, programMinUIvers) < 0);
+        if (isIncompatible) jsdump("INFO: Removing incompatible UI (" + UIvers + " < " + programMinUIvers + "): " + entryArray[f][e]);
+        
+        // silently remove if UI is incompatible
+        if (remove || isIncompatible) entryArray[f].splice(e--, 1);
+        
+        if (tempXSM && tempXSM.exists()) tempXSM.remove(false);
+        if (tempInstallRDF && tempInstallRDF.exists()) tempInstallRDF.remove(false);
+      }
+    
       // All other files
       else {
         remove = false;

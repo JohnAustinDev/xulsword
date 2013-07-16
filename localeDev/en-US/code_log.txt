@@ -2,85 +2,25 @@
 INFO: Reading UI file: "UI-en-US.txt"
 INFO: Reading UI file: "UI-en-US_2.txt"
 INFO: Reading chrome locale override file "chrome://global/locale/appPicker.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/appstrings.properties"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/dialog.properties"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/filepicker.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/filepicker.properties"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/global.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/intl.css"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/nsWebBrowserPersist.properties"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/printPageSetup.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/printPreview.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/printPreviewProgress.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/printProgress.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/printdialog.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/printdialog.properties"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/printing.properties"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/printjoboptions.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/textcontext.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://global/locale/tree.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://mozapps/locale/handling/handling.dtd"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 INFO: Reading chrome locale override file "chrome://mozapps/locale/handling/handling.properties"
-
-ERROR: Missing directory "/localeDev/Firefox22". Skipping locale override.
-
 WARNING xulsword/dialogs/about/about.dtd:producedby: Value is empty.
 WARNING xulsword/startup/startup.dtd:producedby: Value is empty.
 INFO: Copying locale-files of "en-US", /localeDev/en-US/locale-files
