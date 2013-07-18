@@ -227,6 +227,7 @@
         <button disabled="true" id="installButton" icon="save" oncommand="initiateModuleDownloads();" />
         <button disabled="true" id="showInfoButton" icon="help" oncommand="writeModuleInfos(); toggleModuleBox();" />
         <button id="showModulesButton" icon="close" oncommand="toggleModuleBox();" />
+        <button disabled="true" id="moduleCancel" icon="cancel" oncommand="moduleCancel();" />
       </vbox>
       
     </hbox>
@@ -283,6 +284,7 @@
         <button disabled="true" id="toggle" icon="yes" oncommand="toggleReposOnOff()" />
         <button disabled="true" id="add" icon="add" oncommand="addRepository()" />
         <button disabled="true" id="delete" icon="remove" oncommand="deleteSelectedRepositories();" />
+        <button disabled="true" id="repoCancel" icon="cancel" oncommand="repoCancel();" />
       </vbox>
       
     </hbox>

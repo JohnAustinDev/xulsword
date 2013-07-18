@@ -28,7 +28,8 @@ const ERROR = safeGetStringFromName("Ошибка", null, SCRIPT_PROPS, "arm.err
 var RP, RPDS, MLDS, RDF, RDFC, RDFCU;
 var RepositoryArray, RepositoryIndex, RepositoriesLoading, RepositoryCheckInterval;
 var ModulesLoading, ModuleCheckInterval;
-var DownloadsInProgress = [];
+var ReposInProgress = [];
+var ModulesInProgress = [];
 var TEMP, TEMP_Install;
 var RepoProgress;
 
@@ -392,7 +393,7 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
       if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
       
       // it's all done!!
-      ARMU.downloadsInProgressRemove(this.myPersist);
+      ARMU.reposInProgressRemove(this.myPersist);
 
       if (ARMU.getResourceLiteral(RPDS, this.crosswire, "Enabled") == "true") {
         ARMU.setResourceAttribute(RPDS, this.crosswire, "Status", dString(5) + "%");
@@ -422,7 +423,7 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
   };
   persist.saveURI(ios.newURI(url, null, null), null, null, null, null, destFile, null);
-  DownloadsInProgress.push(persist);
+  ARMU.reposInProgressAdd(persist);
   updateRepoListButtons();
   
 }
@@ -498,7 +499,7 @@ function startProcessingNextRepository() {
       
       // it's all done!!
       RepositoriesLoading--;
-      ARMU.downloadsInProgressRemove(this.myPersist);
+      ARMU.reposInProgressRemove(this.myPersist);
       RepoProgress.value = Math.round(Number(RepoProgress.value) + (50/RepositoryArray.length));
       
       if (aStatus == 0) {
@@ -527,7 +528,7 @@ function startProcessingNextRepository() {
   };
   
   persist.saveURI(ios.newURI(myURL + "/" + ManifestFile, null, null), null, null, null, null, file, null);
-  DownloadsInProgress.push(persist);
+  ARMU.reposInProgressAdd(persist);
   updateRepoListButtons();
   
   startProcessingNextRepository();
@@ -749,7 +750,7 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
       onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
         if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
 
-        ARMU.downloadsInProgressRemove(this.persist);
+        ARMU.modulesInProgressRemove(this.persist);
 
         if (aStatus == 0) {
           
@@ -805,7 +806,7 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
       onSecurityChange: function(aWebProgress, aRequest, aState) {}
     };
   persist.saveURI(ios.newURI(directoryUrl, null, null), null, null, null, null, directoryListingFile, null);
-  DownloadsInProgress.push(persist);
+  ARMU.modulesInProgressAdd(persist);
   updateRepoListButtons();
 }
 
@@ -922,7 +923,7 @@ function downloadModule(modResource, modContentData) {
         
         // download finished
         this.data.count--;
-        ARMU.downloadsInProgressRemove(this.myPersist);
+        ARMU.modulesInProgressRemove(this.myPersist);
         
         if (aStatus == 0) this.data.downloadedFiles.push(this.myDestFile);
         else this.data.status = 1;
@@ -985,7 +986,7 @@ function downloadModule(modResource, modContentData) {
       onSecurityChange: function(aWebProgress, aRequest, aState) {}
     };
     persist.saveURI(ios.newURI(modContentData[c].url, null, null), null, null, null, null, destFile, null);
-    DownloadsInProgress.push(persist);
+    ARMU.modulesInProgressAdd(persist);
     updateRepoListButtons();
     
     if (c<modContentData.length-1) data.count++; // don't increment for last file because count started as "1"
@@ -1259,8 +1260,8 @@ function installModules() {
 
 
 function updateRepoListButtons() {
-  var buttons  = ["toggle", "add", "delete"];
-  var disabled = [true, false, true];
+  var buttons  = ["toggle", "add", "delete", "repoCancel"];
+  var disabled = [true, false, true, true];
   
   // button states depend on selection and downloads status
   var tree = document.getElementById("repoListTree");
@@ -1271,9 +1272,12 @@ function updateRepoListButtons() {
       disabled[0] = false; // toggle
       disabled[2] = false; // delete
     }
-    if (DownloadsInProgress.length) {
-      disabled = [true, true, true];
+    if (ModulesInProgress.length || ReposInProgress.length) {
+      disabled[0] = true; // toggle
+      disabled[1] = true; // add
+      disabled[2] = true; // delete
     }
+    disabled[3] = (ReposInProgress.length ? false:true);
   }
   
   // apply disabled attribute
@@ -1284,8 +1288,8 @@ function updateRepoListButtons() {
 }
 
 function updateModuleButtons() {
-  var buttons  = ["installButton", "showInfoButton", "showModulesButton"];
-  var disabled = [true, true, false];
+  var buttons  = ["installButton", "showInfoButton", "showModulesButton", "moduleCancel"];
+  var disabled = [true, true, false, true];
   
   // button states depend on selection
   var tree = document.getElementById("moduleListTree");
@@ -1296,6 +1300,8 @@ function updateModuleButtons() {
     disabled[0] = false; // install
     disabled[1] = false; // showInfo
   }
+  
+  disabled[3] = (ModulesInProgress.length ? false:true);
   
   // apply disabled attribute
   for (var i=0; i<buttons.length; i++) {
@@ -1336,6 +1342,18 @@ function addRepository() {
   tree.view.selection.select(index);
   tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(index);
   tree.focus();
+}
+
+function moduleCancel() {
+  for (var i=0; i<ModulesInProgress.length; i++) {
+    ModulesInProgress[i].cancelSave();
+  }
+}
+
+function repoCancel() {
+  for (var i=0; i<ReposInProgress.length; i++) {
+    ReposInProgress[i].cancelSave();
+  }
 }
 
 
@@ -1895,14 +1913,41 @@ objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.lea
   },
 
   // each file download is controlled by a progress object
-  downloadsInProgressRemove: function(progress) {
-    for (var i=0; i<DownloadsInProgress.length; i++) {
-      if (progress == DownloadsInProgress[i]) {
-        DownloadsInProgress.splice(i,1);
+  modulesInProgressRemove: function(progress) {
+    for (var i=0; i<ModulesInProgress.length; i++) {
+      if (progress == ModulesInProgress[i]) {
+        ModulesInProgress.splice(i,1);
         i--;
       }
     }
     updateRepoListButtons();
+    updateModuleButtons();
+  },
+  
+  // each file download is controlled by a progress object
+  reposInProgressRemove: function(progress) {
+    for (var i=0; i<ReposInProgress.length; i++) {
+      if (progress == ReposInProgress[i]) {
+        ReposInProgress.splice(i,1);
+        i--;
+      }
+    }
+    updateRepoListButtons();
+    updateModuleButtons();
+  },
+  
+    // each file download is controlled by a progress object
+  modulesInProgressAdd: function(progress) {
+    ModulesInProgress.push(progress);
+    updateRepoListButtons();
+    updateModuleButtons();
+  },
+  
+  // each file download is controlled by a progress object
+  reposInProgressAdd: function(progress) {
+    ReposInProgress.push(progress);
+    updateRepoListButtons();
+    updateModuleButtons();
   },
 
   // Search the install TEMP directory for modules which can be installed
@@ -1946,8 +1991,11 @@ function onUnload() {
   ARMU.treeDataSource([true, true, true], ["repoListTree", "languageListTree", "moduleListTree"]);
   
   // abort any downloads which are still in progress
-  for (var i=0; i<DownloadsInProgress.length; i++) {
-    DownloadsInProgress[i].cancelSave();
+  for (var i=0; i<ModulesInProgress.length; i++) {
+    ModulesInProgress[i].cancelSave();
+  }
+  for (var i=0; i<ReposInProgress.length; i++) {
+    ReposInProgress[i].cancelSave();
   }
 
   // remove all temporary files (except install temp files will remain)
