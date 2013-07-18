@@ -200,7 +200,7 @@ function deleteCheckedResources(e) {
     
     if (Tab[mod].conf) {
       filesToDelete.push(Tab[mod].conf);
-      if (reset < SOFTRESET) reset = SOFTRESET;
+      if (reset < HARDRESET) reset = HARDRESET;
       for (var w=1; w<=NW; w++) {
         if (ViewPort.Module[w] == mod) need2ChangeVers[w] = true;
       }
