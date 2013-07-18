@@ -337,6 +337,7 @@
           return rval;
         ]]></getter>
         <setter><![CDATA[
+          if (!val) return val;
           var parts = val.split(".");
           if (parts && parts.length && parts.length>1) {
             this.book = parts[0] ? parts[0]:this.book;
@@ -345,7 +346,7 @@
             this.lastVerse = parts[3] ? parts[3]:parts[2];
           }
           val = this.book + "." + this.chapter + "." + this.verse + "." + this.lastVerse;
-          return val
+          return val;
         ]]></setter>
       </property>
       
