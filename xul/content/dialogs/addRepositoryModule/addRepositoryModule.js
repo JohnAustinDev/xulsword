@@ -32,6 +32,7 @@ var ReposInProgress = [];
 var ModulesInProgress = [];
 var TEMP, TEMP_Install;
 var RepoProgress;
+var WindowIsAlive = true;
 
 function onLoad() {
   
@@ -391,6 +392,7 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
     
     onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
       if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
+      if (!WindowIsAlive) return;
       
       // it's all done!!
       ARMU.reposInProgressRemove(this.myPersist);
@@ -496,6 +498,7 @@ function startProcessingNextRepository() {
     
     onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
       if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
+      if (!WindowIsAlive) return;
       
       // it's all done!!
       RepositoriesLoading--;
@@ -749,6 +752,7 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
       
       onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
         if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
+        if (!WindowIsAlive) return;
 
         ARMU.modulesInProgressRemove(this.persist);
 
@@ -920,6 +924,7 @@ function downloadModule(modResource, modContentData) {
       
       onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
         if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
+        if (!WindowIsAlive) return;
         
         // download finished
         this.data.count--;
@@ -1986,6 +1991,7 @@ objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.lea
 ////////////////////////////////////////////////////////////////////////
 
 function onUnload() {
+  WindowIsAlive = false; // tells progress not to bother reporting anything
   
   // disconnect each data source
   ARMU.treeDataSource([true, true, true], ["repoListTree", "languageListTree", "moduleListTree"]);
