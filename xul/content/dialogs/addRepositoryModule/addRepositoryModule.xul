@@ -103,7 +103,7 @@
       <deck id="moduleDeck" selectedIndex="0" flex="1">
         <vbox flex="1" persist="width" >
           <label class="arm-label">&menu.addNewModule.label;</label>
-          <tree id="moduleListTree" flex="1" flags="dont-build-content" hidecolumnpicker="true" 
+          <tree id="moduleListTree" flex="1" flags="dont-build-content" hidecolumnpicker="false" 
                   datasources="rdf:null" ref="http://www.xulsword.com/repository/ModuleList" 
                   onselect="onModuleListTreeSelect();" >
             <treecols>
@@ -111,24 +111,40 @@
                             class="sortDirectionIndicator" 
                             persist="hidden width ordinal value"
                             sort="rdf:http://www.xulsword.com/repository/rdf#ModuleType"
-                            sortActive="true" sortDirection="ascending" />
+                            sortActive="true" sortDirection="ascending" 
+                            ignoreincolumnpicker="true" />
               <splitter class="tree-splitter"/>
               <treecol id="ModDescription" flex="4"
                             class="sortDirectionIndicator" 
                             persist="hidden width ordinal value"
                             sort="rdf:http://www.xulsword.com/repository/rdf#Description"
-                            sortDirection="ascending" />
+                            sortDirection="ascending" 
+                            ignoreincolumnpicker="true" />
               <splitter class="tree-splitter"/>
               <treecol id="ModName" flex="2" primary="true"
                             class="sortDirectionIndicator" 
                             persist="hidden width ordinal value"
                             sort="rdf:http://www.xulsword.com/repository/rdf#ModuleName"
-                            sortDirection="ascending" />
+                            sortDirection="ascending" 
+                            ignoreincolumnpicker="true" />
               <splitter class="tree-splitter"/>
               <treecol id="ModVersion" flex="1"
                             class="sortDirectionIndicator" 
                             persist="hidden width ordinal value"
                             sort="rdf:http://www.xulsword.com/repository/rdf#Version"
+                            sortDirection="ascending" 
+                            ignoreincolumnpicker="true" />
+              <splitter class="tree-splitter"/>
+              <treecol id="ModSize" label="InstallSize" flex="1" hidden="true"
+                            class="sortDirectionIndicator" 
+                            persist="hidden width ordinal value"
+                            sort="rdf:http://www.xulsword.com/repository/rdf#InstallSize"
+                            sortDirection="ascending" />
+              <splitter class="tree-splitter"/>
+              <treecol id="ModURL" label="Url" flex="1" hidden="true"
+                            class="sortDirectionIndicator" 
+                            persist="hidden width ordinal value"
+                            sort="rdf:http://www.xulsword.com/repository/rdf#Url"
                             sortDirection="ascending" />
               <splitter class="tree-splitter"/>
               <!--
@@ -136,12 +152,6 @@
                             class="sortDirectionIndicator" 
                             persist="hidden width ordinal value"
                             sort="rdf:http://www.xulsword.com/repository/rdf#Abbreviation"
-                            sortDirection="ascending" />
-              <splitter class="tree-splitter"/>
-              <treecol id="ModSize" flex="1" hidden="true"
-                            class="sortDirectionIndicator" 
-                            persist="hidden width ordinal value"
-                            sort="rdf:http://www.xulsword.com/repository/rdf#InstallSize"
                             sortDirection="ascending" />
               <splitter class="tree-splitter"/>
               <treecol id="ModVersification" flex="1" hidden="true"
@@ -168,12 +178,6 @@
                             sort="rdf:http://www.xulsword.com/repository/rdf#DistributionLicense"
                             sortDirection="ascending" />
               <splitter class="tree-splitter"/>
-              <treecol id="ModURL" flex="1" hidden="true"
-                            class="sortDirectionIndicator" 
-                            persist="hidden width ordinal value"
-                            sort="rdf:http://www.xulsword.com/repository/rdf#Url"
-                            sortDirection="ascending" />
-              <splitter class="tree-splitter"/>
               !-->
               <treecol id="ModStatus" flex="1" ignoreincolumnpicker="true"
                             class="sortDirectionIndicator"
@@ -196,14 +200,14 @@
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Description" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#ModuleName" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Version" />
+                      <treecell label="rdf:http://www.xulsword.com/repository/rdf#InstallSize" />
+                      <treecell label="rdf:http://www.xulsword.com/repository/rdf#Url" />
                       <!--
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Abbreviation" />
-                      <treecell label="rdf:http://www.xulsword.com/repository/rdf#InstallSize" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Versification" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Scope" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Copyright" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#DistributionLicense" />
-                      <treecell label="rdf:http://www.xulsword.com/repository/rdf#Url" />
                       !-->
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Status" 
                                 properties="rdf:http://www.xulsword.com/repository/rdf#Style" /> 
@@ -226,7 +230,7 @@
       <vbox id="moduleControls" pack="center" >
         <button disabled="true" id="installButton" icon="save" oncommand="initiateModuleDownloads();" />
         <button disabled="true" id="showInfoButton" icon="help" oncommand="writeModuleInfos(); toggleModuleBox();" />
-        <button id="showModulesButton" icon="close" oncommand="toggleModuleBox();" />
+        <button id="showModulesButton" label="&history.back.label;" oncommand="toggleModuleBox();" />
         <button disabled="true" id="moduleCancel" icon="cancel" oncommand="moduleCancel();" />
       </vbox>
       

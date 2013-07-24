@@ -9,36 +9,48 @@ and applied to Strong's classes */
 #search-content[hasLexicon="true"] #lexiconBox {
   display:block;
 }
-.slist {
+.snlist {
+  display:block;
+}
+.slist, .snlist {
   white-space:nowrap;
 }
-.slist > a {
+.slist > a,
+.snlist a {
   color:blue;
 }
-.slist > a:after {
+.slist > a:after,
+.strongs-type:after {
   content:'-';
   padding-left:4px;
   padding-right:4px;
 }
-.slist > a:hover {
+.slist > a:hover,
+.snlist a:hover {
   border-bottom:1px solid blue;
 }
-.slist > span {
+.slist > span,
+.snlist span {
   display:inline-block;
 }
-.slist > .lex-total:before {
-  content:'(';
+.lex-total:before {
+  content:'[';
   padding:0px;
 }
 .lex-total:after {
-  content:')';
+  content:']:';
   -moz-padding-end:4px;
 }
 .lex-count:before {
   content:'(';
 }
 .lex-count:after {
-  content:'), ';
+  content:'),';
+  -moz-margin-end:0.3em;
+}
+.lex-count:last-child:after {
+  content:')';
+  -moz-margin-end:0.3em;
 }
 .lex-sep {
   border-top:1px solid grey;
