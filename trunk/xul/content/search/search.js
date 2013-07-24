@@ -475,15 +475,21 @@ function SearchObj(searchObj) {
   this.showSearchResults = function(result, s) {
     if (!result || !s) return;
     
+    var keepStrongs = false;
+    
     // only allow translation if both result.translate and s.mod are BIBLEs
     var mod = s.mod;
     if (result.translate != s.mod && Tab[result.translate].modType == BIBLE && Tab[s.mod].modType == BIBLE) {
       mod = result.translate;
     }
-    else result.translate = mod;
+    else {
+      keepStrongs = LibSword.getModuleInformation(mod, "Feature");
+      keepStrongs = (/StrongsNumbers/).test(keepStrongs);
+      result.translate = mod;
+    }
 
     // read search results to display
-    var r = LibSword.getSearchResults(mod, result.index, result.results_per_page, (/lemma\:/).test(s.query));
+    var r = LibSword.getSearchResults(mod, result.index, result.results_per_page, keepStrongs);
     if (!r) return;
     
     // workaround for a FF 17 bug where innerHTML could not be added to
@@ -537,10 +543,10 @@ function SearchObj(searchObj) {
       
       r = r.nextSibling;
     }
- 
+
     // If this is a Strong's search, hilight words with matching Strong's numbers.
     // Also, create and show the lexicon window for those Strong's numbers.
-    if ((/lemma\:/).test(s.query)) {
+    if (keepStrongs && (/lemma\:/).test(s.query)) {
       
       var classes = s.query.match(/lemma\:\s*\S+/g);
       
@@ -579,8 +585,8 @@ function SearchObj(searchObj) {
                 break;
               }
             }
-            
             if (j == lexicon.length) lexicon.push( {text:els[el].innerHTML, count:1} );
+            
           }
           
           // sort the results 
@@ -589,12 +595,12 @@ function SearchObj(searchObj) {
           // format and save the results
           var dictinfo = DictTexts.getStrongsModAndKey(classes[i]);
           html += "<span class=\"slist\" title=\"" + encodeURIComponent(dictinfo.key) + "." + dictinfo.mod + "\">";
-          html +=   "<a class=\"cs-\"" + DEFAULTLOCALE + "\" ";
+          html +=   "<a class=\"cs-" + DEFAULTLOCALE + "\" ";
           html +=       "href=\"javascript:MainWindow.showLocation('" + dictinfo.mod + "', '','" + dictinfo.key + "', 1, 1);\">";
           html +=     classes[i].replace(/^S_/, "");
           html +=   "</a>";
-          html +=   "<span class=\"lex-total\">" + (result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS + "+":result.count) + "</span>";
-          html +=   "<span class=\"cs-\"" + DEFAULTLOCALE + "\">";
+          html +=   "<span class=\"lex-total\">" + dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count) + "</span>";
+          html +=   "<span class=\"cs-" + DEFAULTLOCALE + "\">";
           for (var j=0; j<lexicon.length; j++) {
             html +=   "<span class=\"lex-text\">" + lexicon[j].text + "</span>";
             html +=   "<span class=\"lex-count\">" + lexicon[j].count + "</span>";
@@ -609,6 +615,98 @@ function SearchObj(searchObj) {
         LexiconResults.style.display = ""; // was set to "none" to improve (??) speed
          
       }
+      
+      LexiconResults.parentNode.setAttribute("hasLexicon", "true");
+    }
+    
+    // If this search contains Strongs info, collect all Strong's numbers attached to our results
+    else if (keepStrongs) {
+      LexiconResults.style.display = "none"; // might this speed things up??
+      var lexiconResults = LibSword.getSearchResults(mod, 0, MAX_LEXICON_SEARCH_RESULTS, true);
+      
+      // apply hilight class to search result matches
+      for (var m=0; m<result.matchterms.length; m++) {
+        if (result.matchterms[m].type == "RegExp") {
+          var re = new RegExp(result.matchterms[m].term, "gim");
+          lexiconResults = lexiconResults.replace(re, "$1<span class=\"searchterm\">$2</span>$3");
+        }
+        else if (result.matchterms[m].type == "string") {
+          var re = new RegExp (escapeRE(result.matchterms[m].term), "gim")
+          lexiconResults = lexiconResults.replace(re, "<span class=\"searchterm\">$&</span>");
+        }
+      }
+      LexiconResults.innerHTML = lexiconResults;
+    
+      var matches = LexiconResults.getElementsByClassName("searchterm");
+
+      // Collect all Strongs numbers associated with the matches
+      var strongsList = { "H":[], "G":[] };
+      for (var i=0; i<matches.length; i++) {
+        var p = matches[i].parentNode;
+        if (!p) continue;
+
+        var sclass = p.className.match(/(^|\s)S_(G|H)(\d+)(\s|$)/g);
+        if (!sclass || !sclass.length) continue;
+        
+        for (var si=0; si<sclass.length; si++) {
+          var inf = sclass[si].match(/(^|\s)(S_(G|H)\d+)(\s|$)/);
+          var mtype = inf[3];
+          var mclass = inf[2];
+          
+          // See if we've gotten this strongs number already and if so, 
+          // increment its count. Otherwise add a new strongsList object.
+          for (var j=0; j<strongsList[mtype].length; j++) {
+            if (mclass == strongsList[mtype][j].strongs) {
+              strongsList[mtype][j].count++;
+              break;
+            }
+          }
+          if (j == strongsList[mtype].length) strongsList[mtype].push( { strongs:mclass, count:1 } );
+
+        }
+      }
+      
+      // format and write the results
+      var html = "";
+      for (var type in strongsList) {
+        
+        // sort the results 
+        strongsList[type].sort(function(a,b) {return b.count - a.count;});
+        
+        if (!strongsList[type].length) continue;
+        
+        html += "<span class=\"snlist\">";
+        
+        var mtype = "";
+        if (type == "H") mtype = XSBundle.getString("ORIGLabelOT");
+        if (type == "G") mtype = XSBundle.getString("ORIGLabelNT");
+        html += "<span class=\"strongs-type\">" + mtype + "</span>";
+        html +=   "<span class=\"lex-total\">" + dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count) + "</span>";
+
+        html +=   "<span class=\"cs-" + DEFAULTLOCALE + "\">";
+        for (var j=0; j<strongsList[type].length; j++) {
+          var sti = DictTexts.getStrongsModAndKey(strongsList[type][j].strongs);
+          sti.str = strongsList[type][j].strongs.replace("S_", "");
+          if (sti.mod && sti.key) {
+            html +=   "<a class=\"cs-" + DEFAULTLOCALE + "\" ";
+            html +=       "href=\"javascript:MainWindow.showLocation('" + sti.mod + "', '','" + sti.key + "', 1, 1);\">";
+            html +=     "<span class=\"lex-text\">" + sti.str + "</span>";
+            html +=   "</a>";
+          }
+          else {
+            html +=   "<span class=\"lex-text\">" + sti.str + "</span>";
+          }
+          html +=   "<span class=\"lex-count\">" + strongsList[type][j].count + "</span>";
+        }
+        html +=   "</span>";
+        
+        html += "</span>";
+      }
+      
+      html += "<div class=\"lex-sep\"></div>";
+    
+      LexiconResults.innerHTML = (html ? html:"<span style=\"display:none\"></span>"); // should not be left empty
+      LexiconResults.style.display = ""; // was set to "none" to improve (??) speed
       
       LexiconResults.parentNode.setAttribute("hasLexicon", "true");
     }

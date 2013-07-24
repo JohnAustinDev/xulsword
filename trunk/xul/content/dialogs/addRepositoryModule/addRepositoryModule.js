@@ -601,7 +601,7 @@ function applyConfFile(file, repoUrl) {
   RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
   RDFC.AppendElement(newModRes);
   
-  var type, confInfo, confDefault;
+  var type, confInfo, confDefault, confType;
   var dataPath = ARMU.getConfEntry(filedata, "DataPath");
   var is_XSM_module = ((/\.(zip|xsm)$/).test(dataPath) || (/\/audio\.htm(\?|$)/).test(dataPath));
   if (is_XSM_module) {
@@ -681,10 +681,16 @@ function applyConfFile(file, repoUrl) {
     HasXulswordBookmark:"",
   };
   
+  confType = {
+    InstallSize:"int",
+  };
+  
   for (var p in confInfo) {
     var confres = ARMU.getConfEntry(filedata, confInfo[p]);
     if (!confres || (/^\s*$/).test(confres)) confres = confDefault[p];
-    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + p), RDF.GetLiteral(confres), true);
+    var type = "string";
+    if (confType.hasOwnProperty(p)) type = confType[p];
+    ARMU.setResourceAttribute(MLDS, newModRes, p, confres, type);
   }
   
   // add Url (of module's repository)
@@ -1371,6 +1377,7 @@ function writeModuleInfos() {
   var mods = ARMU.getSelectedResources(document.getElementById("moduleListTree"), true);
   if (!mods.length) return;
   
+  var html = "";
   for (var m=0; m<mods.length; m++) {
     var submods = [];
     
@@ -1393,8 +1400,6 @@ function writeModuleInfos() {
       else submods.push(mods[m]);
     }
     else submods.push(mods[m]);
-    
-    var html = "";
     
     for (var s=0; s<submods.length; s++) {
       var aModRes = submods[s];
@@ -1568,9 +1573,14 @@ objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.lea
   },
 
   // Set a resource's attribute (a string) to value (also a string)
-  setResourceAttribute: function(aDS, resource, attribute, value) {
-    try {attribute = RP[attribute];} catch (er) {return false;}
-    var aNewValue = (value !== null ? RDF.GetLiteral(value):null);
+  setResourceAttribute: function(aDS, resource, attribute, value, type) {
+    attribute = RDF.GetResource(RP.REPOSITORY + attribute);
+    var aNewValue = null;
+    if (value !== null) {
+      if (type && type == "int") aNewValue = RDF.GetIntLiteral(value);
+      else if (type && type == "date") aNewValue = RDF.GetDateLiteral(value);
+      else aNewValue = RDF.GetLiteral(value);
+    }
     var aOldValue = aDS.GetTarget(resource, attribute, true);
     if ((aOldValue || aNewValue) && aOldValue != aNewValue) {
       if (aOldValue && !aNewValue)
@@ -1584,7 +1594,7 @@ objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.lea
     return false;
   },
 
-  // Get a string value of a resources string attribute
+  // Get the value of a resources attribute
   getResourceLiteral: function(aDS, resource, attribute) {
     
     attribute = RDF.GetResource(RP.REPOSITORY + attribute);
@@ -1592,7 +1602,22 @@ objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.lea
     var val = aDS.GetTarget(resource, attribute, true);
     if (!val) return null;
     
-    return val.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
+    try { 
+      var type = val.QueryInterface(Components.interfaces.nsIRDFDate);
+      if (type) return type.Value;
+    } catch (er) {}
+    
+    try {
+      type = val.QueryInterface(Components.interfaces.nsIRDFInt);
+      if (type) return type.Value;
+    } catch (er) {}
+    
+    try {
+      type = val.QueryInterface(Components.interfaces.nsIRDFLiteral);
+      if (type) return type.Value;
+    } catch (er) {}
+    
+    return null;
   },
 
   // Returns true if repository is already in the database, false otherwise

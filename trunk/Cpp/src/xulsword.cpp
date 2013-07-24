@@ -1360,17 +1360,19 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
 
   if (num==0) {num=SearchList.Count();}
 
-  if (keepStrongs) {updateGlobalOptions(true);}
-  else {
-    MyManager->setGlobalOption("Headings","Off");
-    MyManager->setGlobalOption("Footnotes","Off");
-    MyManager->setGlobalOption("Cross-references","Off");
-    MyManager->setGlobalOption("Dictionary","Off");
-    MyManager->setGlobalOption("Words of Christ in Red","Off");
-    MyManager->setGlobalOption("Strong's Numbers","Off");
-    MyManager->setGlobalOption("Morphological Tags","Off");
-    MyManager->setGlobalOption("Morpheme Segmentation","Off");
+  if (keepStrongs) {
+    MyManager->setGlobalOption("Strong's Numbers","On");
   }
+  else {
+    MyManager->setGlobalOption("Strong's Numbers","Off");
+  }
+  MyManager->setGlobalOption("Headings","Off");
+  MyManager->setGlobalOption("Footnotes","Off");
+  MyManager->setGlobalOption("Cross-references","Off");
+  MyManager->setGlobalOption("Dictionary","Off");
+  MyManager->setGlobalOption("Words of Christ in Red","Off");
+  MyManager->setGlobalOption("Morphological Tags","Off");
+  MyManager->setGlobalOption("Morpheme Segmentation","Off");
 
   MySearchTexts.set("");
   SearchList.SetToElement(first,TOP);

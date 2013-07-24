@@ -172,33 +172,36 @@ DictTexts = {
       
       var info = this.getStrongsModAndKey(strongsClassList[i]);
       
+      // get a button to search for this Strong's number
+      var buttonHTML = "";
+      if ((/^S_/).test(strongsClassList[i])) {
+        buttonHTML += "<button type=\"button\" class=\"snbut\" ";
+        buttonHTML +=     "title=\"" + (info.mod ? info.mod:"Program") + ":" + strongsClassList[i].replace(/^[^_]+_/, "") + "." + sourcemod + "\">";
+        buttonHTML +=   strongsClassList[i].replace(/^[^_]+_/, "");
+        buttonHTML += "</button>";
+      }
+      
       if (info.key && info.mod) {
         if (info.key == "00000") continue; // skip G tags with no number
         var entry = LibSword.getDictionaryEntry(info.mod, info.key);
         if (entry) {
-          html   += sep;
-          if ((/^S_/).test(strongsClassList[i])) { // add button for Strong number search
-            html += "<button type=\"button\" class=\"snbut\" ";
-            html +=     "title=\"" + info.mod + ":" + strongsClassList[i].replace(/^[^_]+_/, "") + "." + sourcemod + "\">";
-            html +=   strongsClassList[i].replace(/^[^_]+_/, "");
-            html += "</button>";
-          }
-          html   += entry;
+          html += sep + buttonHTML + entry;
         }
-        else html += sep + info.key;
+        else html += sep + buttonHTML + info.key;
       }
-      else html += sep + strongsClassList[i];
+      else html += sep + buttonHTML + strongsClassList[i];
       
       sep = "<div class=\"lemma-sep\"></div>";
     }
     
     // Add heading now that we know module styling
-    html = "<div class=\"lemma-html cs-" + info.mod + "\"><div class=\"lemma-header\">" + matchingPhrase + "</div>" + html + "<div>";
+    html = "<div class=\"lemma-html cs-" + (info.mod ? info.mod:"Program") + "\"><div class=\"lemma-header\">" + matchingPhrase + "</div>" + html + "<div>";
    
     return html;
   },
   
   getStrongsModAndKey: function(snclass) {
+
     var res = { mod:null, key:null };
     
     const pad="00000";
@@ -254,7 +257,8 @@ DictTexts = {
       
     default:
       // meaning of tag is unknown
-      key = null;
+      jsdump("Unknown Strongs class:" + type);
+      res.key = null;
       break;
       
     }
