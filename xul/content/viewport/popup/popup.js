@@ -60,6 +60,13 @@ function PopupObj(popupobj) {
     var updatingPopup = elem;
     while (updatingPopup && updatingPopup !== this.npopup) {updatingPopup = updatingPopup.parentNode;}
     
+    // dictionary modules may have a "ReferenceBible" conf entry
+    var referenceBible = (p && p.mod ? p.mod:null);
+    if (referenceBible && Tab[referenceBible].modType == DICTIONARY) {
+      var aref = LibSword.getModuleInformation(referenceBible, "ReferenceBible");
+      if (aref && aref != NOTFOUND && Tab.hasOwnProperty(aref)) referenceBible = aref;
+    }
+      
     // Begin building HTML for the popup
     var html = "";
     html += "<div class=\"popupheader cs-Program\">";
@@ -68,24 +75,29 @@ function PopupObj(popupobj) {
     html +=     XSBundle.getString(updatingPopup ? "back":"close");
     html +=   "</a>";
     
-    html +=   "<select class=\"popup-mod-select\" onchange=\"Popup.select(this.value);\" >";
-    if (p && p.mod && (/^(cr|sr)$/).test(p.type)) {
+    // add select drop-down for cr and sr
+    if (p && p.mod && (/^(cr|sr)$/).test(type)) {
+      var bmods = [];
       for (var t=0; t<Tabs.length; t++) {
-        if (Tabs[t].modType != BIBLE) continue;
-        
-        // dictionary modules may have a "ReferenceBible" conf entry
-        var referenceBible = p.mod;
-        if (Tab[referenceBible].modType == DICTIONARY) {
-          var aref = LibSword.getModuleInformation(referenceBible, "ReferenceBible");
-          if (aref && aref != NOTFOUND && Tab.hasOwnProperty(aref)) referenceBible = aref;
-        }
-        
-        var selected = (Tabs[t].modName == referenceBible ? "selected=\"selected\" ":"");
-        html += "<option value=\"" + Tabs[t].modName + "\" class=\"cs-" + Tabs[t].locName + "\" " + selected + ">" + Tabs[t].label + "</option>";
+        if (Tabs[t].modType == BIBLE) bmods.push(Tabs[t].modName);
+      }
+      html += this.getModSelectHTML(bmods, referenceBible, "Popup.select(this.value);");
+    }
+    
+    // add select drop-down(s) for sn
+    if ((/^(sn)$/).test(type)) {
+      for (var sls in SpecialModules.LanguageStudy) {
+        if (SpecialModules.LanguageStudy[sls].length < 2) continue; // need no button if only one choice
+        if (sls=="HebrewDef" & !(/S_H/).test(elem.className)) continue; // need no button if nothing applicable in popup
+        if (sls=="GreekDef" & !(/S_G/).test(elem.className)) continue;
+        html += this.getModSelectHTML(
+          SpecialModules.LanguageStudy[sls], 
+          prefs.getCharPref("Selected" + sls), 
+          "Popup.selectFeature(this.value, '" + sls + "');"
+        );
       }
     }
-    html +=   "</select>";
-    
+
     html += "</div>";
     
     // If popup is already open, then save the current popup inside the "back" link of this new popup...
@@ -170,6 +182,7 @@ function PopupObj(popupobj) {
         i = entry.lastIndexOf("<", i);
         entry = entry.substring(0, i);
       }
+      this.lemmaInfo = { snlist:snlist, entry:entry, mod:mod };
       res = DictTexts.getLemmaHTML(snlist, entry, mod);
       break;
       
@@ -213,6 +226,19 @@ function PopupObj(popupobj) {
     this.showPopupID = window.setTimeout("Popup.open();", (type == "sn" ? POPUPDELAY_STRONGS:POPUPDELAY));
     return true;
     
+  };
+  
+  this.getModSelectHTML = function(mods, selectMod, onchange) {
+    var html  = "<select class=\"popup-mod-select\" onchange=\"" + onchange + "\" >";
+
+    for (var m=0; m<mods.length; m++) {
+      if (!Tab[mods[m]]) continue;
+      var selected = (mods[m] == selectMod ? "selected=\"selected\" ":"");
+      html += "<option value=\"" + mods[m] + "\" class=\"cs-" + Tab[mods[m]].locName + "\" " + selected + ">" + Tab[mods[m]].label + "</option>";
+    }
+    html += "</select>";
+    
+    return html;
   };
   
   this.open = function() {
@@ -265,6 +291,15 @@ function PopupObj(popupobj) {
 
     if (this.crnote) pt.innerHTML = BibleTexts.getNotesHTML(this.crnote, mod, true, true, true, true, 1, false);
     else if (this.srnote) pt.innerHTML = BibleTexts.getNotesHTML(this.srnote, mod, true, true, true, true, 1, true);
+  };
+  
+  this.selectFeature = function(mod, feature) {
+    var pt = this.npopupTX.getElementsByClassName("popup-text");
+    if (!pt) return;
+    pt = pt[pt.length-1]; // the pt we want is the last in the tree
+    
+    prefs.setCharPref("Selected" + feature, mod);
+    pt.innerHTML = DictTexts.getLemmaHTML(this.lemmaInfo.snlist, this.lemmaInfo.entry, this.lemmaInfo.mod);
   };
   
   this.towindow = function() {

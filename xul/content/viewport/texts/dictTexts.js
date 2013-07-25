@@ -163,21 +163,21 @@ DictTexts = {
   
   // Builds HTML text which displays lemma information from numberList
   //    numberList form: (S|WT|SM|RM)_(G|H)#
-  getLemmaHTML: function(strongsClassList, matchingPhrase, sourcemod) {
+  getLemmaHTML: function(strongsClassArray, matchingPhrase, sourcemod) {
     
     // Start building html
     var html = "";
     var sep = "";
-    for (var i=0; i<strongsClassList.length; i++) {
+    for (var i=0; i<strongsClassArray.length; i++) {
       
-      var info = this.getStrongsModAndKey(strongsClassList[i]);
+      var info = this.getStrongsModAndKey(strongsClassArray[i]);
       
       // get a button to search for this Strong's number
       var buttonHTML = "";
-      if ((/^S_/).test(strongsClassList[i])) {
+      if ((/^S_/).test(strongsClassArray[i])) {
         buttonHTML += "<button type=\"button\" class=\"snbut\" ";
-        buttonHTML +=     "title=\"" + (info.mod ? info.mod:"Program") + ":" + strongsClassList[i].replace(/^[^_]+_/, "") + "." + sourcemod + "\">";
-        buttonHTML +=   strongsClassList[i].replace(/^[^_]+_/, "");
+        buttonHTML +=     "title=\"" + (info.mod ? info.mod:"Program") + ":" + strongsClassArray[i].replace(/^[^_]+_/, "") + "." + sourcemod + "\">";
+        buttonHTML +=   strongsClassArray[i].replace(/^[^_]+_/, "");
         buttonHTML += "</button>";
       }
       
@@ -189,7 +189,7 @@ DictTexts = {
         }
         else html += sep + buttonHTML + info.key;
       }
-      else html += sep + buttonHTML + strongsClassList[i];
+      else html += sep + buttonHTML + strongsClassArray[i];
       
       sep = "<div class=\"lemma-sep\"></div>";
     }
@@ -201,13 +201,7 @@ DictTexts = {
   },
   
   getStrongsModAndKey: function(snclass) {
-
     var res = { mod:null, key:null };
-    
-    const pad="00000";
-    var defaultBibleLanguage = LibSword.getModuleInformation(prefs.getCharPref("DefaultVersion"), "Lang");
-    if (defaultBibleLanguage == NOTFOUND) defaultBibleLanguage = "";
-    var defaultBibleLangBase = (defaultBibleLanguage ? defaultBibleLanguage.replace(/-.*$/, ""):"");
     
     var parts = snclass.split("_");
     if (!parts || !parts[1]) return res;
@@ -215,39 +209,24 @@ DictTexts = {
     res.key = parts[1];
     res.key = res.key.replace(" ", "", "g"); // why?
 
-    var type = parts[0];
-    switch (type) {
+    var feature = null;
+    switch (parts[0]) {
       
     case "S":
       // Strongs Hebrew or Greek tags
       if (res.key.charAt(0)=="H") {
-        if (SpecialModules.LanguageStudy["StrongsHebrew" + defaultBibleLanguage])
-          res.mod = SpecialModules.LanguageStudy["StrongsHebrew" + defaultBibleLanguage];
-        else if (SpecialModules.LanguageStudy["StrongsHebrew" + defaultBibleLangBase])
-          res.mod = SpecialModules.LanguageStudy["StrongsHebrew" + defaultBibleLangBase];
-        else if (SpecialModules.LanguageStudy["StrongsHebrew"])
-          res.mod = SpecialModules.LanguageStudy["StrongsHebrew"];
+        feature = "HebrewDef";
       }
       else if (res.key.charAt(0)=="G") {
         if (Number(res.key.substr(1)) >= 5627) return res; // SWORD filters these out- not valid it says
-        if (SpecialModules.LanguageStudy["StrongsGreek" + defaultBibleLanguage])
-          res.mod = SpecialModules.LanguageStudy["StrongsGreek" + defaultBibleLanguage];
-        else if (SpecialModules.LanguageStudy["StrongsGreek" + defaultBibleLangBase])
-          res.mod = SpecialModules.LanguageStudy["StrongsGreek" + defaultBibleLangBase];
-        else if (SpecialModules.LanguageStudy["StrongsGreek"])
-          res.mod = SpecialModules.LanguageStudy["StrongsGreek"];
+        feature = "GreekDef";
       }
-      res.key = pad.substr(0, 5-(res.key.length-1)) + res.key.substr(1);
+      res.key = String("00000").substr(0, 5-(res.key.length-1)) + res.key.substr(1);
       break;
       
     case "RM":
       // Greek parts of speech tags
-      if (SpecialModules.LanguageStudy["GreekParse" + defaultBibleLanguage])
-        res.mod = SpecialModules.LanguageStudy["GreekParse" + defaultBibleLanguage];
-      else if (SpecialModules.LanguageStudy["GreekParse" + defaultBibleLangBase])
-        res.mod = SpecialModules.LanguageStudy["GreekParse" + defaultBibleLangBase];
-      else if (SpecialModules.LanguageStudy["GreekParse"])
-        res.mod = SpecialModules.LanguageStudy["GreekParse"];
+      feature = "GreekParse";
       break;
       
     case "SM":
@@ -257,11 +236,15 @@ DictTexts = {
       
     default:
       // meaning of tag is unknown
-      jsdump("Unknown Strongs class:" + type);
+      jsdump("Unknown Strongs class:" + parts[0]);
       res.key = null;
       break;
       
     }
+    
+    if (!feature) return res;
+    
+    res.mod = prefs.getCharPref("Selected" + feature);
     
     return res;
   },

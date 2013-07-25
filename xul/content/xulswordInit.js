@@ -28,7 +28,7 @@ ModuleConfigs = {};
 ProgramConfig = {};
 Tabs = [];
 Tab = {};
-SpecialModules = {DailyDevotion:{}, LanguageStudy:{}};
+SpecialModules = {DailyDevotion:{}, LanguageStudy:{ GreekDef:[], HebrewDef:[], GreekParse:[] }};
 AllWindows = []; // this is needed by viewport...
 
 
@@ -165,21 +165,10 @@ function initTabGlobals() {
       if (feature.search("DailyDevotion") != -1) {
         SpecialModules.DailyDevotion[mod] = "DailyDevotionToday";
       }
-      else if (feature.search("GreekDef") != -1)  {
-        if (mlang.match(/^ru/i) || !SpecialModules.LanguageStudy.StrongsGreek) SpecialModules.LanguageStudy.StrongsGreek = mod;
-        SpecialModules.LanguageStudy["StrongsGreek" + mlang] = mod;
-        SpecialModules.LanguageStudy["StrongsGreek" + mlangs] = mod;
-      }
-      else if (feature.search("HebrewDef") != -1) {
-        if (mlang.match(/^ru/i) || !SpecialModules.LanguageStudy.StrongsHebrew) SpecialModules.LanguageStudy.StrongsHebrew = mod;
-        SpecialModules.LanguageStudy["StrongsHebrew" + mlang] = mod;
-        SpecialModules.LanguageStudy["StrongsHebrew" + mlangs] = mod;
-      }
-      else if (feature.search("GreekParse") != -1) {
-        if (mlang.match(/^ru/i) || !SpecialModules.LanguageStudy.GreekParse) SpecialModules.LanguageStudy.GreekParse = mod;
-        SpecialModules.LanguageStudy["GreekParse" + mlang] = mod;
-        SpecialModules.LanguageStudy["GreekParse" + mlangs] = mod;
-      }
+      else if (feature.search("GreekDef") != -1) SpecialModules.LanguageStudy.GreekDef.push(mod);
+      else if (feature.search("HebrewDef") != -1) SpecialModules.LanguageStudy.HebrewDef.push(mod);
+      else if (feature.search("GreekParse") != -1) SpecialModules.LanguageStudy.GreekParse.push(mod);
+      
     }
     
     // Get tab label
@@ -208,8 +197,31 @@ function initTabGlobals() {
     modarray.push(amod);
 
   }
+  
+  // Set LanguageStudy prefs
+  var defLang = LibSword.getModuleInformation(prefs.getCharPref("DefaultVersion"), "Lang");
+  if (defLang == NOTFOUND) defLang = "";
+  var defLangBase = (defLang ? defLang.replace(/-.*$/, ""):"");
+  var lng = [ 
+    new RegExp("^" + escapeRE(defLang) + "$", "i"), 
+    new RegExp("^" + escapeRE(defLangBase) + "$", "i"), 
+    new RegExp("^\\S+$", "i")
+  ];
+  
+  for (var sls in SpecialModules.LanguageStudy) {
+FindMod:
+    for (var r=0; r<lng.length; r++) {
+      var mods = SpecialModules.LanguageStudy[sls];
+      for (var m=0; m<mods.length; m++) {
+        if (lng[r].test(LibSword.getModuleInformation(mods[m], "Lang"))) {
+          prefs.setCharPref("Selected" + sls, mods[m]);
+          break FindMod;
+        }
+      }
+    }
+  }
  
-   // Sort tabs...
+  // Sort tabs...
   modarray = modarray.sort(tabOrder);
  
   var commonDir = getSpecialDirectory("xsModsCommon");
