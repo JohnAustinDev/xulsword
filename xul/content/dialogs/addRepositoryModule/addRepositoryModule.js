@@ -644,6 +644,7 @@ function applyConfFile(file, repoUrl) {
     Copyright:"Copyright",
     CopyrightDate:"CopyrightDate",
     TextSource:"TextSource",
+    Feature:"Feature",
     
     // these are specific to the .confs of modules located within .xsm files
     NameXSM:"NameXSM",
@@ -672,6 +673,7 @@ function applyConfFile(file, repoUrl) {
     Copyright:"",
     CopyrightDate:"",
     TextSource:"",
+    Feature:"",
     
     NameXSM:"",
     SwordModules:"",

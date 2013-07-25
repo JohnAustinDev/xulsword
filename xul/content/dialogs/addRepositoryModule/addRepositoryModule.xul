@@ -147,6 +147,12 @@
                             sort="rdf:http://www.xulsword.com/repository/rdf#Url"
                             sortDirection="ascending" />
               <splitter class="tree-splitter"/>
+              <treecol id="ModFeature" label="Feature" flex="1" hidden="true"
+                            class="sortDirectionIndicator" 
+                            persist="hidden width ordinal value"
+                            sort="rdf:http://www.xulsword.com/repository/rdf#Feature"
+                            sortDirection="ascending" />
+              <splitter class="tree-splitter"/>
               <!--
               <treecol id="ModAbbreviation" flex="1"  hidden="true"
                             class="sortDirectionIndicator" 
@@ -202,6 +208,7 @@
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Version" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#InstallSize" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Url" />
+                      <treecell label="rdf:http://www.xulsword.com/repository/rdf#Feature" />
                       <!--
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Abbreviation" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Versification" />
