@@ -460,8 +460,9 @@ Texts = {
   },
   
   getUserNotes: function(bk, ch, mod, text) {
+    if (text === null) text = "";
     var usernotes = {html:text, notes:""};
-      
+     
     var usesVerseKey = (Tab[mod].modType == BIBLE || Tab[mod].modType == COMMENTARY);
     
     // Search User Data for notes with this book, chapter, and version

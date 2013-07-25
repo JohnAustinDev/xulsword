@@ -135,7 +135,7 @@ BookmarkFuns = {
     case COMMENTARY:
       var bkChap = location.shortName + " " + location.chapter + ":";
       location.lastVerse = location.lastVerse ? location.lastVerse:location.verse;
-      text = LibSword.getVerseText(location.version, bkChap + location.verse + "-" + bkChap + location.lastVerse).replace(/^\s*/,"");
+      text = LibSword.getVerseText(location.version, bkChap + location.verse + "-" + bkChap + location.lastVerse, false).replace(/^\s*/,"");
       break;
       
     case DICTIONARY:

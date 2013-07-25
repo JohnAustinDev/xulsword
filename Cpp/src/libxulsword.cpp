@@ -63,8 +63,8 @@ DLLEXPORT char *GetChapterTextMulti(xulsword *inst, const char *vkeymodlist, con
   return inst->getChapterTextMulti(vkeymodlist, vkeytext, keepnotes);
 }
 
-DLLEXPORT char *GetVerseText(xulsword *inst, const char *vkeymod, const char *vkeytext) {
-  return inst->getVerseText(vkeymod, vkeytext);
+DLLEXPORT char *GetVerseText(xulsword *inst, const char *vkeymod, const char *vkeytext, bool keepnotes) {
+  return inst->getVerseText(vkeymod, vkeytext, keepnotes);
 }
 
 DLLEXPORT int GetMaxChapter(xulsword *inst, const char *mod, const char *vkeytext) {

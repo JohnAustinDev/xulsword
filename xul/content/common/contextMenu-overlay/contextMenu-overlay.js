@@ -160,7 +160,7 @@ var ContextMenu = {
   },
 
   build: function(canHaveLemma, canHaveTab, canSelect, canHaveVerse, canHaveParagraph, canHaveBookmark) {
-  var t=""; for (var m in this.target) {t += m + "=" + (this.target[m] ? this.target[m]:"NULL") + ", ";} jsdump(t);
+jsdump("build:" + uneval(this.target));
 
     // Enable command controller
     document.getElementById("contextScriptBox").setAttribute("value", "open");
@@ -268,12 +268,16 @@ var ContextMenu = {
 
     var info = getElementInfo(element);
     if (!info) return false;
-var p=""; for (var m in info) {p += m + "=" + info[m] + " ";} jsdump("readDataFromElement: class=" + element.className + ", title=" + element.title + ", " + p);
+    
+jsdump("readDataFromElement:" + uneval(info));
     
     for (var p in info) {
       
       // first come, first served- don't overwrite existing data
       if (p != "nid" && (!targs.hasOwnProperty(p) || targs[p] !== null)) continue; 
+      
+      // some params use "0" as a placeholder which should not be propagated
+      if ((/^(bk|ch|vs|lv)$/).test(p) && (info[p] == "0" || info[p] == 0)) continue;
         
       if (info[p] === null) {
         targs[p] = NOTFOUND;
@@ -306,7 +310,9 @@ var p=""; for (var m in info) {p += m + "=" + info[m] + " ";} jsdump("readDataFr
       if (val) targs[p] = val; // got it!
 
     }
-//var p=""; for (var m in targs) {p += m + "=" + targs[m] + " ";} jsdump("targs:" + p);      
+    
+//jsdump("targs:" + uneval(targs)); 
+     
     return true;
   },
 

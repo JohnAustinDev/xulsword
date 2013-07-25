@@ -69,7 +69,7 @@ BibleTexts = {
       var gcr = (d.globalOptions["Cross-references"] == "On" && d["ShowCrossrefsAtBottom"]);
       var gun = (d.globalOptions["User Notes"] == "On" && d["ShowUserNotesAtBottom"]);
         
-      if (gfn || gcr || gun) ret.htmlNotes = this.getNotesHTML(ret.footnotes, d.mod, gfn, gcr, gun, false, w);
+      if (gfn || gcr || gun) ret.htmlNotes = this.getNotesHTML(ret.footnotes, d.mod, gfn, gcr, gun, false, w, false);
     }
    
     // localize verse numbers
@@ -195,7 +195,7 @@ BibleTexts = {
     return html;
   },
 
-  getNotesHTML: function(notes, mod, gfn, gcr, gun, openCRs, w) {
+  getNotesHTML: function(notes, mod, gfn, gcr, gun, openCRs, w, keepTextNotes) {
     if (!notes) return "";
     
     if (!w) w = 0; // w is only needed for unique id creation 
@@ -264,7 +264,7 @@ BibleTexts = {
         switch(p.ntype) {
         case "cr":
           // If this is a cross reference, then parse the note body for references and display them
-          t += this.getRefHTML(w, mod, body);
+          t += this.getRefHTML(w, mod, body, keepTextNotes);
           break;
         
         case "fn":
@@ -309,7 +309,8 @@ BibleTexts = {
   // This function also may look through multiple Bible texts until it
   // finds the passage. It also takes care of verse system
   // conversions (KJV and Synodal only, right now).
-  getRefHTML: function(w, mod, body) {
+  getRefHTML: function(w, mod, body, keepTextNotes) {
+    if (!keepTextNotes) keepTextNotes = false;
 
     var ref = body.split(";");
     
@@ -370,7 +371,7 @@ BibleTexts = {
         continue;
       }
       
-      var aVerse = findAVerseText(mod, r, w);
+      var aVerse = findAVerseText(mod, r, w, keepTextNotes);
       if ((/^\s*$/).test(aVerse.text)) aVerse.text = "-----";
       
       var rmod = Tabs[aVerse.tabNum].modName;

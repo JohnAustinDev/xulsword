@@ -434,11 +434,11 @@ getChapterTextMulti: function(modstrlist, vkeytext) {
   return str;
 },
 
-//IMPORTANT: THE FOLLOWING 3 ROUTINES MUST BE CALLED AFTER getChapterText IS CALLED!
+//IMPORTANT: THE FOLLOWING 3 ROUTINES MUST BE CALLED AFTER getChapterText or getChapterTextMulti() IS CALLED!
 
 // getFootnotes
 //Will return the footnotes (or empty string if there aren't any).
-//See * below.
+//getChapterText() or getChapterTextMulti() must be called before notes can be read.
 getFootnotes:function() {
   if (!this.libSwordReady("getFootnotes")) return null;
   if (!this.fdata.gfn)
@@ -452,7 +452,7 @@ getFootnotes:function() {
 
 // getCrossRefs
 //Will return the cross references (or empty string if there aren't any).
-//See * below.
+//getChapterText() or getChapterTextMulti() must be called before notes can be read.
 getCrossRefs:function() {
   if (!this.libSwordReady("getCrossRefs")) return null;
   if (!this.fdata.gcr)
@@ -466,7 +466,7 @@ getCrossRefs:function() {
 
 // getNotes
 //Will return both footnotes and cross references interleaved.
-//See * below.
+//getChapterText() or getChapterTextMulti() must be called before notes can be read.
 //order is: v1-footnotes, v1-crossrefs, v2-footnotes, v2-crossrefs, etc
 getNotes:function() {
   if (!this.libSwordReady("getNotes")) return null;
@@ -480,17 +480,18 @@ getNotes:function() {
 },
 
 // getVerseText
-//Will return the requested verse(s) as raw text, without features such as
-//  verse numbers, note markers, red-words-of-Christ etc.
+//Will return the requested verse(s) text.
 //Vkeymod is the module from which to return text. If it's not a versekey
 //  type module, an error is returned.
 //Vkeytext is the "xulsword reference" (see definition above) from which to
 //  return the text.
-getVerseText: function(vkeymod, vkeytext) {
+//keepTextNotes if false returns raw text, without features such as
+//  verse numbers, note markers, red-words-of-Christ etc.
+getVerseText: function(vkeymod, vkeytext, keepTextNotes) {
   if (!this.libSwordReady("getVerseText")) return null;
   if (!this.fdata.vtx)
-    this.fdata.vtx = this.libsword.declare("GetVerseText", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
-  var cdata = this.fdata.vtx(this.inst, ctypes.char.array()(vkeymod), ctypes.char.array()(vkeytext));
+    this.fdata.vtx = this.libsword.declare("GetVerseText", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char), ctypes.bool);
+  var cdata = this.fdata.vtx(this.inst, ctypes.char.array()(vkeymod), ctypes.char.array()(vkeytext), keepTextNotes);
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
   this.freeMemory(cdata, ctypes.char.array()("char"));
@@ -673,7 +674,7 @@ getSearchVerses: function(modname) {
 
 // getSearchResults
 //Will return the verse texts from previous search.
-//See * below
+//search() must be called before results can be read.
 getSearchResults: function(modname, first, num, keepStrongs) {
   if (!this.libSwordReady("getSearchResults")) return null;
   if (!this.fdata.gst)

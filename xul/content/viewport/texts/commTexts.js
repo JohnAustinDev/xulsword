@@ -47,7 +47,7 @@ CommTexts = {
     var gcr = (d.globalOptions["Cross-references"] == "On" && d["ShowCrossrefsAtBottom"]);
     var gun = (d.globalOptions["User Notes"] == "On" && d["ShowUserNotesAtBottom"]);
       
-    if (gfn || gcr || gun) ret.htmlNotes = BibleTexts.getNotesHTML(ret.footnotes, d.mod, gfn, gcr, gun, false, w);
+    if (gfn || gcr || gun) ret.htmlNotes = BibleTexts.getNotesHTML(ret.footnotes, d.mod, gfn, gcr, gun, false, w, false);
     
     // localize verse numbers
     var tl = ModuleConfigs[d.mod].AssociatedLocale;

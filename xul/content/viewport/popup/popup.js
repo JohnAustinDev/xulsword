@@ -107,14 +107,21 @@ function PopupObj(popupobj) {
     case "cr":
     case "fn":
     case "un":
+      if (!p || !p.mod) return false;
       var w = getContextWindow(elem);
-      if (!p || !p.mod || !w || !Texts.footnotes[w]) return false;
+      if (w === null) return false;
+      if (w == 0) {
+        // must read the entire chapter text before any notes can be read
+        LibSword.getChapterText(p.mod, p.bk + " " + p.ch);
+        Texts.footnotes[w] = LibSword.getNotes();
+      }
+      if (!Texts.footnotes[w]) return false;
       var re = "<div class=\"nlist\" title=\"" + type + "." + escapeRE(p.title) + "\">.*?<\\/div>";
       re = new RegExp(re);
       this.crnote = Texts.footnotes[w].match(re);
       if (!this.crnote) return false;
       this.crnote = this.crnote[0];
-      res = BibleTexts.getNotesHTML(this.crnote, p.mod, true, true, true, true, 1);
+      res = BibleTexts.getNotesHTML(this.crnote, p.mod, true, true, true, true, 1, false);
       break;
 
     case "sr":
@@ -129,7 +136,7 @@ function PopupObj(popupobj) {
         entry = entry.substring(0, i);
       }
       this.srnote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + referenceBible + "\">" + (p.reflist[0] != "unavailable" ? p.reflist.join(";"):entry) + "</div>"
-      res = BibleTexts.getNotesHTML(this.srnote, referenceBible, true, true, true, true, 1);
+      res = BibleTexts.getNotesHTML(this.srnote, referenceBible, true, true, true, true, 1, true);
       break;
     
     case "dtl":
@@ -256,8 +263,8 @@ function PopupObj(popupobj) {
     if (!pt) return;
     pt = pt[pt.length-1]; // the pt we want is the last in the tree
 
-    if (this.crnote) pt.innerHTML = BibleTexts.getNotesHTML(this.crnote, mod, true, true, true, true, 1);
-    else if (this.srnote) pt.innerHTML = BibleTexts.getNotesHTML(this.srnote, mod, true, true, true, true, 1);
+    if (this.crnote) pt.innerHTML = BibleTexts.getNotesHTML(this.crnote, mod, true, true, true, true, 1, false);
+    else if (this.srnote) pt.innerHTML = BibleTexts.getNotesHTML(this.srnote, mod, true, true, true, true, 1, true);
   };
   
   this.towindow = function() {

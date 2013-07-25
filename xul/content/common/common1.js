@@ -323,8 +323,8 @@ function getAvailableBooks(version) {
   if (type!=BIBLE && type!=COMMENTARY) return null;
   for (var b=0; b<Book.length; b++) {
     if (type==BIBLE) {
-      var v1 = LibSword.getVerseText(version, Book[b].sName + " 1:1");
-      var v2 = LibSword.getVerseText(version, Book[b].sName + " 1:2");
+      var v1 = LibSword.getVerseText(version, Book[b].sName + " 1:1", false);
+      var v2 = LibSword.getVerseText(version, Book[b].sName + " 1:2", false);
       if ((!v1 && !v2) || (v1.match(/^\s*-\s*$/) && v2.match(/^\s*-\s*$/))) {
         hasMissing=true;
         continue;
@@ -436,8 +436,9 @@ function getModuleConfig(mod) {
 // Is module a Bible, or does module specify another reference Bible in its config file? Then use that.
 // If version does not yield verse text, then look at visible tabs in their order.
 // If visible tabs do not yield verse text, then look at hidden tabs in their order.
-function findAVerseText(version, location, windowNum) {
+function findAVerseText(version, location, windowNum, keepTextNotes) {
   if (!windowNum) windowNum = 1;
+  if (!keepTextNotes) keepTextNotes = false;
   if (!Tab[version]) return null;
   var ret = {tabNum:Tab[version].index, location:location, text:""};
   
@@ -452,7 +453,7 @@ function findAVerseText(version, location, windowNum) {
   }
   //If we have a Bible, try it first.
   if (bibleVersion && Tab[bibleVersion]) {
-    try {var text = LibSword.getVerseText(bibleVersion, bibleLocation).replace(/\n/g, " ");}
+    try {var text = LibSword.getVerseText(bibleVersion, bibleLocation, keepTextNotes).replace(/\n/g, " ");}
     catch (er) {text = "";}
     if (text && text.length > 7) {
       var vsys = LibSword.getVerseSystem(bibleVersion);
@@ -471,7 +472,7 @@ function findAVerseText(version, location, windowNum) {
     for (var ab=0; ab<abooks.length; ab++) {if (abooks[ab]==book) break;}
     if (ab==abooks.length) continue;
     var tlocation = Location.convertLocation(LibSword.getVerseSystem(version), location, LibSword.getVerseSystem(Tabs[v].modName));
-    text = LibSword.getVerseText(Tabs[v].modName, tlocation).replace(/\n/g, " ");
+    text = LibSword.getVerseText(Tabs[v].modName, tlocation, keepTextNotes).replace(/\n/g, " ");
     if (text && text.length > 7) {
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If

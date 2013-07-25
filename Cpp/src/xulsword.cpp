@@ -861,7 +861,7 @@ char *xulsword::getNotes() {
 /********************************************************************
 GetVerseText
 *********************************************************************/
-char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
+char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
     xsThrow("GetVerseText: module \"%s\" not found.", vkeymod);
@@ -878,14 +878,22 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
   myVerseKey->Persist(1);
   module->setKey(myVerseKey);
 
-  MyManager->setGlobalOption("Headings","Off");
-  MyManager->setGlobalOption("Footnotes","Off");
-  MyManager->setGlobalOption("Cross-references","Off");
-  MyManager->setGlobalOption("Dictionary","Off");
-  MyManager->setGlobalOption("Words of Christ in Red","Off");
-  MyManager->setGlobalOption("Strong's Numbers","Off");
-  MyManager->setGlobalOption("Morphological Tags","Off");
-  MyManager->setGlobalOption("Morpheme Segmentation","Off");
+  if (keepnotes) {
+    MyManager->setGlobalOption("Headings","Off");
+    MyManager->setGlobalOption("Footnotes","On");
+    MyManager->setGlobalOption("Cross-references","On"); 
+    // Other global options remain as set by user  
+  }
+  else {
+    MyManager->setGlobalOption("Headings","Off");
+    MyManager->setGlobalOption("Footnotes","Off");
+    MyManager->setGlobalOption("Cross-references","Off");
+    MyManager->setGlobalOption("Dictionary","Off");
+    MyManager->setGlobalOption("Words of Christ in Red","Off");
+    MyManager->setGlobalOption("Strong's Numbers","Off");
+    MyManager->setGlobalOption("Morphological Tags","Off");
+    MyManager->setGlobalOption("Morpheme Segmentation","Off");
+  }
 
   SWBuf bText;
 
@@ -893,7 +901,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext) {
   int numverses = 176; // set to max verses of any chapter
   while (!myVerseKey->Error())
   {
-    SWBuf vtext = module->StripText();
+    SWBuf vtext = (keepnotes ? module->RenderText():module->StripText());
     const char * vt = vtext.c_str();
     bool printChars = false;
     // trim() locks up if string is only white space! (sword 1.5.9)
