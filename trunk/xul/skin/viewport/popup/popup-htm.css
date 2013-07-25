@@ -161,7 +161,8 @@ body[chromedir="rtl"] .popup-mod-select {
   float:left;
 }
 #npopup[puptype="cr"] .popup-mod-select,
-#npopup[puptype="sr"] .popup-mod-select {
+#npopup[puptype="sr"] .popup-mod-select,
+#npopup[puptype="sn"] .popup-mod-select {
   display:block;
 }
 .prevhtml {

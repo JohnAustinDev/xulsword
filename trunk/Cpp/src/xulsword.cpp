@@ -1794,7 +1794,9 @@ char *StringMgrXS::upperUTF8(char *text, unsigned int max) const {
   return text;
 }
 
-bool StringMgrXS::supportsUnicode() const {return true;}
+bool StringMgrXS::supportsUnicode() const {
+  return false; // must be true for LocaleMgr to work, but there is a crash bug!!
+}
 
 
 /********************************************************************
