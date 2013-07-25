@@ -217,7 +217,7 @@ function scriptMouseOut(e) {
 
 }
 
-const scriptClickClasses = /^(sr|dt|dtl|cr|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
+const scriptClickClasses = /^(sr|dt|dtl|cr|fn|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
 function scriptClick(e) {
 
   // Get the text window of this event
@@ -246,7 +246,7 @@ function scriptClick(e) {
   if (!elem || !type) return;
   type = type[1];
   
-//jsdump("type:" + type + " title:" + elem.title + " class:" + elem.className + "\n");
+//jsdump("w:" + w + " type:" + type + " title:" + elem.title + " class:" + elem.className + "\n");
   
   var p = getElementInfo(elem);
 
@@ -265,8 +265,15 @@ function scriptClick(e) {
     break;
     
   case "cr":
-    var ok = toggleRefText(document.getElementById("w" + w + ".footnote."  + p.type + "." + p.nid + "." + p.osisref + "." + p.mod));
-    if (ok) BibleTexts.scroll2Note("w" + w + ".footnote."  + p.type + "." + p.nid + "." + p.osisref + "." + p.mod);
+    if (w==0) Popup.activate(elem, e);
+    else {
+      var ok = toggleRefText(document.getElementById("w" + w + ".footnote."  + p.type + "." + p.nid + "." + p.osisref + "." + p.mod));
+      if (ok) BibleTexts.scroll2Note("w" + w + ".footnote."  + p.type + "." + p.nid + "." + p.osisref + "." + p.mod);
+    }
+    break;
+    
+  case "fn":
+    if (w==0) Popup.activate(elem, e);
     break;
     
   case "listenlink":
