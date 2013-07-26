@@ -1081,6 +1081,8 @@ function toggleReposOnOff() {
 }
 
 function changeModuleListLanguage(lang) {
+  if (document.getElementById("moduleDialog").getAttribute("showModuleInfo") == "true") toggleModuleBox();
+  
   ARMU.treeDataSource([true], ["moduleListTree"]);
   var tree = document.getElementById("languageListTree");
   
