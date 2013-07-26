@@ -29,7 +29,7 @@ function startxulsword() {
 
 <toolbar id="nav-bar">
   <toolbarbutton insertafter="home-button" 
-      image="chrome://xulsword/skin/icon.png"
+      image="chrome://xulsword/skin/icon32.png"
       class="toolbarbutton-1 chromeclass-toolbar-additional"
       persist="class" 
       removable="true"
