@@ -41,8 +41,13 @@ function PopupObj(popupobj) {
   if (popupobj) {
     this.npopup.setAttribute("puptype", popupobj.npopup.getAttribute("puptype"));
     this.npopupTX.innerHTML = popupobj.npopupTX.innerHTML;
-    this.crnote = popupobj.crnote;
-    this.srnote = popupobj.srnote;
+
+    // copy popupobj additional members (excluding functions) to the new object
+    for (var p in popupobj) {
+      if ((/(npopup|npopupTX|showPopupID)/).test(p)) continue;
+      if (typeof(popupobj[p]) == "function") continue;
+      this[p] = eval(uneval(popupobj[p]));
+    }
   }
 
   // returns false if popup cannot open for any reason

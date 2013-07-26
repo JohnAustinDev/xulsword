@@ -419,11 +419,12 @@ function lpath(path) {
 // xsExtension  = profile extensions directory
 // xsLocale     = libsword locale directory
 // xsDefaults   = xulsword's defaults directory
+// xsProgram    = xulsword's program files root directory
 function getSpecialDirectory(name) {
   var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
   if (name.substr(0,2) == "xs") {
   
-    var profile = directoryService.get("ProfD", Components.interfaces.nsIFile);
+    var profile = directoryService.get("ProfD", Components.interfaces.nsILocalFile);
     
     var resources = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
     var path = profile.path;
@@ -463,7 +464,7 @@ function getSpecialDirectory(name) {
       break;
     case "xsExtResource":
       if (IsExtension) {
-        retval = profile.clone().QueryInterface(Components.interfaces.nsILocalFile);
+        retval = profile.clone();
         retval.append("extensions");
         retval.append(APPLICATIONID);
         retval.append("resources");
@@ -472,14 +473,23 @@ function getSpecialDirectory(name) {
       break;
     case "xsDefaults":
       if (IsExtension) {
-        retval = profile.clone().QueryInterface(Components.interfaces.nsILocalFile);
+        retval = profile.clone();
         retval.append("extensions");
         retval.append(APPLICATIONID);
         retval.append("defaults");
       }
       else {
-        retval = directoryService.get("DefRt", Components.interfaces.nsIFile);
-        retval = retval.QueryInterface(Components.interfaces.nsILocalFile);
+        retval = directoryService.get("DefRt", Components.interfaces.nsILocalFile);
+      }
+      break;
+    case "xsProgram":
+      if (IsExtension) {
+        retval = profile.clone();
+        retval.append("extensions");
+        retval.append(APPLICATIONID);
+      }
+      else {
+        retval = directoryService.get("CurProcD", Components.interfaces.nsILocalFile);
       }
       break;
     case "xsModsCommon":
@@ -500,8 +510,7 @@ function getSpecialDirectory(name) {
     }
   }
   else {
-    retval = directoryService.get(name, Components.interfaces.nsIFile);
-    retval = retval.QueryInterface(Components.interfaces.nsILocalFile);
+    retval = directoryService.get(name, Components.interfaces.nsILocalFile);
   }
   return retval;
 }
@@ -820,7 +829,7 @@ function initCSS(adjustableFontSize) {
   // If we don't have ProgramConfig, make it. If we don't have ModuleConfigs
   // that's perfectly ok to leave empty
   if (typeof(ProgramConfig) == "undefined") {
-    this.ProgramConfig = copyObj(LocaleConfigs[getLocale()]);
+    this.ProgramConfig = eval(uneval(LocaleConfigs[getLocale()]));
     ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
     ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   }

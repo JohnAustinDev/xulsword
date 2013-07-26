@@ -83,7 +83,7 @@ Texts = {
         
       }
       
-      this.pinnedDisplay[w] = copyObj(this.display[w]);
+      this.pinnedDisplay[w] = eval(uneval(this.display[w]));
     }
 /*    
     // scroll notebox to text always. SHOULD THIS BE IN VIEWPORT UPDATE?
@@ -168,7 +168,7 @@ Texts = {
       // while still resulting in a filled multi-column display, if possible.
       if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
         
-        var d2 = copyObj(display);
+        var d2 = eval(uneval(display));
   
         // collect previous chapter(s)
         var c = Number(display.ch) - 1;
@@ -232,7 +232,7 @@ Texts = {
     window.setTimeout("BibleTexts.updateAudioLinks(" + w + ");", 0);
   
     // save display objects for this window
-    this.display[w] = copyObj(display);
+    this.display[w] = eval(uneval(display));
     
   },
   
@@ -295,7 +295,7 @@ Texts = {
     }
   
     // save display object for this window
-    this.display[w] = copyObj(display);
+    this.display[w] = eval(uneval(display));
       
   },
   
@@ -351,7 +351,7 @@ Texts = {
     }
       
     // save display object for this window
-    this.display[w] = copyObj(display);
+    this.display[w] = eval(uneval(display));
 
   },
   
@@ -417,7 +417,7 @@ Texts = {
     }
   
     // save display object for this window
-    this.display[w] = copyObj(display);
+    this.display[w] = eval(uneval(display));
   },
 
 

@@ -32,7 +32,7 @@ function onLoad() {
   var sel = false;  
   var selob = MainWindow.document.getElementById("main-viewport").contentDocument.defaultView.getSelection();
   if (selob && !selob.isCollapsed && !(/^\s*$/).test(selob.toString())) {
-    var t = copyObj(MainWindow.ContextMenu.NEWTARGET);
+    var t = eval(uneval(MainWindow.ContextMenu.NEWTARGET));
     sel = MainWindow.ContextMenu.getTargetsFromSelection(t, selob);
   }
   if (sel && t.mod && t.bk && t.ch && t.vs && t.lv) {

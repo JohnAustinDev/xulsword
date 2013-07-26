@@ -348,7 +348,7 @@ function xulswordInit() {
   jsdump("Loaded locales:" + s);
     
   // Copy current locale's config to ProgramConfig.
-  ProgramConfig = copyObj(LocaleConfigs[currentLocale]);
+  ProgramConfig = eval(uneval(LocaleConfigs[currentLocale]));
   ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
   ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   

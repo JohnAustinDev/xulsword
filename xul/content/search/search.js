@@ -859,7 +859,7 @@ function unloadSearchWindow() {
 
 function handlePrintCommand(command) {
 
-  var result = copyObj(Search.result);
+  var result = eval(uneval(Search.result));
   
   result.results_per_page = MAX_PRINT_SEARCH_RESULTS;
   Search.showSearchResults(result, Search.s);

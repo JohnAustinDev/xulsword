@@ -546,24 +546,6 @@ function isASCII(text) {
   return !notASCII;
 }
 
-function copyObj(obj) {
-//jsdump(uneval(obj));
-  return eval(uneval(obj));
-/*
-  var newobj = {};
-  for (var m in obj) {
-    if (obj[m] === null) newobj[m] = null;
-    else if (obj[m] === NaN) newobj[m] = NaN;
-    else if (typeof(obj[m]) == "object") {
-      newobj[m] = copyObj(obj[m]);
-    }
-    else newobj[m] = obj[m];
-  }
-  
-  return newobj;
-*/
-}
-
 // Return the viewport window in which this element resides.
 // Note: null means unknown window, but 0 means popup window.
 function getContextWindow(elem) {
