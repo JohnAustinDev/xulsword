@@ -102,13 +102,10 @@ LibSword = {
 
     // get path to libxulsword dynamic library built from C++ SWORD engine
     if (!this.LibswordPath) {
+      // NOTE: getSpecialDirectory is not available from within a ChromeWorker, so
+      // LibswordPath must be explicitly set on the LibSword object in such case.
       var dll = (OPSYS == "Windows" ? "xulsword.dll":"libxulsword.so");
-      if (!IsExtension) {this.LibswordPath = getSpecialDirectory("CurProcD").path + "/" + dll;}
-      else {
-        // NOTE: getSpecialDirectory is not available from within a ChromeWorker, so 
-        // LibswordPath must be explicitly set on the LibSword object in such case.
-        this.LibswordPath = getSpecialDirectory("xsExtension").path + "/" + APPLICATIONID + "/" + dll;
-      }
+      this.LibswordPath = getSpecialDirectory("xsProgram").path + "/" + dll;
     }
     
     // get our libxulsword instance
@@ -800,6 +797,9 @@ getModuleInformation: function(modname, paramname) {
 //Returns a localized readable utf8 string correpsonding to the language code.
 //Returns null if the information is not available
 translate: function(text, localeName) {
+
+return text; // a SWORD bug is preventing this from working yet
+
   if (!this.libSwordReady("translate")) return null;
   if (!this.fdata.gln)
     this.fdata.gln = this.libsword.declare("Translate", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char)); 

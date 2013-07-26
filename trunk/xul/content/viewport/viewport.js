@@ -118,14 +118,14 @@ function ViewPortObj(viewPortObj) {
     const copyViewProps = ["ShowOriginal", "IsPinned", "NoteBoxHeight", "MaximizeNoteBox", "Module", "Key"];
     for (var w=1; w<=NW; w++) {
       for (var c=0; c<copyViewProps.length; c++) {
-        this[copyViewProps[c]][w] = copyObj(viewPortObj[copyViewProps[c]][w]);
+        this[copyViewProps[c]][w] = eval(uneval(viewPortObj[copyViewProps[c]][w]));
       }
     }
     
     // copy text properties from old to new
     const copyTextProps = ["scrollTypeFlag", "hilightFlag", "scrollDelta", "display", "pinnedDisplay", "footnotes"];
     for (var t=0; t<copyTextProps.length; t++) {
-      Texts[copyTextProps[t]] = copyObj(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]);
+      Texts[copyTextProps[t]] = eval(uneval(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]));
     }
         
   }

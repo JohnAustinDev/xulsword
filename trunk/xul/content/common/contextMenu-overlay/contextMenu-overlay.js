@@ -28,7 +28,7 @@ var ContextMenu = {
 //var p=""; for (var m in menupopup.triggerNode) {p += m + "=" + menupopup.triggerNode[m] + " ";} jsdump(p);
 
     // init our target info
-    this.target = copyObj(this.NEWTARGET);
+    this.target = eval(uneval(this.NEWTARGET));
     
     this.target.w = getContextWindow(menupopup.triggerNode);
     
@@ -208,10 +208,10 @@ jsdump("build:" + uneval(this.target));
   // Read two targets, one from each end of the selection, merge the two and return the results.
   getTargetsFromSelection: function(target, selob) {
   
-    var targs1 = copyObj(this.NEWTARGET);
+    var targs1 = eval(uneval(this.NEWTARGET));
     if (!this.getTargetsFromElement(targs1, selob.focusNode)) return false;
     
-    var targs2 = copyObj(this.NEWTARGET);
+    var targs2 = eval(uneval(this.NEWTARGET));
     if (!this.getTargetsFromElement(targs2, selob.anchorNode)) return false;
     
     // merge bookmarks

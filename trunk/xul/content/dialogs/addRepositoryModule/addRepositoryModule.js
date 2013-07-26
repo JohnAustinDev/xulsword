@@ -1508,7 +1508,7 @@ tar -xf \"" + aTarGz.path + "\"" + NEWLINE;
     
     // for Windows, 7za.exe must be included with xulsword (250kb compressed)
     else if (OPSYS == "Windows") {
-      var w7z = getSpecialDirectory("CurProcD");
+      var w7z = getSpecialDirectory("xsProgram");
       w7z.append("7za.exe");
       
       var script = "\
