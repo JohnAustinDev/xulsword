@@ -2,7 +2,7 @@
   background-image:url(chrome://xulsword/skin/images/9.gif) !important;
   padding:10px;
 }
-.arm-label {}
+.arm-label {font-weight:bold;}
 
 #body {
   min-height:400px;
@@ -98,7 +98,6 @@
 .arm-remove {
   list-style-image: url("chrome://xulsword/skin/images/arm-icons.png");
 }
-
 .arm-yes        {-moz-image-region: rect(0px 16px 16px 0px);}
 .arm-add        {-moz-image-region: rect(0px 32px 16px 16px);}
 .arm-remove     {-moz-image-region: rect(0px 48px 16px 32px);}
@@ -107,7 +106,6 @@
 .arm-go-back    {-moz-image-region: rect(0px 96px 16px 80px);}
 .arm-save       {-moz-image-region: rect(0px 112px 16px 96px);}
 .arm-help       {-moz-image-region: rect(0px 128px 16px 112px);}
-
 .arm-yes[disabled="true"]        {-moz-image-region: rect(16px 16px 32px 0px);}
 .arm-add[disabled="true"]        {-moz-image-region: rect(16px 32px 32px 16px);}
 .arm-remove[disabled="true"]     {-moz-image-region: rect(16px 48px 32px 32px);}

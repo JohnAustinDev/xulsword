@@ -16,7 +16,6 @@ function startxulsword() {
   
 </script>
 
-<!--
 <menupopup id="menu_ToolsPopup">
   <menuseparator/>
   <menuitem insertafter="menu_preferences" 
@@ -25,7 +24,6 @@ function startxulsword() {
       label="&main.title;..." 
       oncommand="startxulsword();" />
 </menupopup>
-!-->
 
 <toolbar id="nav-bar">
   <toolbarbutton insertafter="home-button" 
@@ -34,7 +32,7 @@ function startxulsword() {
       persist="class" 
       removable="true"
       label="&main.title;"
-      onclick="startxulsword();" />
+      oncommand="startxulsword();" />
 </toolbar>
   
 </overlay>
