@@ -66,7 +66,7 @@
       
       <vbox id="showLanguagesButCont">
         <separator />
-        <button flex="1" icon="go-forward" oncommand="toggleLanguageList(); setTimeout('ARMU.selectLanguage();', 500);" />
+        <button flex="1" class="arm-go-forward" oncommand="toggleLanguageList(); setTimeout('ARMU.selectLanguage();', 500);" />
       </vbox>
       
       <vbox id="languageListContainer" persist="width" >
@@ -94,7 +94,7 @@
           </template>
         </tree>
         
-        <button icon="go-back" oncommand="toggleLanguageList(); changeModuleListLanguage('all');" />
+        <button class="arm-go-back" oncommand="toggleLanguageList(); changeModuleListLanguage('all');" />
         
       </vbox>
       
@@ -235,10 +235,10 @@
       </deck>
         
       <vbox id="moduleControls" pack="center" >
-        <button disabled="true" id="installButton" icon="save" oncommand="initiateModuleDownloads();" />
-        <button disabled="true" id="showInfoButton" icon="help" oncommand="writeModuleInfos(); toggleModuleBox();" />
+        <button disabled="true" id="installButton" class="arm-save" oncommand="initiateModuleDownloads();" />
+        <button disabled="true" id="showInfoButton" class="arm-help" oncommand="writeModuleInfos(); toggleModuleBox();" />
         <button id="showModulesButton" label="&history.back.label;" oncommand="toggleModuleBox();" />
-        <button disabled="true" id="moduleCancel" icon="cancel" oncommand="moduleCancel();" />
+        <button disabled="true" id="moduleCancel" class="arm-cancel" oncommand="moduleCancel();" />
       </vbox>
       
     </hbox>
@@ -292,10 +292,10 @@
       </vbox>
       
       <vbox id="repoControls" pack="center" >
-        <button disabled="true" id="toggle" icon="yes" oncommand="toggleReposOnOff()" />
-        <button disabled="true" id="add" icon="add" oncommand="addRepository()" />
-        <button disabled="true" id="delete" icon="remove" oncommand="deleteSelectedRepositories();" />
-        <button disabled="true" id="repoCancel" icon="cancel" oncommand="repoCancel();" />
+        <button disabled="true" id="toggle" class="arm-yes" oncommand="toggleReposOnOff()" />
+        <button disabled="true" id="add" class="arm-add" oncommand="addRepository()" />
+        <button disabled="true" id="delete" class="arm-remove" oncommand="deleteSelectedRepositories();" />
+        <button disabled="true" id="repoCancel" class="arm-cancel" oncommand="repoCancel();" />
       </vbox>
       
     </hbox>

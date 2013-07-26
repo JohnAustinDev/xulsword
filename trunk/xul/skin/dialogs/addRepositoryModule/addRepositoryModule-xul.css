@@ -86,3 +86,37 @@
 #windowButtons {
   margin-top:20px;
 }
+
+/* button icons */
+.arm-go-forward,
+.arm-go-back,
+.arm-save,
+.arm-help,
+.arm-cancel,
+.arm-yes,
+.arm-add,
+.arm-remove {
+  list-style-image: url("chrome://xulsword/skin/images/arm-icons.png");
+}
+
+.arm-yes        {-moz-image-region: rect(0px 16px 16px 0px);}
+.arm-add        {-moz-image-region: rect(0px 32px 16px 16px);}
+.arm-remove     {-moz-image-region: rect(0px 48px 16px 32px);}
+.arm-cancel     {-moz-image-region: rect(0px 64px 16px 48px);}
+.arm-go-forward {-moz-image-region: rect(0px 80px 16px 64px);}
+.arm-go-back    {-moz-image-region: rect(0px 96px 16px 80px);}
+.arm-save       {-moz-image-region: rect(0px 112px 16px 96px);}
+.arm-help       {-moz-image-region: rect(0px 128px 16px 112px);}
+
+.arm-yes[disabled="true"]        {-moz-image-region: rect(16px 16px 32px 0px);}
+.arm-add[disabled="true"]        {-moz-image-region: rect(16px 32px 32px 16px);}
+.arm-remove[disabled="true"]     {-moz-image-region: rect(16px 48px 32px 32px);}
+.arm-cancel[disabled="true"]     {-moz-image-region: rect(16px 64px 32px 48px);}
+.arm-go-forward[disabled="true"] {-moz-image-region: rect(16px 80px 32px 64px);}
+.arm-go-back[disabled="true"]    {-moz-image-region: rect(16px 96px 32px 80px);}
+.arm-save[disabled="true"]       {-moz-image-region: rect(16px 112px 32px 96px);}
+.arm-help[disabled="true"]       {-moz-image-region: rect(16px 128px 32px 112px);}
+
+
+
+
