@@ -92,7 +92,7 @@ LibSword = {
         // initialize to defaults if needed
         locale.append("locales.conf");
         if (!locale.exists()) {
-          var def = getSpecialDirectory("DefRt");
+          var def = getSpecialDirectory("xsDefaults");
           def.append("locales.conf");
           if (def.exists()) {def.copyTo(locale.parent, null);}
         }
