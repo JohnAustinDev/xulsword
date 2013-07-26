@@ -15,10 +15,26 @@ function startxulsword() {
 ]]>
   
 </script>
-							
+
+<!--
 <menupopup id="menu_ToolsPopup">
   <menuseparator/>
-  <menuitem label="&main.title;..." insertafter="menu_preferences" oncommand="startxulsword();" class="menuitem-iconic" image="chrome://xulsword/skin/icon.png"/>
+  <menuitem insertafter="menu_preferences" 
+      image="chrome://xulsword/skin/icon.png"
+      class="menuitem-iconic"
+      label="&main.title;..." 
+      oncommand="startxulsword();" />
 </menupopup>
+!-->
+
+<toolbar id="nav-bar">
+  <toolbarbutton insertafter="home-button" 
+      image="chrome://xulsword/skin/icon.png"
+      class="toolbarbutton-1 chromeclass-toolbar-additional"
+      persist="class" 
+      removable="true"
+      label="&main.title;"
+      onclick="startxulsword();" />
+</toolbar>
   
 </overlay>

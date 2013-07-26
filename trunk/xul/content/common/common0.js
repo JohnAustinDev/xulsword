@@ -418,17 +418,20 @@ function lpath(path) {
 // xsModsCommon = shared SWORD module directory (contains mods.d & modules)
 // xsExtension  = profile extensions directory
 // xsLocale     = libsword locale directory
+// xsDefaults   = xulsword's defaults directory
 function getSpecialDirectory(name) {
   var directoryService = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties);
   if (name.substr(0,2) == "xs") {
-    var retval = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+  
     var profile = directoryService.get("ProfD", Components.interfaces.nsIFile);
     
-    var re = new RegExp(profile.leafName + "$");
+    var resources = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
     var path = profile.path;
-    if (!IsExtension) path = path.replace(re, "resources");
-    else path += "/xulsword_resources";
-    retval.initWithPath(lpath(path));
+    if (IsExtension) path += "/xulsword_resources";
+    else path = path.replace(new RegExp(escapeRE(profile.leafName) + "$"), "resources");
+    resources.initWithPath(lpath(path));
+    
+    var retval = resources.clone();
     
     switch(name) {
     case "xsFonts":
@@ -465,7 +468,19 @@ function getSpecialDirectory(name) {
         retval.append(APPLICATIONID);
         retval.append("resources");
       }
-      // else return regular profile directory
+      // else return regular resources directory
+      break;
+    case "xsDefaults":
+      if (IsExtension) {
+        retval = profile.clone().QueryInterface(Components.interfaces.nsILocalFile);
+        retval.append("extensions");
+        retval.append(APPLICATIONID);
+        retval.append("defaults");
+      }
+      else {
+        retval = directoryService.get("DefRt", Components.interfaces.nsIFile);
+        retval = retval.QueryInterface(Components.interfaces.nsILocalFile);
+      }
       break;
     case "xsModsCommon":
       switch (OPSYS) {

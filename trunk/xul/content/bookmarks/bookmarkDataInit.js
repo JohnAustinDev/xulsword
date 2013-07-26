@@ -195,7 +195,7 @@ return data;
 }
 
 function getDefaultUserData(fileName) {
-  var file = getSpecialDirectory("DefRt");
+  var file = getSpecialDirectory("xsDefaults");
   file.append(fileName);
   if (!file.exists()) {return null;}
   

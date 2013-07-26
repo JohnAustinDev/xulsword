@@ -163,7 +163,7 @@ function onLoad() {
   // look for a default data source, load it, using it to augment other 
   // data sources. This is used to apply installation specific repos and modules. 
   var defDS = null;
-  var defRDF = getSpecialDirectory("DefRt");
+  var defRDF = getSpecialDirectory("xsDefaults");
   defRDF.append(RepositoryRDF);
   if (defRDF.exists()) {
 
