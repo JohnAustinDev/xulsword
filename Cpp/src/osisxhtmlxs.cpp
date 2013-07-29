@@ -1,22 +1,28 @@
-/***************************************************************************
-				 osisxul.cpp  -  OSIS to HTML with hrefs filter
-					    -------------------
-    begin                : 2003-06-24
-    copyright            : 2003 by CrossWire Bible Society
-    
-    modified:  2009 by John Austin
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation version 2 of the License.                *
- *                                                                         *
- ***************************************************************************/
+/******************************************************************************
+ *
+ *  osisxhtml.cpp -	Render filter for classed XHTML of an OSIS module
+ *
+ * $Id: osisxhtml.cpp 2833 2013-06-29 06:40:28Z chrislit $
+ *
+ * Copyright 2011-2013 CrossWire Bible Society (http://www.crosswire.org)
+ *	CrossWire Bible Society
+ *	P. O. Box 2528
+ *	Tempe, AZ  85280-2528
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation version 2.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ */
 
 #include <stdlib.h>
 #include <ctype.h>
+#include <osisxhtml.h>
 #include <utilxml.h>
 #include <utilstr.h>
 #include <versekey.h>
@@ -194,30 +200,27 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// <p> paragraph and <lg> linegroup tags
 		else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-empty start tag
-				outText("<!P><br />", buf, u);
+				u->outputNewline(buf);
 			}
 			else if (tag.isEndTag()) {	// end tag
-				outText("<!/P><br />", buf, u);
-				userData->supressAdjacentWhitespace = true;
+				u->outputNewline(buf);
 			}
 			else {					// empty paragraph break marker
-				outText("<!P><br />", buf, u);
-				userData->supressAdjacentWhitespace = true;
+				u->outputNewline(buf);
 			}
 		}
 
 		// Milestoned paragraphs, created by osis2mod
 		// <div type="paragraph" sID.../>
 		// <div type="paragraph" eID.../>
-		else if (!tag.isEmpty() && !strcmp(tag.getName(), "div") && tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "paragraph")) {
+		else if (tag.isEmpty() && !strcmp(tag.getName(), "div") && tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "paragraph")) {
 			// <div type="paragraph"  sID... />
 			if (tag.getAttribute("sID")) {	// non-empty start tag
-				outText("<!P><br />", buf, u);
+				u->outputNewline(buf);
 			}
 			// <div type="paragraph"  eID... />
 			else if (tag.getAttribute("eID")) {
-				outText("<!/P><br />", buf, u);
-				userData->supressAdjacentWhitespace = true;
+				u->outputNewline(buf);
 			}
 		}
 
@@ -280,43 +283,42 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
 		// <l> poetry, etc
 		else if (!strcmp(tag.getName(), "l")) {
+			// start line marker
+			if (tag.getAttribute("sID") || (!tag.isEndTag() && !tag.isEmpty())) {
+				// nested lines plus if the line itself has an x-indent type attribute value
+				outText(SWBuf("<span class=\"line indent").appendFormatted("%d\">", u->lineStack->size() + (SWBuf("x-indent") == tag.getAttribute("type")?1:0)).c_str(), buf, u);
+				u->lineStack->push(tag.toString());
+			}
 			// end line marker
-			if (tag.getAttribute("eID")) {
-				outText("<br />", buf, u);
+			else if (tag.getAttribute("eID") || tag.isEndTag()) {
+				outText("</span>", buf, u);
+				u->outputNewline(buf);
+				if (u->lineStack->size()) u->lineStack->pop();
 			}
 			// <l/> without eID or sID
 			// Note: this is improper osis. This should be <lb/>
 			else if (tag.isEmpty() && !tag.getAttribute("sID")) {
-				outText("<br />", buf, u);
-			}
-			// end of the line
-			else if (tag.isEndTag()) {
-				outText("<br />", buf, u);
+				u->outputNewline(buf);
 			}
 		}
 
 		// <lb.../>
 		else if (!strcmp(tag.getName(), "lb")) {
-			outText("<br />", buf, u);
-
-			userData->supressAdjacentWhitespace = true;
+				u->outputNewline(buf);
 		}
 		// <milestone type="line"/>
 		// <milestone type="x-p"/>
 		// <milestone type="cQuote" marker="x"/>
 		else if ((!strcmp(tag.getName(), "milestone")) && (tag.getAttribute("type"))) {
 			if (!strcmp(tag.getAttribute("type"), "line")) {
-				outText("<br />", buf, u);
+				u->outputNewline(buf);
 				if (tag.getAttribute("subType") && !strcmp(tag.getAttribute("subType"), "x-PM")) {
-					outText("<br />", buf, u);
+					u->outputNewline(buf);
 				}
-				userData->supressAdjacentWhitespace = true;
 			}
-			else if(!strcmp(tag.getAttribute("type"),"x-p"))  {
-				if( tag.getAttribute("marker")) {
-				  outText("<br /><br />", buf, u);
-					//outText(tag.getAttribute("marker"), buf, u);
-				}
+			else if (!strcmp(tag.getAttribute("type"),"x-p"))  {
+				if (tag.getAttribute("marker"))
+					outText(tag.getAttribute("marker"), buf, u);
 				else outText("<!p>", buf, u);
 			}
 			else if (!strcmp(tag.getAttribute("type"), "cQuote")) {
@@ -334,9 +336,8 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					outText((level % 2) ? '\"' : '\'', buf, u);
 			}
 			//EDIT!!
-      else if (!strcmp(tag.getAttribute("type"),"x-p-indent")) {outText("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", buf, u);}
+      		else if (!strcmp(tag.getAttribute("type"),"x-p-indent")) {outText("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", buf, u);}
 		}
-
 
 		// <title>
 		else if (!strcmp(tag.getName(), "title")) {
@@ -371,7 +372,6 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       }
 		  else {outText("</div>", buf, u);}
 		}
-
 		// <catchWord> & <rdg> tags (italicize)
 		else if (!strcmp(tag.getName(), "rdg") || !strcmp(tag.getName(), "catchWord")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
@@ -411,24 +411,41 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// <hi> text highlighting
 		else if (!strcmp(tag.getName(), "hi")) {
 			SWBuf type = tag.getAttribute("type");
+			// handle tei rend attribute
+			if (!type.length()) type = tag.getAttribute("rend");
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 				if (type == "bold" || type == "b" || type == "x-b") {
 					outText("<b>", buf, u);
 				}
+				else if (type == "ol") {
+					outText("<span style=\"text-decoration:overline\">", buf, u);
+				}
+				else if (type == "super") {
+					outText("<span class=\"sup\">", buf, u);
+				}
+				else if (type == "sub") {
+					outText("<span class=\"sub\">", buf, u);
+				}
 				else {	// all other types
 					outText("<i>", buf, u);
 				}
-				u->tagStacks->hiStack.push(tag.toString());
+				u->hiStack->push(tag.toString());
 			}
 			else if (tag.isEndTag()) {
 				SWBuf type = "";
-				if (!u->tagStacks->hiStack.empty()) {
-					XMLTag tag(u->tagStacks->hiStack.top());
-					u->tagStacks->hiStack.pop();
+				if (!u->hiStack->empty()) {
+					XMLTag tag(u->hiStack->top());
+					if (u->hiStack->size()) u->hiStack->pop();
 					type = tag.getAttribute("type");
+					if (!type.length()) type = tag.getAttribute("rend");
 				}
 				if (type == "bold" || type == "b" || type == "x-b") {
 					outText("</b>", buf, u);
+				}
+				else if (  	   type == "ol"
+						|| type == "super"
+						|| type == "sub") {
+					outText("</span>", buf, u);
 				}
 				else outText("</i>", buf, u);
 			}
@@ -455,7 +472,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			if ((!tag.isEmpty() && !tag.isEndTag()) || (tag.isEmpty() && tag.getAttribute("sID"))) {
 				// if <q> then remember it for the </q>
 				if (!tag.isEmpty()) {
-					u->tagStacks->quoteStack.push(tag.toString());
+					u->quoteStack->push(tag.toString());
 				}
 
 				// Do this first so quote marks are included as WoC
@@ -472,9 +489,9 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			// close </q> or <q eID... />
 			else if ((tag.isEndTag()) || (tag.isEmpty() && tag.getAttribute("eID"))) {
 				// if it is </q> then pop the stack for the attributes
-				if (tag.isEndTag() && !u->tagStacks->quoteStack.empty()) {
-					XMLTag qTag(u->tagStacks->quoteStack.top());
-					u->tagStacks->quoteStack.pop();
+				if (tag.isEndTag() && !u->quoteStack->empty()) {
+					XMLTag qTag(u->quoteStack->top());
+					if (u->quoteStack->size()) u->quoteStack->pop();
 
 					type    = qTag.getAttribute("type");
 					who     = qTag.getAttribute("who");
@@ -506,14 +523,14 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
 				// just do all transChange tags this way for now
 				if ((type == "added") || (type == "supplied"))
-					outText("<i>", buf, u);
+					outText("<span class=\"transChangeSupplied\">", buf, u);
 				else if (type == "tenseChange")
 					buf += "*";
 			}
 			else if (tag.isEndTag()) {
 				SWBuf type = u->lastTransChange;
 				if ((type == "added") || (type == "supplied"))
-					outText("</i>", buf, u);
+					outText("</span>", buf, u);
 			}
 			else {	// empty transChange marker?
 			}
@@ -522,30 +539,82 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// image
 		else if (!strcmp(tag.getName(), "figure")) {
 			const char *src = tag.getAttribute("src");
-			if (!src)		// assert we have a src attribute
-				return false;
+			if (src) {		// assert we have a src attribute 
+				SWBuf filepath;
+				if (userData->module) {
+					filepath = userData->module->getConfigEntry("AbsoluteDataPath");
+					if ((filepath.size()) && (filepath[filepath.size()-1] != '/') && (src[0] != '/'))
+						filepath += '/';
+				}
+				filepath += src;
 
-			SWBuf filepath;
-			if (userData->module) {
-				filepath = userData->module->getConfigEntry("AbsoluteDataPath");
-				if ((filepath.size()) && (filepath[filepath.size()-1] != '/') && (src[0] != '/'))
-					filepath += '/';
-			}
-			filepath += src;
-      filepath.replaceBytes("\\", '/');
+      			filepath.replaceBytes("\\", '/');
       
-      outText("<div class=\"dict-image-container\">", buf, u);
-			outText("<img src=\"File://", buf, u);
-			outText(filepath, buf, u);
-			outText("\">", buf, u);
-			outText("</div>", buf, u);
+      			outText("<div class=\"dict-image-container\">", buf, u);
+					outText("<img src=\"File://", buf, u);
+					outText(filepath, buf, u);
+					outText("\">", buf, u);
+					outText("</div>", buf, u);
+			}
 		}
 
+		// ok to leave these in
+		else if (!strcmp(tag.getName(), "div")) {
+			SWBuf type = tag.getAttribute("type");
+			if (type == "bookGroup") {
+			}
+			else if (type == "book") {
+			}
+			else if (type == "section") {
+			}
+			else if (type == "majorSection") {
+			}
+			else {
+				buf += tag;
+			}
+		}
+		else if (!strcmp(tag.getName(), "span")) {
+			buf += tag;
+		}
+		else if (!strcmp(tag.getName(), "br")) {
+			buf += tag;
+		}
+		else if (!strcmp(tag.getName(), "table")) {
+			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
+				buf += "<table><tbody>\n";
+			}
+			else if (tag.isEndTag()) {
+				buf += "</tbody></table>\n";
+				++u->consecutiveNewlines;
+				u->supressAdjacentWhitespace = true;
+			}
+			
+		}
+		else if (!strcmp(tag.getName(), "row")) {
+			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
+				buf += "\t<tr>";
+			}
+			else if (tag.isEndTag()) {
+				buf += "</tr>\n";
+			}
+			
+		}
+		else if (!strcmp(tag.getName(), "cell")) {
+			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
+				buf += "<td>";
+			}
+			else if (tag.isEndTag()) {
+				buf += "</td>";
+			}
+		}
 		else {
-		      return false;  // we still didn't handle token
+			if (!u->supressAdjacentWhitespace) u->consecutiveNewlines = 0;
+			return false;  // we still didn't handle token
 		}
 	}
+	if (!u->supressAdjacentWhitespace) u->consecutiveNewlines = 0;
 	return true;
 }
+
 
 SWORD_NAMESPACE_END
