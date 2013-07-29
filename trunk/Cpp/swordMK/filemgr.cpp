@@ -1,10 +1,11 @@
 /******************************************************************************
- *  filemgr.cpp	- implementation of class FileMgr used for pooling file
- *  					handles
  *
- * $Id: filemgr.cpp 2645 2011-07-22 11:03:45Z scribe $
+ *  filemgr.cpp -	implementation of class FileMgr used for pooling file
+ *			handles
  *
- * Copyright 1998 CrossWire Bible Society (http://www.crosswire.org)
+ * $Id: filemgr.cpp 2833 2013-06-29 06:40:28Z chrislit $
+ *
+ * Copyright 1998-2013 CrossWire Bible Society (http://www.crosswire.org)
  *	CrossWire Bible Society
  *	P. O. Box 2528
  *	Tempe, AZ  85280-2528
