@@ -465,23 +465,24 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 
 			// iterate thru each good module position that meets the search
 			bool checkBounds = getKey()->isBoundSet();
-			for (unsigned long i = 0; i < (unsigned long)h->length(); i++) {
-				Document &doc = h->doc(i);
+        for (unsigned long i = 0; i < (unsigned long)h->length(); i++) {
+          Document &doc = h->doc(i);
 
-					// set a temporary verse key to this module position
-					char buff[5000];
-					lucene_wcstoutf8(buff, doc.get(_T("key")), 5000); //TODO Does a key always accept utf8?
-					*resultKey = buff;
+          // set a temporary verse key to this module position
+          char buff[5000];
+          lucene_wcstoutf8(buff, doc.get(_T("key")), 5000); //TODO Does a key always accept utf8?
+          *resultKey = buff;
 
-				// check to see if it sets ok (within our bounds) and if not, skip
-				if (checkBounds) {
-					*getKey() = *resultKey;
-					if (*getKey() != *resultKey) {
-						continue;
-					}
-					listKey << *resultKey;
-					listKey.GetElement()->userData = (__u64)((__u32)(h->score(i)*100));
-				}
+          // check to see if it sets ok (within our bounds) and if not, skip
+          if (checkBounds) {
+            *getKey() = *resultKey;
+            if (*getKey() != *resultKey) {
+              continue;
+            }
+          }
+          listKey << *resultKey;
+          listKey.getElement()->userData = (__u64)((__u32)(h->score(i)*100));
+        }
 				(*percent)(98, percentUserData);
 			}
 		}
@@ -1128,7 +1129,7 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 				}
 			}
 
-      lucene_utf8towcs(wbuff, keyText.c_str(), MAX_FIELD_SIZE);
+			lucene_utf8towcs(wbuff, keyText.c_str(), MAX_FIELD_SIZE);
 			doc->add(*_CLNEW Field(_T("key"), wbuff, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
 
 			if (includeKeyInSearch) {
@@ -1138,13 +1139,13 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 				content = c.c_str();
 			}
 
-      lucene_utf8towcs(wbuff, content, MAX_FIELD_SIZE);
+			lucene_utf8towcs(wbuff, content, MAX_FIELD_SIZE);
 			doc->add(*_CLNEW Field(_T("content"), wbuff, Field::STORE_NO | Field::INDEX_TOKENIZED));
 
 			if (strong.length() > 0) {
-        lucene_utf8towcs(wbuff, strong.c_str(), MAX_FIELD_SIZE);
+				lucene_utf8towcs(wbuff, strong.c_str(), MAX_FIELD_SIZE);
 				doc->add(*_CLNEW Field(_T("lemma"), wbuff, Field::STORE_NO | Field::INDEX_TOKENIZED));
-        lucene_utf8towcs(wbuff, morph.c_str(), MAX_FIELD_SIZE);
+				lucene_utf8towcs(wbuff, morph.c_str(), MAX_FIELD_SIZE);
 				doc->add(*_CLNEW Field(_T("morph"), wbuff, Field::STORE_NO | Field::INDEX_TOKENIZED));
 //printf("setting fields (%s).\ncontent: %s\nlemma: %s\n", (const char *)*key, content, strong.c_str());
 			}
@@ -1289,14 +1290,14 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 		}
 
 		if (proxBuf.length() > 0) {
-      lucene_utf8towcs(wbuff, proxBuf.c_str(), MAX_FIELD_SIZE);
+			lucene_utf8towcs(wbuff, proxBuf.c_str(), MAX_FIELD_SIZE);
 			doc->add(*_CLNEW Field(_T("prox"), wbuff, Field::STORE_NO | Field::INDEX_TOKENIZED));
 			good = true;
 		}
 		if (proxLem.length() > 0) {
-		  lucene_utf8towcs(wbuff, proxLem.c_str(), MAX_FIELD_SIZE);
+			lucene_utf8towcs(wbuff, proxLem.c_str(), MAX_FIELD_SIZE);
 			doc->add(*_CLNEW Field(_T("proxlem"), wbuff, Field::STORE_NO | Field::INDEX_TOKENIZED) );
-      lucene_utf8towcs(wbuff, proxMorph.c_str(), MAX_FIELD_SIZE);
+			lucene_utf8towcs(wbuff, proxMorph.c_str(), MAX_FIELD_SIZE);
 			doc->add(*_CLNEW Field(_T("proxmorph"), wbuff, Field::STORE_NO | Field::INDEX_TOKENIZED) );
 			good = true;
 		}
