@@ -1,21 +1,27 @@
-/***************************************************************************
-                     thmlhtmlhref.cpp  -  ThML to HTML filter with hrefs  
-                             -------------------
-    begin                    : 2001-09-03
-    copyright            : 2001 by CrossWire Bible Society
-    
-    modified:  2009 by John Austin
- ***************************************************************************/
+/******************************************************************************
+ *
+ *  thmlxhtml.cpp -	ThML to classed XHTML
+ *
+ * $Id: thmlxhtml.cpp 2833 2013-06-29 06:40:28Z chrislit $
+ *
+ * Copyright 2011-2013 CrossWire Bible Society (http://www.crosswire.org)
+ *	CrossWire Bible Society
+ *	P. O. Box 2528
+ *	Tempe, AZ  85280-2528
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation version 2.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ */
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
 #include <stdlib.h>
+#include <thmlxhtml.h>
 #include <swmodule.h>
 #include <utilxml.h>
 #include <utilstr.h>
@@ -137,13 +143,13 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 								buf.appendFormatted("<span class=\"cr\" title=\"%s.%s.%s\"></span>",
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
-                userData->module->Name());
+                userData->module->getName());
 					   }
 					   else {
 								buf.appendFormatted("<span class=\"fn\" title=\"%s.%s.%s\"></span>",
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
-                userData->module->Name());
+                userData->module->getName());
 					   }
 					   u->suspendTextPassThru = true;
 					}
@@ -151,12 +157,12 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					   if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
 								buf.appendFormatted("<span class=\"cr\" title=\"%s.unavailable.%s\"></span><span class=\"genbknote\">[",
 								footnoteNumber.c_str(), 
-                userData->module->Name());
+                userData->module->getName());
 					   }
 					   else {
 								buf.appendFormatted("<span class=\"fn\" title=\"%s.unavailable.%s\"></span><span class=\"genbknote\">[",
 								footnoteNumber.c_str(), 
-                userData->module->Name());
+                userData->module->getName());
 					   }
 					   u->suspendTextPassThru = false;
 					}
@@ -178,10 +184,10 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			if (!tag.isEndTag()) {
 				if (!tag.isEmpty()) {
 					if (tag.getAttribute("passage")) {
-            buf.appendFormatted("<a class=\"sr\" title=\"%s.%s\">", tag.getAttribute("passage"), userData->module->Name());
+            buf.appendFormatted("<a class=\"sr\" title=\"%s.%s\">", tag.getAttribute("passage"), userData->module->getName());
 					}
 					else {
-            buf.appendFormatted("<a class=\"sr\" title=\"unavailable.%s\">", userData->module->Name());
+            buf.appendFormatted("<a class=\"sr\" title=\"unavailable.%s\">", userData->module->getName());
           }
 				}
 			}
@@ -265,5 +271,6 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 	}
 	return true;
 }
+
 
 SWORD_NAMESPACE_END

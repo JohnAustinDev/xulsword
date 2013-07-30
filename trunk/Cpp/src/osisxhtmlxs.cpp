@@ -49,19 +49,9 @@ class OSISXHTMLXS : public OSISXHTML {
   	OSISXHTMLXS();
 };
 
-
-typedef std::stack<SWBuf> TagStack;
-
-// though this might be slightly slower, possibly causing an extra bool check, this is a renderFilter
-// so speed isn't the absolute highest priority, and this is a very minor possible hit
+class OSISXHTML::TagStack : public std::stack<SWBuf> {};
 static inline void outText(const char *t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
 static inline void outText(char t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
-
-class OSISXHTML::TagStacks {
-public:
-	TagStack quoteStack;
-	TagStack hiStack;
-};
 
 OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML() {}
 
@@ -123,7 +113,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 						  sep = true;
             } while (++i < count);
           }
-	  snumbers.replaceBytes(".", ' '); // Changed in xulsword 3+
+          snumbers.replaceBytes(".", ' '); // Changed in xulsword 3+
           if (tag.getAttribute("lemma") || tag.getAttribute("morph")) {
             buf.appendFormatted("<span class=\"sn %s\">", snumbers.c_str());
 						u->w = "keep";
@@ -173,14 +163,14 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 								mclass.c_str(),
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
-                userData->module->Name());
+                userData->module->getName());
 							}
 							else {
                 u->inXRefNote = false;
 								buf.appendFormatted("<span class=\"fn\" title=\"%s.%s.%s\"></span>",
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
-                userData->module->Name());
+                userData->module->getName());
 							}
 						}
 						else {
@@ -268,14 +258,14 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				      if (mi==-1) {
 				        // Append current data to last tag
 				        buf.setSize(buf.length()-7); // Strip off last <\span> tag
-					insertpoint = insertpoint - 1 - strlen(userData->module->Name()); // .module name was appended to ref
+                insertpoint = insertpoint - 1 - strlen(userData->module->getName()); // .module name was appended to ref
 				        buf.insert(insertpoint, "; ");
 				        buf.insert(insertpoint+2, referenceInfo.c_str());
 				        return true;
 				      }
 				    }
 				  }
-				  buf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->Name());
+				  buf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
         }
 				if (tag.isEndTag()) {buf.appendFormatted("</%s>", referenceTag.c_str());}
 			}

@@ -183,7 +183,7 @@ DLLEXPORT void FreeLibxulsword() {
   xulsword::MyStringMgrXS = NULL;
 
 /*  
-  VerseMgr::setSystemVerseMgr(NULL);
+  VersificationMgr::getSystemVersificationMgr(NULL);
   FileMgr::setSystemFileMgr(NULL);
   delete LocaleMgr::systemLocaleMgr;
   LocaleMgr::systemLocaleMgr = NULL;

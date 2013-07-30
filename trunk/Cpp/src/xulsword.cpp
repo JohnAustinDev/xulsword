@@ -121,7 +121,7 @@ keyToVars
 void xulsword::keyToVars(VerseKey *key, SWBuf *chapter, int *verse, int *lastverse) {
   chapter->setFormatted("%s %i", key->getBookAbbrev(), key->getChapter());
   *verse = key->getVerse();
-  if (key->isBoundSet()) {*lastverse = key->UpperBound().getVerse();}
+  if (key->isBoundSet()) {*lastverse = key->getUpperBound().getVerse();}
   else {*lastverse = key->getVerse();}
 }
 
@@ -165,7 +165,7 @@ locationToVerseKey
 int xulsword::locationToVerseKey(const char *locationText, VerseKey *vk) {
   int firstverse=0;
   int lastverse=0;
-  vk->ClearBounds(); // important to prevent errors after setText
+  vk->clearBounds(); // important to prevent errors after setText
   VerseKey ub;
   std::string keytext = locationText;
   int dash = keytext.find('-',0);
@@ -221,8 +221,8 @@ int xulsword::locationToVerseKey(const char *locationText, VerseKey *vk) {
   if (lastverse < ub.getVerse()) {lastverse = ub.getVerse();}
   else if (lastverse > ub.getVerseMax()) {lastverse = ub.getVerseMax();}
   ub.setVerse(lastverse);
-  vk->UpperBound(ub);
-  return (vk->Error());
+  vk->setUpperBound(ub);
+  return (vk->popError());
 }
 
 
@@ -324,13 +324,13 @@ void xulsword::mapVersifications(VerseKey *vkin, VerseKey *vkout) {
   else if (!strcmp(inVerseSystem,WESTERN) && (strcmp(outVerseSystem,EASTERN) && !strstr(outVerseSystem,SYNODAL)))
     vkout->setVersificationSystem(EASTERN);
 
-  vkout->ClearBounds(); // important to prevent errors which changing key!
+  vkout->clearBounds(); // important to prevent errors which changing key!
 
   // Prepare to map UpperBound
   SWBuf keyTextU;
   VerseKey bkey;
   if (vkin->isBoundSet()) {
-    keyTextU.appendFormatted("%s %i:%i", vkin->UpperBound().getBookAbbrev(), vkin->UpperBound().getChapter(), vkin->UpperBound().getVerse());
+    keyTextU.appendFormatted("%s %i:%i", vkin->getUpperBound().getBookAbbrev(), vkin->getUpperBound().getChapter(), vkin->getUpperBound().getVerse());
     bkey.setVersificationSystem(!strcmp(inVerseSystem, WESTERN) ? EASTERN:WESTERN);
     bkey.setText(keyTextU.c_str());
   }
@@ -350,7 +350,7 @@ void xulsword::mapVersifications(VerseKey *vkin, VerseKey *vkout) {
     if (vkin->isBoundSet() && !strcmp(keyTextU.c_str(), mf)) {bkey.setText(mt);}
     if (!strcmp(keyText.c_str(), mf)) {vkout->setText(mt);}
   }
-  if (vkin->isBoundSet()) {vkout->UpperBound(bkey);}
+  if (vkin->isBoundSet()) {vkout->setUpperBound(bkey);}
 }
 
 
@@ -389,7 +389,7 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
         sprintf(Outtext, "<div class=\"nlist\" title=\"cr.%d.%s.%s\">", 
           fnV, 
           modKey->getOSISRef(), 
-          module->Name());
+          module->getName());
         
         crossRefText->append(Outtext);
         crossRefText->append(AtIndex->second["refList"]);
@@ -402,15 +402,15 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
         sprintf(Outtext, "<div class=\"nlist\" title=\"fn.%d.%s.%s\"><span class=\"cs-%s%s\">", 
           fnV, 
           modKey->getOSISRef(), 
-          module->Name(),
-          module->Name(),
-          (module->Direction() != DIRECTION_LTR ? " RTL":""));
+          module->getName(),
+          module->getName(),
+          (module->getDirection() != DIRECTION_LTR ? " RTL":""));
         
         footnoteText->append(Outtext);
-        footnoteText->append(module->RenderText(AtIndex->second["body"]));
+        footnoteText->append(module->renderText(AtIndex->second["body"]));
         footnoteText->append("</span></div>");
         noteText->append(Outtext);
-        noteText->append(module->RenderText(AtIndex->second["body"]));
+        noteText->append(module->renderText(AtIndex->second["body"]));
         noteText->append("</span></div>");
       }
     fnV++;
@@ -442,7 +442,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   SWBuf path1;
   path1.set(aPath.substr(0, comma).c_str());
   MyManager = new SWMgrXS(path1.c_str(), false, (MarkupFilterMgr *)muf, false, true);   
-  VerseMgr *vsm = VerseMgr::getSystemVerseMgr();
+  VersificationMgr *vsm = VersificationMgr::getSystemVersificationMgr();
   vsm->registerVersificationSystem("Synodal0", otbooks_synodal0, ntbooks_synodal0, vm_synodal0);
   vsm->registerVersificationSystem("EASTERN", otbooks_eastern, ntbooks_eastern, vm_eastern);
   vsm->registerVersificationSystem("SynodalProt", otbooks_synodalprot, ntbooks_synodalprot, vm_synodalprot);
@@ -499,14 +499,14 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     return NULL;
   }
 
-  SWKey *testkey = module->CreateKey();
+  SWKey *testkey = module->createKey();
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!myVerseKey) {
     delete(testkey);
     xsThrow("GetChapterText: module \"%s\" was not Bible or Commentary.", vkeymod);
   }
 
-  myVerseKey->Persist(1);
+  myVerseKey->setPersist(true);
   myVerseKey->setAutoNormalize(0); // Non-existant calls should return empty string
   module->setKey(myVerseKey);
 
@@ -522,12 +522,12 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   VerseKey ub;
   ub.copyFrom(myVerseKey);
   ub.setVerse(ub.getVerseMax());
-  myVerseKey->UpperBound(ub);
+  myVerseKey->setUpperBound(ub);
 
   //Is this a Commentary??
-  bool isCommentary = !strcmp(module->Type(), "Commentaries");
+  bool isCommentary = !strcmp(module->getType(), "Commentaries");
   
-  bool isRTL = (module->Direction() != DIRECTION_LTR);
+  bool isRTL = (module->getDirection() != DIRECTION_LTR);
 
   //NOW READ ALL VERSES IN THE CHAPTER
 
@@ -541,12 +541,12 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   bool haveText = false;
   std::string chapHTML;
 
-  while (!module->Error()) {
+  while (!module->popError()) {
     SWBuf verseHTML;
     int vNum = myVerseKey->getVerse();
     if (vNum>1 && vNum == Verse) {MyManager->setGlobalOption("Words of Christ in Red","Off");}
     else if (vNum == (LastVerse + 1)) {MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");}
-    verseText = module->RenderText();
+    verseText = module->renderText();
     saveFootnotes(module, &footnoteText, &crossRefText, &noteText);
 
     // move verse number after any paragraph indents
@@ -574,17 +574,17 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
       if (module->getEntryAttributes()["Heading"][Value->first]["canonical"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["canonical"], "true")) {
         verseHTML.append(" canonical");
       }
-      verseHTML.appendFormatted(" cs-%s", module->Name());
+      verseHTML.appendFormatted(" cs-%s", module->getName());
       if (isRTL) {verseHTML.append(" RTL");}
       verseHTML.append("\">");
-      verseHTML.append(module->RenderText(Value->second));
+      verseHTML.append(module->renderText(Value->second));
       verseHTML.append("</div>");
     }
 
     //NOW PRINT OUT THE VERSE ITSELF
     //If this is selected verse then designate as so
     //Output verse html code
-    sprintf(Outtext, "<span title=\"%s.%d.%d.%s\" class=\"vs cs-%s%s\">", bk.c_str(), ch, vNum, module->Name(), module->Name(), (isRTL ? " RTL":""));
+    sprintf(Outtext, "<span title=\"%s.%d.%d.%s\" class=\"vs cs-%s%s\">", bk.c_str(), ch, vNum, module->getName(), module->getName(), (isRTL ? " RTL":""));
     verseHTML.append(Outtext);
 
     if (Verse > 1) {
@@ -661,7 +661,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     return NULL;
   }
 
-  SWKey *testkey1 =  module->CreateKey();
+  SWKey *testkey1 =  module->createKey();
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey1);
   if (!myVerseKey) {
     delete(testkey1);
@@ -669,7 +669,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     return NULL;
   }
 
-  myVerseKey->Persist(1);
+  myVerseKey->setPersist(true);
   myVerseKey->setAutoNormalize(0); // Non-existant calls should return empty string
   module->setKey(myVerseKey);
     
@@ -687,7 +687,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   VerseKey ub;
   ub.copyFrom(myVerseKey);
   ub.setVerse(ub.getVerseMax());
-  myVerseKey->UpperBound(ub);
+  myVerseKey->setUpperBound(ub);
 
 /*
   <div class="interB>
@@ -718,7 +718,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   SWBuf chapText;
   SWModule *versemod;
   bool haveText = false;
-  while (!myVerseKey->Error()) {
+  while (!myVerseKey->popError()) {
     int vNum = myVerseKey->getVerse();
     if (keepnotes && vNum>1 && vNum == Verse) {MyManager->setGlobalOption("Words of Christ in Red","Off");}
     else if (keepnotes && vNum == (LastVerse + 1)) {MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");}
@@ -748,14 +748,14 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
       // each version has its own unique class ID
       chapText.appendFormatted("<div class=\"interV%d cs-%s%s\"><sup class=\"versenum\">", 
         versionNum, 
-        versemod->Name(), 
-        (versemod->Direction() != DIRECTION_LTR ? " RTL":""));
+        versemod->getName(), 
+        (versemod->getDirection() != DIRECTION_LTR ? " RTL":""));
         
       if (Versenumbers) {chapText.appendFormatted("%d",vNum);}
-      chapText.appendFormatted("</sup><span title=\"%s.%d.%d.%s\" class=\"vs\">", bk.c_str(), myVerseKey->getChapter(), vNum, versemod->Name());
+      chapText.appendFormatted("</sup><span title=\"%s.%d.%d.%s\" class=\"vs\">", bk.c_str(), myVerseKey->getChapter(), vNum, versemod->getName());
       versionNum++;
       
-      SWKey *testkey2 = versemod->CreateKey();
+      SWKey *testkey2 = versemod->createKey();
       VerseKey *mainkey = SWDYNAMIC_CAST(VerseKey, testkey2);
       if (!mainkey) {
         delete(testkey2);
@@ -775,11 +775,11 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
         readKey.setVersificationSystem(toVS);
         mapVersifications(&convertKey, &readKey);
       }
-      versemod->SetKey(readKey);
+      versemod->setKey(readKey);
 
       SWBuf tmp;
-      if (!versemod->Error()) {
-        tmp.set(versemod->RenderText());
+      if (!versemod->popError()) {
+        tmp.set(versemod->renderText());
         saveFootnotes(versemod, &footnoteText, &crossRefText, &noteText);
       }
       chapText.append(tmp);
@@ -868,14 +868,14 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
     return NULL;
   }
 
-  SWKey *testkey = module->CreateKey();
+  SWKey *testkey = module->createKey();
   VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!myVerseKey) {
     delete(testkey);
     xsThrow("GetVerseText: module \"%s\" is not a Bible or Commentary.", vkeymod);
     return NULL;
   }
-  myVerseKey->Persist(1);
+  myVerseKey->setPersist(true);
   module->setKey(myVerseKey);
 
   if (keepnotes) {
@@ -899,9 +899,9 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
 
   locationToVerseKey(vkeytext, myVerseKey);
   int numverses = 176; // set to max verses of any chapter
-  while (!myVerseKey->Error())
+  while (!myVerseKey->popError())
   {
-    SWBuf vtext = (keepnotes ? module->RenderText():module->StripText());
+    SWBuf vtext = (keepnotes ? module->renderText():module->renderText(0, -1, false));
     const char * vt = vtext.c_str();
     bool printChars = false;
     // trim() locks up if string is only white space! (sword 1.5.9)
@@ -922,7 +922,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
   
   if (bText.length() > 16) {
     SWBuf css;
-    css.setFormatted("<span class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
+    css.setFormatted("<span class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
     bText.insert(0, css);
     bText.append("</span>");
   }
@@ -976,7 +976,7 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
   VerseKey fromKey;
   fromKey.setVersificationSystem(frVS);
   locationToVerseKey(vkeytext, &fromKey);
-//printf("FROM- KT:%s, LB:%s, UB:%s\n", fromKey.getShortText(), fromKey.LowerBound().getShortText(), fromKey.UpperBound().getShortText());
+//printf("FROM- KT:%s, LB:%s, UB:%s\n", fromKey.getShortText(), fromKey.getLowerBound().getShortText(), fromKey.UpperBound().getShortText());
 
   SWBuf result;
   if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) ||
@@ -984,11 +984,11 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
     VerseKey toKey;
     toKey.setVersificationSystem(EASTERN); // init value only, may be changed by mapVersifications
     mapVersifications(&fromKey, &toKey);
-//printf("TO  - KT:%s, LB:%s, UB:%s\n", toKey.getShortText(), toKey.LowerBound().getShortText(), toKey.UpperBound().getShortText());
-    result.appendFormatted("%s.%i", toKey.getOSISRef(), toKey.UpperBound().getVerse());
+//printf("TO  - KT:%s, LB:%s, UB:%s\n", toKey.getShortText(), toKey.getLowerBound().getShortText(), toKey.getUpperBound().getShortText());
+    result.appendFormatted("%s.%i", toKey.getOSISRef(), toKey.getUpperBound().getVerse());
   }
   else {
-    result.appendFormatted("%s.%i", fromKey.getOSISRef(), fromKey.UpperBound().getVerse());
+    result.appendFormatted("%s.%i", fromKey.getOSISRef(), fromKey.getUpperBound().getVerse());
   }
 
   char *retval;
@@ -1008,7 +1008,7 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
     return NULL;
   }
 
-  SWKey *testkey = module->CreateKey();
+  SWKey *testkey = module->createKey();
   VerseKey *introkey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!introkey) {
     delete(testkey);
@@ -1018,16 +1018,16 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
 
   updateGlobalOptions(false);
 
-  introkey->Headings(1);
+  introkey->setIntros(true);
   introkey->setAutoNormalize(false); // IMPORTANT!! Otherwise, introductions are skipped!
   introkey->setText(bname);
   introkey->setChapter(0);
   introkey->setVerse(0);
-  introkey->Persist(1);
+  introkey->setPersist(true);
   module->setKey(introkey);
 
   SWBuf intro;
-  intro.set(module->RenderText());
+  intro.set(module->renderText());
   
   module->setKey(EmptyKey);
   delete(testkey);
@@ -1035,7 +1035,7 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   if (intro.length() > 16) {
     SWBuf css;
     // use <div> rather than <span> because this needs block not inline display
-    css.setFormatted("<div class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
+    css.setFormatted("<div class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
     intro.insert(0, css);
     intro.append("</div>");
   }
@@ -1062,7 +1062,7 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
     return NULL;
   }
 
-  SWKey *tkey = dmod->CreateKey();
+  SWKey *tkey = dmod->createKey();
   if (!SWDYNAMIC_CAST(StrKey, tkey)) {
     delete(tkey);
     xsThrow("GetDictionaryEntry: module \"%s\" is not a Dictionary.", lexdictmod);
@@ -1078,7 +1078,7 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
 
   if (strcmp(dmod->getKeyText(), key)) {xstring.set("");}
   else {
-    xstring.append(dmod->RenderText());
+    xstring.append(dmod->renderText());
     //Now add any footnotes
     xstring.append("<div class=\"dfnlist\">");
     int footnoteNum = 1;
@@ -1086,14 +1086,14 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
     for (AtIndex = dmod->getEntryAttributes()["Footnote"].begin(); AtIndex != dmod->getEntryAttributes()["Footnote"].end(); AtIndex++) {
       xstring.appendFormatted("<sup>%i</sup><span class=\"dfnote\">%s</span>", 
           footnoteNum++, 
-          dmod->RenderText(AtIndex->second["body"]));
+          dmod->renderText(AtIndex->second["body"]).c_str());
     }
     xstring.append("</div>");
   }
 
   if (xstring.length() > 16) {
     SWBuf cssclass;
-    cssclass.setFormatted("<div class=\"cs-%s%s\">", dmod->Name(), (dmod->Direction() != DIRECTION_LTR ? " RTL":""));
+    cssclass.setFormatted("<div class=\"cs-%s%s\">", dmod->getName(), (dmod->getDirection() != DIRECTION_LTR ? " RTL":""));
     xstring.insert(0, cssclass);
     xstring.append("</div>");
   }
@@ -1118,7 +1118,7 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
     return NULL;
   }
 
-  SWKey *tkey = dmod->CreateKey();
+  SWKey *tkey = dmod->createKey();
   if (!SWDYNAMIC_CAST(StrKey, tkey)) {
     delete(tkey);
     xsThrow("GetAllDictionaryKeys: module \"%s\" is not a Dictionary.", lexdictmod);
@@ -1130,7 +1130,7 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
 
   long count=0;
   SWBuf keytext;
-  while (!dmod->Error() && count++<MAXDICTSIZE) {
+  while (!dmod->popError() && count++<MAXDICTSIZE) {
     keytext.append(dmod->getKeyText());
     keytext.append("<nx>");
    //printf("%s\n", dmod->getKeyText());
@@ -1159,7 +1159,7 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
 
   updateGlobalOptions(false);
 
-  SWKey *testkey = module->CreateKey();
+  SWKey *testkey = module->createKey();
   TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
   if (!key) {
     delete(testkey);
@@ -1173,20 +1173,20 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   }
   else {key->setText(treekey);}
 
-  key->Persist(1);
+  key->setPersist(true);
   module->setKey(key);
-  if (module->Error()) key->root();
+  if (module->popError()) key->root();
 
   SWBuf chapterText;
-  chapterText.append(module->RenderText());
+  chapterText.append(module->renderText());
   
-  module->SetKey(EmptyKey);
+  module->setKey(EmptyKey);
   
   delete(testkey);
   
   if (chapterText.length() > 16) {
     SWBuf css;
-    css.setFormatted("<span class=\"cs-%s%s\">", module->Name(), (module->Direction() != DIRECTION_LTR ? " RTL":""));
+    css.setFormatted("<span class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
     chapterText.insert(0, css);
     chapterText.append("</span>");
   }
@@ -1210,7 +1210,7 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
     return NULL;
   }
 
-  SWKey *testkey = module->CreateKey();
+  SWKey *testkey = module->createKey();
   TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
   if (!key) {
     delete(testkey);
@@ -1286,16 +1286,16 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
   int type1;
   char noneed = 0;
 
-  searchString.set(module->StripText(srchstr));
+  searchString.set(module->renderText(srchstr, -1, false));
 
   SWKey *nvk;
-  SWKey *testkey = module->CreateKey();
+  SWKey *testkey = module->createKey();
   VerseKey *modvkey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (modvkey) {
     parser.setVersificationSystem(modvkey->getVersificationSystem());
-    scopeK = parser.ParseVerseList(scope, parser, true);
+    scopeK = parser.parseVerseList(scope, parser, true);
     nvk = scopeK.getElement();
-    nvk->Persist(1);
+    nvk->setPersist(true);
     module->setKey(nvk);
   }
   delete(testkey);
@@ -1324,10 +1324,10 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
   // COMPOUND SEARCH- currently a phrase search with nearly the speed of a multiword search
   if (type == -5) {
     listkeyInt = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);
-    if (listkeyInt.Count() > 0) {
+    if (listkeyInt.getCount() > 0) {
       //searchString.Insert("[^[:alpha:]]",0);
       //searchString.Append("[^[:alpha:]]");
-      listkeyInt.Persist(1);
+      listkeyInt.setPersist(true);
       module->setKey(listkeyInt);
       //*workKeys = module->search(searchString.get(), 0, flags, 0, 0, &savePercentComplete, NULL);
       *workKeys = module->search(searchString.c_str(), -1, flags, 0, 0, &savePercentComplete, NULL);
@@ -1339,9 +1339,9 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
   // If not a new search append new results to existing key
   if (!newsearch) {
     workKeys->setPosition(TOP);
-    while (!workKeys->Error()) {
+    while (!workKeys->popError()) {
       SWKey *akey;
-      akey = module->CreateKey(); // get correctly versified key
+      akey = module->createKey(); // get correctly versified key
       akey->setText(workKeys->getText());
       SearchList.add(*akey);
       delete(akey);
@@ -1352,7 +1352,7 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
 
   MySearchVerses.set("");
 
-  return SearchList.Count();
+  return SearchList.getCount();
 }
 
 
@@ -1366,7 +1366,7 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
     return NULL;
   }
 
-  if (num==0) {num=SearchList.Count();}
+  if (num==0) {num=SearchList.getCount();}
 
   if (keepStrongs) {
     MyManager->setGlobalOption("Strong's Numbers","On");
@@ -1383,11 +1383,11 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
   MyManager->setGlobalOption("Morpheme Segmentation","Off");
 
   MySearchTexts.set("");
-  SearchList.SetToElement(first,TOP);
+  SearchList.setToElement(first,TOP);
   int written=0;
-  int savePersist = SearchList.Persist();
+  int savePersist = SearchList.isPersist();
 
-  SWKey * testkey = module->CreateKey();
+  SWKey * testkey = module->createKey();
   VerseKey * modvkey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (modvkey) {
     const char *toVS = modvkey->getVersificationSystem();
@@ -1397,11 +1397,11 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
     fromkey.setVersificationSystem(Searchedvers);
     tokey.setVersificationSystem(toVS);
 
-    tokey.Persist(1);
+    tokey.setPersist(true);
     module->setKey(tokey);
     tokey.setAutoNormalize(0); // Non-existant calls should return empty string!
 
-    while (!SearchList.Error()&&(written<num)) {
+    while (!SearchList.popError()&&(written<num)) {
       fromkey=SearchList;
       if ((!strcmp(Searchedvers,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) ||
       (!strcmp(toVS,WESTERN) && (!strcmp(Searchedvers,EASTERN) || strstr(Searchedvers,SYNODAL)))) {
@@ -1413,8 +1413,9 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
       MySearchTexts.appendFormatted("<div class=\"slist\" title=\"%s.%s\">", tokey.getOSISRef(), mod);
       MySearchTexts.appendFormatted("<span class=\"cs-%s%s\">%s</span>", 
           mod,
-          (module->Direction() != DIRECTION_LTR ? " RTL":""),
-          (keepStrongs ? module->RenderText():module->StripText()));
+          (module->getDirection() != DIRECTION_LTR ? " RTL":""),
+          (keepStrongs ? module->renderText().c_str():module->renderText(0, -1, false).c_str())
+      );
       MySearchTexts.append("</div>");
 
       MySearchVerses.append(tokey.getOSISRef());
@@ -1426,9 +1427,9 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
   }
   else {
     delete(testkey);
-    SearchList.Persist(1);
+    SearchList.setPersist(true);
     module->setKey(SearchList);
-    while (!SearchList.Error()&&(written<num)) {
+    while (!SearchList.popError()&&(written<num)) {
       
       SWBuf keyTextEN;
       const char *keyText = module->getKeyText();
@@ -1437,8 +1438,8 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
       MySearchTexts.appendFormatted("<div class=\"slist\" title=\"%s.%s\">", keyTextEN.c_str(), mod);
       MySearchTexts.appendFormatted("<span class=\"cs-%s%s\">%s</span>", 
           mod,
-          (module->Direction() != DIRECTION_LTR ? " RTL":""),
-          (keepStrongs ? module->RenderText():module->StripText()));
+          (module->getDirection() != DIRECTION_LTR ? " RTL":""),
+          (keepStrongs ? module->renderText().c_str():module->renderText(0, -1, false).c_str()));
       MySearchTexts.append("</div>");
 
       MySearchVerses.append(module->getKeyText());
@@ -1450,7 +1451,7 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
   }
 
   module->setKey(EmptyKey); // Overcomes the crash on Persist problem
-  SearchList.Persist(savePersist);
+  SearchList.setPersist(savePersist);
 
   SWBuf check = assureValidUTF8(MySearchTexts.c_str());
 
@@ -1592,9 +1593,9 @@ char* xulsword::getModuleList() {
 	for (modIterator = MyManager->Modules.begin(); modIterator != MyManager->Modules.end(); modIterator++) {
 		module = (*modIterator).second;
 		if (!first) {tr.append("<nx>");}
-		tr.append(module->Name());
+		tr.append(module->getName());
 		tr.append(";");
-		tr.append(module->Type());
+		tr.append(module->getType());
 		first = false;
 	}
 
@@ -1785,9 +1786,10 @@ StringMgrXS::StringMgrXS(char *(*toUpperCase)(char *)) {ToUpperCase = toUpperCas
 StringMgrXS::~StringMgrXS() {}
 
 char *StringMgrXS::upperUTF8(char *text, unsigned int max) const {
-  if (text) {
+  if (strlen(text)) {
+//SWLog::getSystemLog()->logDebug("upperUTF8 in=%s", text);
     char *res = ToUpperCase(text);
-//SWLog::getSystemLog()->logDebug("upperUTF8 in=%s, out=%s", text, res);
+//SWLog::getSystemLog()->logDebug("upperUTF8 out=%s", res);
     strcpy(text, res);
   }
   
@@ -1795,7 +1797,7 @@ char *StringMgrXS::upperUTF8(char *text, unsigned int max) const {
 }
 
 bool StringMgrXS::supportsUnicode() const {
-  return false; // must be true for LocaleMgr to work, but there is a crash bug!!
+  return true; // must be true for LocaleMgr to work, but there is a crash bug!!
 }
 
 
