@@ -190,7 +190,7 @@
                             persist="hidden width ordinal value"
                             sort="rdf:http://www.xulsword.com/repository/rdf#Status"
                             sortDirection="ascending" />
-              <treecol id="ModLang" flex="2"
+              <treecol id="ModLang" flex="2" ignoreincolumnpicker="true" 
                             class="defhide sortDirectionIndicator" 
                             persist="hidden width ordinal value"
                             sort="rdf:http://www.xulsword.com/repository/rdf#LangReadable"

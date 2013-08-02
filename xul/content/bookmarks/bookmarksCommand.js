@@ -593,7 +593,7 @@ var BookmarksCommand = {
       data = data + resourceDelim + myparent.ValueUTF8;
       data = data + BM.kExportDelimiter + myres.ValueUTF8;
       data = data + BM.kExportDelimiter + BM.RDFCU.indexOf(BMDS,myparent,myres);
-      resourceDelim = BM.kExportResourceDelimiter;
+      resourceDelim = BM.kExportResourceDelimiter + BMFileReturn;
       for (var i=0; i<BM.gBmProperties.length; i++) {
         try {
         var value = replaceASCIIcontrolChars(BMDS.GetTarget(myres,BM.gBmProperties[i],true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);}

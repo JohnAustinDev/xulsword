@@ -797,9 +797,6 @@ getModuleInformation: function(modname, paramname) {
 //Returns a localized readable utf8 string correpsonding to the language code.
 //Returns null if the information is not available
 translate: function(text, localeName) {
-
-return text; // a SWORD bug is preventing this from working yet
-
   if (!this.libSwordReady("translate")) return null;
   if (!this.fdata.gln)
     this.fdata.gln = this.libsword.declare("Translate", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char)); 

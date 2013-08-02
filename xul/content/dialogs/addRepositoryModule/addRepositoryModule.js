@@ -247,7 +247,16 @@ function onLoad() {
         if (editingColumn.id != "Name" && oldValue != newValue && site != "?" && path != "?") {
           ARMU.treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
           ARMU.deleteRepository([repoResource]);
-          var nres = { Type:"repository", Enabled:"true", Name:name, Site:site, Path:path, Status:dString(0) + "%", Style:"yellow", Url:ARMU.guessProtocol(site + path) };
+          var nres = { 
+            Type:"repository", 
+            Enabled:"true", 
+            Name:name, 
+            Site:site, 
+            Path:path, 
+            Status:dString(0) + "%", 
+            Style:"yellow", 
+            Url:ARMU.guessProtocol(site + path)
+          };
           var res = ARMU.createRepository(nres);
           loadRepositoryArray([res], true);
         }
@@ -385,7 +394,7 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
     
     onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
       var perc = Math.round(100*(aCurSelfProgress/aMaxSelfProgress))/10;
-      ARMU.setResourceAttribute(RPDS, this.crosswire, "Status", dString(perc) + "%");
+      ARMU.retainStatusMessage(RPDS, this.crosswire, dString(perc) + "%");
       ARMU.setResourceAttribute(RPDS, this.crosswire, "Style", "yellow");
       RepoProgress.value = 10 + Math.round(40*(aCurSelfProgress/aMaxSelfProgress));
     },
@@ -492,7 +501,7 @@ function startProcessingNextRepository() {
      
     onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
       var perc = Math.round(100*(aCurSelfProgress/aMaxSelfProgress));
-      ARMU.setResourceAttribute(RPDS, this.myResource, "Status", dString(perc) + "%");
+      ARMU.retainStatusMessage(RPDS, this.myResource, dString(perc) + "%");
       ARMU.setResourceAttribute(RPDS, this.myResource, "Style", "yellow");
     },
     
@@ -727,12 +736,38 @@ function applyConfFile(file, repoUrl) {
 function fetchSwordModuleUrls(moduledata, subdirectory) {
   if (!subdirectory) subdirectory = "";
 
-  var directoryUrl = ARMU.getResourceLiteral(MLDS, moduledata.modResource, "Url") + "/" + ARMU.getResourceLiteral(MLDS, moduledata.modResource, "DataPath");
+  var directoryUrl = ARMU.getResourceLiteral(MLDS, moduledata.modResource, "ModuleUrl");
   directoryUrl += subdirectory;
   
+  // handle local repositories separately
+  if ((/^file\:\/\//i).test(directoryUrl)) {
+    var aDir = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+    aDir.initWithPath(lpath(directoryUrl.replace(/^file\:\/\//, "")));
+    if (!aDir.exists() || !aDir.isDirectory()) {
+      ARMU.retainStatusMessage(MLDS, moduledata.modResource, ERROR);
+      ARMU.setResourceAttribute(MLDS, moduledata.modResource, "Style", "red");
+      jsdump("ERROR: local repository directory problem \"" + aDir.path + "\"");
+      return;
+    }
+    var dirFiles = aDir.directoryEntries;
+    while (dirFiles.hasMoreElements()) {
+      var file = dirFiles.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+      if (file.isDirectory()) {
+        moduledata.directoriesBeingRead++;
+        fetchSwordModuleUrls(moduledata, subdirectory + "/" + file.leafName);
+      }
+      else moduledata.modContentData.push( { url:directoryUrl + "/" + file.leafName, size:file.fileSize } );
+    }
+    moduledata.directoriesBeingRead--;
+    if (moduledata.directoriesBeingRead == 0) downloadModule(moduledata.modResource, moduledata.modContentData);
+    
+    return;
+  }
+  
+  // request a listing of the remote directory and parse the listing
   var directoryListingFile = ARMU.getModuleListingDirectory(moduledata.modResource);
   directoryListingFile.append(ARMU.getModuleInstallerZipFile(moduledata.modResource).leafName.replace(/\.(zip|xsm)$/, "") + "_" + subdirectory.replace(/\//g, "_"));
-  
+      
   var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);
   var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
   persist.progressListener = 
@@ -748,13 +783,13 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
       approxFileSize:2000,
       
       onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
-        // add this download's progress to the existing percentage, but add a maximum maxPerc for this download
+        // add this download's progress to the existing percentage, but only up to a maximum maxPerc for this download
         var oldperc = ARMU.getResourceLiteral(MLDS, this.moduledata.modResource, "Status");
         if (!(/^\d+\s*\%$/).test(oldperc)) oldperc = 0;
         else oldperc = Number(oldperc.match(/^(\d+)\s*\%$/)[1]);
         if (aCurSelfProgress > this.approxFileSize) aCurSelfProgress = this.approxFileSize;
         var perc = oldperc + Math.round(this.maxPerc*(aCurSelfProgress/this.approxFileSize));
-        ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Status", dString(perc) + "%");
+        ARMU.retainStatusMessage(MLDS, this.moduledata.modResource, dString(perc) + "%");
         ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Style", "yellow");
       },
       
@@ -784,7 +819,7 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
             this.moduledata.modContentData.push( { url:this.directoryUrl + "/" + file[1], size:file[2] } );
           }
           
-          this.moduledata.directoriesBeingRead--; // must decrement after previous increment possibility
+          this.moduledata.directoriesBeingRead--; // must decrement after previous increment possibility?
           if (this.moduledata.directoriesBeingRead == 0) {
          
             var dirListingDir = ARMU.getModuleListingDirectory(this.moduledata.modResource);
@@ -799,7 +834,7 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
         }
         else {
           this.moduledata.status = 1;
-          this.moduledata.directoriesBeingRead--; // must decrement after previous increment possibility
+          this.moduledata.directoriesBeingRead--; // must decrement after previous increment possibility?
           ARMU.retainStatusMessage(MLDS, this.moduledata.modResource, ERROR);
           ARMU.setResourceAttribute(MLDS, this.moduledata.modResource, "Style", "red");
           jsdump("ERROR: fetchSwordModuleUrls failed for \"" + this.directoryUrl + "\"");
@@ -823,7 +858,7 @@ function fetchSwordModuleUrls(moduledata, subdirectory) {
 }
 
 // Download a module whose contents are listed in modContentData 
-// as [ { url:url, size:size } ]. Size is not needed unless there
+// as [ { url:url, size:size }, ... ]. Size is not needed unless there
 // are multiple modContentData objects.
 function downloadModule(modResource, modContentData) {
 //for (var i=0; i<modContentData.length; i++) {jsdump(uneval(modContentData[i]));}
@@ -853,8 +888,8 @@ function downloadModule(modResource, modContentData) {
   
   var downloadedFiles = [];
   if (!is_XSM_module) {
-    // the .conf file was already downloaded during repository loading so just copy it
-    var modConf = ARMU.getRepositoryUrlTempDir(repoUrl);
+    // the .conf file has already been taken care of
+    var modConf = ARMU.getModuleDownloadDirectory(modResource);
     modConf.append("mods.d");
     modConf.append(ARMU.getResourceLiteral(MLDS, modResource, "ConfFileName"));
     downloadedFiles.push(modConf);
@@ -925,7 +960,7 @@ function downloadModule(modResource, modContentData) {
         
         var perc = this.startPerc + Math.round((100-this.startPerc)*(this.data.current/this.data.total));
         for (var s=0; s<this.myStatusArray.length; s++) {
-          ARMU.setResourceAttribute(MLDS, this.myStatusArray[s], "Status", dString(perc) + "%");
+          ARMU.retainStatusMessage(MLDS, this.myStatusArray[s], dString(perc) + "%");
           ARMU.setResourceAttribute(MLDS, this.myStatusArray[s], "Style", "yellow");
         }
       },
@@ -991,18 +1026,33 @@ function downloadModule(modResource, modContentData) {
           ARMU.setResourceAttribute(RPDS, this.myStatusArray[s], "Status", (aMessage ? aMessage:ERROR));
           ARMU.setResourceAttribute(RPDS, this.myStatusArray[s], "Style", "red");
         }
-        if (aMessage) jsdump(this.myURL + ": " + aMessage);
+        if (aMessage) jsdump("ERROR: downloadModule failed for " + this.myURL + ": " + aMessage);
       },
       
       onLocationChange: function(aWebProgress, aRequest, aLocation) {},
       
       onSecurityChange: function(aWebProgress, aRequest, aState) {}
     };
-    persist.saveURI(ios.newURI(modContentData[c].url, null, null), null, null, null, null, destFile, null);
-    ARMU.modulesInProgressAdd(persist);
-    updateRepoListButtons();
     
-    if (c<modContentData.length-1) data.count++; // don't increment for last file because count started as "1"
+    // if it's a file of zero size, persist fails to copy the file... sigh... so here goes the fix...
+    var isZeroFile = false;
+    var test = modContentData[c].url.match(/^file\:\/\/(.*)$/);
+    if (test) {
+      var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+      aFile.initWithPath(lpath(test[1]));
+      if (aFile.exists() && aFile.fileSize == 0) {
+        isZeroFile = true;
+        aFile.copyTo(destFile.parent, destFile.leafName);
+        data.downloadedFiles.push(destFile);
+      }
+    }
+    if (!isZeroFile) {
+      persist.saveURI(ios.newURI(modContentData[c].url, null, null), null, null, null, null, destFile, null);
+      ARMU.modulesInProgressAdd(persist);
+      updateRepoListButtons();
+      
+      if (c<modContentData.length-1) data.count++; // don't increment for last file because count started as "1"
+    }
   }
   
 }
@@ -1190,10 +1240,11 @@ function initiateModuleDownloads() {
     var is_XSM_module = (MLDS.GetTarget(mods[m], RP.Type, true) == RP.XSM_ModuleType);
     
     var moduleUrl = ARMU.getResourceLiteral(MLDS, mods[m], "ModuleUrl");
+    var repoUrl = ARMU.getResourceLiteral(MLDS, mods[m], "Url");
     
     // prompt for audio book and chapters if needed
     if (is_XSM_module && !(/\.(zip|xsm)$/).test(moduleUrl)) {
-      var modConf = ARMU.getRepositoryUrlTempDir(ARMU.getResourceLiteral(MLDS, mods[m], "Url"));
+      var modConf = ARMU.getRepositoryUrlTempDir(repoUrl);
       modConf.append("mods.d");
       modConf.append(ARMU.getResourceLiteral(MLDS, mods[m], "ConfFileName"));
       var data = { ok:false, bk:null, ch:null, cl:null, audio:eval(ARMU.getConfEntry(readFile(modConf), "AudioChapters")) };
@@ -1236,7 +1287,12 @@ function initiateModuleDownloads() {
       modsdDir.append("mods.d");
       if (!modsdDir.exists()) modsdDir.create(modsdDir.DIRECTORY_TYPE, DPERM);
       
-      var confSource = ARMU.getRepositoryUrlTempDir(ARMU.getResourceLiteral(MLDS, mods[m], "Url"));
+      var confSource;
+      if ((/^file\:\/\//i).test(repoUrl)) {
+        confSource = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+        confSource.initWithPath(lpath(repoUrl.replace(/^file\:\/\//, "")));
+      }
+      else confSource = ARMU.getRepositoryUrlTempDir(repoUrl);
       confSource.append("mods.d");
       confSource.append(ARMU.getResourceLiteral(MLDS, mods[m], "ConfFileName"));
       if (!confSource.exists()) {
@@ -1463,22 +1519,31 @@ function writeModuleInfos() {
 function toggleInfo(mod, url, conf) {
   var doc = document.getElementById("infoBox").contentDocument;
   var elem = doc.getElementById("conf." + mod);
+  var textarea = elem.getElementsByTagName("textarea")[0]; 
   var showInfo = elem.getAttribute("showInfo");
  
   if (showInfo == "false") {
     var confInfo = "-----";
-    var confFile = ARMU.getRepositoryUrlTempDir(url);
-    confFile.append("mods.d");
-    confFile.append(conf);
+    var confFile;
+      if ((/^file\:\/\//i).test(url)) {
+        confFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+        confFile.initWithPath(lpath(url.replace(/^file\:\/\//, "")));
+      }
+      else confFile = ARMU.getRepositoryUrlTempDir(url);
+      confFile.append("mods.d");
+      confFile.append(conf);
     if (!confFile.exists()) {
       jsdump("ERROR: Missing .conf file \"" + confFile.path + "\"");
     }
     else {confInfo  = readFile(confFile);}
 
-    elem.getElementsByTagName("textarea")[0].value = confInfo;
+    textarea.value = confInfo;
   }
 
   elem.setAttribute("showInfo", (showInfo == "true" ? "false":"true"));
+
+  if (elem.getAttribute("showInfo") == "true") 
+      textarea.style.height = Number(textarea.scrollHeight + 10) + "px";
 
 }
 

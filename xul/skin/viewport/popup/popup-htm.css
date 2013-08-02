@@ -12,6 +12,14 @@
   element and its children are no longer hovered by the mouse. */
   display:block;
 }
+/* Make sure these npopup styles are NOT inherited from container! */
+#npopup {
+  display:none;
+  text-align:start;
+  color:black;
+  font-weight:normal;
+  font-style:normal;
+}
 #npopupRL {
   /* just a relative container so that popupTX can be absolute */
   position:relative;
@@ -21,14 +29,6 @@
   cursor:default;
   background:rgb(245,220,255);
   padding: 10px 20px 20px 14px;
-}
-/* Make sure these npopup styles are NOT inherited from container! */
-#npopup {
-  display:none;
-  text-align:start;
-  color:black;
-  font-weight:normal;
-  font-style:normal;
 }
 
 /* REGULAR (NON-WINDOW) POPUP STYLES */
@@ -56,7 +56,7 @@ body[chromedir="rtl"] .nb #npopup {
   width:33%;
 }
 .text .introlink #npopup {
-  /* This non inline text element has undesireable an left:auto 
+  /* This non inline text element has an undesireable left:auto 
   value. So it needs explicit left alignment and 100% width so
   that the mouse is guaranteed to always be above the popup. */
   left:30px;
@@ -65,9 +65,6 @@ body[chromedir="rtl"] .nb #npopup {
 .text[textdir="rtl"] .introlink #npopup {
   left:auto;
   right:30px;
-}
-.text .sn #npopup {
-  height:100px;
 }
 .text #npopup #npopupTX {
   position:absolute;
@@ -79,7 +76,8 @@ body[chromedir="rtl"] .nb #npopup {
   box-shadow: 3px 3px 5px 6px #ccc;
   margin: 0px 20px 10px 0px;
   
-  /* popup appears above the element, covering it. */
+/* Insure popup appears above the element, covering it. 
+"top" value should be in px for Javascript. */
   top:-20px;
   left:-20px;
 }
@@ -90,14 +88,15 @@ body[chromedir="rtl"] .nb #npopup {
   left:auto;
   right:-20px;
 }
-/* Strong's popups are offset so that their underlying textdir
-can be read even when the popup is open */
+/* Strong's popups are offset so that their underlying text
+can be read after the popup is open. "top" values here must
+be in px for Javascript. */
 .text .sn #npopup {
   height:100px;
 }
 .text .sn #npopupRL {
-  top:-1em;
-  height:calc(100px + 1em);
+  top:-12px;
+  height:calc(100px + 12px);
 }
 .text .sn #npopup #npopupTX {
   top:100px;
@@ -116,7 +115,8 @@ body.windowedpup {
   padding:0px;
   height:100%;
 }
-#npopup[isWindow="true"] .towindow {
+#npopup[isWindow="true"] .towindow,
+#npopup[isWindow="true"] .draghandle {
   display:none;
 }
 
@@ -134,21 +134,30 @@ body.windowedpup {
 .towindow:hover {
   background-position:20px;
 }
-body[chromedir="rtl"] .towindow {
-  float:right;
-}
 .popupBackLink, .popupCloseLink {
   float:left;
   color:blue;
   cursor:default;
 }
-body[chromedir="rtl"] .popupBackLink,
-body[chromedir="rtl"] .popupCloseLink {
-  float:right;
-}
 .popupBackLink:hover, .popupCloseLink:hover {
   border-bottom:1px solid blue;
   cursor:pointer;
+}
+.draghandle {
+  cursor:move;
+  float:left;
+  position:relative;
+  top:6px;
+  -moz-margin-start:6px;
+  background-image:url('chrome://xulsword/skin/images/draghandle.png');
+  height:12px;
+  width:40px;
+}
+body[chromedir="rtl"] .towindow,
+body[chromedir="rtl"] .popupBackLink,
+body[chromedir="rtl"] .popupCloseLink,
+body[chromedir="rtl"] .draghandle {
+  float:right;
 }
 .popup-mod-select {
   display:none;
@@ -192,3 +201,5 @@ body[chromedir="rtl"] .popup-mod-select {
 #npopup .fncol4 {
   display:none;
 }
+
+

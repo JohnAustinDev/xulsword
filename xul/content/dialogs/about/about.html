@@ -45,6 +45,7 @@
   function toggleInfo(mod) {
     var elem = document.getElementById("conf." + mod);
     var showInfo = elem.getAttribute("showInfo");
+    var textarea = elem.getElementsByTagName("textarea")[0];
    
    setEditable(mod, false);
    
@@ -54,11 +55,12 @@
       if (Tab[mod].conf) {
         confInfo  = readFile(Tab[mod].conf);
       }
-      elem.getElementsByTagName("textarea")[0].value = confInfo;
+      textarea.value = confInfo;
     }
-
     elem.setAttribute("showInfo", (showInfo == "true" ? "false":"true"));
 
+    if (elem.getAttribute("showInfo") == "true") 
+        textarea.style.height = Number(textarea.scrollHeight + 10) + "px";
   }
   
   function setEditable(mod, editable) {

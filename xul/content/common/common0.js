@@ -80,7 +80,7 @@ const GENBOOK = "Generic Books";
 const NOTFOUND = "Not Found";
 const NEWLINE = (OPSYS == "Windows" ? "\r\n":(OPSYS == "MacOS" ? "\r":"\n"));
 const DIRSEP = (OPSYS == "Windows" ? "\\":"/");
-const BMFileReturn="\r\n"; // used in imported/exported bookmarks file
+const BMFileReturn="\r\n"; // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
 const DEFAULTLOCALE = "en-US";
 const DLGSTD="centerscreen,modal,resizable";
 const DLGALERT=0, DLGQUEST=1, DLGINFO=2;

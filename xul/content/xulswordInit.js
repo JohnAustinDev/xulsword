@@ -28,7 +28,11 @@ ModuleConfigs = {};
 ProgramConfig = {};
 Tabs = [];
 Tab = {};
-SpecialModules = {DailyDevotion:{}, LanguageStudy:{ GreekDef:[], HebrewDef:[], GreekParse:[] }};
+SpecialModules = {
+  DailyDevotion:{}, 
+  LanguageStudy:{ GreekDef:[], HebrewDef:[], GreekParse:[] }, 
+  OriginalLanguages: { Greek:[], Hebrew:[] } 
+};
 AllWindows = []; // this is needed by viewport...
 
 
@@ -148,19 +152,20 @@ function initTabGlobals() {
   
   var modlist = LibSword.getModuleList();
   var modarray = [];
-  var origModuleOT = null;
-  var origModuleNT = null;
 
   for (var mod in ModuleConfigs) {
     var typeRE = new RegExp("(^|<nx>)" + mod + ";(.*?)(<nx>|$)");
     var type = modlist.match(typeRE)[2];
+    
+    var mlang = LibSword.getModuleInformation(mod, "Lang");
+    var mlangs = mlang.replace(/-.*$/, "");
+    
+    // Set Original Language modules
+    if ((/^grc$/i).test(mlang)) SpecialModules.OriginalLanguages.Greek.push(mod);
+    if ((/^heb?$/i).test(mlang)) SpecialModules.OriginalLanguages.Hebrew.push(mod);
    
     if (type == DICTIONARY) {
-    
       // Set Global dictionary module params
-      var mlang = LibSword.getModuleInformation(mod, "Lang");
-      var mlangs = mlang.replace(/-.*$/, "");
-
       var feature = LibSword.getModuleInformation(mod, "Feature");
       if (feature.search("DailyDevotion") != -1) {
         SpecialModules.DailyDevotion[mod] = "DailyDevotionToday";
@@ -168,32 +173,16 @@ function initTabGlobals() {
       else if (feature.search("GreekDef") != -1) SpecialModules.LanguageStudy.GreekDef.push(mod);
       else if (feature.search("HebrewDef") != -1) SpecialModules.LanguageStudy.HebrewDef.push(mod);
       else if (feature.search("GreekParse") != -1) SpecialModules.LanguageStudy.GreekParse.push(mod);
-      
     }
     
     // Get tab label
     var label = LibSword.getModuleInformation(mod, "TabLabel");
     if (label == NOTFOUND) label = LibSword.getModuleInformation(mod, "Abbreviation");
-    var labelFromUI = null;
-    
-    // Set up Original tab Globals
-    var isORIG = LibSword.getModuleInformation(mod, "OriginalTabTestament");
-    if (isORIG == "OT") {
-      origModuleOT = mod;
-      try {labelFromUI = XSBundle.getString("ORIGLabelOT");}
-      catch (er) {}
-    }
-    else if (isORIG == "NT") {
-      origModuleNT = mod;
-      try {labelFromUI = XSBundle.getString("ORIGLabelNT");}
-      catch (er) {}
-    }
     
     label = (label != NOTFOUND ? label:mod);
-    labelFromUI = (labelFromUI != NOTFOUND ? labelFromUI:null);
     
     // Save now for sorting after this loop is complete
-    var amod = {mod:mod, type:type, label:label, labelFromUI:labelFromUI };
+    var amod = { mod:mod, type:type, label:label };
     modarray.push(amod);
 
   }
@@ -234,14 +223,19 @@ FindMod:
     mod   = modarray[m].mod;
     type  = modarray[m].type;
     label = modarray[m].label;
-    labelFromUI = modarray[m].labelFromUI;
     
-    var tab = {label:null, labelFromUI:null, modName:null, modType:null, tabType:null, isRTL:null, index:null,  
-        description:null, conf:null, isCommDir:null};
-    tab.label = label;
-    tab.labelFromUI = labelFromUI;
-    tab.modName = mod;
-    tab.modType = type;
+    var tab = {
+      modName:mod, 
+      modType:type, 
+      label:label, 
+      tabType:getShortTypeFromLong(type), 
+      isRTL:(ModuleConfigs[mod].direction == "rtl"), 
+      index:m,  
+      description:LibSword.getModuleInformation(mod, "Description"), 
+      locName:(isASCII(label) ? DEFAULTLOCALE:mod),
+      conf:null, 
+      isCommDir:null
+    };
     
     // find .conf file. Try usual guesses first, then do a rote search if necessary
     tab.conf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
@@ -266,21 +260,22 @@ FindMod:
     if (!tab.conf.exists()) jsdump("WARNING: tab.conf bad path \"" + p + DIRSEP + mod.toLowerCase() + ".conf\"");
     
     tab.isCommDir = (tab.conf && tab.conf.path.toLowerCase().indexOf(commonDir.path.toLowerCase()) == 0 ? true:false);
-    tab.tabType = getShortTypeFromLong(tab.modType);
-    tab.isRTL = (ModuleConfigs[mod].direction == "rtl");
-    tab.index = m;
-    tab.description = LibSword.getModuleInformation(mod, "Description");
-    tab.locName = (isASCII(tab.label) ? DEFAULTLOCALE:mod);
     
     // Save Global tab objects
     Tabs.push(tab);
     Tab[label] = tab;
     Tab[mod] = tab;
-    if (origModuleOT && mod == origModuleOT) Tab.ORIG_OT = tab;
-    if (origModuleNT && mod == origModuleNT) Tab.ORIG_NT = tab;
+    if (SpecialModules.OriginalLanguages.Hebrew.indexOf(mod) != -1 &&
+        (!Tab.ORIG_OT || Tab.ORIG_OT.modName != "HEB")) { // default is HEB
+      Tab.ORIG_OT = tab;
+    }
+    if (SpecialModules.OriginalLanguages.Greek.indexOf(mod) != -1 &&
+        (!Tab.ORIG_NT || Tab.ORIG_NT.modName != "TR")) { // default is TR
+      Tab.ORIG_NT = tab;
+    }
+    
   }
 
-//jsdump("StrongsGreek=" + SpecialModules.LanguageStudy.StrongsGreek + ", StrongsHebrew=" + SpecialModules.LanguageStudy.StrongsHebrew + ", Robinson=" + SpecialModules.LanguageStudy.Robinson);
   return true;
 }
 
@@ -295,7 +290,6 @@ FindMod:
 //        a) tabs matching program locale
 //        b) other tabs with installed locale
 //        c) remaining tabs
-//        d) ORIG tab
 //    3) Alphabetically
 var ModuleTypeOrder = {}
 ModuleTypeOrder[BIBLE] = 1;
@@ -304,11 +298,6 @@ ModuleTypeOrder[GENBOOK] = 3;
 ModuleTypeOrder[DICTIONARY] = 4;
 function tabOrder(a,b) {
   if (a.type == b.type) {
-    // Tab type is the same.
-    if (Tab.ORIG_NT && a.mod==Tab.ORIG_NT.modName) return 1;
-    if (Tab.ORIG_NT && b.mod==Tab.ORIG_NT.modName) return -1;
-    if (Tab.ORIG_OT && a.mod==Tab.ORIG_OT.modName) return 1;
-    if (Tab.ORIG_OT && b.mod==Tab.ORIG_OT.modName) return -1;
 
     // Priority: 1) Modules matching current locale, 2) Other tabs that have
     // locales installed, 3) remaining tabs.
