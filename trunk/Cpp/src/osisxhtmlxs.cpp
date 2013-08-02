@@ -59,14 +59,11 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 	MyUserData *u = (MyUserData *)userData;
 	SWBuf scratch;
 	bool sub = (u->suspendTextPassThru) ? substituteToken(scratch, token) : substituteToken(buf, token);
-	static bool inheaddiv;
 	if (!sub) {
   // manually process if it wasn't a simple substitution
 		XMLTag tag(token);
 		
-//printf("Name:%s, isEndTag:%i, type:%s\n", tag.getName(), tag.isEndTag(), tag.getAttribute("type") ? tag.getAttribute("type"):"");
-		
-		// <w> tag NOTE: KJV has no POS, xlit, or gloss attributes, empty <w> tags, or GH lemma attributes
+		// <w> tag
     if (!strcmp(tag.getName(), "w")) {
 		  VerseKey *vkey;
 			// see if we have a VerseKey * or descendant
@@ -126,7 +123,6 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
 
 		// <note> tag
-		//EDIT!!
 		else if (!strcmp(tag.getName(), "note")) {
 			if (!tag.isEndTag()) {
 				SWBuf type = tag.getAttribute("type");
@@ -153,29 +149,29 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 						SWCATCH ( ... ) {	}
 						if (vkey) {
 							if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
-                u->inXRefNote = true;
-                SWBuf mclass = "cr";
-                if (tag.getAttribute("subType")) {
-                  mclass.append(" ");
-                  mclass.append(tag.getAttribute("subType"));
-                }
+								u->inXRefNote = true;
+								SWBuf mclass = "cr";
+								if (tag.getAttribute("subType")) {
+									mclass.append(" ");
+									mclass.append(tag.getAttribute("subType"));
+								}
 								buf.appendFormatted("<span class=\"%s\" title=\"%s.%s.%s\"></span>",
 								mclass.c_str(),
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
-                userData->module->getName());
+								userData->module->getName());
 							}
 							else {
-                u->inXRefNote = false;
+                				u->inXRefNote = false;
 								buf.appendFormatted("<span class=\"fn\" title=\"%s.%s.%s\"></span>",
 								footnoteNumber.c_str(), 
 								vkey->getOSISRef(),
-                userData->module->getName());
+								userData->module->getName());
 							}
 						}
 						else {
-              buf.appendFormatted("<sup>%i</sup>", footnoteNum++);
-            }
+							buf.appendFormatted("<sup>%i</sup>", footnoteNum++);
+						}
 					}
 				}
 				u->suspendTextPassThru = (++u->suspendLevel);
@@ -307,9 +303,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				}
 			}
 			else if (!strcmp(tag.getAttribute("type"),"x-p"))  {
-				if (tag.getAttribute("marker"))
-					outText(tag.getAttribute("marker"), buf, u);
-				else outText("<!p>", buf, u);
+				outText("<br /><br />", buf, u);
 			}
 			else if (!strcmp(tag.getAttribute("type"), "cQuote")) {
 				const char *tmp = tag.getAttribute("marker");
@@ -325,42 +319,100 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				else if (u->osisQToTick)
 					outText((level % 2) ? '\"' : '\'', buf, u);
 			}
-			//EDIT!!
       		else if (!strcmp(tag.getAttribute("type"),"x-p-indent")) {outText("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", buf, u);}
 		}
 
 		// <title>
 		else if (!strcmp(tag.getName(), "title")) {
-		  if (!tag.isEndTag()) {
-        outText("<div class=\"", buf, u);
-        if (tag.getAttribute("level") && !strcmp(tag.getAttribute("level"), "2")) {outText("head2", buf, u);}
-        else {outText("head1", buf, u);}
-        if (tag.getAttribute("canonical") && !strcmp(tag.getAttribute("canonical"), "true")) {outText(" canonical", buf, u);}
-        outText("\">", buf, u);
-      }
+			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
+				SWBuf mclass;
+				if (tag.getAttribute("level") && !strcmp(tag.getAttribute("level"), "2")) {
+					mclass.set(" head2");
+				}
+		    	else {mclass.set(" head1");}
+				if (tag.getAttribute("canonical") && !strcmp(tag.getAttribute("canonical"), "true")) {
+					mclass.append(" canonical");
+				}
+				VerseKey *vkey = SWDYNAMIC_CAST(VerseKey, u->key);
+				if (vkey && !vkey->getVerse()) {
+					if (!vkey->getChapter()) {
+						if (!vkey->getBook()) {
+							if (!vkey->getTestament()) {
+								buf += "<h1 class=\"moduleHeader";
+								tag.setAttribute("pushed", "h1");
+							}
+							else {
+								buf += "<h1 class=\"testamentHeader";
+								tag.setAttribute("pushed", "h1");
+							}
+						}
+						else {
+							buf += "<h1 class=\"bookHeader";
+							tag.setAttribute("pushed", "h1");
+						}
+					}
+					else {
+						buf += "<h2 class=\"chapterHeader";
+						tag.setAttribute("pushed", "h2");
+					}
+          buf += mclass;
+          buf += "\">";
+				}
+				else {
+					buf += "<h3";
+					if (mclass.length()) {
+						buf += "class=\"";
+						buf += mclass;
+						buf += "\"";
+					}
+					buf += ">";
+					tag.setAttribute("pushed", "h3");
+				}
+				u->titleStack->push(tag.toString());
+			}
 			else if (tag.isEndTag()) {
-				outText("</div>", buf, u);
+				if (!u->titleStack->empty()) {
+					XMLTag tag(u->titleStack->top());
+					if (u->titleStack->size()) u->titleStack->pop();
+					SWBuf pushed = tag.getAttribute("pushed");
+					if (pushed.size()) {
+						buf += (SWBuf)"</" + pushed + ">\n\n";
+					}
+					else {
+						buf += "</h3>\n\n";
+					}
+					++u->consecutiveNewlines;
+					u->supressAdjacentWhitespace = true;
+				}
 			}
 		}
 		
 		// <list>
 		else if (!strcmp(tag.getName(), "list")) {
-		  if (!tag.isEndTag()) {
-        outText("<div", buf, u);
-        if (tag.getAttribute("type")) {buf.appendFormatted(" class=\"%s\"", tag.getAttribute("type"));}
-        outText(">", buf, u);
-      }
-		  else {outText("</div>", buf, u);}
+			if((!tag.isEndTag()) && (!tag.isEmpty())) {
+				outText("<ul class=\"", buf, u);
+				outText(tag.getAttribute("type"), buf, u);
+				outText("\">\n", buf, u);
+			}
+			else if (tag.isEndTag()) {
+				outText("</ul>\n", buf, u);
+				++u->consecutiveNewlines;
+				u->supressAdjacentWhitespace = true;
+			}
 		}
 
-    // <item>
+		// <item>
 		else if (!strcmp(tag.getName(), "item")) {
-			if (!tag.isEndTag()) {
-        outText("<div", buf, u);
-        if (tag.getAttribute("type")) {buf.appendFormatted(" class=\"%s\"", tag.getAttribute("type"));}
-        outText(">", buf, u);
-      }
-		  else {outText("</div>", buf, u);}
+			if((!tag.isEndTag()) && (!tag.isEmpty())) {
+				outText("\t<li class=\"", buf, u);
+				outText(tag.getAttribute("type"), buf, u);
+				outText("\">", buf, u);
+			}
+			else if (tag.isEndTag()) {
+				outText("</li>\n", buf, u);
+				++u->consecutiveNewlines;
+				u->supressAdjacentWhitespace = true;
+			}
 		}
 		// <catchWord> & <rdg> tags (italicize)
 		else if (!strcmp(tag.getName(), "rdg") || !strcmp(tag.getName(), "catchWord")) {
@@ -381,18 +433,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				SWBuf lastText = u->lastSuspendSegment.c_str();
 				u->suspendTextPassThru = (--u->suspendLevel);
 				if (lastText.size()) {
-					toupperstr(lastText);
-					scratch.setFormatted("%c<font size=\"-1\">%s</font>", lastText[0], lastText.c_str()+1);
-
-					const unsigned char *tmpBuf = (const unsigned char *)lastText.c_str();
-					getUniCharFromUTF8(&tmpBuf);
-					int char_length = (tmpBuf - (const unsigned char *)lastText.c_str());
-					scratch.setFormatted("%.*s<font size=\"-1\">%s</font>", 
-						char_length, 
-						lastText.c_str(),
-						lastText.c_str() + char_length
-					);
-					
+					scratch.setFormatted("<span class=\"divineName\">%s</span>", lastText.c_str());
 					outText(scratch.c_str(), buf, u);
 				}               
 			} 
