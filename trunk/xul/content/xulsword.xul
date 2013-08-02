@@ -231,8 +231,8 @@
       <menupopup id="file-popup" onpopupshowing="if (LibSword.hasBible) goUpdateFileMenu();">
         <menu id="newmodule" label="&menu.addNewModule.label;" accesskey="&menu.addNewModule.sc;">
           <menupopup>
-            <menuitem id="newLocalModule" label="&newmodule.fromFile;" accesskey="&newmodule.fromFile.ak;" command="cmd_xs_addLocalModule" hasNoBibleShow="true"/>
             <menuitem id="newInternetModule" label="&newmodule.fromInternet;" accesskey="&newmodule.fromInternet.ak;" command="cmd_xs_addRepositoryModule" hasNoBibleShow="true"/>
+            <menuitem id="newLocalModule" label="&newmodule.fromFile;" accesskey="&newmodule.fromFile.ak;" command="cmd_xs_addLocalModule" hasNoBibleShow="true"/>
           </menupopup>
         </menu>
         <menuitem id="removemodule" label="&menu.removeModule.label;" accesskey="&menu.removeModule.sc;" command="cmd_xs_removeModule" />

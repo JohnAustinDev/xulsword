@@ -83,8 +83,8 @@
 [main-window.title]: Holy Bible
 [main-window.menu-file]: File
 [main-window.menu-file.add_new_module]: Add New Modules
-[main-window.menu-file.add_new_module.from_file]: xsm or zip file
-[main-window.menu-file.add_new_module.from_internet]: Download from Internet
+[main-window.menu-file.add_new_module.from_file]: From a File
+[main-window.menu-file.add_new_module.from_internet]: From the Internet
 [main-window.menu-file.add_new_module.components_not_supported]: The following module(s) have components which are not supported:
 [main-window.menu-file.add_new_module.components_out_of_date]: The following module(s) have components which are out of date:
 [main-window.menu-file.add_new_module.installation_incomplete]: Module installation incomplete.

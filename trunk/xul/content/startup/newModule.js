@@ -232,31 +232,37 @@ jsdump("STARTING startImport");
     return false;  
   }
 
-  // remove incompatible components from the install lists
-  var incomp = removeIncompatibleFiles(ZipFiles, ZipEntry);
-  if (incomp.oldmodule.length || incomp.newmodule.length) {
+  // remove incompatible components from the install lists and report any useful stuff to the user
+  var report = removeIncompatibleFiles(ZipFiles, ZipEntry);
+  if (report.oldmodule.length || report.newmodule.length) {
     jsdump("There were incompatible components:");
-    for (bf=0; bf<incomp.oldmodule.length; bf++) {jsdump("oldmodule:" + incomp.oldmodule[bf].leafName + ", minmodversion:" + incomp.minmodversion);}
-    for (bf=0; bf<incomp.newmodule.length; bf++) {jsdump("newmodule:" + incomp.newmodule[bf].leafName + ", minprogversion:" + incomp.minprogversion);}
+    for (bf=0; bf<report.oldmodule.length; bf++) {jsdump("oldmodule:" + report.oldmodule[bf].leafName + ", minmodversion:" + report.minmodversion[bf]);}
+    for (bf=0; bf<report.newmodule.length; bf++) {jsdump("newmodule:" + report.newmodule[bf].leafName + ", minprogversion:" + report.minprogversion);}
     try {var showPrompt = (!PreMainWin && XSBundle);} catch (er) {showPrompt = false;}
     if (showPrompt) {
       var msg = XSBundle.getString("InstalIncomplete") + "\n";
-      if (incomp.oldmodule.length) {
+      if (report.oldmodule.length) {
         msg += XSBundle.getString("OutOfDate") + "\n\n";
-        for (var bf=0; bf<incomp.oldmodule.length; bf++) {msg+="\"" + incomp.oldmodule[bf].leafName + "\"\n";}
-        msg += "\n" + XSBundle.getFormattedString("MinModVersion2", [(incomp.minmodversion ? incomp.minmodversion:"?")]) + "\n\n";
+        var msgvers = "";
+        var msgsep = "";
+        for (var bf=0; bf<report.oldmodule.length; bf++) {
+          msg+="\"" + report.oldmodule[bf].leafName + "\"\n";
+          msgvers += msgsep + (report.minmodversion[bf] ? report.minmodversion[bf]:"?");
+          msgsep = ", ";
+        }
+        msg += "\n" + XSBundle.getFormattedString("MinModVersion2", [msgvers]) + "\n\n";
       }
-      if (incomp.newmodule.length) {
+      if (report.newmodule.length) {
         // Try is for Backward Compatibility to previous UI. May be removed when new UI is released.
         try {
           msg += XSBundle.getString("TooNew") + "\n\n";
-          for (var bf=0; bf<incomp.newmodule.length; bf++) {msg+="\"" + incomp.newmodule[bf].leafName + "\"\n";}
-          msg += "\n" + XSBundle.getFormattedString("NeedUpgrade2", [(incomp.minprogversion ? incomp.minprogversion:"?")]) + "\n\n";
+          for (var bf=0; bf<report.newmodule.length; bf++) {msg+="\"" + report.newmodule[bf].leafName + "\"\n";}
+          msg += "\n" + XSBundle.getFormattedString("NeedUpgrade2", [(report.minprogversion ? report.minprogversion:"?")]) + "\n\n";
         }
         catch (er) {
           msg += "The following module(s) have components which are not supported:\n\n";
-          for (var bf=0; bf<incomp.newmodule.length; bf++) {msg+="\"" + incomp.newmodule[bf].leafName + "\"\n";}
-          msg += "\nUpgrade the program to at least version:\"" + (incomp.minprogversion ? incomp.minprogversion:"?") + "\"\n\n";
+          for (var bf=0; bf<report.newmodule.length; bf++) {msg+="\"" + report.newmodule[bf].leafName + "\"\n";}
+          msg += "\nUpgrade the program to at least version:\"" + (report.minprogversion ? report.minprogversion:"?") + "\"\n\n";
         }
       }
       if (ProgressMeter) ProgressMeter.close();
@@ -268,6 +274,13 @@ jsdump("STARTING startImport");
           DLGALERT,
           DLGOK);
     }
+  }
+  
+  // Do we still have something to install after doing removeIncompatibleFiles()?
+  if ((!ZipFiles || !ZipFiles.length) && (!RegularFiles || !RegularFiles.length)) {
+    jsdump("INFO: Nothing left to install");
+    if (ProgressMeter) ProgressMeter.close();
+    return false;  
   }
 
   // LibSword may be in any state at this point: non-existant, uninitialized, 
@@ -305,240 +318,243 @@ function startImport2() {
 
 // Checks compatibility of all sword modules and locales
 function removeIncompatibleFiles(fileArray, entryArray) {
-  var incomp = {newmodule:[], minprogversion:null, oldmodule:[], minmodversion:null};
+  var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
   var conf = new RegExp(MODSD + "\/[^\/]+" + CONF_EXT + "$");
   var xpi = new RegExp("\\.xpi$", "i");
-  var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
-  var progVersion = prefs.getCharPref("Version");
+  
   // cannot read directly from engine because it's not loaded yet!
-  var engineVersion; try {engineVersion = prefs.getCharPref("EngineVersion");} catch (er) {engineVersion = NOTFOUND;}
+  try {var engineVersion = prefs.getCharPref("EngineVersion");} catch (er) {engineVersion = 99;}
+  try {var progVersion = prefs.getCharPref("Version");} catch (er) {version = 99;}
+  
+  // this object is returned so any useful stuff can be reported to the user
+  var report = {
+    newmodule:[],         // modules which are too new to be compatible
+    minprogversion:null, // the minimum xulsword version required by any newmodule
+    oldmodule:[],        // modules which are too old to be compatible
+    minmodversion:[]    // the minimum module version required by xulsword
+  };
 
-  var incompModsPath = [];
+  var removeFiles = [];
   for (var f=0; f<entryArray.length; f++) {
-    var modHasIncompatibleNewComponents=false;
-    var modHasIncompatibleOldComponents=false;
     for (var e=0; e<entryArray[f].length; e++) {
     
-      // Conf files
+      var error = false;
+      var isIncompatible = false;
+      var modulePath = null;
+      
+      // Handle Conf files
       if (entryArray[f][e].match(conf)) {
-        var remove = false;
-        var versioninfo = readVersion(fileArray[f], entryArray[f][e], progVersion);
-//window.alert("compVers:" + versioninfo.compversion + ", minProgVers:" + versioninfo.minprogversion + ", type:" + versioninfo.type + ", path:" + versioninfo.path, + ", minCompVers:" + versioninfo.mincompversion);
-        // Check version info
-        if (!versioninfo) jsdump("Problem checking \"" + entryArray[f][e] + "\", retained file.");
-        else if (versioninfo.error) entryArray[f].splice(e--, 1);
-        else {
-          if (!versioninfo.compversion) {jsdump("Unable to read version of " + entryArray[f][e]);}
-          // If component version is less than the required component version, remove and report.
-          // compare: a==b then x=0, a<b then x<0, a>b then x>0
-          if (comparator.compare(versioninfo.compversion, versioninfo.mincompversion) < 0) {
-            remove = true;
-            if (!incomp.minmodversion) incomp.minmodversion = versioninfo.mincompversion;
-            else incomp.minmodversion = (comparator.compare(versioninfo.mincompversion, incomp.minmodversion) < 0 ? incomp.minmodversion:versioninfo.mincompversion);
-            if (!modHasIncompatibleOldComponents) {
-              modHasIncompatibleOldComponents = true;
-              incomp.oldmodule.push(fileArray[f]);
-            }
+        
+        // if SWORD module's ??? is less than that required by xulsword, remove and report.
+        // This was used with xulsword's MinXSMversion when XSM modules specified XSMversion.
+        // But .xsm module no longer include an XSMversion and xulsword is not longer enforcing
+        // a MinXSMversion. Only SWORD modules themselves are tested for compatibility now.
+        if (false) {
+          isIncompatible = true;
+          
+          var minmodversion = "?";
+          try {report.minmodversion = prefs.getCharPref("MinXSMversion");} 
+          catch (er) {report.minmodversion = "?";}
+          
+          // report too-old module
+          report.oldmodule.push(fileArray[f]);
+          report.minmodversion.push(minmodversion);
+          
+          jsdump("INFO: Removing incompatible SWORD module: " + entryArray[f][e]);
+        }
+        
+        // if program's SWORD engine version is less than that required by the module, 
+        // then silently remove. We cannot report to the user the minimum xulsword 
+        // version required because only the minimum required SWORD engine is known.
+        
+        // first unzip the conf file
+        var zReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(Components.interfaces.nsIZipReader);
+        zReader.open(fileArray[f]);
+        var tempCONF = getSpecialDirectory("TmpD");
+        tempCONF.append("xs_sword.conf");
+        if (tempCONF.exists()) tempCONF.remove();
+        tempCONF.create(tempCONF.NORMAL_FILE_TYPE, FPERM);
+        try {zReader.extract(entryArray[f][e], tempCONF);}
+        catch (er) {
+          jsdump("ERROR: Could not extract conf \"" + entryArray[f][e] + "\" from \"" + fileArray[f].path + "\"");
+          error = true;
+        }
+        zReader.close(fileArray[f]);
+        
+        // then read the conf file and get the MinimumVersion entry
+        var minimumVersion = 0;
+        if (!error) {
+          try {var minimumVersion = readParamFromConf(tempCONF, "MinimumVersion");}
+          catch(er) {
+            jsdump("ERROR: While reading MinimumVersion from .conf: \"" + tempCONF.path + "\"");
+            error = true;
           }
-          // If program version is less than component's required program version, remove and report.
-          if (comparator.compare(progVersion, versioninfo.minprogversion) < 0) {
-            remove = true;
-            if (!incomp.minprogversion) incomp.minprogversion = versioninfo.minprogversion;
-            else incomp.minprogversion = (comparator.compare(versioninfo.minprogversion, incomp.minprogversion) < 0 ? incomp.minprogversion:versioninfo.minprogversion);
-            if (!modHasIncompatibleNewComponents) {
-              modHasIncompatibleNewComponents = true;
-              incomp.newmodule.push(fileArray[f]);
-            }   
-          }
-          // If component is compatible but will replace a component which is newer, remove it, and don't report.
-          var overwriteInstalledVersion = null;
-          var matchingXSmoduleTextVersion = null;
-          if (versioninfo.type == CONF_EXT) {
-            if (!versioninfo.xsmodulename) remove = true;
-            // must read conf file directly because LibSword object is not necessarily available...
-            else {
-              var instconf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-              var xsModsUser = getSpecialDirectory("xsModsUser");
-              instconf.initWithPath(lpath(xsModsUser.path + "/" + entryArray[f][e]));
-              if (instconf.exists()) {
-                overwriteInstalledVersion = readParamFromConf(instconf, VERSIONPAR);
-                matchingXSmoduleTextVersion = readParamFromConf(instconf, "Version");
-                if (!matchingXSmoduleTextVersion) matchingXSmoduleTextVersion = 0;
-              }
+          if (!minimumVersion || minimumVersion == NOTFOUND) minimumVersion = 0;
+          
+          try {modulePath = readParamFromConf(tempCONF, "DataPath").replace(/^\.\//, "").replace(/\/[^\/]+$/, "/");}
+          catch (er) {}
+          if (!modulePath || modulePath == NOTFOUND) modulePath = null;
+        }
+        
+        // compare MinimumVersion to xulsword's SWORD engine version
+        if (comparator.compare(engineVersion, minimumVersion) < 0) {
+          isIncompatible = true;
+          
+          // don't report anything (we don't know what xulsword version the user needs!)
               
-							// If conf file's MinimumVersion is greater than program's own engine version, then remove
-							if (versioninfo.xsmodulemineng && engineVersion != NOTFOUND &&
-									comparator.compare(engineVersion, versioninfo.xsmodulemineng) < 0) {
-							  remove = true;
-							  modHasIncompatibleNewComponents = true;
-              	incomp.newmodule.push(fileArray[f]);
-							}
-            }
+          jsdump("INFO: Removing incompatible SWORD module (Engine Version:" + engineVersion + " < " + minimumVersion + "): " + entryArray[f][e]);
+        }
+        
+        // if this SWORD module is already installed and the new version 
+        // is LESS than the old, then silently remove.
+        var localConf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+        var xsModsUser = getSpecialDirectory("xsModsUser");
+        // must read conf file directly because LibSword object is not necessarily available...
+        localConf.initWithPath(lpath(xsModsUser.path + "/" + entryArray[f][e]));
+        if (localConf.exists()) {
+          try {var newVersion = readParamFromConf(tempCONF, "Version");}
+          catch(er) {
+            jsdump("ERROR: While reading Version from conf file: \"" + tempCONF.path + "\"");
+            error = true;
           }
-          if (!remove && overwriteInstalledVersion) {
-            var comp = comparator.compare(versioninfo.compversion, overwriteInstalledVersion);
-            if (comp < 0) {
-              remove = true;
-              jsdump("Rejecting compatible component:" + entryArray[f][e] + " version " + versioninfo.compversion + ", " + overwriteInstalledVersion + " is already installed.");
-            }
-            else if (comp == 0 && versioninfo.type == CONF_EXT && comparator.compare(versioninfo.xsmoduletext, matchingXSmoduleTextVersion) < 0) {
-              remove = true;
-              jsdump("Rejecting compatible xsmodule:" + entryArray[f][e] + " text version " + versioninfo.xsmoduletext + ", " + matchingXSmoduleTextVersion + " text is already installed.");
-            }
-          }      
-          if (remove) {
-            entryArray[f].splice(e--, 1);
-            if (versioninfo.type==CONF_EXT) incompModsPath.push(versioninfo.path);
+          if (!newVersion || newVersion == NOTFOUND) newVersion = 0;
+          
+          try {var localVersion = readParamFromConf(localConf, "Version");} 
+          catch (er) {
+            jsdump("INFO: Failed to read Version of an installed module: \"" + localConf.path + "\"");
+          }
+          if (!localVersion || localVersion == NOTFOUND) localVersion = 0;
+          
+          if (comparator.compare(newVersion, localVersion) < 0) {
+            isIncompatible = true;
+            // don't report anything (user has newer module already)
+            jsdump("INFO: Removing incompatible SWORD module (New Version:" + newVersion + " < " + localVersion + "): " + entryArray[f][e]);
           }
         }
+        
+        if (tempCONF && tempCONF.exists()) tempCONF.remove(false);
       }
       
       // Firefox extensions (locales)
-      if (entryArray[f][e].match(xpi)) {
-        var remove = false;
+      else if (entryArray[f][e].match(xpi)) {
         
-        // get this locale's version
+        // get this locale's version and minVersion from install.rdf
         var UIvers = 0;
+        var UIminProgVersion = 0;
         
-        // first unzip the xsm module
+        // first get the xpi extension from the zip file
         var zReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(Components.interfaces.nsIZipReader);
         zReader.open(fileArray[f]);
-        var tempXSM = getSpecialDirectory("TmpD");
-        tempXSM.append("xs_locale.xpi");
-        if (tempXSM.exists()) tempXSM.remove();
-        tempXSM.create(tempXSM.NORMAL_FILE_TYPE, FPERM);
-        try {zReader.extract(entryArray[f][e], tempXSM);}
+        var tempXPI = getSpecialDirectory("TmpD");
+        tempXPI.append("xs_locale.xpi");
+        if (tempXPI.exists()) tempXPI.remove();
+        tempXPI.create(tempXPI.NORMAL_FILE_TYPE, FPERM);
+        try {zReader.extract(entryArray[f][e], tempXPI);}
         catch (er) {
-          zReader.close(fileArray[f]);
-          remove = true;
+          jsdump("ERROR: Failed to extract xpi \"" + entryArray[f][e] + "\" from \"" + tempXPI.path + "\"");
+          error = true;
         }
         zReader.close(fileArray[f]);
         
         // then unzip the extension to get install.rdf
-        if (!remove) {
-          zReader.open(tempXSM);
+        if (!error) {
+          zReader.open(tempXPI);
           var tempInstallRDF = getSpecialDirectory("TmpD");
           tempInstallRDF.append("xs_install.rdf");
           if (tempInstallRDF.exists()) tempInstallRDF.remove();
           tempInstallRDF.create(tempInstallRDF.NORMAL_FILE_TYPE, FPERM);
           try {zReader.extract("install.rdf", tempInstallRDF);}
           catch (er) {
-            zReader.close(tempXSM);
-            remove = true;
+            jsdump("ERROR: Failed to extract install.rdf from \"" + tempInstallRDF.path + "\"");
+            error = true;
           }
-          zReader.close(tempXSM);
+          zReader.close(tempXPI);
         }
         
-        // finally read the install.rdf to get the version
-        if (!remove) {
+        // finally read the install.rdf to get the version and minVersion
+        if (!error) {
           var installRDF = readFile(tempInstallRDF);
-          UIvers = installRDF.match(/<em\:version>(.*?)<\/em\:version>/mi);
-          if (UIvers === null) {
-            UIvers = 0;
-            remove = true;
+          if (installRDF) {
+            UIvers = installRDF.match(/<em\:version>(.*?)<\/em\:version>/mi);
+            if (UIvers === null) {
+              UIvers = 0;
+              jsdump("ERROR: No version found in install.rdf: \"" + tempInstallRDF.path + "\"");
+              error = true;
+            }
+            else UIvers = UIvers[1];
+            
+            UIminProgVersion = installRDF.match(/<em\:id>xulsword\@xulsword\.org<\/em\:id>[^>]*<em\:minVersion>(.*?)<\/em\:minVersion>/mi);
+            if (UIminProgVersion === null) {
+              jsdump("WARN: No minVersion found in install.rdf: \"" + tempInstallRDF.path + "\"");
+              UIminProgVersion = 0;
+            }
+            else UIminProgVersion = UIminProgVersion[1];
           }
-          else UIvers = UIvers[1];
+          else jsdump("ERROR: Could not read install.rdf: \"" + tempInstallRDF.path + "\"");
         }
         
         // compare UIvers to this program's MinUIversion
         // NOTE: Yes, the extension has a xulsword maxVersion value, but it is   
-        // set to an arbitrary high value because forward compatibility was 
-        // not known at the time of extension creation.
+        // set to an arbitrarily high value because forward compatibility was 
+        // not known at the time of extension creation. Besides, we can block
+        // it earlier at this point in the install anyway.
         try {
           var programMinUIvers = rootprefs.getCharPref("extensions.xulsword.MinUIversion");
         }
         catch (er) {programMinUIvers = 0;}
         
-        var isIncompatible = (comparator.compare(UIvers, programMinUIvers) < 0);
-        if (isIncompatible) jsdump("INFO: Removing incompatible UI (" + UIvers + " < " + programMinUIvers + "): " + entryArray[f][e]);
+        if (comparator.compare(UIvers, programMinUIvers) < 0) {
+          isIncompatible = true;
+          
+          // report too-old module
+          report.oldmodule.push(fileArray[f]);
+          report.minmodversion.push(programMinUIvers);
+          
+          jsdump("INFO: Removing incompatible UI (UI Version:" + UIvers + " < " + programMinUIvers + "): " + entryArray[f][e]);
+        }
         
-        // silently remove if UI is incompatible
-        if (remove || isIncompatible) entryArray[f].splice(e--, 1);
-        
-        if (tempXSM && tempXSM.exists()) tempXSM.remove(false);
+        // compare UIminProgVersion to this program's version. This would be
+        // blocked by the xul install manager anyway, but we'll block it earlier
+        // here.
+        if (comparator.compare(progVersion, UIminProgVersion) < 0) {
+          isIncompatible = true;
+          
+          // report too-new module
+          report.newmodule.push(fileArray[f]);
+          report.minprogversion = (report.minprogversion ? 
+              (comparator.compare(report.minprogversion, UIminProgVersion) < 0 ? 
+              UIminProgVersion:report.minprogversion):UIminProgVersion);
+              
+          jsdump("INFO: Removing incompatible UI (Program Version:" + progVersion + " < " + UIminProgVersion + "): " + entryArray[f][e]);
+        }
+          
+        if (tempXPI && tempXPI.exists()) tempXPI.remove(false);
         if (tempInstallRDF && tempInstallRDF.exists()) tempInstallRDF.remove(false);
       }
     
       // All other files
       else {
-        remove = false;
-        for (var bm=0; bm<incompModsPath.length; bm++) {
-          remove |= (entryArray[f][e].match(escapeRE(incompModsPath[bm])) ? true:false);
+        for (var bm=0; bm<removeFiles.length; bm++) {
+          error |= (entryArray[f][e].match(escapeRE(removeFiles[bm])) ? true:false);
         }
-        if (remove) entryArray[f].splice(e--, 1);
       }
+      
+      // drop this file entirely from the list of files to install?
+      if (error || isIncompatible) {
+        if (entryArray[f][e].match(conf) && modulePath) removeFiles.push(modulePath);
+        entryArray[f].splice(e--, 1);
+      }
+      
     }
-    if (!entryArray[f].length) {entryArray.splice(f, 1); fileArray.splice(f--,1);}
+    
+    if (!entryArray[f].length) {
+      entryArray.splice(f, 1); 
+      fileArray.splice(f--,1);
+    }
     if (!entryArray.length) break;
   }
-  return incomp;
-}
-
-// Each xulsword program has two version related params: MinXSMversion, MinUIversion
-// Each xulsword module has five version related params: MKMversion, UIversion, XSMversion, MinProgversionForUI, MinProgversionForXSM
-// These params are used as follows:
-// 1) program's MinXSMversion > XSMversion of module  = Don't install module, report: module version MinXSMversion is needed
-// 2) program's MinUIversion > UIversion of module    = Don't install locale, report: module version MinUIversion is needed
-// 3) module's MinProgversionForXSM > program version = Don't install module, report: program version MinProgversionForXSM is needed
-// 4) module's MinProgversionForUI > program version  = Don't install locale, report: program version MinProgversionForUI is needed
-//
-// For reporting to work properly, the following should be identical for a given xulsword module:
-// 1) XSMversion
-// 2) UIversion
-// 3) MKMversion
-//
-// However, in order to be backward compatible to the first major xulsword release (2.7), an exception is allowed:
-// If the program's MinXSMversion=1.0 & MinUIversion=2.7, and the module's MinProgversionForXSM=2.7, XSMversion=2.7 & UIversion=MKMversion, the following should also be met:
-// 1) MKMversion: 2.7 <= (MKMversion=UIversion) < 3.0.
-// 2) Module's MinProgversionForUI: 2.9 >= MinProgversionForUI < 3.0. (but still THE UI MUST NOT CAUSE EXCEPTIONS WHEN INSTALLED ON XULSWORD 2.7, because it will not be blocked! XULSWORD 2.8 will block it and give an update message, but it (and only it) needs to block, because it has a slightly different security mod which would trip.)
-// 3) xulsword program's version: version < 3.0. 
-// 4) When either program's MinXSMversion or MinUIversion are finally changed, THEY MUST START AT 3.0 OR GREATER.
-// The above rules allow modules to be created with new version numbers, which are still backward compatible to at least 2.7.
-function readVersion(aZip, aEntry, progVers) {
-  var info = {compversion:"1.0", minprogversion:null, type:null, path:null, mincompversion:null, error:false, xsmodulename:null, xsmoduletext:null};
-  var temp = getSpecialDirectory("TmpD");
-    
-  //exceptions result in keeping the file...
-  if (!temp.exists()) return null;
-  temp.append("xulsword" + CONF_EXT);
-  temp.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
   
-  var zReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(Components.interfaces.nsIZipReader);
-  
-  zReader.open(aZip);
-  try {zReader.extract(aEntry, temp);}
-  catch (er) {
-    zReader.close(aZip);
-    return null;
-  }
-  zReader.close(aZip);
-
-  var isSwordMod = false;
-  if (aEntry.search("." + CONF_EXT, "i")!=-1) {
-    info.type = CONF_EXT;
-    try {info.mincompversion = prefs.getCharPref("MinXSMversion");} catch (er) {info.mincompversion = MINVERSION;}
-    isSwordMod = true;
-    info.path = readParamFromConf(temp, "DataPath").replace(/^\.\//, "").replace(/\/[^\/]+$/, "/");
-    info.xsmodulename = readParamFromConf(temp, "ModuleName");
-    info.xsmoduletext = readParamFromConf(temp, "Version");
-    info.xsmodulemineng = readParamFromConf(temp, "MinimumVersion");
-    if (!info.xsmoduletext) info.xsmoduletext = 0;
-  }
-  
-  var filedata = readFile(temp);
-  removeFile(temp, false);
-  //if the file is empty, there is a problem! Remove it...
-  if (!filedata) {
-    info.error = true;
-    return info;
-  }
-
-  info.minprogversion = filedata.match(MINPROGVERSTAG);
-  info.minprogversion = (info.minprogversion ? info.minprogversion[1]:MINVERSION);
-  
-  info.compversion = filedata.match(VERSIONTAG);
-  info.compversion = (info.compversion ? info.compversion[1]:MINVERSION);
-  return info;
+  return report;
 }
 
 var CopyAnotherFile;
