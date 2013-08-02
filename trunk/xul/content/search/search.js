@@ -339,7 +339,8 @@ function SearchObj(searchObj) {
     
     // get Search flags
     s.flags = 2; //Turn "Ignore Case" flag on. BUG NOTE: THIS DOESNT WORK FOR NON-ENGLISH/NON-LUCENE SEARCHES
-    if (document.getElementById("searchType").selectedItem == document.getElementById("SearchSimilar")) {
+    if (document.getElementById("searchType").selectedItem == document.getElementById("SearchSimilar") ||
+        (/\~/).test(s.query)) {
       s.flags = s.flags|2048; // Turn on Sort By Relevance flag
     } 
     

@@ -512,6 +512,42 @@ function scriptDblClick(e) {
 }
 
 /************************************************************************
+ * MOVABLE POPUP
+ ***********************************************************************/  
+var PopupPosition = 0;
+function popupDrag(type, e) {
+  var popupTX = document.getElementById("npopupTX");
+  
+  switch (type) {
+    
+  case "down":
+    if (e.target.className == 'draghandle' || e.target === popupTX) {
+      PopupPosition = e.clientY;
+      e.target.style.cursor = "move";
+    }
+    break;
+    
+  case "move":
+    if (!PopupPosition) return;
+    
+    var puptop = Number(window.getComputedStyle(npopupTX).top.replace("px", ""));
+    if (isNaN(puptop)) return;
+    
+    npopupTX.style.top = Number(puptop + e.clientY - PopupPosition) + "px";
+    PopupPosition = e.clientY;
+    
+    e.stopPropagation(); // block any higher handlers
+    break;
+    
+  case "up":
+    PopupPosition = 0;
+    e.target.style.cursor = "";
+    break;
+    
+  }
+}
+
+/************************************************************************
  * MOVABLE BOUNDARY BAR
  ***********************************************************************/  
 var MouseIsOver = false;

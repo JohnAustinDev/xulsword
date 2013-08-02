@@ -71,7 +71,7 @@ function initBMServices(bm) {
                        
   bm.kBATCH_LIMIT = 4;
   bm.kExportDelimiter = "<bg/>";
-  bm.kExportResourceDelimiter = "<nx/>" + BMFileReturn;
+  bm.kExportResourceDelimiter = "<nx/>";
     
   initBookmarksDataFile(false);
   var bmds = getUserData(bm.RDF);

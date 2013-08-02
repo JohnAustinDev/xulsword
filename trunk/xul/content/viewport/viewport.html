@@ -188,7 +188,10 @@
         onmouseover="scriptMouseOver(event)" 
         onmouseout="scriptMouseOut(event)" 
         onclick="scriptClick(event)" 
-        ondblclick="scriptDblClick(event)">
+        ondblclick="scriptDblClick(event)"
+        onmousedown="popupDrag('down', event);"
+        onmousemove="popupDrag('move', event);"
+        onmouseup  ="popupDrag('up',   event);">
       </div>
     </div>
   </div>

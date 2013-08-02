@@ -35,6 +35,7 @@ function initWindowedPopup() {
 function PopupObj(popupobj) {
 
   this.npopup = document.getElementById("npopup");
+  this.npopupRL = document.getElementById("npopupRL");
   this.npopupTX = document.getElementById("npopupTX");
   this.showPopupID = null;
     
@@ -44,7 +45,7 @@ function PopupObj(popupobj) {
 
     // copy popupobj additional members (excluding functions) to the new object
     for (var p in popupobj) {
-      if ((/(npopup|npopupTX|showPopupID)/).test(p)) continue;
+      if ((/(npopup|npopupRL|npopupTX|showPopupID)/).test(p)) continue;
       if (typeof(popupobj[p]) == "function") continue;
       this[p] = eval(uneval(popupobj[p]));
     }
@@ -79,6 +80,7 @@ function PopupObj(popupobj) {
     html +=   "<a class=\"" + (updatingPopup ? "popupBackLink":"popupCloseLink") + "\">";
     html +=     XSBundle.getString(updatingPopup ? "back":"close");
     html +=   "</a>";
+    html +=   "<div class=\"draghandle\"></div>";
     
     // add select drop-down for cr and sr
     if (p && p.mod && (/^(cr|sr)$/).test(type)) {
@@ -218,9 +220,10 @@ function PopupObj(popupobj) {
     
     // Normal popup updating itself...
     if (updatingPopup) {
-      // move popup to insure it's under the current mouse position
       this.npopupTX.scrollTop = 0;
-      this.npopupTX.style.top = this.YmouseDelta + e.clientY + "px";
+      
+      // move popup to insure it's under the current mouse position
+      this.npopupTX.style.top = Number(e.clientY - this.parentY - 20) + "px";
       this.checkPopupPosition(e);
       return true;
     }
@@ -253,11 +256,15 @@ function PopupObj(popupobj) {
     
     // make popup appear (via CSS)
     if (this.npopup.parentNode !== this.elem)
-        this.elem.appendChild(this.npopup);
+        this.elem.insertBefore(this.npopup, this.elem.firstChild);
   
-    // store current location relative to mouse
+    // reset Javascript pupTXtop and store initial location relative to mouse
     this.npopupTX.style.top = ""; // reset so that CSS always controls initial location!
-    this.YmouseDelta = (Number(window.getComputedStyle(this.npopupTX).top.replace("px", "")) - this.e.clientY);
+
+    // getting parentY is tricky. Using offsetTop is difficult and must 
+    // also take scrollTop into account. Using e.clientY is not exact,
+    // but it's very close and very easy.
+    this.parentY = this.e.clientY;
     
     this.checkPopupPosition(this.e);
 
@@ -266,14 +273,20 @@ function PopupObj(popupobj) {
 
   };
   
-  // if popup is overflowing bottom of window, then move it up
+  // if popup is overflowing the bottom of the window, then move it up
   this.checkPopupPosition = function(e) {
-    var pupbot = e.clientY + this.npopupTX.offsetHeight;
+    const margin = 30; // allow margin between bottom of window
+    
+    var pupRLtop = Number(window.getComputedStyle(this.npopupRL).top.replace("px", ""));
+    var pupTXtop = Number(window.getComputedStyle(this.npopupTX).top.replace("px", ""));
+    if (isNaN(pupRLtop)) pupRLtop = 0;
+    if (isNaN(pupTXtop)) pupTXtop = 0;
+
+    var pupbot = this.parentY + pupRLtop + pupTXtop + this.npopupTX.offsetHeight;
+
     if (pupbot > window.innerHeight) {
-      var puptop = Number(window.getComputedStyle(this.npopupTX).top.replace("px", ""));
-      if (isNaN(puptop)) return;
-      puptop -= (pupbot - window.innerHeight);
-      this.npopupTX.style.top = puptop + "px";
+      pupTXtop = window.innerHeight - this.parentY - pupRLtop - this.npopupTX.offsetHeight;
+      this.npopupTX.style.top = Number(pupTXtop - margin) + "px";
     }
   };
 

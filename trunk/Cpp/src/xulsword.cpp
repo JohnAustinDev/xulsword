@@ -1335,6 +1335,9 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
   }
   // SIMPLE SEARCH
   else {*workKeys = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);}
+  
+  // 2048 is Sort By Relevance flag
+  if ((flags & 2048) != 2048) workKeys->sort();
 
   // If not a new search append new results to existing key
   if (!newsearch) {
@@ -1785,19 +1788,22 @@ StringMgrXS - to over-ride broken toUpperCase
 StringMgrXS::StringMgrXS(char *(*toUpperCase)(char *)) {ToUpperCase = toUpperCase;}
 StringMgrXS::~StringMgrXS() {}
 
-char *StringMgrXS::upperUTF8(char *text, unsigned int max) const {
-  if (strlen(text)) {
-//SWLog::getSystemLog()->logDebug("upperUTF8 in=%s", text);
-    char *res = ToUpperCase(text);
-//SWLog::getSystemLog()->logDebug("upperUTF8 out=%s", res);
-    strcpy(text, res);
+char *StringMgrXS::upperUTF8(char *text, unsigned int maxlen) const {
+  
+  if (text) {
+    SWBuf check = assureValidUTF8(text);
+    char *res = ToUpperCase((char *)check.c_str());
+    if (res) {
+      if (strlen(res) > maxlen) *(res+maxlen) = 0;
+      strcpy(text, res);
+    }
   }
   
   return text;
 }
 
 bool StringMgrXS::supportsUnicode() const {
-  return true; // must be true for LocaleMgr to work, but there is a crash bug!!
+  return true;
 }
 
 

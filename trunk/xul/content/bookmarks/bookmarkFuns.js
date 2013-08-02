@@ -278,7 +278,7 @@ BookmarkFuns = {
   
   getFormattedBMdata: function(afolder, isHTML) {
     var data= (isHTML ? "<div class=\"page cs-Program\">":"");
-    var ret = (isHTML ? "<br>":BMFileReturn);
+    var ret = (isHTML ? "<br>":NEWLINE);
     var h1s = (isHTML ? "<span class=\"phead1\">":"");
     var h1e = (isHTML ? "</span>":"");
     

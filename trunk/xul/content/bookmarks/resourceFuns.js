@@ -270,7 +270,16 @@ ResourceFuns = {
     var filedata = readFile(aFile);
     if (!filedata) return 0;
     
-    filedata = filedata.replace(BM.kExportResourceDelimiter, "<bMRet>", "g");
+    // get file's newline type
+    var le = new RegExp(BM.kExportResourceDelimiter + "([\n\r]+)");
+    var le = filedata.match(le);
+    if (!le) {
+      jsdump("ERROR: Could not determine type of line endings in \"" + aFile.path + "\"");
+      return 0;
+    }
+    le = le[1];
+    
+    filedata = filedata.replace(BM.kExportResourceDelimiter + le, "<bMRet>", "g");
     filedata = replaceASCIIcontrolChars(filedata);
     filedata = filedata.replace("<bMRet>", BM.kExportResourceDelimiter, "g");
 
@@ -281,10 +290,10 @@ ResourceFuns = {
     
     var importedResources = [];
     var textBookmarks = filedata.split(BM.kExportResourceDelimiter);
-    //Next 2 lines are for backward compatibility to pre V2.8 code
-    var tmp = filedata.split("<nx/>\n");
-    if (tmp.length > textBookmarks.length) textBookmarks = tmp;
-    if (!textBookmarks.length) return 0;
+    if (!textBookmarks.length) {
+      jsdump("ERROR: No bookmark records");
+      return 0;
+    }
     for (var bm=0; bm<textBookmarks.length; bm++) {
       if (!textBookmarks[bm]) continue;
       var propertyValues = textBookmarks[bm].split(BM.kExportDelimiter);

@@ -59,6 +59,7 @@
   border-bottom:none;
 }
 .conf-info textarea {
+  resize: none;
   width:100%;
   height:250px;
   font-family:Courier;
