@@ -51,9 +51,9 @@
   }
   </script>
   
-  <vbox id="mainbox" showingModules="false">
+  <vbox id="mainbox" flex="1" showingModules="false">
   
-    <vbox id="logo" pack="end" width="500" height="375">
+    <vbox id="logo" flex="1" pack="end" width="500" height="375">
     
       <iframe flex="1" id="modules" src="chrome://xulsword/content/dialogs/about/about.html"/>
     

@@ -244,7 +244,8 @@ DictTexts = {
     
     if (!feature) return res;
     
-    res.mod = prefs.getCharPref("Selected" + feature);
+    try {res.mod = prefs.getCharPref("Selected" + feature);}
+    catch (er) {res.mod = null;}
     
     return res;
   },
