@@ -66,48 +66,6 @@ function onLoad() {
   if (TEMP_Install.exists()) TEMP_Install.remove(true);
   TEMP_Install.create(TEMP_Install.DIRECTORY_TYPE, DPERM);
   
-//prefs.clearUserPref("HaveInternetPermission");
-
-  // don't allow access to internet until we have express permission!
-  var haveInternetPermission = getPrefOrCreate("HaveInternetPermission", "Bool", false);
-  
-  if (!haveInternetPermission) {
-    var title = MyStrings.GetStringFromName("arm.internetPromptTitle");
-    var msg = MyStrings.GetStringFromName("arm.internetPromptMessage");
-    msg += "\n\n";
-    msg += MyStrings.GetStringFromName("arm.wishToContinue");
-    var cbText = MyStrings.GetStringFromName("arm.rememberMyChoice");
-    
-    var result = {};
-    var dlg = window.opener.openDialog(
-				"chrome://xulsword/content/dialogs/dialog/dialog.xul", 
-				"dlg", 
-				DLGSTD, 
-				result,
-        fixWindowTitle(title),
-        msg,
-        DLGALERT,
-        DLGYESNO,
-        null,
-        null,
-        cbText
-    );
-    haveInternetPermission = result.ok;
-    
-    // if user wants this choice to be permanent...
-    if (result.checked2) {
-			prefs.setBoolPref("HaveInternetPermission", haveInternetPermission);
-			
-			// there is no way for regular users to undo this, so I've commented it out...
-			//prefs.setBoolPref("AllowNoInternetAccess", !haveInternetPermission);
-		}
-  }
-  
-  if (!haveInternetPermission) {
-    window.close();
-    return;
-  }
-  
   // init Data Source utility globals
   RP = {};
   RDF = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService);
@@ -292,7 +250,51 @@ function onLoad() {
   };
 
   RepoProgress.value = "10";
-  loadMasterRepoList(true); // will call loadXulswordRepositories() when successfully finished
+  
+  window.setTimeout("checkInternetPermission();", 1);
+}
+
+function checkInternetPermission() {
+  
+  //prefs.clearUserPref("HaveInternetPermission");
+
+  // don't allow access to internet until we have express permission!
+  var haveInternetPermission = getPrefOrCreate("HaveInternetPermission", "Bool", false);
+
+  if (!haveInternetPermission) {
+    var title = MyStrings.GetStringFromName("arm.internetPromptTitle");
+    var msg = MyStrings.GetStringFromName("arm.internetPromptMessage");
+    msg += "\n\n";
+    msg += MyStrings.GetStringFromName("arm.wishToContinue");
+    var cbText = MyStrings.GetStringFromName("arm.rememberMyChoice");
+
+    var result = {};
+    var dlg = window.openDialog(
+				"chrome://xulsword/content/dialogs/dialog/dialog.xul",
+				"dlg",
+				DLGSTD,
+				result,
+        fixWindowTitle(title),
+        msg,
+        DLGALERT,
+        DLGYESNO,
+        null,
+        null,
+        cbText
+    );
+    haveInternetPermission = result.ok;
+
+    // if user wants this choice to be permanent...
+    if (result.checked2) {
+			prefs.setBoolPref("HaveInternetPermission", haveInternetPermission);
+
+			// there is no way for regular users to undo this, so I've commented it out...
+			//prefs.setBoolPref("AllowNoInternetAccess", !haveInternetPermission);
+		}
+  }
+
+  if (!haveInternetPermission) window.close();
+  else loadMasterRepoList(true); // will call loadXulswordRepositories() when successfully finished
 }
 
 function loadXulswordRepositories(moduleDataAlreadyDeleted) {
@@ -1606,7 +1608,7 @@ objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.lea
 
       var sfile = aDir.clone();
       sfile.append("untargz.vbs");
-      writeFile(sfile, script, true);
+      writeFile(sfile, script, true, "UTF-16LE"); // Windows vbs files with non-ASCII paths must be UTF-16LE encoded!
       
       var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);
       process.init(sfile);

@@ -78,6 +78,7 @@ function loadedXUL2() {
     
     var w=1;
     for (var m=0; m<NewModuleInfo.NewModules.length; m++) {
+      if (!Tab.hasOwnProperty(NewModuleInfo.NewModules[m])) continue;
       Tab[NewModuleInfo.NewModules[m]]["w" + w + ".hidden"] = false;
       if (w <= ViewPort.NumDisplayedWindows) {
         ViewPort.Module[w] = NewModuleInfo.NewModules[m];
