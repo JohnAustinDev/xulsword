@@ -167,12 +167,13 @@ sub correlateUItoMAP(\%\%\%\%\%\%) {
   }
 
   # clear and report any ERRORS
-  &clearErrors($uiDescValueP, $fileEntryDescP, $mayBeMissingP, $mayBeEmptyP, $matchedDescriptionsP);
+  &clearErrors($uiDescValueP, $fileEntryDescP, $codeFileEntryValuesP, $mayBeMissingP, $mayBeEmptyP, $matchedDescriptionsP);
 }
 
-sub clearErrors(\%\%\%\%\%) {
+sub clearErrors(\%\%\%\%\%\%) {
   my $uiDescValueP = shift;
   my $fileEntryDescP = shift;
+  my $codeFileEntryValuesP = shift;
   my $mayBeMissingP = shift;
   my $mayBeEmptyP = shift;
   my $matchedDescriptionsP = shift;
@@ -185,8 +186,9 @@ sub clearErrors(\%\%\%\%\%) {
     }
   }
 
-  # report any MAP file entries which were not matched, and add empty place holders
-  for my $fe (keys %{$fileEntryDescP}) {
+  # report any MAP file entries which were not matched, and add alternate place holders
+  my %NotMatched;
+  for my $fe (sort keys %{$fileEntryDescP}) {
     if (exists($mayBeMissingP->{$fileEntryDescP->{$fe}})) {next;}
     if (&isWild($fe, 1)) {next;}
     if ($fileEntryDescP->{$fe} ne "<uSEd>") {
@@ -194,10 +196,29 @@ sub clearErrors(\%\%\%\%\%) {
       $uiDescValueP->{$fileEntryDescP->{$fe}} = "";
 
       if (!( $mayBeEmptyP->{$fileEntryDescP->{$fe}} || ($IGNORE_SHORTCUT_KEYS && ($fe =~ /$SHORTCUT/)) )) {
-        &Log("ERROR: MAP file entry was not matched: \"$fe = ".$fileEntryDescP->{$fe}."\".\n");
+				if (!(%UIDescValueALT)) {
+					# read the alternate locale UI
+					&read_UI_Files($LOCALE_ALT, \%UIDescValueALT);
+				}
+				
+				# use alternate value in code file if alternate value exists
+				if (exists($UIDescValueALT{$fileEntryDescP->{$fe}})) {
+					$codeFileEntryValuesP->{$fe} = $UIDescValueALT{$fileEntryDescP->{$fe}};
+					$NotMatched{$fileEntryDescP->{$fe}} = $UIDescValueALT{$fileEntryDescP->{$fe}};
+				}
+				else {
+					$NotMatched{$fileEntryDescP->{$fe}} = "";
+					&Log("ERROR: No Alternate value for \"".$fileEntryDescP->{$fe}."\"\n");
+				}
       }
+      
     }
   }
+  
+  foreach my $desc (sort keys %NotMatched) {
+		&Log("MISSING: [".$desc."]: ".$NotMatched{$desc}."\n");
+	}
+  
 }
 
 sub translateValue($$$$) {
@@ -588,8 +609,8 @@ sub escfile($) {
 sub Log($$) {
   my $p = shift; # log message
   my $h = shift; # -1 = hide from console, 1 = show in console, 2 = only console
-  if ($p =~ /error/i) {$p = "\n$p\n";}
-  if ((!$NOCONSOLELOG && $h!=-1) || !$LOGFILE || $h>=1 || $p =~ /error/i) {print encode("utf8", "$p");}
+  #if ($p =~ /error/i) {$p = "\n$p\n";}
+  if ((!$NOCONSOLELOG && $h!=-1) || !$LOGFILE || $h>=1 || $p =~ /ERROR/) {print encode("utf8", "$p");}
   if ($LOGFILE && $h!=2) {
     open(LOGF, ">>:encoding(UTF-8)", $LOGFILE) || die "Could not open log file \"$LOGFILE\"\n";
     # don't log absolute file names

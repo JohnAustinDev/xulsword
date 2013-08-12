@@ -23,18 +23,22 @@ var Type = window.arguments[3];
 var Buttons = window.arguments[4];
 var CheckBoxText = (window.arguments[5] ? window.arguments[5]:null);
 var TextBoxText = (window.arguments[6] ? window.arguments[6]:null);
-var Checkbox, Textbox;
+var CheckBoxText2 = (window.arguments[7] ? window.arguments[7]:null);
+var Checkbox, Textbox, Checkbox2;
 
 function accept() {
   RetVal.ok = true; 
   if (CheckBoxText) RetVal.checked = Checkbox.checked;
+  if (CheckBoxText2) RetVal.checked2 = Checkbox2.checked;
   if (TextBoxText && Textbox.value) RetVal.value = Textbox.value;
+  
   return true;
 }
 
 function cancel() {
   RetVal.ok = false; 
   if (CheckBoxText) RetVal.checked = Checkbox.checked; 
+  if (CheckBoxText2) RetVal.checked2 = Checkbox2.checked; 
   return true;
 }
 
@@ -45,6 +49,7 @@ function loadDialog() {
   RetVal.ok = false;
   RetVal.checked = null;
   Checkbox = document.getElementById("checkbox");
+  Checkbox2 = document.getElementById("checkbox2");
   Textbox = document.getElementById("textbox");
 
   var acceptLabel, cancelLabel;
@@ -76,7 +81,7 @@ function loadDialog() {
     break;      
   }
    
-  var parent = document.getElementById("text");
+  var parent = document.getElementById("dialog-text");
   while (Text) {
     var firstNL = Text.indexOf("\n");
     var aLine="";
@@ -95,7 +100,7 @@ function loadDialog() {
     parent.appendChild(newElem);
   }
 
-  document.getElementById("icon").setAttribute("src", imgSrc);
+  document.getElementById("dialog-icon").setAttribute("src", imgSrc);
   document.getElementById("dlg").getButton("accept").setAttribute("label", acceptLabel);
   document.getElementById("dlg").getButton("cancel").setAttribute("label", cancelLabel);
   
@@ -107,6 +112,11 @@ function loadDialog() {
   if (TextBoxText) {
     Textbox.setAttribute("hidden", "false");
     Textbox.setAttribute("label", TextBoxText);
+  }
+  
+   if (CheckBoxText2) {
+    Checkbox2.setAttribute("hidden", "false");
+    Checkbox2.setAttribute("label", CheckBoxText2);
   }
 
   // this causes strange exceptions when run at the top of loadDialog (why??)

@@ -23,7 +23,6 @@ const ON = String.fromCharCode(9745);
 const OFF =  String.fromCharCode(9746);
 const EmptyRepoSite = "file://";
 const SCRIPT_PROPS = "dialogs/addRepositoryModule/addRepositoryModule.properties";
-const ERROR = safeGetStringFromName("Ошибка", null, SCRIPT_PROPS, "arm.error");
 
 var RP, RPDS, MLDS, RDF, RDFC, RDFCU;
 var RepositoryArray, RepositoryIndex, RepositoriesLoading, RepositoryCheckInterval;
@@ -33,17 +32,28 @@ var ModulesInProgress = [];
 var TEMP, TEMP_Install;
 var RepoProgress;
 var WindowIsAlive = true;
+var MyStrings = null;
+var ERROR = null;
 
 function onLoad() {
+	
+	MyStrings = getCurrentLocaleBundle(SCRIPT_PROPS);
+	if (!MyStrings) {
+		jsdump("ERROR: No current locale string bundle \"" + SCRIPT_PROPS + "\"");
+		window.close; 
+		return;
+	}
   
   initCSS();
+  
+  ERROR = MyStrings.GetStringFromName("arm.error");
 
   document.title = getDataUI("menu.addNewModule.label");
 
   ModulesLoading = 0; // global to track total number of modules downloading at any given time
   RepoProgress = document.getElementById("repoProgress");
   
-  document.getElementById("repoListLabel").value = safeGetStringFromName("Источники Модулей", null, SCRIPT_PROPS, "arm.repositoryTreeTitle");
+  document.getElementById("repoListLabel").value = MyStrings.GetStringFromName("arm.repositoryTreeTitle");
   
   // start with totally clean temp directories
   TEMP = getSpecialDirectory("TmpD");
@@ -62,22 +72,35 @@ function onLoad() {
   var haveInternetPermission = getPrefOrCreate("HaveInternetPermission", "Bool", false);
   
   if (!haveInternetPermission) {
-    var title = safeGetStringFromName("Скачать Библию с Интернета?", null, SCRIPT_PROPS, "arm.internetPromptTitle");
-    var msg = safeGetStringFromName("This will access Bible related websites on the Internet. Such internet access is closely monitored by authorities in some countries. If this is a concern for you, you should click \"No\".", null, SCRIPT_PROPS, "arm.internetPromptMessage");
+    var title = MyStrings.GetStringFromName("arm.internetPromptTitle");
+    var msg = MyStrings.GetStringFromName("arm.internetPromptMessage");
     msg += "\n\n";
-    msg += safeGetStringFromName("Вы действительно хотите это сделать?", null, SCRIPT_PROPS, "arm.wishToContinue");
-    var cbText = safeGetStringFromName("Запомнить мой выбор?", null, SCRIPT_PROPS, "arm.rememberMyChoice");
+    msg += MyStrings.GetStringFromName("arm.wishToContinue");
+    var cbText = MyStrings.GetStringFromName("arm.rememberMyChoice");
     
     var result = {};
-    var dlg = window.opener.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result,
+    var dlg = window.opener.openDialog(
+				"chrome://xulsword/content/dialogs/dialog/dialog.xul", 
+				"dlg", 
+				DLGSTD, 
+				result,
         fixWindowTitle(title),
         msg,
         DLGALERT,
         DLGYESNO,
-        cbText);
-  
+        null,
+        null,
+        cbText
+    );
     haveInternetPermission = result.ok;
-    if (result.checked) prefs.setBoolPref("HaveInternetPermission", haveInternetPermission);
+    
+    // if user wants this choice to be permanent...
+    if (result.checked2) {
+			prefs.setBoolPref("HaveInternetPermission", haveInternetPermission);
+			
+			// there is no way for regular users to undo this, so I've commented it out...
+			//prefs.setBoolPref("AllowNoInternetAccess", !haveInternetPermission);
+		}
   }
   
   if (!haveInternetPermission) {
@@ -622,13 +645,13 @@ function applyConfFile(file, repoUrl) {
   
   // add ModuleType
   var moduleType = ARMU.getConfEntry(filedata, "ModDrv");
-  if ((/^(RawText|zText)$/i).test(moduleType)) moduleType = safeGetStringFromName("Библия", null, SCRIPT_PROPS, "arm.moduleType.Texts");
-  else if ((/^(RawCom|RawCom4|zCom)$/i).test(moduleType)) moduleType = safeGetStringFromName("Комментарий", null, SCRIPT_PROPS, "arm.moduleType.Comms");
-  else if ((/^(RawLD|RawLD4|zLD)$/i).test(moduleType)) moduleType = safeGetStringFromName("Словарь", null, SCRIPT_PROPS, "arm.moduleType.Dicts");
-  else if ((/^(RawGenBook)$/i).test(moduleType)) moduleType = safeGetStringFromName("Общие Книги", null, SCRIPT_PROPS, "arm.moduleType.Genbks");
-  else if ((/^(RawFiles)$/i).test(moduleType)) moduleType = safeGetStringFromName("Текст", null, SCRIPT_PROPS, "arm.moduleType.SimpleText");
+  if ((/^(RawText|zText)$/i).test(moduleType)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Texts");
+  else if ((/^(RawCom|RawCom4|zCom)$/i).test(moduleType)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Comms");
+  else if ((/^(RawLD|RawLD4|zLD)$/i).test(moduleType)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Dicts");
+  else if ((/^(RawGenBook)$/i).test(moduleType)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Genbks");
+  else if ((/^(RawFiles)$/i).test(moduleType)) moduleType = MyStrings.GetStringFromName("arm.moduleType.SimpleText");
   else if ((/^(HREFCom)$/i).test(moduleType)) moduleType = "URL"; 
-  else if ((/^(audio)$/i).test(moduleType)) moduleType = safeGetStringFromName("Аудио", null, SCRIPT_PROPS, "arm.moduleType.Audio");
+  else if ((/^(audio)$/i).test(moduleType)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Audio");
   moduleType = moduleType.replace(/\:$/, ""); // previous UI option had ":" at the end...
   if (is_XSM_module && moduleType != "Audio") {moduleType = moduleType + " XSM";}
   MLDS.Assert(newModRes, RP.ModuleType, RDF.GetLiteral(moduleType), true);
