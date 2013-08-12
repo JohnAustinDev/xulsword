@@ -38,8 +38,8 @@
     .getString(<name>) and .getFormattedString(<name>, [<param-array]) 
     methods.
     
-  - getLocaleBundle(<locale>, file.properties) retrieves a bundle object
-    from any installed locale and .properties file. The data within the
+  - getCurrentLocaleBundle(file.properties) retrieves a bundle object
+    from the current locale and .properties file. The data within the
     .properties file is accessed with these its two methods:
     .formatStringFromName(<name>, [<param-array], param-array-length) and
     .GetStringFromName(<name>)
@@ -47,7 +47,7 @@
   - safeFormatStringFromName(default, <locale>, file.properties, <name>, 
     [<param-array], param-array-length) and 
     safeGetStringFromName(default, <locale>, file.properties, <name>)  
-    should be used to prevent necessitating a new revision of the UI.
+    can be used to prevent necessitating a new revision of the UI.
     A default value must always be provided for these two functions.
 !-->
 
@@ -230,7 +230,7 @@
     <menu id="file-menu" label="&fileMenu.label;" accesskey="&fileMenu.accesskey;" >
       <menupopup id="file-popup" onpopupshowing="if (LibSword.hasBible) goUpdateFileMenu();">
         <menu id="newmodule" label="&menu.addNewModule.label;" accesskey="&menu.addNewModule.sc;">
-          <menupopup>
+          <menupopup onpopupshowing="goUpdateNewModuleMenu();">
             <menuitem id="newInternetModule" label="&newmodule.fromInternet;" accesskey="&newmodule.fromInternet.ak;" command="cmd_xs_addRepositoryModule" hasNoBibleShow="true"/>
             <menuitem id="newLocalModule" label="&newmodule.fromFile;" accesskey="&newmodule.fromFile.ak;" command="cmd_xs_addLocalModule" hasNoBibleShow="true"/>
           </menupopup>

@@ -1069,6 +1069,18 @@ function goUpdateFileMenu () {
   goUpdateCommand('cmd_xs_importAudio');
 }
 
+function goUpdateNewModuleMenu() {
+	
+  // permanently block all internet access if required
+  var allowNoInternetAccess;
+  try {allowNoInternetAccess = prefs.getBoolPref("AllowNoInternetAccess");}
+	catch (er) {allowNoInternetAccess = false;}
+	
+	if (allowNoInternetAccess) document.getElementById("newInternetModule").setAttribute("hidden", "true");
+	else document.getElementById("newInternetModule").removeAttribute("hidden");
+
+}
+
 
 /************************************************************************
  * XULSWORD Window click handlers

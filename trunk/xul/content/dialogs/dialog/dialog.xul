@@ -21,6 +21,7 @@
 <!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/dialogs/dialog/dialog.dtd">
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/dialogs/dialog/dialog-xul.css" type="text/css" ?>
 
 <dialog id="dlg" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"
         onload="loadDialog();"
@@ -38,19 +39,32 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/dialog/dialog.js"/>
   
-  <vbox id="whole" style="overflow:visible; min-width:326px;">
-    <hbox pack="start" align="start" style="margin:4px;">
-      <image id="icon" src="" style="-moz-margin-end:4px;"/>
+  <vbox>
+		
+    <hbox id="dialog-area" pack="start" align="start" >
+      <image id="dialog-icon" src="" />
       <vbox>
-        <vbox id="text" style="margin-bottom:2em;"></vbox>
+				<!-- text of dialog !-->
+        <vbox id="dialog-text" >
+        
+        </vbox>
+        
+        <!-- checkbox #1 !-->
         <checkbox id="checkbox" hidden="true" />
+        
+        <!-- textbox for user input !-->
         <textbox id="textbox" hidden="true" />
       </vbox>
     </hbox>
+    
     <hbox id="buttons" pack="center">
       <button dlgtype="accept" />
       <button dlgtype="cancel" />
     </hbox>
+    
+    <!-- checkbox #2 !-->
+    <checkbox id="checkbox2" hidden="true" />
+    
   </vbox>
   
 </dialog>
