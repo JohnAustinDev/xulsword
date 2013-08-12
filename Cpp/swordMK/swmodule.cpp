@@ -4,7 +4,7 @@
  *			for all types of modules (e.g. texts, commentaries,
  *			maps, lexicons, etc.)
  *
- * $Id: swmodule.cpp 2922 2013-07-28 17:52:06Z scribe $
+ * $Id: swmodule.cpp 2944 2013-08-03 09:43:40Z scribe $
  *
  * Copyright 1999-2013 CrossWire Bible Society (http://www.crosswire.org)
  *	CrossWire Bible Society
@@ -799,7 +799,9 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
  */
 
 const char *SWModule::stripText(const char *buf, int len) {
-	return renderText(buf, len, false);
+	static SWBuf local;
+	local = renderText(buf, len, false);
+	return local.c_str();
 }
 
 
@@ -834,7 +836,7 @@ const char *SWModule::getRenderHeader() const {
 		setProcessEntryAttributes(false);
 	}
 
-	static SWBuf local;
+	SWBuf local;
 	if (buf)
 		local = buf;
 
@@ -927,6 +929,24 @@ const char *SWModule::stripText(const SWKey *tmpKey) {
 	return retVal;
 }
 
+/******************************************************************************
+ * SWModule::getBibliography	-Returns bibliographic data for a module in the
+ *								requested format
+ *
+ * ENT: bibFormat format of the bibliographic data
+ *
+ * RET: bibliographic data in the requested format as a string (BibTeX by default)
+ */
+
+SWBuf SWModule::getBibliography(unsigned char bibFormat) const {
+	SWBuf s;
+	switch (bibFormat) {
+	case BIB_BIBTEX:
+		s.append("@Book {").append(modname).append(", Title = \"").append(moddesc).append("\", Publisher = \"CrossWire Bible Society\"}");
+		break;
+	}
+	return s;
+}
 
 const char *SWModule::getConfigEntry(const char *key) const {
 	ConfigEntMap::iterator it = config->find(key);
