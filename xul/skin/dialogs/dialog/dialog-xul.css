@@ -1,5 +1,6 @@
 #dialog-area {
 	margin:4px;
+	min-width:400px;
 }
 #dialog-icon {
 	-moz-margin-end:4px;

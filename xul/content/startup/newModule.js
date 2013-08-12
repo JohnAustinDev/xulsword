@@ -380,6 +380,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
           error = true;
         }
         zReader.close(fileArray[f]);
+        tempCONF.permissions = FPERM; // zReader sets permissions!
         
         // then read the conf file and get the MinimumVersion entry
         var minimumVersion = 0;
@@ -455,6 +456,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
           error = true;
         }
         zReader.close(fileArray[f]);
+        tempXPI.permissions = FPERM; // zReader sets permissions!
         
         // then unzip the extension to get install.rdf
         if (!error) {
@@ -469,6 +471,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
             error = true;
           }
           zReader.close(tempXPI);
+          tempInstallRDF.permissions = FPERM; // zReader sets permissions!
         }
         
         // finally read the install.rdf to get the version and minVersion
@@ -749,6 +752,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     return {reset:HARDRESET, success:false, remove:false};
   }
   zReader.close(aZip);
+  inflated.permissions = FPERM; // zReader sets permissions!
 
   //Now perform any operations with the newly installed file
   switch (type) {
@@ -1072,6 +1076,7 @@ function getConfInfo(aZip, aEntry, zReader) {
   try {zReader.extract(aEntry, tconf);}
   catch (er) {}
   zReader.close(aZip);
+  tconf.permissions = FPERM; // zReader sets permissions!
   
   ret.modName = readParamFromConf(tconf, "ModuleName");
   ret.modPath = cleanDataPathDir(readParamFromConf(tconf, "DataPath"));

@@ -46,7 +46,6 @@ Set cFiles1=^
  "%sword%\src\mgr\encfiltmgr.cpp"^
  "%sword%\src\modules\common\entriesblk.cpp"^
  "%sword%\src\utilfuns\ftpparse.c"^
- "%sword%\src\mgr\ftptrans.cpp"^
  "%sword%\src\modules\filters\gbffootnotes.cpp"^
  "%sword%\src\modules\filters\gbfheadings.cpp"^
  "%sword%\src\modules\filters\gbfhtml.cpp"^
@@ -61,14 +60,10 @@ Set cFiles1=^
  "%sword%\src\modules\filters\gbfwebif.cpp"^
  "%sword%\src\modules\filters\gbfwordjs.cpp"^
  "%sword%\src\modules\filters\greeklexattribs.cpp"^
- "%sword%\src\utilfuns\zlib\gzio.c"^
  "%sword%\src\modules\comments\hrefcom\hrefcom.cpp"^
- "%sword%\src\utilfuns\zlib\infblock.c"^
- "%sword%\src\utilfuns\zlib\infcodes.c"^
  "%sword%\src\utilfuns\zlib\inffast.c"^
  "%sword%\src\utilfuns\zlib\inflate.c"^
  "%sword%\src\utilfuns\zlib\inftrees.c"^
- "%sword%\src\utilfuns\zlib\infutil.c"^
  "%sword%\src\modules\filters\latin1utf16.cpp"^
  "%sword%\src\modules\filters\latin1utf8.cpp"^
  "%sword%\src\keys\listkey.cpp"^
@@ -84,15 +79,12 @@ Set cFiles1=^
  "%sword%\src\modules\filters\osisplain.cpp"^
  "%sword%\src\modules\filters\osisredletterwords.cpp"^
  "%sword%\src\modules\filters\osisrtf.cpp"^
- "%sword%\src\modules\filters\osisruby.cpp"^
  "%sword%\src\modules\filters\osisscripref.cpp"^
  "%sword%\src\modules\filters\osisstrongs.cpp"^
  "%sword%\src\modules\filters\osisvariants.cpp"^
  "%sword%\src\modules\filters\osiswebif.cpp"^
  "%sword%\src\modules\filters\osiswordjs.cpp"^
  "%sword%\src\modules\filters\papyriplain.cpp"^
- "%sword%\src\modules\filters\plainfootnotes.cpp"^
- "%sword%\src\modules\filters\plainhtml.cpp"^
  "%sword%\src\modules\comments\rawcom\rawcom.cpp"^
  "%sword%\src\modules\comments\rawcom4\rawcom4.cpp"^
  "%sword%\src\modules\comments\rawfiles\rawfiles.cpp"^
@@ -171,6 +163,13 @@ Set cFiles1=^
  "%sword%\src\modules\filters\utf8nfkd.cpp"^
  "%sword%\src\modules\filters\utf8transliterator.cpp"^
  "%sword%\src\modules\filters\utf8utf16.cpp"^
+ "%sword%\src\modules\filters\osisenum.cpp"^
+ "%sword%\src\modules\filters\osisxlit.cpp"^
+ "%sword%\src\modules\filters\osisglosses.cpp"^
+ "%sword%\src\modules\filters\teixhtml.cpp"^
+ "%sword%\src\modules\filters\scsuutf8.cpp"^
+ "%sword%\src\modules\common\xzcomprs.cpp"^
+ "%sword%\src\modules\common\bz2comprs.cpp"^
  "%sword%\src\utilfuns\utilxml.cpp"^
  "%sword%\src\keys\versekey.cpp"^
  "%sword%\src\keys\versetreekey.cpp"^
@@ -192,7 +191,7 @@ Set cFiles1=^
  "%sword%\src\mgr\localemgr.cpp"^
  "%sword%\src\mgr\markupfiltmgr.cpp"^
  "%sword%\src\mgr\swmgr.cpp"^
- "%sword%\src\mgr\versemgr.cpp"^
+ "%sword%\src\mgr\versificationmgr.cpp"^
  "%sword%\src\utilfuns\zlib\untgz.c"^
  "%sword%\src\mgr\stringmgr.cpp"^
  "%sword%\src\utilfuns\utilstr.cpp"
@@ -209,7 +208,6 @@ Set lFiles1=^
  ".\%objDIR%\encfiltmgr.obj"^
  ".\%objDIR%\entriesblk.obj"^
  ".\%objDIR%\ftpparse.obj"^
- ".\%objDIR%\ftptrans.obj"^
  ".\%objDIR%\gbffootnotes.obj"^
  ".\%objDIR%\gbfheadings.obj"^
  ".\%objDIR%\gbfhtml.obj"^
@@ -224,14 +222,10 @@ Set lFiles1=^
  ".\%objDIR%\gbfwebif.obj"^
  ".\%objDIR%\gbfwordjs.obj"^
  ".\%objDIR%\greeklexattribs.obj"^
- ".\%objDIR%\gzio.obj"^
  ".\%objDIR%\hrefcom.obj"^
- ".\%objDIR%\infblock.obj"^
- ".\%objDIR%\infcodes.obj"^
  ".\%objDIR%\inffast.obj"^
  ".\%objDIR%\inflate.obj"^
  ".\%objDIR%\inftrees.obj"^
- ".\%objDIR%\infutil.obj"^
  ".\%objDIR%\installmgr.obj"^
  ".\%objDIR%\latin1utf16.obj"^
  ".\%objDIR%\latin1utf8.obj"^
@@ -249,15 +243,12 @@ Set lFiles1=^
  ".\%objDIR%\osisplain.obj"^
  ".\%objDIR%\osisredletterwords.obj"^
  ".\%objDIR%\osisrtf.obj"^
- ".\%objDIR%\osisruby.obj"^
  ".\%objDIR%\osisscripref.obj"^
  ".\%objDIR%\osisstrongs.obj"^
  ".\%objDIR%\osisvariants.obj"^
  ".\%objDIR%\osiswebif.obj"^
  ".\%objDIR%\osiswordjs.obj"^
  ".\%objDIR%\papyriplain.obj"^
- ".\%objDIR%\plainfootnotes.obj"^
- ".\%objDIR%\plainhtml.obj"^
  ".\%objDIR%\rawcom.obj"^
  ".\%objDIR%\rawcom4.obj"^
  ".\%objDIR%\rawfiles.obj"^
@@ -337,10 +328,17 @@ Set lFiles2=^
  ".\%objDIR%\utf8nfkd.obj"^
  ".\%objDIR%\utf8transliterator.obj"^
  ".\%objDIR%\utf8utf16.obj"^
+ ".\%objDIR%\osisenum.obj"^
+ ".\%objDIR%\bz2comprs.obj"^
+ ".\%objDIR%\osisxlit.obj"^
+ ".\%objDIR%\osisglosses.obj"^
+ ".\%objDIR%\teixhtml.obj"^
+ ".\%objDIR%\xzcomprs.obj"^
+ ".\%objDIR%\scsuutf8.obj"^
  ".\%objDIR%\utilstr.obj"^
  ".\%objDIR%\utilxml.obj"^
  ".\%objDIR%\versekey.obj"^
- ".\%objDIR%\versemgr.obj"^
+ ".\%objDIR%\versificationmgr.obj"^
  ".\%objDIR%\versetreekey.obj"^
  ".\%objDIR%\zcom.obj"^
  ".\%objDIR%\zipcomprs.obj"^
