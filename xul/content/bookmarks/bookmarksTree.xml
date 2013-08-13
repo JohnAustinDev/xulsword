@@ -883,7 +883,8 @@
                       treechildren CSS selectors (some of which are dynamically created by initCSS()) !-->
                     <treecell label="rdf:http://www.xulsword.com/bookmarks/rdf#Name" properties="rdf:http://www.xulsword.com/bookmarks/rdf#NameLocale" src="rdf:http://www.xulsword.com/bookmarks/rdf#Icon"/>
                     <treecell label="rdf:http://www.xulsword.com/bookmarks/rdf#Note" properties="rdf:http://www.xulsword.com/bookmarks/rdf#NoteLocale" />
-                    <treecell label="rdf:http://www.xulsword.com/bookmarks/rdf#VerseText" properties="rdf:http://www.xulsword.com/bookmarks/rdf#ModuleName" />
+                    <!-- the "m" before "rdf:" is necessary since these properties cannot begin with a digit, but some module names do. !-->
+                    <treecell label="rdf:http://www.xulsword.com/bookmarks/rdf#VerseText" properties="mrdf:http://www.xulsword.com/bookmarks/rdf#ModuleName" />
                     <treecell label="rdf:http://www.xulsword.com/bookmarks/rdf#CreationDate" />
                     <treecell label="rdf:http://www.xulsword.com/bookmarks/rdf#ModifiedDate" />
                   </treerow>

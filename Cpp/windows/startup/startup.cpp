@@ -27,7 +27,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
   wsprintf(commandLine, COMMAND_LINE, wlpCmdLine);
   wsprintf(rundir, L"%s", RUN_DIR);
   int success = CreateProcessW(NULL, commandLine, NULL, NULL, false, CREATE_NEW_PROCESS_GROUP, NULL, rundir, &si, &pi);
-  //std::wcout << L"success=" << success << L", commandLine:" << commandLine << L", rundir:" << rundir << '\n'; 
+  std::wcout << L"success=" << success << L", commandLine:" << commandLine << L", rundir:" << rundir << '\n'; 
   
   return 0;
 }
