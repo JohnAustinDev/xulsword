@@ -458,7 +458,11 @@ body[isWindow="true"] .sbwin {
 /* PRINTING STYLES */
 @media print {
 
-#chooser {
+#chooser,
+#chbutton_open,
+.sbpin,
+.sbwin,
+.nbsizer {
   display:none !important;
 }
 .tab {

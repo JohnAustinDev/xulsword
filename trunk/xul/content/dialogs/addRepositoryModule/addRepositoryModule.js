@@ -249,7 +249,7 @@ function onLoad() {
     this.removeAttribute("editing");
   };
 
-  RepoProgress.value = "10";
+  RepoProgress.value = "0";
   
   window.setTimeout("checkInternetPermission();", 1);
 }
@@ -293,8 +293,13 @@ function checkInternetPermission() {
 		}
   }
 
-  if (!haveInternetPermission) window.close();
-  else loadMasterRepoList(true); // will call loadXulswordRepositories() when successfully finished
+  if (!haveInternetPermission) {
+		window.close();
+		return;
+	}
+	
+	RepoProgress.value = "10";
+  loadMasterRepoList(true); // will call loadXulswordRepositories() when successfully finished
 }
 
 function loadXulswordRepositories(moduleDataAlreadyDeleted) {

@@ -526,8 +526,10 @@
                     <treerow >
                       <!-- the "properties" attribute is used to style xul trees, in conjunction with  
                       treechildren CSS selectors (which are dynamically created by initCSS()) !-->
+                      <!-- the "m" before "rdf:" is necessary since these properties cannot begin with 
+                      a digit, but some module names do. !-->
                       <treecell label="rdf:http://www.xulsword.com/tableofcontents/rdf#Name" 
-                          properties="rdf:http://www.xulsword.com/tableofcontents/rdf#Module"/>
+                          properties="mrdf:http://www.xulsword.com/tableofcontents/rdf#Module"/>
                     </treerow>
                   </treeitem>
                 </treechildren>

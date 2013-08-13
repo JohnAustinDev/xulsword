@@ -186,6 +186,7 @@
                             persist="hidden width ordinal value"
                             sort="rdf:http://www.xulsword.com/repository/rdf#Status"
                             sortDirection="ascending" />
+              <splitter class="tree-splitter"/>
               <treecol id="ModLang" flex="2" ignoreincolumnpicker="true" 
                             class="defhide sortDirectionIndicator" 
                             persist="hidden width ordinal value"

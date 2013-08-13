@@ -422,7 +422,9 @@ function getModuleConfig(mod) {
 
   // Save the CSS style rules for this module, which can be appended to CSS stylesheets
   moduleConfig.StyleRule = createStyleRule(".cs-" + mod, moduleConfig);
-  moduleConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(" + mod + ")", moduleConfig);
+  // "m" is prepended to mod because some module names begin with a digit,
+  // which would otherwise result in an invalid selector
+  moduleConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(m" + mod + ")", moduleConfig);
   
   return moduleConfig;
 }
