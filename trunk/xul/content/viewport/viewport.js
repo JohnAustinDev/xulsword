@@ -44,11 +44,8 @@ function initViewPort() {
     ViewPort = new ViewPortObj(MainWindow.ViewPort);
     
     ViewPort.init();
-    
-    // use our pin info from MainWindow.Texts in case some windows are pinned
-    Texts.pinnedDisplay = MainWindow.Texts.pinnedDisplay;
       
-    Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null, true, true, true]);
+    Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null, 1, 1, 1]);
     
     MainWindow.printBrowserLoaded();
     
@@ -63,6 +60,7 @@ function initViewPort() {
     document.getElementsByTagName("body")[0].setAttribute("isWindow", "true");
     
     ViewPort = new ViewPortObj(MainWindow.ViewPort);
+    document.getElementById("viewportbody").innerHTML = MainWindow.ViewPort.ownerDocument.getElementById("viewportbody").innerHTML;
     
     // our copied viewport will only have one text window showing: towindow...
     // also pin towindow so it becomes independant from MainWindow.ViewPort
@@ -70,7 +68,7 @@ function initViewPort() {
     if (!MainWindow.ViewPort.hasOwnProperty("towindow") || !MainWindow.ViewPort.towindow)
         towindow = 1;
     else towindow = MainWindow.ViewPort.towindow;
-        
+
     for (var w=1; w<=NW; w++) {
       if (w == towindow) {
         
@@ -87,10 +85,11 @@ function initViewPort() {
       document.getElementById("text" + w).style.display = "none";
       document.getElementById("tabs" + w).style.display = "none";
     }
-    
+
+    this.ShowChooser = false;
     ViewPort.init();
-    
-    Texts.update(null, null, [null, true, true, true]);
+
+    ViewPort.update(false);
     
   }
   
@@ -98,39 +97,36 @@ function initViewPort() {
 
 function ViewPortObj(viewPortObj) {
   
-  this.windowName = window.name;
-  this.ownerDocument = document;
-  this.ShowOriginal = [];
-  this.IsPinned = [];
-  this.NoteBoxHeight = [];
-  this.MaximizeNoteBox = [];
-  this.Module = [];
-  this.Key = [];
-  
   // If we have a passed viewPortObj, then copy it. Otherwise create 
   // a ViewPortObj from global preferences.
   if (viewPortObj) {
-    
-    this.ShowChooser = false;
-    this.NumDisplayedWindows = viewPortObj.NumDisplayedWindows;
-        
-    // copy viewport properties from old to new
-    const copyViewProps = ["ShowOriginal", "IsPinned", "NoteBoxHeight", "MaximizeNoteBox", "Module", "Key"];
-    for (var w=1; w<=NW; w++) {
-      for (var c=0; c<copyViewProps.length; c++) {
-        this[copyViewProps[c]][w] = eval(uneval(viewPortObj[copyViewProps[c]][w]));
-      }
+
+    // copy viewPortObj members (excluding functions) to our ViewPort
+    for (var p in viewPortObj) {
+      if (typeof(viewPortObj[p]) == "function") continue;
+      this[p] = eval(uneval(viewPortObj[p]));
+    }
+
+    // copy MainWindow.Texts members (excluding functions) to our Texts
+    var objTexts = viewPortObj.ownerDocument.defaultView.Texts;
+    for (var p in objTexts) {
+      if (typeof(objTexts[p]) == "function") continue;
+      Texts[p] = eval(uneval(objTexts[p]));
     }
     
-    // copy text properties from old to new
-    const copyTextProps = ["scrollTypeFlag", "hilightFlag", "scrollDelta", "display", "pinnedDisplay", "footnotes"];
-    for (var t=0; t<copyTextProps.length; t++) {
-      Texts[copyTextProps[t]] = eval(uneval(viewPortObj.ownerDocument.defaultView.Texts[copyTextProps[t]]));
-    }
-        
+    this.windowName = window.name;
+    this.ownerDocument = document;
   }
   
   else {
+    this.windowName = window.name;
+    this.ownerDocument = document;
+    this.ShowOriginal = [];
+    this.IsPinned = [];
+    this.NoteBoxHeight = [];
+    this.MaximizeNoteBox = [];
+    this.Module = [];
+    this.Key = [];
 
     // Insure we have first time startup defaults in prefs:
     getPrefOrCreate("ShowChooser","Bool",true);

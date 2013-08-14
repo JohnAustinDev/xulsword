@@ -507,9 +507,7 @@
 <!-- VIEWPORT DECK PLACED HERE !-->
   <vbox flex="100%">
     <deck id="viewport-deck" flex="100%">
-      
-      <!-- <iframe id="aboutConfig" flex="100%" src="about:config" /> !-->
-      
+
       <hbox id="frameset" chooser="bible" flex="100%"> <!-- chooser attribute may be set to "bible", "book", or "hide" -->
         <vbox id="genBookChooser" pack="start" flex="1" align="end">
           <spacer height="36"/>

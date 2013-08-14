@@ -517,13 +517,15 @@ function scriptDblClick(e) {
 var PopupPosition = 0;
 function popupDrag(type, e) {
   var popupTX = document.getElementById("npopupTX");
-  
+
   switch (type) {
     
   case "down":
     if (e.target.className == 'draghandle' || e.target === popupTX) {
       PopupPosition = e.clientY;
       e.target.style.cursor = "move";
+      e.stopPropagation();
+      e.preventDefault();
     }
     break;
     
@@ -536,7 +538,8 @@ function popupDrag(type, e) {
     npopupTX.style.top = Number(puptop + e.clientY - PopupPosition) + "px";
     PopupPosition = e.clientY;
     
-    e.stopPropagation(); // block any higher handlers
+    e.stopPropagation();
+    e.preventDefault();
     break;
     
   case "up":
@@ -774,6 +777,7 @@ function previousPage(w) {
     Texts.pinnedDisplay[w].bk = v.bk;
     Texts.pinnedDisplay[w].ch = v.ch;
     Texts.pinnedDisplay[w].vs = v.vs;
+    Texts.pinnedDisplay[w].lv = v.vs;
     Texts.update(SCROLLTYPEEND, HILIGHTNONE);
   }
   else {
@@ -820,9 +824,12 @@ function nextPage(w) {
     Texts.pinnedDisplay[w].bk = v.bk;
     Texts.pinnedDisplay[w].ch = v.ch;
     Texts.pinnedDisplay[w].vs = v.vs;
+    Texts.pinnedDisplay[w].lv = v.vs;
+    Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
   }
-  else {Location.setLocation(v.mod, v.bk + "." + v.ch + "." + v.vs);}
-    
-  MainWindow.Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+  else {
+    Location.setLocation(v.mod, v.bk + "." + v.ch + "." + v.vs);
+    MainWindow.Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+  }
 }
 
