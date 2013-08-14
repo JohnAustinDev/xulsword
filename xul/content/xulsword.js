@@ -43,7 +43,12 @@ function loadedXUL() {
   //are initialized.
   try {prefs.getIntPref("ViewPortHeight");}
   catch (er) {
-    window.setTimeout("loadedXUL2()",0);
+    document.getElementById('main-viewport').style.visibility = 'hidden';
+    window.setTimeout(
+    "\
+      loadedXUL2(); \
+      document.getElementById('main-viewport').style.visibility = ''; \
+    ",0);
     return;
   }
   
@@ -1138,7 +1143,7 @@ function handleOptions(elem) {
         }
       }
       
-      Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null, true, true, true]);
+      Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null, 1, 1, 1]);
       break;
     
     case "about":

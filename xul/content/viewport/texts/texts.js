@@ -108,12 +108,23 @@ Texts = {
     // need to also change our current scrollTypeFlag to SCROLLTYPEBEG
     if (this.scrollTypeFlag == SCROLLTYPEENDSELECT) this.scrollTypeFlag = SCROLLTYPEBEG;
     
-    // If this is the MainWindow.Text object which we just updated, then go and update any
-    // other windowed ViewPort Text objects as well now. Plus update navigator and history.
     if (this === MainWindow.Texts) {
+
+      // If this is the MainWindow.Text object which we just updated, then go and update any
+      // other unpinned windowed ViewPort Text objects. Plus update navigator and history.
       for (var x=0; x<MainWindow.AllWindows.length; x++) {
+        if (MainWindow.AllWindows[x] === MainWindow) continue;
         if (!(/^viewport/).test(MainWindow.AllWindows[x].name)) continue;
+
+        for (w=1; w<=NW; w++) {
+          if (MainWindow.AllWindows[x].ViewPort.IsPinned[w]) {
+            if (!save.p3) save.p3 = [null, 0, 0, 0];
+            save.p3[w] = -1; // don't update if pinned
+          }
+        }
+
         MainWindow.AllWindows[x].Texts.update(save.p1, save.p2, save.p3);
+
       }
       
       MainWindow.updateNavigator();
@@ -141,6 +152,7 @@ Texts = {
       display.bk  = this.pinnedDisplay[w].bk;
       display.ch  = this.pinnedDisplay[w].ch;
       display.vs  = this.pinnedDisplay[w].vs;
+      display.lv  = this.pinnedDisplay[w].lv;
       loc = display.bk + "." + display.ch + "." + display.vs;
       hilightFlag = HILIGHTNONE;
     }
@@ -156,7 +168,7 @@ Texts = {
     var textUpdated = false;
     var check = ["mod", "bk", "ch", "globalOptions", "ShowOriginal", "ShowFootnotesAtBottom", 
                 "ShowCrossrefsAtBottom", "ShowUserNotesAtBottom", "columns"];
-                
+
     if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
       textUpdated = true;
 //jsdump("Reading text from libsword w" + w);
@@ -204,7 +216,7 @@ Texts = {
         }
         
       }
-//jsdump("reading w" + w + ": " + display.ch);     
+//jsdump("reading w" + w + ": " + display.ch);
       var ti = BibleTexts.read(w, display);
         
       var hd = t.getElementsByClassName("hd")[0];
@@ -259,6 +271,7 @@ Texts = {
       display.bk  = this.pinnedDisplay[w].bk;
       display.ch  = this.pinnedDisplay[w].ch;
       display.vs  = this.pinnedDisplay[w].vs;
+      display.lv  = this.pinnedDisplay[w].lv;
       loc = display.bk + "." + display.ch + "." + display.vs;
       hilightFlag = HILIGHTNONE;
     }
@@ -573,7 +586,7 @@ Texts = {
 
   scroll2Verse: function(w, l, scrollTypeFlag) {
     if (!l) return true;
-//jsdump("SCROLLING w=" + w + ", l=" + l +", type=" + scrollTypeFlag);    
+//jsdump("SCROLLING w=" + w + ", l=" + l +", type=" + scrollTypeFlag);
     var t = document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];
     var mod = ViewPort.Module[w];
