@@ -1,6 +1,8 @@
 // cdrun.cpp
 //
 
+#include <iostream> // for wcout
+
 #include "stdafx.h"
 #include "appInfo.h"
 
@@ -64,6 +66,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     wsprintf(commandLine, L"\"%s\" %s", PATH_TO_SETUP, wlpCmdLine);
     success = CreateProcessW(NULL, commandLine, NULL, NULL, false, CREATE_NEW_PROCESS_GROUP, NULL, NULL, &si, &pi);
   }
+  std::wcout << L"success=" << success << L", commandLine:" << commandLine << L", rundir:" << rundir << '\n';
   
   return 0;
 }

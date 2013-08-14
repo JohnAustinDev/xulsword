@@ -97,7 +97,6 @@ Set cFiles1=^
  "%sword%\src\modules\texts\rawtext4\rawtext4.cpp"^
  "%sword%\src\modules\common\rawverse.cpp"^
  "%sword%\src\modules\common\rawverse4.cpp"^
- "%sword%\src\utilfuns\regex.c"^
  "%sword%\src\utilfuns\roman.cpp"^
  "%sword%\src\modules\filters\rtfhtml.cpp"
  
@@ -261,7 +260,6 @@ Set lFiles1=^
  ".\%objDIR%\rawtext4.obj"^
  ".\%objDIR%\rawverse.obj"^
  ".\%objDIR%\rawverse4.obj"^
- ".\%objDIR%\regex.obj"^
  ".\%objDIR%\roman.obj"^
  ".\%objDIR%\rtfhtml.obj"
 
