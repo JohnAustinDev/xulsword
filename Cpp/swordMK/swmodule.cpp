@@ -452,38 +452,32 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 
 			const TCHAR *stopWords[] = { 0 };
 			standard::StandardAnalyzer analyzer(stopWords);
-		  wchar_t wbuff[5000];
-			lucene_utf8towcs(wbuff, istr, 5000);
-			q = QueryParser::parse(wbuff, _T("content"), &analyzer);
-// IMPORTANT...
-			if (q) {
-				(*percent)(20, percentUserData);
-// IMPORTANT...
-        h = is->search(q);
-				(*percent)(80, percentUserData);
+			q = QueryParser::parse((wchar_t *)utf8ToWChar(istr).getRawData(), _T("content"), &analyzer);
+			(*percent)(20, percentUserData);
+			h = is->search(q);
+			(*percent)(80, percentUserData);
 
 			// iterate thru each good module position that meets the search
 			bool checkBounds = getKey()->isBoundSet();
-        for (unsigned long i = 0; i < (unsigned long)h->length(); i++) {
-          Document &doc = h->doc(i);
+			for (unsigned long i = 0; i < (unsigned long)h->length(); i++) {
+				Document &doc = h->doc(i);
 
-          // set a temporary verse key to this module position
-          char buff[5000];
-          lucene_wcstoutf8(buff, doc.get(_T("key")), 5000); //TODO Does a key always accept utf8?
-          *resultKey = buff;
+				// set a temporary verse key to this module position
+				char buff[5000];
+				lucene_wcstoutf8(buff, doc.get(_T("key")), 5000); //TODO Does a key always accept utf8?
+				*resultKey = buff;
 
-          // check to see if it sets ok (within our bounds) and if not, skip
-          if (checkBounds) {
-            *getKey() = *resultKey;
-            if (*getKey() != *resultKey) {
-              continue;
-            }
-          }
-          listKey << *resultKey;
-          listKey.getElement()->userData = (__u64)((__u32)(h->score(i)*100));
-        }
-				(*percent)(98, percentUserData);
+				// check to see if it sets ok (within our bounds) and if not, skip
+				if (checkBounds) {
+					*getKey() = *resultKey;
+					if (*getKey() != *resultKey) {
+						continue;
+					}
+				}
+				listKey << *resultKey;
+				listKey.getElement()->userData = (__u64)((__u32)(h->score(i)*100));
 			}
+			(*percent)(98, percentUserData);
 		}
 		SWCATCH (...) {
 			q = 0;

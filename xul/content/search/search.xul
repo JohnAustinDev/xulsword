@@ -196,14 +196,17 @@
               
             </groupbox>
             
-            <reference-dropdown id="bible-translator" 
-                disabled="true" flex="1" 
-                onlybibles="true" 
-                hidebook="true" 
-                hidechapter="true" 
-                hideverse="true" 
-                hidelastverse="true" 
-                menuheight="400px"/>
+            <hbox id="bible-translator-cont" align="center">
+							<label value="&search.Texts;"/>
+							<reference-dropdown id="bible-translator" 
+									disabled="true" flex="1" 
+									onlybibles="true" 
+									hidebook="true" 
+									hidechapter="true" 
+									hideverse="true" 
+									hidelastverse="true" 
+									menuheight="400px"/>
+            </hbox>
           
           </vbox>
           

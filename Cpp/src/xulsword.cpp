@@ -43,6 +43,15 @@
 #include "osisdictionary.h"
 #include "versemaps.h"
 
+#include <CLucene.h>
+using namespace lucene::index;
+using namespace lucene::analysis;
+using namespace lucene::util;
+using namespace lucene::store;
+using namespace lucene::document;
+using namespace lucene::queryParser;
+using namespace lucene::search;
+
 #define MAXSTRING 1000
 #define MAXDICTSIZE 20000 /*ISBE is 9350 entries*/
 #define MODVERSION "xulswordVersion"
@@ -1321,21 +1330,33 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
     workKeys = &SearchList;
   }
   
-  // COMPOUND SEARCH- currently a phrase search with nearly the speed of a multiword search
-  if (type == -5) {
-    listkeyInt = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);
-    if (listkeyInt.getCount() > 0) {
-      //searchString.Insert("[^[:alpha:]]",0);
-      //searchString.Append("[^[:alpha:]]");
-      listkeyInt.setPersist(true);
-      module->setKey(listkeyInt);
-      //*workKeys = module->search(searchString.get(), 0, flags, 0, 0, &savePercentComplete, NULL);
-      *workKeys = module->search(searchString.c_str(), -1, flags, 0, 0, &savePercentComplete, NULL);
-    }
-  }
-  // SIMPLE SEARCH
-  else {*workKeys = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);}
-  
+  // Since SWORD does not check for a null Clucene QueryParser, I'll check 
+  // it here before searching. Otherwise, searching for words like "and", 
+  // "or", or some Unicode chars like "←" will cause a crash in swmodule.cpp!
+  Query *q  = 0;
+  const TCHAR *stopWords[] = { 0 };
+	standard::StandardAnalyzer analyzer(stopWords);
+	wchar_t wbuff[5000];
+	lucene_utf8towcs(wbuff, searchString.c_str(), 5000);
+	q = QueryParser::parse(wbuff, _T("content"), &analyzer);
+			
+	if (q) {
+		// COMPOUND SEARCH- currently a phrase search with nearly the speed of a multiword search
+		if (type == -5) {
+			listkeyInt = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);
+			if (listkeyInt.getCount() > 0) {
+				//searchString.Insert("[^[:alpha:]]",0);
+				//searchString.Append("[^[:alpha:]]");
+				listkeyInt.setPersist(true);
+				module->setKey(listkeyInt);
+				//*workKeys = module->search(searchString.get(), 0, flags, 0, 0, &savePercentComplete, NULL);
+				*workKeys = module->search(searchString.c_str(), -1, flags, 0, 0, &savePercentComplete, NULL);
+			}
+		}
+		// SIMPLE SEARCH
+		else {*workKeys = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);}
+	 } 
+ 
   // 2048 is Sort By Relevance flag
   if ((flags & 2048) != 2048) workKeys->sort();
 
