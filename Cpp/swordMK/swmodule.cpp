@@ -452,7 +452,17 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 
 			const TCHAR *stopWords[] = { 0 };
 			standard::StandardAnalyzer analyzer(stopWords);
-			q = QueryParser::parse((wchar_t *)utf8ToWChar(istr).getRawData(), _T("content"), &analyzer);
+			//q = QueryParser::parse((wchar_t *)utf8ToWChar(istr).getRawData(), _T("content"), &analyzer);
+			
+			// SWORD's utf8ToWChar() relies on getUniCharFromUTF8() which assumes that 
+			// wchar_t is a 32 bit UTF-32 character (like Linux). But Window's wchar_t is 
+			// instead a 16 bit UTF-16LE character (when compiled with _UNICODE). So 
+			// CLucene's lucene_utf8towcs() is used instead.
+
+			wchar_t wbuff[5000];
+			lucene_utf8towcs(wbuff, istr, 5000);
+			q = QueryParser::parse(wbuff, _T("content"), &analyzer);
+                        
 			(*percent)(20, percentUserData);
 			h = is->search(q);
 			(*percent)(80, percentUserData);
@@ -993,6 +1003,8 @@ signed char SWModule::createSearchFramework(void (*percent)(char, void *), void 
 	SWBuf c;
 
 	const int MAX_CONV_SIZE = 1024 * 1024;
+
+	// buffer used by lucene_utf8towcs
 	const int MAX_FIELD_SIZE = 1024 * 128;
 	wchar_t wbuff[MAX_FIELD_SIZE];
 
