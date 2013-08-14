@@ -230,6 +230,9 @@ sub writeCompileDeps($) {
     # don't use -no-remote because otherwise .xsm and .xsb onclick installation won't work.
     print INFO "#define COMMAND_LINE L\"\\\".\\\\$Name\\\\xulrunner\\\\$WINprocess\\\" -app ..\\\\xulsword\\\\application.ini -profile ..\\\\profile %s\"\n";
   }
+  print INFO "\n// The following are used by cdrun.cpp\n";
+  print INFO "#define PROC_NAME L\"$WINprocess\"\n";
+  print INFO "#define KEYADDRESS L\"Software\\\\$Vendor\\\\$Name\"\n";
   close(INFO);
   
   &Log("----> Writing path info for C++ compiler.\n");

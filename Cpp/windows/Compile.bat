@@ -43,7 +43,8 @@ Set cFiles=%SECURITYCPP%^
  "%MK%\Cpp\src\windows\dirent.cpp"^
  "%MK%\Cpp\src\windows\fileops.cpp"^
  "%MK%\Cpp\swordMK\swmodule.cpp"^
- "%MK%\Cpp\swordMK\filemgr.cpp"
+ "%MK%\Cpp\swordMK\filemgr.cpp"^
+ "%MK%\Cpp\swordMK\regex.c"
  
 Set lFlags=libsword.lib libclucene.lib /nologo /dll /incremental:no /manifest /manifestfile:"Release\xulsword.dll.manifest" /implib:"Release\xulsword.lib" /pdb:"Release/xulsword.pdb" /out:".\Release\xulsword.dll" /libpath:"..\swordMK\windows\lib\Release" /libpath:"..\cluceneMK\windows\lib\Release"
 Set lFiles=%ldbg% %SECURITYOBJ%^
@@ -52,7 +53,8 @@ Set lFiles=%ldbg% %SECURITYOBJ%^
  ".\Release\dirent.obj"^
  ".\Release\fileops.obj"^
  ".\Release\swmodule.obj"^
- ".\Release\filemgr.obj"
+ ".\Release\filemgr.obj"^
+ ".\Release\regex.obj"
 
 echo on
 cl.exe %cFlags% %cFiles%
