@@ -517,6 +517,7 @@ function scriptDblClick(e) {
 var PopupPosition = 0;
 function popupDrag(type, e) {
   var popupTX = document.getElementById("npopupTX");
+  var popupBOX = document.getElementById("npopupBOX");
 
   switch (type) {
     
@@ -532,10 +533,10 @@ function popupDrag(type, e) {
   case "move":
     if (!PopupPosition) return;
     
-    var puptop = Number(window.getComputedStyle(npopupTX).top.replace("px", ""));
+    var puptop = Number(window.getComputedStyle(popupBOX).top.replace("px", ""));
     if (isNaN(puptop)) return;
     
-    npopupTX.style.top = Number(puptop + e.clientY - PopupPosition) + "px";
+    popupBOX.style.top = Number(puptop + e.clientY - PopupPosition) + "px";
     PopupPosition = e.clientY;
     
     e.stopPropagation();
