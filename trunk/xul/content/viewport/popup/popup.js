@@ -36,6 +36,7 @@ function PopupObj(popupobj) {
 
   this.npopup = document.getElementById("npopup");
   this.npopupRL = document.getElementById("npopupRL");
+  this.npopupBOX = document.getElementById("npopupBOX");
   this.npopupTX = document.getElementById("npopupTX");
   this.showPopupID = null;
     
@@ -45,7 +46,7 @@ function PopupObj(popupobj) {
 
     // copy popupobj additional members (excluding functions) to the new object
     for (var p in popupobj) {
-      if ((/(npopup|npopupRL|npopupTX|showPopupID)/).test(p)) continue;
+      if ((/(npopup|npopupRL|npopupBOX|npopupTX|showPopupID)/).test(p)) continue;
       if (typeof(popupobj[p]) == "function") continue;
       this[p] = eval(uneval(popupobj[p]));
     }
@@ -220,10 +221,10 @@ function PopupObj(popupobj) {
     
     // Normal popup updating itself...
     if (updatingPopup) {
-      this.npopupTX.scrollTop = 0;
+      this.npopupBOX.scrollTop = 0;
       
       // move popup to insure it's under the current mouse position
-      this.npopupTX.style.top = Number(e.clientY - this.parentY - 20) + "px";
+      this.npopupBOX.style.top = Number(e.clientY - this.parentY - 20) + "px";
       this.checkPopupPosition(e);
       return true;
     }
@@ -259,7 +260,7 @@ function PopupObj(popupobj) {
         this.elem.insertBefore(this.npopup, this.elem.firstChild);
   
     // reset Javascript pupTXtop and store initial location relative to mouse
-    this.npopupTX.style.top = ""; // reset so that CSS always controls initial location!
+    this.npopupBOX.style.top = ""; // reset so that CSS always controls initial location!
 
     // getting parentY is tricky. Using offsetTop is difficult and must 
     // also take scrollTop into account. Using e.clientY is not exact,
@@ -278,15 +279,15 @@ function PopupObj(popupobj) {
     const margin = 30; // allow margin between bottom of window
     
     var pupRLtop = Number(window.getComputedStyle(this.npopupRL).top.replace("px", ""));
-    var pupTXtop = Number(window.getComputedStyle(this.npopupTX).top.replace("px", ""));
+    var pupBOXtop = Number(window.getComputedStyle(this.npopupBOX).top.replace("px", ""));
     if (isNaN(pupRLtop)) pupRLtop = 0;
-    if (isNaN(pupTXtop)) pupTXtop = 0;
+    if (isNaN(pupBOXtop)) pupBOXtop = 0;
 
-    var pupbot = this.parentY + pupRLtop + pupTXtop + this.npopupTX.offsetHeight;
+    var pupbot = this.parentY + pupRLtop + pupBOXtop + this.npopupBOX.offsetHeight;
 
     if (pupbot > window.innerHeight) {
-      pupTXtop = window.innerHeight - this.parentY - pupRLtop - this.npopupTX.offsetHeight;
-      this.npopupTX.style.top = Number(pupTXtop - margin) + "px";
+      pupBOXtop = window.innerHeight - this.parentY - pupRLtop - this.npopupBOX.offsetHeight;
+      this.npopupBOX.style.top = Number(pupBOXtop - margin) + "px";
     }
   };
 
@@ -328,7 +329,7 @@ function PopupObj(popupobj) {
     // on Linux, window.innerHeight = outerHeight = height of entire window viewport, NOT including the operating system frame
     var f = window.frameElement;
     var wintop = f.ownerDocument.defaultView;
-    var offset = getOffset(this.npopupTX);
+    var offset = getOffset(this.npopupBOX);
     X = Number(f.boxObject.x + offset.left);
     Y = Number(f.boxObject.y + offset.top);
     //jsdump("INFO:" + f.boxObject.y + "-" + MainWindow.outerHeight + "+" + v.height + "=" + Y);
@@ -337,8 +338,8 @@ function PopupObj(popupobj) {
     var p = "chrome,resizable,dependant";
     p += ",left=" + Number(wintop.screenX + X);
     p += ",top=" + Number(wintop.screenY + Y);
-    p += ",width=" + this.npopupTX.offsetWidth;
-    p += ",height=" + this.npopupTX.offsetHeight;
+    p += ",width=" + this.npopupBOX.offsetWidth;
+    p += ",height=" + this.npopupBOX.offsetHeight;
     AllWindows.push(wintop.open("chrome://xulsword/content/viewport/popup/popup.xul", "popup" + String(Math.random()), p));
 
   };

@@ -25,9 +25,9 @@
   position:relative;
 }
 #npopupTX {
+  background:rgb(245,220,255);
   font-size: 1.1em;
   cursor:default;
-  background:rgb(245,220,255);
   padding: 10px 20px 20px 14px;
 }
 
@@ -66,7 +66,7 @@ body[chromedir="rtl"] .nb #npopup {
   left:auto;
   right:30px;
 }
-.text #npopup #npopupTX {
+.text #npopup #npopupBOX {
   position:absolute;
   overflow:auto;
   width:calc(100% - 60px);
@@ -81,7 +81,7 @@ body[chromedir="rtl"] .nb #npopup {
   top:-20px;
   left:-20px;
 }
-.text[textdir="rtl"] #npopup #npopupTX {
+.text[textdir="rtl"] #npopup #npopupBOX {
   margin: 0px 0px 10px 20px;
   padding: 22px 14px 20px 20px;
   
@@ -98,7 +98,7 @@ be in px for Javascript. */
   top:-12px;
   height:calc(100px + 12px);
 }
-.text .sn #npopup #npopupTX {
+.text .sn #npopup #npopupBOX {
   top:100px;
 }
 
