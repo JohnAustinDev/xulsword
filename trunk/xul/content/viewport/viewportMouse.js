@@ -278,9 +278,9 @@ function scriptClick(e) {
     
   case "listenlink":
     MainWindow.Player.w = w;
-    MainWindow.Player.version = Texts.display[w].mod;
-    MainWindow.Player.chapter = Texts.display[w].ch;
-    MainWindow.Player.book = Texts.display[w].bk;
+    MainWindow.Player.version = p.mod;
+    MainWindow.Player.chapter = p.ch;
+    MainWindow.Player.book = p.bk;
     MainWindow.beginAudioPlayer();
     break;
     
@@ -524,7 +524,7 @@ function popupDrag(type, e) {
   case "down":
     if (e.target.className == 'draghandle' || e.target === popupTX) {
       PopupPosition = e.clientY;
-      e.target.style.cursor = "move";
+      popupTX.style.cursor = "move";
       e.stopPropagation();
       e.preventDefault();
     }
@@ -545,7 +545,7 @@ function popupDrag(type, e) {
     
   case "up":
     PopupPosition = 0;
-    e.target.style.cursor = "";
+    popupTX.style.cursor = "";
     break;
     
   }

@@ -131,7 +131,8 @@ const TextClasses = {
   nlist:  [ { re:new RegExp(/^(\w+)\.([^\.]*)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),              ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,     mod:7, osisref:3 },
             { re:new RegExp(/^(un)\.([^\.]*)\.[^\.]*\.(.*)\.(\d+)\.([^\.]+)$/),                    ntype:1, nid:2, bk:null, ch:3,    vs:4,     lv:4,     mod:5 } ],
   slist:  [ { re:new RegExp(/^([^\.]*)\.([^\.]*)$/),                                                               bk:null, ch:1,    vs:null, lv:null,  mod:2 },
-            { re:new RegExp(/^(([^\.]*)\.(\d+)\.(\d+))\.([^\.]*)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 } ]
+            { re:new RegExp(/^(([^\.]*)\.(\d+)\.(\d+))\.([^\.]*)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 } ],
+  listenlink: [ { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                           bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 } ]
 };
 
 // This function will accept either raw HTML or a DOM element as "elem"

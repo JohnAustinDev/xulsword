@@ -143,6 +143,7 @@ function getAudioRelatedFile(dirName, fileName) {
  ***********************************************************************/ 
   
 function beginAudioPlayer() {
+	jsdump("beginAudioPlayer:" + MainWindow.Player.version + ", " + MainWindow.Player.chapter + " " + MainWindow.Player.book);
   document.getElementById("historyButtons").hidden = true;
   document.getElementById("player").hidden = false;
   document.getElementById("playerFrame").contentDocument.defaultView.location.reload();

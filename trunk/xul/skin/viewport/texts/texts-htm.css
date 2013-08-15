@@ -82,6 +82,9 @@
   width:45px;
   height:37px;
 }
+.listenlink[hasAudio="true"] {
+	visibility:visible;
+}
 .listenlink:hover {
   background:url('chrome://xulsword/skin/images/listen1.gif');
   cursor:pointer;
