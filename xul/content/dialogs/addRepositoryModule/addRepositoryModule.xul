@@ -59,6 +59,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/addRepositoryModule/utilities.js"/>
 
   <vbox id="body" flex="1" showRepositoryList="false" >
   
@@ -72,7 +73,7 @@
       <vbox id="languageListContainer" persist="width" >
         <label class="arm-label" id="languageListLabel">&menu.options.language;</label>
         <tree id="languageListTree" flex="1" flags="dont-build-content" seltype="single" 
-                hidecolumnpicker="true" onselect="changeModuleListLanguage();"
+                hidecolumnpicker="true" onselect="updateModuleList();"
                 datasources="rdf:null" ref="http://www.xulsword.com/repository/LanguageList" >
           <treecols>
             <treecol id="Language" flex="1" primary="true"
@@ -94,7 +95,7 @@
           </template>
         </tree>
         
-        <button class="arm-go-back" oncommand="toggleLanguageList(); changeModuleListLanguage('all');" />
+        <button class="arm-go-back" oncommand="toggleLanguageList(); updateModuleList('all');" />
         
       </vbox>
       

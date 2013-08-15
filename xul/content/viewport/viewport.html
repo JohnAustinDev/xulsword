@@ -50,153 +50,159 @@
       onmouseout="chooserMouse(event)" 
       onclick="chooserMouse(event)">
   
-  <div id="chbutton_open"></div>
-        
-  <div id="viewport">
-    <div id="chooser">
-      <div>
-        
-        <div id="fadetop"></div>
-        
-        <div id="biblechooser" showing="nt">
-          <div class="biblechooser-cell">
-            <div id="testaments">
-              <div class="testaments-row">
-                <div id="testament_ot" class="testament">
-                  <div id="chbutton_close"></div>
-                  <script>
-                  var text = XSBundle.getString('OTtext');
-                  if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
-                  else document.write("<img src=\"chrome://xulsword/locale/OT.png\">");
-                  </script>
-                </div>
-              </div>
-              <div class="testaments-row">
-                <div id="testament_nt" class="testament">
-                  <script>
-                  var text = XSBundle.getString('NTtext');
-                  if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
-                  else document.write("<img src=\"chrome://xulsword/locale/NT.png\">");
-                  </script>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="biblechooser-cell">
-            <div id="biblebooks_ot" class="biblebooks">
-              <script>drawOTbooks();</script>         
-            </div>
-            <div id="biblebooks_nt" class="biblebooks">
-              <script>drawNTbooks();</script>
-            </div>
-          </div>
-        </div>
-        
-        <div id="fadebot"></div>
-        
-      </div>
-    </div>
-  
+		<div id="chbutton_open"></div>
+					
+		<div id="viewport">
+			<div id="chooser">
+				<div>
+					
+					<div id="fadetop"></div>
+					
+					<div id="biblechooser" showing="nt">
+						<div class="biblechooser-cell">
+							<div id="testaments">
+								<div class="testaments-row">
+									<div id="testament_ot" class="testament">
+										<div id="chbutton_close"></div>
+										<script>
+										var text = XSBundle.getString('OTtext');
+										if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
+										else document.write("<img src=\"chrome://xulsword/locale/OT.png\">");
+										</script>
+									</div>
+								</div>
+								<div class="testaments-row">
+									<div id="testament_nt" class="testament">
+										<script>
+										var text = XSBundle.getString('NTtext');
+										if (!text.match(/^\s*$/)) document.write(verticalWrite(text));
+										else document.write("<img src=\"chrome://xulsword/locale/NT.png\">");
+										</script>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="biblechooser-cell">
+							<div id="biblebooks_ot" class="biblebooks">
+								<script>drawOTbooks();</script>         
+							</div>
+							<div id="biblebooks_nt" class="biblebooks">
+								<script>drawNTbooks();</script>
+							</div>
+						</div>
+					</div>
+					
+					<div id="fadebot"></div>
+					
+				</div>
+			</div>
+		
 
-    <div id="textarea" windows="show3">
-      <div id="tabrow" onmouseover="tabMouse(event);" onmouseout="tabMouse(event);" onclick="tabMouse(event);">
-        
-        <div id="tabrowf">
-          <div id="tabs1" class="tabs" pinned="false" noBibleTabs="false"></div>
-          <div id="tabs2" class="tabs" pinned="false" noBibleTabs="false"></div>
-          <div id="tabs3" class="tabs" pinned="false" noBibleTabs="false"></div>
-        </div>
-        
-      </div>
-      
-      <div id="textrow"
-          onclick="scriptClick(event)" 
-          ondblclick="scriptDblClick(event)" 
-          onmouseover="scriptMouseOver(event)" 
-          onmouseout="scriptMouseOut(event)" 
-          onmousemove="bbMouseMove(event);" 
-          onmouseup="bbMouseUp(event);">
-          
-        <div id="text1" class="text userFontSize" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
-            footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
-          <div class="textf">
-            <div class="sbcontrols">
-              <div class="sbpin" id="sbpin1"></div>
-              <div class="sbwin" id="sbwin1"></div>
-            </div>
-            <div class="hd"></div>
-            <div class="sb"></div>
-            <div class="nbc">
-              <div class="nbf">
-                <div class="bb" onmousedown="bbMouseDown(event);"></div>
-                <div class="nbsizer"></div>
-                <div id="note1" class="nb"></div>
-              </div>
-            </div>
-            <div class="fr"></div>
-          </div>
-        </div>
-        
-        <div id="text2" class="text userFontSize" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
-            footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
-          <div class="textf">
-            <div class="sbcontrols">
-              <div class="sbpin" id="sbpin2"></div>
-              <div class="sbwin" id="sbwin2"></div>
-            </div>
-            <div class="hd"></div>
-            <div class="sb"></div>
-            <div class="nbc">
-              <div class="nbf">
-                <div class="bb" onmousedown="bbMouseDown(event);"></div>
-                <div class="nbsizer"></div>
-                <div id="note2" class="nb"></div>
-              </div>
-            </div>
-            <div class="fr"></div>
-          </div>
-        </div>
-        
-        <div id="text3" class="text userFontSize" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
-            footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
-          <div class="textf">
-            <div class="sbcontrols">
-              <div class="sbpin" id="sbpin3"></div>
-              <div class="sbwin" id="sbwin3"></div>
-            </div>
-            <div class="hd"></div>
-            <div class="sb"></div>
-            <div class="nbc">
-              <div class="nbf">
-                <div class="bb" onmousedown="bbMouseDown(event);"></div>
-                <div class="nbsizer"></div>
-                <div id="note3" class="nb"></div>
-              </div>
-            </div>
-            <div class="fr"></div>
-          </div>
-        </div>
-        
-      </div>
-        
-    </div>
-  </div>
+			<div id="textarea" windows="show3">
+				<div id="tabrow" onmouseover="tabMouse(event);" onmouseout="tabMouse(event);" onclick="tabMouse(event);">
+					
+					<div id="tabrowf">
+						<div id="tabs1" class="tabs" pinned="false" noBibleTabs="false"></div>
+						<div id="tabs2" class="tabs" pinned="false" noBibleTabs="false"></div>
+						<div id="tabs3" class="tabs" pinned="false" noBibleTabs="false"></div>
+					</div>
+					
+				</div>
+				
+				<div id="textrow"
+						onclick="scriptClick(event)" 
+						ondblclick="scriptDblClick(event)" 
+						onmouseover="scriptMouseOver(event)" 
+						onmouseout="scriptMouseOut(event)" 
+						onmousemove="bbMouseMove(event);" 
+						onmouseup="bbMouseUp(event);">
+						
+					<div id="text1" class="text userFontSize" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
+							footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
+						<div class="textf">
+							<div class="sbcontrols">
+								<div class="sbpin" id="sbpin1"></div>
+								<div class="sbwin" id="sbwin1"></div>
+							</div>
+							<div class="hd"></div>
+							<div class="sb"></div>
+							<div class="nbc">
+								<div class="nbf">
+									<div class="bb" onmousedown="bbMouseDown(event);"></div>
+									<div class="nbsizer"></div>
+									<div id="note1" class="nb"></div>
+								</div>
+							</div>
+							<div class="fr"></div>
+						</div>
+					</div>
+					
+					<div id="text2" class="text userFontSize" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
+							footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
+						<div class="textf">
+							<div class="sbcontrols">
+								<div class="sbpin" id="sbpin2"></div>
+								<div class="sbwin" id="sbwin2"></div>
+							</div>
+							<div class="hd"></div>
+							<div class="sb"></div>
+							<div class="nbc">
+								<div class="nbf">
+									<div class="bb" onmousedown="bbMouseDown(event);"></div>
+									<div class="nbsizer"></div>
+									<div id="note2" class="nb"></div>
+								</div>
+							</div>
+							<div class="fr"></div>
+						</div>
+					</div>
+					
+					<div id="text3" class="text userFontSize" textdir="ltr" moduleType="Texts" columns="show1" pinned="false" 
+							footnotesEmpty="false" footnotesMaximized="false" CanDoNextPage="false" CanDoPreviousPage="false">
+						<div class="textf">
+							<div class="sbcontrols">
+								<div class="sbpin" id="sbpin3"></div>
+								<div class="sbwin" id="sbwin3"></div>
+							</div>
+							<div class="hd"></div>
+							<div class="sb"></div>
+							<div class="nbc">
+								<div class="nbf">
+									<div class="bb" onmousedown="bbMouseDown(event);"></div>
+									<div class="nbsizer"></div>
+									<div id="note3" class="nb"></div>
+								</div>
+							</div>
+							<div class="fr"></div>
+						</div>
+					</div>
+					
+				</div>
+					
+			</div>
+		</div>
 
-  <div id="npopup" class="userFontSize cs-Program" isWindow="false" puptype="fn">
-    <div id="npopupRL">
-      <div id="npopupBOX">
-        <div id="npopupTX"
-          onmouseover="scriptMouseOver(event)"
-          onmouseout="scriptMouseOut(event)"
-          onclick="scriptClick(event)"
-          ondblclick="scriptDblClick(event)"
-          onmousedown="popupDrag('down', event);"
-          onmousemove="popupDrag('move', event);"
-          onmouseup  ="popupDrag('up',   event);">
-        </div>
-      </div>
-    </div>
-  </div>
+		<div id="npopup" class="userFontSize cs-Program" isWindow="false" puptype="fn">
+			
+			<!-- used for relative positioning of popup !-->
+			<div id="npopupRL">
+				
+				<!-- used for absolute positioning of popup box !-->
+				<div id="npopupBOX"> 
+				
+					<!-- used for popup text container !-->
+					<div id="npopupTX"
+						onmouseover="scriptMouseOver(event)"
+						onmouseout="scriptMouseOut(event)"
+						onclick="scriptClick(event)"
+						ondblclick="scriptDblClick(event)"
+						onmousedown="popupDrag('down', event);"
+						onmousemove="popupDrag('move', event);"
+						onmouseup  ="popupDrag('up',   event);">
+					</div>
+				</div>
+			</div>
+		</div>
 
   </body>
 </html>

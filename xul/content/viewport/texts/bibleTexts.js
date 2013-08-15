@@ -182,7 +182,7 @@ BibleTexts = {
     html +=   "</div>";
 
     html +=   "<div class=\"chapinfo\">";
-    html +=     "<div class=\"listenlink\"></div>";
+    html +=     "<div class=\"listenlink\" title=\"" + [bk, ch, 1, mod].join(".") + "\" hasAudio=\"false\"></div>";
     html +=     "<div class=\"introlink\" empty=\"" + (intro ? "false":"true") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
     html +=   "</div>";
     
@@ -191,7 +191,7 @@ BibleTexts = {
     html += "<div class=\"head-line-break\"></div>";
     
     html += "<div class=\"introtext\" empty=\"" + (intro ? "false":"true") + "\">" + (intro ? intro :"") + "</div>";
-    
+   
     return html;
   },
 
@@ -482,10 +482,8 @@ BibleTexts = {
   updateAudioLinks: function(w) {
     var icons = document.getElementById("text" + w).getElementsByClassName("listenlink");
     for (var i = 0; i < icons.length; ++i) {
-      var icon = icons[i];
-//icon.style.visibility = "visible"; continue;
-      if (AudioDirs.length && MainWindow.getAudioForChapter(Texts.display[w].mod, Texts.display[w].bk, Texts.display[w].ch))
-          icon.style.visibility = "visible";
+      var p = getElementInfo(icons[i]);
+			icons[i].setAttribute("hasAudio", (AudioDirs.length && MainWindow.getAudioForChapter(p.mod, p.bk, p.ch) ? "true":"false"));
     }
   }
 
