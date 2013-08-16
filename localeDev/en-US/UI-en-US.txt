@@ -319,7 +319,7 @@
 [add-repository-module.error]: Error
 [add-repository-module.repositoryTreeTitle]: Module Sources
 [add-repository-module.internetPromptTitle]: Download a Bible from the internet?
-[add-repository-module.internetMessage]: Bible related websites on the Internet will be accessed.\nInternet access is monitored by authorities in some places.\nIf this is a concern, you may click "No" to cancel this operation.
+[add-repository-module.internetMessage]: You are about to download Biblical texts from the Internet.\nYour Internet activity may be easily monitored by authorities.\nIf this is a concern, you may click "No" to cancel this operation.
 [add-repository-module.rememberMyChoice]: Remember my choice?
 [add-repository-module.wishToContinue]: Do you want to continue?
 [add-repository-module.moduleType_SimpleText]: Text
@@ -328,4 +328,3 @@
 [add-repository-module.moduleType_Comms]: Commentary
 [add-repository-module.moduleType_Dicts]: Dictionary
 [add-repository-module.moduleType_Genbks]: Book
-

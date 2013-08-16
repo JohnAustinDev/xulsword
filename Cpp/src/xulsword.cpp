@@ -1667,10 +1667,13 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
 /********************************************************************
 UncompressTarGz
 *********************************************************************/
+#include <iostream>
+#include <fstream>
+
 #include "../sword-svn/src/utilfuns/zlib/untgz.c"
 void xulsword::uncompressTarGz(const char *tarGzPath, const char *aDirPath) {
 	
-	int fd = open(tarGzPath, O_RDONLY);
+	int fd = open(tarGzPath, O_RDONLY|O_BINARY);
 	if (fd < 1) {
 		xsThrow("uncompressTarGz: Couldn't open %s.", tarGzPath);
 		return;		
@@ -1682,6 +1685,18 @@ void xulsword::uncompressTarGz(const char *tarGzPath, const char *aDirPath) {
 		xsThrow("uncompressTarGz: Couldn't gzdopen %s.", tarGzPath);
 		return;
 	}
+	
+	#define BIGNUM 500000
+	char buf[BIGNUM];
+	int read = gzread(f, buf, BIGNUM);
+	SWLog::getSystemLog()->logDebug("read=%i", read);
+
+  ofstream myfile;
+  myfile.open("C:\\home\\dev\\gz_output", ios::out | ios::app | ios::binary);
+  myfile.write(buf, read);
+  myfile.close();
+  
+  gzrewind(f);
 	
 	if (untar(f, aDirPath)) {
 		xsThrow("uncompressTarGz: Couldn't untar to %s.", aDirPath);

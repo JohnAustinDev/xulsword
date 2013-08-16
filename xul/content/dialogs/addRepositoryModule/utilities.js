@@ -209,14 +209,17 @@ ARMU = {
       RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
       RDFC.RemoveElement(mod, (mods.hasMoreElements() ? false:true));
       
-      // delete mod attributes
-      var arcsOut = MLDS.ArcLabelsOut(mod);
-      while (arcsOut.hasMoreElements()) {
-        var thisarc = arcsOut.getNext();
-        var targs = MLDS.GetTargets(mod, thisarc, true);
-        while (targs.hasMoreElements()) {
-          MLDS.Unassert(mod, thisarc, targs.getNext());
-        }
+      ARMU.deleteResource(mod);
+    }
+  },
+  
+  deleteResource: function(res) {
+    var arcsOut = MLDS.ArcLabelsOut(res);
+    while (arcsOut.hasMoreElements()) {
+      var thisarc = arcsOut.getNext();
+      var targs = MLDS.GetTargets(res, thisarc, true);
+      while (targs.hasMoreElements()) {
+        MLDS.Unassert(res, thisarc, targs.getNext());
       }
     }
   },
