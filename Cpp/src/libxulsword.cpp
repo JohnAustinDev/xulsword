@@ -143,6 +143,10 @@ DLLEXPORT char *GetModuleInformation(xulsword *inst, const char *mod, const char
   return inst->getModuleInformation(mod, paramname);
 }
 
+DLLEXPORT void UncompressTarGz(xulsword *inst, const char *tarGzPath, const char *aDirPath) {
+  return inst->uncompressTarGz(tarGzPath, aDirPath);
+}
+
 DLLEXPORT char *Translate(xulsword *inst, const char *text, const char *localeName) {
   return inst->translate(text, localeName);
 }

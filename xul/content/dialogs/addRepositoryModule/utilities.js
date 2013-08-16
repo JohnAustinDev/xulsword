@@ -21,44 +21,6 @@
 ////////////////////////////////////////////////////////////////////////
 
 ARMU = {
-  // this function blocks (is not intended for asynchronous use)
-  unCompressTarGz: function(aTarGz, aDir) {
-    if (OPSYS == "Linux") {
-
-      var script = "\
-#!/bin/sh" + NEWLINE + "\
-cd \"" + aDir.path + "\"" + NEWLINE + "\
-tar -xf \"" + aTarGz.path + "\"" + NEWLINE;
-
-      var sfile = aDir.clone();
-      sfile.append("untargz.sh");
-      writeFile(sfile, script, true);
-      
-      var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);
-      process.init(sfile);
-      process.run(true, [], 0);
-    }
-    
-    // for Windows, 7za.exe must be included with xulsword (250kb compressed)
-    else if (OPSYS == "Windows") {
-      var w7z = getSpecialDirectory("xsProgram");
-      w7z.append("7za.exe");
-      
-      var script = "\
-Set objShell = CreateObject(\"WScript.Shell\")" + NEWLINE + "\
-objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aTarGz.path + "\"\" -o\"\"" + aDir.path + "\"\"\", 0, True" + NEWLINE + "\
-objShell.Run \"\"\"" + w7z.path + "\"\" x \"\"" + aDir.path + "\\" +  aTarGz.leafName.replace(".gz", "") + "\"\" -o\"\"" + aDir.path + "\"\"\", 0, True" + NEWLINE;
-
-      var sfile = aDir.clone();
-      sfile.append("untargz.vbs");
-      writeFile(sfile, script, true, "UTF-16LE"); // Windows vbs files with non-ASCII paths must be UTF-16LE encoded!
-      
-      var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);
-      process.init(sfile);
-      process.run(true, [], 0);
-    }
-    else throw ("ERROR: ARMU.unCompressTarGz not implemented for this op-sys");
-  },
 
   getRepositoryUrlTempDir: function(url) {
     var file = TEMP.clone();

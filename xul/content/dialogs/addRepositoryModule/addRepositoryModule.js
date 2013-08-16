@@ -606,8 +606,7 @@ function applyRepositoryManifest(resource, manifest) {
   var tmpDir = ARMU.getRepositoryUrlTempDir(url);
   if (!tmpDir.exists()) tmpDir.create(tmpDir.DIRECTORY_TYPE, DPERM);
   
-  // nsIZipReader only handles ZIP- ARGGGG!
-  ARMU.unCompressTarGz(manifest, tmpDir);
+  LibSword.uncompressTarGz(manifest.path, tmpDir.path);
   
   tmpDir.append("mods.d");
   
