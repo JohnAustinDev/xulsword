@@ -36,6 +36,7 @@
 #include "osisxhtml.h"
 #include "gbfxhtml.h"
 #include "thmlxhtml.h"
+#include "filemgr.h"
 
 #include "canon_synodal0.h"	// Russian Synodal sword-1.6.1 v11n system
 #include "canon_east.h"
@@ -1667,42 +1668,13 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
 /********************************************************************
 UncompressTarGz
 *********************************************************************/
-#include <iostream>
-#include <fstream>
 
 #include "../sword-svn/src/utilfuns/zlib/untgz.c"
 void xulsword::uncompressTarGz(const char *tarGzPath, const char *aDirPath) {
-	
-	int fd = open(tarGzPath, O_RDONLY|O_BINARY);
-	if (fd < 1) {
-		xsThrow("uncompressTarGz: Couldn't open %s.", tarGzPath);
-		return;		
-	}
-	
-	gzFile	f;
-	f = gzdopen(fd, "rb");
-	if (f == NULL) {
-		xsThrow("uncompressTarGz: Couldn't gzdopen %s.", tarGzPath);
-		return;
-	}
-	
-	#define BIGNUM 500000
-	char buf[BIGNUM];
-	int read = gzread(f, buf, BIGNUM);
-	SWLog::getSystemLog()->logDebug("read=%i", read);
 
-  ofstream myfile;
-  myfile.open("C:\\home\\dev\\gz_output", ios::out | ios::app | ios::binary);
-  myfile.write(buf, read);
-  myfile.close();
-  
-  gzrewind(f);
-	
-	if (untar(f, aDirPath)) {
-		xsThrow("uncompressTarGz: Couldn't untar to %s.", aDirPath);
-	}
-	
-	gzclose(f); // also closes fd
+	FileDesc *fd = FileMgr::getSystemFileMgr()->open(tarGzPath, FileMgr::RDONLY);
+	untargz(fd->getFd(), aDirPath);
+	FileMgr::getSystemFileMgr()->close(fd);
 
 	return;
 }
