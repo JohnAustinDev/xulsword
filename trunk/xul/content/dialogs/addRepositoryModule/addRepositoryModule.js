@@ -83,18 +83,6 @@ function onLoad() {
   RP.ModuleListID       = RP.ROOT + "/ModuleList";
   RP.CrossWireRepoID    = RP.ROOT + "/CrossWire";
   
-  RP.Enabled    = RDF.GetResource(RP.REPOSITORY+"Enabled");
-  RP.Name       = RDF.GetResource(RP.REPOSITORY+"Name");
-  RP.Site       = RDF.GetResource(RP.REPOSITORY+"Site");
-  RP.Path       = RDF.GetResource(RP.REPOSITORY+"Path");
-  RP.Status     = RDF.GetResource(RP.REPOSITORY+"Status");
-  RP.Style      = RDF.GetResource(RP.REPOSITORY+"Style");
-  RP.Url        = RDF.GetResource(RP.REPOSITORY+"Url");
-  RP.ModuleType = RDF.GetResource(RP.REPOSITORY+"ModuleType");
-  RP.Show       = RDF.GetResource(RP.REPOSITORY+"Show");
-  RP.Type       = RDF.GetResource(RP.REPOSITORY+"Type");
-  RP.ModuleUrl  = RDF.GetResource(RP.REPOSITORY+"ModuleUrl");
-  
   RP.XSM_ModuleType   = RDF.GetLiteral("xsm_module");
   RP.SWORD_ModuleType = RDF.GetLiteral("sword_module");
   RP.LanguageListType = RDF.GetLiteral("language");
@@ -144,7 +132,8 @@ function onLoad() {
   }
   
   // look for a default data source, load it, using it to augment other 
-  // data sources. This is used to apply installation specific repos and modules. 
+  // data sources. This is used to apply installation specific repos and 
+  // modules which are found in a xsDefaults/RepositoryRDF file. 
   var defDS = null;
   var defRDF = getSpecialDirectory("xsDefaults");
   defRDF.append(RepositoryRDF);
@@ -161,7 +150,7 @@ function onLoad() {
         var rinfo = {};
         var arcsOut = defDS.ArcLabelsOut(repo);
         while (arcsOut.hasMoreElements()) {
-          var arc = arcsOut.getNext();
+          var arc = arcsOut.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
           var attrib = arc.ValueUTF8.replace(RP.REPOSITORY, "");
           var val = ARMU.getResourceLiteral(defDS, repo, attrib);
           rinfo[attrib] = val;
@@ -172,12 +161,12 @@ function onLoad() {
       RDFC.Init(defDS, RDF.GetResource(RP.ModuleListID));
       var mods = RDFC.GetElements();
       while (mods.hasMoreElements()) {
-        var mod = mods.getNext();
+        var mod = mods.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
         RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
         RDFC.AppendElement(mod);
         arcsOut = defDS.ArcLabelsOut(mod);
         while (arcsOut.hasMoreElements()) {
-          arc = arcsOut.getNext();
+          arc = arcsOut.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
           var targ = defDS.GetTarget(mod, arc, true);
           MLDS.Assert(mod, arc, targ, true);
         }
@@ -190,7 +179,7 @@ function onLoad() {
   var ress = RPDS.GetAllResources();
   while(ress.hasMoreElements()) {
     var res = ress.getNext();
-    var enabled = RPDS.GetTarget(res, RP.Enabled, true);
+    var enabled = RPDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY+"Enabled"), true);
     if (enabled) {
       enabled = enabled.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
       ARMU.setResourceAttribute(RPDS, res, "Status", (enabled == "false" ? OFF:dString(1) + "%"));
@@ -315,7 +304,7 @@ function loadXulswordRepositories(moduleDataAlreadyDeleted) {
   while(repos.hasMoreElements()) {
     var res = repos.getNext();
     
-    if (RPDS.GetTarget(res, RP.Enabled, true) != RP.True) continue;
+    if (RPDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY+"Enabled"), true) != RP.True) continue;
     
     repoArray.push(res);
   }
@@ -337,7 +326,7 @@ function loadRepositoryArray(resourceArray, moduleDataAlreadyDeleted) {
     // don't load unknown or uninitialized Urls
     if ((/^(\s*|\?)$/).test(ARMU.getResourceLiteral(RPDS, resourceArray[i], "Url"))) continue;
     
-    repoUrlArray.push(RPDS.GetTarget(resourceArray[i], RP.Url, true));
+    repoUrlArray.push(RPDS.GetTarget(resourceArray[i], RDF.GetResource(RP.REPOSITORY+"Url"), true));
     
     RepositoriesLoading++;
 
@@ -401,11 +390,11 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
   
   // get URL for masterRepoList.conf
   var site = RDF.GetResource(RP.masterRepoListID);
-  site = RPDS.GetTarget(site, RP.Site, true);
+  site = RPDS.GetTarget(site, RDF.GetResource(RP.REPOSITORY+"Site"), true);
   site = site.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
 
   var path = RDF.GetResource(RP.masterRepoListID);
-  path = RPDS.GetTarget(path, RP.Path, true);
+  path = RPDS.GetTarget(path, RDF.GetResource(RP.REPOSITORY+"Path"), true);
   path = path.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
   
   var url = "ftp://" + site + path;
@@ -662,14 +651,14 @@ function applyConfFile(file, repoUrl) {
   else if ((/^(audio)$/i).test(moduleType)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Audio");
   moduleType = moduleType.replace(/\:$/, ""); // previous UI option had ":" at the end...
   if (is_XSM_module && moduleType != "Audio") {moduleType = moduleType + " XSM";}
-  MLDS.Assert(newModRes, RP.ModuleType, RDF.GetLiteral(moduleType), true);
+  MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"ModuleType"), RDF.GetLiteral(moduleType), true);
   
   // add XSM/SWORD Type
   if (is_XSM_module) {
-    MLDS.Assert(newModRes, RP.Type, RP.XSM_ModuleType, true);
+    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"Type"), RP.XSM_ModuleType, true);
   }
   else {
-    MLDS.Assert(newModRes, RP.Type, RP.SWORD_ModuleType, true);
+    MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"Type"), RP.SWORD_ModuleType, true);
   }
   
   // write this .conf info to the new module resource
@@ -744,7 +733,7 @@ function applyConfFile(file, repoUrl) {
   }
   
   // add Url (of module's repository)
-  MLDS.Assert(newModRes, RP.Url, RDF.GetLiteral(repoUrl), true);
+  MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"Url"), RDF.GetLiteral(repoUrl), true);
   // fix up and add DataPath and add ModuleUrl (of module)
   var moduleUrl;
   if ((/^(\.|\/)/).test(dataPath)) {
@@ -754,14 +743,14 @@ function applyConfFile(file, repoUrl) {
   }
   else moduleUrl = dataPath;
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "DataPath"), RDF.GetLiteral(dataPath), true);
-  MLDS.Assert(newModRes, RP.ModuleUrl, RDF.GetLiteral(moduleUrl), true);
+  MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"ModuleUrl"), RDF.GetLiteral(moduleUrl), true);
   // add .conf file name (NOT always lower case of module name!)
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "ConfFileName"), RDF.GetLiteral(file.leafName), true);
   // add LangReadable (so language can be read in moduleListTree)
   var langReadable = ARMU.getLangReadable(ARMU.getConfEntry(filedata, "Lang"));
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langReadable), true);
   // add Status
-  MLDS.Assert(newModRes, RP.Status, RDF.GetLiteral(dString(0) + "%"), true);
+  MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"Status"), RDF.GetLiteral(dString(0) + "%"), true);
   
   // add the new resource to the Module List
   RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
@@ -916,7 +905,7 @@ function downloadModule(modResource, modContentData) {
     
   var repoUrl = ARMU.getResourceLiteral(MLDS, modResource, "Url");
   var moduleDir = ARMU.getModuleDownloadDirectory(modResource);
-  var is_XSM_module = (MLDS.GetTarget(modResource, RP.Type, true) == RP.XSM_ModuleType);
+  var is_XSM_module = ARMU.is_XSM_module(modResource);
 
   var modPath = "";
   if (!is_XSM_module) {
@@ -1021,7 +1010,7 @@ function downloadModule(modResource, modContentData) {
         
         if (this.data.count == 0) {
           
-          var is_XSM_module = (MLDS.GetTarget(this.myResource, RP.Type, true) == RP.XSM_ModuleType);
+          var is_XSM_module = ARMU.is_XSM_module(this.myResource);
           
           if (!this.data.status) {
           
@@ -1146,9 +1135,9 @@ function toggleReposOnOff() {
   var deleteModDataUrl = [];
   for (var i=0; i<selectedResources.length; i++) {
     
-    deleteModDataUrl.push(RPDS.GetTarget(selectedResources[i], RP.Url, true));
+    deleteModDataUrl.push(RPDS.GetTarget(selectedResources[i], RDF.GetResource(RP.REPOSITORY+"Url"), true));
   
-    var enabled = RPDS.GetTarget(selectedResources[i], RP.Enabled, true);
+    var enabled = RPDS.GetTarget(selectedResources[i], RDF.GetResource(RP.REPOSITORY+"Enabled"), true);
     
     var newval = (enabled ? null:"true");
     if (!newval) {
@@ -1237,7 +1226,7 @@ function initiateModuleDownloads() {
   // fetch files into separate module directories so that in the end, 
   // only complete downloads will be installed.
   for (var m=0; m<mods.length; m++) {
-    var is_XSM_module = (MLDS.GetTarget(mods[m], RP.Type, true) == RP.XSM_ModuleType);
+    var is_XSM_module = ARMU.is_XSM_module(mods[m]);
     
     var moduleUrl = ARMU.getResourceLiteral(MLDS, mods[m], "ModuleUrl");
     var repoUrl = ARMU.getResourceLiteral(MLDS, mods[m], "Url");
@@ -1387,7 +1376,7 @@ function onModuleListTreeSelect() {
   var xsmUrls = [];
   for (var m=0; m < mods.length; m++) {
     var mod = mods[m];
-    var is_XSM_module = (MLDS.GetTarget(mod, RP.Type, true) == RP.XSM_ModuleType);
+    var is_XSM_module = ARMU.is_XSM_module(mod);
     if (!is_XSM_module) continue;
     var url = ARMU.getResourceLiteral(MLDS, mod, "ModuleUrl");
     if (!url) continue;
@@ -1441,7 +1430,7 @@ function writeModuleInfos() {
   for (var m=0; m<mods.length; m++) {
     var submods = [];
     
-    var is_XSM_module = (MLDS.GetTarget(mods[m], RP.Type, true) == RP.XSM_ModuleType);
+    var is_XSM_module = ARMU.is_XSM_module(mods[m]);
     
     if (is_XSM_module) {
       // include all SWORD modules within this XSM module
