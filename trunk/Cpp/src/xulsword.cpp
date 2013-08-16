@@ -1665,6 +1665,34 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
 }
 
 /********************************************************************
+UncompressTarGz
+*********************************************************************/
+#include "../sword-svn/src/utilfuns/zlib/untgz.c"
+void xulsword::uncompressTarGz(const char *tarGzPath, const char *aDirPath) {
+	
+	int fd = open(tarGzPath, O_RDONLY);
+	if (fd < 1) {
+		xsThrow("uncompressTarGz: Couldn't open %s.", tarGzPath);
+		return;		
+	}
+	
+	gzFile	f;
+	f = gzdopen(fd, "rb");
+	if (f == NULL) {
+		xsThrow("uncompressTarGz: Couldn't gzdopen %s.", tarGzPath);
+		return;
+	}
+	
+	if (untar(f, aDirPath)) {
+		xsThrow("uncompressTarGz: Couldn't untar to %s.", aDirPath);
+	}
+	
+	gzclose(f); // also closes fd
+
+	return;
+}
+
+/********************************************************************
 Translate
 *********************************************************************/
 char *xulsword::translate(const char *text, const char *localeName) {

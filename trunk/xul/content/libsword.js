@@ -790,6 +790,16 @@ getModuleInformation: function(modname, paramname) {
   return str;
 },
 
+// uncompressTarGz
+//Uncompresses a .tar.gz file into aDir
+uncompressTarGz: function(tarGzPath, aDirPath) {
+  if (!this.libSwordReady("uncompressTarGz")) return;
+  if (!this.fdata.tgz)
+    this.fdata.tgz = this.libsword.declare("UncompressTarGz", ctypes.default_abi, ctypes.void_t, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char)); 
+  var cdata = this.fdata.tgz(this.inst, ctypes.char.array()(tarGzPath), ctypes.char.array()(aDirPath));
+  this.checkerror();
+},
+
 /******************************************************************************
 * LOCALE RELATED INFORMATION:
 ******************************************************************************/

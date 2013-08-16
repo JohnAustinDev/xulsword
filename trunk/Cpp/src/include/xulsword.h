@@ -181,6 +181,7 @@ class xulsword {
   void  setCipherKey(const char *mod, const char *cipherkey, bool useSecModule);
   char *getModuleList();
   char *getModuleInformation(const char *mod, const char *paramname);
+  void  uncompressTarGz(const char *tarGzPath, const char *aDirPath);
   char *translate(const char *text, const char *localeName);
 
 };
