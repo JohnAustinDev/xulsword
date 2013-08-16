@@ -55,7 +55,7 @@ ARMU = {
   getModuleInstallerZipFile: function(modResource) {
     var installZipFile = TEMP_Install.clone();
 
-    var is_XSM_module = (MLDS.GetTarget(modResource, RP.Type, true) == RP.XSM_ModuleType);
+    var is_XSM_module = ARMU.is_XSM_module(modResource);
     
     if (is_XSM_module) {
       // get leafName of ModuleUrl
@@ -132,7 +132,7 @@ ARMU = {
       var check = ["Type", "Site", "Path", "Url"];
        
       for (var i=0; i<check.length; i++) {
-        var val = RPDS.GetTarget(res, RP[check[i]], true);
+        var val = RPDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY+check[i]), true);
         if (!val) continue NextResource;
         val = val.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
         if (val != repoInfo[check[i]]) continue NextResource;
@@ -151,7 +151,7 @@ ARMU = {
     // create a new resource
     var res = (resourceID ? RDF.GetResource(resourceID):RDF.GetAnonymousResource());
     for (var p in newRepoInfo) {
-      RPDS.Assert(res, RP[p], RDF.GetLiteral(replaceASCIIcontrolChars(newRepoInfo[p])), true);
+      RPDS.Assert(res, RDF.GetResource(RP.REPOSITORY+p), RDF.GetLiteral(replaceASCIIcontrolChars(newRepoInfo[p])), true);
     }
     
     // add the new resource to our database's xulswordRepo list
@@ -169,7 +169,7 @@ ARMU = {
     // collect url info before beginning to delete (to filter modules with)
     var urls = [];
     for (var i=0; i<repoResourceArray.length; i++) {
-      urls.push(RPDS.GetTarget(repoResourceArray[i], RP.Url, true));
+      urls.push(RPDS.GetTarget(repoResourceArray[i], RDF.GetResource(RP.REPOSITORY+"Url"), true));
     }
     
     // remove from database's xulswordRepo list
@@ -201,7 +201,7 @@ ARMU = {
     while (mods.hasMoreElements()) {
       var mod = mods.getNext();
       
-      var url = MLDS.GetTarget(mod, RP.Url, true);
+      var url = MLDS.GetTarget(mod, RDF.GetResource(RP.REPOSITORY+"Url"), true);
       for (var i=0; i<repoUrlArray.length; i++) {if (url == repoUrlArray[i]) break;}
       if (i == repoUrlArray.length) continue;
       
@@ -252,7 +252,7 @@ ARMU = {
     var repos = RDFC.GetElements();
     while (repos.hasMoreElements()) {
       var repo = repos.getNext();
-      if (RPDS.GetTarget(repo, RP.Enabled, true) == RP.False) continue;
+      if (RPDS.GetTarget(repo, RDF.GetResource(RP.REPOSITORY+"Enabled"), true) == RP.False) continue;
       urls.push(ARMU.getResourceLiteral(RPDS, repo, "Url"));
     }
    
@@ -380,7 +380,7 @@ ARMU = {
 			
 			var mod = mods.getNext();
 			var mlang = ARMU.getResourceLiteral(MLDS, mod, "Lang").replace(/\-.*$/, "");
-			var is_XSM_module = (MLDS.GetTarget(mod, RP.Type, true) == RP.XSM_ModuleType);
+			var is_XSM_module = ARMU.is_XSM_module(mod);
 			
 			var show = (lang != "none" && (lang == mlang || lang == "all"));
 			
@@ -486,7 +486,7 @@ ARMU = {
           var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(v);
         }
         catch (er) {continue;}
-        var is_XSM_module = (MLDS.GetTarget(res, RP.Type, true) == RP.XSM_ModuleType);
+        var is_XSM_module = ARMU.is_XSM_module(res);
         selInfo.push( 
           { resource:res, 
             isXSM:is_XSM_module, 
@@ -583,6 +583,10 @@ ARMU = {
     if (!existingStatus || existingStatus.length < 16) existingStatus = null;
     
     ARMU.setResourceAttribute(aDS, aRes, "Status", (existingStatus ? existingStatus:status));
-  }
+  },
+  
+  is_XSM_module: function(modResource) {
+		return (MLDS.GetTarget(modResource, RDF.GetResource(RP.REPOSITORY+"Type"), true) == RP.XSM_ModuleType);
+	}
 
 };

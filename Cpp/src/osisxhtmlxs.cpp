@@ -390,9 +390,12 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// <list>
 		else if (!strcmp(tag.getName(), "list")) {
 			if((!tag.isEndTag()) && (!tag.isEmpty())) {
-				outText("<ul class=\"", buf, u);
-				outText(tag.getAttribute("type"), buf, u);
-				outText("\">\n", buf, u);
+				if (tag.getAttribute("type")) {
+					outText("<ul class=\"", buf, u);
+					outText(tag.getAttribute("type"), buf, u);
+					outText("\">\n", buf, u);
+				}
+				else outText("<ul>\n", buf, u);
 			}
 			else if (tag.isEndTag()) {
 				outText("</ul>\n", buf, u);
@@ -404,9 +407,12 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// <item>
 		else if (!strcmp(tag.getName(), "item")) {
 			if((!tag.isEndTag()) && (!tag.isEmpty())) {
-				outText("\t<li class=\"", buf, u);
-				outText(tag.getAttribute("type"), buf, u);
-				outText("\">", buf, u);
+				if (tag.getAttribute("type")) {
+					outText("<li class=\"", buf, u);
+					outText(tag.getAttribute("type"), buf, u);
+					outText("\">", buf, u);
+				}
+				else outText("\t<li>", buf, u);
 			}
 			else if (tag.isEndTag()) {
 				outText("</li>\n", buf, u);
