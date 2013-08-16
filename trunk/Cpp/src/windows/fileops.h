@@ -16,6 +16,7 @@
 #ifndef FILEOPS_INCLUDED
 #define FILEOPS_INCLUDED
 
+#include <windows.h>
 #include <stdio.h>
 #include "dirent.h"
 
@@ -37,6 +38,7 @@ char *wn_fullpath(char *absPath, const char *relPath, size_t maxlen);
 int   wn_stat64(const char *file, struct _stat64 * fileinfo);
 int   wn_stati64(const char *path, struct _stati64 *buffer);
 int   wn_unlink(const char * file);
+HANDLE wn_CreateFile(const char *file, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 const char *wn_getenv(const char *varname);
 
 #endif

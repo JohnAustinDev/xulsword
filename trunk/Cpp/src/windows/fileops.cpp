@@ -125,4 +125,11 @@ const char *wn_getenv(const char *varname)
   return utf8;
 }
 
+HANDLE wn_CreateFile(const char *file, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
+  wchar_t utf16[CL_MAX_PATH];
+  MultiByteToWideChar(CP_UTF8, 0, file, -1, utf16, CL_MAX_PATH);
+  return CreateFileW(utf16, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
 

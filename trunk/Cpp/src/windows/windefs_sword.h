@@ -44,6 +44,9 @@
 // int   wn_stat(const char *file, struct __stat * fileinfo);
 #define stat(path,stats) wn_stat64(path,stats)
 
+// HANDLE CreateFile(...)
+#define CreateFile(fileName,acess,smode,secAttribs,crdisp,flags,tfile) wn_CreateFile(fileName,acess,smode,secAttribs,crdisp,flags,tfile) // for untgz.c
+
 // int   wn_open(const char *path, int mode, int perms);
 /* the identifier "open" is used for other functions and so cannot be
    re-defined. See filemgr.cpp for manual redefinitions.

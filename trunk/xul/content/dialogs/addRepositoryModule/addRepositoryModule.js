@@ -634,25 +634,25 @@ function applyConfFile(file, repoUrl) {
   var category = ARMU.getConfEntry(filedata, "Category");
   if (getPrefOrCreate("filterQuestionableTexts", "Bool", true) && category 
       && (/(Cults|Unorthodox|Questionable)/i).test(category)) return;
-  
-  // create a new module resource and add it to the modlist
+      
+  // create a new module resource
   var newModRes = RDF.GetAnonymousResource();
-  
-  RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-  RDFC.AppendElement(newModRes);
-  
   var type, confInfo, confDefault, confType;
+  
   var dataPath = ARMU.getConfEntry(filedata, "DataPath");
-  var is_XSM_module = ((/\.(zip|xsm)$/).test(dataPath) || (/\/audio\.htm(\?|$)/).test(dataPath));
-  if (is_XSM_module) {
-    MLDS.Assert(newModRes, RP.Type, RP.XSM_ModuleType, true);
-  }
-  else {
-    MLDS.Assert(newModRes, RP.Type, RP.SWORD_ModuleType, true);
+  if (!dataPath || dataPath == NOTFOUND) {
+    ARMU.deleteResource(newModRes)
+    return;
   }
   
+  var is_XSM_module = ((/\.(zip|xsm)$/).test(dataPath) || (/\/audio\.htm(\?|$)/).test(dataPath));
+
   // add ModuleType
   var moduleType = ARMU.getConfEntry(filedata, "ModDrv");
+  if (!moduleType || moduleType == NOTFOUND) {
+    ARMU.deleteResource(newModRes);
+    return;
+  }
   if ((/^(RawText|zText)$/i).test(moduleType)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Texts");
   else if ((/^(RawCom|RawCom4|zCom)$/i).test(moduleType)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Comms");
   else if ((/^(RawLD|RawLD4|zLD)$/i).test(moduleType)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Dicts");
@@ -663,6 +663,14 @@ function applyConfFile(file, repoUrl) {
   moduleType = moduleType.replace(/\:$/, ""); // previous UI option had ":" at the end...
   if (is_XSM_module && moduleType != "Audio") {moduleType = moduleType + " XSM";}
   MLDS.Assert(newModRes, RP.ModuleType, RDF.GetLiteral(moduleType), true);
+  
+  // add XSM/SWORD Type
+  if (is_XSM_module) {
+    MLDS.Assert(newModRes, RP.Type, RP.XSM_ModuleType, true);
+  }
+  else {
+    MLDS.Assert(newModRes, RP.Type, RP.SWORD_ModuleType, true);
+  }
   
   // write this .conf info to the new module resource
   // RDF-Attribute:"Conf-Entry"
@@ -754,6 +762,10 @@ function applyConfFile(file, repoUrl) {
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langReadable), true);
   // add Status
   MLDS.Assert(newModRes, RP.Status, RDF.GetLiteral(dString(0) + "%"), true);
+  
+  // add the new resource to the Module List
+  RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+  RDFC.AppendElement(newModRes);
 
 }
 

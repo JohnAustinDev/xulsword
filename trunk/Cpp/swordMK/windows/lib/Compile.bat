@@ -191,7 +191,10 @@ Set cFiles1=^
  "%sword%\src\mgr\markupfiltmgr.cpp"^
  "%sword%\src\mgr\swmgr.cpp"^
  "%sword%\src\mgr\versificationmgr.cpp"^
- "%sword%\src\utilfuns\zlib\untgz.c"^
+ "%sword%\src\utilfuns\zlib\gzlib.c"^
+ "%sword%\src\utilfuns\zlib\gzread.c"^
+ "%sword%\src\utilfuns\zlib\gzwrite.c"^
+ "%sword%\src\utilfuns\zlib\gzclose.c"^
  "%sword%\src\mgr\stringmgr.cpp"^
  "%sword%\src\utilfuns\utilstr.cpp"
  
@@ -311,7 +314,6 @@ Set lFiles2=^
  ".\%objDIR%\trees.obj"^
  ".\%objDIR%\uncompr.obj"^
  ".\%objDIR%\unicodertf.obj"^
- ".\%objDIR%\untgz.obj"^
  ".\%objDIR%\url.obj"^
  ".\%objDIR%\utf16utf8.obj"^
  ".\%objDIR%\utf8arabicpoints.obj"^
@@ -337,6 +339,10 @@ Set lFiles2=^
  ".\%objDIR%\utilxml.obj"^
  ".\%objDIR%\versekey.obj"^
  ".\%objDIR%\versificationmgr.obj"^
+ ".\%objDIR%\gzlib.obj"^
+ ".\%objDIR%\gzread.obj"^
+ ".\%objDIR%\gzwrite.obj"^
+ ".\%objDIR%\gzclose.obj"^
  ".\%objDIR%\versetreekey.obj"^
  ".\%objDIR%\zcom.obj"^
  ".\%objDIR%\zipcomprs.obj"^
