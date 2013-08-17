@@ -111,7 +111,7 @@
               <treecol id="ModType" flex="2"
                             class="sortDirectionIndicator" 
                             persist="hidden width ordinal value"
-                            sort="rdf:http://www.xulsword.com/repository/rdf#ModuleType"
+                            sort="rdf:http://www.xulsword.com/repository/rdf#TypeReadable"
                             sortActive="true" sortDirection="ascending" 
                             ignoreincolumnpicker="true" />
               <splitter class="tree-splitter"/>
@@ -200,7 +200,7 @@
                 <treechildren>
                   <treeitem uri="rdf:*">
                     <treerow>
-                      <treecell label="rdf:http://www.xulsword.com/repository/rdf#ModuleType" />
+                      <treecell label="rdf:http://www.xulsword.com/repository/rdf#TypeReadable" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Description" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#ModuleName" />
                       <treecell label="rdf:http://www.xulsword.com/repository/rdf#Version" />
@@ -270,7 +270,7 @@
                           sort="rdf:http://www.xulsword.com/repository/rdf#Status" />
           </treecols>
           <template>
-            <rule REPOSITORY:Type="repository">
+            <rule REPOSITORY:ResourceType="repository">
               <treechildren>
                 <treeitem uri="rdf:*">
                   <treerow>
