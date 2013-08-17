@@ -55,7 +55,7 @@ ARMU = {
   getModuleInstallerZipFile: function(modResource) {
     var installZipFile = TEMP_Install.clone();
 
-    var is_XSM_module = ARMU.is_XSM_module(modResource);
+    var is_XSM_module = ARMU.is_XSM_module(MLDS, modResource);
     
     if (is_XSM_module) {
       // get leafName of ModuleUrl
@@ -129,7 +129,7 @@ ARMU = {
       var res = ress.getNext();
       
       // if these resource attributes match repoInfo, this repo already exists
-      var check = ["Type", "Site", "Path", "Url"];
+      var check = ["ResourceType", "Site", "Path", "Url"];
        
       for (var i=0; i<check.length; i++) {
         var val = RPDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY+check[i]), true);
@@ -285,13 +285,36 @@ ARMU = {
     RDFC.Init(MLDS, RDF.GetResource(RP.LanguageListID));
     for (var i=0; i<langs.length; i++) {
       var newLangRes = RDF.GetAnonymousResource();
-      MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Type"), RP.LanguageListType, true);
+      MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "ResourceType"), RP.LanguageListType, true);
       MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Lang"), RDF.GetLiteral(langs[i].lang), true);
       MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langs[i].rlang), true);
       RDFC.AppendElement(newLangRes);
     }
     
   },
+  
+  // reads a module resource's ModDrv attribute and returns a readable type string
+  // or null if ModDrv could not be found.
+  getTypeReadable: function(modDS, modResource) {
+		var modDrv = ARMU.getResourceLiteral(modDS, modResource, "ModDrv");
+
+		if (!modDrv || modDrv == NOTFOUND) return null;
+		
+		var moduleType;
+		if ((/^(RawText|zText)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Texts");
+		else if ((/^(RawCom|RawCom4|zCom)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Comms");
+		else if ((/^(RawLD|RawLD4|zLD)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Dicts");
+		else if ((/^(RawGenBook)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Genbks");
+		else if ((/^(RawFiles)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.SimpleText");
+		else if ((/^(HREFCom)$/i).test(modDrv)) moduleType = "URL"; 
+		else if ((/^(audio)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Audio");
+		
+		moduleType = moduleType.replace(/\:$/, ""); // previous UI option had ":" at the end...
+		
+		if (ARMU.is_XSM_module(modDS, modResource) && moduleType != "Audio") moduleType += " XSM";
+		
+		return moduleType;
+	},
 
   getLangReadable: function(lang) {
     if ((/^en(\-*|\_*)$/).test(lang)) return "English";
@@ -380,7 +403,7 @@ ARMU = {
 			
 			var mod = mods.getNext();
 			var mlang = ARMU.getResourceLiteral(MLDS, mod, "Lang").replace(/\-.*$/, "");
-			var is_XSM_module = ARMU.is_XSM_module(mod);
+			var is_XSM_module = ARMU.is_XSM_module(MLDS, mod);
 			
 			var show = (lang != "none" && (lang == mlang || lang == "all"));
 			
@@ -391,7 +414,7 @@ ARMU = {
 			if (show && is_XSM_module) {
 				var isCompilation = ARMU.getResourceLiteral(MLDS, mod, "SwordModules").split(";").length > 3;
 				var isDictRE = new RegExp(escapeRE(MyStrings.GetStringFromName("arm.moduleType.Dicts")));
-				if (!isCompilation && (isDictRE).test(ARMU.getResourceLiteral(MLDS, mod, "ModuleType"))) {
+				if (!isCompilation && (isDictRE).test(ARMU.getResourceLiteral(MLDS, mod, "TypeReadable"))) {
 					show = false;
 				}
 			}
@@ -486,7 +509,7 @@ ARMU = {
           var res = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getResourceAtIndex(v);
         }
         catch (er) {continue;}
-        var is_XSM_module = ARMU.is_XSM_module(res);
+        var is_XSM_module = ARMU.is_XSM_module(MLDS, res);
         selInfo.push( 
           { resource:res, 
             isXSM:is_XSM_module, 
@@ -585,8 +608,9 @@ ARMU = {
     ARMU.setResourceAttribute(aDS, aRes, "Status", (existingStatus ? existingStatus:status));
   },
   
-  is_XSM_module: function(modResource) {
-		return (MLDS.GetTarget(modResource, RDF.GetResource(RP.REPOSITORY+"Type"), true) == RP.XSM_ModuleType);
+  is_XSM_module: function(modDS, modResource) {
+		var moduleUrl = ARMU.getResourceLiteral(modDS, modResource, "ModuleUrl");
+		return ((/\.(zip|xsm)$/).test(moduleUrl) || (/\/audio\.htm(\?|$)/).test(moduleUrl));
 	}
 
 };
