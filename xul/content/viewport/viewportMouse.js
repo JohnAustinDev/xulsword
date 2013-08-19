@@ -198,7 +198,7 @@ var MatchingStrongs = getCSS(".matchingStrongs {"); // Read from CSS stylesheet
 var AddedRules = [];
 function scriptMouseOut(e) {
  
-  if (Popup.showPopupID) window.clearTimeout(Popup.showPopupID);
+  if (Popup && Popup.showPopupID) window.clearTimeout(Popup.showPopupID);
   
   // Remove any footnote hilighting
   if (BibleTexts.SelectedNote) BibleTexts.SelectedNote.className = BibleTexts.SelectedNote.className.replace(" fnselected", "");

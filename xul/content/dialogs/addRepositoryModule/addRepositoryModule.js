@@ -59,7 +59,7 @@ function onLoad() {
   
   // start with totally clean temp directories
   TEMP = getSpecialDirectory("TmpD");
-  TEMP.append("xs_addRepositoryModule");
+  TEMP.append("xs_addRepositoryModule_" + String(Math.round(10000*Math.random())));
   if (TEMP.exists()) TEMP.remove(true);
   TEMP.create(TEMP.DIRECTORY_TYPE, DPERM);
   
@@ -679,8 +679,9 @@ function applyConfFile(file, repoUrl) {
   var moduleUrl;
   if ((/^(\.|\/)/).test(dataPath)) {
     dataPath = dataPath.replace(/^\.*\//, "");
-    dataPath = dataPath.replace(/\/[^\/]*$/, "");
-    moduleUrl = ARMU.getResourceLiteral(MLDS, newModRes, "Url") + "/" + dataPath;
+    if (!(/\.(zip|xsm)$/i).test(dataPath)) 
+				dataPath = dataPath.replace(/\/[^\/]*$/, "");
+    moduleUrl = repoUrl + "/" + dataPath;
   }
   else moduleUrl = dataPath;
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "DataPath"), RDF.GetLiteral(dataPath), true);
@@ -1110,6 +1111,7 @@ function downloadModule(modResource, modContentData) {
       }
     }
     if (!isZeroFile) {
+			jsdump(modContentData[c].url);
       persist.saveURI(ios.newURI(modContentData[c].url, null, null), null, null, null, null, destFile, null);
       ARMU.modulesInProgressAdd(persist);
       updateRepoListButtons();

@@ -36,6 +36,7 @@
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   xmlns:html="http://www.w3.org/1999/xhtml"
   xmlns:REPOSITORY="http://www.xulsword.com/repository/rdf#"
+  windowtype="addRepositoryModule" 
   id="add-repository-module"
   onload="onLoad();"
   onunload="onUnload();"
