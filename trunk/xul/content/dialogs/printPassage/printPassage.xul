@@ -25,6 +25,7 @@
 
 <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
   id="printPassage"
+  windowtype="printPassage"
   onload="PrintPassage.init();"
   persist="screenX screenY"
   screenX="24" screenY="24">

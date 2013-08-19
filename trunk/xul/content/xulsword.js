@@ -815,7 +815,12 @@ var XulswordController = {
       updateFromNavigator();
       break;
     case "cmd_xs_openManager":
-      AllWindows.push(window.open("chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen"));
+			var bookmarksManager = Components.classes['@mozilla.org/appshell/window-mediator;1'].
+				getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow('bookmarksManager');
+			if (bookmarksManager) bookmarksManager.focus();
+			else {
+				AllWindows.push(window.open("chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen"));
+			}
       break;
     case "cmd_xs_toggleTab":
       if (CommandTarget.w) {
@@ -832,7 +837,12 @@ var XulswordController = {
       if (!addNewModule()) ModuleCopyMutex=false;
       break;
     case "cmd_xs_addRepositoryModule":
-      AllWindows.push(window.open("chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.xul", getDataUI("menu.addNewModule.label"), "chrome,resizable,centerscreen"));
+			var addRepositoryModuleWindow = Components.classes['@mozilla.org/appshell/window-mediator;1'].
+				getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow('addRepositoryModule');
+			if (addRepositoryModuleWindow) addRepositoryModuleWindow.focus();
+			else {
+				AllWindows.push(window.open("chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.xul", getDataUI("menu.addNewModule.label"), "chrome,resizable,centerscreen"));
+			}
       break;
     case "cmd_xs_removeModule":
       AllWindows.push(window.open("chrome://xulsword/content/dialogs/removeModule/removeModule.xul", getDataUI("menu.removeModule.label"), "chrome,resizable,centerscreen"));
@@ -1525,7 +1535,7 @@ function unloadXUL() {
 
 function copyPassageDialog() {
   AllWindows.push(window.open("chrome://xulsword/content/dialogs/copyPassage/copyPassage.xul", 
-      getDataUI("menu.copypassage"),
+      getDataUI("menu.copypassage") + "_" + String(Math.round(10000*Math.random())),
       "chrome,resizable,centerscreen"));
 }
 
@@ -1556,9 +1566,14 @@ function handlePrintCommand(command, target) {
     break;
     
   case "cmd_print_passage":
-    AllWindows.push(window.open("chrome://xulsword/content/dialogs/printPassage/printPassage.xul",
-        getDataUI("print.printpassage"),
-        "chrome,resizable,centerscreen"));
+		var printPassage = Components.classes['@mozilla.org/appshell/window-mediator;1'].
+			getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow('printPassage');
+		if (printPassage) printPassage.focus();
+		else {
+			AllWindows.push(window.open("chrome://xulsword/content/dialogs/printPassage/printPassage.xul",
+					getDataUI("print.printpassage"),
+					"chrome,resizable,centerscreen"));
+		 }
     break;
   }
 }
