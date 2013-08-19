@@ -270,8 +270,8 @@ const NW = 3; // max number of text windows a single viewport supports
 
 
 // scrolling
-const SCROLLTYPENONE = 0;         // don't scroll
-const SCROLLTYPETOP = 1;          // scroll to top
+const SCROLLTYPENONE = 0;         // don't scroll un-linked windows, but scroll linked windows to center.
+const SCROLLTYPETOP = 1;          // scroll to top of current chapter
 const SCROLLTYPEBEG = 2;          // put selected verse at the top of the window or link
 const SCROLLTYPECENTER = 3;       // put selected verse in the middle of the window or link, unless verse is already visible or verse 1
 const SCROLLTYPECENTERALWAYS = 4; // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
@@ -284,8 +284,8 @@ const SCROLLTYPEPREVIOUS = 8;     // scroll exactly as previous
 const HILIGHTNONE = 0;            // highlight no verse
 const HILIGHTVERSE = 1;           // highlight selected verse in blue
 const HILIGHT_IFNOTV1 = 2;        // highlight selected verse in blue unless it is verse 1
-const HILIGHTPREVIOUS = 3;        // keep hilighted verse the same
-const HILIGHTSKIP = 4             // skip hilighting step- any previously hilighted verse will remain so
+const HILIGHTPREVIOUS = 3;        // do same hilight type as during previous update
+const HILIGHTSKIP = 4             // skip hilighting step to speed things up- any previously hilighted verse(s) will remain so
 
 const GlobalToggleCommands = {
   cmd_xs_toggleHeadings:   "Headings",

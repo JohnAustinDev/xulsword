@@ -217,7 +217,7 @@ function scriptMouseOut(e) {
 
 }
 
-const scriptClickClasses = /^(sr|dt|dtl|cr|fn|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
+const scriptClickClasses = /^(sn|sr|dt|dtl|cr|fn|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
 function scriptClick(e) {
 
   // Get the text window of this event
@@ -246,9 +246,9 @@ function scriptClick(e) {
   if (!elem || !type) return;
   type = type[1];
   
-//jsdump("w:" + w + " type:" + type + " title:" + elem.title + " class:" + elem.className + "\n");
-  
   var p = getElementInfo(elem);
+Pilgrim Part I, THE SECOND STAGE, first link, with Strong's in popup text (KJV)
+jsdump("w:" + w + " type:" + type + " p:" + uneval(p));
 
   switch (type) {
     
@@ -274,6 +274,10 @@ function scriptClick(e) {
     
   case "fn":
     if (w==0) Popup.activate(elem, e);
+    break;
+    
+  case "sn":
+    if (w==0)  Popup.activate(elem, e);
     break;
     
   case "listenlink":
@@ -366,8 +370,9 @@ function scriptClick(e) {
         if (!prevchap) return;
         
         if (ViewPort.IsPinned[w]) {
+          Texts.pinnedDisplay[w].scrollTypeFlag = SCROLLTYPETOP;
           Texts.pinnedDisplay[w].Key = prevchap;
-          Texts.update();
+          Texts.update(SCROLLTYPEPREVIOUS, HILIGHTSKIP);
         }
         else GenBookTexts.navigatorSelect(mod, prevchap);
         // scroll to end if possible
@@ -428,8 +433,9 @@ function scriptClick(e) {
         if (!nextchap) return;
         
         if (ViewPort.IsPinned[w]) {
+          Texts.pinnedDisplay[w].scrollTypeFlag = SCROLLTYPETOP;
           Texts.pinnedDisplay[w].Key = nextchap;
-          Texts.update();
+          Texts.update(SCROLLTYPEPREVIOUS, HILIGHTSKIP);
         }
         else GenBookTexts.navigatorSelect(mod, nextchap);
       }
@@ -710,6 +716,9 @@ var MouseWheel = {
       var p = getElementInfo(v);
       
       if (ViewPort.IsPinned[MouseWheel.SWwin]) {
+        scrollType = SCROLLTYPEPREVIOUS;
+        Texts.pinnedDisplay[MouseWheel.SWwin].scrollTypeFlag = SCROLLTYPEBEG;
+        Texts.pinnedDisplay[MouseWheel.SWwin].location = [p.bk,p.ch,p.vs,p.vs].join(".");
         Texts.pinnedDisplay[MouseWheel.SWwin].mod = p.mod;
         Texts.pinnedDisplay[MouseWheel.SWwin].bk = p.bk;
         Texts.pinnedDisplay[MouseWheel.SWwin].ch = p.ch;
@@ -746,15 +755,17 @@ function previousChapterPinned(w) {
   try {if (!ViewPort.IsPinned[w]) return;}
   catch(er) {return;}
   
-  var vers = ViewPort.Module[w];
-  var bkn = findBookNum(Texts.display[w].bk);
-  var chn = Texts.display[w].ch;
+  var chn = Texts.pinnedDisplay[w].ch;
   
   if (chn > 1) {chn--;}
   else return;
   
+  Texts.pinnedDisplay[w].scrollTypeFlag = SCROLLTYPEBEG;
+  var loc = Texts.pinnedDisplay[w].location.split(".");
+  loc[1] = chn;
+  Texts.pinnedDisplay[w].location = loc.join(".");
   Texts.pinnedDisplay[w].ch = chn;
-  Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+  Texts.update(SCROLLTYPEPREVIOUS, HILIGHTSKIP);
 }
 
 // window w may be pinned or unpinned
@@ -775,11 +786,13 @@ function previousPage(w) {
   v = getElementInfo(v);
   
   if (ViewPort.IsPinned[w]) {
+    Texts.pinnedDisplay[w].scrollTypeFlag = SCROLLTYPEEND;
+    Texts.pinnedDisplay[w].location = [v.bk,v.ch,v.vs,v.vs].join(".");
     Texts.pinnedDisplay[w].bk = v.bk;
     Texts.pinnedDisplay[w].ch = v.ch;
     Texts.pinnedDisplay[w].vs = v.vs;
     Texts.pinnedDisplay[w].lv = v.vs;
-    Texts.update(SCROLLTYPEEND, HILIGHTNONE);
+    Texts.update(SCROLLTYPEPREVIOUS, HILIGHTSKIP);
   }
   else {
     Location.setLocation(v.mod, v.bk + "." + v.ch + "." + v.vs);
@@ -792,15 +805,19 @@ function nextChapterPinned(w) {
   try {if (!ViewPort.IsPinned[w]) return;}
   catch(er) {return;}
   
-  var vers = Texts.display[w].mod;
-  var bkn = findBookNum(Texts.display[w].bk);
-  var chn = Texts.display[w].ch;
+  var chn = Texts.pinnedDisplay[w].ch;
   
-  if (chn < LibSword.getMaxChapter("KJV", Texts.display[w].bk)) {chn++;}
+  if (chn < LibSword.getMaxChapter(Texts.pinnedDisplay[w].mod, Texts.pinnedDisplay[w].bk)) {
+    chn++;
+  }
   else return;
   
+  Texts.pinnedDisplay[w].scrollTypeFlag = SCROLLTYPEBEG;
+  var loc = Texts.pinnedDisplay[w].location.split(".");
+  loc[1] = chn;
+  Texts.pinnedDisplay[w].location = loc.join(".");
   Texts.pinnedDisplay[w].ch = chn;
-  Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+  Texts.update(SCROLLTYPEPREVIOUS, HILIGHTSKIP);
 }
 
 // window w may be pinned or unpinned
@@ -822,11 +839,13 @@ function nextPage(w) {
   v = getElementInfo(v);
 
   if (ViewPort.IsPinned[w]) {
+    Texts.pinnedDisplay[w].scrollTypeFlag = SCROLLTYPEBEG;
+    Texts.pinnedDisplay[w].location = [v.bk,v.ch,v.vs,v.vs].join(".");
     Texts.pinnedDisplay[w].bk = v.bk;
     Texts.pinnedDisplay[w].ch = v.ch;
     Texts.pinnedDisplay[w].vs = v.vs;
     Texts.pinnedDisplay[w].lv = v.vs;
-    Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+    Texts.update(SCROLLTYPEPREVIOUS, HILIGHTSKIP);
   }
   else {
     Location.setLocation(v.mod, v.bk + "." + v.ch + "." + v.vs);

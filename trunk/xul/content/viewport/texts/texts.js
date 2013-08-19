@@ -49,12 +49,10 @@ Texts = {
     else {this.hilightFlag = hilightFlag;}
     
 //jsdump("scrollTypeFlag=" + scrollTypeFlag + ", hilightFlag=" + hilightFlag + ", force=" + force);
-   
-    if (this.scrollTypeFlag == SCROLLTYPETOP) Location.setVerse(prefs.getCharPref("DefaultVersion"), 1, 1);
     
     Popup.close();
     
-    ViewPort.update(false, force);
+    ViewPort.update(false);
     
     for (var w=1; w<=NW; w++) {
       
@@ -62,28 +60,65 @@ Texts = {
       if (document.getElementById("text" + w).style.display == "none") continue; // used by windowed viewports
       if (w > ViewPort.NumDisplayedWindows) continue;
       if (force[w] == -1) continue;
+      
+      // then update this window...
+      var modType = Tab[ViewPort.Module[w]].modType;
+      
+      if (!this.pinnedDisplay[w]) ViewPort.IsPinned[w] = false;
+    
+      if (this.scrollTypeFlag == SCROLLTYPETOP && 
+          !ViewPort.IsPinned[w] && 
+          (modType == BIBLE || modType == COMMENTARY)) {
+        Location.setVerse(prefs.getCharPref("DefaultVersion"), 1, 1);
+      }
+      
+      // get current global ViewPort display params for this window
+      var display = this.getDisplay(w);
+      
+      // reset some or all display params with pinned values if we're pinned
+      if (ViewPort.IsPinned[w]) {
+        // reset any pinned params which should not track unpinned 
+        // windows' values. These may have been manually changed since the  
+        // last display due to operation of a pinned window's own controls.
+        
+        // pinned windowed ViewPorts should not track MainWindow at all
+        if (this !== MainWindow.Texts) {
+          display = eval(uneval(this.pinnedDisplay[w]));
+        }
+        // pinned MainWidow ViewPort tracks everything except the following:
+        else {
+          var keepPinned = ["scrollTypeFlag", "mod", "bk", "ch", "vs", "lv", "Key"];
+          for (var x=0; x<keepPinned.length; x++) {
+            display[keepPinned[x]] = this.pinnedDisplay[w][keepPinned[x]];
+          }
+        }
+        
+        display.hilightFlag = HILIGHTNONE; // pinned windows never have hilight
+      }
    
-      switch(Tab[ViewPort.Module[w]].modType) {
+      switch(modType) {
         
       case BIBLE:
-        this.updateBible(w, force[w]);
+        this.updateBible(w, display, force[w]);
         break;
         
       case COMMENTARY:
-        this.updateCommentary(w, force[w]);
+        this.updateCommentary(w, display, force[w]);
         break;
       
       case DICTIONARY:
-        this.updateDictionary(w, force[w]);
+        this.updateDictionary(w, display, force[w]);
         break;
         
       case GENBOOK:
-        this.updateGenBook(w, force[w]);
+        this.updateGenBook(w, display, force[w]);
         break;
-        
+
       }
       
-      this.pinnedDisplay[w] = eval(uneval(this.display[w]));
+      // save the display objects for this window
+      this.display[w] = eval(uneval(display));
+      this.pinnedDisplay[w] = eval(uneval(display));
     }
 /*    
     // scroll notebox to text always. SHOULD THIS BE IN VIEWPORT UPDATE?
@@ -108,14 +143,17 @@ Texts = {
     // need to also change our current scrollTypeFlag to SCROLLTYPEBEG
     if (this.scrollTypeFlag == SCROLLTYPEENDSELECT) this.scrollTypeFlag = SCROLLTYPEBEG;
     
+    
+    // If this is the MainWindow.Text object which we just updated, then go and update any
+    // other unpinned windowed ViewPort Text objects. Plus update navigator and history.
     if (this === MainWindow.Texts) {
 
-      // If this is the MainWindow.Text object which we just updated, then go and update any
-      // other unpinned windowed ViewPort Text objects. Plus update navigator and history.
       for (var x=0; x<MainWindow.AllWindows.length; x++) {
         if (MainWindow.AllWindows[x] === MainWindow) continue;
+        
         if (!(/^viewport/).test(MainWindow.AllWindows[x].name)) continue;
 
+        // then update Text of a windowed ViewPort, skipping pinned windows entirely
         for (w=1; w<=NW; w++) {
           if (MainWindow.AllWindows[x].ViewPort.IsPinned[w]) {
             if (!save.p3) save.p3 = [null, 0, 0, 0];
@@ -135,27 +173,7 @@ Texts = {
 
   },
   
-  updateBible: function(w, force) {
-    
-    var scrollTypeFlag = this.scrollTypeFlag;
-    var hilightFlag = this.hilightFlag;
-    var loc = Location.getLocation(ViewPort.Module[w]);
-    
-    // get current display params
-    var display = this.getDisplay(ViewPort.Module[w], loc, w);
-    
-    // overwrite display and location with any pinned values
-    if (!this.pinnedDisplay[w]) ViewPort.IsPinned[w] = false;
-    if (ViewPort.IsPinned[w]) {
-      // then keep pinned params (which could have been changed since last display)
-      display.mod = this.pinnedDisplay[w].mod;
-      display.bk  = this.pinnedDisplay[w].bk;
-      display.ch  = this.pinnedDisplay[w].ch;
-      display.vs  = this.pinnedDisplay[w].vs;
-      display.lv  = this.pinnedDisplay[w].lv;
-      loc = display.bk + "." + display.ch + "." + display.vs;
-      hilightFlag = HILIGHTNONE;
-    }
+  updateBible: function(w, display, force) {
   
     var t = document.getElementById("text" + w);
     var ltr = (ModuleConfigs[display.mod].direction == "ltr");
@@ -231,10 +249,10 @@ Texts = {
     
     if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
       // handle scroll
-      this.scroll2Verse(w, loc, scrollTypeFlag);
+      this.scroll2Verse(w, display);
       
       // handle highlights
-      this.hilightVerses(w, loc, hilightFlag);
+      this.hilightVerses(w, display);
       
       // remove notes which aren't in window, or hide notebox entirely if empty
       t.setAttribute("footnotesEmpty", !BibleTexts.checkNoteBox(w))
@@ -242,41 +260,19 @@ Texts = {
     
     // set audio icons
     window.setTimeout("BibleTexts.updateAudioLinks(" + w + ");", 0);
-  
-    // save display objects for this window
-    this.display[w] = eval(uneval(display));
     
   },
   
-  updateCommentary: function(w, force) {
-    
-    var scrollTypeFlag = this.scrollTypeFlag;
-    var hilightFlag = this.hilightFlag;
-    var loc = Location.getLocation(ViewPort.Module[w]);
-        
-    // get current display params
-    var display = this.getDisplay(ViewPort.Module[w], loc, w);
-    
-    var t =  document.getElementById("text" + w);
+  updateCommentary: function(w, display, force) {
+  
+    var t = document.getElementById("text" + w);
+    var ltr = (ModuleConfigs[display.mod].direction == "ltr");
     var sb = t.getElementsByClassName("sb")[0];
     
     // the class of sb must be that of the module
     sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
 
-    // overwrite display and loc with any pinned values
-    if (!this.pinnedDisplay[w]) ViewPort.IsPinned[w] = false;
-    if (ViewPort.IsPinned[w]) {
-      // then keep pinned params (which could have been changed since last display)
-      display.mod = this.pinnedDisplay[w].mod;
-      display.bk  = this.pinnedDisplay[w].bk;
-      display.ch  = this.pinnedDisplay[w].ch;
-      display.vs  = this.pinnedDisplay[w].vs;
-      display.lv  = this.pinnedDisplay[w].lv;
-      loc = display.bk + "." + display.ch + "." + display.vs;
-      hilightFlag = HILIGHTNONE;
-    }
-
-    // don't read new text if the results will be identical to last displayed text
+    // don't read new text if the results will be identical to the last displayed text
     var textUpdated = false;
     var check = ["mod", "bk", "ch", "globalOptions", "ShowFootnotesAtBottom", 
                 "ShowCrossrefsAtBottom", "ShowUserNotesAtBottom", "columns"]
@@ -297,40 +293,29 @@ Texts = {
     
     if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
       // handle scroll
-      this.scroll2Verse(w, loc, scrollTypeFlag);
+      this.scroll2Verse(w, display);
       
       // handle highlights
-      this.hilightVerses(w, loc, hilightFlag);
+      display.hilightFlag = HILIGHTNONE;
+      this.hilightVerses(w, display);
       
       // hide notebox entirely if empty
       t.setAttribute("footnotesEmpty", !BibleTexts.checkNoteBox(w))
   
     }
-  
-    // save display object for this window
-    this.display[w] = eval(uneval(display));
-      
   },
   
-  updateGenBook: function(w, force) {
+  updateGenBook: function(w, display, force) {
 
     ViewPort.ShowOriginal[w] = false;
     ViewPort.MaximizeNoteBox[w] = false;
     
-    // get current display params
-    var display = this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), w);
-    
     var t =  document.getElementById("text" + w);
+    var ltr = (ModuleConfigs[display.mod].direction == "ltr");
     var sb = t.getElementsByClassName("sb")[0];
     
     // the class of sb must be that of the module
     sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
-
-    if (!this.pinnedDisplay[w]) ViewPort.IsPinned[w] = false;
-    if (ViewPort.IsPinned[w]) {
-      // then keep pinned params (which could have been changed since last display)
-      display.Key = this.pinnedDisplay[w].Key;
-    }
     
     // reset key if the module has changed since last read
     if (!this.display[w] || this.display[w].mod != display.mod) 
@@ -355,33 +340,24 @@ Texts = {
     }
   
     // handle scroll
-    if (this.scrollTypeFlag != SCROLLTYPENONE) {
-      if (this.scrollTypeFlag == SCROLLTYPEDELTA) GenBookTexts.scrollDelta(w, this.scrollDelta);
+    if (display.scrollTypeFlag != SCROLLTYPENONE) {
+      if (display.scrollTypeFlag == SCROLLTYPEDELTA) GenBookTexts.scrollDelta(w, this.scrollDelta);
       else {
         sb.scrollTop = 0;
         sb.scrollLeft = 0;
       }
     }
-      
-    // save display object for this window
-    this.display[w] = eval(uneval(display));
-
   },
   
-  updateDictionary: function(w, force) {
+  updateDictionary: function(w, display, force) {
 
     ViewPort.IsPinned[w] = false;
     ViewPort.ShowOriginal[w] = false;
     ViewPort.MaximizeNoteBox[w] = false;
-    
-    // get current display params
-    var display = this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), w);
-    
+
     var t =  document.getElementById("text" + w);
+    var ltr = (ModuleConfigs[display.mod].direction == "ltr");
     var sb = t.getElementsByClassName("sb")[0];
-    
-    // the class of sb must be that of the module
-    sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
     
     // reset key if the module has changed since last read
     if (!this.display[w] || this.display[w].mod != display.mod) {
@@ -424,13 +400,10 @@ Texts = {
     }
     
     // handle scroll
-    if (this.scrollTypeFlag != SCROLLTYPENONE) {
+    if (display.scrollTypeFlag != SCROLLTYPENONE) {
       sb.scrollTop = 0;
       sb.scrollLeft = 0;
     }
-  
-    // save display object for this window
-    this.display[w] = eval(uneval(display));
   },
 
 
@@ -537,29 +510,38 @@ Texts = {
     return usernotes;
   },
  
-  getDisplay: function(mod, loc, w) {
-    loc = loc.split(".");
+  getDisplay: function(w) {
     var display = {globalOptions:{}};
-    display.mod = mod;
-    display.bk = loc[0];
-    display.ch = Number((loc[1] ? loc[1]:1));
-    display.vs = Number((loc[2] ? loc[2]:1));
-    display.lv = Number((loc[3] ? loc[3]:1));
-    display.scrollTypeFlag = this.scrollTypeFlag;
-    display.Key = ViewPort.Key[w];
-    display.ShowOriginal = ViewPort.ShowOriginal[w];
-    display.MaximizeNoteBox = ViewPort.MaximizeNoteBox[w];
-    display.ShowFootnotesAtBottom = getPrefOrCreate("ShowFootnotesAtBottom", "Bool", true);
-    display.ShowCrossrefsAtBottom = getPrefOrCreate("ShowCrossrefsAtBottom", "Bool", false);
-    display.ShowUserNotesAtBottom = getPrefOrCreate("ShowUserNotesAtBottom", "Bool", true);
-    var c = document.getElementById("text" + w);
-    display.columns = (c ? c.getAttribute("columns"):null);
-
+    
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") 
         display.globalOptions[GlobalToggleCommands[cmd]] = prefs.getCharPref(GlobalToggleCommands[cmd]);
       else display.globalOptions[GlobalToggleCommands[cmd]] = LibSword.getGlobalOption(GlobalToggleCommands[cmd]);
     }
+    
+    display.mod = ViewPort.Module[w];
+    display.location = Location.getLocation(ViewPort.Module[w]);
+    
+    var loc = display.location.split(".");
+    
+    display.bk = loc[0];
+    display.ch = Number((loc[1] ? loc[1]:1));
+    display.vs = Number((loc[2] ? loc[2]:1));
+    display.lv = Number((loc[3] ? loc[3]:1));
+    
+    display.scrollTypeFlag = this.scrollTypeFlag;
+    display.hilightFlag = this.hilightFlag;
+    
+    display.Key = ViewPort.Key[w];
+    
+    display.ShowOriginal = ViewPort.ShowOriginal[w];
+    display.MaximizeNoteBox = ViewPort.MaximizeNoteBox[w];
+    display.ShowFootnotesAtBottom = getPrefOrCreate("ShowFootnotesAtBottom", "Bool", true);
+    display.ShowCrossrefsAtBottom = getPrefOrCreate("ShowCrossrefsAtBottom", "Bool", false);
+    display.ShowUserNotesAtBottom = getPrefOrCreate("ShowUserNotesAtBottom", "Bool", true);
+    
+    var c = document.getElementById("text" + w);
+    display.columns = (c ? c.getAttribute("columns"):null);
     
     return display;
   },
@@ -584,16 +566,23 @@ Texts = {
     return false;
   },
 
-  scroll2Verse: function(w, l, scrollTypeFlag) {
-    if (!l) return true;
-//jsdump("SCROLLING w=" + w + ", l=" + l +", type=" + scrollTypeFlag);
+  // scrolls a window according to display settings. 
+  // returns true if a scroll change occurred or false otherwise
+  scroll2Verse: function(w, d) {
+    var scrollChanged = false;
+    
+    if (!d.location) return false;
+//jsdump("SCROLLING w=" + w + ", display=" + uneval(d));
+
     var t = document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];
-    var mod = ViewPort.Module[w];
     
+    var startScrollTop = sb.scrollTop;
+    
+    if (sb.scrollLeft) scrollChanged = true;
     sb.scrollLeft = 0; // commentary may have been non-zero
     
-    l = l.split(".");
+    var l = d.location.split(".");
     var bk = l[0];
     var ch = (l[1] ? Number(l[1]):1);
     var vs = (l[2] ? Number(l[2]):1);
@@ -617,7 +606,8 @@ Texts = {
     if (!v) v = vf;
   
     // if neither verse nor chapter has been found, return false
-    if (!v) return false;
+    if (!v) return (scrollChanged || startScrollTop != sb.scrollTop);
+//jsdump("v=" + uneval(getElementInfo(v)));
 
     // perform appropriate scroll action
     var vOffsetTop = v.offsetTop;
@@ -628,27 +618,29 @@ Texts = {
     }
     
     // some special rules for commentaries
-    if (Tab[mod].modType == COMMENTARY) {
+    if (Tab[d.mod].modType == COMMENTARY) {
       
       // if part of commentary element is already visible, don't rescroll
       if ((vOffsetTop < sb.scrollTop) &&
-          (vOffsetTop + v.offsetHeight > sb.scrollTop + 20)) return true;
+          (vOffsetTop + v.offsetHeight > sb.scrollTop + 20)) {
+        return (scrollChanged || startScrollTop != sb.scrollTop);
+      }
           
       // commentaries should never scroll verse to middle, only to top
-      if (scrollTypeFlag == SCROLLTYPECENTER || scrollTypeFlag == SCROLLTYPECENTERALWAYS)
-          scrollTypeFlag = SCROLLTYPEBEG;
+      if (d.scrollTypeFlag == SCROLLTYPECENTER || d.scrollTypeFlag == SCROLLTYPECENTERALWAYS)
+          d.scrollTypeFlag = SCROLLTYPEBEG;
           
     }
       
     // if this is verse 1 then SCROLLTYPEBEG and SCROLLTYPECENTER both become SCROLLTYPETOP
-    if (vs == 1 && (scrollTypeFlag == SCROLLTYPEBEG || scrollTypeFlag == SCROLLTYPECENTER)) {
-      scrollTypeFlag = SCROLLTYPETOP;
+    if (vs == 1 && (d.scrollTypeFlag == SCROLLTYPEBEG || d.scrollTypeFlag == SCROLLTYPECENTER)) {
+      d.scrollTypeFlag = SCROLLTYPETOP;
     }
   
     // scroll single column windows...
     if (t.getAttribute("columns") == "show1") {
       
-      switch (scrollTypeFlag) {
+      switch (d.scrollTypeFlag) {
       case SCROLLTYPENONE:         // don't scroll (for links this becomes SCROLLTYPECENTER)
         break;
       case SCROLLTYPETOP:          // scroll to top
@@ -673,14 +665,18 @@ Texts = {
       case SCROLLTYPEEND:          // put selected verse at the end of the window or link, and don't change selection
       case SCROLLTYPEENDSELECT:    // put selected verse at the end of the window or link, then select first verse of link or verse 1
         sb.scrollTop = vOffsetTop + v.offsetHeight - sb.offsetHeight;
+        if (d.scrollTypeFlag == SCROLLTYPEENDSELECT) {
+          // then set Location to first visible verse- but not implemented because not yet used
+        }
         break;
       }
     }
     
     // or scroll multi-column windows...
     else {
+      scrollChanged = true;
 
-      switch (scrollTypeFlag) {
+      switch (d.scrollTypeFlag) {
 
       case SCROLLTYPETOP:          // scroll to top
         // hide all verses previous to scroll verse's chapter
@@ -694,7 +690,7 @@ Texts = {
         }
         break;
       case SCROLLTYPEBEG:          // put selected verse at the top of the window or link
-        // Hide all verses before the scroll verse. If the scroll verse is emmediately preceded by
+        // Hide all verses before the scroll verse. If the scroll verse is immediately preceded by
         // consecutive non-verse (heading) elements, then show them.
         var vs = sb.lastChild;
         var show = true;
@@ -715,7 +711,7 @@ Texts = {
         break;
       case SCROLLTYPENONE:         // don't scroll (for links this becomes SCROLLTYPECENTER)
       case SCROLLTYPECENTER:       // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
-        var ltr = (ModuleConfigs[mod].direction == "ltr");
+        var ltr = (ModuleConfigs[d.mod].direction == "ltr");
         var tv = sb.firstChild;
         if (vs == 1 || this.isVisibleVerse(v, w)) break;
       case SCROLLTYPECENTERALWAYS: // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
@@ -742,7 +738,7 @@ Texts = {
         break;
       case SCROLLTYPEEND:          // put selected verse at the end of the window or link, and don't change selection
       case SCROLLTYPEENDSELECT:    // put selected verse at the end of the window or link, then select first verse of link or verse 1
-        var ltr = (ModuleConfigs[mod].direction == "ltr");
+        var ltr = (ModuleConfigs[d.mod].direction == "ltr");
       
         // show all verses
         var vs = sb.lastChild;
@@ -757,7 +753,7 @@ Texts = {
           vs = vs.nextSibling;
         }
         
-        if (scrollTypeFlag == SCROLLTYPEENDSELECT) {
+        if (d.scrollTypeFlag == SCROLLTYPEENDSELECT) {
           var vs = sb.firstChild;
           while(vs) {
             var p = getElementInfo(vs);
@@ -773,7 +769,7 @@ Texts = {
       }
     }
   
-    return true;
+    return (scrollChanged || startScrollTop != sb.scrollTop);
   },
   
   // returns true if velem is a visible verse element in window w, false otherwise
@@ -832,16 +828,13 @@ Texts = {
 
   },
   
-  hilightVerses: function(w, l, hilightFlag) {
-    if (!l || hilightFlag == HILIGHTSKIP) return;
-    
-    if (Tab[ViewPort.Module[w]].modType == COMMENTARY) hilightFlag = HILIGHTNONE;
+  hilightVerses: function(w, d) {
+    if (!d.location || d.hilightFlag == HILIGHTSKIP) return;
  
     var t = document.getElementById("text" + w);
     var sb = t.getElementsByClassName("sb")[0];
-    var mod = ViewPort.Module[w];
     
-    l = l.split(".");
+    var l = d.location.split(".");
     var bk = l[0];
     var ch = (l[1] ? Number(l[1]):1);
     var vs = (l[2] ? Number(l[2]):1);
@@ -857,10 +850,10 @@ Texts = {
       var v = getElementInfo(av);
       if (v && v.type == "vs") {
         var hi = (v.bk == bk && v.ch == ch);
-        if (hilightFlag == HILIGHTNONE) hi = false;
-        if (hilightFlag == HILIGHT_IFNOTV1 && 
+        if (d.hilightFlag == HILIGHTNONE) hi = false;
+        if (d.hilightFlag == HILIGHT_IFNOTV1 && 
             (vs == 1 || v.vs < vs || v.vs > lv)) hi = false;
-        if (hilightFlag == HILIGHTVERSE && 
+        if (d.hilightFlag == HILIGHTVERSE && 
             (v.vs < vs || v.vs > lv)) hi = false;
      
         if (hi) av.className = (av.className ? av.className + " hl":"hl");

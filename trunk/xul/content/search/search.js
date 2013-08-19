@@ -122,10 +122,10 @@ function SearchObj(searchObj) {
   // These parameters may be passed to a new Search window using searchObj.
   // The type and scope params are search.xul IDs of the desired selections.
   this.init = {};
-  this.init.mod        = (searchObj.hasOwnProperty("mod")        ? searchObj.mod:       def.mod);
-  this.init.searchtext = (searchObj.hasOwnProperty("searchtext") ? searchObj.searchtext:def.searchtext);
-  this.init.type       = (searchObj.hasOwnProperty("type")       ? searchObj.type:      def.type);
-  this.init.scope      = (searchObj.hasOwnProperty("scope")      ? searchObj.scope:     def.scope);
+  this.init.mod        = (searchObj.hasOwnProperty("mod")        && searchObj["mod"]        ? searchObj.mod:       def.mod);
+  this.init.searchtext = (searchObj.hasOwnProperty("searchtext") && searchObj["searchtext"] ? searchObj.searchtext:def.searchtext);
+  this.init.type       = (searchObj.hasOwnProperty("type")       && searchObj["type"]       ? searchObj.type:      def.type);
+  this.init.scope      = (searchObj.hasOwnProperty("scope")      && searchObj["scope"]      ? searchObj.scope:     def.scope);
 
   this.s = {}; // holds search related parameters
   this.result = {}; // holds result related parameters
