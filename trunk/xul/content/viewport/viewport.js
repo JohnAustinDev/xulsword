@@ -60,10 +60,16 @@ function initViewPort() {
     document.getElementsByTagName("body")[0].setAttribute("isWindow", "true");
     
     ViewPort = new ViewPortObj(MainWindow.ViewPort);
+    
+    // here we copy MainWindow viewportbody html directly (and use only 
+    // ViewPort.update rather than Texts.update below), because although
+    // a usual Texts.update would re-create the exact window most of the 
+    // time, it would not do so for certain hilighted-verse windows. 
     document.getElementById("viewportbody").innerHTML = MainWindow.ViewPort.ownerDocument.getElementById("viewportbody").innerHTML;
     
-    // our copied viewport will only have one text window showing: towindow...
-    // also pin towindow so it becomes independant from MainWindow.ViewPort
+    // this copied viewport should have only one text window showing: towindow...
+    // This window should be pinned if it's pinable, and all other windows should 
+    // have their moduleType set to "none".
     var towindow;
     if (!MainWindow.ViewPort.hasOwnProperty("towindow") || !MainWindow.ViewPort.towindow)
         towindow = 1;
@@ -71,24 +77,29 @@ function initViewPort() {
 
     for (var w=1; w<=NW; w++) {
       if (w == towindow) {
-        
-        // pinning is not supported for Dict modules, but others should be pinned (at least to start with, though user may unpin it)
+        // pinning is not supported for Dict modules, but others should 
+        // be pinned (at least to start with, though user may unpin it)
         if (Tab[ViewPort.Module[w]].modType != DICTIONARY) {
+					// the following method of getting wl only works because we copied  
+					// MainWindow viewportbody html (this ViewPort has not been updated yet).
           var wl = MainWindow.ViewPort.ownerDocument.getElementById("text" + w).getAttribute("columns").match(/^show(\d+)$/);
-          if (wl) {wl = Number(wl[1]);}
-          else wl = towindow;
-          for (var wt=towindow; wt<towindow+wl; wt++) {ViewPort.IsPinned[wt] = true;}
+          wl = towindow + Number(wl[1]) - 1;
+          while (w <= wl) {
+						ViewPort.IsPinned[w] = true;
+						w++;
+					}
+					w--; // sit on last handled w because it will be incremented in above "for"
         }
-        
-        continue;
       }
-      document.getElementById("text" + w).style.display = "none";
-      document.getElementById("tabs" + w).style.display = "none";
+      else {
+				document.getElementById("tabs" + w).setAttribute("moduleType", "none");
+				document.getElementById("text" + w).setAttribute("moduleType", "none");
+			}
     }
 
-    this.ShowChooser = false;
     ViewPort.init();
 
+		document.getElementById("viewportbody").setAttribute("chooser", "hide");
     ViewPort.update(false);
     
   }
@@ -206,7 +217,7 @@ function ViewPortObj(viewPortObj) {
   // classes, values etc.
   this.update = function(skipBibleChooserTest) {
 
-    // Size layout correctly
+    // Size layout and Graphical Bible Navigator (chooser) correctly
     this.hackedResizing(skipBibleChooserTest);
     
     // Tab row attribute
@@ -215,29 +226,36 @@ function ViewPortObj(viewPortObj) {
     // Windows
     for (var w=1; w<=NW; w++) {
       var value = "show1";
-      if (w > this.NumDisplayedWindows) value = "hide";
+      if (w > this.NumDisplayedWindows || 
+					document.getElementById("text" + w).getAttribute("moduleType") == "none") {
+				value = "hide";
+			}
       else {
-        
+				   
         if ((w+1) <= this.NumDisplayedWindows && 
+						document.getElementById("text" + (w+1)).getAttribute("moduleType") != "none" &&
             Tab[this.Module[w]].modType == BIBLE &&
-            !this.ShowOriginal[w] && !this.ShowOriginal[(w+1)] &&
+            !this.ShowOriginal[w] && 
+            !this.ShowOriginal[(w+1)] &&
             this.IsPinned[w] == this.IsPinned[(w+1)] && 
             this.Module[w] == this.Module[Number(w+1)])
             value = "show2";
             
         else if ((w+1) <= this.NumDisplayedWindows && 
+						document.getElementById("text" + (w+1)).getAttribute("moduleType") != "none" &&
             (Tab[this.Module[w]].modType == COMMENTARY || Tab[this.Module[w]].modType == GENBOOK) &&
             this.IsPinned[w] == this.IsPinned[(w+1)] && 
             this.Module[w] == this.Module[Number(w+1)])
             value = "show2";
 
         if (value == "show2" && w+2 <= this.NumDisplayedWindows && 
+						document.getElementById("text" + (w+2)).getAttribute("moduleType") != "none" &&
             !this.ShowOriginal[(w+2)] &&
             this.IsPinned[Number(w+1)] == this.IsPinned[Number(w+2)] &&
             this.Module[Number(w+1)] == this.Module[Number(w+2)])
             value = "show3";
       }
-      
+    
       // Firefox 16 has a bug where RTL column CSS does not scroll. The work
       // around at this time is to prohibit RTL multi-columns.
       //if ((ModuleConfigs[this.Module[w]].direction == "rtl" || ProgramConfig.direction == "rtl" )&& (/^show(2|3)$/).test(value)) value = "show1";
@@ -258,7 +276,7 @@ function ViewPortObj(viewPortObj) {
       var t = document.getElementById("text" + wThis);
       t.setAttribute("columns", valueThis);
       
-      // Set linked window's to hide
+      // Set linked windows to hide
       if (value == "show2") {
         w++;
         document.getElementById("text" + w).setAttribute("columns", "hide");
@@ -270,8 +288,15 @@ function ViewPortObj(viewPortObj) {
         document.getElementById("text" + w).setAttribute("columns", "hide");
       }
       
-      // Set this window's type
-      t.setAttribute("moduleType",  getShortTypeFromLong(Tab[this.Module[wThis]].modType));
+      // Set this window's and tab's type
+      var mtype = getShortTypeFromLong(Tab[this.Module[wThis]].modType);
+      if (t.getAttribute("moduleType") != "none") {
+				t.setAttribute("moduleType", mtype);
+			}
+			var tabs = document.getElementById("tabs" + wThis);
+			if (tabs.getAttribute("moduleType") != "none") {
+				tabs.setAttribute("moduleType", mtype);
+			}
       
       // Set this window's next/prev links
       var prev = true;
@@ -403,7 +428,7 @@ function ViewPortObj(viewPortObj) {
     
     // special ORIG tab
     var orig = "";
-    orig += "<input type=\"button\" class=\"tab tabTexts\" ";
+    orig += "<input type=\"button\" class=\"tab tabTexts tabOrig\" ";
     orig += "id=\"w" + w + ".tab.orig\" value=\"" + XSBundle.getString("ORIGLabelTab") + "\" ";
     orig += "title=\"\"" + (!Tab.ORIG_NT && !Tab.ORIG_OT ? " style=\"display:none;\"":"") + "></button>";
 
@@ -491,19 +516,20 @@ function ViewPortObj(viewPortObj) {
     r.rule.style.height = sb_maxH + "px";
     r = getCSS("#text1[footnotesMaximized=\"true\"]:not([columns=\"show1\"]) .nb,");
     r.rule.style.height = Number(sb_maxH - margt - margb - this.bbheight + this.footheight) + "px"; // margt & margb set above (all windows are same)
-
-    // If this is not MainWindow.ViewPort, then we're done hacking...
-    if (document !== MainWindow.document.getElementById("main-viewport").contentDocument) {
-      document.getElementById("viewportbody").setAttribute("chooser", "hide");
-      return;
-    }
     
-    // Bible chooser
-    var genbkinfo = GenBookTexts.getGenBookInfo();
-    var chooser = (genbkinfo.numUniqueGenBooks > 0 ? "book":(this.ShowChooser ? "bible":"hide"));
-    document.getElementById("viewportbody").setAttribute("chooser", chooser);
+    GenBookTexts.validateKeys();
+    
+    // General-Book Chooser (part of xulsword.xul but treated as part of MainWindow.ViewPort)
+    var genbkinfo = GenBookNavigator.getGenBookInfo();
+		
+		// Bible chooser
+    var chooser = (genbkinfo.unPinnedGenbkArray.length ? "book":(this.ShowChooser ? "bible":"hide"));
+    MainWindow.ViewPort.ownerDocument.getElementById("viewportbody").setAttribute("chooser", chooser);
     MainWindow.document.getElementById("frameset").setAttribute("chooser", chooser);
-    if (genbkinfo.numUniqueGenBooks > 0) GenBookTexts.updateGenBookNavigator(genbkinfo);
+    GenBookNavigator.update(genbkinfo); // must be done after chooser is made visible!
+    
+    // If this is not MainWindow.ViewPort, then we're done hacking...
+    if (this !== MainWindow.ViewPort) return;
   
     var lbn = findBookNum(Location.getBookName());
     if (!skipBibleChooserTest) document.getElementById("biblechooser").setAttribute("showing", (lbn >= NumOT ? "nt":"ot"));
@@ -561,10 +587,27 @@ function ViewPortObj(viewPortObj) {
   
   this.selectTab = function(w, version) {
     var fdb = this.firstDisplayBible(true); // capture before changing prefs...
-    this.ShowOriginal[w] = false;
-    this.Module[w] = version;
-    if (w == fdb || fdb != this.firstDisplayBible(true))
-        window.setTimeout(function() {ViewPort.disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));}, 200);
+    
+    if (this === MainWindow.ViewPort) {
+			// update this window
+			this.ShowOriginal[w] = false;
+			this.Module[w] = version;
+			
+			// if the firstDisplayBible has changed, update the navigator
+			if ((w == fdb || fdb != this.firstDisplayBible(true)))
+					window.setTimeout(function() {ViewPort.disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));}, 200);
+		}
+    
+    // windowed ViewPorts only show a single text, so if this is a windowed 
+    // ViewPort, update all the texts in its link.
+    else {
+			for (var x=1; x<=NW; x++) {
+				if (document.getElementById("text" + x).getAttribute("moduleType")=="none") continue;
+				this.ShowOriginal[x] = false;
+				this.Module[x] = version;	
+			}
+		}
+		
   };
 
   this.disableMissingBooks = function(hide) {

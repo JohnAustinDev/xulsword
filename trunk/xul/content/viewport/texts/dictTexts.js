@@ -22,8 +22,8 @@
 
 DictTexts = {
   
-  keyList: {},
-  keysHTML: {},
+  keyList: MainWindow.DictKeyLists,
+  keysHTML: MainWindow.DictKeyHTMLs,
   
   read: function(w, d) {
     var ret = { htmlList:"", htmlHead:Texts.getPageLinks(), htmlEntry:"", footnotes:null };
@@ -31,31 +31,19 @@ DictTexts = {
     // the key list is cached because it can take several seconds to
     // process large dictionaries!
     if (!this.keyList[d.mod]) {
-      if (this !== MainWindow.DictTexts && 
-          MainWindow.DictTexts.keyList.hasOwnProperty(d.mod)) {
-        this.keyList[d.mod] = MainWindow.DictTexts.keyList[d.mod];
-      }
-      else {
-        this.keyList[d.mod] = LibSword.getAllDictionaryKeys(d.mod).split("<nx>");
-        this.keyList[d.mod].pop();
-        this.sortOrder = LibSword.getModuleInformation(d.mod, "LangSortOrder");
-        if (this.sortOrder != NOTFOUND) {
-          this.sortOrder += "0123456789";
-          this.langSortSkipChars = LibSword.getModuleInformation(d.mod, "LangSortSkipChars");
-          if (this.langSortSkipChars == NOTFOUND) this.langSortSkipChars = "";
-          this.keyList[d.mod].sort(this.dictSort);
-        }
-      }
+			this.keyList[d.mod] = LibSword.getAllDictionaryKeys(d.mod).split("<nx>");
+			this.keyList[d.mod].pop();
+			this.sortOrder = LibSword.getModuleInformation(d.mod, "LangSortOrder");
+			if (this.sortOrder != NOTFOUND) {
+				this.sortOrder += "0123456789";
+				this.langSortSkipChars = LibSword.getModuleInformation(d.mod, "LangSortSkipChars");
+				if (this.langSortSkipChars == NOTFOUND) this.langSortSkipChars = "";
+				this.keyList[d.mod].sort(this.dictSort);
+			}
     }
     
     // get html for list of keys (is cached)
-    if (!this.keysHTML[d.mod]) {
-      if (this !== MainWindow.DictTexts && 
-          MainWindow.DictTexts.keysHTML.hasOwnProperty(d.mod)) {
-        this.keysHTML[d.mod] = MainWindow.DictTexts.keysHTML[d.mod];
-      }
-      else this.keysHTML[d.mod] = this.getListHTML(d.mod);
-    }
+    if (!this.keysHTML[d.mod]) this.keysHTML[d.mod] = this.getListHTML(d.mod);
     ret.htmlList = this.keysHTML[d.mod];
 
     // get actual key
@@ -283,7 +271,7 @@ DictTexts = {
     else {
       textbox.style.color="";
       ViewPort.Key[w] = firstMatch[2];
-      Texts.updateDictionary(w);
+      Texts.updateDictionary(w, Texts.getDisplay(w), false);
     }
   },
 
@@ -293,7 +281,7 @@ DictTexts = {
     var w = getContextWindow(e.target);
     
     ViewPort.Key[w] = decodeURIComponent(e.target.title);
-    Texts.updateDictionary(w);
+    Texts.updateDictionary(w, Texts.getDisplay(w), false);
     window.setTimeout("document.getElementById('note" + w + "').getElementsByClassName('keytextbox')[0].focus();", 1);
   }
 

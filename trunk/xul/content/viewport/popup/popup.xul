@@ -25,12 +25,14 @@
 <window 
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:html="http://www.w3.org/1999/xhtml"
+    windowtype="popup"
     onload="initCSS(); document.getElementById('npopup').contentDocument.defaultView.initWindowedPopup();">
    
   <script>var MainWindow = window.opener;</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
+  <script>document.title = "POPUP";</script>
   
   <commandset id="xulswordCommandSet"></commandset>
   <commandset id="BookmarksMenuCommandSet"></commandset>
