@@ -69,7 +69,7 @@ body[chromedir="rtl"] .nb #npopup {
 .text #npopup #npopupBOX {
   position:absolute;
   overflow:auto;
-  width:calc(100% - 60px);
+  width:calc(100% - 30px);
   max-height:300px; /* dynamic in popup.js */
   border:1px solid black;
   border-radius:5px;

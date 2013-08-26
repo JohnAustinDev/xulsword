@@ -211,15 +211,11 @@ BibleTexts = {
       // Now parse each note in the chapter separately
       for (var n=0; n < note.length; n++) {
         if (!note[n]) continue;
-
+        
+        note[n] = note[n].replace(/[\n\r]/g, " "); // otherwise match below fails if these chars exist
+        
         var m = note[n].match(/(<div class="nlist" [^>]*>(.*?)<\/div>)/);
         if (!m) {
-/*
-
-ERROR: skipped bad note "<div class="nlist" title="fn.1.Matt.6.11.LUTK"><span class="cs-LUTK"><i>"хлеб" - </i>в данном случае синоним пищи вообще (ср. <span class="sr" title="Luke.14.1; Prov.30.8.LUTK">Лк. 14.1; Притч. 30.8</span>).<br />
-<i>"насущный" - </i>слово это воистину было "камнем преткновения" для экзегетов. В классической греческой литературе оно не встречается, и Ориген, напр., считал, что Матфей сам составил его из предлога "на" и существительного "сущность". Однако не столь давно был найден папирус (дохристианских времен), где встречается это спорное слово. Текст оказался списком "насущных", то есть "обычных", "повседневных" покупок на базаре.</span></div>"
-
-*/
 					jsdump("ERROR: skipped bad note \"" + note[n] + "\"");
 					continue;
 				}
