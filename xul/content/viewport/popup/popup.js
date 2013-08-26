@@ -215,6 +215,7 @@ function PopupObj(popupobj) {
     
     this.npopup.setAttribute("puptype", type);
     this.npopupTX.innerHTML = html;
+//jsdump("popup html=" + html);
   
     // Windowed popup...
     if (window.name == "npopup") return true;

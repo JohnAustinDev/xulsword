@@ -22,6 +22,8 @@
  ***********************************************************************/
 var NewModuleInfo;
 var AddRepositoryModules;
+var DictKeyLists = {}; // save dictionary key lists
+var DictKeyHTMLs = {}; // save dictionary key HTML
 
 function loadedXUL() {
   //start_venkman();

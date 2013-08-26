@@ -93,7 +93,7 @@
   // xulsword's program-wide global objects...
   var MainWindow = window;
   var LibSword, Location, AudioDirs, LocaleConfigs, ModuleConfigs, ProgramConfig;
-  var Book, Tab, Tabs, SpecialModules, AllWindows, XSBundle;
+  var Book, Tab, Tabs, SpecialModules, GenBookNavigator, AllWindows, XSBundle;
   var BM, BMDS, ResourceFuns, BookmarkFuns, CommandTarget;
   var ViewPort, Texts, BibleTexts, DictTexts, GenBookTexts, CommTexts;
 </script>
@@ -127,6 +127,7 @@
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksCommand.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksMenu.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/search/indexer.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/viewport/texts/genbkNavigator.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/xulsword.js"/>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/xulswordInit.js"/>
@@ -514,7 +515,7 @@
           <vbox id="genBookTree" flex="1">
             <tree id="genbook-tree" flex="1" class="plain" hidecolumnpicker="true" seltype="single" enableColumnDrag="false"
                 datasources="rdf:null" ref="rdf:#http://www.xulsword.com/tableofcontents/ContentsRoot" flags="dont-build-content"
-                onselect="ViewPort.ownerDocument.defaultView.GenBookTexts.onSelectGenBook();" >
+                onselect="GenBookNavigator.selectionChanged();" >
               <treecols>
                 <treecol id="chapter-column" flex="1" hideheader="true" primary="true"/>
               </treecols>

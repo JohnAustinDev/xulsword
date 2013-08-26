@@ -193,7 +193,7 @@ ARMU = {
     ARMU.deleteModuleData(urls);
   },
 
-  // Delete all modules associated with a list of repository Urls 
+  // Delete all modules contained within a list of repository Urls 
   deleteModuleData: function(repoUrlArray) {
 
     RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
@@ -224,7 +224,7 @@ ARMU = {
     }
   },
 
-  // Populate the language tree's data from enabled repository modules
+  // Populate the language tree based on all modules within enabled repositories
   buildLanguageList: function() {
 
     // delete all LanguageList resources
@@ -316,6 +316,10 @@ ARMU = {
 		return moduleType;
 	},
 
+	// returns a readable translation of an ISO language code. 
+	//		translates code.en if UI is English and such a translation exists
+	//		otherwise translates code if such a translation exists
+	//		otherwise returns original ISO code
   getLangReadable: function(lang) {
     if ((/^en(\-*|\_*)$/).test(lang)) return "English";
     
@@ -333,6 +337,8 @@ ARMU = {
     return (renlang ? renlang:rlang);
   },
 
+	// select a particular language in the languageListTree. This
+	// triggers ARMI.updateModuleList() due to onselect.
   selectLanguage: function(language) {
     var tree = document.getElementById("languageListTree");
     
@@ -388,11 +394,11 @@ ARMU = {
   },
   
   // adjusts the Show attribute of each module. The moduleListTree filters
-  // its displayed modules based on the Show attribute.
+  // its displayed modules based on this Show attribute.
   showModules: function(lang) {
 		// setting the rule's REPOSITORY:Lang attribute filters okay, but once it's  
-		// removed (to show all) the tree is never rebuilt if it is re-added. Besides
-		// filtering is also being done on other bases now as well.
+		// removed (to show all) the tree is never rebuilt if it is re-added. Besides,
+		// filtering is also being done on other base as well now.
 		
 		RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
 		var mods = RDFC.GetElements();
@@ -545,8 +551,8 @@ ARMU = {
 	// each file download is controlled by a progress object
   modulesInProgressAdd: function(progress) {
     ModulesInProgress.push(progress);
-    updateRepoListButtons();
-    updateModuleButtons();
+    ARMI.updateRepoListButtons();
+    ARMI.updateModuleButtons();
   },
   
   // each file download is controlled by a progress object
@@ -557,15 +563,15 @@ ARMU = {
         i--;
       }
     }
-    updateRepoListButtons();
-    updateModuleButtons();
+    ARMI.updateRepoListButtons();
+    ARMI.updateModuleButtons();
   },
   
 	// each file download is controlled by a progress object
   reposInProgressAdd: function(progress) {
     ReposInProgress.push(progress);
-    updateRepoListButtons();
-    updateModuleButtons();
+    ARMI.updateRepoListButtons();
+    ARMI.updateModuleButtons();
   },
   
   // each file download is controlled by a progress object
@@ -576,11 +582,11 @@ ARMU = {
         i--;
       }
     }
-    updateRepoListButtons();
-    updateModuleButtons();
+    ARMI.updateRepoListButtons();
+    ARMI.updateModuleButtons();
   },
 
-  // Search the install TEMP directory for modules which can be installed
+  // search the install TEMP directory for modules which can be installed
   getInstallableModules: function() {
     var installDir = TEMP_Install.clone();
     var files = installDir.directoryEntries;
@@ -593,6 +599,7 @@ ARMU = {
     return installableModules;
   },
   
+  // add a best guess protocol to URL's which are missing protocol
   guessProtocol: function(url) {
     if ((/^ftp/i).test(url)) url = "ftp://" + url;
     else if (!(/^[^\:]+\:\/\//).test(url)) url = "http://" + url;

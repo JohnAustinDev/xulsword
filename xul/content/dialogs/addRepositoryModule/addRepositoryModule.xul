@@ -59,7 +59,9 @@
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
-  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/addRepositoryModule/loadUnload.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/addRepositoryModule/interfaceFuncs.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/addRepositoryModule/download.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/addRepositoryModule/utilities.js"/>
 
   <vbox id="body" flex="1" showRepositoryList="false" >
@@ -68,13 +70,13 @@
       
       <vbox id="showLanguagesButCont">
         <separator />
-        <button flex="1" class="arm-go-forward" oncommand="toggleLanguageList(); setTimeout('ARMU.selectLanguage();', 500);" />
+        <button flex="1" class="arm-go-forward" oncommand="ARMI.toggleLanguageList(); setTimeout('ARMU.selectLanguage();', 500);" />
       </vbox>
       
       <vbox id="languageListContainer" persist="width" >
         <label class="arm-label" id="languageListLabel">&menu.options.language;</label>
         <tree id="languageListTree" flex="1" flags="dont-build-content" seltype="single" 
-                hidecolumnpicker="true" onselect="updateModuleList();"
+                hidecolumnpicker="true" onselect="ARMI.updateModuleList();"
                 datasources="rdf:null" ref="http://www.xulsword.com/repository/LanguageList" >
           <treecols>
             <treecol id="Language" flex="1" primary="true"
@@ -96,7 +98,7 @@
           </template>
         </tree>
         
-        <button class="arm-go-back" oncommand="toggleLanguageList(); updateModuleList('all');" />
+        <button class="arm-go-back" oncommand="ARMI.toggleLanguageList(); ARMI.updateModuleList('all');" />
         
       </vbox>
       
@@ -107,7 +109,7 @@
           <label class="arm-label">&menu.addNewModule.label;</label>
           <tree id="moduleListTree" flex="1" flags="dont-build-content" hidecolumnpicker="false" 
                   datasources="rdf:null" ref="http://www.xulsword.com/repository/ModuleList" 
-                  onselect="onModuleListTreeSelect();" >
+                  onselect="ARMI.onModuleListTreeSelect();" >
             <treecols>
               <treecol id="ModType" flex="2"
                             class="sortDirectionIndicator" 
@@ -232,10 +234,10 @@
       </deck>
         
       <vbox id="moduleControls" pack="center" >
-        <button disabled="true" id="installButton" class="arm-save" oncommand="initiateModuleDownloads();" />
-        <button disabled="true" id="showInfoButton" class="arm-help" oncommand="writeModuleInfos(); toggleModuleBox();" />
-        <button id="showModulesButton" label="&history.back.label;" oncommand="toggleModuleBox();" />
-        <button disabled="true" id="moduleCancel" class="arm-cancel" oncommand="moduleCancel();" />
+        <button disabled="true" id="installButton" class="arm-save" oncommand="ARMI.initiateModuleDownloads();" />
+        <button disabled="true" id="showInfoButton" class="arm-help" oncommand="ARMI.writeModuleInfos(); ARMI.toggleModuleBox();" />
+        <button id="showModulesButton" label="&history.back.label;" oncommand="ARMI.toggleModuleBox();" />
+        <button disabled="true" id="moduleCancel" class="arm-cancel" oncommand="ARMI.moduleCancel();" />
       </vbox>
       
     </hbox>
@@ -246,7 +248,7 @@
       <vbox id="repoList" flex="1">
         <label class="arm-label" id="repoListLabel"/>
         <tree id="repoListTree" flex="1" datasources="rdf:null" editable="true"
-                onselect="updateRepoListButtons(event)" hidecolumnpicker="true" 
+                onselect="ARMI.updateRepoListButtons()" hidecolumnpicker="true" 
                 ref="http://www.xulsword.com/repository/xulswordRepoList" flags="dont-build-content">
           <treecols>
             <treecol id="Name" flex="1" primary="true"
@@ -289,10 +291,10 @@
       </vbox>
       
       <vbox id="repoControls" pack="center" >
-        <button disabled="true" id="toggle" class="arm-yes" oncommand="toggleReposOnOff()" />
-        <button disabled="true" id="add" class="arm-add" oncommand="addRepository()" />
-        <button disabled="true" id="delete" class="arm-remove" oncommand="deleteSelectedRepositories();" />
-        <button disabled="true" id="repoCancel" class="arm-cancel" oncommand="repoCancel();" />
+        <button disabled="true" id="toggle" class="arm-yes" oncommand="ARMI.toggleReposOnOff()" />
+        <button disabled="true" id="add" class="arm-add" oncommand="ARMI.addRepository()" />
+        <button disabled="true" id="delete" class="arm-remove" oncommand="ARMI.deleteSelectedRepositories();" />
+        <button disabled="true" id="repoCancel" class="arm-cancel" oncommand="ARMI.repoCancel();" />
       </vbox>
       
     </hbox>
@@ -301,9 +303,9 @@
       <hbox flex="1" pack="start">
         <button id="showRepoButton" label="&more.label;" oncommand="document.getElementById('body').setAttribute('showRepositoryList', 'true');" />
         <button id="hideRepoButton" label="&less.label;" oncommand="document.getElementById('body').setAttribute('showRepositoryList', 'false');" />
-        <progressmeter id="repoProgress" flex="1" value="0" />
+        <progressmeter id="reposTotalProgress" flex="1" value="0" />
       </hbox>
-      <button disabled="true" id="apply" label="&dialog.OK;" oncommand="installModules(); window.close();" />
+      <button disabled="true" id="apply" label="&dialog.OK;" oncommand="ARMI.installModules(); window.close();" />
       <button id="cancel" label="&dialog.Cancel;" oncommand="window.close();" />
     </hbox>
     

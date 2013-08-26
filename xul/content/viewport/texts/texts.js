@@ -57,7 +57,7 @@ Texts = {
     for (var w=1; w<=NW; w++) {
       
       if (document.getElementById("text" + w).getAttribute("columns") == "hide") continue;
-      if (document.getElementById("text" + w).style.display == "none") continue; // used by windowed viewports
+      if (document.getElementById("text" + w).getAttribute("moduleType") == "none") continue;
       if (w > ViewPort.NumDisplayedWindows) continue;
       if (force[w] == -1) continue;
       
@@ -74,7 +74,7 @@ Texts = {
       
       // get current global ViewPort display params for this window
       var display = this.getDisplay(w);
-      
+     
       // reset some or all display params with pinned values if we're pinned
       if (ViewPort.IsPinned[w]) {
         // reset any pinned params which should not track unpinned 
@@ -148,21 +148,21 @@ Texts = {
     // other unpinned windowed ViewPort Text objects. Plus update navigator and history.
     if (this === MainWindow.Texts) {
 
-      for (var x=0; x<MainWindow.AllWindows.length; x++) {
-        if (MainWindow.AllWindows[x] === MainWindow) continue;
-        
-        if (!(/^viewport/).test(MainWindow.AllWindows[x].name)) continue;
+			var allViewPortWindows = Components.classes['@mozilla.org/appshell/window-mediator;1'].
+				getService(Components.interfaces.nsIWindowMediator).getEnumerator("viewport");
+				
+			while (allViewPortWindows.hasMoreElements()) {
+				var aViewPortWindow = allViewPortWindows.getNext();
 
         // then update Text of a windowed ViewPort, skipping pinned windows entirely
         for (w=1; w<=NW; w++) {
-          if (MainWindow.AllWindows[x].ViewPort.IsPinned[w]) {
+          if (aViewPortWindow.ViewPort.IsPinned[w]) {
             if (!save.p3) save.p3 = [null, 0, 0, 0];
             save.p3[w] = -1; // don't update if pinned
           }
         }
 
-        MainWindow.AllWindows[x].Texts.update(save.p1, save.p2, save.p3);
-
+        aViewPortWindow.Texts.update(save.p1, save.p2, save.p3);
       }
       
       MainWindow.updateNavigator();
@@ -319,11 +319,11 @@ Texts = {
     
     // reset key if the module has changed since last read
     if (!this.display[w] || this.display[w].mod != display.mod) 
-        display.Key = GenBookTexts.getGenBkRoot(display.mod);
+        display.Key = GenBookTexts.firstChapter(display.mod);
   
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "Key", "globalOptions"];
-    
+ 
     if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
       var ti = GenBookTexts.read(w, display);
      
@@ -333,10 +333,7 @@ Texts = {
       hd.innerHTML = ti.htmlHead;
       
       sb.innerHTML = ti.htmlText;
-      
-      // insure navigator shows correct chapter (even though this will 
-      // sometimes initiate a second call to Text.update)
-      if (!ViewPort.IsPinned[w]) GenBookTexts.navigatorSelect(display.mod, display.Key);
+
     }
   
     // handle scroll

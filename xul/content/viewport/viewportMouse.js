@@ -227,8 +227,9 @@ function scriptClick(e) {
   // when an unpinned GenBook window is clicked, select its chapter in the navigator
   if (w && !ViewPort.IsPinned[w] && Tab[ViewPort.Module[w]].modType == GENBOOK) {
     var key = ViewPort.Key[w];
-    if (!GenBookTexts.isSelectedGenBook(ViewPort.Module[w], key)) 
-        GenBookTexts.navigatorSelect(ViewPort.Module[w], key);
+    if (GenBookNavigator.selectedChapter() != "rdf:#/" + ViewPort.Module[w] + key) {
+			GenBookNavigator.select("rdf:#/" + ViewPort.Module[w] + key);
+		}
   }
   
   // Only proceed for events with click functionality, but move up the
@@ -247,8 +248,7 @@ function scriptClick(e) {
   type = type[1];
   
   var p = getElementInfo(elem);
-Pilgrim Part I, THE SECOND STAGE, first link, with Strong's in popup text (KJV)
-jsdump("w:" + w + " type:" + type + " p:" + uneval(p));
+//jsdump("w:" + w + " type:" + type + " p:" + uneval(p) + ", elem_cn=" + elem.className + ", elem_t=" + elem.title);
 
   switch (type) {
     
@@ -277,7 +277,11 @@ jsdump("w:" + w + " type:" + type + " p:" + uneval(p));
     break;
     
   case "sn":
-    if (w==0)  Popup.activate(elem, e);
+    if (w==0) Popup.activate(elem, e);
+    break;
+    
+  case "snbut":
+    MainWindow.XulswordController.doCommand("cmd_xs_search", { search:{ mod:p.mod, searchtext:"lemma: " + p.ch, type:"SearchAdvanced" }});
     break;
     
   case "listenlink":
@@ -336,7 +340,7 @@ jsdump("w:" + w + " type:" + type + " p:" + uneval(p));
       k--;
       if (DictTexts.keyList[mod][k]) {
         ViewPort.Key[w] = DictTexts.keyList[mod][k];
-        Texts.updateDictionary(w);
+        Texts.updateDictionary(w, Texts.getDisplay(w), false);
       }
       break;
     case COMMENTARY:
@@ -366,15 +370,15 @@ jsdump("w:" + w + " type:" + type + " p:" + uneval(p));
       }
       // if not, then load previous chapter
       else {
-        var prevchap = GenBookTexts.previousChapter(mod, (ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]));
+        var prevchap = GenBookTexts.previousChapter("rdf:#/" + mod + (ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]));
         if (!prevchap) return;
         
         if (ViewPort.IsPinned[w]) {
           Texts.pinnedDisplay[w].scrollTypeFlag = SCROLLTYPETOP;
-          Texts.pinnedDisplay[w].Key = prevchap;
+          Texts.pinnedDisplay[w].Key = prevchap.match(GenBookNavigator.RDFCHAPTER)[2];
           Texts.update(SCROLLTYPEPREVIOUS, HILIGHTSKIP);
         }
-        else GenBookTexts.navigatorSelect(mod, prevchap);
+        else GenBookNavigator.select(prevchap);
         // scroll to end if possible
         sb.scrollLeft = sb.scrollWidth;
         break;
@@ -415,7 +419,7 @@ jsdump("w:" + w + " type:" + type + " p:" + uneval(p));
       k++;
       if (DictTexts.keyList[mod][k]) {
         ViewPort.Key[w] = DictTexts.keyList[mod][k];
-        Texts.updateDictionary(w);
+        Texts.updateDictionary(w, Texts.getDisplay(w), false);
       }
       break;
     case GENBOOK:
@@ -429,22 +433,22 @@ jsdump("w:" + w + " type:" + type + " p:" + uneval(p));
       sb.scrollLeft = next;
       // if not, then load next chapter
       if (sb.scrollLeft == prev) {
-        var nextchap = GenBookTexts.nextChapter(mod, (ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]));
+        var nextchap = GenBookTexts.nextChapter("rdf:#/" + mod + (ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]));
         if (!nextchap) return;
         
         if (ViewPort.IsPinned[w]) {
           Texts.pinnedDisplay[w].scrollTypeFlag = SCROLLTYPETOP;
-          Texts.pinnedDisplay[w].Key = nextchap;
+          Texts.pinnedDisplay[w].Key = nextchap.match(GenBookNavigator.RDFCHAPTER)[2];
           Texts.update(SCROLLTYPEPREVIOUS, HILIGHTSKIP);
         }
-        else GenBookTexts.navigatorSelect(mod, nextchap);
+        else GenBookNavigator.select(nextchap);
       }
       break;
     }
     break;
     
 
-  // Note box and Popup clicks
+  // Note box clicks
   case "crtwisty":
     toggleRefText(elem);
     break;
@@ -471,10 +475,6 @@ jsdump("w:" + w + " type:" + type + " p:" + uneval(p));
   case "crref":
     Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs + "." + p.lv);
     MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
-    break;
-    
-  case "snbut":
-    MainWindow.XulswordController.doCommand("cmd_xs_search", { search:{ mod:p.mod, searchtext:"lemma: " + p.ch, type:"SearchAdvanced" }});
     break;
     
   }

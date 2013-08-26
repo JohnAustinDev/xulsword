@@ -64,6 +64,8 @@ var BMDS                  = MainWindow.BMDS;
 var BookmarkFuns          = MainWindow.BookmarkFuns;
 var ResourceFuns          = MainWindow.ResourceFuns;
 
+var GenBookNavigator      = MainWindow.GenBookNavigator;
+
 var AllWindows            = MainWindow.AllWindows;
 
 var SpecialModules        = MainWindow.SpecialModules;
@@ -563,27 +565,43 @@ function getContextWindow(elem) {
 // Return the module context in which the element resides, NOT the
 // module associated with the data of the element itself.
 function getContextModule(elem) {
+	var contextMod = null;
   
   // first let's see if we're in a verse
   var telem = elem;
   while (telem && (!telem.className || !(/^vs(\s|$)/).test(telem.className))) {
     telem = telem.parentNode;
   }
-  if (telem) return getElementInfo(telem).mod;
+  if (telem) contextMod = getElementInfo(telem).mod;
   
   // then see if we're in a viewport window, and use its module
-  var w = getContextWindow(elem);
-  if (w) return ViewPort.Module[w];
+  if (!contextMod) {
+		var w = getContextWindow(elem);
+		if (w) contextMod = ViewPort.Module[w];
+	}
+  
+  // are we in cross reference text?
+  if (!contextMod) {
+		telem = elem;
+		while (telem && (!telem.className || !(/^crtext(\s|$)/).test(telem.className))) {
+			telem = telem.parentNode;
+		}
+		if (telem && telem.className && (/(^|\s)cs\-(\S+)(\s|$)/).test(telem.className)) {
+			contextMod = telem.className.match(/(^|\s)cs\-(\S+)(\s|$)/)[2];
+		}
+	}
   
   // otherwise see if we're in a search results list
-  var telem = elem;
-  while (telem && (!telem.className || !(/^slist(\s|$)/).test(telem.className))) {
-    telem = telem.parentNode;
-  }
-  if (telem) return getElementInfo(telem).mod;
-  
-  // oh well, I tried...
-  return null;
+  if (!contextMod) {
+		telem = elem;
+		while (telem && (!telem.className || !(/^slist(\s|$)/).test(telem.className))) {
+			telem = telem.parentNode;
+		}
+		if (telem) contextMod = getElementInfo(telem).mod;
+	}
+	
+//jsdump("contextMod=" + contextMod ? contextMod:"null");
+  return contextMod;
   
 }
 
