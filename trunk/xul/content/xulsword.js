@@ -80,7 +80,9 @@ function loadedXUL2() {
     NewModuleInfo.NewModules = NewModuleInfo.NewModules.sort(
     function(a,b) {
       var order = [BIBLE, COMMENTARY, DICTIONARY, GENBOOK];
-      return order.indexOf(Tab[a].modType) > order.indexOf(Tab[b].modType);
+      var ra = (Tab.hasOwnProperty(a) ? Tab[a].modType:GENBOOK);
+      var rb = (Tab.hasOwnProperty(b) ? Tab[b].modType:GENBOOK);
+      return order.indexOf(ra) > order.indexOf(rb);
     });
     
     var w=1;

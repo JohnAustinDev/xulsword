@@ -58,6 +58,7 @@ OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML() {}
 bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData) {
 	MyUserData *u = (MyUserData *)userData;
 	SWBuf scratch;
+  if (!u->supressAdjacentWhitespace) u->consecutiveNewlines = 0; // seems to be a SWORD bug?
 	bool sub = (u->suspendTextPassThru) ? substituteToken(scratch, token) : substituteToken(buf, token);
 	if (!sub) {
   // manually process if it wasn't a simple substitution
@@ -303,7 +304,8 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				}
 			}
 			else if (!strcmp(tag.getAttribute("type"),"x-p"))  {
-				outText("<br /><br />", buf, u);
+        u->outputNewline(buf);
+        u->outputNewline(buf);
 			}
 			else if (!strcmp(tag.getAttribute("type"), "cQuote")) {
 				const char *tmp = tag.getAttribute("marker");
