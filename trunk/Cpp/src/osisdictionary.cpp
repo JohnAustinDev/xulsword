@@ -1,9 +1,9 @@
 /******************************************************************************
  * 
  * OSISDictionary
- *      modified:  2009 by John Austin
- *			SWFilter descendant to toggle red coloring for words
- *			of Christ in an OSIS module.
+ *			modified:	2009 by John Austin
+ *			SWFilter descendant to toggle links to words found in
+ *			a dictionary.
  */
 
 
@@ -16,7 +16,7 @@
 SWORD_NAMESPACE_START
 
 const char oName[] = "Dictionary";
-const char oTip[] = "Toggles links for words found in the dictionary.";
+const char oTip[] = "Toggles links to words found in a dictionary.";
 
 const SWBuf choices[3] = {"Off", "On", ""};
 const StringList oValues(&choices[0], &choices[2]);
@@ -35,7 +35,7 @@ char OSISDictionary::processText(SWBuf &text, const SWKey *key, const SWModule *
 		return 0;
 	
 	SWBuf token;
-	bool intoken    = false;
+	bool intoken		= false;
 	bool stripThisToken = false;
 
 	SWBuf orig = text;
@@ -59,17 +59,17 @@ char OSISDictionary::processText(SWBuf &text, const SWKey *key, const SWModule *
 				text.append('>');
 			}
 			else {
-        XMLTag tag;
-        tag = token;
-        if (!tag.isEndTag() && tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "x-glossary")) {
-          stripThisToken = true; 
-          continue;
-        }
-        else if (tag.isEndTag() && stripThisToken) {
-          stripThisToken = false; 
-          continue;
-        }
-        text.append('<');
+				XMLTag tag;
+				tag = token;
+				if (!tag.isEndTag() && tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "x-glossary")) {
+					stripThisToken = true; 
+					continue;
+				}
+				else if (tag.isEndTag() && stripThisToken) {
+					stripThisToken = false; 
+					continue;
+				}
+				text.append('<');
 				text.append(token);
 				text.append('>');
 			}
