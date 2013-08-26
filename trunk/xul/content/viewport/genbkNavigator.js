@@ -66,10 +66,11 @@ GenBookNavigator = {
 			for (var w=1; w<=allViewports[i].NumDisplayedWindows; w++) {
 				var aMod = allViewports[i].Module[w];
 				if (Tab[aMod].modType != GENBOOK) continue;
-				
+			
 				if (allViewports[i].IsPinned[w]) continue;
 				if (allViewports[i].ownerDocument.getElementById("text" + w).getAttribute("columns") == "hide") continue;
-			
+        if (allViewports[i].ownerDocument.getElementById("text" + w).getAttribute("moduleType") == "none") continue;
+	
 				// save our unpinned info!
 				if (unPinnedGenbkArray.indexOf(aMod) == -1) 
 						unPinnedGenbkArray.push(aMod);
@@ -92,7 +93,7 @@ GenBookNavigator = {
 	
 	// update genBookNavigator based on genBook info
 	update: function(info) {
-		
+
 		// figure out which of Tree's databases stay, which need to be added, and which need to go.
 		var treeDSs = this.Tree().database.GetDataSources();
 		var removeDS = [];

@@ -204,8 +204,8 @@ function ViewPortObj(viewPortObj) {
     }
     
     // set mouse wheel listeners
-    document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", wheel, false);
-    document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", wheel, false);
+    document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
+    document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
     document.getElementById("textrow").addEventListener("DOMMouseScroll", MouseWheel.scroll, false);
 
   };
@@ -217,9 +217,6 @@ function ViewPortObj(viewPortObj) {
   // classes, values etc.
   this.update = function(skipBibleChooserTest) {
 
-    // Size layout and Graphical Bible Navigator (chooser) correctly
-    this.hackedResizing(skipBibleChooserTest);
-    
     // Tab row attribute
     document.getElementById("textarea").setAttribute("windows", "show" + this.NumDisplayedWindows);
     
@@ -336,6 +333,10 @@ function ViewPortObj(viewPortObj) {
       document.getElementById("text" + w).setAttribute("footnotesEmpty", !BibleTexts.checkNoteBox(w));
       document.getElementById("text" + w).setAttribute("footnotesMaximized", this.MaximizeNoteBox[w]);
     }
+    
+    // Size layout and Graphical Bible Navigator (chooser) correctly. This routine
+    // may require that certain ViewPort attributes be already updated (done above).
+    this.hackedResizing(skipBibleChooserTest);
     
     // Individual tabs
     // start with all chosen tabs showing in the multi-tab (except ORIG tab)

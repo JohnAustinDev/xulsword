@@ -64,6 +64,7 @@ var BMDS                  = MainWindow.BMDS;
 var BookmarkFuns          = MainWindow.BookmarkFuns;
 var ResourceFuns          = MainWindow.ResourceFuns;
 
+var BibleNavigator        = MainWindow.BibleNavigator;
 var GenBookNavigator      = MainWindow.GenBookNavigator;
 
 var AllWindows            = MainWindow.AllWindows;

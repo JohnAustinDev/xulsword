@@ -110,18 +110,16 @@ body[isWindow="true"] .tabs:not([moduleType="none"]) ~ .tabs {
 }
 /* Very special situation: Windowed viewports show only one text. If 
 it happens to be a linked text which is unpinned and then switched to become
-a dictionary (which cannot be linked), there will be three single windows  
-showing the same dictionary. In this case, tabs should only appear 
-above a single dictionary window because all three will show the same
-dict and it looks strange to have a single row of tabs spanning multiple
-windows */
-body[isWindow="true"] #textarea .tabs[moduleType="Dicts"] {
-	display:table-cell;
-	visibility:hidden;
+a dictionary (which cannot be linked), this situation needs this special CSS: */
+body[isWindow="true"] #textarea .tabs[moduleType="Dicts"],
+body[isWindow="true"] #textarea .text[moduleType="Dicts"] {
+	display:none;
 }
 body[isWindow="true"] #textarea .tabs[moduleType="none"] + .tabs[moduleType="Dicts"],
-body[isWindow="true"] #textarea .tabs[moduleType="Dicts"]:first-child {
-	visibility:visible;
+body[isWindow="true"] #textarea .tabs[moduleType="Dicts"]:first-child,
+body[isWindow="true"] #textarea .text[moduleType="none"] + .text[moduleType="Dicts"],
+body[isWindow="true"] #textarea .text[moduleType="Dicts"]:first-child {
+	display:table-cell;
 }
 .tab {
   position:relative;
