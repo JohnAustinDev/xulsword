@@ -612,7 +612,7 @@ ARMU = {
     var existingStatus = ARMU.getResourceLiteral(aDS, aRes, "Status");
     if (!existingStatus || existingStatus.length < 16) existingStatus = null;
     
-    ARMU.setResourceAttribute(aDS, aRes, "Status", (existingStatus ? existingStatus:status));
+    ARMU.setResourceAttribute(aDS, aRes, "Status", (existingStatus ? existingStatus:(status.length <= 16 ? status:ERROR + ": " + status)));
   },
   
   is_XSM_module: function(modDS, modResource) {

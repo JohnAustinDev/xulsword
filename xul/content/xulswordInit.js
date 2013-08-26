@@ -74,6 +74,7 @@ function initModules() {
   var modules = LibSword.getModuleList();
   if (!modules) return false;
   modules = modules.split("<nx>");
+//jsdump(modules);
   
   for (var m=0; m<modules.length; m++) {
   
@@ -83,7 +84,10 @@ function initModules() {
     // Weed out unsupported module types
     var supported = false;
     for each (var stype in SupportedModuleTypes) {supported |= (type == stype);}
-    if (!supported) continue;
+    if (!supported) {
+      jsdump("ERROR: Dropping module \"" + mod + "\". Unsupported type \"" + type + "\".");
+      continue;
+    }
     
     // Weed out incompatible module versions. The module installer shouldn't 
     // allow bad mods, but this is just in case.
@@ -92,17 +96,31 @@ function initModules() {
     xsversion = (xsversion != NOTFOUND ? xsversion:MINVERSION);
     var modminxsvers;
     try {modminxsvers = prefs.getCharPref("MinXSMversion");} catch (er) {modminxsvers = MINVERSION;}
-    if (comparator.compare(xsversion, modminxsvers) < 0) continue;
+    if (comparator.compare(xsversion, modminxsvers) < 0) {
+      jsdump("ERROR: Dropping module \"" + mod + "\". xsversion:" + xsversion + " < " + "modminxsvers:" + modminxsvers);
+      continue;
+    }
     var xminprogvers = LibSword.getModuleInformation(mod, MINPVERPAR);
     xminprogvers = (xminprogvers != NOTFOUND ? xminprogvers:MINVERSION);
-    if (comparator.compare(prefs.getCharPref("Version"), xminprogvers) < 0) continue;
+    if (comparator.compare(prefs.getCharPref("Version"), xminprogvers) < 0) {
+      jsdump("ERROR: Dropping module \"" + mod + "\". Version:" + prefs.getCharPref("Version") + " < " + "xminprogvers:" + xminprogvers);
+      continue;
+    }
     var xsengvers = LibSword.getModuleInformation(mod, "MinimumVersion");
     xsengvers = (xsengvers!=NOTFOUND ? xsengvers:0);
     var enginevers; try {enginevers = prefs.getCharPref("EngineVersion");} catch (er) {enginevers = NOTFOUND;}
-    if (enginevers != NOTFOUND && comparator.compare(enginevers, xsengvers) < 0) continue;
+    if (enginevers != NOTFOUND && comparator.compare(enginevers, xsengvers) < 0) {
+      jsdump("ERROR: Dropping module \"" + mod + "\". enginevers:" + enginevers + " < " + "xsengvers:" + xsengvers);
+      continue;
+    }
     
+/*
     // Language glossaries don't currently work (too big??) and so aren't supported.
-    if (LibSword.getModuleInformation(mod, "GlossaryFrom") != NOTFOUND) continue;
+    if (LibSword.getModuleInformation(mod, "GlossaryFrom") != NOTFOUND) {
+      jsdump("ERROR: Dropping module \"" + mod + "\". Language glossaries are not supported.");
+      continue;
+    }
+*/
     
     ModuleConfigs[mod] = getModuleConfig(mod);
   }

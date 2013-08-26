@@ -55,7 +55,7 @@ BibleTexts = {
     }
     else {
       ret.htmlText = LibSword.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");
-      
+
       ret.footnotes = LibSword.getNotes();
      
       if (d.globalOptions["User Notes"] == "On") {

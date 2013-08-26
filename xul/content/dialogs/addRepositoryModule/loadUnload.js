@@ -236,10 +236,11 @@ function onLoad() {
     var enabled = RPDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY+"Enabled"), true);
     if (enabled) {
       enabled = enabled.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-      ARMU.setResourceAttribute(RPDS, res, "Status", (enabled == "false" ? OFF:dString(1) + "%"));
-      ARMU.setResourceAttribute(RPDS, res, "Style", (enabled == "false" ? "red":"yellow"));
+      ARMU.setResourceAttribute(RPDS, res, "Status", (navigator.onLine ? (enabled == "false" ? OFF:dString(1) + "%"):ERROR));
+      ARMU.setResourceAttribute(RPDS, res, "Style", (navigator.onLine ? (enabled == "false" ? "red":"yellow"):"red"));
     }
   }
+  if (!navigator.onLine) document.getElementById('body').setAttribute('showRepositoryList', 'true');
   
   // add our datasource to the repository tree
   ARMU.treeDataSource([false], ["repoListTree"]);
@@ -343,8 +344,11 @@ function checkInternetPermission() {
 		return;
 	}
 	
-	ReposTotalProgress.value = "10";
-  loadMasterRepoList(true); // will call loadXulswordRepositories() when successfully finished
+  if (navigator.onLine) {
+    ReposTotalProgress.value = "10";
+    loadMasterRepoList(true); // will call loadXulswordRepositories() when successfully finished
+  }
+  else ReposTotalProgress.value = "100";
 }
 
 function loadXulswordRepositories(moduleDataAlreadyDeleted) {

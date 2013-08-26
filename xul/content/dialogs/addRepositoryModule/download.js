@@ -337,7 +337,6 @@ function downloadModule(modResource, modContentData) {
       }
     }
     if (!isZeroFile) {
-			jsdump(modContentData[c].url);
       persist.saveURI(ios.newURI(modContentData[c].url, null, null), null, null, null, null, destFile, null);
       ARMU.modulesInProgressAdd(persist);
       ARMI.updateRepoListButtons();
