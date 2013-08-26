@@ -29,7 +29,7 @@
 
 SWORD_NAMESPACE_START
 
-/** This Filter shows/hides headings in a OSIS text
+/** This Filter hides glossary/dictionary links in an OSIS text
  */
 class SWDLLEXPORT OSISDictionary : public SWOptionFilter {
 public:
