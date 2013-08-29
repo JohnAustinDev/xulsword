@@ -303,7 +303,10 @@
       <hbox flex="1" pack="start">
         <button id="showRepoButton" label="&more.label;" oncommand="document.getElementById('body').setAttribute('showRepositoryList', 'true');" />
         <button id="hideRepoButton" label="&less.label;" oncommand="document.getElementById('body').setAttribute('showRepositoryList', 'false');" />
-        <progressmeter id="reposTotalProgress" flex="1" value="0" />
+        <stack flex="1">
+					<progressmeter id="progressBar" flex="1" value="0" />
+					<hbox flex="1" pack="center" align="center"><label id="timeRemaining"></label></hbox>
+				</stack>
       </hbox>
       <button disabled="true" id="apply" label="&dialog.OK;" oncommand="ARMI.installModules(); window.close();" />
       <button id="cancel" label="&dialog.Cancel;" oncommand="window.close();" />

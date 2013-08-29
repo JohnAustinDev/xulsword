@@ -25,7 +25,7 @@
 	implement the C++ API, and doing so would not make XUL's RDF database 
 	coding any simpler anyway. But the major advantage of this implemen-
 	tation is that it makes full use of Firefox's powerful simultaneous, 
-	asyncronous download capability. This works faster, allows simultaneous 
+	asynchronous download capability. This works faster, allows simultaneous 
 	download of many modules, allows the user to continue using xulsword 
 	(including the install manager) while downloading, and provides more 
 	user feedback.
@@ -42,20 +42,25 @@ const ON = String.fromCharCode(9745);
 const OFF =  String.fromCharCode(9746);
 const EmptyRepoSite = "file://";
 const SCRIPT_PROPS = "dialogs/addRepositoryModule/addRepositoryModule.properties";
+const MAX_CONNECTIONS = 7;
+const PERSIST_FLAGS_BYPASS_CACHE = 2;
 
 var RP, RPDS, MLDS, RDF, RDFC, RDFCU; // RDF database related globals
-var RepositoryArray, RepositoryIndex, RepositoriesLoading, RepositoryCheckInterval;
-var ModulesLoading, ModuleCheckInterval;
-var ReposInProgress = [];
-var ModulesInProgress = [];
+var RepositoryArray, RepositoryIndex;
+var ManifestsLoading, ManifestCheckInterval;
+var Web = [];
 var TEMP, TEMP_Install;
-var ReposTotalProgress;
-var WindowIsAlive = true;
+var ProgressBar;
+var WindowIsClosing = false;
 var MyStrings = null;
 var ERROR = null;
 
+var SYNC = false;
+var USE_CACHE = true;
+
 var ARMU; // defined in utilities.js
 var ARMI; // defined in interfaceFuncs.js
+var ARMD; // defined in download.js
 
 function onLoad() {
 	
@@ -72,8 +77,7 @@ function onLoad() {
 
   document.title = getDataUI("menu.addNewModule.label");
 
-  ModulesLoading = 0; // global to track total number of modules downloading at any given time
-  ReposTotalProgress = document.getElementById("reposTotalProgress");
+  ProgressBar = document.getElementById("progressBar");
   
   document.getElementById("repoListLabel").value = MyStrings.GetStringFromName("arm.repositoryTreeTitle");
   
@@ -236,8 +240,12 @@ function onLoad() {
     var enabled = RPDS.GetTarget(res, RDF.GetResource(RP.REPOSITORY+"Enabled"), true);
     if (enabled) {
       enabled = enabled.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-      ARMU.setResourceAttribute(RPDS, res, "Status", (navigator.onLine ? (enabled == "false" ? OFF:dString(1) + "%"):ERROR));
-      ARMU.setResourceAttribute(RPDS, res, "Style", (navigator.onLine ? (enabled == "false" ? "red":"yellow"):"red"));
+      ARMU.setStatus(
+				RPDS, 
+				res, 
+				(navigator.onLine ? (enabled == "false" ? OFF:dString(1) + "%"):ERROR), 
+				(navigator.onLine ? (enabled == "false" ? "red":"yellow"):"red")
+			);
     }
   }
   if (!navigator.onLine) document.getElementById('body').setAttribute('showRepositoryList', 'true');
@@ -282,10 +290,10 @@ function onLoad() {
             Path:path, 
             Status:dString(0) + "%", 
             Style:"yellow", 
-            Url:ARMU.guessProtocol(site + path)
+            Url:ARMU.guessProtocol(site, path)
           };
           var res = ARMU.createRepository(nres);
-          loadRepositoryArray([res], true);
+          loadRepositories([res], true);
         }
       }
       
@@ -294,8 +302,6 @@ function onLoad() {
     input.value = "";
     this.removeAttribute("editing");
   };
-
-  ReposTotalProgress.value = "0";
   
   window.setTimeout("checkInternetPermission();", 1);
 }
@@ -345,10 +351,10 @@ function checkInternetPermission() {
 	}
 	
   if (navigator.onLine) {
-    ReposTotalProgress.value = "10";
     loadMasterRepoList(true); // will call loadXulswordRepositories() when successfully finished
   }
-  else ReposTotalProgress.value = "100";
+  else ProgressBar.hidden = true;
+
 }
 
 function loadXulswordRepositories(moduleDataAlreadyDeleted) {
@@ -367,15 +373,17 @@ function loadXulswordRepositories(moduleDataAlreadyDeleted) {
     repoArray.push(res);
   }
 
-  loadRepositoryArray(repoArray, moduleDataAlreadyDeleted);
+  loadRepositories(repoArray, moduleDataAlreadyDeleted);
 }
 
-function loadRepositoryArray(resourceArray, moduleDataAlreadyDeleted) {
+function loadRepositories(resourceArray, moduleDataAlreadyDeleted) {
+	
+	ARMU.clearErrors(RPDS, RDF.GetResource(RP.XulswordRepoListID));
   
   // init global repository array for new loading
   RepositoryArray = [];
   RepositoryIndex = -1; // begin sequence
-  RepositoriesLoading = 0;
+  ManifestsLoading = 0;
   
   var repoUrlArray = [];
   
@@ -386,7 +394,7 @@ function loadRepositoryArray(resourceArray, moduleDataAlreadyDeleted) {
     
     repoUrlArray.push(RPDS.GetTarget(resourceArray[i], RDF.GetResource(RP.REPOSITORY+"Url"), true));
     
-    RepositoriesLoading++;
+    ManifestsLoading++;
 
     var obj = { resource:resourceArray[i], manifest:null };
     RepositoryArray.push(obj);
@@ -394,7 +402,12 @@ function loadRepositoryArray(resourceArray, moduleDataAlreadyDeleted) {
 
   if (!moduleDataAlreadyDeleted) ARMU.deleteModuleData(repoUrlArray);
   
-  RepositoryCheckInterval = window.setInterval("checkAllRepositoriesLoaded();", 200);
+  ManifestCheckInterval = window.setInterval("checkAllRepositoriesLoaded();", 200);
+  
+  ProgressBar.max = 0;
+  ProgressBar.value = 0;
+  ProgressBar.mode = "undetermined";
+  ProgressBar.hidden = false;
   
   // now begin to process each repository asynchronously while 
   // checkAllRepositoriesLoaded will watch for final completion
@@ -402,11 +415,14 @@ function loadRepositoryArray(resourceArray, moduleDataAlreadyDeleted) {
 }
 
 function checkAllRepositoriesLoaded() {
-  if (RepositoriesLoading !== 0) return;
+  if (ManifestsLoading !== 0) return;
 
-  window.clearInterval(RepositoryCheckInterval);
+  window.clearInterval(ManifestCheckInterval);
   
-  ReposTotalProgress.hidden = true;
+  ProgressBar.max = 0;
+	ProgressBar.value = 0;
+	ProgressBar.mode = "undetermined";
+  ProgressBar.hidden = true;
   
   ARMU.buildLanguageList();
 
@@ -445,6 +461,8 @@ function initDataSource(data, fileName) {
 
 // Download the masterRepoList from CrossWire's designated source
 function loadMasterRepoList(moduleDataAlreadyDeleted) {
+	
+	ProgressBar.mode = "undetermined";
   
   // get URL for masterRepoList.conf
   var site = RDF.GetResource(RP.masterRepoListID);
@@ -463,6 +481,8 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
   // download masterRepoList.conf
   var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService); 
   var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+  if (!USE_CACHE) persist.persistFlags |= PERSIST_FLAGS_BYPASS_CACHE;
+
   persist.progressListener = 
   {
     myDestFile:destFile,
@@ -471,27 +491,20 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
     crosswire:RDF.GetResource(RP.CrossWireRepoID),
     moduleDataAlreadyDeleted:moduleDataAlreadyDeleted,
     
-    onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
-      var perc = Math.round(100*(aCurSelfProgress/aMaxSelfProgress))/10;
-      ARMU.retainStatusMessage(RPDS, this.crosswire, dString(perc) + "%");
-      ARMU.setResourceAttribute(RPDS, this.crosswire, "Style", "yellow");
-      ReposTotalProgress.value = 10 + Math.round(40*(aCurSelfProgress/aMaxSelfProgress));
-    },
+    onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {},
     
     onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
       if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
-      if (!WindowIsAlive) return;
+      if (WindowIsClosing) return;
       
-      // it's all done!!
-      ARMU.reposInProgressRemove(this.myPersist);
+      // finished downloading masterRepoList.conf
+      ARMU.webRemove(this.myPersist);
 
       if (ARMU.getResourceLiteral(RPDS, this.crosswire, "Enabled") == "true") {
-        ARMU.setResourceAttribute(RPDS, this.crosswire, "Status", dString(5) + "%");
-        ARMU.setResourceAttribute(RPDS, this.crosswire, "Style", "yellow");
+        ARMU.setStatus(RPDS, this.crosswire, dString(5) + "%", "yellow");
       }
       else {
-        ARMU.retainStatusMessage(RPDS, this.crosswire, OFF);
-        ARMU.setResourceAttribute(RPDS, this.crosswire, "Style", "red");
+        ARMU.setStatus(RPDS, this.crosswire, OFF, "red");
       }
       
       if (aStatus == 0) readMasterRepoList(this.myDestFile, this.moduleDataAlreadyDeleted);
@@ -500,8 +513,7 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
     },
     
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
-      ARMU.setResourceAttribute(RPDS, this.crosswire, "Status", (aMessage ? aMessage:ERROR));
-      ARMU.setResourceAttribute(RPDS, this.crosswire, "Style", "red");
+      ARMU.setStatus(RPDS, this.crosswire, (aMessage ? aMessage:ERROR), "red");
       if (aMessage) {
         jsdump(this.myURL + ": " + aMessage);
         document.getElementById('body').setAttribute('showRepositoryList', 'true');
@@ -512,9 +524,9 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
     
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
   };
+  
   persist.saveURI(ios.newURI(url, null, null), null, null, null, null, destFile, null);
-  ARMU.reposInProgressAdd(persist);
-  ARMI.updateRepoListButtons();
+  ARMU.webAdd(persist, "masterRepoList", "", url);
   
 }
 
@@ -539,7 +551,7 @@ function readMasterRepoList(aFile, moduleDataAlreadyDeleted) {
 					Path:r[3], 
 					Status:OFF, 
 					Style:"red", 
-					Url:ARMU.guessProtocol(r[2] + r[3]) 
+					Url:ARMU.guessProtocol(r[2], r[3]) 
 				};
         if (!ARMU.existsRepository(nres)) ARMU.createRepository(nres);
       }
@@ -554,18 +566,16 @@ function readMasterRepoList(aFile, moduleDataAlreadyDeleted) {
 // This can (does) occur asyncronously with other repositories at the same time.
 function startProcessingNextRepository() {
   RepositoryIndex++;
-  if (RepositoryIndex == RepositoryArray.length) return;
+  if (RepositoryIndex >= RepositoryArray.length) return;
   
   var myURL = ARMU.getResourceLiteral(RPDS, RepositoryArray[RepositoryIndex].resource, "Url");
 
   // handle local repositories syncronously
   if ((/^file\:\/\//i).test(myURL)) {
     var res = RepositoryArray[RepositoryIndex].resource;
-    ARMU.setResourceAttribute(RPDS, res, "Status", ON);
-    ARMU.setResourceAttribute(RPDS, res, "Style", "green");
+    ARMU.setStatus(RPDS, res, ON, "green");
     applyRepositoryLocalConfs(res);
-    window.setTimeout("RepositoriesLoading--;", 1);
-    ReposTotalProgress.value = Math.round(Number(ReposTotalProgress.value) + (50/RepositoryArray.length));
+    window.setTimeout("ManifestsLoading--;", 1);
 
     startProcessingNextRepository();
     return;
@@ -580,42 +590,53 @@ function startProcessingNextRepository() {
 
   var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);
   var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+  if (!USE_CACHE) persist.persistFlags |= PERSIST_FLAGS_BYPASS_CACHE;
+  
   persist.progressListener = 
   {
     myResource:RepositoryArray[RepositoryIndex].resource,
     myManifestFile:RepositoryArray[RepositoryIndex].manifest,
     myURL:myURL,
     myPersist:persist,
+    
+    myMaxSelfProgress:0,
+    myLastSelfProgress:0,
      
     onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
-      var perc = Math.round(100*(aCurSelfProgress/aMaxSelfProgress));
-      ARMU.retainStatusMessage(RPDS, this.myResource, dString(perc) + "%");
-      ARMU.setResourceAttribute(RPDS, this.myResource, "Style", "yellow");
+			
+			// update repo status progress
+      ARMU.setStatus(RPDS, this.myResource, dString(Math.round(100*(aCurSelfProgress/aMaxSelfProgress))) + "%", "yellow");
+
     },
     
     onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
       if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
-      if (!WindowIsAlive) return;
+      if (WindowIsClosing) return;
       
-      // it's all done!!
-      RepositoriesLoading--;
-      ARMU.reposInProgressRemove(this.myPersist);
-      ReposTotalProgress.value = Math.round(Number(ReposTotalProgress.value) + (50/RepositoryArray.length));
+      // finished downloading repository manifest
+      ARMU.webRemove(this.myPersist);
+      ManifestsLoading--;
+      
+			// update manifest total progress bar
+			ProgressBar.value = Number(ProgressBar.value) + Number(this.myMaxSelfProgress) - Number(this.myLastSelfProgress);
+			this.myLastSelfProgress = 0;
+			if (ProgressBar.value == ProgressBar.max) {
+				ProgressBar.mode = "undetermined";
+			}
       
       if (aStatus == 0) {
-        ARMU.setResourceAttribute(RPDS, this.myResource, "Status", ON);
-        ARMU.setResourceAttribute(RPDS, this.myResource, "Style", "green");
+        ARMU.setStatus(RPDS, this.myResource, ON, "green");
         applyRepositoryManifest(this.myResource, this.myManifestFile);
       }
       else {
-        ARMU.retainStatusMessage(RPDS, this.myResource, ERROR);
-        ARMU.setResourceAttribute(RPDS, this.myResource, "Style", "red");
+        ARMU.setStatus(RPDS, this.myResource, OFF, "red");
       }
+      
+      startProcessingNextRepository();
     },
     
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
-      ARMU.setResourceAttribute(RPDS, this.myResource, "Status", (aMessage ? aMessage:ERROR));
-      ARMU.setResourceAttribute(RPDS, this.myResource, "Style", "red");
+      ARMU.setStatus(RPDS, this.myResource, (aMessage ? aMessage:ERROR), "red");
       if (aMessage) {
         jsdump(this.myURL + ": " + aMessage);
         document.getElementById('body').setAttribute('showRepositoryList', 'true');
@@ -626,12 +647,11 @@ function startProcessingNextRepository() {
     
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
   };
-  
+ 
   persist.saveURI(ios.newURI(myURL + "/" + ManifestFile, null, null), null, null, null, null, file, null);
-  ARMU.reposInProgressAdd(persist);
-  ARMI.updateRepoListButtons();
+  ARMU.webAdd(persist, "manifest", "", myURL);
   
-  startProcessingNextRepository();
+  if (!SYNC) startProcessingNextRepository();
 }
 
 function applyRepositoryLocalConfs(resource) {
@@ -642,8 +662,7 @@ function applyRepositoryLocalConfs(resource) {
   localDir.append("mods.d");
   
   if (!localDir.exists()) {
-    ARMU.setResourceAttribute(RPDS, resource, "Status", ERROR);
-    ARMU.setResourceAttribute(RPDS, resource, "Style", "red");
+    ARMU.setStatus(RPDS, resource, ERROR, "red");
     jsdump("ERROR: could not read local repository directory in \"" + localDir.path + "\"");
     return;
   }
@@ -667,8 +686,7 @@ function applyRepositoryManifest(resource, manifest) {
   tmpDir.append("mods.d");
   
   if (!tmpDir.exists()) {
-    ARMU.setResourceAttribute(RPDS, resource, "Status", ERROR);
-    ARMU.setResourceAttribute(RPDS, resource, "Style", "red");
+    ARMU.setStatus(RPDS, resource, ERROR, "red");
     jsdump("ERROR: could not read repository manifest in \"" + tmpDir.path + "\"");
     return;
   }
@@ -821,18 +839,15 @@ function applyConfFile(file, repoUrl) {
 ////////////////////////////////////////////////////////////////////////
 
 function onUnload() {
-  WindowIsAlive = false; // tells progress not to bother reporting anything anymore
+  WindowIsClosing = true; // tells progress not to try reporting anything anymore
   
   // disconnect each data source
   ARMU.treeDataSource([true, true, true], ["repoListTree", "languageListTree", "moduleListTree"]);
   
   // abort any downloads which are still in progress
-  for (var i=0; i<ModulesInProgress.length; i++) {
-    ModulesInProgress[i].cancelSave();
-  }
-  for (var i=0; i<ReposInProgress.length; i++) {
-    ReposInProgress[i].cancelSave();
-  }
+  var cancel = [];
+  for (var i=0; i<Web.length; i++) {cancel.push(Web[i].persist);}
+  for (var p=0; p<cancel.length; p++) {cancel[p].cancelSave();}
 
   // remove all temporary files (except install temp files will remain)
   if (TEMP.exists()) TEMP.remove(true);
