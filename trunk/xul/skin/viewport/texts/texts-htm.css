@@ -158,7 +158,7 @@
 .fn:after,
 .un:after {
   vertical-align:top;
-  font-family:'Arial' !important;
+  font-family:'arial' !important;
   font-size-adjust:0.55 !important;
   line-height:100% !important;
 }

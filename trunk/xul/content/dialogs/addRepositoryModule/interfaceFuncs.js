@@ -18,7 +18,7 @@
 
 
 ////////////////////////////////////////////////////////////////////////
-// Mouse and Selection functions
+// Add Repository Module User Interface Functions
 ////////////////////////////////////////////////////////////////////////
 
 ARMI = {
@@ -26,6 +26,8 @@ ARMI = {
 	deleteSelectedRepositories: function() {
 		var selectedResources = ARMU.getSelectedResources(document.getElementById("repoListTree"));
 		if (!selectedResources.length) return;
+		
+		ARMU.clearErrors(RPDS, RDF.GetResource(RP.XulswordRepoListID));
 		
 		ARMU.treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
 		
@@ -42,7 +44,9 @@ ARMI = {
 		var selectedResources = ARMU.getSelectedResources(document.getElementById("repoListTree"));
 		if (!selectedResources.length) return;
 		
-		// disconnect large trees to speed things up. loadRepositoryArray reconnects them
+		ARMU.clearErrors(RPDS, RDF.GetResource(RP.XulswordRepoListID));
+		
+		// disconnect large trees to speed things up. loadRepositories reconnects them
 		ARMU.treeDataSource([true, true], ["languageListTree", "moduleListTree"]);
 
 		// set enable/disable etc. attributes
@@ -63,18 +67,16 @@ ARMI = {
 			ARMU.setResourceAttribute(RPDS, selectedResources[i], "Enabled", newval);
 			
 			if (newval == "true") {
-				ARMU.setResourceAttribute(RPDS, selectedResources[i], "Status", dString(1) + "%");
-				ARMU.setResourceAttribute(RPDS, selectedResources[i], "Style", "yellow");
+				ARMU.setStatus(RPDS, selectedResources[i], dString(1) + "%", "yellow");
 				nowOnRes.push(selectedResources[i]);
 			}
 			else {
-				ARMU.setResourceAttribute(RPDS, selectedResources[i], "Status", OFF);
-				ARMU.setResourceAttribute(RPDS, selectedResources[i], "Style", "red");
+				ARMU.setStatus(RPDS, selectedResources[i], OFF, "red");
 			}
 		}
 		
 		ARMU.deleteModuleData(deleteModDataUrl);
-		loadRepositoryArray(nowOnRes, true);
+		loadRepositories(nowOnRes, true);
 	},
 
 	// updates moduleListTree to show certain modules. 
@@ -134,94 +136,19 @@ ARMI = {
 		
 		if (document.getElementById("moduleDialog").getAttribute("showModuleInfo") == "true")
 				ARMI.toggleModuleBox();
+				
+		ARMU.clearErrors(MLDS, RDF.GetResource(RP.ModuleListID));
 		
-		ModulesLoading += mods.length;
-		if (!ModuleCheckInterval) ModuleCheckInterval = window.setInterval("checkAllModulesAreDownloaded();", 200);
-		
-		// fetch files into separate module directories so that in the end, 
-		// only complete downloads will be installed.
 		for (var m=0; m<mods.length; m++) {
-			var is_XSM_module = ARMU.is_XSM_module(MLDS, mods[m]);
-			
-			var moduleUrl = ARMU.getResourceLiteral(MLDS, mods[m], "ModuleUrl");
-			var repoUrl = ARMU.getResourceLiteral(MLDS, mods[m], "Url");
-			
-			// prompt for audio book and chapters if needed
-			if (is_XSM_module && !(/\.(zip|xsm)$/).test(moduleUrl)) {
-				var modConf = ARMU.getRepositoryUrlTempDir(repoUrl);
-				modConf.append("mods.d");
-				modConf.append(ARMU.getResourceLiteral(MLDS, mods[m], "ConfFileName"));
-				var data = { ok:false, bk:null, ch:null, cl:null, audio:eval(ARMU.getConfEntry(readFile(modConf), "AudioChapters")) };
-				var dlg = window.openDialog("chrome://xulsword/content/dialogs/addRepositoryModule/audioDialog.xul", "dlg", DLGSTD, data);
-				
-				if (!data.ok || !data.bk || !data.ch || !data.cl) {
-					ModulesLoading--;
-					continue;
-				}
-				
-				moduleUrl = ARMU.getResourceLiteral(MLDS, mods[m], "DataPath") + "&bk=" + data.bk + "&ch=" + data.ch + "&cl=" + data.cl;
-				ARMU.setResourceAttribute(MLDS, mods[m], "ModuleUrl", moduleUrl);
-			}
-			
-			// all module downloads will go under "downloads/subdir/"
-			// this directory will be deleted once download is copied so
-			// don't allow another download until this one is done
-			var dest = ARMU.getModuleDownloadDirectory(mods[m]);
-			if (dest.exists()) {
-				ModulesLoading--;
-				continue;
-			}
-			dest.create(dest.DIRECTORY_TYPE, DPERM);
-			
-			// and don't download something that has already been succesfully downloaded either!
-			if (ARMU.getModuleInstallerZipFile(mods[m]).exists()) {
-				ModulesLoading--;
-				continue;
-			}
-			
-			if (is_XSM_module) {
-				// install a .xsm module
-				downloadModule(mods[m], [ { url:moduleUrl, size:1 } ]);
-			}
-			else {
-				// install a SWORD module
-			
-				// first, copy .conf file from local dir to "downloads/modName/mods.d"
-				var modsdDir = dest.clone();
-				modsdDir.append("mods.d");
-				if (!modsdDir.exists()) modsdDir.create(modsdDir.DIRECTORY_TYPE, DPERM);
-				
-				var confSource;
-				if ((/^file\:\/\//i).test(repoUrl)) {
-					confSource = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-					confSource.initWithPath(lpath(repoUrl.replace(/^file\:\/\//, "")));
-				}
-				else confSource = ARMU.getRepositoryUrlTempDir(repoUrl);
-				confSource.append("mods.d");
-				confSource.append(ARMU.getResourceLiteral(MLDS, mods[m], "ConfFileName"));
-				if (!confSource.exists()) {
-					jsdump("ERROR: Conf file doesn't exist \"" + confSource.path + "\".");
-					ModulesLoading--;
-					continue;
-				}
-				confSource.copyTo(modsdDir, null);
-			
-				var moduleListingDir = ARMU.getModuleListingDirectory(mods[m]);
-				if (moduleListingDir.exists()) {
-					ModulesLoading--;
-					continue;
-				}
-				moduleListingDir.create(moduleListingDir.DIRECTORY_TYPE, DPERM);
-			
-				// now copy the module contents from the Url to "downloads/modName/modules/..."
-				ARMU.setResourceAttribute(MLDS, mods[m], "Status", dString(1) + "%");
-				ARMU.setResourceAttribute(MLDS, mods[m], "Style", "yellow");
-				
-				// fetchSwordModuleUrls will asyncronously call downloadModule 
-				// when all module content files are finally known.
-				fetchSwordModuleUrls( { modResource:mods[m], modContentData:[], directoriesBeingRead:1 , status:0} );
-			}
+			ARMU.setStatus(MLDS, mods[m], dString(0) + "%", "yellow");
 		}
+		
+		ProgressBar.hidden = false;
+  
+		ARMD.ModulesQuerying = ARMD.ModulesQuerying.concat(mods);
+		if (!ARMD.QueryCheckInterval) ARMD.QueryCheckInterval = window.setInterval("ARMD.checkAllQueriesAreCompleted();", 200);
+		
+		ARMD.queryNextModule();
 	},
 
 	installModules: function() {
@@ -246,12 +173,13 @@ ARMI = {
 				disabled[0] = false; // toggle
 				disabled[2] = false; // delete
 			}
-			if (ModulesInProgress.length || ReposInProgress.length) {
+			if (Web.length) {
 				disabled[0] = true; // toggle
 				disabled[1] = true; // add
 				disabled[2] = true; // delete
 			}
-			disabled[3] = (ReposInProgress.length ? false:true);
+			
+			disabled[3] = !this.repoCancel(true);
 		}
 		
 		// apply disabled attribute
@@ -275,7 +203,7 @@ ARMI = {
 			disabled[1] = false; // showInfo
 		}
 		
-		disabled[3] = (ModulesInProgress.length ? false:true);
+		disabled[3] = !this.moduleCancel(true);
 		
 		// apply disabled attribute
 		for (var i=0; i<buttons.length; i++) {
@@ -327,16 +255,95 @@ ARMI = {
 		tree.focus();
 	},
 
-	moduleCancel: function() {
-		for (var i=0; i<ModulesInProgress.length; i++) {
-			ModulesInProgress[i].cancelSave();
+	// cancels selected modules if possible, and returns true if anything was
+	// canceled. The testOnly bool is used to return the possibility of a
+	// cancelation given the selection.
+	moduleCancel: function(testOnly, mods) {
+		var didCancel = false;
+		
+		if (!mods) mods = ARMU.getSelectedResources(document.getElementById("moduleListTree"), true);
+		if (!mods.length) return didCancel;
+		
+		for (var m=0; m<mods.length; m++) {
+		
+			// is this mod queued for querying?
+			var mqi = ARMD.ModulesQuerying.indexOf(mods[m]);
+			if (mqi != -1) {
+				didCancel = true;
+				if (!testOnly) {
+					ARMD.ModulesQuerying.splice(mqi, 1);
+					ARMU.revertStatus(MLDS, mods[m]);
+				}
+			}
+			
+			// is this mod queued for downloading?
+			for (var x=0; x<ARMD.ModulesDownloading.length; x++) {
+				if (ARMD.ModulesDownloading[x].modResource != mods[m]) continue;
+				didCancel = true;
+				if (!testOnly) {
+					ARMD.ModulesDownloading.splice(x, 1);
+					ARMU.revertStatus(MLDS, mods[m]);
+					x--;
+					
+					var downDir = ARMU.getModuleDownloadDirectory(mods[m]);
+					if (downDir.exists()) downDir.remove(true);
+				}
+			}
+
+			// is this mod currently downloading
+			var cancel = [];
+			for (var i=0; i<Web.length; i++) {
+				if (Web[i].type != "moduleListing" && Web[i].type != "moduleFile") continue;	
+				if (Web[i].group == mods[m].ValueUTF8) {
+					didCancel = true;
+					if (!testOnly) cancel.push(Web[i].persist);
+				}
+			}
+			for (var p=0; p<cancel.length; p++) {cancel[p].cancelSave();}
+			
 		}
+		
+		if (didCancel && !testOnly) USE_CACHE = false;
+		
+		return didCancel;
 	},
 
-	repoCancel: function() {
-		for (var i=0; i<ReposInProgress.length; i++) {
-			ReposInProgress[i].cancelSave();
+	// cancels selected repos if possible, and returns true if anything was
+	// canceled. The testOnly bool is used to return the possibility of a
+	// cancelation given the selection.
+	repoCancel: function(testOnly, repos) {
+		var didCancel = false;
+		
+		if (!repos) repos = ARMU.getSelectedResources(document.getElementById("repoListTree"), true);
+		if (!repos.length) return didCancel;
+		
+		for (var r=0; r<repos.length; r++) {
+		
+			// is this repo queued for loading?
+			for (var x=0; x<RepositoryArray.length; x++) {
+				if (RepositoryArray[x] != ARMU.getResourceLiteral(RPDS, repos[r], "Url")) continue;
+				didCancel = true;
+				if (!testOnly) {
+					RepositoryArray.splice(x, 1);
+					ARMU.setStatus(RPDS, repos[r], dString(0) + "%", "");
+					x--;
+				}
+			}
+
+			// is this repo manifest currently downloading?
+			var cancel = [];
+			for (var i=0; i<Web.length; i++) {
+				if (Web[i].type != "masterRepoList" && Web[i].type != "manifest") continue;
+				if (Web[i].url.indexOf(ARMU.getResourceLiteral(RPDS, repos[r], "Url")) == 0) {
+					didCancel = true;
+					if (!testOnly) cancel.push(Web[i].persist);
+				}
+			}
+			for (var p=0; p<cancel.length; p++) {cancel[p].cancelSave();}
+			
 		}
+		
+		return didCancel;
 	},
 
 

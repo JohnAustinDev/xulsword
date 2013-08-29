@@ -17,7 +17,7 @@
 */
 
 ////////////////////////////////////////////////////////////////////////
-// addRepositoryModule Utility functions
+// // Add Repository Module Utility Functions
 ////////////////////////////////////////////////////////////////////////
 
 ARMU = {
@@ -54,10 +54,8 @@ ARMU = {
   // return the final nsILocalFile this module resource will download into
   getModuleInstallerZipFile: function(modResource) {
     var installZipFile = TEMP_Install.clone();
-
-    var is_XSM_module = ARMU.is_XSM_module(MLDS, modResource);
     
-    if (is_XSM_module) {
+    if (ARMU.is_XSM_module(MLDS, modResource)) {
       // get leafName of ModuleUrl
       var zipFileName = ARMU.getResourceLiteral(MLDS, modResource, "ModuleUrl").replace(/^.*?([^\/]+)$/, "$1");
       if (!(/\.(zip|xsm)$/).test(zipFileName)) zipFileName += ".xsm";
@@ -547,41 +545,33 @@ ARMU = {
     aDS = aDS.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource);
     aDS.Flush();
   },
+  
+	// each web download is controlled by a nsIWebBrowserPersist object
+	maxConnections:0,
+  webAdd: function(aWebBrowserPersist, aType, aGroup, url) {
+    Web.push( { persist:aWebBrowserPersist, type:aType, group:aGroup, url:url } );
+    
+    if (Web.length == MAX_CONNECTIONS) SYNC = true;
+    
+    if (Web.length > this.maxConnections) this.maxConnections = Web.length;
+//jsdump("webAdd " + aType + " from " + url + "\n\n" + "Active connections = " + Web.length + "\nMax connections = " + this.maxConnections);
 
-	// each file download is controlled by a progress object
-  modulesInProgressAdd: function(progress) {
-    ModulesInProgress.push(progress);
     ARMI.updateRepoListButtons();
     ARMI.updateModuleButtons();
   },
   
-  // each file download is controlled by a progress object
-  modulesInProgressRemove: function(progress) {
-    for (var i=0; i<ModulesInProgress.length; i++) {
-      if (progress == ModulesInProgress[i]) {
-        ModulesInProgress.splice(i,1);
+  // each web download is controlled by a nsIWebBrowserPersist object
+  webRemove: function(aWebBrowserPersist) {
+    for (var i=0; i<Web.length; i++) {
+      if (aWebBrowserPersist == Web[i].persist) {
+        var x = Web.splice(i,1);
         i--;
       }
     }
-    ARMI.updateRepoListButtons();
-    ARMI.updateModuleButtons();
-  },
-  
-	// each file download is controlled by a progress object
-  reposInProgressAdd: function(progress) {
-    ReposInProgress.push(progress);
-    ARMI.updateRepoListButtons();
-    ARMI.updateModuleButtons();
-  },
-  
-  // each file download is controlled by a progress object
-  reposInProgressRemove: function(progress) {
-    for (var i=0; i<ReposInProgress.length; i++) {
-      if (progress == ReposInProgress[i]) {
-        ReposInProgress.splice(i,1);
-        i--;
-      }
-    }
+    
+    if (Web.length < MAX_CONNECTIONS) SYNC = false;
+    
+//jsdump("webRemove " + (x[0].type ? x[0].type:"null") + " from " + (x[0].url ? x[0].url:"null") + "\n\n" + "Active connections = " + Web.length);
     ARMI.updateRepoListButtons();
     ARMI.updateModuleButtons();
   },
@@ -600,20 +590,76 @@ ARMU = {
   },
   
   // add a best guess protocol to URL's which are missing protocol
-  guessProtocol: function(url) {
+  guessProtocol: function(site, path) {
+		if (path == ".") path = "";
+		
+		var url = site + path;
     if ((/^ftp/i).test(url)) url = "ftp://" + url;
     else if (!(/^[^\:]+\:\/\//).test(url)) url = "http://" + url;
     
     return url;
   },
   
-  // try to apply new status to aRes but DON'T overwrite any existing status message
-  retainStatusMessage: function(aDS, aRes, status) {
-    var existingStatus = ARMU.getResourceLiteral(aDS, aRes, "Status");
-    if (!existingStatus || existingStatus.length < 16) existingStatus = null;
+  // clear any error messages from a particular set of resources
+  clearErrors: function(aDS, aContainer) {
+		var er = RDF.GetResource(RP.REPOSITORY+"ErrorMsg");
+		
+		RDFC.Init(aDS, aContainer);
+		var ress = RDFC.GetElements();
+		while (ress.hasMoreElements()) {
+			var aRes = ress.getNext();
+			var errorMsg = aDS.GetTargets(aRes, er, true);
+			if (errorMsg.hasMoreElements()) {
+				while (errorMsg.hasMoreElements()) aDS.Unassert(aRes, er, errorMsg.getNext());
+			}
+		}
+	},
+	
+	notError: new RegExp("^\\s*(" + escapeRE(ON) + "|" + escapeRE(OFF) + "|.*\\%)\\s*$"),
+  
+  // apply status to aRes but DON'T overwrite any existing error message until errors are cleared
+  setStatus: function(aDS, aRes, status, style) {
+		
+		// don't overwrite any existing error message, unless it was generic.
+		var hasError = ARMU.getResourceLiteral(aDS, aRes, "ErrorMsg");
+		if (hasError && hasError != ERROR) return;
+
+		// handle any new error messages
+    if (!this.notError.test(status)) {
+			// all error messages should begin with ERROR
+			if (status.indexOf(ERROR) != 0) status = ERROR + ": " + status;
+			ARMU.setResourceAttribute(aDS, aRes, "ErrorMsg", status);
+			style = "red";
+		}
     
-    ARMU.setResourceAttribute(aDS, aRes, "Status", (existingStatus ? existingStatus:(status.length <= 16 ? status:ERROR + ": " + status)));
+    var statusArray = [];
+		if (aDS == MLDS && ARMU.is_XSM_module(MLDS, aRes)) {
+			// update status of all modules included in this XSM file
+			var myKey = ARMU.getResourceLiteral(MLDS, aRes, "ModuleUrl");
+			RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+			var elems = RDFC.GetElements();
+			while (elems.hasMoreElements()) {
+				var elem = elems.getNext();
+				var key = ARMU.getResourceLiteral(MLDS, elem, "ModuleUrl");
+				if (key == myKey) statusArray.push(elem);
+			}
+		}
+		else statusArray.push(aRes);
+		
+		for (var i=0; i<statusArray.length; i++) {
+			ARMU.setResourceAttribute(aDS, statusArray[i], "Status", status);
+			ARMU.setResourceAttribute(aDS, statusArray[i], "Style", style);
+		}
   },
+  
+  revertStatus: function(aDS, aRes) {
+		if (aDS != MLDS) return;
+		
+		if (ARMU.getModuleInstallerZipFile(aRes).exists())
+				ARMU.setStatus(MLDS, aRes, ON, "green");
+		else 
+				ARMU.setStatus(MLDS, aRes, dString(0) + "%", "");
+	},
   
   is_XSM_module: function(modDS, modResource) {
 		var moduleUrl = ARMU.getResourceLiteral(modDS, modResource, "ModuleUrl");

@@ -36,7 +36,7 @@ toolbarbutton, menulist, label {
 toolbar[printpreview="true"] {
   /* overwrite anything inherited from cs-Program class */
   direction:ltr;
-  font-family: Arial, sans-serif;
+  font-family: arial, sans-serif;
   font-size-adjust:none;
   line-height:100%;
   
