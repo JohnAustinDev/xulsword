@@ -264,6 +264,13 @@ ARMI = {
 		if (!mods) mods = ARMU.getSelectedResources(document.getElementById("moduleListTree"), true);
 		if (!mods.length) return didCancel;
 		
+		// add to selection any other XSM members too
+		var add = [];
+		for (var m=0; m<mods.length; m++) {
+			add = add.concat(ARMU.otherMembersXSM(mods[m]));
+		}
+		mods = mods.concat(add);
+		
 		for (var m=0; m<mods.length; m++) {
 		
 			// is this mod queued for querying?

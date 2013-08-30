@@ -632,25 +632,36 @@ ARMU = {
 			style = "red";
 		}
     
-    var statusArray = [];
-		if (aDS == MLDS && ARMU.is_XSM_module(MLDS, aRes)) {
-			// update status of all modules included in this XSM file
-			var myKey = ARMU.getResourceLiteral(MLDS, aRes, "ModuleUrl");
-			RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-			var elems = RDFC.GetElements();
-			while (elems.hasMoreElements()) {
-				var elem = elems.getNext();
-				var key = ARMU.getResourceLiteral(MLDS, elem, "ModuleUrl");
-				if (key == myKey) statusArray.push(elem);
-			}
+    var statusArray = [aRes];
+		if (aDS == MLDS) {
+			statusArray = statusArray.concat(this.otherMembersXSM(aRes));
 		}
-		else statusArray.push(aRes);
 		
 		for (var i=0; i<statusArray.length; i++) {
 			ARMU.setResourceAttribute(aDS, statusArray[i], "Status", status);
 			ARMU.setResourceAttribute(aDS, statusArray[i], "Style", style);
 		}
   },
+  
+  // returns an array of other module resources which share the same XSM
+  // module or else an empty array if there are no others.
+  otherMembersXSM: function(modResource) {
+		var resArray = [];
+		
+		if (!ARMU.is_XSM_module(MLDS, modResource)) return resArray;
+		
+		var myKey = ARMU.getResourceLiteral(MLDS, modResource, "ModuleUrl");
+		RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+		var elems = RDFC.GetElements();
+		while (elems.hasMoreElements()) {
+			var elem = elems.getNext();
+			if (elem == modResource) continue; // get "other" members only
+			var key = ARMU.getResourceLiteral(MLDS, elem, "ModuleUrl");
+			if (key == myKey) resArray.push(elem);
+		}
+
+		return resArray;
+	},
   
   revertStatus: function(aDS, aRes) {
 		if (aDS != MLDS) return;
