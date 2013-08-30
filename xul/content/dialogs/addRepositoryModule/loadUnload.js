@@ -658,12 +658,13 @@ function applyRepositoryLocalConfs(resource) {
   var localUrl = ARMU.getResourceLiteral(RPDS, resource, "Url");
   localUrl = localUrl.replace(/^file\:\/\//, "");
   var localDir = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  localDir.initWithPath(localUrl);
-  localDir.append("mods.d");
+  try {localDir.initWithPath(lpath(localUrl));}
+  catch (er) {jsdump("ERROR: " + er); localDir = null;}
+  if (localDir) localDir.append("mods.d");
   
-  if (!localDir.exists()) {
+  if (!localDir || !localDir.exists()) {
     ARMU.setStatus(RPDS, resource, ERROR, "red");
-    jsdump("ERROR: could not read local repository directory in \"" + localDir.path + "\"");
+    jsdump("ERROR: could not read local repository directory in \"" + (localDir ? localDir.path:lpath(localUrl)) + "\"");
     return;
   }
   
@@ -848,11 +849,15 @@ function onUnload() {
   var cancel = [];
   for (var i=0; i<Web.length; i++) {cancel.push(Web[i].persist);}
   for (var p=0; p<cancel.length; p++) {cancel[p].cancelSave();}
+  
+  ARMU.clearErrors(RPDS, RDF.GetResource(RP.XulswordRepoListID));
+  ARMU.clearErrors(MLDS, RDF.GetResource(RP.ModuleListID));
 
   // remove all temporary files (except install temp files will remain)
   if (TEMP.exists()) TEMP.remove(true);
   
-  // delete all module and language data (it's regenerated every time the window is opened)
+  // delete all module and language data (it's regenerated every time the 
+  // window is opened) but repository data is retained between loads.
   if (MLDS) {
     var ress = MLDS.GetAllResources();
     while (ress.hasMoreElements()) {

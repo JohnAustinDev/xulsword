@@ -115,14 +115,17 @@ ARMD = {
 			var confSource;
 			if ((/^file\:\/\//i).test(repoUrl)) {
 				confSource = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-				confSource.initWithPath(lpath(repoUrl.replace(/^file\:\/\//, "")));
+				try {confSource.initWithPath(lpath(repoUrl.replace(/^file\:\/\//, "")));}
+        catch (er) {jsdump("ERROR: " + er); confSource = null;}
 			}
 			else confSource = ARMU.getRepositoryUrlTempDir(repoUrl);
-			confSource.append("mods.d");
-			confSource.append(ARMU.getResourceLiteral(MLDS, mod, "ConfFileName"));
-			if (!confSource.exists()) {
+      if (confSource) {
+        confSource.append("mods.d");
+        confSource.append(ARMU.getResourceLiteral(MLDS, mod, "ConfFileName"));
+      }
+			if (!confSource || !confSource.exists()) {
 				dest.remove(true);
-				jsdump("ERROR: Conf file doesn't exist \"" + confSource.path + "\".");
+				jsdump("ERROR: Conf file doesn't exist \"" + (confSource ? confSource.path:lpath(repoUrl.replace(/^file\:\/\//, ""))) + "\".");
 				ARMU.setStatus(MLDS, mod, ERROR, "red");
 				this.queryNextModule();
 				return;
@@ -152,9 +155,10 @@ ARMD = {
 		// handle local repositories separately
 		if ((/^file\:\/\//i).test(directoryUrl)) {
 			var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-			aFile.initWithPath(lpath(directoryUrl.replace(/^file\:\/\//, "")));
-			if (!aFile.exists()) {
-				jsdump("ERROR: local repository directory problem \"" + aFile.path + "\"");
+			try {aFile.initWithPath(lpath(directoryUrl.replace(/^file\:\/\//, "")));}
+      catch (er) {jsdump("ERROR: " + er); aFile = null;}
+			if (!aFile || !aFile.exists()) {
+				jsdump("ERROR: local repository directory problem \"" + (aFile ? aFile.path:lpath(directoryUrl.replace(/^file\:\/\//, ""))) + "\"");
 				ARMU.setStatus(MLDS, module.modResource, ERROR, "red");
 				var downDir = ARMU.getModuleDownloadDirectory(module.modResource);
 				if (downDir.exists()) downDir.remove(true);
@@ -433,9 +437,9 @@ ARMD = {
 			destFile.append(ARMU.getModuleInstallerZipFile(module.modResource).leafName);
 		}
 		else {
-			var url = ARMU.getResourceLiteral(MLDS, module.modResource, "Url");
+			var url = ARMU.getResourceLiteral(MLDS, module.modResource, "Url").replace("\\", "/", "g");
 			var datapath = ARMU.getResourceLiteral(MLDS, module.modResource, "DataPath");
-			var sub = aContentData.url.replace(url + "/" + datapath + "/", "");
+			var sub = aContentData.url.replace("\\", "/", "g").replace(url + "/" + datapath + "/", "");
 			sub = sub.split("/");
 			for (var sd=0; sd<sub.length-1; sd++) {
 				if (!sub[sd]) return; // handle dir//subdir
@@ -533,8 +537,9 @@ ARMD = {
 		var test = aContentData.url.match(/^file\:\/\/(.*)$/);
 		if (test) {
 			var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-			aFile.initWithPath(lpath(test[1]));
-			if (aFile.exists() && aFile.fileSize == 0) {
+			try {aFile.initWithPath(lpath(test[1]));}
+      catch (er) {jsdump("ERROR: " + er); aFile = null;}
+			if (aFile && aFile.exists() && aFile.fileSize == 0) {
 				isZeroFile = true;
 				aFile.copyTo(destFile.parent, destFile.leafName);
 				module.downloadedFiles.push(destFile);
