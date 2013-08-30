@@ -345,9 +345,9 @@ ARMD = {
 			
 			ProgressBar.max = Number(ProgressBar.max) + Number(size);
 			
-			if (this.check1.hasOwnProperty(encodeURI(modobj.modContentData[f].url)))
+			if (this.check1.hasOwnProperty(encodeURI(modobj.modContentData[f].url.replace(/^file\:\/*/, "").replace("\\", "/", "g"))))
 					jsdump("REPEATED DOWNLOAD SCHEDULED " + modobj.modContentData[f].url);
-			this.check1[encodeURI(modobj.modContentData[f].url)] = modobj.modContentData[f].size;
+			this.check1[encodeURI(modobj.modContentData[f].url.replace(/^file\:\/*/, "").replace("\\", "/", "g"))] = modobj.modContentData[f].size;
 //jsdump("Added file for download: " + modobj.modContentData[f].url);
 		}
 		
@@ -439,7 +439,8 @@ ARMD = {
 		else {
 			var url = ARMU.getResourceLiteral(MLDS, module.modResource, "Url").replace("\\", "/", "g");
 			var datapath = ARMU.getResourceLiteral(MLDS, module.modResource, "DataPath");
-			var sub = aContentData.url.replace("\\", "/", "g").replace(url + "/" + datapath + "/", "");
+			var sub = aContentData.url.replace("\\", "/", "g").replace(url + "/" + datapath, "");
+      sub = sub.replace(/^\//, "");
 			sub = sub.split("/");
 			for (var sd=0; sd<sub.length-1; sd++) {
 				if (!sub[sd]) return; // handle dir//subdir
@@ -497,9 +498,9 @@ ARMD = {
 				// finished file download		
 				ARMU.webRemove(this.myPersist);
 
-				if (ARMD.check2.hasOwnProperty(aRequest.name)) 
+				if (ARMD.check2.hasOwnProperty(aRequest.name.replace(/^file\:\/*/, "")))
 						jsdump("REPEATED DOWNLOAD " + aRequest.name);
-				ARMD.check2[aRequest.name] = Number(this.mySize);
+				ARMD.check2[aRequest.name.replace(/^file\:\/*/, "")] = Number(this.mySize);
 
 				// update manifest total progress bar
 				ProgressBar.value = Number(ProgressBar.value) + Number(this.mySize) - Number(this.myLastProgress);
