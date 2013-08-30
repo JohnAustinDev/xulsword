@@ -451,15 +451,18 @@ ARMI = {
 		if (showInfo == "false") {
 			var confInfo = "-----";
 			var confFile;
-				if ((/^file\:\/\//i).test(url)) {
-					confFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-					confFile.initWithPath(lpath(url.replace(/^file\:\/\//, "")));
-				}
-				else confFile = ARMU.getRepositoryUrlTempDir(url);
-				confFile.append("mods.d");
-				confFile.append(conf);
-			if (!confFile.exists()) {
-				jsdump("ERROR: Missing .conf file \"" + confFile.path + "\"");
+      if ((/^file\:\/\//i).test(url)) {
+        confFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+        try {confFile.initWithPath(lpath(url.replace(/^file\:\/\//, "")));}
+        catch (er) {jsdump("ERROR: " + er); confFile = null;}
+      }
+      else confFile = ARMU.getRepositoryUrlTempDir(url);
+      if (confFile) {
+        confFile.append("mods.d");
+        confFile.append(conf);
+      }
+			if (!confFile || !confFile.exists()) {
+				jsdump("ERROR: Missing .conf file \"" + (confFile ? confFile.path:lpath(url.replace(/^file\:\/\//, ""))) + "\"");
 			}
 			else {confInfo  = readFile(confFile);}
 
