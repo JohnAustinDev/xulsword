@@ -35,8 +35,6 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
   <script>
-		
-		document.title = "VIEWPORT";
     
     // Overwrite these global objects (assigned to MainWindow objects in common1.js)
     // with the local objects that have been created within our iframe.

@@ -32,7 +32,6 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
-  <script>document.title = "POPUP";</script>
   
   <commandset id="xulswordCommandSet"></commandset>
   <commandset id="BookmarksMenuCommandSet"></commandset>

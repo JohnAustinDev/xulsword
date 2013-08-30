@@ -59,9 +59,6 @@ function PopupObj(popupobj) {
     // get our event element's type and mod etc.
     var type = elem.className.match(/^([^\s\-]+)?/)[0];
     var p = getElementInfo(elem); // p may be null because not all handled elements are in TextClasses
-    
-    this.crnote = null; // for module select feature
-    this.srnote = null; // for module select feature
    
     // did this event originate from inside this popup?
     var updatingPopup = elem;
@@ -120,6 +117,7 @@ function PopupObj(popupobj) {
       var old = this.npopup.getElementsByClassName("prevhtml")[0];
       this.npopup.setAttribute("puptype", old.getAttribute("title"));
       this.npopupTX.innerHTML = old.innerHTML;
+      this.setTitle();
       this.checkPopupPosition(e);
       return true;
       break;
@@ -138,10 +136,13 @@ function PopupObj(popupobj) {
       if (!Texts.footnotes[w]) return false;
       var re = "<div class=\"nlist\" title=\"" + type + "." + escapeRE(p.title) + "\">.*?<\\/div>";
       re = new RegExp(re);
-      this.crnote = Texts.footnotes[w].match(re);
-      if (!this.crnote) return false;
-      this.crnote = this.crnote[0];
-      res = BibleTexts.getNotesHTML(this.crnote, p.mod, true, true, true, true, 1, false);
+      
+      var myNote = Texts.footnotes[w].match(re);
+      if (!myNote) return false;
+      myNote = myNote[0];
+      
+      res = BibleTexts.getNotesHTML(myNote, p.mod, true, true, true, true, 1, false);
+      res += "<div class=\"myNote is_" + type + "\" style=\"display:none;\">" + myNote + "</div>";
       break;
 
     case "sr":
@@ -155,8 +156,10 @@ function PopupObj(popupobj) {
         i = entry.lastIndexOf("<", i);
         entry = entry.substring(0, i);
       }
-      this.srnote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + referenceBible + "\">" + (p.reflist[0] != "unavailable" ? p.reflist.join(";"):entry) + "</div>"
-      res = BibleTexts.getNotesHTML(this.srnote, referenceBible, true, true, true, true, 1, true);
+      var myNote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + referenceBible + "\">" + (p.reflist[0] != "unavailable" ? p.reflist.join(";"):entry) + "</div>";
+      
+      res = BibleTexts.getNotesHTML(myNote, referenceBible, true, true, true, true, 1, true);
+      res += "<div class=\"myNote is_" + type + "\" style=\"display:none;\">" + myNote + "</div>";
       break;
     
     case "dtl":
@@ -218,7 +221,10 @@ function PopupObj(popupobj) {
 //jsdump("popup html=" + html);
   
     // Windowed popup...
-    if (window.name == "npopup") return true;
+    if (window.name == "npopup") {
+      this.setTitle();
+      return true;
+    }
     
     // Normal popup updating itself...
     if (updatingPopup) {
@@ -249,6 +255,22 @@ function PopupObj(popupobj) {
     html += "</select>";
     
     return html;
+  };
+  
+  this.setTitle = function() {
+    if (window.name != "npopup") return;
+    var title = "";
+    
+    var pt = this.npopupTX.getElementsByClassName("popup-text");
+    if (!pt) return;
+    pt = pt[pt.length-1]; // the pt we want is the last in the tree
+  
+    var html = pt.innerHTML.replace(/(\s*&nbsp;\s*)+/g, " ");
+    html = html.replace(/^.*?class=\"cs-[^>]*>/, ""); // find module text
+    html = html.replace(/<[^>]*>/g, ""); // remove tags
+    title = html.substring(0, html.indexOf(" ", 24)) + "…"; //shorten
+  
+    frameElement.ownerDocument.title = title;
   };
   
   this.open = function() {
@@ -308,9 +330,15 @@ function PopupObj(popupobj) {
     var pt = this.npopupTX.getElementsByClassName("popup-text");
     if (!pt) return;
     pt = pt[pt.length-1]; // the pt we want is the last in the tree
+    
+    var n = pt.getElementsByClassName("myNote");
+    if (!n) return;
+    n = n[0];
 
-    if (this.crnote) pt.innerHTML = BibleTexts.getNotesHTML(this.crnote, mod, true, true, true, true, 1, false);
-    else if (this.srnote) pt.innerHTML = BibleTexts.getNotesHTML(this.srnote, mod, true, true, true, true, 1, true);
+    var h = BibleTexts.getNotesHTML(n.innerHTML, mod, true, true, true, true, 1, (/(^|\s+)is_sr(\s+|$)/).test(n.className));
+    h += "<div class=\"" + n.className + "\" style=\"display:none;\">" + n.innerHTML + "</div>";
+    pt.innerHTML = h;
+    Popup.setTitle();
   };
   
   this.selectFeature = function(mod, feature) {
@@ -320,6 +348,7 @@ function PopupObj(popupobj) {
     
     prefs.setCharPref("Selected" + feature, mod);
     pt.innerHTML = DictTexts.getLemmaHTML(this.lemmaInfo.snlist, this.lemmaInfo.entry, this.lemmaInfo.mod);
+    Popup.setTitle();
   };
   
   this.towindow = function() {
@@ -345,4 +374,5 @@ function PopupObj(popupobj) {
 
   };
   
+  this.setTitle();
 }
