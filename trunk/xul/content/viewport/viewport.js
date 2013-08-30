@@ -216,6 +216,16 @@ function ViewPortObj(viewPortObj) {
   // should be done using CSS, and here we only set applicable attributes
   // classes, values etc.
   this.update = function(skipBibleChooserTest) {
+  
+    if (this != MainWindow.ViewPort) {
+      for (var w=1; w<=NW; w++) {
+        if (document.getElementById("tabs" + w).getAttribute("moduleType") != "none") {
+          window.frameElement.ownerDocument.title = Tab[this.Module[w]].label + 
+              (Tab[this.Module[w]].description ? ": " + Tab[this.Module[w]].description:"");
+          break;
+        }
+      }
+    }
 
     // Tab row attribute
     document.getElementById("textarea").setAttribute("windows", "show" + this.NumDisplayedWindows);
