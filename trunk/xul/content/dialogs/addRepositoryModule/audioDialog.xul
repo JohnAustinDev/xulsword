@@ -60,7 +60,7 @@
       }
       
       // create chapter elements, all hidden
-      for (var c=1; c<150; c++) {
+      for (var c=1; c<=150; c++) {
         var item = chapterList.appendItem(dString(c), c);
         if (c > 1) item.setAttribute("hidden", "true");
         
