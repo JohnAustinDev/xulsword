@@ -18,6 +18,9 @@ and applied to Strong's classes */
 .slist > a,
 .snlist a {
   color:blue;
+  display:inline-block;
+  position:relative;
+  border-bottom:1px solid transparent;
 }
 .slist > a:after,
 .strongs-type:after {
@@ -28,6 +31,7 @@ and applied to Strong's classes */
 .slist > a:hover,
 .snlist a:hover {
   border-bottom:1px solid blue;
+  cursor:pointer;
 }
 .slist > span,
 .snlist span {

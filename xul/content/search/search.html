@@ -24,58 +24,67 @@
   <meta name="generator" content="PSPad editor, www.pspad.com">
   <title>Search Frame</title>
   <link rel="stylesheet" href="chrome://xulsword/skin/common/global-htm.css" type="text/css">
+  <link rel="stylesheet" href="chrome://xulsword/skin/viewport/popup/popup-htm.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/search/search-htm.css" type="text/css">
 
   <script>
     var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
     var MainWindow = watcher.getWindowByName("xulsword-window", window);
+    var SearchMouse;
   </script>
   
   <script src="chrome://xulsword/content/common/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common/common1.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/viewport/popup/popup.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/search/searchMouse.js" type="text/javascript"></script>
   
   <script>
     
   function load() {
-    if (document !== MainWindow.document.getElementById("printBrowser").contentDocument) return;
-  
-    // then we are printing...
-    document.getElementsByTagName("body")[0].setAttribute("print", "true");
-    MainWindow.printBrowserLoaded();
-  }
-
-  function scriptDblClick(e) {
-
-    // Get module this event occurred in
-    var mod = window.frameElement.ownerDocument.defaultView.Search.result.translate;
-    
-    // Get selected text
-    var selob = window.getSelection();
-    var sel = selob.toString();
-    sel = cleanDoubleClickSelection(sel);
-    if (!sel || sel.search(/^\s*$/)!=-1) return; //return of nothing or white-space
-
-    // Do a search for selected word in mod. Use cmd_xs_search because 
-    // its much faster than cmd_xs_searchForSelection and can be used
-    // because our selection is only a single word.
-    MainWindow.XulswordController.doCommand("cmd_xs_search", { search:{ mod:mod, searchtext:sel, type:"SearchAnyWord" }});
-    
-    e.stopPropagation(); // block any higher handlers
+    if (document === MainWindow.document.getElementById("printBrowser").contentDocument) {
+			// then we are printing...
+			document.getElementsByTagName("body")[0].setAttribute("print", "true");
+			MainWindow.printBrowserLoaded();
+			return;
+		}
+		
+		Popup = new PopupObj();
   }
 
   </script>
 
   </head>
   
-  <body class="searchres" print="false" onload="initCSS(); load();" ondblclick="scriptDblClick(event);">
+  <body class="searchres" print="false" 
+        onload="initCSS(); load();" 
+        ondblclick="SearchMouse.DblClick(event);">
     
     <div id="search-content" hasLexicon="false">
       
-      <div id="lexiconBox" ></div>
+      <div id="lexiconBox" onmouseover="SearchMouse.popupOver(event)" onmouseout="SearchMouse.popupOut(event)"></div>
     
       <div id="searchBox"></div>
     
     </div>
+    
+    <div id="npopup" class="userFontSize cs-Program" isWindow="false" puptype="fn">
+			
+			<!-- used for relative positioning of popup !-->
+			<div id="npopupRL">
+				
+				<!-- used for absolute positioning of popup box !-->
+				<div id="npopupBOX"> 
+				
+					<!-- used for popup text container !-->
+					<div id="npopupTX"
+						onclick="SearchMouse.popupClick(event)"
+						onmousedown="Popup.drag('down', event);"
+						onmousemove="Popup.drag('move', event);"
+						onmouseup  ="Popup.drag('up',   event);">
+					</div>
+				</div>
+			</div>
+		</div>
     
   </body>
   

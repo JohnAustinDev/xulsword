@@ -142,7 +142,7 @@ function PopupObj(popupobj) {
       myNote = myNote[0];
       
       res = BibleTexts.getNotesHTML(myNote, p.mod, true, true, true, true, 1, false);
-      res += "<div class=\"myNote is_" + type + "\" style=\"display:none;\">" + myNote + "</div>";
+      res += "<div class=\"popup-noteAddress is_" + type + "\">" + myNote + "</div>";
       break;
 
     case "sr":
@@ -159,7 +159,7 @@ function PopupObj(popupobj) {
       var myNote = "<div class=\"nlist\" title=\"cr.1.0.0.0." + referenceBible + "\">" + (p.reflist[0] != "unavailable" ? p.reflist.join(";"):entry) + "</div>";
       
       res = BibleTexts.getNotesHTML(myNote, referenceBible, true, true, true, true, 1, true);
-      res += "<div class=\"myNote is_" + type + "\" style=\"display:none;\">" + myNote + "</div>";
+      res += "<div class=\"popup-noteAddress is_" + type + "\">" + myNote + "</div>";
       break;
     
     case "dtl":
@@ -258,7 +258,7 @@ function PopupObj(popupobj) {
   };
   
   this.setTitle = function() {
-    if (window.name != "npopup") return;
+    if (window.name != "npopup") return; // only windowed popups need titles
     var title = "";
     
     var pt = this.npopupTX.getElementsByClassName("popup-text");
@@ -267,8 +267,8 @@ function PopupObj(popupobj) {
   
     var html = pt.innerHTML.replace(/(\s*&nbsp;\s*)+/g, " ");
     html = html.replace(/^.*?class=\"cs-[^>]*>/, ""); // find module text
-    html = html.replace(/<[^>]*>/g, ""); // remove tags
-    title = html.substring(0, html.indexOf(" ", 24)) + "…"; //shorten
+    html = html.replace(/<[^>]*>/g, ""); // remove all tags
+    title = html.substring(0, html.indexOf(" ", 24)) + "…"; //shorten it
   
     frameElement.ownerDocument.title = title;
   };
@@ -284,6 +284,7 @@ function PopupObj(popupobj) {
   
     // reset Javascript pupTXtop and store initial location relative to mouse
     this.npopupBOX.style.top = ""; // reset so that CSS always controls initial location!
+    this.npopupBOX.style.left = "";
 
     // getting parentY is tricky. Using offsetTop is difficult and must 
     // also take scrollTop into account. Using e.clientY is not exact,
@@ -331,7 +332,7 @@ function PopupObj(popupobj) {
     if (!pt) return;
     pt = pt[pt.length-1]; // the pt we want is the last in the tree
     
-    var n = pt.getElementsByClassName("myNote");
+    var n = pt.getElementsByClassName("popup-noteAddress");
     if (!n) return;
     n = n[0];
 
@@ -371,8 +372,66 @@ function PopupObj(popupobj) {
     p += ",width=" + this.npopupBOX.offsetWidth;
     p += ",height=" + this.npopupBOX.offsetHeight;
     AllWindows.push(wintop.open("chrome://xulsword/content/viewport/popup/popup.xul", "popup" + String(Math.random()), p));
-
+		
+		this.close();
   };
-  
-  this.setTitle();
+
+	this.PopupY = 0;
+	this.PopupX = 0;
+	
+	this.drag = function(type, e) {
+		var popupTX = document.getElementById("npopupTX");
+		var popupBOX = document.getElementById("npopupBOX");
+
+		switch (type) {
+			
+		case "down":
+			if (e.target.className == 'draghandle' || e.target === popupTX) {
+				this.PopupY = e.clientY + 40; // the 20 helps quick upward drags to not inadvertently leave the popup
+				this.PopupX = e.clientX;
+				popupTX.style.cursor = "move";
+				e.stopPropagation();
+				e.preventDefault();
+			}
+			break;
+			
+		case "move":
+			if (!this.PopupY) return;
+			
+			var puptop = Number(window.getComputedStyle(popupBOX).top.replace("px", ""));
+			if (isNaN(puptop)) return;
+			
+			popupBOX.style.top = Number(puptop + e.clientY - this.PopupY) + "px";
+			this.PopupY = e.clientY;
+			
+			var isSearch = e.target;
+			while(isSearch && (!isSearch.id || isSearch.id != "search-content")) {
+				isSearch = isSearch.parentNode;
+			}
+		
+			if (isSearch) {
+				
+				var pupleft = Number(window.getComputedStyle(popupBOX).left.replace("px", ""));
+				if (!isNaN(pupleft)) {		
+						
+				popupBOX.style.left = Number(pupleft + e.clientX - this.PopupX) + "px";
+				this.PopupX = e.clientX;
+				}
+			}
+			
+			e.stopPropagation();
+			e.preventDefault();
+			break;
+			
+		case "up":
+			this.PopupY = 0;
+			this.PopupX = 0;
+			popupTX.style.cursor = "";
+			break;
+			
+		}
+	};
+	
+	
+	this.setTitle();
 }
