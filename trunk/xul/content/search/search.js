@@ -472,7 +472,7 @@ function SearchObj(searchObj) {
 
   // Display the current page of results for the previous search. NOTE:
   // the module (mod) is not always the same as that which generated
-  // the search results, and verses will be mapped (KJV <> Synodal only)
+  // the search results, and verses will be mapped (KJV <> Synodal only right now)
   this.showSearchResults = function(result, s) {
     if (!result || !s) return;
     
@@ -667,7 +667,7 @@ function SearchObj(searchObj) {
         }
       }
       
-      // format and write the results
+      // format and write the results in the Lexicon section
       var html = "";
       for (var type in strongsList) {
         
@@ -676,7 +676,7 @@ function SearchObj(searchObj) {
         
         if (!strongsList[type].length) continue;
         
-        html += "<span class=\"snlist\">";
+        html += "<span class=\"snlist\" contextModule=\"" + mod + "\">";
         
         var mtype = "";
         if (type == "H") mtype = XSBundle.getString("ORIGLabelOT");
@@ -686,17 +686,15 @@ function SearchObj(searchObj) {
 
         html +=   "<span class=\"cs-" + DEFAULTLOCALE + "\">";
         for (var j=0; j<strongsList[type].length; j++) {
+					var strongNum = strongsList[type][j].strongs.replace("S_", "");
           var sti = DictTexts.getStrongsModAndKey(strongsList[type][j].strongs);
-          sti.str = strongsList[type][j].strongs.replace("S_", "");
-          if (sti.mod && sti.key) {
-            html +=   "<a class=\"cs-" + DEFAULTLOCALE + "\" ";
-            html +=       "href=\"javascript:MainWindow.showLocation('" + sti.mod + "', '','" + sti.key + "', 1, 1);\">";
-            html +=     "<span class=\"lex-text\">" + sti.str + "</span>";
-            html +=   "</a>";
-          }
-          else {
-            html +=   "<span class=\"lex-text\">" + sti.str + "</span>";
-          }
+
+          html +=   "<a " + (sti.mod && sti.key ? "class=\"sn " + strongsList[type][j].strongs + "\" ":"");
+          html +=       "onclick=\"MainWindow.XulswordController.doCommand('cmd_xs_searchForLemma', ";
+          html +=       "{search:{searchtext:'lemma:" + strongNum + "', mod:'" + mod + "'}});\">";
+          html +=     "<span class=\"lex-text\">" + strongNum + "</span>";
+          html +=   "</a>";
+
           html +=   "<span class=\"lex-count\">" + strongsList[type][j].count + "</span>";
         }
         html +=   "</span>";

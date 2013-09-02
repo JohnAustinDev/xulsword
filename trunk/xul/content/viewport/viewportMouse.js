@@ -517,45 +517,6 @@ function scriptDblClick(e) {
   e.stopPropagation(); // block any higher handlers
 }
 
-/************************************************************************
- * MOVABLE POPUP
- ***********************************************************************/  
-var PopupPosition = 0;
-function popupDrag(type, e) {
-  var popupTX = document.getElementById("npopupTX");
-  var popupBOX = document.getElementById("npopupBOX");
-
-  switch (type) {
-    
-  case "down":
-    if (e.target.className == 'draghandle' || e.target === popupTX) {
-      PopupPosition = e.clientY;
-      popupTX.style.cursor = "move";
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    break;
-    
-  case "move":
-    if (!PopupPosition) return;
-    
-    var puptop = Number(window.getComputedStyle(popupBOX).top.replace("px", ""));
-    if (isNaN(puptop)) return;
-    
-    popupBOX.style.top = Number(puptop + e.clientY - PopupPosition) + "px";
-    PopupPosition = e.clientY;
-    
-    e.stopPropagation();
-    e.preventDefault();
-    break;
-    
-  case "up":
-    PopupPosition = 0;
-    popupTX.style.cursor = "";
-    break;
-    
-  }
-}
 
 /************************************************************************
  * MOVABLE BOUNDARY BAR

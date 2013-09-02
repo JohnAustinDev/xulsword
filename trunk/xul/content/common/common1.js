@@ -591,6 +591,15 @@ function getContextModule(elem) {
 			contextMod = telem.className.match(/(^|\s)cs\-(\S+)(\s|$)/)[2];
 		}
 	}
+	
+	// in a search lexicon list?
+	if (!contextMod) {
+		telem = elem;
+		while (telem && (!telem.className || !(/^snlist(\s|$)/).test(telem.className))) {
+			telem = telem.parentNode;
+		}
+		if (telem) contextMod = telem.getAttribute("contextModule");
+	}
   
   // otherwise see if we're in a search results list
   if (!contextMod) {

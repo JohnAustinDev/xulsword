@@ -32,7 +32,8 @@
 }
 
 /* REGULAR (NON-WINDOW) POPUP STYLES */
-.text #npopup {
+.text #npopup,
+#search-content #npopup {
   z-index:100;
   position:absolute; /* insure popup falls out of page layout */
   height:0px;
@@ -55,6 +56,9 @@ body[chromedir="rtl"] .nb #npopup {
 .text[columns="show3"] .sb #npopup {
   width:33%;
 }
+#search-content #npopup {
+	width:400px;
+}
 .text .introlink #npopup {
   /* This non inline text element has an undesireable left:auto 
   value. So it needs explicit left alignment and 100% width so
@@ -66,7 +70,8 @@ body[chromedir="rtl"] .nb #npopup {
   left:auto;
   right:30px;
 }
-.text #npopup #npopupBOX {
+.text #npopup #npopupBOX,
+#search-content #npopup #npopupBOX {
   position:absolute;
   overflow:auto;
   width:calc(100% - 30px);
@@ -88,17 +93,24 @@ body[chromedir="rtl"] .nb #npopup {
   left:auto;
   right:-20px;
 }
+#search-content #npopup #npopupBOX {
+	width:100%;
+	margin:0px;
+}
 /* Strong's popups are offset so that their underlying text
 can be read after the popup is open. "top" values here must
 be in px for Javascript. */
-.text .sn #npopup {
+.text .sn #npopup,
+#search-content .sn #npopup {
   height:100px;
 }
-.text .sn #npopupRL {
+.text .sn #npopupRL,
+#search-content .sn #npopupRL {
   top:-12px;
   height:calc(100px + 12px);
 }
-.text .sn #npopup #npopupBOX {
+.text .sn #npopup #npopupBOX,
+#search-content .sn #npopup #npopupBOX {
   top:100px;
 }
 
@@ -181,6 +193,9 @@ body[chromedir="rtl"] .popup-mod-select {
   width:100%;
   clear:both;
 }
+.popup-noteAddress {
+	display:none;
+}
 
 /* dictionary styles */
 #npopup .dtl,
@@ -202,4 +217,39 @@ body[chromedir="rtl"] .popup-mod-select {
   display:none;
 }
 
+/* Strong's numbers dictionary entry display */
+.snbut {
+  float:right;
+  margin-top:5px;
+  margin-bottom:5px;
+  -moz-margin-start:10px;
+  -moz-margin-end:0px;
+}
+.snbut:after {
+  display:inline-block;
+  content:url(chrome://xulsword/skin/images/search.png);
+  width:30px;
+  height:18px;
+  overflow:hidden;
+  -moz-margin-start:16px;
+}
+.lemma-header {
+  font-weight:bold;
+}
+.lemma-html {
+	white-space:normal;
+}
+.lemma-sep {
+  border-top:3px solid grey;
+  margin:10px;
+}
+.dt {
+  border-bottom:1px solid black;
+  cursor:pointer;
+}
+.dtl {
+  color:blue;
+  border-bottom:1px solid blue;
+  cursor:pointer;
+}
 

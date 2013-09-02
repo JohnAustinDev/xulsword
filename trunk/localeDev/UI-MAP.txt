@@ -202,6 +202,7 @@ xulsword/xulsword.dtd:menu.removeModule.label                            =  main
 xulsword/dialogs/removeModule/removeModule.dtd:menu.removeModule.label   =  main-window.menu-file.remove_modules
 xulsword/dialogs/removeModule/removeModule.dtd:deleteAudio.label         =  main-window.menu-file.remove_modules.delete_audio
 xulsword/dialogs/removeModule/removeModule.dtd:deleteconfirm.title       =  main-window.menu-file.remove_modules.delete_confirmation
+xulsword/bookmarks/bookmarks.properties:deleteconfirm.title              =  main-window.menu-file.remove_modules.delete_confirmation
 xulsword/dialogs/removeModule/removeModule.dtd:deleteLocales.label       =  main-window.menu-file.remove_modules.delete_locales
 xulsword/dialogs/removeModule/removeModule.dtd:deleteModules.label       =  main-window.menu-file.remove_modules.delete_sword_modules
 xulsword/xulsword.dtd:menu.removeModule.sc                               = ?main-window.menu-file.remove_modules.ak
