@@ -595,11 +595,15 @@ function SearchObj(searchObj) {
           
           // format and save the results
           var dictinfo = DictTexts.getStrongsModAndKey(classes[i]);
-          html += "<span class=\"slist\" title=\"" + encodeURIComponent(dictinfo.key) + "." + dictinfo.mod + "\">";
-          html +=   "<a class=\"cs-" + DEFAULTLOCALE + "\" ";
-          html +=       "href=\"javascript:MainWindow.showLocation('" + dictinfo.mod + "', '','" + dictinfo.key + "', 1, 1);\">";
-          html +=     classes[i].replace(/^S_/, "");
+          html += "<span class=\"slist cs-" + DEFAULTLOCALE + "\" title=\"" + encodeURIComponent(dictinfo.key) + "." + dictinfo.mod + "\">";
+          
+          var strongNum = classes[i].replace("S_", "");
+          html +=   "<a " + (dictinfo.mod && dictinfo.key ? "class=\"sn " + classes[i] + "\" ":"");
+          html +=       "onclick=\"MainWindow.XulswordController.doCommand('cmd_xs_searchForLemma', ";
+          html +=       "{search:{searchtext:'lemma:" + strongNum + "', mod:'" + mod + "'}});\">";
+          html +=     strongNum;
           html +=   "</a>";
+          
           html +=   "<span class=\"lex-total\">" + dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count) + "</span>";
           html +=   "<span class=\"cs-" + DEFAULTLOCALE + "\">";
           for (var j=0; j<lexicon.length; j++) {
