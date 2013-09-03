@@ -392,7 +392,7 @@ ARMI = {
 				
 				var modName = ARMU.getResourceLiteral(MLDS, aModRes, "ModuleName");
 			
-				html += "<div class=\"module-detail cs-Program\">";
+				html += "<div class=\"module-detail cs-" + DEFAULTLOCALE + "\">";
 				
 				// Heading and version
 				var vers = ARMU.getResourceLiteral(MLDS, aModRes, "Version");

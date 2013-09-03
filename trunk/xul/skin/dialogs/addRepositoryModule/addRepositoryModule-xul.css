@@ -115,6 +115,9 @@
 .arm-save[disabled="true"]       {-moz-image-region: rect(16px 112px 32px 96px);}
 .arm-help[disabled="true"]       {-moz-image-region: rect(16px 128px 32px 112px);}
 
-
+window[chromedir="rtl"] .arm-go-forward {-moz-image-region: rect(0px 96px 16px 80px);}
+window[chromedir="rtl"] .arm-go-back    {-moz-image-region: rect(0px 80px 16px 64px);}
+window[chromedir="rtl"] .arm-go-forward[disabled="true"] {-moz-image-region: rect(16px 96px 32px 80px);}
+window[chromedir="rtl"] .arm-go-back[disabled="true"]    {-moz-image-region: rect(16px 80px 32px 64px);}
 
 

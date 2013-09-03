@@ -97,6 +97,9 @@ body[chromedir="rtl"] .nb #npopup {
 	width:100%;
 	margin:0px;
 }
+#search-content .slist > a #npopup #npopupBOX {
+  left:0px;
+}
 /* Strong's popups are offset so that their underlying text
 can be read after the popup is open. "top" values here must
 be in px for Javascript. */
@@ -219,6 +222,8 @@ body[chromedir="rtl"] .popup-mod-select {
 
 /* Strong's numbers dictionary entry display */
 .snbut {
+  position:relative;
+  top:-9px;
   float:right;
   margin-top:5px;
   margin-bottom:5px;
