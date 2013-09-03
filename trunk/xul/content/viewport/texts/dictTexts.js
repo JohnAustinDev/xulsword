@@ -170,9 +170,21 @@ DictTexts = {
       }
       
       if (info.key && info.mod) {
-        if (info.key == "00000") continue; // skip G tags with no number
+        if (Number(info.key) == 0) continue; // skip G tags with no number
         var entry = LibSword.getDictionaryEntry(info.mod, info.key);
         if (entry) {
+					
+					// some TEI mods (like AbbottSmith) may use @LINK, so replace these here.
+					var link = entry.match(/(\@LINK\s+[^\s<]+)/g);
+					if (link) {
+						for (var x=0; x<link.length; x++) {
+							var l = link[x].match(/\@LINK\s+([^\s<]+)/);
+							var r = LibSword.getDictionaryEntry(info.mod, l[1].toUpperCase());
+							if (!r) r = LibSword.getDictionaryEntry(info.mod, l[1]);
+							if (r) entry = entry.replace(l[0], r);
+						}
+					}
+					
           html += sep + buttonHTML + entry;
         }
         else html += sep + buttonHTML + info.key;
@@ -197,11 +209,12 @@ DictTexts = {
     res.key = parts[1];
     res.key = res.key.replace(" ", "", "g"); // why?
 
-    var feature = null;
     switch (parts[0]) {
       
     case "S":
+        
       // Strongs Hebrew or Greek tags
+      var feature = null;
       if (res.key.charAt(0)=="H") {
         feature = "HebrewDef";
       }
@@ -209,12 +222,33 @@ DictTexts = {
         if (Number(res.key.substr(1)) >= 5627) return res; // SWORD filters these out- not valid it says
         feature = "GreekDef";
       }
-      res.key = String("00000").substr(0, 5-(res.key.length-1)) + res.key.substr(1);
+      if (feature) {
+				try {res.mod = prefs.getCharPref("Selected" + feature);}
+				catch (er) {res.mod = null; return res;}
+			}
+			if (!res.mod) {res.key = null; return res;};
+      
+      var styp = (feature == "HebrewDef" ? "H":"G");
+      var snum = Number(res.key.substr(1));
+      if (isNaN(snum)) {res.key = null; return res;}
+      var pad4 = String("0000").substr(0, 4-(String(snum).length-1)) + String(snum);
+
+			// possible keys in order of likelyhood
+			var keys = ["0" + pad4, styp + pad4, pad4, styp + snum, snum, styp + "0" + pad4];
+			
+			// try out key possibilities until we find a correct key for this mod
+			if (res.mod) {
+				for (var k=0; k<keys.length; k++) {
+					if (LibSword.getDictionaryEntry(res.mod, keys[k])) break;
+				}
+				if (k < keys.length) res.key = keys[k];
+			}
       break;
       
     case "RM":
       // Greek parts of speech tags
-      feature = "GreekParse";
+      try {res.mod = prefs.getCharPref("Selected" + "GreekParse");}
+			catch (er) {res.mod = null;}
       break;
       
     case "SM":
@@ -224,16 +258,11 @@ DictTexts = {
       
     default:
       // meaning of tag is unknown
-      jsdump("Unknown Strongs class:" + parts[0]);
+      jsdump("Unknown Strongs type:" + parts[0]);
       res.key = null;
       break;
       
     }
-    
-    if (!feature) return res;
-    
-    try {res.mod = prefs.getCharPref("Selected" + feature);}
-    catch (er) {res.mod = null;}
     
     return res;
   },

@@ -177,7 +177,7 @@ body[chromedir="rtl"] .multitab-clicker {
   border-bottom:none;
   background:rgb(255,243,255);
 }
-#tabs1[noBibleTabs="true"] .tabOrig,
+.tabs[noBibleTabs="true"] .tabOrig,
 body[isWindow="true"] .tabOrig {
   display:none;
 }
