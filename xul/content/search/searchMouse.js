@@ -77,13 +77,8 @@ SearchMouse = {
 		switch (type) {
 		case "dt":
 		case "dtl":
-			okay = Popup.activate(elem, e);
-			break;
-			
 		case "sn":
-			if (prefs.getCharPref("Strong's Numbers") == "On") {
-				okay = Popup.activate(elem, e);
-			}
+			okay = Popup.activate(elem, e);
 			break;
 		}
 		if (!okay) {

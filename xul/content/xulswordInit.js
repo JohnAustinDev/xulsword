@@ -216,9 +216,15 @@ function initTabGlobals() {
   ];
   
   for (var sls in SpecialModules.LanguageStudy) {
+		var mods = SpecialModules.LanguageStudy[sls];
+		
+		// don't overwrite an existing valid pref
+		try {var now = prefs.getCharPref("Selected" + sls);}
+		catch (er) {now = null;}
+		if (now && mods.indexOf(now) != -1) continue;
+			
 FindMod:
     for (var r=0; r<lng.length; r++) {
-      var mods = SpecialModules.LanguageStudy[sls];
       for (var m=0; m<mods.length; m++) {
         if (lng[r].test(LibSword.getModuleInformation(mods[m], "Lang"))) {
           prefs.setCharPref("Selected" + sls, mods[m]);

@@ -177,7 +177,7 @@ function scriptMouseOver(e) {
     classes.shift(); // remove sn base class
     
     for (var i=0; i<classes.length; i++) {
-      if (!(/^S_/).test(classes[i])) continue;
+      if (!(/^S_\w*\d+$/).test(classes[i])) continue;
       var sheet = document.styleSheets[document.styleSheets.length-1];
       var index = sheet.cssRules.length;
       sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
