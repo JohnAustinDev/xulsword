@@ -24,6 +24,7 @@ var NewModuleInfo;
 var AddRepositoryModules;
 var DictKeyLists = {}; // save dictionary key lists
 var DictKeyHTMLs = {}; // save dictionary key HTML
+var Popup = null; // global to hold any Popup during Popup->toWindow
 
 function loadedXUL() {
   //start_venkman();

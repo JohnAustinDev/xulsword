@@ -25,7 +25,6 @@
   position:relative;
 }
 #npopupTX {
-  background:rgb(245,220,255);
   font-size: 1.1em;
   cursor:default;
   padding: 10px 20px 20px 14px;
@@ -76,6 +75,7 @@ body[chromedir="rtl"] .nb #npopup {
   overflow:auto;
   width:calc(100% - 30px);
   max-height:300px; /* dynamic in popup.js */
+  background:rgb(245,220,255);
   border:1px solid black;
   border-radius:5px;
   box-shadow: 3px 3px 5px 6px #ccc;
@@ -257,4 +257,56 @@ body[chromedir="rtl"] .popup-mod-select {
   border-bottom:1px solid blue;
   cursor:pointer;
 }
-
+/* .strongs- classes come from TEI markup like StrongsHebrew */
+/*
+.markup-entryFree,
+.markup-foreign,
+.markup-xr
+.markup-form
+.markup-note
+.markup-pos
+.markup-gramGrp
+*/
+.markup-title {
+	display:none;
+}
+.markup-sense,
+.markup-pron,
+.markup-orth,
+.markup-orth-trans,
+.markup-entry,
+.markup-etym-note {
+	display:block;
+}
+.markup-sense {
+	-moz-padding-start:6px;
+	padding-bottom:1em;
+}
+.markup-def,
+.markup-cit {
+	font-style:italic;
+}
+.markup-usg,
+.markup-emph {
+	font-weight:bold;
+}
+.markup-quote:before,
+.markup-quote:after {
+	content:"\"";
+}
+	
+/* TEI rend attribute classes */
+.markup_bold {font-weight:bold;}
+.markup_illuminated {float: left; font-size: xx-large; padding: 4px 8px 0px 4px;}
+.markup_italic {font-style:italic;}
+.markup_line-through {text-decoration:line-through;}
+.markup_small-caps {}
+.markup_sub {vertical-align:sub; font-size:smaller;}
+.markup_super {vertical-align:super; font-size:smaller;}
+.markup_underline {text-decoration:underline;}
+.markup_normal {
+	font-style:normal;
+	font-weight:normal;
+	vertical-align:baseline;
+	font-size:medium;
+}

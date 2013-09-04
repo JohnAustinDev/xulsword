@@ -91,6 +91,12 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
               if (sep) {snumbers += ".";}
               snumbers += "S";
               snumbers += "_";
+							if (!strncmp(attrib, "DSS", 3)) {
+								snumbers += "DSS_";
+							}
+							else if (!strncmp(attrib, "MT", 2)) {
+								snumbers += "MT_";
+							}
 						  snumbers += val;
 						  sep = true;
             } while (++i < count);
@@ -103,12 +109,14 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
               if (i < 0) i = 0;	// to handle our -1 condition
               val = strchr(attrib, ':');
               val = (val) ? (val + 1) : attrib;
-              if (sep) {snumbers += ".";}
-              if (!strncmp(attrib, "robinson", 8)) {snumbers += "RM";}
-              else {snumbers += "SM";}
-              snumbers += "_";
-						  snumbers += val;
-						  sep = true;
+              if (*val > 0 && *val < 127) { // some mods (like SP) have Hebrew Unicode chars as morph attribute- so skip them
+								if (sep) {snumbers += ".";}
+								if (!strncmp(attrib, "robinson", 8)) {snumbers += "RM";}
+								else {snumbers += "SM";}
+								snumbers += "_";
+								snumbers += val;
+								sep = true;
+							}
             } while (++i < count);
           }
           snumbers.replaceBytes(".", ' '); // Changed in xulsword 3+

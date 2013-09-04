@@ -98,6 +98,7 @@ DictTexts = {
         try {html = LibSword.getDictionaryEntry(mods[0], key.toUpperCase());}
         catch (er) {jsdump("e1: missing key, skipping."); html = "";}
       }
+      if (html) html = this.markup2html(this.replaceLinks(html, mods[0]), mods[0]);
     }
     else if (mods.length > 1) {
       var sep = "";
@@ -110,6 +111,7 @@ DictTexts = {
           catch (er) {jsdump("e2: missing key, skipping."); dictEntry = "";}
         }
         if (dictEntry) {
+					dictEntry = this.markup2html(this.replaceLinks(dictEntry, mods[dw]), mods[dw]);
           dictEntry = dictEntry.replace(/^(<br>)+/, "");
           var dictTitle = LibSword.getModuleInformation(mods[dw], "Description");
           dictTitle = (dictTitle != NOTFOUND ? "<div class=\"dict-description\">" + dictTitle + "</div>":"");
@@ -162,7 +164,7 @@ DictTexts = {
       
       // get a button to search for this Strong's number
       var buttonHTML = "";
-      if ((/^S_/).test(strongsClassArray[i])) {
+      if ((/^S_/).test(strongsClassArray[i]) && !(/^S_(DSS|MT)/).test(strongsClassArray[i])) { // DSS|MT for SPVar module
         buttonHTML += "<button type=\"button\" class=\"snbut\" ";
         buttonHTML +=     "title=\"" + (info.mod ? info.mod:"Program") + ":" + strongsClassArray[i].replace(/^[^_]+_/, "") + "." + sourcemod + "\">";
         buttonHTML +=   strongsClassArray[i].replace(/^[^_]+_/, "");
@@ -173,23 +175,11 @@ DictTexts = {
         if (Number(info.key) == 0) continue; // skip G tags with no number
         var entry = LibSword.getDictionaryEntry(info.mod, info.key);
         if (entry) {
-					
-					// some TEI mods (like AbbottSmith) may use @LINK, so replace these here.
-					var link = entry.match(/(\@LINK\s+[^\s<]+)/g);
-					if (link) {
-						for (var x=0; x<link.length; x++) {
-							var l = link[x].match(/\@LINK\s+([^\s<]+)/);
-							var r = LibSword.getDictionaryEntry(info.mod, l[1].toUpperCase());
-							if (!r) r = LibSword.getDictionaryEntry(info.mod, l[1]);
-							if (r) entry = entry.replace(l[0], r);
-						}
-					}
-					
-          html += sep + buttonHTML + entry;
+          html += sep + buttonHTML + this.markup2html(this.replaceLinks(entry, info.mod), info.mod);
         }
         else html += sep + buttonHTML + info.key;
       }
-      else html += sep + buttonHTML + strongsClassArray[i];
+      else html += sep + buttonHTML + strongsClassArray[i].replace(/S_(DSS|MT)_/g, "$1: "); // DSS|MT for SPVar module
       
       sep = "<div class=\"lemma-sep\"></div>";
     }
@@ -199,6 +189,119 @@ DictTexts = {
    
     return html;
   },
+  
+  // some TEI mods (like AbbottSmith, Strong) may use @LINK, so replace these here.
+  replaceLinks: function(entry, mod) {
+		var link = entry.match(/(\@LINK\s+[^\s<]+)/g);
+		if (link) {
+			for (var x=0; x<link.length; x++) {
+				var l = link[x].match(/\@LINK\s+([^\s<]+)/);
+				
+				// fix problems related to AbbottSmith module...
+				if (mod == "AbbottSmith") {
+					var hack = {ΐ:"Ϊ́", ὐ:"Υ̓"};
+					for (var h in hack) {l[1] = l[1].replace(h, hack[h], "g");}
+					if (l[1] == "ἀγαλλίασις") l[1] = " ἈΓΑΛΛΊΑΣΙΣ"; // key needs space before!
+				}
+
+				var r = LibSword.getDictionaryEntry(mod, l[1].toUpperCase());
+				if (!r) r = LibSword.getDictionaryEntry(mod, l[1]);
+				if (r) entry = entry.replace(l[0], r);
+			}
+		}
+		
+		return entry;
+	},
+	
+	markup2html: function(entry, mod) {
+		
+		// sense
+		entry = entry.replace(/<\/sense[^>]*>/g, "</span>");
+		do {
+			var entry2 = entry;
+			var p = entry.match(/<sense([^>]*)>(.*?<)/);
+			if (p) {
+				var n = p[1].match(/n="(.*?)"/);
+				n = (n && p[2].indexOf(n[1]) != 0 ? n[1]:"");
+				
+				entry = entry.replace(p[0], "<span class=\"markup-sense\">" + (n ? "<b>" + n + "</b>":"") + (n && !(/^[\.]/).test(p[2]) ? ". ":"") + p[2]);
+			}
+		} while(entry != entry2);
+		
+		// ref
+		entry = entry.replace(/<\/ref[^>]*>/g, "</span>");
+		do {
+			var entry2 = entry;
+			var p = entry.match(/<ref([^>]*)>/);
+			if (p) {
+				var osisID = p[1].match(/osisRef="(.*?)"/);
+				var target = p[1].match(/target="(.*?)"/);
+				
+				var mclass, mtitle;
+				if (osisID) {
+					mtitle = osisID[1] + "." + mod;
+					mclass = "sr";
+				}
+				else if (target) {
+					target = target[1].replace("self:", mod + ":");
+					mtitle = target + "." + mod
+					mclass = "dtl"
+				}
+				
+				entry = entry.replace(p[0], "<span class=\"" + mclass + "\" title=\"" + mtitle + "\">");
+			}
+		} while(entry != entry2);
+		
+		entry = this.replaceTags(entry, "orth", /type="(.*?)/);
+		entry = this.replaceTags(entry, "hi");
+		entry = this.replaceTags(entry, "pron");
+		entry = this.replaceTags(entry, "def");
+		entry = this.replaceTags(entry, "entryFree");
+		entry = this.replaceTags(entry, "title");
+		entry = this.replaceTags(entry, "foreign");
+		entry = this.replaceTags(entry, "xr");
+		entry = this.replaceTags(entry, "entry");
+		entry = this.replaceTags(entry, "form");
+		entry = this.replaceTags(entry, "etym", /n="(.*?)"/);
+		entry = this.replaceTags(entry, "cit");
+		entry = this.replaceTags(entry, "usg");
+		entry = this.replaceTags(entry, "quote");
+		entry = this.replaceTags(entry, "note");
+		entry = this.replaceTags(entry, "emph");
+		entry = this.replaceTags(entry, "gramGrp");
+		entry = this.replaceTags(entry, "pos");
+		
+var m=entry.match(/<(\w+)/g); if (m) {for (var x=0; x<m.length; x++) {if (!(/(span|div|b|i)/).test(m[x])) jsdump("INFO: Found unhandled tag \"" + m[x] + "\" in\n" + entry);}} 
+	
+		return entry;
+	},
+	
+	// class must be a string or a regular-expression to match a string
+	replaceTags: function(entry, tag, subclass) {
+		var eTag = new RegExp("<\\/" + tag + "[^>]*>", "g");
+		entry = entry.replace(eTag, "</span>");
+		
+		var sTag = new RegExp("<" + tag + "([^>]*)>");
+		do {
+			var entry2 = entry;
+			var p = entry.match(sTag);
+			if (p) {
+				var mclass;
+				if (subclass && typeof(subclass) != "string") {
+					mclass = p[1].match(subclass);
+					if (mclass) mclass = mclass[1];
+				}
+				else mclass = subclass;
+				
+				var rend = p[1].match(/rend="(.*?)"/);
+				
+				entry = entry.replace(p[0], "<span class=\"markup-" + tag + (mclass ? "-" + mclass:"") + (rend ? " markup_" + rend[1]:"") + "\">");
+			}
+		}
+		while (entry2 != entry);
+		
+		return entry;
+	},
   
   getStrongsModAndKey: function(snclass) {
     var res = { mod:null, key:null };
@@ -246,14 +349,14 @@ DictTexts = {
       break;
       
     case "RM":
-      // Greek parts of speech tags
-      try {res.mod = prefs.getCharPref("Selected" + "GreekParse");}
-			catch (er) {res.mod = null;}
+      // Robinson's Greek parts of speech tags (used by KJV)
+      if (SpecialModules.LanguageStudy.GreekParse.indexOf("Robinson") != -1) res.mod = "Robinson";
       break;
       
     case "SM":
-    case "WT":
-      // no lookup module available for these
+      // no lookup module available for these yet...
+      try {res.mod = prefs.getCharPref("Selected" + "GreekParse");}
+			catch (er) {res.mod = null;}
       break;
       
     default:
@@ -273,7 +376,7 @@ DictTexts = {
   keyPress: function(e) {
     if (this.keypressOT) window.clearTimeout(this.keypressOT);
     this.keypressEvent = e;
-    this.keypressOT = window.setTimeout("DictTexts.keyPressR()", 500);
+    this.keypressOT = window.setTimeout("DictTexts.keyPressR()", 2000);
   },
 
   keyPressR: function() {
