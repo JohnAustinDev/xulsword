@@ -25,10 +25,10 @@ function initWindowedPopup() {
   initCSS();
   
   // This is a windowed popup, so copy the original popup
-  Popup = new PopupObj(ViewPort.ownerDocument.defaultView.Popup);
+  Popup = new PopupObj(MainWindow.Popup);
   
   // Close the original popup
-  ViewPort.ownerDocument.defaultView.Popup.close();
+  MainWindow.Popup.close();
 
 }
     
@@ -95,6 +95,7 @@ function PopupObj(popupobj) {
         if (SpecialModules.LanguageStudy[sls].length < 2) continue; // need no button if only one choice
         if (sls=="HebrewDef" & !(/S_H/).test(elem.className)) continue; // need no button if nothing applicable in popup
         if (sls=="GreekDef" & !(/S_G/).test(elem.className)) continue;
+        if (sls=="GreekParse" & !(/SM_G/).test(elem.className)) continue;
         html += this.getModSelectHTML(
           SpecialModules.LanguageStudy[sls], 
           prefs.getCharPref("Selected" + sls), 
@@ -262,7 +263,7 @@ function PopupObj(popupobj) {
     var title = "";
     
     var pt = this.npopupTX.getElementsByClassName("popup-text");
-    if (!pt) return;
+    if (!pt || !pt.length) return;
     pt = pt[pt.length-1]; // the pt we want is the last in the tree
   
     var html = pt.innerHTML.replace(/(\s*&nbsp;\s*)+/g, " ");
@@ -365,6 +366,9 @@ function PopupObj(popupobj) {
     Y = Number(f.boxObject.y + offset.top);
     //jsdump("INFO:" + f.boxObject.y + "-" + MainWindow.outerHeight + "+" + v.height + "=" + Y);
   
+		// save this Popup so new window can copy it
+		MainWindow.Popup = this;
+		
     // Open the new xul Popup window.
     var p = "chrome,resizable,dependant";
     p += ",left=" + Number(wintop.screenX + X);
@@ -372,8 +376,7 @@ function PopupObj(popupobj) {
     p += ",width=" + this.npopupBOX.offsetWidth;
     p += ",height=" + this.npopupBOX.offsetHeight;
     AllWindows.push(wintop.open("chrome://xulsword/content/viewport/popup/popup.xul", "popup" + String(Math.random()), p));
-		
-		this.close();
+
   };
 
 	this.PopupY = 0;

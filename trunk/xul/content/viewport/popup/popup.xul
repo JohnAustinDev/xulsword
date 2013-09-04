@@ -28,7 +28,10 @@
     windowtype="popup"
     onload="initCSS(); document.getElementById('npopup').contentDocument.defaultView.initWindowedPopup();">
    
-  <script>var MainWindow = window.opener;</script>
+  <script>
+		var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
+    var MainWindow = watcher.getWindowByName("xulsword-window", window);
+   </script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/globalOverlay.js"/>
