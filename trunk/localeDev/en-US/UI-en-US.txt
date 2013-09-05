@@ -94,8 +94,8 @@
 [main-window.menu-file.exit]: Exit
 [main-window.menu-file.export_audio]: Export Audio
 [main-window.menu-file.import-audio]: Import Audio
-[main-window.menu-file.import-audio.import_from]: Saving From:
-[main-window.menu-file.import-audio.import_to]: To:
+[main-window.menu-file.import-audio.import_from]: Import audio from:
+[main-window.menu-file.import-audio.import_to]: Save imported audio to:
 [main-window.menu-file.import-audio.not_enough_disk_space]: There is not enough room on the disk to save %S.\n\nRemove unnecessary files from the disk and try again, or try saving in a different location.
 [main-window.menu-file.print]: Print
 [main-window.menu-file.page-setup]: Page Setup

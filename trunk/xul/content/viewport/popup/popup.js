@@ -271,7 +271,7 @@ function PopupObj(popupobj) {
     html = html.replace(/<[^>]*>/g, ""); // remove all tags
     title = html.substring(0, html.indexOf(" ", 24)) + "…"; //shorten it
   
-    frameElement.ownerDocument.title = title;
+    frameElement.ownerDocument.title = fixWindowTitle(title);
   };
   
   this.open = function() {
