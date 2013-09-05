@@ -289,7 +289,7 @@
 [search-help-window.ampersand_example]: love && God
 [search-help-window.case_sensitivity_note]: Note: All searches are case insensitive.
 [search-help-window.description_heading]: DESCRIPTION
-[search-help-window.description_of_search_types]: <span style="font-size:large;">There are four types of searches to choose from after you click the "More" button:</span><br><br>1) <b>Find verses which contain the word(s)</b>: Finds verses that have all of the given words in the verse.<br><br>2) <b>Find verses which contain this exact text</b>: Finds the exact word, part of a word, or phrase, everywhere that it occurs.<br><br>3) <b>Advanced matching using special search terms</b>: You may use the special search terms listed in the table below to build complex searches:<br><br>4) <b>Find verses which contain similar words</b>: Finds verses that contain words similar to those given. This is useful if you don't know exactly how a word is spelled, or to find variations of words. Results can be listed in order of relevance by unchecking "Show results in order".<br><br>
+[search-help-window.description_of_search_types]: <span style="font-size:large;">There are four types of searches to choose from after you click the "More" button:</span><br><br>1) <b>Find verses which contain the word(s)</b>: Finds verses that have all of the given words in the verse.<br><br>2) <b>Find verses which contain this exact text</b>: Finds the exact word, part of a word, or phrase, everywhere that it occurs.<br><br>3) <b>Advanced matching using special search terms</b>: You may use the special search terms listed in the table below to build complex searches:<br><br>4) <b>Find verses which contain similar words</b>: Finds verses that contain words similar to those given. This is useful if you don't know exactly how a word is spelled, or to find variations of words.<br><br>
 [search-help-window.example_heading]: EXAMPLE
 [search-help-window.exclamation_description]: Finds verses with "love" but <b>not</b> "God"
 [search-help-window.exclamation_example]: love !God
@@ -319,7 +319,7 @@
 [add-repository-module.error]: Error
 [add-repository-module.repositoryTreeTitle]: Module Sources
 [add-repository-module.internetPromptTitle]: Download a Bible from the internet?
-[add-repository-module.internetMessage]: You are about to download Biblical texts from the Internet.\nYour Internet activity may be easily monitored by authorities.\nIf this is a concern, you may click "No" to cancel this operation.
+[add-repository-module.internetMessage]: You are about to download Biblical texts from the Internet.\nYour Internet activity may be easily monitored by others.\nIf this is a concern, you may click "No" to cancel this operation.
 [add-repository-module.rememberMyChoice]: Remember my choice?
 [add-repository-module.wishToContinue]: Do you want to continue?
 [add-repository-module.moduleType_SimpleText]: Text
