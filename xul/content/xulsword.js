@@ -35,7 +35,7 @@ function loadedXUL() {
   document.getElementById("topbox").setAttribute("libSwordLoadFailed", LibSword.loadFailed ? "true":"false");
   document.getElementById("topbox").setAttribute("hasBible", LibSword.hasBible ? "true":"false");
   
-  document.title = XSBundle.getString("Title");
+  document.title = fixWindowTitle(XSBundle.getString("Title"));
   window.name = "xulsword-window";
   
   //To make the program window draw cleaner and faster, size initialization 

@@ -300,7 +300,7 @@ function importAudio(fromDir, toDir, doNotCopyFiles) {
   const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
   if (!fromDir || doNotCopyFiles) {
     try {
-      var kTitle = fixWindowTitle(getDataUI("savingSource"));
+      var kTitle = fixWindowTitle(getDataUI("importAudioFrom"));
       for (var i=0; i<AudioDirs.length; i++) {
         if (AudioDirs[i].isInstallDir && AudioDirs[i].dir.exists()) {
           kFilePicker.displayDirectory = AudioDirs[i].dir;
@@ -354,7 +354,7 @@ function importAudioTo() {
   const kFilePickerIID = Components.interfaces.nsIFilePicker;
   const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
   try {
-    var kTitle = fixWindowTitle(getDataUI("savingTarget"));
+    var kTitle = fixWindowTitle(getDataUI("importAudioTo"));
     kFilePicker.init(window, kTitle, kFilePickerIID.modeGetFolder);
     if (kFilePicker.show() == kFilePickerIID.returnCancel) return false;
   }

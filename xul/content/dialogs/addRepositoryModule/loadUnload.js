@@ -75,7 +75,7 @@ function onLoad() {
   
   ERROR = MyStrings.GetStringFromName("arm.error");
 
-  document.title = getDataUI("menu.addNewModule.label");
+  document.title = fixWindowTitle(getDataUI("menu.addNewModule.label"));
 
   ProgressBar = document.getElementById("progressBar");
   

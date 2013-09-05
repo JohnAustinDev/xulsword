@@ -46,7 +46,7 @@
     function onLoad() {
       initCSS();
 
-      document.title = getDataUI("menu.importAudio.label");
+      document.title = fixWindowTitle(getDataUI("menu.importAudio.label"));
   
       bookList = document.getElementById("book");
       chapterList = document.getElementById("chapter");
