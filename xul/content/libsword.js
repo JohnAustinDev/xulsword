@@ -65,6 +65,7 @@ LibSword = {
   CheckTheseCipherKeys:[],
   hasBible:null,
   loadFailed:null,
+  searchPointers:[],
 
   initLibsword: function() {
     if (this.loadFailed) return; // if we already failed to load don't keep trying
@@ -170,8 +171,19 @@ LibSword = {
     
   },
   
+	freeSearchPointer: function(sp) {
+		if (!sp) return;
+		var i = this.searchPointers.indexOf(sp);
+		if (i == -1) return; // this pointer was already freed or never existed
+		this.freeMemory(this.searchPointers[i], MainWindow.ctypes.char.array()("searchPointer"));
+		this.searchPointers[i] = null;
+	},
+  
   quitLibsword: function() {
     if (this.libsword) {
+			for (var i=0; i<this.searchPointers.length; i++) {
+				this.freeSearchPointer(this.searchPointers[i]);
+			}
       this.freeInstance();
       this.freeLibxulsword();
       this.libsword.close();
@@ -328,7 +340,10 @@ LibSword = {
   },
   
   libSwordReady: function(caller) {
-    if (this.paused) throw(new Error("libsword paused, \"" + caller + "\" inaccessible."));
+    if (this.paused) {
+			jsdump("ERROR: libsword paused, \"" + caller + "\" inaccessible.");
+			return false;
+		}
     
     if (!this.libsword) this.initLibsword();
     if (this.loadFailed) return false;
@@ -664,14 +679,14 @@ search: function(modname, srchstr, scope, type, flags, newsearch) {
 },
 
 // getSearchPointer
-//Returns a pointer to a newly created copy of LibSword's internal search results ListKey object
-//This pointer MUST BE FREED using freeMemory() once the results are no longer needed by Javascript.
+//Returns an index to a pointer for a newly created copy of LibSword's internal search results ListKey object.
 getSearchPointer: function() {
   if (!this.libSwordReady("getSearchPointer")) return null;
   if (!this.fdata.gsp)
     this.fdata.gsp = this.libsword.declare("GetSearchPointer", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.voidptr_t));
   var cdata = this.fdata.gsp(this.inst);
   this.checkerror();
+  this.searchPointers.push(cdata);
   return cdata;
 },
 
@@ -685,6 +700,10 @@ getSearchVerses: function(modname) {
 //Will return the verse texts from previous search.
 //search() must be called before results can be read.
 getSearchResults: function(modname, first, num, keepStrongs, searchPointer) {
+	
+	// if a searchPointer is given, make sure it has not been freed by LibSword.pause() etc.
+	if (searchPointer && this.searchPointers.indexOf(searchPointer) == -1) return null;
+	
   if (!this.libSwordReady("getSearchResults")) return null;
   if (!this.fdata.gst)
     this.fdata.gst = this.libsword.declare("GetSearchResults", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.int, ctypes.int, ctypes.bool, ctypes.PointerType(ctypes.voidptr_t));
