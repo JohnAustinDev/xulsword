@@ -176,6 +176,11 @@ function SearchObj(searchObj) {
     if (this.progress && this.progress.timeout) this.quitProgress(true);
     this.progress = null;
     
+    // clean up after any previous search
+    if (this.result && this.result.hasOwnProperty("searchPointer") && this.result.searchPointer) {
+			LibSword.freeMemory(this.result.searchPointer, MainWindow.ctypes.char.array()("searchPointer"));
+		}
+    
     // now initialize a new search from scratch...
     this.s = {};
     this.result = {};
@@ -191,6 +196,7 @@ function SearchObj(searchObj) {
     s.flags = null;
     s.isnew = true;
     
+    result.searchPointer = null;
     result.matchterms = null;
     result.count = 0;
     result.index = 0; 
@@ -388,6 +394,7 @@ function SearchObj(searchObj) {
       
 //var p="Single Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(p);
       result.count = LibSword.search(s.mod, s.query, s.scope, s.type, s.flags, s.isnew);
+      result.searchPointer = LibSword.getSearchPointer();
 
       this.updateStatusBar(result);
       
@@ -430,6 +437,8 @@ function SearchObj(searchObj) {
     }
     
     // Were DONE, so close up shop and display results
+    result.searchPointer = LibSword.getSearchPointer(); // now copy all search results
+    
     this.quitProgress();
     
     this.updateStatusBar(result);
@@ -490,7 +499,7 @@ function SearchObj(searchObj) {
     }
 
     // read search results to display
-    var r = LibSword.getSearchResults(mod, result.index, result.results_per_page, keepStrongs);
+    var r = LibSword.getSearchResults(mod, result.index, result.results_per_page, keepStrongs, result.searchPointer);
     if (!r) return;
     
     // workaround for a FF 17 bug where innerHTML could not be added to
@@ -532,11 +541,21 @@ function SearchObj(searchObj) {
       for (var m=0; m<result.matchterms.length; m++) {
         if (result.matchterms[m].type == "RegExp") {
           var re = new RegExp(result.matchterms[m].term, "gim");
-          html = html.replace(re, "$1<span class=\"searchterm\">$2</span>$3");
+          var t = html.split(/(<[^>]*>)/);
+          for (var x=0; x<t.length; x++) {
+						if ((/^<[^>]*>$/).test(t[x])) continue;
+						t[x] = t[x].replace(re, "$1<span class=\"searchterm\">$2</span>$3");
+					}
+					html = t.join("");
         }
         else if (result.matchterms[m].type == "string") {
-          var re = new RegExp (escapeRE(result.matchterms[m].term), "gim")
-          html = html.replace(re, "<span class=\"searchterm\">$&</span>");
+          var re = new RegExp (escapeRE(result.matchterms[m].term), "gim");
+          var t = html.split(/(<[^>]*>)/);
+          for (var x=0; x<t.length; x++) {
+						if ((/^<[^>]*>$/).test(t[x])) continue;
+						t[x] = t[x].replace(re, "<span class=\"searchterm\">$&</span>");
+					}
+					html = t.join("");
         }
       }
       html = html.replace(/<br[^>]*>/g, ""); // since <br> looks bad in display
@@ -567,7 +586,7 @@ function SearchObj(searchObj) {
       if (!LexiconResults.innerHTML) {
         
         LexiconResults.style.display = "none"; // might this speed things up??
-        LexiconResults.innerHTML = LibSword.getSearchResults(mod, 0, MAX_LEXICON_SEARCH_RESULTS, true);
+        LexiconResults.innerHTML = LibSword.getSearchResults(mod, 0, MAX_LEXICON_SEARCH_RESULTS, true, result.searchPointer);
         
         var html = "";
         for (var i=0; i<classes.length; i++) {
@@ -627,7 +646,7 @@ function SearchObj(searchObj) {
     // If this search contains Strongs info, collect all Strong's numbers attached to our results
     else if (keepStrongs) {
       LexiconResults.style.display = "none"; // might this speed things up??
-      var lexiconResults = LibSword.getSearchResults(mod, 0, MAX_LEXICON_SEARCH_RESULTS, true);
+      var lexiconResults = LibSword.getSearchResults(mod, 0, MAX_LEXICON_SEARCH_RESULTS, true, result.searchPointer);
       
       // apply hilight class to search result matches
       for (var m=0; m<result.matchterms.length; m++) {
@@ -765,6 +784,7 @@ function SearchObj(searchObj) {
   }
 
 };
+// END SearchObj
 
 
 function commandHandler(e) {
@@ -849,6 +869,11 @@ function onRefUserUpdate(e, location, version) {
 
 function unloadSearchWindow() {
 
+	// free search results
+	if (Search && Search.result && Search.result.hasOwnProperty("searchPointer") && Search.result.searchPointer) {
+		LibSword.freeMemory(Search.result.searchPointer, MainWindow.ctypes.char.array()("searchPointer"));
+	}
+		
   // need to clean up indexer if it was in process
   if (MainWindow.Indexer.inprogress) {
     MainWindow.Indexer.terminate(); // doesn't actually terminate anything

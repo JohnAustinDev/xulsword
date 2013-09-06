@@ -663,6 +663,18 @@ search: function(modname, srchstr, scope, type, flags, newsearch) {
   return intgr;
 },
 
+// getSearchPointer
+//Returns a pointer to a newly created copy of LibSword's internal search results ListKey object
+//This pointer MUST BE FREED using freeMemory() once the results are no longer needed by Javascript.
+getSearchPointer: function() {
+  if (!this.libSwordReady("getSearchPointer")) return null;
+  if (!this.fdata.gsp)
+    this.fdata.gsp = this.libsword.declare("GetSearchPointer", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.voidptr_t));
+  var cdata = this.fdata.gsp(this.inst);
+  this.checkerror();
+  return cdata;
+},
+
 // getSearchVerses
 //UNEMPLEMENTED AS YET. Returns a list of verse addresses which matched the previous search.
 getSearchVerses: function(modname) {
@@ -672,11 +684,11 @@ getSearchVerses: function(modname) {
 // getSearchResults
 //Will return the verse texts from previous search.
 //search() must be called before results can be read.
-getSearchResults: function(modname, first, num, keepStrongs) {
+getSearchResults: function(modname, first, num, keepStrongs, searchPointer) {
   if (!this.libSwordReady("getSearchResults")) return null;
   if (!this.fdata.gst)
-    this.fdata.gst = this.libsword.declare("GetSearchResults", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.int, ctypes.int, ctypes.bool);
-  var cdata = this.fdata.gst(this.inst, ctypes.char.array()(modname), first, num, keepStrongs);
+    this.fdata.gst = this.libsword.declare("GetSearchResults", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.int, ctypes.int, ctypes.bool, ctypes.PointerType(ctypes.voidptr_t));
+  var cdata = this.fdata.gst(this.inst, ctypes.char.array()(modname), first, num, keepStrongs, searchPointer);
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}
   this.freeMemory(cdata, ctypes.char.array()("char"));
