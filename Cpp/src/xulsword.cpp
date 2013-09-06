@@ -1342,6 +1342,8 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
 	q = QueryParser::parse(wbuff, _T("content"), &analyzer);
 			
 	if (q) {
+//SWLog::getSystemLog()->logDebug("search:\"%s\" %i %i", searchString.c_str(), type1, flags);
+
 		// COMPOUND SEARCH- currently a phrase search with nearly the speed of a multiword search
 		if (type == -5) {
 			listkeyInt = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);
@@ -1351,15 +1353,20 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
 				listkeyInt.setPersist(true);
 				module->setKey(listkeyInt);
 				//*workKeys = module->search(searchString.get(), 0, flags, 0, 0, &savePercentComplete, NULL);
+//SWLog::getSystemLog()->logDebug("search:\"%s\" -1 %i", searchString.c_str(), flags);
 				*workKeys = module->search(searchString.c_str(), -1, flags, 0, 0, &savePercentComplete, NULL);
 			}
 		}
 		// SIMPLE SEARCH
 		else {*workKeys = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);}
 	 } 
- 
+
+	// For Windows, sorting is done in swmodule.cpp and does not need to be done again here.
+	// This ListKey sort implementation is unbearably slow when there are many results.
+#ifndef WIN32
   // 2048 is Sort By Relevance flag
   if ((flags & 2048) != 2048) workKeys->sort();
+#endif
 
   // If not a new search append new results to existing key
   if (!newsearch) {
@@ -1382,16 +1389,28 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
 
 
 /********************************************************************
+GetSearchPointer
+*********************************************************************/
+ListKey *xulsword::getSearchPointer() {
+	//SWLog::getSystemLog()->logDebug("(getSearchPointer) CREATING new searchPointer");
+	ListKey *searchCopy = new ListKey(SearchList);
+	return searchCopy;
+}
+
+
+/********************************************************************
 GetSearchResults
 *********************************************************************/
-char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepStrongs) {
+char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {
     xsThrow("GetSearchResults: module \"%s\" not found.", mod);
     return NULL;
   }
+  
+  ListKey *resultList = (searchPointer ? searchPointer:&SearchList);
 
-  if (num==0) {num=SearchList.getCount();}
+  if (num==0) {num=resultList->getCount();}
 
   if (keepStrongs) {
     MyManager->setGlobalOption("Strong's Numbers","On");
@@ -1408,9 +1427,9 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
   MyManager->setGlobalOption("Morpheme Segmentation","Off");
 
   MySearchTexts.set("");
-  SearchList.setToElement(first,TOP);
+  resultList->setToElement(first,TOP);
   int written=0;
-  int savePersist = SearchList.isPersist();
+  int savePersist = resultList->isPersist();
 
   SWKey * testkey = module->createKey();
   VerseKey * modvkey = SWDYNAMIC_CAST(VerseKey, testkey);
@@ -1426,8 +1445,8 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
     module->setKey(tokey);
     tokey.setAutoNormalize(0); // Non-existant calls should return empty string!
 
-    while (!SearchList.popError()&&(written<num)) {
-      fromkey=SearchList;
+    while (!resultList->popError()&&(written<num)) {
+      fromkey.copyFrom(resultList);
       if ((!strcmp(Searchedvers,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) ||
       (!strcmp(toVS,WESTERN) && (!strcmp(Searchedvers,EASTERN) || strstr(Searchedvers,SYNODAL)))) {
         tokey.setVersificationSystem(toVS);
@@ -1446,15 +1465,15 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
       MySearchVerses.append(tokey.getOSISRef());
       MySearchVerses.append("<nx>");
       
-      SearchList++;
+      resultList->increment(1);
       written++;
     }
   }
   else {
     delete(testkey);
-    SearchList.setPersist(true);
-    module->setKey(SearchList);
-    while (!SearchList.popError()&&(written<num)) {
+    resultList->setPersist(true);
+    module->setKey(resultList);
+    while (!resultList->popError()&&(written<num)) {
       
       SWBuf keyTextEN;
       const char *keyText = module->getKeyText();
@@ -1470,13 +1489,13 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
       MySearchVerses.append(module->getKeyText());
       MySearchVerses.append("<nx>");
 
-      SearchList++;
+      resultList->increment(1);
       written++;
     }
   }
 
   module->setKey(EmptyKey); // Overcomes the crash on Persist problem
-  SearchList.setPersist(savePersist);
+  resultList->setPersist(savePersist);
 
   SWBuf check = assureValidUTF8(MySearchTexts.c_str());
 

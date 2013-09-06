@@ -464,7 +464,9 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 			q = QueryParser::parse(wbuff, _T("content"), &analyzer);
                         
 			(*percent)(20, percentUserData);
-			h = is->search(q);
+			//h = is->search(q);
+			if ((flags & 2048) == 2048) {h = is->search(q, lucene::search::Sort::RELEVANCE );}
+			else {h = is->search(q, lucene::search::Sort::INDEXORDER );}
 			(*percent)(80, percentUserData);
 
 			// iterate thru each good module position that meets the search

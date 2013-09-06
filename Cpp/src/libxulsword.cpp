@@ -20,6 +20,8 @@
 #include "swlog.h"
 #include "stringmgr.h"
 #include <iostream>
+#include <swobject.h>
+#include <defs.h>
 
 #ifdef WIN32
 #define DLLEXPORT extern "C" __declspec(dllexport)
@@ -108,11 +110,19 @@ DLLEXPORT bool LuceneEnabled(xulsword *inst, const char *mod) {
 }
 
 DLLEXPORT int Search(xulsword *inst, const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch) {
-  return inst->search(mod, srchstr, scope, type, flags, newsearch);
+	return inst->search(mod, srchstr, scope, type, flags, newsearch);
 }
 
-DLLEXPORT char *GetSearchResults(xulsword *inst, const char *mod, int first, int num, bool keepStrongs) {
-  return inst->getSearchResults(mod, first, num, keepStrongs);
+DLLEXPORT void *GetSearchPointer(xulsword *inst) {
+	return inst->getSearchPointer();
+}
+
+DLLEXPORT char *GetSearchResults(xulsword *inst, const char *mod, int first, int num, bool keepStrongs, void *searchPointer = NULL) {
+	ListKey *ip = (ListKey *)searchPointer;
+	ListKey *sp;
+	SWTRY {sp = SWDYNAMIC_CAST(ListKey, ip);}
+	SWCATCH ( ... ) {	}
+	return inst->getSearchResults(mod, first, num, keepStrongs, sp);
 }
 
 DLLEXPORT void SearchIndexDelete(xulsword *inst, const char *mod) {
@@ -165,6 +175,18 @@ DLLEXPORT void FreeMemory(void *tofree, char *type) {
       
     }
   }
+  
+  else if (!strcmp(type, "searchPointer")) {
+		ListKey *tf = (ListKey *)tofree;
+		ListKey *sp;
+		SWTRY {sp = SWDYNAMIC_CAST(ListKey, tf);}
+		SWCATCH ( ... ) {	SWLog::getSystemLog()->logDebug("Threw up..."); }
+		if (sp) {
+			//SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING searchPointer");
+			delete sp;
+		}
+		else SWLog::getSystemLog()->logDebug("(FreeMemory) NOT a searchPointer. Did not free unknown object.");
+	}
 
 }
 
