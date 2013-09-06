@@ -177,8 +177,9 @@ function SearchObj(searchObj) {
     this.progress = null;
     
     // clean up after any previous search
-    if (this.result && this.result.hasOwnProperty("searchPointer") && this.result.searchPointer) {
-			LibSword.freeMemory(this.result.searchPointer, MainWindow.ctypes.char.array()("searchPointer"));
+    if (this.result && this.result.hasOwnProperty("searchPointer")) {
+			LibSword.freeSearchPointer(this.result.searchPointer);
+			this.result.searchPointer = null;
 		}
     
     // now initialize a new search from scratch...
@@ -500,7 +501,11 @@ function SearchObj(searchObj) {
 
     // read search results to display
     var r = LibSword.getSearchResults(mod, result.index, result.results_per_page, keepStrongs, result.searchPointer);
-    if (!r) return;
+    if (!r) {
+			SearchResults.innerHTML = "";
+			LexiconResults.innerHTML = "";
+			return;
+		}
     
     // workaround for a FF 17 bug where innerHTML could not be added to
     // an anchor which was created using createElement...
@@ -869,9 +874,10 @@ function onRefUserUpdate(e, location, version) {
 
 function unloadSearchWindow() {
 
-	// free search results
-	if (Search && Search.result && Search.result.hasOwnProperty("searchPointer") && Search.result.searchPointer) {
-		LibSword.freeMemory(Search.result.searchPointer, MainWindow.ctypes.char.array()("searchPointer"));
+	// free any search results
+	if (Search && Search.result && Search.result.hasOwnProperty("searchPointer")) {
+		LibSword.freeSearchPointer(Search.result.searchPointer);
+		Search.result.searchPointer = null;
 	}
 		
   // need to clean up indexer if it was in process
