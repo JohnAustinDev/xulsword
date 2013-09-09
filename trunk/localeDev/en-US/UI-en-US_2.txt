@@ -147,7 +147,6 @@
 [main-window.menu-bookmarks.organize_bookmarks.ak]: M
 [main-window.menu-windows.ak]: W
 [main-window.menu-help.about.ak]: A
-[main-window.menu-help.about.produced_by]: 
 [main-window.menu-help.ak]: H
 [main-window.context-menu.close_tab.ck]: W
 [main-window.context-menu.close_tab.ak]: C
