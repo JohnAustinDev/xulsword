@@ -73,7 +73,7 @@ Texts = {
       }
       
       // get current global ViewPort display params for this window
-      var display = this.getDisplay(w);
+      var display = this.getWindowDisplay(w);
      
       // reset some or all display params with pinned values if we're pinned
       if (ViewPort.IsPinned[w]) {
@@ -506,9 +506,22 @@ Texts = {
     
     return usernotes;
   },
+  
+  getWindowDisplay: function(w) {
+		var display = {};
+		
+		display.Key = ViewPort.Key[w];
+		display.ShowOriginal = ViewPort.ShowOriginal[w];
+    display.MaximizeNoteBox = ViewPort.MaximizeNoteBox[w];
+    var c = document.getElementById("text" + w);
+    display.columns = (c ? c.getAttribute("columns"):null);
+		
+		return this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), display);
+	},
  
-  getDisplay: function(w) {
-    var display = {globalOptions:{}};
+  getDisplay: function(mod, loc, display) {
+		if (!display) display = {};
+    display.globalOptions = {};
     
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") 
@@ -516,10 +529,10 @@ Texts = {
       else display.globalOptions[GlobalToggleCommands[cmd]] = LibSword.getGlobalOption(GlobalToggleCommands[cmd]);
     }
     
-    display.mod = ViewPort.Module[w];
-    display.location = Location.getLocation(ViewPort.Module[w]);
+    display.mod = mod;
+    display.location = loc;
     
-    var loc = display.location.split(".");
+    loc = display.location.split(".");
     
     display.bk = loc[0];
     display.ch = Number((loc[1] ? loc[1]:1));
@@ -529,16 +542,9 @@ Texts = {
     display.scrollTypeFlag = this.scrollTypeFlag;
     display.hilightFlag = this.hilightFlag;
     
-    display.Key = ViewPort.Key[w];
-    
-    display.ShowOriginal = ViewPort.ShowOriginal[w];
-    display.MaximizeNoteBox = ViewPort.MaximizeNoteBox[w];
     display.ShowFootnotesAtBottom = getPrefOrCreate("ShowFootnotesAtBottom", "Bool", true);
     display.ShowCrossrefsAtBottom = getPrefOrCreate("ShowCrossrefsAtBottom", "Bool", false);
     display.ShowUserNotesAtBottom = getPrefOrCreate("ShowUserNotesAtBottom", "Bool", true);
-    
-    var c = document.getElementById("text" + w);
-    display.columns = (c ? c.getAttribute("columns"):null);
     
     return display;
   },

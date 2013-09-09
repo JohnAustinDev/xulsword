@@ -403,7 +403,7 @@ var m=entry.match(/<(\w+)/g); if (m) {for (var x=0; x<m.length; x++) {if (!(/(sp
     else {
       textbox.style.color="";
       ViewPort.Key[w] = firstMatch[2];
-      Texts.updateDictionary(w, Texts.getDisplay(w), false);
+      Texts.updateDictionary(w, Texts.getWindowDisplay(w), false);
     }
   },
 
@@ -413,7 +413,7 @@ var m=entry.match(/<(\w+)/g); if (m) {for (var x=0; x<m.length; x++) {if (!(/(sp
     var w = getContextWindow(e.target);
     
     ViewPort.Key[w] = decodeURIComponent(e.target.title);
-    Texts.updateDictionary(w, Texts.getDisplay(w), false);
+    Texts.updateDictionary(w, Texts.getWindowDisplay(w), false);
     window.setTimeout("document.getElementById('note" + w + "').getElementsByClassName('keytextbox')[0].focus();", 1);
   }
 

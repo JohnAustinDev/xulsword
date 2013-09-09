@@ -56,7 +56,7 @@ function onLoad() {
 function copyPassage(e) {
   
   // Get display from current settings
-  var d = Texts.getDisplay(PassageChooser.version, PassageChooser.location, 1);
+  var d = Texts.getDisplay(PassageChooser.version, PassageChooser.location);
   
   // Overwrite our display with desired values
   for (var tcmd in GlobalToggleCommands) {
