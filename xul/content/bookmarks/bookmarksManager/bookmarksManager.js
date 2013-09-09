@@ -53,14 +53,10 @@ function Startup()
   // always open the bookmark root folder
   if (!bookmarksFolder.treeBoxObject.view.isContainerOpen(0))
     bookmarksFolder.treeBoxObject.view.toggleOpenState(0);
-  bookmarksFolder.treeBoxObject.view.selection.select(0);
-
-  bookmarksView.treeBoxObject.view.selection.select(0);
 
   document.title = fixWindowTitle(titleString);
 
   document.getElementById("CommandUpdate_Bookmarks").setAttribute("commandupdater","true");
-  bookmarksView.focus();
 
   // These observers are needed because folder open/close properties are actually shared
   // between both trees (this seems like a bug and cannot be changed). So
@@ -69,7 +65,8 @@ function Startup()
   bookmarksView.tree.builderView.addObserver(BookmarkTreeObserver);
   
   if (getPrefOrCreate("BMfolderSelection", "Int", 0)>bookmarksFolder.tree.view.rowCount) prefs.setIntPref("BMfolderSelection", 0);
-  bookmarksFolder.tree.view.selection.select(prefs.getIntPref("BMfolderSelection", 0));
+  bookmarksFolder.tree.view.selection.select(prefs.getIntPref("BMfolderSelection"));
+	bookmarksFolder.focus();
   
   //setAllTwisties(true);
   

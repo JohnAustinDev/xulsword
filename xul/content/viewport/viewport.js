@@ -219,7 +219,7 @@ function ViewPortObj(viewPortObj) {
   
     if (this != MainWindow.ViewPort) {
       for (var w=1; w<=NW; w++) {
-        if (document.getElementById("tabs" + w).getAttribute("moduleType") != "none") {
+        if (document.getElementById("tabs" + w).getAttribute("moduleType") != "none" && window.frameElement) {
           window.frameElement.ownerDocument.title = fixWindowTitle(Tab[this.Module[w]].label) + 
               (Tab[this.Module[w]].description ? ": " + Tab[this.Module[w]].description:"");
           break;

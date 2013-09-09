@@ -340,7 +340,7 @@ function scriptClick(e) {
       k--;
       if (DictTexts.keyList[mod][k]) {
         ViewPort.Key[w] = DictTexts.keyList[mod][k];
-        Texts.updateDictionary(w, Texts.getDisplay(w), false);
+        Texts.updateDictionary(w, Texts.getWindowDisplay(w), false);
       }
       break;
     case COMMENTARY:
@@ -419,7 +419,7 @@ function scriptClick(e) {
       k++;
       if (DictTexts.keyList[mod][k]) {
         ViewPort.Key[w] = DictTexts.keyList[mod][k];
-        Texts.updateDictionary(w, Texts.getDisplay(w), false);
+        Texts.updateDictionary(w, Texts.getWindowDisplay(w), false);
       }
       break;
     case GENBOOK:

@@ -130,7 +130,7 @@ var PrintPassage = {
         vs:Number(loc[2]), 
         lv:Number(loc[2]), 
         mod:this.FromChooser.version };
-    
+  
     this.Count = 0;
     this.TotalChaps = 0;
     if (this.From.bn == this.To.bn) this.TotalChaps = this.To.ch - this.From.ch;
@@ -150,7 +150,7 @@ var PrintPassage = {
     this.tmpHTML += "showIntros=\"" + (document.getElementById("introduction").checked ? "true":"false") + "\" ";
     this.tmpHTML += "showCrossRefText=\"" + (document.getElementById("crossreftext").checked  ? "true":"false") + "\" ";
     this.tmpHTML += "showHeadings=\"" + (document.getElementById("cmd_xs_toggleHeadings").checked  ? "true":"false") + "\">"; 
-    this.display = this.getDisplay(this.From.mod, this.From.bk + "." + this.From.ch + ".1.1");
+    this.display = this.getPassageDisplay(this.From.mod, this.From.bk + "." + this.From.ch + ".1.1");
     this.Next = { bn:this.From.bn, ch:this.From.ch };
     
     // start the creation loop which will create a chapter's HTML, update
@@ -190,10 +190,10 @@ var PrintPassage = {
     window.setTimeout("PrintPassage.getChapterHTML();", 1);
   },
   
-  getDisplay: function(mod, loc) {
+  getPassageDisplay: function(mod, loc) {
     
     // Get default display from current Global settings
-    var d = Texts.getDisplay(mod, loc, 1);
+    var d = Texts.getDisplay(mod, loc);
     
     // Insure footnotes may appear
     d["ShowFootnotesAtBottom"] = true;

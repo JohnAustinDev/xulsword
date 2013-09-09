@@ -537,7 +537,7 @@ getMaxVerse: function(modname, vkeytext) {
 // getVerseSystem
 //Returns the verse system of module Mod.
 getVerseSystem: function(modname) {
-  if (!this.libSwordReady("getVerseSystem")) return null;
+  if (!modname || !this.libSwordReady("getVerseSystem")) return null;
   if (!this.fdata.gsy)
     this.fdata.gsy = this.libsword.declare("GetVerseSystem", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.gsy(this.inst, ctypes.char.array()(modname));
