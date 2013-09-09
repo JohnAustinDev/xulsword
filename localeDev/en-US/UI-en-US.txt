@@ -174,6 +174,7 @@
 [main-window.menu-help]: Help
 [main-window.menu-help.about]: About...
 [main-window.menu-help.about.save]: Save
+[main-window.menu-help.about.produced_by]: 
 [main-window.menu-help.about.version]: Version: %1$S, Build: %2$S
 [main-window.tool-bar.back]: Back
 [main-window.tool-bar.back.tooltip]: Go to previous chapter in viewed history.
