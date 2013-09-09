@@ -958,7 +958,7 @@ var BookmarksController = {
   onCommandUpdate: function (aSelection, aTarget)
   {
     var commands = ["cmd_bm_newbookmark", "cmd_bm_newlivemark", "cmd_bm_newfolder", "cmd_bm_newseparator",
-                    "cmd_undo", "cmd_redo", "cmd_bm_properties", "cmd_bm_rename", "cmd_bm_saveas", "cmd_bm_print", "cmd_bm_printPreview",
+                    "cmd_undo", "cmd_redo", "cmd_bm_properties", "cmd_bm_rename", "cmd_bm_export", "cmd_bm_saveas", "cmd_bm_print", "cmd_bm_printPreview",
                     "cmd_bm_copy", "cmd_bm_paste", "cmd_bm_cut", "cmd_bm_delete",
                     "cmd_bm_setpersonaltoolbarfolder", "cmd_bm_movebookmark",
                     "cmd_bm_openfolder", "cmd_bm_managefolder", "cmd_bm_sortbyname"];

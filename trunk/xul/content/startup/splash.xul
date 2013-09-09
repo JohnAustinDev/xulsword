@@ -36,8 +36,8 @@
   
   <data id="ui.menu.addNewModule.label">&menu.addNewModule.label;</data>
   <data id="ui.menu.importAudio.label">&menu.importAudio.label;</data>
-  <data id="ui.importAudioFrom">&importAudioFrom;</data>
-  <data id="ui.importAudioTo">&importAudioTo;</data>
+  <data id="ui.dlgFrom">&dlgFrom;</data>
+  <data id="ui.dlgTo">&dlgTo;</data>
   <data id="ui.locale.dir">&locale.dir;</data>
   
   <script>

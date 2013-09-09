@@ -87,8 +87,8 @@
 <data id="ui.menu.options.language">&menu.options.language;</data>
 <data id="ui.menu.options">&menu.options;</data>
 <data id="ui.menu.removeModule.label">&menu.removeModule.label;</data>
-<data id="ui.importAudioFrom">&importAudioFrom;</data>
-<data id="ui.importAudioTo">&importAudioTo;</data>
+<data id="ui.dlgFrom">&dlgFrom;</data>
+<data id="ui.dlgTo">&dlgTo;</data>
 
 <script>  
   // xulsword's program-wide global objects...
