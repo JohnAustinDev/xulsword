@@ -329,7 +329,7 @@ var BookmarksCommand = {
          for (var k = 0; k < propArray.length; ++k) {
             for (var j = 0; j < BM.gBmProperties.length + 1; ++j) {
                if (propArray[k][j])
-                   sBookmarkItem += propArray[k][j].ValueUTF8 + "\n";
+                   sBookmarkItem += propArray[k][j].QueryInterface(Components.interfaces.nsIRDFLiteral).Value + "\n";
                else
                    sBookmarkItem += "\n";
             }
@@ -462,11 +462,11 @@ var BookmarksCommand = {
     var currentDate = new Date().toLocaleDateString();
     var parent = ResourceFuns.getParentOfResource(aSelection.item[0], BMDS);
     var visited = [aSelection.item[0]];
-    if (parent && parent.Value!=BM.AllBookmarksID) visited.push(parent);
+    if (parent && parent.ValueUTF8!=BM.AllBookmarksID) visited.push(parent);
     for (var i=0; i<visited.length; i++) {
       ResourceFuns.updateAttribute(visited[i], BM.gBmProperties[VISITEDDATE], BMDS.GetTarget(visited[i], BM.gBmProperties[VISITEDDATE], true), BM.RDF.GetLiteral(currentDate));
     }
-    BookmarkFuns.gotoBookMark(aSelection.item[0].Value);
+    BookmarkFuns.gotoBookMark(aSelection.item[0].ValueUTF8);
   },
   
   openBookmarkProperties: function (aSelection) 
@@ -689,7 +689,7 @@ var BookmarksCommand = {
 
                    // then sort by name
                    var aname = BMDS.GetTarget(a, kName, true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
-                   var bname = BMDS.GetTarget(b, kName, true).QueryInterface(Components.interfaces.nsIRDFLiteralD).Value;
+                   var bname = BMDS.GetTarget(b, kName, true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
 
                    return collation.compareString(0, aname, bname);
                  });
@@ -1075,8 +1075,8 @@ var BookmarksUtils = {
     
     if (type == "EmptyBookmark") {return "ImmutableBookmark";} //"Bookmark" NO!!!!!!
 
-    if (type == "") {
-      switch (aResource.Value) {
+    if (type == "" && aResource.ValueUTF8) {
+      switch (aResource.ValueUTF8) {
       case BM.NumberFieldValueID:
         type = "ImmutableBookmark"
         break;
@@ -1230,7 +1230,8 @@ var BookmarksUtils = {
       }
       
       if (aSelection.parent[i]) {
-        BM.RDFC.Init(BMDS, aSelection.parent[i]);
+        var parentCont = Components.classes[BM.kRDFCContractID].createInstance(Components.interfaces.nsIRDFContainer);
+        parentCont.Init(BMDS, aSelection.parent[i]);
 
         // save the selection property into array that is used later in
         // when performing the REMOVE transaction
@@ -1254,7 +1255,7 @@ var BookmarksUtils = {
 
         ResourceFuns.createAndCommitTxn("remove", aAction, 
                                        aSelection.item[i], 
-                                       BM.RDFC.IndexOf(aSelection.item[i]),
+                                       parentCont.IndexOf(aSelection.item[i]),
                                        aSelection.parent[i], 
                                        proplength, propArray);
       }
@@ -1271,7 +1272,7 @@ var BookmarksUtils = {
   //  this recursive function return array of all childrens properties for given folder
   getAllChildren: function (folder, propArray)
   {
-    var container = BM.RDFC;
+    var container = Components.classes[BM.kRDFCContractID].createInstance(Components.interfaces.nsIRDFContainer);
     container.Init(BMDS, folder);
     var children = container.GetElements();
     while (children.hasMoreElements()){

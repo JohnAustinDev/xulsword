@@ -26,6 +26,7 @@ const kUserDataBackupName = "bookmarks_bak.rdf";
 function initBMServices(bm) {
   bm.RDF              = Components.classes["@mozilla.org/rdf/rdf-service;1"].getService(Components.interfaces.nsIRDFService);
   bm.kRDFCContractID  = "@mozilla.org/rdf/container;1";
+  // bm.RDFC is a single instance and must never be treated as a factory
   bm.RDFC             = Components.classes[bm.kRDFCContractID].createInstance(Components.interfaces.nsIRDFContainer);
   bm.RDFCU            = Components.classes["@mozilla.org/rdf/container-utils;1"].getService(Components.interfaces.nsIRDFContainerUtils);
   bm.DS               = Components.classes["@mozilla.org/widget/dragservice;1"].getService(Components.interfaces.nsIDragService);

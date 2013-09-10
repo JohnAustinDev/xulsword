@@ -184,6 +184,7 @@ BookmarkFuns = {
     
     var mod = info[MODULE];
     if (!Tab.hasOwnProperty(mod)) {
+      Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       jsdump("Module \"" + mod + "\" is not installed. Cannot gotoBookMark.")
       return;
     }
@@ -315,9 +316,8 @@ BookmarkFuns = {
     
     var data="";
     
-    var container = BM.RDFC;
-    try {container.Init(BMDS, aFolder);} catch (er) {return data;}
-    var folderElements = container.GetElements();
+    try {BM.RDFC.Init(BMDS, aFolder);} catch (er) {return data;}
+    var folderElements = BM.RDFC.GetElements();
     var datalast;
     var aNote;
     while (folderElements.hasMoreElements()) {

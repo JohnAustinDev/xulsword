@@ -40,9 +40,8 @@ ResourceFuns = {
       //When importing it is possible that we could be running "createNewResource" on an already partially "created" (and un-empty) folder!
       if (BM.RDFCU.IsSeq(BMDS, newResource)) {return newResource;}
       BM.RDFCU.MakeSeq(BMDS,newResource);
-      var container = BM.RDFC;
-      container.Init(BMDS, newResource);
-      container.AppendElement(BM.BmEmptyRes);
+      BM.RDFC.Init(BMDS, newResource);
+      BM.RDFC.AppendElement(BM.BmEmptyRes);
     }
     
     if (propertyValues[TYPE] == "Bookmark" || propertyValues[TYPE] == "Folder") {
@@ -65,10 +64,9 @@ ResourceFuns = {
   },
   
   deleteElement: function (aResource, aParent, renumber) {
-    var container = BM.RDFC;
-    container.Init(BMDS, aParent);
-    container.RemoveElement(aResource,renumber);
-    if (container.GetCount() == 0) {container.AppendElement(BM.BmEmptyRes);}
+    BM.RDFC.Init(BMDS, aParent);
+    BM.RDFC.RemoveElement(aResource,renumber);
+    if (BM.RDFC.GetCount() == 0) {BM.RDFC.AppendElement(BM.BmEmptyRes);}
   },
   
   addResourceToFolder: function (res, folderID, insertionIndex) {
@@ -123,7 +121,7 @@ ResourceFuns = {
   removeEmptyResFrom: function (folderID) {
     var folderRes = BM.RDF.GetResource(folderID);
     if (BM.RDFCU.IsContainer(BMDS, folderRes)) {
-      var container = BM.RDFC;
+      var container = Components.classes[BM.kRDFCContractID].createInstance(Components.interfaces.nsIRDFContainer);
       container.Init(BMDS, folderRes);
       container.RemoveElement(BM.BmEmptyRes,true);
     }
@@ -178,8 +176,8 @@ ResourceFuns = {
     if (BM.RDFCU.IsContainer(BMDS, aResource) && BookmarksUtils.resolveType(aResource, BMDS)=="Folder") {
       BM.RDFCU.MakeSeq(BMDS, newResource);
       this.removeEmptyResFrom(newResource.ValueUTF8);
-      var container = BM.RDFC;
-      var newContainer = BM.RDFC;
+      var container = Components.classes[BM.kRDFCContractID].createInstance(Components.interfaces.nsIRDFContainer);
+      var newContainer = Components.classes[BM.kRDFCContractID].createInstance(Components.interfaces.nsIRDFContainer);
       container.Init(BMDS, aResource);
       newContainer.Init(BMDS, newResource);
       var children = container.GetElements();
@@ -219,7 +217,7 @@ ResourceFuns = {
   },
 
   emptySearchResultsFolder: function () {
-    var resultsFolder = BM.RDFC;
+    var resultsFolder = Components.classes[BM.kRDFCContractID].createInstance(Components.interfaces.nsIRDFContainer);
     resultsFolder.Init(BMDS, BM.FoundResultsRes);
     var srs = resultsFolder.GetElements();
     while (srs.hasMoreElements()) {resultsFolder.RemoveElement(srs.getNext(),false);}
