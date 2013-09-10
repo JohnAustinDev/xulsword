@@ -173,7 +173,7 @@ DLLEXPORT void FreeMemory(void *tofree, char *type) {
   else if (!strcmp(type, "searchPointer")) {
 		ListKey *sp = (ListKey *)tofree;
 		if (sp) {
-			SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING searchPointer");
+			//SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING searchPointer");
 			delete sp;
 		}
 		else SWLog::getSystemLog()->logDebug("(FreeMemory) NULL pointer, nothing freed.");

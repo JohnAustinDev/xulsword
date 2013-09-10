@@ -1849,7 +1849,7 @@ char *StringMgrXS::upperUTF8(char *text, unsigned int maxlen) const {
     SWBuf check = assureValidUTF8(text);
     char *res = ToUpperCase((char *)check.c_str());
     if (res) {
-      if (strlen(res) > maxlen) *(res+maxlen) = 0;
+      if (maxlen && strlen(res) > maxlen) *(res+maxlen) = 0;
       strcpy(text, res);
     }
   }
