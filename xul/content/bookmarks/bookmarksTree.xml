@@ -208,7 +208,7 @@
               }
             }
             catch (e) {
-              jsdump("error in refresh sort:"+e + "\n")
+              jsdump("Sort prefs are not set.");
             }
           }
 
@@ -593,7 +593,7 @@
               var oldresults = BM.RDF.GetResource(BM.FoundResultsID);
               ResourceFuns.emptySearchResultsFolder();
               var allres = BMDS.GetAllResources();
-              var srcontainer = BM.RDFC;
+              var srcontainer = Components.classes[BM.kRDFCContractID].createInstance(Components.interfaces.nsIRDFContainer);
               srcontainer.Init(BMDS, BM.FoundResultsRes);
             ALLELEMENTS:
               while (allres.hasMoreElements()) {
