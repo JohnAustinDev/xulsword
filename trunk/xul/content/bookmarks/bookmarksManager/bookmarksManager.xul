@@ -146,7 +146,7 @@
       </menu>
 
       <menu id="menu_edit">
-        <menupopup>
+        <menupopup onpopupshowing="goUpdateGlobalEditMenuItems()">
           <menuitem id="menu_undo"/>
           <menuitem id="menu_redo"/>
           <menuseparator/>

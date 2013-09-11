@@ -337,9 +337,9 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 				SWBuf mclass;
 				if (tag.getAttribute("level") && !strcmp(tag.getAttribute("level"), "2")) {
-					mclass.set(" head2");
+					mclass.set("head2");
 				}
-		    	else {mclass.set(" head1");}
+		    	else {mclass.set("head1");}
 				if (tag.getAttribute("canonical") && !strcmp(tag.getAttribute("canonical"), "true")) {
 					mclass.append(" canonical");
 				}
@@ -371,7 +371,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				else {
 					buf += "<h3";
 					if (mclass.length()) {
-						buf += "class=\"";
+						buf += " class=\"";
 						buf += mclass;
 						buf += "\"";
 					}

@@ -534,9 +534,8 @@ function SearchObj(searchObj) {
       case GENBOOK:
       case DICTIONARY:
         l.innerHTML = p.ch;
-        l.className = "cs-" + mod;
-        var ch = (Tab[p.mod].modType == GENBOOK ? "/" + mod:"") + p.ch;
-        l.setAttribute("href", "javascript:MainWindow.showLocation('" + mod + "','na','" + ch + "',1,1);");
+        l.className = "cs-" + p.mod;
+        l.setAttribute("href", "javascript:MainWindow.showLocation('" + p.mod + "','na','" +  p.ch + "',1,1);");
         break;
         
       }

@@ -20,49 +20,49 @@
 // GenBookTexts
 ////////////////////////////////////////////////////////////////////////
 
-// IMPORTANT: Key for GenBook has the form: /modName/etc/etc/etc.
-
 GenBookTexts = {
     
   read: function(w, d) {
     var ret = { htmlHead:Texts.getPageLinks(), htmlText:"", footnotes:null };
     
     ret.htmlText = LibSword.getGenBookChapterText(d.mod, d.Key);
-      
-    var un = Texts.getUserNotes("na", d.Key, d.mod, ret.htmlText);
-    ret.htmlText = un.html; // has user notes added to text
-    ret.footnotes = un.notes;
+
+		if (d.globalOptions["User Notes"] == "On") {
+    	var un = Texts.getUserNotes("na", d.Key, d.mod, ret.htmlText);
+    	ret.htmlText = un.html; // has user notes added to text
+    	ret.footnotes = un.notes;
+    }
     
     return ret;
   },
 
-  // returns the first chapter of general-book module, or null if not found.
-  firstChapter: function(mod) {
+  // returns the first rdfChapter of general-book module, or null if not found.
+  firstRdfChapter: function(mod) {
 
     var root = BM.RDF.GetResource("rdf:#" + "/" + mod);
     
 		var db = GenBookNavigator.getDatasource(mod);
 		if (!db) {
-			jsdump("ERROR: firstChapter- No database for \"" + mod + "\""); 
+			jsdump("ERROR: firstRdfChapter- No database for \"" + mod + "\"");
 			return null;			
 		}
 		
 		var chapter1 = db.GetTarget(root, BM.RDFCU.IndexToOrdinalResource(1), true);
     if (!chapter1) {
-			jsdump("ERROR: firstChapter- No chapters in GenBook module \"" + mod + "\""); 
+			jsdump("ERROR: firstRdfChapter- No chapters in GenBook module \"" + mod + "\"");
 			return null;
 		}
 
     return chapter1.QueryInterface(Components.interfaces.nsIRDFResource).ValueUTF8;
   },
   
-  // returns the previous chapter or null if there is none.
-  previousChapter: function(chapter) {
+  // returns the previous rdfChapter or null if there is none.
+  previousRDFChapter: function(rdfChapter) {
     var previous = null;
     
-    var ch = this.getChapterResource(chapter);
+    var ch = this.getRdfChapterResource(rdfChapter);
     if (!ch.node || !ch.ds) {
-			jsdump("ERROR: No previous chapter for \"" + chapter + "\"");
+			jsdump("ERROR: No previous rdfChapter for \"" + rdfChapter + "\"");
 			return null;
 		}
     
@@ -100,19 +100,19 @@ GenBookTexts = {
     // if there is no previous node, go to parent
     if (!previous && parent) previous = parent;
     
-    // return null if result is not a chapter
+    // return null if result is not an rdfChapter
     if (previous && !previous.match(GenBookNavigator.RDFCHAPTER)[2]) return null;
     
     return previous;
   },
   
-  // returns the next chapter, or null if there is none.
-  nextChapter: function(chapter, skipChildren) {
+  // returns the next rdfChapter, or null if there is none.
+  nextRdfChapter: function(rdfChapter, skipChildren) {
     var next = null;
 
-    var ch = this.getChapterResource(chapter);
+    var ch = this.getRdfChapterResource(rdfChapter);
     if (!ch.node || !ch.ds) {
-			jsdump("ERROR: No next chapter for \"" + chapter + "\"");
+			jsdump("ERROR: No next rdfChapter for \"" + rdfChapter + "\"");
 			return null;
 		}
     
@@ -142,9 +142,9 @@ GenBookTexts = {
     }
 
     // or else try parent's next sibling...
-    if (!next && parent) next = this.nextChapter(parent, true);
+    if (!next && parent) next = this.nextRdfChapter(parent, true);
    
-    // return null if result is not a chapter
+    // return null if result is not an rdfChapter
     if (next && !next.match(GenBookNavigator.RDFCHAPTER)[2]) return null;
     return next;
   },
@@ -182,34 +182,37 @@ GenBookTexts = {
 			}
 	
 			if (!validKey) {
-				ViewPort.Key[w] = GenBookTexts.firstChapter(aMod).match(GenBookNavigator.RDFCHAPTER)[2];
+			  var ch = GenBookTexts.firstRdfChapter(aMod);
+				ViewPort.Key[w] = (ch && GenBookNavigator.RDFCHAPTER.test(ch) ? ch.match(GenBookNavigator.RDFCHAPTER)[2]:"");
 //jsdump("validateKeys setting mod:" + aMod + " to key:" + ViewPort.Key[w]);
 			}
 			
 		}
 	},
   
-  // return the database and resource for a given chapter, or null values
-  // if database and/or resource are not found.
-  getChapterResource: function(chapter) {
+  // chack for and return the database and resource for a given rdfChapter, 
+  // or null values if database and/or resource are not found or are unexpected.
+  getRdfChapterResource: function(rdfChapter) {
     // get our resource
     var r = {node:null, ds:null};
     
-    var mod = chapter.match(GenBookNavigator.RDFCHAPTER)[1];
+    var mod = rdfChapter.match(GenBookNavigator.RDFCHAPTER)[1];
+    if (!mod) return r;
     
     r.ds = GenBookNavigator.getDatasource(mod);
+    if (!r.ds) return r;
     
 		var es = r.ds.GetAllResources();
 		while (es.hasMoreElements()) {
 			var e = es.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
-			if (e.ValueUTF8 == chapter) {
+			if (e.ValueUTF8 == rdfChapter) {
 				r.node = e;
 				// if not a container, keep looking. A container resource appears also as description resource.
 				if (BM.RDFCU.IsContainer(r.ds, r.node)) break;
 			}
 		}
     
-    // return null if this is not a chapter
+    // return null if this is not an rdfChapter
     if (r.node && !r.node.ValueUTF8.match(GenBookNavigator.RDFCHAPTER)[2]) r.node = null;
     
     return r;

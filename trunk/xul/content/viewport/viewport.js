@@ -32,8 +32,6 @@ function initViewPort() {
     MainWindow.CommTexts = CommTexts;
     MainWindow.GenBookTexts = GenBookTexts;
     
-    ViewPort.init();
-    
   }
   
   // Else if this is the printing viewport
@@ -42,8 +40,6 @@ function initViewPort() {
     document.getElementsByTagName("body")[0].setAttribute("print", "true");
   
     ViewPort = new ViewPortObj(MainWindow.ViewPort);
-    
-    ViewPort.init();
       
     Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null, 1, 1, 1]);
     
@@ -97,8 +93,6 @@ function initViewPort() {
 			}
     }
 
-    ViewPort.init();
-
 		document.getElementById("viewportbody").setAttribute("chooser", "hide");
     ViewPort.update(false);
     
@@ -107,7 +101,55 @@ function initViewPort() {
 }
 
 function ViewPortObj(viewPortObj) {
-  
+
+  // set mouse wheel listeners
+  document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
+  document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
+  document.getElementById("textrow").addEventListener("DOMMouseScroll", MouseWheel.scroll, false);
+
+  this.drawTabs = function(w) {
+
+    // special ORIG tab
+    var orig = "";
+    orig += "<input type=\"button\" class=\"tab tabTexts tabOrig\" ";
+    orig += "id=\"w" + w + ".tab.orig\" value=\"" + XSBundle.getString("ORIGLabelTab") + "\" ";
+    orig += "title=\"\"" + (!Tab.ORIG_NT && !Tab.ORIG_OT ? " style=\"display:none;\"":"") + "></button>";
+
+    var html = "";
+    for (var t=0; t<Tabs.length; t++) {
+
+      // insert ORIG tab after BIBLEs
+      if (Tabs[t].modType != BIBLE && orig) {
+        html += orig;
+        orig = null;
+      }
+
+      html += "<input type=\"button\" class=\"tab tab" + Tabs[t].tabType + "\" ";
+      html += "id=\"w" + w + ".tab.norm." + t + "\" value=\"" + Tabs[t].label + "\" ";
+      html += "title=\"" + Tabs[t].description + "\"></button>";
+    }
+
+    // The multi-tab tab is a pulldown to hold all tabs which don't fit.
+    html += "<div id = \"w" + w + ".multitab\" class=\"multitab\">"; // to stack two buttons...
+
+    html +=   "<select id=\"w" + w + ".tabselect\" class=\"tab\">";
+    for (t=0; t<Tabs.length; t++) {
+      html +=   "<option id=\"w" + w + ".tab.mult." + t + "\" class=\"tab tab" + Tabs[t].tabType + "\">";
+      html +=   Tabs[t].label + "</option>";
+    }
+    html +=   "</select>";
+
+    // a div is needed to capture tab selection clicks and prevent activation of pulldown menu
+    html +=   "<div class=\"multitab-clicker\" id=\"w" + w + ".tab.tsel\"></div>";
+
+    html += "</div>";
+
+    document.getElementById("tabs" + w).innerHTML = html;
+  };
+
+  // draw tabs
+  for (w=1; w<=NW; w++) {this.drawTabs(w);}
+
   // If we have a passed viewPortObj, then copy it. Otherwise create 
   // a ViewPortObj from global preferences.
   if (viewPortObj) {
@@ -187,14 +229,8 @@ function ViewPortObj(viewPortObj) {
       if (!Tab.ORIG_NT && !Tab.ORIG_OT) this.ShowOriginal[w] = false;
       
     }
-
-  }
-  
-  this.init = function() {
-  
-    // draw tabs
-    for (w=1; w<=NW; w++) {this.drawTabs(w);}
     
+    // show/hide global tabs based on prefs
     for (w=1; w<=NW; w++) {
       for (var t=0; t<Tabs.length; t++) {
         var inhide = new RegExp("(^|;)" + escapeRE(Tabs[t].modName) + ";");
@@ -202,13 +238,8 @@ function ViewPortObj(viewPortObj) {
         else Tabs[t]["w" + w + ".hidden"] = false;
       }
     }
-    
-    // set mouse wheel listeners
-    document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
-    document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
-    document.getElementById("textrow").addEventListener("DOMMouseScroll", MouseWheel.scroll, false);
 
-  };
+  }
 
   // This function updates the viewport based on all previously set ViewPort
   // user settings. It does not set/change any such paramters, but only
@@ -433,46 +464,6 @@ function ViewPortObj(viewPortObj) {
 
 //var d="NumDisplayedWindows=" + document.getElementById("textarea").getAttribute("windows"); for (w=1; w<=NW; w++) {d+=", text" + w + "=" + document.getElementById("text" + w).getAttribute("columns");} jsdump(d);
 
-  };
-
-  this.drawTabs = function(w) {
-    
-    // special ORIG tab
-    var orig = "";
-    orig += "<input type=\"button\" class=\"tab tabTexts tabOrig\" ";
-    orig += "id=\"w" + w + ".tab.orig\" value=\"" + XSBundle.getString("ORIGLabelTab") + "\" ";
-    orig += "title=\"\"" + (!Tab.ORIG_NT && !Tab.ORIG_OT ? " style=\"display:none;\"":"") + "></button>";
-
-    var html = "";
-    for (var t=0; t<Tabs.length; t++) {
-      
-      // insert ORIG tab after BIBLEs
-      if (Tabs[t].modType != BIBLE && orig) {
-        html += orig;
-        orig = null;
-      }
-      
-      html += "<input type=\"button\" class=\"tab tab" + Tabs[t].tabType + "\" ";
-      html += "id=\"w" + w + ".tab.norm." + t + "\" value=\"" + Tabs[t].label + "\" ";
-      html += "title=\"" + Tabs[t].description + "\"></button>";
-    }
-    
-    // The multi-tab tab is a pulldown to hold all tabs which don't fit.
-    html += "<div id = \"w" + w + ".multitab\" class=\"multitab\">"; // to stack two buttons...
-    
-    html +=   "<select id=\"w" + w + ".tabselect\" class=\"tab\">";
-    for (t=0; t<Tabs.length; t++) {
-      html +=   "<option id=\"w" + w + ".tab.mult." + t + "\" class=\"tab tab" + Tabs[t].tabType + "\">";
-      html +=   Tabs[t].label + "</option>";
-    }
-    html +=   "</select>";
-    
-    // a div is needed to capture tab selection clicks and prevent activation of pulldown menu
-    html +=   "<div class=\"multitab-clicker\" id=\"w" + w + ".tab.tsel\"></div>";
-    
-    html += "</div>";
-    
-    document.getElementById("tabs" + w).innerHTML = html;
   };
   
   // Some layouts, like the Navigator dimensions and variable height

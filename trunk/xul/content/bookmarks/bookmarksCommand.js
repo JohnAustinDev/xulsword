@@ -472,7 +472,7 @@ var BookmarksCommand = {
   openBookmarkProperties: function (aSelection) 
   {
     var bookmark = aSelection.item[0].ValueUTF8;
-    return BookmarkFuns.showPropertiesWindow(bookmark, false);
+    return BookmarkFuns.showPropertiesWindow(window, bookmark, false);
   },
 
   createNewBookmark: function (aTarget)
@@ -660,8 +660,7 @@ var BookmarksCommand = {
     var folderContents = BM.RDFC.GetElements();
     while (folderContents.hasMoreElements()) {
         var rsrc = folderContents.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
-        var rtype = BookmarksUtils.resolveType(rsrc);
-        if (rtype == "BookmarkSeparator")
+        if (BookmarksUtils.resolveType(rsrc) == "BookmarkSeparator")
           continue;
         toSort.push(rsrc);
     }
@@ -695,22 +694,29 @@ var BookmarksCommand = {
                  });
 
     // we now have the resources here sorted by name
+    try {BM.gTxnSvc.beginBatch(null);}
+    catch (er) {BM.gTxnSvc.beginBatch();}
     BMDS.beginUpdateBatch();
 
-    BM.RDFC.Init(BMDS, theFolder);
-
     // remove existing elements
+    BM.RDFC.Init(BMDS, theFolder);
     var folderContents = BM.RDFC.GetElements();
+    var fc = [];
     while (folderContents.hasMoreElements()) {
-      BM.RDFC.RemoveElement (folderContents.getNext(), false);
+      fc.push(folderContents.getNext());
+    }
+    for (var i=0; i<fc.length; i++) {
+      ResourceFuns.createAndCommitTxn("remove", null, fc[i], null, theFolder, null, null);
     }
 
     // and add our elements back
     for (var i = 0; i < toSort.length; i++) {
-      BM.RDFC.InsertElementAt (toSort[i], i+1, true);
+      ResourceFuns.createAndCommitTxn("insert", null, toSort[i], i+1, theFolder, null, null);
     }
 
     BMDS.endUpdateBatch();
+    try {BM.gTxnSvc.endBatch(false);}
+    catch (er) {BM.gTxnSvc.endBatch();}
   },
   
   onPrintPreviewDone: function() {window.focus();}

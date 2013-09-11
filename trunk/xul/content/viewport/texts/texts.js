@@ -318,8 +318,10 @@ Texts = {
     sb.className = sb.className.replace(/\s*cs\-\S+/, "") + " cs-" + display.mod;
     
     // reset key if the module has changed since last read
-    if (!this.display[w] || this.display[w].mod != display.mod) 
-        display.Key = GenBookTexts.firstChapter(display.mod);
+    if (!this.display[w] || this.display[w].mod != display.mod) {
+      var ch = GenBookTexts.firstRdfChapter(display.mod);
+      display.Key = (ch && GenBookNavigator.RDFCHAPTER.test(ch) ? ch.match(GenBookNavigator.RDFCHAPTER)[2]:"");
+    }
   
     // don't read new text if the results will be identical to last displayed text
     var check = ["mod", "Key", "globalOptions"];

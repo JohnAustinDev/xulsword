@@ -301,10 +301,10 @@ function identifyModuleFeatures(resetUserPrefs) {
   
   if (!f.isStrongs) prefs.setCharPref("Strong's Numbers", "Off");
   prefs.setCharPref("Morphological Tags", prefs.getCharPref("Strong's Numbers"));
-  
+
   var thv = document.getElementById("cmd_xs_toggleHebrewVowelPoints");
   var thc = document.getElementById("cmd_xs_toggleHebrewCantillation");
-  if (getPrefOrCreate("HideHebrewOptions", "Bool", false) || ((thv.hidden || thv.getAttribute("disabled")=="true") && (thc.hidden || thc.getAttribute("disabled")=="true")))
+  if (getPrefOrCreate("HideHebrewOptions", "Bool", false) && ((thv.hidden || thv.getAttribute("disabled")=="true") && (thc.hidden || thc.getAttribute("disabled")=="true")))
     document.getElementById("sub-heb").hidden = true;
 }
 
@@ -544,9 +544,16 @@ function fillModuleMenuLists() {
       else document.getElementById(sub).disabled=true;
     }
     else if (moduleTypeCounts[type]==1) {
-      document.getElementById(sepShowAll).hidden=true;
-      document.getElementById(showAllTabs).hidden=true;
-      document.getElementById(showNoTabs).hidden=true;
+      if (getPrefOrCreate("HideDisabledViewMenuItems", "Bool", false)) {
+        document.getElementById(sepShowAll).hidden=true;
+        document.getElementById(showAllTabs).hidden=true;
+        document.getElementById(showNoTabs).hidden=true;
+      }
+      else {
+        document.getElementById(sepShowAll).disabled=true;
+        document.getElementById(showAllTabs).disabled=true;
+        document.getElementById(showNoTabs).disabled=true;
+      }
     }
   }
 }
@@ -830,7 +837,7 @@ var XulswordController = {
     case "cmd_xs_toggleTab":
       if (CommandTarget.w) {
         Tab[CommandTarget.mod]["w" + CommandTarget.w + ".hidden"] = !Tab[CommandTarget.mod]["w" + CommandTarget.w + ".hidden"];
-        updateModuleMenuCheckmarks();
+        insureValidTextSelections();
         Texts.update();
       }
       break;
@@ -1186,6 +1193,7 @@ function handleOptions(elem) {
         }
       }
       updateModuleMenuCheckmarks();
+      insureValidTextSelections();
       break;
 
     case "emailus":
@@ -1269,6 +1277,7 @@ function setAllTabs(toShowing, w) {
   }
   
   updateModuleMenuCheckmarks();
+  insureValidTextSelections();
   Texts.update(SCROLLTYPETOP, HILIGHTNONE);
 }
 
@@ -1284,6 +1293,7 @@ function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
       if (oldCheckedValue != Tabs[tabNum]["w" + i + ".hidden"]) {
         Tabs[tabNum]["w" + i + ".hidden"] = !Tabs[tabNum]["w" + i + ".hidden"] ;
         updateModuleMenuCheckmarks();
+        insureValidTextSelections();
       }
       break;
     case "showAllTabs":
@@ -1295,7 +1305,7 @@ function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
         var toggleMe = (id=="showNoTabs" ? !Tabs[t]["w" + i + ".hidden"]:Tabs[t]["w" + i + ".hidden"]);
         if (toggleMe) Tabs[t]["w" + i + ".hidden"] = !Tabs[t]["w" + i + ".hidden"];
       }
-      updateModuleMenuCheckmarks();
+      insureValidTextSelections();
       break;
     }
   }
@@ -1400,7 +1410,9 @@ function updateModuleMenuCheckmarks() {
       
 //jsdump(Tabs[t].modName + "=" + checked);
   }
-  
+}
+
+function insureValidTextSelections() {
   // insure each window has a selected tab
   for (var w=1; w<=NW; w++) {
     if (Tab[ViewPort.Module[w]]["w" + w + ".hidden"]) {
@@ -1471,7 +1483,7 @@ function ensureModuleShowing(version) {
     if (!firstUnPinnedWin) return 0;
     aWindow = firstUnPinnedWin;
     Tab[version]["w" + aWindow + ".hidden"] = !Tab[version]["w" + aWindow + ".hidden"]
-    updateModuleMenuCheckmarks();
+    insureValidTextSelections();
   }
 
   ViewPort.selectTab(aWindow, version);
