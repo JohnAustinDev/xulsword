@@ -56,8 +56,7 @@
         title-selectFolder="&selectFolder.label;"
         style="width:35em;"
         onload="initCSS(); Startup();"
-        onunload="setFolderTreeHeight();"
-        persist="screenX screenY width height">
+        onunload="setFolderTreeHeight();">
    
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>

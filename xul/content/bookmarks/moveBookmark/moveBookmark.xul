@@ -51,9 +51,7 @@
         title="&selectFolder.label;" title-selectFolder="&selectFolder.label;"
         onload="initCSS(); Startup();"
         buttonlabelaccept="&okButton.label;"
-        buttonlabelcancel="&cancelButton.label;"
-        persist="screenX screenY width height"
-        screenX="24" screenY="24">
+        buttonlabelcancel="&cancelButton.label;">
         
   <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>

@@ -21,17 +21,17 @@
 	IMPLEMENTATION NOTE:
 	
 	This implementation does not use the libsword install manager API. It 
-	would be difficult to create a libxulsword Javascript interface to 
-	implement the C++ API, and doing so would not make XUL's RDF database 
+	would be rather difficult to create a libxulsword Javascript interface to
+	implement the SWORD API, and doing so would not make XUL's RDF database
 	coding any simpler anyway. But the major advantage of this implemen-
 	tation is that it makes full use of Firefox's powerful simultaneous, 
 	asynchronous download capability. This works faster, allows simultaneous 
 	download of many modules, allows the user to continue using xulsword 
-	(including the install manager) while downloading, and provides more 
-	user feedback.
+	(including the install manager itself) while waiting for downloads to 
+	finish, and provides more user feedback.
 	
-	This implementation also supports XSM (xulsword module) repositories 
-	and audio module repositories as well as traditional SWORD repos.
+	Another reason is this implementation also supports XSM (xulsword module) 
+	repositories and audio module repositories as well as traditional SWORD repos.
 
 */
 

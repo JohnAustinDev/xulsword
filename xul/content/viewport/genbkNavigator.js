@@ -22,7 +22,7 @@ GenBookNavigator = {
 	
 	ChapterResource: BM.RDF.GetResource("http://www.xulsword.com/tableofcontents/rdf#Chapter"),
 	
-	RDFCHAPTER: new RegExp(/^rdf\:\#\/([^\/]+)(\/.*)?$/), // chapter is rdf:#/ModName/Key
+	RDFCHAPTER: new RegExp(/^rdf\:\#\/([^\/]+)(\/.*)?$/), // rdfChapter is rdf:#/ModName/Key
 	
 	Tree: function() { return document.getElementById("genbook-tree"); },
 	TreeBuilder: function() { return this.Tree().view.QueryInterface(Components.interfaces.nsIXULTreeBuilder); },
@@ -143,11 +143,11 @@ GenBookNavigator = {
 	},
 	
 	// shows and selects key in GenBook navigator. The selection will trigger an update event.
-	select: function(chapter) {
+	select: function(rdfChapter) {
 
-		this.showChapter(chapter);
+		this.showRdfChapter(rdfChapter);
 
-		var i = this.TreeBuilder().getIndexOfResource(BM.RDF.GetResource(chapter));
+		var i = this.TreeBuilder().getIndexOfResource(BM.RDF.GetResource(rdfChapter));
 		if (i == -1) return false;
 		
 		this.Tree().view.selection.select(i);  
@@ -157,14 +157,14 @@ GenBookNavigator = {
 		return true; 
 	},
 	
-	// return the currently selected chapter, or null if no selection
-	selectedChapter: function() {
+	// return the currently selected rdfChapter, or null if no selection
+	selectedRdfChapter: function() {
 		try {
-			var selChapter = this.TreeBuilder().getResourceAtIndex(this.Tree().currentIndex).ValueUTF8;
+			var selRdfChapter = this.TreeBuilder().getResourceAtIndex(this.Tree().currentIndex).ValueUTF8;
 		}
 		catch (er) {return null;}
 		
-		return selChapter;
+		return selRdfChapter;
 	},
 	
 	 // update GenBook keys according to navigator selection, and update texts.
@@ -178,7 +178,7 @@ GenBookNavigator = {
 		var mod = selRes.match(this.RDFCHAPTER)[1];
 		var key = selRes.match(this.RDFCHAPTER)[2];
 		if (!key) {
-			this.select(GenBookTexts.firstChapter(mod));
+			this.select(GenBookTexts.firstRdfChapter(mod));
 			return
 		}
 		
@@ -198,14 +198,14 @@ GenBookNavigator = {
 		MainWindow.Texts.update();
 	},
 	
-	// recursively opens a chapter and scrolls there (does not select)
-	showChapter: function(chapter) {
+	// recursively opens a rdfChapter and scrolls there (does not select)
+	showRdfChapter: function(rdfChapter) {
 		
-		// open chapter containers to make final chapter visible
+		// open rdfChapter containers to make final chapter visible
 		var t = ("rdf:#/").length;
 		do {
-			t = chapter.indexOf("/", t+1);
-			var sub = chapter.substring(0,(t==-1 ? chapter.length:t));
+			t = rdfChapter.indexOf("/", t+1);
+			var sub = rdfChapter.substring(0,(t==-1 ? rdfChapter.length:t));
 			
 			var index = this.TreeBuilder().getIndexOfResource(BM.RDF.GetResource(sub));
 
@@ -216,9 +216,9 @@ GenBookNavigator = {
 			}
 		} while (t != -1);
 		
-		// now select the chapter in the navigator
+		// now select the rdfChapter in the navigator
 		try {
-			var res = BM.RDF.GetResource(chapter);
+			var res = BM.RDF.GetResource(rdfChapter);
 			var i = this.TreeBuilder().getIndexOfResource(res);
 		}
 		catch (er) {return;}

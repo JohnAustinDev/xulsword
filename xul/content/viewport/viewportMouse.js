@@ -131,7 +131,7 @@ function scriptMouseOver(e) {
   if (!w) return; // this also excludes Popup which is w==0
 
   var p = getElementInfo(elem);
-  
+
 //jsdump("type:" + type + " title:" + elem.title + " class:" + elem.className + "\n");
   var okay = false;
   switch (type) {
@@ -227,7 +227,7 @@ function scriptClick(e) {
   // when an unpinned GenBook window is clicked, select its chapter in the navigator
   if (w && !ViewPort.IsPinned[w] && Tab[ViewPort.Module[w]].modType == GENBOOK) {
     var key = ViewPort.Key[w];
-    if (GenBookNavigator.selectedChapter() != "rdf:#/" + ViewPort.Module[w] + key) {
+    if (GenBookNavigator.selectedRdfChapter() != "rdf:#/" + ViewPort.Module[w] + key) {
 			GenBookNavigator.select("rdf:#/" + ViewPort.Module[w] + key);
 		}
   }
@@ -340,7 +340,7 @@ function scriptClick(e) {
       k--;
       if (DictTexts.keyList[mod][k]) {
         ViewPort.Key[w] = DictTexts.keyList[mod][k];
-        Texts.updateDictionary(w, Texts.getWindowDisplay(w), false);
+        Texts.update(SCROLLTYPETOP, HILIGHTNONE);
       }
       break;
     case COMMENTARY:
@@ -370,7 +370,7 @@ function scriptClick(e) {
       }
       // if not, then load previous chapter
       else {
-        var prevchap = GenBookTexts.previousChapter("rdf:#/" + mod + (ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]));
+        var prevchap = GenBookTexts.previousRdfChapter("rdf:#/" + mod + (ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]));
         if (!prevchap) return;
         
         if (ViewPort.IsPinned[w]) {
@@ -419,7 +419,7 @@ function scriptClick(e) {
       k++;
       if (DictTexts.keyList[mod][k]) {
         ViewPort.Key[w] = DictTexts.keyList[mod][k];
-        Texts.updateDictionary(w, Texts.getWindowDisplay(w), false);
+        Texts.update(SCROLLTYPETOP, HILIGHTNONE);
       }
       break;
     case GENBOOK:
@@ -433,7 +433,7 @@ function scriptClick(e) {
       sb.scrollLeft = next;
       // if not, then load next chapter
       if (sb.scrollLeft == prev) {
-        var nextchap = GenBookTexts.nextChapter("rdf:#/" + mod + (ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]));
+        var nextchap = GenBookTexts.nextRdfChapter("rdf:#/" + mod + (ViewPort.IsPinned[w] ? Texts.pinnedDisplay[w].Key:ViewPort.Key[w]));
         if (!nextchap) return;
         
         if (ViewPort.IsPinned[w]) {
@@ -602,7 +602,7 @@ var MouseWheel = {
 
   // scroll wheel does synchronized scrolling of all visible versekey windows
   scroll: function(event) {
-    
+
     // find window in which event occurred
     var w = getContextWindow(event.target);
     if (!w) return; // if we're over a popup don't do anything

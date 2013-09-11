@@ -55,9 +55,11 @@ DictTexts = {
     
     // get htmlEntry
     var de = this.getEntryHTML(d.Key, d.mod);
-    var un = Texts.getUserNotes("na", d.Key, d.mod, de);
-    de = un.html; // has user notes added to text
-    ret.footnotes = un.notes;
+    if (d.globalOptions["User Notes"] == "On") {
+    	var un = Texts.getUserNotes("na", d.Key, d.mod, de);
+    	de = un.html; // has user notes added to text
+    	ret.footnotes = un.notes;
+		}
     
     ret.htmlEntry += "<div class=\"dictentry\">" + de + "</div>";
   
@@ -271,7 +273,7 @@ DictTexts = {
 		entry = this.replaceTags(entry, "gramGrp");
 		entry = this.replaceTags(entry, "pos");
 		
-var m=entry.match(/<(\w+)/g); if (m) {for (var x=0; x<m.length; x++) {if (!(/(span|div|b|i)/).test(m[x])) jsdump("INFO: Found unhandled tag \"" + m[x] + "\" in\n" + entry);}} 
+var m=entry.match(/<\w+/g); if (m) {for (var x=0; x<m.length; x++) {if (!(/^<(table|tbody|span|div|img|br|tr|td|h\d+|ul|li|b|i)$/i).test(m[x])) jsdump("INFO: Found unhandled tag \"" + m[x] + "\" in\n" + entry);}}
 	
 		return entry;
 	},
@@ -403,7 +405,7 @@ var m=entry.match(/<(\w+)/g); if (m) {for (var x=0; x<m.length; x++) {if (!(/(sp
     else {
       textbox.style.color="";
       ViewPort.Key[w] = firstMatch[2];
-      Texts.updateDictionary(w, Texts.getWindowDisplay(w), false);
+      Texts.update(SCROLLTYPETOP, HILIGHTNONE);
     }
   },
 
@@ -413,7 +415,8 @@ var m=entry.match(/<(\w+)/g); if (m) {for (var x=0; x<m.length; x++) {if (!(/(sp
     var w = getContextWindow(e.target);
     
     ViewPort.Key[w] = decodeURIComponent(e.target.title);
-    Texts.updateDictionary(w, Texts.getWindowDisplay(w), false);
+    Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+
     window.setTimeout("document.getElementById('note" + w + "').getElementsByClassName('keytextbox')[0].focus();", 1);
   }
 

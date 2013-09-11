@@ -251,12 +251,12 @@ BibleNavigator = {
  ***********************************************************************/  
   CanUpShift: {biblebooks_nt:true,  biblebooks_ot:true},
   CanDownShift: {biblebooks_nt:false, biblebooks_ot:false},
-  Delta:0,
+  Delta: Number(0),
 
   wheel: function(event) {
-    if (this.Delta == 0) 
-        window.setTimeout("BibleNavigator.wheelScroll('biblebooks_" + this.doc().getElementById("biblechooser").getAttribute("showing") + "')", 50);
-    this.Delta += event.detail;
+    if (BibleNavigator.Delta == 0)
+        window.setTimeout("BibleNavigator.wheelScroll('biblebooks_" + BibleNavigator.doc().getElementById("biblechooser").getAttribute("showing") + "')", 50);
+    BibleNavigator.Delta += event.detail;
   },
 
   wheelScroll: function(testid) {

@@ -296,7 +296,7 @@
         </menupopup></menu>
         <menuseparator/>
         <menu id="sub-Texts" class="menu-iconic" label="  &menu.view.showtexttabs;" accesskey="&menu.view.showtexttabs.sc;">
-          <menupopup id="sub-Texts-pup">
+          <menupopup id="sub-Texts-pup" onpopupshowing="updateModuleMenuCheckmarks();">
             <menuseparator id="sepShowAll-Texts"/>
             <menuitem id="showAllTabs.Texts" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuitem id="showNoTabs.Texts" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
@@ -308,7 +308,7 @@
           </menupopup>
         </menu>
         <menu id="sub-Comms" class="menu-iconic" label="  &menu.view.showcommtabs;" accesskey="&menu.view.showcommtabs.sc;">
-          <menupopup id="sub-Comms-pup">
+          <menupopup id="sub-Comms-pup" onpopupshowing="updateModuleMenuCheckmarks();">
             <menuseparator id="sepShowAll-Comms"/>
             <menuitem id="showAllTabs.Comms" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuitem id="showNoTabs.Comms" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
@@ -320,7 +320,7 @@
           </menupopup>
         </menu>
         <menu id="sub-Genbks" class="menu-iconic" label="  &menu.view.showbooktabs;" accesskey="&menu.view.showbooktabs.sc;">
-          <menupopup id="sub-Genbks-pup">
+          <menupopup id="sub-Genbks-pup" onpopupshowing="updateModuleMenuCheckmarks();">
             <menuseparator id="sepShowAll-Genbks"/>
             <menuitem id="showAllTabs.Genbks" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuitem id="showNoTabs.Genbks" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
@@ -332,7 +332,7 @@
           </menupopup>
         </menu>
         <menu id="sub-Dicts" class="menu-iconic" label="  &menu.view.showdicttabs;" accesskey="&menu.view.showdicttabs.sc;">
-          <menupopup id="sub-Dicts-pup">
+          <menupopup id="sub-Dicts-pup" onpopupshowing="updateModuleMenuCheckmarks();">
             <menuseparator id="sepShowAll-Dicts"/>
             <menuitem id="showAllTabs.Dicts" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuitem id="showNoTabs.Dicts" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>

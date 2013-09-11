@@ -207,7 +207,11 @@ function getElementInfo(elem) {
           r[p] = r[p].split(/ +/);
         }
         
-        else if (type == "sr") r[p] = r[p].split(";");
+        else if (type == "sr") {
+					r[p] = r[p].split(";");
+					// remove useless "Bible:" from refs (like module SME)
+					for (var i=0; i<r[p].length; i++) {r[p][i] = r[p][i].replace(/^\s*Bible\:\s*/i, "");}
+				}
         
         else {throw("Unknown type of reflist:" + type);}
         

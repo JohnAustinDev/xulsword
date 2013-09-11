@@ -152,11 +152,10 @@ BookmarkFuns = {
     return retval;
   },
   
-  showPropertiesWindow: function (resourceID, editNote) {
+  showPropertiesWindow: function (aWindow, resourceID, editNote) {
     var value = {ok:false};
-    // NOTE: this window MUST be modal (even if it screws with window 
-    // focus) so that bookmark transactions work properly.
-    openDialog("chrome://xulsword/content/bookmarks/bookmarksProperties/bookmarksProperties.xul", "", "centerscreen,chrome,modal,resizable=no", resourceID, value, editNote);
+    // NOTE: this window MUST be modal so that bookmark transactions work properly.
+    aWindow.openDialog("chrome://xulsword/content/bookmarks/bookmarksProperties/bookmarksProperties.xul", "", "centerscreen,chrome,modal,resizable=no", resourceID, value, editNote);
     return value.ok;
   },
     
@@ -199,7 +198,7 @@ BookmarkFuns = {
       var loc = { bk:"na.", ch:info[CHAPTER], vs:info[VERSE], lv:info[VERSE] };
       break;
     }
-    
+
     MainWindow.showLocation(mod, loc.bk, loc.ch, loc.vs, loc.lv);
   },
 
