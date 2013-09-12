@@ -158,13 +158,16 @@
   <key keycode="VK_LEFT"   command="cmd_xs_back"/>
   <key keycode="VK_RIGHT"  command="cmd_xs_forward"/>
   <key keycode="VK_F1"     oncommand="openLanguageMenu();"/>
-  <key id="addBM"         key="&addCurPageAsCmd.commandkey;" modifiers="accel" command="cmd_xs_newBookmark"/>
-  <key id="addBMN"        key="&addCurPageAsCmd.commandkey;" modifiers="control shift" command="cmd_xs_newUserNote"/>
-  <key id="manBookmarkKb" key="&manBookmarksCmd.accesskey;" modifiers="accel" command="cmd_xs_openManager"/>
-  <key id="printKb"       key="&printCmd.accesskey;"        modifiers="accel" command="cmd_print"/>
-  <key id="copyPassageKb" key="&menu.copypassage.sc;"       modifiers="accel" oncommand="copyPassageDialog();"/>
   <key keycode="VK_DOWN"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').focus();"/>
   <key key="B"            modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').focus();"/> <!-- Like Paratext !-->
+  
+  <key id="addBM"         key="&addCurPageAsCmd.commandkey;" modifiers="accel" command="cmd_xs_newBookmark"/>
+  <key id="addBMN"        key="&addCurPageAsCmd.commandkey;" modifiers="control shift" command="cmd_xs_newUserNote"/>
+  <key id="manBookmarkKb" key="&manBookmarksCmd.commandkey;" modifiers="accel" command="cmd_xs_openManager"/>
+  <key id="printPrevKb"   key="&printCmd.commandkey;"         modifiers="accel" oncommand="handlePrintCommand('cmd_printPreview');"/>
+  <key id="printKb"       key="&printCmd.commandkey;"         modifiers="control shift" oncommand="handlePrintCommand('cmd_print')"/>
+  <key id="printPassKb"   key="&printPassageCmd.commandkey;" modifiers="accel" oncommand="handlePrintCommand('cmd_print_passage');"/>
+  <key id="copyPassageKb" key="&menu.copypassage.sc;"        modifiers="accel" oncommand="copyPassageDialog();"/>
   <key id="openSearchDialog" key="&SearchAccKey;" modifiers="accel" oncommand="XulswordController.doCommand('cmd_xs_search', '{search:{searchtext:null}}');"/>
 </keyset>
 
@@ -244,12 +247,12 @@
         <menuitem id="importAudio" label="&menu.importAudio.label;" accesskey="&menu.importAudio.sc;" command="cmd_xs_importAudio" />
         <menuseparator/>
         <menuitem label="&printSetupCmd.label;" accesskey="&printSetupCmd.accesskey;" oncommand="handlePrintCommand('cmd_pageSetup');"/>
-        <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" 
+        <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" key="printPrevKb" 
             oncommand="handlePrintCommand('cmd_printPreview');"/>
         <menuitem label="&printCmd.label;" accesskey="&printCmd.accesskey;" key="printKb" 
             oncommand="handlePrintCommand('cmd_print');"/>
         <menuseparator/>
-        <menuitem label="&print.printpassage;" accesskey="&print.printpassage.sc;"
+        <menuitem label="&print.printpassage;" accesskey="&print.printpassage.sc;" key="printPassKb"
             oncommand="handlePrintCommand('cmd_print_passage');"/>
         <menuseparator/>
         <menuitem id="quit" label="&quitApplicationCmdWin.label;" accesskey="&quitApplicationCmdWin.accesskey;" oncommand="window.close()"/>
@@ -263,7 +266,7 @@
         <menuitem id="menu_copy"/>
         <menuitem id="menu_paste"/>
         <menuseparator/>
-        <menuitem id="edit.search" label="&searchBut.label;" oncommand="XulswordController.doCommand('cmd_xs_search', '{search:{searchtext:null}}');" key="openSearchDialog"/>
+        <menuitem id="edit.search" label="&searchBut.label;" accesskey="&SearchAccKey;" oncommand="XulswordController.doCommand('cmd_xs_search', '{search:{searchtext:null}}');" key="openSearchDialog"/>
         <menuseparator/>
         <menuitem label="&menu.copypassage;" accesskey="&menu.copypassage.sc;" oncommand="copyPassageDialog();" key="copyPassageKb"/>
       </menupopup>

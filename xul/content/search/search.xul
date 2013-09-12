@@ -47,9 +47,12 @@
 <script src="chrome://xulsword/content/search/search.js"/>
 
 <keyset>
-  <key keycode="VK_RETURN"                 oncommand="document.getElementById('searchButton').click()"/>
-  <key keycode="VK_ENTER"                  oncommand="document.getElementById('searchButton').click()"/>
-  <key keycode="VK_ESCAPE"                 oncommand="window.close();"/>
+  <key keycode="VK_RETURN" oncommand="document.getElementById('searchButton').click()"/>
+  <key keycode="VK_ENTER" oncommand="document.getElementById('searchButton').click()"/>
+  <key keycode="VK_ESCAPE" oncommand="window.close();"/>
+  <key id="printPrevKb" key="&printCmd.commandkey;" modifiers="accel" oncommand="handlePrintCommand('cmd_printPreview');"/>
+  <key id="printKb" key="&printCmd.commandkey;" modifiers="control shift" oncommand="handlePrintCommand('cmd_print')"/>
+  <key id="key_close" key="&closeCmd.commandkey;" modifiers="accel" oncommand="window.close();"/>
 </keyset>
 
 <keyset id="editMenuKeys"/>
@@ -64,7 +67,7 @@
     <menu label="&fileMenu.label;" accesskey="&fileMenu.accesskey;">
       <menupopup>
         <menuitem label="&printSetupCmd.label;" accesskey="&printSetupCmd.accesskey;" oncommand="handlePrintCommand('cmd_pageSetup')"/>
-        <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" oncommand="handlePrintCommand('cmd_printPreview')"/>
+        <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" key="printPrevKb" oncommand="handlePrintCommand('cmd_printPreview')"/>
         <menuitem label="&printCmd.label;" accesskey="&printCmd.accesskey;" key="printKb" oncommand="handlePrintCommand('cmd_print')"/>
         <menuseparator/>
         <menuitem label="&closeCmd.label;" key="key_close" accesskey="&closeCmd.accesskey;" oncommand="window.close()"/>

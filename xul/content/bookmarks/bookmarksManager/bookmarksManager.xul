@@ -67,6 +67,9 @@
     <key keycode="VK_ESCAPE" command="cmd_close"/>
     <key id="bm_key_find" key="&edit.find.keybinding;" modifiers="accel" command="cmd_bm_find"/>
     <key id="bm_key_properties" key="&edit.properties.keybinding;" modifiers="accel" command="cmd_bm_properties"/>
+    <key id="bm_key_delete" keycode="VK_DELETE" command="cmd_bm_delete"/>
+    <key id="printPrevKb" key="&printCmd.commandkey;" modifiers="accel" command="cmd_bm_printPreview"/>
+    <key id="printKb" key="&printCmd.commandkey;" modifiers="control shift" command="cmd_bm_print"/>
   </keyset>
   
   <commandset id="editMenuCommands"/>
@@ -135,6 +138,7 @@
                     command="cmd_bm_pageSetup"/>
           <menuitem label="&printPreviewCmd.label;"
                     accesskey="&printPreviewCmd.accesskey;"
+                    key="printPrevKb"
                     command="cmd_bm_printPreview"/>
           <menuitem label="&printCmd.label;"
                     accesskey="&printCmd.accesskey;" key="printKb"
@@ -160,7 +164,7 @@
             key="key_paste" accesskey="&pasteCmd.accesskey;"
             command="cmd_bm_paste"/>
           <menuitem id="menu_bm_delete" label="&deleteCmd.label;"
-            key="key_delete" accesskey="&deleteCmd.accesskey;"
+            key="bm_key_delete" accesskey="&deleteCmd.accesskey;"
             command="cmd_bm_delete"/>
           <menuseparator/>
           <menuitem id="menu_selectAll"/>

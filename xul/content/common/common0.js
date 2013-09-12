@@ -174,7 +174,7 @@ function getElementInfo(elem) {
     var m = title.match(TextClasses[type][i].re);
     if (!m) continue;
     r.i = i;
-    
+//jsdump("i=" + i + "\n" + uneval(m));    
     for (var p in TextClasses[type][i]) {
       if (p == "re") continue;
       if (TextClasses[type][i][p] === null) r[p] = null;
@@ -210,7 +210,7 @@ function getElementInfo(elem) {
         else if (type == "sr") {
 					r[p] = r[p].split(";");
 					// remove useless "Bible:" from refs (like module SME)
-					for (var i=0; i<r[p].length; i++) {r[p][i] = r[p][i].replace(/^\s*Bible\:\s*/i, "");}
+					for (var ii=0; ii<r[p].length; ii++) {r[p][ii] = r[p][ii].replace(/^\s*Bible\:\s*/i, "");}
 				}
         
         else {throw("Unknown type of reflist:" + type);}
@@ -229,7 +229,7 @@ function getElementInfo(elem) {
   }
   if (i == TextClasses[type].length) return null;
 
-//var msg=""; for (var m in r) {msg += m + "=" + r[m] + " ";} jsdump(msg);
+//jsdump(uneval(r));
 
   return r;
 }

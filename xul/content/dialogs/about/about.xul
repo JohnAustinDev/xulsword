@@ -53,7 +53,7 @@
   
   <vbox id="mainbox" flex="1" showingModules="false">
 		
-		<stack>
+		<stack flex="1">
 			
 			<vbox id="layer1" flex="1" width="500" height="375"></vbox>
   
