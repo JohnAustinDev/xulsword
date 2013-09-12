@@ -77,7 +77,7 @@ function addNewModule(e) {
     const kTitle = fixWindowTitle(getDataUI("menu.addNewModule.label"));
     var kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
     kFilePicker.init(window, kTitle, kFilePickerIID.modeOpenMultiple);
-    kFilePicker.appendFilter("XSM, ZIP", "*.xsm; *.zip");
+    kFilePicker.appendFilter("XSM, XSB, ZIP", "*.xsm; *.xsb; *.zip");
     if (kFilePicker.show() != kFilePickerIID.returnCancel) {
       if (!kFilePicker.files.hasMoreElements()) return false;
       files = kFilePicker.files;

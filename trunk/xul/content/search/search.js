@@ -891,13 +891,14 @@ function unloadSearchWindow() {
 
 
 function handlePrintCommand(command) {
+  if (!Search || !Search.result || !Search.result.count) return;
 
-  var result = eval(uneval(Search.result));
-  
-  result.results_per_page = MAX_PRINT_SEARCH_RESULTS;
-  Search.showSearchResults(result, Search.s);
-  var bodyHTML = document.getElementById("search-frame").contentDocument.getElementsByTagName("body")[0].innerHTML; 
-  Search.showSearchResults(Search.result, Search.s); // return to original
+  var result_per_page = Search.result.results_per_page; // save original result_per_page
+  Search.result.results_per_page = MAX_PRINT_SEARCH_RESULTS;
+  Search.showSearchResults(Search.result, Search.s);
+  var bodyHTML = document.getElementById("search-frame").contentDocument.getElementsByTagName("body")[0].innerHTML;
+  Search.result.results_per_page = result_per_page; // return to original
+  Search.showSearchResults(Search.result, Search.s); // redraw results
     
   var target = {
     command:command,

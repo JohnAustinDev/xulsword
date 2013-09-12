@@ -1,4 +1,7 @@
+# Long forms of book names (optional)
 [books.*_long_form]: 
+
+# Variations of book names (optional)
 [books.Ps_variations]: PSM,PSS
 [books.Matt_variations]: Mt,Ma
 [books.Phlm_variations]: PHLM,PHM
@@ -21,6 +24,8 @@
 [books.Mark_variations]: Mrk,Mr,Mk
 [books.John_variations]: Jn,Jo,Jhn
 [books.Ezek_variations]: EZK
+
+# Order of books (required)
 [books.Genesis_index]: 0
 [books.Exodus_index]: 1
 [books.Leviticus_index]: 2
@@ -87,76 +92,84 @@
 [books.Philemon_index]: 56
 [books.Hebrews_index]: 57
 [books.Revelation_index]: 65
+
+# Command Keys (optional)
+[main-window.menu-file.print.ck]: P
+[main-window.menu-file.print_passage.ck]: R
+[main-window.menu-edit.undo.ck]: Z
+[main-window.menu-edit.redo.ck]: Y
+[main-window.menu-edit.cut.ck]: X
+[main-window.menu-edit.copy.ck]: C
+[main-window.menu-edit.paste.ck]: V
+[main-window.menu-edit.copy_passage.ck]: G
+[main-window.menu-bookmarks.organize_bookmarks.ck]: M
+[main-window.menu-bookmarks.new-bookmark.ck]: d
+[bookmark-window.menu-file.close.ck]: W
+[bookmark-window.menu-edit.select_all.ck]: A
+[bookmark-window.find.ck]: f
+[bookmark-window.properties.ck]: i
+
+# Access Keys, also called shortcut keys (optional)
 [main-window.menu-file.ak]: F
 [main-window.menu-file.add_new_module.ak]: A
 [main-window.menu-file.add_new_module.from_file.ak]: f
 [main-window.menu-file.add_new_module.from_internet.ak]: I
-[main-window.menu-file.exit.ak]: x
+[main-window.menu-file.remove_modules.ak]: R
 [main-window.menu-file.export_audio.ak]: E
 [main-window.menu-file.import-audio.ak]: I
 [main-window.menu-file.page-setup.ak]: u
-[main-window.menu-file.print.ak]: P
-[main-window.menu-file.print-preview.ak]: 
-[main-window.menu-file.print_passage.ak]: a
-[main-window.menu-file.remove_modules.ak]: R
+[main-window.menu-file.print-preview.ak]: p
+[main-window.menu-file.print.ak]: n
+[main-window.menu-file.print_passage.ak]: r
+[main-window.menu-file.exit.ak]: x
 [main-window.menu-edit.ak]: E
-[main-window.menu-edit.copy.ak]: c
-[main-window.menu-edit.copy.ck]: C
-[main-window.menu-edit.copy_passage.ak]: G
-[main-window.menu-edit.cut.ak]: t
-[main-window.menu-edit.cut.ck]: X
-[main-window.menu-edit.paste.ak]: p
-[main-window.menu-edit.paste.ck]: V
-[main-window.menu-edit.search.ak]: F
-[main-window.menu-edit.undo.ck]: Z
 [main-window.menu-edit.undo.ak]: u
-[main-window.menu-edit.redo.ck]: Y
 [main-window.menu-edit.redo.ak]: r
+[main-window.menu-edit.cut.ak]: t
+[main-window.menu-edit.copy.ak]: c
+[main-window.menu-edit.paste.ak]: p
+[main-window.menu-edit.search.ak]: S
 [main-window.menu-view.ak]: V
-[main-window.menu-view.bible_tabs.ak]: B
-[main-window.menu-view.book_tabs.ak]: B
-[main-window.menu-view.commentary_tabs.ak]: C
 [main-window.menu-view.cross_references.ak]: C
 [main-window.menu-view.dictionary_links.ak]: D
-[main-window.menu-view.dictionary_tabs.ak]: R
 [main-window.menu-view.footnotes.ak]: F
+[main-window.menu-view.verse_numbers.ak]: V
+[main-window.menu-view.user_notes.ak]: P
 [main-window.menu-view.headings.ak]: H
-[main-window.menu-view.hide_all.ak]: n
 [main-window.menu-view.language_notes.ak]: L
 [main-window.menu-view.red_words_of_christ.ak]: r
+[main-window.menu-view.hide_all.ak]: n
 [main-window.menu-view.show_all.ak]: a
-[main-window.menu-view.show_cross_references.ak]: R
-[main-window.menu-view.show_footnotes.ak]: n
-[main-window.menu-view.show_notes.in_note_box.ak]: b
-[main-window.menu-view.show_notes.in_popup.ak]: p
-[main-window.menu-view.show_user_notes.ak]: e
-[main-window.menu-view.user_notes.ak]: P
-[main-window.menu-view.verse_numbers.ak]: V
+[main-window.menu-view.bible_tabs.ak]: 
+[main-window.menu-view.book_tabs.ak]: 
+[main-window.menu-view.commentary_tabs.ak]: 
+[main-window.menu-view.dictionary_tabs.ak]: 
+[main-window.menu-view.show_cross_references.ak]: 
+[main-window.menu-view.show_footnotes.ak]: 
+[main-window.menu-view.show_user_notes.ak]: 
+[main-window.menu-view.show_notes.in_note_box.ak]: 
+[main-window.menu-view.show_notes.in_popup.ak]: 
+[main-window.menu-options.ak]: O
 [main-window.menu-options.font.ak]: F
 [main-window.menu-options.hebrew.ak]: H
 [main-window.menu-options.hebrew.show_cantillation.ak]: C
 [main-window.menu-options.hebrew.show_vowel_points.ak]: V
 [main-window.menu-options.language.ak]: L
 [main-window.menu-options.language.this_langauge.ak]: E
-[main-window.menu-options.ak]: O
 [main-window.menu-bookmarks.ak]: B
+[main-window.menu-bookmarks.new-bookmark.ak]: B
 [main-window.menu-bookmarks.context-menu.new_folder.ak]: o
 [main-window.menu-bookmarks.context-menu.new_separator.ak]: t
-[main-window.menu-bookmarks.new-bookmark.ak]: B
-[main-window.menu-bookmarks.new-bookmark.ck]: d
-[main-window.menu-bookmarks.organize_bookmarks.ak]: M
 [main-window.menu-windows.ak]: W
 [main-window.menu-help.about.ak]: A
 [main-window.menu-help.ak]: H
-[main-window.context-menu.close_tab.ck]: W
 [main-window.context-menu.close_tab.ak]: C
+[bookmark-window.menu-file.save-as.ak]: S
 [bookmark-window.menu-file.export.ak]: e
 [bookmark-window.menu-file.import.ak]: i
-[bookmark-window.menu-file.save-as.ak]: S
 [bookmark-window.menu-edit.delete.ak]: d
 [bookmark-window.menu-edit.move-bookmark.ak]: M
 [bookmark-window.menu-edit.move-bookmark.new_folder.ak]: o
-[bookmark-window.menu-edit.select_all.ck]: A
 [bookmark-window.menu-edit.select_all.ak]: a
 [bookmark-window.menu-edit.properties.ak]: i
 [bookmark-window.menu-view.show-columns.ak]: S
@@ -164,36 +177,25 @@
 [bookmark-window.menu-view.show-columns.descending.ak]: D
 [bookmark-window.menu-view.show-columns.unsorted.ak]: u
 [bookmark-window.menu-view.toolbar.ak]: t
-[bookmark-window.find.ck]: f
-[bookmark-window.properties.ck]: i
+
+# Search help table notes (optional)
 [search-help-window.ampersand_notes]: 
-[search-help-window.ampersand_term]: &&
 [search-help-window.exclamation_notes]: 
-[search-help-window.exclamation_term]: !
 [search-help-window.parenthesis_notes]: 
+[search-help-window.quotes_notes]: 
+[search-help-window.vertical_bar_notes]: 
+
+# Search help table terms (required)
+[search-help-window.ampersand_term]: &&
+[search-help-window.exclamation_term]: !
 [search-help-window.parenthesis_term]: ()
 [search-help-window.question_mark_term]: ?
-[search-help-window.quotes_notes]: 
 [search-help-window.quotes_term]: " "
 [search-help-window.star_term]: *
 [search-help-window.tilde_term]: ~
-[search-help-window.vertical_bar_notes]: 
 [search-help-window.vertical_bar_term]: ||
-[locale_direction]: ltr
-[configuration.default_modules]: ESV
-[configuration.font]: 
-[configuration.font_size_adjust]: 
-[configuration.line_height]: 
-[numeral-0]: 0
-[numeral-1]: 1
-[numeral-2]: 2
-[numeral-3]: 3
-[numeral-4]: 4
-[numeral-5]: 5
-[numeral-6]: 6
-[numeral-7]: 7
-[numeral-8]: 8
-[numeral-9]: 9
+
+# Actual special search symbols characters (optional- defaults otherwise apply)
 [search-window.search_symbols.SINGLE_CHARACTER_WILD_CARD]: 
 [search-window.search_symbols.MULTIPLE_CHARACTER_WILD_CARD]: 
 [search-window.search_symbols.AND]: 
@@ -204,3 +206,25 @@
 [search-window.search_symbols.GROUP_END]: 
 [search-window.search_symbols.QUOTE_START]: 
 [search-window.search_symbols.QUOTE_END]: 
+
+# Locale direction (required)
+[locale_direction]: ltr
+
+# Locale configuration information (optional)
+[configuration.default_modules]: ESV
+[configuration.font]: 
+[configuration.font_size_adjust]: 
+[configuration.line_height]: 
+
+# Localized numerals (optional- Arabic numerals are default)
+[numeral-0]: 0
+[numeral-1]: 1
+[numeral-2]: 2
+[numeral-3]: 3
+[numeral-4]: 4
+[numeral-5]: 5
+[numeral-6]: 6
+[numeral-7]: 7
+[numeral-8]: 8
+[numeral-9]: 9
+
