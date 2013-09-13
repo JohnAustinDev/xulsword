@@ -20,6 +20,11 @@
  * GLOBAL Bible Location
  ***********************************************************************/ 
 
+/*
+  This object holds and accesses the global Scripture location referenced  
+  by all of xulsword's unpinned windows etc.
+*/
+
 Location = {
   modname:null,
   modvsys:null,
