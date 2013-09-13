@@ -60,8 +60,25 @@ class SWMgrXS : public SWMgr {
     signed char Load();
   
   protected:
+    // load custom modules with better search control
+    SWModule *createModule(const char *name, const char *driver, ConfigEntMap &section);
+    
     bool mgrModeMultiMod; // was private in SWMgr...
     bool augmentHome; // was private in SWMgr...
+};
+
+//SWModuleXS - to allow decoding of search result keys and better search control
+class SWModuleXS {
+  public:
+    ListKey &search(const char *istr, int searchType = 0, int flags = 0,
+			SWKey * scope = 0,
+			bool * justCheckIfSupported = 0,
+			void (*percent) (char, void *) = &SWSearchable::nullPercent,
+			void *percentUserData = 0);
+      
+    signed char createSearchFramework(
+			void (*percent) (char, void *) = &SWSearchable::nullPercent,
+			void *percentUserData = 0);
 };
 
 //StringMgrXS - to over-ride broken toUpperCase
@@ -188,6 +205,184 @@ class xulsword {
 
 };
 
+
+/********************************************************************
+MODULE CONTRUCTOR FLUFF
+*********************************************************************/
+// These are copies of the parent contructor arguments so they can be used
+// in place of the parent but will inherit SWModuleXS's search etc.. These 
+// are used in swmgrxs.cpp when new modules are created.
+class zTextXS : public zText, public SWModuleXS {
+  public:
+    zTextXS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0,
+			int blockType = CHAPTERBLOCKS, SWCompress *icomp = 0,
+			SWDisplay *idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN,
+			SWTextDirection dir = DIRECTION_LTR,
+			SWTextMarkup markup = FMT_UNKNOWN, 
+      const char *ilang = 0,
+			const char *versification = "KJV"
+    ) : zText(ipath, iname, idesc, blockType, icomp, idisp, encoding, dir, markup, ilang) {}
+};
+class zComXS : public zCom, public SWModuleXS {
+  public:
+    zComXS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0,
+			int blockType = CHAPTERBLOCKS, 
+      SWCompress *icomp = 0,
+			SWDisplay *idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN,
+			SWTextDirection dir = DIRECTION_LTR,
+			SWTextMarkup markup = FMT_UNKNOWN, 
+      const char *ilang = 0,
+			const char *versification = "KJV"
+    ) : zCom(ipath, iname, idesc, blockType, icomp, idisp, encoding, dir, markup, ilang, versification) {}
+};
+class RawTextXS : public RawText, public SWModuleXS {
+  public:
+    RawTextXS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0, 
+      SWDisplay * idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN, 
+      SWTextDirection dir = DIRECTION_LTR, 
+      SWTextMarkup markup = FMT_UNKNOWN, 
+      const char* ilang = 0, 
+      const char *versification = "KJV"
+    ) : RawText(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, versification) {}
+};
+class RawText4XS : public RawText4, public SWModuleXS {
+  public:
+    RawText4XS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0, 
+      SWDisplay * idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN, 
+      SWTextDirection dir = DIRECTION_LTR, 
+      SWTextMarkup markup = FMT_UNKNOWN, 
+      const char* ilang = 0, 
+      const char *versification = "KJV"
+    ) : RawText4(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, versification) {}
+};
+class RawComXS : public RawCom, public SWModuleXS {
+  public:
+    RawComXS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0,
+			SWDisplay *idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN,
+			SWTextDirection dir = DIRECTION_LTR, 
+      SWTextMarkup markup = FMT_UNKNOWN,
+			const char *ilang = 0, 
+      const char *versification = "KJV"
+    ) : RawCom(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, versification) {}
+};
+class RawCom4XS : public RawCom4, public SWModuleXS {
+  public:
+    RawCom4XS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0,
+			SWDisplay *idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN,
+			SWTextDirection dir = DIRECTION_LTR, 
+      SWTextMarkup markup = FMT_UNKNOWN,
+			const char *ilang = 0, 
+      const char *versification = "KJV"
+    ) : RawCom4(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, versification) {}
+};
+class RawFilesXS : public RawFiles, public SWModuleXS {
+  public:
+    RawFilesXS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0,
+			SWDisplay *idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN,
+			SWTextDirection dir = DIRECTION_LTR, 
+      SWTextMarkup markup = FMT_UNKNOWN,
+			const char *ilang = 0
+    ) : RawFiles(ipath, iname, idesc, idisp, encoding, dir, markup, ilang) {}
+};
+class HREFComXS : public HREFCom, public SWModuleXS {
+  public:
+    HREFComXS(
+      const char *ipath, 
+      const char *prefix, 
+      const char *iname = 0,
+			const char *idesc = 0, 
+      SWDisplay * idisp = 0
+    ) : HREFCom(ipath, prefix, iname, idesc, idisp) {}
+};
+class RawLDXS : public RawLD, public SWModuleXS {
+  public:
+    RawLDXS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0,
+			SWDisplay * idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN,
+			SWTextDirection dir = DIRECTION_LTR,
+			SWTextMarkup markup = FMT_UNKNOWN, 
+      const char* ilang = 0, 
+      bool caseSensitive = false, 
+      bool strongsPadding = true
+    ) : RawLD(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, caseSensitive, strongsPadding) {}
+};
+class RawLD4XS : public RawLD4, public SWModuleXS {
+  public:
+    RawLD4XS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0,
+			SWDisplay *idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN,
+			SWTextDirection dir = DIRECTION_LTR,
+			SWTextMarkup markup = FMT_UNKNOWN, 
+      const char *ilang = 0, 
+      bool caseSensitive = false, 
+      bool strongsPadding = true
+    ) : RawLD4(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, caseSensitive, strongsPadding) {}
+};
+class zLDXS : public zLD, public SWModuleXS {
+  public:
+    zLDXS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0, 
+      long blockCount = 200, 
+      SWCompress *icomp = 0, 
+      SWDisplay * idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN, 
+      SWTextDirection dir = DIRECTION_LTR, 
+      SWTextMarkup markup = FMT_UNKNOWN, 
+      const char* ilang = 0, 
+      bool caseSensitive = false, 
+      bool strongsPadding = true
+    ) : zLD(ipath, iname, idesc, blockCount, icomp, idisp, encoding, dir, markup, ilang, caseSensitive, strongsPadding) {}
+};
+class RawGenBookXS : public RawGenBook, public SWModuleXS {
+  public:
+    RawGenBookXS(
+      const char *ipath, 
+      const char *iname = 0, 
+      const char *idesc = 0,
+			SWDisplay * idisp = 0, 
+      SWTextEncoding encoding = ENC_UNKNOWN,
+			SWTextDirection dir = DIRECTION_LTR,
+			SWTextMarkup markup = FMT_UNKNOWN, 
+      const char* ilang = 0, 
+      const char *keyType = "TreeKey"
+    ) : RawGenBook(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, keyType) {}
+};
 
 #endif
 
