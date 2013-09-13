@@ -94,11 +94,11 @@ void savePercentComplete(char percent, void *userData) {
 /********************************************************************
 Custom derivative classes
 *********************************************************************/
-#include "swmgrxs.cpp"
-#include "swmodulexs.cpp"
-#include "osisxhtmlxs.cpp"
-#include "gbfxhtmlxs.cpp"
-#include "thmlxhtmlxs.cpp"
+#include "swmgr_xs.cpp"
+#include "swmodule_xs.cpp"
+#include "osisxhtml_xs.cpp"
+#include "gbfxhtml_xs.cpp"
+#include "thmlxhtml_xs.cpp"
 #include "osisdictionary.cpp"
 
 using namespace sword;
