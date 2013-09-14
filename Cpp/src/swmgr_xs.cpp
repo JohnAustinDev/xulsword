@@ -20,108 +20,12 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-
-#include <sys/stat.h>
-#ifndef _MSC_VER
-#include <iostream>
-#endif
-#include <dirent.h>
-
-#include <swmgr.h>
-#include <rawtext.h>
-#include <rawtext4.h>
-#include <filemgr.h>
-#include <rawgenbook.h>
-#include <rawcom.h>
-#include <rawcom4.h>
-#include <hrefcom.h>
-#include <rawld.h>
-#include <rawld4.h>
-#include <utilstr.h>
-#include <gbfplain.h>
-#include <thmlplain.h>
-#include <osisplain.h>
-#include <teiplain.h>
-#include <papyriplain.h>
-#include <gbfstrongs.h>
-#include <gbffootnotes.h>
-#include <gbfheadings.h>
-#include <gbfredletterwords.h>
-#include <gbfmorph.h>
-#include <osisenum.h>
-#include <osisglosses.h>
-#include <osisheadings.h>
-#include <osisfootnotes.h>
-#include <osisstrongs.h>
-#include <osismorph.h>
-#include <osislemma.h>
-#include <osisredletterwords.h>
-#include <osismorphsegmentation.h>
-#include <osisscripref.h>
-#include <osisvariants.h>
-#include <osisxlit.h>
-#include <thmlstrongs.h>
-#include <thmlfootnotes.h>
-#include <thmlheadings.h>
-#include <thmlmorph.h>
-#include <thmlvariants.h>
-#include <thmllemma.h>
-#include <thmlscripref.h>
-#include <cipherfil.h>
-#include <rawfiles.h>
-#include <ztext.h>
-#include <zld.h>
-#include <zcom.h>
 #include <lzsscomprs.h>
-#include <utf8greekaccents.h>
-#include <utf8cantillation.h>
-#include <utf8hebrewpoints.h>
-#include <utf8arabicpoints.h>
-#include <greeklexattribs.h>
-#include <swfiltermgr.h>
-#include <swcipher.h>
-#include <swoptfilter.h>
-#include <rtfhtml.h>
-
-#include <swlog.h>
-
-#include <iterator>
-
 #ifndef EXCLUDEZLIB
 #include "zipcomprs.h"
 #include "bz2comprs.h"
 #include "xzcomprs.h"
 #endif
-
-
-#ifdef _ICU_
-#include <utf8transliterator.h>
-#endif
-
-SWORD_NAMESPACE_START
-
-#ifdef _ICU_
-bool SWMgr::isICU = true;
-#else
-bool SWMgr::isICU = false;
-#endif
-
-
-#ifdef GLOBCONFPATH
-const char *SWMgr::globalConfPath = GLOBCONFPATH;
-#else
-const char *SWMgr::globalConfPath = "/etc/sword.conf:/usr/local/etc/sword.conf";
-#endif
-
-const char *SWMgr::MODTYPE_BIBLES = "Biblical Texts";
-const char *SWMgr::MODTYPE_COMMENTARIES = "Commentaries";
-const char *SWMgr::MODTYPE_LEXDICTS = "Lexicons / Dictionaries";
-const char *SWMgr::MODTYPE_GENBOOKS = "Generic Books";
-const char *SWMgr::MODTYPE_DAILYDEVOS = "Daily Devotional";
-
 
 /********************************************************************
 SWMgrXS - to over-ride modules and how they are loaded
@@ -223,7 +127,7 @@ signed char SWMgrXS::Load() {
 	return ret;
 }
 
-
+#ifndef WIN_32
 SWModule *SWMgrXS::createModule(const char *name, const char *driver, ConfigEntMap &section)
 {
 	SWBuf description, datapath, misc1;
@@ -303,7 +207,7 @@ SWModule *SWMgrXS::createModule(const char *name, const char *driver, ConfigEntM
 			blockType = CHAPTERBLOCKS;
 		else if (!stricmp(misc1.c_str(), "BOOK"))
 			blockType = BOOKBLOCKS;
-		
+
 		misc1 = ((entry = section.find("CompressType")) != section.end()) ? (*entry).second : (SWBuf)"LZSS";
 #ifndef EXCLUDEZLIB
 		if (!stricmp(misc1.c_str(), "ZIP"))
@@ -427,7 +331,8 @@ SWModule *SWMgrXS::createModule(const char *name, const char *driver, ConfigEntM
 
 		newmod->setConfig(&section);
 	}
-	
+
 	return newmod;
 }
+#endif
 

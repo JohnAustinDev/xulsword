@@ -94,12 +94,124 @@ void savePercentComplete(char percent, void *userData) {
 /********************************************************************
 Custom derivative classes
 *********************************************************************/
+
 #include "swmgr_xs.cpp"
-#include "swmodule_xs.cpp"
 #include "osisxhtml_xs.cpp"
 #include "gbfxhtml_xs.cpp"
 #include "thmlxhtml_xs.cpp"
 #include "osisdictionary.cpp"
+
+#ifndef WIN_32
+#ifdef USECXX11REGEX
+#include <regex>
+#ifndef REG_ICASE
+#define REG_ICASE std::regex::icase
+#endif
+#else
+#include <regex.h>
+#endif
+
+#define SWMODULE_SEARCH(zTextXS) \
+	ListKey &zTextXS::search(\
+		const char *istr, \
+		int searchType, \
+		int flags, \
+		SWKey *scope, \
+		bool *justCheckIfSupported, \
+		void (*percent)(char, void *), \
+		void *percentUserData\
+	) {
+#define SWMODULE_CREATESF(zTextXS) \
+	signed char zTextXS::createSearchFramework(\
+		void (*percent)(char, void *), \
+		void *percentUserData\
+	) {
+#define SWMODULE_STOP }
+
+SWMODULE_SEARCH(zTextXS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(zTextXS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(zComXS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(zComXS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(RawTextXS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(RawTextXS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(RawText4XS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(RawText4XS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(RawComXS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(RawComXS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(RawCom4XS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(RawCom4XS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(RawFilesXS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(RawFilesXS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(HREFComXS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(HREFComXS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(RawLDXS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(RawLDXS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(RawLD4XS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(RawLD4XS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(zLDXS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(zLDXS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+
+SWMODULE_SEARCH(RawGenBookXS)
+#include "swmodule_search.cpp"
+SWMODULE_STOP
+SWMODULE_CREATESF(RawGenBookXS)
+#include "swmodule_createSearchFramework.cpp"
+SWMODULE_STOP
+#endif
 
 using namespace sword;
 

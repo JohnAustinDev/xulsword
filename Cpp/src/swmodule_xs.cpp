@@ -68,11 +68,7 @@ using namespace lucene::search;
 
 using std::vector;
 
-//SWORD_NAMESPACE_START
-
-SWModule::StdOutDisplay SWModule::rawdisp;
-
-typedef std::list<SWBuf> StringList;
+SWORD_NAMESPACE_START
 
 /******************************************************************************
  * SWModule::Search 	- Searches a module for a string
@@ -92,7 +88,7 @@ typedef std::list<SWBuf> StringList;
  * RET: ListKey set to verses that contain istr
  */
 
-ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *scope, bool *justCheckIfSupported, void (*percent)(char, void *), void *percentUserData) {
+ListKey &SWModuleXS::search(const char *istr, int searchType, int flags, SWKey *scope, bool *justCheckIfSupported, void (*percent)(char, void *), void *percentUserData) {
 
 	listKey.clear();
 	SWBuf term = istr;
@@ -548,7 +544,7 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 }
 
 
-signed char SWModule::createSearchFramework(void (*percent)(char, void *), void *percentUserData) {
+signed char SWModuleXS::createSearchFramework(void (*percent)(char, void *), void *percentUserData) {
 
 #ifdef USELUCENE
 	SWBuf target = getConfigEntry("AbsoluteDataPath");
