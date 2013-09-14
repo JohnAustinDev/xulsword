@@ -58,27 +58,16 @@ class SWMgrXS : public SWMgr {
     
     // needed to enable support sword-1.6.1 Synodal modules and to add OSISDictionary filter option to all modules
     signed char Load();
-  
+
   protected:
+  
+#ifndef WIN_32
     // load custom modules with better search control
     SWModule *createModule(const char *name, const char *driver, ConfigEntMap &section);
-    
+#endif
+
     bool mgrModeMultiMod; // was private in SWMgr...
     bool augmentHome; // was private in SWMgr...
-};
-
-//SWModuleXS - to allow decoding of search result keys and better search control
-class SWModuleXS {
-  public:
-    ListKey &search(const char *istr, int searchType = 0, int flags = 0,
-			SWKey * scope = 0,
-			bool * justCheckIfSupported = 0,
-			void (*percent) (char, void *) = &SWSearchable::nullPercent,
-			void *percentUserData = 0);
-      
-    signed char createSearchFramework(
-			void (*percent) (char, void *) = &SWSearchable::nullPercent,
-			void *percentUserData = 0);
 };
 
 //StringMgrXS - to over-ride broken toUpperCase
@@ -207,12 +196,29 @@ class xulsword {
 
 
 /********************************************************************
-MODULE CONTRUCTOR FLUFF
+MODULE VIRTUAL REDEFINITION FLUFF
 *********************************************************************/
+
+#ifndef WIN_32
+#define SWMODULE_DECLS \
+	ListKey &search( \
+		const char *istr, \
+		int searchType = 0, \
+		int flags = 0, \
+		SWKey * scope = 0, \
+		bool * justCheckIfSupported = 0, \
+		void (*percent) (char, void *) = &SWSearchable::nullPercent, \
+		void *percentUserData = 0 \
+	); \
+  signed char createSearchFramework( \
+		void (*percent) (char, void *) = &SWSearchable::nullPercent, \
+		void *percentUserData = 0 \
+	);
+
 // These are copies of the parent contructor arguments so they can be used
 // in place of the parent but will inherit SWModuleXS's search etc.. These 
 // are used in swmgrxs.cpp when new modules are created.
-class zTextXS : public zText, public SWModuleXS {
+class zTextXS : public zText {
   public:
     zTextXS(
       const char *ipath, 
@@ -226,8 +232,11 @@ class zTextXS : public zText, public SWModuleXS {
       const char *ilang = 0,
 			const char *versification = "KJV"
     ) : zText(ipath, iname, idesc, blockType, icomp, idisp, encoding, dir, markup, ilang) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class zComXS : public zCom, public SWModuleXS {
+
+class zComXS : public zCom {
   public:
     zComXS(
       const char *ipath, 
@@ -242,8 +251,10 @@ class zComXS : public zCom, public SWModuleXS {
       const char *ilang = 0,
 			const char *versification = "KJV"
     ) : zCom(ipath, iname, idesc, blockType, icomp, idisp, encoding, dir, markup, ilang, versification) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class RawTextXS : public RawText, public SWModuleXS {
+class RawTextXS : public RawText {
   public:
     RawTextXS(
       const char *ipath, 
@@ -256,8 +267,10 @@ class RawTextXS : public RawText, public SWModuleXS {
       const char* ilang = 0, 
       const char *versification = "KJV"
     ) : RawText(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, versification) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class RawText4XS : public RawText4, public SWModuleXS {
+class RawText4XS : public RawText4 {
   public:
     RawText4XS(
       const char *ipath, 
@@ -270,8 +283,10 @@ class RawText4XS : public RawText4, public SWModuleXS {
       const char* ilang = 0, 
       const char *versification = "KJV"
     ) : RawText4(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, versification) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class RawComXS : public RawCom, public SWModuleXS {
+class RawComXS : public RawCom {
   public:
     RawComXS(
       const char *ipath, 
@@ -284,8 +299,10 @@ class RawComXS : public RawCom, public SWModuleXS {
 			const char *ilang = 0, 
       const char *versification = "KJV"
     ) : RawCom(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, versification) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class RawCom4XS : public RawCom4, public SWModuleXS {
+class RawCom4XS : public RawCom4 {
   public:
     RawCom4XS(
       const char *ipath, 
@@ -298,8 +315,10 @@ class RawCom4XS : public RawCom4, public SWModuleXS {
 			const char *ilang = 0, 
       const char *versification = "KJV"
     ) : RawCom4(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, versification) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class RawFilesXS : public RawFiles, public SWModuleXS {
+class RawFilesXS : public RawFiles {
   public:
     RawFilesXS(
       const char *ipath, 
@@ -311,8 +330,10 @@ class RawFilesXS : public RawFiles, public SWModuleXS {
       SWTextMarkup markup = FMT_UNKNOWN,
 			const char *ilang = 0
     ) : RawFiles(ipath, iname, idesc, idisp, encoding, dir, markup, ilang) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class HREFComXS : public HREFCom, public SWModuleXS {
+class HREFComXS : public HREFCom {
   public:
     HREFComXS(
       const char *ipath, 
@@ -321,8 +342,10 @@ class HREFComXS : public HREFCom, public SWModuleXS {
 			const char *idesc = 0, 
       SWDisplay * idisp = 0
     ) : HREFCom(ipath, prefix, iname, idesc, idisp) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class RawLDXS : public RawLD, public SWModuleXS {
+class RawLDXS : public RawLD {
   public:
     RawLDXS(
       const char *ipath, 
@@ -336,8 +359,10 @@ class RawLDXS : public RawLD, public SWModuleXS {
       bool caseSensitive = false, 
       bool strongsPadding = true
     ) : RawLD(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, caseSensitive, strongsPadding) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class RawLD4XS : public RawLD4, public SWModuleXS {
+class RawLD4XS : public RawLD4 {
   public:
     RawLD4XS(
       const char *ipath, 
@@ -351,8 +376,10 @@ class RawLD4XS : public RawLD4, public SWModuleXS {
       bool caseSensitive = false, 
       bool strongsPadding = true
     ) : RawLD4(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, caseSensitive, strongsPadding) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class zLDXS : public zLD, public SWModuleXS {
+class zLDXS : public zLD {
   public:
     zLDXS(
       const char *ipath, 
@@ -368,8 +395,10 @@ class zLDXS : public zLD, public SWModuleXS {
       bool caseSensitive = false, 
       bool strongsPadding = true
     ) : zLD(ipath, iname, idesc, blockCount, icomp, idisp, encoding, dir, markup, ilang, caseSensitive, strongsPadding) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
-class RawGenBookXS : public RawGenBook, public SWModuleXS {
+class RawGenBookXS : public RawGenBook {
   public:
     RawGenBookXS(
       const char *ipath, 
@@ -382,7 +411,10 @@ class RawGenBookXS : public RawGenBook, public SWModuleXS {
       const char* ilang = 0, 
       const char *keyType = "TreeKey"
     ) : RawGenBook(ipath, iname, idesc, idisp, encoding, dir, markup, ilang, keyType) {}
+    SWMODULE_DECLS
+		SWMODULE_OPERATORS
 };
+#endif
 
 #endif
 
