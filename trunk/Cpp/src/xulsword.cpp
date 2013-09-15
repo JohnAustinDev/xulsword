@@ -101,118 +101,6 @@ Custom derivative classes
 #include "thmlxhtml_xs.cpp"
 #include "osisdictionary.cpp"
 
-#ifndef WIN_32
-#ifdef USECXX11REGEX
-#include <regex>
-#ifndef REG_ICASE
-#define REG_ICASE std::regex::icase
-#endif
-#else
-#include <regex.h>
-#endif
-
-#define SWMODULE_SEARCH(zTextXS) \
-	ListKey &zTextXS::search(\
-		const char *istr, \
-		int searchType, \
-		int flags, \
-		SWKey *scope, \
-		bool *justCheckIfSupported, \
-		void (*percent)(char, void *), \
-		void *percentUserData\
-	) {
-#define SWMODULE_CREATESF(zTextXS) \
-	signed char zTextXS::createSearchFramework(\
-		void (*percent)(char, void *), \
-		void *percentUserData\
-	) {
-#define SWMODULE_STOP }
-
-SWMODULE_SEARCH(zTextXS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(zTextXS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(zComXS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(zComXS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(RawTextXS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(RawTextXS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(RawText4XS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(RawText4XS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(RawComXS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(RawComXS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(RawCom4XS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(RawCom4XS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(RawFilesXS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(RawFilesXS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(HREFComXS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(HREFComXS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(RawLDXS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(RawLDXS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(RawLD4XS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(RawLD4XS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(zLDXS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(zLDXS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-
-SWMODULE_SEARCH(RawGenBookXS)
-#include "swmodule_search.cpp"
-SWMODULE_STOP
-SWMODULE_CREATESF(RawGenBookXS)
-#include "swmodule_createSearchFramework.cpp"
-SWMODULE_STOP
-#endif
-
 using namespace sword;
 
 
@@ -557,7 +445,6 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   ToUpperCase = toUpperCase;
   ThrowJS = throwJS;
   ReportProgress = reportProgress;
-SWLog::getSystemLog()->logDebug("ReportProgress=%x", ReportProgress);
 
   MarkupFilterMgrXS *muf = new MarkupFilterMgrXS();
       
@@ -1475,6 +1362,13 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
 		// SIMPLE SEARCH
 		else {*workKeys = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);}
 	 }
+	 
+	// For Windows, sorting is done in swmodule.cpp and does not need to be done again here.
+	// This ListKey sort implementation is unbearably slow when there are many results.
+	#ifndef WIN32
+		// 2048 is Sort By Relevance flag
+		if ((flags & 2048) != 2048) workKeys->sort();
+	#endif
 
   // If not a new search append new results to existing key
   if (!newsearch) {
@@ -1634,9 +1528,6 @@ void xulsword::searchIndexBuild(const char *mod) {
   SWModule * module = MyManager->getModule(mod);
   if (module && ReportProgress) {
     if (module->hasSearchFramework()) {
-SWLog::getSystemLog()->logDebug("&savePercentComplete=%x", &savePercentComplete);
-SWLog::getSystemLog()->logDebug("ReportProgress=%x", ReportProgress);
-
       module->createSearchFramework(&savePercentComplete, (void *)ReportProgress);
     }
   }
