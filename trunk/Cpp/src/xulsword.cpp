@@ -435,6 +435,10 @@ PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
 xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localedir) {
+#ifdef WIN32
+	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG); // turn off MSVC debug mode's horrid assertion prompts
+#endif
+
   if (!MySWLogXS) {
     MySWLogXS = new SWLogXS();
     SWLog::setSystemLog(MySWLogXS);
