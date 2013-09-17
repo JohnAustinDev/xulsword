@@ -123,7 +123,6 @@ Set cFiles1=^
  "%sword%\src\modules\filters\swoptfilter.cpp"^
  "%sword%\src\mgr\swsearchable.cpp"^
  "%sword%\src\modules\texts\swtext.cpp"^
- "%sword%\src\utilfuns\swunicod.cpp"^
  "%sword%\src\utilfuns\swversion.cpp"^
  "%sword%\src\modules\filters\teihtmlhref.cpp"^
  "%sword%\src\modules\filters\teiplain.cpp"^
@@ -289,7 +288,6 @@ Set lFiles2=^
  ".\%objDIR%\swoptfilter.obj"^
  ".\%objDIR%\swsearchable.obj"^
  ".\%objDIR%\swtext.obj"^
- ".\%objDIR%\swunicod.obj"^
  ".\%objDIR%\swversion.obj"^
  ".\%objDIR%\teihtmlhref.obj"^
  ".\%objDIR%\teiplain.obj"^

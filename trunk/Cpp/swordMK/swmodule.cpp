@@ -475,10 +475,11 @@ ListKey &SWModule::search(const char *istr, int searchType, int flags, SWKey *sc
 			standard::StandardAnalyzer analyzer(stopWords);
 			//q = QueryParser::parse((wchar_t *)utf8ToWChar(istr).getRawData(), _T("content"), &analyzer);
 			
-			// SWORD's utf8ToWChar() relies on getUniCharFromUTF8() which assumes that 
-			// wchar_t is a 32 bit UTF-32 character (like Linux). But Window's wchar_t is 
-			// instead a 16 bit UTF-16LE character (when compiled with _UNICODE). So 
-			// CLucene's lucene_utf8towcs() is used instead because it works on all platforms.
+			// SWORD's utf8ToWChar() and other utilstr.cpp implementations depend on the
+			// fact that wchar_t chars are fixed width (UTF32 encoded). Unfortunately,
+			// MS-Window's wchar_t is UTF16LE (when the _UNICODE compiler flag is set
+			// as it should be). UTF16 chars are variable width and so the utilstr.cpp
+			// approaches cannot be used. So CLucene's lucene_utf8towcs() is used instead.
 
 			wchar_t wbuff[5000];
 			lucene_utf8towcs(wbuff, istr, 5000);
