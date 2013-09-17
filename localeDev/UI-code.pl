@@ -53,6 +53,13 @@ if (-e $LOCALECODE) {remove_tree($LOCALECODE);}
 # read UI file(s).
 &read_UI_Files($LOCALE, \%UIDescValue);
 
+# overwrite stock en-US with supplemental UI file (having perhaps: "Produced By")
+$supEN = "$MKSDEV/en-US/UI-en-US.txt";
+if ($LOCALE eq "en-US" && -e $supEN) {
+	&Log("INFO: Copying supplemental en-US locale, $supEN\n");
+	&read_UI_File($supEN, \%UIDescValue);
+}
+
 # read the MAP contents into memory
 &readMAP($MAPFILE, \%FileEntryDesc, \%MayBeMissing, \%MayBeEmpty, \%MapLine);
 
@@ -99,4 +106,9 @@ my $localeFiles = "$LOCALEDIR/locale-files";
 if (-e $localeFiles || -d $localeFiles) {
   &Log("INFO: Copying locale-files of \"$LOCALE\", $localeFiles\n");
   &copy_dir("$localeFiles", "$LOCALECODE/xulsword", "", "\.svn");
+}
+$supEN = "$MKSDEV/en-US/locale-files";
+if ($LOCALE eq "en-US" && -e $supEN) {
+	&Log("INFO: Copying supplemental en-US locale-files, $supEN\n");
+  &copy_dir("$supEN", "$LOCALECODE/xulsword", "", "\.svn");
 }

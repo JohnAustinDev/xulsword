@@ -1,4 +1,4 @@
-# Locale=en-US, Version=3.5, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_shortCut_keys=false
+# Locale=en-US, Version=3.6, Alternate_locale=en-US, Firefox_locale=en-US, Ignore_shortCut_keys=false
 #
 # This page holds the words and phrases in xulsword's user interface. 
 # Only the word or phrase after the semicolon on each line needs to be 
