@@ -119,6 +119,10 @@
 }
 
 /* Script box styles */
+h1, h2, h3 {
+	/* all titles are same size titles */
+	font-size:1em !important;
+}
 .head1 {
   font-size:1.6em;
   color:rgb(110,85,110);

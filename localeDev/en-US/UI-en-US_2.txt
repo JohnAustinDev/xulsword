@@ -1,7 +1,78 @@
-# Long forms of book names (optional)
+# All entries in this file are optional, and have default values.
+# Each line may be left blank or else entirely removed.
+
+# Index number of book order, starting with 0 (default is KJV index number)
+[books.Genesis_index]: 
+[books.Exodus_index]: 
+[books.Leviticus_index]: 
+[books.Numbers_index]: 
+[books.Deuteronomy_index]: 
+[books.Joshua_index]: 
+[books.Judges_index]: 
+[books.Ruth_index]: 
+[books.1-Samuel_index]: 
+[books.2-Samuel_index]: 
+[books.1-Kings_index]: 
+[books.2-Kings_index]: 
+[books.1-Chronicles_index]: 
+[books.2-Chronicles_index]: 
+[books.Ezra_index]: 
+[books.Nehemiah_index]: 
+[books.Esther_index]: 
+[books.Job_index]: 
+[books.Psalms_index]: 
+[books.Proverbs_index]: 
+[books.Ecclesiastes_index]: 
+[books.Song-of-Songs_index]: 
+[books.Isaiah_index]: 
+[books.Jeremiah_index]: 
+[books.Lamentations_index]: 
+[books.Ezekiel_index]: 
+[books.Daniel_index]: 
+[books.Hosea_index]: 
+[books.Joel_index]: 
+[books.Amos_index]: 
+[books.Obadiah_index]: 
+[books.Jonah_index]: 
+[books.Micah_index]: 
+[books.Nahum_index]: 
+[books.Habakkuk_index]: 
+[books.Zephaniah_index]: 
+[books.Haggai_index]: 
+[books.Zechariah_index]: 
+[books.Malachi_index]: 
+[books.Matthew_index]: 
+[books.Mark_index]: 
+[books.Luke_index]: 
+[books.John_index]: 
+[books.Acts_index]: 
+[books.James_index]: 
+[books.1-Peter_index]: 
+[books.2-Peter_index]: 
+[books.1-John_index]: 
+[books.2-John_index]: 
+[books.3-John_index]: 
+[books.Jude_index]: 
+[books.Romans_index]: 
+[books.1st-Corinthians_index]: 
+[books.2nd-Corinthians_index]: 
+[books.Galatians_index]: 
+[books.Ephesians_index]: 
+[books.Philippians_index]: 
+[books.Colossians_index]: 
+[books.1st-Thessalonians_index]: 
+[books.2nd-Thessalonians_index]: 
+[books.1-Timothy_index]: 
+[books.2-Timothy_index]: 
+[books.Titus_index]: 
+[books.Philemon_index]: 
+[books.Hebrews_index]: 
+[books.Revelation_index]: 
+
+# Long forms of book names
 [books.*_long_form]: 
 
-# Variations of book names (optional)
+# Variations of book names
 [books.Ps_variations]: PSM,PSS
 [books.Matt_variations]: Mt,Ma
 [books.Phlm_variations]: PHLM,PHM
@@ -25,75 +96,7 @@
 [books.John_variations]: Jn,Jo,Jhn
 [books.Ezek_variations]: EZK
 
-# Order of books (required)
-[books.Genesis_index]: 0
-[books.Exodus_index]: 1
-[books.Leviticus_index]: 2
-[books.Numbers_index]: 3
-[books.Deuteronomy_index]: 4
-[books.Joshua_index]: 5
-[books.Judges_index]: 6
-[books.Ruth_index]: 7
-[books.1-Samuel_index]: 8
-[books.2-Samuel_index]: 9
-[books.1-Kings_index]: 10
-[books.2-Kings_index]: 11
-[books.1-Chronicles_index]: 12
-[books.2-Chronicles_index]: 13
-[books.Ezra_index]: 14
-[books.Nehemiah_index]: 15
-[books.Esther_index]: 16
-[books.Job_index]: 17
-[books.Psalms_index]: 18
-[books.Proverbs_index]: 19
-[books.Ecclesiastes_index]: 20
-[books.Song-of-Songs_index]: 21
-[books.Isaiah_index]: 22
-[books.Jeremiah_index]: 23
-[books.Lamentations_index]: 24
-[books.Ezekiel_index]: 25
-[books.Daniel_index]: 26
-[books.Hosea_index]: 27
-[books.Joel_index]: 28
-[books.Amos_index]: 29
-[books.Obadiah_index]: 30
-[books.Jonah_index]: 31
-[books.Micah_index]: 32
-[books.Nahum_index]: 33
-[books.Habakkuk_index]: 34
-[books.Zephaniah_index]: 35
-[books.Haggai_index]: 36
-[books.Zechariah_index]: 37
-[books.Malachi_index]: 38
-[books.Matthew_index]: 39
-[books.Mark_index]: 40
-[books.Luke_index]: 41
-[books.John_index]: 42
-[books.Acts_index]: 43
-[books.James_index]: 58
-[books.1-Peter_index]: 59
-[books.2-Peter_index]: 60
-[books.1-John_index]: 61
-[books.2-John_index]: 62
-[books.3-John_index]: 63
-[books.Jude_index]: 64
-[books.Romans_index]: 44
-[books.1st-Corinthians_index]: 45
-[books.2nd-Corinthians_index]: 46
-[books.Galatians_index]: 47
-[books.Ephesians_index]: 48
-[books.Philippians_index]: 49
-[books.Colossians_index]: 50
-[books.1st-Thessalonians_index]: 51
-[books.2nd-Thessalonians_index]: 52
-[books.1-Timothy_index]: 53
-[books.2-Timothy_index]: 54
-[books.Titus_index]: 55
-[books.Philemon_index]: 56
-[books.Hebrews_index]: 57
-[books.Revelation_index]: 65
-
-# Command Keys (optional)
+# Command Keys 
 [main-window.menu-file.print.ck]: P
 [main-window.menu-file.print_passage.ck]: R
 [main-window.menu-edit.undo.ck]: Z
@@ -102,14 +105,14 @@
 [main-window.menu-edit.copy.ck]: C
 [main-window.menu-edit.paste.ck]: V
 [main-window.menu-edit.copy_passage.ck]: G
+[main-window.menu-edit.search.ck]: F
 [main-window.menu-bookmarks.organize_bookmarks.ck]: M
-[main-window.menu-bookmarks.new-bookmark.ck]: d
+[main-window.menu-bookmarks.new-bookmark.ck]: D
 [bookmark-window.menu-file.close.ck]: W
 [bookmark-window.menu-edit.select_all.ck]: A
-[bookmark-window.find.ck]: f
-[bookmark-window.properties.ck]: i
+[bookmark-window.properties.ck]: I
 
-# Access Keys, also called shortcut keys (optional)
+# Access Keys, also called shortcut keys 
 [main-window.menu-file.ak]: F
 [main-window.menu-file.add_new_module.ak]: A
 [main-window.menu-file.add_new_module.from_file.ak]: f
@@ -129,6 +132,7 @@
 [main-window.menu-edit.copy.ak]: c
 [main-window.menu-edit.paste.ak]: p
 [main-window.menu-edit.search.ak]: S
+[main-window.menu-edit.copy_passage.ak]: g
 [main-window.menu-view.ak]: V
 [main-window.menu-view.cross_references.ak]: C
 [main-window.menu-view.dictionary_links.ak]: D
@@ -155,7 +159,7 @@
 [main-window.menu-options.hebrew.show_cantillation.ak]: C
 [main-window.menu-options.hebrew.show_vowel_points.ak]: V
 [main-window.menu-options.language.ak]: L
-[main-window.menu-options.language.this_langauge.ak]: E
+[main-window.menu-options.language.this_langauge.ak]: 
 [main-window.menu-bookmarks.ak]: B
 [main-window.menu-bookmarks.new-bookmark.ak]: B
 [main-window.menu-bookmarks.context-menu.new_folder.ak]: o
@@ -178,24 +182,13 @@
 [bookmark-window.menu-view.show-columns.unsorted.ak]: u
 [bookmark-window.menu-view.toolbar.ak]: t
 
-# Search help table notes (optional)
-[search-help-window.ampersand_notes]: 
-[search-help-window.exclamation_notes]: 
-[search-help-window.parenthesis_notes]: 
-[search-help-window.quotes_notes]: 
-[search-help-window.vertical_bar_notes]: 
+# Locale configuration information 
+[configuration.default_modules]: ESV,KJV
+[configuration.font]: 
+[configuration.font_size_adjust]: 
+[configuration.line_height]: 
 
-# Search help table terms (required)
-[search-help-window.ampersand_term]: &&
-[search-help-window.exclamation_term]: !
-[search-help-window.parenthesis_term]: ()
-[search-help-window.question_mark_term]: ?
-[search-help-window.quotes_term]: " "
-[search-help-window.star_term]: *
-[search-help-window.tilde_term]: ~
-[search-help-window.vertical_bar_term]: ||
-
-# Actual special search symbols characters (optional- defaults otherwise apply)
+# Special search symbols characters 
 [search-window.search_symbols.SINGLE_CHARACTER_WILD_CARD]: 
 [search-window.search_symbols.MULTIPLE_CHARACTER_WILD_CARD]: 
 [search-window.search_symbols.AND]: 
@@ -207,24 +200,22 @@
 [search-window.search_symbols.QUOTE_START]: 
 [search-window.search_symbols.QUOTE_END]: 
 
-# Locale direction (required)
-[locale_direction]: ltr
+# Search help table notes 
+[search-help-window.ampersand_notes]: 
+[search-help-window.exclamation_notes]: 
+[search-help-window.parenthesis_notes]: 
+[search-help-window.quotes_notes]: 
+[search-help-window.vertical_bar_notes]: 
 
-# Locale configuration information (optional)
-[configuration.default_modules]: ESV
-[configuration.font]: 
-[configuration.font_size_adjust]: 
-[configuration.line_height]: 
-
-# Localized numerals (optional- Arabic numerals are default)
-[numeral-0]: 0
-[numeral-1]: 1
-[numeral-2]: 2
-[numeral-3]: 3
-[numeral-4]: 4
-[numeral-5]: 5
-[numeral-6]: 6
-[numeral-7]: 7
-[numeral-8]: 8
-[numeral-9]: 9
+# Localized numerals 
+[numeral-0]: 
+[numeral-1]: 
+[numeral-2]: 
+[numeral-3]: 
+[numeral-4]: 
+[numeral-5]: 
+[numeral-6]: 
+[numeral-7]: 
+[numeral-8]: 
+[numeral-9]: 
 

@@ -168,7 +168,7 @@
   <key id="printKb"       key="&printCmd.commandkey;"         modifiers="control shift" oncommand="handlePrintCommand('cmd_print')"/>
   <key id="printPassKb"   key="&printPassageCmd.commandkey;" modifiers="accel" oncommand="handlePrintCommand('cmd_print_passage');"/>
   <key id="copyPassageKb" key="&menu.copypassage.sc;"        modifiers="accel" oncommand="copyPassageDialog();"/>
-  <key id="openSearchDialog" key="&SearchAccKey;" modifiers="accel" oncommand="XulswordController.doCommand('cmd_xs_search', '{search:{searchtext:null}}');"/>
+  <key id="openSearchDialog" key="&SearchCommandKey;" modifiers="accel" oncommand="XulswordController.doCommand('cmd_xs_search', '{search:{searchtext:null}}');"/>
 </keyset>
 
 <keyset id="editMenuKeys"/>
@@ -268,7 +268,7 @@
         <menuseparator/>
         <menuitem id="edit.search" label="&searchBut.label;" accesskey="&SearchAccKey;" oncommand="XulswordController.doCommand('cmd_xs_search', '{search:{searchtext:null}}');" key="openSearchDialog"/>
         <menuseparator/>
-        <menuitem label="&menu.copypassage;" accesskey="&menu.copypassage.sc;" oncommand="copyPassageDialog();" key="copyPassageKb"/>
+        <menuitem label="&menu.copypassage;" accesskey="&menu.copypassage.ak;" oncommand="copyPassageDialog();" key="copyPassageKb"/>
       </menupopup>
     </menu>
     <menu id="view-menu" label="&viewMenu.label;" accesskey="&viewMenu.accesskey;">

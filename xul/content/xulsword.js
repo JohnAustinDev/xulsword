@@ -1331,6 +1331,8 @@ function changeLocaleTo(newLocale) {
   
   setGlobalDirectionPrefs();
   
+  prefs.clearUserPref("addRepositoryModuleLang");
+  
   restartApplication();
 }
 

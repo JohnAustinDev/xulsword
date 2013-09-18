@@ -22,37 +22,42 @@
 // book list and information in the future.
 
 function getBibleBooks() {
-  var b = getCurrentLocaleBundle("common/books.properties");
-  
-  var book = [];
 
+	// default book order is KJV
   var allBooks = ["Gen", "Exod", "Lev", "Num", "Deut", "Josh", "Judg", 
       "Ruth", "1Sam", "2Sam", "1Kgs", "2Kgs", "1Chr", "2Chr", "Ezra", 
       "Neh", "Esth", "Job", "Ps", "Prov", "Eccl", "Song", "Isa", "Jer", 
       "Lam", "Ezek", "Dan", "Hos", "Joel", "Amos", "Obad", "Jonah", "Mic", 
       "Nah", "Hab", "Zeph", "Hag", "Zech", "Mal", "Matt", "Mark", "Luke", 
-      "John", "Acts", "Jas", "1Pet", "2Pet", "1John", "2John", "3John", 
-      "Jude", "Rom", "1Cor", "2Cor", "Gal", "Eph", "Phil", "Col", "1Thess", 
-      "2Thess", "1Tim", "2Tim", "Titus", "Phlm", "Heb", "Rev"];
-  
+      "John", "Acts", "Rom", "1Cor", "2Cor", "Gal", "Eph", "Phil", "Col", 
+      "1Thess", "2Thess", "1Tim", "2Tim", "Titus", "Phlm", "Heb", "Jas", 
+      "1Pet", "2Pet", "1John", "2John", "3John", "Jude", "Rev"];
+
+  var book = [];
   for (var i=0; i < allBooks.length; i++) {
-    book[i] = new Object();
-    book[i].sName  = "";
-    book[i].bName  = "";
-    book[i].bNameL = "";
+		book.push( { sName:"", bName:"", bNameL:"" } );
   }
 
+	var b = getCurrentLocaleBundle("common/books.properties");
   for (i=0; i < book.length; i++) {
     // implement book order from xulsword locale
-    var x = Number(b.GetStringFromName(allBooks[i] + "i"));
-    
+    try {
+			var x = b.GetStringFromName(allBooks[i] + "i");
+			if ((/^\s*$/).test(x)) x = i;
+			x = Number(x);
+		}
+    catch (er) {x = i;}
+  
+    if (book[x].sName) 
+				throw "ERROR: Two books share the same index (" + x + "):" + book[x].sName + ", " + allBooks[i];
+				
     book[x].sName = allBooks[i];
   }
 
   for (i=0; i < book.length; i++) {  
-    var localName = b.GetStringFromName(book[i].sName);
-    book[i].bName  = localName;
-    book[i].bNameL = localName;
+    var bName = b.GetStringFromName(book[i].sName);
+    book[i].bName  = bName;
+    book[i].bNameL = bName;
   }
     
   // Search locale for long books names, and save them

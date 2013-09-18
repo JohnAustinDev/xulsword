@@ -23,7 +23,7 @@
 
 <window
     id="searchHelp-window" xmlns:html="http://www.w3.org/1999/xhtml"
-    width="800" height="600"
+    width="700" height="600"
     onload="initCSS();"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
@@ -31,6 +31,6 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   
-  <iframe flex="1" id="helpFrame" src="searchHelp.html" style="overflow:hidden;"/>
+  <iframe flex="1" id="helpFrame" src="searchHelp.html"/>
   
 </window>

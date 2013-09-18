@@ -211,10 +211,9 @@ BibleNavigator = {
     var chtxt = LibSword.getChapterText(biblemod, Book[p[1]].sName + "." + p[2] + ".1.1");
     
     // Find all headings and their following verses
-    var hdplus = /<div[^>]*class="head1.*?>.*?<\/div>.*?<sup.*?>\d+<\/sup>/gim; // Get Array of head + next verse's
-    var hd = /(<div[^>]*class="head1.*?>.*?<\/div>)/i;                          // Get heading from above
-    var vs = /<sup.*?>(\d+)<\/sup>/i;                                           // Get verse from above
-    var re = /(<\/?span[^>]*>)/gim;                                             // Used to remove all spans
+    var hdplus = /<div[^>]*class="head1[^"]*"[^>]*>.*?<\/div>.*?<sup[^>]*>\d+<\/sup>/gim; // Get Array of head + next verse's
+    var hd = /(<div[^>]*class="head1[^"]*"[^>]*>)(.*?)<\/div>/i;                          // Get heading from above
+    var vs = /<sup[^>]*>(\d+)<\/sup>/i;                                                   // Get verse from above
     
     //  Find each heading and write it and its link to HTML
     var head = chtxt.match(hdplus);
@@ -222,8 +221,8 @@ BibleNavigator = {
     var hr="";
     if (head != null) {
       for (var h=0; h < head.length; h++) {
-        var heading=head[h].match(hd)[1].replace(re, "").replace(/head1/, "nohead");
-        var verse=head[h].match(vs)[1];
+        var heading = head[h].match(hd)[1].replace(/head1/, "nohead") + head[h].match(hd)[2].replace(/<[^>]*>/g, "") + "</div>";
+        var verse = head[h].match(vs)[1];
         if (!(/^<div[^>]*>\s*<\/div>$/).test(heading)) {
           html += hr + "<a class=\"heading-link cs-" + biblemod + "\" id=\"headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod + "\" >" + heading + "</a>"; 
           hr="<hr>";

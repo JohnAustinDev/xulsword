@@ -24,45 +24,82 @@
   <meta name="searchHelp-window" content="PSPad editor, www.pspad.com">
   <title>searchHelp-window</title>
   <link rel="stylesheet" href="chrome://xulsword/skin/common/global-htm.css" type="text/css">
-  <link rel="stylesheet" href="chrome://xulsword/skin/search/search-htm.css" type="text/css">
+  <link rel="stylesheet" href="chrome://xulsword/skin/search/searchHelp-htm.css" type="text/css">
   </head>
   
-  <script>var MainWindow = (window.frameElement.ownerDocument.defaultView.MainWindow ? window.frameElement.ownerDocument.defaultView.MainWindow:null)</script>
+  <script>var MainWindow = null;</script>
   <script src="chrome://xulsword/content/common/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common/common1.js" type="text/javascript"></script>
-
   <script>
+	var SearchBundle = Components.classes["@mozilla.org/intl/stringbundle;1"]
+      .getService(Components.interfaces.nsIStringBundleService)
+      .createBundle("chrome://xulsword/locale/search/search.properties");
+	
+	function onLoad() {
+		initCSS();
+		window.frameElement.ownerDocument.defaultView.innerHeight = document.getElementById("helpPane").scrollHeight + 20;
+		document.getElementsByTagName("body")[0].style.overflow = "auto"; // only allow scroll bar after proper sizing
+  }
+  
   function writeSearchHelp() {
+		var rows = [null, "MULTICharWildCard", "SINGLECharWildCard", "AND", "OR", "NOT", "GROUPSTART", "SIMILAR", "QUOTESTART"];
     var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
     var bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/search/search-help.properties");
+    
     window.frameElement.ownerDocument.title = fixWindowTitle(bundle.GetStringFromName("windowTitle"));
-    document.write("<div style=\"width:100%;\">" + bundle.GetStringFromName("searchTypes") + "</div>");
-    document.write("<table style=\"width:100%; font-size:12px; border-collapse:collapse; border:2px solid rgb(200,170,205); border-radius:4px;\"><tbody>");
-    var grey=false;
+
+    document.write("<div class='searchTypes'>" + bundle.GetStringFromName("searchTypes") + "</div>");
+    document.write("<div class='desc'>");
+    document.write("<div><div class='typeName'>" + dString(1) + ") " + bundle.GetStringFromName("hasthewords") + ": </div>");
+    document.write(     "<div class='typeDesc'>"    + bundle.GetStringFromName("contains_the_words_desc") + "</div></div>");
+    document.write("<div><div class='typeName'>" + dString(2) + ") " + bundle.GetStringFromName("hasthistext") + ": </div>");
+    document.write(     "<div class='typeDesc'>"    + bundle.GetStringFromName("contains_exact_text_desc") + "</div></div>");
+    document.write("<div><div class='typeName'>" + dString(3) + ") " + bundle.GetStringFromName("advancedmatch") + ": </div>");
+    document.write(     "<div class='typeDesc'>"    + bundle.GetStringFromName("using_special_search_terms_desc") + "</div></div>");
+    document.write("<div><div class='typeName'>" + dString(4) + ") " + bundle.GetStringFromName("matchparts") + ": </div>");
+    document.write(     "<div class='typeDesc'>"    + bundle.GetStringFromName("contains_similar_words_desc") + "</div></div>");
+    document.write("</div>");
+    
+    // use a table to display search help text
+    document.write("<table><tbody>");
     for (var r=0; r<9; r++) {
-      var style = grey ? "background:rgb(230,230,230);":"background:rgb(245,245,245);";
-      grey = !grey;
-      document.write("<tr>");
+      document.write("<tr class=\"" + (r%2 == 1 ? "odd-row":"even-row") + "\">");
       for (var c=0; c<4; c++) {
-        var mystyle = (c==0) ? style + " text-align:center;":style;
-        document.write("<td style=\"padding:5px; " + mystyle + "\">" + bundle.GetStringFromName("searchTable_" + r + "_" + c) + "</td>");
+        if (c > 0 || r == 0) {
+					var lstring = bundle.GetStringFromName("searchTable_" + r + "_" + c);
+				}
+        else {
+					lstring = getSpecialSearchChar(rows[r]);
+					if ((/START$/).test(rows[r])) {
+						lstring += " " + getSpecialSearchChar(rows[r].replace("START", "END"));
+					}
+				}
+				document.write("<td class=\"col" + c + " row" + r + "\">" + lstring + "</td>");
       }
       document.write("</tr>");
     }
     document.write("</tbody></table>");
-    document.write("<br><div>" + bundle.GetStringFromName("searchCase") + "</div>");
+    
+    document.write("<div id=\"caseMessage\">" + bundle.GetStringFromName("searchCase") + "</div>");
   }
   
-  function htmlLoaded() {
-    var winh = window.frameElement.ownerDocument.height-60;
-    document.getElementById("helpPane").style.height = String(winh) + "px";
-  }
+  function getSpecialSearchChar(name) {
+		try {var schar = SearchBundle.GetStringFromName(name);}
+		catch (er) {schar = "";}
+		
+		if (!schar || (/^\s*$/).test(schar)) {
+			schar = LOCALE_SEARCH_SYMBOLS[name];
+		}
+		
+		return schar;
+	}
   
   </script>
   
-  <body  id="searchHelp-window" onload="initCSS(); setTimeout('htmlLoaded()',0);" style="font-size:12px; background-image: url(chrome://xulsword/skin/images/9.gif);">
-    <div id="helpPane" style="overflow:auto; min-width:340px; min-height:300px; padding:20px; background:white; border:2px solid rgb(200,170,205); border-radius:4px;">
+  <body onload="window.setTimeout('onLoad();', 0);">
+    <div id="helpPane">
       <script>writeSearchHelp();</script>
     </div>
   </body>
+  
 </html>

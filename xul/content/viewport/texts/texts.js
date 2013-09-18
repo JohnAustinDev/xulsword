@@ -227,7 +227,6 @@ Texts = {
           next.htmlNotes = next.htmlNotes + tip.htmlNotes;
           next.footnotes = next.footnotes + tip.footnotes;
           sb.innerHTML = next.htmlText;
-//window.alert(c + ":" + sb.firstChild.offsetLeft + ", " + sb.lastChild.offsetLeft + ", " + sb.offsetWidth);
           if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
                (!ltr && sb.lastChild.offsetLeft < 0) ) break;
           c++;

@@ -159,7 +159,7 @@
         <body><![CDATA[
           if (!aMenuList.menupopup) aMenuList.appendItem(dString(1), 1);
           for (var i=aMenuList.menupopup.childNodes.length+1; (i<=aNumber && i<=maxLength); i++) {
-          var newitem = aMenuList.appendItem(String(i), i);
+          var newitem = aMenuList.appendItem(dString(i), i);
         }
         ]]>
         </body>

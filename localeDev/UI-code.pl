@@ -94,7 +94,10 @@ for my $fe2 (sort keys %CodeFileEntryValues) {
   $openfile = $f;
 
   if ($f =~ /\.properties$/i) {print OUTF $e."=".$v."\n";}
-  elsif ($f =~ /\.dtd$/i) {print OUTF "<!ENTITY ".$e." \"".$v."\">\n";}
+  elsif ($f =~ /\.dtd$/i) {
+		$v =~ s/"/&quot;/g;
+		print OUTF "<!ENTITY ".$e." \"".$v."\">\n";
+	}
   else {&Log("ERROR FileEntry=\"".$fe2."\": Unknown file type \"".$f."\"\n");}
   
 }

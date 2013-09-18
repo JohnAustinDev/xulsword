@@ -17,6 +17,7 @@
 */
 
 const BROWSER_ADD_BM_FEATURES = "centerscreen,modal,chrome,dialog,resizable,dependent";
+const MAX_BOOKMARK_TEXT = 1024;
 
 /************************************************************************
  * Bookmark functions
@@ -148,7 +149,7 @@ BookmarkFuns = {
     }
     
     text = text.replace(/<[^>]*>/g, "");
-    retval.text = text;
+    retval.text = text.substr(0, MAX_BOOKMARK_TEXT);
     return retval;
   },
   

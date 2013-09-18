@@ -641,6 +641,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   delete(testkey);
   
   SWBuf check = assureValidUTF8(chapHTML.c_str());
+	check.replaceBytes("\n\r", ' ');
   
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
