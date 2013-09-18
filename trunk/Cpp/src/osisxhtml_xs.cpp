@@ -386,10 +386,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					if (u->titleStack->size()) u->titleStack->pop();
 					SWBuf pushed = tag.getAttribute("pushed");
 					if (pushed.size()) {
-						buf += (SWBuf)"</" + pushed + ">\n\n";
+						buf += (SWBuf)"</" + pushed + ">";
 					}
 					else {
-						buf += "</h3>\n\n";
+						buf += "</h3>";
 					}
 					++u->consecutiveNewlines;
 					u->supressAdjacentWhitespace = true;
@@ -403,12 +403,12 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				if (tag.getAttribute("type")) {
 					outText("<ul class=\"", buf, u);
 					outText(tag.getAttribute("type"), buf, u);
-					outText("\">\n", buf, u);
+					outText("\">", buf, u);
 				}
-				else outText("<ul>\n", buf, u);
+				else outText("<ul>", buf, u);
 			}
 			else if (tag.isEndTag()) {
-				outText("</ul>\n", buf, u);
+				outText("</ul>", buf, u);
 				++u->consecutiveNewlines;
 				u->supressAdjacentWhitespace = true;
 			}
@@ -425,7 +425,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				else outText("\t<li>", buf, u);
 			}
 			else if (tag.isEndTag()) {
-				outText("</li>\n", buf, u);
+				outText("</li>", buf, u);
 				++u->consecutiveNewlines;
 				u->supressAdjacentWhitespace = true;
 			}
@@ -628,10 +628,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		}
 		else if (!strcmp(tag.getName(), "table")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
-				buf += "<table><tbody>\n";
+				buf += "<table><tbody>";
 			}
 			else if (tag.isEndTag()) {
-				buf += "</tbody></table>\n";
+				buf += "</tbody></table>";
 				++u->consecutiveNewlines;
 				u->supressAdjacentWhitespace = true;
 			}
@@ -642,7 +642,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				buf += "\t<tr>";
 			}
 			else if (tag.isEndTag()) {
-				buf += "</tr>\n";
+				buf += "</tr>";
 			}
 			
 		}

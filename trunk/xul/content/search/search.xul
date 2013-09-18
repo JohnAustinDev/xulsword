@@ -150,10 +150,10 @@
             <caption label="&type;"/> 
             
             <radiogroup id="searchType">
-              <radio id="SearchAnyWord"   label="&hasthewords;" selected="true" />
-              <radio id="SearchExactText" label="&hasthistext;"/>
-              <radio id="SearchAdvanced"  label="&advancedmatch;"/>
-              <radio id="SearchSimilar"   label="&matchparts;"/>
+              <radio id="SearchAnyWord"   label="&hasthewords;" tooltiptext="&contains_the_words_desc;" selected="true" />
+              <radio id="SearchExactText" label="&hasthistext;" tooltiptext="&contains_exact_text_desc;" />
+              <radio id="SearchAdvanced"  label="&advancedmatch;" tooltiptext="&using_special_search_terms_desc;" />
+              <radio id="SearchSimilar"   label="&matchparts;" tooltiptext="&contains_similar_words_desc;" />
             </radiogroup>
             
             </groupbox>

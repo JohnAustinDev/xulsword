@@ -89,7 +89,6 @@ DictTexts = {
   
   getEntryHTML: function(key, mods) {
     if (!key || !mods) return "";
-
     mods = mods.split(";");
     
     var html = "";
@@ -273,7 +272,7 @@ DictTexts = {
 		entry = this.replaceTags(entry, "gramGrp");
 		entry = this.replaceTags(entry, "pos");
 		
-var m=entry.match(/<\w+/g); if (m) {for (var x=0; x<m.length; x++) {if (!(/^<(table|tbody|span|div|img|br|tr|td|h\d+|ul|li|b|i)$/i).test(m[x])) jsdump("INFO: Found unhandled tag \"" + m[x] + "\" in\n" + entry);}}
+//var m=entry.match(/<\w+/g); if (m) {for (var x=0; x<m.length; x++) {if (!(/^<(table|tbody|span|sup|div|img|br|tr|td|h\d+|ul|li|b|i)$/i).test(m[x])) jsdump("INFO: Found unhandled tag \"" + m[x] + "\" in\n" + entry);}}
 	
 		return entry;
 	},

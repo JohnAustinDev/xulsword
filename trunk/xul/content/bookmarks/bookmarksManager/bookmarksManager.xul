@@ -40,7 +40,12 @@
 
 <?xul-overlay href="chrome://xulsword/content/common/editMenu-overlay/editMenu-overlay.xul"?>
 
-<!DOCTYPE window SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
+<!DOCTYPE window [
+  <!ENTITY % bookmarksDTD SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
+  %bookmarksDTD;
+  <!ENTITY % editMenuDTD SYSTEM "chrome://xulsword/locale/common/editMenu-overlay/editMenu-overlay.dtd">
+  %editMenuDTD;
+]>
 
 <window id="bookmark-window"
         title="&bookmarksWindowTitle.label;"
@@ -59,8 +64,6 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/nsDragAndDrop.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksCommand.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.js"/>
-
-  <keyset id="editMenuKeys"/>
   
   <keyset id="bookmarksManagerKeys">
     <key id="key_close" key="&closeCmd.commandkey;" modifiers="accel" command="cmd_close"/>
@@ -70,6 +73,12 @@
     <key id="bm_key_delete" keycode="VK_DELETE" command="cmd_bm_delete"/>
     <key id="printPrevKb" key="&printCmd.commandkey;" modifiers="accel" command="cmd_bm_printPreview"/>
     <key id="printKb" key="&printCmd.commandkey;" modifiers="control shift" command="cmd_bm_print"/>
+    <key id="key_undo" key="&undoCmd.key;" modifiers="accel" command="cmd_undo"/>
+    <key id="key_redo" key="&redoCmd.key;" modifiers="accel" command="cmd_redo"/>
+    <key id="key_cut" key="&cutCmd.key;" modifiers="accel" command="cmd_bm_cut"/>
+    <key id="key_copy" key="&copyCmd.key;" modifiers="accel" command="cmd_bm_copy"/>
+    <key id="key_paste" key="&pasteCmd.key;" modifiers="accel" command="cmd_bm_paste"/>
+    <key id="key_selectAll" key="&selectAllCmd.key;" modifiers="accel" command="cmd_selectAll"/>
   </keyset>
   
   <commandset id="editMenuCommands"/>

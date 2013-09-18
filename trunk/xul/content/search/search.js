@@ -18,11 +18,10 @@
 
 // LIBXULSWORD API's search types. Warning: only REGEX and LUCENE are used or are debugged...
 const REGEX=0, PHRASE=-1, MULTIWORD=-2, ENTRY_ATTRIBUTE=-3, LUCENE=-4, COMPOUND=-5; 
-const LOCALE_SEARCH_SYMBOLS = ["SINGLECharWildCard", "MULTICharWildCard", "AND", "OR", "NOT", "SIMILAR", "GROUPSTART", "GROUPEND", "QUOTESTART", "QUOTEEND"];
-const ACTUAL_SEARCH_SYMBOLS = ["?", "*", "&&", "||", "!", "~", "(", ")", "\"", "\""];
 const MAX_RESULTS_PER_PAGE = 30;
 const MAX_LEXICON_SEARCH_RESULTS = 500;
 const MAX_PRINT_SEARCH_RESULTS = 30;
+const ACTUAL_SEARCH_SYMBOLS = {SINGLECharWildCard:"?", MULTICharWildCard:"*", AND:"AND", OR:"OR", NOT:"NOT", SIMILAR:"~", GROUPSTART:"(", GROUPEND:")", QUOTESTART:"\"", QUOTEEND:"\""};
 
 var Search;
 var SearchResults;
@@ -249,11 +248,11 @@ function SearchObj(searchObj) {
     s.query = s.query.replace(/\s*$/,""); //remove trailing whitespace
     s.query = s.query.replace(/\s+/," "); //change all white space to " "
     
-    // replace UI search symbols with internally recognized search symbols
-    for (var i=0; i<LOCALE_SEARCH_SYMBOLS.length; i++) {
-      try {var sym = this.bundle.GetStringFromName(LOCALE_SEARCH_SYMBOLS[i]);} catch (er) {continue;}
+    // replace UI search symbols with LibSword recognized search symbols
+    for (var m in LOCALE_SEARCH_SYMBOLS) {
+      try {var sym = this.bundle.GetStringFromName(m);} catch (er) {continue;}
       if (!sym || (/^\s*$/).test(sym)) continue;
-      s.query = s.query.replace(sym, ACTUAL_SEARCH_SYMBOLS[i], "g");
+      s.query = s.query.replace(sym, ACTUAL_SEARCH_SYMBOLS[m], "g");
     }
 
     var rawText = s.query; // save query at this point for use later
@@ -323,7 +322,7 @@ function SearchObj(searchObj) {
       
     case "SearchAdvanced":
       rawText = rawText.replace(/ +/g,";");
-      rawText = rawText.replace(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|\]|\^|~|:|\\|AND;|OR;|NOT;)/g,""); // remove all control chars except [?";*]
+      rawText = rawText.replace(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|\]|\^|~|:|"|\\|AND;|OR;|NOT;)/g,""); // remove all control chars except [?";*]
       rawText = rawText.replace("?",".","g");     // add dots before any ?s
       rawText = rawText.replace("*",".*?","g");   // add dots before any *s
       
@@ -393,7 +392,7 @@ function SearchObj(searchObj) {
       
       // Search all in one go with no progress meter...
       
-//var p="Single Search: "; for (var m in s) {p += m + "=" + s[m] + " ";} jsdump(p);
+//jsdump(uneval(s));
       result.count = LibSword.search(s.mod, s.query, s.scope, s.type, s.flags, s.isnew);
       result.searchPointer = LibSword.getSearchPointer();
 

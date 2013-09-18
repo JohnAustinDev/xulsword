@@ -145,13 +145,19 @@ sub correlateUItoMAP(\%\%\%\%\%\%) {
           $fe2 =~ s/\*/$w/;
         }
         $matchedDescriptionsP->{$d}++;
+        
         if ($fe2 !~ /^(.+?)\:(.+)\s*$/) {&Log("ERROR: Malformed file:entry \"$fe2\"\n"); next;}
-        $codeFileEntryValuesP->{$fe2} = $uiDescValueP->{$d};
-        if (exists($isFEWild{$fe})) {next;}
-        if ($uiDescValueP->{$d} =~ /^\s*$/ && !exists($mayBeEmptyP->{$fileEntryDescP->{$fe}})) {
+        elsif (exists($isFEWild{$fe}) && $uiDescValueP->{$d} =~ /^\s*$/) {next;}
+        elsif ($uiDescValueP->{$d} =~ /^\s*$/ && 
+						(!exists($mayBeEmptyP->{$fileEntryDescP->{$fe}}) && !exists($mayBeMissingP->{$fileEntryDescP->{$fe}}))) {
           &Log("WARNING $fe2: Value is empty.\n");
         }
-        $fileEntryDescP->{$fe} = "<uSEd>";
+      
+        $codeFileEntryValuesP->{$fe2} = $uiDescValueP->{$d};
+        
+        if (!exists($isFEWild{$fe})) {
+					$fileEntryDescP->{$fe} = "<uSEd>";
+				}
       }
     }
   }
@@ -163,6 +169,7 @@ sub correlateUItoMAP(\%\%\%\%\%\%) {
       $codeFileEntryValuesP->{$fe} = $1;
       $fileEntryDescP->{$fe} = "<uSEd>";
     }
+    elsif (exists($isFEWild{$fe})) {next;} # Don't want wildcard expressions to have their own values
     elsif (!exists($codeFileEntryValuesP->{$fe})) {$codeFileEntryValuesP->{$fe} = "";}
   }
 

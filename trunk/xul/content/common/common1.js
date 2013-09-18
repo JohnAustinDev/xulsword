@@ -142,7 +142,8 @@ LOOP1:
     if (parsed[4]) {location.lastVerse = (Number(parsed[4])>0) ? Number(parsed[4]):1;}
   }
   else {return null;}
-//jsdump("book:" + location.shortName + " version:" + location.version + " chapter:" + location.chapter + " verse:" + location.verse + " last-verse:" + location.lastVerse + "\n");
+  
+//jsdump(uneval(location));
   return location;
 }
 
