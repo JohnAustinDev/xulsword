@@ -58,8 +58,10 @@ BookmarkFuns = {
       var loc = {version:bmInfo[MODULE], shortName:bmInfo[BOOK], chapter:bmInfo[CHAPTER], verse:bmInfo[VERSE], lastVerse:bmInfo[LASTVERSE]};
       if (!bmInfo[BMTEXT]) bmInfo[BMTEXT] = BookmarkFuns.getTextForBookmark(loc).text;
       if (!bmInfo[NAME]) bmInfo[NAME] = BookmarkFuns.getNameForBookmark(loc);
-      if (!bmInfo[LOCATION] && loc.shortName)
-          bmInfo[LOCATION] = Location.convertLocation(LibSword.getVerseSystem(loc.version), loc.shortName + "." + loc.chapter + "." + loc.verse + "." + loc.lastVerse, WESTERNVS);
+      if (!bmInfo[LOCATION] && loc.shortName) {
+        // LOCATION is always according to the KJV verse system!
+        bmInfo[LOCATION] = Location.convertLocation(LibSword.getVerseSystem(loc.version), loc.shortName + "." + loc.chapter + "." + loc.verse + "." + loc.lastVerse, WESTERNVS);
+      }
       break;
       
     case "Folder":
@@ -68,6 +70,37 @@ BookmarkFuns = {
       break;
     }
 //jsdump(bmType + " FINISH completeBMInfo:" + bmInfo);
+  },
+  
+  updateBookmarkProperties: function(bmID, info) {
+    var wasChanged = false;
+    
+    var gResource = BM.RDF.GetResource(bmID);
+    
+    // Grovel through the fields to see if any of the values have
+    // changed. If so, update the RDF graph and force them to be saved
+    // to disk.
+    for (var i=0; i<info.length; ++i) {
+      // Get the new value as a literal, using 'null' if the value is empty.
+      var newValue = info[i];
+      
+      var oldValue = BMDS.GetTarget(gResource, BM.gBmProperties[i], true);
+
+      if (oldValue)
+        oldValue = oldValue.QueryInterface(Components.interfaces.nsIRDFLiteral);
+
+      if (newValue)
+        newValue = BM.RDF.GetLiteral(newValue);
+
+      wasChanged |= ResourceFuns.updateAttribute(gResource, BM.gBmProperties[i], oldValue, newValue);
+      
+      if (!newValue) newValue = "";
+      if (!oldValue) oldValue = "";
+      if (i == NAME && newValue != oldValue) info[NAMELOCALE] = getLocale();
+      if (i == NOTE && newValue != oldValue) info[NOTELOCALE] = getLocale();
+    }
+    
+    return wasChanged;
   },
 
   addBookmarkAs: function (location, selectNoteFlag) {

@@ -111,16 +111,26 @@ function loadedXUL2() {
     updateXulswordButtons();
     
   }
-    
-  // Some "hard-wired" access keys...
-  document.getElementById("w1").setAttribute("accesskey", dString("1"));
-  document.getElementById("w2").setAttribute("accesskey", dString("2"));
-  document.getElementById("w3").setAttribute("accesskey", dString("3"));
-  document.getElementById("f0").setAttribute("accesskey", dString("1"));
-  document.getElementById("f1").setAttribute("accesskey", dString("2"));
-  document.getElementById("f2").setAttribute("accesskey", dString("3"));
-  document.getElementById("f3").setAttribute("accesskey", dString("4"));
-  document.getElementById("f4").setAttribute("accesskey", dString("5"));
+  
+  // Add some numeric access keys but only if parent has an access key...
+  function addAccessKeyIf(sc, id) {
+    if ((/^\s*$/).test(getDataUI(sc)) || !(/\(n\)/).test(id)) return;
+    var n = 0;
+    while (true) {
+      var elem = document.getElementById(id.replace("(n)", n));
+      if (!elem && n > 0) break;
+      if (elem) elem.setAttribute("accesskey", dString(n));
+      n += 1;
+    }
+  }
+  addAccessKeyIf("menu.windows.sc", "w(n)");
+  addAccessKeyIf("menu.options.font.sc", "f(n)");
+  addAccessKeyIf("menu.view.showtexttabs.sc", "winRadio.(n).Texts");
+  addAccessKeyIf("menu.view.showcommtabs.sc", "winRadio.(n).Comms");
+  addAccessKeyIf("menu.view.showbooktabs.sc", "winRadio.(n).Genbks");
+  addAccessKeyIf("menu.view.showdicttabs.sc", "winRadio.(n).Dicts");
+  addAccessKeyIf("menu.view.showAll.sc", "allTabs.w(n)");
+  addAccessKeyIf("menu.view.hideAll.sc", "noTabs.w(n)");
   
   // Listen for keypresses on search textbox (for return key)
   document.getElementById("searchText").addEventListener("keypress", 
@@ -202,6 +212,8 @@ function postWindowInit() {
   createHelpVideoMenu();
   
   checkCipherKeys();
+  
+  initBookmarksLocale(BM, BMDS);
 
 }
 

@@ -76,7 +76,7 @@ function initBMServices(bm) {
     
   initBookmarksDataFile(false);
   var bmds = getUserData(bm.RDF);
-  initBookmarksLocale(bm.RDF, bmds, bm.AllBookmarksRes, bm.gBmProperties, bm.BmEmptyRes);
+  //initBookmarksLocale(bm, bmds);
   return bmds;
 }
 
@@ -154,18 +154,68 @@ function getUserData(rdf) {
   return myDS;
 }
 
-function initBookmarksLocale(rdf, aDS, allBookmarksRes, bmProperties, bmEmptyRes) {
-  
-  var bookmarks = "chrome://xulsword/locale/bookmarks/bookmarks.properties";
-  var b = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService).createBundle(bookmarks);
+function initBookmarksLocale() {
+return;
 
-  var oldValue = aDS.GetTarget(allBookmarksRes, bmProperties[NAME], true);
-  var newValue = rdf.GetLiteral(b.GetStringFromName("BookmarksRoot"));
-  ResourceFuns.updateAttribute(allBookmarksRes, bmProperties[NAME], oldValue, newValue, aDS);
+  var mod = prefs.getCharPref("DefaultVersion");
   
-  oldValue = aDS.GetTarget(bmEmptyRes, bmProperties[NAME], true);
-  newValue = rdf.GetLiteral(b.GetStringFromName("emptyFolder"));
-  ResourceFuns.updateAttribute(bmEmptyRes, bmProperties[NAME], oldValue, newValue, aDS);
+  // if our locale has associated modules, see if one of them is 
+  // installed and use it if possible
+  var mods = LocaleConfigs[getLocale()].AssociatedModules;
+  mods = (mods ? mods.split(/\s*,\s*/):[null]);
+  for (var i=0; i<mods.length; i++) {
+    if (!mods[i] || !Tab.hasOwnProperty(mods[i])) continue;
+    mod = mods[i];
+    break;
+  }
+  
+  var b = getCurrentLocaleBundle("bookmarks/bookmarks.properties");
+  
+  // list new values of all attributes of all bookmarks that are to be updated
+  var update = {};
+  update[BM.AllBookmarksID] = { f:[NAME],         t:[b.GetStringFromName("BookmarksRoot")] };
+  update[BM.BmEmptyID]      = { f:[NAME],         t:[b.GetStringFromName("emptyFolder")] };
+  update.example_usernote   = { f:[MODULE, NOTE], t:[mod, b.GetStringFromName("exampleDescription")] };
+  update.example_folder     = { f:[NAME, NOTE],   t:[b.GetStringFromName("exampleFolder"), b.GetStringFromName("exampleDescription")] };
+  update.example_1          = { f:[NAME],         t:[b.GetStringFromName("exampleSubFolder1")] };
+  update.example_1_1        = { f:[MODULE],       t:[mod] };
+  update.example_1_2        = { f:[MODULE],       t:[mod] };
+  update.example_1_3        = { f:[MODULE],       t:[mod] };
+  update.example_1_4        = { f:[MODULE],       t:[mod] };
+  update.example_1_5        = { f:[MODULE],       t:[mod] };
+  update.example_1_6        = { f:[MODULE],       t:[mod] };
+  update.example_1_7        = { f:[MODULE],       t:[mod] };
+  update.example_1_8        = { f:[MODULE],       t:[mod] };
+  update.example_2          = { f:[NAME],         t:[b.GetStringFromName("exampleSubFolder2")] };
+  update.example_2_1        = { f:[MODULE],       t:[mod] };
+  update.example_2_2        = { f:[MODULE],       t:[mod] };
+  update.example_2_3        = { f:[MODULE],       t:[mod] };
+  update.example_2_4        = { f:[MODULE],       t:[mod] };
+//jsdump(uneval(update));  
+  for (var bmid in update) {
+    var bmobj = update[bmid];
+    if (bmid.indexOf("http") != 0) bmid = "rdf:#" + bmid;
+    
+    var info = ResourceFuns.BmGetInfo(bmid);
+//jsdump("#1=" + uneval(info));    
+    // remove all info which should update
+    var rem = [NAME, NOTE, MODULE, BMTEXT, ICON, VISITEDDATE, NAMELOCALE, NOTELOCALE];
+    for (var x=0; x<rem.length; x++) {info[x] = null;}
+
+    // now add info from our update object
+    for (var i=0; i<bmobj.f.length; i++) {
+      info[bmobj.f[i]] = bmobj.t[i];
+    }
+//jsdump("#1=" + uneval(info));     
+    // now fill in the gaps
+    BookmarkFuns.completeBMInfo(info);
+    
+    // save our updated bookmark
+    BookmarkFuns.updateBookmarkProperties(bmid, info);
+  }
+  
+  // flush the bookmark database
+  BMDS.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource).Flush();
 }
 
 function getEmptyUserData() {

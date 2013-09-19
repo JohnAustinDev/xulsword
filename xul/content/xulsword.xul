@@ -90,6 +90,15 @@
 <data id="ui.dlgFrom">&dlgFrom;</data>
 <data id="ui.dlgTo">&dlgTo;</data>
 
+<data id="ui.menu.windows.sc">&menu.windows.sc;</data>
+<data id="ui.menu.options.font.sc">&menu.options.font.sc;</data>
+<data id="ui.menu.view.showtexttabs.sc">&menu.view.showtexttabs.sc;</data>
+<data id="ui.menu.view.showcommtabs.sc">&menu.view.showcommtabs.sc;</data>
+<data id="ui.menu.view.showbooktabs.sc">&menu.view.showbooktabs.sc;</data>
+<data id="ui.menu.view.showdicttabs.sc">&menu.view.showdicttabs.sc;</data>
+<data id="ui.menu.view.showAll.sc">&menu.view.showAll.sc;</data>
+<data id="ui.menu.view.hideAll.sc">&menu.view.hideAll.sc;</data>
+
 <script>  
   // xulsword's program-wide global objects...
   var MainWindow = window;
@@ -172,6 +181,7 @@
 </keyset>
 
 <keyset id="editMenuKeys"/>
+
 <keyset id="bookmarksManagerKeys">
   <key id="bm_key_properties" key="&edit.properties.keybinding;" modifiers="accel" command="cmd_bm_properties"/>
 </keyset>
@@ -304,10 +314,10 @@
             <menuitem id="showAllTabs.Texts" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuitem id="showNoTabs.Texts" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuseparator id="sep2ShowAll-Texts"/>
-            <menuitem id="winRadio.1.Texts"  label="&menu.view.window1;" accesskey="1" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.2.Texts"  label="&menu.view.window2;" accesskey="2" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.3.Texts"  label="&menu.view.window3;" accesskey="3" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.all.Texts" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.1.Texts"  label="&menu.view.window1;" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.2.Texts"  label="&menu.view.window2;" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.3.Texts"  label="&menu.view.window3;" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.all.Texts" label="&menu.view.allwindows;" type="radio" name="Texts" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menu id="sub-Comms" class="menu-iconic" label="  &menu.view.showcommtabs;" accesskey="&menu.view.showcommtabs.sc;">
@@ -316,10 +326,10 @@
             <menuitem id="showAllTabs.Comms" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuitem id="showNoTabs.Comms" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuseparator id="sep2ShowAll-Comms"/>
-            <menuitem id="winRadio.1.Comms"  label="&menu.view.window1;" accesskey="1" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.2.Comms"  label="&menu.view.window2;" accesskey="2" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.3.Comms"  label="&menu.view.window3;" accesskey="3" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.all.Comms" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.1.Comms"  label="&menu.view.window1;" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.2.Comms"  label="&menu.view.window2;" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.3.Comms"  label="&menu.view.window3;" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.all.Comms" label="&menu.view.allwindows;" type="radio" name="Comms" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menu id="sub-Genbks" class="menu-iconic" label="  &menu.view.showbooktabs;" accesskey="&menu.view.showbooktabs.sc;">
@@ -328,10 +338,10 @@
             <menuitem id="showAllTabs.Genbks" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuitem id="showNoTabs.Genbks" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuseparator id="sep2ShowAll-Genbks"/>
-            <menuitem id="winRadio.1.Genbks"  label="&menu.view.window1;" accesskey="1" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.2.Genbks"  label="&menu.view.window2;" accesskey="2" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.3.Genbks"  label="&menu.view.window3;" accesskey="3" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.all.Genbks" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.1.Genbks"  label="&menu.view.window1;" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.2.Genbks"  label="&menu.view.window2;" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.3.Genbks"  label="&menu.view.window3;" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.all.Genbks" label="&menu.view.allwindows;" type="radio" name="Genbks" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menu id="sub-Dicts" class="menu-iconic" label="  &menu.view.showdicttabs;" accesskey="&menu.view.showdicttabs.sc;">
@@ -340,26 +350,26 @@
             <menuitem id="showAllTabs.Dicts" accesskey="&menu.view.showAll.sc;" label="&menu.view.showAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuitem id="showNoTabs.Dicts" accesskey="&menu.view.hideAll.sc;" label="&menu.view.hideAll;" oncommand="holdMenuAndHandleOptions(this);"/>
             <menuseparator id="sep2ShowAll-Dicts"/>
-            <menuitem id="winRadio.1.Dicts"  label="&menu.view.window1;" accesskey="1" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.2.Dicts"  label="&menu.view.window2;" accesskey="2" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.3.Dicts"  label="&menu.view.window3;" accesskey="3" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="winRadio.all.Dicts" label="&menu.view.allwindows;" accesskey="4" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.1.Dicts"  label="&menu.view.window1;" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.2.Dicts"  label="&menu.view.window2;" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.3.Dicts"  label="&menu.view.window3;" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="winRadio.all.Dicts" label="&menu.view.allwindows;" type="radio" name="Dicts" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menu class="menu-iconic" label="  &menu.view.showAll;" accesskey="&menu.view.showAll.sc;">
           <menupopup id="allTabs.menu">
-            <menuitem id="allTabs.w1" label="&menu.view.window1;" accesskey="1" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="allTabs.w2" label="&menu.view.window2;" accesskey="2" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="allTabs.w3" label="&menu.view.window3;" accesskey="3" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="allTabs.all" label="&menu.view.allwindows;" accesskey="4" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="allTabs.w1" label="&menu.view.window1;" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="allTabs.w2" label="&menu.view.window2;" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="allTabs.w3" label="&menu.view.window3;" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="allTabs.all" label="&menu.view.allwindows;" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
         <menu class="menu-iconic" label="  &menu.view.hideAll;" accesskey="&menu.view.hideAll.sc;">
           <menupopup id="noTabs.menu">
-            <menuitem id="noTabs.w1" label="&menu.view.window1;" accesskey="1" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="noTabs.w2" label="&menu.view.window2;" accesskey="2" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="noTabs.w3" label="&menu.view.window3;" accesskey="3" oncommand="holdMenuAndHandleOptions(this)"/>
-            <menuitem id="noTabs.all" label="&menu.view.allwindows;" accesskey="4" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="noTabs.w1" label="&menu.view.window1;" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="noTabs.w2" label="&menu.view.window2;" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="noTabs.w3" label="&menu.view.window3;" oncommand="holdMenuAndHandleOptions(this)"/>
+            <menuitem id="noTabs.all" label="&menu.view.allwindows;" oncommand="holdMenuAndHandleOptions(this)"/>
           </menupopup>
         </menu>
       </menupopup>
@@ -368,11 +378,11 @@
       <menupopup id="options-popup">
         <menu id="sub-fs" label="&menu.options.font;" accesskey="&menu.options.font.sc;">
           <menupopup>
-            <menuitem id="f0" label="&menu.options.font1;" accesskey="1" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
-            <menuitem id="f1" label="&menu.options.font2;" accesskey="2" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
-            <menuitem id="f2" label="&menu.options.font3;" accesskey="3" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
-            <menuitem id="f3" label="&menu.options.font4;" accesskey="4" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
-            <menuitem id="f4" label="&menu.options.font5;" accesskey="5" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
+            <menuitem id="f0" label="&menu.options.font1;" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
+            <menuitem id="f1" label="&menu.options.font2;" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
+            <menuitem id="f2" label="&menu.options.font3;" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
+            <menuitem id="f3" label="&menu.options.font4;" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
+            <menuitem id="f4" label="&menu.options.font5;" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
           </menupopup>
         </menu>
         <menu id="sub-heb" label="&menu.options.hebrew;" accesskey="&menu.options.hebrew.sc;">

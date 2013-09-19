@@ -164,28 +164,7 @@ function Commit() {
     BookmarkFuns.completeBMInfo(gInfoResource, (gIsContainer ? "Folder":"Bookmark"));
   }
   
-  // Grovel through the fields to see if any of the values have
-  // changed. If so, update the RDF graph and force them to be saved
-  // to disk.
-  for (var i=0; i<gInfoResource.length; ++i) {
-    // Get the new value as a literal, using 'null' if the value is empty.
-    var newValue = gInfoResource[i];
-    
-    var oldValue = BMDS.GetTarget(gResource, BM.gBmProperties[i], true);
-
-    if (oldValue)
-      oldValue = oldValue.QueryInterface(Components.interfaces.nsIRDFLiteral);
-
-    if (newValue)
-      newValue = BM.RDF.GetLiteral(newValue);
-
-    changed |= ResourceFuns.updateAttribute(gResource, BM.gBmProperties[i], oldValue, newValue);
-    
-    if (!newValue) newValue = "";
-    if (!oldValue) oldValue = "";
-    if (i == NAME && newValue != oldValue) gInfoResource[NAMELOCALE] = getLocale();
-    if (i == NOTE && newValue != oldValue) gInfoResource[NOTELOCALE] = getLocale();
-  }
+  changed = BookmarkFuns.updateBookmarkProperties(gResource.ValueUTF8, gInfoResource);
 
   var remote = BMDS.QueryInterface(Components.interfaces.nsIRDFRemoteDataSource);
   if (remote) {remote.Flush();}
