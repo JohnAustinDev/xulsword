@@ -155,8 +155,6 @@ function getUserData(rdf) {
 }
 
 function initBookmarksLocale() {
-return;
-
   var mod = prefs.getCharPref("DefaultVersion");
   
   // if our locale has associated modules, see if one of them is 
@@ -175,6 +173,7 @@ return;
   var update = {};
   update[BM.AllBookmarksID] = { f:[NAME],         t:[b.GetStringFromName("BookmarksRoot")] };
   update[BM.BmEmptyID]      = { f:[NAME],         t:[b.GetStringFromName("emptyFolder")] };
+  /*
   update.example_usernote   = { f:[MODULE, NOTE], t:[mod, b.GetStringFromName("exampleDescription")] };
   update.example_folder     = { f:[NAME, NOTE],   t:[b.GetStringFromName("exampleFolder"), b.GetStringFromName("exampleDescription")] };
   update.example_1          = { f:[NAME],         t:[b.GetStringFromName("exampleSubFolder1")] };
@@ -191,6 +190,7 @@ return;
   update.example_2_2        = { f:[MODULE],       t:[mod] };
   update.example_2_3        = { f:[MODULE],       t:[mod] };
   update.example_2_4        = { f:[MODULE],       t:[mod] };
+*/
 //jsdump(uneval(update));  
   for (var bmid in update) {
     var bmobj = update[bmid];
