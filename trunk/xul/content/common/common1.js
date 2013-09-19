@@ -97,6 +97,13 @@ var CommTexts             = MainWindow.CommTexts;
 // determined from the parsed string is returned as null. Parsed negative numbers are
 // converted to "1"
 function parseLocation(loc2parse) {
+	var dot = dotStringLoc2ObjectLoc(loc2parse);
+	var bknum = findBookNum(dot.shortName);
+	if (bknum !== null) {
+		// loc2parse started with something like Gen. so we assume it's a valid osisRef
+		return dot;
+	}
+	
   loc2parse = loc2parse.replace(/[“|”|\(|\)|\[|\]|,]/g," ");
   loc2parse = loc2parse.replace(/^\s+/,"");
   loc2parse = loc2parse.replace(/\s+$/,"");
@@ -355,7 +362,7 @@ function getModsWithConfigEntry(param, value, biblesOnly, ignoreCase, matchValue
 }
 
 function dotStringLoc2ObjectLoc(dotLocation, version) {
-  var retval = {shortName:null, chapter:null, book:null, verse:null, lastVerse:null};
+  var retval = {shortName:null, chapter:null, book:null, verse:null, lastVerse:null, version:null};
   dotLocation = dotLocation.split(".");
   if (dotLocation[0]!=null) retval.shortName =  dotLocation[0];
   if (dotLocation[1]!=null) retval.chapter =    Number(dotLocation[1]);
