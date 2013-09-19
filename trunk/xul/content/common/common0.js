@@ -629,10 +629,12 @@ function getDataUI(prop) {
   var d = document.getElementById("ui." + prop);
   
   if (!d) {
-    if (typeof("jsdump") != "undefined") jsdump("WARNING: getDataUI() failed to locate data.");
+    if (typeof("jsdump") != "undefined") jsdump("WARNING: getDataUI() failed to locate data: " + prop);
     return "";
   }
   
+  if (!d.childNodes || !d.childNodes.length) return "";
+
   return d.childNodes[0].nodeValue.replace(/\\n/g, "\n");
 }
 

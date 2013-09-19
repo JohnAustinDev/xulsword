@@ -48,9 +48,10 @@ function onLoad() {
   
   PassageTextBox.focus();
   PassageTextBox.select();
-  
-  // Allow return key to copy and close the window
-  PassageTextBox.setAttribute("onkeyup", "if (event.which==13) { document.getElementById('copy').click(); }");
+}
+
+function onRefUserUpdate(e, loc, vers) {
+  if (e.which == 13) document.getElementById('copy').click();
 }
 
 function copyPassage(e) {

@@ -40,7 +40,8 @@
   <data id="ui.cancelButton.label">&cancelButton.label;</data>
   
   <keyset>
-    <key keycode="VK_ESCAPE"                 oncommand="window.close();"/>
+    <key keycode="VK_ESCAPE" oncommand="window.close();"/>
+    <key keycode="VK_RETURN" oncommand="if (event.target !== PassageTextBox) document.getElementById('copy').click();"/>
   </keyset>
 
   <groupbox>
