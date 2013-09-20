@@ -69,7 +69,7 @@
 }
 .chapinfo {
   float:right;
-  min-width:60px;
+  min-width:40px;
   color:rgb(110,85,110);
 }
 .chapterhead[headdir="rtl"] .chapinfo {

@@ -333,9 +333,10 @@
 [add-repository-module.moduleType_Comms]: Commentary
 [add-repository-module.moduleType_Dicts]: Dictionary
 [add-repository-module.moduleType_Genbks]: Book
-[bookmark-window.example_folder]: EXAMPLE FOLDER
-[bookmark-window.example_subFolder_1]: KNOWING GOD
-[bookmark-window.example_subFolder_2]: BORN AGAIN
-[bookmark-window.example_description]: YOU CAN DO COOL THINGS WITH BOOKMARKS!
-# locale_direction is either "ltr" for left-to-right scripts, or "rtl" for right-to-left scripts
+[bookmark-window.example_folder]: Example Bookmarks
+[bookmark-window.example_subFolder_1]: Knowing God
+[bookmark-window.example_subFolder_2]: Born Again
+[bookmark-window.example_description]: You can put your own notes in the text.
+
+# locale_direction must be either "ltr" for left-to-right scripts, or "rtl" for right-to-left scripts
 [locale_direction]: ltr

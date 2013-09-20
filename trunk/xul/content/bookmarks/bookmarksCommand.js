@@ -827,7 +827,7 @@ var BookmarksController = {
     case "cmd_bm_newfolder":
     case "cmd_bm_newseparator":
       return (aSelection && aSelection.item.length && aSelection.item[0]==BM.BmEmptyRes || 
-          BookmarksUtils.isValidTargetContainer(aTarget.parent));
+          (aTarget && aTarget.parent && BookmarksUtils.isValidTargetContainer(aTarget.parent)));
     case "cmd_bm_properties":
     case "cmd_bm_rename":
       if (length != 1 || aSelection.containsImmutable ||
