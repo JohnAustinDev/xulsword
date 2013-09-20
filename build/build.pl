@@ -550,8 +550,6 @@ sub includeLocales($$\@$) {
       $haveLocale{$loc} = 1;
     }
     &copy_file("$TRUNK/build-files/locales/$loc/$loc.jar", "$od/chrome");
-    if (-e "$ldir/$loc.rdf") {&copy_file("$ldir/$loc.rdf", "$od/defaults/");}
-    else {&Log("WARNING: No bookmarks.rdf file found for locale \"$loc\".\n");}
 
     # write locale manifest info
     # NOTE: this registers the locale in the xulsword build, but each 

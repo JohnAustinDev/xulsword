@@ -55,6 +55,10 @@ BookmarkFuns = {
         if (!bmInfo[LASTVERSE]) bmInfo[LASTVERSE] = bmInfo[VERSE];
         if (!bmInfo[BOOK]) bmInfo[BOOK] = getAvailableBooks(bmInfo[MODULE])[0];
       }
+      
+      // A bookmark's content is based on MODULE/BOOK/CHAPTER/VERSE/LASTVERSE rather than on LOCATION
+      // The LOCATION is just the KJV equivalent of this as an "absolute" reference (not all possible 
+      // verses have a KJV equivalent, but this is the way it was originally done).
       var loc = {version:bmInfo[MODULE], shortName:bmInfo[BOOK], chapter:bmInfo[CHAPTER], verse:bmInfo[VERSE], lastVerse:bmInfo[LASTVERSE]};
       if (!bmInfo[BMTEXT]) bmInfo[BMTEXT] = BookmarkFuns.getTextForBookmark(loc).text;
       if (!bmInfo[NAME]) bmInfo[NAME] = BookmarkFuns.getNameForBookmark(loc);

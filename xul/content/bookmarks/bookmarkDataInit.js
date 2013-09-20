@@ -91,8 +91,7 @@ function initBookmarksDataFile(useEmptyDataSet) {
     var data = "";
     if (useEmptyDataSet) {data = getEmptyUserData();}
     else {
-      var currentLocale = getLocale();
-      data = getDefaultUserData(currentLocale + ".rdf");
+      data = getDefaultUserData("bookmarks.rdf");
       if (!data) {data = getEmptyUserData();}
     }
     writeFile(userDataInProfile, data, 1);
@@ -169,48 +168,68 @@ function initBookmarksLocale() {
   
   var b = getCurrentLocaleBundle("bookmarks/bookmarks.properties");
   
-  // list new values of all attributes of all bookmarks that are to be updated
   var update = {};
-  update[BM.AllBookmarksID] = { f:[NAME],         t:[b.GetStringFromName("BookmarksRoot")] };
-  update[BM.BmEmptyID]      = { f:[NAME],         t:[b.GetStringFromName("emptyFolder")] };
-  /*
-  update.example_usernote   = { f:[MODULE, NOTE], t:[mod, b.GetStringFromName("exampleDescription")] };
-  update.example_folder     = { f:[NAME, NOTE],   t:[b.GetStringFromName("exampleFolder"), b.GetStringFromName("exampleDescription")] };
-  update.example_1          = { f:[NAME],         t:[b.GetStringFromName("exampleSubFolder1")] };
-  update.example_1_1        = { f:[MODULE],       t:[mod] };
-  update.example_1_2        = { f:[MODULE],       t:[mod] };
-  update.example_1_3        = { f:[MODULE],       t:[mod] };
-  update.example_1_4        = { f:[MODULE],       t:[mod] };
-  update.example_1_5        = { f:[MODULE],       t:[mod] };
-  update.example_1_6        = { f:[MODULE],       t:[mod] };
-  update.example_1_7        = { f:[MODULE],       t:[mod] };
-  update.example_1_8        = { f:[MODULE],       t:[mod] };
-  update.example_2          = { f:[NAME],         t:[b.GetStringFromName("exampleSubFolder2")] };
-  update.example_2_1        = { f:[MODULE],       t:[mod] };
-  update.example_2_2        = { f:[MODULE],       t:[mod] };
-  update.example_2_3        = { f:[MODULE],       t:[mod] };
-  update.example_2_4        = { f:[MODULE],       t:[mod] };
-*/
-//jsdump(uneval(update));  
+  
+  // list new values of attributes of special bookmarks that need to be localized
+  update[BM.AllBookmarksID] = { attribs:[NAME],         vals:[b.GetStringFromName("BookmarksRoot")] };
+  update[BM.BmEmptyID]      = { attribs:[NAME],         vals:[b.GetStringFromName("emptyFolder")] };
+  
+  // localize the default bookmarks in defaults/bookmarks.rdf
+  update.example_usernote   = { attribs:[NOTE],         vals:[b.GetStringFromName("exampleDescription")] };
+  update.example_folder     = { attribs:[NAME, NOTE],   vals:[b.GetStringFromName("exampleFolder"), b.GetStringFromName("exampleDescription")] };
+  update.example_1          = { attribs:[NAME],         vals:[b.GetStringFromName("exampleSubFolder1")] };
+  update.example_1_1        = {};
+  update.example_1_2        = {};
+  update.example_1_3        = {};
+  update.example_1_4        = {};
+  update.example_1_5        = {};
+  update.example_1_6        = {};
+  update.example_1_7        = {};
+  update.example_1_8        = {};
+  update.example_2          = { attribs:[NAME],         vals:[b.GetStringFromName("exampleSubFolder2")] };
+  update.example_2_1        = {};
+  update.example_2_2        = {};
+  update.example_2_3        = {};
+  update.example_2_4        = {};
+
   for (var bmid in update) {
-    var bmobj = update[bmid];
+    var newBM = update[bmid];
     if (bmid.indexOf("http") != 0) bmid = "rdf:#" + bmid;
+    if (!newBM.hasOwnProperty("attribs")) {newBM.attribs = []; newBM.vals = [];}
+    
+    // just bail if this bookmark doesn't exist or was deleted
+    if (!BMDS.ArcLabelsOut(BM.RDF.GetResource(bmid)).hasMoreElements()) continue;
     
     var info = ResourceFuns.BmGetInfo(bmid);
-//jsdump("#1=" + uneval(info));    
-    // remove all info which should update
-    var rem = [NAME, NOTE, MODULE, BMTEXT, ICON, VISITEDDATE, NAMELOCALE, NOTELOCALE];
-    for (var x=0; x<rem.length; x++) {info[x] = null;}
-
-    // now add info from our update object
-    for (var i=0; i<bmobj.f.length; i++) {
-      info[bmobj.f[i]] = bmobj.t[i];
+    
+    if (info[TYPE] == "Bookmark") {
+			
+			// translate this bookmark's location into the new module's verse system if necessary
+			var toLoc = info[LOCATION];
+			var toVsys = LibSword.getVerseSystem(mod);
+			if (toVsys != "KJV") toLoc = LibSword.convertLocation("KJV", toLoc, toVsys);
+			
+			// (re)set location attributes
+			toLoc = toLoc.split(".");
+			newBM.attribs.push(MODULE);    newBM.vals.push(mod);
+			newBM.attribs.push(BOOK);      newBM.vals.push(toLoc[0]);
+			newBM.attribs.push(CHAPTER);   newBM.vals.push(toLoc[1]);
+			newBM.attribs.push(VERSE);     newBM.vals.push(toLoc[2]);
+			newBM.attribs.push(LASTVERSE); newBM.vals.push(toLoc.length > 3 ? toLoc[3]:toLoc[2]);
+		}
+		
+    // now write all new values from our update object
+    for (var i=0; i<newBM.attribs.length; i++) {
+      info[newBM.attribs[i]] = newBM.vals[i];
     }
-//jsdump("#1=" + uneval(info));     
-    // now fill in the gaps
+
+    // now update dependencies
+    var clear = [BMTEXT, ICON, CREATIONDATE, NAMELOCALE, NOTELOCALE];
+    if (info[TYPE] == "Bookmark") clear.push(NAME);
+    for (var i=0; i<clear.length; i++) {info[clear[i]] = null;}
     BookmarkFuns.completeBMInfo(info);
     
-    // save our updated bookmark
+    // write our updated bookmark info
     BookmarkFuns.updateBookmarkProperties(bmid, info);
   }
   

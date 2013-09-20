@@ -113,8 +113,9 @@ function loadedXUL2() {
   }
   
   // Add some numeric access keys but only if parent has an access key...
-  function addAccessKeyIf(sc, id) {
-    if ((/^\s*$/).test(getDataUI(sc)) || !(/\(n\)/).test(id)) return;
+  function addAccessKeyIf(scelem, id) {
+		if ((/^\s*$/).test(document.getElementById(scelem).getAttribute("accesskey")) ||
+				!(/\(n\)/).test(id)) return;
     var n = 0;
     while (true) {
       var elem = document.getElementById(id.replace("(n)", n));
@@ -123,14 +124,14 @@ function loadedXUL2() {
       n += 1;
     }
   }
-  addAccessKeyIf("menu.windows.sc", "w(n)");
-  addAccessKeyIf("menu.options.font.sc", "f(n)");
-  addAccessKeyIf("menu.view.showtexttabs.sc", "winRadio.(n).Texts");
-  addAccessKeyIf("menu.view.showcommtabs.sc", "winRadio.(n).Comms");
-  addAccessKeyIf("menu.view.showbooktabs.sc", "winRadio.(n).Genbks");
-  addAccessKeyIf("menu.view.showdicttabs.sc", "winRadio.(n).Dicts");
-  addAccessKeyIf("menu.view.showAll.sc", "allTabs.w(n)");
-  addAccessKeyIf("menu.view.hideAll.sc", "noTabs.w(n)");
+  addAccessKeyIf("window-menu", "w(n)");
+  addAccessKeyIf("sub-fs", "f(n)");
+  addAccessKeyIf("sub-Texts", "winRadio.(n).Texts");
+  addAccessKeyIf("sub-Comms", "winRadio.(n).Comms");
+  addAccessKeyIf("sub-Genbks", "winRadio.(n).Genbks");
+  addAccessKeyIf("sub-Dicts", "winRadio.(n).Dicts");
+  addAccessKeyIf("allTabs.submenu", "allTabs.w(n)");
+  addAccessKeyIf("noTabs.submenu", "noTabs.w(n)");
   
   // Listen for keypresses on search textbox (for return key)
   document.getElementById("searchText").addEventListener("keypress", 
@@ -540,7 +541,6 @@ function fillModuleMenuLists() {
       var sepShowAll = "sepShowAll-" + type;
       if (!moduleTypeCounts[type]) moduleTypeCounts[type]=1;
       else moduleTypeCounts[type]++;
-      //if (moduleTypeCounts[type]<10) xulElement.setAttribute("accesskey", String(moduleTypeCounts[type]));
       document.getElementById(subPup).insertBefore(xulElement, document.getElementById(sepShowAll));
     }
   }
@@ -1195,14 +1195,11 @@ function handleOptions(elem) {
       break;
 
     case "winRadio":
-      var wins = ["1","2","3","all"];
       for (var shortType in SupportedModuleTypes) {
-        for (var i=0; i<wins.length; i++){
-          if (wins[i] == id[1]) {
-            document.getElementById("winRadio." + id[1] + "." + shortType).setAttribute("checked", "true");
-          }
-          else document.getElementById("winRadio." + wins[i] + "." + shortType).removeAttribute("checked");
-        }
+				for (var i=1; i<=(NW+1); i++) {
+					document.getElementById("winRadio." + i + "." + shortType).removeAttribute("checked");
+				}
+				document.getElementById("winRadio." + id[1] + "." + shortType).setAttribute("checked", "true");
       }
       updateModuleMenuCheckmarks();
       insureValidTextSelections();
@@ -1226,14 +1223,12 @@ function handleOptions(elem) {
       
     case "allTabs":
       var w = id[1].match(/^w(\d)$/);
-      if (w) setAllTabs(true, w[1]);
-      else setAllTabs(true);
+      setAllTabs(true, w[1]);
       break;
       
     case "noTabs":
       var w = id[1].match(/^w(\d)$/);
-      if (w) setAllTabs(false, w[1]);
-      else setAllTabs(false);
+      setAllTabs(false, w[1]);
       break;
       
     case "langMenu":
@@ -1279,8 +1274,8 @@ function checkMenuHide(elem, e) {
 
 // Shows or hides all tabs for: if w is passed then window w, otherwise all windows
 function setAllTabs(toShowing, w) {
-  if (w) {var s=w; var e=w;}
-  else {s=1; e=3;}
+  if (w<4) {var s=w; var e=w;}
+  else {s=1; e=NW;}
   for (var i=s; i<=e; i++) {
     for (var t=0; t<Tabs.length; t++) {
       var toggleMe = (toShowing ? Tabs[t]["w" + i + ".hidden"]:!Tabs[t]["w" + i + ".hidden"]);
@@ -1294,18 +1289,16 @@ function setAllTabs(toShowing, w) {
 }
 
 function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
-  var rs = getRadioSelection(subPupId);
+  var rs = getWinRadioSelection(subPupId);
   var aWindowNum = rs;
-  if (aWindowNum <= 3) var sw=aWindowNum;
-  else {sw=1; aWindowNum=3;}
+  if (aWindowNum <= NW) var sw=aWindowNum;
+  else {sw=1; aWindowNum=NW;}
   
   for (var i=sw; i<=aWindowNum; i++) {
     switch (id) {
     case "modulemenu":
       if (oldCheckedValue != Tabs[tabNum]["w" + i + ".hidden"]) {
         Tabs[tabNum]["w" + i + ".hidden"] = !Tabs[tabNum]["w" + i + ".hidden"] ;
-        updateModuleMenuCheckmarks();
-        insureValidTextSelections();
       }
       break;
     case "showAllTabs":
@@ -1317,20 +1310,20 @@ function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
         var toggleMe = (id=="showNoTabs" ? !Tabs[t]["w" + i + ".hidden"]:Tabs[t]["w" + i + ".hidden"]);
         if (toggleMe) Tabs[t]["w" + i + ".hidden"] = !Tabs[t]["w" + i + ".hidden"];
       }
-      insureValidTextSelections();
       break;
     }
   }
   
-  Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+	updateModuleMenuCheckmarks();
+	insureValidTextSelections();
+	Texts.update(SCROLLTYPETOP, HILIGHTNONE);
 
 }
 
-function getRadioSelection(type) {
-  var radios = ["1", "2", "3", "all"];
-  for (var r=0; r<radios.length; r++) {
-    var elem = document.getElementById("winRadio." + radios[r] + "." + type);
-    if (elem.getAttribute("checked") == "true") return r+1;
+function getWinRadioSelection(type) {
+  for (var r=1; r<=(NW+1); r++) {
+    var elem = document.getElementById("winRadio." + r + "." + type);
+    if (elem.getAttribute("checked") == "true") return r;
   }
   return 4;
 }
@@ -1349,6 +1342,8 @@ function changeLocaleTo(newLocale) {
 }
 
 function updateXulswordButtons() {
+	
+	// update global toggle menu and buttons
   var checkboxes = ["cmd_xs_toggleHebrewCantillation", "cmd_xs_toggleHebrewVowelPoints"];
   for (var cmd in GlobalToggleCommands) {
     var checkbox=false;
@@ -1362,7 +1357,7 @@ function updateXulswordButtons() {
       LibSword.setGlobalOption(GlobalToggleCommands[cmd], prefs.getCharPref(GlobalToggleCommands[cmd]));
   }
   
-  // Menu Checkboxes
+  // update language menu
   var myLocale = getLocale();
   if (document.getElementById("sub-lang").getAttribute("disabled") != "true") {
     for (var lc in LocaleConfigs) {
@@ -1371,26 +1366,28 @@ function updateXulswordButtons() {
       lmenu.setAttribute("checked",(lc == myLocale ? true:false));
     }
   }
+  
+  // update font size menu
   document.getElementById("f0").setAttribute("checked",(prefs.getIntPref("FontSize")==-4 ? true:false));
   document.getElementById("f1").setAttribute("checked",(prefs.getIntPref("FontSize")==-2 ? true:false));
   document.getElementById("f2").setAttribute("checked",(prefs.getIntPref("FontSize")==0 ? true:false));
   document.getElementById("f3").setAttribute("checked",(prefs.getIntPref("FontSize")==2 ? true:false));
   document.getElementById("f4").setAttribute("checked",(prefs.getIntPref("FontSize")==4 ? true:false));
+  
+  // update show notes in popup/footnote-box
   document.getElementById("note0").setAttribute("checked",(prefs.getBoolPref("ShowFootnotesAtBottom") ? false:true));
   document.getElementById("note1").setAttribute("checked",(prefs.getBoolPref("ShowFootnotesAtBottom") ? true:false));
   document.getElementById("note2").setAttribute("checked",(prefs.getBoolPref("ShowCrossrefsAtBottom") ? false:true));
   document.getElementById("note3").setAttribute("checked",(prefs.getBoolPref("ShowCrossrefsAtBottom") ? true:false));
   document.getElementById("note4").setAttribute("checked",(prefs.getBoolPref("ShowUserNotesAtBottom") ? false:true));
   document.getElementById("note5").setAttribute("checked",(prefs.getBoolPref("ShowUserNotesAtBottom") ? true:false));
+  
+  // update window menu
   document.getElementById("w1").setAttribute("checked",(ViewPort.NumDisplayedWindows==1 ? true:false));
   document.getElementById("w2").setAttribute("checked",(ViewPort.NumDisplayedWindows==2 ? true:false));
   document.getElementById("w3").setAttribute("checked",(ViewPort.NumDisplayedWindows==3 ? true:false));
   
-  for (var shortType in SupportedModuleTypes) {
-    document.getElementById("winRadio." + getPrefOrCreate("ModuleMenuRadioSetting", "Char", "all") + "." + shortType).setAttribute("checked", true);
-   } 
-  
-  // Enabled/Disable some menus based on settings
+  // disable show notes in popup/footnote-box menus if related footnotes are off
   if (LibSword.getGlobalOption("Footnotes") == "On") {document.getElementById("sub-fn").setAttribute("disabled",false);}
   else {document.getElementById("sub-fn").setAttribute("disabled",true);}
   if (LibSword.getGlobalOption("Cross-references") == "On")  {document.getElementById("sub-cr").setAttribute("disabled",false);}
@@ -1410,20 +1407,22 @@ function updateXulswordCommands() {
 }
 
 function updateModuleMenuCheckmarks() {
-//jsdump("RUNNING UPDATE MODULE MENU CHECKMARKS");
+
   for (var t=0; t<Tabs.length; t++) {
-    var aWindowNum = getRadioSelection(Tabs[t].tabType);
+		
+    var aWindowNum = getWinRadioSelection(Tabs[t].tabType);
     var checked = true;
-    if (aWindowNum <= 3) var sw = aWindowNum;
-    else {sw=1; aWindowNum=3;}
+    if (aWindowNum <= NW) var sw = aWindowNum;
+    else {sw=1; aWindowNum=NW;}
     for (var w=sw; w<=aWindowNum; w++) {
       checked &= !Tabs[t]["w" + w + ".hidden"];
     }
-    checked = (checked ? "true":"false");
-    document.getElementById("modulemenu." + t).setAttribute("checked", checked);
-      
-//jsdump(Tabs[t].modName + "=" + checked);
+
+    if (checked) document.getElementById("modulemenu." + t).setAttribute("checked", "true");
+    else document.getElementById("modulemenu." + t).removeAttribute("checked");
+    
   }
+  
 }
 
 function insureValidTextSelections() {
