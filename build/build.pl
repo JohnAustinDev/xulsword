@@ -93,7 +93,7 @@ if ($MakeFFextension =~ /true/i) {
   $BuildID = sprintf("%02d%02d%02d_%dE", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
   if (-e $FFEXTENSION) {&cleanDir($FFEXTENSION);}
   else {make_path($FFEXTENSION);}
-  &compileLibSword($FFEXTENSION, 1);
+  &compileLibSword($FFEXTENSION, ("$^O" =~ /MSWin32/i ? 1:0));
   my @manifest;
   # the Firefox extension needs a Firefox overlay to put a startup button in the tools menu
   push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/startup/extension-overlay.xul");
@@ -624,7 +624,7 @@ sub createLocale($) {
   system("$TRUNK/localeDev/UI-code.pl", $TRUNK, $XulswordExtras, $locale);
 
   if (compare("$ldir/code_log.txt", "$ldir/code_log-bak.txt") != 0) {
-    &Log("WARNING: $locale LOG FILE HAS CHANGED. PLEASE CHECK IT: \"$ldir/code_log.txt\".\n");
+    #&Log("WARNING: $locale LOG FILE HAS CHANGED. PLEASE CHECK IT: \"$ldir/code_log.txt\".\n");
   }
   unlink("$ldir/code_log-bak.txt");
   

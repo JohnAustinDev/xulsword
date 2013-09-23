@@ -113,7 +113,7 @@ LibSword = {
     try {this.libsword = ctypes.open(this.LibswordPath);}
     catch (er) {
       window.alert("Could not load " + this.LibswordPath);
-      if (OPSYS == "Linux") {window.alert("These Linux libraries must be installed:	libz, libm, libc, libstdc++, libgcc_s, libpthread");}
+      if (OPSYS == "Linux") {window.alert("Maybe one of these Linux libraries is not installed:	libsword, libz, libm, libc, libstdc++, libgcc_s, libpthread");}
       this.loadFailed = true;
       this.libsword = null;
       return;
