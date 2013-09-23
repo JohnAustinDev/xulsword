@@ -120,7 +120,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
             } while (++i < count);
           }
           snumbers.replaceBytes(".", ' '); // Changed in xulsword 3+
-          if (tag.getAttribute("lemma") || tag.getAttribute("morph")) {
+          if (!tag.isEmpty() && (tag.getAttribute("lemma") || tag.getAttribute("morph"))) {
             buf.appendFormatted("<span class=\"sn %s\">", snumbers.c_str());
 						u->w = "keep";
 					}
