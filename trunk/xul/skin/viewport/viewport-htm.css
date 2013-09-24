@@ -453,6 +453,10 @@ body[isWindow="true"] .sbwin {
   width:15px;
   height:14px;
 }
+.text[textdir="rtl"] .nbsizer {
+	right:auto;
+	left:42px;
+}
 .text[footnotesMaximized="true"] .nbsizer {
   background:url(chrome://xulsword/skin/images/norm.bmp);
 }

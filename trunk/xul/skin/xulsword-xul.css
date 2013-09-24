@@ -81,11 +81,11 @@
   list-style-image: url("chrome://xulsword/skin/images/dictionary.png") !important;
   -moz-box-orient: vertical;
 }
-toolbarbutton[class="togglebutton"] {
+button[class="togglebutton"] {
   color: black; 
   -moz-image-region: rect(0px, 64px, 28px, 32px) !important;
 }
-toolbarbutton[class="togglebutton"][value="true"] {
+button[class="togglebutton"][value="true"] {
   color: blue; 
   -moz-image-region: rect(0px, 32px, 28px, 0px) !important;
 }
@@ -162,7 +162,7 @@ menu#sub-Genbks {
 #back:not([disabled="true"]):hover {
   -moz-image-region: rect(0px, 44px, 14px, 22px) !important;
 }
-#back[chromedir="rtl"] {
+window[chromedir="rtl"] #back {
   list-style-image: url("chrome://xulsword/skin/images/forward.png") !important;
 }
 #forward {
@@ -178,7 +178,7 @@ menu#sub-Genbks {
 #forward:not([disabled="true"]):hover {
   -moz-image-region: rect(0px, 44px, 14px, 22px) !important;
 }
-#forward[chromedir="rtl"] {
+window[chromedir="rtl"] #forward {
   list-style-image: url("chrome://xulsword/skin/images/back.png") !important;
 }
 
