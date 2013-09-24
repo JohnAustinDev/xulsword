@@ -617,7 +617,7 @@ function SearchObj(searchObj) {
           
           // format and save the results
           var dictinfo = DictTexts.getStrongsModAndKey(classes[i]);
-          html += "<span class=\"slist cs-" + DEFAULTLOCALE + "\" title=\"" + encodeURIComponent(dictinfo.key) + "." + dictinfo.mod + "\">";
+          html += "<span class=\"slist cs-Program\" title=\"" + encodeURIComponent(dictinfo.key) + "." + dictinfo.mod + "\">";
           
           var strongNum = classes[i].replace("S_", "");
           html +=   "<a " + (dictinfo.mod && dictinfo.key ? "class=\"sn " + classes[i] + "\" ":"");
@@ -627,7 +627,7 @@ function SearchObj(searchObj) {
           html +=   "</a>";
           
           html +=   "<span class=\"lex-total\">" + dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count) + "</span>";
-          html +=   "<span class=\"cs-" + DEFAULTLOCALE + "\">";
+          html +=   "<span class=\"cs-" + mod + "\">";
           for (var j=0; j<lexicon.length; j++) {
             html +=   "<span class=\"lex-text\">" + lexicon[j].text + "</span>";
             html +=   "<span class=\"lex-count\">" + lexicon[j].count + "</span>";
@@ -710,7 +710,7 @@ function SearchObj(searchObj) {
         html += "<span class=\"strongs-type\">" + mtype + "</span>";
         html +=   "<span class=\"lex-total\">" + dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count) + "</span>";
 
-        html +=   "<span class=\"cs-" + DEFAULTLOCALE + "\">";
+        html +=   "<span class=\"cs-Program\">";
         for (var j=0; j<strongsList[type].length; j++) {
 					var strongNum = strongsList[type][j].strongs.replace("S_", "");
           var sti = DictTexts.getStrongsModAndKey(strongsList[type][j].strongs);
