@@ -34,6 +34,7 @@ Location = {
   lastverse:null,
 
   convertLocation: function(vsys1, xsref, vsys2) {
+    if (!vsys1 || !xsref || !vsys2) return null;
     var p = xsref.split(".");
     var vzero = false;
     if (p && (p.length==3 || p.length==4) && p[2]==0) {

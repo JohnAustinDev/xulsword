@@ -100,6 +100,9 @@ body[chromedir="rtl"] .nb #npopup {
 #search-content .slist > a #npopup #npopupBOX {
   left:0px;
 }
+body[chromedir="rtl"] #search-content .slist > a #npopup #npopupBOX {
+	left:calc(40px - 100%);
+}
 /* Strong's popups are offset so that their underlying text
 can be read after the popup is open. "top" values here must
 be in px for Javascript. */
