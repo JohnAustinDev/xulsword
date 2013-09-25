@@ -50,12 +50,6 @@ toolbar[printpreview="true"]:-moz-locale-dir(rtl) {
 reference-dropdown {
   -moz-binding: url("chrome://xulsword/content/common/referenceDropdown.xml#reference-dropdown");
 }
-reference-textbox, reference-textbox[type="textbox"] {
-  -moz-binding: url("chrome://xulsword/content/scriprefTextbox.xml#scripref-textbox");
-}
-reference-textbox[type="dropdown"] {
-  -moz-binding: url("chrome://xulsword/content/scriprefTextbox.xml#scripref-textbox-dropdown");
-}
 reference-dropdown menulist[anonid="book"] {
   -moz-margin-end:9px;
 }
