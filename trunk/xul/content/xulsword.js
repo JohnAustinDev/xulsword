@@ -160,6 +160,7 @@ function loadedXUL2() {
   else if (LibSword.loadFailed) window.close(); // nothing we can to here...
   
   // otherwise, no Bibles loaded leaves user with choice to exit or install a module.
+	else XulswordController.doCommand("cmd_xs_addRepositoryModule");
   
   jsdump("Initilization Complete\n");
 }

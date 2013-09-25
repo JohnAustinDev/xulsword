@@ -3,21 +3,21 @@
 
 # BUILD WHAT?
 Set MakeDevelopment=true
-Set MakeFFextension=false
-Set MakePortable=false
+Set MakeFFextension=true
+Set MakePortable=true
 Set MakeSetup=false
 
 # SPECIFY PATHS
-Set CluceneSource=C:\home\dev\mk-dev\Cpp\clucene-core-0.9.21b
-Set SwordSource=C:\home\dev\mk-dev\Cpp\sword-svn
-Set OutputDirectory=C:\home\dev\mk-dev\build-out
+Set CluceneSource=C:\dev\mk-dev\Cpp\clucene-core-0.9.21b
+Set SwordSource=C:\dev\mk-dev\Cpp\sword-svn
+Set OutputDirectory=C:\dev\mk-dev\build-out
 Set ModuleRepository1=X:\repository\modsword\raw
-Set ModuleRepository2=C:\home\dev\repository
-Set XulswordExtras=C:\home\dev\sup-dev
+Set ModuleRepository2=C:\dev\repository
+Set XulswordExtras=C:\dev\sup-dev
 
 # PATHS NEEDED FOR WINDOWS ONLY:
-Set XULRunner=C:\home\dev\mk-dev\xulrunner
-Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v6.1
+Set XULRunner=C:\dev\mk-dev\xulrunner
+Set MicrosoftSDK=C:\Program Files\Microsoft Platform SDK
 
 # SPECIFY BUILD INFORMATION
 Set Version=3.6
@@ -25,9 +25,9 @@ Set Name=xulsword
 Set Vendor=CrossWire
 Set Executable=xulsword
 Set GeckoMinVersion=7.0
-Set GeckoMaxVersion=30.*
+Set GeckoMaxVersion=50.*
 Set XULToolkitVersion=22
-Set (prefs.js):extensions.xulsword.EngineVersion=1.7.0
+Set (prefs.js):extensions.xulsword.EngineVersion=1.7
 Set (prefs.js):extensions.xulsword.MinXSMversion=1.0
 Set (prefs.js):extensions.xulsword.MinUIversion=3.6
 Set (prefs.js):extensions.xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
@@ -47,8 +47,8 @@ Set (language.js):general.useragent.locale=en-US
 Set IncludeLocales=en-US
 
 # MODULES TO INCLUDE IN BUILD
-# Note StrongsGreek,StrongsHebrew,Robinson are used for original lang features
-Set IncludeModules=KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson
+# Note: KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson are used for original lang features
+Set IncludeModules=
 
 # INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
 Set IncludeIndexes=false
