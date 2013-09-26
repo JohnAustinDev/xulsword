@@ -17,6 +17,17 @@ if (!$SETTING) {$SETTING = "build_settings.txt";}
 &readSettings("build_prefs.txt");
 &readSettings($SETTING);
 
+# Don't accidently run with Windows path names in Linux...
+@PathNames = ("CluceneSource", "SwordSource", "OutputDirectory", "ModuleRepository1", "ModuleRepository2", "XulswordExtras");
+foreach my $path (@PathNames) {
+	my $isWindowsPath = $$path=~/^\w\:/;
+	my $isWindows = "$^O" =~ /MSWin32/i;
+	if ($isWindows && !$isWindowsPath || !$isWindows && $isWindowsPath) {
+		&Log("ERROR: Path name \"$$path\" does not match your operating system.\n");
+		die;
+	}
+}
+
 $WINprocess = "$Executable-srv.exe";
 @ModRepos = ($ModuleRepository1, $ModuleRepository2);
 
@@ -93,7 +104,7 @@ if ($MakeFFextension =~ /true/i) {
   $BuildID = sprintf("%02d%02d%02d_%dE", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
   if (-e $FFEXTENSION) {&cleanDir($FFEXTENSION);}
   else {make_path($FFEXTENSION);}
-  &compileLibSword($FFEXTENSION, ("$^O" =~ /MSWin32/i ? 1:0));
+  &compileLibSword($FFEXTENSION, 1);
   my @manifest;
   # the Firefox extension needs a Firefox overlay to put a startup button in the tools menu
   push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/startup/extension-overlay.xul");
