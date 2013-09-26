@@ -150,14 +150,22 @@ function loadedXUL2() {
   // close splash window
   if (window.opener && window.opener.document.title == "Splash")
       window.opener.close(); // Close hidden startup window (which in turn closes visible splash window)
-  
+ 
   if (LibSword.hasBible) {
     //we're ok!
     // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
     Texts.update(SCROLLTYPEBEG, HILIGHT_IFNOTV1);
-    window.setTimeout("postWindowInit()", 1000); 
+    window.setTimeout("postWindowInit()", 1); 
   }
-  else if (LibSword.loadFailed) window.close(); // nothing we can to here...
+  else if (LibSword.loadFailed) {
+		window.setTimeout(function() {
+			window.alert("Could not load " + LibSword.LibswordPath.replace(/^.*?[\\\/]([^\\\/]+)$/, "$1"));
+			if (OPSYS == "Linux") {
+				window.alert("\n\nRun:\n\n$ ldd \"" + LibSword.LibswordPath + "\"\n\nInstall any libraries listed as: \"not found\".");
+			}
+			window.close(); // nothing we can to here...
+		}, 1);
+	}
   
   // otherwise, no Bibles loaded leaves user with choice to exit or install a module.
 	else XulswordController.doCommand("cmd_xs_addRepositoryModule");
