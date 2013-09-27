@@ -13,3 +13,20 @@ groupbox > grid {
 groupbox caption {
   background:-moz-Dialog;
 }
+
+/* MENU ICONS (hidden by default on Linux so make visible always) */
+.menu-iconic-left {
+  visibility:visible !important;
+}
+
+/* BUTTON ICONS (hidden by default on Linux so make visible always) */
+#back .button-icon,
+#historymenu .button-icon,
+#forward .button-icon,
+#searchButton .button-icon,
+#hdbutton .button-icon,
+#fnbutton .button-icon,
+#crbutton .button-icon,
+#dtbutton .button-icon {
+  display: -moz-box;
+}

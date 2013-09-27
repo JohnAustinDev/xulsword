@@ -118,7 +118,3 @@ groupbox {
   margin:-6px 0px 0px 0px;
 }
 
-/* MENU ICONS (hidden by default on Linux so make visible always) */
-.menu-iconic-left {
-  visibility:visible !important;
-}

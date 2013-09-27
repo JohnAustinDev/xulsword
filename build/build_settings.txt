@@ -8,24 +8,14 @@ Set MakePortable=true
 Set MakeSetup=false
 
 # SPECIFY PATHS
-# MS-Windows paths example
-#Set CluceneSource=C:\dev\mk-dev\Cpp\clucene-core-0.9.21b
-#Set SwordSource=C:\dev\mk-dev\Cpp\sword-svn
-#Set OutputDirectory=C:\dev\mk-dev\build-out
-#Set ModuleRepository1=X:\repository\modsword\raw
-#Set ModuleRepository2=C:\dev\repository
-#Set XulswordExtras=C:\dev\sup-dev
-
-# Linux paths example
-Set CluceneSource=~/xulsword/mk-dev/Cpp/clucene-core-0.9.21b
-Set SwordSource=~/xulsword/mk-dev/Cpp/sword-svn
-Set OutputDirectory=~/xulsword/mk-dev/build-out
-Set ModuleRepository1=~/.sword
+Set CluceneSource=../Cpp/clucene-core-0.9.21b
+Set SwordSource=../Cpp/sword-svn
+Set XulswordExtras=../../mk-sup/
+Set ModuleRepository1=
 Set ModuleRepository2=
-Set XulswordExtras=~/xulsword/mk-sup/
 
 # PATHS NEEDED FOR MS-WINDOWS ONLY:
-Set XULRunner=C:\dev\mk-dev\xulrunner
+Set XULRunner=..\xulrunner
 Set MicrosoftSDK=C:\Program Files\Microsoft Platform SDK
 
 # SPECIFY BUILD INFORMATION

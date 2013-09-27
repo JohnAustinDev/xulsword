@@ -10,20 +10,20 @@ $TRUNK =~ s/\\/\//g;
 $LOGFILE = File::Spec->rel2abs( __FILE__ );
 $LOGFILE .= "_log.txt";
 if (-e $LOGFILE) {unlink($LOGFILE);}
+$OutputDirectory = File::Spec->rel2abs("../build-out");
 require "$TRUNK/build/script/common.pl";
 
 $SETTING = shift;
 if (!$SETTING) {$SETTING = "build_settings.txt";}
 &readSettings("build_prefs.txt");
 &readSettings($SETTING);
+if ("$^O" !~ /MSWin32/i) {$XULRunner = ""; $MicrosoftSDK = "";}
 
-# Don't accidently run with Windows path names in Linux...
-@PathNames = ("CluceneSource", "SwordSource", "OutputDirectory", "ModuleRepository1", "ModuleRepository2", "XulswordExtras");
+# Check that paths exist
+@PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK");
 foreach my $path (@PathNames) {
-	my $isWindowsPath = $$path=~/^\w\:/;
-	my $isWindows = "$^O" =~ /MSWin32/i;
-	if ($isWindows && !$isWindowsPath || !$isWindows && $isWindowsPath) {
-		&Log("ERROR: Path name \"$$path\" does not match your operating system.\n");
+	if ($$path && !-e $$path) {
+		&Log("ERROR: File \"$$path\" does not exist.");
 		die;
 	}
 }
