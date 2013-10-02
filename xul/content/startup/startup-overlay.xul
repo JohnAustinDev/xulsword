@@ -1,0 +1,182 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of xulSword.
+
+    Copyright 2013 John Austin (gpl.programs.info@gmail.com)
+
+    xulSword is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    xulSword is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
+
+<!DOCTYPE window [
+	<!ENTITY % startupDTD SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
+	%startupDTD;
+	<!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+	%globalDTD;
+]>
+
+<overlay xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	
+<script>
+	window.name = "main-window";
+	var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+			.getService(Components.interfaces.nsIWindowWatcher);
+	var MainWindow = watcher.getWindowByName("xulsword-window", window);
+	var AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs, Book;
+</script>
+
+<script>XSBundle = document.getElementById("strings"); AllWindows = [];</script>
+	
+<script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+<script>rootprefs.setCharPref("intl.uidirection." + getLocale(), getDataUI("locale.dir"));</script>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
+<script>initLogging();</script>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkDataInit.js"/>
+<script>BM = {}; BMDS = initBMServices(BM);</script>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
+<script>AudioDirs = getAudioDirs();</script>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/bibleBooks.js"/>
+<script>Book = getBibleBooks();</script>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
+
+<script>
+<![CDATA[
+	
+	var SplashScreen;
+	
+	// endInstall is called by newModule.js when module installation is complete
+	function endInstall() {
+		if (WillRestart) return;
+		
+		if (!IsExtension) {
+			var installOnly = false;
+			try {
+				installOnly = prefs.getBoolPref("xsInstallOnly");
+				prefs.setBoolPref("xsInstallOnly", false);
+				prefs.clearUserPref("xsInstallOnly");
+			}
+			catch(er) {installOnly = false;} // if pref did not exist
+			
+			// Are we just installing modules, but not starting xulsword?
+			// Or is MainWindow already open? Then we're done...
+			if (installOnly || MainWindow) window.close();
+		
+			// Otherwise open the visible splash screen and start the main xulsword window
+		}
+		
+		SplashScreen = window.open("chrome://xulsword/content/startup/banner.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable");
+		window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul', 'xulsword-window', 'chrome,resizable')", 300);
+
+		// xulsword.xul may close this window during MainWindow init,
+		// and then this window's onunload will close the visible splash screen.
+	}
+
+	function unload() {
+		if (SplashScreen) {SplashScreen.close();}
+		
+		if (!IsExtension) {
+			try {var installOnly = prefs.getBoolPref("xsInstallOnly");}
+			catch (er) {installOnly = false;}
+			
+			if (installOnly) {
+				jsdump("Quiting... xsInstallOnly command line flag was set.");
+				var mutex = getSpecialDirectory("TmpD");
+				mutex.append("xsInstallOnlyMutex");
+				if (mutex.exists()) mutex.remove(false); // siginify to caller that we're done installing
+			}
+		}
+		
+	}
+	
+	////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////
+	// This window creates xulsword profile directories, installs modules, 
+	// and then either quits (if xsInstallOnly is set) or opens the splash window
+	// and main xulsword window (the usual occurence). The main xulsword window 
+	// closes this hidden window during its init sequence, which in turn closes the
+	// visible splash window.
+
+	function startxulsword() {
+		createAppDirectories();
+	
+		if (!IsExtension) {
+			window.screenX = window.screen.width/2-50;
+			window.screenY = window.screen.height/2-50;
+
+			// Scripts or programs that need to block while xulsword performs
+			// command line module installation (the xsInstallOnly command line 
+			// option), will get confused if xulsword needs to restart. Hence 
+			// we need xsInstallOnlyMutex. Xulsword will delete the mutex file 
+			// when it is done installing to signify to the caller that 
+			// installation is complete. The xsInstallOnly pref is set by
+			// xulsword's command line handler component: xscommandline.js.
+			try {var installOnly = prefs.getBoolPref("xsInstallOnly");} 
+			catch (er) {installOnly = false;}
+			if (installOnly) {
+				var mutex = getSpecialDirectory("TmpD");
+				mutex.append("xsInstallOnlyMutex");
+				if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
+			}
+		}
+		
+		// If the FirstRunXSM pref is set, then install the XSM module
+		try {
+			var firstRunXSM = prefs.getCharPref("FirstRunXSM");
+			prefs.setCharPref("FirstRunXSM", "");
+		}
+		catch(er) {firstRunXSM = "";}
+		if (firstRunXSM) {
+			var xsm = getSpecialDirectory("xsDefaults");
+			xsm.append(firstRunXSM);
+			if (xsm.exists()) installModuleArray(finishAndStartXulSword2, [xsm]);
+		}
+		else moduleInstall(false); // this will call endInstall() when complete...
+		
+	}
+	
+	// Extensions do not start xulsword during load, so a pref is used to
+	// indicated xulsword should be restarted
+	if (IsExtension) {
+		try {var restartXulsword = prefs.getBoolPref("RestartXulsword");}
+		catch (er) {restartXulsword = false;}
+
+		try {prefs.clearUserPref("RestartXulsword");}
+		catch (er) {}
+
+		if (restartXulsword) startxulsword();
+	}
+	
+]]>
+</script>
+	
+<window id="main-window" onunload="unload();">
+	
+	<stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+	
+	<data id="ui.menu.addNewModule.label">&menu.addNewModule.label;</data>
+	<data id="ui.menu.importAudio.label">&menu.importAudio.label;</data>
+	<data id="ui.dlgFrom">&dlgFrom;</data>
+	<data id="ui.dlgTo">&dlgTo;</data>
+	<data id="ui.locale.dir">&locale.dir;</data>
+	
+</window>
+
+</overlay>
