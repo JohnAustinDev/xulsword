@@ -62,8 +62,8 @@
 
 <window
     id="xulsword-window" xmlns:html="http://www.w3.org/1999/xhtml"
-    width="1024" height="738" screenX="50" screenY="50"
-    persist="width height screenX screenY sizemode"
+    width="1024" height="738"
+    persist="width height sizemode"
     onload="loadedXUL()"
     onunload="unloadXUL()"
     ondragover="nsDragAndDrop.dragOver(event,fileObserver)"

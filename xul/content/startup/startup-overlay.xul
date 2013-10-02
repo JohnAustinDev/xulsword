@@ -83,7 +83,7 @@
 		}
 		
 		SplashScreen = window.open("chrome://xulsword/content/startup/banner.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable");
-		window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul', 'xulsword-window', 'chrome,resizable')", 300);
+		window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul', 'xulsword-window', 'chrome,centerscreen,resizable')", 300);
 
 		// xulsword.xul may close this window during MainWindow init,
 		// and then this window's onunload will close the visible splash screen.
