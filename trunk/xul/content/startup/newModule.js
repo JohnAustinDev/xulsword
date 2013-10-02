@@ -1223,7 +1223,7 @@ function installFont(aFontFile) {
     newfont.append(aFontFile.leafName);
     if (newfont.exists()) return false;
     
-    aFontFile.copyTo(fonts, newfont);
+    aFontFile.copyTo(fonts, newfont.leafName);
   }
 
   return true;

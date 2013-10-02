@@ -1,17 +1,90 @@
 <?xml version="1.0"?>
 
-<!DOCTYPE window SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
+<!DOCTYPE window [
+  <!ENTITY % startupDTD SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
+  %startupDTD;
+  <!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+  %globalDTD;
+]>
 
 <overlay id="xulsword-overlay" xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
+<stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+
+<data id="ui.menu.addNewModule.label">&menu.addNewModule.label;</data>
+<data id="ui.menu.importAudio.label">&menu.importAudio.label;</data>
+<data id="ui.dlgFrom">&dlgFrom;</data>
+<data id="ui.dlgTo">&dlgTo;</data>
+<data id="ui.locale.dir">&locale.dir;</data>
+
+<script>
+	var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+			.getService(Components.interfaces.nsIWindowWatcher);
+	var MainWindow = watcher.getWindowByName("xulsword-window", window);
+	var AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs, Book;
+</script>
+
+<script>XSBundle = document.getElementById("strings"); AllWindows = [];</script>
+	
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+<script>rootprefs.setCharPref("intl.uidirection." + getLocale(), getDataUI("locale.dir"));</script>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
+<script>initLogging();</script>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
+<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkDataInit.js"/>
+<script>BM = {}; BMDS = initBMServices(BM);</script>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
+<script>AudioDirs = getAudioDirs();</script>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/bibleBooks.js"/>
+<script>Book = getBibleBooks();</script>
+
+<script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
+		
 <script type="text/javascript">
 
 <![CDATA[
+	
 function startxulsword() {
+		
   createAppDirectories();
-  window.open('chrome://xulsword/content/xulsword.xul','xulsword-window','chrome,resizable');
+  
+	// If the FirstRunXSM pref is set, then install the XSM module
+	try {
+		var firstRunXSM = prefs.getCharPref("FirstRunXSM");
+		prefs.setCharPref("FirstRunXSM", "");
+	}
+	catch(er) {firstRunXSM = "";}
+	if (firstRunXSM) {
+		var xsm = getSpecialDirectory("xsDefaults");
+		xsm.append(firstRunXSM);
+		if (xsm.exists()) installModuleArray(finishAndStartXulSword2, [xsm]);
+	}
+	else moduleInstall(false); // this will call endInstall() when complete...
 }
+
+function endInstall() {
+	if (WillRestart) {
+		prefs.setBoolPref("RestartXulsword", true);
+		return;
+	}
+
+	if (MainWindow) window.close();
+	
+	window.open('chrome://xulsword/content/xulsword.xul','xulsword-window','chrome,resizable');
+}
+
+try {var restartXulsword = prefs.getBoolPref("RestartXulsword");}
+catch (er) {restartXulsword = false;}
+
+try {prefs.clearUserPref("RestartXulsword");}
+catch (er) {}
+
+if (restartXulsword) startxulsword();
+
 ]]>
   
 </script>

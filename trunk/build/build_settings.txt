@@ -13,6 +13,7 @@ Set SwordSource=../Cpp/sword-svn
 Set XulswordExtras=../../mk-sup/
 Set ModuleRepository1=
 Set ModuleRepository2=
+Set FirstRunXSM=
 
 # PATHS NEEDED FOR MS-WINDOWS ONLY:
 Set XULRunner=..\xulrunner
