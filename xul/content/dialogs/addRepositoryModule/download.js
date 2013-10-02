@@ -98,7 +98,7 @@ ARMD = {
 		// don't allow another download until this one is done
 		var dest = ARMU.getModuleDownloadDirectory(mod);
 		if (dest.exists()) {
-			jsdump("INFO: Download is already underway");
+			jsdump("INFO: Download of \"" + ARMU.getResourceLiteral(MLDS, mod, "ModuleName") + "\" is already underway");
 			// leave status
 			this.queryNextModule();
 			return;

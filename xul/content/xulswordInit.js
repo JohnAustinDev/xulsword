@@ -251,6 +251,7 @@ FindMod:
     var tab = {
       modName:mod, 
       modType:type, 
+      modVersion:LibSword.getModuleInformation(mod, "Version"),
       label:label, 
       tabType:getShortTypeFromLong(type), 
       isRTL:(ModuleConfigs[mod].direction == "rtl"), 
