@@ -157,10 +157,10 @@
   <key keycode="VK_PAGE_DOWN"                  oncommand="event.prevendDevault();"/><!-- page-down causes no-scroll-bar single window displays to scroll the viewport partially off screen !-->
   <key keycode="VK_LEFT"   command="cmd_xs_back"/>
   <key keycode="VK_RIGHT"  command="cmd_xs_forward"/>
-  <key keycode="VK_F1"     oncommand="openLanguageMenu();"/>
   <key keycode="VK_DOWN"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').focus();"/>
   <key key="B"            modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').focus();"/> <!-- Like Paratext !-->
   
+	<key id="key_openLanguageMenu" keycode="VK_F1" command="cmd_xs_openLanguageMenu"/>
   <key id="addBM"         key="&addCurPageAsCmd.commandkey;" modifiers="accel" command="cmd_xs_newBookmark"/>
   <key id="addBMN"        key="&addCurPageAsCmd.commandkey;" modifiers="control shift" command="cmd_xs_newUserNote"/>
   <key id="manBookmarkKb" key="&manBookmarksCmd.commandkey;" modifiers="accel" command="cmd_xs_openManager"/>
@@ -227,7 +227,8 @@
   <command id="cmd_xs_nextChapter"               oncommand="goDoCommand('cmd_xs_nextChapter');"/>
   <command id="cmd_xs_previousChapter"           oncommand="goDoCommand('cmd_xs_previousChapter');"/>
   <command id="cmd_xs_nextBook"                  oncommand="goDoCommand('cmd_xs_nextBook');"/>
-  <command id="cmd_xs_previousBook"              oncommand="goDoCommand('cmd_xs_previousBook');"/>  
+  <command id="cmd_xs_previousBook"              oncommand="goDoCommand('cmd_xs_previousBook');"/>
+	<command id="cmd_xs_openLanguageMenu"          oncommand="openLanguageMenu();"/>
 </commandset>
              
 <vbox id="topbox" hasBible="true" libSwordLoadFailed="false" flex="100%">
@@ -382,7 +383,7 @@
             <menuitem id="h1" label="&menu.options.hebCant;"  accesskey="&menu.options.hebCant.sc;"  type="checkbox" autocheck="false" command="cmd_xs_toggleHebrewCantillation" observes="cmd_xs_toggleHebrewCantillation"/>
           </menupopup>
         </menu>
-        <menu id="sub-lang" label="&menu.options.language;" accesskey="&menu.options.language.sc;">
+        <menu id="sub-lang" label="&menu.options.language;" accesskey="&menu.options.language.sc;" key="key_openLanguageMenu">
           <menupopup id="sub-lang-pup"/>
         </menu>
       </menupopup>

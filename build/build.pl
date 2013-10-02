@@ -22,6 +22,7 @@ if ("$^O" !~ /MSWin32/i) {$XULRunner = ""; $MicrosoftSDK = "";}
 # Check that paths exist
 @PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK");
 foreach my $path (@PathNames) {
+	if ($$path =~ /^\./) {$$path = File::Spec->rel2abs($$path);}
 	if ($$path && !-e $$path) {
 		&Log("ERROR: File \"$$path\" does not exist.");
 		die;
