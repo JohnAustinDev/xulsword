@@ -424,6 +424,66 @@ function checkAllRepositoriesLoaded() {
 	ProgressBar.mode = "undetermined";
   ProgressBar.hidden = true;
   
+	var mods = [];
+		
+	// if any modules are flagged as a needed upgrade, then ask user to upgrade them
+	RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+	var iter = RDFC.GetElements();
+	while(iter.hasMoreElements()) {
+		var mod = iter.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
+		if (ARMU.is_XSM_module(MLDS, mod)) continue;
+		if (ARMU.getResourceLiteral(MLDS, mod, "ModuleUpdateNeeded") == "true") {
+			mods.push(mod);
+		}
+	}
+
+	// only upgrade an entire XSM module if it is still necessary
+	RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+	var iter = RDFC.GetElements();
+	while(iter.hasMoreElements()) {
+		var mod = iter.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
+		if (!ARMU.is_XSM_module(MLDS, mod)) continue;
+		if (ARMU.getResourceLiteral(MLDS, mod, "ModuleUpdateNeeded") == "true") {
+			var skipXSM = false;
+			for (var i=0; i<mods.length; i++) {
+				if (ARMU.getResourceLiteral(MLDS, mod, "ModuleName") != ARMU.getResourceLiteral(MLDS, mods[i], "ModuleName")) continue;
+				if (ARMU.compareSwordVersions(ARMU.getResourceLiteral(MLDS, mod, "Version"), ARMU.getResourceLiteral(MLDS, mods[i], "Version")).result < 1) {
+					skipXSM = true;
+				}
+				break;
+			}
+			if (!skipXSM) {
+				if (i == mods.length) mods.push(mod);
+				else mods[i] = mod;
+			}
+		}
+	}
+
+	// ask user if an update is desired
+	if (mods.length) {
+		var title = getDataUI("menu.addNewModule.label");
+		var msg = "\n";
+		for (var i=0; i<mods.length; i++) {
+			var modName = ARMU.getResourceLiteral(MLDS, mods[i], "ModuleName");
+			msg += modName + (modName != Tab[modName].label ? " (" + Tab[modName].label + ") ":" ") + ARMU.getResourceLiteral(MLDS, mods[i], "Version") + "\n";
+		}
+		msg += "\n\n";
+		msg += MyStrings.GetStringFromName("arm.wishToContinue");
+
+		var result = {};
+		var dlg = window.openDialog(
+				"chrome://xulsword/content/dialogs/dialog/dialog.xul",
+				"dlg",
+				DLGSTD,
+				result,
+				fixWindowTitle(title),
+				msg,
+				DLGALERT,
+				DLGYESNO
+		);
+		if (result.ok) ARMI.initiateModuleDownloads(mods);
+	}
+  
   ARMU.buildLanguageList();
 
   ARMU.treeDataSource([false, false], ["languageListTree", "moduleListTree"]);
@@ -831,6 +891,20 @@ function applyConfFile(file, repoUrl) {
   // add the new resource to the Module List
   RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
   RDFC.AppendElement(newModRes);
+  
+	var moduleUpdateNeeded = false;
+
+	// set flags to update any updateable modules
+	var moduleName = ARMU.getResourceLiteral(MLDS, newModRes, "ModuleName");
+	var moduleVersion = ARMU.getResourceLiteral(MLDS, newModRes, "Version");
+
+	if (Tab.hasOwnProperty(moduleName) && moduleName != "Personal") {
+		if (ARMU.compareSwordVersions(moduleVersion, Tab[moduleName].modVersion).result == 1) {
+			moduleUpdateNeeded = true;
+		}
+		if (moduleUpdateNeeded) jsdump("INFO: module \"" + moduleName + ", " + Tab[moduleName].modVersion + "\" can be updated to version \"" + moduleVersion + (is_XSM_module ? " XSM":"") + "\".");
+	}
+	ARMU.setResourceAttribute(MLDS, newModRes, "ModuleUpdateNeeded", (moduleUpdateNeeded ? "true":"false"));
 
 }
 

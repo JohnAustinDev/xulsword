@@ -396,7 +396,7 @@ ARMU = {
   showModules: function(lang) {
 		// setting the rule's REPOSITORY:Lang attribute filters okay, but once it's  
 		// removed (to show all) the tree is never rebuilt if it is re-added. Besides,
-		// filtering is also being done on other base as well now.
+		// filtering is also being done on other bases as well now.
 		
 		RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
 		var mods = RDFC.GetElements();
@@ -457,9 +457,10 @@ ARMU = {
 		} // ModuleListID loop
 		
 		// if a .xsm module is showing, hide the SWORD modules
-		// which are contained within it.
+		// which are contained within it, unless they need updating.
 		for (key in xsm) {
 			for (var m=0; sword[key] && m<sword[key].length; m++) {
+				if (ARMU.getResourceLiteral(MLDS, sword[key][m], "ModuleUpdateNeeded") == "true") continue;
 				ARMU.setResourceAttribute(MLDS, sword[key][m], "Show", "false");
 			}
 		}
@@ -490,7 +491,7 @@ ARMU = {
       if (retval) retval = retval[1];
     }
     else {
-      prm = new RegExp("\\s*" + escapeRE(param) + "\\s*=\\s*(.*?)\\s*?[\\r\\n]", "im");
+      prm = new RegExp("^\\s*" + escapeRE(param) + "\\s*=\\s*(.*?)\\s*?[\\r\\n]", "im");
       retval = filedata.match(prm);
       if (retval) retval = retval[1];
     }
@@ -675,6 +676,44 @@ ARMU = {
   is_XSM_module: function(modDS, modResource) {
 		var moduleUrl = ARMU.getResourceLiteral(modDS, modResource, "ModuleUrl");
 		return ((/\.(zip|xsm)$/).test(moduleUrl) || (/\/audio\.htm(\?|$)/).test(moduleUrl));
+	},
+  
+	// compare two SWORD version numbers. 
+	//   if a < b return -1 
+	//   if a > b return 1
+	//   if a == b return 0
+	// If the difference is only a conf update it sets updateOnlyConf to true.
+	compareSwordVersions: function(a, b) {
+		var ret = {result:-1, updateOnlyConf:false};
+
+		if (a == b) {ret.result = 0; return ret;}
+
+		// SWORD module versions are composed of three "." separated parts.
+		// If an update involves only the .conf file, only the third part
+		// is incremented.
+		a = a.split(".");
+		b = b.split(".");
+		if (!isNaN(Number(a[0]))) {
+			if (a[0] == b[0]) {
+				if (a.length > 1 && a[1]!==null && !isNaN(Number(a[1]))) {
+					if (b.length < 2 || b[1]===null || isNaN(Number(b[1]))) {
+						b[1] = 0;
+					}
+					if (Number(a[1]) > Number(b[1])) ret.result = 1;
+					else if (Number(a[1]) == Number(b[1]) && (a.length == 3 && a[2] !== null && !isNaN(Number(a[2])))) {
+						if (b.length < 3 || b[2]===null || isNaN(Number(b[2])) || Number(a[2]) > Number(b[2])) {
+							ret.result = 1;
+							ret.updateOnlyConf = true;
+						}
+					}
+				}
+			}
+			else if (b[0]===null || isNaN(Number(b[0])) || Number(a[0]) > Number(b[0])) {
+				ret.result = 1;
+			}
+		}
+
+		return ret;
 	}
 
 };

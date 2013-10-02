@@ -130,8 +130,8 @@ ARMI = {
 		vbox.setAttribute("showLanguageList", (vbox.getAttribute("showLanguageList")=="false" ? "true":"false"));
 	},
 
-	initiateModuleDownloads: function() {
-		var mods = ARMU.getSelectedResources(document.getElementById("moduleListTree"), true);
+	initiateModuleDownloads: function(mods) {
+		if (!mods) mods = ARMU.getSelectedResources(document.getElementById("moduleListTree"), true);
 		if (!mods.length) return;
 		
 		if (document.getElementById("moduleDialog").getAttribute("showModuleInfo") == "true")
