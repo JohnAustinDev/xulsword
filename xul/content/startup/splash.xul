@@ -69,7 +69,49 @@
   
   <script>
   <![CDATA[
-  
+    
+    // endInstall is called by newModule.js when module installation is complete
+		function endInstall() {
+			if (WillRestart) return;
+			
+			var installOnly = false;
+			try {
+				installOnly = prefs.getBoolPref("xsInstallOnly");
+				prefs.setBoolPref("xsInstallOnly", false);
+				prefs.clearUserPref("xsInstallOnly");
+			}
+			catch(er) {installOnly = false;} // if pref did not exist
+			
+			// Are we just installing modules, but not starting xulsword?
+			// Or is MainWindow already open? Then we're done...
+			if (installOnly || MainWindow) window.close();
+			
+			// Otherwise open the visible splash screen and start the main xulsword window
+			SplashScreen = window.open("chrome://xulsword/content/startup/banner.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable");
+			window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul', 'xulsword-window', 'chrome,resizable')", 300);
+
+			// xulsword.xul will close this hidden window during MainWindow init,
+			// and then this window's onunload will close the visible splash screen.
+		}
+
+    var SplashScreen;
+    function unload() {
+      if (SplashScreen) {SplashScreen.close();}
+      
+      try {var installOnly = prefs.getBoolPref("xsInstallOnly");}
+      catch (er) {installOnly = false;}
+      
+      if (installOnly) {
+        jsdump("Quiting... xsInstallOnly command line flag was set.");
+        var mutex = getSpecialDirectory("TmpD");
+        mutex.append("xsInstallOnlyMutex");
+        if (mutex.exists()) mutex.remove(false); // siginify to caller that we're done installing
+      }
+      
+    }
+    
+    ////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////
     // This hidden window creates xulsword profile directories, installs modules, 
     // and then either quits (if xsInstallOnly is set) or opens the splash window
     // and main xulsword window (the usual occurence). The main xulsword window 
@@ -96,47 +138,18 @@
       if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
     }
     
-    moduleInstall(false); // this will call endInstall() when complete...
-    
-    // endInstall is called by newModule.js when module installation is complete
-    function endInstall() {
-      if (WillRestart) return;
-      
-      var installOnly = false;
-      try {
-        installOnly = prefs.getBoolPref("xsInstallOnly");
-        prefs.setBoolPref("xsInstallOnly", false);
-        prefs.clearUserPref("xsInstallOnly");
-      }
-      catch(er) {installOnly = false;} // if pref did not exist
-      
-      // Are we just installing modules, but not starting xulsword?
-      // Or is MainWindow already open? Then we're done...
-      if (installOnly || MainWindow) window.close();
-      
-      // Otherwise open the visible splash screen and start the main xulsword window
-      SplashScreen = window.open("chrome://xulsword/content/startup/banner.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable");
-      window.setTimeout("window.open('chrome://xulsword/content/xulsword.xul', 'xulsword-window', 'chrome,resizable')", 300);
-
-      // xulsword.xul will close this hidden window during MainWindow init,
-      // and then this window's onunload will close the visible splash screen.
+    // If the FirstRunXSM pref is set, then install the XSM module
+    try {
+			var firstRunXSM = prefs.getCharPref("FirstRunXSM");
+			prefs.setCharPref("FirstRunXSM", "");
+		}
+    catch(er) {firstRunXSM = "";}
+    if (firstRunXSM) {
+			var xsm = getSpecialDirectory("xsDefaults");
+			xsm.append(firstRunXSM);
+			if (xsm.exists()) installModuleArray(finishAndStartXulSword2, [xsm]);
     }
-    
-    var SplashScreen;
-    function unload() {
-      if (SplashScreen) {SplashScreen.close();}
-      
-      try {var installOnly = prefs.getBoolPref("xsInstallOnly");}
-      catch (er) {installOnly = false;}
-      
-      if (installOnly) {
-        jsdump("Quiting... xsInstallOnly command line flag was set.");
-        var mutex = getSpecialDirectory("TmpD");
-        mutex.append("xsInstallOnlyMutex");
-        if (mutex.exists()) mutex.remove(false); // siginify to caller that we're done installing
-      }
-      
-    }
+    else moduleInstall(false); // this will call endInstall() when complete...
     
   ]]>
   </script>

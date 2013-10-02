@@ -20,7 +20,7 @@ if (!$SETTING) {$SETTING = "build_settings.txt";}
 if ("$^O" !~ /MSWin32/i) {$XULRunner = ""; $MicrosoftSDK = "";}
 
 # Check that paths exist
-@PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK");
+@PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK", "FirstRunXSM");
 foreach my $path (@PathNames) {
 	if ($$path =~ /^\./) {$$path = File::Spec->rel2abs($$path);}
 	if ($$path && !-e $$path) {
@@ -79,6 +79,7 @@ if ($MakeDevelopment =~ /true/i) {
   &compileLibSword("$DEVELOPMENT/xulsword", ("$^O" =~ /MSWin32/i ? 1:0));
   my @manifest;
   &copyXulswordFiles("$DEVELOPMENT/xulsword", \@manifest, $IncludeLocales, 1, 0);
+  if ($FirstRunXSM) {&includeFirstRunXSM("$DEVELOPMENT/xulsword/defaults", \%Prefs, $FirstRunXSM);}
   # Windows uses a custom local XULRunner installation, but Linux is assumed 
   # to have a recent Firefox installation available to use at runtime with
   # the -app command line flag. Some versions of Windows Firefox do not
@@ -110,6 +111,7 @@ if ($MakeFFextension =~ /true/i) {
   # the Firefox extension needs a Firefox overlay to put a startup button in the tools menu
   push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/startup/extension-overlay.xul");
   &copyXulswordFiles($FFEXTENSION, \@manifest, $IncludeLocales, 0, 1);
+  if ($FirstRunXSM) {&includeFirstRunXSM("$FFEXTENSION/defaults", \%Prefs, $FirstRunXSM);}
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = ""; # undo any previous setting
   $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "true";
   $Prefs{"(language.js):general.useragent.locale"} = ""; # can't overwrite the Firefox setting
@@ -137,6 +139,7 @@ if ($MakePortable =~ /true/i) {
   &compileLibSword("$rundir/$Name/xulsword", 1);
   my @manifest;
   &copyXulswordFiles("$rundir/$Name/xulsword", \@manifest, $IncludeLocales, 0, 0);
+  if ($FirstRunXSM) {&includeFirstRunXSM("$rundir/$Name/xulsword/defaults", \%Prefs, $FirstRunXSM);}
   if ("$^O" =~ /MSWin32/i) {&copyFirefoxFiles("$rundir/$Name/xulrunner");}
   # Set our startup location...
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
@@ -175,6 +178,7 @@ if ($MakeSetup =~ /true/i) {
   &compileLibSword("$INSTALLER/xulsword", 1);
   my @manifest;
   &copyXulswordFiles("$INSTALLER/xulsword", \@manifest, $IncludeLocales, 0, 0);
+  if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/xulsword/defaults", \%Prefs, $FirstRunXSM);}
   &copyFirefoxFiles("$INSTALLER/xulrunner");
   # Set our startup location...
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
@@ -421,6 +425,19 @@ sub copyXulswordFiles($\@$$$) {
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/common/windows/ os=WINNT");
   }
 
+}
+
+sub includeFirstRunXSM($\%$) {
+	my $do = shift;
+	my $pP = shift;
+	my $xsm = shift;
+	
+	# copy xsm module to output directory
+	&copy_file($xsm, $do);
+	
+	# set pref to do xsm install on first run
+	$xsm =~ s/^.*?[\/\\]([^\/\\]*)$/$1/;
+	$pP->{"(prefs.js):extensions.xulsword.FirstRunXSM"} = $xsm;
 }
 
 sub copyFirefoxFiles($) {
