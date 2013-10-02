@@ -148,8 +148,9 @@ function loadedXUL2() {
   document.getElementById("historymenu").style.height = String(document.getElementById("back").boxObject.height) + "px";
   
   // close splash window
-  if (window.opener && window.opener.document.title == "Splash")
+  if (window.opener && window.opener.document.title == "hidden-window")
       window.opener.close(); // Close hidden startup window (which in turn closes visible splash window)
+	else if (window.opener && window.opener.SplashScreen) window.opener.SplashScreen.close();
  
   if (LibSword.hasBible) {
     //we're ok!

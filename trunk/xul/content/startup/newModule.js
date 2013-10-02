@@ -1483,6 +1483,9 @@ function restartApplication(promptBefore) {
   
   if (typeof(LibSword) != "undefined" && LibSword.paused) LibSword.resume(); // window unload accesses LibSword object
   
+  // extensions must restart Firefox and then xulsword as well
+  if (IsExtension) prefs.setBoolPref("RestartXulsword", true);
+  
 	var appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                    .getService(Components.interfaces.nsIAppStartup);
 
