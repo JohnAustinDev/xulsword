@@ -52,6 +52,7 @@ const MINVERSION = "1.0";
 */
 
 var ModuleCopyMutex = false;
+var WindowsFontInstallScripts = [];
 
 /************************************************************************
  * Module install functions
@@ -772,8 +773,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
   case FONTS:
     installFont(inflated);
     NewFonts = pushIf(NewFonts, inflated.leafName);
-    // Linux font install requires a restart
-    if (OPSYS == "Linux") return {reset:HARDRESET, success:true, remove:true};
+    return {reset:HARDRESET, success:true, remove:true};
     break;
     
   case AUDIO:
@@ -1202,15 +1202,26 @@ function installFont(aFontFile) {
   
   if (OPSYS == "Windows") {
     jsdump("Installing Windows font file \"" + aFontFile.leafName + "\":");
+
     var vbsdata = "";
-    vbsdata += "Const FONTS = &H14& " + NEWLINE;
+    vbsdata += "Const FONTS = &H14&" + NEWLINE;
     vbsdata += "Set objShell = CreateObject(\"Shell.Application\")" + NEWLINE;
     vbsdata += "Set objFolder = objShell.Namespace(FONTS)" + NEWLINE;
     vbsdata += "Set objFolderItem = objFolder.ParseName(\"" + aFontFile.leafName + "\")" + NEWLINE;
-    vbsdata += "if (objFolderItem is nothing) then" + NEWLINE;
+    vbsdata += NEWLINE;
+    vbsdata += "Set fso = CreateObject(\"Scripting.FileSystemObject\")" + NEWLINE;
+    vbsdata += "set wshShell = Wscript.CreateObject(\"Wscript.shell\")" + NEWLINE;
+    vbsdata += "fontpath = wshShell.ExpandEnvironmentStrings(\"%windir%\")" + NEWLINE;
+    vbsdata += "fontpath = fontpath+\"\\fonts\\" + aFontFile.leafName + "\"" + NEWLINE;
+    vbsdata += NEWLINE;
+    vbsdata += "if not fso.FileExists(fontpath) then" + NEWLINE;
     vbsdata += "objFolder.CopyHere(\"" + aFontFile.path + "\")" + NEWLINE;
-    vbsdata += "end if";
-    launchTempScript(vbsdata, "vbs");
+    vbsdata += "end if" + NEWLINE;
+    vbsdata += NEWLINE;
+    vbsdata += "strScript = Wscript.ScriptFullName" + NEWLINE;
+    vbsdata += "fso.DeleteFile(strScript)" + NEWLINE;
+
+    WindowsFontInstallScripts.push(launchTempScript(vbsdata, "vbs"));
   }
   else if (OPSYS == "Linux") {
     jsdump("Installing Linux font file \"" + aFontFile.leafName + "\":");
@@ -1249,7 +1260,7 @@ function launchTempScript(scriptContents, ext) {
   catch (er) {jsdump("Could not execute script:\n" + scriptContents);}
   
   // This leaves the temp file in the temp directory! But since we are not blocking, it's hard to know when to delete it, and they're small anyway
-  return;
+  return script;
 }
 
 /************************************************************************
@@ -1472,6 +1483,17 @@ function prefFileArray(files, aPref, exts, dontCheckExists) {
 }
 
 function restartApplication(promptBefore) {
+
+  // restart will fail if the asynchronous Windows font installers are not finished.
+  if (WindowsFontInstallScripts.length) {
+    for (var i=0; i<WindowsFontInstallScripts.length; i++) {
+      if (WindowsFontInstallScripts[i].exists()) {
+        window.setTimeout("restartApplication(" + (promptBefore ? "true":"false") + ");", 500);
+        return;
+      }
+    }
+  }
+  
   if (promptBefore) {
     var result = {};
     var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 

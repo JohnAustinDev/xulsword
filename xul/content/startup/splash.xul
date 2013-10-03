@@ -25,9 +25,10 @@
 <!DOCTYPE window>
 
 <window xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-		id="main-window" 
-		onload="startxulsword();">
-		
-		<script>document.title = "hidden-window";</script>
-
+		id="main-window" title="hidden-window"
+    onload="startxulsword();" onunload="unload()"
+    hidechrome="true"
+    width="0"
+    height="0"
+    style="background:transparent;">
 </window>
