@@ -805,7 +805,7 @@ sub writeInstallerLocaleinfo($$\%) {
     my $pl = $locale; $pl =~ s/-//g; # iss defines can't use "-"
     print OUTF "#define $pl \"true\"\n";
   }
-  print OUTF "#define defLang\"".$prefsP->{"(language.js):general.useragent.locale"}."\"\n";
+  print OUTF "#define defLang \"".$prefsP->{"(language.js):general.useragent.locale"}."\"\n";
   close(OUTF);
 }
 
