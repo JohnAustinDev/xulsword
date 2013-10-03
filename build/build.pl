@@ -14,20 +14,7 @@ $OutputDirectory = File::Spec->rel2abs("../build-out");
 require "$TRUNK/build/script/common.pl";
 
 $SETTING = shift;
-if (!$SETTING) {$SETTING = "build_settings.txt";}
-&readSettings("build_prefs.txt");
-&readSettings($SETTING);
-if ("$^O" !~ /MSWin32/i) {$XULRunner = ""; $MicrosoftSDK = "";}
-
-# Check that paths exist
-@PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK", "FirstRunXSM");
-foreach my $path (@PathNames) {
-	if ($$path =~ /^\./) {$$path = File::Spec->rel2abs($$path);}
-	if ($$path && !-e $$path) {
-		&Log("ERROR: File \"$$path\" does not exist.");
-		die;
-	}
-}
+&readSettingsFiles(\%Prefs);
 
 $WINprocess = "$Executable-srv.exe";
 @ModRepos = ($ModuleRepository1, $ModuleRepository2);
@@ -70,6 +57,7 @@ $PORTABLE="$TRUNK/build-files/$Name/portable";
 # DEVELOPMENT ENVIRONMENT
 if ($MakeDevelopment =~ /true/i) {
   &Log("\n----> BUILDING DEVELOPMENT ENVIRONMENT\n");
+  undef(%Prefs); &readSettingsFiles(\%Prefs);
   # "D" in BuildID identifies this as being a development version
   $BuildID = sprintf("%02d%02d%02d_%dD", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
   if (-e $DEVELOPMENT) {&cleanDir($DEVELOPMENT);}
@@ -102,6 +90,7 @@ if ($MakeDevelopment =~ /true/i) {
 # FIREFOX EXTENSION
 if ($MakeFFextension =~ /true/i) {
   &Log("\n----> BUILDING FIREFOX EXTENSION\n");
+  undef(%Prefs); &readSettingsFiles(\%Prefs);
   # "E" in BuildID identifies this as being a Firefox extension
   $BuildID = sprintf("%02d%02d%02d_%dE", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
   if (-e $FFEXTENSION) {&cleanDir($FFEXTENSION);}
@@ -127,6 +116,7 @@ if ($MakeFFextension =~ /true/i) {
 # PORTABLE VERSION
 if ($MakePortable =~ /true/i) {
   &Log("\n----> BUILDING PORTABLE VERSION\n");
+  undef(%Prefs); &readSettingsFiles(\%Prefs);
   # "P" in BuildID identifies this as being a portable version
   $BuildID = sprintf("%02d%02d%02d_%dP", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
   my $intdir = ("$^O" =~ /linux/i ? "":"/$Name-Portable-$Version");
@@ -161,6 +151,7 @@ if ($MakePortable =~ /true/i) {
 # WINDOWS INSTALLER VERSION
 if ($MakeSetup =~ /true/i) {
   &Log("\n----> BUILDING PROGRAM SETUP INSTALLER\n");
+  undef(%Prefs); &readSettingsFiles(\%Prefs);
   if ("$^O" !~ /MSWin32/i) {
     &Log("ERROR: Setup Installer has not been implemented for your platform.\n");
      die;
@@ -197,7 +188,7 @@ if ($MakeSetup =~ /true/i) {
   if (-e $autogen) {&cleanDir($autogen);}
   make_path($autogen);
   &writeInstallerAppInfo("$autogen/appinfo.iss");
-  &writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales)
+  &writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales, \%Prefs)
   &writeInstallerModuleUninstall("$autogen/uninstall.iss", $RESOURCES, $IncludeModules, $IncludeLocales);
   &packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
 
@@ -798,12 +789,15 @@ sub writeInstallerAppInfo($) {
   print ISS "#define MKS \"$XulswordExtras\"\n";
   print ISS "#define MKO \"$OutputDirectory\"\n";
   print ISS "#define APPDATA \"$Appdata\"\n";
+  print ISS "#define FirstRunXSM \"$FirstRunXSM\"\n";
   close(ISS);
 }
 
-sub writeInstallerLocaleinfo($$) {
+sub writeInstallerLocaleinfo($$\%) {
   my $of = shift;
   my @locales = split(/\s*,\s*/, shift);
+  my $prefsP = shift;
+  
   &Log("----> Writing installer locale script.\n");
   open(OUTF, ">:encoding(UTF-8)", $of) || die;
   # set any included locales to true
@@ -811,6 +805,7 @@ sub writeInstallerLocaleinfo($$) {
     my $pl = $locale; $pl =~ s/-//g; # iss defines can't use "-"
     print OUTF "#define $pl \"true\"\n";
   }
+  print OUTF "#define defLang\"".$prefsP->{"(language.js):general.useragent.locale"}."\"\n";
   close(OUTF);
 }
 
