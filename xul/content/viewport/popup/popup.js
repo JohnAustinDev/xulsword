@@ -39,6 +39,7 @@ function PopupObj(popupobj) {
   this.npopupBOX = document.getElementById("npopupBOX");
   this.npopupTX = document.getElementById("npopupTX");
   this.showPopupID = null;
+  this.selectRef = {};
     
   if (popupobj) {
     this.npopup.setAttribute("puptype", popupobj.npopup.getAttribute("puptype"));
@@ -65,11 +66,17 @@ function PopupObj(popupobj) {
     while (updatingPopup && updatingPopup !== this.npopup) {updatingPopup = updatingPopup.parentNode;}
     
     // dictionary modules may have a "ReferenceBible" conf entry
-    var referenceBible = (p && p.mod ? p.mod:null);
-    if (referenceBible && Tab[referenceBible].modType == DICTIONARY) {
-      var aref = LibSword.getModuleInformation(referenceBible, "ReferenceBible");
-      if (aref && aref != NOTFOUND && Tab.hasOwnProperty(aref)) referenceBible = aref;
-    }
+    var referenceBible;
+    if (p && p.mod && this.selectRef.hasOwnProperty(p.mod)) {
+			referenceBible = this.selectRef[p.mod];
+		}
+		else {
+			referenceBible = (p && p.mod ? p.mod:null);
+			if (referenceBible && Tab[referenceBible].modType == DICTIONARY) {
+				var aref = LibSword.getModuleInformation(referenceBible, "ReferenceBible");
+				if (aref && aref != NOTFOUND && Tab.hasOwnProperty(aref)) referenceBible = aref;
+			}
+		}
       
     // Begin building HTML for the popup
     var html = "";
@@ -86,7 +93,7 @@ function PopupObj(popupobj) {
       for (var t=0; t<Tabs.length; t++) {
         if (Tabs[t].modType == BIBLE) bmods.push(Tabs[t].modName);
       }
-      html += this.getModSelectHTML(bmods, referenceBible, "Popup.select(this.value);");
+      html += this.getModSelectHTML(bmods, referenceBible, "Popup.select(this.value, '" + p.mod + "');");
     }
     
     // add select drop-down(s) for sn
@@ -142,7 +149,7 @@ function PopupObj(popupobj) {
       if (!myNote) return false;
       myNote = myNote[0];
       
-      res = BibleTexts.getNotesHTML(myNote, p.mod, true, true, true, true, 1, false);
+      res = BibleTexts.getNotesHTML(myNote, (referenceBible ? referenceBible:p.mod), true, true, true, true, 1, false);
       res += "<div class=\"popup-noteAddress is_" + type + "\">" + myNote + "</div>";
       break;
 
@@ -328,7 +335,7 @@ function PopupObj(popupobj) {
     document.getElementsByTagName("body")[0].appendChild(this.npopup);
   };
   
-  this.select = function(mod) {
+  this.select = function(mod, msrc) {
     var pt = this.npopupTX.getElementsByClassName("popup-text");
     if (!pt) return;
     pt = pt[pt.length-1]; // the pt we want is the last in the tree
@@ -341,6 +348,7 @@ function PopupObj(popupobj) {
     h += "<div class=\"" + n.className + "\" style=\"display:none;\">" + n.innerHTML + "</div>";
     pt.innerHTML = h;
     Popup.setTitle();
+    this.selectRef[msrc] = mod;
   };
   
   this.selectFeature = function(mod, feature) {

@@ -1242,7 +1242,7 @@ function installFont(aFontFile) {
 
 function launchTempScript(scriptContents, ext) {
   var script = getSpecialDirectory("TmpD");
-  if (!script.exists()) return;
+  if (!script.exists()) return null;
   script.append("xulswordScript." + ext);
   script.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
 
@@ -1487,7 +1487,7 @@ function restartApplication(promptBefore) {
   // restart will fail if the asynchronous Windows font installers are not finished.
   if (WindowsFontInstallScripts.length) {
     for (var i=0; i<WindowsFontInstallScripts.length; i++) {
-      if (WindowsFontInstallScripts[i].exists()) {
+      if (WindowsFontInstallScripts[i] && WindowsFontInstallScripts[i].exists()) {
         window.setTimeout("restartApplication(" + (promptBefore ? "true":"false") + ");", 500);
         return;
       }
