@@ -439,7 +439,7 @@ function getSpecialDirectory(name) {
     else path = path.replace(new RegExp(escapeRE(profile.leafName) + "$"), "resources");
     resources.initWithPath(lpath(path));
     
-    var retval = resources.clone();
+    var retval = resources.clone().QueryInterface(Components.interfaces.nsILocalFile);
     
     switch(name) {
     case "xsFonts":
