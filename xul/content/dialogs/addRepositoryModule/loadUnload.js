@@ -427,37 +427,8 @@ function checkAllRepositoriesLoaded() {
 	var mods = [];
 		
 	// if any modules are flagged as a needed upgrade, then ask user to upgrade them
-	RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-	var iter = RDFC.GetElements();
-	while(iter.hasMoreElements()) {
-		var mod = iter.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
-		if (ARMU.is_XSM_module(MLDS, mod)) continue;
-		if (ARMU.getResourceLiteral(MLDS, mod, "ModuleUpdateNeeded") == "true") {
-			mods.push(mod);
-		}
-	}
-
-	// only upgrade an entire XSM module if it is still necessary
-	RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-	var iter = RDFC.GetElements();
-	while(iter.hasMoreElements()) {
-		var mod = iter.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
-		if (!ARMU.is_XSM_module(MLDS, mod)) continue;
-		if (ARMU.getResourceLiteral(MLDS, mod, "ModuleUpdateNeeded") == "true") {
-			var skipXSM = false;
-			for (var i=0; i<mods.length; i++) {
-				if (ARMU.getResourceLiteral(MLDS, mod, "ModuleName") != ARMU.getResourceLiteral(MLDS, mods[i], "ModuleName")) continue;
-				if (ARMU.compareSwordVersions(ARMU.getResourceLiteral(MLDS, mod, "Version"), ARMU.getResourceLiteral(MLDS, mods[i], "Version")).result < 1) {
-					skipXSM = true;
-				}
-				break;
-			}
-			if (!skipXSM) {
-				if (i == mods.length) mods.push(mod);
-				else mods[i] = mod;
-			}
-		}
-	}
+	getUpdateMods(mods, false); // prefer non-xsm
+	getUpdateMods(mods, true); // xsm wins only if it's a greater version than all non-xsm
 
 	// ask user if an update is desired
 	if (mods.length) {
@@ -492,6 +463,30 @@ function checkAllRepositoriesLoaded() {
   
   // now we're finally done with onLoad and we turn things over to the user!
   return;
+}
+
+function getUpdateMods(mods, doXSM) {
+	RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+	var iter = RDFC.GetElements();
+	while(iter.hasMoreElements()) {
+		var mod = iter.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
+		var meXSM = ARMU.is_XSM_module(MLDS, mod);
+		if (doXSM && !meXSM || !doXSM && meXSM) continue;
+		if (ARMU.getResourceLiteral(MLDS, mod, "ModuleUpdateNeeded") == "true") {
+			var skipXSM = false;
+			for (var i=0; i<mods.length; i++) {
+				if (ARMU.getResourceLiteral(MLDS, mod, "ModuleName") != ARMU.getResourceLiteral(MLDS, mods[i], "ModuleName")) continue;
+				if (ARMU.compareSwordVersions(ARMU.getResourceLiteral(MLDS, mod, "Version"), ARMU.getResourceLiteral(MLDS, mods[i], "Version")).result < 1) {
+					skipXSM = true;
+				}
+				break;
+			}
+			if (!skipXSM) {
+				if (i == mods.length) mods.push(mod);
+				else mods[i] = mod;
+			}
+		}
+	}
 }
 
 
