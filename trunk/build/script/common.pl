@@ -4,8 +4,31 @@ use File::Path qw(make_path remove_tree);
 use File::Compare;
 
 # read settings files
-sub readSettings($) {
+sub readSettingsFiles(\%) {
+  my $prefsP = shift;
+  
+  my $f = $SETTING;
+  
+  if (!$f) {$f = "build_settings.txt";}
+  &readSettings("build_prefs.txt", $prefsP);
+  &readSettings($f, $prefsP);
+  if ("$^O" !~ /MSWin32/i) {$XULRunner = ""; $MicrosoftSDK = "";}
+  if ($UseSecurityModule ne "true") {$KeyGenPath = "";}
+  
+  # Check that paths exist
+  @PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK", "FirstRunXSM", "KeyGenPath");
+  foreach my $path (@PathNames) {
+  	if ($$path =~ /^\./) {$$path = File::Spec->rel2abs($$path);}
+  	if ($$path && !-e $$path) {
+  		&Log("ERROR: File \"$$path\" does not exist.");
+  		die;
+  	}
+  }
+}
+
+sub readSettings($\%) {
   my $f = shift;
+  my $prefsP = shift;
   if (!-e $f) {&Log("Build control file \"$f\" not found.\n"); exit;}
   &Log("----> Reading control file: \"$f\".\n");
   open(SETF, "<:encoding(UTF-8)", $f) || die;
@@ -16,7 +39,7 @@ sub readSettings($) {
     elsif ($_ =~ /^(\:\:|rem|\#)/i) {next;}
     elsif ($_ =~ /^Set\s+(.*?)\s*=\s*(.*?)\s*$/i) {
       my $var=$1; my $val=$2;
-      if ($var =~ /^\(.*?\.js\)\:/) {$Prefs{$var} = $val;}
+      if ($var =~ /^\(.*?\.js\)\:/) {$prefsP->{$var} = $val;}
       else {$$1 = $2;}
     }
     else {&Log("WARNING: unhandled control file line $line: \"$_\"\n");}

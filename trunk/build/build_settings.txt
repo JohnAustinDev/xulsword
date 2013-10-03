@@ -16,7 +16,7 @@ Set ModuleRepository2=
 Set FirstRunXSM=
 
 # PATHS NEEDED FOR MS-WINDOWS ONLY:
-Set XULRunner=..\xulrunner
+Set XULRunner=../xulrunner
 Set MicrosoftSDK=C:\Program Files\Microsoft Platform SDK
 
 # SPECIFY BUILD INFORMATION
