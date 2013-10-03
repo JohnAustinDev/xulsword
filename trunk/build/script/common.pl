@@ -4,14 +4,15 @@ use File::Path qw(make_path remove_tree);
 use File::Compare;
 
 # read settings files
-sub readSettingsFiles(\%) {
+sub readSettingsFiles(\%$) {
   my $prefsP = shift;
+  my $saveFiles = shift;
   
   my $f = $SETTING;
   
-  if (!$f) {$f = "build_settings.txt";}
-  &readSettings("build_prefs.txt", $prefsP);
-  &readSettings($f, $prefsP);
+  if (!$f) {$f = "$TRUNK/build/build_settings.txt";}
+  &readSettings("$TRUNK/build/build_prefs.txt", $prefsP, $saveFiles);
+  &readSettings($f, $prefsP, $saveFiles);
   if ("$^O" !~ /MSWin32/i) {$XULRunner = ""; $MicrosoftSDK = "";}
   if ($UseSecurityModule ne "true") {$KeyGenPath = "";}
   
@@ -26,9 +27,11 @@ sub readSettingsFiles(\%) {
   }
 }
 
-sub readSettings($\%) {
+sub readSettings($\%$) {
   my $f = shift;
   my $prefsP = shift;
+  my $saveFiles = shift;
+  
   if (!-e $f) {&Log("Build control file \"$f\" not found.\n"); exit;}
   &Log("----> Reading control file: \"$f\".\n");
   open(SETF, "<:encoding(UTF-8)", $f) || die;
@@ -40,7 +43,7 @@ sub readSettings($\%) {
     elsif ($_ =~ /^Set\s+(.*?)\s*=\s*(.*?)\s*$/i) {
       my $var=$1; my $val=$2;
       if ($var =~ /^\(.*?\.js\)\:/) {$prefsP->{$var} = $val;}
-      else {$$1 = $2;}
+      elsif ($saveFiles) {$$1 = $2;}
     }
     else {&Log("WARNING: unhandled control file line $line: \"$_\"\n");}
   }

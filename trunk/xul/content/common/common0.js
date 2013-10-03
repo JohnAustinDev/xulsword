@@ -383,12 +383,12 @@ function readParamFromConf(nsIFileConf, param) {
   var filedata = readFile(nsIFileConf);
   
   if (param == "ModuleName") {
-    var prm = new RegExp("\\[(.*)\\]", "m");
+    var prm = new RegExp("^\\s*\\[(.*)\\]", "m");
     var retval = filedata.match(prm);
     if (retval) retval = retval[1];
   }
   else {
-    prm = new RegExp("\\s*" + escapeRE(param) + "\\s*=\\s*(.*?)\\s*?[\\r\\n]", "im");
+    prm = new RegExp("^\\s*" + escapeRE(param) + "\\s*=\\s*(.*?)\\s*?[\\r\\n]", "im");
     retval = filedata.match(prm);
     if (retval) retval = retval[1];
   }
