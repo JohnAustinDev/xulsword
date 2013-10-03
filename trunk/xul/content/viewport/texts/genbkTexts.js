@@ -57,7 +57,7 @@ GenBookTexts = {
   },
   
   // returns the previous rdfChapter or null if there is none.
-  previousRDFChapter: function(rdfChapter) {
+  previousRdfChapter: function(rdfChapter) {
     var previous = null;
     
     var ch = this.getRdfChapterResource(rdfChapter);

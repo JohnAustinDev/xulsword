@@ -64,6 +64,10 @@ var ARMD; // defined in download.js
 
 function onLoad() {
 	
+  RepositoryArray = []; // must not be undefined from the get-go
+  RepositoryIndex = -1;
+  ManifestsLoading = 0;
+	
 	MyStrings = getCurrentLocaleBundle(SCRIPT_PROPS);
 	if (!MyStrings) {
 		jsdump("ERROR: No current locale string bundle \"" + SCRIPT_PROPS + "\"");
