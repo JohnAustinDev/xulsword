@@ -180,8 +180,10 @@ function scriptMouseOver(e) {
       if (!(/^S_\w*\d+$/).test(classes[i])) continue;
       var sheet = document.styleSheets[document.styleSheets.length-1];
       var index = sheet.cssRules.length;
-      sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
-      AddedRules.push( { sheet:sheet, index:index } );
+      try {
+				sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
+				AddedRules.push( { sheet:sheet, index:index } );
+			} catch (er) {}
     }
     break;
   }

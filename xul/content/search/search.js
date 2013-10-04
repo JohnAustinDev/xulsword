@@ -580,8 +580,10 @@ function SearchObj(searchObj) {
         
         var sheet = document.getElementById("search-frame").contentDocument.styleSheets[document.styleSheets.length-1];
         var index = sheet.cssRules.length;
-        sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
-        AddedStrongsCSSRules.push( { sheet:sheet, index:index } );
+        try {
+					sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
+					AddedStrongsCSSRules.push( { sheet:sheet, index:index } );
+				} catch (er) {}
         
       }
       
