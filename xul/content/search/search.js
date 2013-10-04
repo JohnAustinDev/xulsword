@@ -393,7 +393,7 @@ function SearchObj(searchObj) {
       
       // Search all in one go with no progress meter...
       
-jsdump(uneval(s));
+//jsdump(uneval(s));
       result.count = LibSword.search(s.mod, s.query, s.scope, s.type, s.flags, s.isnew);
       result.searchPointer = LibSword.getSearchPointer();
 
