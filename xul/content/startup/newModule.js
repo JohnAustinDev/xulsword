@@ -878,7 +878,7 @@ function handleResetRequest() {
       if (modsUsingAudio && modsUsingAudio[0]) {
         MainWindow.showLocation(modsUsingAudio[0], info.book, Number(info.chapter), 1, 1);
       }
-      else {Texts.update(SCROLLTYPETOP, HILIGHTNONE);}
+      else {MainWindow.Texts.update(SCROLLTYPETOP, HILIGHTNONE);}
     }
     break;
   case SOFTRESET: // program needs to reload all SWORD modules
