@@ -21,7 +21,7 @@ const REGEX=0, PHRASE=-1, MULTIWORD=-2, ENTRY_ATTRIBUTE=-3, LUCENE=-4, COMPOUND=
 const MAX_RESULTS_PER_PAGE = 30;
 const MAX_LEXICON_SEARCH_RESULTS = 500;
 const MAX_PRINT_SEARCH_RESULTS = 30;
-const ACTUAL_SEARCH_SYMBOLS = {SINGLECharWildCard:"?", MULTICharWildCard:"*", AND:"AND", OR:"OR", NOT:"NOT", SIMILAR:"~", GROUPSTART:"(", GROUPEND:")", QUOTESTART:"\"", QUOTEEND:"\""};
+const ACTUAL_SEARCH_SYMBOLS = {SINGLECharWildCard:"?", MULTICharWildCard:"*", AND:" AND ", OR:" OR ", NOT:" NOT ", SIMILAR:"~ ", GROUPSTART:"(", GROUPEND:")", QUOTESTART:"\"", QUOTEEND:"\""};
 
 var Search;
 var SearchResults;
@@ -241,26 +241,27 @@ function SearchObj(searchObj) {
         return;
       }
     }
-    
-    // process our search text using Search settings to create an actual search term
+    // process our search text using Search settings to create an actual search query
     s.query = s.searchtext;
-    s.query = s.query.replace(/^\s*/,""); //remove leading whitespace
-    s.query = s.query.replace(/\s*$/,""); //remove trailing whitespace
-    s.query = s.query.replace(/\s+/," "); //change all white space to " "
     
     // replace UI search symbols with LibSword recognized search symbols
     for (var m in LOCALE_SEARCH_SYMBOLS) {
-      try {var sym = this.bundle.GetStringFromName(m);} catch (er) {continue;}
-      if (!sym || (/^\s*$/).test(sym)) continue;
+			var sym = null;
+      try {sym = this.bundle.GetStringFromName(m);} catch (er) {}
+      if (!sym || (/^\s*$/).test(sym)) sym = LOCALE_SEARCH_SYMBOLS[m];
       s.query = s.query.replace(sym, ACTUAL_SEARCH_SYMBOLS[m], "g");
     }
+    
+    s.query = s.query.replace(/^\s*/,""); //remove leading whitespace
+    s.query = s.query.replace(/\s*$/,""); //remove trailing whitespace
+    s.query = s.query.replace(/\s+/g," "); //change all white space to " "
 
     var rawText = s.query; // save query at this point for use later
 
     if (LibSword.luceneEnabled(s.mod)) {
       s.type = LUCENE; //Lucene search
       
-      // if Lucene special chars/operators are present then take string literally without any modification
+      // if Lucene special chars/operators are present then take string literally without any more modification
       if (s.query.search(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|\]|\^|"|~|\*|\?|:|\\|AND|OR|NOT)/)!=-1) {
         document.getElementById("searchType").selectedItem = document.getElementById("SearchAdvanced");
       }
@@ -392,7 +393,7 @@ function SearchObj(searchObj) {
       
       // Search all in one go with no progress meter...
       
-//jsdump(uneval(s));
+jsdump(uneval(s));
       result.count = LibSword.search(s.mod, s.query, s.scope, s.type, s.flags, s.isnew);
       result.searchPointer = LibSword.getSearchPointer();
 

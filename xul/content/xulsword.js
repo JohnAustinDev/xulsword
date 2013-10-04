@@ -670,6 +670,7 @@ var History = {
   },
     
   add: function() {
+		if (LibSword.paused) return;
     var bcvH = this.list[this.index].split(".");
     var bcvN = new Array(3);
     // Always store as SAME versification!
