@@ -188,7 +188,8 @@ if ($MakeSetup =~ /true/i) {
   if (-e $autogen) {&cleanDir($autogen);}
   make_path($autogen);
   &writeInstallerAppInfo("$autogen/appinfo.iss");
-  &writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales, \%Prefs)
+  &writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales, \%Prefs);
+	&writeInstallerDefaultLocale("$autogen/defaultLocale.iss", \%Prefs);
   &writeInstallerModuleUninstall("$autogen/uninstall.iss", $RESOURCES, $IncludeModules, $IncludeLocales);
   &packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
 
@@ -806,6 +807,16 @@ sub writeInstallerLocaleinfo($$\%) {
     print OUTF "#define $pl \"true\"\n";
   }
   print OUTF "#define defLang \"".$prefsP->{"(language.js):general.useragent.locale"}."\"\n";
+  close(OUTF);
+}
+
+sub writeInstallerDefaultLocale($\%) {
+  my $of = shift;
+  my $prefsP = shift;
+
+  &Log("----> Writing installer default locale script.\n");
+  open(OUTF, ">:encoding(UTF-8)", $of) || die;
+  print OUTF "DefaultLocale := '".$prefsP->{"(language.js):general.useragent.locale"}."';\n";
   close(OUTF);
 }
 
