@@ -1,5 +1,9 @@
 REM USAGE: CompileAll.bat [NOSECURITY]
 
+@echo off
+cd %~dp0
+call Versions.bat
+
 call "%MK%\Cpp\cluceneMK\windows\lib\Compile.bat"
 
 call "%MK%\Cpp\swordMK\windows\lib\Compile.bat"
