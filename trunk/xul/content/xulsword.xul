@@ -160,7 +160,9 @@
   <key keycode="VK_DOWN"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').focus();"/>
   <key key="B"            modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').focus();"/> <!-- Like Paratext !-->
   
-	<key id="key_openLanguageMenu" keycode="VK_F1" command="cmd_xs_openLanguageMenu"/>
+	<key id="key_openLanguageMenu"    keycode="VK_F1" command="cmd_xs_openLanguageMenu"/>
+	<key id="key_addRepositoryModule" keycode="VK_F2" command="cmd_xs_addRepositoryModule"/>
+
   <key id="addBM"         key="&addCurPageAsCmd.commandkey;" modifiers="accel" command="cmd_xs_newBookmark"/>
   <key id="addBMN"        key="&addCurPageAsCmd.commandkey;" modifiers="control shift" command="cmd_xs_newUserNote"/>
   <key id="manBookmarkKb" key="&manBookmarksCmd.commandkey;" modifiers="accel" command="cmd_xs_openManager"/>
