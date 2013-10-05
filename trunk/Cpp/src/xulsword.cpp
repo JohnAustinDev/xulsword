@@ -41,7 +41,6 @@
 #include "canon_synodal0.h"	// Russian Synodal sword-1.6.1 v11n system
 #include "canon_east.h"
 #include "canon_synodalprot.h"
-#include "osisdictionary.h"
 #include "versemaps.h"
 
 #include <CLucene.h>
@@ -99,7 +98,6 @@ Custom derivative classes
 #include "osisxhtml_xs.cpp"
 #include "gbfxhtml_xs.cpp"
 #include "thmlxhtml_xs.cpp"
-#include "osisdictionary.cpp"
 
 using namespace sword;
 
