@@ -56,7 +56,7 @@ class SWMgrXS : public SWMgr {
     SWMgrXS(const char *iConfigPath, bool autoload = true, SWFilterMgr *filterMgr = 0, bool multiMod = false, bool augmentHome = true);
     ~SWMgrXS();
     
-    // needed to enable support sword-1.6.1 Synodal modules and to add OSISDictionary filter option to all modules
+    // needed to enable support sword-1.6.1 Synodal modules
     signed char Load();
 
   protected:

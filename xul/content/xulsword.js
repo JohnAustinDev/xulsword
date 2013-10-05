@@ -369,8 +369,10 @@ function getModuleFeatures(module) {
   
   var feature = LibSword.getModuleInformation(module, "Feature");
   features.isStrongs         = (feature.search("GreekDef")!=-1 || feature.search("HebrewDef")!=-1);
-      
-  if (globalOptionFilters.search("Dictionary")!= -1) {
+  
+  // "Dictionary" is for backward compatibility to old mods which lack standard conf entry (made for xulsword <= 3.6)
+  if (globalOptionFilters.search("Reference Material Links")!= -1 || 
+			globalOptionFilters.search("Dictionary")!= -1) {
     features.haveDictionary = false;
     var dmods = LibSword.getModuleInformation(module, "DictionaryModule");
     dmods = dmods.split("<nx>");
