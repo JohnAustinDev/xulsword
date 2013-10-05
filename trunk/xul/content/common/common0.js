@@ -297,7 +297,7 @@ const GlobalToggleCommands = {
   cmd_xs_toggleHeadings:   "Headings",
   cmd_xs_toggleFootnotes:  "Footnotes",
   cmd_xs_toggleCrossRefs:  "Cross-references",
-  cmd_xs_toggleDictionary: "Dictionary",
+  cmd_xs_toggleDictionary: "Reference Material Links",
   cmd_xs_toggleStrongsTags: "Strong's Numbers",
   cmd_xs_toggleMorphTags: "Morphological Tags",
   cmd_xs_toggleVerseNums:  "Verse Numbers",

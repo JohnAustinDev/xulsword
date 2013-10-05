@@ -27,6 +27,8 @@
 #include "xzcomprs.h"
 #endif
 
+#include "osisreferencelinks.h";
+
 /********************************************************************
 SWMgrXS - to over-ride modules and how they are loaded
 *********************************************************************/
@@ -42,6 +44,13 @@ SWMgrXS::~SWMgrXS() {}
 signed char SWMgrXS::Load() {
 //COPIED from SWMgr::Load 3/6/2012
 	signed char ret = 0;
+	
+  //EDIT: adding OSISReferenceLinks filter for backward compatibility to old mods which lack this conf entry (made for xulsword <= 3.6)
+  SWOptionFilter *tmpFilter = 0;
+  tmpFilter = new OSISReferenceLinks("Reference Material Links", "Hide or show links to study helps in the Biblical text.", "x-glossary", "", "On");
+  optionFilters.insert(OptionFilterMap::value_type("OSISDictionary", tmpFilter));
+  cleanupFilters.push_back(tmpFilter);
+  //EDIT_END
 
 	if (!config) {	// If we weren't passed a config object at construction, find a config file
 		if (!configPath) {	// If we weren't passed a config path at construction...

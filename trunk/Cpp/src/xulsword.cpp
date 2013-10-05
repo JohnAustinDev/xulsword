@@ -309,7 +309,8 @@ void xulsword::updateGlobalOptions(bool disableFootCrossRed) {
   MyManager->setGlobalOption("Headings",Headings ? "On":"Off");
   MyManager->setGlobalOption("Footnotes",Footnotes && !disableFootCrossRed ? "On":"Off");
   MyManager->setGlobalOption("Cross-references",Crossrefs && !disableFootCrossRed ? "On":"Off");
-  MyManager->setGlobalOption("Dictionary",Dictionary ? "On":"Off");
+  MyManager->setGlobalOption("Reference Material Links",Dictionary ? "On":"Off");
+  MyManager->setGlobalOption("Dictionary",Dictionary ? "On":"Off"); // for backward compatibility
   MyManager->setGlobalOption("Words of Christ in Red",Redwords && !disableFootCrossRed ? "On":"Off");
   MyManager->setGlobalOption("Hebrew Vowel Points",HebrewPoints ? "On":"Off");
   MyManager->setGlobalOption("Hebrew Cantillation",Cantillation ? "On":"Off");
@@ -903,7 +904,8 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
     MyManager->setGlobalOption("Headings","Off");
     MyManager->setGlobalOption("Footnotes","Off");
     MyManager->setGlobalOption("Cross-references","Off");
-    MyManager->setGlobalOption("Dictionary","Off");
+    MyManager->setGlobalOption("Reference Material Links","Off");
+    MyManager->setGlobalOption("Dictionary","Off"); // for backward compatibility
     MyManager->setGlobalOption("Words of Christ in Red","Off");
     MyManager->setGlobalOption("Strong's Numbers","Off");
     MyManager->setGlobalOption("Morphological Tags","Off");
@@ -1426,7 +1428,8 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
   MyManager->setGlobalOption("Headings","Off");
   MyManager->setGlobalOption("Footnotes","Off");
   MyManager->setGlobalOption("Cross-references","Off");
-  MyManager->setGlobalOption("Dictionary","Off");
+  MyManager->setGlobalOption("Reference Material Links","Off");
+  MyManager->setGlobalOption("Dictionary","Off"); // for backward compatibility
   MyManager->setGlobalOption("Words of Christ in Red","Off");
   MyManager->setGlobalOption("Morphological Tags","Off");
   MyManager->setGlobalOption("Morpheme Segmentation","Off");
@@ -1544,17 +1547,17 @@ void xulsword::setGlobalOption(const char *option, const char *setting) {
   bool * thisOption;
 
   // Find which global option we are updating
-  if      (!strcmp(option,"Headings"))               {thisOption = &Headings;}
-  else if (!strcmp(option,"Footnotes"))              {thisOption = &Footnotes;}
-  else if (!strcmp(option,"Cross-references"))       {thisOption = &Crossrefs;}
-  else if (!strcmp(option,"Dictionary"))             {thisOption = &Dictionary;}
-  else if (!strcmp(option,"Words of Christ in Red")) {thisOption = &Redwords;}
-  else if (!strcmp(option,"Verse Numbers"))          {thisOption = &Versenumbers;}
-  else if (!strcmp(option,"Hebrew Vowel Points"))    {thisOption = &HebrewPoints;}
-  else if (!strcmp(option,"Hebrew Cantillation"))    {thisOption = &Cantillation;}
-  else if (!strcmp(option,"Strong's Numbers"))       {thisOption = &Strongs;}
-  else if (!strcmp(option,"Morphological Tags"))     {thisOption = &Morph;}
-  else if (!strcmp(option,"Morpheme Segmentation"))  {thisOption = &MorphSeg;}
+  if      (!strcmp(option,"Headings"))                 {thisOption = &Headings;}
+  else if (!strcmp(option,"Footnotes"))                {thisOption = &Footnotes;}
+  else if (!strcmp(option,"Cross-references"))         {thisOption = &Crossrefs;}
+  else if (!strcmp(option,"Reference Material Links")) {thisOption = &Dictionary;}
+  else if (!strcmp(option,"Words of Christ in Red"))   {thisOption = &Redwords;}
+  else if (!strcmp(option,"Verse Numbers"))            {thisOption = &Versenumbers;}
+  else if (!strcmp(option,"Hebrew Vowel Points"))      {thisOption = &HebrewPoints;}
+  else if (!strcmp(option,"Hebrew Cantillation"))      {thisOption = &Cantillation;}
+  else if (!strcmp(option,"Strong's Numbers"))         {thisOption = &Strongs;}
+  else if (!strcmp(option,"Morphological Tags"))       {thisOption = &Morph;}
+  else if (!strcmp(option,"Morpheme Segmentation"))    {thisOption = &MorphSeg;}
   else {xsThrow("SetGlobalOption: unknown option \"%s\" .", option); return;}
 
   // Now update the global option
@@ -1572,17 +1575,17 @@ char *xulsword::getGlobalOption(const char *option) {
   SWBuf rCText;
 
   //Find which global option is being asked for
-  if      (!strcmp(option,"Headings"))               {thisOption = &Headings;}
-  else if (!strcmp(option,"Footnotes"))              {thisOption = &Footnotes;}
-  else if (!strcmp(option,"Cross-references"))       {thisOption = &Crossrefs;}
-  else if (!strcmp(option,"Dictionary"))             {thisOption = &Dictionary;}
-  else if (!strcmp(option,"Words of Christ in Red")) {thisOption = &Redwords;}
-  else if (!strcmp(option,"Verse Numbers"))          {thisOption = &Versenumbers;}
-  else if (!strcmp(option,"Hebrew Vowel Points"))    {thisOption = &HebrewPoints;}
-  else if (!strcmp(option,"Hebrew Cantillation"))    {thisOption = &Cantillation;}
-  else if (!strcmp(option,"Strong's Numbers"))       {thisOption = &Strongs;}
-  else if (!strcmp(option,"Morphological Tags"))     {thisOption = &Morph;}
-  else if (!strcmp(option,"Morpheme Segmentation"))  {thisOption = &MorphSeg;}
+  if      (!strcmp(option,"Headings"))                 {thisOption = &Headings;}
+  else if (!strcmp(option,"Footnotes"))                {thisOption = &Footnotes;}
+  else if (!strcmp(option,"Cross-references"))         {thisOption = &Crossrefs;}
+  else if (!strcmp(option,"Reference Material Links")) {thisOption = &Dictionary;}
+  else if (!strcmp(option,"Words of Christ in Red"))   {thisOption = &Redwords;}
+  else if (!strcmp(option,"Verse Numbers"))            {thisOption = &Versenumbers;}
+  else if (!strcmp(option,"Hebrew Vowel Points"))      {thisOption = &HebrewPoints;}
+  else if (!strcmp(option,"Hebrew Cantillation"))      {thisOption = &Cantillation;}
+  else if (!strcmp(option,"Strong's Numbers"))         {thisOption = &Strongs;}
+  else if (!strcmp(option,"Morphological Tags"))       {thisOption = &Morph;}
+  else if (!strcmp(option,"Morpheme Segmentation"))    {thisOption = &MorphSeg;}
   else {xsThrow("GetGlobalOption: unknown option \"%s\".", option); return NULL;}
 
   // Now return the proper value
