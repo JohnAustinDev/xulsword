@@ -43,13 +43,6 @@ signed char SWMgrXS::Load() {
 //COPIED from SWMgr::Load 3/6/2012
 	signed char ret = 0;
 
-//EDIT: adding OSISDictionary filter
-  SWOptionFilter *tmpFilter = 0;
-  tmpFilter = new OSISDictionary();
-  optionFilters.insert(OptionFilterMap::value_type("OSISDictionary", tmpFilter));
-  cleanupFilters.push_back(tmpFilter);
-//EDIT_END
-
 	if (!config) {	// If we weren't passed a config object at construction, find a config file
 		if (!configPath) {	// If we weren't passed a config path at construction...
 			SWLog::getSystemLog()->logDebug("LOOKING UP MODULE CONFIGURATION...");
