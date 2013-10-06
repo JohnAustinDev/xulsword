@@ -280,6 +280,7 @@ ARMI = {
 				if (!testOnly) {
 					ARMD.ModulesQuerying.splice(mqi, 1);
 					ARMU.revertStatus(MLDS, mods[m]);
+					jsdump("INFO: Module \"" + ARMU.getResourceLiteral(MLDS, mods[m], "ModuleName") + "\" removed from query queue.");
 				}
 			}
 			
@@ -291,6 +292,7 @@ ARMI = {
 					ARMD.ModulesDownloading.splice(x, 1);
 					ARMU.revertStatus(MLDS, mods[m]);
 					x--;
+					jsdump("INFO: Module \"" + ARMU.getResourceLiteral(MLDS, mods[m], "ModuleName") + "\" removed from download queue.");
 					
 					var downDir = ARMU.getModuleDownloadDirectory(mods[m]);
 					if (downDir.exists()) downDir.remove(true);
@@ -303,7 +305,10 @@ ARMI = {
 				if (Web[i].type != "moduleListing" && Web[i].type != "moduleFile") continue;	
 				if (Web[i].group == mods[m].ValueUTF8) {
 					didCancel = true;
-					if (!testOnly) cancel.push(Web[i].persist);
+					if (!testOnly) {
+						cancel.push(Web[i].persist);
+						jsdump("INFO: Module \"" + uneval(Web[i]) + "\" download cancelled.");
+					}
 				}
 			}
 			for (var p=0; p<cancel.length; p++) {cancel[p].cancelSave();}

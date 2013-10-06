@@ -363,10 +363,51 @@ ARMD = {
 		this.QueryCheckInterval = null;
 		
 		if (!ARMD.ModuleCheckInterval) ARMD.ModuleCheckInterval = window.setInterval("ARMD.checkAllModulesAreDownloaded();", 200);
+
+		// if this is an auto-update, ask user if it should be cancelled, but ask after
+		// a timeout so that asynch download threads are started first
+		if (PromptUpdateMods.prompt) window.setTimeout("ARMD.requestUpdatePermission();", 1);
+		PromptUpdateMods.prompt = false;
 		
 		// start the file download process...
 		this.downloadNextModule();
 	},
+	
+	requestUpdatePermission: function() {
+		var mods = PromptUpdateMods.mods;
+
+		var title = getDataUI("menu.addNewModule.label");
+		var msg = "\n";
+		for (var i=0; i<mods.length; i++) {
+				var modName = ARMU.getResourceLiteral(MLDS, mods[i], "ModuleName");
+				var modVers = ARMU.getResourceLiteral(MLDS, mods[i], "Version");
+				if (modVers === null) modVers = "?";
+				var change = ARMU.getResourceLiteral(MLDS, mods[i], "History_" + modVers);
+				change = (change && !(/^\s*$/).test(change) && change != NOTFOUND ? change:null);
+				msg += modName;
+				msg += (modName != Tab[modName].label ? " (" + Tab[modName].label + ") ":" ");
+				msg += modVers;
+				msg += (change ? ": " + change:"");
+				msg += "\n";
+		}
+		msg += "\n\n";
+		msg += MyStrings.GetStringFromName("arm.wishToContinue");
+
+		var result = {};
+		var dlg = window.openDialog(
+				"chrome://xulsword/content/dialogs/dialog/dialog.xul",
+				"dlg",
+				DLGSTD,
+				result,
+				fixWindowTitle(title),
+				msg,
+				DLGALERT,
+				DLGYESNO
+		);
+		
+		if (!result.ok) ARMI.moduleCancel(false, PromptUpdateMods.mods);
+	},
+	
 	
 ////////////////////////////////////////////////////////////////////////
 // PHASE 2: DOWNLOADING MODULE CONTENTS
@@ -519,7 +560,7 @@ ARMD = {
 				}
 				
 				ARMD.checkModuleComplete(this.module);
-				ARMD.downloadNextFile(this.module);
+				if (!this.module.status) ARMD.downloadNextFile(this.module);
 			},
 			
 			onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
@@ -565,7 +606,7 @@ ARMD = {
 			}
 		}
 		
-		if (stillWorking) return;
+		if (!module.status && stillWorking) return;
 			
 		var is_XSM_module = ARMU.is_XSM_module(MLDS, module.modResource);
 		

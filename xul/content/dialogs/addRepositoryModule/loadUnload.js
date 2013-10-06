@@ -54,9 +54,10 @@ var ProgressBar;
 var WindowIsClosing = false;
 var MyStrings = null;
 var ERROR = null;
+var PromptUpdateMods = { prompt:false, mods:[] };
 
 var SYNC = false;
-var USE_CACHE = true;
+var USE_CACHE = false;
 
 var ARMU; // defined in utilities.js
 var ARMI; // defined in interfaceFuncs.js
@@ -434,29 +435,11 @@ function checkAllRepositoriesLoaded() {
 	getUpdateMods(mods, false); // prefer non-xsm
 	getUpdateMods(mods, true); // xsm wins only if it's a greater version than all non-xsm
 
-	// ask user if an update is desired
+	// begin updating texts which need it
 	if (mods.length) {
-		var title = getDataUI("menu.addNewModule.label");
-		var msg = "\n";
-		for (var i=0; i<mods.length; i++) {
-			var modName = ARMU.getResourceLiteral(MLDS, mods[i], "ModuleName");
-			msg += modName + (modName != Tab[modName].label ? " (" + Tab[modName].label + ") ":" ") + ARMU.getResourceLiteral(MLDS, mods[i], "Version") + "\n";
-		}
-		msg += "\n\n";
-		msg += MyStrings.GetStringFromName("arm.wishToContinue");
-
-		var result = {};
-		var dlg = window.openDialog(
-				"chrome://xulsword/content/dialogs/dialog/dialog.xul",
-				"dlg",
-				DLGSTD,
-				result,
-				fixWindowTitle(title),
-				msg,
-				DLGALERT,
-				DLGYESNO
-		);
-		if (result.ok) ARMI.initiateModuleDownloads(mods);
+		ARMI.initiateModuleDownloads(mods);
+		PromptUpdateMods.mods = mods;
+		PromptUpdateMods.prompt = true; // triggers a prompt after files are located
 	}
   
   ARMU.buildLanguageList();
@@ -901,7 +884,11 @@ function applyConfFile(file, repoUrl) {
 		if (ARMU.compareSwordVersions(moduleVersion, Tab[moduleName].modVersion).result == 1) {
 			moduleUpdateNeeded = true;
 		}
-		if (moduleUpdateNeeded) jsdump("INFO: module \"" + moduleName + ", " + Tab[moduleName].modVersion + "\" can be updated to version \"" + moduleVersion + (is_XSM_module ? " XSM":"") + "\".");
+		if (moduleUpdateNeeded) {
+			jsdump("INFO: module \"" + moduleName + ", " + Tab[moduleName].modVersion + "\" can be updated to version \"" + moduleVersion + (is_XSM_module ? " XSM":"") + "\".");
+			var change = ARMU.getConfEntry(filedata, "History_" + moduleVersion);
+			if (change && !(/^\s*$/).test(change)) ARMU.setResourceAttribute(MLDS, newModRes, "History_" + moduleVersion, change);
+		}
 	}
 	ARMU.setResourceAttribute(MLDS, newModRes, "ModuleUpdateNeeded", (moduleUpdateNeeded ? "true":"false"));
 
@@ -920,7 +907,10 @@ function onUnload() {
   
   // abort any downloads which are still in progress
   var cancel = [];
-  for (var i=0; i<Web.length; i++) {cancel.push(Web[i].persist);}
+  for (var i=0; i<Web.length; i++) {
+		cancel.push(Web[i].persist);
+		jsdump("INFO: Cancelling download on unload: \"" + uneval(Web[i]) + "\"");
+	}
   for (var p=0; p<cancel.length; p++) {cancel[p].cancelSave();}
   
   ARMU.clearErrors(RPDS, RDF.GetResource(RP.XulswordRepoListID));
