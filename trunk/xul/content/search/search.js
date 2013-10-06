@@ -52,6 +52,7 @@ function initSearch() {
       radio.setAttribute("class", "radio cs-" + Tabs[t].locName);
       radio.setAttribute("id", "mod-radio."+ Tabs[t].modName);
       radio.setAttribute("label", Tabs[t].label);
+      radio.setAttribute("tooltiptext", Tabs[t].description);
       
       // do we need to add another column now?
       if (row.childNodes.length + 1 > numcols) {
