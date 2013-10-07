@@ -279,7 +279,7 @@ ARMD = {
 					}
 					else {
 						this.module.status = 1;
-						ARMU.setStatus(MLDS, this.module.modResource, dString(0) + "%", "");
+						ARMU.revertStatus(MLDS, this.module.modResource);
 						jsdump("ERROR: fetchModuleUrls failed for \"" + this.directoryUrl + "\"");
 						var downDir = ARMU.getModuleDownloadDirectory(this.module.modResource);
 						if (downDir.exists()) downDir.remove(true);
@@ -647,7 +647,7 @@ ARMD = {
 			}
 			
 		}
-		else ARMU.setStatus(MLDS, module.modResource, dString(0) + "%", "");
+		else ARMU.revertStatus(MLDS, module.modResource);
 		
 		var downDir = ARMU.getModuleDownloadDirectory(module.modResource);
 		if (downDir.exists()) downDir.remove(true);

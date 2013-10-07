@@ -72,7 +72,7 @@ function PopupObj(popupobj) {
 		}
 		else {
 			referenceBible = (p && p.mod ? p.mod:null);
-			if (referenceBible && Tab[referenceBible].modType == DICTIONARY) {
+			if (referenceBible && Tab.hasOwnProperty(referenceBible) && Tab[referenceBible].modType == DICTIONARY) {
 				var aref = LibSword.getModuleInformation(referenceBible, "ReferenceBible");
 				if (aref && aref != NOTFOUND && Tab.hasOwnProperty(aref)) referenceBible = aref;
 			}
