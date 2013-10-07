@@ -669,8 +669,10 @@ ARMU = {
 		
 		if (ARMU.getModuleInstallerZipFile(aRes).exists())
 				ARMU.setStatus(MLDS, aRes, ON, "green");
-		else 
-				ARMU.setStatus(MLDS, aRes, dString(0) + "%", "");
+		else {
+			var isInstalled = ARMU.getResourceLiteral(MLDS, aRes, "Installed");
+			ARMU.setStatus(MLDS, aRes, (isInstalled && isInstalled == "true" ? ON:dString(0) + "%"), "");
+		}
 	},
   
   is_XSM_module: function(modDS, modResource) {
@@ -714,6 +716,36 @@ ARMU = {
 		}
 
 		return ret;
+	},
+	
+	// checks modules to see if an update is needed. It checks EITHER XSM
+	// OR REGULAR MODULES, depending on doXSM flag. Modules which need to
+	// be upgraded will be included in the mods array. If multiple versions 
+	// of a module exist, only the highest version will be included in the 
+	// mods array. If two updateable modules have the same module name and 
+	// version, the first to appear on the list will be included.
+	getUpdateMods: function(mods, doXSM) {
+		RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+		var iter = RDFC.GetElements();
+		while(iter.hasMoreElements()) {
+			var mod = iter.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
+			var meXSM = ARMU.is_XSM_module(MLDS, mod);
+			if (doXSM && !meXSM || !doXSM && meXSM) continue;
+			if (ARMU.getResourceLiteral(MLDS, mod, "ModuleUpdateNeeded") == "true") {
+				var skipMe = false;
+				for (var i=0; i<mods.length; i++) {
+					if (ARMU.getResourceLiteral(MLDS, mod, "ModuleName") != ARMU.getResourceLiteral(MLDS, mods[i], "ModuleName")) continue;
+					if (ARMU.compareSwordVersions(ARMU.getResourceLiteral(MLDS, mod, "Version"), ARMU.getResourceLiteral(MLDS, mods[i], "Version")).result < 1) {
+						skipMe = true;
+					}
+					break;
+				}
+				if (!skipMe) {
+					if (i == mods.length) mods.push(mod);
+					else mods[i] = mod;
+				}
+			}
+		}
 	}
 
 };
