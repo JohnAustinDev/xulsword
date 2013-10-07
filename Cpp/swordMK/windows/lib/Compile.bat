@@ -85,6 +85,7 @@ Set cFiles1=^
  "%sword%\src\modules\filters\osiswebif.cpp"^
  "%sword%\src\modules\filters\osiswordjs.cpp"^
  "%sword%\src\modules\filters\papyriplain.cpp"^
+ "%sword%\src\modules\filters\osisreferencelinks.cpp"^
  "%sword%\src\modules\comments\rawcom\rawcom.cpp"^
  "%sword%\src\modules\comments\rawcom4\rawcom4.cpp"^
  "%sword%\src\modules\comments\rawfiles\rawfiles.cpp"^
@@ -351,7 +352,8 @@ Set lFiles2=^
  ".\%objDIR%\zverse.obj"^
  ".\%objDIR%\osisxhtml.obj"^
  ".\%objDIR%\gbfxhtml.obj"^
- ".\%objDIR%\thmlxhtml.obj"
+ ".\%objDIR%\thmlxhtml.obj"^
+ ".\%objDIR%\osisreferencelinks.obj"
 
 link.exe -lib %lFlags% %lFiles1% %lFiles2%
 
