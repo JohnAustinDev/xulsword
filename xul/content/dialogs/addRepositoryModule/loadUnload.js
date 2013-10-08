@@ -54,7 +54,9 @@ var ProgressBar;
 var WindowIsClosing = false;
 var MyStrings = null;
 var ERROR = null;
+
 var PromptUpdateMods = { prompt:false, mods:[] };
+var StatusUpdateMods = { pause:false, mods:[], status:[], style:[] };
 
 var SYNC = false;
 var USE_CACHE = false;

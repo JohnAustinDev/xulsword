@@ -265,11 +265,11 @@ ARMI = {
 		if (!mods.length) return didCancel;
 		
 		// add to selection any other XSM members too
-		var add = [];
+		var allmods = [];
 		for (var m=0; m<mods.length; m++) {
-			add = add.concat(ARMU.otherMembersXSM(mods[m]));
+			allmods = allmods.concat(ARMU.allMembersXSM(mods[m]));
 		}
-		mods = mods.concat(add);
+		mods = allmods;
 		
 		for (var m=0; m<mods.length; m++) {
 		

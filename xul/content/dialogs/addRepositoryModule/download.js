@@ -345,9 +345,11 @@ ARMD = {
 			
 			ProgressBar.max = Number(ProgressBar.max) + Number(size);
 			
-			if (this.check1.hasOwnProperty(encodeURI(modobj.modContentData[f].url.replace(/^file\:\/*/, "").replace("\\", "/", "g"))))
-					jsdump("REPEATED DOWNLOAD SCHEDULED " + modobj.modContentData[f].url);
-			this.check1[encodeURI(modobj.modContentData[f].url.replace(/^file\:\/*/, "").replace("\\", "/", "g"))] = modobj.modContentData[f].size;
+			try {
+				var check1 = modobj.modContentData[f].url.replace(/^file\:\/*/i, "").replace("\\", "/", "g");
+				if (this.check1.hasOwnProperty(check1)) jsdump("REPEATED check1: " + check1);
+				this.check1[check1] = modobj.modContentData[f].size;
+			} catch (er) {jsdump("ERROR during addRepositoryModule.js check1");}
 //jsdump("Added file for download: " + modobj.modContentData[f].url);
 		}
 		
@@ -374,6 +376,11 @@ ARMD = {
 	},
 	
 	requestUpdatePermission: function() {
+		// pause update status indicators while user is reading the prompt (just seems better)
+		ProgressBar.hidden = true;
+		StatusUpdateMods.pause = true;
+		StatusUpdateMods.mods = PromptUpdateMods.mods;
+		
 		var mods = PromptUpdateMods.mods;
 
 		var title = getDataUI("menu.addNewModule.label");
@@ -405,7 +412,27 @@ ARMD = {
 				DLGYESNO
 		);
 		
-		if (!result.ok) ARMI.moduleCancel(false, PromptUpdateMods.mods);
+		ProgressBar.hidden = false;
+		StatusUpdateMods.pause = false;
+		for (var i=0; i<StatusUpdateMods.mods.length; i++) {
+			if (StatusUpdateMods.status[i]) 
+					ARMU.setStatus(MLDS, StatusUpdateMods.mods[i], StatusUpdateMods.status[i], StatusUpdateMods.style[i]);
+		}
+		
+		if (!result.ok) {
+			// download was already started, so revert the process
+			ARMI.moduleCancel(false, PromptUpdateMods.mods);
+			for (var i=0; i<PromptUpdateMods.mods.length; i++) {
+				var dlmod = ARMU.getModuleInstallerZipFile(PromptUpdateMods.mods[i]);
+				if (dlmod.exists()) dlmod.remove(false);
+				ARMU.revertStatus(MLDS, PromptUpdateMods.mods[i]);
+			}
+			var intmods = ARMU.getInstallableModules();
+			if (intmods.length) document.getElementById("apply").removeAttribute("disabled");
+			else document.getElementById("apply").setAttribute("disabled", "true");
+		}
+		else ARMD.checkAllModulesAreDownloaded(); // downloads may have finished during prompt
+		
 	},
 	
 	
@@ -480,8 +507,8 @@ ARMD = {
 		else {
 			var url = ARMU.getResourceLiteral(MLDS, module.modResource, "Url").replace("\\", "/", "g");
 			var datapath = ARMU.getResourceLiteral(MLDS, module.modResource, "DataPath");
-			var sub = aContentData.url.replace("\\", "/", "g").replace(url + "/" + datapath, "");
-      sub = sub.replace(/^\//, "");
+			var sub = decodeURI(aContentData.url).replace("\\", "/", "g").replace(url + "/" + datapath, "");
+			sub = sub.replace(/^\//, "");
 			sub = sub.split("/");
 			for (var sd=0; sd<sub.length-1; sd++) {
 				if (!sub[sd]) return; // handle dir//subdir
@@ -539,9 +566,11 @@ ARMD = {
 				// finished file download		
 				ARMU.webRemove(this.myPersist);
 
-				if (ARMD.check2.hasOwnProperty(aRequest.name.replace(/^file\:\/*/, "")))
-						jsdump("REPEATED DOWNLOAD " + aRequest.name);
-				ARMD.check2[aRequest.name.replace(/^file\:\/*/, "")] = Number(this.mySize);
+				try {
+					var check2 = aRequest.name.replace(/^file\:\/*/i, "");
+					if (ARMD.check2.hasOwnProperty(check2)) jsdump("REPEATED check2: " + check2);
+					ARMD.check2[check2] = Number(this.mySize);
+				} catch (er) {jsdump("ERROR during addRepositoryModule.js check2");}
 
 				// update manifest total progress bar
 				ProgressBar.value = Number(ProgressBar.value) + Number(this.mySize) - Number(this.myLastProgress);
@@ -709,16 +738,16 @@ ARMD = {
 			return;
 		}
 		
-		window.clearInterval(this.ModuleCheckInterval);
+		if (this.ModuleCheckInterval) window.clearInterval(this.ModuleCheckInterval);
 		this.ModuleCheckInterval = null;
 		
 		// do some sanity checking and error reporting
 		for (var t in this.check1) {
-			if (!this.check2.hasOwnProperty(t)) jsdump("WARN: Download file is missing: " + t);
+			if (!this.check2.hasOwnProperty(t)) jsdump("WARN: Download check1 is unmatched: " + t);
 			else if (this.check1[t] != this.check2[t]) jsdump("ERROR: Scheduled-download-size:" + this.check1[t] + " <> actual-size:" + this.check2[t]);
 		}
 		for (var t in ARMD.check2) {
-			if (!this.check1.hasOwnProperty(t)) jsdump("WARN: Query file is missing: " + t);
+			if (!this.check1.hasOwnProperty(t)) jsdump("WARN: Download check2 is unmatched: " + t);
 		}
 		this.check1 = {};
 		this.check2 = {};
