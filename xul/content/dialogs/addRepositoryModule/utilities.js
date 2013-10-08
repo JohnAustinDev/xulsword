@@ -667,7 +667,10 @@ ARMU = {
 		
 		var myKey = ARMU.getResourceLiteral(MLDS, modResource, "ModuleUrl");
 		
-		if (!this.membersXSM || !this.membersXSM.hasOwnProperty(myKey)) {
+		// mykey members could have been invalidated by a repository reload etc.
+		// so check for this too.
+		if (!this.membersXSM || !this.membersXSM.hasOwnProperty(myKey) || 
+				!MLDS.ArcLabelsIn(this.membersXSM[myKey][0]).hasMoreElements()) { 
 			this.membersXSM = {};
 			RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
 			var elems = RDFC.GetElements();
