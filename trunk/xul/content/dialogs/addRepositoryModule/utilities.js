@@ -414,19 +414,27 @@ ARMU = {
 			// dictionary modules are sometimes duplicated within various XSM modules, 
 			// leading to strange (to the user) multiple listings and so here we
 			// hide any dictionary(s) within XSM modules, unless the XSM is considered 
-			// a "compilation"
+			// a "compilation" or unless the XSM is partially installed.
 			if (show && is_XSM_module) {
 				var isCompilation = ARMU.getResourceLiteral(MLDS, mod, "SwordModules").split(";").length > 3;
-				var isDictRE = new RegExp(escapeRE(MyStrings.GetStringFromName("arm.moduleType.Dicts")));
-				if (!isCompilation && (isDictRE).test(ARMU.getResourceLiteral(MLDS, mod, "TypeReadable"))) {
-					show = false;
+				if (!isCompilation) {
+					var isDictRE = new RegExp(escapeRE(MyStrings.GetStringFromName("arm.moduleType.Dicts")));
+					if ((isDictRE).test(ARMU.getResourceLiteral(MLDS, mod, "TypeReadable"))) {
+						var isPartialInstall = false;
+						var allxsm = ARMU.allMembersXSM(mod);
+						for (var i=1; i<allxsm.length; i++) {
+							isPartialInstall |= (ARMU.getResourceLiteral(MLDS, allxsm[0], "Installed") != ARMU.getResourceLiteral(MLDS, allxsm[i], "Installed"));
+						}
+						if (!isPartialInstall) show = false;
+					}
 				}
 			}
 			
 			ARMU.setResourceAttribute(MLDS, mod, "Show", (show ? "true":"false"));
 			
-			// if showing, then save unique keys representing each module, as either 
-			// XSM or SWORD modules, for use after the main loop.
+			// if showing, then save unique keys representing this module, as either 
+			// an XSM or SWORD module, for use after the main loop to hide SWORD
+			// modules which also exist within an XSM module.
 			if (show) {
 				if (is_XSM_module) {
 					mname = ARMU.getResourceLiteral(MLDS, mod, "SwordModules").split(";");
@@ -456,7 +464,7 @@ ARMU = {
 		
 		} // ModuleListID loop
 		
-		// if a .xsm module is showing, hide the SWORD modules
+		// if an XSM module is showing, hide the separate SWORD modules
 		// which are contained within it, unless they need updating.
 		for (key in xsm) {
 			for (var m=0; sword[key] && m<sword[key].length; m++) {
@@ -634,34 +642,44 @@ ARMU = {
 		}
     
     var statusArray = [aRes];
-		if (aDS == MLDS) {
-			statusArray = statusArray.concat(this.otherMembersXSM(aRes));
-		}
+		if (aDS == MLDS) statusArray = this.allMembersXSM(aRes);
 		
 		for (var i=0; i<statusArray.length; i++) {
-			ARMU.setResourceAttribute(aDS, statusArray[i], "Status", status);
-			ARMU.setResourceAttribute(aDS, statusArray[i], "Style", style);
+			var pausei = (StatusUpdateMods.pause ? StatusUpdateMods.mods.indexOf(aRes):-1);
+			if (pausei == -1) {
+				ARMU.setResourceAttribute(aDS, statusArray[i], "Status", status);
+				ARMU.setResourceAttribute(aDS, statusArray[i], "Style", style);
+			}
+			else {
+				StatusUpdateMods.status[pausei] = status;
+				StatusUpdateMods.style[pausei] = style;
+			}
 		}
+		
   },
   
-  // returns an array of other module resources which share the same XSM
-  // module or else an empty array if there are no others.
-  otherMembersXSM: function(modResource) {
-		var resArray = [];
+  // returns an array of all module resources which share the same XSM
+  // module or else an array of 1 for a non-XSM resources.
+  membersXSM: null, // cache these or suffer a big speed hit
+  allMembersXSM: function(modResource) {
 		
-		if (!ARMU.is_XSM_module(MLDS, modResource)) return resArray;
+		if (!ARMU.is_XSM_module(MLDS, modResource)) return [modResource];
 		
 		var myKey = ARMU.getResourceLiteral(MLDS, modResource, "ModuleUrl");
-		RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-		var elems = RDFC.GetElements();
-		while (elems.hasMoreElements()) {
-			var elem = elems.getNext();
-			if (elem == modResource) continue; // get "other" members only
-			var key = ARMU.getResourceLiteral(MLDS, elem, "ModuleUrl");
-			if (key == myKey) resArray.push(elem);
+		
+		if (!this.membersXSM || !this.membersXSM.hasOwnProperty(myKey)) {
+			this.membersXSM = {};
+			RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+			var elems = RDFC.GetElements();
+			while (elems.hasMoreElements()) {
+				var elem = elems.getNext();
+				var key = ARMU.getResourceLiteral(MLDS, elem, "ModuleUrl");
+				if (!this.membersXSM.hasOwnProperty(key)) this.membersXSM[key] = [];
+				this.membersXSM[key].push(elem);
+			}
 		}
 
-		return resArray;
+		return this.membersXSM[myKey];
 	},
   
   revertStatus: function(aDS, aRes) {
@@ -723,7 +741,7 @@ ARMU = {
 	// be upgraded will be included in the mods array. If multiple versions 
 	// of a module exist, only the highest version will be included in the 
 	// mods array. If two updateable modules have the same module name and 
-	// version, the first to appear on the list will be included.
+	// version, only the first to appear on the list will be included.
 	getUpdateMods: function(mods, doXSM) {
 		RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
 		var iter = RDFC.GetElements();
