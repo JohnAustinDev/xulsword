@@ -588,6 +588,8 @@ function ViewPortObj(viewPortObj) {
   };
   
   this.selectTab = function(w, version) {
+		document.getElementById("text" + w).setAttribute("versePerLine", "false");
+		
     var fdb = this.firstDisplayBible(true); // capture before changing prefs...
     
     if (this === MainWindow.ViewPort) {

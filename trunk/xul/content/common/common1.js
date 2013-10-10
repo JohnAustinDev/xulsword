@@ -548,17 +548,6 @@ function cleanDoubleClickSelection(sel) {
   return sel;
 }
 
-function isASCII(text) {
-  var notASCII = false;
-  for (var c=0; c<text.length; c++) {
-    if (text.charCodeAt(c) > 128) {
-      notASCII = true;
-      break;
-    }
-  }
-  return !notASCII;
-}
-
 // Return the viewport window in which this element resides.
 // Note: null means unknown window, but 0 means popup window.
 function getContextWindow(elem) {

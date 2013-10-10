@@ -407,6 +407,17 @@ function replaceASCIIcontrolChars(string) {
   return string;
 }
 
+function isASCII(text) {
+  var notASCII = false;
+  for (var c=0; c<text.length; c++) {
+    if (text.charCodeAt(c) > 128) {
+      notASCII = true;
+      break;
+    }
+  }
+  return !notASCII;
+}
+
 // Convert file path separators into native platform separators 
 function lpath(path) {
   if (OPSYS == "Windows") {path = path.replace(/\//g, "\\");}
