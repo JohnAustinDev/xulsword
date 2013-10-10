@@ -595,6 +595,9 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
       verseHTML.append(module->renderText(Value->second));
       verseHTML.append("</div>");
     }
+    
+    // VERSE PER LINE BUTTON
+    if (vNum == 1) {verseHTML.append("<span class=\"versePerLineButton\"><div></div></span>");}
 
     //NOW PRINT OUT THE VERSE ITSELF
     //If this is selected verse then designate as so

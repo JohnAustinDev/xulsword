@@ -219,7 +219,7 @@ function scriptMouseOut(e) {
 
 }
 
-const scriptClickClasses = /^(sn|sr|dt|dtl|cr|fn|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink)(\-|\s|$)/;
+const scriptClickClasses = /^(sn|sr|dt|dtl|cr|fn|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink|versePerLineButton)(\-|\s|$)/;
 function scriptClick(e) {
 
   // Get the text window of this event
@@ -448,8 +448,12 @@ function scriptClick(e) {
       break;
     }
     break;
+  case "versePerLineButton":
+		var t = document.getElementById("text" + w);
+		var vplWas = t.getAttribute("versePerLine");
+		t.setAttribute("versePerLine", (vplWas == "false" ? "true":"false"));
+		break;
     
-
   // Note box clicks
   case "crtwisty":
     toggleRefText(elem);
