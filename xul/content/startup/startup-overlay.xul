@@ -20,7 +20,7 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
 
-<!DOCTYPE window [
+<!DOCTYPE overlay [
 	<!ENTITY % startupDTD SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
 	%startupDTD;
 	<!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">

@@ -408,9 +408,15 @@ function getModuleConfig(mod) {
     var val = LibSword.getModuleInformation(mod, Config[p].modConf);
     if ((/^\s*$/).test(val)) val = NOTFOUND;
 
-    if (val == NOTFOUND && Config[p].CSS && ConfigDefaultCSS[p]) {
-      val = ConfigDefaultCSS[p];
+    if (val == NOTFOUND && Config[p].CSS && ModuleConfigDefaultCSS[p]) {
+      val = ModuleConfigDefaultCSS[p];
     }
+    
+    // allow user to overwrite module defaults
+    try {
+			var userVal = prefs.getCharPref("user." + p + "." + mod);
+			if (userVal) val = userVal;
+		} catch (er) {}
     
     moduleConfig[p] = val;
   }
@@ -438,6 +444,39 @@ function getModuleConfig(mod) {
   moduleConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(m" + mod + ")", moduleConfig);
   
   return moduleConfig;
+}
+
+// Return a locale (if any) to associate with the module:
+//    Return a Locale which lists the module as its default
+//    Return a Locale with exact same language code as module
+//    Return a Locale having same base language code as module, prefering current Locale over any others
+//    Return null if no match
+function getLocaleOfModule(module) {
+  var myLocale=null;
+  
+  for (var lc in LocaleConfigs) {
+    var regex = new RegExp("(^|\s|,)+" + module + "(,|\s|$)+");
+    if (LocaleConfigs[lc].AssociatedModules.match(regex)) myLocale = lc;
+  }
+  
+  if (myLocale) return myLocale;
+  
+  for (lc in LocaleConfigs) {
+    var lcs, ms;
+    try {
+      lcs = lc.toLowerCase();
+      ms = LibSword.getModuleInformation(module, "Lang").toLowerCase();
+    }
+    catch(er) {lcs=null; ms==null;}
+    
+    if (ms && ms == lcs) {myLocale = lc; break;}
+    if (ms && lcs && ms.replace(/-.*$/, "") == lcs.replace(/-.*$/, "")) {
+      myLocale = lc;
+      if (myLocale == getLocale()) break;
+    }
+  }
+  
+  return myLocale;
 }
 
 // "location" may have the forms: 

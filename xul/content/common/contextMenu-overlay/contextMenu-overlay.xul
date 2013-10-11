@@ -25,6 +25,7 @@
   <commandset id="xulswordCommandSet">
     <command id="cmd_xs_searchForLemma"            oncommand="goDoCommand('cmd_xs_searchForLemma');"/>
     <command id="cmd_xs_aboutModule"               oncommand="goDoCommand('cmd_xs_aboutModule');"/>
+    <command id="cmd_xs_chooseFont"                oncommand="goDoCommand('cmd_xs_chooseFont');"/>
     <command id="cmd_xs_toggleTab"                 oncommand="goDoCommand('cmd_xs_toggleTab');"/>
     <command id="cmd_xs_searchForSelection"        oncommand="goDoCommand('cmd_xs_searchForSelection');"/>
     <command id="cmd_xs_openFromSelection"         oncommand="goDoCommand('cmd_xs_openFromSelection');"/>
@@ -49,6 +50,7 @@
       <menuitem id="ctx_xs_searchForLemma" label="&xs_searchForLemma;" command="cmd_xs_searchForLemma"/>
       <menuseparator/>
       <menuitem id="ctx_xs_aboutModule" label="&xs_aboutModule;" command="cmd_xs_aboutModule"/>
+      <menuitem id="ctx_xs_chooseFont" label="&xs_chooseFont;" command="cmd_xs_chooseFont"/>
       <menuitem id="ctx_xs_toggleTab" label="&xs_toggleTab;" command="cmd_xs_toggleTab"/>
       <menuseparator/>
       <menuitem id="cMenu_copy"/>

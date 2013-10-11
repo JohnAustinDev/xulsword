@@ -196,6 +196,13 @@
 [main-window.context-menu.open_selected_reference]: Open Selected Reference
 [main-window.context-menu.search]: Search
 [main-window.context-menu.select_verses]: Select Verse(s)
+[main-window.context-menu.choose_font]: Font
+[choose-font-dialog.fontsAndColors_label]: Fonts &amp; Colors
+[choose-font-dialog.defaultSize_label]: Size
+[choose-font-dialog.textColor_label]: Text
+[choose-font-dialog.backgroundColor_label]: Background
+[choose-font-dialog.lineHeight_label]: Line Height
+[choose-font-dialog.makeDefault_label]: Make Default
 [main-window.audio-player.quicktime_install_needed]: To listen to audio content, a QuickTime plugin must be installed.
 [main-window.audio-player.quicktime_upgrade_needed]: Please update your QuickTime installation.
 [main-window.audio-player.quicktime_want_to_install_prompt]: To listen to audio content, a QuickTime plugin must be installed.\n\nWould you like to install the "QT Lite" plugin now?\n
