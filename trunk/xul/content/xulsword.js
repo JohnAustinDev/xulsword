@@ -869,6 +869,9 @@ var XulswordController = {
     case "cmd_xs_aboutModule":
       AllWindows.push(window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen"));
       break;
+    case "cmd_xs_chooseFont":
+			AllWindows.push(window.open("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,modal,centerscreen"));
+			break;
     case "cmd_xs_addLocalModule":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
       if (!addNewModule()) ModuleCopyMutex=false;
@@ -1045,6 +1048,7 @@ var XulswordController = {
     case "cmd_xs_openFromSelection":
     case "cmd_xs_toggleTab":
     case "cmd_xs_aboutModule":
+    case "cmd_xs_chooseFont":
     case "cmd_xs_addLocalModule":
     case "cmd_xs_addRepositoryModule":
     case "cmd_xs_removeModule":

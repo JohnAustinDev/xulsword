@@ -185,6 +185,9 @@
 # Locale configuration information 
 [configuration.default_modules]: ESV,KJV
 [configuration.font]: 
+[configuration.font_size]:
+[configuration.font_color]:
+[configuration.font_background]:
 [configuration.font_size_adjust]: 
 [configuration.line_height]: 
 

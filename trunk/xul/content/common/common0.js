@@ -257,18 +257,37 @@ const Config = {
   fontFamily:       { modConf:"Font", localeConf:"Font", CSS:"font-family" },
   fontSizeAdjust:   { modConf:"FontSizeAdjust", localeConf:"FontSizeAdjust", CSS:"font-size-adjust" },
   lineHeight:       { modConf:"LineHeight", localeConf:"LineHeight", CSS:"line-height" },
+  fontSize:         { modConf:"FontSize", localeConf:"FontSize", CSS:"font-size" },
+  color:            { modConf:"FontColor", localeConf:"FontColor", CSS:"color" },
+  background:       { modConf:"FontBackground", localeConf:"FontBackground", CSS:"background" },
   AssociatedModules:{ modConf:null, localeConf:"DefaultModule", CSS:null },
   AssociatedLocale: { modConf:null, localeConf:null, CSS:null },
   StyleRule:        { modConf:null, localeConf:null, CSS:null },
   TreeStyleRule:    { modConf:null, localeConf:null, CSS:null }
 };
 
-const ConfigDefaultCSS = {
+const LocaleConfigDefaultCSS = {
   fontFamily:"'Arial'",
   direction:"ltr",
   fontSizeAdjust:"none",
-  lineHeight:"1.6em"
+  lineHeight:"unspecified",
+  fontSize:"unspecified",
+  color:"unspecified",
+  background:"unspecified"
 };
+
+var ModuleConfigDefaultCSS;
+function initModuleConfigDefaultCSS() {
+	ModuleConfigDefaultCSS = {
+		fontFamily:getPrefOrCreate("user.fontFamily.default", "Char", "'Arial'"),
+		direction: getPrefOrCreate("user.direction.default", "Char", "ltr"),
+		fontSizeAdjust: getPrefOrCreate("user.fontSizeAdjust.default", "Char", "none"),
+		lineHeight: getPrefOrCreate("user.lineHeight.default", "Char", "1.6em"),
+		fontSize: getPrefOrCreate("user.fontSize.default", "Char", "unspecified"),
+		color: getPrefOrCreate("user.color.default", "Char", "unspecified"),
+		background: getPrefOrCreate("user.background.default", "Char", "unspecified")
+	};
+}
 
 const NumOT = 39;
 const NumNT = 27;
@@ -925,7 +944,7 @@ function createDynamicCssClasses(configProp) {
 function createStyleRule(selector, config) {
   var rule = selector + " {";
   for (var p in Config) {
-    if (!Config[p].CSS) continue;
+    if (!Config[p].CSS || config[p] == "unspecified") continue;
     rule += Config[p].CSS + ":" + config[p] + "; ";
   }
   rule += "}";
@@ -966,8 +985,8 @@ function getLocaleConfig(lc) {
     if ((/^\s*$/).test(val)) val = NOTFOUND;
     
     
-    if (val == NOTFOUND && Config[p].CSS && ConfigDefaultCSS[p]) {
-      val = ConfigDefaultCSS[p];
+    if (val == NOTFOUND && Config[p].CSS && LocaleConfigDefaultCSS[p]) {
+      val = LocaleConfigDefaultCSS[p];
     }
     
     localeConfig[p] = val;
@@ -1029,6 +1048,8 @@ function isProgramPortable() {
   return (appInfo && appInfo.substr(appInfo.length-1) == "P");
 }
 IsPortable = isProgramPortable();
+
+initModuleConfigDefaultCSS();
 
 // DEBUG helps
 /*

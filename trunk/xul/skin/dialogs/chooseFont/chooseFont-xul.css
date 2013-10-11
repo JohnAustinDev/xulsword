@@ -1,0 +1,21 @@
+groupbox {
+  margin:5px 10px 5px 10px;
+}
+
+#fontFamily {
+	width:200px;
+}
+#fontSize,
+#color,
+#background,
+#lineHeight {
+	width:120px;
+}
+
+colorpicker {
+	-moz-margin-end: 4px;
+}
+
+rows > row {
+	margin-bottom:10px;
+}

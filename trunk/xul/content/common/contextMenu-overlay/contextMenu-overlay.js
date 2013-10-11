@@ -168,6 +168,7 @@ jsdump("build:" + uneval(this.target));
     // Enable/disable menu options accordingly
     goUpdateCommand("cmd_xs_searchForLemma");
     goUpdateCommand("cmd_xs_aboutModule");
+    goUpdateCommand("cmd_xs_chooseFont");
     goUpdateCommand("cmd_xs_toggleTab");
     goUpdateCommand("cmd_copy");
     goUpdateCommand("cmd_xs_searchForSelection");
@@ -183,6 +184,7 @@ jsdump("build:" + uneval(this.target));
     
     document.getElementById("ctx_xs_aboutModule").previousSibling.hidden       = (!canHaveTab || !canHaveLemma);
     document.getElementById("ctx_xs_aboutModule").hidden                       = !canHaveTab;
+    document.getElementById("ctx_xs_chooseFont").hidden                        = !canHaveTab;
     document.getElementById("ctx_xs_toggleTab").hidden                         = !canHaveTab;
     
     document.getElementById("cMenu_copy").previousSibling.hidden               = (!canSelect || !canHaveTab);
@@ -356,10 +358,11 @@ var ContextMenuController = {
     // Only handle commands when context menu is open
     if (document.getElementById("contextScriptBox").getAttribute("value") == "closed") 
         return false;
-    
+   
     switch(cmd) {
       case "cmd_xs_searchForLemma":
       case "cmd_xs_aboutModule":
+      case "cmd_xs_chooseFont":
       case "cmd_xs_toggleTab":
       case "cmd_xs_searchForSelection":
       case "cmd_xs_openFromSelection":

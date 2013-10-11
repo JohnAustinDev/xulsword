@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of xulSword.
+
+    Copyright 2013 John Austin (gpl.programs.info@gmail.com)
+
+    xulSword is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    xulSword is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
+!-->
+
+<?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/dialogs/chooseFont/chooseFont-xul.css" type="text/css"?>
+
+<!DOCTYPE window [
+  <!ENTITY % chooseFontDTD SYSTEM "chrome://xulsword/locale/dialogs/chooseFont/chooseFont.dtd">
+  <!ENTITY % dialogDTD SYSTEM "chrome://xulsword/locale/dialogs/dialog/dialog.dtd">
+  %chooseFontDTD;
+  %dialogDTD;
+]>
+
+<window 
+    id="chooseFont" xmlns:html="http://www.w3.org/1999/xhtml"
+    title="&xs_chooseFont;"
+    onload="chooseFont.loaded();"
+    onunload="chooseFont.buttonHandler('cancel');" 
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  
+  <keyset>
+    <key keycode="VK_ESCAPE"                 oncommand="window.close();"/>
+  </keyset>
+  
+  <script>
+		var MainWindow = window.opener;
+		var chooseFont;
+  </script>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  <script type="application/javascript" src="chrome://mozapps/content/preferences/fontbuilder.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/chooseFont/chooseFont.js"/>
+  
+  <vbox>
+		<groupbox id="fontsGroup">
+		<caption label="&fontsAndColors.label;"/>
+
+		<grid id="fontsGrid">
+			<columns>
+				<column flex="1"/>
+			</columns>
+			<rows id="fontsRows">
+				<row id="fontRow">
+					<hbox align="center">
+						<label control="fontFamily">&xs_chooseFont;:</label>
+						<menulist id="fontFamily" onselect="chooseFont.update(event);" flex="1"/>
+					</hbox>
+					<hbox align="center">
+						<label control="fontSize">&defaultSize.label;:</label>
+						<spacer flex="1"/>
+						<menulist id="fontSize" onselect="chooseFont.update(event);">
+							<menupopup>
+								<menuitem value="0.5em" label="0.5em"/>
+								<menuitem value="0.7em" label="0.7em"/>
+								<menuitem value="0.8em" label="0.8em"/>
+								<menuitem value="0.85em" label="0.85em"/>
+								<menuitem value="0.9em" label="0.9em"/>
+								<menuitem value="0.925em" label="0.925em"/>
+								<menuitem value="0.95em" label="0.95em"/>
+								<menuitem value="0.975em" label="0.975em"/>
+								<menuitem value="1em"   label="1em" selected="true"/>
+								<menuitem value="1.025em" label="1.025em"/>
+								<menuitem value="1.05em" label="1.05em"/>
+								<menuitem value="1.075em" label="1.075em"/>
+								<menuitem value="1.1em" label="1.1em"/>
+								<menuitem value="1.15em" label="1.15em"/>
+								<menuitem value="1.2em" label="1.2em"/>
+								<menuitem value="1.3em" label="1.3em"/>
+								<menuitem value="1.5em" label="1.5em"/>
+							</menupopup>
+						</menulist>
+					</hbox>
+				</row>
+				<row>
+					<hbox></hbox>
+					<hbox align="center">
+						<label value="&lineHeight.label;:" control="lineHeight"/>
+							<menulist id="lineHeight" onselect="chooseFont.update(event);" >
+							<menupopup>
+								<menuitem value="1.0em" label="1.0em"/>
+								<menuitem value="1.2em" label="1.2em"/>
+								<menuitem value="1.4em" label="1.4em"/>
+								<menuitem value="1.5em" label="1.5em"/>
+								<menuitem value="1.6em" label="1.6em" selected="true"/>
+								<menuitem value="1.7em" label="1.7em"/>
+								<menuitem value="1.8em" label="1.8em"/>
+								<menuitem value="2.0em" label="2.0em"/>
+								<menuitem value="2.5em" label="2.5em"/>
+							</menupopup>
+						</menulist>
+					</hbox>
+				</row>
+				<row id="colorRow">
+					<hbox></hbox>
+					<hbox align="center">
+						<label value="&textColor.label;:" control="color"/>
+						<spacer flex="1"/>
+						<colorpicker type="button" id="color" palettename="standard" onchange="chooseFont.update(event);"/>
+					</hbox>
+				</row>
+				<row id="backgroundRow" hidden="true">
+					<hbox></hbox>
+					<hbox align="center">
+						<label value="&backgroundColor.label;:" control="background"/>
+						<spacer flex="1"/>
+						<colorpicker type="button" id="background" palettename="standard" onchange="chooseFont.update(event);"/>
+					</hbox>
+				</row>
+				<row>
+					<checkbox id="makeDefault" label="&makeDefault.label;" checked="false"/>
+				</row>
+			</rows>
+		</grid>
+		</groupbox>
+		
+		<spacer flex="1"/>
+		
+		<hbox class="dialogbuttons" flex="1" pack="end" align="end">
+			<button id="cancel" label="&dialog.Cancel;" oncommand="chooseFont.buttonHandler('cancel');" />
+			<button id="ok" label="&dialog.OK;" oncommand="chooseFont.buttonHandler('ok');" />
+		</hbox>
+    
+	</vbox>
+    
+</window>

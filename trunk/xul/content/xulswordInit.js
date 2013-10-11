@@ -128,39 +128,6 @@ function initModules() {
   return true;
 }
 
-// Return a locale (if any) to associate with the module:
-//    Return a Locale which lists the module as its default
-//    Return a Locale with exact same language code as module
-//    Return a Locale having same base language code as module, prefering current Locale over any others
-//    Return null if no match
-function getLocaleOfModule(module) {
-  var myLocale=null;
-  
-  for (var lc in LocaleConfigs) {
-    var regex = new RegExp("(^|\s|,)+" + module + "(,|\s|$)+");
-    if (LocaleConfigs[lc].AssociatedModules.match(regex)) myLocale = lc;
-  }
-  
-  if (myLocale) return myLocale;
-  
-  for (lc in LocaleConfigs) {
-    var lcs, ms;
-    try {
-      lcs = lc.toLowerCase();
-      ms = LibSword.getModuleInformation(module, "Lang").toLowerCase();
-    }
-    catch(er) {lcs=null; ms==null;}
-    
-    if (ms && ms == lcs) {myLocale = lc; break;}
-    if (ms && lcs && ms.replace(/-.*$/, "") == lcs.replace(/-.*$/, "")) {
-      myLocale = lc;
-      if (myLocale == getLocale()) break;
-    }
-  }
-  
-  return myLocale;
-}
-
 
 /************************************************************************
  * INITIALIZE PROGRAM TABS AND LABELS ETC.
