@@ -1196,6 +1196,11 @@ function handleOptions(elem) {
       
       Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null, 1, 1, 1]);
       break;
+      
+    case "fontAdjust":
+			CommandTarget.mod = null;
+			MainWindow.XulswordController.doCommand("cmd_xs_chooseFont");
+			break;
     
     case "about":
       CommandTarget = { mod:null }; // show logo, not modules info

@@ -378,6 +378,8 @@
             <menuitem id="f2" label="&menu.options.font3;" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
             <menuitem id="f3" label="&menu.options.font4;" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
             <menuitem id="f4" label="&menu.options.font5;" type="radio" name="fnt"  oncommand="handleOptions(this)"/>
+            <menuseparator/>
+            <menuitem id="fontAdjust" label="&fontsAndColors.label;" oncommand="handleOptions(this)"/>
           </menupopup>
         </menu>
         <menu id="sub-heb" label="&menu.options.hebrew;" accesskey="&menu.options.hebrew.sc;">

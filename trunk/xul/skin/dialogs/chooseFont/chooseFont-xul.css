@@ -16,6 +16,7 @@ colorpicker {
 	-moz-margin-end: 4px;
 }
 
-rows > row {
+rows > row,
+#chooseModBox {
 	margin-bottom:10px;
 }
