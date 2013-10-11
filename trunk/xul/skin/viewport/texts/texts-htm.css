@@ -154,21 +154,26 @@ h1, h2, h3 {
 }
 .versePerLineButton > div {
 	position:absolute;
-	top:-3px;
-	left:-18px;
+	top:0px;
+	left:-25px;
 	background:url('chrome://xulsword/skin/images/versePerLine.png');
-	background-position:32px;
-	width:16px;
-	height:16px;
+	background-position:0px 0px;
+	width:20px;
+	height:20px;
+}
+.text[textdir="rtl"] .versePerLineButton > div {
+	left:auto;
+	right:-25px;
+	transform:scaleX(-1);
 }
 .text[versePerLine="true"] .versePerLineButton > div {
-	background-position:0px;
+	background-position:-40px 0px;
 }
 .text[versePerLine="false"] .versePerLineButton > div:hover {
-	background-position:48px;
+	background-position:-20px 0px;
 }
 .text[versePerLine="true"] .versePerLineButton > div:hover {
-	background-position:16px;
+	background-position:-60px 0px;
 }
 .text[versePerLine="true"] .vs {
 	display:block;
