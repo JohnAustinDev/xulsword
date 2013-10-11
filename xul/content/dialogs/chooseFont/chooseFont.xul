@@ -52,6 +52,11 @@
 		<groupbox id="fontsGroup">
 		<caption label="&fontsAndColors.label;"/>
 
+		<hbox id="chooseModBox" align="center">
+			<label control="chooseMod">&chooseModule.label;:</label>
+			<reference-dropdown id="chooseMod" flex="1" hidebook="true" hidechapter="true" hideverse="true" hidelastverse="true"/>
+		</hbox>
+		
 		<grid id="fontsGrid">
 			<columns>
 				<column flex="1"/>
@@ -124,7 +129,7 @@
 					</hbox>
 				</row>
 				<row>
-					<checkbox id="makeDefault" label="&makeDefault.label;" checked="false"/>
+					<checkbox id="makeDefault" label="&makeDefault.label;" checked="false" oncommand="chooseFont.update(event);"/>
 				</row>
 			</rows>
 		</grid>

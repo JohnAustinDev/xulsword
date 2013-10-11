@@ -22,10 +22,14 @@ chooseFont = {
 	modName: null,
 	start: {},
 	
+	chooseMod: function() {return document.getElementById("chooseMod");},
+	
 	loaded: function() {
 		initCSS();
 		
-		this.modName = CommandTarget.mod;
+		if (CommandTarget.mod) this.chooseMod().version = CommandTarget.mod;
+		
+		this.modName = this.chooseMod().version;
 		
 		for (var i=0; i<this.toUpdate.length; i++) {
 			this.start[this.toUpdate[i]] = ModuleConfigs[this.modName][this.toUpdate[i]];
@@ -66,6 +70,14 @@ chooseFont = {
 	},
 	
 	update: function(e) {
+		if (!this.modName) return;
+		
+		if (e.target.id == "makeDefault") {
+			if (e.target.checked) this.chooseMod().setAttribute("disabled", "true");
+			else this.chooseMod().removeAttribute("disabled");
+			return;
+		}
+		
 		var dl = "";
 		var val;
 		
@@ -101,8 +113,10 @@ chooseFont = {
 		if (button == "ok") {
 			var targ = (document.getElementById("makeDefault").checked ? "default":this.modName);
 			for (var i=0; i<this.toUpdate.length; i++) {
-				if (ModuleConfigs[this.modName][this.toUpdate[i]])
-						prefs.setCharPref("user." + this.toUpdate[i] + "." + targ, ModuleConfigs[this.modName][this.toUpdate[i]]);
+				if (ModuleConfigs[this.modName][this.toUpdate[i]]) {
+					prefs.setCharPref("user." + this.toUpdate[i] + "." + targ, ModuleConfigs[this.modName][this.toUpdate[i]]);
+					if (targ == "default") prefs.clearUserPref("user." + this.toUpdate[i] + "." + this.modName);
+				}
 			}
 		}
 		
@@ -124,3 +138,5 @@ chooseFont = {
 	}
 	
 };
+
+function onRefUserUpdate(e, location, version) {chooseFont.modName = version;}
