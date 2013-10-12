@@ -167,12 +167,10 @@ function ViewPortObj(viewPortObj) {
       Texts[p] = eval(uneval(objTexts[p]));
     }
     
-    this.windowName = window.name;
     this.ownerDocument = document;
   }
   
   else {
-    this.windowName = window.name;
     this.ownerDocument = document;
     this.ShowOriginal = [];
     this.IsPinned = [];

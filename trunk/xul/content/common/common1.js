@@ -51,6 +51,7 @@ var Location              = MainWindow.Location;
 var LocaleConfigs         = MainWindow.LocaleConfigs;
 var ModuleConfigs         = MainWindow.ModuleConfigs;
 var ProgramConfig         = MainWindow.ProgramConfig;
+var ModuleConfigDefaultCSS= MainWindow.ModuleConfigDefaultCSS;
 
 var AudioDirs             = MainWindow.AudioDirs;
 

@@ -870,7 +870,7 @@ var XulswordController = {
       AllWindows.push(window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen"));
       break;
     case "cmd_xs_chooseFont":
-			AllWindows.push(window.open("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,modal,centerscreen"));
+			AllWindows.push(CommandTarget.window.open("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,modal,centerscreen"));
 			break;
     case "cmd_xs_addLocalModule":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
@@ -1107,10 +1107,12 @@ function getCommandTarget(target) {
   if (s) s = replaceASCIIcontrolChars(s.toString())
   deftarg.selection = s;
   
+  deftarg.window = window;
+  
   // now overwrite defaults with any provided target parameters
   if (target) {
     for (var m in target) {
-      if (target[m] !== null) {
+      if (target.hasOwnProperty(m) && target[m] !== undefined && target[m] !== null) {
         deftarg[m] = target[m];
       }
     }
