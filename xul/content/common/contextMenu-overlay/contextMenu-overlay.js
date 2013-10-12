@@ -22,7 +22,7 @@ var ContextMenu = {
   
   lemmaLabel:null,
   
-  NEWTARGET:{ bk:null, ch:null, vs:null, lv:null, mod:null, w:null, bookmark:null, selection:null, search:{mod:null, searchtext:null, type:null} },
+  NEWTARGET:{ bk:null, ch:null, vs:null, lv:null, mod:null, w:null, bookmark:null, selection:null, search:{mod:null, searchtext:null, type:null, window:null } },
 
   showing: function(e, menupopup) {
 //var p=""; for (var m in menupopup.triggerNode) {p += m + "=" + menupopup.triggerNode[m] + " ";} jsdump(p);
@@ -30,6 +30,7 @@ var ContextMenu = {
     // init our target info
     this.target = eval(uneval(this.NEWTARGET));
     
+    this.target.window = window;
     this.target.w = getContextWindow(menupopup.triggerNode);
     
     // Do some viewport specific cleanup

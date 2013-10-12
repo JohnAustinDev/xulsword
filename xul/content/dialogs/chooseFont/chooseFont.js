@@ -34,7 +34,6 @@ chooseFont = {
 		for (var i=0; i<this.toUpdate.length; i++) {
 			this.start[this.toUpdate[i]] = ModuleConfigs[this.modName][this.toUpdate[i]];
 		}
-//jsdump(this.modName + ", " + uneval(this.start));
 		
 		var loc = LibSword.getModuleInformation(this.modName, "Lang");
 		loc = (loc != NOTFOUND ? loc:"en-US");
@@ -67,16 +66,12 @@ chooseFont = {
 		}
 
 		window.sizeToContent();
+		
+//jsdump(this.modName + ", " + uneval(this.start));
 	},
 	
 	update: function(e) {
 		if (!this.modName) return;
-		
-		if (e.target.id == "makeDefault") {
-			if (e.target.checked) this.chooseMod().setAttribute("disabled", "true");
-			else this.chooseMod().removeAttribute("disabled");
-			return;
-		}
 		
 		var dl = "";
 		var val;
@@ -108,9 +103,15 @@ chooseFont = {
 	},
 	
 	buttonHandler: function(button) {
-		
-		// save user choices permanently in user prefs
-		if (button == "ok") {
+		switch (button) {
+		case "makeDefault":
+			if (document.getElementById('makeDefault').checked) 
+					this.chooseMod().setAttribute("disabled", "true");
+			else this.chooseMod().removeAttribute("disabled");
+			return;
+			break;
+		case "ok":
+			// save user choices permanently in user prefs
 			var targ = (document.getElementById("makeDefault").checked ? "default":this.modName);
 			for (var i=0; i<this.toUpdate.length; i++) {
 				if (ModuleConfigs[this.modName][this.toUpdate[i]]) {
@@ -118,10 +119,11 @@ chooseFont = {
 					if (targ == "default") prefs.clearUserPref("user." + this.toUpdate[i] + "." + this.modName);
 				}
 			}
+			break;
 		}
 		
 		// reset ModuleConfigs
-		initModuleConfigDefaultCSS();
+		ModuleConfigDefaultCSS = getModuleConfigDefaultCSS();
 		for (var i=0; i<Tabs.length; i++) {
 			ModuleConfigs[Tabs[i].modName] = getModuleConfig(Tabs[i].modName);
 		}
@@ -129,7 +131,9 @@ chooseFont = {
 		if (button == "ok") {
 			// update all windows with new CSS
 			for (var i=0; i<AllWindows.length; i++) {
-				if (AllWindows[i] && AllWindows[i].initCSS) AllWindows[i].initCSS();
+				if (!AllWindows[i]) continue;
+				if (AllWindows[i].initCSS) AllWindows[i].initCSS();
+				if (AllWindows[i].ViewPort) AllWindows[i].ViewPort.ownerDocument.defaultView.initCSS();
 			}
 		}
 		else window.opener.ViewPort.ownerDocument.defaultView.initCSS();

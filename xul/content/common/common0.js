@@ -276,9 +276,8 @@ const LocaleConfigDefaultCSS = {
   background:"unspecified"
 };
 
-var ModuleConfigDefaultCSS;
-function initModuleConfigDefaultCSS() {
-	ModuleConfigDefaultCSS = {
+function getModuleConfigDefaultCSS() {
+	var moduleConfigDefaultCSS = {
 		fontFamily:getPrefOrCreate("user.fontFamily.default", "Char", "'Arial'"),
 		direction: getPrefOrCreate("user.direction.default", "Char", "ltr"),
 		fontSizeAdjust: getPrefOrCreate("user.fontSizeAdjust.default", "Char", "none"),
@@ -287,6 +286,8 @@ function initModuleConfigDefaultCSS() {
 		color: getPrefOrCreate("user.color.default", "Char", "unspecified"),
 		background: getPrefOrCreate("user.background.default", "Char", "unspecified")
 	};
+	
+	return moduleConfigDefaultCSS;
 }
 
 const NumOT = 39;
@@ -1048,8 +1049,6 @@ function isProgramPortable() {
   return (appInfo && appInfo.substr(appInfo.length-1) == "P");
 }
 IsPortable = isProgramPortable();
-
-initModuleConfigDefaultCSS();
 
 // DEBUG helps
 /*
