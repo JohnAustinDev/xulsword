@@ -93,7 +93,7 @@
 <script>  
   // xulsword's program-wide global objects...
   var MainWindow = window;
-  var LibSword, Location, AudioDirs, LocaleConfigs, ModuleConfigs, ProgramConfig, ModuleConfigDefaultCSS;
+  var LibSword, Location, AudioDirs, LocaleConfigs, ModuleConfigs, ProgramConfig;
   var Book, Tab, Tabs, SpecialModules, GenBookNavigator, BibleNavigator, AllWindows, XSBundle;
   var BM, BMDS, ResourceFuns, BookmarkFuns, CommandTarget;
   var ViewPort, Texts, BibleTexts, DictTexts, GenBookTexts, CommTexts;
@@ -102,8 +102,6 @@
 <script>XSBundle = document.getElementById("strings");</script>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
-<script>ModuleConfigDefaultCSS = getModuleConfigDefaultCSS();</script>
-
 <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
 <script>initLogging();</script>
 

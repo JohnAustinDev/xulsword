@@ -339,7 +339,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				if (tag.getAttribute("level") && !strcmp(tag.getAttribute("level"), "2")) {
 					mclass.set("head2");
 				}
-		    	else {mclass.set("head1");}
+				else {mclass.set("head1");}
 				if (tag.getAttribute("canonical") && !strcmp(tag.getAttribute("canonical"), "true")) {
 					mclass.append(" canonical");
 				}
@@ -365,6 +365,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 						buf += "<h2 class=\"chapterHeader";
 						tag.setAttribute("pushed", "h2");
 					}
+          buf += " ";
           buf += mclass;
           buf += "\">";
 				}

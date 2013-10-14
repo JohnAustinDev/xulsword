@@ -229,6 +229,9 @@ body[chromedir="rtl"] .chaptermenu {
   border-radius:6px;
   z-index:60;
 }
+a .nohead {
+	color:blue;
+}
 .heading-link:hover {
   text-decoration:underline;
   cursor:pointer;
