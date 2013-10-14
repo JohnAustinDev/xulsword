@@ -215,8 +215,8 @@ jsdump("STARTING startImport");
   if (!blocking && (ZipFiles.length || RegularFiles.length>5)) {
     var result = {};
     ProgressMeterLoaded = false;
-    AllWindows.push(window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
-      fixWindowTitle(getDataUI("menu.addNewModule.label")),
+    window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
+      fixWindowTitle(getDataUI("menu.addNewModule.label"),
       "", 
       PMNORMAL,
       null));
@@ -229,7 +229,7 @@ jsdump("STARTING startImport");
   if ((!ZipFiles || !ZipFiles.length) && (!RegularFiles || !RegularFiles.length)) {
     Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
     jsdump("MODULE WAS EMPTY");
-    if (ProgressMeter) ProgressMeter.close();
+    if (ProgressMeter) closeWindowXS(ProgressMeter);
     return false;  
   }
 
@@ -266,7 +266,7 @@ jsdump("STARTING startImport");
           msg += "\nUpgrade the program to at least version:\"" + (report.minprogversion ? report.minprogversion:"?") + "\"\n\n";
         }
       }
-      if (ProgressMeter) ProgressMeter.close();
+      if (ProgressMeter) closeWindowXS(ProgressMeter);
       Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       var result = {};
       var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result,
@@ -280,7 +280,7 @@ jsdump("STARTING startImport");
   // Do we still have something to install after doing removeIncompatibleFiles()?
   if ((!ZipFiles || !ZipFiles.length) && (!RegularFiles || !RegularFiles.length)) {
     jsdump("INFO: Nothing left to install");
-    if (ProgressMeter) ProgressMeter.close();
+    if (ProgressMeter) closeWindowXS(ProgressMeter);
     return false;  
   }
 
@@ -310,7 +310,7 @@ function startImport2() {
     if (typeof(ProgressMeter) != "undefined") {
       window.setTimeout("if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute('value', 90);", 500);
       window.setTimeout("if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute('value', 100);", 1500);
-      window.setTimeout("ProgressMeter.close();", 2000);
+      window.setTimeout("closeWindowXS(ProgressMeter);", 2000);
     }
     ModuleCopyMutex=false;
   } 
@@ -833,7 +833,7 @@ function finishAndStartXulSword2() {
 function finish(isFinalPass) {
   if (typeof(LibSword) != "undefined" && !LibSword.loadFailed && LibSword.paused) LibSword.resume();
   if (ProgressMeterLoaded && typeof(ProgressMeter) != "undefined" && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
-  if (typeof(ProgressMeter) != "undefined") window.setTimeout("ProgressMeter.close();", 100);
+  if (typeof(ProgressMeter) != "undefined") window.setTimeout("closeWindowXS(ProgressMeter);", 100);
   if (NewPlugin) {
     window.setTimeout("checkQuickTime();", 1000);
     NewPlugin = false;
@@ -899,7 +899,7 @@ function handleResetRequest() {
 
 function writeManifest(newLocales, newModules, newFonts, filesNotWaiting) {
   // write a module install file if needed. example- NewLocales;uz;NewModules;uzv;uzdot;uzdnt
-  if (typeof(ProgressMeter) != "undefined") ProgressMeter.close();
+  if (typeof(ProgressMeter) != "undefined") closeWindowXS(ProgressMeter);
   
   newLocales = (newLocales ? newLocales:NewLocales);
   newModules = (newModules ? newModules:NewModules);

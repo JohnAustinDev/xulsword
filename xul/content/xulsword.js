@@ -148,8 +148,8 @@ function loadedXUL2() {
   
   // close splash window
   if (window.opener && window.opener.document.title == "hidden-window")
-      closeXulswordWindow(window.opener); // Close hidden startup window (which in turn closes visible splash window)
-	else if (window.opener && window.opener.SplashScreen) closeXulswordWindow(window.opener.SplashScreen);
+      closeWindowXS(window.opener); // Close hidden startup window (which in turn closes visible splash window)
+	else if (window.opener && window.opener.SplashScreen) closeWindowXS(window.opener.SplashScreen);
  
   if (LibSword.hasBible) {
     //we're ok!
@@ -163,7 +163,7 @@ function loadedXUL2() {
 			if (OPSYS == "Linux") {
 				window.alert("\n\nRun:\n\n$ ldd \"" + LibSword.LibswordPath + "\"\n\nInstall any libraries listed as: \"not found\".");
 			}
-			closeXulswordWindow(window); // nothing we can to here...
+			closeWindowXS(window); // nothing we can to here...
 		}, 1);
 	}
   
@@ -811,22 +811,22 @@ var XulswordController = {
       Texts.update();
       break;
     case "cmd_xs_search":
-      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen"));
+      window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen");
       break;
     case "cmd_xs_searchFromTextBox":
       CommandTarget.search.searchtext = document.getElementById("searchText").value;
-      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen"));
+      window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen");
       break;
     case "cmd_xs_searchForSelection":
       CommandTarget.search.mod = CommandTarget.mod;
       CommandTarget.search.searchtext = CommandTarget.selection;
       CommandTarget.search.type = "SearchExactText";
-      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen"));
+      window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen");
       break;
     case "cmd_xs_searchForLemma":
       if (!(/lemma\:/).test(CommandTarget.search.searchtext)) break;
       CommandTarget.search.type = "SearchAdvanced";
-      AllWindows.push(window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen"));
+      window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen");
       break;
     case "cmd_xs_openFromSelection":
       updateToReference(this.parsedLocation);
@@ -855,7 +855,7 @@ var XulswordController = {
 				getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow('bookmarksManager');
 			if (bookmarksManager) bookmarksManager.focus();
 			else {
-				AllWindows.push(window.open("chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen"));
+				window.open("chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen");
 			}
       break;
     case "cmd_xs_toggleTab":
@@ -880,11 +880,11 @@ var XulswordController = {
 				getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow('addRepositoryModule');
 			if (addRepositoryModuleWindow) addRepositoryModuleWindow.focus();
 			else {
-				AllWindows.push(window.open("chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.xul", getDataUI("menu.addNewModule.label"), "chrome,resizable,centerscreen"));
+				window.open("chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.xul", getDataUI("menu.addNewModule.label"), "chrome,resizable,centerscreen");
 			}
       break;
     case "cmd_xs_removeModule":
-      AllWindows.push(window.open("chrome://xulsword/content/dialogs/removeModule/removeModule.xul", getDataUI("menu.removeModule.label"), "chrome,resizable,centerscreen"));
+      window.open("chrome://xulsword/content/dialogs/removeModule/removeModule.xul", getDataUI("menu.removeModule.label"), "chrome,resizable,centerscreen");
       break;
     case "cmd_xs_exportAudio":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
@@ -1585,9 +1585,9 @@ function unloadXUL() {
  ***********************************************************************/ 
 
 function copyPassageDialog() {
-  AllWindows.push(window.open("chrome://xulsword/content/dialogs/copyPassage/copyPassage.xul", 
+  window.open("chrome://xulsword/content/dialogs/copyPassage/copyPassage.xul", 
       getDataUI("menu.copypassage") + "_" + String(Math.round(10000*Math.random())),
-      "chrome,resizable,centerscreen"));
+      "chrome,resizable,centerscreen");
 }
 
 // To print, you must pass a print-target to this handlePrintCommand
@@ -1621,9 +1621,9 @@ function handlePrintCommand(command, target) {
 			getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow('printPassage');
 		if (printPassage) printPassage.focus();
 		else {
-			AllWindows.push(window.open("chrome://xulsword/content/dialogs/printPassage/printPassage.xul",
+			window.open("chrome://xulsword/content/dialogs/printPassage/printPassage.xul",
 					getDataUI("print.printpassage"),
-					"chrome,resizable,centerscreen"));
+					"chrome,resizable,centerscreen");
 		 }
     break;
   }

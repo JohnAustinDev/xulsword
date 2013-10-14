@@ -464,7 +464,7 @@ function finishExport() {
 
   if (ProgressMeter) {
     if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
-    window.setTimeout("ProgressMeter.close();", 1000);
+    window.setTimeout("closeWindowXS(ProgressMeter);", 1000);
   }
   ModuleCopyMutex=false;
 }

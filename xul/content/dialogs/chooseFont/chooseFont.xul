@@ -39,7 +39,7 @@
   <data id="ui.deleteconfirm.title">&deleteconfirm.title;</data>
   
   <keyset>
-    <key keycode="VK_ESCAPE" oncommand="closeXulswordWindow(window);"/>
+    <key keycode="VK_ESCAPE" oncommand="closeWindowXS(window);"/>
   </keyset>
   
   <script>

@@ -43,7 +43,7 @@
     if (newkey != "") {
       prefs.setCharPref("CipherKey" + window.arguments[0], newkey);
       window.arguments[1].gotKey = true;
-      closeXulswordWindow(window);
+      closeWindowXS(window);
     }
     return true;
   }

@@ -43,7 +43,6 @@ function cancel() {
 }
 
 function loadDialog() {
-  AllWindows.push(window);
   document.title = fixWindowTitle(Title);
 
   RetVal.ok = false;

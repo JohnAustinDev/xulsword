@@ -46,8 +46,6 @@ var gUnknownModule = false;
 function Init()
 {
   
-  AllWindows.push(window);
-  
   gResource = BM.RDF.GetResource(window.arguments[0]);
   gIsContainer = BM.RDFCU.IsContainer(BMDS, gResource);
   gName = document.getElementById("bmname");
@@ -172,7 +170,7 @@ function Commit() {
   if (changed) BookmarkFuns.updateMainWindow();
 
   window.arguments[1].ok = true;
-  closeXulswordWindow(window);
+  closeWindowXS(window);
   
   return true;
 }

@@ -918,14 +918,15 @@ function initCSS(adjustableFontSize) {
 
 }
 
-// Will create CSS classes for locales and modules and append to a stylesheet.
+// Will add/update CSS classes for locales and modules in last style sheet.
+// Replaces any existing identical selector or else appends a new one.
 function createDynamicCssClasses(configProp) {
 	var sheetIndex = document.styleSheets.length-1;
   var sheet = document.styleSheets[sheetIndex];
   if (!sheet) return;
   if (!configProp) configProp = "StyleRule";
 
-var debug = sheet.cssRules.length;
+//var debug = sheet.cssRules.length;
   
   if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
     for (var lc in LocaleConfigs) {
@@ -956,7 +957,7 @@ var debug = sheet.cssRules.length;
 //jsdump(ProgramConfig[configProp]);
   }
   
-if (sheet.cssRules.length != debug) jsdump(window.name + ": \nADDED " + (sheet.cssRules.length - debug) + " new dynamic " + configProp + " rules (" + sheet.cssRules.length + ")");
+//if (sheet.cssRules.length != debug) jsdump(window.name + ": \nADDED " + (sheet.cssRules.length - debug) + " new dynamic " + configProp + " rules (" + sheet.cssRules.length + ")");
 }
 
 function createStyleRule(selector, config) {
@@ -1076,7 +1077,7 @@ function isProgramPortable() {
 }
 IsPortable = isProgramPortable();
 
-function closeXulswordWindow(aWindow) {
+function closeWindowXS(aWindow) {
 	var i = AllWindows.indexOf(aWindow);
 	if (i != -1) AllWindows.splice(i, 1);
 	aWindow.close();

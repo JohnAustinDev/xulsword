@@ -45,7 +45,6 @@
   // program-wide globals CANNOT be assumed to be defined!
   function Load() {
 
-    if (typeof(AllWindows) != "undefined") AllWindows.push(window);
     document.title = fixWindowTitle(Title);
     
     UserObj.ok=false;
@@ -77,7 +76,7 @@
   
   function cancel() {
     if (OnCancel) OnCancel();
-    closeXulswordWindow(window);
+    closeWindowXS(window);
   }
   
   </script>

@@ -37,7 +37,7 @@
   <data id="ui.less.label">&less.label;</data>
   
   <keyset>
-    <key keycode="VK_ESCAPE"                 oncommand="closeXulswordWindow(window);"/>
+    <key keycode="VK_ESCAPE"                 oncommand="closeWindowXS(window);"/>
   </keyset>
   
   <script>var MainWindow = window.opener;</script>
@@ -75,7 +75,7 @@
 					
 					<spacer flex="1" orient="horizontal"/>
 					
-					<button id="close-button" label="&closeCmd.label;" flex="1" oncommand="closeXulswordWindow(window);"/>
+					<button id="close-button" label="&closeCmd.label;" flex="1" oncommand="closeWindowXS(window);"/>
 					
 				</hbox>
 				
