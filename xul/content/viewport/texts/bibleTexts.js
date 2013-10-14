@@ -275,7 +275,7 @@ BibleTexts = {
         
         case "fn":
           // If this is a footnote, then just write the body
-          t += "<span class=\"fntext cs-" + (isASCII(body) ? "en-US":mod) + (ModuleConfigs[mod].direction != ProgramConfig.direction ? " opposing-program-direction":"") + "\">" + body + "</span>";
+          t += "<span class=\"fntext cs-" + (isASCII(body) ? DEFAULTLOCALE:mod) + (ModuleConfigs[mod].direction != ProgramConfig.direction ? " opposing-program-direction":"") + "\">" + body + "</span>";
           break;
         
         case "un":

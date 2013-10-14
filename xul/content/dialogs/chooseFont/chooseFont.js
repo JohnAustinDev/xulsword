@@ -22,21 +22,19 @@ chooseFont = {
 	modName: null,
 	start: {},
 	
-	chooseMod: function() {return document.getElementById("chooseMod");},
-	
 	loaded: function() {
 		initCSS();
 		
-		if (CommandTarget.mod) this.chooseMod().version = CommandTarget.mod;
+		if (CommandTarget.mod) document.getElementById("chooseMod").version = CommandTarget.mod;
 		
-		this.modName = this.chooseMod().version;
+		this.modName = document.getElementById("chooseMod").version;
 		
 		for (var i=0; i<this.toUpdate.length; i++) {
 			this.start[this.toUpdate[i]] = ModuleConfigs[this.modName][this.toUpdate[i]];
 		}
 		
 		var loc = LibSword.getModuleInformation(this.modName, "Lang");
-		loc = (loc != NOTFOUND ? loc:"en-US");
+		loc = (loc != NOTFOUND ? loc:DEFAULTLOCALE);
 		
 		var menulist = document.getElementById("fontFamily");
 		FontBuilder.buildFontList(loc, this.start["fontFamily"], menulist);
@@ -104,38 +102,65 @@ chooseFont = {
 	
 	buttonHandler: function(button) {
 		switch (button) {
-		case "makeDefault":
-			if (document.getElementById('makeDefault').checked) 
-					this.chooseMod().setAttribute("disabled", "true");
-			else this.chooseMod().removeAttribute("disabled");
-			return;
-			break;
 		case "ok":
-			// save user choices permanently in user prefs
-			var targ = (document.getElementById("makeDefault").checked ? "default":this.modName);
-			for (var i=0; i<this.toUpdate.length; i++) {
-				if (ModuleConfigs[this.modName][this.toUpdate[i]]) {
-					prefs.setCharPref("user." + this.toUpdate[i] + "." + targ, ModuleConfigs[this.modName][this.toUpdate[i]]);
-					if (targ == "default") prefs.clearUserPref("user." + this.toUpdate[i] + "." + this.modName);
+			if (document.getElementById("restoreAllDefaults").checked) {
+				var result = {};
+				var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
+						fixWindowTitle(getDataUI("restoreAllDefaults.label")),
+						getDataUI("deleteconfirm.title"), 
+						DLGQUEST,
+						DLGYESNO);
+				if (!result.ok) {
+					document.getElementById("restoreAllDefaults").checked = false;
+					return;
+				}
+			}
+			if (!document.getElementById("restoreDefault").checked && !document.getElementById("restoreAllDefaults").checked) {
+				// save user choices permanently in user prefs
+				var targ = (document.getElementById("makeDefault").checked ? "default":this.modName);
+				for (var i=0; i<this.toUpdate.length; i++) {
+					if (ModuleConfigs[this.modName][this.toUpdate[i]]) {
+						prefs.setCharPref("user." + this.toUpdate[i] + "." + targ, ModuleConfigs[this.modName][this.toUpdate[i]]);
+						if (targ == "default") prefs.clearUserPref("user." + this.toUpdate[i] + "." + this.modName);
+					}
+				}
+			}
+			else {
+				// restore defaults if requested
+				for (var j=0; j<this.toUpdate.length; j++) {
+					if (document.getElementById("restoreAllDefaults").checked) {
+						prefs.clearUserPref("user." + this.toUpdate[j] + ".default");
+						for (var i=0; i<Tabs.length; i++) {
+							prefs.clearUserPref("user." + this.toUpdate[j] + "." + Tabs[i].modName);
+						}
+					}
+					else prefs.clearUserPref("user." + this.toUpdate[j] + "." + this.modName);
 				}
 			}
 			break;
 		}
 		
 		// reset ModuleConfigs
-		ModuleConfigDefaultCSS = getModuleConfigDefaultCSS();
 		for (var i=0; i<Tabs.length; i++) {
 			ModuleConfigs[Tabs[i].modName] = getModuleConfig(Tabs[i].modName);
 		}
 		
+		// Updating window CSS this way appends new style rules at the end
+		// of each windows' style-sheet. This works, but also can cause a
+		// noticeable update delay if many consecutive changes are made. But
+		// reloading the main-window (restarting the program) fixes the delay.
 		if (button == "ok") {
-			// update all windows with new CSS
+			// update all windows' CSS with ModuleConfigs
 			for (var i=0; i<AllWindows.length; i++) {
 				if (!AllWindows[i]) continue;
 				if (AllWindows[i].initCSS) AllWindows[i].initCSS();
-				if (AllWindows[i].ViewPort) AllWindows[i].ViewPort.ownerDocument.defaultView.initCSS();
+				if (AllWindows[i].ViewPort) {
+					try {AllWindows[i].ViewPort.ownerDocument.defaultView.initCSS();}
+					catch (er) {}
+				}
 			}
 		}
+		// update only preview window with new CSS
 		else window.opener.ViewPort.ownerDocument.defaultView.initCSS();
 
 		window.close();

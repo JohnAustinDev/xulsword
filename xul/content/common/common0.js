@@ -282,8 +282,8 @@ function getModuleConfigDefaultCSS() {
 		direction: getPrefOrCreate("user.direction.default", "Char", "ltr"),
 		fontSizeAdjust: getPrefOrCreate("user.fontSizeAdjust.default", "Char", "none"),
 		lineHeight: getPrefOrCreate("user.lineHeight.default", "Char", "1.6em"),
-		fontSize: getPrefOrCreate("user.fontSize.default", "Char", "unspecified"),
-		color: getPrefOrCreate("user.color.default", "Char", "unspecified"),
+		fontSize: getPrefOrCreate("user.fontSize.default", "Char", "1em"),
+		color: getPrefOrCreate("user.color.default", "Char", "#202020"),
 		background: getPrefOrCreate("user.background.default", "Char", "unspecified")
 	};
 	
@@ -933,7 +933,8 @@ function createDynamicCssClasses(configProp) {
     for (var m in ModuleConfigs) {
       sheet.insertRule(ModuleConfigs[m][configProp], sheetLength);
 //jsdump(ModuleConfigs[m][configProp]);
-      }
+		}
+		sheet.insertRule(getModuleConfig("LTR_DEFAULT")[configProp], sheetLength);
   }
   
   if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {

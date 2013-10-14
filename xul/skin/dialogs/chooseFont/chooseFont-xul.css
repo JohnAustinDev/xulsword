@@ -2,9 +2,24 @@ groupbox {
   margin:5px 10px 5px 10px;
 }
 
-#fontFamily {
-	width:200px;
+#chooseModBox label,
+#fontRow label[control="fontFamily"] {
+	min-width:50px;
 }
+
+#fontFamily {
+	width:300px;
+}
+
+#fontsGrid columns > column:first-child {
+	-moz-margin-end: 20px;
+}
+
+rows > row,
+#chooseModBox {
+	margin-bottom:10px;
+}
+
 #fontSize,
 #color,
 #background,
@@ -12,11 +27,10 @@ groupbox {
 	width:120px;
 }
 
-colorpicker {
-	-moz-margin-end: 4px;
+menulist {
+	min-height:28px;
 }
 
-rows > row,
-#chooseModBox {
-	margin-bottom:10px;
+colorpicker {
+	-moz-margin-end: 4px;
 }

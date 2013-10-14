@@ -51,7 +51,6 @@ var Location              = MainWindow.Location;
 var LocaleConfigs         = MainWindow.LocaleConfigs;
 var ModuleConfigs         = MainWindow.ModuleConfigs;
 var ProgramConfig         = MainWindow.ProgramConfig;
-var ModuleConfigDefaultCSS= MainWindow.ModuleConfigDefaultCSS;
 
 var AudioDirs             = MainWindow.AudioDirs;
 
@@ -401,18 +400,23 @@ function isLocationAbeforeB(locA, locB) {
 
 function getModuleConfig(mod) {
   var moduleConfig = {};
+  
+  var moduleConfigDefaultCSS = getModuleConfigDefaultCSS();
 
   // All versionconfig members should have a valid value, and it must not be null.
   // Read values from module's .conf file
   for (var p in Config) {
     if (!Config[p].modConf) continue;
-    var val = LibSword.getModuleInformation(mod, Config[p].modConf);
+    if (mod != "LTR_DEFAULT") {
+			var val = LibSword.getModuleInformation(mod, Config[p].modConf);
+		}
+		else val = "";
     if ((/^\s*$/).test(val)) val = NOTFOUND;
 
-    if (val == NOTFOUND && Config[p].CSS && ModuleConfigDefaultCSS[p]) {
-      val = ModuleConfigDefaultCSS[p];
+    if (val == NOTFOUND && Config[p].CSS && moduleConfigDefaultCSS[p]) {
+      val = moduleConfigDefaultCSS[p];
     }
-    
+  
     // allow user to overwrite module defaults
     try {
 			var userVal = prefs.getCharPref("user." + p + "." + mod);
@@ -423,13 +427,19 @@ function getModuleConfig(mod) {
   }
   
   // Assign associated locale and modules
-  moduleConfig["AssociatedLocale"] = getLocaleOfModule(mod);
-  if (!moduleConfig["AssociatedLocale"]) moduleConfig["AssociatedLocale"] = NOTFOUND;
-  
-  if (moduleConfig["AssociatedLocale"] != NOTFOUND && LocaleConfigs.hasOwnProperty(moduleConfig["AssociatedLocale"]))
-      moduleConfig["AssociatedModules"] = LocaleConfigs[moduleConfig["AssociatedLocale"]].AssociatedModules;
-  else moduleConfig["AssociatedModules"] = NOTFOUND;
-  
+  if (mod != "LTR_DEFAULT") {
+		moduleConfig["AssociatedLocale"] = getLocaleOfModule(mod);
+		if (!moduleConfig["AssociatedLocale"]) moduleConfig["AssociatedLocale"] = NOTFOUND;
+		
+		if (moduleConfig["AssociatedLocale"] != NOTFOUND && LocaleConfigs.hasOwnProperty(moduleConfig["AssociatedLocale"]))
+				moduleConfig["AssociatedModules"] = LocaleConfigs[moduleConfig["AssociatedLocale"]].AssociatedModules;
+		else moduleConfig["AssociatedModules"] = NOTFOUND;
+	}
+	else {
+		moduleConfig["AssociatedLocale"] = DEFAULTLOCALE;
+		moduleConfig["AssociatedModules"] = NOTFOUND;
+	}
+	
   // Normalize direction value
   moduleConfig.direction = (moduleConfig.direction.search("RtoL", "i") != -1 ? "rtl":"ltr");
 

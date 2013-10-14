@@ -114,15 +114,24 @@ function initModules() {
       continue;
     }
     
-/*
-    // Language glossaries don't currently work (too big??) and so aren't supported.
-    if (LibSword.getModuleInformation(mod, "GlossaryFrom") != NOTFOUND) {
-      jsdump("ERROR: Dropping module \"" + mod + "\". Language glossaries are not supported.");
-      continue;
-    }
-*/
-    
     ModuleConfigs[mod] = getModuleConfig(mod);
+    
+    // if a font is specified in a conf, write it to user pref as well. This
+    // allows an XSM module to specify a font for a module which will
+    // persist even if the module is updated from another repo. Order of
+    // cascade is: default-val -> conf-val -> user-pref-val
+    var toUpdate = ["fontFamily", "fontSize", "lineHeight", "color", "background", "fontSizeAdjust"];
+    for (var i=0; i<toUpdate.length; i++) {
+			var confVal = LibSword.getModuleInformation(mod, Config[toUpdate[i]].modConf);
+			if (confVal != NOTFOUND && !(/^\s*$/).test(confVal)) {
+				// don't auto-overwrite if it's already set!
+				try {
+					var test = prefs.getCharPref("user." + toUpdate[i] + "." + mod);
+				}
+				catch (er) {prefs.setCharPref("user." + toUpdate[i] + "." + mod, confVal);}
+			}
+		}
+		
   }
   
   return true;
@@ -224,7 +233,7 @@ FindMod:
       isRTL:(ModuleConfigs[mod].direction == "rtl"), 
       index:m,  
       description:LibSword.getModuleInformation(mod, "Description"), 
-      locName:(isASCII(label) ? DEFAULTLOCALE:mod),
+      locName:(isASCII(label) ? "LTR_DEFAULT":mod),
       conf:null, 
       isCommDir:null
     };
