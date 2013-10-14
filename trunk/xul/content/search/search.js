@@ -859,7 +859,6 @@ function commandHandler(e) {
   case "helpButton":
   case "searchHelp":
     SearchHelpWindow = window.open("chrome://xulsword/content/search/searchHelp.xul", "searchHelp", "chrome,resizable");
-    AllWindows.push(SearchHelpWindow);
     break;
   }
   
@@ -889,7 +888,7 @@ function unloadSearchWindow() {
     MainWindow.Indexer.callback = null;
   }
   
-  try {closeXulswordWindow(SearchHelpWindow);} catch(er) {}
+  try {closeWindowXS(SearchHelpWindow);} catch(er) {}
 }
 
 

@@ -98,8 +98,6 @@ var gCreateInFolder = BM.AllBookmarksID;
 function Startup()
 {
 
-  AllWindows.push(window);
-
   document.title = fixWindowTitle(document.title);
   BookmarkFuns.initTemplateDataSource(document.getAnonymousElementByAttribute(document.getElementById("bookmarks-view"), "anonid", "bookmarks-tree"), BMDS);
     

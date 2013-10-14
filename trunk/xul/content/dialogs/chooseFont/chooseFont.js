@@ -166,7 +166,7 @@ chooseFont = {
 			}
 		}
 
-		closeXulswordWindow(window);
+		closeWindowXS(window);
 	}
 	
 };

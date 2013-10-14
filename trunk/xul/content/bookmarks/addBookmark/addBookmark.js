@@ -74,8 +74,6 @@ var WSucks;
 function Startup()
 {
 
-  AllWindows.push(window);
-
   BookmarkFuns.initTemplateDataSource(document.getElementById("folderPopup"), BMDS);
   BookmarkFuns.initTemplateDataSource(document.getAnonymousElementByAttribute(document.getElementById("folder-tree"), "anonid", "bookmarks-tree"), BMDS);
   

@@ -273,7 +273,7 @@ function deleteCheckedResources(e) {
     }
   }
   
-  closeXulswordWindow(window);
+  closeWindowXS(window);
 }
 
 // Don't allow all xulsword's Bibles to be deleted. At least one must remain in

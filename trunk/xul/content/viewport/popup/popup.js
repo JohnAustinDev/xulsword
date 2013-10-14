@@ -327,7 +327,7 @@ function PopupObj(popupobj) {
   
     // If we're a windowed popup, just close the window
     if (window.name == "npopup") {
-      window.frameElement.ownerDocument.defaultView.close();
+      closeWindowXS(window.frameElement.ownerDocument.defaultView);
       return;
     }
     
@@ -383,7 +383,7 @@ function PopupObj(popupobj) {
     p += ",top=" + Number(wintop.screenY + Y);
     p += ",width=" + this.npopupBOX.offsetWidth;
     p += ",height=" + this.npopupBOX.offsetHeight;
-    AllWindows.push(wintop.open("chrome://xulsword/content/viewport/popup/popup.xul", "popup" + String(Math.random()), p));
+    wintop.open("chrome://xulsword/content/viewport/popup/popup.xul", "popup" + String(Math.random()), p);
 
   };
 

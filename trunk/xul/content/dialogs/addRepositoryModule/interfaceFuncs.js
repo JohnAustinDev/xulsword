@@ -157,7 +157,7 @@ ARMI = {
 		
 		MainWindow.installModuleArray(MainWindow.finishAndHandleReset, MainWindow.AddRepositoryModules);
 		
-		closeXulswordWindow(window);
+		closeWindowXS(window);
 	},
 
 	updateRepoListButtons: function() {
