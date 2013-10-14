@@ -26,24 +26,16 @@
 <window 
     id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"
     title="&menu.help.about;"
-    onload="initCSS(); onLoad();"
+    onload="initCSS(); sizeToContent();"
     centerscreen="true"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
+  <script>
+		var MainWindow = (window.opener ? window.opener.MainWindow:null);
+		var LocaleConfigs, ProgramConfig;
+	</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
-  
-  <script>
-    
-    function onLoad() {
-      
-      setGlobalDirectionPrefs();
-      
-      sizeToContent();
-      
-    }
-  </script>
   
   <vbox id="mainbox" flex="1">
 		

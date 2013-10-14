@@ -77,7 +77,7 @@
 			
 			// Are we just installing modules, but not starting xulsword?
 			// Or is MainWindow already open? Then we're done...
-			if (installOnly || MainWindow) window.close();
+			if (installOnly || MainWindow) closeXulswordWindow(window);
 		
 			// Otherwise open the visible splash screen and start the main xulsword window
 		}
@@ -90,7 +90,7 @@
 	}
 
 	function unload() {
-		if (SplashScreen) {SplashScreen.close();}
+		if (SplashScreen) {closeXulswordWindow(SplashScreen);}
 		
 		if (!IsExtension) {
 			try {var installOnly = prefs.getBoolPref("xsInstallOnly");}

@@ -88,7 +88,7 @@ function finishedAudioFile() {
   MainWindow.goDoCommand('cmd_xs_nextChapter');
   MainWindow.Player.book = Location.getBookName();
   MainWindow.Player.chapter = Location.getChapterNumber(MainWindow.Player.version);
-  windowLocationReload(); // re-starts player
+  window.location.reload(); // re-starts player
   
 }
 

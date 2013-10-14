@@ -40,7 +40,7 @@
   <data id="ui.cancelButton.label">&cancelButton.label;</data>
   
   <keyset>
-    <key keycode="VK_ESCAPE" oncommand="window.close();"/>
+    <key keycode="VK_ESCAPE" oncommand="closeXulswordWindow(window);"/>
     <key keycode="VK_RETURN" oncommand="if (event.target !== PassageTextBox) document.getElementById('copy').click();"/>
   </keyset>
 
@@ -81,7 +81,7 @@
       <spacer flex="1"/>
       <hbox class="dialogbuttons" align="end">
         <button id="copy" label="&copyCmd.label;" oncommand="copyPassage(event);" />
-        <button id="close" label="&cancelButton.label;" oncommand="window.close()" />
+        <button id="close" label="&cancelButton.label;" oncommand="closeXulswordWindow(window)" />
       </hbox>
     </vbox>
     

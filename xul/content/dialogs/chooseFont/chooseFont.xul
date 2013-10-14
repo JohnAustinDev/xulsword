@@ -32,14 +32,14 @@
     id="chooseFont" xmlns:html="http://www.w3.org/1999/xhtml"
     title="&xs_chooseFont;"
     onload="chooseFont.loaded();"
-    onunload="chooseFont.buttonHandler('cancel');" 
+    onunload="chooseFont.exit('cancel');" 
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   
   <data id="ui.restoreAllDefaults.label">&restoreAllDefaults.label;</data>
   <data id="ui.deleteconfirm.title">&deleteconfirm.title;</data>
   
   <keyset>
-    <key keycode="VK_ESCAPE" oncommand="window.close();"/>
+    <key keycode="VK_ESCAPE" oncommand="closeXulswordWindow(window);"/>
   </keyset>
   
   <script>
@@ -146,8 +146,8 @@
 		<spacer flex="1"/>
 		
 		<hbox class="dialogbuttons" flex="1" pack="end" align="end">
-			<button id="cancel" label="&dialog.Cancel;" oncommand="chooseFont.buttonHandler('cancel');" />
-			<button id="ok" label="&dialog.OK;" oncommand="chooseFont.buttonHandler('ok');" />
+			<button id="cancel" label="&dialog.Cancel;" oncommand="chooseFont.exit('cancel');" />
+			<button id="ok" label="&dialog.OK;" oncommand="chooseFont.exit('ok');" />
 		</hbox>
     
 	</vbox>

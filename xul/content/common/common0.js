@@ -864,18 +864,22 @@ function getDisplayNumerals(locale, localnumbers) {
 // current stylesheet. It also sets the attributes used by CSS to control
 // direction (rtl or ltr).
 function initCSS(adjustableFontSize) {
+	if (typeof(AllWindows) != "undefined") {
+		var i = AllWindows.indexOf(window);
+		if (i == -1) AllWindows.push(window);
+	}
   
   // If we don't have LocaleConfigs yet, set LocaleConfigs of current locale.
   if (typeof(LocaleConfigs) == "undefined") {
     var lc = getLocale();
-    this.LocaleConfigs = {};
+    LocaleConfigs = {};
     LocaleConfigs[lc] = getLocaleConfig(lc);
   }
   
   // If we don't have ProgramConfig, make it. If we don't have ModuleConfigs
   // that's perfectly ok to leave empty
   if (typeof(ProgramConfig) == "undefined") {
-    this.ProgramConfig = eval(uneval(LocaleConfigs[getLocale()]));
+    ProgramConfig = eval(uneval(LocaleConfigs[getLocale()]));
     ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
     ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   }
@@ -916,31 +920,43 @@ function initCSS(adjustableFontSize) {
 
 // Will create CSS classes for locales and modules and append to a stylesheet.
 function createDynamicCssClasses(configProp) {
-  var sheet = document.styleSheets[document.styleSheets.length-1];
+	var sheetIndex = document.styleSheets.length-1;
+  var sheet = document.styleSheets[sheetIndex];
   if (!sheet) return;
   if (!configProp) configProp = "StyleRule";
-  
-  var sheetLength = sheet.cssRules.length;
+
+var debug = sheet.cssRules.length;
   
   if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
     for (var lc in LocaleConfigs) {
-      sheet.insertRule(LocaleConfigs[lc][configProp], sheetLength);
+			var ex = getCSS(LocaleConfigs[lc][configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+			if (ex) sheet.deleteRule(ex.index);
+      sheet.insertRule(LocaleConfigs[lc][configProp], sheet.cssRules.length);
 //jsdump(LocaleConfigs[lc][configProp]);
       }
   }
   
   if (typeof(ModuleConfigs) != "undefined" && ModuleConfigs) {
     for (var m in ModuleConfigs) {
-      sheet.insertRule(ModuleConfigs[m][configProp], sheetLength);
+			ex = getCSS(ModuleConfigs[m][configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+			if (ex) sheet.deleteRule(ex.index);
+      sheet.insertRule(ModuleConfigs[m][configProp], sheet.cssRules.length);
 //jsdump(ModuleConfigs[m][configProp]);
 		}
-		sheet.insertRule(getModuleConfig("LTR_DEFAULT")[configProp], sheetLength);
+		var ruleCss = getModuleConfig("LTR_DEFAULT")[configProp];
+		ex = getCSS(ruleCss.replace(/\s*\{.*$/, ""), sheetIndex);
+		if (ex) sheet.deleteRule(ex.index);
+		sheet.insertRule(ruleCss, sheet.cssRules.length);
   }
   
   if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {
-    sheet.insertRule(ProgramConfig[configProp], sheetLength);
+		ex = getCSS(ProgramConfig[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+		if (ex) sheet.deleteRule(ex.index);
+    sheet.insertRule(ProgramConfig[configProp], sheet.cssRules.length);
 //jsdump(ProgramConfig[configProp]);
   }
+  
+if (sheet.cssRules.length != debug) jsdump(window.name + ": \nADDED " + (sheet.cssRules.length - debug) + " new dynamic " + configProp + " rules (" + sheet.cssRules.length + ")");
 }
 
 function createStyleRule(selector, config) {
@@ -1008,11 +1024,20 @@ function getLocaleConfig(lc) {
   return localeConfig;
 }
 
-// This function returns the FIRST rule matching the selector.
-function getCSS(selector) {
+// This function returns the FIRST rule matching the selector from the
+// given style sheet, or the first of all style sheets if sheet not specified.
+function getCSS(selector, sheetIndex) {
   selector = new RegExp("^" + escapeRE(selector));
+
+  var ss1 = 0;
+  var ss2 = document.styleSheets.length-1;
+  if (sheetIndex != null) {
+		ss1 = sheetIndex;
+		ss2 = sheetIndex;
+	}
+  
   var myRule = null;
-  for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
+  for (var ssn=ss1; ssn <= ss2; ssn++) {
     try {var zend = document.styleSheets[ssn].cssRules.length;} catch (er) {zend = 0;}
     for (var z=0; z<zend; z++) {
       var myRule = document.styleSheets[ssn].cssRules[z];
@@ -1050,6 +1075,12 @@ function isProgramPortable() {
   return (appInfo && appInfo.substr(appInfo.length-1) == "P");
 }
 IsPortable = isProgramPortable();
+
+function closeXulswordWindow(aWindow) {
+	var i = AllWindows.indexOf(aWindow);
+	if (i != -1) AllWindows.splice(i, 1);
+	aWindow.close();
+}
 
 // DEBUG helps
 /*

@@ -30,7 +30,6 @@ function loadedXUL() {
   //start_venkman();
 
   initCSS();
-  AllWindows.push(window);
   
   document.getElementById("topbox").setAttribute("libSwordLoadFailed", LibSword.loadFailed ? "true":"false");
   document.getElementById("topbox").setAttribute("hasBible", LibSword.hasBible ? "true":"false");
@@ -149,8 +148,8 @@ function loadedXUL2() {
   
   // close splash window
   if (window.opener && window.opener.document.title == "hidden-window")
-      window.opener.close(); // Close hidden startup window (which in turn closes visible splash window)
-	else if (window.opener && window.opener.SplashScreen) window.opener.SplashScreen.close();
+      closeXulswordWindow(window.opener); // Close hidden startup window (which in turn closes visible splash window)
+	else if (window.opener && window.opener.SplashScreen) closeXulswordWindow(window.opener.SplashScreen);
  
   if (LibSword.hasBible) {
     //we're ok!
@@ -164,7 +163,7 @@ function loadedXUL2() {
 			if (OPSYS == "Linux") {
 				window.alert("\n\nRun:\n\n$ ldd \"" + LibSword.LibswordPath + "\"\n\nInstall any libraries listed as: \"not found\".");
 			}
-			window.close(); // nothing we can to here...
+			closeXulswordWindow(window); // nothing we can to here...
 		}, 1);
 	}
   
@@ -179,11 +178,11 @@ function checkCipherKeys() {
   for (var t=0; t<LibSword.CheckTheseCipherKeys.length; t++) {
     if (!getAvailableBooks(LibSword.CheckTheseCipherKeys[t])[0]) {
       var retVals = {gotKey: false};
-      AllWindows.push(window.openDialog("chrome://xulsword/content/dialogs/getkey/getkey.xul", "getkey", "chrome, dependent, alwaysRaised, centerscreen, modal", LibSword.CheckTheseCipherKeys[t], retVals));
+      window.openDialog("chrome://xulsword/content/dialogs/getkey/getkey.xul", "getkey", "chrome, dependent, alwaysRaised, centerscreen, modal", LibSword.CheckTheseCipherKeys[t], retVals);
       gotKey |= retVals.gotKey;
     }
   }
-  if (gotKey) windowLocationReload();
+  if (gotKey) window.location.reload();
 }
 
 //This function is run after the xulsword window is built and displayed. Init functions
@@ -867,10 +866,10 @@ var XulswordController = {
       }
       break;
     case "cmd_xs_aboutModule":
-      AllWindows.push(window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen"));
+      window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen");
       break;
     case "cmd_xs_chooseFont":
-			AllWindows.push(CommandTarget.window.open("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,modal,centerscreen"));
+			CommandTarget.window.open("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,modal,centerscreen");
 			break;
     case "cmd_xs_addLocalModule":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
@@ -1206,7 +1205,7 @@ function handleOptions(elem) {
     
     case "about":
       CommandTarget = { mod:null }; // show logo, not modules info
-      AllWindows.push(window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen"));
+      window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen");
       break;
       
     case "modulemenu":
@@ -1357,8 +1356,6 @@ function changeLocaleTo(newLocale) {
                       getService(Components.interfaces.nsIPrefBranch);
   if (newLocale == getLocale()) return;
   rootPrefBranch.setCharPref("general.useragent.locale",newLocale);
-  
-  setGlobalDirectionPrefs();
   
   prefs.clearUserPref("addRepositoryModuleLang");
   

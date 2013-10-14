@@ -260,7 +260,7 @@
         <menuitem label="&print.printpassage;" accesskey="&print.printpassage.sc;" key="printPassKb"
             oncommand="handlePrintCommand('cmd_print_passage');"/>
         <menuseparator/>
-        <menuitem id="quit" label="&quitApplicationCmdWin.label;" accesskey="&quitApplicationCmdWin.accesskey;" oncommand="window.close()"/>
+        <menuitem id="quit" label="&quitApplicationCmdWin.label;" accesskey="&quitApplicationCmdWin.accesskey;" oncommand="closeXulswordWindow(window);"/>
       </menupopup>
     </menu>
     <menu id="edit-menu" label="&editMenu.label;" accesskey="&editMenu.accesskey;">

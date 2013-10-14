@@ -353,7 +353,7 @@ function checkInternetPermission() {
   }
 
   if (!haveInternetPermission) {
-		window.close();
+		closeXulswordWindow(window);
 		return;
 	}
 	

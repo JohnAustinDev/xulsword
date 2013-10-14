@@ -49,10 +49,10 @@
 <keyset>
   <key keycode="VK_RETURN" oncommand="document.getElementById('searchButton').click()"/>
   <key keycode="VK_ENTER" oncommand="document.getElementById('searchButton').click()"/>
-  <key keycode="VK_ESCAPE" oncommand="window.close();"/>
+  <key keycode="VK_ESCAPE" oncommand="closeXulswordWindow(window);"/>
   <key id="printPrevKb" key="&printCmd.commandkey;" modifiers="accel" oncommand="handlePrintCommand('cmd_printPreview');"/>
   <key id="printKb" key="&printCmd.commandkey;" modifiers="control shift" oncommand="handlePrintCommand('cmd_print')"/>
-  <key id="key_close" key="&closeCmd.commandkey;" modifiers="accel" oncommand="window.close();"/>
+  <key id="key_close" key="&closeCmd.commandkey;" modifiers="accel" oncommand="closeXulswordWindow(window);"/>
 </keyset>
 
 <keyset id="editMenuKeys"/>
@@ -70,7 +70,7 @@
         <menuitem label="&printPreviewCmd.label;" accesskey="&printPreviewCmd.accesskey;" key="printPrevKb" oncommand="handlePrintCommand('cmd_printPreview')"/>
         <menuitem label="&printCmd.label;" accesskey="&printCmd.accesskey;" key="printKb" oncommand="handlePrintCommand('cmd_print')"/>
         <menuseparator/>
-        <menuitem label="&closeCmd.label;" key="key_close" accesskey="&closeCmd.accesskey;" oncommand="window.close()"/>
+        <menuitem label="&closeCmd.label;" key="key_close" accesskey="&closeCmd.accesskey;" oncommand="closeXulswordWindow(window)"/>
       </menupopup>
     </menu>
     <menu id="menu_edit">

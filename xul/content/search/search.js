@@ -889,7 +889,7 @@ function unloadSearchWindow() {
     MainWindow.Indexer.callback = null;
   }
   
-  try {SearchHelpWindow.close();} catch(er) {}
+  try {closeXulswordWindow(SearchHelpWindow);} catch(er) {}
 }
 
 

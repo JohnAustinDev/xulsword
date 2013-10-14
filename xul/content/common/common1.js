@@ -573,18 +573,6 @@ function guiDirection() {
   return LocaleDir;
 }
 
-function setGlobalDirectionPrefs() {
-  // Set scrollbar location (left side for RTL locale)
-  //var progdir = guiDirection();
-  //rootprefs.setIntPref("layout.scrollbar.side", (progdir=="rtl" ? 4:0));
-  //rootprefs.setIntPref("bidi.direction", (progdir=="rtl" ? 2:1));
-}
-
-function windowLocationReload() {
-  setGlobalDirectionPrefs();
-  window.location.reload();
-}
-
 //Removes white-space, trailing or leading punctuation, "x" (note symbol),
 //and leading digits (for verse numbers)
 function cleanDoubleClickSelection(sel) {

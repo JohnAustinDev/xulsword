@@ -883,7 +883,7 @@ function handleResetRequest() {
     break;
   case SOFTRESET: // program needs to reload all SWORD modules
     jsdump("Initiating SOFTRESET");
-    if (window.name == "xulsword-window") window.setTimeout("windowLocationReload();", 500);
+    if (window.name == "xulsword-window") window.setTimeout("window.location.reload();", 500);
     else {
       WillRestart = true;
       window.setTimeout("restartApplication();", 500);

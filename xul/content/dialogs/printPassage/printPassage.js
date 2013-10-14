@@ -96,11 +96,11 @@ var PrintPassage = {
   },
   
   onPrintPreviewDone: function() {
-    window.close();
+    closeXulswordWindow(window);
   },
   
   onPrintDone: function() {
-    window.close();
+    closeXulswordWindow(window);
   },
   
   From:null,

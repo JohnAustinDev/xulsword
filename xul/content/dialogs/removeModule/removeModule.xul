@@ -49,7 +49,7 @@
   <data id="ui.deleteconfirm.title">&deleteconfirm.title;</data>
   
   <keyset>
-    <key keycode="VK_ESCAPE"                 oncommand="window.close();"/>
+    <key keycode="VK_ESCAPE"                 oncommand="closeXulswordWindow(window);"/>
   </keyset>
 
   <vbox id="body" flex="1">
@@ -85,7 +85,7 @@
     
     <hbox id="dialogbuttons" class="dialogbuttons" align="end">
       <button id="delete" label="&deleteCmd.label;" oncommand="deleteCheckedResources(event);" />
-      <button id="close" label="&cancelButton.label;" oncommand="window.close()" />
+      <button id="close" label="&cancelButton.label;" oncommand="closeXulswordWindow(window)" />
     </hbox>
     
   </vbox>

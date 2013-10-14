@@ -36,7 +36,7 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/printPassage/printPassage.js"/>
 
   <keyset>
-    <key keycode="VK_ESCAPE"                 oncommand="window.close();"/>
+    <key keycode="VK_ESCAPE"                 oncommand="closeXulswordWindow(window);"/>
   </keyset>
   
   <vbox flex="1">
@@ -107,7 +107,7 @@
     <hbox flex="1">
       <progressmeter height="26" flex="1" id="progress" mode="determined" value="0" hidden="true" />
     </hbox>
-    <button id="close" label="&cancelButton.label;" oncommand="window.close()" />
+    <button id="close" label="&cancelButton.label;" oncommand="closeXulswordWindow(window)" />
   </hbox>
   
 </window>
