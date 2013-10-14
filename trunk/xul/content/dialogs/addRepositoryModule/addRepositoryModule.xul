@@ -308,8 +308,8 @@
 					<hbox flex="1" pack="center" align="center"><label id="timeRemaining"></label></hbox>
 				</stack>
       </hbox>
-      <button disabled="true" id="apply" label="&dialog.OK;" oncommand="ARMI.installModules(); window.close();" />
-      <button id="cancel" label="&dialog.Cancel;" oncommand="window.close();" />
+      <button disabled="true" id="apply" label="&dialog.OK;" oncommand="ARMI.installModules(); closeXulswordWindow(window);" />
+      <button id="cancel" label="&dialog.Cancel;" oncommand="closeXulswordWindow(window);" />
     </hbox>
     
   </vbox>

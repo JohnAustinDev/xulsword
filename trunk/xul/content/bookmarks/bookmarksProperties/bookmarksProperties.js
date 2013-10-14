@@ -172,7 +172,7 @@ function Commit() {
   if (changed) BookmarkFuns.updateMainWindow();
 
   window.arguments[1].ok = true;
-  window.close();
+  closeXulswordWindow(window);
   
   return true;
 }

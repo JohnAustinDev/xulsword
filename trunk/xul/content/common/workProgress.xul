@@ -77,7 +77,7 @@
   
   function cancel() {
     if (OnCancel) OnCancel();
-    window.close();
+    closeXulswordWindow(window);
   }
   
   </script>

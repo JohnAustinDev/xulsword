@@ -101,7 +101,7 @@ function copyPassage(e) {
       getService(Components.interfaces.nsIClipboard);  
   clipboard.setData(trans, null, Components.interfaces.nsIClipboard.kGlobalClipboard);
     
-  window.close();
+  closeXulswordWindow(window);
 }
 
 // Loads html text into a temporary DOM element where it can be manipulated 

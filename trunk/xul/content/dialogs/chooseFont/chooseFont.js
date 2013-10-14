@@ -20,7 +20,7 @@ chooseFont = {
 	toUpdate: ["fontFamily", "fontSize", "lineHeight", "color", "background"],
 	
 	modName: null,
-	start: {},
+	modInitial: null,
 	
 	loaded: function() {
 		initCSS();
@@ -29,15 +29,24 @@ chooseFont = {
 		
 		this.modName = document.getElementById("chooseMod").version;
 		
+		this.setSelections();
+
+		window.sizeToContent();
+		
+//jsdump(this.modName + ", " + uneval(this.start));
+	},
+	
+	setSelections: function() {
+		this.modInitial = {};
 		for (var i=0; i<this.toUpdate.length; i++) {
-			this.start[this.toUpdate[i]] = ModuleConfigs[this.modName][this.toUpdate[i]];
+			this.modInitial[this.toUpdate[i]] = ModuleConfigs[this.modName][this.toUpdate[i]];
 		}
 		
 		var loc = LibSword.getModuleInformation(this.modName, "Lang");
 		loc = (loc != NOTFOUND ? loc:DEFAULTLOCALE);
 		
 		var menulist = document.getElementById("fontFamily");
-		FontBuilder.buildFontList(loc, this.start["fontFamily"], menulist);
+		FontBuilder.buildFontList(loc, this.modInitial["fontFamily"], menulist);
 		
 		if (menulist.selectedIndex == -1) {
 			menulist.insertItemAt(0, "", "", "");
@@ -45,7 +54,7 @@ chooseFont = {
 		}
 		
 		for (var i=0; i<this.toUpdate.length; i++) {
-			var val = this.start[this.toUpdate[i]];
+			var val = this.modInitial[this.toUpdate[i]];
 			
 			switch(this.toUpdate[i]) {
 			case "fontFamily":
@@ -62,10 +71,6 @@ chooseFont = {
 				break;
 			}
 		}
-
-		window.sizeToContent();
-		
-//jsdump(this.modName + ", " + uneval(this.start));
 	},
 	
 	update: function(e) {
@@ -97,12 +102,20 @@ chooseFont = {
 		
 		ModuleConfigs[this.modName].StyleRule = createStyleRule(".cs-" + this.modName, ModuleConfigs[this.modName]);
 		ModuleConfigs[this.modName].TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(m" + this.modName + ")", ModuleConfigs[this.modName]);
+
 		window.opener.ViewPort.ownerDocument.defaultView.initCSS();
 	},
 	
-	buttonHandler: function(button) {
-		switch (button) {
-		case "ok":
+	resetModuleConfigsAndUpdatePreview: function() {
+		for (var i=0; i<Tabs.length; i++) {
+			ModuleConfigs[Tabs[i].modName] = getModuleConfig(Tabs[i].modName);
+		}
+		
+		window.opener.ViewPort.ownerDocument.defaultView.initCSS();
+	},
+	
+	exit: function(button) {
+		if (button == "ok") {
 			if (document.getElementById("restoreAllDefaults").checked) {
 				var result = {};
 				var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
@@ -137,22 +150,14 @@ chooseFont = {
 					else prefs.clearUserPref("user." + this.toUpdate[j] + "." + this.modName);
 				}
 			}
-			break;
 		}
 		
-		// reset ModuleConfigs
-		for (var i=0; i<Tabs.length; i++) {
-			ModuleConfigs[Tabs[i].modName] = getModuleConfig(Tabs[i].modName);
-		}
+		this.resetModuleConfigsAndUpdatePreview();
 		
-		// Updating window CSS this way appends new style rules at the end
-		// of each windows' style-sheet. This works, but also can cause a
-		// noticeable update delay if many consecutive changes are made. But
-		// reloading the main-window (restarting the program) fixes the delay.
 		if (button == "ok") {
 			// update all windows' CSS with ModuleConfigs
 			for (var i=0; i<AllWindows.length; i++) {
-				if (!AllWindows[i]) continue;
+				if (!AllWindows[i] || AllWindows[i] === window) continue;
 				if (AllWindows[i].initCSS) AllWindows[i].initCSS();
 				if (AllWindows[i].ViewPort) {
 					try {AllWindows[i].ViewPort.ownerDocument.defaultView.initCSS();}
@@ -160,12 +165,14 @@ chooseFont = {
 				}
 			}
 		}
-		// update only preview window with new CSS
-		else window.opener.ViewPort.ownerDocument.defaultView.initCSS();
 
-		window.close();
+		closeXulswordWindow(window);
 	}
 	
 };
 
-function onRefUserUpdate(e, location, version) {chooseFont.modName = version;}
+function onRefUserUpdate(e, location, version) {
+	chooseFont.resetModuleConfigsAndUpdatePreview();
+	chooseFont.modName = version;
+	chooseFont.setSelections();
+}
