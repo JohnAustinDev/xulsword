@@ -1082,8 +1082,12 @@ function isProgramPortable() {
 IsPortable = isProgramPortable();
 
 function closeWindowXS(aWindow) {
-	var i = AllWindows.indexOf(aWindow);
-	if (i != -1) AllWindows.splice(i, 1);
+	if (typeof(AllWindows) == "object" && 
+			AllWindows instanceof Array && 
+			AllWindows.length) {
+		var i = AllWindows.indexOf(aWindow);
+		if (i != -1) AllWindows.splice(i, 1);
+	}
 	aWindow.close();
 }
 

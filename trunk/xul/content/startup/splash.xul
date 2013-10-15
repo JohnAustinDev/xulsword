@@ -26,7 +26,7 @@
 
 <window xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 		id="main-window" title="hidden-window"
-    onload="startxulsword();" onunload="unload()"
+    onload="startxulsword();"
     hidechrome="true"
     width="0"
     height="0"
