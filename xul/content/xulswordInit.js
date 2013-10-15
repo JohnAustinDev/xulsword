@@ -22,7 +22,9 @@
 /************************************************************************
  * Initialize program-wide global variables
  ***********************************************************************/ 
- 
+
+var ModuleConfigDefault;
+
 LocaleConfigs = {};
 ModuleConfigs = {};
 ProgramConfig = {};
@@ -69,6 +71,8 @@ function initLocales() {
  ***********************************************************************/ 
 
 function initModules() {
+	
+	ModuleConfigDefault = getModuleConfig("LTR_DEFAULT");
 
   // Gets list of available modules
   var modules = LibSword.getModuleList();

@@ -944,10 +944,14 @@ function createDynamicCssClasses(configProp) {
       sheet.insertRule(ModuleConfigs[m][configProp], sheet.cssRules.length);
 //jsdump(ModuleConfigs[m][configProp]);
 		}
-		var ruleCss = getModuleConfig("LTR_DEFAULT")[configProp];
-		ex = getCSS(ruleCss.replace(/\s*\{.*$/, ""), sheetIndex);
+	}
+	
+	if (typeof(MainWindow) != "undefined" && MainWindow && 
+			typeof(MainWindow.ModuleConfigDefault) != "undefined" && MainWindow.ModuleConfigDefault) {
+		ex = getCSS(MainWindow.ModuleConfigDefault[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
 		if (ex) sheet.deleteRule(ex.index);
-		sheet.insertRule(ruleCss, sheet.cssRules.length);
+		sheet.insertRule(MainWindow.ModuleConfigDefault[configProp], sheet.cssRules.length);
+//jsdump(MainWindow.ModuleConfigDefault[configProp]);
   }
   
   if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {

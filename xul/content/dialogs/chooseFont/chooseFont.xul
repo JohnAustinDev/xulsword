@@ -29,11 +29,11 @@
 ]>
 
 <window 
-    id="chooseFont" xmlns:html="http://www.w3.org/1999/xhtml"
+    id="chooseFont" xmlns:html="http://www.w3.org/1999/xhtml" 
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     title="&xs_chooseFont;"
-    onload="chooseFont.loaded();"
-    onunload="chooseFont.exit('cancel');" 
-    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+    onload="chooseFont.init();"
+    onunload="chooseFont.exit();">
   
   <data id="ui.restoreAllDefaults.label">&restoreAllDefaults.label;</data>
   <data id="ui.deleteconfirm.title">&deleteconfirm.title;</data>
