@@ -215,12 +215,11 @@ jsdump("STARTING startImport");
   if (!blocking && (ZipFiles.length || RegularFiles.length>5)) {
     var result = {};
     ProgressMeterLoaded = false;
-    window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
+    ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
       fixWindowTitle(getDataUI("menu.addNewModule.label"),
       "", 
       PMNORMAL,
       null));
-    ProgressMeter = AllWindows[AllWindows.length-1];
   }
   CountTotal = (ZipFiles ? ZipFiles.length:0) + (RegularFiles ? RegularFiles.length:0);
   CountCurrent = 0;

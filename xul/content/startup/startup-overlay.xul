@@ -29,32 +29,14 @@
 
 <overlay xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	
-<script>
-	window.name = "main-window";
-	var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-			.getService(Components.interfaces.nsIWindowWatcher);
-	var MainWindow = watcher.getWindowByName("xulsword-window", window);
-	var AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs, Book;
-</script>
+<script>var MainWindow, AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs, Book;</script>
 
-<script>XSBundle = document.getElementById("strings"); AllWindows = [];</script>
-	
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
-<script>rootprefs.setCharPref("intl.uidirection." + getLocale(), getDataUI("locale.dir"));</script>
-
 <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
-<script>initLogging();</script>
-
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkDataInit.js"/>
-<script>BM = {}; BMDS = initBMServices(BM);</script>
-
 <script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>
-<script>AudioDirs = getAudioDirs();</script>
-
 <script type="application/x-javascript" src="chrome://xulsword/content/bibleBooks.js"/>
-<script>Book = getBibleBooks();</script>
-
 <script type="application/x-javascript" src="chrome://xulsword/content/startup/newModule.js"/>
 
 <script>
@@ -67,17 +49,15 @@
 		if (WillRestart) return;
 		
 		if (!IsExtension) {
-			var installOnly = false;
-			try {
-				installOnly = prefs.getBoolPref("xsInstallOnly");
-				prefs.setBoolPref("xsInstallOnly", false);
-				prefs.clearUserPref("xsInstallOnly");
-			}
-			catch(er) {installOnly = false;} // if pref did not exist
+			try {var installOnly = prefs.getBoolPref("xsInstallOnly");}
+			catch(er) {installOnly = false;}
 			
 			// Are we just installing modules, but not starting xulsword?
 			// Or is MainWindow already open? Then we're done...
-			if (installOnly || MainWindow) closeWindowXS(window);
+			if (installOnly || MainWindow) {
+				closeWindowXS(window);
+				return;
+			}
 		
 			// Otherwise open the visible splash screen and start the main xulsword window
 		}
@@ -89,7 +69,7 @@
 		// and then this window's onunload will close the visible splash screen.
 	}
 
-	function unload() {
+	function unloadXS() {
 		if (SplashScreen) {closeWindowXS(SplashScreen);}
 		
 		if (!IsExtension) {
@@ -97,6 +77,8 @@
 			catch (er) {installOnly = false;}
 			
 			if (installOnly) {
+				prefs.setBoolPref("xsInstallOnly", false);
+				prefs.clearUserPref("xsInstallOnly");
 				jsdump("Quiting... xsInstallOnly command line flag was set.");
 				var mutex = getSpecialDirectory("TmpD");
 				mutex.append("xsInstallOnlyMutex");
@@ -114,7 +96,23 @@
 	// closes this hidden window during its init sequence, which in turn closes the
 	// visible splash window.
 
+	var OnUnloadPrevious;
 	function startxulsword() {
+		XSBundle = document.getElementById("stringsXS");
+		AllWindows = [];
+		rootprefs.setCharPref("intl.uidirection." + getLocale(), getDataUI("locale.dir"));
+		initLogging();
+		BM = {};
+		BMDS = initBMServices(BM);
+		AudioDirs = getAudioDirs();
+		Book = getBibleBooks();
+		
+		OnUnloadPrevious = window.onunload;
+		window.onunload = function () {
+			if (typeof OnUnloadPrevious == "function") OnUnloadPrevious();
+			unloadXS();
+		}
+		
 		createAppDirectories();
 	
 		if (!IsExtension) {
@@ -134,6 +132,7 @@
 				var mutex = getSpecialDirectory("TmpD");
 				mutex.append("xsInstallOnlyMutex");
 				if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
+				jsdump("INFO: xsInstallOnly flag was set");
 			}
 		}
 		
@@ -167,9 +166,9 @@
 ]]>
 </script>
 	
-<window id="main-window" onunload="unload();">
+<window id="main-window">
 	
-	<stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+	<stringbundle id="stringsXS" src="chrome://xulsword/locale/xulsword.properties"/>
 	
 	<data id="ui.menu.addNewModule.label">&menu.addNewModule.label;</data>
 	<data id="ui.menu.importAudio.label">&menu.importAudio.label;</data>
