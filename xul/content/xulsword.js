@@ -811,22 +811,22 @@ var XulswordController = {
       Texts.update();
       break;
     case "cmd_xs_search":
-      window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen");
+      openWindowXS("chrome://xulsword/content/search/search.xul", "search", "chrome,resizable,centerscreen");
       break;
     case "cmd_xs_searchFromTextBox":
       CommandTarget.search.searchtext = document.getElementById("searchText").value;
-      window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen");
+      openWindowXS("chrome://xulsword/content/search/search.xul", "search", "chrome,resizable,centerscreen");
       break;
     case "cmd_xs_searchForSelection":
       CommandTarget.search.mod = CommandTarget.mod;
       CommandTarget.search.searchtext = CommandTarget.selection;
       CommandTarget.search.type = "SearchExactText";
-      window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen");
+      openWindowXS("chrome://xulsword/content/search/search.xul", "search", "chrome,resizable,centerscreen");
       break;
     case "cmd_xs_searchForLemma":
       if (!(/lemma\:/).test(CommandTarget.search.searchtext)) break;
       CommandTarget.search.type = "SearchAdvanced";
-      window.open("chrome://xulsword/content/search/search.xul", "_blank", "chrome,resizable,centerscreen");
+      openWindowXS("chrome://xulsword/content/search/search.xul", "search", "chrome,resizable,centerscreen");
       break;
     case "cmd_xs_openFromSelection":
       updateToReference(this.parsedLocation);
@@ -851,12 +851,7 @@ var XulswordController = {
       updateFromNavigator();
       break;
     case "cmd_xs_openManager":
-			var bookmarksManager = Components.classes['@mozilla.org/appshell/window-mediator;1'].
-				getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow('bookmarksManager');
-			if (bookmarksManager) bookmarksManager.focus();
-			else {
-				window.open("chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.xul", "_blank", "chrome,resizable,centerscreen");
-			}
+			openWindowXS("chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.xul", "bookmarksManager", "chrome,resizable,centerscreen", "bookmarksManager");
       break;
     case "cmd_xs_toggleTab":
       if (CommandTarget.w) {
@@ -866,25 +861,20 @@ var XulswordController = {
       }
       break;
     case "cmd_xs_aboutModule":
-      window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen");
+      openWindowXS("chrome://xulsword/content/dialogs/about/about.xul", "about", "chrome,modal,centerscreen", "about");
       break;
     case "cmd_xs_chooseFont":
-			CommandTarget.window.open("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,centerscreen");
+			openWindowXS("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,centerscreen", "chooseFont", CommandTarget.window);
 			break;
     case "cmd_xs_addLocalModule":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
       if (!addNewModule()) ModuleCopyMutex=false;
       break;
     case "cmd_xs_addRepositoryModule":
-			var addRepositoryModuleWindow = Components.classes['@mozilla.org/appshell/window-mediator;1'].
-				getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow('addRepositoryModule');
-			if (addRepositoryModuleWindow) addRepositoryModuleWindow.focus();
-			else {
-				window.open("chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.xul", getDataUI("menu.addNewModule.label"), "chrome,resizable,centerscreen");
-			}
+			openWindowXS("chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.xul", "addRepositoryModule", "chrome,resizable,centerscreen", "addRepositoryModule");
       break;
     case "cmd_xs_removeModule":
-      window.open("chrome://xulsword/content/dialogs/removeModule/removeModule.xul", getDataUI("menu.removeModule.label"), "chrome,resizable,centerscreen");
+      openWindowXS("chrome://xulsword/content/dialogs/removeModule/removeModule.xul", "removeModule", "chrome,resizable,centerscreen", "removeModule");
       break;
     case "cmd_xs_exportAudio":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
@@ -1205,7 +1195,7 @@ function handleOptions(elem) {
     
     case "about":
       CommandTarget = { mod:null }; // show logo, not modules info
-      window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen");
+      openWindowXS("chrome://xulsword/content/dialogs/about/about.xul", "about", "chrome,modal,centerscreen", "about");
       break;
       
     case "modulemenu":
@@ -1585,9 +1575,7 @@ function unloadXUL() {
  ***********************************************************************/ 
 
 function copyPassageDialog() {
-  window.open("chrome://xulsword/content/dialogs/copyPassage/copyPassage.xul", 
-      getDataUI("menu.copypassage") + "_" + String(Math.round(10000*Math.random())),
-      "chrome,resizable,centerscreen");
+  openWindowXS("chrome://xulsword/content/dialogs/copyPassage/copyPassage.xul", "copyPassage", "chrome,resizable,centerscreen", "copyPassage");
 }
 
 // To print, you must pass a print-target to this handlePrintCommand
@@ -1617,14 +1605,7 @@ function handlePrintCommand(command, target) {
     break;
     
   case "cmd_print_passage":
-		var printPassage = Components.classes['@mozilla.org/appshell/window-mediator;1'].
-			getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow('printPassage');
-		if (printPassage) printPassage.focus();
-		else {
-			window.open("chrome://xulsword/content/dialogs/printPassage/printPassage.xul",
-					getDataUI("print.printpassage"),
-					"chrome,resizable,centerscreen");
-		 }
+			openWindowXS("chrome://xulsword/content/dialogs/printPassage/printPassage.xul", "printPassage", "chrome,resizable,centerscreen", "printPassage");
     break;
   }
 }

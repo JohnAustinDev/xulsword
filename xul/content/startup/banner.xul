@@ -26,6 +26,7 @@
 <window 
     id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"
     title="&menu.help.about;"
+    windowtype="splash-banner"
     onload="initCSS(); sizeToContent();"
     centerscreen="true"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">

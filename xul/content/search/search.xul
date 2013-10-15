@@ -29,6 +29,7 @@
 <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"
     id="search"
     title="&search.title; &quot;**search_title**&quot;"
+    windowtype="search"
     width="800" height="630" screenX="50" screenY="50"
     persist="width height screenX screenY sizemode"
     onload="initSearch()"

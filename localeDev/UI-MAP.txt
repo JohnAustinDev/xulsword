@@ -200,6 +200,7 @@ xulsword/search/search.dtd:printPreviewCmd.accesskey                     =??main
 xulsword/dialogs/printPassage/printPassage.dtd:frompageInput.label       =  main-window.menu-file.print.from_page
 xulsword/dialogs/printPassage/printPassage.dtd:topageInput.label         =  main-window.menu-file.print.to_page
 xulsword/xulsword.dtd:print.printpassage                                 =  main-window.menu-file.print_passage
+xulsword/dialogs/printPassage/printPassage.dtd:print.printpassage        =  main-window.menu-file.print_passage
 xulsword/xulsword.dtd:print.printpassage.sc                              =??main-window.menu-file.print_passage.ak
 xulsword/xulsword.dtd:printPassageCmd.commandkey                         =??main-window.menu-file.print_passage.ck
 xulsword/xulsword.dtd:menu.removeModule.label                            =  main-window.menu-file.remove_modules

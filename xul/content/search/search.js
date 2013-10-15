@@ -858,7 +858,7 @@ function commandHandler(e) {
     
   case "helpButton":
   case "searchHelp":
-    SearchHelpWindow = window.open("chrome://xulsword/content/search/searchHelp.xul", "searchHelp", "chrome,resizable");
+    SearchHelpWindow = openWindowXS("chrome://xulsword/content/search/searchHelp.xul", "searchHelp", "chrome,resizable", "searchHelp");
     break;
   }
   
