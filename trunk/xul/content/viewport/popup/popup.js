@@ -229,7 +229,7 @@ function PopupObj(popupobj) {
 //jsdump("popup html=" + html);
   
     // Windowed popup...
-    if (window.name == "npopup") {
+    if ((/\.windowedPopup$/).test(window.name)) {
       this.setTitle();
       return true;
     }
@@ -266,7 +266,7 @@ function PopupObj(popupobj) {
   };
   
   this.setTitle = function() {
-    if (window.name != "npopup") return; // only windowed popups need titles
+    if (!(/\.windowedPopup$/).test(window.name)) return; // only windowed popups need titles
     var title = "";
     
     var pt = this.npopupTX.getElementsByClassName("popup-text");
@@ -326,7 +326,7 @@ function PopupObj(popupobj) {
   this.close = function() {
   
     // If we're a windowed popup, just close the window
-    if (window.name == "npopup") {
+    if ((/\.windowedPopup$/).test(window.name)) {
       closeWindowXS(window.frameElement.ownerDocument.defaultView);
       return;
     }
@@ -383,7 +383,7 @@ function PopupObj(popupobj) {
     p += ",top=" + Number(wintop.screenY + Y);
     p += ",width=" + this.npopupBOX.offsetWidth;
     p += ",height=" + this.npopupBOX.offsetHeight;
-    wintop.open("chrome://xulsword/content/viewport/popup/popup.xul", "popup" + String(Math.random()), p);
+    openWindowXS("chrome://xulsword/content/viewport/popup/popup.xul", "popup", p, null, wintop);
 
   };
 

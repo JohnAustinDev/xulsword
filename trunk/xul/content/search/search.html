@@ -31,6 +31,7 @@
     var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
     var MainWindow = watcher.getWindowByName("xulsword-window", window);
     var SearchMouse;
+    window.name = frameElement.ownerDocument.defaultView.name + ".search-frame";
   </script>
   
   <script src="chrome://xulsword/content/common/common0.js" type="text/javascript"></script>

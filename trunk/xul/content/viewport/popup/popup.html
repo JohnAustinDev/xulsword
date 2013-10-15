@@ -26,7 +26,10 @@
   <link rel="stylesheet" href="chrome://xulsword/skin/viewport/texts/texts-htm.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/viewport/popup/popup-htm.css" type="text/css">
   
-  <script>var MainWindow = (window.frameElement.ownerDocument.defaultView.MainWindow);</script>
+  <script>
+		var MainWindow = (frameElement.ownerDocument.defaultView.MainWindow);
+		window.name = frameElement.ownerDocument.defaultView.name + ".windowedPopup";
+	</script>
   <script src="chrome://xulsword/content/common/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common/common1.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/viewport/viewportMouse.js" type="text/javascript"></script>

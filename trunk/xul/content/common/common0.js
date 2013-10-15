@@ -1081,6 +1081,24 @@ function isProgramPortable() {
 }
 IsPortable = isProgramPortable();
 
+function openWindowXS(url, name, args, windowtype, parentWindow) {
+	if (!parentWindow) parentWindow = window;
+	
+	var existingWin = null;
+	if (windowtype) {
+		existingWin = Components.classes['@mozilla.org/appshell/window-mediator;1'].
+		getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow(windowtype);
+	}
+	else name += "-" + Math.round(10000*Math.random());
+	
+	if (existingWin) {
+		existingWin.focus();
+		return existingWin;
+	}
+	
+	return window.open(url, name, args);
+}
+
 function closeWindowXS(aWindow) {
 	if (typeof(AllWindows) == "object" && 
 			AllWindows instanceof Array && 

@@ -25,6 +25,7 @@
 
 <window 
     id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"
+    windowtype="about"
     title="&menu.help.about;"
     onload="initCSS(); loaded();"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">

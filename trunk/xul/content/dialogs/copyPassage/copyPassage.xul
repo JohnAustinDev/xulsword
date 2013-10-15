@@ -29,6 +29,7 @@
   id="copyPassage"
   onload="onLoad();"
   title="&menu.copypassage;"
+  windowtype="copyPassage" 
   persist="screenX screenY"
   screenX="24" screenY="24">
 

@@ -29,6 +29,7 @@
   id="removeModule"
   onload="onLoad();"
   title="&menu.removeModule.label;"
+  windowtype="removeModule"
   persist="screenX screenY width height"
   screenX="24" screenY="24">
 

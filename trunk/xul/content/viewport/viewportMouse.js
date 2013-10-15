@@ -321,7 +321,7 @@ function scriptClick(e) {
     p += ",top=" + Number(wintop.screenY + Y);
     p += ",width=" + t.offsetWidth;
     p += ",height=" + (t.offsetHeight + chromeH);
-    wintop.open("chrome://xulsword/content/viewport/viewport.xul", "viewport" + String(Math.random()), p);
+    openWindowXS("chrome://xulsword/content/viewport/viewport.xul", "viewport", p, null, wintop);
     break;
 
   case "prevchaplink":

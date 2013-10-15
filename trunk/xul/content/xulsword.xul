@@ -62,6 +62,7 @@
 
 <window
     id="xulsword-window" xmlns:html="http://www.w3.org/1999/xhtml"
+    windowtype="xulsword-window"
     width="1024" height="738"
     persist="width height sizemode"
     onload="loadedXUL()"
