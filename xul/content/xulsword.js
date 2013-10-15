@@ -1000,7 +1000,7 @@ var XulswordController = {
     case "cmd_xs_nextBook":
       return (findBookNum(target.bk) < Book.length-1);
     case "cmd_xs_previousBook":
-      return (findBookNum(target.mod) > 1);
+      return (findBookNum(target.bk) > 1);
     }
     
     return true;
@@ -1523,6 +1523,12 @@ function ensureModuleShowing(version) {
 
 function unloadXUL() {
   
+  // set these so xulsword viewport can draw cleaner and faster upon next startup
+  if (ViewPort.ownerDocument.defaultView && ViewPort.ownerDocument.defaultView.innerHeight) {
+    prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
+    prefs.setIntPref("ViewPortWidth", ViewPort.ownerDocument.defaultView.innerWidth);
+  }
+  
   ViewPort.unload();
   
   // remove the exception reporter
@@ -1556,12 +1562,6 @@ function unloadXUL() {
   for (var cmd in GlobalToggleCommands) {
     if (GlobalToggleCommands[cmd] == "User Notes") continue;
     prefs.setCharPref(GlobalToggleCommands[cmd], LibSword.getGlobalOption(GlobalToggleCommands[cmd]));
-  }
-
-  // set these so xulsword viewport can draw cleaner and faster upon next startup
-  if (ViewPort.ownerDocument.defaultView.innerHeight) {
-    prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
-    prefs.setIntPref("ViewPortWidth", ViewPort.ownerDocument.defaultView.innerWidth);
   }
 
   History.save();

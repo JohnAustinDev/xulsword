@@ -234,6 +234,7 @@ a .nohead {
 }
 .heading-link:hover {
   text-decoration:underline;
+  color:blue;
   cursor:pointer;
 }
 .bookname:hover .chaptermenu[headingmenu="show"] .headingmenu {

@@ -76,7 +76,7 @@ function initModules() {
 
   // Gets list of available modules
   var modules = LibSword.getModuleList();
-  if (!modules) return false;
+  if (!modules || modules == "No Modules") return false;
   modules = modules.split("<nx>");
 //jsdump(modules);
   
