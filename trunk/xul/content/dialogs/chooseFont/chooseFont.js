@@ -21,8 +21,9 @@ chooseFont = {
 	
 	modName: null,
 	modInitial: null,
+	newSelections: {},
 	
-	loaded: function() {
+	init: function() {
 		initCSS();
 		
 		if (CommandTarget.mod) document.getElementById("chooseMod").version = CommandTarget.mod;
@@ -37,6 +38,10 @@ chooseFont = {
 	},
 	
 	setSelections: function() {
+		if (!this.newSelections.hasOwnProperty(this.modName)) {
+			this.newSelections[this.modName] = {};
+		}
+		
 		this.modInitial = {};
 		for (var i=0; i<this.toUpdate.length; i++) {
 			this.modInitial[this.toUpdate[i]] = ModuleConfigs[this.modName][this.toUpdate[i]];
@@ -74,7 +79,7 @@ chooseFont = {
 	},
 	
 	update: function(e) {
-		if (!this.modName) return;
+		if (!this.modName) return; // update could be called before init?
 		
 		var dl = "";
 		var val;
@@ -95,6 +100,8 @@ chooseFont = {
 
 		ModuleConfigs[this.modName][e.target.id] = dl + val + dl;
 		this.updatePreview();
+		
+		this.newSelections[this.modName][e.target.id] = ModuleConfigs[this.modName][e.target.id];
 	},
 	
 	updatePreview: function() {
@@ -106,73 +113,99 @@ chooseFont = {
 		window.opener.ViewPort.ownerDocument.defaultView.initCSS();
 	},
 	
-	resetModuleConfigsAndUpdatePreview: function() {
+	resetModuleConfigs: function() {
+		// resets all global ModuleConfigs from current user prefs
+		MainWindow.ModuleConfigDefault = getModuleConfig("LTR_DEFAULT");
 		for (var i=0; i<Tabs.length; i++) {
 			ModuleConfigs[Tabs[i].modName] = getModuleConfig(Tabs[i].modName);
 		}
-		
-		window.opener.ViewPort.ownerDocument.defaultView.initCSS();
 	},
 	
+	closed: false,
+	
 	exit: function(button) {
-		if (button == "ok") {
-			if (document.getElementById("restoreAllDefaults").checked) {
-				var result = {};
-				var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
-						fixWindowTitle(getDataUI("restoreAllDefaults.label")),
-						getDataUI("deleteconfirm.title"), 
-						DLGQUEST,
-						DLGYESNO);
-				if (!result.ok) {
-					document.getElementById("restoreAllDefaults").checked = false;
-					return;
-				}
-			}
-			if (!document.getElementById("restoreDefault").checked && !document.getElementById("restoreAllDefaults").checked) {
-				// save user choices permanently in user prefs
-				var targ = (document.getElementById("makeDefault").checked ? "default":this.modName);
-				for (var i=0; i<this.toUpdate.length; i++) {
-					if (ModuleConfigs[this.modName][this.toUpdate[i]]) {
-						prefs.setCharPref("user." + this.toUpdate[i] + "." + targ, ModuleConfigs[this.modName][this.toUpdate[i]]);
-						if (targ == "default") prefs.clearUserPref("user." + this.toUpdate[i] + "." + this.modName);
-					}
-				}
-			}
-			else {
-				// restore defaults if requested
-				for (var j=0; j<this.toUpdate.length; j++) {
-					if (document.getElementById("restoreAllDefaults").checked) {
-						prefs.clearUserPref("user." + this.toUpdate[j] + ".default");
-						for (var i=0; i<Tabs.length; i++) {
-							prefs.clearUserPref("user." + this.toUpdate[j] + "." + Tabs[i].modName);
-						}
-					}
-					else prefs.clearUserPref("user." + this.toUpdate[j] + "." + this.modName);
-				}
+		if (this.closed) return;
+		
+		if (button == "ok" && document.getElementById("restoreAllDefaults").checked) {
+			var result = {};
+			var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
+					fixWindowTitle(getDataUI("restoreAllDefaults.label")),
+					getDataUI("deleteconfirm.title"), 
+					DLGQUEST,
+					DLGYESNO);
+			if (!result.ok) {
+				document.getElementById("restoreAllDefaults").checked = false;
+				return;
 			}
 		}
 		
-		this.resetModuleConfigsAndUpdatePreview();
+		this.resetModuleConfigs();
 		
 		if (button == "ok") {
-			// update all windows' CSS with ModuleConfigs
-			for (var i=0; i<AllWindows.length; i++) {
-				if (!AllWindows[i] || AllWindows[i] === window) continue;
-				if (AllWindows[i].initCSS) AllWindows[i].initCSS();
-				if (AllWindows[i].ViewPort) {
-					try {AllWindows[i].ViewPort.ownerDocument.defaultView.initCSS();}
-					catch (er) {}
+
+			for (var mod in this.newSelections) {
+				for (var i=0; i<this.toUpdate.length; i++) {
+					if (!this.newSelections[mod].hasOwnProperty(this.toUpdate[i]) || 
+							this.newSelections[mod][this.toUpdate[i]] == ModuleConfigs[this.modName][this.toUpdate[i]]) {
+						continue;
+					}
+					prefs.setCharPref("user." + this.toUpdate[i] + "." + mod, this.newSelections[mod][this.toUpdate[i]]);
 				}
+			}
+
+			if (document.getElementById("makeDefault").checked) {
+				for (var i=0; i<this.toUpdate.length; i++) {
+					var val = this.modInitial[this.toUpdate[i]];
+					if (this.newSelections[this.modName].hasOwnProperty(this.toUpdate[i])) {
+						val = this.newSelections[this.modName][this.toUpdate[i]];
+					}
+					prefs.setCharPref("user." + this.toUpdate[i] + ".default", val);
+					prefs.clearUserPref("user." + this.toUpdate[i] + "." + this.modName);
+				}
+			}
+			
+			if (document.getElementById("restoreDefault").checked) {
+				for (var i=0; i<this.toUpdate.length; i++) {
+					prefs.clearUserPref("user." + this.toUpdate[i] + "." + this.modName);
+				}
+			}
+			
+			if (document.getElementById("restoreAllDefaults").checked) {
+				for (var i=0; i<this.toUpdate.length; i++) {
+					prefs.clearUserPref("user." + this.toUpdate[i] + ".default");
+					for (var j=0; j<Tabs.length; j++) {
+						prefs.clearUserPref("user." + this.toUpdate[i] + "." + Tabs[j].modName);
+					}
+				}
+			}
+			
+			this.resetModuleConfigs(); // applies updated pref settings to ModuleConfigs
+		}
+		
+		if (window.opener && window.opener.ViewPort)
+				window.opener.ViewPort.ownerDocument.defaultView.initCSS();
+		
+		if (button == "ok") {
+			for (var i=0; i<AllWindows.length; i++) {
+				if (AllWindows[i] == window) continue;
+				try {
+					AllWindows[i].initCSS();
+					AllWindows[i].ViewPort.ownerDocument.defaultView.initCSS();
+				}
+				catch (er) {}
 			}
 		}
 
+		this.closed = true;
 		closeWindowXS(window);
 	}
 	
 };
 
 function onRefUserUpdate(e, location, version) {
-	chooseFont.resetModuleConfigsAndUpdatePreview();
+	//chooseFont.resetModuleConfigs(); // allow multiple mod changes?
+	//chooserFont.newSelections = {};
+	//window.opener.ViewPort.ownerDocument.defaultView.initCSS();
 	chooseFont.modName = version;
 	chooseFont.setSelections();
 }

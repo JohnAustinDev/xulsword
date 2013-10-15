@@ -869,7 +869,7 @@ var XulswordController = {
       window.open("chrome://xulsword/content/dialogs/about/about.xul","splash","chrome,modal,centerscreen");
       break;
     case "cmd_xs_chooseFont":
-			CommandTarget.window.open("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,modal,centerscreen");
+			CommandTarget.window.open("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,centerscreen");
 			break;
     case "cmd_xs_addLocalModule":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
