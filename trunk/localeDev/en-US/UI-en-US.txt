@@ -196,10 +196,9 @@
 [main-window.context-menu.open_selected_reference]: Open Selected Reference
 [main-window.context-menu.search]: Search
 [main-window.context-menu.select_verses]: Select Verse(s)
-[main-window.context-menu.choose_font]: Font
 [choose-font-dialog.chooseModule_label]: Module
 [choose-font-dialog.fontsAndColors_label]: Fonts &amp; Colors
-[choose-font-dialog.defaultSize_label]: Size
+[choose-font-dialog.textSize_label]: Size
 [choose-font-dialog.textColor_label]: Color
 [choose-font-dialog.backgroundColor_label]: Background
 [choose-font-dialog.lineHeight_label]: Line height
