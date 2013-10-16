@@ -1,4 +1,4 @@
-# MIN_XULSWORD_VERSION:3.6, MAX_XULSWORD_VERSION:3.50
+# MIN_XULSWORD_VERSION:3.7, MAX_XULSWORD_VERSION:3.50
 # 
 # A "*" in a file-entry and/or description is wildcard.
 # ?? description prefix means file-entry and value are optional.
@@ -312,6 +312,8 @@ xulsword/xulsword.dtd:menu.view.window2                                  =  main
 xulsword/xulsword.dtd:menu.view.window3                                  =  main-window.menu-view.window3
 xulsword/xulsword.dtd:menu.options                                       =  main-window.menu-options
 xulsword/xulsword.dtd:menu.options.font                                  =  main-window.menu-options.font
+xulsword/common/common.dtd:xs_chooseFont                                 =  main-window.menu-options.font
+xulsword/dialogs/chooseFont/chooseFont.dtd:xs_chooseFont                 =  main-window.menu-options.font
 xulsword/xulsword.dtd:menu.options.font.sc                               =??main-window.menu-options.font.ak
 xulsword/xulsword.dtd:menu.options.font1                                 =  main-window.menu-options.font.size1
 xulsword/xulsword.dtd:menu.options.font2                                 =  main-window.menu-options.font.size2
@@ -406,8 +408,6 @@ xulsword/bookmarks/bookmarks.dtd:closeCmd.commandkey                     =??book
 xulsword/search/search.dtd:closeCmd.commandkey                           =??bookmark-window.menu-file.close.ck
 xulsword/bookmarks/bookmarks.dtd:closeCmd.accesskey                      =??main-window.context-menu.close_tab.ak
 xulsword/search/search.dtd:closeCmd.accesskey                            =??main-window.context-menu.close_tab.ak
-xulsword/common/common.dtd:xs_chooseFont                                 =  main-window.context-menu.choose_font
-xulsword/dialogs/chooseFont/chooseFont.dtd:xs_chooseFont                 =  main-window.context-menu.choose_font
 xulsword/common/common.dtd:bm_delete                                     =  main-window.context-menu.delete_user_note
 xulsword/common/common.dtd:xs_openFromSelection                          =  main-window.context-menu.open_selected_reference
 xulsword/xulsword.properties:Search                                      =  main-window.context-menu.search
@@ -590,16 +590,6 @@ xulsword/search/search-help.properties:searchTable_7_3                   =  sear
 xulsword/search/search-help.properties:searchTable_8_1                   =  search-help-window.quotes_example
 xulsword/search/search-help.properties:searchTable_8_2                   =  search-help-window.quotes_description
 xulsword/search/search-help.properties:searchTable_8_3                   =??search-help-window.quotes_notes
-xulsword/dialogs/chooseFont/chooseFont.dtd:fontsAndColors.label          =  choose-font-dialog.fontsAndColors_label
-xulsword/xulsword.dtd:fontsAndColors.label                               =  choose-font-dialog.fontsAndColors_label
-xulsword/dialogs/chooseFont/chooseFont.dtd:chooseModule.label            =  choose-font-dialog.chooseModule_label
-xulsword/dialogs/chooseFont/chooseFont.dtd:defaultSize.label             =  choose-font-dialog.defaultSize_label
-xulsword/dialogs/chooseFont/chooseFont.dtd:textColor.label               =  choose-font-dialog.textColor_label
-xulsword/dialogs/chooseFont/chooseFont.dtd:backgroundColor.label         =  choose-font-dialog.backgroundColor_label
-xulsword/dialogs/chooseFont/chooseFont.dtd:makeDefault.label             =  choose-font-dialog.makeDefault_label
-xulsword/dialogs/chooseFont/chooseFont.dtd:restoreDefault.label          =  choose-font-dialog.restoreDefault_label
-xulsword/dialogs/chooseFont/chooseFont.dtd:restoreAllDefaults.label      =  choose-font-dialog.restoreAllDefaults_label
-xulsword/dialogs/chooseFont/chooseFont.dtd:lineHeight.label              =  choose-font-dialog.lineHeight_label
 xulsword/dialogs/dialog/dialog.dtd:dialog.Cancel                         =  dialog-window.cancel
 xulsword/dialogs/removeModule/removeModule.dtd:cancelButton.label        =  dialog-window.cancel
 xulsword/dialogs/copyPassage/copyPassage.dtd:cancelButton.label          =  dialog-window.cancel
@@ -640,6 +630,18 @@ xulsword/search/search.properties:GROUPSTART                             =??sear
 xulsword/search/search.properties:GROUPEND                               =??search-window.search_symbols.GROUP_END
 xulsword/search/search.properties:QUOTESTART                             =??search-window.search_symbols.QUOTE_START
 xulsword/search/search.properties:QUOTEEND                               =??search-window.search_symbols.QUOTE_END
+
+# New chooseFont UI (xulsword 3.7+)
+xulsword/xulsword.dtd:fontsAndColors.label                               =  choose-font-dialog.fontsAndColors_label
+xulsword/dialogs/chooseFont/chooseFont.dtd:fontsAndColors.label          =  choose-font-dialog.fontsAndColors_label
+xulsword/dialogs/chooseFont/chooseFont.dtd:chooseModule.label            =  choose-font-dialog.chooseModule_label
+xulsword/dialogs/chooseFont/chooseFont.dtd:textSize.label                =  choose-font-dialog.textSize_label
+xulsword/dialogs/chooseFont/chooseFont.dtd:lineHeight.label              =  choose-font-dialog.lineHeight_label
+xulsword/dialogs/chooseFont/chooseFont.dtd:textColor.label               =  choose-font-dialog.textColor_label
+xulsword/dialogs/chooseFont/chooseFont.dtd:backgroundColor.label         =  choose-font-dialog.backgroundColor_label
+xulsword/dialogs/chooseFont/chooseFont.dtd:makeDefault.label             =  choose-font-dialog.makeDefault_label
+xulsword/dialogs/chooseFont/chooseFont.dtd:restoreDefault.label          =  choose-font-dialog.restoreDefault_label
+xulsword/dialogs/chooseFont/chooseFont.dtd:restoreAllDefaults.label      =  choose-font-dialog.restoreAllDefaults_label
 
 # New addRepositoryModule UI (xulsword 3.6+)
 xulsword/dialogs/addRepositoryModule/addRepositoryModule.properties:arm.error                 = add-repository-module.error

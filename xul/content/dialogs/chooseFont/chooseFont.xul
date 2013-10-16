@@ -73,7 +73,7 @@
 						<menulist id="fontFamily" sizetopopup="true" onselect="chooseFont.update(event);" flex="1"/>
 					</hbox>
 					<hbox align="center">
-						<label control="fontSize">&defaultSize.label;:</label>
+						<label control="fontSize">&textSize.label;:</label>
 						<spacer flex="1"/>
 						<menulist id="fontSize" onselect="chooseFont.update(event);">
 							<menupopup>
