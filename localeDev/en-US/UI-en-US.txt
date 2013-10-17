@@ -196,15 +196,6 @@
 [main-window.context-menu.open_selected_reference]: Open Selected Reference
 [main-window.context-menu.search]: Search
 [main-window.context-menu.select_verses]: Select Verse(s)
-[choose-font-dialog.chooseModule_label]: Module
-[choose-font-dialog.fontsAndColors_label]: Fonts &amp; Colors
-[choose-font-dialog.textSize_label]: Size
-[choose-font-dialog.textColor_label]: Color
-[choose-font-dialog.backgroundColor_label]: Background
-[choose-font-dialog.lineHeight_label]: Line height
-[choose-font-dialog.makeDefault_label]: Set as default
-[choose-font-dialog.restoreDefault_label]: Restore module defaults
-[choose-font-dialog.restoreAllDefaults_label]: Restore all defaults
 [main-window.audio-player.quicktime_install_needed]: To listen to audio content, a QuickTime plugin must be installed.
 [main-window.audio-player.quicktime_upgrade_needed]: Please update your QuickTime installation.
 [main-window.audio-player.quicktime_want_to_install_prompt]: To listen to audio content, a QuickTime plugin must be installed.\n\nWould you like to install the "QT Lite" plugin now?\n
@@ -346,6 +337,15 @@
 [bookmark-window.example_subFolder_1]: Knowing God
 [bookmark-window.example_subFolder_2]: Born Again
 [bookmark-window.example_description]: You can put your own notes in the text.
+[choose-font-dialog.chooseModule_label]: Module
+[choose-font-dialog.fontsAndColors_label]: Fonts &amp; Colors
+[choose-font-dialog.textSize_label]: Size
+[choose-font-dialog.textColor_label]: Color
+[choose-font-dialog.backgroundColor_label]: Background
+[choose-font-dialog.lineHeight_label]: Line height
+[choose-font-dialog.makeDefault_label]: Set as default
+[choose-font-dialog.restoreDefault_label]: Restore module defaults
+[choose-font-dialog.restoreAllDefaults_label]: Restore all defaults
 
 # locale_direction must be either "ltr" for left-to-right scripts, or "rtl" for right-to-left scripts
 [locale_direction]: ltr
