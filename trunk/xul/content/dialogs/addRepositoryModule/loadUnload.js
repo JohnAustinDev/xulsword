@@ -739,6 +739,7 @@ function applyConfFile(file, repoUrl) {
     ARMU.deleteResource(newModRes)
     return;
   }
+  if (OPSYS == "Linux" && (/^http\:\/\/.*audio\.htm\?/).test(dataPath)) dataPath += "&ogg=1"; 
   var moduleUrl;
   if ((/^(\.|\/)/).test(dataPath)) {
     dataPath = dataPath.replace(/^\.*\//, "");

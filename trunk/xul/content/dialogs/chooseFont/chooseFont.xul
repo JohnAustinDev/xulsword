@@ -59,6 +59,7 @@
 		<hbox id="chooseModBox" flex="1" align="center">
 			<label control="chooseMod">&chooseModule.label;:</label>
 			<reference-dropdown id="chooseMod" hidebook="true" hidechapter="true" hideverse="true" hidelastverse="true"/>
+			<checkbox id="restoreDefault" label="&restoreDefault.label;" checked="false"/>
 		</hbox>
 		
 		<grid id="fontsGrid">
@@ -137,7 +138,6 @@
 					<checkbox id="makeDefault" label="&makeDefault.label;" checked="false"/>
 				</row>
 				<row>
-					<checkbox id="restoreDefault" label="&restoreDefault.label;" checked="false"/>
 					<checkbox id="restoreAllDefaults" label="&restoreAllDefaults.label;" checked="false"/>
 				</row>
 			</rows>

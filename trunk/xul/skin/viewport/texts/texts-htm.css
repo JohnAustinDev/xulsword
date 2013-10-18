@@ -81,6 +81,8 @@
   background:url('chrome://xulsword/skin/images/listen0.png');
   width:45px;
   height:37px;
+  position:relative;
+  top:-0.8em;
 }
 .listenlink[hasAudio="true"] {
 	visibility:visible;
