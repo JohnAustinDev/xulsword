@@ -529,7 +529,7 @@ function findAVerseText(version, location, windowNum, keepTextNotes) {
   //Passed version does not yield verse text. So now look at tabs...
   var book = location.match(/^\W*(\w+)/)[1];
   for (var v=0; v<Tabs.length; v++) {
-    if (Tab.ORIG_NT && Tabs[v].modName == Tab.ORIG_NT.modName || Tab.ORIG_OT && Tabs[v].modName == Tab.ORIG_NT.modName) continue;
+    if (Tab.ORIG_NT && Tabs[v].modName == Tab.ORIG_NT.modName || Tab.ORIG_OT && Tabs[v].modName == Tab.ORIG_OT.modName) continue;
     if (Tabs[v].modType!=BIBLE) continue;
     var abooks = getAvailableBooks(Tabs[v].modName);
     for (var ab=0; ab<abooks.length; ab++) {if (abooks[ab]==book) break;}
