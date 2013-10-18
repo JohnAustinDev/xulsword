@@ -11,11 +11,8 @@
 #player {
 	-moz-padding-start:6px;
 }
-#book {
-	width:296px;
-}
 #chapter {
-  -moz-margin-start:-3px;
+  -moz-margin-start:-20px;
 }
 
 #search-tool {
