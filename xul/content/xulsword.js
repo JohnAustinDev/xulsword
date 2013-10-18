@@ -975,7 +975,7 @@ var XulswordController = {
           var subs = AudioDirs[i].dir.directoryEntries;
           while (subs && subs.hasMoreElements()) {
             var sub = subs.getNext().QueryInterface(Components.interfaces.nsILocalFile);
-            if (!sub || !sub.isDirectory() || sub.equals(getSpecialDirectory("xsAudioPI"))) continue;
+            if (!sub || !sub.isDirectory()) continue;
             return true;
           }
         }

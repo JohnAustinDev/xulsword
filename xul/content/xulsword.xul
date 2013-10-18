@@ -473,8 +473,8 @@
         <button id="forward" tooltip="forwardTT" label="&history.forward.label;  " command="cmd_xs_forward" dir="reverse" flex="40%"/>
       </hbox>
       
-      <hbox id="player" flex="1" align="center" pack="end" hidden="true">
-        <iframe id="playerFrame" src="chrome://xulsword/content/audio/player.html"/>
+      <hbox id="player" flex="1" align="center" pack="start" hidden="true">
+        <audio xmlns="http://www.w3.org/1999/xhtml" controls="true" onended="emptyAudioPlayer();"/>
         <button id="closeplayer" label="&closeCmd.label;" oncommand="endAudioPlayer()"/>
       </hbox>
       

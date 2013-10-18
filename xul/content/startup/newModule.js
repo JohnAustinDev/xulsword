@@ -18,7 +18,7 @@
 
 const SEP = ",";
 const TIMEOUT = 25;
-const AUDEXT = ["mp3", "wav", "aif"];
+const AUDEXT = (OPSYS == "Windows" ? ["mp3", "ogg"]:["ogg", "mp3"]);
 const XSMODEXT = ["zip", "xsm"];
 const XSBMEXT = ["txt", "xsb"];
 const XSVIDEXT = ["wmv", "mov", "mpeg", "mpg", "avi"];
@@ -176,7 +176,6 @@ var ExitFunction;
 var NewLocales;
 var NewModules;
 var NewFonts;
-var NewPlugin;
 var PreMainWin;
 var SkipList;
 var CommonList;
@@ -703,10 +702,6 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     inflated.initWithPath(lpath(getSpecialDirectory("xsExtension").path + "/" + entryFileName));
     NewLocales = pushIf(NewLocales, localeName);
     break;
-    
-  case AUDIOPLUGIN:
-    inflated.initWithPath(lpath(getSpecialDirectory("xsAudioPI").path + "/" + entryFileName));
-    break;
 
   case FONTS:
     inflated.initWithPath(lpath(getSpecialDirectory("xsFonts").path + "/" + entryFileName));
@@ -783,15 +778,6 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     GotoVideoFile = inflated;
     break;
     
-  case AUDIOPLUGIN:
-    for (var f=0; f<QTIMEINS.length; f++) {
-      var inst = new RegExp("^" + escapeRE(QTIMEINS[f]) + "$");
-      if (inflated.leafName.search(inst)!=-1) {
-        NewPlugin = inflated;
-      }
-    }
-    break;
-    
   case BOOKMARKS:
     // this doesn't access the LibSword object in this case.
     var ret = installBookmarkFile(inflated);
@@ -833,10 +819,6 @@ function finish(isFinalPass) {
   if (typeof(LibSword) != "undefined" && !LibSword.loadFailed && LibSword.paused) LibSword.resume();
   if (ProgressMeterLoaded && typeof(ProgressMeter) != "undefined" && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
   if (typeof(ProgressMeter) != "undefined") window.setTimeout("closeWindowXS(ProgressMeter);", 100);
-  if (NewPlugin) {
-    window.setTimeout("checkQuickTime();", 1000);
-    NewPlugin = false;
-  }
   if (GotoAudioFile) audioDirPref(AudioDestination);
   if (!isFinalPass && ResetNeeded>NORESET) saveArraysToPrefs();
 

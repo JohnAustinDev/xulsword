@@ -19,10 +19,8 @@
 /************************************************************************
  * Audio driver functions
  ***********************************************************************/ 
-const QTIMEINS = ["qtlite270.exe", "qtalt.exe"];
-const PLUGINLINKS = ["http://www.ibt.org.ru/ru/pc.htm", "http://www.apple.com/quicktime/download/"];
+
 var Player = {};
-Player.volume = 128;
 // The first audio dir is the user profile's audio dir.
 // For Backward Compatibility, if there is audio in the Program Files install dir, add it.
 // Add any dirs registered in prefs as having audio files
@@ -145,150 +143,47 @@ function getAudioRelatedFile(dirName, fileName) {
 function beginAudioPlayer() {
 	jsdump("beginAudioPlayer:" + MainWindow.Player.version + ", " + MainWindow.Player.chapter + " " + MainWindow.Player.book);
   document.getElementById("historyButtons").hidden = true;
+  
+  var quit = false;
+  if (!Player || !Player.version || !Player.book || !Player.chapter) {
+    endAudioPlayer(); 
+    return;
+  }
+  
+  var audiofile = getAudioForChapter(Player.version, Player.book, Player.chapter);
+  
+  if (!audiofile) {
+    endAudioPlayer(); 
+    return;
+  }
+  
+  jsdump("Have audio:" + audiofile.path + "\n");
+  
+  var audio = document.getElementById("player").getElementsByTagName("audio")[0];
+  audio.src = "file://" + audiofile.path;
+  audio.play();
   document.getElementById("player").hidden = false;
-  document.getElementById("playerFrame").contentDocument.defaultView.location.reload();
+}
+
+function emptyAudioPlayer() {
+	 if (Player.isPinned) {
+    endAudioPlayer()
+    return;
+  }
+ 
+  goDoCommand('cmd_xs_nextChapter');
+  Player.book = Location.getBookName();
+  Player.chapter = Location.getChapterNumber(MainWindow.Player.version);
+  
+  beginAudioPlayer();
 }
 
 function endAudioPlayer() {
   jsdump("CLosing Player\n");
-  document.getElementById("playerFrame").contentDocument.getElementById("playerDiv").innerHTML = "";
+  var audio = document.getElementById("player").getElementsByTagName("audio")[0];
   document.getElementById("historyButtons").hidden = false;
   document.getElementById("player").hidden = true;
-}
-
-// Checks QuickTime installation and version:
-// If not installed, a message is given, and then QT may be installed if available (non-blocking,
-// with option to start player once finished). False is returned.
-// If version is too old, a message is given, and then false is returned.
-// If everything is good, true is returned with no message.
-var AlreadyPrompted;
-function checkQuickTime() {
-  var haveQT = isQTInstalled();
-  var haveOKQT = isQTVersionOK();
-  
-  if (haveQT && haveOKQT) return true;
-  if (!haveQT) {
-    jsdump("QuickTime not installed\n");
-    for (var f=QTIMEINS.length-1; f>=0; f--) {
-      var installer = getAudioRelatedFile(AUDIOPLUGIN, QTIMEINS[f]);
-      if (installer) break;
-    }
-    if (!installer) {
-      try {var msg = XSBundle.getString("MustInstallQuickTime") + "\n\n";}
-      catch (er) {msg = XSBundle.getString("Want2InstallQuickTime") + "\n\n";} //BACKWARD COMPATIBILITY
-      for (var k=0; k<PLUGINLINKS.length; k++) {msg += PLUGINLINKS[k] + "\n";}
-      msg += "\n";
-      var result = {};
-      var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result,
-          fixWindowTitle(XSBundle.getString("Title")),
-          msg,
-          DLGINFO,
-          DLGOK);
-    }
-    else installQT(installer);
-
-    return false;
-  }
-  
-  if (haveQT && !haveOKQT && !AlreadyPrompted) {
-    try {var msg = XSBundle.getString("QuickTimeUpdateNeeded2");}
-    catch (er) {msg = XSBundle.getString("QuickTimeUpdateNeeded");} //BACKWARD COMPATIBILITY
-    var result = {};
-    var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result,
-        fixWindowTitle(XSBundle.getString("Title")),
-        msg,
-        DLGINFO,
-        DLGOK);
-    AlreadyPrompted = true;
-  }
-  
-  return false;
-}
-
-// Returns value of key if plugin is installed, null otherwise
-function isQTInstalled() {
-  var retval=null;
-  if (typeof Components.classes["@mozilla.org/windows-registry-key;1"] == "undefined") return null;
-  try {
-    var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
-    wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\Apple Computer, Inc.\\QuickTime",wrk.ACCESS_READ);
-    var retval = wrk.readStringValue("InstallDir");
-    wrk.close();
-  }
-  catch (er) {retval=null;}
-  return retval;
-}
-
-function isQTVersionOK() {
-  var retval=null;
-  if (typeof Components.classes["@mozilla.org/windows-registry-key;1"] == "undefined") return false;
-  try {
-    var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
-    wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,"SOFTWARE\\Apple Computer, Inc.\\QuickTime",wrk.ACCESS_READ);
-    var retval = wrk.readInt64Value("Version");
-    wrk.close();
-  }
-  catch (er) {retval=0;}
-  return (retval > 119603200); // which is 0x07210000, or version 7.2.1 - the first QT version supporting DOM events
-}
-
-// Tries to install QuickTime and returns true if the install was started, false otherwise...
-function installQT(installerFile) {
-	if (!installerFile || !installerFile.exists()) return false;
-	
-  var result = {};
-  var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
-      fixWindowTitle(XSBundle.getString("Title")),
-      XSBundle.getString("Want2InstallQuickTime"), 
-      DLGQUEST,
-      DLGYESNO);
-  if (!result.ok) return false;
-  
-  quietQTInstallWin(installerFile);
-  return true;
-}
-
-function quietQTInstallWin(aInstaller) {
-  jsdump("Installing plugin file \"" + aInstaller.leafName + "\":");
-  var iniPath = aInstaller.path.replace(/\.exe$/i, ".ini");
-  
-  // IMPORTANT: nsIProcess can only use the program's run directory for the new process's run directory, but
-  // QT install requires that it be started from its own directory in order to successfully locate its .ini
-  // (passing the full path to .exe and/or .ini does NOT fix this limitation). This requires a script of some
-  // sort to CD into the QT installer directory and start the QT installer from there.
-  // BAT script cannot handle Unicode file names, so all file names must be ASCII and must be copied to TmpD.
-  var tmp = getSpecialDirectory("TmpD");
-  var ini = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-  ini.initWithPath(lpath(iniPath));
-  var tmpini = tmp.clone(); tmpini.append(ini.leafName);
-  if (tmpini.exists()) tmpini.remove(false);
-  ini.copyTo(tmp, ""); // copy .ini to TmpD
-  var tmpexe = tmp.clone(); tmpexe.append(aInstaller.leafName);
-  if (tmpexe.exists()) tmpexe.remove(false);
-  aInstaller.copyTo(tmp, ""); // copy .ini to TmpD
-  var installMon = tmp.clone();
-  installMon.append("xsQTinstallmon.txt");
-  if (installMon.exists()) installMon.remove(false);
-  var batdata = "@cd /D \"" + tmp.path + "\"\r\n";
-  batdata += "@echo Installing QuickTime Lite Plugin\r\n@echo.\r\n@echo Please wait...\r\n@\"" + tmpexe.leafName + "\" /verysilent /norestart /LoadInf=\"" + tmpini.leafName + "\"\r\n@echo Done!";
-  batdata += "\r\n@echo Done! > \"" + installMon.path + "\"";
-  launchTempScript(batdata, "bat");
-  
-  Player.installMon = installMon;
-  Player.installMonCnt = 0;
-  Player.installTmps = [tmpini, tmpexe];
-  Player.installMonInterval = window.setInterval("isQTInstallDone();", 500);
-}
-
-function isQTInstallDone() {
-  // wait max 5 minutes...
-  if (Player.installMonCnt++ > 600) window.clearInterval(Player.installMonInterval);
-  if (Player.installMon.exists()) {
-    Player.installMon.remove(false);
-    for (var i=0; i<Player.installTmps.length; i++) Player.installTmps[i].remove(false);
-    window.clearInterval(Player.installMonInterval)
-    window.setTimeout("restartApplication();", 500);
-  }
+  audio.pause();
 }
 
 /************************************************************************

@@ -81,6 +81,7 @@ function openTabToolTip(t, w, cX, cY) {
   if (desc.length==TOOLTIP_LEN) desc += "...";
   
   tt.firstChild.setAttribute("class", "cs-" + Tab[modName].locName);
+  tt.firstChild.setAttribute("style", "color:inherit;");
   tt.firstChild.setAttribute("value", desc);
   
   if (ShowTabToolTip) window.clearTimeout(ShowTabToolTip);

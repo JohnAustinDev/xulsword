@@ -4,29 +4,15 @@
 #main-controlbar {
   background-image: url(chrome://xulsword/skin/images/b2.gif);
 }
-#navigator-tool {
-  min-width:346px; /* specified to allow for player's width */
-}
-#historyButtons {
+#historyButtons, #player {
   margin-top:2px; 
-  min-height:34px; /* specified to allow for player's height */
+  height:34px; /* specified to allow for player's height */
 }
 #player {
-  margin-top:2px; 
-  min-height:32px; /* specified because player's actual height is large (for showing video) */
+	-moz-padding-start:6px;
 }
-#playerFrame {
-  width:218px;
-  height:34px;
-  overflow:hidden;
-}
-#closeplayer {
-  width:98px; 
-  -moz-margin-end:14px;
-}
-#textnav {
-  margin-left:8px;
-  margin-right:10px;
+#book {
+	width:296px;
 }
 #chapter {
   -moz-margin-start:-3px;

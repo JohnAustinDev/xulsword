@@ -122,7 +122,6 @@ function onLoad() {
     while (subs.hasMoreElements()) {
       var adir = subs.getNext().QueryInterface(Components.interfaces.nsILocalFile);
       if (!adir.isDirectory()) continue;
-      if (adir.leafName == AUDIOPLUGIN) continue;
       
       var cb = document.createElement("checkbox");
       cb.setAttribute("id", adir.leafName);

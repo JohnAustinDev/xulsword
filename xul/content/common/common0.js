@@ -88,7 +88,7 @@ const DLGOK=0, DLGOKCANCEL=1, DLGYESNO=2;
 const WESTERNVS = "KJV";
 const EASTERNVS = "Synodal";
 const TOOLTIP_LEN=96;
-const MODSD="mods.d", MODS="modules", LOCALE="locale", CHROME="chrome", FONTS="fonts", AUDIO="audio", AUDIOPLUGIN="QuickTime Plugin", BOOKMARKS="bookmarks", VIDEO="video";
+const MODSD="mods.d", MODS="modules", LOCALE="locale", CHROME="chrome", FONTS="fonts", AUDIO="audio", BOOKMARKS="bookmarks", VIDEO="video";
 const MANIFEST_EXT=".manifest", CONF_EXT=".conf", EXTENSION_EXT=".xpi";
 const PMSTD="centerscreen, dependent";
 const PMSPLASH="alwaysRaised,centerscreen";
@@ -450,7 +450,6 @@ function lpath(path) {
 // xsResD       = resource directory
 // xsFonts      = user fonts directory
 // xsAudio      = user audio directory
-// xsAudioPI    = user audio plugin directory
 // xsBookmarks  = user bookmarks directory
 // xsModsUser   = user SWORD module directory (contains mods.d & modules)
 // xsModsCommon = shared SWORD module directory (contains mods.d & modules)
@@ -478,10 +477,6 @@ function getSpecialDirectory(name) {
       break;
     case "xsAudio":
       retval.append(AUDIO);
-      break;
-    case "xsAudioPI":
-      retval.append(AUDIO);
-      retval.append(AUDIOPLUGIN);
       break;
     case "xsBookmarks":
       retval.append(BOOKMARKS);
@@ -568,7 +563,6 @@ function createAppDirectories() {
   checkdir = getSpecialDirectory("xsFonts");      if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
   checkdir = getSpecialDirectory("xsAudio");      if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
   checkdir = getSpecialDirectory("xsBookmarks");  if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
-  checkdir = getSpecialDirectory("xsAudioPI");    if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
   checkdir = getSpecialDirectory("xsVideo");      if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
   checkdir = getSpecialDirectory("xsLocale");     if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
 }
