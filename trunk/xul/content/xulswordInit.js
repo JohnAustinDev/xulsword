@@ -239,7 +239,10 @@ FindMod:
       description:LibSword.getModuleInformation(mod, "Description"), 
       locName:(isASCII(label) ? "LTR_DEFAULT":mod),
       conf:null, 
-      isCommDir:null
+      isCommDir:null,
+      audio: {}, // will be filled in later
+      audioCode:LibSword.getModuleInformation(mod, "AudioCode"),
+      lang:LibSword.getModuleInformation(mod, "Lang")
     };
     
     // find .conf file. Try usual guesses first, then do a rote search if necessary

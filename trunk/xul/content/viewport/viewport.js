@@ -598,6 +598,8 @@ function ViewPortObj(viewPortObj) {
 			// if the firstDisplayBible has changed, update the navigator
 			if ((w == fdb || fdb != this.firstDisplayBible(true)))
 					window.setTimeout(function() {ViewPort.disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));}, 200);
+					
+			MainWindow.updateBibleNavigatorAudio();
 		}
     
     // windowed ViewPorts only show a single text, so if this is a windowed 

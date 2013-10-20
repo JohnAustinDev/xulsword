@@ -288,7 +288,6 @@ function scriptClick(e) {
     break;
     
   case "listenlink":
-    MainWindow.Player.w = w;
     MainWindow.Player.version = p.mod;
     MainWindow.Player.chapter = p.ch;
     MainWindow.Player.book = p.bk;

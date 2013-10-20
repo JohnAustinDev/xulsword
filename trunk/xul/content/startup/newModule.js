@@ -853,8 +853,14 @@ function handleResetRequest() {
         MainWindow.setTimeout("document.getElementById('menu_BookmarksPopup').showPopup();", 500);
       }
       if (GotoAudioFile) {
+				refreshAudioCatalog();
+				updateBibleNavigatorAudio();
         var info = decodeAudioFileName(GotoAudioFile.path);
         var modsUsingAudio = getModsUsingAudioCode(info.basecode);
+				MainWindow.Player.version = modsUsingAudio[0];
+				MainWindow.Player.chapter = info.chapter;
+				MainWindow.Player.book = info.book;
+        window.setTimeout('MainWindow.beginAudioPlayer();', 1);
       }
       if (modsUsingAudio && modsUsingAudio[0]) {
         MainWindow.showLocation(modsUsingAudio[0], info.book, Number(info.chapter), 1, 1);
