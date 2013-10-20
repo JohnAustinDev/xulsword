@@ -82,62 +82,117 @@ function getAudioDirs() {
 //    3) If still not found, look for audio matching the module's base "Lang" attribute.
 //    4) If still not found, there is no audio...
 function getAudioForChapter(version, bookShortName, chapterNumber) {
-  var ret = getAudioFile(version, bookShortName, chapterNumber);
-  if (ret) return ret;
-    
-  var audioCode = LibSword.getModuleInformation(version, "AudioCode");
-  if (audioCode!=NOTFOUND) {
-    ret = getAudioFile(audioCode, bookShortName, chapterNumber);
-    if (ret) return ret;
-  }
-  
-  var mLang = LibSword.getModuleInformation(version, "Lang");
-  if (mLang) mLang = mLang.replace(/-.*$/, "");
-  ret = getAudioFile(mLang, bookShortName, chapterNumber);
-  if (ret) return ret;
-  
-  return null;
+	chapterNumber = Number(chapterNumber);
+	if (isNaN(chapterNumber)) return null;
+	if (Tab[version].audio.hasOwnProperty(bookShortName + "_" + chapterNumber)) {
+		return Tab[version].audio[bookShortName + "_" + chapterNumber];
+	}
+	
+	return null;
 }
 
-function getAudioFile(code, shortName, chapter) {
-  var dcode;
-  var dlocale;
+function refreshAudioCatalog() {
+  var lang = {};
+  var audioCode = {};
+  for (var t=0; t<Tabs.length; t++) {
+		Tabs[t].audio = {};
+		if (Tabs[t].audioCode != NOTFOUND) {
+			if (!audioCode.hasOwnProperty(Tabs[t].audioCode.toLowerCase())) audioCode[Tabs[t].audioCode.toLowerCase()] = [];
+			audioCode[Tabs[t].audioCode.toLowerCase()].push(Tabs[t].modName);
+		}
+		if (Tabs[t].lang != NOTFOUND) {
+			if (!lang.hasOwnProperty(Tabs[t].lang.toLowerCase())) lang[Tabs[t].lang.toLowerCase()] = [];
+			lang[Tabs[t].lang.toLowerCase()].push(Tabs[t].modName);
+		}
+	}
+	
   for (var d=0; d<AudioDirs.length; d++) {
     try {var ok = (AudioDirs[d].dir.exists() && AudioDirs[d].dir.directoryEntries)} catch (er) {continue;}
     if (!ok) continue;
-    var files = AudioDirs[d].dir.directoryEntries;
-    while (files.hasMoreElements()) {
-      var file = files.getNext().QueryInterface(Components.interfaces.nsILocalFile);
-      if (!file || !file.isDirectory()) continue;
-      var re = new RegExp("^" + code + "(_(.*))?$", "i");
-      var fcode = file.leafName.match(re);
-      if (fcode) {
-        for (var e=0; e<AUDEXT.length; e++) {
-          if (fcode[2]) {
-            var aFile = getLocalizedAudioFile(AudioDirs[d].dir, file.leafName.replace(/_.*$/, ""), shortName, chapter, AUDEXT[e], fcode[2]);
-          }
-          else aFile = getThisAudioFile(AudioDirs[d].dir, file.leafName.replace(/_.*$/, ""), shortName, chapter, AUDEXT[e]);
-          if (aFile && aFile.exists()) return aFile;
-        }
-      }
+    var codes = AudioDirs[d].dir.directoryEntries;
+    while (codes.hasMoreElements()) {
+      var code = codes.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+      if (!code.isDirectory()) continue;
+			var books = code.directoryEntries;
+			while(books.hasMoreElements()) {
+				var book = books.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+				if (!book.isDirectory()) continue;
+				var chapters = book.directoryEntries;
+				while(chapters.hasMoreElements()) {
+					var chapter = chapters.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+					if (chapter.isDirectory()) continue;
+
+					var ext = null
+					for (var i=0; i<AUDEXT.length; i++) {
+						var re = new RegExp("\\." + escapeRE(AUDEXT[i]) + "$", "i");
+						if ((re).test(chapter.leafName)) ext = AUDEXT[i]; break;
+					}
+					if (!ext) continue;
+					// currently Linux does not play mp3...
+          if (OPSYS == "Linux" && ext == "mp3") continue;
+         
+          // we have an audio file, so now associate it with its module(s)
+          var acode = code.leafName.toLowerCase();
+          var abook = book.leafName;
+          var achap = chapter.leafName;
+          var isLocalized = acode.match(/^(.+)_(.+?)$/);
+          if (isLocalized) {
+						acode = isLocalized[1];
+						isLocalized = isLocalized[2];
+						abook = identifyBook(abook.replace(/^\d+\-/, "")).shortName;
+						if (!abook) continue;
+					}
+					achap = achap.match(/(\d+)\.[^\.]+$/);
+					if (!achap) continue;
+					achap = Number(achap[1]);
+				
+					var mods = [];
+					for (var t=0; t<Tabs.length; t++) {
+						if (Tabs[t].modName.toLowerCase() == acode) mods.push(Tabs[t].modName);
+					}
+					if (lang.hasOwnProperty(acode)) mods = mods.concat(lang[acode]);
+					if (audioCode.hasOwnProperty(acode)) mods = mods.concat(audioCode[acode]);	
+						
+					for (var i=0; i<mods.length; i++) {
+						if (Tab[mods[i]].audio.hasOwnProperty(abook + "_" + achap)) {
+							jsdump("WARN: Multiple audio files for \"" + mods[i] + "_" + abook + "_" + achap + "\"");
+						}
+						Tab[mods[i]].audio[abook + "_" + achap] = chapter;
+					}
+					
+				}
+			}
     }
   }
-  return null;
 }
 
-function getAudioRelatedFile(dirName, fileName) {
-  var aFile;
-  for (var d=0; d<AudioDirs.length; d++) {
-    aFile = AudioDirs[d].dir.clone();
-    if (dirName) aFile.append(dirName);
-    aFile.append(fileName);
-    if (aFile.exists()) return aFile;
-  }
-  return null;
+function updateBibleNavigatorAudio() {
+	var doc = MainWindow.ViewPort.ownerDocument;
+	
+	var booknames = doc.getElementsByClassName("bookname");
+	for (var i=0; i<booknames.length; i++) {booknames[i].removeAttribute("hasAudio");}
+	
+	var chapcells = doc.getElementsByClassName("chaptermenucell");
+	for (var i=0; i<chapcells.length; i++) {chapcells[i].removeAttribute("hasAudio");}
+	
+	var vp = MainWindow.ViewPort;
+	for (var w=1; w<=vp.NumDisplayedWindows; w++) {
+		if (Tab[vp.Module[w]].modType != BIBLE) continue;
+		for (var k in Tab[vp.Module[w]].audio) {
+			var bk = k.match(/^(.*)_(\d+)$/)[1];
+			var ch = k.match(/^(.*)_(\d+)$/)[2];
+			var bkelem = doc.getElementById("book_" + findBookNum(bk));
+			if (bkelem) bkelem.setAttribute("hasAudio", "true");
+			var chelem = doc.getElementById("chmenucell_" + findBookNum(bk) + "_" + ch);
+			if (chelem) chelem.setAttribute("hasAudio", "true");
+		}
+	}
+	
 }
+
 
 /************************************************************************
- * QuickTime player and installation functions
+ * Audio player functions
  ***********************************************************************/ 
   
 function beginAudioPlayer() {
@@ -185,6 +240,7 @@ function endAudioPlayer() {
   document.getElementById("player").hidden = true;
   audio.pause();
 }
+
 
 /************************************************************************
  * Audio import functions

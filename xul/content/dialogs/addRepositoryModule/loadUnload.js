@@ -739,6 +739,7 @@ function applyConfFile(file, repoUrl) {
     ARMU.deleteResource(newModRes)
     return;
   }
+  // currently Linux does not play mp3... so request ogg instead
   if (OPSYS == "Linux" && (/^http\:\/\/.*audio\.htm\?/).test(dataPath)) dataPath += "&ogg=1"; 
   var moduleUrl;
   if ((/^(\.|\/)/).test(dataPath)) {

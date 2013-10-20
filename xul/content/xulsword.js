@@ -224,6 +224,12 @@ function postWindowInit() {
   checkCipherKeys();
   
   initBookmarksLocale(BM, BMDS);
+  
+  refreshAudioCatalog();
+  for (var w=1; w<=NW; w++) {
+		BibleTexts.updateAudioLinks(w);
+	}
+	updateBibleNavigatorAudio();
 
 }
 
