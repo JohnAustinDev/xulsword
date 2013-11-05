@@ -52,14 +52,18 @@ PHP_METHOD(phpsword, __construct)
 {
   char *path;
   int lpath;
+  char *localedir = NULL;
+  int llocaledir;
   xulsword *sword = NULL;
   zval *object = getThis();
 
+	// the localedir argument is not required at the moment to keep API unchanged
+	//if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &path, &lpath, &localedir, &llocaledir) == FAILURE) {
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &path, &lpath) == FAILURE) {
       RETURN_NULL();
   }
 
-  sword = new xulsword(path, NULL, NULL, NULL);
+  sword = new xulsword(path, NULL, NULL, NULL, localedir);
   sword_object *obj = (sword_object *)zend_object_store_get_object(object TSRMLS_CC);
   obj->sword = sword;
 }
@@ -496,7 +500,7 @@ PHP_METHOD(phpsword, translate)
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &text, &l1, &localeName, &l2) == FAILURE) {
       RETURN_EMPTY_STRING();
     }
-    char *ret = sword->getLanguageName(text, localeName);
+    char *ret = sword->translate(text, localeName);
     if (ret) {RETURN_STRING(ret, 0);}
     else RETURN_EMPTY_STRING();
   }
