@@ -1,0 +1,43 @@
+#labels Featured
+Server Side SWORD
+
+= phpsword PECL extension =
+
+This PHP extension brings the power of SWORD to a web server. It provides the same API that xulsword utilizes, but via PHP, rather than Javascript.
+
+
+= Compilation and use =
+
+Compile the extension by going to the phpsword directory and running:
+{{{
+$ phpize
+$ ./configure
+$ make
+$ sudo make install
+}}}
+
+This will install the extension to your php shared extensions directory.
+
+Next, to enable the extension you can add the following to your php.ini:
+{{{
+[PHP]
+extension=phpsword.so
+}}}
+And then restart PHP:
+{{{
+$ sudo apache2ctl restart
+}}}
+
+Finally, to access phpsword from PHP, do something like this:
+{{{
+if (!extension_loaded("phpsword")) {
+  header('Location: ' . $redirect_URL);
+  exit;
+}
+
+$Sword = new phpsword($repository_path);
+
+$My_modlist = $Sword->getModuleList();
+}}}
+
+The PHP interface is the same as the [http://code.google.com/p/xulsword/source/browse/trunk/xul/content/libsword.js Javascript interface].
