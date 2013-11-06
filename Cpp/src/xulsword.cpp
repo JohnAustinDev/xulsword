@@ -1019,12 +1019,12 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
 
 
 /********************************************************************
-GetBookIntroduction
+GetIntroductions
 *********************************************************************/
-char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
+char *xulsword::getIntroductions(const char *vkeymod, const char *bname) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
-    xsThrow("GetBookIntroduction: module \"%s\" not found.", vkeymod);
+    xsThrow("GetIntroductions: module \"%s\" not found.", vkeymod);
     return NULL;
   }
 
@@ -1032,22 +1032,66 @@ char *xulsword::getBookIntroduction(const char *vkeymod, const char *bname) {
   VerseKey *introkey = SWDYNAMIC_CAST(VerseKey, testkey);
   if (!introkey) {
     delete(testkey);
-    xsThrow("GetBookIntroduction: module \"%s\" is not a Bible or Commentary.", vkeymod);
+    xsThrow("GetIntroductions: module \"%s\" is not a Bible or Commentary.", vkeymod);
     return NULL;
   }
 
   updateGlobalOptions(false);
-
+  
+  VerseKey wkey = introkey;
+  wkey.setText(bname);
+  
+  VerseKey topkeyModule = introkey;
+  topkeyModule.setTestament(1);
+  topkeyModule.setBook(1);
+  topkeyModule.setChapter(1);
+  topkeyModule.setVerse(1);
+  bool isFirstInModule = (!strcmp(wkey.getBookName(), topkeyModule.getBookName()));
+  
+  VerseKey topkeyTestament = introkey;
+  topkeyTestament.setTestament(wkey.getTestament());
+  topkeyTestament.setBook(1);
+  topkeyTestament.setChapter(1);
+  topkeyTestament.setVerse(1);
+  topkeyTestament.setPosition(POS_TOP);
+  bool isFirstInTestament = (!strcmp(wkey.getBookName(), topkeyTestament.getBookName()));
+  
+  bool isFirstChapter = (strpbrk(bname, " .") == NULL || wkey.getChapter() == 1);
+  
   introkey->setIntros(true);
   introkey->setAutoNormalize(false); // IMPORTANT!! Otherwise, introductions are skipped!
   introkey->setText(bname);
-  introkey->setChapter(0);
   introkey->setVerse(0);
   introkey->setPersist(true);
   module->setKey(introkey);
-
+  
   SWBuf intro;
-  intro.set(module->renderText());
+  
+  // if bname is first in module: get module, 1st testament, 1st book, and that book's 1st chapter intros
+  if (isFirstInModule) {
+		introkey->setTestament(0);
+		introkey->setBook(0);
+		introkey->setChapter(0);
+		intro.append(module->renderText());
+		introkey->setTestament(topkeyModule.getTestament());
+		isFirstInTestament = true;
+	}
+  // if bname is first in testament: get Testament, book, and that book's 1st chapter intros
+  if (isFirstInTestament) {
+		introkey->setBook(0);
+		introkey->setChapter(0);
+		intro.append(module->renderText());
+		introkey->setBook(topkeyTestament.getBook());
+		isFirstChapter = true;
+	}
+  // if bname's chapter is unspecified: get book and that book's 1st chapter intros
+  if (isFirstChapter) {
+		introkey->setChapter(0);
+		intro.append(module->renderText());
+		introkey->setChapter(1);
+	}
+  // get specified chapter intro
+	intro.append(module->renderText());
   
   module->setKey(EmptyKey);
   delete(testkey);

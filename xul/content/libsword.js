@@ -566,14 +566,14 @@ convertLocation: function(fromVerseSystem, vkeytext, toVerseSystem) {
 /*******************************************************************************
 * RETRIEVING FOOTNOTES, CROSS REFERENCES, INTRODUCTIONS, DICTIONARY ENTRIES, ETC.:
 *******************************************************************************/
-// getBookIntroduction
+// getIntroductions
 //Will return the introduction for a given short book name in module Vkeymod,
 //  if one exists in the version. If there is not introduction, "" is returned.
 //If Vkeymod is not a versekey type module, an error is returned.
-getBookIntroduction: function(vkeymod, bname) {
-  if (!this.libSwordReady("getBookIntroduction")) return null;
+getIntroductions: function(vkeymod, bname) {
+  if (!this.libSwordReady("getIntroductions")) return null;
   if (!this.fdata.git)
-    this.fdata.git = this.libsword.declare("GetBookIntroduction", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
+    this.fdata.git = this.libsword.declare("GetIntroductions", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.char));
   var cdata = this.fdata.git(this.inst, ctypes.char.array()(vkeymod), ctypes.char.array()(bname));
   this.checkerror();
   try {var str = cdata.readString();} catch(er) {str = "";}

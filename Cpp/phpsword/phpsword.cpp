@@ -244,6 +244,7 @@ PHP_METHOD(phpsword, convertLocation)
   RETURN_EMPTY_STRING();
 }
 
+// getIntroductions has been left as getBookIntroduction to keep API unchanged
 PHP_METHOD(phpsword, getBookIntroduction)
 {
   xulsword *sword;
@@ -257,7 +258,7 @@ PHP_METHOD(phpsword, getBookIntroduction)
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymod, &l1, &bname, &l2) == FAILURE) {
       RETURN_EMPTY_STRING();
     }
-    char *ret = sword->getBookIntroduction(vkeymod, bname);
+    char *ret = sword->getIntroductions(vkeymod, bname);
     if (ret) {RETURN_STRING(ret, 0);}
     else RETURN_EMPTY_STRING();
   }
