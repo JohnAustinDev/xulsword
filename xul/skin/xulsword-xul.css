@@ -64,13 +64,14 @@
   list-style-image: url("chrome://xulsword/skin/images/dictionary.png") !important;
   -moz-box-orient: vertical;
 }
-button[class="togglebutton"] {
-  color: black; 
-  -moz-image-region: rect(0px, 64px, 28px, 32px) !important;
-}
 button[class="togglebutton"][value="true"] {
   color: blue; 
-  -moz-image-region: rect(0px, 32px, 28px, 0px) !important;
+  -moz-image-region: rect(0px, 32px, 28px, 0px);
+}
+button[class="togglebutton"],
+button[class="togglebutton"][disabled="true"] {
+  color: black;
+  -moz-image-region: rect(0px, 64px, 28px, 32px);
 }
 
 /* MAIN WINDOW TOGGLE MENU ITEMS */

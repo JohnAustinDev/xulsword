@@ -505,10 +505,10 @@
     <spacer flex="14%"  orient="vertical"/>
     
     <hbox id="optionButtons" hidden="false" align="start">
-      <button id="hdbutton" class="togglebutton" label="&headingsButton.label;"  tooltip="hdbuttonTT"  command="cmd_xs_toggleHeadings"/>
-      <button id="fnbutton" class="togglebutton" label="&notesButton.label;"     tooltip="fnbuttonTT"  command="cmd_xs_toggleFootnotes"/>
-      <button id="crbutton" class="togglebutton" label="&crossrefsButton.label;" tooltip="crbuttonTT"  command="cmd_xs_toggleCrossRefs"/>
-      <button id="dtbutton" class="togglebutton" label="&dictButton.label;"      tooltip="dtbuttonTT"  command="cmd_xs_toggleDictionary"/>
+      <button id="hdbutton" class="togglebutton" label="&headingsButton.label;"  tooltip="hdbuttonTT"  command="cmd_xs_toggleHeadings" observes="cmd_xs_toggleHeadings"/>
+      <button id="fnbutton" class="togglebutton" label="&notesButton.label;"     tooltip="fnbuttonTT"  command="cmd_xs_toggleFootnotes" observes="cmd_xs_toggleFootnotes"/>
+      <button id="crbutton" class="togglebutton" label="&crossrefsButton.label;" tooltip="crbuttonTT"  command="cmd_xs_toggleCrossRefs" observes="cmd_xs_toggleCrossRefs"/>
+      <button id="dtbutton" class="togglebutton" label="&dictButton.label;"      tooltip="dtbuttonTT"  command="cmd_xs_toggleDictionary" observes="cmd_xs_toggleDictionary"/>
     </hbox>
 
     <spacer id="rightspacer"  flex="72%" orient="vertical"/>
