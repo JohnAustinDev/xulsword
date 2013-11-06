@@ -155,7 +155,7 @@ BibleTexts = {
     if (l == NOTFOUND) {l = getLocale();} // otherwise use current program locale
     var b = getLocaleBundle(l, "common/books.properties");
 
-    var intro = (ch == 1 ? BibleTexts.getBookIntroduction(mod, bk):"");
+    var intro = BibleTexts.getIntroductions(mod, bk + " " + ch);
     if (intro && (intro.length < 10 || (/^\s*$/).test(intro))) intro = "";
     
     var lt = LibSword.getModuleInformation(mod, "NoticeLink");
@@ -456,12 +456,12 @@ BibleTexts = {
   },
 
   // Turns headings on before reading introductions
-  getBookIntroduction: function(mod, bk) {
+  getIntroductions: function(mod, bk) {
     if (!Tab[mod] || (Tab[mod].modType != BIBLE && Tab[mod].modType != COMMENTARY)) return "";
     
     LibSword.setGlobalOption("Headings", "On");
     
-    var intro = LibSword.getBookIntroduction(mod, bk);
+    var intro = LibSword.getIntroductions(mod, bk);
     
     LibSword.setGlobalOption("Headings", prefs.getCharPref("Headings"));
     return intro;

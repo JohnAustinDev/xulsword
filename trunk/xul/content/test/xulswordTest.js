@@ -19,7 +19,7 @@ convertLocation             tested
 getModuleInformation        tested
 getModuleList               tested
 
-getBookIntroduction         tested
+getIntroductions            tested
 getDictionaryEntry          tested
 getAllDictionaryKeys        tested
 getGenBookTableOfContents   tested
@@ -251,7 +251,7 @@ else {
 }
 
 jsdump("getModuleList=" + LibSword.getModuleList());
-jsdump("getBookIntroduction=" + LibSword.getBookIntroduction("UZV", "Matt"));
+jsdump("getIntroductions=" + LibSword.getIntroductions("UZV", "Matt"));
 jsdump("getDictionaryEntry БАШАН=" + LibSword.getDictionaryEntry("UZDOT", "БАШАН"));
 jsdump("getAllDictionaryKeys=" + LibSword.getAllDictionaryKeys("UZDOT"));
 jsdump("getGenBookTableOfContents=" + LibSword.getGenBookTableOfContents("Pilgrim"));

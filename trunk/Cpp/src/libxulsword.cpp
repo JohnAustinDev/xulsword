@@ -83,8 +83,8 @@ DLLEXPORT char *ConvertLocation(xulsword *inst, const char *frVS, const char *vk
   return inst->convertLocation(frVS, vkeytext, toVS);
 }
 
-DLLEXPORT char *GetBookIntroduction(xulsword *inst, const char *vkeymod, const char *bname) {
-  return inst->getBookIntroduction(vkeymod, bname);
+DLLEXPORT char *GetIntroductions(xulsword *inst, const char *vkeymod, const char *bname) {
+  return inst->getIntroductions(vkeymod, bname);
 }
 
 DLLEXPORT char *GetDictionaryEntry(xulsword *inst, const char *lexdictmod, const char *key) {

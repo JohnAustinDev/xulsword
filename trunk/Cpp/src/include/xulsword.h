@@ -167,7 +167,7 @@ class xulsword {
   int   getMaxVerse(const char *mod, const char *vkeytext);
   char *getVerseSystem(const char *mod);
   char *convertLocation(const char *frVS, const char *vkeytext, const char *toVS);
-  char *getBookIntroduction(const char *vkeymod, const char *bname);
+  char *getIntroductions(const char *vkeymod, const char *bname);
   char *getDictionaryEntry(const char *lexdictmod, const char *key);
   char *getAllDictionaryKeys(const char *lexdictmod);
   char *getGenBookChapterText(const char *gbmod, const char *treekey);
