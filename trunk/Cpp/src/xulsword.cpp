@@ -1021,7 +1021,7 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
 /********************************************************************
 GetIntroductions
 *********************************************************************/
-char *xulsword::getIntroductions(const char *vkeymod, const char *bname) {
+char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
     xsThrow("GetIntroductions: module \"%s\" not found.", vkeymod);
@@ -1039,64 +1039,76 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *bname) {
   updateGlobalOptions(false);
   
   VerseKey wkey = introkey;
-  wkey.setText(bname);
+  wkey.setText(vkeytext);
   
-  VerseKey topkeyModule = introkey;
-  topkeyModule.setTestament(1);
-  topkeyModule.setBook(1);
-  topkeyModule.setChapter(1);
-  topkeyModule.setVerse(1);
-  bool isFirstInModule = (!strcmp(wkey.getBookName(), topkeyModule.getBookName()));
+  bool isFirstChapter = (strpbrk(vkeytext, " .") == NULL || wkey.getChapter() == 1);
   
-  VerseKey topkeyTestament = introkey;
-  topkeyTestament.setTestament(wkey.getTestament());
-  topkeyTestament.setBook(1);
-  topkeyTestament.setChapter(1);
-  topkeyTestament.setVerse(1);
-  topkeyTestament.setPosition(POS_TOP);
-  bool isFirstInTestament = (!strcmp(wkey.getBookName(), topkeyTestament.getBookName()));
+  VerseKey topkey = introkey;
+  topkey.setBook(1);
+  topkey.setTestament(1);
+  topkey.setChapter(1);
+  topkey.setVerse(1);
+  bool isFirstInModule = (isFirstChapter && !strcmp(wkey.getBookName(), topkey.getBookName()));
   
-  bool isFirstChapter = (strpbrk(bname, " .") == NULL || wkey.getChapter() == 1);
+  topkey.setTestament(wkey.getTestament());
+  bool isFirstInTestament = (isFirstChapter && !strcmp(wkey.getBookName(), topkey.getBookName()));
   
   introkey->setIntros(true);
   introkey->setAutoNormalize(false); // IMPORTANT!! Otherwise, introductions are skipped!
-  introkey->setText(bname);
+  introkey->setText(vkeytext);
   introkey->setVerse(0);
   introkey->setPersist(true);
   module->setKey(introkey);
   
   SWBuf intro;
+  SWBuf test;
   
-  // if bname is first in module: get module, 1st testament, 1st book, and that book's 1st chapter intros
+  // if vkeytext is first in module: get module, 1st testament, 1st book, and that book's 1st chapter intros
   if (isFirstInModule) {
 		introkey->setTestament(0);
 		introkey->setBook(0);
 		introkey->setChapter(0);
-		intro.append(module->renderText());
-		introkey->setTestament(topkeyModule.getTestament());
+		test = module->renderText();
+		if (test.length() > 8) {
+			intro.append(test);
+			intro.append("<br /><br />");
+		}
+		introkey->setTestament(topkey.getTestament());
 		isFirstInTestament = true;
 	}
-  // if bname is first in testament: get Testament, book, and that book's 1st chapter intros
+  // if vkeytext is first in testament: get Testament, book, and that book's 1st chapter intros
   if (isFirstInTestament) {
 		introkey->setBook(0);
 		introkey->setChapter(0);
-		intro.append(module->renderText());
-		introkey->setBook(topkeyTestament.getBook());
+		test = module->renderText();
+		if (test.length() > 8) {
+			intro.append(test);
+			intro.append("<br /><br />");
+		}
+		introkey->setBook(topkey.getBook());
 		isFirstChapter = true;
 	}
-  // if bname's chapter is unspecified: get book and that book's 1st chapter intros
+  // if vkeytext's chapter is unspecified: get book and that book's 1st chapter intros
   if (isFirstChapter) {
 		introkey->setChapter(0);
-		intro.append(module->renderText());
+		test = module->renderText();
+		if (test.length() > 8) {
+			intro.append(test);
+			intro.append("<br /><br />");
+		}
 		introkey->setChapter(1);
 	}
   // get specified chapter intro
-	intro.append(module->renderText());
+  test = module->renderText();
+  if (test.length() > 8) {
+		intro.append(test);
+		intro.append("<br /><br />");
+	}
   
   module->setKey(EmptyKey);
   delete(testkey);
   
-  if (intro.length() > 16) {
+  if (intro.length()) {
     SWBuf css;
     // use <div> rather than <span> because this needs block not inline display
     css.setFormatted("<div class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
