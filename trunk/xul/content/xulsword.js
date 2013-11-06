@@ -338,7 +338,7 @@ function identifyModuleFeatures(resetUserPrefs) {
 
 function updateFeature(info, f, resetUserPrefs, hideDisabledItems) {
   if (!f[info.n]) {
-    if (info.e) prefs.setCharPref(GlobalToggleCommands[info.e], "Off");
+    if (info.e) prefs.setCharPref(GlobalToggleCommands[info.e], "On"); // it's okay to disable if there's no filter, but default is "On"
     if (info.e) document.getElementById(info.e).setAttribute("disabled", "true");
     if (hideDisabledItems && info.e) document.getElementById(info.e).hidden = true;
     //if (info.b) document.getElementById(info.b).hidden = true; THIS WAS CONFUSING TO USERS WITH LITTLE BENEFIT
@@ -363,7 +363,7 @@ function getModuleFeatures(module) {
   if (!module) return features;
   
   var globalOptionFilters = LibSword.getModuleInformation(module, "GlobalOptionFilter");
-  features.haveHeadings      = (globalOptionFilters.search("Headings")  != -1);
+  features.haveHeadings      = true; // Headings include intros and chapter numbers, so all modules have headings
   features.haveFootnotes     = (globalOptionFilters.search("Footnotes") != -1);
   features.haveCrossRefs     = (globalOptionFilters.search("Scripref")  != -1);
   features.haveHebrewCant    = (globalOptionFilters.search("UTF8Cantillation")  != -1);
