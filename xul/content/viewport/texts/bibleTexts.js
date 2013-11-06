@@ -456,13 +456,13 @@ BibleTexts = {
   },
 
   // Turns headings on before reading introductions
-  getIntroductions: function(mod, bk) {
+  getIntroductions: function(mod, vkeytext) {
     if (!Tab[mod] || (Tab[mod].modType != BIBLE && Tab[mod].modType != COMMENTARY)) return "";
     
     LibSword.setGlobalOption("Headings", "On");
     
-    var intro = LibSword.getIntroductions(mod, bk);
-    
+    var intro = LibSword.getIntroductions(mod, vkeytext);
+  
     LibSword.setGlobalOption("Headings", prefs.getCharPref("Headings"));
     return intro;
   },
