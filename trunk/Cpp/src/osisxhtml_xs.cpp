@@ -617,6 +617,8 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 			else if (type == "majorSection") {
 			}
+			else if (tag.isEmpty()) { // milestone divs are not valid HTML
+			}
 			else {
 				buf += tag;
 			}
