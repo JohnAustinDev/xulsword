@@ -355,8 +355,7 @@ sub copyXulswordFiles($\@$$$) {
     # because they override regular skin code files which are accessed
     # directly in the Development setup.
     for my $loc (@locales) {
-      my $ldir = "$XulswordExtras/localeDev/$loc";
-      if ($loc eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
+      my $ldir = &localeDirectory($loc);
       
       if (-e "$ldir/skin-files") {
         &Log("----> Overwriting skin.jar with $loc skin-files.\n");
@@ -563,8 +562,7 @@ sub includeLocales($$\@$) {
   &Log("----> Processing requested locales.\n");
   foreach my $loc (@locales) {
 
-  my $ldir = "$XulswordExtras/localeDev/$loc";
-  if ($loc eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
+		my $ldir = &localeDirectory($loc);
 
     # create locale jar file
     if (!$haveLocale{$loc}) {
@@ -608,8 +606,7 @@ sub includeLocales($$\@$) {
       my $haveAllTargets = 1;
       my $loc2;
       foreach $loc2 (@locales) {
-        my $ldir = "$XulswordExtras/localeDev/$loc2";
-        if ($loc2 eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
+        my $ldir = &localeDirectory($loc2);
         if (!-e "$ldir/locale/".$OVERRIDES{$override}) {
           $haveAllTargets = 0;
           &Log("WARNING: override target \"".$OVERRIDES{$override}."\" does not exist in \"$loc2\". Skipping override of \"$override\".\n");
@@ -637,8 +634,7 @@ sub createLocale($) {
 
   &Log("----> Creating locale $locale\n");
 
-  my $ldir = "$XulswordExtras/localeDev/$locale";
-  if ($locale eq "en-US") {$ldir = "$TRUNK/localeDev/en-US";}
+  my $ldir = &localeDirectory($locale);
 
   # recreate xulsword locale from UI source and report if the log file changes
   mv("$ldir/code_log.txt", "$ldir/code_log-bak.txt");
@@ -890,4 +886,12 @@ sub packageFFExtension($$) {
   &Log("----> Making extension xpt package.\n");
   if (-e $of) {unlink($of);}
   &makeZIP($of, $id, 0, "file_log.txt");
+}
+
+sub localeDirectory($) {
+	my $subdir = shift;
+	if (-e "$TRUNK/localeDev/$subdir") {return "$TRUNK/localeDev/$subdir";}
+	if (-e "$XulswordExtras/localeDev/$subdir") {return "$XulswordExtras/localeDev/$subdir";}
+	&Log("ERROR: entry locale directory \"$TRUNK/localeDev/$subdir\" not found.\n");
+	return "$TRUNK/localeDev/$subdir";
 }

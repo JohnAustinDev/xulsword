@@ -8,7 +8,7 @@ use File::Compare;
 $MKDEV = "$MK/localeDev";
 $MKSDEV = "$MKS/localeDev";
 $MAPFILE   = "$MKDEV/UI-MAP.txt";
-$LOCALEDIR = ($LOCALE ne "en-US" ? "$MKSDEV/$LOCALE":"$MKDEV/$LOCALE");
+$LOCALEDIR = &localeDirectory($LOCALE);
 $LOCALECODE = "$LOCALEDIR/locale";
 $SHORTCUT = "(\\.accesskey|\\.commandkey|\\.keybinding|\\.key|\\.sc|\\.sh|\\:LanguageMenuAccKey|\\:SearchAccKey)\$";
 
@@ -56,7 +56,7 @@ sub UI_File($$) {
   my $n = shift;
   if ($n == 1) {$n = "";}
   else {$n = "_$n";}
-  my $ldir = ($loc ne "en-US" ? "$MKSDEV/$loc":"$MKDEV/$loc");
+  my $ldir = &localeDirectory($loc);
   return "$ldir/UI-$loc$n.txt";
 }
 
@@ -234,8 +234,8 @@ sub translateValue($$$$) {
   my $tloc = shift;
   my $ffdir = shift;
 
-  my $f_ffpath = ($floc eq "en-US" ? "$MKDEV":"$MKSDEV").$ffdir;
-  my $t_ffpath = ($tloc eq "en-US" ? "$MKDEV":"$MKSDEV").$ffdir;
+  my $f_ffpath = &localeDirectory($floc)."/../".$ffdir;
+  my $t_ffpath = &localeDirectory($tloc)."/../".$ffdir;
 
   # look for a matching value in from-locale and return its file-entry
   if (!-e "$f_ffpath/$floc") {
@@ -274,8 +274,8 @@ sub xtrans($$$$$$) {
   my $tloc = shift;
   my $ffdir = shift;
 
-  my $f_ffpath = ($floc eq "en-US" ? "$MKDEV":"$MKSDEV").$ffdir;
-  my $t_ffpath = ($tloc eq "en-US" ? "$MKDEV":"$MKSDEV").$ffdir;
+  my $f_ffpath = &localeDirectory($floc)."/../".$ffdir;
+  my $t_ffpath = &localeDirectory($tloc)."/../".$ffdir;
 
   my $v2 = "";
   if (!opendir(CDIR, $dir)) {&Log("ERROR: Could not open \"$dir\".\n"); die;}
@@ -456,10 +456,9 @@ sub readLocaleOverrideFile($$$$\%) {
   $versionFF = $1;
 
   # get the Firefox file's path
-  my $FirefoxPath = "$MKSDEV/Firefox$versionFF";
-  if ($localeFF eq "en-US") {$FirefoxPath = "$MKDEV/Firefox$versionFF";}
+  my $FirefoxPath = &localeDirectory("Firefox$versionFF/$localeFF");
   if (!-e "$FirefoxPath") {
-    &Log("ERROR: Missing directory \"$FirefoxPath\". Skipping locale override.\n");
+    &Log("ERROR: Missing directory \"$MKDEV/Firefox$versionFF/$localeFF\". Skipping locale override.\n");
     return;
   }
   if ($chrome !~ /^chrome\:\/\/([^\/]+)\/locale\/(.*?)$/) {
@@ -468,7 +467,7 @@ sub readLocaleOverrideFile($$$$\%) {
   }
   my $tkdir = $1;
   my $tkpath = $2;
-  my $override = "$FirefoxPath/$localeFF/$tkdir/$tkpath";
+  my $override = "$FirefoxPath/$tkdir/$tkpath";
   if (!-e $override) {
     &Log("ERROR: Chrome override file not found \"$override\". Skipping locale override.\n");
     return;
@@ -502,13 +501,21 @@ sub readLocaleOverrideFile($$$$\%) {
   }
   else {
     # then just copy the whole file to destination
-    my $dest = ($localeXS ne "en-US" ? "$MKSDEV":"$MKDEV")."/$localeXS/locale/$target";
+    my $dest = &localeDirectory($localeXS)."/locale/$target";
     my $parent = $dest;
     $parent =~ s/^(.*?)\/[^\/]+$/$1/;
     if (!-e $parent) {make_path($parent);}
     cp($override, $dest);
   }
 
+}
+
+sub localeDirectory($) {
+	my $subdir = shift;
+	if (-e "$MKDEV/$subdir") {return "$MKDEV/$subdir";}
+	if (-e "$MKSDEV/$subdir") {return "$MKSDEV/$subdir";}
+	&Log("ERROR: entry locale directory \"$subdir\" not found.\n");
+	return "$MKDEV/$subdir";
 }
 
 # copies a directory recursively

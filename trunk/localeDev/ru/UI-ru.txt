@@ -1,0 +1,334 @@
+# Locale=ru, Version=3.6, Alternate_locale=ru, Firefox_locale=ru, Ignore_shortCut_keys=false
+[books.Genesis]: Бытие
+[books.Exodus]: Исход
+[books.Leviticus]: Левит
+[books.Numbers]: Числа
+[books.Deuteronomy]: Второзаконие
+[books.Joshua]: Иисус Навин
+[books.Judges]: Судьи
+[books.Ruth]: Руфь
+[books.1-Samuel]: 1 Царств
+[books.2-Samuel]: 2 Царств
+[books.1-Kings]: 3 Царств
+[books.2-Kings]: 4 Царств
+[books.1-Chronicles]: 1 Паралипоменон
+[books.2-Chronicles]: 2 Паралипоменон
+[books.Ezra]: Ездра
+[books.Nehemiah]: Неемия
+[books.Esther]: Есфирь
+[books.Job]: Иов
+[books.Psalms]: Псалтирь
+[books.Proverbs]: Притчи
+[books.Ecclesiastes]: Екклесиаст
+[books.Song-of-Songs]: Песнь песней
+[books.Isaiah]: Исаия
+[books.Jeremiah]: Иеремия
+[books.Lamentations]: Плач Иеремии
+[books.Ezekiel]: Иезекииль
+[books.Daniel]: Даниил
+[books.Hosea]: Осия
+[books.Joel]: Иоиль
+[books.Amos]: Амос
+[books.Obadiah]: Авдий
+[books.Jonah]: Иона
+[books.Micah]: Михей
+[books.Nahum]: Наум
+[books.Habakkuk]: Аввакум
+[books.Zephaniah]: Софония
+[books.Haggai]: Аггей
+[books.Zechariah]: Захария
+[books.Malachi]: Малахия
+[books.Matthew]: От Матфея
+[books.Mark]: От Марка
+[books.Luke]: От Луки
+[books.John]: От Иоанна
+[books.Acts]: Деяния Апостолов
+[books.James]: Иакова
+[books.1-Peter]: 1 Петра
+[books.2-Peter]: 2 Петра
+[books.1-John]: 1 Иоанна
+[books.2-John]: 2 Иоанна
+[books.3-John]: 3 Иоанна
+[books.Jude]: Иуды
+[books.Romans]: Римлянам
+[books.1st-Corinthians]: 1 Коринфянам
+[books.2nd-Corinthians]: 2 Коринфянам
+[books.Galatians]: Галатам
+[books.Ephesians]: Ефесянам
+[books.Philippians]: Филиппийцам
+[books.Colossians]: Колоссянам
+[books.1st-Thessalonians]: 1 Фессалоникийцам
+[books.2nd-Thessalonians]: 2 Фессалоникийцам
+[books.1-Timothy]: 1 Тимофею
+[books.2-Timothy]: 2 Тимофею
+[books.Titus]: Титу
+[books.Philemon]: Филимону
+[books.Hebrews]: Евреям
+[books.Revelation]: Откровение
+[main-window.title]: Электронная Библия
+[main-window.menu-file]: Файл
+[main-window.menu-file.add_new_module]: Добавить новые модули
+[main-window.menu-file.add_new_module.from_file]: xsm или zip файл
+[main-window.menu-file.add_new_module.from_internet]: Загрузить из интернета
+[main-window.menu-file.add_new_module.components_not_supported]: Эти модули имеют компоненты, которые не поддерживаются:
+[main-window.menu-file.add_new_module.components_out_of_date]: Следующие модули имеют устаревшие компоненты:
+[main-window.menu-file.add_new_module.installation_incomplete]: Установка модуля не завершена.
+[main-window.menu-file.add_new_module.module_upgrade_needed]: Полная установка требует хотя бы версию модуля: %1$S
+[main-window.menu-file.add_new_module.program_upgrade_needed]: Обновление программы. Минимальная версия: %1$S
+[main-window.menu-file.add_new_module.restart_needed]: Сообщение перезагрузки – Изменения произойдут при следующей загрузке программы.
+[main-window.menu-file.exit]: Выход
+[main-window.menu-file.export_audio]: Экспорт аудио
+[main-window.menu-file.import-audio]: Импорт аудио
+[main-window.menu-file.import-audio.import_from]: Сохранение из:
+[main-window.menu-file.import-audio.import_to]: В:
+[main-window.menu-file.import-audio.not_enough_disk_space]: Недостаточно места на диске для сохранения «%S».\n\nУдалите ненужные файлы на диске и попробуйте снова или введите другой адрес для сохранения.
+[main-window.menu-file.page-setup]: Параметры страницы...
+[main-window.menu-file.print]: Печать...
+[main-window.menu-file.print-preview]: Предварительный просмотр
+[main-window.menu-file.print.from_page]: с
+[main-window.menu-file.print.to_page]: по
+[main-window.menu-file.print_passage]: Печатать отрывок
+[main-window.menu-file.remove_modules]: Удалить модули
+[main-window.menu-file.remove_modules.delete_audio]: Удалить звук
+[main-window.menu-file.remove_modules.delete_confirmation]: Вы уверены?
+[main-window.menu-file.remove_modules.delete_locales]: Удалить языки
+[main-window.menu-file.remove_modules.delete_sword_modules]: Удалить модули
+[main-window.menu-edit]: Правка
+[main-window.menu-edit.copy]: Копировать
+[main-window.menu-edit.copy_passage]: Копировать отрывок
+[main-window.menu-edit.copy_passage.cross-references-with-text]: Перекрестные ссылки с текстом
+[main-window.menu-edit.copy_passage.include_label]: Включать
+[main-window.menu-edit.copy_passage.passage_label]: Отрывок
+[main-window.menu-edit.cut]: Вырезать
+[main-window.menu-edit.paste]: Вставить
+[main-window.menu-edit.redo]: Повторить
+[main-window.menu-edit.undo]: Отменить
+[main-window.menu-view]: Вид
+[main-window.menu-view.all_windows]: Все Окна
+[main-window.menu-view.bible_tabs]: Ярлыки Библия
+[main-window.menu-view.book_tabs]: Ярлыки Книга
+[main-window.menu-view.commentary_tabs]: Ярлыки Комментарий
+[main-window.menu-view.cross_references]: Перекрестные ссылки
+[main-window.menu-view.dictionary_links]: Ссылки словарей
+[main-window.menu-view.dictionary_tabs]: Ярлыки Ресурс
+[main-window.menu-view.footnotes]: Сноски
+[main-window.menu-view.headings]: Заголовки
+[main-window.menu-view.hide_all]: Отключить всё
+[main-window.menu-view.language_notes]: Примечания языка
+[main-window.menu-view.red_words_of_christ]: Слова Христа в красном шрифте
+[main-window.menu-view.show_all]: Включить всё
+[main-window.menu-view.show_cross_references]: Показать перекрестные ссылки
+[main-window.menu-view.show_footnotes]: Показать сноски
+[main-window.menu-view.show_notes.in_note_box]: Показать в окне сносок
+[main-window.menu-view.show_notes.in_popup]: Показать как всплывающие окна
+[main-window.menu-view.show_user_notes]: Показать личные заметки
+[main-window.menu-view.user_notes]: Личные заметки
+[main-window.menu-view.verse_numbers]: Номера стихов
+[main-window.menu-view.window1]: Окно 1
+[main-window.menu-view.window2]: Окно 2
+[main-window.menu-view.window3]: Окно 3
+[main-window.menu-options]: Варианты
+[main-window.menu-options.font]: Шрифт
+[main-window.menu-options.font.size1]: Самый маленький шрифт
+[main-window.menu-options.font.size2]: Маленький шрифт
+[main-window.menu-options.font.size3]: Стандартный шрифт
+[main-window.menu-options.font.size4]: Большой шрифт
+[main-window.menu-options.font.size5]: Самый большой шрифт
+[main-window.menu-options.hebrew]: Еврейский
+[main-window.menu-options.hebrew.show_cantillation]: Покажи Еврейский нараспев
+[main-window.menu-options.hebrew.show_vowel_points]: Показать знаки гласных
+[main-window.menu-options.language]: Язык дисплея
+[main-window.menu-options.language.this_langauge]: Русский
+[main-window.menu-bookmarks]: Закладки
+[main-window.menu-bookmarks.context-menu.new_folder]: Создать папку...
+[main-window.menu-bookmarks.context-menu.new_separator]: Новый разделитель
+[main-window.menu-bookmarks.context-menu.open]: Открыть
+[main-window.menu-bookmarks.context-menu.properties]: Свойства...
+[main-window.menu-bookmarks.context-menu.sort_by]: Сортировать по колонке %S
+[main-window.menu-bookmarks.new-bookmark]: Новая закладка...
+[main-window.menu-bookmarks.new-bookmark.title]: Новая закладка
+[main-window.menu-bookmarks.new-bookmark.create_in]: Создать в:
+[main-window.menu-bookmarks.new-bookmark.expander-button-down.tooltip]: Показать все папки закладок
+[main-window.menu-bookmarks.new-bookmark.expander-button-up.tooltip]: Скрыть
+[main-window.menu-bookmarks.new_user_note]: Новая личная заметка...
+[main-window.menu-bookmarks.organize_bookmarks]: Управление закладками...
+[main-window.menu-windows]: Окна
+[main-window.menu-windows.1_window]: 1 Окно
+[main-window.menu-windows.2_window]: 2 Окна
+[main-window.menu-windows.3_window]: 3 Окна
+[main-window.menu-help]: Поддержка
+[main-window.menu-help.about.save]: Сохранить
+[main-window.menu-help.about]: О программе...
+[main-window.menu-help.about.produced_by]: Институт перевода Библии 2013
+[main-window.menu-help.about.version]: Версия: %1$S, Сборка: %2$S
+[main-window.tool-bar.back]: назад
+[main-window.tool-bar.back.tooltip]: Перейти на предыдущую главу из архива
+[main-window.tool-bar.cross-references]: перекрестные ссылки
+[main-window.tool-bar.cross-references.tooltip]: Подключать отображение перекрестных ссылок
+[main-window.tool-bar.dictionary-links]: словарь
+[main-window.tool-bar.dictionary-links.tooltip]: Показать ссылки словарей
+[main-window.tool-bar.footnotes]: сноски
+[main-window.tool-bar.footnotes.tooltip]: Подключать отображение сносок
+[main-window.tool-bar.forward]: вперёд
+[main-window.tool-bar.forward.tooltip]: Перейти на следующую главу из архива
+[main-window.tool-bar.headings]: заголовки
+[main-window.tool-bar.headings.tooltip]: подключать отображение заголовков
+[main-window.tool-bar.search]: Найти
+[main-window.tool-bar.search.tooltip]: Найти стихи
+[main-window.tool-bar.show-history.tooltip]: Выбрать место с прошлого архива
+[main-window.context-menu.close_tab]: Закрыть
+[main-window.context-menu.delete_user_note]: Удалить личную заметку
+[main-window.context-menu.open_selected_reference]: Открыть выбранную ссылку
+[main-window.context-menu.search]: найти
+[main-window.context-menu.select_verses]: Выделить стих(и)
+[main-window.audio-player.quicktime_install_needed]: Для прослушивания аудио-содержимого должна быть установлена подключаемая программа QuickTime.
+[main-window.audio-player.quicktime_upgrade_needed]: Обновите QuickTime установки.
+[main-window.audio-player.quicktime_want_to_install_prompt]: Для прослушивания аудио-содержимого должна быть установлена подключаемая программа QuickTime.\n\nВы хотите установить программу "QT Lite" сейчас?\n
+[main-window.bible-tabs.greek]: Греческий
+[main-window.bible-tabs.hebrew]: Еврейский
+[main-window.bible-tabs.original_language]: ОРИГ
+[main-window.bible.chapter-1-heading.hide_introduction]: Скрыть
+[main-window.bible.chapter-1-heading.introduction]: Введение
+[main-window.bible.chapter-heading.chapter]: %1$S - Глава
+[main-window.bible.next_link]: Следующая
+[main-window.bible.previous_link]: Предыдущая
+[main-window.change_language_help_message]: Язык можно изменить используя меню "%1$S" --> "%2$S". Или же нажимая F1.
+[main-window.chooser-tool.new_testament]: Новый
+[main-window.chooser-tool.old_testament]: Ветхий
+[main-window.cipher_key_prompt]: Пожалуйста, введите ключ расшифровки текста Библии.
+[main-window.context-menu-edit_user_note]: Править личную заметку
+[bookmark-window.title]: Менеджер закладок
+[bookmark-window.menu-file.export]: Экспорт...
+[bookmark-window.menu-file.export.file-chooser.export]: Экспорт файла закладок:
+[bookmark-window.menu-file.import]: Импорт...
+[bookmark-window.menu-file.import.file-chooser.import]: Импорт файла закладок:
+[bookmark-window.menu-file.save-as]: Сохранить выбранную папку в текстовом файле...
+[bookmark-window.menu-edit.delete]: Удалить
+[bookmark-window.menu-edit.move-bookmark]: Переместить закладки...
+[bookmark-window.menu-edit.move-bookmark.move_to]: Переместить в:
+[bookmark-window.menu-edit.move-bookmark.new_folder]: Новая папка...
+[bookmark-window.menu-edit.move-bookmark.window_title]: Выбор папки
+[bookmark-window.menu-edit.properties.window_title]: Свойства &quot;**bm_title**&quot;
+[bookmark-window.menu-edit.select_all]: Выделить всё
+[bookmark-window.menu-view.show-columns]: Показать колонки
+[bookmark-window.menu-view.show-columns.ascending]: Сортировать по возрастанию
+[bookmark-window.menu-view.show-columns.descending]: Сортировать по убыванию
+[bookmark-window.menu-view.show-columns.sort_by_name]: Сортировать по имени
+[bookmark-window.menu-view.show-columns.unsorted]: Не сортировать
+[bookmark-window.menu-view.toolbar]: Панель инструментов
+[bookmark-window.tool-bar.move-bookmark]: Переместить...
+[bookmark-window.tool-bar.rename_button]: Переименовать...
+[bookmark-window.tree-column.added]: Дата добавления
+[bookmark-window.tree-column.location]: Место
+[bookmark-window.tree-column.name]: Имя
+[bookmark-window.tree-column.note]: Заметка
+[bookmark-window.tree-column.verse_text]: Стих
+[bookmark-window.tree-column.visited]: Дата последнего посещения
+[bookmark-window.tree.bookmark_root_folder]: Закладки
+[bookmark-window.tree.empty_folder]: (пусто)
+[bookmark-window.tree.new_folder]: Новая папка
+[bookmark-window.tree.restore-column-order]: Восстановить порядок колонок
+[bookmark-window.tree.status.folder_count]: Объектов: %S
+[bookmark-window.search-in-menu]: Искать в...
+[bookmark-window.search_label]: Поиск:
+[search-window.title]: Найти
+[search-window.more-options.book_group_label]: Книги:
+[search-window.more-options.commentary_group_label]: Коментарии:
+[search-window.more-options.resource_group_label]: Ресурсы:
+[search-window.more-options.search-scope]: Выбрать область поиска:
+[search-window.more-options.search-scope.all_books]: Вся Библия
+[search-window.more-options.search-scope.current_book]: Данной книге
+[search-window.more-options.search-scope.choose-books]: Выбрать книги
+[search-window.more-options.search-scope.choose-books.gospel]: Евангелие
+[search-window.more-options.search-scope.choose-books.gospel.range]: Matt-John
+[search-window.more-options.search-scope.choose-books.history]: Книги исторические
+[search-window.more-options.search-scope.choose-books.history.range]: Josh-Esth
+[search-window.more-options.search-scope.choose-books.letters]: Послания
+[search-window.more-options.search-scope.choose-books.letters.range]: Acts-Rev
+[search-window.more-options.search-scope.choose-books.pentateuch]: Пятикнижие Моисея
+[search-window.more-options.search-scope.choose-books.pentateuch.range]: Gen-Deut
+[search-window.more-options.search-scope.choose-books.prophets]: Книги пророческие
+[search-window.more-options.search-scope.choose-books.prophets.range]: Isa-Mal
+[search-window.more-options.search-scope.choose-books.wisdom]: Книги мудрости
+[search-window.more-options.search-scope.choose-books.wisdom.range]: Job-Song
+[search-window.more-options.search-scope.new_testament]: Новый Завет
+[search-window.more-options.search-scope.old_testament]: Ветхий Завет
+[search-window.more-options.search-type]: Выбрать тип поиска:
+[search-window.more-options.search-type.contains_exact_text]: Найти стихи с этим точным текстом
+[search-window.more-options.search-type.contains_similar_words]: Найти стихи с похожими словами.
+[search-window.more-options.search-type.contains_the_words]: Найти стихи, содержащие слово/слова.
+[search-window.more-options.search-type.using_special_search_terms]: Расширенный поиск с использованием специальных символов.
+[search-window.more-options.text_group_label]: Библии:
+[search-window.more-options.create_search_index]:Создать индекс поисков
+[search-window.build_index_progress_label]: Идёт создание индекса поисков....
+[search-window.first_search_prompt]: Этот техт был установлен без индекса поисков.\nСейчас индекс поисков будет создан для вас.
+[search-window.more-less-button.less]: меньше
+[search-window.more-less-button.more]: ещё
+[search-window.searchbox.tooltip]: Согласовать любое слово с окончанием ' * '. Согласовать любой символ с ' ? '
+[search-window.search-status.found_showing_all]: Найденные стихи: %1$S.
+[search-window.search-status.found_showing_some]: Найдено %3$S стихов (показано %1$S до %2$S).
+[search-window.search_label]: Найти слово или фразу:
+[search-window.search_progress_label]: Поиск %1$S...
+[search-window.stop-button]: остановить
+[search-help-window.title]: Помощь для поиска
+[search-help-window.ampersand_description]: находит стихи с обоими словами "любовь" <b>и</b> "Бог"
+[search-help-window.ampersand_example]: любовь && Бог
+[search-help-window.case_sensitivity_note]: Примечание: В поиске не различаются большие и маленькие буквы.
+[search-help-window.description_heading]: Описание
+[search-help-window.description_of_search_types]: Можно выбрать из трёх видов поиска, когда нажимаете на кнопку “Ещё”:
+[search-window.more-options.search-type-desc.contains_the_words]: Найти стихи, в которых есть все данные слова.
+[search-window.more-options.search-type-desc.contains_exact_text]: Находит точное слово, часть слова или фразы, везде, где это происходит.
+[search-window.more-options.search-type-desc.using_special_search_terms]: Вы можете использовать следующие специальные символы для построения комплексных поисков.
+[search-window.more-options.search-type-desc.contains_similar_words]: Найти стихи, в которых есть слова похожие на данные слова. Например, если вы введёте слово “стол”, все слова такие как “стул”, “сталь”, “стать”, “стола”, “столу” будут найдены.
+[search-help-window.example_heading]: Пример
+[search-help-window.exclamation_description]: находит стихи со словом "любовь", <b>но не со словом</b> "Бог"
+[search-help-window.exclamation_example]: любовь !Бог
+[search-help-window.notes_heading]: Заметки
+[search-help-window.parenthesis_description]: находит стихи со словом "великий" <b>или</b> "маленький" <b>и</b> "любовь"
+[search-help-window.parenthesis_example]: (великий || маленький) && любовь
+[search-help-window.question_mark_description]: Находит "Апостол", "престол" ... и т.д.
+[search-help-window.question_mark_example]: ???стол
+[search-help-window.question_mark_notes]: Можно использовать в любом месте слова.
+[search-help-window.quotes_description]: находит стихи с этой же фразой.
+[search-help-window.quotes_example]: "Ибо так возлюбил Бог"
+[search-help-window.star_description]: Находит любое слово, которое начинается с "небес".
+[search-help-window.star_example]: небес*
+[search-help-window.star_notes]: Невозможно использовать в начале слова.
+[search-help-window.term_heading]: Символ
+[search-help-window.tilde_description]: Находит слова, написанные примерно такими буквами "Новоходоносор"
+[search-help-window.tilde_example]: Новоходоносор~
+[search-help-window.tilde_notes]: Это великолепное средство, если вы не знаете как пишется слово.
+[search-help-window.vertical_bar_description]: находит стихи или со словом "любовь" <b>или</b> "Бог"
+[search-help-window.vertical_bar_example]: любовь || Бог
+[dialog-window.cancel]: Отмена
+[dialog-window.no]: Нет
+[dialog-window.ok]: ОК
+[dialog-window.yes]: Да
+[error-reporter.dont_show_this_again]: Больше не показывать это окно.
+[error-reporter.error_detection_message]: Обнаружена проблема.\nСообщить об этой проблеме нажмите “%1$S”.
+[add-repository-module.error]: Ошибка
+[add-repository-module.repositoryTreeTitle]: Источники Модулей
+[add-repository-module.internetPromptTitle]: Скачать Библию с Интернета?
+[add-repository-module.internetMessage]: Вы хотите скачать Библейские тексты из интернета.\nЭти ваши действия в интернете могут быть легко прослежены посторонними лицами.\nЕсли это вас беспокоит, нажатием кнопки “Нет” вы можете отменить загрузку. 
+[add-repository-module.rememberMyChoice]: Запомнить мой выбор?
+[add-repository-module.wishToContinue]: Вы действительно хотите это сделать?
+[add-repository-module.moduleType_SimpleText]: Текст
+[add-repository-module.moduleType_Audio]: Аудио
+[add-repository-module.moduleType_Texts]: Библия
+[add-repository-module.moduleType_Comms]: Комментарий
+[add-repository-module.moduleType_Dicts]: Словарь
+[add-repository-module.moduleType_Genbks]: Общие Книги
+[bookmark-window.example_folder]: Примеры закладок
+[bookmark-window.example_subFolder_1]: Познание Бога
+[bookmark-window.example_subFolder_2]: Родится свыше
+[bookmark-window.example_description]: Вы можете создать свои личные заметки и закладки.
+[choose-font-dialog.chooseModule_label]: Модули
+[choose-font-dialog.fontsAndColors_label]: Шрифты и цвета
+[choose-font-dialog.textSize_label]: Размер
+[choose-font-dialog.textColor_label]: Цвета
+[choose-font-dialog.backgroundColor_label]: Цвета 2
+[choose-font-dialog.lineHeight_label]: Высота строки
+[choose-font-dialog.makeDefault_label]: Использовать это в качестве по умолчанию
+[choose-font-dialog.restoreDefault_label]: Восстановить модуль по умолчанию
+[choose-font-dialog.restoreAllDefaults_label]: Восстановить все значения по умолчанию
+[locale_direction]: ltr
