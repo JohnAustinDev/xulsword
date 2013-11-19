@@ -52,14 +52,12 @@ PHP_METHOD(phpsword, __construct)
 {
   char *path;
   int lpath;
-  char *localedir = NULL;
+  char *localedir;
   int llocaledir;
   xulsword *sword = NULL;
   zval *object = getThis();
 
-	// the localedir argument is not required at the moment to keep API unchanged
-	//if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &path, &lpath, &localedir, &llocaledir) == FAILURE) {
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &path, &lpath) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &path, &lpath, &localedir, &llocaledir) == FAILURE) {
       RETURN_NULL();
   }
 
@@ -244,8 +242,7 @@ PHP_METHOD(phpsword, convertLocation)
   RETURN_EMPTY_STRING();
 }
 
-// getIntroductions has been left as getBookIntroduction to keep API unchanged
-PHP_METHOD(phpsword, getBookIntroduction)
+PHP_METHOD(phpsword, getIntroductions)
 {
   xulsword *sword;
   sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -525,7 +522,7 @@ function_entry sword_methods[] = {
     PHP_ME(phpsword,  getMaxVerse,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getVerseSystem,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  convertLocation,   NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(phpsword,  getBookIntroduction,   NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getIntroductions,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getDictionaryEntry,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getAllDictionaryKeys,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getGenBookChapterText,   NULL, ZEND_ACC_PUBLIC)
