@@ -54,10 +54,12 @@ if (-e $LOCALECODE) {remove_tree($LOCALECODE);}
 &read_UI_Files($LOCALE, \%UIDescValue);
 
 # overwrite stock locale with supplemental UI file (having perhaps: "Produced By")
-$supLOC = "$MKSDEV/$LOCALE/UI-$LOCALE.txt";
-if (-e $supLOC) {
-	&Log("INFO: Copying supplemental $LOCALE locale, $supLOC\n");
-	&read_UI_File($supLOC, \%UIDescValue);
+if ($LOCALEDIR =~ /^\Q$MKDEV/) {
+	$supLOC = "$MKSDEV/$LOCALE/UI-$LOCALE.txt";
+	if (-e $supLOC) {
+		&Log("INFO: Copying supplemental $LOCALE locale, $supLOC\n");
+		&read_UI_File($supLOC, \%UIDescValue);
+	}
 }
 
 # read the MAP contents into memory
@@ -110,8 +112,10 @@ if (-e $localeFiles || -d $localeFiles) {
   &Log("INFO: Copying locale-files of \"$LOCALE\", $localeFiles\n");
   &copy_dir("$localeFiles", "$LOCALECODE/xulsword", "", "\.svn");
 }
-$supLOC = "$MKSDEV/$LOCALE/locale-files";
-if (-e $supLOC) {
-	&Log("INFO: Copying supplemental $LOCALE locale-files, $supLOC\n");
-  &copy_dir("$supLOC", "$LOCALECODE/xulsword", "", "\.svn");
+if ($LOCALEDIR =~ /^\Q$MKDEV/) {
+	$supLOC = "$MKSDEV/$LOCALE/locale-files";
+	if (-e $supLOC) {
+		&Log("INFO: Copying supplemental $LOCALE locale-files, $supLOC\n");
+	  &copy_dir("$supLOC", "$LOCALECODE/xulsword", "", "\.svn");
+	}
 }
