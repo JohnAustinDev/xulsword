@@ -111,7 +111,7 @@ if (-e $localeFiles || -d $localeFiles) {
   &copy_dir("$localeFiles", "$LOCALECODE/xulsword", "", "\.svn");
 }
 $supLOC = "$MKSDEV/$LOCALE/locale-files";
-if ($LOCALE eq "en-US" && -e $supLOC) {
+if (-e $supLOC) {
 	&Log("INFO: Copying supplemental $LOCALE locale-files, $supLOC\n");
   &copy_dir("$supLOC", "$LOCALECODE/xulsword", "", "\.svn");
 }
