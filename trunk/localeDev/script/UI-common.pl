@@ -234,8 +234,10 @@ sub translateValue($$$$) {
   my $tloc = shift;
   my $ffdir = shift;
 
-  my $f_ffpath = &localeDirectory($floc)."/../".$ffdir;
-  my $t_ffpath = &localeDirectory($tloc)."/../".$ffdir;
+  my $f_ffpath = &localeDirectory($floc);
+  $f_ffpath =~ s/\Q$floc$/$ffdir/;
+  my $t_ffpath = &localeDirectory($tloc);
+  $t_ffpath =~ s/\Q$tloc$/$ffdir/;
 
   # look for a matching value in from-locale and return its file-entry
   if (!-e "$f_ffpath/$floc") {
@@ -274,8 +276,10 @@ sub xtrans($$$$$$) {
   my $tloc = shift;
   my $ffdir = shift;
 
-  my $f_ffpath = &localeDirectory($floc)."/../".$ffdir;
-  my $t_ffpath = &localeDirectory($tloc)."/../".$ffdir;
+  my $f_ffpath = &localeDirectory($floc);
+  $f_ffpath =~ s/\Q$floc$/$ffdir/;
+  my $t_ffpath = &localeDirectory($tloc);
+  $t_ffpath =~ s/\Q$tloc$/$ffdir/;
 
   my $v2 = "";
   if (!opendir(CDIR, $dir)) {&Log("ERROR: Could not open \"$dir\".\n"); die;}
@@ -512,10 +516,12 @@ sub readLocaleOverrideFile($$$$\%) {
 
 sub localeDirectory($) {
 	my $subdir = shift;
-	if (-e "$MKDEV/$subdir") {return "$MKDEV/$subdir";}
-	if (-e "$MKSDEV/$subdir") {return "$MKSDEV/$subdir";}
-	&Log("ERROR: entry locale directory \"$subdir\" not found.\n");
-	return "$MKDEV/$subdir";
+	my $path1 = "$MKDEV/$subdir";
+	my $path2 = "$MKSDEV/$subdir";
+	if (-e $path1) {return $path1;}
+	elsif (-e $path2) {return $path2;}
+	else {&Log("ERROR: entry locale directory \"".$path1."\" not found.\n");}
+	return $path1;
 }
 
 # copies a directory recursively

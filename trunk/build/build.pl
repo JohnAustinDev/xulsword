@@ -562,8 +562,6 @@ sub includeLocales($$\@$) {
   &Log("----> Processing requested locales.\n");
   foreach my $loc (@locales) {
 
-		my $ldir = &localeDirectory($loc);
-
     # create locale jar file
     if (!$haveLocale{$loc}) {
       &createLocale($loc);
@@ -890,8 +888,10 @@ sub packageFFExtension($$) {
 
 sub localeDirectory($) {
 	my $subdir = shift;
-	if (-e "$TRUNK/localeDev/$subdir") {return "$TRUNK/localeDev/$subdir";}
-	if (-e "$XulswordExtras/localeDev/$subdir") {return "$XulswordExtras/localeDev/$subdir";}
-	&Log("ERROR: entry locale directory \"$TRUNK/localeDev/$subdir\" not found.\n");
-	return "$TRUNK/localeDev/$subdir";
+	my $path1 = "$TRUNK/localeDev/$subdir";
+	my $path2 = "$XulswordExtras/localeDev/$subdir";
+	if (-e $path1) {return $path1;}
+	elsif (-e $path2) {return $path2;}
+	else {&Log("ERROR: entry locale directory \"".$path1."\" not found.\n");}
+	return $path1;
 }
