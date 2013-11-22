@@ -98,6 +98,8 @@ const APPLICATIONID="xulsword@xulsword.org";
 const FIREFOXUID="ec8030f7-c20a-464f-9b0e-13a3a9e97384";
 const VERSIONPAR = "xulswordVersion";
 const LOCALE_SEARCH_SYMBOLS = {SINGLECharWildCard:"?", MULTICharWildCard:"*", AND:"&&", OR:"||", NOT:"!", SIMILAR:"~", GROUPSTART:"(", GROUPEND:")", QUOTESTART:"\"", QUOTEEND:"\""};
+const AUDEXT = (OPSYS == "Windows" ? ["mp3", "ogg"]:["ogg", "mp3"]);
+const AUDMIME = {mp3:"audio/mpeg", ogg:"audio/ogg"};
 
 
 // TextClasses is an object used to parse information from element classes

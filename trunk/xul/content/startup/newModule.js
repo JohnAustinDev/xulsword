@@ -18,7 +18,6 @@
 
 const SEP = ",";
 const TIMEOUT = 25;
-const AUDEXT = (OPSYS == "Windows" ? ["mp3", "ogg"]:["ogg", "mp3"]);
 const XSMODEXT = ["zip", "xsm"];
 const XSBMEXT = ["txt", "xsb"];
 const XSVIDEXT = ["wmv", "mov", "mpeg", "mpg", "avi"];
@@ -730,7 +729,7 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
       return {reset:HARDRESET, success:true, remove:false};
     }
   }
-  
+
   try {inflated.create(inflated.NORMAL_FILE_TYPE, FPERM);}
   catch (er) {
     //don't log this because it commonly happens when parent dir was just deleted and is not ready to receive children. HARDRESET takes care if this...

@@ -1,4 +1,4 @@
-# MIN_XULSWORD_VERSION:3.7, MAX_XULSWORD_VERSION:3.50
+# MIN_XULSWORD_VERSION:3.8, MAX_XULSWORD_VERSION:3.50
 # 
 # A "*" in a file-entry and/or description is wildcard.
 # ?? description prefix means file-entry and value are optional.
@@ -630,6 +630,10 @@ xulsword/search/search.properties:GROUPSTART                             =??sear
 xulsword/search/search.properties:GROUPEND                               =??search-window.search_symbols.GROUP_END
 xulsword/search/search.properties:QUOTESTART                             =??search-window.search_symbols.QUOTE_START
 xulsword/search/search.properties:QUOTEEND                               =??search-window.search_symbols.QUOTE_END
+
+# New chooseFont UI (xulsword 3.8+)
+xulsword/audio/audio.properties:error                                    = add-repository-module.error
+xulsword/audio/audio.properties:audioFormatNotSupported                  = audio.formatNotSupported
 
 # New chooseFont UI (xulsword 3.7+)
 xulsword/xulsword.dtd:fontsAndColors.label                               =  choose-font-dialog.fontsAndColors_label
