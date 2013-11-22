@@ -125,7 +125,7 @@ function refreshAudioCatalog() {
 					var ext = null
 					for (var i=0; i<AUDEXT.length; i++) {
 						var re = new RegExp("\\." + escapeRE(AUDEXT[i]) + "$", "i");
-						if ((re).test(chapter.leafName)) ext = AUDEXT[i]; break;
+						if ((re).test(chapter.leafName)) {ext = AUDEXT[i]; break;}
 					}
 					if (!ext) continue;
 					// currently Linux does not play mp3...
