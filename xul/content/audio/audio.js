@@ -155,7 +155,7 @@ function refreshAudioCatalog() {
 						
 					for (var i=0; i<mods.length; i++) {
 						if (Tab[mods[i]].audio.hasOwnProperty(abook + "_" + achap)) {
-							jsdump("WARN: Multiple audio files for \"" + mods[i] + "_" + abook + "_" + achap + "\"");
+							jsdump("WARN: Multiple audio files for \"" + mods[i] + ":" + abook + "." + achap + "\"");
 						}
 						Tab[mods[i]].audio[abook + "_" + achap] = chapter;
 					}
@@ -194,7 +194,7 @@ function updateBibleNavigatorAudio() {
 /************************************************************************
  * Audio player functions
  ***********************************************************************/ 
-  
+
 function beginAudioPlayer() {
 	jsdump("beginAudioPlayer:" + MainWindow.Player.version + ", " + MainWindow.Player.chapter + " " + MainWindow.Player.book);
   document.getElementById("historyButtons").hidden = true;
@@ -214,10 +214,39 @@ function beginAudioPlayer() {
   
   jsdump("Have audio:" + audiofile.path + "\n");
   
-  var audio = document.getElementById("player").getElementsByTagName("audio")[0];
+	var audio = document.getElementById("player").getElementsByTagName("audio")[0];
+
+	// is this file playable? If not then get one that is playable...
+	var testfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+	for (var i=0; i<AUDEXT.length; i++) {
+		var myext = (audiofile.leafName.match(/\.([^\.]+)$/)[1].toLowerCase());
+		if (audio.canPlayType(AUDMIME[myext]) !== "") {break;}
+		testfile.initWithPath(lpath(audiofile.path.replace(/\.([^\.]+)$/, "." + AUDEXT[i])));
+		if (testfile.exists()) audiofile = testfile;
+	}
+
   audio.src = "file://" + audiofile.path;
+
+	Player.canPlay = false; // oncanplay will set this to true
+
   audio.play();
+
   document.getElementById("player").hidden = false;
+
+	window.setTimeout("if(!Player.canPlay) reportPlayerError();", 3000);
+}
+
+function reportPlayerError() {
+	Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
+  var result = {};
+	var bundle = getCurrentLocaleBundle("audio/audio.properties");
+  var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result,
+      fixWindowTitle(bundle.GetStringFromName("error")),
+      bundle.GetStringFromName("audioFormatNotSupported"),
+      DLGALERT,
+      DLGOK);
+
+	endAudioPlayer();
 }
 
 function emptyAudioPlayer() {

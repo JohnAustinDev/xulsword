@@ -739,8 +739,13 @@ function applyConfFile(file, repoUrl) {
     ARMU.deleteResource(newModRes)
     return;
   }
-  // currently Linux does not play mp3... so request ogg instead
-  if (OPSYS == "Linux" && (/^http\:\/\/.*audio\.htm\?/).test(dataPath)) dataPath += "&ogg=1"; 
+
+  // Firefox's native mp3 playability is dependant on op-sys, and is spotty among Windows
+	// versions, service packs etc. etc. etc. so xulsword will always ask for ogg. The only
+	// downside is that if audio is exported, it will be ogg, which some portable players
+	// don't handle natively. But this is a minor concession compared to playability!
+  if ((/^http\:\/\/.*audio\.htm\?/).test(dataPath)) dataPath += "&ogg=1";
+
   var moduleUrl;
   if ((/^(\.|\/)/).test(dataPath)) {
     dataPath = dataPath.replace(/^\.*\//, "");

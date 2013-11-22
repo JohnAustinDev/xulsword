@@ -474,7 +474,7 @@
       </hbox>
       
       <hbox id="player" flex="1" align="center" pack="start" hidden="true">
-        <audio xmlns="http://www.w3.org/1999/xhtml" controls="true" onended="emptyAudioPlayer();"/>
+        <audio xmlns="http://www.w3.org/1999/xhtml" controls="true" onended="emptyAudioPlayer();" oncanplay="Player.canPlay = true;"/>
         <button id="closeplayer" label="&closeCmd.label;" oncommand="endAudioPlayer()"/>
       </hbox>
       

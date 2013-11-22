@@ -346,6 +346,7 @@
 [choose-font-dialog.makeDefault_label]: Set as default
 [choose-font-dialog.restoreDefault_label]: Restore module defaults
 [choose-font-dialog.restoreAllDefaults_label]: Restore all defaults
+[audio.formatNotSupported]: Your operating system does not provide complete support for HTML5 audio.\n\nPress the F2 key to install audio which will play on your system.";
 
 # locale_direction must be either "ltr" for left-to-right scripts, or "rtl" for right-to-left scripts
 [locale_direction]: ltr
