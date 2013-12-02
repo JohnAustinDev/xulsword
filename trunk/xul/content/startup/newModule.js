@@ -746,7 +746,8 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     return {reset:HARDRESET, success:false, remove:false};
   }
   zReader.close(aZip);
-  inflated.permissions = FPERM; // zReader sets permissions!
+  try {inflated.permissions = FPERM;} // zReader sets permissions!
+  catch (er) {jsdump("Failure changing permissions of " + inflated.path + " to " + FPERM + "\n" + er);}
 
   //Now perform any operations with the newly installed file
   switch (type) {
