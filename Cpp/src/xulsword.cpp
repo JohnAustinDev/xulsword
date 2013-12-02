@@ -617,9 +617,8 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     if (Versenumbers && (verseText.length() > 0)) {
       sprintf(Outtext, "%d", vNum);
       verseHTML.append(Outtext);
-      verseHTML.append("</sup>");
     }
-    else {verseHTML.append("</sup> ");}
+    verseHTML.append("</sup> ");
 
     verseHTML.append(verseText.c_str());
     if (isCommentary) {verseHTML.append("<br><br>");}

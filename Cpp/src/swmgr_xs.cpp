@@ -27,7 +27,7 @@
 #include "xzcomprs.h"
 #endif
 
-#include "osisreferencelinks.h";
+#include "osisreferencelinks.h"
 
 /********************************************************************
 SWMgrXS - to over-ride modules and how they are loaded
