@@ -575,6 +575,8 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     //FIRST PRINT OUT ANY HEADINGS IN THE VERSE
     AttributeValue::iterator Value;
     for (Value = module->getEntryAttributes()["Heading"]["Preverse"].begin(); Value != module->getEntryAttributes()["Heading"]["Preverse"].end(); Value++) {
+			if (module->getEntryAttributes()["Heading"][Value->first]["type"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["type"], "x-milestone")) {continue;} // WEB has <div type="x-milestone" subType="x-preverse" sID="pv3076"/> captured as titles
+			
       // if a line break is not found at or near the end of the previous verse,
       // add a line break to help insure titles have space above them.
       if (!verseHTML.length() && chapHTML.length() > 64) {
