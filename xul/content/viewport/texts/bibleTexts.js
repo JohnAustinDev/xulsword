@@ -156,8 +156,8 @@ BibleTexts = {
     var b = getLocaleBundle(l, "common/books.properties");
 
     var intro = BibleTexts.getIntroductions(mod, bk + " " + ch);
-    if (intro && (intro.length < 10 || (/^\s*$/).test(intro))) intro = "";
-    
+    if (!intro || (intro.length < 10 || (/^\s*$/).test(intro.replace(/<[^>]*>/g, "")))) intro = "";
+  
     var lt = LibSword.getModuleInformation(mod, "NoticeLink");
     if (lt == NOTFOUND) lt = "";
     else lt = lt.replace("<a>", "<a class='noticelink'>");
@@ -183,14 +183,14 @@ BibleTexts = {
 
     html +=   "<div class=\"chapinfo\">";
     html +=     "<div class=\"listenlink\" title=\"" + [bk, ch, 1, mod].join(".") + "\" hasAudio=\"false\"></div>";
-    html +=     "<div class=\"introlink\" empty=\"" + (intro ? "false":"true") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
+    html +=     "<div class=\"introlink\" title=\"" + [bk, ch, 1, mod].join(".") + "\" empty=\"" + (intro ? "false":"true") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
     html +=   "</div>";
     
     html += "</div>";
     
     html += "<div class=\"head-line-break\"></div>";
     
-    html += "<div class=\"introtext\" empty=\"" + (intro ? "false":"true") + "\">" + (intro ? intro :"") + "</div>";
+    html += "<div class=\"introtext\" title=\"" + [bk, ch, 1, mod].join(".") + "\" empty=\"" + (intro ? "false":"true") + "\">" + (intro ? intro :"") + "</div>";
    
     return html;
   },

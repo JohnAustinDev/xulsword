@@ -208,7 +208,9 @@ function PopupObj(popupobj) {
     case "introlink":
       var w = getContextWindow(elem);
       if (!w) return false;
-      res = document.getElementById("text" + w).getElementsByClassName("introtext")[0].innerHTML;
+      var intros = document.getElementById("text" + w).getElementsByClassName("introtext");
+      for (var i=0; i<intros.length; i++) {if (intros[i].title == elem.title) {break;}}
+      if (i < intros.length) res = intros[i].innerHTML;
       break;
       
     case "noticelink":
