@@ -36,19 +36,24 @@
 
 SWORD_NAMESPACE_START
 
+class OSISXHTML::TagStack : public std::stack<SWBuf> {};
+static inline void outText(const char *t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
+static inline void outText(char t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
+
 class OSISXHTMLXS : public OSISXHTML {
   private:
 		// variables unique to OSISXHTMLXS
     int footnoteNum;
 		SWBuf referenceTag;
-		std::list<SWBuf> htmlTagStack;
+		TagStack *htmlTagStack; // used to insure rendered HTML tags are all closed
 
   protected:
 		// redefinition of virtual function defined in OSISXHTML
   	BasicFilterUserData *createUserData(const SWModule *module, const SWKey *key) {
       footnoteNum = 1;
       referenceTag = "";
-      htmlTagStack.clear();
+      if (htmlTagStack) {delete htmlTagStack;}
+      htmlTagStack = new TagStack;
   		return new MyUserData(module, key);
   	}
   	
@@ -57,6 +62,7 @@ class OSISXHTMLXS : public OSISXHTML {
   	
   public:
   	OSISXHTMLXS();
+  	~OSISXHTMLXS();
   	
   	void outHtmlTag(const char * t, SWBuf &o, BasicFilterUserData *u);
   	
@@ -64,49 +70,46 @@ class OSISXHTMLXS : public OSISXHTML {
   	char processText(SWBuf &text, const SWKey *key = 0, const SWModule *module = 0);
 };
 
-class OSISXHTML::TagStack : public std::stack<SWBuf> {};
-static inline void outText(const char *t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
-static inline void outText(char t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
+OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML(), htmlTagStack(NULL) {}
+OSISXHTMLXS::~OSISXHTMLXS() {if (htmlTagStack) {delete htmlTagStack;}}
 
-OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML() {}
-
-// output the HTML tag and update the HTML tag stack so that final 
-// rendered text can have all its open tags closed
+// This is used to output HTML tags and to update the HTML tag list so 
+// that rendered text will not be returned with open tags. For this 
+// function to work as intended, only a single opening or closing tag 
+// can be included anywhere in t.
 void OSISXHTMLXS::outHtmlTag(const char * t, SWBuf &o, BasicFilterUserData *u) {
-	outText(t, o, u);
 
-	if (u->suspendTextPassThru) return;
-	
-	SWBuf tin = t;
-	
-	char *tcopy = (char *)malloc(strlen(t) + 1);
-	memcpy(tcopy, t, strlen(t));
-	SWBuf tag = strtok(tcopy, "</ >");
-	free(tcopy);
-	
-	if (tag == "br" || tag == "hr") return;
-SWLog::getSystemLog()->logDebug("tag=%s, t=%s\n", tag.c_str(), t);	
-
-	if (!strncmp(t, "</", 2)) {
-		SWBuf *mbuf;
-		// remove this tag from stack
-		list<SWBuf>::iterator it;
-		for (it = htmlTagStack.end(); it != htmlTagStack.begin(); it--) {
-			mbuf = &*it;
-SWLog::getSystemLog()->logDebug("debug=%s, %s\n", mbuf->c_str(), tag.c_str());
-			if (!strcmp(mbuf->c_str(), tag.c_str())) {
-SWLog::getSystemLog()->logDebug("popping=%s\n", mbuf->c_str());
-				htmlTagStack.erase(it);
-				break;
-			}
-		}
+	if (u->suspendTextPassThru) {
+		u->lastSuspendSegment += t;
+		return;
 	}
-	else if (!strncmp(t, "<", 1)) {
+	
+	SWBuf tag;
+	char *tcopy = new char [ strlen(t) + 1 ];
+	strcpy(tcopy, t);
+	char *tagStart = strchr(tcopy, '<');
+	if (tagStart) {tag = strtok(tagStart, "</ >");}
+	
+	bool singleton = (
+		!strcmp(tag.c_str(), "br") || 
+		!strcmp(tag.c_str(), "hr") || 
+		!strcmp(tag.c_str(), "img")
+	);
+	
+	bool keepTag = true;
+	
+	if (tagStart && *(tagStart+1) == '/' && !singleton) {
+		keepTag = (!htmlTagStack->empty() && !strcmp(htmlTagStack->top().c_str(), tag.c_str()));
+		if (keepTag) htmlTagStack->pop();
+	}
+	else if (tagStart && !singleton) {
 		// add this tag to stack
-SWLog::getSystemLog()->logDebug("pushing=%s\n", tag.c_str());
-		htmlTagStack.push_back(tag);
+		htmlTagStack->push(SWBuf(tag.c_str()));
 	}
 	
+	if (keepTag) {o += t;}
+	
+	delete(tcopy);
 }
 
 char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *module) {
@@ -187,13 +190,10 @@ char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *mod
 
 	}
 	
-	// insure all opened HTML tags are now closed
-	list<SWBuf>::iterator it;
-	for (it = htmlTagStack.end(); it != htmlTagStack.begin(); it--) {
-		text.append("</");
-		text.append(*it);
-		text.append(" ADDED=\"TRUE\"");
-		text.append(">");
+	// THE WHOLE PURPOSE OF THIS OVERRIDE FUNCTION: is to insure all opened HTML tags are closed
+	while (!htmlTagStack->empty()) {
+		text.append((SWBuf)"</" + htmlTagStack->top().c_str() + ">");
+		htmlTagStack->pop();
 	}
 
 	delete userData;
@@ -418,9 +418,15 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				      }
 				    }
 				  }
-				  buf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
+				  SWBuf tmpbuf;
+				  tmpbuf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
+				  outHtmlTag(tmpbuf, buf, u);
         }
-				if (tag.isEndTag()) {buf.appendFormatted("</%s>", referenceTag.c_str());}
+				if (tag.isEndTag()) {
+					SWBuf tmpbuf;
+					tmpbuf.appendFormatted("</%s>", referenceTag.c_str());
+					outHtmlTag(tmpbuf, buf, u);
+				}
 			}
 		}
 
@@ -746,11 +752,11 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
       			filepath.replaceBytes("\\", '/');
       
-      		outText("<div class=\"dict-image-container\">", buf, u);
-					outText("<img src=\"File://", buf, u);
+      		outHtmlTag("<div class=\"dict-image-container\">", buf, u);
+					outHtmlTag("<img src=\"File://", buf, u);
 					outText(filepath, buf, u);
 					outText("\">", buf, u);
-					outText("</div>", buf, u);
+					outHtmlTag("</div>", buf, u);
 			}
 		}
 
