@@ -1,3 +1,14 @@
+/* Standard SWORD OSIS filter CSS */
+.divineName { font-variant: small-caps; }
+.transChangeSupplied { font-style: italic; }
+.small, .sub, .sup { font-size: .83em; }
+.sub             { vertical-align: sub; }
+.sup             { vertical-align: super; }
+.indent1         { margin-left: 10px; }
+.indent2         { margin-left: 20px; }
+.indent3         { margin-left: 30px; }
+.indent4         { margin-left: 40px; }
+		
 /* Header Links */
 .navlink {
   color:blue;

@@ -46,6 +46,7 @@ class OSISXHTMLXS : public OSISXHTML {
     int footnoteNum;
 		SWBuf referenceTag;
 		TagStack *htmlTagStack; // used to insure rendered HTML tags are all closed
+		int previousConsecutiveNewlines;
 
   protected:
 		// redefinition of virtual function defined in OSISXHTML
@@ -70,7 +71,7 @@ class OSISXHTMLXS : public OSISXHTML {
   	char processText(SWBuf &text, const SWKey *key = 0, const SWModule *module = 0);
 };
 
-OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML(), htmlTagStack(NULL) {}
+OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML(), htmlTagStack(NULL), previousConsecutiveNewlines(0) {}
 OSISXHTMLXS::~OSISXHTMLXS() {if (htmlTagStack) {delete htmlTagStack;}}
 
 // This is used to output HTML tags and to update the HTML tag list so 
@@ -120,6 +121,14 @@ char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *mod
 	bool inEsc = false;
 	SWBuf lastTextNode;
 	BasicFilterUserData *userData = createUserData(module, key);
+	
+	// xulsword causes consecutiveNewlines to remain unchanged between  
+	// processText calls because xulsword calls processText on sequential 
+	// verses and concatenates each result. The only side effect of this 
+	// is that newlines at the beginning of non-sequential calls may or 
+	// may not be passed, and this is now indeterminate with xulsword.
+	MyUserData *osisUserData = dynamic_cast<MyUserData *>(userData);
+	if (osisUserData) {osisUserData->consecutiveNewlines = previousConsecutiveNewlines;}
 
 	SWBuf orig = text;
 	from = orig.getRawData();
@@ -186,15 +195,18 @@ char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *mod
 				lastTextNode.append(*from);
  			}
 			userData->supressAdjacentWhitespace = false;
+			if (osisUserData && *from != ' ') {osisUserData->consecutiveNewlines = 0;}
 		}
 
 	}
 	
-	// THE WHOLE PURPOSE OF THIS OVERRIDE FUNCTION: is to insure all opened HTML tags are closed
+	// THE MAIN PURPOSE OF THIS OVERRIDE FUNCTION: is to insure all opened HTML tags are closed
 	while (!htmlTagStack->empty()) {
 		text.append((SWBuf)"</" + htmlTagStack->top().c_str() + ">");
 		htmlTagStack->pop();
 	}
+	
+	if (osisUserData) {previousConsecutiveNewlines = osisUserData->consecutiveNewlines;}
 
 	delete userData;
 	return 0;
@@ -204,7 +216,6 @@ char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *mod
 bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData) {
 	MyUserData *u = (MyUserData *)userData;
 	SWBuf scratch;
-  if (!u->supressAdjacentWhitespace) u->consecutiveNewlines = 0; // seems to be a SWORD bug?
 	bool sub = (u->suspendTextPassThru) ? substituteToken(scratch, token) : substituteToken(buf, token);
 	if (!sub) {
   // manually process if it wasn't a simple substitution
@@ -344,11 +355,14 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-empty start tag
 				u->outputNewline(buf);
+				u->outputNewline(buf);
 			}
 			else if (tag.isEndTag()) {	// end tag
 				u->outputNewline(buf);
+				u->outputNewline(buf);
 			}
 			else {					// empty paragraph break marker
+				u->outputNewline(buf);
 				u->outputNewline(buf);
 			}
 		}
@@ -360,9 +374,11 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			// <div type="paragraph"  sID... />
 			if (tag.getAttribute("sID")) {	// non-empty start tag
 				u->outputNewline(buf);
+				u->outputNewline(buf);
 			}
 			// <div type="paragraph"  eID... />
 			else if (tag.getAttribute("eID")) {
+				u->outputNewline(buf);
 				u->outputNewline(buf);
 			}
 		}
@@ -411,6 +427,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				      if (mi==-1) {
 				        // Append current data to last tag
 				        buf.setSize(buf.length()-7); // Strip off last <\span> tag
+				        htmlTagStack->push(SWBuf("span")); // previous span has become re-opened
                 insertpoint = insertpoint - 1 - strlen(userData->module->getName()); // .module name was appended to ref
 				        buf.insert(insertpoint, "; ");
 				        buf.insert(insertpoint+2, referenceInfo.c_str());
