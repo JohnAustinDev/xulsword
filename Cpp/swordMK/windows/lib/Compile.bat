@@ -5,7 +5,10 @@ cd %~dp0
 call ..\..\..\windows\Versions.bat
 
 :: Make sure our compiler environment is configured
-if not defined VSINSTALLDIR call "%ProgramFiles%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
+if defined VSINSTALLDIR goto envdefined
+if "%ProgramFiles(x86)%" == "" set "ProgramFiles(x86)=%ProgramFiles%"
+call "%ProgramFiles(x86)%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
+:envdefined
 set INCLUDE=%INCLUDE%;%microsoftsdk%\Include
 set LIB=%LIB%;%microsoftsdk%\Lib
 
