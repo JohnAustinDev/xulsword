@@ -632,6 +632,9 @@ xulsword/search/search.properties:QUOTESTART                             =??sear
 xulsword/search/search.properties:QUOTEEND                               =??search-window.search_symbols.QUOTE_END
 
 # New chooseFont UI (xulsword 3.8+)
+xulsword/dialogs/about/about.dtd:contributors.label                      = main-window.menu-help.about.contributors_label
+
+# New chooseFont UI (xulsword 3.8+)
 xulsword/audio/audio.properties:error                                    = add-repository-module.error
 xulsword/audio/audio.properties:audioFormatNotSupported                  = audio.formatNotSupported
 

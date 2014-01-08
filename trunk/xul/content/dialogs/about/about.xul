@@ -45,44 +45,75 @@
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   
-  <script>
+  <script><![CDATA[
+
   function loaded() {
     document.getElementById("info").value = XSBundle.getFormattedString('Version', [prefs.getCharPref("Version"), prefs.getCharPref("BuildID")]);
+
+    try {var contribs = prefs.getCharPref("ContributorList");}
+    catch (er) {}
+    if (contribs) {
+			contribs = contribs.split("\n");
+			for (var i=0; i<contribs.length; i++) {
+				if (!contribs[i]) contribs[i] = " ";
+				var label = document.createElement("label");
+				label.setAttribute("value", contribs[i]);
+				document.getElementById("contributorList").appendChild(label);
+			}
+			document.getElementById("show-contributors-button").removeAttribute("hidden");
+    }
     window.sizeToContent();
   }
-  </script>
+  
+  var ContribScroll;
+  var ContribScrollTop = 9999;
+  function scrollContributors() {
+		var box = document.getElementById("contributors");
+		var list = document.getElementById("contributorList");
+		if (ContribScrollTop > box.boxObject.height + list.boxObject.height - (2*255)) ContribScrollTop = 0;
+		ContribScrollTop += 1;
+		box.scrollTop = ContribScrollTop;
+  }
+  ]]></script>
   
   <vbox id="mainbox" flex="1" showingModules="false">
 		
 		<stack flex="1">
 			
-			<vbox id="layer1" flex="1" width="500" height="375"></vbox>
-  
-			<vbox id="layer2" flex="1" pack="end" width="500" height="375">
+			<vbox id="layer1" flex="1" pack="end" width="500" height="375">
 			
-				<iframe flex="1" id="modules" src="chrome://xulsword/content/dialogs/about/about.html"/>
-			
-				<hbox align="center">
+				<hbox id="contributors">
+					<vbox id="contributorList"></vbox>
+				</hbox>
 				
-					<button id="show-modules-button" label="&more.label;" flex="1"
-						oncommand="document.getElementById('mainbox').setAttribute('showingModules', 'true');"/>
-						
+				<hbox align="center">
 					<spacer flex="1" orient="horizontal"/>
-					
 					<vbox class="help-text" flex="1" pack="start" align="center">
 						<label id="info" value=""/>
 						<label id="producedBy" value="&producedby;"/>
 					</vbox>
-					
 					<spacer flex="1" orient="horizontal"/>
-					
-					<button id="close-button" label="&closeCmd.label;" flex="1" oncommand="closeWindowXS(window);"/>
-					
 				</hbox>
+				
+			</vbox>
+  
+			<vbox id="layer2" flex="1" pack="end" width="500" height="375">
+			
+				<iframe flex="1" id="modules" src="chrome://xulsword/content/dialogs/about/about.html"/>
 				
 			</vbox>
     
     </stack>
+    
+    <hbox align="center">
+			<button id="show-modules-button" label="&more.label;" flex="1"
+				oncommand="document.getElementById('mainbox').setAttribute('showingModules', 'true');"/>
+			<spacer flex="1" orient="horizontal"/>
+			<button id="show-contributors-button" label="&contributors.label;" flex="1" hidden="true"
+				oncommand="document.getElementById('mainbox').setAttribute('showingContributors', 'true'); ContribScroll = window.setInterval('scrollContributors();', 50);"/>
+			<spacer flex="1" orient="horizontal"/>
+			<button id="close-button" label="&closeCmd.label;" flex="1" oncommand="closeWindowXS(window);"/>
+		</hbox>
     
   </vbox>
     
