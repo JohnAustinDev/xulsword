@@ -1,3 +1,7 @@
+button {
+  margin:4px 6px 6px 6px;
+}
+
 #mainbox {
   border:2px solid rgb(230,200,255);
   border-radius:8px;
@@ -18,16 +22,34 @@
 	font-size:14px;
 	color:rgb(77,37,143);
 }
-#modules {
+#modules,
+#contributors {
   display:none;
 }
-#mainbox[showingModules="true"] #modules {
+#contributors {
+	height:255px;
+	overflow:hidden;
+	margin:76px 94px 4px 94px;
+	background:rgba(0,0,0,0.5);
+	color:white;
+}
+#contributors label {
+	text-align:center;
+	width:300px;
+}
+#contributors label:first-child {
+	margin-top:255px;
+}
+#contributors label:last-child {
+	margin-bottom:255px;
+}
+
+#mainbox[showingModules="true"] #modules,
+#mainbox[showingContributors="true"] #contributors {
   display:block;
 }
-#show-modules-button,
-#close-button {
-  margin:4px 6px 6px 6px;
-}
-#mainbox[showingModules="true"] #show-modules-button {
+
+#mainbox[showingModules="true"] #show-modules-button,
+#mainbox[showingModules="true"] #show-contributors-button {
   visibility:hidden;
 }
