@@ -435,6 +435,14 @@ function checkAllRepositoriesLoaded() {
 	var mods = [];
 	ARMU.getUpdateMods(mods, false); // prefer non-xsm
 	ARMU.getUpdateMods(mods, true); // xsm wins only if it's a greater version than all non-xsm
+	
+	// remove any upgrade which has already been downloaded during this session
+	for (var i=0; i<mods.length; i++) {
+		if (ARMU.getModuleInstallerZipFile(mods[i]).exists()) {
+			mods.splice(i,1);
+			i--;
+		}
+	}
 
 	// begin updating texts which need it
 	if (mods.length) {

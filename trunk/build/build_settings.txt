@@ -55,3 +55,7 @@ Set IncludeIndexes=false
 
 # SHOULD THE INSTALLER INSTALL THE HEBREW FONT? (true or false)
 Set IncludeHebrewFont=false
+
+# CONTRIBUTOR'S LISTING
+Set (prefs.js):extensions.xulsword.ContributorList=Special Thanks To:\nTroy Griffitts and the SWORD Project\n\nDevelopers:\nJohn Austin\nDavid Booth\n\nContributors:\nDavid Haslam\nWolfgang Stradner
+
