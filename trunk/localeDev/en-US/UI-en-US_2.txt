@@ -96,6 +96,9 @@
 [books.John_variations]: Jn,Jo,Jhn
 [books.Ezek_variations]: EZK
 
+# Psalm chapter headings
+[main-window.bible.psalm-heading]: Psalm-%1$S
+
 # Command Keys 
 [main-window.menu-file.print.ck]: P
 [main-window.menu-file.print_passage.ck]: R

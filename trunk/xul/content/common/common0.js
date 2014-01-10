@@ -772,10 +772,8 @@ function fixWindowTitle(title) {
 
 function getLocalizedChapterTerm(shortBookName, chapternumber, bookbundle, locale) {
   var chapTerm;
-  if (shortBookName=="Ps") {
-    try {chapTerm = bookbundle.formatStringFromName("PsalmTerm",[dString(chapternumber, locale)], 1);}
-    catch (er) {chapTerm=null;}
-  }
+  try {chapTerm = bookbundle.formatStringFromName(shortBookName + "_Chaptext",[dString(chapternumber, locale)], 1);}
+  catch (er) {chapTerm=null;}
   if (!chapTerm) chapTerm = bookbundle.formatStringFromName("Chaptext",[dString(chapternumber, locale)], 1);
   return chapTerm;
 }
