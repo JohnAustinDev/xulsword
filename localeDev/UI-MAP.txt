@@ -422,6 +422,7 @@ xulsword/common/books.properties:HideIntroLink                           =  main
 xulsword/common/books.properties:IntroLink                               =  main-window.bible.chapter-1-heading.introduction
 xulsword/dialogs/printPassage/printPassage.dtd:IntroLink                 =  main-window.bible.chapter-1-heading.introduction
 xulsword/common/books.properties:Chaptext                                =  main-window.bible.chapter-heading.chapter
+xulsword/common/books.properties:Ps_Chaptext                             =??main-window.bible.psalm-heading
 xulsword/xulsword.properties:NextChaptext                                =  main-window.bible.next_link
 xulsword/xulsword.properties:PrevChaptext                                =  main-window.bible.previous_link
 xulsword/xulsword.properties:LangSelectMsg                               =  main-window.change_language_help_message

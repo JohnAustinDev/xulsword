@@ -12,7 +12,7 @@ $LOCALEDIR = &localeDirectory($LOCALE);
 $LOCALECODE = "$LOCALEDIR/locale";
 $SHORTCUT = "(\\.accesskey|\\.commandkey|\\.keybinding|\\.key|\\.sc|\\.sh|\\:LanguageMenuAccKey|\\:SearchAccKey)\$";
 
-if (!-e $LOCALEDIR) {make_path($LOCALEDIR);}
+if (!-e $LOCALEDIR) {&Log("ERROR UI-common.pl: Locale directory does not exist \"$LOCALEDIR\".\n"); die;}
 
 # Get locale information
 $IGNORE_SHORTCUT_KEYS = 0;
