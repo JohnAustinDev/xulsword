@@ -29,7 +29,7 @@
   
   <script>
     var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
-    var MainWindow = watcher.getWindowByName("xulsword-window", window);
+    var XSNS_MainWindow = watcher.getWindowByName("xulsword-window", window);
     window.name = (frameElement ? frameElement.ownerDocument.defaultView.name:"print") + ".viewportFrame";
   </script>
   

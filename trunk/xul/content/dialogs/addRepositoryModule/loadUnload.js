@@ -310,7 +310,7 @@ function onLoad() {
     this.removeAttribute("editing");
   };
   
-  window.setTimeout("checkInternetPermission();", 1);
+  window.setTimeout(function () {checkInternetPermission();}, 1);
 }
 
 function checkInternetPermission() {
@@ -409,7 +409,7 @@ function loadRepositories(resourceArray, moduleDataAlreadyDeleted) {
 
   if (!moduleDataAlreadyDeleted) ARMU.deleteModuleData(repoUrlArray);
   
-  ManifestCheckInterval = window.setInterval("checkAllRepositoriesLoaded();", 200);
+  ManifestCheckInterval = window.setInterval(checkAllRepositoriesLoaded, 200);
   
   ProgressBar.max = 0;
   ProgressBar.value = 0;
@@ -602,7 +602,7 @@ function startProcessingNextRepository() {
     var res = RepositoryArray[RepositoryIndex].resource;
     ARMU.setStatus(RPDS, res, ON, "green");
     applyRepositoryLocalConfs(res);
-    window.setTimeout("ManifestsLoading--;", 1);
+    window.setTimeout(function () {ManifestsLoading--;}, 1);
 
     startProcessingNextRepository();
     return;

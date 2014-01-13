@@ -17,13 +17,13 @@
 */
 
 // IMPORTANT INFO ABOUT THIS FILE:
-// The functions in common0.js may be used even before the MainWindow has 
+// The functions in common0.js may be used even before the XSNS_MainWindow has 
 // loaded. But NO FUNCTION IN THIS FILE may use LibSword or call another 
 // function which uses LibSword. Otherwise there will be unhandled excep-
 // tions. This file also assigns global constants and it should be loaded
 // into every scope which uses any common Javascript code. Naturally, 
 // functions in this file must properly handle any exceptions which may
-// arise from unset MainWindow globals.
+// arise from unset XSNS_MainWindow globals.
 
 var prefs, rootprefs;
 var IsPortable;
@@ -654,6 +654,7 @@ function getPrefOrCreate(prefName, prefType, defaultValue) {
 
 function getDataUI(prop) {
   var d = document.getElementById("ui." + prop);
+  if (!d) d = document.getElementById("xulsword-ui." + prop);
   
   if (!d) {
     if (typeof("jsdump") != "undefined") jsdump("WARNING: getDataUI() failed to locate data: " + prop);
@@ -782,7 +783,7 @@ var DisplayNumeral = new Object();
 
 // converts any normal digits in a string or number into localized digits
 function dString(x, locale) {
-  try {var cache = MainWindow.DisplayNumeral;}
+  try {var cache = XSNS_MainWindow.DisplayNumeral;}
   catch (er) {cache = DisplayNumeral;}
   
   if (!locale) locale = getLocale();
@@ -808,7 +809,7 @@ function dString(x, locale) {
 
 // converts any localized digits in a string into normal digits
 function iString(x, locale) {
-  try {var cache = MainWindow.DisplayNumeral;}
+  try {var cache = XSNS_MainWindow.DisplayNumeral;}
   catch (er) {cache = DisplayNumeral;}
   
   if (!locale) locale = getLocale();
@@ -940,12 +941,12 @@ function createDynamicCssClasses(configProp) {
 		}
 	}
 	
-	if (typeof(MainWindow) != "undefined" && MainWindow && 
-			typeof(MainWindow.ModuleConfigDefault) != "undefined" && MainWindow.ModuleConfigDefault) {
-		ex = getCSS(MainWindow.ModuleConfigDefault[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+	if (typeof(XSNS_MainWindow) != "undefined" && XSNS_MainWindow && 
+			typeof(XSNS_MainWindow.ModuleConfigDefault) != "undefined" && XSNS_MainWindow.ModuleConfigDefault) {
+		ex = getCSS(XSNS_MainWindow.ModuleConfigDefault[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
 		if (ex) sheet.deleteRule(ex.index);
-		sheet.insertRule(MainWindow.ModuleConfigDefault[configProp], sheet.cssRules.length);
-//jsdump(MainWindow.ModuleConfigDefault[configProp]);
+		sheet.insertRule(XSNS_MainWindow.ModuleConfigDefault[configProp], sheet.cssRules.length);
+//jsdump(XSNS_MainWindow.ModuleConfigDefault[configProp]);
   }
   
   if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {

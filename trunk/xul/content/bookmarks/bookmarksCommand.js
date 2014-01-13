@@ -477,7 +477,7 @@ var BookmarksCommand = {
 
   createNewBookmark: function (aTarget)
   {
-    var t = MainWindow.getCommandTarget();
+    var t = XSNS_MainWindow.getCommandTarget();
     
     var resource = ResourceFuns.createNewResource(
       ["Bookmark", null, null, t.bk, t.ch, t.vs, t.lv, t.mod]
@@ -941,7 +941,7 @@ var BookmarksController = {
       BookmarksCommand.sortByName(aSelection);
       break;
     case "cmd_bm_pageSetup":
-      MainWindow.document.getElementById("cmd_pageSetup").doCommand();
+      XSNS_MainWindow.document.getElementById("cmd_pageSetup").doCommand();
       break;
     case "cmd_bm_print":
     case "cmd_bm_printPreview":
@@ -952,7 +952,7 @@ var BookmarksController = {
         bodyHTML:BookmarkFuns.getFormattedBMdata(resource0, true),
         callback:BookmarksCommand
       };
-      MainWindow.handlePrintCommand(aCommand, target);
+      XSNS_MainWindow.handlePrintCommand(aCommand, target);
       break;
     default: 
       jsdump("Bookmark command "+aCommand+" not handled!\n");

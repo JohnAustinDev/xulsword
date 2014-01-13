@@ -146,16 +146,16 @@ ARMI = {
 		ProgressBar.hidden = false;
   
 		ARMD.ModulesQuerying = ARMD.ModulesQuerying.concat(mods);
-		if (!ARMD.QueryCheckInterval) ARMD.QueryCheckInterval = window.setInterval("ARMD.checkAllQueriesAreCompleted();", 200);
+		if (!ARMD.QueryCheckInterval) ARMD.QueryCheckInterval = window.setInterval(function () {ARMD.checkAllQueriesAreCompleted();}, 200);
 		
 		ARMD.queryNextModule();
 	},
 
 	installModules: function() {
 
-		MainWindow.AddRepositoryModules = ARMU.getInstallableModules();
+		XSNS_MainWindow.AddRepositoryModules = ARMU.getInstallableModules();
 		
-		MainWindow.installModuleArray(MainWindow.finishAndHandleReset, MainWindow.AddRepositoryModules);
+		XSNS_MainWindow.installModuleArray(XSNS_MainWindow.finishAndHandleReset, XSNS_MainWindow.AddRepositoryModules);
 		
 		closeWindowXS(window);
 	},

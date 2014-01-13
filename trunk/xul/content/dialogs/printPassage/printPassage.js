@@ -44,7 +44,7 @@ var PrintPassage = {
     this.FromBook = document.getAnonymousElementByAttribute(this.FromChooser, "anonid", "book");
   
     var startBible = ViewPort.firstDisplayBible();
-    var startLocation = MainWindow.Location.getLocation(startBible);
+    var startLocation = XSNS_MainWindow.Location.getLocation(startBible);
     
     this.FromChooser.location = startLocation;
     this.FromChooser.version = startBible;
@@ -78,7 +78,7 @@ var PrintPassage = {
         this.createTextHTML();
       }
       
-      window.setTimeout("PrintPassage.handlePrintCommand('" + command + "');", 100);
+      window.setTimeout(function () {PrintPassage.handlePrintCommand(command);}, 100);
       return;
     }
     this.creatingTextHTML = false;
@@ -90,7 +90,7 @@ var PrintPassage = {
           callback:this
         }
       
-    MainWindow.handlePrintCommand(command, target);
+    XSNS_MainWindow.handlePrintCommand(command, target);
     
     this.textHTML = "";
   },
@@ -156,7 +156,7 @@ var PrintPassage = {
     // start the creation loop which will create a chapter's HTML, update
     // the progress bar, and then either quit (if counters are complete) or
     // else schedule a timeout to get the next chapter.
-    window.setTimeout("PrintPassage.getChapterHTML();",1);
+    window.setTimeout(function () {PrintPassage.getChapterHTML();}, 1);
     
   },
 
@@ -187,7 +187,7 @@ var PrintPassage = {
     }
     else this.Next.ch++;
     
-    window.setTimeout("PrintPassage.getChapterHTML();", 1);
+    window.setTimeout(function () {PrintPassage.getChapterHTML();}, 1);
   },
   
   getPassageDisplay: function(mod, loc) {

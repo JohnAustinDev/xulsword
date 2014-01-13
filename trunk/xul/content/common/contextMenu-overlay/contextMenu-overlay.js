@@ -303,7 +303,7 @@ jsdump("readDataFromElement:" + uneval(info));
           var aItem = BM.RDF.GetResource(decodeURIComponent(val));
           var aParent = ResourceFuns.getParentOfResource(aItem, BMDS);
           if (aParent) {
-            targs.bookmark = MainWindow.BookmarksUtils.getSelectionFromResource(aItem, aParent);
+            targs.bookmark = XSNS_MainWindow.BookmarksUtils.getSelectionFromResource(aItem, aParent);
           }
         }
         val = null;
@@ -333,11 +333,11 @@ var ContextMenuController = {
 
       case "cmd_bm_properties":
       case "cmd_bm_delete":
-        MainWindow.BookmarksController.doCommand(cmd, ContextMenu.target.bookmark);
+        XSNS_MainWindow.BookmarksController.doCommand(cmd, ContextMenu.target.bookmark);
         break;
         
       default:
-        MainWindow.XulswordController.doCommand(cmd, ContextMenu.target);
+        XSNS_MainWindow.XulswordController.doCommand(cmd, ContextMenu.target);
     }
   },
   
@@ -347,11 +347,11 @@ var ContextMenuController = {
       case "cmd_bm_properties":
       case "cmd_bm_delete":
         if (!ContextMenu.target.bookmark) return false;
-        return MainWindow.BookmarksController.isCommandEnabled(cmd, ContextMenu.target.bookmark);
+        return XSNS_MainWindow.BookmarksController.isCommandEnabled(cmd, ContextMenu.target.bookmark);
         break;
     }
 
-    return MainWindow.XulswordController.isCommandEnabled(cmd, ContextMenu.target);
+    return XSNS_MainWindow.XulswordController.isCommandEnabled(cmd, ContextMenu.target);
   },
   
   supportsCommand: function(cmd) {

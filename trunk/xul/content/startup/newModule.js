@@ -305,9 +305,9 @@ function startImport2() {
   // module is xulsword module, but contained nothing that needed to be, or could be, installed. Show progress meter so user knows it at least tried!
   else {
     if (typeof(ProgressMeter) != "undefined") {
-      window.setTimeout("if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute('value', 90);", 500);
-      window.setTimeout("if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute('value', 100);", 1500);
-      window.setTimeout("closeWindowXS(ProgressMeter);", 2000);
+      window.setTimeout(function () {if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 90);}, 500);
+      window.setTimeout(function () {if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);}, 1500);
+      window.setTimeout(function () {closeWindowXS(ProgressMeter);}, 2000);
     }
     ModuleCopyMutex=false;
   } 
@@ -560,7 +560,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
 
 var CopyAnotherFile;
 function copyZipFilesTO() {
-  CopyAnotherFile = window.setTimeout(copyZipFiles, TIMEOUT);
+  CopyAnotherFile = window.setTimeout(function () {copyZipFiles();}, TIMEOUT);
 }
 
 function copyZipFiles() {
@@ -588,7 +588,7 @@ function copyZipFiles() {
 }
 
 function copyRegularFilesTO() {
-  CopyAnotherFile = window.setTimeout("copyRegularFiles();", TIMEOUT);
+  CopyAnotherFile = window.setTimeout(function () {copyRegularFiles();}, TIMEOUT);
 }
 
 function copyRegularFiles() {
@@ -818,7 +818,7 @@ function finishAndStartXulSword2() {
 function finish(isFinalPass) {
   if (typeof(LibSword) != "undefined" && !LibSword.loadFailed && LibSword.paused) LibSword.resume();
   if (ProgressMeterLoaded && typeof(ProgressMeter) != "undefined" && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
-  if (typeof(ProgressMeter) != "undefined") window.setTimeout("closeWindowXS(ProgressMeter);", 100);
+  if (typeof(ProgressMeter) != "undefined") window.setTimeout(function () {closeWindowXS(ProgressMeter);}, 100);
   if (GotoAudioFile) audioDirPref(AudioDestination);
   if (!isFinalPass && ResetNeeded>NORESET) saveArraysToPrefs();
 
@@ -841,45 +841,45 @@ function handleResetRequest() {
   case NORESET: // program continues running and needs no reload or restart
     if (PreMainWin) writeManifest(NewLocales, NewModules, NewFonts, true);
     else {
-      if (!MainWindow || !MainWindow.LibSword || !MainWindow.Tabs.length) {
+      if (!XSNS_MainWindow || !XSNS_MainWindow.LibSword || !XSNS_MainWindow.Tabs.length) {
         restartApplication(false);
         break;
       }
       
       //NOTE: In this case a manifest file for new mods etc. will not be written!
-      if (GotoVideoFile) MainWindow.createHelpVideoMenu();
+      if (GotoVideoFile) XSNS_MainWindow.createHelpVideoMenu();
       if (GotoBookmarkFile) {
-        MainWindow.focus();
-        MainWindow.setTimeout("document.getElementById('menu_BookmarksPopup').showPopup();", 500);
+        XSNS_MainWindow.focus();
+        XSNS_MainWindow.setTimeout(function () {document.getElementById("menu_BookmarksPopup").showPopup();}, 500);
       }
       if (GotoAudioFile) {
 				refreshAudioCatalog();
 				updateBibleNavigatorAudio();
         var info = decodeAudioFileName(GotoAudioFile.path);
         var modsUsingAudio = getModsUsingAudioCode(info.basecode);
-				MainWindow.Player.version = modsUsingAudio[0];
-				MainWindow.Player.chapter = info.chapter;
-				MainWindow.Player.book = info.book;
-        window.setTimeout('MainWindow.beginAudioPlayer();', 1);
+				XSNS_MainWindow.Player.version = modsUsingAudio[0];
+				XSNS_MainWindow.Player.chapter = info.chapter;
+				XSNS_MainWindow.Player.book = info.book;
+        window.setTimeout(function () {XSNS_MainWindow.beginAudioPlayer();}, 1);
       }
       if (modsUsingAudio && modsUsingAudio[0]) {
-        MainWindow.showLocation(modsUsingAudio[0], info.book, Number(info.chapter), 1, 1);
+        XSNS_MainWindow.showLocation(modsUsingAudio[0], info.book, Number(info.chapter), 1, 1);
       }
-      else {MainWindow.Texts.update(SCROLLTYPETOP, HILIGHTNONE);}
+      else {XSNS_MainWindow.Texts.update(SCROLLTYPETOP, HILIGHTNONE);}
     }
     break;
   case SOFTRESET: // program needs to reload all SWORD modules
     jsdump("Initiating SOFTRESET");
-    if (window.name == "xulsword-window") window.setTimeout("window.location.reload();", 500);
+    if (window.name == "xulsword-window") window.setTimeout(function () {window.location.reload();}, 500);
     else {
       WillRestart = true;
-      window.setTimeout("restartApplication();", 500);
+      window.setTimeout(function () {restartApplication();}, 500);
     }
     break;
   case HARDRESET: // program needs to quit and restart from nothing
     jsdump("Initiating HARDRESET");
     WillRestart = true;
-    window.setTimeout("restartApplication();", 500);
+    window.setTimeout(function () {restartApplication();}, 500);
     break;
   }
 }
@@ -1475,7 +1475,7 @@ function restartApplication(promptBefore) {
   if (WindowsFontInstallScripts.length) {
     for (var i=0; i<WindowsFontInstallScripts.length; i++) {
       if (WindowsFontInstallScripts[i] && WindowsFontInstallScripts[i].exists()) {
-        window.setTimeout("restartApplication(" + (promptBefore ? "true":"false") + ");", 500);
+        window.setTimeout(function () {restartApplication(promptBefore ? "true":"false");}, 500);
         return;
       }
     }
@@ -1502,6 +1502,6 @@ function restartApplication(promptBefore) {
 }
 
 function setPreMainWin() {
-  PreMainWin = (!MainWindow)
+  PreMainWin = (!XSNS_MainWindow)
   jsdump("PreMainWin = " + PreMainWin);
 }

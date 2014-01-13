@@ -489,7 +489,7 @@ BibleTexts = {
     var icons = document.getElementById("text" + w).getElementsByClassName("listenlink");
     for (var i = 0; i < icons.length; ++i) {
       var p = getElementInfo(icons[i]);
-			icons[i].setAttribute("hasAudio", (AudioDirs.length && MainWindow.getAudioForChapter(p.mod, p.bk, p.ch) ? "true":"false"));
+			icons[i].setAttribute("hasAudio", (AudioDirs.length && XSNS_MainWindow.getAudioForChapter(p.mod, p.bk, p.ch) ? "true":"false"));
     }
   }
 

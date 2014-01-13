@@ -364,11 +364,11 @@ ARMD = {
 		window.clearInterval(this.QueryCheckInterval);
 		this.QueryCheckInterval = null;
 		
-		if (!ARMD.ModuleCheckInterval) ARMD.ModuleCheckInterval = window.setInterval("ARMD.checkAllModulesAreDownloaded();", 200);
+		if (!ARMD.ModuleCheckInterval) ARMD.ModuleCheckInterval = window.setInterval(function () {ARMD.checkAllModulesAreDownloaded();}, 200);
 
 		// if this is an auto-update, ask user if it should be cancelled, but ask after
 		// a timeout so that asynch download threads are started first
-		if (PromptUpdateMods.prompt) window.setTimeout("ARMD.requestUpdatePermission();", 1);
+		if (PromptUpdateMods.prompt) window.setTimeout(function () {ARMD.requestUpdatePermission();}, 1);
 		PromptUpdateMods.prompt = false;
 		
 		// start the file download process...

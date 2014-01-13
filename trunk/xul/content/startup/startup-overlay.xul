@@ -18,8 +18,6 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
-
 <!DOCTYPE overlay [
 	<!ENTITY % startupDTD SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
 	%startupDTD;
@@ -29,7 +27,7 @@
 
 <overlay xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	
-<script>var MainWindow, AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs, Book;</script>
+<script>var XSNS_MainWindow, AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs, Book;</script>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
@@ -53,8 +51,8 @@
 			catch(er) {installOnly = false;}
 			
 			// Are we just installing modules, but not starting xulsword?
-			// Or is MainWindow already open? Then we're done...
-			if (installOnly || MainWindow) {
+			// Or is XSNS_MainWindow already open? Then we're done...
+			if (installOnly || XSNS_MainWindow) {
 				closeWindowXS(window);
 				return;
 			}
@@ -63,9 +61,9 @@
 		}
 		
 		SplashScreen = openWindowXS("chrome://xulsword/content/startup/banner.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable", "splash-banner");
-		window.setTimeout("openWindowXS('chrome://xulsword/content/xulsword.xul', 'xulsword-window', 'chrome,centerscreen,resizable', 'xulsword-window')", 300);
+		window.setTimeout(function () {openWindowXS("chrome://xulsword/content/xulsword.xul", "xulsword-window", "chrome,centerscreen,resizable", "xulsword-window")}, 300);
 
-		// xulsword.xul may close this window during MainWindow init,
+		// xulsword.xul may close this window during XSNS_MainWindow init,
 		// and then this window's onunload will close the visible splash screen.
 	}
 
@@ -98,7 +96,7 @@
 
 	var OnUnloadPrevious;
 	function startxulsword() {
-		XSBundle = document.getElementById("stringsXS");
+		XSBundle = document.getElementById("xulsword-strings");
 		AllWindows = [];
 		rootprefs.setCharPref("intl.uidirection." + getLocale(), getDataUI("locale.dir"));
 		initLogging();
@@ -168,13 +166,13 @@
 	
 <window id="main-window">
 	
-	<stringbundle id="stringsXS" src="chrome://xulsword/locale/xulsword.properties"/>
+	<stringbundle id="xulsword-strings" src="chrome://xulsword/locale/xulsword.properties"/>
 	
-	<data id="ui.menu.addNewModule.label">&menu.addNewModule.label;</data>
-	<data id="ui.menu.importAudio.label">&menu.importAudio.label;</data>
-	<data id="ui.dlgFrom">&dlgFrom;</data>
-	<data id="ui.dlgTo">&dlgTo;</data>
-	<data id="ui.locale.dir">&locale.dir;</data>
+	<data id="xulsword-ui.menu.addNewModule.label">&menu.addNewModule.label;</data>
+	<data id="xulsword-ui.menu.importAudio.label">&menu.importAudio.label;</data>
+	<data id="xulsword-ui.dlgFrom">&dlgFrom;</data>
+	<data id="xulsword-ui.dlgTo">&dlgTo;</data>
+	<data id="xulsword-ui.locale.dir">&locale.dir;</data>
 	
 </window>
 

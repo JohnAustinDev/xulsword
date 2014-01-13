@@ -75,7 +75,7 @@
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#">
     
 <!-- the stringbundle element is used for script UI localization !-->
-<stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
+<stringbundle id="xulsword-strings" src="chrome://xulsword/locale/xulsword.properties"/>
 
 <!-- data elements are used by the getDataUI Javascript function for script UI localization !-->
 <data id="ui.print.printpassage">&print.printpassage;</data>
@@ -93,14 +93,14 @@
 
 <script>  
   // xulsword's program-wide global objects...
-  var MainWindow = window;
+  var XSNS_MainWindow = window;
   var LibSword, Location, AudioDirs, LocaleConfigs, ModuleConfigs, ProgramConfig;
   var Book, Tab, Tabs, SpecialModules, GenBookNavigator, BibleNavigator, AllWindows, XSBundle;
   var BM, BMDS, ResourceFuns, BookmarkFuns, CommandTarget;
   var ViewPort, Texts, BibleTexts, DictTexts, GenBookTexts, CommTexts;
 </script>
 
-<script>XSBundle = document.getElementById("strings");</script>
+<script>XSBundle = document.getElementById("xulsword-strings");</script>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
@@ -224,7 +224,7 @@
   <command id="cmd_printPreview"                 oncommand="PrintUtils.printPreview(PrintPreviewCallbacks);"/>
   <command id="cmd_pageSetup"                    oncommand="PrintUtils.showPageSetup();"/>
   <command id="cmd_xs_startHistoryTimer"
-            oncommand="try {window.clearTimeout(History.timer);} catch(er){} History.timer=window.setTimeout('History.add()', History.delay);"/>
+            oncommand="try {window.clearTimeout(History.timer);} catch(er){} History.timer=window.setTimeout(function () {History.add();}, History.delay);"/>
   <command id="cmd_xs_nextVerse"                 oncommand="goDoCommand('cmd_xs_nextVerse');"/>
   <command id="cmd_xs_previousVerse"             oncommand="goDoCommand('cmd_xs_previousVerse');"/>
   <command id="cmd_xs_nextChapter"               oncommand="goDoCommand('cmd_xs_nextChapter');"/>
@@ -553,7 +553,7 @@
         <iframe id="main-viewport" flex="100%" src="viewport/viewport.html" context="contextScriptBox" />
       </hbox>
       
-      <browser id="printPreviewBrowser" disablehistory="true"/>
+      <browser id="printPreviewBrowser" type="content" disablehistory="true"/>
       
       <browser id="printBrowser" type="content-primary" disablehistory="true"/>
       

@@ -43,9 +43,6 @@
   persist="screenX screenY width height"
   screenX="24" screenY="24">
   
-  <!-- the stringbundle element is used for script UI localization !-->
-  <stringbundle id="strings" src="chrome://xulsword/locale/xulsword.properties"/>
-  
   <data id="ui.less.label">&less.label;</data>
   <data id="ui.more.label">&more.label;</data>
   <data id="ui.menu.addNewModule.label">&menu.addNewModule.label;</data>
@@ -56,7 +53,7 @@
   <data id="ui.search.Dicts">&search.Dicts;</data>
   <data id="ui.search.Genbks">&search.Genbks;</data>
   
-  <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
+  <script>var XSNS_MainWindow = (window.opener ? window.opener.XSNS_MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/addRepositoryModule/loadUnload.js"/>
@@ -70,7 +67,7 @@
       
       <vbox id="showLanguagesButCont">
         <separator />
-        <button flex="1" class="arm-go-forward" oncommand="ARMI.toggleLanguageList(); setTimeout('ARMU.selectLanguage();', 500);" />
+        <button flex="1" class="arm-go-forward" oncommand="ARMI.toggleLanguageList(); setTimeout(function () {ARMU.selectLanguage();}, 500);" />
       </vbox>
       
       <vbox id="languageListContainer" persist="width" >

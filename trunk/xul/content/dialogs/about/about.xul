@@ -41,7 +41,7 @@
     <key keycode="VK_ESCAPE"                 oncommand="closeWindowXS(window);"/>
   </keyset>
   
-  <script>var MainWindow = window.opener;</script>
+  <script>var XSNS_MainWindow = window.opener;</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   
@@ -110,7 +110,7 @@
 				oncommand="document.getElementById('mainbox').setAttribute('showingModules', 'true');"/>
 			<spacer flex="1" orient="horizontal"/>
 			<button id="show-contributors-button" label="&contributors.label;" flex="1" hidden="true"
-				oncommand="document.getElementById('mainbox').setAttribute('showingContributors', 'true'); ContribScroll = window.setInterval('scrollContributors();', 50);"/>
+				oncommand="document.getElementById('mainbox').setAttribute('showingContributors', 'true'); ContribScroll = window.setInterval(scrollContributors, 50);"/>
 			<spacer flex="1" orient="horizontal"/>
 			<button id="close-button" label="&closeCmd.label;" flex="1" oncommand="closeWindowXS(window);"/>
 		</hbox>

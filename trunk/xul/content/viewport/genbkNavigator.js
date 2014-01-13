@@ -56,7 +56,7 @@ GenBookNavigator = {
 		var viewports = Components.classes['@mozilla.org/appshell/window-mediator;1'].
 				getService(Components.interfaces.nsIWindowMediator).getEnumerator("viewport");
 				
-		var allViewports = [MainWindow.ViewPort];
+		var allViewports = [XSNS_MainWindow.ViewPort];
 		while (viewports.hasMoreElements()) {
 			allViewports.push(viewports.getNext().ViewPort);
 		}
@@ -152,7 +152,7 @@ GenBookNavigator = {
 		
 		this.Tree().view.selection.select(i);  
 		
-		window.setTimeout("GenBookNavigator.Tree().boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(" + i + ");", 0);
+		window.setTimeout(function () {GenBookNavigator.Tree().boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(i);}, 0);
 		
 		return true; 
 	},
@@ -186,7 +186,7 @@ GenBookNavigator = {
 		var viewports = Components.classes['@mozilla.org/appshell/window-mediator;1'].
 				getService(Components.interfaces.nsIWindowMediator).getEnumerator("viewport");
 				
-		var allViewports = [MainWindow.ViewPort];
+		var allViewports = [XSNS_MainWindow.ViewPort];
 		while (viewports.hasMoreElements()) {
 			allViewports.push(viewports.getNext().ViewPort);
 		}
@@ -195,7 +195,7 @@ GenBookNavigator = {
 			allViewports[i].ownerDocument.defaultView.GenBookTexts.updateKeys(mod, key);
 		}
 
-		MainWindow.Texts.update();
+		XSNS_MainWindow.Texts.update();
 	},
 	
 	// recursively opens a rdfChapter and scrolls there (does not select)
@@ -224,7 +224,7 @@ GenBookNavigator = {
 		catch (er) {return;}
 		
 		if (index == -1) return;
-		window.setTimeout("GenBookNavigator.Tree().boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(" + i + ");", 0);
+		window.setTimeout(function () {GenBookNavigator.Tree().boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(i);}, 0);
 	}
 
 };

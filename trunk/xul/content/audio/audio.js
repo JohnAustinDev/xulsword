@@ -167,7 +167,7 @@ function refreshAudioCatalog() {
 }
 
 function updateBibleNavigatorAudio() {
-	var doc = MainWindow.ViewPort.ownerDocument;
+	var doc = XSNS_MainWindow.ViewPort.ownerDocument;
 	
 	var booknames = doc.getElementsByClassName("bookname");
 	for (var i=0; i<booknames.length; i++) {booknames[i].removeAttribute("hasAudio");}
@@ -175,7 +175,7 @@ function updateBibleNavigatorAudio() {
 	var chapcells = doc.getElementsByClassName("chaptermenucell");
 	for (var i=0; i<chapcells.length; i++) {chapcells[i].removeAttribute("hasAudio");}
 	
-	var vp = MainWindow.ViewPort;
+	var vp = XSNS_MainWindow.ViewPort;
 	for (var w=1; w<=vp.NumDisplayedWindows; w++) {
 		if (Tab[vp.Module[w]].modType != BIBLE) continue;
 		for (var k in Tab[vp.Module[w]].audio) {
@@ -196,7 +196,7 @@ function updateBibleNavigatorAudio() {
  ***********************************************************************/ 
 
 function beginAudioPlayer() {
-	jsdump("beginAudioPlayer:" + MainWindow.Player.version + ", " + MainWindow.Player.chapter + " " + MainWindow.Player.book);
+	jsdump("beginAudioPlayer:" + XSNS_MainWindow.Player.version + ", " + XSNS_MainWindow.Player.chapter + " " + XSNS_MainWindow.Player.book);
   document.getElementById("historyButtons").hidden = true;
   
   var quit = false;
@@ -233,7 +233,7 @@ function beginAudioPlayer() {
 
   document.getElementById("player").hidden = false;
 
-	window.setTimeout("if(!Player.canPlay) reportPlayerError();", 3000);
+	window.setTimeout(function () {if(!Player.canPlay) reportPlayerError();}, 3000);
 }
 
 function reportPlayerError() {
@@ -257,7 +257,7 @@ function emptyAudioPlayer() {
  
   goDoCommand('cmd_xs_nextChapter');
   Player.book = Location.getBookName();
-  Player.chapter = Location.getChapterNumber(MainWindow.Player.version);
+  Player.chapter = Location.getChapterNumber(XSNS_MainWindow.Player.version);
   
   beginAudioPlayer();
 }
@@ -421,7 +421,7 @@ function exportAudio(exportFileFormat) {
   CountTotal = (Files ? Files.length:0);
   CountCurrent = 0;
   
-  ExportAnotherFile = window.setTimeout("copyFiles();", TIMEOUT);
+  ExportAnotherFile = window.setTimeout(function () {copyFiles();}, TIMEOUT);
   return true;
 }
 
@@ -436,7 +436,7 @@ function copyFiles() {
   try {if (ProgressMeter && ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100*(++CountCurrent/CountTotal));}
   catch (er) {}
   if (Index==Files.length) finishExport();
-  else ExportAnotherFile = window.setTimeout("copyFiles();", TIMEOUT);
+  else ExportAnotherFile = window.setTimeout(function () {copyFiles();}, TIMEOUT);
 }
 
 function finishExport() {
@@ -444,7 +444,7 @@ function finishExport() {
 
   if (ProgressMeter) {
     if (ProgressMeter.Progress) ProgressMeter.Progress.setAttribute("value", 100);
-    window.setTimeout("closeWindowXS(ProgressMeter);", 1000);
+    window.setTimeout(function () {closeWindowXS(ProgressMeter);}, 1000);
   }
   ModuleCopyMutex=false;
 }
@@ -535,9 +535,9 @@ function getModsUsingAudioCode(basecode) {
   if (!basecode) return list;
   if (Tab[basecode]) list.push(basecode);
   else if (Tab[basecode.toUpperCase()]) list.push(basecode.toUpperCase());
-  var matchAudioCode = MainWindow.getModsWithConfigEntry("AudioCode", basecode, true, true, false);
+  var matchAudioCode = XSNS_MainWindow.getModsWithConfigEntry("AudioCode", basecode, true, true, false);
   if (matchAudioCode && matchAudioCode[0]) list = list.concat(matchAudioCode);
-  var matchLang = MainWindow.getModsWithConfigEntry("Lang", basecode.replace(/-.*$/, ""), true, true, true);
+  var matchLang = XSNS_MainWindow.getModsWithConfigEntry("Lang", basecode.replace(/-.*$/, ""), true, true, true);
   if (matchLang && matchLang[0]) list = list.concat(matchLang);
   
   return list;
