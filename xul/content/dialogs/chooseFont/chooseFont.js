@@ -115,7 +115,7 @@ chooseFont = {
 	
 	resetModuleConfigs: function() {
 		// resets all global ModuleConfigs from current user prefs
-		MainWindow.ModuleConfigDefault = getModuleConfig("LTR_DEFAULT");
+		XSNS_MainWindow.ModuleConfigDefault = getModuleConfig("LTR_DEFAULT");
 		for (var i=0; i<Tabs.length; i++) {
 			ModuleConfigs[Tabs[i].modName] = getModuleConfig(Tabs[i].modName);
 		}

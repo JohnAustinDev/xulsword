@@ -135,7 +135,7 @@ function Startup()
     else {gMenulist.selectedIndex = 0;}
     gSelectedFolder = BM.RDF.GetResource(gMenulist.selectedItem.id);
   }
-  setTimeout(initMenulist, 0);
+  setTimeout(function () {initMenulist();}, 0);
   
 }
 

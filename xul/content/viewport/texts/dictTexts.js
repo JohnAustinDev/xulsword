@@ -22,8 +22,8 @@
 
 DictTexts = {
   
-  keyList: MainWindow.DictKeyLists,
-  keysHTML: MainWindow.DictKeyHTMLs,
+  keyList: XSNS_MainWindow.DictKeyLists,
+  keysHTML: XSNS_MainWindow.DictKeyHTMLs,
   
   read: function(w, d) {
     var ret = { htmlList:"", htmlHead:Texts.getPageLinks(), htmlEntry:"", footnotes:null };
@@ -377,7 +377,7 @@ DictTexts = {
   keyPress: function(e) {
     if (this.keypressOT) window.clearTimeout(this.keypressOT);
     this.keypressEvent = e;
-    this.keypressOT = window.setTimeout("DictTexts.keyPressR()", 2000);
+    this.keypressOT = window.setTimeout(function () {DictTexts.keyPressR();}, 2000);
   },
 
   keyPressR: function() {
@@ -416,7 +416,7 @@ DictTexts = {
     ViewPort.Key[w] = decodeURIComponent(e.target.title);
     Texts.update(SCROLLTYPETOP, HILIGHTNONE);
 
-    window.setTimeout("document.getElementById('note" + w + "').getElementsByClassName('keytextbox')[0].focus();", 1);
+    window.setTimeout(function () {document.getElementById("note" + w).getElementsByClassName("keytextbox")[0].focus();}, 1);
   }
 
 };

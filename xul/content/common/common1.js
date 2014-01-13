@@ -18,21 +18,21 @@
 
 
 // IMPORTANT INFO ABOUT THIS FILE:
-// The functions in common1.js may use and rely on the MainWindow as 
+// The functions in common1.js may use and rely on the XSNS_MainWindow as 
 // well as the global LibSword object and the other program-wide globals. 
 // NOTE: this is unlike common0.js whose functions cannot rely on 
-// MainWindow or other MainWindow globals, and can not even try to 
+// XSNS_MainWindow or other XSNS_MainWindow globals, and can not even try to 
 // access LibSword.
 
-// MainWindow is often assigned before any scripts are loaded, but we
+// XSNS_MainWindow is often assigned before any scripts are loaded, but we
 // check it again here, just in case...
-if (!MainWindow) {
+if (!XSNS_MainWindow) {
   var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
-  MainWindow = watcher.getWindowByName("xulsword-window", window);
+  XSNS_MainWindow = watcher.getWindowByName("xulsword-window", window);
 }
 
-if (!MainWindow) {
-  MainWindow = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+if (!XSNS_MainWindow) {
+  XSNS_MainWindow = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
       .getInterface(Components.interfaces.nsIWebNavigation)
       .QueryInterface(Components.interfaces.nsIDocShellTreeItem)
       .rootTreeItem
@@ -40,52 +40,52 @@ if (!MainWindow) {
       .getInterface(Components.interfaces.nsIDOMWindow);
 }
 
-if (!MainWindow) jsdump("WARNING: Unable to locate MainWindow in: (" + window.name + ")\n");
+if (!XSNS_MainWindow) jsdump("WARNING: Unable to locate XSNS_MainWindow in: (" + window.name + ")\n");
 
 /************************************************************************
- * Program-wide Globals defined in MainWindow to be used anywhere
+ * Program-wide Globals defined in XSNS_MainWindow to be used anywhere
  ***********************************************************************/ 
-var LibSword              = MainWindow.LibSword;
-var Location              = MainWindow.Location;
+var LibSword              = XSNS_MainWindow.LibSword;
+var Location              = XSNS_MainWindow.Location;
 
-var LocaleConfigs         = MainWindow.LocaleConfigs;
-var ModuleConfigs         = MainWindow.ModuleConfigs;
-var ProgramConfig         = MainWindow.ProgramConfig;
+var LocaleConfigs         = XSNS_MainWindow.LocaleConfigs;
+var ModuleConfigs         = XSNS_MainWindow.ModuleConfigs;
+var ProgramConfig         = XSNS_MainWindow.ProgramConfig;
 
-var AudioDirs             = MainWindow.AudioDirs;
+var AudioDirs             = XSNS_MainWindow.AudioDirs;
 
-var Book                  = MainWindow.Book;
+var Book                  = XSNS_MainWindow.Book;
 
-var Tabs                  = MainWindow.Tabs;
-var Tab                   = MainWindow.Tab;
+var Tabs                  = XSNS_MainWindow.Tabs;
+var Tab                   = XSNS_MainWindow.Tab;
 
-var BM                    = MainWindow.BM;
-var BMDS                  = MainWindow.BMDS;
-var BookmarkFuns          = MainWindow.BookmarkFuns;
-var ResourceFuns          = MainWindow.ResourceFuns;
+var BM                    = XSNS_MainWindow.BM;
+var BMDS                  = XSNS_MainWindow.BMDS;
+var BookmarkFuns          = XSNS_MainWindow.BookmarkFuns;
+var ResourceFuns          = XSNS_MainWindow.ResourceFuns;
 
-var BibleNavigator        = MainWindow.BibleNavigator;
-var GenBookNavigator      = MainWindow.GenBookNavigator;
+var BibleNavigator        = XSNS_MainWindow.BibleNavigator;
+var GenBookNavigator      = XSNS_MainWindow.GenBookNavigator;
 
-var AllWindows            = MainWindow.AllWindows;
+var AllWindows            = XSNS_MainWindow.AllWindows;
 
-var SpecialModules        = MainWindow.SpecialModules;
+var SpecialModules        = XSNS_MainWindow.SpecialModules;
 
-var CommandTarget         = MainWindow.CommandTarget;
+var CommandTarget         = XSNS_MainWindow.CommandTarget;
 
-var XSBundle              = MainWindow.XSBundle;
+var XSBundle              = XSNS_MainWindow.XSBundle;
 
 
 // The following objects are sometimes intentionally overwritten by 
 // loading a corresponding js file after common1.js has loaded. This
-// allows multiple copies of these objects to be used (a MainWindow
+// allows multiple copies of these objects to be used (a XSNS_MainWindow
 // object as well as others located in other viweports).
-var ViewPort              = MainWindow.ViewPort;
-var Texts                 = MainWindow.Texts;
-var BibleTexts            = MainWindow.BibleTexts;
-var DictTexts             = MainWindow.DictTexts;
-var GenBookTexts          = MainWindow.GenBookTexts;
-var CommTexts             = MainWindow.CommTexts;
+var ViewPort              = XSNS_MainWindow.ViewPort;
+var Texts                 = XSNS_MainWindow.Texts;
+var BibleTexts            = XSNS_MainWindow.BibleTexts;
+var DictTexts             = XSNS_MainWindow.DictTexts;
+var GenBookTexts          = XSNS_MainWindow.GenBookTexts;
+var CommTexts             = XSNS_MainWindow.CommTexts;
 
 
 /************************************************************************

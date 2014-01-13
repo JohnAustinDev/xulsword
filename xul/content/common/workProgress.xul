@@ -27,7 +27,7 @@
   onunload="if (typeof(OnUnload) != 'undefined') OnUnload();"
   style="border:2px solid rgb(200,170,205); background-image: url(chrome://xulsword/skin/images/9.gif);">
 
-  <script>var MainWindow = (window.opener ? window.opener.MainWindow:null)</script>
+  <script>var XSNS_MainWindow = (window.opener ? window.opener.XSNS_MainWindow:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script>
@@ -41,7 +41,7 @@
     
   var Progress, LabelElem, ButtonElem;
 
-  // workProgress.xul can be displayed before the MainWindow, so
+  // workProgress.xul can be displayed before the XSNS_MainWindow, so
   // program-wide globals CANNOT be assumed to be defined!
   function Load() {
 
@@ -63,10 +63,10 @@
     
     LabelElem.setAttribute("label", Label);
   
-    window.setTimeout("sizeToContent()", 1);
-    window.setTimeout("finishedLoading()", 1);
+    window.setTimeout(function () {sizeToContent();}, 1);
+    window.setTimeout(function () {finishedLoading();}, 1);
     
-    if (UserObj.afterload) window.setTimeout(UserObj.afterload, 1);
+    if (UserObj.afterload) window.setTimeout(function () {UserObj.afterload();}, 1);
   }
   
   function finishedLoading() {

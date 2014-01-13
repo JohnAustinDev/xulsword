@@ -81,8 +81,8 @@ Texts = {
         // windows' values. These may have been manually changed since the  
         // last display due to operation of a pinned window's own controls.
         
-        // pinned windowed ViewPorts should not track MainWindow at all
-        if (this !== MainWindow.Texts) {
+        // pinned windowed ViewPorts should not track XSNS_MainWindow at all
+        if (this !== XSNS_MainWindow.Texts) {
           display = eval(uneval(this.pinnedDisplay[w]));
         }
         // pinned MainWidow ViewPort tracks everything except the following:
@@ -144,9 +144,9 @@ Texts = {
     if (this.scrollTypeFlag == SCROLLTYPEENDSELECT) this.scrollTypeFlag = SCROLLTYPEBEG;
     
     
-    // If this is the MainWindow.Text object which we just updated, then go and update any
+    // If this is the XSNS_MainWindow.Text object which we just updated, then go and update any
     // other unpinned windowed ViewPort Text objects. Plus update navigator and history.
-    if (this === MainWindow.Texts) {
+    if (this === XSNS_MainWindow.Texts) {
 
 			var allViewPortWindows = Components.classes['@mozilla.org/appshell/window-mediator;1'].
 				getService(Components.interfaces.nsIWindowMediator).getEnumerator("viewport");
@@ -165,9 +165,9 @@ Texts = {
         aViewPortWindow.Texts.update(save.p1, save.p2, save.p3);
       }
       
-      MainWindow.updateNavigator();
+      XSNS_MainWindow.updateNavigator();
     
-      MainWindow.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
+      XSNS_MainWindow.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
     
     }
 
@@ -258,7 +258,7 @@ Texts = {
     }
     
     // set audio icons
-    window.setTimeout("BibleTexts.updateAudioLinks(" + w + ");", 0);
+    window.setTimeout(function () {BibleTexts.updateAudioLinks(w);}, 0);
     
   },
   

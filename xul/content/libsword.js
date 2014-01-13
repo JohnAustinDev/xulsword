@@ -173,7 +173,7 @@ LibSword = {
 		if (!sp) return;
 		var i = this.searchPointers.indexOf(sp);
 		if (i == -1) return; // this pointer was already freed or never existed
-		this.freeMemory(this.searchPointers[i], MainWindow.ctypes.char.array()("searchPointer"));
+		this.freeMemory(this.searchPointers[i], XSNS_MainWindow.ctypes.char.array()("searchPointer"));
 		this.searchPointers[i] = null;
 	},
   
@@ -304,9 +304,9 @@ LibSword = {
   },
 
   allWindowsModal: function(setModal) {
-    if (!MainWindow) return;
-    for (var i=0; MainWindow.AllWindows && i<MainWindow.AllWindows.length; i++) {
-      this.windowModal(MainWindow.AllWindows[i], setModal);
+    if (!XSNS_MainWindow) return;
+    for (var i=0; XSNS_MainWindow.AllWindows && i<XSNS_MainWindow.AllWindows.length; i++) {
+      this.windowModal(XSNS_MainWindow.AllWindows[i], setModal);
     }
   },
 

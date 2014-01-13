@@ -119,7 +119,7 @@ function Init()
     gNote.focus();
     //gNote.select(); select() does not work on note textbox!
   }
-  window.setTimeout("sizeToContent()", 0);
+  window.setTimeout(function () {sizeToContent();}, 0);
 }
 
 function onRefUserUpdate(e, location, version) {
@@ -133,7 +133,7 @@ function onRefUserUpdate(e, location, version) {
   gName.value = BookmarkFuns.getNameForBookmark(vtext.location);
   gName.className = "cs-Program";
   document.title = fixWindowTitle(gSaveEmptyTitle.replace(/\*\*bm_title\*\*/gi, gName.value));
-  window.setTimeout("sizeToContent();", 0);
+  window.setTimeout(function () {sizeToContent();}, 0);
 }
 
 function Commit() {

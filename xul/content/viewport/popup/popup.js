@@ -25,10 +25,10 @@ function initWindowedPopup() {
   initCSS();
   
   // This is a windowed popup, so copy the original popup
-  Popup = new PopupObj(MainWindow.Popup);
+  Popup = new PopupObj(XSNS_MainWindow.Popup);
   
   // Close the original popup
-  MainWindow.Popup.close();
+  XSNS_MainWindow.Popup.close();
 
 }
     
@@ -249,7 +249,7 @@ function PopupObj(popupobj) {
     // Normal popup opening anew...
     this.elem = elem;
     this.e = e;
-    this.showPopupID = window.setTimeout("Popup.open();", (type == "sn" ? POPUPDELAY_STRONGS:POPUPDELAY));
+    this.showPopupID = window.setTimeout(function () {Popup.open();}, (type == "sn" ? POPUPDELAY_STRONGS:POPUPDELAY));
     return true;
     
   };
@@ -304,7 +304,7 @@ function PopupObj(popupobj) {
     this.checkPopupPosition(this.e);
 
 //jsdump(this.npopupTX.innerHTML);
-//window.setTimeout("debugStyle(document.getElementById('npopup'))", 1000);
+//window.setTimeout(function () {debugStyle(document.getElementById('npopup'));}, 1000);
 
   };
   
@@ -374,10 +374,10 @@ function PopupObj(popupobj) {
     var offset = getOffset(this.npopupBOX);
     X = Number(f.boxObject.x + offset.left);
     Y = Number(f.boxObject.y + offset.top);
-    //jsdump("INFO:" + f.boxObject.y + "-" + MainWindow.outerHeight + "+" + v.height + "=" + Y);
+    //jsdump("INFO:" + f.boxObject.y + "-" + XSNS_MainWindow.outerHeight + "+" + v.height + "=" + Y);
   
 		// save this Popup so new window can copy it
-		MainWindow.Popup = this;
+		XSNS_MainWindow.Popup = this;
 		
     // Open the new xul Popup window.
     var p = "chrome,resizable,dependant";

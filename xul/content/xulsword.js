@@ -46,11 +46,10 @@ function loadedXUL() {
   try {prefs.getIntPref("ViewPortHeight");}
   catch (er) {
     document.getElementById('main-viewport').style.visibility = 'hidden';
-    window.setTimeout(
-    "\
-      loadedXUL2(); \
-      document.getElementById('main-viewport').style.visibility = ''; \
-    ",0);
+    window.setTimeout(function () {
+      loadedXUL2();
+      document.getElementById('main-viewport').style.visibility = '';
+    }, 0);
     return;
   }
   
@@ -155,7 +154,7 @@ function loadedXUL2() {
     //we're ok!
     // User pref DefaultVersion is guaranteed to exist and to be an installed Bible version
     Texts.update(SCROLLTYPEBEG, HILIGHT_IFNOTV1);
-    window.setTimeout("postWindowInit()", 1); 
+    window.setTimeout(function () {postWindowInit();}, 1); 
   }
   else if (LibSword.loadFailed) {
 		window.setTimeout(function() {
@@ -299,7 +298,7 @@ function readNewInstallsFile(aFile) {
 
 function openLanguageMenu(selectLocale) {
   document.getElementById('options-popup').showPopup(); 
-  window.setTimeout("document.getElementById('sub-lang-pup').showPopup()", 100);
+  window.setTimeout(function () {document.getElementById('sub-lang-pup').showPopup();}, 100);
 }
 
 function resetSearchIndex(modName) {
@@ -1152,7 +1151,7 @@ var OptionsElement;
 function holdMenuAndHandleOptions(elem) {
   preventMenuFromHiding();
   OptionsElement = elem;
-  window.setTimeout("handleOptions();", 0);
+  window.setTimeout(function () {handleOptions();}, 0);
 }
 
 function handleOptions(elem) {
@@ -1196,7 +1195,7 @@ function handleOptions(elem) {
       
     case "fontAdjust":
 			CommandTarget.mod = null;
-			MainWindow.XulswordController.doCommand("cmd_xs_chooseFont");
+			XSNS_MainWindow.XulswordController.doCommand("cmd_xs_chooseFont");
 			break;
     
     case "about":
@@ -1210,7 +1209,7 @@ function handleOptions(elem) {
     case "showAllTabs":
     case "showNoTabs":
       var subPupId = elem.parentNode.id.match(/sub-([^-]+)-pup/)[1];
-      MainWindow.setTimeout("moduleMenuClick1('" + id[0] + "', '" + id[1] + "', '" + subPupId + "', " + oldCheckedValue + ")", 0);
+      XSNS_MainWindow.setTimeout(function () {moduleMenuClick1(id[0], id[1], subPupId, oldCheckedValue);}, 0);
       break;
 
     case "winRadio":
@@ -1267,14 +1266,14 @@ function handleOptions(elem) {
 
 function holdPopupAndDo(cmd) {
   preventMenuFromHiding();
-  if (cmd == "cmd_xs_toggleStrongsTags") window.setTimeout("goDoCommand('cmd_xs_toggleStrongsTags'); goDoCommand('cmd_xs_toggleMorphTags');", 0);
-  else window.setTimeout("goDoCommand('" + cmd + "');", 0);
+  if (cmd == "cmd_xs_toggleStrongsTags") window.setTimeout(function () {goDoCommand('cmd_xs_toggleStrongsTags'); goDoCommand('cmd_xs_toggleMorphTags');}, 0);
+  else {window.setTimeout(function () {goDoCommand(cmd);}, 0);}
 }
 
 var PreventMenuHide = false;
 function preventMenuFromHiding() {
   PreventMenuHide = true;
-  window.setTimeout("PreventMenuHide = false; Pups = null;", 0);
+  window.setTimeout(function () {PreventMenuHide = false; Pups = null;}, 0);
 }
 
 var Pups;
@@ -1412,7 +1411,7 @@ function updateXulswordButtons() {
   if (prefs.getCharPref("User Notes") == "On")  {document.getElementById("sub-un").setAttribute("disabled",false);}
   else {document.getElementById("sub-un").setAttribute("disabled",true);}
 
-  window.setTimeout("updateXulswordCommands();", 0); // timeout insures commandDispatcher is ready during xulSword init
+  window.setTimeout(function () {updateXulswordCommands();}, 0); // timeout insures commandDispatcher is ready during xulSword init
 }
 
 function updateXulswordCommands() {
@@ -1465,7 +1464,7 @@ function showLocation(mod, bk, ch, vs, lv) {
   GotoLocation = { w:w, mod:mod, bk:bk, ch:ch, vs:vs, lv:lv };
   
 //jsdump("showLocation:" + w + ", " + mod + ", " + bk + ", " + ch + ", " + vs + ", " + lv);  
-  window.setTimeout("showLocation2()", 1);
+  window.setTimeout(function () {showLocation2();}, 1);
   
 }
 
@@ -1478,14 +1477,14 @@ function showLocation2() {
   case BIBLE:
   case COMMENTARY:
     Location.setLocation(l.mod, l.bk + "." + l.ch + "." + l.vs + "." + l.lv);
-    MainWindow.focus();
+    XSNS_MainWindow.focus();
     Texts.update(SCROLLTYPECENTER, HILIGHTVERSE, [null,1,1,1]);
     break;
     
   case GENBOOK:
   case DICTIONARY:
     ViewPort.Key[l.w] = l.ch;
-    MainWindow.focus();
+    XSNS_MainWindow.focus();
     Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null,1,1,1]);
     break;
     
@@ -1606,7 +1605,7 @@ function handlePrintCommand(command, target) {
     
   case "cmd_printPreview":
   case "cmd_print":
-    // NOTE: The loaded URI must call MainWindow.printBrowserLoaded() after it has loaded!
+    // NOTE: The loaded URI must call XSNS_MainWindow.printBrowserLoaded() after it has loaded!
     document.getElementById('printBrowser').loadURI(PrintTarget.uri);
     break;
     

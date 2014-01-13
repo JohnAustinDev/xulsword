@@ -118,7 +118,7 @@ BibleNavigator = {
       switch (e.type) {
       case "mouseover":
         if (this.ShowChooserTO) window.clearTimeout(this.ShowChooserTO);
-        this.ShowChooserTO = window.setTimeout("BibleNavigator.showChooser('" +  p[1] + "',false)", 100);
+        this.ShowChooserTO = window.setTimeout(function () {BibleNavigator.showChooser(p[1], false);}, 100);
         break;
       
       case "mouseout":
@@ -127,7 +127,7 @@ BibleNavigator = {
         
       case "click":
         Location.setLocation(ViewPort.firstDisplayBible(), Book[(p[1]=="ot" ? 0:NumOT)].sName + ".1.1");
-        MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+        XSNS_MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
         break;
       }
       break;
@@ -137,12 +137,12 @@ BibleNavigator = {
       switch (e.type) {  
       case "mouseover":
         if (!this.MouseScrollTO) {
-          this.MouseScrollTO = window.setTimeout("BibleNavigator.mouseScroll('" + t.parentNode.id + "', " + t.offsetTop + ");", 100);
+          this.MouseScrollTO = window.setTimeout(function () {BibleNavigator.mouseScroll(t.parentNode.id, t.offsetTop);}, 100);
         }
         break;
       case "click":
         Location.setLocation(ViewPort.firstDisplayBible(), Book[p[1]].sName + ".1.1");
-        MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+        XSNS_MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
         break;
       }
       break;
@@ -153,7 +153,7 @@ BibleNavigator = {
       case "mouseover":
         this.doc().getElementById("chmenu_" + p[1]).setAttribute("headingmenu", "hide");
         if (this.ShowHeadingTO) window.clearTimeout(this.ShowHeadingTO);
-        this.ShowHeadingTO = window.setTimeout("BibleNavigator.showHeadings('" + e.target.id + "','" + e.clientY + "')", 500);
+        this.ShowHeadingTO = window.setTimeout(function () {BibleNavigator.showHeadings(e.target.id, e.clientY);}, 500);
         if (!this.MouseScrollTO && 
             (e.target.parentNode.parentNode.offsetHeight - e.target.offsetTop > 
             this.doc().getElementById("book_1").offsetTop - this.doc().getElementById("book_0").offsetTop)) {
@@ -164,13 +164,13 @@ BibleNavigator = {
             m = m.parentNode;
           }
           offsetTop += m.offsetTop;
-          this.MouseScrollTO = window.setTimeout("BibleNavigator.mouseScroll('" + m.parentNode.id + "', " + offsetTop + ");", 100);
+          this.MouseScrollTO = window.setTimeout(function () {BibleNavigator.mouseScroll(m.parentNode.id, offsetTop);}, 100);
         }
         break;
           
       case "click":
         Location.setLocation(ViewPort.firstDisplayBible(), Book[p[1]].sName + "." + p[2] + ".1.1");
-        MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+        XSNS_MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
         break
       }
       break;
@@ -186,7 +186,7 @@ BibleNavigator = {
     case "headlink":
       if (e.type == "click") {
         Location.setLocation(p[4], p[1] + "." + p[2] + "." + p[3]);
-        MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+        XSNS_MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       }
       break;
       
@@ -254,7 +254,7 @@ BibleNavigator = {
 
   wheel: function(event) {
     if (BibleNavigator.Delta == 0)
-        window.setTimeout("BibleNavigator.wheelScroll('biblebooks_" + BibleNavigator.doc().getElementById("biblechooser").getAttribute("showing") + "')", 50);
+        window.setTimeout(function () {BibleNavigator.wheelScroll("biblebooks_" + BibleNavigator.doc().getElementById("biblechooser").getAttribute("showing"));}, 50);
     BibleNavigator.Delta += event.detail;
   },
 

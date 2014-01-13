@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="chrome://xulsword/skin/search/searchHelp-htm.css" type="text/css">
   </head>
   
-  <script>var MainWindow = null;</script>
+  <script>var XSNS_MainWindow = null;</script>
   <script src="chrome://xulsword/content/common/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common/common1.js" type="text/javascript"></script>
   <script>
@@ -96,7 +96,7 @@
   
   </script>
   
-  <body onload="window.setTimeout('onLoad();', 0);">
+  <body onload="window.setTimeout(function () {onLoad();}, 0);">
     <div id="helpPane">
       <script>writeSearchHelp();</script>
     </div>

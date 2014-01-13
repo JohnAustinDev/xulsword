@@ -783,7 +783,7 @@
             this.mOuter.updateTreeSelection();
           // use of a timer to speedup
           var This = this.mOuter;
-          setTimeout( function (){This.treeBoxObject.view.selection.selectEventsSuppressed = false}, 100)
+          setTimeout(function (){This.treeBoxObject.view.selection.selectEventsSuppressed = false}, 100)
           //jsdump("DND time:"+(Date.now()-date)+"\n")
         },
 

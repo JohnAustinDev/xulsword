@@ -30,10 +30,10 @@ function onLoad() {
   
   // Set passage to selection if there is one
   var sel = false;  
-  var selob = MainWindow.document.getElementById("main-viewport").contentDocument.defaultView.getSelection();
+  var selob = XSNS_MainWindow.document.getElementById("main-viewport").contentDocument.defaultView.getSelection();
   if (selob && !selob.isCollapsed && !(/^\s*$/).test(selob.toString())) {
-    var t = eval(uneval(MainWindow.ContextMenu.NEWTARGET));
-    sel = MainWindow.ContextMenu.getTargetsFromSelection(t, selob);
+    var t = eval(uneval(XSNS_MainWindow.ContextMenu.NEWTARGET));
+    sel = XSNS_MainWindow.ContextMenu.getTargetsFromSelection(t, selob);
   }
   if (sel && t.mod && t.bk && t.ch && t.vs && t.lv) {
     PassageChooser.version = t.mod;
@@ -43,7 +43,7 @@ function onLoad() {
   // otherwise use the global location
   else {
     PassageChooser.version = ViewPort.firstDisplayBible();
-    PassageChooser.location = MainWindow.Location.getLocation(ViewPort.firstDisplayBible());
+    PassageChooser.location = XSNS_MainWindow.Location.getLocation(ViewPort.firstDisplayBible());
   }
   
   PassageTextBox.focus();

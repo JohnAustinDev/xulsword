@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="chrome://xulsword/skin/common/global-htm.css" type="text/css">
   <link rel="stylesheet" href="chrome://xulsword/skin/dialogs/about/about-htm.css" type="text/css">
   
-  <script>var MainWindow = window.frameElement.ownerDocument.defaultView.MainWindow;</script>
+  <script>var XSNS_MainWindow = window.frameElement.ownerDocument.defaultView.XSNS_MainWindow;</script>
   <script type="text/javascript" src="chrome://xulsword/content/common/common0.js"></script>
   <script type="text/javascript" src="chrome://xulsword/content/common/common1.js"></script>
   
@@ -38,7 +38,7 @@
     
     // show the CommandTarget module info...
     window.frameElement.ownerDocument.getElementById("mainbox").setAttribute("showingModules", "true");
-    window.setTimeout("document.getElementById('mod." + CommandTarget.mod + "').scrollIntoView(true);", 1);
+    window.setTimeout(function () {document.getElementById("mod." + CommandTarget.mod).scrollIntoView(true);}, 1);
     
   }
   

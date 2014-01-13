@@ -36,7 +36,7 @@ function onLoad() {
     cb = document.createElement("checkbox");
     cb.setAttribute("class", "module-checkbox");
     cb.setAttribute("modName", Tabs[t].modName);
-    cb.setAttribute("oncommand", "window.setTimeout('disableBibleIfLast();', 1);");
+    cb.setAttribute("oncommand", function () {window.setTimeout(function () {disableBibleIfLast();}, 1);});
     checkBoxes.push(cb);
     
     lastType = Tabs[t].modType;
@@ -108,7 +108,7 @@ function onLoad() {
   if (checkBoxes.length) {
     document.getElementById("locgroup").removeAttribute("hidden");
     document.getElementById("locgroup-spacer").removeAttribute("hidden");
-    checkBoxes.sort(MainWindow.localeElemSort);
+    checkBoxes.sort(XSNS_MainWindow.localeElemSort);
     for (var c=0; c<checkBoxes.length; c++) {
       document.getElementById("locales").appendChild(checkBoxes[c]);
     }
@@ -134,7 +134,7 @@ function onLoad() {
   if (checkBoxes.length) {
     document.getElementById("audgroup").removeAttribute("hidden");
     document.getElementById("audgroup-spacer").removeAttribute("hidden");
-    checkBoxes.sort(MainWindow.localeElemSort);
+    checkBoxes.sort(XSNS_MainWindow.localeElemSort);
     for (var c=0; c<checkBoxes.length; c++) {
 
       // build our label name using default formatting
@@ -264,10 +264,10 @@ function deleteCheckedResources(e) {
     switch(reset) {
     case NORESET:
     case SOFTRESET:
-      MainWindow.location.reload();
+      XSNS_MainWindow.location.reload();
       break;
     case HARDRESET:
-      MainWindow.setTimeout("restartApplication();", 0);
+      XSNS_MainWindow.setTimeout(function () {restartApplication();}, 0);
       break;
     }
   }

@@ -18,8 +18,6 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 !-->
 
-<?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
-
 <!DOCTYPE overlay [
 	<!ENTITY % startupDTD SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
 	%startupDTD;

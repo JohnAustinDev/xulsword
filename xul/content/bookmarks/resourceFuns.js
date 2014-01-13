@@ -18,7 +18,7 @@
 
 ResourceFuns = {
   
-  // skipComplete must be true if this function is called before the MainWindow loads!
+  // skipComplete must be true if this function is called before the XSNS_MainWindow loads!
   createNewResource: function(propertyValues, keepTimeStamp, resourceName, skipComplete) {
     if (!skipComplete) BookmarkFuns.completeBMInfo(propertyValues);
     var newResource = resourceName ? BM.RDF.GetResource(resourceName):BM.RDF.GetAnonymousResource();
@@ -397,7 +397,7 @@ nsITransaction.prototype = {
     }
     try {window.clearTimeout(TransactionTO);} catch (er) {}
     if (typeof(BookmarkFuns) != "undefined") 
-        TransactionTO = window.setTimeout("BookmarkFuns.updateMainWindow()",0);
+        TransactionTO = window.setTimeout(function () {BookmarkFuns.updateMainWindow();},0);
   },
   
   merge: function () {
@@ -423,6 +423,6 @@ nsITransaction.prototype = {
     }
     try {window.clearTimeout(TransactionTO);} catch (er) {}
     if (typeof(BookmarkFuns) != "undefined") 
-        TransactionTO = window.setTimeout("BookmarkFuns.updateMainWindow()",0);
+        TransactionTO = window.setTimeout(function () {BookmarkFuns.updateMainWindow();},0);
   }
 };

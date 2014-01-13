@@ -311,7 +311,7 @@ function onSearchMenuColumnItemSelected(aEvent)
   }
   
   aEvent.stopPropagation();
-  //window.setTimeout("document.getElementById('searchinPopup').showPopup(null,-1,-1,'popup')",0);
+  //window.setTimeout(fuction () {document.getElementById("searchinPopup").showPopup(null,-1,-1,"popup");},0);
 
 }
 
@@ -336,7 +336,7 @@ function onViewSelected(aEvent)
     var rangeMax = {};
     aEvent.target.treeBoxObject.view.selection.getRangeAt(0, rangeMin, rangeMax);
     var mysel = rangeMin.value;
-    window.setTimeout("BookmarksUtils.FolderSelection = " + mysel + ";", 0); //Save selection as late as possible in thread
+    window.setTimeout(function () {BookmarksUtils.FolderSelection = mysel;}, 0); //Save selection as late as possible in thread
     bookmarksView.tree.setAttribute("ref",selection.item[0].ValueUTF8);
   }
   
@@ -409,6 +409,6 @@ function updateTreeResource(aResource, aID) {
   var row = treelem.tree.builderView.getIndexOfResource(aResource);
   if (row<0) return;
   //Can't seem to rebuild just one row in this implementation...
-  //window.setTimeout("document.getElementById('" + aID + "').tree.treeBoxObject.invalidateRow(" + row + ");", 0);
-  window.setTimeout("document.getElementById('" + aID + "').tree.builder.rebuild();", 0);
+  //window.setTimeout(function () {document.getElementById(aID).tree.treeBoxObject.invalidateRow(row);}, 0);
+  window.setTimeout(function () {document.getElementById(aID).tree.builder.rebuild();}, 0);
 }
