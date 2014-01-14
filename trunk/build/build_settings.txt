@@ -57,5 +57,5 @@ Set IncludeIndexes=false
 Set IncludeHebrewFont=false
 
 # CONTRIBUTOR'S LISTING
-Set (prefs.js):extensions.xulsword.ContributorList=Special Thanks To:\nTroy Griffitts and the SWORD Project\n\nDevelopers:\nJohn Austin\nDavid Booth\n\nContributors:\nAbram Victorovich\nDavid Haslam\nWolfgang Stradner
+Set (prefs.js):extensions.xulsword.ContributorList=Special Thanks To:\nTroy Griffitts and the SWORD Project\n\nDevelopers:\nJohn Austin\nDavid Booth\n\nContributors:\nAbram Victorovich\nAllen Peleton\nDavid Haslam\nWolfgang Stradner
 

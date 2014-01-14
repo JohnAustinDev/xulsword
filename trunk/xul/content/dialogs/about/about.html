@@ -33,7 +33,120 @@
   
   function onLoad() {
     initCSS();
-   
+    
+    var body = document.getElementById("scrollbox");
+    
+    body.appendChild(document.createElement("a")).setAttribute("href", "#top");
+      
+		// begin with a basic module listing
+		var lastType;
+		for (var t=0; t<Tabs.length; t++) {
+
+			if (!lastType || Tabs[t].modType != lastType) {
+				var type = getUI("search." + Tabs[t].tabType);
+				var heading = body.appendChild(document.createElement("div"));
+				heading.className = "mod-heading";
+				heading.textContent = type;
+			}
+			lastType = Tabs[t].modType;
+			
+			var a = body.appendChild(document.createElement("a"));
+			a.className = "simple-list link cs-" + Tabs[t].locName;
+			a.setAttribute("href", "#" + Tabs[t].modName);
+			a.textContent = Tabs[t].label + " - " + Tabs[t].description;
+			
+		}
+		
+		body.appendChild(document.createElement("div")).id = "separator";
+      
+		// now show detailed module listing
+		for (t=0; t<Tabs.length; t++) {
+			
+			// Module's target link
+			var a = body.appendChild(document.createElement("a"));
+			a.className = "mod-anchor";
+			a.id = "mod." + Tabs[t].modName;
+			a.setAttribute("name", Tabs[t].modName);
+			
+			var detail = body.appendChild(document.createElement("div"));
+			detail.className = "module-detail cs-" + Tabs[t].locName;
+			
+			// Heading and version
+			var vers = LibSword.getModuleInformation(Tabs[t].modName, "Version");
+			var span = detail.appendChild(document.createElement("span"));
+			span.className = "mod-detail-heading";
+			span.textContent = Tabs[t].label + (vers != NOTFOUND ? "(" + vers + ")":"");
+			var a = detail.appendChild(document.createElement("a"));
+			a.className = "return-link";
+			a.setAttribute("href", "#top");
+			
+			// Descripton
+			if (Tabs[t].description) {
+				var description = detail.appendChild(document.createElement("div"));
+				description.className = "description";
+				description.textContent = Tabs[t].description;
+			}
+
+			// Copyright
+			var copyright = LibSword.getModuleInformation(Tabs[t].modName, "DistributionLicense");
+			if (copyright == NOTFOUND) copyright = "";
+			if (copyright) {
+				var div = detail.appendChild(document.createElement("div"));
+				div.className = "copyright";
+				div.textContent = copyright;
+			}
+					 
+			// About
+			var about = LibSword.getModuleInformation(Tabs[t].modName,"About");
+			if (about == Tabs[t].description || about == NOTFOUND) about = "";
+			if (about) {
+				about = about.split("\\par");
+				for (var i=0; i<about.length; i++) {
+					var div = detail.appendChild(document.createElement("div"));
+					div.className = "about";
+					div.textContent = about[i];
+				}
+			}
+					 
+			// Conf contents
+			var conf = body.appendChild(document.createElement("div"));
+			conf.className = "conf-info";
+			conf.id = "conf." + Tabs[t].modName
+			conf.setAttribute("showInfo", "false");
+			conf.setAttribute("readonly", "readonly");
+			
+			var a = conf.appendChild(document.createElement("a"));
+			a.className = "link";
+			a.setAttribute("href", "javascript:toggleInfo('" + Tabs[t].modName + "');");
+			var span = a.appendChild(document.createElement("span"));
+			span.className = "more-label";
+			span.textContent = getUI("more.label");
+			var span = a.appendChild(document.createElement("span"));
+			span.className = "less-label";
+			span.textContent = getUI("less.label");
+			
+			var a = conf.appendChild(document.createElement("a"));
+			a.className = "link edit-link";
+			a.setAttribute("href", "javascript:setEditable('" + Tabs[t].modName + "', true);");
+			var span = a.appendChild(document.createElement("span"));
+			span.className = "less-label";
+			span.textContent = safeGetStringFromName("edit", null, "common/additional.properties", "edit.label");
+
+			var a = conf.appendChild(document.createElement("a"));
+			a.className = "link save-link";
+			a.setAttribute("href", "javascript:saveConfText('" + Tabs[t].modName + "');");
+			var span = a.appendChild(document.createElement("span"));
+			span.className = "less-label";
+			span.textContent = safeGetStringFromName("save", null, "common/additional.properties", "save.label");
+
+			var div = conf.appendChild(document.createElement("div")).className = "confpath";
+			
+			var textarea = conf.appendChild(document.createElement("textarea"));
+			textarea.className = "cs-" + DEFAULTLOCALE;
+			textarea.id = "conftext." + Tabs[t].modName;
+			textarea.setAttribute("readonly", "readonly");
+		}
+      
     if (!CommandTarget.mod || !window.frameElement.ownerDocument.getElementById("mainbox")) return;
     
     // show the CommandTarget module info...
@@ -50,7 +163,7 @@
    setEditable(mod, false);
    
     if (showInfo == "false") {
-      elem.getElementsByClassName("confpath")[0].innerHTML = Tab[mod].conf.path;
+      setInnerHTML(elem.getElementsByClassName("confpath")[0], Tab[mod].conf.path);
       var confInfo = "-----";
       if (Tab[mod].conf) {
         confInfo  = readFile(Tab[mod].conf);
@@ -90,82 +203,5 @@
   </head>
   
   <body id="scrollbox" onload="onLoad();">
-    <script>
-    
-      document.write("<a href=\"#top\"></a>");
-      
-      // begin with a basic module listing
-      var lastType;
-      for (var t=0; t<Tabs.length; t++) {
-      
-        if (!lastType || Tabs[t].modType != lastType) {
-          var type = getUI("search." + Tabs[t].tabType);
-          document.write("<div class=\"mod-heading\">" + type + "</div>");
-        }
-        lastType = Tabs[t].modType;
-        
-        document.write("<a class=\"simple-list link cs-" + Tabs[t].locName + "\" href=\"#" + Tabs[t].modName + "\">");
-        document.write(Tabs[t].label + " - " + Tabs[t].description);
-        document.write("</a>");
-        
-      }
-      
-      document.write("<div id=\"separator\"></div>");
-      
-      // now show detailed module listing
-      for (t=0; t<Tabs.length; t++) {
-        
-        // Module's target link
-        document.write("<a class=\"mod-anchor\" id=\"mod." + Tabs[t].modName + "\" name=\"" + Tabs[t].modName + "\"></a>");
-        
-        document.write("<div class=\"module-detail cs-" + Tabs[t].locName + "\">");
-        
-        // Heading and version
-        var vers = LibSword.getModuleInformation(Tabs[t].modName, "Version");
-        document.write(  "<span class=\"mod-detail-heading\">");
-        document.write(    Tabs[t].label + (vers != NOTFOUND ? "(" + vers + ")":""));
-        document.write(  "</span>");
-        document.write(  "<a href=\"#top\" class=\"return-link\"></a>");
-        
-        // Descripton
-        if (Tabs[t].description) 
-            document.write("<div class=\"description\">" + Tabs[t].description + "</div>");
- 
-        // Copyright
-        var copyright = LibSword.getModuleInformation(Tabs[t].modName, "DistributionLicense");
-        if (copyright == NOTFOUND) copyright = "";
-        if (copyright)
-             document.write("<div class=\"copyright\">" + copyright + "</div>");
-             
-        // About
-        var about = LibSword.getModuleInformation(Tabs[t].modName,"About");
-        if (about == Tabs[t].description || about == NOTFOUND) about = "";
-        if (about) {
-          about = about.replace(/(\\par)/g, "<br>");
-          document.write("<div class=\"about\">" + about + "</div>");
-        }
-             
-        document.write("</div>"); // end module-detail
-             
-        // Conf contents
-        document.write("<div id=\"conf." + Tabs[t].modName + "\" class=\"conf-info\" showInfo=\"false\" readonly=\"readonly\">");
-        document.write(  "<a class=\"link\" href=\"javascript:toggleInfo('" + Tabs[t].modName + "');\">");
-        document.write(    "<span class=\"more-label\">" + getUI("more.label") + "</span>");
-        document.write(    "<span class=\"less-label\">" + getUI("less.label") + "</span>");
-        document.write(  "</a>");
-        document.write(  "<a class=\"link edit-link\" href=\"javascript:setEditable('" + Tabs[t].modName + "', true);\">");
-        document.write(    "<span class=\"less-label\">" + safeGetStringFromName("edit", null, "common/additional.properties", "edit.label") + "</span>");
-        document.write(  "</a>");
-        document.write(  "<a class=\"link save-link\" href=\"javascript:saveConfText('" + Tabs[t].modName + "');\">");
-        document.write(    "<span class=\"less-label\">" + safeGetStringFromName("save", null, "common/additional.properties", "save.label") + "</span>");
-        document.write(  "</a>");
-        document.write(  "<div class=\"confpath\"></div>");
-        document.write(  "<textarea id=\"conftext." + Tabs[t].modName + "\" class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>");
-        document.write("</div>");
-
-      }
-      
-    </script>
-    
   </body>
 </html>

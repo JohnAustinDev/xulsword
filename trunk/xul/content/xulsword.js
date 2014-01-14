@@ -450,7 +450,7 @@ function createLanguageMenu() {
     xulElement.setAttribute("class", "cs-" + lc);
     xulElement.setAttribute("type", "radio");
     xulElement.setAttribute("name", "lng");
-    xulElement.setAttribute("oncommand", "handleOptions(this)");
+    xulElement.addEventListener("command", function () {handleOptions(this);});
     menuItems.push(xulElement);
   }
   menuItems.sort(localeElemSort);
@@ -534,8 +534,8 @@ function getLabelOfVideo(file) {
 function writeHelpVideoElem(elem, v) {
   elem.setAttribute("id", v.id);
   elem.setAttribute("label", v.label);
-  elem.setAttribute("oncommand", "AllVideos[" + v.index + "].file.launch()");
   elem.setAttribute("class", "menuitem-iconic videoHelpMenuItem" + (v.locale ? " cs-" + v.locale:""));
+  elem.addEventListener("command", function () {AllVideos[v.index].file.launch();});
   return elem;
 }
 
@@ -547,8 +547,8 @@ function fillModuleMenuLists() {
     xulElement.setAttribute("label", Tabs[t].label + (Tabs[t].description ? " --- " + Tabs[t].description:""));
     xulElement.setAttribute("id", "modulemenu." + String(t));
     xulElement.setAttribute("type", "checkbox");
-    xulElement.setAttribute("oncommand", "holdMenuAndHandleOptions(this)");
     xulElement.setAttribute("autocheck","false");
+    xulElement.addEventListener("command", function () {holdMenuAndHandleOptions(this);});
     
     for (var type in SupportedModuleTypes) {
       if (Tabs[t].modType!=SupportedModuleTypes[type]) continue;
@@ -667,7 +667,7 @@ var History = {
     var vers = ViewPort.firstDisplayBible();
     for (var i=this.list.length-1; i>=0; i--) {
       var xulElement = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "menuitem");
-      xulElement.setAttribute("oncommand", "History.toSelection('" + i + "')");
+      xulElement.addEventListener("command", function () {History.toSelection(i)});
       var aref = Location.convertLocation(WESTERNVS, this.list[i], LibSword.getVerseSystem(vers));
       xulElement.setAttribute("label", ref2ProgramLocaleText(aref, true));
       //if (i == this.index) {xulElement.style.background="rgb(230,200,255)";}
@@ -1623,7 +1623,7 @@ function printBrowserLoaded() {
   if (PrintTarget.bodyHTML) {
     // NOTE: this copies the body HTML but not any body attributes. So
     // body attributes will remain what they were when the doc was loaded.
-    pbDoc.getElementsByTagName("body")[0].innerHTML = PrintTarget.bodyHTML;
+    setInnerHTML(pbDoc.getElementsByTagName("body")[0], PrintTarget.bodyHTML);
   }
   
   document.getElementById(PrintTarget.command).doCommand();

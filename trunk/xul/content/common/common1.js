@@ -64,7 +64,6 @@ var BMDS                  = XSNS_MainWindow.BMDS;
 var BookmarkFuns          = XSNS_MainWindow.BookmarkFuns;
 var ResourceFuns          = XSNS_MainWindow.ResourceFuns;
 
-var BibleNavigator        = XSNS_MainWindow.BibleNavigator;
 var GenBookNavigator      = XSNS_MainWindow.GenBookNavigator;
 
 var AllWindows            = XSNS_MainWindow.AllWindows;

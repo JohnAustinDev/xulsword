@@ -41,7 +41,7 @@
       if (XSNS_MainWindow.document.getElementById("printBrowser").contentDocument === document) {
         
         if (XSNS_MainWindow.PrintTarget.bodyHTML) {
-          document.getElementsByTagName("body")[0].innerHTML = XSNS_MainWindow.PrintTarget.bodyHTML;
+					setInnerHTML(document.getElementsByTagName("body")[0], XSNS_MainWindow.PrintTarget.bodyHTML);
         }
         
         XSNS_MainWindow.printBrowserLoaded();

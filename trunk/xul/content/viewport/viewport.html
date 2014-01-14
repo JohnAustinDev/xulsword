@@ -30,11 +30,13 @@
   <script>
     var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
     var XSNS_MainWindow = watcher.getWindowByName("xulsword-window", window);
+    var BibleNavigator;
     window.name = (frameElement ? frameElement.ownerDocument.defaultView.name:"print") + ".viewportFrame";
   </script>
   
   <script src="chrome://xulsword/content/common/common0.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/common/common1.js" type="text/javascript"></script>
+  <script src="chrome://xulsword/content/viewport/bibleNavigator.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/viewport/texts/texts.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/viewport/texts/bibleTexts.js" type="text/javascript"></script>
   <script src="chrome://xulsword/content/viewport/texts/commTexts.js" type="text/javascript"></script>
@@ -45,7 +47,7 @@
   <script src="chrome://xulsword/content/viewport/viewport.js" type="text/javascript"></script>
   
   </head>
-  <body id="viewportbody" chooser="bible" print="false" isWindow="false" onload="Popup = new PopupObj(); initViewPort();" 
+  <body id="viewportbody" chooser="bible" print="false" isWindow="false" onload="BibleNavigator.init(); Popup = new PopupObj(); initViewPort();" 
       onmouseover="BibleNavigator.mouseHandler(event)" 
       onmouseout="BibleNavigator.mouseHandler(event)" 
       onclick="BibleNavigator.mouseHandler(event)">
@@ -64,30 +66,22 @@
 								<div class="testaments-row">
 									<div id="testament_ot" class="testament">
 										<div id="chbutton_close"></div>
-										<script>
-										var text = XSBundle.getString('OTtext');
-										if (!text.match(/^\s*$/)) document.write(BibleNavigator.verticalWrite(text));
-										else document.write("<img src=\"chrome://xulsword/locale/OT.png\">");
-										</script>
+										<!-- Content created dynamically !-->
 									</div>
 								</div>
 								<div class="testaments-row">
 									<div id="testament_nt" class="testament">
-										<script>
-										var text = XSBundle.getString('NTtext');
-										if (!text.match(/^\s*$/)) document.write(BibleNavigator.verticalWrite(text));
-										else document.write("<img src=\"chrome://xulsword/locale/NT.png\">");
-										</script>
+										<!-- Content created dynamically !-->
 									</div>
 								</div>
 							</div>
 						</div>
 						<div class="biblechooser-cell">
 							<div id="biblebooks_ot" class="biblebooks">
-								<script>document.write(BibleNavigator.drawOTbooks());</script>         
+								<!-- Content created dynamically !-->         
 							</div>
 							<div id="biblebooks_nt" class="biblebooks">
-								<script>document.write(BibleNavigator.drawNTbooks());</script>
+								<!-- Content created dynamically !-->
 							</div>
 						</div>
 					</div>

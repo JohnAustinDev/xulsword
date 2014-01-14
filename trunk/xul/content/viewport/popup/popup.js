@@ -27,6 +27,14 @@ function initWindowedPopup() {
   // This is a windowed popup, so copy the original popup
   Popup = new PopupObj(XSNS_MainWindow.Popup);
   
+  // eventListeners are not copied by DOM manipulation, so add them now
+  var selects = document.getElementsByClassName("popup-mod-select");
+  for (var i=0; i<selects.length; i++) {Popup.addSelectEventListener(selects[i]);}
+  var towindows = document.getElementsByClassName("towindow");
+  for (var i=0; i<towindows.length; i++) {
+		towindows[i].addEventListener("click", function () {Popup.towindow();});
+	}
+  
   // Close the original popup
   XSNS_MainWindow.Popup.close();
 
@@ -43,7 +51,11 @@ function PopupObj(popupobj) {
     
   if (popupobj) {
     this.npopup.setAttribute("puptype", popupobj.npopup.getAttribute("puptype"));
-    this.npopupTX.innerHTML = popupobj.npopupTX.innerHTML;
+    
+    while (this.npopupTX.firstChild) {this.npopupTX.removeChild(this.npopupTX.firstChild);}
+    for (var i=0; i<popupobj.npopupTX.childNodes.length; i++) {
+			this.npopupTX.appendChild(document.importNode(popupobj.npopupTX.childNodes[i], true));
+		}
 
     // copy popupobj additional members (excluding functions) to the new object
     for (var p in popupobj) {
@@ -77,54 +89,19 @@ function PopupObj(popupobj) {
 				if (aref && aref != NOTFOUND && Tab.hasOwnProperty(aref)) referenceBible = aref;
 			}
 		}
-      
-    // Begin building HTML for the popup
-    var html = "";
-    html += "<div class=\"popupheader cs-Program\">";
-    html +=   "<div class=\"towindow\" onclick=\"Popup.towindow();\"></div>";
-    html +=   "<a class=\"" + (updatingPopup ? "popupBackLink":"popupCloseLink") + "\">";
-    html +=     XSBundle.getString(updatingPopup ? "back":"close");
-    html +=   "</a>";
-    html +=   "<div class=\"draghandle\"></div>";
-    
-    // add select drop-down for cr and sr
-    if (p && p.mod && (/^(cr|sr)$/).test(type)) {
-      var bmods = [];
-      for (var t=0; t<Tabs.length; t++) {
-        if (Tabs[t].modType == BIBLE) bmods.push(Tabs[t].modName);
-      }
-      html += this.getModSelectHTML(bmods, referenceBible, "Popup.select(this.value, '" + p.mod + "');");
-    }
-    
-    // add select drop-down(s) for sn
-    if ((/^(sn)$/).test(type)) {
-      for (var sls in SpecialModules.LanguageStudy) {
-        if (SpecialModules.LanguageStudy[sls].length < 2) continue; // need no button if only one choice
-        if (sls=="HebrewDef" & !(/S_H/).test(elem.className)) continue; // need no button if nothing applicable in popup
-        if (sls=="GreekDef" & !(/S_G/).test(elem.className)) continue;
-        if (sls=="GreekParse" & !(/SM_G/).test(elem.className)) continue;
-        html += this.getModSelectHTML(
-          SpecialModules.LanguageStudy[sls], 
-          prefs.getCharPref("Selected" + sls), 
-          "Popup.selectFeature(this.value, '" + sls + "');"
-        );
-      }
-    }
 
-    html += "</div>";
-    
-    // If popup is already open, then save the current popup inside the "back" link of this new popup...
-    html += "<div class=\"prevhtml\" title=\"" + this.npopup.getAttribute("puptype") + "\">" + (updatingPopup ? this.npopupTX.innerHTML:"") + "</div>";
-
-    html += "<div class=\"popup-text cs-Program\">";
-    
     var res = "";
     switch (type) {
     
     case "popupBackLink":
       var old = this.npopup.getElementsByClassName("prevhtml")[0];
       this.npopup.setAttribute("puptype", old.getAttribute("title"));
-      this.npopupTX.innerHTML = old.innerHTML;
+      var oldchildren = [];
+      while (old.firstChild) {oldchildren.push(old.removeChild(old.firstChild));}
+      while (this.npopupTX.firstChild) {this.npopupTX.removeChild(this.npopupTX.firstChild);}
+      for (var i=0; i<oldchildren.length; i++) {
+				this.npopupTX.appendChild(oldchildren[i]);
+			}
       this.setTitle();
       this.checkPopupPosition(e);
       return true;
@@ -224,12 +201,67 @@ function PopupObj(popupobj) {
       return false;
     }
     if (!res) return false;
-    html += res + "</div>";
     
     this.npopup.setAttribute("puptype", type);
-    this.npopupTX.innerHTML = html;
-//jsdump("popup html=" + html);
-  
+
+		// save old popup
+		var oldChildren = [];
+		while(this.npopupTX.firstChild) {
+			oldChildren.push(this.npopupTX.removeChild(this.npopupTX.firstChild));
+		}
+		
+		// build the new popup's DOM
+		var popupheader = this.npopupTX.appendChild(document.createElement("div"));
+		popupheader.className = "popupheader cs-Program";
+		var towindow = popupheader.appendChild(document.createElement("div"));
+		towindow.className = "towindow";
+		towindow.addEventListener("click", function () {Popup.towindow();});
+		var backlink = popupheader.appendChild(document.createElement("a"));
+		backlink.className = (updatingPopup ? "popupBackLink":"popupCloseLink");
+		backlink.textContent = XSBundle.getString(updatingPopup ? "back":"close");
+		var draghandle = popupheader.appendChild(document.createElement("div"));
+		draghandle.className = "draghandle";
+
+    // append select drop-down for cr and sr
+    if (p && p.mod && (/^(cr|sr)$/).test(type)) {
+      var bmods = [];
+      for (var t=0; t<Tabs.length; t++) {
+        if (Tabs[t].modType == BIBLE) bmods.push(Tabs[t].modName);
+      }
+      this.appendModSelect(popupheader, bmods, referenceBible, false, p.mod);
+    }
+    
+    // append select drop-down(s) for sn
+    if ((/^(sn)$/).test(type)) {
+      for (var sls in SpecialModules.LanguageStudy) {
+        if (SpecialModules.LanguageStudy[sls].length < 2) continue; // need no button if only one choice
+        if (sls=="HebrewDef" & !(/S_H/).test(elem.className)) continue; // need no button if nothing applicable in popup
+        if (sls=="GreekDef" & !(/S_G/).test(elem.className)) continue;
+        if (sls=="GreekParse" & !(/SM_G/).test(elem.className)) continue;
+        this.appendModSelect(
+					popupheader,
+          SpecialModules.LanguageStudy[sls], 
+          prefs.getCharPref("Selected" + sls), 
+          true, sls
+        );
+      }
+    }
+    
+    // If popup is already open, then save the current popup inside the "back" link of this new popup...
+    var prevcontent = this.npopupTX.appendChild(document.createElement("div"));
+    prevcontent.className = "prevhtml";
+    prevcontent.setAttribute("title", this.npopup.getAttribute("puptype"));
+    if (updatingPopup) {
+			for (var i=0; i<oldChildren.length; i++) {
+				prevcontent.appendChild(oldChildren[i]);
+			}
+		}
+
+		// finally add our new popup results
+		var newcontent = this.npopupTX.appendChild(document.createElement("div"));
+		newcontent.className = "popup-text cs-Program";
+		setInnerHTML(newcontent, res);
+
     // Windowed popup...
     if ((/\.windowedPopup$/).test(window.name)) {
       this.setTitle();
@@ -254,18 +286,33 @@ function PopupObj(popupobj) {
     
   };
   
-  this.getModSelectHTML = function(mods, selectMod, onchange) {
-    var html  = "<select class=\"popup-mod-select\" onchange=\"" + onchange + "\" >";
-
+  this.appendModSelect = function(parent, mods, selectMod, isFeature, arg2) {
+		var select = parent.appendChild(document.createElement("select"));
+		select.className = "popup-mod-select";
+		select.setAttribute("title", isFeature + "," + arg2);
+		this.addSelectEventListener(select);
+		
     for (var m=0; m<mods.length; m++) {
       if (!Tab[mods[m]]) continue;
-      var selected = (mods[m] == selectMod ? "selected=\"selected\" ":"");
-      html += "<option value=\"" + mods[m] + "\" class=\"cs-" + Tab[mods[m]].locName + "\" " + selected + ">" + Tab[mods[m]].label + "</option>";
+      var option = select.appendChild(document.createElement("option"));
+      option.className = "cs-" + Tab[mods[m]].locName;
+      option.setAttribute("value", mods[m]);
+      if (mods[m] == selectMod) option.setAttribute("selected", "selected");
+      option.textContent = Tab[mods[m]].label;
     }
-    html += "</select>";
     
-    return html;
   };
+  
+  this.addSelectEventListener = function (selectElem) {
+		var title = selectElem.getAttribute("title");
+		if (!title) return;
+		title = title.split(",");
+		if (!title.length || title.length != 2) return;
+		var isFeature = (title[0] == "true");
+		var arg2 = title[1];
+		if (!isFeature) selectElem.addEventListener("change", function (event) {Popup.select(event, arg2);});
+		else selectElem.addEventListener("change", function (event) {Popup.selectFeature(event, arg2);});
+	};
   
   this.setTitle = function() {
     if (!(/\.windowedPopup$/).test(window.name)) return; // only windowed popups need titles
@@ -337,7 +384,8 @@ function PopupObj(popupobj) {
     document.getElementsByTagName("body")[0].appendChild(this.npopup);
   };
   
-  this.select = function(mod, msrc) {
+  this.select = function(e, msrc) {
+		var mod = e.target.value;
     var pt = this.npopupTX.getElementsByClassName("popup-text");
     if (!pt) return;
     pt = pt[pt.length-1]; // the pt we want is the last in the tree
@@ -348,20 +396,34 @@ function PopupObj(popupobj) {
 
     var h = BibleTexts.getNotesHTML(n.innerHTML, mod, true, true, true, true, 1, (/(^|\s+)is_sr(\s+|$)/).test(n.className));
     h += "<div class=\"" + n.className + "\" style=\"display:none;\">" + n.innerHTML + "</div>";
-    pt.innerHTML = h;
+    setInnerHTML(pt, h);
     Popup.setTitle();
     this.selectRef[msrc] = mod;
+    this.setSelectAttribute(e.target, mod);
   };
   
-  this.selectFeature = function(mod, feature) {
+  this.selectFeature = function(e, feature) {
+		var mod = e.target.value;
     var pt = this.npopupTX.getElementsByClassName("popup-text");
     if (!pt) return;
     pt = pt[pt.length-1]; // the pt we want is the last in the tree
     
     prefs.setCharPref("Selected" + feature, mod);
-    pt.innerHTML = DictTexts.getLemmaHTML(this.lemmaInfo.snlist, this.lemmaInfo.entry, this.lemmaInfo.mod);
+    setInnerHTML(pt, DictTexts.getLemmaHTML(this.lemmaInfo.snlist, this.lemmaInfo.entry, this.lemmaInfo.mod));
     Popup.setTitle();
+    this.setSelectAttribute(e.target, mod);
   };
+  
+  // this is only needed so that when selects are copied using DOM
+  // manipulation functions, the selection will be copied as well
+  this.setSelectAttribute = function(selectElem, mod) {
+		for (var i=0; i<selectElem.childNodes.length; i++) {
+			if (selectElem.childNodes[i].value == mod) {
+				selectElem.childNodes[i].setAttribute("selected", "selected");
+			}
+			else selectElem.childNodes[i].removeAttribute("selected");
+		}
+	};
   
   this.towindow = function() {
     

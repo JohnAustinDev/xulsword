@@ -61,7 +61,14 @@ function initViewPort() {
     // ViewPort.update rather than Texts.update below), because although
     // a usual Texts.update would re-create the exact window most of the 
     // time, it would not do so for certain hilighted-verse windows. 
-    document.getElementById("viewportbody").innerHTML = XSNS_MainWindow.ViewPort.ownerDocument.getElementById("viewportbody").innerHTML;
+    var myVP = document.getElementById("viewportbody");
+    var srcVP = document.importNode(XSNS_MainWindow.ViewPort.ownerDocument.getElementById("viewportbody"), true);
+    while (myVP.firstChild) {myVP.removeChild(myVP.firstChild);}
+    while (srcVP.firstChild) {myVP.appendChild(srcVP.removeChild(srcVP.firstChild));}
+    // copying via DOM functions does not copy eventListeners, so add them back
+		document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
+		document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
+		document.getElementById("textrow").addEventListener("DOMMouseScroll", MouseWheel.scroll, false);
     
     // this copied viewport should have only one text window showing: towindow...
     // This window should be pinned if it's pinable, and all other windows should 
@@ -144,11 +151,8 @@ function ViewPortObj(viewPortObj) {
 
     html += "</div>";
 
-    document.getElementById("tabs" + w).innerHTML = html;
+		setInnerHTML(document.getElementById("tabs" + w), html);
   };
-
-  // draw tabs
-  for (w=1; w<=NW; w++) {this.drawTabs(w);}
 
   // If we have a passed viewPortObj, then copy it. Otherwise create 
   // a ViewPortObj from global preferences.
@@ -171,6 +175,9 @@ function ViewPortObj(viewPortObj) {
   }
   
   else {
+		// draw tabs
+		for (w=1; w<=NW; w++) {this.drawTabs(w);}
+
     this.ownerDocument = document;
     this.ShowOriginal = [];
     this.IsPinned = [];
@@ -657,7 +664,6 @@ function ViewPortObj(viewPortObj) {
     if (this.resizeTimer) window.clearTimeout(this.resizeTimer);
     this.resizeTimer = window.setTimeout(function () {ViewPort.update();}, 300);
   };
-
 
   this.unload = function() {
     
