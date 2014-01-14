@@ -36,7 +36,7 @@ function onLoad() {
     cb = document.createElement("checkbox");
     cb.setAttribute("class", "module-checkbox");
     cb.setAttribute("modName", Tabs[t].modName);
-    cb.setAttribute("oncommand", function () {window.setTimeout(function () {disableBibleIfLast();}, 1);});
+    cb.addEventListener("command", function () {window.setTimeout(function () {disableBibleIfLast();}, 1);});
     checkBoxes.push(cb);
     
     lastType = Tabs[t].modType;

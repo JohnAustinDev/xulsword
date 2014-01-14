@@ -443,7 +443,7 @@ ARMI = {
 		}
 		
 		var body = document.getElementById("infoBox").contentDocument.getElementsByTagName("body")[0];
-		body.innerHTML = html;
+		setInnerHTML(body, html);
 		body.style.background = "white";
 	},
 

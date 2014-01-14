@@ -210,7 +210,7 @@ Texts = {
           prev.htmlText = tip.htmlText + prev.htmlText;
           prev.htmlNotes = tip.htmlNotes + prev.htmlNotes;
           prev.footnotes = tip.footnotes + prev.footnotes;
-          sb.innerHTML = prev.htmlText;
+          setInnerHTML(sb, prev.htmlText);
           if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
                (!ltr && sb.lastChild.offsetLeft < 0) ) break;
           c--;
@@ -226,7 +226,7 @@ Texts = {
           next.htmlText = next.htmlText + tip.htmlText;
           next.htmlNotes = next.htmlNotes + tip.htmlNotes;
           next.footnotes = next.footnotes + tip.footnotes;
-          sb.innerHTML = next.htmlText;
+          setInnerHTML(sb, next.htmlText);
           if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
                (!ltr && sb.lastChild.offsetLeft < 0) ) break;
           c++;
@@ -237,13 +237,14 @@ Texts = {
       var ti = BibleTexts.read(w, display);
         
       var hd = t.getElementsByClassName("hd")[0];
-      hd.innerHTML = ti.htmlHead;
-      
-      sb.innerHTML = prev.htmlText + (ti.htmlText.length > 64 ? ti.htmlText:"") + next.htmlText;
 
+      setInnerHTML(hd, ti.htmlHead);
+jsdump(prev.htmlText + (ti.htmlText.length > 64 ? ti.htmlText:"") + next.htmlText);    
+      setInnerHTML(sb, prev.htmlText + (ti.htmlText.length > 64 ? ti.htmlText:"") + next.htmlText);
+jsdump(sb.innerHTML);  
       var nb = t.getElementsByClassName("nb")[0];
       this.footnotes[w] = prev.footnotes + ti.footnotes + next.footnotes;
-      nb.innerHTML = prev.htmlNotes + ti.htmlNotes + next.htmlNotes;
+      setInnerHTML(nb, prev.htmlNotes + ti.htmlNotes + next.htmlNotes);
     }
     
     if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
@@ -281,13 +282,13 @@ Texts = {
       var ti = CommTexts.read(w, display);
 
       var hd = t.getElementsByClassName("hd")[0];
-      hd.innerHTML = ti.htmlHead;
+      setInnerHTML(hd, ti.htmlHead);
       
-      sb.innerHTML = (ti.htmlText.length > 64 ? ti.htmlText:"");
+      setInnerHTML(sb, (ti.htmlText.length > 64 ? ti.htmlText:""));
       
       var nb = t.getElementsByClassName("nb")[0];
       this.footnotes[w] = ti.footnotes;
-      nb.innerHTML = ti.htmlNotes;
+      setInnerHTML(nb, ti.htmlNotes);
     }
     
     if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
@@ -331,9 +332,9 @@ Texts = {
       this.footnotes[w] = ti.footnotes;
       
       var hd = t.getElementsByClassName("hd")[0];
-      hd.innerHTML = ti.htmlHead;
+      setInnerHTML(hd, ti.htmlHead);
       
-      sb.innerHTML = ti.htmlText;
+      setInnerHTML(sb, ti.htmlText);
 
     }
   
@@ -371,16 +372,16 @@ Texts = {
       this.footnotes[w] = ti.footnotes;
       
       var hd = t.getElementsByClassName("hd")[0];
-      hd.innerHTML = ti.htmlHead;
+      setInnerHTML(hd, ti.htmlHead);
       
-      sb.innerHTML = ti.htmlEntry;
+      setInnerHTML(sb, ti.htmlEntry);
       
       var nb = t.getElementsByClassName("nb")[0];
       display.htmlList = ti.htmlList;
       if (force || !this.display[w] || 
           !this.display[w].hasOwnProperty("htmlList") || 
           this.display[w].htmlList != ti.htmlList)
-        nb.innerHTML = ti.htmlList;
+        setInnerHTML(nb, ti.htmlList);
     
       // highlight the selected key
       var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");

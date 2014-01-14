@@ -346,6 +346,25 @@ function jsdump(str)
 
 jsdump("Load common: " + window.name + "\n");
 
+
+// Firefox Add-On validation warns about setting innerHTML directly,
+// so this is a safe solution. In future, it's better to manipulate the
+// DOM directly rather than use innerHTML also because it's faster.
+function setInnerHTML(parent, html) {
+	var doc = parent.ownerDocument;
+	var allowStyle = true;
+	var baseURI = null;
+	var isXML = false;
+	
+	if ((/<[^>]*"[^>"]*[;\{]/).test(html)) jsdump("WARNING1: Javascript will be removed!\n" + html.match(/<[^>]*"[^>"]*[;\{]/)[0]); 
+	if ((/<[^>]*on\S*\s*=\s*"[^"]"/).test(html)) jsdump("WARNING2: Javascript will be removed!\n" + html.match(/<[^>]*on\S*\s*=\s*"[^"]"/)[0]); 
+	
+	while (parent.firstChild) {parent.removeChild(parent.firstChild);}
+	
+	var parser = Components.classes["@mozilla.org/parserutils;1"].getService(Components.interfaces.nsIParserUtils);
+	parent.appendChild(parser.parseFragment(html, allowStyle ? parser.SanitizerAllowStyle : 0, !!isXML, baseURI, doc.documentElement));
+}
+
 function escapeRE(text) {
   const ESCAPE_RE= new RegExp(/([\-\[\]\(\)\{\}\+\*\.\:\^\$\?\|\\])/g);
   return text.replace(ESCAPE_RE, "\\$1");

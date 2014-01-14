@@ -208,9 +208,9 @@ function SearchObj(searchObj) {
     document.title = fixWindowTitle(this.originalTitle.replace("**search_title**", s.searchtext));
     
     // prepare search results window for new results
-    SearchResults.innerHTML = "";
+    setInnerHTML(SearchResults, "");
     //SearchResults.style.whiteSpace = (ModuleConfigs[s.mod].direction == "rtl" ? "normal":""); // FF bug workaround
-    LexiconResults.innerHTML = "";
+    setInnerHTML(LexiconResults, "");
     
     document.getElementById("bible-translator").version = s.mod;
     
@@ -503,8 +503,8 @@ function SearchObj(searchObj) {
     // read search results to display
     var r = LibSword.getSearchResults(mod, result.index, result.results_per_page, keepStrongs, result.searchPointer);
     if (!r) {
-			SearchResults.innerHTML = "";
-			LexiconResults.innerHTML = "";
+			setInnerHTML(SearchResults, "");
+			setInnerHTML(LexiconResults, "");
 			return;
 		}
     
@@ -512,7 +512,7 @@ function SearchObj(searchObj) {
     // an anchor which was created using createElement...
     r = r.replace(/<span /g, "<a></a><span ");
     
-    SearchResults.innerHTML = r;
+    setInnerHTML(SearchResults, r);
     
     r = SearchResults.firstChild;
     while(r) {
@@ -526,7 +526,7 @@ function SearchObj(searchObj) {
       case COMMENTARY:
         // translate from s.mod to mod...
         var loc = LibSword.convertLocation(LibSword.getVerseSystem(s.mod), p.osisref, LibSword.getVerseSystem(mod));
-        l.innerHTML = ref2ProgramLocaleText(loc);
+        setInnerHTML(l, ref2ProgramLocaleText(loc));
         l.className = "cs-Program";
         loc = loc.split(".");
         l.setAttribute("href", "javascript:XSNS_MainWindow.showLocation('" + mod + "','" + loc[0] + "','" + loc[1] + "','" + loc[2] + "','" + loc[3] + "');");
@@ -534,7 +534,7 @@ function SearchObj(searchObj) {
         
       case GENBOOK:
       case DICTIONARY:
-        l.innerHTML = p.ch;
+        setInnerHTML(l, p.ch);
         l.className = "cs-" + p.mod;
         l.setAttribute("href", "javascript:XSNS_MainWindow.showLocation('" + p.mod + "','na','" +  p.ch + "',1,1);");
         break;
@@ -564,7 +564,7 @@ function SearchObj(searchObj) {
         }
       }
       html = html.replace(/<br[^>]*>/g, ""); // since <br> looks bad in display
-      r.lastChild.innerHTML = html;
+      setInnerHTML(r.lastChild, html);
       
       r = r.nextSibling;
     }
@@ -593,7 +593,7 @@ function SearchObj(searchObj) {
       if (!LexiconResults.innerHTML) {
         
         LexiconResults.style.display = "none"; // might this speed things up??
-        LexiconResults.innerHTML = LibSword.getSearchResults(mod, 0, MAX_LEXICON_SEARCH_RESULTS, true, result.searchPointer);
+        setInnerHTML(LexiconResults, LibSword.getSearchResults(mod, 0, MAX_LEXICON_SEARCH_RESULTS, true, result.searchPointer));
         
         var html = "";
         for (var i=0; i<classes.length; i++) {
@@ -642,7 +642,7 @@ function SearchObj(searchObj) {
           
         }
         
-        LexiconResults.innerHTML = (html ? html:"<span style=\"display:none\"></span>"); // should not be left empty
+        setInnerHTML(LexiconResults, (html ? html:"<span style=\"display:none\"></span>")); // should not be left empty
         LexiconResults.style.display = ""; // was set to "none" to improve (??) speed
          
       }
@@ -666,7 +666,7 @@ function SearchObj(searchObj) {
           lexiconResults = lexiconResults.replace(re, "<span class=\"searchterm\">$&</span>");
         }
       }
-      LexiconResults.innerHTML = lexiconResults;
+      setInnerHTML(LexiconResults, lexiconResults);
     
       var matches = LexiconResults.getElementsByClassName("searchterm");
 
@@ -734,7 +734,7 @@ function SearchObj(searchObj) {
       
       html += "<div class=\"lex-sep\"></div>";
     
-      LexiconResults.innerHTML = (html ? html:"<span style=\"display:none\"></span>"); // should not be left empty
+      setInnerHTML(LexiconResults, (html ? html:"<span style=\"display:none\"></span>")); // should not be left empty
       LexiconResults.style.display = ""; // was set to "none" to improve (??) speed
       
       LexiconResults.parentNode.setAttribute("hasLexicon", "true");

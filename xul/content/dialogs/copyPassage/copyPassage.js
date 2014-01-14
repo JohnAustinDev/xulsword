@@ -108,7 +108,7 @@ function copyPassage(e) {
 // with DOM functions to remove un-needed verses etc.
 function htmlVerses(d, html, versesOnly) {
   var parent = document.getElementById("chaptertext").contentDocument.body;
-  parent.innerHTML = html;
+  setInnerHTML(parent, html);
 
   var elem = parent.lastChild;
   
@@ -142,7 +142,7 @@ function htmlVerses(d, html, versesOnly) {
   
   // wrap everything in a container so headings are centered correctly
   html = "<div>" + html + "</div>";
-  
+ 
   return html;
 }
 
