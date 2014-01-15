@@ -35,7 +35,6 @@ function loadedXUL() {
   document.getElementById("topbox").setAttribute("hasBible", LibSword.hasBible ? "true":"false");
   
   document.title = fixWindowTitle(XSBundle.getString("Title"));
-  window.name = "xulsword-window";
   
   //To make the program window draw cleaner and faster, size initialization 
   //routines use prefs to size the frames since window size is not available during 
@@ -535,7 +534,8 @@ function writeHelpVideoElem(elem, v) {
   elem.setAttribute("id", v.id);
   elem.setAttribute("label", v.label);
   elem.setAttribute("class", "menuitem-iconic videoHelpMenuItem" + (v.locale ? " cs-" + v.locale:""));
-  elem.addEventListener("command", function () {AllVideos[v.index].file.launch();});
+  // launch() is not allowed by Firefox AMO Add-On validation, and should be replaced with embeded player
+  //elem.addEventListener("command", function () {AllVideos[v.index].file.launch();});
   return elem;
 }
 
@@ -1234,7 +1234,7 @@ function handleOptions(elem) {
         aURI = ios.newURI(aURI, null, null);
         aURI = aURI.asciiSpec;
         jsdump("Launching mailto URI of " + aURI.length + " chars.");
-        try {window.location = aURI;}
+        try {window.location.href = aURI;}
         catch(er) {jsdump("Unable to launch email client.");}
       }
       break;
@@ -1350,7 +1350,7 @@ function changeLocaleTo(newLocale) {
   var rootPrefBranch = Components.classes["@mozilla.org/preferences-service;1"].
                       getService(Components.interfaces.nsIPrefBranch);
   if (newLocale == getLocale()) return;
-  rootPrefBranch.setCharPref("general.useragent.locale",newLocale);
+  rootPrefBranch.setCharPref(LOCALEPREF, newLocale);
   
   prefs.clearUserPref("addRepositoryModuleLang");
   

@@ -79,7 +79,7 @@ var BookmarksMenu = {
     if (targettype == "Folder") target.firstChild.hidePopup(); //Added for xulrunner 1.9pre. Open menupopup forced selection to null!
     BookmarksCommand.createContextMenu(aEvent, this._selection, this._db);
     this.onCommandUpdate();
-    aEvent.target.addEventListener("mousemove", BookmarksMenuController.onMouseMove, false);
+    aEvent.target.addEventListener(MSMOVE, BookmarksMenuController.onMouseMove, false);
     return true;
   },
 
@@ -103,7 +103,7 @@ var BookmarksMenu = {
     // if the user types escape, we need to remove the feedback
     BookmarksMenuDNDObserver.onDragRemoveFeedBack(document.popupNode);
 
-    aEvent.target.removeEventListener("mousemove", BookmarksMenuController.onMouseMove, false);
+    aEvent.target.removeEventListener(MSMOVE, BookmarksMenuController.onMouseMove, false);
 
     this._target = null;
     this._selection = null;

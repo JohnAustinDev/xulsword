@@ -105,18 +105,16 @@
 		AudioDirs = getAudioDirs();
 		Book = getBibleBooks();
 		
+		/* the code below is requires if this overlay is used on any window without onunload = unloadXS()
 		OnUnloadPrevious = window.onunload;
 		window.onunload = function () {
 			if (typeof OnUnloadPrevious == "function") OnUnloadPrevious();
 			unloadXS();
-		}
+		} */
 		
 		createAppDirectories();
 	
 		if (!IsExtension) {
-			window.screenX = window.screen.width/2-50;
-			window.screenY = window.screen.height/2-50;
-
 			// Scripts or programs that need to block while xulsword performs
 			// command line module installation (the xsInstallOnly command line 
 			// option), will get confused if xulsword needs to restart. Hence 
@@ -147,18 +145,6 @@
 		}
 		else moduleInstall(false); // this will call endInstall() when complete...
 		
-	}
-	
-	// Extensions do not start xulsword during load, so a pref is used to
-	// indicated xulsword should be restarted
-	if (IsExtension) {
-		try {var restartXulsword = prefs.getBoolPref("RestartXulsword");}
-		catch (er) {restartXulsword = false;}
-
-		try {prefs.clearUserPref("RestartXulsword");}
-		catch (er) {}
-
-		if (restartXulsword) startxulsword();
 	}
 	
 ]]>

@@ -65,7 +65,7 @@
 [books.Philemon]: Филимону
 [books.Hebrews]: Евреям
 [books.Revelation]: Откровение
-[main-window.title]: Электронная Библия
+[main-window.title]: xulsword
 [main-window.menu-file]: Файл
 [main-window.menu-file.add_new_module]: Добавить новые модули
 [main-window.menu-file.add_new_module.from_file]: xsm или zip файл

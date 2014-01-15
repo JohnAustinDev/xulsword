@@ -80,7 +80,7 @@
 [books.Philemon]: Philemon
 [books.Hebrews]: Hebrews
 [books.Revelation]: Revelation
-[main-window.title]: Holy Bible
+[main-window.title]: xulsword
 [main-window.menu-file]: File
 [main-window.menu-file.add_new_module]: Add New Modules
 [main-window.menu-file.add_new_module.from_file]: From a File

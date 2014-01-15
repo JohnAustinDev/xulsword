@@ -54,6 +54,10 @@ var ProgressBar;
 var WindowIsClosing = false;
 var MyStrings = null;
 var ERROR = null;
+var PrivacyContext = window
+		.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+		.getInterface(Components.interfaces.nsIWebNavigation)
+		.QueryInterface(Components.interfaces.nsILoadContext);
 
 var PromptUpdateMods = { prompt:false, mods:[] };
 var StatusUpdateMods = { pause:false, mods:[], status:[], style:[] };
@@ -552,7 +556,7 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
   };
   
-  persist.saveURI(ios.newURI(url, null, null), null, null, null, null, destFile, null);
+  persist.saveURI(ios.newURI(url, null, null), null, null, null, null, destFile, PrivacyContext);
   ARMU.webAdd(persist, "masterRepoList", "", url);
   
 }
@@ -675,7 +679,7 @@ function startProcessingNextRepository() {
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
   };
  
-  persist.saveURI(ios.newURI(myURL + "/" + ManifestFile, null, null), null, null, null, null, file, null);
+  persist.saveURI(ios.newURI(myURL + "/" + ManifestFile, null, null), null, null, null, null, file, PrivacyContext);
   ARMU.webAdd(persist, "manifest", "", myURL);
   
   if (!SYNC) startProcessingNextRepository();

@@ -110,7 +110,7 @@ BibleNavigator = {
   mouseHandler: function(e) {
     var t;
     if (this.ShowHeadingTO) window.clearTimeout(this.ShowHeadingTO);
-    if (e.type == "mouseout" && e.target.id && e.target.id.substr(0,12) == "headingmenu_") {
+    if (e.type == MSOUT && e.target.id && e.target.id.substr(0,12) == "headingmenu_") {
       t = e.relatedTarget;
       while(t && (!t.id || (t.id && t.id != e.target.id))) {t = t.parentNode;}
       if (!t || t.id != e.target.id) {
@@ -129,12 +129,12 @@ BibleNavigator = {
     // Testament selector of the Bible Navigator
     case "testament":
       switch (e.type) {
-      case "mouseover":
+      case MSOVER:
         if (this.ShowChooserTO) window.clearTimeout(this.ShowChooserTO);
         this.ShowChooserTO = window.setTimeout(function () {BibleNavigator.showChooser(p[1], false);}, 100);
         break;
       
-      case "mouseout":
+      case MSOUT:
         if (this.ShowChooserTO) window.clearTimeout(this.ShowChooserTO);
         break;
         
@@ -148,7 +148,7 @@ BibleNavigator = {
     // Book selector of the Bible Navigator
     case "book":
       switch (e.type) {  
-      case "mouseover":
+      case MSOVER:
         if (!this.MouseScrollTO) {
           this.MouseScrollTO = window.setTimeout(function () {BibleNavigator.mouseScroll(t.parentNode.id, t.offsetTop);}, 100);
         }
@@ -163,7 +163,7 @@ BibleNavigator = {
     // Chapter menu of the Bible Navigator
     case "chmenucell":
       switch(e.type) {
-      case "mouseover":
+      case MSOVER:
         this.doc().getElementById("chmenu_" + p[1]).setAttribute("headingmenu", "hide");
         if (this.ShowHeadingTO) window.clearTimeout(this.ShowHeadingTO);
         this.ShowHeadingTO = window.setTimeout(function () {BibleNavigator.showHeadings(e.target.id, e.clientY);}, 500);
@@ -230,25 +230,28 @@ BibleNavigator = {
     
     //  Find each heading and write it and its link to HTML
     var head = chtxt.match(hdplus);
-    var html = "";
-    var hr="";
+    var hm = this.doc().getElementById("headingmenu_" + p[1]);
+    while (hm.firstChild) {hm.removeChild(hm.firstChild);}
+    var hr = false;
     if (head != null) {
       for (var h=0; h < head.length; h++) {
         var heading = head[h].match(hd)[1].replace(/head1/, "nohead") + head[h].match(hd)[2].replace(/<[^>]*>/g, "") + "</div>";
         var verse = head[h].match(vs)[1];
         if (!(/^<div[^>]*>\s*<\/div>$/).test(heading)) {
-          html += hr + "<a class=\"heading-link cs-" + biblemod + "\" id=\"headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod + "\" >" + heading + "</a>"; 
-          hr="<hr>";
+					if (hr) hm.appendChild(this.doc().createElement("hr"));
+					var a = hm.appendChild(this.doc().createElement("a"));
+					a.className = "heading-link cs-" + biblemod;
+					a.id = "headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod;
+					setInnerHTML(a, heading);
+					hr = true;
         }
       }
     }
     
     // If headings were found, then display them inside the popup
-    if (html) {
+    if (hm.childNodes.length) {
       var cm = this.doc().getElementById("chmenu_" + p[1]);
-      var hm = this.doc().getElementById("headingmenu_" + p[1]);
       hm.style.top = Number(-2 + (1 + Math.floor((p[2]-1)/10)) * cm.firstChild.offsetHeight) + "px";
-      setInnerHTML(hm, html);
       cm.setAttribute("headingmenu", "show");
     }
     

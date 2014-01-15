@@ -72,7 +72,7 @@ ARMD = {
 			var modConf = ARMU.getRepositoryUrlTempDir(repoUrl);
 			modConf.append("mods.d");
 			modConf.append(ARMU.getResourceLiteral(MLDS, mod, "ConfFileName"));
-			var data = { ok:false, bk:null, ch:null, cl:null, audio:eval(ARMU.getConfEntry(readFile(modConf), "AudioChapters")) };
+			var data = { ok:false, bk:null, ch:null, cl:null, audio:JSON.parse(ARMU.getConfEntry(readFile(modConf), "AudioChapters")) };
 			var dlg = window.openDialog("chrome://xulsword/content/dialogs/addRepositoryModule/audioDialog.xul", "dlg", DLGSTD, data);
 			if (!data.ok || !data.bk || !data.ch || !data.cl) {
 				jsdump("INFO: User canceled audio prompt");
@@ -317,8 +317,8 @@ ARMD = {
 			
 			onSecurityChange: function(aWebProgress, aRequest, aState) {}
 		};
-
-		persist.saveURI(ios.newURI(directoryUrl, null, null), null, null, null, null, directoryListingFile, null);
+                                     
+		persist.saveURI(ios.newURI(directoryUrl, null, null), null, null, null, null, directoryListingFile, PrivacyContext);
 		ARMU.webAdd(persist, "moduleListing", module.modResource.ValueUTF8, directoryUrl);
 		
 		if (!SYNC) this.queryNextModule();
@@ -618,7 +618,7 @@ ARMD = {
 			}
 		}
 		if (!isZeroFile) {
-			persist.saveURI(ios.newURI(aContentData.url, null, null), null, null, null, null, destFile, null);
+			persist.saveURI(ios.newURI(aContentData.url, null, null), null, null, null, null, destFile, PrivacyContext);
 			ARMU.webAdd(persist, "moduleFile", module.modResource.ValueUTF8, aContentData.url);
 		}
 		

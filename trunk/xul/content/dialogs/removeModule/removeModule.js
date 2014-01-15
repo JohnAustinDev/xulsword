@@ -247,7 +247,7 @@ function deleteCheckedResources(e) {
     
     var loc = locs[i].getAttribute("class").match(/(^|\s)cs-(.*)(\s|$)/)[2];
     if (loc == currentLocale) {
-      rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
+      rootprefs.setCharPref(LOCALEPREF, DEFAULTLOCALE);
     }
     if (typeof(AddonManager) == "undefined") Components.utils.import("resource://gre/modules/AddonManager.jsm");
     AddonManager.getAddonByID(loc + "." + APPLICATIONID, function(addon) {addon.uninstall();});

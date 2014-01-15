@@ -160,6 +160,8 @@ function sortFiles(a,b) {
   return 0;
 }
 
+function setProgressMeterLoaded() {ProgressMeterLoaded = true;}
+
 var ResetNeeded;
 var Success;
 var GotoAudioFile;

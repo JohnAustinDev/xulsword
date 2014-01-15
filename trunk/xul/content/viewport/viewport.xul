@@ -54,7 +54,7 @@
   <commandset id="xulswordCommandSet"></commandset>
   <commandset id="BookmarksMenuCommandSet"></commandset>
   
-  <iframe id="viewport" flex="1" src="viewport.html" context="contextScriptBox"/>
+  <iframe id="viewportFrame" flex="1" src="viewport.html" context="contextScriptBox"/>
 
   <!-- for contextMenu-overlay.xul to fill !-->
   <popupset id="main-popupset"></popupset>

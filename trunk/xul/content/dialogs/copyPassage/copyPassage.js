@@ -32,7 +32,7 @@ function onLoad() {
   var sel = false;  
   var selob = XSNS_MainWindow.document.getElementById("main-viewport").contentDocument.defaultView.getSelection();
   if (selob && !selob.isCollapsed && !(/^\s*$/).test(selob.toString())) {
-    var t = eval(uneval(XSNS_MainWindow.ContextMenu.NEWTARGET));
+    var t = deepClone(XSNS_MainWindow.ContextMenu.NEWTARGET);
     sel = XSNS_MainWindow.ContextMenu.getTargetsFromSelection(t, selob);
   }
   if (sel && t.mod && t.bk && t.ch && t.vs && t.lv) {

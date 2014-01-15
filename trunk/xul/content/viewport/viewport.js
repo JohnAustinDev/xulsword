@@ -117,41 +117,50 @@ function ViewPortObj(viewPortObj) {
   this.drawTabs = function(w) {
 
     // special ORIG tab
-    var orig = "";
-    orig += "<input type=\"button\" class=\"tab tabTexts tabOrig\" ";
-    orig += "id=\"w" + w + ".tab.orig\" value=\"" + XSBundle.getString("ORIGLabelTab") + "\" ";
-    orig += "title=\"\"" + (!Tab.ORIG_NT && !Tab.ORIG_OT ? " style=\"display:none;\"":"") + "></button>";
+    var orig = document.createElement("input");
+    orig.className = "tab tabTexts tabOrig";
+    orig.id = "w" + w + ".tab.orig";
+    orig.setAttribute("type", "button");
+    orig.setAttribute("value", XSBundle.getString("ORIGLabelTab"));
+    orig.setAttribute("title", (!Tab.ORIG_NT && !Tab.ORIG_OT ? " style=\"display:none;\"":""));
 
-    var html = "";
+    var tabs = document.getElementById("tabs" + w);
     for (var t=0; t<Tabs.length; t++) {
 
       // insert ORIG tab after BIBLEs
       if (Tabs[t].modType != BIBLE && orig) {
-        html += orig;
+				tabs.appendChild(orig);
         orig = null;
       }
-
-      html += "<input type=\"button\" class=\"tab tab" + Tabs[t].tabType + "\" ";
-      html += "id=\"w" + w + ".tab.norm." + t + "\" value=\"" + Tabs[t].label + "\" ";
-      html += "title=\"" + Tabs[t].description + "\"></button>";
+      
+      var tab = tabs.appendChild(document.createElement("input"));
+      tab.className = "tab tab" + Tabs[t].tabType;
+      tab.id = "w" + w + ".tab.norm." + t;
+			tab.setAttribute("type", "button");
+			tab.setAttribute("value", Tabs[t].label);
+			tab.setAttribute("title", Tabs[t].description);
     }
 
     // The multi-tab tab is a pulldown to hold all tabs which don't fit.
-    html += "<div id = \"w" + w + ".multitab\" class=\"multitab\">"; // to stack two buttons...
+    var multitab = tabs.appendChild(document.createElement("div"));
+    multitab.className = "multitab";
+    multitab.id = "w" + w + ".multitab";
+    
+    var select = multitab.appendChild(document.createElement("select"));
+    select.className = "tab";
+    select.id = "w" + w + ".tabselect";
 
-    html +=   "<select id=\"w" + w + ".tabselect\" class=\"tab\">";
     for (t=0; t<Tabs.length; t++) {
-      html +=   "<option id=\"w" + w + ".tab.mult." + t + "\" class=\"tab tab" + Tabs[t].tabType + "\">";
-      html +=   Tabs[t].label + "</option>";
+			var option = select.appendChild(document.createElement("option"));
+			option.className = "tab tab" + Tabs[t].tabType;
+			option.id = "w" + w + ".tab.mult." + t;
+			option.textContent = Tabs[t].label;
     }
-    html +=   "</select>";
 
     // a div is needed to capture tab selection clicks and prevent activation of pulldown menu
-    html +=   "<div class=\"multitab-clicker\" id=\"w" + w + ".tab.tsel\"></div>";
-
-    html += "</div>";
-
-		setInnerHTML(document.getElementById("tabs" + w), html);
+    var clicker = multitab.appendChild(document.createElement("div"));
+    clicker.className = "multitab-clicker";
+    clicker.id = "w" + w + ".tab.tsel";
   };
 
   // If we have a passed viewPortObj, then copy it. Otherwise create 
@@ -161,14 +170,14 @@ function ViewPortObj(viewPortObj) {
     // copy viewPortObj members (excluding functions) to our ViewPort
     for (var p in viewPortObj) {
       if (typeof(viewPortObj[p]) == "function") continue;
-      this[p] = eval(uneval(viewPortObj[p]));
+      this[p] = deepClone(viewPortObj[p]);
     }
 
     // copy XSNS_MainWindow.Texts members (excluding functions) to our Texts
     var objTexts = viewPortObj.ownerDocument.defaultView.Texts;
     for (var p in objTexts) {
       if (typeof(objTexts[p]) == "function") continue;
-      Texts[p] = eval(uneval(objTexts[p]));
+      Texts[p] = deepClone(objTexts[p]);
     }
     
     this.ownerDocument = document;

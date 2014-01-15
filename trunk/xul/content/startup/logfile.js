@@ -139,7 +139,7 @@ var aConsoleListener =
 
     this.processingException = false;
     
-    window.location = aURI;
+    window.location.href = aURI;
   },
   
   QueryInterface: function (iid) {

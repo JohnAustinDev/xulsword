@@ -20,7 +20,7 @@ Set XULRunner=../xulrunner
 Set MicrosoftSDK=C:\Program Files\Microsoft Platform SDK
 
 # SPECIFY BUILD INFORMATION
-Set Version=3.8
+Set Version=3.9
 Set Name=xulsword
 Set Vendor=CrossWire
 Set Executable=xulsword
@@ -44,7 +44,7 @@ Set (prefs.js):extensions.xulsword.DefaultCK=defaultKey
 Set (language.js):general.useragent.locale=en-US
 
 # LOCALES TO INCLUDE IN BUILD (Must include at least one locale. Example:en-US, or ru,ar)
-Set IncludeLocales=en-US
+Set IncludeLocales=en-US,ru
 
 # MODULES TO INCLUDE IN BUILD
 # Note: KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson are used for original lang features
