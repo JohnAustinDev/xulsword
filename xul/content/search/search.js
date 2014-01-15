@@ -508,7 +508,7 @@ function SearchObj(searchObj) {
 			return;
 		}
     
-    // workaround for a FF 17 bug where innerHTML could not be added to
+    // workaround for a FF 17 issue where innerHTML could not be added to
     // an anchor which was created using createElement...
     r = r.replace(/<span /g, "<a></a><span ");
     
@@ -568,6 +568,8 @@ function SearchObj(searchObj) {
       
       r = r.nextSibling;
     }
+    
+    var fdoc = LexiconResults.ownerDocument;
 
     // If this is a Strong's search, hilight words with matching Strong's numbers.
     // Also, create and show the lexicon window for those Strong's numbers.
@@ -595,7 +597,7 @@ function SearchObj(searchObj) {
         LexiconResults.style.display = "none"; // might this speed things up??
         setInnerHTML(LexiconResults, LibSword.getSearchResults(mod, 0, MAX_LEXICON_SEARCH_RESULTS, true, result.searchPointer));
         
-        var html = "";
+        var slists = [];
         for (var i=0; i<classes.length; i++) {
           
           var lexicon = [];
@@ -621,28 +623,50 @@ function SearchObj(searchObj) {
           
           // format and save the results
           var dictinfo = DictTexts.getStrongsModAndKey(classes[i]);
-          html += "<span class=\"slist cs-Program\" title=\"" + encodeURIComponent(dictinfo.key) + "." + dictinfo.mod + "\">";
-          
+          var slist = fdoc.createElement("span");
+          slists.push(slist);
+          slist.className = "slist cs-Program";
+          slist.setAttribute("title", encodeURIComponent(dictinfo.key) + "." + dictinfo.mod);
+
           var strongNum = classes[i].replace("S_", "");
-          html +=   "<a " + (dictinfo.mod && dictinfo.key ? "class=\"sn " + classes[i] + "\" ":"");
-          html +=       "onclick=\"XSNS_MainWindow.XulswordController.doCommand('cmd_xs_searchForLemma', ";
-          html +=       "{search:{searchtext:'lemma:" + strongNum + "', mod:'" + mod + "'}});\">";
-          html +=     strongNum;
-          html +=   "</a>";
           
-          html +=   "<span class=\"lex-total\">" + dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count) + "</span>";
-          html +=   "<span class=\"cs-" + mod + "\">";
+          var a = slist.appendChild(fdoc.createElement("a"));
+          if (dictinfo.mod && dictinfo.key) a.className = "sn " + classes[i];
+          a.textContent = strongNum;
+          a.addEventListener("click", 
+						function () {
+							XSNS_MainWindow.XulswordController.doCommand("cmd_xs_searchForLemma", {search:{searchtext:"lemma:" + strongNum, mod:mod}});
+						}
+					);
+					
+          var span = slist.appendChild(fdoc.createElement("span"));
+          span.className = "lex-total";
+          span.textContent = dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count);
+          
+          var span = slist.appendChild(fdoc.createElement("span"));
+          span.className = "cs-" + mod;
           for (var j=0; j<lexicon.length; j++) {
-            html +=   "<span class=\"lex-text\">" + lexicon[j].text + "</span>";
-            html +=   "<span class=\"lex-count\">" + lexicon[j].count + "</span>";
+						var child = span.appendChild(fdoc.createElement("span"));
+						child.className = "lex-text";
+						child.textContent = lexicon[j].text;
+						
+						var child = span.appendChild(fdoc.createElement("span"));
+						child.className = "lex-count";
+						child.textContent = lexicon[j].count;
           }
-          html +=   "</span>";
-          html += "</span>";
-          html += "<div class=\"lex-sep\"></div>";
-          
+
+          slist.appendChild(fdoc.createElement("div")).className = "lex-sep";
         }
         
-        setInnerHTML(LexiconResults, (html ? html:"<span style=\"display:none\"></span>")); // should not be left empty
+        // now display the list
+        while (LexiconResults.firstChild) {LexiconResults.removeChild(LexiconResults.firstChild);}
+        if (!slists.length) setInnerHTML(LexiconResults, "<span style=\"display:none\"></span>"); // should not be left empty
+        else {
+					for (var i=0; i<slists.length; i++) {
+						LexiconResults.appendChild(slists[i]);
+					}
+				}
+
         LexiconResults.style.display = ""; // was set to "none" to improve (??) speed
          
       }
@@ -698,7 +722,7 @@ function SearchObj(searchObj) {
       }
       
       // format and write the results in the Lexicon section
-      var html = "";
+      var snlists = [];
       for (var type in strongsList) {
         
         // sort the results 
@@ -706,35 +730,57 @@ function SearchObj(searchObj) {
         
         if (!strongsList[type].length) continue;
         
-        html += "<span class=\"snlist\" contextModule=\"" + mod + "\">";
+        var snlist = fdoc.createElement("span");
+        snlists.push(snlist);
+        snlist.className = "snlist";
+        snlist.setAttribute("contextModule", mod);
         
         var mtype = "";
         if (type == "H") mtype = XSBundle.getString("ORIGLabelOT");
         if (type == "G") mtype = XSBundle.getString("ORIGLabelNT");
-        html += "<span class=\"strongs-type\">" + mtype + "</span>";
-        html +=   "<span class=\"lex-total\">" + dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count) + "</span>";
+        
+				var span = snlist.appendChild(fdoc.createElement("span"));
+				span.className = "strongs-type";
+				span.textContent = mtype;
 
-        html +=   "<span class=\"cs-Program\">";
+				var span = snlist.appendChild(fdoc.createElement("span"));
+				span.className = "lex-total";
+				span.textContent = dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count);
+
+				var respan = snlist.appendChild(fdoc.createElement("span"));
+				respan.className = "cs-Program";
+
         for (var j=0; j<strongsList[type].length; j++) {
 					var strongNum = strongsList[type][j].strongs.replace("S_", "");
           var sti = DictTexts.getStrongsModAndKey(strongsList[type][j].strongs);
-
-          html +=   "<a " + (sti.mod && sti.key ? "class=\"sn " + strongsList[type][j].strongs + "\" ":"");
-          html +=       "onclick=\"XSNS_MainWindow.XulswordController.doCommand('cmd_xs_searchForLemma', ";
-          html +=       "{search:{searchtext:'lemma:" + strongNum + "', mod:'" + mod + "'}});\">";
-          html +=     "<span class=\"lex-text\">" + strongNum + "</span>";
-          html +=   "</a>";
-
-          html +=   "<span class=\"lex-count\">" + strongsList[type][j].count + "</span>";
+          
+          var a = respan.appendChild(fdoc.createElement("a"));
+          if (sti.mod && sti.key) a.className = "sn " + strongsList[type][j].strongs;
+          a.addEventListener("click",
+						function () {
+							XSNS_MainWindow.XulswordController.doCommand("cmd_xs_searchForLemma", {search:{searchtext:"lemma:" + strongNum, mod:mod}});
+						}
+					);
+					var span2 = a.appendChild(fdoc.createElement("span"));
+					span2.className = "lex-text";
+					span2.textContent = strongNum;
+					
+					var span = respan.appendChild(fdoc.createElement("span"));
+					span.className = "lex-count";
+					span.textContent = strongsList[type][j].count;
         }
-        html +=   "</span>";
-        
-        html += "</span>";
       }
       
-      html += "<div class=\"lex-sep\"></div>";
-    
-      setInnerHTML(LexiconResults, (html ? html:"<span style=\"display:none\"></span>")); // should not be left empty
+			// now display the list
+			while (LexiconResults.firstChild) {LexiconResults.removeChild(LexiconResults.firstChild);}
+			if (!snlists.length) setInnerHTML(LexiconResults, "<span style=\"display:none\"></span>"); // should not be left empty
+			else {
+				for (var i=0; i<snlists.length; i++) {
+					LexiconResults.appendChild(snlists[i]);
+				}
+			}
+			LexiconResults.appendChild(fdoc.createElement("div")).className = "lex-sep";
+				
       LexiconResults.style.display = ""; // was set to "none" to improve (??) speed
       
       LexiconResults.parentNode.setAttribute("hasLexicon", "true");

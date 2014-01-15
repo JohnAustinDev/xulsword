@@ -61,7 +61,7 @@ function PopupObj(popupobj) {
     for (var p in popupobj) {
       if ((/(npopup|npopupRL|npopupBOX|npopupTX|showPopupID)/).test(p)) continue;
       if (typeof(popupobj[p]) == "function") continue;
-      this[p] = eval(uneval(popupobj[p]));
+      this[p] = deepClone(popupobj[p]);
     }
   }
 
@@ -263,7 +263,7 @@ function PopupObj(popupobj) {
 		setInnerHTML(newcontent, res);
 
     // Windowed popup...
-    if ((/\.windowedPopup$/).test(window.name)) {
+    if ((/windowedPopup$/).test(window.name)) {
       this.setTitle();
       return true;
     }
@@ -315,7 +315,7 @@ function PopupObj(popupobj) {
 	};
   
   this.setTitle = function() {
-    if (!(/\.windowedPopup$/).test(window.name)) return; // only windowed popups need titles
+    if (!(/windowedPopup$/).test(window.name)) return; // only windowed popups need titles
     var title = "";
     
     var pt = this.npopupTX.getElementsByClassName("popup-text");
@@ -375,7 +375,7 @@ function PopupObj(popupobj) {
   this.close = function() {
   
     // If we're a windowed popup, just close the window
-    if ((/\.windowedPopup$/).test(window.name)) {
+    if ((/windowedPopup$/).test(window.name)) {
       closeWindowXS(window.frameElement.ownerDocument.defaultView);
       return;
     }

@@ -26,7 +26,7 @@ DictTexts = {
   keysHTML: XSNS_MainWindow.DictKeyHTMLs,
   
   read: function(w, d) {
-    var ret = { htmlList:"", htmlHead:Texts.getPageLinks(), htmlEntry:"", footnotes:null };
+    var ret = { htmlList:null, htmlHead:Texts.getPageLinks(), htmlEntry:"", footnotes:null };
     
     // the key list is cached because it can take several seconds to
     // process large dictionaries!
@@ -68,23 +68,37 @@ DictTexts = {
     return ret;
   },
   
+  // this function returns a DOM node which is intended for copying 
+  // by document.importNode(). Event attributes must therefore be
+  // used in leiu of addEventListener, because the latter is NOT
+  // copied by importNode().
   getListHTML: function(mod) {
     var list = this.keyList[mod];
     
-    var html = "";
-    html += "<div class=\"dictlist\">"
-    html +=   "<div class=\"textboxparent\">";
-    html +=     "<input class=\"cs-" + mod + " keytextbox\" onfocus=\"this.select()\" ondblclick=\"this.select()\" ";
-    html +=     "onkeypress=\"DictTexts.keyPress(event)\" />";
-    html +=   "</div>";
-    html +=   "<div class=\"keylist\" onclick=\"DictTexts.selKey(event)\">";
+    var div = document.createElement("div");
+    div.className = "dictlist";
+    
+    var tbparent = div.appendChild(document.createElement("div"));
+    tbparent.className = "textboxparent";
+    
+    var input = tbparent.appendChild(document.createElement("input"));
+    input.className = "cs-" + mod + " keytextbox";
+    input.setAttribute("onfocus", "event.target.select();");
+    input.setAttribute("ondblclick", "event.target.select();");
+    input.setAttribute("onkeypress", "DictTexts.keyPress(event);");
+    
+    var keylist = div.appendChild(document.createElement("div"));
+    keylist.className = "keylist";
+    keylist.setAttribute("onclick", "DictTexts.selKey(event);");
+    
     for (var e=0; e < list.length; e++) {
-      html += "<div class=\"key " + encodeURIComponent(list[e]) + "\" title=\"" + encodeURIComponent(list[e]) + "\" >" + list[e] + "</div>";
+			var key = keylist.appendChild(document.createElement("div"));
+			key.className = "key " + encodeURIComponent(list[e]);
+			key.setAttribute("title",  encodeURIComponent(list[e]));
+			key.textContent = list[e];
     }
-    html +=   "</div>";
-    html += "</div>";
 
-    return html;
+    return div;
   },
   
   getEntryHTML: function(key, mods) {
@@ -343,9 +357,10 @@ DictTexts = {
 			// try out key possibilities until we find a correct key for this mod
 			if (res.mod) {
 				for (var k=0; k<keys.length; k++) {
-					if (LibSword.getDictionaryEntry(res.mod, keys[k])) break;
+					try {if (LibSword.getDictionaryEntry(res.mod, keys[k])) break;}
+					catch (er) {res.mod = null; break;}
 				}
-				if (k < keys.length) res.key = keys[k];
+				if (res.mod && k < keys.length) res.key = keys[k];
 			}
       break;
       

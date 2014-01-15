@@ -47,10 +47,10 @@ function tabMouse(e) {
   var t = Number(p[3]);
   
   switch (e.type) {
-  case "mouseover":
+  case MSOVER:
     openTabToolTip(t, w, e.clientX, e.clientY);
     break;
-  case "mouseout":
+  case MSOUT:
     closeTabToolTip();
     break;
   case "click":

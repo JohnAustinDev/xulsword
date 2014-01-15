@@ -166,9 +166,9 @@ BibleTexts = {
     // current program locale if no associated locale is installed. But notice-link 
     // is always cs-module style.
     var html = "";
-    html  = "<div class=\"chapterhead" + (ch==1 ? " chapterfirst":"") + " cs-" + l + "\" headdir=\"" + (LocaleConfigs[l].direction) + "\">";
+    html  = "<div class=\"chapterhead" + (ch==1 ? " chapterfirst":"") + " cs-" + l + ((/rtl/i).test(LocaleConfigs[l].direction) ? " RTL":"") + "\">";
     
-    html +=   "<div class=\"chapnotice cs-" + mod + "\" empty=\"" + (lt ? "false":"true") + "\">";
+    html +=   "<div class=\"chapnotice cs-" + mod + (!lt ? " empty":"") + "\">";
     html +=     "<div class=\"noticelink-c\">" + (lt ? lt:"") + "</div>";
     html +=     "<div class=\"noticetext\">"; // contains a span with class cs-mod because LibSword.getModuleInformation doesn't supply the class
     html +=       "<div class=\"cs-" + mod + "\">" + (lt ? LibSword.getModuleInformation(mod, "NoticeText"):"") + "</div>";
@@ -182,15 +182,15 @@ BibleTexts = {
     html +=   "</div>";
 
     html +=   "<div class=\"chapinfo\">";
-    html +=     "<div class=\"listenlink\" title=\"" + [bk, ch, 1, mod].join(".") + "\" hasAudio=\"false\"></div>";
-    html +=     "<div class=\"introlink\" title=\"" + [bk, ch, 1, mod].join(".") + "\" empty=\"" + (intro ? "false":"true") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
+    html +=     "<div class=\"listenlink\" title=\"" + [bk, ch, 1, mod].join(".") + "\"></div>";
+    html +=     "<div class=\"introlink" + (!intro ? " empty":"") + "\" title=\"" + [bk, ch, 1, mod].join(".") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
     html +=   "</div>";
     
     html += "</div>";
     
     html += "<div class=\"head-line-break\"></div>";
     
-    html += "<div class=\"introtext\" title=\"" + [bk, ch, 1, mod].join(".") + "\" empty=\"" + (intro ? "false":"true") + "\">" + (intro ? intro :"") + "</div>";
+    html += "<div class=\"introtext" + (!intro ? " empty":"") + "\" title=\"" + [bk, ch, 1, mod].join(".") + "\">" + (intro ? intro :"") + "</div>";
    
     return html;
   },
@@ -489,7 +489,8 @@ BibleTexts = {
     var icons = document.getElementById("text" + w).getElementsByClassName("listenlink");
     for (var i = 0; i < icons.length; ++i) {
       var p = getElementInfo(icons[i]);
-			icons[i].setAttribute("hasAudio", (AudioDirs.length && XSNS_MainWindow.getAudioForChapter(p.mod, p.bk, p.ch) ? "true":"false"));
+      icons[i].className = icons[i].className.replace(/\s*hasAudio/, "");
+      if (AudioDirs.length && XSNS_MainWindow.getAudioForChapter(p.mod, p.bk, p.ch)) icons[i].className += " hasAudio";
     }
   }
 

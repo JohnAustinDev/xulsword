@@ -100,6 +100,10 @@ const VERSIONPAR = "xulswordVersion";
 const LOCALE_SEARCH_SYMBOLS = {SINGLECharWildCard:"?", MULTICharWildCard:"*", AND:"&&", OR:"||", NOT:"!", SIMILAR:"~", GROUPSTART:"(", GROUPEND:")", QUOTESTART:"\"", QUOTEEND:"\""};
 const AUDEXT = (OPSYS == "Windows" ? ["mp3", "ogg"]:["ogg", "mp3"]);
 const AUDMIME = {mp3:"audio/mpeg", ogg:"audio/ogg"};
+const LOCALEPREF = "general.useragent.locale";
+const MSMOVE = "mousemove";
+const MSOVER = "mouseover";
+const MSOUT  = "mouseout";
 
 
 // TextClasses is an object used to parse information from element classes
@@ -347,9 +351,11 @@ function jsdump(str)
 jsdump("Load common: " + window.name + "\n");
 
 
-// Firefox Add-On validation warns about setting innerHTML directly,
-// so this is a safe solution. In future, it's better to manipulate the
-// DOM directly rather than use innerHTML also because it's faster.
+// Firefox Add-On validation throws warnings about setting innerHTML 
+// directly, so this is a safe solution. In future, it's better to 
+// manipulate the DOM directly rather than use innerHTML also 
+// because it's faster. NOTE: This function scrubs out all Javascript 
+// as well as non-standard HTML attributes.
 function setInnerHTML(parent, html) {
 	var doc = parent.ownerDocument;
 	var allowStyle = true;
@@ -363,6 +369,12 @@ function setInnerHTML(parent, html) {
 	
 	var parser = Components.classes["@mozilla.org/parserutils;1"].getService(Components.interfaces.nsIParserUtils);
 	parent.appendChild(parser.parseFragment(html, allowStyle ? parser.SanitizerAllowStyle : 0, !!isXML, baseURI, doc.documentElement));
+}
+
+// Firefox Add-On validation throws warnings about eval(uneval(obj)), so
+// this is an alternate way...
+function deepClone(obj) {
+	return JSON.parse(JSON.stringify(obj));
 }
 
 function escapeRE(text) {
@@ -686,11 +698,11 @@ function getDataUI(prop) {
 }
 
 function getLocale() {
-  var loc = rootprefs.getCharPref("general.useragent.locale");
+  var loc = rootprefs.getCharPref(LOCALEPREF);
   if (loc.indexOf("chrome")==0) {
     try {
       loc = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService).createBundle(loc);
-      loc = GetStringFromName("general.useragent.locale");
+      loc = GetStringFromName(LOCALEPREF);
     }
     catch(er) {loc = DEFAULTLOCALE;}
   }
@@ -704,12 +716,12 @@ function getLocaleBundle(locale, file) {
   var saveLocale = getLocale();
   if (locale == saveLocale) return getCurrentLocaleBundle(file);
   
-  rootprefs.setCharPref("general.useragent.locale", locale);
+  rootprefs.setCharPref(LOCALEPREF, locale);
   var BUNDLESVC = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
   try {bundle = BUNDLESVC.createBundle("chrome://xulsword/locale/" + file);}
   catch (er) {bundle = null;}
   try {bundle.GetStringFromName("dummy");} catch (er) {} //CLUDGE to get bundle initialized before locale changes!
-  rootprefs.setCharPref("general.useragent.locale", saveLocale);
+  rootprefs.setCharPref(LOCALEPREF, saveLocale);
   
   return bundle;
 }
@@ -893,7 +905,7 @@ function initCSS(adjustableFontSize) {
   // If we don't have ProgramConfig, make it. If we don't have ModuleConfigs
   // that's perfectly ok to leave empty
   if (typeof(ProgramConfig) == "undefined") {
-    ProgramConfig = eval(uneval(LocaleConfigs[getLocale()]));
+    ProgramConfig = deepClone(LocaleConfigs[getLocale()]);
     ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
     ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   }

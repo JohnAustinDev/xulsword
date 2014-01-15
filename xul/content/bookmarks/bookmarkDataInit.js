@@ -75,7 +75,7 @@ function initBMServices(bm) {
   bm.kExportResourceDelimiter = "<nx/>";
     
   initBookmarksDataFile(false);
-  var bmds = getUserData(bm.RDF);
+  var bmds = getBookmarkData(bm.RDF);
   //initBookmarksLocale(bm, bmds);
   return bmds;
 }
@@ -98,7 +98,7 @@ function initBookmarksDataFile(useEmptyDataSet) {
   }
 }
 
-function getUserData(rdf) {
+function getBookmarkData(rdf) {
   var myDS=null;
   var DSisGood=false;
   try {

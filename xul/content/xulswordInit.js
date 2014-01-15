@@ -50,7 +50,7 @@ function initLocales() {
 	var availableLocales = toolkitChromeReg.getLocalesForPackage("xulsword");
   
   var currentLocale = getLocale();
-  rootprefs.setCharPref("general.useragent.locale", currentLocale);
+  rootprefs.setCharPref(LOCALEPREF, currentLocale);
   
   // Create LocaleConfigs
 	while(availableLocales.hasMore()) {
@@ -332,7 +332,7 @@ function xulswordInit() {
   if (!currentLocale) {
   
     // Present locale not valid? Change to DEFAULTLOCALE and restart.
-    rootprefs.setCharPref("general.useragent.locale", DEFAULTLOCALE);
+    rootprefs.setCharPref(LOCALEPREF, DEFAULTLOCALE);
     var appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                      .getService(Components.interfaces.nsIAppStartup);
     appStartup.quit(Components.interfaces.nsIAppStartup.eRestart | Components.interfaces.nsIAppStartup.eForceQuit);
@@ -345,7 +345,7 @@ function xulswordInit() {
   jsdump("Loaded locales:" + s);
     
   // Copy current locale's config to ProgramConfig.
-  ProgramConfig = eval(uneval(LocaleConfigs[currentLocale]));
+  ProgramConfig = deepClone(LocaleConfigs[currentLocale]);
   ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
   ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   

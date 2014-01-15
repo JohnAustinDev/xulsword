@@ -98,7 +98,6 @@ if ($MakeFFextension =~ /true/i) {
   &compileLibSword($FFEXTENSION, 1);
   my @manifest;
   # the Firefox extension needs a Firefox overlay to put a startup button in the tools menu
-  push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/startup/startup-overlay.xul");
   push(@manifest, "overlay chrome://browser/content/browser.xul chrome://xulsword/content/startup/extension-overlay.xul");
   &copyXulswordFiles($FFEXTENSION, \@manifest, $IncludeLocales, 0, 1);
   if ($FirstRunXSM) {&includeFirstRunXSM("$FFEXTENSION/defaults", \%Prefs, $FirstRunXSM);}

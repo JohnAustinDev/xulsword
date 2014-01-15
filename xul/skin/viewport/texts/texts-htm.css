@@ -42,7 +42,7 @@
   font-size:1.0em !important;
   margin:0px 10px 10px 10px;
 }
-.chapnotice[empty="true"] {
+.chapnotice.empty {
   display:none;
 }
 .noticelink-c {
@@ -62,7 +62,7 @@
   font-weight:bold;
   color:rgb(110,85,110);
 }
-.chapterhead[headdir="rtl"] .chaptitle {
+.chapterhead.RTL .chaptitle {
   float:right;
 }
 .chapbk, .chapch {
@@ -83,7 +83,7 @@
   min-width:40px;
   color:rgb(110,85,110);
 }
-.chapterhead[headdir="rtl"] .chapinfo {
+.chapterhead.RTL .chapinfo {
   float:left;
 }
 .listenlink {
@@ -95,7 +95,7 @@
   position:relative;
   top:-0.8em;
 }
-.listenlink[hasAudio="true"] {
+.listenlink.hasAudio {
 	visibility:visible;
 }
 .listenlink:hover {
@@ -108,7 +108,7 @@
   color:blue;
   cursor:pointer;
 }
-.introlink[empty="true"] {
+.introlink.empty {
   display:none;
 }
 .head-line-break {

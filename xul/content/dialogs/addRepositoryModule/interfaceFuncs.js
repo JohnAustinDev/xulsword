@@ -368,7 +368,11 @@ ARMI = {
 		var mods = ARMU.getSelectedResources(document.getElementById("moduleListTree"), true);
 		if (!mods.length) return;
 		
-		var html = "";
+		var body = document.getElementById("infoBox").contentDocument.getElementsByTagName("body")[0];
+		body.style.background = "white";
+		
+		var fdoc = body.ownerDocument;
+		
 		for (var m=0; m<mods.length; m++) {
 			var submods = [];
 			
@@ -397,59 +401,79 @@ ARMI = {
 				
 				var modName = ARMU.getResourceLiteral(MLDS, aModRes, "ModuleName");
 			
-				html += "<div class=\"module-detail cs-" + DEFAULTLOCALE + "\">";
+				var detail = body.appendChild(fdoc.createElement("div"));
+				detail.className = "module-detail cs-" + DEFAULTLOCALE;
 				
 				// Heading and version
 				var vers = ARMU.getResourceLiteral(MLDS, aModRes, "Version");
 				var modAbbr = ARMU.getResourceLiteral(MLDS, aModRes, "Abbreviation");
 				if (!modAbbr || modAbbr == "?") modAbbr = modName; 
-				html +=  "<span class=\"mod-detail-heading\">";
-				html +=    modAbbr + (vers != "?" ? "(" + vers + ")":"");
-				html +=  "</span>";
+				var span = detail.appendChild(fdoc.createElement("span"));
+				span.className = "mod-detail-heading";
+				span.textContent = modAbbr + (vers != "?" ? "(" + vers + ")":"");
 				
 				// Descripton
 				var description = ARMU.getResourceLiteral(MLDS, aModRes, "Description");
-				if (description) 
-						html += "<div class=\"description\">" + description + "</div>";
+				if (description) {
+					var div = detail.appendChild(fdoc.createElement("div"));
+					div.className = "description";
+					div.textContent = description;
+				}
 
 				// Copyright
 				var copyright = ARMU.getResourceLiteral(MLDS, aModRes, "DistributionLicense");
-				if (copyright)
-						 html += "<div class=\"copyright\">" + copyright + "</div>";
+				if (copyright) {
+					var div = detail.appendChild(fdoc.createElement("div"));
+					div.className = "copyright";
+					div.textContent = copyright;
+				}
 						 
 				// About
 				var about = ARMU.getResourceLiteral(MLDS, aModRes, "About");
+				if (about == description || about == NOTFOUND) about = "";
 				if (about) {
-					about = about.replace(/(\\par)/g, "<br>");
-					html += "<div class=\"about\">" + about + "</div>";
+					about = about.split("\\par");
+					for (var i=0; i<about.length; i++) {
+						var div = detail.appendChild(fdoc.createElement("div"));
+						div.className = "about";
+						div.textContent = about[i];
+					}
 				}
-						 
-				html += "</div>"; // end module-detail
-					 
+						 				 
 				// Conf contents
 				var confFile = ARMU.getResourceLiteral(MLDS, aModRes, "ConfFileName");
 
 				if (confFile) {
-					html += "<div id=\"conf." + modName + "\" class=\"conf-info\" showInfo=\"false\" readonly=\"readonly\">";
-					html +=   "<a class=\"link\" href=\"javascript:frameElement.ownerDocument.defaultView";
-					html +=     ".ARMI.toggleInfo('" + modName + "', '" + ARMU.getResourceLiteral(MLDS, aModRes, "Url") + "', '" + confFile + "');\">";
-					html +=     "<span class=\"more-label\">" + getDataUI("more.label") + "</span>";
-					html +=     "<span class=\"less-label\">" + getDataUI("less.label") + "</span>";
-					html +=   "</a>";
-					html +=   "<textarea id=\"conftext." + modName + "\" class=\"cs-" + DEFAULTLOCALE + "\" readonly=\"readonly\"></textarea>";
-					html += "</div>";
+					var div = body.appendChild(fdoc.createElement("div"));
+					div.className = "conf-info";
+					div.id = "conf." + modName;
+					div.setAttribute("showInfo", "false");
+					div.setAttribute("readonly", "readonly");
+					
+					var a = div.appendChild(fdoc.createElement("a"));
+					a.className = "link";
+					a.setAttribute("href", "javascript:frameElement.ownerDocument.defaultView.ARMI.toggleInfo('" + modName + "', '" + ARMU.getResourceLiteral(MLDS, aModRes, "Url") + "', '" + confFile + "');");
+					var span = a.appendChild(fdoc.createElement("span"));
+					span.className = "more-label";
+					span.textContent = getDataUI("more.label");
+					var span = a.appendChild(fdoc.createElement("span"));
+					span.className = "less-label";
+					span.textContent = getDataUI("less.label");
+					
+					var textarea = div.appendChild(fdoc.createElement("textarea"));
+					textarea.className = "cs-" + DEFAULTLOCALE;
+					textarea.id = "conftext." + modName;
+					textarea.setAttribute("readonly", "readonly");
 				}
 			}
+			
 		}
-		
-		var body = document.getElementById("infoBox").contentDocument.getElementsByTagName("body")[0];
-		setInnerHTML(body, html);
-		body.style.background = "white";
+
 	},
 
 	toggleInfo: function(mod, url, conf) {
-		var doc = document.getElementById("infoBox").contentDocument;
-		var elem = doc.getElementById("conf." + mod);
+		var fdoc = document.getElementById("infoBox").contentDocument;
+		var elem = fdoc.getElementById("conf." + mod);
 		var textarea = elem.getElementsByTagName("textarea")[0]; 
 		var showInfo = elem.getAttribute("showInfo");
 	 

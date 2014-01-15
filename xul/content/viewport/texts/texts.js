@@ -83,7 +83,7 @@ Texts = {
         
         // pinned windowed ViewPorts should not track XSNS_MainWindow at all
         if (this !== XSNS_MainWindow.Texts) {
-          display = eval(uneval(this.pinnedDisplay[w]));
+          display = deepClone(this.pinnedDisplay[w]);
         }
         // pinned MainWidow ViewPort tracks everything except the following:
         else {
@@ -117,8 +117,8 @@ Texts = {
       }
       
       // save the display objects for this window
-      this.display[w] = eval(uneval(display));
-      this.pinnedDisplay[w] = eval(uneval(display));
+      this.display[w] = deepClone(display);
+      this.pinnedDisplay[w] = deepClone(display);
     }
 /*    
     // scroll notebox to text always. SHOULD THIS BE IN VIEWPORT UPDATE?
@@ -198,7 +198,7 @@ Texts = {
       // while still resulting in a filled multi-column display, if possible.
       if ((/^show(2|3)$/).test(t.getAttribute("columns"))) {
         
-        var d2 = eval(uneval(display));
+        var d2 = deepClone(display);
   
         // collect previous chapter(s)
         var c = Number(display.ch) - 1;
@@ -239,9 +239,9 @@ Texts = {
       var hd = t.getElementsByClassName("hd")[0];
 
       setInnerHTML(hd, ti.htmlHead);
-jsdump(prev.htmlText + (ti.htmlText.length > 64 ? ti.htmlText:"") + next.htmlText);    
+        
       setInnerHTML(sb, prev.htmlText + (ti.htmlText.length > 64 ? ti.htmlText:"") + next.htmlText);
-jsdump(sb.innerHTML);  
+
       var nb = t.getElementsByClassName("nb")[0];
       this.footnotes[w] = prev.footnotes + ti.footnotes + next.footnotes;
       setInnerHTML(nb, prev.htmlNotes + ti.htmlNotes + next.htmlNotes);
@@ -380,8 +380,10 @@ jsdump(sb.innerHTML);
       display.htmlList = ti.htmlList;
       if (force || !this.display[w] || 
           !this.display[w].hasOwnProperty("htmlList") || 
-          this.display[w].htmlList != ti.htmlList)
-        setInnerHTML(nb, ti.htmlList);
+          this.display[w].htmlList !== ti.htmlList) {
+				while (nb.firstChild) {nb.removeChild(nb.firstChild);}
+				nb.appendChild(document.importNode(ti.htmlList, true));
+			}
     
       // highlight the selected key
       var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");

@@ -26,7 +26,7 @@
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:html="http://www.w3.org/1999/xhtml"
     windowtype="popup"
-    onload="initCSS(); document.getElementById('npopup').contentDocument.defaultView.initWindowedPopup();">
+    onload="initCSS(); document.getElementById('windowedPopup').contentDocument.defaultView.initWindowedPopup();">
    
   <script>
 		var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
@@ -39,7 +39,7 @@
   <commandset id="xulswordCommandSet"></commandset>
   <commandset id="BookmarksMenuCommandSet"></commandset>
   
-  <iframe id="npopup" flex="1" src="popup.html" context="contextScriptBox"/>
+  <iframe id="windowedPopup" flex="1" src="popup.html" context="contextScriptBox"/>
 
   <!-- for contextMenu-overlay.xul to fill !-->
   <popupset id="main-popupset"></popupset>

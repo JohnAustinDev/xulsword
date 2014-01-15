@@ -163,7 +163,7 @@
    setEditable(mod, false);
    
     if (showInfo == "false") {
-      setInnerHTML(elem.getElementsByClassName("confpath")[0], Tab[mod].conf.path);
+			elem.getElementsByClassName("confpath")[0].textContent = Tab[mod].conf.path;
       var confInfo = "-----";
       if (Tab[mod].conf) {
         confInfo  = readFile(Tab[mod].conf);

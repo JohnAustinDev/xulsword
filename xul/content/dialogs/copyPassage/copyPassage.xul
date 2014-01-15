@@ -52,7 +52,7 @@
     </vbox>
   </groupbox>
 
-  <iframe flex="1" id="chaptertext"/>
+  <iframe flex="1" id="chaptertext" type="content" />
     
   <hbox id="options">
                     
