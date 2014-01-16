@@ -1,3 +1,8 @@
+@font-face {
+	font-family: "Ezra SIL";
+	src: url("file:///home/dale/.crosswire/xulsword/resources/fonts/SILEOT.ttf");
+}
+
 /* UI classes which are dynamically updated */
 .userFontSize {
   font-size:12px;
