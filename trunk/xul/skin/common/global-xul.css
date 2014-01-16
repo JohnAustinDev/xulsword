@@ -1,6 +1,11 @@
 @import url(chrome://global/skin/);
 @import url(chrome://xsplatform/skin/xul.css);
 
+@font-face {
+	font-family: "Ezra SIL";
+	src: url("file:///home/dale/.crosswire/xulsword/resources/fonts/SILEOT.ttf");
+}
+    
 /* UI class which is dynamically updated */
 .userFontSize {
   font-size:14px;

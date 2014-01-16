@@ -26,7 +26,147 @@ var DictKeyLists = {}; // save dictionary key lists
 var DictKeyHTMLs = {}; // save dictionary key HTML
 var Popup = null; // global to hold any Popup during Popup->toWindow
 
+function addFontCSS(file) {
+jsdump("STARTING:" + file.QueryInterface(Components.interfaces.nsILocalFile).path);
+
+	var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].
+								createInstance(Components.interfaces.nsIFileInputStream);
+	istream.init(file, -1, -1, false);
+
+	var bstream = Components.classes["@mozilla.org/binaryinputstream;1"].
+								createInstance(Components.interfaces.nsIBinaryInputStream);
+	bstream.setInputStream(istream);
+
+	var data = [];
+
+	while (bstream.available()) {data.push(bstream.read8());}
+
+	
+	// decimal to character
+	var chr = function (val) {
+		return String.fromCharCode(val);
+	};
+
+	// decimal to ushort
+	var chr16 = function (val) {
+		if (val < 256) { return chr(0) + chr(val); }
+		var b1 = val >> 8;
+		var b2 = val & 0xFF;
+		return chr(b1) + chr(b2);
+	};
+
+	// decimal to hexadecimal
+	// See http://phpjs.org/functions/dechex:382
+	var dechex =  function (val) {
+		if (val < 0) { val = 0xFFFFFFFF + val + 1; }
+		return parseInt(val, 10).toString(16);
+	};
+
+	// unsigned short to decimal
+	var ushort = function (b1, b2) {
+		return 256 * b1 + b2;
+	};
+
+	// signed short to decimal
+	var fword = function (b1, b2) {
+		var negative = b1 >> 7 === 1, val;
+		b1 = b1 & 0x7F;
+		val = 256 * b1 + b2;
+		// positive numbers are already done
+		if (!negative) { return val; }
+		// negative numbers need the two's complement treatment
+		return val - 0x8000;
+	};
+
+	// unsigned long to decimal
+	var ulong = function (b1, b2, b3, b4) {
+		return 16777216 * b1 + 65536 * b2 + 256 * b3 + b4;
+	};
+
+	// unified error handling
+	var error = function (msg) {
+		instance.onerror(msg);
+	};
+
+	// we know about TTF (0x00010000) and CFF ('OTTO') fonts
+	var ttf = chr(0) + chr(1) + chr(0) + chr(0);
+	var cff = "OTTO";
+
+	// so what kind of font is this?
+	var version = chr(data[0]) + chr(data[1]) + chr(data[2]) + chr(data[3]);
+	var isTTF = (version === ttf);
+	var isCFF = (isTTF ? false : version === cff);
+	if (isTTF) { format = "truetype"; }
+	else if (isCFF) { format = "opentype"; }
+	// terminal error: stop running code
+	else { jsdump("Error: file cannot be interpreted as OpenType font."); return; }
+
+	// ================================================================
+	// if we get here, this is a legal font. Extract some font metrics,
+	// and then wait for the font to be available for on-page styling.
+	// ================================================================
+
+	// first, we parse the SFNT header data
+	var numTables = ushort(data[4], data[5]),
+			tagStart = 12, ptr, end = tagStart + 16 * numTables, tags = {},
+			tag;
+	for (ptr = tagStart; ptr < end; ptr += 16) {
+		tag = chr(data[ptr]) + chr(data[ptr + 1]) + chr(data[ptr + 2]) + chr(data[ptr + 3]);
+		tags[tag] = {
+			name: tag,
+			checksum: ulong(data[ptr+4], data[ptr+5], data[ptr+6], data[ptr+7]),
+			offset:   ulong(data[ptr+8], data[ptr+9], data[ptr+10], data[ptr+11]),
+			length:   ulong(data[ptr+12], data[ptr+13], data[ptr+14], data[ptr+15])
+		};
+	}
+
+	// first we define a quick error shortcut function:
+	var checkTableError = function (tag) {
+		if (!tags[tag]) {
+			jsdump("Error: font is missing the required OpenType '" + tag + "' table.");
+			// return false, so that the result of this function can be used to stop running code
+			return false;
+		}
+		return tag;
+	};
+
+	tag = checkTableError("name");
+	if (tag === false) { return; }
+	ptr = tags[tag].offset;
+jsdump(uneval(tags[tag]));
+	var format = "" + data[ptr];
+	var count = data[ptr+1];
+	var stringOffset = data[ptr+2];
+jsdump("format=" + format + ", count=" + count + ", " + "stringOffset=" + stringOffset);	
+	var nameRecord_offset = 3;
+	const nameID_offset = 3;
+	
+	var length, offset;
+	for (var i=0; i<count; i++) {
+		var idptr = Number(nameRecord_offset) + (6*i) + Number(nameID);
+jsdump("idptr=" + idptr);	
+		if ("" + data[idptr] != "2") continue;
+		length = "" + data[idptr+1];
+		offset = "" + data[idptr+2];
+	}
+	
+	var name = "";
+	for (var i=0; i<Number(length); i++) {
+		name += "" + data[ptr + Number(stringOffset) + Number(offset)];
+	}
+	
+jsdump("DONE!:" + data.length + ", " + name);
+}
+
 function loadedXUL() {
+	var fonts = getSpecialDirectory("xsFonts").directoryEntries;
+	while (fonts.hasMoreElements()) {
+		var font = fonts.getNext();
+		if (font.isDirectory) continue;
+		addFontCSS(font);
+	}
+	
+
   //start_venkman();
 
   initCSS();
