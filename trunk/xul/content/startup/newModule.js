@@ -51,7 +51,6 @@ const MINVERSION = "1.0";
 */
 
 var ModuleCopyMutex = false;
-var WindowsFontInstallScripts = [];
 
 /************************************************************************
  * Module install functions
@@ -767,7 +766,6 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     break;
     
   case FONTS:
-    installFont(inflated);
     NewFonts = pushIf(NewFonts, inflated.leafName);
     return {reset:HARDRESET, success:true, remove:true};
     break;
@@ -1179,78 +1177,6 @@ function padChapterNum(ch) {
   return ch;
 }
 
-// returns true if the new font was installed, returns false otherwise
-function installFont(aFontFile) {
-  var type = aFontFile.leafName.match(/\.([^\.]+)$/);
-  if (!type) return false;
-  
-  type = type[1];
-  var validTypes = ["ttf", "otf", "fon"];
-  for (var f=0; f<validTypes.length; f++) {if (type.search(validTypes[f], "i")!=-1) break;}
-  if (f == validTypes.length) return false;
-  
-  if (OPSYS == "Windows") {
-    jsdump("Installing Windows font file \"" + aFontFile.leafName + "\":");
-
-    var vbsdata = "";
-    vbsdata += "Const FONTS = &H14&" + NEWLINE;
-    vbsdata += "Set objShell = CreateObject(\"Shell.Application\")" + NEWLINE;
-    vbsdata += "Set objFolder = objShell.Namespace(FONTS)" + NEWLINE;
-    vbsdata += "Set objFolderItem = objFolder.ParseName(\"" + aFontFile.leafName + "\")" + NEWLINE;
-    vbsdata += NEWLINE;
-    vbsdata += "Set fso = CreateObject(\"Scripting.FileSystemObject\")" + NEWLINE;
-    vbsdata += "set wshShell = Wscript.CreateObject(\"Wscript.shell\")" + NEWLINE;
-    vbsdata += "fontpath = wshShell.ExpandEnvironmentStrings(\"%windir%\")" + NEWLINE;
-    vbsdata += "fontpath = fontpath+\"\\fonts\\" + aFontFile.leafName + "\"" + NEWLINE;
-    vbsdata += NEWLINE;
-    vbsdata += "if not fso.FileExists(fontpath) then" + NEWLINE;
-    vbsdata += "objFolder.CopyHere(\"" + aFontFile.path + "\")" + NEWLINE;
-    vbsdata += "end if" + NEWLINE;
-    vbsdata += NEWLINE;
-    vbsdata += "strScript = Wscript.ScriptFullName" + NEWLINE;
-    vbsdata += "fso.DeleteFile(strScript)" + NEWLINE;
-
-    WindowsFontInstallScripts.push(launchTempScript(vbsdata, "vbs"));
-  }
-  else if (OPSYS == "Linux") {
-    jsdump("Installing Linux font file \"" + aFontFile.leafName + "\":");
-    var fonts = getSpecialDirectory("Home");
-    fonts.append(".fonts");
-    
-    if (!fonts.exists()) fonts.create(fonts.DIRECTORY_TYPE, DPERM);
-    
-    var newfont = fonts.clone();
-    newfont.append(aFontFile.leafName);
-    if (newfont.exists()) return false;
-    
-    aFontFile.copyTo(fonts, newfont.leafName);
-  }
-
-  return true;
-}
-
-function launchTempScript(scriptContents, ext) {
-  var script = getSpecialDirectory("TmpD");
-  if (!script.exists()) return null;
-  script.append("xulswordScript." + ext);
-  script.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
-
-  var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-  foStream.init(script, 0x02 | 0x08 | 0x20, FPERM, 0);
-  var charset = (ext.match(/^vbs$/i) ? "UTF-16LE":"UTF8"); // VBS understands UTF-16LE, but BAT must be ASCII to work!
-  var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
-  os.init(foStream, charset, 0, 0x0000);
-  os.writeString(scriptContents);
-  os.close();
-  foStream.close();
-  
-  script = script.QueryInterface(Components.interfaces.nsILocalFile);
-  try {script.launch();}
-  catch (er) {jsdump("Could not execute script:\n" + scriptContents);}
-  
-  // This leaves the temp file in the temp directory! But since we are not blocking, it's hard to know when to delete it, and they're small anyway
-  return script;
-}
 
 /************************************************************************
  * Module Removal
@@ -1472,16 +1398,6 @@ function prefFileArray(files, aPref, exts, dontCheckExists) {
 }
 
 function restartApplication(promptBefore) {
-
-  // restart will fail if the asynchronous Windows font installers are not finished.
-  if (WindowsFontInstallScripts.length) {
-    for (var i=0; i<WindowsFontInstallScripts.length; i++) {
-      if (WindowsFontInstallScripts[i] && WindowsFontInstallScripts[i].exists()) {
-        window.setTimeout(function () {restartApplication(promptBefore ? "true":"false");}, 500);
-        return;
-      }
-    }
-  }
   
   if (promptBefore) {
     var result = {};

@@ -910,9 +910,8 @@ function initCSS(adjustableFontSize) {
     ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   }
 
-  // Create and append module and locale specific CSS rules to stylesheet
-  createDynamicCssClasses("StyleRule");
-  createDynamicCssClasses("TreeStyleRule");
+  // Create and append font, module and locale specific CSS rules to stylesheet
+  createDynamicCssClasses();
 
   setUserFontSize(getPrefOrCreate('FontSize', "Int", 0));
 
@@ -944,48 +943,63 @@ function initCSS(adjustableFontSize) {
 
 }
 
-// Will add/update CSS classes for locales and modules in last style sheet.
+// Will add/update CSS classes for fonts, locales and modules in last style sheet.
 // Replaces any existing identical selector or else appends a new one.
-function createDynamicCssClasses(configProp) {
+function createDynamicCssClasses() {
 	var sheetIndex = document.styleSheets.length-1;
   var sheet = document.styleSheets[sheetIndex];
   if (!sheet) return;
-  if (!configProp) configProp = "StyleRule";
 
-//var debug = sheet.cssRules.length;
-  
-  if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
-    for (var lc in LocaleConfigs) {
-			var ex = getCSS(LocaleConfigs[lc][configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+	//var debug = sheet.cssRules.length;
+
+	// create CSS rules for LocaleConfigs and ModuleConfigs
+  var configProps = ["StyleRule", "TreeStyleRule"];
+	for (var cp=0; cp<configProps.length; cp++) {
+		var configProp = configProps[cp];
+		
+		if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
+			for (var lc in LocaleConfigs) {
+				var ex = getCSS(LocaleConfigs[lc][configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+				if (ex) sheet.deleteRule(ex.index);
+				sheet.insertRule(LocaleConfigs[lc][configProp], sheet.cssRules.length);
+	//jsdump(LocaleConfigs[lc][configProp]);
+				}
+		}
+		
+		if (typeof(ModuleConfigs) != "undefined" && ModuleConfigs) {
+			for (var m in ModuleConfigs) {
+				ex = getCSS(ModuleConfigs[m][configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+				if (ex) sheet.deleteRule(ex.index);
+				sheet.insertRule(ModuleConfigs[m][configProp], sheet.cssRules.length);
+	//jsdump(ModuleConfigs[m][configProp]);
+			}
+		}
+		
+		if (typeof(XSNS_MainWindow) != "undefined" && XSNS_MainWindow && 
+				typeof(XSNS_MainWindow.ModuleConfigDefault) != "undefined" && XSNS_MainWindow.ModuleConfigDefault) {
+			ex = getCSS(XSNS_MainWindow.ModuleConfigDefault[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
 			if (ex) sheet.deleteRule(ex.index);
-      sheet.insertRule(LocaleConfigs[lc][configProp], sheet.cssRules.length);
-//jsdump(LocaleConfigs[lc][configProp]);
-      }
-  }
-  
-  if (typeof(ModuleConfigs) != "undefined" && ModuleConfigs) {
-    for (var m in ModuleConfigs) {
-			ex = getCSS(ModuleConfigs[m][configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+			sheet.insertRule(XSNS_MainWindow.ModuleConfigDefault[configProp], sheet.cssRules.length);
+	//jsdump(XSNS_MainWindow.ModuleConfigDefault[configProp]);
+		}
+		
+		if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {
+			ex = getCSS(ProgramConfig[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
 			if (ex) sheet.deleteRule(ex.index);
-      sheet.insertRule(ModuleConfigs[m][configProp], sheet.cssRules.length);
-//jsdump(ModuleConfigs[m][configProp]);
+			sheet.insertRule(ProgramConfig[configProp], sheet.cssRules.length);
+	//jsdump(ProgramConfig[configProp]);
 		}
 	}
-	
-	if (typeof(XSNS_MainWindow) != "undefined" && XSNS_MainWindow && 
-			typeof(XSNS_MainWindow.ModuleConfigDefault) != "undefined" && XSNS_MainWindow.ModuleConfigDefault) {
-		ex = getCSS(XSNS_MainWindow.ModuleConfigDefault[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
-		if (ex) sheet.deleteRule(ex.index);
-		sheet.insertRule(XSNS_MainWindow.ModuleConfigDefault[configProp], sheet.cssRules.length);
-//jsdump(XSNS_MainWindow.ModuleConfigDefault[configProp]);
-  }
-  
-  if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {
-		ex = getCSS(ProgramConfig[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
-		if (ex) sheet.deleteRule(ex.index);
-    sheet.insertRule(ProgramConfig[configProp], sheet.cssRules.length);
-//jsdump(ProgramConfig[configProp]);
-  }
+
+	// create CSS rules for fonts
+	if (typeof(FontFaceConfigs) != "undefined" && FontFaceConfigs) {
+		for (var ff in FontFaceConfigs) {
+			var rule = "@font-face {font-family:" + ff + "; src:url(\"" + FontFaceConfigs[ff] + "\");}";
+			ex = getCSS(rule.replace(/src\:.*$/, ""), sheetIndex);
+			if (ex) sheet.deleteRule(ex.index);
+			sheet.insertRule(rule, sheet.cssRules.length);
+		}
+	}
   
 //if (sheet.cssRules.length != debug) jsdump(window.name + ": \nADDED " + (sheet.cssRules.length - debug) + " new dynamic " + configProp + " rules (" + sheet.cssRules.length + ")");
 }

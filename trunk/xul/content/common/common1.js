@@ -51,6 +51,7 @@ var Location              = XSNS_MainWindow.Location;
 var LocaleConfigs         = XSNS_MainWindow.LocaleConfigs;
 var ModuleConfigs         = XSNS_MainWindow.ModuleConfigs;
 var ProgramConfig         = XSNS_MainWindow.ProgramConfig;
+var FontFaceConfigs       = XSNS_MainWindow.FontFaceConfigs;
 
 var AudioDirs             = XSNS_MainWindow.AudioDirs;
 
@@ -441,6 +442,16 @@ function getModuleConfig(mod) {
 	
   // Normalize direction value
   moduleConfig.direction = (moduleConfig.direction.search("RtoL", "i") != -1 ? "rtl":"ltr");
+  
+	// if fontFamily specifies a font URL, rather than a fontFamily, then create a
+	// @font-face CSS entry and use it for this module.
+	var url = moduleConfig.fontFamily.match(/(\w+\:\/\/[^"'\)]+)\s*$/);
+	if (url) {
+		var fam = "_" + url[1].replace(/[^\w\d]/g, "_");
+		FontFaceConfigs[fam] = url[1];
+		moduleConfig.fontFamily = fam;
+		//jsdump("INFO: " + mod + " is using font-face " + fam + ": " + url[1]);
+	}
 
   // Insure there are single quotes around font names
   moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/\"/g, "'");
