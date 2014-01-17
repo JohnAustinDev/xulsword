@@ -181,7 +181,8 @@ body[chromedir="rtl"] .multitab-clicker {
 body[isWindow="true"] .tabOrig {
   display:none;
 }
-.tabs:not([moduleType="Texts"]) .tabOrig {
+.tabs:not([moduleType="Texts"]) .tabOrig,
+body[hasOriginalLanguage="false"] .tabOrig {
 	color:rgb(210,210,210);
 }
 .tabs[pinned="true"] .tab {

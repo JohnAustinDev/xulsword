@@ -275,15 +275,18 @@ FindMod:
     Tabs.push(tab);
     Tab[label] = tab;
     Tab[mod] = tab;
-    if (SpecialModules.OriginalLanguages.Hebrew.indexOf(mod) != -1 &&
-        (!Tab.ORIG_OT || Tab.ORIG_OT.modName != "HEB")) { // default is HEB
-      Tab.ORIG_OT = tab;
-    }
-    if (SpecialModules.OriginalLanguages.Greek.indexOf(mod) != -1 &&
-        (!Tab.ORIG_NT || Tab.ORIG_NT.modName != "TR")) { // default is TR
-      Tab.ORIG_NT = tab;
-    }
-    
+
+		if (tab.modType == BIBLE) {
+			if (SpecialModules.OriginalLanguages.Hebrew.indexOf(mod) != -1 &&
+					(!Tab.ORIG_OT || Tab.ORIG_OT.modName != "HEB")) { // default is HEB
+				Tab.ORIG_OT = tab;
+			}
+			if (SpecialModules.OriginalLanguages.Greek.indexOf(mod) != -1 &&
+					(!Tab.ORIG_NT || Tab.ORIG_NT.modName != "TR")) { // default is TR
+				Tab.ORIG_NT = tab;
+			}
+		}
+		
   }
 
   return true;

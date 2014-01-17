@@ -38,6 +38,7 @@ function tabMouse(e) {
     p = elem.id.split(".");
   }
   else if (p[2] == "orig") {
+		if (document.getElementById("viewportbody").getAttribute("hasOriginalLanguage") == "false") return;
     if (e.type != "click" || ViewPort.IsPinned[w] || Tab[ViewPort.Module[w]].modType != BIBLE) return;
     ViewPort.ShowOriginal[w] = !ViewPort.ShowOriginal[w];
     Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
