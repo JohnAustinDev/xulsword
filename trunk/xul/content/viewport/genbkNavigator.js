@@ -56,7 +56,7 @@ GenBookNavigator = {
 		var viewports = Components.classes['@mozilla.org/appshell/window-mediator;1'].
 				getService(Components.interfaces.nsIWindowMediator).getEnumerator("viewport");
 				
-		var allViewports = [XSNS_MainWindow.ViewPort];
+		var allViewports = [XS_window.ViewPort];
 		while (viewports.hasMoreElements()) {
 			allViewports.push(viewports.getNext().ViewPort);
 		}
@@ -186,7 +186,7 @@ GenBookNavigator = {
 		var viewports = Components.classes['@mozilla.org/appshell/window-mediator;1'].
 				getService(Components.interfaces.nsIWindowMediator).getEnumerator("viewport");
 				
-		var allViewports = [XSNS_MainWindow.ViewPort];
+		var allViewports = [XS_window.ViewPort];
 		while (viewports.hasMoreElements()) {
 			allViewports.push(viewports.getNext().ViewPort);
 		}
@@ -195,7 +195,7 @@ GenBookNavigator = {
 			allViewports[i].ownerDocument.defaultView.GenBookTexts.updateKeys(mod, key);
 		}
 
-		XSNS_MainWindow.Texts.update();
+		XS_window.Texts.update();
 	},
 	
 	// recursively opens a rdfChapter and scrolls there (does not select)

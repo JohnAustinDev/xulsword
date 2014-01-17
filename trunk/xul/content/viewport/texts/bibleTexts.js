@@ -490,7 +490,7 @@ BibleTexts = {
     for (var i = 0; i < icons.length; ++i) {
       var p = getElementInfo(icons[i]);
       icons[i].className = icons[i].className.replace(/\s*hasAudio/, "");
-      if (AudioDirs.length && XSNS_MainWindow.getAudioForChapter(p.mod, p.bk, p.ch)) icons[i].className += " hasAudio";
+      if (AudioDirs.length && XS_window.getAudioForChapter(p.mod, p.bk, p.ch)) icons[i].className += " hasAudio";
     }
   }
 

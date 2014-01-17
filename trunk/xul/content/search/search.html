@@ -29,7 +29,7 @@
 
   <script>
     var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher); 
-    var XSNS_MainWindow = watcher.getWindowByName("xulsword-window", window);
+    var XS_window = watcher.getWindowByName("xulsword-window", window);
     var SearchMouse;
   </script>
   
@@ -41,10 +41,10 @@
   <script>
     
   function load() {
-    if (document === XSNS_MainWindow.document.getElementById("printBrowser").contentDocument) {
+    if (document === XS_window.document.getElementById("printBrowser").contentDocument) {
 			// then we are printing...
 			document.getElementsByTagName("body")[0].setAttribute("print", "true");
-			XSNS_MainWindow.printBrowserLoaded();
+			XS_window.printBrowserLoaded();
 			return;
 		}
 		

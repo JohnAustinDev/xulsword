@@ -529,14 +529,14 @@ function SearchObj(searchObj) {
         setInnerHTML(l, ref2ProgramLocaleText(loc));
         l.className = "cs-Program";
         loc = loc.split(".");
-        l.setAttribute("href", "javascript:XSNS_MainWindow.showLocation('" + mod + "','" + loc[0] + "','" + loc[1] + "','" + loc[2] + "','" + loc[3] + "');");
+        l.setAttribute("href", "javascript:XS_window.showLocation('" + mod + "','" + loc[0] + "','" + loc[1] + "','" + loc[2] + "','" + loc[3] + "');");
         break;
         
       case GENBOOK:
       case DICTIONARY:
         setInnerHTML(l, p.ch);
         l.className = "cs-" + p.mod;
-        l.setAttribute("href", "javascript:XSNS_MainWindow.showLocation('" + p.mod + "','na','" +  p.ch + "',1,1);");
+        l.setAttribute("href", "javascript:XS_window.showLocation('" + p.mod + "','na','" +  p.ch + "',1,1);");
         break;
         
       }
@@ -635,7 +635,7 @@ function SearchObj(searchObj) {
           a.textContent = strongNum;
           a.addEventListener("click", 
 						function () {
-							XSNS_MainWindow.XulswordController.doCommand("cmd_xs_searchForLemma", {search:{searchtext:"lemma:" + strongNum, mod:mod}});
+							XS_window.XulswordController.doCommand("cmd_xs_searchForLemma", {search:{searchtext:"lemma:" + strongNum, mod:mod}});
 						}
 					);
 					
@@ -758,7 +758,7 @@ function SearchObj(searchObj) {
           if (sti.mod && sti.key) a.className = "sn " + strongsList[type][j].strongs;
           a.addEventListener("click",
 						function () {
-							XSNS_MainWindow.XulswordController.doCommand("cmd_xs_searchForLemma", {search:{searchtext:"lemma:" + strongNum, mod:mod}});
+							XS_window.XulswordController.doCommand("cmd_xs_searchForLemma", {search:{searchtext:"lemma:" + strongNum, mod:mod}});
 						}
 					);
 					var span2 = a.appendChild(fdoc.createElement("span"));
@@ -928,10 +928,10 @@ function unloadSearchWindow() {
 	}
 		
   // need to clean up indexer if it was in process
-  if (XSNS_MainWindow.Indexer.inprogress) {
-    XSNS_MainWindow.Indexer.terminate(); // doesn't actually terminate anything
-    XSNS_MainWindow.Indexer.progressMeter = null;
-    XSNS_MainWindow.Indexer.callback = null;
+  if (XS_window.Indexer.inprogress) {
+    XS_window.Indexer.terminate(); // doesn't actually terminate anything
+    XS_window.Indexer.progressMeter = null;
+    XS_window.Indexer.callback = null;
   }
   
   try {closeWindowXS(SearchHelpWindow);} catch(er) {}
@@ -956,7 +956,7 @@ function handlePrintCommand(command) {
   };
   
 
-  XSNS_MainWindow.handlePrintCommand(command, target);
+  XS_window.handlePrintCommand(command, target);
 }
 
 
@@ -972,11 +972,11 @@ function startIndexer() {
   document.getElementById("searchmsg").value = getDataUI("BuildingIndex");
   document.getElementById("stopButton").hidden = true;
   
-  if (!XSNS_MainWindow.Indexer.inprogress) {
-    XSNS_MainWindow.Indexer.moduleName = document.getElementById("search-module").selectedItem.id.match(/^mod-radio\.(.*)$/)[1];
-    XSNS_MainWindow.Indexer.progressMeter = document.getElementById("progress");
-    XSNS_MainWindow.Indexer.callback = Search;
-    XSNS_MainWindow.Indexer.create();
+  if (!XS_window.Indexer.inprogress) {
+    XS_window.Indexer.moduleName = document.getElementById("search-module").selectedItem.id.match(/^mod-radio\.(.*)$/)[1];
+    XS_window.Indexer.progressMeter = document.getElementById("progress");
+    XS_window.Indexer.callback = Search;
+    XS_window.Indexer.create();
   }
   
 }

@@ -27,7 +27,7 @@
 
 <overlay xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 	
-<script>var XSNS_MainWindow, AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs, Book;</script>
+<script>var XS_window, AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs, Book;</script>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
 <script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
@@ -51,8 +51,8 @@
 			catch(er) {installOnly = false;}
 			
 			// Are we just installing modules, but not starting xulsword?
-			// Or is XSNS_MainWindow already open? Then we're done...
-			if (installOnly || XSNS_MainWindow) {
+			// Or is XS_window already open? Then we're done...
+			if (installOnly || XS_window) {
 				closeWindowXS(window);
 				return;
 			}
@@ -63,7 +63,7 @@
 		SplashScreen = openWindowXS("chrome://xulsword/content/startup/banner.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable", "splash-banner");
 		window.setTimeout(function () {openWindowXS("chrome://xulsword/content/xulsword.xul", "xulsword-window", "chrome,centerscreen,resizable", "xulsword-window")}, 300);
 
-		// xulsword.xul may close this window during XSNS_MainWindow init,
+		// xulsword.xul may close this window during XS_window init,
 		// and then this window's onunload will close the visible splash screen.
 	}
 

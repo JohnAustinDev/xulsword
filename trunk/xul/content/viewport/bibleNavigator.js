@@ -140,7 +140,7 @@ BibleNavigator = {
         
       case "click":
         Location.setLocation(ViewPort.firstDisplayBible(), Book[(p[1]=="ot" ? 0:NumOT)].sName + ".1.1");
-        XSNS_MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+        XS_window.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
         break;
       }
       break;
@@ -155,7 +155,7 @@ BibleNavigator = {
         break;
       case "click":
         Location.setLocation(ViewPort.firstDisplayBible(), Book[p[1]].sName + ".1.1");
-        XSNS_MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+        XS_window.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
         break;
       }
       break;
@@ -183,7 +183,7 @@ BibleNavigator = {
           
       case "click":
         Location.setLocation(ViewPort.firstDisplayBible(), Book[p[1]].sName + "." + p[2] + ".1.1");
-        XSNS_MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+        XS_window.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
         break
       }
       break;
@@ -199,7 +199,7 @@ BibleNavigator = {
     case "headlink":
       if (e.type == "click") {
         Location.setLocation(p[4], p[1] + "." + p[2] + "." + p[3]);
-        XSNS_MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
+        XS_window.Texts.update(SCROLLTYPECENTER, HILIGHTNONE);
       }
       break;
       

@@ -108,7 +108,7 @@ function onLoad() {
   if (checkBoxes.length) {
     document.getElementById("locgroup").removeAttribute("hidden");
     document.getElementById("locgroup-spacer").removeAttribute("hidden");
-    checkBoxes.sort(XSNS_MainWindow.localeElemSort);
+    checkBoxes.sort(XS_window.localeElemSort);
     for (var c=0; c<checkBoxes.length; c++) {
       document.getElementById("locales").appendChild(checkBoxes[c]);
     }
@@ -134,7 +134,7 @@ function onLoad() {
   if (checkBoxes.length) {
     document.getElementById("audgroup").removeAttribute("hidden");
     document.getElementById("audgroup-spacer").removeAttribute("hidden");
-    checkBoxes.sort(XSNS_MainWindow.localeElemSort);
+    checkBoxes.sort(XS_window.localeElemSort);
     for (var c=0; c<checkBoxes.length; c++) {
 
       // build our label name using default formatting
@@ -264,10 +264,10 @@ function deleteCheckedResources(e) {
     switch(reset) {
     case NORESET:
     case SOFTRESET:
-      XSNS_MainWindow.location.reload();
+      XS_window.location.reload();
       break;
     case HARDRESET:
-      XSNS_MainWindow.setTimeout(function () {restartApplication();}, 0);
+      XS_window.setTimeout(function () {restartApplication();}, 0);
       break;
     }
   }

@@ -22,8 +22,8 @@
 
 DictTexts = {
   
-  keyList: XSNS_MainWindow.DictKeyLists,
-  keysHTML: XSNS_MainWindow.DictKeyHTMLs,
+  keyList: XS_window.DictKeyLists,
+  keysHTML: XS_window.DictKeyHTMLs,
   
   read: function(w, d) {
     var ret = { htmlList:null, htmlHead:Texts.getPageLinks(), htmlEntry:"", footnotes:null };

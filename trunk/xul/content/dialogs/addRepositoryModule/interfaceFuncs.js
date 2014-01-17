@@ -153,9 +153,9 @@ ARMI = {
 
 	installModules: function() {
 
-		XSNS_MainWindow.AddRepositoryModules = ARMU.getInstallableModules();
+		XS_window.AddRepositoryModules = ARMU.getInstallableModules();
 		
-		XSNS_MainWindow.installModuleArray(XSNS_MainWindow.finishAndHandleReset, XSNS_MainWindow.AddRepositoryModules);
+		XS_window.installModuleArray(XS_window.finishAndHandleReset, XS_window.AddRepositoryModules);
 		
 		closeWindowXS(window);
 	},

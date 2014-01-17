@@ -237,15 +237,15 @@ BookmarkFuns = {
       break;
     }
 
-    XSNS_MainWindow.showLocation(mod, loc.bk, loc.ch, loc.vs, loc.lv);
+    XS_window.showLocation(mod, loc.bk, loc.ch, loc.vs, loc.lv);
   },
 
   
   updateMainWindow: function (focusOnMainWindow, scrollFlag) {
-    if (!XSNS_MainWindow || LibSword.paused) return;
+    if (!XS_window || LibSword.paused) return;
     if (scrollFlag == null) scrollFlag = SCROLLTYPECENTER;
-    if (focusOnMainWindow) XSNS_MainWindow.focus();
-    XSNS_MainWindow.Texts.update(scrollFlag, HILIGHTVERSE, [null,1,1,1]);
+    if (focusOnMainWindow) XS_window.focus();
+    XS_window.Texts.update(scrollFlag, HILIGHTVERSE, [null,1,1,1]);
   },
   
   getLocaleString: function (aStringKey, aReplaceString) {

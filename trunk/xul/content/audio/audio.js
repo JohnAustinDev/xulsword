@@ -167,7 +167,7 @@ function refreshAudioCatalog() {
 }
 
 function updateBibleNavigatorAudio() {
-	var doc = XSNS_MainWindow.ViewPort.ownerDocument;
+	var doc = XS_window.ViewPort.ownerDocument;
 	
 	var booknames = doc.getElementsByClassName("bookname");
 	for (var i=0; i<booknames.length; i++) {booknames[i].removeAttribute("hasAudio");}
@@ -175,7 +175,7 @@ function updateBibleNavigatorAudio() {
 	var chapcells = doc.getElementsByClassName("chaptermenucell");
 	for (var i=0; i<chapcells.length; i++) {chapcells[i].removeAttribute("hasAudio");}
 	
-	var vp = XSNS_MainWindow.ViewPort;
+	var vp = XS_window.ViewPort;
 	for (var w=1; w<=vp.NumDisplayedWindows; w++) {
 		if (Tab[vp.Module[w]].modType != BIBLE) continue;
 		for (var k in Tab[vp.Module[w]].audio) {
@@ -196,7 +196,7 @@ function updateBibleNavigatorAudio() {
  ***********************************************************************/ 
 
 function beginAudioPlayer() {
-	jsdump("beginAudioPlayer:" + XSNS_MainWindow.Player.version + ", " + XSNS_MainWindow.Player.chapter + " " + XSNS_MainWindow.Player.book);
+	jsdump("beginAudioPlayer:" + XS_window.Player.version + ", " + XS_window.Player.chapter + " " + XS_window.Player.book);
   document.getElementById("historyButtons").hidden = true;
   
   var quit = false;
@@ -257,7 +257,7 @@ function emptyAudioPlayer() {
  
   goDoCommand('cmd_xs_nextChapter');
   Player.book = Location.getBookName();
-  Player.chapter = Location.getChapterNumber(XSNS_MainWindow.Player.version);
+  Player.chapter = Location.getChapterNumber(XS_window.Player.version);
   
   beginAudioPlayer();
 }
@@ -535,9 +535,9 @@ function getModsUsingAudioCode(basecode) {
   if (!basecode) return list;
   if (Tab[basecode]) list.push(basecode);
   else if (Tab[basecode.toUpperCase()]) list.push(basecode.toUpperCase());
-  var matchAudioCode = XSNS_MainWindow.getModsWithConfigEntry("AudioCode", basecode, true, true, false);
+  var matchAudioCode = XS_window.getModsWithConfigEntry("AudioCode", basecode, true, true, false);
   if (matchAudioCode && matchAudioCode[0]) list = list.concat(matchAudioCode);
-  var matchLang = XSNS_MainWindow.getModsWithConfigEntry("Lang", basecode.replace(/-.*$/, ""), true, true, true);
+  var matchLang = XS_window.getModsWithConfigEntry("Lang", basecode.replace(/-.*$/, ""), true, true, true);
   if (matchLang && matchLang[0]) list = list.concat(matchLang);
   
   return list;

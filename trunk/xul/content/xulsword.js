@@ -63,14 +63,14 @@ function loadedXUL2() {
   // check for newly installed modules and reset mods if necessary
   var resetUserPrefs = false;
 
-  if (XSNS_MainWindow.NewModuleInfo.NewModules.length) {
+  if (XS_window.NewModuleInfo.NewModules.length) {
     
     resetUserPrefs = true;
-    for (var m=0; m<XSNS_MainWindow.NewModuleInfo.NewModules.length; m++) {
-      resetSearchIndex(XSNS_MainWindow.NewModuleInfo.NewModules[m]);
+    for (var m=0; m<XS_window.NewModuleInfo.NewModules.length; m++) {
+      resetSearchIndex(XS_window.NewModuleInfo.NewModules[m]);
     }
 
-    XSNS_MainWindow.NewModuleInfo.NewModules = XSNS_MainWindow.NewModuleInfo.NewModules.sort(
+    XS_window.NewModuleInfo.NewModules = XS_window.NewModuleInfo.NewModules.sort(
     function(a,b) {
       var order = [BIBLE, COMMENTARY, DICTIONARY, GENBOOK];
       var ra = (Tab.hasOwnProperty(a) ? Tab[a].modType:GENBOOK);
@@ -79,11 +79,11 @@ function loadedXUL2() {
     });
     
     var w=1;
-    for (var m=0; m<XSNS_MainWindow.NewModuleInfo.NewModules.length; m++) {
-      if (!Tab.hasOwnProperty(XSNS_MainWindow.NewModuleInfo.NewModules[m])) continue;
-      Tab[XSNS_MainWindow.NewModuleInfo.NewModules[m]]["w" + w + ".hidden"] = false;
+    for (var m=0; m<XS_window.NewModuleInfo.NewModules.length; m++) {
+      if (!Tab.hasOwnProperty(XS_window.NewModuleInfo.NewModules[m])) continue;
+      Tab[XS_window.NewModuleInfo.NewModules[m]]["w" + w + ".hidden"] = false;
       if (w <= ViewPort.NumDisplayedWindows) {
-        ViewPort.Module[w] = XSNS_MainWindow.NewModuleInfo.NewModules[m];
+        ViewPort.Module[w] = XS_window.NewModuleInfo.NewModules[m];
         w++;
       }
     }
@@ -187,8 +187,8 @@ function postWindowInit() {
   ViewPort.disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));
   
   // Open language menu if a new locale was just installed
-  if ((!document.getElementById("sub-lang").disabled && XSNS_MainWindow.NewModuleInfo.showLangMenu) || 
-				XSNS_MainWindow.NewModuleInfo.NewLocales.length) {
+  if ((!document.getElementById("sub-lang").disabled && XS_window.NewModuleInfo.showLangMenu) || 
+				XS_window.NewModuleInfo.NewLocales.length) {
     var opmenu = getDataUI("menu.options");
     var lamenu = getDataUI("menu.options.language");
     var result={};
@@ -370,7 +370,7 @@ function createLanguageMenu() {
         // if so, then show this locale now and cancel the pref
         prefs.setBoolPref("hideUntilModuleInstalled." + lc, false);
         hideUntilModuleInstalled = false;
-        XSNS_MainWindow.NewModuleInfo.showLangMenu = true;
+        XS_window.NewModuleInfo.showLangMenu = true;
         break;
       }
     }
@@ -476,8 +476,7 @@ function writeHelpVideoElem(elem, v) {
   elem.setAttribute("id", v.id);
   elem.setAttribute("label", v.label);
   elem.setAttribute("class", "menuitem-iconic videoHelpMenuItem" + (v.locale ? " cs-" + v.locale:""));
-  // launch() is not allowed by Firefox AMO Add-On validation, and should be replaced with embeded player
-  //elem.addEventListener("command", function () {AllVideos[v.index].file.launch();});
+  //elem.addEventListener("command", ??);
   return elem;
 }
 
@@ -1137,7 +1136,7 @@ function handleOptions(elem) {
       
     case "fontAdjust":
 			CommandTarget.mod = null;
-			XSNS_MainWindow.XulswordController.doCommand("cmd_xs_chooseFont");
+			XS_window.XulswordController.doCommand("cmd_xs_chooseFont");
 			break;
     
     case "about":
@@ -1151,7 +1150,7 @@ function handleOptions(elem) {
     case "showAllTabs":
     case "showNoTabs":
       var subPupId = elem.parentNode.id.match(/sub-([^-]+)-pup/)[1];
-      XSNS_MainWindow.setTimeout(function () {moduleMenuClick1(id[0], id[1], subPupId, oldCheckedValue);}, 0);
+      XS_window.setTimeout(function () {moduleMenuClick1(id[0], id[1], subPupId, oldCheckedValue);}, 0);
       break;
 
     case "winRadio":
@@ -1419,14 +1418,14 @@ function showLocation2() {
   case BIBLE:
   case COMMENTARY:
     Location.setLocation(l.mod, l.bk + "." + l.ch + "." + l.vs + "." + l.lv);
-    XSNS_MainWindow.focus();
+    XS_window.focus();
     Texts.update(SCROLLTYPECENTER, HILIGHTVERSE, [null,1,1,1]);
     break;
     
   case GENBOOK:
   case DICTIONARY:
     ViewPort.Key[l.w] = l.ch;
-    XSNS_MainWindow.focus();
+    XS_window.focus();
     Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null,1,1,1]);
     break;
     
@@ -1547,7 +1546,7 @@ function handlePrintCommand(command, target) {
     
   case "cmd_printPreview":
   case "cmd_print":
-    // NOTE: The loaded URI must call XSNS_MainWindow.printBrowserLoaded() after it has loaded!
+    // NOTE: The loaded URI must call XS_window.printBrowserLoaded() after it has loaded!
     document.getElementById('printBrowser').loadURI(PrintTarget.uri);
     break;
     

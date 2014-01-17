@@ -32,7 +32,7 @@
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
   <script>
-		var XSNS_MainWindow = (window.opener ? window.opener.XSNS_MainWindow:null);
+		var XS_window = (window.opener ? window.opener.XS_window:null);
 		var LocaleConfigs, ProgramConfig;
 	</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>

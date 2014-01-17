@@ -44,7 +44,7 @@
   </keyset>
   
   <script>
-		var XSNS_MainWindow;
+		var XS_window;
 		var chooseFont;
   </script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>

@@ -81,8 +81,8 @@ Texts = {
         // windows' values. These may have been manually changed since the  
         // last display due to operation of a pinned window's own controls.
         
-        // pinned windowed ViewPorts should not track XSNS_MainWindow at all
-        if (this !== XSNS_MainWindow.Texts) {
+        // pinned windowed ViewPorts should not track XS_window at all
+        if (this !== XS_window.Texts) {
           display = deepClone(this.pinnedDisplay[w]);
         }
         // pinned MainWidow ViewPort tracks everything except the following:
@@ -144,9 +144,9 @@ Texts = {
     if (this.scrollTypeFlag == SCROLLTYPEENDSELECT) this.scrollTypeFlag = SCROLLTYPEBEG;
     
     
-    // If this is the XSNS_MainWindow.Text object which we just updated, then go and update any
+    // If this is the XS_window.Text object which we just updated, then go and update any
     // other unpinned windowed ViewPort Text objects. Plus update navigator and history.
-    if (this === XSNS_MainWindow.Texts) {
+    if (this === XS_window.Texts) {
 
 			var allViewPortWindows = Components.classes['@mozilla.org/appshell/window-mediator;1'].
 				getService(Components.interfaces.nsIWindowMediator).getEnumerator("viewport");
@@ -165,9 +165,9 @@ Texts = {
         aViewPortWindow.Texts.update(save.p1, save.p2, save.p3);
       }
       
-      XSNS_MainWindow.updateNavigator();
+      XS_window.updateNavigator();
     
-      XSNS_MainWindow.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
+      XS_window.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
     
     }
 

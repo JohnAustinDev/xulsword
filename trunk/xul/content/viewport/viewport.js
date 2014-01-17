@@ -20,49 +20,49 @@ function initViewPort() {
   initCSS();
   
   // If this is the main xulsword ViewPort, use prefs as initial settings
-  if (document === XSNS_MainWindow.document.getElementById("main-viewport").contentDocument) {
+  if (document === XS_window.document.getElementById("main-viewport").contentDocument) {
     
     ViewPort = new ViewPortObj(); // uses prefs
     
     // this context's text objects here become program-wide globals.
-    XSNS_MainWindow.ViewPort = ViewPort;
-    XSNS_MainWindow.Texts = Texts;
-    XSNS_MainWindow.BibleTexts = BibleTexts;
-    XSNS_MainWindow.DictTexts = DictTexts;
-    XSNS_MainWindow.CommTexts = CommTexts;
-    XSNS_MainWindow.GenBookTexts = GenBookTexts;
+    XS_window.ViewPort = ViewPort;
+    XS_window.Texts = Texts;
+    XS_window.BibleTexts = BibleTexts;
+    XS_window.DictTexts = DictTexts;
+    XS_window.CommTexts = CommTexts;
+    XS_window.GenBookTexts = GenBookTexts;
     
   }
   
   // Else if this is the printing viewport
-  else if (document === XSNS_MainWindow.document.getElementById("printBrowser").contentDocument) {
+  else if (document === XS_window.document.getElementById("printBrowser").contentDocument) {
   
     document.getElementsByTagName("body")[0].setAttribute("print", "true");
   
-    ViewPort = new ViewPortObj(XSNS_MainWindow.ViewPort);
+    ViewPort = new ViewPortObj(XS_window.ViewPort);
       
     Texts.update(SCROLLTYPETOP, HILIGHTNONE, [null, 1, 1, 1]);
     
-    XSNS_MainWindow.printBrowserLoaded();
+    XS_window.printBrowserLoaded();
     
   }
   
   // Otherwise it's a windowed viewport
   else {
  
-    // for windowed viewport, use settings of XSNS_MainWindow.ViewPort, but
+    // for windowed viewport, use settings of XS_window.ViewPort, but
     // show only the window whose towindow button was clicked
     
     document.getElementsByTagName("body")[0].setAttribute("isWindow", "true");
     
-    ViewPort = new ViewPortObj(XSNS_MainWindow.ViewPort);
+    ViewPort = new ViewPortObj(XS_window.ViewPort);
     
-    // here we copy XSNS_MainWindow viewportbody html directly (and use only 
+    // here we copy XS_window viewportbody html directly (and use only 
     // ViewPort.update rather than Texts.update below), because although
     // a usual Texts.update would re-create the exact window most of the 
     // time, it would not do so for certain hilighted-verse windows. 
     var myVP = document.getElementById("viewportbody");
-    var srcVP = document.importNode(XSNS_MainWindow.ViewPort.ownerDocument.getElementById("viewportbody"), true);
+    var srcVP = document.importNode(XS_window.ViewPort.ownerDocument.getElementById("viewportbody"), true);
     while (myVP.firstChild) {myVP.removeChild(myVP.firstChild);}
     while (srcVP.firstChild) {myVP.appendChild(srcVP.removeChild(srcVP.firstChild));}
     // copying via DOM functions does not copy eventListeners, so add them back
@@ -74,9 +74,9 @@ function initViewPort() {
     // This window should be pinned if it's pinable, and all other windows should 
     // have their moduleType set to "none".
     var towindow;
-    if (!XSNS_MainWindow.ViewPort.hasOwnProperty("towindow") || !XSNS_MainWindow.ViewPort.towindow)
+    if (!XS_window.ViewPort.hasOwnProperty("towindow") || !XS_window.ViewPort.towindow)
         towindow = 1;
-    else towindow = XSNS_MainWindow.ViewPort.towindow;
+    else towindow = XS_window.ViewPort.towindow;
 
     for (var w=1; w<=NW; w++) {
       if (w == towindow) {
@@ -84,8 +84,8 @@ function initViewPort() {
         // be pinned (at least to start with, though user may unpin it)
         if (Tab[ViewPort.Module[w]].modType != DICTIONARY) {
 					// the following method of getting wl only works because we copied  
-					// XSNS_MainWindow viewportbody html (this ViewPort has not been updated yet).
-          var wl = XSNS_MainWindow.ViewPort.ownerDocument.getElementById("text" + w).getAttribute("columns").match(/^show(\d+)$/);
+					// XS_window viewportbody html (this ViewPort has not been updated yet).
+          var wl = XS_window.ViewPort.ownerDocument.getElementById("text" + w).getAttribute("columns").match(/^show(\d+)$/);
           wl = towindow + Number(wl[1]) - 1;
           while (w <= wl) {
 						ViewPort.IsPinned[w] = true;
@@ -118,8 +118,8 @@ function ViewPortObj(viewPortObj) {
 
     // special ORIG tab
     var orig = document.createElement("input");
-    orig.className = "tab tabTexts tabOrig";
-    orig.id = "w" + w + ".tab.orig";
+    orig.setAttribute("class", "tab tabTexts tabOrig");
+    orig.setAttribute("id", "w" + w + ".tab.orig");
     orig.setAttribute("type", "button");
     orig.setAttribute("value", XSBundle.getString("ORIGLabelTab"));
     orig.setAttribute("title", (!Tab.ORIG_NT && !Tab.ORIG_OT ? " style=\"display:none;\"":""));
@@ -134,8 +134,8 @@ function ViewPortObj(viewPortObj) {
       }
       
       var tab = tabs.appendChild(document.createElement("input"));
-      tab.className = "tab tab" + Tabs[t].tabType;
-      tab.id = "w" + w + ".tab.norm." + t;
+      tab.setAttribute("class", "tab tab" + Tabs[t].tabType);
+      tab.setAttribute("id", "w" + w + ".tab.norm." + t);
 			tab.setAttribute("type", "button");
 			tab.setAttribute("value", Tabs[t].label);
 			tab.setAttribute("title", Tabs[t].description);
@@ -143,25 +143,28 @@ function ViewPortObj(viewPortObj) {
 
     // The multi-tab tab is a pulldown to hold all tabs which don't fit.
     var multitab = tabs.appendChild(document.createElement("div"));
-    multitab.className = "multitab";
-    multitab.id = "w" + w + ".multitab";
+    multitab.setAttribute("class", "multitab");
+    multitab.setAttribute("id", "w" + w + ".multitab");
     
     var select = multitab.appendChild(document.createElement("select"));
-    select.className = "tab";
-    select.id = "w" + w + ".tabselect";
+    select.setAttribute("class", "tab");
+    select.setAttribute("id", "w" + w + ".tabselect");
 
     for (t=0; t<Tabs.length; t++) {
 			var option = select.appendChild(document.createElement("option"));
-			option.className = "tab tab" + Tabs[t].tabType;
-			option.id = "w" + w + ".tab.mult." + t;
+			option.setAttribute("class", "tab tab" + Tabs[t].tabType);
+			option.setAttribute("id", "w" + w + ".tab.mult." + t);
 			option.textContent = Tabs[t].label;
     }
 
     // a div is needed to capture tab selection clicks and prevent activation of pulldown menu
     var clicker = multitab.appendChild(document.createElement("div"));
-    clicker.className = "multitab-clicker";
-    clicker.id = "w" + w + ".tab.tsel";
+    clicker.setAttribute("class", "multitab-clicker");
+    clicker.setAttribute("id", "w" + w + ".tab.tsel");
   };
+  
+	// draw tabs
+	for (w=1; w<=NW; w++) {this.drawTabs(w);}
 
   // If we have a passed viewPortObj, then copy it. Otherwise create 
   // a ViewPortObj from global preferences.
@@ -173,7 +176,7 @@ function ViewPortObj(viewPortObj) {
       this[p] = deepClone(viewPortObj[p]);
     }
 
-    // copy XSNS_MainWindow.Texts members (excluding functions) to our Texts
+    // copy XS_window.Texts members (excluding functions) to our Texts
     var objTexts = viewPortObj.ownerDocument.defaultView.Texts;
     for (var p in objTexts) {
       if (typeof(objTexts[p]) == "function") continue;
@@ -184,9 +187,6 @@ function ViewPortObj(viewPortObj) {
   }
   
   else {
-		// draw tabs
-		for (w=1; w<=NW; w++) {this.drawTabs(w);}
-
     this.ownerDocument = document;
     this.ShowOriginal = [];
     this.IsPinned = [];
@@ -262,7 +262,7 @@ function ViewPortObj(viewPortObj) {
   // classes, values etc.
   this.update = function(skipBibleChooserTest) {
   
-    if (this != XSNS_MainWindow.ViewPort) {
+    if (this != XS_window.ViewPort) {
       for (var w=1; w<=NW; w++) {
         if (document.getElementById("tabs" + w).getAttribute("moduleType") != "none" && window.frameElement) {
           window.frameElement.ownerDocument.title = fixWindowTitle(Tab[this.Module[w]].label) + 
@@ -357,8 +357,8 @@ function ViewPortObj(viewPortObj) {
         case BIBLE:
         case COMMENTARY:
           if ((/^show1$/).test(t.getAttribute("columns"))) {
-            prev = XSNS_MainWindow.XulswordController.isCommandEnabled("cmd_xs_previousChapter");
-            next = XSNS_MainWindow.XulswordController.isCommandEnabled("cmd_xs_nextChapter");
+            prev = XS_window.XulswordController.isCommandEnabled("cmd_xs_previousChapter");
+            next = XS_window.XulswordController.isCommandEnabled("cmd_xs_nextChapter");
           }
           break
         case DICTIONARY:
@@ -535,17 +535,17 @@ function ViewPortObj(viewPortObj) {
     
     GenBookTexts.validateKeys();
     
-    // General-Book Chooser (part of xulsword.xul but treated as part of XSNS_MainWindow.ViewPort)
+    // General-Book Chooser (part of xulsword.xul but treated as part of XS_window.ViewPort)
     var genbkinfo = GenBookNavigator.getGenBookInfo();
 		
 		// Bible chooser
     var chooser = (genbkinfo.unPinnedGenbkArray.length ? "book":(this.ShowChooser ? "bible":"hide"));
-    XSNS_MainWindow.ViewPort.ownerDocument.getElementById("viewportbody").setAttribute("chooser", chooser);
-    XSNS_MainWindow.document.getElementById("frameset").setAttribute("chooser", chooser);
+    XS_window.ViewPort.ownerDocument.getElementById("viewportbody").setAttribute("chooser", chooser);
+    XS_window.document.getElementById("frameset").setAttribute("chooser", chooser);
     GenBookNavigator.update(genbkinfo); // must be done after chooser is made visible!
     
-    // If this is not XSNS_MainWindow.ViewPort, then we're done hacking...
-    if (this !== XSNS_MainWindow.ViewPort) return;
+    // If this is not XS_window.ViewPort, then we're done hacking...
+    if (this !== XS_window.ViewPort) return;
   
     var lbn = findBookNum(Location.getBookName());
     if (!skipBibleChooserTest) document.getElementById("biblechooser").setAttribute("showing", (lbn >= NumOT ? "nt":"ot"));
@@ -595,7 +595,7 @@ function ViewPortObj(viewPortObj) {
 
     // fix main-viewport width to fill parent with no overflow
     if (window.frameElement && window.frameElement.id == "main-viewport") {
-      var width = (winw ? winw:XSNS_MainWindow.innerWidth - XSNS_MainWindow.document.getElementById("genBookChooser").boxObject.width) + "px";
+      var width = (winw ? winw:XS_window.innerWidth - XS_window.document.getElementById("genBookChooser").boxObject.width) + "px";
       document.getElementById("viewportbody").style.width = width;
     }
 
@@ -606,7 +606,7 @@ function ViewPortObj(viewPortObj) {
 		
     var fdb = this.firstDisplayBible(true); // capture before changing prefs...
     
-    if (this === XSNS_MainWindow.ViewPort) {
+    if (this === XS_window.ViewPort) {
 			// update this window
 			this.ShowOriginal[w] = false;
 			this.Module[w] = version;
@@ -615,7 +615,7 @@ function ViewPortObj(viewPortObj) {
 			if ((w == fdb || fdb != this.firstDisplayBible(true)))
 					window.setTimeout(function() {ViewPort.disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));}, 200);
 					
-			XSNS_MainWindow.updateBibleNavigatorAudio();
+			XS_window.updateBibleNavigatorAudio();
 		}
     
     // windowed ViewPorts only show a single text, so if this is a windowed 
@@ -677,7 +677,7 @@ function ViewPortObj(viewPortObj) {
   this.unload = function() {
     
     // no unload stuff is necessary except for main-viewport
-    if (document !== XSNS_MainWindow.document.getElementById("main-viewport").contentDocument) return;
+    if (document !== XS_window.document.getElementById("main-viewport").contentDocument) return;
 
     // save hidden tab prefs
     for (var w=1; w<=NW; w++) {

@@ -93,7 +93,7 @@
 
 <script>  
   // xulsword's program-wide global objects...
-  var XSNS_MainWindow = window;
+  var XS_window = window;
   var LibSword, Location, AudioDirs, LocaleConfigs, ModuleConfigs, ProgramConfig, FontFaceConfigs;
   var Book, Tab, Tabs, SpecialModules, GenBookNavigator, AllWindows, XSBundle;
   var BM, BMDS, ResourceFuns, BookmarkFuns, CommandTarget;

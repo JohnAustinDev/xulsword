@@ -16,7 +16,6 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const EMAIL = "gpl.programs.info@gmail.com";
 const SUBJECT = "Problem Report";
 const MAXLENGTH = 1966; //2006 is absolute max;
 const URLNEWLINE = "%0A";
@@ -44,6 +43,10 @@ var aConsoleListener =
     }
     
     this.skipExceptions = true;
+    
+		prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                    getService(Components.interfaces.nsIPrefService);  
+		prefs = prefs.getBranch("extensions.xulsword.");
    
     // BUILD REPORT FILE
     var file = "";
@@ -130,7 +133,8 @@ var aConsoleListener =
     }
     
     //file = URLencode(file);
-    var aURI = "mailto:" + EMAIL + "?subject=" + SUBJECT + "&body=" + file;
+    try {var email = prefs.getCharPref("HelpEmailAddress");} catch (er) {email="";}
+    var aURI = "mailto:" + email + "?subject=" + SUBJECT + "&body=" + file;
     var ios = Components.classes["@mozilla.org/network/io-service;1"]
                 .getService(Components.interfaces.nsIIOService);
     aURI = ios.newURI(aURI, null, null);
@@ -175,5 +179,5 @@ function initLogging() {
   var env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
   env.set("XRE_CONSOLE_LOG", debugInfo.path);
 
-  setConsoleService(!prefs.getBoolPref("DontShowExceptionDialog"));
+  if (!IsExtension) setConsoleService(!prefs.getBoolPref("DontShowExceptionDialog"));
 }
