@@ -140,6 +140,7 @@ function ViewPortObj(viewPortObj) {
 			tab.setAttribute("value", Tabs[t].label);
 			tab.setAttribute("title", Tabs[t].description);
     }
+    if (orig) {tabs.appendChild(orig);}
 
     // The multi-tab tab is a pulldown to hold all tabs which don't fit.
     var multitab = tabs.appendChild(document.createElement("div"));
@@ -165,6 +166,7 @@ function ViewPortObj(viewPortObj) {
   
 	// draw tabs
 	for (w=1; w<=NW; w++) {this.drawTabs(w);}
+	document.getElementById("viewportbody").setAttribute("hasOriginalLanguage", (Tab.ORIG_OT || Tab.ORIG_NT ? "true":"false"));
 
   // If we have a passed viewPortObj, then copy it. Otherwise create 
   // a ViewPortObj from global preferences.
