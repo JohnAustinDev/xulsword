@@ -55,6 +55,7 @@ chooseFont = {
 		
 		// add dynamic fonts to the list as well
 		for (var ff in FontFaceConfigs) {
+			if (!foption) menulist.firstChild.insertBefore(document.createElement("menuseparator"), menulist.firstChild.firstChild);
 			var foption = document.createElement("menuitem");
 			foption.setAttribute("label", ff);
 			foption.setAttribute("value", ff);
@@ -123,7 +124,7 @@ chooseFont = {
 	
 	resetModuleConfigs: function() {
 		// resets all global ModuleConfigs from current user prefs
-		XSNS_MainWindow.ModuleConfigDefault = getModuleConfig("LTR_DEFAULT");
+		XS_window.ModuleConfigDefault = getModuleConfig("LTR_DEFAULT");
 		for (var i=0; i<Tabs.length; i++) {
 			ModuleConfigs[Tabs[i].modName] = getModuleConfig(Tabs[i].modName);
 		}

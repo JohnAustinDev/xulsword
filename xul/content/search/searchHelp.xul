@@ -28,7 +28,7 @@
     onload="initCSS();"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <script>var XSNS_MainWindow = (window.opener ? window.opener.XSNS_MainWindow:null)</script>
+  <script>var XS_window = (window.opener ? window.opener.XS_window:null)</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   

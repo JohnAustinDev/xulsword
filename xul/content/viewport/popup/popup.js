@@ -25,7 +25,7 @@ function initWindowedPopup() {
   initCSS();
   
   // This is a windowed popup, so copy the original popup
-  Popup = new PopupObj(XSNS_MainWindow.Popup);
+  Popup = new PopupObj(XS_window.Popup);
   
   // eventListeners are not copied by DOM manipulation, so add them now
   var selects = document.getElementsByClassName("popup-mod-select");
@@ -36,7 +36,7 @@ function initWindowedPopup() {
 	}
   
   // Close the original popup
-  XSNS_MainWindow.Popup.close();
+  XS_window.Popup.close();
 
 }
     
@@ -436,10 +436,10 @@ function PopupObj(popupobj) {
     var offset = getOffset(this.npopupBOX);
     X = Number(f.boxObject.x + offset.left);
     Y = Number(f.boxObject.y + offset.top);
-    //jsdump("INFO:" + f.boxObject.y + "-" + XSNS_MainWindow.outerHeight + "+" + v.height + "=" + Y);
+    //jsdump("INFO:" + f.boxObject.y + "-" + XS_window.outerHeight + "+" + v.height + "=" + Y);
   
 		// save this Popup so new window can copy it
-		XSNS_MainWindow.Popup = this;
+		XS_window.Popup = this;
 		
     // Open the new xul Popup window.
     var p = "chrome,resizable,dependant";

@@ -41,7 +41,7 @@
     <key keycode="VK_ESCAPE"                 oncommand="closeWindowXS(window);"/>
   </keyset>
   
-  <script>var XSNS_MainWindow = window.opener;</script>
+  <script>var XS_window = window.opener;</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   

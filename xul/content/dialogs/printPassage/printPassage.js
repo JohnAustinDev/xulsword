@@ -44,7 +44,7 @@ var PrintPassage = {
     this.FromBook = document.getAnonymousElementByAttribute(this.FromChooser, "anonid", "book");
   
     var startBible = ViewPort.firstDisplayBible();
-    var startLocation = XSNS_MainWindow.Location.getLocation(startBible);
+    var startLocation = XS_window.Location.getLocation(startBible);
     
     this.FromChooser.location = startLocation;
     this.FromChooser.version = startBible;
@@ -90,7 +90,7 @@ var PrintPassage = {
           callback:this
         }
       
-    XSNS_MainWindow.handlePrintCommand(command, target);
+    XS_window.handlePrintCommand(command, target);
     
     this.textHTML = "";
   },

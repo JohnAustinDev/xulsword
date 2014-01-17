@@ -67,7 +67,7 @@ function tabMouse(e) {
 //consistency). These routines allow that...
 var ShowTabToolTip, HideTabToolTip;
 function openTabToolTip(t, w, cX, cY) {
-  var tt = XSNS_MainWindow.document.getElementById("tabTT");
+  var tt = XS_window.document.getElementById("tabTT");
   if (!tt) return;
   
   tt.hidePopup();
@@ -87,15 +87,15 @@ function openTabToolTip(t, w, cX, cY) {
   if (ShowTabToolTip) window.clearTimeout(ShowTabToolTip);
   if (HideTabToolTip) window.clearTimeout(HideTabToolTip);
   
-  cX += XSNS_MainWindow.document.getElementById("main-viewport").boxObject.x;
-  ShowTabToolTip = window.setTimeout(function () {XSNS_MainWindow.document.getElementById("tabTT").openPopup(XSNS_MainWindow.document.getElementById("main-viewport"), "after_pointer", cX, cY);}, 500);
-  HideTabToolTip = window.setTimeout(function () {XSNS_MainWindow.document.getElementById("tabTT").hidePopup;}, 5000);
+  cX += XS_window.document.getElementById("main-viewport").boxObject.x;
+  ShowTabToolTip = window.setTimeout(function () {XS_window.document.getElementById("tabTT").openPopup(XS_window.document.getElementById("main-viewport"), "after_pointer", cX, cY);}, 500);
+  HideTabToolTip = window.setTimeout(function () {XS_window.document.getElementById("tabTT").hidePopup;}, 5000);
 }
 
 function closeTabToolTip() {
   window.clearTimeout(ShowTabToolTip);
   window.clearTimeout(HideTabToolTip);
-  var tabtt = XSNS_MainWindow.document.getElementById('tabTT');
+  var tabtt = XS_window.document.getElementById('tabTT');
   if (tabtt) tabtt.hidePopup();
 }
 
@@ -107,7 +107,7 @@ var scriptMouseOverClasses = /^(cr|fn|sr|dt|dtl|sn|un|introlink|noticelink)(\-|\
 function scriptMouseOver(e) {
   
   // Bail if another mouse operation is already happening...
-  var mainContextMenu = XSNS_MainWindow.document.getElementById("contextScriptBox");
+  var mainContextMenu = XS_window.document.getElementById("contextScriptBox");
   if (BoundaryClicked || 
       (mainContextMenu && mainContextMenu.getAttribute("value") == "open")
       ) return;
@@ -284,14 +284,14 @@ function scriptClick(e) {
     break;
     
   case "snbut":
-    XSNS_MainWindow.XulswordController.doCommand("cmd_xs_search", { search:{ mod:p.mod, searchtext:"lemma: " + p.ch, type:"SearchAdvanced" }});
+    XS_window.XulswordController.doCommand("cmd_xs_search", { search:{ mod:p.mod, searchtext:"lemma: " + p.ch, type:"SearchAdvanced" }});
     break;
     
   case "listenlink":
-    XSNS_MainWindow.Player.version = p.mod;
-    XSNS_MainWindow.Player.chapter = p.ch;
-    XSNS_MainWindow.Player.book = p.bk;
-    XSNS_MainWindow.beginAudioPlayer();
+    XS_window.Player.version = p.mod;
+    XS_window.Player.chapter = p.ch;
+    XS_window.Player.book = p.bk;
+    XS_window.beginAudioPlayer();
     break;
     
   case "sbpin":
@@ -332,7 +332,7 @@ function scriptClick(e) {
       if ((/^show(2|3)$/).test(document.getElementById("text" + w).getAttribute("columns"))) 
           previousPage(w);
       else if (ViewPort.IsPinned[w]) previousChapterPinned(w);
-      else XSNS_MainWindow.goDoCommand('cmd_xs_previousChapter');
+      else XS_window.goDoCommand('cmd_xs_previousChapter');
       break;
     case DICTIONARY:
       var currentKey = ViewPort.Key[w];
@@ -357,7 +357,7 @@ function scriptClick(e) {
         if (sb.scrollLeft < 0) sb.scrollLeft = 0;
       }
       else if (ViewPort.IsPinned[w]) previousChapterPinned(w);
-      else XSNS_MainWindow.goDoCommand('cmd_xs_previousChapter');
+      else XS_window.goDoCommand('cmd_xs_previousChapter');
       break;
     case GENBOOK:
       // first see if we can scroll the window
@@ -396,7 +396,7 @@ function scriptClick(e) {
       if ((/^show(2|3)$/).test(document.getElementById("text" + w).getAttribute("columns")))
           nextPage(w);
       else if (ViewPort.IsPinned[w]) nextChapterPinned(w);
-      else XSNS_MainWindow.goDoCommand('cmd_xs_nextChapter');
+      else XS_window.goDoCommand('cmd_xs_nextChapter');
       break;
     case COMMENTARY:
       // first see if we can scroll the window
@@ -410,7 +410,7 @@ function scriptClick(e) {
       // if not, then load next chapter
       if (sb.scrollLeft == prev) {
         if (ViewPort.IsPinned[w])  nextChapterPinned(w);
-        else XSNS_MainWindow.goDoCommand('cmd_xs_nextChapter');
+        else XS_window.goDoCommand('cmd_xs_nextChapter');
       }
       break;
     case DICTIONARY:
@@ -464,7 +464,7 @@ function scriptClick(e) {
     case BIBLE:
     case COMMENTARY:
       Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
-      XSNS_MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
+      XS_window.Texts.update(SCROLLTYPECENTER, HILIGHTVERSE);
       break;
      case DICTIONARY:
      case GENBOOK:
@@ -480,7 +480,7 @@ function scriptClick(e) {
     
   case "crref":
     Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs + "." + p.lv);
-    XSNS_MainWindow.Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
+    XS_window.Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     break;
     
   }
@@ -518,7 +518,7 @@ function scriptDblClick(e) {
   // Do a search for selected word in mod. Use cmd_xs_search because 
   // its much faster than cmd_xs_searchForSelection and can be used
   // because our selection is only a single word.
-  XSNS_MainWindow.XulswordController.doCommand("cmd_xs_search", { search:{ mod:mod, searchtext:sel, type:"SearchAnyWord" }});
+  XS_window.XulswordController.doCommand("cmd_xs_search", { search:{ mod:mod, searchtext:sel, type:"SearchAnyWord" }});
   
   e.stopPropagation(); // block any higher handlers
 }
@@ -763,7 +763,7 @@ function previousPage(w) {
   }
   else {
     Location.setLocation(v.mod, v.bk + "." + v.ch + "." + v.vs);
-    XSNS_MainWindow.Texts.update(SCROLLTYPEENDSELECT, HILIGHTNONE);
+    XS_window.Texts.update(SCROLLTYPEENDSELECT, HILIGHTNONE);
   }
 
 }
@@ -816,7 +816,7 @@ function nextPage(w) {
   }
   else {
     Location.setLocation(v.mod, v.bk + "." + v.ch + "." + v.vs);
-    XSNS_MainWindow.Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
+    XS_window.Texts.update(SCROLLTYPEBEG, HILIGHTNONE);
   }
 }
 

@@ -18,7 +18,7 @@
 
 ResourceFuns = {
   
-  // skipComplete must be true if this function is called before the XSNS_MainWindow loads!
+  // skipComplete must be true if this function is called before the XS_window loads!
   createNewResource: function(propertyValues, keepTimeStamp, resourceName, skipComplete) {
     if (!skipComplete) BookmarkFuns.completeBMInfo(propertyValues);
     var newResource = resourceName ? BM.RDF.GetResource(resourceName):BM.RDF.GetAnonymousResource();

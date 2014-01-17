@@ -841,31 +841,31 @@ function handleResetRequest() {
   case NORESET: // program continues running and needs no reload or restart
     if (PreMainWin) writeManifest(NewLocales, NewModules, NewFonts, true);
     else {
-      if (!XSNS_MainWindow || !XSNS_MainWindow.LibSword || !XSNS_MainWindow.Tabs.length) {
+      if (!XS_window || !XS_window.LibSword || !XS_window.Tabs.length) {
         restartApplication(false);
         break;
       }
       
       //NOTE: In this case a manifest file for new mods etc. will not be written!
-      if (GotoVideoFile) XSNS_MainWindow.createHelpVideoMenu();
+      if (GotoVideoFile) XS_window.createHelpVideoMenu();
       if (GotoBookmarkFile) {
-        XSNS_MainWindow.focus();
-        XSNS_MainWindow.setTimeout(function () {document.getElementById("menu_BookmarksPopup").showPopup();}, 500);
+        XS_window.focus();
+        XS_window.setTimeout(function () {document.getElementById("menu_BookmarksPopup").showPopup();}, 500);
       }
       if (GotoAudioFile) {
 				refreshAudioCatalog();
 				updateBibleNavigatorAudio();
         var info = decodeAudioFileName(GotoAudioFile.path);
         var modsUsingAudio = getModsUsingAudioCode(info.basecode);
-				XSNS_MainWindow.Player.version = modsUsingAudio[0];
-				XSNS_MainWindow.Player.chapter = info.chapter;
-				XSNS_MainWindow.Player.book = info.book;
-        window.setTimeout(function () {XSNS_MainWindow.beginAudioPlayer();}, 1);
+				XS_window.Player.version = modsUsingAudio[0];
+				XS_window.Player.chapter = info.chapter;
+				XS_window.Player.book = info.book;
+        window.setTimeout(function () {XS_window.beginAudioPlayer();}, 1);
       }
       if (modsUsingAudio && modsUsingAudio[0]) {
-        XSNS_MainWindow.showLocation(modsUsingAudio[0], info.book, Number(info.chapter), 1, 1);
+        XS_window.showLocation(modsUsingAudio[0], info.book, Number(info.chapter), 1, 1);
       }
-      else {XSNS_MainWindow.Texts.update(SCROLLTYPETOP, HILIGHTNONE);}
+      else {XS_window.Texts.update(SCROLLTYPETOP, HILIGHTNONE);}
     }
     break;
   case SOFTRESET: // program needs to reload all SWORD modules
@@ -1420,6 +1420,6 @@ function restartApplication(promptBefore) {
 }
 
 function setPreMainWin() {
-  PreMainWin = (!XSNS_MainWindow)
+  PreMainWin = (!XS_window)
   jsdump("PreMainWin = " + PreMainWin);
 }

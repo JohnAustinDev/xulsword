@@ -32,7 +32,7 @@ SearchMouse = {
 		// Do a search for selected word in mod. Use cmd_xs_search because 
 		// its much faster than cmd_xs_searchForSelection and can be used
 		// because our selection is only a single word.
-		XSNS_MainWindow.XulswordController.doCommand("cmd_xs_search", { search:{ mod:mod, searchtext:sel, type:"SearchAnyWord" }});
+		XS_window.XulswordController.doCommand("cmd_xs_search", { search:{ mod:mod, searchtext:sel, type:"SearchAnyWord" }});
 		
 		e.stopPropagation(); // block any higher handlers
 	},
@@ -128,7 +128,7 @@ SearchMouse = {
 			break;
 			
 		case "snbut":
-			XSNS_MainWindow.XulswordController.doCommand("cmd_xs_search", { search:{ mod:p.mod, searchtext:"lemma: " + p.ch, type:"SearchAdvanced" }});
+			XS_window.XulswordController.doCommand("cmd_xs_search", { search:{ mod:p.mod, searchtext:"lemma: " + p.ch, type:"SearchAdvanced" }});
 			break;
     
 		case "popupBackLink":

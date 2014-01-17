@@ -34,7 +34,7 @@
   <data id="ui.dialog.No">&dialog.No;</data>
   <data id="ui.dialog.Cancel">&dialog.Cancel;</data>
 
-  <script>var XSNS_MainWindow = (window.opener ? window.opener.XSNS_MainWindow:null);</script>
+  <script>var XS_window = (window.opener ? window.opener.XS_window:null);</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/dialog/dialog.js"/>
