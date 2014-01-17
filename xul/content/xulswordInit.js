@@ -24,10 +24,12 @@
  ***********************************************************************/ 
 
 var ModuleConfigDefault;
+var NewModuleInfo;
 
 LocaleConfigs = {};
 ModuleConfigs = {};
 ProgramConfig = {};
+FontFaceConfigs = {};
 Tabs = [];
 Tab = {};
 SpecialModules = {
@@ -323,6 +325,205 @@ function tabOrder(a,b) {
 
 
 /************************************************************************
+ * READ NEW INSTALLS FILE
+ ***********************************************************************/ 
+ 
+function readNewInstallsFile() {
+	var modInfo = { NewLocales:[], NewModules:[], NewFonts:[], showLangMenu:false };
+	
+	var modules = LibSword.getModuleList();
+  if (!modules || modules == "No Modules") return modInfo;
+  modules = modules.split("<nx>");
+
+	var aFile = getSpecialDirectory("xsResD");
+  aFile.append(NEWINSTALLFILE);
+  
+  if (!aFile.exists()) return modInfo;
+	
+  var filedata = readFile(aFile);
+  removeFile(aFile, false);
+  
+jsdump("INFO: NewInstall=" + filedata);
+  // Filedata example: NewLocales;uz;NewModules;uzv;uzdot;uzdnt;NewFonts;Arial.ttf
+  filedata = filedata.split(";");
+  var reading = "unknown";
+  if (filedata && filedata.length) {
+    for (var n=0; n<filedata.length; n++) {
+      if (!filedata[n]) continue
+      filedata[n] = filedata[n].replace(/(^\s+|\s+$)/g, "");
+      if (filedata[n]=="NewLocales" || filedata[n]=="NewModules" || filedata[n]=="NewFonts") {
+        reading = filedata[n];
+        modInfo[reading] = [];
+        continue;
+      }
+      switch(reading) {
+      case "NewLocales":
+        for (var lc in LocaleConfigs) {
+          // check that we have a valid locale before saving it
+          if (filedata[n] == DEFAULTLOCALE || filedata[n] == lc) {
+            modInfo[reading].push(filedata[n]);
+            break;
+          }
+        }
+        break;
+      case "NewModules":
+				for (var m=0; m<modules.length; m++) {
+					var mod = modules[m].split(";");
+					// check that we have a valid module before saving it
+					if (mod && mod[0] && mod[0] == filedata[n]) {
+						modInfo[reading].push(filedata[n]);
+						break;
+					}
+				}
+        break;
+      case "NewFonts":
+        modInfo[reading].push(filedata[n]);
+        break;
+      }
+    }
+  }
+  
+  return modInfo;
+}
+
+
+/************************************************************************
+ * XULSWORD LOCAL FONT READER
+ ***********************************************************************/ 
+ 
+// return a font file's fontFamily value
+function getFontFamily(fontFile, cache) {
+	if (cache && cache.hasOwnProperty(fontFile.path)) return cache[fontFile.path];
+
+	var istream = Components.classes["@mozilla.org/network/file-input-stream;1"].
+								createInstance(Components.interfaces.nsIFileInputStream);
+	istream.init(fontFile, -1, -1, false);
+
+	var bstream = Components.classes["@mozilla.org/binaryinputstream;1"].
+								createInstance(Components.interfaces.nsIBinaryInputStream);
+	bstream.setInputStream(istream);
+
+	var data = [];
+
+	// decimal to character
+	var chr = function (val) {
+		return String.fromCharCode(val);
+	};
+
+	// unsigned short to decimal
+	var ushort = function (b1, b2) {
+		return 256 * b1 + b2;
+	};
+
+	// unsigned long to decimal
+	var ulong = function (b1, b2, b3, b4) {
+		return 16777216 * b1 + 65536 * b2 + 256 * b3 + b4;
+	};
+	
+	// we know about TTF (0x00010000) and CFF ('OTTO') fonts
+	var ttf = chr(0) + chr(1) + chr(0) + chr(0);
+	var cff = "OTTO";
+	
+	for (var b=0; b<6 && bstream.available(); b++) {data.push(bstream.read8());}
+
+	// so what kind of font is this?
+	var format;
+	var version = chr(data[0]) + chr(data[1]) + chr(data[2]) + chr(data[3]);
+	var isTTF = (version === ttf);
+	var isCFF = (isTTF ? false : version === cff);
+	if (isTTF) { format = "truetype"; }
+	else if (isCFF) { format = "opentype"; }
+	else {
+		jsdump("ERROR: " + fontFile.leafName + " cannot be interpreted as OpenType font."); 
+		return null;
+	}
+
+	// parse the SFNT header data
+	var numTables = ushort(data[4], data[5]),
+			tagStart = 12, ptr, end = tagStart + 16 * numTables, tags = {},
+			tag;
+			
+	for (var b=6; b<end+16 && bstream.available(); b++) {data.push(bstream.read8());}
+	
+	for (ptr = tagStart; ptr < end; ptr += 16) {
+		tag = chr(data[ptr]) + chr(data[ptr + 1]) + chr(data[ptr + 2]) + chr(data[ptr + 3]);
+		tags[tag] = {
+			name: tag,
+			checksum: ulong(data[ptr+4], data[ptr+5], data[ptr+6], data[ptr+7]),
+			offset:   ulong(data[ptr+8], data[ptr+9], data[ptr+10], data[ptr+11]),
+			length:   ulong(data[ptr+12], data[ptr+13], data[ptr+14], data[ptr+15])
+		};
+	}
+
+	// read the Naming Table
+	tag = "name";
+	if (!tags[tag]) {
+		jsdump("Error: " + fontFile.leafName + " is missing the required OpenType " + tag + " table.");
+		return null;
+	}
+	ptr = tags[tag].offset;
+
+	for (var b=end+16; b<ptr+6 && bstream.available(); b++) {data.push(bstream.read8());}
+
+	var nameTable = {
+		format: ushort(data[ptr], data[ptr+1]),
+		count: ushort(data[ptr+2], data[ptr+3]),
+		string_offset: ushort(data[ptr+4], data[ptr+5]),
+		nameRecord_offset: 6
+	};
+	
+	var r1ptr = ptr + nameTable.nameRecord_offset;
+	
+	for (var b=ptr+6; b<r1ptr + 13 * nameTable.count && bstream.available(); b++) {data.push(bstream.read8());}
+	
+	for (var nrptr = r1ptr; nrptr < r1ptr + 12 * nameTable.count; nrptr += 12) {
+		var aString = {
+			platformID: ushort(data[nrptr], data[nrptr+1]),
+			encodingID: ushort(data[nrptr+2], data[nrptr+3]),
+			languageID: ushort(data[nrptr+4], data[nrptr+5]),
+			nameID: ushort(data[nrptr+6], data[nrptr+7]),
+			length: ushort(data[nrptr+8], data[nrptr+9]),
+			offset: ushort(data[nrptr+10], data[nrptr+11])
+		};
+		if (aString.nameID == 1) break; // fontFamily
+	}
+	if (aString.nameID != 1) {
+		jsdump("Error: " + fontFile.leafName + " is missing the required OpenType fontFamily string.");
+		return null;
+	}
+
+	// read the familyName string
+	var familyName = null, s=ptr+nameTable.string_offset+aString.offset, e=s+aString.length;
+	
+	for (var b=r1ptr + 13 * nameTable.count; b<s+aString.length && bstream.available(); b++) {data.push(bstream.read8());}
+	
+	var u8 = data.slice(s,e);
+	switch(aString.platformID) {
+	case 0: // Unicode (just assume utf16?)
+		var u16 = []; for (var i=0; i<u8.length; i+=2) {u16.push(ushort(u8[i], u8[i+1]));}
+		familyName = String.fromCharCode.apply(null, u16);
+		break;
+	case 1: // Macintosh
+		familyName = String.fromCharCode.apply(null, u8);
+		break;
+	case 2: // ISO [deprecated]
+	case 3: // Windows
+	case 4: // Custom
+	default:
+		jsdump("WARNING: " + fontFile.leafName + ": " + format + " font string's platform decoding is not implemented, assuming utf16.");
+		var u16 = []; for (var i=0; i<u8.length; i+=2) {u16.push(ushort(u8[i], u8[i+1]));}
+		familyName = String.fromCharCode.apply(null, u16);
+	}
+	
+	if (familyName) {
+		cache[fontFile.path] = familyName;
+		jsdump("INFO: Read " + familyName + "; " + fontFile.leafName);
+	}
+	return familyName;
+}
+
+
+/************************************************************************
  * RUN ALL THE INITIALIZATION ROUTINES
  ***********************************************************************/ 
 
@@ -349,6 +550,25 @@ function xulswordInit() {
   ProgramConfig.StyleRule = createStyleRule(".cs-Program", ProgramConfig);
   ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   
+  NewModuleInfo = readNewInstallsFile();
+  if (NewModuleInfo.NewFonts.length) prefs.clearUserPref("InstalledFonts");
+  
+  // Read fonts which are in xulsword's xsFonts directory
+	var fontdir = getSpecialDirectory("xsFonts").directoryEntries;
+	var fonts = [];
+	while (fontdir.hasMoreElements()) {
+		var font = fontdir.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+		if (!font.isDirectory()) fonts.push(font);
+	}
+	try {var cache = JSON.parse(prefs.getCharPref("InstalledFonts"));} catch (er) {cache = {};}
+	if (cache===null || typeof(cache) != "object") cache = {};
+	for (var i=0; i<fonts.length; i++) {
+		var fontFamily = getFontFamily(fonts[i], cache);
+		if (!fontFamily) continue;
+		FontFaceConfigs[fontFamily] = "file://" + fonts[i].path;
+	}
+	prefs.setCharPref("InstalledFonts", JSON.stringify(cache));
+
   var defaultMod = NOTFOUND;
  
   if (initModules()) {

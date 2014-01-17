@@ -53,6 +53,14 @@ chooseFont = {
 		var menulist = document.getElementById("fontFamily");
 		FontBuilder.buildFontList(loc, this.modInitial["fontFamily"], menulist);
 		
+		// add dynamic fonts to the list as well
+		for (var ff in FontFaceConfigs) {
+			var foption = document.createElement("menuitem");
+			foption.setAttribute("label", ff);
+			foption.setAttribute("value", ff);
+			menulist.firstChild.insertBefore(foption, menulist.firstChild.firstChild);
+		}
+		
 		if (menulist.selectedIndex == -1) {
 			menulist.insertItemAt(0, "", "", "");
 			menulist.selectedIndex = 0;
