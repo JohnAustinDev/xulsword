@@ -167,7 +167,8 @@ Texts = {
       
       XS_window.updateNavigator();
     
-      XS_window.document.getElementById("cmd_xs_startHistoryTimer").doCommand();
+      try {XS_window.clearTimeout(XS_window.History.timer);} catch(er){} 
+      XS_window.History.timer = XS_window.setTimeout(function () {XS_window.History.add();}, XS_window.History.delay);
     
     }
 

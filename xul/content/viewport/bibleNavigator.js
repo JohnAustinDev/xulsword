@@ -26,6 +26,8 @@ BibleNavigator = {
   doc: function() {return document;},
   
   init: function() {
+		if (LibSword.loadFailed) return;
+		
 		var tst = this.doc().getElementById("testament_ot");
 		var text = XSBundle.getString('OTtext');
 		if (!text.match(/^\s*$/)) this.verticalWrite(tst, text);

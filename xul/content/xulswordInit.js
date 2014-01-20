@@ -161,8 +161,8 @@ function initTabGlobals() {
     var mlangs = mlang.replace(/-.*$/, "");
     
     // Set Original Language modules
-    if ((/^grc$/i).test(mlang)) SpecialModules.OriginalLanguages.Greek.push(mod);
-    if ((/^heb?$/i).test(mlang)) SpecialModules.OriginalLanguages.Hebrew.push(mod);
+    if (type == BIBLE && (/^grc$/i).test(mlang)) SpecialModules.OriginalLanguages.Greek.push(mod);
+    if (type == BIBLE && (/^heb?$/i).test(mlang)) SpecialModules.OriginalLanguages.Hebrew.push(mod);
    
     if (type == DICTIONARY) {
       // Set Global dictionary module params
@@ -277,13 +277,9 @@ FindMod:
     Tab[mod] = tab;
 
 		if (tab.modType == BIBLE) {
-			if (SpecialModules.OriginalLanguages.Hebrew.indexOf(mod) != -1 &&
-					(!Tab.ORIG_OT || Tab.ORIG_OT.modName != "HEB")) { // default is HEB
-				Tab.ORIG_OT = tab;
-			}
-			if (SpecialModules.OriginalLanguages.Greek.indexOf(mod) != -1 &&
-					(!Tab.ORIG_NT || Tab.ORIG_NT.modName != "TR")) { // default is TR
-				Tab.ORIG_NT = tab;
+			if (SpecialModules.OriginalLanguages.Hebrew.indexOf(mod) != -1 || SpecialModules.OriginalLanguages.Greek.indexOf(mod) != -1) {
+				if (!Tab.ORIG_OT || Tab.ORIG_OT.modName != "HEB") Tab.ORIG_OT = tab; // default is HEB
+				if (!Tab.ORIG_NT || Tab.ORIG_NT.modName != "TR") Tab.ORIG_NT = tab; // default is TR
 			}
 		}
 		

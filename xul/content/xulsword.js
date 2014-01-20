@@ -533,116 +533,119 @@ function fillModuleMenuLists() {
  ***********************************************************************/ 
  
 var History = {
-  list:null,
-  index:0,
-  depth:30,
+  depth:20,
   timer:null,
   delay:3500,
-  delim:"<nx>",
+  popup:null,
   
   init: function() {
-    this.list = getPrefOrCreate("History", "Char", this.delim).split(this.delim);
-    this.index = getPrefOrCreate("HistoryIndex", "Int", 0);
-    this.list.pop(); // History pref should always end with HistoryDelimeter
-    if (prefs.getCharPref("DefaultVersion") != NOTFOUND) {
-      var aVersion = prefs.getCharPref("DefaultVersion");
-      var loc = Location.convertLocation(LibSword.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
-      this.list[this.index] = loc[0] + "." + loc[1] + "." + loc[2];
-    } 
+		History.popup = document.getElementById("historypopup");
+    var h = JSON.parse(getPrefOrCreate("History", "Char", "[]"));
+    var x = getPrefOrCreate("HistoryIndex", "Int", 0);
+    for (var i=0; i<h.length; i++) {History.createMenuItemBefore(null, h[i], i == x);}
   },
   
-  save: function() {
-    var newhist="";
-    for (var i=0; this.list && i<this.list.length; i++) {
-      newhist += this.list[i] + this.delim;
-    }
-    prefs.setCharPref("History", newhist);
-    prefs.setIntPref("HistoryIndex", this.index);
-  },
+	add: function() {
+		if (LibSword.paused) return;
+		
+		var newmod = ViewPort.firstDisplayBible();
+		var newloc = Location.getLocation(newmod).split(".");
+		newloc[3] = LibSword.getVerseSystem(newmod);
+		var sel = History.popup.getElementsByClassName("selected")[0];
+		if (sel) {
+			var seloc = sel.getAttribute("value").split(".");
+			seloc = Location.convertLocation(seloc.pop(), seloc.join("."), newloc[3]).split("."); // convert selection to current vsys
+			seloc[3] = newloc[3];
+		}
+	
+		// if new chapter is different...
+		if (!sel || newloc[0] != seloc[0] || newloc[1] != seloc[1]) {
+			History.createMenuItemBefore(sel, newloc.join("."), true);
+			
+			//update buttons
+      goUpdateCommand("cmd_xs_forward");
+      goUpdateCommand("cmd_xs_back");
+		}
+		// if only verse differs, just update selection.
+		else if (newloc[2] != seloc[2]) {
+			var selv = sel.getAttribute("value").split(".");
+			selv[2] = newloc[2];
+			sel.setAttribute("value", selv.join("."));
+		}
+	},
   
   back: function() {
-    if (this.index <= 0) return;
     // If we've clicked back, make sure the current location has been added to history first!
-    try {window.clearTimeout(this.timer);} catch(er){}
-    this.add();
-    this.index--;
-    this.toHistory(this.index);
+    try {window.clearTimeout(History.timer);} catch(er){}
+    History.add();
+    var sel = History.popup.getElementsByClassName("selected")[0];
+    if (sel.nextSibling) {
+			sel.removeAttribute("class");
+			sel.nextSibling.setAttribute("class", "selected");
+			sel.nextSibling.click();
+		}
   },
 
   forward: function() {
-    if (this.index >= this.depth) return;
-    this.index++;
-    this.toHistory(this.index);
+		var sel = History.popup.getElementsByClassName("selected")[0];
+    if (sel.previousSibling) {
+			sel.removeAttribute("class");
+			sel.previousSibling.setAttribute("class", "selected");
+			sel.previousSibling.click();
+		}
   },
+  
+  onselect: function(e) {
+		var refBible = ViewPort.firstDisplayBible();
+		var value = e.target.getAttribute("value").split(".");
+		var c = History.popup.firstChild;
+		while (c) {c.removeAttribute("class"); c = c.nextSibling;}
+		e.target.setAttribute("class", "selected");
+		
+		var loc = Location.convertLocation(value.pop(), value.join("."), LibSword.getVerseSystem(refBible));
+		Location.setLocation(refBible, loc);
+		document.getElementById("book").book = Location.getBookName();
+		document.getElementById("book").version = refBible;
+		document.getElementById("chapter").value = dString(Location.getChapterNumber(refBible));
+		document.getElementById("verse").value = dString(Location.getVerseNumber(refBible));
+		updateFromNavigator();
+		goUpdateCommand("cmd_xs_forward");
+		goUpdateCommand("cmd_xs_back");
+	},
 
-  toHistory: function (index) {
-    var refBible = ViewPort.firstDisplayBible();
-    var loc = Location.convertLocation(WESTERNVS, this.list[index] + ".1", LibSword.getVerseSystem(refBible));
-    Location.setLocation(refBible, loc);
-    document.getElementById("book").book = Location.getBookName();
-    document.getElementById("book").version = refBible;
-    document.getElementById("chapter").value = dString(Location.getChapterNumber(refBible));
-    document.getElementById("verse").value = dString(Location.getVerseNumber(refBible));
-    updateFromNavigator();
-    goUpdateCommand("cmd_xs_forward");
-    goUpdateCommand("cmd_xs_back");
+  updateMenu: function(aEvent) {
+		var c = History.popup.firstChild;
+		while (c) {
+			var value = c.getAttribute("value").split(".");
+			var ref = Location.convertLocation(value.pop(), value.join("."), LibSword.getVerseSystem(ViewPort.firstDisplayBible()));
+			c.setAttribute("label", ref2ProgramLocaleText(ref, true));
+			c = c.nextSibling;
+		}
+	},
+  
+  createMenuItemBefore: function(elem, value, isSelected) {
+		var menuitem = document.createElement("menuitem");
+		menuitem.setAttribute("value", value);
+		History.popup.insertBefore(menuitem, elem);
+		if (History.popup.childNodes.length > History.depth) History.popup.removeChild(History.popup.lastChild);
+		if (isSelected) {
+			var c = History.popup.firstChild;
+			while (c) {c.removeAttribute("class"); c = c.nextSibling;}
+			menuitem.setAttribute("class", "selected");
+		}
+		menuitem.addEventListener("click", function (event) {History.onselect(event);});
+	},
+  
+  save: function() {
+		var h = [];
+		var c = History.popup.firstChild;
+		while (c) {
+			h.push(c.getAttribute("value"));
+			if (c.getAttribute("class") == "selected") prefs.setIntPref("HistoryIndex", h.length-1);
+			c = c.nextSibling;
+		}
+    prefs.setCharPref("History", JSON.stringify(h));
   },
-
-  //When something is selected from the menulist, this routine processes the selection
-  toSelection: function(index) {
-      this.index = index;
-      var toFront = this.list[this.index];  // save chosen entry
-      this.list.splice(this.index, 1);   // delete chosen entry
-      this.list.push(toFront);        // append chosen entry to front
-      this.index = this.list.length-1;  // update Historyi to point to moved entry
-      
-      this.toHistory(this.index);
-  },
-
-  createMenu: function(aEvent) {
-    var popup = aEvent.target;
-    // clear out the old context menu contents (if any)
-    while (popup.hasChildNodes()) 
-      popup.removeChild(popup.firstChild);
-    // Show history in verse system of firstDisplayBible(), save current Bible location and restore it after creating menu
-    var vers = ViewPort.firstDisplayBible();
-    for (var i=this.list.length-1; i>=0; i--) {
-      var xulElement = document.createElementNS("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul", "menuitem");
-      xulElement.addEventListener("command", function () {History.toSelection(i)});
-      var aref = Location.convertLocation(WESTERNVS, this.list[i], LibSword.getVerseSystem(vers));
-      xulElement.setAttribute("label", ref2ProgramLocaleText(aref, true));
-      //if (i == this.index) {xulElement.style.background="rgb(230,200,255)";}
-      popup.appendChild(xulElement);  
-    }
-  },
-    
-  add: function() {
-		if (LibSword.paused) return;
-    var bcvH = this.list[this.index].split(".");
-    var bcvN = new Array(3);
-    // Always store as SAME versification!
-    var aVersion = prefs.getCharPref("DefaultVersion");
-    var loc = Location.convertLocation(LibSword.getVerseSystem(aVersion), Location.getLocation(aVersion), WESTERNVS).split(".");
-    bcvN[0] = loc[0];
-    bcvN[1] = loc[1];
-    bcvN[2] = loc[2];
-    // Check to see if book or chapter is different than last saved history
-    if ((bcvN[0] != bcvH[0]) || (bcvN[1] != bcvH[1])) {
-      // If so, then record this as a new history entry
-      this.index++;
-      if (this.index == this.depth) {
-        this.list.shift(); 
-        this.index--;
-      }
-      this.list.splice(this.index, (this.depth-this.index), bcvN.join("."));
-        
-      //update buttons
-      goUpdateCommand("cmd_xs_forward");
-      goUpdateCommand("cmd_xs_back");
-    }
-    // If book/chap is same as history, but verse is different, then update verse number in current history, but don't create new history entry
-    else if ((bcvN[2] != bcvH[2])) {this.list[this.index] = bcvN.join(".");}
-  }
   
 };
 
@@ -903,9 +906,11 @@ var XulswordController = {
     case "cmd_xs_searchForLemma":
       return ((/lemma\:/).test(target.search.searchtext) && target.mod ? true:false);
     case "cmd_xs_forward":
-      return (History.index < History.list.length-1);
+			var sel = History.popup.getElementsByClassName("selected")[0];
+      return (sel && typeof(sel.previousSibling) != "undefined" && sel.previousSibling);
     case "cmd_xs_back":
-      return (History.index > 0);
+			var sel = History.popup.getElementsByClassName("selected")[0];
+			return (sel && typeof(sel.nextSibling) != "undefined" &&sel.nextSibling);
     case "cmd_xs_openFromSelection":
       this.parsedLocation = null;
       var s = target.selection;

@@ -221,7 +221,7 @@ function scriptMouseOut(e) {
 
 }
 
-const scriptClickClasses = /^(sn|sr|dt|dtl|cr|fn|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink|versePerLineButton)(\-|\s|$)/;
+const scriptClickClasses = /^(sn|sr|dt|dtl|cr|fn|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|origoption|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink|versePerLineButton)(\-|\s|$)/;
 function scriptClick(e) {
 
   // Get the text window of this event
@@ -483,6 +483,13 @@ function scriptClick(e) {
     Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs + "." + p.lv);
     XS_window.Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
     break;
+    
+  case "origoption":
+		var orig = elem.getAttribute("value").split(".");
+		if (findBookNum(orig[0]) < NumOT) Tab.ORIG_OT = Tab[orig[3]];
+		else Tab.ORIG_NT = Tab[orig[3]];
+		XS_window.Texts.update(SCROLLTYPEPREVIOUS, HILIGHTPREVIOUS, [null, (w==1), (w==2), (w==3)]);
+		break;
     
   }
   

@@ -111,6 +111,9 @@
 .introlink.empty {
   display:none;
 }
+.origselect select {
+	margin-top:1em;
+}
 .head-line-break {
   clear:both;
   margin-bottom:30px;
