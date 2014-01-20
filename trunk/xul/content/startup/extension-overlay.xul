@@ -37,7 +37,6 @@
 			!watcher.getWindowByName("xulsword-window", window)
 			) 
 			window.open("chrome://xulsword/content/startup/splash.xul", "xulsword-temporary-hidden-window", "chrome");
-		else if (XS_window) XS_window.focus(); 
 	}
 	
 	// During xulsword hard restarts (which restart both Firefox and 
