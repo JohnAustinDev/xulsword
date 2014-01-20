@@ -201,8 +201,6 @@ function PopupObj(popupobj) {
       return false;
     }
     if (!res) return false;
-    
-    this.npopup.setAttribute("puptype", type);
 
 		// save old popup
 		var oldChildren = [];
@@ -257,10 +255,11 @@ function PopupObj(popupobj) {
 			}
 		}
 
-		// finally add our new popup results
+		// finally add our new popup results and type
 		var newcontent = this.npopupTX.appendChild(document.createElement("div"));
 		newcontent.className = "popup-text cs-Program";
 		setInnerHTML(newcontent, res);
+		this.npopup.setAttribute("puptype", type);
 
     // Windowed popup...
     if ((/windowedPopup$/).test(window.name)) {
