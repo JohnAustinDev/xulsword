@@ -63,7 +63,6 @@
 		SplashScreen = openWindowXS("chrome://xulsword/content/startup/banner.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable", "splash-banner");
 		window.setTimeout(function () {
 			var w = openWindowXS("chrome://xulsword/content/xulsword.xul", "xulsword-window", "chrome,centerscreen,resizable", "xulsword-window");
-			if (window.opener && window.opener.hasOwnProperty(XS_window)) window.opener.XS_window = w;
 		}, 300);
 
 		// xulsword.xul may close this window during XS_window init,
