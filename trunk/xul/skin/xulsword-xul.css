@@ -133,6 +133,12 @@ menu#sub-Genbks {
 }
 
 /* MAIN WINDOW HISTORY BUTTONS */
+#historypopup menuitem.selected {
+	-moz-appearance: none;
+	margin: 2px 4px;
+  background-color: Highlight;
+  color: HighlightText;
+}
 #back {
   list-style-image: url("chrome://xulsword/skin/images/back.png") !important;
   -moz-image-region: rect(0px, 22px, 14px, 0px) !important;

@@ -370,6 +370,7 @@ ARMI = {
 		
 		var body = document.getElementById("infoBox").contentDocument.getElementsByTagName("body")[0];
 		body.style.background = "white";
+		while (body.firstChild) {body.removeChild(body.firstChild);}
 		
 		var fdoc = body.ownerDocument;
 		

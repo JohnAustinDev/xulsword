@@ -222,8 +222,6 @@
   <command id="cmd_print"                        oncommand="PrintUtils.print();"/>
   <command id="cmd_printPreview"                 oncommand="PrintUtils.printPreview(PrintPreviewCallbacks);"/>
   <command id="cmd_pageSetup"                    oncommand="PrintUtils.showPageSetup();"/>
-  <command id="cmd_xs_startHistoryTimer"
-            oncommand="try {window.clearTimeout(History.timer);} catch(er){} History.timer=window.setTimeout(function () {History.add();}, History.delay);"/>
   <command id="cmd_xs_nextVerse"                 oncommand="goDoCommand('cmd_xs_nextVerse');"/>
   <command id="cmd_xs_previousVerse"             oncommand="goDoCommand('cmd_xs_previousVerse');"/>
   <command id="cmd_xs_nextChapter"               oncommand="goDoCommand('cmd_xs_nextChapter');"/>
@@ -467,7 +465,7 @@
       <hbox id="historyButtons" align="center" >
         <button id="back" tooltip="backTT" label="  &history.back.label;" command="cmd_xs_back" flex="40%"/>
         <button id="historymenu" tooltip="historymenuTT" type="menu">
-          <menupopup id="historypopup" onpopupshowing="History.createMenu(event);"/>
+          <menupopup id="historypopup" onpopupshowing="History.updateMenu(event);"/>
         </button>
         <button id="forward" tooltip="forwardTT" label="&history.forward.label;  " command="cmd_xs_forward" dir="reverse" flex="40%"/>
       </hbox>

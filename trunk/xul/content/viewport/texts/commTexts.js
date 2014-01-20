@@ -58,7 +58,7 @@ CommTexts = {
     // add headers
     var showHeader = (d.globalOptions["Headings"] == "On");
     if (showHeader && ret.htmlText) {
-      ret.htmlText = BibleTexts.getChapterHeading(d.bk, d.ch, d.mod) + ret.htmlText;
+      ret.htmlText = BibleTexts.getChapterHeading(d) + ret.htmlText;
     }
     
     // put "global" SWORD options back to their global context values

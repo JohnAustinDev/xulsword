@@ -81,7 +81,7 @@ BibleTexts = {
     // add headers
     var showHeader = (d.globalOptions["Headings"]=="On");
     if (showHeader && ret.htmlText) {
-      ret.htmlText = this.getChapterHeading(d.bk, d.ch, d.mod) + ret.htmlText;
+      ret.htmlText = this.getChapterHeading(d) + ret.htmlText;
     }
     
     // put "global" SWORD options back to their global context values
@@ -150,15 +150,15 @@ BibleTexts = {
   },
   
   // This function is only for versekey modules (BIBLE, COMMENTARY)
-  getChapterHeading: function(bk, ch, mod) {
-    var l = ModuleConfigs[mod].AssociatedLocale;
+  getChapterHeading: function(d) {
+    var l = ModuleConfigs[d.mod].AssociatedLocale;
     if (l == NOTFOUND) {l = getLocale();} // otherwise use current program locale
     var b = getLocaleBundle(l, "common/books.properties");
 
-    var intro = BibleTexts.getIntroductions(mod, bk + " " + ch);
+    var intro = BibleTexts.getIntroductions(d.mod, d.bk + " " + d.ch);
     if (!intro || (intro.length < 10 || (/^\s*$/).test(intro.replace(/<[^>]*>/g, "")))) intro = "";
   
-    var lt = LibSword.getModuleInformation(mod, "NoticeLink");
+    var lt = LibSword.getModuleInformation(d.mod, "NoticeLink");
     if (lt == NOTFOUND) lt = "";
     else lt = lt.replace("<a>", "<a class='noticelink'>");
     
@@ -166,31 +166,45 @@ BibleTexts = {
     // current program locale if no associated locale is installed. But notice-link 
     // is always cs-module style.
     var html = "";
-    html  = "<div class=\"chapterhead" + (ch==1 ? " chapterfirst":"") + " cs-" + l + ((/rtl/i).test(LocaleConfigs[l].direction) ? " RTL":"") + "\">";
+    html  = "<div class=\"chapterhead" + (d.ch==1 ? " chapterfirst":"") + " cs-" + l + ((/rtl/i).test(LocaleConfigs[l].direction) ? " RTL":"") + "\">";
     
-    html +=   "<div class=\"chapnotice cs-" + mod + (!lt ? " empty":"") + "\">";
+    html +=   "<div class=\"chapnotice cs-" + d.mod + (!lt ? " empty":"") + "\">";
     html +=     "<div class=\"noticelink-c\">" + (lt ? lt:"") + "</div>";
     html +=     "<div class=\"noticetext\">"; // contains a span with class cs-mod because LibSword.getModuleInformation doesn't supply the class
-    html +=       "<div class=\"cs-" + mod + "\">" + (lt ? LibSword.getModuleInformation(mod, "NoticeText"):"") + "</div>";
+    html +=       "<div class=\"cs-" + d.mod + "\">" + (lt ? LibSword.getModuleInformation(d.mod, "NoticeText"):"") + "</div>";
     html +=     "</div>";
     html +=     "<div class=\"head-line-break\"></div>";
     html +=   "</div>";
 
     html +=   "<div class=\"chaptitle\" >";
-    html +=     "<div class=\"chapbk\">" + b.GetStringFromName(bk) + "</div>";
-    html +=     "<div class=\"chapch\">" + getLocalizedChapterTerm(bk, ch, b, l) + "</div>";
+    html +=     "<div class=\"chapbk\">" + b.GetStringFromName(d.bk) + "</div>";
+    html +=     "<div class=\"chapch\">" + getLocalizedChapterTerm(d.bk, d.ch, b, l) + "</div>";
     html +=   "</div>";
 
     html +=   "<div class=\"chapinfo\">";
-    html +=     "<div class=\"listenlink\" title=\"" + [bk, ch, 1, mod].join(".") + "\"></div>";
-    html +=     "<div class=\"introlink" + (!intro ? " empty":"") + "\" title=\"" + [bk, ch, 1, mod].join(".") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
+    html +=     "<div class=\"listenlink\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\"></div>";
+    html +=     "<div class=\"introlink" + (!intro ? " empty":"") + "\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
+    if (d["ShowOriginal"]) {
+			var origs = SpecialModules.OriginalLanguages.Greek.concat(SpecialModules.OriginalLanguages.Hebrew);
+			if (origs.length) {
+				html += "<div class=\"origselect\">";
+				html +=   "<select>";
+				for (var i=0; i<origs.length; i++) {
+					try {var selected = origs[i] == (findBookNum(d.bk) < NumOT ? Tab.ORIG_OT.modName:Tab.ORIG_NT.modName);}
+					catch (er) {selected = false;}
+					html +=   "<option class=\"origoption cs-" + Tab[origs[i]].locName + "\" value=\"" + d.bk + ".1.1." + origs[i] + "\"" + (selected ? " selected=\"selected\"":"") + ">" + Tab[origs[i]].label + "</option>";
+				} 
+				html +=   "</select>";
+				html += "</div>";
+			}
+    }
     html +=   "</div>";
     
     html += "</div>";
     
     html += "<div class=\"head-line-break\"></div>";
     
-    html += "<div class=\"introtext" + (!intro ? " empty":"") + "\" title=\"" + [bk, ch, 1, mod].join(".") + "\">" + (intro ? intro :"") + "</div>";
+    html += "<div class=\"introtext" + (!intro ? " empty":"") + "\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\">" + (intro ? intro :"") + "</div>";
    
     return html;
   },
