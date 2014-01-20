@@ -199,7 +199,10 @@ Set cFiles1=^
  "%sword%\src\utilfuns\zlib\gzwrite.c"^
  "%sword%\src\utilfuns\zlib\gzclose.c"^
  "%sword%\src\mgr\stringmgr.cpp"^
- "%sword%\src\utilfuns\utilstr.cpp"
+ "%sword%\src\utilfuns\utilstr.cpp"^
+ "%sword%\src\modules\filters\gbflatex.cpp"^
+ "%sword%\src\modules\filters\osislatex.cpp"^
+ "%sword%\src\modules\filters\thmllatex.cpp"
  
 cl.exe %cFlags% %cFiles1%
 
@@ -356,7 +359,10 @@ Set lFiles2=^
  ".\%objDIR%\osisxhtml.obj"^
  ".\%objDIR%\gbfxhtml.obj"^
  ".\%objDIR%\thmlxhtml.obj"^
- ".\%objDIR%\osisreferencelinks.obj"
+ ".\%objDIR%\osisreferencelinks.obj"^
+ ".\%objDIR%\gbflatex.obj"^
+ ".\%objDIR%\osislatex.obj"^
+ ".\%objDIR%\thmllatex.obj"
 
 link.exe -lib %lFlags% %lFiles1% %lFiles2%
 
