@@ -179,5 +179,7 @@ function initLogging() {
   var env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
   env.set("XRE_CONSOLE_LOG", debugInfo.path);
 
-  if (!IsExtension) setConsoleService(!prefs.getBoolPref("DontShowExceptionDialog"));
+	try {var dev = prefs.getCharPref("BuildID").match(/D$/);} catch (er) {dev = null;}
+
+  if (!IsExtension && !dev) setConsoleService(!prefs.getBoolPref("DontShowExceptionDialog"));
 }

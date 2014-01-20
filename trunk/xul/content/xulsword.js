@@ -279,7 +279,7 @@ function identifyModuleFeatures(resetUserPrefs) {
 
 function updateFeature(info, f, resetUserPrefs, hideDisabledItems) {
   if (!f[info.n]) {
-    if (info.e) prefs.setCharPref(GlobalToggleCommands[info.e], "On"); // it's okay to disable if there's no filter, but default is "On"
+    if (info.e) prefs.setCharPref(GlobalToggleCommands[info.e], "Off"); // no modules have this feature so it is off
     if (info.e) document.getElementById(info.e).setAttribute("disabled", "true");
     if (hideDisabledItems && info.e) document.getElementById(info.e).hidden = true;
     //if (info.b) document.getElementById(info.b).hidden = true; THIS WAS CONFUSING TO USERS WITH LITTLE BENEFIT

@@ -929,7 +929,7 @@ function unloadSearchWindow() {
 		
   // need to clean up indexer if it was in process
   if (XS_window.Indexer.inprogress) {
-    XS_window.Indexer.terminate(); // doesn't actually terminate anything
+    XS_window.Indexer.terminate();
     XS_window.Indexer.progressMeter = null;
     XS_window.Indexer.callback = null;
   }
