@@ -29,7 +29,7 @@ Set GeckoMaxVersion=28.*
 Set XULToolkitVersion=22
 Set (prefs.js):extensions.xulsword.EngineVersion=1.7.2
 Set (prefs.js):extensions.xulsword.MinXSMversion=1.0
-Set (prefs.js):extensions.xulsword.MinUIversion=3.8
+Set (prefs.js):extensions.xulsword.MinUIversion=3.9
 Set (prefs.js):extensions.xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
 # CHOOSE SECURITY SETTINGS

@@ -37,15 +37,8 @@ function tabMouse(e) {
     while(!elem.selected) {elem = elem.nextSibling;}
     p = elem.id.split(".");
   }
-  else if (p[2] == "orig") {
-		if (document.getElementById("viewportbody").getAttribute("hasOriginalLanguage") == "false") return;
-    if (e.type != "click" || ViewPort.IsPinned[w] || Tab[ViewPort.Module[w]].modType != BIBLE) return;
-    ViewPort.ShowOriginal[w] = !ViewPort.ShowOriginal[w];
-    Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);
-    return;
-  }
   
-  var t = Number(p[3]);
+  var t = (p.length >= 4 ? Number(p[3]):null);
   
   switch (e.type) {
   case MSOVER:
@@ -57,7 +50,9 @@ function tabMouse(e) {
   case "click":
     closeTabToolTip();
     if (ViewPort.IsPinned[w]) return;
-    ViewPort.selectTab(w, Tabs[t].modName);
+    if (p[2] == "orig" && (Tab[ViewPort.Module[w]].modType != BIBLE || document.getElementById("viewportbody").getAttribute("hasOriginalLanguage") == "false")) return;
+    if (p[2] == "orig") ViewPort.ShowOriginal[w] = !ViewPort.ShowOriginal[w];
+    else ViewPort.selectTab(w, Tabs[t].modName);
     Texts.update(SCROLLTYPECENTER, HILIGHT_IFNOTV1);    
     break;
   }
@@ -70,18 +65,25 @@ var ShowTabToolTip, HideTabToolTip;
 function openTabToolTip(t, w, cX, cY) {
   var tt = XS_window.document.getElementById("tabTT");
   if (!tt) return;
-  
   tt.hidePopup();
-  var modName = Tabs[t].modName;
-  if (!modName) return;
   
-  var desc = Tabs[t].description;
-  if (!desc) return;
-  
-  desc = desc.substr(0, TOOLTIP_LEN);
-  if (desc.length==TOOLTIP_LEN) desc += "...";
-  
-  tt.firstChild.setAttribute("class", "cs-" + Tab[modName].locName);
+  if (t) {
+		var modName = Tabs[t].modName;
+		if (!modName) return;
+		
+		var desc = Tabs[t].description;
+		if (!desc) return;
+		
+		desc = desc.substr(0, TOOLTIP_LEN);
+		if (desc.length==TOOLTIP_LEN) desc += "...";
+		
+		tt.firstChild.setAttribute("class", "cs-" + Tab[modName].locName);
+	}
+	else {
+		desc = XSBundle.getString("ORIGTabToolTip");
+		tt.firstChild.setAttribute("class", "cs-Program");
+	}
+	
   tt.firstChild.setAttribute("style", "color:inherit;");
   tt.firstChild.setAttribute("value", desc);
   
