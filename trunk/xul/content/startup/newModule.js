@@ -371,7 +371,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
         zReader.open(fileArray[f]);
         var tempCONF = getSpecialDirectory("TmpD");
         tempCONF.append("xs_sword.conf");
-        if (tempCONF.exists()) tempCONF.remove();
+        if (tempCONF.exists()) tempCONF.remove(false);
         tempCONF.create(tempCONF.NORMAL_FILE_TYPE, FPERM);
         try {zReader.extract(entryArray[f][e], tempCONF);}
         catch (er) {
@@ -401,7 +401,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
           isIncompatible = true;
           
           // don't report anything (we don't know what xulsword version the user needs!)
-              
+          Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();    
           jsdump("INFO: Removing incompatible SWORD module (Engine Version:" + engineVersion + " < " + minimumVersion + "): " + entryArray[f][e]);
         }
         
@@ -428,6 +428,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
           if (comparator.compare(newVersion, localVersion) < 0) {
             isIncompatible = true;
             // don't report anything (user has newer module already)
+            Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
             jsdump("INFO: Removing incompatible SWORD module (New Version:" + newVersion + " < " + localVersion + "): " + entryArray[f][e]);
           }
         }
@@ -447,7 +448,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
         zReader.open(fileArray[f]);
         var tempXPI = getSpecialDirectory("TmpD");
         tempXPI.append("xs_locale.xpi");
-        if (tempXPI.exists()) tempXPI.remove();
+        if (tempXPI.exists()) tempXPI.remove(false);
         tempXPI.create(tempXPI.NORMAL_FILE_TYPE, FPERM);
         try {zReader.extract(entryArray[f][e], tempXPI);}
         catch (er) {
@@ -462,7 +463,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
           zReader.open(tempXPI);
           var tempInstallRDF = getSpecialDirectory("TmpD");
           tempInstallRDF.append("xs_install.rdf");
-          if (tempInstallRDF.exists()) tempInstallRDF.remove();
+          if (tempInstallRDF.exists()) tempInstallRDF.remove(false);
           tempInstallRDF.create(tempInstallRDF.NORMAL_FILE_TYPE, FPERM);
           try {zReader.extract("install.rdf", tempInstallRDF);}
           catch (er) {
