@@ -235,6 +235,7 @@ jsdump("STARTING startImport");
   var report = removeIncompatibleFiles(ZipFiles, ZipEntry);
   if (report.oldmodule.length || report.newmodule.length) {
     jsdump("There were incompatible components:");
+    Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
     for (bf=0; bf<report.oldmodule.length; bf++) {jsdump("oldmodule:" + report.oldmodule[bf].leafName + ", minmodversion:" + report.minmodversion[bf]);}
     for (bf=0; bf<report.newmodule.length; bf++) {jsdump("newmodule:" + report.newmodule[bf].leafName + ", minprogversion:" + report.minprogversion);}
     try {var showPrompt = (!PreMainWin && XSBundle);} catch (er) {showPrompt = false;}
@@ -265,7 +266,6 @@ jsdump("STARTING startImport");
         }
       }
       if (ProgressMeter) closeWindowXS(ProgressMeter);
-      Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
       var result = {};
       var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result,
           fixWindowTitle(getDataUI("menu.addNewModule.label")),
