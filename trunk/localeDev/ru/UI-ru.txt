@@ -333,4 +333,5 @@
 [choose-font-dialog.restoreDefault_label]: Восстановить модуль по умолчанию
 [choose-font-dialog.restoreAllDefaults_label]: Восстановить все значения по умолчанию
 [audio.formatNotSupported]: Ваша операционная система не обеспечивает полную поддержку HTML5 аудио.\n\nНажмите клавишу F2, чтобы установить аудио, который будет играть в вашей системе.
+[main-window.viewport.ORIG_tab_tooltip]: Подстрочник режим\n(доступно после иврите или греческие Библии установлены)
 [locale_direction]: ltr

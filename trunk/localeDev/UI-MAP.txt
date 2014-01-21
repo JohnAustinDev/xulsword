@@ -632,12 +632,15 @@ xulsword/search/search.properties:GROUPEND                               =??sear
 xulsword/search/search.properties:QUOTESTART                             =??search-window.search_symbols.QUOTE_START
 xulsword/search/search.properties:QUOTEEND                               =??search-window.search_symbols.QUOTE_END
 
-# New chooseFont UI (xulsword 3.8+)
-xulsword/dialogs/about/about.dtd:contributors.label                      = main-window.menu-help.about.contributors_label
+# ORIG Tab Tool-tip
+xulsword/xulsword.properties:ORIGTabToolTip                              =  main-window.viewport.ORIG_tab_tooltip
 
 # New chooseFont UI (xulsword 3.8+)
-xulsword/audio/audio.properties:error                                    = add-repository-module.error
-xulsword/audio/audio.properties:audioFormatNotSupported                  = audio.formatNotSupported
+xulsword/dialogs/about/about.dtd:contributors.label                      =  main-window.menu-help.about.contributors_label
+
+# New chooseFont UI (xulsword 3.8+)
+xulsword/audio/audio.properties:error                                    =  add-repository-module.error
+xulsword/audio/audio.properties:audioFormatNotSupported                  =  audio.formatNotSupported
 
 # New chooseFont UI (xulsword 3.7+)
 xulsword/xulsword.dtd:fontsAndColors.label                               =  choose-font-dialog.fontsAndColors_label
