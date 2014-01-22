@@ -67,7 +67,7 @@ function openTabToolTip(t, w, cX, cY) {
   if (!tt) return;
   tt.hidePopup();
   
-  if (t) {
+  if (t !== null) {
 		var modName = Tabs[t].modName;
 		if (!modName) return;
 		
