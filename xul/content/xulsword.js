@@ -540,7 +540,8 @@ var History = {
   
   init: function() {
 		History.popup = document.getElementById("historypopup");
-    var h = JSON.parse(getPrefOrCreate("History", "Char", "[]"));
+    try {var h = JSON.parse(getPrefOrCreate("History", "Char", "[]"));}
+    catch (er) {h = [];}
     var x = getPrefOrCreate("HistoryIndex", "Int", 0);
     for (var i=0; i<h.length; i++) {History.createMenuItemBefore(null, h[i], i == x);}
   },
