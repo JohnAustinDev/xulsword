@@ -77,7 +77,7 @@ if ($MakeDevelopment =~ /true/i) {
     &copyFirefoxFiles("$DEVELOPMENT/xulrunner");
   }
   # Set our startup location...
-  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
+  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
   $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
   &writePreferences("$DEVELOPMENT/xulsword", \%Prefs, 1);
   &writeApplicationINI("$DEVELOPMENT/xulsword");
@@ -132,7 +132,7 @@ if ($MakePortable =~ /true/i) {
   if ($FirstRunXSM) {&includeFirstRunXSM("$rundir/$Name/xulsword/defaults", \%Prefs, $FirstRunXSM);}
   if ("$^O" =~ /MSWin32/i) {&copyFirefoxFiles("$rundir/$Name/xulrunner");}
   # Set our startup location...
-  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
+  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
   $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
   &writePreferences("$rundir/$Name/xulsword", \%Prefs);
   &writeApplicationINI("$rundir/$Name/xulsword");
@@ -172,7 +172,7 @@ if ($MakeSetup =~ /true/i) {
   if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/xulsword/defaults", \%Prefs, $FirstRunXSM);}
   &copyFirefoxFiles("$INSTALLER/xulrunner");
   # Set our startup location...
-  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/splash.xul";
+  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
   $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
   &writePreferences("$INSTALLER/xulsword", \%Prefs);
   &writeApplicationINI("$INSTALLER/xulsword");

@@ -19,18 +19,41 @@
 !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/dialogs/about/about-xul.css" type="text/css"?>
 
-<?xul-overlay href="chrome://xulsword/content/startup/startup-overlay.xul"?>
+<!DOCTYPE window SYSTEM "chrome://xulsword/locale/startup/startup.dtd">
 
-<!DOCTYPE window>
+<window 
+    id="splash-window" xmlns:html="http://www.w3.org/1999/xhtml"
+    title="&menu.help.about;"
+    windowtype="splash-banner"
+    onload="initCSS(); sizeToContent();"
+    centerscreen="true"
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-<window xmlns:html="http://www.w3.org/1999/xhtml" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-		id="xulsword-temporary-hidden-window" 
-		title="xulsword-temporary-hidden-window"
-    onload="startxulsword();"
-    onunload="unloadXS();"
-    hidechrome="true"
-    width="0"
-    height="0"
-    style="background:transparent;">
+  <script>
+		var XS_window = (window.opener ? window.opener.XS_window:null);
+		var LocaleConfigs, ProgramConfig;
+	</script>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
+  <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
+  
+  <vbox id="mainbox" flex="1">
+		
+		<stack>
+			
+			<vbox id="layer1" flex="1" width="500" height="375"></vbox>
+  
+			<vbox id="layer2" flex="1" pack="end" width="500" height="375">
+				<hbox align="center">
+					<vbox flex="1" pack="start" align="center">
+						<label id="producedBy" class="splash-text" value="&producedby;"/>
+					</vbox>
+				</hbox>
+			</vbox>
+    
+    </stack>
+    
+  </vbox>
+    
 </window>
