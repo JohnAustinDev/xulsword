@@ -47,5 +47,9 @@ perl -p -i -e 's/(PKG_CHECK_MODULES\(\[CLUCENE2\], \[libclucene\-core >= 2.3\],,
 cd ..
 find . -name "*.pl" -exec chmod ugo+x {} \;
 cd build
-./build.pl build_settings.txt
+if [ -e /vagrant/build/loc_vagrant.txt ]; then
+	./build.pl /vagrant/build/loc_vagrant.txt
+else 
+	./build.pl build_settings.txt
+fi
 
