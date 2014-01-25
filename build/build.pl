@@ -867,7 +867,8 @@ sub packagePortable($$) {
   my $id = shift;
   my $od = shift;
 
-  my $fname = ("$^O" =~ /linux/i ? "$Name-$PLATFORM-$Version":"$Name Portable-$Version");
+	my $pf = ($PLATFORM eq "WINNT_x86-msvc" ? "Windows":$PLATFORM);
+  my $fname = $Name."_Portable(".$pf.")-".$Version;
   my $of = "$od/$fname.zip";
   my $lf = "$fname.txt";
   
@@ -881,7 +882,8 @@ sub packageFFExtension($$) {
   my $id = shift;
   my $od = shift;
   
-  my $fname = $Name."_Firefox(".$PLATFORM.")-".$Version;
+  my $pf = ($PLATFORM eq "WINNT_x86-msvc" ? "Windows":$PLATFORM);
+  my $fname = $Name."_Firefox(".$pf.")-".$Version;
   my $of = "$od/$fname.xpi";
   my $lf = "$fname.txt";
   
