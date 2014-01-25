@@ -865,24 +865,28 @@ sub packagePortable($$) {
   my $id = shift;
   my $od = shift;
 
-  &cleanDir($od);
-  my $fname = ("$^O" =~ /linux/i ? "$Name-$PLATFORM-$Version.zip":"$Name Portable-$Version.zip");
-  $of = "$od/$fname";
+  my $fname = ("$^O" =~ /linux/i ? "$Name-$PLATFORM-$Version":"$Name Portable-$Version");
+  my $of = "$od/$fname.zip";
+  my $lf = "$fname.txt";
   
   &Log("----> Making portable zip package.\n");
-  &makeZIP($of, $id, 0, "file_log.txt");
+  if (-e $of) {unlink($of);}
+  if (-e "$od/$lf") {unlink("$od/$lf");}
+  &makeZIP($of, $id, 0, $lf);
 }
 
 sub packageFFExtension($$) {
   my $id = shift;
   my $od = shift;
   
-  &cleanDir($od);
-  $of = "$od/$Name"."_Firefox(".$PLATFORM.")-".$Version.".xpi";
+  my $fname = $Name."_Firefox(".$PLATFORM.")-".$Version;
+  my $of = "$od/$fname.xpi";
+  my $lf = "$fname.txt";
   
   &Log("----> Making extension xpt package.\n");
   if (-e $of) {unlink($of);}
-  &makeZIP($of, $id, 0, "file_log.txt");
+  if (-e "$od/$lf") {unlink("$od/$lf");}
+  &makeZIP($of, $id, 0, $lf);
 }
 
 sub localeDirectory($) {
