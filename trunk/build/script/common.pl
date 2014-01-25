@@ -128,13 +128,6 @@ sub makeZIP($$$$) {
     $di =~ s/[\/]/\\/g;
     my $a = ($updateExisting ? "u":"a");
     $cmd = "7za $a -tzip ".&escfile($zf)." -r ".&escfile($di)." -x!.svn";
-    if ($logfile) {
-      my $lf = $zf;
-      $lf =~ s/[^\/\\]+$/$logfile/;
-      $cmd .= " > $lf";
-    }
-    #&Log("$cmd\n");
-    `$cmd`;
   }
   elsif ("$^O" =~ /linux/i) {
     $cwd = `echo $PWD`; $cwd =~ s/\s*$//;
@@ -153,7 +146,7 @@ sub makeZIP($$$$) {
   if ($cmd && $logfile) {
     my $lf = $zf;
     $lf =~ s/[^\/\\]+$/$logfile/;
-    $cmd .= " > $lf";
+    $cmd .= " > \"$lf\"";
   }
   #&Log("$cmd\n");
   if ($cmd) {`$cmd`;}
