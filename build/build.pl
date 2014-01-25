@@ -858,7 +858,10 @@ sub packageWindowsSetup($) {
     die;
   }
   
-  `"%ProgramFiles%/Inno Setup 5/ISCC.exe" "$is" > "$resdir/setup-$Name-$Version.txt"`;
+  my $pf = ($PLATFORM eq "WINNT_x86-msvc" ? "Windows":$PLATFORM);
+  my $fname = $Name."_Portable(".$pf.")-".$Version;
+  
+  `"%ProgramFiles%/Inno Setup 5/ISCC.exe" "$is" > "$resdir/$fname.txt"`;
   
   chdir("$TRUNK/build");
 }
