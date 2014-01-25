@@ -13,7 +13,9 @@ if (-e $LOGFILE) {unlink($LOGFILE);}
 $OutputDirectory = File::Spec->rel2abs("../build-out");
 require "$TRUNK/build/script/common.pl";
 
-$SETTING = File::Spec->rel2abs("./".shift);
+$SETTING = shift;
+if ($SETTING =~ /^[^\.\/\\]/) {$SETTING = "./$SETTING";}
+$SETTING = File::Spec->rel2abs($SETTING);
 &readSettingsFiles(\%Prefs, 1);
 
 $WINprocess = "$Executable-srv.exe";
