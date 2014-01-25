@@ -856,7 +856,7 @@ sub packageWindowsSetup($) {
     die;
   }
   
-  `"%ProgramFiles%/Inno Setup 5/ISCC.exe" "$is" > "$resdir/file_log.txt"`;
+  `"%ProgramFiles%/Inno Setup 5/ISCC.exe" "$is" > "$resdir/setup-$Name-$Version.txt"`;
   
   chdir("$TRUNK/build");
 }
