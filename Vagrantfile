@@ -14,6 +14,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 		precise32.vm.box_url = "http://files.vagrantup.com/precise32.box"
 		precise32.vm.provision :shell, :path => "VagrantProvision.sh"
 		precise32.vm.synced_folder "./build-out", "/home/vagrant/src/xulsword/build-out"
+		precise32.vm.synced_folder "./extras", "/home/vagrant/src/xulsword/extras"
 	end
 	
 	config.vm.define "precise64" do |precise64|
@@ -21,6 +22,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 		precise64.vm.box_url = "http://files.vagrantup.com/precise64.box"
 		precise64.vm.provision :shell, :path => "VagrantProvision.sh"
 		precise64.vm.synced_folder "./build-out", "/home/vagrant/src/xulsword/build-out"
+		precise64.vm.synced_folder "./.vagranthost/mk-sup", "/home/vagrant/src/xulsword/.vagranthost/mk-sup"
+		precise64.vm.synced_folder "./extras", "/home/vagrant/src/xulsword/extras"
 	end
 
   # Every Vagrant virtual environment requires a box to build off of.
