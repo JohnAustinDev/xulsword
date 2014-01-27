@@ -17,7 +17,7 @@ The following programs need to be in your command path:
   # Unzip [http://www.crosswire.org/ftpmirror/pub/sword/source/v1.7 sword-1.7].
   # Update the paths and settings in the [http://code.google.com/p/xulsword/source/browse/trunk/build/build_settings.txt build settings file].
   # Run [http://code.google.com/p/xulsword/source/browse/trunk/build/build.pl build.pl].
-  # Start the program by running `run-xulsword-dev.pl` (which is created when you build xulsword). The development version of the program has a hidden button which displays useful debugging features when clicked. This invisible button is located JUST under the top menu bar at the FAR right of the screen. Debugging buttons will appear in that same area when the invisible button is clicked.
+  # Start the program by running `run-xulsword-dev.pl` (which is created when you build xulsword). The development version of the program has a hidden button which displays useful debugging features when clicked. This invisible button is located JUST under the top menu bar at the FAR right of the xulsword window. Debugging buttons will appear in that same area when the invisible button is clicked.
 
 -----
 
