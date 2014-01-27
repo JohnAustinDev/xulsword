@@ -1,5 +1,7 @@
 #!/bin/bash
 
+find . -name "*.pl" -exec chmod ugo+x {} \;
+
 sudo apt-get update
 
 if [ ! -e ./Cpp ]; then 
