@@ -17,8 +17,8 @@
 */
 
 const SUBJECT = "Problem Report";
-const MAXLENGTH = 1966; //2006 is absolute max;
-const URLNEWLINE = "%0A";
+const MAXLENGTH = 5000
+const URLNEWLINE = "\n";
 var aConsoleListener =
 {
   skipExceptions:false,
@@ -42,25 +42,25 @@ var aConsoleListener =
       return;
     }
     
-    this.skipExceptions = true;
+    this.skipExceptions = true; // only report the first exception during a session...
     
-		prefs = Components.classes["@mozilla.org/preferences-service;1"].
-                    getService(Components.interfaces.nsIPrefService);  
+		prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);  
 		prefs = prefs.getBranch("extensions.xulsword.");
    
-    // BUILD REPORT FILE
-    var file = "";
-    var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
-    file += "Vendor:" + prefs.getCharPref("Vendor") + ", ";
-    file += "Name:" + prefs.getCharPref("Name") + ", ";
-    file += "Version:" + prefs.getCharPref("Version") + ", ";
-    file += "Build:" + prefs.getCharPref("BuildID") + ", ";
-    file += "xulrunner:" + (appInfo ? appInfo.platformVersion:"unknown") + ", ";
-    file += "xrbuildID:" + (appInfo ? appInfo.platformBuildID:"unknown") + ", ";
-    file += "Engine:" + prefs.getCharPref("EngineVersion") + URLNEWLINE;
-    file += aMessage.message + URLNEWLINE;
+    // BUILD REPORT
+    var rep = aMessage.message + URLNEWLINE;
     
-    file += URLNEWLINE;
+    var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
+    rep += "Vendor:" + prefs.getCharPref("Vendor") + ", ";
+    rep += "Name:" + prefs.getCharPref("Name") + ", ";
+    rep += "Version:" + prefs.getCharPref("Version") + ", ";
+    rep += "LibxulswordVersion:" + prefs.getCharPref("LibxulswordVersion") + ", ";
+    rep += "Build:" + prefs.getCharPref("BuildID") + ", ";
+    rep += "xulrunner:" + (appInfo ? appInfo.platformVersion:"unknown") + ", ";
+    rep += "xrbuildID:" + (appInfo ? appInfo.platformBuildID:"unknown") + ", ";
+    rep += "Engine:" + prefs.getCharPref("EngineVersion");
+    
+    rep += URLNEWLINE;
 
     if (OPSYS == "Windows") {
       var keys = ["ProductName", "CSDVersion", "CurrentBuildNumber", "CurrentVersion"];
@@ -73,77 +73,74 @@ var aConsoleListener =
           wrk.close();
         }
         catch(er) {data = "failed to read registry value";}
-        file += keys[k] + " = " + data + URLNEWLINE;
+        rep += keys[k] + " = " + data + ", ";
       }
+      rep += URLNEWLINE;
     }
-    
-    file += URLNEWLINE;        
 
     try {
-      file += "Version1:" + ViewPort.Module[1] + URLNEWLINE;
-      file += "Version2:" + ViewPort.Module[2] + URLNEWLINE;
-      file += "Version3:" + ViewPort.Module[3] + URLNEWLINE;
+      rep += "Version1:" + ViewPort.Module[1] + ", ";
+      rep += "Version2:" + ViewPort.Module[2] + ", ";
+      rep += "Version3:" + ViewPort.Module[3] + ", ";
     }
-    catch(er) {file += "Could not read window modules." + URLNEWLINE;}
+    catch(er) {rep += "Could not read window modules. ";}
     
     try {
-      file += "DefaultVersion:" + prefs.getCharPref("DefaultVersion") + URLNEWLINE;
-      file += "Location:" + Location.getLocation(prefs.getCharPref("DefaultVersion")) + URLNEWLINE;
+      rep += "DefaultVersion:" + prefs.getCharPref("DefaultVersion") + ", ";
+      rep += "Location:" + Location.getLocation(prefs.getCharPref("DefaultVersion")) + ", ";
     }
-    catch (er) {file += "Could not read prefs." + URLNEWLINE;}
+    catch (er) {rep += "Could not read prefs. ";}
+    
+    rep += URLNEWLINE;
     
     try {
-      file += "Module List:" + LibSword.getModuleList() + URLNEWLINE;
+      rep += "Module List:" + LibSword.getModuleList() + URLNEWLINE;
     }
-    catch(er) {file += "ERROR: Could not read LibSword module list." + URLNEWLINE;}
-
-    file += URLNEWLINE;        
-
-    // console messages up to first unhandled exception
-    var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
-        .getService(Components.interfaces.nsIConsoleService);
-    var messages = {};
-    var length = {};
-    consoleService.getMessageArray(messages, length);
-    messages = messages.value;
-    for (var m = messages.length-1; m>=0; m--) {
-      messages[m] = messages[m].QueryInterface(Components.interfaces.nsIConsoleMessage).message;
-      file += messages[m] + URLNEWLINE;
-    }
+    catch(er) {rep += "ERROR: Could not read LibSword module list." + URLNEWLINE;}     
    
-    // EMAIL REPORT FILE
-    var result={};
-    var bundle = getCurrentLocaleBundle("startup/startup.properties");
-    var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
-      bundle.GetStringFromName("Title"),
-      bundle.formatStringFromName("SendErrorReport", [bundle.GetStringFromName("dialog.OK")], 1) + "\n\n" + aMessage.message,
-      DLGALERT,
-      DLGOKCANCEL,
-      bundle.GetStringFromName("dontShowAgain")
-    );
+    // prompt user to report problem
+    try {var haveInternetPermission = prefs.getBoolPref("HaveInternetPermission");}
+		catch (er) {haveInternetPermission = false;}
+
+    var result={checked:false, ok: false};
+    try {
+			var bundle = getCurrentLocaleBundle("startup/startup.properties");
+			var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
+				bundle.GetStringFromName("Title"),
+				(haveInternetPermission ? bundle.formatStringFromName("SendErrorReport", [bundle.GetStringFromName("dialog.OK")], 1) + "\n\n":"") + aMessage.message,
+				DLGALERT,
+				DLGOKCANCEL,
+				bundle.GetStringFromName("dontShowAgain")
+			);
+		}
+		catch (er) {}
     
     if (result.checked) {
       prefs.setBoolPref("DontShowExceptionDialog", true);
       setConsoleService(false);
     }
-    
-    if (!result.ok) {
+   
+    if (!result.ok || !haveInternetPermission) {
       this.processingException = false;
       return;
     }
     
-    //file = URLencode(file);
-    try {var email = prefs.getCharPref("HelpEmailAddress");} catch (er) {email="";}
-    var aURI = "mailto:" + email + "?subject=" + SUBJECT + "&body=" + file;
-    var ios = Components.classes["@mozilla.org/network/io-service;1"]
-                .getService(Components.interfaces.nsIIOService);
-    aURI = ios.newURI(aURI, null, null);
-    aURI = aURI.asciiSpec;
-    aURI = aURI.substr(0, MAXLENGTH);
-
-    this.processingException = false;
+    try {var url = prefs.getCharPref("ProblemReportURL");} catch (er) {url=null;}
+    if (!url) {
+			this.processingException = false;
+      return;
+		}
     
-    window.location.href = aURI;
+    var params = "xulsword=1&report=" + encodeURIComponent(rep.substr(0, MAXLENGTH)).replace(/%20/g, '+');
+		var ajax = new XMLHttpRequest();
+		ajax.open("POST", url, true);
+		ajax.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		ajax.setRequestHeader("Content-length", params.length);
+		ajax.setRequestHeader("Connection", "close");
+		ajax.send(params);
+		
+		this.processingException = false;
+    
   },
   
   QueryInterface: function (iid) {
@@ -179,7 +176,11 @@ function initLogging() {
   var env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
   env.set("XRE_CONSOLE_LOG", debugInfo.path);
 
-	try {var dev = prefs.getCharPref("BuildID").match(/D$/);} catch (er) {dev = null;}
+	try {var dev = prefs.getCharPref("BuildID").match(/D$/);} 
+	catch (er) {dev = null;}
 
-  if (!IsExtension && !dev) setConsoleService(!prefs.getBoolPref("DontShowExceptionDialog"));
+	try {var haveInternetPermission = prefs.getBoolPref("HaveInternetPermission");}
+	catch (er) {haveInternetPermission = false;}
+    
+  if (haveInternetPermission && !dev && !prefs.getBoolPref("DontShowExceptionDialog")) setConsoleService(true);
 }

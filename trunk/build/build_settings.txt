@@ -33,6 +33,9 @@ Set (prefs.js):extensions.xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 # FIREFOX EXTENSIONS WILL NOT INCLUDE THE BINARY LIBRARY IF A URL IS SPECIFIED HERE:
 Set (prefs.js):extensions.xulsword.LibSwordURL=
 
+# XULSWORD WILL REPORT UNHANDLED EXCEPTIONS TO THIS URL, IF SPECIFIED:
+Set (prefs.js):extensions.xulsword.ProblemReportURL=
+
 # CHOOSE SECURITY SETTINGS
 Set UseSecurityModule=false
 Set KeyGenPath=
