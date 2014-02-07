@@ -14,7 +14,7 @@ $OutputDirectory = File::Spec->rel2abs("../build-out");
 require "$TRUNK/build/script/common.pl";
 
 $SETTING = shift;
-if ($SETTING =~ /^[^\.\/\\]/) {$SETTING = "./$SETTING";}
+if ($SETTING !~ /^\w+\:[\/\\]+/ && $SETTING =~ /^[^\.\/\\]/) {$SETTING = "./$SETTING";}
 $SETTING = File::Spec->rel2abs($SETTING);
 &readSettingsFiles(\%Prefs, 1);
 
