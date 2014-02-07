@@ -111,6 +111,23 @@ if ($MakeFFextension =~ /true/i) {
   &includeLocales($FFEXTENSION, $IncludeLocales, \@manifest, 1);
   &writeManifest($FFEXTENSION, \@manifest);
   &writeExtensionInstallManifest($FFEXTENSION);
+  
+  # to pass Firefox AMO, the binary cannot be included in the Add-On.
+  # if LibSwordURL is specified in build_settings, then this binary will 
+  # NOT be included in the extension. Instead it will be downloaded upon first run.
+  my $libdir = "$OutputDirectory/$Name-LibSword-$Version";
+  if (! -e $libdir) {make_path($libdir);}
+  my $lib = "xulsword-$Version-$PLATFORM.".("$^O" =~ /linux/i ? "so":"dll");
+  if (-e "$libdir/$lib.zip") {unlink("$libdir/$lib.zip");}
+  if ($Prefs{"(prefs.js):extensions.xulsword.LibSwordURL"}) {
+		mv("$FFEXTENSION/$lib", "$libdir/$lib");
+	}
+  else {
+		cp("$FFEXTENSION/$lib", "$libdir/$lib");
+	}
+	&makeZIP("$libdir/$lib.zip", "$libdir/$lib", 0, 0);
+	unlink("$libdir/$lib");
+	
   &packageFFExtension("$FFEXTENSION/*", "$OutputDirectory/$Name-Extension-$Version");
 }
 
@@ -291,7 +308,7 @@ sub compileLibSword($$) {
       
       if (!-e "$TRUNK/Cpp/windows/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); die;}
     }
-    &copy_file("$TRUNK/Cpp/windows/Release/xulsword.dll", $do);
+    &copy_file("$TRUNK/Cpp/windows/Release/xulsword.dll", "$do/xulsword-$Version-$PLATFORM.dll");
   }
   elsif ("$^O" =~ /linux/i) {
     if (!$CompiledAlready) {
@@ -305,10 +322,10 @@ sub compileLibSword($$) {
       `./staticlib.sh >> $LOGFILE 2>&1`;
       if (!-e "$TRUNK/Cpp/.libs/libxulsword.so") {&Log("ERROR: libxulsword did not compile.\n"); die;}
     }
-    if (!$staticLinkToSWORD) {&copy_file("$TRUNK/Cpp/.libs/libxulsword.so", $do);}
+    if (!$staticLinkToSWORD) {&copy_file("$TRUNK/Cpp/.libs/libxulsword.so", "$do/xulsword-$Version-$PLATFORM.so");}
     else {
       &copy_file("$TRUNK/Cpp/.libs/libxulswordstatic.so", $do);
-      mv("$do/libxulswordstatic.so", "$do/libxulsword.so");
+      mv("$do/libxulswordstatic.so", "$do/xulsword-$Version-$PLATFORM.so");
     }
   }
   else {&Log("ERROR: Please add a compile script for your platform.\n");}
@@ -471,6 +488,7 @@ sub writePreferences($\%$) {
   $pP->{"(prefs.js):extensions.xulsword.Vendor"} = $Vendor;
   $pP->{"(prefs.js):extensions.xulsword.Name"} = $Name;
   $pP->{"(prefs.js):extensions.xulsword.Version"} = $Version;
+  $pP->{"(prefs.js):extensions.xulsword.Platform"} = $PLATFORM;
   $pP->{"(prefs.js):extensions.xulsword.BuildID"} = $BuildID;
 
   foreach my $p (sort keys %{$pP}) {
@@ -700,7 +718,9 @@ sub writeExtensionInstallManifest($) {
   print INM "    <em:homepageURL>http://code.google.com/p/xulsword</em:homepageURL>\n";
   print INM "    <em:iconURL>chrome://xulsword/skin/icon.png</em:iconURL>\n";
   print INM "    <em:unpack>true</em:unpack>\n";
-  print INM "    <em:targetPlatform>$PLATFORM</em:targetPlatform>\n";
+  print INM "    <em:targetPlatform>WINNT_x86-msvc</em:targetPlatform>\n";
+  print INM "    <em:targetPlatform>Linux_x86-gcc3</em:targetPlatform>\n";
+  print INM "    <em:targetPlatform>Linux_x86_64-gcc3</em:targetPlatform>\n";
   print INM "  </Description>\n";
   print INM "</RDF>\n";
   close(INM);
@@ -780,7 +800,6 @@ sub writeInstallerAppInfo($) {
   print ISS "#define MyDecimalVersion \"$Version\"\n";
   print ISS "#define MyVersion \"$Version\"\n";
   print ISS "#define securitymod \"$UseSecurityModule\"\n";
-  print ISS "#define HebrewFont \"$IncludeHebrewFont\"\n";
   print ISS "#define MK \"$TRUNK\"\n";
   print ISS "#define MKS \"$XulswordExtras\"\n";
   print ISS "#define MKO \"$OutputDirectory\"\n";
@@ -885,8 +904,7 @@ sub packageFFExtension($$) {
   my $id = shift;
   my $od = shift;
   
-  my $pf = ($PLATFORM eq "WINNT_x86-msvc" ? "Windows":$PLATFORM);
-  my $fname = $Name."_Firefox(".$pf.")-".$Version;
+  my $fname = $Name."_Firefox-".$Version;
   my $of = "$od/$fname.xpi";
   my $lf = "$fname.txt";
   

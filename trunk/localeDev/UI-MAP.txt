@@ -1,4 +1,4 @@
-# MIN_XULSWORD_VERSION:3.8, MAX_XULSWORD_VERSION:3.50
+# MIN_XULSWORD_VERSION:3.9, MAX_XULSWORD_VERSION:3.50
 # 
 # A "*" in a file-entry and/or description is wildcard.
 # ?? description prefix means file-entry and value are optional.
@@ -632,8 +632,9 @@ xulsword/search/search.properties:GROUPEND                               =??sear
 xulsword/search/search.properties:QUOTESTART                             =??search-window.search_symbols.QUOTE_START
 xulsword/search/search.properties:QUOTEEND                               =??search-window.search_symbols.QUOTE_END
 
-# ORIG Tab Tool-tip
+# ORIG Tab Tool-tip (xulsword 3.9+)
 xulsword/xulsword.properties:ORIGTabToolTip                              =  main-window.viewport.ORIG_tab_tooltip
+xulsword/xulsword.properties:LibSwordDownloadMsg                         =  dialog.Libsword_Download_Msg
 
 # New chooseFont UI (xulsword 3.8+)
 xulsword/dialogs/about/about.dtd:contributors.label                      =  main-window.menu-help.about.contributors_label

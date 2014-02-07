@@ -62,6 +62,8 @@ else if (navigator.appVersion.indexOf("Mac")!=-1) OPSYS="MacOS";
 else if (navigator.appVersion.indexOf("Linux")!=-1) OPSYS="Linux";
 else if (navigator.appVersion.indexOf("X11")!=-1) OPSYS="Linux";
 
+var BIN = { Windows:"dll", Linux:"so" };
+
 // Are we running as a Firefox extension?
 IsExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");
 
@@ -358,7 +360,27 @@ function setInnerHTML(parent, html) {
 	while (parent.firstChild) {parent.removeChild(parent.firstChild);}
 	
 	var parser = Components.classes["@mozilla.org/parserutils;1"].getService(Components.interfaces.nsIParserUtils);
-	parent.appendChild(parser.parseFragment(html, parser.SanitizerAllowStyle, false, null, parent.ownerDocument.documentElement));
+	parent.appendChild(escapeAttributes(parser.parseFragment(html, parser.SanitizerAllowStyle, false, null, parent.ownerDocument.documentElement)));
+}
+
+// Insure that no HTML special characters appear in DocumentFragment 
+// attribute values. 
+function escapeAttributes(node) {
+	
+	for (var i=0; i<node.children.length; i++) {
+		var attribs = node.children[i].attributes;
+		for (var j=0; attribs && j<attribs.length; j++) {
+			attribs[j].value = attribs[j].value.replace(/[<>"'&]/g, escapeAttribChar);
+		}
+		if (node.children[i].firstChild) escapeAttributes(node.children[i]);
+	}
+	
+	return node;
+}
+
+function escapeAttribChar(chr) {
+	jsdump("WARN: Escaping '" + chr + "' in attribute");
+	return "%" + chr.charCodeAt(0);
 }
 
 // Firefox Add-On validation throws warnings about eval(uneval(obj)), so
@@ -591,7 +613,7 @@ function createAppDirectories() {
 }
 
 /************************************************************************
- * Global Preferences Obect and its Support Routines
+ * Global Preferences Object and its Support Routines
  ***********************************************************************/ 
 // Get the "xulsword." branch of prefs
 

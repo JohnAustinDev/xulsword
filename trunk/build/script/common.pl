@@ -112,6 +112,7 @@ sub cleanDir($) {
   }
 }
 
+# zips $di (may be directory or file) into file $zf
 sub makeZIP($$$$) {
   my $zf = shift;
   my $di = shift;
