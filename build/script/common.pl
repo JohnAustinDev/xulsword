@@ -16,11 +16,11 @@ sub readSettingsFiles(\%$) {
   if ("$^O" !~ /MSWin32/i) {$XULRunner = ""; $MicrosoftSDK = "";}
   if ($UseSecurityModule ne "true") {$KeyGenPath = "";}
   
-  # Check that paths exist
+  # Normalize paths, and check that required paths exist.
   @PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK", "FirstRunXSM", "KeyGenPath");
   foreach my $path (@PathNames) {
   	if ($$path =~ /^\./) {$$path = File::Spec->rel2abs($$path);}
-  	if ($$path && !-e $$path) {
+  	if ($path !~ /^ModuleRepository/ && $$path && !-e $$path) {
   		&Log("ERROR: File \"$$path\" does not exist.");
   		die;
   	}

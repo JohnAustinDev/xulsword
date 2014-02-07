@@ -105,7 +105,7 @@ LibSword = {
     if (!this.LibswordPath) {
       // NOTE: getSpecialDirectory is not available from within a ChromeWorker, so
       // LibswordPath must be explicitly set on the LibSword object in such case.
-      this.LibswordPath = getSpecialDirectory("xsProgram").path + "/" + "xulsword-" + prefs.getCharPref("Version") + "-" + prefs.getCharPref("Platform") + "." + BIN[OPSYS];
+      this.LibswordPath = getSpecialDirectory("xsProgram").path + "/" + "libxulsword-" + prefs.getCharPref("LibxulswordVersion") + "-" + prefs.getCharPref("Platform") + "." + BIN[OPSYS];
     }
     
     // get our libxulsword instance

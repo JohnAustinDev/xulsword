@@ -75,7 +75,7 @@
 			
 				// Check that we have libxulsword installed
 				if (!BIN.hasOwnProperty(OPSYS)) return;
-				var libName = "xulsword-" + prefs.getCharPref("Version") + "-" + prefs.getCharPref("Platform") + "." + BIN[OPSYS];
+				var libName = "libxulsword-" + prefs.getCharPref("LibxulswordVersion") + "-" + prefs.getCharPref("Platform") + "." + BIN[OPSYS];
 				SWLibrary.file = getSpecialDirectory("xsProgram");
 				SWLibrary.file.append(libName);
 				if (SWLibrary.file.exists()) {

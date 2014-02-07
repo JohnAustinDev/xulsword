@@ -115,9 +115,9 @@ if ($MakeFFextension =~ /true/i) {
   # to pass Firefox AMO, the binary cannot be included in the Add-On.
   # if LibSwordURL is specified in build_settings, then this binary will 
   # NOT be included in the extension. Instead it will be downloaded upon first run.
-  my $libdir = "$OutputDirectory/$Name-LibSword-$Version";
+  my $libdir = "$OutputDirectory/$Name-libxulsword-$LibxulswordVersion";
   if (! -e $libdir) {make_path($libdir);}
-  my $lib = "xulsword-$Version-$PLATFORM.".("$^O" =~ /linux/i ? "so":"dll");
+  my $lib = "libxulsword-$LibxulswordVersion-$PLATFORM.".("$^O" =~ /linux/i ? "so":"dll");
   if (-e "$libdir/$lib.zip") {unlink("$libdir/$lib.zip");}
   if ($Prefs{"(prefs.js):extensions.xulsword.LibSwordURL"}) {
 		mv("$FFEXTENSION/$lib", "$libdir/$lib");
@@ -170,47 +170,45 @@ if ($MakePortable =~ /true/i) {
 if ($MakeSetup =~ /true/i) {
   &Log("\n----> BUILDING PROGRAM SETUP INSTALLER\n");
   undef(%Prefs); &readSettingsFiles(\%Prefs);
-  if ("$^O" !~ /MSWin32/i) {
-    &Log("ERROR: Setup Installer has not been implemented for your platform.\n");
-     die;
-  }
-  # "S" in BuildID identifies this as being Setup Installer version
-  $BuildID = sprintf("%02d%02d%02d_%dS", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
-  
-  if (-e $INSTALLER) {&cleanDir($INSTALLER);}
-  else {make_path($INSTALLER);}
-  # Delete RESOURCES because this dir is copied into Setup by the setup compiler
-  if (-e $RESOURCES) {&cleanDir($RESOURCES);}
-  else {make_path($RESOURCES);}
-  
-  make_path("$INSTALLER/xulsword");
-  make_path("$INSTALLER/xulrunner");
-  &compileLibSword("$INSTALLER/xulsword", 1);
-  my @manifest;
-  &copyXulswordFiles("$INSTALLER/xulsword", \@manifest, $IncludeLocales, 0, 0);
-  if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/xulsword/defaults", \%Prefs, $FirstRunXSM);}
-  &copyFirefoxFiles("$INSTALLER/xulrunner");
-  # Set our startup location...
-  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
-  $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
-  &writePreferences("$INSTALLER/xulsword", \%Prefs);
-  &writeApplicationINI("$INSTALLER/xulsword");
-  &compileWindowsStartup($INSTALLER, 0);
-  &includeModules($RESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
-  &includeLocales("$INSTALLER/xulsword", $IncludeLocales, \@manifest, 0);
-  &writeManifest("$INSTALLER/xulsword", \@manifest);
-  &writeRunScript($INSTALLER, "setup");
+  if ("$^O" =~ /MSWin32/i) {
+		# "S" in BuildID identifies this as being Setup Installer version
+		$BuildID = sprintf("%02d%02d%02d_%dS", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
+		
+		if (-e $INSTALLER) {&cleanDir($INSTALLER);}
+		else {make_path($INSTALLER);}
+		# Delete RESOURCES because this dir is copied into Setup by the setup compiler
+		if (-e $RESOURCES) {&cleanDir($RESOURCES);}
+		else {make_path($RESOURCES);}
+		
+		make_path("$INSTALLER/xulsword");
+		make_path("$INSTALLER/xulrunner");
+		&compileLibSword("$INSTALLER/xulsword", 1);
+		my @manifest;
+		&copyXulswordFiles("$INSTALLER/xulsword", \@manifest, $IncludeLocales, 0, 0);
+		if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/xulsword/defaults", \%Prefs, $FirstRunXSM);}
+		&copyFirefoxFiles("$INSTALLER/xulrunner");
+		# Set our startup location...
+		$Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
+		$Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
+		&writePreferences("$INSTALLER/xulsword", \%Prefs);
+		&writeApplicationINI("$INSTALLER/xulsword");
+		&compileWindowsStartup($INSTALLER, 0);
+		&includeModules($RESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
+		&includeLocales("$INSTALLER/xulsword", $IncludeLocales, \@manifest, 0);
+		&writeManifest("$INSTALLER/xulsword", \@manifest);
+		&writeRunScript($INSTALLER, "setup");
 
-  # package everything into the Setup Installer
-  my $autogen = "$XulswordExtras/installer/autogen";
-  if (-e $autogen) {&cleanDir($autogen);}
-  make_path($autogen);
-  &writeInstallerAppInfo("$autogen/appinfo.iss");
-  &writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales, \%Prefs);
-	&writeInstallerDefaultLocale("$autogen/defaultLocale.iss", \%Prefs);
-  &writeInstallerModuleUninstall("$autogen/uninstall.iss", $RESOURCES, $IncludeModules, $IncludeLocales);
-  &packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
-
+		# package everything into the Setup Installer
+		my $autogen = "$XulswordExtras/installer/autogen";
+		if (-e $autogen) {&cleanDir($autogen);}
+		make_path($autogen);
+		&writeInstallerAppInfo("$autogen/appinfo.iss");
+		&writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales, \%Prefs);
+		&writeInstallerDefaultLocale("$autogen/defaultLocale.iss", \%Prefs);
+		&writeInstallerModuleUninstall("$autogen/uninstall.iss", $RESOURCES, $IncludeModules, $IncludeLocales);
+		&packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
+	}
+	else {&Log("WARN: Setup Installer has not been implemented for your platform.\n");}
 }
 
 &Log("FINISHED BUILDING\n");
@@ -308,7 +306,7 @@ sub compileLibSword($$) {
       
       if (!-e "$TRUNK/Cpp/windows/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); die;}
     }
-    &copy_file("$TRUNK/Cpp/windows/Release/xulsword.dll", "$do/xulsword-$Version-$PLATFORM.dll");
+    &copy_file("$TRUNK/Cpp/windows/Release/xulsword.dll", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.dll");
   }
   elsif ("$^O" =~ /linux/i) {
     if (!$CompiledAlready) {
@@ -322,10 +320,10 @@ sub compileLibSword($$) {
       `./staticlib.sh >> $LOGFILE 2>&1`;
       if (!-e "$TRUNK/Cpp/.libs/libxulsword.so") {&Log("ERROR: libxulsword did not compile.\n"); die;}
     }
-    if (!$staticLinkToSWORD) {&copy_file("$TRUNK/Cpp/.libs/libxulsword.so", "$do/xulsword-$Version-$PLATFORM.so");}
+    if (!$staticLinkToSWORD) {&copy_file("$TRUNK/Cpp/.libs/libxulsword.so", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.so");}
     else {
       &copy_file("$TRUNK/Cpp/.libs/libxulswordstatic.so", $do);
-      mv("$do/libxulswordstatic.so", "$do/xulsword-$Version-$PLATFORM.so");
+      mv("$do/libxulswordstatic.so", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.so");
     }
   }
   else {&Log("ERROR: Please add a compile script for your platform.\n");}
@@ -488,6 +486,7 @@ sub writePreferences($\%$) {
   $pP->{"(prefs.js):extensions.xulsword.Vendor"} = $Vendor;
   $pP->{"(prefs.js):extensions.xulsword.Name"} = $Name;
   $pP->{"(prefs.js):extensions.xulsword.Version"} = $Version;
+  $pP->{"(prefs.js):extensions.xulsword.LibxulswordVersion"} = $LibxulswordVersion;
   $pP->{"(prefs.js):extensions.xulsword.Platform"} = $PLATFORM;
   $pP->{"(prefs.js):extensions.xulsword.BuildID"} = $BuildID;
 
