@@ -215,10 +215,10 @@ jsdump("STARTING startImport");
     var result = {};
     ProgressMeterLoaded = false;
     ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
-      fixWindowTitle(getDataUI("menu.addNewModule.label"),
+      fixWindowTitle(getDataUI("menu.addNewModule.label")),
       "", 
       PMNORMAL,
-      null));
+      null);
   }
   CountTotal = (ZipFiles ? ZipFiles.length:0) + (RegularFiles ? RegularFiles.length:0);
   CountCurrent = 0;

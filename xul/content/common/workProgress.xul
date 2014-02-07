@@ -54,9 +54,9 @@
     ButtonElem = document.getElementById("stop");
   
     switch (Type) {
-    case window.opener.PMNORMAL:
+    case PMNORMAL:
       break;
-    case window.opener.PMSTOP:
+    case PMSTOP:
       ButtonElem.setAttribute("hidden", "false");
       break;
     }

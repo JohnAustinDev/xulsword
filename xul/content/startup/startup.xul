@@ -58,6 +58,8 @@
 		// closes this hidden window during its init sequence, which in turn closes the
 		// visible splash window.
 
+		var SWLibrary = {};
+		
 		function startxulsword() {
 			XSBundle = document.getElementById("xulsword-strings");
 			AllWindows = [];
@@ -69,7 +71,120 @@
 			Book = getBibleBooks();
 			createAppDirectories();
 		
-			if (!IsExtension) {
+			if (IsExtension) {
+			
+				// Check that we have libxulsword installed
+				if (!BIN.hasOwnProperty(OPSYS)) return;
+				var libName = "xulsword-" + prefs.getCharPref("Version") + "-" + prefs.getCharPref("Platform") + "." + BIN[OPSYS];
+				SWLibrary.file = getSpecialDirectory("xsProgram");
+				SWLibrary.file.append(libName);
+				if (SWLibrary.file.exists()) {
+					startxulsword2();
+					return;
+				}
+
+				// If not installed, prompt for libxulsword download permission
+				SWLibrary.url = prefs.getCharPref("LibSwordURL") + "/" + libName + ".zip";
+				var result={};
+				var dlg = window.opener.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
+					"",
+					XSBundle.getString("LibSwordDownloadMsg") + ":\n" + SWLibrary.url,
+					DLGQUEST,
+					DLGOKCANCEL
+				);
+				
+				if (!result.ok || !navigator.onLine) {
+					closeWindowXS(window);
+					return;
+				}
+				
+				// Now download libxulsword (as a zip file for quicker download)
+				SWLibrary.window = window;
+				SWLibrary.response = 0;
+				SWLibrary.zipFile = getSpecialDirectory("TmpD");
+				SWLibrary.zipFile.append(libName + ".zip");
+				if (SWLibrary.zipFile.exists()) SWLibrary.zipFile.remove(false); 
+				
+				// Open progress-meter
+				persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+				var result = {};
+				SWLibrary.progressMeter = window.opener.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
+					"",
+					"", 
+					PMSTOP,
+					null,
+					function () {persist.cancelSave();}
+				);
+				
+				// Begin download
+				persist.persistFlags  = persist.PERSIST_FLAGS_BYPASS_CACHE;
+				persist.progressListener = 
+				{
+
+					onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
+						SWLibrary.progressMeter.Progress.setAttribute("value", Math.floor(100*aCurSelfProgress/aMaxSelfProgress));
+					},
+					
+					onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
+						if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
+						
+						var http = aRequest.QueryInterface(Components.interfaces.nsIHttpChannel);
+						if (http) {
+							SWLibrary.response = http.responseStatus;
+							SWLibrary.status = http.responseStatus + " " + http.responseStatusText;
+						}
+
+						if (aStatus == 0 && SWLibrary.response == 200) {
+							// download success! now unzip the download
+							var zReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(Components.interfaces.nsIZipReader);
+							zReader.open(SWLibrary.zipFile);
+							SWLibrary.file.create(SWLibrary.file.NORMAL_FILE_TYPE, FPERM);
+							try {zReader.extract(SWLibrary.zipFile.leafName.replace(".zip",""), SWLibrary.file);}
+							catch (er) {
+								aStatus = -1;
+								SWLibrary.status = "nsIZipReader \"" + zipFile.leafName + "\".";
+							}
+							zReader.close(SWLibrary.zipFile);
+							SWLibrary.file.permissions = FPERM; // zReader sets permissions!
+						}
+						if (SWLibrary.zipFile.exists()) SWLibrary.zipFile.remove(false);
+						
+						if (aStatus == 0 && SWLibrary.response == 200) {
+							// final success! now we're done...
+							closeWindowXS(SWLibrary.progressMeter);
+							startxulsword2();
+						}
+						else {
+							// could not get libxulsword, so clean up, tell user, and bail...
+							if (SWLibrary.file.exists()) SWLibrary.file.remove(false);
+							SWLibrary.progressMeter.Progress.setAttribute("value", 5);
+							SWLibrary.progressMeter.LabelElem.textContent = "ERROR: " + SWLibrary.status;
+							SWLibrary.progressMeter.LabelElem.style.width = "400px";
+							SWLibrary.progressMeter.sizeToContent();
+							closeWindowXS(SWLibrary.window);
+						}
+						
+					},
+					
+					onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {
+						if (aMessage) {
+							SWLibrary.status = aMessage;
+							jsdump("INFO: Download status " + SWLibrary.url + ": " + aMessage);
+						}
+					},
+					
+					onLocationChange: function(aWebProgress, aRequest, aLocation) {},
+					
+					onSecurityChange: function(aWebProgress, aRequest, aState) {}
+				};
+																				
+				var ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);
+				var context = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+					.getInterface(Components.interfaces.nsIWebNavigation)
+					.QueryInterface(Components.interfaces.nsILoadContext);
+				persist.saveURI(ios.newURI(SWLibrary.url, null, null), null, null, null, null, SWLibrary.zipFile, context);
+			}
+			else {
 				// Scripts or programs that need to block while xulsword performs
 				// command line module installation (the xsInstallOnly command line 
 				// option), will get confused if xulsword needs to restart. Hence 
@@ -85,8 +200,13 @@
 					if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
 					jsdump("INFO: xsInstallOnly flag was set");
 				}
+				
+				startxulsword2();
 			}
+		}
 			
+		function startxulsword2() {
+	
 			// If the FirstRunXSM pref is set, then install the specified XSM 
 			// module, which must be located in the xsDefaults directory.
 			try {

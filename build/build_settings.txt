@@ -1,6 +1,3 @@
-#----------------------------------------------------------------
-#----------------------------------------------------------------
-
 # BUILD WHAT?
 Set MakeDevelopment=true
 Set MakeFFextension=true
@@ -32,6 +29,9 @@ Set (prefs.js):extensions.xulsword.MinXSMversion=1.0
 Set (prefs.js):extensions.xulsword.MinUIversion=3.9
 Set (prefs.js):extensions.xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
+# FIREFOX EXTENSIONS WILL NOT INCLUDE THE BINARY LIBRARY IF A URL IS SPECIFIED HERE:
+Set (prefs.js):extensions.xulsword.LibSwordURL=
+
 # CHOOSE SECURITY SETTINGS
 Set UseSecurityModule=false
 Set KeyGenPath=
@@ -49,12 +49,6 @@ Set IncludeLocales=en-US,ru
 # MODULES TO INCLUDE IN BUILD
 # Note: KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson are used for original lang features
 Set IncludeModules=
-
-# INCLUDE SEARCH INDEXES IN INSTALLER (true:false)
-Set IncludeIndexes=false
-
-# SHOULD THE INSTALLER INSTALL THE HEBREW FONT? (true or false)
-Set IncludeHebrewFont=false
 
 # CONTRIBUTOR'S LISTING
 Set (prefs.js):extensions.xulsword.ContributorList=Special Thanks To:\nTroy Griffitts and the SWORD Project\n\nDevelopers:\nJohn Austin\nDavid Booth\n\nContributors:\nAbram Victorovich\nAllen Peleton\nDavid Haslam\nWolfgang Stradner
