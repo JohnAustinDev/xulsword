@@ -349,7 +349,7 @@
 [choose-font-dialog.restoreAllDefaults_label]: Restore all defaults
 [audio.formatNotSupported]: Your operating system does not provide complete support for HTML5 audio.\n\nPress the F2 key to install audio which will play on your system.
 [main-window.viewport.ORIG_tab_tooltip]: Interlinear mode (only available after Hebrew or Greek Bibles are installed)
-[dialog.Libsword_Download_Msg]:To read SWORD modules a binary executable library must be downloaded.\n\nThis library has not been screened by Mozilla.\n\nDo you still wish to download this library?
+[dialog.Libsword_Download_Msg]:To read SWORD modules a binary executable library must be downloaded.\n\nThis library has NOT been screened by Mozilla.\n\nDo you still wish to download this library?
 
 # locale_direction must be either "ltr" for left-to-right scripts, or "rtl" for right-to-left scripts
 [locale_direction]: ltr

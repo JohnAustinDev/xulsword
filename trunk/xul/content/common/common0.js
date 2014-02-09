@@ -57,12 +57,12 @@ const TYPE=0, NAME=1, NOTE=2, BOOK=3, CHAPTER=4, VERSE=5, LASTVERSE=6, MODULE=7,
 
 // What's our operating system?
 var OPSYS = "Unknown OS";
-if (navigator.appVersion.indexOf("Win")!=-1) OPSYS="Windows";
+if (navigator.appVersion.indexOf("Win")!=-1) OPSYS="WINNT";
 else if (navigator.appVersion.indexOf("Mac")!=-1) OPSYS="MacOS";
 else if (navigator.appVersion.indexOf("Linux")!=-1) OPSYS="Linux";
 else if (navigator.appVersion.indexOf("X11")!=-1) OPSYS="Linux";
 
-var BIN = { Windows:"dll", Linux:"so" };
+var BIN = { WINNT:"dll", Linux:"so" };
 
 // Are we running as a Firefox extension?
 IsExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");
@@ -80,8 +80,8 @@ const DICTIONARY = "Lexicons / Dictionaries";
 const COMMENTARY = "Commentaries";
 const GENBOOK = "Generic Books";
 const NOTFOUND = "Not Found";
-const NEWLINE = (OPSYS == "Windows" ? "\r\n":(OPSYS == "MacOS" ? "\r":"\n"));
-const DIRSEP = (OPSYS == "Windows" ? "\\":"/");
+const NEWLINE = (OPSYS == "WINNT" ? "\r\n":(OPSYS == "MacOS" ? "\r":"\n"));
+const DIRSEP = (OPSYS == "WINNT" ? "\\":"/");
 const BMFileReturn="\r\n"; // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
 const DEFAULTLOCALE = "en-US";
 const DLGSTD="centerscreen,modal,resizable";
@@ -100,7 +100,7 @@ const APPLICATIONID="xulsword@xulsword.org";
 const FIREFOXUID="ec8030f7-c20a-464f-9b0e-13a3a9e97384";
 const VERSIONPAR = "xulswordVersion";
 const LOCALE_SEARCH_SYMBOLS = {SINGLECharWildCard:"?", MULTICharWildCard:"*", AND:"&&", OR:"||", NOT:"!", SIMILAR:"~", GROUPSTART:"(", GROUPEND:")", QUOTESTART:"\"", QUOTEEND:"\""};
-const AUDEXT = (OPSYS == "Windows" ? ["mp3", "ogg"]:["ogg", "mp3"]);
+const AUDEXT = (OPSYS == "WINNT" ? ["mp3", "ogg"]:["ogg", "mp3"]);
 const AUDMIME = {mp3:"audio/mpeg", ogg:"audio/ogg"};
 const LOCALEPREF = "general.useragent.locale";
 const MSMOVE = "mousemove";
@@ -485,7 +485,7 @@ function isASCII(text) {
 
 // Convert file path separators into native platform separators 
 function lpath(path) {
-  if (OPSYS == "Windows") {path = path.replace(/\//g, "\\");}
+  if (OPSYS == "WINNT") {path = path.replace(/\//g, "\\");}
   else if (OPSYS == "Linux") {path = path.replace(/\\/g, "/");}
 
   return path;
@@ -572,7 +572,7 @@ function getSpecialDirectory(name) {
       break;
     case "xsModsCommon":
       switch (OPSYS) {
-      case "Windows":
+      case "WINNT":
         var userAppPath = Components.classes["@mozilla.org/process/environment;1"].
             getService(Components.interfaces.nsIEnvironment).get("APPDATA");
         userAppPath += "/Sword";
@@ -1159,6 +1159,58 @@ function closeWindowXS(aWindow) {
 		if (i != -1) AllWindows.splice(i, 1);
 	}
 	aWindow.close();
+
+}
+
+// Returns whether the user has given permission to use Internet during  
+// this session, and prompts the user if the answer is unknown.
+function internetPermission(win) {
+	if (!win) win = window;
+
+	//prefs.clearUserPref("HaveInternetPermission");
+
+	// never allow access to internet until we have express permission!
+	var haveInternetPermission = (
+		getPrefOrCreate("HaveInternetPermission", "Bool", false) || 
+		getPrefOrCreate("SessionHasInternetPermission", "Bool", false)
+	);
+
+	if (!haveInternetPermission) {
+		bundle = getCurrentLocaleBundle("dialogs/addRepositoryModule/addRepositoryModule.properties");
+		var title = bundle.GetStringFromName("arm.internetPromptTitle");
+		var msg = bundle.GetStringFromName("arm.internetPromptMessage");
+		msg += "\n\n";
+		msg += bundle.GetStringFromName("arm.wishToContinue");
+		var cbText = bundle.GetStringFromName("arm.rememberMyChoice");
+
+		var result = {};
+		var dlg = win.openDialog(
+			"chrome://xulsword/content/dialogs/dialog/dialog.xul",
+			"dlg",
+			DLGSTD,
+			result,
+			fixWindowTitle(title),
+			msg,
+			DLGALERT,
+			DLGYESNO,
+			null,
+			null,
+			cbText
+		);
+		haveInternetPermission = result.ok;
+
+		// if user wants this choice to be permanent...
+		if (result.checked2) {
+			prefs.setBoolPref("HaveInternetPermission", haveInternetPermission);
+
+			// there is no way for regular users to undo this, so I've commented it out...
+			//prefs.setBoolPref("AllowNoInternetAccess", !haveInternetPermission);
+		}
+	}
+
+	prefs.setBoolPref("SessionHasInternetPermission", haveInternetPermission);
+
+	return haveInternetPermission;
 }
 
 // DEBUG helps

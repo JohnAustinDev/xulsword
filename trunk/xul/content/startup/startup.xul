@@ -61,6 +61,7 @@
 		var SWLibrary = {};
 		
 		function startxulsword() {
+			prefs.setBoolPref("SessionHasInternetPermission", false);
 			XSBundle = document.getElementById("xulsword-strings");
 			AllWindows = [];
 			rootprefs.setCharPref("intl.uidirection." + getLocale(), getDataUI("locale.dir"));
@@ -75,7 +76,10 @@
 			
 				// Check that we have libxulsword installed
 				if (!BIN.hasOwnProperty(OPSYS)) return;
-				var libName = "libxulsword-" + prefs.getCharPref("LibxulswordVersion") + "-" + prefs.getCharPref("Platform") + "." + BIN[OPSYS];
+				var xulABI = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULRuntime);
+				try {xulABI = xulABI.XPCOMABI;}
+				catch (er) {xulABI = "unknown";}
+				var libName = "libxulsword-" + prefs.getCharPref("LibxulswordVersion") + "-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS];
 				SWLibrary.file = getSpecialDirectory("xsProgram");
 				SWLibrary.file.append(libName);
 				if (SWLibrary.file.exists()) {
@@ -93,7 +97,7 @@
 					DLGOKCANCEL
 				);
 				
-				if (!result.ok || !navigator.onLine) {
+				if (!result.ok || !navigator.onLine || !internetPermission(window.opener)) {
 					closeWindowXS(window);
 					return;
 				}

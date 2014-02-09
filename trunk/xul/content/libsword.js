@@ -103,9 +103,12 @@ LibSword = {
 
     // get path to libxulsword dynamic library built from C++ SWORD engine
     if (!this.LibswordPath) {
-      // NOTE: getSpecialDirectory is not available from within a ChromeWorker, so
+      // NOTE: getSpecialDirectory etc. is not available from within a ChromeWorker, so
       // LibswordPath must be explicitly set on the LibSword object in such case.
-      this.LibswordPath = getSpecialDirectory("xsProgram").path + "/" + "libxulsword-" + prefs.getCharPref("LibxulswordVersion") + "-" + prefs.getCharPref("Platform") + "." + BIN[OPSYS];
+      var xulABI = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULRuntime);
+      try {xulABI = xulABI.XPCOMABI;}
+      catch (er) {xulABI = "unknown";}
+      this.LibswordPath = getSpecialDirectory("xsProgram").path + "/" + "libxulsword-" + prefs.getCharPref("LibxulswordVersion") + "-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS];
     }
     
     // get our libxulsword instance

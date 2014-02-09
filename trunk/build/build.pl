@@ -80,7 +80,6 @@ if ($MakeDevelopment =~ /true/i) {
   }
   # Set our startup location...
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
-  $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
   &writePreferences("$DEVELOPMENT/xulsword", \%Prefs, 1);
   &writeApplicationINI("$DEVELOPMENT/xulsword");
   &includeModules($RESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
@@ -104,7 +103,6 @@ if ($MakeFFextension =~ /true/i) {
   &copyXulswordFiles($FFEXTENSION, \@manifest, $IncludeLocales, 0, 1);
   if ($FirstRunXSM) {&includeFirstRunXSM("$FFEXTENSION/defaults", \%Prefs, $FirstRunXSM);}
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = ""; # undo any previous setting
-  $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "true";
   $Prefs{"(language.js):general.useragent.locale"} = ""; # can't overwrite the Firefox setting
   &writePreferences($FFEXTENSION, \%Prefs);
   &includeModules("$FFEXTENSION/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
@@ -152,7 +150,6 @@ if ($MakePortable =~ /true/i) {
   if ("$^O" =~ /MSWin32/i) {&copyFirefoxFiles("$rundir/$Name/xulrunner");}
   # Set our startup location...
   $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
-  $Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
   &writePreferences("$rundir/$Name/xulsword", \%Prefs);
   &writeApplicationINI("$rundir/$Name/xulsword");
   if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup($rundir, 1);}
@@ -189,7 +186,6 @@ if ($MakeSetup =~ /true/i) {
 		&copyFirefoxFiles("$INSTALLER/xulrunner");
 		# Set our startup location...
 		$Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
-		$Prefs{"(prefs.js):extensions.xulsword.DontShowExceptionDialog"} = "false";
 		&writePreferences("$INSTALLER/xulsword", \%Prefs);
 		&writeApplicationINI("$INSTALLER/xulsword");
 		&compileWindowsStartup($INSTALLER, 0);
@@ -487,7 +483,6 @@ sub writePreferences($\%$) {
   $pP->{"(prefs.js):extensions.xulsword.Name"} = $Name;
   $pP->{"(prefs.js):extensions.xulsword.Version"} = $Version;
   $pP->{"(prefs.js):extensions.xulsword.LibxulswordVersion"} = $LibxulswordVersion;
-  $pP->{"(prefs.js):extensions.xulsword.Platform"} = $PLATFORM;
   $pP->{"(prefs.js):extensions.xulsword.BuildID"} = $BuildID;
 
   foreach my $p (sort keys %{$pP}) {

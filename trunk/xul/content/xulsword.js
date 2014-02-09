@@ -1499,6 +1499,7 @@ function unloadXUL() {
     if (AllWindows[i] === window) continue;
     try {AllWindows[i].close();} catch(er) {}
   }
+  AllWindows = [];
 
   // clear Transactions
   BM.gTxnSvc.clear();
@@ -1516,7 +1517,7 @@ function unloadXUL() {
     prefs.setCharPref(GlobalToggleCommands[cmd], LibSword.getGlobalOption(GlobalToggleCommands[cmd]));
   }
 
-  History.save();
+  if (History.popup) History.save(); // only save if History has been initialized
   LibSword.quitLibsword();
 
   jsdump("Finished unloading xulsword.js");
