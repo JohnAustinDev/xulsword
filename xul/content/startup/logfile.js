@@ -62,7 +62,7 @@ var aConsoleListener =
     
     rep += URLNEWLINE;
 
-    if (OPSYS == "Windows") {
+    if (OPSYS == "WINNT") {
       var keys = ["ProductName", "CSDVersion", "CurrentBuildNumber", "CurrentVersion"];
       var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
       for (var k=0; wrk && k<keys.length; k++) {
@@ -78,28 +78,25 @@ var aConsoleListener =
       rep += URLNEWLINE;
     }
 
-    try {
-      rep += "Version1:" + ViewPort.Module[1] + ", ";
-      rep += "Version2:" + ViewPort.Module[2] + ", ";
-      rep += "Version3:" + ViewPort.Module[3] + ", ";
-    }
-    catch(er) {rep += "Could not read window modules. ";}
+    try {rep += "Version1:" + ViewPort.Module[1] + ", ";}
+    catch (er) {rep += "Could not read ViewPort.Module[1]. ";}
+    try {rep += "Version2:" + ViewPort.Module[2] + ", ";}
+    catch (er) {rep += "Could not read ViewPort.Module[2]. ";}
+    try {rep += "Version3:" + ViewPort.Module[3] + ", ";}
+    catch (er) {rep += "Could not read ViewPort.Module[3]. ";}
     
-    try {
-      rep += "DefaultVersion:" + prefs.getCharPref("DefaultVersion") + ", ";
-      rep += "Location:" + Location.getLocation(prefs.getCharPref("DefaultVersion")) + ", ";
-    }
-    catch (er) {rep += "Could not read prefs. ";}
+    try {rep += "DefaultVersion:" + prefs.getCharPref("DefaultVersion") + ", ";}
+    catch (er) {rep += "Could not read pref 'DefaultVersion'. ";}
+    try {rep += "Location:" + Location.getLocation(prefs.getCharPref("DefaultVersion")) + ", ";}
+    catch (er) {rep += "Could not read Location. ";}
     
     rep += URLNEWLINE;
     
-    try {
-      rep += "Module List:" + LibSword.getModuleList() + URLNEWLINE;
-    }
+    try {rep += "Module List:" + LibSword.getModuleList() + URLNEWLINE;}
     catch(er) {rep += "ERROR: Could not read LibSword module list." + URLNEWLINE;}     
    
     // prompt user to report problem
-    try {var haveInternetPermission = prefs.getBoolPref("HaveInternetPermission");}
+    try {var haveInternetPermission = (prefs.getBoolPref("SessionHasInternetPermission") || prefs.getBoolPref("HaveInternetPermission"));}
 		catch (er) {haveInternetPermission = false;}
 
     var result={checked:false, ok: false};
@@ -109,7 +106,7 @@ var aConsoleListener =
 				bundle.GetStringFromName("Title"),
 				(haveInternetPermission ? bundle.formatStringFromName("SendErrorReport", [bundle.GetStringFromName("dialog.OK")], 1) + "\n\n":"") + aMessage.message,
 				DLGALERT,
-				DLGOKCANCEL,
+				(haveInternetPermission ? DLGOKCANCEL:DLGOK),
 				bundle.GetStringFromName("dontShowAgain")
 			);
 		}
@@ -178,9 +175,6 @@ function initLogging() {
 
 	try {var dev = prefs.getCharPref("BuildID").match(/D$/);} 
 	catch (er) {dev = null;}
-
-	try {var haveInternetPermission = prefs.getBoolPref("HaveInternetPermission");}
-	catch (er) {haveInternetPermission = false;}
     
-  if (haveInternetPermission && !dev && !prefs.getBoolPref("DontShowExceptionDialog")) setConsoleService(true);
+  if (!dev && !prefs.getBoolPref("DontShowExceptionDialog")) setConsoleService(true);
 }

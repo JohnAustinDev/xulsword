@@ -322,39 +322,7 @@ function checkInternetPermission() {
   //prefs.clearUserPref("HaveInternetPermission");
 
   // don't allow access to internet until we have express permission!
-  var haveInternetPermission = getPrefOrCreate("HaveInternetPermission", "Bool", false);
-
-  if (!haveInternetPermission) {
-    var title = MyStrings.GetStringFromName("arm.internetPromptTitle");
-    var msg = MyStrings.GetStringFromName("arm.internetPromptMessage");
-    msg += "\n\n";
-    msg += MyStrings.GetStringFromName("arm.wishToContinue");
-    var cbText = MyStrings.GetStringFromName("arm.rememberMyChoice");
-
-    var result = {};
-    var dlg = window.openDialog(
-				"chrome://xulsword/content/dialogs/dialog/dialog.xul",
-				"dlg",
-				DLGSTD,
-				result,
-        fixWindowTitle(title),
-        msg,
-        DLGALERT,
-        DLGYESNO,
-        null,
-        null,
-        cbText
-    );
-    haveInternetPermission = result.ok;
-
-    // if user wants this choice to be permanent...
-    if (result.checked2) {
-			prefs.setBoolPref("HaveInternetPermission", haveInternetPermission);
-
-			// there is no way for regular users to undo this, so I've commented it out...
-			//prefs.setBoolPref("AllowNoInternetAccess", !haveInternetPermission);
-		}
-  }
+  var haveInternetPermission = internetPermission();
 
   if (!haveInternetPermission) {
 		closeWindowXS(window);
