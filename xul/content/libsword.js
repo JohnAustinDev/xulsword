@@ -119,6 +119,8 @@ LibSword = {
       return;
     }
     
+    if (typeof(jsdump) != "undefined") jsdump("LOADED " + this.LibswordPath.match(/([^\/\\]*$)/)[1]);
+    
     // assign a function for freeing memory allocated by LibSword
     this.freeMemory = this.libsword.declare("FreeMemory", ctypes.default_abi, ctypes.void_t, ctypes.voidptr_t, ctypes.PointerType(ctypes.char));
     
