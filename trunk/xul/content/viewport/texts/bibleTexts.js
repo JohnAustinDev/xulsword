@@ -157,6 +157,16 @@ BibleTexts = {
 
     var intro = BibleTexts.getIntroductions(d.mod, d.bk + " " + d.ch);
     if (!intro || (intro.length < 10 || (/^\s*$/).test(intro.replace(/<[^>]*>/g, "")))) intro = "";
+    
+    // MAJOR CLUDGE! All this string processing should be replaced by DOM instructions. As it is now,
+    // if any portion of HTML returned by LibSword is not well-formed, then the entire page is broken.
+    // Setting intro (which is not well-formed for all RusVZh chapters) to an element and reading again 
+    // insures HTML string is well formed at least.
+    if (intro) {
+			var tmp = document.createElement("div");
+			setInnerHTML(tmp, intro);
+			intro = tmp.innerHTML;
+    }
   
     var lt = LibSword.getModuleInformation(d.mod, "NoticeLink");
     if (lt == NOTFOUND) lt = "";
