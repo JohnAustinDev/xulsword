@@ -49,7 +49,7 @@
 
   function loaded() {
     var bid = prefs.getCharPref("BuildID");
-    if (LibSword && !LibSword.loadFailed) bid += LibSword.LibswordPath.match(/libxulsword\-([^\-]*)\-/)[1];
+    if (LibSword && !LibSword.loadFailed) bid += LibSword.LibswordPath.match(/libxulsword\-(.*?)\.[^\.]+$/)[1];
     document.getElementById("info").value = XSBundle.getFormattedString('Version', [prefs.getCharPref("Version"), bid]);
 
     try {var contribs = prefs.getCharPref("ContributorList");}

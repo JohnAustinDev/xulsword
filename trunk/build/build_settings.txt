@@ -16,24 +16,28 @@ Set FirstRunXSM=
 Set XULRunner=../xulrunner
 Set MicrosoftSDK=C:\Program Files\Microsoft Platform SDK
 
+# XULToolkitVersion SHOULD BE THE MAJOR VERSION OF XULRunner (IF THAT PATH IS SPECIFIED)
+# IT SHOULD ALSO MATCH A LOCALE OVERLOAD VERSION FROM THE UI-MAP
+Set XULToolkitVersion=22
+
 # SPECIFY BUILD INFORMATION
 Set Version=3.10
 Set LibxulswordVersion=1.0
 Set Name=xulsword
 Set Vendor=CrossWire
 Set Executable=xulsword
-Set GeckoMinVersion=21.0
-Set GeckoMaxVersion=28.*
-Set XULToolkitVersion=22
+Set FirefoxMinVersion=21.0
+Set FirefoxMaxVersion=29.*
 Set (prefs.js):extensions.xulsword.EngineVersion=1.7.2
 Set (prefs.js):extensions.xulsword.MinXSMversion=1.0
 Set (prefs.js):extensions.xulsword.MinUIversion=3.10
 Set (prefs.js):extensions.xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
-# FIREFOX EXTENSIONS WILL NOT INCLUDE THE BINARY LIBRARY IF A URL IS SPECIFIED HERE:
+# FIREFOX EXTENSIONS WILL NOT INCLUDE THE BINARY LIBRARY IF A URL IS SPECIFIED HERE.
+# IF THE URL IS FTP PROTOCOL, THEN THE LATEST COMPATIBLE LIB CAN BE IDENTIFIED AT RUNTIME.
 Set (prefs.js):extensions.xulsword.LibSwordURL=
 
-# XULSWORD WILL REPORT UNHANDLED EXCEPTIONS TO THIS URL, IF SPECIFIED:
+# XULSWORD CAN REPORT UNHANDLED EXCEPTIONS TO THIS URL, IF SPECIFIED:
 Set (prefs.js):extensions.xulsword.ProblemReportURL=
 
 # CHOOSE SECURITY SETTINGS

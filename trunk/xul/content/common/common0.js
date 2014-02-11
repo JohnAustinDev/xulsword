@@ -1176,7 +1176,7 @@ function internetPermission(win) {
 	);
 
 	if (!haveInternetPermission) {
-		bundle = getCurrentLocaleBundle("dialogs/addRepositoryModule/addRepositoryModule.properties");
+		var bundle = getCurrentLocaleBundle("dialogs/addRepositoryModule/addRepositoryModule.properties");
 		var title = bundle.GetStringFromName("arm.internetPromptTitle");
 		var msg = bundle.GetStringFromName("arm.internetPromptMessage");
 		msg += "\n\n";

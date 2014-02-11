@@ -71,114 +71,104 @@
 			AudioDirs = getAudioDirs();
 			Book = getBibleBooks();
 			createAppDirectories();
-		
-			if (IsExtension) {
 			
-				// Check that we have libxulsword installed
-				if (!BIN.hasOwnProperty(OPSYS)) return;
-				var xulABI = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULRuntime);
-				try {xulABI = xulABI.XPCOMABI;}
-				catch (er) {xulABI = "unknown";}
-				SWLibrary.libName = "libxulsword-" + prefs.getCharPref("LibxulswordVersion") + "-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS];
-				SWLibrary.file = getSpecialDirectory("xsProgram");
-				SWLibrary.file.append(SWLibrary.libName);
-				if (SWLibrary.file.exists()) {
-					startxulsword2();
-					return;
-				}
+			// Check that we have libxulsword installed
+			if (!BIN.hasOwnProperty(OPSYS)) {
+				jsdump("ERROR: This platform is currently not supported. Exiting...");
+				closeWindowXS(window);
+				return;
+			}
+			var xulABI = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULRuntime);
+			try {xulABI = xulABI.XPCOMABI;}
+			catch (er) {xulABI = "unknown";}
+			SWLibrary.libName = "libxulsword-" + prefs.getCharPref("LibxulswordVersion") + "-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS];
+			SWLibrary.file = getSpecialDirectory("xsProgram");
+			SWLibrary.file.append(SWLibrary.libName);
+			if (SWLibrary.file.exists()) {
+				startxulsword2();
+				return;
+			}
 
-				// If not installed, prompt for libxulsword download permission
-				SWLibrary.url = prefs.getCharPref("LibSwordURL") + "/" + SWLibrary.libName + ".zip";
-				var result={};
-				var dlg = window.opener.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
-					"",
-					XSBundle.getString("LibSwordDownloadMsg") + ":\n" + SWLibrary.url,
-					DLGQUEST,
-					DLGOKCANCEL
-				);
-				
-				if (!result.ok || !navigator.onLine || !internetPermission(window.opener)) {
-					closeWindowXS(window);
-					return;
-				}
-				
-				// Request the latest compatible libxulsword version available (by reading the FTP directory listing)
-				// This only works if LibSwordURL protocol is FTP, otherwise LibxulswordVersion will be requested.
-				SWLibrary.window = window;
-				SWLibrary.ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);
-				SWLibrary.context = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-				.getInterface(Components.interfaces.nsIWebNavigation)
-				.QueryInterface(Components.interfaces.nsILoadContext);
-				
-				SWLibrary.listingFile = getSpecialDirectory("TmpD");
-				SWLibrary.listingFile.append("libxulswordListing.txt");
-				if (SWLibrary.listingFile.exists()) SWLibrary.listingFile.remove(false);
-				
-				var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
-				persist.persistFlags  = persist.PERSIST_FLAGS_BYPASS_CACHE;
-				persist.progressListener = 
-				{
-					onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {},
+			// If not installed, check whether it can be downloaded
+			try {SWLibrary.url = prefs.getCharPref("LibSwordURL") + "/" + SWLibrary.libName + ".zip";}
+			catch (er) {
+				jsdump("ERROR: No libxulsword and no LibSwordURL. Exiting...");
+				closeWindowXS(window);
+				return;
+			}
+			
+			// Prompt for libxulsword download permission
+			var result={};
+			SWLibrary.opener = (window.opener ? window.opener:window);
+			var dlg = SWLibrary.opener.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
+				"",
+				XSBundle.getString("LibSwordDownloadMsg") + ":\n" + SWLibrary.url,
+				DLGQUEST,
+				DLGOKCANCEL
+			);
+			
+			if (!result.ok || !navigator.onLine || !internetPermission(SWLibrary.opener)) {
+				closeWindowXS(window);
+				return;
+			}
+			
+			// Request the latest compatible libxulsword version available (by reading the FTP directory listing)
+			// This only works if LibSwordURL protocol is FTP, otherwise LibxulswordVersion will be requested.
+			SWLibrary.window = window;
+			SWLibrary.ios = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService);
+			SWLibrary.context = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+			.getInterface(Components.interfaces.nsIWebNavigation)
+			.QueryInterface(Components.interfaces.nsILoadContext);
+			
+			SWLibrary.listingFile = getSpecialDirectory("TmpD");
+			SWLibrary.listingFile.append("libxulswordListing.txt");
+			if (SWLibrary.listingFile.exists()) SWLibrary.listingFile.remove(false);
+			
+			var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+			persist.persistFlags  = persist.PERSIST_FLAGS_BYPASS_CACHE;
+			persist.progressListener = 
+			{
+				onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {},
 
-					onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
-						if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
+				onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
+					if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
 
-						if (aStatus == 0) {
-							var data = readFile(SWLibrary.listingFile);
-							var files = data.match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/gm);
-							var maxvers = prefs.getCharPref("LibxulswordVersion");
-							var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
-							var compatible = new RegExp(
-								escapeRE("libxulsword-") + 
-								"(" + escapeRE(prefs.getCharPref("LibxulswordVersion").split(".")[0]) + "[^\\-]*)" + 
-								escapeRE("-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS])
-							); // is only compatible if major version is identical, in addition to platform etc.
-							
-							for (var i=0; files && i<files.length; i++) {
-								var file = files[i].match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/)[1];
-								var vers = file.match(compatible);
-								if (vers && comparator.compare(vers[1], maxvers) > 0) maxvers = vers[1];
-							}
-							if (maxvers != prefs.getCharPref("LibxulswordVersion")) {
-								SWLibrary.libName = "libxulsword-" + maxvers + "-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS];
-								SWLibrary.file = getSpecialDirectory("xsProgram");
-								SWLibrary.file.append(SWLibrary.libName);
-								SWLibrary.url = prefs.getCharPref("LibSwordURL") + "/" + SWLibrary.libName + ".zip";
-							}
-							
+					if (aStatus == 0) {
+						var data = readFile(SWLibrary.listingFile);
+						var files = data.match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/gm);
+						var maxvers = prefs.getCharPref("LibxulswordVersion");
+						var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
+						var compatible = new RegExp(
+							escapeRE("libxulsword-") + 
+							"(" + escapeRE(prefs.getCharPref("LibxulswordVersion").split(".")[0]) + "[^\\-]*)" + 
+							escapeRE("-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS])
+						); // is only compatible if major version is identical, in addition to platform etc.
+						
+						for (var i=0; files && i<files.length; i++) {
+							var file = files[i].match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/)[1];
+							var vers = file.match(compatible);
+							if (vers && comparator.compare(vers[1], maxvers) > 0) maxvers = vers[1];
+						}
+						if (maxvers != prefs.getCharPref("LibxulswordVersion")) {
+							SWLibrary.libName = "libxulsword-" + maxvers + "-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS];
+							SWLibrary.file = getSpecialDirectory("xsProgram");
+							SWLibrary.file.append(SWLibrary.libName);
+							SWLibrary.url = prefs.getCharPref("LibSwordURL") + "/" + SWLibrary.libName + ".zip";
 						}
 						
-						if (SWLibrary.listingFile.exists()) SWLibrary.listingFile.remove(false); 
-						
-						// We've finished checking for latest libxulsword version, so now begin download
-						downloadLibxulsword();
-					},
-					onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {},
-					onLocationChange: function(aWebProgress, aRequest, aLocation) {},
-					onSecurityChange: function(aWebProgress, aRequest, aState) {}
-				};
+					}
+					
+					if (SWLibrary.listingFile.exists()) SWLibrary.listingFile.remove(false); 
+					
+					// We've finished checking for latest libxulsword version, so now begin download
+					downloadLibxulsword();
+				},
+				onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {},
+				onLocationChange: function(aWebProgress, aRequest, aLocation) {},
+				onSecurityChange: function(aWebProgress, aRequest, aState) {}
+			};
 
-				persist.saveURI(SWLibrary.ios.newURI(prefs.getCharPref("LibSwordURL"), null, null), null, null, null, null, SWLibrary.listingFile, SWLibrary.context);
-			}
-			else {
-				// Scripts or programs that need to block while xulsword performs
-				// command line module installation (the xsInstallOnly command line 
-				// option), will get confused if xulsword needs to restart. Hence 
-				// we need xsInstallOnlyMutex. Xulsword will delete the mutex file 
-				// when it is done installing to signify to the caller that 
-				// installation is complete. The xsInstallOnly pref is set by
-				// xulsword's command line handler component: xscommandline.js.
-				try {var installOnly = prefs.getBoolPref("xsInstallOnly");} 
-				catch (er) {installOnly = false;}
-				if (installOnly) {
-					var mutex = getSpecialDirectory("TmpD");
-					mutex.append("xsInstallOnlyMutex");
-					if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
-					jsdump("INFO: xsInstallOnly flag was set");
-				}
-				
-				startxulsword2();
-			}
+			persist.saveURI(SWLibrary.ios.newURI(prefs.getCharPref("LibSwordURL"), null, null), null, null, null, null, SWLibrary.listingFile, SWLibrary.context);
 		}
 		
 		function downloadLibxulsword() {
@@ -189,9 +179,9 @@
 			if (SWLibrary.zipFile.exists()) SWLibrary.zipFile.remove(false); 
 			
 			// Open progress-meter
-			persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
+			var persist = Components.classes['@mozilla.org/embedding/browser/nsWebBrowserPersist;1'].createInstance(Components.interfaces.nsIWebBrowserPersist);
 			var result = {};
-			SWLibrary.progressMeter = window.opener.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
+			SWLibrary.progressMeter = SWLibrary.opener.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
 				"",
 				"", 
 				PMSTOP,
@@ -267,6 +257,24 @@
 		}
 			
 		function startxulsword2() {
+		
+			if (!IsExtension) {
+				// Scripts or programs that need to block while xulsword performs
+				// command line module installation (the xsInstallOnly command line 
+				// option), will get confused if xulsword needs to restart. Hence 
+				// we need xsInstallOnlyMutex. Xulsword will delete the mutex file 
+				// when it is done installing to signify to the caller that 
+				// installation is complete. The xsInstallOnly pref is set by
+				// xulsword's command line handler component: xscommandline.js.
+				try {var installOnly = prefs.getBoolPref("xsInstallOnly");} 
+				catch (er) {installOnly = false;}
+				if (installOnly) {
+					var mutex = getSpecialDirectory("TmpD");
+					mutex.append("xsInstallOnlyMutex");
+					if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
+					jsdump("INFO: xsInstallOnly flag was set");
+				}
+			}
 	
 			// If the FirstRunXSM pref is set, then install the specified XSM 
 			// module, which must be located in the xsDefaults directory.
