@@ -522,8 +522,8 @@ sub writeApplicationINI($) {
   # parent of the profile while the the actual child profile directory still has
   # a random name!
   print INI "[Gecko]\n";
-  print INI "MinVersion=$GeckoMinVersion\n";
-  print INI "MaxVersion=$GeckoMaxVersion\n\n";
+  print INI "MinVersion=$FirefoxMinVersion\n";
+  print INI "MaxVersion=$FirefoxMaxVersion\n\n";
   print INI "[XRE]\n";
   print INI "EnableExtensionManager=1\n";
   close(INI);
@@ -701,8 +701,8 @@ sub writeExtensionInstallManifest($) {
   print INM "    <em:targetApplication>\n";
   print INM "      <Description>\n";
   print INM "        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>\n";
-  print INM "        <em:minVersion>$GeckoMinVersion</em:minVersion>\n";
-  print INM "        <em:maxVersion>$GeckoMaxVersion</em:maxVersion>\n";
+  print INM "        <em:minVersion>$FirefoxMinVersion</em:minVersion>\n";
+  print INM "        <em:maxVersion>$FirefoxMaxVersion</em:maxVersion>\n";
   print INM "      </Description>\n";
   print INM "    </em:targetApplication>\n";
   print INM "\n";
