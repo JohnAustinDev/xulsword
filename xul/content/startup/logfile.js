@@ -50,12 +50,14 @@ var aConsoleListener =
     // BUILD REPORT
     var rep = aMessage.message + URLNEWLINE;
     
+    var bid = prefs.getCharPref("BuildID");
+    if (LibSword && !LibSword.loadFailed) bid += LibSword.LibswordPath.match(/libxulsword\-(.*?)\.[^\.]+$/)[1];
     var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
     rep += "Vendor:" + prefs.getCharPref("Vendor") + ", ";
     rep += "Name:" + prefs.getCharPref("Name") + ", ";
     rep += "Version:" + prefs.getCharPref("Version") + ", ";
     rep += "LibxulswordVersion:" + prefs.getCharPref("LibxulswordVersion") + ", ";
-    rep += "Build:" + prefs.getCharPref("BuildID") + ", ";
+    rep += "Build:" + bid + ", ";
     rep += "xulrunner:" + (appInfo ? appInfo.platformVersion:"unknown") + ", ";
     rep += "xrbuildID:" + (appInfo ? appInfo.platformBuildID:"unknown") + ", ";
     rep += "Engine:" + prefs.getCharPref("EngineVersion");
