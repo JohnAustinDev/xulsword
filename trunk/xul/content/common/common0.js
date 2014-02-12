@@ -367,7 +367,7 @@ function setInnerHTML(parent, html) {
 // attribute values. 
 function escapeAttributes(node) {
 	
-	for (var i=0; i<node.children.length; i++) {
+	for (var i=0; node && node.children && i<node.children.length; i++) {
 		var attribs = node.children[i].attributes;
 		for (var j=0; attribs && j<attribs.length; j++) {
 			attribs[j].value = attribs[j].value.replace(/[<>"'&]/g, escapeAttribChar);
