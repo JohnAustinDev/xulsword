@@ -56,6 +56,8 @@ $INSTALLER="$TRUNK/build-files/$Name/setup";
 $FFEXTENSION="$TRUNK/build-files/$Name/xulsword\@xulsword.org";
 $PORTABLE="$TRUNK/build-files/$Name/portable";
 
+&Log("\nBUILDING: $Vendor $Name-$Version (libxulsword $LibxulswordVersion)\n");
+
 # DEVELOPMENT ENVIRONMENT
 if ($MakeDevelopment =~ /true/i) {
   &Log("\n----> BUILDING DEVELOPMENT ENVIRONMENT\n");

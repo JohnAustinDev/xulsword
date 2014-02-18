@@ -19,6 +19,7 @@
 const SUBJECT = "Problem Report";
 const MAXLENGTH = 5000
 const URLNEWLINE = "\n";
+
 var aConsoleListener =
 {
   skipExceptions:false,
@@ -50,35 +51,7 @@ var aConsoleListener =
     // BUILD REPORT
     var rep = aMessage.message + URLNEWLINE;
     
-    var bid = prefs.getCharPref("BuildID");
-    if (LibSword && !LibSword.loadFailed) bid += LibSword.LibswordPath.match(/libxulsword\-(.*?)\.[^\.]+$/)[1];
-    var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
-    rep += "Vendor:" + prefs.getCharPref("Vendor") + ", ";
-    rep += "Name:" + prefs.getCharPref("Name") + ", ";
-    rep += "Version:" + prefs.getCharPref("Version") + ", ";
-    rep += "LibxulswordVersion:" + prefs.getCharPref("LibxulswordVersion") + ", ";
-    rep += "Build:" + bid + ", ";
-    rep += "xulrunner:" + (appInfo ? appInfo.platformVersion:"unknown") + ", ";
-    rep += "xrbuildID:" + (appInfo ? appInfo.platformBuildID:"unknown") + ", ";
-    rep += "Engine:" + prefs.getCharPref("EngineVersion");
-    
-    rep += URLNEWLINE;
-
-    if (OPSYS == "WINNT") {
-      var keys = ["ProductName", "CSDVersion", "CurrentBuildNumber", "CurrentVersion"];
-      var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
-      for (var k=0; wrk && k<keys.length; k++) {
-        var data = "";
-        try {
-          wrk.open(wrk["ROOT_KEY_LOCAL_MACHINE"], "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", wrk.ACCESS_READ);
-          var data = wrk.readStringValue(keys[k]);
-          wrk.close();
-        }
-        catch(er) {data = "failed to read registry value";}
-        rep += keys[k] + " = " + data + ", ";
-      }
-      rep += URLNEWLINE;
-    }
+    rep += this.getPlatformInfo();
 
     try {rep += "Version1:" + ViewPort.Module[1] + ", ";}
     catch (er) {rep += "Could not read ViewPort.Module[1]. ";}
@@ -148,7 +121,46 @@ var aConsoleListener =
 		  throw Components.results.NS_ERROR_NO_INTERFACE;
 	  }
     return this;
-  }
+  },
+  
+  getPlatformInfo: function() {
+		var info = "Program info: ";
+		
+		prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);  
+		prefs = prefs.getBranch("extensions.xulsword.");
+    
+    var bid = prefs.getCharPref("BuildID");
+    if (LibSword && !LibSword.loadFailed) bid += LibSword.LibswordPath.match(/libxulsword\-(.*?)\.[^\.]+$/)[1];
+    var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
+    info += "Vendor:" + prefs.getCharPref("Vendor") + ", ";
+    info += "Name:" + prefs.getCharPref("Name") + ", ";
+    info += "Version:" + prefs.getCharPref("Version") + ", ";
+    info += "Build:" + bid + ", ";
+    info += "LibxulswordVersion:" + prefs.getCharPref("LibxulswordVersion") + ", ";
+    info += "xulrunner version:" + (appInfo ? appInfo.platformVersion:"unknown") + ", ";
+    info += "xulrunner buildID:" + (appInfo ? appInfo.platformBuildID:"unknown") + ", ";
+    info += "SWORD Engine version:" + prefs.getCharPref("EngineVersion");
+    
+    info += URLNEWLINE;
+
+    if (OPSYS == "WINNT") {
+      var keys = ["ProductName", "CSDVersion", "CurrentBuildNumber", "CurrentVersion"];
+      var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
+      for (var k=0; wrk && k<keys.length; k++) {
+        var data = "";
+        try {
+          wrk.open(wrk["ROOT_KEY_LOCAL_MACHINE"], "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", wrk.ACCESS_READ);
+          var data = wrk.readStringValue(keys[k]);
+          wrk.close();
+        }
+        catch(er) {data = "failed to read registry value";}
+        info += keys[k] + " = " + data + ", ";
+      }
+      info += URLNEWLINE;
+    }
+    
+    return info;
+	}
   
 };
 

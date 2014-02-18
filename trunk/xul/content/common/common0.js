@@ -1056,9 +1056,12 @@ function getLocaleConfig(lc) {
   // Read values from locale's config.properties file
   for (var p in Config) {
     if (!Config[p].localeConf) continue;
-    var val = b.GetStringFromName(Config[p].localeConf);
+    try {var val = b.GetStringFromName(Config[p].localeConf);}
+    catch (er) {
+			jsdump(er + "\n" + "WARN: \"" + lc + "\" locale: failed to read \"" + Config[p].localeConf + "\" in \"common/config.properties\", using default.");
+			val = NOTFOUND;
+		}
     if ((/^\s*$/).test(val)) val = NOTFOUND;
-    
     
     if (val == NOTFOUND && Config[p].CSS && LocaleConfigDefaultCSS[p]) {
       val = LocaleConfigDefaultCSS[p];

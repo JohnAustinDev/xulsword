@@ -1474,6 +1474,9 @@ function ensureModuleShowing(version) {
  ***********************************************************************/ 
 
 function unloadXUL() {
+	
+	if (typeof(aConsoleListener) != "undefined" && typeof(aConsoleListener.getPlatformInfo) == "function") 
+			jsdump(aConsoleListener.getPlatformInfo());
   
   // set these so xulsword viewport can draw cleaner and faster upon next startup
   if (ViewPort.ownerDocument.defaultView && ViewPort.ownerDocument.defaultView.innerHeight) {
