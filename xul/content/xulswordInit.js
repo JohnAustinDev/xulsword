@@ -49,12 +49,19 @@ function initLocales() {
   
   var chromeRegService = Components.classes["@mozilla.org/chrome/chrome-registry;1"].getService();
 	var toolkitChromeReg = chromeRegService.QueryInterface(Components.interfaces.nsIToolkitChromeRegistry);
-	var availableLocales = toolkitChromeReg.getLocalesForPackage("xulsword");
   
   var currentLocale = getLocale();
+  
+  // log our locales
+  var availableLocales = toolkitChromeReg.getLocalesForPackage("xulsword");
+  var s = "";
+  while(availableLocales.hasMore()) {s += availableLocales.getNext() + ", ";}
+  jsdump("Current locale: " + currentLocale + "\nLoaded locales: " + s);
+  
   rootprefs.setCharPref(LOCALEPREF, currentLocale);
   
   // Create LocaleConfigs
+  var availableLocales = toolkitChromeReg.getLocalesForPackage("xulsword");
 	while(availableLocales.hasMore()) {
 		var lc = availableLocales.getNext();
     
@@ -538,11 +545,6 @@ function xulswordInit() {
     appStartup.quit(Components.interfaces.nsIAppStartup.eRestart | Components.interfaces.nsIAppStartup.eForceQuit);
     return;
   }
-
-  // log our locales
-  var s = "";
-  for (var l in LocaleConfigs) {s += l + "; ";}
-  jsdump("Loaded locales:" + s);
     
   // Copy current locale's config to ProgramConfig.
   ProgramConfig = deepClone(LocaleConfigs[currentLocale]);
