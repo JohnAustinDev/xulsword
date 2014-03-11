@@ -356,31 +356,11 @@ const SupportedModuleTypes = {
 // manipulate the DOM directly rather than use innerHTML also 
 // because it's faster. NOTE: This function scrubs out all Javascript 
 // as well as non-standard HTML attributes.
-function setInnerHTML(parent, html) {
+function sanitizeHTML(parent, html) {
 	while (parent.firstChild) {parent.removeChild(parent.firstChild);}
 	
 	var parser = Components.classes["@mozilla.org/parserutils;1"].getService(Components.interfaces.nsIParserUtils);
-	parent.appendChild(escapeAttributes(parser.parseFragment(html, parser.SanitizerAllowStyle, false, null, parent.ownerDocument.documentElement)));
-}
-
-// Insure that no HTML special characters appear in DocumentFragment 
-// attribute values. 
-function escapeAttributes(node) {
-	
-	for (var i=0; node && node.children && i<node.children.length; i++) {
-		var attribs = node.children[i].attributes;
-		for (var j=0; attribs && j<attribs.length; j++) {
-			attribs[j].value = attribs[j].value.replace(/[<>"'&]/g, escapeAttribChar);
-		}
-		if (node.children[i].firstChild) escapeAttributes(node.children[i]);
-	}
-	
-	return node;
-}
-
-function escapeAttribChar(chr) {
-	jsdump("WARN: Escaping '" + chr + "' in attribute");
-	return "%" + chr.charCodeAt(0);
+	parent.appendChild(parser.parseFragment(html, parser.SanitizerAllowStyle, false, null, parent.ownerDocument.documentElement));
 }
 
 // Firefox Add-On validation throws warnings about eval(uneval(obj)), so

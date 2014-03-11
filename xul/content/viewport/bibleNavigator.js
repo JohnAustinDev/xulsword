@@ -244,7 +244,7 @@ BibleNavigator = {
 					var a = hm.appendChild(this.doc().createElement("a"));
 					a.className = "heading-link cs-" + biblemod;
 					a.id = "headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod;
-					setInnerHTML(a, heading);
+					sanitizeHTML(a, heading);
 					hr = true;
         }
       }

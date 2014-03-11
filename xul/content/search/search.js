@@ -208,9 +208,9 @@ function SearchObj(searchObj) {
     document.title = fixWindowTitle(this.originalTitle.replace("**search_title**", s.searchtext));
     
     // prepare search results window for new results
-    setInnerHTML(SearchResults, "");
+    sanitizeHTML(SearchResults, "");
     //SearchResults.style.whiteSpace = (ModuleConfigs[s.mod].direction == "rtl" ? "normal":""); // FF bug workaround
-    setInnerHTML(LexiconResults, "");
+    sanitizeHTML(LexiconResults, "");
     
     document.getElementById("bible-translator").version = s.mod;
     
@@ -503,8 +503,8 @@ function SearchObj(searchObj) {
     // read search results to display
     var r = LibSword.getSearchResults(mod, result.index, result.results_per_page, keepStrongs, result.searchPointer);
     if (!r) {
-			setInnerHTML(SearchResults, "");
-			setInnerHTML(LexiconResults, "");
+			sanitizeHTML(SearchResults, "");
+			sanitizeHTML(LexiconResults, "");
 			return;
 		}
     
@@ -512,7 +512,7 @@ function SearchObj(searchObj) {
     // an anchor which was created using createElement...
     r = r.replace(/<span /g, "<a></a><span ");
     
-    setInnerHTML(SearchResults, r);
+    sanitizeHTML(SearchResults, r);
     
     r = SearchResults.firstChild;
     while(r) {
@@ -526,7 +526,7 @@ function SearchObj(searchObj) {
       case COMMENTARY:
         // translate from s.mod to mod...
         var loc = LibSword.convertLocation(LibSword.getVerseSystem(s.mod), p.osisref, LibSword.getVerseSystem(mod));
-        setInnerHTML(l, ref2ProgramLocaleText(loc));
+        sanitizeHTML(l, ref2ProgramLocaleText(loc));
         l.className = "cs-Program";
         loc = loc.split(".");
         l.setAttribute("href", "javascript:XS_window.showLocation('" + mod + "','" + loc[0] + "','" + loc[1] + "','" + loc[2] + "','" + loc[3] + "');");
@@ -534,7 +534,7 @@ function SearchObj(searchObj) {
         
       case GENBOOK:
       case DICTIONARY:
-        setInnerHTML(l, p.ch);
+        sanitizeHTML(l, p.ch);
         l.className = "cs-" + p.mod;
         l.setAttribute("href", "javascript:XS_window.showLocation('" + p.mod + "','na','" +  p.ch + "',1,1);");
         break;
@@ -564,7 +564,7 @@ function SearchObj(searchObj) {
         }
       }
       html = html.replace(/<br[^>]*>/g, ""); // since <br> looks bad in display
-      setInnerHTML(r.lastChild, html);
+      sanitizeHTML(r.lastChild, html);
       
       r = r.nextSibling;
     }
@@ -595,7 +595,7 @@ function SearchObj(searchObj) {
       if (!LexiconResults.innerHTML) {
         
         LexiconResults.style.display = "none"; // might this speed things up??
-        setInnerHTML(LexiconResults, LibSword.getSearchResults(mod, 0, MAX_LEXICON_SEARCH_RESULTS, true, result.searchPointer));
+        sanitizeHTML(LexiconResults, LibSword.getSearchResults(mod, 0, MAX_LEXICON_SEARCH_RESULTS, true, result.searchPointer));
         
         var slists = [];
         for (var i=0; i<classes.length; i++) {
@@ -660,7 +660,7 @@ function SearchObj(searchObj) {
         
         // now display the list
         while (LexiconResults.firstChild) {LexiconResults.removeChild(LexiconResults.firstChild);}
-        if (!slists.length) setInnerHTML(LexiconResults, "<span style=\"display:none\"></span>"); // should not be left empty
+        if (!slists.length) sanitizeHTML(LexiconResults, "<span style=\"display:none\"></span>"); // should not be left empty
         else {
 					for (var i=0; i<slists.length; i++) {
 						LexiconResults.appendChild(slists[i]);
@@ -690,7 +690,7 @@ function SearchObj(searchObj) {
           lexiconResults = lexiconResults.replace(re, "<span class=\"searchterm\">$&</span>");
         }
       }
-      setInnerHTML(LexiconResults, lexiconResults);
+      sanitizeHTML(LexiconResults, lexiconResults);
     
       var matches = LexiconResults.getElementsByClassName("searchterm");
 
@@ -773,7 +773,7 @@ function SearchObj(searchObj) {
       
 			// now display the list
 			while (LexiconResults.firstChild) {LexiconResults.removeChild(LexiconResults.firstChild);}
-			if (!snlists.length) setInnerHTML(LexiconResults, "<span style=\"display:none\"></span>"); // should not be left empty
+			if (!snlists.length) sanitizeHTML(LexiconResults, "<span style=\"display:none\"></span>"); // should not be left empty
 			else {
 				for (var i=0; i<snlists.length; i++) {
 					LexiconResults.appendChild(snlists[i]);

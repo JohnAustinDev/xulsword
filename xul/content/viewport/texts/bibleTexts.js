@@ -164,7 +164,7 @@ BibleTexts = {
     // insures HTML string is well formed at least.
     if (intro) {
 			var tmp = document.createElement("div");
-			setInnerHTML(tmp, intro);
+			sanitizeHTML(tmp, intro);
 			intro = tmp.innerHTML;
     }
   
