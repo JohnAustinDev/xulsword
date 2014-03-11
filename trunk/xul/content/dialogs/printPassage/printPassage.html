@@ -41,7 +41,7 @@
       if (XS_window.document.getElementById("printBrowser").contentDocument === document) {
         
         if (XS_window.PrintTarget.bodyHTML) {
-					setInnerHTML(document.getElementsByTagName("body")[0], XS_window.PrintTarget.bodyHTML);
+					sanitizeHTML(document.getElementsByTagName("body")[0], XS_window.PrintTarget.bodyHTML);
         }
         
         XS_window.printBrowserLoaded();

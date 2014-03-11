@@ -1574,7 +1574,7 @@ function printBrowserLoaded() {
   if (PrintTarget.bodyHTML) {
     // NOTE: this copies the body HTML but not any body attributes. So
     // body attributes will remain what they were when the doc was loaded.
-    setInnerHTML(pbDoc.getElementsByTagName("body")[0], PrintTarget.bodyHTML);
+    sanitizeHTML(pbDoc.getElementsByTagName("body")[0], PrintTarget.bodyHTML);
   }
   
   document.getElementById(PrintTarget.command).doCommand();

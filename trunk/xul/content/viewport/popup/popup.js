@@ -258,7 +258,7 @@ function PopupObj(popupobj) {
 		// finally add our new popup results and type
 		var newcontent = this.npopupTX.appendChild(document.createElement("div"));
 		newcontent.className = "popup-text cs-Program";
-		setInnerHTML(newcontent, res);
+		sanitizeHTML(newcontent, res);
 		this.npopup.setAttribute("puptype", type);
 
     // Windowed popup...
@@ -395,7 +395,7 @@ function PopupObj(popupobj) {
 
     var h = BibleTexts.getNotesHTML(n.innerHTML, mod, true, true, true, true, 1, (/(^|\s+)is_sr(\s+|$)/).test(n.className));
     h += "<div class=\"" + n.className + "\" style=\"display:none;\">" + n.innerHTML + "</div>";
-    setInnerHTML(pt, h);
+    sanitizeHTML(pt, h);
     Popup.setTitle();
     this.selectRef[msrc] = mod;
     this.setSelectAttribute(e.target, mod);
@@ -408,7 +408,7 @@ function PopupObj(popupobj) {
     pt = pt[pt.length-1]; // the pt we want is the last in the tree
     
     prefs.setCharPref("Selected" + feature, mod);
-    setInnerHTML(pt, DictTexts.getLemmaHTML(this.lemmaInfo.snlist, this.lemmaInfo.entry, this.lemmaInfo.mod));
+    sanitizeHTML(pt, DictTexts.getLemmaHTML(this.lemmaInfo.snlist, this.lemmaInfo.entry, this.lemmaInfo.mod));
     Popup.setTitle();
     this.setSelectAttribute(e.target, mod);
   };

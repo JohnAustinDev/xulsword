@@ -211,7 +211,7 @@ Texts = {
           prev.htmlText = tip.htmlText + prev.htmlText;
           prev.htmlNotes = tip.htmlNotes + prev.htmlNotes;
           prev.footnotes = tip.footnotes + prev.footnotes;
-          setInnerHTML(sb, prev.htmlText);
+          sanitizeHTML(sb, prev.htmlText);
           if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
                (!ltr && sb.lastChild.offsetLeft < 0) ) break;
           c--;
@@ -227,7 +227,7 @@ Texts = {
           next.htmlText = next.htmlText + tip.htmlText;
           next.htmlNotes = next.htmlNotes + tip.htmlNotes;
           next.footnotes = next.footnotes + tip.footnotes;
-          setInnerHTML(sb, next.htmlText);
+          sanitizeHTML(sb, next.htmlText);
           if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
                (!ltr && sb.lastChild.offsetLeft < 0) ) break;
           c++;
@@ -239,13 +239,13 @@ Texts = {
         
       var hd = t.getElementsByClassName("hd")[0];
 
-      setInnerHTML(hd, ti.htmlHead);
+      sanitizeHTML(hd, ti.htmlHead);
         
-      setInnerHTML(sb, prev.htmlText + (ti.htmlText.length > 64 ? ti.htmlText:"") + next.htmlText);
+      sanitizeHTML(sb, prev.htmlText + (ti.htmlText.length > 64 ? ti.htmlText:"") + next.htmlText);
 
       var nb = t.getElementsByClassName("nb")[0];
       this.footnotes[w] = prev.footnotes + ti.footnotes + next.footnotes;
-      setInnerHTML(nb, prev.htmlNotes + ti.htmlNotes + next.htmlNotes);
+      sanitizeHTML(nb, prev.htmlNotes + ti.htmlNotes + next.htmlNotes);
     }
     
     if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
@@ -283,13 +283,13 @@ Texts = {
       var ti = CommTexts.read(w, display);
 
       var hd = t.getElementsByClassName("hd")[0];
-      setInnerHTML(hd, ti.htmlHead);
+      sanitizeHTML(hd, ti.htmlHead);
       
-      setInnerHTML(sb, (ti.htmlText.length > 64 ? ti.htmlText:""));
+      sanitizeHTML(sb, (ti.htmlText.length > 64 ? ti.htmlText:""));
       
       var nb = t.getElementsByClassName("nb")[0];
       this.footnotes[w] = ti.footnotes;
-      setInnerHTML(nb, ti.htmlNotes);
+      sanitizeHTML(nb, ti.htmlNotes);
     }
     
     if (textUpdated || this.isChanged(['vs', 'scrollTypeFlag'], display, this.display[w])) {
@@ -333,9 +333,9 @@ Texts = {
       this.footnotes[w] = ti.footnotes;
       
       var hd = t.getElementsByClassName("hd")[0];
-      setInnerHTML(hd, ti.htmlHead);
+      sanitizeHTML(hd, ti.htmlHead);
       
-      setInnerHTML(sb, ti.htmlText);
+      sanitizeHTML(sb, ti.htmlText);
 
     }
   
@@ -373,9 +373,9 @@ Texts = {
       this.footnotes[w] = ti.footnotes;
       
       var hd = t.getElementsByClassName("hd")[0];
-      setInnerHTML(hd, ti.htmlHead);
+      sanitizeHTML(hd, ti.htmlHead);
       
-      setInnerHTML(sb, ti.htmlEntry);
+      sanitizeHTML(sb, ti.htmlEntry);
       
       var nb = t.getElementsByClassName("nb")[0];
       display.htmlList = ti.htmlList;

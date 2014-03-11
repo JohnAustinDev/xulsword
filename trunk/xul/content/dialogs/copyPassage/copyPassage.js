@@ -106,7 +106,7 @@ function copyPassage(e) {
 // with DOM functions to remove un-needed verses etc.
 function htmlVerses(d, html, versesOnly) {
   var parent = document.getElementById("chaptertext").contentDocument.body;
-  setInnerHTML(parent, html);
+  sanitizeHTML(parent, html);
 
   var elem = parent.lastChild;
   
