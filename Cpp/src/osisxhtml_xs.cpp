@@ -46,6 +46,7 @@ class OSISXHTMLXS : public OSISXHTML {
     int footnoteNum;
 		SWBuf referenceTag;
 		TagStack *htmlTagStack; // used to insure rendered HTML tags are all closed
+		TagStack *pStack; // used for OSIS <p> with subType to render as HTML <p>
 		int previousConsecutiveNewlines;
 
   protected:
@@ -55,6 +56,8 @@ class OSISXHTMLXS : public OSISXHTML {
       referenceTag = "";
       if (htmlTagStack) {delete htmlTagStack;}
       htmlTagStack = new TagStack;
+      if (pStack) {delete pStack;}
+      pStack = new TagStack;
   		return new MyUserData(module, key);
   	}
   	
@@ -71,8 +74,11 @@ class OSISXHTMLXS : public OSISXHTML {
   	char processText(SWBuf &text, const SWKey *key = 0, const SWModule *module = 0);
 };
 
-OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML(), htmlTagStack(NULL), previousConsecutiveNewlines(0) {}
-OSISXHTMLXS::~OSISXHTMLXS() {if (htmlTagStack) {delete htmlTagStack;}}
+OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML(), htmlTagStack(NULL), pStack(NULL), previousConsecutiveNewlines(0) {}
+OSISXHTMLXS::~OSISXHTMLXS() {
+	if (htmlTagStack) {delete htmlTagStack;}
+	if (pStack) {delete pStack;}
+}
 
 // This is used to output HTML tags and to update the HTML tag list so 
 // that rendered text will not be returned with open tags. For this 
@@ -353,17 +359,30 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
 		// <p> paragraph and <lg> linegroup tags
 		else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg")) {
-			if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-empty start tag
-				u->outputNewline(buf);
-				u->outputNewline(buf);
+			if (tag.getAttribute("subType") && !tag.isEndTag()) {
+				// special case of p with subType generates HTML <p class="[subType]">
+				outHtmlTag(SWBuf().appendFormatted("<p class=\"%s\">", tag.getAttribute("subType")).c_str(), buf, u);
+				pStack->push(tag.toString());
 			}
-			else if (tag.isEndTag()) {	// end tag
-				u->outputNewline(buf);
-				u->outputNewline(buf);
-			}
-			else {					// empty paragraph break marker
-				u->outputNewline(buf);
-				u->outputNewline(buf);
+			else {
+				if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-empty start tag
+					u->outputNewline(buf);
+					u->outputNewline(buf);
+				}
+				else if (tag.isEndTag()) {	// end tag
+					if (!pStack->empty()) {
+						pStack->pop();
+						outHtmlTag("</p>", buf, u);
+					}
+					else {
+						u->outputNewline(buf);
+						u->outputNewline(buf);
+					}
+				}
+				else {					// empty paragraph break marker
+					u->outputNewline(buf);
+					u->outputNewline(buf);
+				}
 			}
 		}
 
@@ -658,14 +677,25 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					outHtmlTag("<i>", buf, u);
 				}
 				u->hiStack->push(tag.toString());
+				
+				// create separate span from any subType
+				if (tag.getAttribute("subType")) {
+					outHtmlTag(SWBuf().appendFormatted("<span class=\"%s\">", tag.getAttribute("subType")).c_str(), buf, u);
+				}
 			}
 			else if (tag.isEndTag()) {
 				SWBuf type = "";
+				SWBuf subType = "";
 				if (!u->hiStack->empty()) {
 					XMLTag tag(u->hiStack->top());
 					if (u->hiStack->size()) u->hiStack->pop();
 					type = tag.getAttribute("type");
 					if (!type.length()) type = tag.getAttribute("rend");
+					subType = tag.getAttribute("subType");
+				}
+				if (subType.length()) {
+					// close any subType span
+					outHtmlTag("</span>", buf, u);
 				}
 				if (type == "bold" || type == "b" || type == "x-b") {
 					outHtmlTag("</b>", buf, u);
@@ -778,7 +808,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
       			filepath.replaceBytes("\\", '/');
       
-      		outHtmlTag("<div class=\"dict-image-container\">", buf, u);
+      		outHtmlTag(SWBuf().appendFormatted("<div class=\"xslib-image-container %s\">", (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")).c_str(), buf, u);
 					outHtmlTag("<img src=\"File://", buf, u);
 					outText(filepath, buf, u);
 					outText("\">", buf, u);

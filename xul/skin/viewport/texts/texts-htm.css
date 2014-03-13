@@ -451,10 +451,31 @@ body[chromedir="rtl"] .fncol3 {
 .dict-key-heading {
   font-weight:bold;
 }
-.dict-image-container {
+
+/* LIBXULSWORD GENERATED CLASSES */
+.xslib-image-container {
   text-align:center;
 }
 
+/* LIBXULSWORD PASSED CLASSES */
+.x-text-image {
+	float:right;
+}
+.x-text-image img {
+	margin:0px 0px 0.5em 1em;
+}
+.x-p-first {
+  display:block;
+}
+.x-p-first:first-letter {
+  font-size:4em; 
+  float:left; 
+  margin-right:10px; 
+}
+.x-ref-cb {
+  display:block;
+  text-align:right;
+}
 
 /* PRINTING STYLES */
 @media print {
