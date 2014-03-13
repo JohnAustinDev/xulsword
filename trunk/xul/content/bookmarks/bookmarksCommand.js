@@ -614,15 +614,8 @@ var BookmarksCommand = {
         data = data + BM.kExportDelimiter + value;
       }
     }
-
-    var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-    foStream.init(file, 0x02 | 0x08 | 0x20, -1, 0);
-    var charset = "UTF-8"; // Can be any character encoding name that Mozilla supports
-    var os = Components.classes["@mozilla.org/intl/converter-output-stream;1"].createInstance(Components.interfaces.nsIConverterOutputStream);
-    os.init(foStream, charset, 0, 0x0000);
-    os.writeString(data);
-    os.close();
-    foStream.close();
+    
+    writeFile(file, data, true, "UTF-8");
   },
 
   sortByName: function (aSelection)
