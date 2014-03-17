@@ -344,7 +344,13 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 							}
 						}
 						else {
-							buf.appendFormatted("<sup>%i</sup>", footnoteNum++);
+							buf.appendFormatted("<span class=\"fn\" title=\"%s.unavailable.%s\"></span><span class=\"genbknote\">[",
+								footnoteNumber.c_str(), 
+								userData->module->getName());
+							SWBuf fnbody = userData->module->getEntryAttributes()["Footnote"][footnoteNumber.c_str()]["body"];
+							SWModule *mmod = (SWModule *)userData->module;
+							buf.append(mmod->renderText(fnbody.trim().c_str()));
+							buf.append("]</span>");
 						}
 					}
 				}
