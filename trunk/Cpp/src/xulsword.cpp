@@ -388,43 +388,59 @@ char *xulsword::getBookName(SWBuf *Chapter) {
 /********************************************************************
 saveFootnotes
 *********************************************************************/
-void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *crossRefText, SWBuf *noteText) {
-  SWKey *testkey = module->getKey();
-  VerseKey *modKey = SWDYNAMIC_CAST(VerseKey, testkey);
-  if (!modKey) {return;}
+void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *crossRefText, SWBuf *noteText, bool includeMarkerLinks) {
+  SWKey *modkey = module->getKey();
+  VerseKey *versekey = SWDYNAMIC_CAST(VerseKey, modkey);
   
   int fnV = 1;
   AttributeList::iterator AtIndex;
   for (AtIndex = module->getEntryAttributes()["Footnote"].begin(); AtIndex != module->getEntryAttributes()["Footnote"].end(); AtIndex++) {
-    if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
-        sprintf(Outtext, "<div class=\"nlist\" title=\"cr.%d.%s.%s\">", 
-          fnV, 
-          modKey->getOSISRef(), 
-          module->getName());
-        
-        crossRefText->append(Outtext);
-        crossRefText->append(AtIndex->second["refList"]);
-        crossRefText->append("</div>");
-        noteText->append(Outtext);
-        noteText->append(AtIndex->second["refList"]);
-        noteText->append("</div>");
-      }
-      else {
-        sprintf(Outtext, "<div class=\"nlist\" title=\"fn.%d.%s.%s\"><span class=\"cs-%s%s\">", 
-          fnV, 
-          modKey->getOSISRef(), 
-          module->getName(),
-          module->getName(),
-          (module->getDirection() != DIRECTION_LTR ? " RTL":""));
-        
-        footnoteText->append(Outtext);
-        footnoteText->append(module->renderText(AtIndex->second["body"]));
-        footnoteText->append("</span></div>");
-        noteText->append(Outtext);
-        noteText->append(module->renderText(AtIndex->second["body"]));
-        noteText->append("</span></div>");
-      }
-    fnV++;
+		if (!strcmp(AtIndex->first.c_str(), "count")) {continue;} // thmlfootnotes.cpp adds "count"
+		
+		SWBuf mclass = "fn";
+		if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
+			mclass = "cr";
+		}
+
+		SWBuf div;
+		div.appendFormatted("<div class=\"nlist\" title=\"%s.%d.%s.%s\">",
+			mclass.c_str(),
+			fnV,
+			(versekey ? versekey->getOSISRef():"unavailable"), 
+			module->getName());
+
+		SWBuf link;
+		if (includeMarkerLinks) {
+			link.appendFormatted("<span class=\"gfn\" title=\"%s.%s.%s\">%s</span>", 
+				AtIndex->first.c_str(),
+				mclass.c_str(),
+				module->getName(),
+				AtIndex->first.c_str());
+		}
+
+		if (!strcmp(mclass.c_str(), "cr")) {
+			SWBuf crNote;
+			crNote.append(div);
+			if (includeMarkerLinks) {crNote.append(link);}
+			crNote.append(AtIndex->second["refList"]);
+			crNote.append("</div>");
+			
+			if (crossRefText) {crossRefText->append(crNote);}
+			if (noteText) {noteText->append(crNote);}
+		}
+		else {
+			SWBuf fnNote;
+			fnNote.append(div);
+			fnNote.appendFormatted("<span class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
+			if (includeMarkerLinks) {fnNote.append(link);}
+			fnNote.append(module->renderText(AtIndex->second["body"]));
+			fnNote.append("</span></div>");
+			
+			if (footnoteText) {footnoteText->append(fnNote);}
+			if (noteText) {noteText->append(fnNote);}
+		}
+      
+		fnV++;
   }
 }
 
@@ -1257,6 +1273,9 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   SWBuf chapterText;
   chapterText.append(module->renderText());
   
+  SWBuf noteText;
+  saveFootnotes(module, NULL, NULL, &noteText, true);
+  
   module->setKey(EmptyKey);
   
   delete(testkey);
@@ -1265,6 +1284,7 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
     SWBuf css;
     css.setFormatted("<span class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
     chapterText.insert(0, css);
+    if (Footnotes) {chapterText.append(noteText);}
     chapterText.append("</span>");
   }
   

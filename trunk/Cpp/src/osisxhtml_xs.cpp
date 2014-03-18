@@ -321,36 +321,31 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 							vkey = SWDYNAMIC_CAST(VerseKey, u->key);
 						}
 						SWCATCH ( ... ) {	}
+						SWBuf mclass = "fn";
+						if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
+							mclass = "cr";
+						}
 						if (vkey) {
-							if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
+							u->inXRefNote = false;
+							if (!strcmp(mclass.c_str(), "cr")) {
 								u->inXRefNote = true;
-								SWBuf mclass = "cr";
 								if (tag.getAttribute("subType")) {
 									mclass.append(" ");
 									mclass.append(tag.getAttribute("subType"));
 								}
-								buf.appendFormatted("<span class=\"%s\" title=\"%s.%s.%s\"></span>",
-								mclass.c_str(),
-								footnoteNumber.c_str(), 
-								vkey->getOSISRef(),
-								userData->module->getName());
 							}
-							else {
-                u->inXRefNote = false;
-								buf.appendFormatted("<span class=\"fn\" title=\"%s.%s.%s\"></span>",
-								footnoteNumber.c_str(), 
-								vkey->getOSISRef(),
-								userData->module->getName());
-							}
+							buf.appendFormatted("<span class=\"%s\" title=\"%s.%s.%s\"></span>",
+							mclass.c_str(),
+							footnoteNumber.c_str(), 
+							vkey->getOSISRef(),
+							userData->module->getName());
 						}
 						else {
-							buf.appendFormatted("<span class=\"fn\" title=\"%s.unavailable.%s\"></span><span class=\"genbknote\">[",
-								footnoteNumber.c_str(), 
-								userData->module->getName());
-							SWBuf fnbody = userData->module->getEntryAttributes()["Footnote"][footnoteNumber.c_str()]["body"];
-							SWModule *mmod = (SWModule *)userData->module;
-							buf.append(mmod->renderText(fnbody.trim().c_str()));
-							buf.append("]</span>");
+							buf.appendFormatted("<span class=\"gfn\" title=\"%s.%s.%s\">%s</span>",
+								footnoteNumber.c_str(),
+								mclass.c_str(),
+								userData->module->getName(),
+								footnoteNumber.c_str());
 						}
 					}
 				}
@@ -814,7 +809,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
       			filepath.replaceBytes("\\", '/');
       
-      		outHtmlTag(SWBuf().appendFormatted("<div class=\"xslib-image-container %s\">", (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")).c_str(), buf, u);
+      		outHtmlTag(SWBuf().appendFormatted("<div class=\"image-container %s\">", (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")).c_str(), buf, u);
 					outHtmlTag("<img src=\"File://", buf, u);
 					outText(filepath, buf, u);
 					outText("\">", buf, u);
