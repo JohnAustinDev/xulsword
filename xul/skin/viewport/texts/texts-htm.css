@@ -208,12 +208,14 @@
 }
 .cr, 
 .fn,
-.un {
+.un,
+.gfn {
   cursor:pointer;
 }
 .cr:after, 
 .fn:after,
-.un:after {
+.un:after,
+.gfn {
   vertical-align:top;
   font-family:'arial' !important;
   font-size-adjust:0.55 !important;
@@ -247,9 +249,17 @@
   border-bottom:1px solid black;
   cursor:pointer;
 }
-.genbknote {
-  color:blue;
+.gfn {
+	color:rgb(0,200,250);
 }
+.gfn:before {
+	content:'[';
+}
+.gfn:after {
+	content:'] ';
+}
+
+
 /* Words with Strong's number attached */
 .sn {
   border-bottom: 1px solid rgb(220,195,220); /*(240,215,240);*/
@@ -393,6 +403,13 @@ body[chromedir="rtl"] .fncol3 {
   font-style:italic;
 }
 
+/* Other footnotes */
+.sb .nlist {
+	border-top:1px solid grey;
+	margin:24px 10% 0px 10%;
+	padding:10px 0px 10px 0px;
+}
+
 /* Dictionary styles */
 .dictentry {
   display:table;
@@ -452,12 +469,17 @@ body[chromedir="rtl"] .fncol3 {
   font-weight:bold;
 }
 
-/* LIBXULSWORD GENERATED CLASSES */
-.xslib-image-container {
+.image-container {
   text-align:center;
 }
 
-/* LIBXULSWORD PASSED CLASSES */
+/* HTML TABLES */
+.sb table tr td {
+	border:1px outset grey;
+	padding:10px;
+}
+
+/* CLASSES PASSED FROM SWORD MODULES BY LIBXULSWORD */
 .x-text-image {
 	float:right;
 }

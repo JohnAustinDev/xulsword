@@ -162,6 +162,7 @@ const TextClasses = {
             { re:new RegExp(/^((([^\.]+)\.(\d+)\.(\d+))(\;.*?)?)\.([^\.]+)$/),                          reflist:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:7, osisref:2 },
             { re:new RegExp(/^((([^\.]+)\.(\d+)\.(\d+)\s*-\s*[^\.]+\.\d+\.(\d+))(\;.*?)?)\.([^\.]+)$/), reflist:1, bk:3,    ch:4,     vs:5,    lv:6,     mod:8, osisref:2 },
             { re:new RegExp(/^(.*?)\.([^\.]+)$/),                                                       reflist:1, bk:null, ch:null, vs:null, lv:null, mod:2 } ],
+  gfn:    [ { re:new RegExp (/^(\d+)\.(fn|cr)\.(.*?)$/),                                           ntype:2, nid:1,                                       mod:3 } ],
   // dt and dtl allow [:.] as delineator for backward compatibility < 2.23 ([:] is correct)
   dt:     [ { re:new RegExp(/^((([^\:\.]+)[\:\.]([^\.]+))(\s+[^\:\.]+[\:\.][^\.]+)?)\.([^\.]+)$/),      reflist:1, bk:null, ch:4,    vs:null, lv:null, mod:3, osisref:2 } ],
   dtl:    [ { re:new RegExp(/^((([^\:\.]+)[\:\.]([^\.]+))(\s+[^\:\.]+[\:\.][^\.]+)?)\.([^\.]+)$/),      reflist:1, bk:null, ch:4,    vs:null, lv:null, mod:3, osisref:2 } ],

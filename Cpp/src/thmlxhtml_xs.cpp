@@ -138,41 +138,29 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 						vkey = SWDYNAMIC_CAST(VerseKey, u->key);
 					}
 					SWCATCH ( ... ) {	}
+					SWBuf mclass = "fn";
+					if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
+						mclass = "cr";
+					}
 					if (vkey) {
-					   if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
-								buf.appendFormatted("<span class=\"cr\" title=\"%s.%s.%s\"></span>",
-								footnoteNumber.c_str(), 
-								vkey->getOSISRef(),
-                userData->module->getName());
-					   }
-					   else {
-								buf.appendFormatted("<span class=\"fn\" title=\"%s.%s.%s\"></span>",
-								footnoteNumber.c_str(), 
-								vkey->getOSISRef(),
-                userData->module->getName());
-					   }
-					   u->suspendTextPassThru = true;
+						buf.appendFormatted("<span class=\"%s\" title=\"%s.%s.%s\"></span>",
+							mclass.c_str(),
+							footnoteNumber.c_str(), 
+							vkey->getOSISRef(),
+							userData->module->getName());
 					}
 					else {
-					   if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
-								buf.appendFormatted("<span class=\"cr\" title=\"%s.unavailable.%s\"></span><span class=\"genbknote\">[",
-								footnoteNumber.c_str(), 
-                userData->module->getName());
-					   }
-					   else {
-								buf.appendFormatted("<span class=\"fn\" title=\"%s.unavailable.%s\"></span><span class=\"genbknote\">[",
-								footnoteNumber.c_str(), 
-                userData->module->getName());
-					   }
-					   u->suspendTextPassThru = false;
+						buf.appendFormatted("<span class=\"gfn\" title=\"%s.%s.%s\">%s</span>",
+							footnoteNumber.c_str(),
+							mclass.c_str(),
+							userData->module->getName(),
+							footnoteNumber.c_str());
 					}
 				}
+				u->suspendTextPassThru = true;
 			}
 			if (tag.isEndTag()) {
-			   if (u->suspendTextPassThru == false) {
-			     buf.append("]</span>");
-			   }
-			   else {u->suspendTextPassThru = false;}
+			   u->suspendTextPassThru = false;
 			}
 		}
 		else if (!strcmp(tag.getName(), "scripture")) {
