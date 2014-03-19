@@ -74,7 +74,10 @@ class OSISXHTMLXS : public OSISXHTML {
   	char processText(SWBuf &text, const SWKey *key = 0, const SWModule *module = 0);
 };
 
-OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML(), htmlTagStack(NULL), pStack(NULL), previousConsecutiveNewlines(0) {}
+OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML(), htmlTagStack(NULL), pStack(NULL), previousConsecutiveNewlines(0) {
+	addAllowedEscapeString("nbsp");
+}
+
 OSISXHTMLXS::~OSISXHTMLXS() {
 	if (htmlTagStack) {delete htmlTagStack;}
 	if (pStack) {delete pStack;}
