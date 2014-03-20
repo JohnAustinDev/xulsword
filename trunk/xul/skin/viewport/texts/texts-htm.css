@@ -478,6 +478,12 @@ body[chromedir="rtl"] .fncol3 {
 	border:1px outset grey;
 	padding:10px;
 }
+.sb td .head1 {
+	font-size:1em !important;
+}
+.sb td .head2 {
+	font-size:1em !important;
+}
 
 /* CLASSES PASSED FROM SWORD MODULES BY LIBXULSWORD */
 .x-text-image {
