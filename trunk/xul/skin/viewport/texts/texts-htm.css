@@ -167,6 +167,14 @@
   font-size: 1.3em !important;
 	color: black;
 }
+.line {
+  display:block; 
+  margin-bottom:1em;
+}
+.indent0 {margin-left:2em;}
+.indent1 {margin-left:4em;}
+.indent2 {margin-left:6em;}
+.indent3 {margin-left:8em;}
 .versePerLineButton {
 	position:relative;
 	display:block;
@@ -495,7 +503,8 @@ body[chromedir="rtl"] .fncol3 {
 .x-p-first {
   display:block;
 }
-.x-p-first:first-letter {
+.x-p-first:first-letter,
+.x-p-first .line:first-child:first-letter {
   font-size:4em; 
   float:left; 
   margin-right:10px; 
@@ -504,6 +513,10 @@ body[chromedir="rtl"] .fncol3 {
   display:block;
   text-align:right;
 }
+p {
+  margin-bottom:1em;
+}
+
 
 /* PRINTING STYLES */
 @media print {
