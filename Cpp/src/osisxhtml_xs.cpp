@@ -377,6 +377,11 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					if (!pStack->empty()) {
 						pStack->pop();
 						outHtmlTag("</p>", buf, u);
+						SWBuf junk;
+						// html <p> CSS handles spacing instead of outputNewline
+						u->consecutiveNewlines++;
+						u->consecutiveNewlines++;
+						u->supressAdjacentWhitespace = true;
 					}
 					else {
 						u->outputNewline(buf);
@@ -481,8 +486,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			// end line marker
 			else if (tag.getAttribute("eID") || tag.isEndTag()) {
 				outHtmlTag("</span>", buf, u);
-				u->outputNewline(buf);
 				if (u->lineStack->size()) u->lineStack->pop();
+				// html <span class="line"> CSS handles spacing instead of outputNewline
+				u->consecutiveNewlines++;
+				u->supressAdjacentWhitespace = true;
 			}
 			// <l/> without eID or sID
 			// Note: this is improper osis. This should be <lb/>
