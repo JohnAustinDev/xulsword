@@ -170,10 +170,10 @@
 .line {
   display:block; 
 }
-.indent0 {margin-left:2em;}
-.indent1 {margin-left:4em;}
-.indent2 {margin-left:6em;}
-.indent3 {margin-left:8em;}
+.indent0 {margin-left:0;}
+.indent1 {margin-left:2em;}
+.indent2 {margin-left:3em;}
+.indent3 {margin-left:6em;}
 .versePerLineButton {
 	position:relative;
 	display:block;
