@@ -183,7 +183,7 @@ function setConsoleService(addListener) {
 function initLogging() {
   var debugInfo = getSpecialDirectory("ProfD");
   debugInfo.append("consoleLog.txt");
-  if (!debugInfo.exists()) debugInfo.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
+  if (!debugInfo.exists()) createSafeFile(debugInfo, FPERM);
   var env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
   env.set("XRE_CONSOLE_LOG", debugInfo.path);
 

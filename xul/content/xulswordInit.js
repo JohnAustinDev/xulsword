@@ -169,7 +169,7 @@ function initTabGlobals() {
     
     // Set Original Language modules
     if (type == BIBLE && (/^grc$/i).test(mlang)) SpecialModules.OriginalLanguages.Greek.push(mod);
-    if (type == BIBLE && (/^heb?$/i).test(mlang)) SpecialModules.OriginalLanguages.Hebrew.push(mod);
+    if (type == BIBLE && (/^heb?$/i).test(mlang) && !(/HebModern/i).test(mod)) SpecialModules.OriginalLanguages.Hebrew.push(mod);
    
     if (type == DICTIONARY) {
       // Set Global dictionary module params

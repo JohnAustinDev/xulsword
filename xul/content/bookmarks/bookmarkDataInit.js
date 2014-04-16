@@ -81,20 +81,19 @@ function initBMServices(bm) {
 }
 
 function initBookmarksDataFile(useEmptyDataSet) {
-  var userDataInProfile = getSpecialDirectory("xsBookmarks");
-  userDataInProfile.append(kUserDataFileName);
+  var rdfFile = getSpecialDirectory("xsBookmarks");
+  rdfFile.append(kUserDataFileName);
 
-  UserDataURI = encodeURI("File://" + userDataInProfile.path.replace("\\", "/", "g"));
+  UserDataURI = encodeURI("File://" + rdfFile.path.replace("\\", "/", "g"));
 
-  if (!userDataInProfile.exists()) {
-    userDataInProfile.create(userDataInProfile.NORMAL_FILE_TYPE, FPERM);
+  if (!rdfFile.exists()) {
     var data = "";
     if (useEmptyDataSet) {data = getEmptyUserData();}
     else {
       data = getDefaultUserData("bookmarks.rdf");
       if (!data) {data = getEmptyUserData();}
     }
-    writeFile(userDataInProfile, data, 1);
+    writeSafeFile(rdfFile, data, true);
   }
 }
 

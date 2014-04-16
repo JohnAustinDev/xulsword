@@ -35,7 +35,7 @@ Set (prefs.js):extensions.xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
 
 # FIREFOX EXTENSIONS WILL NOT INCLUDE THE BINARY LIBRARY IF A URL IS SPECIFIED HERE.
 # IF THE URL IS FTP PROTOCOL, THEN THE LATEST COMPATIBLE LIB CAN BE IDENTIFIED AT RUNTIME.
-Set (prefs.js):extensions.xulsword.LibSwordURL=
+Set (prefs.js):extensions.xulsword.LibSwordURL=ftp://ftp.ibt.org.ru/pub/xulsword/lib
 
 # XULSWORD CAN REPORT UNHANDLED EXCEPTIONS TO THIS URL, IF SPECIFIED:
 Set (prefs.js):extensions.xulsword.ProblemReportURL=
