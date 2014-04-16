@@ -450,8 +450,7 @@ function initDataSource(data, fileName) {
   }
   
   if (!rdfFile.exists()) {
-    rdfFile.create(rdfFile.NORMAL_FILE_TYPE, FPERM);
-    writeFile(rdfFile, data, 1);
+    writeSafeFile(rdfFile, data, true);
     ds = RDF.GetDataSourceBlocking(encodeURI("File://" + rdfFile.path.replace("\\", "/", "g")));
   }
 

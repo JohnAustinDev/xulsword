@@ -134,28 +134,30 @@
 					if (!(aStateFlags & 0x10)) return; // if this is not STATE_STOP, always return
 
 					if (aStatus == 0) {
+						// see if a newer compatible library version is available
+						// If both primary and secondary version numbers match those of LibxulswordVersion, 
+						// then the lib is compatible. If a tertiary version number is also present, choose
+						// the lib with the highest tertiary.
 						var data = readFile(SWLibrary.listingFile);
 						var files = data.match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/gm);
-						var maxvers = prefs.getCharPref("LibxulswordVersion");
+						var libvers = prefs.getCharPref("LibxulswordVersion");
 						var comparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator);
 						var compatible = new RegExp(
 							escapeRE("libxulsword-") + 
-							"(" + escapeRE(prefs.getCharPref("LibxulswordVersion").split(".")[0]) + "[^\\-]*)" + 
+							"(" + escapeRE(libvers.split(".")[0] + "." + libvers.split(".")[1]) + "[^\\-]*)" + 
 							escapeRE("-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS])
-						); // is only compatible if major version is identical, in addition to platform etc.
+						); // is only compatible if major and secondary versions are identical, in addition to platform etc.
 						
 						for (var i=0; files && i<files.length; i++) {
 							var file = files[i].match(/201\: \"(.*?)\" (\d+) .*? FILE\s*$/)[1];
 							var vers = file.match(compatible);
-							if (vers && comparator.compare(vers[1], maxvers) > 0) maxvers = vers[1];
+							if (vers && comparator.compare(vers[1], libvers) > 0) libvers = vers[1];
 						}
-						if (maxvers != prefs.getCharPref("LibxulswordVersion")) {
-							SWLibrary.libName = "libxulsword-" + maxvers + "-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS];
-							SWLibrary.file = getSpecialDirectory("xsProgram");
-							SWLibrary.file.append(SWLibrary.libName);
-							SWLibrary.url = prefs.getCharPref("LibSwordURL") + "/" + SWLibrary.libName + ".zip";
-						}
-						
+
+						SWLibrary.libName = "libxulsword-" + libvers + "-" + OPSYS + "_" + xulABI + "." + BIN[OPSYS];
+						SWLibrary.file = getSpecialDirectory("xsProgram");
+						SWLibrary.file.append(SWLibrary.libName);
+						SWLibrary.url = prefs.getCharPref("LibSwordURL") + "/" + SWLibrary.libName + ".zip";
 					}
 					
 					if (SWLibrary.listingFile.exists()) SWLibrary.listingFile.remove(false); 
@@ -209,17 +211,24 @@
 					}
 
 					if (aStatus == 0 && (!http || SWLibrary.response == 200)) {
-						// download success! now unzip the download
-						var zReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(Components.interfaces.nsIZipReader);
-						zReader.open(SWLibrary.zipFile);
-						SWLibrary.file.create(SWLibrary.file.NORMAL_FILE_TYPE, FPERM);
-						try {zReader.extract(SWLibrary.zipFile.leafName.replace(".zip",""), SWLibrary.file);}
-						catch (er) {
+						// download success! now unzip the download to get the library
+						if (!(/\.(so|dll)$/i).test(SWLibrary.file.leafName)) {
 							aStatus = -1;
-							SWLibrary.status = "nsIZipReader \"" + SWLibrary.zipFile.leafName + "\".";
+							SWLibrary.status = "Bad file type \"" + SWLibrary.file.leafName + "\".";
 						}
-						zReader.close(SWLibrary.zipFile);
-						SWLibrary.file.permissions = FPERM; // zReader sets permissions!
+						else {
+							SWLibrary.file.create(SWLibrary.file.NORMAL_FILE_TYPE, FPERM);
+							
+							var zReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(Components.interfaces.nsIZipReader);
+							zReader.open(SWLibrary.zipFile);
+							try {zReader.extract(SWLibrary.zipFile.leafName.replace(".zip",""), SWLibrary.file);}
+							catch (er) {
+								aStatus = -1;
+								SWLibrary.status = "nsIZipReader \"" + SWLibrary.zipFile.leafName + "\".";
+							}
+							zReader.close(SWLibrary.zipFile);
+							SWLibrary.file.permissions = FPERM; // zReader sets permissions!
+						}
 					}
 					if (SWLibrary.zipFile.exists()) SWLibrary.zipFile.remove(false);
 					
@@ -270,8 +279,8 @@
 				catch (er) {installOnly = false;}
 				if (installOnly) {
 					var mutex = getSpecialDirectory("TmpD");
-					mutex.append("xsInstallOnlyMutex");
-					if (!mutex.exists()) mutex.create(mutex.NORMAL_FILE_TYPE, FPERM);
+					mutex.append("xsInstallOnlyMutex.txt");
+					if (!mutex.exists()) createSafeFile(mutex, FPERM);
 					jsdump("INFO: xsInstallOnly flag was set");
 				}
 			}
@@ -331,7 +340,7 @@
 					prefs.clearUserPref("xsInstallOnly");
 					jsdump("Quiting... xsInstallOnly command line flag was set.");
 					var mutex = getSpecialDirectory("TmpD");
-					mutex.append("xsInstallOnlyMutex");
+					mutex.append("xsInstallOnlyMutex.txt");
 					if (mutex.exists()) mutex.remove(false); // siginify to caller that we're done installing
 				}
 			}

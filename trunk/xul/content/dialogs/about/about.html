@@ -190,7 +190,7 @@
   function saveConfText(mod) {
     var elem = document.getElementById("conf." + mod);
     var conftext = elem.getElementsByTagName("textarea")[0].value;
-    writeFile(Tab[mod].conf, conftext, true);
+    writeSafeFile(Tab[mod].conf, conftext, true);
     setEditable(mod, false);
   }
   

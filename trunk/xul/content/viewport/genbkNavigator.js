@@ -32,12 +32,11 @@ GenBookNavigator = {
 		if (!this.Datasources.hasOwnProperty(mod)) {
 		
 			// get a table of contents .rdf for this GenBook
-			var moduleRDF = getSpecialDirectory("xsResD");
-			moduleRDF.append(mod + ".rdf");
-			if (moduleRDF.exists()) moduleRDF.remove(false);
-			writeFile(moduleRDF, LibSword.getGenBookTableOfContents(mod));
+			var rdfFile = getSpecialDirectory("xsResD");
+			rdfFile.append(mod + ".rdf");
+			writeSafeFile(rdfFile, LibSword.getGenBookTableOfContents(mod), true);
 			
-			var myURI = encodeURI("File://" + moduleRDF.path.replace("\\","/","g"));
+			var myURI = encodeURI("File://" + rdfFile.path.replace("\\","/","g"));
 			//jsdump("Adding: " + myURI.match(/\/([^\/]+\.rdf)/)[1] + "\n");
 			this.Datasources[mod] = BM.RDF.GetDataSourceBlocking(myURI);
 		}

@@ -298,20 +298,16 @@ BookmarkFuns = {
       }
       else return;
 
-      var file = Components.classes["@mozilla.org/file/local;1"]
+      var textFile = Components.classes["@mozilla.org/file/local;1"]
                            .createInstance(Components.interfaces.nsILocalFile);
-      if (!file)
-        return;
-      file.initWithPath(lpath(fileName));
-      if (!file.exists()) {
-        file.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
-      }
+      if (!textFile) return;
+      textFile.initWithPath(lpath(fileName));
     }
     catch (e) {
       return;
     }
     
-    writeFile(file, this.getFormattedBMdata(aSelection.item[0], false), true, "UTF-16");
+    writeSafeFile(textFile, this.getFormattedBMdata(aSelection.item[0], false), true, "UTF-16");
   },
   
   getFormattedBMdata: function(afolder, isHTML) {

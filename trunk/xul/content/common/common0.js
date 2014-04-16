@@ -392,13 +392,37 @@ function readFile(nsIFile) {
   return filedata;
 }
 
-function writeFile(nsIFile, str, overwrite, toEncoding) {
+// creates only allowable file types
+function createSafeFile(nsIFile, perm, createUnique) {
+  if (!nsIFile || !nsIFile.QueryInterface(Components.interfaces.nsILocalFile)) return 0;
+  
+  // only create a file if it has one of these file extensions
+  if (!(/\.(txt|xsb|rdf|conf|xpi)$/i).test(nsIFile.leafName)) {
+    jsdump("ERROR: createSafeFile \"" + nsIFile.path + "\"");
+    return 0;
+  }
+  
+  if (createUnique) nsIFile.createUnique(nsIFile.NORMAL_FILE_TYPE, perm);
+  else nsIFile.create(nsIFile.NORMAL_FILE_TYPE, perm);
+  
+  return 1;
+}
+
+// writes to only allowable file types
+function writeSafeFile(nsIFile, str, overwrite, toEncoding) {
   if (!nsIFile || ! nsIFile.QueryInterface(Components.interfaces.nsILocalFile)) return 0;
+  
+  // only write to a file if it has one of these file extensions
+  if (!(/\.(txt|xsb|rdf|conf)$/i).test(nsIFile.leafName)) {
+    jsdump("ERROR: writeSafeFile \"" + nsIFile.path + "\"");
+    return 0;
+  }
+  
   if (nsIFile.exists()) {
     if (!overwrite) return 0;
     nsIFile.remove(true);
   }
-  nsIFile.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FPERM);
+  createSafeFile(nsIFile, FPERM);
     
   var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
   foStream.init(nsIFile, 0x02 | 0x08 | 0x20, -1, 0);

@@ -372,7 +372,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
         var tempCONF = getSpecialDirectory("TmpD");
         tempCONF.append("xs_sword.conf");
         if (tempCONF.exists()) tempCONF.remove(false);
-        tempCONF.create(tempCONF.NORMAL_FILE_TYPE, FPERM);
+        createSafeFile(tempCONF, FPERM);
         try {zReader.extract(entryArray[f][e], tempCONF);}
         catch (er) {
           jsdump("ERROR: Could not extract conf \"" + entryArray[f][e] + "\" from \"" + fileArray[f].path + "\"");
@@ -449,7 +449,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
         var tempXPI = getSpecialDirectory("TmpD");
         tempXPI.append("xs_locale.xpi");
         if (tempXPI.exists()) tempXPI.remove(false);
-        tempXPI.create(tempXPI.NORMAL_FILE_TYPE, FPERM);
+        createSafeFile(tempXPI, FPERM);
         try {zReader.extract(entryArray[f][e], tempXPI);}
         catch (er) {
           jsdump("ERROR: Failed to extract xpi \"" + entryArray[f][e] + "\" from \"" + tempXPI.path + "\"");
@@ -464,7 +464,7 @@ function removeIncompatibleFiles(fileArray, entryArray) {
           var tempInstallRDF = getSpecialDirectory("TmpD");
           tempInstallRDF.append("xs_install.rdf");
           if (tempInstallRDF.exists()) tempInstallRDF.remove(false);
-          tempInstallRDF.create(tempInstallRDF.NORMAL_FILE_TYPE, FPERM);
+          createSafeFile(tempInstallRDF, FPERM);
           try {zReader.extract("install.rdf", tempInstallRDF);}
           catch (er) {
             jsdump("ERROR: Failed to extract install.rdf from \"" + tempInstallRDF.path + "\"");
@@ -901,10 +901,7 @@ function writeManifest(newLocales, newModules, newFonts, filesNotWaiting) {
       try {pfile.remove(false);} catch (er) {jsdump("Could not delete " + pfile.path + ". " + er);}
     }
     
-    var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-    foStream.init(pfile, 0x02 | 0x08 | 0x20, FPERM, 0); 
-    foStream.write(modFileText, modFileText.length);
-    foStream.close();
+    writeSafeFile(pfile, modFileText, false);
   }
 }
 
@@ -1058,7 +1055,7 @@ function getConfInfo(aZip, aEntry, zReader) {
   tconf.append(MODSD);
   if (!tconf.exists()) tconf.create(tconf.DIRECTORY_TYPE, DPERM);
   tconf.append("xulsword.conf");
-  tconf.createUnique(tconf.NORMAL_FILE_TYPE, FPERM);
+  createSafeFile(tconf, FPERM, true);
   
   zReader.open(aZip);
   try {zReader.extract(aEntry, tconf);}
