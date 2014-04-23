@@ -25,6 +25,8 @@ set lFiles1=
 set lFiles2=
 
 Set cFlags=/nologo /EHsc /W0^
+ /I ".\lzma\include"^
+ /I ".\bzlib\include"^
  /I "%MK%\Cpp\src\windows"^
  /I "%clucene%\src"^
  /I "%sword%\include"^
@@ -103,7 +105,7 @@ Set cFiles1=^
  "%sword%\src\modules\common\rawverse4.cpp"^
  "%sword%\src\utilfuns\roman.cpp"^
  "%sword%\src\modules\filters\rtfhtml.cpp"
- 
+
 cl.exe %cFlags% %cFiles1%
 
 Set cFiles1=^
@@ -176,12 +178,15 @@ Set cFiles1=^
  "%sword%\src\keys\versekey.cpp"^
  "%sword%\src\keys\versetreekey.cpp"^
  "%sword%\src\modules\comments\zcom\zcom.cpp"^
+ "%sword%\src\modules\comments\zcom4\zcom4.cpp"^
  "%sword%\src\modules\common\zipcomprs.cpp"^
  "%sword%\src\modules\lexdict\zld\zld.cpp"^
  "%sword%\src\modules\common\zstr.cpp"^
  "%sword%\src\modules\texts\ztext\ztext.cpp"^
+ "%sword%\src\modules\texts\ztext4\ztext4.cpp"^
  "%sword%\src\utilfuns\zlib\zutil.c"^
  "%sword%\src\modules\common\zverse.cpp"^
+ "%sword%\src\modules\common\zverse4.cpp"^
  "%sword%\src\modules\filters\osisxhtml.cpp"^
  "%sword%\src\modules\filters\gbfxhtml.cpp"^
  "%sword%\src\modules\filters\thmlxhtml.cpp"
@@ -202,7 +207,9 @@ Set cFiles1=^
  "%sword%\src\utilfuns\utilstr.cpp"^
  "%sword%\src\modules\filters\gbflatex.cpp"^
  "%sword%\src\modules\filters\osislatex.cpp"^
- "%sword%\src\modules\filters\thmllatex.cpp"
+ "%sword%\src\modules\filters\thmllatex.cpp"^
+ "%sword%\src\modules\filters\teilatex.cpp"
+ 
  
 cl.exe %cFlags% %cFiles1%
 
@@ -350,19 +357,23 @@ Set lFiles2=^
  ".\%objDIR%\gzclose.obj"^
  ".\%objDIR%\versetreekey.obj"^
  ".\%objDIR%\zcom.obj"^
+ ".\%objDIR%\zcom4.obj"^
  ".\%objDIR%\zipcomprs.obj"^
  ".\%objDIR%\zld.obj"^
  ".\%objDIR%\zstr.obj"^
  ".\%objDIR%\ztext.obj"^
+ ".\%objDIR%\ztext4.obj"^
  ".\%objDIR%\zutil.obj"^
  ".\%objDIR%\zverse.obj"^
+ ".\%objDIR%\zverse4.obj"^
  ".\%objDIR%\osisxhtml.obj"^
  ".\%objDIR%\gbfxhtml.obj"^
  ".\%objDIR%\thmlxhtml.obj"^
  ".\%objDIR%\osisreferencelinks.obj"^
  ".\%objDIR%\gbflatex.obj"^
  ".\%objDIR%\osislatex.obj"^
- ".\%objDIR%\thmllatex.obj"
+ ".\%objDIR%\thmllatex.obj"^
+ ".\%objDIR%\teilatex.obj"
 
 link.exe -lib %lFlags% %lFiles1% %lFiles2%
 
