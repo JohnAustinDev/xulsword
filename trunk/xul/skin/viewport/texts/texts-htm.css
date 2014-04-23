@@ -8,6 +8,7 @@
 .indent2         { margin-left: 20px; }
 .indent3         { margin-left: 30px; }
 .indent4         { margin-left: 40px; }
+.overline        { text-decoration: overline; }
 		
 /* Header Links */
 .navlink {
@@ -102,6 +103,11 @@
   background:url('chrome://xulsword/skin/images/listen1.gif');
   cursor:pointer;
 }
+.text[moduleType="Genbks"] .listenlink {
+	position:absolute;
+	top:0px;
+	left:52px;
+}
 .introlink {
   font-size:1.4em;
   border-bottom:1px solid blue;
@@ -135,14 +141,14 @@
 }
 
 /* Script box styles */
-.head1 > h1, 
-.head1 > h2, 
-.head1 > h3,
-.head2 > h1, 
-.head2 > h2, 
-.head2 > h3 {
+.head1 h1, 
+.head1 h2, 
+.head1 h3,
+.head2 h1, 
+.head2 h2, 
+.head2 h3 {
 	/* all titles are same size titles */
-	font-size:inherit !important;
+	font-size:inherit;
 }
 .head1 {
   font-size:1.6em !important;
@@ -167,12 +173,28 @@
   font-size: 1.3em !important;
 	color: black;
 }
+p {
+  margin-bottom:0px;
+}
+ol, ul {
+  margin-bottom:0px;
+}
+.paragraph-start:before {
+	content:'';
+	display:block;
+	height:0em;
+}
+.paragraph-start:after {
+	content:'';
+	display:inline;
+	-moz-margin-start:1.5em;
+}
 .line {
   display:block; 
 }
 .indent0 {margin-left:0;}
 .indent1 {margin-left:2em;}
-.indent2 {margin-left:3em;}
+.indent2 {margin-left:4em;}
 .indent3 {margin-left:6em;}
 .versePerLineButton {
 	position:relative;
@@ -205,6 +227,16 @@
 }
 .text[versePerLine="true"] .vs {
 	display:block;
+}
+.text[versePerLine="true"] .paragraph-start,
+.text[versePerLine="true"] br {
+	display:none;
+}
+.text[versePerLine="true"] .indent0,
+.text[versePerLine="true"] .indent1,
+.text[versePerLine="true"] .indent2,
+.text[versePerLine="true"] .indent3 {
+	margin-left:0;
 }
 .versenum {
   vertical-align:top;
@@ -495,9 +527,14 @@ body[chromedir="rtl"] .fncol3 {
 /* CLASSES PASSED FROM SWORD MODULES BY LIBXULSWORD */
 .x-text-image {
 	float:right;
+	margin-right:10px;
+	max-width:50%;
 }
 .x-text-image img {
 	margin:0px 0px 0.5em 1em;
+	border:3px outset black;
+	border-radius:8px;
+	width:100%;
 }
 .x-p-first {
   display:block;
@@ -511,9 +548,7 @@ body[chromedir="rtl"] .fncol3 {
 .x-ref-cb {
   display:block;
   text-align:right;
-}
-p {
-  margin-bottom:1em;
+  font-size:smaller;
 }
 
 

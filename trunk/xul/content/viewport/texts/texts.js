@@ -347,6 +347,10 @@ Texts = {
         sb.scrollLeft = 0;
       }
     }
+    
+    // set audio icons
+    window.setTimeout(function () {GenBookTexts.updateAudioLinks(w);}, 0);
+    
   },
   
   updateDictionary: function(w, display, force) {
