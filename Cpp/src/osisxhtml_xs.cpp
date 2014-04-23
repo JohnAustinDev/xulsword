@@ -2,9 +2,9 @@
  *
  *  osisxhtml.cpp -	Render filter for classed XHTML of an OSIS module
  *
- * $Id: osisxhtml.cpp 2833 2013-06-29 06:40:28Z chrislit $
+ * $Id: osisxhtml.cpp 3120 2014-03-13 08:43:37Z chrislit $
  *
- * Copyright 2011-2013 CrossWire Bible Society (http://www.crosswire.org)
+ * Copyright 2011-2014 CrossWire Bible Society (http://www.crosswire.org)
  *	CrossWire Bible Society
  *	P. O. Box 2528
  *	Tempe, AZ  85280-2528
@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 #include <ctype.h>
-#include <osisxhtml.h>
+#include <osisxhtmlxs.h>
 #include <utilxml.h>
 #include <utilstr.h>
 #include <versekey.h>
@@ -30,64 +30,159 @@
 #include <url.h>
 #include <stringmgr.h>
 #include <stack>
-#include <swbasicfilter.h>
-#include <swkey.h>
-#include <list>
 
 SWORD_NAMESPACE_START
 
-class OSISXHTML::TagStack : public std::stack<SWBuf> {};
 static inline void outText(const char *t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
 static inline void outText(char t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
 
-class OSISXHTMLXS : public OSISXHTML {
-  private:
-		// variables unique to OSISXHTMLXS
-    int footnoteNum;
-		SWBuf referenceTag;
-		TagStack *htmlTagStack; // used to insure rendered HTML tags are all closed
-		TagStack *pStack; // used for OSIS <p> with subType to render as HTML <p>
-		int previousConsecutiveNewlines;
+/* The following are not used by xulsword...
+void processLemma(bool suspendTextPassThru, XMLTag &tag, SWBuf &buf) {
+	const char *attrib;
+	const char *val;
+	if ((attrib = tag.getAttribute("lemma"))) {
+		int count = tag.getAttributePartCount("lemma", ' ');
+		int i = (count > 1) ? 0 : -1;		// -1 for whole value cuz it's faster, but does the same thing as 0
+		do {
+			attrib = tag.getAttribute("lemma", i, ' ');
+			if (i < 0) i = 0;	// to handle our -1 condition
+			val = strchr(attrib, ':');
+			val = (val) ? (val + 1) : attrib;
+			SWBuf gh;
+			if(*val == 'G')
+				gh = "Greek";
+			if(*val == 'H')
+				gh = "Hebrew";
+			const char *val2 = val;
+			if ((strchr("GH", *val)) && (isdigit(val[1])))
+				val2++;
+			//if ((!strcmp(val2, "3588")) && (lastText.length() < 1))
+			//	show = false;
+			//else {
+				if (!suspendTextPassThru) {
+					buf.appendFormatted("<small><em class=\"strongs\">&lt;<a href=\"passagestudy.jsp?action=showStrongs&type=%s&value=%s\" class=\"strongs\">%s</a>&gt;</em></small>",
+							(gh.length()) ? gh.c_str() : "", 
+							URL::encode(val2).c_str(),
+							val2);
+				}
+			//}
+			
+		} while (++i < count);
+	}
+}
 
-  protected:
-		// redefinition of virtual function defined in OSISXHTML
-  	BasicFilterUserData *createUserData(const SWModule *module, const SWKey *key) {
-      footnoteNum = 1;
-      referenceTag = "";
-      if (htmlTagStack) {delete htmlTagStack;}
-      htmlTagStack = new TagStack;
-      if (pStack) {delete pStack;}
-      pStack = new TagStack;
-  		return new MyUserData(module, key);
-  	}
-  	
-  	// redefinition of virtual function defined in OSISXHTML
-  	bool handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData);
-  	
-  public:
-  	OSISXHTMLXS();
-  	~OSISXHTMLXS();
-  	
-  	void outHtmlTag(const char * t, SWBuf &o, BasicFilterUserData *u);
-  	
-  	// redefinition of virtual function defined in SWBasicFilter
-  	char processText(SWBuf &text, const SWKey *key = 0, const SWModule *module = 0);
-};
 
-OSISXHTMLXS::OSISXHTMLXS() : OSISXHTML(), htmlTagStack(NULL), pStack(NULL), previousConsecutiveNewlines(0) {
+
+void processMorph(bool suspendTextPassThru, XMLTag &tag, SWBuf &buf) {
+	const char * attrib;
+	const char *val;
+	if ((attrib = tag.getAttribute("morph"))) { // && (show)) {
+		SWBuf savelemma = tag.getAttribute("savlm");
+		//if ((strstr(savelemma.c_str(), "3588")) && (lastText.length() < 1))
+		//	show = false;
+		//if (show) {
+			int count = tag.getAttributePartCount("morph", ' ');
+			int i = (count > 1) ? 0 : -1;		// -1 for whole value cuz it's faster, but does the same thing as 0
+			do {
+				attrib = tag.getAttribute("morph", i, ' ');
+				if (i < 0) i = 0;	// to handle our -1 condition
+				val = strchr(attrib, ':');
+				val = (val) ? (val + 1) : attrib;
+				const char *val2 = val;
+				if ((*val == 'T') && (strchr("GH", val[1])) && (isdigit(val[2])))
+					val2+=2;
+				if (!suspendTextPassThru) {
+					buf.appendFormatted("<small><em class=\"morph\">(<a href=\"passagestudy.jsp?action=showMorph&type=%s&value=%s\" class=\"morph\">%s</a>)</em></small>",
+							URL::encode(tag.getAttribute("morph")).c_str(),
+							URL::encode(val).c_str(), 
+							val2);
+				}
+			} while (++i < count);
+		//}
+	}
+}
+
+
+}	// end anonymous namespace
+*/
+
+BasicFilterUserData *OSISXHTMLXS::createUserData(const SWModule *module, const SWKey *key) {
+	return new MyUserDataXS(module, key);
+}
+
+
+OSISXHTMLXS::OSISXHTMLXS() {
+	setTokenStart("<");
+	setTokenEnd(">");
+
+	setEscapeStart("&");
+	setEscapeEnd(";");
+
+	setEscapeStringCaseSensitive(true);
+	setPassThruNumericEscapeString(true);
+
+	addAllowedEscapeString("quot");
+	addAllowedEscapeString("apos");
+	addAllowedEscapeString("amp");
+	addAllowedEscapeString("lt");
+	addAllowedEscapeString("gt");
+
+	setTokenCaseSensitive(true);
+	
+	//	addTokenSubstitute("lg",  "<br />");
+	//	addTokenSubstitute("/lg", "<br />");
+
+	// unique to OSISXHTMLXS
 	addAllowedEscapeString("nbsp");
 }
 
-OSISXHTMLXS::~OSISXHTMLXS() {
-	if (htmlTagStack) {delete htmlTagStack;}
-	if (pStack) {delete pStack;}
+class OSISXHTMLXS::TagStack : public std::stack<SWBuf> {
+};
+
+OSISXHTMLXS::MyUserDataXS::MyUserDataXS(const SWModule *module, const SWKey *key) : BasicFilterUserData(module, key), quoteStack(new TagStack()), hiStack(new TagStack()), titleStack(new TagStack()), lineStack(new TagStack()), htmlTagStack(new TagStack()), pStack(new TagStack()) {
+	inXRefNote    = false;
+	suspendLevel = 0;
+	wordsOfChristStart = "<span class=\"wordsOfJesus\"> ";
+	wordsOfChristEnd   = "</span> ";
+	if (module) {
+		osisQToTick = ((!module->getConfigEntry("OSISqToTick")) || (strcmp(module->getConfigEntry("OSISqToTick"), "false")));
+		version = module->getName();
+		BiblicalText = (!strcmp(module->getType(), "Biblical Texts"));
+	}
+	else {
+		osisQToTick = true;	// default
+		version = "";
+	}
+	consecutiveNewlines = 0;
+	
+	// variables unique to OSISXHTMLXS
+	referenceTag = "";
 }
+
+OSISXHTMLXS::MyUserDataXS::~MyUserDataXS() {
+	delete quoteStack;
+	delete hiStack;
+	delete titleStack;
+	delete lineStack;
+	
+	// variables unique to OSISXHTMLXS
+	delete htmlTagStack;
+	delete pStack;
+}
+
+void OSISXHTMLXS::MyUserDataXS::outputNewline(SWBuf &buf) {
+	if (++consecutiveNewlines <= 2) {
+		outText("<br />\n", buf, this);
+		supressAdjacentWhitespace = true;
+	}
+}
+
 
 // This is used to output HTML tags and to update the HTML tag list so 
 // that rendered text will not be returned with open tags. For this 
 // function to work as intended, only a single opening or closing tag 
 // can be included anywhere in t.
-void OSISXHTMLXS::outHtmlTag(const char * t, SWBuf &o, BasicFilterUserData *u) {
+void OSISXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
 
 	if (u->suspendTextPassThru) {
 		u->lastSuspendSegment += t;
@@ -109,12 +204,12 @@ void OSISXHTMLXS::outHtmlTag(const char * t, SWBuf &o, BasicFilterUserData *u) {
 	bool keepTag = true;
 	
 	if (tagStart && *(tagStart+1) == '/' && !singleton) {
-		keepTag = (!htmlTagStack->empty() && !strcmp(htmlTagStack->top().c_str(), tag.c_str()));
-		if (keepTag) htmlTagStack->pop();
+		keepTag = (!u->htmlTagStack->empty() && !strcmp(u->htmlTagStack->top().c_str(), tag.c_str()));
+		if (keepTag) u->htmlTagStack->pop();
 	}
 	else if (tagStart && !singleton) {
 		// add this tag to stack
-		htmlTagStack->push(SWBuf(tag.c_str()));
+		u->htmlTagStack->push(SWBuf(tag.c_str()));
 	}
 	
 	if (keepTag) {o += t;}
@@ -129,15 +224,8 @@ char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *mod
 	bool intoken = false;
 	bool inEsc = false;
 	SWBuf lastTextNode;
-	BasicFilterUserData *userData = createUserData(module, key);
+	MyUserDataXS *userData = (MyUserDataXS *)createUserData(module, key);
 	
-	// xulsword causes consecutiveNewlines to remain unchanged between  
-	// processText calls because xulsword calls processText on sequential 
-	// verses and concatenates each result. The only side effect of this 
-	// is that newlines at the beginning of non-sequential calls may or 
-	// may not be passed, and this is now indeterminate with xulsword.
-	MyUserData *osisUserData = dynamic_cast<MyUserData *>(userData);
-	if (osisUserData) {osisUserData->consecutiveNewlines = previousConsecutiveNewlines;}
 
 	SWBuf orig = text;
 	from = orig.getRawData();
@@ -204,18 +292,15 @@ char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *mod
 				lastTextNode.append(*from);
  			}
 			userData->supressAdjacentWhitespace = false;
-			if (osisUserData && *from != ' ') {osisUserData->consecutiveNewlines = 0;}
 		}
 
 	}
 	
 	// THE MAIN PURPOSE OF THIS OVERRIDE FUNCTION: is to insure all opened HTML tags are closed
-	while (!htmlTagStack->empty()) {
-		text.append((SWBuf)"</" + htmlTagStack->top().c_str() + ">");
-		htmlTagStack->pop();
+	while (!userData->htmlTagStack->empty()) {
+		text.append((SWBuf)"</" + userData->htmlTagStack->top().c_str() + ">");
+		userData->htmlTagStack->pop();
 	}
-	
-	if (osisUserData) {previousConsecutiveNewlines = osisUserData->consecutiveNewlines;}
 
 	delete userData;
 	return 0;
@@ -223,7 +308,7 @@ char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *mod
 
 
 bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData) {
-	MyUserData *u = (MyUserData *)userData;
+	MyUserDataXS *u = (MyUserDataXS *)userData;
 	SWBuf scratch;
 	bool sub = (u->suspendTextPassThru) ? substituteToken(scratch, token) : substituteToken(buf, token);
 	if (!sub) {
@@ -363,34 +448,33 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
 		// <p> paragraph and <lg> linegroup tags
 		else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg")) {
-			if (tag.getAttribute("subType") && !tag.isEndTag()) {
-				// special case of p with subType generates HTML <p class="[subType]">
+			if (tag.getAttribute("subType") && !tag.isEndTag() && !tag.isEmpty()) {
+				// special case of non-empty p or lg with subType generates HTML <p class="[subType]">
 				outHtmlTag(SWBuf().appendFormatted("<p class=\"%s\">", tag.getAttribute("subType")).c_str(), buf, u);
-				pStack->push(tag.toString());
+				u->pStack->push(tag.toString());
 			}
 			else {
 				if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-empty start tag
-					u->outputNewline(buf);
-					u->outputNewline(buf);
+					u->consecutiveNewlines++; // disallow <br> before paragraphs, presentation is handled by CSS
+					u->consecutiveNewlines++;
+					outText("<span class=\"paragraph-start\"></span>", buf, u);
 				}
 				else if (tag.isEndTag()) {	// end tag
-					if (!pStack->empty()) {
-						pStack->pop();
+					if (!u->pStack->empty()) {
+						u->pStack->pop();
 						outHtmlTag("</p>", buf, u);
-						SWBuf junk;
-						// html <p> CSS handles spacing instead of outputNewline
-						u->consecutiveNewlines++;
+						// The </p> renders like a single <lb />
 						u->consecutiveNewlines++;
 						u->supressAdjacentWhitespace = true;
 					}
 					else {
 						u->outputNewline(buf);
-						u->outputNewline(buf);
 					}
 				}
 				else {					// empty paragraph break marker
-					u->outputNewline(buf);
-					u->outputNewline(buf);
+					u->consecutiveNewlines++; // disallow <br> before paragraphs, presentation is handled by CSS
+					u->consecutiveNewlines++;
+					outText("<span class=\"paragraph-start\"></span>", buf, u);
 				}
 			}
 		}
@@ -398,15 +482,15 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// Milestoned paragraphs, created by osis2mod
 		// <div type="paragraph" sID.../>
 		// <div type="paragraph" eID.../>
-		else if (tag.isEmpty() && !strcmp(tag.getName(), "div") && tag.getAttribute("type") && !strcmp(tag.getAttribute("type"), "paragraph")) {
+		else if (tag.isEmpty() && !strcmp(tag.getName(), "div") && tag.getAttribute("type") && (!strcmp(tag.getAttribute("type"), "x-p") || !strcmp(tag.getAttribute("type"), "paragraph"))) {
 			// <div type="paragraph"  sID... />
 			if (tag.getAttribute("sID")) {	// non-empty start tag
-				u->outputNewline(buf);
-				u->outputNewline(buf);
+				u->consecutiveNewlines++; // disallow <br> before paragraphs, presentation is handled by CSS
+				u->consecutiveNewlines++;
+				outText("<span class=\"paragraph-start\"></span>", buf, u);
 			}
 			// <div type="paragraph"  eID... />
 			else if (tag.getAttribute("eID")) {
-				u->outputNewline(buf);
 				u->outputNewline(buf);
 			}
 		}
@@ -418,17 +502,17 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				  SWBuf referenceClass;
 				  SWBuf referenceInfo;
 				  if (tag.getAttribute("type") && !strcmp("x-glossary", tag.getAttribute("type"))) {
-				    referenceTag = "span";
+				    u->referenceTag = "span";
 				    referenceClass = "dt";
 				    referenceInfo = (tag.getAttribute("osisRef")) ? tag.getAttribute("osisRef"):"";
 				  }
 				  else if (tag.getAttribute("type") && !strcmp("x-glosslink", tag.getAttribute("type"))) {
-				    referenceTag = "span";
+				    u->referenceTag = "span";
 				    referenceClass = "dtl";
 				    referenceInfo = (tag.getAttribute("osisRef")) ? tag.getAttribute("osisRef"):"";				  
 				  }
 				  else {
-				    referenceTag = "span";
+				    u->referenceTag = "span";
 				    referenceClass = "sr";
 				    if (tag.getAttribute("osisRef")) {
 				      referenceInfo = tag.getAttribute("osisRef");
@@ -455,7 +539,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				      if (mi==-1) {
 				        // Append current data to last tag
 				        buf.setSize(buf.length()-7); // Strip off last <\span> tag
-				        htmlTagStack->push(SWBuf("span")); // previous span has become re-opened
+				        u->htmlTagStack->push(SWBuf("span")); // previous span has become re-opened
                 insertpoint = insertpoint - 1 - strlen(userData->module->getName()); // .module name was appended to ref
 				        buf.insert(insertpoint, "; ");
 				        buf.insert(insertpoint+2, referenceInfo.c_str());
@@ -464,12 +548,12 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				    }
 				  }
 				  SWBuf tmpbuf;
-				  tmpbuf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
+				  tmpbuf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", u->referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
 				  outHtmlTag(tmpbuf, buf, u);
         }
 				if (tag.isEndTag()) {
 					SWBuf tmpbuf;
-					tmpbuf.appendFormatted("</%s>", referenceTag.c_str());
+					tmpbuf.appendFormatted("</%s>", u->referenceTag.c_str());
 					outHtmlTag(tmpbuf, buf, u);
 				}
 			}
@@ -486,10 +570,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			// end line marker
 			else if (tag.getAttribute("eID") || tag.isEndTag()) {
 				outHtmlTag("</span>", buf, u);
-				if (u->lineStack->size()) u->lineStack->pop();
-				// html <span class="line"> CSS handles spacing instead of outputNewline
+				//u->outputNewline(buf); // class="line" is display:block and so does not need a newline
 				u->consecutiveNewlines++;
 				u->supressAdjacentWhitespace = true;
+				if (u->lineStack->size()) u->lineStack->pop();
 			}
 			// <l/> without eID or sID
 			// Note: this is improper osis. This should be <lb/>
@@ -513,8 +597,9 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				}
 			}
 			else if (!strcmp(tag.getAttribute("type"),"x-p"))  {
-        u->outputNewline(buf);
-        u->outputNewline(buf);
+				u->consecutiveNewlines++; // disallow <br> before paragraphs, presentation is handled by CSS
+				u->consecutiveNewlines++;
+				outText("<span class=\"paragraph-start\"></span>", buf, u);
 			}
 			else if (!strcmp(tag.getAttribute("type"), "cQuote")) {
 				const char *tmp = tag.getAttribute("marker");
@@ -530,6 +615,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				else if (u->osisQToTick)
 					outText((level % 2) ? '\"' : '\'', buf, u);
 			}
+					// old xulsword modules use this (pre SWORD 1.7)
       		else if (!strcmp(tag.getAttribute("type"),"x-p-indent")) {outText("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", buf, u);}
 		}
 
@@ -566,9 +652,9 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 						outHtmlTag("<h2 class=\"chapterHeader", buf, u);
 						tag.setAttribute("pushed", "h2");
 					}
-          outText(" ", buf, u);
-          outText(mclass, buf, u);
-          outText("\">", buf, u);
+					outText(" ", buf, u);
+					outText(mclass, buf, u);
+					outText("\">", buf, u);
 				}
 				else {
 					outHtmlTag("<h3", buf, u);
@@ -602,9 +688,9 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// <list>
 		else if (!strcmp(tag.getName(), "list")) {
 			if((!tag.isEndTag()) && (!tag.isEmpty())) {
-				if (tag.getAttribute("type")) {
+				if (tag.getAttribute("subType")) {
 					outHtmlTag("<ul class=\"", buf, u);
-					outText(tag.getAttribute("type"), buf, u);
+					outText(tag.getAttribute("subType"), buf, u);
 					outText("\">", buf, u);
 				}
 				else outHtmlTag("<ul>", buf, u);
@@ -619,9 +705,9 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// <item>
 		else if (!strcmp(tag.getName(), "item")) {
 			if((!tag.isEndTag()) && (!tag.isEmpty())) {
-				if (tag.getAttribute("type")) {
+				if (tag.getAttribute("subType")) {
 					outHtmlTag("<li class=\"", buf, u);
-					outText(tag.getAttribute("type"), buf, u);
+					outText(tag.getAttribute("subType"), buf, u);
 					outText("\">", buf, u);
 				}
 				else outHtmlTag("<li>", buf, u);
@@ -675,7 +761,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				// OSIS overline attribute is made available, these should all
 				// eventually be deprecated and never documented that they are supported.
 				else if (type == "ol"  || type == "overline" || type == "x-overline") {
-					outHtmlTag("<span style=\"text-decoration:overline\">", buf, u);
+					outHtmlTag("<span class=\"overline\">", buf, u);
 				}
 
 				else if (type == "super") {
@@ -831,12 +917,16 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		else if (!strcmp(tag.getName(), "div")) {
 			SWBuf type = tag.getAttribute("type");
 			if (type == "bookGroup") {
+				u->supressAdjacentWhitespace = 1;
 			}
 			else if (type == "book") {
+				u->supressAdjacentWhitespace = 1;
 			}
 			else if (type == "section") {
+				u->supressAdjacentWhitespace = 1;
 			}
 			else if (type == "majorSection") {
+				u->supressAdjacentWhitespace = 1;
 			}
 			else if (tag.isEmpty()) { // milestone divs are not valid HTML
 			}
@@ -844,6 +934,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				SWBuf mtag = "<";
 				if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 					mtag.append(type);
+					if (tag.getAttribute("subType")) {mtag.appendFormatted(" class=\"%s\"", tag.getAttribute("subType"));}
 					mtag.append(">");
 					outHtmlTag(mtag, buf, u);
 				}
@@ -856,15 +947,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 		}
 		else if (!strcmp(tag.getName(), "span")) {
-			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
-				outHtmlTag("<span>", buf, u);
-			}
-			else if (tag.isEndTag()) {
-				outHtmlTag("</span>", buf, u);
-			}
+			outHtmlTag(tag, buf, u);
 		}
 		else if (!strcmp(tag.getName(), "br")) {
-			outHtmlTag("<br>", buf, u);
+			buf += tag;
 		}
 		else if (!strcmp(tag.getName(), "table")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {

@@ -5,7 +5,7 @@
 # Version change: Change line 8 only !
 # Change it immediately after a release
 
-AC_INIT(libxulsword, 1.6.2, gpl.programs.info@gmail.com)
+AC_INIT(libxulsword, 1.7.3, gpl.programs.info@gmail.com)
 AC_CONFIG_SRCDIR([autogen.sh])
 AC_PREREQ(2.52)
 AC_REVISION($Revision: 1.45 $)

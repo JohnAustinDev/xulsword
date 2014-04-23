@@ -33,7 +33,6 @@
 #include "swmodule.h"
 #include "swlog.h"
 #include "localemgr.h"
-#include "osisxhtml.h"
 #include "gbfxhtml.h"
 #include "thmlxhtml.h"
 #include "filemgr.h"
@@ -570,7 +569,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   int ch = myVerseKey->getChapter();
 
   bool haveText = false;
-  std::string chapHTML;
+  std::string chapHTML; // std::string needed for rfind
 
   while (!module->popError()) {
     SWBuf verseHTML;
@@ -580,38 +579,62 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     verseText = module->renderText();
     saveFootnotes(module, &footnoteText, &crossRefText, &noteText);
 
-    // move verse number after any paragraph indents
-    bool verseStartsWithIndent = false;
-    if (!strncmp(verseText.c_str(),"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",30)) {
-      verseStartsWithIndent = true;
-      verseText << 30;
-    }
     haveText = haveText || *verseText.c_str();
+    
+    //Don't allow more than 2 <br /> between verses. This code is needed even though module->renderText() 
+    //has its own counter to insure no more than 2 consecutive <br />s. Since the previous state of 
+    //this counter cannot be reliably passed from one renderText() verse call to the next, we still 
+    //need a manual check here, between verses, in addition to the counter method.
+    if (chapHTML.length()) {
+			// count line breaks at end of chapHTML
+			int numLBs = 0;
+			const char *cs = chapHTML.c_str(); // first char
+			char *cp = (char *)cs + chapHTML.length() -1; // last char
+			const char *ce = cp; // last char
+			while(cp >= cs) {
+				if (*cp == ' ' || *cp == '\n') {cp--;}
+				else if (*cp == '>') {
+					do {cp--;} while(cp >= cs && *cp != '<');
+					// quit counting if tag is malformed or is any start tag other than <br...>
+					if (cp < cs || (ce - cp) < 2 || (!(*(cp+1) == '/') && !(*(cp+1) == 'b' && *(cp+2) == 'r'))) {break;}
+					else {numLBs++; cp--;}
+				}
+				else break;
+			}
+			// now remove extra line breaks at start of verseHTML
+			const char *vs = verseText.c_str(); // first char
+			char *vp = (char *)vs; // first char
+			const char *ve = (vs + verseText.length()); // string terminator
+			while (vp && *vp) {
+				if (*vp == ' ' || *vp == '\n') {vp++;}
+				else if (*vp == '<') {
+					if ((ve - vp) < 3 || *(vp+1) != 'b' || *(vp+2) != 'r') {break;}
+					vp = strchr(vp, '>');
+					if (!vp) {break;}
+					numLBs++;
+					vp++;
+					if (numLBs > 2) {
+						// then remove this <br...>
+						verseText << (vp-vs);
+						vs = verseText.c_str();
+						vp = (char *)vs;
+						ve = (vs + verseText.length());
+					}
+				}
+				else {break;}
+			}
+		}
 
     //FIRST PRINT OUT ANY HEADINGS IN THE VERSE
     AttributeValue::iterator Value;
     for (Value = module->getEntryAttributes()["Heading"]["Preverse"].begin(); Value != module->getEntryAttributes()["Heading"]["Preverse"].end(); Value++) {
-			if (module->getEntryAttributes()["Heading"][Value->first]["type"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["type"], "x-milestone")) {continue;} // WEB has <div type="x-milestone" subType="x-preverse" sID="pv3076"/> captured as titles
-			
       // if a line break is not found at or near the end of the previous verse,
       // add a line break to help insure titles have space above them.
       if (!verseHTML.length() && chapHTML.length() > 64) {
         int lbr = chapHTML.rfind("<br />");
-        if (lbr != -1 && chapHTML.length()-1-lbr < 64) verseHTML.append("<br />");
+        if (lbr != -1 && chapHTML.length()-1-lbr > 64) verseHTML.append("<br />");
       }
-      verseHTML.append("<div class=\"");
-      if (module->getEntryAttributes()["Heading"][Value->first]["level"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["level"], "2")) {
-        verseHTML.append("head2");
-      }
-      else {verseHTML.append("head1");}
-      if (module->getEntryAttributes()["Heading"][Value->first]["canonical"] && !strcmp(module->getEntryAttributes()["Heading"][Value->first]["canonical"], "true")) {
-        verseHTML.append(" canonical");
-      }
-      verseHTML.appendFormatted(" cs-%s", module->getName());
-      if (isRTL) {verseHTML.append(" RTL");}
-      verseHTML.append("\">");
       verseHTML.append(module->renderText(Value->second));
-      verseHTML.append("</div>");
     }
     
     // VERSE PER LINE BUTTON
@@ -620,25 +643,44 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     //NOW PRINT OUT THE VERSE ITSELF
     //If this is selected verse then designate as so
     //Output verse html code
-    sprintf(Outtext, "<span title=\"%s.%d.%d.%s\" class=\"vs cs-%s%s\">", bk.c_str(), ch, vNum, module->getName(), module->getName(), (isRTL ? " RTL":""));
-    verseHTML.append(Outtext);
+    verseHTML.appendFormatted("<span title=\"%s.%d.%d.%s\" class=\"vs cs-%s%s\">", bk.c_str(), ch, vNum, module->getName(), module->getName(), (isRTL ? " RTL":""));
 
     if (Verse > 1) {
       if (vNum == Verse) {verseHTML.append("<span class=\"hl\" id=\"sv\">");}
       if ((vNum > Verse)&&(vNum <= LastVerse)) {verseHTML.append("<span class=\"hl\">");}
     }
     
-    if (verseStartsWithIndent) {verseHTML.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");}
-
-    verseHTML.append("<sup class=\"versenum\">");
+    //Find the appropriate place to insert the verse number (after white-space, line-breaks, and non-canonical headings)
+    char *vs = (char *)verseText.c_str();
+    char *vp = vs;
+    bool inTitle = false;
+    while (vp && *vp) {
+			if (*vp == ' ' || *vp == '\n') {vp++;}
+			if (*vp == '<') {
+				const char *ts = vp;
+				vp = strchr(vp, '>'); 
+				if (vp && *vp) {
+					vp++;
+					if (!strncmp((ts+1), "h", 1)) {
+						const char *canon = strstr(ts, "canonical");
+						if (!canon || canon >= vp) {inTitle = true;}
+					}
+					else if (!strncmp((ts+1), "/h", 2)) {inTitle = false;}
+				}
+			}
+			else if (inTitle) {vp++;}
+			else if (!strncmp(vp, "&nbsp;", 6)) {vp += 6;} // found in old xulsword modules (pre SWORD 1.7)
+			else {break;}
+		}
+    
+		SWBuf verseNumHTML = "<sup class=\"versenum\">";
     //If verse is non-empty and verse numbers are being displayed then print the verse number
-    if (Versenumbers && (verseText.length() > 0)) {
-      sprintf(Outtext, "%d", vNum);
-      verseHTML.append(Outtext);
-    }
-    verseHTML.append("</sup> ");
-
+    if (Versenumbers && (verseText.length() > 0)) {verseNumHTML.appendFormatted("%d", vNum);}
+    verseNumHTML.append("</sup> ");
+    verseText.insert((vp && *vp ? (vp-vs):0), verseNumHTML);
+    
     verseHTML.append(verseText.c_str());
+
     if (isCommentary) {verseHTML.append("<br><br>");}
 
     if (Verse > 1) {

@@ -224,12 +224,12 @@ BibleNavigator = {
     LibSword.setGlobalOption("Verse Numbers", "On");
 
     var chtxt = LibSword.getChapterText(biblemod, Book[p[1]].sName + "." + p[2] + ".1.1");
-    
+  
     // Find all headings and their following verses
-    var hdplus = /<div[^>]*class="head1[^"]*"[^>]*>.*?<\/div>.*?<sup[^>]*>\d+<\/sup>/gim; // Get Array of head + next verse's
-    var hd = /(<div[^>]*class="head1[^"]*"[^>]*>)(.*?)<\/div>/i;                          // Get heading from above
+    var hdplus = /<h\d[^>]*class="head1[^"]*"[^>]*>.*?<\/h\d>.*?<sup[^>]*>\d+<\/sup>/gim; // Get Array of head + next verse's
+    var hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;                          // Get heading from above
     var vs = /<sup[^>]*>(\d+)<\/sup>/i;                                                   // Get verse from above
-    
+  
     //  Find each heading and write it and its link to HTML
     var head = chtxt.match(hdplus);
     var hm = this.doc().getElementById("headingmenu_" + p[1]);
@@ -237,7 +237,7 @@ BibleNavigator = {
     var hr = false;
     if (head != null) {
       for (var h=0; h < head.length; h++) {
-        var heading = head[h].match(hd)[1].replace(/head1/, "nohead") + head[h].match(hd)[2].replace(/<[^>]*>/g, "") + "</div>";
+        var heading = "<div" + head[h].match(hd)[1].replace(/head1/, "nohead") + head[h].match(hd)[2].replace(/<[^>]*>/g, "") + "</div>";
         var verse = head[h].match(vs)[1];
         if (!(/^<div[^>]*>\s*<\/div>$/).test(heading)) {
 					if (hr) hm.appendChild(this.doc().createElement("hr"));

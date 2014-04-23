@@ -26,6 +26,12 @@ GenBookTexts = {
     var ret = { htmlHead:Texts.getPageLinks(), htmlText:"", footnotes:null };
     
     ret.htmlText = LibSword.getGenBookChapterText(d.mod, d.Key);
+    
+    // add headers
+    var showHeader = (d.globalOptions["Headings"]=="On");
+    if (showHeader && ret.htmlText) {
+      ret.htmlText = this.getChapterHeading(d) + ret.htmlText;
+    }
 
 		if (d.globalOptions["User Notes"] == "On") {
     	var un = Texts.getUserNotes("na", d.Key, d.mod, ret.htmlText);
@@ -34,6 +40,26 @@ GenBookTexts = {
     }
     
     return ret;
+  },
+  
+  // This function is only for GenBook modules
+  getChapterHeading: function(d) {
+    var l = ModuleConfigs[d.mod].AssociatedLocale;
+    if (l == NOTFOUND) {l = getLocale();} // otherwise use current program locale
+  
+    var html = "";
+    html += "<div class=\"listenlink\" title=\"" + [0, encodeURIComponent(d.Key), 0, d.mod].join(".") + "\"></div>";
+   
+    return html;
+  },
+  
+  updateAudioLinks: function(w) {
+    var icons = document.getElementById("text" + w).getElementsByClassName("listenlink");
+    for (var i = 0; i < icons.length; ++i) {
+      var p = getElementInfo(icons[i]);
+      icons[i].className = icons[i].className.replace(/\s*hasAudio/, "");
+      if (AudioDirs.length && false) icons[i].className += " hasAudio"; //XS_window.getAudioForChapter(p.mod, p.bk, p.ch)
+    }
   },
 
   // returns the first rdfChapter of general-book module, or null if not found.
