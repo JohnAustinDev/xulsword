@@ -49,7 +49,13 @@ Set cFiles=%SECURITYCPP%^
  "%MK%\Cpp\swordMK\filemgr.cpp"^
  "%MK%\Cpp\swordMK\regex.c"
  
-Set lFlags=libsword.lib libclucene.lib /nologo /dll /incremental:no /manifest /manifestfile:"Release\xulsword.dll.manifest" /implib:"Release\xulsword.lib" /pdb:"Release/xulsword.pdb" /out:".\Release\xulsword.dll" /libpath:"..\swordMK\windows\lib\Release" /libpath:"..\cluceneMK\windows\lib\Release"
+Set lFlags=libsword.lib libclucene.lib libbz2.dll.a liblzma.a.lib /nologo /dll /incremental:no /manifest /manifestfile:"Release\xulsword.dll.manifest" /implib:"Release\xulsword.lib" /pdb:"Release/xulsword.pdb" /out:".\Release\xulsword.dll"^
+ /libpath:"..\swordMK\windows\lib\Release"^
+ /libpath:"..\cluceneMK\windows\lib\Release"^
+ /libpath:"..\swordMK\windows\lib\bzlib\lib"^
+ /libpath:"..\swordMK\windows\lib\lzma\bin_i486"
+
+ 
 Set lFiles=%ldbg% %SECURITYOBJ%^
  ".\Release\xulsword.obj"^
  ".\Release\libxulsword.obj"^

@@ -31,11 +31,11 @@ Set FirefoxMaxVersion=29.*
 Set (prefs.js):extensions.xulsword.EngineVersion=1.7.2
 Set (prefs.js):extensions.xulsword.MinXSMversion=1.0
 Set (prefs.js):extensions.xulsword.MinUIversion=3.10
-Set (prefs.js):extensions.xulsword.HelpEmailAddress=gpl.programs.info@gmail.com
+Set (prefs.js):extensions.xulsword.HelpEmailAddress=
 
 # FIREFOX EXTENSIONS WILL NOT INCLUDE THE BINARY LIBRARY IF A URL IS SPECIFIED HERE.
 # IF THE URL IS FTP PROTOCOL, THEN THE LATEST COMPATIBLE LIB CAN BE IDENTIFIED AT RUNTIME.
-Set (prefs.js):extensions.xulsword.LibSwordURL=ftp://ftp.ibt.org.ru/pub/xulsword/lib
+Set (prefs.js):extensions.xulsword.LibSwordURL=
 
 # XULSWORD CAN REPORT UNHANDLED EXCEPTIONS TO THIS URL, IF SPECIFIED:
 Set (prefs.js):extensions.xulsword.ProblemReportURL=
