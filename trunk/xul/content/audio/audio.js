@@ -226,6 +226,7 @@ function beginAudioPlayer() {
 	}
 
   audio.src = "file://" + audiofile.path;
+  if (OPSYS == "WINNT") audio.src = audio.src.replace(/\\/g, "/");
 
 	Player.canPlay = false; // oncanplay will set this to true
 

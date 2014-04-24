@@ -868,6 +868,8 @@ function applyConfFile(file, repoUrl) {
 function onUnload() {
   WindowIsClosing = true; // tells progress not to try reporting anything anymore
   
+  if (ARMI.installBeforeClosing) ARMI.installModules();
+  
   // disconnect each data source
   ARMU.treeDataSource([true, true, true], ["repoListTree", "languageListTree", "moduleListTree"]);
   
@@ -905,6 +907,7 @@ function onUnload() {
   
   if (RPDS) ARMU.dbFlush(RPDS);
   
+  closeWindowXS(window); // remove window pointer
 }
 
 

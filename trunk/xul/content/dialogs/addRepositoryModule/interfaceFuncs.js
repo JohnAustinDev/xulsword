@@ -23,6 +23,8 @@
 
 ARMI = {
 	
+	installBeforeClosing: true,
+	
 	deleteSelectedRepositories: function() {
 		var selectedResources = ARMU.getSelectedResources(document.getElementById("repoListTree"));
 		if (!selectedResources.length) return;
@@ -152,12 +154,14 @@ ARMI = {
 	},
 
 	installModules: function() {
+		if (!XS_window || XS_window.XS_WindowIsClosing) return; // can't install without XS_window!
 
 		XS_window.AddRepositoryModules = ARMU.getInstallableModules();
 		
-		XS_window.installModuleArray(XS_window.finishAndHandleReset, XS_window.AddRepositoryModules);
-		
-		closeWindowXS(window);
+		if (XS_window.AddRepositoryModules.length) {
+			XS_window.installModuleArray(XS_window.finishAndHandleReset, XS_window.AddRepositoryModules);
+		}
+
 	},
 
 	updateRepoListButtons: function() {
