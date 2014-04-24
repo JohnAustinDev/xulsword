@@ -1472,8 +1472,9 @@ function ensureModuleShowing(version) {
 /************************************************************************
  * XUL Window Unload
  ***********************************************************************/ 
-
+var XS_WindowIsClosing = false;
 function unloadXUL() {
+	XS_WindowIsClosing = true;
 	
 	if (typeof(aConsoleListener) != "undefined" && typeof(aConsoleListener.getPlatformInfo) == "function") 
 			jsdump(aConsoleListener.getPlatformInfo());

@@ -312,8 +312,8 @@
 					<hbox flex="1" pack="center" align="center"><label id="timeRemaining"></label></hbox>
 				</stack>
       </hbox>
-      <button disabled="true" id="apply" label="&dialog.OK;" oncommand="ARMI.installModules(); closeWindowXS(window);" />
-      <button id="cancel" label="&dialog.Cancel;" oncommand="closeWindowXS(window);" />
+      <button disabled="true" id="apply" label="&dialog.OK;" oncommand="closeWindowXS(window);" />
+      <button id="cancel" label="&dialog.Cancel;" oncommand="ARMI.installBeforeClosing=false; closeWindowXS(window);" />
     </hbox>
     
   </vbox>

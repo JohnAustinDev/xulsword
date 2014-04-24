@@ -18,7 +18,7 @@ if ($SETTING !~ /^\w+\:[\/\\]+/ && $SETTING =~ /^[^\.\/\\]/) {$SETTING = "./$SET
 $SETTING = File::Spec->rel2abs($SETTING);
 &readSettingsFiles(\%Prefs, 1);
 
-$WINprocess = "$Executable-srv.exe";
+$WINprocess = "$Name-srv.exe";
 @ModRepos = ($ModuleRepository1, $ModuleRepository2);
 
 if ("$^O" =~ /MSWin32/i) {$PLATFORM = "WINNT_x86-msvc";}
@@ -740,7 +740,7 @@ sub writeRunScript($$) {
     }
     else {
       print SCR "chdir(\"".$rundir."\");\n";
-      print SCR "`$Executable.exe`;\n";
+      print SCR "`$Name.exe`;\n";
     }
   }
   elsif ("$^O" =~ /linux/i) {
@@ -783,7 +783,7 @@ sub compileWindowsStartup($$) {
     &Log("ERROR: startup.exe did not compile.\n");
     die;
   }
-  &copy_file("$TRUNK/Cpp/windows/startup/Release/startup.exe", "$do/$Executable.exe");
+  &copy_file("$TRUNK/Cpp/windows/startup/Release/startup.exe", "$do/$Name.exe");
 }
 
 sub writeInstallerAppInfo($) {
@@ -791,7 +791,7 @@ sub writeInstallerAppInfo($) {
   &Log("----> Writing installer application info script.\n");
   open (ISS, ">:encoding(UTF-8)", $of) || die;
   print ISS "#define MyAppName \"$Name\"\n";
-  print ISS "#define MyAppExeName \"$Executable.exe\"\n";
+  print ISS "#define MyAppExeName \"$Name.exe\"\n";
   print ISS "#define MyPublisher \"$Vendor\"\n";
   print ISS "#define MyDecimalVersion \"$Version\"\n";
   print ISS "#define MyVersion \"$Version\"\n";

@@ -440,7 +440,7 @@ function getFontFamily(fontFile, cache) {
 	if (isTTF) { format = "truetype"; }
 	else if (isCFF) { format = "opentype"; }
 	else {
-		jsdump("ERROR: " + fontFile.leafName + " cannot be interpreted as OpenType font."); 
+		jsdump("ERROR: \"" + fontFile.path + "\" cannot be interpreted as OpenType font."); 
 		return null;
 	}
 
@@ -464,7 +464,7 @@ function getFontFamily(fontFile, cache) {
 	// read the Naming Table
 	tag = "name";
 	if (!tags[tag]) {
-		jsdump("Error: " + fontFile.leafName + " is missing the required OpenType " + tag + " table.");
+		jsdump("Error: \"" + fontFile.path + "\" is missing the required OpenType " + tag + " table.");
 		return null;
 	}
 	ptr = tags[tag].offset;
@@ -494,7 +494,7 @@ function getFontFamily(fontFile, cache) {
 		if (aString.nameID == 1) break; // fontFamily
 	}
 	if (aString.nameID != 1) {
-		jsdump("Error: " + fontFile.leafName + " is missing the required OpenType fontFamily string.");
+		jsdump("Error: \"" + fontFile.path + "\" is missing the required OpenType fontFamily string.");
 		return null;
 	}
 
@@ -516,7 +516,7 @@ function getFontFamily(fontFile, cache) {
 	case 3: // Windows
 	case 4: // Custom
 	default:
-		jsdump("WARNING: " + fontFile.leafName + ": " + format + " font string's platform decoding is not implemented, assuming utf16.");
+		jsdump("WARNING: \"" + fontFile.path + ": " + format + "\" font string's platform decoding is not implemented, assuming utf16.");
 		var u16 = []; for (var i=0; i<u8.length; i+=2) {u16.push(ushort(u8[i], u8[i+1]));}
 		familyName = String.fromCharCode.apply(null, u16);
 	}
@@ -567,6 +567,7 @@ function xulswordInit() {
 		var fontFamily = getFontFamily(fonts[i], cache);
 		if (!fontFamily) continue;
 		FontFaceConfigs[fontFamily] = "file://" + fonts[i].path;
+		if (OPSYS == "WINNT") FontFaceConfigs[fontFamily] = FontFaceConfigs[fontFamily].replace(/\\/g, "/");
 	}
 	prefs.setCharPref("InstalledFonts", JSON.stringify(cache));
 
