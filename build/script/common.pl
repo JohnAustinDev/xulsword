@@ -10,7 +10,7 @@ sub readSettingsFiles(\%$) {
   
   my $f = $SETTING;
   
-  if (!$f) {$f = "$TRUNK/build/build_settings.txt";}
+  if (!$f || -d $f) {$f = "$TRUNK/build/build_settings.txt";}
   &readSettings("$TRUNK/build/build_prefs.txt", $prefsP, $saveFiles);
   &readSettings($f, $prefsP, $saveFiles);
   if ("$^O" !~ /MSWin32/i) {$XULRunner = ""; $MicrosoftSDK = "";}

@@ -88,7 +88,7 @@ body[isWindow="true"] .tabs:not([moduleType="none"]) ~ .tabs {
 }
 #textarea[windows="show1"] #tabs1 {
   width:100%;
-  min-width:250px;
+  min-width:100px;
 }
 #textarea[windows="show1"] #tabs2,
 #textarea[windows="show1"] #tabs3 {
@@ -97,7 +97,7 @@ body[isWindow="true"] .tabs:not([moduleType="none"]) ~ .tabs {
 #textarea[windows="show2"] #tabs1, 
 #textarea[windows="show2"] #tabs2 {
   width:50%;
-  min-width:250px;
+  min-width:100px;
 }
 #textarea[windows="show2"] #tabs3 {
   display:none;
@@ -106,7 +106,7 @@ body[isWindow="true"] .tabs:not([moduleType="none"]) ~ .tabs {
 #textarea[windows="show3"] #tabs2,
 #textarea[windows="show3"] #tabs3 {
   width:33%;
-  min-width:250px;
+  min-width:100px;
 }
 /* Very special situation: Windowed viewports show only one text. If 
 it happens to be a linked text which is unpinned and then switched to become
@@ -221,33 +221,33 @@ body[hasOriginalLanguage="false"] .tabOrig {
 }
 #textarea[windows="show3"] .text[columns="show1"] {
   width:33%;
-  /* max-width:250px somehow forces width 
+  /* max-width:100px somehow forces width
   to 33% even when contents are very wide */ 
-  max-width:250px;
-  min-width:250px;
+  max-width:100px;
+  min-width:100px;
 }
 #textarea[windows="show2"] .text[columns="show1"] {
   width:50%;
-  /* max-width:250px somehow forces width 
+  /* max-width:100px somehow forces width
   to 50% even when contents are very wide */ 
-  max-width:250px;
-  min-width:250px;
+  max-width:100px;
+  min-width:100px;
 }
 #textarea[windows="show3"] .text[columns="show2"] {
   width:66%;
-  /* max-width:500px somehow forces width 
+  /* max-width:200px somehow forces width
   to 66% even when contents are very wide */ 
-  max-width:500px;
-  min-width:500px;
+  max-width:200px;
+  min-width:200px;
 }
 #textarea[windows="show1"] .text[columns="show1"],
 #textarea[windows="show2"] .text[columns="show2"],
 #textarea[windows="show3"] .text[columns="show3"] {
   width:100%;
-  /* max-width:750px somehow forces width 
+  /* max-width:300px somehow forces width
   to 100% even when contents are very wide */ 
-  max-width:750px;
-  min-width:750px;
+  max-width:300px;
+  min-width:300px;
 }
 .text[columns=""], 
 .text[columns="hide"], 

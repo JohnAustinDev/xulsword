@@ -80,8 +80,6 @@ if ($MakeDevelopment =~ /true/i) {
     make_path("$DEVELOPMENT/xulrunner");
     &copyFirefoxFiles("$DEVELOPMENT/xulrunner");
   }
-  # Set our startup location...
-  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
   &writePreferences("$DEVELOPMENT/xulsword", \%Prefs, 1);
   &writeApplicationINI("$DEVELOPMENT/xulsword");
   &includeModules($RESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
@@ -150,8 +148,6 @@ if ($MakePortable =~ /true/i) {
   &copyXulswordFiles("$rundir/$Name/xulsword", \@manifest, $IncludeLocales, 0, 0);
   if ($FirstRunXSM) {&includeFirstRunXSM("$rundir/$Name/xulsword/defaults", \%Prefs, $FirstRunXSM);}
   if ("$^O" =~ /MSWin32/i) {&copyFirefoxFiles("$rundir/$Name/xulrunner");}
-  # Set our startup location...
-  $Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
   &writePreferences("$rundir/$Name/xulsword", \%Prefs);
   &writeApplicationINI("$rundir/$Name/xulsword");
   if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup($rundir, 1);}
@@ -186,8 +182,6 @@ if ($MakeSetup =~ /true/i) {
 		&copyXulswordFiles("$INSTALLER/xulsword", \@manifest, $IncludeLocales, 0, 0);
 		if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/xulsword/defaults", \%Prefs, $FirstRunXSM);}
 		&copyFirefoxFiles("$INSTALLER/xulrunner");
-		# Set our startup location...
-		$Prefs{"(prefs.js):toolkit.defaultChromeURI"} = "chrome://xulsword/content/startup/startup.xul";
 		&writePreferences("$INSTALLER/xulsword", \%Prefs);
 		&writeApplicationINI("$INSTALLER/xulsword");
 		&compileWindowsStartup($INSTALLER, 0);
@@ -736,7 +730,8 @@ sub writeRunScript($$) {
   if ("$^O" =~ /MSWin32/i) {
     if ($type eq "dev") {
       print SCR "chdir(\"".$rundir."\");\n";
-      print SCR "`start /wait ../xulrunner/$Name-srv.exe -app application.ini -jsconsole -console -no-remote`;\n";
+      # don't use -no-remote because otherwise commandline installation won't work!
+      print SCR "`start /wait ../xulrunner/$Name-srv.exe -app application.ini -jsconsole -console`;\n";
     }
     else {
       print SCR "chdir(\"".$rundir."\");\n";
@@ -745,7 +740,8 @@ sub writeRunScript($$) {
   }
   elsif ("$^O" =~ /linux/i) {
     if ($type eq "dev") {
-      print SCR "`firefox --app $rundir/application.ini -jsconsole -no-remote`;\n";
+      # don't use -no-remote because otherwise commandline installation won't work!
+      print SCR "`firefox --app $rundir/application.ini -jsconsole`;\n";
     }
     else {
       print SCR "chdir(\"".$rundir."\");\n";
@@ -755,7 +751,8 @@ sub writeRunScript($$) {
       my $profile = ($type eq "portable" ? " -profile ./$Name/profile":"");
       if (open(PRUN, ">:encoding(UTF-8)", "$rundir/start-$Name.sh")) {
         print PRUN "#!/bin/bash\n";
-        print PRUN "firefox --app ./$Name/xulsword/application.ini$profile -no-remote\n";
+        # don't use -no-remote because otherwise commandline installation won't work!
+        print PRUN "firefox --app ./$Name/xulsword/application.ini$profile\n";
         close(PRUN);
         `chmod ug+x "$rundir/start-$Name.sh"`;
       }

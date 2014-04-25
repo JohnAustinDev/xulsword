@@ -318,6 +318,16 @@
 				}
 			}
 			
+			// If the main xulsword window is already open (which may happen when 
+      // startup.xul is opened by an .xsm click for instance) then just reload.
+      var watcher = Components.classes["@mozilla.org/embedcomp/window-watcher;1"].getService(Components.interfaces.nsIWindowWatcher);
+      var mainwin = watcher.getWindowByName("xulsword-window", window);
+		  if (mainwin) {
+        mainwin.location.reload();
+        window.close();
+        return;
+		  }
+			
 			// Open the visible splash screen and start the main xulsword window
 			SplashScreen = openWindowXS("chrome://xulsword/content/startup/splash.xul", "splash-banner", "chrome,alwaysRaised,centerscreen,resizable", "splash-banner");
 			window.setTimeout(function () {

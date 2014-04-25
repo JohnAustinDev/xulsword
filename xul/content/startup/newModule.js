@@ -400,8 +400,10 @@ function removeIncompatibleFiles(fileArray, entryArray) {
         if (comparator.compare(engineVersion, minimumVersion) < 0) {
           isIncompatible = true;
           
-          // don't report anything (we don't know what xulsword version the user needs!)
-          Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();    
+          Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
+          // report too-new module
+          report.newmodule.push(fileArray[f]);
+          report.minprogversion = "SWORD-" + minimumVersion;
           jsdump("INFO: Removing incompatible SWORD module (Engine Version:" + engineVersion + " < " + minimumVersion + "): " + entryArray[f][e]);
         }
         
@@ -759,7 +761,8 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
     if (overwriting) var success = removeModuleContents(inflated).success;
     if (!success) SkipList.push(conf.modPath);
     NewModules = pushIf(NewModules, conf.modName);
-    return {reset:(PreMainWin ? NORESET:SOFTRESET), success:success, remove:true};
+    // always return success:true, because any !success mod was added to SkipList which will result in a SOFTRESET and another try
+    return {reset:(PreMainWin ? NORESET:SOFTRESET), success:true, remove:success};
     break;
     
   case LOCALE:

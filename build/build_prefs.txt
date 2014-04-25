@@ -3,6 +3,9 @@ Set (prefs.js):intl.locale.matchOS=false
 
 # UBUNTU SPECIFIC PREFS
 Set (prefs.js):ui.use_unity_menubar=false
+
+# STARTUP LOCATION
+Set (prefs.js):toolkit.defaultChromeURI=chrome://xulsword/content/startup/startup.xul
   
 # MISC INITIAL PROGRAM SETTINGS
 Set (prefs.js):extensions.xulsword.Footnotes=On
