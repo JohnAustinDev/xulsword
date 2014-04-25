@@ -1011,6 +1011,16 @@ function createDynamicCssClasses() {
 	// create CSS rules for fonts
 	if (typeof(FontFaceConfigs) != "undefined" && FontFaceConfigs) {
 		for (var ff in FontFaceConfigs) {
+      if (!(/string/i).test(typeof(FontFaceConfigs[ff]))) continue;
+      //if (!(/^file\:/i).test(FontFaceConfigs[ff]) && (typeof(XS_window) == "undefined" || window !== XS_window || !navigator.onLine || !internetPermission(XS_window))) { // this may open a user prompt
+      if (!(/^file\:/i).test(FontFaceConfigs[ff]) &&
+          !getPrefOrCreate("HaveInternetPermission", "Bool", false) &&
+          !getPrefOrCreate("SessionHasInternetPermission", "Bool", false)) {
+        if (typeof(FontFaceConfigs.disabled) == "undefined") FontFaceConfigs.disabled = {};
+        FontFaceConfigs.disabled[ff] = "true";
+        jsdump("WARN: No access to Internet font: \"" + FontFaceConfigs[ff] + "\"");
+        continue;
+      }
 			var rule = "@font-face {font-family:" + ff + "; src:url(\"" + FontFaceConfigs[ff] + "\");}";
 			ex = getCSS(rule.replace(/src\:.*$/, ""), sheetIndex);
 			if (ex) sheet.deleteRule(ex.index);

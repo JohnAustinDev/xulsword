@@ -18,13 +18,17 @@
   text-align:start;
 }
 
-menu, menuitem, button, textbox, 
-toolbarbutton, menulist, label {
+menu, menuitem, menulist, button, 
+textbox, toolbarbutton, label {
   font-family:inherit;
   font-size:inherit;
   line-height:inherit;
   font-size-adjust:inherit;
   direction:inherit;
+}
+
+button, toolbarbutton {
+  font-size:11px;
 }
 
 /* button.xml in omni.ja */

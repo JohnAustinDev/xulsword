@@ -55,10 +55,14 @@ chooseFont = {
 		
 		// add dynamic fonts to the list as well
 		for (var ff in FontFaceConfigs) {
+      if (!(/string/i).test(typeof(FontFaceConfigs[ff]))) continue;
 			if (!foption) menulist.firstChild.insertBefore(document.createElement("menuseparator"), menulist.firstChild.firstChild);
 			var foption = document.createElement("menuitem");
-			foption.setAttribute("label", ff);
+			foption.setAttribute("label", FontFaceConfigs[ff]);
 			foption.setAttribute("value", ff);
+			if (FontFaceConfigs.hasOwnProperty("disabled") && FontFaceConfigs.disabled.hasOwnProperty(ff)) {
+        foption.setAttribute("disabled", FontFaceConfigs.disabled[ff]);
+      }
 			menulist.firstChild.insertBefore(foption, menulist.firstChild.firstChild);
 		}
 		

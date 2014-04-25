@@ -19,7 +19,7 @@
   height:423px; /* dynamic in viewport.js */
   width:180px; /* dynamic in viewport.js */
   -moz-margin-start:10px;
-  padding:6px;
+  padding:6px 6px 6px 3px;
   -moz-border-start:2px solid rgb(175,145,180);
   border-top:2px solid rgb(175,145,180);
   -moz-border-end:2px solid rgb(225,195,230);
@@ -35,6 +35,7 @@
 #testaments {
   display:table;
   height:100%;
+  border-spacing:2px;
 }
 .testaments-row {
   display:table-row;
@@ -45,7 +46,7 @@
   position:relative;
   top:0px;
   height:50%;
-  width:20px;
+  width:22px;
   color:rgb(0,0,100);
   background:rgb(233,233,233);
   border:1px outset rgb(200,200,200);
@@ -91,10 +92,10 @@ body[chromedir="rtl"] #chbutton_close {
 .biblebooks {
   display:table;
   visibility:hidden;
-  border-spacing:1px;
+  border-spacing:2px;
   position:absolute;
   top:8px;
-  left:28px;
+  left:33px;
   background:rgb(255,230,255);
   border:1px outset rgb(200,200,200);
   padding:1px 0px 1px 0px;

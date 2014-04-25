@@ -26,7 +26,7 @@ while (<INF>) {
   if ($_ =~ /^(\s*)[-+](swordmk-mods|sword-mods|TranslationUtils|zipmods|Original Backups|libxml*|GoBibleCreator|Release|autogen|\.svn|bin|tmp|compare|xulrunner-.*|clucene-core.*)$/) {$skipdir = $1; next;}
 
   # Skip listed root directories
-  elsif ($_ =~ /^(\t\t)[-+](build-out|portable|xulrunner)$/) {$skipdir = $1; next;}
+  elsif ($_ =~ /^(\t\t)[-+](build-out|build-files|portable|xulrunner)$/) {$skipdir = $1; next;}
   else {$skipdir = "none";}
 
   # Skip listed files and file types
