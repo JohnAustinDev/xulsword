@@ -1,15 +1,3 @@
-/* Standard SWORD OSIS filter CSS */
-.divineName { font-variant: small-caps; }
-.transChangeSupplied { font-style: italic; }
-.small, .sub, .sup { font-size: .83em; }
-.sub             { vertical-align: sub; }
-.sup             { vertical-align: super; }
-.indent1         { margin-left: 10px; }
-.indent2         { margin-left: 20px; }
-.indent3         { margin-left: 30px; }
-.indent4         { margin-left: 40px; }
-.overline        { text-decoration: overline; }
-		
 /* Header Links */
 .navlink {
   color:blue;
@@ -141,6 +129,28 @@
 }
 
 /* Script box styles */
+
+/* Standard SWORD OSIS filter CSS */
+.divineName { font-variant: small-caps; }
+.transChangeSupplied { font-style: italic; }
+.small, .sub, .sup { font-size: .83em; }
+.sub             { vertical-align: sub; }
+.sup             { vertical-align: super; }
+.indent0 {margin-left:0;}
+.indent1 {margin-left:2em;}
+.indent2 {margin-left:4em;}
+.indent3 {margin-left:6em;}
+.indent4 {margin-left:8em;}
+.overline        { text-decoration: overline; }
+.moduleHeader,
+.testamentHeader,
+.bookHeader,
+.chapterHeader {}
+.wordsOfJesus,
+.wordsOfJesus span {
+  color:red;
+}
+/* Xulsword OSIS filter specific CSS */
 .head1 h1, 
 .head1 h2, 
 .head1 h3,
@@ -169,33 +179,56 @@
 .canonical {
   font-style:italic;
 }
-.divine {
-  font-size: 1.3em !important;
-	color: black;
+.lb {
+/* effect of lb is entirely 
+   dependent upon what follows but
+   default is nothing */
+	display:none;
 }
-p {
-  margin-bottom:0px;
+.lb + .lb {
+	display:block;
+	margin:1em;
 }
-ol, ul {
-  margin-bottom:0px;
+.x-p {
+	text-indent:1.5em;
+	margin-top:0px;
+	margin-bottom:0px;
 }
-.paragraph-start:before {
+.x-p.x-noindent {
+	text-indent:0em;
+}
+.p-start:before,
+.x-p-indent:before {
 	content:'';
 	display:block;
 	height:0em;
 }
-.paragraph-start:after {
+.p-start:after,
+.x-p-indent:after {
 	content:'';
 	display:inline;
 	-moz-margin-start:1.5em;
 }
-.line {
-  display:block; 
+.p-end:after {
+	content:'';
+	display:block;
+	height:0em;
 }
-.indent0 {margin-left:0;}
-.indent1 {margin-left:2em;}
-.indent2 {margin-left:4em;}
-.indent3 {margin-left:6em;}
+.osis2mod {}
+.x-lg {
+	text-indent:0px;
+	margin-top:1em;
+	margin-bottom:1em;
+}
+.lg-start, .lg-end {
+	display:block;
+	margin:1em;
+}
+.line {
+  display:block;
+}
+.x-PM {}
+
 .versePerLineButton {
 	position:relative;
 	display:block;
@@ -228,15 +261,38 @@ ol, ul {
 .text[versePerLine="true"] .vs {
 	display:block;
 }
-.text[versePerLine="true"] .paragraph-start,
-.text[versePerLine="true"] br {
+.text[versePerLine="true"] .x-p {
+	text-indent:0em;
+	margin:0px;
+}
+.text[versePerLine="true"] .p-end,
+.text[versePerLine="true"] .lg-end,
+.text[versePerLine="true"] .lb {
+	display:inline-block;
+	width:0.25em;
+}
+.text[versePerLine="true"] .p-start,
+.text[versePerLine="true"] .lg-start,
+.text[versePerLine="true"] .x-p-indent,
+.text[versePerLine="true"] .p-start:before,
+.text[versePerLine="true"] .p-start:after,
+.text[versePerLine="true"] .x-p-indent:before,
+.text[versePerLine="true"] .x-p-indent:after,
+.text[versePerLine="true"] .p-end:after,
+.text[versePerLine="true"] .lb + .lb {
 	display:none;
 }
 .text[versePerLine="true"] .indent0,
 .text[versePerLine="true"] .indent1,
 .text[versePerLine="true"] .indent2,
-.text[versePerLine="true"] .indent3 {
-	margin-left:0;
+.text[versePerLine="true"] .indent3,
+.text[versePerLine="true"] .indent4,
+.text[versePerLine="true"] .x-lg {
+	margin:0px;
+}
+.text[versePerLine="true"] .line {
+  display:inline;
+  -moz-margin-end:0.25em;
 }
 .versenum {
   vertical-align:top;
@@ -306,9 +362,6 @@ ol, ul {
 }
 .matchingStrongs {
   background:yellow;
-}
-.wordsOfJesus {
-  color:red;
 }
 /* selected verse highlight */
 .sb .hl,

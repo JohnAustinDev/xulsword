@@ -46,6 +46,7 @@ protected:
 		int suspendLevel;
 		SWBuf wordsOfChristStart;
 		SWBuf wordsOfChristEnd;
+		bool wordsOfChrist;
 		TagStack *quoteStack;
 		TagStack *hiStack;
 		TagStack *titleStack;
@@ -63,7 +64,6 @@ protected:
 
 		MyUserDataXS(const SWModule *module, const SWKey *key);
 		~MyUserDataXS();
-		void outputNewline(SWBuf &buf);
 	};
 
 public:

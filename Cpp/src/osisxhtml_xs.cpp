@@ -144,6 +144,7 @@ OSISXHTMLXS::MyUserDataXS::MyUserDataXS(const SWModule *module, const SWKey *key
 	suspendLevel = 0;
 	wordsOfChristStart = "<span class=\"wordsOfJesus\"> ";
 	wordsOfChristEnd   = "</span> ";
+	wordsOfChrist = false;
 	if (module) {
 		osisQToTick = ((!module->getConfigEntry("OSISqToTick")) || (strcmp(module->getConfigEntry("OSISqToTick"), "false")));
 		version = module->getName();
@@ -170,18 +171,11 @@ OSISXHTMLXS::MyUserDataXS::~MyUserDataXS() {
 	delete pStack;
 }
 
-void OSISXHTMLXS::MyUserDataXS::outputNewline(SWBuf &buf) {
-	if (++consecutiveNewlines <= 2) {
-		outText("<br />\n", buf, this);
-		supressAdjacentWhitespace = true;
-	}
-}
-
-
 // This is used to output HTML tags and to update the HTML tag list so 
 // that rendered text will not be returned with open tags. For this 
 // function to work as intended, only a single opening or closing tag 
-// can be included anywhere in t.
+// can be included anywhere in t. Partial (unfinished) start tags are 
+// allowed.
 void OSISXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
 
 	if (u->suspendTextPassThru) {
@@ -203,13 +197,15 @@ void OSISXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
 	
 	bool keepTag = true;
 	
-	if (tagStart && *(tagStart+1) == '/' && !singleton) {
-		keepTag = (!u->htmlTagStack->empty() && !strcmp(u->htmlTagStack->top().c_str(), tag.c_str()));
-		if (keepTag) u->htmlTagStack->pop();
-	}
-	else if (tagStart && !singleton) {
-		// add this tag to stack
-		u->htmlTagStack->push(SWBuf(tag.c_str()));
+	if (!singleton) {
+		if (tagStart && *(tagStart+1) == '/') {
+			keepTag = (!u->htmlTagStack->empty() && !strcmp(u->htmlTagStack->top().c_str(), tag.c_str()));
+			if (keepTag) u->htmlTagStack->pop();
+		}
+		else if (tagStart) {
+			// add this tag to stack
+			u->htmlTagStack->push(SWBuf(tag.c_str()));
+		}
 	}
 	
 	if (keepTag) {o += t;}
@@ -448,34 +444,40 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
 		// <p> paragraph and <lg> linegroup tags
 		else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg")) {
-			if (tag.getAttribute("subType") && !tag.isEndTag() && !tag.isEmpty()) {
-				// special case of non-empty p or lg with subType generates HTML <p class="[subType]">
-				outHtmlTag(SWBuf().appendFormatted("<p class=\"%s\">", tag.getAttribute("subType")).c_str(), buf, u);
+			if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-empty start tag
+				SWBuf htag = "<";
+				htag.append(!strcmp(tag.getName(), "p") ? "p":"div");
+				htag.append(" class=\"x-");
+				htag.append(tag.getName());
+				if (tag.getAttribute("type")) {htag.append(" "); htag.append(tag.getAttribute("type"));}
+				if (tag.getAttribute("subType")) {htag.append(" "); htag.append(tag.getAttribute("subType"));}
+				htag.append("\">");
+				outHtmlTag(htag.c_str(), buf, u);
 				u->pStack->push(tag.toString());
 			}
-			else {
-				if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-empty start tag
-					u->consecutiveNewlines++; // disallow <br> before paragraphs, presentation is handled by CSS
-					u->consecutiveNewlines++;
-					outText("<span class=\"paragraph-start\"></span>", buf, u);
+			else if (tag.isEndTag()) {	// end tag
+				if (!u->pStack->empty()) {
+					XMLTag stag(u->pStack->top());
+					u->pStack->pop();
+					SWBuf htag = "</";
+					htag.append(!strcmp(stag.getName(), "p") ? "p":"div");
+					htag.append(">");
+					outHtmlTag(htag.c_str(), buf, u);
 				}
-				else if (tag.isEndTag()) {	// end tag
-					if (!u->pStack->empty()) {
-						u->pStack->pop();
-						outHtmlTag("</p>", buf, u);
-						// The </p> renders like a single <lb />
-						u->consecutiveNewlines++;
-						u->supressAdjacentWhitespace = true;
-					}
-					else {
-						u->outputNewline(buf);
-					}
+				else {
+					outText("<span class=\"", buf, u);
+					outText(tag.getName(), buf, u);
+					outText("-end", buf, u);
+					if (tag.getAttribute("subType")) {outText(" ", buf, u); outText(tag.getAttribute("subType"), buf, u);}
+					outText("\"></span>", buf, u);
 				}
-				else {					// empty paragraph break marker
-					u->consecutiveNewlines++; // disallow <br> before paragraphs, presentation is handled by CSS
-					u->consecutiveNewlines++;
-					outText("<span class=\"paragraph-start\"></span>", buf, u);
-				}
+			}
+			else {					// empty paragraph break marker
+				outText("<span class=\"", buf, u);
+				outText(tag.getName(), buf, u);
+				outText("-start", buf, u);
+				if (tag.getAttribute("subType")) {outText(" ", buf, u); outText(tag.getAttribute("subType"), buf, u);}
+				outText("\"></span>", buf, u);
 			}
 		}
 
@@ -485,13 +487,11 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		else if (tag.isEmpty() && !strcmp(tag.getName(), "div") && tag.getAttribute("type") && (!strcmp(tag.getAttribute("type"), "x-p") || !strcmp(tag.getAttribute("type"), "paragraph"))) {
 			// <div type="paragraph"  sID... />
 			if (tag.getAttribute("sID")) {	// non-empty start tag
-				u->consecutiveNewlines++; // disallow <br> before paragraphs, presentation is handled by CSS
-				u->consecutiveNewlines++;
-				outText("<span class=\"paragraph-start\"></span>", buf, u);
+				outText("<span class=\"p-start osis2mod\"></span>", buf, u);
 			}
 			// <div type="paragraph"  eID... />
 			else if (tag.getAttribute("eID")) {
-				u->outputNewline(buf);
+				outText("<span class=\"p-end osis2mod\"></span>", buf, u);
 			}
 		}
 
@@ -563,43 +563,57 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		else if (!strcmp(tag.getName(), "l")) {
 			// start line marker
 			if (tag.getAttribute("sID") || (!tag.isEndTag() && !tag.isEmpty())) {
-				// nested lines plus if the line itself has an x-indent type attribute value
-				outHtmlTag(SWBuf("<span class=\"line indent").appendFormatted("%d\">", u->lineStack->size() + (SWBuf("x-indent") == tag.getAttribute("type")?1:0)).c_str(), buf, u);
+				if (u->wordsOfChrist) {outHtmlTag(u->wordsOfChristEnd, buf, u);}
+				// nested lines plus if the line itself has an x-indent or x-indent-n type attribute value
+				SWBuf htag = "<span class=\"line indent";
+				int ind = u->lineStack->size();
+				const char *type = tag.getAttribute("type");
+				if (type) {
+					if (!strcmp(type, "x-indent")) ind++;
+					else if (!strncmp(type, "x-indent-", 9)) {ind += atoi(type+9);}
+				}
+				htag.appendFormatted("%d", ind);
+				if (tag.getAttribute("subType")) {htag.append(" "); htag.append(tag.getAttribute("subType"));}
+				htag.append("\">");
+				outHtmlTag(htag.c_str(), buf, u);
 				u->lineStack->push(tag.toString());
+				if (u->wordsOfChrist) {outHtmlTag(u->wordsOfChristStart, buf, u);}
 			}
 			// end line marker
 			else if (tag.getAttribute("eID") || tag.isEndTag()) {
+				if (u->wordsOfChrist) {outHtmlTag(u->wordsOfChristEnd, buf, u);}
 				outHtmlTag("</span>", buf, u);
-				//u->outputNewline(buf); // class="line" is display:block and so does not need a newline
-				u->consecutiveNewlines++;
-				u->supressAdjacentWhitespace = true;
 				if (u->lineStack->size()) u->lineStack->pop();
+				if (u->wordsOfChrist) {outHtmlTag(u->wordsOfChristStart, buf, u);}
 			}
 			// <l/> without eID or sID
 			// Note: this is improper osis. This should be <lb/>
 			else if (tag.isEmpty() && !tag.getAttribute("sID")) {
-				u->outputNewline(buf);
+				outText("<span class=\"lb\"></span>", buf, u);
 			}
 		}
 
 		// <lb.../>
 		else if (!strcmp(tag.getName(), "lb") && (!tag.getAttribute("type") || strcmp(tag.getAttribute("type"), "x-optional"))) {
-				u->outputNewline(buf);
+			outText("<span class=\"lb", buf, u);
+			if (tag.getAttribute("subType")) {outText(" ", buf, u); outText(tag.getAttribute("subType"), buf, u);}
+			outText("\"></span>", buf, u);
 		}
 		// <milestone type="line"/>
 		// <milestone type="x-p"/>
 		// <milestone type="cQuote" marker="x"/>
 		else if ((!strcmp(tag.getName(), "milestone")) && (tag.getAttribute("type"))) {
+			SWBuf subType = tag.getAttribute("subType");
+			if (subType.length()) {subType.insert(0, " ");}
 			if (!strcmp(tag.getAttribute("type"), "line")) {
-				u->outputNewline(buf);
-				if (tag.getAttribute("subType") && !strcmp(tag.getAttribute("subType"), "x-PM")) {
-					u->outputNewline(buf);
-				}
+				outText("<span class=\"lb", buf, u);
+				outText(subType.c_str(), buf, u);
+				outText("\"></span>", buf, u);
 			}
 			else if (!strcmp(tag.getAttribute("type"),"x-p"))  {
-				u->consecutiveNewlines++; // disallow <br> before paragraphs, presentation is handled by CSS
-				u->consecutiveNewlines++;
-				outText("<span class=\"paragraph-start\"></span>", buf, u);
+				outText("<span class=\"p-start", buf, u);
+				outText(subType.c_str(), buf, u);
+				outText("\"></span>", buf, u);
 			}
 			else if (!strcmp(tag.getAttribute("type"), "cQuote")) {
 				const char *tmp = tag.getAttribute("marker");
@@ -615,8 +629,13 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				else if (u->osisQToTick)
 					outText((level % 2) ? '\"' : '\'', buf, u);
 			}
-					// old xulsword modules use this (pre SWORD 1.7)
-      		else if (!strcmp(tag.getAttribute("type"),"x-p-indent")) {outText("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", buf, u);}
+			// old xulsword modules use x-p-indent (pre SWORD 1.7)
+			else {
+				outText("<span class=\"", buf, u); 
+				outText(tag.getAttribute("type"), buf, u); 
+				outText(subType.c_str(), buf, u);
+				outText("\"></span>", buf, u);
+			}
 		}
 
 		// <title>
@@ -630,6 +649,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				if (tag.getAttribute("canonical") && !strcmp(tag.getAttribute("canonical"), "true")) {
 					mclass.append(" canonical");
 				}
+				if (tag.getAttribute("subType")) {mclass.append(" "); mclass.append(tag.getAttribute("subType"));}
 				VerseKey *vkey = SWDYNAMIC_CAST(VerseKey, u->key);
 				if (vkey && !vkey->getVerse()) {
 					if (!vkey->getChapter()) {
@@ -679,8 +699,6 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					else {
 						outHtmlTag("</h3>", buf, u);
 					}
-					++u->consecutiveNewlines;
-					u->supressAdjacentWhitespace = true;
 				}
 			}
 		}
@@ -697,8 +715,6 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 			else if (tag.isEndTag()) {
 				outHtmlTag("</ul>", buf, u);
-				++u->consecutiveNewlines;
-				u->supressAdjacentWhitespace = true;
 			}
 		}
 
@@ -714,8 +730,6 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 			else if (tag.isEndTag()) {
 				outHtmlTag("</li>", buf, u);
-				++u->consecutiveNewlines;
-				u->supressAdjacentWhitespace = true;
 			}
 		}
 		// <catchWord> & <rdg> tags (italicize)
@@ -777,7 +791,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				
 				// create separate span from any subType
 				if (tag.getAttribute("subType")) {
-					outHtmlTag(SWBuf().appendFormatted("<span class=\"%s\">", tag.getAttribute("subType")).c_str(), buf, u);
+					SWBuf htag = "<span class=\"";
+					htag.append(tag.getAttribute("subType"));
+					htag.append("\">");
+					outHtmlTag(htag.c_str(), buf, u);
 				}
 			}
 			else if (tag.isEndTag()) {
@@ -831,8 +848,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				}
 
 				// Do this first so quote marks are included as WoC
-				if (who == "Jesus")
+				if (who == "Jesus") {
 					outHtmlTag(u->wordsOfChristStart, buf, u);
+					u->wordsOfChrist = true;
+				}
 
 				// first check to see if we've been given an explicit mark
 				if (hasMark)
@@ -865,8 +884,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					outText((level % 2) ? '\"' : '\'', buf, u);
 
 				// Do this last so quote marks are included as WoC
-				if (who == "Jesus")
+				if (who == "Jesus") {
 					outHtmlTag(u->wordsOfChristEnd, buf, u);
+					u->wordsOfChrist = false;
+				}
 			}
 		}
 
@@ -917,33 +938,31 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		else if (!strcmp(tag.getName(), "div")) {
 			SWBuf type = tag.getAttribute("type");
 			if (type == "bookGroup") {
-				u->supressAdjacentWhitespace = 1;
 			}
 			else if (type == "book") {
-				u->supressAdjacentWhitespace = 1;
 			}
 			else if (type == "section") {
-				u->supressAdjacentWhitespace = 1;
 			}
 			else if (type == "majorSection") {
-				u->supressAdjacentWhitespace = 1;
 			}
 			else if (tag.isEmpty()) { // milestone divs are not valid HTML
 			}
-			else {
+			else if (type.length()) {
 				SWBuf mtag = "<";
-				if ((!tag.isEndTag()) && (!tag.isEmpty())) {
+				if (!tag.isEndTag()) {
 					mtag.append(type);
-					if (tag.getAttribute("subType")) {mtag.appendFormatted(" class=\"%s\"", tag.getAttribute("subType"));}
-					mtag.append(">");
-					outHtmlTag(mtag, buf, u);
+					if (tag.getAttribute("subType")) {
+						mtag.append(" class=\"");
+						mtag.append(tag.getAttribute("subType"));
+						mtag.append("\"");
+					}
 				}
-				else if (tag.isEndTag()) {
+				else {
 					mtag.append("/");
 					mtag.append(type);
-					mtag.append(">");
-					outHtmlTag(mtag, buf, u);
 				}
+				mtag.append(">");
+				outHtmlTag(mtag, buf, u);
 			}
 		}
 		else if (!strcmp(tag.getName(), "span")) {
@@ -954,40 +973,40 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		}
 		else if (!strcmp(tag.getName(), "table")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
-				outHtmlTag("<table>", buf, u);
+				outHtmlTag("<table", buf, u);
+				if (tag.getAttribute("subType")) {outText(" class=\"", buf, u); outText(tag.getAttribute("subType"), buf, u); outText("\"", buf, u);}
+				outText(">", buf, u);
 				outHtmlTag("<tbody>", buf, u);
 			}
 			else if (tag.isEndTag()) {
 				outHtmlTag("</tbody>", buf, u);
 				outHtmlTag("</table>", buf, u);
-				++u->consecutiveNewlines;
-				u->supressAdjacentWhitespace = true;
 			}
-			
 		}
 		else if (!strcmp(tag.getName(), "row")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
-				outHtmlTag("<tr>", buf, u);
+				outHtmlTag("<tr", buf, u);
+				if (tag.getAttribute("subType")) {outText(" class=\"", buf, u); outText(tag.getAttribute("subType"), buf, u); outText("\"", buf, u);}
+				outText(">", buf, u);
 			}
 			else if (tag.isEndTag()) {
 				outHtmlTag("</tr>", buf, u);
 			}
-			
 		}
 		else if (!strcmp(tag.getName(), "cell")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
-				outHtmlTag("<td>", buf, u);
+				outHtmlTag("<td", buf, u);
+				if (tag.getAttribute("subType")) {outText(" class=\"", buf, u); outText(tag.getAttribute("subType"), buf, u); outText("\"", buf, u);}
+				outText(">", buf, u);
 			}
 			else if (tag.isEndTag()) {
 				outHtmlTag("</td>", buf, u);
 			}
 		}
 		else {
-			if (!u->supressAdjacentWhitespace) u->consecutiveNewlines = 0;
 			return false;  // we still didn't handle token
 		}
 	}
-	if (!u->supressAdjacentWhitespace) u->consecutiveNewlines = 0;
 	return true;
 }
 

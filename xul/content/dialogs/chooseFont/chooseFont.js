@@ -58,7 +58,7 @@ chooseFont = {
       if (!(/string/i).test(typeof(FontFaceConfigs[ff]))) continue;
 			if (!foption) menulist.firstChild.insertBefore(document.createElement("menuseparator"), menulist.firstChild.firstChild);
 			var foption = document.createElement("menuitem");
-			foption.setAttribute("label", FontFaceConfigs[ff]);
+			foption.setAttribute("label", ((/^file\:/i).test(FontFaceConfigs[ff]) ? ff:FontFaceConfigs[ff]));
 			foption.setAttribute("value", ff);
 			if (FontFaceConfigs.hasOwnProperty("disabled") && FontFaceConfigs.disabled.hasOwnProperty(ff)) {
         foption.setAttribute("disabled", FontFaceConfigs.disabled[ff]);
