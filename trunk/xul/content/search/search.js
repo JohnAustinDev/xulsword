@@ -495,8 +495,8 @@ function SearchObj(searchObj) {
       mod = result.translate;
     }
     else {
-      keepStrongs = LibSword.getModuleInformation(mod, "Feature");
-      keepStrongs = (/StrongsNumbers/).test(keepStrongs);
+      keepStrongs = LibSword.getModuleInformation(mod, "Feature") + LibSword.getModuleInformation(mod, "GlobalOptionFilter");
+      keepStrongs = (/Strongs/i).test(keepStrongs);
       result.translate = mod;
     }
 

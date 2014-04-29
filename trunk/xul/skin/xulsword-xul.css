@@ -1,3 +1,6 @@
+button, toolbarbutton {
+  font-size:11px;
+}
 #topbox[hasBible="false"] {
   background-image: url(chrome://xulsword/skin/images/b2.gif);
 }

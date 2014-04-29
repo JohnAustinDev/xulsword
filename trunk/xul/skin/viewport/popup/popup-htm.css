@@ -19,6 +19,7 @@
   color:black;
   font-weight:normal;
   font-style:normal;
+  text-indent:0px;
 }
 #npopupRL {
   /* just a relative container so that popupTX can be absolute */
@@ -201,6 +202,9 @@ body[chromedir="rtl"] .popup-mod-select {
 }
 .popup-noteAddress {
 	display:none;
+}
+#npopupTX .image-container img {
+	max-width:none;
 }
 
 /* dictionary styles */

@@ -27,10 +27,6 @@ textbox, toolbarbutton, label {
   direction:inherit;
 }
 
-button, toolbarbutton {
-  font-size:11px;
-}
-
 /* button.xml in omni.ja */
 .button-box {
   background-color:rgb(255,255,255);

@@ -22,7 +22,7 @@
 
  
 #include <stdlib.h>
-#include <gbfxhtml.h>
+#include <gbfxhtmlxs.h>
 #include <swmodule.h>
 #include <utilxml.h>
 #include <versekey.h>
@@ -31,15 +31,59 @@
 
 SWORD_NAMESPACE_START
 
-class GBFXHTMLXS : public GBFXHTML {
-  protected:
-  	bool handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData);
-  	
-  public:
-  	GBFXHTMLXS();
-};
+const char *GBFXHTMLXS::getHeader() const {
+	return "\
+		.wordsOfJesus {\
+			color: red;\
+		}\
+	";
+}
 
-GBFXHTMLXS::GBFXHTMLXS() : GBFXHTML() {}
+GBFXHTMLXS::MyUserData::MyUserData(const SWModule *module, const SWKey *key) : BasicFilterUserData(module, key) {
+	if (module) {
+		version = module->getName(); 
+	}	
+}
+
+GBFXHTMLXS::GBFXHTMLXS() {
+	setTokenStart("<");
+	setTokenEnd(">");
+	
+	setTokenCaseSensitive(true);
+
+	//addTokenSubstitute("Rf", ")</small></font>");
+	addTokenSubstitute("FA", "<font color=\"#800000\">"); // for ASV footnotes to mark text
+	addTokenSubstitute("Rx", "</a>");
+	addTokenSubstitute("FI", "<i>"); // italics begin
+	addTokenSubstitute("Fi", "</i>");
+	addTokenSubstitute("FB", "<b>"); // bold begin
+	addTokenSubstitute("Fb", "</b>");
+	addTokenSubstitute("FR", "<span class=\"wordsOfJesus\">"); // words of Jesus begin
+	addTokenSubstitute("Fr", "</span>");
+	addTokenSubstitute("FU", "<u>"); // underline begin
+	addTokenSubstitute("Fu", "</u>");
+	addTokenSubstitute("FO", "<cite>"); //  Old Testament quote begin
+	addTokenSubstitute("Fo", "</cite>");
+	addTokenSubstitute("FS", "<sup>"); // Superscript begin// Subscript begin
+	addTokenSubstitute("Fs", "</sup>");
+	addTokenSubstitute("FV", "<sub>"); // Subscript begin
+	addTokenSubstitute("Fv", "</sub>");
+	addTokenSubstitute("TT", "<big>"); // Book title begin
+	addTokenSubstitute("Tt", "</big>");
+	addTokenSubstitute("PP", "<cite>"); //  poetry  begin
+	addTokenSubstitute("Pp", "</cite>");
+	addTokenSubstitute("Fn", "</font>"); //  font  end
+	addTokenSubstitute("CL", "<br />"); //  new line
+	addTokenSubstitute("CM", "<br /><br />"); //  paragraph <!P> is a non showing comment that can be changed in the front end to <P> if desired
+	addTokenSubstitute("CG", ""); //  ???
+	addTokenSubstitute("CT", ""); // ???
+	addTokenSubstitute("JR", "<div align=\"right\">"); // right align begin
+	addTokenSubstitute("JC", "<div align=\"center\">"); // center align begin
+	addTokenSubstitute("JL", "</div>"); // align end
+	
+	renderNoteNumbers = false;
+}
+
 
 bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData) {
 	const char *tok;
@@ -48,7 +92,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
 	if (!substituteToken(buf, token)) {
 		XMLTag tag(token);
 		
-		if (!strncmp(token, "WG", 2) || !strncmp(token, "WH", 2) || !strncmp(token, "WTG", 3) || !strncmp(token, "WTH", 3)) { // strong's numbers
+	if (!strncmp(token, "WG", 2) || !strncmp(token, "WH", 2) || !strncmp(token, "WTG", 3) || !strncmp(token, "WTH", 3)) { // strong's numbers
 		
 		SWBuf styp;
 		int tl = 2;
@@ -127,6 +171,70 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
 			}
 		}
 
+		else if (!strncmp(token, "WT", 2) && strncmp(token, "WTH", 3) && strncmp(token, "WTG", 3)) { // morph tags
+			// WT[^HG] is never used in RWebster or RusVZh
+		}
+
+		else if (!strcmp(tag.getName(), "RX")) {
+			buf += "<a href=\"";
+			for (tok = token + 3; *tok; tok++) {
+			  if(*tok != '<' && *tok+1 != 'R' && *tok+2 != 'x') {
+			    buf += *tok;
+			  }
+			  else {
+			    break;
+			  }
+			}
+			buf += "\">";
+		}
+		else if (!strcmp(tag.getName(), "RF")) {
+			SWBuf footnoteNumber = tag.getAttribute("swordFootnote");
+			VerseKey *vkey = NULL;
+			// see if we have a VerseKey * or descendant
+			SWTRY {
+				vkey = SWDYNAMIC_CAST(VerseKey, u->key);
+			}
+			SWCATCH ( ... ) {	}
+			if (vkey) {
+				buf.appendFormatted("<span class=\"fn\" title=\"%s.%s.%s\"></span>",
+							footnoteNumber.c_str(), 
+							vkey->getOSISRef(),
+							userData->module->getName());
+			}
+			else {
+				buf.appendFormatted("<span class=\"gfn\" title=\"%s.fn.%s\"></span>",
+							footnoteNumber.c_str(), 
+							userData->module->getName());
+			}
+			
+			u->suspendTextPassThru = true;
+		}
+		else if (!strcmp(tag.getName(), "Rf")) {
+			u->suspendTextPassThru = false;
+		}
+/*
+		else if (!strncmp(token, "RB", 2)) {
+			buf += "<i> ";
+			u->hasFootnotePreTag = true;
+		}
+
+		else if (!strncmp(token, "Rf", 2)) {
+			buf += "&nbsp<a href=\"note=";
+			buf += u->lastTextNode.c_str();
+			buf += "\">";
+			buf += "<small><sup>*n</sup></small></a>&nbsp";
+			// let's let text resume to output again
+			u->suspendTextPassThru = false;
+		}
+		
+		else if (!strncmp(token, "RF", 2)) {
+			if (u->hasFootnotePreTag) {
+				u->hasFootnotePreTag = false;
+				buf += "</i> ";
+			}
+			u->suspendTextPassThru = true;
+		}
+*/
 		else if (!strncmp(token, "FN", 2)) {
 			buf += "<font face=\"";
 			for (tok = token + 2; *tok; tok++)				

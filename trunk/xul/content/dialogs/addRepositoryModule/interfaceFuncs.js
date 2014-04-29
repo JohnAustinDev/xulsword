@@ -94,9 +94,9 @@ ARMI = {
 		
 		var tree = document.getElementById("languageListTree");
 		
-		if (flag == "all") {tree.view.selection.clearSelection();}
+		if (tree.view && flag == "all") {tree.view.selection.clearSelection();}
 		
-		if (!flag) {
+		if (tree.view && !flag) {
 			var selIndex = tree.view.selection.currentIndex;
 			
 			flag = "none";
@@ -108,6 +108,7 @@ ARMI = {
 				}
 			} catch (er) {}
 		}
+		else if (!flag) flag = "none";
 		
 		flag = flag.replace(/\-.*$/, ""); // match all root language modules
 		
