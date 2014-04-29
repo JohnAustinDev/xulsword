@@ -1,4 +1,6 @@
-/* THE FOLLOWING STYLES ARE WRITEN AT RUNTIME BASED ON LOCALE */
+button, toolbarbutton {
+  font-size:11px;
+}
 
 bookmarks-tree, bookmarks-tree[type="multi-column"] {
   -moz-binding: url("chrome://xulsword/content/bookmarks/bookmarksTree.xml#bookmarks-tree-full");

@@ -151,16 +151,7 @@
   color:red;
 }
 /* Xulsword OSIS filter specific CSS */
-.head1 h1, 
-.head1 h2, 
-.head1 h3,
-.head2 h1, 
-.head2 h2, 
-.head2 h3 {
-	/* all titles are same size titles */
-	font-size:inherit;
-}
-.head1 {
+.head1, h1, h2, h3 {
   font-size:1.6em !important;
   color:rgb(110,85,110) !important;
   font-weight:bold;
@@ -175,6 +166,15 @@
   font-weight:bold;
   margin-bottom:0.5em;
   clear:both;
+}
+.head1 h1, 
+.head1 h2, 
+.head1 h3,
+.head2 h1, 
+.head2 h2, 
+.head2 h3 {
+	/* all titles are same size titles */
+	font-size:inherit;
 }
 .canonical {
   font-style:italic;
@@ -194,7 +194,8 @@
 	margin-top:0px;
 	margin-bottom:0px;
 }
-.x-p.x-noindent {
+.x-p.x-noindent,
+.x-p.x-p-first {
 	text-indent:0em;
 }
 .p-start:before,
@@ -279,7 +280,8 @@
 .text[versePerLine="true"] .x-p-indent:before,
 .text[versePerLine="true"] .x-p-indent:after,
 .text[versePerLine="true"] .p-end:after,
-.text[versePerLine="true"] .lb + .lb {
+.text[versePerLine="true"] .lb + .lb,
+.text[versePerLine="true"] br {
 	display:none;
 }
 .text[versePerLine="true"] .indent0,
@@ -339,6 +341,11 @@
 .sr {
 	border-bottom:1px solid blue;
   cursor:pointer;
+}
+.sr:before,
+.sr:after {
+/* ISV uses inline sr without surrounding whitespace */
+	content:' ';
 }
 .dt {
   border-bottom:1px solid black;
@@ -564,6 +571,9 @@ body[chromedir="rtl"] .fncol3 {
 .image-container {
   text-align:center;
 }
+.image-container img {
+	max-width:100%;
+}
 
 /* HTML TABLES */
 .sb table tr td {
@@ -587,7 +597,6 @@ body[chromedir="rtl"] .fncol3 {
 	margin:0px 0px 0.5em 1em;
 	border:3px outset black;
 	border-radius:8px;
-	width:100%;
 }
 .x-p-first {
   display:block;

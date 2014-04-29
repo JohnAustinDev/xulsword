@@ -152,7 +152,7 @@ BibleNavigator = {
       switch (e.type) {  
       case MSOVER:
         if (!this.MouseScrollTO) {
-          this.MouseScrollTO = window.setTimeout(function () {BibleNavigator.mouseScroll(t.parentNode.id, t.offsetTop);}, 100);
+          this.MouseScrollTO = window.setTimeout(function () {BibleNavigator.mouseScroll(t.parentNode.id, t.offsetTop);}, 10);
         }
         break;
       case "click":
@@ -296,11 +296,11 @@ BibleNavigator = {
     this.MouseScrollTO = null;
     var rh = this.doc().getElementById("book_1").offsetTop - this.doc().getElementById("book_0").offsetTop;
     var testel = this.doc().getElementById(testid);
-    if (this.CanDownShift[testid] && offsetTop + testel.offsetTop < 3*rh) {
+    if (this.CanDownShift[testid] && offsetTop + testel.offsetTop < 1*rh) {
       this.CanUpShift[testid] = true;
       this.CanDownShift[testid] = this.shiftChooserDown(testid, rh);
     }
-    else if (this.CanUpShift[testid] && (this.doc().getElementById("testaments").offsetHeight - (offsetTop + testel.offsetTop) < (3*rh))) {
+    else if (this.CanUpShift[testid] && (this.doc().getElementById("testaments").offsetHeight - (offsetTop + testel.offsetTop) < (1*rh))) {
       this.CanDownShift[testid] = true;
       this.CanUpShift[testid] = this.shiftChooserUp(testid, rh);
     }  

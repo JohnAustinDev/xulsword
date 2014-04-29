@@ -2,7 +2,7 @@
  *
  *  thmlxhtml.cpp -	ThML to classed XHTML
  *
- * $Id: thmlxhtml.cpp 2833 2013-06-29 06:40:28Z chrislit $
+ * $Id: thmlxhtml.cpp 3192 2014-04-19 17:26:34Z scribe $
  *
  * Copyright 2011-2013 CrossWire Bible Society (http://www.crosswire.org)
  *	CrossWire Bible Society
@@ -21,7 +21,7 @@
  */
 
 #include <stdlib.h>
-#include <thmlxhtml.h>
+#include <thmlxhtmlxs.h>
 #include <swmodule.h>
 #include <utilxml.h>
 #include <utilstr.h>
@@ -29,16 +29,146 @@
 #include <url.h>
 
 SWORD_NAMESPACE_START
+ 
 
-class ThMLXHTMLXS : public ThMLXHTML {
-  protected:
-  	bool handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData);
-  	
-  public:
-  	ThMLXHTMLXS();
-};
+const char *ThMLXHTMLXS::getHeader() const {
+	return "\
+	";
+}
 
-ThMLXHTMLXS::ThMLXHTMLXS() : ThMLXHTML() {}
+
+ThMLXHTMLXS::MyUserData::MyUserData(const SWModule *module, const SWKey *key) : BasicFilterUserData(module, key) {
+	if (module) {
+		version = module->getName();
+		BiblicalText = (!strcmp(module->getType(), "Biblical Texts"));
+		SecHead = false;
+	}	
+}
+
+
+ThMLXHTMLXS::ThMLXHTMLXS() {
+	setTokenStart("<");
+	setTokenEnd(">");
+
+	setEscapeStart("&");
+	setEscapeEnd(";");
+
+	setEscapeStringCaseSensitive(true);
+	setPassThruNumericEscapeString(true);
+
+	addAllowedEscapeString("quot");
+	addAllowedEscapeString("amp");
+	addAllowedEscapeString("lt");
+	addAllowedEscapeString("gt");
+
+	addAllowedEscapeString("nbsp");
+	addAllowedEscapeString("brvbar"); // "Š"
+	addAllowedEscapeString("sect");   // "§"
+	addAllowedEscapeString("copy");   // "©"
+	addAllowedEscapeString("laquo");  // "«"
+	addAllowedEscapeString("reg");    // "®"
+	addAllowedEscapeString("acute");  // "Ž"
+	addAllowedEscapeString("para");   // "¶"
+	addAllowedEscapeString("raquo");  // "»"
+
+	addAllowedEscapeString("Aacute"); // "Á"
+	addAllowedEscapeString("Agrave"); // "À"
+	addAllowedEscapeString("Acirc");  // "Â"
+	addAllowedEscapeString("Auml");   // "Ä"
+	addAllowedEscapeString("Atilde"); // "Ã"
+	addAllowedEscapeString("Aring");  // "Å"
+	addAllowedEscapeString("aacute"); // "á"
+	addAllowedEscapeString("agrave"); // "à"
+	addAllowedEscapeString("acirc");  // "â"
+	addAllowedEscapeString("auml");   // "ä"
+	addAllowedEscapeString("atilde"); // "ã"
+	addAllowedEscapeString("aring");  // "å"
+	addAllowedEscapeString("Eacute"); // "É"
+	addAllowedEscapeString("Egrave"); // "È"
+	addAllowedEscapeString("Ecirc");  // "Ê"
+	addAllowedEscapeString("Euml");   // "Ë"
+	addAllowedEscapeString("eacute"); // "é"
+	addAllowedEscapeString("egrave"); // "è"
+	addAllowedEscapeString("ecirc");  // "ê"
+	addAllowedEscapeString("euml");   // "ë"
+	addAllowedEscapeString("Iacute"); // "Í"
+	addAllowedEscapeString("Igrave"); // "Ì"
+	addAllowedEscapeString("Icirc");  // "Î"
+	addAllowedEscapeString("Iuml");   // "Ï"
+	addAllowedEscapeString("iacute"); // "í"
+	addAllowedEscapeString("igrave"); // "ì"
+	addAllowedEscapeString("icirc");  // "î"
+	addAllowedEscapeString("iuml");   // "ï"
+	addAllowedEscapeString("Oacute"); // "Ó"
+	addAllowedEscapeString("Ograve"); // "Ò"
+	addAllowedEscapeString("Ocirc");  // "Ô"
+	addAllowedEscapeString("Ouml");   // "Ö"
+	addAllowedEscapeString("Otilde"); // "Õ"
+	addAllowedEscapeString("oacute"); // "ó"
+	addAllowedEscapeString("ograve"); // "ò"
+	addAllowedEscapeString("ocirc");  // "ô"
+	addAllowedEscapeString("ouml");   // "ö"
+	addAllowedEscapeString("otilde"); // "õ"
+	addAllowedEscapeString("Uacute"); // "Ú"
+	addAllowedEscapeString("Ugrave"); // "Ù"
+	addAllowedEscapeString("Ucirc");  // "Û"
+	addAllowedEscapeString("Uuml");   // "Ü"
+	addAllowedEscapeString("uacute"); // "ú"
+	addAllowedEscapeString("ugrave"); // "ù"
+	addAllowedEscapeString("ucirc");  // "û"
+	addAllowedEscapeString("uuml");   // "ü"
+	addAllowedEscapeString("Yacute"); // "Ý"
+	addAllowedEscapeString("yacute"); // "ý"
+	addAllowedEscapeString("yuml");   // "ÿ"
+
+	addAllowedEscapeString("deg");    // "°"
+	addAllowedEscapeString("plusmn"); // "±"
+	addAllowedEscapeString("sup2");   // "²"
+	addAllowedEscapeString("sup3");   // "³"
+	addAllowedEscapeString("sup1");   // "¹"
+	addAllowedEscapeString("nbsp");   // "º"
+	addAllowedEscapeString("pound");  // "£"
+	addAllowedEscapeString("cent");   // "¢"
+	addAllowedEscapeString("frac14"); // "Œ"
+	addAllowedEscapeString("frac12"); // "œ"
+	addAllowedEscapeString("frac34"); // "Ÿ"
+	addAllowedEscapeString("iquest"); // "¿"
+	addAllowedEscapeString("iexcl");  // "¡"
+	addAllowedEscapeString("ETH");    // "Ð"
+	addAllowedEscapeString("eth");    // "ð"
+	addAllowedEscapeString("THORN");  // "Þ"
+	addAllowedEscapeString("thorn");  // "þ"
+	addAllowedEscapeString("AElig");  // "Æ"
+	addAllowedEscapeString("aelig");  // "æ"
+	addAllowedEscapeString("Oslash"); // "Ø"
+	addAllowedEscapeString("curren"); // "€"
+	addAllowedEscapeString("Ccedil"); // "Ç"
+	addAllowedEscapeString("ccedil"); // "ç"
+	addAllowedEscapeString("szlig");  // "ß"
+	addAllowedEscapeString("Ntilde"); // "Ñ"
+	addAllowedEscapeString("ntilde"); // "ñ"
+	addAllowedEscapeString("yen");    // "¥"
+	addAllowedEscapeString("not");    // "¬"
+	addAllowedEscapeString("ordf");   // "ª"
+	addAllowedEscapeString("uml");    // "š"
+	addAllowedEscapeString("shy");    // "­"
+	addAllowedEscapeString("macr");   // "¯"
+
+	addAllowedEscapeString("micro");  // "µ"
+	addAllowedEscapeString("middot"); // "·"
+	addAllowedEscapeString("cedil");  // "ž"
+	addAllowedEscapeString("ordm");   // "º"
+	addAllowedEscapeString("times");  // "×"
+	addAllowedEscapeString("divide"); // "÷"
+	addAllowedEscapeString("oslash"); // "ø"
+
+	setTokenCaseSensitive(true);
+//	addTokenSubstitute("scripture", "<i> ");
+	addTokenSubstitute("/scripture", "</i> ");
+
+	renderNoteNumbers = false;
+}
+
 
 bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData) {
 	if (!substituteToken(buf, token)) { // manually process if it wasn't a simple substitution
@@ -185,17 +315,19 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		}
 		else if (tag.getName() && !strcmp(tag.getName(), "div")) {
 			if (tag.isEndTag() && u->SecHead) {
-				buf += "</i></b><br />";
+				buf += "</h";
+				buf += u->SecHead;
+				buf += ">";
 				u->SecHead = false;
 			}
 			else if (tag.getAttribute("class")) {
 				if (!stricmp(tag.getAttribute("class"), "sechead")) {
-					u->SecHead = true;
-					buf += "<br /><b><i>";
+					u->SecHead = '3';
+					buf += "<h3>";
 				}
 				else if (!stricmp(tag.getAttribute("class"), "title")) {
-					u->SecHead = true;
-					buf += "<br /><b><i>";
+					u->SecHead = '2';
+					buf += "<h2>";
 				}
 				else {
 					buf += tag;
@@ -215,38 +347,18 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			    ((d = strchr( ++c , '"')) == NULL))	// identify endpoints.
 				return false;			// abandon hope.
 
-			SWBuf imagename = "file:";
+			SWBuf imagename;
 			if (*c == '/')				// as below, inside for loop.
 				imagename += userData->module->getConfigEntry("AbsoluteDataPath");
 			while (c != d)				// move bits into the name.
 			    imagename += *(c++);
+			    
+			imagename.replaceBytes("\\", '/');
 
-			// images become clickable, if the UI supports showImage.
-			buf.appendFormatted("<a href=\"passagestudy.jsp?action=showImage&value=%s&module=%s\"><",
-					    URL::encode(imagename.c_str()).c_str(),
-					    URL::encode(u->version.c_str()).c_str());
-
-			for (c = token; *c; c++) {
-				if ((*c == '/') && (*(c+1) == '\0'))
-					continue;
-				if (c == src) {
-					for (;((*c) && (*c != '"')); c++)
-						buf += *c;
-
-					if (!*c) { c--; continue; }
-
-					buf += '"';
-					if (*(c+1) == '/') {
-						buf += "file:";
-						buf += userData->module->getConfigEntry("AbsoluteDataPath");
-						if (buf[buf.length()-2] == '/')
-							c++;		// skip '/'
-					}
-					continue;
-				}
-				buf += *c;
-			}
-               buf += " border=0 /></a>";
+			buf.append("<div class=\"image-container\">");
+			buf.append("<img src=\"File://");
+			buf.append(URL::encode(imagename.c_str()).c_str());
+			buf.append("\"></div>");
 		}
 		else {
 			buf += '<';

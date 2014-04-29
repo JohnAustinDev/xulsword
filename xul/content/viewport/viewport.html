@@ -46,12 +46,10 @@
   <script src="chrome://xulsword/content/viewport/viewport.js" type="text/javascript"></script>
   
   </head>
-  <body id="viewportbody" chooser="bible" print="false" isWindow="false" hasOriginalLanguage="false" onload="BibleNavigator.init(); Popup = new PopupObj(); initViewPort();" 
-      onmouseover="BibleNavigator.mouseHandler(event)" 
-      onmouseout="BibleNavigator.mouseHandler(event)" 
-      onclick="BibleNavigator.mouseHandler(event)">
+  <body id="viewportbody" chooser="bible" print="false" isWindow="false" hasOriginalLanguage="false" 
+			onload="BibleNavigator.init(); Popup = new PopupObj(); initViewPort();">
   
-		<div id="chbutton_open"></div>
+		<div id="chbutton_open" onclick="BibleNavigator.mouseHandler(event)"></div>
 					
 		<div id="viewport">
 			<div id="chooser">
@@ -59,7 +57,10 @@
 					
 					<div id="fadetop"></div>
 					
-					<div id="biblechooser" showing="nt">
+					<div id="biblechooser" showing="nt"
+							onmouseover="BibleNavigator.mouseHandler(event)" 
+							onmouseout="BibleNavigator.mouseHandler(event)" 
+							onclick="BibleNavigator.mouseHandler(event)">
 						<div class="biblechooser-cell">
 							<div id="testaments">
 								<div class="testaments-row">
