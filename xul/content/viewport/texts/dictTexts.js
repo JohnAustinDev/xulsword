@@ -69,9 +69,10 @@ DictTexts = {
   },
   
   // this function returns a DOM node which is intended for copying 
-  // by document.importNode(). Event attributes must therefore be
-  // used in leiu of addEventListener, because the latter is NOT
-  // copied by importNode().
+  // by document.importNode(). Event handlers must therefore be
+  // added later by addEventListener, because they are NOT
+  // copied by importNode(). Event attributes are not unrecommended by
+  // Firefox AMO.
   getListHTML: function(mod) {
     var list = this.keyList[mod];
     
@@ -83,13 +84,9 @@ DictTexts = {
     
     var input = tbparent.appendChild(document.createElement("input"));
     input.className = "cs-" + mod + " keytextbox";
-    input.setAttribute("onfocus", "event.target.select();");
-    input.setAttribute("ondblclick", "event.target.select();");
-    input.setAttribute("onkeypress", "DictTexts.keyPress(event);");
     
     var keylist = div.appendChild(document.createElement("div"));
     keylist.className = "keylist";
-    keylist.setAttribute("onclick", "DictTexts.selKey(event);");
     
     for (var e=0; e < list.length; e++) {
 			var key = keylist.appendChild(document.createElement("div"));
