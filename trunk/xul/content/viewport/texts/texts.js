@@ -386,8 +386,22 @@ Texts = {
       if (force || !this.display[w] || 
           !this.display[w].hasOwnProperty("htmlList") || 
           this.display[w].htmlList !== ti.htmlList) {
+						
 				while (nb.firstChild) {nb.removeChild(nb.firstChild);}
 				nb.appendChild(document.importNode(ti.htmlList, true));
+				
+				var keytextbox = nb.getElementsByClassName("keytextbox");
+				if (keytextbox && keytextbox.length) keytextbox = keytextbox[0];
+				if (keytextbox) {
+					keytextbox.addEventListener("focus", function(event) {event.target.select();});
+					keytextbox.addEventListener("dblclick", function(event) {event.target.select();});
+					keytextbox.addEventListener("keypress", function(event) {DictTexts.keyPress(event);});
+				}
+				
+				var keylist = nb.getElementsByClassName("keylist")[0];
+				if (keylist && keylist.length) keylist = keylist[0];
+				if (keylist) keylist.addEventListener("click", function(event) {DictTexts.selKey(event);});
+				
 			}
     
       // highlight the selected key
@@ -697,7 +711,9 @@ Texts = {
         while(vs) {
           var p = getElementInfo(vs);
           if (p && p.type == "vs" && p.ch == (ch-1)) show = false;
-          vs.style.display = (show ? "":"none");
+          // must always check for (vs.style) because pre-verse titles  
+          // may begin with a Text node which will not have a style prop.
+          if (vs.style) vs.style.display = (show ? "":"none");
           vs = vs.previousSibling;
         }
         break;
@@ -711,11 +727,11 @@ Texts = {
           if (!show && showhead) {
             var p = getElementInfo(vs);
             var isverse = (p && p.type == "vs");
-            vs.style.display = (isverse  ? "none":"");
+            if (vs.style) vs.style.display = (isverse  ? "none":"");
             if (isverse) showhead = false;
           }
           else {
-            vs.style.display = (show ? "":"none");
+            if (vs.style) vs.style.display = (show ? "":"none");
             if (vs == v) show = false;
           }
           vs = vs.previousSibling;
@@ -732,7 +748,7 @@ Texts = {
         var show = false;
         while (vs) {
           if (vs === v) show = true;
-          vs.style.display = (show ? "":"none"); 
+          if (vs.style) vs.style.display = (show ? "":"none"); 
           vs = vs.nextSibling;
         }
         // show verse near middle of first column
@@ -740,7 +756,7 @@ Texts = {
         if (vs) {
           var h = 0;
           do {
-            vs.style.display = "";
+            if (vs.style) vs.style.display = "";
             h += vs.offsetHeight;
             vs = vs.previousSibling;
           }
@@ -755,13 +771,13 @@ Texts = {
         // show all verses
         var vs = sb.lastChild;
         while (vs) {
-          vs.style.display = "";
+          if (vs.style) vs.style.display = "";
           vs = vs.previousSibling;
         }
         // hide verses until last verse is visible
         vs = sb.firstChild;
         while (vs && !this.isVisibleVerse(v, w)) {
-          vs.style.display = "none";
+          if (vs.style) vs.style.display = "none";
           vs = vs.nextSibling;
         }
         
@@ -769,7 +785,7 @@ Texts = {
           var vs = sb.firstChild;
           while(vs) {
             var p = getElementInfo(vs);
-            if (p && p.type == "vs" && vs.style.display != "none") {
+            if (p && p.type == "vs" && vs.style && vs.style.display != "none") {
               Location.setLocation(p.mod, p.bk + "." + p.ch + "." + p.vs);
               break;
             }
