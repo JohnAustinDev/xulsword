@@ -71,7 +71,7 @@ DictTexts = {
   // this function returns a DOM node which is intended for copying 
   // by document.importNode(). Event handlers must therefore be
   // added later by addEventListener, because they are NOT
-  // copied by importNode(). Event attributes are not unrecommended by
+  // copied by importNode(). Event attributes are unrecommended by
   // Firefox AMO.
   getListHTML: function(mod) {
     var list = this.keyList[mod];
