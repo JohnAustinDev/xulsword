@@ -444,7 +444,8 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
 		// <p> paragraph and <lg> linegroup tags
 		else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg")) {
-			if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-empty start tag
+			// NOTE: Milestone p is illegal OSIS, but is handled gracefully anyway
+			if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-milestone start tag
 				SWBuf htag = "<";
 				htag.append(!strcmp(tag.getName(), "p") ? "p":"div");
 				htag.append(" class=\"x-");
@@ -455,7 +456,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				outHtmlTag(htag.c_str(), buf, u);
 				u->pStack->push(tag.toString());
 			}
-			else if (tag.isEndTag()) {	// end tag
+			else if (tag.isEndTag()) {	// non-milestone end tag
 				if (!u->pStack->empty()) {
 					XMLTag stag(u->pStack->top());
 					u->pStack->pop();
@@ -464,15 +465,15 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					htag.append(">");
 					outHtmlTag(htag.c_str(), buf, u);
 				}
-				else {
-					outText("<span class=\"", buf, u);
-					outText(tag.getName(), buf, u);
-					outText("-end", buf, u);
-					if (tag.getAttribute("subType")) {outText(" ", buf, u); outText(tag.getAttribute("subType"), buf, u);}
-					outText("\"></span>", buf, u);
-				}
 			}
-			else {					// empty paragraph break marker
+			else if (tag.getAttribute("eID")) { // milestone end tag
+				outText("<span class=\"", buf, u);
+				outText(tag.getName(), buf, u);
+				outText("-end", buf, u);
+				if (tag.getAttribute("subType")) {outText(" ", buf, u); outText(tag.getAttribute("subType"), buf, u);}
+				outText("\"></span>", buf, u);
+			}
+			else {					// empty paragraph break marker or milestone start tag
 				outText("<span class=\"", buf, u);
 				outText(tag.getName(), buf, u);
 				outText("-start", buf, u);
@@ -485,14 +486,14 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// <div type="paragraph" sID.../>
 		// <div type="paragraph" eID.../>
 		else if (tag.isEmpty() && !strcmp(tag.getName(), "div") && tag.getAttribute("type") && (!strcmp(tag.getAttribute("type"), "x-p") || !strcmp(tag.getAttribute("type"), "paragraph"))) {
-			// <div type="paragraph"  sID... />
-			if (tag.getAttribute("sID")) {	// non-empty start tag
-				outText("<span class=\"p-start osis2mod\"></span>", buf, u);
+			SWBuf cls = (tag.getAttribute("eID") ? "end":"start");
+			outText("<span class=\"p-", buf, u);
+			outText(cls, buf, u);
+			if (tag.getAttribute("subType")) {
+				outText(" ", buf, u);
+				outText(tag.getAttribute("subType"), buf, u);
 			}
-			// <div type="paragraph"  eID... />
-			else if (tag.getAttribute("eID")) {
-				outText("<span class=\"p-end osis2mod\"></span>", buf, u);
-			}
+			outText(" osis2mod\"></span>", buf, u);
 		}
 
 		// <reference> tag

@@ -572,7 +572,8 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   bool haveText = false;
   std::string chapHTML; // std::string needed for rfind
 
-  while (!module->popError()) {
+  bool done = false;
+  while (!done) {
     SWBuf verseHTML;
     int vNum = myVerseKey->getVerse();
     if (vNum>1 && vNum == Verse) {MyManager->setGlobalOption("Words of Christ in Red","Off");}
@@ -630,9 +631,21 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
 			else {break;}
 		}
     
+    module->increment(1); // increment now so we can find last-verse
+    done = module->popError();
+    
 		SWBuf verseNumHTML = "<sup class=\"versenum\">";
     //If verse is non-empty and verse numbers are being displayed then print the verse number
-    if (Versenumbers && (verseText.length() > 0)) {verseNumHTML.appendFormatted("%d", vNum);}
+    if (Versenumbers && (verseText.length() > 0)) {
+      int vnx;
+      if (!done) {
+        vnx = myVerseKey->getVerse();
+        vnx--;
+      }
+      else {vnx = myVerseKey->getVerseMax();}
+      if (vNum == vnx) {verseNumHTML.appendFormatted("%d", vNum);}
+      else {verseNumHTML.appendFormatted("%d-%d", vNum, vnx);}
+    }
     verseNumHTML.append("</sup> ");
     verseText.insert((vp && *vp ? (vp-vs):0), verseNumHTML);
     
@@ -647,7 +660,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     
     verseHTML.append("</span>");
     chapHTML.append(verseHTML.c_str());
-    module->increment(1);
+    
   }
   module->setKey(EmptyKey);
 

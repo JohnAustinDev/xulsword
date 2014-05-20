@@ -166,6 +166,10 @@
   font-weight:bold;
   margin-bottom:0.5em;
   clear:both;
+  text-align:left;
+}
+.text[textdir="rtl"] .head2 {
+	text-align:right;
 }
 .head1 h1, 
 .head1 h2, 
@@ -185,7 +189,8 @@
    default is nothing */
 	display:none;
 }
-.lb + .lb {
+.lb + .lb,
+.line > .lb {
 	display:block;
 	margin:1em;
 }
