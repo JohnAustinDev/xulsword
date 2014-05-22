@@ -370,26 +370,24 @@ BibleTexts = {
       if (!ref[i]) continue;
       var failed = false;
       
-      var r = ref[i];
-      
       // is this ref an osisRef type reference?
-      r = this.normalizeOsisReference(r, mod);
+      var r = this.normalizeOsisReference(ref[i], mod);
       
       // if not, then parse it and fill in any missing values from context
-      if (!r) {
+      if (!r.ref) {
         var loc = parseLocation(ref[i]);
         if (loc) {
           bk = loc.shortName ? loc.shortName:bk;
           ch = loc.chapter ? loc.chapter:ch;
           vs = loc.verse ? loc.verse:vs;
           
-          r = bk + "." + ch + "." + vs;
+          r.ref = bk + "." + ch + "." + vs;
           
-          if (loc.lastVerse) {r += "-" + bk + "." + ch + "." + loc.lastVerse;}
+          if (loc.lastVerse) {r.ref += "-" + bk + "." + ch + "." + loc.lastVerse;}
           
-          r = this.normalizeOsisReference(r, mod);
+          r = this.normalizeOsisReference(r.ref, mod);
           
-          if (!r) failed = true;
+          if (!r.ref) failed = true;
         }
         else failed = true;
       }
@@ -401,7 +399,8 @@ BibleTexts = {
         continue;
       }
       
-      var aVerse = findAVerseText(mod, r, w, keepTextNotes);
+      var aVerse = findAVerseText(r.mod, r.ref, w, keepTextNotes);
+      if (!aVerse) aVerse = { text:"(" + ref[i] + " ??)", location:r.ref, tabNum:Tab[mod].index };
       if ((/^\s*$/).test(aVerse.text)) aVerse.text = "-----";
       
       var rmod = Tabs[aVerse.tabNum].modName;
@@ -420,6 +419,7 @@ BibleTexts = {
   },
   
   // Looks for a "." delineated OSIS Scripture reference, checks, and normalizes it.
+  // Reads any osisRef target:ref and returns mod=null if it's not installed.
   // Returns null if this is not an OSIS type reference.
   // Converts book.c to book.c.vfirst-book.c.vlast
   // And returns one of the following forms:
@@ -427,32 +427,47 @@ BibleTexts = {
   // b)   book.c.v-book.c.v
   normalizeOsisReference: function(ref, bibleMod) {
   //dump(ref + "\n");
-    var saveref = ref;
-    if (ref.search("null")!=-1) return null;
+		var ret = {mod:bibleMod, ref:null};
+    if (ref.search("null")!=-1) return ret;
     
     ref = ref.replace(/^\s+/,""); // remove beginning white space
     ref = ref.replace(/\s+$/,""); // remove trailing white space
     
-    if ((/^[^\.]+\.\d+$/).test(ref))                              // bk.c
-      return  ref + ".1-" + ref + "." + LibSword.getMaxVerse(bibleMod, ref);
+    // does osisRef have a target?
+    var m = ref.match(/^(\w+)\:/);
+    if (m) {
+			if (!(/Bible/i).test(m[1])) {
+				if (Tab.hasOwnProperty(ret.mod)) ret.mod = m[1];
+				else {
+					ret.mod = null;
+					jsdump("WARN: Target module is not installed!");
+				}
+			}
+			ref = ref.replace(/^\w+\:/, "");
+		}
+    
+    if ((/^[^\.]+\.\d+$/).test(ref)) {                            // bk.c
+			if (ret.mod) ret.ref =  ref + ".1-" + ref + "." + LibSword.getMaxVerse(ret.mod, ref);
+      else ret.ref = ref;
+    }
       
     if ((/^[^\.]+\.\d+\.\d+$/).test(ref))                         // bk.c.v
-      return ref;
+      ret.ref = ref;
       
     if ((/^[^\.]+\.\d+\.\d+\.\d+$/).test(ref)) {                  // bk.c.v1.v2
       var p = ref.match(/^(([^\.]+\.\d+)\.\d+)\.(\d+)$/);
-      return p[1] + "-" + p[2] + "." + p[3];
+      ret.ref = p[1] + "-" + p[2] + "." + p[3];
     }
     
     if ((/^[^\.]+\.\d+\.\d+-\d+$/).test(ref)) {                   // bk.c.v1-v2
       var p = ref.match(/(^[^\.]+\.\d+\.)(\d+)-(\d+)$/);
-      return p[1] + p[2] + "-" + p[1] + p[3];
+      ret.ref = p[1] + p[2] + "-" + p[1] + p[3];
     }
     
     if ((/^[^\.]+\.\d+\.\d+-[^\.]+\.\d+\.\d+$/).test(ref))        // bk.c.v-bk.c.v
-      return ref; 
+      ret.ref = ref; 
       
-    return null;
+    return ret;
   },
   
   ascendingVerse: function(a,b) {

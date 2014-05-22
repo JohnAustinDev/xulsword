@@ -137,10 +137,10 @@
 .sub             { vertical-align: sub; }
 .sup             { vertical-align: super; }
 .indent0 {margin-left:0;}
-.indent1 {margin-left:2em;}
-.indent2 {margin-left:4em;}
-.indent3 {margin-left:6em;}
-.indent4 {margin-left:8em;}
+.indent1 {margin-left:1.5em;}
+.indent2 {margin-left:3em;}
+.indent3 {margin-left:4.5em;}
+.indent4 {margin-left:6em;}
 .overline        { text-decoration: overline; }
 .moduleHeader,
 .testamentHeader,
@@ -183,15 +183,9 @@
 .canonical {
   font-style:italic;
 }
-.lb {
-/* effect of lb is entirely 
-   dependent upon what follows but
-   default is nothing */
-	display:none;
-}
 .lb + .lb,
-.line > .lb {
-	display:block;
+.line > .lb,
+.item > .lb {
 	margin:1em;
 }
 .x-p {
@@ -203,37 +197,113 @@
 .x-p.x-p-first {
 	text-indent:0em;
 }
-.p-start:before,
-.x-p-indent:before {
+/* x-p-indent occurs in old osis-converters modules */
+.x-p-indent:before,
+.p-start:before {
 	content:'';
 	display:block;
-	height:0em;
 }
-.p-start:after,
-.x-p-indent:after {
-	content:'';
-	display:inline;
-	-moz-margin-start:1.5em;
+.x-p-indent, .p-start {
+	display:inline-block;
+	width:1.5em;
 }
 .p-end:after {
 	content:'';
 	display:block;
-	height:0em;
 }
 .osis2mod {}
-.x-lg {
+.x-lg,
+.x-list {
 	text-indent:0px;
 	margin-top:1em;
 	margin-bottom:1em;
 }
-.lg-start, .lg-end {
-	display:block;
+.lg-start, .lg-end,
+.list-start, .list-end {
 	margin:1em;
 }
-.line {
+/* OSIS <lg subType="x-list-ms"><l subType="x-item-ms"> is used in 
+ * place of <list><item> since <lg> and <l> are milestoneable */
+.line:not(.x-item-ms) {
+	text-indent:-1.5em;
+	padding-left:1.5em;
+}
+/* OSIS <l level="N" subType="x-to-next-level"> only occurs when the 
+ * next <l> has the next highest level. */
+.line:not(.x-item-ms).x-to-next-level {
+	text-indent:-3em;
+	padding-left:3em;
+}
+.item {}
+.x-PM {}
+.text[versePerLine="true"] .p-end,
+.text[versePerLine="true"] .lg-end,
+.text[versePerLine="true"] .list-end,
+.text[versePerLine="true"] .lb,
+.text[versePerLine="true"] .line,
+.text[versePerLine="true"] .item {
+	display:inline;
+	margin:0.25em;
+	text-indent:0px;
+  padding:0px;
+}
+.text[versePerLine="true"] .p-end:after,
+.text[versePerLine="true"] .p-start,
+.text[versePerLine="true"] .lg-start,
+.text[versePerLine="true"] .list-start,
+.text[versePerLine="true"] .x-p-indent,
+.text[versePerLine="true"] .lb + .lb,
+.text[versePerLine="true"] br {
+	display:none;
+}
+text[versePerLine="true"] .x-p,
+.text[versePerLine="true"] .indent0,
+.text[versePerLine="true"] .indent1,
+.text[versePerLine="true"] .indent2,
+.text[versePerLine="true"] .indent3,
+.text[versePerLine="true"] .indent4,
+.text[versePerLine="true"] .x-lg,
+.text[versePerLine="true"] .x-list {
+	text-indent:0em;
+	margin:0px;
+}
+/* CLASSES PASSED FROM SWORD MODULES BY LIBXULSWORD */
+.image-container {
+  text-align:center;
+}
+.image-container img {
+	max-width:100%;
+	margin:20px 0px 20px 0px;
+}
+.x-text-image {
+	float:right;
+	margin-right:10px;
+	max-width:50%;
+}
+.x-text-image img {
+	margin:0px 0px 0.5em 1em;
+	border:3px outset black;
+	border-radius:8px;
+}
+.x-p-first {
   display:block;
 }
-.x-PM {}
+.x-p-first:first-letter,
+.x-p-first .line:first-child:first-letter,
+.x-p-first .item:first-child:first-letter {
+  font-size:4em; 
+  float:left; 
+  margin-right:10px; 
+}
+.x-p-first .line:not(.x-item-ms):first-child {
+	text-indent:0em;
+	padding-left:0em;
+}
+.x-ref-cb {
+  display:block;
+  text-align:right;
+  font-size:smaller;
+}
 
 .versePerLineButton {
 	position:relative;
@@ -267,40 +337,7 @@
 .text[versePerLine="true"] .vs {
 	display:block;
 }
-.text[versePerLine="true"] .x-p {
-	text-indent:0em;
-	margin:0px;
-}
-.text[versePerLine="true"] .p-end,
-.text[versePerLine="true"] .lg-end,
-.text[versePerLine="true"] .lb {
-	display:inline-block;
-	width:0.25em;
-}
-.text[versePerLine="true"] .p-start,
-.text[versePerLine="true"] .lg-start,
-.text[versePerLine="true"] .x-p-indent,
-.text[versePerLine="true"] .p-start:before,
-.text[versePerLine="true"] .p-start:after,
-.text[versePerLine="true"] .x-p-indent:before,
-.text[versePerLine="true"] .x-p-indent:after,
-.text[versePerLine="true"] .p-end:after,
-.text[versePerLine="true"] .lb + .lb,
-.text[versePerLine="true"] br {
-	display:none;
-}
-.text[versePerLine="true"] .indent0,
-.text[versePerLine="true"] .indent1,
-.text[versePerLine="true"] .indent2,
-.text[versePerLine="true"] .indent3,
-.text[versePerLine="true"] .indent4,
-.text[versePerLine="true"] .x-lg {
-	margin:0px;
-}
-.text[versePerLine="true"] .line {
-  display:inline;
-  -moz-margin-end:0.25em;
-}
+
 .versenum {
   vertical-align:top;
 }
@@ -573,13 +610,6 @@ body[chromedir="rtl"] .fncol3 {
   font-weight:bold;
 }
 
-.image-container {
-  text-align:center;
-}
-.image-container img {
-	max-width:100%;
-}
-
 /* HTML TABLES */
 .sb table tr td {
 	border:1px outset grey;
@@ -590,32 +620,6 @@ body[chromedir="rtl"] .fncol3 {
 }
 .sb td .head2 {
 	font-size:1em !important;
-}
-
-/* CLASSES PASSED FROM SWORD MODULES BY LIBXULSWORD */
-.x-text-image {
-	float:right;
-	margin-right:10px;
-	max-width:50%;
-}
-.x-text-image img {
-	margin:0px 0px 0.5em 1em;
-	border:3px outset black;
-	border-radius:8px;
-}
-.x-p-first {
-  display:block;
-}
-.x-p-first:first-letter,
-.x-p-first .line:first-child:first-letter {
-  font-size:4em; 
-  float:left; 
-  margin-right:10px; 
-}
-.x-ref-cb {
-  display:block;
-  text-align:right;
-  font-size:smaller;
 }
 
 

@@ -442,9 +442,13 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 		}
 
-		// <p> paragraph and <lg> linegroup tags
-		else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg")) {
-			// NOTE: Milestone p is illegal OSIS, but is handled gracefully anyway
+		// <p> paragraph, <lg> linegroup tags and <list>
+		// NOTE: Milestone p is illegal OSIS, but is handled anyway. Non-milestone 
+		// versions of these three tags should not be found in versified Bibles, 
+		// so it is not necessary to open/close u->wordsOfChrist (OSIS container 
+		// tags here remain to container-type HTML elements, which could
+		// break wordsOfChrist presentation).
+		else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg") || !strcmp(tag.getName(), "list")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-milestone start tag
 				SWBuf htag = "<";
 				htag.append(!strcmp(tag.getName(), "p") ? "p":"div");
@@ -467,18 +471,20 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				}
 			}
 			else if (tag.getAttribute("eID")) { // milestone end tag
-				outText("<span class=\"", buf, u);
+				outText("<div class=\"", buf, u);
 				outText(tag.getName(), buf, u);
 				outText("-end", buf, u);
+				if (tag.getAttribute("type")) {outText(" ", buf, u); outText(tag.getAttribute("type"), buf, u);}
 				if (tag.getAttribute("subType")) {outText(" ", buf, u); outText(tag.getAttribute("subType"), buf, u);}
-				outText("\"></span>", buf, u);
+				outText("\"></div>", buf, u);
 			}
 			else {					// empty paragraph break marker or milestone start tag
-				outText("<span class=\"", buf, u);
+				outText("<div class=\"", buf, u);
 				outText(tag.getName(), buf, u);
 				outText("-start", buf, u);
+				if (tag.getAttribute("type")) {outText(" ", buf, u); outText(tag.getAttribute("type"), buf, u);}
 				if (tag.getAttribute("subType")) {outText(" ", buf, u); outText(tag.getAttribute("subType"), buf, u);}
-				outText("\"></span>", buf, u);
+				outText("\"></div>", buf, u);
 			}
 		}
 
@@ -487,13 +493,13 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// <div type="paragraph" eID.../>
 		else if (tag.isEmpty() && !strcmp(tag.getName(), "div") && tag.getAttribute("type") && (!strcmp(tag.getAttribute("type"), "x-p") || !strcmp(tag.getAttribute("type"), "paragraph"))) {
 			SWBuf cls = (tag.getAttribute("eID") ? "end":"start");
-			outText("<span class=\"p-", buf, u);
+			outText("<div class=\"p-", buf, u);
 			outText(cls, buf, u);
 			if (tag.getAttribute("subType")) {
 				outText(" ", buf, u);
 				outText(tag.getAttribute("subType"), buf, u);
 			}
-			outText(" osis2mod\"></span>", buf, u);
+			outText(" osis2mod\"></div>", buf, u);
 		}
 
 		// <reference> tag
@@ -560,18 +566,29 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 		}
 
-		// <l> poetry, etc
-		else if (!strcmp(tag.getName(), "l")) {
-			// start line marker
+		// <l> poetry, <item> list-item
+		// NOTE: <l> and <item> should not be nested according to my reading of OSIS 
+		// schema, but nesting is handled anyway. Also <l> allows the "level" attribute,
+		// while <item> does not, however both attributes are always handled anyway.
+		else if (!strcmp(tag.getName(), "l") || !strcmp(tag.getName(), "item")) {
 			if (tag.getAttribute("sID") || (!tag.isEndTag() && !tag.isEmpty())) {
 				if (u->wordsOfChrist) {outHtmlTag(u->wordsOfChristEnd, buf, u);}
-				// nested lines plus if the line itself has an x-indent or x-indent-n type attribute value
-				SWBuf htag = "<span class=\"line indent";
+				// nested lines plus if the line itself has an x-indent or x-indent-n type attribute value or level attribute
+				SWBuf htag = "<div class=\"";
+				htag.append((!strcmp(tag.getName(), "l") ? "line":"item"));
+				htag.append(" indent");
 				int ind = u->lineStack->size();
 				const char *type = tag.getAttribute("type");
 				if (type) {
 					if (!strcmp(type, "x-indent")) ind++;
 					else if (!strncmp(type, "x-indent-", 9)) {ind += atoi(type+9);}
+				}
+				if (ind == u->lineStack->size()) {
+					const char *level = tag.getAttribute("level");
+					if (level) {
+						int lv = atoi(level);
+						ind += (lv > 0 ? (lv-1):0);
+					}
 				}
 				htag.appendFormatted("%d", ind);
 				if (tag.getAttribute("subType")) {htag.append(" "); htag.append(tag.getAttribute("subType"));}
@@ -583,22 +600,22 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			// end line marker
 			else if (tag.getAttribute("eID") || tag.isEndTag()) {
 				if (u->wordsOfChrist) {outHtmlTag(u->wordsOfChristEnd, buf, u);}
-				outHtmlTag("</span>", buf, u);
+				outHtmlTag("</div>", buf, u);
 				if (u->lineStack->size()) u->lineStack->pop();
 				if (u->wordsOfChrist) {outHtmlTag(u->wordsOfChristStart, buf, u);}
 			}
 			// <l/> without eID or sID
 			// Note: this is improper osis. This should be <lb/>
 			else if (tag.isEmpty() && !tag.getAttribute("sID")) {
-				outText("<span class=\"lb\"></span>", buf, u);
+				outText("<div class=\"lb\"></div>", buf, u);
 			}
 		}
 
 		// <lb.../>
 		else if (!strcmp(tag.getName(), "lb") && (!tag.getAttribute("type") || strcmp(tag.getAttribute("type"), "x-optional"))) {
-			outText("<span class=\"lb", buf, u);
+			outText("<div class=\"lb", buf, u);
 			if (tag.getAttribute("subType")) {outText(" ", buf, u); outText(tag.getAttribute("subType"), buf, u);}
-			outText("\"></span>", buf, u);
+			outText("\"></div>", buf, u);
 		}
 		// <milestone type="line"/>
 		// <milestone type="x-p"/>
@@ -607,14 +624,14 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			SWBuf subType = tag.getAttribute("subType");
 			if (subType.length()) {subType.insert(0, " ");}
 			if (!strcmp(tag.getAttribute("type"), "line")) {
-				outText("<span class=\"lb", buf, u);
+				outText("<div class=\"lb", buf, u);
 				outText(subType.c_str(), buf, u);
-				outText("\"></span>", buf, u);
+				outText("\"></div>", buf, u);
 			}
 			else if (!strcmp(tag.getAttribute("type"),"x-p"))  {
-				outText("<span class=\"p-start", buf, u);
+				outText("<div class=\"p-start", buf, u);
 				outText(subType.c_str(), buf, u);
-				outText("\"></span>", buf, u);
+				outText("\"></div>", buf, u);
 			}
 			else if (!strcmp(tag.getAttribute("type"), "cQuote")) {
 				const char *tmp = tag.getAttribute("marker");
@@ -632,10 +649,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 			// old xulsword modules use x-p-indent (pre SWORD 1.7)
 			else {
-				outText("<span class=\"", buf, u); 
+				outText("<div class=\"", buf, u); 
 				outText(tag.getAttribute("type"), buf, u); 
 				outText(subType.c_str(), buf, u);
-				outText("\"></span>", buf, u);
+				outText("\"></div>", buf, u);
 			}
 		}
 
@@ -703,7 +720,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				}
 			}
 		}
-		
+/*		
 		// <list>
 		else if (!strcmp(tag.getName(), "list")) {
 			if((!tag.isEndTag()) && (!tag.isEmpty())) {
@@ -732,7 +749,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			else if (tag.isEndTag()) {
 				outHtmlTag("</li>", buf, u);
 			}
-		}
+		}*/
 		// <catchWord> & <rdg> tags (italicize)
 		else if (!strcmp(tag.getName(), "rdg") || !strcmp(tag.getName(), "catchWord")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {

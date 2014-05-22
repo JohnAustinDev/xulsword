@@ -21,8 +21,8 @@ Set MicrosoftSDK=C:\Program Files\Microsoft Platform SDK
 Set XULToolkitVersion=22
 
 # SPECIFY BUILD INFORMATION
-Set Version=3.10
-Set LibxulswordVersion=1.1.1
+Set Version=3.11
+Set LibxulswordVersion=1.2
 Set Name=xulsword
 Set Vendor=CrossWire
 Set FirefoxMinVersion=21.0

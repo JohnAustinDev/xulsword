@@ -608,22 +608,26 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
       if ((vNum > Verse)&&(vNum <= LastVerse)) {verseHTML.append("<span class=\"hl\">");}
     }
     
-    //Find the appropriate place to insert the verse number (after white-space, line-breaks, and non-canonical headings)
+    //Find the appropriate place to insert the verse number (after white-space, empty divs, div start tags, and non-canonical headings)
     char *vs = (char *)verseText.c_str();
     char *vp = vs;
     bool inTitle = false;
     while (vp && *vp) {
 			if (*vp == ' ' || *vp == '\n') {vp++;}
 			if (*vp == '<') {
-				const char *ts = vp;
+				char *ts = vp;
 				vp = strchr(vp, '>'); 
-				if (vp && *vp) {
+				if (vp) {
 					vp++;
-					if (!strncmp((ts+1), "h", 1)) {
+					if (!strncmp(ts, "<h", 2)) {
 						const char *canon = strstr(ts, "canonical");
 						if (!canon || canon >= vp) {inTitle = true;}
 					}
-					else if (!strncmp((ts+1), "/h", 2)) {inTitle = false;}
+					else if (!strncmp(ts, "</h", 3)) {inTitle = false;}
+					else if (strncmp(ts, "<div", 4) && strncmp(ts, "</div", 5)) {
+						vp = ts;
+						break;
+					}
 				}
 			}
 			else if (inTitle) {vp++;}
