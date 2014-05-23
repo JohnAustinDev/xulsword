@@ -624,7 +624,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
 						if (!canon || canon >= vp) {inTitle = true;}
 					}
 					else if (!strncmp(ts, "</h", 3)) {inTitle = false;}
-					else if (strncmp(ts, "<div", 4) && strncmp(ts, "</div", 5)) {
+					else if (!inTitle && strncmp(ts, "<div", 4) && strncmp(ts, "</div", 5)) {
 						vp = ts;
 						break;
 					}

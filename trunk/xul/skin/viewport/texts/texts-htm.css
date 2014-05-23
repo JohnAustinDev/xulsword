@@ -177,8 +177,10 @@
 .head2 h1, 
 .head2 h2, 
 .head2 h3 {
-	/* all titles are same size titles */
 	font-size:inherit;
+}
+.x-right {
+	text-align:right;
 }
 .canonical {
   font-style:italic;
@@ -247,16 +249,22 @@
 	text-indent:0px;
   padding:0px;
 }
+.interB .head1,
+.interB .head2,
 .text[versePerLine="true"] .p-end:after,
 .text[versePerLine="true"] .p-start,
 .text[versePerLine="true"] .lg-start,
 .text[versePerLine="true"] .list-start,
 .text[versePerLine="true"] .x-p-indent,
 .text[versePerLine="true"] .lb + .lb,
-.text[versePerLine="true"] br {
+.text[versePerLine="true"] br,
+.interB .lg-start:first-child,
+.interB .lg-end:last-child,
+.interB .list-start:first-child,
+.interB .list-end:last-child  {
 	display:none;
 }
-text[versePerLine="true"] .x-p,
+.text[versePerLine="true"] .x-p,
 .text[versePerLine="true"] .indent0,
 .text[versePerLine="true"] .indent1,
 .text[versePerLine="true"] .indent2,
@@ -267,7 +275,6 @@ text[versePerLine="true"] .x-p,
 	text-indent:0em;
 	margin:0px;
 }
-/* CLASSES PASSED FROM SWORD MODULES BY LIBXULSWORD */
 .image-container {
   text-align:center;
 }
@@ -275,6 +282,7 @@ text[versePerLine="true"] .x-p,
 	max-width:100%;
 	margin:20px 0px 20px 0px;
 }
+/* CLASSES FROM OSIS-CONVERTER-MADE SWORD MODULES */
 .x-text-image {
 	float:right;
 	margin-right:10px;
@@ -300,8 +308,8 @@ text[versePerLine="true"] .x-p,
 	padding-left:0em;
 }
 .x-ref-cb {
-  display:block;
-  text-align:right;
+  display:block; /* CBs > May 2014 don't need this */
+  text-align:right; /* CBs > May 2014 don't need this */
   font-size:smaller;
 }
 
@@ -546,6 +554,7 @@ body[chromedir="rtl"] .fncol3 {
 
 /* Other footnotes */
 .sb .nlist {
+	clear:both;
 	border-top:1px solid grey;
 	margin:24px 10% 0px 10%;
 	padding:10px 0px 10px 0px;

@@ -597,8 +597,8 @@ function ViewPortObj(viewPortObj) {
 
     // fix main-viewport width to fill parent with no overflow
     if (window.frameElement && window.frameElement.id == "main-viewport") {
-      var width = (winw ? winw:XS_window.innerWidth - XS_window.document.getElementById("genBookChooser").boxObject.width) + "px";
-      document.getElementById("viewportbody").style.width = width;
+      var width = (winw ? winw:XS_window.innerWidth - XS_window.document.getElementById("genBookChooser").boxObject.width);
+      if (width > 200) document.getElementById("viewportbody").style.width = width + "px";
     }
 
   };
