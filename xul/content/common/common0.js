@@ -151,7 +151,7 @@ jsdump("Load common: " + window.name + "\n");
 // signifies the value should be provided by context. NOTE: the sr, 
 // dt, and dtl class may have multiple ";" or " " separated references 
 // in their titles.
-const TextClasses = {
+var TextClasses = {
   vs:     [ { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 } ],
   fn:     [ { re:new RegExp(/^(\d+)\.(unavailable)\.([^\.]+)$/),                                            nid:1, bk:null, ch:null, vs:null, lv:null, mod:3, osisref:2 },
             { re:new RegExp(/^(\d+)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                 nid:1, bk:3,    ch:4,     vs:5,    lv:5,     mod:6, osisref:2 } ],
