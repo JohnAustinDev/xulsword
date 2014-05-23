@@ -478,7 +478,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				if (tag.getAttribute("subType")) {outText(" ", buf, u); outText(tag.getAttribute("subType"), buf, u);}
 				outText("\"></div>", buf, u);
 			}
-			else {					// empty paragraph break marker or milestone start tag
+			else {	// milestone start tag
 				outText("<div class=\"", buf, u);
 				outText(tag.getName(), buf, u);
 				outText("-start", buf, u);
@@ -629,7 +629,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				outText("\"></div>", buf, u);
 			}
 			else if (!strcmp(tag.getAttribute("type"),"x-p"))  {
-				outText("<div class=\"p-start", buf, u);
+				outText("<div class=\"p-milestone", buf, u);
 				outText(subType.c_str(), buf, u);
 				outText("\"></div>", buf, u);
 			}

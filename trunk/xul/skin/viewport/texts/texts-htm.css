@@ -92,9 +92,9 @@
   cursor:pointer;
 }
 .text[moduleType="Genbks"] .listenlink {
-	position:absolute;
-	top:0px;
-	left:52px;
+  position:absolute;
+  top:0px;
+  left:52px;
 }
 .introlink {
   font-size:1.4em;
@@ -177,10 +177,14 @@
 .head2 h1, 
 .head2 h2, 
 .head2 h3 {
-	font-size:inherit;
+  font-size:inherit;
+}
+.interB .head1,
+.interB .head2 {
+  display:none;
 }
 .x-right {
-	text-align:right;
+  text-align:right;
 }
 .canonical {
   font-style:italic;
@@ -188,53 +192,47 @@
 .lb + .lb,
 .line > .lb,
 .item > .lb {
-	margin:1em;
+  margin:1em;
+}
+.osis2mod {}
+.p-milestone {
+  margin:1em;
 }
 .x-p {
-	text-indent:1.5em;
-	margin-top:0px;
-	margin-bottom:0px;
+  text-indent:1.5em;
+  margin-top:0px;
+  margin-bottom:0px;
 }
 .x-p.x-noindent,
 .x-p.x-p-first {
-	text-indent:0em;
+  text-indent:0em;
 }
 /* x-p-indent occurs in old osis-converters modules */
-.x-p-indent:before,
-.p-start:before {
-	content:'';
-	display:block;
-}
 .x-p-indent, .p-start {
-	display:inline-block;
-	width:1.5em;
+  display:inline-block;
+  width:1.5em;
 }
-.p-end:after {
-	content:'';
-	display:block;
-}
-.osis2mod {}
 .x-lg,
 .x-list {
-	text-indent:0px;
-	margin-top:1em;
-	margin-bottom:1em;
+  text-indent:0px;
+  margin-top:1em;
+  margin-bottom:1em;
 }
 .lg-start, .lg-end,
 .list-start, .list-end {
-	margin:1em;
+  margin:1em;
 }
 /* OSIS <lg subType="x-list-ms"><l subType="x-item-ms"> is used in 
  * place of <list><item> since <lg> and <l> are milestoneable */
 .line:not(.x-item-ms) {
-	text-indent:-1.5em;
-	padding-left:1.5em;
+  text-indent:-1.5em;
+  padding-left:1.5em;
 }
 /* OSIS <l level="N" subType="x-to-next-level"> only occurs when the 
  * next <l> has the next highest level. */
 .line:not(.x-item-ms).x-to-next-level {
-	text-indent:-3em;
-	padding-left:3em;
+  text-indent:-3em;
+  padding-left:3em;
 }
 .item {}
 .x-PM {}
@@ -244,14 +242,12 @@
 .text[versePerLine="true"] .lb,
 .text[versePerLine="true"] .line,
 .text[versePerLine="true"] .item {
-	display:inline;
-	margin:0.25em;
-	text-indent:0px;
+  display:inline;
+  margin:0.25em;
+  text-indent:0px;
   padding:0px;
 }
-.interB .head1,
-.interB .head2,
-.text[versePerLine="true"] .p-end:after,
+.text[versePerLine="true"] .p-milestone,
 .text[versePerLine="true"] .p-start,
 .text[versePerLine="true"] .lg-start,
 .text[versePerLine="true"] .list-start,
@@ -262,7 +258,7 @@
 .interB .lg-end:last-child,
 .interB .list-start:first-child,
 .interB .list-end:last-child  {
-	display:none;
+  display:none;
 }
 .text[versePerLine="true"] .x-p,
 .text[versePerLine="true"] .indent0,
@@ -272,26 +268,26 @@
 .text[versePerLine="true"] .indent4,
 .text[versePerLine="true"] .x-lg,
 .text[versePerLine="true"] .x-list {
-	text-indent:0em;
-	margin:0px;
+  text-indent:0em;
+  margin:0px;
 }
 .image-container {
   text-align:center;
 }
 .image-container img {
-	max-width:100%;
-	margin:20px 0px 20px 0px;
+  max-width:100%;
+  margin:20px 0px 20px 0px;
 }
 /* CLASSES FROM OSIS-CONVERTER-MADE SWORD MODULES */
 .x-text-image {
-	float:right;
-	margin-right:10px;
-	max-width:50%;
+  float:right;
+  margin-right:10px;
+  max-width:50%;
 }
 .x-text-image img {
-	margin:0px 0px 0.5em 1em;
-	border:3px outset black;
-	border-radius:8px;
+  margin:0px 0px 0.5em 1em;
+  border:3px outset black;
+  border-radius:8px;
 }
 .x-p-first {
   display:block;
@@ -304,8 +300,8 @@
   margin-right:10px; 
 }
 .x-p-first .line:not(.x-item-ms):first-child {
-	text-indent:0em;
-	padding-left:0em;
+  text-indent:0em;
+  padding-left:0em;
 }
 .x-ref-cb {
   display:block; /* CBs > May 2014 don't need this */
@@ -314,36 +310,36 @@
 }
 
 .versePerLineButton {
-	position:relative;
-	display:block;
-	width:0px;
-	height:0px;
+  position:relative;
+  display:block;
+  width:0px;
+  height:0px;
 }
 .versePerLineButton > div {
-	position:absolute;
-	top:0px;
-	left:-25px;
-	background:url('chrome://xulsword/skin/images/versePerLine.png');
-	background-position:0px 0px;
-	width:17px;
-	height:20px;
+  position:absolute;
+  top:0px;
+  left:-25px;
+  background:url('chrome://xulsword/skin/images/versePerLine.png');
+  background-position:0px 0px;
+  width:17px;
+  height:20px;
 }
 .text[textdir="rtl"] .versePerLineButton > div {
-	left:auto;
-	right:-25px;
-	transform:scaleX(-1);
+  left:auto;
+  right:-25px;
+  transform:scaleX(-1);
 }
 .text[versePerLine="true"] .versePerLineButton > div {
-	background-position:-34px 0px;
+  background-position:-34px 0px;
 }
 .text[versePerLine="false"] .versePerLineButton > div:hover {
-	background-position:-17px 0px;
+  background-position:-17px 0px;
 }
 .text[versePerLine="true"] .versePerLineButton > div:hover {
-	background-position:-51px 0px;
+  background-position:-51px 0px;
 }
 .text[versePerLine="true"] .vs {
-	display:block;
+  display:block;
 }
 
 .versenum {
@@ -664,10 +660,6 @@ body[chromedir="rtl"] .fncol3 {
 .dtl, .sr {
   color:inherit;
   border-bottom:none;
-}
-.sb .hl,
-.hl .wordsOfJesus {
-  color:inherit;
 }
 .text[moduleType="Texts"] .un-hilight {
   background:transparent;
