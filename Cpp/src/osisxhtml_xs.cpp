@@ -667,6 +667,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				if (tag.getAttribute("canonical") && !strcmp(tag.getAttribute("canonical"), "true")) {
 					mclass.append(" canonical");
 				}
+				if (tag.getAttribute("type")) {mclass.append(" "); mclass.append(tag.getAttribute("type"));}
 				if (tag.getAttribute("subType")) {mclass.append(" "); mclass.append(tag.getAttribute("subType"));}
 				VerseKey *vkey = SWDYNAMIC_CAST(VerseKey, u->key);
 				if (vkey && !vkey->getVerse()) {
@@ -944,7 +945,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
       			filepath.replaceBytes("\\", '/');
       
-      		outHtmlTag(SWBuf().appendFormatted("<div class=\"image-container %s\">", (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")).c_str(), buf, u);
+      		outHtmlTag(SWBuf().appendFormatted("<div class=\"image-container %s %s\">", 
+							(tag.getAttribute("type") ? tag.getAttribute("type"):""),
+							(tag.getAttribute("subType") ? tag.getAttribute("subType"):"")
+						).c_str(), buf, u);
 					outHtmlTag("<img src=\"File://", buf, u);
 					outText(filepath, buf, u);
 					outText("\">", buf, u);
@@ -969,9 +973,12 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				SWBuf mtag = "<";
 				if (!tag.isEndTag()) {
 					mtag.append(type);
-					if (tag.getAttribute("subType")) {
-						mtag.append(" class=\"");
-						mtag.append(tag.getAttribute("subType"));
+					SWBuf subType = tag.getAttribute("subType");
+					if (type.length() || subType.length()) {
+						mtag.append(" class=\""); 
+						mtag.append(type);
+						mtag.append(" ");
+						mtag.append(subType);
 						mtag.append("\"");
 					}
 				}
@@ -992,7 +999,15 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		else if (!strcmp(tag.getName(), "table")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 				outHtmlTag("<table", buf, u);
-				if (tag.getAttribute("subType")) {outText(" class=\"", buf, u); outText(tag.getAttribute("subType"), buf, u); outText("\"", buf, u);}
+				SWBuf type = tag.getAttribute("type");
+				SWBuf subType = tag.getAttribute("subType");
+				if (type.length() || subType.length()) {
+					outText(" class=\"", buf, u); 
+					outText(type, buf, u);
+					outText(" ", buf, u);
+					outText(subType, buf, u);
+					outText("\"", buf, u);
+				}
 				outText(">", buf, u);
 				outHtmlTag("<tbody>", buf, u);
 			}
@@ -1004,7 +1019,15 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		else if (!strcmp(tag.getName(), "row")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 				outHtmlTag("<tr", buf, u);
-				if (tag.getAttribute("subType")) {outText(" class=\"", buf, u); outText(tag.getAttribute("subType"), buf, u); outText("\"", buf, u);}
+				SWBuf type = tag.getAttribute("type");
+				SWBuf subType = tag.getAttribute("subType");
+				if (type.length() || subType.length()) {
+					outText(" class=\"", buf, u); 
+					outText(type, buf, u);
+					outText(" ", buf, u);
+					outText(subType, buf, u);
+					outText("\"", buf, u);
+				}
 				outText(">", buf, u);
 			}
 			else if (tag.isEndTag()) {
@@ -1014,7 +1037,15 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		else if (!strcmp(tag.getName(), "cell")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 				outHtmlTag("<td", buf, u);
-				if (tag.getAttribute("subType")) {outText(" class=\"", buf, u); outText(tag.getAttribute("subType"), buf, u); outText("\"", buf, u);}
+				SWBuf type = tag.getAttribute("type");
+				SWBuf subType = tag.getAttribute("subType");
+				if (type.length() || subType.length()) {
+					outText(" class=\"", buf, u); 
+					outText(type, buf, u);
+					outText(" ", buf, u);
+					outText(subType, buf, u);
+					outText("\"", buf, u);
+				}
 				outText(">", buf, u);
 			}
 			else if (tag.isEndTag()) {
