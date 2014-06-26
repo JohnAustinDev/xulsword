@@ -262,7 +262,7 @@
 [search-window.more-options.text_group_label]: Библии:
 [search-window.more-options.create_search_index]:Создать индекс поисков
 [search-window.build_index_progress_label]: Идёт создание индекса поисков....
-[search-window.first_search_prompt]: Этот техт был установлен без индекса поисков.\nСейчас индекс поисков будет создан для вас.
+[search-window.first_search_prompt]: Этот текст был установлен без индекса поисков.\nСейчас индекс поисков будет создан для вас.
 [search-window.more-less-button.less]: меньше
 [search-window.more-less-button.more]: ещё
 [search-window.searchbox.tooltip]: Согласовать любое слово с окончанием ' * '. Согласовать любой символ с ' ? '
