@@ -214,7 +214,7 @@ jsdump("STARTING startImport");
   if (!blocking && (ZipFiles.length || RegularFiles.length>5)) {
     var result = {};
     ProgressMeterLoaded = false;
-    ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSPLASH, result,
+    ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress/workProgress.xul", "work-progress", PMSPLASH, result,
       fixWindowTitle(getDataUI("menu.addNewModule.label")),
       "", 
       PMNORMAL,
