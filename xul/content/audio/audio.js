@@ -414,7 +414,7 @@ function exportAudio(exportFileFormat) {
   if (!Files || !Files.length) return false;
   
   var result = {};
-  ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress.xul", "work-progress", PMSTD, result, 
+  ProgressMeter = window.openDialog("chrome://xulsword/content/common/workProgress/workProgress.xul", "work-progress", PMSTD, result, 
       fixWindowTitle(getDataUI("menu.exportAudio.label")),
       "", 
       PMSTOP,

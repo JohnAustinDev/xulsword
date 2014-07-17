@@ -44,45 +44,7 @@
   <script>var XS_window = window.opener;</script>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
   <script type="application/x-javascript" src="chrome://xulsword/content/common/common1.js"/>
-  
-  <script><![CDATA[
-
-  function loaded() {
-    var bid = prefs.getCharPref("BuildID");
-    if (LibSword && !LibSword.loadFailed) bid += LibSword.LibswordPath.match(/libxulsword\-(.*?)\.[^\.]+$/)[1];
-    document.getElementById("info").value = XSBundle.getFormattedString('Version', [prefs.getCharPref("Version"), bid]);
-
-    try {var contribs = prefs.getCharPref("ContributorList");}
-    catch (er) {}
-    if (contribs) {
-			contribs = contribs.split("\n");
-			for (var i=0; i<contribs.length; i++) {
-				if (!contribs[i]) contribs[i] = " ";
-				var label = document.createElement("label");
-				label.setAttribute("value", contribs[i]);
-				document.getElementById("contributorList").appendChild(label);
-			}
-			document.getElementById("show-contributors-button").removeAttribute("hidden");
-    }
-    window.sizeToContent();
-  }
-  
-  var ContribScroll;
-  var ContribScrollTop = 9999;
-  function showContributors() {
-		document.getElementById('mainbox').setAttribute('showingContributors', 'true'); 
-		ContribScroll = window.setInterval(function () {scrollContributors();}, 50);
-  }
-  
-  function scrollContributors() {
-		var box = document.getElementById("contributors");
-		var list = document.getElementById("contributorList");
-		if (ContribScrollTop > box.boxObject.height + list.boxObject.height - (2*255)) ContribScrollTop = 0;
-		ContribScrollTop += 1;
-		box.scrollTop = ContribScrollTop;
-  }
-  
-  ]]></script>
+  <script type="application/x-javascript" src="chrome://xulsword/content/dialogs/about/about-xul.js"/>
   
   <vbox id="mainbox" flex="1" showingModules="false">
 		
