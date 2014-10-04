@@ -1,6 +1,10 @@
 #include "xulsword.h"
 #include "phpsword.h"
 
+#ifndef NOSECURITY
+  #include "../src/security.cpp"
+#endif
+
 /********************************************************************
 PHPSWORD Extension Glue
 *********************************************************************/
