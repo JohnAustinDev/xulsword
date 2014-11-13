@@ -78,8 +78,8 @@ body[chromedir="rtl"] #testament_nt {
   width:15px;
   height:15px;
   position:absolute;
-  top:16px;
-  left:11px;
+  top:8px;
+  left:3px;
 }
 body[chromedir="rtl"] #chbutton_close {
   left:auto;
