@@ -1,3 +1,4 @@
+#include "config.h"
 #include "xulsword.h"
 #include "phpsword.h"
 
