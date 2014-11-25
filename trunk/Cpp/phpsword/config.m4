@@ -16,5 +16,7 @@ if test $PHP_PHPSWORD != "no"; then
     PHP_ADD_LIBRARY(sword, 1, PHPSWORD_SHARED_LIBADD)
     PHP_ADD_LIBRARY(clucene, 1, PHPSWORD_SHARED_LIBADD)
     
+    AC_DEFINE(NOSECURITY, 1, "Set to disable text security.")
+    
     PHP_NEW_EXTENSION(phpsword, phpsword.cpp ../src/xulsword.cpp, $ext_shared)
 fi

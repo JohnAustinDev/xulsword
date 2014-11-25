@@ -3,14 +3,14 @@
 
 # Compares two canon.h header files and reports all differences in names/numbers of books, chapters, and verses
 
-$canon1 = "sword-svn/include/canon_synodal.h"; #shift;
-$canon2 = "src/include/canon_east.h"; #shift;
+$canon1 = "sword-svn/include/canon.h"; #shift;
+$canon2 = "sword-svn/include/canon_synodalprot.h"; #shift;
 
 readCanonFile($canon1, \%data1);
 readCanonFile($canon2, \%data2);
 
 print "\n\n";
-foreach $key (keys %data1) {
+foreach $key (sort keys %data1) {
   if ($key !~ /maxchap-/) {next;}
   if ($data1{$key} ne $data2{$key}) {
     $key =~ /maxchap-(.*)/;
@@ -19,7 +19,7 @@ foreach $key (keys %data1) {
   }
   $data1{$key} = "checked";
 }
-foreach $key (keys %data2) {
+foreach $key (sort keys %data2) {
   if ($key !~ /maxchap-/) {next;}
   if ($data1{$key} eq "checked") {next;}
   if ($data1{$key} ne $data2{$key}) {
@@ -30,23 +30,37 @@ foreach $key (keys %data2) {
   $data2{$key} = "checked";
 }
 
-print "\n\n";
-foreach $key (keys %data1) {
+print "\n\nComparing values of #1 against #2\n";
+foreach $key (sort {&locSortV($a,$b);} keys %data1) {
   if ($key !~ /maxverse-/ || !exists($data2{$key})) {next;}
   if ($data1{$key} ne $data2{$key}) {
     $key =~ /maxverse-([^-]+)-(\d+)/;
-    print $1." ".$2." maxverse differs: ".$data1{$key}.", ".$data2{$key}."\n";
+    print $1." ".$2.": last-verse = ".$data1{$key}.", ".$data2{$key}."\n";
   }
   $data1{$key} = "checked";
 }
-foreach $key (keys %data2) {
+print "\n\nComparing unchecked values of #2 against #1\n";
+foreach $key (sort {&locSortV($a,$b);} keys %data2) {
   if ($key !~ /maxverse-/ || !exists($data1{$key})) {next;}
   if ($data1{$key} eq "checked") {next;}
   if ($data1{$key} ne $data2{$key}) {
     $key =~ /maxverse-([^-]+)-(\d+)/;
-    print $1." ".$2." maxverse differs: ".$data1{$key}.", ".$data2{$key}."\n";
+    print $1." ".$2.": last-verse = ".$data1{$key}.", ".$data2{$key}."\n";
   }
   $data2{$key} = "checked";
+}
+
+sub locSortV($$) {
+  my $a = shift;
+  my $b = shift;
+  if ($a !~ /maxverse-([^-]+)-(\d+)/) {return $a cmp $b;}
+  my $ab = $1;
+  my $ac = $2*1;
+  if ($b !~ /maxverse-([^-]+)-(\d+)/) {return $a cmp $b;}
+  my $bb = $1;
+  my $bc = $2*1;
+  if ($ab eq $bb) {return $ac <=> $bc;}
+  return $a cmp $b;
 }
 
 sub readCanonFile($) {
