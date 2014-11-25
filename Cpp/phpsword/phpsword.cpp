@@ -147,7 +147,7 @@ PHP_METHOD(phpsword, getChapterTextMulti)
     int l1;
     char *vkeytext;
     int l2;
-    bool keepnotes;
+    zend_bool keepnotes;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssb", &vkeymodlist, &l1, &vkeytext, &l2, &keepnotes) == FAILURE) {
       RETURN_EMPTY_STRING();
     }
@@ -378,8 +378,8 @@ PHP_METHOD(phpsword, search)
     int l2;
     char *scope;
     int l3;
-    int type, flags;
-    bool newsearch;
+    long type, flags;
+    zend_bool newsearch;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssllb", &mod, &l1, &srchstr, &l2, &scope, &l3, &type, &flags, &newsearch) == FAILURE) {
       RETURN_LONG(0);
     }
@@ -396,8 +396,8 @@ PHP_METHOD(phpsword, getSearchResults)
   if (sword != NULL) {
     char *mod;
     int l1;
-    int first, num;
-    bool keepStrongs;
+    long first, num;
+    zend_bool keepStrongs;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sllb", &mod, &l1, &first, &num, &keepStrongs) == FAILURE) {
       RETURN_EMPTY_STRING();
     }
@@ -454,7 +454,7 @@ PHP_METHOD(phpsword, setCipherKey)
     int l1;
     char *cipherkey;
     int l2;
-    bool useSecModule;
+    zend_bool useSecModule;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssb", &mod, &l1, &cipherkey, &l2, &useSecModule) == FAILURE) {
       RETURN_NULL();
     }
