@@ -107,20 +107,6 @@ function Startup()
   WSucks = parseInt(gBookmarksTree.getAttribute("height"));
   if (!WSucks)
     WSucks = 150;
-
-  // fix no more persisted class attribute in old profiles
-  var localStore = BM.RDF.GetDataSource("rdf:local-store");
-  var rAttribute = BM.RDF.GetResource("class");
-  var rElement   = BM.RDF.GetResource("chrome://xulsword/content/bookmarks/addBookmark/addBookmark.xul#expander");
-  var rDialog    = BM.RDF.GetResource("chrome://xulsword/content/bookmarks/addBookmark/addBookmark.xul");
-  var rPersist   = BM.RDF.GetResource(BM.gNC_NS+"persist");
-  
-  var rOldValue = localStore.GetTarget(rElement, rAttribute, true);
-  if (rOldValue) {
-    localStore.Unassert(rElement, rAttribute, rOldValue, true);
-    localStore.Unassert(rDialog, rPersist, rElement, true);
-    gExpander.setAttribute("class", "down");
-  }
   
   gVerseText.value = gArg.text.text;
   gVerseText.className = "cs-" + gArg.text.location.version;
