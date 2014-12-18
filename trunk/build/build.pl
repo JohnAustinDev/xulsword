@@ -519,7 +519,10 @@ sub writeApplicationINI($) {
   # a random name!
   print INI "[Gecko]\n";
   print INI "MinVersion=$FirefoxMinVersion\n";
-  print INI "MaxVersion=$FirefoxMaxVersion\n\n";
+  # MaxVersion has been removed from application.ini since at best it may 
+  # prevent future compatibility failures, but having it causes certain 
+  # inexplicable death after any harmless Firefox upgrade.
+  #print INI "MaxVersion=$FirefoxMaxVersion\n\n";
   print INI "[XRE]\n";
   print INI "EnableExtensionManager=1\n";
   close(INI);
