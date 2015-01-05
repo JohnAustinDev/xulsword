@@ -4,10 +4,7 @@ find . -name "*.pl" -exec chmod ugo+x {} \;
 
 sudo apt-get update
 
-# [ ! -e ./Cpp ] means running in Vagrant
-if [ ! -e ./Cpp ]; then 
-	noprompt="-y"
-fi 
+noprompt="-y"
 
 sudo apt-get install $noprompt libtool
 sudo apt-get install $noprompt autoconf
