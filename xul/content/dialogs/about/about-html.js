@@ -85,12 +85,9 @@ function onLoad() {
     var about = LibSword.getModuleInformation(Tabs[t].modName,"About");
     if (about == Tabs[t].description || about == NOTFOUND) about = "";
     if (about) {
-      about = about.split("\\par");
-      for (var i=0; i<about.length; i++) {
-        var div = detail.appendChild(document.createElement("div"));
-        div.className = "about";
-        div.textContent = about[i];
-      }
+      var div = detail.appendChild(document.createElement("div"));
+      div.className = "about";
+      RTF2DOM(about, div);
     }
          
     // Conf contents
