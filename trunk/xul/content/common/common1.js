@@ -671,3 +671,46 @@ function getOffset(elem) {
   
   return offset;
 }
+
+// A wimpy RTF converter to handle SWORD's About .conf entry
+function RTF2DOM(rtf, domNode) {
+
+  var tags = [
+    // order must be longest tag to shortest
+    {re:"\\\\pard ?", rep:"", e:""}, 
+    {re:"\\\\par ?",  rep:"<br>", e:""},
+    {re:"\\\\qc ?",   rep:"<div style=\"text-align:center;\">", e:"</div>"}
+  ];
+  
+  // build a RegExp to match them all
+  var sep = "";
+  var reAll = "(";
+  for (var i=0; i<tags.length; i++) {
+    reAll += sep + tags[i].re;
+    sep = "|";
+    tags[i].rx = new RegExp(tags[i].re, "i");
+  }
+  reAll += ")";
+  reAll = new RegExp(reAll, "i");
+
+  // process tags in order now...
+  var e = "";
+  while(reAll.test(rtf)) {
+    var m = rtf.match(reAll);
+    for (var i=0; i<tags.length; i++) {
+      if (tags[i].rx.test(m[0])) {
+        rtf = rtf.replace(reAll, e + tags[i].rep);
+        break;
+      }
+    }
+    e = tags[i].e;
+  }
+  rtf += e;
+  
+  // preserve white-space
+  rtf = rtf.split(/(<[^>]*>)/);
+  for (var i=0; i<rtf.length; i++) {rtf[i] = rtf[i].replace(/  /g, " &nbsp;");}
+  rtf = rtf.join("");
+  
+  sanitizeHTML(domNode, rtf);
+}

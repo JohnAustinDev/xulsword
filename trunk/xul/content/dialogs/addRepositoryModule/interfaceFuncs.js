@@ -438,13 +438,10 @@ ARMI = {
 				var about = ARMU.getResourceLiteral(MLDS, aModRes, "About");
 				if (about == description || about == NOTFOUND) about = "";
 				if (about) {
-					about = about.split("\\par");
-					for (var i=0; i<about.length; i++) {
-						var div = detail.appendChild(fdoc.createElement("div"));
-						div.className = "about";
-						div.textContent = about[i];
-					}
-				}
+          var div = detail.appendChild(fdoc.createElement("div"));
+          div.className = "about";
+          RTF2DOM(about, div);
+        }
 						 				 
 				// Conf contents
 				var confFile = ARMU.getResourceLiteral(MLDS, aModRes, "ConfFileName");

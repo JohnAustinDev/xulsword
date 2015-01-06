@@ -499,6 +499,8 @@ ARMU = {
       if (retval) retval = retval[1];
     }
     else {
+      var cont = new RegExp(/\\[\r\n]/m); // continuation character is "\"
+      while(cont.test(filedata)) {filedata = filedata.replace(cont, " ");}
       prm = new RegExp("^\\s*" + escapeRE(param) + "\\s*=\\s*(.*?)\\s*?[\\r\\n]", "im");
       retval = filedata.match(prm);
       if (retval) retval = retval[1];
