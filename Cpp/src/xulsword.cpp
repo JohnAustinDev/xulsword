@@ -41,6 +41,7 @@
 #include "canon_east.h"
 #include "canon_synodalprot.h"
 #include "versemaps.h"
+#include "versificationmgr.h"
 
 #include <CLucene.h>
 using namespace lucene::index;
@@ -445,10 +446,38 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
 
 
 /********************************************************************
+getTreeContents
+*********************************************************************/
+void xulsword::getTreeContents(TreeKey *key, SWBuf *body) {
+	bool ok;
+	bool isChild = false;
+	body->append("{");
+	for (ok = key->firstChild(); ok; ) {
+		isChild = true;
+  	body->appendFormatted("\"%s\":", key->getLocalName());
+  	if (key->hasChildren()) {
+  		body->append("\n");
+  		getTreeContents(key, body);
+  	} else {
+  		body->append("1");
+  	}  	
+  	ok = key->nextSibling();
+  	if (ok) {
+  		body->append(",");
+  	}
+  }  
+  body->append("}");
+  if (isChild) {
+  	key->parent();
+  }
+}
+
+
+/********************************************************************
 PUBLIC XULSWORD FUNCTIONS
 *********************************************************************/
 
-xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localedir) {
+xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localedir, bool firebibleMode) {
 #ifdef WIN32
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG); // turn off MSVC debug mode's horrid assertion prompts
 	CreateMutexA(NULL, FALSE, "xulswordmutex"); // so Window's installer will bail we're already running
@@ -464,6 +493,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   ToUpperCase = toUpperCase;
   ThrowJS = throwJS;
   ReportProgress = reportProgress;
+  FireBibleMode = firebibleMode;
 
   MarkupFilterMgrXS *muf = new MarkupFilterMgrXS();
       
@@ -547,13 +577,15 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   updateGlobalOptions(false);
   module->setSkipConsecutiveLinks(true);
 
-  //Initialize Key to chapter
-  myVerseKey->setText(Chapter.c_str());
-
-  VerseKey ub;
-  ub.copyFrom(myVerseKey);
-  ub.setVerse(ub.getVerseMax());
-  myVerseKey->setUpperBound(ub);
+  if (!FireBibleMode) {
+    //Initialize Key to chapter
+    myVerseKey->setText(Chapter.c_str());
+	
+    VerseKey ub;
+    ub.copyFrom(myVerseKey);
+    ub.setVerse(ub.getVerseMax());
+    myVerseKey->setUpperBound(ub);
+  }
 
   //Is this a Commentary??
   bool isCommentary = !strcmp(module->getType(), "Commentaries");
@@ -647,7 +679,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
         vnx--;
       }
       else {vnx = myVerseKey->getVerseMax();}
-      if (vNum == vnx) {verseNumHTML.appendFormatted("%d", vNum);}
+      if (vNum == vnx || FireBibleMode) {verseNumHTML.appendFormatted("%d", vNum);}
       else {verseNumHTML.appendFormatted("%d-%d", vNum, vnx);}
     }
     verseNumHTML.append("</sup> ");
@@ -733,28 +765,32 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     MyManager->setGlobalOption("Words of Christ in Red","Off"); // Words of Christ in Red is off for multidisplay
   }
 
-  //Initialize Key to chapter  
-  myVerseKey->setText(Chapter.c_str());
+  if (!FireBibleMode) {
+    //Initialize Key to chapter  
+    myVerseKey->setText(Chapter.c_str());
 
-  VerseKey ub;
-  ub.copyFrom(myVerseKey);
-  ub.setVerse(ub.getVerseMax());
-  myVerseKey->setUpperBound(ub);
+    VerseKey ub;
+    ub.copyFrom(myVerseKey);
+    ub.setVerse(ub.getVerseMax());
+    myVerseKey->setUpperBound(ub);
+  }
 
 /*
   <div class="interB>
 
     [<span class="hl">]
     <div class="interV1 cs-KJV">
-      <sup class="versnum">1</sup>
-      <span title="Gen.5.1.KJV" class="vs">Some verse text from module 1.</span>
+      <span title="Gen.5.1.KJV" class="vs">
+        <sup class="versnum">1</sup>Some verse text from module 1.
+      </span>
     </div>
 
     <div class="interS"></div>
 
-    <div class="interV2 cs-KYROH RTL">
-      <sup class="versnum">2</sup>
-      <span title="Gen.5.2.KYROH" class="vs">Some verse text from module 2.</span>
+    <div class="interV2 cs-KYROH RTL">      
+      <span title="Gen.5.1.KYROH" class="vs">
+        <sup class="versnum">1</sup>Some verse text from module 2.
+      </span>
     </div>
     [</span>]
 
@@ -779,7 +815,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     chapText.append("<div class=\"interB\">");
 
     //If this is the selected verse group then designate as so
-    if (Verse > 1) {
+    if (Verse > 1 && !FireBibleMode) {
       if (vNum == Verse) {chapText.append("<span class=\"hl\" id=\"sv\">");}
       if ((vNum > Verse)&&(vNum <= LastVerse)) {chapText.append("<span class=\"hl\">");}
     }
@@ -798,13 +834,13 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
       if (versionNum > 1) {chapText.append("<div class=\"interS\"></div>");}
 
       // each version has its own unique class ID
-      chapText.appendFormatted("<div class=\"interV%d cs-%s%s\"><sup class=\"versenum\">", 
+      chapText.appendFormatted("<div class=\"interV%d cs-%s%s\">", 
         versionNum, 
         versemod->getName(), 
         (versemod->getDirection() != DIRECTION_LTR ? " RTL":""));
         
-      if (Versenumbers) {chapText.appendFormatted("%d",vNum);}
-      chapText.appendFormatted("</sup><span title=\"%s.%d.%d.%s\" class=\"vs\">", bk.c_str(), myVerseKey->getChapter(), vNum, versemod->getName());
+      chapText.appendFormatted("<span title=\"%s.%d.%d.%s\" class=\"vs\">", bk.c_str(), myVerseKey->getChapter(), vNum, versemod->getName());
+      if (Versenumbers) {chapText.appendFormatted("<sup class=\"versenum\">%d</sup> ",vNum);}
       versionNum++;
       
       SWKey *testkey2 = versemod->createKey();
@@ -841,7 +877,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     
     } while (comma != -1);
 
-    if (Verse > 1) {
+    if (Verse > 1 && !FireBibleMode) {
       if (vNum==Verse) {chapText.append("</span>");}
       else if ((vNum > Verse)&&(vNum <= LastVerse)) {chapText.append("</span>");}
     }
@@ -1019,6 +1055,73 @@ char *xulsword::getVerseSystem(const char *mod) {
   retval = (char *)emalloc(vsystem.length() + 1);
   if (retval) {strcpy(retval, vsystem.c_str());}
 	return retval;
+}
+
+
+/********************************************************************
+GetModuleBooks
+*********************************************************************/
+char *xulsword::getModuleBooks(const char *mod) {
+	SWBuf bookList;
+	const VersificationMgr::System *refSys = VersificationMgr::getSystemVersificationMgr()->getVersificationSystem(getVerseSystemOfModule(mod));
+	if (refSys) {
+		int maxBooks = refSys->getBookCount();
+		for (int i = 0; i < maxBooks; i++) {
+			const VersificationMgr::Book *book = refSys->getBook(i);
+			bookList.append(book->getLongName());
+			bookList.append("<bk>");
+			bookList.append(book->getPreferredAbbreviation());
+			bookList.append("<bk>");
+			bookList.appendFormatted("%i", book->getChapterMax());
+			if (i < maxBooks-1) {
+				bookList.append("<nx>");
+			}
+		}
+	}
+	SWBuf check = assureValidUTF8(bookList.c_str());
+
+	char *retval;
+	retval = (char *)emalloc(check.length() + 1);
+	if (retval) {strcpy(retval, check.c_str());}
+	return retval;
+}
+
+
+/********************************************************************
+ParseVerseKey
+*********************************************************************/
+char *xulsword::parseVerseKey(const char *vkeymod, const char *vkeytext) {
+  SWModule * module = MyManager->getModule(vkeymod);
+  if (!module) {
+    xsThrow("GetChapterText: module \"%s\" not found.", vkeymod);
+    return NULL;
+  }
+
+  SWKey *testkey = module->createKey();
+  VerseKey *myVerseKey = SWDYNAMIC_CAST(VerseKey, testkey);
+  if (!myVerseKey) {
+    delete(testkey);
+    xsThrow("GetChapterText: module \"%s\" was not Bible or Commentary.", vkeymod);
+  }
+
+  //myVerseKey->setPersist(true);
+  myVerseKey->setAutoNormalize(0); // Non-existant calls should return empty string
+  module->setKey(myVerseKey);  
+
+  locationToVerseKey(vkeytext, myVerseKey);
+  
+  SWBuf bookChapter;
+
+  //myVerseKey->getVerse(); //side effect initializes bounds
+  bookChapter.set(myVerseKey->getBookName());
+  bookChapter.appendFormatted(",%d,%d,%d,%d", myVerseKey->getChapter(), myVerseKey->getVerse(), myVerseKey->getUpperBound().getVerse(), myVerseKey->getVerseMax());
+
+  delete(testkey);
+
+  char *retval;
+  retval = (char *)emalloc(bookChapter.length() + 1);
+  if (retval) {strcpy(retval, bookChapter.c_str());}
+  return retval;
 }
 
 
@@ -1354,6 +1457,39 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
 
   toc.append("</RDF:RDF>");
 
+  delete(testkey);
+
+  SWBuf check = assureValidUTF8(toc.c_str());
+
+  char *retval;
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
+	return retval;
+}
+
+
+/********************************************************************
+GetGenBookTableOfContentsJSON
+*********************************************************************/
+char *xulsword::getGenBookTableOfContentsJSON(const char *gbmod) {
+  SWModule * module = MyManager->getModule(gbmod);
+  if (!module) {
+    xsThrow("GetGenBookTOC: module \"%s\" not found.", gbmod);
+    return NULL;
+  }
+
+  SWKey *testkey = module->createKey();
+  TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);
+  if (!key) {
+    delete(testkey);
+    xsThrow("GetGenBookTOC: module \"%s\" is not a General-Book.", gbmod);
+    return NULL;
+  }
+
+  SWBuf toc;
+  //toc.appendFormatted("\"%s\": ",key->getLocalName());
+  getTreeContents(key, &toc);
+  
   delete(testkey);
 
   SWBuf check = assureValidUTF8(toc.c_str());
@@ -1817,6 +1953,7 @@ char *xulsword::translate(const char *text, const char *localeName) {
   if (retval) {strcpy(retval, check.c_str());}
 	return retval;
 }
+
 
 // END class xulsword
 
