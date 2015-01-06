@@ -66,7 +66,7 @@ function Startup()
   
   if (getPrefOrCreate("BMfolderSelection", "Int", 0)>bookmarksFolder.tree.view.rowCount) prefs.setIntPref("BMfolderSelection", 0);
   bookmarksFolder.tree.view.selection.select(prefs.getIntPref("BMfolderSelection"));
-	bookmarksFolder.focus();
+  bookmarksFolder.focus();
   
   //setAllTwisties(true);
   

@@ -148,11 +148,11 @@ Texts = {
     // other unpinned windowed ViewPort Text objects. Plus update navigator and history.
     if (this === XS_window.Texts) {
 
-			var allViewPortWindows = Components.classes['@mozilla.org/appshell/window-mediator;1'].
-				getService(Components.interfaces.nsIWindowMediator).getEnumerator("viewport");
-				
-			while (allViewPortWindows.hasMoreElements()) {
-				var aViewPortWindow = allViewPortWindows.getNext();
+      var allViewPortWindows = Components.classes['@mozilla.org/appshell/window-mediator;1'].
+        getService(Components.interfaces.nsIWindowMediator).getEnumerator("viewport");
+        
+      while (allViewPortWindows.hasMoreElements()) {
+        var aViewPortWindow = allViewPortWindows.getNext();
 
         // then update Text of a windowed ViewPort, skipping pinned windows entirely
         for (w=1; w<=NW; w++) {
@@ -386,23 +386,23 @@ Texts = {
       if (force || !this.display[w] || 
           !this.display[w].hasOwnProperty("htmlList") || 
           this.display[w].htmlList !== ti.htmlList) {
-						
-				while (nb.firstChild) {nb.removeChild(nb.firstChild);}
-				nb.appendChild(document.importNode(ti.htmlList, true));
-				
-				var keytextbox = nb.getElementsByClassName("keytextbox");
-				if (keytextbox && keytextbox.length) keytextbox = keytextbox[0];
-				if (keytextbox) {
-					keytextbox.addEventListener("focus", function(event) {event.target.select();});
-					keytextbox.addEventListener("dblclick", function(event) {event.target.select();});
-					keytextbox.addEventListener("keypress", function(event) {DictTexts.keyPress(event);});
-				}
-				
-				var keylist = nb.getElementsByClassName("keylist")[0];
-				if (keylist && keylist.length) keylist = keylist[0];
-				if (keylist) keylist.addEventListener("click", function(event) {DictTexts.selKey(event);});
-				
-			}
+            
+        while (nb.firstChild) {nb.removeChild(nb.firstChild);}
+        nb.appendChild(document.importNode(ti.htmlList, true));
+        
+        var keytextbox = nb.getElementsByClassName("keytextbox");
+        if (keytextbox && keytextbox.length) keytextbox = keytextbox[0];
+        if (keytextbox) {
+          keytextbox.addEventListener("focus", function(event) {event.target.select();});
+          keytextbox.addEventListener("dblclick", function(event) {event.target.select();});
+          keytextbox.addEventListener("keypress", function(event) {DictTexts.keyPress(event);});
+        }
+        
+        var keylist = nb.getElementsByClassName("keylist")[0];
+        if (keylist && keylist.length) keylist = keylist[0];
+        if (keylist) keylist.addEventListener("click", function(event) {DictTexts.selKey(event);});
+        
+      }
     
       // highlight the selected key
       var k = document.getElementById("note" + w).getElementsByClassName("dictselectkey");
@@ -531,19 +531,19 @@ Texts = {
   },
   
   getWindowDisplay: function(w) {
-		var display = {};
-		
-		display.Key = ViewPort.Key[w];
-		display.ShowOriginal = ViewPort.ShowOriginal[w];
+    var display = {};
+    
+    display.Key = ViewPort.Key[w];
+    display.ShowOriginal = ViewPort.ShowOriginal[w];
     display.MaximizeNoteBox = ViewPort.MaximizeNoteBox[w];
     var c = document.getElementById("text" + w);
     display.columns = (c ? c.getAttribute("columns"):null);
-		
-		return this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), display);
-	},
+    
+    return this.getDisplay(ViewPort.Module[w], Location.getLocation(ViewPort.Module[w]), display);
+  },
  
   getDisplay: function(mod, loc, display) {
-		if (!display) display = {};
+    if (!display) display = {};
     display.globalOptions = {};
     
     for (var cmd in GlobalToggleCommands) {

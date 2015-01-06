@@ -163,9 +163,9 @@ BibleTexts = {
     // Setting intro (which is not well-formed for all RusVZh chapters) to an element and reading again 
     // insures HTML string is well formed at least.
     if (intro) {
-			var tmp = document.createElement("div");
-			sanitizeHTML(tmp, intro);
-			intro = tmp.innerHTML;
+      var tmp = document.createElement("div");
+      sanitizeHTML(tmp, intro);
+      intro = tmp.innerHTML;
     }
   
     var lt = LibSword.getModuleInformation(d.mod, "NoticeLink");
@@ -195,18 +195,18 @@ BibleTexts = {
     html +=     "<div class=\"listenlink\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\"></div>";
     html +=     "<div class=\"introlink" + (!intro ? " empty":"") + "\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
     if (d["ShowOriginal"]) {
-			var origs = SpecialModules.OriginalLanguages.Greek.concat(SpecialModules.OriginalLanguages.Hebrew);
-			if (origs.length) {
-				html += "<div class=\"origselect\">";
-				html +=   "<select>";
-				for (var i=0; i<origs.length; i++) {
-					try {var selected = origs[i] == (findBookNum(d.bk) < NumOT ? Tab.ORIG_OT.modName:Tab.ORIG_NT.modName);}
-					catch (er) {selected = false;}
-					html +=   "<option class=\"origoption cs-" + Tab[origs[i]].locName + "\" value=\"" + d.bk + ".1.1." + origs[i] + "\"" + (selected ? " selected=\"selected\"":"") + ">" + Tab[origs[i]].label + "</option>";
-				} 
-				html +=   "</select>";
-				html += "</div>";
-			}
+      var origs = SpecialModules.OriginalLanguages.Greek.concat(SpecialModules.OriginalLanguages.Hebrew);
+      if (origs.length) {
+        html += "<div class=\"origselect\">";
+        html +=   "<select>";
+        for (var i=0; i<origs.length; i++) {
+          try {var selected = origs[i] == (findBookNum(d.bk) < NumOT ? Tab.ORIG_OT.modName:Tab.ORIG_NT.modName);}
+          catch (er) {selected = false;}
+          html +=   "<option class=\"origoption cs-" + Tab[origs[i]].locName + "\" value=\"" + d.bk + ".1.1." + origs[i] + "\"" + (selected ? " selected=\"selected\"":"") + ">" + Tab[origs[i]].label + "</option>";
+        } 
+        html +=   "</select>";
+        html += "</div>";
+      }
     }
     html +=   "</div>";
     
@@ -240,9 +240,9 @@ BibleTexts = {
         
         var m = note[n].match(/(<div class="nlist" [^>]*>(.*?)<\/div>)/);
         if (!m) {
-					jsdump("ERROR: skipped bad note \"" + note[n] + "\"");
-					continue;
-				}
+          jsdump("ERROR: skipped bad note \"" + note[n] + "\"");
+          continue;
+        }
         var body = m[2];
         
         var p = getElementInfo(note[n]);
@@ -427,7 +427,7 @@ BibleTexts = {
   // b)   book.c.v-book.c.v
   normalizeOsisReference: function(ref, bibleMod) {
   //dump(ref + "\n");
-		var ret = {mod:bibleMod, ref:null};
+    var ret = {mod:bibleMod, ref:null};
     if (ref.search("null")!=-1) return ret;
     
     ref = ref.replace(/^\s+/,""); // remove beginning white space
@@ -436,18 +436,18 @@ BibleTexts = {
     // does osisRef have a target?
     var m = ref.match(/^(\w+)\:/);
     if (m) {
-			if (!(/Bible/i).test(m[1])) {
-				if (Tab.hasOwnProperty(ret.mod)) ret.mod = m[1];
-				else {
-					ret.mod = null;
-					jsdump("WARN: Target module is not installed!");
-				}
-			}
-			ref = ref.replace(/^\w+\:/, "");
-		}
+      if (!(/Bible/i).test(m[1])) {
+        if (Tab.hasOwnProperty(ret.mod)) ret.mod = m[1];
+        else {
+          ret.mod = null;
+          jsdump("WARN: Target module is not installed!");
+        }
+      }
+      ref = ref.replace(/^\w+\:/, "");
+    }
     
     if ((/^[^\.]+\.\d+$/).test(ref)) {                            // bk.c
-			if (ret.mod) ret.ref =  ref + ".1-" + ref + "." + LibSword.getMaxVerse(ret.mod, ref);
+      if (ret.mod) ret.ref =  ref + ".1-" + ref + "." + LibSword.getMaxVerse(ret.mod, ref);
       else ret.ref = ref;
     }
       

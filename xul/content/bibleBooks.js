@@ -23,7 +23,7 @@
 
 function getBibleBooks() {
 
-	// default book order is KJV
+  // default book order is KJV
   var allBooks = ["Gen", "Exod", "Lev", "Num", "Deut", "Josh", "Judg", 
       "Ruth", "1Sam", "2Sam", "1Kgs", "2Kgs", "1Chr", "2Chr", "Ezra", 
       "Neh", "Esth", "Job", "Ps", "Prov", "Eccl", "Song", "Isa", "Jer", 
@@ -35,22 +35,22 @@ function getBibleBooks() {
 
   var book = [];
   for (var i=0; i < allBooks.length; i++) {
-		book.push( { sName:"", bName:"", bNameL:"" } );
+    book.push( { sName:"", bName:"", bNameL:"" } );
   }
 
-	var b = getCurrentLocaleBundle("common/books.properties");
+  var b = getCurrentLocaleBundle("common/books.properties");
   for (i=0; i < book.length; i++) {
     // implement book order from xulsword locale
     try {
-			var x = b.GetStringFromName(allBooks[i] + "i");
-			if ((/^\s*$/).test(x)) x = i;
-			x = Number(x);
-		}
+      var x = b.GetStringFromName(allBooks[i] + "i");
+      if ((/^\s*$/).test(x)) x = i;
+      x = Number(x);
+    }
     catch (er) {x = i;}
   
     if (book[x].sName) 
-				throw "ERROR: Two books share the same index (" + x + "):" + book[x].sName + ", " + allBooks[i];
-				
+        throw "ERROR: Two books share the same index (" + x + "):" + book[x].sName + ", " + allBooks[i];
+        
     book[x].sName = allBooks[i];
   }
 

@@ -202,21 +202,21 @@ function initBookmarksLocale() {
     var info = ResourceFuns.BmGetInfo(bmid);
     
     if (info[TYPE] == "Bookmark") {
-			
-			// translate this bookmark's location into the new module's verse system if necessary
-			var toLoc = info[LOCATION];
-			var toVsys = LibSword.getVerseSystem(mod);
-			if (toVsys != "KJV") toLoc = LibSword.convertLocation("KJV", toLoc, toVsys);
-			
-			// (re)set location attributes
-			toLoc = toLoc.split(".");
-			newBM.attribs.push(MODULE);    newBM.vals.push(mod);
-			newBM.attribs.push(BOOK);      newBM.vals.push(toLoc[0]);
-			newBM.attribs.push(CHAPTER);   newBM.vals.push(toLoc[1]);
-			newBM.attribs.push(VERSE);     newBM.vals.push(toLoc[2]);
-			newBM.attribs.push(LASTVERSE); newBM.vals.push(toLoc.length > 3 ? toLoc[3]:toLoc[2]);
-		}
-		
+      
+      // translate this bookmark's location into the new module's verse system if necessary
+      var toLoc = info[LOCATION];
+      var toVsys = LibSword.getVerseSystem(mod);
+      if (toVsys != "KJV") toLoc = LibSword.convertLocation("KJV", toLoc, toVsys);
+      
+      // (re)set location attributes
+      toLoc = toLoc.split(".");
+      newBM.attribs.push(MODULE);    newBM.vals.push(mod);
+      newBM.attribs.push(BOOK);      newBM.vals.push(toLoc[0]);
+      newBM.attribs.push(CHAPTER);   newBM.vals.push(toLoc[1]);
+      newBM.attribs.push(VERSE);     newBM.vals.push(toLoc[2]);
+      newBM.attribs.push(LASTVERSE); newBM.vals.push(toLoc.length > 3 ? toLoc[3]:toLoc[2]);
+    }
+    
     // now write all new values from our update object
     for (var i=0; i<newBM.attribs.length; i++) {
       info[newBM.attribs[i]] = newBM.vals[i];

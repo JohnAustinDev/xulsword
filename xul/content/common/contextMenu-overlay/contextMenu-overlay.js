@@ -150,11 +150,11 @@ var ContextMenu = {
     
     // If target module is not installed, force target to defaults
     if (!Tab.hasOwnProperty(this.target.mod)) {
-			this.target.mod = prefs.getCharPref("DefaultVersion");
-			for (var p in defaults[Tab[this.target.mod].tabType]) {
-				this.target[p] = defaults[Tab[this.target.mod].tabType][p];
-			}
-		}
+      this.target.mod = prefs.getCharPref("DefaultVersion");
+      for (var p in defaults[Tab[this.target.mod].tabType]) {
+        this.target[p] = defaults[Tab[this.target.mod].tabType][p];
+      }
+    }
     
     // Fill in any remaining missing target props with defaults
     for (var p in defaults[Tab[this.target.mod].tabType]) {

@@ -173,19 +173,19 @@ LibSword = {
     
   },
   
-	freeSearchPointer: function(sp) {
-		if (!sp) return;
-		var i = this.searchPointers.indexOf(sp);
-		if (i == -1) return; // this pointer was already freed or never existed
-		this.freeMemory(this.searchPointers[i], XS_window.ctypes.char.array()("searchPointer"));
-		this.searchPointers[i] = null;
-	},
+  freeSearchPointer: function(sp) {
+    if (!sp) return;
+    var i = this.searchPointers.indexOf(sp);
+    if (i == -1) return; // this pointer was already freed or never existed
+    this.freeMemory(this.searchPointers[i], XS_window.ctypes.char.array()("searchPointer"));
+    this.searchPointers[i] = null;
+  },
   
   quitLibsword: function() {
     if (this.libsword) {
-			for (var i=0; i<this.searchPointers.length; i++) {
-				this.freeSearchPointer(this.searchPointers[i]);
-			}
+      for (var i=0; i<this.searchPointers.length; i++) {
+        this.freeSearchPointer(this.searchPointers[i]);
+      }
       this.freeInstance();
       this.freeLibxulsword();
       this.libsword.close();
@@ -343,9 +343,9 @@ LibSword = {
   
   libSwordReady: function(caller) {
     if (this.paused) {
-			jsdump("ERROR: libsword paused, \"" + caller + "\" inaccessible.");
-			return false;
-		}
+      jsdump("ERROR: libsword paused, \"" + caller + "\" inaccessible.");
+      return false;
+    }
     
     if (!this.libsword) this.initLibsword();
     if (this.loadFailed) return false;
@@ -702,10 +702,10 @@ getSearchVerses: function(modname) {
 //Will return the verse texts from previous search.
 //search() must be called before results can be read.
 getSearchResults: function(modname, first, num, keepStrongs, searchPointer) {
-	
-	// if a searchPointer is given, make sure it has not been freed by LibSword.pause() etc.
-	if (searchPointer && this.searchPointers.indexOf(searchPointer) == -1) return null;
-	
+  
+  // if a searchPointer is given, make sure it has not been freed by LibSword.pause() etc.
+  if (searchPointer && this.searchPointers.indexOf(searchPointer) == -1) return null;
+  
   if (!this.libSwordReady("getSearchResults")) return null;
   if (!this.fdata.gst)
     this.fdata.gst = this.libsword.declare("GetSearchResults", ctypes.default_abi, ctypes.PointerType(ctypes.char), ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.char), ctypes.int, ctypes.int, ctypes.bool, ctypes.PointerType(ctypes.voidptr_t));

@@ -55,7 +55,7 @@
   text-align:left;
 }
 .text[textdir="rtl"] .head2 {
-	text-align:right;
+  text-align:right;
 }
 .head1 h1, 
 .head1 h2, 
@@ -277,13 +277,13 @@
   color:rgb(0,0,200);
 }
 .sr {
-	border-bottom:1px solid blue;
+  border-bottom:1px solid blue;
   cursor:pointer;
 }
 .sr:before,
 .sr:after {
 /* ISV uses inline sr without surrounding whitespace */
-	content:' ';
+  content:' ';
 }
 .dt {
   border-bottom:1px solid black;
@@ -303,11 +303,11 @@
   cursor:pointer;
 }
 .gfn {
-	color:rgb(0,200,250);
+  color:rgb(0,200,250);
 }
 .gfn:before {
-	content:'[';
+  content:'[';
 }
 .gfn:after {
-	content:'] ';
+  content:'] ';
 }

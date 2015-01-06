@@ -32,8 +32,8 @@ function initWindowedPopup() {
   for (var i=0; i<selects.length; i++) {Popup.addSelectEventListener(selects[i]);}
   var towindows = document.getElementsByClassName("towindow");
   for (var i=0; i<towindows.length; i++) {
-		towindows[i].addEventListener("click", function () {Popup.towindow();});
-	}
+    towindows[i].addEventListener("click", function () {Popup.towindow();});
+  }
   
   // Close the original popup
   XS_window.Popup.close();
@@ -54,8 +54,8 @@ function PopupObj(popupobj) {
     
     while (this.npopupTX.firstChild) {this.npopupTX.removeChild(this.npopupTX.firstChild);}
     for (var i=0; i<popupobj.npopupTX.childNodes.length; i++) {
-			this.npopupTX.appendChild(document.importNode(popupobj.npopupTX.childNodes[i], true));
-		}
+      this.npopupTX.appendChild(document.importNode(popupobj.npopupTX.childNodes[i], true));
+    }
 
     // copy popupobj additional members (excluding functions) to the new object
     for (var p in popupobj) {
@@ -80,15 +80,15 @@ function PopupObj(popupobj) {
     // dictionary modules may have a "ReferenceBible" conf entry
     var referenceBible;
     if (p && p.mod && this.selectRef.hasOwnProperty(p.mod)) {
-			referenceBible = this.selectRef[p.mod];
-		}
-		else {
-			referenceBible = (p && p.mod ? p.mod:null);
-			if (referenceBible && Tab.hasOwnProperty(referenceBible) && Tab[referenceBible].modType == DICTIONARY) {
-				var aref = LibSword.getModuleInformation(referenceBible, "ReferenceBible");
-				if (aref && aref != NOTFOUND && Tab.hasOwnProperty(aref)) referenceBible = aref;
-			}
-		}
+      referenceBible = this.selectRef[p.mod];
+    }
+    else {
+      referenceBible = (p && p.mod ? p.mod:null);
+      if (referenceBible && Tab.hasOwnProperty(referenceBible) && Tab[referenceBible].modType == DICTIONARY) {
+        var aref = LibSword.getModuleInformation(referenceBible, "ReferenceBible");
+        if (aref && aref != NOTFOUND && Tab.hasOwnProperty(aref)) referenceBible = aref;
+      }
+    }
 
     var res = "";
     switch (type) {
@@ -100,8 +100,8 @@ function PopupObj(popupobj) {
       while (old.firstChild) {oldchildren.push(old.removeChild(old.firstChild));}
       while (this.npopupTX.firstChild) {this.npopupTX.removeChild(this.npopupTX.firstChild);}
       for (var i=0; i<oldchildren.length; i++) {
-				this.npopupTX.appendChild(oldchildren[i]);
-			}
+        this.npopupTX.appendChild(oldchildren[i]);
+      }
       this.setTitle();
       this.checkPopupPosition(e);
       return true;
@@ -202,23 +202,23 @@ function PopupObj(popupobj) {
     }
     if (!res) return false;
 
-		// save old popup
-		var oldChildren = [];
-		while(this.npopupTX.firstChild) {
-			oldChildren.push(this.npopupTX.removeChild(this.npopupTX.firstChild));
-		}
-		
-		// build the new popup's DOM
-		var popupheader = this.npopupTX.appendChild(document.createElement("div"));
-		popupheader.className = "popupheader cs-Program";
-		var towindow = popupheader.appendChild(document.createElement("div"));
-		towindow.className = "towindow";
-		towindow.addEventListener("click", function () {Popup.towindow();});
-		var backlink = popupheader.appendChild(document.createElement("a"));
-		backlink.className = (updatingPopup ? "popupBackLink":"popupCloseLink");
-		backlink.textContent = XSBundle.getString(updatingPopup ? "back":"close");
-		var draghandle = popupheader.appendChild(document.createElement("div"));
-		draghandle.className = "draghandle";
+    // save old popup
+    var oldChildren = [];
+    while(this.npopupTX.firstChild) {
+      oldChildren.push(this.npopupTX.removeChild(this.npopupTX.firstChild));
+    }
+    
+    // build the new popup's DOM
+    var popupheader = this.npopupTX.appendChild(document.createElement("div"));
+    popupheader.className = "popupheader cs-Program";
+    var towindow = popupheader.appendChild(document.createElement("div"));
+    towindow.className = "towindow";
+    towindow.addEventListener("click", function () {Popup.towindow();});
+    var backlink = popupheader.appendChild(document.createElement("a"));
+    backlink.className = (updatingPopup ? "popupBackLink":"popupCloseLink");
+    backlink.textContent = XSBundle.getString(updatingPopup ? "back":"close");
+    var draghandle = popupheader.appendChild(document.createElement("div"));
+    draghandle.className = "draghandle";
 
     // append select drop-down for cr and sr
     if (p && p.mod && (/^(cr|sr)$/).test(type)) {
@@ -237,7 +237,7 @@ function PopupObj(popupobj) {
         if (sls=="GreekDef" & !(/S_G/).test(elem.className)) continue;
         if (sls=="GreekParse" & !(/SM_G/).test(elem.className)) continue;
         this.appendModSelect(
-					popupheader,
+          popupheader,
           SpecialModules.LanguageStudy[sls], 
           prefs.getCharPref("Selected" + sls), 
           true, sls
@@ -250,16 +250,16 @@ function PopupObj(popupobj) {
     prevcontent.className = "prevhtml";
     prevcontent.setAttribute("title", this.npopup.getAttribute("puptype"));
     if (updatingPopup) {
-			for (var i=0; i<oldChildren.length; i++) {
-				prevcontent.appendChild(oldChildren[i]);
-			}
-		}
+      for (var i=0; i<oldChildren.length; i++) {
+        prevcontent.appendChild(oldChildren[i]);
+      }
+    }
 
-		// finally add our new popup results and type
-		var newcontent = this.npopupTX.appendChild(document.createElement("div"));
-		newcontent.className = "popup-text cs-Program";
-		sanitizeHTML(newcontent, res);
-		this.npopup.setAttribute("puptype", type);
+    // finally add our new popup results and type
+    var newcontent = this.npopupTX.appendChild(document.createElement("div"));
+    newcontent.className = "popup-text cs-Program";
+    sanitizeHTML(newcontent, res);
+    this.npopup.setAttribute("puptype", type);
 
     // Windowed popup...
     if ((/windowedPopup$/).test(window.name)) {
@@ -286,11 +286,11 @@ function PopupObj(popupobj) {
   };
   
   this.appendModSelect = function(parent, mods, selectMod, isFeature, arg2) {
-		var select = parent.appendChild(document.createElement("select"));
-		select.className = "popup-mod-select";
-		select.setAttribute("title", isFeature + "," + arg2);
-		this.addSelectEventListener(select);
-		
+    var select = parent.appendChild(document.createElement("select"));
+    select.className = "popup-mod-select";
+    select.setAttribute("title", isFeature + "," + arg2);
+    this.addSelectEventListener(select);
+    
     for (var m=0; m<mods.length; m++) {
       if (!Tab[mods[m]]) continue;
       var option = select.appendChild(document.createElement("option"));
@@ -303,15 +303,15 @@ function PopupObj(popupobj) {
   };
   
   this.addSelectEventListener = function (selectElem) {
-		var title = selectElem.getAttribute("title");
-		if (!title) return;
-		title = title.split(",");
-		if (!title.length || title.length != 2) return;
-		var isFeature = (title[0] == "true");
-		var arg2 = title[1];
-		if (!isFeature) selectElem.addEventListener("change", function (event) {Popup.select(event, arg2);});
-		else selectElem.addEventListener("change", function (event) {Popup.selectFeature(event, arg2);});
-	};
+    var title = selectElem.getAttribute("title");
+    if (!title) return;
+    title = title.split(",");
+    if (!title.length || title.length != 2) return;
+    var isFeature = (title[0] == "true");
+    var arg2 = title[1];
+    if (!isFeature) selectElem.addEventListener("change", function (event) {Popup.select(event, arg2);});
+    else selectElem.addEventListener("change", function (event) {Popup.selectFeature(event, arg2);});
+  };
   
   this.setTitle = function() {
     if (!(/windowedPopup$/).test(window.name)) return; // only windowed popups need titles
@@ -384,7 +384,7 @@ function PopupObj(popupobj) {
   };
   
   this.select = function(e, msrc) {
-		var mod = e.target.value;
+    var mod = e.target.value;
     var pt = this.npopupTX.getElementsByClassName("popup-text");
     if (!pt) return;
     pt = pt[pt.length-1]; // the pt we want is the last in the tree
@@ -402,7 +402,7 @@ function PopupObj(popupobj) {
   };
   
   this.selectFeature = function(e, feature) {
-		var mod = e.target.value;
+    var mod = e.target.value;
     var pt = this.npopupTX.getElementsByClassName("popup-text");
     if (!pt) return;
     pt = pt[pt.length-1]; // the pt we want is the last in the tree
@@ -416,13 +416,13 @@ function PopupObj(popupobj) {
   // this is only needed so that when selects are copied using DOM
   // manipulation functions, the selection will be copied as well
   this.setSelectAttribute = function(selectElem, mod) {
-		for (var i=0; i<selectElem.childNodes.length; i++) {
-			if (selectElem.childNodes[i].value == mod) {
-				selectElem.childNodes[i].setAttribute("selected", "selected");
-			}
-			else selectElem.childNodes[i].removeAttribute("selected");
-		}
-	};
+    for (var i=0; i<selectElem.childNodes.length; i++) {
+      if (selectElem.childNodes[i].value == mod) {
+        selectElem.childNodes[i].setAttribute("selected", "selected");
+      }
+      else selectElem.childNodes[i].removeAttribute("selected");
+    }
+  };
   
   this.towindow = function() {
     
@@ -437,9 +437,9 @@ function PopupObj(popupobj) {
     Y = Number(f.boxObject.y + offset.top);
     //jsdump("INFO:" + f.boxObject.y + "-" + XS_window.outerHeight + "+" + v.height + "=" + Y);
   
-		// save this Popup so new window can copy it
-		XS_window.Popup = this;
-		
+    // save this Popup so new window can copy it
+    XS_window.Popup = this;
+    
     // Open the new xul Popup window.
     var p = "chrome,resizable,dependant";
     p += ",left=" + Number(wintop.screenX + X);
@@ -450,62 +450,62 @@ function PopupObj(popupobj) {
 
   };
 
-	this.PopupY = 0;
-	this.PopupX = 0;
-	
-	this.drag = function(type, e) {
-		var popupTX = document.getElementById("npopupTX");
-		var popupBOX = document.getElementById("npopupBOX");
+  this.PopupY = 0;
+  this.PopupX = 0;
+  
+  this.drag = function(type, e) {
+    var popupTX = document.getElementById("npopupTX");
+    var popupBOX = document.getElementById("npopupBOX");
 
-		switch (type) {
-			
-		case "down":
-			if (e.target.className == 'draghandle' || e.target === popupTX) {
-				this.PopupY = e.clientY + 40; // the 20 helps quick upward drags to not inadvertently leave the popup
-				this.PopupX = e.clientX;
-				popupTX.style.cursor = "move";
-				e.stopPropagation();
-				e.preventDefault();
-			}
-			break;
-			
-		case "move":
-			if (!this.PopupY) return;
-			
-			var puptop = Number(window.getComputedStyle(popupBOX).top.replace("px", ""));
-			if (isNaN(puptop)) return;
-			
-			popupBOX.style.top = Number(puptop + e.clientY - this.PopupY) + "px";
-			this.PopupY = e.clientY;
-			
-			var isSearch = e.target;
-			while(isSearch && (!isSearch.id || isSearch.id != "search-content")) {
-				isSearch = isSearch.parentNode;
-			}
-		
-			if (isSearch) {
-				
-				var pupleft = Number(window.getComputedStyle(popupBOX).left.replace("px", ""));
-				if (!isNaN(pupleft)) {		
-						
-				popupBOX.style.left = Number(pupleft + e.clientX - this.PopupX) + "px";
-				this.PopupX = e.clientX;
-				}
-			}
-			
-			e.stopPropagation();
-			e.preventDefault();
-			break;
-			
-		case "up":
-			this.PopupY = 0;
-			this.PopupX = 0;
-			popupTX.style.cursor = "";
-			break;
-			
-		}
-	};
-	
-	
-	this.setTitle();
+    switch (type) {
+      
+    case "down":
+      if (e.target.className == 'draghandle' || e.target === popupTX) {
+        this.PopupY = e.clientY + 40; // the 20 helps quick upward drags to not inadvertently leave the popup
+        this.PopupX = e.clientX;
+        popupTX.style.cursor = "move";
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      break;
+      
+    case "move":
+      if (!this.PopupY) return;
+      
+      var puptop = Number(window.getComputedStyle(popupBOX).top.replace("px", ""));
+      if (isNaN(puptop)) return;
+      
+      popupBOX.style.top = Number(puptop + e.clientY - this.PopupY) + "px";
+      this.PopupY = e.clientY;
+      
+      var isSearch = e.target;
+      while(isSearch && (!isSearch.id || isSearch.id != "search-content")) {
+        isSearch = isSearch.parentNode;
+      }
+    
+      if (isSearch) {
+        
+        var pupleft = Number(window.getComputedStyle(popupBOX).left.replace("px", ""));
+        if (!isNaN(pupleft)) {		
+            
+        popupBOX.style.left = Number(pupleft + e.clientX - this.PopupX) + "px";
+        this.PopupX = e.clientX;
+        }
+      }
+      
+      e.stopPropagation();
+      e.preventDefault();
+      break;
+      
+    case "up":
+      this.PopupY = 0;
+      this.PopupX = 0;
+      popupTX.style.cursor = "";
+      break;
+      
+    }
+  };
+  
+  
+  this.setTitle();
 }

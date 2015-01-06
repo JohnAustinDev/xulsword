@@ -97,13 +97,13 @@ var CommTexts             = XS_window.CommTexts;
 // determined from the parsed string is returned as null. Parsed negative numbers are
 // converted to "1"
 function parseLocation(loc2parse) {
-	var dot = dotStringLoc2ObjectLoc(loc2parse);
-	var bknum = findBookNum(dot.shortName);
-	if (bknum !== null) {
-		// loc2parse started with something like Gen. so we assume it's a valid osisRef
-		return dot;
-	}
-	
+  var dot = dotStringLoc2ObjectLoc(loc2parse);
+  var bknum = findBookNum(dot.shortName);
+  if (bknum !== null) {
+    // loc2parse started with something like Gen. so we assume it's a valid osisRef
+    return dot;
+  }
+  
   loc2parse = loc2parse.replace(/[“|”|\(|\)|\[|\]|,]/g," ");
   loc2parse = loc2parse.replace(/^\s+/,"");
   loc2parse = loc2parse.replace(/\s+$/,"");
@@ -408,9 +408,9 @@ function getModuleConfig(mod) {
   for (var p in Config) {
     if (!Config[p].modConf) continue;
     if (mod != "LTR_DEFAULT") {
-			var val = LibSword.getModuleInformation(mod, Config[p].modConf);
-		}
-		else val = "";
+      var val = LibSword.getModuleInformation(mod, Config[p].modConf);
+    }
+    else val = "";
     if ((/^\s*$/).test(val)) val = NOTFOUND;
 
     if (val == NOTFOUND && Config[p].CSS && moduleConfigDefaultCSS[p]) {
@@ -419,39 +419,39 @@ function getModuleConfig(mod) {
   
     // allow user to overwrite module defaults
     try {
-			var userVal = prefs.getCharPref("user." + p + "." + mod);
-			if (userVal) val = userVal;
-		} catch (er) {}
+      var userVal = prefs.getCharPref("user." + p + "." + mod);
+      if (userVal) val = userVal;
+    } catch (er) {}
     
     moduleConfig[p] = val;
   }
   
   // Assign associated locale and modules
   if (mod != "LTR_DEFAULT") {
-		moduleConfig["AssociatedLocale"] = getLocaleOfModule(mod);
-		if (!moduleConfig["AssociatedLocale"]) moduleConfig["AssociatedLocale"] = NOTFOUND;
-		
-		if (moduleConfig["AssociatedLocale"] != NOTFOUND && LocaleConfigs.hasOwnProperty(moduleConfig["AssociatedLocale"]))
-				moduleConfig["AssociatedModules"] = LocaleConfigs[moduleConfig["AssociatedLocale"]].AssociatedModules;
-		else moduleConfig["AssociatedModules"] = NOTFOUND;
-	}
-	else {
-		moduleConfig["AssociatedLocale"] = DEFAULTLOCALE;
-		moduleConfig["AssociatedModules"] = NOTFOUND;
-	}
-	
+    moduleConfig["AssociatedLocale"] = getLocaleOfModule(mod);
+    if (!moduleConfig["AssociatedLocale"]) moduleConfig["AssociatedLocale"] = NOTFOUND;
+    
+    if (moduleConfig["AssociatedLocale"] != NOTFOUND && LocaleConfigs.hasOwnProperty(moduleConfig["AssociatedLocale"]))
+        moduleConfig["AssociatedModules"] = LocaleConfigs[moduleConfig["AssociatedLocale"]].AssociatedModules;
+    else moduleConfig["AssociatedModules"] = NOTFOUND;
+  }
+  else {
+    moduleConfig["AssociatedLocale"] = DEFAULTLOCALE;
+    moduleConfig["AssociatedModules"] = NOTFOUND;
+  }
+  
   // Normalize direction value
   moduleConfig.direction = (moduleConfig.direction.search("RtoL", "i") != -1 ? "rtl":"ltr");
 
-	// if fontFamily specifies a font URL, rather than a fontFamily, then create a
-	// @font-face CSS entry and use it for this module.
-	var url = LibSword.getModuleInformation(mod, "Font").match(/(\w+\:\/\/[^"'\)]+)\s*$/);
-	if (url) {
-		var fam = "_" + url[1].replace(/[^\w\d]/g, "_");
-		FontFaceConfigs[fam] = url[1];
-		moduleConfig.fontFamily = fam;
-		//jsdump("INFO: " + mod + " specifies font-face " + url[1]);
-	}
+  // if fontFamily specifies a font URL, rather than a fontFamily, then create a
+  // @font-face CSS entry and use it for this module.
+  var url = LibSword.getModuleInformation(mod, "Font").match(/(\w+\:\/\/[^"'\)]+)\s*$/);
+  if (url) {
+    var fam = "_" + url[1].replace(/[^\w\d]/g, "_");
+    FontFaceConfigs[fam] = url[1];
+    moduleConfig.fontFamily = fam;
+    //jsdump("INFO: " + mod + " specifies font-face " + url[1]);
+  }
 
   // Insure there are single quotes around font names
   moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/\"/g, "'");
@@ -611,7 +611,7 @@ function getContextWindow(elem) {
 // Return the module context in which the element resides, NOT the
 // module associated with the data of the element itself.
 function getContextModule(elem) {
-	var contextMod = null;
+  var contextMod = null;
   
   // first let's see if we're in a verse
   var telem = elem;
@@ -622,39 +622,39 @@ function getContextModule(elem) {
   
   // then see if we're in a viewport window, and use its module
   if (!contextMod) {
-		var w = getContextWindow(elem);
-		if (w) contextMod = ViewPort.Module[w];
-	}
+    var w = getContextWindow(elem);
+    if (w) contextMod = ViewPort.Module[w];
+  }
   
   // are we in cross reference text?
   if (!contextMod) {
-		telem = elem;
-		while (telem && (!telem.className || !(/^crtext(\s|$)/).test(telem.className))) {
-			telem = telem.parentNode;
-		}
-		if (telem && telem.className && (/(^|\s)cs\-(\S+)(\s|$)/).test(telem.className)) {
-			contextMod = telem.className.match(/(^|\s)cs\-(\S+)(\s|$)/)[2];
-		}
-	}
-	
-	// in a search lexicon list?
-	if (!contextMod) {
-		telem = elem;
-		while (telem && (!telem.className || !(/^snlist(\s|$)/).test(telem.className))) {
-			telem = telem.parentNode;
-		}
-		if (telem) contextMod = telem.getAttribute("contextModule");
-	}
+    telem = elem;
+    while (telem && (!telem.className || !(/^crtext(\s|$)/).test(telem.className))) {
+      telem = telem.parentNode;
+    }
+    if (telem && telem.className && (/(^|\s)cs\-(\S+)(\s|$)/).test(telem.className)) {
+      contextMod = telem.className.match(/(^|\s)cs\-(\S+)(\s|$)/)[2];
+    }
+  }
+  
+  // in a search lexicon list?
+  if (!contextMod) {
+    telem = elem;
+    while (telem && (!telem.className || !(/^snlist(\s|$)/).test(telem.className))) {
+      telem = telem.parentNode;
+    }
+    if (telem) contextMod = telem.getAttribute("contextModule");
+  }
   
   // otherwise see if we're in a search results list
   if (!contextMod) {
-		telem = elem;
-		while (telem && (!telem.className || !(/^slist(\s|$)/).test(telem.className))) {
-			telem = telem.parentNode;
-		}
-		if (telem) contextMod = getElementInfo(telem).mod;
-	}
-	
+    telem = elem;
+    while (telem && (!telem.className || !(/^slist(\s|$)/).test(telem.className))) {
+      telem = telem.parentNode;
+    }
+    if (telem) contextMod = getElementInfo(telem).mod;
+  }
+  
 //jsdump("contextMod=" + contextMod ? contextMod:"null");
   return contextMod;
   

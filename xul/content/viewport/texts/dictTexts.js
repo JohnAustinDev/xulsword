@@ -31,15 +31,15 @@ DictTexts = {
     // the key list is cached because it can take several seconds to
     // process large dictionaries!
     if (!this.keyList[d.mod]) {
-			this.keyList[d.mod] = LibSword.getAllDictionaryKeys(d.mod).split("<nx>");
-			this.keyList[d.mod].pop();
-			this.sortOrder = LibSword.getModuleInformation(d.mod, "LangSortOrder");
-			if (this.sortOrder != NOTFOUND) {
-				this.sortOrder += "0123456789";
-				this.langSortSkipChars = LibSword.getModuleInformation(d.mod, "LangSortSkipChars");
-				if (this.langSortSkipChars == NOTFOUND) this.langSortSkipChars = "";
-				this.keyList[d.mod].sort(this.dictSort);
-			}
+      this.keyList[d.mod] = LibSword.getAllDictionaryKeys(d.mod).split("<nx>");
+      this.keyList[d.mod].pop();
+      this.sortOrder = LibSword.getModuleInformation(d.mod, "LangSortOrder");
+      if (this.sortOrder != NOTFOUND) {
+        this.sortOrder += "0123456789";
+        this.langSortSkipChars = LibSword.getModuleInformation(d.mod, "LangSortSkipChars");
+        if (this.langSortSkipChars == NOTFOUND) this.langSortSkipChars = "";
+        this.keyList[d.mod].sort(this.dictSort);
+      }
     }
     
     // get html for list of keys (is cached)
@@ -56,10 +56,10 @@ DictTexts = {
     // get htmlEntry
     var de = this.getEntryHTML(d.Key, d.mod);
     if (d.globalOptions["User Notes"] == "On") {
-    	var un = Texts.getUserNotes("na", d.Key, d.mod, de);
-    	de = un.html; // has user notes added to text
-    	ret.footnotes = un.notes;
-		}
+      var un = Texts.getUserNotes("na", d.Key, d.mod, de);
+      de = un.html; // has user notes added to text
+      ret.footnotes = un.notes;
+    }
     
     ret.htmlEntry += "<div class=\"dictentry\">" + de + "</div>";
   
@@ -89,10 +89,10 @@ DictTexts = {
     keylist.className = "keylist";
     
     for (var e=0; e < list.length; e++) {
-			var key = keylist.appendChild(document.createElement("div"));
-			key.className = "key " + encodeURIComponent(list[e]);
-			key.setAttribute("title",  encodeURIComponent(list[e]));
-			key.textContent = list[e];
+      var key = keylist.appendChild(document.createElement("div"));
+      key.className = "key " + encodeURIComponent(list[e]);
+      key.setAttribute("title",  encodeURIComponent(list[e]));
+      key.textContent = list[e];
     }
 
     return div;
@@ -123,7 +123,7 @@ DictTexts = {
           catch (er) {jsdump("e2: missing key, skipping."); dictEntry = "";}
         }
         if (dictEntry) {
-					dictEntry = this.markup2html(this.replaceLinks(dictEntry, mods[dw]), mods[dw]);
+          dictEntry = this.markup2html(this.replaceLinks(dictEntry, mods[dw]), mods[dw]);
           dictEntry = dictEntry.replace(/^(<br>)+/, "");
           var dictTitle = LibSword.getModuleInformation(mods[dw], "Description");
           dictTitle = (dictTitle != NOTFOUND ? "<div class=\"dict-description\">" + dictTitle + "</div>":"");
@@ -204,116 +204,116 @@ DictTexts = {
   
   // some TEI mods (like AbbottSmith, Strong) may use @LINK, so replace these here.
   replaceLinks: function(entry, mod) {
-		var link = entry.match(/(\@LINK\s+[^\s<]+)/g);
-		if (link) {
-			for (var x=0; x<link.length; x++) {
-				var l = link[x].match(/\@LINK\s+([^\s<]+)/);
-				
-				// fix problems related to AbbottSmith module...
-				if (mod == "AbbottSmith") {
-					var hack = {ΐ:"Ϊ́", ὐ:"Υ̓"};
-					for (var h in hack) {l[1] = l[1].replace(h, hack[h], "g");}
-					if (l[1] == "ἀγαλλίασις") l[1] = " ἈΓΑΛΛΊΑΣΙΣ"; // key needs space before!
-				}
+    var link = entry.match(/(\@LINK\s+[^\s<]+)/g);
+    if (link) {
+      for (var x=0; x<link.length; x++) {
+        var l = link[x].match(/\@LINK\s+([^\s<]+)/);
+        
+        // fix problems related to AbbottSmith module...
+        if (mod == "AbbottSmith") {
+          var hack = {ΐ:"Ϊ́", ὐ:"Υ̓"};
+          for (var h in hack) {l[1] = l[1].replace(h, hack[h], "g");}
+          if (l[1] == "ἀγαλλίασις") l[1] = " ἈΓΑΛΛΊΑΣΙΣ"; // key needs space before!
+        }
 
-				var r = LibSword.getDictionaryEntry(mod, l[1].toUpperCase());
-				if (!r) r = LibSword.getDictionaryEntry(mod, l[1]);
-				if (r) entry = entry.replace(l[0], r);
-			}
-		}
-		
-		return entry;
-	},
-	
-	markup2html: function(entry, mod) {
-		
-		// sense
-		entry = entry.replace(/<\/sense[^>]*>/g, "</span>");
-		do {
-			var entry2 = entry;
-			var p = entry.match(/<sense([^>]*)>(.*?<)/);
-			if (p) {
-				var n = p[1].match(/n="(.*?)"/);
-				n = (n && p[2].indexOf(n[1]) != 0 ? n[1]:"");
-				
-				entry = entry.replace(p[0], "<span class=\"markup-sense\">" + (n ? "<b>" + n + "</b>":"") + (n && !(/^[\.]/).test(p[2]) ? ". ":"") + p[2]);
-			}
-		} while(entry != entry2);
-		
-		// ref
-		entry = entry.replace(/<\/ref[^>]*>/g, "</span>");
-		do {
-			var entry2 = entry;
-			var p = entry.match(/<ref([^>]*)>/);
-			if (p) {
-				var osisID = p[1].match(/osisRef="(.*?)"/);
-				var target = p[1].match(/target="(.*?)"/);
-				
-				var mclass, mtitle;
-				if (osisID) {
-					mtitle = osisID[1] + "." + mod;
-					mclass = "sr";
-				}
-				else if (target) {
-					target = target[1].replace("self:", mod + ":");
-					mtitle = target + "." + mod
-					mclass = "dtl"
-				}
-				
-				entry = entry.replace(p[0], "<span class=\"" + mclass + "\" title=\"" + mtitle + "\">");
-			}
-		} while(entry != entry2);
-		
-		entry = this.replaceTags(entry, "orth", /type="(.*?)/);
-		entry = this.replaceTags(entry, "hi");
-		entry = this.replaceTags(entry, "pron");
-		entry = this.replaceTags(entry, "def");
-		entry = this.replaceTags(entry, "entryFree");
-		entry = this.replaceTags(entry, "title");
-		entry = this.replaceTags(entry, "foreign");
-		entry = this.replaceTags(entry, "xr");
-		entry = this.replaceTags(entry, "entry");
-		entry = this.replaceTags(entry, "form");
-		entry = this.replaceTags(entry, "etym", /n="(.*?)"/);
-		entry = this.replaceTags(entry, "cit");
-		entry = this.replaceTags(entry, "usg");
-		entry = this.replaceTags(entry, "quote");
-		entry = this.replaceTags(entry, "note");
-		entry = this.replaceTags(entry, "emph");
-		entry = this.replaceTags(entry, "gramGrp");
-		entry = this.replaceTags(entry, "pos");
-		
+        var r = LibSword.getDictionaryEntry(mod, l[1].toUpperCase());
+        if (!r) r = LibSword.getDictionaryEntry(mod, l[1]);
+        if (r) entry = entry.replace(l[0], r);
+      }
+    }
+    
+    return entry;
+  },
+  
+  markup2html: function(entry, mod) {
+    
+    // sense
+    entry = entry.replace(/<\/sense[^>]*>/g, "</span>");
+    do {
+      var entry2 = entry;
+      var p = entry.match(/<sense([^>]*)>(.*?<)/);
+      if (p) {
+        var n = p[1].match(/n="(.*?)"/);
+        n = (n && p[2].indexOf(n[1]) != 0 ? n[1]:"");
+        
+        entry = entry.replace(p[0], "<span class=\"markup-sense\">" + (n ? "<b>" + n + "</b>":"") + (n && !(/^[\.]/).test(p[2]) ? ". ":"") + p[2]);
+      }
+    } while(entry != entry2);
+    
+    // ref
+    entry = entry.replace(/<\/ref[^>]*>/g, "</span>");
+    do {
+      var entry2 = entry;
+      var p = entry.match(/<ref([^>]*)>/);
+      if (p) {
+        var osisID = p[1].match(/osisRef="(.*?)"/);
+        var target = p[1].match(/target="(.*?)"/);
+        
+        var mclass, mtitle;
+        if (osisID) {
+          mtitle = osisID[1] + "." + mod;
+          mclass = "sr";
+        }
+        else if (target) {
+          target = target[1].replace("self:", mod + ":");
+          mtitle = target + "." + mod
+          mclass = "dtl"
+        }
+        
+        entry = entry.replace(p[0], "<span class=\"" + mclass + "\" title=\"" + mtitle + "\">");
+      }
+    } while(entry != entry2);
+    
+    entry = this.replaceTags(entry, "orth", /type="(.*?)/);
+    entry = this.replaceTags(entry, "hi");
+    entry = this.replaceTags(entry, "pron");
+    entry = this.replaceTags(entry, "def");
+    entry = this.replaceTags(entry, "entryFree");
+    entry = this.replaceTags(entry, "title");
+    entry = this.replaceTags(entry, "foreign");
+    entry = this.replaceTags(entry, "xr");
+    entry = this.replaceTags(entry, "entry");
+    entry = this.replaceTags(entry, "form");
+    entry = this.replaceTags(entry, "etym", /n="(.*?)"/);
+    entry = this.replaceTags(entry, "cit");
+    entry = this.replaceTags(entry, "usg");
+    entry = this.replaceTags(entry, "quote");
+    entry = this.replaceTags(entry, "note");
+    entry = this.replaceTags(entry, "emph");
+    entry = this.replaceTags(entry, "gramGrp");
+    entry = this.replaceTags(entry, "pos");
+    
 //var m=entry.match(/<\w+/g); if (m) {for (var x=0; x<m.length; x++) {if (!(/^<(table|tbody|span|sup|div|img|br|tr|td|h\d+|ul|li|b|i)$/i).test(m[x])) jsdump("INFO: Found unhandled tag \"" + m[x] + "\" in\n" + entry);}}
-	
-		return entry;
-	},
-	
-	// class must be a string or a regular-expression to match a string
-	replaceTags: function(entry, tag, subclass) {
-		var eTag = new RegExp("<\\/" + tag + "[^>]*>", "g");
-		entry = entry.replace(eTag, "</span>");
-		
-		var sTag = new RegExp("<" + tag + "([^>]*)>");
-		do {
-			var entry2 = entry;
-			var p = entry.match(sTag);
-			if (p) {
-				var mclass;
-				if (subclass && typeof(subclass) != "string") {
-					mclass = p[1].match(subclass);
-					if (mclass) mclass = mclass[1];
-				}
-				else mclass = subclass;
-				
-				var rend = p[1].match(/rend="(.*?)"/);
-				
-				entry = entry.replace(p[0], "<span class=\"markup-" + tag + (mclass ? "-" + mclass:"") + (rend ? " markup_" + rend[1]:"") + "\">");
-			}
-		}
-		while (entry2 != entry);
-		
-		return entry;
-	},
+  
+    return entry;
+  },
+  
+  // class must be a string or a regular-expression to match a string
+  replaceTags: function(entry, tag, subclass) {
+    var eTag = new RegExp("<\\/" + tag + "[^>]*>", "g");
+    entry = entry.replace(eTag, "</span>");
+    
+    var sTag = new RegExp("<" + tag + "([^>]*)>");
+    do {
+      var entry2 = entry;
+      var p = entry.match(sTag);
+      if (p) {
+        var mclass;
+        if (subclass && typeof(subclass) != "string") {
+          mclass = p[1].match(subclass);
+          if (mclass) mclass = mclass[1];
+        }
+        else mclass = subclass;
+        
+        var rend = p[1].match(/rend="(.*?)"/);
+        
+        entry = entry.replace(p[0], "<span class=\"markup-" + tag + (mclass ? "-" + mclass:"") + (rend ? " markup_" + rend[1]:"") + "\">");
+      }
+    }
+    while (entry2 != entry);
+    
+    return entry;
+  },
   
   getStrongsModAndKey: function(snclass) {
     var res = { mod:null, key:null };
@@ -338,27 +338,27 @@ DictTexts = {
         feature = "GreekDef";
       }
       if (feature) {
-				try {res.mod = prefs.getCharPref("Selected" + feature);}
-				catch (er) {res.mod = null; return res;}
-			}
-			if (!res.mod) {res.key = null; return res;};
+        try {res.mod = prefs.getCharPref("Selected" + feature);}
+        catch (er) {res.mod = null; return res;}
+      }
+      if (!res.mod) {res.key = null; return res;};
       
       var styp = (feature == "HebrewDef" ? "H":"G");
       var snum = Number(res.key.substr(1));
       if (isNaN(snum)) {res.key = null; return res;}
       var pad4 = String("0000").substr(0, 4-(String(snum).length-1)) + String(snum);
 
-			// possible keys in order of likelyhood
-			var keys = ["0" + pad4, styp + pad4, pad4, styp + snum, snum, styp + "0" + pad4];
-			
-			// try out key possibilities until we find a correct key for this mod
-			if (res.mod) {
-				for (var k=0; k<keys.length; k++) {
-					try {if (LibSword.getDictionaryEntry(res.mod, keys[k])) break;}
-					catch (er) {res.mod = null; break;}
-				}
-				if (res.mod && k < keys.length) res.key = keys[k];
-			}
+      // possible keys in order of likelyhood
+      var keys = ["0" + pad4, styp + pad4, pad4, styp + snum, snum, styp + "0" + pad4];
+      
+      // try out key possibilities until we find a correct key for this mod
+      if (res.mod) {
+        for (var k=0; k<keys.length; k++) {
+          try {if (LibSword.getDictionaryEntry(res.mod, keys[k])) break;}
+          catch (er) {res.mod = null; break;}
+        }
+        if (res.mod && k < keys.length) res.key = keys[k];
+      }
       break;
       
     case "RM":
@@ -369,7 +369,7 @@ DictTexts = {
     case "SM":
       // no lookup module available for these yet...
       try {res.mod = prefs.getCharPref("Selected" + "GreekParse");}
-			catch (er) {res.mod = null;}
+      catch (er) {res.mod = null;}
       break;
       
     default:

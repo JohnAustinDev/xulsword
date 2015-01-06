@@ -4,33 +4,33 @@ groupbox {
 
 #chooseModBox label,
 #fontRow label[control="fontFamily"] {
-	min-width:50px;
+  min-width:50px;
 }
 
 #fontFamily {
-	width:300px;
+  width:300px;
 }
 
 #fontsGrid columns > column:first-child {
-	-moz-margin-end: 20px;
+  -moz-margin-end: 20px;
 }
 
 rows > row,
 #chooseModBox {
-	margin-bottom:10px;
+  margin-bottom:10px;
 }
 
 #fontSize,
 #color,
 #background,
 #lineHeight {
-	width:120px;
+  width:120px;
 }
 
 menulist {
-	min-height:28px;
+  min-height:28px;
 }
 
 colorpicker {
-	-moz-margin-end: 4px;
+  -moz-margin-end: 4px;
 }

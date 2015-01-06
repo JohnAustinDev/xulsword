@@ -85,7 +85,7 @@
   top:-0.8em;
 }
 .listenlink.hasAudio {
-	visibility:visible;
+  visibility:visible;
 }
 .listenlink:hover {
   background:url('chrome://xulsword/skin/images/listen1.gif');
@@ -106,7 +106,7 @@
   display:none;
 }
 .origselect select {
-	margin-top:1em;
+  margin-top:1em;
 }
 .head-line-break {
   clear:both;
@@ -259,10 +259,10 @@ body[chromedir="rtl"] .fncol3 {
 
 /* Other footnotes */
 .sb .nlist {
-	clear:both;
-	border-top:1px solid grey;
-	margin:24px 10% 0px 10%;
-	padding:10px 0px 10px 0px;
+  clear:both;
+  border-top:1px solid grey;
+  margin:24px 10% 0px 10%;
+  padding:10px 0px 10px 0px;
 }
 
 /* Dictionary styles */
@@ -321,14 +321,14 @@ body[chromedir="rtl"] .fncol3 {
 
 /* HTML TABLES */
 .sb table tr td {
-	border:1px outset grey;
-	padding:10px;
+  border:1px outset grey;
+  padding:10px;
 }
 .sb td .head1 {
-	font-size:1em !important;
+  font-size:1em !important;
 }
 .sb td .head2 {
-	font-size:1em !important;
+  font-size:1em !important;
 }
 
 

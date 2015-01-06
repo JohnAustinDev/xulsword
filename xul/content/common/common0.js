@@ -135,7 +135,7 @@ function jsdump(str)
   try {Components.classes['@mozilla.org/consoleservice;1']
             .getService(Components.interfaces.nsIConsoleService)
             .logStringMessage(str);}
-	catch (er) {}
+  catch (er) {}
 }
 
 jsdump("Load common: " + window.name + "\n");
@@ -251,8 +251,8 @@ function getElementInfo(elem) {
         }
         
         else if (type == "sr") {
-					r[p] = r[p].split(";");
-				}
+          r[p] = r[p].split(";");
+        }
         
         else {throw("Unknown type of reflist:" + type);}
         
@@ -316,17 +316,17 @@ const LocaleConfigDefaultCSS = {
 };
 
 function getModuleConfigDefaultCSS() {
-	var moduleConfigDefaultCSS = {
-		fontFamily:getPrefOrCreate("user.fontFamily.default", "Char", "'Arial'"),
-		direction: getPrefOrCreate("user.direction.default", "Char", "ltr"),
-		fontSizeAdjust: getPrefOrCreate("user.fontSizeAdjust.default", "Char", "none"),
-		lineHeight: getPrefOrCreate("user.lineHeight.default", "Char", "1.6em"),
-		fontSize: getPrefOrCreate("user.fontSize.default", "Char", "1em"),
-		color: getPrefOrCreate("user.color.default", "Char", "#202020"),
-		background: getPrefOrCreate("user.background.default", "Char", "unspecified")
-	};
-	
-	return moduleConfigDefaultCSS;
+  var moduleConfigDefaultCSS = {
+    fontFamily:getPrefOrCreate("user.fontFamily.default", "Char", "'Arial'"),
+    direction: getPrefOrCreate("user.direction.default", "Char", "ltr"),
+    fontSizeAdjust: getPrefOrCreate("user.fontSizeAdjust.default", "Char", "none"),
+    lineHeight: getPrefOrCreate("user.lineHeight.default", "Char", "1.6em"),
+    fontSize: getPrefOrCreate("user.fontSize.default", "Char", "1em"),
+    color: getPrefOrCreate("user.color.default", "Char", "#202020"),
+    background: getPrefOrCreate("user.background.default", "Char", "unspecified")
+  };
+  
+  return moduleConfigDefaultCSS;
 }
 
 const GlobalToggleCommands = {
@@ -356,16 +356,16 @@ const SupportedModuleTypes = {
 // because it's faster. NOTE: This function scrubs out all Javascript 
 // as well as non-standard HTML attributes.
 function sanitizeHTML(parent, html) {
-	while (parent.firstChild) {parent.removeChild(parent.firstChild);}
-	
-	var parser = Components.classes["@mozilla.org/parserutils;1"].getService(Components.interfaces.nsIParserUtils);
-	parent.appendChild(parser.parseFragment(html, parser.SanitizerAllowStyle, false, null, parent.ownerDocument.documentElement));
+  while (parent.firstChild) {parent.removeChild(parent.firstChild);}
+  
+  var parser = Components.classes["@mozilla.org/parserutils;1"].getService(Components.interfaces.nsIParserUtils);
+  parent.appendChild(parser.parseFragment(html, parser.SanitizerAllowStyle, false, null, parent.ownerDocument.documentElement));
 }
 
 // Firefox Add-On validation throws warnings about eval(uneval(obj)), so
 // this is an alternate way...
 function deepClone(obj) {
-	return JSON.parse(JSON.stringify(obj));
+  return JSON.parse(JSON.stringify(obj));
 }
 
 function escapeRE(text) {
@@ -377,8 +377,8 @@ function escapeRE(text) {
 function readFile(nsIFile) {
   if (!nsIFile || !nsIFile.exists()) return "";
   var fstream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
-	fstream.init(nsIFile, -1, 0, 0);
-	var charset = "UTF-8";
+  fstream.init(nsIFile, -1, 0, 0);
+  var charset = "UTF-8";
   const replacementChar = Components.interfaces.nsIConverterInputStream.DEFAULT_REPLACEMENT_CHARACTER;
   var is = Components.classes["@mozilla.org/intl/converter-input-stream;1"].createInstance(Components.interfaces.nsIConverterInputStream);
   is.init(fstream, charset, 1024, replacementChar);
@@ -630,8 +630,8 @@ function createAppDirectories() {
 // by xulsword cannot be later changed by updating /defaults/pref/*.js
 // files.
 prefs = Components.classes["@mozilla.org/preferences-service;1"]
-										.getService(Components.interfaces.nsIPrefService) 
-										.getBranch("extensions.xulsword.");
+                    .getService(Components.interfaces.nsIPrefService) 
+                    .getBranch("extensions.xulsword.");
 
 rootprefs = Components.classes["@mozilla.org/preferences-service;1"]
                     .getService(Components.interfaces.nsIPrefBranch); 
@@ -905,10 +905,10 @@ function getDisplayNumerals(locale, localnumbers) {
 // current stylesheet. It also sets the attributes used by CSS to control
 // direction (rtl or ltr).
 function initCSS(adjustableFontSize) {
-	if (typeof(AllWindows) != "undefined") {
-		var i = AllWindows.indexOf(window);
-		if (i == -1) AllWindows.push(window);
-	}
+  if (typeof(AllWindows) != "undefined") {
+    var i = AllWindows.indexOf(window);
+    if (i == -1) AllWindows.push(window);
+  }
   
   // If we don't have LocaleConfigs yet, set LocaleConfigs of current locale.
   if (typeof(LocaleConfigs) == "undefined") {
@@ -961,54 +961,54 @@ function initCSS(adjustableFontSize) {
 // Will add/update CSS classes for fonts, locales and modules in last style sheet.
 // Replaces any existing identical selector or else appends a new one.
 function createDynamicCssClasses() {
-	var sheetIndex = document.styleSheets.length-1;
+  var sheetIndex = document.styleSheets.length-1;
   var sheet = document.styleSheets[sheetIndex];
   if (!sheet) return;
 
-	//var debug = sheet.cssRules.length;
+  //var debug = sheet.cssRules.length;
 
-	// create CSS rules for LocaleConfigs and ModuleConfigs
+  // create CSS rules for LocaleConfigs and ModuleConfigs
   var configProps = ["StyleRule", "TreeStyleRule"];
-	for (var cp=0; cp<configProps.length; cp++) {
-		var configProp = configProps[cp];
-		
-		if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
-			for (var lc in LocaleConfigs) {
-				var ex = getCSS(LocaleConfigs[lc][configProp].replace(/\s*\{.*$/, ""), sheetIndex);
-				if (ex) sheet.deleteRule(ex.index);
-				sheet.insertRule(LocaleConfigs[lc][configProp], sheet.cssRules.length);
-	//jsdump(LocaleConfigs[lc][configProp]);
-				}
-		}
-		
-		if (typeof(ModuleConfigs) != "undefined" && ModuleConfigs) {
-			for (var m in ModuleConfigs) {
-				ex = getCSS(ModuleConfigs[m][configProp].replace(/\s*\{.*$/, ""), sheetIndex);
-				if (ex) sheet.deleteRule(ex.index);
-				sheet.insertRule(ModuleConfigs[m][configProp], sheet.cssRules.length);
-	//jsdump(ModuleConfigs[m][configProp]);
-			}
-		}
-		
-		if (typeof(XS_window) != "undefined" && XS_window && 
-				typeof(XS_window.ModuleConfigDefault) != "undefined" && XS_window.ModuleConfigDefault) {
-			ex = getCSS(XS_window.ModuleConfigDefault[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
-			if (ex) sheet.deleteRule(ex.index);
-			sheet.insertRule(XS_window.ModuleConfigDefault[configProp], sheet.cssRules.length);
-	//jsdump(XS_window.ModuleConfigDefault[configProp]);
-		}
-		
-		if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {
-			ex = getCSS(ProgramConfig[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
-			if (ex) sheet.deleteRule(ex.index);
-			sheet.insertRule(ProgramConfig[configProp], sheet.cssRules.length);
-	//jsdump(ProgramConfig[configProp]);
-		}
-	}
+  for (var cp=0; cp<configProps.length; cp++) {
+    var configProp = configProps[cp];
+    
+    if (typeof(LocaleConfigs) != "undefined" && LocaleConfigs) {
+      for (var lc in LocaleConfigs) {
+        var ex = getCSS(LocaleConfigs[lc][configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+        if (ex) sheet.deleteRule(ex.index);
+        sheet.insertRule(LocaleConfigs[lc][configProp], sheet.cssRules.length);
+  //jsdump(LocaleConfigs[lc][configProp]);
+        }
+    }
+    
+    if (typeof(ModuleConfigs) != "undefined" && ModuleConfigs) {
+      for (var m in ModuleConfigs) {
+        ex = getCSS(ModuleConfigs[m][configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+        if (ex) sheet.deleteRule(ex.index);
+        sheet.insertRule(ModuleConfigs[m][configProp], sheet.cssRules.length);
+  //jsdump(ModuleConfigs[m][configProp]);
+      }
+    }
+    
+    if (typeof(XS_window) != "undefined" && XS_window && 
+        typeof(XS_window.ModuleConfigDefault) != "undefined" && XS_window.ModuleConfigDefault) {
+      ex = getCSS(XS_window.ModuleConfigDefault[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+      if (ex) sheet.deleteRule(ex.index);
+      sheet.insertRule(XS_window.ModuleConfigDefault[configProp], sheet.cssRules.length);
+  //jsdump(XS_window.ModuleConfigDefault[configProp]);
+    }
+    
+    if (typeof(ProgramConfig) != "undefined" && ProgramConfig) {
+      ex = getCSS(ProgramConfig[configProp].replace(/\s*\{.*$/, ""), sheetIndex);
+      if (ex) sheet.deleteRule(ex.index);
+      sheet.insertRule(ProgramConfig[configProp], sheet.cssRules.length);
+  //jsdump(ProgramConfig[configProp]);
+    }
+  }
 
-	// create CSS rules for fonts
-	if (typeof(FontFaceConfigs) != "undefined" && FontFaceConfigs) {
-		for (var ff in FontFaceConfigs) {
+  // create CSS rules for fonts
+  if (typeof(FontFaceConfigs) != "undefined" && FontFaceConfigs) {
+    for (var ff in FontFaceConfigs) {
       if (!(/string/i).test(typeof(FontFaceConfigs[ff]))) continue;
       //if (!(/^file\:/i).test(FontFaceConfigs[ff]) && (typeof(XS_window) == "undefined" || window !== XS_window || !navigator.onLine || !internetPermission(XS_window))) { // this may open a user prompt
       if (!(/^file\:/i).test(FontFaceConfigs[ff]) &&
@@ -1019,12 +1019,12 @@ function createDynamicCssClasses() {
         jsdump("WARN: No access to Internet font: \"" + FontFaceConfigs[ff] + "\"");
         continue;
       }
-			var rule = "@font-face {font-family:" + ff + "; src:url(\"" + FontFaceConfigs[ff] + "\");}";
-			ex = getCSS(rule.replace(/src\:.*$/, ""), sheetIndex);
-			if (ex) sheet.deleteRule(ex.index);
-			sheet.insertRule(rule, sheet.cssRules.length);
-		}
-	}
+      var rule = "@font-face {font-family:" + ff + "; src:url(\"" + FontFaceConfigs[ff] + "\");}";
+      ex = getCSS(rule.replace(/src\:.*$/, ""), sheetIndex);
+      if (ex) sheet.deleteRule(ex.index);
+      sheet.insertRule(rule, sheet.cssRules.length);
+    }
+  }
   
 //if (sheet.cssRules.length != debug) jsdump(window.name + ": \nADDED " + (sheet.cssRules.length - debug) + " new dynamic " + configProp + " rules (" + sheet.cssRules.length + ")");
 }
@@ -1071,9 +1071,9 @@ function getLocaleConfig(lc) {
     if (!Config[p].localeConf) continue;
     try {var val = b.GetStringFromName(Config[p].localeConf);}
     catch (er) {
-			jsdump(er + "\n" + "WARN: \"" + lc + "\" locale: failed to read \"" + Config[p].localeConf + "\" in \"common/config.properties\", using default.");
-			val = NOTFOUND;
-		}
+      jsdump(er + "\n" + "WARN: \"" + lc + "\" locale: failed to read \"" + Config[p].localeConf + "\" in \"common/config.properties\", using default.");
+      val = NOTFOUND;
+    }
     if ((/^\s*$/).test(val)) val = NOTFOUND;
     
     if (val == NOTFOUND && Config[p].CSS && LocaleConfigDefaultCSS[p]) {
@@ -1105,9 +1105,9 @@ function getCSS(selector, sheetIndex) {
   var ss1 = 0;
   var ss2 = document.styleSheets.length-1;
   if (sheetIndex != null) {
-		ss1 = sheetIndex;
-		ss2 = sheetIndex;
-	}
+    ss1 = sheetIndex;
+    ss2 = sheetIndex;
+  }
   
   var myRule = null;
   for (var ssn=ss1; ssn <= ss2; ssn++) {
@@ -1150,83 +1150,83 @@ function isProgramPortable() {
 IsPortable = isProgramPortable();
 
 function openWindowXS(url, name, args, windowtype, parentWindow) {
-	if (!parentWindow) parentWindow = window;
-	
-	var existingWin = null;
-	if (windowtype) {
-		existingWin = Components.classes['@mozilla.org/appshell/window-mediator;1'].
-		getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow(windowtype);
-	}
-	else name += "-" + Math.round(10000*Math.random());
-	
-	if (existingWin) {
-		existingWin.focus();
-		return existingWin;
-	}
-	
-	return window.open(url, name, args);
+  if (!parentWindow) parentWindow = window;
+  
+  var existingWin = null;
+  if (windowtype) {
+    existingWin = Components.classes['@mozilla.org/appshell/window-mediator;1'].
+    getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow(windowtype);
+  }
+  else name += "-" + Math.round(10000*Math.random());
+  
+  if (existingWin) {
+    existingWin.focus();
+    return existingWin;
+  }
+  
+  return window.open(url, name, args);
 }
 
 function closeWindowXS(aWindow) {
-	if (typeof(AllWindows) == "object" && 
-			AllWindows instanceof Array && 
-			AllWindows.length) {
-		var i = AllWindows.indexOf(aWindow);
-		if (i != -1) AllWindows.splice(i, 1);
-	}
-	aWindow.close();
+  if (typeof(AllWindows) == "object" && 
+      AllWindows instanceof Array && 
+      AllWindows.length) {
+    var i = AllWindows.indexOf(aWindow);
+    if (i != -1) AllWindows.splice(i, 1);
+  }
+  aWindow.close();
 
 }
 
 // Returns whether the user has given permission to use Internet during  
 // this session, and prompts the user if the answer is unknown.
 function internetPermission(win) {
-	if (!win) win = window;
+  if (!win) win = window;
 
-	//prefs.clearUserPref("HaveInternetPermission");
+  //prefs.clearUserPref("HaveInternetPermission");
 
-	// never allow access to internet until we have express permission!
-	var haveInternetPermission = (
-		getPrefOrCreate("HaveInternetPermission", "Bool", false) || 
-		getPrefOrCreate("SessionHasInternetPermission", "Bool", false)
-	);
+  // never allow access to internet until we have express permission!
+  var haveInternetPermission = (
+    getPrefOrCreate("HaveInternetPermission", "Bool", false) || 
+    getPrefOrCreate("SessionHasInternetPermission", "Bool", false)
+  );
 
-	if (!haveInternetPermission) {
-		var bundle = getCurrentLocaleBundle("dialogs/addRepositoryModule/addRepositoryModule.properties");
-		var title = bundle.GetStringFromName("arm.internetPromptTitle");
-		var msg = bundle.GetStringFromName("arm.internetPromptMessage");
-		msg += "\n\n";
-		msg += bundle.GetStringFromName("arm.wishToContinue");
-		var cbText = bundle.GetStringFromName("arm.rememberMyChoice");
+  if (!haveInternetPermission) {
+    var bundle = getCurrentLocaleBundle("dialogs/addRepositoryModule/addRepositoryModule.properties");
+    var title = bundle.GetStringFromName("arm.internetPromptTitle");
+    var msg = bundle.GetStringFromName("arm.internetPromptMessage");
+    msg += "\n\n";
+    msg += bundle.GetStringFromName("arm.wishToContinue");
+    var cbText = bundle.GetStringFromName("arm.rememberMyChoice");
 
-		var result = {};
-		var dlg = win.openDialog(
-			"chrome://xulsword/content/dialogs/dialog/dialog.xul",
-			"dlg",
-			DLGSTD,
-			result,
-			fixWindowTitle(title),
-			msg,
-			DLGALERT,
-			DLGYESNO,
-			null,
-			null,
-			cbText
-		);
-		haveInternetPermission = result.ok;
+    var result = {};
+    var dlg = win.openDialog(
+      "chrome://xulsword/content/dialogs/dialog/dialog.xul",
+      "dlg",
+      DLGSTD,
+      result,
+      fixWindowTitle(title),
+      msg,
+      DLGALERT,
+      DLGYESNO,
+      null,
+      null,
+      cbText
+    );
+    haveInternetPermission = result.ok;
 
-		// if user wants this choice to be permanent...
-		if (result.checked2) {
-			prefs.setBoolPref("HaveInternetPermission", haveInternetPermission);
+    // if user wants this choice to be permanent...
+    if (result.checked2) {
+      prefs.setBoolPref("HaveInternetPermission", haveInternetPermission);
 
-			// there is no way for regular users to undo this, so I've commented it out...
-			//prefs.setBoolPref("AllowNoInternetAccess", !haveInternetPermission);
-		}
-	}
+      // there is no way for regular users to undo this, so I've commented it out...
+      //prefs.setBoolPref("AllowNoInternetAccess", !haveInternetPermission);
+    }
+  }
 
-	prefs.setBoolPref("SessionHasInternetPermission", haveInternetPermission);
+  prefs.setBoolPref("SessionHasInternetPermission", haveInternetPermission);
 
-	return haveInternetPermission;
+  return haveInternetPermission;
 }
 
 // DEBUG helps

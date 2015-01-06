@@ -12,7 +12,7 @@ button, toolbarbutton {
   height:34px; /* specified to allow for player's height */
 }
 #player {
-	-moz-padding-start:6px;
+  -moz-padding-start:6px;
 }
 #chapter {
   -moz-margin-start:-20px;
@@ -137,8 +137,8 @@ menu#sub-Genbks {
 
 /* MAIN WINDOW HISTORY BUTTONS */
 #historypopup menuitem.selected {
-	-moz-appearance: none;
-	margin: 2px 4px;
+  -moz-appearance: none;
+  margin: 2px 4px;
   background-color: Highlight;
   color: HighlightText;
 }
