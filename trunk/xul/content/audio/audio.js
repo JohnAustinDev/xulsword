@@ -82,30 +82,30 @@ function getAudioDirs() {
 //    3) If still not found, look for audio matching the module's base "Lang" attribute.
 //    4) If still not found, there is no audio...
 function getAudioForChapter(version, bookShortName, chapterNumber) {
-	chapterNumber = Number(chapterNumber);
-	if (isNaN(chapterNumber)) return null;
-	if (Tab[version].audio.hasOwnProperty(bookShortName + "_" + chapterNumber)) {
-		return Tab[version].audio[bookShortName + "_" + chapterNumber];
-	}
-	
-	return null;
+  chapterNumber = Number(chapterNumber);
+  if (isNaN(chapterNumber)) return null;
+  if (Tab[version].audio.hasOwnProperty(bookShortName + "_" + chapterNumber)) {
+    return Tab[version].audio[bookShortName + "_" + chapterNumber];
+  }
+  
+  return null;
 }
 
 function refreshAudioCatalog() {
   var lang = {};
   var audioCode = {};
   for (var t=0; t<Tabs.length; t++) {
-		Tabs[t].audio = {};
-		if (Tabs[t].audioCode != NOTFOUND) {
-			if (!audioCode.hasOwnProperty(Tabs[t].audioCode.toLowerCase())) audioCode[Tabs[t].audioCode.toLowerCase()] = [];
-			audioCode[Tabs[t].audioCode.toLowerCase()].push(Tabs[t].modName);
-		}
-		if (Tabs[t].lang != NOTFOUND) {
-			if (!lang.hasOwnProperty(Tabs[t].lang.toLowerCase())) lang[Tabs[t].lang.toLowerCase()] = [];
-			lang[Tabs[t].lang.toLowerCase()].push(Tabs[t].modName);
-		}
-	}
-	
+    Tabs[t].audio = {};
+    if (Tabs[t].audioCode != NOTFOUND) {
+      if (!audioCode.hasOwnProperty(Tabs[t].audioCode.toLowerCase())) audioCode[Tabs[t].audioCode.toLowerCase()] = [];
+      audioCode[Tabs[t].audioCode.toLowerCase()].push(Tabs[t].modName);
+    }
+    if (Tabs[t].lang != NOTFOUND) {
+      if (!lang.hasOwnProperty(Tabs[t].lang.toLowerCase())) lang[Tabs[t].lang.toLowerCase()] = [];
+      lang[Tabs[t].lang.toLowerCase()].push(Tabs[t].modName);
+    }
+  }
+  
   for (var d=0; d<AudioDirs.length; d++) {
     try {var ok = (AudioDirs[d].dir.exists() && AudioDirs[d].dir.directoryEntries)} catch (er) {continue;}
     if (!ok) continue;
@@ -113,22 +113,22 @@ function refreshAudioCatalog() {
     while (codes.hasMoreElements()) {
       var code = codes.getNext().QueryInterface(Components.interfaces.nsILocalFile);
       if (!code.isDirectory()) continue;
-			var books = code.directoryEntries;
-			while(books.hasMoreElements()) {
-				var book = books.getNext().QueryInterface(Components.interfaces.nsILocalFile);
-				if (!book.isDirectory()) continue;
-				var chapters = book.directoryEntries;
-				while(chapters.hasMoreElements()) {
-					var chapter = chapters.getNext().QueryInterface(Components.interfaces.nsILocalFile);
-					if (chapter.isDirectory()) continue;
+      var books = code.directoryEntries;
+      while(books.hasMoreElements()) {
+        var book = books.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+        if (!book.isDirectory()) continue;
+        var chapters = book.directoryEntries;
+        while(chapters.hasMoreElements()) {
+          var chapter = chapters.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+          if (chapter.isDirectory()) continue;
 
-					var ext = null
-					for (var i=0; i<AUDEXT.length; i++) {
-						var re = new RegExp("\\." + escapeRE(AUDEXT[i]) + "$", "i");
-						if ((re).test(chapter.leafName)) {ext = AUDEXT[i]; break;}
-					}
-					if (!ext) continue;
-					// currently Linux does not play mp3...
+          var ext = null
+          for (var i=0; i<AUDEXT.length; i++) {
+            var re = new RegExp("\\." + escapeRE(AUDEXT[i]) + "$", "i");
+            if ((re).test(chapter.leafName)) {ext = AUDEXT[i]; break;}
+          }
+          if (!ext) continue;
+          // currently Linux does not play mp3...
           if (OPSYS == "Linux" && ext == "mp3") continue;
          
           // we have an audio file, so now associate it with its module(s)
@@ -137,57 +137,57 @@ function refreshAudioCatalog() {
           var achap = chapter.leafName;
           var isLocalized = acode.match(/^(.+)_(.+?)$/);
           if (isLocalized) {
-						acode = isLocalized[1];
-						isLocalized = isLocalized[2];
-						abook = identifyBook(abook.replace(/^\d+\-/, "")).shortName;
-						if (!abook) continue;
-					}
-					achap = achap.match(/(\d+)\.[^\.]+$/);
-					if (!achap) continue;
-					achap = Number(achap[1]);
-				
-					var mods = [];
-					for (var t=0; t<Tabs.length; t++) {
-						if (Tabs[t].modName.toLowerCase() == acode) mods.push(Tabs[t].modName);
-					}
-					if (lang.hasOwnProperty(acode)) mods = mods.concat(lang[acode]);
-					if (audioCode.hasOwnProperty(acode)) mods = mods.concat(audioCode[acode]);	
-						
-					for (var i=0; i<mods.length; i++) {
-						if (Tab[mods[i]].audio.hasOwnProperty(abook + "_" + achap)) {
-							jsdump("WARN: Multiple audio files for \"" + mods[i] + ":" + abook + "." + achap + "\"");
-						}
-						Tab[mods[i]].audio[abook + "_" + achap] = chapter;
-					}
-					
-				}
-			}
+            acode = isLocalized[1];
+            isLocalized = isLocalized[2];
+            abook = identifyBook(abook.replace(/^\d+\-/, "")).shortName;
+            if (!abook) continue;
+          }
+          achap = achap.match(/(\d+)\.[^\.]+$/);
+          if (!achap) continue;
+          achap = Number(achap[1]);
+        
+          var mods = [];
+          for (var t=0; t<Tabs.length; t++) {
+            if (Tabs[t].modName.toLowerCase() == acode) mods.push(Tabs[t].modName);
+          }
+          if (lang.hasOwnProperty(acode)) mods = mods.concat(lang[acode]);
+          if (audioCode.hasOwnProperty(acode)) mods = mods.concat(audioCode[acode]);	
+            
+          for (var i=0; i<mods.length; i++) {
+            if (Tab[mods[i]].audio.hasOwnProperty(abook + "_" + achap)) {
+              jsdump("WARN: Multiple audio files for \"" + mods[i] + ":" + abook + "." + achap + "\"");
+            }
+            Tab[mods[i]].audio[abook + "_" + achap] = chapter;
+          }
+          
+        }
+      }
     }
   }
 }
 
 function updateBibleNavigatorAudio() {
-	var doc = XS_window.ViewPort.ownerDocument;
-	
-	var booknames = doc.getElementsByClassName("bookname");
-	for (var i=0; i<booknames.length; i++) {booknames[i].removeAttribute("hasAudio");}
-	
-	var chapcells = doc.getElementsByClassName("chaptermenucell");
-	for (var i=0; i<chapcells.length; i++) {chapcells[i].removeAttribute("hasAudio");}
-	
-	var vp = XS_window.ViewPort;
-	for (var w=1; w<=vp.NumDisplayedWindows; w++) {
-		if (Tab[vp.Module[w]].modType != BIBLE) continue;
-		for (var k in Tab[vp.Module[w]].audio) {
-			var bk = k.match(/^(.*)_(\d+)$/)[1];
-			var ch = k.match(/^(.*)_(\d+)$/)[2];
-			var bkelem = doc.getElementById("book_" + findBookNum(bk));
-			if (bkelem) bkelem.setAttribute("hasAudio", "true");
-			var chelem = doc.getElementById("chmenucell_" + findBookNum(bk) + "_" + ch);
-			if (chelem) chelem.setAttribute("hasAudio", "true");
-		}
-	}
-	
+  var doc = XS_window.ViewPort.ownerDocument;
+  
+  var booknames = doc.getElementsByClassName("bookname");
+  for (var i=0; i<booknames.length; i++) {booknames[i].removeAttribute("hasAudio");}
+  
+  var chapcells = doc.getElementsByClassName("chaptermenucell");
+  for (var i=0; i<chapcells.length; i++) {chapcells[i].removeAttribute("hasAudio");}
+  
+  var vp = XS_window.ViewPort;
+  for (var w=1; w<=vp.NumDisplayedWindows; w++) {
+    if (Tab[vp.Module[w]].modType != BIBLE) continue;
+    for (var k in Tab[vp.Module[w]].audio) {
+      var bk = k.match(/^(.*)_(\d+)$/)[1];
+      var ch = k.match(/^(.*)_(\d+)$/)[2];
+      var bkelem = doc.getElementById("book_" + findBookNum(bk));
+      if (bkelem) bkelem.setAttribute("hasAudio", "true");
+      var chelem = doc.getElementById("chmenucell_" + findBookNum(bk) + "_" + ch);
+      if (chelem) chelem.setAttribute("hasAudio", "true");
+    }
+  }
+  
 }
 
 
@@ -196,7 +196,7 @@ function updateBibleNavigatorAudio() {
  ***********************************************************************/ 
 
 function beginAudioPlayer() {
-	jsdump("beginAudioPlayer:" + XS_window.Player.version + ", " + XS_window.Player.chapter + " " + XS_window.Player.book);
+  jsdump("beginAudioPlayer:" + XS_window.Player.version + ", " + XS_window.Player.chapter + " " + XS_window.Player.book);
   document.getElementById("historyButtons").hidden = true;
   
   var quit = false;
@@ -214,44 +214,44 @@ function beginAudioPlayer() {
   
   jsdump("Have audio:" + audiofile.path + "\n");
   
-	var audio = document.getElementById("player").getElementsByTagName("audio")[0];
+  var audio = document.getElementById("player").getElementsByTagName("audio")[0];
 
-	// is this file playable? If not then get one that is playable...
-	var testfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-	for (var i=0; i<AUDEXT.length; i++) {
-		var myext = (audiofile.leafName.match(/\.([^\.]+)$/)[1].toLowerCase());
-		if (audio.canPlayType(AUDMIME[myext]) !== "") {break;}
-		testfile.initWithPath(lpath(audiofile.path.replace(/\.([^\.]+)$/, "." + AUDEXT[i])));
-		if (testfile.exists()) audiofile = testfile;
-	}
+  // is this file playable? If not then get one that is playable...
+  var testfile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+  for (var i=0; i<AUDEXT.length; i++) {
+    var myext = (audiofile.leafName.match(/\.([^\.]+)$/)[1].toLowerCase());
+    if (audio.canPlayType(AUDMIME[myext]) !== "") {break;}
+    testfile.initWithPath(lpath(audiofile.path.replace(/\.([^\.]+)$/, "." + AUDEXT[i])));
+    if (testfile.exists()) audiofile = testfile;
+  }
 
   audio.src = "file://" + audiofile.path;
   if (OPSYS == "WINNT") audio.src = audio.src.replace(/\\/g, "/");
 
-	Player.canPlay = false; // oncanplay will set this to true
+  Player.canPlay = false; // oncanplay will set this to true
 
   audio.play();
 
   document.getElementById("player").hidden = false;
 
-	window.setTimeout(function () {if(!Player.canPlay) reportPlayerError();}, 3000);
+  window.setTimeout(function () {if(!Player.canPlay) reportPlayerError();}, 3000);
 }
 
 function reportPlayerError() {
-	Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
+  Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
   var result = {};
-	var bundle = getCurrentLocaleBundle("audio/audio.properties");
+  var bundle = getCurrentLocaleBundle("audio/audio.properties");
   var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result,
       fixWindowTitle(bundle.GetStringFromName("error")),
       bundle.GetStringFromName("audioFormatNotSupported"),
       DLGALERT,
       DLGOK);
 
-	endAudioPlayer();
+  endAudioPlayer();
 }
 
 function emptyAudioPlayer() {
-	 if (Player.isPinned) {
+   if (Player.isPinned) {
     endAudioPlayer()
     return;
   }

@@ -32,7 +32,7 @@ toolbar[showAdvanced="false"] #advanced {
 }
 
 #search-controls > separator:nth-child(4) {
-	margin:0px;
+  margin:0px;
 }
 #search-module { 
   overflow-x:auto;
@@ -50,7 +50,7 @@ groupbox {
   margin:5px 10px 5px 10px;
 }
 #advanced {
-	padding-bottom:5px;
+  padding-bottom:5px;
 }
 #dividerBox {
   background:rgb(220,220,220);
@@ -64,7 +64,7 @@ groupbox {
   border-radius:4px;
 }
 #bible-translator-cont > label {
-	-moz-padding-start:6px;
+  -moz-padding-start:6px;
 }
 #bible-translator menulist[anonid="version"] {
   min-width:100px;

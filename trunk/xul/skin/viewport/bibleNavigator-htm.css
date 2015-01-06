@@ -152,20 +152,20 @@ body[chromedir="rtl"] .biblebooks {
   -moz-padding-end:20px;
 }
 .bookname[hasAudio="true"] .bookname-div2 {
-	-moz-padding-end:40px;
+  -moz-padding-end:40px;
 }
 .bookname[hasAudio="true"] .bookname-div2:after {
-	position:absolute;
-	right:22px;
-	top:2px;
-	content:url('chrome://xulsword/skin/images/listen-small.png');
-	opacity:0.6;
-	width:15px;
-	height:13px;
+  position:absolute;
+  right:22px;
+  top:2px;
+  content:url('chrome://xulsword/skin/images/listen-small.png');
+  opacity:0.6;
+  width:15px;
+  height:13px;
 }
 body[chromedir="rtl"] .bookname[hasAudio="true"] .bookname-div2:after {
-	right:auto;
-	left:22px;
+  right:auto;
+  left:22px;
 }
 .charrow {
   position:absolute;
@@ -226,13 +226,13 @@ body[chromedir="rtl"] .chaptermenu {
   border:1px inset rgb(255,243,255);
 }
 .chaptermenucell[hasAudio="true"]:after {
-	-moz-margin-start:2px;
-	position:relative;
-	top:2px;
-	content: url('chrome://xulsword/skin/images/listen-small.png');
-	width:15px;
-	height:13px;
-	opacity:0.5;
+  -moz-margin-start:2px;
+  position:relative;
+  top:2px;
+  content: url('chrome://xulsword/skin/images/listen-small.png');
+  width:15px;
+  height:13px;
+  opacity:0.5;
 }
 .emptych {
   visibility:hidden;
@@ -256,7 +256,7 @@ body[chromedir="rtl"] .chaptermenu {
   z-index:60;
 }
 a .nohead {
-	color:blue;
+  color:blue;
 }
 .heading-link:hover {
   text-decoration:underline;

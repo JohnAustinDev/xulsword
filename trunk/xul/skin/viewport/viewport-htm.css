@@ -84,7 +84,7 @@ body[chromedir="rtl"] #chooser {
 }
 .tabs[moduleType="none"],
 body[isWindow="true"] .tabs:not([moduleType="none"]) ~ .tabs {
-	display:none;
+  display:none;
 }
 #textarea[windows="show1"] #tabs1 {
   width:100%;
@@ -113,13 +113,13 @@ it happens to be a linked text which is unpinned and then switched to become
 a dictionary (which cannot be linked), this situation needs this special CSS: */
 body[isWindow="true"] #textarea .tabs[moduleType="Dicts"],
 body[isWindow="true"] #textarea .text[moduleType="Dicts"] {
-	display:none;
+  display:none;
 }
 body[isWindow="true"] #textarea .tabs[moduleType="none"] + .tabs[moduleType="Dicts"],
 body[isWindow="true"] #textarea .tabs[moduleType="Dicts"]:first-child,
 body[isWindow="true"] #textarea .text[moduleType="none"] + .text[moduleType="Dicts"],
 body[isWindow="true"] #textarea .text[moduleType="Dicts"]:first-child {
-	display:table-cell;
+  display:table-cell;
 }
 .tab {
   position:relative;
@@ -153,14 +153,14 @@ body[isWindow="true"] #textarea .text[moduleType="Dicts"]:first-child {
   height:100%;
 }
 .tabs[pinned="true"] .multitab-clicker {
-	width:100%;
+  width:100%;
 }
 .tabs[pinned="true"] .multitab select {
 /* remove the select arrow. see:
 https://bugzilla.mozilla.org/show_bug.cgi?id=649849#c59*/
-	-moz-appearance: none;
-	text-indent: 0.01px;
-	text-overflow: '';
+  -moz-appearance: none;
+  text-indent: 0.01px;
+  text-overflow: '';
 }
 body[chromedir="rtl"] .multitab-clicker {
   left:auto;
@@ -183,7 +183,7 @@ body[isWindow="true"] .tabOrig {
 }
 .tabs:not([moduleType="Texts"]) .tabOrig,
 body[hasOriginalLanguage="false"] .tabOrig {
-	color:rgb(210,210,210);
+  color:rgb(210,210,210);
 }
 .tabs[pinned="true"] .tab {
   visibility:hidden;
@@ -258,8 +258,8 @@ body[hasOriginalLanguage="false"] .tabOrig {
 
 .textf {
   font-size: 1.1em;
-	background:rgb(255,243,255);
-	border:2px solid rgb(200,170,205);
+  background:rgb(255,243,255);
+  border:2px solid rgb(200,170,205);
   border-radius:8px;
   position:relative;
 }
@@ -455,8 +455,8 @@ body[isWindow="true"] .sbwin {
   height:14px;
 }
 .text[textdir="rtl"] .nbsizer {
-	right:auto;
-	left:42px;
+  right:auto;
+  left:42px;
 }
 .text[footnotesMaximized="true"] .nbsizer {
   background:url(chrome://xulsword/skin/images/norm.bmp);
@@ -468,8 +468,8 @@ body[isWindow="true"] .sbwin {
 .nb {
   font-size:0.9em;
   overflow:auto;
-	background:rgb(240,235,240);
-	border:2px solid rgb(150,150,150);
+  background:rgb(240,235,240);
+  border:2px solid rgb(150,150,150);
   border-radius:8px;
   padding:0px 5px 0px 5px;
 }
@@ -536,7 +536,7 @@ body[isWindow="true"] .sbwin {
 }
 .nb {
   background:transparent;
-	border:none;
+  border:none;
   padding-top:20px;
 }
 .fr {

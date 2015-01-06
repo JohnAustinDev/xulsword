@@ -45,8 +45,8 @@ var aConsoleListener =
     
     this.skipExceptions = true; // only report the first exception during a session...
     
-		prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);  
-		prefs = prefs.getBranch("extensions.xulsword.");
+    prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);  
+    prefs = prefs.getBranch("extensions.xulsword.");
    
     // BUILD REPORT
     var rep = aMessage.message + URLNEWLINE;
@@ -72,20 +72,20 @@ var aConsoleListener =
    
     // prompt user to report problem
     try {var haveInternetPermission = (prefs.getBoolPref("SessionHasInternetPermission") || prefs.getBoolPref("HaveInternetPermission"));}
-		catch (er) {haveInternetPermission = false;}
+    catch (er) {haveInternetPermission = false;}
 
     var result={checked:false, ok: false};
     try {
-			var bundle = getCurrentLocaleBundle("startup/startup.properties");
-			var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
-				bundle.GetStringFromName("Title"),
-				(haveInternetPermission ? bundle.formatStringFromName("SendErrorReport", [bundle.GetStringFromName("dialog.OK")], 1) + "\n\n":"") + aMessage.message,
-				DLGALERT,
-				(haveInternetPermission ? DLGOKCANCEL:DLGOK),
-				bundle.GetStringFromName("dontShowAgain")
-			);
-		}
-		catch (er) {}
+      var bundle = getCurrentLocaleBundle("startup/startup.properties");
+      var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
+        bundle.GetStringFromName("Title"),
+        (haveInternetPermission ? bundle.formatStringFromName("SendErrorReport", [bundle.GetStringFromName("dialog.OK")], 1) + "\n\n":"") + aMessage.message,
+        DLGALERT,
+        (haveInternetPermission ? DLGOKCANCEL:DLGOK),
+        bundle.GetStringFromName("dontShowAgain")
+      );
+    }
+    catch (er) {}
     
     if (result.checked) {
       prefs.setBoolPref("DontShowExceptionDialog", true);
@@ -99,35 +99,35 @@ var aConsoleListener =
     
     try {var url = prefs.getCharPref("ProblemReportURL");} catch (er) {url=null;}
     if (!url) {
-			this.processingException = false;
+      this.processingException = false;
       return;
-		}
+    }
     
     var params = "xulsword=1&report=" + encodeURIComponent(rep.substr(0, MAXLENGTH)).replace(/%20/g, '+');
-		var ajax = new XMLHttpRequest();
-		ajax.open("POST", url, true);
-		ajax.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-		ajax.setRequestHeader("Content-length", params.length);
-		ajax.setRequestHeader("Connection", "close");
-		ajax.send(params);
-		
-		this.processingException = false;
+    var ajax = new XMLHttpRequest();
+    ajax.open("POST", url, true);
+    ajax.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    ajax.setRequestHeader("Content-length", params.length);
+    ajax.setRequestHeader("Connection", "close");
+    ajax.send(params);
+    
+    this.processingException = false;
     
   },
   
   QueryInterface: function (iid) {
     if (!iid.equals(Components.interfaces.nsIConsoleListener) &&
             !iid.equals(Components.interfaces.nsISupports)) {
-		  throw Components.results.NS_ERROR_NO_INTERFACE;
-	  }
+      throw Components.results.NS_ERROR_NO_INTERFACE;
+    }
     return this;
   },
   
   getPlatformInfo: function() {
-		var info = "Program info: ";
-		
-		prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);  
-		prefs = prefs.getBranch("extensions.xulsword.");
+    var info = "Program info: ";
+    
+    prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);  
+    prefs = prefs.getBranch("extensions.xulsword.");
     
     var bid = prefs.getCharPref("BuildID");
     if (LibSword && !LibSword.loadFailed) bid += LibSword.LibswordPath.match(/libxulsword\-(.*?)\.[^\.]+$/)[1];
@@ -160,7 +160,7 @@ var aConsoleListener =
     }
     
     return info;
-	}
+  }
   
 };
 
@@ -187,8 +187,8 @@ function initLogging() {
   var env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
   env.set("XRE_CONSOLE_LOG", debugInfo.path);
 
-	try {var dev = prefs.getCharPref("BuildID").match(/D$/);} 
-	catch (er) {dev = null;}
+  try {var dev = prefs.getCharPref("BuildID").match(/D$/);} 
+  catch (er) {dev = null;}
     
   if (!dev && !prefs.getBoolPref("DontShowExceptionDialog")) setConsoleService(true);
 }

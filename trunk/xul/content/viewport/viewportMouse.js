@@ -68,22 +68,22 @@ function openTabToolTip(t, w, cX, cY) {
   tt.hidePopup();
   
   if (t !== null) {
-		var modName = Tabs[t].modName;
-		if (!modName) return;
-		
-		var desc = Tabs[t].description;
-		if (!desc) return;
-		
-		desc = desc.substr(0, TOOLTIP_LEN);
-		if (desc.length==TOOLTIP_LEN) desc += "...";
-		
-		tt.firstChild.setAttribute("class", "cs-" + Tab[modName].locName);
-	}
-	else {
-		desc = XSBundle.getString("ORIGTabToolTip");
-		tt.firstChild.setAttribute("class", "cs-Program");
-	}
-	
+    var modName = Tabs[t].modName;
+    if (!modName) return;
+    
+    var desc = Tabs[t].description;
+    if (!desc) return;
+    
+    desc = desc.substr(0, TOOLTIP_LEN);
+    if (desc.length==TOOLTIP_LEN) desc += "...";
+    
+    tt.firstChild.setAttribute("class", "cs-" + Tab[modName].locName);
+  }
+  else {
+    desc = XSBundle.getString("ORIGTabToolTip");
+    tt.firstChild.setAttribute("class", "cs-Program");
+  }
+  
   tt.firstChild.setAttribute("style", "color:inherit;");
   tt.firstChild.setAttribute("value", desc);
   
@@ -185,9 +185,9 @@ function scriptMouseOver(e) {
       var sheet = document.styleSheets[document.styleSheets.length-1];
       var index = sheet.cssRules.length;
       try {
-				sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
-				AddedRules.push( { sheet:sheet, index:index } );
-			} catch (er) {}
+        sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
+        AddedRules.push( { sheet:sheet, index:index } );
+      } catch (er) {}
     }
     break;
   }
@@ -234,8 +234,8 @@ function scriptClick(e) {
   if (w && !ViewPort.IsPinned[w] && Tab[ViewPort.Module[w]].modType == GENBOOK) {
     var key = ViewPort.Key[w];
     if (GenBookNavigator.selectedRdfChapter() != "rdf:#/" + ViewPort.Module[w] + key) {
-			GenBookNavigator.select("rdf:#/" + ViewPort.Module[w] + key);
-		}
+      GenBookNavigator.select("rdf:#/" + ViewPort.Module[w] + key);
+    }
   }
   
   // Only proceed for events with click functionality, but move up the
@@ -452,10 +452,10 @@ function scriptClick(e) {
     }
     break;
   case "versePerLineButton":
-		var t = document.getElementById("text" + w);
-		var vplWas = t.getAttribute("versePerLine");
-		t.setAttribute("versePerLine", (vplWas == "false" ? "true":"false"));
-		break;
+    var t = document.getElementById("text" + w);
+    var vplWas = t.getAttribute("versePerLine");
+    t.setAttribute("versePerLine", (vplWas == "false" ? "true":"false"));
+    break;
     
   // Note box clicks
   case "crtwisty":
@@ -487,21 +487,21 @@ function scriptClick(e) {
     break;
     
   case "origoption":
-		var orig = elem.getAttribute("value").split(".");
-		if (findBookNum(orig[0]) < NumOT) Tab.ORIG_OT = Tab[orig[3]];
-		else Tab.ORIG_NT = Tab[orig[3]];
-		XS_window.Texts.update(SCROLLTYPEPREVIOUS, HILIGHTPREVIOUS, [null, (w==1), (w==2), (w==3)]);
-		break;
-		
-	case "gfn":
-		var gfns = document.getElementById("text" + w);
-		if (!gfns) break;
-		gfns = gfns.getElementsByClassName("gfn");
-		for (var gfn of gfns) {
-			if (gfn === elem || gfn.title != p.title) continue;
-			gfn.scrollIntoView();
-		}
-		break;
+    var orig = elem.getAttribute("value").split(".");
+    if (findBookNum(orig[0]) < NumOT) Tab.ORIG_OT = Tab[orig[3]];
+    else Tab.ORIG_NT = Tab[orig[3]];
+    XS_window.Texts.update(SCROLLTYPEPREVIOUS, HILIGHTPREVIOUS, [null, (w==1), (w==2), (w==3)]);
+    break;
+    
+  case "gfn":
+    var gfns = document.getElementById("text" + w);
+    if (!gfns) break;
+    gfns = gfns.getElementsByClassName("gfn");
+    for (var gfn of gfns) {
+      if (gfn === elem || gfn.title != p.title) continue;
+      gfn.scrollIntoView();
+    }
+    break;
     
   }
   

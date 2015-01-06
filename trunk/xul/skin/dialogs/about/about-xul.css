@@ -19,30 +19,30 @@ button {
   color:rgb(77,37,143);
 }
 .splash-text {
-	font-size:14px;
-	color:rgb(77,37,143);
+  font-size:14px;
+  color:rgb(77,37,143);
 }
 #modules,
 #contributors {
   display:none;
 }
 #contributors {
-	height:250px;
-	overflow:hidden;
-	margin:76px 98px 10px 98px;
-	background:rgba(0,0,0,0.5);
-	color:white;
-	border-radius:8px;
+  height:250px;
+  overflow:hidden;
+  margin:76px 98px 10px 98px;
+  background:rgba(0,0,0,0.5);
+  color:white;
+  border-radius:8px;
 }
 #contributors label {
-	text-align:center;
-	width:300px;
+  text-align:center;
+  width:300px;
 }
 #contributors label:first-child {
-	margin-top:250px;
+  margin-top:250px;
 }
 #contributors label:last-child {
-	margin-bottom:250px;
+  margin-bottom:250px;
 }
 
 #mainbox[showingModules="true"] #modules,

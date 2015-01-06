@@ -26,59 +26,59 @@ BibleNavigator = {
   doc: function() {return document;},
   
   init: function() {
-		if (LibSword.loadFailed) return;
-		
-		var tst = this.doc().getElementById("testament_ot");
-		var text = XSBundle.getString('OTtext');
-		if (!text.match(/^\s*$/)) this.verticalWrite(tst, text);
-		else {
-			var img = tst.appendChild(this.doc().createElement("img")); 
-			img.setAttribute("src", "chrome://xulsword/locale/OT.png");
-		}
-		
-		tst = this.doc().getElementById("testament_nt");
-		text = XSBundle.getString('NTtext');
-		if (!text.match(/^\s*$/)) this.verticalWrite(tst, text);
-		else {
-			var img = tst.appendChild(this.doc().createElement("img")); 
-			img.setAttribute("src", "chrome://xulsword/locale/NT.png");
-		}
-		
-		this.drawBooks("ot", this.doc().getElementById("biblebooks_ot"));
-		this.drawBooks("nt", this.doc().getElementById("biblebooks_nt"));
-	},
+    if (LibSword.loadFailed) return;
+    
+    var tst = this.doc().getElementById("testament_ot");
+    var text = XSBundle.getString('OTtext');
+    if (!text.match(/^\s*$/)) this.verticalWrite(tst, text);
+    else {
+      var img = tst.appendChild(this.doc().createElement("img")); 
+      img.setAttribute("src", "chrome://xulsword/locale/OT.png");
+    }
+    
+    tst = this.doc().getElementById("testament_nt");
+    text = XSBundle.getString('NTtext');
+    if (!text.match(/^\s*$/)) this.verticalWrite(tst, text);
+    else {
+      var img = tst.appendChild(this.doc().createElement("img")); 
+      img.setAttribute("src", "chrome://xulsword/locale/NT.png");
+    }
+    
+    this.drawBooks("ot", this.doc().getElementById("biblebooks_ot"));
+    this.drawBooks("nt", this.doc().getElementById("biblebooks_nt"));
+  },
   
   drawBooks: function(which, elem) {
-		var start = (which == "ot" ? 0:NumOT);
-		var end = (which == "ot" ? NumOT:Book.length);
+    var start = (which == "ot" ? 0:NumOT);
+    var end = (which == "ot" ? NumOT:Book.length);
     for (var b=start; b<end; b++) {this.drawBook(elem, b);}
   },
 
   drawBook: function(elem, b) {
-		var bookname = elem.appendChild(this.doc().createElement("div"));
-		bookname.className = "bookname";
-		bookname.id = "book_" + b;
-		var div1 = bookname.appendChild(this.doc().createElement("div"));
-		div1.className = "bookname-div1";
-		var div2 = div1.appendChild(this.doc().createElement("div"));
-		div2.className = "bookname-div2";
-		div2.textContent = Book[b].bName;
-		div2.appendChild(this.doc().createElement("div")).className = "charrow";
-		this.writeChapterMenu(div2, b);
+    var bookname = elem.appendChild(this.doc().createElement("div"));
+    bookname.className = "bookname";
+    bookname.id = "book_" + b;
+    var div1 = bookname.appendChild(this.doc().createElement("div"));
+    div1.className = "bookname-div1";
+    var div2 = div1.appendChild(this.doc().createElement("div"));
+    div2.className = "bookname-div2";
+    div2.textContent = Book[b].bName;
+    div2.appendChild(this.doc().createElement("div")).className = "charrow";
+    this.writeChapterMenu(div2, b);
   },
 
   writeChapterMenu: function(elem, bk) {
-		var chaptermenu = elem.appendChild(this.doc().createElement("div"));
-		chaptermenu.className = "chaptermenu";
-		chaptermenu.id = "chmenu_" + bk;
-		chaptermenu.setAttribute("headingmenu", "hide");
-		
+    var chaptermenu = elem.appendChild(this.doc().createElement("div"));
+    chaptermenu.className = "chaptermenu";
+    chaptermenu.id = "chmenu_" + bk;
+    chaptermenu.setAttribute("headingmenu", "hide");
+    
     var row=1; 
     var col=1;
     for (var ch=1; ch<=LibSword.getMaxChapter("KJV", Book[bk].sName); ch++) {
       if (col == 1) {
-				var chaptermenurow = chaptermenu.appendChild(this.doc().createElement("div"));
-				chaptermenurow.className = "chaptermenurow";
+        var chaptermenurow = chaptermenu.appendChild(this.doc().createElement("div"));
+        chaptermenurow.className = "chaptermenurow";
       }
       var chaptermenucell = chaptermenurow.appendChild(this.doc().createElement("div"));
       chaptermenucell.className = "chaptermenucell cs-Program";
@@ -97,8 +97,8 @@ BibleNavigator = {
 
   verticalWrite: function(elem, txt) {
     for (var i=0; i<txt.length; i++) {
-			var l = elem.appendChild(this.doc().createElement("div"));
-			l.textContent = txt.substr(i,1);
+      var l = elem.appendChild(this.doc().createElement("div"));
+      l.textContent = txt.substr(i,1);
     }
   },
 
@@ -240,12 +240,12 @@ BibleNavigator = {
         var heading = "<div" + head[h].match(hd)[1].replace(/head1/, "nohead") + head[h].match(hd)[2].replace(/<[^>]*>/g, "") + "</div>";
         var verse = head[h].match(vs)[1];
         if (!(/^<div[^>]*>\s*<\/div>$/).test(heading)) {
-					if (hr) hm.appendChild(this.doc().createElement("hr"));
-					var a = hm.appendChild(this.doc().createElement("a"));
-					a.className = "heading-link cs-" + biblemod;
-					a.id = "headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod;
-					sanitizeHTML(a, heading);
-					hr = true;
+          if (hr) hm.appendChild(this.doc().createElement("hr"));
+          var a = hm.appendChild(this.doc().createElement("a"));
+          a.className = "heading-link cs-" + biblemod;
+          a.id = "headlink_" + Book[p[1]].sName + "_" + p[2] + "_" + verse + "_" + biblemod;
+          sanitizeHTML(a, heading);
+          hr = true;
         }
       }
     }

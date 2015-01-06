@@ -106,8 +106,8 @@ function loadedXUL2() {
   
   // Add some numeric access keys but only if parent has an access key...
   function addAccessKeyIf(scelem, id) {
-		if ((/^\s*$/).test(document.getElementById(scelem).getAttribute("accesskey")) ||
-				!(/\(n\)/).test(id)) return;
+    if ((/^\s*$/).test(document.getElementById(scelem).getAttribute("accesskey")) ||
+        !(/\(n\)/).test(id)) return;
     var n = 0;
     while (true) {
       var elem = document.getElementById(id.replace("(n)", n));
@@ -142,7 +142,7 @@ function loadedXUL2() {
   // close splash window
   if (window.opener && window.opener.document.title == "xulsword-temporary-hidden-window")
       closeWindowXS(window.opener); // Close hidden startup window (which in turn closes visible splash window)
-	else if (window.opener && window.opener.SplashScreen) closeWindowXS(window.opener.SplashScreen);
+  else if (window.opener && window.opener.SplashScreen) closeWindowXS(window.opener.SplashScreen);
  
   if (LibSword.hasBible) {
     //we're ok!
@@ -151,17 +151,17 @@ function loadedXUL2() {
     window.setTimeout(function () {postWindowInit();}, 1); 
   }
   else if (LibSword.loadFailed) {
-		window.setTimeout(function() {
-			window.alert("Could not load " + LibSword.LibswordPath.replace(/^.*?[\\\/]([^\\\/]+)$/, "$1"));
-			if (OPSYS == "Linux") {
-				window.alert("\n\nRun:\n\n$ ldd \"" + LibSword.LibswordPath + "\"\n\nInstall any libraries listed as: \"not found\".");
-			}
-			closeWindowXS(window); // nothing we can to here...
-		}, 1);
-	}
+    window.setTimeout(function() {
+      window.alert("Could not load " + LibSword.LibswordPath.replace(/^.*?[\\\/]([^\\\/]+)$/, "$1"));
+      if (OPSYS == "Linux") {
+        window.alert("\n\nRun:\n\n$ ldd \"" + LibSword.LibswordPath + "\"\n\nInstall any libraries listed as: \"not found\".");
+      }
+      closeWindowXS(window); // nothing we can to here...
+    }, 1);
+  }
   
   // otherwise, no Bibles loaded leaves user with choice to exit or install a module.
-	else XulswordController.doCommand("cmd_xs_addRepositoryModule");
+  else XulswordController.doCommand("cmd_xs_addRepositoryModule");
   
   jsdump("Initilization Complete\n");
 }
@@ -188,7 +188,7 @@ function postWindowInit() {
   
   // Open language menu if a new locale was just installed
   if ((!document.getElementById("sub-lang").disabled && XS_window.NewModuleInfo.showLangMenu) || 
-				XS_window.NewModuleInfo.NewLocales.length) {
+        XS_window.NewModuleInfo.NewLocales.length) {
     var opmenu = getDataUI("menu.options");
     var lamenu = getDataUI("menu.options.language");
     var result={};
@@ -219,9 +219,9 @@ function postWindowInit() {
   
   refreshAudioCatalog();
   for (var w=1; w<=NW; w++) {
-		BibleTexts.updateAudioLinks(w);
-	}
-	updateBibleNavigatorAudio();
+    BibleTexts.updateAudioLinks(w);
+  }
+  updateBibleNavigatorAudio();
 
 }
 
@@ -318,7 +318,7 @@ function getModuleFeatures(module) {
   
   // "Dictionary" is for backward compatibility to old mods which lack standard conf entry (made for xulsword <= 3.6)
   if (globalOptionFilters.search("Reference Material Links")!= -1 || 
-			globalOptionFilters.search("Dictionary")!= -1) {
+      globalOptionFilters.search("Dictionary")!= -1) {
     features.haveDictionary = false;
     var dmods = LibSword.getModuleInformation(module, "DictionaryModule");
     dmods = dmods.split("<nx>");
@@ -539,41 +539,41 @@ var History = {
   popup:null,
   
   init: function() {
-		History.popup = document.getElementById("historypopup");
+    History.popup = document.getElementById("historypopup");
     try {var h = JSON.parse(getPrefOrCreate("History", "Char", "[]"));}
     catch (er) {h = [];}
     var x = getPrefOrCreate("HistoryIndex", "Int", 0);
     for (var i=0; i<h.length; i++) {History.createMenuItemBefore(null, h[i], i == x);}
   },
   
-	add: function() {
-		if (LibSword.paused) return;
-		
-		var newmod = ViewPort.firstDisplayBible();
-		var newloc = Location.getLocation(newmod).split(".");
-		newloc[3] = LibSword.getVerseSystem(newmod);
-		var sel = History.popup.getElementsByClassName("selected")[0];
-		if (sel) {
-			var seloc = sel.getAttribute("value").split(".");
-			seloc = Location.convertLocation(seloc.pop(), seloc.join("."), newloc[3]).split("."); // convert selection to current vsys
-			seloc[3] = newloc[3];
-		}
-	
-		// if new chapter is different...
-		if (!sel || newloc[0] != seloc[0] || newloc[1] != seloc[1]) {
-			History.createMenuItemBefore(sel, newloc.join("."), true);
-			
-			//update buttons
+  add: function() {
+    if (LibSword.paused) return;
+    
+    var newmod = ViewPort.firstDisplayBible();
+    var newloc = Location.getLocation(newmod).split(".");
+    newloc[3] = LibSword.getVerseSystem(newmod);
+    var sel = History.popup.getElementsByClassName("selected")[0];
+    if (sel) {
+      var seloc = sel.getAttribute("value").split(".");
+      seloc = Location.convertLocation(seloc.pop(), seloc.join("."), newloc[3]).split("."); // convert selection to current vsys
+      seloc[3] = newloc[3];
+    }
+  
+    // if new chapter is different...
+    if (!sel || newloc[0] != seloc[0] || newloc[1] != seloc[1]) {
+      History.createMenuItemBefore(sel, newloc.join("."), true);
+      
+      //update buttons
       goUpdateCommand("cmd_xs_forward");
       goUpdateCommand("cmd_xs_back");
-		}
-		// if only verse differs, just update selection.
-		else if (newloc[2] != seloc[2]) {
-			var selv = sel.getAttribute("value").split(".");
-			selv[2] = newloc[2];
-			sel.setAttribute("value", selv.join("."));
-		}
-	},
+    }
+    // if only verse differs, just update selection.
+    else if (newloc[2] != seloc[2]) {
+      var selv = sel.getAttribute("value").split(".");
+      selv[2] = newloc[2];
+      sel.setAttribute("value", selv.join("."));
+    }
+  },
   
   back: function() {
     // If we've clicked back, make sure the current location has been added to history first!
@@ -581,70 +581,70 @@ var History = {
     History.add();
     var sel = History.popup.getElementsByClassName("selected")[0];
     if (sel.nextSibling) {
-			sel.removeAttribute("class");
-			sel.nextSibling.setAttribute("class", "selected");
-			sel.nextSibling.click();
-		}
+      sel.removeAttribute("class");
+      sel.nextSibling.setAttribute("class", "selected");
+      sel.nextSibling.click();
+    }
   },
 
   forward: function() {
-		var sel = History.popup.getElementsByClassName("selected")[0];
+    var sel = History.popup.getElementsByClassName("selected")[0];
     if (sel.previousSibling) {
-			sel.removeAttribute("class");
-			sel.previousSibling.setAttribute("class", "selected");
-			sel.previousSibling.click();
-		}
+      sel.removeAttribute("class");
+      sel.previousSibling.setAttribute("class", "selected");
+      sel.previousSibling.click();
+    }
   },
   
   onselect: function(e) {
-		var refBible = ViewPort.firstDisplayBible();
-		var value = e.target.getAttribute("value").split(".");
-		var c = History.popup.firstChild;
-		while (c) {c.removeAttribute("class"); c = c.nextSibling;}
-		e.target.setAttribute("class", "selected");
-		
-		var loc = Location.convertLocation(value.pop(), value.join("."), LibSword.getVerseSystem(refBible));
-		Location.setLocation(refBible, loc);
-		document.getElementById("book").book = Location.getBookName();
-		document.getElementById("book").version = refBible;
-		document.getElementById("chapter").value = dString(Location.getChapterNumber(refBible));
-		document.getElementById("verse").value = dString(Location.getVerseNumber(refBible));
-		updateFromNavigator();
-		goUpdateCommand("cmd_xs_forward");
-		goUpdateCommand("cmd_xs_back");
-	},
+    var refBible = ViewPort.firstDisplayBible();
+    var value = e.target.getAttribute("value").split(".");
+    var c = History.popup.firstChild;
+    while (c) {c.removeAttribute("class"); c = c.nextSibling;}
+    e.target.setAttribute("class", "selected");
+    
+    var loc = Location.convertLocation(value.pop(), value.join("."), LibSword.getVerseSystem(refBible));
+    Location.setLocation(refBible, loc);
+    document.getElementById("book").book = Location.getBookName();
+    document.getElementById("book").version = refBible;
+    document.getElementById("chapter").value = dString(Location.getChapterNumber(refBible));
+    document.getElementById("verse").value = dString(Location.getVerseNumber(refBible));
+    updateFromNavigator();
+    goUpdateCommand("cmd_xs_forward");
+    goUpdateCommand("cmd_xs_back");
+  },
 
   updateMenu: function(aEvent) {
-		var c = History.popup.firstChild;
-		while (c) {
-			var value = c.getAttribute("value").split(".");
-			var ref = Location.convertLocation(value.pop(), value.join("."), LibSword.getVerseSystem(ViewPort.firstDisplayBible()));
-			c.setAttribute("label", ref2ProgramLocaleText(ref, true));
-			c = c.nextSibling;
-		}
-	},
+    var c = History.popup.firstChild;
+    while (c) {
+      var value = c.getAttribute("value").split(".");
+      var ref = Location.convertLocation(value.pop(), value.join("."), LibSword.getVerseSystem(ViewPort.firstDisplayBible()));
+      c.setAttribute("label", ref2ProgramLocaleText(ref, true));
+      c = c.nextSibling;
+    }
+  },
   
   createMenuItemBefore: function(elem, value, isSelected) {
-		var menuitem = document.createElement("menuitem");
-		menuitem.setAttribute("value", value);
-		History.popup.insertBefore(menuitem, elem);
-		if (History.popup.childNodes.length > History.depth) History.popup.removeChild(History.popup.lastChild);
-		if (isSelected) {
-			var c = History.popup.firstChild;
-			while (c) {c.removeAttribute("class"); c = c.nextSibling;}
-			menuitem.setAttribute("class", "selected");
-		}
-		menuitem.addEventListener("click", function (event) {History.onselect(event);});
-	},
+    var menuitem = document.createElement("menuitem");
+    menuitem.setAttribute("value", value);
+    History.popup.insertBefore(menuitem, elem);
+    if (History.popup.childNodes.length > History.depth) History.popup.removeChild(History.popup.lastChild);
+    if (isSelected) {
+      var c = History.popup.firstChild;
+      while (c) {c.removeAttribute("class"); c = c.nextSibling;}
+      menuitem.setAttribute("class", "selected");
+    }
+    menuitem.addEventListener("click", function (event) {History.onselect(event);});
+  },
   
   save: function() {
-		var h = [];
-		var c = History.popup.firstChild;
-		while (c) {
-			h.push(c.getAttribute("value"));
-			if (c.getAttribute("class") == "selected") prefs.setIntPref("HistoryIndex", h.length-1);
-			c = c.nextSibling;
-		}
+    var h = [];
+    var c = History.popup.firstChild;
+    while (c) {
+      h.push(c.getAttribute("value"));
+      if (c.getAttribute("class") == "selected") prefs.setIntPref("HistoryIndex", h.length-1);
+      c = c.nextSibling;
+    }
     prefs.setCharPref("History", JSON.stringify(h));
   },
   
@@ -801,7 +801,7 @@ var XulswordController = {
       updateFromNavigator();
       break;
     case "cmd_xs_openManager":
-			openWindowXS("chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.xul", "bookmarksManager", "chrome,resizable,centerscreen", "bookmarksManager");
+      openWindowXS("chrome://xulsword/content/bookmarks/bookmarksManager/bookmarksManager.xul", "bookmarksManager", "chrome,resizable,centerscreen", "bookmarksManager");
       break;
     case "cmd_xs_toggleTab":
       if (CommandTarget.w) {
@@ -814,14 +814,14 @@ var XulswordController = {
       openWindowXS("chrome://xulsword/content/dialogs/about/about.xul", "about", "chrome,modal,centerscreen", "about");
       break;
     case "cmd_xs_chooseFont":
-			openWindowXS("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,centerscreen", "chooseFont", CommandTarget.window);
-			break;
+      openWindowXS("chrome://xulsword/content/dialogs/chooseFont/chooseFont.xul","chooseFont","chrome,centerscreen", "chooseFont", CommandTarget.window);
+      break;
     case "cmd_xs_addLocalModule":
       ModuleCopyMutex=true; //insures other module functions are blocked during this operation
       if (!addNewModule()) ModuleCopyMutex=false;
       break;
     case "cmd_xs_addRepositoryModule":
-			openWindowXS("chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.xul", "addRepositoryModule", "chrome,resizable,centerscreen", "addRepositoryModule");
+      openWindowXS("chrome://xulsword/content/dialogs/addRepositoryModule/addRepositoryModule.xul", "addRepositoryModule", "chrome,resizable,centerscreen", "addRepositoryModule");
       break;
     case "cmd_xs_removeModule":
       openWindowXS("chrome://xulsword/content/dialogs/removeModule/removeModule.xul", "removeModule", "chrome,resizable,centerscreen", "removeModule");
@@ -907,11 +907,11 @@ var XulswordController = {
     case "cmd_xs_searchForLemma":
       return ((/lemma\:/).test(target.search.searchtext) && target.mod ? true:false);
     case "cmd_xs_forward":
-			var sel = History.popup.getElementsByClassName("selected")[0];
+      var sel = History.popup.getElementsByClassName("selected")[0];
       return (sel && typeof(sel.previousSibling) != "undefined" && sel.previousSibling);
     case "cmd_xs_back":
-			var sel = History.popup.getElementsByClassName("selected")[0];
-			return (sel && typeof(sel.nextSibling) != "undefined" &&sel.nextSibling);
+      var sel = History.popup.getElementsByClassName("selected")[0];
+      return (sel && typeof(sel.nextSibling) != "undefined" &&sel.nextSibling);
     case "cmd_xs_openFromSelection":
       this.parsedLocation = null;
       var s = target.selection;
@@ -1070,14 +1070,14 @@ function goUpdateFileMenu () {
 }
 
 function goUpdateNewModuleMenu() {
-	
+  
   // permanently block all internet access if required
   var allowNoInternetAccess;
   try {allowNoInternetAccess = prefs.getBoolPref("AllowNoInternetAccess");}
-	catch (er) {allowNoInternetAccess = false;}
-	
-	if (allowNoInternetAccess) document.getElementById("newInternetModule").setAttribute("hidden", "true");
-	else document.getElementById("newInternetModule").removeAttribute("hidden");
+  catch (er) {allowNoInternetAccess = false;}
+  
+  if (allowNoInternetAccess) document.getElementById("newInternetModule").setAttribute("hidden", "true");
+  else document.getElementById("newInternetModule").removeAttribute("hidden");
 
 }
 
@@ -1141,9 +1141,9 @@ function handleOptions(elem) {
       break;
       
     case "fontAdjust":
-			CommandTarget.mod = null;
-			XS_window.XulswordController.doCommand("cmd_xs_chooseFont");
-			break;
+      CommandTarget.mod = null;
+      XS_window.XulswordController.doCommand("cmd_xs_chooseFont");
+      break;
     
     case "about":
       CommandTarget = { mod:null }; // show logo, not modules info
@@ -1161,10 +1161,10 @@ function handleOptions(elem) {
 
     case "winRadio":
       for (var shortType in SupportedModuleTypes) {
-				for (var i=1; i<=(NW+1); i++) {
-					document.getElementById("winRadio." + i + "." + shortType).removeAttribute("checked");
-				}
-				document.getElementById("winRadio." + id[1] + "." + shortType).setAttribute("checked", "true");
+        for (var i=1; i<=(NW+1); i++) {
+          document.getElementById("winRadio." + i + "." + shortType).removeAttribute("checked");
+        }
+        document.getElementById("winRadio." + id[1] + "." + shortType).setAttribute("checked", "true");
       }
       updateModuleMenuCheckmarks();
       insureValidTextSelections();
@@ -1279,9 +1279,9 @@ function moduleMenuClick1(id, tabNum, subPupId, oldCheckedValue) {
     }
   }
   
-	updateModuleMenuCheckmarks();
-	insureValidTextSelections();
-	Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+  updateModuleMenuCheckmarks();
+  insureValidTextSelections();
+  Texts.update(SCROLLTYPETOP, HILIGHTNONE);
 
 }
 
@@ -1305,8 +1305,8 @@ function changeLocaleTo(newLocale) {
 }
 
 function updateXulswordButtons() {
-	
-	// update global toggle menu and buttons
+  
+  // update global toggle menu and buttons
   var checkboxes = ["cmd_xs_toggleHebrewCantillation", "cmd_xs_toggleHebrewVowelPoints"];
   for (var cmd in GlobalToggleCommands) {
     var checkbox=false;
@@ -1372,7 +1372,7 @@ function updateXulswordCommands() {
 function updateModuleMenuCheckmarks() {
 
   for (var t=0; t<Tabs.length; t++) {
-		
+    
     var aWindowNum = getWinRadioSelection(Tabs[t].tabType);
     var checked = true;
     if (aWindowNum <= NW) var sw = aWindowNum;
@@ -1474,10 +1474,10 @@ function ensureModuleShowing(version) {
  ***********************************************************************/ 
 var XS_WindowIsClosing = false;
 function unloadXUL() {
-	XS_WindowIsClosing = true;
-	
-	if (typeof(aConsoleListener) != "undefined" && typeof(aConsoleListener.getPlatformInfo) == "function") 
-			jsdump(aConsoleListener.getPlatformInfo());
+  XS_WindowIsClosing = true;
+  
+  if (typeof(aConsoleListener) != "undefined" && typeof(aConsoleListener.getPlatformInfo) == "function") 
+      jsdump(aConsoleListener.getPlatformInfo());
   
   // set these so xulsword viewport can draw cleaner and faster upon next startup
   if (ViewPort.ownerDocument.defaultView && ViewPort.ownerDocument.defaultView.innerHeight) {
@@ -1562,7 +1562,7 @@ function handlePrintCommand(command, target) {
     break;
     
   case "cmd_print_passage":
-			openWindowXS("chrome://xulsword/content/dialogs/printPassage/printPassage.xul", "printPassage", "chrome,resizable,centerscreen", "printPassage");
+      openWindowXS("chrome://xulsword/content/dialogs/printPassage/printPassage.xul", "printPassage", "chrome,resizable,centerscreen", "printPassage");
     break;
   }
 }

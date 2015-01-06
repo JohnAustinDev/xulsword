@@ -294,30 +294,30 @@ ARMU = {
   // reads a module resource's ModDrv attribute and returns a readable type string
   // or null if ModDrv could not be found.
   getTypeReadable: function(modDS, modResource) {
-		var modDrv = ARMU.getResourceLiteral(modDS, modResource, "ModDrv");
+    var modDrv = ARMU.getResourceLiteral(modDS, modResource, "ModDrv");
 
-		if (!modDrv || modDrv == NOTFOUND) return null;
-		
-		var moduleType;
-		if ((/^(RawText|zText)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Texts");
-		else if ((/^(RawCom|RawCom4|zCom)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Comms");
-		else if ((/^(RawLD|RawLD4|zLD)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Dicts");
-		else if ((/^(RawGenBook)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Genbks");
-		else if ((/^(RawFiles)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.SimpleText");
-		else if ((/^(HREFCom)$/i).test(modDrv)) moduleType = "URL"; 
-		else if ((/^(audio)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Audio");
-		
-		moduleType = moduleType.replace(/\:$/, ""); // previous UI option had ":" at the end...
-		
-		if (ARMU.is_XSM_module(modDS, modResource) && moduleType != "Audio") moduleType += " XSM";
-		
-		return moduleType;
-	},
+    if (!modDrv || modDrv == NOTFOUND) return null;
+    
+    var moduleType;
+    if ((/^(RawText|zText)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Texts");
+    else if ((/^(RawCom|RawCom4|zCom)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Comms");
+    else if ((/^(RawLD|RawLD4|zLD)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Dicts");
+    else if ((/^(RawGenBook)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Genbks");
+    else if ((/^(RawFiles)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.SimpleText");
+    else if ((/^(HREFCom)$/i).test(modDrv)) moduleType = "URL"; 
+    else if ((/^(audio)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Audio");
+    
+    moduleType = moduleType.replace(/\:$/, ""); // previous UI option had ":" at the end...
+    
+    if (ARMU.is_XSM_module(modDS, modResource) && moduleType != "Audio") moduleType += " XSM";
+    
+    return moduleType;
+  },
 
-	// returns a readable translation of an ISO language code. 
-	//		translates code.en if UI is English and such a translation exists
-	//		otherwise translates code if such a translation exists
-	//		otherwise returns original ISO code
+  // returns a readable translation of an ISO language code. 
+  //		translates code.en if UI is English and such a translation exists
+  //		otherwise translates code if such a translation exists
+  //		otherwise returns original ISO code
   getLangReadable: function(lang) {
     if ((/^en(\-*|\_*)$/).test(lang)) return "English";
     
@@ -335,8 +335,8 @@ ARMU = {
     return (renlang ? renlang:rlang);
   },
 
-	// select a particular language in the languageListTree. This
-	// triggers ARMI.updateModuleList() due to onselect.
+  // select a particular language in the languageListTree. This
+  // triggers ARMI.updateModuleList() due to onselect.
   selectLanguage: function(language) {
     var tree = document.getElementById("languageListTree");
     
@@ -394,86 +394,86 @@ ARMU = {
   // adjusts the Show attribute of each module. The moduleListTree filters
   // its displayed modules based on this Show attribute.
   showModules: function(lang) {
-		// setting the rule's REPOSITORY:Lang attribute filters okay, but once it's  
-		// removed (to show all) the tree is never rebuilt if it is re-added. Besides,
-		// filtering is also being done on other bases as well now.
-		
-		RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-		var mods = RDFC.GetElements();
-		
-		var xsm = {};
-		var sword = {};
-		while (mods.hasMoreElements()) {
-			
-			var mod = mods.getNext();
-			var mlang = ARMU.getResourceLiteral(MLDS, mod, "Lang").replace(/\-.*$/, "");
-			var is_XSM_module = ARMU.is_XSM_module(MLDS, mod);
-			
-			var show = (lang != "none" && (lang == mlang || lang == "all"));
-			
-			// dictionary modules are sometimes duplicated within various XSM modules, 
-			// leading to strange (to the user) multiple listings and so here we
-			// hide any dictionary(s) within XSM modules, unless the XSM is considered 
-			// a "compilation" or unless the XSM is partially installed.
-			if (show && is_XSM_module) {
-				var isCompilation = ARMU.getResourceLiteral(MLDS, mod, "SwordModules").split(";").length > 3;
-				if (!isCompilation) {
-					var isDictRE = new RegExp(escapeRE(MyStrings.GetStringFromName("arm.moduleType.Dicts")));
-					if ((isDictRE).test(ARMU.getResourceLiteral(MLDS, mod, "TypeReadable"))) {
-						var isPartialInstall = false;
-						var allxsm = ARMU.allMembersXSM(mod);
-						for (var i=1; i<allxsm.length; i++) {
-							isPartialInstall |= (ARMU.getResourceLiteral(MLDS, allxsm[0], "Installed") != ARMU.getResourceLiteral(MLDS, allxsm[i], "Installed"));
-						}
-						if (!isPartialInstall) show = false;
-					}
-				}
-			}
-			
-			ARMU.setResourceAttribute(MLDS, mod, "Show", (show ? "true":"false"));
-			
-			// if showing, then save unique keys representing this module, as either 
-			// an XSM or SWORD module, for use after the main loop to hide SWORD
-			// modules which also exist within an XSM module.
-			if (show) {
-				if (is_XSM_module) {
-					mname = ARMU.getResourceLiteral(MLDS, mod, "SwordModules").split(";");
-					mvers = ARMU.getResourceLiteral(MLDS, mod, "SwordVersions").split(";");
-					for (var i=0; i<mname.length; i++) {
-						try {
-							var key = mname[i] + mvers[i];
-							key = key.replace(/\./g, "_");
-							if (!xsm[key]) xsm[key] = [mod];
-							else xsm[key].push(mod);
-						}
-						catch (er) {}
-					}
-				}
-				else {
-					var mname = ARMU.getResourceLiteral(MLDS, mod, "ModuleName");
-					var mvers = ARMU.getResourceLiteral(MLDS, mod, "Version");
-					try {
-						key = mname + mvers;
-						key = key.replace(/\./g, "_");
-						if (!sword[key]) sword[key] = [mod];
-						else sword[key].push(mod);
-					}
-					catch (er) {}
-				}
-			}
-		
-		} // ModuleListID loop
-		
-		// if an XSM module is showing, hide the separate SWORD modules
-		// which are contained within it, unless they need updating.
-		for (key in xsm) {
-			for (var m=0; sword[key] && m<sword[key].length; m++) {
-				if (ARMU.getResourceLiteral(MLDS, sword[key][m], "ModuleUpdateNeeded") == "true") continue;
-				ARMU.setResourceAttribute(MLDS, sword[key][m], "Show", "false");
-			}
-		}
-		
-	},
+    // setting the rule's REPOSITORY:Lang attribute filters okay, but once it's  
+    // removed (to show all) the tree is never rebuilt if it is re-added. Besides,
+    // filtering is also being done on other bases as well now.
+    
+    RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+    var mods = RDFC.GetElements();
+    
+    var xsm = {};
+    var sword = {};
+    while (mods.hasMoreElements()) {
+      
+      var mod = mods.getNext();
+      var mlang = ARMU.getResourceLiteral(MLDS, mod, "Lang").replace(/\-.*$/, "");
+      var is_XSM_module = ARMU.is_XSM_module(MLDS, mod);
+      
+      var show = (lang != "none" && (lang == mlang || lang == "all"));
+      
+      // dictionary modules are sometimes duplicated within various XSM modules, 
+      // leading to strange (to the user) multiple listings and so here we
+      // hide any dictionary(s) within XSM modules, unless the XSM is considered 
+      // a "compilation" or unless the XSM is partially installed.
+      if (show && is_XSM_module) {
+        var isCompilation = ARMU.getResourceLiteral(MLDS, mod, "SwordModules").split(";").length > 3;
+        if (!isCompilation) {
+          var isDictRE = new RegExp(escapeRE(MyStrings.GetStringFromName("arm.moduleType.Dicts")));
+          if ((isDictRE).test(ARMU.getResourceLiteral(MLDS, mod, "TypeReadable"))) {
+            var isPartialInstall = false;
+            var allxsm = ARMU.allMembersXSM(mod);
+            for (var i=1; i<allxsm.length; i++) {
+              isPartialInstall |= (ARMU.getResourceLiteral(MLDS, allxsm[0], "Installed") != ARMU.getResourceLiteral(MLDS, allxsm[i], "Installed"));
+            }
+            if (!isPartialInstall) show = false;
+          }
+        }
+      }
+      
+      ARMU.setResourceAttribute(MLDS, mod, "Show", (show ? "true":"false"));
+      
+      // if showing, then save unique keys representing this module, as either 
+      // an XSM or SWORD module, for use after the main loop to hide SWORD
+      // modules which also exist within an XSM module.
+      if (show) {
+        if (is_XSM_module) {
+          mname = ARMU.getResourceLiteral(MLDS, mod, "SwordModules").split(";");
+          mvers = ARMU.getResourceLiteral(MLDS, mod, "SwordVersions").split(";");
+          for (var i=0; i<mname.length; i++) {
+            try {
+              var key = mname[i] + mvers[i];
+              key = key.replace(/\./g, "_");
+              if (!xsm[key]) xsm[key] = [mod];
+              else xsm[key].push(mod);
+            }
+            catch (er) {}
+          }
+        }
+        else {
+          var mname = ARMU.getResourceLiteral(MLDS, mod, "ModuleName");
+          var mvers = ARMU.getResourceLiteral(MLDS, mod, "Version");
+          try {
+            key = mname + mvers;
+            key = key.replace(/\./g, "_");
+            if (!sword[key]) sword[key] = [mod];
+            else sword[key].push(mod);
+          }
+          catch (er) {}
+        }
+      }
+    
+    } // ModuleListID loop
+    
+    // if an XSM module is showing, hide the separate SWORD modules
+    // which are contained within it, unless they need updating.
+    for (key in xsm) {
+      for (var m=0; sword[key] && m<sword[key].length; m++) {
+        if (ARMU.getResourceLiteral(MLDS, sword[key][m], "ModuleUpdateNeeded") == "true") continue;
+        ARMU.setResourceAttribute(MLDS, sword[key][m], "Show", "false");
+      }
+    }
+    
+  },
 
   // Connect and disconnect tree data sources
   treeDataSource: function(disconnectArray, idArray) {
@@ -557,8 +557,8 @@ ARMU = {
     aDS.Flush();
   },
   
-	// each web download is controlled by a nsIWebBrowserPersist object
-	maxConnections:0,
+  // each web download is controlled by a nsIWebBrowserPersist object
+  maxConnections:0,
   webAdd: function(aWebBrowserPersist, aType, aGroup, url) {
     Web.push( { persist:aWebBrowserPersist, type:aType, group:aGroup, url:url } );
     
@@ -602,9 +602,9 @@ ARMU = {
   
   // add a best guess protocol to URL's which are missing protocol
   guessProtocol: function(site, path) {
-		if (path == ".") path = "";
-		
-		var url = site + path;
+    if (path == ".") path = "";
+    
+    var url = site + path;
     if ((/^ftp/i).test(url)) url = "ftp://" + url;
     else if (!(/^[^\:]+\:\/\//).test(url)) url = "http://" + url;
     
@@ -613,162 +613,162 @@ ARMU = {
   
   // clear any error messages from a particular set of resources
   clearErrors: function(aDS, aContainer) {
-		var er = RDF.GetResource(RP.REPOSITORY+"ErrorMsg");
-		
-		RDFC.Init(aDS, aContainer);
-		var ress = RDFC.GetElements();
-		while (ress.hasMoreElements()) {
-			var aRes = ress.getNext();
-			var errorMsg = aDS.GetTargets(aRes, er, true);
-			if (errorMsg.hasMoreElements()) {
-				while (errorMsg.hasMoreElements()) aDS.Unassert(aRes, er, errorMsg.getNext());
-			}
-		}
-	},
-	
-	notError: new RegExp("^\\s*(" + escapeRE(ON) + "|" + escapeRE(OFF) + "|.*\\%)\\s*$"),
+    var er = RDF.GetResource(RP.REPOSITORY+"ErrorMsg");
+    
+    RDFC.Init(aDS, aContainer);
+    var ress = RDFC.GetElements();
+    while (ress.hasMoreElements()) {
+      var aRes = ress.getNext();
+      var errorMsg = aDS.GetTargets(aRes, er, true);
+      if (errorMsg.hasMoreElements()) {
+        while (errorMsg.hasMoreElements()) aDS.Unassert(aRes, er, errorMsg.getNext());
+      }
+    }
+  },
+  
+  notError: new RegExp("^\\s*(" + escapeRE(ON) + "|" + escapeRE(OFF) + "|.*\\%)\\s*$"),
   
   // apply status to aRes but DON'T overwrite any existing error message until errors are cleared
   setStatus: function(aDS, aRes, status, style) {
-		
-		// don't overwrite any existing error message, unless it was generic.
-		var hasError = ARMU.getResourceLiteral(aDS, aRes, "ErrorMsg");
-		if (hasError && hasError != ERROR) return;
+    
+    // don't overwrite any existing error message, unless it was generic.
+    var hasError = ARMU.getResourceLiteral(aDS, aRes, "ErrorMsg");
+    if (hasError && hasError != ERROR) return;
 
-		// handle any new error messages
+    // handle any new error messages
     if (!this.notError.test(status)) {
-			// all error messages should begin with ERROR
-			if (status.indexOf(ERROR) != 0) status = ERROR + ": " + status;
-			ARMU.setResourceAttribute(aDS, aRes, "ErrorMsg", status);
-			style = "red";
-		}
+      // all error messages should begin with ERROR
+      if (status.indexOf(ERROR) != 0) status = ERROR + ": " + status;
+      ARMU.setResourceAttribute(aDS, aRes, "ErrorMsg", status);
+      style = "red";
+    }
     
     var statusArray = [aRes];
-		if (aDS == MLDS) statusArray = this.allMembersXSM(aRes);
-		
-		for (var i=0; i<statusArray.length; i++) {
-			var pausei = (StatusUpdateMods.pause ? StatusUpdateMods.mods.indexOf(aRes):-1);
-			if (pausei == -1) {
-				ARMU.setResourceAttribute(aDS, statusArray[i], "Status", status);
-				ARMU.setResourceAttribute(aDS, statusArray[i], "Style", style);
-			}
-			else {
-				StatusUpdateMods.status[pausei] = status;
-				StatusUpdateMods.style[pausei] = style;
-			}
-		}
-		
+    if (aDS == MLDS) statusArray = this.allMembersXSM(aRes);
+    
+    for (var i=0; i<statusArray.length; i++) {
+      var pausei = (StatusUpdateMods.pause ? StatusUpdateMods.mods.indexOf(aRes):-1);
+      if (pausei == -1) {
+        ARMU.setResourceAttribute(aDS, statusArray[i], "Status", status);
+        ARMU.setResourceAttribute(aDS, statusArray[i], "Style", style);
+      }
+      else {
+        StatusUpdateMods.status[pausei] = status;
+        StatusUpdateMods.style[pausei] = style;
+      }
+    }
+    
   },
   
   // returns an array of all module resources which share the same XSM
   // module or else an array of 1 for a non-XSM resources.
   membersXSM: null, // cache these or suffer a big speed hit
   allMembersXSM: function(modResource) {
-		
-		if (!ARMU.is_XSM_module(MLDS, modResource)) return [modResource];
-		
-		var myKey = ARMU.getResourceLiteral(MLDS, modResource, "ModuleUrl");
-		
-		// mykey members could have been invalidated by a repository reload etc.
-		// so check for this too.
-		if (!this.membersXSM || !this.membersXSM.hasOwnProperty(myKey) || 
-				!MLDS.ArcLabelsIn(this.membersXSM[myKey][0]).hasMoreElements()) { 
-			this.membersXSM = {};
-			RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-			var elems = RDFC.GetElements();
-			while (elems.hasMoreElements()) {
-				var elem = elems.getNext();
-				var key = ARMU.getResourceLiteral(MLDS, elem, "ModuleUrl");
-				if (!this.membersXSM.hasOwnProperty(key)) this.membersXSM[key] = [];
-				this.membersXSM[key].push(elem);
-			}
-		}
+    
+    if (!ARMU.is_XSM_module(MLDS, modResource)) return [modResource];
+    
+    var myKey = ARMU.getResourceLiteral(MLDS, modResource, "ModuleUrl");
+    
+    // mykey members could have been invalidated by a repository reload etc.
+    // so check for this too.
+    if (!this.membersXSM || !this.membersXSM.hasOwnProperty(myKey) || 
+        !MLDS.ArcLabelsIn(this.membersXSM[myKey][0]).hasMoreElements()) { 
+      this.membersXSM = {};
+      RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+      var elems = RDFC.GetElements();
+      while (elems.hasMoreElements()) {
+        var elem = elems.getNext();
+        var key = ARMU.getResourceLiteral(MLDS, elem, "ModuleUrl");
+        if (!this.membersXSM.hasOwnProperty(key)) this.membersXSM[key] = [];
+        this.membersXSM[key].push(elem);
+      }
+    }
 
-		return this.membersXSM[myKey];
-	},
+    return this.membersXSM[myKey];
+  },
   
   revertStatus: function(aDS, aRes) {
-		if (aDS != MLDS) return;
-		
-		if (ARMU.getModuleInstallerZipFile(aRes).exists())
-				ARMU.setStatus(MLDS, aRes, ON, "green");
-		else {
-			var isInstalled = ARMU.getResourceLiteral(MLDS, aRes, "Installed");
-			ARMU.setStatus(MLDS, aRes, (isInstalled && isInstalled == "true" ? ON:dString(0) + "%"), "");
-		}
-	},
+    if (aDS != MLDS) return;
+    
+    if (ARMU.getModuleInstallerZipFile(aRes).exists())
+        ARMU.setStatus(MLDS, aRes, ON, "green");
+    else {
+      var isInstalled = ARMU.getResourceLiteral(MLDS, aRes, "Installed");
+      ARMU.setStatus(MLDS, aRes, (isInstalled && isInstalled == "true" ? ON:dString(0) + "%"), "");
+    }
+  },
   
   is_XSM_module: function(modDS, modResource) {
-		var moduleUrl = ARMU.getResourceLiteral(modDS, modResource, "ModuleUrl");
-		return ((/\.(zip|xsm)$/).test(moduleUrl) || (/\/audio\.htm(\?|$)/).test(moduleUrl));
-	},
+    var moduleUrl = ARMU.getResourceLiteral(modDS, modResource, "ModuleUrl");
+    return ((/\.(zip|xsm)$/).test(moduleUrl) || (/\/audio\.htm(\?|$)/).test(moduleUrl));
+  },
   
-	// compare two SWORD version numbers. 
-	//   if a < b return -1 
-	//   if a > b return 1
-	//   if a == b return 0
-	// If the difference is only a conf update it sets updateOnlyConf to true.
-	compareSwordVersions: function(a, b) {
-		var ret = {result:-1, updateOnlyConf:false};
+  // compare two SWORD version numbers. 
+  //   if a < b return -1 
+  //   if a > b return 1
+  //   if a == b return 0
+  // If the difference is only a conf update it sets updateOnlyConf to true.
+  compareSwordVersions: function(a, b) {
+    var ret = {result:-1, updateOnlyConf:false};
 
-		if (a == b) {ret.result = 0; return ret;}
+    if (a == b) {ret.result = 0; return ret;}
 
-		// SWORD module versions are composed of three "." separated parts.
-		// If an update involves only the .conf file, only the third part
-		// is incremented.
-		a = a.split(".");
-		b = b.split(".");
-		if (!isNaN(Number(a[0]))) {
-			if (a[0] == b[0]) {
-				if (a.length > 1 && a[1]!==null && !isNaN(Number(a[1]))) {
-					if (b.length < 2 || b[1]===null || isNaN(Number(b[1]))) {
-						b[1] = 0;
-					}
-					if (Number(a[1]) > Number(b[1])) ret.result = 1;
-					else if (Number(a[1]) == Number(b[1]) && (a.length == 3 && a[2] !== null && !isNaN(Number(a[2])))) {
-						if (b.length < 3 || b[2]===null || isNaN(Number(b[2])) || Number(a[2]) > Number(b[2])) {
-							ret.result = 1;
-							ret.updateOnlyConf = true;
-						}
-					}
-				}
-			}
-			else if (b[0]===null || isNaN(Number(b[0])) || Number(a[0]) > Number(b[0])) {
-				ret.result = 1;
-			}
-		}
+    // SWORD module versions are composed of three "." separated parts.
+    // If an update involves only the .conf file, only the third part
+    // is incremented.
+    a = a.split(".");
+    b = b.split(".");
+    if (!isNaN(Number(a[0]))) {
+      if (a[0] == b[0]) {
+        if (a.length > 1 && a[1]!==null && !isNaN(Number(a[1]))) {
+          if (b.length < 2 || b[1]===null || isNaN(Number(b[1]))) {
+            b[1] = 0;
+          }
+          if (Number(a[1]) > Number(b[1])) ret.result = 1;
+          else if (Number(a[1]) == Number(b[1]) && (a.length == 3 && a[2] !== null && !isNaN(Number(a[2])))) {
+            if (b.length < 3 || b[2]===null || isNaN(Number(b[2])) || Number(a[2]) > Number(b[2])) {
+              ret.result = 1;
+              ret.updateOnlyConf = true;
+            }
+          }
+        }
+      }
+      else if (b[0]===null || isNaN(Number(b[0])) || Number(a[0]) > Number(b[0])) {
+        ret.result = 1;
+      }
+    }
 
-		return ret;
-	},
-	
-	// checks modules to see if an update is needed. It checks EITHER XSM
-	// OR REGULAR MODULES, depending on doXSM flag. Modules which need to
-	// be upgraded will be included in the mods array. If multiple versions 
-	// of a module exist, only the highest version will be included in the 
-	// mods array. If two updateable modules have the same module name and 
-	// version, only the first to appear on the list will be included.
-	getUpdateMods: function(mods, doXSM) {
-		RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
-		var iter = RDFC.GetElements();
-		while(iter.hasMoreElements()) {
-			var mod = iter.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
-			var meXSM = ARMU.is_XSM_module(MLDS, mod);
-			if (doXSM && !meXSM || !doXSM && meXSM) continue;
-			if (ARMU.getResourceLiteral(MLDS, mod, "ModuleUpdateNeeded") == "true") {
-				var skipMe = false;
-				for (var i=0; i<mods.length; i++) {
-					if (ARMU.getResourceLiteral(MLDS, mod, "ModuleName") != ARMU.getResourceLiteral(MLDS, mods[i], "ModuleName")) continue;
-					if (ARMU.compareSwordVersions(ARMU.getResourceLiteral(MLDS, mod, "Version"), ARMU.getResourceLiteral(MLDS, mods[i], "Version")).result < 1) {
-						skipMe = true;
-					}
-					break;
-				}
-				if (!skipMe) {
-					if (i == mods.length) mods.push(mod);
-					else mods[i] = mod;
-				}
-			}
-		}
-	}
+    return ret;
+  },
+  
+  // checks modules to see if an update is needed. It checks EITHER XSM
+  // OR REGULAR MODULES, depending on doXSM flag. Modules which need to
+  // be upgraded will be included in the mods array. If multiple versions 
+  // of a module exist, only the highest version will be included in the 
+  // mods array. If two updateable modules have the same module name and 
+  // version, only the first to appear on the list will be included.
+  getUpdateMods: function(mods, doXSM) {
+    RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
+    var iter = RDFC.GetElements();
+    while(iter.hasMoreElements()) {
+      var mod = iter.getNext().QueryInterface(Components.interfaces.nsIRDFResource);
+      var meXSM = ARMU.is_XSM_module(MLDS, mod);
+      if (doXSM && !meXSM || !doXSM && meXSM) continue;
+      if (ARMU.getResourceLiteral(MLDS, mod, "ModuleUpdateNeeded") == "true") {
+        var skipMe = false;
+        for (var i=0; i<mods.length; i++) {
+          if (ARMU.getResourceLiteral(MLDS, mod, "ModuleName") != ARMU.getResourceLiteral(MLDS, mods[i], "ModuleName")) continue;
+          if (ARMU.compareSwordVersions(ARMU.getResourceLiteral(MLDS, mod, "Version"), ARMU.getResourceLiteral(MLDS, mods[i], "Version")).result < 1) {
+            skipMe = true;
+          }
+          break;
+        }
+        if (!skipMe) {
+          if (i == mods.length) mods.push(mod);
+          else mods[i] = mod;
+        }
+      }
+    }
+  }
 
 };

@@ -178,9 +178,9 @@ function SearchObj(searchObj) {
     
     // clean up after any previous search
     if (this.result && this.result.hasOwnProperty("searchPointer")) {
-			LibSword.freeSearchPointer(this.result.searchPointer);
-			this.result.searchPointer = null;
-		}
+      LibSword.freeSearchPointer(this.result.searchPointer);
+      this.result.searchPointer = null;
+    }
     
     // now initialize a new search from scratch...
     this.s = {};
@@ -247,7 +247,7 @@ function SearchObj(searchObj) {
     
     // replace UI search symbols with LibSword recognized search symbols
     for (var m in LOCALE_SEARCH_SYMBOLS) {
-			var sym = null;
+      var sym = null;
       try {sym = this.bundle.GetStringFromName(m);} catch (er) {}
       if (!sym || (/^\s*$/).test(sym)) sym = LOCALE_SEARCH_SYMBOLS[m];
       s.query = s.query.replace(sym, ACTUAL_SEARCH_SYMBOLS[m], "g");
@@ -503,10 +503,10 @@ function SearchObj(searchObj) {
     // read search results to display
     var r = LibSword.getSearchResults(mod, result.index, result.results_per_page, keepStrongs, result.searchPointer);
     if (!r) {
-			sanitizeHTML(SearchResults, "");
-			sanitizeHTML(LexiconResults, "");
-			return;
-		}
+      sanitizeHTML(SearchResults, "");
+      sanitizeHTML(LexiconResults, "");
+      return;
+    }
     
     // workaround for a FF 17 issue where innerHTML could not be added to
     // an anchor which was created using createElement...
@@ -548,19 +548,19 @@ function SearchObj(searchObj) {
           var re = new RegExp(result.matchterms[m].term, "gim");
           var t = html.split(/(<[^>]*>)/);
           for (var x=0; x<t.length; x++) {
-						if ((/^<[^>]*>$/).test(t[x])) continue;
-						t[x] = t[x].replace(re, "$1<span class=\"searchterm\">$2</span>$3");
-					}
-					html = t.join("");
+            if ((/^<[^>]*>$/).test(t[x])) continue;
+            t[x] = t[x].replace(re, "$1<span class=\"searchterm\">$2</span>$3");
+          }
+          html = t.join("");
         }
         else if (result.matchterms[m].type == "string") {
           var re = new RegExp (escapeRE(result.matchterms[m].term), "gim");
           var t = html.split(/(<[^>]*>)/);
           for (var x=0; x<t.length; x++) {
-						if ((/^<[^>]*>$/).test(t[x])) continue;
-						t[x] = t[x].replace(re, "<span class=\"searchterm\">$&</span>");
-					}
-					html = t.join("");
+            if ((/^<[^>]*>$/).test(t[x])) continue;
+            t[x] = t[x].replace(re, "<span class=\"searchterm\">$&</span>");
+          }
+          html = t.join("");
         }
       }
       html = html.replace(/<br[^>]*>/g, ""); // since <br> looks bad in display
@@ -584,9 +584,9 @@ function SearchObj(searchObj) {
         var sheet = document.getElementById("search-frame").contentDocument.styleSheets[document.styleSheets.length-1];
         var index = sheet.cssRules.length;
         try {
-					sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
-					AddedStrongsCSSRules.push( { sheet:sheet, index:index } );
-				} catch (er) {}
+          sheet.insertRule(MatchingStrongs.rule.cssText.replace("matchingStrongs", classes[i]), index);
+          AddedStrongsCSSRules.push( { sheet:sheet, index:index } );
+        } catch (er) {}
         
       }
       
@@ -634,11 +634,11 @@ function SearchObj(searchObj) {
           if (dictinfo.mod && dictinfo.key) a.className = "sn " + classes[i];
           a.textContent = strongNum;
           a.addEventListener("click", 
-						function () {
-							XS_window.XulswordController.doCommand("cmd_xs_searchForLemma", {search:{searchtext:"lemma:" + strongNum, mod:mod}});
-						}
-					);
-					
+            function () {
+              XS_window.XulswordController.doCommand("cmd_xs_searchForLemma", {search:{searchtext:"lemma:" + strongNum, mod:mod}});
+            }
+          );
+          
           var span = slist.appendChild(fdoc.createElement("span"));
           span.className = "lex-total";
           span.textContent = dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count);
@@ -646,13 +646,13 @@ function SearchObj(searchObj) {
           var span = slist.appendChild(fdoc.createElement("span"));
           span.className = "cs-" + mod;
           for (var j=0; j<lexicon.length; j++) {
-						var child = span.appendChild(fdoc.createElement("span"));
-						child.className = "lex-text";
-						child.textContent = lexicon[j].text;
-						
-						var child = span.appendChild(fdoc.createElement("span"));
-						child.className = "lex-count";
-						child.textContent = lexicon[j].count;
+            var child = span.appendChild(fdoc.createElement("span"));
+            child.className = "lex-text";
+            child.textContent = lexicon[j].text;
+            
+            var child = span.appendChild(fdoc.createElement("span"));
+            child.className = "lex-count";
+            child.textContent = lexicon[j].count;
           }
 
           slist.appendChild(fdoc.createElement("div")).className = "lex-sep";
@@ -662,10 +662,10 @@ function SearchObj(searchObj) {
         while (LexiconResults.firstChild) {LexiconResults.removeChild(LexiconResults.firstChild);}
         if (!slists.length) sanitizeHTML(LexiconResults, "<span style=\"display:none\"></span>"); // should not be left empty
         else {
-					for (var i=0; i<slists.length; i++) {
-						LexiconResults.appendChild(slists[i]);
-					}
-				}
+          for (var i=0; i<slists.length; i++) {
+            LexiconResults.appendChild(slists[i]);
+          }
+        }
 
         LexiconResults.style.display = ""; // was set to "none" to improve (??) speed
          
@@ -739,48 +739,48 @@ function SearchObj(searchObj) {
         if (type == "H") mtype = XSBundle.getString("ORIGLabelOT");
         if (type == "G") mtype = XSBundle.getString("ORIGLabelNT");
         
-				var span = snlist.appendChild(fdoc.createElement("span"));
-				span.className = "strongs-type";
-				span.textContent = mtype;
+        var span = snlist.appendChild(fdoc.createElement("span"));
+        span.className = "strongs-type";
+        span.textContent = mtype;
 
-				var span = snlist.appendChild(fdoc.createElement("span"));
-				span.className = "lex-total";
-				span.textContent = dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count);
+        var span = snlist.appendChild(fdoc.createElement("span"));
+        span.className = "lex-total";
+        span.textContent = dString(1) + "-" + dString(result.count > MAX_LEXICON_SEARCH_RESULTS ? MAX_LEXICON_SEARCH_RESULTS:result.count);
 
-				var respan = snlist.appendChild(fdoc.createElement("span"));
-				respan.className = "cs-Program";
+        var respan = snlist.appendChild(fdoc.createElement("span"));
+        respan.className = "cs-Program";
 
         for (var j=0; j<strongsList[type].length; j++) {
-					var strongNum = strongsList[type][j].strongs.replace("S_", "");
+          var strongNum = strongsList[type][j].strongs.replace("S_", "");
           var sti = DictTexts.getStrongsModAndKey(strongsList[type][j].strongs);
           
           var a = respan.appendChild(fdoc.createElement("a"));
           if (sti.mod && sti.key) a.className = "sn " + strongsList[type][j].strongs;
           a.addEventListener("click",
-						function () {
-							XS_window.XulswordController.doCommand("cmd_xs_searchForLemma", {search:{searchtext:"lemma:" + strongNum, mod:mod}});
-						}
-					);
-					var span2 = a.appendChild(fdoc.createElement("span"));
-					span2.className = "lex-text";
-					span2.textContent = strongNum;
-					
-					var span = respan.appendChild(fdoc.createElement("span"));
-					span.className = "lex-count";
-					span.textContent = strongsList[type][j].count;
+            function () {
+              XS_window.XulswordController.doCommand("cmd_xs_searchForLemma", {search:{searchtext:"lemma:" + strongNum, mod:mod}});
+            }
+          );
+          var span2 = a.appendChild(fdoc.createElement("span"));
+          span2.className = "lex-text";
+          span2.textContent = strongNum;
+          
+          var span = respan.appendChild(fdoc.createElement("span"));
+          span.className = "lex-count";
+          span.textContent = strongsList[type][j].count;
         }
       }
       
-			// now display the list
-			while (LexiconResults.firstChild) {LexiconResults.removeChild(LexiconResults.firstChild);}
-			if (!snlists.length) sanitizeHTML(LexiconResults, "<span style=\"display:none\"></span>"); // should not be left empty
-			else {
-				for (var i=0; i<snlists.length; i++) {
-					LexiconResults.appendChild(snlists[i]);
-				}
-			}
-			LexiconResults.appendChild(fdoc.createElement("div")).className = "lex-sep";
-				
+      // now display the list
+      while (LexiconResults.firstChild) {LexiconResults.removeChild(LexiconResults.firstChild);}
+      if (!snlists.length) sanitizeHTML(LexiconResults, "<span style=\"display:none\"></span>"); // should not be left empty
+      else {
+        for (var i=0; i<snlists.length; i++) {
+          LexiconResults.appendChild(snlists[i]);
+        }
+      }
+      LexiconResults.appendChild(fdoc.createElement("div")).className = "lex-sep";
+        
       LexiconResults.style.display = ""; // was set to "none" to improve (??) speed
       
       LexiconResults.parentNode.setAttribute("hasLexicon", "true");
@@ -921,12 +921,12 @@ function onRefUserUpdate(e, location, version) {
 
 function unloadSearchWindow() {
 
-	// free any search results
-	if (Search && Search.result && Search.result.hasOwnProperty("searchPointer")) {
-		LibSword.freeSearchPointer(Search.result.searchPointer);
-		Search.result.searchPointer = null;
-	}
-		
+  // free any search results
+  if (Search && Search.result && Search.result.hasOwnProperty("searchPointer")) {
+    LibSword.freeSearchPointer(Search.result.searchPointer);
+    Search.result.searchPointer = null;
+  }
+    
   // need to clean up indexer if it was in process
   if (XS_window.Indexer.inprogress) {
     XS_window.Indexer.terminate();

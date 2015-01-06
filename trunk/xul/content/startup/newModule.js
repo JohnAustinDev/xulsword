@@ -857,13 +857,13 @@ function handleResetRequest() {
         XS_window.setTimeout(function () {document.getElementById("menu_BookmarksPopup").showPopup();}, 500);
       }
       if (GotoAudioFile) {
-				refreshAudioCatalog();
-				updateBibleNavigatorAudio();
+        refreshAudioCatalog();
+        updateBibleNavigatorAudio();
         var info = decodeAudioFileName(GotoAudioFile.path);
         var modsUsingAudio = getModsUsingAudioCode(info.basecode);
-				XS_window.Player.version = modsUsingAudio[0];
-				XS_window.Player.chapter = info.chapter;
-				XS_window.Player.book = info.book;
+        XS_window.Player.version = modsUsingAudio[0];
+        XS_window.Player.chapter = info.chapter;
+        XS_window.Player.book = info.book;
         window.setTimeout(function () {XS_window.beginAudioPlayer();}, 1);
       }
       if (modsUsingAudio && modsUsingAudio[0]) {
@@ -1414,10 +1414,10 @@ function restartApplication(promptBefore) {
   // extensions must restart Firefox and then xulsword as well
   if (IsExtension) prefs.setBoolPref("RestartXulsword", true);
   
-	var appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
+  var appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                    .getService(Components.interfaces.nsIAppStartup);
 
-	appStartup.quit(Components.interfaces.nsIAppStartup.eRestart | Components.interfaces.nsIAppStartup.eForceQuit);
+  appStartup.quit(Components.interfaces.nsIAppStartup.eRestart | Components.interfaces.nsIAppStartup.eForceQuit);
 }
 
 function setPreMainWin() {

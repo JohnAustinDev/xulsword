@@ -898,13 +898,13 @@ var BookmarksController = {
     case "cmd_bm_delete":
       // Ask confirmation that we really want to delete.
       var bmbundle = getCurrentLocaleBundle("bookmarks/bookmarks.properties");
-			var result = {};
-			var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
-					fixWindowTitle(bmbundle.GetStringFromName("cmd_delete")),
-					bmbundle.GetStringFromName("deleteconfirm.title"), 
-					DLGQUEST,
-					DLGYESNO);
-			if (result.ok) BookmarksCommand.deleteBookmark(aSelection);
+      var result = {};
+      var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
+          fixWindowTitle(bmbundle.GetStringFromName("cmd_delete")),
+          bmbundle.GetStringFromName("deleteconfirm.title"), 
+          DLGQUEST,
+          DLGYESNO);
+      if (result.ok) BookmarksCommand.deleteBookmark(aSelection);
       break;
     case "cmd_bm_movebookmark":
       BookmarksCommand.moveBookmark(aSelection);

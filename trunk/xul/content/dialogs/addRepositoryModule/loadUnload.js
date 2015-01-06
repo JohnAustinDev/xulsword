@@ -18,20 +18,20 @@
 
 /*
 
-	IMPLEMENTATION NOTE:
-	
-	This implementation does not use the libsword install manager API. It 
-	would be rather difficult to create a libxulsword Javascript interface to
-	implement the SWORD API, and doing so would not make XUL's RDF database
-	coding any simpler anyway. But the major advantage of this implemen-
-	tation is that it makes full use of Firefox's powerful simultaneous, 
-	asynchronous download capability. This works faster, allows simultaneous 
-	download of many modules, allows the user to continue using xulsword 
-	(including the install manager itself) while waiting for downloads to 
-	finish, and provides more user feedback.
-	
-	Another reason is this implementation also supports XSM (xulsword module) 
-	repositories and audio module repositories as well as traditional SWORD repos.
+  IMPLEMENTATION NOTE:
+  
+  This implementation does not use the libsword install manager API. It 
+  would be rather difficult to create a libxulsword Javascript interface to
+  implement the SWORD API, and doing so would not make XUL's RDF database
+  coding any simpler anyway. But the major advantage of this implemen-
+  tation is that it makes full use of Firefox's powerful simultaneous, 
+  asynchronous download capability. This works faster, allows simultaneous 
+  download of many modules, allows the user to continue using xulsword 
+  (including the install manager itself) while waiting for downloads to 
+  finish, and provides more user feedback.
+  
+  Another reason is this implementation also supports XSM (xulsword module) 
+  repositories and audio module repositories as well as traditional SWORD repos.
 
 */
 
@@ -55,9 +55,9 @@ var WindowIsClosing = false;
 var MyStrings = null;
 var ERROR = null;
 var PrivacyContext = window
-		.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-		.getInterface(Components.interfaces.nsIWebNavigation)
-		.QueryInterface(Components.interfaces.nsILoadContext);
+    .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+    .getInterface(Components.interfaces.nsIWebNavigation)
+    .QueryInterface(Components.interfaces.nsILoadContext);
 
 var PromptUpdateMods = { prompt:false, mods:[] };
 var StatusUpdateMods = { pause:false, mods:[], status:[], style:[] };
@@ -70,17 +70,17 @@ var ARMI; // defined in interfaceFuncs.js
 var ARMD; // defined in download.js
 
 function onLoad() {
-	
+  
   RepositoryArray = []; // must not be undefined from the get-go
   RepositoryIndex = -1;
   ManifestsLoading = 0;
-	
-	MyStrings = getCurrentLocaleBundle(SCRIPT_PROPS);
-	if (!MyStrings) {
-		jsdump("ERROR: No current locale string bundle \"" + SCRIPT_PROPS + "\"");
-		window.close; 
-		return;
-	}
+  
+  MyStrings = getCurrentLocaleBundle(SCRIPT_PROPS);
+  if (!MyStrings) {
+    jsdump("ERROR: No current locale string bundle \"" + SCRIPT_PROPS + "\"");
+    window.close; 
+    return;
+  }
   
   initCSS();
   
@@ -204,33 +204,33 @@ function onLoad() {
         // add readable (localized) attribute(s) and status to module
         var modDrv = ARMU.getResourceLiteral(defDS, mod, "ModDrv");
         if (!modDrv || modDrv == NOTFOUND) {
-					jsdump("ERROR: a default module is missing the \"ModDrv\" .conf attribute.");
-					continue;
-				}
+          jsdump("ERROR: a default module is missing the \"ModDrv\" .conf attribute.");
+          continue;
+        }
         
         RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
         RDFC.AppendElement(mod);
         
         MLDS.Assert(
-					mod, 
-					RDF.GetResource(RP.REPOSITORY+"TypeReadable"), 
-					RDF.GetLiteral(ARMU.getTypeReadable(defDS, mod)), 
-					true
-				);
-				
+          mod, 
+          RDF.GetResource(RP.REPOSITORY+"TypeReadable"), 
+          RDF.GetLiteral(ARMU.getTypeReadable(defDS, mod)), 
+          true
+        );
+        
         MLDS.Assert(
-					mod, 
-					RDF.GetResource(RP.REPOSITORY + "LangReadable"), 
-					RDF.GetLiteral(ARMU.getLangReadable(ARMU.getResourceLiteral(defDS, mod, "Lang"))), 
-					true
-				);
-				
-				MLDS.Assert(
-					mod, 
-					RDF.GetResource(RP.REPOSITORY + "Status"), 
-					RDF.GetLiteral(dString(0) + "%"), 
-					true
-				);
+          mod, 
+          RDF.GetResource(RP.REPOSITORY + "LangReadable"), 
+          RDF.GetLiteral(ARMU.getLangReadable(ARMU.getResourceLiteral(defDS, mod, "Lang"))), 
+          true
+        );
+        
+        MLDS.Assert(
+          mod, 
+          RDF.GetResource(RP.REPOSITORY + "Status"), 
+          RDF.GetLiteral(dString(0) + "%"), 
+          true
+        );
         
         arcsOut = defDS.ArcLabelsOut(mod);
         while (arcsOut.hasMoreElements()) {
@@ -252,11 +252,11 @@ function onLoad() {
     if (enabled) {
       enabled = enabled.QueryInterface(Components.interfaces.nsIRDFLiteral).Value;
       ARMU.setStatus(
-				RPDS, 
-				res, 
-				(navigator.onLine ? (enabled == "false" ? OFF:dString(1) + "%"):ERROR), 
-				(navigator.onLine ? (enabled == "false" ? "red":"yellow"):"red")
-			);
+        RPDS, 
+        res, 
+        (navigator.onLine ? (enabled == "false" ? OFF:dString(1) + "%"):ERROR), 
+        (navigator.onLine ? (enabled == "false" ? "red":"yellow"):"red")
+      );
     }
   }
   if (!navigator.onLine) document.getElementById('body').setAttribute('showRepositoryList', 'true');
@@ -325,10 +325,10 @@ function checkInternetPermission() {
   var haveInternetPermission = internetPermission();
 
   if (!haveInternetPermission) {
-		closeWindowXS(window);
-		return;
-	}
-	
+    closeWindowXS(window);
+    return;
+  }
+  
   if (navigator.onLine) {
     loadMasterRepoList(true); // will call loadXulswordRepositories() when successfully finished
   }
@@ -356,8 +356,8 @@ function loadXulswordRepositories(moduleDataAlreadyDeleted) {
 }
 
 function loadRepositories(resourceArray, moduleDataAlreadyDeleted) {
-	
-	ARMU.clearErrors(RPDS, RDF.GetResource(RP.XulswordRepoListID));
+  
+  ARMU.clearErrors(RPDS, RDF.GetResource(RP.XulswordRepoListID));
   
   // init global repository array for new loading
   RepositoryArray = [];
@@ -399,29 +399,29 @@ function checkAllRepositoriesLoaded() {
   window.clearInterval(ManifestCheckInterval);
   
   ProgressBar.max = 0;
-	ProgressBar.value = 0;
-	ProgressBar.mode = "undetermined";
+  ProgressBar.value = 0;
+  ProgressBar.mode = "undetermined";
   ProgressBar.hidden = true;
-		
-	// if any modules are flagged as a needed upgrade, then ask user to upgrade them
-	var mods = [];
-	ARMU.getUpdateMods(mods, false); // prefer non-xsm
-	ARMU.getUpdateMods(mods, true); // xsm wins only if it's a greater version than all non-xsm
-	
-	// remove any upgrade which has already been downloaded during this session
-	for (var i=0; i<mods.length; i++) {
-		if (ARMU.getModuleInstallerZipFile(mods[i]).exists()) {
-			mods.splice(i,1);
-			i--;
-		}
-	}
+    
+  // if any modules are flagged as a needed upgrade, then ask user to upgrade them
+  var mods = [];
+  ARMU.getUpdateMods(mods, false); // prefer non-xsm
+  ARMU.getUpdateMods(mods, true); // xsm wins only if it's a greater version than all non-xsm
+  
+  // remove any upgrade which has already been downloaded during this session
+  for (var i=0; i<mods.length; i++) {
+    if (ARMU.getModuleInstallerZipFile(mods[i]).exists()) {
+      mods.splice(i,1);
+      i--;
+    }
+  }
 
-	// begin updating texts which need it
-	if (mods.length) {
-		ARMI.initiateModuleDownloads(mods);
-		PromptUpdateMods.mods = mods;
-		PromptUpdateMods.prompt = true; // triggers a prompt after files are located
-	}
+  // begin updating texts which need it
+  if (mods.length) {
+    ARMI.initiateModuleDownloads(mods);
+    PromptUpdateMods.mods = mods;
+    PromptUpdateMods.prompt = true; // triggers a prompt after files are located
+  }
   
   ARMU.buildLanguageList();
 
@@ -459,8 +459,8 @@ function initDataSource(data, fileName) {
 
 // Download the masterRepoList from CrossWire's designated source
 function loadMasterRepoList(moduleDataAlreadyDeleted) {
-	
-	ProgressBar.mode = "undetermined";
+  
+  ProgressBar.mode = "undetermined";
   
   // get URL for masterRepoList.conf
   var site = RDF.GetResource(RP.masterRepoListID);
@@ -542,15 +542,15 @@ function readMasterRepoList(aFile, moduleDataAlreadyDeleted) {
         var r = list[i].match(/^\d+=FTPSource=(.*?)\|(.*?)\|(.*?)\s*$/i);
         
         var nres = { 
-					ResourceType:"repository", 
-					Enabled:"false", 
-					Name:r[1], 
-					Site:r[2], 
-					Path:r[3], 
-					Status:OFF, 
-					Style:"red", 
-					Url:ARMU.guessProtocol(r[2], r[3]) 
-				};
+          ResourceType:"repository", 
+          Enabled:"false", 
+          Name:r[1], 
+          Site:r[2], 
+          Path:r[3], 
+          Status:OFF, 
+          Style:"red", 
+          Url:ARMU.guessProtocol(r[2], r[3]) 
+        };
         if (!ARMU.existsRepository(nres)) ARMU.createRepository(nres);
       }
       
@@ -601,8 +601,8 @@ function startProcessingNextRepository() {
     myLastSelfProgress:0,
      
     onProgressChange: function(aWebProgress, aRequest, aCurSelfProgress, aMaxSelfProgress, aCurTotalProgress, aMaxTotalProgress) {
-			
-			// update repo status progress
+      
+      // update repo status progress
       ARMU.setStatus(RPDS, this.myResource, dString(Math.round(100*(aCurSelfProgress/aMaxSelfProgress))) + "%", "yellow");
 
     },
@@ -615,12 +615,12 @@ function startProcessingNextRepository() {
       ARMU.webRemove(this.myPersist);
       ManifestsLoading--;
       
-			// update manifest total progress bar
-			ProgressBar.value = Number(ProgressBar.value) + Number(this.myMaxSelfProgress) - Number(this.myLastSelfProgress);
-			this.myLastSelfProgress = 0;
-			if (ProgressBar.value == ProgressBar.max) {
-				ProgressBar.mode = "undetermined";
-			}
+      // update manifest total progress bar
+      ProgressBar.value = Number(ProgressBar.value) + Number(this.myMaxSelfProgress) - Number(this.myLastSelfProgress);
+      this.myLastSelfProgress = 0;
+      if (ProgressBar.value == ProgressBar.max) {
+        ProgressBar.mode = "undetermined";
+      }
       
       if (aStatus == 0) {
         ARMU.setStatus(RPDS, this.myResource, ON, "green");
@@ -720,16 +720,16 @@ function applyConfFile(file, repoUrl) {
   }
 
   // Firefox's native mp3 playability is dependant on op-sys, and is spotty among Windows
-	// versions, service packs etc. etc. etc. so xulsword will always ask for ogg. The only
-	// downside is that if audio is exported, it will be ogg, which some portable players
-	// don't handle natively. But this is a minor concession compared to playability!
+  // versions, service packs etc. etc. etc. so xulsword will always ask for ogg. The only
+  // downside is that if audio is exported, it will be ogg, which some portable players
+  // don't handle natively. But this is a minor concession compared to playability!
   if ((/^http\:\/\/.*audio\.htm\?/).test(dataPath)) dataPath += "&ogg=1";
 
   var moduleUrl;
   if ((/^(\.|\/)/).test(dataPath)) {
     dataPath = dataPath.replace(/^\.*\//, "");
     if (!(/\.(zip|xsm)$/i).test(dataPath)) 
-				dataPath = dataPath.replace(/\/[^\/]*$/, "");
+        dataPath = dataPath.replace(/\/[^\/]*$/, "");
     moduleUrl = repoUrl + "/" + dataPath;
   }
   else moduleUrl = dataPath;
@@ -744,7 +744,7 @@ function applyConfFile(file, repoUrl) {
     ARMU.deleteResource(newModRes)
     return;
   }
-	MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "ModDrv"), RDF.GetLiteral(modDrv), true);
+  MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "ModDrv"), RDF.GetLiteral(modDrv), true);
 
   // add TypeReadable
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"TypeReadable"), RDF.GetLiteral(ARMU.getTypeReadable(MLDS, newModRes)), true);
@@ -834,7 +834,7 @@ function applyConfFile(file, repoUrl) {
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langReadable), true);
   // add Status and Installed
   var moduleName = ARMU.getResourceLiteral(MLDS, newModRes, "ModuleName");
-	var moduleVersion = ARMU.getResourceLiteral(MLDS, newModRes, "Version");
+  var moduleVersion = ARMU.getResourceLiteral(MLDS, newModRes, "Version");
   var isInstalled = (Tab.hasOwnProperty(moduleName) && Tab[moduleName].modVersion == moduleVersion);
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"Status"), RDF.GetLiteral(isInstalled ? ON:dString(0) + "%"), true);
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"Installed"), RDF.GetLiteral(isInstalled ? "true":"false"), true);
@@ -843,20 +843,20 @@ function applyConfFile(file, repoUrl) {
   RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
   RDFC.AppendElement(newModRes);
   
-	var moduleUpdateNeeded = false;
+  var moduleUpdateNeeded = false;
 
-	// set flags to update any updateable modules
-	if (Tab.hasOwnProperty(moduleName) && moduleName != "Personal") {
-		if (ARMU.compareSwordVersions(moduleVersion, Tab[moduleName].modVersion).result == 1) {
-			moduleUpdateNeeded = true;
-		}
-		if (moduleUpdateNeeded) {
-			jsdump("INFO: module \"" + moduleName + ", " + Tab[moduleName].modVersion + "\" can be updated to version \"" + moduleVersion + (is_XSM_module ? " XSM":"") + "\".");
-			var change = ARMU.getConfEntry(filedata, "History_" + moduleVersion);
-			if (change && !(/^\s*$/).test(change)) ARMU.setResourceAttribute(MLDS, newModRes, "History_" + moduleVersion, change);
-		}
-	}
-	ARMU.setResourceAttribute(MLDS, newModRes, "ModuleUpdateNeeded", (moduleUpdateNeeded ? "true":"false"));
+  // set flags to update any updateable modules
+  if (Tab.hasOwnProperty(moduleName) && moduleName != "Personal") {
+    if (ARMU.compareSwordVersions(moduleVersion, Tab[moduleName].modVersion).result == 1) {
+      moduleUpdateNeeded = true;
+    }
+    if (moduleUpdateNeeded) {
+      jsdump("INFO: module \"" + moduleName + ", " + Tab[moduleName].modVersion + "\" can be updated to version \"" + moduleVersion + (is_XSM_module ? " XSM":"") + "\".");
+      var change = ARMU.getConfEntry(filedata, "History_" + moduleVersion);
+      if (change && !(/^\s*$/).test(change)) ARMU.setResourceAttribute(MLDS, newModRes, "History_" + moduleVersion, change);
+    }
+  }
+  ARMU.setResourceAttribute(MLDS, newModRes, "ModuleUpdateNeeded", (moduleUpdateNeeded ? "true":"false"));
 
 }
 
@@ -876,9 +876,9 @@ function onUnload() {
   // abort any downloads which are still in progress
   var cancel = [];
   for (var i=0; i<Web.length; i++) {
-		cancel.push(Web[i].persist);
-		jsdump("INFO: Cancelling download on unload: \"" + uneval(Web[i]) + "\"");
-	}
+    cancel.push(Web[i].persist);
+    jsdump("INFO: Cancelling download on unload: \"" + uneval(Web[i]) + "\"");
+  }
   for (var p=0; p<cancel.length; p++) {cancel[p].cancelSave();}
   
   ARMU.clearErrors(RPDS, RDF.GetResource(RP.XulswordRepoListID));

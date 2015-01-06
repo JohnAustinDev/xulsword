@@ -57,7 +57,7 @@ body[chromedir="rtl"] .nb #npopup {
   width:33%;
 }
 #search-content #npopup {
-	width:400px;
+  width:400px;
 }
 .text .introlink #npopup {
   /* This non inline text element has an undesireable left:auto 
@@ -95,14 +95,14 @@ body[chromedir="rtl"] .nb #npopup {
   right:-20px;
 }
 #search-content #npopup #npopupBOX {
-	width:100%;
-	margin:0px;
+  width:100%;
+  margin:0px;
 }
 #search-content .slist > a #npopup #npopupBOX {
   left:0px;
 }
 body[chromedir="rtl"] #search-content .slist > a #npopup #npopupBOX {
-	left:calc(40px - 100%);
+  left:calc(40px - 100%);
 }
 /* Strong's popups are offset so that their underlying text
 can be read after the popup is open. "top" values here must
@@ -201,10 +201,10 @@ body[chromedir="rtl"] .popup-mod-select {
   clear:both;
 }
 .popup-noteAddress {
-	display:none;
+  display:none;
 }
 #npopupTX .image-container img {
-	max-width:none;
+  max-width:none;
 }
 
 /* dictionary styles */
@@ -249,7 +249,7 @@ body[chromedir="rtl"] .popup-mod-select {
   font-weight:bold;
 }
 .lemma-html {
-	white-space:normal;
+  white-space:normal;
 }
 .lemma-sep {
   border-top:3px solid grey;
@@ -275,7 +275,7 @@ body[chromedir="rtl"] .popup-mod-select {
 .markup-gramGrp
 */
 .markup-title {
-	display:none;
+  display:none;
 }
 .markup-sense,
 .markup-pron,
@@ -283,25 +283,25 @@ body[chromedir="rtl"] .popup-mod-select {
 .markup-orth-trans,
 .markup-entry,
 .markup-etym-note {
-	display:block;
+  display:block;
 }
 .markup-sense {
-	-moz-padding-start:6px;
-	padding-bottom:1em;
+  -moz-padding-start:6px;
+  padding-bottom:1em;
 }
 .markup-def,
 .markup-cit {
-	font-style:italic;
+  font-style:italic;
 }
 .markup-usg,
 .markup-emph {
-	font-weight:bold;
+  font-weight:bold;
 }
 .markup-quote:before,
 .markup-quote:after {
-	content:"\"";
+  content:"\"";
 }
-	
+  
 /* TEI rend attribute classes */
 .markup_bold {font-weight:bold;}
 .markup_illuminated {float: left; font-size: xx-large; padding: 4px 8px 0px 4px;}
@@ -312,8 +312,8 @@ body[chromedir="rtl"] .popup-mod-select {
 .markup_super {vertical-align:super; font-size:smaller;}
 .markup_underline {text-decoration:underline;}
 .markup_normal {
-	font-style:normal;
-	font-weight:normal;
-	vertical-align:baseline;
-	font-size:medium;
+  font-style:normal;
+  font-weight:normal;
+  vertical-align:baseline;
+  font-size:medium;
 }

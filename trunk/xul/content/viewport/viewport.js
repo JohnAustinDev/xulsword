@@ -66,9 +66,9 @@ function initViewPort() {
     while (myVP.firstChild) {myVP.removeChild(myVP.firstChild);}
     while (srcVP.firstChild) {myVP.appendChild(srcVP.removeChild(srcVP.firstChild));}
     // copying via DOM functions does not copy eventListeners, so add them back
-		document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
-		document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
-		document.getElementById("textrow").addEventListener("DOMMouseScroll", MouseWheel.scroll, false);
+    document.getElementById("biblebooks_nt").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
+    document.getElementById("biblebooks_ot").addEventListener("DOMMouseScroll", BibleNavigator.wheel, false);
+    document.getElementById("textrow").addEventListener("DOMMouseScroll", MouseWheel.scroll, false);
     
     // this copied viewport should have only one text window showing: towindow...
     // This window should be pinned if it's pinable, and all other windows should 
@@ -83,24 +83,24 @@ function initViewPort() {
         // pinning is not supported for Dict modules, but others should 
         // be pinned (at least to start with, though user may unpin it)
         if (Tab[ViewPort.Module[w]].modType != DICTIONARY) {
-					// the following method of getting wl only works because we copied  
-					// XS_window viewportbody html (this ViewPort has not been updated yet).
+          // the following method of getting wl only works because we copied  
+          // XS_window viewportbody html (this ViewPort has not been updated yet).
           var wl = XS_window.ViewPort.ownerDocument.getElementById("text" + w).getAttribute("columns").match(/^show(\d+)$/);
           wl = towindow + Number(wl[1]) - 1;
           while (w <= wl) {
-						ViewPort.IsPinned[w] = true;
-						w++;
-					}
-					w--; // sit on last handled w because it will be incremented in above "for"
+            ViewPort.IsPinned[w] = true;
+            w++;
+          }
+          w--; // sit on last handled w because it will be incremented in above "for"
         }
       }
       else {
-				document.getElementById("tabs" + w).setAttribute("moduleType", "none");
-				document.getElementById("text" + w).setAttribute("moduleType", "none");
-			}
+        document.getElementById("tabs" + w).setAttribute("moduleType", "none");
+        document.getElementById("text" + w).setAttribute("moduleType", "none");
+      }
     }
 
-		document.getElementById("viewportbody").setAttribute("chooser", "hide");
+    document.getElementById("viewportbody").setAttribute("chooser", "hide");
     ViewPort.update(false);
     
   }
@@ -129,16 +129,16 @@ function ViewPortObj(viewPortObj) {
 
       // insert ORIG tab after BIBLEs
       if (Tabs[t].modType != BIBLE && orig) {
-				tabs.appendChild(orig);
+        tabs.appendChild(orig);
         orig = null;
       }
       
       var tab = tabs.appendChild(document.createElement("input"));
       tab.setAttribute("class", "tab tab" + Tabs[t].tabType);
       tab.setAttribute("id", "w" + w + ".tab.norm." + t);
-			tab.setAttribute("type", "button");
-			tab.setAttribute("value", Tabs[t].label);
-			tab.setAttribute("title", Tabs[t].description);
+      tab.setAttribute("type", "button");
+      tab.setAttribute("value", Tabs[t].label);
+      tab.setAttribute("title", Tabs[t].description);
     }
     if (orig) {tabs.appendChild(orig);}
 
@@ -152,10 +152,10 @@ function ViewPortObj(viewPortObj) {
     select.setAttribute("id", "w" + w + ".tabselect");
 
     for (t=0; t<Tabs.length; t++) {
-			var option = select.appendChild(document.createElement("option"));
-			option.setAttribute("class", "tab tab" + Tabs[t].tabType);
-			option.setAttribute("id", "w" + w + ".tab.mult." + t);
-			option.textContent = Tabs[t].label;
+      var option = select.appendChild(document.createElement("option"));
+      option.setAttribute("class", "tab tab" + Tabs[t].tabType);
+      option.setAttribute("id", "w" + w + ".tab.mult." + t);
+      option.textContent = Tabs[t].label;
     }
 
     // a div is needed to capture tab selection clicks and prevent activation of pulldown menu
@@ -164,9 +164,9 @@ function ViewPortObj(viewPortObj) {
     clicker.setAttribute("id", "w" + w + ".tab.tsel");
   };
   
-	// draw tabs
-	for (w=1; w<=NW; w++) {this.drawTabs(w);}
-	document.getElementById("viewportbody").setAttribute("hasOriginalLanguage", (Tab.ORIG_OT || Tab.ORIG_NT ? "true":"false"));
+  // draw tabs
+  for (w=1; w<=NW; w++) {this.drawTabs(w);}
+  document.getElementById("viewportbody").setAttribute("hasOriginalLanguage", (Tab.ORIG_OT || Tab.ORIG_NT ? "true":"false"));
 
   // If we have a passed viewPortObj, then copy it. Otherwise create 
   // a ViewPortObj from global preferences.
@@ -281,13 +281,13 @@ function ViewPortObj(viewPortObj) {
     for (var w=1; w<=NW; w++) {
       var value = "show1";
       if (w > this.NumDisplayedWindows || 
-					document.getElementById("text" + w).getAttribute("moduleType") == "none") {
-				value = "hide";
-			}
+          document.getElementById("text" + w).getAttribute("moduleType") == "none") {
+        value = "hide";
+      }
       else {
-				   
+           
         if ((w+1) <= this.NumDisplayedWindows && 
-						document.getElementById("text" + (w+1)).getAttribute("moduleType") != "none" &&
+            document.getElementById("text" + (w+1)).getAttribute("moduleType") != "none" &&
             Tab[this.Module[w]].modType == BIBLE &&
             !this.ShowOriginal[w] && 
             !this.ShowOriginal[(w+1)] &&
@@ -296,14 +296,14 @@ function ViewPortObj(viewPortObj) {
             value = "show2";
             
         else if ((w+1) <= this.NumDisplayedWindows && 
-						document.getElementById("text" + (w+1)).getAttribute("moduleType") != "none" &&
+            document.getElementById("text" + (w+1)).getAttribute("moduleType") != "none" &&
             (Tab[this.Module[w]].modType == COMMENTARY || Tab[this.Module[w]].modType == GENBOOK) &&
             this.IsPinned[w] == this.IsPinned[(w+1)] && 
             this.Module[w] == this.Module[Number(w+1)])
             value = "show2";
 
         if (value == "show2" && w+2 <= this.NumDisplayedWindows && 
-						document.getElementById("text" + (w+2)).getAttribute("moduleType") != "none" &&
+            document.getElementById("text" + (w+2)).getAttribute("moduleType") != "none" &&
             !this.ShowOriginal[(w+2)] &&
             this.IsPinned[Number(w+1)] == this.IsPinned[Number(w+2)] &&
             this.Module[Number(w+1)] == this.Module[Number(w+2)])
@@ -345,12 +345,12 @@ function ViewPortObj(viewPortObj) {
       // Set this window's and tab's type
       var mtype = getShortTypeFromLong(Tab[this.Module[wThis]].modType);
       if (t.getAttribute("moduleType") != "none") {
-				t.setAttribute("moduleType", mtype);
-			}
-			var tabs = document.getElementById("tabs" + wThis);
-			if (tabs.getAttribute("moduleType") != "none") {
-				tabs.setAttribute("moduleType", mtype);
-			}
+        t.setAttribute("moduleType", mtype);
+      }
+      var tabs = document.getElementById("tabs" + wThis);
+      if (tabs.getAttribute("moduleType") != "none") {
+        tabs.setAttribute("moduleType", mtype);
+      }
       
       // Set this window's next/prev links
       var prev = true;
@@ -539,8 +539,8 @@ function ViewPortObj(viewPortObj) {
     
     // General-Book Chooser (part of xulsword.xul but treated as part of XS_window.ViewPort)
     var genbkinfo = GenBookNavigator.getGenBookInfo();
-		
-		// Bible chooser
+    
+    // Bible chooser
     var chooser = (genbkinfo.unPinnedGenbkArray.length ? "book":(this.ShowChooser ? "bible":"hide"));
     XS_window.ViewPort.ownerDocument.getElementById("viewportbody").setAttribute("chooser", chooser);
     XS_window.document.getElementById("frameset").setAttribute("chooser", chooser);
@@ -604,32 +604,32 @@ function ViewPortObj(viewPortObj) {
   };
   
   this.selectTab = function(w, version) {
-		document.getElementById("text" + w).setAttribute("versePerLine", "false");
-		
+    document.getElementById("text" + w).setAttribute("versePerLine", "false");
+    
     var fdb = this.firstDisplayBible(true); // capture before changing prefs...
     
     if (this === XS_window.ViewPort) {
-			// update this window
-			this.ShowOriginal[w] = false;
-			this.Module[w] = version;
-			
-			// if the firstDisplayBible has changed, update the navigator
-			if ((w == fdb || fdb != this.firstDisplayBible(true)))
-					window.setTimeout(function() {ViewPort.disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));}, 200);
-					
-			XS_window.updateBibleNavigatorAudio();
-		}
+      // update this window
+      this.ShowOriginal[w] = false;
+      this.Module[w] = version;
+      
+      // if the firstDisplayBible has changed, update the navigator
+      if ((w == fdb || fdb != this.firstDisplayBible(true)))
+          window.setTimeout(function() {ViewPort.disableMissingBooks(getPrefOrCreate("HideDisabledBooks", "Bool", false));}, 200);
+          
+      XS_window.updateBibleNavigatorAudio();
+    }
     
     // windowed ViewPorts only show a single text, so if this is a windowed 
     // ViewPort, update all the texts in its link.
     else {
-			for (var x=1; x<=NW; x++) {
-				if (document.getElementById("text" + x).getAttribute("moduleType")=="none") continue;
-				this.ShowOriginal[x] = false;
-				this.Module[x] = version;	
-			}
-		}
-		
+      for (var x=1; x<=NW; x++) {
+        if (document.getElementById("text" + x).getAttribute("moduleType")=="none") continue;
+        this.ShowOriginal[x] = false;
+        this.Module[x] = version;	
+      }
+    }
+    
   };
 
   this.disableMissingBooks = function(hide) {
