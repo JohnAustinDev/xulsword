@@ -28,19 +28,33 @@
 #endif
 
 static xulsword *my_xulsword;
+static xulsword *my_xulswordfb;
 
 /********************************************************************
 EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
+// Ruturns a xulsword instance with firebibleMode = false
 DLLEXPORT xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir) {
   
   if (my_xulsword) return my_xulsword;
   
-  my_xulsword = new xulsword(path, toUpperCase, throwJS, reportProgress, localeDir);
+  my_xulsword = new xulsword(path, toUpperCase, throwJS, reportProgress, localeDir, false);
   
-  SWLog::getSystemLog()->logDebug("CREATED xulsword object");
+  SWLog::getSystemLog()->logDebug("CREATED xulsword object (firebibleMode = false)");
   
   return my_xulsword;
+}
+
+// Ruturns a xulsword instance with firebibleMode = true
+DLLEXPORT xulsword *GetXulswordFB(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir) {
+  
+  if (my_xulswordfb) return my_xulswordfb;
+  
+  my_xulswordfb = new xulsword(path, toUpperCase, throwJS, reportProgress, localeDir, true);
+  
+  SWLog::getSystemLog()->logDebug("CREATED xulsword object (firebibleMode = true)");
+  
+  return my_xulswordfb;
 }
 
 DLLEXPORT char *GetChapterText(xulsword *inst, const char *vkeymod, const char *vkeytext) {
@@ -75,6 +89,14 @@ DLLEXPORT int GetMaxVerse(xulsword *inst, const char *mod, const char *vkeytext)
   return inst->getMaxVerse(mod, vkeytext);
 }
 
+DLLEXPORT char *GetModuleBooks(xulsword *inst, const char *mod) {
+  return inst->getModuleBooks(mod);
+}
+
+DLLEXPORT char *ParseVerseKey(xulsword *inst, const char *vkeymod, const char *vkeytext) {
+  return inst->parseVerseKey(vkeymod, vkeytext);
+}
+
 DLLEXPORT char *GetVerseSystem(xulsword *inst, const char *mod) {
   return inst->getVerseSystem(mod);
 }
@@ -101,6 +123,10 @@ DLLEXPORT char *GetGenBookChapterText(xulsword *inst, const char *gbmod, const c
 
 DLLEXPORT char *GetGenBookTableOfContents(xulsword *inst, const char *gbmod) {
   return inst->getGenBookTableOfContents(gbmod);
+}
+
+DLLEXPORT char *GetGenBookTableOfContentsJSON(xulsword *inst, const char *gbmod) {
+  return inst->getGenBookTableOfContentsJSON(gbmod);
 }
 
 DLLEXPORT bool LuceneEnabled(xulsword *inst, const char *mod) {

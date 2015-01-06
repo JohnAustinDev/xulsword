@@ -122,6 +122,7 @@ class xulsword {
   bool Strongs;
   bool Morph;
   bool MorphSeg;
+  bool FireBibleMode;
   char Outtext[256];
   VerseKey EmptyKey;
   SWBuf MyFootnotes;
@@ -148,10 +149,11 @@ class xulsword {
   void mapVersifications(VerseKey *vkin, VerseKey *vkout);
   char *getBookName(SWBuf *Chapter);
   void saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *crossRefText, SWBuf *noteText, bool includeMarkerLinks = false);
+  void getTreeContents(TreeKey *key, SWBuf *retval);
 
 
   public:
-  xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir = NULL);
+  xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir = NULL, bool firebibleMode = false);
   ~xulsword();
   
   static StringMgrXS *MyStringMgrXS;
@@ -165,6 +167,8 @@ class xulsword {
   char *getVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes = false);
   int   getMaxChapter(const char *mod, const char *vkeytext);
   int   getMaxVerse(const char *mod, const char *vkeytext);
+  char *getModuleBooks(const char *mod);
+  char *parseVerseKey(const char *vkeymod, const char *vkeytext);
   char *getVerseSystem(const char *mod);
   char *convertLocation(const char *frVS, const char *vkeytext, const char *toVS);
   char *getIntroductions(const char *vkeymod, const char *bname);
@@ -172,6 +176,7 @@ class xulsword {
   char *getAllDictionaryKeys(const char *lexdictmod);
   char *getGenBookChapterText(const char *gbmod, const char *treekey);
   char *getGenBookTableOfContents(const char *gbmod);
+  char *getGenBookTableOfContentsJSON(const char *gbmod);  
   bool  luceneEnabled(const char *mod);
   int   search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch);
   ListKey *getSearchPointer();
