@@ -73,7 +73,7 @@ PHP_METHOD(phpsword, __construct)
       RETURN_NULL();
   }
 
-  sword = new xulsword(path, NULL, NULL, NULL, localedir);
+  sword = new xulsword(path, NULL, NULL, NULL, localedir, false);
   sword_object *obj = (sword_object *)zend_object_store_get_object(object TSRMLS_CC);
   obj->sword = sword;
 }
@@ -232,6 +232,44 @@ PHP_METHOD(phpsword, getVerseSystem)
   RETURN_EMPTY_STRING();
 }
 
+PHP_METHOD(phpsword, getModuleBooks)
+{
+  xulsword *sword;
+  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword = obj->sword;
+  if (sword != NULL) {
+    char *mod;
+    int l1;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &mod, &l1) == FAILURE) {
+      RETURN_EMPTY_STRING();
+    }
+    char *ret = sword->getModuleBooks(mod);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
+  }
+  RETURN_EMPTY_STRING();
+}
+
+PHP_METHOD(phpsword, parseVerseKey)
+{
+  xulsword *sword;
+  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword = obj->sword;
+  if (sword != NULL) {
+    char *vkeymod;
+    int l1;
+    char *vkeytext;
+    int l2;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &vkeymod, &l1, &vkeytext, &l2) == FAILURE) {
+      RETURN_EMPTY_STRING();
+    }
+    char *ret = sword->parseVerseKey(vkeymod, vkeytext);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
+  }
+  RETURN_EMPTY_STRING();
+}
+
 PHP_METHOD(phpsword, convertLocation)
 {
   xulsword *sword;
@@ -344,6 +382,24 @@ PHP_METHOD(phpsword, getGenBookTableOfContents)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getGenBookTableOfContents(gbmod);
+    if (ret) {RETURN_STRING(ret, 0);}
+    else RETURN_EMPTY_STRING();
+  }
+  RETURN_EMPTY_STRING();
+}
+
+PHP_METHOD(phpsword, getGenBookTableOfContentsJSON)
+{
+  xulsword *sword;
+  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword = obj->sword;
+  if (sword != NULL) {
+    char *gbmod;
+    int l1;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &gbmod, &l1) == FAILURE) {
+      RETURN_EMPTY_STRING();
+    }
+    char *ret = sword->getGenBookTableOfContentsJSON(gbmod);
     if (ret) {RETURN_STRING(ret, 0);}
     else RETURN_EMPTY_STRING();
   }
@@ -533,12 +589,15 @@ zend_function_entry sword_methods[] = {
     PHP_ME(phpsword,  getMaxChapter,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getMaxVerse,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getVerseSystem,   NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getModuleBooks,   NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  parseVerseKey,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  convertLocation,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getIntroductions,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getDictionaryEntry,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getAllDictionaryKeys,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getGenBookChapterText,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getGenBookTableOfContents,   NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(phpsword,  getGenBookTableOfContentsJSON,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  luceneEnabled,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  search,   NULL, ZEND_ACC_PUBLIC)
     PHP_ME(phpsword,  getSearchResults,   NULL, ZEND_ACC_PUBLIC)
