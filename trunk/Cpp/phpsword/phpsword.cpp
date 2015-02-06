@@ -454,10 +454,11 @@ PHP_METHOD(phpsword, getSearchResults)
     int l1;
     long first, num;
     zend_bool keepStrongs;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sllb", &mod, &l1, &first, &num, &keepStrongs) == FAILURE) {
+    zend_bool referencesOnly;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sllbb", &mod, &l1, &first, &num, &keepStrongs, &referencesOnly) == FAILURE) {
       RETURN_EMPTY_STRING();
     }
-    char *ret = sword->getSearchResults(mod, first, num, keepStrongs);
+    char *ret = sword->getSearchResults(mod, first, num, keepStrongs, NULL, referencesOnly);
     if (ret) {RETURN_STRING(ret, 0);}
     else RETURN_EMPTY_STRING();
   }
