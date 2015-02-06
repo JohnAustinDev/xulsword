@@ -1640,7 +1640,7 @@ ListKey *xulsword::getSearchPointer() {
 /********************************************************************
 GetSearchResults
 *********************************************************************/
-char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer) {
+char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer, bool referencesOnly) {
   SWModule * module = MyManager->getModule(mod);
   if (!module) {
     xsThrow("GetSearchResults: module \"%s\" not found.", mod);
@@ -1737,7 +1737,7 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
   module->setKey(EmptyKey); // Overcomes the crash on Persist problem
   resultList->setPersist(savePersist);
 
-  SWBuf check = assureValidUTF8(MySearchTexts.c_str());
+  SWBuf check = assureValidUTF8(referencesOnly ? MySearchVerses.c_str():MySearchTexts.c_str());
 
   char *retval;
   retval = (char *)emalloc(check.length() + 1);

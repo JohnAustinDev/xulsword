@@ -180,7 +180,7 @@ class xulsword {
   bool  luceneEnabled(const char *mod);
   int   search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch);
   ListKey *getSearchPointer();
-  char *getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer = NULL);
+  char *getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer = NULL, bool referencesOnly = false);
   void  searchIndexDelete(const char *mod);
   void  searchIndexBuild(const char *mod);
   void  setGlobalOption(const char *option, const char *setting);
