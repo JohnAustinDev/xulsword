@@ -235,8 +235,8 @@ var BookmarksMenu = {
              BookmarksUtils.DROP_AFTER:BookmarksUtils.DROP_ON;
     }
 
-    var overButtonBoxObject = target.boxObject.QueryInterface(Components.interfaces.nsIBoxObject);
-    var overParentBoxObject = target.parentNode.boxObject.QueryInterface(Components.interfaces.nsIBoxObject);
+    var overButtonBoxObject = target.boxObject;
+    var overParentBoxObject = target.parentNode.boxObject;
 
     var size, border;
     var coordValue, clientCoordValue;

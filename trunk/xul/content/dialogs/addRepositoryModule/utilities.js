@@ -387,7 +387,7 @@ ARMU = {
     
     if (tree && tree.view && tree.boxObject) {
       tree.view.selection.select(index);
-      tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(index);
+      tree.boxObject.ensureRowIsVisible(index);
     }
   },
   

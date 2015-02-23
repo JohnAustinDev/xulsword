@@ -256,7 +256,7 @@ ARMI = {
     var tree = document.getElementById("repoListTree");
     var index = tree.builder.QueryInterface(Components.interfaces.nsIXULTreeBuilder).getIndexOfResource(res);
     tree.view.selection.select(index);
-    tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(index);
+    tree.boxObject.ensureRowIsVisible(index);
     tree.focus();
   },
 
