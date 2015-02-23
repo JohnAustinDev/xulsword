@@ -459,7 +459,7 @@ ARMD = {
     if (!ARMU.is_XSM_module(MLDS, module.modResource)) {
       var p = ARMU.getResourceLiteral(MLDS, module.modResource, "DataPath").split("/");
       for (var i=0; i<p.length; i++) {
-        if (!p[i]) contine; // case of dir//subdir
+        if (!p[i]) continue; // case of dir//subdir
         module.moduleDir.append(p[i]);
         module.moduleDir.create(module.moduleDir.DIRECTORY_TYPE, DPERM);
       }
@@ -603,21 +603,13 @@ ARMD = {
       onSecurityChange: function(aWebProgress, aRequest, aState) {}
     };
     
-    // if it's a file of zero size, persist fails to copy the file... sigh... so here goes the fix...
-    var isZeroFile = false;
-    var test = aContentData.url.match(/^file\:\/\/(.*)$/);
-    if (test) {
-      var aFile = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
-      try {aFile.initWithPath(lpath(test[1]));}
-      catch (er) {jsdump("ERROR: " + er); aFile = null;}
-      if (aFile && aFile.exists() && aFile.fileSize == 0) {
-        isZeroFile = true;
-        aFile.copyTo(destFile.parent, destFile.leafName);
-        module.downloadedFiles.push(destFile);
-        this.checkModuleComplete(module);
-      }
+    // if it's zero size, persist fails! So here goes the fix...
+    if (aContentData.size == 0) {
+      destFile.create(destFile.NORMAL_FILE_TYPE, FPERM);
+      module.downloadedFiles.push(destFile);
+      this.checkModuleComplete(module);
     }
-    if (!isZeroFile) {
+    else {
       persist.saveURI(ios.newURI(aContentData.url, null, null), null, null, null, null, destFile, PrivacyContext);
       ARMU.webAdd(persist, "moduleFile", module.modResource.ValueUTF8, aContentData.url);
     }
@@ -638,7 +630,7 @@ ARMD = {
     if (!module.status && stillWorking) return;
       
     var is_XSM_module = ARMU.is_XSM_module(MLDS, module.modResource);
-    
+   
     // then entire module is complete...
     if (!module.status) {
     

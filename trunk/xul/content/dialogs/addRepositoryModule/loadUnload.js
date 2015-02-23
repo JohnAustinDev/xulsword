@@ -44,6 +44,7 @@ const EmptyRepoSite = "file://";
 const SCRIPT_PROPS = "dialogs/addRepositoryModule/addRepositoryModule.properties";
 const MAX_CONNECTIONS = 7;
 const PERSIST_FLAGS_BYPASS_CACHE = 2;
+const AUDIO_URL_RE = new RegExp("audio", "i"); // to test if a dataPath is IBT's audio repo
 
 var RP, RPDS, MLDS, RDF, RDFC, RDFCU; // RDF database related globals
 var RepositoryArray, RepositoryIndex;
@@ -723,11 +724,26 @@ function applyConfFile(file, repoUrl) {
   // versions, service packs etc. etc. etc. so xulsword will always ask for ogg. The only
   // downside is that if audio is exported, it will be ogg, which some portable players
   // don't handle natively. But this is a minor concession compared to playability!
-  if ((/^http\:\/\/.*audio\.htm\?/).test(dataPath)) dataPath += "&ogg=1";
+  if ((AUDIO_URL_RE).test(dataPath)) {
+    dataPath += "&ogg=1";
+    // As a work around to provide backward compatibility to < 3.12 (due to a bug) the audio 
+    // repo dataPath  was not changed from audio.htm to audio as it should have been when the
+    // URL changed. Instead we make the change here, to get the correct path.
+    dataPath = dataPath.replace(/audio\.htm/, 'audio');
+  }
 
   var moduleUrl;
+  // examples of dataPath:
+  // ./ADG.xsm
+  // http://ibt.org.ru/ru/audio?id=ADG/ADG
+  // ./modules/texts/ztext/adg/
+  //
+  // examples of moduleURL:
+  // ftp://ftp.ibt.org.ru/pub/modxsm/ADG.xsm
+  // http://ibt.org.ru/ru/audio?id=ADG/ADG
+  // ftp://ftp.ibt.org.ru/pub/modsword/raw/modules/texts/ztext/adg
   if ((/^(\.|\/)/).test(dataPath)) {
-    dataPath = dataPath.replace(/^\.*\//, "");
+    dataPath = dataPath.replace(/^\.*\//, ""); // we don't allow ../ in relative paths
     if (!(/\.(zip|xsm)$/i).test(dataPath)) 
         dataPath = dataPath.replace(/\/[^\/]*$/, "");
     moduleUrl = repoUrl + "/" + dataPath;
