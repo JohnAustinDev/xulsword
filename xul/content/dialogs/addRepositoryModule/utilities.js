@@ -700,7 +700,7 @@ ARMU = {
   
   is_XSM_module: function(modDS, modResource) {
     var moduleUrl = ARMU.getResourceLiteral(modDS, modResource, "ModuleUrl");
-    return ((/\.(zip|xsm)$/).test(moduleUrl) || (/\/audio\.htm(\?|$)/).test(moduleUrl));
+    return ((/\.(zip|xsm)$/).test(moduleUrl) || (AUDIO_URL_RE).test(moduleUrl));
   },
   
   // compare two SWORD version numbers. 
