@@ -262,7 +262,7 @@
 
       <property name="treeBoxObject">
         <getter><![CDATA[
-          return this.tree.boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject);
+          return this.tree.boxObject;
         ]]></getter>
       </property>
 

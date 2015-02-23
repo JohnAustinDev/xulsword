@@ -151,7 +151,7 @@ GenBookNavigator = {
     
     this.Tree().view.selection.select(i);  
     
-    window.setTimeout(function () {GenBookNavigator.Tree().boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(i);}, 0);
+    window.setTimeout(function () {GenBookNavigator.Tree().boxObject.ensureRowIsVisible(i);}, 0);
     
     return true; 
   },
@@ -223,7 +223,7 @@ GenBookNavigator = {
     catch (er) {return;}
     
     if (index == -1) return;
-    window.setTimeout(function () {GenBookNavigator.Tree().boxObject.QueryInterface(Components.interfaces.nsITreeBoxObject).ensureRowIsVisible(i);}, 0);
+    window.setTimeout(function () {GenBookNavigator.Tree().boxObject.ensureRowIsVisible(i);}, 0);
   }
 
 };
