@@ -119,13 +119,13 @@ function PopupObj(popupobj) {
         Texts.footnotes[w] = LibSword.getNotes();
       }
       if (!Texts.footnotes[w]) return false;
-      var re = "<div class=\"nlist\" title=\"" + type + "." + escapeRE(p.title) + "\">.*?<\\/div>";
-      re = new RegExp(re);
-      
-      var myNote = Texts.footnotes[w].match(re);
-      if (!myNote) return false;
-      myNote = myNote[0];
-      
+      var noteContainer = document.createElement("div");
+      sanitizeHTML(noteContainer, Texts.footnotes[w]);
+      var myNote = noteContainer.firstChild;
+      while (myNote && (!myNote.title || myNote.title != type + "." + p.title)) {
+        myNote = myNote.nextSibling;
+      }
+      if (!myNote) return false;    
       res = BibleTexts.getNotesHTML(myNote, (referenceBible ? referenceBible:p.mod), true, true, true, true, 1, false);
       res += "<div class=\"popup-noteAddress is_" + type + "\">" + myNote + "</div>";
       break;

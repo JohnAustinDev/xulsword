@@ -170,7 +170,7 @@ var ContextMenu = {
   },
 
   build: function(canHaveLemma, canHaveTab, canSelect, canHaveVerse, canHaveParagraph, canHaveBookmark) {
-jsdump("build:" + uneval(this.target));
+try {jsdump("build:" + uneval(this.target));} catch(er) {}
 
     // Enable command controller
     document.getElementById("contextScriptBox").setAttribute("value", "open");
@@ -281,7 +281,7 @@ jsdump("build:" + uneval(this.target));
     var info = getElementInfo(element);
     if (!info) return false;
     
-jsdump("readDataFromElement:" + uneval(info));
+try{jsdump("readDataFromElement:" + uneval(info));} catch(er) {}
     
     for (var p in info) {
       

@@ -312,7 +312,7 @@ ARMI = {
           didCancel = true;
           if (!testOnly) {
             cancel.push(Web[i].persist);
-            jsdump("INFO: Module \"" + uneval(Web[i]) + "\" download cancelled.");
+            try {jsdump("INFO: Module \"" + uneval(Web[i]) + "\" download cancelled.");} catch(er) {}
           }
         }
       }

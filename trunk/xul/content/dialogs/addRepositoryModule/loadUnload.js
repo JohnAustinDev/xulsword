@@ -893,7 +893,7 @@ function onUnload() {
   var cancel = [];
   for (var i=0; i<Web.length; i++) {
     cancel.push(Web[i].persist);
-    jsdump("INFO: Cancelling download on unload: \"" + uneval(Web[i]) + "\"");
+    try {jsdump("INFO: Cancelling download on unload: \"" + uneval(Web[i]) + "\"");} catch (er) {}
   }
   for (var p=0; p<cancel.length; p++) {cancel[p].cancelSave();}
   
