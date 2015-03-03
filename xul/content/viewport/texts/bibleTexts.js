@@ -219,12 +219,29 @@ BibleTexts = {
     return html;
   },
 
+  // The 'notes' argument can be HTML or a DOM element which is either a single
+  // note or a container with note child/children
   getNotesHTML: function(notes, mod, gfn, gcr, gun, openCRs, w, keepTextNotes) {
     if (!notes) return "";
     
-    if (!w) w = 0; // w is only needed for unique id creation 
+    if (!w) w = 0; // w is only needed for unique id creation
     
-    var note = notes.split(/(<div class="nlist" [^>]*>.*?<\/div>)/);
+    var noteContainer;
+    if (typeof(notes) == "string") {
+      noteContainer = document.createElement("div");
+      sanitizeHTML(noteContainer, notes);
+    }
+    else if (notes.className == "nlist") {
+      noteContainer = document.createElement("div");
+      noteContainer.appendChild(notes);
+    }
+    else noteContainer = notes;
+      
+    var note = [];
+    var notechild = noteContainer.childNodes;
+    for (var n=0; n < notechild.length; n++) {
+      note.push(notechild[n]);
+    }
     note = note.sort(this.ascendingVerse);
     
     // Start building our html
@@ -234,18 +251,10 @@ BibleTexts = {
 
       // Now parse each note in the chapter separately
       for (var n=0; n < note.length; n++) {
-        if (!note[n]) continue;
-        
-        note[n] = note[n].replace(/[\n\r]/g, " "); // otherwise match below fails if these chars exist
-        
-        var m = note[n].match(/(<div class="nlist" [^>]*>(.*?)<\/div>)/);
-        if (!m) {
-          jsdump("ERROR: skipped bad note \"" + note[n] + "\"");
-          continue;
-        }
-        var body = m[2];
         
         var p = getElementInfo(note[n]);
+        if (!p) continue;
+        var body = note[n].innerHTML;
         
         // Check if this note should be displayed here, and if not then continue
         switch (p.ntype) {
@@ -474,11 +483,12 @@ BibleTexts = {
     var t1 = "un"; 
     var t2 = "fn"; 
     var t3 = "cr";
-    if (!a) return 1;
-    if (!b) return -1;
     
     var pa = getElementInfo(a);
     var pb = getElementInfo(b);
+    
+    if (!pa) return 1;
+    if (!pb) return -1;
 
     if (pa.ch == pb.ch) {
       if (pa.vs == pb.vs) {
