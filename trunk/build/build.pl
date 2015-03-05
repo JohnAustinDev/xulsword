@@ -452,7 +452,7 @@ sub copyFirefoxFiles($) {
   
   &copy_dir($XULRunner, $do, "", $skip);
   
-  if ("$^O" !~ /MSWin32/i) {&mv("$do/xulrunner.exe", "$do/$WINprocess");}
+  if ("$^O" =~ /MSWin32/i) {&mv("$do/xulrunner.exe", "$do/$WINprocess");}
 
 }
 
