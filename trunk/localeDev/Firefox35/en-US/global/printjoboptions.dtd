@@ -21,13 +21,13 @@
 <!ENTITY jobTitleInput.label "Job Title:">
 <!ENTITY jobTitleInput.accesskey "J">
 
-<!ENTITY colorGroup.label "Colour:">
-<!ENTITY grayRadio.label "Greyscale">
+<!ENTITY colorGroup.label "Color:">
+<!ENTITY grayRadio.label "Grayscale">
 <!ENTITY grayRadio.accesskey "G">
-<!ENTITY colorRadio.label "Colour">
+<!ENTITY colorRadio.label "Color">
 <!ENTITY colorRadio.accesskey "C">
 
-<!ENTITY colorspaceInput.label "Colourspace:">
+<!ENTITY colorspaceInput.label "Colorspace:">
 <!ENTITY colorspaceInput.accesskey "s">
 
 <!ENTITY fontsGroup.label "Fonts:">
