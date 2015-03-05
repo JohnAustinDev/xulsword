@@ -72,14 +72,8 @@ if ($MakeDevelopment =~ /true/i) {
   my @manifest;
   &copyXulswordFiles("$DEVELOPMENT/xulsword", \@manifest, $IncludeLocales, 1, 0);
   if ($FirstRunXSM) {&includeFirstRunXSM("$DEVELOPMENT/xulsword/defaults", \%Prefs, $FirstRunXSM);}
-  # Windows uses a custom local XULRunner installation, but Linux is assumed 
-  # to have a recent Firefox installation available to use at runtime with
-  # the -app command line flag. Some versions of Windows Firefox do not
-  # support the -app flag, so a XULRunner runtime is required.
-  if ("$^O" =~ /MSWin32/i) {
-    make_path("$DEVELOPMENT/xulrunner");
-    &copyFirefoxFiles("$DEVELOPMENT/xulrunner");
-  }
+  make_path("$DEVELOPMENT/xulrunner");
+  &copyFirefoxFiles("$DEVELOPMENT/xulrunner");
   &writePreferences("$DEVELOPMENT/xulsword", \%Prefs, 1);
   &writeApplicationINI("$DEVELOPMENT/xulsword");
   &includeModules($RESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
@@ -140,14 +134,14 @@ if ($MakePortable =~ /true/i) {
   if (-e $PORTABLE) {&cleanDir($PORTABLE);}
   else {make_path("$rundir/$Name");}
   make_path("$rundir/$Name/xulsword");
-  if ("$^O" =~ /MSWin32/i) {make_path("$rundir/$Name/xulrunner");}
+  make_path("$rundir/$Name/xulrunner");
   make_path("$rundir/$Name/resources");
   make_path("$rundir/$Name/profile");
   &compileLibSword("$rundir/$Name/xulsword", 1);
   my @manifest;
   &copyXulswordFiles("$rundir/$Name/xulsword", \@manifest, $IncludeLocales, 0, 0);
   if ($FirstRunXSM) {&includeFirstRunXSM("$rundir/$Name/xulsword/defaults", \%Prefs, $FirstRunXSM);}
-  if ("$^O" =~ /MSWin32/i) {&copyFirefoxFiles("$rundir/$Name/xulrunner");}
+  &copyFirefoxFiles("$rundir/$Name/xulrunner");
   &writePreferences("$rundir/$Name/xulsword", \%Prefs);
   &writeApplicationINI("$rundir/$Name/xulsword");
   if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup($rundir, 1);}
@@ -443,25 +437,22 @@ sub includeFirstRunXSM($\%$) {
 sub copyFirefoxFiles($) {
   my $do = shift;
   
-  if ("$^O" !~ /MSWin32/i) {
+  if ("$^O" !~ /MSWin32/i && "$^O" !~ /linux/i) {
     &Log("ERROR: Custom packaged Firefox is not currently supported on this platform.\n");
     return;
   }
   
-  my $EXE = ".exe";
-  my $DLL = ".dll";
-  
   &Log("----> Copying XULRunner files.\n");
 
   my $skip = "(";
-  #$skip .= "\\S+$EXE|";
   $skip .= "dictionaries";
   $skip .= ")";
 
   if (!-e $XULRunner) {&Log("ERROR: No directory: \"$XULRunner\".\n"); die;}
   
   &copy_dir($XULRunner, $do, "", $skip);
-  &mv("$do/xulrunner.exe", "$do/$WINprocess");
+  
+  if ("$^O" !~ /MSWin32/i) {&mv("$do/xulrunner.exe", "$do/$WINprocess");}
 
 }
 
@@ -744,7 +735,7 @@ sub writeRunScript($$) {
   elsif ("$^O" =~ /linux/i) {
     if ($type eq "dev") {
       # don't use -no-remote because otherwise commandline installation won't work!
-      print SCR "`firefox --app $rundir/application.ini -jsconsole`;\n";
+      print SCR "`$rundir/../xulrunner/xulrunner --app $rundir/application.ini -jsconsole`;\n";
     }
     else {
       print SCR "chdir(\"".$rundir."\");\n";
@@ -755,7 +746,7 @@ sub writeRunScript($$) {
       if (open(PRUN, ">:encoding(UTF-8)", "$rundir/start-$Name.sh")) {
         print PRUN "#!/bin/bash\n";
         # don't use -no-remote because otherwise commandline installation won't work!
-        print PRUN "firefox --app ./$Name/xulsword/application.ini$profile\n";
+        print PRUN "./$Name/xulrunner/xulrunner --app ./$Name/xulsword/application.ini$profile\n";
         close(PRUN);
         `chmod ug+x "$rundir/start-$Name.sh"`;
       }

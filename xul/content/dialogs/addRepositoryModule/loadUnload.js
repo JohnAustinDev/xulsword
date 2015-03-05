@@ -35,6 +35,8 @@
 
 */
 
+Components.utils.import("resource://gre/modules/Downloads.jsm");
+
 const RepositoryRDF = "repositoryDefaults.rdf";
 const ModuleRDF = "addRepositoryModule.rdf";
 const ManifestFile = "mods.d.tar.gz";

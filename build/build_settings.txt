@@ -1,10 +1,11 @@
 # BUILD WHAT?
 Set MakeDevelopment=true
-Set MakeFFextension=true
 Set MakePortable=true
 Set MakeSetup=false
+Set MakeFFextension=false
 
 # SPECIFY PATHS
+Set XULRunner=../xulrunner
 Set CluceneSource=../Cpp/clucene-core-0.9.21b
 Set SwordSource=../Cpp/sword-svn
 Set XulswordExtras=
@@ -13,12 +14,11 @@ Set ModuleRepository2=
 Set FirstRunXSM=
 
 # PATHS NEEDED FOR MS-WINDOWS ONLY:
-Set XULRunner=../xulrunner
 Set MicrosoftSDK=C:\Program Files\Microsoft Platform SDK
 
 # XULToolkitVersion SHOULD BE THE MAJOR VERSION OF XULRunner (IF THAT PATH IS SPECIFIED)
 # IT SHOULD ALSO MATCH A LOCALE OVERLOAD VERSION FROM THE UI-MAP
-Set XULToolkitVersion=22
+Set XULToolkitVersion=35
 
 # SPECIFY BUILD INFORMATION
 Set Version=3.12
@@ -26,7 +26,7 @@ Set LibxulswordVersion=1.2.1
 Set Name=xulsword
 Set Vendor=CrossWire
 Set FirefoxMinVersion=21.0
-Set FirefoxMaxVersion=36.*
+Set FirefoxMaxVersion=35.*
 Set (prefs.js):extensions.xulsword.EngineVersion=1.7.3
 Set (prefs.js):extensions.xulsword.MinXSMversion=1.0
 Set (prefs.js):extensions.xulsword.MinUIversion=3.10
