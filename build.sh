@@ -1,41 +1,69 @@
 #!/bin/bash
 
-find . -name "*.pl" -exec chmod ugo+x {} \;
+# This script can be run on any linux machine or vagrant machine. It
+# installs any necessary dependencies and builds xulsword using the
+# loc_MK.txt build settings if this file exists (otherwise defaults).
+
+cd `dirname $0`
 
 sudo apt-get update
 
-noprompt="-y"
+sudo apt-get install -y libtool
+sudo apt-get install -y autoconf
+sudo apt-get install -y make
+sudo apt-get install -y pkg-config
+sudo apt-get install -y build-essential
+sudo apt-get install -y subversion
+sudo apt-get install -y zip
 
-sudo apt-get install $noprompt libtool
-sudo apt-get install $noprompt autoconf
-sudo apt-get install $noprompt make
-sudo apt-get install $noprompt pkg-config
-sudo apt-get install $noprompt build-essential
-sudo apt-get install $noprompt subversion
-sudo apt-get install $noprompt zip
+# If this is a vagrant machine, we get xulsword from latest SVN, NOT 
+# from the host! IMPORTANT: this means that any xulsword changes on the 
+# host will be IGNORED by vagrant builds until they are checked in.  
+# This is necessary to avoid replacing the host's locally compiled
+# files with incompatible files.
+if [ -e /vagrant ]; then
+  cd /home/vagrant
+  if [ ! -e ./xulsword ]; then
+    svn checkout http://xulsword.googlecode.com/svn/trunk/ ./xulsword
+    cd xulsword
+  else
+    cd xulsword
+    svn update
+  fi
+fi
+XULSWORD=`pwd -P`
 
-# Find our Cpp directory
-if [ -e ./Cpp ]; then
-	cd Cpp 
+echo XULSWORD path is "$XULSWORD"
+
+# XULSWORD_HOST is xulsword on the non-virtual machine (may have custom
+# control files etc.)
+if [ -e /vagrant ]; then
+  XULSWORD_HOST=/vagrant
 else
-	cd /vagrant/Cpp
+  XULSWORD_HOST=$XULSWORD
 fi
 
-# Compile CLucene
-if [ ! -e ./clucene-core-0.9.21b ]; then
+cd $XULSWORD
+find . -name "*.pl" -exec chmod ug+x {} \;
+find . -name "*.sh" -exec chmod ug+x {} \;
+
+# COMPILE SWORD ENGINE DEPENDENCIES
+# CLucene
+if [ ! -e $XULSWORD/Cpp/clucene-core-0.9.21b ]; then
+  cd $XULSWORD/Cpp
 	wget http://sourceforge.net/projects/clucene/files/clucene-core-stable/0.9.21b/clucene-core-0.9.21b.tar.bz2/download
 	tar -xf download 
 	rm download
 fi
-cd clucene-core-0.9.21b
+cd $XULSWORD/Cpp/clucene-core-0.9.21b
 make clean
 ./configure --disable-multithreading
 make
 sudo make install
 sudo ldconfig
-cd ..
 
 : <<'COMMENT'
+cd $XULSWORD/Cpp
 # Compile XZ Utils
 if [ ! -e ./xz-5.0.5 ]; then
 	wget http://tukaani.org/xz/xz-5.0.5.tar.bz2
@@ -48,9 +76,9 @@ make clean
 make
 sudo make install
 sudo ldconfig
-cd ..
 
 # Compile bzip2
+cd $XULSWORD/Cpp
 if [ ! -e ./clucene-core-0.9.21b ]; then
 	wget http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz
 	tar -xf bzip2-1.0.6.tar.gz 
@@ -61,22 +89,20 @@ make clean
 make
 sudo make install
 sudo ldconfig
-cd ..
 COMMENT
 
-# Compile SWORD engine
+# Compile the SWORD engine (at specific rev)
 swordRev=3203
-if [ ! -e ./sword-svn ]; then
-	mkdir sword-svn
-	cd sword-svn
-	svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk ./
-	cd ..
-else
+if [ ! -e $XULSWORD/Cpp/sword-svn ]; then
+  cd $XULSWORD/Cpp
+	svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword-svn
   cd sword-svn
+else
+  cd $XULSWORD/Cpp/sword-svn
   svn update -r $swordRev
-  cd ..
 fi
-cd sword-svn
+
+cd $XULSWORD/Cpp/sword-svn
 make clean
 ./autogen.sh
 ./configure --without-icu --without-xz --without-bzip2
@@ -84,28 +110,47 @@ make
 sudo make install
 sudo ldconfig
 
-# Get xulrunner
-rm -rf ./xulrunner
-if [[ "$(uname -m)" == *"i686"* ]]; then
-  xulrunner=xulrunner-35.0.en-US.linux-i686.tar.bz2
-else
-  xulrunner=xulrunner-35.0.en-US.linux-x86_64.tar.bz2
+# Download xulrunner (unless it exists already)
+if [ ! -e $XULSWORD/xulrunner ]; then
+  cd $XULSWORD
+  if [[ "$(uname -m)" == *"i686"* ]]; then
+    xulrunner=xulrunner-35.0.en-US.linux-i686.tar.bz2
+  else
+    xulrunner=xulrunner-35.0.en-US.linux-x86_64.tar.bz2
+  fi
+  wget http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/35.0/runtimes/$xulrunner
+  tar -xf $xulrunner
+  rm $xulrunner
 fi
-wget http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/35.0/runtimes/$xulrunner
-tar -xf $xulrunner
-rm $xulrunner
 
 # Configure xulsword
-cd ..
+cd $XULSWORD/Cpp
 make clean
 ./autogen.sh
 ./configure
 
-# Build and compile xulsword
-cd ../build
-if [ -e loc_vagrant.txt ]; then
-	./build.pl loc_vagrant.txt
-else 
-	./build.pl build_settings.txt
+# Link to host's extras if needed
+if [ -e "$XULSWORD_HOST/extras" -a ! -e "$XULSWORD/extras" ]; then
+  sudo ln -s "$XULSWORD_HOST/extras" "$XULSWORD/extras"
 fi
 
+# Start with a clean build-out if we're virtual
+if [ -e /vagrant ]; then
+  `rm -rf "$XULSWORD/build-out"`
+fi
+
+# Build and compile xulsword
+cd $XULSWORD/build
+if [ -e $XULSWORD_HOST/build/loc_MK.txt ]; then
+  if [ -e /vagrant ]; then
+    `cp "$XULSWORD_HOST/build/loc_MK.txt" "."`
+  fi
+	./build.pl loc_MK.txt
+else 
+	./build.pl
+fi
+
+# Copy virtual build-out to host if we're running virtual
+if [ -e /vagrant ]; then
+  `cp -r "$XULSWORD/build-out" /vagrant`
+fi
