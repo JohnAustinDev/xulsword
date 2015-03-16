@@ -39,6 +39,10 @@ if ($OutputDirectory =~ /^\./) {
 if (!-e $OutputDirectory) {make_path($OutputDirectory);}
 if (!-e "$TRUNK/build-files/$Name") {make_path("$TRUNK/build-files/$Name");}
 
+# Create some empty directories this script expects to find
+make_path("$TRUNK/xul/installation/defaults/preferences");
+make_path("$TRUNK/xul/distribution/bundles");
+
 # assign our Appdata and RESOURCES paths
 if ("$^O" =~ /MSWin32/i) {
   $Appdata = `Set APPDATA`; $Appdata =~ s/APPDATA=(.*?)\s*$/$1/i;

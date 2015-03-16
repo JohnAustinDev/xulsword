@@ -141,11 +141,8 @@ fi
 
 # Build and compile xulsword
 cd $XULSWORD/build
-if [ -e $XULSWORD_HOST/build/loc_MK.txt ]; then
-  if [ -e /vagrant ]; then
-    `cp "$XULSWORD_HOST/build/loc_MK.txt" "."`
-  fi
-	./build.pl loc_MK.txt
+if [ -e $XULSWORD_HOST/extras/loc_MK.txt ]; then
+	./build.pl $XULSWORD_HOST/extras/loc_MK.txt
 else 
 	./build.pl
 fi
