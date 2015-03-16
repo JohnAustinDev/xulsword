@@ -127,7 +127,7 @@ function PopupObj(popupobj) {
       }
       if (!myNote) return false;    
       res = BibleTexts.getNotesHTML(myNote, (referenceBible ? referenceBible:p.mod), true, true, true, true, 1, false);
-      res += "<div class=\"popup-noteAddress is_" + type + "\">" + myNote + "</div>";
+      res += "<div class=\"popup-noteAddress is_" + type + "\">" + myNote.outerHTML + "</div>";
       break;
 
     case "sr":
