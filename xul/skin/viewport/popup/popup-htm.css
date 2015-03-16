@@ -21,6 +21,11 @@
   font-style:normal;
   text-indent:0px;
 }
+.sb .hl #npopup div,
+.sb .hl #npopup span {
+  /* override a text-htm.css rule */
+  color:black;
+}
 #npopupRL {
   /* just a relative container so that popupTX can be absolute */
   position:relative;

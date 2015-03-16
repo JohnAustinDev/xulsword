@@ -235,10 +235,10 @@
 .versenum:after {
   content:' ';
 }
-.hl,
-.hl div,
-.hl span,
-.hl .wordsOfJesus {
+.sb .hl,
+.sb .hl div,
+.sb .hl span,
+.sb .hl .wordsOfJesus {
   color:blue;
 }
 .cr, 
