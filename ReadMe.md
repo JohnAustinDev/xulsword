@@ -1,3 +1,64 @@
+#A Bible reading and study tool
+
+xulsword is a Bible reading and study tool intended to be easy to use, 
+yet very powerful at the same time. It utilizes popular Open Source 
+technologies such as The SWORD Project and Firefox and will always be a 
+free program. It is designed for full internationalization, including 
+right-to-left languages. Potential users include those who are not 
+experienced at using a computer, those who might be new to the Bible, 
+and those who may not have (or may not want to use) an internet 
+connection.
+
+##Distinctives include:
+
+* Direct text download. Allows easy download of hundreds of texts in 
+hundreds of languages with the "Add New Module" interface (located under 
+the File menu, or else just press F2).
+* Single file internationalization. Simple drag-and-drop of an XSM 
+(XulSword Module) file automatically adapts the program to a new 
+language by installing a user interface translation, new Bible(s), 
+glossaries, bookmarks, fonts, audio files, and more. This file can be 
+downloaded from the internet, passed from person to person, distributed 
+on DVD/CDROM, or even emailed. RTL languages are fully supported (the 
+entire UI becomes RTL).
+* Very readable texts. Texts can be nicely formatted to appear on screen 
+the way they look in printed form. Text flows from column to column (up 
+to three columns). Font, font size, line spacing etc are adjustable for 
+each text.
+* Easy Bible browsing. Go to any heading in the entire Bible with a 
+single click using the graphical Bible navigator. This also gives a 
+visual representation of the Bible.
+* Print capability. A powerful print feature allows Bible texts and 
+related information to be easily printed, and includes print preview.
+* Integrated audio. Allows you to listen to the Bible and read along. 
+Export audio for other uses, such as mp3 players.
+* Text Links. Bible texts and footnotes can include quick links to 
+associated dictionaries, which may include pictures, maps and tables.
+* Recursive popup windows. Dictionary links, cross references, footnotes 
+and more appear in multilevel recursive popup windows that allow instant 
+access to a variety of information without necessitating a complex user 
+interface layout.
+* Powerful bookmark and personal annotation features. Annotate texts 
+with personal notes, create and organize bookmarks, notes and verse 
+lists. Make quality printouts of your notes and verse lists, or export 
+them to share with other xulsword users.
+* Secure texts. Texts can be encrypted and secured to prevent others 
+from tampering with them. There are no encryption keys to enter or lose 
+(or find), and users never even know that a text is encrypted.
+* The marriage of Firefox with SWORD provides the best of both worlds 
+by combining the power and speed of C++ in the back-end SWORD engine 
+with the quick and easy programming of a Javascript front-end and CSS3 UI. 
+
+##Plus many other features provided by the SWORD engine, such as:
+
+* Compatible with a wide variety of Bibles, commentaries, glossaries, 
+books, and devotionals which are already freely available in the SWORD standard.
+* Powerful search capability.
+* Parallel and interlinear version display.
+* Much more...
+
+-----
+
 # Compilation instructions for Linux
 
 **Native**: Run build.sh
