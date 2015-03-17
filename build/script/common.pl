@@ -137,8 +137,8 @@ sub makeZIP($$$$) {
     $d = $1;
     if (!$d || $d =~ /^\s*\*\s*$/) {$d = "*";}
     chdir($dip);
-    my $a = ($updateExisting ? "-u ":"");
-    $cmd = "zip -r ".$a.&escfile($zf)." ".$d." -x '*/.svn/*'";  
+    # linux zip default adds and updates
+    $cmd = "zip -r ".&escfile($zf)." ".$d." -x '*/.svn/*'";  
   }
   else {
     &Log("ERROR: Please update common.pl->makeZIP() to include your platform.\n");

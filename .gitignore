@@ -1,6 +1,8 @@
+.vagrant
 Cpp/.*
 Cpp/*.in
 Cpp/*.m4
+Cpp/m4/*.m4
 Cpp/*.h
 Cpp/*.cache
 Cpp/configure
