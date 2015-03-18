@@ -82,6 +82,7 @@ Builds will appear in the `/build-out` directory.
 
 ## Build requirements
 The following programs need to be in the command path:
+  * [Git](http://git-scm.com/download/win)
   * [7-zip](http://www.7-zip.org/download.html) (command line version)
   * [Perl](http://www.activestate.com/activeperl/downloads/)
   * [MSVC8 C++ Compiler](http://www.softpedia.com/get/Programming/Other-Programming-Files/Microsoft-Visual-C-Toolkit.shtml) 
@@ -97,9 +98,10 @@ The following programs need to be in the command path:
   * Get the [XulRunner runtime](https://developer.mozilla.org/en/XULRunner).
   * Get [Clucene](http://sourceforge.net/projects/clucene/files/clucene-core-stable/0.9.21b/).
   * Get [SWORD](http://crosswire.org/svn/sword) source code.
-  * Check the paths for these in the `/build/build_settings.txt` file.
-  * Run `/build/build.pl`
-  * Start the program by running `/build/run-xulsword-dev.pl` (which is 
+  * Check or add paths in `xulsword/build/build_settings.txt` for 
+  `XULRunner`, `CluceneSource`, `SwordSource` and `MicrosoftSDK`.
+  * Run `xulsword/build/build.pl`
+  * Start the program by running `xulsword/build/run-xulsword-dev.pl` (which is 
   created when you build xulsword). The development version of the 
   program has a hidden button which displays useful debugging features 
   when clicked. This invisible button is located JUST under the top 
@@ -109,12 +111,12 @@ The following programs need to be in the command path:
 -----
 
 # Build Controls
-Build controls are in `/build/build_settings.txt`. Build the Development 
+Build controls are in `xulsword/build/build_settings.txt`. Build the Development 
 version, Portable version, Firefox extension, and Setup installer 
 version by setting their values to "true". Install modules with your 
 build by adding your repository path(s) and by adding SWORD module names 
 to the `IncludeModules` line. Various user preferences can be set in 
-`/build/build_prefs.txt` as well. To help protect texts from tampering, 
+`xulsword/build/build_prefs.txt` as well. To help protect texts from tampering, 
 a security module is provided. To enable the security module, set 
 `UseSecurityModule` to true and set the path of `KeyGenPath` to your key 
 generator. 
@@ -124,13 +126,13 @@ generator.
 # Locale Creation
 ##What must be translated?
 The phrases used by xulsword's user interface are found in 
-`/localeDev/en-US/UI-en-US.txt`. Optional bits are in 
-`/localeDev/en-US/UI-en-us_2.txt`.
+`xulsword/localeDev/en-US/UI-en-US.txt`. Optional bits are in 
+`xulsword/localeDev/en-US/UI-en-us_2.txt`.
 
 ##Add a new locale to xulsword
 Locales are automatically packaged when xulsword is built. Create 
-`/extras/localeDev/<locale-code>` and put the locale files there. Edit 
-`build/build_settings.txt` so IncludeLocales lists '<locale-code>' and 
+`xulsword/extras/localeDev/<locale-code>` and put the locale files there. Edit 
+`xulsword/build/build_settings.txt` so IncludeLocales lists '<locale-code>' and 
 so XulswordExtras is `../extras`. Rebuild and start xulsword.
 
 A new user interface choice will appear in the Options -> Language menu 
@@ -140,7 +142,7 @@ compatible versions of xulsword.
 
 ##Optional user interface possibilities
 * Many optional locale configuration settings are found in 
-`/localeDev/en-US/UI-en-us_2.txt` including the order of Bible books, 
+`xulsword/localeDev/en-US/UI-en-us_2.txt` including the order of Bible books, 
 short-cut keys for menu commands, CSS font-family, font-size, etc., and 
 localization of numerals and search symbols, among other things.
 * A locale-files subdirectory, containing a localized splash image 
@@ -199,7 +201,7 @@ audio file tags.
 The PHP extension brings libxulsword's API into php.
 
 ##Compilation and use
-Compile the extension by going to the phpsword directory and running:
+Compile the extension by going to the `xulsword/Cpp/phpsword` directory and running:
 
     $ phpize
     $ ./configure

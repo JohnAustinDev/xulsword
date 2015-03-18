@@ -67,7 +67,7 @@ if ($MakeDevelopment =~ /true/i) {
   &Log("\n----> BUILDING DEVELOPMENT ENVIRONMENT\n");
   undef(%Prefs); &readSettingsFiles(\%Prefs);
   # "D" in BuildID identifies this as being a development version
-  $BuildID = sprintf("%02d%02d%02d_%dD", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
+  $BuildID = sprintf("%02d%02d%02d_%dD", ($D[5]%100), ($D[4]+1), $D[3], &get_GIT_rev());
   if (-e $DEVELOPMENT) {&cleanDir($DEVELOPMENT);}
   else {make_path($DEVELOPMENT);}
   make_path("$DEVELOPMENT/xulsword");
@@ -91,7 +91,7 @@ if ($MakeFFextension =~ /true/i) {
   &Log("\n----> BUILDING FIREFOX EXTENSION\n");
   undef(%Prefs); &readSettingsFiles(\%Prefs);
   # "E" in BuildID identifies this as being a Firefox extension
-  $BuildID = sprintf("%02d%02d%02d_%dE", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
+  $BuildID = sprintf("%02d%02d%02d_%dE", ($D[5]%100), ($D[4]+1), $D[3], &get_GIT_rev());
   if (-e $FFEXTENSION) {&cleanDir($FFEXTENSION);}
   else {make_path($FFEXTENSION);}
   &compileLibSword($FFEXTENSION, 1);
@@ -132,7 +132,7 @@ if ($MakePortable =~ /true/i) {
   &Log("\n----> BUILDING PORTABLE VERSION\n");
   undef(%Prefs); &readSettingsFiles(\%Prefs);
   # "P" in BuildID identifies this as being a portable version
-  $BuildID = sprintf("%02d%02d%02d_%dP", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
+  $BuildID = sprintf("%02d%02d%02d_%dP", ($D[5]%100), ($D[4]+1), $D[3], &get_GIT_rev());
   my $intdir = ("$^O" =~ /linux/i ? "":"/$Name-Portable-$Version");
   my $rundir = $PORTABLE.$intdir;
   if (-e $PORTABLE) {&cleanDir($PORTABLE);}
@@ -165,7 +165,7 @@ if ($MakeSetup =~ /true/i) {
   undef(%Prefs); &readSettingsFiles(\%Prefs);
   if ("$^O" =~ /MSWin32/i) {
 		# "S" in BuildID identifies this as being Setup Installer version
-		$BuildID = sprintf("%02d%02d%02d_%dS", ($D[5]%100), ($D[4]+1), $D[3], &get_SVN_rev());
+		$BuildID = sprintf("%02d%02d%02d_%dS", ($D[5]%100), ($D[4]+1), $D[3], &get_GIT_rev());
 		
 		if (-e $INSTALLER) {&cleanDir($INSTALLER);}
 		else {make_path($INSTALLER);}

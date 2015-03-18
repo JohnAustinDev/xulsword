@@ -7,6 +7,7 @@ Cpp/*.h
 Cpp/*.cache
 Cpp/configure
 Cpp/clucene-core-*
+Cpp/compile
 Cpp/Makefile
 Cpp/config.*
 Cpp/depcomp
@@ -28,3 +29,11 @@ extras
 localeDev/*/*_log.txt
 localeDev/*/locale
 xulrunner
+
+# For Windows...
+Cpp/cluceneMK/windows/lib/Release/
+Cpp/src/include/appInfo.h
+Cpp/swordMK/windows/lib/Release/
+Cpp/windows/Release/
+Cpp/windows/Versions.bat
+Cpp/windows/startup/Release/

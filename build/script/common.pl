@@ -191,7 +191,7 @@ sub escfile($) {
 }
 
 sub get_SVN_rev() {
-  # Get our current osis-converters revision number
+  # Get our current revision number
   my $rev;
   if ("$^O" =~ /MSWin32/i) {
     $rev = "SubWCRev \"".__FILE__."\" 2>&1";
@@ -205,6 +205,21 @@ sub get_SVN_rev() {
     if ($rev && $rev =~ /^Revision:\s*(\d+)\s*$/mi) {$rev = $1;}
     else {$rev = "";}
   }
+  
+  return $rev;
+}
+
+sub get_GIT_rev() {
+  # Get our current fake "revision" number, which is just the number of commits in master Git branch.
+  # The following allows matching this back to a real git commit:
+  # ~/.gitconfig: [alias]\n\t show-rev-number = !sh -c 'git rev-list --reverse HEAD | awk NR==$0'
+  my $rev;
+  if ("$^O" =~ /MSWin32/i) {
+    `git rev-list HEAD > list.txt`;
+    $rev = `Find /V /C "" < list.txt`;
+    `del list.txt`; 
+  }
+  else {$rev = `git rev-list HEAD | wc -l 2>&1`;}
   
   return $rev;
 }
