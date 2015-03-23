@@ -6,6 +6,8 @@
 
 cd `dirname $0`
 
+EXTRAS=IBTxulsword
+
 sudo apt-get update
 
 sudo apt-get install -y libtool
@@ -129,9 +131,13 @@ make clean
 ./autogen.sh
 ./configure
 
-# Link to host's extras if needed
-if [ -e "$XULSWORD_HOST/extras" -a ! -e "$XULSWORD/extras" ]; then
-  sudo ln -s "$XULSWORD_HOST/extras" "$XULSWORD/extras"
+if [ ! -e $XULSWORD/sword ]; then
+  mkdir $XULSWORD/sword
+fi
+
+# Link to EXTRAS if available
+if [ -e "$XULSWORD_HOST/$EXTRAS" -a ! -e "$XULSWORD/$EXTRAS" ]; then
+  sudo ln -s "$XULSWORD_HOST/$EXTRAS" "$XULSWORD/$EXTRAS"
 fi
 
 # Start with a clean build-out if we're virtual
@@ -140,11 +146,11 @@ if [ -e /vagrant ]; then
 fi
 
 # Build and compile xulsword
-cd $XULSWORD/build
-if [ -e $XULSWORD_HOST/extras/loc_MK.txt ]; then
-	./build.pl $XULSWORD_HOST/extras/loc_MK.txt
+if [ -e $XULSWORD/$EXTRAS/loc_MK.txt ]; then
+  $XULSWORD/$EXTRAS/build_MK.sh
+	$XULSWORD/build/build.pl $XULSWORD/$EXTRAS/loc_MK.txt
 else 
-	./build.pl
+	$XULSWORD/build/build.pl
 fi
 
 # Copy virtual build-out to host if we're running virtual

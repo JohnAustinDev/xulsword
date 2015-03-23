@@ -109,7 +109,7 @@ if ($FilteredShortcuts) {&Log("WARNING: All access and command keys have been fi
 # copy locale-files to new locale
 my $localeFiles = "$LOCALEDIR/locale-files";
 if (-e $localeFiles || -d $localeFiles) {
-  &Log("INFO: Copying locale-files of \"$LOCALE\", $localeFiles\n");
+  &Log("INFO: Copying locale-files of \"$LOCALE\"\n");
   &copy_dir("$localeFiles", "$LOCALECODE/xulsword", "", "\.svn");
 }
 if ($LOCALEDIR =~ /^\Q$MKDEV/) {

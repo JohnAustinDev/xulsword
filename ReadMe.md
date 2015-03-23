@@ -132,8 +132,8 @@ The phrases used by xulsword's user interface are found in
 ##Add a new locale to xulsword
 Locales are automatically packaged when xulsword is built. Create 
 `xulsword/extras/localeDev/<locale-code>` and put the locale files there. Edit 
-`xulsword/build/build_settings.txt` so IncludeLocales lists '<locale-code>' and 
-so XulswordExtras is `../extras`. Rebuild and start xulsword.
+`xulsword/build/build_settings.txt` so IncludeLocales lists `<locale-code>` and 
+XulswordExtras is `../extras`. Rebuild and start xulsword.
 
 A new user interface choice will appear in the Options -> Language menu 
 of xulsword. Also, a locale extension module will be created under 
@@ -146,7 +146,7 @@ compatible versions of xulsword.
 short-cut keys for menu commands, CSS font-family, font-size, etc., and 
 localization of numerals and search symbols, among other things.
 * A locale-files subdirectory, containing a localized splash image 
-called splash-overlay.png may be included.
+called `splash-overlay.png` may be included.
 * A skin-files subdirectory, containing files which will overwrite the 
 default skin, may also be included. This allows you to run xulsword with 
 a customized skin for your locale.

@@ -1,4 +1,7 @@
 .vagrant
+IBTxulsword
+sword
+xulrunner
 Cpp/.*
 Cpp/*.in
 Cpp/*.m4
@@ -25,10 +28,8 @@ build-out
 build/*_log.txt
 build/run_*
 build/loc_*
-extras
 localeDev/*/*_log.txt
 localeDev/*/locale
-xulrunner
 
 # For Windows...
 Cpp/cluceneMK/windows/lib/Release/
