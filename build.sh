@@ -6,7 +6,7 @@
 
 cd `dirname $0`
 
-EXTRAS=IBTxulsword
+EXTRAS=IBTXulsword
 
 sudo apt-get update
 
