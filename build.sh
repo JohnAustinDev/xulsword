@@ -16,22 +16,24 @@ sudo apt-get install -y make
 sudo apt-get install -y pkg-config
 sudo apt-get install -y build-essential
 sudo apt-get install -y subversion
+sudo apt-get install -y git
 sudo apt-get install -y zip
 
-# If this is a vagrant machine, we get xulsword from latest SVN, NOT 
-# from the host! IMPORTANT: this means that any xulsword changes on the 
-# host will be IGNORED by vagrant builds until they are checked in.  
-# This is necessary to avoid replacing the host's locally compiled
-# files with incompatible files.
+# If this is Vagrant, then copy xulsword code locally so as not to 
+# disturb any build files on the host machine!
 if [ -e /vagrant ]; then
-  cd /home/vagrant
-  if [ ! -e ./xulsword ]; then
-    svn checkout http://xulsword.googlecode.com/svn/trunk/ ./xulsword
-    cd xulsword
-  else
-    cd xulsword
-    svn update
+  if [ -e /home/vagrant/xulsword ]; then
+    rm -rf /home/vagrant/xulsword
   fi
+  mkdir /home/vagrant/xulsword
+  
+  cd /vagrant
+  stash=`git stash create`
+  git archive -o archive.zip $stash
+  mv archive.zip /home/vagrant/xulsword
+  cd /home/vagrant/xulsword
+  unzip archive.zip
+  rm archive.zip
 fi
 XULSWORD=`pwd -P`
 
