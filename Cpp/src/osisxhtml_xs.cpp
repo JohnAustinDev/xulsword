@@ -587,7 +587,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 					const char *level = tag.getAttribute("level");
 					if (level) {
 						int lv = atoi(level);
-						ind += (lv > 0 ? (lv-1):0);
+						ind += (lv > 0 ? lv:0);
 					}
 				}
 				htag.appendFormatted("%d", ind);

@@ -2,6 +2,7 @@
 IBTXulsword
 sword
 xulrunner
+xul/viewport.html
 Cpp/.*
 Cpp/*.in
 Cpp/*.m4

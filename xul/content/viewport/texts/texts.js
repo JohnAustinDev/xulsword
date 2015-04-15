@@ -171,7 +171,7 @@ Texts = {
       XS_window.History.timer = XS_window.setTimeout(function () {XS_window.History.add();}, XS_window.History.delay);
     
     }
-
+//jsdump(XS_window.document.getElementById("main-viewport").contentDocument.getElementsByTagName("HTML")[0].outerHTML);
   },
   
   updateBible: function(w, display, force) {
