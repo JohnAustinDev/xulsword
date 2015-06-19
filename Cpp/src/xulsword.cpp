@@ -96,6 +96,7 @@ Custom derivative classes
 
 #include "swmgr_xs.cpp"
 #include "osisxhtml_xs.cpp"
+#include "teixhtml_xs.cpp"
 #include "gbfxhtml_xs.cpp"
 #include "thmlxhtml_xs.cpp"
 
@@ -964,7 +965,9 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
     return NULL;
   }
   myVerseKey->setPersist(true);
+  myVerseKey->setAutoNormalize(0); // Non-existant calls should return empty string
   module->setKey(myVerseKey);
+  module->setSkipConsecutiveLinks(true);
 
   if (keepnotes) {
     MyManager->setGlobalOption("Headings","Off");
@@ -988,7 +991,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
 
   locationToVerseKey(vkeytext, myVerseKey);
   int numverses = 176; // set to max verses of any chapter
-  while (!myVerseKey->popError())
+  while (!module->popError())
   {
     SWBuf vtext = (keepnotes ? module->renderText():module->renderText(0, -1, false));
     const char * vt = vtext.c_str();
@@ -1002,7 +1005,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
       bText.append(vtext.c_str());
       bText.append(" ");
     }
-    myVerseKey->increment(1);
+    module->increment(1);
     if (--numverses == 0) {break;}
   }
   module->setKey(EmptyKey);
@@ -1971,7 +1974,7 @@ MarkupFilterMgrXS::MarkupFilterMgrXS() {
   fromthml = new ThMLXHTMLXS();
   fromgbf = new GBFXHTMLXS();
   fromosis = new OSISXHTMLXS();
-  fromtei = NULL;
+  fromtei = new TEIXHTMLXS();
 }
 
 MarkupFilterMgrXS::~MarkupFilterMgrXS() {}

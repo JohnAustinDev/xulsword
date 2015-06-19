@@ -320,8 +320,7 @@ function getModuleFeatures(module) {
   if (globalOptionFilters.search("Reference Material Links")!= -1 || 
       globalOptionFilters.search("Dictionary")!= -1) {
     features.haveDictionary = false;
-    var dmods = LibSword.getModuleInformation(module, "DictionaryModule");
-    dmods = dmods.split("<nx>");
+    var dmods = getCompanionModules(module);
     for (var m=0; m<dmods.length && !features.haveDictionary; m++) {
       for (var t=0; t<Tabs.length; t++) {
         if (Tabs[t].modName==dmods[m]) features.haveDictionary=true;

@@ -468,19 +468,12 @@ function getModuleConfig(mod) {
 }
 
 // Return a locale (if any) to associate with the module:
-//    Return a Locale which lists the module as its default
 //    Return a Locale with exact same language code as module
 //    Return a Locale having same base language code as module, prefering current Locale over any others
+//    Return a Locale which lists the module as an associated module
 //    Return null if no match
 function getLocaleOfModule(module) {
   var myLocale=null;
-  
-  for (var lc in LocaleConfigs) {
-    var regex = new RegExp("(^|\s|,)+" + module + "(,|\s|$)+");
-    if (LocaleConfigs[lc].AssociatedModules.match(regex)) myLocale = lc;
-  }
-  
-  if (myLocale) return myLocale;
   
   for (lc in LocaleConfigs) {
     var lcs, ms;
@@ -495,6 +488,13 @@ function getLocaleOfModule(module) {
       myLocale = lc;
       if (myLocale == getLocale()) break;
     }
+  }
+  
+  if (myLocale) return myLocale;
+  
+  for (var lc in LocaleConfigs) {
+    var regex = new RegExp("(^|\s|,)+" + module + "(,|\s|$)+");
+    if (LocaleConfigs[lc].AssociatedModules.match(regex)) myLocale = lc;
   }
   
   return myLocale;
@@ -520,8 +520,8 @@ function findAVerseText(version, location, windowNum, keepTextNotes) {
   var bibleLocation = location;
   if (getModuleLongType(version)==BIBLE) bibleVersion = version;
   else if (!getPrefOrCreate("DontReadReferenceBible", "Bool", false)) {
-    bibleVersion = LibSword.getModuleInformation(version, "ReferenceBible");
-    bibleVersion = (bibleVersion==NOTFOUND || !Tab[bibleVersion] ? null:bibleVersion);
+    bibleVersion = getCompanionModules(version);
+    bibleVersion = (!bibleVersion.length || !Tab[bibleVersion[0]] ? null:bibleVersion[0]);
     if (bibleVersion) bibleLocation = Location.convertLocation(LibSword.getVerseSystem(version), location, LibSword.getVerseSystem(bibleVersion));
   }
   //If we have a Bible, try it first.
@@ -658,6 +658,20 @@ function getContextModule(elem) {
 //jsdump("contextMod=" + contextMod ? contextMod:"null");
   return contextMod;
   
+}
+
+function getCompanionModules(mod) {
+  var cms = LibSword.getModuleInformation(mod, "Companion");
+  if (cms != NOTFOUND) return cms.split(/\s*,\s*/);
+  
+  // The following are deprecated as of xulsword 3.13+
+  cms = LibSword.getModuleInformation(mod, "DictionaryModule");
+  if (cms != NOTFOUND) return cms.split(/\s*<nx>\s*/);
+  
+  cms = LibSword.getModuleInformation(mod, "ReferenceBible");
+  if (cms != NOTFOUND) return cms.split(/\s*<nx>\s*/);
+  
+  return [];
 }
 
 function getOffset(elem) {

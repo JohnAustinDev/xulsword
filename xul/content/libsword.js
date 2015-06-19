@@ -31,9 +31,8 @@ Valid for all modules:
   "xulswordVersion" - Min version of xulsword this SWORD mod is compatible with
 
 Valid for Bible modules:
-  "OriginalTabTestament" - If set to "OT" or "NT", an ORIG tab will be available,
-      and this module will be shown (in interlinear format) when it is activated.
-  "DictionaryModule" - Associate a dictionary with the module. There may be
+  "DictionaryModule" - (DEPRECATED and replaced by "Companion" - see CrossWire's 
+      documentation) Associate a dictionary with the module. There may be
       more than one DictionaryModule entry.
   "AudioCode" - Audio files located in this directory (within the Audio dir) will
       be avaialble in this Bible module.
@@ -42,7 +41,8 @@ Valid for Bible modules:
 Valid for Dictionary modules:
   "LangSortOrder" - Allows for sorting entries alphabetically in any language.
   "LangSortSkipChars" - Used in conjunction with LangSortOrder
-  "ReferenceBible" - Preffered Bible module to use for Scripture references.
+  "ReferenceBible" - (DEPRECATED and replaced by "Companion" - see CrossWire's
+      documentation) Preffered Bible module to use for Scripture references.
 */
 
 // as a ChromeWorker, Components is not available but ctypes automatically is,

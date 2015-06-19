@@ -77,7 +77,7 @@ function PopupObj(popupobj) {
     var updatingPopup = elem;
     while (updatingPopup && updatingPopup !== this.npopup) {updatingPopup = updatingPopup.parentNode;}
     
-    // dictionary modules may have a "ReferenceBible" conf entry
+    // dictionary modules may have a "Companion" conf entry
     var referenceBible;
     if (p && p.mod && this.selectRef.hasOwnProperty(p.mod)) {
       referenceBible = this.selectRef[p.mod];
@@ -85,8 +85,8 @@ function PopupObj(popupobj) {
     else {
       referenceBible = (p && p.mod ? p.mod:null);
       if (referenceBible && Tab.hasOwnProperty(referenceBible) && Tab[referenceBible].modType == DICTIONARY) {
-        var aref = LibSword.getModuleInformation(referenceBible, "ReferenceBible");
-        if (aref && aref != NOTFOUND && Tab.hasOwnProperty(aref)) referenceBible = aref;
+        var aref = getCompanionModules(referenceBible);
+        if (aref.length && Tab.hasOwnProperty(aref[0])) referenceBible = aref[0];
       }
     }
 
