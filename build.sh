@@ -29,6 +29,7 @@ if [ -e /vagrant ]; then
   
   cd /vagrant
   stash=`git stash create`
+  if [ ! $stash ]; then stash=`git rev-parse HEAD`; fi
   git archive -o archive.zip $stash
   mv archive.zip /home/vagrant/xulsword
   cd /home/vagrant/xulsword
