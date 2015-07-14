@@ -9,17 +9,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # options are documented and commented below. For a complete reference,
   # please see the online documentation at vagrantup.com.
   
-	config.vm.define "precise32", primary: true do |precise32|
-		precise32.vm.box = "precise32"
-		precise32.vm.box_url = "http://files.vagrantup.com/precise32.box"
-		precise32.vm.provision :shell, :path => "build.sh"
-	end
-	
-	config.vm.define "precise64" do |precise64|
-		precise64.vm.box = "precise64"
-		precise64.vm.box_url = "http://files.vagrantup.com/precise64.box"
-		precise64.vm.provision :shell, :path => "build.sh"
-	end
+  config.vm.box = "precise32"
+  config.vm.box_url = "http://files.vagrantup.com/precise32.box"
+  
+#  config.vm.box = "precise64"
+#  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+
+  config.vm.provision :shell, :path => "build.sh"
+  config.ssh.forward_x11 = true
 
   # Every Vagrant virtual environment requires a box to build off of.
   #config.vm.box = "precise64"

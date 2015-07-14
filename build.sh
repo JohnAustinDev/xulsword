@@ -18,6 +18,7 @@ sudo apt-get install -y build-essential
 sudo apt-get install -y subversion
 sudo apt-get install -y git
 sudo apt-get install -y zip
+sudo apt-get install -y firefox
 
 # If this is Vagrant, then copy xulsword code locally so as not to 
 # disturb any build files on the host machine!
@@ -49,8 +50,8 @@ else
 fi
 
 cd $XULSWORD
-find . -name "*.pl" -exec chmod ug+x {} \;
-find . -name "*.sh" -exec chmod ug+x {} \;
+find . -name "*.pl" -exec chmod ugo+x {} \;
+find . -name "*.sh" -exec chmod ugo+x {} \;
 
 # COMPILE SWORD ENGINE DEPENDENCIES
 # CLucene
@@ -159,4 +160,6 @@ fi
 # Copy virtual build-out to host if we're running virtual
 if [ -e /vagrant ]; then
   `cp -r "$XULSWORD/build-out" /vagrant`
+  # Fix permissions in Vagrant
+  chown -R vagrant:vagrant /home/vagrant
 fi
