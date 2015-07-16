@@ -65,14 +65,9 @@ books, and devotionals which are already freely available in the SWORD standard.
 
 **Cross-compiled**: On MS-Windows, Linux, or MAC install 
 [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and 
-[Vagrant](https://www.vagrantup.com/downloads.html). 
-Change into the xulsword directory and run:
+[Vagrant](https://www.vagrantup.com/downloads.html) and run: 
 
-`$ vagrant up precise32`
-
-or
-
-`$ vagrant up precise64`
+`$ vagrant up`
 
 Builds will appear in the `/build-out` directory.
 
