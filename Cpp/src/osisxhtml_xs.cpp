@@ -529,6 +529,9 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				    }
 				    else {referenceInfo = "";}
 				    // Do we need to append this to the last <span class="sr"... tag??
+				    int lenBeforeTrim = buf.length();
+				    buf.trimEnd();
+				    int lenAfterTrim = buf.length();
 				    if (buf.endsWith("</span>")) {
 				      int stag = -1;
 				      int etag = -1;
@@ -553,6 +556,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				        return true;
 				      }
 				    }
+				    else if (lenAfterTrim < lenBeforeTrim) buf += ' ';
 				  }
 				  SWBuf tmpbuf;
 				  tmpbuf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", u->referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
