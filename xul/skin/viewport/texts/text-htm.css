@@ -95,10 +95,33 @@
   text-indent:0em;
 }
 /* x-p-indent occurs in old osis-converters modules */
-.x-p-indent, .p-start {
+.x-p-indent,
+.p-start {
   display:inline-block;
   width:1.5em;
 }
+.p-start.x-noindent,
+.p-start.x-nobreak,
+.p-start.x-nobreakNext {
+  width:0em;
+}
+.p-start.x-indented-2,
+.p-start.x-level-2{
+  width:3em;
+}
+.p-start.x-indented-3,
+.p-start.x-level-3{
+  width:4.5em;
+}
+.p-start.x-indented-4,
+.p-start.x-level-4{
+  width:6em;
+}
+.p-start.x-indented-5,
+.p-start.x-level-5{
+  width:7.5em;
+}
+
 /*.x-lg,*/
 .x-list {
   text-indent:0px;
