@@ -586,7 +586,8 @@ function getSpecialDirectory(name) {
         userAppPath += "/.sword";
         break;
       }
-      retval.initWithPath(lpath(userAppPath));
+      try {retval.initWithPath(lpath(userAppPath));}
+      catch (er) {retval = null;}
       break;
     }
   }
@@ -602,8 +603,9 @@ function createAppDirectories() {
   var checkdi2 = checkdir.clone();
   checkdi2.append(MODSD);                         if (!checkdi2.exists()) checkdi2.create(checkdi2.DIRECTORY_TYPE, DPERM);
   checkdir.append(MODS);                          if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
-  if (!IsPortable) {
-    checkdir=getSpecialDirectory("xsModsCommon"); if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
+  checkdir=getSpecialDirectory("xsModsCommon");
+  if (checkdir && !IsPortable) {
+    if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);
     checkdi2=checkdir.clone();
     checkdi2.append(MODSD);                       if (!checkdi2.exists()) checkdi2.create(checkdi2.DIRECTORY_TYPE, DPERM);
     checkdir.append(MODS);                        if (!checkdir.exists()) checkdir.create(checkdir.DIRECTORY_TYPE, DPERM);

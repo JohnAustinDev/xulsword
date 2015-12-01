@@ -285,7 +285,8 @@ ARMU = {
       var newLangRes = RDF.GetAnonymousResource();
       MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "ResourceType"), RP.LanguageListType, true);
       MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "Lang"), RDF.GetLiteral(langs[i].lang), true);
-      MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langs[i].rlang), true);
+      try {var mrlang = RDF.GetLiteral(langs[i].rlang);} catch (er) {mrlang = "??";}
+      MLDS.Assert(newLangRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), mrlang, true);
       RDFC.AppendElement(newLangRes);
     }
     

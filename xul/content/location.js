@@ -75,12 +75,15 @@ Location = {
     if ((/^[^\s\.]+\.\d+$/).test(xsref)) xsref += ".1.1";
 */ 
     var loc = this.convertLocation(this.modvsys, xsref, this.modvsys);
-    var p = loc.split(".");
 
-    this.book = p[0];
-    this.chapter = p[1];
-    this.verse = p[2];
-    this.lastverse = p[3];
+    if (loc) {
+      var p = loc.split(".");
+
+      this.book = p[0];
+      this.chapter = p[1];
+      this.verse = p[2];
+      this.lastverse = p[3];
+    }
 
     return this.modvsys;
   },

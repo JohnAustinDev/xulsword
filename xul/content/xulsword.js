@@ -546,7 +546,7 @@ var History = {
   },
   
   add: function() {
-    if (LibSword.paused) return;
+    if (LibSword.paused || !History.popup) return;
     
     var newmod = ViewPort.firstDisplayBible();
     var newloc = Location.getLocation(newmod).split(".");
@@ -575,6 +575,7 @@ var History = {
   },
   
   back: function() {
+    if (!History.popup) return;
     // If we've clicked back, make sure the current location has been added to history first!
     try {window.clearTimeout(History.timer);} catch(er){}
     History.add();
@@ -587,6 +588,7 @@ var History = {
   },
 
   forward: function() {
+    if (!History.popup) return;
     var sel = History.popup.getElementsByClassName("selected")[0];
     if (sel.previousSibling) {
       sel.removeAttribute("class");
@@ -596,6 +598,7 @@ var History = {
   },
   
   onselect: function(e) {
+    if (!History.popup) return;
     var refBible = ViewPort.firstDisplayBible();
     var value = e.target.getAttribute("value").split(".");
     var c = History.popup.firstChild;
@@ -614,6 +617,7 @@ var History = {
   },
 
   updateMenu: function(aEvent) {
+    if (!History.popup) return;
     var c = History.popup.firstChild;
     while (c) {
       var value = c.getAttribute("value").split(".");
@@ -637,6 +641,7 @@ var History = {
   },
   
   save: function() {
+    if (!History.popup) return;
     var h = [];
     var c = History.popup.firstChild;
     while (c) {

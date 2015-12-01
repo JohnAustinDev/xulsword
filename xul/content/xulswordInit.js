@@ -210,7 +210,7 @@ FindMod:
   modarray = modarray.sort(tabOrder);
  
   var commonDir = getSpecialDirectory("xsModsCommon");
-  commonDir.append(MODSD);
+  if (commonDir) commonDir.append(MODSD);
 
   // Create Global Tab and Tabs
   Tab.ORIG_OT = null;
@@ -247,19 +247,21 @@ FindMod:
       if (!tab.conf.exists()) {
         var modRE = new RegExp("^\\[" + mod + "\\]");
         tab.conf.initWithPath(p);
-        var files = tab.conf.directoryEntries;
-        while (files.hasMoreElements()) {
-          var file = files.getNext().QueryInterface(Components.interfaces.nsILocalFile);
-          var cdata = readFile(file);
-          if (!(modRE.test(cdata))) continue;
-          tab.conf = file;
-          break;
+        if (tab.conf.exists()) {
+          var files = tab.conf.directoryEntries;
+          while (files.hasMoreElements()) {
+            var file = files.getNext().QueryInterface(Components.interfaces.nsILocalFile);
+            var cdata = readFile(file);
+            if (!(modRE.test(cdata))) continue;
+            tab.conf = file;
+            break;
+          }
         }
       }
     }
     if (!tab.conf.exists()) jsdump("WARNING: tab.conf bad path \"" + p + DIRSEP + mod.toLowerCase() + ".conf\"");
     
-    tab.isCommDir = (tab.conf && tab.conf.path.toLowerCase().indexOf(commonDir.path.toLowerCase()) == 0 ? true:false);
+    tab.isCommDir = (commonDir && tab.conf && tab.conf.path.toLowerCase().indexOf(commonDir.path.toLowerCase()) == 0 ? true:false);
     
     // Save Global tab objects
     Tabs.push(tab);

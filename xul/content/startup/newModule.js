@@ -379,7 +379,11 @@ function removeIncompatibleFiles(fileArray, entryArray) {
           error = true;
         }
         zReader.close(fileArray[f]);
-        tempCONF.permissions = FPERM; // zReader sets permissions!
+        try {tempCONF.permissions = FPERM;} // zReader sets permissions!
+        catch (er) {
+          jsdump("ERROR: Could not set permissions reading \"" + entryArray[f][e] + "\" from \"" + fileArray[f].path + "\"");
+          error = true;
+        }
         
         // then read the conf file and get the MinimumVersion entry
         var minimumVersion = 0;

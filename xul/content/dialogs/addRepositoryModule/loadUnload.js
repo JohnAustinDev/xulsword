@@ -101,7 +101,14 @@ function onLoad() {
   
   TEMP_Install = getSpecialDirectory("TmpD");
   TEMP_Install.append("xs_addRepositoryModule_Install");
-  if (TEMP_Install.exists()) TEMP_Install.remove(true);
+  if (TEMP_Install.exists()) {
+    try {TEMP_Install.remove(true);}
+    catch (er) {
+      TEMP_Install = getSpecialDirectory("TmpD");
+      TEMP_Install.append("xs_addRepositoryModule_Install" + String(Math.round(10000*Math.random())));
+      if (TEMP_Install.exists()) TEMP_Install.remove(true);
+    }
+  }
   TEMP_Install.create(TEMP_Install.DIRECTORY_TYPE, DPERM);
   
   // init Data Source utility globals

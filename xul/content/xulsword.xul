@@ -154,7 +154,7 @@
   <key keycode="VK_UP"                         command="cmd_xs_previousVerse"/>
   <key keycode="VK_UP"   modifiers="alt"       command="cmd_xs_previousChapter"/>
   <key keycode="VK_UP"   modifiers="alt shift" command="cmd_xs_previousBook"/>
-  <key keycode="VK_PAGE_DOWN"                  oncommand="event.prevendDevault();"/><!-- page-down causes no-scroll-bar single window displays to scroll the viewport partially off screen !-->
+  <key keycode="VK_PAGE_DOWN"                  oncommand="event.preventDefault();"/><!-- page-down causes no-scroll-bar single window displays to scroll the viewport partially off screen !-->
   <key keycode="VK_LEFT"   command="cmd_xs_back"/>
   <key keycode="VK_RIGHT"  command="cmd_xs_forward"/>
   <key keycode="VK_DOWN"  modifiers="control"  oncommand="document.getAnonymousElementByAttribute(document.getElementById('book'), 'anonid', 'book').focus();"/>
