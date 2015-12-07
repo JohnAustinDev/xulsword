@@ -318,7 +318,16 @@ ARMD = {
       onSecurityChange: function(aWebProgress, aRequest, aState) {}
     };
                                      
-    persist.saveURI(ios.newURI(directoryUrl, null, null), null, null, null, null, directoryListingFile, PrivacyContext);
+    persist.saveURI(
+      ios.newURI(directoryUrl, null, null),
+      null,
+      ios.newURI("http://xulsword.org", null, null),
+      null,
+      null,
+      null,
+      directoryListingFile,
+      PrivacyContext
+    );
     ARMU.webAdd(persist, "moduleListing", module.modResource.ValueUTF8, directoryUrl);
     
     if (!SYNC) this.queryNextModule();
@@ -610,7 +619,16 @@ ARMD = {
       this.checkModuleComplete(module);
     }
     else {
-      persist.saveURI(ios.newURI(aContentData.url, null, null), null, null, null, null, destFile, PrivacyContext);
+      persist.saveURI(
+        ios.newURI(aContentData.url, null, null),
+        null,
+        ios.newURI("http://xulsword.org", null, null),
+        null,
+        null,
+        null,
+        destFile,
+        PrivacyContext
+      );
       ARMU.webAdd(persist, "moduleFile", module.modResource.ValueUTF8, aContentData.url);
     }
     

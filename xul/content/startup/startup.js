@@ -136,7 +136,16 @@ function startxulsword() {
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
   };
 
-  persist.saveURI(SWLibrary.ios.newURI(prefs.getCharPref("LibSwordURL"), null, null), null, null, null, null, SWLibrary.listingFile, SWLibrary.context);
+  persist.saveURI(
+    SWLibrary.ios.newURI(prefs.getCharPref("LibSwordURL"), null, null),
+    null,
+    ios.newURI("http://xulsword.org", null, null),
+    null,
+    null,
+    null,
+    SWLibrary.listingFile,
+    SWLibrary.context
+  );
 }
 
 function downloadLibxulsword() {
@@ -228,7 +237,16 @@ function downloadLibxulsword() {
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
   };
 
-  persist.saveURI(SWLibrary.ios.newURI(SWLibrary.url, null, null), null, null, null, null, SWLibrary.zipFile, SWLibrary.context);
+  persist.saveURI(
+    SWLibrary.ios.newURI(SWLibrary.url, null, null),
+    null,
+    ios.newURI("http://xulsword.org", null, null),
+    null,
+    null,
+    null,
+    SWLibrary.zipFile,
+    SWLibrary.context
+  );
 }
   
 function startxulsword2() {

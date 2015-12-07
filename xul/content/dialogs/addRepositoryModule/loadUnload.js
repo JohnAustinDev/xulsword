@@ -531,7 +531,17 @@ function loadMasterRepoList(moduleDataAlreadyDeleted) {
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
   };
   
-  persist.saveURI(ios.newURI(url, null, null), null, null, null, null, destFile, PrivacyContext);
+  persist.saveURI(
+    ios.newURI(url, null, null),
+    null,
+    ios.newURI("http://xulsword.org", null, null),
+    null,
+    null,
+    null,
+    destFile,
+    PrivacyContext
+  );
+  
   ARMU.webAdd(persist, "masterRepoList", "", url);
   
 }
@@ -654,7 +664,16 @@ function startProcessingNextRepository() {
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
   };
  
-  persist.saveURI(ios.newURI(myURL + "/" + ManifestFile, null, null), null, null, null, null, file, PrivacyContext);
+  persist.saveURI(
+    ios.newURI(myURL + "/" + ManifestFile, null, null),
+    null,
+    ios.newURI("http://xulsword.org", null, null),
+    null,
+    null,
+    null,
+    file,
+    PrivacyContext
+  );
   ARMU.webAdd(persist, "manifest", "", myURL);
   
   if (!SYNC) startProcessingNextRepository();
