@@ -185,7 +185,7 @@ function onLoad() {
   defRDF.append(RepositoryRDF);
   if (defRDF.exists()) {
 
-    defDS = RDF.GetDataSourceBlocking(encodeURI("File://" + defRDF.path.replace("\\", "/", "g")));
+    defDS = RDF.GetDataSourceBlocking(encodeURI("File://" + defRDF.path.replace(/\\/g, "/")));
     
     if (defDS) {
       // add any repositories
@@ -453,13 +453,13 @@ function initDataSource(data, fileName) {
 
   var ds = null;
   if (rdfFile.exists()) {
-    ds = RDF.GetDataSourceBlocking(encodeURI("File://" + rdfFile.path.replace("\\", "/", "g")));
+    ds = RDF.GetDataSourceBlocking(encodeURI("File://" + rdfFile.path.replace(/\\/g, "/")));
     if (!ds) rdfFile.remove(false);
   }
   
   if (!rdfFile.exists()) {
     writeSafeFile(rdfFile, data, true);
-    ds = RDF.GetDataSourceBlocking(encodeURI("File://" + rdfFile.path.replace("\\", "/", "g")));
+    ds = RDF.GetDataSourceBlocking(encodeURI("File://" + rdfFile.path.replace(/\\/g, "/")));
   }
 
   return ds;

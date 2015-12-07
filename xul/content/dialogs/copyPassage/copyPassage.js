@@ -174,7 +174,7 @@ function html2text(html) {
   html = html.replace(/<br>/gi, NEWLINE);
   html = html.replace(/<\/div>/gi, NEWLINE);
   html = html.replace(/<[^>]+>/g,"");
-  html = html.replace("&nbsp;", " ", "gi");
+  html = html.replace(/&nbsp;/gi, " ");
   html = html.replace(/(\&rlm\;|\&lrm\;)/g, "");
   return html
 }

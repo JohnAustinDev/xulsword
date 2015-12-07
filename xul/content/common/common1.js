@@ -441,7 +441,7 @@ function getModuleConfig(mod) {
   }
   
   // Normalize direction value
-  moduleConfig.direction = (moduleConfig.direction.search("RtoL", "i") != -1 ? "rtl":"ltr");
+  moduleConfig.direction = (moduleConfig.direction.search(/RtoL/i) != -1 ? "rtl":"ltr");
 
   // if fontFamily specifies a font URL, rather than a fontFamily, then create a
   // @font-face CSS entry and use it for this module.

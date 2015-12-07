@@ -607,7 +607,7 @@
                   var tliteral;
                   try {tliteral=BMDS.GetTarget(et,columnRes,true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} 
                   catch (er) {continue;}
-                  try {if (tliteral.search(aInput,"i") == -1) {continue;}}
+                  try {if (tliteral.search(new RegExp(escapeRE(aInput), "i")) == -1) {continue;}}
                   catch (er) {continue;}
                   srcontainer.AppendElement(et);
                   continue ALLELEMENTS;

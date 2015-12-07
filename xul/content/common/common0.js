@@ -243,8 +243,8 @@ function getElementInfo(elem) {
         if ((/^(dtl|dt)$/).test(type)) {
           // Backward Compatibility to < 2.23
           if (r[p].indexOf(":") == -1) {
-            r[p] = r[p].replace(" ", "_32_", "g");
-            r[p] = r[p].replace(";", " ", "g");
+            r[p] = r[p].replace(/ /g, "_32_");
+            r[p] = r[p].replace(/;/g, " ");
             r[p] = r[p].replace(/((^|\s)\w+)\./g, "$1:");
           }
           r[p] = r[p].split(/ +/);
@@ -280,7 +280,7 @@ function decodeOSISRef(aRef) {
   var m = aRef.match(re);
   while(m) {
     var r = String.fromCharCode(Number(m[1]));
-    aRef = aRef.replace(m[0], r, "g");
+    aRef = aRef.replace(new RegExp(escapeRE(m[0]), "g"), r);
     m = aRef.match(re);
   }
   return aRef;
@@ -369,7 +369,7 @@ function deepClone(obj) {
 }
 
 function escapeRE(text) {
-  const ESCAPE_RE= new RegExp(/([\-\[\]\(\)\{\}\+\*\.\:\^\$\?\|\\])/g);
+  const ESCAPE_RE= new RegExp(/([\-\[\]\(\)\{\}\=\!\+\*\.\:\^\$\?\|\/\\])/g);
   return text.replace(ESCAPE_RE, "\\$1");
 }
 
@@ -446,7 +446,7 @@ function removeFile(file, recurse) {
 function readParamFromConf(nsIFileConf, param) {
   nsIFileConf = nsIFileConf.QueryInterface(Components.interfaces.nsILocalFile);
   if (!nsIFileConf) return "";
-  if (nsIFileConf.leafName.search(".conf", "i") == -1) return null;
+  if (nsIFileConf.leafName.search(/\.conf/i) == -1) return null;
   
   var filedata = readFile(nsIFileConf);
   
@@ -794,28 +794,28 @@ function fixWindowTitle(title) {
   if (!title) return "";
 
   // Uzbek chars
-  title = title.replace(String.fromCharCode(1202),String.fromCharCode(1061),"gm"); //? to ?
-  title = title.replace(String.fromCharCode(1203),String.fromCharCode(1093),"gm"); //? to ?
-  title = title.replace(String.fromCharCode(1178),String.fromCharCode(1050),"gm"); //? to ?
-  title = title.replace(String.fromCharCode(1179),String.fromCharCode(1082),"gm"); //? to ?
-  title = title.replace(String.fromCharCode(1170),String.fromCharCode(1043),"gm"); //? to ?
-  title = title.replace(String.fromCharCode(1171),String.fromCharCode(1075),"gm"); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1202), "gm"), String.fromCharCode(1061)); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1203), "gm"), String.fromCharCode(1093)); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1178), "gm"), String.fromCharCode(1050)); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1179), "gm"), String.fromCharCode(1082)); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1170), "gm"), String.fromCharCode(1043)); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1171), "gm"), String.fromCharCode(1075)); //? to ?
 
   // Kyrgyz chars
-  title = title.replace(String.fromCharCode(1198),"Y","gm"); //? to ?
-  title = title.replace(String.fromCharCode(1199),"v","gm"); //? to ?
-  title = title.replace(String.fromCharCode(1256),String.fromCharCode(216),"gm"); //? to ?
-  title = title.replace(String.fromCharCode(1257),String.fromCharCode(248),"gm"); //? to ?
-  title = title.replace(String.fromCharCode(1186),String.fromCharCode(1053),"gm"); //? to ?
-  title = title.replace(String.fromCharCode(1187),String.fromCharCode(1085),"gm"); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1198), "gm"), "Y"); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1199), "gm"), "v"); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1256), "gm"), String.fromCharCode(216)); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1257), "gm"), String.fromCharCode(248)); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1186), "gm"), String.fromCharCode(1053)); //? to ?
+  title = title.replace(new RegExp(String.fromCharCode(1187), "gm"), String.fromCharCode(1085)); //? to ?
 
   // remove Unicode directional chars
-  title = title.replace(String.fromCharCode(8207), "", "gm");
-  title = title.replace(String.fromCharCode(8206), "", "gm");
+  title = title.replace(new RegExp(String.fromCharCode(8207), "gm"), "");
+  title = title.replace(new RegExp(String.fromCharCode(8206), "gm"), "");
 
   // The ? chars seem to be in the 1251 code page and so aren't included
-  //title = title.replace(String.fromCharCode(1038),String.fromCharCode(1059),"gm"); //? to ?
-  //title = title.replace(String.fromCharCode(1118),String.fromCharCode(1091),"gm"); //? to ?
+  //title = title.replace(new RegExp(String.fromCharCode(1038), "gm"), String.fromCharCode(1059)); //? to ?
+  //title = title.replace(new RegExp(String.fromCharCode(1118), "gm"), String.fromCharCode(1091)); //? to ?
   return title;
 }
 
@@ -841,16 +841,16 @@ function dString(x, locale) {
   var s = String(x);
   if (!cache[locale][10]) return s; // then no numbers are localized
   
-  s = s.replace("0", cache[locale][0],"g");
-  s = s.replace("1", cache[locale][1],"g");
-  s = s.replace("2", cache[locale][2],"g");
-  s = s.replace("3", cache[locale][3],"g");
-  s = s.replace("4", cache[locale][4],"g");
-  s = s.replace("5", cache[locale][5],"g");
-  s = s.replace("6", cache[locale][6],"g");
-  s = s.replace("7", cache[locale][7],"g");
-  s = s.replace("8", cache[locale][8],"g");
-  s = s.replace("9", cache[locale][9],"g");
+  s = s.replace(/0/g, cache[locale][0]);
+  s = s.replace(/1/g, cache[locale][1]);
+  s = s.replace(/2/g, cache[locale][2]);
+  s = s.replace(/3/g, cache[locale][3]);
+  s = s.replace(/4/g, cache[locale][4]);
+  s = s.replace(/5/g, cache[locale][5]);
+  s = s.replace(/6/g, cache[locale][6]);
+  s = s.replace(/7/g, cache[locale][7]);
+  s = s.replace(/8/g, cache[locale][8]);
+  s = s.replace(/9/g, cache[locale][9]);
   
   return s;
 }
@@ -867,16 +867,16 @@ function iString(x, locale) {
   var s = String(x);
   if (!cache[locale][10]) return s; // then no numbers are localized
   
-  s = s.replace(cache[locale][0], "0", "g");
-  s = s.replace(cache[locale][1], "1", "g");
-  s = s.replace(cache[locale][2], "2", "g");
-  s = s.replace(cache[locale][3], "3", "g");
-  s = s.replace(cache[locale][4], "4", "g");
-  s = s.replace(cache[locale][5], "5", "g");
-  s = s.replace(cache[locale][6], "6", "g");
-  s = s.replace(cache[locale][7], "7", "g");
-  s = s.replace(cache[locale][8], "8", "g");
-  s = s.replace(cache[locale][9], "9", "g");
+  s = s.replace(new RegExp(escapeRE(cache[locale][0]), "g"), "0");
+  s = s.replace(new RegExp(escapeRE(cache[locale][1]), "g"), "1");
+  s = s.replace(new RegExp(escapeRE(cache[locale][2]), "g"), "2");
+  s = s.replace(new RegExp(escapeRE(cache[locale][3]), "g"), "3");
+  s = s.replace(new RegExp(escapeRE(cache[locale][4]), "g"), "4");
+  s = s.replace(new RegExp(escapeRE(cache[locale][5]), "g"), "5");
+  s = s.replace(new RegExp(escapeRE(cache[locale][6]), "g"), "6");
+  s = s.replace(new RegExp(escapeRE(cache[locale][7]), "g"), "7");
+  s = s.replace(new RegExp(escapeRE(cache[locale][8]), "g"), "8");
+  s = s.replace(new RegExp(escapeRE(cache[locale][9]), "g"), "9");
   
   return s;
 }
@@ -1053,7 +1053,7 @@ function setUserFontSize(delta) {
   for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
     for (var z=0; document.styleSheets[ssn].cssRules && z<document.styleSheets[ssn].cssRules.length; z++) {
       var myRule = document.styleSheets[ssn].cssRules[z];
-      if (myRule.cssText.search(".userFontSize") == -1) continue;
+      if (myRule.cssText.search(/\.userFontSize/) == -1) continue;
       if (!StartingFont["ssn" + ssn + "z" + z]) {
           StartingFont["ssn" + ssn + "z" + z] = Number(myRule.style.fontSize.match(/(\d+)/)[0]);
       }

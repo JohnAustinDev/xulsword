@@ -277,9 +277,9 @@ ResourceFuns = {
     }
     le = le[1];
     
-    filedata = filedata.replace(BM.kExportResourceDelimiter + le, "<bMRet>", "g");
+    filedata = filedata.replace(new RegExp(escapeRE(BM.kExportResourceDelimiter + le), "g"), "<bMRet>");
     filedata = replaceASCIIcontrolChars(filedata);
-    filedata = filedata.replace("<bMRet>", BM.kExportResourceDelimiter, "g");
+    filedata = filedata.replace(/<bMRet>/g, BM.kExportResourceDelimiter);
 
     var suffix = (overwrite ? "":String(Math.round(10000*Math.random())));
     

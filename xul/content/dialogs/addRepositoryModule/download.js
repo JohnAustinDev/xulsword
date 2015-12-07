@@ -346,7 +346,7 @@ ARMD = {
       ProgressBar.max = Number(ProgressBar.max) + Number(size);
       
       try {
-        var check1 = modobj.modContentData[f].url.replace(/^file\:\/*/i, "").replace("\\", "/", "g");
+        var check1 = modobj.modContentData[f].url.replace(/^file\:\/*/i, "").replace(/\\/g, "/");
         if (this.check1.hasOwnProperty(check1)) jsdump("REPEATED check1: " + check1);
         this.check1[check1] = modobj.modContentData[f].size;
       } catch (er) {jsdump("ERROR during addRepositoryModule.js check1");}
@@ -505,9 +505,9 @@ ARMD = {
       destFile.append(ARMU.getModuleInstallerZipFile(module.modResource).leafName);
     }
     else {
-      var url = ARMU.getResourceLiteral(MLDS, module.modResource, "Url").replace("\\", "/", "g");
+      var url = ARMU.getResourceLiteral(MLDS, module.modResource, "Url").replace(/\\/g, "/");
       var datapath = ARMU.getResourceLiteral(MLDS, module.modResource, "DataPath");
-      var sub = decodeURI(aContentData.url).replace("\\", "/", "g").replace(url + "/" + datapath, "");
+      var sub = decodeURI(aContentData.url).replace(/\\/g, "/").replace(url + "/" + datapath, "");
       sub = sub.replace(/^\//, "");
       sub = sub.split("/");
       for (var sd=0; sd<sub.length-1; sd++) {

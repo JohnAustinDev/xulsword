@@ -150,8 +150,8 @@ function readZipFile(aZipFile) {
 
 function sortFiles(a,b) {
   var priority = [MANIFEST_EXT, MODSD];
-  for (var ap=0; ap<priority.length; ap++) {if (a.match(priority[ap], "i")) break;}
-  for (var bp=0; bp<priority.length; bp++) {if (b.match(priority[bp], "i")) break;}
+  for (var ap=0; ap<priority.length; ap++) {if (a.match(new RegExp(escapeRE(priority[ap]), "i"))) break;}
+  for (var bp=0; bp<priority.length; bp++) {if (b.match(new RegExp(escapeRE(priority[bp]), "i"))) break;}
   if (ap<bp) return -1;
   if (ap>bp) return 1;
   if (a<b) return -1;
@@ -688,11 +688,11 @@ jsdump("Processing Entry:" + aZip + ", " + aEntry);
   case MODS:
     var skip = false;
     for (var s=0; s<SkipList.length; s++) {
-      if (aEntry.indexOf(SkipList[s].replace("\\", "/", "g")!=-1)) skip=true;
+      if (aEntry.indexOf(SkipList[s].replace(/\\/g, "/")!=-1)) skip=true;
     }
     if (skip) return {reset:SOFTRESET, success:true, remove:false};
     var dest = "xsModsUser";
-//    for (var s=0; s<CommonList.length; s++) {if (aEntry.match(CommonList[s], "i")) dest = "xsModsCommon";}
+//    for (var s=0; s<CommonList.length; s++) {if (aEntry.match(new RegExp(escapeRE(CommonList[s]), "i"))) dest = "xsModsCommon";}
     inflated.initWithPath(lpath(getSpecialDirectory(dest).path + "/" + aEntry));
     break;
     
@@ -1094,7 +1094,7 @@ function isConfCommon(aConf) {
 
 function cleanDataPathDir(aDataPath) {
   if (!aDataPath) return null;
-  aDataPath = aDataPath.replace("\\", "/", "g").replace(/(^\s*\.\/|\s*$)/, "", "g");
+  aDataPath = aDataPath.replace(/\\/g, "/").replace(/(^\s*\.\/|\s*$)/g, "");
   var d = 0;
   var d1 = 0;
   var d2 = 0;
@@ -1125,7 +1125,7 @@ function decodeAudioFileName(path) {
     if (isNaN(Number(path[4]))) {jsdump("A: Bad chapter \"" + path[4] + "\""); return null;}
     ret.chapter =   padChapterNum(path[4]);
     ret.ext =       path[5];
-    for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(AUDEXT[e], "i")!=-1) break;}
+    for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(new RegExp(escapeRE(AUDEXT[e]),"i"))!=-1) break;}
     if (e==AUDEXT.length) {jsdump("A: Bad audio ext:" + ret.ext); return null;}
     if (findBookNum(ret.book) === null) {jsdump("A: Bad book \"" + ret.book + "\""); return null;}
     return ret;
@@ -1150,7 +1150,7 @@ function decodeAudioFileName(path) {
     if (isNaN(Number(path[4]))) {jsdump("B: Bad chapter \"" + path[4] + "\""); return null;}
     ret.chapter =   padChapterNum(path[4]);
     ret.ext =       path[5];
-    for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(AUDEXT[e], "i")!=-1) break;}
+    for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(new RegExp(escapeRE(AUDEXT[e]), "i"))!=-1) break;}
     if (e==AUDEXT.length) {jsdump("B: Bad audio ext:" + ret.ext); return null;}
     if (findBookNum(ret.book) === null) {jsdump("B: Bad book \"" + ret.book + "\""); return null;}
     return ret;  
@@ -1166,7 +1166,7 @@ function decodeAudioFileName(path) {
     if (isNaN(Number(path[4]))) {jsdump("C: Bad chapter \"" + path[4] + "\""); return null;}
     ret.chapter =   padChapterNum(path[4]);
     ret.ext =       path[5];
-    for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(AUDEXT[e], "i")!=-1) break;}
+    for (var e=0; e<AUDEXT.length; e++) {if (ret.ext.match(new RegExp(escapeRE(AUDEXT[e]), "i"))!=-1) break;}
     if (e==AUDEXT.length) {jsdump("C: Bad audio ext:" + ret.ext); return null;}
     if (findBookNum(ret.book) === null) {jsdump("C: Bad book \"" + ret.book + "\""); return null;}
     return ret;  
@@ -1247,7 +1247,7 @@ function getSwordModParent(aConfFile, willDelete) {
     return {pathFromConf:null, file:null};
   }
   
-  pathFromConf = pathFromConf.replace("\\", "/", "g").replace(/(^\s*\.\/|\s*$)/, "", "g");
+  pathFromConf = pathFromConf.replace(/\\/g, "/").replace(/(^\s*\.\/|\s*$)/g, "");
   var realdir = cleanDataPathDir(pathFromConf);
   if (!realdir) {
     jsdump("Could not get real path from:" + pathFromConf);

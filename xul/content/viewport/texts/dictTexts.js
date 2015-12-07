@@ -212,7 +212,7 @@ DictTexts = {
         // fix problems related to AbbottSmith module...
         if (mod == "AbbottSmith") {
           var hack = {ΐ:"Ϊ́", ὐ:"Υ̓"};
-          for (var h in hack) {l[1] = l[1].replace(h, hack[h], "g");}
+          for (var h in hack) {l[1] = l[1].replace(new RegExp(h, "g"), hack[h]);}
           if (l[1] == "ἀγαλλίασις") l[1] = " ἈΓΑΛΛΊΑΣΙΣ"; // key needs space before!
         }
 
@@ -322,7 +322,7 @@ DictTexts = {
     if (!parts || !parts[1]) return res;
     
     res.key = parts[1];
-    res.key = res.key.replace(" ", "", "g"); // why?
+    res.key = res.key.replace(/ /g, ""); // why?
 
     switch (parts[0]) {
       

@@ -896,7 +896,7 @@ Texts = {
   HTML2text: function(html) {
     var text = html;
     text = text.replace(/(<[^>]+>)/g,"");
-    text = text.replace("&nbsp;", " ", "gim");
+    text = text.replace(/&nbsp;/gim, " ");
     return text;
   }
 

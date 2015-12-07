@@ -36,7 +36,7 @@ GenBookNavigator = {
       rdfFile.append(mod + ".rdf");
       writeSafeFile(rdfFile, LibSword.getGenBookTableOfContents(mod), true);
       
-      var myURI = encodeURI("File://" + rdfFile.path.replace("\\","/","g"));
+      var myURI = encodeURI("File://" + rdfFile.path.replace(/\\/g, "/"));
       //jsdump("Adding: " + myURI.match(/\/([^\/]+\.rdf)/)[1] + "\n");
       this.Datasources[mod] = BM.RDF.GetDataSourceBlocking(myURI);
     }

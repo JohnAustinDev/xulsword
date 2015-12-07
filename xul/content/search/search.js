@@ -250,7 +250,7 @@ function SearchObj(searchObj) {
       var sym = null;
       try {sym = this.bundle.GetStringFromName(m);} catch (er) {}
       if (!sym || (/^\s*$/).test(sym)) sym = LOCALE_SEARCH_SYMBOLS[m];
-      s.query = s.query.replace(sym, ACTUAL_SEARCH_SYMBOLS[m], "g");
+      s.query = s.query.replace(new RegExp(escapeRE(sym), "g"), ACTUAL_SEARCH_SYMBOLS[m]);
     }
     
     s.query = s.query.replace(/^\s*/,""); //remove leading whitespace
@@ -269,12 +269,12 @@ function SearchObj(searchObj) {
       
       switch (document.getElementById("searchType").selectedItem.id) {
       case "SearchAnyWord":
-        s.query = s.query.replace(" "," AND ","gim");
+        s.query = s.query.replace(/ /gm, " AND ");
         break;
         
       case "SearchSimilar":
         s.query = s.query.replace(/\s*$/, "~");
-        s.query = s.query.replace(" ", "~ AND ","gim");
+        s.query = s.query.replace(/ /gm, "~ AND ");
         break;
         
       case "SearchExactText":
@@ -325,8 +325,8 @@ function SearchObj(searchObj) {
     case "SearchAdvanced":
       rawText = rawText.replace(/ +/g,";");
       rawText = rawText.replace(/(\+|-|&&|\|\||!|\(|\)|{|}|\[|\]|\^|~|:|"|\\|AND;|OR;|NOT;)/g,""); // remove all control chars except [?";*]
-      rawText = rawText.replace("?",".","g");     // add dots before any ?s
-      rawText = rawText.replace("*",".*?","g");   // add dots before any *s
+      rawText = rawText.replace(/\?/g, ".");     // add dots before any ?s
+      rawText = rawText.replace(/\*/g, ".*?");   // add dots before any *s
       
       //change ";"s which are between quotes back into spaces, and remove the quotes
       var quoted = false; 

@@ -84,7 +84,7 @@ function initBookmarksDataFile(useEmptyDataSet) {
   var rdfFile = getSpecialDirectory("xsBookmarks");
   rdfFile.append(kUserDataFileName);
 
-  UserDataURI = encodeURI("File://" + rdfFile.path.replace("\\", "/", "g"));
+  UserDataURI = encodeURI("File://" + rdfFile.path.replace(/\\/g, "/"));
 
   if (!rdfFile.exists()) {
     var data = "";
