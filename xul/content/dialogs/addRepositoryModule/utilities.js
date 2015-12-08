@@ -22,6 +22,8 @@
 
 ARMU = {
 
+  comparator: Components.classes["@mozilla.org/xpcom/version-comparator;1"].getService(Components.interfaces.nsIVersionComparator),
+
   getRepositoryUrlTempDir: function(url) {
     var file = TEMP.clone();
     file.append(url.replace(/^[^\:]+:\/\//, "").replace(/[\\\/]/g, "_"));
@@ -493,6 +495,26 @@ ARMU = {
     }
   },
 
+  AllowMultiple: ["GlobalOptionFilter", "Feature", "Obsoletes"],
+  
+  getConfEntries: function(filedata) {
+    var entries = {};
+    try {entries['ModuleName'] = filedata.match(/\[(.*)\]/m)[1];}
+    catch (er) {
+      jsdump("ERROR: No module name in conf file. Skipping");
+      return null;
+    }
+    filedata = filedata.replace(/\\[\r\n]/gm, " ");
+    var m0 = filedata.match(/^[^;][^=\r\n]*=[^\r\n]+$/gm);
+    for (var i=0; i<m0.length; i++) {
+      var m1 = m0[i].match(/^\s*([^=]+?)\s*=\s*(.*?)\s*$/);
+      if (entries[m1[1]] && this.AllowMultiple.indexOf(m1[1]) > -1) entries[m1[1]] += ", " + m1[2];
+      else entries[m1[1]] = m1[2];
+    }
+
+    return entries;
+  },
+
   getConfEntry: function(filedata, param) {
     if (param == "ModuleName") {
       var prm = new RegExp("\\[(.*)\\]", "m");
@@ -695,7 +717,11 @@ ARMU = {
         ARMU.setStatus(MLDS, aRes, ON, "green");
     else {
       var isInstalled = ARMU.getResourceLiteral(MLDS, aRes, "Installed");
-      ARMU.setStatus(MLDS, aRes, (isInstalled && isInstalled == "true" ? ON:dString(0) + "%"), "");
+      var isInstallable = ARMU.getResourceLiteral(MLDS, aRes, "Installable");
+      var status = dString(0) + "%";
+      if (isInstallable && isInstallable != "true") status = OFF;
+      if (isInstalled && isInstalled == "true") status = ON;
+      ARMU.setStatus(MLDS, aRes, status, "");
     }
   },
   

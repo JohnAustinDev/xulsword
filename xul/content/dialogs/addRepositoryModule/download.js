@@ -46,6 +46,18 @@ ARMD = {
     // only complete downloads will be installed.
     var mod = this.ModulesQuerying[0];
     this.ModulesQuerying.splice(this.ModulesQuerying.indexOf(mod), 1);
+
+    // don't download if it's not installable
+    var isInstallable = ARMU.getResourceLiteral(MLDS, mod, "Installable");
+    if (isInstallable && isInstallable != "true") {
+      jsdump("INFO: Module is uninstallable");
+      Components.classes["@mozilla.org/sound;1"].createInstance(Components.interfaces.nsISound).beep();
+      try {var msg = XSBundle.getFormattedString("NeedUpgrade2", [isInstallable]);}
+      catch (er) {msg = "Upgrade the program to at least version:\"" + (isInstallable ? isInstallable:"?") + "\"";}
+      ARMU.setStatus(MLDS, mod, msg, "red");
+      this.queryNextModule();
+      return;
+    }
     
     var is_XSM_module = ARMU.is_XSM_module(MLDS, mod);
     

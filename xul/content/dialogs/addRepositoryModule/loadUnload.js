@@ -729,22 +729,21 @@ function applyConfFile(file, repoUrl) {
    
   // read the extracted file
   var filedata = readFile(file);
+  var conf = ARMU.getConfEntries(filedata);
+  if (!conf) return;
+  if (!conf["DataPath"]) return;
+  if (!conf["ModDrv"]) return;
   
   // do any module filtering
-  var category = ARMU.getConfEntry(filedata, "Category");
-  if (getPrefOrCreate("filterQuestionableTexts", "Bool", true) && category 
-      && (/(Cults|Unorthodox|Questionable)/i).test(category)) return;
+  if (getPrefOrCreate("filterQuestionableTexts", "Bool", true) && conf["Category"] 
+      && (/(Cults|Unorthodox|Questionable)/i).test(conf["Category"])) return;
       
   // create a new module resource
   var newModRes = RDF.GetAnonymousResource();
   var type, confInfo, confDefault, confType;
   
   // add DataPath and add ModuleUrl (of module)
-  var dataPath = ARMU.getConfEntry(filedata, "DataPath");
-  if (!dataPath || dataPath == NOTFOUND) {
-    ARMU.deleteResource(newModRes)
-    return;
-  }
+  var dataPath = conf["DataPath"];
 
   // Firefox's native mp3 playability is dependant on op-sys, and is spotty among Windows
   // versions, service packs etc. etc. etc. so xulsword will always ask for ogg. The only
@@ -781,11 +780,7 @@ function applyConfFile(file, repoUrl) {
   var is_XSM_module = ARMU.is_XSM_module(MLDS, newModRes);
   
   // add ModDrv (used to determine TypeReadable)
-  var modDrv = ARMU.getConfEntry(filedata, "ModDrv");
-  if (!modDrv || modDrv == NOTFOUND) {
-    ARMU.deleteResource(newModRes)
-    return;
-  }
+  var modDrv = conf["ModDrv"];
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "ModDrv"), RDF.GetLiteral(modDrv), true);
 
   // add TypeReadable
@@ -860,8 +855,11 @@ function applyConfFile(file, repoUrl) {
   };
   
   for (var p in confInfo) {
-    var confres = ARMU.getConfEntry(filedata, confInfo[p]);
-    if (!confres || (/^\s*$/).test(confres)) confres = confDefault[p];
+    var confres;
+    if (!conf[confInfo[p]] || (/^\s*$/).test(conf[confInfo[p]])) {
+      confres = confDefault[p];
+    }
+    else confres = conf[confInfo[p]];
     var type = "string";
     if (confType.hasOwnProperty(p)) type = confType[p];
     ARMU.setResourceAttribute(MLDS, newModRes, p, confres, type);
@@ -872,14 +870,21 @@ function applyConfFile(file, repoUrl) {
   // add .conf file name (NOT always lower case of module name!)
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "ConfFileName"), RDF.GetLiteral(file.leafName), true);
   // add LangReadable (so language can be read in moduleListTree)
-  var langReadable = ARMU.getLangReadable(ARMU.getConfEntry(filedata, "Lang"));
+  var langReadable = ARMU.getLangReadable(conf["Lang"] ? conf["Lang"]:"?");
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY + "LangReadable"), RDF.GetLiteral(langReadable), true);
   // add Status and Installed
   var moduleName = ARMU.getResourceLiteral(MLDS, newModRes, "ModuleName");
   var moduleVersion = ARMU.getResourceLiteral(MLDS, newModRes, "Version");
   var isInstalled = (Tab.hasOwnProperty(moduleName) && Tab[moduleName].modVersion == moduleVersion);
-  MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"Status"), RDF.GetLiteral(isInstalled ? ON:dString(0) + "%"), true);
+  try {var engineVersion = prefs.getCharPref("EngineVersion");} catch (er) {engineVersion = 99;}
+  var isInstallable = (!conf["MinimumVersion"] || ARMU.comparator.compare(engineVersion, conf["MinimumVersion"]) >= 0);
   MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"Installed"), RDF.GetLiteral(isInstalled ? "true":"false"), true);
+  MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"Installable"), RDF.GetLiteral(isInstallable ? "true":conf["MinimumVersion"]), true);
+
+  var status = dString(0) + "%";
+  if (!isInstallable) status = OFF;
+  if (isInstalled) status = ON;
+  MLDS.Assert(newModRes, RDF.GetResource(RP.REPOSITORY+"Status"), RDF.GetLiteral(status), true);
   
   // add the new resource to the Module List
   RDFC.Init(MLDS, RDF.GetResource(RP.ModuleListID));
@@ -894,7 +899,7 @@ function applyConfFile(file, repoUrl) {
     }
     if (moduleUpdateNeeded) {
       jsdump("INFO: module \"" + moduleName + ", " + Tab[moduleName].modVersion + "\" can be updated to version \"" + moduleVersion + (is_XSM_module ? " XSM":"") + "\".");
-      var change = ARMU.getConfEntry(filedata, "History_" + moduleVersion);
+      var change = conf["History_" + moduleVersion];
       if (change && !(/^\s*$/).test(change)) ARMU.setResourceAttribute(MLDS, newModRes, "History_" + moduleVersion, change);
     }
   }
