@@ -524,9 +524,9 @@ var BookmarksCommand = {
     try {
       const kFilePickerContractID = "@mozilla.org/filepicker;1";
       const kFilePickerIID = Components.interfaces.nsIFilePicker;
-      const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
+      var kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
     
-      const kTitle = fixWindowTitle(BookmarksUtils.getLocaleString("SelectImport"));
+      var kTitle = fixWindowTitle(BookmarksUtils.getLocaleString("SelectImport"));
       kFilePicker.init(window, kTitle, kFilePickerIID["modeOpen"]);
       kFilePicker.appendFilter("XSB, TXT", "*.xsb; *.txt");
       kFilePicker.defaultExtension = "xsb";
@@ -549,9 +549,9 @@ var BookmarksCommand = {
     try {
       const kFilePickerContractID = "@mozilla.org/filepicker;1";
       const kFilePickerIID = Components.interfaces.nsIFilePicker;
-      const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
+      var kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
       
-      const kTitle = fixWindowTitle(BookmarksUtils.getLocaleString("EnterExport"));
+      var kTitle = fixWindowTitle(BookmarksUtils.getLocaleString("EnterExport"));
       kFilePicker.init(window, kTitle, kFilePickerIID["modeSave"]);
       kFilePicker.appendFilter("XSB, TXT", "*.xsb; *.txt");
       kFilePicker.defaultString = "exported bookmarks.xsb";
@@ -655,7 +655,7 @@ var BookmarksCommand = {
         toSort.push(rsrc);
     }
 
-    const kName = BM.RDF.GetResource(BM.gNC_NS+"Name");
+    var kName = BM.RDF.GetResource(BM.gNC_NS+"Name");
 
     var localeService = Components.classes["@mozilla.org/intl/nslocaleservice;1"]
                                   .getService(Components.interfaces.nsILocaleService);

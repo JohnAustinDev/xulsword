@@ -40,7 +40,7 @@ var bookmarksView, bookmarksFolder;
 function Startup()
 {
   
-  const windowNode = document.getElementById("bookmark-window");
+  var windowNode = document.getElementById("bookmark-window");
   bookmarksView = document.getElementById("bookmarks-view");
   bookmarksFolder = document.getElementById("bookmark-folders-view");
   

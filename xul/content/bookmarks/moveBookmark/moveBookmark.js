@@ -186,7 +186,7 @@ function setupFields()
 
 function onFieldInput()
 {
-  const ok = document.documentElement.getButton("accept");
+  var ok = document.documentElement.getButton("accept");
   ok.disabled = gFld_URL.value == "" ||
                 gFld_Name.value == "";
 }    

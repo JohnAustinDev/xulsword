@@ -73,7 +73,7 @@ function addNewModule(e) {
   try {
     const kFilePickerContractID = "@mozilla.org/filepicker;1";
     const kFilePickerIID = Components.interfaces.nsIFilePicker;
-    const kTitle = fixWindowTitle(getDataUI("menu.addNewModule.label"));
+    var kTitle = fixWindowTitle(getDataUI("menu.addNewModule.label"));
     var kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
     kFilePicker.init(window, kTitle, kFilePickerIID.modeOpenMultiple);
     kFilePicker.appendFilter("XSM, XSB, ZIP", "*.xsm; *.xsb; *.zip");

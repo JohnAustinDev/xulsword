@@ -387,9 +387,9 @@ function exportAudio(exportFileFormat) {
   try {
     const kFilePickerContractID = "@mozilla.org/filepicker;1";
     const kFilePickerIID = Components.interfaces.nsIFilePicker;
-    const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
+    var kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
     
-    const kTitle = fixWindowTitle(getDataUI("menu.exportAudio.label"));
+    var kTitle = fixWindowTitle(getDataUI("menu.exportAudio.label"));
     kFilePicker.init(window, kTitle, kFilePickerIID.modeGetFolder);
     if (kFilePicker.show() == kFilePickerIID.returnCancel) return false;
   }

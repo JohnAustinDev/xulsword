@@ -284,9 +284,9 @@ BookmarkFuns = {
     try {
       const kFilePickerContractID = "@mozilla.org/filepicker;1";
       const kFilePickerIID = Components.interfaces.nsIFilePicker;
-      const kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
+      var kFilePicker = Components.classes[kFilePickerContractID].createInstance(kFilePickerIID);
       
-      const kTitle = fixWindowTitle(XSBundle.getString("SaveAs"));
+      var kTitle = fixWindowTitle(XSBundle.getString("SaveAs"));
       kFilePicker.init(window, kTitle, kFilePickerIID["modeSave"]);
       kFilePicker.appendFilters(kFilePickerIID.filterText);
       kFilePicker.defaultString = "bookmarks.txt";
