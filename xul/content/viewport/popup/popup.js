@@ -289,6 +289,8 @@ function PopupObj(popupobj) {
     var select = parent.appendChild(document.createElement("select"));
     select.className = "popup-mod-select";
     select.setAttribute("title", isFeature + "," + arg2);
+    // The following is a workaround for an apparent Mozilla bug that caused npopup to close as the mouse moved onto the select's dropdown.
+    select.setAttribute("onMouseOut", "javascript:document.getElementById('npopup').style.display='block'; window.setTimeout(function () {document.getElementById('npopup').style.display=''}, 500);");
     this.addSelectEventListener(select);
     
     for (var m=0; m<mods.length; m++) {
