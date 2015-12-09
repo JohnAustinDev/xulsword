@@ -547,7 +547,6 @@ xulsword::~xulsword() {
 GetChapterText
 *********************************************************************/
 char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
-  SWBuf verseText;
   SWBuf footnoteText;
   SWBuf crossRefText;
   SWBuf noteText;
@@ -608,15 +607,10 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   bool done = false;
   while (!done) {
     SWBuf verseHTML;
-    int vNum = myVerseKey->getVerse();
-    if (vNum>1 && vNum == Verse) {MyManager->setGlobalOption("Words of Christ in Red","Off");}
-    else if (vNum == (LastVerse + 1)) {MyManager->setGlobalOption("Words of Christ in Red", Redwords ? "On":"Off");}
-    verseText = module->renderText();
+
+    // SAVE HEADINGS, TEXT, AND FOOTNOTES FROM THIS MODULE POSITION
+    SWBuf verseText = module->renderText(); // MUST renderText() before saveFootnotes() or module->getEntryAttributes()!
     saveFootnotes(module, &footnoteText, &crossRefText, &noteText);
-
-    haveText = haveText || *verseText.c_str();
-
-    //FIRST PRINT OUT ANY HEADINGS IN THE VERSE
     AttributeValue::iterator Value;
     for (Value = module->getEntryAttributes()["Heading"]["Preverse"].begin(); Value != module->getEntryAttributes()["Heading"]["Preverse"].end(); Value++) {
       // if a line break is not found at or near the end of the previous verse,
@@ -627,6 +621,25 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
       }
       verseHTML.append(module->renderText(Value->second));
     }
+
+    int vNum = myVerseKey->getVerse();
+    int vLast;
+    module->increment(1); // must do this now to get vLast
+    done = module->popError();
+    if (done) {vLast = myVerseKey->getVerseMax();}
+    else {vLast = myVerseKey->getVerse() - 1;}
+    
+    bool hilightVerse = false;
+    bool selectVerse = false;
+    if (Verse > 1) {
+      if (Verse == vNum || (Verse > vNum && Verse <= vLast)) {
+        hilightVerse = true;
+        selectVerse = true;
+      }
+      else if ((vNum > Verse) && (vNum <= LastVerse)) {hilightVerse = true;}
+    }
+
+    haveText = haveText || *verseText.c_str();
     
     // VERSE PER LINE BUTTON
     if (!isCommentary && vNum == 1) {verseHTML.append("<span class=\"versePerLineButton\"><div></div></span>");}
@@ -634,11 +647,12 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     //NOW PRINT OUT THE VERSE ITSELF
     //If this is selected verse then designate as so
     //Output verse html code
-    verseHTML.appendFormatted("<span title=\"%s.%d.%d.%s\" class=\"vs cs-%s%s\">", bk.c_str(), ch, vNum, module->getName(), module->getName(), (isRTL ? " RTL":""));
+    verseHTML.appendFormatted("<span title=\"%s.%d.%d.%d.%s\" class=\"vs cs-%s%s\">", bk.c_str(), ch, vNum, vLast, module->getName(), module->getName(), (isRTL ? " RTL":""));
 
-    if (Verse > 1) {
-      if (vNum == Verse) {verseHTML.append("<span class=\"hl\" id=\"sv\">");}
-      if ((vNum > Verse)&&(vNum <= LastVerse)) {verseHTML.append("<span class=\"hl\">");}
+    if (hilightVerse) {
+      verseHTML.append("<span class=\"hl\"");
+      if (selectVerse) {verseHTML.append(" id=\"sv\"");}
+      verseHTML.append(">");
     }
     
     //Find the appropriate place to insert the verse number (after white-space, empty divs, div start tags, and non-canonical headings)
@@ -668,20 +682,10 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
 			else {break;}
 		}
     
-    module->increment(1); // increment now so we can find last-verse
-    done = module->popError();
-    
 		SWBuf verseNumHTML = "<sup class=\"versenum\">";
-    //If verse is non-empty and verse numbers are being displayed then print the verse number
     if (Versenumbers && (verseText.length() > 0)) {
-      int vnx;
-      if (!done) {
-        vnx = myVerseKey->getVerse();
-        vnx--;
-      }
-      else {vnx = myVerseKey->getVerseMax();}
-      if (vNum == vnx || FireBibleMode) {verseNumHTML.appendFormatted("%d", vNum);}
-      else {verseNumHTML.appendFormatted("%d-%d", vNum, vnx);}
+      if (vNum == vLast || FireBibleMode) {verseNumHTML.appendFormatted("%d", vNum);}
+      else {verseNumHTML.appendFormatted("%d-%d", vNum, vLast);}
     }
     verseNumHTML.append("</sup> ");
     verseText.insert((vp && *vp ? (vp-vs):0), verseNumHTML);
@@ -690,10 +694,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
 
     if (isCommentary) {verseHTML.append("<br><br>");}
 
-    if (Verse > 1) {
-      if(vNum==Verse) {verseHTML.append("</span>");}
-      else if ((vNum > Verse)&&(vNum <= LastVerse)) {verseHTML.append("</span>");}
-    }
+    if (hilightVerse) {verseHTML.append("</span>");}
     
     verseHTML.append("</span>");
     chapHTML.append(verseHTML.c_str());

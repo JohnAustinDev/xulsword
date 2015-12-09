@@ -880,9 +880,9 @@ Texts = {
         var hi = (v.bk == bk && v.ch == ch);
         if (d.hilightFlag == HILIGHTNONE) hi = false;
         if (d.hilightFlag == HILIGHT_IFNOTV1 && 
-            (vs == 1 || v.vs < vs || v.vs > lv)) hi = false;
+            (vs == 1 || v.lv < vs || v.vs > lv)) hi = false;
         if (d.hilightFlag == HILIGHTVERSE && 
-            (v.vs < vs || v.vs > lv)) hi = false;
+            (v.lv < vs || v.vs > lv)) hi = false;
      
         if (hi) av.className = (av.className ? av.className + " hl":"hl");
         

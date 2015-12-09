@@ -170,7 +170,6 @@ var ContextMenu = {
   },
 
   build: function(canHaveLemma, canHaveTab, canSelect, canHaveVerse, canHaveParagraph, canHaveBookmark) {
-try {jsdump("build:" + uneval(this.target));} catch(er) {}
 
     // Enable command controller
     document.getElementById("contextScriptBox").setAttribute("value", "open");
