@@ -359,7 +359,7 @@ var ContextMenuController = {
         break;
     }
 
-    return XS_window.XulswordController.isCommandEnabled(cmd, ContextMenu.target);
+    return (XS_window.XulswordController ? XS_window.XulswordController.isCommandEnabled(cmd, ContextMenu.target):false);
   },
   
   supportsCommand: function(cmd) {

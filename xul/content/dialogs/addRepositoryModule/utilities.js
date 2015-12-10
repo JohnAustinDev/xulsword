@@ -444,7 +444,7 @@ ARMU = {
           mvers = ARMU.getResourceLiteral(MLDS, mod, "SwordVersions").split(";");
           for (var i=0; i<mname.length; i++) {
             try {
-              var key = mname[i] + mvers[i];
+              var key = mname[i] + (mvers && mvers.hasOwnProperty(i) ? mvers[i]:'');
               key = key.replace(/\./g, "_");
               if (!xsm[key]) xsm[key] = [mod];
               else xsm[key].push(mod);
@@ -456,7 +456,7 @@ ARMU = {
           var mname = ARMU.getResourceLiteral(MLDS, mod, "ModuleName");
           var mvers = ARMU.getResourceLiteral(MLDS, mod, "Version");
           try {
-            key = mname + mvers;
+            key = mname + (typeof(mvers) == "string" && !(/^\s*$/).test(mvers) ? mvers:'');
             key = key.replace(/\./g, "_");
             if (!sword[key]) sword[key] = [mod];
             else sword[key].push(mod);

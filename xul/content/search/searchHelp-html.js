@@ -69,7 +69,7 @@ function writeSearchHelp(elem) {
       }
       var cell = row.appendChild(document.createElement("td"));
       cell.className = "col" + c + " row" + r;
-      cell.textContent = lstring;
+      cell.innerHTML = lstring;
     }
   }
   

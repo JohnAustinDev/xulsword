@@ -618,7 +618,8 @@ function getContextModule(elem) {
   while (telem && (!telem.className || !(/^vs(\s|$)/).test(telem.className))) {
     telem = telem.parentNode;
   }
-  if (telem) contextMod = getElementInfo(telem).mod;
+  if (telem) contextMod = getElementInfo(telem);
+  if (contextMod) contextMod = contextMod.mod;
   
   // then see if we're in a viewport window, and use its module
   if (!contextMod) {

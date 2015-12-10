@@ -416,7 +416,7 @@ ARMI = {
         if (!modAbbr || modAbbr == "?") modAbbr = modName; 
         var span = detail.appendChild(fdoc.createElement("span"));
         span.className = "mod-detail-heading";
-        span.textContent = modAbbr + (vers != "?" ? "(" + vers + ")":"");
+        span.textContent = modAbbr + (vers && vers != "?" ? "(" + vers + ")":"");
         
         // Descripton
         var description = ARMU.getResourceLiteral(MLDS, aModRes, "Description");
