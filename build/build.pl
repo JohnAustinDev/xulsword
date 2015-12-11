@@ -628,6 +628,7 @@ sub includeLocales($$\@$) {
             $lp =~ s/^xulsword\///;
             push(@{$manifestP}, "override $override chrome://xulsword/locale/$lp");
           }
+          else {&Log("ERROR: \"$version\" is the wrong UI-MAP.txt override for XULToolkitVersion \"$XULToolkitVersion\".\n");}
         }
       }
     }

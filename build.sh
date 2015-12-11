@@ -117,14 +117,15 @@ sudo make install
 sudo ldconfig
 
 # Download xulrunner (unless it exists already)
+xulrunnerRev=41.0b9
 if [ ! -e $XULSWORD/xulrunner ]; then
   cd $XULSWORD
   if [[ "$(uname -m)" == *"i686"* ]]; then
-    xulrunner=xulrunner-35.0.en-US.linux-i686.tar.bz2
+    xulrunner=xulrunner-$xulrunnerRev.en-US.linux-i686.tar.bz2
   else
-    xulrunner=xulrunner-35.0.en-US.linux-x86_64.tar.bz2
+    xulrunner=xulrunner-$xulrunnerRev.en-US.linux-x86_64.tar.bz2
   fi
-  wget http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/35.0/runtimes/$xulrunner
+  wget http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/$xulrunnerRev/runtimes/$xulrunner
   tar -xf $xulrunner
   rm $xulrunner
 fi
