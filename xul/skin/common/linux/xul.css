@@ -30,3 +30,7 @@ groupbox caption {
 #dtbutton .button-icon {
   display: -moz-box;
 }
+
+#bookmarkTT label {
+  color:white;
+}
