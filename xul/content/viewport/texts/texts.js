@@ -130,7 +130,7 @@ Texts = {
       var aoref = this.display[w].bk + "." + this.display[w].ch + "." + this.display[w].vs;
       var t = document.getElementById("text" + w);
       var sb = t.getElementsByClassName("sb")[0];
-      var firstVerse = sb.innerHTML.indexOf("title=\"" + aoref + ".");
+      var firstVerse = sb.innerHTML.indexOf("title=\"" + aoref + "."); // WOULD FAIL WITH libxulsword 1.3.1+ UPDATED vs TITLE
       if (firstVerse != -1) {
         var nre = new RegExp("class=\"(fn|cr|un)\" title=\"([^\"]+)\"");
         var firstNote = sb.innerHTML.substr(firstVerse).match(nre);
@@ -503,8 +503,9 @@ Texts = {
         chapter = "1";
       }
       
-      // get the verse where the note is
-      try {var verse = BMDS.GetTarget(res, BM.gBmProperties[VERSE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value;} catch (er) {continue;}
+      // get the verses where the note is
+      try {var verse = Number(BMDS.GetTarget(res, BM.gBmProperties[VERSE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);} catch (er) {continue;}
+      try {var lastverse = Number(BMDS.GetTarget(res, BM.gBmProperties[LASTVERSE], true).QueryInterface(Components.interfaces.nsIRDFLiteral).Value);} catch (er) {lastverse = verse;}
        
       // We have a keeper, lets save the note and show it in the text!
       // Encode ID
@@ -514,8 +515,17 @@ Texts = {
       
       // if this is a selected verse, place usernote inside the verse element (like regular notes)
       if (usesVerseKey) {
-        var re = new RegExp("(title=\"" + bk + "." + ch + "." + verse + "." + mod + "\" class=\"vs)([^>]*>)(\\s*<span.*?>)?", "im");
-        usernotes.html = usernotes.html.replace(re, "$1 un-hilight$2$3" + newNoteHTML);
+        var re1 = new RegExp("title=\"" + bk + "\\." + ch + "\\.\\d*\\.\\d*\\." + mod + "\" class=\"vs", "gim");
+        var re2 = new RegExp("\\.(\\d*)\\.(\\d*)\\." + mod + "\"", "i");
+        var m = usernotes.html.match(re1);
+        var verseclass = "un-hilight";
+        for (var i=0; m && i<m.length; i++) {
+          var m2 = m[i].match(re2);
+          if (!m2 || !(Number(m2[1]) <= lastverse && verse <= Number(m2[2]))) continue;
+          var re3 = new RegExp("(" + escapeRE(m[i]) + ")([^>]*>)(\\s*<span.*?>)?", "im");
+          usernotes.html = usernotes.html.replace(re3, "$1 " + verseclass + "$2$3" + newNoteHTML);
+          if (verseclass == "un-hilight") verseclass += " no-symbol";
+        }
       }
       else {
         // All non-versekey usernotes are placed at the beginning of the HTML container
@@ -623,7 +633,7 @@ Texts = {
       if (p && p.type == "vs") {
         if (!vf && p.bk == bk && p.ch == ch) vf = av;
           
-        if (p.bk == bk && p.ch == ch && p.vs == vs) v = av;
+        if (p.bk == bk && p.ch == ch && (p.vs >= vs && vs <= p.lv)) v = av;
       }
       av = av.nextSibling;
     }

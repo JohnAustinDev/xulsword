@@ -300,6 +300,9 @@
   content: "\00D7 ";
   color:rgb(0,0,200);
 }
+.no-symbol .un:after {
+  content: "";
+}
 .sr {
   border-bottom:1px solid blue;
   cursor:pointer;
