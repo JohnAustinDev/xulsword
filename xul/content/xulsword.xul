@@ -73,6 +73,19 @@
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:BOOKMARKS="http://www.xulsword.com/bookmarks/rdf#">
+
+<script>
+  // <![CDATA[
+  // Close splash window now, using setTimeout, to prevent unhandled
+  // exceptions from leaving the hidden window open and causing xulrunner
+  // not to close.
+  window.setTimeout(function() {
+    if (window.opener && window.opener.document.title == "xulsword-temporary-hidden-window")
+        window.opener.closeWindowXS(window.opener); // Close hidden startup window (which in turn closes visible splash window)
+    else if (window.opener && window.opener.SplashScreen) window.opener.closeWindowXS(window.opener.SplashScreen);
+  }, 2000);
+  // ]]>
+</script>
     
 <!-- the stringbundle element is used for script UI localization !-->
 <stringbundle id="xulsword-strings" src="chrome://xulsword/locale/xulsword.properties"/>

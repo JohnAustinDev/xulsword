@@ -138,11 +138,6 @@ function loadedXUL2() {
   
   // Cludge to get history button the right height, must happen after updating locale configuration
   document.getElementById("historymenu").style.height = String(document.getElementById("back").boxObject.height) + "px";
-  
-  // close splash window
-  if (window.opener && window.opener.document.title == "xulsword-temporary-hidden-window")
-      closeWindowXS(window.opener); // Close hidden startup window (which in turn closes visible splash window)
-  else if (window.opener && window.opener.SplashScreen) closeWindowXS(window.opener.SplashScreen);
  
   if (LibSword.hasBible) {
     //we're ok!
