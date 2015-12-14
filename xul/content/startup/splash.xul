@@ -28,6 +28,7 @@
     title="&menu.help.about;"
     windowtype="splash-banner"
     onload="initCSS(); sizeToContent();"
+    onunload="if (window.opener &amp;&amp; window.opener.document.title == 'xulsword-temporary-hidden-window') window.opener.closeWindowXS(window.opener);"
     centerscreen="true"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
