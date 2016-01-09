@@ -91,9 +91,9 @@ The following programs need to be in the command path:
 
 ## Compilation Steps
   * Get the xulsword code from GitHub.
-  * Get the [XulRunner runtime](https://developer.mozilla.org/en/XULRunner).
-  * Get [Clucene](http://sourceforge.net/projects/clucene/files/clucene-core-stable/0.9.21b/).
-  * Get [SWORD](http://crosswire.org/svn/sword) source code.
+  * Get the [XulRunner runtime (version 41.0b9)](https://developer.mozilla.org/en/XULRunner).
+  * Get [Clucene (version 0.9.21b)](http://sourceforge.net/projects/clucene/files/clucene-core-stable/0.9.21b/).
+  * Get [SWORD (svn revision 3203)](http://crosswire.org/svn/sword) source code.
   * Check or add paths in `xulsword/build/build_settings.txt` for 
   `XULRunner`, `CluceneSource`, `SwordSource` and `MicrosoftSDK`.
   * Run `xulsword/build/build.pl`
