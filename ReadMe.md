@@ -80,13 +80,14 @@ The following programs need to be in the command path:
   * [Git](http://git-scm.com/download/win)
   * [7-zip](http://www.7-zip.org/download.html) (command line version)
   * [Perl](http://www.activestate.com/activeperl/downloads/)
-  * [MSVC8 C++ Compiler](http://www.softpedia.com/get/Programming/Other-Programming-Files/Microsoft-Visual-C-Toolkit.shtml) 
-  (the Express Edition works great)
-  * MS-Windows SDK. Old SDK versions like 
+  * [MSVC8 C++ Express Compiler](http://go.microsoft.com/fwlink/?linkid=57034) and 
+  [MSVC8 C++ Express SP1](https://www.microsoft.com/en-us/download/details.aspx?id=804) 
+  (VS80sp1-KB926748-X86-INTL.exe) 
+  * MS-Windows SDK. Old SDK versions like  
   [Windows Server 2003 SP1 Platform SDK](http://www.microsoft.com/en-us/download/details.aspx?id=6510) 
-  work just fine. For quickest install, use the web-install and choose 
-  what parts you want to download. All that is required to build 
-  xulsword is the `Include` and `Lib` subdirectories.
+  work just fine. Full install is unnecessary, but the Build Environment 
+  and Tools categories of the Microsoft Windows Core SDK, are both 
+  required. Also the Bin directory must be in your PATH. 
 
 ## Compilation Steps
   * Get the xulsword code from GitHub.
