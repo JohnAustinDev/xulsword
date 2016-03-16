@@ -7,7 +7,7 @@ call ..\..\windows\Versions.bat
 if exist .\Release rmdir /S /Q .\Release
 mkdir .\Release
 
-Set cFlags=/nologo /MT /EHsc /W0 /Wp64^
+Set cFlags=/nologo /MT /EHsc /W0^
  /I "%MK%\Cpp\src\include"^
  /D USE_STL /D NDEBUG /D _UNICODE /D UNICODE /D _CRT_SECURE_NO_DEPRECATE /Fo".\Release\\" /c
 
@@ -21,11 +21,11 @@ Set lFlags=/OUT:".\Release\cdrun.exe" /INCREMENTAL:NO /NOLOGO^
 
 Set lFiles=^
  ".\Release\w32process.obj"^
- ".\Release\cdrun.obj"^
- ".\Release\CDRunApp.res"
+ ".\Release\cdrun.obj"
+:: ".\Release\CDRunApp.res" icon cannot be added with WindowsSDK7 due to a bug in cvtres.exe
 
 echo on
-rc.exe /l 0x409 /fo".\Release\CDRunApp.res" ".\CDRunApp.rc"
+::rc.exe /l 0x409 /fo".\Release\CDRunApp.res" ".\CDRunApp.rc"
 cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
 mt.exe -manifest "Release\cdrun.exe.intermediate.manifest" -outputresource:".\Release\cdrun.exe";1

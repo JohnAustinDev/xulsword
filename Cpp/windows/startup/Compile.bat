@@ -17,10 +17,11 @@ Set lFlags= /OUT:"Release\startup.exe" /INCREMENTAL:NO /NOLOGO^
  /MANIFEST /MANIFESTFILE:"Release\startup.exe.intermediate.manifest"^
  /SUBSYSTEM:WINDOWS User32.lib
 
-Set lFiles=".\Release\startup.obj" ".\Release\startup.res"
+Set lFiles=".\Release\startup.obj"
+::".\Release\startup.res" icon cannot be added with WindowsSDK7 due to a bug in cvtres.exe
 
 echo on
-rc.exe /l 0x409 /fo".\Release\startup.res" ".\startup.rc"
+::rc.exe /l 0x409 /fo".\Release\startup.res" ".\startup.rc"
 cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
 mt.exe -manifest ".\Release\startup.exe.intermediate.manifest" -outputresource:".\Release\startup.exe";1

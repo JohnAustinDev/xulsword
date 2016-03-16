@@ -2,6 +2,7 @@
 IBTXulsword
 sword
 xulrunner
+xulrunner64
 xul/viewport.html
 Cpp/.*
 Cpp/*.in
@@ -40,4 +41,5 @@ Cpp/windows/Release/
 Cpp/windows/Versions.bat
 Cpp/windows/startup/Release/
 Cpp/windows/cdrun/Release/
+Cpp/windows/compiled.txt
 

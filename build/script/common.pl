@@ -13,11 +13,11 @@ sub readSettingsFiles(\%$) {
   if (!$f || -d $f) {$f = "$TRUNK/build/build_settings.txt";}
   &readSettings("$TRUNK/build/build_prefs.txt", $prefsP, $saveFiles);
   &readSettings($f, $prefsP, $saveFiles);
-  if ("$^O" !~ /MSWin32/i) {$MicrosoftSDK = "";}
+  if ("$^O" !~ /MSWin32/i) {$MicrosoftSDK = ""; $MicrosoftVS = "";}
   if ($UseSecurityModule ne "true") {$KeyGenPath = "";}
   
   # Normalize paths, and check that required paths exist.
-  @PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK", "FirstRunXSM", "KeyGenPath");
+  @PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK", "MicrosoftVS", "FirstRunXSM", "KeyGenPath");
   foreach my $path (@PathNames) {
   	if ($$path =~ /^\./) {$$path = File::Spec->rel2abs($$path);}
   	if ($path !~ /^ModuleRepository/ && $$path && !-e $$path) {

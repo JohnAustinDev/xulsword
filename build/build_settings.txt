@@ -2,6 +2,7 @@
 Set MakeDevelopment=true
 Set MakePortable=true
 Set MakeSetup=false
+# To build separate LibXulsword package MakeFFextension must be true
 Set MakeFFextension=false
 
 # SPECIFY PATHS (RELATIVE TO xulsword/build or FULL path)

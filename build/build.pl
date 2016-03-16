@@ -21,7 +21,10 @@ $SETTING = File::Spec->rel2abs($SETTING);
 $WINprocess = "$Name-srv.exe";
 @ModRepos = ($ModuleRepository1, $ModuleRepository2);
 
-if ("$^O" =~ /MSWin32/i) {$PLATFORM = "WINNT_x86-msvc";}
+if ("$^O" =~ /MSWin32/i) {
+  if ($MakeWindows64bit && $MakeWindows64bit !~ /\bfalse\b/i) {$PLATFORM = "WINNT_x86_64-msvc";}
+  else {$PLATFORM = "WINNT_x86-msvc";}
+}
 elsif ("$^O" =~ /linux/i) {
   $PLATFORM = "Linux_x86";
   if (`uname -m` eq "x86_64\n") {$PLATFORM .= "_64";}
@@ -60,7 +63,7 @@ $INSTALLER="$TRUNK/build-files/$Name/setup";
 $FFEXTENSION="$TRUNK/build-files/$Name/xulsword\@xulsword.org";
 $PORTABLE="$TRUNK/build-files/$Name/portable";
 
-&Log("\nBUILDING: $Vendor $Name-$Version (libxulsword $LibxulswordVersion)\n");
+&Log("\nBUILDING: $Vendor $Name-$Version (libxulsword $LibxulswordVersion) for $PLATFORM\n");
 
 # DEVELOPMENT ENVIRONMENT
 if ($MakeDevelopment =~ /true/i) {
@@ -312,6 +315,21 @@ sub compileLibSword($$) {
       &Log("WARNING: staticLinkToSWORD=false, but MS-Windows will get static link anyway.\n");
     }
     if (!$CompiledAlready) {
+      # If Windows target type has changed since last run, rebuild everything
+      my $recompileAll = 0;
+      if (!-e "$TRUNK/Cpp/windows/compiled.txt") {$recompileAll = 1;}
+      else {
+        open(LCMP, "<$TRUNK/Cpp/windows/compiled.txt") || die;
+        while (<LCMP>) {
+           if ($_ !~ /^\Q$PLATFORM\E$/) {$recompileAll = 1;}
+        }
+        close(LCMP);
+      }
+      if ($recompileAll) {
+        &cleanDir("$TRUNK/Cpp/cluceneMK/windows/lib/Release");
+        &cleanDir("$TRUNK/Cpp/swordMK/windows/lib/Release");
+      }
+
       if (!-e "$TRUNK/Cpp/cluceneMK/windows/lib/Release/libclucene.lib") {
         `call "$TRUNK/Cpp/cluceneMK/windows/lib/Compile.bat" >> $LOGFILE`;
       }
@@ -327,6 +345,10 @@ sub compileLibSword($$) {
       }
       
       if (!-e "$TRUNK/Cpp/windows/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); die;}
+
+      open(LCMP, ">$TRUNK/Cpp/windows/compiled.txt") || die;
+      print LCMP $PLATFORM;
+      close(LCMP);
     }
     &copy_file("$TRUNK/Cpp/windows/Release/xulsword.dll", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.dll");
   }
@@ -484,9 +506,11 @@ sub copyFirefoxFiles($) {
   $skip .= "dictionaries";
   $skip .= ")";
 
-  if (!-e $XULRunner) {&Log("ERROR: No directory: \"$XULRunner\".\n"); die;}
+   # add "64" to xulrunner directory name if we're building for 64 bit Windows
+  my $xr = $XULRunner . ($MakeWindows64bit && $MakeWindows64bit !~ /\bfalse\b/i ? "64":"");
+  if (!-e $xr) {&Log("ERROR: No directory: \"$xr\".\n"); die;}
   
-  &copy_dir($XULRunner, $do, "", $skip);
+  &copy_dir($xr, $do, "", $skip);
   
   if ("$^O" =~ /MSWin32/i) {&mv("$do/xulrunner.exe", "$do/$WINprocess");}
 
@@ -829,6 +853,7 @@ sub writeInstallerAppInfo($) {
   print ISS "#define MKO \"$OutputDirectory\"\n";
   print ISS "#define APPDATA \"$Appdata\"\n";
   print ISS "#define FirstRunXSM \"$FirstRunXSM\"\n";
+  print ISS "#define OutputBaseFilename \"" . $Name . "_Setup(" . $PLATFORM . ")-" . $Version . "\"\n";
   close(ISS);
 }
 
@@ -893,18 +918,19 @@ sub packageWindowsSetup($) {
   if (!-e $resdir) {make_path($resdir);}
 
   if (!chdir($id)) {&Log("ERROR: Could not cd into \"$id\".\n"); die;}
-  my $isp = `echo %ProgramFiles%/Inno Setup 5/ISCC.exe`;
+
+  my $onWin64 = `if defined ProgramFiles(x86) echo 1`;
+  my $programFiles = "ProgramFiles" . ($onWin64 ? "(x86)":"");
+  my $isp = `echo %$programFiles%/Inno Setup 5/ISCC.exe`;
   chomp($isp);
   
   if (!-e $isp) {
-    &Log("ERROR: Inno Setup 5 (Unicode) is not installed (did not find: \"%ProgramFiles%/Inno Setup 5/ISCC.exe\").\n");
+    &Log("ERROR: Inno Setup 5 (Unicode) is not installed (did not find: \"%$programFiles%/Inno Setup 5/ISCC.exe\").\n");
     die;
   }
   
-  my $pf = ($PLATFORM eq "WINNT_x86-msvc" ? "Windows":$PLATFORM);
-  my $fname = $Name."_Setup(".$pf.")-".$Version;
-  
-  `"%ProgramFiles%/Inno Setup 5/ISCC.exe" "$is" > "$resdir/$fname.txt"`;
+  my $fname = $Name."_Setup(".$PLATFORM.")-".$Version;
+  `"%$programFiles%/Inno Setup 5/ISCC.exe" "$is" > "$resdir/$fname.txt"`;
   
   chdir("$TRUNK/build");
 }
@@ -913,8 +939,7 @@ sub packagePortable($$) {
   my $id = shift;
   my $od = shift;
 
-	my $pf = ($PLATFORM eq "WINNT_x86-msvc" ? "Windows":$PLATFORM);
-  my $fname = $Name."_Portable(".$pf.")-".$Version;
+  my $fname = $Name."_Portable(".$PLATFORM.")-".$Version;
   my $of = "$od/$fname.zip";
   my $lf = "$fname.txt";
   
