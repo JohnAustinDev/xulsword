@@ -80,14 +80,11 @@ The following programs need to be in the command path:
   * [Git](http://git-scm.com/download/win)
   * [7-zip](http://www.7-zip.org/download.html) (command line version)
   * [Perl](http://www.activestate.com/activeperl/downloads/)
-  * [MSVC8 C++ Express Compiler](http://go.microsoft.com/fwlink/?linkid=57034) and 
-  [MSVC8 C++ Express SP1](https://www.microsoft.com/en-us/download/details.aspx?id=804) 
-  (VS80sp1-KB926748-X86-INTL.exe) 
-  * MS-Windows SDK. Old SDK versions like  
-  [Windows Server 2003 SP1 Platform SDK](http://www.microsoft.com/en-us/download/details.aspx?id=6510) 
-  work just fine. Full install is unnecessary, but the Build Environment 
-  and Tools categories of the Microsoft Windows Core SDK, are both 
-  required. Also the Bin directory must be in your PATH. 
+  * [Microsoft SDK](https://www.microsoft.com/en-us/download/details.aspx?id=8442) (GRMSDKX_EN_DVD.iso for 64 bit builds)
+  You may need to run Setup/SDKSetup.exe (instead of setup.exe) to allow compiler installation.
+  Unfortunately this version of cvtres.exe is broken which adds custom launcher
+  icons. The official fix creates yet another bug by deleting amnintrin.h
+  so that nothing compiles... Workaround in progress...
 
 ## Compilation Steps
   * Get the xulsword code from GitHub.

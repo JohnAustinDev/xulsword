@@ -4,14 +4,6 @@
 cd %~dp0
 call ..\..\..\windows\Versions.bat
 
-:: Make sure our compiler environment is configured
-if defined VSINSTALLDIR goto envdefined
-if "%ProgramFiles(x86)%" == "" set "ProgramFiles(x86)=%ProgramFiles%"
-call "%ProgramFiles(x86)%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
-:envdefined
-set INCLUDE=%INCLUDE%;%microsoftsdk%\Include
-set LIB=%LIB%;%microsoftsdk%\Lib
-
 if exist .\Release rmdir /S /Q .\Release
 mkdir .\Release
 
@@ -25,15 +17,13 @@ set lFiles1=
 set lFiles2=
 
 Set cFlags=/nologo /EHsc /W0^
- /I ".\lzma\include"^
- /I ".\bzlib\include"^
  /I "%MK%\Cpp\src\windows"^
  /I "%clucene%\src"^
  /I "%sword%\include"^
  /I "%sword%\include\internal\regex"^
  /FI "fileops.h"^
  /FI "windefs_sword.h"^
- /D WIN32 /D _WINDOWS /D USELUCENE /D REGEX_MALLOC /D _CL_HAVE_DIRENT_H /D WIN32_LEAN_AND_MEAN /D UNICODE /D _UNICODE /D _LIB /Zm200 /c
+ /D WIN32 /D _WINDOWS /D USELUCENE /D REGEX_MALLOC /D _CL_HAVE_DIRENT_H /D WIN32_LEAN_AND_MEAN /D UNICODE /D _UNICODE /D _LIB /D EXCLUDEBZIP2 /D EXCLUDEXZ /Zm200 /c
 
 Set cFlags=/MT%cdbg% /Fo".\Release\libsword/" %cFlags%
 Set lFlags=/nologo /out:".\Release\libsword.lib"
@@ -172,8 +162,6 @@ Set cFiles1=^
  "%sword%\src\modules\filters\osisglosses.cpp"^
  "%sword%\src\modules\filters\teixhtml.cpp"^
  "%sword%\src\modules\filters\scsuutf8.cpp"^
- "%sword%\src\modules\common\xzcomprs.cpp"^
- "%sword%\src\modules\common\bz2comprs.cpp"^
  "%sword%\src\utilfuns\utilxml.cpp"^
  "%sword%\src\keys\versekey.cpp"^
  "%sword%\src\keys\versetreekey.cpp"^
@@ -341,11 +329,9 @@ Set lFiles2=^
  ".\%objDIR%\utf8transliterator.obj"^
  ".\%objDIR%\utf8utf16.obj"^
  ".\%objDIR%\osisenum.obj"^
- ".\%objDIR%\bz2comprs.obj"^
  ".\%objDIR%\osisxlit.obj"^
  ".\%objDIR%\osisglosses.obj"^
  ".\%objDIR%\teixhtml.obj"^
- ".\%objDIR%\xzcomprs.obj"^
  ".\%objDIR%\scsuutf8.obj"^
  ".\%objDIR%\utilstr.obj"^
  ".\%objDIR%\utilxml.obj"^

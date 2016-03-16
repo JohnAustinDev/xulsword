@@ -4,13 +4,7 @@
 cd %~dp0
 call Versions.bat
 
-:: Make sure our compiler environment is configured
-if defined VSINSTALLDIR goto envdefined
-if "%ProgramFiles(x86)%" == "" set "ProgramFiles(x86)=%ProgramFiles%"
-call "%ProgramFiles(x86)%\Microsoft Visual Studio 8\Common7\Tools\VSVARS32.bat"
-:envdefined
-set INCLUDE=%INCLUDE%;%microsoftsdk%\Include
-set LIB=%LIB%;%microsoftsdk%\Lib
+echo INCLUDE is %INCLUDE%
 
 if exist ".\Release" rmdir /S /Q ".\Release"
 mkdir ".\Release"
@@ -49,13 +43,11 @@ Set cFiles=%SECURITYCPP%^
  "%MK%\Cpp\swordMK\filemgr.cpp"^
  "%MK%\Cpp\swordMK\regex.c"
  
-Set lFlags=libsword.lib libclucene.lib libbz2.dll.a liblzma.a.lib /nologo /dll /incremental:no /manifest /manifestfile:"Release\xulsword.dll.manifest" /implib:"Release\xulsword.lib" /pdb:"Release/xulsword.pdb" /out:".\Release\xulsword.dll"^
+Set lFlags=libsword.lib libclucene.lib /nologo /dll /incremental:no /manifest /manifestfile:"Release\xulsword.dll.manifest" /implib:"Release\xulsword.lib" /pdb:"Release/xulsword.pdb" /out:".\Release\xulsword.dll"^
  /libpath:"..\swordMK\windows\lib\Release"^
- /libpath:"..\cluceneMK\windows\lib\Release"^
- /libpath:"..\swordMK\windows\lib\bzlib\lib"^
- /libpath:"..\swordMK\windows\lib\lzma\bin_i486"
+ /libpath:"..\cluceneMK\windows\lib\Release"
+if defined Windows64bit Set lFlags=%lFlags% /MACHINE:X64
 
- 
 Set lFiles=%ldbg% %SECURITYOBJ%^
  ".\Release\xulsword.obj"^
  ".\Release\libxulsword.obj"^

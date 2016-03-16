@@ -13,8 +13,10 @@ Set ModuleRepository1=
 Set ModuleRepository2=
 Set FirstRunXSM=
 
-# PATHS NEEDED FOR MS-WINDOWS ONLY (FULL path):
-Set MicrosoftSDK=C:\Program Files\Microsoft Platform SDK
+# FOR MS-WINDOWS ONLY (use FULL paths):
+Set MakeWindows64bit=false
+Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v7.1
+Set MicrosoftVS=C:\Program Files (x86)\Microsoft Visual Studio 10.0
 
 # XULToolkitVersion SHOULD BE THE MAJOR VERSION OF XULRunner (IF THAT PATH IS SPECIFIED)
 # IT SHOULD ALSO MATCH A LOCALE OVERLOAD VERSION FROM THE UI-MAP

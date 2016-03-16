@@ -258,11 +258,43 @@ sub writeCompileDeps($) {
   print INFO "Set clucene=$CluceneSource\n";
   print INFO "Set sword=$SwordSource\n";
   print INFO "Set microsoftsdk=$MicrosoftSDK\n";
+  print INFO "Set microsoftvs=$MicrosoftVS\n";
   print INFO "Set Name=$Name\n";
   print INFO "Set MKS=$XulswordExtras\n";
+
   my $t = $TRUNK;
   $t =~ s/\//\\/g;
   print INFO "Set MK=$t\n";
+
+  # path
+  my $onWin64 = `if defined ProgramFiles(x86) echo 1`;
+  print INFO "if not defined origpath Set origpath=%path%\n";
+  print INFO "Set path=%origpath%";
+  print INFO ";%microsoftsdk%\\Bin";
+  if ($onWin64) {print INFO "\\x64";}
+  print INFO ";%microsoftvs%\\Common7\\IDE";
+  print INFO ";%microsoftvs%\\VC\\bin";
+  if ($MakeWindows64bit && $MakeWindows64bit !~ /\bfalse\b/i) {
+    if ($onWin64) {print INFO "\\amd64";}
+    else {print INFO "\\x86_amd64";}
+  }
+  print INFO "\n";
+
+  # INCLUDE
+  print INFO "Set INCLUDE=%microsoftsdk%\\Include";
+  print INFO ";%microsoftvs%\\VC\\include";
+  print INFO "\n";
+
+  # LIB
+  print INFO "Set LIB=%microsoftsdk%\\Lib";
+  if ($MakeWindows64bit && $MakeWindows64bit !~ /\bfalse\b/i) {
+    print INFO "\\x64";
+  }
+  print INFO ";%microsoftvs%\\VC\\lib";
+  if ($MakeWindows64bit && $MakeWindows64bit !~ /\bfalse\b/i) {
+    print INFO "\\amd64";
+  }
+  print INFO "\n";
   close(INFO);
 
 }
