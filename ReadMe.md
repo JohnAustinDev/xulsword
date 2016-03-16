@@ -92,7 +92,7 @@ The following programs need to be in the command path:
   * Get [Clucene (version 0.9.21b)](http://sourceforge.net/projects/clucene/files/clucene-core-stable/0.9.21b/).
   * Get [SWORD (svn revision 3203)](http://crosswire.org/svn/sword) source code.
   * Check or add paths in `xulsword/build/build_settings.txt` for 
-  `XULRunner`, `CluceneSource`, `SwordSource` and `MicrosoftSDK`.
+  `XULRunner`, `CluceneSource`, `SwordSource`, `MicrosoftVS` and `MicrosoftSDK`.
   * Run `xulsword/build/build.pl`
   * Start the program by running `xulsword/build/run-xulsword-dev.pl` (which is 
   created when you build xulsword). The development version of the 
