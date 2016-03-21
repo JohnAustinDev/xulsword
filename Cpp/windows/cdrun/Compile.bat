@@ -22,8 +22,8 @@ Set lFlags=/OUT:".\Release\cdrun.exe" /INCREMENTAL:NO /NOLOGO^
 Set lFiles=".\Release\w32process.obj" ".\Release\cdrun.obj"
 
 :: The startup.exe icon cannot be added without first replacing the buggy
-:: cvtres.exe in Windows SDK7, then uncomment this line:
-::Set lFiles=".\Release\w32process.obj" ".\Release\cdrun.obj" ".\Release\CDRunApp.res"
+:: cvtres.exe in Windows SDK7. So comment out this line if cvtres.exe fails!
+Set lFiles=".\Release\w32process.obj" ".\Release\cdrun.obj" ".\Release\CDRunApp.res"
 
 echo on
 rc.exe /l 0x409 /fo".\Release\CDRunApp.res" ".\CDRunApp.rc"

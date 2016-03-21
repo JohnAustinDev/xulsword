@@ -20,8 +20,8 @@ Set lFlags= /OUT:"Release\startup.exe" /INCREMENTAL:NO /NOLOGO^
 Set lFiles=".\Release\startup.obj"
 
 :: The startup.exe icon cannot be added without first replacing the buggy 
-:: cvtres.exe in Windows SDK7, then uncomment this line:
-::Set lFiles=".\Release\startup.obj" ".\Release\startup.res"
+:: cvtres.exe in Windows SDK7. So comment out this line if cvtres.exe fails!:
+Set lFiles=".\Release\startup.obj" ".\Release\startup.res"
 
 echo on
 rc.exe /l 0x409 /fo".\Release\startup.res" ".\startup.rc"
