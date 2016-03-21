@@ -18,10 +18,13 @@ Set lFlags= /OUT:"Release\startup.exe" /INCREMENTAL:NO /NOLOGO^
  /SUBSYSTEM:WINDOWS User32.lib
 
 Set lFiles=".\Release\startup.obj"
-::".\Release\startup.res" icon cannot be added with WindowsSDK7 due to a bug in cvtres.exe
+
+:: The startup.exe icon cannot be added without first replacing the buggy 
+:: cvtres.exe in Windows SDK7, then uncomment this line:
+::Set lFiles=".\Release\startup.obj" ".\Release\startup.res"
 
 echo on
-::rc.exe /l 0x409 /fo".\Release\startup.res" ".\startup.rc"
+rc.exe /l 0x409 /fo".\Release\startup.res" ".\startup.rc"
 cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
 mt.exe -manifest ".\Release\startup.exe.intermediate.manifest" -outputresource:".\Release\startup.exe";1

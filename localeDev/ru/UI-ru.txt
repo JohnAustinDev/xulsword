@@ -159,7 +159,7 @@
 [main-window.menu-help]: Поддержка
 [main-window.menu-help.about.save]: Сохранить
 [main-window.menu-help.about]: О программе...
-[main-window.menu-help.about.produced_by]: 2015
+[main-window.menu-help.about.produced_by]: 2016
 [main-window.menu-help.about.version]: Версия: %1$S, Сборка: %2$S
 [main-window.menu-help.about.contributors_label]: Содействующий...
 [main-window.tool-bar.back]: назад

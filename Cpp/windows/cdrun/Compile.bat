@@ -19,13 +19,14 @@ Set lFlags=/OUT:".\Release\cdrun.exe" /INCREMENTAL:NO /NOLOGO^
  /MANIFEST /MANIFESTFILE:".\Release\cdrun.exe.intermediate.manifest"^
  /SUBSYSTEM:WINDOWS Advapi32.lib User32.lib
 
-Set lFiles=^
- ".\Release\w32process.obj"^
- ".\Release\cdrun.obj"
-:: ".\Release\CDRunApp.res" icon cannot be added with WindowsSDK7 due to a bug in cvtres.exe
+Set lFiles=".\Release\w32process.obj" ".\Release\cdrun.obj"
+
+:: The startup.exe icon cannot be added without first replacing the buggy
+:: cvtres.exe in Windows SDK7, then uncomment this line:
+::Set lFiles=".\Release\w32process.obj" ".\Release\cdrun.obj" ".\Release\CDRunApp.res"
 
 echo on
-::rc.exe /l 0x409 /fo".\Release\CDRunApp.res" ".\CDRunApp.rc"
+rc.exe /l 0x409 /fo".\Release\CDRunApp.res" ".\CDRunApp.rc"
 cl.exe %cFlags% %cFiles%
 link.exe %lFlags% %lFiles%
 mt.exe -manifest "Release\cdrun.exe.intermediate.manifest" -outputresource:".\Release\cdrun.exe";1
