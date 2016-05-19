@@ -8,7 +8,7 @@ cd `dirname $0`
 
 EXTRAS=IBTXulsword
 
-if [ ! $(uname | grep -q Darwin) ]; then
+if [ $(uname | grep Darwin) ]; then
   echo Running on OSX
   brew update
   brew install wget
@@ -74,7 +74,7 @@ if [ ! -e $XULSWORD/Cpp/clucene-core-0.9.21b ]; then
 
   cd $XULSWORD/Cpp/clucene-core-0.9.21b
   # Patch a problem with MAC compile of clucene
-  if [ ! $(uname | grep -q Darwin) ]; then
+  if [ $(uname | grep Darwin) ]; then
     cp -f ../cluceneMK/osx/repl_tchar.h ./src/CLucene/config
   fi
   make clean
@@ -121,8 +121,8 @@ if [ ! -e $XULSWORD/Cpp/sword-svn ]; then
   cd sword-svn
   # fix a SWORD bug
   perl -p -i -e 's/(PKG_CHECK_MODULES\(\[CLUCENE2\], \[libclucene\-core >= 2.3\],,true\))/\#$1/' ./configure.ac
-  if [ ! $(uname | grep -q Darwin) ]; then
-    # use brew’s glibtoolize instead of libtoolize
+  if [ $(uname | grep Darwin) ]; then
+    # use brew's glibtoolize instead of libtoolize
     perl -p -i -e 's/^(LTIZE="\$AUTODIR"")(libtoolize")/$1g$2/' ./autogen.sh
   fi
   ./autogen.sh
@@ -149,7 +149,7 @@ fi
 # Configure xulsword
 cd $XULSWORD/Cpp
 make clean
-if [ ! $(uname | grep -q Darwin) ]; then
+if [ $(uname | grep Darwin) ]; then
   # patch untgz MAC compile problem
   perl -p -i -e 's/#ifdef unix/#if defined(unix) || defined(__APPLE__)/g' ./sword-svn/src/utilfuns/zlib/untgz.c
 fi
