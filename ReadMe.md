@@ -73,6 +73,11 @@ Builds will appear in the `/build-out` directory.
 
 -----
 
+# Compilation instructions for MAC OSX El Capitan:
+Install Firefox and Homebrew. Then run build.sh.
+
+-----
+
 # Compilation instructions for MS-Windows
 
 ## Build requirements

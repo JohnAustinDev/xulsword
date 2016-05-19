@@ -2,13 +2,16 @@
 # Bootstrap the xulsword installation.
 # Run this to generate all the initial makefiles, etc.
 srcdir=`dirname $0`
+if [ ! $(uname | grep -q Darwin) ]; then
+  libtool=glibtool
+else
+  libtool=libtool
+fi
 test -z "$srcdir" && srcdir=.
 
 ORIGDIR=`pwd`
 cd $srcdir
 PROJECT=xulsword
-TEST_TYPE=-f
-FILE=configure.ac
 
 DIE=0
 
@@ -36,7 +39,7 @@ ACLOCAL=aclocal-1.9
 	DIE=1
 }
 
-(libtool --version) < /dev/null > /dev/null 2>&1 || {
+($libtool --version) < /dev/null > /dev/null 2>&1 || {
     echo
     echo "**Error**: You must have \`libtool' installed to call autogen.sh."
     echo "Get ftp://ftp.gnu.org/pub/gnu/libtool-1.2d.tar.gz"
@@ -48,11 +51,6 @@ if test "$DIE" -eq 1; then
 	exit 1
 fi
 
-test $TEST_TYPE $FILE || {
-	echo "You must run this script in the top-level $PROJECT directory"
-	exit 1
-}
-
 if test "$1" = "--clean" || test "$1" = "--clear"; then
   make maintainer-clean
   rm -fdr build libltdl config autom4te.cache _configs.sed
@@ -63,7 +61,7 @@ fi
 mkdir config 2>/dev/null
 
 set -x
-libtoolize --force --copy --ltdl --automake
+${libtool}ize --force --copy --ltdl --automake
 $ACLOCAL -I m4
 autoconf
 autoheader

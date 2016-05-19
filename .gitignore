@@ -43,3 +43,7 @@ Cpp/windows/startup/Release/
 Cpp/windows/cdrun/Release/
 Cpp/windows/compiled.txt
 
+# For MAC
+.DS_Store
+test-driver
+

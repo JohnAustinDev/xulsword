@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script can be run on any linux machine or vagrant machine. It
+# This script can be run on any linux, OSX or vagrant machine. It
 # installs any necessary dependencies and builds xulsword using the
 # loc_MK.txt build settings if this file exists (otherwise defaults).
 
@@ -8,17 +8,27 @@ cd `dirname $0`
 
 EXTRAS=IBTXulsword
 
-sudo apt-get update
-
-sudo apt-get install -y libtool
-sudo apt-get install -y autoconf
-sudo apt-get install -y make
-sudo apt-get install -y pkg-config
-sudo apt-get install -y build-essential
-sudo apt-get install -y subversion
-sudo apt-get install -y git
-sudo apt-get install -y zip
-sudo apt-get install -y firefox
+if [ ! $(uname | grep -q Darwin) ]; then
+  echo Running on OSX
+  brew update
+  brew install wget
+  brew install autoconf
+  brew install automake
+  brew install subversion
+  brew install libtool
+else
+  echo Running on Linux
+  sudo apt-get update
+  sudo apt-get install -y libtool
+  sudo apt-get install -y autoconf
+  sudo apt-get install -y make
+  sudo apt-get install -y pkg-config
+  sudo apt-get install -y build-essential
+  sudo apt-get install -y subversion
+  sudo apt-get install -y git
+  sudo apt-get install -y zip
+  sudo apt-get install -y firefox
+fi
 
 # If this is Vagrant, then copy xulsword code locally so as not to 
 # disturb any build files on the host machine!
@@ -56,17 +66,23 @@ find . -name "*.sh" -exec chmod ugo+x {} \;
 # COMPILE SWORD ENGINE DEPENDENCIES
 # CLucene
 if [ ! -e $XULSWORD/Cpp/clucene-core-0.9.21b ]; then
+  echo Compiling $XULSWORD/Cpp/clucene-core-0.9.21b
   cd $XULSWORD/Cpp
-	wget http://sourceforge.net/projects/clucene/files/clucene-core-stable/0.9.21b/clucene-core-0.9.21b.tar.bz2/download
-	tar -xf download 
-	rm download
+  wget http://sourceforge.net/projects/clucene/files/clucene-core-stable/0.9.21b/clucene-core-0.9.21b.tar.bz2/download
+  tar -xf download 
+  rm download
+
+  cd $XULSWORD/Cpp/clucene-core-0.9.21b
+  # Patch a problem with MAC compile of clucene
+  if [ ! $(uname | grep -q Darwin) ]; then
+    cp -f ../cluceneMK/osx/repl_tchar.h ./src/CLucene/config
+  fi
+  make clean
+  ./configure --disable-multithreading
+  make
+  sudo make install
+  sudo ldconfig
 fi
-cd $XULSWORD/Cpp/clucene-core-0.9.21b
-make clean
-./configure --disable-multithreading
-make
-sudo make install
-sudo ldconfig
 
 : <<'COMMENT'
 cd $XULSWORD/Cpp
@@ -101,20 +117,20 @@ COMMENT
 swordRev=3203
 if [ ! -e $XULSWORD/Cpp/sword-svn ]; then
   cd $XULSWORD/Cpp
-	svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword-svn
+  svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword-svn
   cd sword-svn
-else
-  cd $XULSWORD/Cpp/sword-svn
-  svn update -r $swordRev
+  # fix a SWORD bug
+  perl -p -i -e 's/(PKG_CHECK_MODULES\(\[CLUCENE2\], \[libclucene\-core >= 2.3\],,true\))/\#$1/' ./configure.ac
+  if [ ! $(uname | grep -q Darwin) ]; then
+    # use brew’s glibtoolize instead of libtoolize
+    perl -p -i -e 's/^(LTIZE="\$AUTODIR"")(libtoolize")/$1g$2/' ./autogen.sh
+  fi
+  ./autogen.sh
+  ./configure --without-icu --without-xz --without-bzip2
+  make
+  sudo make install
+  sudo ldconfig
 fi
-
-cd $XULSWORD/Cpp/sword-svn
-make clean
-./autogen.sh
-./configure --without-icu --without-xz --without-bzip2
-make
-sudo make install
-sudo ldconfig
 
 # Download xulrunner (unless it exists already)
 xulrunnerRev=41.0b9
@@ -133,6 +149,10 @@ fi
 # Configure xulsword
 cd $XULSWORD/Cpp
 make clean
+if [ ! $(uname | grep -q Darwin) ]; then
+  # patch untgz MAC compile problem
+  perl -p -i -e 's/#ifdef unix/#if defined(unix) || defined(__APPLE__)/g' ./sword-svn/src/utilfuns/zlib/untgz.c
+fi
 ./autogen.sh
 ./configure
 
