@@ -62,7 +62,7 @@ else if (navigator.appVersion.indexOf("Mac")!=-1) OPSYS="MacOS";
 else if (navigator.appVersion.indexOf("Linux")!=-1) OPSYS="Linux";
 else if (navigator.appVersion.indexOf("X11")!=-1) OPSYS="Linux";
 
-var BIN = { WINNT:"dll", Linux:"so" };
+var BIN = { WINNT:"dll", Linux:"so", MacOS:"dylib" };
 
 // Are we running as a Firefox extension?
 IsExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");

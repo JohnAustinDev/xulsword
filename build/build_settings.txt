@@ -6,7 +6,6 @@ Set MakeSetup=false
 Set MakeFFextension=false
 
 # SPECIFY PATHS (RELATIVE TO xulsword/build or FULL path)
-Set XULRunner=../xulrunner
 Set CluceneSource=../Cpp/clucene-core-0.9.21b
 Set SwordSource=../Cpp/sword-svn
 Set XulswordExtras=
@@ -15,6 +14,7 @@ Set ModuleRepository2=
 Set FirstRunXSM=
 
 # FOR MS-WINDOWS ONLY (use FULL paths):
+Set XULRunner=../xulrunner
 Set MakeWindows64bit=false
 Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v7.1
 Set MicrosoftVS=C:\Program Files (x86)\Microsoft Visual Studio 10.0

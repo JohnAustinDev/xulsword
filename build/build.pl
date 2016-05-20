@@ -22,11 +22,19 @@ $WINprocess = "$Name-srv.exe";
 @ModRepos = ($ModuleRepository1, $ModuleRepository2);
 
 if ("$^O" =~ /MSWin32/i) {
+  $DLB = "dll";
   if ($MakeWindows64bit && $MakeWindows64bit !~ /\bfalse\b/i) {$PLATFORM = "WINNT_x86_64-msvc";}
   else {$PLATFORM = "WINNT_x86-msvc";}
 }
 elsif ("$^O" =~ /linux/i) {
+  $DLB = "so";
   $PLATFORM = "Linux_x86";
+  if (`uname -m` eq "x86_64\n") {$PLATFORM .= "_64";}
+  $PLATFORM .= "-gcc3";
+}
+elsif ("$^O" =~ /darwin/i) {
+  $DLB = "dylib";
+  $PLATFORM = "MacOS_x86";
   if (`uname -m` eq "x86_64\n") {$PLATFORM .= "_64";}
   $PLATFORM .= "-gcc3";
 }
@@ -49,11 +57,15 @@ make_path("$TRUNK/xul/distribution/bundles");
 # assign our Appdata and RESOURCES paths
 if ("$^O" =~ /MSWin32/i) {
   $Appdata = `Set APPDATA`; $Appdata =~ s/APPDATA=(.*?)\s*$/$1/i;
-  $RESOURCES = "$Appdata/$Vendor/$Name/Profiles/resources";
+  $ADRESOURCES = "$Appdata/$Vendor/$Name/Profiles/resources";
 }
 elsif ("$^O" =~ /linux/i) {
   $Appdata = `echo \$HOME`; $Appdata =~ s/^\s*(.*?)\s*$/$1/;
-  $RESOURCES = "$Appdata/.".lc($Vendor)."/".lc($Name)."/resources";
+  $ADRESOURCES = "$Appdata/.".lc($Vendor)."/".lc($Name)."/resources";
+}
+elsif ("$^O" =~ /darwin/i) {
+  $Appdata = `echo \$HOME`; $Appdata =~ s/^\s*(.*?)\s*$/$1/;
+  $ADRESOURCES = "$Appdata/.".lc($Vendor)."/".lc($Name)."/resources";
 }
 else {&Log("ERROR: Please add assignment to application directory of your platform\n");}
 
@@ -62,6 +74,10 @@ $DEVELOPMENT="$TRUNK/build-files/$Name/development";
 $INSTALLER="$TRUNK/build-files/$Name/setup";
 $FFEXTENSION="$TRUNK/build-files/$Name/xulsword\@xulsword.org";
 $PORTABLE="$TRUNK/build-files/$Name/portable";
+
+$XULSWORD=("$^O" =~ /darwin/i ? "Resources":"xulsword");
+$XULRUNNER=("$^O" =~ /darwin/i ? "MacOS":"xulrunner");
+$MAC_RESOURCE_SD = ("$^O" =~ /darwin/i ? "user/":"");
 
 &Log("\nBUILDING: $Vendor $Name-$Version (libxulsword $LibxulswordVersion) for $PLATFORM\n");
 
@@ -73,20 +89,20 @@ if ($MakeDevelopment =~ /true/i) {
   $BuildID = sprintf("%02d%02d%02d_%dD", ($D[5]%100), ($D[4]+1), $D[3], &get_GIT_rev());
   if (-e $DEVELOPMENT) {&cleanDir($DEVELOPMENT);}
   else {make_path($DEVELOPMENT);}
-  make_path("$DEVELOPMENT/xulsword");
+  make_path("$DEVELOPMENT/$XULSWORD");
   # Linux uses dynamic linking to SWORD, not static
-  &compileLibSword("$DEVELOPMENT/xulsword", ("$^O" =~ /MSWin32/i ? 1:0));
+  &compileLibSword("$DEVELOPMENT/$XULSWORD", ("$^O" =~ /MSWin32/i ? 1:0));
   my @manifest;
-  &copyXulswordFiles("$DEVELOPMENT/xulsword", \@manifest, $IncludeLocales, 1, 0);
-  if ($FirstRunXSM) {&includeFirstRunXSM("$DEVELOPMENT/xulsword/defaults", \%Prefs, $FirstRunXSM);}
-  make_path("$DEVELOPMENT/xulrunner");
-  &copyFirefoxFiles("$DEVELOPMENT/xulrunner");
-  &writePreferences("$DEVELOPMENT/xulsword", \%Prefs, 1);
-  &writeApplicationINI("$DEVELOPMENT/xulsword");
-  &includeModules($RESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
-  &includeLocales("$DEVELOPMENT/xulsword", $IncludeLocales, \@manifest, 0);
-  &writeManifest("$DEVELOPMENT/xulsword", \@manifest);
-  &writeRunScript("$DEVELOPMENT/xulsword", "dev");
+  &copyXulswordFiles("$DEVELOPMENT/$XULSWORD", \@manifest, $IncludeLocales, 1, 0);
+  if ($FirstRunXSM) {&includeFirstRunXSM("$DEVELOPMENT/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
+  make_path("$DEVELOPMENT/$XULRUNNER");
+  &copyFirefoxFiles("$DEVELOPMENT/$XULRUNNER");
+  &writePreferences("$DEVELOPMENT/$XULSWORD", \%Prefs, 1);
+  &writeApplicationINI("$DEVELOPMENT/$XULSWORD");
+  &includeModules($ADRESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
+  &includeLocales("$DEVELOPMENT/$XULSWORD", $IncludeLocales, \@manifest, 0);
+  &writeManifest("$DEVELOPMENT/$XULSWORD", \@manifest);
+  &writeRunScript("$DEVELOPMENT/$XULSWORD", "$DEVELOPMENT/$XULSWORD", "$DEVELOPMENT/$XULRUNNER", "dev");
 }
 
 # FIREFOX EXTENSION
@@ -116,7 +132,7 @@ if ($MakeFFextension =~ /true/i) {
   # NOT be included in the extension. Instead it will be downloaded upon first run.
   my $libdir = "$OutputDirectory/$Name-libxulsword-$LibxulswordVersion";
   if (! -e $libdir) {make_path($libdir);}
-  my $lib = "libxulsword-$LibxulswordVersion-$PLATFORM.".("$^O" =~ /linux/i ? "so":"dll");
+  my $lib = "libxulsword-$LibxulswordVersion-$PLATFORM.$DLB";
   if (-e "$libdir/$lib.zip") {unlink("$libdir/$lib.zip");}
   if ($Prefs{"(prefs.js):extensions.xulsword.LibSwordURL"}) {
 		mv("$FFEXTENSION/$lib", "$libdir/$lib");
@@ -136,29 +152,29 @@ if ($MakePortable =~ /true/i) {
   undef(%Prefs); &readSettingsFiles(\%Prefs);
   # "P" in BuildID identifies this as being a portable version
   $BuildID = sprintf("%02d%02d%02d_%dP", ($D[5]%100), ($D[4]+1), $D[3], &get_GIT_rev());
-  my $intdir = ("$^O" =~ /linux/i ? "":"/$Name-Portable-$Version");
+  my $intdir = ("$^O" =~ /(linux|darwin)/i ? "":"/$Name-Portable-$Version");
   my $rundir = $PORTABLE.$intdir;
   if (-e $PORTABLE) {&cleanDir($PORTABLE);}
   else {make_path("$rundir/$Name");}
-  make_path("$rundir/$Name/xulsword");
-  make_path("$rundir/$Name/xulrunner");
-  make_path("$rundir/$Name/resources");
-  make_path("$rundir/$Name/profile");
-  &compileLibSword("$rundir/$Name/xulsword", 1);
+  make_path("$rundir/$Name/$XULSWORD");
+  make_path("$rundir/$Name/$XULRUNNER");
+  make_path("$rundir/$Name/$MAC_RESOURCE_SD"."resources");
+  make_path("$rundir/$Name/$MAC_RESOURCE_SD"."profile");
+  &compileLibSword("$rundir/$Name/$XULSWORD", 1);
   my @manifest;
-  &copyXulswordFiles("$rundir/$Name/xulsword", \@manifest, $IncludeLocales, 0, 0);
-  if ($FirstRunXSM) {&includeFirstRunXSM("$rundir/$Name/xulsword/defaults", \%Prefs, $FirstRunXSM);}
-  &copyFirefoxFiles("$rundir/$Name/xulrunner");
-  &writePreferences("$rundir/$Name/xulsword", \%Prefs);
-  &writeApplicationINI("$rundir/$Name/xulsword");
+  &copyXulswordFiles("$rundir/$Name/$XULSWORD", \@manifest, $IncludeLocales, 0, 0);
+  if ($FirstRunXSM) {&includeFirstRunXSM("$rundir/$Name/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
+  &copyFirefoxFiles("$rundir/$Name/$XULRUNNER");
+  &writePreferences("$rundir/$Name/$XULSWORD", \%Prefs);
+  &writeApplicationINI("$rundir/$Name/$XULSWORD");
   if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup($rundir, 1);}
-  &includeModules("$rundir/$Name/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
-  &includeLocales("$rundir/$Name/xulsword", $IncludeLocales, \@manifest, 0);
-  &writeManifest("$rundir/$Name/xulsword", \@manifest);
-  open(NIN, ">:encoding(UTF-8)", "$rundir/$Name/resources/newInstalls.txt") || die;
+  &includeModules("$rundir/$Name/$MAC_RESOURCE_SD"."resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
+  &includeLocales("$rundir/$Name/$XULSWORD", $IncludeLocales, \@manifest, 0);
+  &writeManifest("$rundir/$Name/$XULSWORD", \@manifest);
+  open(NIN, ">:encoding(UTF-8)", "$rundir/$Name/$MAC_RESOURCE_SD"."resources/newInstalls.txt") || die;
   print NIN "NewLocales;en-US\n"; # this opens language menu on first run
   close(NIN);
-  &writeRunScript($rundir, "portable");
+  &writeRunScript($rundir, "$rundir/$Name/$XULSWORD", "$rundir/$Name/$XULRUNNER", "portable");
   &packagePortable("$PORTABLE/*", "$OutputDirectory/$Name-Portable-$Version");
 }
 
@@ -173,23 +189,23 @@ if ($MakeSetup =~ /true/i) {
 		if (-e $INSTALLER) {&cleanDir($INSTALLER);}
 		else {make_path($INSTALLER);}
 		# Delete RESOURCES because this dir is copied into Setup by the setup compiler
-		if (-e $RESOURCES) {&cleanDir($RESOURCES);}
-		else {make_path($RESOURCES);}
+		if (-e $ADRESOURCES) {&cleanDir($ADRESOURCES);}
+		else {make_path($ADRESOURCES);}
 		
-		make_path("$INSTALLER/xulsword");
-		make_path("$INSTALLER/xulrunner");
-		&compileLibSword("$INSTALLER/xulsword", 1);
+		make_path("$INSTALLER/$XULSWORD");
+		make_path("$INSTALLER/$XULRUNNER");
+		&compileLibSword("$INSTALLER/$XULSWORD", 1);
 		my @manifest;
-		&copyXulswordFiles("$INSTALLER/xulsword", \@manifest, $IncludeLocales, 0, 0);
-		if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/xulsword/defaults", \%Prefs, $FirstRunXSM);}
-		&copyFirefoxFiles("$INSTALLER/xulrunner");
-		&writePreferences("$INSTALLER/xulsword", \%Prefs);
-		&writeApplicationINI("$INSTALLER/xulsword");
+		&copyXulswordFiles("$INSTALLER/$XULSWORD", \@manifest, $IncludeLocales, 0, 0);
+		if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
+		&copyFirefoxFiles("$INSTALLER/$XULRUNNER");
+		&writePreferences("$INSTALLER/$XULSWORD", \%Prefs);
+		&writeApplicationINI("$INSTALLER/$XULSWORD");
 		&compileWindowsStartup($INSTALLER, 0);
-		&includeModules($RESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
-		&includeLocales("$INSTALLER/xulsword", $IncludeLocales, \@manifest, 0);
-		&writeManifest("$INSTALLER/xulsword", \@manifest);
-		&writeRunScript($INSTALLER, "setup");
+		&includeModules($ADRESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
+		&includeLocales("$INSTALLER/$XULSWORD", $IncludeLocales, \@manifest, 0);
+		&writeManifest("$INSTALLER/$XULSWORD", \@manifest);
+		&writeRunScript($INSTALLER, '', '', "setup");
 
 		# package everything into the Setup Installer
 		my $autogen = "$XulswordExtras/installer/autogen";
@@ -198,7 +214,7 @@ if ($MakeSetup =~ /true/i) {
 		&writeInstallerAppInfo("$autogen/appinfo.iss");
 		&writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales, \%Prefs);
 		&writeInstallerDefaultLocale("$autogen/defaultLocale.iss", \%Prefs);
-		&writeInstallerModuleUninstall("$autogen/uninstall.iss", $RESOURCES, $IncludeModules, $IncludeLocales);
+		&writeInstallerModuleUninstall("$autogen/uninstall.iss", $ADRESOURCES, $IncludeModules, $IncludeLocales);
 		&packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
 	}
 	else {&Log("WARN: Setup Installer has not been implemented for your platform.\n");}
@@ -352,7 +368,7 @@ sub compileLibSword($$) {
     }
     &copy_file("$TRUNK/Cpp/windows/Release/xulsword.dll", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.dll");
   }
-  elsif ("$^O" =~ /linux/i) {
+  elsif ("$^O" =~ /(linux|darwin)/i) {
     if (!$CompiledAlready) {
       chdir("$TRUNK/Cpp");
       if (!-e "$TRUNK/Cpp/Makefile.in") {
@@ -362,12 +378,12 @@ sub compileLibSword($$) {
       `make clean >> $LOGFILE 2>&1`;
       `make >> $LOGFILE 2>&1`;
       `./staticlib.sh >> $LOGFILE 2>&1`;
-      if (!-e "$TRUNK/Cpp/.libs/libxulsword.so") {&Log("ERROR: libxulsword did not compile.\n"); die;}
+      if (!-e "$TRUNK/Cpp/.libs/libxulsword.$DLB") {&Log("ERROR: libxulsword did not compile.\n"); die;}
     }
-    if (!$staticLinkToSWORD) {&copy_file("$TRUNK/Cpp/.libs/libxulsword.so", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.so");}
+    if (!$staticLinkToSWORD) {&copy_file("$TRUNK/Cpp/.libs/libxulsword.$DLB", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.$DLB");}
     else {
-      &copy_file("$TRUNK/Cpp/.libs/libxulswordstatic.so", $do);
-      mv("$do/libxulswordstatic.so", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.so");
+      &copy_file("$TRUNK/Cpp/.libs/libxulswordstatic.$DLB", $do);
+      mv("$do/libxulswordstatic.$DLB", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.$DLB");
     }
   }
   else {&Log("ERROR: Please add a compile script for your platform.\n");}
@@ -495,7 +511,7 @@ sub includeFirstRunXSM($\%$) {
 sub copyFirefoxFiles($) {
   my $do = shift;
   
-  if ("$^O" !~ /MSWin32/i && "$^O" !~ /linux/i) {
+  if ("$^O" !~ /(MSWin32|linux|darwin)/i) {
     &Log("ERROR: Custom packaged Firefox is not currently supported on this platform.\n");
     return;
   }
@@ -510,7 +526,14 @@ sub copyFirefoxFiles($) {
   my $xr = $XULRunner . ($MakeWindows64bit && $MakeWindows64bit !~ /\bfalse\b/i ? "64":"");
   if (!-e $xr) {&Log("ERROR: No directory: \"$xr\".\n"); die;}
   
+  if ("$^O" =~ /darwin/i) {$xr =~ s/[^\/\\]*$/XUL.framework\/Versions\/Current/;}
+  
   &copy_dir($xr, $do, "", $skip);
+  
+  if ("$^O" =~ /darwin/i) {
+	`mv "$do/dependentlibs.list" "$do/../Resources"`;
+	`mv "$do/omni.ja" "$do/../Resources"`;
+  }
   
   if ("$^O" =~ /MSWin32/i) {&mv("$do/xulrunner.exe", "$do/$WINprocess");}
 
@@ -771,8 +794,10 @@ sub writeExtensionInstallManifest($) {
   close(INM);
 }
 
-sub writeRunScript($$) {
-  my $rundir = shift;
+sub writeRunScript($$$$) {
+  my $runScriptDir = shift;
+  my $xulsword = shift;
+  my $xulrunner = shift;
   my $type = shift;
 
   &Log("----> Writing run script.\n");
@@ -784,41 +809,41 @@ sub writeRunScript($$) {
 
   if ("$^O" =~ /MSWin32/i) {
     if ($type eq "dev") {
-      print SCR "chdir(\"".$rundir."\");\n";
+      print SCR "chdir(\"".$runScriptDir."\");\n";
       # don't use -no-remote because otherwise commandline installation won't work!
-      print SCR "`start /wait ../xulrunner/$Name-srv.exe -app application.ini -jsconsole -console`;\n";
+      print SCR "`start /wait $xulrunner/$Name-srv.exe -app application.ini -jsconsole -console`;\n";
     }
     else {
-      print SCR "chdir(\"".$rundir."\");\n";
+      print SCR "chdir(\"".$runScriptDir."\");\n";
       print SCR "`$Name.exe`;\n";
     }
   }
-  elsif ("$^O" =~ /linux/i) {
+  elsif ("$^O" =~ /(linux|darwin)/i) {
     if ($type eq "dev") {
       # don't use -no-remote because otherwise commandline installation won't work!
-      print SCR "`$rundir/../xulrunner/xulrunner --app $rundir/application.ini -jsconsole`;\n";
+      print SCR "`$xulrunner/xulrunner --app $xulsword/application.ini -jsconsole`;\n";
     }
     else {
-      print SCR "chdir(\"".$rundir."\");\n";
+      print SCR "chdir(\"".$runScriptDir."\");\n";
       print SCR "`./start-$Name.sh`;\n";
       
       # write the start script too
-      my $profile = ($type eq "portable" ? " -profile ./$Name/profile":"");
-      if (open(PRUN, ">:encoding(UTF-8)", "$rundir/start-$Name.sh")) {
+      my $profile = ($type eq "portable" ? " -profile ./$Name/$MAC_RESOURCE_SD"."profile":"");
+      if (open(PRUN, ">:encoding(UTF-8)", "$runScriptDir/start-$Name.sh")) {
         print PRUN "#!/bin/bash\n";
         # don't use -no-remote because otherwise commandline installation won't work!
-        print PRUN "./$Name/xulrunner/xulrunner --app ./$Name/xulsword/application.ini$profile\n";
+        print PRUN "$xulrunner/xulrunner --app $xulsword/application.ini$profile\n";
         close(PRUN);
-        `chmod ug+x "$rundir/start-$Name.sh"`;
+        `chmod ug+x "$runScriptDir/start-$Name.sh"`;
       }
-      else {&Log("ERROR: Could not open file \"$rundir/start-$Name.sh\"\n");}
+      else {&Log("ERROR: Could not open file \"$runScriptDir/start-$Name.sh\"\n");}
       
     }
   }
   else {&Log("ERROR: Please add run scripts for your platform.\n");}
   
   close(SCR);
-  if ("$^O" =~ /linux/i) {`chmod ug+x "$s"`}
+  if ("$^O" =~ /(linux|darwin)/i) {`chmod ug+x "$s"`}
 }
 
 sub compileWindowsStartup($$) {

@@ -46,4 +46,5 @@ Cpp/windows/compiled.txt
 # For MAC
 .DS_Store
 test-driver
+XUL.framework
 

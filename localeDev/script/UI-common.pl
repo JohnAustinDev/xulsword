@@ -562,7 +562,7 @@ sub copy_file($$) {
   my $if = shift;
   my $of = shift;
   if ("$^O" =~ /MSWin32/i) {cp($if, $of);}
-  elsif ("$^O" =~ /linux/i) {
+  elsif ("$^O" =~ /(linux|darwin)/i) {
     my $cmd = "cp -p ".&escfile($if)." ".&escfile($of);
     `$cmd`;
   }
@@ -592,7 +592,7 @@ sub makeZIP($$$$) {
     #&Log("$cmd\n");
     `$cmd`;
   }
-  elsif ("$^O" =~ /linux/i) {
+  elsif ("$^O" =~ /(linux|darwin)/i) {
     $cwd = `echo $PWD`; $cwd =~ s/\s*$//;
     my $dip = $di;
     $dip =~ s/\/([^\/]*)$//;
@@ -621,7 +621,7 @@ sub escfile($) {
   my $n = shift;
 
   if ("$^O" =~ /MSWin32/i) {$n = "\"".$n."\"";}
-  elsif ("$^O" =~ /linux/i) {$n =~ s/([ \(\)])/\\$1/g;}
+  elsif ("$^O" =~ /(linux|darwin)/i) {$n =~ s/([ \(\)])/\\$1/g;}
   else {&Log("Please add file escape function for your platform.\n");}
   return $n;
 }

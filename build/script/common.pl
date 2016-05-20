@@ -13,15 +13,19 @@ sub readSettingsFiles(\%$) {
   if (!$f || -d $f) {$f = "$TRUNK/build/build_settings.txt";}
   &readSettings("$TRUNK/build/build_prefs.txt", $prefsP, $saveFiles);
   &readSettings($f, $prefsP, $saveFiles);
-  if ("$^O" !~ /MSWin32/i) {$MicrosoftSDK = ""; $MicrosoftVS = "";}
+  if ("$^O" !~ /MSWin32/i) {
+	$MicrosoftSDK = "";
+	$MicrosoftVS = "";
+	$XULRunner = ("$^O" =~ /darwin/i ? "../XUL.framework":"../xulrunner");
+  }
   if ($UseSecurityModule ne "true") {$KeyGenPath = "";}
   
   # Normalize paths, and check that required paths exist.
   @PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK", "MicrosoftVS", "FirstRunXSM", "KeyGenPath");
   foreach my $path (@PathNames) {
-  	if ($$path =~ /^\./) {$$path = File::Spec->rel2abs($$path);}
+  	if ($$path =~ /^\./) {$$path = File::Spec->rel2abs($$path, "$TRUNK/build");}
   	if ($path !~ /^ModuleRepository/ && $$path && !-e $$path) {
-  		&Log("ERROR: File \"$$path\" does not exist.");
+  		&Log("ERROR: $path, file \"$$path\" does not exist.");
   		die;
   	}
   }
@@ -88,7 +92,7 @@ sub copy_file($$) {
   my $if = shift;
   my $of = shift;
   if ("$^O" =~ /MSWin32/i) {cp($if, $of);}
-  elsif ("$^O" =~ /linux/i) {
+  elsif ("$^O" =~ /(linux|darwin)/i) {
     my $cmd = "cp -p ".&escfile($if)." ".&escfile($of);
     `$cmd`;
   }
@@ -118,7 +122,7 @@ sub makeZIP($$$$) {
   my $di = shift;
   my $updateExisting = shift;
   my $logfile = shift;
-  
+
   my $cmd = "";
   my $cwd = "";
   my $zd = $zf;
@@ -130,7 +134,7 @@ sub makeZIP($$$$) {
     my $a = ($updateExisting ? "u":"a");
     $cmd = "7za $a -tzip ".&escfile($zf)." -r ".&escfile($di)." -x!.svn";
   }
-  elsif ("$^O" =~ /linux/i) {
+  elsif ("$^O" =~ /(linux|darwin)/i) {
     $cwd = `echo $PWD`; $cwd =~ s/\s*$//;
     my $dip = $di;
     $dip =~ s/\/([^\/]*)$//;
@@ -185,7 +189,7 @@ sub escfile($) {
   my $n = shift;
   
   if ("$^O" =~ /MSWin32/i) {$n = "\"".$n."\"";}
-  elsif ("$^O" =~ /linux/i) {$n =~ s/([ \(\)])/\\$1/g;}
+  elsif ("$^O" =~ /(linux|darwin)/i) {$n =~ s/([ \(\)])/\\$1/g;}
   else {&Log("Please add file escape function for your platform.\n");}
   return $n;
 }
