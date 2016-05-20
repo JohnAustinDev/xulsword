@@ -2,11 +2,12 @@
 # Bootstrap the xulsword installation.
 # Run this to generate all the initial makefiles, etc.
 srcdir=`dirname $0`
-if [ $(uname | grep -q Darwin) ]; then
+if [ $(uname | grep Darwin) ]; then
   libtool=glibtool
 else
   libtool=libtool
 fi
+echo Using libtool executable: $libtool
 test -z "$srcdir" && srcdir=.
 
 ORIGDIR=`pwd`
