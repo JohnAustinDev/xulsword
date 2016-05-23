@@ -75,9 +75,9 @@ $INSTALLER="$TRUNK/build-files/$Name/setup";
 $FFEXTENSION="$TRUNK/build-files/$Name/xulsword\@xulsword.org";
 $PORTABLE="$TRUNK/build-files/$Name/portable";
 
-$XULSWORD=("$^O" =~ /darwin/i ? "Resources":"xulsword");
-$XULRUNNER=("$^O" =~ /darwin/i ? "MacOS":"xulrunner");
-$MAC_RESOURCE_SD = ("$^O" =~ /darwin/i ? "user/":"");
+$XULSWORD=("$^O" =~ /darwin/i ? "$Name.app/Contents/Resources":"xulsword");
+$XULRUNNER=("$^O" =~ /darwin/i ? "$Name.app/Contents/MacOS":"xulrunner");
+$MAC_PORTABLE_RESOURCE_SUBDIR = ("$^O" =~ /darwin/i ? "user/":"");
 
 &Log("\nBUILDING: $Vendor $Name-$Version (libxulsword $LibxulswordVersion) for $PLATFORM\n");
 
@@ -92,6 +92,7 @@ if ($MakeDevelopment =~ /true/i) {
   make_path("$DEVELOPMENT/$XULSWORD");
   # Linux uses dynamic linking to SWORD, not static
   &compileLibSword("$DEVELOPMENT/$XULSWORD", ("$^O" =~ /MSWin32/i ? 1:0));
+  if ("$^O" =~ /darwin/i) {&writeMACPackageFiles("$DEVELOPMENT/$XULSWORD/..");}
   my @manifest;
   &copyXulswordFiles("$DEVELOPMENT/$XULSWORD", \@manifest, $IncludeLocales, 1, 0);
   if ($FirstRunXSM) {&includeFirstRunXSM("$DEVELOPMENT/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
@@ -102,7 +103,7 @@ if ($MakeDevelopment =~ /true/i) {
   &includeModules($ADRESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
   &includeLocales("$DEVELOPMENT/$XULSWORD", $IncludeLocales, \@manifest, 0);
   &writeManifest("$DEVELOPMENT/$XULSWORD", \@manifest);
-  &writeRunScript("$DEVELOPMENT/$XULSWORD", "$DEVELOPMENT/$XULSWORD", "$DEVELOPMENT/$XULRUNNER", "dev");
+  if ("$^O" =~ /darwin/i) {&writeRunScript("$DEVELOPMENT/$XULRUNNER", "$DEVELOPMENT/$XULSWORD", "$DEVELOPMENT/$XULRUNNER", "dev");}
 }
 
 # FIREFOX EXTENSION
@@ -152,72 +153,90 @@ if ($MakePortable =~ /true/i) {
   undef(%Prefs); &readSettingsFiles(\%Prefs);
   # "P" in BuildID identifies this as being a portable version
   $BuildID = sprintf("%02d%02d%02d_%dP", ($D[5]%100), ($D[4]+1), $D[3], &get_GIT_rev());
-  my $intdir = ("$^O" =~ /(linux|darwin)/i ? "":"/$Name-Portable-$Version");
-  my $rundir = $PORTABLE.$intdir;
+  my $top = "$PORTABLE";
+  if ("$^O" =~ /MSWin32/i) {$top .= "/$Name-Portable-$Version";}
+  elsif ("$^O" =~ /linux/i) {$top .= "/$Name";}
   if (-e $PORTABLE) {&cleanDir($PORTABLE);}
-  else {make_path("$rundir/$Name");}
-  make_path("$rundir/$Name/$XULSWORD");
-  make_path("$rundir/$Name/$XULRUNNER");
-  make_path("$rundir/$Name/$MAC_RESOURCE_SD"."resources");
-  make_path("$rundir/$Name/$MAC_RESOURCE_SD"."profile");
-  &compileLibSword("$rundir/$Name/$XULSWORD", 1);
+  make_path("$top/$XULSWORD");
+  make_path("$top/$XULRUNNER");
+  make_path("$top/$XULSWORD/resources");
+  make_path("$top/$XULSWORD/profile");
+  &compileLibSword("$top/$XULSWORD", 1);
   my @manifest;
-  &copyXulswordFiles("$rundir/$Name/$XULSWORD", \@manifest, $IncludeLocales, 0, 0);
-  if ($FirstRunXSM) {&includeFirstRunXSM("$rundir/$Name/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
-  &copyFirefoxFiles("$rundir/$Name/$XULRUNNER");
-  &writePreferences("$rundir/$Name/$XULSWORD", \%Prefs);
-  &writeApplicationINI("$rundir/$Name/$XULSWORD");
-  if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup($rundir, 1);}
-  &includeModules("$rundir/$Name/$MAC_RESOURCE_SD"."resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
-  &includeLocales("$rundir/$Name/$XULSWORD", $IncludeLocales, \@manifest, 0);
-  &writeManifest("$rundir/$Name/$XULSWORD", \@manifest);
-  open(NIN, ">:encoding(UTF-8)", "$rundir/$Name/$MAC_RESOURCE_SD"."resources/newInstalls.txt") || die;
+  &copyXulswordFiles("$top/$XULSWORD", \@manifest, $IncludeLocales, 0, 0);
+  if ($FirstRunXSM) {&includeFirstRunXSM("$top/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
+  &copyFirefoxFiles("$top/$XULRUNNER");
+  &writePreferences("$top/$XULSWORD", \%Prefs);
+  &writeApplicationINI("$top/$XULSWORD");
+  if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup($top, 1);}
+  if ("$^O" =~ /darwin/i) {&writeMACPackageFiles("$top/$XULSWORD/..");}
+  &includeModules("$top/$XULSWORD/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
+  &includeLocales("$top/$XULSWORD", $IncludeLocales, \@manifest, 0);
+  &writeManifest("$top/$XULSWORD", \@manifest);
+  open(NIN, ">:encoding(UTF-8)", "$top/$XULSWORD/resources/newInstalls.txt") || die;
   print NIN "NewLocales;en-US\n"; # this opens language menu on first run
   close(NIN);
-  &writeRunScript($rundir, "$rundir/$Name/$XULSWORD", "$rundir/$Name/$XULRUNNER", "portable");
-  &packagePortable("$PORTABLE/*", "$OutputDirectory/$Name-Portable-$Version");
+  &writeRunScript(("$^O" =~ /darwin/i ? "$top/$XULRUNNER":$top), "$top/$XULSWORD", "$rundir/$XULRUNNER", "portable");
+  &packageXulsword("$PORTABLE/*", "$OutputDirectory/$Name-Portable-$Version", "Portable");
 }
 
-# WINDOWS INSTALLER VERSION
+# WINDOWS/MAC INSTALLER VERSIONS
 if ($MakeSetup =~ /true/i) {
   &Log("\n----> BUILDING PROGRAM SETUP INSTALLER\n");
   undef(%Prefs); &readSettingsFiles(\%Prefs);
-  if ("$^O" =~ /MSWin32/i) {
-		# "S" in BuildID identifies this as being Setup Installer version
-		$BuildID = sprintf("%02d%02d%02d_%dS", ($D[5]%100), ($D[4]+1), $D[3], &get_GIT_rev());
-		
-		if (-e $INSTALLER) {&cleanDir($INSTALLER);}
-		else {make_path($INSTALLER);}
-		# Delete RESOURCES because this dir is copied into Setup by the setup compiler
-		if (-e $ADRESOURCES) {&cleanDir($ADRESOURCES);}
-		else {make_path($ADRESOURCES);}
-		
-		make_path("$INSTALLER/$XULSWORD");
-		make_path("$INSTALLER/$XULRUNNER");
-		&compileLibSword("$INSTALLER/$XULSWORD", 1);
-		my @manifest;
-		&copyXulswordFiles("$INSTALLER/$XULSWORD", \@manifest, $IncludeLocales, 0, 0);
-		if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
-		&copyFirefoxFiles("$INSTALLER/$XULRUNNER");
-		&writePreferences("$INSTALLER/$XULSWORD", \%Prefs);
-		&writeApplicationINI("$INSTALLER/$XULSWORD");
-		&compileWindowsStartup($INSTALLER, 0);
-		&includeModules($ADRESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
-		&includeLocales("$INSTALLER/$XULSWORD", $IncludeLocales, \@manifest, 0);
-		&writeManifest("$INSTALLER/$XULSWORD", \@manifest);
-		&writeRunScript($INSTALLER, '', '', "setup");
 
-		# package everything into the Setup Installer
-		my $autogen = "$XulswordExtras/installer/autogen";
-		if (-e $autogen) {&cleanDir($autogen);}
-		make_path($autogen);
-		&writeInstallerAppInfo("$autogen/appinfo.iss");
-		&writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales, \%Prefs);
-		&writeInstallerDefaultLocale("$autogen/defaultLocale.iss", \%Prefs);
-		&writeInstallerModuleUninstall("$autogen/uninstall.iss", $ADRESOURCES, $IncludeModules, $IncludeLocales);
-		&packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
-	}
-	else {&Log("WARN: Setup Installer has not been implemented for your platform.\n");}
+  # "S" in BuildID identifies this as being Setup Installer version
+  $BuildID = sprintf("%02d%02d%02d_%dS", ($D[5]%100), ($D[4]+1), $D[3], &get_GIT_rev());
+  if (-e $INSTALLER) {&cleanDir($INSTALLER);}
+  else {make_path($INSTALLER);}
+  
+  if ("$^O" =~ /MSWin32/i) {
+	# Delete RESOURCES because this dir is copied into Setup by the setup compiler
+	if (-e $ADRESOURCES) {&cleanDir($ADRESOURCES);}
+	else {make_path($ADRESOURCES);}
+		
+	make_path("$INSTALLER/$XULSWORD");
+	make_path("$INSTALLER/$XULRUNNER");
+	&compileLibSword("$INSTALLER/$XULSWORD", 1);
+	my @manifest;
+	&copyXulswordFiles("$INSTALLER/$XULSWORD", \@manifest, $IncludeLocales, 0, 0);
+	if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
+	&copyFirefoxFiles("$INSTALLER/$XULRUNNER");
+	&writePreferences("$INSTALLER/$XULSWORD", \%Prefs);
+	&writeApplicationINI("$INSTALLER/$XULSWORD");
+	&compileWindowsStartup($INSTALLER, 0);
+	&includeModules($ADRESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
+	&includeLocales("$INSTALLER/$XULSWORD", $IncludeLocales, \@manifest, 0);
+	&writeManifest("$INSTALLER/$XULSWORD", \@manifest);
+	&writeRunScript($INSTALLER, '', '', "setup");
+
+	# package everything into the Setup Installer
+	my $autogen = "$XulswordExtras/installer/autogen";
+	if (-e $autogen) {&cleanDir($autogen);}
+	make_path($autogen);
+	&writeInstallerAppInfo("$autogen/appinfo.iss");
+	&writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales, \%Prefs);
+	&writeInstallerDefaultLocale("$autogen/defaultLocale.iss", \%Prefs);
+	&writeInstallerModuleUninstall("$autogen/uninstall.iss", $ADRESOURCES, $IncludeModules, $IncludeLocales);
+	&packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
+  }
+  elsif ("$^O" =~ /darwin/i) {
+    make_path("$INSTALLER/$XULSWORD");
+    make_path("$INSTALLER/$XULRUNNER");
+    &compileLibSword("$INSTALLER/$XULSWORD", 1);
+    my @manifest;
+    &copyXulswordFiles("$INSTALLER/$XULSWORD", \@manifest, $IncludeLocales, 0, 0);
+    if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
+    &copyFirefoxFiles("$INSTALLER/$XULRUNNER");
+    &writePreferences("$INSTALLER/$XULSWORD", \%Prefs);
+    &writeApplicationINI("$INSTALLER/$XULSWORD");
+    &writeMACPackageFiles("$INSTALLER/$XULSWORD/..");
+    &includeLocales("$INSTALLER/$XULSWORD", $IncludeLocales, \@manifest, 0);
+    &writeManifest("$INSTALLER/$XULSWORD", \@manifest);
+    &writeRunScript("$INSTALLER/$XULRUNNER", "$INSTALLER/$XULSWORD", "$INSTALLER/$XULRUNNER", "setup");
+    &packageMacSetup("$TRUNK/build/script/mac_dmg.sh");
+  }
+  else {&Log("WARN: Setup Installer has not been implemented for your platform.\n");}
 }
 
 &Log("FINISHED BUILDING\n");
@@ -479,10 +498,10 @@ sub copyXulswordFiles($\@$$$) {
     push(@{$manifestP}, "content branding jar:chrome/content.jar!/branding/");
   }
   if ($makeDevelopment) {
-    push(@{$manifestP}, "content xulsword file:../../../../xul/content/");
-    push(@{$manifestP}, "skin xulsword skin file:../../../../xul/skin/");
-    push(@{$manifestP}, "skin xsplatform skin file:../../../../xul/skin/common/linux/ os=Linux");
-    push(@{$manifestP}, "skin xsplatform skin file:../../../../xul/skin/common/windows/ os=WINNT");
+    push(@{$manifestP}, "content xulsword file:".File::Spec->abs2rel("$TRUNK/xul/content", $do)."/");
+    push(@{$manifestP}, "skin xulsword skin file:".File::Spec->abs2rel("$TRUNK/xul/skin/", $do)."/");
+    push(@{$manifestP}, "skin xsplatform skin file:".File::Spec->abs2rel("$TRUNK/xul/skin/common/linux/", $do)."/ os=Linux");
+    push(@{$manifestP}, "skin xsplatform skin file:".File::Spec->abs2rel("$TRUNK/xul/skin/common/windows/", $do)."/ os=WINNT");
     # development includes the hidden debug overlay
     push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/test/debug-overlay.xul");
   }
@@ -794,6 +813,56 @@ sub writeExtensionInstallManifest($) {
   close(INM);
 }
 
+sub writeMACPackageFiles($) {
+  my $contentsDir = shift;
+  
+  my $mpf = "$contentsDir/PkgInfo";
+  if (open(MPF, ">:encoding(UTF-8)", $mpf)) {
+    print MPF "APPL$CFBundleSignature\n";
+	close(MPF);
+  }
+  else {&Log("ERROR: Could not open MAC package file: \"$mpf\"\n");}
+  
+  $mpf = "$contentsDir/Info.plist";
+  if (open(MPF, ">:encoding(UTF-8)", $mpf)) {
+    print MPF 
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
+<plist version=\"1.0\">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>$MACBundleIdentifier</string>
+    <key>CFBundleSignature</key>
+    <string>$CFBundleSignature</string>
+    <key>CFBundleExecutable</key>
+    <string>$Name.command</string>
+    <key>CFBundleName</key>
+    <string>$Name</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$Version</string>
+    <key>CFBundleVersion</key>
+    <string>$Version</string>
+    <key>CFBundleIconFile</key>
+    <string>program.icns</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>".($CFBundleDevelopmentRegion ? $CFBundleDevelopmentRegion:"English")."</string>\n";
+    if ($NSHumanReadableCopyright) {
+      print MPF "
+    <key>NSHumanReadableCopyright</key>
+    <string>$NSHumanReadableCopyright</string>\n";
+    }
+    print MPF "
+</dict>
+</plist>\n";
+    close(MPF);
+  }
+  else {&Log("ERROR: Could not open MAC package file: \"$mpf\"\n");}
+}
+
 sub writeRunScript($$$$) {
   my $runScriptDir = shift;
   my $xulsword = shift;
@@ -818,7 +887,7 @@ sub writeRunScript($$$$) {
       print SCR "`$Name.exe`;\n";
     }
   }
-  elsif ("$^O" =~ /(linux|darwin)/i) {
+  elsif ("$^O" =~ /linux/i) {
     if ($type eq "dev") {
       # don't use -no-remote because otherwise commandline installation won't work!
       print SCR "`$xulrunner/xulrunner --app $xulsword/application.ini -jsconsole`;\n";
@@ -828,7 +897,7 @@ sub writeRunScript($$$$) {
       print SCR "`./start-$Name.sh`;\n";
       
       # write the start script too
-      my $profile = ($type eq "portable" ? " -profile ./$Name/$MAC_RESOURCE_SD"."profile":"");
+      my $profile = ($type eq "portable" ? " -profile ./$Name/profile":"");
       if (open(PRUN, ">:encoding(UTF-8)", "$runScriptDir/start-$Name.sh")) {
         print PRUN "#!/bin/bash\n";
         # don't use -no-remote because otherwise commandline installation won't work!
@@ -837,13 +906,45 @@ sub writeRunScript($$$$) {
         `chmod ug+x "$runScriptDir/start-$Name.sh"`;
       }
       else {&Log("ERROR: Could not open file \"$runScriptDir/start-$Name.sh\"\n");}
-      
     }
+  }
+  elsif ("$^O" =~ /darwin/i) {
+    print SCR "`$runScriptDir/$Name.command`\n";
+    if (open(PRUN, ">:encoding(UTF-8)", "$runScriptDir/$Name.command")) {
+      print PRUN "#!/bin/bash\n";
+      print PRUN "runpath=\$( dirname \"\${BASH_SOURCE[0]}\" )\n";
+      print PRUN "contentsdir=\"`cd \"\$runpath\"/.. > /dev/null && pwd`\"\n";
+	  print PRUN "eval profile=~/.".lc($Vendor)."/".lc($Name)."/profile\n";
+      if ($type eq "portable") {
+        print PRUN "exec \"\$runpath/xulrunner\" --app \"\$contentsdir/Resources/application.ini\" -profile \"\$contentsdir/Resources/".$MAC_PORTABLE_RESOURCE_SUBDIR."profile\"\n";
+      }
+      elsif ($type eq "setup") {
+		print PRUN &checkProfile($user);
+        print PRUN "exec \"\$runpath/xulrunner\" --app \"\$contentsdir/Resources/application.ini\" -profile \"\$profile\"\n";
+      }
+      else {
+		print PRUN &checkProfile($user);
+        print PRUN "exec \"\$runpath/xulrunner\" --app \"\$contentsdir/Resources/application.ini\" -profile \"\$profile\" -jsconsole\n";
+      }
+	  close(PRUN);
+	  `chmod ug+x "$runScriptDir/$Name.command"`;
+    }
+    else {&Log("ERROR: Could not open file \"$runScriptDir/$Name.command\"\n");}
   }
   else {&Log("ERROR: Please add run scripts for your platform.\n");}
   
   close(SCR);
   if ("$^O" =~ /(linux|darwin)/i) {`chmod ug+x "$s"`}
+}
+
+sub checkProfile($) {
+return "
+if [ ! -e \"\$profile\" ]; then
+  mkdir -p \"\$profile\"
+#elif [ -e \"./deleteProfile\" ]; then
+#  rm \"./deleteProfile\"
+#  rm -rf \"\$profile/*\"
+fi\n\n";
 }
 
 sub compileWindowsStartup($$) {
@@ -960,11 +1061,35 @@ sub packageWindowsSetup($) {
   chdir("$TRUNK/build");
 }
 
-sub packagePortable($$) {
+sub packageMacSetup($) {
+  my $is = shift;
+  
+  &Log("----> Creating MAC setup installer.\n");
+  
+  my $od = $is;
+  $od =~ s/[\/\\][^\/\\]*$//;
+  
+  my $img = ($XulswordExtras ? "$XulswordExtras/installer/mac/dmg_background.png":"$od/dmg_background.png");
+  my $outdir = "${OutputDirectory}/${Name}-Setup-${Version}";
+  if (! -e $outdir) {make_path($outdir);}
+  my $outfile = "${Name}_Setup(${PLATFORM})-${Version}.dmg";
+  if (-e "$outdir/$outfile") {unlink("$outdir/$outfile");}
+  
+  my $cmd = "$is \"$INSTALLER\" \"$Name\" 200000 \"$img\" \"$outdir/$outfile\"";
+#  &Log("$cmd\n");
+  my $r = `$cmd`;
+  
+  my $log = "$outdir/$outfile"; $log =~ s/.dmg$/.txt/;
+  if (open(LFG, ">:encoding(UTF-8)", $log)) {print LFG $r; close(LFG);}
+  else {&Log("ERROR: Could write packageMacSetup log to \"$log\"\n");}
+}
+
+sub packageXulsword($$$) {
   my $id = shift;
   my $od = shift;
+  my $type = shift;
 
-  my $fname = $Name."_Portable(".$PLATFORM.")-".$Version;
+  my $fname = $Name."_$type(".$PLATFORM.")-".$Version;
   my $of = "$od/$fname.zip";
   my $lf = "$fname.txt";
   

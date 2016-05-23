@@ -12,6 +12,10 @@ lzma=
 bz2=
 
 if [ $(uname | grep Darwin) ]; then
+# Don't include untgz.o twice
+if [ -e "./sword-svn/lib/.libs/untgz.o" ]; then
+  rm ./sword-svn/lib/.libs/untgz.o;
+fi
 g++ -dynamiclib -Wl,-undefined -Wl,dynamic_lookup \
 -o .libs/libxulswordstatic.dylib \
 .libs/xulsword.o \

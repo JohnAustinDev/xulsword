@@ -19,6 +19,12 @@ Set MakeWindows64bit=false
 Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v7.1
 Set MicrosoftVS=C:\Program Files (x86)\Microsoft Visual Studio 10.0
 
+# FOR MAC ONLY
+Set CFBundleSignature=CWXS
+Set MACBundleIdentifier=org.crosswire.mac.xulsword
+Set CFBundleDevelopmentRegion=English
+Set NSHumanReadableCopyright=
+
 # XULToolkitVersion SHOULD BE THE MAJOR VERSION OF XULRunner (IF THAT PATH IS SPECIFIED)
 # IT SHOULD ALSO MATCH A LOCALE OVERLOAD VERSION FROM THE UI-MAP
 # AND THE MAJOR VERSION OF xulrunnerRev IN build.sh SHOULD ALSO MATCH
