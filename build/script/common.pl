@@ -223,7 +223,10 @@ sub get_GIT_rev() {
     $rev = `Find /V /C "" < list.txt`;
     `del list.txt`; 
   }
-  else {$rev = `git rev-list HEAD | wc -l 2>&1`;}
+  else {
+    my $d = (-e "/vagrant/" ? "/vagrant":"$TRUNK");
+    $rev = `git --git-dir "$d/.git" rev-list HEAD | wc -l 2>&1`;
+  }
   
   return $rev;
 }

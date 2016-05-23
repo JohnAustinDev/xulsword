@@ -176,7 +176,7 @@ if ($MakePortable =~ /true/i) {
   open(NIN, ">:encoding(UTF-8)", "$top/$XULSWORD/resources/newInstalls.txt") || die;
   print NIN "NewLocales;en-US\n"; # this opens language menu on first run
   close(NIN);
-  &writeRunScript(("$^O" =~ /darwin/i ? "$top/$XULRUNNER":$top), "$top/$XULSWORD", "$rundir/$XULRUNNER", "portable");
+  &writeRunScript(("$^O" =~ /darwin/i ? "$top/$XULRUNNER":$top), "$top/$XULSWORD", "$top/$XULRUNNER", "portable");
   &packageXulsword("$PORTABLE/*", "$OutputDirectory/$Name-Portable-$Version", "Portable");
 }
 
