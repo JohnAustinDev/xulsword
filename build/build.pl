@@ -838,6 +838,8 @@ sub writeMACPackageFiles($) {
     <string>$Name.command</string>
     <key>CFBundleName</key>
     <string>$Name</string>
+	<key>CFBundleGetInfoString</key>
+	<string>$Name $Version</string>
     <key>CFBundleShortVersionString</key>
     <string>$Version</string>
     <key>CFBundleVersion</key>
@@ -848,6 +850,16 @@ sub writeMACPackageFiles($) {
     <string>APPL</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
+	<key>NSAppleScriptEnabled</key>
+	<true/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+  	<true/>
+  	<key>NSPrincipalClass</key>
+  	<string>GeckoNSApplication</string>
+  	<key>NSDisablePersistence</key>
+  	<true/>
     <key>CFBundleDevelopmentRegion</key>
     <string>".($CFBundleDevelopmentRegion ? $CFBundleDevelopmentRegion:"English")."</string>\n";
     if ($NSHumanReadableCopyright) {
@@ -858,6 +870,17 @@ sub writeMACPackageFiles($) {
     print MPF "
 </dict>
 </plist>\n";
+
+#<key>LSMinimumSystemVersion</key>
+#<string>10.6</string>
+#<key>LSMinimumSystemVersionByArchitecture</key>
+#<dict>
+#	<key>i386</key>
+#	<string>10.6.0</string>
+#	<key>x86_64</key>
+#	<string>10.6.0</string>
+#</dict>
+
     close(MPF);
   }
   else {&Log("ERROR: Could not open MAC package file: \"$mpf\"\n");}
