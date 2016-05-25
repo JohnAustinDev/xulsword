@@ -4,18 +4,18 @@ window {
   background-image:url(chrome://xulsword/skin/images/9.gif);
 }
 
-toolbar {
+#searchToolbar {
   font-size:0.8em;
 }
 #searchrow {
   padding:4px;
 }
-toolbar[showAdvanced="true"] #more,
-toolbar[showAdvanced="false"] #less,
-toolbar[showAdvanced="false"] #Comms-row,
-toolbar[showAdvanced="false"] #Dicts-row,
-toolbar[showAdvanced="false"] #Genbks-row,
-toolbar[showAdvanced="false"] #advanced {
+#searchToolbar[showAdvanced="true"] #more,
+#searchToolbar[showAdvanced="false"] #less,
+#searchToolbar[showAdvanced="false"] #Comms-row,
+#searchToolbar[showAdvanced="false"] #Dicts-row,
+#searchToolbar[showAdvanced="false"] #Genbks-row,
+#searchToolbar[showAdvanced="false"] #advanced {
   display:none;
 }
 #searchText {

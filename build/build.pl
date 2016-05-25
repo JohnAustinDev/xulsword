@@ -77,8 +77,7 @@ $PORTABLE="$TRUNK/build-files/$Name/portable";
 
 $XULSWORD=("$^O" =~ /darwin/i ? "$Name.app/Contents/Resources":"xulsword");
 $XULRUNNER=("$^O" =~ /darwin/i ? "$Name.app/Contents/MacOS":"xulrunner");
-$MAC_PORTABLE_RESOURCE_SUBDIR = ("$^O" =~ /darwin/i ? "user/":"");
-$MAC_SYSTEM_PROFILE = "~/$Vendor/$Name/profile";
+$MAC_USER_PROFILE = "~/Library/Application Support/$Name/profile";
 
 &Log("\nBUILDING: $Vendor $Name-$Version (libxulsword $LibxulswordVersion) for $PLATFORM\n");
 
@@ -235,6 +234,9 @@ if ($MakeSetup =~ /true/i) {
 	&includeModules("$INSTALLER/$XULSWORD/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
     &includeLocales("$INSTALLER/$XULSWORD", $IncludeLocales, \@manifest, 0);
     &writeManifest("$INSTALLER/$XULSWORD", \@manifest);
+    open(NIN, ">:encoding(UTF-8)", "$INSTALLER/$XULSWORD/resources/newInstalls.txt") || die;
+    print NIN "NewLocales;en-US\n"; # this opens language menu on first run
+    close(NIN);
     &writeRunScript("$INSTALLER/$XULRUNNER", "$INSTALLER/$XULSWORD", "$INSTALLER/$XULRUNNER", "setup");
     &packageMacSetup("$TRUNK/build/script/mac_dmg.sh");
   }
@@ -937,23 +939,45 @@ sub writeRunScript($$$$) {
   }
   elsif ("$^O" =~ /darwin/i) {
     print SCR "`$runScriptDir/$Name.command`\n";
+	
     if (open(PRUN, ">:encoding(UTF-8)", "$runScriptDir/$Name.command")) {
-      print PRUN "#!/bin/bash\n";
-      print PRUN "runpath=\$( dirname \"\${BASH_SOURCE[0]}\" )\n";
-      print PRUN "contentsdir=\"`cd \"\$runpath\"/.. > /dev/null && pwd`\"\n";
-	  print PRUN "eval profile=$MAC_SYSTEM_PROFILE\n";
+		my $mup = $MAC_USER_PROFILE;
+		$mup =~ s/([^\w\/\\\~\.])/\\\\$1/g; # escape file paths for eval
+		
+      print PRUN "#!/bin/bash
+xulrunner=\$( dirname \"\${BASH_SOURCE[0]}\" )
+contents=\"`cd \"\$xulrunner/..\" > /dev/null && pwd`\"
+eval profile=$mup
+
+if [ ! -e \"\$profile\" ]; then
+  mkdir -p \"\$profile\"
+elif [ -e \"\$contents/Resources/resources/deleteProfile\" ]; then
+  rm \"\$contents/Resources/resources/deleteProfile\"
+  rm -rf \"\$profile/*\"
+fi\n\n";
+      if ($type ne "portable") {
+        print PRUN "
+if [ -e \"\$contents/Resources/resources\" ] && [ ! -e \"\$profile/../resources\" ]; then
+  cp -Rn \"\$contents/Resources/resources\" \"\$profile/..\"
+  rm -rf \"\$contents/Resources/resources\"
+fi\n\n";
+      }
+      print PRUN "exec \"\$xulrunner/xulrunner\" --app \"\$contents/Resources/application.ini\" ";
+      
       if ($type eq "portable") {
-        print PRUN "exec \"\$runpath/xulrunner\" --app \"\$contentsdir/Resources/application.ini\" -profile \"\$contentsdir/Resources/".$MAC_PORTABLE_RESOURCE_SUBDIR."profile\"\n";
+        print PRUN "-profile \"\$contents/Resources/profile\" ";
       }
-      elsif ($type eq "setup") {
-		print PRUN &updateProfile($type);
-        print PRUN "exec \"\$runpath/xulrunner\" --app \"\$contentsdir/Resources/application.ini\" -profile \"\$profile\"\n";
-      }
-      else {
-		print PRUN &updateProfile($type);
-        print PRUN "exec \"\$runpath/xulrunner\" --app \"\$contentsdir/Resources/application.ini\" -profile \"\$profile\" -jsconsole\n";
-      }
+	  else {
+        print PRUN "-profile \"\$profile\" ";
+	  }
+	  
+	  if ($type eq "dev") {
+        print PRUN "-jsconsole "
+	  }
+	  
+	  print PRUN "\n";
 	  close(PRUN);
+	  
 	  `chmod ug+x "$runScriptDir/$Name.command"`;
     }
     else {&Log("ERROR: Could not open file \"$runScriptDir/$Name.command\"\n");}
@@ -962,28 +986,6 @@ sub writeRunScript($$$$) {
   
   close(SCR);
   if ("$^O" =~ /(linux|darwin)/i) {`chmod ug+x "$s"`}
-}
-
-sub updateProfile($) {
-  my $type = shift;
-	
-  my $r = "
-if [ ! -e \"\$profile\" ]; then
-  mkdir -p \"\$profile\"
-elif [ -e \"./deleteProfile\" ]; then
-  rm \"./deleteProfile\"
-  rm -rf \"\$profile/*\"
-fi\n\n";
-
-  if ($type ne "portable") {
-	$r .= "
-if [ -e \"./resources\" ]; then
-  cp -Rn \"./resources\" \"\$profile/..\"
-  rm -rf \"./resources\"
-fi\n\n";
-  }
-
-  return $r;
 }
 
 sub compileWindowsStartup($$) {
@@ -1114,7 +1116,7 @@ sub packageMacSetup($) {
   my $outfile = "${Name}_Setup(${PLATFORM})-${Version}.dmg";
   if (-e "$outdir/$outfile") {unlink("$outdir/$outfile");}
   
-  `chmod -R 755 "$INSTALLER/$Name"`;
+  `chmod -R 755 "$INSTALLER/$Name.app"`;
   
   my $cmd = "$is \"$INSTALLER\" \"$Name\" 200000 \"$img\" \"$outdir/$outfile\"";
 #  &Log("$cmd\n");

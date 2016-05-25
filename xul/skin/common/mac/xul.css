@@ -5,3 +5,12 @@ toolbar.mac-menubar > menu {
 	-moz-appearance:none !important;
 	padding:0px 10px !important;
 }
+
+button[class="togglebutton"] > hbox {
+	background-color:transparent !important;
+}
+
+button:not([disabled="true"]):hover:active,
+button[default="true"]:not([disabled="true"]):not(:-moz-window-inactive) {
+  color: inherit !important;
+}

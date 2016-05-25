@@ -94,7 +94,8 @@ GenBookNavigator = {
   update: function(info) {
 
     // figure out which of Tree's databases stay, which need to be added, and which need to go.
-    var treeDSs = this.Tree().database.GetDataSources();
+    try {var treeDSs = this.Tree().database.GetDataSources();}
+	catch(er) {jsdump("GenBookNavigator.update failed!: " + er); return 0;}
     var removeDS = [];
     var addDS = deepClone(info.unPinnedGenbkArray);
     while (treeDSs.hasMoreElements()) {

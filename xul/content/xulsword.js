@@ -184,6 +184,7 @@ function postWindowInit() {
   // Open language menu if a new locale was just installed
   if ((!document.getElementById("sub-lang").disabled && XS_window.NewModuleInfo.showLangMenu) || 
         XS_window.NewModuleInfo.NewLocales.length) {
+/*
     var opmenu = getDataUI("menu.options");
     var lamenu = getDataUI("menu.options.language");
     var result={};
@@ -192,6 +193,7 @@ function postWindowInit() {
         XSBundle.getFormattedString("LangSelectMsg", [opmenu, lamenu]), 
         DLGINFO,
         DLGOK);
+*/
     openLanguageMenu();
   }
   

@@ -70,7 +70,7 @@ function initSearch() {
   
   // open in advanced mode if searching non-BIBLE so that its radio button will show up
   if (Tab[Search.init.mod].modType != BIBLE)
-    document.getElementsByTagName("toolbar")[0].setAttribute("showAdvanced", "true");
+    document.getElementById("searchToolbar").setAttribute("showAdvanced", "true");
   
   // timeout needed to allow DOM changes to take full effect before continuing
   window.setTimeout(function () {initSearch2();}, 1); 
@@ -858,11 +858,11 @@ function commandHandler(e) {
     break;
 
   case "more":
-    document.getElementsByTagName("toolbar")[0].setAttribute("showAdvanced", "true");
+    document.getElementById("searchToolbar").setAttribute("showAdvanced", "true");
     break;
     
   case "less":
-    document.getElementsByTagName("toolbar")[0].setAttribute("showAdvanced", "false");
+    document.getElementById("searchToolbar").setAttribute("showAdvanced", "false");
     break;
     
   case "first":

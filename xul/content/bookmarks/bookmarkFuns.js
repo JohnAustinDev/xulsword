@@ -27,7 +27,12 @@ BookmarkFuns = {
   _bundle: null,
   
   initTemplateDataSource: function(elem, ds) {
-    elem.database.AddDataSource(ds);
+    try {elem.database.AddDataSource(ds);}
+	catch(er) {
+	  jsdump("Retrying BookmarkFuns.initTemplateDataSource: " + er); 
+	  window.setTimeout(function() {BookmarkFuns.initTemplateDataSource(elem, ds)}, 2000);
+	  return;
+  	}
     elem.builder.rebuild();
   },
 
