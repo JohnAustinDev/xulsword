@@ -1,0 +1,7 @@
+toolbar.mac-menubar > menu > hbox {
+	display:none !important;
+}
+toolbar.mac-menubar > menu {
+	-moz-appearance:none !important;
+	padding:0px 10px !important;
+}
