@@ -194,7 +194,7 @@ function postWindowInit() {
         DLGINFO,
         DLGOK);
 */
-    openLanguageMenu();
+    window.setTimeout(function() {openLanguageMenu();}, 1000);
   }
   
   // Enable help email address

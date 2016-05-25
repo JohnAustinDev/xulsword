@@ -738,7 +738,7 @@ function macMenuBar() {
   var m = document.getElementsByTagName("menubar")[0];
   var t = document.createElement("toolbar");
   while (m.firstChild) {t.appendChild(m.firstChild);}
-  for (index = m.attributes.length - 1; index >= 0; --index) {
+  for (var index = m.attributes.length - 1; index >= 0; --index) {
     t.attributes.setNamedItem(m.attributes[index].cloneNode());
   }
   t.className += " mac-menubar";
