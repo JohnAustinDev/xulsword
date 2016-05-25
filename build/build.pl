@@ -78,6 +78,7 @@ $PORTABLE="$TRUNK/build-files/$Name/portable";
 $XULSWORD=("$^O" =~ /darwin/i ? "$Name.app/Contents/Resources":"xulsword");
 $XULRUNNER=("$^O" =~ /darwin/i ? "$Name.app/Contents/MacOS":"xulrunner");
 $MAC_PORTABLE_RESOURCE_SUBDIR = ("$^O" =~ /darwin/i ? "user/":"");
+$MAC_SYSTEM_PROFILE = "~/$Vendor/$Name/profile";
 
 &Log("\nBUILDING: $Vendor $Name-$Version (libxulsword $LibxulswordVersion) for $PLATFORM\n");
 
@@ -231,6 +232,7 @@ if ($MakeSetup =~ /true/i) {
     &writePreferences("$INSTALLER/$XULSWORD", \%Prefs);
     &writeApplicationINI("$INSTALLER/$XULSWORD");
     &writeMACPackageFiles("$INSTALLER/$XULSWORD/..");
+	&includeModules("$INSTALLER/$XULSWORD/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
     &includeLocales("$INSTALLER/$XULSWORD", $IncludeLocales, \@manifest, 0);
     &writeManifest("$INSTALLER/$XULSWORD", \@manifest);
     &writeRunScript("$INSTALLER/$XULRUNNER", "$INSTALLER/$XULSWORD", "$INSTALLER/$XULRUNNER", "setup");
@@ -502,6 +504,7 @@ sub copyXulswordFiles($\@$$$) {
     push(@{$manifestP}, "skin xulsword skin file:".File::Spec->abs2rel("$TRUNK/xul/skin/", $do)."/");
     push(@{$manifestP}, "skin xsplatform skin file:".File::Spec->abs2rel("$TRUNK/xul/skin/common/linux/", $do)."/ os=Linux");
     push(@{$manifestP}, "skin xsplatform skin file:".File::Spec->abs2rel("$TRUNK/xul/skin/common/windows/", $do)."/ os=WINNT");
+	push(@{$manifestP}, "skin xsplatform skin file:".File::Spec->abs2rel("$TRUNK/xul/skin/common/mac/", $do)."/ os=Darwin");
     # development includes the hidden debug overlay
     push(@{$manifestP}, "overlay chrome://xulsword/content/xulsword.xul chrome://xulsword/content/test/debug-overlay.xul");
   }
@@ -510,6 +513,7 @@ sub copyXulswordFiles($\@$$$) {
     push(@{$manifestP}, "skin xulsword skin jar:chrome/skin.jar!/");
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/common/linux/ os=Linux");
     push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/common/windows/ os=WINNT");
+	push(@{$manifestP}, "skin xsplatform skin jar:chrome/skin.jar!/common/mac/ os=Darwin");
   }
 
 }
@@ -937,16 +941,16 @@ sub writeRunScript($$$$) {
       print PRUN "#!/bin/bash\n";
       print PRUN "runpath=\$( dirname \"\${BASH_SOURCE[0]}\" )\n";
       print PRUN "contentsdir=\"`cd \"\$runpath\"/.. > /dev/null && pwd`\"\n";
-	  print PRUN "eval profile=~/.".lc($Vendor)."/".lc($Name)."/profile\n";
+	  print PRUN "eval profile=$MAC_SYSTEM_PROFILE\n";
       if ($type eq "portable") {
         print PRUN "exec \"\$runpath/xulrunner\" --app \"\$contentsdir/Resources/application.ini\" -profile \"\$contentsdir/Resources/".$MAC_PORTABLE_RESOURCE_SUBDIR."profile\"\n";
       }
       elsif ($type eq "setup") {
-		print PRUN &checkProfile($user);
+		print PRUN &updateProfile($type);
         print PRUN "exec \"\$runpath/xulrunner\" --app \"\$contentsdir/Resources/application.ini\" -profile \"\$profile\"\n";
       }
       else {
-		print PRUN &checkProfile($user);
+		print PRUN &updateProfile($type);
         print PRUN "exec \"\$runpath/xulrunner\" --app \"\$contentsdir/Resources/application.ini\" -profile \"\$profile\" -jsconsole\n";
       }
 	  close(PRUN);
@@ -960,14 +964,26 @@ sub writeRunScript($$$$) {
   if ("$^O" =~ /(linux|darwin)/i) {`chmod ug+x "$s"`}
 }
 
-sub checkProfile($) {
-return "
+sub updateProfile($) {
+  my $type = shift;
+	
+  my $r = "
 if [ ! -e \"\$profile\" ]; then
   mkdir -p \"\$profile\"
-#elif [ -e \"./deleteProfile\" ]; then
-#  rm \"./deleteProfile\"
-#  rm -rf \"\$profile/*\"
+elif [ -e \"./deleteProfile\" ]; then
+  rm \"./deleteProfile\"
+  rm -rf \"\$profile/*\"
 fi\n\n";
+
+  if ($type ne "portable") {
+	$r .= "
+if [ -e \"./resources\" ]; then
+  cp -Rn \"./resources\" \"\$profile/..\"
+  rm -rf \"./resources\"
+fi\n\n";
+  }
+
+  return $r;
 }
 
 sub compileWindowsStartup($$) {
@@ -1098,6 +1114,8 @@ sub packageMacSetup($) {
   my $outfile = "${Name}_Setup(${PLATFORM})-${Version}.dmg";
   if (-e "$outdir/$outfile") {unlink("$outdir/$outfile");}
   
+  `chmod -R 755 "$INSTALLER/$Name"`;
+  
   my $cmd = "$is \"$INSTALLER\" \"$Name\" 200000 \"$img\" \"$outdir/$outfile\"";
 #  &Log("$cmd\n");
   my $r = `$cmd`;
@@ -1111,6 +1129,12 @@ sub packageXulsword($$$) {
   my $id = shift;
   my $od = shift;
   my $type = shift;
+  
+  if ("$^O" =~ /darwin/i) {
+	my $mp = $id; 
+	$mp =~ s/[^\/\\]*$/$Name.app/;
+	`chmod -R 755 "$mp"`;
+  }
 
   my $fname = $Name."_$type(".$PLATFORM.")-".$Version;
   my $of = "$od/$fname.zip";

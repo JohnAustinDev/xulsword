@@ -217,6 +217,7 @@
         </menupopup>
       </menu>
       <!-- <menu id="helpMenu"/> !-->
+	  <script>macMenuBar()</script>
     </menubar>
 
     <toolbar id="command-toolbar" tbalign="stretch">

@@ -465,6 +465,7 @@
         <menuitem id="about" label="&menu.help.about;" accesskey="&menu.help.about.sc;" oncommand="handleOptions(this)"/>
       </menupopup>
     </menu>
+	<script>macMenuBar()</script>
   </menubar>
   </toolbox>
   

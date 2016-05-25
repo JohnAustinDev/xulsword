@@ -729,3 +729,18 @@ function RTF2DOM(rtf, domNode) {
   
   sanitizeHTML(domNode, rtf);
 }
+
+// Place this function at the end of menubar elements to replace menubar 
+// with toolbar, because menubar on MAC requires a fully authenticated package
+// before it will appear and/or work correctly as the MAC top menu.
+function macMenuBar() {
+  if (OPSYS != 'MacOS') return;
+  var m = document.getElementsByTagName("menubar")[0];
+  var t = document.createElement("toolbar");
+  while (m.firstChild) {t.appendChild(m.firstChild);}
+  for (index = m.attributes.length - 1; index >= 0; --index) {
+    t.attributes.setNamedItem(m.attributes[index].cloneNode());
+  }
+  t.className += " mac-menubar";
+  m.parentNode.replaceChild(t, m);
+}

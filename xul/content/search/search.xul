@@ -91,6 +91,7 @@
         <menuitem id="searchHelp" label="&search.title; &menu.help;" accesskey="&menu.help.sc;"/>
       </menupopup>
     </menu>
+	<script>macMenuBar()</script>
   </menubar>
   
   
