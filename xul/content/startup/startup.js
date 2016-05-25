@@ -139,7 +139,7 @@ function startxulsword() {
   persist.saveURI(
     SWLibrary.ios.newURI(prefs.getCharPref("LibSwordURL"), null, null),
     null,
-    ios.newURI("http://xulsword.org", null, null),
+    SWLibrary.ios.newURI("http://xulsword.org", null, null),
     null,
     null,
     null,
@@ -187,7 +187,7 @@ function downloadLibxulsword() {
 
       if (aStatus == 0 && (!http || SWLibrary.response == 200)) {
         // download success! now unzip the download to get the library
-        if (!(/\.(so|dll)$/i).test(SWLibrary.file.leafName)) {
+        if (!(/\.(so|dll|dylib)$/i).test(SWLibrary.file.leafName)) {
           aStatus = -1;
           SWLibrary.status = "Bad file type \"" + SWLibrary.file.leafName + "\".";
         }
@@ -240,7 +240,7 @@ function downloadLibxulsword() {
   persist.saveURI(
     SWLibrary.ios.newURI(SWLibrary.url, null, null),
     null,
-    ios.newURI("http://xulsword.org", null, null),
+    SWLibrary.ios.newURI("http://xulsword.org", null, null),
     null,
     null,
     null,
