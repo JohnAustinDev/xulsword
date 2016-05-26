@@ -67,6 +67,11 @@ var BIN = { WINNT:"dll", Linux:"so", MacOS:"dylib" };
 // Are we running as a Firefox extension?
 IsExtension = (Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo).name == "Firefox");
 
+// For error handler reporting
+const SUBJECT = "Problem Report";
+const MAXLENGTH = 5000
+const URLNEWLINE = "\n";
+
 /************************************************************************
  * Declare/Define Common Global Constants
  ***********************************************************************/
@@ -900,6 +905,146 @@ function getDisplayNumerals(locale, localnumbers) {
 
 
 /************************************************************************
+ * ERROR LOGGING FUNCTIONS
+ ***********************************************************************/ 
+var SkipExceptions = false;
+var ProcessingException = false;
+
+function errorHandler(message, source, lineno, colno, error) {
+  if (SkipExceptions || prefs.getBoolPref("DontShowExceptionDialog") || ProcessingException) return;
+  ProcessingException = true;
+
+  // only alert about exceptions in xulsword code- ignore exceptions in Firefox code
+  if (!source || !(/chrome\:\/\/xulsword\/content/).test(source)) {
+    ProcessingException = false;
+    return;
+  }
+  
+  prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);  
+  prefs = prefs.getBranch("extensions.xulsword.");
+ 
+  // BUILD REPORT
+  var rep = message + URLNEWLINE;
+  
+  rep += getPlatformInfo();
+
+  try {rep += "Version1:" + ViewPort.Module[1] + ", ";}
+  catch (er) {rep += "Could not read ViewPort.Module[1]. ";}
+  try {rep += "Version2:" + ViewPort.Module[2] + ", ";}
+  catch (er) {rep += "Could not read ViewPort.Module[2]. ";}
+  try {rep += "Version3:" + ViewPort.Module[3] + ", ";}
+  catch (er) {rep += "Could not read ViewPort.Module[3]. ";}
+  
+  try {rep += "DefaultVersion:" + prefs.getCharPref("DefaultVersion") + ", ";}
+  catch (er) {rep += "Could not read pref 'DefaultVersion'. ";}
+  try {rep += "Location:" + Location.getLocation(prefs.getCharPref("DefaultVersion")) + ", ";}
+  catch (er) {rep += "Could not read Location. ";}
+  
+  rep += URLNEWLINE;
+  
+  try {rep += "Module List:" + LibSword.getModuleList() + URLNEWLINE;}
+  catch(er) {rep += "ERROR: Could not read LibSword module list." + URLNEWLINE;}
+  
+  rep += "STACK:" + error.stack;
+  
+  jsdump(rep);
+ 
+  // prompt user to report problem
+  try {var haveInternetPermission = (prefs.getBoolPref("SessionHasInternetPermission") || prefs.getBoolPref("HaveInternetPermission"));}
+  catch (er) {haveInternetPermission = false;}
+
+  var result={checked:false, ok: false};
+  try {
+    var bundle = getCurrentLocaleBundle("startup/startup.properties");
+    var dlg = window.openDialog("chrome://xulsword/content/dialogs/dialog/dialog.xul", "dlg", DLGSTD, result, 
+      bundle.GetStringFromName("Title"),
+      (haveInternetPermission ? bundle.formatStringFromName("SendErrorReport", [bundle.GetStringFromName("dialog.OK")], 1) + "\n\n":"") + message,
+      DLGALERT,
+      (haveInternetPermission ? DLGOKCANCEL:DLGOK),
+      bundle.GetStringFromName("dontShowAgain")
+    );
+  }
+  catch (er) {}
+  
+  SkipExceptions = true; // only report the first exception during any session...
+  
+  if (result.checked) prefs.setBoolPref("DontShowExceptionDialog", true);
+ 
+  if (!result.ok || !haveInternetPermission) {
+    ProcessingException = false;
+    return;
+  }
+  
+  try {var url = prefs.getCharPref("ProblemReportURL");}
+  catch (er) {url=null;}
+  
+  if (!url) {
+    ProcessingException = false;
+    return;
+  }
+  
+  var params = "xulsword=1&report=" + encodeURIComponent(rep.substr(0, MAXLENGTH)).replace(/%20/g, '+');
+  var ajax = new XMLHttpRequest();
+  ajax.open("POST", url, true);
+  ajax.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  ajax.setRequestHeader("Content-length", params.length);
+  ajax.setRequestHeader("Connection", "close");
+  ajax.send(params);
+  
+  ProcessingException = false;
+}
+
+function getPlatformInfo() {
+  var info = "Program info: ";
+  
+  try {
+    prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);  
+    prefs = prefs.getBranch("extensions.xulsword.");
+    
+    var bid = prefs.getCharPref("BuildID");
+    if (LibSword && !LibSword.loadFailed) bid += LibSword.LibswordPath.match(/libxulsword\-(.*?)\.[^\.]+$/)[1];
+    var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].getService(Components.interfaces.nsIXULAppInfo);
+    info += "Vendor:" + prefs.getCharPref("Vendor") + ", ";
+    info += "Name:" + prefs.getCharPref("Name") + ", ";
+    info += "Version:" + prefs.getCharPref("Version") + ", ";
+    info += "Build:" + bid + ", ";
+    info += "LibxulswordVersion:" + prefs.getCharPref("LibxulswordVersion") + ", ";
+    info += "xulrunner version:" + (appInfo ? appInfo.platformVersion:"unknown") + ", ";
+    info += "xulrunner buildID:" + (appInfo ? appInfo.platformBuildID:"unknown") + ", ";
+    info += "SWORD Engine version:" + prefs.getCharPref("EngineVersion");
+  }
+  catch(er) {info += er;}
+  
+  info += URLNEWLINE;
+
+  if (OPSYS == "WINNT") {
+    var keys = ["ProductName", "CSDVersion", "CurrentBuildNumber", "CurrentVersion"];
+    var wrk = Components.classes["@mozilla.org/windows-registry-key;1"].createInstance(Components.interfaces.nsIWindowsRegKey);
+    for (var k=0; wrk && k<keys.length; k++) {
+      var data = "";
+      try {
+        wrk.open(wrk["ROOT_KEY_LOCAL_MACHINE"], "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", wrk.ACCESS_READ);
+        var data = wrk.readStringValue(keys[k]);
+        wrk.close();
+      }
+      catch(er) {data = "failed to read registry value";}
+      info += keys[k] + " = " + data + ", ";
+    }
+    info += URLNEWLINE;
+  }
+  
+  return info;
+}
+
+function initLogging() {
+  var debugInfo = getSpecialDirectory("ProfD");
+  debugInfo.append("consoleLog.txt");
+  if (!debugInfo.exists()) createSafeFile(debugInfo, FPERM);
+  var env = Components.classes["@mozilla.org/process/environment;1"].getService(Components.interfaces.nsIEnvironment);
+  env.set("XRE_CONSOLE_LOG", debugInfo.path);
+}
+
+/************************************************************************
  * DYNAMIC CSS FUNCTIONS
  ***********************************************************************/ 
 
@@ -910,7 +1055,10 @@ function getDisplayNumerals(locale, localnumbers) {
 function initCSS(adjustableFontSize) {
   if (typeof(AllWindows) != "undefined") {
     var i = AllWindows.indexOf(window);
-    if (i == -1) AllWindows.push(window);
+    if (i == -1) {
+      window.onerror = errorHandler;
+      AllWindows.push(window);
+    }
   }
   
   // If we don't have LocaleConfigs yet, set LocaleConfigs of current locale.

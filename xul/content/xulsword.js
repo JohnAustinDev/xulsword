@@ -1477,8 +1477,8 @@ var XS_WindowIsClosing = false;
 function unloadXUL() {
   XS_WindowIsClosing = true;
   
-  if (typeof(aConsoleListener) != "undefined" && typeof(aConsoleListener.getPlatformInfo) == "function") 
-      jsdump(aConsoleListener.getPlatformInfo());
+  if (typeof(getPlatformInfo) == "function") 
+      jsdump(getPlatformInfo());
   
   // set these so xulsword viewport can draw cleaner and faster upon next startup
   if (ViewPort.ownerDocument.defaultView && ViewPort.ownerDocument.defaultView.innerHeight) {
@@ -1489,7 +1489,7 @@ function unloadXUL() {
   ViewPort.unload();
   
   // remove the exception reporter
-  setConsoleService(false);
+  window.onerror = null;
   
   // remove ALL command controllers because window.location.reload otherwise
   // allows them to pile up, causing very strange effects during debugging (like
@@ -1502,6 +1502,7 @@ function unloadXUL() {
   // close all windows
   for (var i=0; i<AllWindows.length; i++) {
     if (AllWindows[i] === window) continue;
+    try {AllWindows[i].onerror = null;} catch (er) {}
     try {AllWindows[i].close();} catch(er) {}
   }
   AllWindows = [];

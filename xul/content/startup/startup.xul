@@ -40,7 +40,6 @@
 	<script>var XS_window, AllWindows, XSBundle, ResourceFuns, BM, BMDS, AudioDirs, Book;</script>
 
 	<script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
-	<script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
 	<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
 	<script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/bookmarkDataInit.js"/>
 	<script type="application/x-javascript" src="chrome://xulsword/content/audio/audio.js"/>

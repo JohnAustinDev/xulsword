@@ -29,7 +29,7 @@
         <button id="reloadButton" label="Reload"       oncommand="window.location.reload();"/>
         <button id="extman"       label="Extensions"   oncommand="showPage('chrome://mozapps/content/extensions/extensions.xul?type=extensions');"/>
         <button id="debugger"     label="Debug"        oncommand="start_venkman()"/>
-        <button id="throw"        label="Throw"        oncommand="throw 'chrome://xulsword/content/debug-overlay.xul: The user has thrown an exception.';"/>
+        <button id="throw"        label="Throw"        oncommand="throw(new Error('The user has thrown an exception.'));"/>
       </hbox>
       
     </vbox>

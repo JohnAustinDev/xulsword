@@ -116,7 +116,6 @@
 <script>XSBundle = document.getElementById("xulsword-strings");</script>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/common/common0.js"/>
-<script type="application/x-javascript" src="chrome://xulsword/content/startup/logfile.js"/>
 <script>initLogging();</script>
 
 <script type="application/x-javascript" src="chrome://xulsword/content/bookmarks/resourceFuns.js"/>
