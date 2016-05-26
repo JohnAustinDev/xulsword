@@ -57,16 +57,24 @@ ARMU = {
   getModuleInstallerZipFile: function(modResource) {
     var installZipFile = TEMP_Install.clone();
     
+    var zipFileName
     if (ARMU.is_XSM_module(MLDS, modResource)) {
       // get leafName of ModuleUrl
-      var zipFileName = ARMU.getResourceLiteral(MLDS, modResource, "ModuleUrl").replace(/^.*?([^\/]+)$/, "$1");
+      zipFileName = ARMU.getResourceLiteral(MLDS, modResource, "ModuleUrl");
+      if (!zipFileName) zipFileName = "noModuleUrl";
+      zipFileName = zipFileName.replace(/^.*?([^\/]+)$/, "$1");
       if (!(/\.(zip|xsm)$/).test(zipFileName)) zipFileName += ".xsm";
-      zipFileName = zipFileName.replace(/[\&=]+/g, "");
-      installZipFile.append(zipFileName);
     }
     else {
-      installZipFile.append(ARMU.getResourceLiteral(MLDS, modResource, "ModuleName") + "_" + ARMU.getResourceLiteral(MLDS, modResource, "Version") + ".zip");
+      zipFileName = ARMU.getResourceLiteral(MLDS, modResource, "ModuleName");
+      if (!zipFileName) zipFileName = "noModuleName";
+      var v = ARMU.getResourceLiteral(MLDS, modResource, "Version");
+      if (!v) v = "noVersion";
+      zipFileName = zipFileName + "_" + v + ".zip";
     }
+    
+    zipFileName = zipFileName.replace(/[^\w\d\.\-\_]/g, "");
+    installZipFile.append(zipFileName);
     
     return installZipFile
   },

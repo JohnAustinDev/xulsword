@@ -765,7 +765,8 @@ function previousPage(w) {
   
   var sb = t.getElementsByClassName("sb")[0];
   var v = sb.firstChild;
-  while (v && (v.style.display == "none" || !v.className || !(/^vs(\s|$)/).test(v.className))) {
+  
+  while (v && (!v.style || v.style.display == "none" || !v.className || !(/^vs(\s|$)/).test(v.className))) {
     v = v.nextSibling;
   }
   if (!v) return;

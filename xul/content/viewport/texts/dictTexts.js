@@ -400,7 +400,9 @@ DictTexts = {
     var w = getContextWindow(e.target);
     var mod = ViewPort.Module[w];
     
-    var textbox = document.getElementById("note" + w).getElementsByClassName("keytextbox")[0];
+    var textbox = document.getElementById("note" + w);
+    if (!textbox) return;
+    textbox = textbox.getElementsByClassName("keytextbox")[0];
     var text = textbox.value;
     if (!text) {
       textbox.style.color="";

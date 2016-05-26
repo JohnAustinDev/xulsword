@@ -1481,12 +1481,12 @@ function unloadXUL() {
       jsdump(getPlatformInfo());
   
   // set these so xulsword viewport can draw cleaner and faster upon next startup
-  if (ViewPort.ownerDocument.defaultView && ViewPort.ownerDocument.defaultView.innerHeight) {
+  if (typeof(ViewPort) == "object" && ViewPort.ownerDocument.defaultView && ViewPort.ownerDocument.defaultView.innerHeight) {
     prefs.setIntPref("ViewPortHeight", ViewPort.ownerDocument.defaultView.innerHeight);
     prefs.setIntPref("ViewPortWidth", ViewPort.ownerDocument.defaultView.innerWidth);
   }
-  
-  ViewPort.unload();
+
+  if (typeof(ViewPort) == "object") ViewPort.unload();
   
   // remove the exception reporter
   window.onerror = null;
