@@ -157,10 +157,19 @@ if ($MakePortable =~ /true/i) {
   if ("$^O" =~ /MSWin32/i) {$top .= "/$Name-Portable-$Version";}
   elsif ("$^O" =~ /linux/i) {$top .= "/$Name";}
   if (-e $PORTABLE) {&cleanDir($PORTABLE);}
+  my $resources; my $profile;
+  if ("$^O" =~ /darwin/i) {
+    $resources = "$top/$XULSWORD/resources";
+    $profile = "$top/$XULSWORD/profile";
+  }
+  else {
+    $resources = "$top/resources";
+    $profile = "$top/profile";
+  }
   make_path("$top/$XULSWORD");
   make_path("$top/$XULRUNNER");
-  make_path("$top/$XULSWORD/resources");
-  make_path("$top/$XULSWORD/profile");
+  make_path($resources);
+  make_path($profile);
   &compileLibSword("$top/$XULSWORD", 1);
   my @manifest;
   &copyXulswordFiles("$top/$XULSWORD", \@manifest, $IncludeLocales, 0, 0);
@@ -169,14 +178,14 @@ if ($MakePortable =~ /true/i) {
   &writePreferences("$top/$XULSWORD", \%Prefs);
   &writeApplicationINI("$top/$XULSWORD");
   if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup($top, 1);}
-  if ("$^O" =~ /darwin/i) {&writeMACPackageFiles("$top/$XULSWORD/..");}
-  &includeModules("$top/$XULSWORD/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
+  if ("$^O" =~ /darwin/i) {&writeMACPackageFiles($top);}
+  &includeModules($resources, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
   &includeLocales("$top/$XULSWORD", $IncludeLocales, \@manifest, 0);
   &writeManifest("$top/$XULSWORD", \@manifest);
-  open(NIN, ">:encoding(UTF-8)", "$top/$XULSWORD/resources/newInstalls.txt") || die;
+  open(NIN, ">:encoding(UTF-8)", "$resources/newInstalls.txt") || die;
   print NIN "NewLocales;en-US\n"; # this opens language menu on first run
   close(NIN);
-  &writeRunScript(("$^O" =~ /darwin/i ? "$top/$XULRUNNER":$top), "$top/$XULSWORD", "$top/$XULRUNNER", "portable");
+  &writeRunScript(("$^O" =~ /darwin/i ? "$top/$XULRUNNER":"$top/.."), "$top/$XULSWORD", "$top/$XULRUNNER", "portable");
   &packageXulsword("$PORTABLE/*", "$OutputDirectory/$Name-Portable-$Version", "Portable");
 }
 
@@ -191,34 +200,34 @@ if ($MakeSetup =~ /true/i) {
   else {make_path($INSTALLER);}
   
   if ("$^O" =~ /MSWin32/i) {
-	# Delete RESOURCES because this dir is copied into Setup by the setup compiler
-	if (-e $ADRESOURCES) {&cleanDir($ADRESOURCES);}
-	else {make_path($ADRESOURCES);}
-		
-	make_path("$INSTALLER/$XULSWORD");
-	make_path("$INSTALLER/$XULRUNNER");
-	&compileLibSword("$INSTALLER/$XULSWORD", 1);
-	my @manifest;
-	&copyXulswordFiles("$INSTALLER/$XULSWORD", \@manifest, $IncludeLocales, 0, 0);
-	if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
-	&copyFirefoxFiles("$INSTALLER/$XULRUNNER");
-	&writePreferences("$INSTALLER/$XULSWORD", \%Prefs);
-	&writeApplicationINI("$INSTALLER/$XULSWORD");
-	&compileWindowsStartup($INSTALLER, 0);
-	&includeModules($ADRESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
-	&includeLocales("$INSTALLER/$XULSWORD", $IncludeLocales, \@manifest, 0);
-	&writeManifest("$INSTALLER/$XULSWORD", \@manifest);
-	&writeRunScript($INSTALLER, '', '', "setup");
+    # Delete RESOURCES because this dir is copied into Setup by the setup compiler
+    if (-e $ADRESOURCES) {&cleanDir($ADRESOURCES);}
+    else {make_path($ADRESOURCES);}
+      
+    make_path("$INSTALLER/$XULSWORD");
+    make_path("$INSTALLER/$XULRUNNER");
+    &compileLibSword("$INSTALLER/$XULSWORD", 1);
+    my @manifest;
+    &copyXulswordFiles("$INSTALLER/$XULSWORD", \@manifest, $IncludeLocales, 0, 0);
+    if ($FirstRunXSM) {&includeFirstRunXSM("$INSTALLER/$XULSWORD/defaults", \%Prefs, $FirstRunXSM);}
+    &copyFirefoxFiles("$INSTALLER/$XULRUNNER");
+    &writePreferences("$INSTALLER/$XULSWORD", \%Prefs);
+    &writeApplicationINI("$INSTALLER/$XULSWORD");
+    &compileWindowsStartup($INSTALLER, 0);
+    &includeModules($ADRESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
+    &includeLocales("$INSTALLER/$XULSWORD", $IncludeLocales, \@manifest, 0);
+    &writeManifest("$INSTALLER/$XULSWORD", \@manifest);
+    &writeRunScript($INSTALLER, '', '', "setup");
 
-	# package everything into the Setup Installer
-	my $autogen = "$XulswordExtras/installer/autogen";
-	if (-e $autogen) {&cleanDir($autogen);}
-	make_path($autogen);
-	&writeInstallerAppInfo("$autogen/appinfo.iss");
-	&writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales, \%Prefs);
-	&writeInstallerDefaultLocale("$autogen/defaultLocale.iss", \%Prefs);
-	&writeInstallerModuleUninstall("$autogen/uninstall.iss", $ADRESOURCES, $IncludeModules, $IncludeLocales);
-	&packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
+    # package everything into the Setup Installer
+    my $autogen = "$XulswordExtras/installer/autogen";
+    if (-e $autogen) {&cleanDir($autogen);}
+    make_path($autogen);
+    &writeInstallerAppInfo("$autogen/appinfo.iss");
+    &writeInstallerLocaleinfo("$autogen/localeinfo.iss", $IncludeLocales, \%Prefs);
+    &writeInstallerDefaultLocale("$autogen/defaultLocale.iss", \%Prefs);
+    &writeInstallerModuleUninstall("$autogen/uninstall.iss", $ADRESOURCES, $IncludeModules, $IncludeLocales);
+    &packageWindowsSetup("$XulswordExtras/installer/scriptProduction.iss");
   }
   elsif ("$^O" =~ /darwin/i) {
     make_path("$INSTALLER/$XULSWORD");
@@ -893,9 +902,9 @@ sub writeMACPackageFiles($) {
 }
 
 sub writeRunScript($$$$) {
-  my $runScriptDir = shift;
-  my $xulsword = shift;
-  my $xulrunner = shift;
+  my $runScriptDir = shift; # full path
+  my $xulsword = shift;     # full path
+  my $xulrunner = shift;    # full path
   my $type = shift;
 
   &Log("----> Writing run script.\n");
@@ -907,13 +916,12 @@ sub writeRunScript($$$$) {
 
   if ("$^O" =~ /MSWin32/i) {
     if ($type eq "dev") {
-      print SCR "chdir(\"".$runScriptDir."\");\n";
       # don't use -no-remote because otherwise commandline installation won't work!
       print SCR "`start /wait $xulrunner/$Name-srv.exe -app application.ini -jsconsole -console`;\n";
     }
     else {
-      print SCR "chdir(\"".$runScriptDir."\");\n";
-      print SCR "`$Name.exe`;\n";
+      # this is an executable (which was compiled earlier) rather than a script
+      print SCR "`$runScriptDir/$Name.exe`;\n";
     }
   }
   elsif ("$^O" =~ /linux/i) {
@@ -922,19 +930,20 @@ sub writeRunScript($$$$) {
       print SCR "`$xulrunner/xulrunner --app $xulsword/application.ini -jsconsole`;\n";
     }
     else {
-      print SCR "chdir(\"".$runScriptDir."\");\n";
-      print SCR "`./start-$Name.sh`;\n";
+      print SCR "`$runScriptDir/start-$Name.sh`;\n";
       
       # write the start script too
-      my $profile = ($type eq "portable" ? " -profile ./$Name/profile":"");
-      if (open(PRUN, ">:encoding(UTF-8)", "$runScriptDir/start-$Name.sh")) {
+      my $runScript = "$runScriptDir/start-$Name.sh";
+      my $profile = ($type eq "portable" ? " -profile \"./".File::Spec->abs2rel("$xulsword/../profile", $runScriptDir)."\"":"");
+      if (open(PRUN, ">:encoding(UTF-8)", $runScript)) {
         print PRUN "#!/bin/bash\n";
+        print PRUN "cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\"\n";
         # don't use -no-remote because otherwise commandline installation won't work!
-        print PRUN "$xulrunner/xulrunner --app $xulsword/application.ini$profile\n";
+        print PRUN "\"./".File::Spec->abs2rel("$xulrunner/xulrunner", $runScriptDir)."\" --app \"./".File::Spec->abs2rel("$xulsword/application.ini", $runScriptDir)."\"$profile\n";
         close(PRUN);
-        `chmod ug+x "$runScriptDir/start-$Name.sh"`;
+        `chmod ug+x "$runScript"`;
       }
-      else {&Log("ERROR: Could not open file \"$runScriptDir/start-$Name.sh\"\n");}
+      else {&Log("ERROR: Could not open file \"$runScript\"\n");}
     }
   }
   elsif ("$^O" =~ /darwin/i) {

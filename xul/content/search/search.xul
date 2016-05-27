@@ -95,7 +95,7 @@
   </menubar>
   
   
-  <toolbar showAdvanced="false">
+  <toolbar id="searchToolbar" showAdvanced="false">
     <vbox id="search-controls" flex="1">
     
       <hbox id="searchrow" pack="center" align="center">
