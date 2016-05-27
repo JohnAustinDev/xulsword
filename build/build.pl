@@ -906,6 +906,9 @@ sub writeRunScript($$$$) {
   my $xulsword = shift;     # full path
   my $xulrunner = shift;    # full path
   my $type = shift;
+  
+  # runScriptDir is used as base for abs2rel so it must be perfectly absolute (otherwise abs2rel returns junk)
+  if ($runScriptDir =~ /[\/\\]\.\.$/) {$runScriptDir =~ s/[\/\\][^\/\\]*[\/\\]\.\.$//;}
 
   &Log("----> Writing run script.\n");
 
@@ -930,16 +933,18 @@ sub writeRunScript($$$$) {
       print SCR "`$xulrunner/xulrunner --app $xulsword/application.ini -jsconsole`;\n";
     }
     else {
-      print SCR "`$runScriptDir/start-$Name.sh`;\n";
+      my $runScript = "$runScriptDir/start-$Name.sh";
+      print SCR "`$runScript`;\n";
       
       # write the start script too
-      my $runScript = "$runScriptDir/start-$Name.sh";
-      my $profile = ($type eq "portable" ? " -profile \"./".File::Spec->abs2rel("$xulsword/../profile", $runScriptDir)."\"":"");
+      # don't pass to abs2rel anything ending with "/.." just in case, since this is known to break the base argument
+      my $profd = $xulsword; $profd =~ s/[^\/\\]*$/profile/;
+      my $profile = ($type eq "portable" ? " -profile \"./".File::Spec->abs2rel($profd, $runScriptDir)."\"":"");
       if (open(PRUN, ">:encoding(UTF-8)", $runScript)) {
         print PRUN "#!/bin/bash\n";
         print PRUN "cd \"\$( dirname \"\${BASH_SOURCE[0]}\" )\"\n";
         # don't use -no-remote because otherwise commandline installation won't work!
-        print PRUN "\"./".File::Spec->abs2rel("$xulrunner/xulrunner", $runScriptDir)."\" --app \"./".File::Spec->abs2rel("$xulsword/application.ini", $runScriptDir)."\"$profile\n";
+        print PRUN "\"./".File::Spec->abs2rel($xulrunner, $runScriptDir)."/xulrunner\" --app \"./".File::Spec->abs2rel($xulsword, $runScriptDir)."/application.ini\"$profile\n";
         close(PRUN);
         `chmod ug+x "$runScript"`;
       }
