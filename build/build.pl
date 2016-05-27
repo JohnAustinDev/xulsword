@@ -154,7 +154,7 @@ if ($MakePortable =~ /true/i) {
   # "P" in BuildID identifies this as being a portable version
   $BuildID = sprintf("%02d%02d%02d_%dP", ($D[5]%100), ($D[4]+1), $D[3], &get_GIT_rev());
   my $top = "$PORTABLE";
-  if ("$^O" =~ /MSWin32/i) {$top .= "/$Name-Portable-$Version";}
+  if ("$^O" =~ /MSWin32/i) {$top .= "/$Name-Portable-$Version/$Name";}
   elsif ("$^O" =~ /linux/i) {$top .= "/$Name";}
   if (-e $PORTABLE) {&cleanDir($PORTABLE);}
   my $resources; my $profile;
@@ -177,7 +177,7 @@ if ($MakePortable =~ /true/i) {
   &copyFirefoxFiles("$top/$XULRUNNER");
   &writePreferences("$top/$XULSWORD", \%Prefs);
   &writeApplicationINI("$top/$XULSWORD");
-  if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup($top, 1);}
+  if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup("$top/..", 1);}
   if ("$^O" =~ /darwin/i) {&writeMACPackageFiles($top);}
   &includeModules($resources, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
   &includeLocales("$top/$XULSWORD", $IncludeLocales, \@manifest, 0);
