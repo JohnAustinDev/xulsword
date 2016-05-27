@@ -178,7 +178,7 @@ if ($MakePortable =~ /true/i) {
   &writePreferences("$top/$XULSWORD", \%Prefs);
   &writeApplicationINI("$top/$XULSWORD");
   if ("$^O" =~ /MSWin32/i) {&compileWindowsStartup("$top/..", 1);}
-  if ("$^O" =~ /darwin/i) {&writeMACPackageFiles($top);}
+  if ("$^O" =~ /darwin/i) {&writeMACPackageFiles("$top/$XULSWORD/..");}
   &includeModules($resources, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
   &includeLocales("$top/$XULSWORD", $IncludeLocales, \@manifest, 0);
   &writeManifest("$top/$XULSWORD", \@manifest);
