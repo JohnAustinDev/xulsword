@@ -32,9 +32,9 @@ Set (prefs.js):extensions.xulsword.HideDisabledViewMenuItems=false
 Set (prefs.js):extensions.xulsword.DontReadReferenceBible=false
 
 # MODULES FOR EACH WINDOW WHOSE TABS SHOULD BE INITIALLY HIDDEN
-Set (prefs.js):extensions.xulsword.w1.hidden=TR;HEB;StrongsGreek;StrongsHebrew;Robinson;
-Set (prefs.js):extensions.xulsword.w2.hidden=TR;HEB;StrongsGreek;StrongsHebrew;Robinson;
-Set (prefs.js):extensions.xulsword.w3.hidden=TR;HEB;StrongsGreek;StrongsHebrew;Robinson;
+Set (prefs.js):extensions.xulsword.w1.hidden=TR;HEB;StrongsGreek;StrongsGreekRU;StrongsHebrew;StrongsHebrewRU;Robinson;
+Set (prefs.js):extensions.xulsword.w2.hidden=TR;HEB;StrongsGreek;StrongsGreekRU;StrongsHebrew;StrongsHebrewRU;Robinson;
+Set (prefs.js):extensions.xulsword.w3.hidden=TR;HEB;StrongsGreek;StrongsGreekRU;StrongsHebrew;StrongsHebrewRU;Robinson;
 
 # SET advanced.mailftp TO TRUE SO THAT SETTING network.ftp.anonymous_password WILL WORK
 Set (prefs.js):advanced.mailftp=true
