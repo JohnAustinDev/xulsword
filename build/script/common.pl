@@ -109,7 +109,7 @@ sub cleanDir($) {
   my @files = readdir(CDIR);
   closedir(CDIR);
   foreach my $f (@files) {
-    if ($f =~ /^\.+/) {next;}
+    if ($f =~ /^\.+$/) {next;}
     $f = "$id/$f";
     if (-d $f) {remove_tree($f);}
     else {unlink($f);}
