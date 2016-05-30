@@ -65,14 +65,14 @@ find . -name "*.sh" -exec chmod ugo+x {} \;
 
 # COMPILE SWORD ENGINE DEPENDENCIES
 # CLucene
-if [ ! -e $XULSWORD/Cpp/clucene-core-0.9.21b ]; then
+if [ ! -e "$XULSWORD/Cpp/clucene-core-0.9.21b" ]; then
   echo Compiling $XULSWORD/Cpp/clucene-core-0.9.21b
-  cd $XULSWORD/Cpp
+  cd "$XULSWORD/Cpp"
   wget http://sourceforge.net/projects/clucene/files/clucene-core-stable/0.9.21b/clucene-core-0.9.21b.tar.bz2/download
   tar -xf download 
   rm download
 
-  cd $XULSWORD/Cpp/clucene-core-0.9.21b
+  cd "$XULSWORD/Cpp/clucene-core-0.9.21b"
   # Patch a problem with MAC compile of clucene
   if [ $(uname | grep Darwin) ]; then
     cp -f ../cluceneMK/osx/repl_tchar.h ./src/CLucene/config
@@ -115,8 +115,8 @@ COMMENT
 
 # Compile the SWORD engine (at specific rev)
 swordRev=3203
-if [ ! -e $XULSWORD/Cpp/sword-svn ]; then
-  cd $XULSWORD/Cpp
+if [ ! -e "$XULSWORD/Cpp/sword-svn" ]; then
+  cd "$XULSWORD/Cpp"
   svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword-svn
   cd sword-svn
   # fix a SWORD bug
@@ -134,8 +134,8 @@ fi
 
 # Download xulrunner (unless it exists already)
 xulrunnerRev=41.0b9
-if [ ! -e $XULSWORD/xulrunner ]; then
-  cd $XULSWORD
+if [ ! -e "$XULSWORD/xulrunner" ]; then
+  cd "$XULSWORD"
   if [ $(uname | grep Darwin) ]; then
     xulrunner=xulrunner-$xulrunnerRev.en-US.mac.tar.bz2
   else
@@ -151,7 +151,7 @@ if [ ! -e $XULSWORD/xulrunner ]; then
 fi
 
 # Configure xulsword
-cd $XULSWORD/Cpp
+cd "$XULSWORD/Cpp"
 make clean
 if [ $(uname | grep Darwin) ]; then
   # patch untgz MAC compile problem
@@ -161,7 +161,7 @@ fi
 ./configure
 
 if [ ! -e $XULSWORD/sword ]; then
-  mkdir $XULSWORD/sword
+  mkdir "$XULSWORD/sword"
 fi
 
 # Link to EXTRAS if available
@@ -175,11 +175,11 @@ if [ -e /vagrant ]; then
 fi
 
 # Build and compile xulsword
-if [ -e $XULSWORD/$EXTRAS/loc_MK.txt ]; then
-  $XULSWORD/$EXTRAS/build_MK.sh
-	$XULSWORD/build/build.pl $XULSWORD/$EXTRAS/loc_MK.txt
+if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
+  "$XULSWORD/$EXTRAS/build_MK.sh"
+	"$XULSWORD/build/build.pl" "$XULSWORD/$EXTRAS/loc_MK.txt"
 else 
-	$XULSWORD/build/build.pl
+	"$XULSWORD/build/build.pl"
 fi
 
 # Copy virtual build-out to host if we're running virtual
