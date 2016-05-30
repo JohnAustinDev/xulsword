@@ -973,7 +973,6 @@ fi\n\n";
         print PRUN "
 if [ -e \"\$contents/Resources/resources\" ] && [ ! -e \"\$profile/../resources\" ]; then
   cp -Rn \"\$contents/Resources/resources\" \"\$profile/..\"
-  rm -rf \"\$contents/Resources/resources\"
 fi\n\n";
       }
       print PRUN "exec \"\$xulrunner/xulrunner\" --app \"\$contents/Resources/application.ini\" ";
