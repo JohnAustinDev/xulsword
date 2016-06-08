@@ -103,7 +103,7 @@ if ($MakeDevelopment =~ /true/i) {
   &includeModules($ADRESOURCES, $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
   &includeLocales("$DEVELOPMENT/$XULSWORD", $IncludeLocales, \@manifest, 0);
   &writeManifest("$DEVELOPMENT/$XULSWORD", \@manifest);
-  if ("$^O" =~ /darwin/i) {&writeRunScript("$DEVELOPMENT/$XULRUNNER", "$DEVELOPMENT/$XULSWORD", "$DEVELOPMENT/$XULRUNNER", "dev");}
+  &writeRunScript(("$^O" =~ /darwin/i ? "$DEVELOPMENT/$XULRUNNER":"$DEVELOPMENT/.."), "$DEVELOPMENT/$XULSWORD", "$DEVELOPMENT/$XULRUNNER", "dev");
 }
 
 # FIREFOX EXTENSION
