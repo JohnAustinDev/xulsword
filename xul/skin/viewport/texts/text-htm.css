@@ -54,6 +54,12 @@
   clear:both;
   text-align:left;
 }
+.head2.moduleHeader,
+.head2.testamentHeader,
+.head2.bookHeader,
+.head2.chapterHeader {
+  text-align:center;
+}
 .text[textdir="rtl"] .head2 {
   text-align:right;
 }
