@@ -119,8 +119,9 @@ if [ ! -e "$XULSWORD/Cpp/sword-svn" ]; then
   cd "$XULSWORD/Cpp"
   svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword-svn
   cd sword-svn
-  # fix a SWORD bug
+  # fix a SWORD bug or two
   perl -p -i -e 's/(PKG_CHECK_MODULES\(\[CLUCENE2\], \[libclucene\-core >= 2.3\],,true\))/\#$1/' ./configure.ac
+  cp "$XULSWORD/Cpp/swordMK/osisheadings.cpp" "$XULSWORD/Cpp/sword-svn/src/modules/filters/"
   if [ $(uname | grep Darwin) ]; then
     # use brew's glibtoolize instead of libtoolize
     perl -p -i -e 's/^(LTIZE="\$AUTODIR"")(libtoolize")/$1g$2/' ./autogen.sh
