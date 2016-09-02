@@ -668,17 +668,16 @@ function ViewPortObj(viewPortObj) {
     return {mod:this.Module[1], w:1};
   };
   
-  
-  this.resizeTimer = null;
-  this.resizeFunc = function() {
-    if (typeof(LibSword) != "object" || !LibSword.libSwordReady("viewport.resizeFunc")) return;
-    if (this.resizeTimer) window.clearInterval(this.resizeTimer);
-    this.resizeTimer = null;
-    ViewPort.update();
-  };
+  this.resizeInterval = null;
   this.resize = function() {
-    if (window.innerHeight < 100) return;
-    if (!this.resizeTimer) this.resizeTimer = window.setInterval(this.resizeFunc, 300);
+    var self = this;
+    if (window.innerHeight < 100 || self.resizeInterval !== null) return;
+    self.resizeInterval = window.setInterval(function() {
+      if (typeof(LibSword) != "object" || !LibSword.libSwordReady("viewport.resizeFunc")) return;
+      window.clearInterval(self.resizeInterval);
+      self.resizeInterval = null;
+      ViewPort.update();  
+    }, 300);
   };
 
   this.unload = function() {

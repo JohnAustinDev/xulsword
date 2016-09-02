@@ -516,6 +516,7 @@ ARMU = {
     var m0 = filedata.match(/^[^;][^=\r\n]*=[^\r\n]+$/gm);
     for (var i=0; i<m0.length; i++) {
       var m1 = m0[i].match(/^\s*([^=]+?)\s*=\s*(.*?)\s*$/);
+      if (!m1) continue;
       if (entries[m1[1]] && this.AllowMultiple.indexOf(m1[1]) > -1) entries[m1[1]] += ", " + m1[2];
       else entries[m1[1]] = m1[2];
     }
