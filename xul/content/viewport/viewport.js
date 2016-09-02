@@ -670,10 +670,15 @@ function ViewPortObj(viewPortObj) {
   
   
   this.resizeTimer = null;
+  this.resizeFunc = function() {
+    if (typeof(LibSword) != "object" || !LibSword.libSwordReady("viewport.resizeFunc")) return;
+    if (this.resizeTimer) window.clearInterval(this.resizeTimer);
+    this.resizeTimer = null;
+    ViewPort.update();
+  };
   this.resize = function() {
     if (window.innerHeight < 100) return;
-    if (this.resizeTimer) window.clearTimeout(this.resizeTimer);
-    this.resizeTimer = window.setTimeout(function () {ViewPort.update();}, 300);
+    if (!this.resizeTimer) this.resizeTimer = window.setInterval(this.resizeFunc, 300);
   };
 
   this.unload = function() {

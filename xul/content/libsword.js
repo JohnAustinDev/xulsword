@@ -316,7 +316,7 @@ LibSword = {
 
   windowModal: function(win, setModal) {
     var events = ["dragstart", "drop", "click", "mousewheel", MSOVER, MSOUT, MSMOVE, "mousedown",
-              "mouseup", "dblclick", "select", "keydown", "keypress", "keyup", "contextmenu"];
+              "mouseup", "dblclick", "select", "keydown", "keypress", "keyup", "contextmenu", "DOMMouseScroll"];
     if (setModal) {
       for (var i=0; i<events.length; i++){
         win.addEventListener(events[i], this.stopevent, true);
