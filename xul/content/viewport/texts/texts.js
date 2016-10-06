@@ -767,11 +767,11 @@ Texts = {
           var h = 0;
           do {
             if (vs.style) vs.style.display = "";
-            h += vs.offsetHeight;
+            if (vs.offsetHeight) h += vs.offsetHeight;
             vs = vs.previousSibling;
           }
           while (vs && h < (sb.offsetHeight/2 - 20));
-          if (vs) vs.style.display = "none";
+          if (vs && vs.style) vs.style.display = "none";
         }
         break;
       case SCROLLTYPEEND:          // put selected verse at the end of the window or link, and don't change selection

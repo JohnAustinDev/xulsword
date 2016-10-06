@@ -38,6 +38,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks-xul.css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/addBookmark/arrow.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/addBookmark/addBookmark-xul.css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/common/dynamic.css" type="text/css" ?>
 
 <!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/bookmarks/bookmarks.dtd">
 

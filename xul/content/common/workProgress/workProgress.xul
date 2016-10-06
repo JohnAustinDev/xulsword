@@ -19,6 +19,7 @@
 !-->
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/common/dynamic.css" type="text/css" ?>
 
 <!DOCTYPE window SYSTEM "chrome://xulsword/locale/common/common.dtd">
 

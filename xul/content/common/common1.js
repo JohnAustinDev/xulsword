@@ -744,3 +744,52 @@ function macMenuBar() {
   t.className += " mac-menubar";
   m.parentNode.replaceChild(t, m);
 }
+
+// Inserts links to module specific CSS files. Edits those stylesheets
+// so they will apply only to that module's text, and not elsewhere.
+function moduleCssLinks() {
+  var modsheets = {};
+  if (typeof(Tab) == "undefined" || typeof(ModuleConfigs) == "undefined") return;
+  for (var mod in Tab) {
+    if (!ModuleConfigs.hasOwnProperty(mod) || ModuleConfigs[mod].PreferredCSSXHTML == NOTFOUND) continue;
+    var p = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+    p.initWithPath(Tab[mod].modDir + ModuleConfigs[mod].PreferredCSSXHTML);
+    if (!p.exists()) continue;
+    var href = 'file://' + p.path;
+    document.write('<link rel="stylesheet" href="' + href + '" type="text/css">');
+    modsheets[mod] = href;
+  }
+  
+  // Make sure this module's stylesheet only effects its own text, and not any others!
+  window.setTimeout(function () {
+    for (var mod in modsheets) {
+      for (var i=0; i < document.styleSheets.length; i++) {
+        if (getStyleSheetHREF(document.styleSheets[i]) != modsheets[mod]) continue;
+        try {var rl = document.styleSheets[i].cssRules.length;}
+        catch (er) {rl = 0;}
+        for (var r=0; r < rl; r++) {
+          var rule = document.styleSheets[i].cssRules[r];
+          if (rule.type != rule.STYLE_RULE) continue;
+          var t = rule.cssText.match(/^([^\{]+)(\{.*)$/);
+          if (!t) {continue;}
+          t[1] = t[1].replace(/(^|,)/g, ".cs-" + mod + " ");
+          document.styleSheets[i].insertRule(t[1] + t[2], r);
+          document.styleSheets[i].deleteRule(r+1);
+        }
+//for (var r=0; r < rl; r++) {jsdump(document.styleSheets[i].cssRules[r].cssText);}
+      }
+    }
+  }, 1);
+}
+
+/*
+window.setTimeout(function () {
+  for (var i=0; i < document.styleSheets.length; i++) {
+    for(var r=0; r < document.styleSheets[i].cssRules.length; r++) {
+      if (r > 20) continue;
+      try {var t = document.styleSheets[i].cssRules[r].cssText;} catch (er) {jsdump("ERROR:" + er); continue;}
+      jsdump(window.name + " (sheet " + i + ")\n" + t);
+    }
+  }
+}, 3000);
+*/

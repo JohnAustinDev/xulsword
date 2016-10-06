@@ -224,6 +224,7 @@ FindMod:
       modName:mod, 
       modType:type, 
       modVersion:LibSword.getModuleInformation(mod, "Version"),
+      modDir:null,
       label:label, 
       tabType:getShortTypeFromLong(type), 
       isRTL:(ModuleConfigs[mod].direction == "rtl"), 
@@ -240,6 +241,7 @@ FindMod:
     // find .conf file. Try usual guesses first, then do a rote search if necessary
     tab.conf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
     var p = LibSword.getModuleInformation(mod, "AbsoluteDataPath").replace(/[\\\/]/g, DIRSEP);
+    tab.modDir = p;
     p = p.replace(/[\\\/]modules[\\\/].*?$/, DIRSEP + "mods.d");
     tab.conf.initWithPath(p + DIRSEP + mod.toLowerCase() + ".conf");
     if (!tab.conf.exists()) {

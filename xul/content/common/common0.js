@@ -308,7 +308,8 @@ const Config = {
   AssociatedModules:{ modConf:null, localeConf:"DefaultModule", CSS:null },
   AssociatedLocale: { modConf:null, localeConf:null, CSS:null },
   StyleRule:        { modConf:null, localeConf:null, CSS:null },
-  TreeStyleRule:    { modConf:null, localeConf:null, CSS:null }
+  TreeStyleRule:    { modConf:null, localeConf:null, CSS:null },
+  PreferredCSSXHTML:{ modConf:"PreferredCSSXHTML", localeConf:null, CSS:null }
 };
 
 const LocaleConfigDefaultCSS = {
@@ -1050,7 +1051,7 @@ function initLogging() {
 
 // This should be called during onload of every .xul or .html file. It
 // creates the CSS classes for locales and modules and adds them to the
-// current stylesheet. It also sets the attributes used by CSS to control
+// dynamic stylesheet. It also sets the attributes used by CSS to control
 // direction (rtl or ltr).
 function initCSS(adjustableFontSize) {
   if (typeof(AllWindows) != "undefined") {
@@ -1076,8 +1077,12 @@ function initCSS(adjustableFontSize) {
     ProgramConfig.TreeStyleRule = createStyleRule("treechildren::-moz-tree-cell-text(Program)", ProgramConfig);
   }
 
-  // Create and append font, module and locale specific CSS rules to stylesheet
-  createDynamicCssClasses();
+  // Create and append font, module and locale specific CSS rules to dynamic.css stylesheet
+  for (var i=0; i < document.styleSheets.length; i++) {
+    if (!(/\bdynamic\.css$/).test(getStyleSheetHREF(document.styleSheets[i]))) continue;
+    createDynamicCssClasses(i);
+    break;
+  }
 
   setUserFontSize(getPrefOrCreate('FontSize', "Int", 0));
 
@@ -1109,10 +1114,18 @@ function initCSS(adjustableFontSize) {
 
 }
 
-// Will add/update CSS classes for fonts, locales and modules in last style sheet.
+function getStyleSheetHREF(sheet) {
+  try {var name = sheet.ownerNode.nodeName;} catch (er) {return "";}
+  if (name == "LINK") return sheet.ownerNode.href;
+  else if (name == "xml-stylesheet") {
+    var m = sheet.ownerNode.textContent.match(/href\s*=\s*["']([^"']*)["']/);
+    return (m ? m[1]:"");
+  }
+}
+
+// Will add/update CSS classes for fonts, locales and modules in styleSheet.
 // Replaces any existing identical selector or else appends a new one.
-function createDynamicCssClasses() {
-  var sheetIndex = document.styleSheets.length-1;
+function createDynamicCssClasses(sheetIndex) {
   var sheet = document.styleSheets[sheetIndex];
   if (!sheet) return;
 
@@ -1200,8 +1213,9 @@ function setUserFontSize(delta) {
   if (!document || !document.styleSheets || !document.styleSheets.length) return;
   
   for (var ssn=0; ssn < document.styleSheets.length; ssn++) {
-    for (var z=0; document.styleSheets[ssn].cssRules && z<document.styleSheets[ssn].cssRules.length; z++) {
-      var myRule = document.styleSheets[ssn].cssRules[z];
+    try {var r = document.styleSheets[ssn].cssRules;} catch (er) {continue;}
+    for (var z=0; r && z<r.length; z++) {
+      var myRule = r[z];
       if (myRule.cssText.search(/\.userFontSize/) == -1) continue;
       if (!StartingFont["ssn" + ssn + "z" + z]) {
           StartingFont["ssn" + ssn + "z" + z] = Number(myRule.style.fontSize.match(/(\d+)/)[0]);

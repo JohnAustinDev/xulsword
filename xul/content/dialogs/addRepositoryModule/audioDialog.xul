@@ -20,6 +20,7 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/dialogs/addRepositoryModule/addRepositoryModule-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/common/dynamic.css" type="text/css" ?>
 
 <!DOCTYPE dialog SYSTEM "chrome://xulsword/locale/xulsword.dtd">
 

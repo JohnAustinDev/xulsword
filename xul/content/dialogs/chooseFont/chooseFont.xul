@@ -20,6 +20,7 @@
 
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/dialogs/chooseFont/chooseFont-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/common/dynamic.css" type="text/css" ?>
 
 <!DOCTYPE window [
   <!ENTITY % chooseFontDTD SYSTEM "chrome://xulsword/locale/dialogs/chooseFont/chooseFont.dtd">

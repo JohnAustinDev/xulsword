@@ -37,6 +37,7 @@
 <?xml-stylesheet href="chrome://xulsword/skin/common/global-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarks-xul.css" type="text/css"?>
 <?xml-stylesheet href="chrome://xulsword/skin/bookmarks/bookmarksManager/bookmarksManager-xul.css" type="text/css"?>
+<?xml-stylesheet href="chrome://xulsword/skin/common/dynamic.css" type="text/css" ?>
 
 <?xul-overlay href="chrome://xulsword/content/common/editMenu-overlay/editMenu-overlay.xul"?>
 
