@@ -147,9 +147,9 @@ var PrintPassage = {
 
     // initialize loop variables
     this.tmpHTML  = "<div id=\"print-passage-container\" "; // begin single outer container
-    this.tmpHTML += "showIntros=\"" + (document.getElementById("introduction").checked ? "true":"false") + "\" ";
-    this.tmpHTML += "showCrossRefText=\"" + (document.getElementById("crossreftext").checked  ? "true":"false") + "\" ";
-    this.tmpHTML += "showHeadings=\"" + (document.getElementById("cmd_xs_toggleHeadings").checked  ? "true":"false") + "\">"; 
+    this.tmpHTML += "data-showIntros=\"" + (document.getElementById("introduction").checked ? "true":"false") + "\" ";
+    this.tmpHTML += "data-showCrossRefText=\"" + (document.getElementById("crossreftext").checked  ? "true":"false") + "\" ";
+    this.tmpHTML += "data-showHeadings=\"" + (document.getElementById("cmd_xs_toggleHeadings").checked  ? "true":"false") + "\">"; 
     this.display = this.getPassageDisplay(this.From.mod, this.From.bk + "." + this.From.ch + ".1.1");
     this.Next = { bn:this.From.bn, ch:this.From.ch };
     

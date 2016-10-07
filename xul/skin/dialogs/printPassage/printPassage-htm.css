@@ -17,24 +17,24 @@
 .nb[empty="true"] {
   display:none;
 }
-#print-passage-container[showIntros="true"] .introtext {
+#print-passage-container[data-showIntros="true"] .introtext {
   display:block;
   margin-bottom:40px;
 }
-#print-passage-container[showCrossRefText="false"] .crref:after {
+#print-passage-container[data-showCrossRefText="false"] .crref:after {
   content:none;
 }
-#print-passage-container[showCrossRefText="false"] .crtext {
+#print-passage-container[data-showCrossRefText="false"] .crtext {
   display:none;
 }
-#print-passage-container[showCrossRefText="false"] .crtext.opposing-program-direction {
+#print-passage-container[data-showCrossRefText="false"] .crtext.opposing-program-direction {
   display:none;
 }
-#print-passage-container[showCrossRefText="false"] .cr-sep {
+#print-passage-container[data-showCrossRefText="false"] .cr-sep {
   display:inline;
   margin:0px;
 }
-#print-passage-container[showCrossRefText="false"] .cr-sep:after {
+#print-passage-container[data-showCrossRefText="false"] .cr-sep:after {
   content:";";
   -moz-padding-end:0.5em;
 }
