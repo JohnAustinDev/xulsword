@@ -445,14 +445,18 @@ BibleTexts = {
     // does osisRef have a target?
     var m = ref.match(/^(\w+)\:/);
     if (m) {
+      ref = ref.replace(/^\w+\:/, "");
+      
       if (!(/Bible/i).test(m[1])) {
-        if (Tab.hasOwnProperty(ret.mod)) ret.mod = m[1];
+        if (Tab.hasOwnProperty(ret.mod) && Tab.hasOwnProperty(m[1])) {
+          ref = LibSword.convertLocation(LibSword.getVerseSystem(m[1]), ref, LibSword.getVerseSystem(ret.mod));
+        }
+        else if (Tab.hasOwnProperty(m[1])) ret.mod = m[1];
         else {
           ret.mod = null;
           jsdump("WARN: Target module is not installed!");
         }
       }
-      ref = ref.replace(/^\w+\:/, "");
     }
     
     if ((/^[^\.]+\.\d+$/).test(ref)) {                            // bk.c
