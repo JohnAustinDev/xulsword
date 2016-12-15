@@ -21,8 +21,8 @@
       <hbox>
         <button id="config"       label="config"       oncommand="showPage('about:config');"/>
         <button id="memory"       label="memory"       oncommand="showPage('about:memory');"/>
-        <button id="compartments" label="compartments" oncommand="showPage('about:compartments');"/>
         <button id="plugins"      label="Plugins"      oncommand="showPage('about:plugins');"/>
+        <button id="loghtml"      label="log VP HTML"  oncommand="jsdump(XS_window.ViewPort.ownerDocument.getElementById('viewportbody').outerHTML);"/>
       </hbox>
       
       <hbox>
