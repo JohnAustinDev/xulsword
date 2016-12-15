@@ -28,7 +28,11 @@ CommTexts = {
     // For Pin feature, set "global" SWORD options for local context
     for (var cmd in GlobalToggleCommands) {
       if (GlobalToggleCommands[cmd] == "User Notes") continue;
-      LibSword.setGlobalOption(GlobalToggleCommands[cmd], d.globalOptions[GlobalToggleCommands[cmd]]);
+      // Commentaries should always have these features turned on!
+      else if ((/^(Headings|Footnotes|Cross-references|Reference Material Links)$/).test(GlobalToggleCommands[cmd])) {
+        LibSword.setGlobalOption(GlobalToggleCommands[cmd], "On");
+      }
+      else LibSword.setGlobalOption(GlobalToggleCommands[cmd], d.globalOptions[GlobalToggleCommands[cmd]]);
     }
     
     // get Commentary chapter's text

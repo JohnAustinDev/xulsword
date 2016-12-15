@@ -102,6 +102,13 @@ DictTexts = {
     if (!key || !mods) return "";
     mods = mods.split(";");
     
+    // Dictionaries should always have these features turned on!
+    for (var cmd in GlobalToggleCommands) {
+      if ((/^(Headings|Footnotes|Cross-references|Reference Material Links)$/).test(GlobalToggleCommands[cmd])) {
+        LibSword.setGlobalOption(GlobalToggleCommands[cmd], "On");
+      }
+    }
+    
     var html = "";
     if (mods.length == 1) {
       try {html = LibSword.getDictionaryEntry(mods[0], key);}
@@ -132,7 +139,12 @@ DictTexts = {
         }
       }
     }
-    
+    for (var cmd in GlobalToggleCommands) {
+      if ((/^(Headings|Footnotes|Cross-references|Reference Material Links)$/).test(GlobalToggleCommands[cmd])) {
+        LibSword.setGlobalOption(GlobalToggleCommands[cmd], prefs.getCharPref(GlobalToggleCommands[cmd]));
+      }
+    }
+     
     if (!html) return "";
 
     // Add a heading

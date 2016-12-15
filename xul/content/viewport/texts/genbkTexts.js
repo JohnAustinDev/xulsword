@@ -25,6 +25,13 @@ GenBookTexts = {
   read: function(w, d) {
     var ret = { htmlHead:Texts.getPageLinks(), htmlText:"", footnotes:null };
     
+    // GenBooks should always have these features turned on!
+    for (var cmd in GlobalToggleCommands) {
+      if ((/^(Headings|Footnotes|Cross-references|Reference Material Links)$/).test(GlobalToggleCommands[cmd])) {
+        LibSword.setGlobalOption(GlobalToggleCommands[cmd], "On");
+      }
+    }
+    
     ret.htmlText = LibSword.getGenBookChapterText(d.mod, d.Key);
     
     // add headers
@@ -37,6 +44,12 @@ GenBookTexts = {
       var un = Texts.getUserNotes("na", d.Key, d.mod, ret.htmlText);
       ret.htmlText = un.html; // has user notes added to text
       ret.footnotes = un.notes;
+    }
+    
+    for (var cmd in GlobalToggleCommands) {
+      if ((/^(Headings|Footnotes|Cross-references|Reference Material Links)$/).test(GlobalToggleCommands[cmd])) {
+        LibSword.setGlobalOption(GlobalToggleCommands[cmd], prefs.getCharPref(GlobalToggleCommands[cmd]));
+      }
     }
     
     return ret;
