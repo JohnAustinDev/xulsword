@@ -261,8 +261,12 @@ body[chromedir="rtl"] .fncol3 {
 .sb .nlist {
   clear:both;
   border-top:1px solid grey;
-  margin:24px 10% 0px 10%;
+  margin:24px 0px 0px 0px;
   padding:10px 0px 10px 0px;
+}
+.sb .nlist:first-of-type,
+.dfnlist {
+  margin-top:50px;
 }
 
 /* Dictionary styles */
@@ -318,6 +322,11 @@ body[chromedir="rtl"] .fncol3 {
 .dict-key-heading {
   font-weight:bold;
 }
+div.dfnlist > span.dfnote:after {
+  content:' ';
+  display:block;
+}
+
 
 /* HTML TABLES */
 .sb table tr td {

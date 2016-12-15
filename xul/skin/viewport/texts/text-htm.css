@@ -335,12 +335,12 @@
   border-bottom:1px solid blue;
   cursor:pointer;
 }
-.gfn {
+.gfn, div.dfnlist > sup {
   color:rgb(0,200,250);
 }
-.gfn:before {
+.gfn:before, div.dfnlist > sup:before {
   content:'[';
 }
-.gfn:after {
+.gfn:after, div.dfnlist > sup:after {
   content:'] ';
 }
