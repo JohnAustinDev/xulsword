@@ -498,7 +498,7 @@ function scriptClick(e) {
     if (!gfns) break;
     gfns = gfns.getElementsByClassName("gfn");
     for (var gfn of gfns) {
-      if (gfn === elem || gfn.title != p.title) continue;
+      if (gfn === elem || !p || gfn.title != p.title) continue;
       gfn.scrollIntoView();
     }
     break;
