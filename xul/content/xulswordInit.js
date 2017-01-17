@@ -241,6 +241,7 @@ FindMod:
     // find .conf file. Try usual guesses first, then do a rote search if necessary
     tab.conf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
     var p = LibSword.getModuleInformation(mod, "AbsoluteDataPath").replace(/[\\\/]/g, DIRSEP);
+    if (p.slice(-1) != DIRSEP) p += DIRSEP;
     tab.modDir = p;
     p = p.replace(/[\\\/]modules[\\\/].*?$/, DIRSEP + "mods.d");
     tab.conf.initWithPath(p + DIRSEP + mod.toLowerCase() + ".conf");
