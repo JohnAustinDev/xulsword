@@ -106,7 +106,7 @@ function closeTabToolTip() {
 /************************************************************************
  * TEXT SCRIPT BOX MOUSE FUNCTIONS
  ***********************************************************************/  
-var scriptMouseOverClasses = /^(cr|fn|sr|dt|dtl|sn|un|introlink|noticelink)(\-|\s|$)/;
+var scriptMouseOverClasses = /^(cr|fn|sr|dt|dtl|sn|un|introlink|noticelink|image-container)(\-|\s|$)/;
 function scriptMouseOver(e) {
   
   // Bail if another mouse operation is already happening...
@@ -132,7 +132,7 @@ function scriptMouseOver(e) {
 
   // Get the text window of this event
   var w = getContextWindow(elem);
-  if (!w) return; // this also excludes Popup which is w==0
+  if (!w && type != "image-container") return; // this usually excludes Popup which is w==0
 
   var p = getElementInfo(elem);
 
@@ -190,6 +190,15 @@ function scriptMouseOver(e) {
       } catch (er) {}
     }
     break;
+  case "image-container":
+    okay = true;
+    var img = elem.getElementsByTagName("img");
+    if (img && img.length) {
+      if (img[0].clientWidth < img[0].naturalWidth) img[0].style.cursor = "zoom-in";
+      else if (img[0].style.width) img[0].style.cursor = "zoom-out";
+      else img[0].style.cursor = "";
+    }
+    break;
   }
   if (!okay) {
     // report the problem for debugging
@@ -223,7 +232,7 @@ function scriptMouseOut(e) {
 
 }
 
-const scriptClickClasses = /^(sn|sr|dt|dtl|cr|fn|gfn|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|origoption|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink|versePerLineButton)(\-|\s|$)/;
+const scriptClickClasses = /^(sn|sr|dt|dtl|cr|fn|gfn|sbpin|sbwin|crtwisty|fnlink|nbsizer|crref|snbut|origoption|listenlink|prevchaplink|nextchaplink|popupBackLink|popupCloseLink|versePerLineButton|image-container)(\-|\s|$)/;
 function scriptClick(e) {
 
   // Get the text window of this event
@@ -500,6 +509,17 @@ function scriptClick(e) {
     for (var gfn of gfns) {
       if (gfn === elem || !p || gfn.title != p.title) continue;
       gfn.scrollIntoView();
+    }
+    break;
+    
+  case "image-container":
+    var img = elem.getElementsByTagName("img");
+    if (img && img.length) {
+      if (img[0].clientWidth < img[0].naturalWidth) img[0].style.width = img[0].naturalWidth + "px";
+      else img[0].style.width = "";
+      if (img[0].clientWidth < img[0].naturalWidth) img[0].style.cursor = "zoom-in";
+      else if (img[0].style.width) img[0].style.cursor = "zoom-out";
+      else img[0].style.cursor = "";
     }
     break;
     

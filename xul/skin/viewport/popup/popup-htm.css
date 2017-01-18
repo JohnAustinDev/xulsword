@@ -208,9 +208,7 @@ body[chromedir="rtl"] .popup-mod-select {
 .popup-noteAddress {
   display:none;
 }
-#npopupTX .image-container img {
-  max-width:none;
-}
+
 
 /* dictionary styles */
 #npopup .dtl,
