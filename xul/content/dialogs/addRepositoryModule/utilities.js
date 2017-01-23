@@ -310,13 +310,14 @@ ARMU = {
     if (!modDrv || modDrv == NOTFOUND) return null;
     
     var moduleType;
-    if ((/^(RawText|zText)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Texts");
-    else if ((/^(RawCom|RawCom4|zCom)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Comms");
-    else if ((/^(RawLD|RawLD4|zLD)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Dicts");
+    if ((/^(RawText|zText)\d?$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Texts");
+    else if ((/^(RawCom|RawCom|zCom)\d?$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Comms");
+    else if ((/^(RawLD|RawLD|zLD)\d?$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Dicts");
     else if ((/^(RawGenBook)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Genbks");
     else if ((/^(RawFiles)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.SimpleText");
     else if ((/^(HREFCom)$/i).test(modDrv)) moduleType = "URL"; 
     else if ((/^(audio)$/i).test(modDrv)) moduleType = MyStrings.GetStringFromName("arm.moduleType.Audio");
+    else return NULL;
     
     moduleType = moduleType.replace(/\:$/, ""); // previous UI option had ":" at the end...
     
