@@ -194,7 +194,7 @@ function scriptMouseOver(e) {
     okay = true;
     var img = elem.getElementsByTagName("img");
     if (img && img.length) {
-      if (img[0].clientWidth < img[0].naturalWidth) img[0].style.cursor = "zoom-in";
+      if (img[0].offsetWidth < img[0].naturalWidth) img[0].style.cursor = "zoom-in";
       else if (img[0].style.width) img[0].style.cursor = "zoom-out";
       else img[0].style.cursor = "";
     }
@@ -515,9 +515,9 @@ function scriptClick(e) {
   case "image-container":
     var img = elem.getElementsByTagName("img");
     if (img && img.length) {
-      if (img[0].clientWidth < img[0].naturalWidth) img[0].style.width = img[0].naturalWidth + "px";
+      if (img[0].offsetWidth < img[0].naturalWidth) img[0].style.width = img[0].naturalWidth + "px";
       else img[0].style.width = "";
-      if (img[0].clientWidth < img[0].naturalWidth) img[0].style.cursor = "zoom-in";
+      if (img[0].offsetWidth < img[0].naturalWidth) img[0].style.cursor = "zoom-in";
       else if (img[0].style.width) img[0].style.cursor = "zoom-out";
       else img[0].style.cursor = "";
     }
