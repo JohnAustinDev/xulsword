@@ -840,15 +840,15 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
         versionNum, 
         versemod->getName(), 
         (versemod->getDirection() != DIRECTION_LTR ? " RTL":""));
-        
-      chapText.appendFormatted("<span title=\"%s.%d.%d.%s\" class=\"vs\">", bk.c_str(), myVerseKey->getChapter(), vNum, versemod->getName());
-      if (Versenumbers) {chapText.appendFormatted("<sup class=\"versenum\">%d</sup> ",vNum);}
       versionNum++;
       
       SWKey *testkey2 = versemod->createKey();
       VerseKey *mainkey = SWDYNAMIC_CAST(VerseKey, testkey2);
       if (!mainkey) {
         delete(testkey2);
+        chapText.appendFormatted("<span title=\"%s.%d.%d.%d.%s\" class=\"vs\">", bk.c_str(), myVerseKey->getChapter(), vNum, vNum, versemod->getName());
+        if (Versenumbers) {chapText.appendFormatted("<sup class=\"versenum\">%d</sup> ",vNum);}
+        chapText.appendFormatted("</span></div>");
         break;
       }
       const char * toVS = mainkey->getVersificationSystem();
@@ -865,15 +865,48 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
         readKey.setVersificationSystem(toVS);
         mapVersifications(&convertKey, &readKey);
       }
+      
+      int vFirst = vNum;
+      int vLast = vNum;
+      
+      readKey.setPersist(true);
+      readKey.setAutoNormalize(0);
       versemod->setKey(readKey);
 
-      SWBuf tmp;
+      SWBuf verseText;
       if (!versemod->popError()) {
-        tmp.set(versemod->renderText());
+        verseText.set(versemod->renderText());
         saveFootnotes(versemod, &footnoteText, &crossRefText, &noteText);
+        
+        // if this is a linked verse, set vFirst to first verse of link and vLast to last verse of link
+        versemod->setSkipConsecutiveLinks(true);
+        VerseKey lb; lb.copyFrom(readKey); lb.setVerse(1);
+        VerseKey ub; ub.copyFrom(readKey); ub.setVerse(readKey.getVerseMax());
+        readKey.setLowerBound(lb);
+        readKey.setUpperBound(ub);
+        versemod->decrement(1);
+        if (!versemod->popError()) {
+          versemod->increment(1);
+          vFirst = readKey.getVerse();
+        }
+        else {vFirst = 1;}
+        versemod->increment(1);
+        if (versemod->popError()) {
+          vLast = readKey.getVerseMax();
+        }
+        else {vLast = readKey.getVerse() - 1;}
       }
-      chapText.append(tmp);
-      haveText = haveText || tmp.c_str();
+      versemod->setKey(EmptyKey);
+      
+      chapText.appendFormatted("<span title=\"%s.%d.%d.%d.%s\" class=\"vs\">", bk.c_str(), myVerseKey->getChapter(), vFirst, vLast, versemod->getName());
+      chapText.append("<sup class=\"versenum\">");
+      if (Versenumbers) {
+        if (vFirst == vLast) {chapText.appendFormatted("%d", vFirst);}
+        else {chapText.appendFormatted("%d-%d", vFirst, vLast);}
+      }
+      chapText.append("</sup> ");
+      chapText.append(verseText);
+      haveText = haveText || verseText.c_str();
 
       chapText.append("</span></div>");
     
