@@ -258,13 +258,13 @@ body[chromedir="rtl"] .fncol3 {
 }
 
 /* Other footnotes */
-.sb .nlist {
+.nlist {
   clear:both;
   border-top:1px solid grey;
   margin:24px 0px 0px 0px;
   padding:10px 0px 10px 0px;
 }
-.sb .nlist:first-of-type,
+.nlist:first-of-type,
 .dfnlist {
   margin-top:50px;
 }

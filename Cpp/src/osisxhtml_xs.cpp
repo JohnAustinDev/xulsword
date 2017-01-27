@@ -409,7 +409,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 						if ((tag.getAttribute("type") && ((!strcmp(tag.getAttribute("type"), "crossReference")) || (!strcmp(tag.getAttribute("type"), "x-cross-ref"))))) {
 							mclass = "cr";
 						}
-						if (vkey) {
+						if (vkey && strchr(vkey->getOSISRef(), '.')) { // no chapter and verse means introduction, so use gfn marker
 							u->inXRefNote = false;
 							if (!strcmp(mclass.c_str(), "cr")) {
 								u->inXRefNote = true;

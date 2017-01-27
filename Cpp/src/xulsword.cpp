@@ -393,10 +393,20 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
   SWKey *modkey = module->getKey();
   VerseKey *versekey = SWDYNAMIC_CAST(VerseKey, modkey);
   
-  int fnV = 1;
   AttributeList::iterator AtIndex;
+  
+  // Due to a bug in SWORD 1.7.3, Footnote AttributeList keys are string 
+  // integers, and are sorted lexigraphically, thus incorrectly. So
+  // re-sort them properly here...
+  AttributeList correctlySortedList;
   for (AtIndex = module->getEntryAttributes()["Footnote"].begin(); AtIndex != module->getEntryAttributes()["Footnote"].end(); AtIndex++) {
+    SWBuf num;
+    num.setFormatted("%06i", strtol(AtIndex->first.c_str(), NULL, 10));
+    correctlySortedList[num] = AtIndex->second;
+  }
+  for (AtIndex = correctlySortedList.begin(); AtIndex != correctlySortedList.end(); AtIndex++) {
 		if (!strcmp(AtIndex->first.c_str(), "count")) {continue;} // thmlfootnotes.cpp adds "count"
+    int noteNum = strtol(AtIndex->first.c_str(), NULL, 10);
 		
 		SWBuf mclass = "fn";
 		if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
@@ -404,19 +414,19 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
 		}
 
 		SWBuf div;
-		div.appendFormatted("<div class=\"nlist\" title=\"%s.%d.%s.%s\">",
+		div.appendFormatted("<div class=\"nlist\" title=\"%s.%i.%s.%s\">",
 			mclass.c_str(),
-			fnV,
+			noteNum,
 			(versekey ? versekey->getOSISRef():"unavailable"), 
 			module->getName());
 
 		SWBuf link;
 		if (includeMarkerLinks) {
-			link.appendFormatted("<span class=\"gfn\" title=\"%s.%s.%s\">%s</span>", 
-				AtIndex->first.c_str(),
+			link.appendFormatted("<span class=\"gfn\" title=\"%i.%s.%s\">%i</span>", 
+				noteNum,
 				mclass.c_str(),
 				module->getName(),
-				AtIndex->first.c_str());
+				noteNum);
 		}
 
 		if (!strcmp(mclass.c_str(), "cr")) {
@@ -440,8 +450,6 @@ void xulsword::saveFootnotes(SWModule *module, SWBuf *footnoteText, SWBuf *cross
 			if (footnoteText) {footnoteText->append(fnNote);}
 			if (noteText) {noteText->append(fnNote);}
 		}
-      
-		fnV++;
   }
 }
 
@@ -1195,6 +1203,10 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
 GetIntroductions
 *********************************************************************/
 char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
+  SWBuf footnoteText;
+  SWBuf crossRefText;
+  SWBuf noteText;
+  
   SWModule * module = MyManager->getModule(vkeymod);
   if (!module) {
     xsThrow("GetIntroductions: module \"%s\" not found.", vkeymod);
@@ -1210,6 +1222,11 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
   }
 
   updateGlobalOptions(false);
+  
+  // Non-Bible texts should never filter these
+  MyManager->setGlobalOption("Headings", "On");
+  MyManager->setGlobalOption("Footnotes", "On");
+  MyManager->setGlobalOption("Cross-references", "On");
   
   VerseKey wkey = introkey;
   wkey.setText(vkeytext);
@@ -1242,9 +1259,17 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
 		introkey->setBook(0);
 		introkey->setChapter(0);
 		test = module->renderText();
+    footnoteText.append("<div class=\"module-intro\">");
+    crossRefText.append("<div class=\"module-intro\">");
+    noteText.append("<div class=\"module-intro\">");
+    saveFootnotes(module, &footnoteText, &crossRefText, &noteText, true);
+    footnoteText.append("</div>");
+    crossRefText.append("</div>");
+    noteText.append("</div>");
 		if (test.length() > 8) {
+      intro.append("<div class=\"module-intro\">");
 			intro.append(test);
-			intro.append("<br /><br />");
+			intro.append("<br /><br /></div>");
 		}
 		introkey->setTestament(topkey.getTestament());
 		isFirstInTestament = true;
@@ -1254,9 +1279,17 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
 		introkey->setBook(0);
 		introkey->setChapter(0);
 		test = module->renderText();
+    footnoteText.append("<div class=\"testament-intro\">");
+    crossRefText.append("<div class=\"testament-intro\">");
+    noteText.append("<div class=\"testament-intro\">");
+    saveFootnotes(module, &footnoteText, &crossRefText, &noteText, true);
+    footnoteText.append("</div>");
+    crossRefText.append("</div>");
+    noteText.append("</div>");
 		if (test.length() > 8) {
+			intro.append("<div class=\"testament-intro\">");
 			intro.append(test);
-			intro.append("<br /><br />");
+			intro.append("<br /><br /></div>");
 		}
 		introkey->setBook(topkey.getBook());
 		isFirstChapter = true;
@@ -1265,17 +1298,33 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
   if (isFirstChapter) {
 		introkey->setChapter(0);
 		test = module->renderText();
+    footnoteText.append("<div class=\"book-intro\">");
+    crossRefText.append("<div class=\"book-intro\">");
+    noteText.append("<div class=\"book-intro\">");
+    saveFootnotes(module, &footnoteText, &crossRefText, &noteText, true);
+    footnoteText.append("</div>");
+    crossRefText.append("</div>");
+    noteText.append("</div>");
 		if (test.length() > 8) {
+			intro.append("<div class=\"book-intro\">");
 			intro.append(test);
-			intro.append("<br /><br />");
+			intro.append("<br /><br /></div>");
 		}
 		introkey->setChapter(1);
 	}
   // get specified chapter intro
   test = module->renderText();
+  footnoteText.append("<div class=\"chapter-intro\">");
+  crossRefText.append("<div class=\"chapter-intro\">");
+  noteText.append("<div class=\"chapter-intro\">");
+  saveFootnotes(module, &footnoteText, &crossRefText, &noteText, true);
+  footnoteText.append("</div>");
+  crossRefText.append("</div>");
+  noteText.append("</div>");
   if (test.length() > 8) {
-		intro.append(test);
-		intro.append("<br /><br />");
+		intro.append("<div class=\"chapter-intro\">");
+    intro.append(test);
+    intro.append("<br /><br /></div>");
 	}
   
   module->setKey(EmptyKey);
@@ -1288,6 +1337,10 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
     intro.insert(0, css);
     intro.append("</div>");
   }
+  
+  MyFootnotes = footnoteText;
+  MyCrossRefs = crossRefText;
+  MyNotes = noteText;
   
   SWBuf check = assureValidUTF8(intro.c_str());
 
@@ -1318,6 +1371,11 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
   delete(tkey);
   
   updateGlobalOptions(false);
+  
+  // Non-Bible texts should never filter these
+  MyManager->setGlobalOption("Headings", "On");
+  MyManager->setGlobalOption("Footnotes", "On");
+  MyManager->setGlobalOption("Cross-references", "On");
 
   SWBuf xstring;
   
@@ -1407,6 +1465,11 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   }
 
   updateGlobalOptions(false);
+  
+  // Non-Bible texts should never filter these
+  MyManager->setGlobalOption("Headings", "On");
+  MyManager->setGlobalOption("Footnotes", "On");
+  MyManager->setGlobalOption("Cross-references", "On");
 
   SWKey *testkey = module->createKey();
   TreeKey *key = SWDYNAMIC_CAST(TreeKey, testkey);

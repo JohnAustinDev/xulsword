@@ -503,12 +503,17 @@ function scriptClick(e) {
     break;
     
   case "gfn":
-    var gfns = document.getElementById("text" + w);
-    if (!gfns) break;
-    gfns = gfns.getElementsByClassName("gfn");
+    var gfns;
+    if (!w) gfns = Popup.npopupTX.getElementsByClassName("gfn");
+    else {
+      gfns = document.getElementById("text" + w);
+      if (!gfns) break;
+      gfns = gfns.getElementsByClassName("gfn");
+    }
     for (var gfn of gfns) {
       if (gfn === elem || !p || gfn.title != p.title) continue;
       gfn.scrollIntoView();
+      if (window.name == "main-viewport") document.getElementsByTagName("body")[0].scrollTop = 0;
     }
     break;
     

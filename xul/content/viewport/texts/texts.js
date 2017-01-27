@@ -27,6 +27,8 @@ Texts = {
   pinnedDisplay:[null, null, null, null],
   
   footnotes:[null, null, null, null],
+  
+  introFootnotes:[null, null, null, null],
 
   // The force parameter is an array of values, one for each window, 
   // beginning with index 1 (0 is null). Each value has the following
@@ -191,8 +193,8 @@ Texts = {
     if (force || !this.display[w] || this.isChanged(check, display, this.display[w])) {
       textUpdated = true;
 //jsdump("Reading text from libsword w" + w);
-      var prev = {htmlText:"", htmlNotes:"", footnotes:""};
-      var next = {htmlText:"", htmlNotes:"", footnotes:""};
+      var prev = {htmlText:"", htmlNotes:"", footnotes:"", introFootnotes:""};
+      var next = {htmlText:"", htmlNotes:"", footnotes:"", introFootnotes:""};
 
       // Get any additional chapters needed to fill multi-column Bible displays.
       // Any verse in the display chapter should be scrollable (top, center, or bottom)
@@ -211,6 +213,7 @@ Texts = {
           prev.htmlText = tip.htmlText + prev.htmlText;
           prev.htmlNotes = tip.htmlNotes + prev.htmlNotes;
           prev.footnotes = tip.footnotes + prev.footnotes;
+          prev.introFootnotes = tip.introFootnotes + prev.introFootnotes;
           sanitizeHTML(sb, prev.htmlText);
           if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
                (!ltr && sb.lastChild.offsetLeft < 0) ) break;
@@ -227,6 +230,7 @@ Texts = {
           next.htmlText = next.htmlText + tip.htmlText;
           next.htmlNotes = next.htmlNotes + tip.htmlNotes;
           next.footnotes = next.footnotes + tip.footnotes;
+          next.introFootnotes = next.introFootnotes + tip.introFootnotes;
           sanitizeHTML(sb, next.htmlText);
           if ( (ltr && sb.lastChild.offsetLeft >= sb.offsetWidth) || 
                (!ltr && sb.lastChild.offsetLeft < 0) ) break;
@@ -245,6 +249,7 @@ Texts = {
 
       var nb = t.getElementsByClassName("nb")[0];
       this.footnotes[w] = prev.footnotes + ti.footnotes + next.footnotes;
+      this.introFootnotes[w] = prev.introFootnotes + ti.introFootnotes + next.introFootnotes;
       sanitizeHTML(nb, prev.htmlNotes + ti.htmlNotes + next.htmlNotes);
     }
     
@@ -289,6 +294,7 @@ Texts = {
       
       var nb = t.getElementsByClassName("nb")[0];
       this.footnotes[w] = ti.footnotes;
+      this.introFootnotes[w] = ti.introFootnotes;
       sanitizeHTML(nb, ti.htmlNotes);
     }
     

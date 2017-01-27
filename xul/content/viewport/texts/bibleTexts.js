@@ -25,7 +25,7 @@ BibleTexts = {
   read: function(w, d) {
     // w is only needed for creating unique ids
   
-    var ret = { htmlText:"", htmlNotes:"", htmlHead:Texts.getPageLinks(), footnotes:null };
+    var ret = { htmlText:"", htmlNotes:"", htmlHead:Texts.getPageLinks(), footnotes:null, introFootnotes:null };
 
     // For Pin feature, set "global" SWORD options for local context
     for (var cmd in GlobalToggleCommands) {
@@ -81,7 +81,9 @@ BibleTexts = {
     // add headers
     var showHeader = (d.globalOptions["Headings"]=="On");
     if (showHeader && ret.htmlText) {
-      ret.htmlText = this.getChapterHeading(d) + ret.htmlText;
+      var headInfo = this.getChapterHeading(d);
+      ret.htmlText = headInfo.text + ret.htmlText;
+      ret.introFootnotes = headInfo.notes;
     }
     
     // put "global" SWORD options back to their global context values
@@ -156,16 +158,16 @@ BibleTexts = {
     var b = getLocaleBundle(l, "common/books.properties");
 
     var intro = BibleTexts.getIntroductions(d.mod, d.bk + " " + d.ch);
-    if (!intro || (intro.length < 10 || (/^\s*$/).test(intro.replace(/<[^>]*>/g, "")))) intro = "";
+    if (!intro.text || (intro.text.length < 10 || (/^\s*$/).test(intro.text.replace(/<[^>]*>/g, "")))) intro.text = "";
     
     // MAJOR CLUDGE! All this string processing should be replaced by DOM instructions. As it is now,
     // if any portion of HTML returned by LibSword is not well-formed, then the entire page is broken.
     // Setting intro (which is not well-formed for all RusVZh chapters) to an element and reading again 
     // insures HTML string is well formed at least.
-    if (intro) {
+    if (intro.text) {
       var tmp = document.createElement("div");
-      sanitizeHTML(tmp, intro);
-      intro = tmp.innerHTML;
+      sanitizeHTML(tmp, intro.text);
+      intro.text = tmp.innerHTML;
     }
   
     var lt = LibSword.getModuleInformation(d.mod, "NoticeLink");
@@ -193,7 +195,7 @@ BibleTexts = {
 
     html +=   "<div class=\"chapinfo\">";
     html +=     "<div class=\"listenlink\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\"></div>";
-    html +=     "<div class=\"introlink" + (!intro ? " empty":"") + "\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
+    html +=     "<div class=\"introlink" + (!intro.text ? " empty":"") + "\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\">" + b.GetStringFromName("IntroLink") + "</div>";
     if (d["ShowOriginal"]) {
       var origs = SpecialModules.OriginalLanguages.Greek.concat(SpecialModules.OriginalLanguages.Hebrew);
       if (origs.length) {
@@ -214,9 +216,9 @@ BibleTexts = {
     
     html += "<div class=\"head-line-break\"></div>";
     
-    html += "<div class=\"introtext" + (!intro ? " empty":"") + "\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\">" + (intro ? intro :"") + "</div>";
-   
-    return html;
+    html += "<div class=\"introtext" + (!intro.text ? " empty":"") + "\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\">" + (intro.text ? intro.text :"") + (intro.notes ? intro.notes :"") + "</div>";
+ 
+    return { text:html, notes:intro.notes };
   },
 
   // The 'notes' argument can be HTML or a DOM element which is either a single
@@ -510,14 +512,15 @@ BibleTexts = {
 
   // Turns headings on before reading introductions
   getIntroductions: function(mod, vkeytext) {
-    if (!Tab[mod] || (Tab[mod].modType != BIBLE && Tab[mod].modType != COMMENTARY)) return "";
+    if (!Tab[mod] || (Tab[mod].modType != BIBLE && Tab[mod].modType != COMMENTARY)) return { text:'', notes:'' };
     
     LibSword.setGlobalOption("Headings", "On");
     
     var intro = LibSword.getIntroductions(mod, vkeytext);
+    var notes = LibSword.getNotes();
   
     LibSword.setGlobalOption("Headings", prefs.getCharPref("Headings"));
-    return intro;
+    return { text:intro, notes:notes };
   },
   
   SelectedNote:null,

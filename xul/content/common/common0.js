@@ -178,6 +178,7 @@ var TextClasses = {
   crref:  [ { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 },
             { re:new RegExp(/^(([^\.]+)\.(\d+)\.(\d+)\.(\d+))\.([^\.]+)$/),                                        bk:2,    ch:3,     vs:4,    lv:5,     mod:6, osisref:1 } ],
   nlist:  [ { re:new RegExp(/^(\w+)\.([^\.]*)\.(([^\.]+)\.(\d+)\.(\d+))\.([^\.]+)$/),              ntype:1, nid:2, bk:4,    ch:5,     vs:6,    lv:6,     mod:7, osisref:3 },
+            { re:new RegExp(/^(\w+)\.([^\.]*)\.(([^\.]+)(\.(0)(\.(0))?)?)\.([^\.]+)$/),            ntype:1, nid:2, bk:4,    ch:6,     vs:8,    lv:8,     mod:9, osisref:3 },
             { re:new RegExp(/^(un)\.([^\.]*)\.[^\.]*\.(.*)\.(\d+)\.([^\.]+)$/),                    ntype:1, nid:2, bk:null, ch:3,    vs:4,     lv:4,     mod:5 } ],
   slist:  [ { re:new RegExp(/^([^\.]*)\.([^\.]*)$/),                                                               bk:null, ch:1,    vs:null, lv:null,  mod:2 },
             { re:new RegExp(/^(([^\.]*)\.(\d+)\.(\d+))\.([^\.]*)$/),                                               bk:2,    ch:3,     vs:4,    lv:4,     mod:5, osisref:1 } ],
@@ -236,7 +237,7 @@ function getElementInfo(elem) {
       }
      
       // decode properties which need decodeURIComponent
-      if ((/^(osisref|reflist|ch)$/).test(p)) r[p] = decodeURIComponent(r[p]);
+      if (r[p] && (/^(osisref|reflist|ch)$/).test(p)) r[p] = decodeURIComponent(r[p]);
       
       // fix incorrect dictionary osisRefs for backward compatibility to <2.23
       if (p == "osisref" && (/^(dtl|dt)$/).test(type)) {
@@ -268,7 +269,7 @@ function getElementInfo(elem) {
       if (p == "reflist") {
         for (var x=0; x<r[p].length; x++) {r[p][x] = decodeOSISRef(r[p][x]);}
       }
-      if (p == "ch") r[p] = decodeOSISRef(r[p]);
+      if (r[p] && p == "ch") r[p] = decodeOSISRef(r[p]);
       
     }
     

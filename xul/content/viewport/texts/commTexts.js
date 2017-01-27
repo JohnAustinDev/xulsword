@@ -23,7 +23,7 @@
 CommTexts = {
   
   read: function(w, d) {
-    var ret = { htmlText:"", htmlNotes:"", htmlHead:Texts.getPageLinks(), footnotes:null };
+    var ret = { htmlText:"", htmlNotes:"", htmlHead:Texts.getPageLinks(), footnotes:null, introFootnotes:null };
 
     // For Pin feature, set "global" SWORD options for local context
     for (var cmd in GlobalToggleCommands) {
@@ -62,7 +62,9 @@ CommTexts = {
     // add headers
     var showHeader = (d.globalOptions["Headings"] == "On");
     if (showHeader && ret.htmlText) {
-      ret.htmlText = BibleTexts.getChapterHeading(d) + ret.htmlText;
+      var headInfo = BibleTexts.getChapterHeading(d);
+      ret.htmlText = headInfo.text + ret.htmlText;
+      ret.introFootnotes = headInfo.notes;
     }
     
     // put "global" SWORD options back to their global context values
