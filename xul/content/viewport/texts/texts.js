@@ -535,7 +535,7 @@ Texts = {
       }
       else {
         // All non-versekey usernotes are placed at the beginning of the HTML container
-        re = new RegExp("(class=\"cs-" + mod + ")([^>]*>\\s*)", "im");
+        var re = new RegExp("(class=\"cs-" + mod + ")([^>]*>\\s*)", "im");
         usernotes.html = usernotes.html.replace(re, "$1 un-hilight$2" + newNoteHTML);
       }
       
