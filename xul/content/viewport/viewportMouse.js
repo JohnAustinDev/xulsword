@@ -513,10 +513,10 @@ function scriptClick(e) {
     for (var gfn of gfns) {
       if (gfn === elem || !p || gfn.title != p.title) continue;
       gfn.scrollIntoView();
-      if (window.name == "main-viewport") document.getElementsByTagName("body")[0].scrollTop = 0;
+      if ((/viewport/i).test(window.name)) document.getElementsByTagName("body")[0].scrollTop = 0;
     }
     break;
-    
+   
   case "image-container":
     var img = elem.getElementsByTagName("img");
     if (img && img.length) {

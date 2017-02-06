@@ -216,7 +216,7 @@ BibleTexts = {
     
     html += "<div class=\"head-line-break\"></div>";
     
-    html += "<div class=\"introtext" + (!intro.text ? " empty":"") + "\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\">" + (intro.text ? intro.text :"") + (intro.notes ? intro.notes :"") + "</div>";
+    html += "<div class=\"introtext" + (!intro.text ? " empty":"") + "\" title=\"" + [d.bk, d.ch, 1, d.mod].join(".") + "\">" + (intro.text ? intro.text :"") + "</div>";
  
     return { text:html, notes:intro.notes };
   },
@@ -240,9 +240,9 @@ BibleTexts = {
     else noteContainer = notes;
       
     var note = [];
-    var notechild = noteContainer.childNodes;
-    for (var n=0; n < notechild.length; n++) {
-      note.push(notechild[n]);
+    var nodelist = noteContainer.getElementsByClassName("nlist");
+    for (var n=0; n < nodelist.length; n++) {
+      note.push(nodelist[n]);
     }
     note = note.sort(this.ascendingVerse);
     

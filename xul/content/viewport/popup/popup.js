@@ -121,9 +121,10 @@ function PopupObj(popupobj) {
       if (!Texts.footnotes[w]) return false;
       var noteContainer = document.createElement("div");
       sanitizeHTML(noteContainer, Texts.footnotes[w]);
-      var myNote = noteContainer.firstChild;
-      while (myNote && (!myNote.title || myNote.title != type + "." + p.title)) {
-        myNote = myNote.nextSibling;
+      var myNote;
+      var notes = noteContainer.getElementsByClassName("nlist");
+      for (var note of notes) {
+        if (note.title && note.title == type + "." + p.title) {myNote = note; break;}
       }
       if (!myNote) return false;    
       res = BibleTexts.getNotesHTML(myNote, (referenceBible ? referenceBible:p.mod), true, true, true, true, 1, false);
