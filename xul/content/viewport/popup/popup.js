@@ -104,6 +104,18 @@ function PopupObj(popupobj) {
       }
       this.setTitle();
       this.checkPopupPosition(e);
+      // If the event that cuased the leaving of prevhtml was triggered by an element, scroll back to that element now
+      if (old.getAttribute('data-className') && old.getAttribute('data-title')) {
+        var scrollTo = this.npopupTX.getElementsByClassName(old.getAttribute('data-className'));
+        if (scrollTo) {
+          for (var el of scrollTo) {
+            if (el.title && el.title == old.getAttribute('data-title')) {
+              el.scrollIntoView();
+              if ((/viewport/i).test(window.name)) document.getElementsByTagName("body")[0].scrollTop = 0;
+            }
+          }
+        }
+      }
       return true;
       break;
       
@@ -251,6 +263,12 @@ function PopupObj(popupobj) {
     prevcontent.className = "prevhtml";
     prevcontent.setAttribute("title", this.npopup.getAttribute("puptype"));
     if (updatingPopup) {
+      // Save the element that triggered the event to update the popup, so that 
+      // if/when prevcontent is restored, that element can be scrolled back to.
+      if (elem.className && elem.title) {
+        prevcontent.setAttribute("data-className", elem.className);
+        prevcontent.setAttribute("data-title", elem.title);
+      }
       for (var i=0; i<oldChildren.length; i++) {
         prevcontent.appendChild(oldChildren[i]);
       }
@@ -265,6 +283,7 @@ function PopupObj(popupobj) {
     // Windowed popup...
     if ((/windowedPopup$/).test(window.name)) {
       this.setTitle();
+      this.npopup.parentNode.scrollTop = 0;
       return true;
     }
     
