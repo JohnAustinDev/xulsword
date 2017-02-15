@@ -1270,6 +1270,7 @@ function getCSS(selector, sheetIndex) {
 
   var ss1 = 0;
   var ss2 = document.styleSheets.length-1;
+  if (sheetIndex != null && (sheetIndex < ss1 || sheetIndex > ss2)) {return null;}
   if (sheetIndex != null) {
     ss1 = sheetIndex;
     ss2 = sheetIndex;
