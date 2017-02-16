@@ -36,6 +36,11 @@ Set (prefs.js):extensions.xulsword.w1.hidden=TR;HEB;StrongsGreek;StrongsGreekRU;
 Set (prefs.js):extensions.xulsword.w2.hidden=TR;HEB;StrongsGreek;StrongsGreekRU;StrongsHebrew;StrongsHebrewRU;Robinson;
 Set (prefs.js):extensions.xulsword.w3.hidden=TR;HEB;StrongsGreek;StrongsGreekRU;StrongsHebrew;StrongsHebrewRU;Robinson;
 
+# INCREASE SCRIPT TIMEOUT FROM FIREFOX DEFAULT OF TEN SECONDS
+Set (prefs.js):dom.max_child_script_run_time=60
+Set (prefs.js):dom.max_chrome_script_run_time=60
+Set (prefs.js):dom.max_script_run_time=60
+
 # SET advanced.mailftp TO TRUE SO THAT SETTING network.ftp.anonymous_password WILL WORK
 Set (prefs.js):advanced.mailftp=true
 Set (prefs.js):network.ftp.anonymous_password=xulsword@xulsword.org
