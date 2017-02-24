@@ -84,7 +84,8 @@
 .lb + .lb,
 .line > .lb,
 .item > .lb,
-.lg-end + .lb {
+.lg-end + .lb,
+.lb + .p-end {
   margin:1em;
 }
 .osis2mod {}
