@@ -64,8 +64,9 @@ body[chromedir="rtl"] .nb #npopup {
 #search-content #npopup {
   width:400px;
 }
+.text table #npopup,
 .text .introlink #npopup {
-  /* This non inline text element has an undesireable left:auto 
+  /* These non inline text elements have an undesireable left:auto 
   value. So it needs explicit left alignment and 100% width so
   that the mouse is guaranteed to always be above the popup. */
   left:30px;
