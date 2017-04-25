@@ -416,11 +416,17 @@ void xulsword::saveFootnotes(SWModule *module, bool includeNumberedMarkers) {
 		}
 
 		SWBuf div;
-		div.appendFormatted("<div class=\"nlist\" title=\"%s.%i.%s.%s\">",
+		SWBuf id = "";
+		if (AtIndex->second["osisID"]) {
+		  SWBuf tmp = AtIndex->second["osisID"];
+		  id.setFormatted(" data-osisID=\"%s\"", tmp.c_str());
+		}
+		div.appendFormatted("<div class=\"nlist\" title=\"%s.%i.%s.%s\"%s>",
 			mclass.c_str(),
 			noteNum,
 			(versekey ? versekey->getOSISRef():"unavailable"), 
-			module->getName());
+			module->getName(),
+			id.c_str());
 
 		SWBuf numberedMarker;
 		if (includeNumberedMarkers) {

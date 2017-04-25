@@ -550,9 +550,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				        // Append current data to last tag
 				        buf.setSize(buf.length()-7); // Strip off last <\span> tag
 				        u->htmlTagStack->push(SWBuf("span")); // previous span has become re-opened
-                insertpoint = insertpoint - 1 - strlen(userData->module->getName()); // .module name was appended to ref
+				        insertpoint = insertpoint - 1 - strlen(userData->module->getName()); // .module name was appended to ref
 				        buf.insert(insertpoint, "; ");
 				        buf.insert(insertpoint+2, referenceInfo.c_str());
+				        if (lenAfterTrim < lenBeforeTrim) buf += ' ';
 				        return true;
 				      }
 				    }

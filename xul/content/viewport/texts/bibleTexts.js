@@ -353,11 +353,11 @@ BibleTexts = {
   getRefHTML: function(w, mod, body, keepTextNotes) {
     if (!keepTextNotes) keepTextNotes = false;
 
-    var ref = body.split(";");
+    var ref = body.split(/\s*;\s*/);
     
     // are there any commas? then add the sub refs to the list...
     for (var i=0; i<ref.length; i++) {
-      var verses = ref[i].split(",");
+      var verses = ref[i].split(/\s*,\s*/);
       if (verses.length == 1) continue;
       
       var r = 1;
@@ -380,6 +380,36 @@ BibleTexts = {
     for (var i=0; i<ref.length; i++) {
       if (!ref[i]) continue;
       var failed = false;
+      
+      // is this a reference to a footnote?
+      if (ref[i].indexOf("!") != -1) {
+        var footnote = "-----";
+        
+        var m = ref[i].match(/^\s*(([^\:]+)\:)?([^\!\:]+)(\!.*?)\s*$/);
+        if (m) {
+          var rmod = (m[1] ? m[2]:mod);
+          var rref = m[3];
+          var ext = m[4];
+          
+          // find the footnote which is being referenced
+          LibSword.getChapterText(rmod, rref);
+          var noteContainer = document.createElement("div");
+          sanitizeHTML(noteContainer, LibSword.getNotes());
+          var notes = noteContainer.getElementsByClassName("nlist");
+          
+          for (var note of notes) {
+            var osisID = note.getAttribute('data-osisID');
+            if (osisID && osisID == (rref + ext)) {footnote = note.innerHTML; break;}
+          }
+        }
+        
+        html += sep;
+        // the following html was copied from bibleTexts.getNotesHTML()
+        html += "<span class=\"fntext cs-" + (isASCII(footnote) ? DEFAULTLOCALE:mod) + (ModuleConfigs[mod].direction != ProgramConfig.direction ? " opposing-program-direction":"") + "\">" + footnote + "</span>"
+        sep = "<span class=\"cr-sep\"></span>";
+        
+        continue;
+      }
       
       // is this ref an osisRef type reference?
       var r = this.normalizeOsisReference(ref[i], mod);
