@@ -63,7 +63,7 @@ function loadedXUL2() {
   // check for newly installed modules and reset mods if necessary
   var resetUserPrefs = false;
 
-  if (XS_window.NewModuleInfo.NewModules.length) {
+  if (typeof(XS_window.NewModuleInfo.NewModules.length) != 'undefined') {
     
     resetUserPrefs = true;
     for (var m=0; m<XS_window.NewModuleInfo.NewModules.length; m++) {

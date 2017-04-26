@@ -402,6 +402,7 @@ function SearchObj(searchObj) {
       
       this.showSearchResults(result, s);
     }
+//window.setTimeout(function(){jsdump(document.getElementById("search-frame").contentDocument.getElementsByTagName("body")[0].outerHTML);}, 5000);
   };
   
 
