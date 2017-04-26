@@ -8,19 +8,18 @@
   font-family:ariel;
 }
 .prevchaplink, .nextchaplink {
+  text-decoration:underline;
   cursor:pointer;
 }
 .text[CanDoPreviousPage="false"] .prevchaplink,
 .text[CanDoNextPage="false"] .nextchaplink {
   color:grey;
+  text-decoration:none;
   cursor:default;
-}
-.prevchaplink:hover, .nextchaplink:hover {
-  border-bottom:1px solid blue;
 }
 .text[CanDoPreviousPage="false"] .prevchaplink:hover,
 .text[CanDoNextPage="false"] .nextchaplink:hover {
-  border-bottom:none;
+  text-decoration:none;
 }
 
 /* Bible & Commentary chapter/page header */
@@ -38,7 +37,7 @@
   text-align:center;
 }
 .noticelink {
-  border-bottom:1px solid blue;
+  text-decoration:underline;
   color:blue;
   cursor:pointer;
 }
@@ -98,7 +97,7 @@
 }
 .introlink {
   font-size:1.4em;
-  border-bottom:1px solid blue;
+  text-decoration:underline;
   color:blue;
   cursor:pointer;
 }
@@ -199,11 +198,9 @@ body[chromedir="rtl"] .fncol3 {
   padding-top:2px;
 }
 .fnlink {
-  color:blue;
-}
-.fnlink:hover {
-  border-bottom:1px solid blue;
+  text-decoration:underline;
   cursor:pointer;
+  color:blue;
 }
 .fncol5 {
   display:table-cell;
@@ -216,11 +213,9 @@ body[chromedir="rtl"] .fncol3 {
   background:rgb(255,243,255);
 }
 .crref {
-  color:blue;
-}
-.crref:hover {
-  border-bottom:1px solid blue;
+  text-decoration:underline;
   cursor:pointer;
+  color:blue;
 }
 .cropened .crref:after {
   content:": ";
@@ -359,15 +354,11 @@ body[chromedir="rtl"] .fncol3 {
 .interS {
   border-top:1px solid black;
 }
-.dt {
-  border-bottom:none;
-}
-.sn {
-  border-bottom:none;
+* {
+  text-decoration:none !important;
 }
 .dtl, .sr {
   color:inherit;
-  border-bottom:none;
 }
 .text[moduleType="Texts"] .un-hilight {
   background:transparent;

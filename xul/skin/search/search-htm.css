@@ -20,18 +20,14 @@ and applied to Strong's classes */
   color:blue;
   display:inline-block;
   position:relative;
-  border-bottom:1px solid transparent;
+  text-decoration:underline;
+  cursor:pointer;
 }
 .slist > a:after,
 .strongs-type:after {
   content:'-';
   padding-left:4px;
   padding-right:4px;
-}
-.slist > a:hover,
-.snlist a:hover {
-  border-bottom:1px solid blue;
-  cursor:pointer;
 }
 .slist > span,
 .snlist span {
@@ -59,6 +55,9 @@ and applied to Strong's classes */
 .lex-sep {
   border-top:1px solid grey;
   margin:10px;
+}
+a.sn span {
+  text-decoration:underline;
 }
 .searchTerm {
   color:red;

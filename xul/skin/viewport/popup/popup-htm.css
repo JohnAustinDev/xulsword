@@ -165,7 +165,7 @@ body.windowedpup {
   cursor:default;
 }
 .popupBackLink:hover, .popupCloseLink:hover {
-  border-bottom:1px solid blue;
+  text-decoration:underline;
   cursor:pointer;
 }
 .draghandle {
@@ -211,16 +211,6 @@ body[chromedir="rtl"] .popup-mod-select {
 }
 
 
-/* dictionary styles */
-#npopup .dtl,
-#npopup .sr {
-  border-bottom:none;
-}
-#npopup .dtl:hover,
-#npopup .sr:hover {
-  border-bottom:1px solid;
-}
-
 /* footnote styles */
 #npopup .fntable {
   margin:0px;
@@ -259,15 +249,7 @@ body[chromedir="rtl"] .popup-mod-select {
   border-top:3px solid grey;
   margin:10px;
 }
-.dt {
-  border-bottom:1px solid black;
-  cursor:pointer;
-}
-.dtl {
-  color:blue;
-  border-bottom:1px solid blue;
-  cursor:pointer;
-}
+
 /* .strongs- classes come from TEI markup like StrongsHebrew */
 /*
 .markup-entryFree,

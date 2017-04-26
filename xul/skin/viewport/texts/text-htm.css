@@ -311,7 +311,8 @@
   content: "";
 }
 .sr {
-  border-bottom:1px solid blue;
+  color:blue;
+  text-decoration:underline;
   cursor:pointer;
 }
 .sr:before,
@@ -319,21 +320,13 @@
 /* ISV uses inline sr without surrounding whitespace */
   content:' ';
 }
-.dt {
-  border-bottom:1px solid black;
+.dtl, .dt {
+  text-decoration:underline;
   cursor:pointer;
 }
 /* Words with Strong's number attached */
-.sn:hover {
-  border-bottom: 1px solid rgb(120,95,120);
-}
 .sn {
-  border-bottom: 1px solid rgb(220,195,220); /*(240,215,240);*/
-  cursor:pointer;
-}
-.dtl, .sr {
-  color:blue;
-  border-bottom:1px solid blue;
+  text-decoration:underline;
   cursor:pointer;
 }
 .gfn {
