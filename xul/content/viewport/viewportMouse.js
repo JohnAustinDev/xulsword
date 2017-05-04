@@ -520,11 +520,27 @@ function scriptClick(e) {
   case "image-container":
     var img = elem.getElementsByTagName("img");
     if (img && img.length && window.getComputedStyle(img[0], null).cursor != "not-allowed") {
+      var scrollbox = elem.parentNode;
+      while (scrollbox && scrollbox.scrollHeight <= scrollbox.clientHeight) {scrollbox = scrollbox.parentNode;}
+      if (scrollbox) {
+        var sbox = scrollbox.getBoundingClientRect(); 
+        var scrollYinit = scrollbox.scrollTop;
+        var scrollXinit = scrollbox.scrollLeft;
+        var mouseYinit = ((e.clientY-sbox.top)-(img[0].offsetTop-scrollYinit))/img[0].offsetHeight;
+        var mouseXinit = ((e.clientX-sbox.left)-(img[0].offsetLeft-scrollXinit))/img[0].offsetWidth;
+      }
+      
       if (img[0].offsetWidth < img[0].naturalWidth) img[0].style.width = img[0].naturalWidth + "px";
       else img[0].style.width = "";
       if (img[0].offsetWidth < img[0].naturalWidth) img[0].style.cursor = "zoom-in";
       else if (img[0].style.width) img[0].style.cursor = "zoom-out";
       else img[0].style.cursor = "";
+      
+      // scroll image to our click location
+      if (scrollbox) {
+        scrollbox.scrollTop = (mouseYinit*img[0].offsetHeight) - e.clientY + sbox.top + img[0].offsetTop;
+        scrollbox.scrollLeft = (mouseXinit*img[0].offsetWidth) - e.clientX + sbox.left + img[0].offsetLeft;
+      }
     }
     break;
     
