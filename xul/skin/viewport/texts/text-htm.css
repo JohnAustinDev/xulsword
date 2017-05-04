@@ -38,7 +38,7 @@
 }
 /* Xulsword OSIS filter specific CSS */
 .head1, h1, h2, h3 {
-  font-size:1.6em !important;
+  font-size:1.4em !important;
   color:rgb(110,85,110) !important;
   font-weight:bold;
   text-align:center;
@@ -47,12 +47,12 @@
   clear:both;
 }
 .head2 {
-  font-size:1.3em !important;
+  font-size:1.2em !important;
   color:rgb(110,85,110) !important;
   font-weight:bold;
+  font-style:italic;
   margin-bottom:0.5em;
   clear:both;
-  text-align:left;
 }
 .head2.moduleHeader,
 .head2.testamentHeader,

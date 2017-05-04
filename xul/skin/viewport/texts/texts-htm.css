@@ -46,7 +46,7 @@
 }
 .chaptitle {
   float:left;
-  font-size:2em;
+  font-size:1.6em;
   font-weight:bold;
   color:rgb(110,85,110);
 }
@@ -96,7 +96,7 @@
   left:52px;
 }
 .introlink {
-  font-size:1.4em;
+  font-size:1.2em;
   text-decoration:underline;
   color:blue;
   cursor:pointer;
