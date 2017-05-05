@@ -111,6 +111,9 @@ function PopupObj(popupobj) {
           for (var el of scrollTo) {
             if (el.title && el.title == old.getAttribute('data-title')) {
               el.scrollIntoView();
+              var sbox = el.parentNode;
+              while (sbox && sbox.scrollHeight <= sbox.clientHeight) {sbox = sbox.parentNode;}
+              if (sbox) {sbox.scrollTop = sbox.scrollTop - (sbox.offsetHeight/3);}
               if ((/viewport/i).test(window.name)) document.getElementsByTagName("body")[0].scrollTop = 0;
             }
           }
