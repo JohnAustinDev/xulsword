@@ -43,6 +43,13 @@
   position:absolute; /* insure popup falls out of page layout */
   height:0px;
   overflow:visible;
+  left:30px;
+  width:100%;
+}
+body[chromedir="rtl"] .text #npopup,
+body[chromedir="rtl"] #search-content #npopup {
+  left:auto;
+  right:30px;
 }
 .nb #npopup {
   width:100%;
@@ -63,18 +70,6 @@ body[chromedir="rtl"] .nb #npopup {
 }
 #search-content #npopup {
   width:400px;
-}
-.text table #npopup,
-.text .introlink #npopup {
-  /* These non inline text elements have an undesireable left:auto 
-  value. So it needs explicit left alignment and 100% width so
-  that the mouse is guaranteed to always be above the popup. */
-  left:30px;
-  width:100%;
-}
-.text[textdir="rtl"] .introlink #npopup {
-  left:auto;
-  right:30px;
 }
 .text #npopup #npopupBOX,
 #search-content #npopup #npopupBOX {
