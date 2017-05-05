@@ -75,9 +75,6 @@
 .interB .head2 {
   display:none;
 }
-.x-right {
-  text-align:right;
-}
 .canonical {
   font-style:italic;
 }
@@ -128,6 +125,24 @@
 .p-start.x-level-5{
   width:7.5em;
 }
+
+/* paragraph types */
+.x-center {text-align:center;}
+.x-noindent-indented {text-indent:1.5em;}
+.x-quote {font-style:italic;}
+.x-noindent-quote {text-indent:0px; font-style:italic;}
+.x-right {text-align:right;}
+.x-embedded-opening, .x-embedded-closing {text-indent:0px; padding-left:1.5em;}
+.x-embedded {text-indent:1.5em; padding-left:1.5em;}
+.x-indented-1, .x-level-1 {text-indent:1.5em;}
+.x-indented-2, .x-level-2 {text-indent:3em;}
+.x-indented-3, .x-level-3 {text-indent:4.5em;}
+.x-indented-4, .x-level-4 {text-indent:6em;}
+.x-indented-5, .x-level-5 {text-indent:7.5em;}
+.x-nobreak {margin-top:0px}
+.x-indented-hanging {padding-left:3em; text-indent:-1.5em}
+.x-nobreakNext {margin-bottom:0px}
+.x-nobreakNext-indented {margin-bottom:0px; text-indent:1.5em;}
 
 /*.x-lg,*/
 .x-list {
