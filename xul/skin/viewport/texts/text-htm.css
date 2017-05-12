@@ -37,28 +37,33 @@
   color:red;
 }
 /* Xulsword OSIS filter specific CSS */
+.head1.main {
+  font-size:1.8em !important;
+  color:rgb(110,85,110) !important;
+  text-align:center;
+  font-weight:bold;
+  margin-top:3em;
+  margin-bottom:1em;
+  clear:both;
+}
 .head1, h1, h2, h3 {
   font-size:1.4em !important;
   color:rgb(110,85,110) !important;
-  font-weight:bold;
   text-align:center;
+  font-weight:bold;
+  margin-top:2em;
   margin-bottom:1em;
-  margin-top:1em;
   clear:both;
 }
 .head2 {
   font-size:1.2em !important;
   color:rgb(110,85,110) !important;
+  text-align:center;
   font-weight:bold;
   font-style:italic;
+  margin-top:0.5em;
   margin-bottom:0.5em;
   clear:both;
-}
-.head2.moduleHeader,
-.head2.testamentHeader,
-.head2.bookHeader,
-.head2.chapterHeader {
-  text-align:center;
 }
 .text[textdir="rtl"] .head2 {
   text-align:right;
@@ -78,11 +83,7 @@
 .canonical {
   font-style:italic;
 }
-.lb + .lb,
-.line > .lb,
-.item > .lb,
-.lg-end + .lb,
-.lb + .p-end {
+.lb {
   margin:1em;
 }
 .osis2mod {}
