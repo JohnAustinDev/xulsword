@@ -32,7 +32,7 @@ Set XULToolkitVersion=41
 
 # SPECIFY BUILD INFORMATION
 Set Version=3.15
-Set LibxulswordVersion=1.4.1
+Set LibxulswordVersion=1.4.2
 Set Name=xulsword
 Set Vendor=CrossWire
 Set FirefoxMinVersion=21.0

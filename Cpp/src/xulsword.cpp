@@ -1282,7 +1282,7 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
     MyFootnotes.append("</div>");
     MyCrossRefs.append("</div>");
     MyNotes.append("</div>");
-		if (test.length() > 8) {
+		if (test.length() > 64) {
       intro.append("<div class=\"module-intro\">");
 			intro.append(test);
 			intro.append("<br /><br /></div>");
@@ -1302,7 +1302,7 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
     MyFootnotes.append("</div>");
     MyCrossRefs.append("</div>");
     MyNotes.append("</div>");
-		if (test.length() > 8) {
+		if (test.length() > 64) {
 			intro.append("<div class=\"testament-intro\">");
 			intro.append(test);
 			intro.append("<br /><br /></div>");
@@ -1321,7 +1321,7 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
     MyFootnotes.append("</div>");
     MyCrossRefs.append("</div>");
     MyNotes.append("</div>");
-		if (test.length() > 8) {
+		if (test.length() > 64) {
 			intro.append("<div class=\"book-intro\">");
 			intro.append(test);
 			intro.append("<br /><br /></div>");
@@ -1337,7 +1337,7 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
   MyFootnotes.append("</div>");
   MyCrossRefs.append("</div>");
   MyNotes.append("</div>");
-  if (test.length() > 8) {
+  if (test.length() > 64) {
 		intro.append("<div class=\"chapter-intro\">");
     intro.append(test);
     intro.append("<br /><br /></div>");

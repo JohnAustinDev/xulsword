@@ -38,11 +38,11 @@
 }
 /* Xulsword OSIS filter specific CSS */
 .head1.main {
-  font-size:1.8em !important;
+  font-size:1.5em !important;
   color:rgb(110,85,110) !important;
   text-align:center;
   font-weight:bold;
-  margin-top:3em;
+  margin-top:2em;
   margin-bottom:1em;
   clear:both;
 }
@@ -144,6 +144,11 @@
 .x-indented-hanging {padding-left:3em; text-indent:-1.5em}
 .x-nobreakNext {margin-bottom:0px}
 .x-nobreakNext-indented {margin-bottom:0px; text-indent:1.5em;}
+
+.osis2mod.x-right + .dtl {
+  float:right;
+  clear:both;
+}
 
 /*.x-lg,*/
 .x-list {
@@ -339,6 +344,9 @@
 .dtl, .dt {
   text-decoration:underline;
   cursor:pointer;
+}
+.dtl.x-target_self {
+  color:blue;
 }
 /* Words with Strong's number attached */
 .sn {

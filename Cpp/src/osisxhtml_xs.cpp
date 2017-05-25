@@ -511,11 +511,17 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				  if (tag.getAttribute("type") && !strcmp("x-glossary", tag.getAttribute("type"))) {
 				    u->referenceTag = "span";
 				    referenceClass = "dt";
+				    if (tag.getAttribute("subType") && !strcmp("x-target_self", tag.getAttribute("subType"))) {
+							referenceClass.append(" "); referenceClass.append(tag.getAttribute("subType"));
+						}
 				    referenceInfo = (tag.getAttribute("osisRef")) ? tag.getAttribute("osisRef"):"";
 				  }
 				  else if (tag.getAttribute("type") && !strcmp("x-glosslink", tag.getAttribute("type"))) {
 				    u->referenceTag = "span";
 				    referenceClass = "dtl";
+				    if (tag.getAttribute("subType") && !strcmp("x-target_self", tag.getAttribute("subType"))) {
+							referenceClass.append(" "); referenceClass.append(tag.getAttribute("subType"));
+						}
 				    referenceInfo = (tag.getAttribute("osisRef")) ? tag.getAttribute("osisRef"):"";				  
 				  }
 				  else {

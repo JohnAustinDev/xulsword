@@ -129,6 +129,8 @@ function scriptMouseOver(e) {
   }
   if (!elem || !type) return;
   type = type[1];
+  
+  if (elem.className && elem.className.indexOf('x-target_self') !== -1) return;
 
   // Get the text window of this event
   var w = getContextWindow(elem);
@@ -272,7 +274,11 @@ function scriptClick(e) {
   case "dt":
   case "dtl":
   case "popupBackLink":
-    Popup.activate(elem, e);
+    if (w && elem.className && elem.className.indexOf('x-target_self') !== -1 && Tab[ViewPort.Module[w]].modType == DICTIONARY) {
+      ViewPort.Key[w] = decodeOSISRef(p.osisref.replace(/^[^\:]+\:/, ''));
+      Texts.update(SCROLLTYPETOP, HILIGHTNONE);
+    }
+    else Popup.activate(elem, e);
     break;
     
   case "popupCloseLink":
