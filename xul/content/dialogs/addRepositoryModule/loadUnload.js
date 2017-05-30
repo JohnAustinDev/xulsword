@@ -891,6 +891,12 @@ function applyConfFile(file, repoUrl) {
   RDFC.AppendElement(newModRes);
   
   var moduleUpdateNeeded = false;
+  
+  // cludge to request install (remove in version 3.16?)
+  var specialUpdate = (
+    (moduleName == 'UZVDICT' && !Tab.hasOwnProperty('UZVDICT') && Tab.hasOwnProperty('UZV')) || 
+    (moduleName == 'UZVLDICT' && !Tab.hasOwnProperty('UZVLDICT') && Tab.hasOwnProperty('UZVL'))
+  );
 
   // set flags to update any updateable modules
   if (Tab.hasOwnProperty(moduleName) && moduleName != "Personal") {
@@ -902,6 +908,11 @@ function applyConfFile(file, repoUrl) {
       var change = conf["History_" + moduleVersion];
       if (change && !(/^\s*$/).test(change)) ARMU.setResourceAttribute(MLDS, newModRes, "History_" + moduleVersion, change);
     }
+  }
+  else if (specialUpdate) {
+    moduleUpdateNeeded = true;
+    jsdump("INFO: specialUpdate module \"" + moduleName + "\".");
+    ARMU.setResourceAttribute(MLDS, newModRes, "History_" + moduleVersion, "Muqaddas Kitob: O‘quv manbalari");
   }
   ARMU.setResourceAttribute(MLDS, newModRes, "ModuleUpdateNeeded", (moduleUpdateNeeded ? "true":"false"));
 

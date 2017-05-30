@@ -413,7 +413,7 @@ ARMD = {
         var change = ARMU.getResourceLiteral(MLDS, mods[i], "History_" + modVers);
         change = (change && !(/^\s*$/).test(change) && change != NOTFOUND ? change:null);
         msg += modName;
-        msg += (modName != Tab[modName].label ? " (" + Tab[modName].label + ") ":" ");
+        msg += (Tab.hasOwnProperty(modName) && modName != Tab[modName].label ? " (" + Tab[modName].label + ") ":" ");
         msg += modVers;
         msg += (change ? ": " + change:"");
         msg += "\n";
@@ -429,7 +429,7 @@ ARMD = {
         result,
         fixWindowTitle(title),
         msg,
-        DLGALERT,
+        DLGINFO,
         DLGYESNO
     );
     
