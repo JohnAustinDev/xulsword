@@ -28,6 +28,8 @@ else
   sudo apt-get install -y git
   sudo apt-get install -y zip
   sudo apt-get install -y firefox
+  # The following is needed on 16.04 Xenial
+  sudo apt-get install -y libtool-bin
 fi
 
 # If this is Vagrant, then copy xulsword code locally so as not to 

@@ -59,15 +59,6 @@ body[chromedir="rtl"] .nb #npopup {
   left:auto;
   right:40px;
 }
-.text[columns="show1"] .sb #npopup {
-  width:100%;
-}
-.text[columns="show2"] .sb #npopup {
-  width:50%;
-}
-.text[columns="show3"] .sb #npopup {
-  width:33%;
-}
 #search-content #npopup {
   width:400px;
 }
