@@ -240,7 +240,7 @@ if ($MakeSetup =~ /true/i) {
     &writePreferences("$INSTALLER/$XULSWORD", \%Prefs);
     &writeApplicationINI("$INSTALLER/$XULSWORD");
     &writeMACPackageFiles("$INSTALLER/$XULSWORD/..");
-	&includeModules("$INSTALLER/$XULSWORD/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
+    &includeModules("$INSTALLER/$XULSWORD/resources", $IncludeModules, \@ModRepos, $IncludeSearchIndexes);
     &includeLocales("$INSTALLER/$XULSWORD", $IncludeLocales, \@manifest, 0);
     &writeManifest("$INSTALLER/$XULSWORD", \@manifest);
     open(NIN, ">:encoding(UTF-8)", "$INSTALLER/$XULSWORD/resources/newInstalls.txt") || die;

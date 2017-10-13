@@ -167,15 +167,15 @@ function PopupObj(popupobj) {
     case "dt":
       if (!p || !p.reflist) return false;
       
-      var dnames="", dword="", sep="";
+      var dnames=[], dword='';
       for (var i=0; i<p.reflist.length; i++) {
         if (!p.reflist[i]) continue;
-        dnames += sep + p.reflist[i].split(":")[0];
-        if (!dword) dword = p.reflist[i].split(":")[1];
-        sep = ";"
+        var colon = p.reflist[i].indexOf(':');
+        if (colon != -1) dnames.push(p.reflist[i].substr(0, colon));
+        if (!dword) dword = p.reflist[i].substr(colon+1);
       }
     
-      res = DictTexts.getEntryHTML(dword, dnames);
+      res = DictTexts.getEntryHTML(dword, dnames.join(';'));
       break;
       
     case "sn":
