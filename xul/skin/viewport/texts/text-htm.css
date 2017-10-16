@@ -172,7 +172,8 @@
   text-indent:-3em;
   padding-left:3em;
 }
-.item {}
+.item {margin-bottom:1em;}
+.x-navmenu .item {margin-bottom:0;}
 .x-PM {}
 .text[versePerLine="true"] .p-end,
 .text[versePerLine="true"] .lg-end,
