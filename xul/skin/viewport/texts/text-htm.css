@@ -247,6 +247,15 @@
   text-align:right; /* CBs > May 2014 don't need this */
   font-size:smaller;
 }
+.x-selah {
+  float:right;
+  margin-left:3em;
+}
+.text[textdir="rtl"] .x-selah {
+  float:left;
+  margin-left:0;
+  margin-right:3em;
+}
 
 .versePerLineButton {
   position:relative;
