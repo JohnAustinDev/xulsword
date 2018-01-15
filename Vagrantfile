@@ -9,11 +9,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # options are documented and commented below. For a complete reference,
   # please see the online documentation at vagrantup.com.
   
-  config.vm.box = "ubuntu/xenial32"
+#  config.vm.box = "ubuntu/xenial32"
   
-#  config.vm.box = "ubuntu/xenial64"
+  config.vm.box = "ubuntu/xenial64"
 
-  config.vm.provision :shell, :path => "build.sh"
+  config.vm.provision :shell, :path => "build.sh", privileged: false
   config.ssh.forward_x11 = true
 
   # Every Vagrant virtual environment requires a box to build off of.

@@ -21,13 +21,15 @@ else
   sudo apt-get update
   sudo apt-get install -y build-essential git subversion libtool-bin autoconf make pkg-config zip
   # install packages for sword
-  sudo apt-get install -y zlib1g-dev libclucene-dev
+  sudo apt-get install -y zlib1g-dev libclucene-dev 
+  # libboost-dev ?
   if [[ "$(uname -p)" == "i686" ]]; then
     # the 32-bit libclucene is installed in an unexpected place for sword-svn, so fix it
     sudo ln -s /usr/lib/i386-linux-gnu/libclucene-core.so /usr/lib/libclucene-core.so
   fi
-  # fix bug in clucene
-  sudo sed -i -e 's/#include "CLucene\/clucene-config.h"/#include "CLucene\/CLConfig.h"/' /usr/include/CLucene/SharedHeader.h
+  # fix bugs in clucene
+  #sudo sed -i -e 's/#include "CLucene\/clucene-config.h"/#include "CLucene\/CLConfig.h"/' /usr/include/CLucene/SharedHeader.h
+  #sudo sed -i -e 's/#if defined(_CL_DISABLE_MULTITHREADING)/#if defined(_CL_DISABLE_MULTITHREADING)\n#define _LUCENE_ATOMIC_INT_GET(x) x\n#define _LUCENE_ATOMIC_INT_SET(x,v) x=v\n/' /usr/include/CLucene/LuceneThreads.h
     
   #sudo apt-get install -y firefox
 fi
@@ -35,17 +37,19 @@ fi
 # If this is Vagrant, then copy xulsword code locally so as not to 
 # disturb any build files on the host machine!
 if [ -e /vagrant ]; then
-  if [ -e /home/vagrant/xulsword ]; then
-    rm -rf /home/vagrant/xulsword
+  if [ -e $HOME/xulsword ]; then
+    rm -rf $HOME/xulsword
   fi
-  mkdir /home/vagrant/xulsword
+  mkdir $HOME/xulsword
   
   cd /vagrant
+  git config --global user.email "vagrant@vm.net"
+  git config --global user.name "Vagrant User"
   stash=`git stash create`
   if [ ! $stash ]; then stash=`git rev-parse HEAD`; fi
   git archive -o archive.zip $stash
-  mv archive.zip /home/vagrant/xulsword
-  cd /home/vagrant/xulsword
+  mv archive.zip $HOME/xulsword
+  cd $HOME/xulsword
   unzip archive.zip
   rm archive.zip
 fi
@@ -95,7 +99,8 @@ if [ ! -e "$XULSWORD/Cpp/sword-svn" ]; then
     perl -p -i -e 's/^(LTIZE="\$AUTODIR"")(libtoolize")/$1g$2/' ./autogen.sh
   fi
   ./autogen.sh
-  ./configure
+  ./configure CLUCENE2_CFLAGS="-D_CL_DISABLE_MULTITHREADING"
+  #sudo cp ./config.h /usr/include/CLucene/clucene-config.h
   make
   sudo make install
   sudo ldconfig
@@ -157,5 +162,5 @@ fi
 if [ -e /vagrant ]; then
   `cp -r "$XULSWORD/build-out" /vagrant`
   # Fix permissions in Vagrant
-  chown -R vagrant:vagrant /home/vagrant
+  chown -R vagrant:vagrant $HOME
 fi
