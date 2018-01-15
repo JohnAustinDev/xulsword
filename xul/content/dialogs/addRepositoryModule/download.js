@@ -300,11 +300,13 @@ ARMD = {
         }
         
         var stillWorking = 0;
-        for (var p=0; p<Web.length; p++) {
-          if (
-            Web[p].type == "moduleListing" && 
-            Web[p].group == this.module.modResource.ValueUTF8
-          ) stillWorking++;
+        if (aStatus == 0 || is_XSM_module) {
+          for (var p=0; p<Web.length; p++) {
+            if (
+              Web[p].type == "moduleListing" && 
+              Web[p].group == this.module.modResource.ValueUTF8
+            ) stillWorking++;
+          }
         }
         
         if (!stillWorking) {
