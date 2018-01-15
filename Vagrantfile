@@ -9,11 +9,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # options are documented and commented below. For a complete reference,
   # please see the online documentation at vagrantup.com.
   
-  config.vm.box = "precise32"
-  config.vm.box_url = "http://files.vagrantup.com/precise32.box"
+  config.vm.box = "ubuntu/xenial32"
   
-#  config.vm.box = "precise64"
-#  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+#  config.vm.box = "ubuntu/xenial64"
 
   config.vm.provision :shell, :path => "build.sh"
   config.ssh.forward_x11 = true
