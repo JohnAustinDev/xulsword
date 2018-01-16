@@ -20,41 +20,35 @@ else
   echo Running on Linux
   sudo apt-get update
   sudo apt-get install -y build-essential git subversion libtool-bin autoconf make pkg-config zip
-  # install packages for sword
-  sudo apt-get install -y zlib1g-dev libclucene-dev 
-  # libboost-dev ?
-  if [[ "$(uname -p)" == "i686" ]]; then
-    # the 32-bit libclucene is installed in an unexpected place for sword-svn, so fix it
-    sudo ln -s /usr/lib/i386-linux-gnu/libclucene-core.so /usr/lib/libclucene-core.so
-  fi
-  # fix bugs in clucene
-  #sudo sed -i -e 's/#include "CLucene\/clucene-config.h"/#include "CLucene\/CLConfig.h"/' /usr/include/CLucene/SharedHeader.h
-  #sudo sed -i -e 's/#if defined(_CL_DISABLE_MULTITHREADING)/#if defined(_CL_DISABLE_MULTITHREADING)\n#define _LUCENE_ATOMIC_INT_GET(x) x\n#define _LUCENE_ATOMIC_INT_SET(x,v) x=v\n/' /usr/include/CLucene/LuceneThreads.h
-    
+  # install and configure packages for sword
+  sudo apt-get install -y zlib1g-dev libclucene-dev
+  sudo ln -s "$HOME/src/xulsword/Cpp/cluceneMK/include/Linux/clucene-config.h" "/usr/include/CLucene/clucene-config.h"
+  
   #sudo apt-get install -y firefox
 fi
+
+git config --global user.email "vm@vagrant.net"
+git config --global user.name "Vagrant User"
 
 # If this is Vagrant, then copy xulsword code locally so as not to 
 # disturb any build files on the host machine!
 if [ -e /vagrant ]; then
-  if [ -e $HOME/xulsword ]; then
-    rm -rf $HOME/xulsword
+  if [ -e $HOME/src/xulsword ]; then
+    rm -rf $HOME/src/xulsword
   fi
-  mkdir $HOME/xulsword
-  
+  mkdir -p $HOME/src/xulsword
   cd /vagrant
-  git config --global user.email "vagrant@vm.net"
-  git config --global user.name "Vagrant User"
   stash=`git stash create`
   if [ ! $stash ]; then stash=`git rev-parse HEAD`; fi
   git archive -o archive.zip $stash
-  mv archive.zip $HOME/xulsword
-  cd $HOME/xulsword
+  mv archive.zip $HOME/src/xulsword
+  cd $HOME/src/xulsword
   unzip archive.zip
   rm archive.zip
+  find . -name "*.pl" -exec chmod ugo+x {} \;
+  find . -name "*.sh" -exec chmod ugo+x {} \;
 fi
 XULSWORD=`pwd -P`
-
 echo XULSWORD path is "$XULSWORD"
 
 # XULSWORD_HOST is xulsword on the non-virtual machine (may have custom
@@ -65,29 +59,8 @@ else
   XULSWORD_HOST=$XULSWORD
 fi
 
-cd $XULSWORD
-find . -name "*.pl" -exec chmod ugo+x {} \;
-find . -name "*.sh" -exec chmod ugo+x {} \;
-
-# COMPILE SWORD ENGINE DEPENDENCIES
-# CLucene
-if [ $(uname | grep Darwin) ] && [ ! -e "$XULSWORD/Cpp/clucene-core-0.9.21b" ]; then
-  # Patch a problem with MAC compile of clucene
-  echo Compiling $XULSWORD/Cpp/clucene-core-0.9.21b
-  cd "$XULSWORD/Cpp"
-  wget http://sourceforge.net/projects/clucene/files/clucene-core-stable/0.9.21b/clucene-core-0.9.21b.tar.bz2/download
-  tar -xf download 
-  rm download
-  cd "$XULSWORD/Cpp/clucene-core-0.9.21b"
-  cp -f ../cluceneMK/osx/repl_tchar.h ./src/CLucene/config
-  make clean
-  ./configure --disable-multithreading
-  make
-  sudo make install
-  sudo ldconfig
-fi
-
-# Compile the SWORD engine (at specific rev)
+# Compile CLucene (needed for static lib)
+# Compile the SWORD engine (needed for static lib)
 # 3563 is sword-1.8.1
 swordRev=3563
 if [ ! -e "$XULSWORD/Cpp/sword-svn" ]; then
@@ -99,14 +72,11 @@ if [ ! -e "$XULSWORD/Cpp/sword-svn" ]; then
     perl -p -i -e 's/^(LTIZE="\$AUTODIR"")(libtoolize")/$1g$2/' ./autogen.sh
   fi
   ./autogen.sh
-  ./configure CLUCENE2_CFLAGS="-D_CL_DISABLE_MULTITHREADING"
-  #sudo cp ./config.h /usr/include/CLucene/clucene-config.h
+  ./configure
   make
   sudo make install
   sudo ldconfig
 fi
-
-exit
 
 # Download xulrunner (unless it exists already)
 xulrunnerRev=41.0b9
@@ -115,11 +85,7 @@ if [ ! -e "$XULSWORD/xulrunner" ]; then
   if [ $(uname | grep Darwin) ]; then
     xulrunner=xulrunner-$xulrunnerRev.en-US.mac.tar.bz2
   else
-    if [[ "$(uname -p)" == "i686" ]]; then
-      xulrunner=xulrunner-$xulrunnerRev.en-US.linux-i686.tar.bz2
-    else
-      xulrunner=xulrunner-$xulrunnerRev.en-US.linux-x86_64.tar.bz2
-    fi
+    xulrunner=xulrunner-$xulrunnerRev.en-US.linux-$(uname -p).tar.bz2
   fi
   wget http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/$xulrunnerRev/runtimes/$xulrunner
   tar -xf $xulrunner
