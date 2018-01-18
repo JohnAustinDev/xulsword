@@ -31,6 +31,7 @@ build-out
 build/*_log.txt
 build/run_*
 build/loc_*
+Cpp/build
 localeDev/*/*_log.txt
 localeDev/*/locale
 

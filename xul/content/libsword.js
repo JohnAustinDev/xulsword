@@ -114,6 +114,7 @@ LibSword = {
     // get our libxulsword instance
     try {this.libsword = ctypes.open(this.LibswordPath);}
     catch (er) {
+      if (typeof(jsdump) != "undefined") jsdump(er);
       this.loadFailed = true;
       this.libsword = null;
       return;

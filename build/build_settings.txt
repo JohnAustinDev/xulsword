@@ -6,8 +6,8 @@ Set MakeSetup=false
 Set MakeFFextension=false
 
 # SPECIFY PATHS (RELATIVE TO xulsword/build or FULL path)
-Set CluceneSource=../Cpp/clucene-core-0.9.21b
-Set SwordSource=../Cpp/sword-svn
+Set CluceneSource=../Cpp/clucene
+Set SwordSource=../Cpp/sword
 Set XulswordExtras=
 Set ModuleRepository1=
 Set ModuleRepository2=

@@ -18,8 +18,6 @@
 
 #ifdef _WIN32
   #include "windows.h"
-#else
-  #include "config.h"
 #endif
 
 #include <dirent.h>
@@ -44,6 +42,7 @@
 #include "versificationmgr.h"
 
 #include <CLucene.h>
+#include "../clucene/src/shared/CLucene/config/repl_wchar.h"
 using namespace lucene::index;
 using namespace lucene::analysis;
 using namespace lucene::util;
@@ -2045,7 +2044,7 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
 UncompressTarGz
 *********************************************************************/
 
-#include "../sword-svn/src/utilfuns/zlib/untgz.c"
+#include "../sword/src/utilfuns/zlib/untgz.c"
 void xulsword::uncompressTarGz(const char *tarGzPath, const char *aDirPath) {
 
 	FileDesc *fd = FileMgr::getSystemFileMgr()->open(tarGzPath, FileMgr::RDONLY);

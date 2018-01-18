@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# This script can be run on any linux, OSX or vagrant machine. It
+# This script should NOT be run as root (privileged: false in Vagrantfile)
+
+# This script can be run on a linux, OSX or vagrant machine. It
 # installs any necessary dependencies and builds xulsword using the
 # loc_MK.txt build settings if this file exists (otherwise defaults).
 
@@ -8,27 +10,23 @@ cd `dirname $0`
 
 EXTRAS=IBTXulsword
 
-if [ $(uname | grep Darwin) ]; then
-  echo Running on OSX
-  brew update
-  brew install wget
-  brew install autoconf
-  brew install automake
-  brew install subversion
-  brew install libtool
-else
-  echo Running on Linux
-  sudo apt-get update
-  sudo apt-get install -y build-essential git subversion libtool-bin autoconf make pkg-config zip
-  # install and configure packages for sword
-  sudo apt-get install -y zlib1g-dev libclucene-dev
-  sudo ln -s "$HOME/src/xulsword/Cpp/cluceneMK/include/Linux/clucene-config.h" "/usr/include/CLucene/clucene-config.h"
-  
-  #sudo apt-get install -y firefox
+if [ ! -e "$XULSWORD/Cpp/build" ]; then
+  if [ $(uname | grep Darwin) ]; then
+    echo Running on OSX
+    brew update
+    brew install wget
+    brew install autoconf
+    brew install automake
+    brew install subversion
+    brew install libtool
+  else
+    echo Running on Linux
+    sudo apt-get update
+    sudo apt-get install -y build-essential git subversion libtool-bin cmake autoconf make pkg-config zip
+  fi
+  git config --global user.email "vm@vagrant.net"
+  git config --global user.name "Vagrant User"
 fi
-
-git config --global user.email "vm@vagrant.net"
-git config --global user.name "Vagrant User"
 
 # If this is Vagrant, then copy xulsword code locally so as not to 
 # disturb any build files on the host machine!
@@ -59,28 +57,73 @@ else
   XULSWORD_HOST=$XULSWORD
 fi
 
-# Compile CLucene (needed for static lib)
-# Compile the SWORD engine (needed for static lib)
-# 3563 is sword-1.8.1
-swordRev=3563
-if [ ! -e "$XULSWORD/Cpp/sword-svn" ]; then
+# Compile zlib (local compilation is required to create CLucene static library)
+# https://packages.ubuntu.com/source/xenial/zlib
+if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
+  sudo apt-get install -y debhelper binutils gcc-multilib dpkg-dev
   cd "$XULSWORD/Cpp"
-  svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword-svn
-  cd sword-svn
-  if [ $(uname | grep Darwin) ]; then
-    # use brew's glibtoolize instead of libtoolize
-    perl -p -i -e 's/^(LTIZE="\$AUTODIR"")(libtoolize")/$1g$2/' ./autogen.sh
-  fi
-  ./autogen.sh
-  ./configure
+  wget http://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.8.dfsg.orig.tar.gz
+  tar -xf zlib_1.2.8.dfsg.orig.tar.gz
+  rm zlib_1.2.8.dfsg.orig.tar.gz
+  mv zlib-1.2.8 zlib
+  mkdir ./zlib/build
+  cd ./zlib/build
+  cmake -G "Unix Makefiles" ..
   make
   sudo make install
-  sudo ldconfig
+  # create a symlink to zconf.h (which was just renamed by cmake) so CLucene will compile
+  ln -s ./build/zconf.h ../zconf.h
 fi
 
-# Download xulrunner (unless it exists already)
-xulrunnerRev=41.0b9
+# Compile libclucene (local compilation is required to create libsword static library)
+if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
+  sudo apt-get install -y debhelper libboost-dev
+  cd "$XULSWORD/Cpp"
+  wget http://archive.ubuntu.com/ubuntu/pool/main/c/clucene-core/clucene-core_2.3.3.4.orig.tar.gz
+  tar -xf clucene-core_2.3.3.4.orig.tar.gz
+  rm clucene-core_2.3.3.4.orig.tar.gz
+  mv clucene-core-2.3.3.4 clucene
+  mkdir ./clucene/build
+  cd ./clucene/build
+  # -D DISABLE_MULTITHREADING=ON always causes compilation to fail, os it is not used
+  cmake -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=1 -D ZLIB_INCLUDE_DIR=$HOME/src/Cpp/zlib ..
+  make
+  sudo make install
+fi
+
+# Compile libsword (local compilation is required to create libxulsword static library)
+if [ ! -e "$XULSWORD/Cpp/sword" ]; then
+  # svn rev 3563 is sword-1.8.1
+  swordRev=3563
+  cd "$XULSWORD/Cpp"
+  svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword
+  mkdir ./sword/build
+  cd ./sword/build
+  cmake -G "Unix Makefiles" ..
+  make
+  sudo make install
+fi
+
+# Compile libxulsword
+if [ ! -e "$XULSWORD/Cpp/build" ]; then
+  cd "$XULSWORD/Cpp"
+  if [ $(uname | grep Darwin) ]; then
+    # patch untgz MAC compile problem
+    perl -p -i -e 's/#ifdef unix/#if defined(unix) || defined(__APPLE__)/g' ./sword/src/utilfuns/zlib/untgz.c
+  fi
+  mkdir build
+  cd build
+  cmake -G "Unix Makefiles" ..
+  make
+fi
+
+if [ ! -e $XULSWORD/sword ]; then
+  mkdir "$XULSWORD/sword"
+fi
+
+# Download xulrunner
 if [ ! -e "$XULSWORD/xulrunner" ]; then
+  xulrunnerRev=41.0b9
   cd "$XULSWORD"
   if [ $(uname | grep Darwin) ]; then
     xulrunner=xulrunner-$xulrunnerRev.en-US.mac.tar.bz2
@@ -90,20 +133,6 @@ if [ ! -e "$XULSWORD/xulrunner" ]; then
   wget http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/$xulrunnerRev/runtimes/$xulrunner
   tar -xf $xulrunner
   rm $xulrunner
-fi
-
-# Configure xulsword
-cd "$XULSWORD/Cpp"
-make clean
-if [ $(uname | grep Darwin) ]; then
-  # patch untgz MAC compile problem
-  perl -p -i -e 's/#ifdef unix/#if defined(unix) || defined(__APPLE__)/g' ./sword-svn/src/utilfuns/zlib/untgz.c
-fi
-./autogen.sh
-./configure
-
-if [ ! -e $XULSWORD/sword ]; then
-  mkdir "$XULSWORD/sword"
 fi
 
 # Link to EXTRAS if available
@@ -124,9 +153,16 @@ else
 	"$XULSWORD/build/build.pl"
 fi
 
-# Copy virtual build-out to host if we're running virtual
+# Copy build-out result to host if we're running on a VM
 if [ -e /vagrant ]; then
-  `cp -r "$XULSWORD/build-out" /vagrant`
-  # Fix permissions in Vagrant
-  chown -R vagrant:vagrant $HOME
+  cp -rf "$XULSWORD/build-out" /vagrant
+fi
+
+# Start xulsword
+# a VM must have firefox installed to run xulsword
+if [ -e /vagrant ] && [ ! $(which firefox) ]; then sudo apt-get install -y firefox; fi
+if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
+  $HOME/src/xulsword/build/run_MK-dev.pl
+else
+  $HOME/src/xulsword/build/run_xulsword-dev.pl
 fi

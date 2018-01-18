@@ -410,12 +410,12 @@ sub compileLibSword($$) {
       `make clean >> $LOGFILE 2>&1`;
       `make >> $LOGFILE 2>&1`;
       `./staticlib.sh >> $LOGFILE 2>&1`;
-      if (!-e "$TRUNK/Cpp/.libs/libxulsword.$DLB") {&Log("ERROR: libxulsword did not compile.\n"); die;}
+      if (!-e "$TRUNK/Cpp/build/libxulsword.$DLB") {&Log("ERROR: libxulsword did not compile.\n"); die;}
     }
-    if (!$staticLinkToSWORD) {&copy_file("$TRUNK/Cpp/.libs/libxulsword.$DLB", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.$DLB");}
+    if (!$staticLinkToSWORD) {&copy_file("$TRUNK/Cpp/build/libxulsword.$DLB", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.$DLB");}
     else {
-      &copy_file("$TRUNK/Cpp/.libs/libxulswordstatic.$DLB", $do);
-      mv("$do/libxulswordstatic.$DLB", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.$DLB");
+      &copy_file("$TRUNK/Cpp/build/libxulsword-static.$DLB", $do);
+      mv("$do/libxulsword-static.$DLB", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.$DLB");
     }
   }
   else {&Log("ERROR: Please add a compile script for your platform.\n");}
