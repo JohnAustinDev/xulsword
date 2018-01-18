@@ -174,7 +174,7 @@
 [main-window.menu-help]: Help
 [main-window.menu-help.about]: About...
 [main-window.menu-help.about.save]: Save
-[main-window.menu-help.about.produced_by]: 2016
+[main-window.menu-help.about.produced_by]: 2018
 [main-window.menu-help.about.version]: Version: %1$S, Build: %2$S
 [main-window.menu-help.about.contributors_label]: Contributors...
 [main-window.tool-bar.back]: Back
