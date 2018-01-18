@@ -10,24 +10,6 @@ cd `dirname $0`
 
 EXTRAS=IBTXulsword
 
-if [ ! -e "$XULSWORD/Cpp/build" ]; then
-  if [ $(uname | grep Darwin) ]; then
-    echo Running on OSX
-    brew update
-    brew install wget
-    brew install autoconf
-    brew install automake
-    brew install subversion
-    brew install libtool
-  else
-    echo Running on Linux
-    sudo apt-get update
-    sudo apt-get install -y build-essential git subversion libtool-bin cmake autoconf make pkg-config zip
-  fi
-  git config --global user.email "vm@vagrant.net"
-  git config --global user.name "Vagrant User"
-fi
-
 # If this is Vagrant, then copy xulsword code locally so as not to 
 # disturb any build files on the host machine!
 if [ -e /vagrant ]; then
@@ -49,6 +31,25 @@ fi
 XULSWORD=`pwd -P`
 echo XULSWORD path is "$XULSWORD"
 
+# Install build tools if needed
+if [ ! -e "$XULSWORD/Cpp/build" ]; then
+  if [ $(uname | grep Darwin) ]; then
+    echo Running on OSX
+    brew update
+    brew install wget
+    brew install autoconf
+    brew install automake
+    brew install subversion
+    brew install libtool
+  else
+    echo Running on Linux
+    sudo apt-get update
+    sudo apt-get install -y build-essential git subversion libtool-bin cmake autoconf make pkg-config zip
+  fi
+  git config --global user.email "vm@vagrant.net"
+  git config --global user.name "Vagrant User"
+fi
+
 # XULSWORD_HOST is xulsword on the non-virtual machine (may have custom
 # control files etc.)
 if [ -e /vagrant ]; then
@@ -56,6 +57,9 @@ if [ -e /vagrant ]; then
 else
   XULSWORD_HOST=$XULSWORD
 fi
+
+# Create a local installation directory, so that
+if [ ! -e "$XULSWORD/Cpp/install" ]; then  mkdir "$XULSWORD/Cpp/install"; fi
 
 # Compile zlib (local compilation is required to create CLucene static library)
 # https://packages.ubuntu.com/source/xenial/zlib
@@ -69,8 +73,7 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
   mkdir ./zlib/build
   cd ./zlib/build
   cmake -G "Unix Makefiles" ..
-  make
-  sudo make install
+  make DESTDIR="$XULSWORD/Cpp/install" install
   # create a symlink to zconf.h (which was just renamed by cmake) so CLucene will compile
   ln -s ./build/zconf.h ../zconf.h
 fi
@@ -85,10 +88,9 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
   mv clucene-core-2.3.3.4 clucene
   mkdir ./clucene/build
   cd ./clucene/build
-  # -D DISABLE_MULTITHREADING=ON always causes compilation to fail, os it is not used
-  cmake -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=1 -D ZLIB_INCLUDE_DIR=$HOME/src/Cpp/zlib ..
-  make
-  sudo make install
+  # -D DISABLE_MULTITHREADING=ON always causes compilation to fail
+  cmake -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
+  make DESTDIR="$XULSWORD/Cpp/install" install
 fi
 
 # Compile libsword (local compilation is required to create libxulsword static library)
@@ -99,9 +101,13 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword
   mkdir ./sword/build
   cd ./sword/build
-  cmake -G "Unix Makefiles" ..
-  make
-  sudo make install
+  # The sword CMakeLists.txt expects this header here
+  cd "$XULSWORD/Cpp/install/usr/local/lib"
+  mkdir CLucene
+  cp "$XULSWORD/Cpp/clucene/build/src/shared/CLucene/clucene-config.h" ./CLucene/clucene-config.h
+  cd "$XULSWORD/Cpp/sword/build"
+  cmake -G "Unix Makefiles" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install/usr/local/lib" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.so" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
+  make DESTDIR="$XULSWORD/Cpp/install" install
 fi
 
 # Compile libxulsword
@@ -113,7 +119,7 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   fi
   mkdir build
   cd build
-  cmake -G "Unix Makefiles" ..
+  cmake -G "Unix Makefiles" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make
 fi
 
@@ -137,7 +143,7 @@ fi
 
 # Link to EXTRAS if available
 if [ -e "$XULSWORD_HOST/$EXTRAS" -a ! -e "$XULSWORD/$EXTRAS" ]; then
-  sudo ln -s "$XULSWORD_HOST/$EXTRAS" "$XULSWORD/$EXTRAS"
+  ln -s "$XULSWORD_HOST/$EXTRAS" "$XULSWORD/$EXTRAS"
 fi
 
 # Start with a clean build-out if we're virtual
@@ -148,9 +154,11 @@ fi
 # Build and compile xulsword
 if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
   "$XULSWORD/$EXTRAS/build_MK.sh"
-	"$XULSWORD/build/build.pl" "$XULSWORD/$EXTRAS/loc_MK.txt"
-else 
-	"$XULSWORD/build/build.pl"
+  cd "$XULSWORD/build"
+	"./build.pl" "$XULSWORD/$EXTRAS/loc_MK.txt"
+else
+  cd "$XULSWORD/build"
+	"./build/build.pl"
 fi
 
 # Copy build-out result to host if we're running on a VM
@@ -162,7 +170,7 @@ fi
 # a VM must have firefox installed to run xulsword
 if [ -e /vagrant ] && [ ! $(which firefox) ]; then sudo apt-get install -y firefox; fi
 if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
-  $HOME/src/xulsword/build/run_MK-dev.pl
+  $XULSWORD/build/run_MK-dev.pl
 else
-  $HOME/src/xulsword/build/run_xulsword-dev.pl
+  $XULSWORD/build/run_xulsword-dev.pl
 fi
