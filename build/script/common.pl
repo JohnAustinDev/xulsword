@@ -18,10 +18,9 @@ sub readSettingsFiles(\%$) {
 	$MicrosoftVS = "";
 	$XULRunner = ("$^O" =~ /darwin/i ? "../XUL.framework":"../xulrunner");
   }
-  if ($UseSecurityModule ne "true") {$KeyGenPath = "";}
   
   # Normalize paths, and check that required paths exist.
-  @PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK", "MicrosoftVS", "FirstRunXSM", "KeyGenPath");
+  @PathNames = ("CluceneSource", "SwordSource", "ModuleRepository1", "ModuleRepository2", "XulswordExtras", "XULRunner", "MicrosoftSDK", "MicrosoftVS", "FirstRunXSM");
   foreach my $path (@PathNames) {
   	if ($$path =~ /^\./) {$$path = File::Spec->rel2abs($$path, "$TRUNK/build");}
   	if ($path !~ /^ModuleRepository/ && $$path && !-e $$path) {

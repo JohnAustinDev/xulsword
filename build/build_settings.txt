@@ -49,11 +49,6 @@ Set (prefs.js):extensions.xulsword.LibSwordURL=
 # XULSWORD CAN REPORT UNHANDLED EXCEPTIONS TO THIS URL, IF SPECIFIED:
 Set (prefs.js):extensions.xulsword.ProblemReportURL=
 
-# CHOOSE SECURITY SETTINGS
-Set UseSecurityModule=false
-Set KeyGenPath=
-Set (prefs.js):extensions.xulsword.DefaultCK=defaultKey
-
 # DEFAULT LOCALE (en-US, ru, etc.)
 # The separate pref filename "language.js" is used here because this allows
 # the setup installer to overwrite this file (and pref) if the user selects

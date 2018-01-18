@@ -267,18 +267,6 @@ sub writeCompileDeps($) {
   if (-e "$TRUNK/Cpp/src/include/keygen.h") {unlink("$TRUNK/Cpp/src/include/keygen.h");}
   if (-e "$TRUNK/Cpp/windows/Versions.bat") {unlink("$TRUNK/Cpp/windows/Versions.bat");}
   
-  if ($UseSecurityModule =~ /true/i) {
-    if (!-e $KeyGenPath) {
-      &Log("ERROR: You cannot use the security module without supplying a key generator. (UseSecurityModule=true, KeyGenPath=???)\n");
-      die;
-    }
-    open(INFO, ">:encoding(UTF-8)", "$TRUNK/Cpp/src/include/keygen.h") || die;
-    print INFO "#ifdef _XULSECURITY_\n";
-    print INFO "#  include \"$KeyGenPath\"\n";
-    print INFO "#endif\n";
-    close(INFO);
-  }
-  
   # the following compiler deps are only needed by Windows
   if ("$^O" !~ /MSWin32/i) {return;}
   
@@ -385,12 +373,7 @@ sub compileLibSword($$) {
         `call "$TRUNK/Cpp/swordMK/windows/lib/Compile.bat" >> $LOGFILE`;
       }
 
-      if ($UseSecurityModule =~ /true/i) {
-        `call "$TRUNK/Cpp/windows/Compile.bat" >> $LOGFILE`;
-      }
-      else {
-        `call "$TRUNK/Cpp/windows/Compile.bat" NOSECURITY >> $LOGFILE`;
-      }
+      `call "$TRUNK/Cpp/windows/Compile.bat" NOSECURITY >> $LOGFILE`;
       
       if (!-e "$TRUNK/Cpp/windows/Release/xulsword.dll") {&Log("ERROR: libsword did not compile.\n"); die;}
 
@@ -1027,7 +1010,7 @@ sub writeInstallerAppInfo($) {
   print ISS "#define MyPublisher \"$Vendor\"\n";
   print ISS "#define MyDecimalVersion \"$Version\"\n";
   print ISS "#define MyVersion \"$Version\"\n";
-  print ISS "#define securitymod \"$UseSecurityModule\"\n";
+  print ISS "#define securitymod \"false\"\n";
   print ISS "#define MK \"$TRUNK\"\n";
   print ISS "#define MKS \"$XulswordExtras\"\n";
   print ISS "#define MKO \"$OutputDirectory\"\n";

@@ -41,10 +41,6 @@
 #include "localemgr.h"
 #include "listkey.h"
 
-#ifndef NOSECURITY
-   #include "security.h"
-#endif
-
 SWORD_NAMESPACE_START
 
 /********************************************************************
@@ -132,10 +128,7 @@ class xulsword {
   ListKey SearchList;
   SWBuf MySearchVerses;
   SWBuf MySearchTexts;
-  #ifndef NOSECURITY
-     security InstSecurity;
-  #endif
-
+  
 
   protected:
   void xsThrow(const char *msg, const char *param = NULL);

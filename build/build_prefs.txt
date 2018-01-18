@@ -48,6 +48,9 @@ Set (prefs.js):network.ftp.anonymous_password=xulsword@xulsword.org
 # OTHER SETTINGS
 Set (prefs.js):extensions.xulsword.DontShowExceptionDialog=false
 
+# NO LONGER USED BUILD SETTINGS
+Set (prefs.js):extensions.xulsword.DefaultCK=defaultKey
+
 # DEBUG PREFERENCES (USED ONLY WITH DEVELOPMENT ENVIRONMENT)
 Set (debug.js):javascript.options.strict=true
 Set (debug.js):nglayout.debug.disable_xul_cache=true

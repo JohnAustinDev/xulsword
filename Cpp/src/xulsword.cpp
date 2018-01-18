@@ -1957,24 +1957,7 @@ void xulsword::setCipherKey(const char *mod, const char *cipherkey, bool useSecM
     xsThrow("SetCipherKey: module \"%s\" not found.", mod);
     return;
   }
-      
-  #ifndef NOSECURITY
-    if (useSecModule) {
-      SWBuf paramstring;
-      paramstring.set(NOTFOUND);
-      ConfigEntMap * infoConfig = const_cast<ConfigEntMap *>(&module->getConfig());
-      ConfigEntMap::iterator it = infoConfig->find(MODVERSION);
-      if (it != infoConfig->end()) {paramstring.set(it->second.c_str());}
-
-      //printf("mod:%s, ver:%s\n", mod, paramstring.get());
-      InstSecurity.ModCipherKey(Outtext, cipherkey, paramstring.c_str(), mod);
-    }
-    else {sprintf(Outtext,"%s", cipherkey);}
-    
-  #else
-    sprintf(Outtext,"%s", cipherkey);
-    
-  #endif
+  sprintf(Outtext,"%s", cipherkey);
 
   // Set the new Cipher Key. IF WRONG CIPHER KEY IS GIVEN, IT CANNOT BE CHANGED WITHOUT RELOAD (SWORD BUG)
 //SWLog::getSystemLog()->logDebug("Actual CipherKey=%s\n", Outtext);
