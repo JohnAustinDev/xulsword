@@ -8,31 +8,11 @@
 
 cd `dirname $0`
 
+COMPILE_ONLY=$1
 EXTRAS=IBTXulsword
 
-# If this is Vagrant, then copy xulsword code locally so as not to 
-# disturb any build files on the host machine!
-if [ -e /vagrant ]; then
-  if [ -e $HOME/src/xulsword ]; then
-    rm -rf $HOME/src/xulsword
-  fi
-  mkdir -p $HOME/src/xulsword
-  cd /vagrant
-  stash=`git stash create`
-  if [ ! $stash ]; then stash=`git rev-parse HEAD`; fi
-  git archive -o archive.zip $stash
-  mv archive.zip $HOME/src/xulsword
-  cd $HOME/src/xulsword
-  unzip archive.zip
-  rm archive.zip
-  find . -name "*.pl" -exec chmod ugo+x {} \;
-  find . -name "*.sh" -exec chmod ugo+x {} \;
-fi
-XULSWORD=`pwd -P`
-echo XULSWORD path is "$XULSWORD"
-
 # Install build tools if needed
-if [ ! -e "$XULSWORD/Cpp/build" ]; then
+if [ ! -e /vagrant ] || [ ! -e "$HOME/src/xulsword/Cpp/build" ]; then
   if [ $(uname | grep Darwin) ]; then
     echo Running on OSX
     brew update
@@ -49,6 +29,35 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   git config --global user.email "vm@vagrant.net"
   git config --global user.name "Vagrant User"
 fi
+
+# If this is Vagrant, then copy xulsword code locally so as not to 
+# disturb any build files on the host machine!
+if [ -e /vagrant ]; then
+  # save any existing build files
+  if [ -e "$HOME/src/xulsword/Cpp/install" ]; then mv "$HOME/src/xulsword/Cpp/install" "$HOME"; fi
+  if [ -e "$HOME/src/xulsword/Cpp/build" ];   then mv "$HOME/src/xulsword/Cpp/build"   "$HOME"; fi
+  
+  if [ -e "$HOME/src/xulsword" ]; then
+    rm -rf "$HOME/src/xulsword"
+  fi
+  mkdir -p "$HOME/src/xulsword"
+  cd /vagrant
+  stash=`git stash create`
+  if [ ! $stash ]; then stash=`git rev-parse HEAD`; fi
+  git archive -o archive.zip $stash
+  mv archive.zip "$HOME/src/xulsword"
+  cd "$HOME/src/xulsword"
+  unzip archive.zip
+  rm archive.zip
+  find . -name "*.pl" -exec chmod ugo+x {} \;
+  find . -name "*.sh" -exec chmod ugo+x {} \;
+  
+  # restore any pre-existing build files
+  if [ -e "$HOME/install" ]; then mv "$HOME/install" "$HOME/src/xulsword/Cpp"; fi
+  if [ -e "$HOME/build" ];   then mv "$HOME/build"   "$HOME/src/xulsword/Cpp"; fi
+fi
+XULSWORD=`pwd -P`
+echo XULSWORD path is "$XULSWORD"
 
 # XULSWORD_HOST is xulsword on the non-virtual machine (may have custom
 # control files etc.)
@@ -72,7 +81,7 @@ if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
   mv zlib-1.2.8 zlib
   mkdir ./zlib/build
   cd ./zlib/build
-  cmake -G "Unix Makefiles" ..
+  cmake -G "Unix Makefiles" -D CMAKE_C_FLAGS="-fPIC" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
   # create a symlink to zconf.h (which was just renamed by cmake) so CLucene will compile
   ln -s ./build/zconf.h ../zconf.h
@@ -88,7 +97,7 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
   mv clucene-core-2.3.3.4 clucene
   mkdir ./clucene/build
   cd ./clucene/build
-  # -D DISABLE_MULTITHREADING=ON always causes compilation to fail
+  # -D DISABLE_MULTITHREADING=ON causes compilation to fail
   cmake -G "Unix Makefiles" -D BUILD_STATIC_LIBRARIES=ON -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
 fi
@@ -100,11 +109,12 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cd "$XULSWORD/Cpp"
   svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword
   mkdir ./sword/build
-  cd ./sword/build
-  # The sword CMakeLists.txt expects this header here
+  
+  # The sword CMakeLists.txt expects this header to be here, so add it
   cd "$XULSWORD/Cpp/install/usr/local/lib"
   mkdir CLucene
   cp "$XULSWORD/Cpp/clucene/build/src/shared/CLucene/clucene-config.h" ./CLucene/clucene-config.h
+  
   cd "$XULSWORD/Cpp/sword/build"
   cmake -G "Unix Makefiles" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install/usr/local/lib" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.so" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
@@ -123,9 +133,7 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   make
 fi
 
-if [ ! -e $XULSWORD/sword ]; then
-  mkdir "$XULSWORD/sword"
-fi
+if [ ! -z "$COMPILE_ONLY" ]; then exit; fi
 
 # Download xulrunner
 if [ ! -e "$XULSWORD/xulrunner" ]; then
@@ -136,7 +144,7 @@ if [ ! -e "$XULSWORD/xulrunner" ]; then
   else
     xulrunner=xulrunner-$xulrunnerRev.en-US.linux-$(uname -p).tar.bz2
   fi
-  wget http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/$xulrunnerRev/runtimes/$xulrunner
+  wget "http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/$xulrunnerRev/runtimes/$xulrunner"
   tar -xf $xulrunner
   rm $xulrunner
 fi
@@ -152,6 +160,7 @@ if [ -e /vagrant ]; then
 fi
 
 # Build and compile xulsword
+if [ ! -e "$XULSWORD/sword" ]; then mkdir "$XULSWORD/sword"; fi
 if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
   "$XULSWORD/$EXTRAS/build_MK.sh"
   cd "$XULSWORD/build"
@@ -170,7 +179,7 @@ fi
 # a VM must have firefox installed to run xulsword
 if [ -e /vagrant ] && [ ! $(which firefox) ]; then sudo apt-get install -y firefox; fi
 if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
-  $XULSWORD/build/run_MK-dev.pl
+  "$XULSWORD/build/run_MK-dev.pl"
 else
-  $XULSWORD/build/run_xulsword-dev.pl
+  "$XULSWORD/build/run_xulsword-dev.pl"
 fi
