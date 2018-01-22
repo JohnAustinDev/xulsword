@@ -10,6 +10,7 @@ cd `dirname $0`
 
 COMPILE_ONLY=$1
 EXTRAS=IBTXulsword
+if [ -e /vagrant ] && [ -e /home/vagrant ]; then MODE="guest"; else MODE="host"; fi
 
 # Install build tools if needed
 if [ ! -e /vagrant ] || [ ! -e "$HOME/src/xulsword/Cpp/build" ]; then
@@ -30,9 +31,9 @@ if [ ! -e /vagrant ] || [ ! -e "$HOME/src/xulsword/Cpp/build" ]; then
   git config --global user.name "Vagrant User"
 fi
 
-# If this is Vagrant, then copy xulsword code locally so as not to 
+# If this is xulsword Vagrant, then copy xulsword code locally so as not to 
 # disturb any build files on the host machine!
-if [ -e /vagrant ]; then
+if [ $MODE -eq "guest" ]; then
   # save any existing build files
   if [ -e "$HOME/src/xulsword/Cpp/install" ]; then mv "$HOME/src/xulsword/Cpp/install" "$HOME"; fi
   if [ -e "$HOME/src/xulsword/Cpp/build" ];   then mv "$HOME/src/xulsword/Cpp/build"   "$HOME"; fi
@@ -61,13 +62,13 @@ echo XULSWORD path is "$XULSWORD"
 
 # XULSWORD_HOST is xulsword on the non-virtual machine (may have custom
 # control files etc.)
-if [ -e /vagrant ]; then
+if [ $MODE -eq "guest" ]; then
   XULSWORD_HOST=/vagrant
 else
   XULSWORD_HOST=$XULSWORD
 fi
 
-# Create a local installation directory, so that
+# Create a local installation directory
 if [ ! -e "$XULSWORD/Cpp/install" ]; then  mkdir "$XULSWORD/Cpp/install"; fi
 
 # Compile zlib (local compilation is required to create CLucene static library)
