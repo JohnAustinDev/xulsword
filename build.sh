@@ -10,7 +10,7 @@ fi
 EXTRAS=IBTXulsword
 
 if [ -e /vagrant ] && [ -e /home/vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
-if [ -e /vagrant ] && [ -e /home/vagrant ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD=`dirname $0`; fi
+if [ -e /vagrant ] && [ -e /home/vagrant ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD="$( cd "$(dirname "$0")" ; pwd -P )"; fi
 
 # BUILD DEPENDENCIES (Ubuntu Xenial)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip"
@@ -106,7 +106,7 @@ if [ ! -e "$XULSWORD/xulrunner" ]; then
   if [ $(uname | grep Darwin) ]; then
     xulrunner=xulrunner-$xulrunnerRev.en-US.mac.tar.bz2
   else
-    xulrunner=xulrunner-$xulrunnerRev.en-US.linux-$(uname -p).tar.bz2
+    xulrunner=xulrunner-$xulrunnerRev.en-US.linux-$(uname -m).tar.bz2
   fi
   wget "http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/$xulrunnerRev/runtimes/$xulrunner"
   tar -xf $xulrunner
