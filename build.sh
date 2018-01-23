@@ -1,9 +1,6 @@
 #!/bin/bash
 
-# This script checks the necessary dependencies and builds xulsword using 
-# the loc_MK.txt build settings if this file exists (otherwise defaults).
-
-cd `dirname $0`
+# This script checks the necessary dependencies and builds xulsword
 
 if [[ $EUID -eq 0 ]]; then
    echo "This script should not be run as root. Exiting..." 
@@ -13,6 +10,7 @@ fi
 EXTRAS=IBTXulsword
 
 if [ -e /vagrant ] && [ -e /home/vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
+if [ -e /vagrant ] && [ -e /home/vagrant ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD=`dirname $0`; fi
 
 # BUILD DEPENDENCIES (Ubuntu Xenial)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip"
@@ -30,37 +28,12 @@ if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
     echo $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed")
   fi
 fi
-  
-if [ "$CONTEXT" = "xsguest" ]; then
-  # Save any existing build files
-  if [ -e "$HOME/src/xulsword/Cpp/install" ]; then mv "$HOME/src/xulsword/Cpp/install" "$HOME"; fi
-  if [ -e "$HOME/src/xulsword/Cpp/build" ];   then mv "$HOME/src/xulsword/Cpp/build"   "$HOME"; fi
-  
-  # If this is a xulsword guest virtual machine, then copy xulsword code   
-  # locally so as not to disturb xulsword build files on the host!
-  if [ -e "$HOME/src/xulsword" ]; then
-    rm -rf "$HOME/src/xulsword"
-  fi
-  mkdir -p "$HOME/src/xulsword"
-  cd /vagrant
-  git config --global user.email "vm@vagrant.net"
-  git config --global user.name "Vagrant User"
-  stash=`git stash create`
-  if [ ! $stash ]; then stash=`git rev-parse HEAD`; fi
-  git archive -o archive.zip $stash
-  mv archive.zip "$HOME/src/xulsword"
-  cd "$HOME/src/xulsword"
-  unzip archive.zip
-  rm archive.zip
-  find . -name "*.pl" -exec chmod ugo+x {} \;
-  find . -name "*.sh" -exec chmod ugo+x {} \;
-  
-  # restore any pre-existing build files
-  if [ -e "$HOME/install" ]; then mv "$HOME/install" "$HOME/src/xulsword/Cpp"; fi
-  if [ -e "$HOME/build" ];   then mv "$HOME/build"   "$HOME/src/xulsword/Cpp"; fi
+
+# If this is a xulsword guest, then link to host's xulsword code, but build everything within the VM
+if [ "$CONTEXT" = "xsguest" ] && [ ! -e "$XULSWORD" ]; then
+  mkdir -p "$XULSWORD"
+  cp -alr /vagrant/* "$XULSWORD"
 fi
-XULSWORD=`pwd -P`
-echo XULSWORD path is "$XULSWORD"
 
 # Create a local installation directory
 if [ ! -e "$XULSWORD/Cpp/install" ]; then  mkdir "$XULSWORD/Cpp/install"; fi
@@ -146,11 +119,6 @@ if [ "$CONTEXT" != "xsguest" ]; then
 fi
 
 # BUILD AND RUN XULSWORD IN THE XULSWORD GUEST VM
-
-# Link to EXTRAS, if available
-if [ "$CONTEXT" = "xsguest" ] && [ -e "/vagrant/$EXTRAS" ] && [ ! -e "$XULSWORD/$EXTRAS" ]; then
-  ln -s "/vagrant/$EXTRAS" "$XULSWORD/$EXTRAS"
-fi
 
 # Start with a clean build-out
 rm -rf "$XULSWORD/build-out"
