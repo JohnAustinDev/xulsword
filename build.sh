@@ -1,48 +1,50 @@
 #!/bin/bash
 
-# This script should NOT be run as root (privileged: false in Vagrantfile)
-
-# This script can be run on a linux, OSX or vagrant machine. It
-# installs any necessary dependencies and builds xulsword using the
-# loc_MK.txt build settings if this file exists (otherwise defaults).
+# This script checks the necessary dependencies and builds xulsword using 
+# the loc_MK.txt build settings if this file exists (otherwise defaults).
 
 cd `dirname $0`
 
-COMPILE_ONLY=$1
-EXTRAS=IBTXulsword
-if [ -e /vagrant ] && [ -e /home/vagrant ]; then MODE="guest"; else MODE="host"; fi
-
-# Install build tools if needed
-if [ ! -e /vagrant ] || [ ! -e "$HOME/src/xulsword/Cpp/build" ]; then
-  if [ $(uname | grep Darwin) ]; then
-    echo Running on OSX
-    brew update
-    brew install wget
-    brew install autoconf
-    brew install automake
-    brew install subversion
-    brew install libtool
-  else
-    echo Running on Linux
-    sudo apt-get update
-    sudo apt-get install -y build-essential git subversion libtool-bin cmake autoconf make pkg-config zip
-  fi
-  git config --global user.email "vm@vagrant.net"
-  git config --global user.name "Vagrant User"
+if [[ $EUID -eq 0 ]]; then
+   echo "This script should not be run as root. Exiting..." 
+   exit 1
 fi
 
-# If this is xulsword Vagrant, then copy xulsword code locally so as not to 
-# disturb any build files on the host machine!
-if [ $MODE -eq "guest" ]; then
-  # save any existing build files
+EXTRAS=IBTXulsword
+
+if [ -e /vagrant ] && [ -e /home/vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
+
+# BUILD DEPENDENCIES (Ubuntu Xenial)
+PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip"
+# for ZLib build
+PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
+# for Clucene build
+PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
+if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
+  if [ "$CONTEXT" = "xsguest" ]; then
+    sudo apt-get update
+    sudo apt-get install -y $PKG_DEPS
+  else
+    echo
+    echo WARNING!! You may need to install the following:
+    echo $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed")
+  fi
+fi
+  
+if [ "$CONTEXT" = "xsguest" ]; then
+  # Save any existing build files
   if [ -e "$HOME/src/xulsword/Cpp/install" ]; then mv "$HOME/src/xulsword/Cpp/install" "$HOME"; fi
   if [ -e "$HOME/src/xulsword/Cpp/build" ];   then mv "$HOME/src/xulsword/Cpp/build"   "$HOME"; fi
   
+  # If this is a xulsword guest virtual machine, then copy xulsword code   
+  # locally so as not to disturb xulsword build files on the host!
   if [ -e "$HOME/src/xulsword" ]; then
     rm -rf "$HOME/src/xulsword"
   fi
   mkdir -p "$HOME/src/xulsword"
   cd /vagrant
+  git config --global user.email "vm@vagrant.net"
+  git config --global user.name "Vagrant User"
   stash=`git stash create`
   if [ ! $stash ]; then stash=`git rev-parse HEAD`; fi
   git archive -o archive.zip $stash
@@ -60,21 +62,12 @@ fi
 XULSWORD=`pwd -P`
 echo XULSWORD path is "$XULSWORD"
 
-# XULSWORD_HOST is xulsword on the non-virtual machine (may have custom
-# control files etc.)
-if [ $MODE -eq "guest" ]; then
-  XULSWORD_HOST=/vagrant
-else
-  XULSWORD_HOST=$XULSWORD
-fi
-
 # Create a local installation directory
 if [ ! -e "$XULSWORD/Cpp/install" ]; then  mkdir "$XULSWORD/Cpp/install"; fi
 
 # Compile zlib (local compilation is required to create CLucene static library)
 # https://packages.ubuntu.com/source/xenial/zlib
 if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
-  sudo apt-get install -y debhelper binutils gcc-multilib dpkg-dev
   cd "$XULSWORD/Cpp"
   wget http://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.8.dfsg.orig.tar.gz
   tar -xf zlib_1.2.8.dfsg.orig.tar.gz
@@ -90,7 +83,6 @@ fi
 
 # Compile libclucene (local compilation is required to create libsword static library)
 if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
-  sudo apt-get install -y debhelper libboost-dev
   cd "$XULSWORD/Cpp"
   wget http://archive.ubuntu.com/ubuntu/pool/main/c/clucene-core/clucene-core_2.3.3.4.orig.tar.gz
   tar -xf clucene-core_2.3.3.4.orig.tar.gz
@@ -134,9 +126,7 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   make
 fi
 
-if [ ! -z "$COMPILE_ONLY" ]; then exit; fi
-
-# Download xulrunner
+# Install xulrunner locally
 if [ ! -e "$XULSWORD/xulrunner" ]; then
   xulrunnerRev=41.0b9
   cd "$XULSWORD"
@@ -150,15 +140,20 @@ if [ ! -e "$XULSWORD/xulrunner" ]; then
   rm $xulrunner
 fi
 
-# Link to EXTRAS if available
-if [ -e "$XULSWORD_HOST/$EXTRAS" -a ! -e "$XULSWORD/$EXTRAS" ]; then
-  ln -s "$XULSWORD_HOST/$EXTRAS" "$XULSWORD/$EXTRAS"
+# DONE! Unless we're a xulsword guest VM
+if [ "$CONTEXT" != "xsguest" ]; then 
+  exit
 fi
 
-# Start with a clean build-out if we're virtual
-if [ -e /vagrant ]; then
-  `rm -rf "$XULSWORD/build-out"`
+# BUILD AND RUN XULSWORD IN THE XULSWORD GUEST VM
+
+# Link to EXTRAS, if available
+if [ "$CONTEXT" = "xsguest" ] && [ -e "/vagrant/$EXTRAS" ] && [ ! -e "$XULSWORD/$EXTRAS" ]; then
+  ln -s "/vagrant/$EXTRAS" "$XULSWORD/$EXTRAS"
 fi
+
+# Start with a clean build-out
+rm -rf "$XULSWORD/build-out"
 
 # Build and compile xulsword
 if [ ! -e "$XULSWORD/sword" ]; then mkdir "$XULSWORD/sword"; fi
@@ -171,14 +166,12 @@ else
 	"./build/build.pl"
 fi
 
-# Copy build-out result to host if we're running on a VM
-if [ -e /vagrant ]; then
-  cp -rf "$XULSWORD/build-out" /vagrant
-fi
+# Copy build-out result to host
+cp -rf "$XULSWORD/build-out" /vagrant
 
 # Start xulsword
-# a VM must have firefox installed to run xulsword
-if [ -e /vagrant ] && [ ! $(which firefox) ]; then sudo apt-get install -y firefox; fi
+# must also have firefox installed to run xulsword on a clean VM
+sudo apt-get install -y firefox
 if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
   "$XULSWORD/build/run_MK-dev.pl"
 else
