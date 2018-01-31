@@ -14,8 +14,13 @@ if test $PHP_PHPSWORD != "no"; then
     
     PHP_ADD_LIBPATH(../install/usr/local/lib)
     PHP_ADD_LIBRARY(stdc++, 1, PHPSWORD_SHARED_LIBADD)
-    PHP_ADD_LIBRARY(sword, 1, PHPSWORD_STATIC_LIBADD)
-    PHP_ADD_LIBRARY(clucene-core-static, 1, PHPSWORD_STATIC_LIBADD)
+    
+# Don't even try to get phpize to link these libraries statically. After Googling and trying
+# many reasonable things, phpize and configure never produced the necessary linker flags. So 
+# the script staticlib.sh is used for static linking instead. The following produces a shared lib.
+    PHP_ADD_LIBRARY(sword, 1, PHPSWORD_SHARED_LIBADD)
+    PHP_ADD_LIBRARY(clucene-core, 1, PHPSWORD_SHARED_LIBADD)
+    PHP_ADD_LIBRARY(clucene-shared, 1, PHPSWORD_SHARED_LIBADD)
     
     PHP_NEW_EXTENSION(phpsword, phpsword.cpp ../src/xulsword.cpp, $ext_shared)
 fi
