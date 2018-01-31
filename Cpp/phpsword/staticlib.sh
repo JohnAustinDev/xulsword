@@ -7,8 +7,8 @@ if [ -e .libs/phpswordstatic.so ]; then rm .libs/phpswordstatic.so; fi
 
 gcclibDir=$(cc -v 2>&1 | grep COLLECT_LTO_WRAPPER | sed -r 's/(^.*?=|[^\/]*$)//g')
 
-# Linker --no-undefined is not used because zend functions are not 
-# located until later, however, it should be used to validate that all  
+# Linker --no-undefined is not used because zend functions are not
+# located until later, however, it should be used to validate that all
 # other references are linked, and then it can be commented out again.
 #noundef="-Wl,--no-undefined"
 
@@ -24,5 +24,4 @@ $noundef -L$gcclibDir -lstdc++ -lm \
 echo cc $ccflags
 cc $ccflags
 
-if [ -f ".libs/phpsword.so" ]; then mv ./.libs/phpsword.so ./.libs/phpsword-shared.so; fi
-if [ -e ".libs/phpswordstatic.so" ]; then ln -s ./phpswordstatic.so ./.libs/phpsword.so; fi
+if [ -e .libs/phpswordstatic.so ]; then cp -f .libs/phpswordstatic.so ./modules/phpsword.so; fi
