@@ -643,7 +643,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     }
 
     int vNum = myVerseKey->getVerse();
-    int vLast;
+    int vLast; // the current module position may include multiple linked verses, so this is the last verse of our position
     module->increment(1); // must do this now to get vLast
     done = module->popError();
     if (done) {vLast = myVerseKey->getVerseMax();}
