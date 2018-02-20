@@ -38,8 +38,8 @@ protected:
 	public:
 		MyUserData(const SWModule *module, const SWKey *key);//: BasicFilterUserData(module, key) {}
 		bool inscriptRef;
-		char SecHead;
-		bool BiblicalText;
+		char secHeadLevel;
+		bool isBiblicalText;
 		SWBuf version;
 		XMLTag startTag;
 	};

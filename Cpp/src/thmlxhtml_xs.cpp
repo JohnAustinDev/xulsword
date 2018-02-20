@@ -38,10 +38,11 @@ const char *ThMLXHTMLXS::getHeader() const {
 
 
 ThMLXHTMLXS::MyUserData::MyUserData(const SWModule *module, const SWKey *key) : BasicFilterUserData(module, key) {
+	isBiblicalText = false;
+	secHeadLevel = 0;
 	if (module) {
 		version = module->getName();
-		BiblicalText = (!strcmp(module->getType(), "Biblical Texts"));
-		SecHead = false;
+		isBiblicalText = (!strcmp(module->getType(), "Biblical Texts"));
 	}	
 }
 
@@ -314,19 +315,19 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 			}
 		}
 		else if (tag.getName() && !strcmp(tag.getName(), "div")) {
-			if (tag.isEndTag() && u->SecHead) {
+			if (tag.isEndTag() && u->secHeadLevel) {
 				buf += "</h";
-				buf += u->SecHead;
+				buf += u->secHeadLevel;
 				buf += ">";
-				u->SecHead = false;
+				u->secHeadLevel = 0;
 			}
 			else if (tag.getAttribute("class")) {
 				if (!stricmp(tag.getAttribute("class"), "sechead")) {
-					u->SecHead = '3';
+					u->secHeadLevel = '3';
 					buf += "<h3>";
 				}
 				else if (!stricmp(tag.getAttribute("class"), "title")) {
-					u->SecHead = '2';
+					u->secHeadLevel = '2';
 					buf += "<h2>";
 				}
 				else {

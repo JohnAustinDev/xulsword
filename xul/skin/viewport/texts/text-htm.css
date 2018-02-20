@@ -16,26 +16,50 @@
     You should have received a copy of the GNU General Public License
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
-/* Standard SWORD OSIS filter CSS */
+/* SWORD getHeader() of osis2xhtml.cpp CSS */
 .divineName { font-variant: small-caps; }
-.transChangeSupplied { font-style: italic; }
-.small, .sub, .sup { font-size: .83em; }
-.sub             { vertical-align: sub; }
-.sup             { vertical-align: super; }
-.indent0 {margin-left:0;}
-.indent1 {margin-left:1.5em;}
-.indent2 {margin-left:3em;}
-.indent3 {margin-left:4.5em;}
-.indent4 {margin-left:6em;}
-.overline        { text-decoration: overline; }
-.moduleHeader,
-.testamentHeader,
-.bookHeader,
-.chapterHeader {}
-.wordsOfJesus,
-.wordsOfJesus span {
-  color:red;
-}
+.wordsOfJesus, .wordsOfJesus span { color: red; }
+.transChange { font-style: italic; }
+.transChange.transChange-supplied { font-style: italic; }
+.transChange.transChange-added { font-style: italic; }
+.transChange.transChange-tenseChange::before { content: '*'; }
+.transChange.transChange-tenseChange { font-style: normal; }
+.transChange:lang(zh) { font-style: normal; text-decoration: dotted underline; }
+.overline { text-decoration: overline; }
+.indent1 { margin-left: 1.5em; }
+.indent2 { margin-left: 3em; }
+.indent3 { margin-left: 4.5em; }
+.indent4 { margin-left: 6em; }
+.small-caps { font-variant: small-caps; }
+.selah { text-align: right; width: 50%; margin: 0; padding: 0; }
+.acrostic { text-align: center; }
+.colophon {font-style: italic; font-size: small; display: block; }
+.rdg { font-style: italic; }
+.catchWord { font-style: bold; }
+
+/* SWORD getHeader() of teixhtml.cpp CSS */
+.entryFree, .form, .etym, .def, .usg, .quote { display:block; }
+.pron, .pos, .oVar, .ref { display:inline }
+[type=headword] { font-weight:bold; font-variant:small-caps; text-decoration:underline; }
+[type=derivative] { font-weight:bold; font-variant:small-caps; }
+[rend=italic] { font-style:italic; }
+[rend=bold] { font-weight:bold; }
+[rend=small-caps] { font-variant:small-caps; }
+.pos:before { content: "Pos.: "; font-weight:bold; }
+.pron:before { content:" \\\\ "; }
+.pron:after { content:" \\\\ "; }
+.etym:before { content:"Etym.:"; display:block; font-weight:bold; }
+.usg:before { content:"Usg.:"; display:block; font-weight:bold; }
+.def:before { content:"Def.:" display:block; font-weight:bold; }
+.quote { background-color:#cfcfdf; padding:0.3em; margin:0.5em; border-width:1px; border-style:solid; }
+.cit:before { content:"quote:" ; display:block; margin-top:0.5em; font-size:small; }
+.cit { text-align:center; }
+.persName:before { content:" ("; font-size:small; }
+.persName:after { content:") "; font-size:small; }
+.persName { font-size:small; }
+.number { font-style:bold; }
+.def { font-style:bold; }
+    
 /* Xulsword OSIS filter specific CSS */
 .head1.main {
   font-size:1.5em !important;

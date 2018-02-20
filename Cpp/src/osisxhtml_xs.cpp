@@ -36,75 +36,6 @@ SWORD_NAMESPACE_START
 static inline void outText(const char *t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
 static inline void outText(char t, SWBuf &o, BasicFilterUserData *u) { if (!u->suspendTextPassThru) o += t; else u->lastSuspendSegment += t; }
 
-/* The following are not used by xulsword...
-void processLemma(bool suspendTextPassThru, XMLTag &tag, SWBuf &buf) {
-	const char *attrib;
-	const char *val;
-	if ((attrib = tag.getAttribute("lemma"))) {
-		int count = tag.getAttributePartCount("lemma", ' ');
-		int i = (count > 1) ? 0 : -1;		// -1 for whole value cuz it's faster, but does the same thing as 0
-		do {
-			attrib = tag.getAttribute("lemma", i, ' ');
-			if (i < 0) i = 0;	// to handle our -1 condition
-			val = strchr(attrib, ':');
-			val = (val) ? (val + 1) : attrib;
-			SWBuf gh;
-			if(*val == 'G')
-				gh = "Greek";
-			if(*val == 'H')
-				gh = "Hebrew";
-			const char *val2 = val;
-			if ((strchr("GH", *val)) && (isdigit(val[1])))
-				val2++;
-			//if ((!strcmp(val2, "3588")) && (lastText.length() < 1))
-			//	show = false;
-			//else {
-				if (!suspendTextPassThru) {
-					buf.appendFormatted("<small><em class=\"strongs\">&lt;<a href=\"passagestudy.jsp?action=showStrongs&type=%s&value=%s\" class=\"strongs\">%s</a>&gt;</em></small>",
-							(gh.length()) ? gh.c_str() : "", 
-							URL::encode(val2).c_str(),
-							val2);
-				}
-			//}
-			
-		} while (++i < count);
-	}
-}
-
-
-
-void processMorph(bool suspendTextPassThru, XMLTag &tag, SWBuf &buf) {
-	const char * attrib;
-	const char *val;
-	if ((attrib = tag.getAttribute("morph"))) { // && (show)) {
-		SWBuf savelemma = tag.getAttribute("savlm");
-		//if ((strstr(savelemma.c_str(), "3588")) && (lastText.length() < 1))
-		//	show = false;
-		//if (show) {
-			int count = tag.getAttributePartCount("morph", ' ');
-			int i = (count > 1) ? 0 : -1;		// -1 for whole value cuz it's faster, but does the same thing as 0
-			do {
-				attrib = tag.getAttribute("morph", i, ' ');
-				if (i < 0) i = 0;	// to handle our -1 condition
-				val = strchr(attrib, ':');
-				val = (val) ? (val + 1) : attrib;
-				const char *val2 = val;
-				if ((*val == 'T') && (strchr("GH", val[1])) && (isdigit(val[2])))
-					val2+=2;
-				if (!suspendTextPassThru) {
-					buf.appendFormatted("<small><em class=\"morph\">(<a href=\"passagestudy.jsp?action=showMorph&type=%s&value=%s\" class=\"morph\">%s</a>)</em></small>",
-							URL::encode(tag.getAttribute("morph")).c_str(),
-							URL::encode(val).c_str(), 
-							val2);
-				}
-			} while (++i < count);
-		//}
-	}
-}
-
-
-}	// end anonymous namespace
-*/
 
 BasicFilterUserData *OSISXHTMLXS::createUserData(const SWModule *module, const SWKey *key) {
 	return new MyUserDataXS(module, key);
@@ -446,8 +377,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		// NOTE: Milestone p is illegal OSIS, but is handled anyway. Non-milestone 
 		// versions of these three tags should not be found in versified Bibles, 
 		// so it is not necessary to open/close u->wordsOfChrist (OSIS container 
-		// tags here remain to container-type HTML elements, which could
-		// break wordsOfChrist presentation).
+		// tags could break wordsOfChrist presentation).
 		else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg") || !strcmp(tag.getName(), "list")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {	// non-milestone start tag
 				SWBuf htag = "<";
@@ -506,34 +436,27 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		else if (!strcmp(tag.getName(), "reference")) {
       if (!u->inXRefNote) {	// only show these if we're not in an xref note				
 				if ((!tag.isEndTag()) && (!tag.isEmpty())) {
+				  SWBuf referenceInfo = "";
+				  if ((tag.getAttribute("osisRef"))) referenceInfo = tag.getAttribute("osisRef");
+				  else if ((tag.getAttribute("passage"))) referenceInfo = tag.getAttribute("passage");
 				  SWBuf referenceClass;
-				  SWBuf referenceInfo;
 				  if (tag.getAttribute("type") && !strcmp("x-glossary", tag.getAttribute("type"))) {
 				    u->referenceTag = "span";
 				    referenceClass = "dt";
 				    if (tag.getAttribute("subType") && !strcmp("x-target_self", tag.getAttribute("subType"))) {
 							referenceClass.append(" "); referenceClass.append(tag.getAttribute("subType"));
 						}
-				    referenceInfo = (tag.getAttribute("osisRef")) ? tag.getAttribute("osisRef"):"";
 				  }
 				  else if (tag.getAttribute("type") && !strcmp("x-glosslink", tag.getAttribute("type"))) {
 				    u->referenceTag = "span";
 				    referenceClass = "dtl";
 				    if (tag.getAttribute("subType") && !strcmp("x-target_self", tag.getAttribute("subType"))) {
 							referenceClass.append(" "); referenceClass.append(tag.getAttribute("subType"));
-						}
-				    referenceInfo = (tag.getAttribute("osisRef")) ? tag.getAttribute("osisRef"):"";				  
+						}		  
 				  }
 				  else {
 				    u->referenceTag = "span";
 				    referenceClass = "sr";
-				    if (tag.getAttribute("osisRef")) {
-				      referenceInfo = tag.getAttribute("osisRef");
-				    }
-				    else if ((tag.getAttribute("passage"))) {
-				      referenceInfo = tag.getAttribute("passage");
-				    }
-				    else {referenceInfo = "";}
 				    // Do we need to append this to the last <span class="sr"... tag??
 				    int lenBeforeTrim = buf.length();
 				    buf.trimEnd();
@@ -732,36 +655,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				}
 			}
 		}
-/*		
-		// <list>
-		else if (!strcmp(tag.getName(), "list")) {
-			if((!tag.isEndTag()) && (!tag.isEmpty())) {
-				if (tag.getAttribute("subType")) {
-					outHtmlTag("<ul class=\"", buf, u);
-					outText(tag.getAttribute("subType"), buf, u);
-					outText("\">", buf, u);
-				}
-				else outHtmlTag("<ul>", buf, u);
-			}
-			else if (tag.isEndTag()) {
-				outHtmlTag("</ul>", buf, u);
-			}
-		}
 
-		// <item>
-		else if (!strcmp(tag.getName(), "item")) {
-			if((!tag.isEndTag()) && (!tag.isEmpty())) {
-				if (tag.getAttribute("subType")) {
-					outHtmlTag("<li class=\"", buf, u);
-					outText(tag.getAttribute("subType"), buf, u);
-					outText("\">", buf, u);
-				}
-				else outHtmlTag("<li>", buf, u);
-			}
-			else if (tag.isEndTag()) {
-				outHtmlTag("</li>", buf, u);
-			}
-		}*/
 		// <catchWord> & <rdg> tags (italicize)
 		else if (!strcmp(tag.getName(), "rdg") || !strcmp(tag.getName(), "catchWord")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
@@ -920,23 +814,22 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 				}
 			}
 		}
-
+		
 		// <transChange>
 		else if (!strcmp(tag.getName(), "transChange")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 				SWBuf type = tag.getAttribute("type");
 				u->lastTransChange = type;
-
-				// just do all transChange tags this way for now
-				if ((type == "added") || (type == "supplied"))
-					outHtmlTag("<span class=\"transChangeSupplied\">", buf, u);
-				else if (type == "tenseChange")
-					buf += "*";
+				
+				outHtmlTag("<span class=\"transChange", buf, u);
+				if (type.length()) {
+					outText(" transChange-", buf, u);
+					outText(type, buf, u);
+				}
+				outText("\">", buf, u);
 			}
 			else if (tag.isEndTag()) {
-				SWBuf type = u->lastTransChange;
-				if ((type == "added") || (type == "supplied"))
-					outHtmlTag("</span>", buf, u);
+				outHtmlTag("</span>", buf, u);
 			}
 			else {	// empty transChange marker?
 			}
@@ -1003,6 +896,17 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 		}
 		else if (!strcmp(tag.getName(), "span")) {
 			outHtmlTag(tag, buf, u);
+		}
+		else if (!strcmp(tag.getName(), "abbr")) {
+			if (!tag.isEndTag()) {
+				SWBuf title = tag.getAttribute("expansion");
+				outHtmlTag("<abbr title=\"", buf, u);
+				outText(title, buf, u); 
+				outText("\">", buf, u);
+			}
+			else if (tag.isEndTag()) {
+				outHtmlTag("</abbr>", buf, u);
+			}
 		}
 		else if (!strcmp(tag.getName(), "br")) {
 			buf += tag;

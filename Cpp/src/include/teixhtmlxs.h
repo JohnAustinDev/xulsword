@@ -42,7 +42,7 @@ protected:
 	public:
 		bool osisQToTick;
 		bool inXRefNote;
-		bool BiblicalText;
+		bool isBiblicalText;
 		int suspendLevel;
 		SWBuf wordsOfChristStart;
 		SWBuf wordsOfChristEnd;
