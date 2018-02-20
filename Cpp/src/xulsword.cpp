@@ -530,7 +530,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   vsm->registerVersificationSystem("EASTERN", otbooks_eastern, ntbooks_eastern, vm_eastern);
   vsm->registerVersificationSystem("SynodalProt", otbooks_synodalprot, ntbooks_synodalprot, vm_synodalprot);
   
-  MyManager->Load();
+  MyManager->load();
   
   MyManager->augmentModules(path1.c_str(), false); // override any "home" modules
   while (comma != aPath.length()) {
