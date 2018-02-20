@@ -46,20 +46,6 @@ SWORD_NAMESPACE_START
 /********************************************************************
 CUSTOM DERIVATIVE CLASSES
 *********************************************************************/
-//SWMgrXS - to over-ride modules and how they are loaded
-class SWMgrXS : public SWMgr {
-  public:
-    SWMgrXS(const char *iConfigPath, bool autoload = true, SWFilterMgr *filterMgr = 0, bool multiMod = false, bool augmentHome = true);
-    ~SWMgrXS();
-    
-    // needed to enable support sword-1.6.1 Synodal modules
-    signed char Load();
-
-  protected:
-    bool mgrModeMultiMod; // was private in SWMgr...
-    bool augmentHome; // was private in SWMgr...
-};
-
 //StringMgrXS - to over-ride broken toUpperCase
 class StringMgrXS : public StringMgr {
   public:
@@ -99,7 +85,7 @@ MAIN XULSWORD CLASS
 class xulsword {
 
   private:
-  SWMgrXS *MyManager;
+  SWMgr *MyManager;
 
   char *(*ToUpperCase)(char *);
   void (*ThrowJS)(const char *);

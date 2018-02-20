@@ -97,7 +97,6 @@ void savePercentComplete(char percent, void *userData) {
 Custom derivative classes
 *********************************************************************/
 
-#include "swmgr_xs.cpp"
 #include "osisxhtml_xs.cpp"
 #include "teixhtml_xs.cpp"
 #include "gbfxhtml_xs.cpp"
@@ -525,7 +524,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   if (comma == -1) {comma = aPath.length();}
   SWBuf path1;
   path1.set(aPath.substr(0, comma).c_str());
-  MyManager = new SWMgrXS(path1.c_str(), false, (MarkupFilterMgr *)muf, false, true);   
+  MyManager = new SWMgr(path1.c_str(), false, (MarkupFilterMgr *)muf, false, true);   
   VersificationMgr *vsm = VersificationMgr::getSystemVersificationMgr();
   vsm->registerVersificationSystem("Synodal0", otbooks_synodal0, ntbooks_synodal0, vm_synodal0);
   vsm->registerVersificationSystem("EASTERN", otbooks_eastern, ntbooks_eastern, vm_eastern);
