@@ -388,13 +388,11 @@ sub compileLibSword($$) {
   elsif ("$^O" =~ /(linux|darwin)/i) {
     if (!$CompiledAlready) {
       chdir("$TRUNK/Cpp");
-      if (!-e "$TRUNK/Cpp/Makefile.in") {
-        `./autogen.sh >> $LOGFILE 2>&1`;
-        `./configure >> $LOGFILE 2>&1`;
-      }
-      `make clean >> $LOGFILE 2>&1`;
-      `make >> $LOGFILE 2>&1`;
-      `./staticlib.sh >> $LOGFILE 2>&1`;
+      if (-e "./build") {&cleanDir("./build");}
+      if (! -e "./build") {mkdir("build");}
+      chdir("./build");
+      `cmake -G "Unix Makefiles" -D CMAKE_INCLUDE_PATH="$TRUNK/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$TRUNK/Cpp/install/usr/local/lib" ..`;
+      `make`;
       if (!-e "$TRUNK/Cpp/build/libxulsword.$DLB") {&Log("ERROR: libxulsword did not compile.\n"); die;}
     }
     if (!$staticLinkToSWORD) {&copy_file("$TRUNK/Cpp/build/libxulsword.$DLB", "$do/libxulsword-$LibxulswordVersion-$PLATFORM.$DLB");}
