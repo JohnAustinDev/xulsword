@@ -154,7 +154,8 @@ function initTabGlobals() {
     if (type == BIBLE && (/^grc$/i).test(mlang)) SpecialModules.OriginalLanguages.Greek.push(mod);
     if (type == BIBLE && (/^heb?$/i).test(mlang) && !(/HebModern/i).test(mod)) SpecialModules.OriginalLanguages.Hebrew.push(mod);
    
-    if (type == DICTIONARY) {
+    var notStrongsKeyed = new RegExp("^(AbbottSmith|InvStrongsRealGreek|InvStrongsRealHebrew)$", "i"); // These Strongs feature modules do not have Strongs number keys, and so cannot be used
+    if (type == DICTIONARY && !(notStrongsKeyed).test(mod)) {
       // Set Global dictionary module params
       var feature = LibSword.getModuleInformation(mod, "Feature");
       if (feature.search("DailyDevotion") != -1) {
