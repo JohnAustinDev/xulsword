@@ -117,6 +117,7 @@ DictTexts = {
         try {html = LibSword.getDictionaryEntry(mods[0], key.toUpperCase());}
         catch (er) {jsdump("e1: missing key, skipping."); html = "";}
       }
+//jsdump("Raw entry:" + (html ? html:''));
       if (html) html = this.markup2html(this.replaceLinks(html, mods[0]), mods[0]);
     }
     else if (mods.length > 1) {
@@ -129,6 +130,7 @@ DictTexts = {
           try {dictEntry = LibSword.getDictionaryEntry(mods[dw], key.toUpperCase());}
           catch (er) {jsdump("e2: missing key, skipping."); dictEntry = "";}
         }
+//jsdump("Raw entry:" + (dictEntry ? dictEntry:''));
         if (dictEntry) {
           dictEntry = this.markup2html(this.replaceLinks(dictEntry, mods[dw]), mods[dw]);
           dictEntry = dictEntry.replace(/^(<br>)+/, "");
@@ -358,8 +360,8 @@ DictTexts = {
       var styp = (feature == "HebrewDef" ? "H":"G");
       var snum = Number(res.key.substr(1));
       if (isNaN(snum)) {res.key = null; return res;}
-      var pad4 = String("0000").substr(0, 4-(String(snum).length-1)) + String(snum);
-
+      var pad4 = String("000").substr(0, 3-(String(snum).length-1)) + String(snum);
+      
       // possible keys in order of likelyhood
       var keys = ["0" + pad4, styp + pad4, pad4, styp + snum, snum, styp + "0" + pad4];
       
