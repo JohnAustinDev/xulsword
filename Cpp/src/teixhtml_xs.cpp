@@ -544,7 +544,8 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
               referenceClass.append(" "); referenceClass.append(tag.getAttribute("subType"));
             }
           }
-          else if (tag.getAttribute("type") && !strcmp("x-glosslink", tag.getAttribute("type"))) {
+          else if (tag.getAttribute("type") && !strcmp("x-glosslink", tag.getAttribute("type")) ||
+            (tag.getAttribute("target") && !strncmp("self:", tag.getAttribute("target"), 5))) {
             u->referenceTag = "span";
             referenceClass = "dtl";
             if (tag.getAttribute("subType") && !strcmp("x-target_self", tag.getAttribute("subType"))) {
@@ -584,6 +585,17 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
               }
             }
             else if (lenAfterTrim < lenBeforeTrim) buf += ' ';
+          }
+          // "self:" appears in at least the BDBGlosses_Strongs module
+          if (referenceInfo.startsWith("self:")) { 
+            referenceInfo << 5;
+            // Don't output links to the current entry (circular links)
+            if (referenceInfo == userData->module->getKeyText()) {
+              u->referenceTag = "";
+              return true;
+            }
+            referenceInfo.insert(0, ":");
+            referenceInfo.insert(0, userData->module->getName());
           }
           SWBuf tmpbuf;
           tmpbuf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", u->referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());

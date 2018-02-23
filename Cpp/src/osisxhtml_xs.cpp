@@ -488,6 +488,11 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
             }
             else if (lenAfterTrim < lenBeforeTrim) buf += ' ';
           }
+          // "self:" appears in at least the BDBGlosses_Strongs module
+          if (referenceInfo.startsWith("self:")) {
+            referenceInfo << 4;
+            referenceInfo.insert(0, userData->module->getName());
+          }
           SWBuf tmpbuf;
           tmpbuf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", u->referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
           outHtmlTag(tmpbuf, buf, u);
