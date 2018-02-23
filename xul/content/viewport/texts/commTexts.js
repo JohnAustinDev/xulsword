@@ -36,7 +36,7 @@ CommTexts = {
     }
     
     // get Commentary chapter's text
-    ret.htmlText = LibSword.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");   
+    ret.htmlText = LibSword.getChapterText(d.mod, d.bk + "." + d.ch);   
     ret.footnotes = LibSword.getNotes();
      
     var un;

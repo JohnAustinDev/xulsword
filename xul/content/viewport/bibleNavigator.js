@@ -223,7 +223,7 @@ BibleNavigator = {
     LibSword.setGlobalOption("Headings", "On");
     LibSword.setGlobalOption("Verse Numbers", "On");
 
-    var chtxt = LibSword.getChapterText(biblemod, Book[p[1]].sName + "." + p[2] + ".1.1");
+    var chtxt = LibSword.getChapterText(biblemod, Book[p[1]].sName + "." + p[2]);
   
     // Find all headings and their following verses
     var hdplus = /<h\d[^>]*class="head1[^"]*"[^>]*>.*?<\/h\d>.*?<sup[^>]*>\d+<\/sup>/gim; // Get Array of head + next verse's

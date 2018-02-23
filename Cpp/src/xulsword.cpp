@@ -600,6 +600,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   updateGlobalOptions(false);
   module->setSkipConsecutiveLinks(true);
 
+  int vChapLast = 0;
   if (!FireBibleMode) {
     //Initialize Key to chapter
     myVerseKey->setText(Chapter.c_str());
@@ -608,6 +609,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     ub.copyFrom(myVerseKey);
     ub.setVerse(ub.getVerseMax());
     myVerseKey->setUpperBound(ub);
+    vChapLast = myVerseKey->getUpperBound().getVerse();
   }
 
   //Is this a Commentary??
@@ -654,7 +656,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     
     bool hilightVerse = false;
     bool selectVerse = false;
-    if (Verse > 1) {
+    if (!(Verse == 1 && vChapLast && LastVerse == vChapLast)) { // Never hilight entire chapter
       if (Verse == vNum || (Verse > vNum && Verse <= vLast)) {
         hilightVerse = true;
         selectVerse = true;
@@ -792,6 +794,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     MyManager->setGlobalOption("Words of Christ in Red","Off"); // Words of Christ in Red is off for multidisplay
   }
 
+  int vChapLast = 0;
   if (!FireBibleMode) {
     //Initialize Key to chapter  
     myVerseKey->setText(Chapter.c_str());
@@ -800,6 +803,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     ub.copyFrom(myVerseKey);
     ub.setVerse(ub.getVerseMax());
     myVerseKey->setUpperBound(ub);
+    vChapLast = myVerseKey->getUpperBound().getVerse();
   }
 
 /*
@@ -842,7 +846,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
     chapText.append("<div class=\"interB\">");
 
     //If this is the selected verse group then designate as so
-    if (Verse > 1 && !FireBibleMode) {
+    if (!FireBibleMode && !(Verse == 1 && vChapLast && LastVerse == vChapLast)) { // Never hilight entire chapter
       if (vNum == Verse) {chapText.append("<span class=\"hl\" id=\"sv\">");}
       if ((vNum > Verse)&&(vNum <= LastVerse)) {chapText.append("<span class=\"hl\">");}
     }

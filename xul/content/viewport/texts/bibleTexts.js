@@ -48,13 +48,13 @@ BibleTexts = {
         mod2 = Tab.ORIG_NT.modName;
       }
       
-      ret.htmlText = LibSword.getChapterTextMulti(d.mod + "," + mod2, d.bk + "." + d.ch + ".1.1").replace(/interV2/gm, "cs-" + mod2);
+      ret.htmlText = LibSword.getChapterTextMulti(d.mod + "," + mod2, d.bk + "." + d.ch).replace(/interV2/gm, "cs-" + mod2);
       
       LibSword.setGlobalOption("Strong's Numbers", prefs.getCharPref("Strong's Numbers"));
       LibSword.setGlobalOption("Morphological Tags", prefs.getCharPref("Morphological Tags"));
     }
     else {
-      ret.htmlText = LibSword.getChapterText(d.mod, d.bk + "." + d.ch + ".1.1");
+      ret.htmlText = LibSword.getChapterText(d.mod, d.bk + "." + d.ch);
 //jsdump(ret.htmlText);
       ret.footnotes = LibSword.getNotes();
      
