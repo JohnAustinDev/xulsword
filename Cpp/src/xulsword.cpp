@@ -39,7 +39,7 @@
 #include "thmlxhtml.h"
 #include "filemgr.h"
 
-#include "canon_synodal0.h"	// Russian Synodal sword-1.6.1 v11n system
+#include "canon_synodal0.h" // Russian Synodal sword-1.6.1 v11n system
 #include "canon_east.h"
 #include "canon_synodalprot.h"
 #include "versemaps.h"
@@ -409,60 +409,60 @@ void xulsword::saveFootnotes(SWModule *module, bool includeNumberedMarkers) {
     correctlySortedList[num] = AtIndex->second;
   }
   for (AtIndex = correctlySortedList.begin(); AtIndex != correctlySortedList.end(); AtIndex++) {
-		if (!strcmp(AtIndex->first.c_str(), "count")) {continue;} // thmlfootnotes.cpp adds "count"
+    if (!strcmp(AtIndex->first.c_str(), "count")) {continue;} // thmlfootnotes.cpp adds "count"
     int noteNum = strtol(AtIndex->first.c_str(), NULL, 10);
-		
-		SWBuf mclass = "fn";
-		if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
-			mclass = "cr";
-		}
+    
+    SWBuf mclass = "fn";
+    if ((AtIndex->second["type"] == "crossReference")||(AtIndex->second["type"] == "x-cross-ref")) {
+      mclass = "cr";
+    }
 
-		SWBuf div;
-		SWBuf id = "";
-		if (AtIndex->second["osisID"]) {
-		  SWBuf tmp = AtIndex->second["osisID"];
-		  id.setFormatted(" data-osisID=\"%s\"", tmp.c_str());
-		}
-		div.appendFormatted("<div class=\"nlist\" title=\"%s.%i.%s.%s\"%s>",
-			mclass.c_str(),
-			noteNum,
-			(versekey ? versekey->getOSISRef():"unavailable"), 
-			module->getName(),
-			id.c_str());
+    SWBuf div;
+    SWBuf id = "";
+    if (AtIndex->second["osisID"]) {
+      SWBuf tmp = AtIndex->second["osisID"];
+      id.setFormatted(" data-osisID=\"%s\"", tmp.c_str());
+    }
+    div.appendFormatted("<div class=\"nlist\" title=\"%s.%i.%s.%s\"%s>",
+      mclass.c_str(),
+      noteNum,
+      (versekey ? versekey->getOSISRef():"unavailable"), 
+      module->getName(),
+      id.c_str());
 
-		SWBuf numberedMarker;
-		if (includeNumberedMarkers) {
-			numberedMarker.appendFormatted("<span class=\"gfn\" title=\"%i.%s.%s\">%i</span>", 
-				noteNum,
-				mclass.c_str(),
-				module->getName(),
-				noteNum);
-		}
+    SWBuf numberedMarker;
+    if (includeNumberedMarkers) {
+      numberedMarker.appendFormatted("<span class=\"gfn\" title=\"%i.%s.%s\">%i</span>", 
+        noteNum,
+        mclass.c_str(),
+        module->getName(),
+        noteNum);
+    }
 
-		if (!strcmp(mclass.c_str(), "cr")) {
-			MyCrossRefs.append(div);
-			if (includeNumberedMarkers) {MyCrossRefs.append(numberedMarker);}
-			MyCrossRefs.append(AtIndex->second["refList"]);
-			MyCrossRefs.append("</div>");
-			
-			MyNotes.append(div);
-			if (includeNumberedMarkers) {MyNotes.append(numberedMarker);}
-			MyNotes.append(AtIndex->second["refList"]);
-			MyNotes.append("</div>");
-		}
-		else {
-			MyFootnotes.append(div);
-			MyFootnotes.appendFormatted("<span class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
-			if (includeNumberedMarkers) {MyFootnotes.append(numberedMarker);}
-			MyFootnotes.append(module->renderText(AtIndex->second["body"]));
-			MyFootnotes.append("</span></div>");
-			
-			MyNotes.append(div);
-			MyNotes.appendFormatted("<span class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
-			if (includeNumberedMarkers) {MyNotes.append(numberedMarker);}
-			MyNotes.append(module->renderText(AtIndex->second["body"]));
-			MyNotes.append("</span></div>");
-		}
+    if (!strcmp(mclass.c_str(), "cr")) {
+      MyCrossRefs.append(div);
+      if (includeNumberedMarkers) {MyCrossRefs.append(numberedMarker);}
+      MyCrossRefs.append(AtIndex->second["refList"]);
+      MyCrossRefs.append("</div>");
+      
+      MyNotes.append(div);
+      if (includeNumberedMarkers) {MyNotes.append(numberedMarker);}
+      MyNotes.append(AtIndex->second["refList"]);
+      MyNotes.append("</div>");
+    }
+    else {
+      MyFootnotes.append(div);
+      MyFootnotes.appendFormatted("<span class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
+      if (includeNumberedMarkers) {MyFootnotes.append(numberedMarker);}
+      MyFootnotes.append(module->renderText(AtIndex->second["body"]));
+      MyFootnotes.append("</span></div>");
+      
+      MyNotes.append(div);
+      MyNotes.appendFormatted("<span class=\"cs-%s%s\">", module->getName(), (module->getDirection() != DIRECTION_LTR ? " RTL":""));
+      if (includeNumberedMarkers) {MyNotes.append(numberedMarker);}
+      MyNotes.append(module->renderText(AtIndex->second["body"]));
+      MyNotes.append("</span></div>");
+    }
   }
 }
 
@@ -471,26 +471,26 @@ void xulsword::saveFootnotes(SWModule *module, bool includeNumberedMarkers) {
 getTreeContents
 *********************************************************************/
 void xulsword::getTreeContents(TreeKey *key, SWBuf *body) {
-	bool ok;
-	bool isChild = false;
-	body->append("{");
-	for (ok = key->firstChild(); ok; ) {
-		isChild = true;
-  	body->appendFormatted("\"%s\":", key->getLocalName());
-  	if (key->hasChildren()) {
-  		body->append("\n");
-  		getTreeContents(key, body);
-  	} else {
-  		body->append("1");
-  	}  	
-  	ok = key->nextSibling();
-  	if (ok) {
-  		body->append(",");
-  	}
+  bool ok;
+  bool isChild = false;
+  body->append("{");
+  for (ok = key->firstChild(); ok; ) {
+    isChild = true;
+    body->appendFormatted("\"%s\":", key->getLocalName());
+    if (key->hasChildren()) {
+      body->append("\n");
+      getTreeContents(key, body);
+    } else {
+      body->append("1");
+    }   
+    ok = key->nextSibling();
+    if (ok) {
+      body->append(",");
+    }
   }  
   body->append("}");
   if (isChild) {
-  	key->parent();
+    key->parent();
   }
 }
 
@@ -501,8 +501,8 @@ PUBLIC XULSWORD FUNCTIONS
 
 xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localedir, bool firebibleMode) {
 #ifdef WIN32
-	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG); // turn off MSVC debug mode's horrid assertion prompts
-	CreateMutexA(NULL, FALSE, "xulswordmutex"); // so Window's installer will bail we're already running
+  _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG); // turn off MSVC debug mode's horrid assertion prompts
+  CreateMutexA(NULL, FALSE, "xulswordmutex"); // so Window's installer will bail we're already running
 #endif
 
   if (!MySWLogXS) {
@@ -603,7 +603,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   if (!FireBibleMode) {
     //Initialize Key to chapter
     myVerseKey->setText(Chapter.c_str());
-	
+  
     VerseKey ub;
     ub.copyFrom(myVerseKey);
     ub.setVerse(ub.getVerseMax());
@@ -683,29 +683,29 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
     char *vp = vs;
     bool inTitle = false;
     while (vp && *vp) {
-			if (*vp == ' ' || *vp == '\n') {vp++;}
-			if (*vp == '<') {
-				char *ts = vp;
-				vp = strchr(vp, '>'); 
-				if (vp) {
-					vp++;
-					if (!strncmp(ts, "<h", 2)) {
-						const char *canon = strstr(ts, "canonical");
-						if (!canon || canon >= vp) {inTitle = true;}
-					}
-					else if (!strncmp(ts, "</h", 3)) {inTitle = false;}
-					else if (!inTitle && strncmp(ts, "<div", 4) && strncmp(ts, "</div", 5)) {
-						vp = ts;
-						break;
-					}
-				}
-			}
-			else if (inTitle) {vp++;}
-			else if (!strncmp(vp, "&nbsp;", 6)) {vp += 6;}
-			else {break;}
-		}
+      if (*vp == ' ' || *vp == '\n') {vp++;}
+      if (*vp == '<') {
+        char *ts = vp;
+        vp = strchr(vp, '>'); 
+        if (vp) {
+          vp++;
+          if (!strncmp(ts, "<h", 2)) {
+            const char *canon = strstr(ts, "canonical");
+            if (!canon || canon >= vp) {inTitle = true;}
+          }
+          else if (!strncmp(ts, "</h", 3)) {inTitle = false;}
+          else if (!inTitle && strncmp(ts, "<div", 4) && strncmp(ts, "</div", 5)) {
+            vp = ts;
+            break;
+          }
+        }
+      }
+      else if (inTitle) {vp++;}
+      else if (!strncmp(vp, "&nbsp;", 6)) {vp += 6;}
+      else {break;}
+    }
     
-		SWBuf verseNumHTML = "<sup class=\"versenum\">";
+    SWBuf verseNumHTML = "<sup class=\"versenum\">";
     if (Versenumbers && (verseText.length() > 0)) {
       if (vNum == vLast || FireBibleMode) {verseNumHTML.appendFormatted("%d", vNum);}
       else {verseNumHTML.appendFormatted("%d-%d", vNum, vLast);}
@@ -734,7 +734,7 @@ char *xulsword::getChapterText(const char *vkeymod, const char *vkeytext) {
   MyNotes.append("</div>");
   
   SWBuf check = assureValidUTF8(chapHTML.c_str());
-	check.replaceBytes("\n\r", ' ');
+  check.replaceBytes("\n\r", ' ');
   
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
@@ -964,7 +964,7 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -977,7 +977,7 @@ char *xulsword::getFootnotes() {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -990,7 +990,7 @@ char *xulsword::getCrossRefs() {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1003,7 +1003,7 @@ char *xulsword::getNotes() {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1084,7 +1084,7 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1117,7 +1117,7 @@ char *xulsword::getVerseSystem(const char *mod) {
   char *retval;
   retval = (char *)emalloc(vsystem.length() + 1);
   if (retval) {strcpy(retval, vsystem.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1125,28 +1125,28 @@ char *xulsword::getVerseSystem(const char *mod) {
 GetModuleBooks
 *********************************************************************/
 char *xulsword::getModuleBooks(const char *mod) {
-	SWBuf bookList;
-	const VersificationMgr::System *refSys = VersificationMgr::getSystemVersificationMgr()->getVersificationSystem(getVerseSystemOfModule(mod));
-	if (refSys) {
-		int maxBooks = refSys->getBookCount();
-		for (int i = 0; i < maxBooks; i++) {
-			const VersificationMgr::Book *book = refSys->getBook(i);
-			bookList.append(book->getLongName());
-			bookList.append("<bk>");
-			bookList.append(book->getPreferredAbbreviation());
-			bookList.append("<bk>");
-			bookList.appendFormatted("%i", book->getChapterMax());
-			if (i < maxBooks-1) {
-				bookList.append("<nx>");
-			}
-		}
-	}
-	SWBuf check = assureValidUTF8(bookList.c_str());
+  SWBuf bookList;
+  const VersificationMgr::System *refSys = VersificationMgr::getSystemVersificationMgr()->getVersificationSystem(getVerseSystemOfModule(mod));
+  if (refSys) {
+    int maxBooks = refSys->getBookCount();
+    for (int i = 0; i < maxBooks; i++) {
+      const VersificationMgr::Book *book = refSys->getBook(i);
+      bookList.append(book->getLongName());
+      bookList.append("<bk>");
+      bookList.append(book->getPreferredAbbreviation());
+      bookList.append("<bk>");
+      bookList.appendFormatted("%i", book->getChapterMax());
+      if (i < maxBooks-1) {
+        bookList.append("<nx>");
+      }
+    }
+  }
+  SWBuf check = assureValidUTF8(bookList.c_str());
 
-	char *retval;
-	retval = (char *)emalloc(check.length() + 1);
-	if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  char *retval;
+  retval = (char *)emalloc(check.length() + 1);
+  if (retval) {strcpy(retval, check.c_str());}
+  return retval;
 }
 
 
@@ -1213,7 +1213,7 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
   char *retval;
   retval = (char *)emalloc(result.length() + 1);
   if (retval) {strcpy(retval, result.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1273,10 +1273,10 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
   
   // if vkeytext is first in module: get module, 1st testament, 1st book, and that book's 1st chapter intros
   if (isFirstInModule) {
-		introkey->setTestament(0);
-		introkey->setBook(0);
-		introkey->setChapter(0);
-		test = module->renderText();
+    introkey->setTestament(0);
+    introkey->setBook(0);
+    introkey->setChapter(0);
+    test = module->renderText();
     MyFootnotes.append("<div class=\"module-intro footnotes\">");
     MyCrossRefs.append("<div class=\"module-intro crossrefs\">");
     MyNotes.append("<div class=\"module-intro notes\">");
@@ -1284,19 +1284,19 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
     MyFootnotes.append("</div>");
     MyCrossRefs.append("</div>");
     MyNotes.append("</div>");
-		if (test.length() > 64) {
+    if (test.length() > 64) {
       intro.append("<div class=\"module-intro\">");
-			intro.append(test);
-			intro.append("<br /><br /></div>");
-		}
-		introkey->setTestament(topkey.getTestament());
-		isFirstInTestament = true;
-	}
+      intro.append(test);
+      intro.append("<br /><br /></div>");
+    }
+    introkey->setTestament(topkey.getTestament());
+    isFirstInTestament = true;
+  }
   // if vkeytext is first in testament: get Testament, book, and that book's 1st chapter intros
   if (isFirstInTestament) {
-		introkey->setBook(0);
-		introkey->setChapter(0);
-		test = module->renderText();
+    introkey->setBook(0);
+    introkey->setChapter(0);
+    test = module->renderText();
     MyFootnotes.append("<div class=\"testament-intro footnotes\">");
     MyCrossRefs.append("<div class=\"testament-intro crossrefs\">");
     MyNotes.append("<div class=\"testament-intro notes\">");
@@ -1304,18 +1304,18 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
     MyFootnotes.append("</div>");
     MyCrossRefs.append("</div>");
     MyNotes.append("</div>");
-		if (test.length() > 64) {
-			intro.append("<div class=\"testament-intro\">");
-			intro.append(test);
-			intro.append("<br /><br /></div>");
-		}
-		introkey->setBook(topkey.getBook());
-		isFirstChapter = true;
-	}
+    if (test.length() > 64) {
+      intro.append("<div class=\"testament-intro\">");
+      intro.append(test);
+      intro.append("<br /><br /></div>");
+    }
+    introkey->setBook(topkey.getBook());
+    isFirstChapter = true;
+  }
   // if vkeytext's chapter is unspecified: get book and that book's 1st chapter intros
   if (isFirstChapter) {
-		introkey->setChapter(0);
-		test = module->renderText();
+    introkey->setChapter(0);
+    test = module->renderText();
     MyFootnotes.append("<div class=\"book-intro footnotes\">");
     MyCrossRefs.append("<div class=\"book-intro crossrefs\">");
     MyNotes.append("<div class=\"book-intro notes\">");
@@ -1323,13 +1323,13 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
     MyFootnotes.append("</div>");
     MyCrossRefs.append("</div>");
     MyNotes.append("</div>");
-		if (test.length() > 64) {
-			intro.append("<div class=\"book-intro\">");
-			intro.append(test);
-			intro.append("<br /><br /></div>");
-		}
-		introkey->setChapter(1);
-	}
+    if (test.length() > 64) {
+      intro.append("<div class=\"book-intro\">");
+      intro.append(test);
+      intro.append("<br /><br /></div>");
+    }
+    introkey->setChapter(1);
+  }
   // get specified chapter intro
   test = module->renderText();
   MyFootnotes.append("<div class=\"chapter-intro footnotes\">");
@@ -1340,10 +1340,10 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
   MyCrossRefs.append("</div>");
   MyNotes.append("</div>");
   if (test.length() > 64) {
-		intro.append("<div class=\"chapter-intro\">");
+    intro.append("<div class=\"chapter-intro\">");
     intro.append(test);
     intro.append("<br /><br /></div>");
-	}
+  }
   
   module->setKey(EmptyKey);
   delete(testkey);
@@ -1362,7 +1362,7 @@ char *xulsword::getIntroductions(const char *vkeymod, const char *vkeytext) {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1423,7 +1423,7 @@ char *xulsword::getDictionaryEntry(const char *lexdictmod, const char *key) {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1463,7 +1463,7 @@ char *xulsword::getAllDictionaryKeys(const char *lexdictmod) {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1531,7 +1531,7 @@ char *xulsword::getGenBookChapterText(const char *gbmod, const char *treekey) {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1583,7 +1583,7 @@ char *xulsword::getGenBookTableOfContents(const char *gbmod) {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1616,7 +1616,7 @@ char *xulsword::getGenBookTableOfContentsJSON(const char *gbmod) {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1694,37 +1694,37 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
   // "or", or some Unicode chars like "←" will cause a crash in swmodule.cpp!
   Query *q  = 0;
   const TCHAR *stopWords[] = { 0 };
-	standard::StandardAnalyzer analyzer(stopWords);
-	wchar_t wbuff[5000];
-	lucene_utf8towcs(wbuff, searchString.c_str(), 5000);
-	q = QueryParser::parse(wbuff, _T("content"), &analyzer);
-			
-	if (q) {
+  standard::StandardAnalyzer analyzer(stopWords);
+  wchar_t wbuff[5000];
+  lucene_utf8towcs(wbuff, searchString.c_str(), 5000);
+  q = QueryParser::parse(wbuff, _T("content"), &analyzer);
+      
+  if (q) {
 //SWLog::getSystemLog()->logDebug("search:\"%s\" %i %i", searchString.c_str(), type1, flags);
 
-		// COMPOUND SEARCH- currently a phrase search with nearly the speed of a multiword search
-		if (type == -5) {
-			listkeyInt = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);
-			if (listkeyInt.getCount() > 0) {
-				//searchString.Insert("[^[:alpha:]]",0);
-				//searchString.Append("[^[:alpha:]]");
-				listkeyInt.setPersist(true);
-				module->setKey(listkeyInt);
-				//*workKeys = module->search(searchString.get(), 0, flags, 0, 0, &savePercentComplete, NULL);
+    // COMPOUND SEARCH- currently a phrase search with nearly the speed of a multiword search
+    if (type == -5) {
+      listkeyInt = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);
+      if (listkeyInt.getCount() > 0) {
+        //searchString.Insert("[^[:alpha:]]",0);
+        //searchString.Append("[^[:alpha:]]");
+        listkeyInt.setPersist(true);
+        module->setKey(listkeyInt);
+        //*workKeys = module->search(searchString.get(), 0, flags, 0, 0, &savePercentComplete, NULL);
 //SWLog::getSystemLog()->logDebug("search:\"%s\" -1 %i", searchString.c_str(), flags);
-				*workKeys = module->search(searchString.c_str(), -1, flags, 0, 0, &savePercentComplete, NULL);
-			}
-		}
-		// SIMPLE SEARCH
-		else {*workKeys = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);}
-	 }
-	 
-	// For Windows, sorting is done in swmodule.cpp and does not need to be done again here.
-	// This ListKey sort implementation is unbearably slow when there are many results.
-	#ifndef WIN32
-		// 2048 is Sort By Relevance flag
-		if ((flags & 2048) != 2048) workKeys->sort();
-	#endif
+        *workKeys = module->search(searchString.c_str(), -1, flags, 0, 0, &savePercentComplete, NULL);
+      }
+    }
+    // SIMPLE SEARCH
+    else {*workKeys = module->search(searchString.c_str(), type1, flags, 0, 0, &savePercentComplete, NULL);}
+   }
+   
+  // For Windows, sorting is done in swmodule.cpp and does not need to be done again here.
+  // This ListKey sort implementation is unbearably slow when there are many results.
+  #ifndef WIN32
+    // 2048 is Sort By Relevance flag
+    if ((flags & 2048) != 2048) workKeys->sort();
+  #endif
 
   // If not a new search append new results to existing key
   if (!newsearch) {
@@ -1750,9 +1750,9 @@ int xulsword::search(const char *mod, const char *srchstr, const char *scope, in
 GetSearchPointer
 *********************************************************************/
 ListKey *xulsword::getSearchPointer() {
-	//SWLog::getSystemLog()->logDebug("(getSearchPointer) CREATING new searchPointer");
-	ListKey *searchCopy = new ListKey(SearchList);
-	return searchCopy;
+  //SWLog::getSystemLog()->logDebug("(getSearchPointer) CREATING new searchPointer");
+  ListKey *searchCopy = new ListKey(SearchList);
+  return searchCopy;
 }
 
 
@@ -1861,7 +1861,7 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1945,7 +1945,7 @@ char *xulsword::getGlobalOption(const char *option) {
   char *retval;
   retval = (char *)emalloc(rCText.length() + 1);
   if (retval) {strcpy(retval, rCText.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -1972,25 +1972,25 @@ void xulsword::setCipherKey(const char *mod, const char *cipherkey, bool useSecM
 GetModuleList()
 *********************************************************************/
 char* xulsword::getModuleList() {
-	std::string tr;
-	SWModule * module;
+  std::string tr;
+  SWModule * module;
 
   bool first = true;
-	for (modIterator = MyManager->Modules.begin(); modIterator != MyManager->Modules.end(); modIterator++) {
-		module = (*modIterator).second;
-		if (!first) {tr.append("<nx>");}
-		tr.append(module->getName());
-		tr.append(";");
-		tr.append(module->getType());
-		first = false;
-	}
+  for (modIterator = MyManager->Modules.begin(); modIterator != MyManager->Modules.end(); modIterator++) {
+    module = (*modIterator).second;
+    if (!first) {tr.append("<nx>");}
+    tr.append(module->getName());
+    tr.append(";");
+    tr.append(module->getType());
+    first = false;
+  }
 
-	if (!strcmp(tr.c_str(), "")) {tr.assign("No Modules");}
+  if (!strcmp(tr.c_str(), "")) {tr.assign("No Modules");}
 
   char *retval;
   retval = (char *)emalloc(tr.length() + 1);
   if (retval) {strcpy(retval, tr.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -2023,7 +2023,7 @@ char *xulsword::getModuleInformation(const char *mod, const char *paramname) {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 /********************************************************************
@@ -2033,11 +2033,11 @@ UncompressTarGz
 #include "../sword/src/utilfuns/zlib/untgz.c"
 void xulsword::uncompressTarGz(const char *tarGzPath, const char *aDirPath) {
 
-	FileDesc *fd = FileMgr::getSystemFileMgr()->open(tarGzPath, FileMgr::RDONLY);
-	untargz(fd->getFd(), aDirPath);
-	FileMgr::getSystemFileMgr()->close(fd);
+  FileDesc *fd = FileMgr::getSystemFileMgr()->open(tarGzPath, FileMgr::RDONLY);
+  untargz(fd->getFd(), aDirPath);
+  FileMgr::getSystemFileMgr()->close(fd);
 
-	return;
+  return;
 }
 
 /********************************************************************
@@ -2053,7 +2053,7 @@ char *xulsword::translate(const char *text, const char *localeName) {
   char *retval;
   retval = (char *)emalloc(check.length() + 1);
   if (retval) {strcpy(retval, check.c_str());}
-	return retval;
+  return retval;
 }
 
 
@@ -2111,8 +2111,8 @@ SWLogXS::SWLogXS() {}
 SWLogXS::~SWLogXS() {}
 void SWLogXS::logMessage(const char *message, int level) const {
 #ifndef PHPSWORD
-	std::cerr << message;
-	std::cerr << std::endl;
+  std::cerr << message;
+  std::cerr << std::endl;
 #else
   printf("%s\n", message);
 #endif

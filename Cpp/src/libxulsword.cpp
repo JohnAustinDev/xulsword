@@ -134,15 +134,15 @@ DLLEXPORT bool LuceneEnabled(xulsword *inst, const char *mod) {
 }
 
 DLLEXPORT int Search(xulsword *inst, const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch) {
-	return inst->search(mod, srchstr, scope, type, flags, newsearch);
+  return inst->search(mod, srchstr, scope, type, flags, newsearch);
 }
 
 DLLEXPORT void *GetSearchPointer(xulsword *inst) {
-	return inst->getSearchPointer();
+  return inst->getSearchPointer();
 }
 
 DLLEXPORT char *GetSearchResults(xulsword *inst, const char *mod, int first, int num, bool keepStrongs, void *searchPointer = NULL) {
-	return inst->getSearchResults(mod, first, num, keepStrongs, (ListKey *)searchPointer);
+  return inst->getSearchResults(mod, first, num, keepStrongs, (ListKey *)searchPointer);
 }
 
 DLLEXPORT void SearchIndexDelete(xulsword *inst, const char *mod) {
@@ -197,13 +197,13 @@ DLLEXPORT void FreeMemory(void *tofree, char *type) {
   }
   
   else if (!strcmp(type, "searchPointer")) {
-		ListKey *sp = (ListKey *)tofree;
-		if (sp) {
-			//SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING searchPointer");
-			delete sp;
-		}
-		else SWLog::getSystemLog()->logDebug("(FreeMemory) NULL pointer, nothing freed.");
-	}
+    ListKey *sp = (ListKey *)tofree;
+    if (sp) {
+      //SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING searchPointer");
+      delete sp;
+    }
+    else SWLog::getSystemLog()->logDebug("(FreeMemory) NULL pointer, nothing freed.");
+  }
 
 }
 

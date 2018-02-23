@@ -91,7 +91,7 @@ class xulsword {
   void (*ThrowJS)(const char *);
   void (*ReportProgress)(int);
   
-  ModMap::iterator modIterator;	//Iterator for modules
+  ModMap::iterator modIterator; //Iterator for modules
 
   bool Footnotes;
   bool Headings;
