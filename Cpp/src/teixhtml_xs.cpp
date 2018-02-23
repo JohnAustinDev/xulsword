@@ -256,10 +256,15 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
 		else if (!strcmp(tag.getName(), "sense")) {
 			if ((!tag.isEndTag()) && (!tag.isEmpty())) {
 				SWBuf n = tag.getAttribute("n");
+        SWBuf level = tag.getAttribute("level");
         outHtmlTag("<br/>", buf, u);
         outHtmlTag("<span class=\"sense", buf, u);
+        if (level != "") {
+          outText(" sense-level-", buf, u);
+          outText(level, buf, u);
+        }
 				if (n != "") {
-					outText("\" n=\"", buf, u);
+					outText("\" data-n=\"", buf, u);
 					outText(n, buf, u);
 				}
 				outText("\">", buf, u);
@@ -290,11 +295,11 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         outHtmlTag("<span class=\"", buf, u);
 				outText(tag.getName(), buf, u);
 				if (tag.getAttribute("type")) {
-					outText("\" type =\"", buf, u);
+					outText("\" data-type =\"", buf, u);
 					outText(tag.getAttribute("type"), buf, u);
 				}
 				if (tag.getAttribute("rend")) {
-					outText("\" rend =\"", buf, u);
+					outText("\" data-rend =\"", buf, u);
 					outText(tag.getAttribute("rend"), buf, u);
 				}
 				outText("\">", buf, u);
@@ -527,8 +532,12 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
           if ((tag.getAttribute("osisRef"))) referenceInfo = tag.getAttribute("osisRef");
           else if ((tag.getAttribute("target")))  referenceInfo = tag.getAttribute("target");
 				  else if ((tag.getAttribute("passage"))) referenceInfo = tag.getAttribute("passage");
-				  SWBuf referenceClass;	
-				  if (tag.getAttribute("type") && !strcmp("x-glossary", tag.getAttribute("type"))) {
+				  SWBuf referenceClass;
+          if (referenceInfo == "" && !strcmp(tag.getName(), "ref")) {
+            u->referenceTag = "";
+            return true;
+          }
+				  else if (tag.getAttribute("type") && !strcmp("x-glossary", tag.getAttribute("type"))) {
 				    u->referenceTag = "span";
 				    referenceClass = "dt";
 				    if (tag.getAttribute("subType") && !strcmp("x-target_self", tag.getAttribute("subType"))) {
@@ -580,7 +589,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
 				  tmpbuf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", u->referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
 				  outHtmlTag(tmpbuf, buf, u);
         }
-				if (tag.isEndTag()) {
+				if (tag.isEndTag() && u->referenceTag != "") {
 					SWBuf tmpbuf;
 					tmpbuf.appendFormatted("</%s>", u->referenceTag.c_str());
 					outHtmlTag(tmpbuf, buf, u);

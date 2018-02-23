@@ -35,30 +35,38 @@
 .acrostic { text-align: center; }
 .colophon {font-style: italic; font-size: small; display: block; }
 .rdg { font-style: italic; }
-.catchWord { font-style: bold; }
+.catchWord { font-weight: bold; }
 
 /* SWORD getHeader() of teixhtml.cpp CSS */
 .entryFree, .form, .etym, .def, .usg, .quote { display:block; }
 .pron, .pos, .oVar, .ref { display:inline }
-[type=headword] { font-weight:bold; font-variant:small-caps; text-decoration:underline; }
-[type=derivative] { font-weight:bold; font-variant:small-caps; }
-[rend=italic] { font-style:italic; }
-[rend=bold] { font-weight:bold; }
-[rend=small-caps] { font-variant:small-caps; }
+span[data-type="headword"] { font-weight:bold; font-variant:small-caps; text-decoration:underline; }
+span[data-type="derivative"] { font-weight:bold; font-variant:small-caps; }
+span[data-rend="italic"] { font-style:italic; }
+span[data-rend="bold"] { font-weight:bold; }
+span[data-rend="small-caps"] { font-variant:small-caps; }
 .pos:before { content: "Pos.: "; font-weight:bold; }
 .pron:before { content:" \\\\ "; }
 .pron:after { content:" \\\\ "; }
 .etym:before { content:"Etym.:"; display:block; font-weight:bold; }
 .usg:before { content:"Usg.:"; display:block; font-weight:bold; }
-.def:before { content:"Def.:" display:block; font-weight:bold; }
+.def:before { content:"Def.:"; display:block; font-weight:bold; }
 .quote { background-color:#cfcfdf; padding:0.3em; margin:0.5em; border-width:1px; border-style:solid; }
-.cit:before { content:"quote:" ; display:block; margin-top:0.5em; font-size:small; }
+.cit:before { display:block; margin-top:0.5em; font-size:small; }
 .cit { text-align:center; }
 .persName:before { content:" ("; font-size:small; }
 .persName:after { content:") "; font-size:small; }
 .persName { font-size:small; }
-.number { font-style:bold; }
-.def { font-style:bold; }
+.number { font-weight:bold; }
+.def { font-weight:bold; }
+/* Additions for xulsword */
+.sense { display:block; border:1px solid grey; padding:1em; }
+.sense:before, span.sense[data-n="0"]:before { content: "Sense: "; }
+.sense[data-n]:before { content: "Sense " attr(data-n) ": "; }
+span[class*=" sense-level-"] { margin:0 3em; }
+span.sense-level-0 { margin:0 0; }
+span.sense-level-1 { margin:0 1em; }
+span.sense-level-2 { margin:0 2em; }
     
 /* Xulsword OSIS filter specific CSS */
 .head1.main {
