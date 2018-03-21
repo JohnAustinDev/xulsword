@@ -280,7 +280,8 @@ FindMod:
     }
     
   }
-
+  
+//jsdump(uneval(SpecialModules));
   return true;
 }
 
