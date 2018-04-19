@@ -1,4 +1,4 @@
-#A Bible reading and study tool
+# A Bible reading and study tool
 
 xulsword is a Bible reading and study tool intended to be easy to use, 
 yet very powerful at the same time. It utilizes popular Open Source 
@@ -9,7 +9,7 @@ experienced at using a computer, those who might be new to the Bible,
 and those who may not have (or may not want to use) an internet 
 connection.
 
-##Distinctives include:
+## Distinctives include:
 
 * Direct text download. Allows easy download of hundreds of texts in 
 hundreds of languages with the "Add New Module" interface (located under 
@@ -49,7 +49,7 @@ from tampering with them. There are no encryption keys to enter or lose
 by combining the power and speed of C++ in the back-end SWORD engine 
 with the quick and easy programming of a Javascript front-end and CSS3 UI. 
 
-##Plus many other features provided by the SWORD engine, such as:
+## Plus many other features provided by the SWORD engine, such as:
 
 * Compatible with a wide variety of Bibles, commentaries, glossaries, 
 books, and devotionals which are already freely available in the SWORD standard.
@@ -127,7 +127,7 @@ The phrases used by xulsword's user interface are found in
 `xulsword/localeDev/en-US/UI-en-US.txt`. Optional bits are in 
 `xulsword/localeDev/en-US/UI-en-us_2.txt`.
 
-##Add a new locale to xulsword
+## Add a new locale to xulsword
 Locales are automatically packaged when xulsword is built. Create 
 `xulsword/extras/localeDev/<locale-code>` and put the locale files there. Edit 
 `xulsword/build/build_settings.txt` so IncludeLocales lists `<locale-code>` and 
@@ -138,7 +138,7 @@ of xulsword. Also, a locale extension module will be created under
 build-out which can be used to install the new locale into other 
 compatible versions of xulsword.
 
-##Optional user interface possibilities
+## Optional user interface possibilities
 * Many optional locale configuration settings are found in 
 `xulsword/localeDev/en-US/UI-en-us_2.txt` including the order of Bible books, 
 short-cut keys for menu commands, CSS font-family, font-size, etc., and 
@@ -154,14 +154,14 @@ the locale-files subdirectory.
 
 -----
 
-#Audio Modules
+# Audio Modules
 Translations may have associated audio readings of the text. These audio 
 files can be packaged in zip files for easy installation into xulsword. 
 After installation, audio icons will appear above the associated texts 
 to play their audio recording. Audio files may be exported from xulsword 
 with File -> Export Audio.
 
-##Packaging an audio module
+## Packaging an audio module
 An audio module is a zip archive with a directory structure containing 
 ogg audio files like:
 
@@ -180,7 +180,7 @@ SWORD modules associated with the audio files need to have
 audio-code, which will then associate the audio files with all SWORD 
 modules shareing that language code.
 
-##Audio file coverage
+## Audio file coverage
 An ogg file should cover an entire Bible chapter. It's perfectly ok if 
 only certain chapters have audio files. It's possible to have multiple 
 chapters recorded in a single audio file, but this is not recommended 
@@ -188,17 +188,17 @@ because users will only be notified of the existence of the first
 chapter's recording (the audio icon will only appear in the first 
 chapter which is covered by the audio file).
 
-##Audio file tagging
+## Audio file tagging
 Audio files can be exported from xulsword, so it's also a good idea to 
 tag the audio files. But xulsword itself does not require or utilise 
 audio file tags.
 
 -----
 
-#PECL extension: phpsword
+# PECL extension: phpsword
 The PHP extension brings libxulsword's API into php.
 
-##Compilation and use
+## Compilation and use
 Compile the extension by going to the `xulsword/Cpp/phpsword` directory and running:
 
     $ phpize
