@@ -16,14 +16,19 @@
     along with xulSword.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define MAPLEN 2697
-// 2714
-
 struct w2emap
 {
         const char *west;
         const char *east;
 };
+
+/* The West2EastMap below is equivalent to the SWORD mapping of KJV to 
+Synodal. The West2EastMap may also be equivalent to the SWORD mapping of 
+KJV to SynodalProt but only when all Prov entries in West2EastMap 
+are ignored. In other words there is no mapping required in the book 
+of Proverbs to convert between SWORD KJV and SynodalProt (but some 
+mapping is required to go between KJV and Synodal in the book of 
+Proverbs chapters 13 and 18). */
 
 struct w2emap West2EastMap[] = {
 {"1Sam 23:29", "1Sam 24:1"},
@@ -2753,6 +2758,35 @@ struct w2emap West2EastMap[] = {
 {"Ps 99:7", "Ps 98:7"},
 {"Ps 99:8", "Ps 98:8"},
 {"Ps 99:9", "Ps 98:9"},
+{"Prov 13:14", "Prov 13:15"},
+{"Prov 13:15", "Prov 13:16"},
+{"Prov 13:16", "Prov 13:17"},
+{"Prov 13:17", "Prov 13:18"},
+{"Prov 13:18", "Prov 13:19"},
+{"Prov 13:19", "Prov 13:20"},
+{"Prov 13:20", "Prov 13:21"},
+{"Prov 13:21", "Prov 13:22"},
+{"Prov 13:22", "Prov 13:23"},
+{"Prov 13:23", "Prov 13:24"},
+{"Prov 13:24", "Prov 13:25"},
+{"Prov 13:25", "Prov 13:26"},
+{"Prov 18:10", "Prov 18:11"},
+{"Prov 18:11", "Prov 18:12"},
+{"Prov 18:12", "Prov 18:13"},
+{"Prov 18:13", "Prov 18:14"},
+{"Prov 18:14", "Prov 18:15"},
+{"Prov 18:15", "Prov 18:16"},
+{"Prov 18:16", "Prov 18:17"},
+{"Prov 18:17", "Prov 18:18"},
+{"Prov 18:18", "Prov 18:19"},
+{"Prov 18:19", "Prov 18:20"},
+{"Prov 18:20", "Prov 18:21"},
+{"Prov 18:21", "Prov 18:22"},
+{"Prov 18:22", "Prov 18:23"},
+{"Prov 18:23", "Prov 18:24"},
+{"Prov 18:24", "Prov 18:25"},
+{"Prov 18:8", "Prov 18:9"},
+{"Prov 18:9", "Prov 18:10"},
 {"Song 1:1", "Song 1:0"},
 {"Song 1:10", "Song 1:9"},
 {"Song 1:11", "Song 1:10"},

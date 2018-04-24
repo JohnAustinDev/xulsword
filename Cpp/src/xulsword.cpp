@@ -39,11 +39,7 @@
 #include "thmlxhtml.h"
 #include "filemgr.h"
 
-#include "canon_synodal0.h" // Russian Synodal sword-1.6.1 v11n system
-#include "canon_east.h"
-#include "canon_synodalprot.h"
 #include "versemaps.h"
-#include "versificationmgr.h"
 
 #include <CLucene.h>
 #include "../clucene/src/shared/CLucene/config/repl_wchar.h"
@@ -60,7 +56,6 @@ using namespace lucene::search;
 #define MODVERSION "xulswordVersion"
 #define NOTFOUND "Not Found"
 #define WESTERN "KJV"
-#define EASTERN "EASTERN" // DEPRICATED verse system used by pre sword-1.6.1 built modules
 #define SYNODAL "Synodal"  // can be used by strstr to match SynodalProt, SynodalP, Synodal0, and Synodal
 #define VSERROR 99
 #define MAXINSTANCE 10;
@@ -326,45 +321,64 @@ void xulsword::updateGlobalOptions(bool disableFootCrossRed) {
 /********************************************************************
 mapVersifications
 *********************************************************************/
-// Reads an input key and sets the output key to the same verse in opposing verse system.
-// Conversion is always between WESTERN (KJV) and EASTERN (Synodal, Synodal0, SynodalP, SynodalProt etc).
-// If upper bound is set on input key, then converted upper bound will be set on output key
+/* 
+Converts the versekey index of vkin into vkout according to the 
+versification systems previously set on vkin and vkout. Both vkin and 
+vkout versification systems must be one of: KJV, Synodal or SynodalProt, 
+or else vkin will just be copied to vkout, and the verse system of vkout
+will be that of vkin. If vkin has an upper bound set, it will also be 
+converted to vkout's upper bound according to the same rules. */
 void xulsword::mapVersifications(VerseKey *vkin, VerseKey *vkout) {
   const char *inVerseSystem = vkin->getVersificationSystem();
   const char *outVerseSystem = vkout->getVersificationSystem();
-
-  // only change output key's verse system when it's necessary
-  if (!strcmp(inVerseSystem,EASTERN) || strstr(inVerseSystem,SYNODAL)) vkout->setVersificationSystem(WESTERN);
-  else if (!strcmp(inVerseSystem,WESTERN) && (strcmp(outVerseSystem,EASTERN) && !strstr(outVerseSystem,SYNODAL)))
-    vkout->setVersificationSystem(EASTERN);
-
-  vkout->clearBounds(); // important to prevent errors which changing key!
-
-  // Prepare to map UpperBound
-  SWBuf keyTextU;
-  VerseKey bkey;
+  
+  // If both verse systems are the same or either is not KJV|Synodal|SynodalProt, then just copy vkin to vkout
+  if (!strcmp(inVerseSystem, outVerseSystem) || 
+      !strstr("SynodalProtKJV", inVerseSystem) || 
+      !strstr("SynodalProtKJV", outVerseSystem)) {
+    vkout->copyFrom(vkin);
+    return;
+  }
+  
+  // Get WEST2EAST conversion mode
+  // w2e=true means convert west to east, w2e=false means convert east to west
+  bool w2e = ( !strcmp(inVerseSystem, "KJV") || 
+               (!strcmp(inVerseSystem, "SynodalProt") && !strcmp(outVerseSystem, "Synodal"))
+             );
+  // onlyProv=true means consider only Prov in WEST2EAST (when converting Synodal<=>SynodalProt)
+  bool onlyProv = ( (!strcmp(inVerseSystem, "SynodalProt") && !strcmp(outVerseSystem, "Synodal")) ||
+                    (!strcmp(inVerseSystem, "Synodal")     && !strcmp(outVerseSystem, "SynodalProt"))
+                  );
+  // ignoreProv=true means do not consider Prov in WEST2EAST (when converting KJV<=>SynodlaProt)
+  bool ignoreProv = ( (!strcmp(inVerseSystem, "SynodalProt") && !strcmp(outVerseSystem, "KJV")) ||
+                      (!strcmp(inVerseSystem, "KJV")         && !strcmp(outVerseSystem, "SynodalProt"))
+                    );
+  
+  // Prepare vkout
+  vkout->clearBounds(); // important to prevent errors when changing key!
+  SWBuf out;
+  out.appendFormatted("%s %i:%i", vkin->getBookAbbrev(), vkin->getChapter(), vkin->getVerse());
+  vkout->setText(out.c_str());
+  
+  // Prepare vkout upper bound
+  SWBuf outUB; VerseKey vkUB;
   if (vkin->isBoundSet()) {
-    keyTextU.appendFormatted("%s %i:%i", vkin->getUpperBound().getBookAbbrev(), vkin->getUpperBound().getChapter(), vkin->getUpperBound().getVerse());
-    bkey.setVersificationSystem(!strcmp(inVerseSystem, WESTERN) ? EASTERN:WESTERN);
-    bkey.setText(keyTextU.c_str());
+    outUB.appendFormatted("%s %i:%i", vkin->getUpperBound().getBookAbbrev(), vkin->getUpperBound().getChapter(), vkin->getUpperBound().getVerse());
+    vkUB.setVersificationSystem(outVerseSystem);
+    vkUB.setText(outUB.c_str());
   }
-
-  // Prepare to map key
-  SWBuf keyText;
-  keyText.appendFormatted("%s %i:%i", vkin->getBookAbbrev(), vkin->getChapter(), vkin->getVerse());
-  vkout->setText(keyText.c_str());
-
-  // Map key and bounds
-  // Note: this loop needs to complete (no "break"ing) to insure conversion is done properly!
-  for (int i=0; i < MAPLEN; i++) {
-    const char * mf;
-    const char * mt;
-    if ((!strcmp(inVerseSystem, WESTERN))) {mf = West2EastMap[i].west; mt = West2EastMap[i].east;}
-    else                                   {mf = West2EastMap[i].east; mt = West2EastMap[i].west;}
-    if (vkin->isBoundSet() && !strcmp(keyTextU.c_str(), mf)) {bkey.setText(mt);}
-    if (!strcmp(keyText.c_str(), mf)) {vkout->setText(mt);}
+  
+  // Convert it
+  for (int i=0; i < sizeof(West2EastMap)/sizeof(West2EastMap[0]); i++) {
+    const char * mf; const char * mt;
+    if (w2e) {mf = West2EastMap[i].west; mt = West2EastMap[i].east;}
+    else     {mf = West2EastMap[i].east; mt = West2EastMap[i].west;}
+    bool isProv = (bool)strstr(mf, "Prov");
+    if ((onlyProv && !isProv) || (ignoreProv && isProv)) {continue;}
+    if (vkin->isBoundSet() && !strcmp(outUB.c_str(), mf)) {vkUB.setText(mt);}
+    if (!strcmp(out.c_str(), mf)) {vkout->setText(mt);}
   }
-  if (vkin->isBoundSet()) {vkout->setUpperBound(bkey);}
+  if (vkin->isBoundSet()) {vkout->setUpperBound(vkUB);}
 }
 
 
@@ -525,11 +539,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
   SWBuf path1;
   path1.set(aPath.substr(0, comma).c_str());
   MyManager = new SWMgr(path1.c_str(), false, (MarkupFilterMgr *)muf, false, true);   
-  VersificationMgr *vsm = VersificationMgr::getSystemVersificationMgr();
-  vsm->registerVersificationSystem("Synodal0", otbooks_synodal0, ntbooks_synodal0, vm_synodal0);
-  vsm->registerVersificationSystem("EASTERN", otbooks_eastern, ntbooks_eastern, vm_eastern);
-  vsm->registerVersificationSystem("SynodalProt", otbooks_synodalprot, ntbooks_synodalprot, vm_synodalprot);
-  
+
   MyManager->load();
   
   MyManager->augmentModules(path1.c_str(), false); // override any "home" modules
@@ -882,18 +892,14 @@ char *xulsword::getChapterTextMulti(const char *vkeymodlist, const char *vkeytex
       }
       const char * toVS = mainkey->getVersificationSystem();
       delete(testkey2);
-
+      
+      VerseKey fromKey;
+      fromKey.copyFrom(myVerseKey);
+      
       VerseKey readKey;
-      readKey.copyFrom(myVerseKey);
+      readKey.setVersificationSystem(toVS);
       readKey.setAutoNormalize(0); // Non-existant calls should return empty string!
-      const char * frVS = readKey.getVersificationSystem();
-      if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) ||
-          (!strcmp(toVS,WESTERN) && (!strcmp(frVS,EASTERN) || strstr(frVS,SYNODAL)))) {
-        VerseKey convertKey;
-        convertKey.copyFrom(readKey);
-        readKey.setVersificationSystem(toVS);
-        mapVersifications(&convertKey, &readKey);
-      }
+      mapVersifications(&fromKey, &readKey);
       
       int vFirst = vNum;
       int vLast = vNum;
@@ -1199,20 +1205,13 @@ char *xulsword::convertLocation(const char *frVS, const char *vkeytext, const ch
   VerseKey fromKey;
   fromKey.setVersificationSystem(frVS);
   locationToVerseKey(vkeytext, &fromKey);
-//printf("FROM- KT:%s, LB:%s, UB:%s\n", fromKey.getShortText(), fromKey.getLowerBound().getShortText(), fromKey.UpperBound().getShortText());
 
+  VerseKey toKey;
+  toKey.setVersificationSystem(toVS);
+  mapVersifications(&fromKey, &toKey);
+  
   SWBuf result;
-  if ((!strcmp(frVS,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) ||
-      (!strcmp(toVS,WESTERN) && (!strcmp(frVS,EASTERN) || strstr(frVS,SYNODAL)))) {
-    VerseKey toKey;
-    toKey.setVersificationSystem(EASTERN); // init value only, may be changed by mapVersifications
-    mapVersifications(&fromKey, &toKey);
-//printf("TO  - KT:%s, LB:%s, UB:%s\n", toKey.getShortText(), toKey.getLowerBound().getShortText(), toKey.getUpperBound().getShortText());
-    result.appendFormatted("%s.%i", toKey.getOSISRef(), toKey.getUpperBound().getVerse());
-  }
-  else {
-    result.appendFormatted("%s.%i", fromKey.getOSISRef(), fromKey.getUpperBound().getVerse());
-  }
+  result.appendFormatted("%s.%i", toKey.getOSISRef(), toKey.getUpperBound().getVerse());
 
   char *retval;
   retval = (char *)emalloc(result.length() + 1);
@@ -1810,12 +1809,8 @@ char *xulsword::getSearchResults(const char *mod, int first, int num, bool keepS
 
     while (!resultList->popError()&&(written<num)) {
       fromkey.copyFrom(resultList);
-      if ((!strcmp(Searchedvers,WESTERN) && (!strcmp(toVS,EASTERN) || strstr(toVS,SYNODAL))) ||
-      (!strcmp(toVS,WESTERN) && (!strcmp(Searchedvers,EASTERN) || strstr(Searchedvers,SYNODAL)))) {
-        tokey.setVersificationSystem(toVS);
-        mapVersifications(&fromkey, &tokey);
-      }
-      else {tokey.copyFrom(fromkey);}
+      tokey.setVersificationSystem(toVS);
+      mapVersifications(&fromkey, &tokey);
       
       MySearchTexts.appendFormatted("<div class=\"slist\" title=\"%s.%s\">", tokey.getOSISRef(), mod);
       MySearchTexts.appendFormatted("<span class=\"cs-%s%s\">%s</span>", 
