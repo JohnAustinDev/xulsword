@@ -9,8 +9,8 @@ fi
 
 EXTRAS=IBTXulsword
 
-if [ -e /vagrant ] && [ -e /home/vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
-if [ -e /vagrant ] && [ -e /home/vagrant ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD="$( cd "$(dirname "$0")" ; pwd -P )"; fi
+if [ -e /vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
+if [ -e /vagrant ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD="$( cd "$(dirname "$0")" ; pwd -P )"; fi
 
 # BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip"
