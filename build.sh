@@ -142,9 +142,13 @@ if [ "$CONTEXT" = "xsguest" ]; then
 fi
 
 if [ "$CONTEXT" = "xsguest" ]; then
-  # On VM: Start xulsword
+  # On VM: Start xulsword GUI
   # must also have this installed to run xulsword GUI
-  sudo apt-get install -y libgtk2.0-dev
+  if [[ "$(uname -a)" = *"xenial"* ]]; then 
+    sudo apt-get install -y firefox
+  else
+    sudo apt-get install -y libgtk2.0-dev
+  fi
   if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
     "$XULSWORD/build/run_MK-dev.pl"
   else
