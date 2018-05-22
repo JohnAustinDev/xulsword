@@ -32,10 +32,14 @@ if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
   fi
 fi
 
-# If this is a xulsword guest, then link to host's xulsword code, but build everything within the VM
-if [ "$CONTEXT" = "xsguest" ] && [ ! -e "$XULSWORD" ]; then
-  mkdir -p "$XULSWORD"
-  cp -alr /vagrant/* "$XULSWORD"
+# If this is a xulsword guest, then get host's xulsword code, but build everything within the VM
+if [ "$CONTEXT" = "xsguest" ]; then
+  #if [ -e "$XULSWORD" ]; then rm -rf "$XULSWORD"; fi
+  if [ ! -e "$XULSWORD" ]; then mkdir -p "$XULSWORD"; fi
+  cd /vagrant
+  git ls-files | tar -czf "$XULSWORD/archive.tgz" -T -
+  cd "$XULSWORD"
+  tar -xvzf ./archive.tgz
 fi
 
 # Create a local installation directory
@@ -139,8 +143,8 @@ fi
 
 if [ "$CONTEXT" = "xsguest" ]; then
   # On VM: Start xulsword
-  # must also have firefox installed to run xulsword on a clean VM
-  sudo apt-get install -y firefox
+  # must also have this installed to run xulsword GUI
+  sudo apt-get install -y libgtk2.0-dev
   if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
     "$XULSWORD/build/run_MK-dev.pl"
   else
