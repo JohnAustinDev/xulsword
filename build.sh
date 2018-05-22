@@ -12,7 +12,7 @@ EXTRAS=IBTXulsword
 if [ -e /vagrant ] && [ -e /home/vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
 if [ -e /vagrant ] && [ -e /home/vagrant ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD="$( cd "$(dirname "$0")" ; pwd -P )"; fi
 
-# BUILD DEPENDENCIES (Ubuntu Xenial)
+# BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
 PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip"
 # for ZLib build
 PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
@@ -24,8 +24,11 @@ if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
     sudo apt-get install -y $PKG_DEPS
   else
     echo
-    echo WARNING!! You may need to install the following:
+    echo First, you need to install missing packages:
     echo $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed")
+    echo .
+    echo Then run this script again.
+    exit;
   fi
 fi
 
@@ -113,35 +116,34 @@ if [ ! -e "$XULSWORD/xulrunner" ]; then
   rm $xulrunner
 fi
 
-# DONE! Unless we're a xulsword guest VM
-if [ "$CONTEXT" != "xsguest" ]; then 
-  exit
+if [ "$CONTEXT" = "xsguest" ]; then 
+  # On VM: Start with a clean build-out
+  rm -rf "$XULSWORD/build-out"
 fi
 
-# BUILD AND RUN XULSWORD IN THE XULSWORD GUEST VM
-
-# Start with a clean build-out
-rm -rf "$XULSWORD/build-out"
-
-# Build and compile xulsword
+# BUILD XULSWORD
 if [ ! -e "$XULSWORD/sword" ]; then mkdir "$XULSWORD/sword"; fi
 if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
   "$XULSWORD/$EXTRAS/build_MK.sh"
   cd "$XULSWORD/build"
-	"./build.pl" "$XULSWORD/$EXTRAS/loc_MK.txt"
+  "./build.pl" "$XULSWORD/$EXTRAS/loc_MK.txt"
 else
   cd "$XULSWORD/build"
-	"./build/build.pl"
+  "./build.pl"
 fi
 
-# Copy build-out result to host
-cp -rf "$XULSWORD/build-out" /vagrant
+if [ "$CONTEXT" = "xsguest" ]; then
+  # On VM: Copy build-out result to host
+  cp -rf "$XULSWORD/build-out" /vagrant
+fi
 
-# Start xulsword
-# must also have firefox installed to run xulsword on a clean VM
-sudo apt-get install -y firefox
-if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
-  "$XULSWORD/build/run_MK-dev.pl"
-else
-  "$XULSWORD/build/run_xulsword-dev.pl"
+if [ "$CONTEXT" = "xsguest" ]; then
+  # On VM: Start xulsword
+  # must also have firefox installed to run xulsword on a clean VM
+  sudo apt-get install -y firefox
+  if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
+    "$XULSWORD/build/run_MK-dev.pl"
+  else
+    "$XULSWORD/build/run_xulsword-dev.pl"
+  fi
 fi
