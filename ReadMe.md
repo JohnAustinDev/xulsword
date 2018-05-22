@@ -61,15 +61,15 @@ books, and devotionals which are already freely available in the SWORD standard.
 
 # Compilation instructions for Linux
 
-**Native**: Run build.sh
+**Linux (Ubuntu Xenial/Bionic)**: Run build.sh
 
-**Cross-compiled**: On MS-Windows, Linux, or MAC install 
+**Cross-compiled to Linux 64/32 bit**: On MS-Windows, Linux, or MAC install 
 [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and 
 [Vagrant](https://www.vagrantup.com/downloads.html) and run: 
 
 `$ vagrant up`
 
-Builds will appear in the `/build-out` directory.
+Linux builds will appear in the `/build-out` directory.
 
 -----
 
