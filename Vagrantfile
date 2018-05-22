@@ -8,7 +8,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
 #  config.vm.box = "ubuntu/xenial32"
   
-  config.vm.box = "ubuntu/xenial64"
+  config.vm.box = "ubuntu/bionic64"
 
   config.vm.provision :shell, :path => "build.sh", privileged: false
   
