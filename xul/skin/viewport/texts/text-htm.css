@@ -362,7 +362,7 @@ span.sense-level-2 { margin:0 2em; }
   color:rgb(255,0,0);
 }
 .x-parallel-passage:after {
-  content: "\25CF ";
+  content: "\2022 ";
   color:rgb(255,0,0);
 }
 .x-style1:after {
