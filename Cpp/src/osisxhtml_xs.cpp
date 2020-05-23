@@ -878,10 +878,10 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       }
       else if (tag.isEmpty()) { // milestone divs are not valid HTML
       }
-      else if (type.length()) {
+      else {
         SWBuf mtag = "<";
         if (!tag.isEndTag()) {
-          mtag.append(type);
+          mtag.append("div");
           SWBuf subType = tag.getAttribute("subType");
           if (type.length() || subType.length()) {
             mtag.append(" class=\""); 
@@ -893,7 +893,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         }
         else {
           mtag.append("/");
-          mtag.append(type);
+          mtag.append("div");
         }
         mtag.append(">");
         outHtmlTag(mtag, buf, u);
