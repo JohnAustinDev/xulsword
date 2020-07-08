@@ -9,6 +9,9 @@ fi
 
 EXTRAS=IBTXulsword
 
+# OSX uses a different suffix for dynamic libraries ...
+LIB_EXT=$([ $(uname | grep Darwin) ] && echo "dylib" || echo "so")
+
 if [ -e /vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
 if [ -e /vagrant ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD="$( cd "$(dirname "$0")" ; pwd -P )"; fi
 
@@ -49,7 +52,7 @@ if [ ! -e "$XULSWORD/Cpp/install" ]; then  mkdir "$XULSWORD/Cpp/install"; fi
 # https://packages.ubuntu.com/source/xenial/zlib
 if [ ! -e "$XULSWORD/Cpp/zlib" ]; then
   cd "$XULSWORD/Cpp"
-  wget http://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.8.dfsg.orig.tar.gz
+  curl -o zlib_1.2.8.dfsg.orig.tar.gz http://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib_1.2.8.dfsg.orig.tar.gz
   tar -xf zlib_1.2.8.dfsg.orig.tar.gz
   rm zlib_1.2.8.dfsg.orig.tar.gz
   mv zlib-1.2.8 zlib
@@ -64,10 +67,20 @@ fi
 # Compile libclucene (local compilation is required to create libsword static library)
 if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
   cd "$XULSWORD/Cpp"
-  wget http://archive.ubuntu.com/ubuntu/pool/main/c/clucene-core/clucene-core_2.3.3.4.orig.tar.gz
+  curl -o clucene-core_2.3.3.4.orig.tar.gz http://archive.ubuntu.com/ubuntu/pool/main/c/clucene-core/clucene-core_2.3.3.4.orig.tar.gz
   tar -xf clucene-core_2.3.3.4.orig.tar.gz
   rm clucene-core_2.3.3.4.orig.tar.gz
   mv clucene-core-2.3.3.4 clucene
+
+  if [ $(uname | grep Darwin) ]; then
+    # patch clucene for OSX build (https://stackoverflow.com/questions/28113556/error-while-making-clucene-for-max-os-x-10-10/28175358#28175358)
+    pushd "$XULSWORD/Cpp/clucene/src/shared/CLucene"
+    patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-LuceneThreads.h.diff
+    cd config
+    patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-config-repl_tchar.h.diff
+    popd
+  fi
+
   mkdir ./clucene/build
   cd ./clucene/build
   # -D DISABLE_MULTITHREADING=ON causes compilation to fail
@@ -89,7 +102,7 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cp "$XULSWORD/Cpp/clucene/build/src/shared/CLucene/clucene-config.h" ./CLucene/clucene-config.h
   
   cd "$XULSWORD/Cpp/sword/build"
-  cmake -G "Unix Makefiles" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install/usr/local/lib" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.so" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
+  cmake -G "Unix Makefiles" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install/usr/local/lib" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.$LIB_EXT" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install
 fi
 
@@ -115,7 +128,7 @@ if [ ! -e "$XULSWORD/xulrunner" ]; then
   else
     xulrunner=xulrunner-$xulrunnerRev.en-US.linux-$(uname -m).tar.bz2
   fi
-  wget "http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/$xulrunnerRev/runtimes/$xulrunner"
+  curl -o $xulrunner http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/$xulrunnerRev/runtimes/$xulrunner
   tar -xf $xulrunner
   rm $xulrunner
 fi

@@ -5,8 +5,15 @@ set(xulswordProj_VERSION_MAJOR "1")
 set(xulswordProj_VERSION_MINOR "4")
 set(xulswordProj_VERSION_REVISION "4")
 
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH "")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+
 # -Wl,--no-undefined flags are required by GCC to make it check shared library dependencies
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--no-undefined -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+set(CMAKE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,error")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,error")
 
 # sword does not install all the sword headers, so use the local include dir
 include_directories(./src/include ./sword/include  ${CMAKE_INCLUDE_PATH})
