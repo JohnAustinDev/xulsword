@@ -75,9 +75,9 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
   if [ $(uname | grep Darwin) ]; then
     # patch clucene for OSX build (https://stackoverflow.com/questions/28113556/error-while-making-clucene-for-max-os-x-10-10/28175358#28175358)
     pushd "$XULSWORD/Cpp/clucene/src/shared/CLucene"
-    patch < $XULSWORD/patch/patch-src-shared-CLucene-LuceneThreads.h.diff
+    patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-LuceneThreads.h.diff
     cd config
-    patch < $XULSWORD/patch/patch-src-shared-CLucene-config-repl_tchar.h.diff
+    patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-config-repl_tchar.h.diff
     popd
   fi
 
