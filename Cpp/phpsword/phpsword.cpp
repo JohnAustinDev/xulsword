@@ -1,55 +1,25 @@
-#include "config.h"
 #include "xulsword.h"
 #include "phpsword.h"
 
-/********************************************************************
-PHPSWORD Extension Glue
-*********************************************************************/
+static zend_object_handlers sword_object_handlers;
 
-zend_object_handlers sword_object_handlers;
+static zend_class_entry *sword_ce;
 
-struct sword_object {
-  zend_object std;
+typedef struct _sword_object {
+  zend_object zo;
   xulsword *sword;
-};
+} sword_object;
 
-zend_class_entry *sword_ce;
-
-void sword_free_storage(void *object TSRMLS_DC)
+static zend_object *sword_create_object(zend_class_entry *class_type TSRMLS_DC)
 {
-    sword_object *obj = (sword_object *)object;
-    delete obj->sword; 
+    sword_object *phpsword;
+    phpsword = (sword_object *)zend_object_alloc(sizeof(sword_object), class_type);
 
-    zend_hash_destroy(obj->std.properties);
-    FREE_HASHTABLE(obj->std.properties);
+    zend_object_std_init(&phpsword->zo, class_type);
+    object_properties_init(&phpsword->zo, class_type);
+    phpsword->zo.handlers = &sword_object_handlers;
 
-    efree(obj);
-}
-
-zend_object_value sword_create_handler(zend_class_entry *type TSRMLS_DC)
-{
-    zval *tmp;
-    zend_object_value retval;
-
-    sword_object *obj = (sword_object *)emalloc(sizeof(sword_object));
-    memset(obj, 0, sizeof(sword_object));
-    obj->std.ce = type;
-
-    ALLOC_HASHTABLE(obj->std.properties);
-    zend_hash_init(obj->std.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-    
-#if PHP_VERSION_ID < 50399
-    zend_hash_copy(obj->std.properties, &type->default_properties, (copy_ctor_func_t)zval_add_ref, (void *)&tmp, sizeof(zval *));
-#else
-    object_properties_init(&obj->std, type);
-#endif
-
-    
-
-    retval.handle = zend_objects_store_put(obj, NULL, sword_free_storage, NULL TSRMLS_CC);
-    retval.handlers = &sword_object_handlers;
-
-    return retval;
+    return &phpsword->zo;
 }
 
 /********************************************************************
@@ -63,21 +33,20 @@ PHP_METHOD(phpsword, __construct)
   char *localedir;
   int llocaledir;
   xulsword *sword = NULL;
-  zval *object = getThis();
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &path, &lpath, &localedir, &llocaledir) == FAILURE) {
       RETURN_NULL();
   }
 
   sword = new xulsword(path, NULL, NULL, NULL, localedir, false);
-  sword_object *obj = (sword_object *)zend_object_store_get_object(object TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   obj->sword = sword;
 }
 
 PHP_METHOD(phpsword, getChapterText)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     const char *vkeymod;
@@ -88,7 +57,7 @@ PHP_METHOD(phpsword, getChapterText)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getChapterText(vkeymod, vkeytext);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -97,11 +66,11 @@ PHP_METHOD(phpsword, getChapterText)
 PHP_METHOD(phpsword, getFootnotes)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *ret = sword->getFootnotes();
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -110,11 +79,11 @@ PHP_METHOD(phpsword, getFootnotes)
 PHP_METHOD(phpsword, getCrossRefs)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *ret = sword->getCrossRefs();
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -123,11 +92,11 @@ PHP_METHOD(phpsword, getCrossRefs)
 PHP_METHOD(phpsword, getNotes)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *ret = sword->getNotes();
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -136,7 +105,7 @@ PHP_METHOD(phpsword, getNotes)
 PHP_METHOD(phpsword, getChapterTextMulti)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *vkeymodlist;
@@ -148,7 +117,7 @@ PHP_METHOD(phpsword, getChapterTextMulti)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getChapterTextMulti(vkeymodlist, vkeytext, keepnotes);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -157,7 +126,7 @@ PHP_METHOD(phpsword, getChapterTextMulti)
 PHP_METHOD(phpsword, getVerseText)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *vkeymod;
@@ -168,7 +137,7 @@ PHP_METHOD(phpsword, getVerseText)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getVerseText(vkeymod, vkeytext);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -177,7 +146,7 @@ PHP_METHOD(phpsword, getVerseText)
 PHP_METHOD(phpsword, getMaxChapter)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *mod;
@@ -195,7 +164,7 @@ PHP_METHOD(phpsword, getMaxChapter)
 PHP_METHOD(phpsword, getMaxVerse)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *mod;
@@ -213,7 +182,7 @@ PHP_METHOD(phpsword, getMaxVerse)
 PHP_METHOD(phpsword, getVerseSystem)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *mod;
@@ -222,7 +191,7 @@ PHP_METHOD(phpsword, getVerseSystem)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getVerseSystem(mod);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -231,7 +200,7 @@ PHP_METHOD(phpsword, getVerseSystem)
 PHP_METHOD(phpsword, getModuleBooks)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *mod;
@@ -240,7 +209,7 @@ PHP_METHOD(phpsword, getModuleBooks)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getModuleBooks(mod);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -249,7 +218,7 @@ PHP_METHOD(phpsword, getModuleBooks)
 PHP_METHOD(phpsword, parseVerseKey)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *vkeymod;
@@ -260,7 +229,7 @@ PHP_METHOD(phpsword, parseVerseKey)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->parseVerseKey(vkeymod, vkeytext);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -269,7 +238,7 @@ PHP_METHOD(phpsword, parseVerseKey)
 PHP_METHOD(phpsword, convertLocation)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *frVS;
@@ -282,7 +251,7 @@ PHP_METHOD(phpsword, convertLocation)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->convertLocation(frVS, vkeytext, toVS);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -291,7 +260,7 @@ PHP_METHOD(phpsword, convertLocation)
 PHP_METHOD(phpsword, getIntroductions)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *vkeymod;
@@ -302,7 +271,7 @@ PHP_METHOD(phpsword, getIntroductions)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getIntroductions(vkeymod, bname);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -311,7 +280,7 @@ PHP_METHOD(phpsword, getIntroductions)
 PHP_METHOD(phpsword, getDictionaryEntry)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *lexdictmod;
@@ -322,7 +291,7 @@ PHP_METHOD(phpsword, getDictionaryEntry)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getDictionaryEntry(lexdictmod, key);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -331,7 +300,7 @@ PHP_METHOD(phpsword, getDictionaryEntry)
 PHP_METHOD(phpsword, getAllDictionaryKeys)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *lexdictmod;
@@ -340,7 +309,7 @@ PHP_METHOD(phpsword, getAllDictionaryKeys)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getAllDictionaryKeys(lexdictmod);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -349,7 +318,7 @@ PHP_METHOD(phpsword, getAllDictionaryKeys)
 PHP_METHOD(phpsword, getGenBookChapterText)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *gbmod;
@@ -360,7 +329,7 @@ PHP_METHOD(phpsword, getGenBookChapterText)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getGenBookChapterText(gbmod, treekey);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -369,7 +338,7 @@ PHP_METHOD(phpsword, getGenBookChapterText)
 PHP_METHOD(phpsword, getGenBookTableOfContents)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *gbmod;
@@ -378,7 +347,7 @@ PHP_METHOD(phpsword, getGenBookTableOfContents)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getGenBookTableOfContents(gbmod);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -387,7 +356,7 @@ PHP_METHOD(phpsword, getGenBookTableOfContents)
 PHP_METHOD(phpsword, getGenBookTableOfContentsJSON)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *gbmod;
@@ -396,7 +365,7 @@ PHP_METHOD(phpsword, getGenBookTableOfContentsJSON)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getGenBookTableOfContentsJSON(gbmod);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -405,7 +374,7 @@ PHP_METHOD(phpsword, getGenBookTableOfContentsJSON)
 PHP_METHOD(phpsword, luceneEnabled)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *mod;
@@ -421,7 +390,7 @@ PHP_METHOD(phpsword, luceneEnabled)
 PHP_METHOD(phpsword, search)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *mod;
@@ -443,7 +412,7 @@ PHP_METHOD(phpsword, search)
 PHP_METHOD(phpsword, getSearchResults)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *mod;
@@ -455,7 +424,7 @@ PHP_METHOD(phpsword, getSearchResults)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getSearchResults(mod, first, num, keepStrongs, NULL, referencesOnly);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -464,7 +433,7 @@ PHP_METHOD(phpsword, getSearchResults)
 PHP_METHOD(phpsword, setGlobalOption)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *option;
@@ -482,7 +451,7 @@ PHP_METHOD(phpsword, setGlobalOption)
 PHP_METHOD(phpsword, getGlobalOption)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *option;
@@ -491,7 +460,7 @@ PHP_METHOD(phpsword, getGlobalOption)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getGlobalOption(option);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -500,7 +469,7 @@ PHP_METHOD(phpsword, getGlobalOption)
 PHP_METHOD(phpsword, setCipherKey)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *mod;
@@ -520,11 +489,11 @@ PHP_METHOD(phpsword, setCipherKey)
 PHP_METHOD(phpsword, getModuleList)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *ret = sword->getModuleList();
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -533,7 +502,7 @@ PHP_METHOD(phpsword, getModuleList)
 PHP_METHOD(phpsword, getModuleInformation)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *mod;
@@ -544,7 +513,7 @@ PHP_METHOD(phpsword, getModuleInformation)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->getModuleInformation(mod, paramname);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
@@ -553,7 +522,7 @@ PHP_METHOD(phpsword, getModuleInformation)
 PHP_METHOD(phpsword, translate)
 {
   xulsword *sword;
-  sword_object *obj = (sword_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  sword_object *obj = (sword_object *)Z_OBJ_P(getThis());
   sword = obj->sword;
   if (sword != NULL) {
     char *text;
@@ -564,16 +533,11 @@ PHP_METHOD(phpsword, translate)
       RETURN_EMPTY_STRING();
     }
     char *ret = sword->translate(text, localeName);
-    if (ret) {RETURN_STRING(ret, 0);}
+    if (ret) {RETURN_STRING(ret);}
     else RETURN_EMPTY_STRING();
   }
   RETURN_EMPTY_STRING();
 }
-
-
-/********************************************************************
-More PHPSWORD Extension Glue
-*********************************************************************/
 
 zend_function_entry sword_methods[] = {
     PHP_ME(phpsword,  __construct,     NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
@@ -607,21 +571,23 @@ zend_function_entry sword_methods[] = {
     {NULL, NULL, NULL}
 };
 
-PHP_MINIT_FUNCTION(phpsword)
+/********************************************************************
+PHPSWORD Extension Glue
+*********************************************************************/
+
+static PHP_MINIT_FUNCTION(phpsword)
 {
   zend_class_entry ce;
   INIT_CLASS_ENTRY(ce, "phpsword", sword_methods);
-  sword_ce = zend_register_internal_class(&ce TSRMLS_CC);
-  sword_ce->create_object = sword_create_handler;
+  sword_ce = zend_register_internal_class(&ce TSRMLS_DC);
+  sword_ce->create_object = sword_create_object;
   memcpy(&sword_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
   sword_object_handlers.clone_obj = NULL;
   return SUCCESS;
 }
 
 zend_module_entry phpsword_module_entry = {
-#if ZEND_MODULE_API_NO >= 20010901
     STANDARD_MODULE_HEADER,
-#endif
     PHP_PHPSWORD_EXTNAME,
     NULL,                  /* Functions */
     PHP_MINIT(phpsword),
@@ -629,11 +595,20 @@ zend_module_entry phpsword_module_entry = {
     NULL,                  /* RINIT */
     NULL,                  /* RSHUTDOWN */
     NULL,                  /* MINFO */
-#if ZEND_MODULE_API_NO >= 20010901
     PHP_PHPSWORD_EXTVER,
-#endif
     STANDARD_MODULE_PROPERTIES
 };
+
+void sword_free_storage(void *object TSRMLS_DC)
+{
+    sword_object *obj = (sword_object *)object;
+    delete obj->sword; 
+
+    zend_hash_destroy(obj->zo.properties);
+    FREE_HASHTABLE(obj->zo.properties);
+
+    efree(obj);
+}
 
 #ifdef COMPILE_DL_PHPSWORD
 extern "C" {
