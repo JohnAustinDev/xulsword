@@ -2,7 +2,7 @@
 #define PHP_PHPSWORD_H
 
 #define PHP_PHPSWORD_EXTNAME  "phpsword"
-#define PHP_PHPSWORD_EXTVER   "0.1"
+#define PHP_PHPSWORD_EXTVER   "7.3.0"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
