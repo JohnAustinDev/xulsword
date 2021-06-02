@@ -80,6 +80,9 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
     patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-config-repl_tchar.h.diff
     popd
   fi
+  
+  # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump. 
+  sed -i 's/!allowLeadingWildcard/!true/g' "$XULSWORD/Cpp/clucene/src/core/CLucene/queryParser/QueryParser.cpp"
 
   mkdir ./clucene/build
   cd ./clucene/build
