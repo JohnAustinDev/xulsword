@@ -1,0 +1,19 @@
+{
+  "name": "xulsword",
+  "productName": "xulsword",
+  "version": "3.0.0",
+  "description": "SWORD front-end created with node.js",
+  "main": "./dist/main/main.js",
+  "author": {
+    "name": "John Austin",
+    "email": "gpl.programs.info@gmail.com",
+    "url": "https://github.com/JohnAustinDev/xulsword"
+  },
+  "scripts": {
+    "electron-rebuild": "node -r ../../.erb/scripts/babel-register.js ../../.erb/scripts/electron-rebuild.js",
+    "link-modules": "node -r ../../.erb/scripts/babel-register.js ../../.erb/scripts/link-modules.js",
+    "postinstall": "yarn electron-rebuild && yarn link-modules"
+  },
+  "license": "MIT",
+  "dependencies": {}
+}

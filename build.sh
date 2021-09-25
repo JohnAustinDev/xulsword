@@ -21,6 +21,8 @@ PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-con
 PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
 # for Clucene build
 PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
+# for Electron
+PKG_DEPS="$PKG_DEPS rpm"
 if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
   if [ "$CONTEXT" = "xsguest" ]; then
     sudo apt-get update
@@ -35,9 +37,9 @@ if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
   fi
 fi
 
-# If this is a xulsword guest, then get host's xulsword code, but build everything within the VM
+# If this is a xulsword guest, then copy host's xulsword code, but build everything within the VM
 if [ "$CONTEXT" = "xsguest" ]; then
-  #if [ -e "$XULSWORD" ]; then rm -rf "$XULSWORD"; fi
+  if [ -e "$XULSWORD" ]; then rm -rf "$XULSWORD/*"; fi
   if [ ! -e "$XULSWORD" ]; then mkdir -p "$XULSWORD"; fi
   cd /vagrant
   git ls-files | tar -czf "$XULSWORD/archive.tgz" -T -
@@ -45,7 +47,38 @@ if [ "$CONTEXT" = "xsguest" ]; then
   tar -xvzf ./archive.tgz
 fi
 
-# Create a local installation directory
+
+# Install node.js for Electron and React
+# Add nvm in .bashrc so our dev environment can use any particular version of nodejs
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+source ~/.bashrc
+
+# Use latest LTS version of node.js
+cd "$XULSWORD"
+nvm install --lts
+nvm use node
+
+# Install node packages
+npm i --global yarn
+cd "$XULSWORD/xulsword"
+yarn 
+
+# Create Electron project
+#cd "$XULSWORD/xulsword"
+#npm init
+#npm i -D electron react reactdom electron-is-dev babel-cli babel-preset-react-app
+#npm install -D @electron-forge/cli
+#npx electron-forge import
+
+npm i -D electron-store
+
+https://stackoverflow.com/questions/57807459/how-to-use-preload-js-properly-in-electron
+
+# Did not use 'Create React App' because its webpack only supports a 
+# single page (unless ejected and webpack.config.js is hacked). Also, 
+# debugging with auto-reload would likely require similar re-config.
+
+# Create a local Cpp installation directory
 if [ ! -e "$XULSWORD/Cpp/install" ]; then  mkdir "$XULSWORD/Cpp/install"; fi
 
 # Compile zlib (local compilation is required to create CLucene static library)
@@ -122,7 +155,7 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   make
 fi
 
-# Install xulrunner locally
+# THIS SECTION TO BE REMOVED: Install xulrunner locally
 if [ ! -e "$XULSWORD/xulrunner" ]; then
   xulrunnerRev=41.0b9
   cd "$XULSWORD"
@@ -141,7 +174,7 @@ if [ "$CONTEXT" = "xsguest" ]; then
   rm -rf "$XULSWORD/build-out"
 fi
 
-# BUILD XULSWORD
+# THIS SECTION TO BE REPLACED BY ELECTRON BUILD: BUILD XULSWORD
 if [ ! -e "$XULSWORD/sword" ]; then mkdir "$XULSWORD/sword"; fi
 if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
   "$XULSWORD/$EXTRAS/build_MK.sh"
