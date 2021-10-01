@@ -38,33 +38,46 @@ if (
   execSync('yarn postinstall');
 }
 
+function entryConfig(name) {
+  return {
+    import: [
+      'webpack-dev-server/client?http://localhost:1212/dist',
+      'webpack/hot/only-dev-server',
+      'core-js',
+      'regenerator-runtime/runtime',
+      path.join(webpackPaths.srcRendererPath, name + '/' + name + '.tsx')
+    ]
+  };
+};
+
+function htmlConfig(name) {
+  return {
+    filename: path.join(name + '.html'),
+    template: path.join(webpackPaths.srcRendererPath, name + '/' + name + '.ejs'),
+    chunks: [name],
+    minify: {
+      collapseWhitespace: true,
+      removeAttributeQuotes: true,
+      removeComments: true,
+    },
+    isBrowser: false,
+    env: process.env.NODE_ENV,
+    isDevelopment: process.env.NODE_ENV !== 'production',
+    nodeModules: webpackPaths.appNodeModulesPath,
+  };
+};
+
 export default merge(baseConfig, {
   devtool: 'inline-source-map',
 
   mode: 'development',
 
   target: ['web', 'electron-renderer'],
- 
+
   entry: {
     // Entry points and output files (one for each kind of BrowserWindow)
-    main: {
-      import: [
-        'webpack-dev-server/client?http://localhost:1212/dist',
-        'webpack/hot/only-dev-server',
-        'core-js',
-        'regenerator-runtime/runtime',
-        path.join(webpackPaths.srcRendererPath, 'main/main.tsx'),
-      ],
-    },
-    about: {
-      import: [
-        'webpack-dev-server/client?http://localhost:1212/dist',
-        'webpack/hot/only-dev-server',
-        'core-js',
-        'regenerator-runtime/runtime',
-        path.join(webpackPaths.srcRendererPath, 'about/about.tsx'),
-      ],
-    }
+    main:  entryConfig('main'),
+    about: entryConfig('about'),
   },
 
   output: {
@@ -266,36 +279,9 @@ export default merge(baseConfig, {
 
     new ReactRefreshWebpackPlugin(),
 
-    // Entry point html files (one plugin for each kind of BrowserWindow) 
-    new HtmlWebpackPlugin({
-      filename: path.join('main.html'),
-      template: path.join(webpackPaths.srcRendererPath, 'main/main.ejs'),
-      chunks: ['main'],
-      minify: {
-        collapseWhitespace: true,
-        removeAttributeQuotes: true,
-        removeComments: true,
-      },
-      isBrowser: false,
-      env: process.env.NODE_ENV,
-      isDevelopment: process.env.NODE_ENV !== 'production',
-      nodeModules: webpackPaths.appNodeModulesPath,
-    }),
-    
-    new HtmlWebpackPlugin({
-      filename: path.join('about.html'),
-      template: path.join(webpackPaths.srcRendererPath, 'about/about.ejs'),
-      chunks: ['about'],
-      minify: {
-        collapseWhitespace: true,
-        removeAttributeQuotes: true,
-        removeComments: true,
-      },
-      isBrowser: false,
-      env: process.env.NODE_ENV,
-      isDevelopment: process.env.NODE_ENV !== 'production',
-      nodeModules: webpackPaths.appNodeModulesPath,
-    }),
+    // Entry point html files (one plugin for each kind of BrowserWindow)
+    new HtmlWebpackPlugin(htmlConfig('main')),
+    new HtmlWebpackPlugin(htmlConfig('about'))
   ],
 
   node: {

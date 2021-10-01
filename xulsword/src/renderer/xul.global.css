@@ -1,0 +1,58 @@
+.stack {
+  position: relative;
+}
+.stack > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.vbox,
+.hbox {
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  flex-wrap: nowrap;
+}
+
+.vbox {
+  flex-direction: column;
+}
+
+.hbox {
+  flex-direction: row;
+}
+
+.vbox[pack='start'],
+.hbox[pack='start'] {
+  justify-content: flex-start;
+}
+.vbox[pack='center'],
+.hbox[pack='center'] {
+  justify-content: center;
+}
+.vbox[pack='end'],
+.hbox[pack='end'] {
+  justify-content: flex-end;
+}
+
+.vbox[align='start'],
+.hbox[align='start'] {
+  align-items: flex-start;
+}
+.vbox[align='center'],
+.hbox[align='center'] {
+  align-items: center;
+}
+.vbox[align='end'],
+.hbox[align='end'] {
+  align-items: flex-end;
+}
+.vbox[align='stretch'],
+.hbox[align='stretch'] {
+  align-items: space-evenly;
+}
+
+.hbox[align='baseline'] {
+  align-items: baseline;
+}

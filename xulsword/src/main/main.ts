@@ -11,7 +11,7 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -25,7 +25,7 @@ export default class AppUpdater {
   }
 }
 
-const mainWindow: BrowserWindow | null = null;
+let mainWindow: BrowserWindow | null = null;
 
 const RESOURCES_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
@@ -66,18 +66,22 @@ ipcMain.on('ipc-example', async (event, arg) => {
   event.reply('ipc-example', msgTemplate('pong'));
 });
 
-const createWindow = (name, icon, w, h, startup) => {
+ipcMain.handle('ipc-example', async (event, arg) => {
+  const msgTemplate = (pingPong: string) => `IPC test2: ${pingPong}`;
+  console.log(msgTemplate(arg));
+  return msgTemplate('pong');
+});
+
+const createWindow = (name, params, startup) => {
   const newWindow = new BrowserWindow({
     show: false,
-    width: w,
-    height: h,
-    icon: getAssetPath(icon),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       enableRemoteModule: false,
     },
+    ...params,
   });
 
   newWindow.loadURL(resolveHtmlPath(`${name}.html`));
@@ -105,22 +109,38 @@ const start = async () => {
     await installExtensions();
   }
 
-  const aboutWindow = createWindow('about', 'icon.png', 800, 400);
+  const splashWindow = createWindow(
+    'about',
+    {
+      width: 500,
+      height: 375,
+      alwaysOnTop: true,
+      frame: false,
+      transparent: true,
+    },
+    1
+  );
 
-  mainWindow = createWindow('main', 'icon.png', 1024, 728);
+  mainWindow = createWindow(
+    'main',
+    {
+      icon: getAssetPath('icon.png'),
+      width: 1024,
+      height: 728,
+    },
+    1
+  );
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
+  mainWindow.once('ready-to-show', () => {
+    setTimeout(() => splashWindow.close(), 1500);
+  });
+
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
-
-  // Open urls in the user's browser
-  mainWindow.webContents.on('new-window', (event, url) => {
-    event.preventDefault();
-    shell.openExternal(url);
-  });
 
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line

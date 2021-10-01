@@ -25,6 +25,31 @@ const devtoolsConfig =
       }
     : {};
 
+function entryConfig(name) {
+  return {
+    import: [
+      'core-js',
+      'regenerator-runtime/runtime',
+      path.join(webpackPaths.srcRendererPath, name + '/' + name + '.tsx')
+    ]
+  };
+}
+
+function htmlConfig(name) {
+  return {
+    filename: name + '.html',
+    template: path.join(webpackPaths.srcRendererPath, name + '/' + name + '.ejs'),
+    chunks: [name],
+    minify: {
+      collapseWhitespace: true,
+      removeAttributeQuotes: true,
+      removeComments: true,
+    },
+    isBrowser: false,
+    isDevelopment: process.env.NODE_ENV !== 'production',
+  };
+}
+
 export default merge(baseConfig, {
   ...devtoolsConfig,
 
@@ -34,20 +59,8 @@ export default merge(baseConfig, {
 
   entry: {
     // Entry points and output files (one for each kind of BrowserWindow)
-    main: {
-      import: [
-        'core-js',
-        'regenerator-runtime/runtime',
-        path.join(webpackPaths.srcRendererPath, 'main/main.tsx'),
-      ],
-    },
-    about: {
-      import: [
-        'core-js',
-        'regenerator-runtime/runtime',
-        path.join(webpackPaths.srcRendererPath, 'about/about.tsx'),
-      ],
-    }
+    main:  entryConfig('main'),
+    about: entryConfig('about'),
   },
 
   output: {
@@ -170,7 +183,7 @@ export default merge(baseConfig, {
     }),
 
     new MiniCssExtractPlugin({
-      filename: 'style.css',
+      filename: '[name]-style.css',
     }),
 
     new BundleAnalyzerPlugin({
@@ -179,31 +192,8 @@ export default merge(baseConfig, {
       openAnalyzer: process.env.OPEN_ANALYZER === 'true',
     }),
 
-    // Entry point html files (one plugin for each kind of BrowserWindow) 
-    new HtmlWebpackPlugin({
-      filename: 'main.html',
-      template: path.join(webpackPaths.srcRendererPath, 'main/main.ejs'),
-      chunks: ['main'],
-      minify: {
-        collapseWhitespace: true,
-        removeAttributeQuotes: true,
-        removeComments: true,
-      },
-      isBrowser: false,
-      isDevelopment: process.env.NODE_ENV !== 'production',
-    }),
-    
-    new HtmlWebpackPlugin({
-      filename: 'about.html',
-      template: path.join(webpackPaths.srcRendererPath, 'about/about.ejs'),
-      chunks: ['about'],
-      minify: {
-        collapseWhitespace: true,
-        removeAttributeQuotes: true,
-        removeComments: true,
-      },
-      isBrowser: false,
-      isDevelopment: process.env.NODE_ENV !== 'production',
-    }),
+    // Entry point html files (one plugin for each kind of BrowserWindow)
+    new HtmlWebpackPlugin(htmlConfig('main')),
+    new HtmlWebpackPlugin(htmlConfig('about'))
   ],
 });

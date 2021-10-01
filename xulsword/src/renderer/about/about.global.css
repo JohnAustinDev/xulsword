@@ -1,0 +1,14 @@
+#layer1 {
+  background-image: url(../../../assets/splash.png);
+  background-repeat: no-repeat;
+}
+
+#layer2 {
+  background-image: url(../../../assets/splash-overlay.png);
+  background-repeat: no-repeat;
+}
+
+.splash-text {
+  font-size: 14px;
+  color: rgb(77, 37, 143);
+}
