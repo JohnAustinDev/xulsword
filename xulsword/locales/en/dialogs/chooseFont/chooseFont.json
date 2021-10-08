@@ -1,0 +1,13 @@
+{
+  "backgroundColor.label": "Background",
+  "chooseModule.label": "Module",
+  "deleteconfirm.title": "Are you sure?",
+  "fontsAndColors.label": "Fonts &amp; Colors",
+  "lineHeight.label": "Line height",
+  "makeDefault.label": "Set as default",
+  "restoreAllDefaults.label": "Restore all defaults",
+  "restoreDefault.label": "Restore module defaults",
+  "textColor.label": "Color",
+  "textSize.label": "Size",
+  "xs_chooseFont": "Font"
+}

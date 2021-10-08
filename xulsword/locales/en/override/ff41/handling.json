@@ -1,0 +1,14 @@
+{
+  "choose.application.title": "Another Application…",
+  "protocol.checkbox.accesskey": "R",
+  "protocol.checkbox.extra": "This can be changed in %S's preferences.",
+  "protocol.checkbox.label": "Remember my choice for %S links.",
+  "protocol.choices.label": "Send to:",
+  "protocol.description": "This link needs to be opened with an application.",
+  "protocol.title": "Launch Application",
+  "ChooseApp.accessKey": "C",
+  "ChooseApp.description": "Choose an Application",
+  "ChooseApp.label": "Choose…",
+  "window.emHeight": "26em",
+  "window.emWidth": "26em"
+}

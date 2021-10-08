@@ -1,0 +1,14 @@
+{
+  "arm.error": "Error",
+  "arm.internetPromptMessage": "You are about to download Biblical texts from the Internet.\nYour Internet activity may be easily monitored by others.\nIf this is a concern, you may click \"No\" to cancel this operation.",
+  "arm.internetPromptTitle": "Download a Bible from the internet?",
+  "arm.moduleType.Audio": "Audio",
+  "arm.moduleType.Comms": "Commentary",
+  "arm.moduleType.Dicts": "Dictionary",
+  "arm.moduleType.Genbks": "Book",
+  "arm.moduleType.SimpleText": "Text",
+  "arm.moduleType.Texts": "Bible",
+  "arm.rememberMyChoice": "Remember my choice?",
+  "arm.repositoryTreeTitle": "Module Sources",
+  "arm.wishToContinue": "Do you want to continue?"
+}

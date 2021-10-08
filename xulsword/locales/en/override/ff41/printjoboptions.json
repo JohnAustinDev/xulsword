@@ -1,0 +1,21 @@
+{
+  "bottomInput.accesskey": "B",
+  "bottomInput.label": "Bottom:",
+  "colorGroup.label": "Color:",
+  "colorRadio.accesskey": "C",
+  "colorRadio.label": "Color",
+  "edgeMarginInput.label": "Gap from edge of paper to Margin",
+  "grayRadio.accesskey": "G",
+  "grayRadio.label": "Grayscale",
+  "jobTitleInput.accesskey": "J",
+  "jobTitleInput.label": "Job Title:",
+  "leftInput.accesskey": "L",
+  "leftInput.label": "Left:",
+  "paperInput.accesskey": "P",
+  "paperInput.label": "Paper Size:",
+  "printJobOptions.title": "Printer Properties",
+  "rightInput.accesskey": "R",
+  "rightInput.label": "Right:",
+  "topInput.accesskey": "T",
+  "topInput.label": "Top:"
+}

@@ -1,0 +1,14 @@
+{
+  "bm_delete": "Удалить личную заметку",
+  "bm_properties": "Править личную заметку",
+  "stop.label": "остановить",
+  "xs_aboutModule": "О программе...",
+  "xs_chooseFont": "Шрифт",
+  "xs_newBookmark": "Новая закладка...",
+  "xs_newUserNote": "Новая личная заметка...",
+  "xs_openFromSelection": "Открыть выбранную ссылку",
+  "xs_searchForLemma": "Найти",
+  "xs_searchForSelection": "Найти",
+  "xs_selectVerse": "Выделить стих(и)",
+  "xs_toggleTab": "Закрыть"
+}

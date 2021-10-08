@@ -1,0 +1,14 @@
+{
+  "bm_delete": "Delete Personal Note",
+  "bm_properties": "Edit Personal Note",
+  "stop.label": "Stop",
+  "xs_aboutModule": "About...",
+  "xs_chooseFont": "Font",
+  "xs_newBookmark": "New Bookmark...",
+  "xs_newUserNote": "New Personal Note...",
+  "xs_openFromSelection": "Open Selected Reference",
+  "xs_searchForLemma": "Search",
+  "xs_searchForSelection": "Search",
+  "xs_selectVerse": "Select Verse(s)",
+  "xs_toggleTab": "Close"
+}

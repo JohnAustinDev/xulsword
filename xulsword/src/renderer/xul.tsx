@@ -5,22 +5,31 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './xul.global.css';
 
-// Convert XUL element attributes to HTML element CSS style
+// Convert XUL attributes to HTML element CSS style
 const xulStyle = (props) => {
   const s = {};
   if (props.width) s.width = props.width.concat('px');
   if (props.height) s.height = props.height.concat('px');
-  if (props.flex) s['flex-grow'] = props.flex;
+  if (props.flex) s.flexGrow = props.flex;
   return Object.keys(s).length ? s : null;
 };
 
-// Define types for XUL attribute values
+// These XUL attributes are to be passed down as-is in props
+const keep = (props) => {
+  return {
+    id: props.id,
+    pack: props.pack,
+    align: props.align,
+  };
+};
+
+// Define type checking for XUL attributes
 const xulPropTypes = {
-  flex: PropTypes.oneOf([PropTypes.number, null]),
-  width: PropTypes.oneOf([PropTypes.number, null]),
-  height: PropTypes.oneOf([PropTypes.number, null]),
-  class: PropTypes.oneOf([PropTypes.string, null]),
-  children: PropTypes.oneOf([PropTypes.node, null]),
+  flex: PropTypes.string,
+  width: PropTypes.string,
+  height: PropTypes.string,
+  class: PropTypes.string,
+  children: PropTypes.node,
 };
 
 // Set default prop values
@@ -33,7 +42,7 @@ const xulDefaultProps = {
 };
 
 //
-// REACT COMPONENT DEFINITIONS FOR XUL ELEMENTS
+// REACT COMPONENT DEFINITIONS FOR XUL UI
 //
 
 // XUL label
@@ -52,7 +61,7 @@ export { Label };
 function Stack(props) {
   const classes = ['stack', props.class ? props.class.split(' ') : null];
   return (
-    <div className={classes.join(' ')} {...props} style={xulStyle(props)}>
+    <div className={classes.join(' ')} {...keep(props)} style={xulStyle(props)}>
       {props.children}
     </div>
   );
@@ -65,7 +74,7 @@ export { Stack };
 function Vbox(props) {
   const classes = ['vbox', props.class ? props.class.split(' ') : null];
   return (
-    <div className={classes.join(' ')} {...props} style={xulStyle(props)}>
+    <div className={classes.join(' ')} {...keep(props)} style={xulStyle(props)}>
       {props.children}
     </div>
   );
@@ -78,7 +87,7 @@ export { Vbox };
 function Hbox(props) {
   const classes = ['hbox', props.class ? props.class.split(' ') : null];
   return (
-    <div className={classes.join(' ')} {...props} style={xulStyle(props)}>
+    <div className={classes.join(' ')} {...keep(props)} style={xulStyle(props)}>
       {props.children}
     </div>
   );

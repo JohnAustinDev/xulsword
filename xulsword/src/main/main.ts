@@ -11,11 +11,16 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
+import fs from 'fs';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import Prefs from './modules/prefs';
+import { jsdump } from '../common0';
+
+const backend = require('i18next-electron-fs-backend');
 
 export default class AppUpdater {
   constructor() {
@@ -57,22 +62,33 @@ const installExtensions = async () => {
       extensions.map((name) => installer[name]),
       forceDownload
     )
-    .catch(console.log);
+    .catch((e: Error) => jsdump(e));
 };
 
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
+const prefs = new Prefs(false);
+ipcMain.on('prefs', (event, method: string, ...args) => {
+  let ret = null;
+  if (prefs !== null) {
+    const f = prefs[method];
+    if (typeof f === 'function') {
+      ret = f(...args);
+    } else {
+      throw Error(`prefs has no method ${method}`);
+    }
+  }
+
+  event.returnValue = ret;
 });
 
-ipcMain.handle('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test2: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  return msgTemplate('pong');
+ipcMain.on('jsdump', (_event, msg: string) => {
+  jsdump(msg);
 });
 
-const createWindow = (name, params, startup) => {
+const createWindow = (
+  name: string,
+  params: Electron.BrowserWindowConstructorOptions | undefined,
+  startup: boolean
+) => {
   const newWindow = new BrowserWindow({
     show: false,
     webPreferences: {
@@ -85,6 +101,9 @@ const createWindow = (name, params, startup) => {
   });
 
   newWindow.loadURL(resolveHtmlPath(`${name}.html`));
+
+  // Configure i18n backend for the window
+  backend.mainBindings(ipcMain, newWindow, fs);
 
   newWindow.webContents.on('did-finish-load', () => {
     if (!newWindow) {
@@ -101,14 +120,7 @@ const createWindow = (name, params, startup) => {
   return newWindow;
 };
 
-const start = async () => {
-  if (
-    process.env.NODE_ENV === 'development' ||
-    process.env.DEBUG_PROD === 'true'
-  ) {
-    await installExtensions();
-  }
-
+const openSplashWindow = (startup: boolean) => {
   const splashWindow = createWindow(
     'about',
     {
@@ -118,9 +130,13 @@ const start = async () => {
       frame: false,
       transparent: true,
     },
-    1
+    startup
   );
 
+  return splashWindow;
+};
+
+const openMainWindow = (startup: boolean) => {
   mainWindow = createWindow(
     'main',
     {
@@ -128,23 +144,38 @@ const start = async () => {
       width: 1024,
       height: 728,
     },
-    1
+    startup
   );
 
   mainWindow.on('closed', () => {
     mainWindow = null;
-  });
-
-  mainWindow.once('ready-to-show', () => {
-    setTimeout(() => splashWindow.close(), 1500);
+    jsdump('NOTE: mainWindow closed...');
   });
 
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
 
+  return mainWindow;
+};
+
+const start = async () => {
+  if (
+    process.env.NODE_ENV === 'development' ||
+    process.env.DEBUG_PROD === 'true'
+  ) {
+    await installExtensions();
+  }
+
+  const splashWindow = openSplashWindow(true);
+
+  mainWindow = openMainWindow(true);
+
+  mainWindow.once('ready-to-show', () => {
+    setTimeout(() => splashWindow.close(), 2000);
+  });
+
   // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
-  new AppUpdater();
+  // new AppUpdater();
 };
 
 /**
@@ -156,13 +187,27 @@ app.on('window-all-closed', () => {
   // after all windows have been closed
   if (process.platform !== 'darwin') {
     app.quit();
+  } else {
+    backend.clearMainBindings(ipcMain);
   }
 });
 
-app.whenReady().then(start).catch(console.log);
+// Write all prefs to disk when app closes
+app.on('window-all-closed', () => {
+  if (prefs.store !== null) {
+    Object.keys(prefs.store).forEach((key) => prefs.writeStore(key));
+  }
+});
+
+app
+  .whenReady()
+  .then(start)
+  .catch((e) => {
+    throw Error(e);
+  });
 
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) createMainWin();
+  if (mainWindow === null) openMainWindow(false);
 });

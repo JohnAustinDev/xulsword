@@ -1,0 +1,20 @@
+{
+  "IntroLink": "Введение",
+  "cancelButton.label": "Отмена",
+  "crossrefs.with.text": "Перекрестные ссылки с текстом",
+  "frompageInput.label": "с",
+  "menu.options.hebCant": "Покажи Еврейский нараспев",
+  "menu.options.hebVowel": "Показать знаки гласных",
+  "menu.options.hebrew": "Еврейский",
+  "menu.view.crossrefs": "Перекрестные ссылки",
+  "menu.view.footnotes": "Сноски",
+  "menu.view.headings": "Заголовки",
+  "menu.view.redwords": "Слова Христа в красном шрифте",
+  "menu.view.usernotes": "Личные заметки",
+  "menu.view.versenums": "Номера стихов",
+  "print.printpassage": "Печатать отрывок",
+  "printCmd.label": "Печать...",
+  "printPreviewCmd.label": "Предварительный просмотр",
+  "term.include": "Включать",
+  "topageInput.label": "по"
+}

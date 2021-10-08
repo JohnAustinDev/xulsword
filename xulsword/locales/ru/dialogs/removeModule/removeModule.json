@@ -1,0 +1,13 @@
+{
+  "cancelButton.label": "Отмена",
+  "deleteAudio.label": "Удалить звук",
+  "deleteCmd.label": "Удалить",
+  "deleteLocales.label": "Удалить языки",
+  "deleteModules.label": "Удалить модули",
+  "deleteconfirm.title": "Вы уверены?",
+  "menu.removeModule.label": "Удалить модули",
+  "radio.label.Comms": "Коментарии:",
+  "radio.label.Dicts": "Ресурсы:",
+  "radio.label.Genbks": "Книги:",
+  "radio.label.Texts": "Библии:"
+}

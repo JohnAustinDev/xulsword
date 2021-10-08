@@ -1,0 +1,14 @@
+{
+  "choose.application.title": "Другое приложение…",
+  "protocol.checkbox.accesskey": "п",
+  "protocol.checkbox.extra": "Это может быть изменено в настройках %S.",
+  "protocol.checkbox.label": "Запомнить мой выбор для «%S» ссылок.",
+  "protocol.choices.label": "Отправить в:",
+  "protocol.description": "Для открытия этой ссылки требуется приложение.",
+  "protocol.title": "Запустить приложение",
+  "ChooseApp.accessKey": "ы",
+  "ChooseApp.description": "Выбрать приложение…",
+  "ChooseApp.label": "Выбрать…",
+  "window.emHeight": "30em",
+  "window.emWidth": "30em"
+}

@@ -1,0 +1,14 @@
+{
+  "arm.error": "Ошибка",
+  "arm.internetPromptMessage": "Вы хотите скачать Библейские тексты из интернета.\nЭти ваши действия в интернете могут быть легко прослежены посторонними лицами.\nЕсли это вас беспокоит, нажатием кнопки “Нет” вы можете отменить загрузку.",
+  "arm.internetPromptTitle": "Скачать Библию с Интернета?",
+  "arm.moduleType.Audio": "Аудио",
+  "arm.moduleType.Comms": "Комментарий",
+  "arm.moduleType.Dicts": "Словарь",
+  "arm.moduleType.Genbks": "Общие Книги",
+  "arm.moduleType.SimpleText": "Текст",
+  "arm.moduleType.Texts": "Библия",
+  "arm.rememberMyChoice": "Запомнить мой выбор?",
+  "arm.repositoryTreeTitle": "Источники Модулей",
+  "arm.wishToContinue": "Вы действительно хотите это сделать?"
+}

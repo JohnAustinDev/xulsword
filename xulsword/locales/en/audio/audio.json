@@ -1,0 +1,5 @@
+{
+  "audioFormatNotSupported": "Your operating system does not provide complete support for HTML5 audio.\n\nPress the F2 key to install audio which will play on your system.",
+  "diskFull": "There is not enough room on the disk to save %S.\n\nRemove unnecessary files from the disk and try again, or try saving in a different location.",
+  "error": "Error"
+}
