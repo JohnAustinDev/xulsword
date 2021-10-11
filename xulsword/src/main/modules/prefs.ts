@@ -24,6 +24,41 @@ export default class Prefs {
     this.store = {};
   }
 
+  // Get a string pref value. Error if key is not String, or is missing from store.
+  getCharPref = (key: string, aStore = 'default'): string => {
+    return this.getPrefOrCreate(key, aStore, 'string', undefined) as string;
+  };
+
+  // Set a string pref value. Error if key is not String.
+  setCharPref = (key: string, value: string, aStore = 'default'): boolean => {
+    return this.setPref(key, aStore, 'string', value);
+  };
+
+  // Get a Boolean pref value. Error if key is not Boolean, or is missing from store.
+  getBoolPref = (key: string, aStore = 'default'): boolean => {
+    return this.getPrefOrCreate(key, aStore, 'boolean', undefined) as boolean;
+  };
+
+  // Set a Boolean pref value. Error if key is not Boolean.
+  setBoolPref = (key: string, value: string, aStore = 'default'): boolean => {
+    return this.setPref(key, aStore, 'boolean', value);
+  };
+
+  // Get an integer pref value. Error if key is not an integer, or is missing from store.
+  getIntPref = (key: string, aStore = 'default'): number => {
+    return this.getPrefOrCreate(key, aStore, 'integer', undefined) as number;
+  };
+
+  // Set a Boolean pref value. Error if key is not an integer.
+  setIntPref = (key: string, value: string, aStore = 'default'): boolean => {
+    return this.setPref(key, aStore, 'integer', value);
+  };
+
+  // Remove the key from a store
+  clearUserPref = (key: string, aStore = 'default'): boolean => {
+    return this.setPref(key, aStore, 'undefined', undefined);
+  };
+
   // Get persistent data from source json files
   getStore = (
     aStore = 'default'
@@ -183,40 +218,5 @@ export default class Prefs {
     }
 
     return true;
-  };
-
-  // Get a string pref value. Error if key is not String, or is missing from store.
-  getCharPref = (key: string, aStore = 'default'): string => {
-    return this.getPrefOrCreate(key, aStore, 'string', undefined) as string;
-  };
-
-  // Set a string pref value. Error if key is not String.
-  setCharPref = (key: string, value: string, aStore = 'default'): boolean => {
-    return this.setPref(key, aStore, 'string', value);
-  };
-
-  // Get a Boolean pref value. Error if key is not Boolean, or is missing from store.
-  getBoolPref = (key: string, aStore = 'default'): boolean => {
-    return this.getPrefOrCreate(key, aStore, 'boolean', undefined) as boolean;
-  };
-
-  // Set a Boolean pref value. Error if key is not Boolean.
-  setBoolPref = (key: string, value: string, aStore = 'default'): boolean => {
-    return this.setPref(key, aStore, 'boolean', value);
-  };
-
-  // Get an integer pref value. Error if key is not an integer, or is missing from store.
-  getIntPref = (key: string, aStore = 'default'): number => {
-    return this.getPrefOrCreate(key, aStore, 'integer', undefined) as number;
-  };
-
-  // Set a Boolean pref value. Error if key is not an integer.
-  setIntPref = (key: string, value: string, aStore = 'default'): boolean => {
-    return this.setPref(key, aStore, 'integer', value);
-  };
-
-  // Remove the key from a store
-  clearUserPref = (key: string, aStore = 'default'): boolean => {
-    return this.setPref(key, aStore, 'undefined', undefined);
   };
 }

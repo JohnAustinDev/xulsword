@@ -16,7 +16,7 @@ if [ -e /vagrant ]; then CONTEXT="xsguest"; else CONTEXT="host"; fi
 if [ -e /vagrant ]; then XULSWORD="$HOME/src/xulsword"; else XULSWORD="$( cd "$(dirname "$0")" ; pwd -P )"; fi
 
 # BUILD DEPENDENCIES (Ubuntu Xenial & Bionic)
-PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip"
+PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-config zip curl"
 # for ZLib build
 PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
 # for Clucene build
@@ -48,16 +48,13 @@ fi
 
 
 # Install node.js using nvm so our dev environment can use the latest  
-# LTS version of node.js
+# LTS version of node.js. Then install yarn and dependant node modules.
+cd "$XULSWORD/xulsword"
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 source ~/.bashrc
-cd "$XULSWORD"
 nvm install --lts
 nvm use node
-
-# Install yarn and dependant node modules
 npm i --global yarn
-cd "$XULSWORD/xulsword"
 yarn
 
 exit
