@@ -8,11 +8,3 @@ describe('Main', () => {
     expect(render(<Main />)).toBeTruthy();
   });
 });
-
-/*
-describe('About', () => {
-  it('should render', () => {
-    expect(render(<About />)).toBeTruthy();
-  });
-});
-*/

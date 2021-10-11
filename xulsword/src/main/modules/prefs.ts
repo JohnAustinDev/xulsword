@@ -146,7 +146,7 @@ export default class Prefs {
     key: string,
     aStore: string,
     type: string,
-    value: any
+    value: string | number | boolean | undefined
   ): boolean => {
     const p = this.getStore(aStore);
     if (p === null) {
@@ -162,7 +162,11 @@ export default class Prefs {
       return false;
     }
 
-    if (type === 'integer' && Math.trunc(value) !== value) {
+    if (
+      typeof value === 'number' &&
+      type === 'integer' &&
+      Math.trunc(value) !== value
+    ) {
       jsdump(`WARN: setPref to non-integer: ${Math.trunc(value)} != ${value}`);
       return false;
     }

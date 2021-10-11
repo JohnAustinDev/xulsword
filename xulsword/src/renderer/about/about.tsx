@@ -4,13 +4,11 @@ import { Translation } from 'react-i18next';
 import { Label, Stack, Vbox, Hbox } from '../xul';
 import i18n from '../i18n';
 import './about.global.css';
-import C from '../../constants';
+import * as C from '../../constants';
 
 const R = window.ipc.renderer;
 
 const lng = R.sendSync('prefs', 'getCharPref', C.LOCALEPREF);
-
-R.send('jsdump', `WOWEEEEE: ${lng}`);
 
 const namespaces = ['startup/startup'];
 i18n.setDefaultNamespace(namespaces[0]);
@@ -24,7 +22,7 @@ i18n
     render(
       <Translation i18n={i18n}>
         {(t) => (
-          <Vbox id="mainbox" flex="1">
+          <Vbox lang={lng} id="mainbox" flex="1">
             <Stack flex="1">
               <Vbox id="layer1" flex="1" width="500" height="375" />
               <Vbox id="layer2" flex="1" width="500" height="375" pack="end">

@@ -3,8 +3,13 @@
   background-repeat: no-repeat;
 }
 
-#layer2 {
+div #layer2 {
   background-image: url(../../../assets/splash-overlay.png);
+  background-repeat: no-repeat;
+}
+
+div[lang='ru'] #layer2 {
+  background-image: url(../../../assets/splash-overlay-ru.png);
   background-repeat: no-repeat;
 }
 

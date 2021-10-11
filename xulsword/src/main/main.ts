@@ -123,13 +123,18 @@ const createWindow = (
 const openSplashWindow = (startup: boolean) => {
   const splashWindow = createWindow(
     'about',
-    {
-      width: 500,
-      height: 375,
-      alwaysOnTop: true,
-      frame: false,
-      transparent: true,
-    },
+    process.env.NODE_ENV === 'development'
+      ? {
+          width: 500,
+          height: 400,
+        }
+      : {
+          width: 500,
+          height: 375,
+          alwaysOnTop: true,
+          frame: false,
+          transparent: true,
+        },
     startup
   );
 
@@ -171,7 +176,9 @@ const start = async () => {
   mainWindow = openMainWindow(true);
 
   mainWindow.once('ready-to-show', () => {
-    setTimeout(() => splashWindow.close(), 2000);
+    if (process.env.NODE_ENV !== 'development') {
+      setTimeout(() => splashWindow.close(), 2000);
+    }
   });
 
   // Remove this if your app does not use auto updates

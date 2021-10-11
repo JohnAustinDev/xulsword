@@ -18,6 +18,7 @@ const xulStyle = (props) => {
 const keep = (props) => {
   return {
     id: props.id,
+    lang: props.lang,
     pack: props.pack,
     align: props.align,
   };

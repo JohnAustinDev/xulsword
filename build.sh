@@ -21,8 +21,6 @@ PKG_DEPS="build-essential git subversion libtool-bin cmake autoconf make pkg-con
 PKG_DEPS="$PKG_DEPS debhelper binutils gcc-multilib dpkg-dev"
 # for Clucene build
 PKG_DEPS="$PKG_DEPS debhelper libboost-dev"
-# for Electron
-PKG_DEPS="$PKG_DEPS rpm"
 if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
   if [ "$CONTEXT" = "xsguest" ]; then
     sudo apt-get update
@@ -48,35 +46,20 @@ if [ "$CONTEXT" = "xsguest" ]; then
 fi
 
 
-# Install node.js for Electron and React
-# Add nvm in .bashrc so our dev environment can use any particular version of nodejs
+# Install node.js using nvm so our dev environment can use the latest  
+# LTS version of node.js
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 source ~/.bashrc
-
-# Use latest LTS version of node.js
 cd "$XULSWORD"
 nvm install --lts
 nvm use node
 
-# Install node packages
+# Install yarn and dependant node modules
 npm i --global yarn
 cd "$XULSWORD/xulsword"
-yarn 
+yarn
 
-# Create Electron project
-#cd "$XULSWORD/xulsword"
-#npm init
-#npm i -D electron react reactdom electron-is-dev babel-cli babel-preset-react-app
-#npm install -D @electron-forge/cli
-#npx electron-forge import
-
-npm i -D electron-store
-
-https://stackoverflow.com/questions/57807459/how-to-use-preload-js-properly-in-electron
-
-# Did not use 'Create React App' because its webpack only supports a 
-# single page (unless ejected and webpack.config.js is hacked). Also, 
-# debugging with auto-reload would likely require similar re-config.
+exit
 
 # Create a local Cpp installation directory
 if [ ! -e "$XULSWORD/Cpp/install" ]; then  mkdir "$XULSWORD/Cpp/install"; fi
