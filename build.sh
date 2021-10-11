@@ -27,9 +27,10 @@ if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
     sudo apt-get install -y $PKG_DEPS
   else
     echo
-    echo First, you need to install missing packages:
     echo $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed")
     echo .
+    echo First, you need to install missing packages with:
+    echo sudo apt install ${PKG_DEPS}
     echo Then run this script again.
     exit;
   fi
