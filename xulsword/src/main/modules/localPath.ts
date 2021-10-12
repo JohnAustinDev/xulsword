@@ -4,8 +4,18 @@ import path from 'path';
 import nsILocalFile from '../components/nsILocalFile';
 import * as C from '../../constants';
 
-// These directories already exist or will be created
+// Path to the 'assets' directory which moves when packaged
+export const ASSET_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'assets')
+  : path.join(__dirname, '..', '..', '..', 'assets');
 
+// Path to app contents, which is a directory tree during
+// development, but becomes a special tar-like file when packaged.
+export const ASAR_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'app.asar')
+  : path.join(__dirname, '..', '..', '..', 'build', 'app');
+
+// These directories already exist or will be created
 export const TmpD = new nsILocalFile(
   app.getPath('temp'),
   nsILocalFile.NO_CREATE
@@ -17,13 +27,8 @@ export const ProfD = new nsILocalFile(
   nsILocalFile.DIRECTORY_TYPE
 );
 
-const xsDefaultsRel =
-  process.env.NODE_ENV === 'development'
-    ? path.join('..', '..', 'build', 'app', 'defaults')
-    : path.join('defaults');
-
 export const xsDefaults = new nsILocalFile(
-  path.join(app.getAppPath(), xsDefaultsRel),
+  path.join(ASAR_PATH, 'defaults'),
   nsILocalFile.DIRECTORY_TYPE
 );
 

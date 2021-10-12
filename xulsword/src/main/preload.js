@@ -5,7 +5,7 @@ contextBridge.exposeInMainWorld('api', {
   i18nextElectronBackend: backend.preloadBindings(ipcRenderer, process),
 });
 
-const validChannels = ['prefs', 'jsdump'];
+const validChannels = ['prefs', 'jsdump', 'paths'];
 
 contextBridge.exposeInMainWorld('ipc', {
   renderer: {

@@ -1,6 +1,9 @@
+/* eslint-disable prettier/prettier */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import backend from 'i18next-electron-fs-backend';
+
+const paths = window.ipc.render.sendSync('paths');
 
 i18n
   .use(backend)
@@ -17,14 +20,14 @@ i18n
 
     backend: {
       // path where resources get loaded from
-      loadPath: 'locales/{{lng}}/{{ns}}.json',
+      loadPath: `${paths.asar}/locales/{{lng}}/{{ns}}.json`,
       // path to post missing resources
-      addPath: 'locales/{{lng}}/{{ns}}.missing.json',
+      addPath: `${paths.asar}/locales/{{lng}}/{{ns}}.missing.json`,
       // jsonIndent to use when storing json files
       jsonIndent: 2,
       ipcRenderer: window.api.i18nextElectronBackend,
     },
-    saveMissing: true,
+    saveMissing: !paths.asar.includes('app.asar'),
     saveMissingTo: 'current',
 
     react: {

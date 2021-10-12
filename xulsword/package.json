@@ -37,6 +37,7 @@
     "files": [
       "dist",
       "defaults",
+      "locales",
       "node_modules",
       "package.json"
     ],

@@ -19,8 +19,14 @@ import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import Prefs from './modules/prefs';
 import { jsdump } from '../common0';
+import { ASAR_PATH, ASSET_PATH } from './modules/localPath';
 
 const backend = require('i18next-electron-fs-backend');
+
+if (process.env.NODE_ENV === 'production') {
+  const sourceMapSupport = require('source-map-support');
+  sourceMapSupport.install();
+}
 
 export default class AppUpdater {
   constructor() {
@@ -32,18 +38,9 @@ export default class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-const RESOURCES_PATH = app.isPackaged
-  ? path.join(process.resourcesPath, 'assets')
-  : path.join(__dirname, '../../assets');
-
 const getAssetPath = (...paths: string[]): string => {
-  return path.join(RESOURCES_PATH, ...paths);
+  return path.join(ASSET_PATH, ...paths);
 };
-
-if (process.env.NODE_ENV === 'production') {
-  const sourceMapSupport = require('source-map-support');
-  sourceMapSupport.install();
-}
 
 const isDevelopment =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
@@ -65,6 +62,7 @@ const installExtensions = async () => {
     .catch((e: Error) => jsdump(e));
 };
 
+// Handle prefs calls from renderer
 const prefs = new Prefs(false);
 ipcMain.on('prefs', (event, method: string, ...args) => {
   let ret = null;
@@ -80,8 +78,16 @@ ipcMain.on('prefs', (event, method: string, ...args) => {
   event.returnValue = ret;
 });
 
+// Handle jsdump calls from renderer
 ipcMain.on('jsdump', (_event, msg: string) => {
   jsdump(msg);
+});
+
+// Handle paths calls from renderer
+ipcMain.on('paths', (event) => {
+  event.returnValue = {
+    asar: ASAR_PATH,
+  };
 });
 
 const createWindow = (
@@ -164,10 +170,7 @@ const openMainWindow = (startup: boolean) => {
 };
 
 const start = async () => {
-  if (
-    process.env.NODE_ENV === 'development' ||
-    process.env.DEBUG_PROD === 'true'
-  ) {
+  if (isDevelopment) {
     await installExtensions();
   }
 

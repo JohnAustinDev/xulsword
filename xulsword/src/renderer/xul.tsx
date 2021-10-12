@@ -5,15 +5,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './xul.global.css';
 
-// Convert XUL attributes to HTML element CSS style
-const xulStyle = (props) => {
-  const s = {};
-  if (props.width) s.width = props.width.concat('px');
-  if (props.height) s.height = props.height.concat('px');
-  if (props.flex) s.flexGrow = props.flex;
-  return Object.keys(s).length ? s : null;
-};
-
 // These XUL attributes are to be passed down as-is in props
 const keep = (props) => {
   return {
@@ -40,6 +31,15 @@ const xulDefaultProps = {
   height: null,
   class: null,
   children: null,
+};
+
+// Convert these XUL attributes to HTML element CSS style
+const xulStyle = (props) => {
+  const s = {};
+  if (props.width) s.width = props.width.concat('px');
+  if (props.height) s.height = props.height.concat('px');
+  if (props.flex) s.flexGrow = props.flex;
+  return Object.keys(s).length ? s : null;
 };
 
 //
