@@ -30,7 +30,9 @@ if [ $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed" | wc -m) -ne 0 ]; then
     echo $(dpkg -s $PKG_DEPS 2>&1 | grep "not installed")
     echo .
     echo First, you need to install missing packages with:
+    echo .
     echo sudo apt install ${PKG_DEPS}
+    echo .
     echo Then run this script again.
     exit;
   fi
@@ -51,7 +53,10 @@ fi
 # LTS version of node.js. Then install yarn and dependant node modules.
 cd "$XULSWORD/xulsword"
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-source ~/.bashrc
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
 nvm install --lts
 nvm use node
 npm i --global yarn

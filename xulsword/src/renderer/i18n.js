@@ -3,7 +3,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import backend from 'i18next-electron-fs-backend';
 
-const paths = window.ipc.render.sendSync('paths');
+const paths = window.ipc.renderer.sendSync('paths');
 
 i18n
   .use(backend)
