@@ -87,6 +87,7 @@ ipcMain.on('jsdump', (_event, msg: string) => {
 ipcMain.on('paths', (event) => {
   event.returnValue = {
     asar: ASAR_PATH,
+    assets: ASSET_PATH,
   };
 });
 

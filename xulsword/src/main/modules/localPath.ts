@@ -28,7 +28,7 @@ export const ProfD = new nsILocalFile(
 );
 
 export const xsDefaults = new nsILocalFile(
-  path.join(ASAR_PATH, 'defaults'),
+  path.join(ASSET_PATH, 'defaults'),
   nsILocalFile.DIRECTORY_TYPE
 );
 

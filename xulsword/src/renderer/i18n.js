@@ -20,14 +20,14 @@ i18n
 
     backend: {
       // path where resources get loaded from
-      loadPath: `${paths.asar}/locales/{{lng}}/{{ns}}.json`,
+      loadPath: `${paths.assets}/locales/{{lng}}/{{ns}}.json`,
       // path to post missing resources
-      addPath: `${paths.asar}/locales/{{lng}}/{{ns}}.missing.json`,
+      addPath: `${paths.assets}/locales/{{lng}}/{{ns}}.missing.json`,
       // jsonIndent to use when storing json files
       jsonIndent: 2,
       ipcRenderer: window.api.i18nextElectronBackend,
     },
-    saveMissing: !paths.asar.includes('app.asar'),
+    saveMissing: !paths.assets.includes('resources'),
     saveMissingTo: 'current',
 
     react: {

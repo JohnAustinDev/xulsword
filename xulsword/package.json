@@ -36,8 +36,6 @@
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
       "dist",
-      "defaults",
-      "locales",
       "node_modules",
       "package.json"
     ],
