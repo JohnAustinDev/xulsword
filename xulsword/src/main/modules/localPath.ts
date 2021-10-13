@@ -21,14 +21,31 @@ export const TmpD = new nsILocalFile(
   nsILocalFile.NO_CREATE
 );
 
+// Apparently app.getAppPath is the app's 'current directory'
+// which is not necessarily the directory of the app executable.
+export const xsProgram = new nsILocalFile(
+  path.join(process.resourcesPath, '..'),
+  nsILocalFile.DIRECTORY_TYPE
+);
+
+export const xsDefaults = new nsILocalFile(
+  path.join(ASSET_PATH, 'defaults'),
+  nsILocalFile.DIRECTORY_TYPE
+);
+
+export const xsPrefDefD = new nsILocalFile(
+  path.join(xsDefaults.path, 'preferences'),
+  nsILocalFile.DIRECTORY_TYPE
+);
+
 // This location could be the only difference between setup and portable!
 export const ProfD = new nsILocalFile(
   app.getPath('userData'),
   nsILocalFile.DIRECTORY_TYPE
 );
 
-export const xsDefaults = new nsILocalFile(
-  path.join(ASSET_PATH, 'defaults'),
+export const xsPrefD = new nsILocalFile(
+  path.join(ProfD.path, 'preferences'),
   nsILocalFile.DIRECTORY_TYPE
 );
 
@@ -39,43 +56,28 @@ export const xsResD = new nsILocalFile(
 
 export const xsModsUser = xsResD;
 
-export const xsPrefD = new nsILocalFile(
-  path.join(ProfD.path, 'preferences'),
-  nsILocalFile.DIRECTORY_TYPE
-);
-
-export const xsPrefDefD = new nsILocalFile(
-  path.join(xsDefaults.path, 'preferences'),
-  nsILocalFile.DIRECTORY_TYPE
-);
-
 export const xsFonts = new nsILocalFile(
-  path.join(ProfD.path, C.FONTS),
+  path.join(xsResD.path, C.FONTS),
   nsILocalFile.DIRECTORY_TYPE
 );
 
 export const xsAudio = new nsILocalFile(
-  path.join(ProfD.path, C.AUDIO),
+  path.join(xsResD.path, C.AUDIO),
   nsILocalFile.DIRECTORY_TYPE
 );
 
 export const xsBookmarks = new nsILocalFile(
-  path.join(ProfD.path, C.BOOKMARKS),
+  path.join(xsResD.path, C.BOOKMARKS),
   nsILocalFile.DIRECTORY_TYPE
 );
 
 export const xsVideo = new nsILocalFile(
-  path.join(ProfD.path, C.VIDEO),
+  path.join(xsResD.path, C.VIDEO),
   nsILocalFile.DIRECTORY_TYPE
 );
 
 export const xsLocale = new nsILocalFile(
-  path.join(ProfD.path, C.LOCALED),
-  nsILocalFile.DIRECTORY_TYPE
-);
-
-export const xsProgram = new nsILocalFile(
-  app.getAppPath(),
+  path.join(xsResD.path, C.LOCALED),
   nsILocalFile.DIRECTORY_TYPE
 );
 
