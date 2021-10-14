@@ -6,7 +6,8 @@ import i18nInit from '../i18n';
 import { Label, Stack, Vbox, Hbox } from '../xul';
 import { jsdump } from '../../common0';
 import '../about/about.css';
-import './splash.css';
+
+document.getElementsByTagName('body')[0].className = 'splash';
 
 i18nInit(['startup/startup']).then(() =>
 render(

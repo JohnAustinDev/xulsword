@@ -7,6 +7,8 @@ import { Label, Stack, Vbox, Hbox } from '../xul';
 import { jsdump } from '../../common0';
 import './main.css';
 
+document.getElementsByTagName('body')[0].className = 'main';
+
 i18nInit(['startup/startup']).then(() =>
 render(
   <Translation>

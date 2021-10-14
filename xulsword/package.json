@@ -206,6 +206,7 @@
     "husky": "4.x.x",
     "i18next": "^21.2.4",
     "i18next-electron-fs-backend": "^2.0.0",
+    "i18next-fs-backend": "^1.1.1",
     "identity-obj-proxy": "^3.0.0",
     "instead": "^1.0.3",
     "jest": "^26.1.0",

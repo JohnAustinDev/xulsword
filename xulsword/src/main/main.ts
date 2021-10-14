@@ -16,7 +16,6 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import Prefs from './modules/prefs';
@@ -24,7 +23,10 @@ import * as P from './modules/localPath';
 import * as C from '../constants';
 import { jsdump } from '../common0';
 
-const rendererBackend = require('i18next-electron-fs-backend');
+const i18nBackendMain = require('i18next-fs-backend');
+const i18nBackendRenderer = require('i18next-electron-fs-backend');
+
+const t = (key: string, options?: any) => i18n.t(key, options);
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -96,8 +98,7 @@ ipcMain.on('paths', (event) => {
 
 const createWindow = (
   name: string,
-  params: Electron.BrowserWindowConstructorOptions | undefined,
-  startup: boolean
+  params: Electron.BrowserWindowConstructorOptions | undefined
 ) => {
   const newWindow = new BrowserWindow({
     show: false,
@@ -113,13 +114,13 @@ const createWindow = (
   newWindow.loadURL(resolveHtmlPath(`${name}.html`));
 
   // Bind i18next-electron-fs-backend providing IPC to renderer processes
-  rendererBackend.mainBindings(ipcMain, newWindow, fs);
+  i18nBackendRenderer.mainBindings(ipcMain, newWindow, fs);
 
   newWindow.webContents.on('did-finish-load', () => {
     if (!newWindow) {
       throw new Error(`${name} window is not defined`);
     }
-    if (startup && process.env.START_MINIMIZED) {
+    if (process.env.START_MINIMIZED) {
       newWindow.minimize();
     } else {
       newWindow.show();
@@ -130,7 +131,7 @@ const createWindow = (
   return newWindow;
 };
 
-const openSplashWindow = (startup: boolean) => {
+const openSplashWindow = () => {
   const splashWindow = createWindow(
     'splash',
     process.env.NODE_ENV === 'development'
@@ -146,26 +147,19 @@ const openSplashWindow = (startup: boolean) => {
           alwaysOnTop: true,
           frame: false,
           transparent: true,
-        },
-    startup
+        }
   );
 
   return splashWindow;
 };
 
-const openMainWindow = async (startup: boolean) => {
-  // await i18n.loadNamespaces(['xulsword']);
-
-  mainWindow = createWindow(
-    'main',
-    {
-      title: 'my title', // i18n.t('Title'),
-      icon: getAssetPath('icon.png'),
-      width: 1024,
-      height: 728,
-    },
-    startup
-  );
+const openMainWindow = () => {
+  mainWindow = createWindow('main', {
+    title: t('Title'),
+    icon: getAssetPath('icon.png'),
+    width: 1024,
+    height: 728,
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -182,20 +176,19 @@ const start = async () => {
   if (isDevelopment) {
     await installExtensions();
   }
-  /*
+
   // Initialize i18n
   await i18n
-    .use(backend)
-    // pass the i18n instance to react-i18next.
-    .use(initReactI18next)
-    // init i18next
-    // for all options read: https://www.i18next.com/overview/configuration-options
+    .use(i18nBackendMain)
     .init({
       lng: prefs.getCharPref(C.LOCALEPREF),
       fallbackLng: 'en',
       supportedLngs: ['en', 'ru'],
 
-      debug: true,
+      ns: 'xulsword',
+      defaultNS: 'xulsword',
+
+      debug: false,
 
       backend: {
         // path where resources get loaded from
@@ -204,9 +197,8 @@ const start = async () => {
         addPath: `${P.ASSET_PATH}/locales/{{lng}}/{{ns}}.missing.json`,
         // jsonIndent to use when storing json files
         jsonIndent: 2,
-        ipcRenderer: window.api.i18nextElectronBackend,
       },
-      saveMissing: !P.ASSET_PATH.includes('resources'),
+      saveMissing: isDevelopment,
       saveMissingTo: 'current',
 
       react: {
@@ -216,11 +208,12 @@ const start = async () => {
       interpolation: {
         escapeValue: false, // not needed for react as it escapes by default
       },
-    });
-*/
-  const splashWindow = openSplashWindow(true);
+    })
+    .catch((e) => jsdump(e));
 
-  mainWindow = await openMainWindow(true);
+  const splashWindow = openSplashWindow();
+
+  mainWindow = openMainWindow();
 
   mainWindow.once('ready-to-show', () => {
     if (process.env.NODE_ENV !== 'development') {
@@ -230,6 +223,8 @@ const start = async () => {
 
   // Remove this if your app does not use auto updates
   // new AppUpdater();
+
+  return mainWindow;
 };
 
 /**
@@ -242,7 +237,7 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   } else {
-    rendererBackend.clearMainBindings(ipcMain);
+    i18nBackendRenderer.clearMainBindings(ipcMain);
   }
 });
 
@@ -263,5 +258,5 @@ app
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) openMainWindow(false);
+  if (mainWindow === null) openMainWindow();
 });
