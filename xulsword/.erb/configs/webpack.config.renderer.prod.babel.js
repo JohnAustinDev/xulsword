@@ -38,7 +38,7 @@ function entryConfig(name) {
 function htmlConfig(name) {
   return {
     filename: name + '.html',
-    template: path.join(webpackPaths.srcRendererPath, name + '/' + name + '.ejs'),
+    template: path.join(webpackPaths.srcRendererPath, 'template.html'),
     chunks: [name],
     minify: {
       collapseWhitespace: true,
@@ -60,7 +60,7 @@ export default merge(baseConfig, {
   entry: {
     // Entry points and output files (one for each kind of BrowserWindow)
     main:  entryConfig('main'),
-    about: entryConfig('about'),
+    splash: entryConfig('splash'),
   },
 
   output: {
@@ -194,6 +194,6 @@ export default merge(baseConfig, {
 
     // Entry point html files (one plugin for each kind of BrowserWindow)
     new HtmlWebpackPlugin(htmlConfig('main')),
-    new HtmlWebpackPlugin(htmlConfig('about'))
+    new HtmlWebpackPlugin(htmlConfig('splash'))
   ],
 });

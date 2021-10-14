@@ -4,37 +4,41 @@ import path from 'path';
 import nsILocalFile from '../components/nsILocalFile';
 import * as C from '../../constants';
 
-// Path to the 'assets' directory which moves when packaged
+// Path to the 'assets' directory of package.json build.extraResources
 export const ASSET_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
   : path.join(__dirname, '..', '..', '..', 'assets');
 
-// Path to app contents, which is a directory tree during
-// development, but becomes a special tar-like file when packaged.
+// Path to app.asar contents. Before packaging these are build/app/
+// subdirectories. But those directories listed in package.json build.files
+// will be combined into a tar-like app.asar file after packaging, and the
+// app.asar file conetents can be accessed using a regular path.
 export const ASAR_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'app.asar')
   : path.join(__dirname, '..', '..', '..', 'build', 'app');
 
-// These directories already exist or will be created
 export const TmpD = new nsILocalFile(
   app.getPath('temp'),
   nsILocalFile.NO_CREATE
 );
 
-// Apparently app.getAppPath is the app's 'current directory'
-// which is not necessarily the directory of the app executable.
+// These directories already exist or will be created
+
+// Note: app.getAppPath is the app's 'current directory' which
+// is not necessarily the directory of the app executable. But
+// xsProgram is the directory of the packaged app's executable.
 export const xsProgram = new nsILocalFile(
   path.join(process.resourcesPath, '..'),
   nsILocalFile.DIRECTORY_TYPE
 );
 
 export const xsDefaults = new nsILocalFile(
-  path.join(ASSET_PATH, 'defaults'),
+  path.join(ASSET_PATH, C.DEFAULTS),
   nsILocalFile.DIRECTORY_TYPE
 );
 
 export const xsPrefDefD = new nsILocalFile(
-  path.join(xsDefaults.path, 'preferences'),
+  path.join(xsDefaults.path, C.PREFERENCES),
   nsILocalFile.DIRECTORY_TYPE
 );
 
@@ -45,7 +49,7 @@ export const ProfD = new nsILocalFile(
 );
 
 export const xsPrefD = new nsILocalFile(
-  path.join(ProfD.path, 'preferences'),
+  path.join(ProfD.path, C.PREFERENCES),
   nsILocalFile.DIRECTORY_TYPE
 );
 

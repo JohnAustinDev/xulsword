@@ -15,13 +15,16 @@ import fs from 'fs';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import Prefs from './modules/prefs';
+import * as P from './modules/localPath';
+import * as C from '../constants';
 import { jsdump } from '../common0';
-import { ASAR_PATH, ASSET_PATH } from './modules/localPath';
 
-const backend = require('i18next-electron-fs-backend');
+const rendererBackend = require('i18next-electron-fs-backend');
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -39,7 +42,7 @@ export default class AppUpdater {
 let mainWindow: BrowserWindow | null = null;
 
 const getAssetPath = (...paths: string[]): string => {
-  return path.join(ASSET_PATH, ...paths);
+  return path.join(P.ASSET_PATH, ...paths);
 };
 
 const isDevelopment =
@@ -86,8 +89,8 @@ ipcMain.on('jsdump', (_event, msg: string) => {
 // Handle paths calls from renderer
 ipcMain.on('paths', (event) => {
   event.returnValue = {
-    asar: ASAR_PATH,
-    assets: ASSET_PATH,
+    asar: P.ASAR_PATH,
+    assets: P.ASSET_PATH,
   };
 });
 
@@ -109,8 +112,8 @@ const createWindow = (
 
   newWindow.loadURL(resolveHtmlPath(`${name}.html`));
 
-  // Configure i18n backend for the window
-  backend.mainBindings(ipcMain, newWindow, fs);
+  // Bind i18next-electron-fs-backend providing IPC to renderer processes
+  rendererBackend.mainBindings(ipcMain, newWindow, fs);
 
   newWindow.webContents.on('did-finish-load', () => {
     if (!newWindow) {
@@ -129,13 +132,15 @@ const createWindow = (
 
 const openSplashWindow = (startup: boolean) => {
   const splashWindow = createWindow(
-    'about',
+    'splash',
     process.env.NODE_ENV === 'development'
       ? {
+          title: 'xulsword',
           width: 500,
           height: 400,
         }
       : {
+          title: 'xulsword',
           width: 500,
           height: 375,
           alwaysOnTop: true,
@@ -148,10 +153,13 @@ const openSplashWindow = (startup: boolean) => {
   return splashWindow;
 };
 
-const openMainWindow = (startup: boolean) => {
+const openMainWindow = async (startup: boolean) => {
+  // await i18n.loadNamespaces(['xulsword']);
+
   mainWindow = createWindow(
     'main',
     {
+      title: 'my title', // i18n.t('Title'),
       icon: getAssetPath('icon.png'),
       width: 1024,
       height: 728,
@@ -174,10 +182,45 @@ const start = async () => {
   if (isDevelopment) {
     await installExtensions();
   }
+  /*
+  // Initialize i18n
+  await i18n
+    .use(backend)
+    // pass the i18n instance to react-i18next.
+    .use(initReactI18next)
+    // init i18next
+    // for all options read: https://www.i18next.com/overview/configuration-options
+    .init({
+      lng: prefs.getCharPref(C.LOCALEPREF),
+      fallbackLng: 'en',
+      supportedLngs: ['en', 'ru'],
 
+      debug: true,
+
+      backend: {
+        // path where resources get loaded from
+        loadPath: `${P.ASSET_PATH}/locales/{{lng}}/{{ns}}.json`,
+        // path to post missing resources
+        addPath: `${P.ASSET_PATH}/locales/{{lng}}/{{ns}}.missing.json`,
+        // jsonIndent to use when storing json files
+        jsonIndent: 2,
+        ipcRenderer: window.api.i18nextElectronBackend,
+      },
+      saveMissing: !P.ASSET_PATH.includes('resources'),
+      saveMissingTo: 'current',
+
+      react: {
+        useSuspense: false,
+      },
+
+      interpolation: {
+        escapeValue: false, // not needed for react as it escapes by default
+      },
+    });
+*/
   const splashWindow = openSplashWindow(true);
 
-  mainWindow = openMainWindow(true);
+  mainWindow = await openMainWindow(true);
 
   mainWindow.once('ready-to-show', () => {
     if (process.env.NODE_ENV !== 'development') {
@@ -199,7 +242,7 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   } else {
-    backend.clearMainBindings(ipcMain);
+    rendererBackend.clearMainBindings(ipcMain);
   }
 });
 

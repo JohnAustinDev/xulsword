@@ -1,41 +1,51 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/destructuring-assignment */
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import './xul.global.css';
+import './xul.css';
 
-// These XUL attributes are to be passed down as-is in props
-const keep = (props) => {
+// These XUL attributes are to be kept on their HTML elements,
+// so they can be used with CSS selectors.
+const keep = (props: any) => {
   return {
+    align: props.align,
     id: props.id,
     lang: props.lang,
     pack: props.pack,
-    align: props.align,
   };
 };
 
 // Define type checking for XUL attributes
 const xulPropTypes = {
-  flex: PropTypes.string,
-  width: PropTypes.string,
-  height: PropTypes.string,
-  class: PropTypes.string,
+  align: PropTypes.string,
   children: PropTypes.node,
+  class: PropTypes.string,
+  flex: PropTypes.string,
+  height: PropTypes.string,
+  id: PropTypes.string,
+  lang: PropTypes.string,
+  pack: PropTypes.string,
+  width: PropTypes.string,
 };
 
 // Set default prop values
 const xulDefaultProps = {
-  flex: null,
-  width: null,
-  height: null,
-  class: null,
+  align: null,
   children: null,
+  class: null,
+  flex: null,
+  height: null,
+  id: null,
+  lang: null,
+  pack: null,
+  width: null,
 };
 
 // Convert these XUL attributes to HTML element CSS style
-const xulStyle = (props) => {
-  const s = {};
+const xulStyle = (props: any) => {
+  const s: any = {};
   if (props.width) s.width = props.width.concat('px');
   if (props.height) s.height = props.height.concat('px');
   if (props.flex) s.flexGrow = props.flex;
@@ -47,7 +57,7 @@ const xulStyle = (props) => {
 //
 
 // XUL label
-function Label(props) {
+function Label(props: any) {
   const classes = ['label', props.class ? props.class.split(' ') : null];
   return <span className={classes.join(' ')}>{props.value}</span>;
 }
@@ -59,7 +69,7 @@ Label.propTypes = {
 export { Label };
 
 // XUL stack
-function Stack(props) {
+function Stack(props: any) {
   const classes = ['stack', props.class ? props.class.split(' ') : null];
   return (
     <div className={classes.join(' ')} {...keep(props)} style={xulStyle(props)}>
@@ -72,7 +82,7 @@ Stack.propTypes = xulPropTypes;
 export { Stack };
 
 // XUL vbox
-function Vbox(props) {
+function Vbox(props: any) {
   const classes = ['vbox', props.class ? props.class.split(' ') : null];
   return (
     <div className={classes.join(' ')} {...keep(props)} style={xulStyle(props)}>
@@ -85,7 +95,7 @@ Vbox.propTypes = xulPropTypes;
 export { Vbox };
 
 // XUL hbox
-function Hbox(props) {
+function Hbox(props: any) {
   const classes = ['hbox', props.class ? props.class.split(' ') : null];
   return (
     <div className={classes.join(' ')} {...keep(props)} style={xulStyle(props)}>
