@@ -3,8 +3,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { xulClass, xulDefaultProps, xulPropTypes } from '../xul';
-import '../xul.css';
+import { xulClass, xulDefaultProps, xulPropTypes } from './xul';
+import './xul.css';
 
 // XUL label
 export default function Label(props) {

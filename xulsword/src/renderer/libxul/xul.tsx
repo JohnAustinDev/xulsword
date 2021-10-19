@@ -75,13 +75,18 @@ export const xulStyle = (props) => {
   return Object.keys(s).length ? s : null;
 };
 
-// These XUL attribute enums are converted to CSS classes.
+// These XUL attribute booleans and enums are converted to CSS classes.
 export const xulClass = (name: string, props) => {
-  const attribs = ['align', 'dir', 'hidden', 'orient', 'pack', 'type'];
+  const enums = ['align', 'dir', 'orient', 'pack', 'type'];
+  const bools = ['hidden', 'checked'];
+
   const c0 = [name.toLowerCase(), props.tooltip ? 'tooltip' : ''];
   const c1 = props.className ? props.className.split(/\s+/) : [];
-  const c2 = attribs.map((c) => (props[c] ? `${c}-${props[c]}` : ''));
-  return c0.concat(c1).concat(c2).filter(Boolean).join(' ');
+  const c2 = enums.map((c) => (props[c] ? `${c}-${props[c]}` : ''));
+  const c3 = bools.map((c) =>
+    props[c] && !/^false$/i.test(props[c]) ? `${c}` : ''
+  );
+  return c0.concat(c1, c2, c3).filter(Boolean).join(' ');
 };
 
 // Use a default if value is null

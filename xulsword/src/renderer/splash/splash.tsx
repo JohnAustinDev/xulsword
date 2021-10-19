@@ -3,14 +3,13 @@ import React from 'react';
 import { render } from 'react-dom';
 import { Translation } from 'react-i18next';
 import i18nInit from '../i18n';
-import Hbox from '../libxul/hbox/hbox';
-import Label from '../libxul/label/label';
-import Stack from '../libxul/stack/stack';
-import Vbox from '../libxul/vbox/vbox';
-import { jsdump } from '../../common0';
+import { Hbox, Vbox } from '../libxul/boxes';
+import Label from '../libxul/label';
+import Stack from '../libxul/stack';
+import { jsdump, setBodyClass } from '../../common0';
 import '../about/about.css';
 
-document.getElementsByTagName('body')[0].className = 'splash';
+setBodyClass('splash');
 
 i18nInit(['startup/startup']).then(() =>
 render(

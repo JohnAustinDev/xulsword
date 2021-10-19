@@ -67,6 +67,33 @@ const installExtensions = async () => {
     .catch((e: Error) => jsdump(e));
 };
 
+// Handle global variable calls from renderer
+ipcMain.on('global', (event, name: string, ...args) => {
+  let ret = null;
+  switch (name) {
+    case 'ProgramConfig': {
+      // TODO: REPLACE WITH REAL ProgramConfig
+      const ProgramConfig: { [i: string]: string } = { direction: 'ltr' };
+      const p = args[0];
+      if (typeof p === 'string') {
+        if (ProgramConfig[p] !== undefined) {
+          ret = ProgramConfig[p];
+        } else {
+          throw Error(`Unhandled global property ${name}.${args[0]}`);
+        }
+      } else {
+        throw Error(`Argument must be a string`);
+      }
+      break;
+    }
+
+    default:
+      throw Error(`Unhandled global name ${name}`);
+  }
+
+  event.returnValue = ret;
+});
+
 // Handle prefs calls from renderer
 const prefs = new Prefs(false);
 ipcMain.on('prefs', (event, method: string, ...args) => {

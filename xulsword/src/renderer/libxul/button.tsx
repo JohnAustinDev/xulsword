@@ -3,10 +3,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import Hbox from '../hbox/hbox';
-import Image from '../image/image';
-import Label from '../label/label';
-import Tooltip from '../tooltip/tooltip';
+import { Box } from './boxes';
+import Label from './label';
+import Menupopup from './menupopup';
+import Tooltip from './tooltip';
 import {
   keep,
   propd,
@@ -14,41 +14,12 @@ import {
   xulDefaultProps,
   xulPropTypes,
   xulStyle,
-} from '../xul';
-import '../xul.css';
+} from './xul';
+import './xul.css';
 import './button.css';
 
 // XUL button
 export default function Button(props) {
-  const children = (
-    <>
-      {props.image !== null && (
-        <Image className="button-icon" src={props.image} />
-      )}
-      {props.label !== null && (
-        <Label className="button-text" value={props.label} />
-      )}
-    </>
-  );
-  let content = children;
-
-  if (props.type === 'menu') {
-    content = (
-      <>
-        <Hbox
-          align={propd('center', props.align)}
-          pack={propd('center', props.pack)}
-          flex="1"
-          dir={props.dir}
-          orient={props.orient}
-        >
-          {children}
-        </Hbox>
-        <Image className="dropmarker-icon" />
-      </>
-    );
-  }
-
   return (
     <button
       type="button"
@@ -56,7 +27,7 @@ export default function Button(props) {
       {...keep(props)}
       style={xulStyle(props)}
     >
-      <Hbox
+      <Box
         className="button-box"
         align={propd('center', props.align)}
         pack={propd('center', props.pack)}
@@ -64,8 +35,12 @@ export default function Button(props) {
         dir={props.dir}
         orient={props.orient}
       >
-        {content}
-      </Hbox>
+        <div className="button-icon" />
+        {props.label !== null && (
+          <Label className="button-text" value={props.label} />
+        )}
+        {props.type === 'menu' && <Menupopup />}
+      </Box>
       <Tooltip tip={props.tooltip} />
     </button>
   );

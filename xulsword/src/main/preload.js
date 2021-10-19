@@ -16,7 +16,7 @@ contextBridge.exposeInMainWorld('c', {
   },
 });
 
-const validChannels = ['prefs', 'jsdump', 'paths', 'close', 'resize'];
+const validChannels = ['prefs', 'global', 'jsdump', 'paths', 'close', 'resize'];
 
 contextBridge.exposeInMainWorld('ipc', {
   renderer: {

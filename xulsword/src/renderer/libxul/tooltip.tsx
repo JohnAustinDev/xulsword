@@ -3,7 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import '../xul.css';
+import './xul.css';
 
 // Tooltip called by other XUL elements
 export default function Tooltip(props) {

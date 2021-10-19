@@ -8,10 +8,7 @@
   top: 0;
 }
 
-.vbox,
-.hbox,
-.orient-vertical,
-.orient-horizontal {
+.box {
   display: flex;
   justify-content: space-around;
   align-items: stretch;
@@ -23,11 +20,12 @@
   flex-direction: column;
 }
 
-.hbox .orient-horizontal {
+.hbox,
+.orient-horizontal {
   flex-direction: row;
 }
 
-.hidden-true {
+.hidden {
   display: none;
 }
 
@@ -66,6 +64,7 @@
   position: relative;
 }
 .tooltip .tooltiptext {
+  width: 100%;
   visibility: hidden;
   background-color: black;
   color: #fff;

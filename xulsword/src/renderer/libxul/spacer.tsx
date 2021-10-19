@@ -3,14 +3,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  keep,
-  xulClass,
-  xulDefaultProps,
-  xulPropTypes,
-  xulStyle,
-} from '../xul';
-import '../xul.css';
+import { keep, xulClass, xulDefaultProps, xulPropTypes, xulStyle } from './xul';
+import './xul.css';
 
 // XUL spacer
 export default function Spacer(props) {

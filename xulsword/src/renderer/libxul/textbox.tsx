@@ -3,15 +3,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import Tooltip from '../tooltip/tooltip';
-import {
-  keep,
-  xulClass,
-  xulDefaultProps,
-  xulPropTypes,
-  xulStyle,
-} from '../xul';
-import '../xul.css';
+import Tooltip from './tooltip';
+import { keep, xulClass, xulDefaultProps, xulPropTypes, xulStyle } from './xul';
+import './xul.css';
 
 // XUL textbox
 export default function Textbox(props) {

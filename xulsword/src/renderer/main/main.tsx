@@ -4,21 +4,20 @@ import React from 'react';
 import { render } from 'react-dom';
 import { Translation } from 'react-i18next';
 import i18nInit from '../i18n';
-import Button from '../libxul/button/button';
-import Deck from '../libxul/deck/deck';
-import Hbox from '../libxul/hbox/hbox';
-import Menupopup from '../libxul/menupopup/menupopup';
-import Referencedropdown from '../libxul/referenceddropdown/referenceddropdown';
-import Spacer from '../libxul/spacer/spacer';
-import Textbox from '../libxul/textbox/textbox';
-import Toolbox from '../libxul/toolbox/toolbox';
-import Vbox from '../libxul/vbox/vbox';
-import { jsdump } from '../../common0';
+import Button from '../libxul/button';
+import Deck from '../libxul/deck';
+import { Hbox, Vbox } from '../libxul/boxes';
+import Menupopup from '../libxul/menupopup';
+import Referencedropdown from '../libxul/referenceddropdown';
+import Spacer from '../libxul/spacer';
+import Textbox from '../libxul/textbox';
+import Toolbox from '../libxul/toolbox';
+import { jsdump, setBodyClass } from '../../common0';
 import { loadedXUL, unloadXUL } from './main.js';
 import eventHandler from './eventHandler';
 import './main.css';
 
-document.getElementsByTagName('body')[0].className = 'main';
+setBodyClass('main');
 
 interface XulswordState {
   hdbutton: boolean,
@@ -62,7 +61,7 @@ class Xulsword extends React.Component {
 <Vbox className="hasBible" lang={i18n.language} id="topbox" flex="1">
   <Toolbox>
 
-    {/* NEED TO ADD MENU */}
+    {/* TODO: NEED TO ADD MENU */}
 
   </Toolbox>
 
@@ -121,7 +120,6 @@ class Xulsword extends React.Component {
 
   </Hbox>
 
-{/* VIEWPORT DECK PLACED HERE */}
   <Vbox flex="1">
     <Deck id="viewport-deck" flex="1">
 
@@ -130,13 +128,13 @@ class Xulsword extends React.Component {
           <Spacer height="36"/>
           <Vbox id="genBookTree" flex="1">
 
-            {/* NEED TO ADD GENBOOK TREE */}
+            {/* TODO: NEED TO ADD GENBOOK TREE */}
 
           </Vbox>
           <Spacer height="22"/>
         </Vbox>
         <Vbox flex="1">
-          {/* <iframe id="main-viewport" src="../viewport/viewport.html" title="viewport" /> */}
+          {/* TODO: <iframe id="main-viewport" src="../viewport/viewport.html" title="viewport" /> */}
         </Vbox>
       </Hbox>
     </Deck>

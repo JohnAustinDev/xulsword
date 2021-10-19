@@ -49,26 +49,41 @@
 }
 
 /* MAIN WINDOW TOGGLE BUTTONS */
-#crbutton {
-  list-style-image: url(../images/crossrefs.png) !important;
+#optionButtons button {
+  padding: 6px 6px;
 }
-#fnbutton {
-  list-style-image: url(../images/footnotes.png) !important;
-}
-#hdbutton {
-  list-style-image: url(../images/headings.png) !important;
-}
-#dtbutton {
-  list-style-image: url(../images/dictionary.png) !important;
-}
-#optionButtons button.checked-true {
-  color: blue;
-  -moz-image-region: rect(0px, 32px, 28px, 0px);
-}
-button[class='togglebutton'],
-button[class='togglebutton'][disabled='true'] {
+#optionButtons .button {
   color: black;
-  -moz-image-region: rect(0px, 64px, 28px, 32px);
+}
+#optionButtons button.checked {
+  color: blue;
+}
+#optionButtons .button.disabled {
+  color: grey;
+}
+#crbutton .button-icon {
+  background: url(../images/crossrefs.png);
+}
+#fnbutton .button-icon {
+  background: url(../images/footnotes.png);
+}
+#hdbutton .button-icon {
+  background: url(../images/headings.png);
+}
+#dtbutton .button-icon {
+  background: url(../images/dictionary.png);
+}
+#optionButtons .button-icon {
+  display: block;
+  width: 32px;
+  height: 28px;
+  background-position: -32px 0px;
+}
+#optionButtons button.checked .button-icon {
+  background-position: 0px 0px;
+}
+#optionButtons button.disabled .button-icon {
+  background-position: -32px 0px;
 }
 
 /* MAIN WINDOW TOGGLE MENU ITEMS */
@@ -121,12 +136,15 @@ menu#sub-Genbks {
 }
 
 /* MAIN WINDOW SEARCH BUTTON */
-#searchButton {
-  list-style-image: url(../images/search.png);
-  -moz-image-region: rect(0px, 30px, 18px, 0px);
+#searchButton .button-icon {
+  display: block;
+  width: 30px;
+  height: 18px;
+  background-image: url(../images/search.png);
+  background-position: 0px 0px;
 }
-#searchButton[disabled='true'] {
-  -moz-image-region: rect(0px, 60px, 18px, 30px);
+#searchButton.disabled {
+  background-position: -30px 0px;
 }
 
 /* MAIN WINDOW HISTORY BUTTONS */
@@ -135,53 +153,54 @@ menu#sub-Genbks {
   background-color: Highlight;
   color: HighlightText;
 }
-#back {
-  list-style-image: url(../images/back.png) !important;
-  -moz-image-region: rect(0px, 22px, 14px, 0px) !important;
-  margin-left: 5px;
-  margin-right: 5px;
-}
-#back[disabled='true'] {
-  -moz-image-region: rect(0px, 66px, 14px, 44px) !important;
-}
-#back:not([disabled='true']):hover {
-  -moz-image-region: rect(0px, 44px, 14px, 22px) !important;
-}
-window[chromedir='rtl'] #back {
-  list-style-image: url(../images/forward.png) !important;
-}
+#back,
 #forward {
-  list-style-image: url(../images/forward.png) !important;
-  -moz-image-region: rect(0px, 22px, 14px, 0px) !important;
+  padding: 3px 30px;
   margin-left: 5px;
   margin-right: 5px;
 }
-#forward[disabled='true'] {
-  -moz-image-region: rect(0px, 66px, 14px, 44px) !important;
+#back .button-icon,
+#forward .button-icon {
+  display: block;
+  height: 14px;
+  width: 22px;
+  background-position: 0px 0px;
+  background-image: url(../images/back.png);
 }
-#forward:not([disabled='true']):hover {
-  -moz-image-region: rect(0px, 44px, 14px, 22px) !important;
+#forward .button-icon {
+  background-image: url(../images/forward.png);
 }
-window[chromedir='rtl'] #forward {
-  list-style-image: url(../images/back.png) !important;
+body.chromedir-rtl #back .button-icon {
+  background-image: url(../images/forward.png);
 }
-
+body.chromedir-rtl #forward .button-icon {
+  background-image: url(../images/back.png);
+}
+#back.disabled .button-icon,
+#forward.disabled .button-icon {
+  background-position: -44px 0px;
+}
+#back:not(.disabled):hover .button-icon,
+#forward:not(.disabled):hover .button-icon {
+  background-position: -22px 0px;
+}
 #historymenu {
-  list-style-image: url(../images/historymenu.png) !important;
-  -moz-image-region: rect(0px, 40px, 11px, 0px) !important;
-  -moz-box-orient: horizontal;
+  padding: 4px 15px;
   margin-left: 0px;
   margin-right: 0px;
 }
-#historymenu[disabled='true'] {
-  -moz-image-region: rect(0px, 120px, 11px, 80px) !important;
+#historymenu .button-icon {
+  display: block;
+  height: 11px;
+  width: 40px;
+  background-position: 0px 0px;
+  background-image: url(../images/historymenu.png);
 }
-#historymenu:not([disabled='true']):hover {
-  -moz-image-region: rect(0px, 80px, 11px, 40px) !important;
+#historymenu.disabled .button-icon {
+  background-position: -80px 0px;
 }
-#historymenu .button-menu-dropmarker,
-#historymenu .button-text {
-  display: none !important;
+#historymenu:not(.disabled):hover .button-icon {
+  background-position: -40px 0px;
 }
 
 /* MAIN WINDOW NAVIGATOR BUTTONS */

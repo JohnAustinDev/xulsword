@@ -2,11 +2,12 @@ button {
   margin: 1px 5px 2px 5px;
   min-width: 6.3em;
   border: 1px solid;
+  border-radius: 4px;
   border-top-color: ThreeDHighlight;
   border-right-color: ThreeDDarkShadow;
   border-bottom-color: ThreeDDarkShadow;
   border-left-color: ThreeDHighlight;
-  background-color: ThreeDFace;
+  background-color: white;
   color: ButtonText;
   text-shadow: none;
 }
@@ -24,12 +25,30 @@ button {
 }
 
 .button-icon {
-  margin-inline-end: 2px;
+  display: none;
 }
 
 .button-text {
-  margin: 0 !important;
-  text-align: center;
+  display: inline-block;
+  padding: 0px;
+}
+button:not(.orient-vertical) .button-text {
+  padding-left: 4px;
+  padding-right: 0px;
+}
+
+button:not(.orient-vertical).dir-reverse .button-text {
+  padding-left: 0px;
+  padding-right: 4px;
+}
+button.orient-vertical .button-text {
+  padding-top: 4px;
+  padding-bottom: 0px;
+}
+
+button.orient-vertical.dir-reverse .button-text {
+  padding-top: 0px;
+  padding-bottom: 4px;
 }
 
 /* .......... focused state .......... */
@@ -41,31 +60,15 @@ button:focus {
   border-left-color: ThreeDDarkShadow;
 }
 
-button:focus > .button-box {
+button:focus .button-box {
   border: 1px dotted ThreeDDarkShadow;
-}
-
-/* .......... default state .......... */
-
-button[default='true'] {
-  border-top-color: ThreeDDarkShadow;
-  border-right-color: ThreeDDarkShadow;
-  border-bottom-color: ThreeDDarkShadow;
-  border-left-color: ThreeDDarkShadow;
-}
-
-/* .......... hover state .......... */
-
-button:hover {
-  color: -moz-buttonhovertext;
-  background-color: -moz-buttonhoverface;
 }
 
 /* .......... active/open/checked state .......... */
 
 button:hover:active,
-button[open='true'],
-button[checked='true'] {
+button.open,
+button.checked {
   border-top-color: ThreeDDarkShadow;
   border-right-color: ThreeDDarkShadow;
   border-bottom-color: ThreeDDarkShadow;
@@ -73,8 +76,8 @@ button[checked='true'] {
   color: ButtonText;
 }
 
-button:hover:active > .button-box,
-button.checked-true > .button-box {
+button:hover:active .button-box,
+button.checked .button-box {
   padding-top: 2px;
   padding-bottom: 1px;
   padding-inline-start: 4px;
@@ -83,8 +86,8 @@ button.checked-true > .button-box {
 
 /* .......... disabled state .......... */
 
-button.disabled-true,
-button.disabled-true:hover:active {
+button.disabled,
+button.disabled:hover:active {
   border-top-color: ThreeDHighlight;
   border-right-color: ThreeDDarkShadow;
   border-bottom-color: ThreeDDarkShadow;
@@ -92,7 +95,7 @@ button.disabled-true:hover:active {
   color: GrayText;
 }
 
-button.disabled-true > .button-box {
+button.disabled .button-box {
   padding-top: 1px !important;
   padding-bottom: 2px !important;
   padding-inline-start: 3px !important;
@@ -101,7 +104,7 @@ button.disabled-true > .button-box {
 
 /* ::::: menu/menu-button buttons ::::: */
 
-button.type-menu-button {
+button.type-menu {
 }
 
 .button-menubutton-button {
@@ -114,12 +117,4 @@ button.type-menu-button {
 
 .button-menubutton-dropmarker {
   margin-inline-end: 3px;
-}
-
-/* ::::: plain buttons ::::: */
-
-button.plain {
-  border: 0px !important;
-  margin: 0px !important;
-  padding: 0px !important;
 }
