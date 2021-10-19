@@ -26,37 +26,37 @@ export default class Prefs {
 
   // Get a string pref value. Error if key is not String, or is missing from store.
   getCharPref = (key: string, aStore = 'default'): string => {
-    return this.getPrefOrCreate(key, aStore, 'string', undefined) as string;
+    return this.getPrefOrCreate(key, 'string', undefined, aStore) as string;
   };
 
   // Set a string pref value. Error if key is not String.
   setCharPref = (key: string, value: string, aStore = 'default'): boolean => {
-    return this.setPref(key, aStore, 'string', value);
+    return this.setPref(key, 'string', value, aStore);
   };
 
   // Get a Boolean pref value. Error if key is not Boolean, or is missing from store.
   getBoolPref = (key: string, aStore = 'default'): boolean => {
-    return this.getPrefOrCreate(key, aStore, 'boolean', undefined) as boolean;
+    return this.getPrefOrCreate(key, 'boolean', undefined, aStore) as boolean;
   };
 
   // Set a Boolean pref value. Error if key is not Boolean.
   setBoolPref = (key: string, value: string, aStore = 'default'): boolean => {
-    return this.setPref(key, aStore, 'boolean', value);
+    return this.setPref(key, 'boolean', value, aStore);
   };
 
   // Get an integer pref value. Error if key is not an integer, or is missing from store.
   getIntPref = (key: string, aStore = 'default'): number => {
-    return this.getPrefOrCreate(key, aStore, 'integer', undefined) as number;
+    return this.getPrefOrCreate(key, 'integer', undefined, aStore) as number;
   };
 
   // Set a Boolean pref value. Error if key is not an integer.
   setIntPref = (key: string, value: string, aStore = 'default'): boolean => {
-    return this.setPref(key, aStore, 'integer', value);
+    return this.setPref(key, 'integer', value, aStore);
   };
 
   // Remove the key from a store
   clearUserPref = (key: string, aStore = 'default'): boolean => {
-    return this.setPref(key, aStore, 'undefined', undefined);
+    return this.setPref(key, 'undefined', undefined, aStore);
   };
 
   // Get persistent data from source json files
@@ -144,9 +144,9 @@ export default class Prefs {
   // Supported types are Javascript primitive types and 'integer'.
   getPrefOrCreate = (
     key: string,
-    aStore: string,
     type: string,
-    defval: boolean | string | number | undefined
+    defval: boolean | string | number | undefined,
+    aStore = 'default'
   ): unknown => {
     const p = this.getStore(aStore);
     if (p === null) return undefined;
@@ -159,7 +159,7 @@ export default class Prefs {
       if (defval === undefined) {
         throw Error(`no key and no default: ${key} of ${aStore} store`);
       }
-      this.setPref(key, aStore, type, val);
+      this.setPref(key, type, val, aStore);
     }
 
     if (
@@ -179,9 +179,9 @@ export default class Prefs {
   // types and 'integer'.
   setPref = (
     key: string,
-    aStore: string,
     type: string,
-    value: string | number | boolean | undefined
+    value: string | number | boolean | undefined,
+    aStore = 'default'
   ): boolean => {
     const p = this.getStore(aStore);
     if (p === null) {

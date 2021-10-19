@@ -26,7 +26,7 @@ import { jsdump } from '../common0';
 const i18nBackendMain = require('i18next-fs-backend');
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
-const t = (key: string, options?: any) => i18n.t(key, options);
+const t = (key: string, options?) => i18n.t(key, options);
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -107,6 +107,7 @@ const createWindow = (
       contextIsolation: true,
       nodeIntegration: false,
       enableRemoteModule: false,
+      additionalArguments: [name], // will be appended to process.argv in the renderer
     },
     ...params,
   });
@@ -157,8 +158,19 @@ const openMainWindow = () => {
   mainWindow = createWindow('main', {
     title: t('Title'),
     icon: getAssetPath('icon.png'),
-    width: 1024,
-    height: 728,
+    width: prefs.getPrefOrCreate('win.main.width', 'number', 1024),
+    height: prefs.getPrefOrCreate('win.main.height', 'number', 728),
+  });
+  if (mainWindow === null) {
+    return null;
+  }
+
+  mainWindow.on('resize', () => {
+    if (mainWindow !== null) mainWindow.webContents.send('resize');
+  });
+
+  mainWindow.on('close', () => {
+    if (mainWindow !== null) mainWindow.webContents.send('close');
   });
 
   mainWindow.on('closed', () => {

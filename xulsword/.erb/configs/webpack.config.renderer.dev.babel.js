@@ -84,7 +84,7 @@ export default merge(baseConfig, {
     path: webpackPaths.distRendererPath,
     publicPath: '/',
     filename: '[name].dev.js',
-    sourceMapFilename: '[name].dev.js.map',
+    // this causes refresh errors about multiple map files: sourceMapFilename: '[name].dev.js.map',
     library: {
       type: 'umd',
     },

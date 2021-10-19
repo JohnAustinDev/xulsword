@@ -1,0 +1,81 @@
+.stack {
+  position: relative;
+}
+
+.stack > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.vbox,
+.hbox,
+.orient-vertical,
+.orient-horizontal {
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  flex-wrap: nowrap;
+}
+
+.vbox,
+.orient-vertical {
+  flex-direction: column;
+}
+
+.hbox .orient-horizontal {
+  flex-direction: row;
+}
+
+.hidden-true {
+  display: none;
+}
+
+.pack-start {
+  justify-content: flex-start;
+}
+.pack-center {
+  justify-content: center;
+}
+.pack-end {
+  justify-content: flex-end;
+}
+
+.align-start {
+  align-items: flex-start;
+}
+.align-center {
+  align-items: center;
+}
+.align-end {
+  align-items: flex-end;
+}
+.align-stretch {
+  align-items: space-evenly;
+}
+.align-baseline {
+  align-items: baseline;
+}
+
+.dir-reverse {
+  flex-direction: row-reverse;
+}
+
+/* TOOLTIP */
+.tooltip {
+  position: relative;
+}
+.tooltip .tooltiptext {
+  visibility: hidden;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1;
+}
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  transition-delay: 1s;
+}

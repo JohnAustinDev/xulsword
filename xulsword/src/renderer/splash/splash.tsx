@@ -3,7 +3,10 @@ import React from 'react';
 import { render } from 'react-dom';
 import { Translation } from 'react-i18next';
 import i18nInit from '../i18n';
-import { Label, Stack, Vbox, Hbox } from '../xul';
+import Hbox from '../libxul/hbox/hbox';
+import Label from '../libxul/label/label';
+import Stack from '../libxul/stack/stack';
+import Vbox from '../libxul/vbox/vbox';
 import { jsdump } from '../../common0';
 import '../about/about.css';
 
@@ -19,7 +22,7 @@ render(
           <Vbox id="layer2" flex="1" width="500" height="375" pack="end">
             <Hbox align="center">
               <Vbox flex="1" pack="start" align="center">
-                <Label class="splash-text" value={t('producedby')} />
+                <Label className="splash-text" value={t('producedby')} />
               </Vbox>
             </Hbox>
           </Vbox>

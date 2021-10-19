@@ -1,0 +1,222 @@
+#topbox.hasBible {
+  background-image: url(../images/b2.gif);
+}
+#main-controlbar {
+  background-image: url(../images/b2.gif);
+}
+#historyButtons,
+#player {
+  margin-top: 2px;
+  height: 34px; /* specified to allow for player's height */
+}
+#player {
+  padding-inline-start: 6px;
+}
+#chapter {
+  margin-inline-start: -20px;
+}
+
+#search-tool {
+  padding-bottom: 0px;
+}
+#search-tool > vbox {
+  padding-top: 2px;
+  margin-left: 0px;
+}
+
+#optionButtons {
+  padding-top: 2px;
+}
+
+#topbox:not(.hasBible) #edit-menu,
+#topbox:not(.hasBible) #view-menu,
+#topbox:not(.hasBible) #options-menu,
+#topbox:not(.hasBible) #bookmarks-menu,
+#topbox:not(.hasBible) #window-menu,
+#topbox:not(.hasBible) #help-menu,
+#topbox:not(.hasBible) #main-controlbar,
+#topbox:not(.hasBible) #main-viewport,
+#topbox:not(.hasBible) #file-menu menuitem,
+#topbox:not(.hasBible) #file-menu menuseparator {
+  display: none;
+}
+#topbox:not(.hasBible) #file-menu menuitem[hasNoBibleShow='true'] {
+  display: block;
+}
+#quit,
+#topbox:not(.libSwordLoadFailed) #newmodule {
+  display: block !important;
+}
+
+/* MAIN WINDOW TOGGLE BUTTONS */
+#crbutton {
+  list-style-image: url(../images/crossrefs.png) !important;
+}
+#fnbutton {
+  list-style-image: url(../images/footnotes.png) !important;
+}
+#hdbutton {
+  list-style-image: url(../images/headings.png) !important;
+}
+#dtbutton {
+  list-style-image: url(../images/dictionary.png) !important;
+}
+#optionButtons button.checked-true {
+  color: blue;
+  -moz-image-region: rect(0px, 32px, 28px, 0px);
+}
+button[class='togglebutton'],
+button[class='togglebutton'][disabled='true'] {
+  color: black;
+  -moz-image-region: rect(0px, 64px, 28px, 32px);
+}
+
+/* MAIN WINDOW TOGGLE MENU ITEMS */
+menuitem#hdmitem {
+  list-style-image: url(../images/headingssm.png) !important;
+}
+menuitem#crmitem {
+  list-style-image: url(../images/crossrefssm.png) !important;
+}
+menuitem#fnmitem {
+  list-style-image: url(../images/footnotessm.png) !important;
+}
+menuitem#dtmitem {
+  list-style-image: url(../images/dictionarysm.png) !important;
+}
+menuitem#lnmitem {
+  list-style-image: url(../images/langstudysm.png) !important;
+}
+menuitem#vnmitem {
+  list-style-image: url(../images/versenumberssm.png) !important;
+}
+menuitem#unmitem {
+  list-style-image: url(../images/usernotessm.png) !important;
+}
+menuitem#rwmitem {
+  list-style-image: url(../images/redwordssm.png) !important;
+}
+.togglemenuitem > .menu-iconic-left > .menu-iconic-icon {
+  width: 16px;
+  height: 16px;
+  -moz-image-region: rect(0px, 32px, 14px, 16px) !important;
+}
+.togglemenuitem[value='true'] > .menu-iconic-left > .menu-iconic-icon {
+  -moz-image-region: rect(0px, 16px, 14px, 0px) !important;
+}
+.togglemenuitem > .menu-iconic-left {
+  display: -moz-box;
+}
+menu#sub-Texts {
+  list-style-image: url(../images/Texts.png) !important;
+}
+menu#sub-Comms {
+  list-style-image: url(../images/Comms.png) !important;
+}
+menu#sub-Dicts {
+  list-style-image: url(../images/Dicts.png) !important;
+}
+menu#sub-Genbks {
+  list-style-image: url(../images/Genbks.png) !important;
+}
+
+/* MAIN WINDOW SEARCH BUTTON */
+#searchButton {
+  list-style-image: url(../images/search.png);
+  -moz-image-region: rect(0px, 30px, 18px, 0px);
+}
+#searchButton[disabled='true'] {
+  -moz-image-region: rect(0px, 60px, 18px, 30px);
+}
+
+/* MAIN WINDOW HISTORY BUTTONS */
+#historypopup menuitem.selected {
+  margin: 2px 4px;
+  background-color: Highlight;
+  color: HighlightText;
+}
+#back {
+  list-style-image: url(../images/back.png) !important;
+  -moz-image-region: rect(0px, 22px, 14px, 0px) !important;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+#back[disabled='true'] {
+  -moz-image-region: rect(0px, 66px, 14px, 44px) !important;
+}
+#back:not([disabled='true']):hover {
+  -moz-image-region: rect(0px, 44px, 14px, 22px) !important;
+}
+window[chromedir='rtl'] #back {
+  list-style-image: url(../images/forward.png) !important;
+}
+#forward {
+  list-style-image: url(../images/forward.png) !important;
+  -moz-image-region: rect(0px, 22px, 14px, 0px) !important;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+#forward[disabled='true'] {
+  -moz-image-region: rect(0px, 66px, 14px, 44px) !important;
+}
+#forward:not([disabled='true']):hover {
+  -moz-image-region: rect(0px, 44px, 14px, 22px) !important;
+}
+window[chromedir='rtl'] #forward {
+  list-style-image: url(../images/back.png) !important;
+}
+
+#historymenu {
+  list-style-image: url(../images/historymenu.png) !important;
+  -moz-image-region: rect(0px, 40px, 11px, 0px) !important;
+  -moz-box-orient: horizontal;
+  margin-left: 0px;
+  margin-right: 0px;
+}
+#historymenu[disabled='true'] {
+  -moz-image-region: rect(0px, 120px, 11px, 80px) !important;
+}
+#historymenu:not([disabled='true']):hover {
+  -moz-image-region: rect(0px, 80px, 11px, 40px) !important;
+}
+#historymenu .button-menu-dropmarker,
+#historymenu .button-text {
+  display: none !important;
+}
+
+/* MAIN WINDOW NAVIGATOR BUTTONS */
+image#nextchap {
+  list-style-image: url(../images/smallButtonIncrement.png) !important;
+  margin-bottom: 1px;
+}
+image#prevchap {
+  list-style-image: url(../images/smallButtonDecrement.png) !important;
+  margin-top: 1px;
+}
+image#nextverse {
+  list-style-image: url(../images/smallButtonIncrement.png) !important;
+  margin-bottom: 1px;
+}
+image#prevverse {
+  list-style-image: url(../images/smallButtonDecrement.png) !important;
+  margin-top: 1px;
+}
+.smallButtons {
+  -moz-image-region: rect(0px, 30px, 8px, 15px) !important;
+}
+.smallButtons:hover {
+  -moz-image-region: rect(0px, 15px, 8px, 0px) !important;
+}
+textbox deck[anonid='search-icons'] {
+  display: none;
+}
+
+.videoHelpMenuItem {
+  list-style-image: url(../images/videohelp.png) !important;
+}
+
+#printBrowser {
+  /*Fixes a Gecko print preview bug where
+  scroll bar was not appearing*/
+  overflow: auto;
+}
