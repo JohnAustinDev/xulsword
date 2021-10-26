@@ -159,5 +159,6 @@
   "Version": "Version: {{v1}}, Build: {{v2}}",
   "Want2InstallQuickTime": "To listen to audio content, a QuickTime plugin must be installed.\n\nWould you like to install the \"QT Lite\" plugin now?\n",
   "back": "Back",
-  "close": "Close"
+  "close": "Close",
+  "locale_direction": "ltr"
 }

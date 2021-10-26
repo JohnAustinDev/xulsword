@@ -2,16 +2,36 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import rendererBackend from 'i18next-electron-fs-backend';
-import * as C from '../constants';
+import C from '../constant';
+import G from './rglobal';
 
 const isDevelopment =
-  window.c.env.NODE_ENV() === 'development' || window.c.env.DEBUG_PROD() === 'true';
+  window.c.process.NODE_ENV() === 'development' || window.c.process.DEBUG_PROD() === 'true';
+
+const className = window.location.pathname.split('\\').pop().split('/').pop().split('.').shift();
+
+function setBodyClass(winClass, lng) {
+  const body = document?.getElementsByTagName('body')[0];
+
+  if (!body) return false;
+
+  body.className = `${winClass} ${lng}`;
+  const dir = i18n.t('locale_direction');
+  if (dir === 'rtl') body.classList.add('chromedir-rtl');
+  return true;
+}
+
+i18n.on('initialized', (options) => {
+  i18n.on('languageChanged', (lng) => {
+    return setBodyClass(className, lng);
+  });
+  return setBodyClass(className, options.lng);
+});
 
 async function i18nInit(namespaces) {
   const R = window.ipc.renderer;
 
   const lang = R.sendSync('prefs', 'getCharPref', C.LOCALEPREF);
-  const paths = R.sendSync('paths');
 
   await i18n
     .use(rendererBackend)
@@ -30,14 +50,14 @@ async function i18nInit(namespaces) {
 
       backend: {
         // path where resources get loaded from
-        loadPath: `${paths.assets}/locales/{{lng}}/{{ns}}.json`,
+        loadPath: `${G.Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.json`,
         // path to post missing resources
-        addPath: `${paths.assets}/locales/{{lng}}/{{ns}}.missing.json`,
+        addPath: `${G.Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.missing.json`,
         // jsonIndent to use when storing json files
         jsonIndent: 2,
         ipcRenderer: window.api.i18nextElectronBackend,
       },
-      saveMissing: !paths.assets.includes('resources'),
+      saveMissing: !G.Dirs.path.xsAsset.includes('resources'),
       saveMissingTo: 'current',
 
       react: {

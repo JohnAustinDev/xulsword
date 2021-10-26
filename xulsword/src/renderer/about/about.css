@@ -8,12 +8,12 @@ body.splash {
   background-repeat: no-repeat;
 }
 
-div #layer2 {
+#layer2 {
   background-image: url(../../../assets/splash-overlay.png);
   background-repeat: no-repeat;
 }
 
-div[lang='ru'] #layer2 {
+body.ru #layer2 {
   background-image: url(../../../assets/splash-overlay-ru.png);
   background-repeat: no-repeat;
 }

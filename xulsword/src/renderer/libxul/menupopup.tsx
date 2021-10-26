@@ -3,11 +3,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { keep, xulClass, xulDefaultProps, xulPropTypes, xulStyle } from './xul';
+import {
+  keep,
+  xulClass,
+  xulDefaultProps,
+  xulPropTypes,
+  XulProps,
+  xulStyle,
+} from './xul';
 import './xul.css';
 
 // XUL menupopup
-export default function Menupopup(props) {
+function Menupopup(props: MenupopupProps) {
   return (
     <div
       className={xulClass('menupopup', props)}
@@ -26,3 +33,9 @@ Menupopup.propTypes = {
   ...xulPropTypes,
   onPopupShowing: PropTypes.func,
 };
+
+interface MenupopupProps extends XulProps {
+  onPopupShowing?: (e: React.SyntheticEvent) => void | null;
+}
+
+export default Menupopup;

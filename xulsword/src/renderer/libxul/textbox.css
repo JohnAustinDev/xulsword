@@ -1,0 +1,41 @@
+.textbox {
+  cursor: text;
+  margin: 2px 4px;
+  border: 2px solid;
+  border-top-color: ThreeDShadow;
+  border-right-color: ThreeDHighlight;
+  border-bottom-color: ThreeDHighlight;
+  border-left-color: ThreeDShadow;
+  padding: 2px 2px 3px;
+  padding-inline-start: 4px;
+}
+
+.textbox input,
+.textbox textarea {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  border: none;
+  padding: 0px 1px;
+  background-color: inherit;
+  color: inherit;
+  font: inherit;
+}
+
+.textbox .contextmenu {
+  cursor: default;
+}
+
+/* ..... readonly state ..... */
+
+.textbox.readonly {
+  background-color: grey;
+}
+
+/* ..... disabled state ..... */
+
+.textbox.disabled {
+  cursor: default;
+  background-color: grey;
+  color: GrayText;
+}

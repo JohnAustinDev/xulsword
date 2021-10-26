@@ -6,17 +6,21 @@ contextBridge.exposeInMainWorld('api', {
 });
 
 contextBridge.exposeInMainWorld('c', {
-  env: {
+  process: {
     NODE_ENV() {
       return process.env.NODE_ENV;
     },
     DEBUG_PROD() {
       return process.env.DEBUG_PROD;
     },
+    argv() {
+      // argv[?] = window name ('main', 'splash' etc.)
+      return process.argv;
+    },
   },
 });
 
-const validChannels = ['prefs', 'global', 'jsdump', 'paths', 'close', 'resize'];
+const validChannels = ['global', 'close', 'resize'];
 
 contextBridge.exposeInMainWorld('ipc', {
   renderer: {

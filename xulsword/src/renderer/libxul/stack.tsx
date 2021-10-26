@@ -2,22 +2,29 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from 'react';
-import Tooltip from './tooltip';
-import { keep, xulClass, xulDefaultProps, xulPropTypes, xulStyle } from './xul';
+import {
+  keep,
+  xulClass,
+  xulDefaultProps,
+  xulPropTypes,
+  XulProps,
+  xulStyle,
+} from './xul';
 import './xul.css';
 
 // XUL stack
-export default function Stack(props) {
+function Stack(props: XulProps) {
   return (
     <div
       className={xulClass('stack', props)}
       {...keep(props)}
       style={xulStyle(props)}
     >
-      <Tooltip tip={props.tooltip} />
       {props.children}
     </div>
   );
 }
 Stack.defaultProps = xulDefaultProps;
 Stack.propTypes = xulPropTypes;
+
+export default Stack;

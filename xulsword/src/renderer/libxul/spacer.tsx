@@ -3,11 +3,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { keep, xulClass, xulDefaultProps, xulPropTypes, xulStyle } from './xul';
+import {
+  keep,
+  xulClass,
+  xulDefaultProps,
+  xulPropTypes,
+  XulProps,
+  xulStyle,
+} from './xul';
 import './xul.css';
 
 // XUL spacer
-export default function Spacer(props) {
+function Spacer(props: SpacerProps) {
   return (
     <div
       className={xulClass('spacer', props)}
@@ -26,3 +33,9 @@ Spacer.propTypes = {
   ...xulPropTypes,
   orient: PropTypes.oneOf(['horizontal', 'vertical']),
 };
+
+interface SpacerProps extends XulProps {
+  orient?: string;
+}
+
+export default Spacer;

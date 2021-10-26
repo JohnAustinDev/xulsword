@@ -3,11 +3,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { keep, xulClass, xulDefaultProps, xulPropTypes, xulStyle } from './xul';
+import {
+  keep,
+  xulClass,
+  xulDefaultProps,
+  xulPropTypes,
+  XulProps,
+  xulStyle,
+} from './xul';
 import './xul.css';
 
 // XUL box
-export function Box(props) {
+function Box(props: XulProps) {
   return (
     <div
       className={xulClass('box', props)}
@@ -30,7 +37,7 @@ Box.propTypes = {
 };
 
 // XUL hbox
-export function Hbox(props) {
+function Hbox(props: XulProps) {
   return (
     <Box
       {...props}
@@ -44,7 +51,7 @@ Hbox.defaultProps = Box.defaultProps;
 Hbox.propTypes = Box.propTypes;
 
 // XUL vbox
-export function Vbox(props) {
+function Vbox(props: XulProps) {
   return (
     <Box
       {...props}
@@ -56,3 +63,5 @@ export function Vbox(props) {
 }
 Vbox.defaultProps = Box.defaultProps;
 Vbox.propTypes = Box.propTypes;
+
+export { Box, Hbox, Vbox };

@@ -3,12 +3,19 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { XulProps } from './xul';
 import './xul.css';
 
 // Tooltip called by other XUL elements
-export default function Tooltip(props) {
+function Tooltip(props: TooltipProps) {
   if (!props.tip || typeof props.tip !== 'string') return null;
   return <span className="tooltiptext">{props.tip}</span>;
 }
 Tooltip.defaultProps = { tip: null };
 Tooltip.propTypes = { tip: PropTypes.string };
+
+interface TooltipProps extends XulProps {
+  tip: string | null;
+}
+
+export default Tooltip;

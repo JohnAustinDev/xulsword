@@ -12,22 +12,8 @@
 #player {
   padding-inline-start: 6px;
 }
-#chapter {
-  margin-inline-start: -20px;
-}
 
-#search-tool {
-  padding-bottom: 0px;
-}
-#search-tool > vbox {
-  padding-top: 2px;
-  margin-left: 0px;
-}
-
-#optionButtons {
-  padding-top: 2px;
-}
-
+/* MAIN WINDOW CONFIGURATIONS */
 #topbox:not(.hasBible) #edit-menu,
 #topbox:not(.hasBible) #view-menu,
 #topbox:not(.hasBible) #options-menu,
@@ -46,44 +32,6 @@
 #quit,
 #topbox:not(.libSwordLoadFailed) #newmodule {
   display: block !important;
-}
-
-/* MAIN WINDOW TOGGLE BUTTONS */
-#optionButtons button {
-  padding: 6px 6px;
-}
-#optionButtons .button {
-  color: black;
-}
-#optionButtons button.checked {
-  color: blue;
-}
-#optionButtons .button.disabled {
-  color: grey;
-}
-#crbutton .button-icon {
-  background: url(../images/crossrefs.png);
-}
-#fnbutton .button-icon {
-  background: url(../images/footnotes.png);
-}
-#hdbutton .button-icon {
-  background: url(../images/headings.png);
-}
-#dtbutton .button-icon {
-  background: url(../images/dictionary.png);
-}
-#optionButtons .button-icon {
-  display: block;
-  width: 32px;
-  height: 28px;
-  background-position: -32px 0px;
-}
-#optionButtons button.checked .button-icon {
-  background-position: 0px 0px;
-}
-#optionButtons button.disabled .button-icon {
-  background-position: -32px 0px;
 }
 
 /* MAIN WINDOW TOGGLE MENU ITEMS */
@@ -135,7 +83,55 @@ menu#sub-Genbks {
   list-style-image: url(../images/Genbks.png) !important;
 }
 
+/* MAIN WINDOW TOGGLE BUTTONS */
+#optionButtons {
+  padding-top: 2px;
+}
+#optionButtons button {
+  padding: 6px 6px;
+}
+#optionButtons .button {
+  color: black;
+}
+#optionButtons button.checked {
+  color: blue;
+}
+#optionButtons .button.disabled {
+  color: grey;
+}
+#crbutton .button-icon {
+  background: url(../images/crossrefs.png);
+}
+#fnbutton .button-icon {
+  background: url(../images/footnotes.png);
+}
+#hdbutton .button-icon {
+  background: url(../images/headings.png);
+}
+#dtbutton .button-icon {
+  background: url(../images/dictionary.png);
+}
+#optionButtons .button-icon {
+  display: block;
+  width: 32px;
+  height: 28px;
+  background-position: -32px 0px;
+}
+#optionButtons button.checked .button-icon {
+  background-position: 0px 0px;
+}
+#optionButtons button.disabled .button-icon {
+  background-position: -32px 0px;
+}
+
 /* MAIN WINDOW SEARCH BUTTON */
+#search-tool {
+  padding-bottom: 0px;
+}
+#search-tool > vbox {
+  padding-top: 2px;
+  margin-left: 0px;
+}
 #searchButton .button-icon {
   display: block;
   width: 30px;
@@ -143,8 +139,41 @@ menu#sub-Genbks {
   background-image: url(../images/search.png);
   background-position: 0px 0px;
 }
-#searchButton.disabled {
+#searchButton.disabled .button-icon {
   background-position: -30px 0px;
+}
+
+/* MAIN WINDOW NAVIGATOR BUTTONS */
+#textnav button {
+  margin: 0px;
+  margin-inline-end: 7px;
+}
+#textnav button,
+#textnav button * {
+  padding: 0px;
+}
+#nextchap .button-icon,
+#nextverse .button-icon {
+  display: block;
+  background: url(../images/smallButtonIncrement.png);
+  margin-bottom: 1px;
+}
+#prevchap .button-icon,
+#prevverse .button-icon {
+  display: block;
+  background: url(../images/smallButtonDecrement.png);
+  margin-top: 1px;
+}
+#textnav button .button-icon {
+  width: 15px;
+  height: 8px;
+  background-position: 0px 0px;
+}
+#textnav button:hover .button-icon {
+  background-position: -15px 0px;
+}
+#textnav .textbox input {
+  text-align: center;
 }
 
 /* MAIN WINDOW HISTORY BUTTONS */
@@ -201,33 +230,6 @@ body.chromedir-rtl #forward .button-icon {
 }
 #historymenu:not(.disabled):hover .button-icon {
   background-position: -40px 0px;
-}
-
-/* MAIN WINDOW NAVIGATOR BUTTONS */
-image#nextchap {
-  list-style-image: url(../images/smallButtonIncrement.png) !important;
-  margin-bottom: 1px;
-}
-image#prevchap {
-  list-style-image: url(../images/smallButtonDecrement.png) !important;
-  margin-top: 1px;
-}
-image#nextverse {
-  list-style-image: url(../images/smallButtonIncrement.png) !important;
-  margin-bottom: 1px;
-}
-image#prevverse {
-  list-style-image: url(../images/smallButtonDecrement.png) !important;
-  margin-top: 1px;
-}
-.smallButtons {
-  -moz-image-region: rect(0px, 30px, 8px, 15px) !important;
-}
-.smallButtons:hover {
-  -moz-image-region: rect(0px, 15px, 8px, 0px) !important;
-}
-textbox deck[anonid='search-icons'] {
-  display: none;
 }
 
 .videoHelpMenuItem {

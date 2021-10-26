@@ -3,11 +3,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { keep, xulClass, xulDefaultProps, xulPropTypes, xulStyle } from './xul';
+import {
+  keep,
+  xulClass,
+  xulDefaultProps,
+  xulPropTypes,
+  XulProps,
+  xulStyle,
+} from './xul';
 import './xul.css';
 
 // XUL image
-export default function Image(props) {
+function Image(props: ImageProps) {
   return (
     <img
       className={xulClass('image', props)}
@@ -20,9 +27,15 @@ export default function Image(props) {
 }
 Image.defaultProps = {
   ...xulDefaultProps,
-  src: null,
+  src: undefined,
 };
 Image.propTypes = {
   ...xulPropTypes,
   src: PropTypes.string,
 };
+
+interface ImageProps extends XulProps {
+  src: string | undefined;
+}
+
+export default Image;

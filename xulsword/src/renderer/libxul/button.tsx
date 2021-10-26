@@ -13,13 +13,14 @@ import {
   xulClass,
   xulDefaultProps,
   xulPropTypes,
+  XulProps,
   xulStyle,
 } from './xul';
 import './xul.css';
 import './button.css';
 
 // XUL button
-export default function Button(props) {
+function Button(props: ButtonProps) {
   return (
     <button
       type="button"
@@ -50,7 +51,6 @@ Button.defaultProps = {
   checked: null,
   disabled: null,
   dlgType: null,
-  image: null,
   label: null,
   tooltip: null,
   type: null,
@@ -58,10 +58,20 @@ Button.defaultProps = {
 Button.propTypes = {
   ...xulPropTypes,
   checked: PropTypes.bool,
-  disabled: PropTypes.oneOf(['true', 'false']),
+  disabled: PropTypes.bool,
   dlgType: PropTypes.oneOf(['accept', 'cancel']),
-  image: PropTypes.string,
   label: PropTypes.string,
   tooltip: PropTypes.string,
   type: PropTypes.oneOf(['button', 'menu']),
 };
+
+interface ButtonProps extends XulProps {
+  checked?: boolean | null;
+  disabled?: boolean | null;
+  dlgType?: string | null;
+  label?: string | null;
+  tooltip?: string | null;
+  type?: string | null;
+}
+
+export default Button;

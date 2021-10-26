@@ -12,21 +12,20 @@ import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
 import fs from 'fs';
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
 import MenuBuilder from './menu';
-import { resolveHtmlPath } from './util';
-import Prefs from './modules/prefs';
-import * as P from './modules/localPath';
-import * as C from '../constants';
-import { jsdump } from '../common0';
+import { resolveHtmlPath, jsdump } from './mutil';
+import G from './mglobal';
+import C from '../constant';
+import { GClass, GPublic } from '../type';
 
 const i18nBackendMain = require('i18next-fs-backend');
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
-const t = (key: string, options?) => i18n.t(key, options);
+let t: () => string;
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -44,7 +43,7 @@ export default class AppUpdater {
 let mainWindow: BrowserWindow | null = null;
 
 const getAssetPath = (...paths: string[]): string => {
-  return path.join(P.ASSET_PATH, ...paths);
+  return path.join(G.Dirs.path.xsAsset, ...paths);
 };
 
 const isDevelopment =
@@ -68,59 +67,31 @@ const installExtensions = async () => {
 };
 
 // Handle global variable calls from renderer
-ipcMain.on('global', (event, name: string, ...args) => {
+ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any) => {
   let ret = null;
-  switch (name) {
-    case 'ProgramConfig': {
-      // TODO: REPLACE WITH REAL ProgramConfig
-      const ProgramConfig: { [i: string]: string } = { direction: 'ltr' };
-      const p = args[0];
-      if (typeof p === 'string') {
-        if (ProgramConfig[p] !== undefined) {
-          ret = ProgramConfig[p];
-        } else {
-          throw Error(`Unhandled global property ${name}.${args[0]}`);
-        }
+
+  if (name in GPublic) {
+    const p = GPublic[name as keyof typeof GPublic];
+    const g = G[name as keyof GClass];
+    if (p === 'readonly') {
+      ret = g;
+    } else if (typeof p === 'object') {
+      const m = args.shift() as keyof (keyof GClass);
+      if (GPublic[name][m] === 'readonly') {
+        ret = g[m];
+      } else if (typeof GPublic[name][m] === 'function') {
+        ret = g[m](...args);
       } else {
-        throw Error(`Argument must be a string`);
+        throw Error(`Unhandled method type for ${name}.${m}`);
       }
-      break;
-    }
-
-    default:
-      throw Error(`Unhandled global name ${name}`);
-  }
-
-  event.returnValue = ret;
-});
-
-// Handle prefs calls from renderer
-const prefs = new Prefs(false);
-ipcMain.on('prefs', (event, method: string, ...args) => {
-  let ret = null;
-  if (prefs !== null) {
-    const f = prefs[method];
-    if (typeof f === 'function') {
-      ret = f(...args);
     } else {
-      throw Error(`prefs has no method ${method}`);
+      throw Error(`unhandled global ${name} ipc type: ${p}`);
     }
+  } else {
+    throw Error(`unhandled global ipc request: ${name}`);
   }
 
   event.returnValue = ret;
-});
-
-// Handle jsdump calls from renderer
-ipcMain.on('jsdump', (_event, msg: string) => {
-  jsdump(msg);
-});
-
-// Handle paths calls from renderer
-ipcMain.on('paths', (event) => {
-  event.returnValue = {
-    asar: P.ASAR_PATH,
-    assets: P.ASSET_PATH,
-  };
 });
 
 const createWindow = (
@@ -185,8 +156,8 @@ const openMainWindow = () => {
   mainWindow = createWindow('main', {
     title: t('Title'),
     icon: getAssetPath('icon.png'),
-    width: prefs.getPrefOrCreate('win.main.width', 'number', 1024),
-    height: prefs.getPrefOrCreate('win.main.height', 'number', 728),
+    width: G.Prefs.getPrefOrCreate('win.main.width', 'number', 1024) as number,
+    height: G.Prefs.getPrefOrCreate('win.main.height', 'number', 728) as number,
   });
   if (mainWindow === null) {
     return null;
@@ -220,7 +191,7 @@ const start = async () => {
   await i18n
     .use(i18nBackendMain)
     .init({
-      lng: prefs.getCharPref(C.LOCALEPREF),
+      lng: G.Prefs.getCharPref(C.LOCALEPREF),
       fallbackLng: 'en',
       supportedLngs: ['en', 'ru'],
 
@@ -231,9 +202,9 @@ const start = async () => {
 
       backend: {
         // path where resources get loaded from
-        loadPath: `${P.ASSET_PATH}/locales/{{lng}}/{{ns}}.json`,
+        loadPath: `${G.Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.json`,
         // path to post missing resources
-        addPath: `${P.ASSET_PATH}/locales/{{lng}}/{{ns}}.missing.json`,
+        addPath: `${G.Dirs.path.xsAsset}/locales/{{lng}}/{{ns}}.missing.json`,
         // jsonIndent to use when storing json files
         jsonIndent: 2,
       },
@@ -250,15 +221,19 @@ const start = async () => {
     })
     .catch((e) => jsdump(e));
 
+  t = (key: string, options?: any) => i18n.t(key, options);
+
   const splashWindow = openSplashWindow();
 
   mainWindow = openMainWindow();
 
-  mainWindow.once('ready-to-show', () => {
-    if (process.env.NODE_ENV !== 'development') {
-      setTimeout(() => splashWindow.close(), 2000);
-    }
-  });
+  if (mainWindow && splashWindow) {
+    mainWindow.once('ready-to-show', () => {
+      if (process.env.NODE_ENV !== 'development') {
+        setTimeout(() => splashWindow.close(), 2000);
+      }
+    });
+  }
 
   // Remove this if your app does not use auto updates
   // new AppUpdater();
@@ -282,8 +257,8 @@ app.on('window-all-closed', () => {
 
 // Write all prefs to disk when app closes
 app.on('window-all-closed', () => {
-  if (prefs.store !== null) {
-    Object.keys(prefs.store).forEach((key) => prefs.writeStore(key));
+  if (G.Prefs.store !== null) {
+    Object.keys(G.Prefs.store).forEach((key) => G.Prefs.writeStore(key));
   }
 });
 

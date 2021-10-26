@@ -14,14 +14,14 @@ export default class nsILocalFile {
   static NORMAL_FILE_TYPE = 2;
 
   // Optionally create an empty directory or file
-  constructor(aPath: string, createType: number) {
+  constructor(aPath: string, createType?: number) {
     if (aPath) {
       this.initWithPath(aPath, createType);
     }
   }
 
   // Set the absolute path of the nsILocalFile
-  initWithPath(aPath: string, createType: number) {
+  initWithPath(aPath: string, createType?: number) {
     if (path.isAbsolute(aPath)) {
       this.path = aPath;
       if (createType) {
