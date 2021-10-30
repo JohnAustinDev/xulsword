@@ -21,12 +21,12 @@ const defaultProps = {
   disabled: false,
   maxLength: undefined,
   multiline: false,
-  pattern: null,
-  readonly: undefined,
+  pattern: undefined,
+  readonly: false,
   inputRef: undefined,
-  timeout: null,
-  tooltip: null,
-  type: null,
+  timeout: undefined,
+  tooltip: undefined,
+  type: 'text',
   value: '',
 };
 
@@ -41,20 +41,20 @@ const propTypes = {
   inputRef: PropTypes.object,
   timeout: PropTypes.string,
   tooltip: PropTypes.string,
-  type: PropTypes.oneOf(['search']),
+  type: PropTypes.oneOf(['search', 'text']),
   value: PropTypes.string,
 };
 
 interface TextboxProps extends XulProps {
   disabled?: boolean | undefined;
   maxLength?: string | undefined;
-  multiline?: boolean | null;
-  pattern?: string | null;
-  readonly?: boolean | undefined;
+  multiline?: boolean;
+  pattern?: string | undefined;
+  readonly?: boolean;
   inputRef?: React.RefObject<HTMLInputElement> | undefined;
-  timeout?: string | null;
-  tooltip?: string | null;
-  type?: string | null;
+  timeout?: string | undefined;
+  tooltip?: string | undefined;
+  type?: string;
   value?: string;
 }
 

@@ -22,7 +22,7 @@ export class Xulsword extends React.Component {
   constructor(props: Record<string, never>) {
     super(props);
     this.state = {
-      book: null,
+      book: undefined,
       chapter: 1,
       verse: 1,
       lastverse: 1,

@@ -3,25 +3,25 @@ import PropTypes from 'prop-types';
 
 // Default prop values
 export const xulDefaultProps = {
-  align: null,
-  children: null,
+  align: undefined,
+  children: undefined,
   className: undefined,
   dir: undefined,
-  flex: null,
+  flex: undefined,
   hidden: undefined,
   height: undefined,
   id: undefined,
   lang: undefined,
-  orient: null,
-  pack: null,
-  style: null,
+  orient: undefined,
+  pack: undefined,
+  style: undefined,
   width: undefined,
 
-  onClick: null,
-  onChange: null,
-  onKeyDown: null,
-  onFocus: null,
-  onBlur: null,
+  onClick: undefined,
+  onChange: undefined,
+  onKeyDown: undefined,
+  onFocus: undefined,
+  onBlur: undefined,
 };
 
 // PropTypes checking for XUL attributes
@@ -49,7 +49,7 @@ export const xulPropTypes = {
 
 // IDE TypeScript checking for props
 export interface XulProps {
-  align?: string | null;
+  align?: string | undefined;
   children?:
     | (PropTypes.ReactElementLike | null | false)[]
     | PropTypes.ReactElementLike
@@ -57,13 +57,13 @@ export interface XulProps {
     | false;
   className?: string | undefined;
   dir?: string | undefined;
-  flex?: string | null;
+  flex?: string | undefined;
   height?: string | undefined;
   hidden?: boolean | undefined;
   id?: string | undefined;
   lang?: string | undefined;
-  orient?: string | null;
-  pack?: string | null;
+  orient?: string | undefined;
+  pack?: string | undefined;
   style?: React.CSSProperties | undefined;
   width?: string | undefined;
 
@@ -94,19 +94,19 @@ export const xulEvents = (props: any): XulProps => {
 export const xulStyle = (props: any): React.CSSProperties | undefined => {
   const s = {} as React.CSSProperties;
   // width
-  if (props.width !== null)
+  if (props.width !== undefined)
     s.width = /^\d+$/.test(props.width)
       ? props.width.concat('px')
       : props.width;
 
   // height
-  if (props.height !== null)
+  if (props.height !== undefined)
     s.height = /^\d+$/.test(props.width)
       ? props.height.concat('px')
       : props.height;
 
   // flex
-  if (props.flex !== null)
+  if (props.flex !== undefined)
     s.flexGrow = props.flex.includes('%')
       ? parseFloat(props.flex) / 100.0
       : props.flex;
@@ -139,7 +139,7 @@ export const htmlAttribs = (className: string, props: any) => {
 
 // Use a default if value is null
 export const propd = (defVal: any, value: any) => {
-  return value !== null ? value : defVal;
+  return value !== undefined ? value : defVal;
 };
 
 // Delay an event handler by ms milliseconds. Any previously scheduled

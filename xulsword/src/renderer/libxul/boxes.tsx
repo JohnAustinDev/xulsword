@@ -2,24 +2,13 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from 'react';
-import PropTypes from 'prop-types';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 
 // XUL box
-const defaultProps = {
-  ...xulDefaultProps,
-  align: null,
-  pack: null,
-};
+const defaultProps = xulDefaultProps;
 
-const propTypes = {
-  ...xulPropTypes,
-  // eslint-disable-next-line react/no-unused-prop-types
-  align: PropTypes.string,
-  // eslint-disable-next-line react/no-unused-prop-types
-  pack: PropTypes.string,
-};
+const propTypes = xulPropTypes;
 
 function Box(props: XulProps) {
   return <div {...htmlAttribs('box', props)}>{props.children}</div>;

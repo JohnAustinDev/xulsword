@@ -15,13 +15,13 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  value: PropTypes.string,
   control: PropTypes.string,
+  value: PropTypes.string,
 };
 
 interface LabelProps extends XulProps {
-  value: string;
   control?: string | undefined;
+  value: string;
 }
 function Label(props: LabelProps) {
   let { control } = props;

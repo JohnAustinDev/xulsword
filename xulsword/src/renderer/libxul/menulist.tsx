@@ -15,7 +15,7 @@ const defaultProps = {
   multiple: false,
   options: null,
   size: undefined,
-  tooltip: null,
+  tooltip: undefined,
 };
 
 const propTypes = {
@@ -32,7 +32,7 @@ interface MenulistProps extends XulProps {
   multiple?: boolean;
   options?: PropTypes.ReactElementLike[];
   size?: number | undefined;
-  tooltip?: string;
+  tooltip?: string | undefined;
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 

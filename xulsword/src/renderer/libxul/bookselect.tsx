@@ -46,10 +46,10 @@ import './bookselect.css';
 
 const defaultProps = {
   ...xulDefaultProps,
-  book: null,
-  disabled: undefined,
-  onlyavailablebooks: null,
-  sizetopopup: null,
+  book: undefined,
+  disabled: false,
+  onlyavailablebooks: false,
+  sizetopopup: undefined,
   tooltip: undefined,
   trans: 'KJV',
 };
@@ -65,16 +65,16 @@ const propTypes = {
 };
 
 interface BookselectProps extends XulProps {
-  book?: string | null;
+  book?: string | undefined;
   disabled?: boolean | undefined;
-  onlyavailablebooks?: boolean | null;
-  sizetopopup?: string | null;
+  onlyavailablebooks?: boolean | undefined;
+  sizetopopup?: string | undefined;
   tooltip?: string | undefined;
   trans: string;
 }
 
 interface BookselectState {
-  book: string | null;
+  book: string | undefined;
   propBook: string | undefined;
 }
 
@@ -102,23 +102,18 @@ class Bookselect extends React.Component {
   getBookOptions = (): PropTypes.ReactElementLike[] => {
     const { onlyavailablebooks, trans } = this.props as BookselectProps;
     if (onlyavailablebooks) {
-      if (trans !== null) {
-        const abs = getAvailableBooks(trans.split(/\s*,\s*/)[0], G);
-        return abs.map((bk: string) => {
-          let longName = bk;
-          for (let x = 0; x < G.Book.length; x += 1) {
-            if (G.Book[x].sName === bk) longName = G.Book[x].bNameL;
-          }
-          return (
-            <option key={bk} value={bk}>
-              {longName}
-            </option>
-          );
-        });
-      }
-      throw Error(
-        `The tran attribute must be set when onlyavailablebooks is set`
-      );
+      const abs = getAvailableBooks(trans.split(/\s*,\s*/)[0], G);
+      return abs.map((bk: string) => {
+        let longName = bk;
+        for (let x = 0; x < G.Book.length; x += 1) {
+          if (G.Book[x].sName === bk) longName = G.Book[x].bNameL;
+        }
+        return (
+          <option key={bk} value={bk}>
+            {longName}
+          </option>
+        );
+      });
     }
 
     return G.Book.map((bke: BookType) => {
@@ -201,7 +196,7 @@ class Bookselect extends React.Component {
       newBook = book;
     }
 
-    if (newBook === null) {
+    if (newBook === undefined) {
       newBook = getAvailableBooks(trans.split(/\s*,\s*/)[0], G);
       newBook = Array.isArray(newBook) && newBook[0] ? newBook[0] : 'Matt';
     }

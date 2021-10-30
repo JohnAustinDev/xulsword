@@ -7,12 +7,12 @@ import { XulProps } from './xul';
 import './xul.css';
 
 // Tooltip called by other XUL elements
-const defaultProps = { tip: null };
+const defaultProps = { tip: undefined };
 
 const propTypes = { tip: PropTypes.string };
 
 interface TooltipProps extends XulProps {
-  tip: string | null;
+  tip: string | undefined;
 }
 
 function Tooltip(props: TooltipProps) {

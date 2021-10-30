@@ -23,10 +23,10 @@ const defaultProps = {
   checked: undefined,
   disabled: undefined,
   dlgType: '',
-  label: null,
+  label: undefined,
   open: false,
-  tooltip: null,
-  type: null,
+  tooltip: undefined,
+  type: 'button',
 };
 
 const propTypes = {
@@ -45,10 +45,10 @@ interface ButtonProps extends XulProps {
   checked?: boolean | undefined;
   disabled?: boolean | undefined;
   dlgType?: string;
-  label?: string | null;
+  label?: string | undefined;
   open?: boolean;
-  tooltip?: string | null;
-  type?: string | null;
+  tooltip?: string | undefined;
+  type?: string | undefined;
 }
 
 function Button(props: ButtonProps) {
@@ -68,7 +68,7 @@ function Button(props: ButtonProps) {
       >
         <div className="button-icon" />
 
-        {props.label !== null && (
+        {props.label !== undefined && (
           <Label className="button-text" value={props.label} />
         )}
 
