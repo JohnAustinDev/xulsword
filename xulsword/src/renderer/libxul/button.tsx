@@ -9,12 +9,10 @@ import Menupopup from './menupopup';
 import Tooltip from './tooltip';
 import {
   propd,
-  xulClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
-  xulStyle,
-  xulEvents,
+  htmlAttribs,
 } from './xul';
 import './xul.css';
 import './button.css';
@@ -56,12 +54,9 @@ interface ButtonProps extends XulProps {
 function Button(props: ButtonProps) {
   return (
     <button
-      id={props.id}
+      {...htmlAttribs(`button ${props.dlgType}`, props)}
       disabled={props.disabled}
       type="button"
-      className={xulClass(`button ${props.dlgType}`, props)}
-      style={xulStyle(props)}
-      {...xulEvents(props)}
     >
       <Box
         className="button-box"

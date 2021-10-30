@@ -3,13 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  xulClass,
-  xulDefaultProps,
-  xulPropTypes,
-  XulProps,
-  xulStyle,
-} from './xul';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 
 // XUL spacer
@@ -29,15 +23,7 @@ interface SpacerProps extends XulProps {
 }
 
 function Spacer(props: SpacerProps) {
-  return (
-    <div
-      id={props.id}
-      className={xulClass('spacer', props)}
-      style={xulStyle(props)}
-    >
-      {props.children}
-    </div>
-  );
+  return <div {...htmlAttribs('spacer', props)}>{props.children}</div>;
 }
 Spacer.defaultProps = defaultProps;
 Spacer.propTypes = propTypes;

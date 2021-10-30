@@ -3,14 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  xulClass,
-  xulDefaultProps,
-  xulPropTypes,
-  XulProps,
-  xulStyle,
-  xulEvents,
-} from './xul';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 
 // XUL box
@@ -29,16 +22,7 @@ const propTypes = {
 };
 
 function Box(props: XulProps) {
-  return (
-    <div
-      id={props.id}
-      className={xulClass('box', props)}
-      style={xulStyle(props)}
-      {...xulEvents(props)}
-    >
-      {props.children}
-    </div>
-  );
+  return <div {...htmlAttribs('box', props)}>{props.children}</div>;
 }
 Box.defaultProps = defaultProps;
 Box.propTypes = propTypes;

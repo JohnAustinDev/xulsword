@@ -4,8 +4,6 @@ import G from './gr';
 
 import { findBookNum, getAvailableBooks } from '../common';
 
-const R = window.ipc.renderer;
-
 export function jsdump(msg: string | Error) {
   // eslint-disable-next-line no-console
   console.log(msg);

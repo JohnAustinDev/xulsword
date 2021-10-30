@@ -3,13 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  xulClass,
-  xulDefaultProps,
-  xulPropTypes,
-  XulProps,
-  xulEvents,
-} from './xul';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 
 // XUL label
@@ -38,11 +32,7 @@ function Label(props: LabelProps) {
   }
 
   return (
-    <label
-      htmlFor={control}
-      className={xulClass('label', props)}
-      {...xulEvents(props)}
-    >
+    <label htmlFor={control} {...htmlAttribs('label', props)}>
       {props.value}
     </label>
   );

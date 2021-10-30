@@ -42,13 +42,8 @@ class Menupopup extends React.Component {
   }
 
   render() {
-    const { id } = this.props as MenupopupProps;
     return (
-      <Vbox
-        id={id}
-        className={xulClass('menupopup', this.props)}
-        style={xulStyle(this.props)}
-      >
+      <Vbox {...this.props} className={xulClass('menupopup', this.props)}>
         {this.props.children}
       </Vbox>
     );

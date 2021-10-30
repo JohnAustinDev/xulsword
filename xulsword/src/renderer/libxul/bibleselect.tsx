@@ -5,13 +5,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  xulClass,
-  xulDefaultProps,
-  XulProps,
-  xulPropTypes,
-  xulStyle,
-} from './xul';
+import { xulClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import Bookselect from './bookselect';
 import { Hbox } from './boxes';
 import Label from './label';
@@ -19,14 +13,13 @@ import Menulist from './menulist';
 import Spacer from './spacer';
 import './xul.css';
 import C from '../../constant';
+import G from '../gr';
 
 declare global {
   interface Window {
     ipc: any;
   }
 }
-
-const R = window.ipc.renderer;
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -147,12 +140,10 @@ class Bibleselect extends React.Component {
 
   static getTranslationOptions() {
     const translations = [];
-    const tabs = window.ipc.renderer.sendSync('tabs');
+    const tabs = G.Tabs;
     for (let m = 0; m <= tabs.length; m += 1) {
       if (tabs[m].modType === C.BIBLE) {
-        let description = R.sendSync(
-          'libsword',
-          'getModuleInformation',
+        let description = G.LibSword.getModuleInformation(
           tabs[m].modName,
           'Description'
         );
@@ -219,12 +210,7 @@ class Bibleselect extends React.Component {
     }
 
     // Get updated select options
-    const lastChapter = R.sendSync(
-      'libsword',
-      'getMaxChapter',
-      newTrans,
-      newBook
-    );
+    const lastChapter = G.LibSword.getMaxChapter(newTrans, newBook);
     const chapters = [];
     for (let x = 1; x <= lastChapter; x += 1) {
       chapters.push(
@@ -233,9 +219,7 @@ class Bibleselect extends React.Component {
         </option>
       );
     }
-    const lastVerse = R.sendSync(
-      'libsword',
-      'getMaxVerse',
+    const lastVerse = G.LibSword.getMaxVerse(
       newTrans,
       `${newBook}.${newChapter}`
     );
@@ -257,11 +241,7 @@ class Bibleselect extends React.Component {
     }
 
     return (
-      <Hbox
-        id={pid}
-        className={xulClass('bibleselect', this.props)}
-        style={xulStyle(this.props)}
-      >
+      <Hbox {...this.props} className={xulClass('bibleselect', this.props)}>
         <Bookselect
           id={`${pid}__bsbook`}
           className="bsbook"

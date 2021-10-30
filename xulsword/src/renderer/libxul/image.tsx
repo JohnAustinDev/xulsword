@@ -3,14 +3,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  xulClass,
-  xulDefaultProps,
-  xulPropTypes,
-  XulProps,
-  xulStyle,
-  xulEvents,
-} from './xul';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 
 // XUL image
@@ -27,16 +20,7 @@ interface ImageProps extends XulProps {
   src: string | undefined;
 }
 function Image(props: ImageProps) {
-  return (
-    <img
-      id={props.id}
-      className={xulClass('image', props)}
-      src={props.src}
-      alt=""
-      style={xulStyle(props)}
-      {...xulEvents(props)}
-    />
-  );
+  return <img {...htmlAttribs('image', props)} src={props.src} alt="" />;
 }
 Image.defaultProps = defaultProps;
 Image.propTypes = propTypes;

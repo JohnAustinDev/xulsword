@@ -29,9 +29,7 @@ i18n.on('initialized', (options) => {
 });
 
 async function i18nInit(namespaces) {
-  const R = window.ipc.renderer;
-
-  const lang = R.sendSync('prefs', 'getCharPref', C.LOCALEPREF);
+  const lang = G.Prefs.getCharPref(C.LOCALEPREF);
 
   await i18n
     .use(rendererBackend)

@@ -2,13 +2,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from 'react';
-import {
-  xulClass,
-  xulDefaultProps,
-  xulPropTypes,
-  XulProps,
-  xulStyle,
-} from './xul';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 
 // XUL toolbox
@@ -17,13 +11,7 @@ const defaultProps = xulDefaultProps;
 const propTypes = xulPropTypes;
 
 function Toolbox(props: XulProps) {
-  return (
-    <div
-      id={props.id}
-      className={xulClass('toolbox', props)}
-      style={xulStyle(props)}
-    />
-  );
+  return <div {...htmlAttribs('toolbox', props)} />;
 }
 Toolbox.defaultProps = defaultProps;
 Toolbox.propTypes = propTypes;

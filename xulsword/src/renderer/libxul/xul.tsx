@@ -1,6 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import PropTypes from 'prop-types';
 
+// Default prop values
+export const xulDefaultProps = {
+  align: null,
+  children: null,
+  className: undefined,
+  dir: undefined,
+  flex: null,
+  hidden: undefined,
+  height: undefined,
+  id: undefined,
+  lang: undefined,
+  orient: null,
+  pack: null,
+  style: null,
+  width: undefined,
+
+  onClick: null,
+  onChange: null,
+  onKeyDown: null,
+  onFocus: null,
+  onBlur: null,
+};
+
 // PropTypes checking for XUL attributes
 export const xulPropTypes = {
   align: PropTypes.oneOf(['start', 'center', 'end', 'baseline', 'stretch']),
@@ -32,17 +55,17 @@ export interface XulProps {
     | PropTypes.ReactElementLike
     | null
     | false;
-  className?: string | null;
-  dir?: string | null;
+  className?: string | undefined;
+  dir?: string | undefined;
   flex?: string | null;
-  height?: string | null;
-  hidden?: boolean | null;
+  height?: string | undefined;
+  hidden?: boolean | undefined;
   id?: string | undefined;
-  lang?: string | null;
+  lang?: string | undefined;
   orient?: string | null;
   pack?: string | null;
   style?: React.CSSProperties | undefined;
-  width?: string | null;
+  width?: string | undefined;
 
   onClick?: (e: React.SyntheticEvent<any>) => void;
   onChange?: (e: React.ChangeEvent<any>) => void;
@@ -50,29 +73,6 @@ export interface XulProps {
   onFocus?: (e: React.SyntheticEvent<any>) => void;
   onBlur?: (e: React.SyntheticEvent<any>) => void;
 }
-
-// Default prop values
-export const xulDefaultProps = {
-  align: null,
-  children: null,
-  className: null,
-  dir: null,
-  flex: null,
-  hidden: null,
-  height: null,
-  id: undefined,
-  lang: null,
-  orient: null,
-  pack: null,
-  style: null,
-  width: null,
-
-  onClick: null,
-  onChange: null,
-  onKeyDown: null,
-  onFocus: null,
-  onBlur: null,
-};
 
 const events = ['onClick', 'onChange', 'onKeyDown', 'onFocus', 'onBlur'];
 const styles = ['width', 'height', 'flex'];
@@ -124,6 +124,17 @@ export const xulClass = (name: string, props: any) => {
   );
   const set = [...new Set(c0.concat(c1, c2, c3).filter(Boolean))];
   return set.join(' ');
+};
+
+export const htmlAttribs = (className: string, props: any) => {
+  if (props === null) return {};
+  return {
+    id: props.id,
+    lang: props.lang,
+    className: xulClass(className, props),
+    style: xulStyle(props),
+    ...xulEvents(props),
+  };
 };
 
 // Use a default if value is null

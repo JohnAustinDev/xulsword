@@ -114,8 +114,8 @@ class Textbox extends React.Component {
     // props.value has been changed, use it to set the new value.
     let { newValue } = state;
     if (
-      (typeof props.value === 'string' && props.value !== state.propValue) ||
-      newValue === state.propValue
+      typeof props.value === 'string' &&
+      (props.value !== state.propValue || newValue === state.propValue)
     ) {
       newValue = props.value;
     }
