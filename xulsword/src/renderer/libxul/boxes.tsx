@@ -4,37 +4,44 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  keep,
   xulClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
   xulStyle,
+  xulEvents,
 } from './xul';
 import './xul.css';
 
 // XUL box
+const defaultProps = {
+  ...xulDefaultProps,
+  align: null,
+  pack: null,
+};
+
+const propTypes = {
+  ...xulPropTypes,
+  // eslint-disable-next-line react/no-unused-prop-types
+  align: PropTypes.string,
+  // eslint-disable-next-line react/no-unused-prop-types
+  pack: PropTypes.string,
+};
+
 function Box(props: XulProps) {
   return (
     <div
+      id={props.id}
       className={xulClass('box', props)}
-      {...keep(props)}
       style={xulStyle(props)}
+      {...xulEvents(props)}
     >
       {props.children}
     </div>
   );
 }
-Box.defaultProps = {
-  ...xulDefaultProps,
-  align: null,
-  pack: null,
-};
-Box.propTypes = {
-  ...xulPropTypes,
-  align: PropTypes.string,
-  pack: PropTypes.string,
-};
+Box.defaultProps = defaultProps;
+Box.propTypes = propTypes;
 
 // XUL hbox
 function Hbox(props: XulProps) {
@@ -47,8 +54,8 @@ function Hbox(props: XulProps) {
     </Box>
   );
 }
-Hbox.defaultProps = Box.defaultProps;
-Hbox.propTypes = Box.propTypes;
+Hbox.defaultProps = defaultProps;
+Hbox.propTypes = propTypes;
 
 // XUL vbox
 function Vbox(props: XulProps) {
@@ -61,7 +68,7 @@ function Vbox(props: XulProps) {
     </Box>
   );
 }
-Vbox.defaultProps = Box.defaultProps;
-Vbox.propTypes = Box.propTypes;
+Vbox.defaultProps = defaultProps;
+Vbox.propTypes = propTypes;
 
 export { Box, Hbox, Vbox };

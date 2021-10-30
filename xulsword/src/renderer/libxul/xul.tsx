@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import PropTypes from 'prop-types';
 
 // PropTypes checking for XUL attributes
@@ -18,6 +19,9 @@ export const xulPropTypes = {
 
   onClick: PropTypes.func,
   onChange: PropTypes.func,
+  onKeyDown: PropTypes.func,
+  onFocus: PropTypes.func,
+  onBlur: PropTypes.func,
 };
 
 // IDE TypeScript checking for props
@@ -33,15 +37,18 @@ export interface XulProps {
   flex?: string | null;
   height?: string | null;
   hidden?: boolean | null;
-  id?: string | null;
+  id?: string | undefined;
   lang?: string | null;
   orient?: string | null;
   pack?: string | null;
   style?: React.CSSProperties | undefined;
   width?: string | null;
 
-  onClick?: (e: React.SyntheticEvent) => void;
+  onClick?: (e: React.SyntheticEvent<any>) => void;
   onChange?: (e: React.ChangeEvent<any>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<any>) => void;
+  onFocus?: (e: React.SyntheticEvent<any>) => void;
+  onBlur?: (e: React.SyntheticEvent<any>) => void;
 }
 
 // Default prop values
@@ -53,7 +60,7 @@ export const xulDefaultProps = {
   flex: null,
   hidden: null,
   height: null,
-  id: null,
+  id: undefined,
   lang: null,
   orient: null,
   pack: null,
@@ -62,18 +69,24 @@ export const xulDefaultProps = {
 
   onClick: null,
   onChange: null,
+  onKeyDown: null,
+  onFocus: null,
+  onBlur: null,
 };
 
-// These XUL attributes are to be kept on their HTML elements,
-// so they can be used with events, CSS selectors or javascript.
-export const keep = (props: any) => {
-  return {
-    id: props.id,
-    lang: props.lang,
+const events = ['onClick', 'onChange', 'onKeyDown', 'onFocus', 'onBlur'];
+const styles = ['width', 'height', 'flex'];
+const enums = ['align', 'dir', 'orient', 'pack', 'type'];
+const bools = ['checked', 'disabled', 'hidden', 'readonly'];
+const cssAttribs = styles.concat(enums).concat(bools);
 
-    onClick: props.onClick,
-    onChange: props.onChange,
-  };
+// These XUL event listeners are registered on elements
+export const xulEvents = (props: any): XulProps => {
+  const p: any = {};
+  events.forEach((x) => {
+    p[x] = props[x];
+  });
+  return p;
 };
 
 // These XUL attributes number values (with or without qualifiers) are
@@ -103,9 +116,6 @@ export const xulStyle = (props: any): React.CSSProperties | undefined => {
 
 // These XUL attribute booleans and enums are converted to CSS classes.
 export const xulClass = (name: string, props: any) => {
-  const enums = ['align', 'dir', 'orient', 'pack', 'type'];
-  const bools = ['checked', 'disabled', 'hidden', 'readonly'];
-
   const c0 = [name.toLowerCase(), props.tooltip ? 'tooltip' : ''];
   const c1 = props.className ? props.className.split(/\s+/) : [];
   const c2 = enums.map((c) => (props[c] ? `${c}-${props[c]}` : ''));
@@ -124,11 +134,15 @@ export const propd = (defVal: any, value: any) => {
 // Delay an event handler by ms milliseconds. Any previously scheduled
 // handler call will be cancelled if called like this:
 // delayHandler.call(this, callback, ...args)
-export function delayHandler(callback: (...args: any) => void, ms: number) {
+export function delayHandler(
+  this: any,
+  callback: (...args: any) => void,
+  ms: number | string
+) {
   return (...args: any[]) => {
     clearTimeout(this.delayHandlerTO);
     this.delayHandlerTO = setTimeout(() => {
       callback.call(this, ...args);
-    }, ms || 0);
+    }, Number(ms) || 0);
   };
 }

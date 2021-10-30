@@ -1,11 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { keep, xulClass, xulDefaultProps, xulPropTypes, xulStyle } from './xul';
-import Booklist from './booklist';
+import {
+  xulClass,
+  xulDefaultProps,
+  XulProps,
+  xulPropTypes,
+  xulStyle,
+} from './xul';
+import Bookselect from './bookselect';
 import { Hbox } from './boxes';
 import Label from './label';
 import Menulist from './menulist';
@@ -13,15 +20,79 @@ import Spacer from './spacer';
 import './xul.css';
 import C from '../../constant';
 
+declare global {
+  interface Window {
+    ipc: any;
+  }
+}
+
 const R = window.ipc.renderer;
+
+const defaultProps = {
+  ...xulDefaultProps,
+  book: 'Gen',
+  chapter: 1,
+  verse: 1,
+  lastverse: 1,
+  trans: 'default',
+  disabled: false,
+  onlyavailablebooks: false,
+  sizetopopup: 'none',
+};
+
+const propTypes = {
+  ...xulPropTypes,
+  book: PropTypes.string,
+  chapter: PropTypes.number,
+  verse: PropTypes.number,
+  lastverse: PropTypes.number,
+  trans: PropTypes.string,
+  disabled: PropTypes.bool,
+  onlyavailablebooks: PropTypes.bool,
+  sizetopopup: PropTypes.oneOf(['none', 'always']),
+};
+
+interface BibleselectProps extends XulProps {
+  book: string;
+  chapter: number;
+  verse: number;
+  lastverse: number;
+  trans: string;
+  propBook: string;
+  propChapter: number;
+  propVerse: number;
+  propLastverse: number;
+  propTrans: string;
+  disabled: boolean;
+  onlyavailablebooks: boolean;
+  options: PropTypes.ReactElementLike[] | null;
+  sizetopopup: string;
+}
+
+interface BibleselectState {
+  book: string;
+  chapter: number;
+  verse: number;
+  lastverse: number;
+  trans: string;
+  propBook: string;
+  propChapter: number;
+  propVerse: number;
+  propLastverse: number;
+  propTrans: string;
+}
+
+type BSevent =
+  | React.ChangeEvent<HTMLInputElement>
+  | React.ChangeEvent<HTMLSelectElement>;
 
 // React Bibleselect
 class Bibleselect extends React.Component {
   static translationOptions: PropTypes.ReactElementLike[] | undefined;
 
-  static defaultProps: unknown;
+  static defaultProps: typeof defaultProps;
 
-  static propTypes: unknown;
+  static propTypes: typeof propTypes;
 
   constructor(props: BibleselectProps) {
     super(props);
@@ -109,6 +180,7 @@ class Bibleselect extends React.Component {
     } = this.state as BibleselectState;
 
     const {
+      id: pid,
       book: pbook,
       chapter: pchapter,
       verse: pverse,
@@ -186,11 +258,12 @@ class Bibleselect extends React.Component {
 
     return (
       <Hbox
+        id={pid}
         className={xulClass('bibleselect', this.props)}
-        {...keep(this.props)}
         style={xulStyle(this.props)}
       >
-        <Booklist
+        <Bookselect
+          id={`${pid}__bsbook`}
           className="bsbook"
           book={newBook}
           trans={newTrans}
@@ -201,6 +274,7 @@ class Bibleselect extends React.Component {
         />
 
         <Menulist
+          id={`${pid}__bschapter`}
           className="bschapter"
           disabled={pdisabled}
           options={chapters}
@@ -210,6 +284,7 @@ class Bibleselect extends React.Component {
         <Label className="colon" value=":" />
 
         <Menulist
+          id={`${pid}__bsverse`}
           className="bsverse"
           disabled={pdisabled}
           options={verses}
@@ -219,6 +294,7 @@ class Bibleselect extends React.Component {
         <Label className="dash" value="&#8211;" />
 
         <Menulist
+          id={`${pid}__bslastverse`}
           className="bslastverse"
           disabled={pdisabled}
           options={lastverses}
@@ -228,6 +304,7 @@ class Bibleselect extends React.Component {
         <Spacer width="27px" />
 
         <Menulist
+          id={`${pid}__bstrans`}
           className="bstrans"
           disabled={pdisabled}
           options={Bibleselect.translationOptions}
@@ -237,69 +314,8 @@ class Bibleselect extends React.Component {
     );
   }
 }
-Bibleselect.defaultProps = {
-  ...xulDefaultProps,
-  book: 'Gen',
-  chapter: 1,
-  verse: 1,
-  lastverse: 1,
-  trans: 'default',
-  disabled: false,
-  onlyavailablebooks: false,
-  sizetopopup: 'none',
-};
-Bibleselect.propTypes = {
-  ...xulPropTypes,
-  book: PropTypes.string,
-  chapter: PropTypes.number,
-  verse: PropTypes.number,
-  lastverse: PropTypes.number,
-  trans: PropTypes.string,
-  disabled: PropTypes.bool,
-  onlyavailablebooks: PropTypes.bool,
-  sizetopopup: PropTypes.oneOf(['none', 'always']),
-};
-
+Bibleselect.defaultProps = defaultProps;
+Bibleselect.propTypes = propTypes;
 Bibleselect.translationOptions = Bibleselect.getTranslationOptions();
-
-interface BibleselectProps {
-  book: string;
-  chapter: number;
-  verse: number;
-  lastverse: number;
-  trans: string;
-  propBook: string;
-  propChapter: number;
-  propVerse: number;
-  propLastverse: number;
-  propTrans: string;
-  disabled: boolean;
-  onlyavailablebooks: boolean;
-  options: PropTypes.ReactElementLike[] | null;
-  sizetopopup: string;
-}
-
-interface BibleselectState {
-  book: string;
-  chapter: number;
-  verse: number;
-  lastverse: number;
-  trans: string;
-  propBook: string;
-  propChapter: number;
-  propVerse: number;
-  propLastverse: number;
-  propTrans: string;
-}
-
-type BSevent =
-  | React.ChangeEvent<HTMLInputElement>
-  | React.ChangeEvent<HTMLSelectElement>;
-
-declare global {
-  interface Window {
-    ipc: any;
-  }
-}
 
 export default Bibleselect;

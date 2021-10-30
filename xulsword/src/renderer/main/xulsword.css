@@ -123,6 +123,9 @@ menu#sub-Genbks {
 #optionButtons button.disabled .button-icon {
   background-position: -32px 0px;
 }
+#optionButtons .button-text {
+  white-space: nowrap;
+}
 
 /* MAIN WINDOW SEARCH BUTTON */
 #search-tool {

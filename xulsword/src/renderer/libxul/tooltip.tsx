@@ -7,15 +7,19 @@ import { XulProps } from './xul';
 import './xul.css';
 
 // Tooltip called by other XUL elements
-function Tooltip(props: TooltipProps) {
-  if (!props.tip || typeof props.tip !== 'string') return null;
-  return <span className="tooltiptext">{props.tip}</span>;
-}
-Tooltip.defaultProps = { tip: null };
-Tooltip.propTypes = { tip: PropTypes.string };
+const defaultProps = { tip: null };
+
+const propTypes = { tip: PropTypes.string };
 
 interface TooltipProps extends XulProps {
   tip: string | null;
 }
+
+function Tooltip(props: TooltipProps) {
+  if (!props.tip || typeof props.tip !== 'string') return null;
+  return <span className="tooltiptext">{props.tip}</span>;
+}
+Tooltip.defaultProps = defaultProps;
+Tooltip.propTypes = propTypes;
 
 export default Tooltip;

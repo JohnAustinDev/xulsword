@@ -8,25 +8,60 @@ import Label from './label';
 import Menupopup from './menupopup';
 import Tooltip from './tooltip';
 import {
-  keep,
   propd,
   xulClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
   xulStyle,
+  xulEvents,
 } from './xul';
 import './xul.css';
 import './button.css';
 
 // XUL button
+const defaultProps = {
+  ...xulDefaultProps,
+  checked: undefined,
+  disabled: undefined,
+  dlgType: '',
+  label: null,
+  open: false,
+  tooltip: null,
+  type: null,
+};
+
+const propTypes = {
+  ...xulPropTypes,
+  // eslint-disable-next-line react/no-unused-prop-types
+  checked: PropTypes.bool,
+  disabled: PropTypes.bool,
+  dlgType: PropTypes.oneOf(['accept', 'cancel', '']),
+  label: PropTypes.string,
+  open: PropTypes.bool,
+  tooltip: PropTypes.string,
+  type: PropTypes.oneOf(['button', 'menu']),
+};
+
+interface ButtonProps extends XulProps {
+  checked?: boolean | undefined;
+  disabled?: boolean | undefined;
+  dlgType?: string;
+  label?: string | null;
+  open?: boolean;
+  tooltip?: string | null;
+  type?: string | null;
+}
+
 function Button(props: ButtonProps) {
   return (
     <button
+      id={props.id}
+      disabled={props.disabled}
       type="button"
-      className={xulClass('button', props)}
-      {...keep(props)}
+      className={xulClass(`button ${props.dlgType}`, props)}
       style={xulStyle(props)}
+      {...xulEvents(props)}
     >
       <Box
         className="button-box"
@@ -37,41 +72,18 @@ function Button(props: ButtonProps) {
         orient={props.orient}
       >
         <div className="button-icon" />
+
         {props.label !== null && (
           <Label className="button-text" value={props.label} />
         )}
-        {props.type === 'menu' && <Menupopup />}
+
+        {props.type === 'menu' && <Menupopup id={`${props.id}__menu`} />}
       </Box>
       <Tooltip tip={props.tooltip} />
     </button>
   );
 }
-Button.defaultProps = {
-  ...xulDefaultProps,
-  checked: null,
-  disabled: null,
-  dlgType: null,
-  label: null,
-  tooltip: null,
-  type: null,
-};
-Button.propTypes = {
-  ...xulPropTypes,
-  checked: PropTypes.bool,
-  disabled: PropTypes.bool,
-  dlgType: PropTypes.oneOf(['accept', 'cancel']),
-  label: PropTypes.string,
-  tooltip: PropTypes.string,
-  type: PropTypes.oneOf(['button', 'menu']),
-};
-
-interface ButtonProps extends XulProps {
-  checked?: boolean | null;
-  disabled?: boolean | null;
-  dlgType?: string | null;
-  label?: string | null;
-  tooltip?: string | null;
-  type?: string | null;
-}
+Button.defaultProps = defaultProps;
+Button.propTypes = propTypes;
 
 export default Button;

@@ -4,7 +4,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  keep,
   xulClass,
   xulDefaultProps,
   xulPropTypes,
@@ -14,28 +13,33 @@ import {
 import './xul.css';
 
 // XUL spacer
-function Spacer(props: SpacerProps) {
-  return (
-    <div
-      className={xulClass('spacer', props)}
-      {...keep(props)}
-      style={xulStyle(props)}
-    >
-      {props.children}
-    </div>
-  );
-}
-Spacer.defaultProps = {
+const defaultProps = {
   ...xulDefaultProps,
   orient: 'horizontal',
 };
-Spacer.propTypes = {
+
+const propTypes = {
   ...xulPropTypes,
+  // eslint-disable-next-line react/no-unused-prop-types
   orient: PropTypes.oneOf(['horizontal', 'vertical']),
 };
 
 interface SpacerProps extends XulProps {
   orient?: string;
 }
+
+function Spacer(props: SpacerProps) {
+  return (
+    <div
+      id={props.id}
+      className={xulClass('spacer', props)}
+      style={xulStyle(props)}
+    >
+      {props.children}
+    </div>
+  );
+}
+Spacer.defaultProps = defaultProps;
+Spacer.propTypes = propTypes;
 
 export default Spacer;

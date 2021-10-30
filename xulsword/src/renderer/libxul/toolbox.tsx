@@ -3,7 +3,6 @@
 
 import React from 'react';
 import {
-  keep,
   xulClass,
   xulDefaultProps,
   xulPropTypes,
@@ -13,16 +12,20 @@ import {
 import './xul.css';
 
 // XUL toolbox
+const defaultProps = xulDefaultProps;
+
+const propTypes = xulPropTypes;
+
 function Toolbox(props: XulProps) {
   return (
     <div
+      id={props.id}
       className={xulClass('toolbox', props)}
-      {...keep(props)}
       style={xulStyle(props)}
     />
   );
 }
-Toolbox.defaultProps = xulDefaultProps;
-Toolbox.propTypes = xulPropTypes;
+Toolbox.defaultProps = defaultProps;
+Toolbox.propTypes = propTypes;
 
 export default Toolbox;

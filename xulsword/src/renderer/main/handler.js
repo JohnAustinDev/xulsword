@@ -1,12 +1,14 @@
-import { jsdump } from '../rutil';
+import { jsdump, parseLocation } from '../rutil';
 
-export default function handler(e) {
+export default function handler(e, ...args) {
   switch (e.type) {
     case 'click':
       switch (e.currentTarget.id) {
         case 'chapter':
         case 'verse':
-          e.currentTarget.getElementsByTagName('input')[0].select();
+          if ('select' in e.target) {
+            e.target.select();
+          }
           break;
 
         case 'prevchap':
@@ -52,31 +54,46 @@ export default function handler(e) {
           break;
 
         default:
-          throw Error(`Unhandled onClick event on ${e.currentTarget.id}`);
+          throw Error(`Unhandled onClick event on '${e.currentTarget.id}'`);
       }
       break;
 
-    case 'change':
+    case 'change': {
+      if (!('value' in e.target)) return;
       switch (e.target.id) {
-        case 'chapter__input': {
-          this.setState({ chapter: Number(e.target.value) });
+        case 'book__textbox__input':
+        case 'book__menulist__select': {
+          const location = parseLocation(e.target.value);
+          if (location !== null) {
+            // eslint-disable-next-line prefer-const
+            let { book, chapter, verse } = location;
+            if (book) {
+              if (!chapter) chapter = 1;
+              if (!verse) verse = 1;
+              this.setState({ book, chapter, verse });
+            }
+          }
           break;
         }
+        case 'chapter__input':
+          this.setState({ chapter: Number(e.target.value) });
+          break;
+
         case 'verse__input':
           this.setState({ verse: Number(e.target.value) });
           break;
 
-        case 'searchText': {
+        case 'searchText__input': {
           const enable = /\S+/.test(e.target.value);
           this.setState({ searchDisabled: !enable });
           break;
         }
         default:
-          throw Error(`Unhandled onChange event on ${e.target.id}`);
+          throw Error(`Unhandled onChange event on '${e.currentTarget.id}'`);
       }
       break;
-
+    }
     default:
-      throw Error(`Unhandled event type ${e.type}`);
+      throw Error(`Unhandled event type '${e.type}'`);
   }
 }

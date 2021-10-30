@@ -3,7 +3,6 @@
 
 import React from 'react';
 import {
-  keep,
   xulClass,
   xulDefaultProps,
   xulPropTypes,
@@ -13,18 +12,20 @@ import {
 import './xul.css';
 
 // XUL deck
+const defaultProps = xulDefaultProps;
+const propTypes = xulPropTypes;
 function Deck(props: XulProps) {
   return (
     <div
+      id={props.id}
       className={xulClass('deck', props)}
-      {...keep(props)}
       style={xulStyle(props)}
     >
       {props.children}
     </div>
   );
 }
-Deck.defaultProps = xulDefaultProps;
-Deck.propTypes = xulPropTypes;
+Deck.defaultProps = defaultProps;
+Deck.propTypes = propTypes;
 
 export default Deck;

@@ -1,18 +1,20 @@
 /* eslint-disable class-methods-use-this */
-const LibSword: { [i: string]: any } = {
-  getMaxChapter(modname: string, vkeytext: string): number {
+import { LibSwordPublic } from '../../type';
+
+const LibSword: typeof LibSwordPublic = {
+  getMaxChapter(modname, vkeytext) {
     return 99;
   },
 
-  getMaxVerse(modname: string, vkeytext: string): number {
+  getMaxVerse(modname, vkeytext) {
     return 88;
   },
 
-  getModuleInformation(modname: string, key: string): string {
+  getModuleInformation(modname, key) {
     return `This is ${key} of ${modname}`;
   },
 
-  getModuleList(): string {
+  getModuleList() {
     return 'KJV<nx>SYN';
   },
 
@@ -25,4 +27,4 @@ const LibSword: { [i: string]: any } = {
   },
 };
 
-export default LibSword;
+export default LibSword as typeof LibSwordPublic;

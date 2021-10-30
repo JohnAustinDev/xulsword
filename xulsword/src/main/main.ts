@@ -1,13 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint global-require: off, no-console: off */
 
-/**
- * This module executes inside of electron's main process. You can start
- * electron renderer process from here and communicate with the other processes
- * through IPC.
- *
- * When running `yarn build` or `yarn build:main`, this file is compiled to
- * main.js using webpack. This gives us some performance wins.
- */
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
@@ -18,14 +11,14 @@ import log from 'electron-log';
 import i18n from 'i18next';
 import MenuBuilder from './menu';
 import { resolveHtmlPath, jsdump } from './mutil';
-import G from './mglobal';
+import G from './gm';
 import C from '../constant';
-import { GClass, GPublic } from '../type';
+import { GPublic } from '../type';
 
 const i18nBackendMain = require('i18next-fs-backend');
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
-let t: () => string;
+let t: (key: string, options?: any) => string;
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -67,28 +60,28 @@ const installExtensions = async () => {
 };
 
 // Handle global variable calls from renderer
-ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any) => {
+ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
   let ret = null;
 
   if (name in GPublic) {
-    const p = GPublic[name as keyof typeof GPublic];
-    const g = G[name as keyof GClass];
-    if (p === 'readonly') {
-      ret = g;
-    } else if (typeof p === 'object') {
-      const m = args.shift() as keyof (keyof GClass);
-      if (GPublic[name][m] === 'readonly') {
-        ret = g[m];
-      } else if (typeof GPublic[name][m] === 'function') {
-        ret = g[m](...args);
+    const gPublic = GPublic as any;
+    const g = G as any;
+    if (gPublic[name] === 'readonly') {
+      ret = g[name];
+    } else if (typeof gPublic[name] === 'object') {
+      const m = args.shift();
+      if (gPublic[name][m] === 'readonly') {
+        ret = g[name][m];
+      } else if (typeof gPublic[name][m] === 'function') {
+        ret = g[name][m](...args);
       } else {
         throw Error(`Unhandled method type for ${name}.${m}`);
       }
     } else {
-      throw Error(`unhandled global ${name} ipc type: ${p}`);
+      throw Error(`Unhandled global ${name} ipc type: ${gPublic[name]}`);
     }
   } else {
-    throw Error(`unhandled global ipc request: ${name}`);
+    throw Error(`Unhandled global ipc request: ${name}`);
   }
 
   event.returnValue = ret;

@@ -3,7 +3,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import rendererBackend from 'i18next-electron-fs-backend';
 import C from '../constant';
-import G from './rglobal';
+import G from './gr';
 
 const isDevelopment =
   window.c.process.NODE_ENV() === 'development' || window.c.process.DEBUG_PROD() === 'true';

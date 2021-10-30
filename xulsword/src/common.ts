@@ -1,5 +1,5 @@
 import C from './constant';
-import { GClass } from './type';
+import { GType } from './type';
 
 export function escapeRE(text: string) {
   // eslint-disable-next-line no-useless-escape
@@ -8,7 +8,7 @@ export function escapeRE(text: string) {
 }
 
 // Returns the number of a given short book name
-export function findBookNum(G: GClass, bText: string | null): number | null {
+export function findBookNum(bText: string | null, G: GType): number | null {
   let retv = null;
   for (let b = 0; typeof G.Book !== 'undefined' && b < G.Book.length; b += 1) {
     if (G.Book[b].sName === bText) {
@@ -18,24 +18,27 @@ export function findBookNum(G: GClass, bText: string | null): number | null {
   return retv;
 }
 
-export function getModuleLongType(G: GClass, aModule: string): string {
+export function getModuleLongType(aModule: string, G: GType): string | null {
   if (aModule === C.ORIGINAL) return C.BIBLE;
   const typeRE = new RegExp(
     `(^|<nx>)\\s*${escapeRE(aModule)}\\s*;\\s*(.*?)\\s*(<nx>|$)`
   );
   const moduleList = G.LibSword.getModuleList();
-  let type = moduleList.match(typeRE);
-  if (type) [, , type] = type;
+  const m = moduleList.match(typeRE);
+  let type;
+  if (m !== null) [, , type] = m;
+  else type = null;
+
   return type;
 }
 
-export function getAvailableBooks(G: GClass, version: string) {
+export function getAvailableBooks(version: string, G: GType) {
   if (G.cache.availableBooks === undefined) {
     G.cache.availableBooks = [];
   }
   if (!(version in G.cache.availableBooks)) {
     G.cache.availableBooks[version] = [];
-    const type = getModuleLongType(G, version);
+    const type = getModuleLongType(version, G);
     if (type !== C.BIBLE && type !== C.COMMENTARY) return null;
     for (let b = 0; b < G.Book.length; b += 1) {
       if (type === C.BIBLE) {

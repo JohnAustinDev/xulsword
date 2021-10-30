@@ -3,28 +3,33 @@
 
 import React from 'react';
 import {
-  keep,
   xulClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
   xulStyle,
+  xulEvents,
 } from './xul';
 import './xul.css';
 
 // XUL stack
+const defaultProps = xulDefaultProps;
+
+const propTypes = xulPropTypes;
+
 function Stack(props: XulProps) {
   return (
     <div
+      id={props.id}
       className={xulClass('stack', props)}
-      {...keep(props)}
       style={xulStyle(props)}
+      {...xulEvents(props)}
     >
       {props.children}
     </div>
   );
 }
-Stack.defaultProps = xulDefaultProps;
-Stack.propTypes = xulPropTypes;
+Stack.defaultProps = defaultProps;
+Stack.propTypes = propTypes;
 
 export default Stack;
