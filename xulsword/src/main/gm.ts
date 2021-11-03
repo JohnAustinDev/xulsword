@@ -5,7 +5,14 @@ import fs from 'fs';
 import LibSwordx from './modules/libsword';
 import Dirsx from './modules/dirs';
 import Prefsx from './modules/prefs';
-import { GType, GPublic, LibSwordType, DirsType, PrefsType } from '../type';
+import {
+  getProgramConfig,
+  getLocaleConfigs,
+  getModuleConfigs,
+  getModuleConfigDefault,
+  getFontFaceConfigs,
+} from './config';
+import { GType, GPublic } from '../type';
 import C from '../constant';
 
 // This G object is for use in the main process, and it shares the same
@@ -18,13 +25,21 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
 
   // Permanently store references for use by getters
   refs: {
-    LibSword: LibSwordx as LibSwordType,
-    Prefs: Prefsx as PrefsType,
-    Dirs: Dirsx as DirsType,
     Book: () => getBook(),
     Tabs: () => getTabs(),
     Tab: () => getTab(),
+    LocaleConfigs: () => getLocaleConfigs(),
+    ModuleConfigs: () => getModuleConfigs(),
+    ModuleConfigDefault: () => getModuleConfigDefault(),
     ProgramConfig: () => getProgramConfig(),
+    FontFaceConfigs: () => getFontFaceConfigs(),
+    OPSYS: () => process.platform,
+
+    // getLocaleBundle: null, // defined below
+
+    LibSword: LibSwordx as typeof LibSwordx,
+    Prefs: Prefsx as typeof Prefsx,
+    Dirs: Dirsx as typeof Dirsx,
   },
 
   reset() {
@@ -52,6 +67,9 @@ entries.forEach((entry) => {
         return G.cache[name];
       },
     });
+  } else if (typeof val === 'function') {
+    const g = G as any;
+    g[name] = g.refs[name];
   } else if (typeof val === 'object') {
     Object.defineProperty(G, name, {
       get() {
@@ -155,7 +173,27 @@ function getTab() {
   return null;
 }
 
-function getProgramConfig() {
-  throw Error(`getProgramConfig not yet implemented`);
-  return null;
-}
+/*
+G.refs.getLocaleBundle = (locale: string, file: string) => {
+  const locpath = path.join(
+    Dirsx.path.xsAsset,
+    'locales',
+    Prefsx.getCharPref(C.LOCALEPREF),
+    file
+  );
+  const raw = fs.readFileSync(locpath);
+  let data;
+  if (raw && raw.length) {
+    const json = JSON.parse(raw.toString());
+    if (json && typeof json === 'object') {
+      data = json;
+    } else {
+      throw Error(`failed to parse ${file} at ${locpath}`);
+    }
+  } else {
+    throw Error(`failed to read ${file} at ${locpath}`);
+  }
+
+  return data;
+};
+*/

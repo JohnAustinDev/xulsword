@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/naming-convention */
 import fs from 'fs';
 import path from 'path';
+import C from '../../constant';
 
 export default class nsILocalFile {
   // The file system location for this nsILocalFile instance.
@@ -70,7 +72,7 @@ export default class nsILocalFile {
   // Create a new directory or en empty file for this.path, depending on the
   // requested type. It does nothing if this.path already exists. The type
   // must be supplied or an error is thrown.
-  create(type: number) {
+  create(type: number, permissions?: number) {
     if (this.path) {
       if (!this.exists()) {
         if (type === nsILocalFile.DIRECTORY_TYPE) {
@@ -78,21 +80,78 @@ export default class nsILocalFile {
         } else if (type === nsILocalFile.NORMAL_FILE_TYPE) {
           fs.writeFileSync(this.path, '');
         } else {
-          throw Error(`ERROR: unsupported file type ${type}`);
+          throw Error(`Unsupported file type ${type}`);
         }
       }
     } else {
-      throw Error(`ERROR: cannot create before initWithPath`);
+      throw Error(`Cannot create before initWithPath`);
     }
 
     if (!this.exists()) {
-      throw Error(`ERROR: failed to create ${this.path}`);
+      throw Error(`Failed to create ${this.path}`);
     }
+  }
+
+  // Creates a file. If it already exists, another name is tried (up to
+  // max files) so as to create a unique file name. True is returned if
+  // sucessful, false otherwise.
+  createUnique(type: number, permissions: number) {
+    if (this.path) {
+      const max = 999;
+      let n = 0;
+      let p;
+      do {
+        p = this.path;
+        if (n) p.replace(/([^.]*)$/, 'n.$1');
+        if (!fs.existsSync(this.path)) break;
+        n += 1;
+      } while (n <= max);
+      if (!fs.existsSync(p)) {
+        this.path = p;
+        this.create(type, permissions);
+        return fs.existsSync(p);
+      }
+      return false;
+    }
+    throw Error(`Cannot createUnique before initWithPath`);
   }
 
   // Return boolean value of true if this file or directory exists.
   exists() {
     return fs.existsSync(this.path);
+  }
+
+  isDirectory(): boolean {
+    const stats = this.stats();
+    return stats.isDirectory();
+  }
+
+  get directoryEntries(): string[] | null {
+    if (!this.isDirectory()) {
+      return null;
+    }
+    return fs.readdirSync(this.path, { encoding: 'utf-8' });
+  }
+
+  // This was not part of nsILocalFile, but added for convenience. Reads UTF-8
+  // encoded file contents and returns as string.
+  readFile(): string {
+    return fs.readFileSync(this.path, { encoding: 'utf-8' });
+  }
+
+  remove(recursive = false) {
+    fs.rmSync(this.path, { recursive });
+  }
+
+  stats(options?: any): fs.Stats {
+    return fs.statSync(this.path, options);
+  }
+
+  // This was not part of nsILocalFIle, but added for convenience. Writes UTF-8
+  // encoded string to file.
+  writeFile(str: string, options?: any) {
+    const o = options || { encoding: 'utf8', mode: C.FPERM };
+    fs.writeFile(this.path, str, o);
   }
 
   // Return the file name as a string.

@@ -40,9 +40,9 @@ async function i18nInit(namespaces) {
     .init({
       lng: lang,
       fallbackLng: 'en',
-      supportedLngs: ['en', 'ru'],
+      supportedLngs: C.Languages,
 
-      ns: namespaces,
+      ns: namespaces.concat(['common/books', 'common/numbers']),
 
       debug: isDevelopment,
 

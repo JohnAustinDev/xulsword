@@ -1,7 +1,13 @@
 /* eslint-disable class-methods-use-this */
 import { LibSwordPublic } from '../../type';
 
-const LibSword: typeof LibSwordPublic = {
+const LibSword: LibSwordClass = {
+  hasBible: true,
+
+  libSwordReady() {
+    return true;
+  },
+
   getMaxChapter(modname, vkeytext) {
     return 99;
   },
@@ -27,4 +33,10 @@ const LibSword: typeof LibSwordPublic = {
   },
 };
 
-export default LibSword as typeof LibSwordPublic;
+// The DirsClass interface is only available in main process directly through the Dirs object
+type LibSwordClass = typeof LibSwordPublic & {
+  hasBible: boolean;
+  libSwordReady: () => boolean;
+};
+
+export default LibSword as LibSwordClass;

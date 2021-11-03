@@ -32,6 +32,10 @@ entries.forEach((entry) => {
         return this.cache[name];
       },
     });
+  } else if (typeof val === 'function') {
+    g[name] = (...args: any[]) => {
+      return R.sendSync('global', name, ...args);
+    };
   } else if (typeof val === 'object') {
     const methods = Object.getOwnPropertyNames(val);
     methods.forEach((m) => {

@@ -68,6 +68,8 @@ ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
     const g = G as any;
     if (gPublic[name] === 'readonly') {
       ret = g[name];
+    } else if (typeof gPublic[name] === 'function') {
+      ret = g[name](...args);
     } else if (typeof gPublic[name] === 'object') {
       const m = args.shift();
       if (gPublic[name][m] === 'readonly') {
@@ -186,9 +188,9 @@ const start = async () => {
     .init({
       lng: G.Prefs.getCharPref(C.LOCALEPREF),
       fallbackLng: 'en',
-      supportedLngs: ['en', 'ru'],
+      supportedLngs: C.Languages,
 
-      ns: 'xulsword',
+      ns: ['xulsword', 'common/config', 'common/books', 'common/numbers'],
       defaultNS: 'xulsword',
 
       debug: false,

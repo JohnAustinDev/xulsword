@@ -102,7 +102,7 @@ class Bookselect extends React.Component {
   getBookOptions = (): PropTypes.ReactElementLike[] => {
     const { onlyavailablebooks, trans } = this.props as BookselectProps;
     if (onlyavailablebooks) {
-      const abs = getAvailableBooks(trans.split(/\s*,\s*/)[0], G);
+      const abs = getAvailableBooks(G, trans.split(/\s*,\s*/)[0]);
       return abs.map((bk: string) => {
         let longName = bk;
         for (let x = 0; x < G.Book.length; x += 1) {
@@ -130,7 +130,7 @@ class Bookselect extends React.Component {
     const refelem = this
       .textInput as unknown as React.RefObject<HTMLInputElement>;
     const input = refelem !== null ? refelem.current : null;
-    if (e.type === 'focus') {
+    if (e.type === 'click') {
       if (input !== null) input.select();
     } else if (e.type === 'blur') {
       this.setState({ book, propBook: book });
@@ -170,11 +170,11 @@ class Bookselect extends React.Component {
   textboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { book: pbook } = this.props as BookselectProps;
     const { book: sbook } = this.state as BookselectState;
-    const bk = parseLocation(e.target.value);
+    const bk = parseLocation(e.target.value, true, true);
     if (bk !== null && bk.book !== sbook) {
       this.setState({ book: bk.book, propBook: pbook });
     }
-    e.stopPropagation;
+    e.stopPropagation();
   };
 
   selectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -197,8 +197,8 @@ class Bookselect extends React.Component {
     }
 
     if (newBook === undefined) {
-      newBook = getAvailableBooks(trans.split(/\s*,\s*/)[0], G);
-      newBook = Array.isArray(newBook) && newBook[0] ? newBook[0] : 'Matt';
+      const books = getAvailableBooks(G, trans.split(/\s*,\s*/)[0]);
+      newBook = books[0] ? books[0] : 'Matt';
     }
 
     const books = this.getBookOptions();
@@ -226,7 +226,7 @@ class Bookselect extends React.Component {
               disabled={disabled}
               onChange={this.textboxChange}
               onKeyDown={this.textboxKeyDown}
-              onFocus={this.focusChange}
+              onClick={this.focusChange}
               onBlur={this.focusChange}
               inputRef={this.textInput}
             />

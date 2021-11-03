@@ -15,6 +15,25 @@ import { XulProps } from '../libxul/xul';
 import handler from './handler';
 import './xulsword.css';
 
+interface XulswordState extends XulProps {
+  book: string,
+  chapter: number,
+  verse: number,
+  lastverse: number,
+  showHeadings: boolean,
+  showFootnotes: boolean,
+  showCrossRefs: boolean,
+  showDictLinks: boolean,
+  showVerseNums: boolean,
+  showStrongs: boolean,
+  showMorph: boolean,
+  showUserNotes: boolean,
+  showHebCantillation: boolean,
+  showHebVowelPoints: boolean,
+  showRedWords: boolean,
+  searchDisabled: boolean,
+}
+
 export class Xulsword extends React.Component {
 
   eHandler = handler;
@@ -26,10 +45,11 @@ export class Xulsword extends React.Component {
       chapter: 1,
       verse: 1,
       lastverse: 1,
-      hdbutton: true,
-      fnbutton: true,
-      crbutton: true,
-      dtbutton: true,
+      showHeadings: true,
+      showFootnotes: true,
+      showCrossRefs: true,
+      showDictLinks: true,
+
       searchDisabled: true,
     };
 
@@ -40,7 +60,7 @@ export class Xulsword extends React.Component {
     jsdump(`Rendering Xulsword ${JSON.stringify(this.state)}`);
     const {
         book, chapter, verse, lastverse,
-        hdbutton, fnbutton, crbutton, dtbutton,
+        showHeadings, showFootnotes, showCrossRefs, showDictLinks,
         searchDisabled
     } = this.state as XulswordState;
 
@@ -99,10 +119,10 @@ export class Xulsword extends React.Component {
     <Spacer flex="14%"  orient="vertical"/>
 
     <Hbox id="optionButtons" align="start">
-      <Button id="hdbutton" orient="vertical" checked={hdbutton} onClick={eHandler} label={t('headingsButton.label')}  tooltip={t('headingsButton.tooltip')} />
-      <Button id="fnbutton" orient="vertical" checked={fnbutton} onClick={eHandler} label={t('notesButton.label')}     tooltip={t('notesButton.tooltip')} />
-      <Button id="crbutton" orient="vertical" checked={crbutton} onClick={eHandler} label={t('crossrefsButton.label')} tooltip={t('crossrefsButton.tooltip')} />
-      <Button id="dtbutton" orient="vertical" checked={dtbutton} onClick={eHandler} label={t('dictButton.label')}      tooltip={t('dictButton.tooltip')} />
+      <Button id="hdbutton" orient="vertical" checked={showHeadings} onClick={eHandler} label={t('headingsButton.label')}  tooltip={t('headingsButton.tooltip')} />
+      <Button id="fnbutton" orient="vertical" checked={showFootnotes} onClick={eHandler} label={t('notesButton.label')}     tooltip={t('notesButton.tooltip')} />
+      <Button id="crbutton" orient="vertical" checked={showCrossRefs} onClick={eHandler} label={t('crossrefsButton.label')} tooltip={t('crossrefsButton.tooltip')} />
+      <Button id="dtbutton" orient="vertical" checked={showDictLinks} onClick={eHandler} label={t('dictButton.label')}      tooltip={t('dictButton.tooltip')} />
     </Hbox>
 
     <Spacer id="rightSpacer"  flex="72%" orient="vertical"/>
@@ -131,18 +151,6 @@ export class Xulsword extends React.Component {
 
 </Vbox>)}</Translation>)
   }
-}
-
-interface XulswordState extends XulProps {
-  book: string,
-  chapter: number,
-  verse: number,
-  lastverse: number,
-  hdbutton: boolean,
-  fnbutton: boolean,
-  crbutton: boolean,
-  dtbutton: boolean,
-  searchDisabled: boolean,
 }
 
 export function loadedXUL() {

@@ -2,8 +2,9 @@
 
 // Common Global Constants
 const C = {
-  FPERM: 511, // 0777; // 511;
-  DPERM: 511, // 0777; // 511;
+  Languages: ['en', 'ru'],
+  FPERM: 0o666,
+  DPERM: 0o666,
   ORIGINAL: 'ORIG', // Value doen't really matter, just a export const
   MAXVERSE: 176,
   MAXCHAPTER: 150,
@@ -85,6 +86,69 @@ const C = {
   HILIGHT_IFNOTV1: 2, // highlight selected verse in blue unless it is verse 1
   HILIGHTPREVIOUS: 3, // do same hilight type as during previous update
   HILIGHTSKIP: 4, // skip hilighting step to speed things up- any previously hilighted verse(s) will remain so
+
+  BIN: { win32: 'dll', linux: 'so', darwin: 'dylib' },
+
+  IsExtension: false,
+
+  // bookmark/personal-note fields
+  TYPE: 0,
+  NAME: 1,
+  NOTE: 2,
+  BOOK: 3,
+  CHAPTER: 4,
+  VERSE: 5,
+  LASTVERSE: 6,
+  MODULE: 7,
+  LOCATION: 8,
+  BMTEXT: 9,
+  ICON: 10,
+  CREATIONDATE: 11,
+  VISITEDDATE: 12,
+  NAMELOCALE: 13,
+  NOTELOCALE: 14,
+
+  GlobalToggleCommands: {
+    cmd_xs_toggleHeadings: 'Headings',
+    showFootnotes: 'Footnotes',
+    showCrossRefs: 'Cross-references',
+    showDictLinks: 'Reference Material Links',
+    showStrongs: "Strong's Numbers",
+    showMorph: 'Morphological Tags',
+    showVerseNums: 'Verse Numbers',
+    showUserNotes: 'User Notes',
+    showHebCantillation: 'Hebrew Cantillation',
+    showHebVowelPoints: 'Hebrew Vowel Points',
+    showRedWords: 'Words of Christ in Red',
+  },
+
+  SupportedModuleTypes: {},
+
+  SEP: ',',
+  TIMEOUT: 25,
+  XSMODEXT: ['zip', 'xsm'],
+  XSBMEXT: ['txt', 'xsb'],
+  XSVIDEXT: ['wmv', 'mov', 'mpeg', 'mpg', 'avi'],
+  NOVALUE: -1,
+  NORESET: 0,
+  SOFTRESET: 1,
+  HARDRESET: 2,
+  NEWINSTALLFILE: 'newInstalls.txt',
+  MINPVERPAR: 'minMKVersion',
+  VERSIONTAG: null,
+  MINPROGVERSTAG: null,
+  MINVERSION: '1.0',
+};
+
+C.VERSIONTAG = new RegExp(`${C.VERSIONPAR}\\s*=\\s*(.*)\\s*`, 'im');
+
+C.MINPROGVERSTAG = new RegExp(`${C.MINPVERPAR}\\s*=\\s*(.*)\\s*`, 'im');
+
+C.SupportedModuleTypes = {
+  Texts: C.BIBLE,
+  Comms: C.COMMENTARY,
+  Dicts: C.DICTIONARY,
+  Genbks: C.GENBOOK,
 };
 
 export default C;
