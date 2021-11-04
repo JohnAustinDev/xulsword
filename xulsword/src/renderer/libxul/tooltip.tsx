@@ -5,6 +5,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { XulProps } from './xul';
 import './xul.css';
+import './tooltip.css';
 
 // Tooltip called by other XUL elements
 const defaultProps = { tip: undefined };

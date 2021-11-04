@@ -4,6 +4,12 @@ export default function handler(e, ...args) {
   switch (e.type) {
     case 'click':
       switch (e.currentTarget.id) {
+        case 'back':
+        case 'historyMenu':
+        case 'forward':
+          jsdump(`${e.currentTarget.id} click not yet implented`);
+          break;
+
         case 'chapter':
         case 'verse':
           if ('select' in e.target) {
@@ -32,24 +38,28 @@ export default function handler(e, ...args) {
           });
           break;
 
+        case 'searchButton':
+          jsdump(`searchButton click not yet implemented`);
+          break;
+
         case 'hdbutton':
           this.setState((prevState) => {
-            return { hdbutton: !prevState.hdbutton };
+            return { showHeadings: !prevState.showHeadings };
           });
           break;
         case 'fnbutton':
           this.setState((prevState) => {
-            return { fnbutton: !prevState.fnbutton };
+            return { showFootnotes: !prevState.showFootnotes };
           });
           break;
         case 'crbutton':
           this.setState((prevState) => {
-            return { crbutton: !prevState.crbutton };
+            return { showCrossRefs: !prevState.showCrossRefs };
           });
           break;
         case 'dtbutton':
           this.setState((prevState) => {
-            return { dtbutton: !prevState.dtbutton };
+            return { showDictLinks: !prevState.showDictLinks };
           });
           break;
 
@@ -63,6 +73,7 @@ export default function handler(e, ...args) {
       switch (e.target.id) {
         case 'book__textbox__input':
         case 'book__menulist__select': {
+          this.bsreset += 1; // reset Bookselect even if book didn't change
           const location = parseLocation(e.target.value);
           if (location !== null) {
             // eslint-disable-next-line prefer-const
@@ -71,8 +82,10 @@ export default function handler(e, ...args) {
               if (!chapter) chapter = 1;
               if (!verse) verse = 1;
               this.setState({ book, chapter, verse });
+              return;
             }
           }
+          this.forceUpdate();
           break;
         }
         case 'chapter__input':
@@ -85,14 +98,32 @@ export default function handler(e, ...args) {
 
         case 'searchText__input': {
           const enable = /\S+/.test(e.target.value);
-          this.setState({ searchDisabled: !enable });
+          if (this.state.searchDisabled === enable)
+            this.setState({ searchDisabled: !enable });
           break;
         }
+
         default:
           throw Error(`Unhandled onChange event on '${e.currentTarget.id}'`);
       }
       break;
     }
+
+    case 'keydown': {
+      switch (e.target.id) {
+        case 'searchText__input': {
+          if (e.key === 'Enter') {
+            jsdump(`search Enter not yet implemented`);
+          }
+          break;
+        }
+
+        default:
+          throw Error(`Unhandled onKeyDown event on '${e.currentTarget.id}'`);
+      }
+      break;
+    }
+
     default:
       throw Error(`Unhandled event type '${e.type}'`);
   }

@@ -38,6 +38,8 @@ export class Xulsword extends React.Component {
 
   eHandler = handler;
 
+  bsreset: number;
+
   constructor(props: Record<string, never>) {
     super(props);
     this.state = {
@@ -53,6 +55,8 @@ export class Xulsword extends React.Component {
       searchDisabled: true,
     };
 
+    this.bsreset = 0; // increment this to reset the Bookselect on next render
+
     this.eHandler = this.eHandler.bind(this);
   }
 
@@ -64,7 +68,7 @@ export class Xulsword extends React.Component {
         searchDisabled
     } = this.state as XulswordState;
 
-    const {eHandler} = this;
+    const {eHandler, bsreset } = this;
 
     return (<Translation>{(t) => (
 <Vbox className="hasBible" id="topbox" flex="1">
@@ -93,13 +97,13 @@ export class Xulsword extends React.Component {
       </Hbox>
 
       <Hbox id="textnav" align="center">
-        <Bookselect id="book" sizetopopup="none" flex="1" book={book} trans={t('configuration.default_modules')} onChange={eHandler} />
-        <Textbox  id="chapter" width="50px" maxLength="3" pattern="^[0-9]+$" value={chapter.toString()} timeout="300" onChange={eHandler} onClick={eHandler}/>
+        <Bookselect id="book" key={`bk${book}${bsreset}`} sizetopopup="none" flex="1" book={book} trans={t('configuration.default_modules')} onChange={eHandler} />
+        <Textbox  id="chapter" key={`ch${chapter}`} width="50px" maxLength="3" pattern="^[0-9]+$" value={chapter.toString()} timeout="300" onChange={eHandler} onClick={eHandler}/>
         <Vbox width="28px">
           <Button id="nextchap" onClick={eHandler}/>
           <Button id="prevchap" onClick={eHandler}/>
         </Vbox>
-        <Textbox  id="verse"   width="50px" maxLength="3" pattern="^[0-9]+$" value={ verse.toString() } timeout="300" onChange={eHandler} onClick={eHandler}/>
+        <Textbox  id="verse" key={`vs${verse}`} width="50px" maxLength="3" pattern="^[0-9]+$" value={ verse.toString() } timeout="300" onChange={eHandler} onClick={eHandler}/>
         <Vbox width="28px">
           <Button id="nextverse" onClick={eHandler}/>
           <Button id="prevverse" onClick={eHandler}/>
@@ -111,7 +115,7 @@ export class Xulsword extends React.Component {
 
     <Hbox id="search-tool">
       <Vbox>
-        <Textbox id="searchText" type="search" maxLength="24" onChange={eHandler} tooltip={t('searchbox.tooltip')} />
+        <Textbox id="searchText" type="search" maxLength="24" onChange={eHandler} onKeyDown={eHandler} tooltip={t('searchbox.tooltip')} />
         <Button id="searchButton" orient="horizontal" dir="reverse" disabled={searchDisabled} onClick={eHandler} label={t('searchBut.label')} tooltip={t('search.tooltip')} />
       </Vbox>
     </Hbox>

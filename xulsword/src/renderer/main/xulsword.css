@@ -88,10 +88,11 @@ menu#sub-Genbks {
   padding-top: 2px;
 }
 #optionButtons button {
-  padding: 6px 6px;
-}
-#optionButtons .button {
+  padding: 2px;
   color: black;
+}
+#optionButtons .button-box {
+  padding: 6px;
 }
 #optionButtons button.checked {
   color: blue;
@@ -135,6 +136,12 @@ menu#sub-Genbks {
   padding-top: 2px;
   margin-left: 0px;
 }
+#searchButton {
+  padding: 2px;
+}
+#searchButton .button-box {
+  padding: 2px;
+}
 #searchButton .button-icon {
   display: block;
   width: 30px;
@@ -147,6 +154,12 @@ menu#sub-Genbks {
 }
 
 /* MAIN WINDOW NAVIGATOR BUTTONS */
+#textnav {
+  padding: 2px 0px 2px 5px;
+}
+#textnav .bookselect {
+  height: 24px;
+}
 #textnav button {
   margin: 0px;
   margin-inline-end: 7px;
@@ -180,6 +193,12 @@ menu#sub-Genbks {
 }
 
 /* MAIN WINDOW HISTORY BUTTONS */
+#historyButtons button {
+  padding: 2px;
+}
+#historyButtons .button-box {
+  padding: 4px 30px;
+}
 #historypopup menuitem.selected {
   margin: 2px 4px;
   background-color: Highlight;
@@ -187,7 +206,6 @@ menu#sub-Genbks {
 }
 #back,
 #forward {
-  padding: 3px 30px;
   margin-left: 5px;
   margin-right: 5px;
 }
@@ -216,10 +234,8 @@ body.chromedir-rtl #forward .button-icon {
 #forward:not(.disabled):hover .button-icon {
   background-position: -22px 0px;
 }
-#historymenu {
-  padding: 4px 15px;
-  margin-left: 0px;
-  margin-right: 0px;
+#historymenu .button-box {
+  padding: 4px 10px;
 }
 #historymenu .button-icon {
   display: block;

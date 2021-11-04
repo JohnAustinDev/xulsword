@@ -18,27 +18,27 @@ import './textbox.css';
 
 const defaultProps = {
   ...xulDefaultProps,
-  disabled: false,
   maxLength: undefined,
   multiline: false,
   pattern: undefined,
   readonly: false,
   inputRef: undefined,
+  disabled: false,
   timeout: undefined,
   tooltip: undefined,
   type: 'text',
-  value: '',
+  value: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  disabled: PropTypes.bool,
   maxLength: PropTypes.string,
   multiline: PropTypes.bool,
   pattern: PropTypes.string,
   readonly: PropTypes.bool,
   // eslint-disable-next-line react/forbid-prop-types
   inputRef: PropTypes.object,
+  disabled: PropTypes.bool,
   timeout: PropTypes.string,
   tooltip: PropTypes.string,
   type: PropTypes.oneOf(['search', 'text']),
@@ -46,21 +46,22 @@ const propTypes = {
 };
 
 interface TextboxProps extends XulProps {
-  disabled?: boolean | undefined;
   maxLength?: string | undefined;
   multiline?: boolean;
   pattern?: string | undefined;
   readonly?: boolean;
   inputRef?: React.RefObject<HTMLInputElement> | undefined;
+  disabled?: boolean;
   timeout?: string | undefined;
   tooltip?: string | undefined;
   type?: string;
-  value?: string;
+  value?: string | undefined;
 }
 
 interface TextboxState {
-  propValue: string;
-  newValue: string;
+  value: string;
+  lastPropsValue: string;
+  lastStateValue: string;
 }
 
 type TBevent =
@@ -73,32 +74,50 @@ class Textbox extends React.Component {
 
   static propTypes: typeof propTypes;
 
+  // The key method of resetting a React text input to its props value does
+  // not work in all Textbox use cases. This is because key causes a new
+  // component to be rendered, causing loss of focus and cursor position.
+  // This getDerivedStateFromProps method however does allow higher level
+  // components to implement auto-complete etc. without losing the cursor.
+  static getDerivedStateFromProps(props: TextboxProps, state: TextboxState) {
+    return {
+      value:
+        props.value !== undefined &&
+        (props.value !== state.lastPropsValue ||
+          state.value === state.lastStateValue)
+          ? props.value
+          : state.value,
+      lastPropsValue: props.value,
+      lastStateValue: state.value,
+    };
+  }
+
   constructor(props: TextboxProps) {
     super(props);
     this.state = {
-      propValue: props.value,
-      newValue: props.value,
+      value: props.value !== undefined ? props.value : '',
+      lastPropsValue: props.value,
+      lastStateValue: undefined,
     };
 
     this.handleChange = this.handleChange.bind(this);
   }
 
   handleChange(e: TBevent) {
-    const { pattern, timeout, value, onChange } = this.props as TextboxProps;
+    const { pattern, timeout, onChange } = this.props as TextboxProps;
 
     // Test user input against props.pattern and undo mismatched changes,
     // otherwise call the parent's onChange function (using a delay
     // if props.timeout has a value).
     const p = pattern ? new RegExp(pattern) : null;
     if (p === null || p.test(e.target.value) || !e.target.value) {
-      this.setState({ newValue: e.target.value, propValue: value });
+      this.setState({ value: e.target.value });
       if (timeout && typeof onChange === 'function') {
         const f = delayHandler.call(this, (evt) => onChange(evt), timeout);
         f(e);
         e.stopPropagation();
       }
     } else {
-      this.setState({ propValue: value });
       e.stopPropagation();
     }
   }
@@ -109,16 +128,7 @@ class Textbox extends React.Component {
     const { handleChange } = this;
     const useTextArea = !!(props.type === 'text' && props.multiline);
 
-    // As a 'Controlled' React input, we use state as the source of
-    // truth and overwrite the input's value property with it. But when
-    // props.value has been changed, use it to set the new value.
-    let { newValue } = state;
-    if (
-      typeof props.value === 'string' &&
-      (props.value !== state.propValue || newValue === state.propValue)
-    ) {
-      newValue = props.value;
-    }
+    const value = props.disabled ? props.value : state.value;
 
     return (
       <Box {...props} className={xulClass('textbox', props)}>
@@ -128,7 +138,7 @@ class Textbox extends React.Component {
             disabled={props.disabled}
             maxLength={props.maxLength ? Number(props.maxLength) : undefined}
             readOnly={props.readonly}
-            value={newValue}
+            value={value}
             onChange={handleChange}
           />
         )}
@@ -139,7 +149,7 @@ class Textbox extends React.Component {
             disabled={props.disabled}
             maxLength={props.maxLength ? Number(props.maxLength) : undefined}
             readOnly={props.readonly}
-            value={newValue}
+            value={value}
             onChange={handleChange}
             ref={props.inputRef}
           />

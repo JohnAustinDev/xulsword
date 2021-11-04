@@ -75,7 +75,6 @@ interface BookselectProps extends XulProps {
 
 interface BookselectState {
   book: string | undefined;
-  propBook: string | undefined;
 }
 
 class Bookselect extends React.Component {
@@ -83,12 +82,12 @@ class Bookselect extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  textInput: React.RefObject<Textbox>;
+  textInput: React.RefObject<HTMLInputElement>;
 
   constructor(props: BookselectProps) {
     super(props);
 
-    this.state = { book: props.book, propBook: props.book };
+    this.state = { book: props.book };
 
     this.textInput = React.createRef();
 
@@ -133,7 +132,7 @@ class Bookselect extends React.Component {
     if (e.type === 'click') {
       if (input !== null) input.select();
     } else if (e.type === 'blur') {
-      this.setState({ book, propBook: book });
+      this.setState({ book });
     } else {
       throw Error(`Unhandled focus event: ${e.type}`);
     }
@@ -148,14 +147,10 @@ class Bookselect extends React.Component {
 
     switch (e.key) {
       case 'Escape': {
-        this.setState({ book, propBook: book });
+        this.setState({ book });
         break;
       }
       case 'Enter': {
-        const { value } = e.target as HTMLInputElement;
-        const bk = parseLocation(value);
-        const newBook = bk === null ? book : bk.book;
-        this.setState({ book: newBook, propBook: book });
         if (typeof onChange === 'function') {
           e.type = 'change';
           onChange(e);
@@ -168,72 +163,59 @@ class Bookselect extends React.Component {
   };
 
   textboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { book: pbook } = this.props as BookselectProps;
-    const { book: sbook } = this.state as BookselectState;
     const bk = parseLocation(e.target.value, true, true);
-    if (bk !== null && bk.book !== sbook) {
-      this.setState({ book: bk.book, propBook: pbook });
+    if (bk !== null && bk.book !== null) {
+      this.setState({ book: bk.book });
     }
     e.stopPropagation();
   };
 
   selectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { book } = this.props as BookselectProps;
-    this.setState({ book: e.target.value, propBook: book });
+    this.setState({ book: e.target.value });
   };
 
   render() {
-    const { id, book, disabled, tooltip, trans } = this
-      .props as BookselectProps;
+    const props = this.props as BookselectProps;
+    const state = this.state as BookselectState;
 
-    const { book: sBook, propBook } = this.state as BookselectState;
+    let { book } = state;
 
-    // As a 'Controlled' React input, we use state as the source of
-    // truth and overwrite the input's value property with it. But when
-    // props.value has been changed, use it to set the new value.
-    let newBook = sBook;
-    if (typeof book === 'string' && (book !== propBook || sBook === propBook)) {
-      newBook = book;
+    if (book === undefined) {
+      const bks = getAvailableBooks(G, props.trans.split(/\s*,\s*/)[0]);
+      book = bks[0] ? bks[0] : 'Matt';
     }
 
-    if (newBook === undefined) {
-      const books = getAvailableBooks(G, trans.split(/\s*,\s*/)[0]);
-      newBook = books[0] ? books[0] : 'Matt';
-    }
-
-    const books = this.getBookOptions();
-
-    let newBookName = newBook;
+    let bookName = book;
     for (let x = 0; x < G.Book.length; x += 1) {
-      if (G.Book[x].sName === newBook) newBookName = G.Book[x].bName;
+      if (G.Book[x].sName === book) bookName = G.Book[x].bName;
     }
 
     return (
-      <Box {...this.props} className={xulClass('bookselect', this.props)}>
+      <Box {...this.props} className={xulClass('bookselect', props)}>
         <Stack>
-          <Box style={xulStyle(this.props)}>
+          <Box style={xulStyle(props)}>
             <Menulist
-              id={`${id}__menulist`}
-              options={books}
-              disabled={disabled}
+              id={`${props.id}__menulist`}
+              options={this.getBookOptions()}
+              disabled={props.disabled}
               onChange={this.selectChange}
             />
           </Box>
           <Hbox style={xulStyle(this.props)}>
             <Textbox
-              id={`${id}__textbox`}
-              value={newBookName}
-              disabled={disabled}
+              id={`${props.id}__textbox`}
+              value={bookName}
+              disabled={props.disabled}
               onChange={this.textboxChange}
               onKeyDown={this.textboxKeyDown}
               onClick={this.focusChange}
               onBlur={this.focusChange}
               inputRef={this.textInput}
             />
-            <Spacer width="14px" />
+            <Spacer width="20px" />
           </Hbox>
 
-          <Tooltip tip={tooltip} />
+          <Tooltip tip={props.tooltip} />
         </Stack>
       </Box>
     );
