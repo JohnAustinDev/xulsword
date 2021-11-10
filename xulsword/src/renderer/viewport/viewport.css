@@ -1,0 +1,530 @@
+.viewport {
+  font-family:'arial';
+  padding-inline-end:0px;
+  padding-bottom:24px;
+  padding-inline-start:0px;
+  margin:0px;
+  overflow:hidden;
+  background:url(../images/b2.gif);
+  background-position: 0px 40px;
+  float:left;
+  width:100%;
+  position:relative;
+}
+body.chromedir-rtl .viewport {
+  float:right;
+}
+
+.viewport .open-chooser {
+  position:absolute;
+  background:url(../images/open0.png);
+  width:15px;
+  height:15px;
+  top:10px;
+  left:6px;
+  z-index:40;
+}
+body.chromedir-rtl .viewport .open-chooser {
+  left:auto;
+  right:6px;
+}
+.viewport .open-chooser:hover {
+  background:url(../images/open1.png);
+}
+
+.viewport .chooser {
+  padding-inline-end: 0px;
+  float:left;
+}
+body.chromedir-rtl .viewport .chooser {
+  float:right;
+}
+.viewport.chooser-hidden .chooser {
+  display:none;
+}
+
+#tabrow {
+  display:block;
+  width:100%;
+  padding-top:14px;
+}
+#tabrowf {
+  display:table;
+  width:100%;
+
+  /* coordinate with #textrow */
+  border-collapse:separate;
+  border-spacing:0px 0px;
+}
+.tabs {
+  display:table-cell;
+  padding:0px 20px 0px 30px;
+  -moz-padding-start:30px;
+  -moz-padding-end:20px;
+  position:relative;
+  white-space:nowrap;
+  z-index:10;
+  text-align:end;
+}
+.tabs[moduleType="none"],
+.viewport.ownWindow .tabs:not([moduleType="none"]) ~ .tabs {
+  display:none;
+}
+#textarea[windows="show1"] #tabs1 {
+  width:100%;
+  min-width:100px;
+}
+#textarea[windows="show1"] #tabs2,
+#textarea[windows="show1"] #tabs3 {
+  display:none;
+}
+#textarea[windows="show2"] #tabs1,
+#textarea[windows="show2"] #tabs2 {
+  width:50%;
+  min-width:100px;
+}
+#textarea[windows="show2"] #tabs3 {
+  display:none;
+}
+#textarea[windows="show3"] #tabs1,
+#textarea[windows="show3"] #tabs2,
+#textarea[windows="show3"] #tabs3 {
+  width:33%;
+  min-width:100px;
+}
+/* Very special situation: Windowed viewports show only one text. If
+it happens to be a linked text which is unpinned and then switched to become
+a dictionary (which cannot be linked), this situation needs this special CSS: */
+.viewport.ownWindow #textarea .tabs[moduleType="Dicts"],
+.viewport.ownWindow #textarea .text[moduleType="Dicts"] {
+  display:none;
+}
+.viewport.ownWindow #textarea .tabs[moduleType="none"] + .tabs[moduleType="Dicts"],
+.viewport.ownWindow #textarea .tabs[moduleType="Dicts"]:first-child,
+.viewport.ownWindow #textarea .text[moduleType="none"] + .text[moduleType="Dicts"],
+.viewport.ownWindow #textarea .text[moduleType="Dicts"]:first-child {
+  display:table-cell;
+}
+.tab {
+  position:relative;
+  top:2px;
+  font-size:1em;
+  color:grey;
+  margin:0px 3px 0px 3px;
+  border:3px solid;
+  border-bottom:2px solid rgb(200,170,205);
+  -moz-border-left-colors:  rgb(200,170,205) rgb(200,170,205) transparent;
+  -moz-border-right-colors: rgb(200,170,205) rgb(200,170,205) transparent;
+  background:rgb(255,250,255);
+  height:23px;
+  vertical-align:bottom;
+  border-top-right-radius:4px;
+  border-top-left-radius:4px;
+}
+.multitab select .tab {
+  padding-top:2px;
+  margin-top:2px;
+}
+.multitab {
+  position:relative;
+  display:inline-block;
+}
+.multitab-clicker {
+  position:absolute;
+  top:0px;
+  left:0px;
+  width:80%;
+  height:100%;
+}
+.tabs[pinned="true"] .multitab-clicker {
+  width:100%;
+}
+.tabs[pinned="true"] .multitab select {
+/* remove the select arrow. see:
+https://bugzilla.mozilla.org/show_bug.cgi?id=649849#c59*/
+  -moz-appearance: none;
+  text-indent: 0.01px;
+  text-overflow: '';
+}
+body[chromedir="rtl"] .multitab-clicker {
+  left:auto;
+  right:0px;
+}
+#w1\.tabselect,
+#w2\.tabselect,
+#w3\.tabselect {
+  padding-top:2px;
+  text-align:center;
+}
+.tab[active="true"] {
+  color:blue;
+  border-bottom:none;
+  background:rgb(255,243,255);
+}
+.tabs[noBibleTabs="true"] .tabOrig,
+.viewport.ownWindow .tabOrig {
+  display:none;
+}
+.tabs:not([moduleType="Texts"]) .tabOrig,
+body[hasOriginalLanguage="false"] .tabOrig {
+  color:rgb(210,210,210);
+}
+.tabs[pinned="true"] .tab {
+  visibility:hidden;
+}
+.tabs[pinned="true"] .tab[active="true"] {
+  color:blue;
+  background:white; /*rgb(248,248,241);*/
+  visibility:visible;
+}
+.tabTexts {
+  -moz-border-top-colors:   rgb(200,170,205) rgb(235,50,80) transparent;
+}
+.tabComms {
+  -moz-border-top-colors:   rgb(200,170,205) rgb(175,145,230) rgb(100,100,255);
+}
+.tabDicts {
+  -moz-border-top-colors:   rgb(200,170,205) rgb(226,212,102) rgb(255,255,0);
+}
+.tabGenbks {
+  -moz-border-top-colors:   rgb(200,170,205) rgb(150,207,225) rgb(100,245,245);
+}
+
+#textrow {
+  display:table;
+  width:100%;
+
+  /* coordinate with #tabrow > div*/
+  border-collapse:separate;
+  border-spacing:0px 0px;
+}
+.text {
+  display:table-cell;
+  vertical-align:top;
+  padding:0px 10px 0px 10px;
+}
+#textarea[windows="show3"] .text[columns="show1"] {
+  width:33%;
+  /* max-width:100px somehow forces width
+  to 33% even when contents are very wide */
+  max-width:100px;
+  min-width:100px;
+}
+#textarea[windows="show2"] .text[columns="show1"] {
+  width:50%;
+  /* max-width:100px somehow forces width
+  to 50% even when contents are very wide */
+  max-width:100px;
+  min-width:100px;
+}
+#textarea[windows="show3"] .text[columns="show2"] {
+  width:66%;
+  /* max-width:200px somehow forces width
+  to 66% even when contents are very wide */
+  max-width:200px;
+  min-width:200px;
+}
+#textarea[windows="show1"] .text[columns="show1"],
+#textarea[windows="show2"] .text[columns="show2"],
+#textarea[windows="show3"] .text[columns="show3"] {
+  width:100%;
+  /* max-width:300px somehow forces width
+  to 100% even when contents are very wide */
+  max-width:300px;
+  min-width:300px;
+}
+.text[columns=""],
+.text[columns="hide"],
+.text:not([columns]),
+.text[moduleType="none"] {
+  display:none !important;
+}
+
+.textf {
+  font-size: 1.1em;
+  background:rgb(255,243,255);
+  border:2px solid rgb(200,170,205);
+  border-radius:8px;
+  position:relative;
+}
+.text[pinned="true"] .textf {
+  background:white; /*rgb(248,248,241);*/
+}
+
+.hd {
+  text-align:center;
+  height:30px;
+}
+.fr {
+  position:relative;
+  text-align:center;
+  height:30px;
+}
+.sbcontrols {
+  position:absolute;
+}
+.sbpin {
+  float:left;
+  width:28px;
+  height:37px;
+  position:relative;
+  top:-15px;
+  left:-8px;
+  -moz-margin-end:-8px;
+  background:url(../images/pushpin0.png);
+  z-index:20;
+}
+body[chromedir="rtl"] .sbpin {
+  float:right;
+  left:auto;
+  right:-8px;
+}
+.sbpin:hover {
+  background:url(../images/pushpin2.png) !important;
+}
+.text[pinned="true"] .sbpin {
+  background:url(../images/pushpin1.png);
+}
+.text[moduleType="Dicts"] .sbpin {
+  display:none;
+}
+body[chromedir="ltr"] .sbpin,
+body[chromedir="ltr"] .sbpin:hover,
+body[chromedir="ltr"] .text[pinned="true"] .sbpin {
+  transform:scaleX(-1);
+}
+.sbwin {
+  float:left;
+  width:20px;
+  height:20px;
+  margin:5px;
+  background:url(../images/towindow.png);
+  z-index:20;
+}
+body[chromedir="rtl"] .sbwin {
+  float:right;
+}
+.sbwin:hover {
+  background-position:20px;
+}
+.viewport.ownWindow .sbwin {
+  display:none;
+}
+
+.sb {
+  height:600px; /* dynamic in viewport.js */
+  color: black;
+  padding:0px 30px 0px 30px;
+}
+.text[columns="show1"] .sb {
+  overflow:auto;
+}
+.text[columns="show2"] .sb {
+  overflow:hidden;
+  -moz-columns:2;
+
+  /* following do not effect box layout */
+  -moz-column-gap:80px;
+  -moz-column-rule:14px solid rgb(240,215,240);
+}
+.text[columns="show3"] .sb {
+  overflow:hidden;
+  -moz-columns:3;
+
+  /* following do not effect box layout */
+  -moz-column-gap:80px;
+  -moz-column-rule:14px solid rgb(240,215,240);
+}
+#text1[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb,
+#text1[moduleType="Comms"][columns="show1"][footnotesEmpty="false"] .sb,
+#text1[moduleType="Dicts"] .sb {
+  margin-bottom:200px; /* dynamic in viewport.js */
+  height:400px; /* dynamic in viewport.js */
+}
+#text2[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb,
+#text2[moduleType="Comms"][columns="show1"][footnotesEmpty="false"] .sb,
+#text2[moduleType="Dicts"] .sb {
+  margin-bottom:200px; /* dynamic in viewport.js */
+  height:400px; /* dynamic in viewport.js */
+}
+#text3[moduleType="Texts"][columns="show1"][footnotesEmpty="false"] .sb,
+#text3[moduleType="Comms"][columns="show1"][footnotesEmpty="false"] .sb,
+#text3[moduleType="Dicts"] .sb {
+  margin-bottom:200px; /* dynamic in viewport.js */
+  height:400px; /* dynamic in viewport.js */
+}
+
+.nbc {
+  position:relative;
+  width:100%;
+}
+
+.text[moduleType="Texts"][footnotesEmpty="true"] .nbc,
+.text[moduleType="Comms"][footnotesEmpty="true"] .nbc,
+.text[moduleType="Genbks"] .nbc {
+  display:none;
+}
+
+.nbf {
+  position:absolute;
+  bottom:0px;
+  right:0px;
+  background:rgb(255,243,255);
+  border-radius:8px;
+  z-index:20;
+}
+.text[pinned="true"] .nbf {
+  background:white;
+}
+.text[textdir="rtl"] .nbf {
+  right:auto;
+  left:0px;
+}
+#text1 .nbf {
+  height:200px; /* dynamic in viewport.js */
+}
+#text2 .nbf {
+  height:200px; /* dynamic in viewport.js */
+}
+#text3 .nbf {
+  height:200px; /* dynamic in viewport.js */
+}
+#text1[footnotesMaximized="true"]:not([columns="show1"]) .nbf,
+#text2[footnotesMaximized="true"]:not([columns="show1"]) .nbf,
+#text3[footnotesMaximized="true"]:not([columns="show1"]) .nbf {
+  height:600px; /* dynamic in viewport.js */
+}
+.text[columns="show1"] .nbf {
+  width:100%;
+}
+.text[columns="show2"] .nbf {
+  width:50%;
+  padding-left:20px; /* hides columns rule */
+}
+.text[columns="show3"] .nbf {
+  width:33%;
+  padding-left:20px; /* hides columns rule */
+}
+.text[columns="show2"][textdir="rtl"] .nbf {
+  padding-left:0px;
+  padding-right:20px; /* hides columns rule */
+}
+.text[columns="show3"][textdir="rtl"] .nbf {
+  padding-left:0px;
+  padding-right:20px; /* hides columns rule */
+}
+
+.bb {
+  position:relative;
+  border:1px outset rgb(150,150,150);
+  background:rgb(233,233,233);
+  height:4px;
+  border-radius:4px;
+  cursor:N-resize;
+  z-index:10;
+  margin:10px 60px 0px 60px;
+}
+.bb[moving="true"] {
+  border:1px dashed rgb(150,150,150);
+  background:rgb(233,233,20);
+  z-index:80;
+}
+
+.nbsizer {
+  position:absolute;
+  top:8px;
+  right:42px;
+  background:url(../images/max.png);
+  width:15px;
+  height:14px;
+}
+.text[textdir="rtl"] .nbsizer {
+  right:auto;
+  left:42px;
+}
+.text[footnotesMaximized="true"] .nbsizer {
+  background:url(../images/norm.png);
+}
+.text[columns="show1"] .nbsizer {
+  display:none;
+}
+
+.nb {
+  font-size:0.9em;
+  overflow:auto;
+  background:rgb(240,235,240);
+  border:2px solid rgb(150,150,150);
+  border-radius:8px;
+  padding:0px 5px 0px 5px;
+}
+#text1 .nb {
+  height:192px; /* dynamic in viewport.js */
+  margin:10px;
+}
+#text2 .nb {
+  height:192px; /* dynamic in viewport.js */
+  margin:10px;
+}
+#text3 .nb {
+  height:192px; /* dynamic in viewport.js */
+  margin:10px;
+}
+#text1[footnotesMaximized="true"]:not([columns="show1"]) .nb,
+#text2[footnotesMaximized="true"]:not([columns="show1"]) .nb,
+#text3[footnotesMaximized="true"]:not([columns="show1"]) .nb {
+  height:562px; /* dynamic in viewport.js */
+}
+
+
+/* PRINTING STYLES */
+@media print {
+
+.viewport .chooser,
+.open-chooser,
+.sbpin,
+.sbwin,
+.nbsizer {
+  display:none !important;
+}
+.tab {
+  background-color:white !important;
+  color:black !important;
+}
+.tab[active="false"] {
+  display:none;
+}
+.viewport > div {
+  height:auto;
+}
+.text {
+  max-width:none !important;
+}
+.sb, .nbf, .nb {
+  height:auto !important;
+}
+/*
+.textf {
+  border:none;
+}
+*/
+.sb {
+  margin-bottom:20px !important;
+}
+.bb {
+  display:none;
+}
+.nbf {
+  position:relative;
+  bottom:auto;
+  right:auto;
+}
+.nb {
+  background:transparent;
+  border:none;
+  padding-top:20px;
+}
+.fr {
+  height:0px;
+}
+
+}

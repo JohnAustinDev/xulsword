@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/control-has-associated-label */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable react/static-property-placement */
@@ -19,30 +20,30 @@ import Spacer from './spacer';
 import Stack from './stack';
 import Menulist from './menulist';
 import Textbox from './textbox';
-import { parseLocation } from '../rutil';
+import { getAvailableBooks, parseLocation } from '../rutil';
 import G from '../gr';
 import { BookType } from '../../type';
-import { getAvailableBooks } from '../../common';
 import './xul.css';
 import './bookselect.css';
 
 // XUL Bookselect
 // This component contains an overlapping Textbox and Menulist.
-// The Menulist's value does not appear (its selection is covered
-// by the Textbox; however its drop-down menu button is visible).
-// The Menulist only serves to allow book selection from the dropdown
+// The Menulist's value does not display (its selection is covered
+// by the Textbox). However its drop-down menu button is visible.
+// The Menulist serves only to allow book selection from a dropdown
 // menu. The Textbox shows the selected Bible book name in the program
 // locale. It can be changed by the user to another location, using
-// auto-completed typing in the Textbox or selection via the drop-
+// auto-completed typing in the Textbox, or selected via the drop-
 // down Menulist. If the Textbox gains focus, the value will become
 // selected. If the escape key is pressed while typing, or the
 // textbox loses focus, then the textbox value is returned to what
 // it originally was. The Bookselect onChange event will be fired
 // only if the user selects a book from the drop-down Menulist, or
 // presses the Enter key on the Textbox while it contains a valid
-// Bible book name (if Enter is pressed without a valid book name,
-// the Textbox is returned to its original value without firing
-// onChange.
+// Bible book name. Ff Enter is pressed without a valid book name,
+// the Textbox is simply returned to its original value without
+// firing onChange. Thus onChange is fired only when Bookselect
+// points to a valid book.
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -75,6 +76,8 @@ interface BookselectProps extends XulProps {
 
 interface BookselectState {
   book: string | undefined;
+  pattern: RegExp;
+  autocomp: boolean;
 }
 
 class Bookselect extends React.Component {
@@ -87,7 +90,7 @@ class Bookselect extends React.Component {
   constructor(props: BookselectProps) {
     super(props);
 
-    this.state = { book: props.book };
+    this.state = { book: props.book, pattern: /.*/, autocomp: true };
 
     this.textInput = React.createRef();
 
@@ -100,9 +103,11 @@ class Bookselect extends React.Component {
 
   getBookOptions = (): PropTypes.ReactElementLike[] => {
     const { onlyavailablebooks, trans } = this.props as BookselectProps;
+    const { book } = this.state as BookselectState;
+    let books;
     if (onlyavailablebooks) {
-      const abs = getAvailableBooks(G, trans.split(/\s*,\s*/)[0]);
-      return abs.map((bk: string) => {
+      const abs = getAvailableBooks(trans.split(/\s*,\s*/)[0]);
+      books = abs.map((bk: string) => {
         let longName = bk;
         for (let x = 0; x < G.Book.length; x += 1) {
           if (G.Book[x].sName === bk) longName = G.Book[x].bNameL;
@@ -113,15 +118,25 @@ class Bookselect extends React.Component {
           </option>
         );
       });
+    } else {
+      books = G.Book.map((bke: BookType) => {
+        return (
+          <option key={bke.sName} value={bke.sName}>
+            {bke.bNameL}
+          </option>
+        );
+      });
     }
 
-    return G.Book.map((bke: BookType) => {
-      return (
-        <option key={bke.sName} value={bke.sName}>
-          {bke.bNameL}
-        </option>
-      );
-    });
+    // If book is not defined (no selection) then first item is always
+    // selected, and thus onChange will not fire when chosen by the
+    // user. An empty selection at the top of the list means all valid
+    // selections will fire onChange.
+    if (!book) {
+      books.unshift(<option key="no-selection" />);
+    }
+
+    return books;
   };
 
   focusChange = (e: React.FocusEvent) => {
@@ -132,7 +147,7 @@ class Bookselect extends React.Component {
     if (e.type === 'click') {
       if (input !== null) input.select();
     } else if (e.type === 'blur') {
-      this.setState({ book });
+      this.setState({ book, pattern: /.*/, autocomp: true });
     } else {
       throw Error(`Unhandled focus event: ${e.type}`);
     }
@@ -147,7 +162,7 @@ class Bookselect extends React.Component {
 
     switch (e.key) {
       case 'Escape': {
-        this.setState({ book });
+        this.setState({ book, pattern: /.*/, autocomp: true });
         break;
       }
       case 'Enter': {
@@ -158,36 +173,46 @@ class Bookselect extends React.Component {
         }
         break;
       }
+      case 'Backspace': {
+        this.setState({ book: undefined, pattern: /.*/, autocomp: false });
+        break;
+      }
       default:
     }
   };
 
   textboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const bk = parseLocation(e.target.value, true, true);
-    if (bk !== null && bk.book !== null) {
-      this.setState({ book: bk.book });
+    const { autocomp } = this.state as BookselectState;
+    if (autocomp) {
+      const bk = parseLocation(e.target.value, true, true);
+      if (bk !== null && bk.book !== null) {
+        this.setState({
+          book: bk.book,
+          pattern: /[\s\d.:-]+$/,
+          autocomp: false,
+        });
+      }
+    } else if (/^\s*$/.test(e.target.value)) {
+      this.setState({ pattern: /.*/, autocomp: true });
     }
     e.stopPropagation();
   };
 
   selectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    this.setState({ book: e.target.value });
+    this.setState({ book: e.target.value, pattern: /.*/, autocomp: true });
   };
 
   render() {
     const props = this.props as BookselectProps;
     const state = this.state as BookselectState;
 
-    let { book } = state;
-
-    if (book === undefined) {
-      const bks = getAvailableBooks(G, props.trans.split(/\s*,\s*/)[0]);
-      book = bks[0] ? bks[0] : 'Matt';
-    }
-
+    // book (and thus bookName) may be undefined. This is a necessary
+    // option as it is the only way to update Bookselect state without
+    // effecting Textbox state.
+    const { book } = state;
     let bookName = book;
     for (let x = 0; x < G.Book.length; x += 1) {
-      if (G.Book[x].sName === book) bookName = G.Book[x].bName;
+      if (book && G.Book[x].sName === book) bookName = G.Book[x].bName;
     }
 
     return (
@@ -198,6 +223,7 @@ class Bookselect extends React.Component {
               id={`${props.id}__menulist`}
               options={this.getBookOptions()}
               disabled={props.disabled}
+              value={book}
               onChange={this.selectChange}
             />
           </Box>
@@ -205,6 +231,7 @@ class Bookselect extends React.Component {
             <Textbox
               id={`${props.id}__textbox`}
               value={bookName}
+              pattern={state.pattern}
               disabled={props.disabled}
               onChange={this.textboxChange}
               onKeyDown={this.textboxKeyDown}

@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-loop-func */
 import { jsdump, parseLocation } from '../rutil';
+import G from '../gr';
 
-export default function handler(e, ...args) {
+export function xulswordHandler(e, ...args) {
   switch (e.type) {
     case 'click':
       switch (e.currentTarget.id) {
@@ -64,7 +66,9 @@ export default function handler(e, ...args) {
           break;
 
         default:
-          throw Error(`Unhandled onClick event on '${e.currentTarget.id}'`);
+          throw Error(
+            `Unhandled xulswordHandler onClick event on '${e.currentTarget.id}'`
+          );
       }
       break;
 
@@ -104,7 +108,9 @@ export default function handler(e, ...args) {
         }
 
         default:
-          throw Error(`Unhandled onChange event on '${e.currentTarget.id}'`);
+          throw Error(
+            `Unhandled xulswordHandler onChange event on '${e.currentTarget.id}'`
+          );
       }
       break;
     }
@@ -119,12 +125,80 @@ export default function handler(e, ...args) {
         }
 
         default:
-          throw Error(`Unhandled onKeyDown event on '${e.currentTarget.id}'`);
+          throw Error(
+            `Unhandled xulswordHandler onKeyDown event on '${e.currentTarget.id}'`
+          );
       }
       break;
     }
 
     default:
-      throw Error(`Unhandled event type '${e.type}'`);
+      throw Error(`Unhandled xulswordHandler event type '${e.type}'`);
+  }
+}
+
+export function handleViewport(e, ...args) {
+  switch (e.type) {
+    case 'click': {
+      e.stopPropagation();
+
+      const search = ['chaptermenucell', 'bookname', 'tbot', 'tbnt'];
+      let targ = e.target;
+      while (targ && !search.some((x) => targ.classList.contains(x))) {
+        targ = targ.parentNode;
+      }
+      if (!targ) return;
+      const type = search.find((c) => targ.classList.contains(c));
+
+      switch (type) {
+        case 'tbot': {
+          this.setState({
+            book: 'Gen',
+            chapter: 1,
+            verse: 1,
+            lastverse: 1,
+          });
+          break;
+        }
+        case 'tbnt': {
+          this.setState({
+            book: 'Matt',
+            chapter: 1,
+            verse: 1,
+            lastverse: 1,
+          });
+          break;
+        }
+        case 'bookname': {
+          const b = targ.className.match(/bb_(\d+)\b/);
+          if (b) {
+            this.setState({
+              book: G.Book[Number(b[1])].sName,
+              chapter: 1,
+              verse: 1,
+              lastverse: 1,
+            });
+          }
+          break;
+        }
+        case 'chaptermenucell': {
+          const ch = targ.className.match(/chmc_(\d+)_(\d+)\b/);
+          if (ch) {
+            this.setState({
+              book: G.Book[Number(ch[1])].sName,
+              chapter: Number(ch[2]),
+              verse: 1,
+              lastverse: 1,
+            });
+          }
+          break;
+        }
+        default:
+      }
+      break;
+    }
+
+    default:
+      throw Error(`Unhandled handleViewport event type '${e.type}'`);
   }
 }

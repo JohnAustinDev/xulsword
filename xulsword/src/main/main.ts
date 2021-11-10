@@ -218,7 +218,7 @@ const start = async () => {
 
   t = (key: string, options?: any) => i18n.t(key, options);
 
-  const splashWindow = openSplashWindow();
+  const splashWindow; // = openSplashWindow();
 
   mainWindow = openMainWindow();
 

@@ -1,3 +1,6 @@
+#topbox {
+  overflow: hidden;
+}
 #topbox.hasBible {
   background-image: url(../images/b2.gif);
 }

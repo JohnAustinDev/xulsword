@@ -4,22 +4,22 @@ import React from 'react';
 import { Translation } from 'react-i18next';
 import { jsdump } from '../rutil';
 import Button from '../libxul/button';
-import Deck from '../libxul/deck';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Menupopup from '../libxul/menupopup';
 import Bookselect from '../libxul/bookselect';
 import Spacer from '../libxul/spacer';
 import Textbox from '../libxul/textbox';
 import Toolbox from '../libxul/toolbox';
-import { XulProps } from '../libxul/xul';
-import handler from './handler';
+import Viewport from '../viewport/viewport';
+import { xulswordHandler, handleViewport as handleVP } from './handlers';
 import './xulsword.css';
 
-interface XulswordState extends XulProps {
+interface XulswordState {
   book: string,
   chapter: number,
   verse: number,
   lastverse: number,
+
   showHeadings: boolean,
   showFootnotes: boolean,
   showCrossRefs: boolean,
@@ -31,19 +31,28 @@ interface XulswordState extends XulProps {
   showHebCantillation: boolean,
   showHebVowelPoints: boolean,
   showRedWords: boolean,
+
   searchDisabled: boolean,
+
+  tabs: string[][],
+  modules: string[],
+  keys: string[],
+
+  numDisplayedWindows: number,
 }
 
 export class Xulsword extends React.Component {
 
-  eHandler = handler;
-
   bsreset: number;
+
+  handler: any;
+
+  handleViewport: any;
 
   constructor(props: Record<string, never>) {
     super(props);
     this.state = {
-      book: undefined,
+      book: 'Gen',
       chapter: 1,
       verse: 1,
       lastverse: 1,
@@ -53,11 +62,18 @@ export class Xulsword extends React.Component {
       showDictLinks: true,
 
       searchDisabled: true,
+
+      tabs: [['KJV'], ['KJV'], ['KJV']],
+      modules: ['KJV', 'KJV', 'KJV'],
+      keys: [null, null, null],
+
+      numDisplayedWindows: 3,
     };
 
     this.bsreset = 0; // increment this to reset the Bookselect on next render
 
-    this.eHandler = this.eHandler.bind(this);
+    this.handler = xulswordHandler.bind(this);
+    this.handleViewport = handleVP.bind(this);
   }
 
   render() {
@@ -65,13 +81,13 @@ export class Xulsword extends React.Component {
     const {
         book, chapter, verse, lastverse,
         showHeadings, showFootnotes, showCrossRefs, showDictLinks,
-        searchDisabled
+        searchDisabled, tabs, modules, keys, numDisplayedWindows
     } = this.state as XulswordState;
 
-    const {eHandler, bsreset } = this;
+    const { bsreset, handler, handleViewport } = this;
 
     return (<Translation>{(t) => (
-<Vbox className="hasBible" id="topbox" flex="1">
+<Vbox className="hasBible" id="topbox" pack="start" height="100%">
   <Toolbox>
 
     {/* TODO: NEED TO ADD MENU */}
@@ -84,29 +100,29 @@ export class Xulsword extends React.Component {
 
     <Vbox id="navigator-tool" pack="start">
       <Hbox id="historyButtons" align="center" >
-        <Button id="back" flex="40%" onClick={eHandler} label={t('history.back.label')} tooltip={t('history.back.tooltip')} />
+        <Button id="back" flex="40%" onClick={handler} label={t('history.back.label')} tooltip={t('history.back.tooltip')} />
         <Button id="historymenu" type="menu" tooltip={t('history.all.tooltip')} >
-          <Menupopup id="historypopup" onPopupShowing={eHandler}/>
+          <Menupopup id="historypopup" onPopupShowing={handler}/>
         </Button>
-        <Button id="forward" dir="reverse" flex="40%" onClick={eHandler} label={t('history.forward.label')} tooltip={t('history.forward.tooltip')} />
+        <Button id="forward" dir="reverse" flex="40%" onClick={handler} label={t('history.forward.label')} tooltip={t('history.forward.tooltip')} />
       </Hbox>
 
       <Hbox id="player" pack="start" align="center" hidden>
-        <audio controls onEnded={eHandler} onCanPlay={eHandler}/>
-        <Button id="closeplayer" onClick={eHandler} label={t('closeCmd.label')} />
+        <audio controls onEnded={handler} onCanPlay={handler}/>
+        <Button id="closeplayer" onClick={handler} label={t('closeCmd.label')} />
       </Hbox>
 
       <Hbox id="textnav" align="center">
-        <Bookselect id="book" key={`bk${book}${bsreset}`} sizetopopup="none" flex="1" book={book} trans={t('configuration.default_modules')} onChange={eHandler} />
-        <Textbox  id="chapter" key={`ch${chapter}`} width="50px" maxLength="3" pattern="^[0-9]+$" value={chapter.toString()} timeout="300" onChange={eHandler} onClick={eHandler}/>
+        <Bookselect id="book" key={`bk${book}${bsreset}`} sizetopopup="none" flex="1" book={book} trans={t('configuration.default_modules')} onChange={handler} />
+        <Textbox  id="chapter" key={`ch${chapter}`} width="50px" maxLength="3" pattern={/^[0-9]+$/} value={chapter.toString()} timeout="300" onChange={handler} onClick={handler}/>
         <Vbox width="28px">
-          <Button id="nextchap" onClick={eHandler}/>
-          <Button id="prevchap" onClick={eHandler}/>
+          <Button id="nextchap" onClick={handler}/>
+          <Button id="prevchap" onClick={handler}/>
         </Vbox>
-        <Textbox  id="verse" key={`vs${verse}`} width="50px" maxLength="3" pattern="^[0-9]+$" value={ verse.toString() } timeout="300" onChange={eHandler} onClick={eHandler}/>
+        <Textbox  id="verse" key={`vs${verse}`} width="50px" maxLength="3" pattern={/^[0-9]+$/} value={ verse.toString() } timeout="300" onChange={handler} onClick={handler}/>
         <Vbox width="28px">
-          <Button id="nextverse" onClick={eHandler}/>
-          <Button id="prevverse" onClick={eHandler}/>
+          <Button id="nextverse" onClick={handler}/>
+          <Button id="prevverse" onClick={handler}/>
         </Vbox>
       </Hbox>
     </Vbox>
@@ -115,43 +131,29 @@ export class Xulsword extends React.Component {
 
     <Hbox id="search-tool">
       <Vbox>
-        <Textbox id="searchText" type="search" maxLength="24" onChange={eHandler} onKeyDown={eHandler} tooltip={t('searchbox.tooltip')} />
-        <Button id="searchButton" orient="horizontal" dir="reverse" disabled={searchDisabled} onClick={eHandler} label={t('searchBut.label')} tooltip={t('search.tooltip')} />
+        <Textbox id="searchText" type="search" maxLength="24" onChange={handler} onKeyDown={handler} tooltip={t('searchbox.tooltip')} />
+        <Button id="searchButton" orient="horizontal" dir="reverse" disabled={searchDisabled} onClick={handler} label={t('searchBut.label')} tooltip={t('search.tooltip')} />
       </Vbox>
     </Hbox>
 
     <Spacer flex="14%"  orient="vertical"/>
 
     <Hbox id="optionButtons" align="start">
-      <Button id="hdbutton" orient="vertical" checked={showHeadings} onClick={eHandler} label={t('headingsButton.label')}  tooltip={t('headingsButton.tooltip')} />
-      <Button id="fnbutton" orient="vertical" checked={showFootnotes} onClick={eHandler} label={t('notesButton.label')}     tooltip={t('notesButton.tooltip')} />
-      <Button id="crbutton" orient="vertical" checked={showCrossRefs} onClick={eHandler} label={t('crossrefsButton.label')} tooltip={t('crossrefsButton.tooltip')} />
-      <Button id="dtbutton" orient="vertical" checked={showDictLinks} onClick={eHandler} label={t('dictButton.label')}      tooltip={t('dictButton.tooltip')} />
+      <Button id="hdbutton" orient="vertical" checked={showHeadings} onClick={handler} label={t('headingsButton.label')}  tooltip={t('headingsButton.tooltip')} />
+      <Button id="fnbutton" orient="vertical" checked={showFootnotes} onClick={handler} label={t('notesButton.label')}     tooltip={t('notesButton.tooltip')} />
+      <Button id="crbutton" orient="vertical" checked={showCrossRefs} onClick={handler} label={t('crossrefsButton.label')} tooltip={t('crossrefsButton.tooltip')} />
+      <Button id="dtbutton" orient="vertical" checked={showDictLinks} onClick={handler} label={t('dictButton.label')}      tooltip={t('dictButton.tooltip')} />
     </Hbox>
 
     <Spacer id="rightSpacer"  flex="72%" orient="vertical"/>
 
   </Hbox>
 
-  <Vbox flex="1">
-    <Deck id="viewport-deck" flex="1">
-
-      <Hbox className="bible" id="frameset" flex="1">{/* class (was chooser attribute) may be set to "bible", "book", or "hide" */}
-        <Vbox id="genBookChooser" pack="start" flex="1" align="end">
-          <Spacer height="36"/>
-          <Vbox id="genBookTree" flex="1">
-
-            {/* TODO: NEED TO ADD GENBOOK TREE */}
-
-          </Vbox>
-          <Spacer height="22"/>
-        </Vbox>
-        <Vbox flex="1">{ /*
-          <iframe id="main-viewport" src="../viewport/viewport.html" title="viewport" /> */}
-        </Vbox>
-      </Hbox>
-    </Deck>
-  </Vbox>
+  <Hbox flex="1">
+    <Viewport id="main-viewport"
+      book={book} chapter={chapter} verse={verse} lastverse={lastverse} handler={handleViewport}
+      tabs={tabs} modules={modules} keys={keys} numDisplayedWindows={numDisplayedWindows} />
+  </Hbox>
 
 </Vbox>)}</Translation>)
   }

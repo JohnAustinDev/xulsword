@@ -75,7 +75,7 @@ export default merge(baseConfig, {
   target: ['web', 'electron-renderer'],
 
   entry: {
-    // Entry points and output files (one for each kind of BrowserWindow)
+    // Entry points and output files (one for each html file)
     main:  entryConfig('main'),
     splash: entryConfig('splash'),
   },
@@ -84,7 +84,6 @@ export default merge(baseConfig, {
     path: webpackPaths.distRendererPath,
     publicPath: '/',
     filename: '[name].dev.js',
-    // this causes refresh errors about multiple map files: sourceMapFilename: '[name].dev.js.map',
     library: {
       type: 'umd',
     },

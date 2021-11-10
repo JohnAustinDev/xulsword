@@ -1,0 +1,291 @@
+.fn:hover #npopup,
+.un:hover #npopup,
+.sn:hover #npopup,
+.cr:hover #npopup,
+.sr:hover #npopup,
+.dtl:hover #npopup,
+.dt:hover #npopup,
+.introlink:hover #npopup,
+.noticelink:hover #npopup {
+  /* Once npopup is moved into one of these hovered elements
+  after a Javascript mouseover event, then it stays open until the  
+  element and its children are no longer hovered by the mouse. */
+  display:block;
+}
+/* Make sure these npopup styles are NOT inherited from container! */
+#npopup {
+  display:none;
+  text-align:start;
+  color:black;
+  font-weight:normal;
+  font-style:normal;
+  text-indent:0px;
+}
+.sb .hl #npopup div,
+.sb .hl #npopup span {
+  /* override a text-htm.css rule */
+  color:black;
+}
+#npopupRL {
+  /* just a relative container so that popupTX can be absolute */
+  position:relative;
+}
+#npopupTX {
+  font-size: 1.1em;
+  cursor:default;
+  padding: 10px 20px 20px 14px;
+}
+
+/* REGULAR (NON-WINDOW) POPUP STYLES */
+.text #npopup,
+#search-content #npopup {
+  z-index:100;
+  position:absolute; /* insure popup falls out of page layout */
+  height:0px;
+  overflow:visible;
+  left:30px;
+  width:100%;
+}
+body[chromedir="rtl"] .text #npopup,
+body[chromedir="rtl"] #search-content #npopup {
+  left:auto;
+  right:30px;
+}
+.nb #npopup {
+  width:100%;
+  left:40px;
+}
+body[chromedir="rtl"] .nb #npopup {
+  left:auto;
+  right:40px;
+}
+#search-content #npopup {
+  width:400px;
+}
+.text #npopup #npopupBOX,
+#search-content #npopup #npopupBOX {
+  position:absolute;
+  overflow:auto;
+  width:calc(100% - 30px);
+  max-height:300px; /* dynamic in popup.js */
+  background:rgb(245,220,255);
+  border:1px solid black;
+  border-radius:5px;
+  box-shadow: 3px 3px 5px 6px #ccc;
+  margin: 0px 20px 10px 0px;
+  
+/* Insure popup appears above the element, covering it. 
+"top" value should be in px for Javascript. */
+  top:-20px;
+  left:-20px;
+}
+.text[textdir="rtl"] #npopup #npopupBOX {
+  margin: 0px 0px 10px 20px;
+  padding: 22px 14px 20px 20px;
+  
+  left:auto;
+  right:-20px;
+}
+#search-content #npopup #npopupBOX {
+  width:100%;
+  margin:0px;
+}
+#search-content .slist > a #npopup #npopupBOX {
+  left:0px;
+}
+body[chromedir="rtl"] #search-content .slist > a #npopup #npopupBOX {
+  left:calc(40px - 100%);
+}
+/* Strong's popups are offset so that their underlying text
+can be read after the popup is open. "top" values here must
+be in px for Javascript. */
+.text .sn #npopup,
+#search-content .sn #npopup {
+  height:100px;
+}
+.text .sn #npopupRL,
+#search-content .sn #npopupRL {
+  top:-12px;
+  height:calc(100px + 12px);
+}
+.text .sn #npopup #npopupBOX,
+#search-content .sn #npopup #npopupBOX {
+  top:100px;
+}
+
+/* WINDOWED POPUP STYLES */
+body.windowedpup {
+  background:rgb(245,220,255);
+  padding:0px;
+  margin:0px;
+  overflow:auto;
+}
+#npopup[isWindow="true"] {
+  display:block;
+  margin:0px;
+  padding:0px;
+  height:100%;
+}
+#npopup[isWindow="true"] .towindow,
+#npopup[isWindow="true"] .draghandle {
+  display:none;
+}
+
+/* FOR ALL POPUPS */
+.popupheader {
+  margin:0px 0px 40px 0px;
+}
+.towindow {
+  float:left;
+  -moz-margin-end:10px;
+  background: url('chrome://xulsword/skin/images/towindow.png');
+  width: 20px;
+  height: 20px;
+}
+.towindow:hover {
+  background-position:20px;
+}
+.popupBackLink, .popupCloseLink {
+  float:left;
+  color:blue;
+  cursor:default;
+}
+.popupBackLink:hover, .popupCloseLink:hover {
+  text-decoration:underline;
+  cursor:pointer;
+}
+.draghandle {
+  cursor:move;
+  float:left;
+  position:relative;
+  top:6px;
+  -moz-margin-start:6px;
+  background-image:url('chrome://xulsword/skin/images/draghandle.png');
+  height:12px;
+  width:40px;
+}
+body[chromedir="rtl"] .towindow,
+body[chromedir="rtl"] .popupBackLink,
+body[chromedir="rtl"] .popupCloseLink,
+body[chromedir="rtl"] .draghandle {
+  float:right;
+}
+.popup-mod-select {
+  display:none;
+  float:right;
+  font-size:0.8em;
+  text-align:center;
+  padding-top:3px;
+}
+body[chromedir="rtl"] .popup-mod-select {
+  float:left;
+}
+#npopup[puptype="cr"] .popup-mod-select,
+#npopup[puptype="sr"] .popup-mod-select,
+#npopup[puptype="sn"] .popup-mod-select {
+  display:block;
+}
+.prevhtml {
+  display:none;
+}
+.popup-text {
+  width:100%;
+  clear:both;
+}
+.popup-noteAddress {
+  display:none;
+}
+
+
+/* footnote styles */
+#npopup .fntable {
+  margin:0px;
+}
+#npopup .fncol2,
+#npopup .fncol3,
+#npopup .fncol4 {
+  display:none;
+}
+
+/* Strong's numbers dictionary entry display */
+.snbut {
+  position:relative;
+  top:-9px;
+  float:right;
+  margin-top:5px;
+  margin-bottom:5px;
+  -moz-margin-start:10px;
+  -moz-margin-end:0px;
+}
+.snbut:after {
+  display:inline-block;
+  content:url(chrome://xulsword/skin/images/search.png);
+  width:30px;
+  height:18px;
+  overflow:hidden;
+  -moz-margin-start:16px;
+}
+.lemma-header {
+  font-weight:bold;
+}
+.lemma-html {
+  white-space:normal;
+}
+.lemma-sep {
+  border-top:3px solid grey;
+  margin:10px;
+}
+
+/* .strongs- classes come from TEI markup like StrongsHebrew */
+/*
+.markup-entryFree,
+.markup-foreign,
+.markup-xr
+.markup-form
+.markup-note
+.markup-pos
+.markup-gramGrp
+*/
+.markup-title {
+  display:none;
+}
+.markup-sense,
+.markup-pron,
+.markup-orth,
+.markup-orth-trans,
+.markup-entry,
+.markup-etym-note {
+  display:block;
+}
+.markup-sense {
+  -moz-padding-start:6px;
+  padding-bottom:1em;
+}
+.markup-def,
+.markup-cit {
+  font-style:italic;
+}
+.markup-usg,
+.markup-emph {
+  font-weight:bold;
+}
+.markup-quote:before,
+.markup-quote:after {
+  content:"\"";
+}
+  
+/* TEI rend attribute classes */
+.markup_bold {font-weight:bold;}
+.markup_illuminated {float: left; font-size: xx-large; padding: 4px 8px 0px 4px;}
+.markup_italic {font-style:italic;}
+.markup_line-through {text-decoration:line-through;}
+.markup_small-caps {}
+.markup_sub {vertical-align:sub; font-size:smaller;}
+.markup_super {vertical-align:super; font-size:smaller;}
+.markup_underline {text-decoration:underline;}
+.markup_normal {
+  font-style:normal;
+  font-weight:normal;
+  vertical-align:baseline;
+  font-size:medium;
+}

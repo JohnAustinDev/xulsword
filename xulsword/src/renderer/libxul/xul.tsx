@@ -22,6 +22,10 @@ export const xulDefaultProps = {
   onKeyDown: undefined,
   onFocus: undefined,
   onBlur: undefined,
+  onMouseOver: undefined,
+  onMouseOut: undefined,
+  onMouseMove: undefined,
+  onWheel: undefined,
 };
 
 // PropTypes checking for XUL attributes
@@ -45,12 +49,17 @@ export const xulPropTypes = {
   onKeyDown: PropTypes.func,
   onFocus: PropTypes.func,
   onBlur: PropTypes.func,
+  onMouseOver: PropTypes.func,
+  onMouseOut: PropTypes.func,
+  onMouseMove: PropTypes.func,
+  onWheel: PropTypes.func,
 };
 
 // IDE TypeScript checking for props
 export interface XulProps {
   align?: string | undefined;
   children?:
+    | React.ReactNode[]
     | (PropTypes.ReactElementLike | null | false)[]
     | PropTypes.ReactElementLike
     | null
@@ -72,9 +81,23 @@ export interface XulProps {
   onKeyDown?: (e: React.KeyboardEvent<any>) => void;
   onFocus?: (e: React.SyntheticEvent<any>) => void;
   onBlur?: (e: React.SyntheticEvent<any>) => void;
+  onMouseOver?: (e: React.SyntheticEvent<any>) => void;
+  onMouseOut?: (e: React.SyntheticEvent<any>) => void;
+  onMouseMove?: (e: React.SyntheticEvent<any>) => void;
+  onWheel?: (e: React.SyntheticEvent<any>) => void;
 }
 
-const events = ['onClick', 'onChange', 'onKeyDown', 'onFocus', 'onBlur'];
+const events = [
+  'onClick',
+  'onChange',
+  'onKeyDown',
+  'onFocus',
+  'onBlur',
+  'onMouseOver',
+  'onMouseOut',
+  'onMouseMove',
+  'onWheel',
+];
 const styles = ['width', 'height', 'flex'];
 const enums = ['align', 'dir', 'orient', 'pack', 'type'];
 const bools = ['checked', 'disabled', 'hidden', 'readonly'];
@@ -132,7 +155,10 @@ export const htmlAttribs = (className: string, props: any) => {
     id: props.id,
     lang: props.lang,
     className: xulClass(className, props),
-    style: xulStyle(props),
+    style: {
+      ...xulStyle(props),
+      ...props.style,
+    },
     ...xulEvents(props),
   };
 };
@@ -142,9 +168,9 @@ export const propd = (defVal: any, value: any) => {
   return value !== undefined ? value : defVal;
 };
 
-// Delay an event handler by ms milliseconds. Any previously scheduled
+// Delay an event handler by ms milliseconds and any previously scheduled
 // handler call will be cancelled if called like this:
-// delayHandler.call(this, callback, ...args)
+// delayHandler.call(this, callback, ms)
 export function delayHandler(
   this: any,
   callback: (...args: any) => void,

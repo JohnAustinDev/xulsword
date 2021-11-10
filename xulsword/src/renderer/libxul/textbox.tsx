@@ -34,7 +34,7 @@ const propTypes = {
   ...xulPropTypes,
   maxLength: PropTypes.string,
   multiline: PropTypes.bool,
-  pattern: PropTypes.string,
+  pattern: PropTypes.instanceOf(RegExp),
   readonly: PropTypes.bool,
   // eslint-disable-next-line react/forbid-prop-types
   inputRef: PropTypes.object,
@@ -48,7 +48,7 @@ const propTypes = {
 interface TextboxProps extends XulProps {
   maxLength?: string | undefined;
   multiline?: boolean;
-  pattern?: string | undefined;
+  pattern?: RegExp | undefined;
   readonly?: boolean;
   inputRef?: React.RefObject<HTMLInputElement> | undefined;
   disabled?: boolean;
@@ -109,12 +109,14 @@ class Textbox extends React.Component {
     // Test user input against props.pattern and undo mismatched changes,
     // otherwise call the parent's onChange function (using a delay
     // if props.timeout has a value).
-    const p = pattern ? new RegExp(pattern) : null;
-    if (p === null || p.test(e.target.value) || !e.target.value) {
+    if (
+      !pattern ||
+      pattern.test(e.target.value) ||
+      /^\s*$/.test(e.target.value)
+    ) {
       this.setState({ value: e.target.value });
       if (timeout && typeof onChange === 'function') {
-        const f = delayHandler.call(this, (evt) => onChange(evt), timeout);
-        f(e);
+        delayHandler.call(this, (evt) => onChange(evt), timeout)(e);
         e.stopPropagation();
       }
     } else {

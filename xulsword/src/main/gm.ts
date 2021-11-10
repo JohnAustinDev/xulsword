@@ -12,6 +12,7 @@ import {
   getModuleConfigDefault,
   getFontFaceConfigs,
 } from './config';
+import { resolveHtmlPath } from './mutil';
 import { GType, GPublic } from '../type';
 import C from '../constant';
 
@@ -35,7 +36,9 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     FontFaceConfigs: () => getFontFaceConfigs(),
     OPSYS: () => process.platform,
 
-    // getLocaleBundle: null, // defined below
+    resolveHtmlPath: (s: string) => {
+      return resolveHtmlPath(s);
+    },
 
     LibSword: LibSwordx as typeof LibSwordx,
     Prefs: Prefsx as typeof Prefsx,
@@ -172,28 +175,3 @@ function getTab() {
   throw Error(`getTab not yet implemented`);
   return null;
 }
-
-/*
-G.refs.getLocaleBundle = (locale: string, file: string) => {
-  const locpath = path.join(
-    Dirsx.path.xsAsset,
-    'locales',
-    Prefsx.getCharPref(C.LOCALEPREF),
-    file
-  );
-  const raw = fs.readFileSync(locpath);
-  let data;
-  if (raw && raw.length) {
-    const json = JSON.parse(raw.toString());
-    if (json && typeof json === 'object') {
-      data = json;
-    } else {
-      throw Error(`failed to parse ${file} at ${locpath}`);
-    }
-  } else {
-    throw Error(`failed to read ${file} at ${locpath}`);
-  }
-
-  return data;
-};
-*/

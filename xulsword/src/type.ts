@@ -105,7 +105,7 @@ export const GPublic = {
   OPSYS: 'readonly',
 
   // Global functions
-  // getLocaleBundle: func as unknown,
+  resolveHtmlPath: func as unknown,
 
   // Global objects with methods and/or data
   Prefs: PrefsPublic,
@@ -126,7 +126,7 @@ export interface GType {
 
   OPSYS: 'string';
 
-  // getLocaleBundle: (locale: string, file: string) => { [i: string]: any };
+  resolveHtmlPath: (htmlfile: string) => string;
 
   Prefs: typeof PrefsPublic;
   LibSword: typeof LibSwordPublic;

@@ -9,7 +9,7 @@ const LibSword: LibSwordClass = {
   },
 
   getMaxChapter(modname, vkeytext) {
-    return 99;
+    return 15;
   },
 
   getMaxVerse(modname, vkeytext) {

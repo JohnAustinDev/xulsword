@@ -5,6 +5,7 @@ import { render } from 'react-dom';
 import { jsdump } from '../rutil';
 import i18nInit from '../i18n';
 import { Xulsword, loadedXUL, unloadXUL } from './xulsword';
+import '../global-htm.css';
 
 i18nInit(['xulsword']).then(() =>
 render(
