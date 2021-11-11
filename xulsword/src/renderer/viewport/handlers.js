@@ -1,13 +1,11 @@
-import G from '../gr';
-
 export default function viewportHandler(e, ...args) {
-  const ctClass = e.currentTarget.classList;
+  const clist = e.currentTarget.classList;
   switch (e.type) {
     case 'click': {
       e.stopPropagation();
-      if (ctClass.contains('open-chooser')) {
+      if (clist.contains('open-chooser')) {
         this.setState({ showChooser: true });
-      } else if (ctClass.contains('close-chooser')) {
+      } else if (clist.contains('close-chooser')) {
         this.setState({ showChooser: false });
       } else {
         throw Error(

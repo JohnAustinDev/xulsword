@@ -67,6 +67,7 @@ const C = {
 
   NumOT: 39,
   NumNT: 27,
+  BOOKGROUPS: ['ot', 'nt'],
   NW: 3, // max number of text windows a single viewport supports
 
   // scrolling

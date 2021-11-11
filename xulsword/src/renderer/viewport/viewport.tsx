@@ -17,6 +17,7 @@ import {
   xulDefaultProps,
   xulPropTypes,
   XulProps,
+  delayHandler,
 } from '../libxul/xul';
 import viewportHandler from './handlers';
 import '../libxul/xul.css';
@@ -78,6 +79,8 @@ interface ViewportState {
   noteBoxHeight: number[];
   maximizeNoteBox: boolean[];
   showChooser: boolean;
+
+  chooserReset: number;
 }
 
 class Viewport extends React.Component {
@@ -95,7 +98,15 @@ class Viewport extends React.Component {
       noteBoxHeight: [200, 200, 200], // Should scale to screen??
       maximizeNoteBox: [false, false, false],
       showChooser: true,
+
+      chooserReset: 0,
     };
+
+    window.ipc.renderer.on('resize', delayHandler.call(this, () => {
+      this.setState((prevState: ViewportState) => {
+        return { chooserReset: prevState.chooserReset + 1};
+      });
+    }, 500));
 
     this.handler = viewportHandler.bind(this);
   }
@@ -105,10 +116,10 @@ class Viewport extends React.Component {
     const props = this.props as ViewportProps;
     const state = this.state as ViewportState;
     const { book, modules, ownWindow } = this.props as ViewportProps;
-    const { showChooser, showOriginal } = this.state as ViewportState;
+    const { showChooser, showOriginal, chooserReset } = this.state as ViewportState;
 
     const chooserType = 'bible'; // G.Tab[modules[0]].modType === C.GENBOOK ? 'genbook' : 'bible';
-    const chooserBooks = getAvailableBooks(modules[0]);
+    const availableBooks = getAvailableBooks(modules[0]);
     const classes = [
       'viewport',
       !showChooser ? 'chooser-hidden' : '',
@@ -124,8 +135,8 @@ class Viewport extends React.Component {
   }
 
   {state.showChooser && !props.ownWindow &&
-    <Chooser key={book} type={chooserType} selection={book} headingsModule={modules[0]}
-      versification="KJV" availableBooks={chooserBooks} handler={this.handler} onClick={props.handler}/>
+    <Chooser key={`${book}${chooserReset}`} type={chooserType} selection={book} headingsModule={modules[0]}
+      versification="KJV" availableBooks={availableBooks} handler={this.handler} onClick={props.handler}/>
   }
 
   <Hbox flex="1"/>

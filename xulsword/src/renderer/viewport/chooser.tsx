@@ -13,7 +13,12 @@ import path from 'path';
 import G from '../gr';
 import C from '../../constant';
 import { Hbox, Vbox } from '../libxul/boxes';
-import { dString, findBookGroup, findBookNum } from '../../common';
+import {
+  bookGroupLength,
+  dString,
+  findBookGroup,
+  findBookNum,
+} from '../../common';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -28,8 +33,10 @@ import './chooser.css';
 const defaultProps = {
   ...xulDefaultProps,
   availableBooks: ['Gen'],
+  bookGroups: ['ot', 'nt'],
   handler: undefined,
   headingsModule: undefined,
+  hideUnavailableBooks: false,
   selection: 'Gen',
   type: 'bible',
   versification: 'KJV',
@@ -38,8 +45,10 @@ const defaultProps = {
 const propTypes = {
   ...xulPropTypes,
   availableBooks: PropTypes.arrayOf(PropTypes.string),
+  bookGroups: PropTypes.arrayOf(PropTypes.string),
   handler: PropTypes.func,
   headingsModule: PropTypes.string,
+  hideUnavailableBooks: PropTypes.bool,
   selection: PropTypes.string,
   type: PropTypes.oneOf(['genbook', 'bible']),
   versification: PropTypes.string,
@@ -47,8 +56,10 @@ const propTypes = {
 
 interface ChooserProps extends XulProps {
   availableBooks: string[];
+  bookGroups: string[];
   handler: (e: any) => void;
   headingsModule: string | undefined;
+  hideUnavailableBooks: boolean;
   selection: string;
   type: string;
   versification: string;
@@ -59,7 +70,7 @@ interface ChooserState {
   slideIndex: { [i: string]: number };
 }
 
-const slideSpeed = 50;
+const slideSpeed = 65;
 
 class Chooser extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -70,30 +81,47 @@ class Chooser extends React.Component {
 
   slideInterval: undefined | NodeJS.Timeout;
 
+  // Slide-scrolling cannot begin until after the first update because
+  // layout dimensions must be known. Therefore, the following values
+  // cannot be accessed until slideReady is set to true at the end of
+  // updateDimensionVars().
   rowHeight: number;
 
   chooserHeight: number;
 
+  sliderHeight: { [i: string]: number };
+
+  slideReady: boolean;
+
   constructor(props: ChooserProps) {
     super(props);
 
+    const bg = findBookGroup(G, props.selection)?.group;
+    const si: any = {};
+    props.bookGroups.forEach((g) => {
+      si[g] = 0;
+    });
+
     this.state = {
-      bookGroup: findBookGroup(G, props.selection) || 'nt',
-      slideIndex: {
-        ot: 0,
-        nt: 0,
-      },
+      bookGroup: bg && props.bookGroups.includes(bg) ? bg : props.bookGroups[0],
+      slideIndex: si,
     };
+
+    this.slideReady = false;
 
     setTimeout(() => {
       this.startSlidingUp(null, 1, props.selection);
     }, 0);
 
-    // this.chooserElem; can't be set until componentDidUpdate()
     this.rowHeight = 0;
     this.chooserHeight = 0;
+    const sh: any = {};
+    props.bookGroups.forEach((g) => {
+      sh[g] = 0;
+    });
+    this.sliderHeight = sh;
 
-    this.testamentMouseOver = this.testamentMouseOver.bind(this);
+    this.groupBarMouseOver = this.groupBarMouseOver.bind(this);
     this.startSlidingUp = this.startSlidingUp.bind(this);
     this.startSlidingDown = this.startSlidingDown.bind(this);
     this.stopSliding = this.stopSliding.bind(this);
@@ -101,65 +129,83 @@ class Chooser extends React.Component {
     this.slideDown = this.slideDown.bind(this);
     this.checkScroll = this.checkScroll.bind(this);
     this.onWheel = this.onWheel.bind(this);
+    this.updateDimensionVars = this.updateDimensionVars.bind(this);
+  }
+
+  componentDidMount() {
+    this.updateDimensionVars();
   }
 
   componentDidUpdate() {
-    const { id } = this.props as ChooserProps;
+    this.updateDimensionVars();
+  }
+
+  updateDimensionVars = () => {
+    const { id, bookGroups } = this.props as ChooserProps;
+    const { bookGroup } = this.state as ChooserState;
     const chooser = id
       ? document.getElementById(id)
       : document.getElementsByClassName('chooser')[0];
     const container = chooser?.getElementsByClassName('container')[0];
-    const sizer = container?.getElementsByClassName('sizer-nt')[0];
-    if (!container || !sizer) return;
-
+    const sliders: any = {};
+    bookGroups.forEach((bg) => {
+      sliders[bg] = container?.getElementsByClassName(`slider_${bg}`)[0];
+    });
+    const book = sliders[bookGroup]?.getElementsByClassName('bookname')[0];
+    if (!container || !book) return;
     this.chooserHeight = container.clientHeight;
-    const book = sizer?.getElementsByClassName('bookname')[0];
-    if (!book) return;
-    this.rowHeight = book.clientHeight;
-  }
+    this.rowHeight = book.clientHeight + 2; // 2px for the margin between rows
+    bookGroups.forEach((bg) => {
+      this.sliderHeight[bg] = sliders[bg].clientHeight;
+    });
+    this.slideReady = true;
+  };
 
-  testamentMouseOver = (e: any) => {
-    let bookGroup: string;
-    if (e.target.classList.contains('tbot')) bookGroup = 'ot';
-    else if (e.target.classList.contains('tbnt')) bookGroup = 'nt';
-    else return;
-    if (this.state === bookGroup) return;
+  groupBarMouseOver = (e: any) => {
+    const { bookGroups } = this.props as ChooserProps;
+    const bg = e.target.className.match(/\bbar_(.+?)\b/);
+    if (!bg || !bookGroups.includes(bg[1])) return;
+    if (this.state === bg[1]) return;
     delayHandler.call(
       this,
       () => {
-        this.setState({ bookGroup });
+        this.setState({ bookGroup: bg[1] });
       },
       300
     )(e);
   };
 
   checkScroll = (e: any) => {
-    const scrollMargin = 2;
+    if (!this.slideReady) return;
+    const scrollMargin = 2; // mouse can be this close to top/bottom before scrolling
     const { bookGroup, slideIndex } = this.state as ChooserState;
-    const targ = e.currentTarget.className.match(/bb_(\d+)\b/);
-    if (targ === null) return;
-    const over = Number(targ[1]) - (bookGroup === 'nt' ? C.NumOT : 0);
+    const bookname = e.currentTarget.className.match(/\bbookname_([\w\d]+)\b/);
+    if (bookname === null) return;
+    const index = findBookGroup(G, bookname[1])?.index;
+    if (index === null || index === undefined) return;
     const numSliderRows = Math.round(this.chooserHeight / this.rowHeight);
     const downScroller = slideIndex[bookGroup] + scrollMargin;
     const upScroller = slideIndex[bookGroup] + numSliderRows - scrollMargin;
-    if (over <= downScroller) this.startSlidingDown(e, 100);
-    else if (over >= upScroller) this.startSlidingUp(e, 100);
+    if (index <= downScroller) this.startSlidingDown(e, slideSpeed);
+    else if (index >= upScroller) this.startSlidingUp(e, slideSpeed);
     else this.stopSliding();
   };
 
   onWheel = (e: any) => {
-    if (e.deltaY < 0) this.slideDown(Math.round((-1 * e.deltaY) / 50));
-    else if (e.deltaY > 0) this.slideUp(Math.round(e.deltaY / 50));
+    const wheelD = Math.round(e.deltaY / 50);
+    if (Math.abs(wheelD) > 5) return;
+    if (e.deltaY < 0) this.slideDown(-1 * wheelD);
+    else if (e.deltaY > 0) this.slideUp(wheelD);
   };
 
-  startSlidingUp = (_e: any, speed = slideSpeed, showBook?: string) => {
+  startSlidingUp = (_e: any, speed: number, showBook?: string) => {
     if (this.slideInterval) return;
     this.slideInterval = setInterval(() => {
       this.slideUp(1, showBook);
     }, speed);
   };
 
-  startSlidingDown = (_e: any, speed = slideSpeed) => {
+  startSlidingDown = (_e: any, speed: number) => {
     if (this.slideInterval) return;
     this.slideInterval = setInterval(() => {
       this.slideDown();
@@ -172,17 +218,16 @@ class Chooser extends React.Component {
   };
 
   slideUp = (x = 1, showBook?: string) => {
+    if (!this.slideReady) return;
     const { bookGroup, slideIndex } = this.state as ChooserState;
-    let numBooksInList;
-    if (bookGroup === 'ot') numBooksInList = C.NumOT;
-    else if (bookGroup === 'nt') numBooksInList = C.NumNT;
-    else return;
+    const numBooksInList = Math.round(
+      this.sliderHeight[bookGroup] / this.rowHeight
+    );
 
     // If showBook is set and the book is visible, then stop.
-    if (showBook && findBookGroup(G, showBook) === bookGroup) {
-      let n = findBookNum(G, showBook);
-      if (n !== null) {
-        n -= bookGroup === 'nt' ? C.NumOT : 0;
+    if (showBook && findBookGroup(G, showBook)?.group === bookGroup) {
+      const n = findBookGroup(G, showBook)?.index;
+      if (n !== undefined && n !== null) {
         const c = n - Math.round(this.chooserHeight / this.rowHeight) + 3;
         if (slideIndex[bookGroup] >= c) {
           this.stopSliding();
@@ -204,8 +249,8 @@ class Chooser extends React.Component {
   };
 
   slideDown = (x = 1) => {
+    if (!this.slideReady) return;
     const { bookGroup, slideIndex } = this.state as ChooserState;
-    if (bookGroup !== 'ot' && bookGroup !== 'nt') return;
 
     if (slideIndex[bookGroup] === 0) {
       this.stopSliding();
@@ -218,8 +263,9 @@ class Chooser extends React.Component {
     });
   };
 
-  testamentButton = (tkey: string): React.ReactNode[] => {
-    const name = i18next.exists(tkey) ? i18next.t(tkey) : '';
+  groupBarLabel = (bookGroup: string): React.ReactNode[] => {
+    const tkey = `${bookGroup.toUpperCase()}text`;
+    const name = i18next.exists(tkey) ? i18next.t(tkey) : bookGroup;
     if (/^\s*$/.test(name)) {
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
       const src = path.join(G.Dirs.path.xsAsset, `${tkey}_${lng}.png`);
@@ -227,30 +273,30 @@ class Chooser extends React.Component {
     }
     return [...name].map((l, i) => {
       // eslint-disable-next-line react/no-array-index-key
-      return <div key={`tb${i}`}>{l}</div>;
+      return <div key={`gbl_${i}`}>{l}</div>;
     });
   };
 
-  chapterMenu = (b: number) => {
+  chapterMenu = (book: string) => {
     const { versification } = this.props as ChooserProps;
 
-    const k = `${versification}_${b}`;
+    const k = `${versification}_${book}`;
     if (Chooser.cache[k]) return Chooser.cache[k];
 
     const elements = [];
     let ch = 1;
     // getMaxChapter should take a v11n! Until then must use KJV
-    const lastch = G.LibSword.getMaxChapter(versification, G.Book[b].sName);
+    const lastch = G.LibSword.getMaxChapter(versification, book);
     for (let row = 1; row <= 1 + lastch / 10; row += 1) {
       const cells = [];
-      let key = `${versification}${b}`;
+      let key = `${versification}_${book}`;
       for (let col = 1; col <= 10; col += 1) {
-        key = `${versification}${b}${ch}`;
+        key = `${versification}_${book}_${ch}`;
         if (ch <= lastch) {
           cells.push(
             <div
               key={`1${key}`}
-              className={`chaptermenucell cs-Program chmc_${b}_${ch}`}
+              className={`chaptermenucell cs-Program chmc_${book}_${ch}`}
             >
               {dString(ch)}
             </div>
@@ -272,40 +318,44 @@ class Chooser extends React.Component {
     return Chooser.cache[k];
   };
 
-  bookGroupButtons = (
-    group: string,
+  bookGroupList = (
+    bookGroup: string,
     selBook?: string,
     availBooks?: string[]
   ): React.ReactNode[] => {
-    const start = group === 'ot' ? 0 : C.NumOT;
-    const end = group === 'ot' ? C.NumOT : G.Book.length;
+    const { hideUnavailableBooks } = this.props as ChooserProps;
+    const unavailable = hideUnavailableBooks ? 'hidden' : 'disabled';
     const books = [];
-    for (let b = start; b < end; b += 1) {
+    for (let i = 0; i < bookGroupLength(bookGroup); i += 1) {
       const type =
-        selBook === undefined && availBooks === undefined ? 'sizer' : 'bb';
+        selBook === undefined && availBooks === undefined
+          ? 'sizer'
+          : 'bookname';
 
+      const b = findBookNum(G, bookGroup, i);
+      if (b === null) break;
       const bk = G.Book[b];
       const classes = [
         'bookname',
-        `${type}_${b}`,
+        `${type}_${bk.sName}`,
         selBook && bk.sName === selBook ? 'selected' : '',
-        availBooks && !availBooks.includes(bk.sName) ? 'disabled' : '',
+        availBooks && !availBooks.includes(bk.sName) ? unavailable : '',
       ];
 
       books.push(
         <div
-          key={`${type}_${b}`}
+          key={`${type}_${bookGroup}_${i}`}
           className={classes.filter(Boolean).join(' ')}
           onMouseMove={this.checkScroll}
         >
           <div>
             <div>
               {bk.bName}
-              {type === 'bb' && (
+              {type === 'bookname' && (
                 <>
                   <div className="charrow" />
-                  <div id={`chmenu_${b}`} className="chaptermenu">
-                    {this.chapterMenu(b)}
+                  <div id={`chmenu_${bookGroup}_${i}`} className="chaptermenu">
+                    {this.chapterMenu(bk.sName)}
                   </div>
                 </>
               )}
@@ -321,51 +371,55 @@ class Chooser extends React.Component {
     const props = this.props as ChooserProps;
     const { availableBooks, selection, type } = this.props as ChooserProps;
     const { bookGroup, slideIndex } = this.state as ChooserState;
+    const rowHeight = this.slideReady ? this.rowHeight : 0;
     return (
       <div {...htmlAttribs(`chooser ${type}`, this.props)}>
         <Vbox height="100%">
           <Hbox height="20px" className="fadetop" />
           <Hbox flex="5" className={`container ${bookGroup}`}>
-            <Vbox className="testament-buttons" width="22px">
-              <Vbox
-                className="tbot"
-                flex="50%"
-                pack="center"
-                align="center"
-                onMouseOver={this.testamentMouseOver}
-              >
-                <div className="close-chooser" onClick={props.handler} />
-                {this.testamentButton('OTtext')}
-              </Vbox>
-              <Vbox
-                className="tbnt"
-                flex="50%"
-                pack="center"
-                align="center"
-                onMouseOver={this.testamentMouseOver}
-              >
-                {this.testamentButton('NTtext')}
-              </Vbox>
+            <div className="close-chooser" onClick={props.handler} />
+            <Vbox width="26px">
+              {props.bookGroups.map((bg) => {
+                const selected = bg === bookGroup ? 'selected' : '';
+                return (
+                  <Vbox
+                    key={`bar_${bg}`}
+                    className={`bar bar_${bg} ${selected}`}
+                    flex="50%"
+                    pack="center"
+                    align="center"
+                    onMouseOver={this.groupBarMouseOver}
+                  >
+                    {this.groupBarLabel(bg)}
+                  </Vbox>
+                );
+              })}
             </Vbox>
             {/* The book-list contains multiple panels which are absolutely positioned
             allowing them to occupy the same space but with different top offsets. Absolute
             positioning requires duplicate content placement in order to size the panel
-            container. */}
+            container's width.
+                Using absolutely positioned top and bottom slider scroll detection areas
+            hides the underlying bookname entries from mouse events, so that method was
+            ditched. Instead the checkScroll method is being used. */}
             <Vbox className="book-list" onWheel={this.onWheel}>
-              <Vbox className="sizer-ot">{this.bookGroupButtons('ot')}</Vbox>
-              <Vbox className="sizer-nt">{this.bookGroupButtons('nt')}</Vbox>
-              <Vbox
-                className="bbot"
-                style={{ top: `${-1 * slideIndex.ot * this.rowHeight}px` }}
-              >
-                {this.bookGroupButtons('ot', selection, availableBooks)}
+              <Vbox className="width-sizer">
+                {props.bookGroups.map((bg) => {
+                  return this.bookGroupList(bg);
+                })}
               </Vbox>
-              <Vbox
-                className="bbnt"
-                style={{ top: `${-1 * slideIndex.nt * this.rowHeight}px` }}
-              >
-                {this.bookGroupButtons('nt', selection, availableBooks)}
-              </Vbox>
+              {props.bookGroups.map((bg) => {
+                const selected = bg === bookGroup ? 'selected' : '';
+                return (
+                  <Vbox
+                    key={`slider_${bg}`}
+                    className={`slider slider_${bg} ${selected}`}
+                    style={{ top: `${-1 * slideIndex[bg] * rowHeight}px` }}
+                  >
+                    {this.bookGroupList(bg, selection, availableBooks)}
+                  </Vbox>
+                );
+              })}
             </Vbox>
           </Hbox>
           <Hbox flex="1" className="fadebot" />

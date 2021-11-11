@@ -1,9 +1,9 @@
 .chooser .fadetop,
 .chooser .fadebot {
-  position:relative; /* get z-index to work */
-  background:url(../images/b2.gif) repeat;
-  opacity:0.5;
-  z-index:30;
+  position: relative; /* get z-index to work */
+  background: url(../images/b2.gif) repeat;
+  opacity: 0.7;
+  z-index: 30;
 }
 .chooser .fadetop {
   background-position: 0px 40px;
@@ -12,65 +12,64 @@
   background-position: 0px 0px;
 }
 
+.chooser {
+  font-size: 15px;
+}
 .chooser .container {
-  position:relative;
-  margin-inline-start:10px;
-  padding:6px 6px 6px 3px;
-  border-inline-start:2px solid rgb(175,145,180);
-  border-top:2px solid rgb(175,145,180);
-  border-inline-end:2px solid rgb(225,195,230);
-  border-bottom:2px solid rgb(225,195,230);
-  border-radius:8px;
-  background:white;
-  cursor:pointer;
+  position: relative;
+  margin-inline-start: 10px;
+  padding: 6px 6px 6px 3px;
+  border-inline-start: 2px solid rgb(175, 145, 180);
+  border-top: 2px solid rgb(175, 145, 180);
+  border-inline-end: 2px solid rgb(225, 195, 230);
+  border-bottom: 2px solid rgb(225, 195, 230);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
   flex-shrink: 1;
 }
 
-.chooser .testaments {
-  border-spacing:2px;
+.chooser .bar {
+  position: relative;
+  color: rgb(0, 0, 100);
+  background: rgb(233, 233, 233);
+  border: 1px outset rgb(200, 200, 200);
+  font-size: inherit;
+  text-align: center;
+  margin: 1px 2px;
 }
-.chooser .testaments > div > div {
-  position:relative;
-  color:rgb(0,0,100);
-  background:rgb(233,233,233);
-  border:1px outset rgb(200,200,200);
-  font-size:1.2em;
-  text-align:center;
-}
-.chooser .container.ot .tbot {
-  background:rgb(230,200,255);
-}
-.chooser .container.nt .tbnt {
-  background:rgb(230,200,255);
-}
-.chooser .tbot {
+.chooser .bar:first-child {
   border-top-left-radius: 8px;
-  padding:26px 0px 8px 0px;
+  padding: 26px 0px 8px 0px;
 }
-.chooser .tbnt {
+.chooser .bar:last-child {
   border-bottom-left-radius: 8px;
-  padding:8px 0px 8px 0px;
+  padding: 8px 0px 8px 0px;
 }
-body.chromedir-rtl .chooser .tbot {
+body.chromedir-rtl .chooser .bar:first-child {
   border-top-right-radius: 8px;
 }
-body.chromedir-rtl .chooser .tbnt {
+body.chromedir-rtl .chooser .bar:last-child {
   border-bottom-right-radius: 8px;
 }
+.chooser .container .bar.selected {
+  background: rgb(230, 200, 255);
+}
 .chooser .close-chooser {
-  background:url(../images/close0.png);
-  width:15px;
-  height:15px;
-  position:absolute;
-  top:8px;
-  left:3px;
+  position: absolute;
+  background: url(../images/close0.png);
+  width: 15px;
+  height: 15px;
+  top: 13px;
+  left: 9px;
+  z-index: 50;
 }
 body.chromedir-rtl .chooser .close-chooser {
-  left:auto;
-  right:11px;
+  left: auto;
+  right: 11px;
 }
 .chooser .close-chooser:hover {
-  background:url(../images/close1.png);
+  background: url(../images/close1.png);
 }
 
 .chooser .book-list {
@@ -79,115 +78,97 @@ body.chromedir-rtl .chooser .close-chooser {
 .chooser .book-list > div {
   width: 100%;
 }
-.chooser .sizer-ot,
-.chooser .sizer-nt {
-  visibility: hidden;
+.chooser .width-sizer {
   padding-inline-end: 10px;
-}
-.chooser .sizer-nt {
-  flex-basis: 0px;
-  overflow: hidden;
-}
-.chooser .sizer-ot .bookname {
   height: 0px;
+  overflow-y: hidden;
 }
-.chooser .bbot,
-.chooser .bbnt {
+.chooser .slider {
   position: absolute;
+  background: rgb(255, 230, 255);
+  border: 1px outset rgb(200, 200, 200);
+  padding: 1px 0px 1px 0px;
+  border-inline-start: 1px solid rgb(150, 150, 150);
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
-.chooser .biblebooks {
-  display:table;
-  visibility:hidden;
-  border-spacing:2px;
-  position:absolute;
-  top:8px;
-  left:33px;
-  background:rgb(255,230,255);
-  border:1px outset rgb(200,200,200);
-  padding:1px 0px 1px 0px;
-  -moz-border-start:1px solid rgb(150,150,150);
-  border-top-right-radius:8px;
-  border-bottom-right-radius:8px;
+.chooser .slider:not(.selected) {
+  visibility: hidden;
 }
-body.chromedir-rtl .chooser .biblebooks {
-  left:auto;
-  right:28px;
-  border-top-left-radius:8px;
-  border-bottom-left-radius:8px;
+body.chromedir-rtl .chooser .slider {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
 }
 .chooser .bookname {
-  color:rgb(0,0,100);
+  color: rgb(0, 0, 100);
+  margin: 1px;
 }
 .chooser .bookname.hidden {
-  display:none;
-}
-.chooser .container.ot .bbnt .bookname,
-.chooser .container.nt .bbot .bookname {
   display: none;
 }
 .chooser .bookname > div {
-  vertical-align:middle;
-  background:rgb(233,233,233);
-  border:1px outset black;
-  padding-top:2px;
-  padding-bottom:2px;
-  -moz-padding-start:10px;
-  -moz-padding-end:2px;
-  border-radius:6px;
+  vertical-align: middle;
+  background: rgb(233, 233, 233);
+  border: 1px outset black;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-inline-start: 10px;
+  padding-inline-end: 2px;
+  border-radius: 6px;
 }
 .chooser .bookname.selected > div {
-  background:rgb(230,200,255);
+  background: rgb(230, 200, 255);
 }
 .chooser .bookname > div:hover {
-  background:yellow;
+  background: yellow;
 }
 .chooser .bookname.disabled > div {
-  background:rgb(225,225,225);
-  color:rgb(160,160,160);
-  border:1px inset black;
-  cursor:default;
+  background: rgb(225, 225, 225);
+  color: rgb(160, 160, 160);
+  border: 1px inset black;
+  cursor: default;
 }
 .chooser .bookname > div > div {
-  position:relative;
-  white-space:nowrap;
-  font-size:1.2em;
-  -moz-padding-end:20px;
+  position: relative;
+  white-space: nowrap;
+  font-size: inherit;
+  padding-inline-end: 20px;
 }
 .chooser .bookname.hasAudo > div > div {
-  -moz-padding-end:40px;
+  padding-inline-end: 40px;
 }
 .chooser .bookname.hasAudo > div > div:after {
-  position:absolute;
-  right:22px;
-  top:2px;
-  content:url('../images/listen-small.png');
-  opacity:0.6;
-  width:15px;
-  height:13px;
+  position: absolute;
+  right: 22px;
+  top: 2px;
+  content: url('../images/listen-small.png');
+  opacity: 0.6;
+  width: 15px;
+  height: 13px;
 }
 body.chromedir-rtl .chooser .bookname.hasAudo > div > div:after {
-  right:auto;
-  left:22px;
+  right: auto;
+  left: 22px;
 }
 .chooser .charrow {
-  position:absolute;
-  display:inline-block;
-  top:1px;
-  right:2px;
-  background:url(../images/arrow.png);
-  width:15px;
-  height:12px;
+  position: absolute;
+  display: inline-block;
+  top: 1px;
+  right: 2px;
+  background: url(../images/arrow.png);
+  width: 15px;
+  height: 12px;
 }
 body.chromedir-rtl .chooser .charrow {
-  right:auto;
-  left:2px;
-  background:url(../images/arrow-rtl.png);
+  right: auto;
+  left: 2px;
+  background: url(../images/arrow-rtl.png);
 }
-.chooser .charrow:hover {
-  background:url(../images/arrow2.png);
+.chooser .bookname:hover .charrow {
+  background: url(../images/arrow2.png);
 }
-body.chromedir-rtl .chooser .charrow:hover {
-  background:url(../images/arrow2-rtl.png);
+body.chromedir-rtl .chooser .bookname:hover .charrow {
+  background: url(../images/arrow2-rtl.png);
 }
 
 .chooser .chaptermenu {
@@ -210,22 +191,22 @@ body.chromedir-rtl .chooser .chaptermenu {
   visibility: visible;
 }
 .chooser .chaptermenurow {
-  display:table-row;
-  background:transparent;
+  display: table-row;
+  background: transparent;
 }
 .chooser .chaptermenucell {
   display: table-cell;
   width: 26px;
-  font-size: 13px;
+  font-size: inherit;
   text-align: center;
-  background: rgb(233,233,233);
-  border: 1px outset rgb(255,243,255);
+  background: rgb(233, 233, 233);
+  border: 1px outset rgb(255, 243, 255);
   color: blue;
   padding: 2px;
 }
 .chooser .chaptermenucell:hover {
   background: yellow;
-  border: 1px inset rgb(255,243,255);
+  border: 1px inset rgb(255, 243, 255);
 }
 .chooser .chaptermenucell.hasAudio:after {
   margin-inline-start: 2px;
@@ -245,13 +226,13 @@ body.chromedir-rtl .chooser .chaptermenu {
   min-width: 100%;
   visibility: hidden;
   white-space: nowrap;
-  font-size: 14px;
-  -moz-padding-start: 20px;
-  -moz-padding-end: 20px;
+  font-size: inherit;
+  padding-inline-start: 20px;
+  padding-inline-end: 20px;
   padding-top: 10px;
   padding-bottom: 10px;
   border: 1px outset black;
-  background: rgb(233,233,233);
+  background: rgb(233, 233, 233);
   color: blue;
   box-shadow: 2px 2px 3px 2px #bbb;
   border-radius: 6px;
@@ -261,7 +242,7 @@ body.chromedir-rtl .chooser .chaptermenu {
   color: blue;
 }
 .chooser .heading-link:hover {
-  text-decoration:underline;
+  text-decoration: underline;
   color: blue;
   cursor: pointer;
 }

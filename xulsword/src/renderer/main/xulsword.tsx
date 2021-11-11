@@ -39,12 +39,11 @@ interface XulswordState {
   keys: string[],
 
   numDisplayedWindows: number,
+
+  bsreset: number, // increment this to re-instantiate the Bookselect
 }
 
 export class Xulsword extends React.Component {
-
-  bsreset: number;
-
   handler: any;
 
   handleViewport: any;
@@ -68,9 +67,9 @@ export class Xulsword extends React.Component {
       keys: [null, null, null],
 
       numDisplayedWindows: 3,
-    };
 
-    this.bsreset = 0; // increment this to reset the Bookselect on next render
+      bsreset: 0,
+    };
 
     this.handler = xulswordHandler.bind(this);
     this.handleViewport = handleVP.bind(this);
@@ -81,10 +80,11 @@ export class Xulsword extends React.Component {
     const {
         book, chapter, verse, lastverse,
         showHeadings, showFootnotes, showCrossRefs, showDictLinks,
-        searchDisabled, tabs, modules, keys, numDisplayedWindows
+        searchDisabled, tabs, modules, keys, numDisplayedWindows,
+        bsreset
     } = this.state as XulswordState;
 
-    const { bsreset, handler, handleViewport } = this;
+    const { handler, handleViewport } = this;
 
     return (<Translation>{(t) => (
 <Vbox className="hasBible" id="topbox" pack="start" height="100%">

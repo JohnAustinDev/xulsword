@@ -150,23 +150,81 @@ export function getElementInfo(
   return r;
 }
 
-// Returns the number of a given book code or null if none was found.
-export function findBookNum(G: GType, code: string | null): number | null {
+export function bookGroupLength(bookGroup: string) {
+  if (bookGroup === 'ot') return 39;
+  if (bookGroup === 'nt') return 27;
+  return 0;
+}
+
+export function firstIndexOfBookGroup(bookGroup: string) {
+  let i = 0;
+  for (let x = 0; x < C.BOOKGROUPS.length; x += 1) {
+    if (bookGroup === C.BOOKGROUPS[x]) break;
+    i += bookGroupLength(C.BOOKGROUPS[x]);
+  }
+  return i;
+}
+
+// Returns the index number of a book or null if none was found.
+// The book may be specified by an OSIS book code, or else by
+// a bookGroup code and index number within that bookGroup.
+export function findBookNum(
+  G: GType,
+  code: string | null,
+  n?: number
+): number | null {
   let retv = null;
-  for (let b = 0; typeof G.Book !== 'undefined' && b < G.Book.length; b += 1) {
-    if (G.Book[b].sName === code) {
-      retv = b;
+  if (
+    code &&
+    C.BOOKGROUPS.includes(code) &&
+    n !== undefined &&
+    Number.isInteger(n)
+  ) {
+    if (n >= bookGroupLength(code)) {
+      return null;
+    }
+    retv = 0;
+    for (let x = 0; x < C.BOOKGROUPS.length; x += 1) {
+      if (C.BOOKGROUPS[x] === code) {
+        retv += n;
+        break;
+      }
+      retv += bookGroupLength(C.BOOKGROUPS[x]);
+    }
+  } else {
+    for (
+      let b = 0;
+      typeof G.Book !== 'undefined' && b < G.Book.length;
+      b += 1
+    ) {
+      if (G.Book[b].sName === code) {
+        retv = b;
+      }
     }
   }
+
   return retv;
 }
 
-// Returns the book group of a given book code
-export function findBookGroup(G: GType, code: string): string | null {
+// Returns the bookGroup and bookGroup index of a given book code
+export function findBookGroup(
+  G: GType,
+  code: string
+): { group: string; index: number } | null {
   const i = findBookNum(G, code);
   if (i === null) return null;
-  if (i >= 0 && i < C.NumOT ) return 'ot';
-  if (i >= C.NumOT && i < C.NumOT + C.NumNT) return 'nt';
+
+  const r = { group: '', index: -1 };
+  let ileft = i;
+  for (let x = 0; x < C.BOOKGROUPS.length; x += 1) {
+    const bgl = bookGroupLength(C.BOOKGROUPS[x]);
+    r.group = C.BOOKGROUPS[x];
+    if (ileft < bgl) {
+      r.index = ileft;
+      return r;
+    }
+    ileft -= bgl;
+  }
   return null;
 }
 

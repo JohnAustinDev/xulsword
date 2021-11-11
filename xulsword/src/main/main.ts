@@ -122,6 +122,11 @@ const createWindow = (
     }
   });
 
+  newWindow.on('resize', () => {
+    const size = newWindow.getSize();
+    newWindow.webContents.send('resize', size);
+  });
+
   return newWindow;
 };
 
@@ -157,10 +162,6 @@ const openMainWindow = () => {
   if (mainWindow === null) {
     return null;
   }
-
-  mainWindow.on('resize', () => {
-    if (mainWindow !== null) mainWindow.webContents.send('resize');
-  });
 
   mainWindow.on('close', () => {
     if (mainWindow !== null) mainWindow.webContents.send('close');

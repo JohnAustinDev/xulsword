@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 import { jsdump, parseLocation } from '../rutil';
 import G from '../gr';
+import { firstIndexOfBookGroup } from '../../common';
 
 export function xulswordHandler(e, ...args) {
   switch (e.type) {
@@ -142,7 +143,7 @@ export function handleViewport(e, ...args) {
     case 'click': {
       e.stopPropagation();
 
-      const search = ['chaptermenucell', 'bookname', 'tbot', 'tbnt'];
+      const search = ['chaptermenucell', 'bookname', 'bar'];
       let targ = e.target;
       while (targ && !search.some((x) => targ.classList.contains(x))) {
         targ = targ.parentNode;
@@ -151,29 +152,24 @@ export function handleViewport(e, ...args) {
       const type = search.find((c) => targ.classList.contains(c));
 
       switch (type) {
-        case 'tbot': {
-          this.setState({
-            book: 'Gen',
-            chapter: 1,
-            verse: 1,
-            lastverse: 1,
-          });
-          break;
-        }
-        case 'tbnt': {
-          this.setState({
-            book: 'Matt',
-            chapter: 1,
-            verse: 1,
-            lastverse: 1,
-          });
+        case 'bar': {
+          const m = targ.className.match(/\bbar_(\S+)\b/);
+          const b = m ? firstIndexOfBookGroup(m[1]) : null;
+          if (b !== null) {
+            this.setState({
+              book: G.Book[b].sName,
+              chapter: 1,
+              verse: 1,
+              lastverse: 1,
+            });
+          }
           break;
         }
         case 'bookname': {
-          const b = targ.className.match(/bb_(\d+)\b/);
-          if (b) {
+          const bk = targ.className.match(/\bbookname_([\w\d]+)\b/);
+          if (bk) {
             this.setState({
-              book: G.Book[Number(b[1])].sName,
+              book: bk[1],
               chapter: 1,
               verse: 1,
               lastverse: 1,
@@ -182,10 +178,10 @@ export function handleViewport(e, ...args) {
           break;
         }
         case 'chaptermenucell': {
-          const ch = targ.className.match(/chmc_(\d+)_(\d+)\b/);
+          const ch = targ.className.match(/chmc_([\w\d]+)_(\d+)\b/);
           if (ch) {
             this.setState({
-              book: G.Book[Number(ch[1])].sName,
+              book: ch[1],
               chapter: Number(ch[2]),
               verse: 1,
               lastverse: 1,
