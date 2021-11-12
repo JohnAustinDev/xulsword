@@ -35,7 +35,7 @@ const defaultProps = {
   keys: undefined,
 
   numDisplayedWindows: 1,
-  ownWindow: false,
+  chooser: 'bible',
 
   handler: undefined,
 };
@@ -52,7 +52,7 @@ const propTypes = {
   keys: PropTypes.arrayOf(PropTypes.string),
 
   numDisplayedWindows: PropTypes.number,
-  ownWindow: PropTypes.bool,
+  chooser: PropTypes.string,
 
   handler: PropTypes.func,
 };
@@ -68,7 +68,7 @@ interface ViewportProps extends XulProps {
   keys: string[];
 
   numDisplayedWindows: number;
-  ownWindow: boolean;
+  chooser: string;
 
   handler: (e: any) => void;
 }
@@ -115,27 +115,24 @@ class Viewport extends React.Component {
     jsdump(`Rendering Viewport ${JSON.stringify(this.state)}`);
     const props = this.props as ViewportProps;
     const state = this.state as ViewportState;
-    const { book, modules, ownWindow } = this.props as ViewportProps;
-    const { showChooser, showOriginal, chooserReset } = this.state as ViewportState;
+    const { book, modules, chooser } = this.props as ViewportProps;
+    const { showOriginal, chooserReset } = this.state as ViewportState;
 
-    const chooserType = 'bible'; // G.Tab[modules[0]].modType === C.GENBOOK ? 'genbook' : 'bible';
     const availableBooks = getAvailableBooks(modules[0]);
     const classes = [
       'viewport',
-      !showChooser ? 'chooser-hidden' : '',
-      ownWindow ? 'ownWindow' : '',
       // showOriginal && (G.Tab.ORIG_OT || G.Tab.ORIG_NT) ? 'original-language-tab' : ''
     ];
 
     return (
 <Hbox {...props} className={xulClass(classes.filter(Boolean).join(' '), props)}>
 
-  {!state.showChooser && !props.ownWindow &&
+  {!state.showChooser && chooser !== 'none' &&
     <button type="button" className="open-chooser" onClick={this.handler}/>
   }
 
-  {state.showChooser && !props.ownWindow &&
-    <Chooser key={`${book}${chooserReset}`} type={chooserType} selection={book} headingsModule={modules[0]}
+  {state.showChooser && chooser !== 'none' &&
+    <Chooser key={`${book}${chooserReset}`} type={chooser} selection={book} headingsModule={modules[0]}
       versification="KJV" availableBooks={availableBooks} handler={this.handler} onClick={props.handler}/>
   }
 

@@ -8,9 +8,20 @@ export function xulswordHandler(e, ...args) {
     case 'click':
       switch (e.currentTarget.id) {
         case 'back':
-        case 'historyMenu':
+          this.setHistory(this.state.historyIndex + 1);
+          break;
+        case 'historymenu':
+          e.stopPropagation();
+          this.setState((prevState) => {
+            return {
+              historyMenupopup: prevState.historyMenupopup
+                ? undefined
+                : this.historyMenu(),
+            };
+          });
+          break;
         case 'forward':
-          jsdump(`${e.currentTarget.id} click not yet implented`);
+          this.setHistory(this.state.historyIndex - 1);
           break;
 
         case 'chapter':
@@ -78,19 +89,21 @@ export function xulswordHandler(e, ...args) {
       switch (e.target.id) {
         case 'book__textbox__input':
         case 'book__menulist__select': {
-          this.bsreset += 1; // reset Bookselect even if book didn't change
-          const location = parseLocation(e.target.value);
-          if (location !== null) {
-            // eslint-disable-next-line prefer-const
-            let { book, chapter, verse } = location;
-            if (book) {
-              if (!chapter) chapter = 1;
-              if (!verse) verse = 1;
-              this.setState({ book, chapter, verse });
-              return;
+          this.setState((prevState) => {
+            // reset Bookselect even if book doesn't change
+            const bsreset = prevState.bsreset + 1;
+            const location = parseLocation(e.target.value);
+            if (location !== null) {
+              // eslint-disable-next-line prefer-const
+              let { book, chapter, verse } = location;
+              if (book) {
+                if (!chapter) chapter = 1;
+                if (!verse) verse = 1;
+                return { book, chapter, verse, bsreset };
+              }
             }
-          }
-          this.forceUpdate();
+            return { bsreset };
+          });
           break;
         }
         case 'chapter__input':
@@ -142,13 +155,15 @@ export function handleViewport(e, ...args) {
   switch (e.type) {
     case 'click': {
       e.stopPropagation();
-
       const search = ['chaptermenucell', 'bookname', 'bar'];
       let targ = e.target;
-      while (targ && !search.some((x) => targ.classList.contains(x))) {
+      while (
+        targ &&
+        !search.some((x) => targ.classList && targ.classList.contains(x))
+      ) {
         targ = targ.parentNode;
       }
-      if (!targ) return;
+      if (!targ || !targ.classList) return;
       const type = search.find((c) => targ.classList.contains(c));
 
       switch (type) {

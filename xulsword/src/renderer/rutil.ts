@@ -3,14 +3,21 @@
 import i18next from 'i18next';
 import C from '../constant';
 import G from './gr';
-import { escapeRE, findBookNum, iString } from '../common';
+import {
+  dString,
+  escapeRE,
+  findBookNum,
+  guiDirection,
+  iString,
+} from '../common';
 
 interface LocObject {
   book: string | null;
   chapter: number | null;
   verse: number | null;
-  lastVerse: number | null;
+  lastverse: number | null;
   version: string | null;
+  v11n: string | null;
 }
 
 export function jsdump(msg: string | Error) {
@@ -57,20 +64,95 @@ export function getAvailableBooks(version: string): string[] {
   return books;
 }
 
-function dotStringLoc2ObjectLoc(loc: string, version?: string): LocObject {
+// Converts a dot book reference into readable text in the locale language.
+// Possible inputs: bk.c.v.lv
+// Possible outputs:
+//    bk
+//    nk c
+//    bk c:v
+//    bk c:v-lv
+export function dosString2LocaleString(ref: string, notHTML: boolean): string {
+  const guidir = guiDirection(G);
+
+  const entity = guidir === 'rtl' ? '&rlm;' : '&lrm;';
+  const char =
+    guidir === 'rtl' ? String.fromCharCode(8207) : String.fromCharCode(8206);
+  const dc = notHTML ? char : entity;
+
+  let ret = ref;
+  let r = ref;
+  r = r.replace(/^\s*/, '');
+  // eslint-disable-next-line prefer-const
+  let [bk, ch, vs, lv] = r.split('.');
+  if (vs && lv && vs === lv) lv = '';
+  const bki = findBookNum(G, bk);
+  if (bki === null) return ret;
+  ret = `${dc}${G.Book[bki].bName}`;
+  if (ch) {
+    ret += `${dc} ${ch}`;
+    if (vs) {
+      ret += `${dc}:${vs}`;
+      if (lv) {
+        ret += `${dc}-${lv}`;
+      }
+    }
+  }
+
+  return dString(ret);
+}
+
+// Takes dot-string of form bk.ch.vs.lv.v11n and returns it as tov11n verse system.
+export function convertDotString(from: string, tov11n: string) {
+  let loc = from.split('.');
+  if (loc.length !== 5) {
+    throw Error(`convertDotString must have form: bk.ch.vs.lv.v11n (${from})`);
+  }
+  const v11n = loc.pop();
+  if (v11n && v11n !== tov11n) {
+    let lv = loc.pop();
+    let v = loc.pop();
+    const cv = G.LibSword.convertLocation(
+      v11n,
+      `${loc.join('.')}.${v}`,
+      tov11n
+    ).split('.');
+    const clv = G.LibSword.convertLocation(
+      v11n,
+      `${loc.join('.')}.${lv}`,
+      tov11n
+    ).split('.');
+    lv = clv.pop();
+    if (lv === undefined) lv = '1';
+    v = cv.pop();
+    if (v === undefined) v = '1';
+    if (cv.join('.') !== clv.join('.')) {
+      lv = v;
+    }
+    loc = cv.concat([v, lv]);
+  }
+  loc.push(tov11n);
+  return loc.join('.');
+}
+
+export function dotStringLoc2ObjectLoc(
+  loc: string,
+  version?: string
+): LocObject {
   const retval = {
     chapter: null,
     book: null,
     verse: null,
-    lastVerse: null,
+    lastverse: null,
     version: null,
+    v11n: null,
   } as LocObject;
   const dotLocation = loc.split('.');
-  const [sn, ch, vs, lv] = dotLocation;
+  const [sn, ch, vs, lv, v11n] = dotLocation;
   if (dotLocation[0] !== null) retval.book = sn;
   if (dotLocation[1] !== null) retval.chapter = Number(ch);
   if (dotLocation[2] !== null) retval.verse = Number(vs);
-  if (dotLocation[3] !== null) retval.lastVerse = Number(lv);
+  if (dotLocation[3] !== null) retval.lastverse = Number(lv);
+  if (dotLocation[4] !== null) retval.v11n = v11n;
   if (version !== null && version !== undefined) retval.version = version;
 
   return retval;
@@ -246,30 +328,29 @@ export function parseLocation(
     version: null,
     chapter: null,
     verse: null,
-    lastVerse: null,
+    lastverse: null,
   } as LocObject;
 
-  let m; // used for debugging only
   let has1chap;
   let shft; // book=1, chap=2, verse=3, lastVerse=4
   // eslint-disable-next-line prettier/prettier
-  let parsed = loc2parse.match(/([^:-]+)\s+(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/);           shft=0; m=0; has1chap=false;  // book 1:2-3
+  let parsed = loc2parse.match(/([^:-]+)\s+(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/);           shft=0; has1chap=false;  // book 1:2-3
   // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+(\d+)\s*:\s*(\d+)/);        shft=0; m=1; has1chap=false;} // book 4:5
+  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+(\d+)\s*:\s*(\d+)/);        shft=0; has1chap=false;} // book 4:5
   // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+(\d+)/);                    shft=0; m=2; has1chap=false;} // book 6
+  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+(\d+)/);                    shft=0; has1chap=false;} // book 6
   // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+[v|V].*(\d+)/);             shft=0; m=3; has1chap=true;}  // book v6 THIS VARIES WITH LOCALE!!!
+  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+[v|V].*(\d+)/);             shft=0; has1chap=true;}  // book v6 THIS VARIES WITH LOCALE!!!
   // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/^(\d+)$/);                             shft=2; m=4; has1chap=false;} // 6
+  if (parsed==null) {parsed = loc2parse.match(/^(\d+)$/);                             shft=2; has1chap=false;} // 6
   // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/);       shft=1; m=5; has1chap=false;} // 1:2-3
+  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/);       shft=1; has1chap=false;} // 1:2-3
   // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*:\s*(\d+)/);                   shft=1; m=6; has1chap=false;} // 4:5
+  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*:\s*(\d+)/);                   shft=1; has1chap=false;} // 4:5
   // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*-\s*(\d+)/);                   shft=2; m=7; has1chap=false;} // 4-5
+  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*-\s*(\d+)/);                   shft=2; has1chap=false;} // 4-5
   // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/^(.*?)$/);                             shft=0; m=8; has1chap=false;} // book
+  if (parsed==null) {parsed = loc2parse.match(/^(.*?)$/);                             shft=0; has1chap=false;} // book
   // jsdump("parsed:" + parsed + " match type:" + m + "\n");
 
   if (parsed) {
@@ -307,7 +388,7 @@ export function parseLocation(
       location.verse = Number(parsed[3]) > 0 ? Number(parsed[3]) : 1;
     }
     if (parsed[4]) {
-      location.lastVerse = Number(parsed[4]) > 0 ? Number(parsed[4]) : 1;
+      location.lastverse = Number(parsed[4]) > 0 ? Number(parsed[4]) : 1;
     }
   } else {
     return null;

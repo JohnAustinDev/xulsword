@@ -31,6 +31,14 @@ const LibSword: LibSwordClass = {
   ): string {
     return 'This is some verse text!';
   },
+
+  getVerseSystem(modname) {
+    return 'KJV';
+  },
+
+  convertLocation(fromv11n, vkeytext, tov11n) {
+    return fromv11n;
+  },
 };
 
 // The DirsClass interface is only available in main process directly through the Dirs object

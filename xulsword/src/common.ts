@@ -347,6 +347,13 @@ export function iString(x: number | string, locale: string) {
   return s;
 }
 
+export function guiDirection(G: GType) {
+  const locale = G.Prefs.getCharPref(C.LOCALEPREF);
+  const c = G.LocaleConfigs[locale];
+  if (c && c.direction) return c.direction;
+  return 'ltr';
+}
+
 export function getLocalizedChapterTerm(
   bookCode: string,
   chapNum: number,

@@ -81,6 +81,8 @@ export const LibSwordPublic = {
   getVerseText: func as unknown as (vkeymod: string, vkeytext: string, keepTextNotes: boolean) => string,
   getModuleList: func as unknown as () => string,
   getModuleInformation: func as unknown as (modname: string, key: string) => string,
+  getVerseSystem: func as unknown as (modname: string) => string,
+  convertLocation: func as unknown as (fromv11n: string, vkeytext: string, tov11n: string) => string,
 };
 
 // This GPublic object will be used at runtime to create two different

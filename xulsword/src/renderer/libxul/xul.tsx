@@ -59,11 +59,12 @@ export const xulPropTypes = {
 export interface XulProps {
   align?: string | undefined;
   children?:
+    | React.ReactNode
     | React.ReactNode[]
-    | (PropTypes.ReactElementLike | null | false)[]
     | PropTypes.ReactElementLike
-    | null
-    | false;
+    | PropTypes.ReactElementLike[]
+    | undefined
+    | null;
   className?: string | undefined;
   dir?: string | undefined;
   flex?: string | undefined;

@@ -5,7 +5,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Box } from './boxes';
 import Label from './label';
-import Menupopup from './menupopup';
 import Tooltip from './tooltip';
 import {
   propd,
@@ -71,10 +70,13 @@ function Button(props: ButtonProps) {
         {props.label !== undefined && (
           <Label className="button-text" value={props.label} />
         )}
-
-        {props.type === 'menu' && <Menupopup id={`${props.id}__menu`} />}
       </Box>
+
       <Tooltip tip={props.tooltip} />
+
+      {props.type === 'menu' && props.children && (
+        <div className="menu">{props.children}</div>
+      )}
     </button>
   );
 }

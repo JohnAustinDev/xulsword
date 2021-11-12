@@ -50,7 +50,7 @@ const propTypes = {
   headingsModule: PropTypes.string,
   hideUnavailableBooks: PropTypes.bool,
   selection: PropTypes.string,
-  type: PropTypes.oneOf(['genbook', 'bible']),
+  type: PropTypes.oneOf(['bible', 'genbook', 'none']),
   versification: PropTypes.string,
 };
 
@@ -372,6 +372,7 @@ class Chooser extends React.Component {
     const { availableBooks, selection, type } = this.props as ChooserProps;
     const { bookGroup, slideIndex } = this.state as ChooserState;
     const rowHeight = this.slideReady ? this.rowHeight : 0;
+    if (type === 'none') return [];
     return (
       <div {...htmlAttribs(`chooser ${type}`, this.props)}>
         <Vbox height="100%">
