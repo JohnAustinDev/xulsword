@@ -40,7 +40,7 @@ async function i18nInit(namespaces) {
     .init({
       lng: lang,
       fallbackLng: 'en',
-      supportedLngs: C.Languages,
+      supportedLngs: C.Languages.map((l) => {return l[0];}),
 
       ns: namespaces.concat(['common/books', 'common/numbers']),
 

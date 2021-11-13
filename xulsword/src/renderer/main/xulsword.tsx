@@ -1,15 +1,20 @@
+/* eslint-disable react/jsx-props-no-spreading */
+/* eslint-disable react/static-property-placement */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Translation } from 'react-i18next';
+import i18next from 'i18next';
 import {
   convertDotString,
   dosString2LocaleString,
   dotStringLoc2ObjectLoc,
   jsdump,
 } from '../rutil';
+import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import Button from '../libxul/button';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Menupopup from '../libxul/menupopup';
@@ -19,79 +24,113 @@ import Textbox from '../libxul/textbox';
 import Toolbox from '../libxul/toolbox';
 import Viewport from '../viewport/viewport';
 import G from '../gr';
+import C from '../../constant';
 import { xulswordHandler, handleViewport as handleVP } from './handlers';
 import './xulsword.css';
 
-interface XulswordState {
-  book: string;
-  chapter: number;
-  verse: number;
-  lastverse: number;
+const defaultProps = {
+  ...xulDefaultProps,
+  i18n: undefined,
+};
 
-  historyMenupopup: React.ReactNode | undefined;
-  history: string[];
-  historyIndex: number;
+const propTypes = {
+  ...xulPropTypes,
+};
 
-  showHeadings: boolean;
-  showFootnotes: boolean;
-  showCrossRefs: boolean;
-  showDictLinks: boolean;
-  showVerseNums: boolean;
-  showStrongs: boolean;
-  showMorph: boolean;
-  showUserNotes: boolean;
-  showHebCantillation: boolean;
-  showHebVowelPoints: boolean;
-  showRedWords: boolean;
-
-  searchDisabled: boolean;
-
-  tabs: string[][];
-  modules: string[];
-  keys: string[];
-
-  chooser: string;
-  numDisplayedWindows: number;
-
-  bsreset: number; // increment this to re-instantiate the Bookselect
+interface XulswordProps extends XulProps {
+  i18n: typeof i18next;
 }
 
+const stateDefault = {
+  book: 'Gen',
+  chapter: 1,
+  verse: 1,
+  lastverse: 1,
+
+  historyMenupopup: undefined,
+  history: ['Gen.1.1.1.KJV'],
+  historyIndex: 0,
+
+  showHeadings: true,
+  showFootnotes: true,
+  showCrossRefs: true,
+  showDictLinks: true,
+  showVerseNums: true,
+  showStrongs: true,
+  showMorph: true,
+  showUserNotes: true,
+  showHebCantillation: true,
+  showHebVowelPoints: true,
+  showRedWords: true,
+
+  searchDisabled: true,
+
+  tabs: [['KJV'], ['KJV'], ['KJV']],
+  modules: ['KJV', 'KJV', 'KJV'],
+  keys: ['', '', ''],
+
+  hasBible: G.LibSword.hasBible(),
+  chooser: 'bible', // bible, genbook, or none
+  numDisplayedWindows: 3,
+
+  bsreset: 0,
+};
+
+const stateNoPersist = [
+  'historyMenupopup',
+  'hasBible',
+  'bsreset',
+  'searchDisabled',
+];
+
+type XulswordState = typeof stateDefault;
+
 export class Xulsword extends React.Component {
+  static defaultProps: typeof defaultProps;
+
+  static propTypes: typeof propTypes;
+
   handler: any;
 
   handleViewport: any;
 
   historyTO: NodeJS.Timeout | undefined;
 
-  constructor(props: Record<string, never>) {
+  constructor(props: XulswordProps) {
     super(props);
-    this.state = {
-      book: 'Gen',
-      chapter: 1,
-      verse: 1,
-      lastverse: 1,
 
-      historyMenupopup: undefined,
-      history: [],
-      historyIndex: 0,
+    this.state = this.getStatePrefs();
 
-      showHeadings: true,
-      showFootnotes: true,
-      showCrossRefs: true,
-      showDictLinks: true,
+    window.ipc.renderer.on('setState', (s: any) => {
+      // Check for other state change after language below
+      function setState2(xs: Xulsword, ms: any) {
+        if (Object.keys(ms).length > 0) {
+          G.reset();
+          xs.setState(ms);
+        }
+        return true;
+      }
 
-      searchDisabled: true,
+      // Check for language change
+      const locale = s[C.LOCALEPREF];
+      if (locale === undefined) {
+        setState2(this, s);
+      } else {
+        delete s[C.LOCALEPREF];
+        G.reset();
+        i18next
+          .changeLanguage(locale)
+          .then(() => {
+            return setState2(this, s);
+          })
+          .catch((e) => {
+            throw Error(e);
+          });
+      }
+    });
 
-      tabs: [['KJV'], ['KJV'], ['KJV']],
-      modules: ['KJV', 'KJV', 'KJV'],
-      keys: [null, null, null],
-
-      chooser: 'bible', // bible, genbook, or none
-      numDisplayedWindows: 3,
-
-      bsreset: 0,
-    };
-
+    this.getStatePrefs = this.getStatePrefs.bind(this);
+    this.setStatePrefs = this.setStatePrefs.bind(this);
     this.historyMenu = this.historyMenu.bind(this);
     this.addHistory = this.addHistory.bind(this);
     this.setHistory = this.setHistory.bind(this);
@@ -100,6 +139,55 @@ export class Xulsword extends React.Component {
     this.handler = xulswordHandler.bind(this);
     this.handleViewport = handleVP.bind(this);
   }
+
+  // Read state from Prefs or create Prefs using stateDefault.
+  // Except members of stateNoPersist get stateDefault values
+  // and are never read from Prefs (or written to Prefs by
+  // setStatePrefs).
+  getStatePrefs = () => {
+    const state: any = {};
+    const entries = Object.entries(stateDefault);
+    entries.forEach((entry) => {
+      const [name, value] = entry;
+      if (stateNoPersist.includes(name)) {
+        state[name] = value;
+      } else {
+        const type = typeof value;
+        if (type === 'string' || type === 'number' || type === 'boolean') {
+          state[name] = G.Prefs.getPrefOrCreate(
+            name,
+            type,
+            value as string | number | boolean
+          );
+        } else {
+          const stringDef = JSON.stringify(value);
+          const stringData = G.Prefs.getPrefOrCreate(name, 'string', stringDef);
+          state[name] = JSON.parse(stringData);
+        }
+      }
+    });
+    return state;
+  };
+
+  // Persist state to Prefs (except those in stateNoPersist)
+  setStatePrefs = (s: XulswordState) => {
+    const entries = Object.entries(s);
+    entries.forEach((entry) => {
+      const [name, value] = entry;
+      if (!stateNoPersist.includes(name)) {
+        const type = typeof value;
+        if (type === 'string') {
+          G.Prefs.setCharPref(name, value as string);
+        } else if (type === 'number') {
+          G.Prefs.setIntPref(name, value as number);
+        } else if (type === 'boolean') {
+          G.Prefs.setBoolPref(name, value as boolean);
+        } else {
+          G.Prefs.setCharPref(name, JSON.stringify(value));
+        }
+      }
+    });
+  };
 
   historyMenu = () => {
     const state = this.state as XulswordState;
@@ -123,7 +211,7 @@ export class Xulsword extends React.Component {
             <div
               className={selected}
               onClick={(e) => {
-                this.setHistory(index);
+                this.setHistory(index, true);
                 e.stopPropagation();
               }}
               key={`${selected}${index}${loc}`}
@@ -136,6 +224,7 @@ export class Xulsword extends React.Component {
     );
   };
 
+  // Insert a page history entry at the current historyIndex.
   addHistory = (add?: string): void => {
     const { book, chapter, verse, lastverse, modules, history, historyIndex } =
       this.state as XulswordState;
@@ -157,18 +246,26 @@ export class Xulsword extends React.Component {
     });
   };
 
-  setHistory = (newIndex: number): void => {
-    const { history } = this.state as XulswordState;
-    if (newIndex < 0 || newIndex > history.length - 1) return;
+  // Set state location back to history[index] and move history[index]
+  // to history[0] if promote is true.
+  setHistory = (index: number, promote = false): void => {
+    const { history: h } = this.state as XulswordState;
+    if (index < 0 || index > h.length - 1) return;
     this.setState((prevState: XulswordState) => {
+      const { history, modules } = prevState as XulswordState;
       const newLocation = convertDotString(
-        prevState.history[newIndex],
-        G.LibSword.getVerseSystem(prevState.modules[0])
+        history[index],
+        G.LibSword.getVerseSystem(modules[0])
       );
       const { book, chapter, verse, lastverse } =
         dotStringLoc2ObjectLoc(newLocation);
+      if (promote) {
+        const targ = history.splice(index, 1);
+        history.splice(0, 0, targ[0]);
+      }
       return {
-        historyIndex: newIndex,
+        history,
+        historyIndex: promote ? 0 : index,
         historyMenupopup: undefined,
         book,
         chapter,
@@ -187,6 +284,7 @@ export class Xulsword extends React.Component {
 
   render() {
     jsdump(`Rendering Xulsword ${JSON.stringify(this.state)}`);
+    const state = this.state as XulswordState;
     const {
       book,
       chapter,
@@ -203,12 +301,15 @@ export class Xulsword extends React.Component {
       tabs,
       modules,
       keys,
+      hasBible,
       numDisplayedWindows,
       chooser,
       bsreset,
-    } = this.state as XulswordState;
+    } = state;
 
     const { handler, handleViewport } = this;
+
+    this.setStatePrefs(state);
 
     // Add page to history after a short delay
     if (this.historyTO) clearTimeout(this.historyTO);
@@ -216,16 +317,14 @@ export class Xulsword extends React.Component {
       this.addHistory();
     }, 1000);
 
+    if (!hasBible) {
+      return <Vbox {...this.props} />;
+    }
+
     return (
       <Translation>
         {(t) => (
-          <Vbox
-            id="topbox"
-            className="hasBible"
-            pack="start"
-            height="100%"
-            onClick={this.closeMenupopups}
-          >
+          <Vbox {...this.props} onClick={this.closeMenupopups}>
             <Toolbox>{/* TODO: NEED TO ADD MENU */}</Toolbox>
 
             <Hbox id="main-controlbar" className="controlbar">
@@ -400,6 +499,8 @@ export class Xulsword extends React.Component {
     );
   }
 }
+Xulsword.defaultProps = defaultProps;
+Xulsword.propTypes = propTypes;
 
 export function loadedXUL() {
   jsdump('RUNNING loadedXUL()!');

@@ -1,7 +1,5 @@
 #topbox {
   overflow: hidden;
-}
-#topbox.hasBible {
   background-image: url(../images/b2.gif);
 }
 #main-controlbar {
@@ -17,21 +15,6 @@
 }
 
 /* MAIN WINDOW CONFIGURATIONS */
-#topbox:not(.hasBible) #edit-menu,
-#topbox:not(.hasBible) #view-menu,
-#topbox:not(.hasBible) #options-menu,
-#topbox:not(.hasBible) #bookmarks-menu,
-#topbox:not(.hasBible) #window-menu,
-#topbox:not(.hasBible) #help-menu,
-#topbox:not(.hasBible) #main-controlbar,
-#topbox:not(.hasBible) #main-viewport,
-#topbox:not(.hasBible) #file-menu menuitem,
-#topbox:not(.hasBible) #file-menu menuseparator {
-  display: none;
-}
-#topbox:not(.hasBible) #file-menu menuitem[hasNoBibleShow='true'] {
-  display: block;
-}
 #quit,
 #topbox:not(.libSwordLoadFailed) #newmodule {
   display: block !important;

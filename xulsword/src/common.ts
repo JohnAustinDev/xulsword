@@ -426,8 +426,8 @@ export function internetPermission(G: GType) {
 
   // never allow access to internet until we have express permission!
   const haveInternetPermission =
-    G.Prefs.getPrefOrCreate('HaveInternetPermission', 'Bool', false) ||
-    G.Prefs.getPrefOrCreate('SessionHasInternetPermission', 'Bool', false);
+    G.Prefs.getPrefOrCreate('HaveInternetPermission', 'boolean', false) ||
+    G.Prefs.getPrefOrCreate('SessionHasInternetPermission', 'boolean', false);
 
   if (!haveInternetPermission) {
     /*

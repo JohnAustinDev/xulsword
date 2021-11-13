@@ -59,18 +59,19 @@ export type DirsDirectories = {
   xsModsCommon: string;
 };
 export const PrefsPublic = {
-  getPrefOrCreate: func as unknown as (key: string, type: string, defval: boolean | string | number | undefined, aStore?: string) => any,
+  getPrefOrCreate: func as unknown as (key: string, type: 'string' | 'number' | 'boolean', defval: boolean | string | number | undefined, aStore?: string) => any,
   getCharPref: func as unknown as (key: string, aStore?: string) => string,
   setCharPref: func as unknown as (key: string, value: string, aStore?: string) => boolean,
   getBoolPref: func as unknown as (key: string, aStore?: string) => boolean,
-  setBoolPref: func as unknown as (key: string, value: string, aStore?: string) => boolean,
+  setBoolPref: func as unknown as (key: string, value: boolean, aStore?: string) => boolean,
   getIntPref: func as unknown as (key: string, aStore?: string) => number,
-  setIntPref: func as unknown as (key: string, value: string, aStore?: string) => boolean,
+  setIntPref: func as unknown as (key: string, value: number, aStore?: string) => boolean,
   clearUserPref: func as unknown as (key: string, aStore?: string) => boolean ,
   writeStore: func as unknown as (aStore: string) => boolean,
   store: 'readonly' as unknown as { [i: string]: any },
 };
 export const LibSwordPublic = {
+  hasBible: func as unknown as () => boolean,
   getMaxChapter: func as unknown as (modname: string, vkeytext: string) => number,
   getMaxVerse: func as unknown as (modname: string, vkeytext: string) => number,
   // getChapterText: func as unknown as (modname: string, vkeytext: string) => string,

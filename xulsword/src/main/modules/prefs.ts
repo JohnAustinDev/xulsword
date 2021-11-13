@@ -34,14 +34,14 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
     return this.setPref(key, 'boolean', value, aStore);
   },
 
-  // Get an integer pref value. Error if key is not an integer, or is missing from store.
+  // Get an number pref value. Error if key is not a number, or is missing from store.
   getIntPref(key, aStore = 'default') {
-    return this.getPrefOrCreate(key, 'integer', undefined, aStore) as number;
+    return this.getPrefOrCreate(key, 'number', undefined, aStore) as number;
   },
 
-  // Set a Boolean pref value. Error if key is not an integer.
+  // Set a Boolean pref value. Error if key is not an number.
   setIntPref(key, value, aStore = 'default') {
-    return this.setPref(key, 'integer', value, aStore);
+    return this.setPref(key, 'number', value, aStore);
   },
 
   // Remove the key from a store
@@ -52,13 +52,12 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
   // Get a pref value and throw an error if it does not match type. If the key
   // is not found in the store, it will be added having value defval, and defval
   // will be returned. If defval is required but not supplied, an error is thrown.
-  // Supported types are Javascript primitive types and 'integer'.
   getPrefOrCreate(
     key: string,
-    type: string,
-    defval: boolean | string | number | undefined,
+    type: 'string' | 'number' | 'boolean',
+    defval: string | number | boolean | undefined,
     aStore = 'default'
-  ): boolean | string | number | undefined {
+  ): string | number | boolean | undefined {
     const p = this.getStore(aStore);
     if (p === null) return undefined;
 
@@ -73,10 +72,7 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
       this.setPref(key, type, val, aStore);
     }
 
-    if (
-      typeof val !== type &&
-      !(typeof val === 'number' && type === 'integer')
-    ) {
+    if (typeof val !== type) {
       throw Error(`type not ${type}: ${key} of ${aStore} store`);
     }
 

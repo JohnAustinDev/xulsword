@@ -2,7 +2,9 @@
 import { LibSwordPublic } from '../../type';
 
 const LibSword: LibSwordClass = {
-  hasBible: true,
+  hasBible() {
+    return true;
+  },
 
   libSwordReady() {
     return true;
@@ -43,7 +45,6 @@ const LibSword: LibSwordClass = {
 
 // The DirsClass interface is only available in main process directly through the Dirs object
 type LibSwordClass = typeof LibSwordPublic & {
-  hasBible: boolean;
   libSwordReady: () => boolean;
 };
 

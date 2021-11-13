@@ -20,7 +20,7 @@ contextBridge.exposeInMainWorld('c', {
   },
 });
 
-const validChannels = ['global', 'close', 'resize'];
+const validChannels = ['global', 'close', 'resize', 'setState'];
 
 contextBridge.exposeInMainWorld('ipc', {
   renderer: {

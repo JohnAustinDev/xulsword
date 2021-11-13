@@ -153,15 +153,44 @@ const openSplashWindow = () => {
 };
 
 const openMainWindow = () => {
+  let x;
+  let y;
+  try {
+    x = G.Prefs.getIntPref('win.main.x');
+    y = G.Prefs.getIntPref('win.main.y');
+  } catch {
+    x = undefined;
+    y = undefined;
+  }
   mainWindow = createWindow('main', {
     title: t('Title'),
     icon: getAssetPath('icon.png'),
     width: G.Prefs.getPrefOrCreate('win.main.width', 'number', 1024) as number,
     height: G.Prefs.getPrefOrCreate('win.main.height', 'number', 728) as number,
+    x,
+    y,
   });
   if (mainWindow === null) {
     return null;
   }
+
+  function saveBounds() {
+    if (mainWindow !== null) {
+      const b = mainWindow.getNormalBounds();
+      G.Prefs.setIntPref('win.main.width', b.width);
+      G.Prefs.setIntPref('win.main.height', b.height);
+      G.Prefs.setIntPref('win.main.x', b.x);
+      G.Prefs.setIntPref('win.main.y', b.y);
+    }
+  }
+
+  mainWindow.on('resize', () => {
+    saveBounds();
+  });
+
+  mainWindow.on('move', () => {
+    saveBounds();
+  });
 
   mainWindow.on('close', () => {
     if (mainWindow !== null) mainWindow.webContents.send('close');
@@ -172,7 +201,7 @@ const openMainWindow = () => {
     jsdump('NOTE: mainWindow closed...');
   });
 
-  const menuBuilder = new MenuBuilder(mainWindow);
+  const menuBuilder = new MenuBuilder(mainWindow, i18n);
   menuBuilder.buildMenu();
 
   return mainWindow;
@@ -189,7 +218,9 @@ const start = async () => {
     .init({
       lng: G.Prefs.getCharPref(C.LOCALEPREF),
       fallbackLng: 'en',
-      supportedLngs: C.Languages,
+      supportedLngs: C.Languages.map((l) => {
+        return l[0];
+      }),
 
       ns: ['xulsword', 'common/config', 'common/books', 'common/numbers'],
       defaultNS: 'xulsword',
@@ -219,14 +250,17 @@ const start = async () => {
 
   t = (key: string, options?: any) => i18n.t(key, options);
 
-  const splashWindow; // = openSplashWindow();
+  let splashWindow: BrowserWindow | undefined;
+  if (!isDevelopment) splashWindow = openSplashWindow();
 
   mainWindow = openMainWindow();
 
-  if (mainWindow && splashWindow) {
+  if (mainWindow) {
     mainWindow.once('ready-to-show', () => {
       if (process.env.NODE_ENV !== 'development') {
-        setTimeout(() => splashWindow.close(), 2000);
+        setTimeout(() => {
+          if (splashWindow) splashWindow.close();
+        }, 2000);
       }
     });
   }
