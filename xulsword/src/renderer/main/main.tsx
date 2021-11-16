@@ -9,7 +9,7 @@ import '../global-htm.css';
 i18nInit(['xulsword'])
   .then(() =>
     render(
-      <Xulsword id="topbox" pack="start" height="100%" />,
+      <Xulsword id="xulsword" pack="start" height="100%" />,
       document.getElementById('root')
     )
   )

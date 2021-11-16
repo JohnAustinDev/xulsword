@@ -63,7 +63,7 @@ const C = {
     QUOTEEND: '"',
   },
   AUDMIME: { mp3: 'audio/mpeg', ogg: 'audio/ogg' },
-  LOCALEPREF: 'general.useragent.locale',
+  LOCALEPREF: 'global.locale',
   MSMOVE: 'mousemove',
   MSOVER: 'mouseover',
   MSOUT: 'mouseout',

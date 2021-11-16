@@ -5,7 +5,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Translation } from 'react-i18next';
 import i18next from 'i18next';
 import {
@@ -41,49 +40,44 @@ interface XulswordProps extends XulProps {
   i18n: typeof i18next;
 }
 
-const stateDefault = {
-  book: 'Gen',
-  chapter: 1,
-  verse: 1,
-  lastverse: 1,
+// Default values of these keys are set in the default Pref file
+interface StateDefault {
+  book: string;
+  chapter: number;
+  verse: number;
+  lastverse: number;
 
+  history: string[];
+  historyIndex: number;
+
+  showHeadings: boolean;
+  showFootnotes: boolean;
+  showCrossRefs: boolean;
+  showDictLinks: boolean;
+  showVerseNums: boolean;
+  showStrongs: boolean;
+  showMorph: boolean;
+  showUserNotes: boolean;
+  showHebCantillation: boolean;
+  showHebVowelPoints: boolean;
+  showRedWords: boolean;
+
+  tabs: string[][];
+  modules: string[];
+  keys: string[];
+
+  chooser: 'bible' | 'genbook' | 'none';
+  numDisplayedWindows: number;
+}
+
+const stateNoPref = {
   historyMenupopup: undefined,
-  history: ['Gen.1.1.1.KJV'],
-  historyIndex: 0,
-
-  showHeadings: true,
-  showFootnotes: true,
-  showCrossRefs: true,
-  showDictLinks: true,
-  showVerseNums: true,
-  showStrongs: true,
-  showMorph: true,
-  showUserNotes: true,
-  showHebCantillation: true,
-  showHebVowelPoints: true,
-  showRedWords: true,
-
-  searchDisabled: true,
-
-  tabs: [['KJV'], ['KJV'], ['KJV']],
-  modules: ['KJV', 'KJV', 'KJV'],
-  keys: ['', '', ''],
-
   hasBible: G.LibSword.hasBible(),
-  chooser: 'bible', // bible, genbook, or none
-  numDisplayedWindows: 3,
-
   bsreset: 0,
+  searchDisabled: true,
 };
 
-const stateNoPersist = [
-  'historyMenupopup',
-  'hasBible',
-  'bsreset',
-  'searchDisabled',
-];
-
-type XulswordState = typeof stateDefault;
+type XulswordState = typeof stateNoPref & StateDefault;
 
 export class Xulsword extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -96,41 +90,39 @@ export class Xulsword extends React.Component {
 
   historyTO: NodeJS.Timeout | undefined;
 
+  lastSetPrefs: { [i: string]: any };
+
   constructor(props: XulswordProps) {
     super(props);
 
-    this.state = this.getStatePrefs();
+    this.state = {
+      ...stateNoPref,
+      ...this.getStatePrefs(),
+    };
 
-    window.ipc.renderer.on('setState', (s: any) => {
-      // Check for other state change after language below
-      function setState2(xs: Xulsword, ms: any) {
-        if (Object.keys(ms).length > 0) {
-          G.reset();
-          xs.setState(ms);
-        }
-        return true;
-      }
-
-      // Check for language change
-      const locale = s[C.LOCALEPREF];
-      if (locale === undefined) {
-        setState2(this, s);
-      } else {
-        delete s[C.LOCALEPREF];
+    window.ipc.renderer.on('setStateFromPrefs', (prefs: string | string[]) => {
+      const state = this.getStatePrefs(prefs);
+      const lng = G.Prefs.getCharPref(C.LOCALEPREF);
+      if (lng !== i18next.language) {
         G.reset();
         i18next
-          .changeLanguage(locale)
+          .changeLanguage(lng)
           .then(() => {
-            return setState2(this, s);
+            G.reset();
+            this.setState(state);
+            return true;
           })
           .catch((e) => {
             throw Error(e);
           });
+      } else {
+        G.reset();
+        this.setState(state);
       }
     });
 
     this.getStatePrefs = this.getStatePrefs.bind(this);
-    this.setStatePrefs = this.setStatePrefs.bind(this);
+    this.updateGlobalState = this.updateGlobalState.bind(this);
     this.historyMenu = this.historyMenu.bind(this);
     this.addHistory = this.addHistory.bind(this);
     this.setHistory = this.setHistory.bind(this);
@@ -138,55 +130,76 @@ export class Xulsword extends React.Component {
 
     this.handler = xulswordHandler.bind(this);
     this.handleViewport = handleVP.bind(this);
+    this.lastSetPrefs = {};
   }
 
-  // Read state from Prefs or create Prefs using stateDefault.
-  // Except members of stateNoPersist get stateDefault values
-  // and are never read from Prefs (or written to Prefs by
-  // setStatePrefs).
-  getStatePrefs = () => {
+  // Read state from Prefs, except members of stateNoPersist who
+  // get stateDefault values.
+  getStatePrefs = (prefsToGet?: string | string[]): { [i: string]: any } => {
+    const { id } = this.props as XulswordProps;
+    const store = G.Prefs.getStore();
+    if (!id || !store) {
+      return {};
+    }
+    let prefs: undefined | string[];
+    if (prefsToGet) {
+      if (!Array.isArray(prefsToGet)) prefs = [prefsToGet];
+      else {
+        prefs = prefsToGet;
+      }
+    }
     const state: any = {};
-    const entries = Object.entries(stateDefault);
+    const entries = Object.entries(store);
     entries.forEach((entry) => {
-      const [name, value] = entry;
-      if (stateNoPersist.includes(name)) {
-        state[name] = value;
-      } else {
-        const type = typeof value;
-        if (type === 'string' || type === 'number' || type === 'boolean') {
-          state[name] = G.Prefs.getPrefOrCreate(
-            name,
-            type,
-            value as string | number | boolean
-          );
-        } else {
-          const stringDef = JSON.stringify(value);
-          const stringData = G.Prefs.getPrefOrCreate(name, 'string', stringDef);
-          state[name] = JSON.parse(stringData);
+      const [fullPref, value] = entry;
+      const prefId = fullPref.substr(0, id.length);
+      if (prefId === id && fullPref.substr(id.length, 1) === '.') {
+        const prefName = fullPref.substr(id.length + 1);
+        if (prefs === undefined || prefs.includes(fullPref)) {
+          if (prefName in stateNoPref) {
+            const n = prefName as keyof typeof stateNoPref;
+            state[prefName] = stateNoPref[n];
+          } else {
+            state[prefName] = value;
+          }
         }
       }
     });
     return state;
   };
 
-  // Persist state to Prefs (except those in stateNoPersist)
-  setStatePrefs = (s: XulswordState) => {
+  // Compare state s to the previously set Prefs and do nothing if there
+  // were no changes. Otherwise, if this component has an id, persist its
+  // latest state changes to Prefs (except those in stateNoPersist) and
+  // setGlobalMenuFromPrefs()
+  updateGlobalState = (s: XulswordState) => {
+    const { id } = this.props as XulswordProps;
+    if (!id) return;
+    let prefsChanged = false;
     const entries = Object.entries(s);
     entries.forEach((entry) => {
       const [name, value] = entry;
-      if (!stateNoPersist.includes(name)) {
+      const fullPref = `${id}.${name}`;
+      const laststr =
+        fullPref in this.lastSetPrefs ? this.lastSetPrefs[fullPref] : undefined;
+      let thisstr;
+      if (value !== undefined) thisstr = value.toString();
+      if (!(name in stateNoPref) && laststr !== thisstr) {
         const type = typeof value;
         if (type === 'string') {
-          G.Prefs.setCharPref(name, value as string);
+          G.Prefs.setCharPref(fullPref, value as string);
         } else if (type === 'number') {
-          G.Prefs.setIntPref(name, value as number);
+          G.Prefs.setIntPref(fullPref, value as number);
         } else if (type === 'boolean') {
-          G.Prefs.setBoolPref(name, value as boolean);
+          G.Prefs.setBoolPref(fullPref, value as boolean);
         } else {
-          G.Prefs.setCharPref(name, JSON.stringify(value));
+          G.Prefs.setComplexValue(fullPref, value);
         }
+        this.lastSetPrefs[fullPref] = value.toString();
+        prefsChanged = true;
       }
     });
+    if (prefsChanged) G.setGlobalMenuFromPrefs();
   };
 
   historyMenu = () => {
@@ -283,7 +296,6 @@ export class Xulsword extends React.Component {
   };
 
   render() {
-    jsdump(`Rendering Xulsword ${JSON.stringify(this.state)}`);
     const state = this.state as XulswordState;
     const {
       book,
@@ -307,9 +319,16 @@ export class Xulsword extends React.Component {
       bsreset,
     } = state;
 
+    jsdump(
+      `Rendering Xulsword ${JSON.stringify({
+        ...state,
+        historyMenupopup: !!historyMenupopup,
+      })}`
+    );
+
     const { handler, handleViewport } = this;
 
-    this.setStatePrefs(state);
+    this.updateGlobalState(state);
 
     // Add page to history after a short delay
     if (this.historyTO) clearTimeout(this.historyTO);

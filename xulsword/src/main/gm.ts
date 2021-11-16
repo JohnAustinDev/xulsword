@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import path from 'path';
 import fs from 'fs';
+import { Menu } from 'electron';
 import LibSwordx from './modules/libsword';
 import Dirsx from './modules/dirs';
 import Prefsx from './modules/prefs';
@@ -34,8 +35,13 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     ModuleConfigDefault: () => getModuleConfigDefault(),
     ProgramConfig: () => getProgramConfig(),
     FontFaceConfigs: () => getFontFaceConfigs(),
+
     OPSYS: () => process.platform,
 
+    setGlobalMenuFromPrefs: (menu?: Electron.Menu) => {
+      const m = menu || Menu.getApplicationMenu();
+      if (m !== null) setMenuFromPrefs(m);
+    },
     resolveHtmlPath: (s: string) => {
       return resolveHtmlPath(s);
     },
@@ -174,4 +180,26 @@ function getTabs() {
 function getTab() {
   throw Error(`getTab not yet implemented`);
   return null;
+}
+
+function setMenuFromPrefs(menu: Electron.Menu) {
+  if (!menu.items) return;
+  menu.items.forEach((i) => {
+    if (i.id && i.type === 'checkbox') {
+      const t = Prefsx.getBoolPref(i.id);
+      i.checked = Prefsx.getBoolPref(i.id);
+    } else if (i.id && i.type === 'radio') {
+      const [pref, str] = i.id.split('_val_');
+      if (str !== '') {
+        let val: string | number = str;
+        if (Number(str).toString() === str) val = Number(str);
+        const pval =
+          typeof val === 'number'
+            ? Prefsx.getIntPref(pref)
+            : Prefsx.getCharPref(pref);
+        if (pval === val) i.checked = true;
+      }
+    }
+    if (i.submenu) setMenuFromPrefs(i.submenu);
+  });
 }

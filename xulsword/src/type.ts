@@ -59,16 +59,18 @@ export type DirsDirectories = {
   xsModsCommon: string;
 };
 export const PrefsPublic = {
-  getPrefOrCreate: func as unknown as (key: string, type: 'string' | 'number' | 'boolean', defval: boolean | string | number | undefined, aStore?: string) => any,
+  getPrefOrCreate: func as unknown as (key: string, type: 'string' | 'number' | 'boolean' | 'complex', defval: any, aStore?: string) => any,
   getCharPref: func as unknown as (key: string, aStore?: string) => string,
   setCharPref: func as unknown as (key: string, value: string, aStore?: string) => boolean,
   getBoolPref: func as unknown as (key: string, aStore?: string) => boolean,
   setBoolPref: func as unknown as (key: string, value: boolean, aStore?: string) => boolean,
   getIntPref: func as unknown as (key: string, aStore?: string) => number,
   setIntPref: func as unknown as (key: string, value: number, aStore?: string) => boolean,
+  getComplexValue: func as unknown as (key: string, aStore?: string) => any,
+  setComplexValue: func as unknown as (key: string, value: any, aStore?: string) => boolean,
   clearUserPref: func as unknown as (key: string, aStore?: string) => boolean ,
-  writeStore: func as unknown as (aStore: string) => boolean,
-  store: 'readonly' as unknown as { [i: string]: any },
+  getStore: func as unknown as (aStore?: string) => { [s: string]: any } | null,
+  writeAllStores: func as unknown as () => void,
 };
 export const LibSwordPublic = {
   hasBible: func as unknown as () => boolean,
@@ -109,6 +111,7 @@ export const GPublic = {
 
   // Global functions
   resolveHtmlPath: func as unknown,
+  setGlobalMenuFromPrefs: func as unknown,
 
   // Global objects with methods and/or data
   Prefs: PrefsPublic,
@@ -130,6 +133,7 @@ export interface GType {
   OPSYS: 'string';
 
   resolveHtmlPath: (htmlfile: string) => string;
+  setGlobalMenuFromPrefs: (menu?: Electron.Menu) => void;
 
   Prefs: typeof PrefsPublic;
   LibSword: typeof LibSwordPublic;

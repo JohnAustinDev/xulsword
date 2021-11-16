@@ -62,7 +62,6 @@ const installExtensions = async () => {
 // Handle global variable calls from renderer
 ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
   let ret = null;
-
   if (name in GPublic) {
     const gPublic = GPublic as any;
     const g = G as any;
@@ -153,23 +152,37 @@ const openSplashWindow = () => {
 };
 
 const openMainWindow = () => {
+  const name = 'main';
+  // Open to Prefs size/location
   let x;
   let y;
   try {
-    x = G.Prefs.getIntPref('win.main.x');
-    y = G.Prefs.getIntPref('win.main.y');
+    x = G.Prefs.getIntPref(`window.${name}.x`);
+    y = G.Prefs.getIntPref(`window.${name}.y`);
   } catch {
     x = undefined;
     y = undefined;
   }
-  mainWindow = createWindow('main', {
+  const width = G.Prefs.getPrefOrCreate(
+    `window.${name}.width`,
+    'number',
+    1024
+  ) as number;
+  const height = G.Prefs.getPrefOrCreate(
+    `window.${name}.height`,
+    'number',
+    728
+  ) as number;
+
+  mainWindow = createWindow(name, {
     title: t('Title'),
     icon: getAssetPath('icon.png'),
-    width: G.Prefs.getPrefOrCreate('win.main.width', 'number', 1024) as number,
-    height: G.Prefs.getPrefOrCreate('win.main.height', 'number', 728) as number,
+    width,
+    height,
     x,
     y,
   });
+
   if (mainWindow === null) {
     return null;
   }
@@ -177,10 +190,10 @@ const openMainWindow = () => {
   function saveBounds() {
     if (mainWindow !== null) {
       const b = mainWindow.getNormalBounds();
-      G.Prefs.setIntPref('win.main.width', b.width);
-      G.Prefs.setIntPref('win.main.height', b.height);
-      G.Prefs.setIntPref('win.main.x', b.x);
-      G.Prefs.setIntPref('win.main.y', b.y);
+      G.Prefs.setIntPref(`window.${name}.width`, b.width);
+      G.Prefs.setIntPref(`window.${name}.height`, b.height);
+      G.Prefs.setIntPref(`window.${name}.x`, b.x);
+      G.Prefs.setIntPref(`window.${name}.y`, b.y);
     }
   }
 
@@ -287,16 +300,14 @@ app.on('window-all-closed', () => {
 
 // Write all prefs to disk when app closes
 app.on('window-all-closed', () => {
-  if (G.Prefs.store !== null) {
-    Object.keys(G.Prefs.store).forEach((key) => G.Prefs.writeStore(key));
-  }
+  G.Prefs.writeAllStores();
 });
 
 app
   .whenReady()
   .then(start)
   .catch((e) => {
-    throw Error(e);
+    throw e.stack;
   });
 
 app.on('activate', () => {

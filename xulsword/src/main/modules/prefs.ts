@@ -34,7 +34,7 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
     return this.setPref(key, 'boolean', value, aStore);
   },
 
-  // Get an number pref value. Error if key is not a number, or is missing from store.
+  // Get a number pref value (does no need to be an integer). Error if key is not a number, or is missing from store.
   getIntPref(key, aStore = 'default') {
     return this.getPrefOrCreate(key, 'number', undefined, aStore) as number;
   },
@@ -42,6 +42,16 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
   // Set a Boolean pref value. Error if key is not an number.
   setIntPref(key, value, aStore = 'default') {
     return this.setPref(key, 'number', value, aStore);
+  },
+
+  // Get a complex pref value. Error if key is not complex, or is missing from store.
+  getComplexValue(key, aStore = 'default') {
+    return this.getPrefOrCreate(key, 'complex', undefined, aStore) as number;
+  },
+
+  // Set a Boolean pref value. Error if key is not an number.
+  setComplexValue(key, value, aStore = 'default') {
+    return this.setPref(key, 'complex', value, aStore);
   },
 
   // Remove the key from a store
@@ -52,12 +62,7 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
   // Get a pref value and throw an error if it does not match type. If the key
   // is not found in the store, it will be added having value defval, and defval
   // will be returned. If defval is required but not supplied, an error is thrown.
-  getPrefOrCreate(
-    key: string,
-    type: 'string' | 'number' | 'boolean',
-    defval: string | number | boolean | undefined,
-    aStore = 'default'
-  ): string | number | boolean | undefined {
+  getPrefOrCreate(key, type, defval, aStore = 'default') {
     const p = this.getStore(aStore);
     if (p === null) return undefined;
 
@@ -156,11 +161,17 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
     return true;
   },
 
+  writeAllStores() {
+    if (!this.writeOnChange && this.store !== null) {
+      Object.keys(this.store).forEach((key) => this.writeStore(key));
+    }
+  },
+
   // Write a key value pair to a store. If the value is undefined, the key will
   // be removed from the store. An error is thrown if the value is not
   // of the specified type. If this.writeOnChange is set, then the store will
   // be saved to disk immediately. Supported types are Javascript primitive
-  // types and 'integer'.
+  // types and 'complex' for anything else.
   setPref(key, type, value, aStore = 'default') {
     const p = this.getStore(aStore);
     if (p === null) {
@@ -169,19 +180,10 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
     }
 
     if (
-      typeof value !== type &&
-      !(typeof value === 'number' && type === 'integer')
+      (type === 'complex' && typeof value !== 'object') ||
+      (type !== 'complex' && typeof value !== type)
     ) {
       jsdump(`WARN: setPref to wrong type: ${typeof value} !== ${type}`);
-      return false;
-    }
-
-    if (
-      typeof value === 'number' &&
-      type === 'integer' &&
-      Math.trunc(value) !== value
-    ) {
-      jsdump(`WARN: setPref to non-integer: ${Math.trunc(value)} != ${value}`);
       return false;
     }
 
@@ -203,6 +205,8 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
 type PrefsPrivate = {
   writeOnChange: boolean;
 
+  store: { [i: string]: any };
+
   setPref: (
     key: string,
     type: string,
@@ -210,9 +214,7 @@ type PrefsPrivate = {
     aStore: string
   ) => boolean;
 
-  getStore: (
-    aStore: string
-  ) => { [s: string]: boolean | string | number } | null;
+  writeStore: (aStore: string) => boolean;
 };
 
 export default Prefs as typeof PrefsPublic;

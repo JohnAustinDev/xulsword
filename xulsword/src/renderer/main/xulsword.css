@@ -1,4 +1,4 @@
-#topbox {
+#xulsword {
   overflow: hidden;
   background-image: url(../images/b2.gif);
 }
@@ -16,7 +16,7 @@
 
 /* MAIN WINDOW CONFIGURATIONS */
 #quit,
-#topbox:not(.libSwordLoadFailed) #newmodule {
+#xulsword:not(.libSwordLoadFailed) #newmodule {
   display: block !important;
 }
 

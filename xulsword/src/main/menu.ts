@@ -10,34 +10,62 @@ import i18next from 'i18next';
 import G from './gm';
 import C from '../constant';
 
-function setState2(state: any) {
-  // Change to requested state for each window
-  G.reset();
-  BrowserWindow.getAllWindows().forEach((w) => {
-    w.webContents.send('setState', state);
-  });
-}
-
-function setState(state: any) {
-  // Change language if requested
-  const lng = state[C.LOCALEPREF];
-  if (typeof lng !== undefined && G.Prefs.getCharPref(C.LOCALEPREF) !== lng) {
-    G.reset();
-    delete state[C.LOCALEPREF];
-    i18next
-      .changeLanguage(lng)
-      .then(() => {
-        return setState2(state);
-      })
-      .catch((e) => {
-        throw Error(e);
+const Command = {
+  // Some commands update language and global state from Prefs
+  setGlobalStateFromPrefs(name: string | string[]) {
+    function setGlobalStateFromPrefs2() {
+      G.reset();
+      BrowserWindow.getAllWindows().forEach((w) => {
+        w.webContents.send('setStateFromPrefs', name);
       });
-  } else {
-    setState2(state);
-  }
-}
+    }
 
-const Command: any = {
+    // Change language if Pref changed
+    const lng = G.Prefs.getCharPref(C.LOCALEPREF);
+    if (lng !== i18next.language) {
+      G.reset();
+      i18next
+        .changeLanguage(lng)
+        .then(() => {
+          return setGlobalStateFromPrefs2();
+        })
+        .catch((e) => {
+          throw Error(e);
+        });
+    } else {
+      setGlobalStateFromPrefs2();
+    }
+  },
+
+  // Update Prefs, then setGlobalStateFromPrefs()
+  toggleSwitch(name: string | string[], value?: boolean) {
+    const a = Array.isArray(name) ? name : [name];
+    a.forEach((n) => {
+      const v = value === undefined ? !G.Prefs.getBoolPref(n) : value;
+      G.Prefs.setBoolPref(n, v);
+    });
+    this.setGlobalStateFromPrefs(name);
+  },
+
+  // Update Prefs, then setGlobalStateFromPrefs()
+  radioSwitch(name: string | string[], value: any) {
+    const a = Array.isArray(name) ? name : [name];
+    a.forEach((n) => {
+      if (typeof value === 'number') {
+        G.Prefs.setIntPref(n, value);
+      } else if (typeof value === 'string') {
+        G.Prefs.setCharPref(n, value);
+      } else {
+        throw Error('radioSwitch supports number or string.');
+      }
+    });
+    this.setGlobalStateFromPrefs(name);
+  },
+
+  setTabs(name: string | 'all', value: 'showAll' | 'hideAll') {
+    console.log(`Action not implemented: setTabs(${name}, ${value})`);
+  },
+
   addRepositoryModule() {
     console.log(`Action not implemented: addRepositoryModule`);
   },
@@ -78,38 +106,12 @@ const Command: any = {
     console.log(`Action not implemented: copyPassage`);
   },
 
-  setTabs(name: string | 'all', value: 'showAll' | 'hideAll') {
-    console.log(`Action not implemented: setTabs(${name}, ${value})`);
-  },
-
   search() {
     console.log(`Action not implemented: search()`);
   },
 
   openHelp() {
     console.log(`Action not implemented: openHelp()`);
-  },
-
-  toggleSwitch(name: string | string[], value?: boolean) {
-    const a = Array.isArray(name) ? name : [name];
-    const state: any = {};
-    a.forEach((n) => {
-      const v = value === undefined ? !G.Prefs.getBoolPref(n) : value;
-      G.Prefs.setBoolPref(n, v);
-      state[n] = v;
-    });
-    setState(state);
-  },
-
-  radioSwitch(name: string, value: string | number) {
-    const state: any = { [name]: value };
-    if (typeof value === 'number') {
-      G.Prefs.setIntPref(name, value);
-    } else {
-      G.Prefs.setCharPref(name, value);
-    }
-    setState(state);
-    console.log(`Action not implemented: radioSwitch(${name}, ${value})`);
   },
 };
 
@@ -137,6 +139,41 @@ export default class MenuBuilder {
     this.i18n = i18n;
   }
 
+  buildMenu(): Menu {
+    if (
+      process.env.NODE_ENV === 'development' ||
+      process.env.DEBUG_PROD === 'true'
+    ) {
+      this.setupDevelopmentEnvironment();
+    }
+
+    const template: any =
+      process.platform === 'darwin'
+        ? this.buildDarwinTemplate()
+        : this.buildDefaultTemplate();
+
+    const menu = Menu.buildFromTemplate(template);
+    G.setGlobalMenuFromPrefs(menu);
+    Menu.setApplicationMenu(menu);
+
+    return menu;
+  }
+
+  setupDevelopmentEnvironment(): void {
+    this.mainWindow.webContents.on('context-menu', (_, props) => {
+      const { x, y } = props;
+
+      Menu.buildFromTemplate([
+        {
+          label: 'Inspect element',
+          click: () => {
+            this.mainWindow.webContents.inspectElement(x, y);
+          },
+        },
+      ]).popup({ window: this.mainWindow });
+    });
+  }
+
   // Get locale key with letter prepended with '&' to specify shortcut.
   ts(key: string, letter?: string): string {
     let text = this.i18n.t(key);
@@ -160,146 +197,102 @@ export default class MenuBuilder {
     return text;
   }
 
-  buildMenu(): Menu {
-    if (
-      process.env.NODE_ENV === 'development' ||
-      process.env.DEBUG_PROD === 'true'
-    ) {
-      this.setupDevelopmentEnvironment();
-    }
-
-    const template: any =
-      process.platform === 'darwin'
-        ? this.buildDarwinTemplate()
-        : this.buildDefaultTemplate();
-
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
-
-    return menu;
-  }
-
-  setupDevelopmentEnvironment(): void {
-    this.mainWindow.webContents.on('context-menu', (_, props) => {
-      const { x, y } = props;
-
-      Menu.buildFromTemplate([
-        {
-          label: 'Inspect element',
-          click: () => {
-            this.mainWindow.webContents.inspectElement(x, y);
-          },
-        },
-      ]).popup({ window: this.mainWindow });
-    });
-  }
-
   buildDefaultTemplate() {
-    const entryModule = [
-      {
-        label: this.ts('menu.addNewModule.label'),
-        submenu: [
-          {
-            label: this.ts(
-              'newmodule.fromInternet',
-              'newmodule.fromInternet.ak'
-            ),
-            accelerator: 'F2',
-            click: () => {
-              Command.addRepositoryModule();
-            },
-          },
-          {
-            label: this.ts('newmodule.fromFile', 'newmodule.fromFile.ak'),
-            click: () => {
-              Command.addLocalModule();
-            },
-          },
-        ],
-      },
-    ];
-
-    const entryQuit = [
-      {
-        label: this.ts(
-          'quitApplicationCmdWin.label',
-          'quitApplicationCmdWin.accesskey'
-        ),
-        click: () => {
-          this.mainWindow.close();
-        },
-      },
-    ];
-
-    const subMenuFileNoBible = {
-      label: this.ts('fileMenu.label', 'fileMenu.accesskey'),
-      submenu: [...entryModule, ...entryQuit],
-    };
-
-    if (!G.LibSword.hasBible()) {
-      return [subMenuFileNoBible];
-    }
-
-    const entryFile = [
-      {
-        label: this.ts('menu.removeModule.label', 'menu.removeModule.sc'),
-        click: () => {
-          Command.removeModule();
-        },
-      },
-      { type: 'separator' },
-      {
-        label: this.ts('menu.exportAudio.label', 'menu.exportAudio.sc'),
-        click: () => {
-          Command.exportAudio();
-        },
-      },
-      {
-        label: this.ts('menu.importAudio.label', 'menu.importAudio.sc'),
-        click: () => {
-          Command.importAudio();
-        },
-      },
-      { type: 'separator' },
-      {
-        label: this.ts('printSetupCmd.label', 'printSetupCmd.accesskey'),
-        click: () => {
-          Command.pageSetup();
-        },
-      },
-      {
-        label: this.ts('printPreviewCmd.label', 'printPreviewCmd.accesskey'),
-        accelerator: this.tx('printCmd.commandkey', ['CommandOrControl']),
-        click: () => {
-          Command.printPreview();
-        },
-      },
-      {
-        label: this.ts('printCmd.label', 'printCmd.accesskey'),
-        accelerator: this.tx('printCmd.commandkey', [
-          'CommandOrControl',
-          'Shift',
-        ]),
-        click: () => {
-          Command.print();
-        },
-      },
-      { type: 'separator' },
-      {
-        label: this.ts('print.printpassage'),
-        accelerator: this.tx('printPassageCmd.commandkey', [
-          'CommandOrControl',
-        ]),
-        click: () => {
-          Command.printPassage();
-        },
-      },
-      { type: 'separator' },
-    ];
-
     const subMenuFile = {
       label: this.ts('fileMenu.label', 'fileMenu.accesskey'),
-      submenu: [...entryModule, ...entryFile, ...entryQuit],
+      submenu: [
+        {
+          label: this.ts('menu.addNewModule.label'),
+          submenu: [
+            {
+              label: this.ts(
+                'newmodule.fromInternet',
+                'newmodule.fromInternet.ak'
+              ),
+              accelerator: 'F2',
+              click: () => {
+                Command.addRepositoryModule();
+              },
+            },
+            {
+              label: this.ts('newmodule.fromFile', 'newmodule.fromFile.ak'),
+              click: () => {
+                Command.addLocalModule();
+              },
+            },
+          ],
+        },
+        {
+          label: this.ts('menu.removeModule.label', 'menu.removeModule.sc'),
+          visible: G.LibSword.hasBible(),
+          click: () => {
+            Command.removeModule();
+          },
+        },
+        { type: 'separator', visible: G.LibSword.hasBible() },
+        {
+          label: this.ts('menu.exportAudio.label', 'menu.exportAudio.sc'),
+          visible: G.LibSword.hasBible(),
+          click: () => {
+            Command.exportAudio();
+          },
+        },
+        {
+          label: this.ts('menu.importAudio.label', 'menu.importAudio.sc'),
+          visible: G.LibSword.hasBible(),
+          click: () => {
+            Command.importAudio();
+          },
+        },
+        { type: 'separator', visible: G.LibSword.hasBible() },
+        {
+          label: this.ts('printSetupCmd.label', 'printSetupCmd.accesskey'),
+          visible: G.LibSword.hasBible(),
+          click: () => {
+            Command.pageSetup();
+          },
+        },
+        {
+          label: this.ts('printPreviewCmd.label', 'printPreviewCmd.accesskey'),
+          accelerator: this.tx('printCmd.commandkey', ['CommandOrControl']),
+          visible: G.LibSword.hasBible(),
+          click: () => {
+            Command.printPreview();
+          },
+        },
+        {
+          label: this.ts('printCmd.label', 'printCmd.accesskey'),
+          accelerator: this.tx('printCmd.commandkey', [
+            'CommandOrControl',
+            'Shift',
+          ]),
+          visible: G.LibSword.hasBible(),
+          click: () => {
+            Command.print();
+          },
+        },
+        { type: 'separator', visible: G.LibSword.hasBible() },
+        {
+          label: this.ts('print.printpassage'),
+          accelerator: this.tx('printPassageCmd.commandkey', [
+            'CommandOrControl',
+          ]),
+          visible: G.LibSword.hasBible(),
+          click: () => {
+            Command.printPassage();
+          },
+        },
+        { type: 'separator' },
+        {
+          label: this.ts(
+            'quitApplicationCmdWin.label',
+            'quitApplicationCmdWin.accesskey'
+          ),
+          click: () => {
+            this.mainWindow.close();
+          },
+        },
+      ],
     };
 
     const subMenuEdit = {
@@ -324,14 +317,14 @@ export default class MenuBuilder {
     };
 
     const switches = [
-      ['showHeadings', 'menu.view.headings'],
-      ['sshowFootnotes', 'menu.view.footnotes'],
-      ['sshowCrossRefs', 'menu.view.crossrefs'],
-      ['sshowUserNotes', 'menu.view.usernotes'],
-      ['sshowDictLinks', 'menu.view.dict'],
-      ['sshowStrongs', 'menu.view.langnotes'],
-      ['sshowVerseNums', 'menu.view.versenums'],
-      ['sshowRedWords', 'menu.view.redwords'],
+      ['xulsword.showHeadings', 'menu.view.headings'],
+      ['xulsword.showFootnotes', 'menu.view.footnotes'],
+      ['xulsword.showCrossRefs', 'menu.view.crossrefs'],
+      ['xulsword.showDictLinks', 'menu.view.dict'],
+      ['xulsword.showUserNotes', 'menu.view.usernotes'],
+      ['xulsword.showStrongs', 'menu.view.langnotes'],
+      ['xulsword.showVerseNums', 'menu.view.versenums'],
+      ['xulsword.showRedWords', 'menu.view.redwords'],
     ];
 
     const allswitches = switches.map((x: any) => {
@@ -342,8 +335,8 @@ export default class MenuBuilder {
       const [name, key] = sw;
       return {
         label: this.ts(key),
+        id: name,
         type: 'checkbox',
-        checked: G.Prefs.getPrefOrCreate(name, 'boolean', true),
         click: () => {
           Command.toggleSwitch(name);
         },
@@ -353,24 +346,23 @@ export default class MenuBuilder {
     const radios = ['fnlocation', 'crlocation', 'unlocation'];
 
     const displayLocation = radios.map((name) => {
-      const prefVal = G.Prefs.getPrefOrCreate(name, 'string', 'notebox');
       return {
         label: this.ts(`menu.view.${name}`),
         submenu: [
           {
             label: this.ts('menu.view.popups'),
+            id: `mainmenu.${name}_val_popup`,
             type: 'radio',
-            checked: prefVal === 'popup',
             click: () => {
-              Command.radioSwitch(name, 'popup');
+              Command.radioSwitch(`mainmenu.${name}`, 'popup');
             },
           },
           {
             label: this.ts('menu.view.notebox'),
+            id: `mainmenu.${name}_val_notebox`,
             type: 'radio',
-            checked: prefVal === 'notebox',
             click: () => {
-              Command.radioSwitch(name, 'notebox');
+              Command.radioSwitch(`mainmenu.${name}`, 'notebox');
             },
           },
         ],
@@ -403,7 +395,7 @@ export default class MenuBuilder {
       return {
         label: this.ts(`menu.view.${tab}`),
         submenu: [
-          { id: tab, type: 'separator' },
+          { id: `sep_${tab}`, type: 'separator' },
           {
             label: this.ts('menu.view.showAll'),
             click: () => {
@@ -416,7 +408,7 @@ export default class MenuBuilder {
               Command.setTabs(tab, 'hideAll');
             },
           },
-          { id: tab, type: 'separator' },
+          { type: 'separator' },
           ...winLabels.map((sm: any, i) => {
             sm.type = 'radio';
             if (i === winLabels.length - 1) sm.checked = true;
@@ -475,9 +467,6 @@ export default class MenuBuilder {
       ],
     };
 
-    const fontPref = 'menu.options.font';
-    const fontVal = G.Prefs.getPrefOrCreate(fontPref, 'number', 2);
-    const langVal = G.Prefs.getCharPref(C.LOCALEPREF);
     const subMenuOptions = {
       label: this.ts('menu.options'),
       submenu: [
@@ -486,42 +475,42 @@ export default class MenuBuilder {
           submenu: [
             {
               label: this.ts('menu.options.font1'),
+              id: `global.fontSize_val_0`,
               type: 'radio',
-              checked: fontVal === 0,
               click: () => {
-                Command.radioSwitch(fontPref, 0);
+                Command.radioSwitch('global.fontSize', 0);
               },
             },
             {
               label: this.ts('menu.options.font2'),
+              id: `global.fontSize_val_1`,
               type: 'radio',
-              checked: fontVal === 1,
               click: () => {
-                Command.radioSwitch(fontPref, 1);
+                Command.radioSwitch('global.fontSize', 1);
               },
             },
             {
               label: this.ts('menu.options.font3'),
+              id: `global.fontSize_val_2`,
               type: 'radio',
-              checked: fontVal === 2,
               click: () => {
-                Command.radioSwitch(fontPref, 2);
+                Command.radioSwitch('global.fontSize', 2);
               },
             },
             {
               label: this.ts('menu.options.font4'),
+              id: `global.fontSize_val_3`,
               type: 'radio',
-              checked: fontVal === 3,
               click: () => {
-                Command.radioSwitch(fontPref, 3);
+                Command.radioSwitch('global.fontSize', 3);
               },
             },
             {
               label: this.ts('menu.options.font5'),
+              id: `global.fontSize_val_4`,
               type: 'radio',
-              checked: fontVal === 4,
               click: () => {
-                Command.radioSwitch(fontPref, 4);
+                Command.radioSwitch('global.fontSize', 4);
               },
             },
           ],
@@ -531,26 +520,18 @@ export default class MenuBuilder {
           submenu: [
             {
               label: this.ts('options.hebVowel'),
+              id: 'xulsword.showHebVowelPoints',
               type: 'checkbox',
-              checked: G.Prefs.getPrefOrCreate(
-                'showHebVowelPoints',
-                'boolean',
-                true
-              ),
               click: () => {
-                Command.toggleSwitch('showHebVowelPoints');
+                Command.toggleSwitch('xulsword.showHebVowelPoints');
               },
             },
             {
               label: this.ts('options.hebCant'),
+              id: 'xulsword.showHebCantillation',
               type: 'checkbox',
-              checked: G.Prefs.getPrefOrCreate(
-                'showHebCantillation',
-                'boolean',
-                true
-              ),
               click: () => {
-                Command.toggleSwitch('showHebCantillation');
+                Command.toggleSwitch('xulsword.showHebCantillation');
               },
             },
           ],
@@ -561,8 +542,8 @@ export default class MenuBuilder {
             const [lng, name] = l;
             return {
               label: name,
+              id: `${C.LOCALEPREF}_val_${lng}`,
               type: 'radio',
-              checked: langVal === lng,
               click: () => {
                 Command.radioSwitch(C.LOCALEPREF, lng);
               },
@@ -574,33 +555,31 @@ export default class MenuBuilder {
 
     const subMenuBookmarks = {};
 
-    const winPref = 'numDisplayedWindows';
-    const winVal = G.Prefs.getPrefOrCreate(winPref, 'number', 2);
     const subMenuWindows = {
       label: this.ts('menu.windows'),
       submenu: [
         {
           label: this.ts('menu.windows.1win'),
+          id: 'xulsword.numDisplayedWindows_val_1',
           type: 'radio',
-          checked: winVal === 1,
           click: () => {
-            Command.radioSwitch(winPref, 1);
+            Command.radioSwitch('xulsword.numDisplayedWindows', 1);
           },
         },
         {
           label: this.ts('menu.windows.2win'),
+          id: 'xulsword.numDisplayedWindows_val_2',
           type: 'radio',
-          checked: winVal === 2,
           click: () => {
-            Command.radioSwitch(winPref, 2);
+            Command.radioSwitch('xulsword.numDisplayedWindows', 2);
           },
         },
         {
           label: this.ts('menu.windows.3win'),
+          id: 'xulsword.numDisplayedWindows_val_3',
           type: 'radio',
-          checked: winVal === 3,
           click: () => {
-            Command.radioSwitch(winPref, 3);
+            Command.radioSwitch('xulsword.numDisplayedWindows', 3);
           },
         },
       ],
@@ -611,7 +590,7 @@ export default class MenuBuilder {
       submenu: [
         {
           label: this.ts('menu.help.about'),
-          click() {
+          click: () => {
             Command.openHelp();
           },
         },
