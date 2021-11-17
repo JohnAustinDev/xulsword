@@ -14,7 +14,7 @@ import {
   getFontFaceConfigs,
 } from './config';
 import { resolveHtmlPath } from './mutil';
-import { GType, GPublic } from '../type';
+import { GType, GPublic, TabType } from '../type';
 import C from '../constant';
 
 // This G object is for use in the main process, and it shares the same
@@ -172,22 +172,70 @@ function getBook(): { sName: string; bName: string; bNameL: string }[] {
   return book;
 }
 
+const Tab: { [i: string]: TabType } = {
+  KJV: {
+    modName: 'KJV',
+    tabType: 'Texts',
+    label: 'King James Version',
+    index: 0,
+    description: 'The King James translation of the Bible',
+  },
+  RSP: {
+    modName: 'RSP',
+    tabType: 'Texts',
+    label: 'Russian Synodal',
+    index: 1,
+    description: 'The Russian Synodal translation of the Bible',
+  },
+  MYCOMM: {
+    modName: 'MYCOMM',
+    tabType: 'Comms',
+    label: 'My Commentary',
+    index: 2,
+    description: 'A commentary of the Bible',
+  },
+  MYDICT: {
+    modName: 'MYDICT',
+    tabType: 'Dicts',
+    label: 'My Dictionary',
+    index: 3,
+    description: 'A glossary/dictionary of the Bible',
+  },
+  MYBOOK: {
+    modName: 'MYBOOK',
+    tabType: 'Genbks',
+    label: 'My General Book',
+    index: 4,
+    description: 'Some book related to the Bible',
+  },
+};
+const Tabs: TabType[] = [Tab.RSP, Tab.KJV, Tab.MYCOMM, Tab.MYBOOK, Tab.MYDICT];
 function getTabs() {
-  throw Error(`getTabs not yet implemented`);
-  return null;
+  console.log(`getTabs not yet implemented`);
+  return Tabs;
 }
 
 function getTab() {
-  throw Error(`getTab not yet implemented`);
-  return null;
+  console.log(`getTab not yet implemented`);
+  return Tab;
 }
 
 function setMenuFromPrefs(menu: Electron.Menu) {
   if (!menu.items) return;
   menu.items.forEach((i) => {
     if (i.id && i.type === 'checkbox') {
-      const t = Prefsx.getBoolPref(i.id);
-      i.checked = Prefsx.getBoolPref(i.id);
+      const [type, win, mod] = i.id.split('_');
+      if (type === 'showtab') {
+        const w = Number(win);
+        const pval = Prefsx.getComplexValue('xulsword.tabs');
+        if (Number.isNaN(w)) {
+          i.checked = pval.every((wn: any) => wn?.includes(mod));
+        } else {
+          i.checked = pval[w - 1]?.includes(mod);
+        }
+      } else {
+        i.checked = Prefsx.getBoolPref(i.id);
+      }
     } else if (i.id && i.type === 'radio') {
       const [pref, str] = i.id.split('_val_');
       if (str !== '') {

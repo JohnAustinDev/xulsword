@@ -11,7 +11,7 @@ import log from 'electron-log';
 import i18n from 'i18next';
 import MenuBuilder from './menu';
 import { resolveHtmlPath, jsdump } from './mutil';
-import G from './gm';
+import G from './mg';
 import C from '../constant';
 import { GPublic } from '../type';
 
@@ -152,7 +152,7 @@ const openSplashWindow = () => {
 };
 
 const openMainWindow = () => {
-  const name = 'main';
+  const name = 'xulsword';
   // Open to Prefs size/location
   let x;
   let y;

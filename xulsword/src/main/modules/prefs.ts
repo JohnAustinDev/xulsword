@@ -77,7 +77,10 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
       this.setPref(key, type, val, aStore);
     }
 
-    if (typeof val !== type) {
+    if (
+      (type !== 'complex' && typeof val !== type) ||
+      (type === 'complex' && typeof val !== 'object')
+    ) {
       throw Error(`type not ${type}: ${key} of ${aStore} store`);
     }
 

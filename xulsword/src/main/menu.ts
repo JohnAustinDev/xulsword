@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   app,
@@ -5,18 +6,20 @@ import {
   shell,
   BrowserWindow,
   MenuItemConstructorOptions,
+  MenuItem,
 } from 'electron';
+import path from 'path';
 import i18next from 'i18next';
-import G from './gm';
+import G from './mg';
 import C from '../constant';
 
 const Command = {
   // Some commands update language and global state from Prefs
-  setGlobalStateFromPrefs(name: string | string[]) {
+  setGlobalStateFromPrefs(prefs: string | string[]) {
     function setGlobalStateFromPrefs2() {
       G.reset();
       BrowserWindow.getAllWindows().forEach((w) => {
-        w.webContents.send('setStateFromPrefs', name);
+        w.webContents.send('setStateFromPrefs', prefs);
       });
     }
 
@@ -62,8 +65,50 @@ const Command = {
     this.setGlobalStateFromPrefs(name);
   },
 
-  setTabs(name: string | 'all', value: 'showAll' | 'hideAll') {
-    console.log(`Action not implemented: setTabs(${name}, ${value})`);
+  setTabs(
+    type: string | 'all',
+    winLabel: string | 'all',
+    modOrAll: string,
+    showtab: 'show' | 'hide' | 'toggle'
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    const n = Number(winLabel.substr(winLabel.length - 1));
+    const windows = Number.isNaN(n) ? [1, 2, 3] : [n];
+
+    const modules =
+      modOrAll === 'all'
+        ? G.Tabs.map((t) => {
+            return type === 'all' || type === t.tabType ? t : null;
+          })
+        : [G.Tab[modOrAll]];
+
+    const pval = G.Prefs.getComplexValue('xulsword.tabs');
+    const nval = JSON.parse(JSON.stringify(pval));
+
+    let showtab2 = showtab;
+    if (showtab === 'toggle' && winLabel === 'menu.view.allwindows') {
+      const m = modules[0];
+      const val = m !== null && pval.every((wn: any) => wn?.includes(m.modName));
+      showtab2 = val ? 'hide' : 'show';
+    }
+
+    windows.forEach((w) => {
+      modules.forEach((t) => {
+        if (t) {
+          const show =
+            showtab2 === 'toggle'
+              ? !pval[w - 1].includes(t.modName)
+              : showtab2 === 'show';
+          if (show && !pval[w - 1].includes(t.modName)) {
+            nval[w - 1].push(t.modName);
+          } else if (!show && pval[w - 1].includes(t.modName)) {
+            nval[w - 1].splice(nval[w - 1].indexOf(t.modName), 1);
+          }
+        }
+      });
+    });
+    G.Prefs.setComplexValue('xulsword.tabs', nval);
+    this.setGlobalStateFromPrefs('xulsword.tabs');
   },
 
   addRepositoryModule() {
@@ -153,6 +198,7 @@ export default class MenuBuilder {
         : this.buildDefaultTemplate();
 
     const menu = Menu.buildFromTemplate(template);
+    MenuBuilder.updateTabMenus(menu);
     G.setGlobalMenuFromPrefs(menu);
     Menu.setApplicationMenu(menu);
 
@@ -171,6 +217,58 @@ export default class MenuBuilder {
           },
         },
       ]).popup({ window: this.mainWindow });
+    });
+  }
+
+  static tabs = [
+    ['showtexttabs', 'Texts'],
+    ['showcommtabs', 'Comms'],
+    ['showbooktabs', 'Genbks'],
+    ['showdicttabs', 'Dicts'],
+  ];
+
+  static winLabels = [
+    'menu.view.window1',
+    'menu.view.window2',
+    'menu.view.window3',
+    'menu.view.allwindows',
+  ];
+
+  static updateTabMenus(menu: Menu) {
+    MenuBuilder.tabs.forEach((tb) => {
+      const [tab, type] = tb;
+      let disableParent = true;
+      MenuBuilder.winLabels.forEach((wl) => {
+        const win = Number(wl.substr(wl.length - 1));
+        const tabmenu = menu.getMenuItemById(`menu_${tab}_${wl}`);
+        const submenu = tabmenu?.submenu;
+        if (!submenu) throw Error(`No tabmenu: menu_${tab}_${wl}`);
+        const { items } = submenu;
+        while (items[0].id !== `showAll_${tab}_${wl}`) items.shift();
+        let disableMulti = 0;
+        G.Tabs.reverse().forEach((t) => {
+          if (t.tabType === type) {
+            disableParent = false;
+            disableMulti += 1;
+            const newItem = new MenuItem({
+              id: `showtab_${win}_${t.modName}`,
+              label: t.label + (t.description ? ` --- ${t.description}` : ''),
+              type: 'checkbox',
+              // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
+              click: () => {
+                Command.setTabs(type, wl, t.modName, 'toggle');
+              },
+            });
+            submenu.insert(0, newItem);
+          }
+        });
+        const showAll = menu.getMenuItemById(`showAll_${tab}_${wl}`);
+        const hideAll = menu.getMenuItemById(`hideAll_${tab}_${wl}`);
+        if (showAll) showAll.enabled = disableMulti > 1;
+        if (hideAll) hideAll.enabled = disableMulti > 1;
+      });
+      const parent = menu.getMenuItemById(`parent_${tab}`);
+      if (parent) parent.enabled = !disableParent;
     });
   }
 
@@ -317,28 +415,29 @@ export default class MenuBuilder {
     };
 
     const switches = [
-      ['xulsword.showHeadings', 'menu.view.headings'],
-      ['xulsword.showFootnotes', 'menu.view.footnotes'],
-      ['xulsword.showCrossRefs', 'menu.view.crossrefs'],
-      ['xulsword.showDictLinks', 'menu.view.dict'],
-      ['xulsword.showUserNotes', 'menu.view.usernotes'],
-      ['xulsword.showStrongs', 'menu.view.langnotes'],
-      ['xulsword.showVerseNums', 'menu.view.versenums'],
-      ['xulsword.showRedWords', 'menu.view.redwords'],
+      ['showHeadings', 'headings'],
+      ['showFootnotes', 'footnotes'],
+      ['showCrossRefs', 'crossrefs'],
+      ['showDictLinks', 'dict'],
+      ['showUserNotes', 'usernotes'],
+      ['showStrongs', 'langnotes'],
+      ['showVerseNums', 'versenums'],
+      ['showRedWords', 'redwords'],
     ];
 
     const allswitches = switches.map((x: any) => {
-      return x[0];
+      return `xulsword.${x[0]}`;
     });
 
     const textSwitches = switches.map((sw) => {
       const [name, key] = sw;
       return {
-        label: this.ts(key),
-        id: name,
+        label: this.ts(`menu.view.${key}`),
+        id: `xulsword.${name}`,
         type: 'checkbox',
+        icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x14', `${name}.png`),
         click: () => {
-          Command.toggleSwitch(name);
+          Command.toggleSwitch(`xulsword.${name}`);
         },
       };
     });
@@ -369,50 +468,34 @@ export default class MenuBuilder {
       };
     });
 
-    const tabs = [
-      'showtexttabs',
-      'showcommtabs',
-      'showbooktabs',
-      'showdicttabs',
-    ];
-
-    const winLabels = [
-      {
-        label: this.ts('menu.view.window1'),
-      },
-      {
-        label: this.ts('menu.view.window2'),
-      },
-      {
-        label: this.ts('menu.view.window3'),
-      },
-      {
-        label: this.ts('menu.view.allwindows'),
-      },
-    ];
-
-    const textTabs = tabs.map((tab) => {
+    const textTabs = MenuBuilder.tabs.map((t) => {
+      const [tab, type] = t;
       return {
+        id: `parent_${tab}`,
         label: this.ts(`menu.view.${tab}`),
+        icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
         submenu: [
-          { id: `sep_${tab}`, type: 'separator' },
-          {
-            label: this.ts('menu.view.showAll'),
-            click: () => {
-              Command.setTabs(tab, 'showAll');
-            },
-          },
-          {
-            label: this.ts('menu.view.hideAll'),
-            click: () => {
-              Command.setTabs(tab, 'hideAll');
-            },
-          },
-          { type: 'separator' },
-          ...winLabels.map((sm: any, i) => {
-            sm.type = 'radio';
-            if (i === winLabels.length - 1) sm.checked = true;
-            return sm;
+          ...MenuBuilder.winLabels.map((wl: any) => {
+            return {
+              label: this.ts(wl),
+              id: `menu_${tab}_${wl}`,
+              submenu: [
+                {
+                  id: `showAll_${tab}_${wl}`,
+                  label: this.ts('menu.view.showAll'),
+                  click: () => {
+                    Command.setTabs(type, wl, 'all', 'show');
+                  },
+                },
+                {
+                  id: `hideAll_${tab}_${wl}`,
+                  label: this.ts('menu.view.hideAll'),
+                  click: () => {
+                    Command.setTabs(type, wl, 'all', 'hide');
+                  },
+                },
+              ],
+            };
           }),
         ],
       };
@@ -448,20 +531,24 @@ export default class MenuBuilder {
         ...textTabs,
         {
           label: this.ts('menu.view.showAll'),
-          submenu: winLabels.map((sm: any) => {
-            sm.click = () => {
-              Command.setTabs('all', 'showAll');
+          submenu: MenuBuilder.winLabels.map((wl: any) => {
+            return {
+              label: this.ts(wl),
+              click: () => {
+                Command.setTabs('all', wl, 'all', 'show');
+              },
             };
-            return sm;
           }),
         },
         {
           label: this.ts('menu.view.hideAll'),
-          submenu: winLabels.map((sm: any) => {
-            sm.click = () => {
-              Command.setTabs('all', 'hideAll');
+          submenu: MenuBuilder.winLabels.map((wl: any) => {
+            return {
+              label: this.ts(wl),
+              click: () => {
+                Command.setTabs('all', wl, 'all', 'hide');
+              },
             };
-            return sm;
           }),
         },
       ],

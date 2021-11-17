@@ -2,7 +2,7 @@
 /* eslint-disable import/prefer-default-export */
 import i18next from 'i18next';
 import C from '../constant';
-import G from './gr';
+import G from './rg';
 import {
   dString,
   escapeRE,

@@ -22,8 +22,8 @@
   "xulsword.showHebVowelPoints": true,
   "xulsword.showRedWords": true,
 
-  "xulsword.tabs": [["KJV"], ["KJV"], ["KJV"]],
-  "xulsword.modules": ["KJV", "KJV", "KJV"],
+  "xulsword.tabs": [["KJV"], ["RSP"], ["KJV", "RSP", "MYBOOK"]],
+  "xulsword.modules": ["KJV", "RSP", "MYBOOK"],
   "xulsword.keys": ["", "", ""],
 
   "xulsword.chooser": "bible",

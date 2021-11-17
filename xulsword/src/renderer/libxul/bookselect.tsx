@@ -21,7 +21,7 @@ import Stack from './stack';
 import Menulist from './menulist';
 import Textbox from './textbox';
 import { getAvailableBooks, parseLocation } from '../rutil';
-import G from '../gr';
+import G from '../rg';
 import { BookType } from '../../type';
 import './xul.css';
 import './bookselect.css';

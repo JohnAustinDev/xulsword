@@ -22,7 +22,7 @@ import Spacer from '../libxul/spacer';
 import Textbox from '../libxul/textbox';
 import Toolbox from '../libxul/toolbox';
 import Viewport from '../viewport/viewport';
-import G from '../gr';
+import G from '../rg';
 import C from '../../constant';
 import { xulswordHandler, handleViewport as handleVP } from './handlers';
 import './xulsword.css';
@@ -40,7 +40,8 @@ interface XulswordProps extends XulProps {
   i18n: typeof i18next;
 }
 
-// Default values of these keys are set in the default Pref file
+// Default values for these keys must be set in the default Pref file
+// or an error will be thrown.
 interface StateDefault {
   book: string;
   chapter: number;
@@ -70,6 +71,8 @@ interface StateDefault {
   numDisplayedWindows: number;
 }
 
+// The following state values are not stored in Prefs, but take
+// default values in Xulsword constructor.
 const stateNoPref = {
   historyMenupopup: undefined,
   hasBible: G.LibSword.hasBible(),
@@ -78,6 +81,8 @@ const stateNoPref = {
 };
 
 type XulswordState = typeof stateNoPref & StateDefault;
+
+const maxHistoryMenuLength = 20;
 
 export class Xulsword extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -100,6 +105,7 @@ export class Xulsword extends React.Component {
       ...this.getStatePrefs(),
     };
 
+    // Listener for G.setStateFromPrefs()
     window.ipc.renderer.on('setStateFromPrefs', (prefs: string | string[]) => {
       const state = this.getStatePrefs(prefs);
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
@@ -133,8 +139,7 @@ export class Xulsword extends React.Component {
     this.lastSetPrefs = {};
   }
 
-  // Read state from Prefs, except members of stateNoPersist who
-  // get stateDefault values.
+  // Return values of state Prefs.
   getStatePrefs = (prefsToGet?: string | string[]): { [i: string]: any } => {
     const { id } = this.props as XulswordProps;
     const store = G.Prefs.getStore();
@@ -155,13 +160,11 @@ export class Xulsword extends React.Component {
       const prefId = fullPref.substr(0, id.length);
       if (prefId === id && fullPref.substr(id.length, 1) === '.') {
         const prefName = fullPref.substr(id.length + 1);
-        if (prefs === undefined || prefs.includes(fullPref)) {
-          if (prefName in stateNoPref) {
-            const n = prefName as keyof typeof stateNoPref;
-            state[prefName] = stateNoPref[n];
-          } else {
-            state[prefName] = value;
-          }
+        if (
+          !(prefName in stateNoPref) &&
+          (prefs === undefined || prefs.includes(fullPref))
+        ) {
+          state[prefName] = value;
         }
       }
     });
@@ -204,10 +207,9 @@ export class Xulsword extends React.Component {
 
   historyMenu = () => {
     const state = this.state as XulswordState;
-    const maxMenuLength = 20;
-    let is = state.historyIndex - Math.round(maxMenuLength / 2);
+    let is = state.historyIndex - Math.round(maxHistoryMenuLength / 2);
     if (is < 0) is = 0;
-    let ie = is + maxMenuLength;
+    let ie = is + maxHistoryMenuLength;
     if (ie > state.history.length) ie = state.history.length;
     const items = state.history.slice(is, ie);
     if (!items || !items.length) return null;
@@ -255,6 +257,9 @@ export class Xulsword extends React.Component {
 
     this.setState((prevState: XulswordState) => {
       prevState.history.splice(prevState.historyIndex, 0, location);
+      if (prevState.history.length > maxHistoryMenuLength) {
+        prevState.history.pop();
+      }
       return { history: prevState.history };
     });
   };
@@ -263,7 +268,8 @@ export class Xulsword extends React.Component {
   // to history[0] if promote is true.
   setHistory = (index: number, promote = false): void => {
     const { history: h } = this.state as XulswordState;
-    if (index < 0 || index > h.length - 1) return;
+    if (index < 0 || index > h.length - 1 || index > maxHistoryMenuLength)
+      return;
     this.setState((prevState: XulswordState) => {
       const { history, modules } = prevState as XulswordState;
       const newLocation = convertDotString(

@@ -13,7 +13,7 @@ import Menulist from './menulist';
 import Spacer from './spacer';
 import './xul.css';
 import C from '../../constant';
-import G from '../gr';
+import G from '../rg';
 
 declare global {
   interface Window {

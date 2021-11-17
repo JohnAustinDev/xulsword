@@ -3,7 +3,7 @@ import React from 'react';
 import { render } from 'react-dom';
 import { jsdump } from '../rutil';
 import i18nInit from '../i18n';
-import { Xulsword, loadedXUL, unloadXUL } from './xulsword';
+import { Xulsword, loadedXUL, unloadXUL } from './component';
 import '../global-htm.css';
 
 i18nInit(['xulsword'])

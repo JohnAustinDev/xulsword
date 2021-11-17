@@ -10,7 +10,7 @@ import i18next from 'i18next';
 import React from 'react';
 import PropTypes from 'prop-types';
 import path from 'path';
-import G from '../gr';
+import G from '../rg';
 import C from '../../constant';
 import { Hbox, Vbox } from '../libxul/boxes';
 import {

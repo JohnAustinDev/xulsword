@@ -20,7 +20,7 @@
   display: block !important;
 }
 
-/* MAIN WINDOW TOGGLE MENU ITEMS */
+/* MAIN WINDOW TOGGLE MENU ITEMS
 menuitem#hdmitem {
   list-style-image: url(../images/headingssm.png) !important;
 }
@@ -31,13 +31,13 @@ menuitem#fnmitem {
   list-style-image: url(../images/footnotessm.png) !important;
 }
 menuitem#dtmitem {
-  list-style-image: url(../images/dictionarysm.png) !important;
+  list-style-image: url(../images/dictsm.png) !important;
 }
 menuitem#lnmitem {
-  list-style-image: url(../images/langstudysm.png) !important;
+  list-style-image: url(../images/langnotessm.png) !important;
 }
 menuitem#vnmitem {
-  list-style-image: url(../images/versenumberssm.png) !important;
+  list-style-image: url(../images/versenumssm.png) !important;
 }
 menuitem#unmitem {
   list-style-image: url(../images/usernotessm.png) !important;
@@ -68,6 +68,7 @@ menu#sub-Dicts {
 menu#sub-Genbks {
   list-style-image: url(../images/Genbks.png) !important;
 }
+*/
 
 /* MAIN WINDOW TOGGLE BUTTONS */
 #optionButtons {
@@ -96,7 +97,7 @@ menu#sub-Genbks {
   background: url(../images/headings.png);
 }
 #dtbutton .button-icon {
-  background: url(../images/dictionary.png);
+  background: url(../images/dict.png);
 }
 #optionButtons .button-icon {
   display: block;

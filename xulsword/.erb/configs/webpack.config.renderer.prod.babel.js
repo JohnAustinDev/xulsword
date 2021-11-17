@@ -59,7 +59,7 @@ export default merge(baseConfig, {
 
   entry: {
     // Entry points and output files (one for each kind of BrowserWindow)
-    main:  entryConfig('main'),
+    xulsword:  entryConfig('xulsword'),
     splash: entryConfig('splash'),
   },
 
@@ -193,7 +193,7 @@ export default merge(baseConfig, {
     }),
 
     // Entry point html files (one plugin for each kind of BrowserWindow)
-    new HtmlWebpackPlugin(htmlConfig('main')),
+    new HtmlWebpackPlugin(htmlConfig('xulsword')),
     new HtmlWebpackPlugin(htmlConfig('splash'))
   ],
 });

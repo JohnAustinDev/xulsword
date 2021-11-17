@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 import { jsdump, parseLocation } from '../rutil';
-import G from '../gr';
+import G from '../rg';
 import { firstIndexOfBookGroup } from '../../common';
 
 export function xulswordHandler(e, ...args) {
