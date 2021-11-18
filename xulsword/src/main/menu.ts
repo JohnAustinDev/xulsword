@@ -69,7 +69,7 @@ const Command = {
     type: string | 'all',
     winLabel: string | 'all',
     modOrAll: string,
-    showtab: 'show' | 'hide' | 'toggle'
+    doWhat: 'show' | 'hide' | 'toggle'
   ) {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     const n = Number(winLabel.substr(winLabel.length - 1));
@@ -85,20 +85,22 @@ const Command = {
     const pval = G.Prefs.getComplexValue('xulsword.tabs');
     const nval = JSON.parse(JSON.stringify(pval));
 
-    let showtab2 = showtab;
-    if (showtab === 'toggle' && winLabel === 'menu.view.allwindows') {
+    // If toggling on allwindows, set all according to the clicked
+    // menuitem, and not each item selarately.
+    let doWhat2 = doWhat;
+    if (doWhat === 'toggle' && winLabel === 'menu.view.allwindows') {
       const m = modules[0];
       const val = m !== null && pval.every((wn: any) => wn?.includes(m.modName));
-      showtab2 = val ? 'hide' : 'show';
+      doWhat2 = val ? 'hide' : 'show';
     }
 
     windows.forEach((w) => {
       modules.forEach((t) => {
         if (t) {
           const show =
-            showtab2 === 'toggle'
+            doWhat2 === 'toggle'
               ? !pval[w - 1].includes(t.modName)
-              : showtab2 === 'show';
+              : doWhat2 === 'show';
           if (show && !pval[w - 1].includes(t.modName)) {
             nval[w - 1].push(t.modName);
           } else if (!show && pval[w - 1].includes(t.modName)) {
@@ -147,12 +149,28 @@ const Command = {
     console.log(`Action not implemented: print`);
   },
 
+  search() {
+    console.log(`Action not implemented: search()`);
+  },
+
   copyPassage() {
     console.log(`Action not implemented: copyPassage`);
   },
 
-  search() {
-    console.log(`Action not implemented: search()`);
+  openFontsColors() {
+    console.log(`Action not implemented: openFontsColors`);
+  },
+
+  openBookmarksManager() {
+    console.log(`Action not implemented: openBookmarksManager()`);
+  },
+
+  openNewBookmarkDialog() {
+    console.log(`Action not implemented: openNewBookmarkDialog()`);
+  },
+
+  openNewUserNoteDialog() {
+    console.log(`Action not implemented: openNewUserNoteDialog()`);
   },
 
   openHelp() {
@@ -600,6 +618,13 @@ export default class MenuBuilder {
                 Command.radioSwitch('global.fontSize', 4);
               },
             },
+            { type: 'separator' },
+            {
+              label: this.ts('fontsAndColors.label'),
+              click: () => {
+                Command.openFontsColors();
+              },
+            },
           ],
         },
         {
@@ -625,7 +650,7 @@ export default class MenuBuilder {
         },
         {
           label: this.ts('menu.options.language'),
-          submenu: C.Languages.map((l) => {
+          submenu: G.Prefs.getComplexValue('global.locales').map((l: any) => {
             const [lng, name] = l;
             return {
               label: name,
@@ -640,7 +665,26 @@ export default class MenuBuilder {
       ],
     };
 
-    const subMenuBookmarks = {};
+    const subMenuBookmarks = {
+      label: this.ts('bookmarksMenu.label', 'bookmarksMenu.accesskey'),
+      submenu: [
+        {
+          label: this.ts('manBookmarksCmd.label'),
+          accelerator: this.tx('manBookmarksCmd.commandkey', ['CommandOrControl']),
+          open: () => {Command.openBookmarksManager();},
+        },
+        {
+          label: this.ts('menuitem.newBookmark.label'),
+          accelerator: this.tx('addCurPageAsCmd.commandkey', ['CommandOrControl']),
+          open: () => {Command.openNewBookmarkDialog();},
+        },
+        {
+          label: this.ts('menu.usernote.add'),
+          accelerator: this.tx('addCurPageAsCmd.commandkey', ['CommandOrControl', 'Shift']),
+          open: () => {Command.openNewUserNoteDialog();},
+        }
+      ],
+    };
 
     const subMenuWindows = {
       label: this.ts('menu.windows'),
@@ -711,22 +755,23 @@ export default class MenuBuilder {
       ],
     };
 
-    const all = [
+    const applicationMenuTemplate = [
       subMenuFile,
       subMenuEdit,
       subMenuView,
       subMenuOptions,
-      // subMenuBookmarks,
+      subMenuBookmarks,
       subMenuWindows,
       subMenuHelp,
     ];
+
     if (
       process.env.NODE_ENV === 'development' ||
       process.env.DEBUG_PROD === 'true'
     )
-      all.push(subMenuDev);
+    applicationMenuTemplate.push(subMenuDev);
 
-    return all;
+    return applicationMenuTemplate;
   }
 
   buildDarwinTemplate(): MenuItemConstructorOptions[] {

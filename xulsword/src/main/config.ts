@@ -117,7 +117,7 @@ function localeConfig(locale: string) {
 
 export function getLocaleConfigs() {
   const ret = {} as { [i: string]: ConfigType };
-  C.Languages.forEach((l) => {
+  Prefs.getComplexValue('global.locales').forEach((l: any) => {
     const [lang] = l;
     ret[lang] = localeConfig(lang);
   });
@@ -198,7 +198,7 @@ function getLocaleOfModule(module: string) {
   if (ml === C.NOTFOUND) ml = undefined;
 
   let stop = false;
-  C.Languages.forEach((l) => {
+  Prefs.getComplexValue('global.locales').forEach((l: any) => {
     const [locale] = l;
     if (stop) return;
     const lcs = locale.toLowerCase();
@@ -217,7 +217,7 @@ function getLocaleOfModule(module: string) {
   if (myLocale) return myLocale;
 
   const regex = new RegExp(`(^|s|,)+${module}(,|s|$)+`);
-  C.Languages.forEach((l) => {
+  Prefs.getComplexValue('global.locales').forEach((l: any) => {
     const [locale] = l;
     const toptions = {
       lng: locale,

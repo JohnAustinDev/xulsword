@@ -9,12 +9,6 @@ body.splash {
 }
 
 #layer2 {
-  background-image: url(../../../assets/splash-overlay.png);
-  background-repeat: no-repeat;
-}
-
-body.ru #layer2 {
-  background-image: url(../../../assets/splash-overlay-ru.png);
   background-repeat: no-repeat;
 }
 

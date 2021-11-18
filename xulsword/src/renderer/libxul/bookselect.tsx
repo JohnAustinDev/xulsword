@@ -29,8 +29,8 @@ import './bookselect.css';
 // XUL Bookselect
 // This component contains an overlapping Textbox and Menulist.
 // The Menulist's value does not display (its selection is covered
-// by the Textbox). However its drop-down menu button is visible.
-// The Menulist serves only to allow book selection from a dropdown
+// by the Textbox). Only its drop-down menu button is visible.
+// The Menulist just serves to allow book selection from a dropdown
 // menu. The Textbox shows the selected Bible book name in the program
 // locale. It can be changed by the user to another location, using
 // auto-completed typing in the Textbox, or selected via the drop-
@@ -40,10 +40,9 @@ import './bookselect.css';
 // it originally was. The Bookselect onChange event will be fired
 // only if the user selects a book from the drop-down Menulist, or
 // presses the Enter key on the Textbox while it contains a valid
-// Bible book name. Ff Enter is pressed without a valid book name,
+// Bible book name. If Enter is pressed without a valid book name,
 // the Textbox is simply returned to its original value without
-// firing onChange. Thus onChange is fired only when Bookselect
-// points to a valid book.
+// firing onChange.
 
 const defaultProps = {
   ...xulDefaultProps,

@@ -2,10 +2,6 @@
 
 // Common Global Constants
 const C = {
-  Languages: [
-    ['en', 'English'],
-    ['ru', 'русский'],
-  ],
   FPERM: 0o666,
   DPERM: 0o666,
   ORIGINAL: 'ORIG', // Value doen't really matter, just a export const

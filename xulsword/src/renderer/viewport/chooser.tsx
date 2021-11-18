@@ -9,7 +9,6 @@
 import i18next from 'i18next';
 import React from 'react';
 import PropTypes from 'prop-types';
-import path from 'path';
 import G from '../rg';
 import C from '../../constant';
 import { Hbox, Vbox } from '../libxul/boxes';
@@ -268,7 +267,9 @@ class Chooser extends React.Component {
     const name = i18next.exists(tkey) ? i18next.t(tkey) : bookGroup;
     if (/^\s*$/.test(name)) {
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
-      const src = path.join(G.Dirs.path.xsAsset, `${tkey}_${lng}.png`);
+      const src = [G.Dirs.path.xsAsset, 'locales', lng, `${tkey}.png`].join(
+        '/'
+      );
       return [<img key={src} src={src} alt="" />];
     }
     return [...name].map((l, i) => {

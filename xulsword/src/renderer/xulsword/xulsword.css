@@ -1,9 +1,9 @@
 #xulsword {
   overflow: hidden;
-  background-image: url(../images/b2.gif);
+  background-image: url(../../../assets/b2.gif);
 }
 #main-controlbar {
-  background-image: url(../images/b2.gif);
+  background-image: url(../../../assets/b2.gif);
 }
 #historyButtons,
 #player {

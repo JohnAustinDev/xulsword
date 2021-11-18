@@ -31,6 +31,17 @@ i18n.on('initialized', (options) => {
 async function i18nInit(namespaces) {
   const lang = G.Prefs.getCharPref(C.LOCALEPREF);
 
+  let supportedLangs = G.Prefs.getComplexValue('global.locales').map((l) => {return l[0]});
+  supportedLangs = [
+    ...new Set(
+      supportedLangs.concat(
+        supportedLangs.map((l) => {
+          return l.replace(/-.*$/, '');
+        })
+      )
+    ),
+  ];
+
   await i18n
     .use(rendererBackend)
     // pass the i18n instance to react-i18next.
@@ -40,7 +51,7 @@ async function i18nInit(namespaces) {
     .init({
       lng: lang,
       fallbackLng: 'en',
-      supportedLngs: C.Languages.map((l) => {return l[0];}),
+      supportedLngs: supportedLangs,
 
       ns: namespaces.concat(['common/books', 'common/numbers']),
 

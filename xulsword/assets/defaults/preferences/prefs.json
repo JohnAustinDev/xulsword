@@ -1,5 +1,21 @@
 {
   "global.locale": "ru",
+  "global.locales": [
+    ["en", "English"],
+    ["ru", "Русский"],
+    ["crh-Cyrl", "Русский/Крымскотатарский"],
+    ["fa", "فارسی"],
+    ["kk", "Қазақша"],
+    ["ko", "한국어"],
+    ["kum", "Къумукъ"],
+    ["ky-Arab", "قىرعىزچا"],
+    ["ky-Cyrl", "Кыргызча"],
+    ["ru-CA", "Русский для Востока"],
+    ["tk-Latn", "Түркменче"],
+    ["tt-Cyrl", "Татар теле"],
+    ["uz-Cyrl", "Ўзбекча"],
+    ["uz-Latn", "O‘zbekcha"]
+  ],
   "global.fontSize": 2,
 
   "xulsword.book": "Gen",

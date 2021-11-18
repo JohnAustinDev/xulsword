@@ -225,15 +225,28 @@ const start = async () => {
     await installExtensions();
   }
 
+  let supportedLangs = G.Prefs.getComplexValue('global.locales').map(
+    (l: any) => {
+      return l[0];
+    }
+  );
+  supportedLangs = [
+    ...new Set(
+      supportedLangs.concat(
+        supportedLangs.map((l: any) => {
+          return l.replace(/-.*$/, '');
+        })
+      )
+    ),
+  ];
+
   // Initialize i18n
   await i18n
     .use(i18nBackendMain)
     .init({
       lng: G.Prefs.getCharPref(C.LOCALEPREF),
       fallbackLng: 'en',
-      supportedLngs: C.Languages.map((l) => {
-        return l[0];
-      }),
+      supportedLngs: supportedLangs,
 
       ns: ['xulsword', 'common/config', 'common/books', 'common/numbers'],
       defaultNS: 'xulsword',
