@@ -39,14 +39,14 @@ getGlobalOption             test with xulsword
 
 setCipherKey                test with xulsword
 */
+require('../../../napi/libsword');
+require('../location');
 
-function jsdump(str)
-{
+function jsdump(str) {
   console.log(str);
-  // Components.classes['@mozilla.org/consoleservice;1']
-  //           .getService(Components.interfaces.nsIConsoleService)
-  //           .logStringMessage(str);
 }
+
+LibSword.initLibsword();
 
 var NumFailed = 0;
 if (LibSword.getModuleList() == "No Modules") {
@@ -54,66 +54,66 @@ if (LibSword.getModuleList() == "No Modules") {
   throw("No Modules loaded.");
 }
 
-jsdump("Need ESV and UZV, have " + LibSword.getModuleList());
+jsdump("Need KJV and UZV, have " + LibSword.getModuleList());
 
-Location.setLocation("ESV", "Matt.4");
-testLocs(1, "ESV", "Matt", 4, 1, 25, "KJV");
+Location.setLocation("KJV", "Matt.4");
+testLocs(1, "KJV", "Matt", 4, 1, 25, "KJV");
 jsdump("\n");
 
-Location.setLocation("ESV", "Matt.2.3");
-testLocs(2, "ESV", "Matt", 2, 3, 3, "KJV");
+Location.setLocation("KJV", "Matt.2.3");
+testLocs(2, "KJV", "Matt", 2, 3, 3, "KJV");
 jsdump("\n");
 
-Location.setLocation("ESV", "Matt.3.5.8");
-testLocs(3, "ESV", "Matt", 3, 5, 8, "KJV");
+Location.setLocation("KJV", "Matt.3.5.8");
+testLocs(3, "KJV", "Matt", 3, 5, 8, "KJV");
 jsdump("\n");
 
-Location.setLocation("ESV", "Ps.119");
+Location.setLocation("KJV", "Ps.119");
 testLocs(4, "UZV", "Ps", 118, 1, 176, "Synodal");
 jsdump("\n");
 
-Location.setLocation("ESV", "Ps.25.3");
+Location.setLocation("KJV", "Ps.25.3");
 testLocs(5, "UZV", "Ps", 24, 3, 3, "Synodal");
 jsdump("\n");
 
-Location.setLocation("ESV", "Ps.22.9.12");
+Location.setLocation("KJV", "Ps.22.9.12");
 testLocs(6, "UZV", "Ps", 21, 10, 13, "Synodal");
 jsdump("\n");
 
 Location.setLocation("UZV", "Ps.118");
-testLocs(7, "ESV", "Ps", 119, 1, 176, "KJV");
+testLocs(7, "KJV", "Ps", 119, 1, 176, "KJV");
 jsdump("\n");
 
 Location.setLocation("UZV", "Ps.24.3");
-testLocs(8, "ESV", "Ps", 25, 3, 3, "KJV");
+testLocs(8, "KJV", "Ps", 25, 3, 3, "KJV");
 jsdump("\n");
 
 Location.setLocation("UZV", "Ps.21.10.13");
-testLocs(9, "ESV", "Ps", 22, 9, 12, "KJV");
+testLocs(9, "KJV", "Ps", 22, 9, 12, "KJV");
 jsdump("\n");
 
 Location.setLocation("UZV", "Ps.114.1-Ps.114.2");
-testLocs(10, "ESV", "Ps", 116, 1, 2, "KJV");
+testLocs(10, "KJV", "Ps", 116, 1, 2, "KJV");
 jsdump("\n");
 
 Location.setLocation("UZV", "Ps.114.1 - Ps.114.2");
-testLocs(11, "ESV", "Ps", 116, 1, 2, "KJV");
+testLocs(11, "KJV", "Ps", 116, 1, 2, "KJV");
 jsdump("\n");
 
 Location.setLocation("UZV", "Ps 109");
-testLocs(12, "ESV", "Ps", 110, 1, 7, "KJV");
+testLocs(12, "KJV", "Ps", 110, 1, 7, "KJV");
 jsdump("\n");
 
 Location.setLocation("UZV", "Ps 110:6");
-testLocs(13, "ESV", "Ps", 111, 6, 6, "KJV");
+testLocs(13, "KJV", "Ps", 111, 6, 6, "KJV");
 jsdump("\n");
 
 Location.setLocation("UZV", "Ps 113:2-7");
-testLocs(14, "ESV", "Ps", 114, 2, 7, "KJV");
+testLocs(14, "KJV", "Ps", 114, 2, 7, "KJV");
 jsdump("\n");
 
 Location.setLocation("UZV", "Ps 113:10-Ps 113:20");
-testLocs(15, "ESV", "Ps", 115, 2, 12, "KJV");
+testLocs(15, "KJV", "Ps", 115, 2, 12, "KJV");
 jsdump("\n");
 
 test (16, LibSword.getModuleInformation("UZV", "GlobalOptionFilter"), "OSISFootnotes<nx>OSISHeadings<nx>OSISScripref<nx>OSISDictionary");
@@ -163,55 +163,55 @@ jsdump("\n");
 test(60, Location.convertLocation("Synodal", "Ps 113:10-Ps 113:20", "KJV"), "Ps.115.2.12");
 jsdump("\n");
 
-Location.setLocation("ESV", "Rev 12:2");
-Location.setVerse("ESV", 6, 8);
-test(61, Location.getChapter("ESV"), "Rev 12");
-test(62, Location.getVerseNumber("ESV"), "6");
-test(63, Location.getLastVerseNumber("ESV"), "8");
+Location.setLocation("KJV", "Rev 12:2");
+Location.setVerse("KJV", 6, 8);
+test(61, Location.getChapter("KJV"), "Rev 12");
+test(62, Location.getVerseNumber("KJV"), "6");
+test(63, Location.getLastVerseNumber("KJV"), "8");
 jsdump("\n");
 
-Location.setVerse("ESV", 6, 5);
-test(64, Location.getChapter("ESV"), "Rev 12");
-test(65, Location.getVerseNumber("ESV"), "6");
-test(66, Location.getLastVerseNumber("ESV"), "6");
+Location.setVerse("KJV", 6, 5);
+test(64, Location.getChapter("KJV"), "Rev 12");
+test(65, Location.getVerseNumber("KJV"), "6");
+test(66, Location.getLastVerseNumber("KJV"), "6");
 jsdump("\n");
 
-Location.setVerse("ESV", 6, 6);
-test(67, Location.getChapter("ESV"), "Rev 12");
-test(68, Location.getVerseNumber("ESV"), "6");
-test(69, Location.getLastVerseNumber("ESV"), "6");
+Location.setVerse("KJV", 6, 6);
+test(67, Location.getChapter("KJV"), "Rev 12");
+test(68, Location.getVerseNumber("KJV"), "6");
+test(69, Location.getLastVerseNumber("KJV"), "6");
 jsdump("\n");
 
-Location.setVerse("ESV", -1, 6);
-test(70, Location.getChapter("ESV"), "Rev 12");
-test(71, Location.getVerseNumber("ESV"), "17");
-test(72, Location.getLastVerseNumber("ESV"), "17");
+Location.setVerse("KJV", -1, 6);
+test(70, Location.getChapter("KJV"), "Rev 12");
+test(71, Location.getVerseNumber("KJV"), "17");
+test(72, Location.getLastVerseNumber("KJV"), "17");
 jsdump("\n");
 
-Location.setVerse("ESV", 1, -1);
-test(73, Location.getChapter("ESV"), "Rev 12");
-test(74, Location.getVerseNumber("ESV"), "1");
-test(75, Location.getLastVerseNumber("ESV"), "17");
+Location.setVerse("KJV", 1, -1);
+test(73, Location.getChapter("KJV"), "Rev 12");
+test(74, Location.getVerseNumber("KJV"), "1");
+test(75, Location.getLastVerseNumber("KJV"), "17");
 jsdump("\n");
 
-Location.setVerse("ESV", 0, 0);
-test(76, Location.getChapter("ESV"), "Rev 12");
-test(77, Location.getVerseNumber("ESV"), "0");
-test(78, Location.getLastVerseNumber("ESV"), "0");
+Location.setVerse("KJV", 0, 0);
+test(76, Location.getChapter("KJV"), "Rev 12");
+test(77, Location.getVerseNumber("KJV"), "0");
+test(78, Location.getLastVerseNumber("KJV"), "0");
 jsdump("\n");
 
-Location.setVerse("ESV", 3, 9);
-test(79, Location.getChapter("ESV"), "Rev 12");
-test(80, Location.getVerseNumber("ESV"), "3");
-test(81, Location.getLastVerseNumber("ESV"), "9");
+Location.setVerse("KJV", 3, 9);
+test(79, Location.getChapter("KJV"), "Rev 12");
+test(80, Location.getVerseNumber("KJV"), "3");
+test(81, Location.getLastVerseNumber("KJV"), "9");
 jsdump("\n");
 
-test(82, LibSword.getMaxVerse("ESV", "Ps 119"), 176);
-test(83, LibSword.getMaxVerse("ESV", "Ps 119:4"), 176);
-test(84, LibSword.getMaxVerse("ESV", "Ps 119:6-10"), 176);
-test(85, LibSword.getMaxVerse("ESV", "Ps.119"), 176);
-test(86, LibSword.getMaxVerse("ESV", "Ps.119.24"), 176);
-test(87, LibSword.getMaxVerse("ESV", "Ps.119.100.120"), 176);
+test(82, LibSword.getMaxVerse("KJV", "Ps 119"), 176);
+test(83, LibSword.getMaxVerse("KJV", "Ps 119:4"), 176);
+test(84, LibSword.getMaxVerse("KJV", "Ps 119:6-10"), 176);
+test(85, LibSword.getMaxVerse("KJV", "Ps.119"), 176);
+test(86, LibSword.getMaxVerse("KJV", "Ps.119.24"), 176);
+test(87, LibSword.getMaxVerse("KJV", "Ps.119.100.120"), 176);
 test(88, LibSword.getMaxVerse("UZV", "Ps 118"), 176);
 test(89, LibSword.getMaxVerse("UZV", "Ps 118:4"), 176);
 test(90, LibSword.getMaxVerse("UZV", "Ps 118:6-10"), 176);
@@ -219,8 +219,8 @@ test(91, LibSword.getMaxVerse("UZV", "Ps.118"), 176);
 test(92, LibSword.getMaxVerse("UZV", "Ps.118.24"), 176);
 test(93, LibSword.getMaxVerse("UZV", "Ps.118.100.120"), 176);
 
-test(94, LibSword.getMaxChapter("ESV", "Ps"), 150);
-test(95, LibSword.getMaxChapter("ESV", "Ps.49"), 150);
+test(94, LibSword.getMaxChapter("KJV", "Ps"), 150);
+test(95, LibSword.getMaxChapter("KJV", "Ps.49"), 150);
 test(96, LibSword.getMaxChapter("UZV", "Ps"), 151);
 test(97, LibSword.getMaxChapter("UZV", "Ps.49"), 151);
 
@@ -244,11 +244,9 @@ function test(testNum, result, expectedResult) {
 
 if (NumFailed) {
   jsdump("xulswordText.js " + NumFailed + " FAILURES found.\n");
-  window.alert("xulswordText.js " + NumFailed + " FAILURES found.");
 }
 else {
   jsdump("CONGRATS!!!! ITS WORKING PERFECTLY!!!!\n");
-  window.alert("CONGRATS!!!! ITS WORKING PERFECTLY!!!!");
 }
 
 jsdump("getModuleList=" + LibSword.getModuleList());

@@ -1,0 +1,16 @@
+{
+  "name": "libsword_napi",
+  "version": "1.0.0",
+  "description": "NodeAPI-based libsword addon.",
+  "dependencies": {
+    "bindings": "~1.2.1",
+    "node-addon-api": "^4.2.0",
+    "path":"^0.12.7"
+},
+"main": "libsword.js",
+  "scripts": {
+    "test": "node ../xul/content/test/xulswordTest.js"
+  },
+  "gypfile": true,
+  "license": "ISC"
+}
