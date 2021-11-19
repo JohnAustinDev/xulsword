@@ -1,0 +1,13 @@
+{
+  "dlgFrom": "Көчүрүп алуу:",
+  "dlgTo": "Каерге сактоо:",
+  "main.title": "xulsword",
+  "menu.addNewModule.label": "Жаңы модулду кошуу",
+  "menu.help.about": "Программа жөнүндө...",
+  "menu.importAudio.label": "Үнжазманы кошуу",
+  "producedby": "2022",
+  "SendErrorReport": "Программада ката кетти.  Бул көйгөй туурасында интернет аркылуу программанын авторуна маалымат жиберүү үчүн \"{{v1}}\" басыңыз.",
+  "Title": "xulsword",
+  "dialog.OK": "Макул",
+  "dontShowAgain": "Бул маалыматты башка көрсөтпө."
+}

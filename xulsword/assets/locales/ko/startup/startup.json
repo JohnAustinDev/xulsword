@@ -1,0 +1,13 @@
+{
+  "dlgFrom": "원본 오디오파일 위치:",
+  "dlgTo": "오디어 파일 저장 위치:",
+  "main.title": "xulsword",
+  "menu.addNewModule.label": "모듈 첨가",
+  "menu.help.about": "프로그램에 관하여...",
+  "menu.importAudio.label": "오디오파일 가져오기",
+  "producedby": "2022",
+  "SendErrorReport": "프로그램 오류가 발견되었습니다. 이 문제를 개발자에게 알리려면 \"{{v1}}\"를 누르세요.",
+  "Title": "xulsword",
+  "dialog.OK": "확인",
+  "dontShowAgain": "현재 대화 창을 다시 보지 않습니다."
+}

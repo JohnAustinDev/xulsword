@@ -1,0 +1,13 @@
+{
+  "dlgFrom": "-dan almak",
+  "dlgTo": "-a ibermek/geçirmek",
+  "main.title": "xulsword",
+  "menu.addNewModule.label": "täze moduly goşmak",
+  "menu.help.about": "programma barada",
+  "menu.importAudio.label": "audioimport",
+  "producedby": "2022",
+  "SendErrorReport": "problema tapyldy. bu barada habar etmek üçin, “{{v1}}\" basyň",
+  "Title": "xulsword",
+  "dialog.OK": "bolýar",
+  "dontShowAgain": "bu penjiräni gaýdyp görkezme"
+}
