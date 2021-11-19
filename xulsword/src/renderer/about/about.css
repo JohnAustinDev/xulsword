@@ -16,3 +16,63 @@ body.splash {
   font-size: 14px;
   color: rgb(77, 37, 143);
 }
+
+body.en #layer2 {
+  background-image: url('../../../assets/locales/en/splash-overlay.png');
+}
+
+body.ru #layer2 {
+  background-image: url('../../../assets/locales/ru/splash-overlay.png');
+}
+
+body.crh-Cyrl #layer2 {
+  background-image: url('../../../assets/locales/crh-Cyrl/splash-overlay.png');
+}
+
+body.fa #layer2 {
+  background-image: url('../../../assets/locales/fa/splash-overlay.png');
+}
+
+body.kk #layer2 {
+  background-image: url('../../../assets/locales/kk/splash-overlay.png');
+}
+
+body.ko #layer2 {
+  background-image: url('../../../assets/locales/ko/splash-overlay.png');
+}
+
+body.kum #layer2 {
+  background-image: url('../../../assets/locales/kum/splash-overlay.png');
+}
+
+body.ky-Arab #layer2 {
+  background-image: url('../../../assets/locales/ky-Arab/splash-overlay.png');
+}
+
+body.ky-Cyrl #layer2 {
+  background-image: url('../../../assets/locales/ky-Cyrl/splash-overlay.png');
+}
+
+body.ru-CA #layer2 {
+  background-image: url('../../../assets/locales/ru-CA/splash-overlay.png');
+}
+
+body.tk-Latn #layer2 {
+  background-image: url('../../../assets/locales/tk-Latn/splash-overlay.png');
+}
+
+body.tt-Cyrl #layer2 {
+  background-image: url('../../../assets/locales/tt-Cyrl/splash-overlay.png');
+}
+
+body.ug #layer2 {
+  background-image: url('../../../assets/locales/ug/splash-overlay.png');
+}
+
+body.uz-Cyrl #layer2 {
+  background-image: url('../../../assets/locales/uz-Cyrl/splash-overlay.png');
+}
+
+body.uz-Latn #layer2 {
+  background-image: url('../../../assets/locales/uz-Latn/splash-overlay.png');
+}

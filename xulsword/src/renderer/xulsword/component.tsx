@@ -110,19 +110,12 @@ export class Xulsword extends React.Component {
       const state = this.getStatePrefs(prefs);
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
       if (lng !== i18next.language) {
-        G.reset();
-        i18next
-          .changeLanguage(lng)
-          .then(() => {
-            G.reset();
-            this.setState(state);
-            return true;
-          })
-          .catch((e) => {
-            throw Error(e);
-          });
+        i18next.changeLanguage(lng, (err) => {
+          if (err) throw Error(err);
+          G.reset();
+          this.setState(state);
+        });
       } else {
-        G.reset();
         this.setState(state);
       }
     });

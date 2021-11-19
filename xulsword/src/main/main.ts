@@ -175,7 +175,7 @@ const openMainWindow = () => {
   ) as number;
 
   mainWindow = createWindow(name, {
-    title: t('Title'),
+    title: t('programTitle'),
     icon: getAssetPath('icon.png'),
     width,
     height,

@@ -17,7 +17,6 @@ const Command = {
   // Some commands update language and global state from Prefs
   setGlobalStateFromPrefs(prefs: string | string[]) {
     function setGlobalStateFromPrefs2() {
-      G.reset();
       BrowserWindow.getAllWindows().forEach((w) => {
         w.webContents.send('setStateFromPrefs', prefs);
       });
@@ -26,14 +25,11 @@ const Command = {
     // Change language if Pref changed
     const lng = G.Prefs.getCharPref(C.LOCALEPREF);
     if (lng !== i18next.language) {
-      G.reset();
       i18next
-        .changeLanguage(lng)
-        .then(() => {
-          return setGlobalStateFromPrefs2();
-        })
-        .catch((e) => {
-          throw Error(e);
+        .changeLanguage(lng, (err) => {
+          if (err) throw Error(err);
+          G.reset();
+          setGlobalStateFromPrefs2();
         });
     } else {
       setGlobalStateFromPrefs2();
@@ -656,6 +652,7 @@ export default class MenuBuilder {
               label: name,
               id: `${C.LOCALEPREF}_val_${lng}`,
               type: 'radio',
+              toolTip: lng,
               click: () => {
                 Command.radioSwitch(C.LOCALEPREF, lng);
               },

@@ -265,13 +265,10 @@ class Chooser extends React.Component {
   groupBarLabel = (bookGroup: string): React.ReactNode[] => {
     const tkey = `${bookGroup.toUpperCase()}text`;
     const name = i18next.exists(tkey) ? i18next.t(tkey) : bookGroup;
-    if (/^\s*$/.test(name)) {
-      const lng = G.Prefs.getCharPref(C.LOCALEPREF);
-      const src = [G.Dirs.path.xsAsset, 'locales', lng, `${tkey}.png`].join(
-        '/'
-      );
-      return [<img key={src} src={src} alt="" />];
-    }
+    if (/^\s*$/.test(name))
+      return [
+        <div key={`label_${bookGroup}`} className={`label ${bookGroup}`} />,
+      ];
     return [...name].map((l, i) => {
       // eslint-disable-next-line react/no-array-index-key
       return <div key={`gbl_${i}`}>{l}</div>;
