@@ -109,6 +109,18 @@ const createWindow = (
   // Bind i18next-electron-fs-backend providing IPC to renderer processes
   i18nBackendRenderer.mainBindings(ipcMain, newWindow, fs);
 
+  // Unbind i18next-electron-fs-backend from window upon close to prevent
+  // access of closed window. Since the binding is anonymous, all are
+  // removed, and other windows get new ones added back.
+  newWindow.on('close', () => {
+    i18nBackendRenderer.clearMainBindings(ipcMain);
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (w !== newWindow) {
+        i18nBackendRenderer.mainBindings(ipcMain, w, fs);
+      }
+    });
+  });
+
   newWindow.webContents.on('did-finish-load', () => {
     if (!newWindow) {
       throw new Error(`${name} window is not defined`);
@@ -293,8 +305,6 @@ const start = async () => {
 
   // Remove this if your app does not use auto updates
   // new AppUpdater();
-
-  return mainWindow;
 };
 
 /**
@@ -302,18 +312,14 @@ const start = async () => {
  */
 
 app.on('window-all-closed', () => {
+  // Write all prefs to disk when app closes
+  G.Prefs.writeAllStores();
+
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
   if (process.platform !== 'darwin') {
     app.quit();
-  } else {
-    i18nBackendRenderer.clearMainBindings(ipcMain);
   }
-});
-
-// Write all prefs to disk when app closes
-app.on('window-all-closed', () => {
-  G.Prefs.writeAllStores();
 });
 
 app
