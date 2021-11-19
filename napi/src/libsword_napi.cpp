@@ -15,20 +15,21 @@ Napi::Function reportProgressFunction;
 Napi::String buffer = Napi::String();
 
 char* toUpperCase(char* lowerCase) {
-  // Napi::Value values[1] = {
-  //  buffer = Napi::String::New(toUpperCaseFunction.getEnv(), lowerCase)
-  // };
-  // // Napi::Value value = cb.Call(libswordEnv->env, Napi::String::New(libswordEnv->env, lowerCase));
-  // Napi::Value value = cb.Call(values);
-  // return value.ToString();
-  return lowerCase;
+  static char* upperCase = NULL;
+  if (upperCase != NULL)
+    free(upperCase);
+  upperCase = (char*) strdup(lowerCase);
+  for (size_t index = 0; index < strlen(lowerCase); index++)
+    upperCase[index] = isalpha(lowerCase[index]) ? toupper(lowerCase[index]) : lowerCase[index];
+  return upperCase;
 };
 
-void throwJs(const char *) {
+void throwJs(const char* message) {
   // return nullptr;
 };
 
-void reportProgress(int) { 
+void reportProgress(int progress) { 
+  printf("progress: %d\n", progress);
   // return nullptr;
 };
 
