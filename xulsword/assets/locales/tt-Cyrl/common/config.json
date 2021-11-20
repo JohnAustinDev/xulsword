@@ -1,10 +1,11 @@
 {
-  "DefaultModule": "TTR",
-  "Direction": "",
-  "Font": "",
-  "FontBackground": "",
-  "FontColor": "",
-  "FontSize": "",
-  "FontSizeAdjust": "",
-  "LineHeight": ""
+   "DefaultModule" : "TTR",
+   "Direction" : "",
+   "Font" : "",
+   "FontBackground" : "",
+   "FontColor" : "",
+   "FontSize" : "",
+   "FontSizeAdjust" : "",
+   "LineHeight" : ""
 }
+

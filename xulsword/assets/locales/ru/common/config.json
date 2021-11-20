@@ -1,10 +1,11 @@
 {
-  "DefaultModule": "RSP",
-  "Direction": "ltr",
-  "Font": "",
-  "FontBackground": "",
-  "FontColor": "",
-  "FontSize": "",
-  "FontSizeAdjust": "",
-  "LineHeight": ""
+   "DefaultModule" : "RSP",
+   "Direction" : "ltr",
+   "Font" : "",
+   "FontBackground" : "",
+   "FontColor" : "",
+   "FontSize" : "",
+   "FontSizeAdjust" : "",
+   "LineHeight" : ""
 }
+

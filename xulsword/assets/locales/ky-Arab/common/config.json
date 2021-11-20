@@ -1,10 +1,11 @@
 {
-  "DefaultModule": "KYLSA,KYROHA",
-  "Direction": "rtl",
-  "Font": "UKIJ Tuz Basma",
-  "FontBackground": "",
-  "FontColor": "",
-  "FontSize": "",
-  "FontSizeAdjust": "0.7",
-  "LineHeight": ""
+   "DefaultModule" : "KYLSA,KYROHA",
+   "Direction" : "rtl",
+   "Font" : "UKIJ Tuz Basma",
+   "FontBackground" : "",
+   "FontColor" : "",
+   "FontSize" : "",
+   "FontSizeAdjust" : "0.7",
+   "LineHeight" : ""
 }
+

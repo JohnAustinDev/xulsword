@@ -1,10 +1,11 @@
 {
-  "DefaultModule": "CTT",
-  "Direction": "",
-  "Font": "",
-  "FontBackground": "",
-  "FontColor": "",
-  "FontSize": "",
-  "FontSizeAdjust": "",
-  "LineHeight": ""
+   "DefaultModule" : "CTT",
+   "Direction" : "",
+   "Font" : "",
+   "FontBackground" : "",
+   "FontColor" : "",
+   "FontSize" : "",
+   "FontSizeAdjust" : "",
+   "LineHeight" : ""
 }
+
