@@ -251,7 +251,7 @@ function compareAgainstLocale(
     const keys = [G.Book[i].sName, `Long${G.Book[i].sName}`];
     if (!noVariations) keys.push(`${G.Book[i].sName}Variations`);
     const list = keys.map((k) => {
-      const r = i18next.exists(k, toptions) ? i18next.t(k, toptions) : '';
+      const r = i18next.t(k, toptions);
       return !r ? null : r.split(/\s*,\s*/);
     });
 

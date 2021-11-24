@@ -46,10 +46,10 @@
   border-bottom-left-radius: 8px;
   padding: 8px 0px 8px 0px;
 }
-body.chromedir-rtl .chooser .bar:first-child {
+html.chromedir-rtl .chooser .bar:first-child {
   border-top-right-radius: 8px;
 }
-body.chromedir-rtl .chooser .bar:last-child {
+html.chromedir-rtl .chooser .bar:last-child {
   border-bottom-right-radius: 8px;
 }
 .chooser .container .bar.selected {
@@ -62,22 +62,22 @@ body.chromedir-rtl .chooser .bar:last-child {
   background-position-y: center;
   background-repeat: no-repeat;
 }
-body.ky-Arab .label.ot {
+html.ky-Arab .label.ot {
   background-image: url('../../../assets/locales/ky-Arab/OT.png');
 }
-body.ky-Arab .label.nt {
+html.ky-Arab .label.nt {
   background-image: url('../../../assets/locales/ky-Arab/NT.png');
 }
-body.fa .label.ot {
+html.fa .label.ot {
   background-image: url('../../../assets/locales/fa/OT.png');
 }
-body.fa .label.nt {
+html.fa .label.nt {
   background-image: url('../../../assets/locales/fa/NT.png');
 }
-body.ug .label.ot {
+html.ug .label.ot {
   background-image: url('../../../assets/locales/ug/OT.png');
 }
-body.ug .label.nt {
+html.ug .label.nt {
   background-image: url('../../../assets/locales/ug/NT.png');
 }
 
@@ -90,7 +90,7 @@ body.ug .label.nt {
   left: 9px;
   z-index: 50;
 }
-body.chromedir-rtl .chooser .close-chooser {
+html.chromedir-rtl .chooser .close-chooser {
   left: auto;
   right: 11px;
 }
@@ -121,7 +121,7 @@ body.chromedir-rtl .chooser .close-chooser {
 .chooser .slider:not(.selected) {
   visibility: hidden;
 }
-body.chromedir-rtl .chooser .slider {
+html.chromedir-rtl .chooser .slider {
   border-top-left-radius: 8px;
   border-bottom-left-radius: 8px;
 }
@@ -172,7 +172,7 @@ body.chromedir-rtl .chooser .slider {
   width: 15px;
   height: 13px;
 }
-body.chromedir-rtl .chooser .bookname.hasAudo > div > div:after {
+html.chromedir-rtl .chooser .bookname.hasAudo > div > div:after {
   right: auto;
   left: 22px;
 }
@@ -185,7 +185,7 @@ body.chromedir-rtl .chooser .bookname.hasAudo > div > div:after {
   width: 15px;
   height: 12px;
 }
-body.chromedir-rtl .chooser .charrow {
+html.chromedir-rtl .chooser .charrow {
   right: auto;
   left: 2px;
   background: url(../images/arrow-rtl.png);
@@ -193,7 +193,7 @@ body.chromedir-rtl .chooser .charrow {
 .chooser .bookname:hover .charrow {
   background: url(../images/arrow2.png);
 }
-body.chromedir-rtl .chooser .bookname:hover .charrow {
+html.chromedir-rtl .chooser .bookname:hover .charrow {
   background: url(../images/arrow2-rtl.png);
 }
 
@@ -209,7 +209,7 @@ body.chromedir-rtl .chooser .bookname:hover .charrow {
   border-spacing: 0px 0px;
   z-index: 50;
 }
-body.chromedir-rtl .chooser .chaptermenu {
+html.chromedir-rtl .chooser .chaptermenu {
   left: auto;
   right: 100%;
 }

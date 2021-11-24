@@ -264,7 +264,7 @@ class Chooser extends React.Component {
 
   groupBarLabel = (bookGroup: string): React.ReactNode[] => {
     const tkey = `${bookGroup.toUpperCase()}text`;
-    const name = i18next.exists(tkey) ? i18next.t(tkey) : bookGroup;
+    const name = i18next.t(tkey);
     if (/^\s*$/.test(name))
       return [
         <div key={`label_${bookGroup}`} className={`label ${bookGroup}`} />,

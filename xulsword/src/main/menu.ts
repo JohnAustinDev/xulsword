@@ -286,23 +286,25 @@ export default class MenuBuilder {
     });
   }
 
-  // Get locale key with letter prepended with '&' to specify shortcut.
-  ts(key: string, letter?: string): string {
+  // Get locale key with letter prepended by '&' to specify shortcut.
+  ts(key: string, sckey?: string): string {
     let text = this.i18n.t(key);
-    const ltr = letter || `${key}.sc`;
-    if (ltr) {
-      const l = this.tx(ltr);
-      const re = new RegExp(`(${l})`, 'i');
-      if (l) text = text.replace(re, '&$1');
+    const sckey2 = sckey || `${key}.sc`;
+    if (text) {
+      const l = this.i18n.t(sckey2);
+      if (l) {
+        const re = new RegExp(`(${l})`, 'i');
+        text = text.replace(re, '&$1');
+      }
     }
     return text;
   }
 
-  // Get locale key or silently return undefined if it doesn't exist.
+  // Get locale key or return undefined if it doesn't exist.
   // Also prepend text with modifiers if supplied.
   tx(key: string, modifiers?: Modifiers[]): string | undefined {
-    const text = this.i18n.exists(key) ? this.i18n.t(key) : undefined;
-    if (text === undefined) return undefined;
+    const text = this.i18n.t(key);
+    if (!text) return undefined;
     if (modifiers && modifiers.length) {
       return `${modifiers.join('+')}+${text}`;
     }
@@ -627,7 +629,7 @@ export default class MenuBuilder {
           label: this.ts('menu.options.hebrew'),
           submenu: [
             {
-              label: this.ts('options.hebVowel'),
+              label: this.ts('menu.options.hebVowel'),
               id: 'xulsword.showHebVowelPoints',
               type: 'checkbox',
               click: () => {
@@ -635,7 +637,7 @@ export default class MenuBuilder {
               },
             },
             {
-              label: this.ts('options.hebCant'),
+              label: this.ts('menu.options.hebCant'),
               id: 'xulsword.showHebCantillation',
               type: 'checkbox',
               click: () => {

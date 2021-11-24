@@ -295,8 +295,7 @@ function getDisplayNumerals(locale: string) {
   const toptions = { lng: locale, ns: 'common/numbers' };
   for (let i = 0; i <= 9; i += 1) {
     const key = `n${String(i)}`;
-    let n = i18next.exists(key, toptions) ? i18next.t(key, toptions) : '';
-    if (n && /^\s*$/.test(n)) n = '';
+    const n = i18next.t(key, toptions);
     if (n) LocaleNumerals[locale][10] = true;
     LocaleNumerals[locale][i] = n || i;
   }
@@ -367,12 +366,7 @@ export function getLocalizedChapterTerm(
     ns: 'common/books',
   };
 
-  let r = i18next.exists(k1, toptions) ? i18next.t(k1, toptions) : '';
-  if (!r) {
-    r = i18next.exists(k2, toptions) ? i18next.t(k2, toptions) : '';
-  }
-
-  return r;
+  return i18next.t(k1, toptions) || i18next.t(k2, toptions);
 }
 
 export function isProgramPortable() {

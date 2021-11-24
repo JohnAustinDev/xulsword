@@ -207,10 +207,10 @@ menu#sub-Genbks {
 #forward .button-icon {
   background-image: url(../images/forward.png);
 }
-body.chromedir-rtl #back .button-icon {
+html.chromedir-rtl #back .button-icon {
   background-image: url(../images/forward.png);
 }
-body.chromedir-rtl #forward .button-icon {
+html.chromedir-rtl #forward .button-icon {
   background-image: url(../images/back.png);
 }
 #back.disabled .button-icon,

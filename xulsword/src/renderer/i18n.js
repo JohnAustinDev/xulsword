@@ -10,22 +10,23 @@ const isDevelopment =
 
 const className = window.location.pathname.split('\\').pop().split('/').pop().split('.').shift();
 
-function setBodyClass(winClass, lng) {
-  const body = document?.getElementsByTagName('body')[0];
+function setHTMLClass(winClass, lng) {
+  const html = document?.getElementsByTagName('html')[0];
 
-  if (!body) return false;
+  if (!html) return false;
 
-  body.className = `${winClass} ${lng}`;
+  html.className = `${winClass} ${lng}`;
   const dir = i18n.t('locale_direction');
-  if (dir === 'rtl') body.classList.add('chromedir-rtl');
+  if (dir === 'rtl') html.classList.add('chromedir-rtl');
+  html.dir = dir;
   return true;
 }
 
 i18n.on('initialized', (options) => {
   i18n.on('languageChanged', (lng) => {
-    return setBodyClass(className, lng);
+    return setHTMLClass(className, lng);
   });
-  return setBodyClass(className, options.lng);
+  return setHTMLClass(className, options.lng);
 });
 
 async function i18nInit(namespaces) {

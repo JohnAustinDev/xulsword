@@ -86,10 +86,8 @@ function localeConfig(locale: string) {
         ? LocaleConfigDefaultCSS[k]
         : null;
 
-    let r = i18next.exists(val.localeConf, toptions)
-      ? i18next.t(val.localeConf, toptions)
-      : '';
-    if (!r || /^\s*$/.test(r)) r = C.NOTFOUND;
+    let r = i18next.t(val.localeConf, toptions);
+    if (/^\s*$/.test(r)) r = C.NOTFOUND;
 
     if (r === C.NOTFOUND && val.CSS && def) {
       r = def;
@@ -223,10 +221,7 @@ function getLocaleOfModule(module: string) {
       lng: locale,
       ns: 'common/config',
     };
-    const mods = i18next.exists('DefaultModule', toptions)
-      ? i18next.t('DefaultModule', toptions)
-      : '';
-    if (mods && mods.match(regex)) myLocale = locale;
+    if (i18next.t('DefaultModule', toptions).match(regex)) myLocale = locale;
   });
 
   return myLocale;

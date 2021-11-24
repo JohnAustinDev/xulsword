@@ -9,7 +9,7 @@
   width: 100%;
   position: relative;
 }
-body.chromedir-rtl .viewport {
+html.chromedir-rtl .viewport {
   float: right;
 }
 
@@ -22,7 +22,7 @@ body.chromedir-rtl .viewport {
   left: 6px;
   z-index: 40;
 }
-body.chromedir-rtl .viewport .open-chooser {
+html.chromedir-rtl .viewport .open-chooser {
   left: auto;
   right: 6px;
 }
@@ -34,7 +34,7 @@ body.chromedir-rtl .viewport .open-chooser {
   padding-inline-end: 0px;
   float: left;
 }
-body.chromedir-rtl .viewport .chooser {
+html.chromedir-rtl .viewport .chooser {
   float: right;
 }
 .viewport.chooser-hidden .chooser {

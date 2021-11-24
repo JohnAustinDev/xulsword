@@ -6,6 +6,5 @@ export default function safeGetStringFromName(
   namespace: string,
   key: string
 ) {
-  const options = { lng: locale, ns: namespace };
-  return i18next.exists(key, options) ? i18next.t(key, options) : defvalue;
+  return i18next.t(key, { lng: locale, ns: namespace }) || defvalue;
 }
