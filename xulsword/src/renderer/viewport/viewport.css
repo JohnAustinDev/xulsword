@@ -5,12 +5,8 @@
   overflow: hidden;
   background: url(../../../assets/b2.png);
   background-position: 0px 40px;
-  float: left;
   width: 100%;
   position: relative;
-}
-html.chromedir-rtl .viewport {
-  float: right;
 }
 
 .viewport .open-chooser {

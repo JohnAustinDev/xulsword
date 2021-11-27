@@ -313,6 +313,7 @@ export default class MenuBuilder {
 
   buildDefaultTemplate() {
     const subMenuFile = {
+      role: 'fileMenu',
       label: this.ts('fileMenu.label', 'fileMenu.accesskey'),
       submenu: [
         {
@@ -398,6 +399,7 @@ export default class MenuBuilder {
         },
         { type: 'separator' },
         {
+          role: 'quit',
           label: this.ts(
             'quitApplicationCmdWin.label',
             'quitApplicationCmdWin.accesskey'
@@ -410,6 +412,7 @@ export default class MenuBuilder {
     };
 
     const subMenuEdit = {
+      role: 'editMenu',
       label: this.ts('editMenu.label', 'editMenu.accesskey'),
       submenu: [
         { type: 'separator' },
@@ -518,6 +521,7 @@ export default class MenuBuilder {
     });
 
     const subMenuView = {
+      role: 'viewMenu',
       label: this.ts('viewMenu.label', 'viewMenu.accesskey'),
       submenu: [
         /*
@@ -648,6 +652,7 @@ export default class MenuBuilder {
         },
         {
           label: this.ts('menu.options.language'),
+          // accelerator: 'F1', cannot open main menu item
           submenu: G.Prefs.getComplexValue('global.locales').map((l: any) => {
             const [lng, name] = l;
             return {
@@ -686,6 +691,7 @@ export default class MenuBuilder {
     };
 
     const subMenuWindows = {
+      role: 'windowMenu',
       label: this.ts('menu.windows'),
       submenu: [
         {
@@ -716,6 +722,7 @@ export default class MenuBuilder {
     };
 
     const subMenuHelp = {
+      role: 'about',
       label: this.ts('menu.help'),
       submenu: [
         {

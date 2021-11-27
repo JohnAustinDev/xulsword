@@ -24,6 +24,7 @@ import Toolbox from '../libxul/toolbox';
 import Viewport from '../viewport/viewport';
 import G from '../rg';
 import C from '../../constant';
+import { dString } from '../../common';
 import { xulswordHandler, handleViewport as handleVP } from './handlers';
 import './xulsword.css';
 
@@ -404,7 +405,7 @@ export class Xulsword extends React.Component {
                     width="50px"
                     maxLength="3"
                     pattern={/^[0-9]+$/}
-                    value={chapter.toString()}
+                    value={dString(chapter.toString())}
                     timeout="300"
                     key={`ch${chapter}`}
                     onChange={handler}
@@ -420,7 +421,7 @@ export class Xulsword extends React.Component {
                     width="50px"
                     maxLength="3"
                     pattern={/^[0-9]+$/}
-                    value={verse.toString()}
+                    value={dString(verse.toString())}
                     timeout="300"
                     onChange={handler}
                     onClick={handler}
