@@ -44,15 +44,9 @@ Valid for Dictionary modules:
   "ReferenceBible" - (DEPRECATED and replaced by "Companion" - see CrossWire's
       documentation) Preffered Bible module to use for Scripture references.
 */
-
-// as a ChromeWorker, Components is not available but ctypes automatically is,
-// so don't import ctypes again in that case...
-//TODO: is the following required?
-//if (typeof(ctypes) == "undefined") Components.utils.import("resource://gre/modules/ctypes.jsm");
 var napi = require("bindings")("sword_napi");
 
-function jsdump(str)
-{
+function jsdump(str) {
   console.log(str);
 }
 
@@ -75,7 +69,6 @@ LibSword = {
   
   //TODO: hardwired several paths below ...
   ModuleDirectory:process.env.HOME + "/.crosswire/xulsword/resources",
-  // ModuleDirectory:process.env.HOME + "/.crosswire/xulsword/resources/modules",
   LocaleDirectory:process.env.HOME + "/.crosswire/xulsword/resources/locales.d",
   LibswordPath:process.env.LD_LIBRARY_PATH + "/libxulsword.so.1.4.4",
 
@@ -168,12 +161,6 @@ LibSword = {
     if (typeof(jsdump) != "undefined") jsdump("ModuleDirectory=\"" + this.ModuleDirectory + "\""); 
   },
   
-  freeInstance: function() {
-    if (this.inst) {
-      napi.freeMemory("xulsword");
-    }   
-  },
-  
   freeSearchPointer: function(sp) {
     if (!sp) return;
     var i = this.searchPointers.indexOf(sp);
@@ -187,7 +174,8 @@ LibSword = {
       for (var i=0; i<this.searchPointers.length; i++) {
         this.freeSearchPointer(this.searchPointers[i]);
       }
-      this.freeInstance();
+      if (this.initialized)
+        napi.freeMemory("xulsword");
       napi.freeLibxulsword();
       // napi.libsword.close();
     }
@@ -363,10 +351,9 @@ LibSword = {
 // NOTE: these are invoked as functions by libsword, so "this" will refer to global context!
 
 upperCaseResult:"",
-UpperCase: function(charPtr) {
-  var aString = charPtr.readString();
+UpperCase: function(aString) {
   if (aString) {
-    LibSword.upperCaseResult = ctypes.char.array()(aString.toUpperCase());
+    LibSword.upperCaseResult = aString.toUpperCase();
     return LibSword.upperCaseResult; // assigning to LibSword member keeps pointer alive
   }
   else return null;
@@ -620,12 +607,10 @@ search: function(modname, srchstr, scope, type, flags, newsearch) {
 //Returns an index to a pointer for a newly created copy of LibSword's internal search results ListKey object.
 getSearchPointer: function() {
   if (!this.libSwordReady("getSearchPointer")) return null;
-  if (!this.fdata.gsp)
-    this.fdata.gsp = napi.libsword.declare("GetSearchPointer", ctypes.default_abi, ctypes.PointerType(ctypes.voidptr_t), ctypes.PointerType(ctypes.voidptr_t));
-  var cdata = this.fdata.gsp(this.inst);
+  var searchPointer = napi.GetSearchPointer();
   this.checkerror();
-  this.searchPointers.push(cdata);
-  return cdata;
+  this.searchPointers.push(searchPointer);
+  return searchPointer;
 },
 
 // getSearchVerses

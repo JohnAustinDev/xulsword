@@ -42,6 +42,7 @@ setCipherKey                test with xulsword
 require('../../../napi/libsword');
 require('../location');
 
+
 function jsdump(str) {
   console.log(str);
 }
@@ -55,6 +56,32 @@ if (LibSword.getModuleList() == "No Modules") {
 }
 
 jsdump("Need KJV and UZV, have " + LibSword.getModuleList());
+
+test(0, LibSword.search("KJV", "be.*t.*",             "John",  0 /* regex */,  0, true), 296);
+test(0, LibSword.getSearchResults("KJV", 2, 1, false), "bogus");
+
+results = [
+  'title="John.2.22.KJV"',
+  'title="John.3.34.KJV"',
+  'title="John.4.41.KJV"',
+  'title="John.4.50.KJV"',
+  'title="John.5.24.KJV"'
+];
+
+
+for (let index = 0; index < LibSword.search("KJV", "word", "John",  1, 0, true); index++) {
+  var searchResult = LibSword.getSearchResults("KJV", index, 1, false, 0, false);
+  test(0, searchResult.match(/title=\"[^\"]+\"/g)[0], results[index]);
+  if (index > 4) break;
+}
+
+test(0, LibSword.search("KJV", "shineth in darkness", "John",  2 /* multi */,  0, true),   1);
+test(0, LibSword.getSearchPointer(), 1);
+
+// char *getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer = NULL, bool referencesOnly = false);
+test(0, LibSword.getSearchResults("KJV", 0, 1, false), "bogus");
+
+exit
 
 Location.setLocation("KJV", "Matt.4");
 testLocs(1, "KJV", "Matt", 4, 1, 25, "KJV");
