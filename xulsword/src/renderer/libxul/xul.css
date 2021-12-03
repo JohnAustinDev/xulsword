@@ -1,0 +1,61 @@
+.stack {
+  position: relative;
+  height: 100%;
+}
+
+.stack > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.box {
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  flex-wrap: nowrap;
+}
+
+.vbox,
+.orient-vertical {
+  flex-direction: column;
+}
+
+.hbox,
+.orient-horizontal {
+  flex-direction: row;
+}
+
+.hidden {
+  display: none;
+}
+
+.pack-start {
+  justify-content: flex-start;
+}
+.pack-center {
+  justify-content: center;
+}
+.pack-end {
+  justify-content: flex-end;
+}
+
+.align-start {
+  align-items: flex-start;
+}
+.align-center {
+  align-items: center;
+}
+.align-end {
+  align-items: flex-end;
+}
+.align-stretch {
+  align-items: space-evenly;
+}
+.align-baseline {
+  align-items: baseline;
+}
+
+.dir-reverse {
+  flex-direction: row-reverse;
+}

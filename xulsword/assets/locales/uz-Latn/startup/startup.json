@@ -1,0 +1,13 @@
+{
+  "dlgFrom": "Audioni quyidagi manbadan ko‘chiring:",
+  "dlgTo": "Audioni quyidagi manbaga saqlang:",
+  "main.title": "xulsword",
+  "menu.addNewModule.label": "Yangi modullarni qo‘shish",
+  "menu.help.about": "Malumot...",
+  "menu.importAudio.label": "Audioni import qilish",
+  "producedby": "2022",
+  "SendErrorReport": "Muammo topilgan bo‘lishi mumkin. Bu muammo haqida xabar berish uchun “{{v1}}” ni bosing.",
+  "Title": "xulsword",
+  "dialog.OK": "Mayli",
+  "dontShowAgain": "Bu oynani boshqa ko‘rsatmang."
+}

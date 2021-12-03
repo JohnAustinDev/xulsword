@@ -53,7 +53,7 @@ function entryConfig(name) {
 function htmlConfig(name) {
   return {
     filename: path.join(name + '.html'),
-    template: path.join(webpackPaths.srcRendererPath, name + '/' + name + '.ejs'),
+    template: path.join(webpackPaths.srcRendererPath, 'template.html'),
     chunks: [name],
     minify: {
       collapseWhitespace: true,
@@ -68,23 +68,22 @@ function htmlConfig(name) {
 };
 
 export default merge(baseConfig, {
-  devtool: 'inline-source-map',
+  devtool: 'source-map',
 
   mode: 'development',
 
   target: ['web', 'electron-renderer'],
 
   entry: {
-    // Entry points and output files (one for each kind of BrowserWindow)
-    main:  entryConfig('main'),
-    about: entryConfig('about'),
+    // Entry points and output files (one for each html file)
+    xulsword:  entryConfig('xulsword'),
+    splash: entryConfig('splash'),
   },
 
   output: {
     path: webpackPaths.distRendererPath,
     publicPath: '/',
     filename: '[name].dev.js',
-    sourceMapFilename: '[name].js.map',
     library: {
       type: 'umd',
     },
@@ -105,7 +104,7 @@ export default merge(baseConfig, {
         ],
       },
       {
-        test: /\.global\.css$/,
+        test: /\.css$/,
         use: [
           {
             loader: 'style-loader',
@@ -119,7 +118,7 @@ export default merge(baseConfig, {
         ],
       },
       {
-        test: /^((?!\.global).)*\.css$/,
+        test: /local\.css$/,
         use: [
           {
             loader: 'style-loader',
@@ -136,9 +135,9 @@ export default merge(baseConfig, {
           },
         ],
       },
-      // SASS support - compile all .global.scss files and pipe it to style.css
+      // SASS support - compile all .scss files and pipe it to style.css
       {
-        test: /\.global\.(scss|sass)$/,
+        test: /\.(scss|sass)$/,
         use: [
           {
             loader: 'style-loader',
@@ -154,9 +153,9 @@ export default merge(baseConfig, {
           },
         ],
       },
-      // SASS support - compile all other .scss files and pipe it to style.css
+      // SASS support - compile all local.scss files and pipe it to style.css
       {
-        test: /^((?!\.global).)*\.(scss|sass)$/,
+        test: /local\.(scss|sass)$/,
         use: [
           {
             loader: 'style-loader',
@@ -280,8 +279,8 @@ export default merge(baseConfig, {
     new ReactRefreshWebpackPlugin(),
 
     // Entry point html files (one plugin for each kind of BrowserWindow)
-    new HtmlWebpackPlugin(htmlConfig('main')),
-    new HtmlWebpackPlugin(htmlConfig('about'))
+    new HtmlWebpackPlugin(htmlConfig('xulsword')),
+    new HtmlWebpackPlugin(htmlConfig('splash'))
   ],
 
   node: {

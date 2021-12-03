@@ -1,0 +1,20 @@
+/* TOOLTIP */
+.tooltip {
+  position: relative;
+}
+.tooltip .tooltiptext {
+  width: 100%;
+  top: 100%;
+  visibility: hidden;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 75;
+}
+.tooltip:hover:not(:focus-within) .tooltiptext {
+  visibility: visible;
+  transition-delay: 0.75s;
+}

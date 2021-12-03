@@ -1,0 +1,51 @@
+{
+  "global.locale": "ru",
+  "global.locales": [
+    ["en", "English"],
+    ["ru", "Русский"],
+    ["crh-Cyrl", "Русский/Крымскотатарский"],
+    ["fa", "فارسی"],
+    ["kk", "Қазақша"],
+    ["ko", "한국어"],
+    ["kum", "Къумукъ"],
+    ["ky-Arab", "قىرعىزچا"],
+    ["ky-Cyrl", "Кыргызча"],
+    ["ru-CA", "Русский для Востока"],
+    ["tk-Latn", "Түркменче"],
+    ["tt-Cyrl", "Татар теле"],
+    ["uz-Cyrl", "Ўзбекча"],
+    ["uz-Latn", "O‘zbekcha"]
+  ],
+  "global.fontSize": 2,
+
+  "xulsword.book": "Gen",
+  "xulsword.chapter": 1,
+  "xulsword.verse": 1,
+  "xulsword.lastverse": 1,
+
+  "xulsword.history": ["Gen.1.1.1.KJV"],
+  "xulsword.historyIndex": 0,
+
+  "xulsword.showHeadings": true,
+  "xulsword.showFootnotes": true,
+  "xulsword.showCrossRefs": true,
+  "xulsword.showDictLinks": true,
+  "xulsword.showVerseNums": true,
+  "xulsword.showStrongs": true,
+  "xulsword.showMorph": true,
+  "xulsword.showUserNotes": true,
+  "xulsword.showHebCantillation": true,
+  "xulsword.showHebVowelPoints": true,
+  "xulsword.showRedWords": true,
+
+  "xulsword.tabs": [["KJV"], ["RSP"], ["KJV", "RSP", "MYBOOK"]],
+  "xulsword.modules": ["KJV", "RSP", "MYBOOK"],
+  "xulsword.keys": ["", "", ""],
+
+  "xulsword.chooser": "bible",
+  "xulsword.numDisplayedWindows": 2,
+
+  "mainmenu.fnlocation": "notebox",
+  "mainmenu.crlocation": "notebox",
+  "mainmenu.unlocation": "popup"
+}

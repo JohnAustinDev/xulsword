@@ -1,0 +1,13 @@
+{
+  "dlgFrom": "Мынадан:",
+  "dlgTo": "Мынаған сақталуда:",
+  "main.title": "xulsword",
+  "menu.addNewModule.label": "Жаңа модульдер қосу",
+  "menu.help.about": "Туралы...",
+  "menu.importAudio.label": "Дыбыс файлын импортта",
+  "producedby": "2022",
+  "SendErrorReport": "Мәселе туындаған болуы мүмкін. Бұл мәселе туралы хабар беру үшін мынаны басыңыз: \"{{v1}}\".",
+  "Title": "xulsword",
+  "dialog.OK": "OK",
+  "dontShowAgain": "Осы диалог төртбұрышын енді қайтып көрсетпеу."
+}

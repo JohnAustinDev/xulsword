@@ -1,0 +1,23 @@
+.menupopup {
+  position: absolute;
+  transform: translateX(-50%);
+  width: fit-content;
+  z-index: 99;
+  background: white;
+  font-size: 13.33px;
+  padding: 2px 0px 0px;
+  text-align: start;
+  border: 1px solid #999;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+}
+.menupopup > * {
+  white-space: nowrap;
+  min-height: 1.2em;
+  padding: 0px 20px 1px 18px;
+}
+
+.menupopup:not(:hover) > .selected,
+.menupopup > *:hover {
+  background: #1e90ff;
+  color: white;
+}

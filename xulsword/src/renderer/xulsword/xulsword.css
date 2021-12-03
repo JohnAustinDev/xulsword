@@ -1,0 +1,249 @@
+#xulsword {
+  overflow: hidden;
+  background-image: url(../../../assets/b2.png);
+}
+#main-controlbar {
+  background-image: url(../../../assets/b2.png);
+}
+#historyButtons,
+#player {
+  margin-top: 2px;
+  height: 34px; /* specified to allow for player's height */
+}
+#player {
+  padding-inline-start: 6px;
+}
+
+/* MAIN WINDOW CONFIGURATIONS */
+#quit,
+#xulsword:not(.libSwordLoadFailed) #newmodule {
+  display: block !important;
+}
+
+/* MAIN WINDOW TOGGLE MENU ITEMS
+menuitem#hdmitem {
+  list-style-image: url(../images/headingssm.png) !important;
+}
+menuitem#crmitem {
+  list-style-image: url(../images/crossrefssm.png) !important;
+}
+menuitem#fnmitem {
+  list-style-image: url(../images/footnotessm.png) !important;
+}
+menuitem#dtmitem {
+  list-style-image: url(../images/dictsm.png) !important;
+}
+menuitem#lnmitem {
+  list-style-image: url(../images/langnotessm.png) !important;
+}
+menuitem#vnmitem {
+  list-style-image: url(../images/versenumssm.png) !important;
+}
+menuitem#unmitem {
+  list-style-image: url(../images/usernotessm.png) !important;
+}
+menuitem#rwmitem {
+  list-style-image: url(../images/redwordssm.png) !important;
+}
+.togglemenuitem > .menu-iconic-left > .menu-iconic-icon {
+  width: 16px;
+  height: 16px;
+  -moz-image-region: rect(0px, 32px, 14px, 16px) !important;
+}
+.togglemenuitem[value='true'] > .menu-iconic-left > .menu-iconic-icon {
+  -moz-image-region: rect(0px, 16px, 14px, 0px) !important;
+}
+.togglemenuitem > .menu-iconic-left {
+  display: -moz-box;
+}
+menu#sub-Texts {
+  list-style-image: url(../images/Texts.png) !important;
+}
+menu#sub-Comms {
+  list-style-image: url(../images/Comms.png) !important;
+}
+menu#sub-Dicts {
+  list-style-image: url(../images/Dicts.png) !important;
+}
+menu#sub-Genbks {
+  list-style-image: url(../images/Genbks.png) !important;
+}
+*/
+
+/* MAIN WINDOW TOGGLE BUTTONS */
+#optionButtons {
+  padding-top: 2px;
+}
+#optionButtons button {
+  padding: 2px;
+  color: black;
+}
+#optionButtons .button-box {
+  padding: 6px;
+}
+#optionButtons button.checked {
+  color: blue;
+}
+#optionButtons .button.disabled {
+  color: grey;
+}
+#crbutton .button-icon {
+  background: url(../images/crossrefs.png);
+}
+#fnbutton .button-icon {
+  background: url(../images/footnotes.png);
+}
+#hdbutton .button-icon {
+  background: url(../images/headings.png);
+}
+#dtbutton .button-icon {
+  background: url(../images/dict.png);
+}
+#optionButtons .button-icon {
+  display: block;
+  width: 32px;
+  height: 28px;
+  background-position: -32px 0px;
+}
+#optionButtons button.checked .button-icon {
+  background-position: 0px 0px;
+}
+#optionButtons button.disabled .button-icon {
+  background-position: -32px 0px;
+}
+#optionButtons .button-text {
+  white-space: nowrap;
+}
+
+/* MAIN WINDOW SEARCH BUTTON */
+#search-tool {
+  padding-bottom: 0px;
+}
+#search-tool > vbox {
+  padding-top: 2px;
+  margin-left: 0px;
+}
+#searchButton {
+  padding: 2px;
+}
+#searchButton .button-box {
+  padding: 2px;
+}
+#searchButton .button-icon {
+  display: block;
+  width: 30px;
+  height: 18px;
+  background-image: url(../images/search.png);
+  background-position: 0px 0px;
+}
+#searchButton.disabled .button-icon {
+  background-position: -30px 0px;
+}
+
+/* MAIN WINDOW NAVIGATOR BUTTONS */
+#textnav {
+  padding: 2px 0px 2px 5px;
+}
+#textnav .bookselect {
+  height: 24px;
+}
+#textnav button {
+  margin: 0px;
+  margin-inline-end: 7px;
+}
+#textnav button,
+#textnav button * {
+  padding: 0px;
+}
+#nextchap .button-icon,
+#nextverse .button-icon {
+  display: block;
+  background: url(../images/smallButtonIncrement.png);
+  margin-bottom: 1px;
+}
+#prevchap .button-icon,
+#prevverse .button-icon {
+  display: block;
+  background: url(../images/smallButtonDecrement.png);
+  margin-top: 1px;
+}
+#textnav button .button-icon {
+  width: 15px;
+  height: 8px;
+  background-position: 0px 0px;
+}
+#textnav button:hover .button-icon {
+  background-position: -15px 0px;
+}
+#textnav .textbox input {
+  text-align: center;
+}
+
+/* MAIN WINDOW HISTORY BUTTONS */
+#historyButtons button {
+  padding: 2px;
+}
+#historyButtons .button-box {
+  padding: 4px 30px;
+}
+#historypopup menuitem.selected {
+  margin: 2px 4px;
+  background-color: Highlight;
+  color: HighlightText;
+}
+#back,
+#forward {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+#back .button-icon,
+#forward .button-icon {
+  display: block;
+  height: 14px;
+  width: 22px;
+  background-position: 0px 0px;
+  background-image: url(../images/back.png);
+}
+#forward .button-icon {
+  background-image: url(../images/forward.png);
+}
+html.chromedir-rtl #back .button-icon {
+  background-image: url(../images/forward.png);
+}
+html.chromedir-rtl #forward .button-icon {
+  background-image: url(../images/back.png);
+}
+#back.disabled .button-icon,
+#forward.disabled .button-icon {
+  background-position: -44px 0px;
+}
+#back:not(.disabled):hover .button-icon,
+#forward:not(.disabled):hover .button-icon {
+  background-position: -22px 0px;
+}
+#historymenu .button-box {
+  padding: 4px 10px;
+}
+#historymenu .button-icon {
+  display: block;
+  height: 11px;
+  width: 40px;
+  background-position: 0px 0px;
+  background-image: url(../images/historymenu.png);
+}
+#historymenu.disabled .button-icon {
+  background-position: -80px 0px;
+}
+#historymenu:not(.disabled):hover .button-icon {
+  background-position: -40px 0px;
+}
+
+.videoHelpMenuItem {
+  list-style-image: url(../images/videohelp.png) !important;
+}
+
+#printBrowser {
+  /*Fixes a Gecko print preview bug where
+  scroll bar was not appearing*/
+  overflow: auto;
+}

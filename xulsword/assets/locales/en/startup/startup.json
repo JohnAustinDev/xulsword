@@ -1,0 +1,13 @@
+{
+  "dlgFrom": "Import audio from:",
+  "dlgTo": "Save imported audio to:",
+  "main.title": "xulsword",
+  "menu.addNewModule.label": "Add New Modules",
+  "menu.help.about": "About...",
+  "menu.importAudio.label": "Import Audio",
+  "producedby": "2022",
+  "SendErrorReport": "A problem may have been detected.\nTo report this problem press \"{{v1}}\".",
+  "Title": "xulsword",
+  "dialog.OK": "OK",
+  "dontShowAgain": "Do not show me this dialog box again."
+}
