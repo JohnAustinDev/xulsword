@@ -172,7 +172,6 @@ Napi::Number GetSearchPointer(const Napi::CallbackInfo& info) {
 }
 
 Napi::String GetSearchResults(const Napi::CallbackInfo& info) {
-  printf("args: %d\n", info.Length());
   ListKey* listKey = (info.Length() > 4) ? pointerMap[info[4].As<Napi::Number>().Int32Value()] : NULL;
   bool referencesOnly = info.Length() == 5 ? info[5].As<Napi::Boolean>().Value() : false;
   char* searchResults = myXulsword->getSearchResults(

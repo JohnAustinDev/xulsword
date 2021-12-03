@@ -623,14 +623,17 @@ getSearchVerses: function(modname) {
 //Will return the verse texts from previous search.
 //search() must be called before results can be read.
 getSearchResults: function(modname, first, num, keepStrongs, searchPointer) {
+  if (!this.libSwordReady("getSearchResults")) return null;
   
   // if a searchPointer is given, make sure it has not been freed by LibSword.pause() etc.
   if (searchPointer && this.searchPointers.indexOf(searchPointer) == -1) return null;
-  
-  if (!this.libSwordReady("getSearchResults")) return null;
-  var searchResults = napi.GetSearchResults(modname, first, num, keepStrongs, searchPointer);
-  this.checkerror();
-  return searchResults;
+
+  if (searchPointer) {
+    if (this.searchPointers.indexOf(searchPointer) == -1) return null;
+    return (napi.GetSearchResults(modname, first, num, keepStrongs, searchPointer));
+  } else {
+    return (napi.GetSearchResults(modname, first, num, keepStrongs));
+  }
 },
 
 // searchIndexDelete

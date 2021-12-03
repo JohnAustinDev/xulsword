@@ -57,32 +57,6 @@ if (LibSword.getModuleList() == "No Modules") {
 
 jsdump("Need KJV and UZV, have " + LibSword.getModuleList());
 
-test(0, LibSword.search("KJV", "be.*t.*",             "John",  0 /* regex */,  0, true), 296);
-test(0, LibSword.getSearchResults("KJV", 2, 1, false), "bogus");
-
-results = [
-  'title="John.2.22.KJV"',
-  'title="John.3.34.KJV"',
-  'title="John.4.41.KJV"',
-  'title="John.4.50.KJV"',
-  'title="John.5.24.KJV"'
-];
-
-
-for (let index = 0; index < LibSword.search("KJV", "word", "John",  1, 0, true); index++) {
-  var searchResult = LibSword.getSearchResults("KJV", index, 1, false, 0, false);
-  test(0, searchResult.match(/title=\"[^\"]+\"/g)[0], results[index]);
-  if (index > 4) break;
-}
-
-test(0, LibSword.search("KJV", "shineth in darkness", "John",  2 /* multi */,  0, true),   1);
-test(0, LibSword.getSearchPointer(), 1);
-
-// char *getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer = NULL, bool referencesOnly = false);
-test(0, LibSword.getSearchResults("KJV", 0, 1, false), "bogus");
-
-exit
-
 Location.setLocation("KJV", "Matt.4");
 testLocs(1, "KJV", "Matt", 4, 1, 25, "KJV");
 jsdump("\n");
@@ -250,6 +224,30 @@ test(94, LibSword.getMaxChapter("KJV", "Ps"), 150);
 test(95, LibSword.getMaxChapter("KJV", "Ps.49"), 150);
 test(96, LibSword.getMaxChapter("UZV", "Ps"), 151);
 test(97, LibSword.getMaxChapter("UZV", "Ps.49"), 151);
+
+test(98, LibSword.search("KJV", "be.*t.*",             "John",  0 /* regex */,  0, true), 296);
+test(99, LibSword.getSearchResults("KJV", 2, 1, false).match(/title=\"[^\"]+\"/g)[0], 'title="John.1.7.KJV"');
+
+results = [
+  'title="John.2.22.KJV"',
+  'title="John.3.34.KJV"',
+  'title="John.4.41.KJV"',
+  'title="John.4.50.KJV"',
+  'title="John.5.24.KJV"'
+];
+
+
+for (let index = 0; index < LibSword.search("KJV", "word", "John",  1, 0, true); index++) {
+  var searchResult = LibSword.getSearchResults("KJV", index, 1, false, 0, false);
+  test(100, searchResult.match(/title=\"[^\"]+\"/g)[0], results[index]);
+  if (index > 4) break;
+}
+
+test(101, LibSword.search("KJV", "shineth in darkness", "John",  2 /* multi */,  0, true),   1);
+test(102, LibSword.getSearchPointer(), 1);
+
+// char *getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer = NULL, bool referencesOnly = false);
+test(103, LibSword.getSearchResults("KJV", 0, 1, false), "bogus");
 
 function testLocs(tn, vers, bk, ch, vs, lv, sys) {
   test(tn + "a", Location.getChapter(vers), bk + " " + ch);

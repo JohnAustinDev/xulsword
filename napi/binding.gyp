@@ -3,7 +3,7 @@
     {
       "target_name": "libsword_napi",
       "sources": [ "src/libsword_napi.cpp" ],
-      "libraries": ["/home/tomr/Documents/Projects/xulsword/Cpp/build/libxulsword.so.1.4.4"],
+      "libraries": ["${LD_LIBRARY_PATH}/libxulsword.so.1.4.4"],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
         "../Cpp/src/include",
