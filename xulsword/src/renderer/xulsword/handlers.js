@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 import { jsdump, parseLocation } from '../rutil';
+import C from '../../constant';
 import G from '../rg';
 import { firstIndexOfBookGroup } from '../../common';
 
@@ -155,7 +156,17 @@ export function handleViewport(e, ...args) {
   switch (e.type) {
     case 'click': {
       e.stopPropagation();
-      const search = ['chaptermenucell', 'bookname', 'bar'];
+      const search = [
+        'chaptermenucell',
+        'bookname',
+        'bar',
+        'open-chooser',
+        'close-chooser',
+        'reg-tab', // regular tab
+        'mts-tab', // multi-tab main tab
+        'mto-tab', // multi-tab option tab
+        'ilt-tab', // interlinear tab
+      ];
       let targ = e.target;
       while (
         targ &&
@@ -165,7 +176,6 @@ export function handleViewport(e, ...args) {
       }
       if (!targ || !targ.classList) return;
       const type = search.find((c) => targ.classList.contains(c));
-
       switch (type) {
         case 'bar': {
           const m = targ.className.match(/\bbar_(\S+)\b/);
@@ -201,6 +211,49 @@ export function handleViewport(e, ...args) {
               verse: 1,
               lastverse: 1,
             });
+          }
+          break;
+        }
+        case 'open-chooser': {
+          this.setState({ showChooser: true });
+          break;
+        }
+        case 'close-chooser': {
+          this.setState({ showChooser: false });
+          break;
+        }
+        case 'reg-tab':
+        case 'mts-tab':
+        case 'mto-tab':
+        case 'ilt-tab': {
+          const w = targ.dataset.wnum;
+          const m = targ.dataset.module;
+          if (w && m && !this.state.isPinned[w]) {
+            const i = w - 1;
+            if (type === 'ilt-tab') {
+              this.setState((prevState) => {
+                const { ilModules } = prevState;
+                ilModules[i] = ilModules[i] ? '' : m;
+                return { ilModules };
+              });
+            } else {
+              this.setState((prevState) => {
+                const { modules, mtModules, flagHilight, flagScroll } =
+                  prevState;
+                modules[i] = m;
+                flagHilight[i] = C.HILIGHT_IFNOTV1;
+                flagScroll[i] = C.SCROLLTYPECENTER;
+                if (type === 'mto-tab' || type === 'mts-tab') {
+                  mtModules[i] = m;
+                }
+                return {
+                  flagHilight,
+                  flagScroll,
+                  modules,
+                  mtModules,
+                };
+              });
+            }
           }
           break;
         }

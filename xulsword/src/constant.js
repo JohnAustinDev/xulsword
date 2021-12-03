@@ -4,7 +4,6 @@
 const C = {
   FPERM: 0o666,
   DPERM: 0o666,
-  ORIGINAL: 'ORIG', // Value doen't really matter, just a export const
   MAXVERSE: 176,
   MAXCHAPTER: 150,
   BIBLE: 'Biblical Texts',
@@ -123,6 +122,13 @@ const C = {
   },
 
   SupportedModuleTypes: {},
+
+  ModuleTypeOrder: {
+    Texts: 1,
+    Comms: 2,
+    Genbks: 3,
+    Dicts: 4,
+  },
 
   SEP: ',',
   TIMEOUT: 25,

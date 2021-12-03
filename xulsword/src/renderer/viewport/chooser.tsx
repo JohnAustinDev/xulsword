@@ -10,7 +10,6 @@ import i18next from 'i18next';
 import React from 'react';
 import PropTypes from 'prop-types';
 import G from '../rg';
-import C from '../../constant';
 import { Hbox, Vbox } from '../libxul/boxes';
 import {
   bookGroupLength,

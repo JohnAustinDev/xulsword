@@ -40,7 +40,16 @@
 
   "xulsword.tabs": [["KJV"], ["RSP"], ["KJV", "RSP", "MYBOOK"]],
   "xulsword.modules": ["KJV", "RSP", "MYBOOK"],
+  "xulsword.ilModules": ["", "", ""],
+  "xulsword.mtModules": ["", "", ""],
   "xulsword.keys": ["", "", ""],
+
+  "xulsword.flagHilight": [0, 0, 0],
+  "xulsword.flagScroll": [1, 1, 1],
+  "xulsword.isPinned": [false, false, false],
+  "xulsword.noteBoxHeight": [200, 200, 200],
+  "xulsword.maximizeNoteBox": [false, false, false],
+  "xulsword.showChooser": true,
 
   "xulsword.chooser": "bible",
   "xulsword.numDisplayedWindows": 2,

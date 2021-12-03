@@ -1,0 +1,118 @@
+.tabs {
+  overflow: hidden;
+  display: inline-block;
+  text-align: end;
+  vertical-align: bottom;
+  white-space: nowrap;
+  position: relative;
+  top: 2px;
+  z-index: 10;
+}
+.tabs.open {
+  overflow: visible;
+}
+
+/*
+.tabs .tooltip {
+  Undo relative so ancestor will be used instead
+  position: static;
+}
+.tabs .tooltip .tooltiptext {
+  top: 0px;
+  width: auto;
+}
+*/
+
+.tabs .tab {
+  display: inline-block;
+  cursor: default;
+  font-size: 1em;
+  color: grey;
+  margin: 0px 3px 0px 3px;
+  padding: 0px 5px;
+  border: 3px solid;
+  border-bottom: 2px solid rgb(200, 170, 205);
+  border-left-color: rgb(200, 170, 205);
+  border-right-color: rgb(200, 170, 205);
+  background: rgb(255, 250, 255);
+  height: 23px;
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+}
+.tabs .mts-tab .menu .tab {
+  display: block;
+}
+.tabs .mts-tab .menu .tab.selected {
+  display: none;
+}
+.tabs .mts-tab .button {
+  float: right;
+  width: 10px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+}
+html.chromedir-rtl .tabs .mts-tab .button {
+  float: left;
+}
+.tabs .mts-tab .button .menu {
+  left: auto;
+  right: 0px;
+}
+html.chromedir-rtl .tabs .mts-tab .button .menu {
+  left: 0px;
+  right: auto;
+}
+.tabs .mts-tab .button .menupopup {
+  transform: translateX(-100%);
+}
+.tabs .mts-tab .button-icon {
+  display: visible;
+  width: 10px;
+  height: 100%;
+  background-color: gray;
+  border: 2px outset black;
+  background-image: url(../images/arrow/arrow-dn.png);
+}
+.tabs > *:last-child {
+  margin-inline-end: 20px;
+}
+.tabs > *:first-child {
+  margin-inline-start: 20px;
+}
+.tabs .tab.active {
+  color: blue;
+  border-bottom-color: rgb(255, 243, 255);
+  background: rgb(255, 243, 255);
+}
+.tabs.ownWindow .iltab {
+  display: none;
+}
+.tabs .tabs.pinned .tab {
+  visibility: hidden;
+}
+.tabs .tabs.pinned .tab.active {
+  color: blue;
+  background: white; /*rgb(248,248,241);*/
+  visibility: visible;
+}
+.tabs .tabTexts {
+  border-top-color: rgb(235, 50, 80);
+}
+.tabs .tabComms {
+  border-top-color: rgb(100, 100, 255);
+}
+.tabs .tabDicts {
+  border-top-color: rgb(255, 255, 0);
+}
+.tabs .tabGenbks {
+  border-top-color: rgb(100, 245, 245);
+}
+
+.tabs .tab-label {
+  max-width: 84px;
+  overflow: hidden;
+}
+.tabs .tab > * {
+  display: inline-block;
+}

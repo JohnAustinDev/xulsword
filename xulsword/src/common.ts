@@ -260,6 +260,22 @@ export function deepClone(obj: any) {
   return JSON.parse(JSON.stringify(obj));
 }
 
+export function compareObjects(obj1: any, obj2: any, deep = false): boolean {
+  if (typeof obj1 !== 'object' || typeof obj2 !== 'object') {
+    return obj1 === obj2;
+  }
+  return (
+    Object.keys(obj1).length === Object.keys(obj2).length &&
+    Object.keys(obj1).every(
+      (key) =>
+        Object.prototype.hasOwnProperty.call(obj2, key) &&
+        (deep
+          ? compareObjects(obj1[key], obj2[key], true)
+          : obj1[key] === obj2[key])
+    )
+  );
+}
+
 // Replaces character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
 export function replaceASCIIcontrolChars(string: string) {
   let ret = string;
