@@ -64,9 +64,9 @@ interface ViewportProps extends XulProps {
   lastverse: number;
 
   tabs: string[][];
-  modules: string[];
-  ilModules: string[];
-  mtModules: string[];
+  modules: (string | undefined)[];
+  ilModules: (string | undefined)[];
+  mtModules: (string | undefined)[];
   keys: string[];
 
   flagHilight: number[];
@@ -140,7 +140,8 @@ class Viewport extends React.Component {
     } = this.props as ViewportProps;
     const { resize } = this.state as ViewportState;
 
-    const availableBooks = getAvailableBooks(modules[0]);
+    let availableBooks: any = [];
+    if (modules[0]) availableBooks = getAvailableBooks(modules[0]);
 
     // TODO! interlinear module options depend on book, installed modules, and bible tabs.
     const ilModuleOptions = ['KJV', 'KJV', ''];
@@ -151,17 +152,20 @@ class Viewport extends React.Component {
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       columns[x] = 1;
       const key = `${modules[x]} ${ilModules[x]}`;
-      let n = 0;
+      let f = x + 1;
+      let modf = modules[f];
       while (
-        x + 1 + n < numDisplayedWindows &&
-        G.Tab[modules[x + 1 + n]].modType !== C.DICTIONARY &&
-        key === `${modules[x + 1 + n]} ${ilModules[x + 1 + n]}`
+        modf &&
+        f < numDisplayedWindows &&
+        G.Tab[modf].modType !== C.DICTIONARY &&
+        key === `${modf} ${ilModules[f]}`
       ) {
         columns[x] += 1;
-        columns[x + 1 + n] = 0;
-        n += 1;
+        columns[f] = 0;
+        f += 1;
+        modf = modules[f];
       }
-      x += n;
+      x += f - x - 1;
     }
 
     const tabComps: number[] = [];

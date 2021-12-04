@@ -64,9 +64,9 @@ interface StateDefault {
   showRedWords: boolean;
 
   tabs: string[][];
-  modules: string[];
-  ilModules: string[];
-  mtModules: string[];
+  modules: (string | undefined)[];
+  ilModules: (string | undefined)[];
+  mtModules: (string | undefined)[];
   keys: string[];
 
   flagHilight: number[];
@@ -86,6 +86,7 @@ const stateNoPref = {
   historyMenupopup: undefined,
   hasBible: G.LibSword.hasBible(),
   bsreset: 0,
+  vpreset: 0,
   searchDisabled: true,
 };
 
@@ -215,14 +216,12 @@ export default class Xulsword extends React.Component {
     let ie = is + maxHistoryMenuLength;
     if (ie > state.history.length) ie = state.history.length;
     const items = state.history.slice(is, ie);
-    if (!items || !items.length) return null;
+    const mod = state.modules[0];
+    if (!items || !items.length || !mod) return null;
     return (
       <Menupopup>
         {items.map((loc, i) => {
-          const cloc = convertDotString(
-            loc,
-            G.LibSword.getVerseSystem(state.modules[0])
-          );
+          const cloc = convertDotString(loc, G.LibSword.getVerseSystem(mod));
           const index = i + is;
           const selected = index === state.historyIndex ? 'selected' : '';
           return (
@@ -246,6 +245,7 @@ export default class Xulsword extends React.Component {
   addHistory = (add?: string): void => {
     const { book, chapter, verse, lastverse, modules, history, historyIndex } =
       this.state as XulswordState;
+    if (!modules[0]) return;
     let location = add as string;
     if (!location) {
       location = [
@@ -275,6 +275,7 @@ export default class Xulsword extends React.Component {
       return;
     this.setState((prevState: XulswordState) => {
       const { history, modules } = prevState as XulswordState;
+      if (!modules[0]) return {};
       const newLocation = convertDotString(
         history[index],
         G.LibSword.getVerseSystem(modules[0])
@@ -299,8 +300,16 @@ export default class Xulsword extends React.Component {
 
   closeMenupopups = () => {
     const { historyMenupopup } = this.state as XulswordState;
-    if (historyMenupopup) {
-      this.setState({ historyMenupopup: undefined });
+    let reset = 0;
+    Array.from(document.getElementsByClassName('tabs')).forEach((t) => {
+      if (t.classList.contains('open')) reset += 1;
+    });
+    if (reset || historyMenupopup) {
+      this.setState((prevState) => {
+        let { vpreset } = prevState as XulswordState;
+        if (reset) vpreset += 1;
+        return { vpreset, historyMenupopup: undefined };
+      });
     }
   };
 
@@ -334,6 +343,7 @@ export default class Xulsword extends React.Component {
       showChooser,
       chooser,
       bsreset,
+      vpreset,
     } = state;
 
     jsdump(
@@ -521,6 +531,7 @@ export default class Xulsword extends React.Component {
 
             <Hbox flex="1">
               <Viewport
+                key={vpreset}
                 id="main-viewport"
                 handler={handleViewport}
                 book={book}

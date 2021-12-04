@@ -162,6 +162,7 @@ export function handleViewport(e, ...args) {
         'bar',
         'open-chooser',
         'close-chooser',
+        'nbsizer',
         'reg-tab', // regular tab
         'mts-tab', // multi-tab main tab
         'mto-tab', // multi-tab option tab
@@ -222,6 +223,15 @@ export function handleViewport(e, ...args) {
           this.setState({ showChooser: false });
           break;
         }
+        case 'nbsizer': {
+          this.setState((prevState) => {
+            const { maximizeNoteBox } = prevState;
+            const i = targ.dataset.wnum - 1;
+            maximizeNoteBox[i] = !maximizeNoteBox[i];
+            return { maximizeNoteBox };
+          });
+          break;
+        }
         case 'reg-tab':
         case 'mts-tab':
         case 'mto-tab':
@@ -258,6 +268,19 @@ export function handleViewport(e, ...args) {
           break;
         }
         default:
+      }
+      break;
+    }
+
+    case 'mouseup': {
+      if (e.target.classList.contains('bb')) {
+        const [noteboxResizing] = args;
+        this.setState((prevState) => {
+          const { noteBoxHeight } = prevState;
+          const [initial, final] = noteboxResizing;
+          noteBoxHeight[e.target.dataset.wnum] += final - initial;
+          return { noteBoxHeight };
+        });
       }
       break;
     }

@@ -83,7 +83,7 @@ const Command = {
     const nval = JSON.parse(JSON.stringify(pval));
 
     // If toggling on allwindows, set all according to the clicked
-    // menuitem, and not each item selarately.
+    // menuitem, and not each item separately.
     let doWhat2 = doWhat;
     if (doWhat === 'toggle' && winLabel === 'menu.view.allwindows') {
       const m = modules[0];
@@ -111,8 +111,27 @@ const Command = {
       nval[i] = tabs.sort(this.tabOrder);
     });
 
+    // Insure each window's tabs correspond to its texts
+    const prefs = ['xulsword.modules', 'xulsword.ilModules', 'xulsword.mtModules'];
+    prefs.forEach((p) => {
+      const ms = G.Prefs.getComplexValue(p);
+      let save = false;
+      ms.forEach((m: any, i: any) => {
+        if (!nval[i].includes(m)) {
+          ms[i] = p === 'xulsword.modules' ? nval[i][0] : undefined;
+          save = true;
+        }
+      });
+      if (save) G.Prefs.setComplexValue(p, ms);
+    });
+
     G.Prefs.setComplexValue('xulsword.tabs', nval);
-    this.setGlobalStateFromPrefs('xulsword.tabs');
+    this.setGlobalStateFromPrefs([
+      'xulsword.tabs',
+      'xulsword.modules',
+      'xulsword.ilModules',
+      'xulsword.mtModules'
+    ]);
   },
 
   tabOrder(as: string, bs: string) {

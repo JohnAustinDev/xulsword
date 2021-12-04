@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/no-did-update-set-state */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -35,8 +36,8 @@ const propTypes = {
   chapter: PropTypes.number.isRequired,
   verse: PropTypes.number.isRequired,
   lastverse: PropTypes.number.isRequired,
-  module: PropTypes.string.isRequired,
-  ilModule: PropTypes.string.isRequired,
+  module: PropTypes.string,
+  ilModule: PropTypes.string,
   modkey: PropTypes.string.isRequired,
   flagHilight: PropTypes.number.isRequired,
   flagScroll: PropTypes.number.isRequired,
@@ -46,9 +47,9 @@ const propTypes = {
   ownWindow: PropTypes.bool,
 };
 
-// Atext's own properties. NOTE: property types are used, but property values are not.
+// Atext's own properties. NOTE: property types are checked, but property values are not.
 const AtextOwnProps = {
-  handler: () => {},
+  handler: (e: any, noteBoxResizing?: number[]) => {},
   anid: '',
   n: 0,
   columns: 0,
@@ -56,8 +57,8 @@ const AtextOwnProps = {
   chapter: 0,
   verse: 0,
   lastverse: 0,
-  module: '',
-  ilModule: '',
+  module: undefined,
+  ilModule: undefined,
   modkey: '',
   flagHilight: 0,
   flagScroll: 0,
@@ -68,7 +69,7 @@ const AtextOwnProps = {
 };
 
 // These props can be 'pinned' to become independant state properties.
-// NOTE: property types are used, but property values are not.
+// NOTE: property types are checked, but property values are not.
 const PinProps = {
   book: '',
   chapter: 0,
@@ -81,7 +82,7 @@ const PinProps = {
 
 // These props may change the content. If these props have all the same
 // values as the previous rendering, the content will also be the same.
-// NOTE: property types are used, but property values are not.
+// NOTE: property types are checked, but property values are not.
 const ContentProps = {
   book: '',
   chapter: 0,
@@ -103,7 +104,7 @@ type Content = {
 
 interface AtextState {
   pin: typeof PinProps | null;
-  noteboxMaximized: boolean;
+  noteBoxResizing: number[] | null;
   scrollDelta: number;
   footnotes: string;
   introFootnotes: string;
@@ -132,7 +133,7 @@ class Atext extends React.Component {
 
     this.state = {
       pin: Atext.copyProps(PinProps, props),
-      noteboxMaximized: false,
+      noteBoxResizing: null,
       // scrollDelta: 0,
       // footnotes: '',
       // introFootnotes: '',
@@ -143,6 +144,9 @@ class Atext extends React.Component {
     this.savePin = null;
 
     this.getContent = this.getContent.bind(this);
+    this.bbMouseDown = this.bbMouseDown.bind(this);
+    this.bbMouseMove = this.bbMouseMove.bind(this);
+    this.bbMouseUp = this.bbMouseUp.bind(this);
   }
 
   componentDidMount() {
@@ -236,11 +240,62 @@ class Atext extends React.Component {
     };
   }
 
+  bbMouseDown(e: any) {
+    e.stopPropagation();
+    this.setState({ noteBoxResizing: [e.clientY, e.clientY] });
+  }
+
+  bbMouseMove(e: any) {
+    e.stopPropagation();
+    this.setState((prevState) => {
+      const { noteBoxResizing } = prevState as AtextState;
+      const { columns, noteBoxHeight } = this.props as AtextProps;
+      if (noteBoxResizing === null) return {};
+      const [initial] = noteBoxResizing;
+      const height = noteBoxHeight + e.clientY - initial;
+      if (height < 1) {
+        this.bbMouseUp(e, [initial, initial - noteBoxHeight]);
+        return {};
+      }
+      const maxHeight = 200; // TODO! Finish this...
+      if (height > maxHeight) {
+        if (columns !== 1) {
+          this.bbMouseUp(e, [initial, initial]);
+          const { handler } = this.props as AtextProps;
+          e.type = 'click'; // handle as a maximize click
+          handler(e);
+        } else {
+          this.bbMouseUp(e, [initial, initial - noteBoxHeight + maxHeight]);
+        }
+        return {};
+      }
+      return { noteBoxResizing: [initial, e.clientY] };
+    });
+  }
+
+  bbMouseUp(e: any, nbr?: number[]) {
+    e.stopPropagation();
+    let { noteBoxResizing } = this.state as AtextState;
+    if (nbr) noteBoxResizing = nbr;
+    const { handler } = this.props as AtextProps;
+    e.type = 'mouseup';
+    if (noteBoxResizing !== null) handler(e, noteBoxResizing);
+    this.setState({ noteBoxResizing: null });
+  }
+
   render() {
     const state = this.state as AtextState;
     const props = this.props as AtextProps;
-    const { columns, handler, isPinned, module, n, noteBoxHeight } =
-      props as AtextProps;
+    const { noteBoxResizing } = state;
+    const {
+      columns,
+      isPinned,
+      handler,
+      maximizeNoteBox,
+      module,
+      n,
+      noteBoxHeight,
+    } = props;
 
     // Collect props/state combination to use to render content.
     const pinSource = isPinned ? state.pin : props;
@@ -267,11 +322,22 @@ class Atext extends React.Component {
       this.lastRead.content = this.getContent(contentProps);
     }
 
-    let cls = `text text${n} show${columns} ${G.Tab[module].tabType} userFontSize`;
-    if (G.Tab[module].isRTL) cls += ' rtl-text';
+    const doMaximizeNB =
+      noteBoxResizing === null && columns !== 1 && maximizeNoteBox;
+
+    let cls = `text text${n} show${columns} userFontSize`;
+    if (module) cls += ` ${G.Tab[module].tabType}`;
+    if (module && G.Tab[module].isRTL) cls += ' rtl-text';
     if (isPinned) cls += ' pinned';
-    if (state.noteboxMaximized) cls += ' noteboxMaximized';
+    if (doMaximizeNB) cls += ' noteboxMaximized';
     if (!this.lastRead.content.notes) cls += ' noteboxEmpty';
+
+    const nbh = doMaximizeNB ? '100%' : `${noteBoxHeight}px`;
+    let nbtop;
+    if (noteBoxResizing !== null) {
+      const [initial, current] = noteBoxResizing;
+      nbtop = { top: `${current - initial}px` };
+    }
 
     /*
     onClick={handler}
@@ -287,6 +353,7 @@ class Atext extends React.Component {
         {...props}
         className={xulClass(`atext ${cls}`, props)}
         style={{ ...props.style, position: 'relative' }}
+        onMouseMove={this.bbMouseMove}
       >
         <div
           className="sbcontrols"
@@ -304,10 +371,16 @@ class Atext extends React.Component {
           {this.lastRead.content.text}
         </Box>
 
-        <Vbox className="nbc" height={`${noteBoxHeight}px`}>
+        <Vbox className="nbc" height={nbh}>
           <Hbox height="30px" width="100%">
-            <div className="bb" onMouseDown={handler} />
-            <div className="nbsizer" />
+            <div
+              className={`bb ${noteBoxResizing !== null ? 'moving' : ''}`}
+              onMouseDown={this.bbMouseDown}
+              onMouseUp={this.bbMouseUp}
+              style={nbtop}
+              data-wnum={n}
+            />
+            <div className="nbsizer" onClick={handler} data-wnum={n} />
           </Hbox>
           <Box className="nb" flex="1">
             {this.lastRead.content.notes}

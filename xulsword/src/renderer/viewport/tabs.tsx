@@ -32,12 +32,12 @@ const propTypes = {
   columns: PropTypes.number.isRequired,
   handler: PropTypes.func.isRequired,
   isPinned: PropTypes.bool.isRequired,
-  module: PropTypes.string.isRequired,
+  module: PropTypes.string,
   n: PropTypes.number.isRequired,
   tabs: PropTypes.arrayOf(PropTypes.string).isRequired,
-  ilModule: PropTypes.string.isRequired,
+  ilModule: PropTypes.string,
   ilModuleOption: PropTypes.string.isRequired,
-  mtModule: PropTypes.string.isRequired,
+  mtModule: PropTypes.string,
 };
 
 interface TabsProps extends XulProps {
@@ -45,12 +45,12 @@ interface TabsProps extends XulProps {
   columns: number;
   handler: (e: any) => void;
   isPinned: boolean;
-  module: string;
+  module: string | undefined;
   n: number;
   tabs: string[];
-  ilModule: string;
+  ilModule: string | undefined;
   ilModuleOption: string;
-  mtModule: string;
+  mtModule: string | undefined;
 }
 
 interface TabsState {
@@ -146,7 +146,9 @@ class Tabs extends React.Component {
     }
   }
 
-  multiTabButtonClick() {
+  multiTabButtonClick(e: any) {
+    if (!e.target.classList.contains('button')) return;
+    e.stopPropagation();
     this.setState((prevState: TabsState) => {
       let newpup = null;
       if (!prevState.multiTabMenupopup) {
@@ -177,8 +179,8 @@ class Tabs extends React.Component {
 
     const mtMod = this.getMultiTabSelection();
 
-    let cls = `tabs${n} ${G.Tab[module].tabType}`;
-    if (G.Tab[module].isRTL) cls += ' rtl';
+    let cls = `tabs${n}`;
+    if (module && G.Tab[module].isRTL) cls += ' rtl';
     if (isPinned) cls += ' pinned';
     if (multiTabMenupopup) cls += ' open';
 
