@@ -105,6 +105,11 @@ html.chromedir-rtl .atext .sbwin {
   display: none;
 }
 
+.atext .nbc > div:first-child {
+  height: 30px;
+  width: 100%;
+}
+
 .atext .bb {
   position: relative;
   border: 1px outset rgb(150, 150, 150);
@@ -122,7 +127,7 @@ html.chromedir-rtl .atext .sbwin {
   z-index: 80;
 }
 
-.atext .nbsizer {
+.atext .notebox-maximizer {
   position: absolute;
   background: url(../images/max.png);
   width: 15px;
@@ -130,14 +135,14 @@ html.chromedir-rtl .atext .sbwin {
   top: 8px;
   right: 42px;
 }
-.atext.rtl-text .nbsizer {
+.atext.rtl-text .notebox-maximizer {
   right: auto;
   left: 42px;
 }
-.atext.noteboxMaximized .nbsizer {
+.atext.noteboxMaximized .notebox-maximizer {
   background: url(../images/norm.png);
 }
-.atext.show1 .nbsizer {
+.atext.show1 .notebox-maximizer {
   display: none;
 }
 

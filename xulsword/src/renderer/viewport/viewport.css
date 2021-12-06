@@ -87,7 +87,7 @@ a dictionary (which cannot be linked), this situation needs this special CSS: */
   .viewport .open-chooser,
   .viewport .sbpin,
   .viewport .sbwin,
-  .viewport .nbsizer {
+  .viewport .notebox-maximizer {
     display: none !important;
   }
   .viewport .tab {

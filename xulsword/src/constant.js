@@ -62,6 +62,9 @@ const C = {
   MSMOVE: 'mousemove',
   MSOVER: 'mouseover',
   MSOUT: 'mouseout',
+  TextHeaderHeight: 30,
+  TextBBTopMargin: 30,
+  TextBBBottomMargin: 30,
 
   NumOT: 39,
   NumNT: 27,

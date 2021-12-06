@@ -381,8 +381,8 @@ class Chooser extends React.Component {
                 const selected = bg === bookGroup ? 'selected' : '';
                 return (
                   <Vbox
-                    key={`bar_${bg}`}
-                    className={`bar bar_${bg} ${selected}`}
+                    key={`bookgroup_${bg}`}
+                    className={`bookgroup bookgroup_${bg} ${selected}`}
                     flex="50%"
                     pack="center"
                     align="center"

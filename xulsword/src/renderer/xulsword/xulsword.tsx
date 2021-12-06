@@ -26,23 +26,24 @@ import Viewport from '../viewport/viewport';
 import G from '../rg';
 import C from '../../constant';
 import { dString } from '../../common';
+// eslint-disable-next-line import/no-cycle
 import { xulswordHandler, handleViewport as handleVP } from './handlers';
 import '../global-htm.css';
 import './xulsword.css';
 
-const defaultProps = {
+export const defaultProps = {
   ...xulDefaultProps,
 };
 
-const propTypes = {
+export const propTypes = {
   ...xulPropTypes,
 };
 
-type XulswordProps = XulProps;
+export type XulswordProps = XulProps;
 
 // Default values for these keys must be set in the default Pref file
 // or an error will be thrown.
-interface StateDefault {
+export interface StateDefault {
   book: string;
   chapter: number;
   verse: number;
@@ -73,7 +74,7 @@ interface StateDefault {
   flagScroll: number[];
   isPinned: boolean[];
   noteBoxHeight: number[];
-  maximizeNoteBox: boolean[];
+  maximizeNoteBox: number[];
   showChooser: boolean;
 
   chooser: 'bible' | 'genbook' | 'none';
@@ -82,7 +83,7 @@ interface StateDefault {
 
 // The following state values are not stored in Prefs, but take
 // default values in Xulsword constructor.
-const stateNoPref = {
+export const stateNoPref = {
   historyMenupopup: undefined,
   hasBible: G.LibSword.hasBible(),
   bsreset: 0,
@@ -90,7 +91,7 @@ const stateNoPref = {
   searchDisabled: true,
 };
 
-type XulswordState = typeof stateNoPref & StateDefault;
+export type XulswordState = typeof stateNoPref & StateDefault;
 
 const maxHistoryMenuLength = 20;
 

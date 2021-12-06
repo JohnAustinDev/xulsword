@@ -23,10 +23,12 @@ export const xulDefaultProps = {
   onKeyDown: undefined,
   onFocus: undefined,
   onBlur: undefined,
+  onMouseDown: undefined,
   onMouseOver: undefined,
   onMouseOut: undefined,
   onMouseMove: undefined,
   onMouseUp: undefined,
+  onMouseLeave: undefined,
   onWheel: undefined,
 };
 
@@ -52,10 +54,12 @@ export const xulPropTypes = {
   onKeyDown: PropTypes.func,
   onFocus: PropTypes.func,
   onBlur: PropTypes.func,
+  onMouseDown: PropTypes.func,
   onMouseOver: PropTypes.func,
   onMouseOut: PropTypes.func,
   onMouseMove: PropTypes.func,
   onMouseUp: PropTypes.func,
+  onMouseLeave: PropTypes.func,
   onWheel: PropTypes.func,
 };
 
@@ -87,10 +91,12 @@ export interface XulProps {
   onKeyDown?: (e: React.KeyboardEvent<any>) => void;
   onFocus?: (e: React.SyntheticEvent<any>) => void;
   onBlur?: (e: React.SyntheticEvent<any>) => void;
+  onMouseDown?: (e: React.SyntheticEvent<any>) => void;
   onMouseOver?: (e: React.SyntheticEvent<any>) => void;
   onMouseOut?: (e: React.SyntheticEvent<any>) => void;
   onMouseMove?: (e: React.SyntheticEvent<any>) => void;
   onMouseUp?: (e: React.SyntheticEvent<any>) => void;
+  onMouseLeave?: (e: React.SyntheticEvent<any>) => void;
   onWheel?: (e: React.SyntheticEvent<any>) => void;
 }
 
@@ -101,16 +107,18 @@ const events = [
   'onKeyDown',
   'onFocus',
   'onBlur',
+  'onMouseDown',
   'onMouseOver',
   'onMouseOut',
   'onMouseMove',
   'onMouseUp',
+  'onMouseLeave',
   'onWheel',
 ];
-const styles = ['width', 'height', 'flex'];
+// const styles = ['width', 'height', 'flex'];
 const enums = ['align', 'dir', 'orient', 'pack', 'type'];
 const bools = ['checked', 'disabled', 'hidden', 'readonly'];
-const cssAttribs = styles.concat(enums).concat(bools);
+// const cssAttribs = styles.concat(enums).concat(bools);
 
 // These XUL event listeners are registered on elements
 export const xulEvents = (props: any): XulProps => {
@@ -163,7 +171,7 @@ export const xulClass = (classes: string | string[], props: any) => {
 
 export const htmlAttribs = (className: string, props: any) => {
   if (props === null) return {};
-  return {
+  const r: any = {
     id: props.id,
     lang: props.lang,
     className: xulClass(className, props),
@@ -173,6 +181,13 @@ export const htmlAttribs = (className: string, props: any) => {
     },
     ...xulEvents(props),
   };
+
+  Object.entries(props).forEach((entry) => {
+    const [p, val] = entry;
+    if (p.substr(0, 5) === 'data-') r[p] = val;
+  });
+
+  return r;
 };
 
 // Use a default if value is null

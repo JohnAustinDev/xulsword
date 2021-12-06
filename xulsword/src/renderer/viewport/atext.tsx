@@ -18,7 +18,7 @@ import G from '../rg';
 import C from '../../constant';
 import '../libxul/xul.css';
 import './atext.css';
-import { compareObjects } from '../../common';
+import { compareObjects, ofClass } from '../../common';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -43,13 +43,13 @@ const propTypes = {
   flagScroll: PropTypes.number.isRequired,
   isPinned: PropTypes.bool.isRequired,
   noteBoxHeight: PropTypes.number.isRequired,
-  maximizeNoteBox: PropTypes.bool.isRequired,
+  maximizeNoteBox: PropTypes.number.isRequired,
   ownWindow: PropTypes.bool,
 };
 
 // Atext's own properties. NOTE: property types are checked, but property values are not.
 const AtextOwnProps = {
-  handler: (e: any, noteBoxResizing?: number[]) => {},
+  handler: (e: any, noteBoxResizing?: number[], maximize?: boolean) => {},
   anid: '',
   n: 0,
   columns: 0,
@@ -64,7 +64,7 @@ const AtextOwnProps = {
   flagScroll: 0,
   isPinned: false,
   noteBoxHeight: 0,
-  maximizeNoteBox: false,
+  maximizeNoteBox: 0,
   ownWindow: false,
 };
 
@@ -147,15 +147,19 @@ class Atext extends React.Component {
     this.bbMouseDown = this.bbMouseDown.bind(this);
     this.bbMouseMove = this.bbMouseMove.bind(this);
     this.bbMouseUp = this.bbMouseUp.bind(this);
+    this.bbMouseLeave = this.bbMouseLeave.bind(this);
+    this.onUpdate = this.onUpdate.bind(this);
   }
 
   componentDidMount() {
-    if (!this.savePin) return;
-    this.setState({ pin: this.savePin });
-    this.savePin = null;
+    this.onUpdate();
   }
 
   componentDidUpdate() {
+    this.onUpdate();
+  }
+
+  onUpdate() {
     if (!this.savePin) return;
     this.setState({ pin: this.savePin });
     this.savePin = null;
@@ -240,47 +244,74 @@ class Atext extends React.Component {
     };
   }
 
+  // start dragging the notebox resizing bar?
   bbMouseDown(e: any) {
     e.stopPropagation();
-    this.setState({ noteBoxResizing: [e.clientY, e.clientY] });
+    const { noteBoxResizing } = this.state as AtextState;
+    const targ = ofClass('bb', e.target);
+    if (targ !== null) {
+      this.setState({ noteBoxResizing: [e.clientY, e.clientY] });
+    } else if (noteBoxResizing !== null)
+      this.setState({ noteBoxResizing: null });
   }
 
+  // notebox resize bar dragging...
   bbMouseMove(e: any) {
+    const { noteBoxResizing } = this.state as AtextState;
+    const { handler, noteBoxHeight, maximizeNoteBox } = this
+      .props as AtextProps;
+    if (noteBoxResizing === null) return;
+
+    const targ = ofClass('atext', e.target);
+    if (targ === null) return;
+
     e.stopPropagation();
-    this.setState((prevState) => {
-      const { noteBoxResizing } = prevState as AtextState;
-      const { columns, noteBoxHeight } = this.props as AtextProps;
-      if (noteBoxResizing === null) return {};
-      const [initial] = noteBoxResizing;
-      const height = noteBoxHeight + e.clientY - initial;
-      if (height < 1) {
-        this.bbMouseUp(e, [initial, initial - noteBoxHeight]);
-        return {};
-      }
-      const maxHeight = 200; // TODO! Finish this...
-      if (height > maxHeight) {
-        if (columns !== 1) {
-          this.bbMouseUp(e, [initial, initial]);
-          const { handler } = this.props as AtextProps;
-          e.type = 'click'; // handle as a maximize click
-          handler(e);
-        } else {
-          this.bbMouseUp(e, [initial, initial - noteBoxHeight + maxHeight]);
-        }
-        return {};
-      }
-      return { noteBoxResizing: [initial, e.clientY] };
-    });
+    e.preventDefault();
+
+    if (maximizeNoteBox > 0) handler(e);
+
+    const [initial] = noteBoxResizing;
+
+    // moved above the top?
+    const height = noteBoxHeight + initial - e.clientY;
+    const stopHeight = targ.element.clientHeight - C.TextHeaderHeight;
+    if (height >= stopHeight - C.TextBBTopMargin) {
+      this.bbMouseUp(
+        e,
+        [initial, noteBoxHeight + initial - stopHeight + C.TextBBTopMargin + 5],
+        true
+      );
+      return;
+    }
+
+    // moved below the bottom?
+    if (height <= C.TextBBBottomMargin) {
+      this.bbMouseUp(
+        e,
+        [initial, noteBoxHeight + initial - C.TextBBBottomMargin - 5],
+        false
+      );
+      return;
+    }
+
+    // otherwise follow the mouse...
+    this.setState({ noteBoxResizing: [initial, e.clientY] });
   }
 
-  bbMouseUp(e: any, nbr?: number[]) {
-    e.stopPropagation();
-    let { noteBoxResizing } = this.state as AtextState;
-    if (nbr) noteBoxResizing = nbr;
-    const { handler } = this.props as AtextProps;
-    e.type = 'mouseup';
-    if (noteBoxResizing !== null) handler(e, noteBoxResizing);
+  bbMouseLeave() {
     this.setState({ noteBoxResizing: null });
+  }
+
+  // stop notebox resizing?
+  bbMouseUp(e: any, nbr?: number[], maximize?: boolean) {
+    const { noteBoxResizing } = this.state as AtextState;
+    const { handler } = this.props as AtextProps;
+    if (noteBoxResizing === null) return;
+    e.stopPropagation();
+    const newnbr = nbr || noteBoxResizing;
+    this.setState({ noteBoxResizing: null });
+    e.type = 'mouseup';
+    handler(e, newnbr, maximize);
   }
 
   render() {
@@ -297,7 +328,7 @@ class Atext extends React.Component {
       noteBoxHeight,
     } = props;
 
-    // Collect props/state combination to use to render content.
+    // Collect props/state combination used to render content.
     const pinSource = isPinned ? state.pin : props;
     const pin = Atext.copyProps(PinProps, pinSource);
     if (!compareObjects(pin, state.pin)) this.savePin = pin;
@@ -323,7 +354,7 @@ class Atext extends React.Component {
     }
 
     const doMaximizeNB =
-      noteBoxResizing === null && columns !== 1 && maximizeNoteBox;
+      noteBoxResizing === null && columns !== 1 && maximizeNoteBox > 0;
 
     let cls = `text text${n} show${columns} userFontSize`;
     if (module) cls += ` ${G.Tab[module].tabType}`;
@@ -332,11 +363,10 @@ class Atext extends React.Component {
     if (doMaximizeNB) cls += ' noteboxMaximized';
     if (!this.lastRead.content.notes) cls += ' noteboxEmpty';
 
-    const nbh = doMaximizeNB ? '100%' : `${noteBoxHeight}px`;
-    let nbtop;
+    let bbtop;
     if (noteBoxResizing !== null) {
       const [initial, current] = noteBoxResizing;
-      nbtop = { top: `${current - initial}px` };
+      bbtop = { top: `${current - initial}px` };
     }
 
     /*
@@ -353,7 +383,12 @@ class Atext extends React.Component {
         {...props}
         className={xulClass(`atext ${cls}`, props)}
         style={{ ...props.style, position: 'relative' }}
+        data-wnum={n}
+        onClick={handler}
+        onMouseDown={this.bbMouseDown}
         onMouseMove={this.bbMouseMove}
+        onMouseUp={this.bbMouseUp}
+        onMouseLeave={this.bbMouseLeave}
       >
         <div
           className="sbcontrols"
@@ -363,7 +398,7 @@ class Atext extends React.Component {
           <div className="sbwin" />
         </div>
 
-        <Box className="hd" height="30px">
+        <Box className="hd" height={`${C.TextHeaderHeight}px`}>
           {this.lastRead.content.heading}
         </Box>
 
@@ -371,16 +406,10 @@ class Atext extends React.Component {
           {this.lastRead.content.text}
         </Box>
 
-        <Vbox className="nbc" height={nbh}>
-          <Hbox height="30px" width="100%">
-            <div
-              className={`bb ${noteBoxResizing !== null ? 'moving' : ''}`}
-              onMouseDown={this.bbMouseDown}
-              onMouseUp={this.bbMouseUp}
-              style={nbtop}
-              data-wnum={n}
-            />
-            <div className="nbsizer" onClick={handler} data-wnum={n} />
+        <Vbox className="nbc" height={`${noteBoxHeight}px`}>
+          <Hbox>
+            <div className={`bb ${bbtop ? 'moving' : ''}`} style={bbtop} />
+            <div className="notebox-maximizer" />
           </Hbox>
           <Box className="nb" flex="1">
             {this.lastRead.content.notes}

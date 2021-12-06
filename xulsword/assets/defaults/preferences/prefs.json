@@ -48,7 +48,7 @@
   "xulsword.flagScroll": [1, 1, 1],
   "xulsword.isPinned": [false, false, false],
   "xulsword.noteBoxHeight": [200, 200, 200],
-  "xulsword.maximizeNoteBox": [false, false, false],
+  "xulsword.maximizeNoteBox": [0, 0, 0],
   "xulsword.showChooser": true,
 
   "xulsword.chooser": "bible",

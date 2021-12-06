@@ -47,7 +47,7 @@ const propTypes = {
   flagScroll: PropTypes.arrayOf(PropTypes.number).isRequired,
   isPinned: PropTypes.arrayOf(PropTypes.bool).isRequired,
   noteBoxHeight: PropTypes.arrayOf(PropTypes.number).isRequired,
-  maximizeNoteBox: PropTypes.arrayOf(PropTypes.bool).isRequired,
+  maximizeNoteBox: PropTypes.arrayOf(PropTypes.number).isRequired,
   showChooser: PropTypes.bool.isRequired,
 
   numDisplayedWindows: PropTypes.number,
@@ -73,7 +73,7 @@ interface ViewportProps extends XulProps {
   flagScroll: number[];
   isPinned: boolean[];
   noteBoxHeight: number[];
-  maximizeNoteBox: boolean[];
+  maximizeNoteBox: number[];
   showChooser: boolean;
 
   numDisplayedWindows: number;
