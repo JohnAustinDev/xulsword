@@ -6,6 +6,7 @@ using namespace sword;
 
 extern "C" {
   void FreeMemory(void *tofree, const char *memType);
+  void FreeLibxulsword();
 }
 
 xulsword* myXulsword = NULL;
@@ -45,6 +46,21 @@ Napi::String ConvertLocation(const Napi::CallbackInfo& info) {
   Napi::String napiLocation = Napi::String::New(info.Env(), location);
   FreeMemory(location, "char");
   return napiLocation;
+}
+
+Napi::Boolean FreeSearchPointer(const Napi::CallbackInfo& info) {
+  if (pointerMap[info[0].As<Napi::Number>().Int32Value()] != NULL) {
+    FreeMemory(
+      pointerMap[info[0].As<Napi::Number>().Int32Value()],
+      (char*) info[1].ToString().Utf8Value().c_str());
+    return Napi::Boolean::New(info.Env(), true);
+  }
+  return Napi::Boolean::New(info.Env(), false);
+}
+
+Napi::Boolean FreeLibXulsword(const Napi::CallbackInfo& info) {
+  FreeLibxulsword();
+  return Napi::Boolean::New(info.Env(), true);
 }
 
 Napi::String GetAllDictionaryKeys(const Napi::CallbackInfo& info) {
@@ -174,17 +190,14 @@ Napi::Number GetSearchPointer(const Napi::CallbackInfo& info) {
 Napi::String GetSearchResults(const Napi::CallbackInfo& info) {
   ListKey* listKey = (info.Length() > 4) ? pointerMap[info[4].As<Napi::Number>().Int32Value()] : NULL;
   bool referencesOnly = info.Length() == 5 ? info[5].As<Napi::Boolean>().Value() : false;
-  char* searchResults = myXulsword->getSearchResults(
+  return Napi::String::New(info.Env(), myXulsword->getSearchResults(
     (char*) info[0].ToString().Utf8Value().c_str(),
             info[1].As<Napi::Number>().Int32Value(),
             info[2].As<Napi::Number>().Int32Value(),
             info[3].As<Napi::Boolean>().Value(),
             listKey,
             referencesOnly
-          );
-  Napi::String napiSearchResults = Napi::String::New(info.Env(), searchResults);
-  FreeMemory(searchResults, "char");
-  return napiSearchResults;
+          ));
 }
 
 Napi::String GetVerseSystem(const Napi::CallbackInfo& info) {
@@ -306,6 +319,8 @@ void RunCallback(const Napi::CallbackInfo& info) {
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set(Napi::String::New(env, "ConvertLocation"),           Napi::Function::New(env, ConvertLocation));
+  exports.Set(Napi::String::New(env, "FreeSearchPointer"),         Napi::Function::New(env, FreeSearchPointer));
+  exports.Set(Napi::String::New(env, "FreeLibXulsword"),           Napi::Function::New(env, FreeLibXulsword));
   exports.Set(Napi::String::New(env, "GetAllDictionaryKeys"),      Napi::Function::New(env, GetAllDictionaryKeys));
   exports.Set(Napi::String::New(env, "GetChapterText"),            Napi::Function::New(env, GetChapterText));
   exports.Set(Napi::String::New(env, "GetChapterTextMulti"),       Napi::Function::New(env, GetChapterTextMulti));
@@ -314,8 +329,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set(Napi::String::New(env, "GetFootnotes"),              Napi::Function::New(env, GetFootnotes));
   exports.Set(Napi::String::New(env, "GetGenBookChapterText"),     Napi::Function::New(env, GetGenBookChapterText));
   exports.Set(Napi::String::New(env, "GetGenBookTableOfContents"), Napi::Function::New(env, GetGenBookTableOfContents));
-  exports.Set(Napi::String::New(env, "GetGlobalOption"),           Napi::Function::New(env, GetGenBookTableOfContents));
-  exports.Set(Napi::String::New(env, "GetIntroductions"),          Napi::Function::New(env, GetGlobalOption));
+  exports.Set(Napi::String::New(env, "GetGlobalOption"),           Napi::Function::New(env, GetGlobalOption));
+  exports.Set(Napi::String::New(env, "GetIntroductions"),          Napi::Function::New(env, GetIntroductions));
   exports.Set(Napi::String::New(env, "GetMaxChapter"),             Napi::Function::New(env, GetMaxChapter));
   exports.Set(Napi::String::New(env, "GetMaxVerse"),               Napi::Function::New(env, GetMaxVerse));
   exports.Set(Napi::String::New(env, "GetModuleInformation"),      Napi::Function::New(env, GetModuleInformation));

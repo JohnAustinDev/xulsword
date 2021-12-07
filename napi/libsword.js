@@ -165,18 +165,18 @@ LibSword = {
     if (!sp) return;
     var i = this.searchPointers.indexOf(sp);
     if (i == -1) return; // this pointer was already freed or never existed
-    napi.freeMemory(this.searchPointers[i], "searchPointer");
+    napi.FreeSearchPointer(this.searchPointers[i], "searchPointer");
     this.searchPointers[i] = null;
   },
   
   quitLibsword: function() {
     if (this.initialized) {
+      jsdump("  ... freeing search pointers ...");
       for (var i=0; i<this.searchPointers.length; i++) {
         this.freeSearchPointer(this.searchPointers[i]);
       }
-      if (this.initialized)
-        napi.freeMemory("xulsword");
-      napi.freeLibxulsword();
+      jsdump("  ... closing xulsword");
+      napi.FreeLibXulsword();
       // napi.libsword.close();
     }
     
@@ -554,7 +554,7 @@ getAllDictionaryKeys: function(lexdictmod) {
 //Returns an error if module Gbmod is not a TreeKey mod.
 getGenBookChapterText:function(gbmod, treekey) {
   if (!this.libSwordReady("getGenBookChapterText")) return null;
-  var genBookChapterText = napi.GenBookChapterText(gbmod, treekey);
+  var genBookChapterText = napi.GetGenBookChapterText(gbmod, treekey);
   this.checkerror();
   return genBookChapterText;
 },
@@ -564,7 +564,7 @@ getGenBookChapterText:function(gbmod, treekey) {
 //Returns an error if module Gbmod is not a TreeKey mod.
 getGenBookTableOfContents: function(gbmod) {
   if (!this.libSwordReady("getGenBookTableOfContents")) return null;
-  var genBookTableOfContents = napi.GetGenBookTableOfContents(this.inst, ctypes.char.array()(gbmod));
+  var genBookTableOfContents = napi.GetGenBookTableOfContents(gbmod);
   this.checkerror();
   return genBookTableOfContents;
 },

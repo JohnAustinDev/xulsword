@@ -70,15 +70,15 @@ testLocs(3, "KJV", "Matt", 3, 5, 8, "KJV");
 jsdump("\n");
 
 Location.setLocation("KJV", "Ps.119");
-testLocs(4, "UZV", "Ps", 118, 1, 176, "Synodal");
+testLocs(4, "UZV", "Ps", 118, 1, 176, "SynodalProt");
 jsdump("\n");
 
 Location.setLocation("KJV", "Ps.25.3");
-testLocs(5, "UZV", "Ps", 24, 3, 3, "Synodal");
+testLocs(5, "UZV", "Ps", 24, 3, 3, "SynodalProt");
 jsdump("\n");
 
 Location.setLocation("KJV", "Ps.22.9.12");
-testLocs(6, "UZV", "Ps", 21, 10, 13, "Synodal");
+testLocs(6, "UZV", "Ps", 21, 10, 13, "SynodalProt");
 jsdump("\n");
 
 Location.setLocation("UZV", "Ps.118");
@@ -117,7 +117,7 @@ Location.setLocation("UZV", "Ps 113:10-Ps 113:20");
 testLocs(15, "KJV", "Ps", 115, 2, 12, "KJV");
 jsdump("\n");
 
-test (16, LibSword.getModuleInformation("UZV", "GlobalOptionFilter"), "OSISFootnotes<nx>OSISHeadings<nx>OSISScripref<nx>OSISDictionary");
+test (16, LibSword.getModuleInformation("KJV", "GlobalOptionFilter"), "OSISLemma<nx>OSISStrongs<nx>OSISMorph<nx>OSISFootnotes<nx>OSISHeadings<nx>OSISRedLetterWords");
 
 test(46, Location.convertLocation("KJV", "Matt.4", "Synodal"), "Matt.4.1.25");
 jsdump("\n");
@@ -233,7 +233,8 @@ results = [
   'title="John.3.34.KJV"',
   'title="John.4.41.KJV"',
   'title="John.4.50.KJV"',
-  'title="John.5.24.KJV"'
+  'title="John.5.24.KJV"',
+  'title="John.5.38.KJV"'
 ];
 
 
@@ -247,7 +248,7 @@ test(101, LibSword.search("KJV", "shineth in darkness", "John",  2 /* multi */, 
 test(102, LibSword.getSearchPointer(), 1);
 
 // char *getSearchResults(const char *mod, int first, int num, bool keepStrongs, ListKey *searchPointer = NULL, bool referencesOnly = false);
-test(103, LibSword.getSearchResults("KJV", 0, 1, false), "bogus");
+test(103, LibSword.getSearchResults("KJV", 0, 1, false).match(/title=\"[^\"]+\"/g)[0], 'title="John.1.5.KJV"');
 
 function testLocs(tn, vers, bk, ch, vs, lv, sys) {
   test(tn + "a", Location.getChapter(vers), bk + " " + ch);
@@ -274,11 +275,12 @@ else {
   jsdump("CONGRATS!!!! ITS WORKING PERFECTLY!!!!\n");
 }
 
-jsdump("getModuleList=" + LibSword.getModuleList());
-jsdump("getIntroductions=" + LibSword.getIntroductions("UZV", "Matt"));
-jsdump("getDictionaryEntry БАШАН=" + LibSword.getDictionaryEntry("UZDOT", "БАШАН"));
-jsdump("getAllDictionaryKeys=" + LibSword.getAllDictionaryKeys("UZDOT"));
+jsdump("getModuleList="             + LibSword.getModuleList());
+jsdump("getIntroductions="          + LibSword.getIntroductions("UZV", "Matt"));
+jsdump("getDictionaryEntry БАШАН="  + LibSword.getDictionaryEntry("UZDOT", "БАШАН"));
+jsdump("getAllDictionaryKeys="      + LibSword.getAllDictionaryKeys("UZDOT"));
 jsdump("getGenBookTableOfContents=" + LibSword.getGenBookTableOfContents("Pilgrim"));
-jsdump("getGenBookChapterText=" + LibSword.getGenBookChapterText("Pilgrim", "/PART II/PREFACE"));
+jsdump("getGenBookChapterText="     + LibSword.getGenBookChapterText("Pilgrim", "/PART II/PREFACE"));
 
+jsdump("Freeing memory ...");
 LibSword.quitLibsword();
