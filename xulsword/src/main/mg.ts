@@ -176,7 +176,7 @@ const Tab: { [i: string]: TabType } = {
   KJV: {
     modName: 'KJV',
     tabType: 'Texts',
-    label: 'King James Version',
+    label: 'KJV',
     index: 0,
     description: 'The King James translation of the Bible',
   },
@@ -190,21 +190,21 @@ const Tab: { [i: string]: TabType } = {
   MYCOMM: {
     modName: 'MYCOMM',
     tabType: 'Comms',
-    label: 'My Commentary',
+    label: 'My Comm',
     index: 2,
     description: 'A commentary of the Bible',
   },
   MYDICT: {
     modName: 'MYDICT',
     tabType: 'Dicts',
-    label: 'My Dictionary',
+    label: 'My Dict',
     index: 3,
     description: 'A glossary/dictionary of the Bible',
   },
   MYBOOK: {
     modName: 'MYBOOK',
     tabType: 'Genbks',
-    label: 'My General Book',
+    label: 'My GenBook',
     index: 4,
     description: 'Some book related to the Bible',
   },

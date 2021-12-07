@@ -1,9 +1,13 @@
 #xulsword {
   overflow: hidden;
   background-image: url(../../../assets/b2.png);
+  min-width: 600px;
 }
 #main-controlbar {
   background-image: url(../../../assets/b2.png);
+}
+#xulsword > div {
+  min-width: 600px;
 }
 #historyButtons,
 #player {
@@ -18,126 +22,6 @@
 #quit,
 #xulsword:not(.libSwordLoadFailed) #newmodule {
   display: block !important;
-}
-
-/* MAIN WINDOW TOGGLE MENU ITEMS
-menuitem#hdmitem {
-  list-style-image: url(../images/headingssm.png) !important;
-}
-menuitem#crmitem {
-  list-style-image: url(../images/crossrefssm.png) !important;
-}
-menuitem#fnmitem {
-  list-style-image: url(../images/footnotessm.png) !important;
-}
-menuitem#dtmitem {
-  list-style-image: url(../images/dictsm.png) !important;
-}
-menuitem#lnmitem {
-  list-style-image: url(../images/langnotessm.png) !important;
-}
-menuitem#vnmitem {
-  list-style-image: url(../images/versenumssm.png) !important;
-}
-menuitem#unmitem {
-  list-style-image: url(../images/usernotessm.png) !important;
-}
-menuitem#rwmitem {
-  list-style-image: url(../images/redwordssm.png) !important;
-}
-.togglemenuitem > .menu-iconic-left > .menu-iconic-icon {
-  width: 16px;
-  height: 16px;
-  -moz-image-region: rect(0px, 32px, 14px, 16px) !important;
-}
-.togglemenuitem[value='true'] > .menu-iconic-left > .menu-iconic-icon {
-  -moz-image-region: rect(0px, 16px, 14px, 0px) !important;
-}
-.togglemenuitem > .menu-iconic-left {
-  display: -moz-box;
-}
-menu#sub-Texts {
-  list-style-image: url(../images/Texts.png) !important;
-}
-menu#sub-Comms {
-  list-style-image: url(../images/Comms.png) !important;
-}
-menu#sub-Dicts {
-  list-style-image: url(../images/Dicts.png) !important;
-}
-menu#sub-Genbks {
-  list-style-image: url(../images/Genbks.png) !important;
-}
-*/
-
-/* MAIN WINDOW TOGGLE BUTTONS */
-#optionButtons {
-  padding-top: 2px;
-}
-#optionButtons button {
-  padding: 2px;
-  color: black;
-}
-#optionButtons .button-box {
-  padding: 6px;
-}
-#optionButtons button.checked {
-  color: blue;
-}
-#optionButtons .button.disabled {
-  color: grey;
-}
-#crbutton .button-icon {
-  background: url(../images/crossrefs.png);
-}
-#fnbutton .button-icon {
-  background: url(../images/footnotes.png);
-}
-#hdbutton .button-icon {
-  background: url(../images/headings.png);
-}
-#dtbutton .button-icon {
-  background: url(../images/dict.png);
-}
-#optionButtons .button-icon {
-  display: block;
-  width: 32px;
-  height: 28px;
-  background-position: -32px 0px;
-}
-#optionButtons button.checked .button-icon {
-  background-position: 0px 0px;
-}
-#optionButtons button.disabled .button-icon {
-  background-position: -32px 0px;
-}
-#optionButtons .button-text {
-  white-space: nowrap;
-}
-
-/* MAIN WINDOW SEARCH BUTTON */
-#search-tool {
-  padding-bottom: 0px;
-}
-#search-tool > vbox {
-  padding-top: 2px;
-  margin-left: 0px;
-}
-#searchButton {
-  padding: 2px;
-}
-#searchButton .button-box {
-  padding: 2px;
-}
-#searchButton .button-icon {
-  display: block;
-  width: 30px;
-  height: 18px;
-  background-image: url(../images/search.png);
-  background-position: 0px 0px;
-}
-#searchButton.disabled .button-icon {
-  background-position: -30px 0px;
 }
 
 /* MAIN WINDOW NAVIGATOR BUTTONS */
@@ -236,6 +120,76 @@ html.chromedir-rtl #forward .button-icon {
 }
 #historymenu:not(.disabled):hover .button-icon {
   background-position: -40px 0px;
+}
+
+/* MAIN WINDOW SEARCH BUTTON */
+#search-tool {
+  padding-bottom: 0px;
+}
+#search-tool > vbox {
+  padding-top: 2px;
+  margin-left: 0px;
+}
+#searchButton {
+  padding: 2px;
+}
+#searchButton .button-box {
+  padding: 2px;
+}
+#searchButton .button-icon {
+  display: block;
+  width: 30px;
+  height: 18px;
+  background-image: url(../images/search.png);
+  background-position: 0px 0px;
+}
+#searchButton.disabled .button-icon {
+  background-position: -30px 0px;
+}
+
+/* MAIN WINDOW TOGGLE BUTTONS */
+#optionButtons {
+  padding-top: 2px;
+}
+#optionButtons button {
+  padding: 2px;
+  color: black;
+}
+#optionButtons .button-box {
+  padding: 6px;
+}
+#optionButtons button.checked {
+  color: blue;
+}
+#optionButtons .button.disabled {
+  color: grey;
+}
+#crbutton .button-icon {
+  background: url(../images/crossrefs.png);
+}
+#fnbutton .button-icon {
+  background: url(../images/footnotes.png);
+}
+#hdbutton .button-icon {
+  background: url(../images/headings.png);
+}
+#dtbutton .button-icon {
+  background: url(../images/dict.png);
+}
+#optionButtons .button-icon {
+  display: block;
+  width: 32px;
+  height: 28px;
+  background-position: -32px 0px;
+}
+#optionButtons button.checked .button-icon {
+  background-position: 0px 0px;
+}
+#optionButtons button.disabled .button-icon {
+  background-position: -32px 0px;
+}
+#optionButtons .button-text {
+  white-space: nowrap;
 }
 
 .videoHelpMenuItem {

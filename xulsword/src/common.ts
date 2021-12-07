@@ -260,6 +260,43 @@ export function deepClone(obj: any) {
   return JSON.parse(JSON.stringify(obj));
 }
 
+export function compareObjects(obj1: any, obj2: any, deep = false): boolean {
+  if (typeof obj1 !== 'object' || typeof obj2 !== 'object') {
+    return obj1 === obj2;
+  }
+  return (
+    Object.keys(obj1).length === Object.keys(obj2).length &&
+    Object.keys(obj1).every(
+      (key) =>
+        Object.prototype.hasOwnProperty.call(obj2, key) &&
+        (deep
+          ? compareObjects(obj1[key], obj2[key], true)
+          : obj1[key] === obj2[key])
+    )
+  );
+}
+
+// Searches an element and its ancestors for particular class-name(s).
+// It returns the first element having one of the class-names and the
+// class-name that was found. If the element and its ancestors do
+// not share any of the class-names, null is returned.
+export function ofClass(
+  search: string | string[],
+  element: HTMLElement
+): { element: HTMLElement; type: string } | null {
+  let elm = element;
+  let typ;
+  const s = Array.isArray(search) ? search : [search];
+  // eslint-disable-next-line @typescript-eslint/no-loop-func
+  while (elm && !s.some((x) => elm.classList && elm.classList.contains(x))) {
+    elm = elm.parentNode as HTMLElement;
+  }
+  if (elm && elm.classList) {
+    typ = s.find((c) => elm.classList.contains(c));
+  }
+  return typ ? { element: elm, type: typ } : null;
+}
+
 // Replaces character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
 export function replaceASCIIcontrolChars(string: string) {
   let ret = string;

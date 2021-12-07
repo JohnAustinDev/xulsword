@@ -16,8 +16,9 @@ function setHTMLClass(winClass, lng) {
   if (!html) return false;
 
   html.className = `${winClass} ${lng}`;
+
   const dir = i18n.t('locale_direction');
-  if (dir === 'rtl') html.classList.add('chromedir-rtl');
+  html.classList.add(`chromedir-${dir}`);
   html.dir = dir;
   return true;
 }

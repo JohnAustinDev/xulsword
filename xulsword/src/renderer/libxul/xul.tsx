@@ -18,13 +18,17 @@ export const xulDefaultProps = {
   width: undefined,
 
   onClick: undefined,
+  onDoubleClick: undefined,
   onChange: undefined,
   onKeyDown: undefined,
   onFocus: undefined,
   onBlur: undefined,
+  onMouseDown: undefined,
   onMouseOver: undefined,
   onMouseOut: undefined,
   onMouseMove: undefined,
+  onMouseUp: undefined,
+  onMouseLeave: undefined,
   onWheel: undefined,
 };
 
@@ -45,13 +49,17 @@ export const xulPropTypes = {
   width: PropTypes.string,
 
   onClick: PropTypes.func,
+  onDoubleClick: PropTypes.func,
   onChange: PropTypes.func,
   onKeyDown: PropTypes.func,
   onFocus: PropTypes.func,
   onBlur: PropTypes.func,
+  onMouseDown: PropTypes.func,
   onMouseOver: PropTypes.func,
   onMouseOut: PropTypes.func,
   onMouseMove: PropTypes.func,
+  onMouseUp: PropTypes.func,
+  onMouseLeave: PropTypes.func,
   onWheel: PropTypes.func,
 };
 
@@ -78,31 +86,39 @@ export interface XulProps {
   width?: string | undefined;
 
   onClick?: (e: React.SyntheticEvent<any>) => void;
+  onDoubleClick?: (e: React.SyntheticEvent<any>) => void;
   onChange?: (e: React.ChangeEvent<any>) => void;
   onKeyDown?: (e: React.KeyboardEvent<any>) => void;
   onFocus?: (e: React.SyntheticEvent<any>) => void;
   onBlur?: (e: React.SyntheticEvent<any>) => void;
+  onMouseDown?: (e: React.SyntheticEvent<any>) => void;
   onMouseOver?: (e: React.SyntheticEvent<any>) => void;
   onMouseOut?: (e: React.SyntheticEvent<any>) => void;
   onMouseMove?: (e: React.SyntheticEvent<any>) => void;
+  onMouseUp?: (e: React.SyntheticEvent<any>) => void;
+  onMouseLeave?: (e: React.SyntheticEvent<any>) => void;
   onWheel?: (e: React.SyntheticEvent<any>) => void;
 }
 
 const events = [
   'onClick',
+  'onDoubleClick',
   'onChange',
   'onKeyDown',
   'onFocus',
   'onBlur',
+  'onMouseDown',
   'onMouseOver',
   'onMouseOut',
   'onMouseMove',
+  'onMouseUp',
+  'onMouseLeave',
   'onWheel',
 ];
-const styles = ['width', 'height', 'flex'];
+// const styles = ['width', 'height', 'flex'];
 const enums = ['align', 'dir', 'orient', 'pack', 'type'];
 const bools = ['checked', 'disabled', 'hidden', 'readonly'];
-const cssAttribs = styles.concat(enums).concat(bools);
+// const cssAttribs = styles.concat(enums).concat(bools);
 
 // These XUL event listeners are registered on elements
 export const xulEvents = (props: any): XulProps => {
@@ -130,29 +146,32 @@ export const xulStyle = (props: any): React.CSSProperties | undefined => {
       : props.height;
 
   // flex
-  if (props.flex !== undefined)
+  if (props.flex !== undefined) {
     s.flexGrow = props.flex.includes('%')
       ? parseFloat(props.flex) / 100.0
       : props.flex;
+    s.flexShrink = s.flexGrow;
+  }
 
   return Object.keys(s).length ? s : undefined;
 };
 
-// These XUL attribute booleans and enums are converted to CSS classes.
-export const xulClass = (name: string, props: any) => {
-  const c0 = [name.toLowerCase(), props.tooltip ? 'tooltip' : ''];
-  const c1 = props.className ? props.className.split(/\s+/) : [];
-  const c2 = enums.map((c) => (props[c] ? `${c}-${props[c]}` : ''));
-  const c3 = bools.map((c) =>
+// XUL attribute booleans and enums are converted to CSS classes.
+export const xulClass = (classes: string | string[], props: any) => {
+  const c0 = [props.tooltip ? 'tooltip' : ''];
+  const c1 = Array.isArray(classes) ? classes : classes.split(/\s+/);
+  const c2 = props.className ? props.className.split(/\s+/) : [];
+  const c3 = enums.map((c) => (props[c] ? `${c}-${props[c]}` : ''));
+  const c4 = bools.map((c) =>
     props[c] && !/^false$/i.test(props[c]) ? `${c}` : ''
   );
-  const set = [...new Set(c0.concat(c1, c2, c3).filter(Boolean))];
+  const set = [...new Set(c0.concat(c1, c2, c3, c4).filter(Boolean))];
   return set.join(' ');
 };
 
 export const htmlAttribs = (className: string, props: any) => {
   if (props === null) return {};
-  return {
+  const r: any = {
     id: props.id,
     lang: props.lang,
     className: xulClass(className, props),
@@ -162,6 +181,13 @@ export const htmlAttribs = (className: string, props: any) => {
     },
     ...xulEvents(props),
   };
+
+  Object.entries(props).forEach((entry) => {
+    const [p, val] = entry;
+    if (p.substr(0, 5) === 'data-') r[p] = val;
+  });
+
+  return r;
 };
 
 // Use a default if value is null

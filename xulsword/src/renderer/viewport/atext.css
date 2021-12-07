@@ -1,0 +1,159 @@
+.atext {
+  vertical-align: top;
+  margin: 0px 10px 0px 0px;
+  font-size: 1.1em;
+  background: rgb(255, 243, 255);
+  border: 2px solid rgb(200, 170, 205);
+  border-radius: 8px;
+  height: 100%;
+  flex-basis: 100%;
+}
+.atext.pinned {
+  background: white; /*rgb(248,248,241);*/
+}
+
+.atext .hd {
+  text-align: center;
+}
+.atext .sbpin {
+  float: left;
+  width: 28px;
+  height: 37px;
+  position: relative;
+  top: -15px;
+  left: -8px;
+  margin-inline-end: -8px;
+  background: url(../images/pushpin0.png);
+  z-index: 20;
+}
+html.chromedir-rtl .atext .sbpin {
+  float: right;
+  left: auto;
+  right: -8px;
+}
+.atext.pinned .sbpin {
+  background: url(../images/pushpin1.png);
+}
+.atext .sbpin:hover {
+  background: url(../images/pushpin2.png);
+}
+.atext.Dicts .sbpin {
+  display: none;
+}
+html.chromedir-ltr .atext .sbpin,
+html.chromedir-ltr .atext .sbpin:hover,
+html.chromedir-ltr .atext.pinned .sbpin {
+  transform: scaleX(-1);
+}
+
+.atext .sbwin {
+  float: left;
+  width: 20px;
+  height: 20px;
+  margin: 5px;
+  background: url(../images/towindow.png);
+  z-index: 20;
+}
+html.chromedir-rtl .atext .sbwin {
+  float: right;
+}
+.atext .sbwin:hover {
+  background-position: 20px;
+}
+
+.atext .sb {
+  color: black;
+  padding: 0px 30px;
+}
+.atext.show1 .sb {
+  overflow: auto;
+}
+.atext.show2 .sb {
+  overflow: hidden;
+  columns: 2;
+  column-gap: 80px;
+  column-rule: 14px solid rgb(240, 215, 240);
+}
+.atext.show3 .sb {
+  overflow: hidden;
+  columns: 3;
+  column-gap: 80px;
+  column-rule: 14px solid rgb(240, 215, 240);
+}
+
+.atext .nbc {
+  width: 100%;
+}
+.atext:not(.show1) .nbc {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+}
+.atext.rtl-text:not(.show1) .nbc {
+  right: auto;
+  left: 0px;
+}
+.atext.show2 .nbc {
+  width: 50%;
+}
+.atext.show3 .nbc {
+  width: 33%;
+}
+.atext.Texts.noteboxEmpty .nbc,
+.atext.Comms.noteboxEmpty .nbc,
+.atext.Genbks .nbc {
+  display: none;
+}
+
+.atext .nbc > div:first-child {
+  height: 30px;
+  width: 100%;
+}
+
+.atext .bb {
+  position: relative;
+  border: 1px outset rgb(150, 150, 150);
+  background: rgb(233, 233, 233);
+  height: 4px;
+  border-radius: 4px;
+  cursor: N-resize;
+  z-index: 10;
+  width: 100%;
+  margin: 10px 60px 0px 60px;
+}
+.atext .bb.moving {
+  border: 1px dashed rgb(150, 150, 150);
+  background: rgb(233, 233, 20);
+  z-index: 80;
+}
+
+.atext .notebox-maximizer {
+  position: absolute;
+  background: url(../images/max.png);
+  width: 15px;
+  height: 14px;
+  top: 8px;
+  right: 42px;
+}
+.atext.rtl-text .notebox-maximizer {
+  right: auto;
+  left: 42px;
+}
+.atext.noteboxMaximized .notebox-maximizer {
+  background: url(../images/norm.png);
+}
+.atext.show1 .notebox-maximizer {
+  display: none;
+}
+
+.atext .nb {
+  font-size: 0.9em;
+  overflow: auto;
+  background: rgb(240, 235, 240);
+  border: 2px solid rgb(150, 150, 150);
+  border-radius: 8px;
+  padding: 0px 5px 0px 5px;
+}
+.atext.pinned .nb {
+  background: white;
+}

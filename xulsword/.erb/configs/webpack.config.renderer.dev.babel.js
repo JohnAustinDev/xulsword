@@ -38,14 +38,14 @@ if (
   execSync('yarn postinstall');
 }
 
-function entryConfig(name) {
+function entryConfig(dir, name) {
   return {
     import: [
       'webpack-dev-server/client?http://localhost:1212/dist',
       'webpack/hot/only-dev-server',
       'core-js',
       'regenerator-runtime/runtime',
-      path.join(webpackPaths.srcRendererPath, name + '/' + name + '.tsx')
+      path.join(webpackPaths.srcRendererPath, dir + '/' + name)
     ]
   };
 };
@@ -76,8 +76,8 @@ export default merge(baseConfig, {
 
   entry: {
     // Entry points and output files (one for each html file)
-    xulsword:  entryConfig('xulsword'),
-    splash: entryConfig('splash'),
+    xulsword:  entryConfig('xulsword', 'xulsword.tsx'),
+    splash: entryConfig('splash', 'splash.tsx'),
   },
 
   output: {

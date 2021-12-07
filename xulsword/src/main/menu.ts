@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
@@ -82,7 +83,7 @@ const Command = {
     const nval = JSON.parse(JSON.stringify(pval));
 
     // If toggling on allwindows, set all according to the clicked
-    // menuitem, and not each item selarately.
+    // menuitem, and not each item separately.
     let doWhat2 = doWhat;
     if (doWhat === 'toggle' && winLabel === 'menu.view.allwindows') {
       const m = modules[0];
@@ -105,8 +106,50 @@ const Command = {
         }
       });
     });
+
+    nval.forEach((tabs: string[], i: number) => {
+      nval[i] = tabs.sort(this.tabOrder);
+    });
+
+    // Insure each window's tabs correspond to its texts
+    const prefs = ['xulsword.modules', 'xulsword.ilModules', 'xulsword.mtModules'];
+    prefs.forEach((p) => {
+      const ms = G.Prefs.getComplexValue(p);
+      let save = false;
+      ms.forEach((m: any, i: any) => {
+        if (!nval[i].includes(m)) {
+          ms[i] = p === 'xulsword.modules' ? nval[i][0] : undefined;
+          save = true;
+        }
+      });
+      if (save) G.Prefs.setComplexValue(p, ms);
+    });
+
     G.Prefs.setComplexValue('xulsword.tabs', nval);
-    this.setGlobalStateFromPrefs('xulsword.tabs');
+    this.setGlobalStateFromPrefs([
+      'xulsword.tabs',
+      'xulsword.modules',
+      'xulsword.ilModules',
+      'xulsword.mtModules'
+    ]);
+  },
+
+  tabOrder(as: string, bs: string) {
+    const a = G.Tab[as];
+    const b = G.Tab[bs];
+    if (a.tabType === b.tabType) {
+      // Priority: 1) Modules matching current locale, 2) Other tabs that have
+      // locales installed, 3) remaining tabs.
+      const aLocale = G.ModuleConfigs[a.modName]?.AssociatedLocale;
+      const bLocale = G.ModuleConfigs[b.modName]?.AssociatedLocale;
+      const lng = G.Prefs.getCharPref(C.LOCALEPREF);
+      const aPriority = aLocale && aLocale !== C.NOTFOUND ? (aLocale === lng ? 1 : 2) : 3;
+      const bPriority = bLocale && bLocale !== C.NOTFOUND ? (bLocale === lng ? 1 : 2) : 3;
+      if (aPriority !== bPriority) return (aPriority > bPriority ? 1 : -1);
+      // Type and Priority are same. Sort by label's alpha.
+      return (a.label > b.label ? 1 : -1);
+    }
+    return (C.ModuleTypeOrder[a.tabType] > C.ModuleTypeOrder[b.tabType] ? 1 : -1);
   },
 
   addRepositoryModule() {

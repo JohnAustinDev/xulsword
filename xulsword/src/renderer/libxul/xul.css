@@ -50,7 +50,7 @@
   align-items: flex-end;
 }
 .align-stretch {
-  align-items: space-evenly;
+  align-items: stretch;
 }
 .align-baseline {
   align-items: baseline;

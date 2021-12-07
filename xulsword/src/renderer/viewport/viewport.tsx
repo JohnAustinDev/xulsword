@@ -1,3 +1,4 @@
+/* eslint-disable no-continue */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
@@ -5,12 +6,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable prettier/prettier */
 
 import React from 'react';
 import PropTypes from 'prop-types';
 import Chooser from './chooser';
-import { Hbox } from '../libxul/boxes';
+import { Hbox, Vbox } from '../libxul/boxes';
+import Tabs from './tabs';
+import Atext from './atext';
 import { getAvailableBooks, jsdump } from '../rutil';
 import {
   xulClass,
@@ -19,39 +21,37 @@ import {
   XulProps,
   delayHandler,
 } from '../libxul/xul';
-import viewportHandler from './handlers';
 import '../libxul/xul.css';
 import './viewport.css';
+import C from '../../constant';
+import G from '../rg';
 
 const defaultProps = {
   ...xulDefaultProps,
-  book: undefined,
-  chapter: 1,
-  verse: 1,
-  lastverse: 1,
-
-  tabs: undefined,
-  modules: undefined,
-  keys: undefined,
-
-  numDisplayedWindows: 1,
-  chooser: 'bible',
-
-  handler: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  book: PropTypes.string,
-  chapter: PropTypes.number,
-  verse: PropTypes.number,
-  lastverse: PropTypes.number,
+  book: PropTypes.string.isRequired,
+  chapter: PropTypes.number.isRequired,
+  verse: PropTypes.number.isRequired,
+  lastverse: PropTypes.number.isRequired,
 
-  tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)),
-  modules: PropTypes.arrayOf(PropTypes.string),
-  keys: PropTypes.arrayOf(PropTypes.string),
+  tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
+  modules: PropTypes.arrayOf(PropTypes.string).isRequired,
+  ilModules: PropTypes.arrayOf(PropTypes.string).isRequired,
+  mtModules: PropTypes.arrayOf(PropTypes.string).isRequired,
+  keys: PropTypes.arrayOf(PropTypes.string).isRequired,
+
+  flagHilight: PropTypes.arrayOf(PropTypes.number).isRequired,
+  flagScroll: PropTypes.arrayOf(PropTypes.number).isRequired,
+  isPinned: PropTypes.arrayOf(PropTypes.bool).isRequired,
+  noteBoxHeight: PropTypes.arrayOf(PropTypes.number).isRequired,
+  maximizeNoteBox: PropTypes.arrayOf(PropTypes.number).isRequired,
+  showChooser: PropTypes.bool.isRequired,
 
   numDisplayedWindows: PropTypes.number,
+  ownWindow: PropTypes.bool,
   chooser: PropTypes.string,
 
   handler: PropTypes.func,
@@ -64,23 +64,27 @@ interface ViewportProps extends XulProps {
   lastverse: number;
 
   tabs: string[][];
-  modules: string[];
+  modules: (string | undefined)[];
+  ilModules: (string | undefined)[];
+  mtModules: (string | undefined)[];
   keys: string[];
 
+  flagHilight: number[];
+  flagScroll: number[];
+  isPinned: boolean[];
+  noteBoxHeight: number[];
+  maximizeNoteBox: number[];
+  showChooser: boolean;
+
   numDisplayedWindows: number;
+  ownWindow: boolean;
   chooser: string;
 
   handler: (e: any) => void;
 }
 
 interface ViewportState {
-  showOriginal: boolean[];
-  isPinned: boolean[];
-  noteBoxHeight: number[];
-  maximizeNoteBox: boolean[];
-  showChooser: boolean;
-
-  chooserReset: number;
+  resize: number;
 }
 
 class Viewport extends React.Component {
@@ -88,57 +92,167 @@ class Viewport extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  handler: any;
-
   constructor(props: ViewportProps) {
     super(props);
-    this.state = {
-      showOriginal: [false, false, false],
-      isPinned: [false, false, false],
-      noteBoxHeight: [200, 200, 200], // Should scale to screen??
-      maximizeNoteBox: [false, false, false],
-      showChooser: true,
 
-      chooserReset: 0,
+    this.state = {
+      resize: 0,
     };
 
-    window.ipc.renderer.on('resize', delayHandler.call(this, () => {
-      this.setState((prevState: ViewportState) => {
-        return { chooserReset: prevState.chooserReset + 1};
-      });
-    }, 500));
-
-    this.handler = viewportHandler.bind(this);
+    window.ipc.renderer.on(
+      'resize',
+      delayHandler.call(
+        this,
+        () => {
+          this.setState((prevState: ViewportState) => {
+            return { resize: prevState.resize + 1 };
+          });
+        },
+        500
+      )
+    );
   }
 
   render() {
     jsdump(`Rendering Viewport ${JSON.stringify(this.state)}`);
     const props = this.props as ViewportProps;
-    const state = this.state as ViewportState;
-    const { book, modules, chooser } = this.props as ViewportProps;
-    const { showOriginal, chooserReset } = this.state as ViewportState;
+    const {
+      id,
+      handler,
+      book,
+      chapter,
+      verse,
+      lastverse,
+      chooser,
+      tabs,
+      modules,
+      ilModules,
+      mtModules,
+      keys,
+      flagHilight,
+      flagScroll,
+      isPinned,
+      noteBoxHeight,
+      maximizeNoteBox,
+      showChooser,
+      numDisplayedWindows,
+      ownWindow,
+    } = this.props as ViewportProps;
+    const { resize } = this.state as ViewportState;
 
-    const availableBooks = getAvailableBooks(modules[0]);
-    const classes = [
-      'viewport',
-      // showOriginal && (G.Tab.ORIG_OT || G.Tab.ORIG_NT) ? 'original-language-tab' : ''
-    ];
+    let availableBooks: any = [];
+    if (modules[0]) availableBooks = getAvailableBooks(modules[0]);
+
+    // TODO! interlinear module options depend on book, installed modules, and bible tabs.
+    const ilModuleOptions = ['KJV', 'KJV', ''];
+
+    // Figure out the number of columns that will be shown for each text
+    // in order to fill the number of visible windows.
+    const columns: number[] = [];
+    for (let x = 0; x < numDisplayedWindows; x += 1) {
+      columns[x] = 1;
+      const key = `${modules[x]} ${ilModules[x]}`;
+      let f = x + 1;
+      let modf = modules[f];
+      while (
+        modf &&
+        f < numDisplayedWindows &&
+        G.Tab[modf].modType !== C.DICTIONARY &&
+        key === `${modf} ${ilModules[f]}`
+      ) {
+        columns[x] += 1;
+        columns[f] = 0;
+        f += 1;
+        modf = modules[f];
+      }
+      x += f - x - 1;
+    }
+
+    const tabComps: number[] = [];
+    for (let x = 0; x < numDisplayedWindows; x += 1) {
+      tabComps.push(x);
+    }
+
+    const textComps: number[] = [];
+    for (let x = 0; x < columns.length; x += 1) {
+      if (columns[x]) textComps.push(x);
+    }
+
+    let cls = '';
+    if (props.ownWindow) cls += ' ownWindow';
 
     return (
-<Hbox {...props} className={xulClass(classes.filter(Boolean).join(' '), props)}>
+      <Hbox {...props} className={xulClass(`viewport ${cls}`, props)}>
+        {!showChooser && chooser !== 'none' && (
+          <button type="button" className="open-chooser" onClick={handler} />
+        )}
 
-  {!state.showChooser && chooser !== 'none' &&
-    <button type="button" className="open-chooser" onClick={this.handler}/>
-  }
+        {showChooser && chooser !== 'none' && (
+          <Chooser
+            key={`${book}${resize}`}
+            handler={handler}
+            type={chooser}
+            selection={book}
+            headingsModule={modules[0]}
+            versification="KJV"
+            availableBooks={availableBooks}
+            onClick={handler}
+          />
+        )}
 
-  {state.showChooser && chooser !== 'none' &&
-    <Chooser key={`${book}${chooserReset}`} type={chooser} selection={book} headingsModule={modules[0]}
-      versification="KJV" availableBooks={availableBooks} handler={this.handler} onClick={props.handler}/>
-  }
+        <Vbox className={`textarea show${numDisplayedWindows}`} flex="1">
+          <div className="tabrow">
+            {tabComps.map((i) => {
+              return (
+                <Tabs
+                  key={`tbs_${id}${i}${resize}${tabs}${modules[i]}`}
+                  handler={handler}
+                  anid={id}
+                  n={Number(i + 1)}
+                  columns={columns[i]}
+                  isPinned={isPinned[i]}
+                  module={modules[i]}
+                  tabs={tabs[i]}
+                  ilModule={ilModules[i]}
+                  ilModuleOption={ilModuleOptions[i]}
+                  mtModule={mtModules[i]}
+                />
+              );
+            })}
+          </div>
 
-  <Hbox flex="1"/>
-
-</Hbox>
+          <Hbox className="textrow userFontSize" flex="1">
+            {textComps.map((i) => {
+              return (
+                <Atext
+                  key={`txt_${id}${i}${resize}`}
+                  handler={handler}
+                  anid={id}
+                  n={Number(i + 1)}
+                  ownWindow={ownWindow}
+                  book={book}
+                  chapter={chapter}
+                  verse={verse}
+                  lastverse={lastverse}
+                  columns={columns[i]}
+                  module={modules[i]}
+                  ilModule={ilModules[i]}
+                  modkey={keys[i]}
+                  flagHilight={flagHilight[i]}
+                  flagScroll={flagScroll[i]}
+                  isPinned={isPinned[i]}
+                  noteBoxHeight={noteBoxHeight[i]}
+                  maximizeNoteBox={maximizeNoteBox[i]}
+                  style={{
+                    flexGrow: `${columns[i]}`,
+                    flexShrink: `${numDisplayedWindows - columns[i]}`,
+                  }}
+                />
+              );
+            })}
+          </Hbox>
+        </Vbox>
+      </Hbox>
     );
   }
 }
