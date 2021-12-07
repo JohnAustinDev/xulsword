@@ -1,0 +1,61 @@
+# INSURE LINUX VERSION CAN SWITCH LOCALES
+Set (prefs.js):intl.locale.matchOS=false
+
+# UBUNTU SPECIFIC PREFS
+Set (prefs.js):ui.use_unity_menubar=false
+
+# STARTUP LOCATION
+Set (prefs.js):toolkit.defaultChromeURI=chrome://xulsword/content/startup/startup.xul
+  
+# MISC INITIAL PROGRAM SETTINGS
+Set (prefs.js):extensions.xulsword.Footnotes=On
+Set (prefs.js):extensions.xulsword.Headings=On
+Set (prefs.js):extensions.xulsword.Cross-references=On
+Set (prefs.js):extensions.xulsword.Reference Material Links=On
+Set (prefs.js):extensions.xulsword.Strong's Numbers=On
+Set (prefs.js):extensions.xulsword.Morphological Tags=On
+Set (prefs.js):extensions.xulsword.Verse Numbers=On
+Set (prefs.js):extensions.xulsword.User Notes=On
+Set (prefs.js):extensions.xulsword.Hebrew Cantillation=On
+Set (prefs.js):extensions.xulsword.Hebrew Vowel Points=On
+Set (prefs.js):extensions.xulsword.Words of Christ in Red=On
+Set (prefs.js):extensions.xulsword.Location=Matt.1.1
+Set (prefs.js):extensions.xulsword.ShowCrossrefsAtBottom=false
+Set (prefs.js):extensions.xulsword.ShowFootnotesAtBottom=true
+Set (prefs.js):extensions.xulsword.ShowUserNotesAtBottom=true
+Set (prefs.js):extensions.xulsword.MaximizeNoteBox1=false
+Set (prefs.js):extensions.xulsword.MaximizeNoteBox2=false
+Set (prefs.js):extensions.xulsword.MaximizeNoteBox3=false
+Set (prefs.js):extensions.xulsword.DefaultVersion=none
+Set (prefs.js):extensions.xulsword.HideDisabledBooks=false
+Set (prefs.js):extensions.xulsword.HideDisabledViewMenuItems=false
+Set (prefs.js):extensions.xulsword.DontReadReferenceBible=false
+
+# MODULES FOR EACH WINDOW WHOSE TABS SHOULD BE INITIALLY HIDDEN
+Set (prefs.js):extensions.xulsword.w1.hidden=TR;HEB;StrongsGreek;StrongsGreekRU;StrongsHebrew;StrongsHebrewRU;Robinson;
+Set (prefs.js):extensions.xulsword.w2.hidden=TR;HEB;StrongsGreek;StrongsGreekRU;StrongsHebrew;StrongsHebrewRU;Robinson;
+Set (prefs.js):extensions.xulsword.w3.hidden=TR;HEB;StrongsGreek;StrongsGreekRU;StrongsHebrew;StrongsHebrewRU;Robinson;
+
+# INCREASE SCRIPT TIMEOUT FROM FIREFOX DEFAULT OF TEN SECONDS
+Set (prefs.js):dom.max_child_script_run_time=60
+Set (prefs.js):dom.max_chrome_script_run_time=60
+Set (prefs.js):dom.max_script_run_time=60
+
+# SET advanced.mailftp TO TRUE SO THAT SETTING network.ftp.anonymous_password WILL WORK
+Set (prefs.js):advanced.mailftp=true
+Set (prefs.js):network.ftp.anonymous_password=xulsword@xulsword.org
+
+# OTHER SETTINGS
+Set (prefs.js):extensions.xulsword.DontShowExceptionDialog=false
+
+# NO LONGER USED BUILD SETTINGS
+Set (prefs.js):extensions.xulsword.DefaultCK=defaultKey
+
+# DEBUG PREFERENCES (USED ONLY WITH DEVELOPMENT ENVIRONMENT)
+Set (debug.js):javascript.options.strict=true
+Set (debug.js):nglayout.debug.disable_xul_cache=true
+Set (debug.js):nglayout.debug.disable_xul_fastload=true
+Set (debug.js):extensions.logging.enabled=true
+Set (debug.js):javascript.options.showInConsole=true
+Set (debug.js):dom.report_all_js_exceptions=true
+Set (debug.js):browser.dom.window.dump.enabled=true

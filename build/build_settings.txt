@@ -1,0 +1,67 @@
+# BUILD WHAT?
+Set MakeDevelopment=true
+Set MakePortable=true
+Set MakeSetup=false
+# To build separate LibXulsword package MakeFFextension must be true
+Set MakeFFextension=false
+
+# SPECIFY PATHS (RELATIVE TO xulsword/build or FULL path)
+Set CluceneSource=../Cpp/clucene
+Set SwordSource=../Cpp/sword
+Set XulswordExtras=
+Set ModuleRepository1=
+Set ModuleRepository2=
+Set FirstRunXSM=
+
+# FOR MS-WINDOWS ONLY (use FULL paths):
+Set XULRunner=../xulrunner
+Set MakeWindows64bit=false
+Set MicrosoftSDK=C:\Program Files\Microsoft SDKs\Windows\v7.1
+Set MicrosoftVS=C:\Program Files (x86)\Microsoft Visual Studio 10.0
+
+# FOR MAC ONLY
+Set CFBundleSignature=CWXS
+Set MACBundleIdentifier=org.crosswire.mac.xulsword
+Set CFBundleDevelopmentRegion=English
+Set NSHumanReadableCopyright=
+
+# XULToolkitVersion SHOULD BE THE MAJOR VERSION OF XULRunner (IF THAT PATH IS SPECIFIED)
+# IT SHOULD ALSO MATCH A LOCALE OVERLOAD VERSION FROM THE UI-MAP
+# AND THE MAJOR VERSION OF xulrunnerRev IN build.sh SHOULD ALSO MATCH
+Set XULToolkitVersion=41
+
+# SPECIFY BUILD INFORMATION
+Set Version=3.16
+Set LibxulswordVersion=1.4.5
+Set Name=xulsword
+Set Vendor=CrossWire
+Set FirefoxMinVersion=21.0
+Set FirefoxMaxVersion=41.*
+Set (prefs.js):extensions.xulsword.EngineVersion=1.8.1
+Set (prefs.js):extensions.xulsword.MinXSMversion=1.0
+Set (prefs.js):extensions.xulsword.MinUIversion=3.10
+Set (prefs.js):extensions.xulsword.HelpEmailAddress=
+
+# FIREFOX EXTENSIONS WILL NOT INCLUDE THE BINARY LIBRARY IF A URL IS SPECIFIED HERE.
+# IF THE URL IS FTP PROTOCOL, THEN THE LATEST COMPATIBLE LIB CAN BE IDENTIFIED AT RUNTIME.
+Set (prefs.js):extensions.xulsword.LibSwordURL=
+
+# XULSWORD CAN REPORT UNHANDLED EXCEPTIONS TO THIS URL, IF SPECIFIED:
+Set (prefs.js):extensions.xulsword.ProblemReportURL=
+
+# DEFAULT LOCALE (en-US, ru, etc.)
+# The separate pref filename "language.js" is used here because this allows
+# the setup installer to overwrite this file (and pref) if the user selects
+# a different langauge during install.
+Set (language.js):general.useragent.locale=en-US
+
+# LOCALES TO INCLUDE IN BUILD (Must include at least one locale. Example:en-US, or ru,ar)
+Set IncludeLocales=en-US,ru
+
+# MODULES TO INCLUDE IN BUILD
+# Note: KJV,TR,HEB,StrongsGreek,StrongsHebrew,Robinson are used for original lang features
+Set IncludeModules=
+
+# CONTRIBUTOR'S LISTING
+Set (prefs.js):extensions.xulsword.ContributorList=Special Thanks To:\nTroy Griffitts and the SWORD Project\n\nDevelopers:\nJohn Austin\nDavid Booth\n\nContributors:\nAbram Victorovich\nAllen Peleton\nDavid Haslam\nWolfgang Stradner
+
