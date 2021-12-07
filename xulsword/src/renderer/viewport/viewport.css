@@ -72,12 +72,13 @@ a dictionary (which cannot be linked), this situation needs this special CSS: */
 
 .viewport .textarea {
   min-width: 1px; /* allows textarea to schrink below minimum content size */
+  margin-bottom: 12px;
 }
 .viewport .textrow {
   width: 100%;
 }
 
-.viewport.ownWindow .sbwin {
+.viewport.ownWindow .text-win {
   display: none;
 }
 
@@ -85,8 +86,8 @@ a dictionary (which cannot be linked), this situation needs this special CSS: */
 @media print {
   .viewport .chooser,
   .viewport .open-chooser,
-  .viewport .sbpin,
-  .viewport .sbwin,
+  .viewport .text-pin,
+  .viewport .text-win,
   .viewport .notebox-maximizer {
     display: none !important;
   }

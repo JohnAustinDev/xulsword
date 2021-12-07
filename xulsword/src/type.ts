@@ -88,6 +88,26 @@ export const LibSwordPublic = {
   convertLocation: func as unknown as (fromv11n: string, vkeytext: string, tov11n: string) => string,
 };
 
+export const CommandsPublic = {
+  addRepositoryModule: func as unknown as () => void,
+  addLocalModule: func as unknown as () => void,
+  removeModule: func as unknown as () => void,
+  exportAudio: func as unknown as () => void,
+  importAudio: func as unknown as () => void,
+  pageSetup: func as unknown as () => void,
+  printPreview: func as unknown as () => void,
+  printPassage: func as unknown as () => void,
+  print: func as unknown as () => void,
+  search: func as unknown as () => void,
+  copyPassage: func as unknown as () => void,
+  openFontsColors: func as unknown as () => void,
+  openBookmarksManager: func as unknown as () => void,
+  openNewBookmarkDialog: func as unknown as () => void,
+  openNewUserNoteDialog: func as unknown as () => void,
+  openHelp: func as unknown as () => void,
+  openTextWindow: func as unknown as () => void,
+}
+
 // This GPublic object will be used at runtime to create two different
 // types of G objects sharing the same GType interface: one will be
 // used in the main process and the other in renderer processes. The
@@ -106,6 +126,7 @@ export const GPublic = {
   ModuleConfigs: 'readonly',
   ModuleConfigDefault: 'readonly',
   FontFaceConfigs: 'readonly',
+  ModuleFeature: 'readonly',
 
   OPSYS: 'readonly',
 
@@ -117,6 +138,7 @@ export const GPublic = {
   Prefs: PrefsPublic,
   LibSword: LibSwordPublic,
   Dirs: DirsPublic,
+  Commands: CommandsPublic,
 };
 
 export interface GType {
@@ -129,6 +151,7 @@ export interface GType {
   ModuleConfigs: { [i: string]: ConfigType };
   ModuleConfigDefault: ConfigType;
   FontFaceConfigs: ConfigType[];
+  ModuleFeature: { [i: string]: string };
 
   OPSYS: 'string';
 
@@ -138,6 +161,7 @@ export interface GType {
   Prefs: typeof PrefsPublic;
   LibSword: typeof LibSwordPublic;
   Dirs: typeof DirsPublic;
+  Commands: typeof CommandsPublic;
 
   cache: { [i: string]: any };
   reset: () => void;

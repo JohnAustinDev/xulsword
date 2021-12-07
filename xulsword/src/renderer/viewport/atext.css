@@ -15,7 +15,7 @@
 .atext .hd {
   text-align: center;
 }
-.atext .sbpin {
+.atext .text-pin {
   float: left;
   width: 28px;
   height: 37px;
@@ -26,27 +26,27 @@
   background: url(../images/pushpin0.png);
   z-index: 20;
 }
-html.chromedir-rtl .atext .sbpin {
+html.chromedir-rtl .atext .text-pin {
   float: right;
   left: auto;
   right: -8px;
 }
-.atext.pinned .sbpin {
+.atext.pinned .text-pin {
   background: url(../images/pushpin1.png);
 }
-.atext .sbpin:hover {
+.atext .text-pin:hover {
   background: url(../images/pushpin2.png);
 }
-.atext.Dicts .sbpin {
+.atext.Dicts .text-pin {
   display: none;
 }
-html.chromedir-ltr .atext .sbpin,
-html.chromedir-ltr .atext .sbpin:hover,
-html.chromedir-ltr .atext.pinned .sbpin {
+html.chromedir-ltr .atext .text-pin,
+html.chromedir-ltr .atext .text-pin:hover,
+html.chromedir-ltr .atext.pinned .text-pin {
   transform: scaleX(-1);
 }
 
-.atext .sbwin {
+.atext .text-win {
   float: left;
   width: 20px;
   height: 20px;
@@ -54,10 +54,10 @@ html.chromedir-ltr .atext.pinned .sbpin {
   background: url(../images/towindow.png);
   z-index: 20;
 }
-html.chromedir-rtl .atext .sbwin {
+html.chromedir-rtl .atext .text-win {
   float: right;
 }
-.atext .sbwin:hover {
+.atext .text-win:hover {
   background-position: 20px;
 }
 
@@ -106,7 +106,7 @@ html.chromedir-rtl .atext .sbwin {
 }
 
 .atext .nbc > div:first-child {
-  height: 30px;
+  height: 16px;
   width: 100%;
 }
 
@@ -153,6 +153,7 @@ html.chromedir-rtl .atext .sbwin {
   border: 2px solid rgb(150, 150, 150);
   border-radius: 8px;
   padding: 0px 5px 0px 5px;
+  margin: 8px;
 }
 .atext.pinned .nb {
   background: white;

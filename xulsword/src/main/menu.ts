@@ -9,14 +9,29 @@ import {
   MenuItemConstructorOptions,
   MenuItem,
 } from 'electron';
-import path from 'path';
 import i18next from 'i18next';
+import path from 'path';
+import Commands from './commands';
 import G from './mg';
 import C from '../constant';
 
-const Command = {
+type Modifiers =
+  | 'CommandOrControl'
+  | 'Alt'
+  | 'Option'
+  | 'AltGr'
+  | 'Shift'
+  | 'Super'
+  | 'Meta';
+
+interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
+  selector?: string;
+  submenu?: DarwinMenuItemConstructorOptions[] | Menu;
+}
+
+export default class MenuBuilder {
   // Some commands update language and global state from Prefs
-  setGlobalStateFromPrefs(prefs: string | string[]) {
+  static setGlobalStateFromPrefs(prefs: string | string[]) {
     function setGlobalStateFromPrefs2() {
       BrowserWindow.getAllWindows().forEach((w) => {
         w.webContents.send('setStateFromPrefs', prefs);
@@ -26,29 +41,28 @@ const Command = {
     // Change language if Pref changed
     const lng = G.Prefs.getCharPref(C.LOCALEPREF);
     if (lng !== i18next.language) {
-      i18next
-        .changeLanguage(lng, (err) => {
-          if (err) throw Error(err);
-          G.reset();
-          setGlobalStateFromPrefs2();
-        });
+      i18next.changeLanguage(lng, (err) => {
+        if (err) throw Error(err);
+        G.reset();
+        setGlobalStateFromPrefs2();
+      });
     } else {
       setGlobalStateFromPrefs2();
     }
-  },
+  }
 
   // Update Prefs, then setGlobalStateFromPrefs()
-  toggleSwitch(name: string | string[], value?: boolean) {
+  static toggleSwitch(name: string | string[], value?: boolean) {
     const a = Array.isArray(name) ? name : [name];
     a.forEach((n) => {
       const v = value === undefined ? !G.Prefs.getBoolPref(n) : value;
       G.Prefs.setBoolPref(n, v);
     });
     this.setGlobalStateFromPrefs(name);
-  },
+  }
 
   // Update Prefs, then setGlobalStateFromPrefs()
-  radioSwitch(name: string | string[], value: any) {
+  static radioSwitch(name: string | string[], value: any) {
     const a = Array.isArray(name) ? name : [name];
     a.forEach((n) => {
       if (typeof value === 'number') {
@@ -60,9 +74,9 @@ const Command = {
       }
     });
     this.setGlobalStateFromPrefs(name);
-  },
+  }
 
-  setTabs(
+  static setTabs(
     type: string | 'all',
     winLabel: string | 'all',
     modOrAll: string,
@@ -108,7 +122,8 @@ const Command = {
     });
 
     nval.forEach((tabs: string[], i: number) => {
-      nval[i] = tabs.sort(this.tabOrder);
+      const tmp = tabs.filter(Boolean);
+      nval[i] = tmp.sort(MenuBuilder.tabOrder);
     });
 
     // Insure each window's tabs correspond to its texts
@@ -132,9 +147,9 @@ const Command = {
       'xulsword.ilModules',
       'xulsword.mtModules'
     ]);
-  },
+  }
 
-  tabOrder(as: string, bs: string) {
+  static tabOrder(as: string, bs: string) {
     const a = G.Tab[as];
     const b = G.Tab[bs];
     if (a.tabType === b.tabType) {
@@ -150,88 +165,8 @@ const Command = {
       return (a.label > b.label ? 1 : -1);
     }
     return (C.ModuleTypeOrder[a.tabType] > C.ModuleTypeOrder[b.tabType] ? 1 : -1);
-  },
+  }
 
-  addRepositoryModule() {
-    console.log(`Action not implemented: addRepositoryModule`);
-  },
-
-  addLocalModule() {
-    console.log(`Action not implemented: addLocalModule`);
-  },
-
-  removeModule() {
-    console.log(`Action not implemented: removeModule`);
-  },
-
-  exportAudio() {
-    console.log(`Action not implemented: exportAudio`);
-  },
-
-  importAudio() {
-    console.log(`Action not implemented: importAudio`);
-  },
-
-  pageSetup() {
-    console.log(`Action not implemented: pageSetup`);
-  },
-
-  printPreview() {
-    console.log(`Action not implemented: printPreview`);
-  },
-
-  printPassage() {
-    console.log(`Action not implemented: printPassage`);
-  },
-
-  print() {
-    console.log(`Action not implemented: print`);
-  },
-
-  search() {
-    console.log(`Action not implemented: search()`);
-  },
-
-  copyPassage() {
-    console.log(`Action not implemented: copyPassage`);
-  },
-
-  openFontsColors() {
-    console.log(`Action not implemented: openFontsColors`);
-  },
-
-  openBookmarksManager() {
-    console.log(`Action not implemented: openBookmarksManager()`);
-  },
-
-  openNewBookmarkDialog() {
-    console.log(`Action not implemented: openNewBookmarkDialog()`);
-  },
-
-  openNewUserNoteDialog() {
-    console.log(`Action not implemented: openNewUserNoteDialog()`);
-  },
-
-  openHelp() {
-    console.log(`Action not implemented: openHelp()`);
-  },
-};
-
-type Modifiers =
-  | 'CommandOrControl'
-  | 'Alt'
-  | 'Option'
-  | 'AltGr'
-  | 'Shift'
-  | 'Super'
-  | 'Meta';
-
-interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
-  selector?: string;
-  submenu?: DarwinMenuItemConstructorOptions[] | Menu;
-}
-
-export default class MenuBuilder {
   mainWindow: BrowserWindow;
 
   i18n: any;
@@ -313,7 +248,7 @@ export default class MenuBuilder {
               type: 'checkbox',
               // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
               click: () => {
-                Command.setTabs(type, wl, t.modName, 'toggle');
+                MenuBuilder.setTabs(type, wl, t.modName, 'toggle');
               },
             });
             submenu.insert(0, newItem);
@@ -369,13 +304,13 @@ export default class MenuBuilder {
               ),
               accelerator: 'F2',
               click: () => {
-                Command.addRepositoryModule();
+                Commands.addRepositoryModule();
               },
             },
             {
               label: this.ts('newmodule.fromFile', 'newmodule.fromFile.ak'),
               click: () => {
-                Command.addLocalModule();
+                Commands.addLocalModule();
               },
             },
           ],
@@ -384,7 +319,7 @@ export default class MenuBuilder {
           label: this.ts('menu.removeModule.label', 'menu.removeModule.sc'),
           visible: G.LibSword.hasBible(),
           click: () => {
-            Command.removeModule();
+            Commands.removeModule();
           },
         },
         { type: 'separator', visible: G.LibSword.hasBible() },
@@ -392,14 +327,14 @@ export default class MenuBuilder {
           label: this.ts('menu.exportAudio.label', 'menu.exportAudio.sc'),
           visible: G.LibSword.hasBible(),
           click: () => {
-            Command.exportAudio();
+            Commands.exportAudio();
           },
         },
         {
           label: this.ts('menu.importAudio.label', 'menu.importAudio.sc'),
           visible: G.LibSword.hasBible(),
           click: () => {
-            Command.importAudio();
+            Commands.importAudio();
           },
         },
         { type: 'separator', visible: G.LibSword.hasBible() },
@@ -407,7 +342,7 @@ export default class MenuBuilder {
           label: this.ts('printSetupCmd.label', 'printSetupCmd.accesskey'),
           visible: G.LibSword.hasBible(),
           click: () => {
-            Command.pageSetup();
+            Commands.pageSetup();
           },
         },
         {
@@ -415,7 +350,7 @@ export default class MenuBuilder {
           accelerator: this.tx('printCmd.commandkey', ['CommandOrControl']),
           visible: G.LibSword.hasBible(),
           click: () => {
-            Command.printPreview();
+            Commands.printPreview();
           },
         },
         {
@@ -426,7 +361,7 @@ export default class MenuBuilder {
           ]),
           visible: G.LibSword.hasBible(),
           click: () => {
-            Command.print();
+            Commands.print();
           },
         },
         { type: 'separator', visible: G.LibSword.hasBible() },
@@ -437,7 +372,7 @@ export default class MenuBuilder {
           ]),
           visible: G.LibSword.hasBible(),
           click: () => {
-            Command.printPassage();
+            Commands.printPassage();
           },
         },
         { type: 'separator' },
@@ -463,14 +398,14 @@ export default class MenuBuilder {
           label: this.ts('searchBut.label', 'SearchAccKey'),
           accelerator: this.tx('SearchCommandKey', ['CommandOrControl']),
           click: () => {
-            Command.search();
+            Commands.search();
           },
         },
         {
           label: this.ts('menu.copypassage', 'menu.copypassage.ak'),
           accelerator: this.tx('menu.copypassage.sc', ['CommandOrControl']),
           click: () => {
-            Command.copyPassage();
+            Commands.copyPassage();
           },
         },
       ],
@@ -499,7 +434,7 @@ export default class MenuBuilder {
         type: 'checkbox',
         icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x14', `${name}.png`),
         click: () => {
-          Command.toggleSwitch(`xulsword.${name}`);
+          MenuBuilder.toggleSwitch(`xulsword.${name}`);
         },
       };
     });
@@ -515,7 +450,7 @@ export default class MenuBuilder {
             id: `mainmenu.${name}_val_popup`,
             type: 'radio',
             click: () => {
-              Command.radioSwitch(`mainmenu.${name}`, 'popup');
+              MenuBuilder.radioSwitch(`mainmenu.${name}`, 'popup');
             },
           },
           {
@@ -523,7 +458,7 @@ export default class MenuBuilder {
             id: `mainmenu.${name}_val_notebox`,
             type: 'radio',
             click: () => {
-              Command.radioSwitch(`mainmenu.${name}`, 'notebox');
+              MenuBuilder.radioSwitch(`mainmenu.${name}`, 'notebox');
             },
           },
         ],
@@ -546,14 +481,14 @@ export default class MenuBuilder {
                   id: `showAll_${tab}_${wl}`,
                   label: this.ts('menu.view.showAll'),
                   click: () => {
-                    Command.setTabs(type, wl, 'all', 'show');
+                    MenuBuilder.setTabs(type, wl, 'all', 'show');
                   },
                 },
                 {
                   id: `hideAll_${tab}_${wl}`,
                   label: this.ts('menu.view.hideAll'),
                   click: () => {
-                    Command.setTabs(type, wl, 'all', 'hide');
+                    MenuBuilder.setTabs(type, wl, 'all', 'hide');
                   },
                 },
               ],
@@ -579,13 +514,13 @@ export default class MenuBuilder {
         {
           label: this.ts('menu.view.showAll'),
           click: () => {
-            Command.toggleSwitch(allswitches, true);
+            MenuBuilder.toggleSwitch(allswitches, true);
           },
         },
         {
           label: this.ts('menu.view.hideAll'),
           click: () => {
-            Command.toggleSwitch(allswitches, false);
+            MenuBuilder.toggleSwitch(allswitches, false);
           },
         },
         { type: 'separator' },
@@ -598,7 +533,7 @@ export default class MenuBuilder {
             return {
               label: this.ts(wl),
               click: () => {
-                Command.setTabs('all', wl, 'all', 'show');
+                MenuBuilder.setTabs('all', wl, 'all', 'show');
               },
             };
           }),
@@ -609,7 +544,7 @@ export default class MenuBuilder {
             return {
               label: this.ts(wl),
               click: () => {
-                Command.setTabs('all', wl, 'all', 'hide');
+                MenuBuilder.setTabs('all', wl, 'all', 'hide');
               },
             };
           }),
@@ -628,7 +563,7 @@ export default class MenuBuilder {
               id: `global.fontSize_val_0`,
               type: 'radio',
               click: () => {
-                Command.radioSwitch('global.fontSize', 0);
+                MenuBuilder.radioSwitch('global.fontSize', 0);
               },
             },
             {
@@ -636,7 +571,7 @@ export default class MenuBuilder {
               id: `global.fontSize_val_1`,
               type: 'radio',
               click: () => {
-                Command.radioSwitch('global.fontSize', 1);
+                MenuBuilder.radioSwitch('global.fontSize', 1);
               },
             },
             {
@@ -644,7 +579,7 @@ export default class MenuBuilder {
               id: `global.fontSize_val_2`,
               type: 'radio',
               click: () => {
-                Command.radioSwitch('global.fontSize', 2);
+                MenuBuilder.radioSwitch('global.fontSize', 2);
               },
             },
             {
@@ -652,7 +587,7 @@ export default class MenuBuilder {
               id: `global.fontSize_val_3`,
               type: 'radio',
               click: () => {
-                Command.radioSwitch('global.fontSize', 3);
+                MenuBuilder.radioSwitch('global.fontSize', 3);
               },
             },
             {
@@ -660,14 +595,14 @@ export default class MenuBuilder {
               id: `global.fontSize_val_4`,
               type: 'radio',
               click: () => {
-                Command.radioSwitch('global.fontSize', 4);
+                MenuBuilder.radioSwitch('global.fontSize', 4);
               },
             },
             { type: 'separator' },
             {
               label: this.ts('fontsAndColors.label'),
               click: () => {
-                Command.openFontsColors();
+                Commands.openFontsColors();
               },
             },
           ],
@@ -680,7 +615,7 @@ export default class MenuBuilder {
               id: 'xulsword.showHebVowelPoints',
               type: 'checkbox',
               click: () => {
-                Command.toggleSwitch('xulsword.showHebVowelPoints');
+                MenuBuilder.toggleSwitch('xulsword.showHebVowelPoints');
               },
             },
             {
@@ -688,7 +623,7 @@ export default class MenuBuilder {
               id: 'xulsword.showHebCantillation',
               type: 'checkbox',
               click: () => {
-                Command.toggleSwitch('xulsword.showHebCantillation');
+                MenuBuilder.toggleSwitch('xulsword.showHebCantillation');
               },
             },
           ],
@@ -704,7 +639,7 @@ export default class MenuBuilder {
               type: 'radio',
               toolTip: lng,
               click: () => {
-                Command.radioSwitch(C.LOCALEPREF, lng);
+                MenuBuilder.radioSwitch(C.LOCALEPREF, lng);
               },
             };
           }),
@@ -718,17 +653,17 @@ export default class MenuBuilder {
         {
           label: this.ts('manBookmarksCmd.label'),
           accelerator: this.tx('manBookmarksCmd.commandkey', ['CommandOrControl']),
-          open: () => {Command.openBookmarksManager();},
+          open: () => {Commands.openBookmarksManager();},
         },
         {
           label: this.ts('menuitem.newBookmark.label'),
           accelerator: this.tx('addCurPageAsCmd.commandkey', ['CommandOrControl']),
-          open: () => {Command.openNewBookmarkDialog();},
+          open: () => {Commands.openNewBookmarkDialog();},
         },
         {
           label: this.ts('menu.usernote.add'),
           accelerator: this.tx('addCurPageAsCmd.commandkey', ['CommandOrControl', 'Shift']),
-          open: () => {Command.openNewUserNoteDialog();},
+          open: () => {Commands.openNewUserNoteDialog();},
         }
       ],
     };
@@ -742,7 +677,7 @@ export default class MenuBuilder {
           id: 'xulsword.numDisplayedWindows_val_1',
           type: 'radio',
           click: () => {
-            Command.radioSwitch('xulsword.numDisplayedWindows', 1);
+            MenuBuilder.radioSwitch('xulsword.numDisplayedWindows', 1);
           },
         },
         {
@@ -750,7 +685,7 @@ export default class MenuBuilder {
           id: 'xulsword.numDisplayedWindows_val_2',
           type: 'radio',
           click: () => {
-            Command.radioSwitch('xulsword.numDisplayedWindows', 2);
+            MenuBuilder.radioSwitch('xulsword.numDisplayedWindows', 2);
           },
         },
         {
@@ -758,7 +693,7 @@ export default class MenuBuilder {
           id: 'xulsword.numDisplayedWindows_val_3',
           type: 'radio',
           click: () => {
-            Command.radioSwitch('xulsword.numDisplayedWindows', 3);
+            MenuBuilder.radioSwitch('xulsword.numDisplayedWindows', 3);
           },
         },
       ],
@@ -771,16 +706,18 @@ export default class MenuBuilder {
         {
           label: this.ts('menu.help.about'),
           click: () => {
-            Command.openHelp();
+            Commands.openHelp();
           },
         },
       ],
     };
 
     const subMenuDev = {
+      role: 'help',
       label: 'Devel',
       submenu: [
         {
+          role: 'reload',
           label: '&Reload',
           accelerator: 'Ctrl+R',
           click: () => {
@@ -788,6 +725,7 @@ export default class MenuBuilder {
           },
         },
         {
+          role: 'togglefullscreen',
           label: 'Toggle &Full Screen',
           accelerator: 'F11',
           click: () => {
@@ -795,6 +733,7 @@ export default class MenuBuilder {
           },
         },
         {
+          role: 'toggelDevTools',
           label: 'Toggle &Developer Tools',
           accelerator: 'Alt+Ctrl+I',
           click: () => {

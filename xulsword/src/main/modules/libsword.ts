@@ -1,4 +1,5 @@
 /* eslint-disable class-methods-use-this */
+import C from '../../constant';
 import { LibSwordPublic } from '../../type';
 
 const LibSword: LibSwordClass = {
@@ -23,7 +24,7 @@ const LibSword: LibSwordClass = {
   },
 
   getModuleList() {
-    return 'KJV<nx>SYN';
+    return `RSP;${C.BIBLE}<nx>KJV;${C.BIBLE}<nx>MYCOMM;${C.COMMENTARY}<nx>MYBOOK;${C.GENBOOK}<nx>MYDICT;${C.DICTIONARY}`;
   },
 
   getVerseText(

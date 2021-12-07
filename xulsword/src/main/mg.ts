@@ -6,12 +6,14 @@ import { Menu } from 'electron';
 import LibSwordx from './modules/libsword';
 import Dirsx from './modules/dirs';
 import Prefsx from './modules/prefs';
+import Commandsx from './commands';
 import {
   getProgramConfig,
   getLocaleConfigs,
   getModuleConfigs,
   getModuleConfigDefault,
   getFontFaceConfigs,
+  getModuleFeature,
 } from './config';
 import { resolveHtmlPath } from './mutil';
 import { GType, GPublic, TabType } from '../type';
@@ -35,6 +37,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     ModuleConfigDefault: () => getModuleConfigDefault(),
     ProgramConfig: () => getProgramConfig(),
     FontFaceConfigs: () => getFontFaceConfigs(),
+    ModuleFeature: () => getModuleFeature(),
 
     OPSYS: () => process.platform,
 
@@ -49,6 +52,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     LibSword: LibSwordx as typeof LibSwordx,
     Prefs: Prefsx as typeof Prefsx,
     Dirs: Dirsx as typeof Dirsx,
+    Commands: Commandsx as typeof Commandsx,
   },
 
   reset() {
@@ -175,6 +179,7 @@ function getBook(): { sName: string; bName: string; bNameL: string }[] {
 const Tab: { [i: string]: TabType } = {
   KJV: {
     modName: 'KJV',
+    modType: C.BIBLE,
     tabType: 'Texts',
     label: 'KJV',
     index: 0,
@@ -182,6 +187,7 @@ const Tab: { [i: string]: TabType } = {
   },
   RSP: {
     modName: 'RSP',
+    modType: C.BIBLE,
     tabType: 'Texts',
     label: 'Russian Synodal',
     index: 1,
@@ -189,6 +195,7 @@ const Tab: { [i: string]: TabType } = {
   },
   MYCOMM: {
     modName: 'MYCOMM',
+    modType: C.COMMENTARY,
     tabType: 'Comms',
     label: 'My Comm',
     index: 2,
@@ -196,6 +203,7 @@ const Tab: { [i: string]: TabType } = {
   },
   MYDICT: {
     modName: 'MYDICT',
+    modType: C.DICTIONARY,
     tabType: 'Dicts',
     label: 'My Dict',
     index: 3,
@@ -203,6 +211,7 @@ const Tab: { [i: string]: TabType } = {
   },
   MYBOOK: {
     modName: 'MYBOOK',
+    modType: C.GENBOOK,
     tabType: 'Genbks',
     label: 'My GenBook',
     index: 4,

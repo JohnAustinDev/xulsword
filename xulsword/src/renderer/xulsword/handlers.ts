@@ -172,6 +172,8 @@ export function handleViewport(
     case 'click': {
       const targ = ofClass(
         [
+          'text-pin',
+          'text-win',
           'chaptermenucell',
           'bookname',
           'bookgroup',
@@ -187,8 +189,22 @@ export function handleViewport(
       );
       if (targ === null) return;
       switch (targ.type) {
+        case 'text-win': {
+          G.Commands.openTextWindow();
+          break;
+        }
+        case 'text-pin': {
+          const atext = e.currentTarget as HTMLElement;
+          const i = Number(atext.dataset.wnum) - 1;
+          this.setState((prevState: XulswordState) => {
+            const { isPinned } = prevState;
+            isPinned[i] = !isPinned[i];
+            return { isPinned };
+          });
+          break;
+        }
         case 'bookgroup': {
-          const m = targ.element.className.match(/\bbar_(\S+)\b/);
+          const m = targ.element.className.match(/\bbookgroup_(\S+)\b/);
           const b = m ? firstIndexOfBookGroup(m[1]) : null;
           if (b !== null) {
             this.setState({
@@ -258,6 +274,7 @@ export function handleViewport(
           const i = Number(w) - 1;
           if (w && m && !state.isPinned[i]) {
             if (targ.type === 'ilt-tab') {
+              if (m === 'disabled') return;
               this.setState((prevState: XulswordState) => {
                 const { ilModules } = prevState;
                 ilModules[i] = ilModules[i] ? '' : m;

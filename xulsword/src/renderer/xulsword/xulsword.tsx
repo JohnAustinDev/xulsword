@@ -42,7 +42,7 @@ export const propTypes = {
 export type XulswordProps = XulProps;
 
 // Default values for these keys must be set in the default Pref file
-// or an error will be thrown.
+// or an error will likely be thrown.
 export interface StateDefault {
   book: string;
   chapter: number;
@@ -246,7 +246,7 @@ export default class Xulsword extends React.Component {
   addHistory = (add?: string): void => {
     const { book, chapter, verse, lastverse, modules, history, historyIndex } =
       this.state as XulswordState;
-    if (!modules[0]) return;
+    if (!modules[0] || !book) return;
     let location = add as string;
     if (!location) {
       location = [

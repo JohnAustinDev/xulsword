@@ -161,7 +161,7 @@ class Chooser extends React.Component {
 
   groupBarMouseOver = (e: any) => {
     const { bookGroups } = this.props as ChooserProps;
-    const bg = e.target.className.match(/\bbar_(.+?)\b/);
+    const bg = e.target.className.match(/\bbookgroup_(.+?)\b/);
     if (!bg || !bookGroups.includes(bg[1])) return;
     if (this.state === bg[1]) return;
     delayHandler.call(

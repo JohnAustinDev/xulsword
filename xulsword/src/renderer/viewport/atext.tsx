@@ -394,8 +394,8 @@ class Atext extends React.Component {
           className="sbcontrols"
           style={{ position: 'absolute', top: '0px' }}
         >
-          <div className="sbpin" />
-          <div className="sbwin" />
+          <div className="text-pin" />
+          <div className="text-win" />
         </div>
 
         <Box className="hd" height={`${C.TextHeaderHeight}px`}>

@@ -1,5 +1,9 @@
 {
-  "global.locale": "ru",
+  "EngineVersion": "1.8.1",
+  "MinXSMversion": "1.0",
+  "MinUIversion": "3.10",
+  "HelpEmailAddress": "",
+  "global.locale": "en",
   "global.locales": [
     ["en", "English"],
     ["ru", "Русский"],
@@ -18,12 +22,12 @@
   ],
   "global.fontSize": 2,
 
-  "xulsword.book": "Gen",
+  "xulsword.book": "",
   "xulsword.chapter": 1,
   "xulsword.verse": 1,
   "xulsword.lastverse": 1,
 
-  "xulsword.history": ["Gen.1.1.1.KJV"],
+  "xulsword.history": [],
   "xulsword.historyIndex": 0,
 
   "xulsword.showHeadings": true,
@@ -38,8 +42,8 @@
   "xulsword.showHebVowelPoints": true,
   "xulsword.showRedWords": true,
 
-  "xulsword.tabs": [["KJV"], ["RSP"], ["KJV", "RSP", "MYBOOK"]],
-  "xulsword.modules": ["KJV", "RSP", "MYBOOK"],
+  "xulsword.tabs": [[""], [""], [""]],
+  "xulsword.modules": ["", "", ""],
   "xulsword.ilModules": ["", "", ""],
   "xulsword.mtModules": ["", "", ""],
   "xulsword.keys": ["", "", ""],

@@ -146,9 +146,7 @@ class Tabs extends React.Component {
     }
   }
 
-  multiTabButtonClick(e: any) {
-    if (!e.target.classList.contains('button')) return;
-    e.stopPropagation();
+  multiTabButtonClick() {
     this.setState((prevState: TabsState) => {
       let newpup = null;
       if (!prevState.multiTabMenupopup) {
@@ -179,6 +177,10 @@ class Tabs extends React.Component {
 
     const mtMod = this.getMultiTabSelection();
 
+    let ilcls = '';
+    if (ilModule) ilcls = 'active';
+    if (ilModule === 'disabled') ilcls = 'disabled';
+
     let cls = `tabs${n}`;
     if (module && G.Tab[module].isRTL) cls += ' rtl';
     if (isPinned) cls += ' pinned';
@@ -186,12 +188,14 @@ class Tabs extends React.Component {
 
     return (
       <div {...htmlAttribs(`tabs ${cls}`, this.props)} onClick={handler}>
+        {module && isPinned && this.getTab(module, 'reg-tab', 'active')}
         {tabs.map((m: string) => {
-          if (multiTabs.includes(m)) return null;
+          if (isPinned || !m || multiTabs.includes(m)) return null;
           const selected = m === module ? 'active' : '';
           return this.getTab(m, 'reg-tab', selected);
         })}
-        {multiTabs.length > 0 &&
+        {!isPinned &&
+          multiTabs.length > 0 &&
           mtMod &&
           this.getTab(
             mtMod,
@@ -201,8 +205,9 @@ class Tabs extends React.Component {
               {multiTabMenupopup}
             </Button>
           )}
-        {ilModuleOption &&
-          this.getTab(ilModuleOption, 'ilt-tab', ilModule ? 'active' : '')}
+        {!isPinned &&
+          ilModuleOption &&
+          this.getTab(ilModuleOption, 'ilt-tab', ilcls)}
       </div>
     );
   }

@@ -26,16 +26,16 @@
 .tabs .tab {
   display: inline-block;
   cursor: default;
-  font-size: 1em;
+  font-size: 0.86em;
   color: grey;
   margin: 0px 3px 0px 3px;
   padding: 0px 5px;
-  border: 3px solid;
+  border: 2px solid;
   border-bottom: 2px solid rgb(200, 170, 205);
   border-left-color: rgb(200, 170, 205);
   border-right-color: rgb(200, 170, 205);
   background: rgb(255, 250, 255);
-  height: 23px;
+  height: 17px;
   border-top-right-radius: 4px;
   border-top-left-radius: 4px;
 }
@@ -50,10 +50,12 @@
 }
 .tabs .mts-tab .button {
   float: right;
-  width: 10px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
   margin: 2px;
   padding: 0;
+  background: transparent;
+  border: none;
 }
 .tabs .mts-tab .button-box {
   border: none !important;
@@ -63,10 +65,10 @@ html.chromedir-rtl .tabs .mts-tab .button {
 }
 .tabs .mts-tab .button .menu {
   left: auto;
-  right: 0px;
+  right: calc(-5px - 100%);
 }
 html.chromedir-rtl .tabs .mts-tab .button .menu {
-  left: 0px;
+  left: calc(-5px - 100%);
   right: auto;
 }
 .tabs .mts-tab .button .menupopup {
@@ -74,10 +76,12 @@ html.chromedir-rtl .tabs .mts-tab .button .menu {
 }
 .tabs .mts-tab .button-icon {
   display: block;
-  width: 100%;
-  height: 100%;
-  background-color: gray;
-  /*background-image: url(../images/arrow/arrow-dn.png);*/
+  width: 12px;
+  height: 12px;
+  background-image: url(../images/dropdown-menu.png);
+}
+.tabs .mto-tab {
+  font-size: 1em;
 }
 .tabs > *:last-child {
   margin-inline-end: 20px;
@@ -90,16 +94,15 @@ html.chromedir-rtl .tabs .mts-tab .button .menu {
   border-bottom-color: rgb(255, 243, 255);
   background: rgb(255, 243, 255);
 }
-.tabs.ownWindow .iltab {
+.tabs .ilt-tab.disabled {
+  color: lightgray;
+}
+.tabs.ownWindow .ilt-tab {
   display: none;
 }
-.tabs .tabs.pinned .tab {
-  visibility: hidden;
-}
-.tabs .tabs.pinned .tab.active {
-  color: blue;
-  background: white; /*rgb(248,248,241);*/
-  visibility: visible;
+.tabs.pinned .tab.active {
+  background: white;
+  border-bottom-color: white;
 }
 .tabs .tabTexts {
   border-top-color: rgb(235, 50, 80);

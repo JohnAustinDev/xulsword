@@ -25,6 +25,7 @@ import '../libxul/xul.css';
 import './viewport.css';
 import C from '../../constant';
 import G from '../rg';
+import { findBookGroup } from '../../common';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -143,21 +144,41 @@ class Viewport extends React.Component {
     let availableBooks: any = [];
     if (modules[0]) availableBooks = getAvailableBooks(modules[0]);
 
-    // TODO! interlinear module options depend on book, installed modules, and bible tabs.
-    const ilModuleOptions = ['KJV', 'KJV', ''];
+    // Get interlinear module options
+    const ilModuleOptions = ['', '', ''];
+    for (let x = 0; x < numDisplayedWindows; x += 1) {
+      if (modules[x] && book) {
+        const bkinfo = findBookGroup(G, book);
+        if (bkinfo && (bkinfo.group === 'ot' || bkinfo.group === 'nt')) {
+          const ml =
+            G.ModuleFeature[bkinfo.group === 'nt' ? 'greek' : 'hebrew'];
+          if (ml) ilModuleOptions[x] = ml[0];
+        }
+      }
+    }
+
+    // Disable/enable interlinear tabs as necessary
+    const ilMods = ilModules;
+    for (let x = 0; x < numDisplayedWindows; x += 1) {
+      const mod = modules[x];
+      if (!mod || G.Tab[mod].modType !== C.BIBLE) ilMods[x] = 'disabled';
+      else if (ilMods[x] === 'disabled') ilMods[x] = '';
+    }
 
     // Figure out the number of columns that will be shown for each text
     // in order to fill the number of visible windows.
     const columns: number[] = [];
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       columns[x] = 1;
+      const mod = modules[x];
+      const modType = mod && G.Tab[mod] ? G.Tab[mod].modType : null;
+      if (!modType || modType === C.DICTIONARY) continue;
       const key = `${modules[x]} ${ilModules[x]}`;
       let f = x + 1;
       let modf = modules[f];
       while (
         modf &&
         f < numDisplayedWindows &&
-        G.Tab[modf].modType !== C.DICTIONARY &&
         key === `${modf} ${ilModules[f]}`
       ) {
         columns[x] += 1;
@@ -166,6 +187,17 @@ class Viewport extends React.Component {
         modf = modules[f];
       }
       x += f - x - 1;
+    }
+
+    // Pin each tab bank of each multi-column text
+    const isPinnedTabs = isPinned;
+    for (let x = 0; x < numDisplayedWindows; x += 1) {
+      let c = columns[x] - 1;
+      while (c) {
+        isPinnedTabs[x + c] = isPinned[x];
+        c -= 1;
+      }
+      x += columns[x] - 1;
     }
 
     const tabComps: number[] = [];
@@ -205,15 +237,15 @@ class Viewport extends React.Component {
             {tabComps.map((i) => {
               return (
                 <Tabs
-                  key={`tbs_${id}${i}${resize}${tabs}${modules[i]}`}
+                  key={`tbs_${id}${i}${resize}${tabs}${modules[i]}${ilModuleOptions[i]}`}
                   handler={handler}
                   anid={id}
                   n={Number(i + 1)}
                   columns={columns[i]}
-                  isPinned={isPinned[i]}
+                  isPinned={isPinnedTabs[i]}
                   module={modules[i]}
                   tabs={tabs[i]}
-                  ilModule={ilModules[i]}
+                  ilModule={ilMods[i]}
                   ilModuleOption={ilModuleOptions[i]}
                   mtModule={mtModules[i]}
                 />
@@ -236,7 +268,7 @@ class Viewport extends React.Component {
                   lastverse={lastverse}
                   columns={columns[i]}
                   module={modules[i]}
-                  ilModule={ilModules[i]}
+                  ilModule={ilMods[i]}
                   modkey={keys[i]}
                   flagHilight={flagHilight[i]}
                   flagScroll={flagScroll[i]}

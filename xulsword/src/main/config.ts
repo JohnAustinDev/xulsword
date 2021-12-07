@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable new-cap */
+import { app } from 'electron';
 import path from 'path';
 import i18next from 'i18next';
 import Dirs from './modules/dirs';
@@ -364,34 +365,23 @@ export function getModuleConfigs() {
           `ERROR: Dropping module "${mod}". xsversion:${xsversion} < modminxsvers:${modminxsvers}`
         );
       } else {
-        let xminprogvers = LibSword.getModuleInformation(mod, C.MINPVERPAR);
-        xminprogvers =
-          xminprogvers !== C.NOTFOUND ? xminprogvers : C.MINVERSION;
-        if (versionCompare(Prefs.getCharPref('Version'), xminprogvers) < 0) {
+        let xsengvers = LibSword.getModuleInformation(mod, 'MinimumVersion');
+        xsengvers = xsengvers !== C.NOTFOUND ? xsengvers : '0';
+        let enginevers;
+        try {
+          enginevers = Prefs.getCharPref('EngineVersion');
+        } catch (er) {
+          enginevers = C.NOTFOUND;
+        }
+        if (
+          enginevers !== C.NOTFOUND &&
+          versionCompare(enginevers, xsengvers) < 0
+        ) {
           jsdump(
-            `ERROR: Dropping module "${mod}". Version:${Prefs.getCharPref(
-              'Version'
-            )} < xminprogvers:${xminprogvers}`
+            `ERROR: Dropping module "${mod}". enginevers:${enginevers} < xsengvers:${xsengvers}`
           );
         } else {
-          let xsengvers = LibSword.getModuleInformation(mod, 'MinimumVersion');
-          xsengvers = xsengvers !== C.NOTFOUND ? xsengvers : '0';
-          let enginevers;
-          try {
-            enginevers = Prefs.getCharPref('EngineVersion');
-          } catch (er) {
-            enginevers = C.NOTFOUND;
-          }
-          if (
-            enginevers !== C.NOTFOUND &&
-            versionCompare(enginevers, xsengvers) < 0
-          ) {
-            jsdump(
-              `ERROR: Dropping module "${mod}". enginevers:${enginevers} < xsengvers:${xsengvers}`
-            );
-          } else {
-            ret[mod] = getModuleConfig(mod);
-          }
+          ret[mod] = getModuleConfig(mod);
         }
       }
     } else {
@@ -400,4 +390,37 @@ export function getModuleConfigs() {
   }
 
   return ret;
+}
+
+export function getModuleFeature() {
+  const r = {
+    dailyDevotion: [],
+    greek: ['KJV'],
+    greekDef: [],
+    greekParse: [],
+    hebrew: ['KJV'],
+    hebrewDef: [],
+  };
+  /*
+  const modlist: any = LibSword.getModuleList();
+  const re = '(^|<nx>)([^;]+);([^<]+)(<nx>|$)';
+  const reg = new RegExp(re, 'g');
+  const re1 = new RegExp(re);
+  modlist.match(reg).forEach((match: string) => {
+    const m = match.match(re1);
+    if (m === null) return;
+    const [, name, longType] = m;
+    const mlang = LibSword.getModuleInformation(name, 'Lang');
+    const mlangs = mlang.substr(0, mlang.indexOf('-'));
+    if (longType === C.BIBLE && /^grc$/i.test(mlang)) r.greek.push(name);
+    if (
+      longType === C.BIBLE &&
+      /^heb?$/i.test(mlang) &&
+      !/HebModern/i.test(name)
+    )
+      r.hebrew.push(name);
+    // up to line 156 of xulswordInit.js
+  });
+*/
+  return r;
 }

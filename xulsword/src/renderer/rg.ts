@@ -2,9 +2,10 @@
 import { GType, GPublic } from '../type';
 
 // This G object is for use in renderer processes, and it shares the same
-// interface as the main process G object. Properties of this object
-// access data and objects via IPC to the main process G object. Local
-// readonly data is cached.
+// interface as a main process G object. Both G objects are built auto-
+// matically at runtime from the same GPublic declaration. Properties of
+// this object access data and objects via IPC to the main process G object.
+// Local readonly data is cached.
 
 const R = window.ipc.renderer;
 
