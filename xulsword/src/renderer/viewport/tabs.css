@@ -42,12 +42,6 @@
 .tabs .mts-tab {
   padding-inline-end: 0px;
 }
-.tabs .mts-tab .menu .tab {
-  display: block;
-}
-.tabs .mts-tab .menu .tab.selected {
-  display: none;
-}
 .tabs .mts-tab .button {
   float: right;
   width: 12px;
@@ -81,7 +75,11 @@ html.chromedir-rtl .tabs .mts-tab .button .menu {
   background-image: url(../images/dropdown-menu.png);
 }
 .tabs .mto-tab {
+  display: block;
   font-size: 1em;
+}
+.tabs .mto-tab.selected {
+  display: none;
 }
 .tabs > *:last-child {
   margin-inline-end: 20px;

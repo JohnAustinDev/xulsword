@@ -17,15 +17,15 @@ export interface ConfigType {
 
 export interface TabType {
   modName: string;
-  modType:
+  modType: string; /*
     | 'Biblical Texts'
     | 'Lexicons / Dictionaries'
     | 'Commentaries'
-    | 'Generic Books';
+    | 'Generic Books'; */
   modVersion: string;
   modDir: string;
   label: string;
-  tabType: 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
+  tabType: string // 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
   isRTL: boolean;
   index: number;
   description: string;
@@ -73,19 +73,42 @@ export const PrefsPublic = {
   writeAllStores: func as unknown as () => void,
 };
 export const LibSwordPublic = {
+  initLibsword: func as unknown as () => boolean,
+  libSwordReady: func as unknown as (caller: string) => boolean,
   hasBible: func as unknown as () => boolean,
   getMaxChapter: func as unknown as (modname: string, vkeytext: string) => number,
   getMaxVerse: func as unknown as (modname: string, vkeytext: string) => number,
-  // getChapterText: func as unknown as (modname: string, vkeytext: string) => string,
-  // getChapterTextMulti: func as unknown as (modstrlist: string, vkeytext: string) => string,
-  // getFootnotes: func as unknown as () => string,
-  // getCrossRefs: func as unknown as () => string,
-  // getNotes: func as unknown as () => string,
+  getChapterText: func as unknown as (modname: string, vkeytext: string) => string,
+  getChapterTextMulti: func as unknown as (modstrlist: string, vkeytext: string) => string,
+  getFootnotes: func as unknown as () => string,
+  getCrossRefs: func as unknown as () => string,
+  getNotes: func as unknown as () => string,
   getVerseText: func as unknown as (vkeymod: string, vkeytext: string, keepTextNotes: boolean) => string,
-  getModuleList: func as unknown as () => string,
-  getModuleInformation: func as unknown as (modname: string, key: string) => string,
   getVerseSystem: func as unknown as (modname: string) => string,
   convertLocation: func as unknown as (fromv11n: string, vkeytext: string, tov11n: string) => string,
+  quitLibsword: func as unknown as () => void,
+  pause: func as unknown as (callback: any) => void,
+  resume: func as unknown as () => void,
+  getIntroductions: func as unknown as (vkeymod: string, bname: string) => string,
+  getDictionaryEntry: func as unknown as (lexdictmod: string, key: string) => string,
+  getAllDictionaryKeys: func as unknown as (lexdictmod: string) => string,
+  getGenBookChapterText: func as unknown as (gbmod: string, treekey: string) => string,
+  getGenBookTableOfContents: func as unknown as (gbmod: string) => string,
+  luceneEnabled: func as unknown as (modname: string) => boolean,
+  search: func as unknown as (modname: string, srchstr: string, scope: string, type: number, flags: number, newsearch: boolean) => number,
+  getSearchPointer: func as unknown as () => any,
+  getSearchVerses: func as unknown as (modname: string) => void,
+  getSearchResults: func as unknown as (modname: string, first: number, num: number, keepStrongs: boolean, searchPointer: any) => string,
+  searchIndexDelete: func as unknown as (modname: string) => void,
+  searchIndexBuild: func as unknown as (modname: string) => void,
+  setGlobalOption: func as unknown as (option: string, setting: string) => void,
+  getGlobalOption: func as unknown as (option: string) => string,
+  setCipherKey: func as unknown as (modname: string, cipherKey: string, useSecModule: boolean) => void,
+  getModuleList: func as unknown as () => string,
+  getModuleInformation: func as unknown as (modname: string, paramname: string) => string,
+  uncompressTarGz: func as unknown as (tarGzPath: string, aDirPath: string) => void,
+  translate: func as unknown as (text: string, localeName: string) => string,
+
 };
 
 export const CommandsPublic = {

@@ -51,7 +51,7 @@ const defaultProps = {
   onlyavailablebooks: false,
   sizetopopup: undefined,
   tooltip: undefined,
-  trans: 'KJV',
+  trans: '',
 };
 
 const propTypes = {
@@ -104,7 +104,7 @@ class Bookselect extends React.Component {
     const { onlyavailablebooks, trans } = this.props as BookselectProps;
     const { book } = this.state as BookselectState;
     let books;
-    if (onlyavailablebooks) {
+    if (trans && onlyavailablebooks) {
       const abs = getAvailableBooks(trans.split(/\s*,\s*/)[0]);
       books = abs.map((bk: string) => {
         let longName = bk;

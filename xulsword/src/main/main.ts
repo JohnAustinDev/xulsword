@@ -9,6 +9,7 @@ import { app, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
+import LibSword from '../../napi/libsword';
 import MenuBuilder from './menu';
 import { resolveHtmlPath, jsdump } from './mutil';
 import G from './mg';
@@ -290,6 +291,9 @@ const start = async () => {
 
   let splashWindow: BrowserWindow | undefined;
   if (!isDevelopment) splashWindow = openSplashWindow();
+
+  // Initialize napi libxulsword as LibSword
+  LibSword.initLibsword();
 
   mainWindow = openMainWindow();
 

@@ -62,8 +62,6 @@ nvm use node
 npm i --global yarn
 yarn
 
-exit
-
 # Create a local Cpp installation directory
 if [ ! -e "$XULSWORD/Cpp/install" ]; then  mkdir "$XULSWORD/Cpp/install"; fi
 
@@ -140,6 +138,8 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   cmake -G "Unix Makefiles" -D SWORD_NO_ICU="No" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make
 fi
+
+exit
 
 # THIS SECTION TO BE REMOVED: Install xulrunner locally
 if [ ! -e "$XULSWORD/xulrunner" ]; then

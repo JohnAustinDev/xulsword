@@ -164,7 +164,8 @@ export default class MenuBuilder {
       // Type and Priority are same. Sort by label's alpha.
       return (a.label > b.label ? 1 : -1);
     }
-    return (C.ModuleTypeOrder[a.tabType] > C.ModuleTypeOrder[b.tabType] ? 1 : -1);
+    const mto = C.ModuleTypeOrder as any;
+    return (mto[a.tabType] > mto[b.tabType] ? 1 : -1);
   }
 
   mainWindow: BrowserWindow;
@@ -322,25 +323,22 @@ export default class MenuBuilder {
             Commands.removeModule();
           },
         },
-        { type: 'separator', visible: G.LibSword.hasBible() },
+        { type: 'separator' },
         {
           label: this.ts('menu.exportAudio.label', 'menu.exportAudio.sc'),
-          visible: G.LibSword.hasBible(),
           click: () => {
             Commands.exportAudio();
           },
         },
         {
           label: this.ts('menu.importAudio.label', 'menu.importAudio.sc'),
-          visible: G.LibSword.hasBible(),
           click: () => {
             Commands.importAudio();
           },
         },
-        { type: 'separator', visible: G.LibSword.hasBible() },
+        { type: 'separator' },
         {
           label: this.ts('printSetupCmd.label', 'printSetupCmd.accesskey'),
-          visible: G.LibSword.hasBible(),
           click: () => {
             Commands.pageSetup();
           },
@@ -348,7 +346,6 @@ export default class MenuBuilder {
         {
           label: this.ts('printPreviewCmd.label', 'printPreviewCmd.accesskey'),
           accelerator: this.tx('printCmd.commandkey', ['CommandOrControl']),
-          visible: G.LibSword.hasBible(),
           click: () => {
             Commands.printPreview();
           },
@@ -359,18 +356,16 @@ export default class MenuBuilder {
             'CommandOrControl',
             'Shift',
           ]),
-          visible: G.LibSword.hasBible(),
           click: () => {
             Commands.print();
           },
         },
-        { type: 'separator', visible: G.LibSword.hasBible() },
+        { type: 'separator' },
         {
           label: this.ts('print.printpassage'),
           accelerator: this.tx('printPassageCmd.commandkey', [
             'CommandOrControl',
           ]),
-          visible: G.LibSword.hasBible(),
           click: () => {
             Commands.printPassage();
           },

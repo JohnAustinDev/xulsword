@@ -31,7 +31,7 @@ export default class nsILocalFile {
       }
     } else {
       throw new Error(
-        `ERROR: initWithPath requires an absolute path: ${aPath}`
+        `ERROR: initWithPath requires an absolute path: "${aPath}"`
       );
     }
   }
@@ -42,10 +42,10 @@ export default class nsILocalFile {
     return this;
   }
 
-  // Copy this.path to a directory as leafName. If leafName is null, then
+  // Copy this.path to a directory as leafName. If leafName is falsey, then
   // this.leafName will be used. Destination file will be overwritten if it
   // already exists.
-  copyTo(dirObj: nsILocalFile, leafName: string) {
+  copyTo(dirObj: nsILocalFile, leafName?: string) {
     const name = leafName || this.leafName;
 
     const newFile = new nsILocalFile(

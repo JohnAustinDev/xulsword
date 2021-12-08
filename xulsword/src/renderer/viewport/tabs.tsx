@@ -36,7 +36,7 @@ const propTypes = {
   n: PropTypes.number.isRequired,
   tabs: PropTypes.arrayOf(PropTypes.string).isRequired,
   ilModule: PropTypes.string,
-  ilModuleOption: PropTypes.string.isRequired,
+  ilModuleOption: PropTypes.string,
   mtModule: PropTypes.string,
 };
 
@@ -49,7 +49,7 @@ interface TabsProps extends XulProps {
   n: number;
   tabs: string[];
   ilModule: string | undefined;
-  ilModuleOption: string;
+  ilModuleOption: string | undefined;
   mtModule: string | undefined;
 }
 

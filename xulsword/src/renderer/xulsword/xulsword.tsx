@@ -85,7 +85,6 @@ export interface StateDefault {
 // default values in Xulsword constructor.
 export const stateNoPref = {
   historyMenupopup: undefined,
-  hasBible: G.LibSword.hasBible(),
   bsreset: 0,
   vpreset: 0,
   searchDisabled: true,
@@ -334,7 +333,6 @@ export default class Xulsword extends React.Component {
       ilModules,
       mtModules,
       keys,
-      hasBible,
       numDisplayedWindows,
       flagHilight,
       flagScroll,
@@ -363,10 +361,6 @@ export default class Xulsword extends React.Component {
     this.historyTO = setTimeout(() => {
       this.addHistory();
     }, 1000);
-
-    if (!hasBible) {
-      return <Vbox {...this.props} />;
-    }
 
     const minWidth =
       (chooser !== 'none' && showChooser ? 300 : 0) + 200 * numDisplayedWindows;

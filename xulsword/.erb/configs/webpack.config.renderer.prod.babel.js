@@ -60,7 +60,7 @@ export default merge(baseConfig, {
   entry: {
     // Entry points and output files (one for each kind of BrowserWindow)
     xulsword:  entryConfig('xulsword', 'xulsword.tsx'),
-    splash: entryConfig('splash', 'splash.tsx')),
+    splash: entryConfig('splash', 'splash.tsx'),
   },
 
   output: {

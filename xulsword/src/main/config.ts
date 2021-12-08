@@ -5,7 +5,7 @@ import path from 'path';
 import i18next from 'i18next';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
-import LibSword from './modules/libsword';
+import LibSword from '../../napi/libsword';
 import { ConfigType, GType } from '../type';
 import C from '../constant';
 import { deepClone } from '../common';
@@ -148,7 +148,7 @@ function fontURL(mod: string) {
 
 // Read fonts which are in xulsword's xsFonts directory
 export function getFontFaceConfigs() {
-  if (!LibSword.libSwordReady()) {
+  if (!LibSword.libSwordReady('getFontFaceConfigs')) {
     throw Error(`getFontFaceConfigs must not be run until LibSword is ready!`);
   }
 
@@ -229,7 +229,7 @@ function getLocaleOfModule(module: string) {
 }
 
 function getModuleConfig(mod: string) {
-  if (!LibSword.libSwordReady() && mod !== 'LTR_DEFAULT') {
+  if (!LibSword.libSwordReady('getModuleConfig') && mod !== 'LTR_DEFAULT') {
     throw Error(
       `getModuleConfig(modname) must not be called until LibSword is ready!`
     );
@@ -334,7 +334,7 @@ export function getModuleConfigDefault() {
 }
 
 export function getModuleConfigs() {
-  if (!LibSword.libSwordReady()) {
+  if (!LibSword.libSwordReady('getModuleConfigs')) {
     throw Error(`getModuleConfigs must not be called until LibSword is ready!`);
   }
 
@@ -395,10 +395,10 @@ export function getModuleConfigs() {
 export function getModuleFeature() {
   const r = {
     dailyDevotion: [],
-    greek: ['KJV'],
+    greek: [],
     greekDef: [],
     greekParse: [],
-    hebrew: ['KJV'],
+    hebrew: [],
     hebrewDef: [],
   };
   /*

@@ -1,9 +1,10 @@
+/* eslint-disable new-cap */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import path from 'path';
 import fs from 'fs';
 import { Menu } from 'electron';
-import LibSwordx from './modules/libsword';
+import LibSwordx from '../../napi/libsword';
 import Dirsx from './modules/dirs';
 import Prefsx from './modules/prefs';
 import Commandsx from './commands';
@@ -15,9 +16,11 @@ import {
   getFontFaceConfigs,
   getModuleFeature,
 } from './config';
-import { resolveHtmlPath } from './mutil';
+import { jsdump, resolveHtmlPath } from './mutil';
 import { GType, GPublic, TabType } from '../type';
 import C from '../constant';
+import { isASCII } from '../common';
+import nsILocalFile from './components/nsILocalFile';
 
 // This G object is for use in the main process, and it shares the same
 // interface as the renderer's G object. Properties of this object
@@ -176,56 +179,100 @@ function getBook(): { sName: string; bName: string; bNameL: string }[] {
   return book;
 }
 
-const Tab: { [i: string]: TabType } = {
-  KJV: {
-    modName: 'KJV',
-    modType: C.BIBLE,
-    tabType: 'Texts',
-    label: 'KJV',
-    index: 0,
-    description: 'The King James translation of the Bible',
-  },
-  RSP: {
-    modName: 'RSP',
-    modType: C.BIBLE,
-    tabType: 'Texts',
-    label: 'Russian Synodal',
-    index: 1,
-    description: 'The Russian Synodal translation of the Bible',
-  },
-  MYCOMM: {
-    modName: 'MYCOMM',
-    modType: C.COMMENTARY,
-    tabType: 'Comms',
-    label: 'My Comm',
-    index: 2,
-    description: 'A commentary of the Bible',
-  },
-  MYDICT: {
-    modName: 'MYDICT',
-    modType: C.DICTIONARY,
-    tabType: 'Dicts',
-    label: 'My Dict',
-    index: 3,
-    description: 'A glossary/dictionary of the Bible',
-  },
-  MYBOOK: {
-    modName: 'MYBOOK',
-    modType: C.GENBOOK,
-    tabType: 'Genbks',
-    label: 'My GenBook',
-    index: 4,
-    description: 'Some book related to the Bible',
-  },
-};
-const Tabs: TabType[] = [Tab.RSP, Tab.KJV, Tab.MYCOMM, Tab.MYBOOK, Tab.MYDICT];
+const Tab: { [i: string]: any } = {};
 function getTabs() {
-  console.log(`getTabs not yet implemented`);
-  return Tabs;
+  const tabs: TabType[] = [];
+  const modlist: any = LibSwordx.getModuleList();
+  if (modlist === 'No Modules') return [];
+  const re = '(^|<nx>)([^;<>]+);([^;<>]+)(<nx>|$)';
+  const reg = new RegExp(re, 'g');
+  const re1 = new RegExp(re);
+  let i = 0;
+  modlist.match(reg).forEach((match: string) => {
+    const m = match.match(re1);
+    if (m === null) return;
+    const [, , modName, modType] = m;
+    let label = LibSwordx.getModuleInformation(modName, 'TabLabel');
+    if (label === C.NOTFOUND)
+      label = LibSwordx.getModuleInformation(modName, 'Abbreviation');
+    if (label === C.NOTFOUND) label = modName;
+    let tabType;
+    Object.entries(C.SupportedModuleTypes).forEach((entry) => {
+      const [shortType, longType] = entry;
+      if (longType === modType) tabType = shortType;
+    });
+    if (!tabType) return;
+
+    // Find conf file. Look at file name, then search contents if necessary
+    const DIRSEP = process.platform === 'win32' ? '\\' : '/';
+    let p = LibSwordx.getModuleInformation(modName, 'AbsoluteDataPath').replace(
+      /[\\/]/g,
+      DIRSEP
+    );
+    if (p.slice(-1) !== DIRSEP) p += DIRSEP;
+    const modDir = p;
+    p = p.replace(/[\\/]modules[\\/].*?$/, `${DIRSEP}mods.d`);
+    let confFile = new nsILocalFile(
+      `${p + DIRSEP + modName.toLowerCase()}.conf`
+    );
+    if (!confFile.exists()) {
+      confFile = new nsILocalFile(`${p + DIRSEP + modName}.conf`);
+      if (!confFile.exists()) {
+        const modRE = new RegExp(`^\\[${modName}\\]`);
+        confFile = new nsILocalFile(p);
+        if (confFile.exists()) {
+          const files = confFile.directoryEntries;
+          files?.forEach((file) => {
+            const f = new nsILocalFile(confFile.path);
+            f.append(file);
+            if (!f.isDirectory() && /\.conf$/.test(f.leafName)) {
+              const cdata = f.readFile();
+              if (modRE.test(cdata)) confFile = f;
+            }
+          });
+        }
+      }
+    }
+    const conf = confFile.path;
+    if (!confFile.exists())
+      jsdump(
+        `WARNING: tab.conf bad path "${p}$/${modName.toLowerCase()}.conf"`
+      );
+    const isCommDir =
+      confFile.path
+        .toLowerCase()
+        .indexOf(Dirsx.path.xsModsCommon.toLowerCase()) === 0;
+
+    const tab = {
+      modName,
+      modType,
+      modVersion: LibSwordx.getModuleInformation(modName, 'Version'),
+      modDir,
+      label,
+      tabType,
+      isRTL: /^rt.?l$/i.test(
+        LibSwordx.getModuleInformation(modName, 'Direction')
+      ),
+      index: i,
+      description: LibSwordx.getModuleInformation(modName, 'Description'),
+      locName: isASCII(label) ? 'LTR_DEFAULT' : modName,
+      conf,
+      isCommDir,
+      audio: {}, // will be filled in later
+      audioCode: LibSwordx.getModuleInformation(modName, 'AudioCode'),
+      lang: LibSwordx.getModuleInformation(modName, 'Lang'),
+    };
+
+    tabs.push(tab);
+    Tab[modName] = tab;
+
+    i += 1;
+  });
+
+  return tabs;
 }
 
 function getTab() {
-  console.log(`getTab not yet implemented`);
   return Tab;
 }
 

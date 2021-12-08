@@ -142,7 +142,9 @@ class Viewport extends React.Component {
     const { resize } = this.state as ViewportState;
 
     let availableBooks: any = [];
-    if (modules[0]) availableBooks = getAvailableBooks(modules[0]);
+    const mod1 = modules[0] ? G.Tab[modules[0]] : null;
+    if (mod1 && (mod1.modType === C.BIBLE || mod1.modType === C.COMMENTARY))
+      availableBooks = getAvailableBooks(mod1.modName);
 
     // Get interlinear module options
     const ilModuleOptions = ['', '', ''];
