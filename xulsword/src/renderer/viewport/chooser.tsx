@@ -107,9 +107,11 @@ class Chooser extends React.Component {
 
     this.slideReady = false;
 
-    setTimeout(() => {
-      this.startSlidingUp(null, 1, props.selection);
-    }, 0);
+    if (props.selection) {
+      setTimeout(() => {
+        this.startSlidingUp(null, 1, props.selection);
+      }, 0);
+    }
 
     this.rowHeight = 0;
     this.chooserHeight = 0;
@@ -320,7 +322,7 @@ class Chooser extends React.Component {
     selBook?: string,
     availBooks?: string[]
   ): React.ReactNode[] => {
-    const { hideUnavailableBooks } = this.props as ChooserProps;
+    const { hideUnavailableBooks, versification } = this.props as ChooserProps;
     const unavailable = hideUnavailableBooks ? 'hidden' : 'disabled';
     const books = [];
     for (let i = 0; i < bookGroupLength(bookGroup); i += 1) {
@@ -341,7 +343,7 @@ class Chooser extends React.Component {
 
       books.push(
         <div
-          key={`${type}_${bookGroup}_${i}`}
+          key={`${type}_${versification}_${i}`}
           className={classes.filter(Boolean).join(' ')}
           onMouseMove={this.checkScroll}
         >

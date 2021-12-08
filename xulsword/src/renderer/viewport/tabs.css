@@ -67,6 +67,7 @@ html.chromedir-rtl .tabs .mts-tab .button .menu {
 }
 .tabs .mts-tab .button .menupopup {
   transform: translateX(-100%);
+  overflow: auto;
 }
 .tabs .mts-tab .button-icon {
   display: block;
@@ -77,6 +78,7 @@ html.chromedir-rtl .tabs .mts-tab .button .menu {
 .tabs .mto-tab {
   display: block;
   font-size: 1em;
+  margin: 1px 2px;
 }
 .tabs .mto-tab.selected {
   display: none;

@@ -196,9 +196,13 @@ export function handleViewport(
         case 'text-pin': {
           const atext = e.currentTarget as HTMLElement;
           const i = Number(atext.dataset.wnum) - 1;
+          const c = ofClass(['show1', 'show2', 'show3'], atext);
+          const columns = c ? Number(c.type.substr(-1, 1)) : 1;
           this.setState((prevState: XulswordState) => {
             const { isPinned } = prevState;
-            isPinned[i] = !isPinned[i];
+            for (let x = i; x < columns + i; x += 1) {
+              isPinned[x] = !isPinned[x];
+            }
             return { isPinned };
           });
           break;

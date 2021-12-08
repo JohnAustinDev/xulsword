@@ -1,7 +1,7 @@
 {
   "name": "xulsword",
   "productName": "xulsword",
-  "description": "SWORD front-end created with node.js",
+  "description": "Accessible Bible study software created with node.js",
   "scripts": {
     "build": "concurrently \"yarn build:main\" \"yarn build:renderer\"",
     "build:main": "cross-env NODE_ENV=production webpack --config ./.erb/configs/webpack.config.main.prod.babel.js",
@@ -32,7 +32,7 @@
   "build": {
     "productName": "xulsword",
     "appId": "org.erb.xulsword",
-    "asar": true,
+    "asar": false,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
       "dist",

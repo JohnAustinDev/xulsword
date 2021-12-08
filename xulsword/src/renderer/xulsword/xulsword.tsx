@@ -243,9 +243,24 @@ export default class Xulsword extends React.Component {
 
   // Insert a history entry at the current historyIndex.
   addHistory = (add?: string): void => {
-    const { book, chapter, verse, lastverse, modules, history, historyIndex } =
-      this.state as XulswordState;
-    if (!modules[0] || !book) return;
+    const {
+      book,
+      chapter,
+      verse,
+      lastverse,
+      modules,
+      history,
+      historyIndex,
+      numDisplayedWindows,
+    } = this.state as XulswordState;
+    let i = 0;
+    let firstBible = modules[i];
+    while (
+      (!firstBible || G.Tab[firstBible].modType !== C.BIBLE) &&
+      i < numDisplayedWindows
+    )
+      firstBible = modules[(i += 1)];
+    if (!firstBible || !book) return;
     let location = add as string;
     if (!location) {
       location = [
@@ -253,7 +268,7 @@ export default class Xulsword extends React.Component {
         chapter,
         verse,
         lastverse,
-        G.LibSword.getVerseSystem(modules[0]),
+        G.LibSword.getVerseSystem(firstBible),
       ].join('.');
     }
     if (history[historyIndex] === location) return;

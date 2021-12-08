@@ -146,13 +146,17 @@ class Tabs extends React.Component {
     }
   }
 
-  multiTabButtonClick() {
+  multiTabButtonClick(e: any) {
+    const { multiTabMenupopup } = this.state as TabsState;
+    if (!multiTabMenupopup) e.stopPropagation();
     this.setState((prevState: TabsState) => {
       let newpup = null;
       if (!prevState.multiTabMenupopup) {
         const { multiTabs } = prevState;
+        const textrow = document.getElementsByClassName('textrow');
+        const height = textrow.length ? textrow[0].clientHeight : null;
         newpup = (
-          <Menupopup>
+          <Menupopup style={height ? { maxHeight: `${height}px` } : undefined}>
             {multiTabs.map((m) => {
               return this.getTab(
                 m,

@@ -175,18 +175,21 @@ class Viewport extends React.Component {
       const mod = modules[x];
       const modType = mod && G.Tab[mod] ? G.Tab[mod].modType : null;
       if (!modType || modType === C.DICTIONARY) continue;
-      const key = `${modules[x]} ${ilModules[x]}`;
+      let ilModule = ilModules[x] === 'disabled' ? null : ilModules[x];
+      const key = `${modules[x]} ${!!ilModules[x]} ${!!isPinned[x]}`;
       let f = x + 1;
-      let modf = modules[f];
+      let module = modules[f];
+      ilModule = ilModules[f] === 'disabled' ? null : ilModules[f];
       while (
-        modf &&
+        module &&
         f < numDisplayedWindows &&
-        key === `${modf} ${ilModules[f]}`
+        key === `${module} ${!!ilModule} ${!!isPinned[f]}`
       ) {
         columns[x] += 1;
         columns[f] = 0;
         f += 1;
-        modf = modules[f];
+        module = modules[f];
+        ilModule = ilModules[f] === 'disabled' ? null : ilModules[f];
       }
       x += f - x - 1;
     }
