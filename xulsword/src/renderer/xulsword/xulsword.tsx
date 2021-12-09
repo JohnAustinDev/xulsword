@@ -160,9 +160,12 @@ export default class Xulsword extends React.Component {
     const entries = Object.entries(store);
     entries.forEach((entry) => {
       const [fullPref, value] = entry;
-      const prefId = fullPref.substr(0, id.length);
-      if (prefId === id && fullPref.substr(id.length, 1) === '.') {
-        const prefName = fullPref.substr(id.length + 1);
+      const prefId = fullPref.substring(0, id.length);
+      if (
+        prefId === id &&
+        fullPref.substring(id.length, id.length + 1) === '.'
+      ) {
+        const prefName = fullPref.substring(id.length + 1);
         if (
           !(prefName in stateNoPref) &&
           (prefs === undefined || prefs.includes(fullPref))
@@ -260,7 +263,7 @@ export default class Xulsword extends React.Component {
       i < numDisplayedWindows
     )
       firstBible = modules[(i += 1)];
-    if (!firstBible || !book) return;
+    if (!firstBible || G.Tab[firstBible].modType !== C.BIBLE || !book) return;
     let location = add as string;
     if (!location) {
       location = [

@@ -14,7 +14,7 @@ import {
   getModuleConfigs,
   getModuleConfigDefault,
   getFontFaceConfigs,
-  getModuleFeature,
+  getFeatureModules,
 } from './config';
 import { jsdump, resolveHtmlPath } from './mutil';
 import { GType, GPublic, TabType } from '../type';
@@ -40,7 +40,8 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     ModuleConfigDefault: () => getModuleConfigDefault(),
     ProgramConfig: () => getProgramConfig(),
     FontFaceConfigs: () => getFontFaceConfigs(),
-    ModuleFeature: () => getModuleFeature(),
+    FeatureModules: () => getFeatureModules(),
+    AvailableBooks: () => getAvailableBooks(),
 
     OPSYS: () => process.platform,
 
@@ -108,18 +109,19 @@ export default G as unknown as GType;
 // These functions are called by runtime-generated getter functions, and
 // their output is cached by G until G.reset().
 
+/* eslint-disable prettier/prettier */
+const allBooks = ["Gen", "Exod", "Lev", "Num", "Deut", "Josh", "Judg",
+    "Ruth", "1Sam", "2Sam", "1Kgs", "2Kgs", "1Chr", "2Chr", "Ezra",
+    "Neh", "Esth", "Job", "Ps", "Prov", "Eccl", "Song", "Isa", "Jer",
+    "Lam", "Ezek", "Dan", "Hos", "Joel", "Amos", "Obad", "Jonah", "Mic",
+    "Nah", "Hab", "Zeph", "Hag", "Zech", "Mal", "Matt", "Mark", "Luke",
+    "John", "Acts", "Rom", "1Cor", "2Cor", "Gal", "Eph", "Phil", "Col",
+    "1Thess", "2Thess", "1Tim", "2Tim", "Titus", "Phlm", "Heb", "Jas",
+    "1Pet", "2Pet", "1John", "2John", "3John", "Jude", "Rev"];
+/* eslint-enable prettier/prettier */
+
 function getBook(): { sName: string; bName: string; bNameL: string }[] {
   // default book order is KJV
-  /* eslint-disable prettier/prettier */
-  const allBooks = ["Gen", "Exod", "Lev", "Num", "Deut", "Josh", "Judg",
-      "Ruth", "1Sam", "2Sam", "1Kgs", "2Kgs", "1Chr", "2Chr", "Ezra",
-      "Neh", "Esth", "Job", "Ps", "Prov", "Eccl", "Song", "Isa", "Jer",
-      "Lam", "Ezek", "Dan", "Hos", "Joel", "Amos", "Obad", "Jonah", "Mic",
-      "Nah", "Hab", "Zeph", "Hag", "Zech", "Mal", "Matt", "Mark", "Luke",
-      "John", "Acts", "Rom", "1Cor", "2Cor", "Gal", "Eph", "Phil", "Col",
-      "1Thess", "2Thess", "1Tim", "2Tim", "Titus", "Phlm", "Heb", "Jas",
-      "1Pet", "2Pet", "1John", "2John", "3John", "Jude", "Rev"];
-  /* eslint-enable prettier/prettier */
 
   const book = [];
   let i;
@@ -183,15 +185,10 @@ const Tab: { [i: string]: any } = {};
 function getTabs() {
   const tabs: TabType[] = [];
   const modlist: any = LibSwordx.getModuleList();
-  if (modlist === 'No Modules') return [];
-  const re = '(^|<nx>)([^;<>]+);([^;<>]+)(<nx>|$)';
-  const reg = new RegExp(re, 'g');
-  const re1 = new RegExp(re);
+  if (modlist === C.NOMODULES) return [];
   let i = 0;
-  modlist.match(reg).forEach((match: string) => {
-    const m = match.match(re1);
-    if (m === null) return;
-    const [, , modName, modType] = m;
+  modlist.split('<nx>').forEach((mstring: string) => {
+    const [modName, modType] = mstring.split(';');
     let label = LibSwordx.getModuleInformation(modName, 'TabLabel');
     if (label === C.NOTFOUND)
       label = LibSwordx.getModuleInformation(modName, 'Abbreviation');
@@ -274,6 +271,26 @@ function getTabs() {
 
 function getTab() {
   return Tab;
+}
+
+function getAvailableBooks() {
+  const availableBooks: any = {
+    allBooks,
+  };
+  const modlist = LibSwordx.getModuleList();
+  if (modlist === C.NOMODULES) return availableBooks;
+  modlist.split('<nx>').forEach((m: string) => {
+    const [modName, modType] = m.split(';');
+    const books: string[] = [];
+    if (modType === C.BIBLE || modType === C.COMMENTARY) {
+      allBooks.forEach((bk) => {
+        const vt = LibSwordx.getVerseText(modName, `${bk} 1:1`, false);
+        if (vt) books.push(bk);
+      });
+    }
+    availableBooks[modName] = books;
+  });
+  return availableBooks;
 }
 
 function setMenuFromPrefs(menu: Electron.Menu) {

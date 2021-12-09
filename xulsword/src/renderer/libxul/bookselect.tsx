@@ -20,7 +20,7 @@ import Spacer from './spacer';
 import Stack from './stack';
 import Menulist from './menulist';
 import Textbox from './textbox';
-import { getAvailableBooks, parseLocation } from '../rutil';
+import { parseLocation } from '../rutil';
 import G from '../rg';
 import { BookType } from '../../type';
 import './xul.css';
@@ -105,7 +105,10 @@ class Bookselect extends React.Component {
     const { book } = this.state as BookselectState;
     let books;
     if (trans && onlyavailablebooks) {
-      const abs = getAvailableBooks(trans.split(/\s*,\s*/)[0]);
+      const t = trans.split(/\s*,\s*/)[0];
+      const abs = G.AvailableBooks[t]
+        ? G.AvailableBooks[t]
+        : G.AvailableBooks.allBooks;
       books = abs.map((bk: string) => {
         let longName = bk;
         for (let x = 0; x < G.Book.length; x += 1) {

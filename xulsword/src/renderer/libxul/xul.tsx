@@ -184,7 +184,7 @@ export const htmlAttribs = (className: string, props: any) => {
 
   Object.entries(props).forEach((entry) => {
     const [p, val] = entry;
-    if (p.substr(0, 5) === 'data-') r[p] = val;
+    if (p.substring(0, 5) === 'data-') r[p] = val;
   });
 
   return r;

@@ -83,7 +83,7 @@ export default class MenuBuilder {
     doWhat: 'show' | 'hide' | 'toggle'
   ) {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    const n = Number(winLabel.substr(winLabel.length - 1));
+    const n = Number(winLabel.substring(winLabel.length - 1));
     const windows = Number.isNaN(n) ? [1, 2, 3] : [n];
 
     const modules =
@@ -232,7 +232,7 @@ export default class MenuBuilder {
       const [tab, type] = tb;
       let disableParent = true;
       MenuBuilder.winLabels.forEach((wl) => {
-        const win = Number(wl.substr(wl.length - 1));
+        const win = Number(wl.substring(wl.length - 1));
         const tabmenu = menu.getMenuItemById(`menu_${tab}_${wl}`);
         const submenu = tabmenu?.submenu;
         if (!submenu) throw Error(`No tabmenu: menu_${tab}_${wl}`);

@@ -11,6 +11,7 @@ const C = {
   COMMENTARY: 'Commentaries',
   GENBOOK: 'Generic Books',
   NOTFOUND: 'Not Found',
+  NOMODULES: 'No Modules',
   BMFileReturn: '\r\n', // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
   DEFAULTLOCALE: 'en-US',
   DLGSTD: 'centerscreen,modal,resizable',

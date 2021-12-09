@@ -172,7 +172,7 @@ export function getFontFaceConfigs() {
   // if fontFamily specifies a font URL, rather than a fontFamily, then create a
   // @font-face CSS entry and use it for this module.
   const mods = LibSword.getModuleList();
-  if (mods && mods !== 'No Modules') {
+  if (mods && mods !== C.NOMODULES) {
     const modulelist = mods.split('<nx>');
     const modules = modulelist.map((m: string) => m.split(';')[0]);
     modules.forEach((m) => {
@@ -342,7 +342,7 @@ export function getModuleConfigs() {
 
   // Gets list of available modules
   const mods = LibSword.getModuleList();
-  if (!mods || mods === 'No Modules') return false;
+  if (!mods || mods === C.NOMODULES) return false;
   const modules = mods.split('<nx>');
 
   for (let m = 0; m < modules.length; m += 1) {
@@ -392,35 +392,61 @@ export function getModuleConfigs() {
   return ret;
 }
 
-export function getModuleFeature() {
-  const r = {
-    dailyDevotion: [],
-    greek: [],
-    greekDef: [],
-    greekParse: [],
-    hebrew: [],
-    hebrewDef: [],
+export function getFeatureModules() {
+  // These CrossWire SWORD standard module features
+  const sword = {
+    strongsNumbers: [] as string[],
+    greekDef: [] as string[],
+    hebrewDef: [] as string[],
+    greekParse: [] as string[],
+    hebrewParse: [] as string[],
+    dailyDevotion: {} as { [i: string]: string },
+    glossary: [] as string[],
+    images: [] as string[],
+    noParagraphs: [] as string[], // should be typeset as verse-per-line
   };
-  /*
-  const modlist: any = LibSword.getModuleList();
-  const re = '(^|<nx>)([^;]+);([^<]+)(<nx>|$)';
-  const reg = new RegExp(re, 'g');
-  const re1 = new RegExp(re);
-  modlist.match(reg).forEach((match: string) => {
-    const m = match.match(re1);
-    if (m === null) return;
-    const [, name, longType] = m;
-    const mlang = LibSword.getModuleInformation(name, 'Lang');
-    const mlangs = mlang.substr(0, mlang.indexOf('-'));
-    if (longType === C.BIBLE && /^grc$/i.test(mlang)) r.greek.push(name);
-    if (
-      longType === C.BIBLE &&
+  // These are xulsword features that use certain modules
+  const xulsword = {
+    greek: [] as string[],
+    hebrew: [] as string[],
+  };
+
+  const modlist = LibSword.getModuleList();
+  if (modlist === C.NOMODULES) return { ...sword, ...xulsword };
+  modlist.split('<nx>').forEach((m) => {
+    const [modName, modType] = m.split(';');
+    let mlang = LibSword.getModuleInformation(modName, 'Lang');
+    const dash = mlang.indexOf('-');
+    mlang = mlang.substring(0, dash === -1 ? mlang.length : dash);
+    if (modName !== 'LXX' && modType === C.BIBLE && /^grc$/i.test(mlang))
+      xulsword.greek.push(modName);
+    else if (
+      modType === C.BIBLE &&
       /^heb?$/i.test(mlang) &&
-      !/HebModern/i.test(name)
+      !/HebModern/i.test(modName)
     )
-      r.hebrew.push(name);
-    // up to line 156 of xulswordInit.js
+      xulsword.hebrew.push(modName);
+
+    // These Strongs feature modules do not have Strongs number keys, and so cannot be used
+    const notStrongsKeyed = new RegExp(
+      '^(AbbottSmith|InvStrongsRealGreek|InvStrongsRealHebrew)$',
+      'i'
+    );
+    if (!notStrongsKeyed.test(modName)) {
+      const feature = LibSword.getModuleInformation(modName, 'Feature');
+      Object.keys(sword).forEach((k) => {
+        const property = (k.substring(0, 1).toLowerCase +
+          k.substring(1)) as keyof typeof sword;
+        if (feature.search(k) !== -1) {
+          if (property === 'dailyDevotion') {
+            sword[property][modName] = 'DailyDevotionToday';
+          } else {
+            sword[property].push(modName);
+          }
+        }
+      });
+    }
   });
-*/
-  return r;
+
+  return { ...sword, ...xulsword };
 }

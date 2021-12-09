@@ -25,43 +25,15 @@ export function jsdump(msg: string | Error) {
   console.log(msg);
 }
 
-export function getModuleLongType(aModule: string): string | null {
-  if (aModule === C.ORIGINAL) return C.BIBLE;
-  const typeRE = new RegExp(
-    `(^|<nx>)\\s*${escapeRE(aModule)}\\s*;\\s*(.*?)\\s*(<nx>|$)`
-  );
+export function getModuleLongType(aModule: string): string | undefined {
   const moduleList = G.LibSword.getModuleList();
-  const m = moduleList.match(typeRE);
-  let type;
-  if (m !== null) [, , type] = m;
-  else type = null;
-
-  return type;
-}
-
-export function getAvailableBooks(version: string): string[] {
-  const books = [];
-  const type = C.BIBLE; // getModuleLongType(version);
-  if (type !== C.BIBLE && type !== C.COMMENTARY) return [];
-  for (let b = 0; b < G.Book.length; b += 1) {
-    if (type === C.BIBLE) {
-      const v1 = G.LibSword.getVerseText(
-        version,
-        `${G.Book[b].sName} 1:1`,
-        false
-      );
-      const v2 = G.LibSword.getVerseText(
-        version,
-        `${G.Book[b].sName} 1:2`,
-        false
-      );
-      if ((v1 && !v1.match(/^\s*-\s*$/)) || (v2 && !v2.match(/^\s*-\s*$/))) {
-        books.push(G.Book[b].sName);
-      }
-    }
-  }
-
-  return books;
+  if (moduleList === C.NOMODULES) return undefined;
+  return moduleList
+    .split('<nx>')
+    .find((m) => {
+      return m.startsWith(`${aModule};`);
+    })
+    ?.split(';')[1];
 }
 
 // Converts a dot book reference into readable text in the locale language.
@@ -374,7 +346,8 @@ export function parseLocation(
           book.modules.forEach((mod) => {
             if (stop) return;
             location.version = mod;
-            if (getAvailableBooks(mod).includes(code)) stop = true;
+            if (mod in G.AvailableBooks && G.AvailableBooks[mod].includes(code))
+              stop = true;
           });
         }
       } else {

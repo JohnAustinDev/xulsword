@@ -36,7 +36,7 @@ const propTypes = {
   n: PropTypes.number.isRequired,
   tabs: PropTypes.arrayOf(PropTypes.string).isRequired,
   ilModule: PropTypes.string,
-  ilModuleOption: PropTypes.string,
+  ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
   mtModule: PropTypes.string,
 };
 
@@ -49,7 +49,7 @@ interface TabsProps extends XulProps {
   n: number;
   tabs: string[];
   ilModule: string | undefined;
-  ilModuleOption: string | undefined;
+  ilModuleOption: (string | undefined)[];
   mtModule: string | undefined;
 }
 
@@ -89,18 +89,24 @@ class Tabs extends React.Component {
     if (!multiTabDone) this.checkTabWidth();
   }
 
-  getTab(m: string, type: string, classes: string, children: any = null) {
+  getTab(
+    m: string | undefined,
+    type: string,
+    classes: string,
+    children: any = null
+  ) {
     const { n } = this.props as TabsProps;
+    const tabType = !m || type === 'ilt-tab' ? C.BIBLE : G.Tab[m].tabType;
+    const label =
+      !m || type === 'ilt-tab' ? i18next.t('ORIGLabelTab') : G.Tab[m].label;
     return (
       <div
         key={`${type}_${n}_${m}`}
-        className={`${type} tab tab${G.Tab[m].tabType} ${classes}`}
+        className={`${type} tab tab${tabType} ${classes}`}
         data-module={m}
         data-wnum={n}
       >
-        <div className="tab-label">
-          {type === 'ilt-tab' ? i18next.t('ORIGLabelTab') : G.Tab[m].label}
-        </div>
+        <div className="tab-label">{label}</div>
         {children}
       </div>
     );
@@ -210,8 +216,8 @@ class Tabs extends React.Component {
             </Button>
           )}
         {!isPinned &&
-          ilModuleOption &&
-          this.getTab(ilModuleOption, 'ilt-tab', ilcls)}
+          (ilModule === 'disabled' || ilModuleOption[0]) &&
+          this.getTab(ilModuleOption[0], 'ilt-tab', ilcls)}
       </div>
     );
   }

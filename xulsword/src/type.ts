@@ -149,7 +149,8 @@ export const GPublic = {
   ModuleConfigs: 'readonly',
   ModuleConfigDefault: 'readonly',
   FontFaceConfigs: 'readonly',
-  ModuleFeature: 'readonly',
+  FeatureModules: 'readonly',
+  AvailableBooks: 'readonly',
 
   OPSYS: 'readonly',
 
@@ -174,7 +175,8 @@ export interface GType {
   ModuleConfigs: { [i: string]: ConfigType };
   ModuleConfigDefault: ConfigType;
   FontFaceConfigs: ConfigType[];
-  ModuleFeature: { [i: string]: string };
+  FeatureModules: { [i: string]: any };
+  AvailableBooks: { [i: string]: string[] };
 
   OPSYS: 'string';
 

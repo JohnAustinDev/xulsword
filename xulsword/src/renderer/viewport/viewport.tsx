@@ -13,7 +13,7 @@ import Chooser from './chooser';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Tabs from './tabs';
 import Atext from './atext';
-import { getAvailableBooks, jsdump } from '../rutil';
+import { jsdump } from '../rutil';
 import {
   xulClass,
   xulDefaultProps,
@@ -144,27 +144,53 @@ class Viewport extends React.Component {
     let availableBooks: any = [];
     const mod1 = modules[0] ? G.Tab[modules[0]] : null;
     if (mod1 && (mod1.modType === C.BIBLE || mod1.modType === C.COMMENTARY))
-      availableBooks = getAvailableBooks(mod1.modName);
+      availableBooks = G.AvailableBooks[mod1.modName];
 
     // Get interlinear module options
-    const ilModuleOptions = ['', '', ''];
+    const ilModuleOptions = [[''], [''], ['']];
+    const windowHasILOptions = [false, false, false];
     for (let x = 0; x < numDisplayedWindows; x += 1) {
-      if (modules[x] && book) {
+      const windowHasBible = tabs[x].some((t) => {
+        return t && G.Tab[t].modType === C.BIBLE;
+      });
+      if (windowHasBible && book) {
+        windowHasILOptions[x] =
+          G.FeatureModules.hebrew[0] || G.FeatureModules.greek[0];
         const bkinfo = findBookGroup(G, book);
         if (bkinfo && (bkinfo.group === 'ot' || bkinfo.group === 'nt')) {
           const ml =
-            G.ModuleFeature[bkinfo.group === 'nt' ? 'greek' : 'hebrew'];
-          if (ml) ilModuleOptions[x] = ml[0];
+            G.FeatureModules[bkinfo.group === 'nt' ? 'greek' : 'hebrew'];
+          if (ml.length) ilModuleOptions[x] = ml;
         }
       }
     }
 
-    // Disable/enable interlinear tabs as necessary
-    const ilMods = ilModules;
+    // Hide, disable or enable interlinear (ORIG) tabs.
+    // An interlinear tab is hidden if the window has no ilModuleOption (see logic above).
+    // Otherwise:
+    //   It is visible and disabled if selected module/bookGroup does not support ilModuleOption or if ilModule is the selected module.
+    //   It is visible and active if there is an ilModule and it is an ilModuleOption.
+    //   It is visible but inactive otherwise.
+    const ilMods = ilModules.slice();
     for (let x = 0; x < numDisplayedWindows; x += 1) {
-      const mod = modules[x];
-      if (!mod || G.Tab[mod].modType !== C.BIBLE) ilMods[x] = 'disabled';
-      else if (ilMods[x] === 'disabled') ilMods[x] = '';
+      ilMods[x] = ''; // visible and inactive (or hidden if no ilModuleOption)
+      let ilpref = ilModules[x];
+      if (ilpref === 'disabled') ilpref = undefined;
+      const selmod = modules[x];
+      if (
+        windowHasILOptions &&
+        (!ilModuleOptions[x] ||
+          (selmod && G.Tab[selmod].modType !== C.BIBLE) ||
+          (selmod && selmod === ilModuleOptions[x][0]))
+      ) {
+        ilMods[x] = 'disabled'; // visible and disabled
+      } else if (
+        ilpref &&
+        ilModuleOptions[x][0] &&
+        ilModuleOptions[x].includes(ilpref)
+      ) {
+        ilMods[x] = ilpref; // visible and active
+      }
     }
 
     // Figure out the number of columns that will be shown for each text
@@ -178,23 +204,24 @@ class Viewport extends React.Component {
       let ilModule = ilModules[x] === 'disabled' ? null : ilModules[x];
       const key = `${modules[x]} ${!!ilModules[x]} ${!!isPinned[x]}`;
       let f = x + 1;
-      let module = modules[f];
-      ilModule = ilModules[f] === 'disabled' ? null : ilModules[f];
-      while (
-        module &&
-        f < numDisplayedWindows &&
-        key === `${module} ${!!ilModule} ${!!isPinned[f]}`
-      ) {
+      for (;;) {
+        const module = modules[f];
+        ilModule = ilModules[f] === 'disabled' ? null : ilModules[f];
+        if (
+          !module ||
+          f === numDisplayedWindows ||
+          key !== `${module} ${!!ilModule} ${!!isPinned[f]}`
+        )
+          break;
         columns[x] += 1;
         columns[f] = 0;
         f += 1;
-        module = modules[f];
-        ilModule = ilModules[f] === 'disabled' ? null : ilModules[f];
       }
       x += f - x - 1;
     }
 
-    // Pin each tab bank of each multi-column text
+    // Pin each tab bank of multi-column texts (two or more tab
+    // banks are associated with any multi-column text).
     const isPinnedTabs = isPinned;
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       let c = columns[x] - 1;
@@ -242,7 +269,7 @@ class Viewport extends React.Component {
             {tabComps.map((i) => {
               return (
                 <Tabs
-                  key={`tbs_${id}${i}${resize}${tabs}${modules[i]}${ilModuleOptions[i]}`}
+                  key={`${i}${resize}${tabs}${modules.toString()}${ilModuleOptions.toString()}${isPinned.toString()}`}
                   handler={handler}
                   anid={id}
                   n={Number(i + 1)}

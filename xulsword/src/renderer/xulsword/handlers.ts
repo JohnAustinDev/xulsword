@@ -197,7 +197,7 @@ export function handleViewport(
           const atext = e.currentTarget as HTMLElement;
           const i = Number(atext.dataset.wnum) - 1;
           const c = ofClass(['show1', 'show2', 'show3'], atext);
-          const columns = c ? Number(c.type.substr(-1, 1)) : 1;
+          const columns = c ? Number(c.type.substring(c.type.length - 1)) : 1;
           this.setState((prevState: XulswordState) => {
             const { isPinned } = prevState;
             for (let x = i; x < columns + i; x += 1) {
@@ -276,9 +276,8 @@ export function handleViewport(
           const w = targ.element.dataset.wnum;
           const m = targ.element.dataset.module;
           const i = Number(w) - 1;
-          if (w && m && !state.isPinned[i]) {
+          if (w && m && m !== 'disabled' && !state.isPinned[i]) {
             if (targ.type === 'ilt-tab') {
-              if (m === 'disabled') return;
               this.setState((prevState: XulswordState) => {
                 const { ilModules } = prevState;
                 ilModules[i] = ilModules[i] ? '' : m;
