@@ -1,5 +1,4 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable react/no-did-update-set-state */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
@@ -57,8 +56,8 @@ const AtextOwnProps = {
   chapter: 0,
   verse: 0,
   lastverse: 0,
-  module: undefined,
-  ilModule: undefined,
+  module: '' as string | undefined,
+  ilModule: '' as string | undefined,
   modkey: '',
   flagHilight: 0,
   flagScroll: 0,

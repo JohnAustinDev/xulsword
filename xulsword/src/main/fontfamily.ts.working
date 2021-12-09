@@ -6,7 +6,7 @@ import { jsdump } from './mutil';
 export default function getFontFamily(fontpath: string) {
   const data = [];
 
-  const fd = fs.openSync(fontpath);
+  const fd = fs.openSync(fontpath, 'r');
   if (!fd) return null;
 
   let stop = false;
@@ -20,17 +20,17 @@ export default function getFontFamily(fontpath: string) {
   };
 
   // decimal to character
-  const chr = (val) => {
+  const chr = (val: number) => {
     return String.fromCharCode(val);
   };
 
   // unsigned short to decimal
-  const ushort = (b1, b2) => {
+  const ushort = (b1: number, b2: number) => {
     return 256 * b1 + b2;
   };
 
   // unsigned long to decimal
-  const ulong = (b1, b2, b3, b4) => {
+  const ulong = (b1: number, b2: number, b3: number, b4: number) => {
     return 16777216 * b1 + 65536 * b2 + 256 * b3 + b4;
   };
 

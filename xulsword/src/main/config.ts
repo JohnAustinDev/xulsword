@@ -11,7 +11,7 @@ import C from '../constant';
 import { deepClone } from '../common';
 import { jsdump } from './mutil';
 import nsILocalFile from './components/nsILocalFile';
-import getFontFamily from './fontfamily';
+// import getFontFamily from './fontfamily';
 
 // Config's properties are all the properties which Config type objects will have.
 // The Config property objects map the property for its various uses:
@@ -161,7 +161,7 @@ export function getFontFaceConfigs() {
   });
 
   for (let i = 0; i < fonts.length; i += 1) {
-    const fontFamily = getFontFamily(fonts[i]);
+    const fontFamily = null; // getFontFamily(fonts[i]);
     if (fontFamily) {
       ret[fontFamily] = `file://${fonts[i]}`;
       if (process.platform === 'win32')
