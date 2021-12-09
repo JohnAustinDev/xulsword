@@ -30,33 +30,33 @@ import './chooser.css';
 // XUL stack
 const defaultProps = {
   ...xulDefaultProps,
-  availableBooks: ['Gen'],
   bookGroups: ['ot', 'nt'],
   handler: undefined,
   headingsModule: undefined,
+  booksModule: undefined,
   hideUnavailableBooks: false,
-  selection: 'Gen',
+  selection: '',
   type: 'bible',
-  versification: 'KJV',
+  versification: '',
 };
 
 const propTypes = {
   ...xulPropTypes,
-  availableBooks: PropTypes.arrayOf(PropTypes.string),
   bookGroups: PropTypes.arrayOf(PropTypes.string),
-  handler: PropTypes.func,
+  handler: PropTypes.func.isRequired,
   headingsModule: PropTypes.string,
+  booksModule: PropTypes.string,
   hideUnavailableBooks: PropTypes.bool,
-  selection: PropTypes.string,
-  type: PropTypes.oneOf(['bible', 'genbook', 'none']),
-  versification: PropTypes.string,
+  selection: PropTypes.string.isRequired,
+  type: PropTypes.oneOf(['bible', 'genbook', 'none']).isRequired,
+  versification: PropTypes.string.isRequired,
 };
 
 interface ChooserProps extends XulProps {
-  availableBooks: string[];
   bookGroups: string[];
   handler: (e: any) => void;
   headingsModule: string | undefined;
+  booksModule: string | undefined;
   hideUnavailableBooks: boolean;
   selection: string;
   type: string;
@@ -284,7 +284,6 @@ class Chooser extends React.Component {
 
     const elements = [];
     let ch = 1;
-    // getMaxChapter should take a v11n! Until then must use KJV
     const lastch = G.LibSword.getMaxChapter(versification, book);
     for (let row = 1; row <= 1 + lastch / 10; row += 1) {
       const cells = [];
@@ -368,10 +367,11 @@ class Chooser extends React.Component {
 
   render() {
     const props = this.props as ChooserProps;
-    const { availableBooks, selection, type } = this.props as ChooserProps;
+    const { booksModule, selection, type } = this.props as ChooserProps;
     const { bookGroup, slideIndex } = this.state as ChooserState;
-    const rowHeight = this.slideReady ? this.rowHeight : 0;
     if (type === 'none') return [];
+    const rowHeight = this.slideReady ? this.rowHeight : 0;
+    const availableBooks = booksModule ? G.AvailableBooks[booksModule] : [];
     return (
       <div {...htmlAttribs(`chooser ${type}`, this.props)}>
         <Vbox height="100%">

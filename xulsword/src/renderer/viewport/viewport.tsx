@@ -51,11 +51,12 @@ const propTypes = {
   maximizeNoteBox: PropTypes.arrayOf(PropTypes.number).isRequired,
   showChooser: PropTypes.bool.isRequired,
 
-  numDisplayedWindows: PropTypes.number,
-  ownWindow: PropTypes.bool,
-  chooser: PropTypes.string,
+  numDisplayedWindows: PropTypes.number.isRequired,
+  ownWindow: PropTypes.bool.isRequired,
+  chooser: PropTypes.string.isRequired,
+  versification: PropTypes.string,
 
-  handler: PropTypes.func,
+  handler: PropTypes.func.isRequired,
 };
 
 interface ViewportProps extends XulProps {
@@ -80,6 +81,7 @@ interface ViewportProps extends XulProps {
   numDisplayedWindows: number;
   ownWindow: boolean;
   chooser: string;
+  versification: string | undefined;
 
   handler: (e: any) => void;
 }
@@ -138,13 +140,21 @@ class Viewport extends React.Component {
       showChooser,
       numDisplayedWindows,
       ownWindow,
+      versification,
     } = this.props as ViewportProps;
     const { resize } = this.state as ViewportState;
 
-    let availableBooks: any = [];
-    const mod1 = modules[0] ? G.Tab[modules[0]] : null;
-    if (mod1 && (mod1.modType === C.BIBLE || mod1.modType === C.COMMENTARY))
-      availableBooks = G.AvailableBooks[mod1.modName];
+    const firstBible = modules.find((m, i) => {
+      return i < numDisplayedWindows && m && G.Tab[m].modType === C.BIBLE;
+    });
+
+    const firstBibleOrCommentary = modules.find((m, i) => {
+      return (
+        i < numDisplayedWindows &&
+        m &&
+        (G.Tab[m].modType === C.BIBLE || G.Tab[m].modType === C.COMMENTARY)
+      );
+    });
 
     // Get interlinear module options
     const ilModuleOptions = [[''], [''], ['']];
@@ -165,7 +175,7 @@ class Viewport extends React.Component {
       }
     }
 
-    // Hide, disable or enable interlinear (ORIG) tabs.
+    // Hide, disable or enable interlinear (ORIG) tabs:
     // An interlinear tab is hidden if the window has no ilModuleOption (see logic above).
     // Otherwise:
     //   It is visible and disabled if selected module/bookGroup does not support ilModuleOption or if ilModule is the selected module.
@@ -201,16 +211,18 @@ class Viewport extends React.Component {
       const mod = modules[x];
       const modType = mod && G.Tab[mod] ? G.Tab[mod].modType : null;
       if (!modType || modType === C.DICTIONARY) continue;
-      let ilModule = ilModules[x] === 'disabled' ? null : ilModules[x];
-      const key = `${modules[x]} ${!!ilModules[x]} ${!!isPinned[x]}`;
+      let ilActive =
+        !!ilModuleOptions[x][0] && !!ilMods[x] && ilMods[x] !== 'disabled';
+      const key = `${modules[x]} ${ilActive} ${!!isPinned[x]}`;
       let f = x + 1;
       for (;;) {
         const module = modules[f];
-        ilModule = ilModules[f] === 'disabled' ? null : ilModules[f];
+        ilActive =
+          !!ilModuleOptions[f][0] && !!ilMods[f] && ilMods[f] !== 'disabled';
         if (
           !module ||
           f === numDisplayedWindows ||
-          key !== `${module} ${!!ilModule} ${!!isPinned[f]}`
+          key !== `${module} ${ilActive} ${!!isPinned[f]}`
         )
           break;
         columns[x] += 1;
@@ -257,9 +269,9 @@ class Viewport extends React.Component {
             handler={handler}
             type={chooser}
             selection={book}
-            headingsModule={modules[0]}
-            versification="KJV"
-            availableBooks={availableBooks}
+            headingsModule={firstBible}
+            booksModule={firstBibleOrCommentary}
+            versification={versification}
             onClick={handler}
           />
         )}

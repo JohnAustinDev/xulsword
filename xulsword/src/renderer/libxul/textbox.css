@@ -38,6 +38,5 @@
 
 .textbox.disabled {
   cursor: default;
-  background-color: grey;
   color: GrayText;
 }

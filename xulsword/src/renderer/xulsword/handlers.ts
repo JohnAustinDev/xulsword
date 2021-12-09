@@ -15,16 +15,30 @@ export function xulswordHandler(this: Xulsword, e: React.SyntheticEvent<any>) {
         case 'back':
           this.setHistory(state.historyIndex + 1);
           break;
-        case 'historymenu':
+        case 'historymenu': {
           e.stopPropagation();
-          this.setState((prevState: XulswordState) => {
-            return {
-              historyMenupopup: prevState.historyMenupopup
-                ? undefined
-                : this.historyMenu(),
-            };
+          const v11nmod = state.modules.find((m, i) => {
+            return (
+              i < state.numDisplayedWindows &&
+              m &&
+              (G.Tab[m].modType === C.BIBLE ||
+                G.Tab[m].modType === C.COMMENTARY)
+            );
           });
+          const versification = v11nmod
+            ? G.LibSword.getVerseSystem(v11nmod)
+            : undefined;
+          if (versification) {
+            this.setState((prevState: XulswordState) => {
+              return {
+                historyMenupopup: prevState.historyMenupopup
+                  ? undefined
+                  : this.historyMenu(versification),
+              };
+            });
+          }
           break;
+        }
         case 'forward':
           this.setHistory(state.historyIndex - 1);
           break;
@@ -188,6 +202,7 @@ export function handleViewport(
         t
       );
       if (targ === null) return;
+      e.preventDefault();
       switch (targ.type) {
         case 'text-win': {
           G.Commands.openTextWindow();
