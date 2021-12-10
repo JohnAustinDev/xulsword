@@ -194,10 +194,10 @@ export function findBookNum(
   } else {
     for (
       let b = 0;
-      typeof G.Book !== 'undefined' && b < G.Book.length;
+      typeof G.Books !== 'undefined' && b < G.Books.length;
       b += 1
     ) {
-      if (G.Book[b].sName === code) {
+      if (G.Books[b].sName === code) {
         retv = b;
       }
     }
@@ -230,8 +230,8 @@ export function findBookGroup(
 
 // Returns the number of a given long book name
 function findBookNumL(G: GType, bText: string | null): number | null {
-  for (let b = 0; b < G.Book.length; b += 1) {
-    if (G.Book[b].bNameL === bText) {
+  for (let b = 0; b < G.Books.length; b += 1) {
+    if (G.Books[b].bNameL === bText) {
       return b;
     }
   }
@@ -244,6 +244,7 @@ function findBookNumL(G: GType, bText: string | null): number | null {
 // because it's faster. NOTE: This function scrubs out all Javascript
 // as well as non-standard HTML attributes.
 export function sanitizeHTML(parent: HTMLElement, html: string) {
+  parent.innerHTML = html;
   return parent;
   /*
   while (parent.firstChild) {

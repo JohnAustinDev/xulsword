@@ -227,7 +227,7 @@ export function handleViewport(
           const b = m ? firstIndexOfBookGroup(m[1]) : null;
           if (b !== null) {
             this.setState({
-              book: G.Book[b].sName,
+              book: G.Books[b].sName,
               chapter: 1,
               verse: 1,
               lastverse: 1,

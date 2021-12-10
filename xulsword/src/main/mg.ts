@@ -17,7 +17,7 @@ import {
   getFeatureModules,
 } from './config';
 import { jsdump, resolveHtmlPath } from './mutil';
-import { GType, GPublic, TabType } from '../type';
+import { GType, GPublic, TabType, BookType } from '../type';
 import C from '../constant';
 import { isASCII } from '../common';
 import nsILocalFile from './components/nsILocalFile';
@@ -32,6 +32,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
 
   // Permanently store references for use by getters
   refs: {
+    Books: () => getBooks(),
     Book: () => getBook(),
     Tabs: () => getTabs(),
     Tab: () => getTab(),
@@ -120,7 +121,8 @@ const allBooks = ["Gen", "Exod", "Lev", "Num", "Deut", "Josh", "Judg",
     "1Pet", "2Pet", "1John", "2John", "3John", "Jude", "Rev"];
 /* eslint-enable prettier/prettier */
 
-function getBook(): { sName: string; bName: string; bNameL: string }[] {
+const Book: { [i: string]: BookType } = {};
+function getBooks(): { sName: string; bName: string; bNameL: string }[] {
   // default book order is KJV
 
   const book = [];
@@ -178,10 +180,18 @@ function getBook(): { sName: string; bName: string; bNameL: string }[] {
     if (key in data) book[i].bNameL = data[key];
   }
 
+  for (i = 0; i < allBooks.length; i += 1) {
+    Book[allBooks[i]] = book[i];
+  }
+
   return book;
 }
 
-const Tab: { [i: string]: any } = {};
+function getBook() {
+  return Book;
+}
+
+const Tab: { [i: string]: TabType } = {};
 function getTabs() {
   const tabs: TabType[] = [];
   const modlist: any = LibSwordx.getModuleList();

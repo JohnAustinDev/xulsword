@@ -104,7 +104,7 @@ class Viewport extends React.Component {
 
     window.ipc.renderer.on(
       'resize',
-      delayHandler.call(
+      delayHandler(
         this,
         () => {
           this.setState((prevState: ViewportState) => {

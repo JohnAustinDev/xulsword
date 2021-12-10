@@ -96,7 +96,7 @@ class Tabs extends React.Component {
     children: any = null
   ) {
     const { n } = this.props as TabsProps;
-    const tabType = !m || type === 'ilt-tab' ? C.BIBLE : G.Tab[m].tabType;
+    const tabType = !m || type === 'ilt-tab' ? 'Texts' : G.Tab[m].tabType;
     const label =
       !m || type === 'ilt-tab' ? i18next.t('ORIGLabelTab') : G.Tab[m].label;
     return (

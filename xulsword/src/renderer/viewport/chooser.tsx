@@ -16,6 +16,8 @@ import {
   dString,
   findBookGroup,
   findBookNum,
+  ofClass,
+  sanitizeHTML,
 } from '../../common';
 import {
   xulDefaultProps,
@@ -91,6 +93,8 @@ class Chooser extends React.Component {
 
   slideReady: boolean;
 
+  delayHandlerTO: NodeJS.Timeout | undefined;
+
   constructor(props: ChooserProps) {
     super(props);
 
@@ -122,6 +126,8 @@ class Chooser extends React.Component {
     this.sliderHeight = sh;
 
     this.groupBarMouseOver = this.groupBarMouseOver.bind(this);
+    this.chapterMouseOver = this.chapterMouseOver.bind(this);
+    this.chapterMouseOut = this.chapterMouseOut.bind(this);
     this.startSlidingUp = this.startSlidingUp.bind(this);
     this.startSlidingDown = this.startSlidingDown.bind(this);
     this.stopSliding = this.stopSliding.bind(this);
@@ -166,13 +172,110 @@ class Chooser extends React.Component {
     const bg = e.target.className.match(/\bbookgroup_(.+?)\b/);
     if (!bg || !bookGroups.includes(bg[1])) return;
     if (this.state === bg[1]) return;
-    delayHandler.call(
+    delayHandler(
       this,
       () => {
         this.setState({ bookGroup: bg[1] });
       },
       300
     )(e);
+  };
+
+  chapterMouseOver = (e: any) => {
+    const cell = ofClass('chaptermenucell', e.target);
+    const chapterMenu = ofClass('chaptermenu', e.target);
+    if (!cell || !chapterMenu) return;
+    const { book, chapter } = cell.element.dataset;
+    if (!book || !chapter) return;
+    const { headingsModule } = this.props as ChooserProps;
+    if (!headingsModule) return;
+
+    const headingmenu = document.getElementsByClassName(
+      `hdm-${book}`
+    )[0] as HTMLElement;
+
+    while (headingmenu.firstChild) {
+      headingmenu.removeChild(headingmenu.firstChild);
+    }
+
+    // Set LibSword options and read chapter
+    G.LibSword.setGlobalOption('Headings', 'On');
+    G.LibSword.setGlobalOption('Verse Numbers', 'On');
+
+    // Regex gets array of headings and their following verse tags
+    const hdplus =
+      /<h\d[^>]*class="head1[^"]*"[^>]*>.*?<\/h\d>.*?<sup[^>]*>\d+<\/sup>/gim;
+
+    // Regex parses heading from array member strings
+    const hd = /<h\d([^>]*class="head1[^"]*"[^>]*>)(.*?)<\/h\d>/i;
+
+    // Rexgex parses verse number from array member strings
+    const vs = /<sup[^>]*>(\d+)<\/sup>/i; // Get verse from above
+
+    const chtxt = G.LibSword.getChapterText(
+      headingsModule,
+      `${G.Book[book].sName}.${chapter}`
+    );
+
+    const head = chtxt.match(hdplus);
+
+    if (head) {
+      let hr = false;
+      for (let x = 0; x < head.length; x += 1) {
+        const h = head[x];
+        if (h) {
+          const mh = h.match(hd);
+          const mv = h.match(vs);
+          if (mh && mv) {
+            const [, tag, txt] = mh;
+            const [, verse] = mv;
+            const text = txt.replace(/<[^>]*>/g, '');
+            if (tag && text && !/^\s*$/.test(text)) {
+              const heading = document.createElement('div');
+              sanitizeHTML(heading, text);
+              heading.classList.add('heading-link');
+              if (hr) headingmenu.appendChild(document.createElement('hr'));
+              const a = headingmenu.appendChild(document.createElement('a'));
+              a.className = `heading-link cs-${headingsModule}`;
+              a.id = `headlink_${G.Book[book].sName}_${chapter}_${verse}_${headingsModule}`;
+              a.appendChild(heading);
+              hr = true;
+            }
+          }
+        }
+      }
+    }
+
+    // If headings were found, then display them inside the popup
+    if (headingmenu.childNodes.length) {
+      const row = chapterMenu.element.firstChild as HTMLElement;
+      if (row) {
+        headingmenu.style.top = `${Number(
+          -2 + (1 + Math.floor((Number(chapter) - 1) / 10)) * row.offsetHeight
+        )}px`;
+        chapterMenu.element.classList.add('show');
+      }
+    }
+
+    // Return LibSword options to original state
+    G.LibSword.setGlobalOption(
+      'Headings',
+      G.Prefs.getBoolPref('xulsword.showHeadings') ? 'On' : 'Off'
+    );
+    G.LibSword.setGlobalOption(
+      'Verse Numbers',
+      G.Prefs.getBoolPref('xulsword.showVerseNums') ? 'On' : 'Off'
+    );
+  };
+
+  chapterMouseOut = (e: any) => {
+    const cell = ofClass('chaptermenucell', e.target);
+    const menu = ofClass('chaptermenu', e.target);
+    if (!cell && !menu) return;
+    if (this.delayHandlerTO) clearTimeout(this.delayHandlerTO);
+    if (ofClass('headingmenu', e.relatedTarget)) return;
+    if (menu?.element && menu.element.classList.contains('show'))
+      menu.element.classList.remove('show');
   };
 
   checkScroll = (e: any) => {
@@ -277,12 +380,10 @@ class Chooser extends React.Component {
   };
 
   chapterMenu = (book: string) => {
-    const { versification } = this.props as ChooserProps;
-
+    const { headingsModule, versification } = this.props as ChooserProps;
     const k = `${versification}_${book}`;
     if (Chooser.cache[k]) return Chooser.cache[k];
-
-    const elements = [];
+    const chmenuRows = [];
     let ch = 1;
     const lastch = G.LibSword.getMaxChapter(versification, book);
     for (let row = 1; row <= 1 + lastch / 10; row += 1) {
@@ -293,8 +394,10 @@ class Chooser extends React.Component {
         if (ch <= lastch) {
           cells.push(
             <div
-              key={`1${key}`}
-              className={`chaptermenucell cs-Program chmc_${book}_${ch}`}
+              key={`${key}${headingsModule}`}
+              data-book={book}
+              data-chapter={ch}
+              className="chaptermenucell cs-Program"
             >
               {dString(ch)}
             </div>
@@ -304,14 +407,22 @@ class Chooser extends React.Component {
         }
         ch += 1;
       }
-      elements.push(
+      chmenuRows.push(
         <div key={`3${key}`} className="chaptermenurow">
           {cells}
         </div>
       );
-      elements.push(<div key={`4${key}`} className="headingmenu" />);
     }
-    Chooser.cache[k] = elements;
+    Chooser.cache[k] = (
+      <div
+        className="chaptermenu"
+        onMouseOver={delayHandler(this, this.chapterMouseOver, 500)}
+        onMouseOut={this.chapterMouseOut}
+      >
+        {chmenuRows}
+        <div className={`headingmenu hdm-${book}`} />
+      </div>
+    );
 
     return Chooser.cache[k];
   };
@@ -330,9 +441,10 @@ class Chooser extends React.Component {
           ? 'sizer'
           : 'bookname';
 
+      // TODO! findBookNum should take a v11n and return books in versification order
       const b = findBookNum(G, bookGroup, i);
       if (b === null) break;
-      const bk = G.Book[b];
+      const bk = G.Books[b];
       const classes = [
         'bookname',
         `${type}_${bk.sName}`,
@@ -352,9 +464,7 @@ class Chooser extends React.Component {
               {type === 'bookname' && (
                 <>
                   <div className="charrow" />
-                  <div id={`chmenu_${bookGroup}_${i}`} className="chaptermenu">
-                    {this.chapterMenu(bk.sName)}
-                  </div>
+                  {this.chapterMenu(bk.sName)}
                 </>
               )}
             </div>

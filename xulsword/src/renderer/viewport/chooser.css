@@ -268,7 +268,10 @@ html.chromedir-rtl .chooser .chaptermenu {
   border-radius: 6px;
   z-index: 60;
 }
-.chooser a .nohead {
+.chooser .chaptermenu.show .headingmenu {
+  visibility: visible;
+}
+.chooser a .heading-link {
   color: blue;
 }
 .chooser .heading-link:hover {

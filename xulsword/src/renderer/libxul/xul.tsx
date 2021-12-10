@@ -195,18 +195,17 @@ export const propd = (defVal: any, value: any) => {
   return value !== undefined ? value : defVal;
 };
 
-// Delay an event handler by ms milliseconds and any previously scheduled
-// handler call will be cancelled if called like this:
-// delayHandler.call(this, callback, ms)
+// Delay event handling by ms milliseconds with a single
+// (most recent) event being handled after the delay.
 export function delayHandler(
-  this: any,
+  caller: any,
   callback: (...args: any) => void,
   ms: number | string
 ) {
   return (...args: any[]) => {
-    clearTimeout(this.delayHandlerTO);
-    this.delayHandlerTO = setTimeout(() => {
-      callback.call(this, ...args);
+    clearTimeout(caller.delayHandlerTO);
+    caller.delayHandlerTO = setTimeout(() => {
+      callback.call(caller, ...args);
     }, Number(ms) || 0);
   };
 }

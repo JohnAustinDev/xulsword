@@ -140,6 +140,7 @@ export const CommandsPublic = {
 //  cleared by G.reset().
 export const GPublic = {
   // Global data for read only use
+  Books: 'readonly',
   Book: 'readonly',
   Tabs: 'readonly',
   Tab: 'readonly',
@@ -166,7 +167,8 @@ export const GPublic = {
 };
 
 export interface GType {
-  Book: BookType[];
+  Books: BookType[];
+  Book: { [i: string]: BookType };
   Tabs: TabType[];
   Tab: { [i: string]: TabType };
 

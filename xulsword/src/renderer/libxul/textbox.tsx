@@ -116,7 +116,7 @@ class Textbox extends React.Component {
     ) {
       this.setState({ value: e.target.value });
       if (timeout && typeof onChange === 'function') {
-        delayHandler.call(this, (evt) => onChange(evt), timeout)(e);
+        delayHandler(this, (evt) => onChange(evt), timeout)(e);
         e.stopPropagation();
       }
     } else {

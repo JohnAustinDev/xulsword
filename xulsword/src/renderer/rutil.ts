@@ -59,7 +59,7 @@ export function dosString2LocaleString(ref: string, notHTML: boolean): string {
   if (vs && lv && vs === lv) lv = '';
   const bki = findBookNum(G, bk);
   if (bki === null) return ret;
-  ret = `${dc}${G.Book[bki].bName}`;
+  ret = `${dc}${G.Books[bki].bName}`;
   if (ch) {
     ret += `${dc} ${ch}`;
     if (vs) {
@@ -219,9 +219,9 @@ function compareAgainstLocale(
 ): number {
   const toptions = { lng: bookInfo.locale, ns: 'common/books' };
   let count = 0;
-  for (let i = 0; i < G.Book.length; i += 1) {
-    const keys = [G.Book[i].sName, `Long${G.Book[i].sName}`];
-    if (!noVariations) keys.push(`${G.Book[i].sName}Variations`);
+  for (let i = 0; i < G.Books.length; i += 1) {
+    const keys = [G.Books[i].sName, `Long${G.Books[i].sName}`];
+    if (!noVariations) keys.push(`${G.Books[i].sName}Variations`);
     const list = keys.map((k) => {
       const r = i18next.t(k, toptions);
       return !r ? null : r.split(/\s*,\s*/);
@@ -230,7 +230,7 @@ function compareAgainstLocale(
     if (compareAgainstList(inbook, list, exact)) {
       const am = G.LocaleConfigs[bookInfo.locale].AssociatedModules;
 
-      bookInfo.bookCode = G.Book[i].sName;
+      bookInfo.bookCode = G.Books[i].sName;
       bookInfo.modules = am === C.NOTFOUND ? [] : am.split(/\s*,\s*/);
 
       count += 1;
