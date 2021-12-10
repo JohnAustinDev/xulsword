@@ -1,3 +1,0 @@
-component {06d08b00-8b27-11df-a4ee-0800200c9a66} xscommandline.js
-contract @mozilla.org/commandlinehandler/xs-startup;1?type=xulsword {06d08b00-8b27-11df-a4ee-0800200c9a66}
-category command-line-handler m-a-xulsword @mozilla.org/commandlinehandler/xs-startup;1?type=xulsword
