@@ -10,7 +10,7 @@
   },
   "main": "libsword.js",
   "scripts": {
-    "test": "node ../xul/content/test/xulswordTest.js"
+    "test": "node ./test/xulswordTest.js"
   },
   "gypfile": true,
   "license": "ISC"
