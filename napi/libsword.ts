@@ -2,12 +2,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
 /* eslint-disable new-cap */
-import { LibSwordPublic } from 'type';
-import C from 'constant';
-import nsILocalFile from '../../main/components/nsILocalFile';
-import Dirs from '../../main/modules/dirs';
-import Prefs from '../../main/modules/prefs';
-import { jsdump } from '../../main/mutil';
+import { LibSwordPublic } from '../src/type';
+import C from '../src/constant';
+import nsILocalFile from '../src/main/components/nsILocalFile';
+import Dirs from '../src/main/modules/dirs';
+import Prefs from '../src/main/modules/prefs';
+import { jsdump } from '../src/main/mutil';
 
 /*
 This LibSword object is used to access all SWORD engine capabilities

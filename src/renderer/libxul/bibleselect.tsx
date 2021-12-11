@@ -5,7 +5,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import C from 'constant';
+import C from '../../constant';
 import { xulClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import Bookselect from './bookselect';
 import { Hbox } from './boxes';

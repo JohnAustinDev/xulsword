@@ -2,10 +2,10 @@
 /* eslint-disable new-cap */
 import path from 'path';
 import i18next from 'i18next';
-import C from 'constant';
-import { ConfigType, GType } from 'type';
-import { deepClone } from 'common';
-import LibSword from 'libsword';
+import LibSword from '../../napi/libsword';
+import C from '../constant';
+import { ConfigType, GType } from '../type';
+import { deepClone } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import { jsdump } from './mutil';

@@ -9,8 +9,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import C from 'constant';
-import { findBookGroup } from 'common';
+import C from '../../constant';
+import { findBookGroup } from '../../common';
 import Chooser from './chooser';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Tabs from './tabs';

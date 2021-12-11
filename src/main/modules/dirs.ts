@@ -2,8 +2,8 @@
 /* eslint-disable new-cap */
 import { app } from 'electron';
 import path from 'path';
-import C from 'constant';
-import { DirsDirectories, DirsPublic } from 'type';
+import C from '../../constant';
+import { DirsDirectories, DirsPublic } from '../../type';
 import nsILocalFile from '../components/nsILocalFile';
 
 const Dirs = { path: {} } as typeof DirsPublic;

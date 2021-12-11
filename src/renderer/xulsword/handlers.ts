@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-loop-func */
-import C from 'constant';
-import { firstIndexOfBookGroup, ofClass } from 'common';
+import C from '../../constant';
+import { firstIndexOfBookGroup, ofClass } from '../../common';
 import { jsdump, parseLocation } from '../rutil';
 import G from '../rg';
 // eslint-disable-next-line import/no-cycle

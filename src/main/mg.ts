@@ -4,10 +4,10 @@
 import path from 'path';
 import fs from 'fs';
 import { Menu } from 'electron';
-import { GType, GPublic, TabType, BookType } from 'type';
-import C from 'constant';
-import { isASCII } from 'common';
-import LibSwordx from 'libsword';
+import { GType, GPublic, TabType, BookType } from '../type';
+import LibSwordx from '../../napi/libsword';
+import C from '../constant';
+import { isASCII } from '../common';
 import Dirsx from './modules/dirs';
 import Prefsx from './modules/prefs';
 import Commandsx from './commands';

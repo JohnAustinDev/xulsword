@@ -6,8 +6,8 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import C from 'constant';
-import { compareObjects, ofClass } from 'common';
+import C from '../../constant';
+import { compareObjects, ofClass } from '../../common';
 import {
   xulDefaultProps,
   xulPropTypes,

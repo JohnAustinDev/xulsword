@@ -1,4 +1,4 @@
-import { escapeRE } from 'common';
+import { escapeRE } from '../../common';
 import nsILocalFile from '../components/nsILocalFile';
 
 export function readParamFromConf(nsIFileConf: nsILocalFile, param: string) {

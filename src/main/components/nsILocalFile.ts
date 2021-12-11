@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import fs from 'fs';
 import path from 'path';
-import C from 'constant';
+import C from '../../constant';
 
 export default class nsILocalFile {
   // The file system location for this nsILocalFile instance.

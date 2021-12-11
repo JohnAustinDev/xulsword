@@ -8,8 +8,8 @@ import React from 'react';
 import { render } from 'react-dom';
 import { Translation } from 'react-i18next';
 import i18next from 'i18next';
-import { dString } from 'common';
-import C from 'constant';
+import { dString } from '../../common';
+import C from '../../constant';
 import i18nInit from '../i18n';
 import {
   convertDotString,

@@ -9,9 +9,9 @@ import {
   MenuItemConstructorOptions,
   MenuItem,
 } from 'electron';
-import C from 'constant';
 import i18next from 'i18next';
 import path from 'path';
+import C from '../constant';
 import Commands from './commands';
 import G from './mg';
 

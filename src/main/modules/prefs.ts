@@ -2,7 +2,7 @@
 /* eslint-disable new-cap */
 import path from 'path';
 import fs from 'fs';
-import { PrefsPublic } from 'type';
+import { PrefsPublic } from '../../type';
 import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import { jsdump } from '../mutil';

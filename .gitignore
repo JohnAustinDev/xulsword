@@ -14,8 +14,6 @@ coverage
 # Dependency directory
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
-!src/node_modules/
-src/node_modules/libsword/build
 
 # OSX
 .DS_Store
@@ -54,3 +52,5 @@ Cpp/windows/compiled.txt
 .DS_Store
 test-driver
 XUL.framework
+
+napi/build

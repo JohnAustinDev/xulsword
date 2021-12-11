@@ -1,8 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/prefer-default-export */
 import i18next from 'i18next';
-import C from 'constant';
-import { dString, escapeRE, findBookNum, guiDirection, iString } from 'common';
+import C from '../constant';
+import {
+  dString,
+  escapeRE,
+  findBookNum,
+  guiDirection,
+  iString,
+} from '../common';
 import G from './rg';
 
 interface LocObject {

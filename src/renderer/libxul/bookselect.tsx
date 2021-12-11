@@ -7,7 +7,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { BookType } from 'type';
+import { BookType } from '../../type';
 import Tooltip from './tooltip';
 import {
   xulClass,

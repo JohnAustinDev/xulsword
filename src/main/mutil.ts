@@ -2,7 +2,7 @@
 /* eslint import/prefer-default-export: off, import/no-mutable-exports: off */
 import { URL } from 'url';
 import path from 'path';
-import C from 'constant';
+import C from '../constant';
 import nsILocalFile from './components/nsILocalFile';
 
 // creates only allowable file types

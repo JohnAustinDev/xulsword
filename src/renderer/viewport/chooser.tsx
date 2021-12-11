@@ -16,7 +16,7 @@ import {
   findBookNum,
   ofClass,
   sanitizeHTML,
-} from 'common';
+} from '../../common';
 import G from '../rg';
 import { Hbox, Vbox } from '../libxul/boxes';
 import {
