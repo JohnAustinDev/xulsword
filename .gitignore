@@ -1,0 +1,56 @@
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Coverage directory used by tools like istanbul
+coverage
+.eslintcache
+
+# Dependency directory
+# https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
+node_modules
+!src/node_modules/
+src/node_modules/libsword/build
+
+# OSX
+.DS_Store
+
+build/app/dist
+build/release
+.erb/dll
+
+.idea
+npm-debug.log.*
+*.css.d.ts
+*.sass.d.ts
+*.scss.d.ts
+
+*.missing.*
+
+*-console.log
+.vagrant
+Cpp/sword
+Cpp/zlib
+Cpp/clucene
+Cpp/build
+Cpp/install
+
+# For Windows...
+Cpp/cluceneMK/windows/lib/Release/
+Cpp/src/include/appInfo.h
+Cpp/swordMK/windows/lib/Release/
+Cpp/windows/Release/
+Cpp/windows/Versions.bat
+Cpp/windows/startup/Release/
+Cpp/windows/cdrun/Release/
+Cpp/windows/compiled.txt
+
+# For MAC
+.DS_Store
+test-driver
+XUL.framework
