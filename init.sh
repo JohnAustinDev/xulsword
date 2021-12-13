@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# This script checks the necessary dependencies and builds xulsword
+# This script installs dependencies and builds the libxulsword 
+# dynamic library and libxulsword native node-module.
 
 if [[ $EUID -eq 0 ]]; then
    echo "This script should not be run as root. Exiting..." 
@@ -60,7 +61,6 @@ export NVM_DIR="$HOME/.nvm"
 nvm install --lts
 nvm use node
 npm i --global yarn
-yarn
 
 # Create a local Cpp installation directory
 if [ ! -e "$XULSWORD/Cpp/install" ]; then  mkdir "$XULSWORD/Cpp/install"; fi
@@ -139,54 +139,10 @@ if [ ! -e "$XULSWORD/Cpp/build" ]; then
   make
 fi
 
-exit
+# Set LD_LIBRARY_PATH for the libxulsword node-module build which currently requires it
+LD_LIBRARY_PATH="$XULSWORD/Cpp/build"
 
-# THIS SECTION TO BE REMOVED: Install xulrunner locally
-if [ ! -e "$XULSWORD/xulrunner" ]; then
-  xulrunnerRev=41.0b9
-  cd "$XULSWORD"
-  if [ $(uname | grep Darwin) ]; then
-    xulrunner=xulrunner-$xulrunnerRev.en-US.mac.tar.bz2
-  else
-    xulrunner=xulrunner-$xulrunnerRev.en-US.linux-$(uname -m).tar.bz2
-  fi
-  curl -o $xulrunner http://ftp.mozilla.org/pub/mozilla.org/xulrunner/releases/$xulrunnerRev/runtimes/$xulrunner
-  tar -xf $xulrunner
-  rm $xulrunner
-fi
+# Now initialize node.js
+cd "$XULSWORD"
+yarn
 
-if [ "$CONTEXT" = "xsguest" ]; then 
-  # On VM: Start with a clean build-out
-  rm -rf "$XULSWORD/build-out"
-fi
-
-# THIS SECTION TO BE REPLACED BY ELECTRON BUILD: BUILD XULSWORD
-if [ ! -e "$XULSWORD/sword" ]; then mkdir "$XULSWORD/sword"; fi
-if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
-  "$XULSWORD/$EXTRAS/build_MK.sh"
-  cd "$XULSWORD/build"
-  "./build.pl" "$XULSWORD/$EXTRAS/loc_MK.txt"
-else
-  cd "$XULSWORD/build"
-  "./build.pl"
-fi
-
-if [ "$CONTEXT" = "xsguest" ]; then
-  # On VM: Copy build-out result to host
-  cp -rf "$XULSWORD/build-out" /vagrant
-fi
-
-if [ "$CONTEXT" = "xsguest" ]; then
-  # On VM: Start xulsword GUI
-  # must also have this installed to run xulsword GUI
-  if [[ "$(uname -a)" = *"xenial"* ]]; then 
-    sudo apt-get install -y firefox
-  else
-    sudo apt-get install -y libgtk2.0-dev
-  fi
-  if [ -e "$XULSWORD/$EXTRAS/loc_MK.txt" ]; then
-    "$XULSWORD/build/run_MK-dev.pl"
-  else
-    "$XULSWORD/build/run_xulsword-dev.pl"
-  fi
-fi
