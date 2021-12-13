@@ -2,12 +2,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
 /* eslint-disable new-cap */
-import { LibSwordPublic } from '../src/type';
-import C from '../src/constant';
-import nsILocalFile from '../src/main/components/nsILocalFile';
-import Dirs from '../src/main/modules/dirs';
-import Prefs from '../src/main/modules/prefs';
-import { jsdump } from '../src/main/mutil';
+import { LibSwordPublic } from '../../type';
+import C from '../../constant';
+import nsILocalFile from '../components/nsILocalFile';
+import Dirs from './dirs';
+import Prefs from './prefs';
+import { jsdump } from '../mutil';
+
+const { libxulsword } = require('libxulsword');
 
 /*
 This LibSword object is used to access all SWORD engine capabilities
@@ -37,7 +39,6 @@ Valid for Dictionary modules:
   'ReferenceBible' - (DEPRECATED and replaced by 'Companion' - see CrossWire's
       documentation) Preffered Bible module to use for Scripture references.
 */
-const napi = require('bindings')('sword_napi');
 
 const LibSword: typeof LibSwordPublic & LibSwordPrivate = {
   libsword: null, // reference to the libxulsword dynamic library
@@ -100,7 +101,7 @@ const LibSword: typeof LibSwordPublic & LibSwordPrivate = {
     // this.ReportProgressPtr = funcTypeReportProgressPtr(this.ReportProgress);
 
     // Get our xulsword instance...
-    this.initialized = napi.GetXulsword(
+    this.initialized = libxulsword.GetXulsword(
       this.ModuleDirectory,
       this.UpperCase,
       this.ThrowJSError,
@@ -114,7 +115,7 @@ const LibSword: typeof LibSwordPublic & LibSwordPrivate = {
     if (!sp) return;
     const i = this.searchPointers.indexOf(sp);
     if (i === -1) return; // this pointer was already freed or never existed
-    napi.FreeSearchPointer(this.searchPointers[i], 'searchPointer');
+    libxulsword.FreeSearchPointer(this.searchPointers[i], 'searchPointer');
     this.searchPointers[i] = null;
   },
 
@@ -125,7 +126,7 @@ const LibSword: typeof LibSwordPublic & LibSwordPrivate = {
         this.freeSearchPointer(this.searchPointers[i]);
       }
       jsdump('  ... closing xulsword');
-      napi.FreeLibXulsword();
+      libxulsword.FreeLibXulsword();
       // napi.libsword.close();
     }
 
@@ -274,7 +275,7 @@ const LibSword: typeof LibSwordPublic & LibSwordPrivate = {
   throwMsg: '',
   ThrowJSError(charPtr) {
     const aString = charPtr.readString();
-    napi.freeMemory(charPtr, 'char');
+    libxulsword.freeMemory(charPtr, 'char');
     if (aString) LibSword.throwMsg = aString;
     else LibSword.throwMsg = 'An unknown libsword exception occurred.';
   },
@@ -317,7 +318,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // otherwise null is returned.
   getChapterText(modname, vkeytext) {
     if (!this.libSwordReady('getChapterText')) return null;
-    const chapterText = napi.GetChapterText(modname, vkeytext);
+    const chapterText = libxulsword.GetChapterText(modname, vkeytext);
     this.checkerror();
     return chapterText;
   },
@@ -333,7 +334,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   chapter or verse number than did the first.
   getChapterTextMulti(modstrlist, vkeytext) {
     if (!this.libSwordReady('getChapterTextMulti')) return null;
-    const chapterTextMulti = napi.GetChapterTextMulti(modstrlist, vkeytext);
+    const chapterTextMulti = libxulsword.GetChapterTextMulti(
+      modstrlist,
+      vkeytext
+    );
     this.checkerror();
     return chapterTextMulti;
   },
@@ -345,7 +349,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getChapterText() or getChapterTextMulti() must be called before notes can be read.
   getFootnotes() {
     if (!this.libSwordReady('getFootnotes')) return null;
-    const footnotes = napi.GetFootnotes();
+    const footnotes = libxulsword.GetFootnotes();
     this.checkerror();
     return footnotes;
   },
@@ -355,7 +359,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getChapterText() or getChapterTextMulti() must be called before notes can be read.
   getCrossRefs() {
     if (!this.libSwordReady('getCrossRefs')) return null;
-    const crossRefs = napi.GetCrossRefs();
+    const crossRefs = libxulsword.GetCrossRefs();
     this.checkerror();
     return crossRefs;
   },
@@ -366,7 +370,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // order is: v1-footnotes, v1-crossrefs, v2-footnotes, v2-crossrefs, etc
   getNotes() {
     if (!this.libSwordReady('getNotes')) return null;
-    const notes = napi.GetNotes();
+    const notes = libxulsword.GetNotes();
     this.checkerror();
     return notes;
   },
@@ -381,7 +385,11 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   verse numbers, note markers, red-words-of-Christ etc.
   getVerseText(vkeymod, vkeytext, keepTextNotes) {
     if (!this.libSwordReady('getVerseText')) return null;
-    const verseText = napi.GetVerseText(vkeymod, vkeytext, keepTextNotes);
+    const verseText = libxulsword.GetVerseText(
+      vkeymod,
+      vkeytext,
+      keepTextNotes
+    );
     this.checkerror();
     return verseText;
   },
@@ -391,7 +399,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   xulsword reference Vkeytext, when using the verse system of Mod.
   getMaxChapter(modname, vkeytext) {
     if (!this.libSwordReady('getMaxChapter')) return null;
-    const intgr = napi.GetMaxChapter(modname, vkeytext);
+    const intgr = libxulsword.GetMaxChapter(modname, vkeytext);
     this.checkerror();
     return intgr;
   },
@@ -401,7 +409,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   xulsword reference Vkeytext, when using the verse system of Mod.
   getMaxVerse(modname, vkeytext) {
     if (!this.libSwordReady('getMaxVerse')) return null;
-    const intgr = napi.GetMaxVerse(modname, vkeytext);
+    const intgr = libxulsword.GetMaxVerse(modname, vkeytext);
     this.checkerror();
     return intgr;
   },
@@ -410,7 +418,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns the verse system of module Mod.
   getVerseSystem(modname) {
     if (!this.libSwordReady('getVerseSystem')) return null;
-    return napi.GetVerseSystem(modname);
+    return libxulsword.GetVerseSystem(modname);
   },
 
   // convertLocation
@@ -421,7 +429,11 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returned value is always of the form shortBook.chapter.verse.lastVerse
   convertLocation(fromVerseSystem, vkeytext, toVerseSystem) {
     if (!this.libSwordReady('convertLocation')) return null;
-    return napi.ConvertLocation(fromVerseSystem, vkeytext, toVerseSystem);
+    return libxulsword.ConvertLocation(
+      fromVerseSystem,
+      vkeytext,
+      toVerseSystem
+    );
   },
 
   /* ******************************************************************************
@@ -433,7 +445,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // If Vkeymod is not a versekey type module, an error is returned.
   getIntroductions(vkeymod, bname) {
     if (!this.libSwordReady('getIntroductions')) return null;
-    const introductions = napi.GetIntroductions(vkeymod, bname);
+    const introductions = libxulsword.GetIntroductions(vkeymod, bname);
     this.checkerror();
     return introductions;
   },
@@ -444,7 +456,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   Lexdictmod is not of type StrKey.
   getDictionaryEntry(lexdictmod, key) {
     if (!this.libSwordReady('getDictionaryEntry')) return null;
-    const dictionaryEntry = napi.GetDictionaryEntry(lexdictmod, key);
+    const dictionaryEntry = libxulsword.GetDictionaryEntry(lexdictmod, key);
     this.checkerror();
     return dictionaryEntry;
   },
@@ -454,7 +466,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns an error is module Lexdictmod is not of type StrKey
   getAllDictionaryKeys(lexdictmod) {
     if (!this.libSwordReady('getAllDictionaryKeys')) return null;
-    const allDictionaryKeys = napi.GetAllDictionaryKeys(lexdictmod);
+    const allDictionaryKeys = libxulsword.GetAllDictionaryKeys(lexdictmod);
     this.checkerror();
     return allDictionaryKeys;
   },
@@ -464,7 +476,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns an error if module Gbmod is not a TreeKey mod.
   getGenBookChapterText(gbmod, treekey) {
     if (!this.libSwordReady('getGenBookChapterText')) return null;
-    const genBookChapterText = napi.GetGenBookChapterText(gbmod, treekey);
+    const genBookChapterText = libxulsword.GetGenBookChapterText(
+      gbmod,
+      treekey
+    );
     this.checkerror();
     return genBookChapterText;
   },
@@ -474,7 +489,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns an error if module Gbmod is not a TreeKey mod.
   getGenBookTableOfContents(gbmod) {
     if (!this.libSwordReady('getGenBookTableOfContents')) return null;
-    const genBookTableOfContents = napi.GetGenBookTableOfContents(gbmod);
+    const genBookTableOfContents = libxulsword.GetGenBookTableOfContents(gbmod);
     this.checkerror();
     return genBookTableOfContents;
   },
@@ -486,7 +501,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Will return true if indexed searching is available for the current module, false otherwise.
   luceneEnabled(modname) {
     if (!this.libSwordReady('luceneEnabled')) return null;
-    const enabled = napi.LuceneEnabled(modname);
+    const enabled = libxulsword.LuceneEnabled(modname);
     this.checkerror();
     return enabled;
   },
@@ -507,7 +522,14 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // newsearch should be set to false if you want the search results added to the previous results
   search(modname, srchstr, scope, type, flags, newsearch) {
     if (!this.libSwordReady('search')) return null;
-    const intgr = napi.Search(modname, srchstr, scope, type, flags, newsearch);
+    const intgr = libxulsword.Search(
+      modname,
+      srchstr,
+      scope,
+      type,
+      flags,
+      newsearch
+    );
     this.checkerror();
     return intgr;
   },
@@ -516,7 +538,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns an index to a pointer for a newly created copy of LibSword's internal search results ListKey object.
   getSearchPointer() {
     if (!this.libSwordReady('getSearchPointer')) return null;
-    const searchPointer = napi.GetSearchPointer();
+    const searchPointer = libxulsword.GetSearchPointer();
     this.checkerror();
     this.searchPointers.push(searchPointer);
     return searchPointer;
@@ -540,7 +562,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
 
     if (searchPointer) {
       if (this.searchPointers.indexOf(searchPointer) === -1) return null;
-      return napi.GetSearchResults(
+      return libxulsword.GetSearchResults(
         modname,
         first,
         num,
@@ -548,14 +570,14 @@ DEFINITION OF A 'XULSWORD REFERENCE':
         searchPointer
       );
     }
-    return napi.GetSearchResults(modname, first, num, keepStrongs);
+    return libxulsword.GetSearchResults(modname, first, num, keepStrongs);
   },
 
   // searchIndexDelete
   // Deletes the search index of modname.
   searchIndexDelete(modname) {
     if (!this.libSwordReady('searchIndexDelete')) return;
-    napi.SearchIndexDelete(modname);
+    libxulsword.SearchIndexDelete(modname);
     this.checkerror();
   },
 
@@ -565,7 +587,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getPercentComplete returns 100!
   searchIndexBuild(modname) {
     if (!this.libSwordReady('searchIndexBuild')) return;
-    napi.SearchIndexBuild(modname);
+    libxulsword.SearchIndexBuild(modname);
     this.checkerror();
   },
 
@@ -583,7 +605,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   'Hebrew Vowel Points'
   setGlobalOption(option, setting) {
     if (!this.libSwordReady('setGlobalOption')) return;
-    napi.SetGlobalOption(option, setting);
+    libxulsword.SetGlobalOption(option, setting);
     this.checkerror();
   },
 
@@ -591,7 +613,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Option must one of the above option strings. Either 'Off' or 'On' will be returned.
   getGlobalOption(option) {
     if (!this.libSwordReady('getGlobalOption')) return null;
-    const globalOption = napi.GetGlobalOption(option);
+    const globalOption = libxulsword.GetGlobalOption(option);
     this.checkerror();
     return globalOption;
   },
@@ -603,7 +625,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Will set the module's key. Key can only be set once.
   setCipherKey(modname, cipherKey, useSecModule) {
     if (!this.libSwordReady('setCipherKey')) return;
-    napi.setCipherKey(modname, cipherKey, useSecModule);
+    libxulsword.setCipherKey(modname, cipherKey, useSecModule);
     this.checkerror();
   },
 
@@ -615,7 +637,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns 'No Modules' if there are no modules available.
   getModuleList() {
     if (!this._moduleList) {
-      this._moduleList = napi.GetModuleList();
+      this._moduleList = libxulsword.GetModuleList();
     }
     return this._moduleList;
   },
@@ -628,7 +650,10 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns val1<nx>val2<nx>val3 if there is more than one entry of type infotype (eg. GlobalOptionFilter)
   getModuleInformation(modname, paramname) {
     if (!this.libSwordReady('getModuleInformation')) return null;
-    const moduleInformation = napi.GetModuleInformation(modname, paramname);
+    const moduleInformation = libxulsword.GetModuleInformation(
+      modname,
+      paramname
+    );
     this.checkerror();
     return moduleInformation;
   },
@@ -637,7 +662,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Uncompresses a .tar.gz file into aDir
   uncompressTarGz(tarGzPath, aDirPath) {
     if (!this.libSwordReady('uncompressTarGz')) return;
-    napi.UncompressTarGz(tarGzPath, aDirPath);
+    libxulsword.UncompressTarGz(tarGzPath, aDirPath);
     this.checkerror();
   },
 
@@ -649,7 +674,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Returns null if the information is not available
   translate(text, localeName) {
     if (!this.libSwordReady('translate')) return null;
-    const cdata = napi.Translate(text, localeName);
+    const cdata = libxulsword.Translate(text, localeName);
     this.checkerror();
     return cdata;
   },

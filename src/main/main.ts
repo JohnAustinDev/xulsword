@@ -9,12 +9,12 @@ import { app, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import i18n from 'i18next';
-import LibSword from '../../napi/libsword';
 import { GPublic } from '../type';
 import C from '../constant';
 import MenuBuilder from './menu';
 import { resolveHtmlPath, jsdump } from './mutil';
 import G from './mg';
+import LibSword from './modules/libsword';
 
 const i18nBackendMain = require('i18next-fs-backend');
 const i18nBackendRenderer = require('i18next-electron-fs-backend');

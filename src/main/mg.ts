@@ -5,7 +5,6 @@ import path from 'path';
 import fs from 'fs';
 import { Menu } from 'electron';
 import { GType, GPublic, TabType, BookType } from '../type';
-import LibSwordx from '../../napi/libsword';
 import C from '../constant';
 import { isASCII } from '../common';
 import Dirsx from './modules/dirs';
@@ -21,6 +20,7 @@ import {
 } from './config';
 import { jsdump, resolveHtmlPath } from './mutil';
 import nsILocalFile from './components/nsILocalFile';
+import LibSwordx from './modules/libsword';
 
 // This G object is for use in the main process, and it shares the same
 // interface as the renderer's G object. Properties of this object

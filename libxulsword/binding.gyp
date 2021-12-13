@@ -1,15 +1,15 @@
 {
   "targets": [
     {
-      "target_name": "libsword_napi",
-      "sources": [ "src/libsword_napi.cpp" ],
+      "target_name": "libxulsword",
+      "sources": [ "src/libxulsword.cpp" ],
       "libraries": ["${LD_LIBRARY_PATH}/libxulsword.so.1.4.4"],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
-        "../Cpp/src/include",
-        "../Cpp/sword/include"
+        "../../../../Cpp/src/include",
+        "../../../../Cpp/sword/include"
       ],
-      'defines': [ 'NODE_GYP_MODULE_NAME=libsword_napi' ],
+      'defines': [ 'NODE_GYP_MODULE_NAME=libxulsword' ],
       'cflags!': [ '-fno-exceptions' ],
       'cflags_cc!': [ '-fno-exceptions' ],
       'conditions': [
