@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
 /* eslint-disable new-cap */
-import { LibSwordPublic } from '../../type';
+import { LibSwordPublic, SwordFilterType } from '../../type';
 import C from '../../constant';
 import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
@@ -332,11 +332,12 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   the first module listed, subsequent modules return the same reference as
   //   that returned by the first, even though it may have come from a different
   //   chapter or verse number than did the first.
-  getChapterTextMulti(modstrlist, vkeytext) {
+  getChapterTextMulti(modstrlist, vkeytext, keepnotes = false) {
     if (!this.libSwordReady('getChapterTextMulti')) return null;
     const chapterTextMulti = libxulsword.GetChapterTextMulti(
       modstrlist,
-      vkeytext
+      vkeytext,
+      keepnotes
     );
     this.checkerror();
     return chapterTextMulti;
@@ -607,6 +608,14 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     if (!this.libSwordReady('setGlobalOption')) return;
     libxulsword.SetGlobalOption(option, setting);
     this.checkerror();
+  },
+
+  // This is a IPC speedup function setting multiple options with a single request.
+  setGlobalOptions(options) {
+    Object.entries(options).forEach((entry) => {
+      const option = entry[0] as SwordFilterType;
+      this.setGlobalOption(option, entry[1]);
+    });
   },
 
   // getGlobalOption

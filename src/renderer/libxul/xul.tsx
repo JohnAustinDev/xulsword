@@ -14,6 +14,7 @@ export const xulDefaultProps = {
   lang: undefined,
   orient: undefined,
   pack: undefined,
+  domref: undefined,
   style: undefined,
   width: undefined,
 
@@ -45,6 +46,7 @@ export const xulPropTypes = {
   lang: PropTypes.string,
   orient: PropTypes.oneOf(['horizontal', 'vertical']),
   pack: PropTypes.oneOf(['start', 'center', 'end']),
+  domref: PropTypes.any,
   style: PropTypes.objectOf(PropTypes.string),
   width: PropTypes.string,
 
@@ -82,6 +84,7 @@ export interface XulProps {
   lang?: string | undefined;
   orient?: string | undefined;
   pack?: string | undefined;
+  domref?: React.RefObject<any> | undefined;
   style?: React.CSSProperties | undefined;
   width?: string | undefined;
 
@@ -179,6 +182,7 @@ export const htmlAttribs = (className: string, props: any) => {
       ...xulStyle(props),
       ...props.style,
     },
+    ref: props.domref,
     ...xulEvents(props),
   };
 

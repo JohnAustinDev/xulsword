@@ -5,6 +5,40 @@
 // Dummy func used as place holder
 const func = () => {};
 
+export type SwordFilterType =
+  'Headings' |
+  'Footnotes' |
+  'Cross-references' |
+  'Reference Material Links' |
+  "Strong's Numbers" |
+  'Morphological Tags' |
+  'Verse Numbers' |
+  'Hebrew Cantillation' |
+  'Hebrew Vowel Points' |
+  'Words of Christ in Red'
+
+export type SwordFilterValueType = 'Off' | 'On'
+
+export interface ShowType {
+  headings: boolean;
+  footnotes: boolean;
+  crossrefs: boolean;
+  dictlinks: boolean;
+  versenums: boolean;
+  strongs: boolean;
+  morph: boolean;
+  usernotes: boolean;
+  hebcantillation: boolean;
+  hebvowelpoints: boolean;
+  redwords: boolean;
+}
+
+export interface PlaceType {
+  footnotes: 'notebox' | 'popup';
+  crossrefs: 'notebox' | 'popup';
+  usernotes: 'notebox' | 'popup';
+}
+
 export interface BookType {
   sName: string;
   bName: string;
@@ -15,17 +49,22 @@ export interface ConfigType {
   [index: string]: string;
 }
 
+export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
+
+export type ModTypes =
+| 'Biblical Texts'
+| 'Commentaries'
+| 'Lexicons / Dictionaries'
+| 'Generic Books';
+
 export interface TabType {
   modName: string;
-  modType: string; /*
-    | 'Biblical Texts'
-    | 'Lexicons / Dictionaries'
-    | 'Commentaries'
-    | 'Generic Books'; */
+  modType: ModTypes;
   modVersion: string;
   modDir: string;
   label: string;
-  tabType: string // 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
+  tabType: TabTypes;
+  isVerseKey: boolean;
   isRTL: boolean;
   index: number;
   description: string;
@@ -69,7 +108,7 @@ export const PrefsPublic = {
   getComplexValue: func as unknown as (key: string, aStore?: string) => any,
   setComplexValue: func as unknown as (key: string, value: any, aStore?: string) => boolean,
   clearUserPref: func as unknown as (key: string, aStore?: string) => boolean ,
-  getStore: func as unknown as (aStore?: string) => { [s: string]: any } | null,
+  getStore: func as unknown as (aStore?: string) => { [s: string]: any },
   writeAllStores: func as unknown as () => void,
 };
 export const LibSwordPublic = {
@@ -101,8 +140,9 @@ export const LibSwordPublic = {
   getSearchResults: func as unknown as (modname: string, first: number, num: number, keepStrongs: boolean, searchPointer: any) => string,
   searchIndexDelete: func as unknown as (modname: string) => void,
   searchIndexBuild: func as unknown as (modname: string) => void,
-  setGlobalOption: func as unknown as (option: string, setting: string) => void,
-  getGlobalOption: func as unknown as (option: string) => string,
+  setGlobalOption: func as unknown as (option: SwordFilterType, setting: SwordFilterValueType) => void,
+  setGlobalOptions: func as unknown as (options: { [key in SwordFilterType]: SwordFilterValueType }) => void,
+  getGlobalOption: func as unknown as (option: SwordFilterType) => string,
   setCipherKey: func as unknown as (modname: string, cipherKey: string, useSecModule: boolean) => void,
   getModuleList: func as unknown as () => string,
   getModuleInformation: func as unknown as (modname: string, paramname: string) => string,

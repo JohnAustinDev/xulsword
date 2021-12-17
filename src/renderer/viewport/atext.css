@@ -62,27 +62,30 @@ html.chromedir-rtl .atext .text-win {
 }
 
 .atext .sb {
+  flex-basis: 0px;
   color: black;
   padding: 0px 30px;
+  display: flow-root;
 }
 .atext.show1 .sb {
   overflow: auto;
 }
-.atext.show2 .sb {
+.atext:not(.show1) .sb {
   overflow: hidden;
-  columns: 2;
   column-gap: 80px;
   column-rule: 14px solid rgb(240, 215, 240);
+  column-fill: auto;
+}
+.atext.show2 .sb {
+  column-count: 2;
 }
 .atext.show3 .sb {
-  overflow: hidden;
-  columns: 3;
-  column-gap: 80px;
-  column-rule: 14px solid rgb(240, 215, 240);
+  column-count: 3;
 }
 
 .atext .nbc {
   width: 100%;
+  background-color: inherit;
 }
 .atext:not(.show1) .nbc {
   position: absolute;
@@ -94,13 +97,13 @@ html.chromedir-rtl .atext .text-win {
   left: 0px;
 }
 .atext.show2 .nbc {
-  width: 50%;
+  width: calc(50% - 8px);
 }
 .atext.show3 .nbc {
-  width: 33%;
+  width: calc(33% - 8px);
 }
-.atext.Texts.noteboxEmpty .nbc,
-.atext.Comms.noteboxEmpty .nbc,
+.atext.Texts .nbc.noteboxEmpty,
+.atext.Comms .nbc.noteboxEmpty,
 .atext.Genbks .nbc {
   display: none;
 }

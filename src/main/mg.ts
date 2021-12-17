@@ -4,7 +4,7 @@
 import path from 'path';
 import fs from 'fs';
 import { Menu } from 'electron';
-import { GType, GPublic, TabType, BookType } from '../type';
+import { GType, GPublic, TabType, BookType, TabTypes, ModTypes } from '../type';
 import C from '../constant';
 import { isASCII } from '../common';
 import Dirsx from './modules/dirs';
@@ -198,14 +198,15 @@ function getTabs() {
   if (modlist === C.NOMODULES) return [];
   let i = 0;
   modlist.split('<nx>').forEach((mstring: string) => {
-    const [modName, modType] = mstring.split(';');
+    const [modName, mt] = mstring.split(';');
+    const modType = mt as ModTypes;
     let label = LibSwordx.getModuleInformation(modName, 'TabLabel');
     if (label === C.NOTFOUND)
       label = LibSwordx.getModuleInformation(modName, 'Abbreviation');
     if (label === C.NOTFOUND) label = modName;
     let tabType;
     Object.entries(C.SupportedModuleTypes).forEach((entry) => {
-      const [shortType, longType] = entry;
+      const [longType, shortType] = entry;
       if (longType === modType) tabType = shortType;
     });
     if (!tabType) return;
@@ -257,6 +258,7 @@ function getTabs() {
       modDir,
       label,
       tabType,
+      isVerseKey: modType === C.BIBLE || modType === C.COMMENTARY,
       isRTL: /^rt.?l$/i.test(
         LibSwordx.getModuleInformation(modName, 'Direction')
       ),

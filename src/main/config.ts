@@ -115,6 +115,7 @@ function localeConfig(locale: string) {
 
 export function getLocaleConfigs() {
   const ret = {} as { [i: string]: ConfigType };
+  ret.current = localeConfig(i18next.language);
   Prefs.getComplexValue('global.locales').forEach((l: any) => {
     const [lang] = l;
     ret[lang] = localeConfig(lang);
@@ -348,7 +349,7 @@ export function getModuleConfigs() {
     const [mod, type] = modules[m].split(';');
 
     // Weed out unsupported module types
-    if (Object.values(C.SupportedModuleTypes).includes(type)) {
+    if (Object.keys(C.SupportedModuleTypes).includes(type)) {
       // Weed out incompatible module versions. The module installer shouldn't
       // allow bad mods, but this is just in case.
       let xsversion = LibSword.getModuleInformation(mod, C.VERSIONPAR);

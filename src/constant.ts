@@ -1,4 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-nested-ternary */
+
+import {
+  ModTypes,
+  PlaceType,
+  ShowType,
+  SwordFilterType,
+  SwordFilterValueType,
+  TabTypes,
+} from './type';
 
 // Common Global Constants
 const C = {
@@ -6,14 +16,14 @@ const C = {
   DPERM: 0o666,
   MAXVERSE: 176,
   MAXCHAPTER: 150,
-  BIBLE: 'Biblical Texts',
-  DICTIONARY: 'Lexicons / Dictionaries',
-  COMMENTARY: 'Commentaries',
-  GENBOOK: 'Generic Books',
+  BIBLE: 'Biblical Texts' as ModTypes,
+  DICTIONARY: 'Lexicons / Dictionaries' as ModTypes,
+  COMMENTARY: 'Commentaries' as ModTypes,
+  GENBOOK: 'Generic Books' as ModTypes,
   NOTFOUND: 'Not Found',
   NOMODULES: 'No Modules',
   BMFileReturn: '\r\n', // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
-  DEFAULTLOCALE: 'en-US',
+  DEFAULTLOCALE: 'en',
   DLGSTD: 'centerscreen,modal,resizable',
   DLGALERT: 0,
   DLGQUEST: 1,
@@ -111,21 +121,13 @@ const C = {
   NAMELOCALE: 13,
   NOTELOCALE: 14,
 
-  GlobalToggleCommands: {
-    cmd_xs_toggleHeadings: 'Headings',
-    showFootnotes: 'Footnotes',
-    showCrossRefs: 'Cross-references',
-    showDictLinks: 'Reference Material Links',
-    showStrongs: "Strong's Numbers",
-    showMorph: 'Morphological Tags',
-    showVerseNums: 'Verse Numbers',
-    showUserNotes: 'User Notes',
-    showHebCantillation: 'Hebrew Cantillation',
-    showHebVowelPoints: 'Hebrew Vowel Points',
-    showRedWords: 'Words of Christ in Red',
-  },
+  SwordFilterValues: [] as SwordFilterValueType[],
 
-  SupportedModuleTypes: {},
+  SwordFilters: {} as { [key in SwordFilterType]: keyof ShowType },
+
+  SupportedModuleTypes: {} as { [key in ModTypes]: TabTypes },
+
+  AlwaysOn: {} as { [key in ModTypes]: SwordFilterType[] },
 
   ModuleTypeOrder: {
     Texts: 1,
@@ -145,20 +147,80 @@ const C = {
   HARDRESET: 2,
   NEWINSTALLFILE: 'newInstalls.txt',
   MINPVERPAR: 'minMKVersion',
-  VERSIONTAG: null,
-  MINPROGVERSTAG: null,
+  VERSIONTAG: null as any,
+  MINPROGVERSTAG: null as any,
   MINVERSION: '1.0',
+
+  // These props can be 'pinned' to become independant state properties.
+  // NOTE: property types are important, but property values are not.
+  PinProps: {
+    book: '',
+    chapter: 0,
+    verse: 0,
+    lastverse: 0,
+    module: '',
+    ilModule: '',
+    modkey: '',
+  },
+
+  // These props are used by LibSword. If these props all have the same values
+  // as the previous rendering, the LibSword response will also be the same.
+  // NOTE: property types are important, but property values are not.
+  LibSwordProps: {
+    book: '',
+    chapter: 0,
+    verse: 0,
+    module: '',
+    versification: '',
+    ilModule: '',
+    modkey: '',
+    show: {} as ShowType,
+    place: {} as PlaceType,
+  },
 };
 
 C.VERSIONTAG = new RegExp(`${C.VERSIONPAR}\\s*=\\s*(.*)\\s*`, 'im');
 
 C.MINPROGVERSTAG = new RegExp(`${C.MINPVERPAR}\\s*=\\s*(.*)\\s*`, 'im');
 
-C.SupportedModuleTypes = {
-  Texts: C.BIBLE,
-  Comms: C.COMMENTARY,
-  Dicts: C.DICTIONARY,
-  Genbks: C.GENBOOK,
-};
+C.SwordFilters.Headings = 'headings';
+C.SwordFilters.Footnotes = 'footnotes';
+C.SwordFilters['Cross-references'] = 'crossrefs';
+C.SwordFilters['Reference Material Links'] = 'dictlinks';
+C.SwordFilters["Strong's Numbers"] = 'strongs';
+C.SwordFilters['Morphological Tags'] = 'morph';
+C.SwordFilters['Verse Numbers'] = 'versenums';
+C.SwordFilters['Hebrew Cantillation'] = 'hebcantillation';
+C.SwordFilters['Hebrew Vowel Points'] = 'hebvowelpoints';
+C.SwordFilters['Words of Christ in Red'] = 'redwords';
+
+C.SwordFilterValues.push('Off');
+C.SwordFilterValues.push('On');
+
+C.SupportedModuleTypes[C.BIBLE] = 'Texts';
+C.SupportedModuleTypes[C.COMMENTARY] = 'Comms';
+C.SupportedModuleTypes[C.DICTIONARY] = 'Dicts';
+C.SupportedModuleTypes[C.GENBOOK] = 'Genbks';
+
+// Each module type may have LibSword features that should be always on.
+C.AlwaysOn[C.BIBLE] = [];
+C.AlwaysOn[C.COMMENTARY] = [
+  'Headings',
+  'Footnotes',
+  'Cross-references',
+  'Reference Material Links',
+];
+C.AlwaysOn[C.DICTIONARY] = [
+  'Headings',
+  'Footnotes',
+  'Cross-references',
+  'Reference Material Links',
+];
+C.AlwaysOn[C.GENBOOK] = [
+  'Headings',
+  'Footnotes',
+  'Cross-references',
+  'Reference Material Links',
+];
 
 export default C;

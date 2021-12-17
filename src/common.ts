@@ -29,9 +29,7 @@ function decodeOSISRef(aRef: string) {
 // - reflist: is an array of UTF8 strings
 // - ch: is UTF8 (may be a number or a key)
 // - all other properties: are ASCII
-export function getElementInfo(
-  elem: 'string' | { className: string; title: string }
-): TextInfo | null {
+export function getElementInfo(elem: 'string' | HTMLElement): TextInfo | null {
   // Info is parsed from className and title, so start by getting each
   let className;
   let title;
@@ -238,21 +236,27 @@ function findBookNumL(G: GType, bText: string | null): number | null {
   return null;
 }
 
-// Firefox Add-On validation throws warnings about setting innerHTML
-// directly, so this is a safe solution. In future, it's better to
-// manipulate the DOM directly rather than use innerHTML also
-// because it's faster. NOTE: This function scrubs out all Javascript
-// as well as non-standard HTML attributes.
 export function sanitizeHTML(parent: HTMLElement, html: string) {
   parent.innerHTML = html;
   return parent;
-  /*
-  while (parent.firstChild) {
-    parent.removeChild(parent.firstChild);
+}
+
+export function objectHashString(obj: any): string {
+  if (typeof obj !== 'object') {
+    return obj.toString();
   }
-  const parser = Components.classes["@mozilla.org/parserutils;1"].getService(Components.interfaces.nsIParserUtils);
-  parent.appendChild(parser.parseFragment(html, parser.SanitizerAllowStyle, false, null, parent.ownerDocument.documentElement));
-  */
+  let r = '';
+  Object.entries(obj)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .forEach((entry) => {
+      const [p, v] = entry;
+      if (typeof v !== 'object') {
+        r += `${p}:${v},`;
+      } else {
+        r += `${p}:${objectHashString(v)},`;
+      }
+    });
+  return r;
 }
 
 // Firefox Add-On validation throws warnings about eval(uneval(obj)), so
@@ -262,7 +266,12 @@ export function deepClone(obj: any) {
 }
 
 export function compareObjects(obj1: any, obj2: any, deep = false): boolean {
-  if (typeof obj1 !== 'object' || typeof obj2 !== 'object') {
+  if (
+    obj1 === null ||
+    obj2 === null ||
+    typeof obj1 !== 'object' ||
+    typeof obj2 !== 'object'
+  ) {
     return obj1 === obj2;
   }
   return (
@@ -392,19 +401,21 @@ export function guiDirection(G: GType) {
 }
 
 export function getLocalizedChapterTerm(
-  bookCode: string,
-  chapNum: number,
+  book: string,
+  chapter: number,
   locale: string
 ) {
-  const k1 = `${bookCode}_Chaptext`;
+  const k1 = `${book}_Chaptext`;
   const k2 = 'Chaptext';
   const toptions = {
-    v1: dString(chapNum, locale),
+    v1: dString(chapter, locale),
     lng: locale,
     ns: 'common/books',
   };
 
-  return i18next.t(k1, toptions) || i18next.t(k2, toptions);
+  return i18next.exists(k1, toptions)
+    ? i18next.t(k1, toptions)
+    : i18next.t(k2, toptions);
 }
 
 export function isProgramPortable() {

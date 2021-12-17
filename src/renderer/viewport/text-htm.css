@@ -1,0 +1,588 @@
+/* Standard SWORD OSIS filter CSS */
+.small,
+.sub,
+.sup {
+  font-size: 0.83em;
+}
+.sub {
+  vertical-align: sub;
+}
+.sup {
+  vertical-align: super;
+}
+.indent0 {
+  margin-left: 0;
+}
+
+/* SWORD getHeader() of osis2xhtml.cpp CSS */
+.divineName {
+  font-variant: small-caps;
+}
+.wordsOfJesus,
+.wordsOfJesus span {
+  color: red;
+}
+.transChange {
+  font-style: italic;
+}
+.transChange.transChange-supplied {
+  font-style: italic;
+}
+.transChange.transChange-added {
+  font-style: italic;
+}
+.transChange.transChange-tenseChange::before {
+  content: '*';
+}
+.transChange.transChange-tenseChange {
+  font-style: normal;
+}
+.transChange:lang(zh) {
+  font-style: normal;
+  text-decoration: dotted underline;
+}
+.overline {
+  text-decoration: overline;
+}
+.indent1 {
+  margin-left: 1.5em;
+}
+.indent2 {
+  margin-left: 3em;
+}
+.indent3 {
+  margin-left: 4.5em;
+}
+.indent4 {
+  margin-left: 6em;
+}
+.small-caps {
+  font-variant: small-caps;
+}
+.selah {
+  text-align: right;
+  width: 50%;
+  margin: 0;
+  padding: 0;
+}
+.acrostic {
+  text-align: center;
+}
+.colophon {
+  font-style: italic;
+  font-size: small;
+  display: block;
+}
+.rdg {
+  font-style: italic;
+}
+.catchWord {
+  font-weight: bold;
+}
+
+/* SWORD getHeader() of teixhtml.cpp CSS */
+.entryFree,
+.form,
+.etym,
+.def,
+.usg,
+.quote {
+  display: block;
+}
+.pron,
+.pos,
+.oVar,
+.ref {
+  display: inline;
+}
+span[data-type='headword'] {
+  font-weight: bold;
+  font-variant: small-caps;
+  text-decoration: underline;
+}
+span[data-type='derivative'] {
+  font-weight: bold;
+  font-variant: small-caps;
+}
+span[data-rend='italic'] {
+  font-style: italic;
+}
+span[data-rend='bold'] {
+  font-weight: bold;
+}
+span[data-rend='small-caps'] {
+  font-variant: small-caps;
+}
+.pos:before {
+  content: 'Pos.: ';
+  font-weight: bold;
+}
+.pron:before {
+  content: ' \\\\ ';
+}
+.pron:after {
+  content: ' \\\\ ';
+}
+.etym:before {
+  content: 'Etym.:';
+  display: block;
+  font-weight: bold;
+}
+.usg:before {
+  content: 'Usg.:';
+  display: block;
+  font-weight: bold;
+}
+.def:before {
+  content: 'Def.:';
+  display: block;
+  font-weight: bold;
+}
+.quote {
+  background-color: #cfcfdf;
+  padding: 0.3em;
+  margin: 0.5em;
+  border-width: 1px;
+  border-style: solid;
+}
+.cit:before {
+  display: block;
+  margin-top: 0.5em;
+  font-size: small;
+}
+.cit {
+  text-align: center;
+}
+.persName:before {
+  content: ' (';
+  font-size: small;
+}
+.persName:after {
+  content: ') ';
+  font-size: small;
+}
+.persName {
+  font-size: small;
+}
+.number {
+  font-weight: bold;
+}
+.def {
+  font-weight: bold;
+}
+/* Additions for xulsword */
+.sense {
+  display: block;
+  border: 1px solid grey;
+  padding: 1em;
+}
+.sense:before,
+span.sense[data-n='0']:before {
+  content: 'Sense: ';
+}
+.sense[data-n]:before {
+  content: 'Sense ' attr(data-n) ': ';
+}
+span[class*=' sense-level-'] {
+  margin: 0 3em;
+}
+span.sense-level-0 {
+  margin: 0 0;
+}
+span.sense-level-1 {
+  margin: 0 1em;
+}
+span.sense-level-2 {
+  margin: 0 2em;
+}
+
+/* Xulsword OSIS filter specific CSS */
+.head1.main {
+  font-size: 1.5em !important;
+  color: rgb(110, 85, 110) !important;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 2em;
+  margin-bottom: 1em;
+  clear: both;
+}
+.head1,
+h1,
+h2,
+h3 {
+  font-size: 1.4em !important;
+  color: rgb(110, 85, 110) !important;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 2em;
+  margin-bottom: 1em;
+  clear: both;
+}
+.head2 {
+  font-size: 1.2em !important;
+  color: rgb(110, 85, 110) !important;
+  text-align: center;
+  font-weight: bold;
+  font-style: italic;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  clear: both;
+}
+.rtl-text .head2 {
+  text-align: right;
+}
+.head1 h1,
+.head1 h2,
+.head1 h3,
+.head2 h1,
+.head2 h2,
+.head2 h3 {
+  font-size: inherit;
+}
+.interB .head1,
+.interB .head2 {
+  display: none;
+}
+.canonical {
+  font-style: italic;
+}
+.lb {
+  margin: 1em;
+}
+.osis2mod {
+}
+.p-milestone {
+  margin: 1em;
+}
+.x-p {
+  text-indent: 1.5em;
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+.x-p.x-noindent,
+.x-p.x-p-first {
+  text-indent: 0em;
+}
+/* x-p-indent occurs in old osis-converters modules */
+.x-p-indent,
+.p-start {
+  display: inline-block;
+  width: 1.5em;
+}
+.p-start.x-noindent,
+.p-start.x-nobreak,
+.p-start.x-nobreakNext {
+  width: 0em;
+}
+.p-start.x-indented-2,
+.p-start.x-level-2 {
+  width: 3em;
+}
+.p-start.x-indented-3,
+.p-start.x-level-3 {
+  width: 4.5em;
+}
+.p-start.x-indented-4,
+.p-start.x-level-4 {
+  width: 6em;
+}
+.p-start.x-indented-5,
+.p-start.x-level-5 {
+  width: 7.5em;
+}
+
+/* paragraph types */
+.x-center {
+  text-align: center;
+}
+.x-noindent-indented {
+  text-indent: 1.5em;
+}
+.x-quote {
+  font-style: italic;
+}
+.x-noindent-quote {
+  text-indent: 0px;
+  font-style: italic;
+}
+.x-right {
+  text-align: right;
+}
+.x-embedded-opening,
+.x-embedded-closing {
+  text-indent: 0px;
+  padding-left: 1.5em;
+}
+.x-embedded {
+  text-indent: 1.5em;
+  padding-left: 1.5em;
+}
+.x-indented-1,
+.x-level-1 {
+  text-indent: 1.5em;
+}
+.x-indented-2,
+.x-level-2 {
+  text-indent: 3em;
+}
+.x-indented-3,
+.x-level-3 {
+  text-indent: 4.5em;
+}
+.x-indented-4,
+.x-level-4 {
+  text-indent: 6em;
+}
+.x-indented-5,
+.x-level-5 {
+  text-indent: 7.5em;
+}
+.x-nobreak {
+  margin-top: 0px;
+}
+.x-indented-hanging {
+  padding-left: 3em;
+  text-indent: -1.5em;
+}
+.x-nobreakNext {
+  margin-bottom: 0px;
+}
+.x-nobreakNext-indented {
+  margin-bottom: 0px;
+  text-indent: 1.5em;
+}
+
+.osis2mod.x-right + .dtl {
+  float: right;
+  clear: both;
+}
+
+/*.x-lg,*/
+.x-list {
+  text-indent: 0px;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+/*.lg-start, .lg-end,*/
+.list-start,
+.list-end {
+  margin: 1em;
+}
+/* OSIS <lg subType="x-list-ms"><l subType="x-item-ms"> is used in
+ * place of <list><item> since <lg> and <l> are milestoneable */
+.line:not(.x-item-ms) {
+  text-indent: -1.5em;
+  padding-left: 1.5em;
+}
+/* OSIS <l level="N" subType="x-to-next-level"> only occurs when the
+ * next <l> has the next highest level. */
+.line:not(.x-item-ms).x-to-next-level {
+  text-indent: -3em;
+  padding-left: 3em;
+}
+.item {
+  margin-bottom: 1em;
+}
+.x-navmenu .item {
+  margin-bottom: 0;
+}
+.x-PM {
+}
+.atext.verse-per-line .p-end,
+.atext.verse-per-line .lg-end,
+.atext.verse-per-linetrue .list-end,
+.atext.verse-per-line .lb,
+.atext.verse-per-line .line,
+.atext.verse-per-line .item {
+  display: inline;
+  margin: 0.25em;
+  text-indent: 0px;
+  padding: 0px;
+}
+.atext.verse-per-line .p-milestone,
+.atext.verse-per-line .p-start,
+.atext.verse-per-line .lg-start,
+.atext.verse-per-line .list-start,
+.atext.verse-per-line .x-p-indent,
+.atext.verse-per-line .lb + .lb,
+.atext.verse-per-line br,
+.interB .lg-start:first-child,
+.interB .lg-end:last-child,
+.interB .list-start:first-child,
+.interB .list-end:last-child {
+  display: none;
+}
+.atext.verse-per-line .x-p,
+.atext.verse-per-line .indent0,
+.atext.verse-per-line .indent1,
+.atext.verse-per-line .indent2,
+.atext.verse-per-line .indent3,
+.atext.verse-per-line .indent4,
+.atext.verse-per-line .x-lg,
+.atext.verse-per-line .x-list {
+  text-indent: 0em;
+  margin: 0px;
+}
+.image-container {
+  text-align: center;
+}
+.image-container img {
+  width: 100%;
+  margin: 20px 0px 20px 0px;
+}
+/* CLASSES FROM OSIS-CONVERTER-MADE SWORD MODULES */
+.x-text-image {
+  float: right;
+  margin-right: 10px;
+  max-width: 50%;
+}
+.x-text-image img {
+  margin: 0px 0px 0.5em 1em;
+  border: 3px outset black;
+  border-radius: 8px;
+}
+.x-p-first {
+  display: block;
+}
+.x-p-first:first-letter,
+.x-p-first .line:first-child:first-letter,
+.x-p-first .item:first-child:first-letter {
+  font-size: 4em;
+  float: left;
+  margin-right: 10px;
+}
+.x-p-first .line:not(.x-item-ms):first-child {
+  text-indent: 0em;
+  padding-left: 0em;
+}
+.x-ref-cb {
+  display: block; /* CBs > May 2014 don't need this */
+  text-align: right; /* CBs > May 2014 don't need this */
+  font-size: smaller;
+}
+.x-selah {
+  float: right;
+  margin-left: 3em;
+}
+.atext.rtl-text .x-selah {
+  float: left;
+  margin-left: 0;
+  margin-right: 3em;
+}
+
+.versePerLineButton {
+  position: relative;
+  display: block;
+  width: 0px;
+  height: 0px;
+}
+.versePerLineButton > div {
+  position: absolute;
+  top: 0px;
+  left: -25px;
+  background: url('../images/versePerLine.png');
+  background-position: 0px 0px;
+  width: 17px;
+  height: 20px;
+}
+.atexttrl-text .versePerLineButton > div {
+  left: auto;
+  right: -25px;
+  transform: scaleX(-1);
+}
+.atext.verse-per-line .versePerLineButton > div {
+  background-position: -34px 0px;
+}
+.atext .versePerLineButton > div:hover {
+  background-position: -17px 0px;
+}
+.atext.verse-per-line .versePerLineButton > div:hover {
+  background-position: -51px 0px;
+}
+.atext.verse-per-line .vs {
+  display: block;
+}
+
+.versenum {
+  vertical-align: top;
+}
+.versenum:before,
+.versenum:after {
+  content: ' ';
+}
+.sb .hl,
+.sb .hl div,
+.sb .hl span,
+.sb .hl .wordsOfJesus {
+  color: b lue;
+}
+.cr,
+.fn,
+.un,
+.gfn {
+  cursor: pointer;
+}
+.cr:after,
+.fn:after,
+.un:after,
+.gfn {
+  vertical-align: top;
+  font-family: 'arial' !important;
+  font-size-adjust: 0.55 !important;
+  line-height: 100% !important;
+}
+.cr:after {
+  content: '\00D7 ';
+  color: rgb(255, 0, 0);
+}
+.x-parallel-passage:after {
+  content: '\2022 ';
+  color: rgb(255, 0, 0);
+}
+.x-style1:after {
+  content: '+ ';
+  color: rgb(255, 0, 0);
+}
+.fn:after {
+  content: '\00D7 ';
+  color: rgb(0, 200, 250);
+}
+.un:after {
+  content: '\00D7 ';
+  color: rgb(0, 0, 200);
+}
+.no-symbol .un:after {
+  content: '';
+}
+.sr {
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.sr:before,
+.sr:after {
+  /* ISV uses inline sr without surrounding whitespace */
+  content: ' ';
+}
+.dtl,
+.dt {
+  text-decoration: underline;
+  cursor: pointer;
+}
+.dtl.x-target_self {
+  color: blue;
+}
+/* Words with Strong's number attached */
+.sn {
+  text-decoration: underline;
+  cursor: pointer;
+}
+.gfn {
+  color: rgb(0, 200, 250);
+}
+.gfn:before {
+  content: '[';
+}
+.gfn:after {
+  content: '] ';
+}

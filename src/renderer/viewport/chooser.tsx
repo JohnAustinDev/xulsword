@@ -125,7 +125,7 @@ class Chooser extends React.Component {
     });
     this.sliderHeight = sh;
 
-    this.groupBarMouseOver = this.groupBarMouseOver.bind(this);
+    this.bookGroupMouseOver = this.bookGroupMouseOver.bind(this);
     this.chapterMouseOver = this.chapterMouseOver.bind(this);
     this.chapterMouseOut = this.chapterMouseOut.bind(this);
     this.startSlidingUp = this.startSlidingUp.bind(this);
@@ -167,15 +167,20 @@ class Chooser extends React.Component {
     this.slideReady = true;
   };
 
-  groupBarMouseOver = (e: any) => {
+  bookGroupMouseOver = (e: any) => {
     const { bookGroups } = this.props as ChooserProps;
-    const bg = e.target.className.match(/\bbookgroup_(.+?)\b/);
-    if (!bg || !bookGroups.includes(bg[1])) return;
-    if (this.state === bg[1]) return;
+    const state = this.state as ChooserState;
+    const { bookgroup } = e.target.dataset;
+    if (
+      !bookgroup ||
+      state.bookGroup === bookgroup ||
+      !bookGroups.includes(bookgroup)
+    )
+      return;
     delayHandler(
       this,
       () => {
-        this.setState({ bookGroup: bg[1] });
+        this.setState({ bookGroup: bookgroup });
       },
       300
     )(e);
@@ -231,14 +236,14 @@ class Chooser extends React.Component {
             const [, verse] = mv;
             const text = txt.replace(/<[^>]*>/g, '');
             if (tag && text && !/^\s*$/.test(text)) {
-              const heading = document.createElement('div');
-              sanitizeHTML(heading, text);
-              heading.classList.add('heading-link');
               if (hr) headingmenu.appendChild(document.createElement('hr'));
               const a = headingmenu.appendChild(document.createElement('a'));
+              sanitizeHTML(a, text);
               a.className = `heading-link cs-${headingsModule}`;
-              a.id = `headlink_${G.Book[book].sName}_${chapter}_${verse}_${headingsModule}`;
-              a.appendChild(heading);
+              a.dataset.module = headingsModule;
+              a.dataset.book = book;
+              a.dataset.chapter = chapter;
+              a.dataset.verse = verse;
               hr = true;
             }
           }
@@ -260,11 +265,11 @@ class Chooser extends React.Component {
     // Return LibSword options to original state
     G.LibSword.setGlobalOption(
       'Headings',
-      G.Prefs.getBoolPref('xulsword.showHeadings') ? 'On' : 'Off'
+      G.Prefs.getBoolPref('xulsword.show.headings') ? 'On' : 'Off'
     );
     G.LibSword.setGlobalOption(
       'Verse Numbers',
-      G.Prefs.getBoolPref('xulsword.showVerseNums') ? 'On' : 'Off'
+      G.Prefs.getBoolPref('xulsword.show.versenums') ? 'On' : 'Off'
     );
   };
 
@@ -282,9 +287,9 @@ class Chooser extends React.Component {
     if (!this.slideReady) return;
     const scrollMargin = 2; // mouse can be this close to top/bottom before scrolling
     const { bookGroup, slideIndex } = this.state as ChooserState;
-    const bookname = e.currentTarget.className.match(/\bbookname_([\w\d]+)\b/);
-    if (bookname === null) return;
-    const index = findBookGroup(G, bookname[1])?.index;
+    const { book } = e.currentTarget.dataset;
+    if (!book === null) return;
+    const index = findBookGroup(G, book)?.index;
     if (index === null || index === undefined) return;
     const numSliderRows = Math.round(this.chooserHeight / this.rowHeight);
     const downScroller = slideIndex[bookGroup] + scrollMargin;
@@ -441,13 +446,12 @@ class Chooser extends React.Component {
           ? 'sizer'
           : 'bookname';
 
-      // TODO! findBookNum should take a v11n and return books in versification order
       const b = findBookNum(G, bookGroup, i);
       if (b === null) break;
       const bk = G.Books[b];
       const classes = [
         'bookname',
-        `${type}_${bk.sName}`,
+        `${type}`,
         selBook && bk.sName === selBook ? 'selected' : '',
         availBooks && !availBooks.includes(bk.sName) ? unavailable : '',
       ];
@@ -457,6 +461,7 @@ class Chooser extends React.Component {
           key={`${type}_${versification}_${i}`}
           className={classes.filter(Boolean).join(' ')}
           onMouseMove={this.checkScroll}
+          data-book={bk.sName}
         >
           <div>
             <div>
@@ -493,12 +498,13 @@ class Chooser extends React.Component {
                 const selected = bg === bookGroup ? 'selected' : '';
                 return (
                   <Vbox
-                    key={`bookgroup_${bg}`}
-                    className={`bookgroup bookgroup_${bg} ${selected}`}
+                    key={`${bg}`}
+                    className={`bookgroup ${selected}`}
                     flex="50%"
                     pack="center"
                     align="center"
-                    onMouseOver={this.groupBarMouseOver}
+                    onMouseOver={this.bookGroupMouseOver}
+                    data-bookgroup={bg}
                   >
                     {this.groupBarLabel(bg)}
                   </Vbox>

@@ -9,6 +9,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { PlaceType, ShowType } from '../../type';
 import C from '../../constant';
 import { findBookGroup } from '../../common';
 import Chooser from './chooser';
@@ -44,6 +45,11 @@ const propTypes = {
   mtModules: PropTypes.arrayOf(PropTypes.string).isRequired,
   keys: PropTypes.arrayOf(PropTypes.string).isRequired,
 
+  // eslint-disable-next-line react/forbid-prop-types
+  show: PropTypes.object.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  place: PropTypes.object.isRequired,
+
   flagHilight: PropTypes.arrayOf(PropTypes.number).isRequired,
   flagScroll: PropTypes.arrayOf(PropTypes.number).isRequired,
   isPinned: PropTypes.arrayOf(PropTypes.bool).isRequired,
@@ -70,6 +76,9 @@ interface ViewportProps extends XulProps {
   ilModules: (string | undefined)[];
   mtModules: (string | undefined)[];
   keys: string[];
+
+  show: ShowType;
+  place: PlaceType;
 
   flagHilight: number[];
   flagScroll: number[];
@@ -131,6 +140,8 @@ class Viewport extends React.Component {
       modules,
       ilModules,
       mtModules,
+      show,
+      place,
       keys,
       flagHilight,
       flagScroll,
@@ -157,7 +168,10 @@ class Viewport extends React.Component {
     });
 
     // Get interlinear module options
-    const ilModuleOptions = [[''], [''], ['']];
+    const ilModuleOptions: any = [];
+    for (let x = 0; x < C.NW; x += 1) {
+      ilModuleOptions.push(['']);
+    }
     const windowHasILOptions = [false, false, false];
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       const windowHasBible = tabs[x].some((t) => {
@@ -216,15 +230,11 @@ class Viewport extends React.Component {
       const key = `${modules[x]} ${ilActive} ${!!isPinned[x]}`;
       let f = x + 1;
       for (;;) {
+        if (f === numDisplayedWindows) break;
         const module = modules[f];
         ilActive =
           !!ilModuleOptions[f][0] && !!ilMods[f] && ilMods[f] !== 'disabled';
-        if (
-          !module ||
-          f === numDisplayedWindows ||
-          key !== `${module} ${ilActive} ${!!isPinned[f]}`
-        )
-          break;
+        if (!module || key !== `${module} ${ilActive} ${!!isPinned[f]}`) break;
         columns[x] += 1;
         columns[f] = 0;
         f += 1;
@@ -253,6 +263,22 @@ class Viewport extends React.Component {
     for (let x = 0; x < columns.length; x += 1) {
       if (columns[x]) textComps.push(x);
     }
+
+    // Each text's book/chapter/verse should apply to the main versification.
+    let locs: any = [];
+    for (let x = 0; x < C.NW; x += 1) {
+      locs.push(`${book}.${chapter}.${verse}`);
+    }
+    for (let x = 0; x < numDisplayedWindows; x += 1) {
+      const m = modules[x];
+      if (m && G.Tab[m].isVerseKey && versification) {
+        const to = G.LibSword.getVerseSystem(m);
+        if (to !== versification) {
+          locs[x] = G.LibSword.convertLocation(versification, locs[x], to);
+        }
+      }
+    }
+    locs = locs.map((l: any) => l.split('.'));
 
     let cls = '';
     if (props.ownWindow) cls += ' ownWindow';
@@ -306,13 +332,16 @@ class Viewport extends React.Component {
                   anid={id}
                   n={Number(i + 1)}
                   ownWindow={ownWindow}
-                  book={book}
-                  chapter={chapter}
-                  verse={verse}
+                  book={locs[i][0]}
+                  chapter={Number(locs[i][1])}
+                  verse={Number(locs[i][2])}
                   lastverse={lastverse}
                   columns={columns[i]}
                   module={modules[i]}
                   ilModule={ilMods[i]}
+                  ilModuleOption={ilModuleOptions[i]}
+                  show={show}
+                  place={place}
                   modkey={keys[i]}
                   flagHilight={flagHilight[i]}
                   flagScroll={flagScroll[i]}

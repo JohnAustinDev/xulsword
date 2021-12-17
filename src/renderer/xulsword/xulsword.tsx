@@ -8,7 +8,8 @@ import React from 'react';
 import { render } from 'react-dom';
 import { Translation } from 'react-i18next';
 import i18next from 'i18next';
-import { dString } from '../../common';
+import { PlaceType, ShowType } from '../../type';
+import { compareObjects, deepClone, dString } from '../../common';
 import C from '../../constant';
 import i18nInit from '../i18n';
 import {
@@ -52,17 +53,9 @@ export interface StateDefault {
   history: string[];
   historyIndex: number;
 
-  showHeadings: boolean;
-  showFootnotes: boolean;
-  showCrossRefs: boolean;
-  showDictLinks: boolean;
-  showVerseNums: boolean;
-  showStrongs: boolean;
-  showMorph: boolean;
-  showUserNotes: boolean;
-  showHebCantillation: boolean;
-  showHebVowelPoints: boolean;
-  showRedWords: boolean;
+  show: ShowType;
+
+  place: PlaceType;
 
   tabs: string[][];
   modules: (string | undefined)[];
@@ -107,6 +100,8 @@ export default class Xulsword extends React.Component {
 
   lastSetPrefs: { [i: string]: any };
 
+  versification: string | undefined;
+
   constructor(props: XulswordProps) {
     super(props);
 
@@ -140,9 +135,12 @@ export default class Xulsword extends React.Component {
     this.handler = xulswordHandler.bind(this);
     this.handleViewport = handleVP.bind(this);
     this.lastSetPrefs = {};
+    this.versification = undefined;
   }
 
-  // Return values of state Prefs.
+  // Return values of state Prefs. If prefsToGet is undefined, all state prefs
+  // will be returned. The top pref object (after the id) is returned even if
+  // one of it's descendants is requested.
   getStatePrefs = (prefsToGet?: string | string[]): { [i: string]: any } => {
     const { id } = this.props as XulswordProps;
     const store = G.Prefs.getStore();
@@ -155,25 +153,26 @@ export default class Xulsword extends React.Component {
       else {
         prefs = prefsToGet;
       }
+      prefs = prefs.map((p) => {
+        return p.split('.')[1];
+      });
     }
     const state: any = {};
-    const entries = Object.entries(store);
-    entries.forEach((entry) => {
-      const [fullPref, value] = entry;
-      const prefId = fullPref.substring(0, id.length);
-      if (
-        prefId === id &&
-        fullPref.substring(id.length, id.length + 1) === '.'
-      ) {
-        const prefName = fullPref.substring(id.length + 1);
-        if (
-          !(prefName in stateNoPref) &&
-          (prefs === undefined || prefs.includes(fullPref))
-        ) {
-          state[prefName] = value;
-        }
+    Object.entries(store).forEach((entry) => {
+      const [canid, value] = entry;
+      if (canid === id && typeof value === 'object') {
+        Object.entries(value).forEach((entry2) => {
+          const [s, v] = entry2;
+          if (
+            !(s in stateNoPref) &&
+            (prefs === undefined || prefs.includes(s))
+          ) {
+            state[s] = v;
+          }
+        });
       }
     });
+
     return state;
   };
 
@@ -185,26 +184,24 @@ export default class Xulsword extends React.Component {
     const { id } = this.props as XulswordProps;
     if (!id) return;
     let prefsChanged = false;
-    const entries = Object.entries(s);
-    entries.forEach((entry) => {
+    Object.entries(s).forEach((entry) => {
       const [name, value] = entry;
-      const fullPref = `${id}.${name}`;
-      const laststr =
-        fullPref in this.lastSetPrefs ? this.lastSetPrefs[fullPref] : undefined;
-      let thisstr;
-      if (value !== undefined) thisstr = value.toString();
-      if (!(name in stateNoPref) && laststr !== thisstr) {
-        const type = typeof value;
+      const type = typeof value;
+      const pref = `${id}.${name}`;
+      const lastval =
+        pref in this.lastSetPrefs ? this.lastSetPrefs[pref] : undefined;
+      const thisval = type === 'object' ? deepClone(value) : value;
+      if (!(name in stateNoPref) && !compareObjects(lastval, thisval)) {
         if (type === 'string') {
-          G.Prefs.setCharPref(fullPref, value as string);
+          G.Prefs.setCharPref(pref, value as string);
         } else if (type === 'number') {
-          G.Prefs.setIntPref(fullPref, value as number);
+          G.Prefs.setIntPref(pref, value as number);
         } else if (type === 'boolean') {
-          G.Prefs.setBoolPref(fullPref, value as boolean);
+          G.Prefs.setBoolPref(pref, value as boolean);
         } else {
-          G.Prefs.setComplexValue(fullPref, value);
+          G.Prefs.setComplexValue(pref, value);
         }
-        this.lastSetPrefs[fullPref] = value.toString();
+        this.lastSetPrefs[pref] = thisval;
         prefsChanged = true;
       }
     });
@@ -338,10 +335,8 @@ export default class Xulsword extends React.Component {
       historyMenupopup,
       history,
       historyIndex,
-      showHeadings,
-      showFootnotes,
-      showCrossRefs,
-      showDictLinks,
+      show,
+      place,
       searchDisabled,
       tabs,
       modules,
@@ -359,6 +354,7 @@ export default class Xulsword extends React.Component {
       bsreset,
       vpreset,
     } = state;
+    let { versification } = this;
 
     jsdump(
       `Rendering Xulsword ${JSON.stringify({
@@ -379,15 +375,13 @@ export default class Xulsword extends React.Component {
         (G.Tab[m].modType === C.BIBLE || G.Tab[m].modType === C.COMMENTARY)
       );
     });
-    const versification = v11nmod
-      ? G.LibSword.getVerseSystem(v11nmod)
-      : undefined;
+    versification = v11nmod ? G.LibSword.getVerseSystem(v11nmod) : undefined;
 
     // Add page to history after a short delay
     if (versification) {
       if (this.historyTO) clearTimeout(this.historyTO);
       this.historyTO = setTimeout(() => {
-        this.addHistory(versification);
+        return versification ? this.addHistory(versification) : null;
       }, 1000);
     }
 
@@ -540,7 +534,7 @@ export default class Xulsword extends React.Component {
                 <Button
                   id="hdbutton"
                   orient="vertical"
-                  checked={showHeadings}
+                  checked={show.headings}
                   onClick={handler}
                   label={t('headingsButton.label')}
                   tooltip={t('headingsButton.tooltip')}
@@ -548,7 +542,7 @@ export default class Xulsword extends React.Component {
                 <Button
                   id="fnbutton"
                   orient="vertical"
-                  checked={showFootnotes}
+                  checked={show.footnotes}
                   onClick={handler}
                   label={t('notesButton.label')}
                   tooltip={t('notesButton.tooltip')}
@@ -556,7 +550,7 @@ export default class Xulsword extends React.Component {
                 <Button
                   id="crbutton"
                   orient="vertical"
-                  checked={showCrossRefs}
+                  checked={show.crossrefs}
                   onClick={handler}
                   label={t('crossrefsButton.label')}
                   tooltip={t('crossrefsButton.tooltip')}
@@ -564,7 +558,7 @@ export default class Xulsword extends React.Component {
                 <Button
                   id="dtbutton"
                   orient="vertical"
-                  checked={showDictLinks}
+                  checked={show.dictlinks}
                   onClick={handler}
                   label={t('dictButton.label')}
                   tooltip={t('dictButton.tooltip')}
@@ -587,6 +581,8 @@ export default class Xulsword extends React.Component {
                 modules={modules}
                 ilModules={ilModules}
                 mtModules={mtModules}
+                show={show}
+                place={place}
                 keys={keys}
                 flagHilight={flagHilight}
                 flagScroll={flagScroll}

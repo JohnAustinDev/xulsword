@@ -19,7 +19,7 @@ const propTypes = {
 
 function Menupopup(props: XulProps) {
   return (
-    <Vbox {...props} className={xulClass('menupopup', props)}>
+    <Vbox {...props} pack="start" className={xulClass('menupopup', props)}>
       {props.children}
     </Vbox>
   );

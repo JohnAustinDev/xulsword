@@ -63,25 +63,34 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
   // is not found in the store, it will be added having value defval, and defval
   // will be returned. If defval is required but not supplied, an error is thrown.
   getPrefOrCreate(key, type, defval, aStore = 'default') {
-    const p = this.getStore(aStore);
+    let p = this.getStore(aStore);
     if (p === null) return undefined;
 
-    let val = defval;
-
-    if (key in p) {
-      val = p[key];
-    } else {
-      if (defval === undefined) {
-        throw Error(`no key and no default: ${key} of ${aStore} store`);
+    let keyExists = true;
+    key.split('.').forEach((d) => {
+      if (!keyExists || !(d in p)) {
+        if (defval === undefined) {
+          throw Error(`no key and no default: ${key} of ${aStore} store`);
+        }
+        keyExists = false;
+        return;
       }
+      p = p[d];
+    });
+
+    let val = defval;
+    if (keyExists) {
+      val = p;
+    } else {
       this.setPref(key, type, val, aStore);
     }
 
-    if (
-      (type !== 'complex' && typeof val !== type) ||
-      (type === 'complex' && typeof val !== 'object')
-    ) {
-      throw Error(`type not ${type}: ${key} of ${aStore} store`);
+    let type2: string = type;
+    if (type === 'complex') type2 = 'object';
+    if (typeof val !== type2) {
+      throw Error(
+        `type '${typeof val}' expected '${type2}': ${key} of ${aStore} store`
+      );
     }
 
     return val;
@@ -131,13 +140,11 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
           }
         } else {
           throw Error(`ERROR: failed to read store ${aStore}`);
-          s.data = null;
         }
       }
 
       if (s.data === null) {
         throw Error(`ERROR: failed to read prefs from: ${s.file.path}`);
-        return null;
       }
     }
 
@@ -176,24 +183,39 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
   // be saved to disk immediately. Supported types are Javascript primitive
   // types and 'complex' for anything else.
   setPref(key, type, value, aStore = 'default') {
-    const p = this.getStore(aStore);
+    let p = this.getStore(aStore);
+    let k = key;
     if (p === null) {
       jsdump(`WARN: failed to set key ${key} in ${aStore}`);
       return false;
     }
 
-    if (
-      (type === 'complex' && typeof value !== 'object') ||
-      (type !== 'complex' && typeof value !== type)
-    ) {
+    let type2 = type;
+    if (type === 'complex') type2 = 'object';
+    if (value !== undefined && typeof value !== type2) {
       jsdump(`WARN: setPref to wrong type: ${typeof value} !== ${type}`);
       return false;
     }
 
+    let keyExists = true;
+    key.split('.').forEach((d, i, a) => {
+      k = d;
+      if (i + 1 === a.length) return;
+      if (value === undefined) {
+        if (!(d in p) || !keyExists) {
+          keyExists = false;
+          return;
+        }
+      } else if (!(d in p)) p[d] = {};
+      p = p[d];
+    });
+    if (value === undefined && !keyExists) return true;
+
     if (value === undefined) {
-      delete p[key];
+      if (k in p) delete p[k];
+      else return true;
     } else {
-      p[key] = value;
+      p[k] = value;
     }
 
     // If not writeOnChange, then data is persisted only when app is closed.

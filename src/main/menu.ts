@@ -407,53 +407,52 @@ export default class MenuBuilder {
     };
 
     const switches = [
-      ['showHeadings', 'headings'],
-      ['showFootnotes', 'footnotes'],
-      ['showCrossRefs', 'crossrefs'],
-      ['showDictLinks', 'dict'],
-      ['showUserNotes', 'usernotes'],
-      ['showStrongs', 'langnotes'],
-      ['showVerseNums', 'versenums'],
-      ['showRedWords', 'redwords'],
+      'headings',
+      'footnotes',
+      'crossrefs',
+      'dictlinks',
+      'usernotes',
+      'strongs',
+      'versenums',
+      'redwords'
     ];
 
     const allswitches = switches.map((x: any) => {
-      return `xulsword.${x[0]}`;
+      return `xulsword.show.${x}`;
     });
 
-    const textSwitches = switches.map((sw) => {
-      const [name, key] = sw;
+    const textSwitches = switches.map((key) => {
       return {
         label: this.ts(`menu.view.${key}`),
-        id: `xulsword.${name}`,
+        id: `xulsword.show.${key}`,
         type: 'checkbox',
-        icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x14', `${name}.png`),
+        icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x14', `${key}.png`),
         click: () => {
-          MenuBuilder.toggleSwitch(`xulsword.${name}`);
+          MenuBuilder.toggleSwitch(`xulsword.show.${key}`);
         },
       };
     });
 
-    const radios = ['fnlocation', 'crlocation', 'unlocation'];
+    const radios = ['footnotes', 'crossrefs', 'usernotes'];
 
     const displayLocation = radios.map((name) => {
       return {
-        label: this.ts(`menu.view.${name}`),
+        label: this.ts(`menu.view.place.${name}`),
         submenu: [
           {
             label: this.ts('menu.view.popups'),
-            id: `mainmenu.${name}_val_popup`,
+            id: `xulsword.place.${name}_val_popup`,
             type: 'radio',
             click: () => {
-              MenuBuilder.radioSwitch(`mainmenu.${name}`, 'popup');
+              MenuBuilder.radioSwitch(`xulsword.place.${name}`, 'popup');
             },
           },
           {
             label: this.ts('menu.view.notebox'),
-            id: `mainmenu.${name}_val_notebox`,
+            id: `xulsword.place.${name}_val_notebox`,
             type: 'radio',
             click: () => {
-              MenuBuilder.radioSwitch(`mainmenu.${name}`, 'notebox');
+              MenuBuilder.radioSwitch(`xulsword.place.${name}`, 'notebox');
             },
           },
         ],
@@ -607,18 +606,18 @@ export default class MenuBuilder {
           submenu: [
             {
               label: this.ts('menu.options.hebVowel'),
-              id: 'xulsword.showHebVowelPoints',
+              id: 'xulsword.show.hebvowelpoints',
               type: 'checkbox',
               click: () => {
-                MenuBuilder.toggleSwitch('xulsword.showHebVowelPoints');
+                MenuBuilder.toggleSwitch('xulsword.show.hebvowelpoints');
               },
             },
             {
               label: this.ts('menu.options.hebCant'),
-              id: 'xulsword.showHebCantillation',
+              id: 'xulsword.show.hebcantillation',
               type: 'checkbox',
               click: () => {
-                MenuBuilder.toggleSwitch('xulsword.showHebCantillation');
+                MenuBuilder.toggleSwitch('xulsword.show.hebcantillation');
               },
             },
           ],

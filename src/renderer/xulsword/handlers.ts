@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 import C from '../../constant';
 import { firstIndexOfBookGroup, ofClass } from '../../common';
-import { jsdump, parseLocation } from '../rutil';
+import { convertDotString, jsdump, parseLocation } from '../rutil';
 import G from '../rg';
 // eslint-disable-next-line import/no-cycle
 import Xulsword, { XulswordState } from './xulsword';
@@ -77,22 +77,30 @@ export function xulswordHandler(this: Xulsword, e: React.SyntheticEvent<any>) {
 
         case 'hdbutton':
           this.setState((prevState: XulswordState) => {
-            return { showHeadings: !prevState.showHeadings };
+            const { show } = prevState;
+            show.headings = !show.headings;
+            return { show };
           });
           break;
         case 'fnbutton':
           this.setState((prevState: XulswordState) => {
-            return { showFootnotes: !prevState.showFootnotes };
+            const { show } = prevState;
+            show.footnotes = !show.footnotes;
+            return { show };
           });
           break;
         case 'crbutton':
           this.setState((prevState: XulswordState) => {
-            return { showCrossRefs: !prevState.showCrossRefs };
+            const { show } = prevState;
+            show.crossrefs = !show.crossrefs;
+            return { show };
           });
           break;
         case 'dtbutton':
           this.setState((prevState: XulswordState) => {
-            return { showDictLinks: !prevState.showDictLinks };
+            const { show } = prevState;
+            show.dictlinks = !show.dictlinks;
+            return { show };
           });
           break;
 
@@ -189,6 +197,7 @@ export function handleViewport(
           'text-pin',
           'text-win',
           'chaptermenucell',
+          'heading-link',
           'bookname',
           'bookgroup',
           'open-chooser',
@@ -198,6 +207,8 @@ export function handleViewport(
           'mts-tab', // the multi-tab main tab
           'mto-tab', // a multi-tab option tab
           'ilt-tab', // the interlinear tab
+          'prevchaplink',
+          'nextchaplink',
         ],
         t
       );
@@ -223,8 +234,8 @@ export function handleViewport(
           break;
         }
         case 'bookgroup': {
-          const m = targ.element.className.match(/\bbookgroup_(\S+)\b/);
-          const b = m ? firstIndexOfBookGroup(m[1]) : null;
+          const { bookgroup } = targ.element.dataset;
+          const b = bookgroup ? firstIndexOfBookGroup(bookgroup) : null;
           if (b !== null) {
             this.setState({
               book: G.Books[b].sName,
@@ -236,10 +247,10 @@ export function handleViewport(
           break;
         }
         case 'bookname': {
-          const bk = targ.element.className.match(/\bbookname_([\w\d]+)\b/);
-          if (bk) {
+          const { book } = targ.element.dataset;
+          if (book) {
             this.setState({
-              book: bk[1],
+              book,
               chapter: 1,
               verse: 1,
               lastverse: 1,
@@ -248,13 +259,34 @@ export function handleViewport(
           break;
         }
         case 'chaptermenucell': {
-          const ch = targ.element.className.match(/chmc_([\w\d]+)_(\d+)\b/);
-          if (ch) {
+          const { book, chapter } = targ.element.dataset;
+          if (chapter) {
             this.setState({
-              book: ch[1],
-              chapter: Number(ch[2]),
+              book,
+              chapter: Number(chapter),
               verse: 1,
               lastverse: 1,
+            });
+          }
+          break;
+        }
+        case 'heading-link': {
+          const {
+            module: m,
+            book: b,
+            chapter: c,
+            verse: v,
+          } = targ.element.dataset;
+          if (m) {
+            const from = [b, c, v, G.LibSword.getVerseSystem(m)].join('.');
+            const to = this.versification
+              ? convertDotString(from, this.versification)
+              : from;
+            const [book, chapter, verse] = to.split('.');
+            this.setState({
+              book,
+              chapter: Number(chapter),
+              verse: Number(verse),
             });
           }
           break;
@@ -317,6 +349,14 @@ export function handleViewport(
               });
             }
           }
+          break;
+        }
+        case 'prevchaplink': {
+          console.log('Previous link unimplemented');
+          break;
+        }
+        case 'nextchaplink': {
+          console.log('Next link unimplemented');
           break;
         }
         default:
