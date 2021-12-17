@@ -14,7 +14,7 @@ import C from '../../constant';
 import i18nInit from '../i18n';
 import {
   convertDotString,
-  dosString2LocaleString,
+  dotString2LocaleString,
   dotStringLoc2ObjectLoc,
   jsdump,
 } from '../rutil';
@@ -110,8 +110,8 @@ export default class Xulsword extends React.Component {
       ...this.getStatePrefs(),
     };
 
-    // Listener for G.setStateFromPrefs()
-    window.ipc.renderer.on('setStateFromPrefs', (prefs: string | string[]) => {
+    // Listener for setWindowStates IPC channel requesting we set state from prefs.
+    window.ipc.renderer.on('setWindowStates', (prefs: string | string[]) => {
       const state = this.getStatePrefs(prefs);
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
       if (lng !== i18next.language) {
@@ -139,8 +139,8 @@ export default class Xulsword extends React.Component {
   }
 
   // Return values of state Prefs. If prefsToGet is undefined, all state prefs
-  // will be returned. The top pref object (after the id) is returned even if
-  // one of it's descendants is requested.
+  // will be returned. NOTE: The whole initial pref object (after the id) is
+  // returned if any of its descendants is requested.
   getStatePrefs = (prefsToGet?: string | string[]): { [i: string]: any } => {
     const { id } = this.props as XulswordProps;
     const store = G.Prefs.getStore();
@@ -232,7 +232,7 @@ export default class Xulsword extends React.Component {
               }}
               key={`${selected}${index}${loc}`}
             >
-              {dosString2LocaleString(cloc, true)}
+              {dotString2LocaleString(cloc, true)}
             </div>
           );
         })}
@@ -242,32 +242,23 @@ export default class Xulsword extends React.Component {
 
   // Insert a history entry at the current historyIndex.
   addHistory = (menuVersification: string, add?: string): void => {
-    const { book, chapter, verse, lastverse, history, historyIndex } = this
+    const { book, chapter, verse, history, historyIndex } = this
       .state as XulswordState;
     if (!book) return;
     let location = add as string;
     if (!location) {
-      location = [
-        book,
-        chapter,
-        verse,
-        lastverse,
-        G.LibSword.getVerseSystem(menuVersification),
-      ].join('.');
+      location = [book, chapter, verse, verse, menuVersification].join('.');
     }
-    // Don't record again if previous bk.ch.vs is same as current history index
-    const prev = history[historyIndex]
-      ? convertDotString(
-          history[historyIndex],
-          G.LibSword.getVerseSystem(menuVersification)
-        )
-      : null;
-    if (prev) {
-      const pre = prev.split('.');
-      const loc = location.split('.');
-      pre.pop();
-      loc.pop();
-      if (pre.toString() === loc.toString()) return;
+    // Don't record multiple entries for the same chapter.
+    if (history[historyIndex]) {
+      const current = convertDotString(
+        history[historyIndex],
+        menuVersification
+      ).split('.');
+      const newloc = location.split('.');
+      current.splice(2, 2);
+      newloc.splice(2, 2);
+      if (current.toString() === newloc.toString()) return;
     }
 
     this.setState((prevState: XulswordState) => {
@@ -290,7 +281,7 @@ export default class Xulsword extends React.Component {
       if (!modules[0]) return {};
       const newLocation = convertDotString(
         history[index],
-        G.LibSword.getVerseSystem(modules[0])
+        G.Tab[modules[0]].v11n
       );
       const { book, chapter, verse, lastverse } =
         dotStringLoc2ObjectLoc(newLocation);
@@ -369,13 +360,9 @@ export default class Xulsword extends React.Component {
 
     // Get versification of chooser and history menu
     const v11nmod = modules.find((m, i) => {
-      return (
-        i < numDisplayedWindows &&
-        m &&
-        (G.Tab[m].modType === C.BIBLE || G.Tab[m].modType === C.COMMENTARY)
-      );
+      return i < numDisplayedWindows && m && G.Tab[m].isVerseKey;
     });
-    versification = v11nmod ? G.LibSword.getVerseSystem(v11nmod) : undefined;
+    versification = v11nmod ? G.Tab[v11nmod].v11n : undefined;
 
     // Add page to history after a short delay
     if (versification) {
@@ -387,6 +374,9 @@ export default class Xulsword extends React.Component {
 
     const minWidth =
       (chooser !== 'none' && showChooser ? 300 : 0) + 200 * numDisplayedWindows;
+
+    const navdisabled =
+      !versification || isPinned.every((p, i) => i >= numDisplayedWindows || p);
 
     return (
       <Translation>
@@ -406,7 +396,7 @@ export default class Xulsword extends React.Component {
                     flex="40%"
                     onClick={handler}
                     disabled={
-                      !versification ||
+                      navdisabled ||
                       !history.length ||
                       historyIndex === history.length - 1
                     }
@@ -417,7 +407,7 @@ export default class Xulsword extends React.Component {
                     id="historymenu"
                     type="menu"
                     onClick={handler}
-                    disabled={!versification || history.length <= 1}
+                    disabled={navdisabled || history.length <= 1}
                     tooltip={t('history.all.tooltip')}
                   >
                     {historyMenupopup}
@@ -427,7 +417,7 @@ export default class Xulsword extends React.Component {
                     dir="reverse"
                     flex="40%"
                     onClick={handler}
-                    disabled={!versification || historyIndex === 0}
+                    disabled={navdisabled || historyIndex === 0}
                     label={t('history.forward.label')}
                     tooltip={t('history.forward.tooltip')}
                   />
@@ -449,7 +439,7 @@ export default class Xulsword extends React.Component {
                     flex="1"
                     book={book}
                     trans={t('configuration.default_modules')}
-                    disabled={!versification}
+                    disabled={navdisabled}
                     key={`bk${book}${bsreset}`}
                     onChange={handler}
                   />
@@ -460,7 +450,7 @@ export default class Xulsword extends React.Component {
                     pattern={/^[0-9]+$/}
                     value={dString(chapter.toString())}
                     timeout="300"
-                    disabled={!versification}
+                    disabled={navdisabled}
                     key={`ch${chapter}`}
                     onChange={handler}
                     onClick={handler}
@@ -468,12 +458,12 @@ export default class Xulsword extends React.Component {
                   <Vbox width="28px">
                     <Button
                       id="nextchap"
-                      disabled={!versification}
+                      disabled={navdisabled}
                       onClick={handler}
                     />
                     <Button
                       id="prevchap"
-                      disabled={!versification}
+                      disabled={navdisabled}
                       onClick={handler}
                     />
                   </Vbox>
@@ -485,19 +475,19 @@ export default class Xulsword extends React.Component {
                     pattern={/^[0-9]+$/}
                     value={dString(verse.toString())}
                     timeout="300"
-                    disabled={!versification}
+                    disabled={navdisabled}
                     onChange={handler}
                     onClick={handler}
                   />
                   <Vbox width="28px">
                     <Button
                       id="nextverse"
-                      disabled={!versification}
+                      disabled={navdisabled}
                       onClick={handler}
                     />
                     <Button
                       id="prevverse"
-                      disabled={!versification}
+                      disabled={navdisabled}
                       onClick={handler}
                     />
                   </Vbox>

@@ -35,7 +35,7 @@ const defaultProps = {
   bookGroups: ['ot', 'nt'],
   handler: undefined,
   headingsModule: undefined,
-  booksModule: undefined,
+  availableBooksModule: undefined,
   hideUnavailableBooks: false,
   selection: '',
   type: 'bible',
@@ -47,7 +47,7 @@ const propTypes = {
   bookGroups: PropTypes.arrayOf(PropTypes.string),
   handler: PropTypes.func.isRequired,
   headingsModule: PropTypes.string,
-  booksModule: PropTypes.string,
+  availableBooksModule: PropTypes.string,
   hideUnavailableBooks: PropTypes.bool,
   selection: PropTypes.string.isRequired,
   type: PropTypes.oneOf(['bible', 'genbook', 'none']).isRequired,
@@ -58,7 +58,7 @@ interface ChooserProps extends XulProps {
   bookGroups: string[];
   handler: (e: any) => void;
   headingsModule: string | undefined;
-  booksModule: string | undefined;
+  availableBooksModule: string | undefined;
   hideUnavailableBooks: boolean;
   selection: string;
   type: string;
@@ -195,17 +195,16 @@ class Chooser extends React.Component {
     const { headingsModule } = this.props as ChooserProps;
     if (!headingsModule) return;
 
-    const headingmenu = document.getElementsByClassName(
-      `hdm-${book}`
+    const headingmenu = chapterMenu.element.getElementsByClassName(
+      'headingmenu'
     )[0] as HTMLElement;
 
     while (headingmenu.firstChild) {
       headingmenu.removeChild(headingmenu.firstChild);
     }
 
-    // Set LibSword options and read chapter
-    G.LibSword.setGlobalOption('Headings', 'On');
-    G.LibSword.setGlobalOption('Verse Numbers', 'On');
+    // Set LibSword options and read the chapter
+    G.LibSword.setGlobalOptions({ Headings: 'On', 'Verse Numbers': 'On' });
 
     // Regex gets array of headings and their following verse tags
     const hdplus =
@@ -219,15 +218,14 @@ class Chooser extends React.Component {
 
     const chtxt = G.LibSword.getChapterText(
       headingsModule,
-      `${G.Book[book].sName}.${chapter}`
+      `${book}.${chapter}`
     );
 
-    const head = chtxt.match(hdplus);
-
-    if (head) {
+    const headings = chtxt.match(hdplus);
+    if (headings) {
       let hr = false;
-      for (let x = 0; x < head.length; x += 1) {
-        const h = head[x];
+      for (let x = 0; x < headings.length; x += 1) {
+        const h = headings[x];
         if (h) {
           const mh = h.match(hd);
           const mv = h.match(vs);
@@ -261,16 +259,6 @@ class Chooser extends React.Component {
         chapterMenu.element.classList.add('show');
       }
     }
-
-    // Return LibSword options to original state
-    G.LibSword.setGlobalOption(
-      'Headings',
-      G.Prefs.getBoolPref('xulsword.show.headings') ? 'On' : 'Off'
-    );
-    G.LibSword.setGlobalOption(
-      'Verse Numbers',
-      G.Prefs.getBoolPref('xulsword.show.versenums') ? 'On' : 'Off'
-    );
   };
 
   chapterMouseOut = (e: any) => {
@@ -375,31 +363,25 @@ class Chooser extends React.Component {
     const tkey = `${bookGroup.toUpperCase()}text`;
     const name = i18next.t(tkey);
     if (/^\s*$/.test(name))
-      return [
-        <div key={`label_${bookGroup}`} className={`label ${bookGroup}`} />,
-      ];
+      return [<div key={bookGroup} className={`label ${bookGroup}`} />];
     return [...name].map((l, i) => {
       // eslint-disable-next-line react/no-array-index-key
-      return <div key={`gbl_${i}`}>{l}</div>;
+      return <div key={i}>{l}</div>;
     });
   };
 
   chapterMenu = (book: string) => {
-    const { headingsModule, versification } = this.props as ChooserProps;
-    const k = `${versification}_${book}`;
-    if (Chooser.cache[k]) return Chooser.cache[k];
-    const chmenuRows = [];
+    const { versification } = this.props as ChooserProps;
+    const chmenuCells = [];
     let ch = 1;
     const lastch = G.LibSword.getMaxChapter(versification, book);
     for (let row = 1; row <= 1 + lastch / 10; row += 1) {
       const cells = [];
-      let key = `${versification}_${book}`;
       for (let col = 1; col <= 10; col += 1) {
-        key = `${versification}_${book}_${ch}`;
         if (ch <= lastch) {
           cells.push(
             <div
-              key={`${key}${headingsModule}`}
+              key={[book, ch].join('.')}
               data-book={book}
               data-chapter={ch}
               className="chaptermenucell cs-Program"
@@ -408,28 +390,27 @@ class Chooser extends React.Component {
             </div>
           );
         } else {
-          cells.push(<div key={`2${key}`} className="emptych" />);
+          cells.push(<div key={[book, ch].join('.')} className="emptych" />);
         }
         ch += 1;
       }
-      chmenuRows.push(
-        <div key={`3${key}`} className="chaptermenurow">
+      chmenuCells.push(
+        <div key={row} className="chaptermenurow">
           {cells}
         </div>
       );
     }
-    Chooser.cache[k] = (
+    return (
       <div
+        key={[versification, book].join('_')}
         className="chaptermenu"
         onMouseOver={delayHandler(this, this.chapterMouseOver, 500)}
         onMouseOut={this.chapterMouseOut}
       >
-        {chmenuRows}
-        <div className={`headingmenu hdm-${book}`} />
+        {chmenuCells}
+        <div className="headingmenu" />
       </div>
     );
-
-    return Chooser.cache[k];
   };
 
   bookGroupList = (
@@ -458,7 +439,7 @@ class Chooser extends React.Component {
 
       books.push(
         <div
-          key={`${type}_${versification}_${i}`}
+          key={[bk.sName, versification].join('.')}
           className={classes.filter(Boolean).join(' ')}
           onMouseMove={this.checkScroll}
           data-book={bk.sName}
@@ -468,7 +449,7 @@ class Chooser extends React.Component {
               {bk.bName}
               {type === 'bookname' && (
                 <>
-                  <div className="charrow" />
+                  <div key="charrow" className="charrow" />
                   {this.chapterMenu(bk.sName)}
                 </>
               )}
@@ -482,11 +463,14 @@ class Chooser extends React.Component {
 
   render() {
     const props = this.props as ChooserProps;
-    const { booksModule, selection, type } = this.props as ChooserProps;
+    const { availableBooksModule, selection, type } = this
+      .props as ChooserProps;
     const { bookGroup, slideIndex } = this.state as ChooserState;
     if (type === 'none') return [];
     const rowHeight = this.slideReady ? this.rowHeight : 0;
-    const availableBooks = booksModule ? G.AvailableBooks[booksModule] : [];
+    const availableBooks = availableBooksModule
+      ? G.AvailableBooks[availableBooksModule]
+      : [];
     return (
       <div {...htmlAttribs(`chooser ${type}`, this.props)}>
         <Vbox height="100%">
@@ -498,7 +482,7 @@ class Chooser extends React.Component {
                 const selected = bg === bookGroup ? 'selected' : '';
                 return (
                   <Vbox
-                    key={`${bg}`}
+                    key={bg}
                     className={`bookgroup ${selected}`}
                     flex="50%"
                     pack="center"
@@ -528,7 +512,7 @@ class Chooser extends React.Component {
                 const selected = bg === bookGroup ? 'selected' : '';
                 return (
                   <Vbox
-                    key={`slider_${bg}`}
+                    key={bg}
                     className={`slider slider_${bg} ${selected}`}
                     style={{ top: `${-1 * slideIndex[bg] * rowHeight}px` }}
                   >

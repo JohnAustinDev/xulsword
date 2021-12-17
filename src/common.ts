@@ -241,21 +241,24 @@ export function sanitizeHTML(parent: HTMLElement, html: string) {
   return parent;
 }
 
-export function objectHashString(obj: any): string {
-  if (typeof obj !== 'object') {
-    return obj.toString();
-  }
+export function stringHash(...args: any): string {
   let r = '';
-  Object.entries(obj)
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .forEach((entry) => {
-      const [p, v] = entry;
-      if (typeof v !== 'object') {
-        r += `${p}:${v},`;
-      } else {
-        r += `${p}:${objectHashString(v)},`;
-      }
-    });
+  args.forEach((arg: any) => {
+    if (!arg || typeof arg !== 'object') {
+      return arg.toString();
+    }
+    Object.entries(arg)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .forEach((entry) => {
+        const [p, v] = entry;
+        if (typeof v !== 'object') {
+          r += `${p}:${v},`;
+        } else {
+          r += `${p}:${stringHash(v)},`;
+        }
+      });
+    return r;
+  });
   return r;
 }
 

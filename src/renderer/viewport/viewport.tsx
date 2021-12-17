@@ -96,7 +96,7 @@ interface ViewportProps extends XulProps {
 }
 
 interface ViewportState {
-  resize: number;
+  reset: number;
 }
 
 class Viewport extends React.Component {
@@ -108,8 +108,15 @@ class Viewport extends React.Component {
     super(props);
 
     this.state = {
-      resize: 0,
+      reset: 0,
     };
+
+    window.ipc.renderer.on('reset', () => {
+      G.reset();
+      this.setState((prevState: ViewportState) => {
+        return { reset: prevState.reset + 1 };
+      });
+    });
 
     window.ipc.renderer.on(
       'resize',
@@ -117,7 +124,7 @@ class Viewport extends React.Component {
         this,
         () => {
           this.setState((prevState: ViewportState) => {
-            return { resize: prevState.resize + 1 };
+            return { reset: prevState.reset + 1 };
           });
         },
         500
@@ -153,17 +160,21 @@ class Viewport extends React.Component {
       ownWindow,
       versification,
     } = this.props as ViewportProps;
-    const { resize } = this.state as ViewportState;
+    const { reset } = this.state as ViewportState;
 
-    const firstBible = modules.find((m, i) => {
-      return i < numDisplayedWindows && m && G.Tab[m].modType === C.BIBLE;
-    });
-
-    const firstBibleOrCommentary = modules.find((m, i) => {
+    const firstUnpinnedBible = modules.find((m, i) => {
       return (
         i < numDisplayedWindows &&
+        !ilModules[i] &&
         m &&
-        (G.Tab[m].modType === C.BIBLE || G.Tab[m].modType === C.COMMENTARY)
+        !isPinned[i] &&
+        G.Tab[m].type === C.BIBLE
+      );
+    });
+
+    const firstUnpinnedVerseKey = modules.find((m, i) => {
+      return (
+        i < numDisplayedWindows && m && !isPinned[i] && G.Tab[m].isVerseKey
       );
     });
 
@@ -175,7 +186,7 @@ class Viewport extends React.Component {
     const windowHasILOptions = [false, false, false];
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       const windowHasBible = tabs[x].some((t) => {
-        return t && G.Tab[t].modType === C.BIBLE;
+        return t && G.Tab[t].type === C.BIBLE;
       });
       if (windowHasBible && book) {
         windowHasILOptions[x] =
@@ -204,7 +215,7 @@ class Viewport extends React.Component {
       if (
         windowHasILOptions &&
         (!ilModuleOptions[x] ||
-          (selmod && G.Tab[selmod].modType !== C.BIBLE) ||
+          (selmod && G.Tab[selmod].type !== C.BIBLE) ||
           (selmod && selmod === ilModuleOptions[x][0]))
       ) {
         ilMods[x] = 'disabled'; // visible and disabled
@@ -223,8 +234,7 @@ class Viewport extends React.Component {
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       columns[x] = 1;
       const mod = modules[x];
-      const modType = mod && G.Tab[mod] ? G.Tab[mod].modType : null;
-      if (!modType || modType === C.DICTIONARY) continue;
+      if (!mod || G.Tab[mod].type === C.DICTIONARY) continue;
       let ilActive =
         !!ilModuleOptions[x][0] && !!ilMods[x] && ilMods[x] !== 'disabled';
       const key = `${modules[x]} ${ilActive} ${!!isPinned[x]}`;
@@ -254,6 +264,25 @@ class Viewport extends React.Component {
       x += columns[x] - 1;
     }
 
+    // Each text's book/chapter/verse should apply to the main versification.
+    let locs: any = [];
+    for (let x = 0; x < C.NW; x += 1) {
+      locs.push(`${book}.${chapter}.${verse}`);
+    }
+    for (let x = 0; x < numDisplayedWindows; x += 1) {
+      const m = modules[x];
+      if (m && G.Tab[m].isVerseKey && versification) {
+        if (G.Tab[m].v11n !== versification) {
+          locs[x] = G.LibSword.convertLocation(
+            versification,
+            locs[x],
+            G.Tab[m].v11n
+          );
+        }
+      }
+    }
+    locs = locs.map((l: any) => l.split('.'));
+
     const tabComps: number[] = [];
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       tabComps.push(x);
@@ -263,22 +292,6 @@ class Viewport extends React.Component {
     for (let x = 0; x < columns.length; x += 1) {
       if (columns[x]) textComps.push(x);
     }
-
-    // Each text's book/chapter/verse should apply to the main versification.
-    let locs: any = [];
-    for (let x = 0; x < C.NW; x += 1) {
-      locs.push(`${book}.${chapter}.${verse}`);
-    }
-    for (let x = 0; x < numDisplayedWindows; x += 1) {
-      const m = modules[x];
-      if (m && G.Tab[m].isVerseKey && versification) {
-        const to = G.LibSword.getVerseSystem(m);
-        if (to !== versification) {
-          locs[x] = G.LibSword.convertLocation(versification, locs[x], to);
-        }
-      }
-    }
-    locs = locs.map((l: any) => l.split('.'));
 
     let cls = '';
     if (props.ownWindow) cls += ' ownWindow';
@@ -291,12 +304,11 @@ class Viewport extends React.Component {
 
         {showChooser && chooser !== 'none' && (
           <Chooser
-            key={`${book}${resize}`}
             handler={handler}
             type={chooser}
             selection={book}
-            headingsModule={firstBible}
-            booksModule={firstBibleOrCommentary}
+            headingsModule={firstUnpinnedBible}
+            availableBooksModule={firstUnpinnedVerseKey}
             versification={versification}
             onClick={handler}
           />
@@ -307,7 +319,15 @@ class Viewport extends React.Component {
             {tabComps.map((i) => {
               return (
                 <Tabs
-                  key={`${i}${resize}${tabs}${modules.toString()}${ilModuleOptions.toString()}${isPinned.toString()}`}
+                  key={[
+                    i,
+                    reset,
+                    isPinned.toString(),
+                    columns.toString(),
+                    tabs[i].toString(),
+                    ilMods[i],
+                    mtModules[i],
+                  ].join('_')}
                   handler={handler}
                   anid={id}
                   n={Number(i + 1)}
@@ -327,7 +347,7 @@ class Viewport extends React.Component {
             {textComps.map((i) => {
               return (
                 <Atext
-                  key={`txt_${id}${i}${resize}`}
+                  key={[i, reset].join('.')}
                   handler={handler}
                   anid={id}
                   n={Number(i + 1)}

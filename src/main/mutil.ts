@@ -1,8 +1,8 @@
 /* eslint-disable new-cap */
 /* eslint import/prefer-default-export: off, import/no-mutable-exports: off */
-import { URL } from 'url';
 import path from 'path';
 import C from '../constant';
+// import G from './mg'; Cannot use G without cycles?
 import nsILocalFile from './components/nsILocalFile';
 
 // creates only allowable file types

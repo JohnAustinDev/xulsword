@@ -44,7 +44,7 @@ export function getModuleLongType(aModule: string): string | undefined {
 //    nk c
 //    bk c:v
 //    bk c:v-lv
-export function dosString2LocaleString(ref: string, notHTML: boolean): string {
+export function dotString2LocaleString(ref: string, notHTML: boolean): string {
   const guidir = guiDirection(G);
 
   const entity = guidir === 'rtl' ? '&rlm;' : '&lrm;';
@@ -462,9 +462,9 @@ export function findAVerseText(
         : bibleVersion[0];
     if (bibleVersion)
       bibleLocation = G.LibSword.convertLocation(
-        G.LibSword.getVerseSystem(version),
+        G.Tab[version].v11n,
         location,
-        G.LibSword.getVerseSystem(bibleVersion)
+        G.Tab[bibleVersion].v11n
       );
   }
   // If we have a Bible, try it first.
@@ -480,7 +480,7 @@ export function findAVerseText(
       text = '';
     }
     if (text && text.length > 7) {
-      const vsys = G.LibSword.getVerseSystem(bibleVersion);
+      const vsys = G.Tab[bibleVersion].v11n;
       ret.tabindex = G.Tab[bibleVersion].index;
       ret.location = G.LibSword.convertLocation(vsys, location, vsys);
       ret.text = text;
@@ -493,20 +493,20 @@ export function findAVerseText(
   if (!m) return null;
   const [, book] = m;
   for (let v = 0; v < G.Tabs.length; v += 1) {
-    if (G.Tabs[v].modType !== C.BIBLE) continue;
-    const abooks = G.AvailableBooks[G.Tabs[v].modName];
+    if (G.Tabs[v].module !== C.BIBLE) continue;
+    const abooks = G.AvailableBooks[G.Tabs[v].module];
     let ab;
     for (ab = 0; ab < abooks.length; ab += 1) {
       if (abooks[ab] === book) break;
     }
     if (ab === abooks.length) continue;
     const tlocation = G.LibSword.convertLocation(
-      G.LibSword.getVerseSystem(version),
+      G.Tab[version].v11n,
       location,
-      G.LibSword.getVerseSystem(G.Tabs[v].modName)
+      G.Tabs[v].v11n
     );
     const text = G.LibSword.getVerseText(
-      G.Tabs[v].modName,
+      G.Tabs[v].module,
       tlocation,
       keepTextNotes
     ).replace(/\n/g, ' ');
@@ -514,8 +514,8 @@ export function findAVerseText(
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If
       // no visible tab match is found, this saved result will be returned
-      const vsys = G.LibSword.getVerseSystem(G.Tabs[v].modName);
-      if (tabs.includes(G.Tabs[v].modName)) {
+      const vsys = G.Tabs[v].v11n;
+      if (tabs.includes(G.Tabs[v].module)) {
         ret.tabindex = v;
         ret.location = G.LibSword.convertLocation(vsys, tlocation, vsys);
         ret.text = text;

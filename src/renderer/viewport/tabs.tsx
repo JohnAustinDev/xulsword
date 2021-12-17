@@ -79,6 +79,11 @@ class Tabs extends React.Component {
     this.getMultiTabSelection = this.getMultiTabSelection.bind(this);
   }
 
+  // The multi-tab is built over a series of render cycles that start
+  // when this tabs component is mounted and end when its width fits
+  // the window width. Only when the tabs key prop changes will React
+  // instaniate a new tabs component and thus resize the tabs to the
+  // current window.
   componentDidMount() {
     const { multiTabDone } = this.state as TabsState;
     if (!multiTabDone) this.checkTabWidth();

@@ -58,22 +58,23 @@ export type ModTypes =
 | 'Generic Books';
 
 export interface TabType {
-  modName: string;
-  modType: ModTypes;
-  modVersion: string;
-  modDir: string;
+  module: string;
+  type: ModTypes;
+  version: string;
+  lang: string;
+  dir: string;
+  v11n: string;
   label: string;
   tabType: TabTypes;
+  isCommDir: boolean;
   isVerseKey: boolean;
   isRTL: boolean;
   index: number;
   description: string;
   locName: string;
   conf: string;
-  isCommDir: boolean;
   audio: { [index: string]: string };
   audioCode: string;
-  lang: string;
 }
 
 export const DirsPublic = {
@@ -141,7 +142,7 @@ export const LibSwordPublic = {
   searchIndexDelete: func as unknown as (modname: string) => void,
   searchIndexBuild: func as unknown as (modname: string) => void,
   setGlobalOption: func as unknown as (option: SwordFilterType, setting: SwordFilterValueType) => void,
-  setGlobalOptions: func as unknown as (options: { [key in SwordFilterType]: SwordFilterValueType }) => void,
+  setGlobalOptions: func as unknown as (options: { [key in SwordFilterType]?: SwordFilterValueType }) => void,
   getGlobalOption: func as unknown as (option: SwordFilterType) => string,
   setCipherKey: func as unknown as (modname: string, cipherKey: string, useSecModule: boolean) => void,
   getModuleList: func as unknown as () => string,
@@ -198,6 +199,8 @@ export const GPublic = {
   // Global functions
   resolveHtmlPath: func as unknown,
   setGlobalMenuFromPrefs: func as unknown,
+  setGlobalStateFromPrefs: func as unknown,
+  globalReset: func as unknown,
 
   // Global objects with methods and/or data
   Prefs: PrefsPublic,
@@ -224,6 +227,8 @@ export interface GType {
 
   resolveHtmlPath: (htmlfile: string) => string;
   setGlobalMenuFromPrefs: (menu?: Electron.Menu) => void;
+  setGlobalStateFromPrefs: (prefs?: string | string[], globalMenuUpdated?: boolean) => void;
+  globalReset: () => void;
 
   Prefs: typeof PrefsPublic;
   LibSword: typeof LibSwordPublic;

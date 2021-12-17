@@ -9,8 +9,8 @@ import {
   MenuItemConstructorOptions,
   MenuItem,
 } from 'electron';
-import i18next from 'i18next';
 import path from 'path';
+import { TabTypes } from '../type';
 import C from '../constant';
 import Commands from './commands';
 import G from './mg';
@@ -30,27 +30,6 @@ interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
 }
 
 export default class MenuBuilder {
-  // Some commands update language and global state from Prefs
-  static setGlobalStateFromPrefs(prefs: string | string[]) {
-    function setGlobalStateFromPrefs2() {
-      BrowserWindow.getAllWindows().forEach((w) => {
-        w.webContents.send('setStateFromPrefs', prefs);
-      });
-    }
-
-    // Change language if Pref changed
-    const lng = G.Prefs.getCharPref(C.LOCALEPREF);
-    if (lng !== i18next.language) {
-      i18next.changeLanguage(lng, (err) => {
-        if (err) throw Error(err);
-        G.reset();
-        setGlobalStateFromPrefs2();
-      });
-    } else {
-      setGlobalStateFromPrefs2();
-    }
-  }
-
   // Update Prefs, then setGlobalStateFromPrefs()
   static toggleSwitch(name: string | string[], value?: boolean) {
     const a = Array.isArray(name) ? name : [name];
@@ -58,7 +37,7 @@ export default class MenuBuilder {
       const v = value === undefined ? !G.Prefs.getBoolPref(n) : value;
       G.Prefs.setBoolPref(n, v);
     });
-    this.setGlobalStateFromPrefs(name);
+    G.setGlobalStateFromPrefs(name, true);
   }
 
   // Update Prefs, then setGlobalStateFromPrefs()
@@ -73,11 +52,11 @@ export default class MenuBuilder {
         throw Error('radioSwitch supports number or string.');
       }
     });
-    this.setGlobalStateFromPrefs(name);
+    G.setGlobalStateFromPrefs(name, true);
   }
 
   static setTabs(
-    type: string | 'all',
+    type: TabTypes | 'all',
     winLabel: string | 'all',
     modOrAll: string,
     doWhat: 'show' | 'hide' | 'toggle'
@@ -96,12 +75,12 @@ export default class MenuBuilder {
     const pval = G.Prefs.getComplexValue('xulsword.tabs');
     const nval = JSON.parse(JSON.stringify(pval));
 
-    // If toggling on allwindows, set all according to the clicked
+    // If toggling on allwindows, set them according to the clicked
     // menuitem, and not each item separately.
     let doWhat2 = doWhat;
     if (doWhat === 'toggle' && winLabel === 'menu.view.allwindows') {
       const m = modules[0];
-      const val = m !== null && pval.every((wn: any) => wn?.includes(m.modName));
+      const val = m !== null && pval.every((wn: any) => wn?.includes(m.module));
       doWhat2 = val ? 'hide' : 'show';
     }
 
@@ -110,12 +89,12 @@ export default class MenuBuilder {
         if (t) {
           const show =
             doWhat2 === 'toggle'
-              ? !pval[w - 1].includes(t.modName)
+              ? !pval[w - 1].includes(t.module)
               : doWhat2 === 'show';
-          if (show && !pval[w - 1].includes(t.modName)) {
-            nval[w - 1].push(t.modName);
-          } else if (!show && pval[w - 1].includes(t.modName)) {
-            nval[w - 1].splice(nval[w - 1].indexOf(t.modName), 1);
+          if (show && !pval[w - 1].includes(t.module)) {
+            nval[w - 1].push(t.module);
+          } else if (!show && pval[w - 1].includes(t.module)) {
+            nval[w - 1].splice(nval[w - 1].indexOf(t.module), 1);
           }
         }
       });
@@ -126,27 +105,60 @@ export default class MenuBuilder {
       nval[i] = tmp.sort(MenuBuilder.tabOrder);
     });
 
-    // Insure each window's tabs correspond to its texts
-    const prefs = ['xulsword.modules', 'xulsword.ilModules', 'xulsword.mtModules'];
+    // Insure module vars aren't pointing to modules which have no tab.
+    const prefs = ['xulsword.modules', 'xulsword.mtModules'];
+    const used: any = {};
     prefs.forEach((p) => {
       const ms = G.Prefs.getComplexValue(p);
       let save = false;
       ms.forEach((m: any, i: any) => {
         if (!nval[i].includes(m)) {
-          ms[i] = p === 'xulsword.modules' ? nval[i][0] : undefined;
           save = true;
+          ms[i] = undefined;
+          // Rather than leave a window's display module undefined, we
+          // can choose a new module, and choose a book too if none is
+          // already selected.
+          if (p === 'xulsword.modules') {
+            let it = 0;
+            let nextmod = nval[i][it];
+            while(nextmod in used && it + 1 < nval[i].length) {
+              it += 1;
+              nextmod = nval[i][it];
+            }
+            ms[i] = nextmod;
+            used[nextmod] = true;
+            let bk = G.Prefs.getCharPref('xulsword.book');
+            if (!bk && nextmod && G.Tab[nextmod].isVerseKey) {
+              [bk] = G.AvailableBooks[nextmod];
+              if (bk) {
+                G.Prefs.setCharPref('xulsword.book', bk);
+              }
+            }
+          }
         }
       });
       if (save) G.Prefs.setComplexValue(p, ms);
     });
 
+    // If user is setting tabs for a window that is not open, then open it.
+    if (windows.length === 1) {
+      let ndw = G.Prefs.getIntPref('xulsword.numDisplayedWindows');
+      for (let w = 2; w <= windows[0]; w += 1) {
+        if (w > ndw) ndw = w;
+      }
+      G.Prefs.setIntPref('xulsword.numDisplayedWindows', ndw);
+    }
+
     G.Prefs.setComplexValue('xulsword.tabs', nval);
-    this.setGlobalStateFromPrefs([
+
+    // Update global states corresponding to prefs which could have been changed.
+    G.setGlobalStateFromPrefs([
       'xulsword.tabs',
       'xulsword.modules',
-      'xulsword.ilModules',
-      'xulsword.mtModules'
-    ]);
+      'xulsword.mtModules',
+      'xulsword.book',
+      'xulsword.numDisplayedWindows'
+    ], true);
   }
 
   static tabOrder(as: string, bs: string) {
@@ -155,8 +167,8 @@ export default class MenuBuilder {
     if (a.tabType === b.tabType) {
       // Priority: 1) Modules matching current locale, 2) Other tabs that have
       // locales installed, 3) remaining tabs.
-      const aLocale = G.ModuleConfigs[a.modName]?.AssociatedLocale;
-      const bLocale = G.ModuleConfigs[b.modName]?.AssociatedLocale;
+      const aLocale = G.ModuleConfigs[a.module]?.AssociatedLocale;
+      const bLocale = G.ModuleConfigs[b.module]?.AssociatedLocale;
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
       const aPriority = aLocale && aLocale !== C.NOTFOUND ? (aLocale === lng ? 1 : 2) : 3;
       const bPriority = bLocale && bLocale !== C.NOTFOUND ? (bLocale === lng ? 1 : 2) : 3;
@@ -213,7 +225,7 @@ export default class MenuBuilder {
     });
   }
 
-  static tabs = [
+  static tabs: [string, TabTypes][] = [
     ['showtexttabs', 'Texts'],
     ['showcommtabs', 'Comms'],
     ['showbooktabs', 'Genbks'],
@@ -244,12 +256,12 @@ export default class MenuBuilder {
             disableParent = false;
             disableMulti += 1;
             const newItem = new MenuItem({
-              id: `showtab_${win}_${t.modName}`,
+              id: `showtab_${win}_${t.module}`,
               label: t.label + (t.description ? ` --- ${t.description}` : ''),
               type: 'checkbox',
               // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
               click: () => {
-                MenuBuilder.setTabs(type, wl, t.modName, 'toggle');
+                MenuBuilder.setTabs(type, wl, t.module, 'toggle');
               },
             });
             submenu.insert(0, newItem);

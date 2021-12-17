@@ -69,9 +69,9 @@ function normalizeOsisReference(refx: string, bibleMod: string) {
     if (!/Bible/i.test(m)) {
       if (ret.mod && ret.mod in G.Tab && m in G.Tab) {
         ref = G.LibSword.convertLocation(
-          G.LibSword.getVerseSystem(m),
+          G.Tab[m].v11n,
           ref,
-          G.LibSword.getVerseSystem(ret.mod)
+          G.Tab[ret.mod].v11n
         );
       } else if (m in G.Tab) ret.mod = m;
       else {
@@ -113,10 +113,7 @@ function normalizeOsisReference(refx: string, bibleMod: string) {
 
 // Turns headings on before reading introductions
 function getIntroductions(mod: string, vkeytext: string) {
-  if (
-    !(mod in G.Tab) ||
-    (G.Tab[mod].modType !== C.BIBLE && G.Tab[mod].modType !== C.COMMENTARY)
-  ) {
+  if (!(mod in G.Tab) || G.Tab[mod].isVerseKey) {
     return { textHTML: '', intronotes: '' };
   }
 
@@ -354,7 +351,7 @@ function getRefHTML(
     if (/^\s*$/.test(aVerse.text)) aVerse.text = '-----';
 
     if (aVerse.location) {
-      const rmod = G.Tabs[aVerse.tabindex].modName;
+      const rmod = G.Tabs[aVerse.tabindex].module;
       html += sep;
       html += `<a class="crref" title="${aVerse.location}.${rmod}">`;
       html += ref2ProgramLocaleText(aVerse.location);

@@ -3,8 +3,9 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import path from 'path';
 import fs from 'fs';
-import { Menu } from 'electron';
-import { GType, GPublic, TabType, BookType, TabTypes, ModTypes } from '../type';
+import { BrowserWindow, Menu } from 'electron';
+import i18next from 'i18next';
+import { GType, GPublic, TabType, BookType, ModTypes } from '../type';
 import C from '../constant';
 import { isASCII } from '../common';
 import Dirsx from './modules/dirs';
@@ -53,6 +54,36 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     resolveHtmlPath: (s: string) => {
       return resolveHtmlPath(s);
     },
+    globalReset: () => {
+      G.reset();
+      BrowserWindow.getAllWindows().forEach((w) => {
+        w.webContents.send('reset');
+      });
+    },
+    setGlobalStateFromPrefs: (
+      prefs?: string | string[],
+      globalMenuUpdated?: boolean
+    ) => {
+      function broadcast() {
+        BrowserWindow.getAllWindows().forEach((w) => {
+          w.webContents.send('setWindowStates', prefs);
+        });
+        if (!globalMenuUpdated) {
+          const m = Menu.getApplicationMenu();
+          if (m) setMenuFromPrefs(m);
+        }
+      }
+      const lng = Prefsx.getCharPref(C.LOCALEPREF);
+      if (lng !== i18next.language) {
+        i18next.changeLanguage(lng, (err: any) => {
+          if (err) throw Error(err);
+          G.reset();
+          broadcast();
+        });
+      } else {
+        broadcast();
+      }
+    },
 
     LibSword: LibSwordx as typeof LibSwordx,
     Prefs: Prefsx as typeof Prefsx,
@@ -64,6 +95,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     this.cache = {};
   },
 };
+G.refs.globalReset = G.refs.globalReset.bind(G);
 
 // Add methods to the G object
 const entries = Object.entries(GPublic);
@@ -198,35 +230,35 @@ function getTabs() {
   if (modlist === C.NOMODULES) return [];
   let i = 0;
   modlist.split('<nx>').forEach((mstring: string) => {
-    const [modName, mt] = mstring.split(';');
-    const modType = mt as ModTypes;
-    let label = LibSwordx.getModuleInformation(modName, 'TabLabel');
+    const [module, mt] = mstring.split(';');
+    const type = mt as ModTypes;
+    let label = LibSwordx.getModuleInformation(module, 'TabLabel');
     if (label === C.NOTFOUND)
-      label = LibSwordx.getModuleInformation(modName, 'Abbreviation');
-    if (label === C.NOTFOUND) label = modName;
+      label = LibSwordx.getModuleInformation(module, 'Abbreviation');
+    if (label === C.NOTFOUND) label = module;
     let tabType;
     Object.entries(C.SupportedModuleTypes).forEach((entry) => {
       const [longType, shortType] = entry;
-      if (longType === modType) tabType = shortType;
+      if (longType === type) tabType = shortType;
     });
     if (!tabType) return;
 
     // Find conf file. Look at file name, then search contents if necessary
     const DIRSEP = process.platform === 'win32' ? '\\' : '/';
-    let p = LibSwordx.getModuleInformation(modName, 'AbsoluteDataPath').replace(
+    let p = LibSwordx.getModuleInformation(module, 'AbsoluteDataPath').replace(
       /[\\/]/g,
       DIRSEP
     );
     if (p.slice(-1) !== DIRSEP) p += DIRSEP;
-    const modDir = p;
+    const dir = p;
     p = p.replace(/[\\/]modules[\\/].*?$/, `${DIRSEP}mods.d`);
     let confFile = new nsILocalFile(
-      `${p + DIRSEP + modName.toLowerCase()}.conf`
+      `${p + DIRSEP + module.toLowerCase()}.conf`
     );
     if (!confFile.exists()) {
-      confFile = new nsILocalFile(`${p + DIRSEP + modName}.conf`);
+      confFile = new nsILocalFile(`${p + DIRSEP + module}.conf`);
       if (!confFile.exists()) {
-        const modRE = new RegExp(`^\\[${modName}\\]`);
+        const modRE = new RegExp(`^\\[${module}\\]`);
         confFile = new nsILocalFile(p);
         if (confFile.exists()) {
           const files = confFile.directoryEntries;
@@ -243,37 +275,37 @@ function getTabs() {
     }
     const conf = confFile.path;
     if (!confFile.exists())
-      jsdump(
-        `WARNING: tab.conf bad path "${p}$/${modName.toLowerCase()}.conf"`
-      );
+      jsdump(`WARNING: tab.conf bad path "${p}$/${module.toLowerCase()}.conf"`);
     const isCommDir =
       confFile.path
         .toLowerCase()
         .indexOf(Dirsx.path.xsModsCommon.toLowerCase()) === 0;
+    const isVerseKey = type === C.BIBLE || type === C.COMMENTARY;
 
-    const tab = {
-      modName,
-      modType,
-      modVersion: LibSwordx.getModuleInformation(modName, 'Version'),
-      modDir,
+    const tab: TabType = {
+      module,
+      type,
+      version: LibSwordx.getModuleInformation(module, 'Version'),
+      v11n: isVerseKey ? LibSwordx.getVerseSystem(module) : '',
+      dir,
       label,
       tabType,
-      isVerseKey: modType === C.BIBLE || modType === C.COMMENTARY,
+      isVerseKey,
       isRTL: /^rt.?l$/i.test(
-        LibSwordx.getModuleInformation(modName, 'Direction')
+        LibSwordx.getModuleInformation(module, 'Direction')
       ),
       index: i,
-      description: LibSwordx.getModuleInformation(modName, 'Description'),
-      locName: isASCII(label) ? 'LTR_DEFAULT' : modName,
+      description: LibSwordx.getModuleInformation(module, 'Description'),
+      locName: isASCII(label) ? 'LTR_DEFAULT' : module,
       conf,
       isCommDir,
       audio: {}, // will be filled in later
-      audioCode: LibSwordx.getModuleInformation(modName, 'AudioCode'),
-      lang: LibSwordx.getModuleInformation(modName, 'Lang'),
+      audioCode: LibSwordx.getModuleInformation(module, 'AudioCode'),
+      lang: LibSwordx.getModuleInformation(module, 'Lang'),
     };
 
     tabs.push(tab);
-    Tab[modName] = tab;
+    Tab[module] = tab;
 
     i += 1;
   });

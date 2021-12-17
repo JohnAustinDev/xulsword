@@ -21,13 +21,10 @@ export function xulswordHandler(this: Xulsword, e: React.SyntheticEvent<any>) {
             return (
               i < state.numDisplayedWindows &&
               m &&
-              (G.Tab[m].modType === C.BIBLE ||
-                G.Tab[m].modType === C.COMMENTARY)
+              (G.Tab[m].type === C.BIBLE || G.Tab[m].type === C.COMMENTARY)
             );
           });
-          const versification = v11nmod
-            ? G.LibSword.getVerseSystem(v11nmod)
-            : undefined;
+          const versification = v11nmod ? G.Tab[v11nmod].v11n : undefined;
           if (versification) {
             this.setState((prevState: XulswordState) => {
               return {
@@ -278,7 +275,7 @@ export function handleViewport(
             verse: v,
           } = targ.element.dataset;
           if (m) {
-            const from = [b, c, v, G.LibSword.getVerseSystem(m)].join('.');
+            const from = [b, c, v, G.Tab[m].v11n].join('.');
             const to = this.versification
               ? convertDotString(from, this.versification)
               : from;
@@ -368,7 +365,7 @@ export function handleViewport(
     }
 
     case 'mousemove': {
-      // This event means the bb bar is dragging while maximizeNoteBox > 0
+      // This event means the bb bar is being dragged while maximizeNoteBox > 0
       const targ = ofClass('atext', t);
       if (targ !== null) {
         const w = targ.element.dataset.wnum;

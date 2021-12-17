@@ -16,12 +16,7 @@ import {
 } from '../../type';
 import C from '../../constant';
 import G from '../rg';
-import {
-  compareObjects,
-  dString,
-  objectHashString,
-  ofClass,
-} from '../../common';
+import { compareObjects, dString, stringHash, ofClass } from '../../common';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -150,8 +145,7 @@ class Atext extends React.Component {
 
     if (!module) return r;
 
-    const { modType } = G.Tab[module];
-    const isVerseKey = modType === C.BIBLE || modType === C.COMMENTARY;
+    const { type } = G.Tab[module];
     let moduleLocale = G.ModuleConfigs[props.module].AssociatedLocale;
     if (moduleLocale === C.NOTFOUND) moduleLocale = '';
 
@@ -160,7 +154,7 @@ class Atext extends React.Component {
     Object.entries(C.SwordFilters).forEach((entry) => {
       const sword = entry[0] as SwordFilterType;
       let showi = show[entry[1]] ? 1 : 0;
-      if (C.AlwaysOn[modType].includes(sword)) showi = 1;
+      if (C.AlwaysOn[type].includes(sword)) showi = 1;
       options[sword] = C.SwordFilterValues[showi];
     });
     if (ilModule) {
@@ -171,7 +165,7 @@ class Atext extends React.Component {
     G.LibSword.setGlobalOptions(options);
 
     // Read Libsword according to module type
-    switch (modType) {
+    switch (type) {
       case C.BIBLE: {
         if (ilModule) {
           r.textHTML += G.LibSword.getChapterTextMulti(
@@ -248,7 +242,7 @@ class Atext extends React.Component {
     // handle footnotes.
     // NOTE: This step is by far the slowest part of Atext render,
     // particularly when crossrefs include many links.
-    if (isVerseKey) {
+    if (G.Tab[module].isVerseKey) {
       const notetypes: (keyof PlaceType)[] = [
         'footnotes',
         'crossrefs',
@@ -275,7 +269,7 @@ class Atext extends React.Component {
 
     // Localize verse numbers to match the module
     if (
-      isVerseKey &&
+      G.Tab[module].isVerseKey &&
       moduleLocale &&
       dString(1, moduleLocale) !== dString(1, 'en')
     ) {
@@ -286,7 +280,7 @@ class Atext extends React.Component {
     }
 
     // Add chapter heading and intronotes
-    if (isVerseKey && show.headings && r.textHTML) {
+    if (G.Tab[module].isVerseKey && show.headings && r.textHTML) {
       const headInfo = getChapterHeading(props);
       r.textHTML = headInfo.textHTML + r.textHTML;
       r.intronotes = headInfo.intronotes;
@@ -300,13 +294,6 @@ class Atext extends React.Component {
     props: typeof C.LibSwordProps
   ) {}
 
-  savePin: typeof C.PinProps | null;
-
-  saveLibsword: {
-    libsword: typeof C.LibSwordProps;
-    libswordResponse: LibSwordResponse;
-  } | null;
-
   sbref: React.RefObject<HTMLDivElement>;
 
   nbref: React.RefObject<HTMLDivElement>;
@@ -318,10 +305,6 @@ class Atext extends React.Component {
       pin: null,
       noteBoxResizing: null,
     };
-
-    this.savePin = null;
-
-    this.saveLibsword = null;
 
     this.sbref = React.createRef();
 
@@ -342,32 +325,35 @@ class Atext extends React.Component {
     this.onUpdate();
   }
 
+  // Check if sb already contains the current LibSword response
+  // and if not, memoize LibSword response and update sb. Also
+  // update pin state whenever it changes. NOTE: the LibSword hash
+  // must be stored on the sb HTML element itself, because the sb
+  // element may be silently replaced by React and storing to it
+  // there insures the hash is invalidated at that time.
   onUpdate() {
     const props = this.props as AtextProps;
     const { isPinned, n } = props;
     const { pin } = this.state as AtextState;
-    const { savePin, sbref, nbref } = this;
+    const { sbref, nbref } = this;
 
-    // Check if sb already contains the current LibSword response and if
-    // so don't do anything, otherwise memoize LibSword response and update.
+    const newPin = Atext.copyProps(pin && isPinned ? pin : props, C.PinProps);
+    if (!compareObjects(newPin, pin)) this.setState({ pin: newPin });
+
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
-      const thisPin = Atext.copyProps(
-        pin && isPinned ? pin : props,
-        C.PinProps
-      );
-      const thisLibsword = Atext.copyProps(
+      const newLibSword = Atext.copyProps(
         {
           ...props,
-          ...thisPin,
+          ...newPin,
         },
         C.LibSwordProps
       );
-      const key = objectHashString(thisLibsword);
-      if (key !== Atext.cache?.libsword) {
-        Atext.cache.libsword = key;
-        const response = Atext.libswordResponseMemoized(thisLibsword, n);
+      const key = stringHash(newLibSword, n);
+      if (key !== sbe.dataset.libsword) {
+        sbe.dataset.libsword = key;
+        const response = Atext.libswordResponseMemoized(newLibSword, n);
         sbe.innerHTML = response.textHTML;
         nbe.innerHTML = response.noteHTML;
         const nbc = nbe.parentNode as any;
@@ -376,11 +362,6 @@ class Atext extends React.Component {
         if (nbe.innerHTML && nbc.classList.contains('noteboxEmpty'))
           nbc.classList.remove('noteboxEmpty');
       }
-    }
-
-    if (savePin) {
-      this.setState({ pin: savePin });
-      this.savePin = null;
     }
   }
 
@@ -469,14 +450,10 @@ class Atext extends React.Component {
     } = props;
 
     // Check isPinned and collect the props/state combination to render.
-    const thisPin = Atext.copyProps(pin && isPinned ? pin : props, C.PinProps);
-    if (!compareObjects(thisPin, pin)) this.savePin = thisPin;
+    const newPin = Atext.copyProps(pin && isPinned ? pin : props, C.PinProps);
 
     // Header logic etc.
-    const textIsVerseKey =
-      module &&
-      (G.Tab[module].modType === C.BIBLE ||
-        G.Tab[module].modType === C.COMMENTARY);
+    const textIsVerseKey = module && G.Tab[module].isVerseKey;
     const appIsRTL = G.ProgramConfig?.direction === 'rtl';
     const prevArrow = appIsRTL
       ? String.fromCharCode(8594)
@@ -484,7 +461,7 @@ class Atext extends React.Component {
     const nextArrow = appIsRTL
       ? String.fromCharCode(8592)
       : String.fromCharCode(8594);
-    const disablePrev = textIsVerseKey && thisPin?.chapter < 2;
+    const disablePrev = textIsVerseKey && newPin?.chapter < 2;
     const disableNext = false;
 
     // Notebox logic etc.
@@ -561,7 +538,12 @@ Atext.cacheReset();
 Atext.libswordResponseMemoized = memoize(Atext.libswordResponse, {
   max: 20, // remember up to 20 LibSword responses
   normalizer: (...args: any) =>
-    args.map((arg: any) => objectHashString(arg)).join('+'),
+    args.map((arg: any) => stringHash(arg)).join('+'),
+});
+window.ipc.renderer.on('reset', () => {
+  const m = Atext.libswordResponseMemoized as any;
+  m.clear();
+  Atext.cacheReset();
 });
 
 export default Atext;
