@@ -659,17 +659,17 @@ export default class MenuBuilder {
         {
           label: this.ts('manBookmarksCmd.label'),
           accelerator: this.tx('manBookmarksCmd.commandkey', ['CommandOrControl']),
-          open: () => {Commands.openBookmarksManager();},
+          click: () => {Commands.openBookmarksManager();},
         },
         {
           label: this.ts('menuitem.newBookmark.label'),
           accelerator: this.tx('addCurPageAsCmd.commandkey', ['CommandOrControl']),
-          open: () => {Commands.openNewBookmarkDialog();},
+          click: () => {Commands.openNewBookmarkDialog();},
         },
         {
           label: this.ts('menu.usernote.add'),
           accelerator: this.tx('addCurPageAsCmd.commandkey', ['CommandOrControl', 'Shift']),
-          open: () => {Commands.openNewUserNoteDialog();},
+          click: () => {Commands.openNewUserNoteDialog();},
         }
       ],
     };

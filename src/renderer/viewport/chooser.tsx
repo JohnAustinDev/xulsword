@@ -404,7 +404,7 @@ class Chooser extends React.Component {
       <div
         key={[versification, book].join('_')}
         className="chaptermenu"
-        onMouseOver={delayHandler(this, this.chapterMouseOver, 500)}
+        onMouseOver={delayHandler(this, this.chapterMouseOver, 400)}
         onMouseOut={this.chapterMouseOut}
       >
         {chmenuCells}
