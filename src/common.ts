@@ -244,8 +244,10 @@ export function sanitizeHTML(parent: HTMLElement, html: string) {
 export function stringHash(...args: any): string {
   let r = '';
   args.forEach((arg: any) => {
-    if (!arg || typeof arg !== 'object') {
-      return arg.toString();
+    if (arg === null) return 'null';
+    if (arg === undefined) return 'undefined';
+    if (typeof arg !== 'object') {
+      return `${arg}`;
     }
     Object.entries(arg)
       .sort((a, b) => a[0].localeCompare(b[0]))

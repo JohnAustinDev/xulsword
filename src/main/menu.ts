@@ -37,7 +37,7 @@ export default class MenuBuilder {
       const v = value === undefined ? !G.Prefs.getBoolPref(n) : value;
       G.Prefs.setBoolPref(n, v);
     });
-    G.setGlobalStateFromPrefs(name, true);
+    G.setGlobalStateFromPrefs(name);
   }
 
   // Update Prefs, then setGlobalStateFromPrefs()
@@ -52,7 +52,7 @@ export default class MenuBuilder {
         throw Error('radioSwitch supports number or string.');
       }
     });
-    G.setGlobalStateFromPrefs(name, true);
+    G.setGlobalStateFromPrefs(name);
   }
 
   static setTabs(
@@ -158,7 +158,7 @@ export default class MenuBuilder {
       'xulsword.mtModules',
       'xulsword.book',
       'xulsword.numDisplayedWindows'
-    ], true);
+    ]);
   }
 
   static tabOrder(as: string, bs: string) {

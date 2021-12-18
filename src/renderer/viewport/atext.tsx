@@ -329,8 +329,8 @@ class Atext extends React.Component {
   // and if not, memoize LibSword response and update sb. Also
   // update pin state whenever it changes. NOTE: the LibSword hash
   // must be stored on the sb HTML element itself, because the sb
-  // element may be silently replaced by React and storing to it
-  // there insures the hash is invalidated at that time.
+  // element may be silently replaced by React and storing it there
+  // insures the hash is also invalidated at that time.
   onUpdate() {
     const props = this.props as AtextProps;
     const { isPinned, n } = props;

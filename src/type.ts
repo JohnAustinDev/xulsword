@@ -149,7 +149,6 @@ export const LibSwordPublic = {
   getModuleInformation: func as unknown as (modname: string, paramname: string) => string,
   uncompressTarGz: func as unknown as (tarGzPath: string, aDirPath: string) => void,
   translate: func as unknown as (text: string, localeName: string) => string,
-
 };
 
 export const CommandsPublic = {
@@ -227,7 +226,7 @@ export interface GType {
 
   resolveHtmlPath: (htmlfile: string) => string;
   setGlobalMenuFromPrefs: (menu?: Electron.Menu) => void;
-  setGlobalStateFromPrefs: (prefs?: string | string[], globalMenuUpdated?: boolean) => void;
+  setGlobalStateFromPrefs: (prefs?: string | string[]) => void;
   globalReset: () => void;
 
   Prefs: typeof PrefsPublic;

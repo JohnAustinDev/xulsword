@@ -60,18 +60,11 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
         w.webContents.send('reset');
       });
     },
-    setGlobalStateFromPrefs: (
-      prefs?: string | string[],
-      globalMenuUpdated?: boolean
-    ) => {
+    setGlobalStateFromPrefs: (prefs?: string | string[]) => {
       function broadcast() {
         BrowserWindow.getAllWindows().forEach((w) => {
           w.webContents.send('setWindowStates', prefs);
         });
-        if (!globalMenuUpdated) {
-          const m = Menu.getApplicationMenu();
-          if (m) setMenuFromPrefs(m);
-        }
       }
       const lng = Prefsx.getCharPref(C.LOCALEPREF);
       if (lng !== i18next.language) {
