@@ -110,8 +110,8 @@ export default class Xulsword extends React.Component {
       ...this.getStatePrefs(),
     };
 
-    // Listener for setWindowStates IPC channel requesting we set state from prefs.
-    window.ipc.renderer.on('setWindowStates', (prefs: string | string[]) => {
+    // Listener for set-window-states IPC channel requesting we set state from prefs.
+    window.ipc.renderer.on('set-window-states', (prefs: string | string[]) => {
       const state = this.getStatePrefs(prefs);
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
       if (lng !== i18next.language) {
@@ -597,6 +597,7 @@ Xulsword.propTypes = propTypes;
 
 function loadedXUL() {
   jsdump('RUNNING loadedXUL()!');
+  window.ipc.renderer.send('did-finish-render');
 }
 
 function unloadXUL() {

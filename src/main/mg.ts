@@ -63,7 +63,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     setGlobalStateFromPrefs: (prefs?: string | string[]) => {
       function broadcast() {
         BrowserWindow.getAllWindows().forEach((w) => {
-          w.webContents.send('setWindowStates', prefs);
+          w.webContents.send('set-window-states', prefs);
         });
       }
       const lng = Prefsx.getCharPref(C.LOCALEPREF);

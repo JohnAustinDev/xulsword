@@ -20,14 +20,21 @@ contextBridge.exposeInMainWorld('c', {
   },
 });
 
-const validChannels = ['global', 'close', 'resize', 'setWindowStates', 'reset'];
+const validChannels = [
+  'global',
+  'close',
+  'resize',
+  'set-window-states',
+  'did-finish-render',
+  'reset',
+];
 
 contextBridge.exposeInMainWorld('ipc', {
   renderer: {
     // Trigger a channel event which ipcMain is to listen for. If a single
     // response from ipcMain is desired, then 'invoke' should likely be used.
-    // But event.reply() can respond from ipcMain if the renderer has also
-    // added a listener for it.
+    // Otherwise event.reply() can respond from ipcMain if the renderer has
+    // also added a listener for it.
     send(channel, ...args) {
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, ...args);

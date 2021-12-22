@@ -34,7 +34,10 @@ export default class AppUpdater {
   }
 }
 
-let mainWindow: BrowserWindow | null = null;
+const xsWindow = {
+  main: null as BrowserWindow | null,
+  splash: null as BrowserWindow | null,
+};
 
 const getAssetPath = (...paths: string[]): string => {
   return path.join(G.Dirs.path.xsAsset, ...paths);
@@ -89,12 +92,28 @@ ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
   event.returnValue = ret;
 });
 
+ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    if (win === xsWindow.main && process.env.START_MINIMIZED) {
+      win.minimize();
+    } else {
+      win.show();
+      win.focus();
+    }
+    if (win === xsWindow.main && xsWindow.splash) {
+      xsWindow.splash.close();
+    }
+  }
+});
+
 const createWindow = (
   name: string,
   params: Electron.BrowserWindowConstructorOptions | undefined
 ) => {
   const newWindow = new BrowserWindow({
     show: false,
+    useContentSize: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -122,18 +141,6 @@ const createWindow = (
     });
   });
 
-  newWindow.webContents.on('did-finish-load', () => {
-    if (!newWindow) {
-      throw new Error(`${name} window is not defined`);
-    }
-    if (process.env.START_MINIMIZED) {
-      newWindow.minimize();
-    } else {
-      newWindow.show();
-      newWindow.focus();
-    }
-  });
-
   newWindow.on('resize', () => {
     const size = newWindow.getSize();
     newWindow.webContents.send('resize', size);
@@ -145,7 +152,7 @@ const createWindow = (
 const openSplashWindow = () => {
   const splashWindow = createWindow(
     'splash',
-    process.env.NODE_ENV === 'development'
+    isDevelopment && C.DEVELSPLASH === 2
       ? {
           title: 'xulsword',
           width: 500,
@@ -187,7 +194,7 @@ const openMainWindow = () => {
     728
   ) as number;
 
-  mainWindow = createWindow(name, {
+  const mainWin = createWindow(name, {
     title: t('programTitle'),
     icon: getAssetPath('icon.png'),
     width,
@@ -196,41 +203,34 @@ const openMainWindow = () => {
     y,
   });
 
-  if (mainWindow === null) {
+  if (mainWin === null) {
     return null;
   }
 
   function saveBounds() {
-    if (mainWindow !== null) {
-      const b = mainWindow.getNormalBounds();
-      G.Prefs.setIntPref(`window.${name}.width`, b.width);
-      G.Prefs.setIntPref(`window.${name}.height`, b.height);
-      G.Prefs.setIntPref(`window.${name}.x`, b.x);
-      G.Prefs.setIntPref(`window.${name}.y`, b.y);
-    }
+    const w = mainWin.getNormalBounds();
+    const c = mainWin.getContentBounds();
+    G.Prefs.setIntPref(`window.${name}.width`, c.width);
+    G.Prefs.setIntPref(`window.${name}.height`, c.height);
+    G.Prefs.setIntPref(`window.${name}.x`, c.x);
+    // The 12 works for Ubuntu 20
+    G.Prefs.setIntPref(`window.${name}.y`, w.y - (w.height - c.height) - 12);
   }
 
-  mainWindow.on('resize', () => {
+  const menuBuilder = new MenuBuilder(mainWin, i18n);
+  menuBuilder.buildMenu();
+
+  mainWin.on('close', () => {
     saveBounds();
+    if (xsWindow.main !== null) xsWindow.main.webContents.send('close');
   });
 
-  mainWindow.on('move', () => {
-    saveBounds();
-  });
-
-  mainWindow.on('close', () => {
-    if (mainWindow !== null) mainWindow.webContents.send('close');
-  });
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  mainWin.on('closed', () => {
+    xsWindow.main = null;
     jsdump('NOTE: mainWindow closed...');
   });
 
-  const menuBuilder = new MenuBuilder(mainWindow, i18n);
-  menuBuilder.buildMenu();
-
-  return mainWindow;
+  return mainWin;
 };
 
 const start = async () => {
@@ -289,23 +289,13 @@ const start = async () => {
 
   t = (key: string, options?: any) => i18n.t(key, options);
 
-  let splashWindow: BrowserWindow | undefined;
-  if (!isDevelopment) splashWindow = openSplashWindow();
+  if (!(C.DEVELSPLASH === 1 && isDevelopment))
+    xsWindow.splash = openSplashWindow();
 
   // Initialize napi libxulsword as LibSword
   LibSword.initLibsword();
 
-  mainWindow = openMainWindow();
-
-  if (mainWindow) {
-    mainWindow.once('ready-to-show', () => {
-      if (process.env.NODE_ENV !== 'development') {
-        setTimeout(() => {
-          if (splashWindow) splashWindow.close();
-        }, 2000);
-      }
-    });
-  }
+  xsWindow.main = openMainWindow();
 
   // Remove this if your app does not use auto updates
   // new AppUpdater();
@@ -336,5 +326,5 @@ app
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) openMainWindow();
+  if (xsWindow.main === null) openMainWindow();
 });
