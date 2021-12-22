@@ -250,11 +250,9 @@ export default class MenuBuilder {
         if (!submenu) throw Error(`No tabmenu: menu_${tab}_${wl}`);
         const { items } = submenu;
         while (items[0].id !== `showAll_${tab}_${wl}`) items.shift();
-        let disableMulti = 0;
         G.Tabs.reverse().forEach((t) => {
           if (t.tabType === type) {
             disableParent = false;
-            disableMulti += 1;
             const newItem = new MenuItem({
               id: `showtab_${win}_${t.module}`,
               label: t.label + (t.description ? ` --- ${t.description}` : ''),
@@ -267,21 +265,18 @@ export default class MenuBuilder {
             submenu.insert(0, newItem);
           }
         });
-        const showAll = menu.getMenuItemById(`showAll_${tab}_${wl}`);
-        const hideAll = menu.getMenuItemById(`hideAll_${tab}_${wl}`);
-        if (showAll) showAll.enabled = disableMulti > 1;
-        if (hideAll) hideAll.enabled = disableMulti > 1;
       });
       const parent = menu.getMenuItemById(`parent_${tab}`);
       if (parent) parent.enabled = !disableParent;
     });
   }
 
-  // Get locale key with letter prepended by '&' to specify shortcut.
+  // Read locale key, appending & before shortcut key and escaping other &s.
   ts(key: string, sckey?: string): string {
     let text = this.i18n.t(key);
     const sckey2 = sckey || `${key}.sc`;
     if (text) {
+      text = text.replace(/(?!<&)&(?!=&)/g, '&&');
       const l = this.i18n.t(sckey2);
       if (l) {
         const re = new RegExp(`(${l})`, 'i');
@@ -291,8 +286,8 @@ export default class MenuBuilder {
     return text;
   }
 
-  // Get locale key or return undefined if it doesn't exist.
-  // Also prepend text with modifiers if supplied.
+  // Read locale key returning undefined if it doesn't exist.
+  // Also prepend with key modifiers if needed.
   tx(key: string, modifiers?: Modifiers[]): string | undefined {
     const text = this.i18n.t(key);
     if (!text) return undefined;

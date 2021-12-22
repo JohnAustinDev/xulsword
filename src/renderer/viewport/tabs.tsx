@@ -8,6 +8,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import i18next from 'i18next';
 import C from '../../constant';
+import { ofClass } from '../../common';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -159,7 +160,11 @@ class Tabs extends React.Component {
 
   multiTabButtonClick(e: any) {
     const { multiTabMenupopup } = this.state as TabsState;
-    if (!multiTabMenupopup) e.stopPropagation();
+    if (
+      !multiTabMenupopup ||
+      (multiTabMenupopup && ofClass('button-box', e.target))
+    )
+      e.stopPropagation();
     this.setState((prevState: TabsState) => {
       let newpup = null;
       if (!prevState.multiTabMenupopup) {

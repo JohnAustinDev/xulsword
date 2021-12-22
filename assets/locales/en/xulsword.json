@@ -44,7 +44,7 @@
    "editMenu.label" : "Edit",
    "fileMenu.accesskey" : "F",
    "fileMenu.label" : "File",
-   "fontsAndColors.label" : "Fonts &amp; Colors",
+   "fontsAndColors.label" : "Fonts & Colors",
    "headingsButton.label" : "headings",
    "headingsButton.tooltip" : "Toggle the display of headings.",
    "history.all.tooltip" : "Choose a location from past history",
