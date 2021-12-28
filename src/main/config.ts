@@ -414,34 +414,34 @@ export function getFeatureModules() {
   const modlist = LibSword.getModuleList();
   if (modlist === C.NOMODULES) return { ...sword, ...xulsword };
   modlist.split('<nx>').forEach((m) => {
-    const [modName, modType] = m.split(';');
-    let mlang = LibSword.getModuleInformation(modName, 'Lang');
+    const [module, type] = m.split(';');
+    let mlang = LibSword.getModuleInformation(module, 'Lang');
     const dash = mlang.indexOf('-');
     mlang = mlang.substring(0, dash === -1 ? mlang.length : dash);
-    if (modName !== 'LXX' && modType === C.BIBLE && /^grc$/i.test(mlang))
-      xulsword.greek.push(modName);
+    if (module !== 'LXX' && type === C.BIBLE && /^grc$/i.test(mlang))
+      xulsword.greek.push(module);
     else if (
-      modType === C.BIBLE &&
+      type === C.BIBLE &&
       /^heb?$/i.test(mlang) &&
-      !/HebModern/i.test(modName)
+      !/HebModern/i.test(module)
     )
-      xulsword.hebrew.push(modName);
+      xulsword.hebrew.push(module);
 
     // These Strongs feature modules do not have Strongs number keys, and so cannot be used
     const notStrongsKeyed = new RegExp(
       '^(AbbottSmith|InvStrongsRealGreek|InvStrongsRealHebrew)$',
       'i'
     );
-    if (!notStrongsKeyed.test(modName)) {
-      const feature = LibSword.getModuleInformation(modName, 'Feature');
+    if (!notStrongsKeyed.test(module)) {
+      const feature = LibSword.getModuleInformation(module, 'Feature');
       Object.keys(sword).forEach((k) => {
         const property = (k.substring(0, 1).toLowerCase +
           k.substring(1)) as keyof typeof sword;
         if (feature.search(k) !== -1) {
           if (property === 'dailyDevotion') {
-            sword[property][modName] = 'DailyDevotionToday';
+            sword[property][module] = 'DailyDevotionToday';
           } else {
-            sword[property].push(modName);
+            sword[property].push(module);
           }
         }
       });

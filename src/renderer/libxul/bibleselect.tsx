@@ -142,14 +142,14 @@ class Bibleselect extends React.Component {
     const translations = [];
     const tabs = G.Tabs;
     for (let m = 0; m <= tabs.length; m += 1) {
-      if (tabs[m].modType === C.BIBLE) {
+      if (tabs[m].type === C.BIBLE) {
         let description = G.LibSword.getModuleInformation(
-          tabs[m].modName,
+          tabs[m].module,
           'Description'
         );
         if (description === C.NOTFOUND) description = '';
         translations.push(
-          <option className={`cs-${tabs[m].locName}`} value={tabs[m].modName}>
+          <option className={`cs-${tabs[m].locName}`} value={tabs[m].module}>
             <span className="name">{`${tabs[m].label}`}</span>
             {description && (
               <span className="description">{`${description}`}</span>
@@ -219,12 +219,12 @@ class Bibleselect extends React.Component {
         </option>
       );
     }
-    const lastVerse = G.LibSword.getMaxVerse(
+    const lastverse = G.LibSword.getMaxVerse(
       newTrans,
       `${newBook}.${newChapter}`
     );
     const verses = [];
-    for (let x = 1; x <= lastVerse; x += 1) {
+    for (let x = 1; x <= lastverse; x += 1) {
       verses.push(
         <option selected={x === newVerse} value={x}>
           {x}
@@ -232,7 +232,7 @@ class Bibleselect extends React.Component {
       );
     }
     const lastverses = [];
-    for (let x = newVerse; x <= lastVerse; x += 1) {
+    for (let x = newVerse; x <= lastverse; x += 1) {
       lastverses.push(
         <option selected={x === newLastverse} value={x}>
           {x}

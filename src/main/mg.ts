@@ -317,15 +317,15 @@ function getAvailableBooks() {
   const modlist = LibSwordx.getModuleList();
   if (modlist === C.NOMODULES) return availableBooks;
   modlist.split('<nx>').forEach((m: string) => {
-    const [modName, modType] = m.split(';');
+    const [module, type] = m.split(';');
     const books: string[] = [];
-    if (modType === C.BIBLE || modType === C.COMMENTARY) {
+    if (type === C.BIBLE || type === C.COMMENTARY) {
       allBooks.forEach((bk) => {
-        const vt = LibSwordx.getVerseText(modName, `${bk} 1:1`, false);
+        const vt = LibSwordx.getVerseText(module, `${bk} 1:1`, false);
         if (vt) books.push(bk);
       });
     }
-    availableBooks[modName] = books;
+    availableBooks[module] = books;
   });
   return availableBooks;
 }

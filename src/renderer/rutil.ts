@@ -306,7 +306,7 @@ export function parseLocation(
   } as LocObject;
 
   let has1chap;
-  let shft; // book=1, chap=2, verse=3, lastVerse=4
+  let shft; // book=1, chap=2, verse=3, lastverse=4
   // eslint-disable-next-line prettier/prettier
   let parsed = loc2parse.match(/([^:-]+)\s+(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/);           shft=0; has1chap=false;  // book 1:2-3
   // eslint-disable-next-line prettier/prettier

@@ -264,10 +264,10 @@ class Viewport extends React.Component {
       x += columns[x] - 1;
     }
 
-    // Each text's book/chapter/verse should apply to the main versification.
+    // Each text's book/chapter/verse/lastverse should apply to the main versification.
     let locs: any = [];
     for (let x = 0; x < C.NW; x += 1) {
-      locs.push(`${book}.${chapter}.${verse}`);
+      locs.push(`${book}.${chapter}.${verse}.${lastverse}`);
     }
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       const m = modules[x];
@@ -355,7 +355,8 @@ class Viewport extends React.Component {
                   book={locs[i][0]}
                   chapter={Number(locs[i][1])}
                   verse={Number(locs[i][2])}
-                  lastverse={lastverse}
+                  lastverse={Number(locs[i][3])}
+                  versification={versification}
                   columns={columns[i]}
                   module={modules[i]}
                   ilModule={ilMods[i]}

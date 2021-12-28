@@ -84,22 +84,20 @@ const C = {
   NW: 3, // max number of text windows a single viewport supports
 
   // scrolling
-  SCROLLTYPENONE: 0, // don't scroll un-linked windows, but scroll linked windows to center.
-  SCROLLTYPETOP: 1, // scroll to top of current chapter
-  SCROLLTYPEBEG: 2, // put selected verse at the top of the window or link
-  SCROLLTYPECENTER: 3, // put selected verse in the middle of the window or link, unless verse is already visible or verse 1
-  SCROLLTYPECENTERALWAYS: 4, // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
-  SCROLLTYPEEND: 5, // put selected verse at the end of the window or link, and don't change selection
-  SCROLLTYPEENDSELECT: 6, // put selected verse at the end of the window or link, then select first verse of link or verse 1
-  SCROLLTYPEDELTA: 7, // scroll by given delta in pixels
-  SCROLLTYPEPREVIOUS: 8, // scroll exactly as previous
+  SCROLLTYPENONE: 0, // don't scroll single-column windows, but scroll multi-column windows to center.
+  SCROLLTYPECHAP: 1, // scroll to top of current chapter
+  SCROLLTYPEBEG: 2, // put selected verse at the top
+  SCROLLTYPECENTER: 3, // put selected verse in the middle, unless verse is already visible or is verse 1
+  SCROLLTYPECENTERALWAYS: 4, // put selected verse in the middle even if verse is already visible or verse 1
+  SCROLLTYPEEND: 5, // put selected verse at the end
+  SCROLLTYPEENDSELECT: 6, // put selected verse at the end, then select the first visible verse without scrolling
+  // SCROLLTYPEDELTA: 7, // scroll GenBook by given delta in pixels
 
   // highlighting
   HILIGHTNONE: 0, // highlight no verse
   HILIGHTVERSE: 1, // highlight selected verse in blue
   HILIGHT_IFNOTV1: 2, // highlight selected verse in blue unless it is verse 1
-  HILIGHTPREVIOUS: 3, // do same hilight type as during previous update
-  HILIGHTSKIP: 4, // skip hilighting step to speed things up- any previously hilighted verse(s) will remain so
+  HILIGHTSKIP: 3, // skip hilighting step to speed things up- any previously hilighted verse(s) will remain so
 
   BIN: { win32: 'dll', linux: 'so', darwin: 'dylib' },
 
@@ -167,17 +165,53 @@ const C = {
   // These props are used by LibSword. If these props all have the same values
   // as the previous rendering, the LibSword response will also be the same.
   // NOTE: property types are important, but property values are not.
-  LibSwordProps: {
+  LibSwordPropsTexts: {
     book: '',
     chapter: 0,
-    verse: 0,
     module: '',
+    columns: 0,
     versification: '',
     ilModule: '',
-    modkey: '',
     show: {} as ShowType,
     place: {} as PlaceType,
   },
+  LibSwordPropsComms: {
+    book: '',
+    chapter: 0,
+    module: '',
+    versification: '',
+  },
+  LibSwordPropsDicts: {
+    module: '',
+    modkey: '',
+  },
+  LibSwordPropsGenbks: {
+    module: '',
+    modkey: '',
+  },
+  LibSwordProps: {} as { [key in ModTypes]: { [i: string]: any } },
+
+  // These props are used to scroll and highlight text. If these props all have
+  // the same values as the previous rendering, and the same is true for
+  // the LibSwordProps, then scrolling and highlighting is also unnecessary.
+  // NOTE: property types are important, but property values are not.
+  ScrollPropsTexts: {
+    book: '',
+    chapter: '',
+    verse: 0,
+    lastverse: 0,
+    flagHilight: 0,
+    flagScroll: 0,
+  },
+  ScrollPropsComms: {
+    book: '',
+    chapter: '',
+    verse: 0,
+    flagScroll: 0,
+  },
+  ScrollPropsDicts: {},
+  ScrollPropsGenbks: {},
+  ScrollProps: {} as { [key in ModTypes]: { [i: string]: any } },
 };
 
 C.VERSIONTAG = new RegExp(`${C.VERSIONPAR}\\s*=\\s*(.*)\\s*`, 'im');
@@ -202,6 +236,16 @@ C.SupportedModuleTypes[C.BIBLE] = 'Texts';
 C.SupportedModuleTypes[C.COMMENTARY] = 'Comms';
 C.SupportedModuleTypes[C.DICTIONARY] = 'Dicts';
 C.SupportedModuleTypes[C.GENBOOK] = 'Genbks';
+
+C.LibSwordProps[C.BIBLE] = C.LibSwordPropsTexts;
+C.LibSwordProps[C.COMMENTARY] = C.LibSwordPropsComms;
+C.LibSwordProps[C.DICTIONARY] = C.LibSwordPropsDicts;
+C.LibSwordProps[C.GENBOOK] = C.LibSwordPropsGenbks;
+
+C.ScrollProps[C.BIBLE] = C.ScrollPropsTexts;
+C.ScrollProps[C.COMMENTARY] = C.ScrollPropsComms;
+C.ScrollProps[C.DICTIONARY] = C.ScrollPropsDicts;
+C.ScrollProps[C.GENBOOK] = C.ScrollPropsGenbks;
 
 // Each module type may have LibSword features that should be always on.
 C.AlwaysOn[C.BIBLE] = [];

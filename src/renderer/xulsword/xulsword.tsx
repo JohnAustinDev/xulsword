@@ -131,12 +131,72 @@ export default class Xulsword extends React.Component {
     this.addHistory = this.addHistory.bind(this);
     this.setHistory = this.setHistory.bind(this);
     this.closeMenupopups = this.closeMenupopups.bind(this);
+    this.chapterState = this.chapterState.bind(this);
+    this.verseState = this.verseState.bind(this);
 
     this.handler = xulswordHandler.bind(this);
     this.handleViewport = handleVP.bind(this);
     this.lastSetPrefs = {};
     this.versification = undefined;
   }
+
+  chapterState = (chOrDelta: number, prevState?: XulswordState) => {
+    const { book, modules, numDisplayedWindows } = this.state as XulswordState;
+    const chapter = prevState ? prevState.chapter + chOrDelta : chOrDelta;
+    if (chapter < 1) return null;
+    const v11nmod = modules.find((m, i) => {
+      return i < numDisplayedWindows && m && G.Tab[m].isVerseKey;
+    });
+    if (!v11nmod) return null;
+    const max = G.LibSword.getMaxChapter(v11nmod, book);
+    if (chapter > max) return null;
+    return {
+      book,
+      chapter,
+      verse: 1,
+      lastverse: 1,
+      flagScroll: [C.SCROLLTYPECHAP, C.SCROLLTYPECHAP, C.SCROLLTYPECHAP],
+      flagHilight: [C.HILIGHT_IFNOTV1, C.HILIGHT_IFNOTV1, C.HILIGHT_IFNOTV1],
+    };
+  };
+
+  verseState = (vOrDelta: number, prevState?: XulswordState) => {
+    const state = prevState || (this.state as XulswordState);
+    const { modules, numDisplayedWindows } = state;
+    let { book, chapter } = state;
+    let verse = prevState ? prevState.verse + vOrDelta : vOrDelta;
+    const v11nmod = modules.find((m, i) => {
+      return i < numDisplayedWindows && m && G.Tab[m].isVerseKey;
+    });
+    if (!v11nmod) return null;
+    const max = G.LibSword.getMaxVerse(v11nmod, `${book}.${chapter}`);
+    let ps;
+    if (verse < 1) {
+      ps = prevState ? this.chapterState(-1, prevState) : null;
+      if (!ps) return null;
+      verse = G.LibSword.getMaxVerse(v11nmod, `${ps.book}.${ps.chapter}`);
+      book = ps.book;
+      chapter = ps.chapter;
+    } else if (verse > max) {
+      ps = prevState ? this.chapterState(1, prevState) : null;
+      if (!ps) return null;
+      verse = 1;
+      book = ps.book;
+      chapter = ps.chapter;
+    }
+    return {
+      book,
+      chapter,
+      verse,
+      lastverse: verse,
+      flagScroll: [
+        C.SCROLLTYPECENTERALWAYS,
+        C.SCROLLTYPECENTERALWAYS,
+        C.SCROLLTYPECENTERALWAYS,
+      ],
+      flagHilight: [C.HILIGHTVERSE, C.HILIGHTVERSE, C.HILIGHTVERSE],
+    };
+  };
 
   // Return values of state Prefs. If prefsToGet is undefined, all state prefs
   // will be returned. NOTE: The whole initial pref object (after the id) is
@@ -350,6 +410,7 @@ export default class Xulsword extends React.Component {
     jsdump(
       `Rendering Xulsword ${JSON.stringify({
         ...state,
+        tabs: '',
         historyMenupopup: !!historyMenupopup,
       })}`
     );
@@ -449,7 +510,7 @@ export default class Xulsword extends React.Component {
                     maxLength="3"
                     pattern={/^[0-9]+$/}
                     value={dString(chapter.toString())}
-                    timeout="300"
+                    timeout="600"
                     disabled={navdisabled}
                     key={`ch${chapter}`}
                     onChange={handler}
@@ -474,7 +535,7 @@ export default class Xulsword extends React.Component {
                     maxLength="3"
                     pattern={/^[0-9]+$/}
                     value={dString(verse.toString())}
-                    timeout="300"
+                    timeout="600"
                     disabled={navdisabled}
                     onChange={handler}
                     onClick={handler}

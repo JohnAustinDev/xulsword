@@ -33,7 +33,7 @@
 }
 .bibleselect menulist.bschapter,
 .bibleselect menulist.bsverse,
-.bibleselect menulist.bslastVerse {
+.bibleselect menulist.bslastverse {
   width: 4em;
   margin-inline-start: 1px;
   margin-inline-end: 1px;

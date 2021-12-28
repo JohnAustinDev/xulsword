@@ -49,22 +49,22 @@ export function xulswordHandler(this: Xulsword, e: React.SyntheticEvent<any>) {
 
         case 'prevchap':
           this.setState((prevState: XulswordState) => {
-            return { chapter: prevState.chapter - 1 };
+            return this.chapterState(-1, prevState);
           });
           break;
         case 'nextchap':
           this.setState((prevState: XulswordState) => {
-            return { chapter: prevState.chapter + 1 };
+            return this.chapterState(1, prevState);
           });
           break;
         case 'prevverse':
           this.setState((prevState: XulswordState) => {
-            return { verse: prevState.verse - 1 };
+            return this.verseState(-1, prevState);
           });
           break;
         case 'nextverse':
           this.setState((prevState: XulswordState) => {
-            return { verse: prevState.verse + 1 };
+            return this.verseState(1, prevState);
           });
           break;
 
@@ -125,7 +125,7 @@ export function xulswordHandler(this: Xulsword, e: React.SyntheticEvent<any>) {
               if (book) {
                 if (!chapter) chapter = 1;
                 if (!verse) verse = 1;
-                return { book, chapter, verse, bsreset };
+                return { book, chapter, verse, lastverse: verse, bsreset };
               }
             }
             return { bsreset };
@@ -133,11 +133,11 @@ export function xulswordHandler(this: Xulsword, e: React.SyntheticEvent<any>) {
           break;
         }
         case 'chapter__input':
-          this.setState({ chapter: Number(value) });
+          this.setState(this.chapterState(Number(value)));
           break;
 
         case 'verse__input':
-          this.setState({ verse: Number(value) });
+          this.setState(this.verseState(Number(value)));
           break;
 
         case 'searchText__input': {
@@ -284,6 +284,7 @@ export function handleViewport(
               book,
               chapter: Number(chapter),
               verse: Number(verse),
+              lastverse: Number(verse),
             });
           }
           break;
