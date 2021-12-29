@@ -93,12 +93,6 @@ const C = {
   SCROLLTYPEENDSELECT: 6, // put selected verse at the end, then select the first visible verse without scrolling
   // SCROLLTYPEDELTA: 7, // scroll GenBook by given delta in pixels
 
-  // highlighting
-  HILIGHTNONE: 0, // highlight no verse
-  HILIGHTVERSE: 1, // highlight selected verse in blue
-  HILIGHT_IFNOTV1: 2, // highlight selected verse in blue unless it is verse 1
-  HILIGHTSKIP: 3, // skip hilighting step to speed things up- any previously hilighted verse(s) will remain so
-
   BIN: { win32: 'dll', linux: 'so', darwin: 'dylib' },
 
   IsExtension: false,
@@ -156,7 +150,8 @@ const C = {
     book: '',
     chapter: 0,
     verse: 0,
-    lastverse: 0,
+    selection: '',
+    flagScroll: 0,
     module: '',
     ilModule: '',
     modkey: '',
@@ -191,22 +186,24 @@ const C = {
   },
   LibSwordProps: {} as { [key in ModTypes]: { [i: string]: any } },
 
-  // These props are used to scroll and highlight text. If these props all have
-  // the same values as the previous rendering, and the same is true for
-  // the LibSwordProps, then scrolling and highlighting is also unnecessary.
+  // These props are used to scroll text. If these props all have the
+  // same values as the previous rendering, and the same is true for
+  // the LibSwordProps, then scrolling is also unnecessary.
   // NOTE: property types are important, but property values are not.
   ScrollPropsTexts: {
+    module: '',
     book: '',
     chapter: '',
     verse: 0,
-    lastverse: 0,
-    flagHilight: 0,
+    columns: 0,
     flagScroll: 0,
   },
   ScrollPropsComms: {
+    module: '',
     book: '',
     chapter: '',
     verse: 0,
+    columns: 0,
     flagScroll: 0,
   },
   ScrollPropsDicts: {},

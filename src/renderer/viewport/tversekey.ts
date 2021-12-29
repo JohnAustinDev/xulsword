@@ -521,50 +521,44 @@ export function getNoteHTML(
 }
 
 // returns true if velem is a visible verse element in window w, false otherwise
-function verseIsVisible(
-  v: HTMLElement,
-  sbe: HTMLElement,
-  nbe: HTMLElement,
-  columns: number,
-  module: string
-): boolean {
+function verseIsVisible(v: HTMLElement): boolean {
   // return false if we're not a verse
-  if (!v?.classList?.contains('vs')) return false;
+  if (!v?.classList?.contains('vs') || !('parentNode' in v)) return false;
+  const sb = v.parentNode as HTMLElement;
+  const nbc = sb?.nextSibling as HTMLElement;
+  const nb = nbc?.lastChild as HTMLElement;
+  const atext = sb?.parentNode as HTMLElement;
+  if (!sb || !nbc || !nb || !atext || !atext.classList.contains('atext'))
+    return false;
+  let match = atext.className.match(/\bshow(\d+)\b/);
+  if (!match) return false;
+  const columns = Number(match[1]);
+  match = sb.className.match(/\bcs-(\S+)\b/);
+  if (!match) return false;
+  const module = match[1];
 
   // return false if we're not visible or being displayed
   const style = window.getComputedStyle(v);
   if (style.display === 'none' || style.visibility === 'hidden') return false;
 
-  // return false if we're not in atext
-  const atext = ofClass('atext', sbe);
-  if (!atext) return false;
-  const t = atext.element;
-  let test = v as HTMLElement | null;
-  while (test && test !== t) {
-    test = test.parentNode as HTMLElement | null;
-  }
-  if (!test) return false;
-
   // are we a single column window?
   if (columns === 1) {
     return (
-      v.offsetTop - sbe.offsetTop >= sbe.scrollTop &&
-      v.offsetTop - sbe.offsetTop < sbe.scrollTop + sbe.offsetHeight - 30
+      v.offsetTop - sb.offsetTop >= sb.scrollTop &&
+      v.offsetTop - sb.offsetTop < sb.scrollTop + sb.offsetHeight - 30
     );
   }
-
-  const nbep = nbe.parentNode as HTMLElement;
 
   // multi-column windows...
   if (G.ModuleConfigs[module].direction === 'ltr') {
     // we are LTR
     // are we outside the visible columns?
-    if (v.offsetLeft > sbe.offsetWidth) return false;
+    if (v.offsetLeft > sb.offsetWidth) return false;
 
     // are we in the last visible column but under the footnote box?
     if (
-      v.offsetLeft > sbe.offsetWidth - 1.1 * nbe.offsetWidth &&
-      v.offsetTop + v.offsetHeight > t.offsetHeight - nbep.offsetHeight
+      v.offsetLeft > sb.offsetWidth - 1.1 * nb.offsetWidth &&
+      v.offsetTop + v.offsetHeight > atext.offsetHeight - nbc.offsetHeight
     ) {
       return false;
     }
@@ -579,8 +573,8 @@ function verseIsVisible(
 
   // are we in the last visible column but under the footnote box?
   if (
-    v.offsetLeft < 0.9 * nbe.offsetWidth &&
-    v.offsetTop + v.offsetHeight > t.offsetHeight - nbep.offsetHeight
+    v.offsetLeft < 0.9 * nb.offsetWidth &&
+    v.offsetTop + v.offsetHeight > atext.offsetHeight - nbc.offsetHeight
   ) {
     return false;
   }
@@ -591,19 +585,16 @@ function verseIsVisible(
 
 export function scroll(
   sbe: HTMLElement,
-  nbe: HTMLElement,
   scrollProps: {
+    module: string;
     book: string;
     chapter: number;
     verse: number;
-    lastverse: number;
-    flagHilight: number;
     flagScroll: number;
-  },
-  columns: number,
-  module: string
+    columns: number;
+  }
 ) {
-  const { book, chapter, verse, flagScroll } = scrollProps;
+  const { module, book, chapter, verse, flagScroll, columns } = scrollProps;
 
   sbe.scrollLeft = 0; // commentary may have been non-zero
 
@@ -729,10 +720,7 @@ export function scroll(
 
   // or scroll multi-column windows...
   else if (
-    !(
-      flagScroll2 === C.SCROLLTYPECENTER &&
-      (verse === 1 || verseIsVisible(v, sbe, nbe, columns, module))
-    )
+    !(flagScroll2 === C.SCROLLTYPECENTER && (verse === 1 || verseIsVisible(v)))
   ) {
     switch (flagScroll2) {
       // scroll to top
@@ -784,14 +772,16 @@ export function scroll(
           vs = vs.nextSibling as HTMLElement | null;
         }
         // show verse near middle of first column
+        let max = 10;
         vs = v.previousSibling as HTMLElement | null;
         if (vs) {
           let h = 0;
           do {
+            max -= 1;
             if (vs.style) vs.style.display = '';
             if (vs.offsetHeight) h += vs.offsetHeight;
             vs = vs.previousSibling as HTMLElement | null;
-          } while (vs && h < sbe.offsetHeight / 2 - 20);
+          } while (max && vs && h < sbe.offsetHeight / 2 - 20);
           if (vs && vs.style) vs.style.display = 'none';
         }
         break;
@@ -801,36 +791,35 @@ export function scroll(
       case C.SCROLLTYPEENDSELECT: {
         // put selected verse at the end of the window or link, then select first verse of link or verse 1
         // show all verses
-        let vs = sbe.lastChild as HTMLElement | null;
-        while (vs) {
-          if (vs.style) vs.style.display = '';
-          vs = vs.previousSibling as HTMLElement | null;
+        let lc = sbe.lastChild as HTMLElement | null;
+        while (lc) {
+          if (lc.style) lc.style.display = '';
+          lc = lc.previousSibling as HTMLElement | null;
         }
-        // hide verses until last verse is visible
-        vs = sbe.firstChild as HTMLElement | null;
-        while (vs && !verseIsVisible(v, sbe, nbe, columns, module)) {
-          if (vs.style) vs.style.display = 'none';
-          vs = vs.nextSibling as HTMLElement | null;
+        // hide verses until verse is visible
+        let fc = sbe.firstChild as HTMLElement | null;
+        while (fc && !verseIsVisible(v)) {
+          if (fc.style) fc.style.display = 'none';
+          fc = fc.nextSibling as HTMLElement | null;
         }
 
         if (flagScroll2 === C.SCROLLTYPEENDSELECT) {
-          vs = sbe.firstChild as HTMLElement | null;
-          while (vs) {
-            const p = getElementInfo(vs);
+          let ffc = sbe.firstChild as HTMLElement | null;
+          while (ffc) {
+            const p = getElementInfo(ffc);
             if (
               p &&
               p.type === 'vs' &&
-              vs.style &&
-              vs.style.display !== 'none'
+              ffc.style &&
+              ffc.style.display !== 'none'
             ) {
               return {
                 book: p.bk,
                 chapter: Number(p.ch),
                 verse: Number(p.vs),
-                lastverse: Number(p.vs),
               };
             }
-            vs = vs.nextSibling as HTMLElement | null;
+            ffc = ffc.nextSibling as HTMLElement | null;
           }
         }
         break;
@@ -844,41 +833,33 @@ export function scroll(
 
 export function highlight(
   sbe: HTMLElement,
-  scrollProps: {
-    book: string;
-    chapter: number;
-    verse: number;
-    lastverse: number;
-    flagHilight: number;
-    flagScroll: number;
-  }
+  selection: string,
+  module: string,
+  versification: string | undefined
 ) {
-  const { book, chapter, verse, lastverse, flagHilight } = scrollProps;
-  if (flagHilight === C.HILIGHTSKIP) return;
-
-  // unhilight everything
+  // First unhilight everything
   Array.from(sbe.getElementsByClassName('hl')).forEach((v) => {
     v.classList.remove('hl');
   });
 
-  // find the verse element(s) to highlight
+  if (!selection || !versification) return;
+
+  const [book, ch, vs, lv] = G.LibSword.convertLocation(
+    versification,
+    selection,
+    G.Tab[module].v11n
+  ).split('.');
+  const chapter = Number(ch);
+  const verse = Number(vs);
+  const lastverse = Number(lv);
+
+  // Then find the verse element(s) to highlight
   let av = sbe.firstChild as HTMLElement | null;
   while (av) {
     const v = getElementInfo(av);
     if (v && v.type === 'vs') {
       let hi = v.bk === book && v.ch === chapter;
-      if (flagHilight === C.HILIGHTNONE) hi = false;
-      if (
-        flagHilight === C.HILIGHT_IFNOTV1 &&
-        (verse === 1 || !v.lv || !v.vs || v.lv < verse || v.vs > lastverse)
-      )
-        hi = false;
-      if (
-        flagHilight === C.HILIGHTVERSE &&
-        (!v.lv || !v.vs || v.lv < verse || v.vs > lastverse)
-      )
-        hi = false;
-
+      if (!v.lv || !v.vs || v.lv < verse || v.vs > lastverse) hi = false;
       if (hi) av.classList.add('hl');
     }
 
@@ -895,13 +876,13 @@ export function trimNotes(
 
   // get first chapter/verse
   let vf = sbe.firstChild as HTMLElement | null;
-  while (vf && !verseIsVisible(vf, sbe, nbe, 2, module)) {
+  while (vf && !verseIsVisible(vf)) {
     vf = vf.nextSibling as HTMLElement | null;
   }
 
   // get last chapter/verse
   let vl = sbe.lastChild as HTMLElement | null;
-  while (vl && !verseIsVisible(vl, sbe, nbe, 2, module)) {
+  while (vl && !verseIsVisible(vl)) {
     vl = vl.previousSibling as HTMLElement | null;
   }
 
@@ -957,6 +938,194 @@ export function findVerseElement(
       }
     }
     c = c.nextSibling as HTMLElement | null;
+  }
+  return null;
+}
+
+// For versekey modules only. Change to a particular bk.ch or change
+// the passed chapter by a delta if possible. Returns null if a requested
+// change is not possible. NOTE: This function currently considers changes
+// between books as not possible, although this could be done.
+export function chapterChange(
+  bk: string,
+  ch: number,
+  chDelta?: number,
+  maxchapter?: number
+) {
+  const chapter = chDelta ? ch + chDelta : ch;
+  if (chapter < 1) return null;
+  if (maxchapter && chapter > maxchapter) return null;
+  return {
+    book: bk,
+    chapter,
+    verse: 1,
+    flagScroll: [C.SCROLLTYPECHAP, C.SCROLLTYPECHAP, C.SCROLLTYPECHAP],
+  };
+}
+
+// For versekey modules only. Change to a particular bk.ch.vs or change
+// the passed verse by a delta if possible. Returns null if a requested
+// change is not possible.
+export function verseChange(
+  v11nmod: string | undefined,
+  bk: string,
+  ch: number,
+  vs: number,
+  vsDelta?: number
+) {
+  if (!v11nmod) return null;
+  let book = bk;
+  let chapter = ch;
+  let verse = vsDelta ? vs + vsDelta : vs;
+  const maxvs = G.LibSword.getMaxVerse(v11nmod, `${bk}.${ch}`);
+  let ps;
+  if (verse < 1) {
+    if (!vsDelta) return null;
+    ps = chapterChange(bk, ch, -1);
+    if (!ps) return null;
+    verse = G.LibSword.getMaxVerse(v11nmod, `${ps.book}.${ps.chapter}`);
+    book = ps.book;
+    chapter = ps.chapter;
+  } else if (verse > maxvs) {
+    if (!vsDelta) return null;
+    const maxch = G.LibSword.getMaxChapter(v11nmod, bk);
+    ps = chapterChange(bk, ch, 1, maxch);
+    if (!ps) return null;
+    verse = 1;
+    book = ps.book;
+    chapter = ps.chapter;
+  }
+  return {
+    book,
+    chapter,
+    verse,
+    flagScroll: [
+      C.SCROLLTYPECENTERALWAYS,
+      C.SCROLLTYPECENTERALWAYS,
+      C.SCROLLTYPECENTERALWAYS,
+    ],
+  };
+}
+
+//
+// Atext previous/next functions:
+//
+
+// For multi-column Bibles only.
+export function pageChange(atext: HTMLElement, next: boolean) {
+  const match = atext.className.match(/\btext(\d+)\b/);
+  if (!match || !match[1]) return null;
+  const i = Number(match[1]) - 1;
+  const isPinned = atext.classList.contains('pinned');
+  let flagScroll: number | number[] = next
+    ? C.SCROLLTYPEBEG
+    : C.SCROLLTYPEENDSELECT;
+  // flagScroll is an array for non-pinned state, or a single value for pinned state.
+  if (!isPinned) {
+    const fi = flagScroll;
+    flagScroll = [];
+    for (let x = 0; x < C.NW; x += 1) {
+      flagScroll.push(x === i ? fi : C.SCROLLTYPECENTERALWAYS);
+    }
+  }
+  if (!next) {
+    let firstVerse: HTMLElement | undefined;
+    Array.from(atext.getElementsByClassName('vs')).forEach((v: any) => {
+      if (!firstVerse && verseIsVisible(v)) firstVerse = v;
+    });
+    if (!firstVerse) return null;
+    const ei = getElementInfo(firstVerse);
+    if (!ei) return null;
+    return {
+      chapter: Number(ei.ch),
+      verse: Number(ei.vs),
+      flagScroll,
+    };
+  }
+  if (next) {
+    let lastVerse: HTMLElement | undefined;
+    Array.from(atext.getElementsByClassName('vs'))
+      .reverse()
+      .forEach((v: any) => {
+        if (!lastVerse && verseIsVisible(v)) lastVerse = v;
+      });
+    if (!lastVerse) return null;
+    const ei = getElementInfo(lastVerse);
+    if (!ei) return null;
+    return {
+      chapter: Number(ei.ch),
+      verse: Number(ei.vs),
+      flagScroll,
+    };
+  }
+  return null;
+}
+
+// Change a dictionary to the previous or next key.
+function dictionaryChange(atext: HTMLElement, next: boolean) {
+  console.log(`dictionaryChange not implemented yet.`);
+  return null;
+}
+
+// Change a general book to the previous or next chapter.
+function genbookChange(atext: HTMLElement, next: boolean) {
+  console.log(`genbookChange not implemented yet.`);
+  return null;
+}
+
+// Handle prev/next event of Atext by returning a new state, or null.
+export function textChange(atext: HTMLElement, next: boolean) {
+  const classes = ofClass(['Texts', 'Comms', 'Dicts', 'Genbks'], atext);
+  const type = classes?.type ? classes.type : null;
+  if (!type) return null;
+  const sbe = atext.getElementsByClassName('sb')[0];
+  // Comms and Genbks use scrollLeft for multi-column paging
+  if (sbe && (type === 'Comms' || type === 'Genbks')) {
+    if (sbe.scrollLeft > 0) {
+      const wwin = atext.clientWidth - 4; // 4 = 2 x border-width
+      let twin = wwin * Math.floor(sbe.scrollLeft / wwin);
+      if (twin >= sbe.scrollLeft) twin -= wwin;
+      sbe.scrollLeft = twin;
+      if (sbe.scrollLeft < 0) sbe.scrollLeft = 0;
+      return null;
+    }
+  }
+  switch (type) {
+    case 'Texts':
+    case 'Comms': {
+      if (type === 'Texts' && !atext.classList.contains('show1')) {
+        return pageChange(atext, next);
+      }
+      let firstVerse: HTMLElement | undefined;
+      Array.from(sbe.getElementsByClassName('vs')).forEach((v) => {
+        const verse = v as HTMLElement;
+        if (!firstVerse && verse.style.display !== 'none') firstVerse = verse;
+      });
+      if (firstVerse) {
+        const i = getElementInfo(firstVerse);
+        if (i && i.bk && i.ch) {
+          if (next) {
+            const match = sbe.className.match(/\bcs-(\S+)\b/);
+            if (match) {
+              const module = match[1];
+              return chapterChange(
+                i.bk,
+                Number(i.ch),
+                1,
+                G.LibSword.getMaxChapter(module, i.bk)
+              );
+            }
+          }
+          return chapterChange(i.bk, Number(i.ch), -1);
+        }
+      }
+      break;
+    }
+    case 'Dicts':
+      return dictionaryChange(atext, next);
+    case 'Genbks':
+      return genbookChange(atext, next);
+    default:
   }
   return null;
 }

@@ -15,8 +15,8 @@ import {
   SwordFilterValueType,
 } from '../../type';
 import C from '../../constant';
-import G from '../rg';
 import { compareObjects, dString, stringHash, ofClass } from '../../common';
+import G from '../rg';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -31,6 +31,7 @@ import {
   scroll,
   trimNotes,
   findVerseElement,
+  textChange,
 } from './tversekey';
 import '../libxul/xul.css';
 import './atext.css';
@@ -55,12 +56,11 @@ const propTypes = {
   book: PropTypes.string.isRequired,
   chapter: PropTypes.number.isRequired,
   verse: PropTypes.number.isRequired,
-  lastverse: PropTypes.number.isRequired,
   module: PropTypes.string,
   ilModule: PropTypes.string,
   ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
   modkey: PropTypes.string.isRequired,
-  flagHilight: PropTypes.number.isRequired,
+  selection: PropTypes.string,
   flagScroll: PropTypes.number.isRequired,
   isPinned: PropTypes.bool.isRequired,
   noteBoxHeight: PropTypes.number.isRequired,
@@ -83,12 +83,11 @@ const atextProps = {
   book: '',
   chapter: 0,
   verse: 0,
-  lastverse: 0,
   module: '' as string | undefined,
   ilModule: '' as string | undefined,
   ilModuleOption: [] as string[],
   modkey: '',
-  flagHilight: 0,
+  selection: '' as string | undefined,
   flagScroll: 0,
   isPinned: false,
   noteBoxHeight: 0,
@@ -318,6 +317,7 @@ class Atext extends React.Component {
     this.bbMouseMove = this.bbMouseMove.bind(this);
     this.bbMouseUp = this.bbMouseUp.bind(this);
     this.bbMouseLeave = this.bbMouseLeave.bind(this);
+    this.pinnedClick = this.pinnedClick.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
     this.writeLibSword2DOM = this.writeLibSword2DOM.bind(this);
   }
@@ -351,7 +351,7 @@ class Atext extends React.Component {
 
     let newState = {};
     const newPin = Atext.copyProps(pin && isPinned ? pin : props, C.PinProps);
-    const { book, verse, lastverse, module } = newPin;
+    const { book, verse, selection, module } = newPin;
     if (!compareObjects(newPin, pin)) newState = { ...newState, pin: newPin };
     if (module && sbe && nbe) {
       const { type, isVerseKey } = G.Tab[module];
@@ -362,8 +362,14 @@ class Atext extends React.Component {
         },
         C.LibSwordProps[type]
       );
-      let update = false;
+      const newScroll = Atext.copyProps(
+        { ...props, ...newPin },
+        C.ScrollProps[type]
+      );
       const writekey = stringHash({ ...newLibSword, chapter: 0 }, n);
+      const scrollkey = stringHash(newScroll);
+      // Overwrite current innerHTML if needed
+      let update = false;
       if (!isVerseKey) {
         update = writekey !== sbe.dataset.libsword;
         if (update) this.writeLibSword2DOM(newLibSword, n, 'overwrite');
@@ -379,89 +385,132 @@ class Atext extends React.Component {
             newLibSword.chapter >= chfirst &&
             newLibSword.chapter <= chlast
           ) ||
+          chlast - chfirst > 10 ||
           writekey !== sbe.dataset.libsword
         ) {
           update = true;
           this.writeLibSword2DOM(newLibSword, n, 'overwrite');
           chfirst = Number(sbe.dataset.chfirst);
           chlast = Number(sbe.dataset.chlast);
-        } else if (
-          pin &&
-          (newLibSword.chapter !== pin.chapter ||
-            verse !== pin.verse ||
-            lastverse !== pin.lastverse)
-        ) {
-          update = true;
-          if (type === C.BIBLE && columns > 1) {
-            Array.from(sbe.childNodes).forEach((child: any) => {
-              if ('style' in child && child.style.display === 'none')
-                child.style.display = '';
-            });
-            sbe.dataset.scroll = undefined;
-          }
         }
-        if (update && type === C.BIBLE && columns > 1 && chfirst && chlast) {
+        // Prepare for Bible column scrolling if needed
+        if (
+          newScroll.flagScroll !== C.SCROLLTYPENONE &&
+          (update || scrollkey !== sbe.dataset.scroll) &&
+          type === C.BIBLE &&
+          columns > 1 &&
+          chfirst &&
+          chlast
+        ) {
           const rtl = G.ModuleConfigs[module].direction === 'rtl';
-          let chfv = findVerseElement(sbe, newLibSword.chapter, verse);
+          let v = findVerseElement(sbe, newLibSword.chapter, verse);
+          if (v) v.style.display = '';
+          let sib = v?.previousSibling as HTMLElement | null;
           while (
-            chfirst > 1 &&
-            chfv &&
-            ((!rtl && chfv.offsetLeft < sbe.offsetWidth) ||
-              (rtl && chfv.offsetLeft >= 0))
+            v &&
+            sib &&
+            ((!rtl && v.offsetLeft < sbe.offsetWidth) ||
+              (rtl && v.offsetLeft >= 0))
+          ) {
+            if (sib.style && sib.style.display === 'none')
+              sib.style.display = '';
+            sib = sib.previousSibling as HTMLElement | null;
+          }
+          while (
+            chfirst >= 2 &&
+            v &&
+            ((!rtl && v.offsetLeft < sbe.offsetWidth) ||
+              (rtl && v.offsetLeft >= 0))
           ) {
             update = true;
             this.writeLibSword2DOM(newLibSword, n, 'prepend');
-            chfv = findVerseElement(sbe, newLibSword.chapter, verse);
+            v = findVerseElement(sbe, newLibSword.chapter, verse);
             chfirst -= 1;
           }
           const max = G.LibSword.getMaxChapter(module, book);
-          let chlv = findVerseElement(sbe, newLibSword.chapter, lastverse);
           let last = sbe.lastChild as HTMLElement | null;
+          sib = v?.nextSibling as HTMLElement | null;
+          while (
+            sib &&
+            v &&
+            last &&
+            ((!rtl && last.offsetLeft - v.offsetLeft < sbe.offsetWidth) ||
+              (rtl && last.offsetLeft - v.offsetLeft >= 0))
+          ) {
+            if (sib.style && sib.style.display === 'none')
+              sib.style.display = '';
+            sib = sib.nextSibling as HTMLElement | null;
+          }
           while (
             chlast < max &&
-            chlv &&
+            v &&
             last &&
-            ((!rtl && last.offsetLeft - chlv.offsetLeft < sbe.offsetWidth) ||
-              (rtl && last.offsetLeft - chlv.offsetLeft >= 0))
+            ((!rtl && last.offsetLeft - v.offsetLeft < sbe.offsetWidth) ||
+              (rtl && last.offsetLeft - v.offsetLeft >= 0))
           ) {
             update = true;
             this.writeLibSword2DOM(newLibSword, n, 'append');
-            chlv = findVerseElement(sbe, newLibSword.chapter, lastverse);
+            v = findVerseElement(sbe, newLibSword.chapter, verse);
             last = sbe.lastChild as HTMLElement | null;
             chlast += 1;
           }
         }
       }
-      if (isVerseKey) {
-        const newScroll = Atext.copyProps(props, C.ScrollProps[type]);
-        const scrollkey = stringHash(newScroll);
-        if (update || scrollkey !== sbe.dataset.scroll) {
-          sbe.dataset.scroll = scrollkey;
-          const s = scroll(sbe, nbe, newScroll, columns, module);
-          console.log(
-            `scroll(sbe, nbe, ${newScroll.flagScroll}, ${columns}, ${module})`
-          );
-          if (s && versification) {
-            let { book: bk, chapter: ch, verse: vs, lastverse: lv } = s as any;
-            [bk, ch, vs, lv] = G.LibSword.convertLocation(
-              G.Tab[module].v11n,
-              [bk, ch, vs, lv].join('.'),
-              versification
-            ).split('.');
+      // Scroll if needed
+      if (
+        newScroll.flagScroll !== C.SCROLLTYPENONE &&
+        (update || scrollkey !== sbe.dataset.scroll) &&
+        isVerseKey
+      ) {
+        sbe.dataset.scroll = scrollkey;
+        let s = scroll(sbe, newScroll);
+        console.log(`scroll(sbe, ${JSON.stringify(newScroll)})`);
+        // pageChange('prev') requires another setState to update bk.ch.vs
+        if (s && versification) {
+          let { book: bk, chapter: ch, verse: vs } = s as any;
+          [bk, ch, vs] = G.LibSword.convertLocation(
+            G.Tab[newScroll.module].v11n,
+            [bk, ch, vs, vs].join('.'),
+            versification
+          ).split('.');
+          s = {
+            book: bk,
+            chapter: Number(ch),
+            verse: Number(vs),
+          };
+          if (isPinned) {
             newState = {
               ...newState,
-              book: bk,
-              chapter: ch,
-              verse: vs,
-              lastverse: lv,
+              pin: { ...newPin, ...s, flagScroll: C.SCROLLTYPENONE },
             };
-          }
-          if (type === C.BIBLE) {
-            highlight(sbe, newScroll);
-            console.log(`highlight(sbe, ${JSON.stringify(newScroll)})`);
+          } else {
+            G.Prefs.setCharPref('xulsword.book', bk);
+            G.Prefs.setIntPref('xulsword.chapter', Number(ch));
+            G.Prefs.setIntPref('xulsword.verse', Number(vs));
+            G.Prefs.setComplexValue('xulsword.flagScroll', [
+              C.SCROLLTYPENONE,
+              C.SCROLLTYPENONE,
+              C.SCROLLTYPENONE,
+            ]);
+            setTimeout(() => {
+              G.setGlobalStateFromPrefs([
+                'xulsword.book',
+                'xulsword.chapter',
+                'xulsword.verse',
+                'xulsword.flagScroll',
+              ]);
+            }, 1);
           }
         }
       }
+      // Highlight if needed
+      if (type === C.BIBLE && pin && selection !== pin.selection) {
+        highlight(sbe, selection, module, versification);
+        console.log(
+          `highlight(sbe, ${selection}, ${module}, ${versification})`
+        );
+      }
+      // Trim multi-column Bible notes
       if (columns > 1) {
         const empty = !trimNotes(sbe, nbe, module);
         const nbc = nbe.parentNode as any;
@@ -498,7 +547,7 @@ class Atext extends React.Component {
             ? Number(sbe.dataset.chfirst)
             : libsword.chapter;
         chlast =
-          'lastch' in sbe.dataset
+          'chlast' in sbe.dataset
             ? Number(sbe.dataset.chlast)
             : libsword.chapter;
       }
@@ -572,6 +621,21 @@ class Atext extends React.Component {
       if (fntable?.innerHTML && nbc.classList.contains('noteboxEmpty'))
         nbc.classList.remove('noteboxEmpty');
     }
+  }
+
+  pinnedClick(e: any) {
+    const { isPinned } = this.props as AtextProps;
+    if (!isPinned) return;
+    const link = ofClass(['prevchaplink', 'nextchaplink'], e.target);
+    if (!link) return;
+    e.stopPropagation();
+    const r = textChange(e.currentTarget, link.type === 'nextchaplink');
+    if (r)
+      this.setState((prevState: AtextState) => {
+        const { pin } = prevState;
+        const state = { pin: { ...pin, ...r } };
+        return state;
+      });
   }
 
   // start dragging the notebox resizing bar?
@@ -699,7 +763,10 @@ class Atext extends React.Component {
         className={xulClass(`atext ${cls}`, props)}
         style={{ ...props.style, position: 'relative' }}
         data-wnum={n}
-        onClick={handler}
+        onClick={(e) => {
+          this.pinnedClick(e);
+          if (!e.isPropagationStopped()) handler(e);
+        }}
         onMouseDown={this.bbMouseDown}
         onMouseMove={this.bbMouseMove}
         onMouseUp={this.bbMouseUp}

@@ -37,7 +37,6 @@ const propTypes = {
   book: PropTypes.string.isRequired,
   chapter: PropTypes.number.isRequired,
   verse: PropTypes.number.isRequired,
-  lastverse: PropTypes.number.isRequired,
 
   tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
   modules: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -50,7 +49,7 @@ const propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   place: PropTypes.object.isRequired,
 
-  flagHilight: PropTypes.arrayOf(PropTypes.number).isRequired,
+  selection: PropTypes.string,
   flagScroll: PropTypes.arrayOf(PropTypes.number).isRequired,
   isPinned: PropTypes.arrayOf(PropTypes.bool).isRequired,
   noteBoxHeight: PropTypes.arrayOf(PropTypes.number).isRequired,
@@ -69,7 +68,6 @@ interface ViewportProps extends XulProps {
   book: string;
   chapter: number;
   verse: number;
-  lastverse: number;
 
   tabs: string[][];
   modules: (string | undefined)[];
@@ -80,7 +78,7 @@ interface ViewportProps extends XulProps {
   show: ShowType;
   place: PlaceType;
 
-  flagHilight: number[];
+  selection: string | undefined;
   flagScroll: number[];
   isPinned: boolean[];
   noteBoxHeight: number[];
@@ -141,7 +139,6 @@ class Viewport extends React.Component {
       book,
       chapter,
       verse,
-      lastverse,
       chooser,
       tabs,
       modules,
@@ -150,7 +147,7 @@ class Viewport extends React.Component {
       show,
       place,
       keys,
-      flagHilight,
+      selection,
       flagScroll,
       isPinned,
       noteBoxHeight,
@@ -264,10 +261,10 @@ class Viewport extends React.Component {
       x += columns[x] - 1;
     }
 
-    // Each text's book/chapter/verse/lastverse should apply to the main versification.
+    // Each text's book/chapter/verse should apply to the main versification.
     let locs: any = [];
     for (let x = 0; x < C.NW; x += 1) {
-      locs.push(`${book}.${chapter}.${verse}.${lastverse}`);
+      locs.push(`${book}.${chapter}.${verse}.${verse}`);
     }
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       const m = modules[x];
@@ -355,7 +352,6 @@ class Viewport extends React.Component {
                   book={locs[i][0]}
                   chapter={Number(locs[i][1])}
                   verse={Number(locs[i][2])}
-                  lastverse={Number(locs[i][3])}
                   versification={versification}
                   columns={columns[i]}
                   module={modules[i]}
@@ -364,7 +360,7 @@ class Viewport extends React.Component {
                   show={show}
                   place={place}
                   modkey={keys[i]}
-                  flagHilight={flagHilight[i]}
+                  selection={selection}
                   flagScroll={flagScroll[i]}
                   isPinned={isPinned[i]}
                   noteBoxHeight={noteBoxHeight[i]}

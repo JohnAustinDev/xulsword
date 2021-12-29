@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 import C from '../../constant';
 import { firstIndexOfBookGroup, ofClass } from '../../common';
+import { textChange, chapterChange, verseChange } from '../viewport/tversekey';
 import { convertDotString, jsdump, parseLocation } from '../rutil';
 import G from '../rg';
 // eslint-disable-next-line import/no-cycle
@@ -49,22 +50,45 @@ export function xulswordHandler(this: Xulsword, e: React.SyntheticEvent<any>) {
 
         case 'prevchap':
           this.setState((prevState: XulswordState) => {
-            return this.chapterState(-1, prevState);
+            return chapterChange(prevState.book, prevState.chapter, -1);
           });
           break;
-        case 'nextchap':
-          this.setState((prevState: XulswordState) => {
-            return this.chapterState(1, prevState);
-          });
+        case 'nextchap': {
+          const { v11nmod } = this;
+          if (v11nmod) {
+            this.setState((prevState: XulswordState) => {
+              const maxch = G.LibSword.getMaxChapter(v11nmod, prevState.book);
+              return chapterChange(prevState.book, prevState.chapter, 1, maxch);
+            });
+          }
           break;
+        }
         case 'prevverse':
           this.setState((prevState: XulswordState) => {
-            return this.verseState(-1, prevState);
+            const r = verseChange(
+              this.v11nmod,
+              prevState.book,
+              prevState.chapter,
+              prevState.verse,
+              -1
+            ) as any;
+            if (!r) return null;
+            r.selection = [r.book, r.chapter, r.verse, r.verse].join('.');
+            return r;
           });
           break;
         case 'nextverse':
           this.setState((prevState: XulswordState) => {
-            return this.verseState(1, prevState);
+            const r = verseChange(
+              this.v11nmod,
+              prevState.book,
+              prevState.chapter,
+              prevState.verse,
+              1
+            ) as any;
+            if (!r) return null;
+            r.selection = [r.book, r.chapter, r.verse, r.verse].join('.');
+            return r;
           });
           break;
 
@@ -121,23 +145,45 @@ export function xulswordHandler(this: Xulsword, e: React.SyntheticEvent<any>) {
             const location = parseLocation(value);
             if (location !== null) {
               // eslint-disable-next-line prefer-const
-              let { book, chapter, verse } = location;
+              let { book, chapter, verse, lastverse } = location;
               if (book) {
                 if (!chapter) chapter = 1;
                 if (!verse) verse = 1;
-                return { book, chapter, verse, lastverse: verse, bsreset };
+                const selection = [book, chapter, verse, lastverse].join('.');
+                const flagScroll = [];
+                for (let x = 0; x < C.NW; x += 1) {
+                  flagScroll.push(C.SCROLLTYPECENTER);
+                }
+                return { book, chapter, verse, selection, bsreset, flagScroll };
               }
             }
             return { bsreset };
           });
           break;
         }
-        case 'chapter__input':
-          this.setState(this.chapterState(Number(value)));
+        case 'chapter__input': {
+          const { v11nmod } = this;
+          if (v11nmod) {
+            this.setState((prevState: XulswordState) => {
+              const maxch = G.LibSword.getMaxChapter(v11nmod, prevState.book);
+              return chapterChange(prevState.book, Number(value), 0, maxch);
+            });
+          }
           break;
+        }
 
         case 'verse__input':
-          this.setState(this.verseState(Number(value)));
+          this.setState((prevState: XulswordState) => {
+            const r = verseChange(
+              this.v11nmod,
+              prevState.book,
+              prevState.chapter,
+              Number(value)
+            ) as any;
+            if (!r) return null;
+            r.selection = [r.book, r.chapter, r.verse, r.verse].join('.');
+            return r;
+          });
           break;
 
         case 'searchText__input': {
@@ -238,7 +284,7 @@ export function handleViewport(
               book: G.Books[b].sName,
               chapter: 1,
               verse: 1,
-              lastverse: 1,
+              selection: '',
             });
           }
           break;
@@ -250,7 +296,7 @@ export function handleViewport(
               book,
               chapter: 1,
               verse: 1,
-              lastverse: 1,
+              selection: '',
             });
           }
           break;
@@ -262,7 +308,7 @@ export function handleViewport(
               book,
               chapter: Number(chapter),
               verse: 1,
-              lastverse: 1,
+              selection: '',
             });
           }
           break;
@@ -284,7 +330,7 @@ export function handleViewport(
               book,
               chapter: Number(chapter),
               verse: Number(verse),
-              lastverse: Number(verse),
+              selection: '',
             });
           }
           break;
@@ -330,17 +376,12 @@ export function handleViewport(
               });
             } else {
               this.setState((prevState: XulswordState) => {
-                const { modules, mtModules, flagHilight, flagScroll } =
-                  prevState;
+                const { modules, mtModules } = prevState;
                 modules[i] = m;
-                flagHilight[i] = C.HILIGHT_IFNOTV1;
-                flagScroll[i] = C.SCROLLTYPECENTER;
                 if (targ.type === 'mto-tab' || targ.type === 'mts-tab') {
                   mtModules[i] = m;
                 }
                 return {
-                  flagHilight,
-                  flagScroll,
                   modules,
                   mtModules,
                 };
@@ -350,11 +391,15 @@ export function handleViewport(
           break;
         }
         case 'prevchaplink': {
-          console.log('Previous link unimplemented');
+          const atext = e.currentTarget as HTMLElement;
+          const s = textChange(atext, false);
+          if (s) this.setState(s);
           break;
         }
         case 'nextchaplink': {
-          console.log('Next link unimplemented');
+          const atext = e.currentTarget as HTMLElement;
+          const s = textChange(atext, true);
+          if (s) this.setState(s);
           break;
         }
         default:
