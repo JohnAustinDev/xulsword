@@ -41,7 +41,7 @@ const Location = {
     if (!vsys1 || !xsref || !vsys2) return null;
     let p = xsref.split('.');
     let vzero = false;
-    if (p && (p.length === 3 || p.length === 4) && p[2] === 0) {
+    if (p && (p.length === 3 || p.length === 4) && p[2] === '0') {
       // libxulsword convertLocation was changed to always return valid
       // references (verse=0 is never returned any more). So the old
       // behaviour is enforced here to keep xulsword happy.
