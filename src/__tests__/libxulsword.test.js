@@ -257,8 +257,8 @@ function testMaxChapter(testNumber, version, chapter, lastChapter) {
 const testMaxChapters = [
   [0, 'KJV',    'Ps', 150],
   [1, 'KJV', 'Ps.49', 150],
-  [2, 'UZV',    'Ps', 151],
-  [3, 'UZV', 'Ps.49', 151],
+  [2, 'UZV',    'Ps', 150],
+  [3, 'UZV', 'Ps.49', 150],
 ];
 
 for (let testNumber = 0; testNumber < testMaxChapters.length; testNumber += 1) {
