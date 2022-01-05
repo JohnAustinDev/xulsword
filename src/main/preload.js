@@ -5,7 +5,7 @@ contextBridge.exposeInMainWorld('api', {
   i18nextElectronBackend: backend.preloadBindings(ipcRenderer, process),
 });
 
-contextBridge.exposeInMainWorld('c', {
+contextBridge.exposeInMainWorld('shell', {
   process: {
     NODE_ENV() {
       return process.env.NODE_ENV;
@@ -27,6 +27,7 @@ const validChannels = [
   'set-window-states',
   'did-finish-render',
   'reset',
+  'window',
 ];
 
 contextBridge.exposeInMainWorld('ipc', {

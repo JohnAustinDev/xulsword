@@ -62,10 +62,6 @@ const Commands = {
   openHelp() {
     console.log(`Action not implemented: openHelp()`);
   },
-
-  openTextWindow() {
-    console.log(`Action not implemented: openTextWindow()`);
-  },
 };
 
 export default Commands;

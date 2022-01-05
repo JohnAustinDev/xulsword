@@ -15,12 +15,6 @@ import Spacer from './spacer';
 import './xul.css';
 import G from '../rg';
 
-declare global {
-  interface Window {
-    ipc: any;
-  }
-}
-
 const defaultProps = {
   ...xulDefaultProps,
   book: 'Gen',

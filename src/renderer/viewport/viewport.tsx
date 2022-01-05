@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 /* eslint-disable no-continue */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable jsx-a11y/control-has-associated-label */
@@ -12,10 +13,8 @@ import PropTypes from 'prop-types';
 import { PlaceType, ShowType } from '../../type';
 import C from '../../constant';
 import { findBookGroup } from '../../common';
-import Chooser from './chooser';
-import { Hbox, Vbox } from '../libxul/boxes';
-import Tabs from './tabs';
-import Atext from './atext';
+import Popup from '../popup/popup';
+import G from '../rg';
 import { jsdump } from '../rutil';
 import {
   xulClass,
@@ -24,9 +23,13 @@ import {
   XulProps,
   delayHandler,
 } from '../libxul/xul';
+import Chooser from './chooser';
+import handlerH from './viewportH';
+import { Hbox, Vbox } from '../libxul/boxes';
+import Tabs from './tabs';
+import Atext from './atext';
 import '../libxul/xul.css';
 import './viewport.css';
-import G from '../rg';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -61,10 +64,10 @@ const propTypes = {
   chooser: PropTypes.string.isRequired,
   versification: PropTypes.string,
 
-  handler: PropTypes.func.isRequired,
+  xulswordHandler: PropTypes.func.isRequired,
 };
 
-interface ViewportProps extends XulProps {
+export interface ViewportProps extends XulProps {
   book: string;
   chapter: number;
   verse: number;
@@ -90,10 +93,11 @@ interface ViewportProps extends XulProps {
   chooser: string;
   versification: string | undefined;
 
-  handler: (e: any) => void;
+  xulswordHandler: (e: any) => void;
 }
 
-interface ViewportState {
+export interface ViewportState {
+  popup: HTMLElement | null;
   reset: number;
 }
 
@@ -102,12 +106,17 @@ class Viewport extends React.Component {
 
   static propTypes: typeof propTypes;
 
+  handler: (e: React.SyntheticEvent) => void;
+
   constructor(props: ViewportProps) {
     super(props);
 
     this.state = {
+      popup: null,
       reset: 0,
     };
+
+    this.handler = handlerH.bind(this);
 
     window.ipc.renderer.on('reset', () => {
       G.reset();
@@ -132,10 +141,10 @@ class Viewport extends React.Component {
 
   render() {
     jsdump(`Rendering Viewport ${JSON.stringify(this.state)}`);
+    const { handler } = this;
     const props = this.props as ViewportProps;
     const {
       id,
-      handler,
       book,
       chapter,
       verse,
@@ -156,8 +165,9 @@ class Viewport extends React.Component {
       numDisplayedWindows,
       ownWindow,
       versification,
+      xulswordHandler,
     } = this.props as ViewportProps;
-    const { reset } = this.state as ViewportState;
+    const { reset, popup } = this.state as ViewportState;
 
     const firstUnpinnedBible = modules.find((m, i) => {
       return (
@@ -186,8 +196,9 @@ class Viewport extends React.Component {
         return t && G.Tab[t].type === C.BIBLE;
       });
       if (windowHasBible && book) {
-        windowHasILOptions[x] =
-          G.FeatureModules.hebrew[0] || G.FeatureModules.greek[0];
+        windowHasILOptions[x] = Boolean(
+          G.FeatureModules.hebrew[0] || G.FeatureModules.greek[0]
+        );
         const bkinfo = findBookGroup(G, book);
         if (bkinfo && (bkinfo.group === 'ot' || bkinfo.group === 'nt')) {
           const ml =
@@ -296,22 +307,33 @@ class Viewport extends React.Component {
     return (
       <Hbox {...props} className={xulClass(`viewport ${cls}`, props)}>
         {!showChooser && chooser !== 'none' && (
-          <button type="button" className="open-chooser" onClick={handler} />
+          <button
+            type="button"
+            className="open-chooser"
+            onClick={xulswordHandler}
+          />
         )}
 
         {showChooser && chooser !== 'none' && (
           <Chooser
-            handler={handler}
             type={chooser}
             selection={book}
             headingsModule={firstUnpinnedBible}
             availableBooksModule={firstUnpinnedVerseKey}
             versification={versification}
-            onClick={handler}
+            onClick={xulswordHandler}
+            xulswordHandler={xulswordHandler}
           />
         )}
 
-        <Vbox className={`textarea show${numDisplayedWindows}`} flex="1">
+        <Vbox
+          className={`textarea show${numDisplayedWindows}`}
+          flex="1"
+          onClick={xulswordHandler}
+          onKeyDown={xulswordHandler}
+          onWheel={xulswordHandler}
+          onMouseOver={handler}
+        >
           <div className="tabrow">
             {tabComps.map((i) => {
               return (
@@ -325,7 +347,6 @@ class Viewport extends React.Component {
                     ilMods[i],
                     mtModules[i],
                   ].join('_')}
-                  handler={handler}
                   anid={id}
                   n={Number(i + 1)}
                   columns={columns[i]}
@@ -335,17 +356,19 @@ class Viewport extends React.Component {
                   ilModule={ilMods[i]}
                   ilModuleOption={ilModuleOptions[i]}
                   mtModule={mtModules[i]}
+                  xulswordHandler={xulswordHandler}
                 />
               );
             })}
           </div>
+
+          <Popup showelem={popup} />
 
           <Hbox className="textrow userFontSize" flex="1">
             {textComps.map((i) => {
               return (
                 <Atext
                   key={[i, reset].join('.')}
-                  handler={handler}
                   anid={id}
                   n={Number(i + 1)}
                   ownWindow={ownWindow}
@@ -369,6 +392,7 @@ class Viewport extends React.Component {
                     flexGrow: `${columns[i]}`,
                     flexShrink: `${numDisplayedWindows - columns[i]}`,
                   }}
+                  xulswordHandler={xulswordHandler}
                 />
               );
             })}
@@ -382,5 +406,3 @@ Viewport.defaultProps = defaultProps;
 Viewport.propTypes = propTypes;
 
 export default Viewport;
-
-// <Notepopup id="npopup" class="userFontSize cs-Program" isWindow="false" puptype="fn" />

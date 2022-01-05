@@ -1,3 +1,5 @@
+/* eslint-disable react/forbid-prop-types */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
@@ -15,7 +17,7 @@ import {
   SwordFilterValueType,
 } from '../../type';
 import C from '../../constant';
-import { compareObjects, dString, stringHash, ofClass } from '../../common';
+import { compareObjects, dString, stringHash } from '../../common';
 import G from '../rg';
 import {
   xulDefaultProps,
@@ -24,6 +26,7 @@ import {
   xulClass,
 } from '../libxul/xul';
 import { Vbox, Hbox, Box } from '../libxul/boxes';
+// eslint-disable-next-line import/no-cycle
 import {
   getNoteHTML,
   getChapterHeading,
@@ -31,13 +34,13 @@ import {
   scroll,
   trimNotes,
   findVerseElement,
-  textChange,
-} from './tversekey';
+} from './zversekey';
+// eslint-disable-next-line import/no-cycle
+import handlerH from './atextH';
 import '../libxul/xul.css';
+import '../libsword.css';
 import './atext.css';
-import './texts-htm.css';
-import './text-htm.css';
-import { getDictEntryHTML, getDictSortedKeyList } from './tdictionary';
+import { getDictEntryHTML, getDictSortedKeyList } from './zdictionary';
 
 const memoize = require('memoizee');
 
@@ -49,7 +52,7 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  handler: PropTypes.func.isRequired,
+  xulswordHandler: PropTypes.func.isRequired,
   anid: PropTypes.string,
   n: PropTypes.number.isRequired,
   columns: PropTypes.number.isRequired,
@@ -65,9 +68,7 @@ const propTypes = {
   isPinned: PropTypes.bool.isRequired,
   noteBoxHeight: PropTypes.number.isRequired,
   maximizeNoteBox: PropTypes.number.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
   show: PropTypes.object.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
   place: PropTypes.object.isRequired,
   ownWindow: PropTypes.bool,
   versification: PropTypes.string,
@@ -76,7 +77,11 @@ const propTypes = {
 // Atext's properties. NOTE: property types are checked, but property values are not.
 const atextProps = {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  handler: (_e: any, _noteBoxResizing?: number[], _maximize?: boolean) => {},
+  xulswordHandler: (
+    _e: React.SyntheticEvent<any>,
+    _noteboxResizing?: number[],
+    _maximize?: boolean
+  ): void => {},
   anid: '',
   n: 0,
   columns: 0,
@@ -98,7 +103,7 @@ const atextProps = {
   versification: '' as string | undefined, // v11n of the viewport (not necessarily of the text)
 };
 
-type AtextProps = XulProps & typeof atextProps;
+export type AtextProps = XulProps & typeof atextProps;
 
 type LibSwordResponse = {
   textHTML: string;
@@ -107,8 +112,9 @@ type LibSwordResponse = {
   intronotes: string;
 };
 
-interface AtextState {
+export interface AtextState {
   pin: typeof C.PinProps | null;
+  versePerLine: boolean;
   noteBoxResizing: number[] | null;
 }
 
@@ -289,6 +295,10 @@ class Atext extends React.Component {
 
   static addUserNotes(content: LibSwordResponse, props: AtextProps) {}
 
+  handler: (e: React.SyntheticEvent) => void;
+
+  mouseWheel: { TO: number; atext: HTMLElement | null; count: number };
+
   sbref: React.RefObject<HTMLDivElement>;
 
   nbref: React.RefObject<HTMLDivElement>;
@@ -302,8 +312,11 @@ class Atext extends React.Component {
 
     this.state = {
       pin: null,
+      versePerLine: false,
       noteBoxResizing: null,
     };
+
+    this.mouseWheel = { TO: 0, atext: null, count: 0 };
 
     this.sbref = React.createRef();
 
@@ -313,11 +326,8 @@ class Atext extends React.Component {
 
     this.intronotes = '';
 
-    this.bbMouseDown = this.bbMouseDown.bind(this);
-    this.bbMouseMove = this.bbMouseMove.bind(this);
+    this.handler = handlerH.bind(this);
     this.bbMouseUp = this.bbMouseUp.bind(this);
-    this.bbMouseLeave = this.bbMouseLeave.bind(this);
-    this.pinnedClick = this.pinnedClick.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
     this.writeLibSword2DOM = this.writeLibSword2DOM.bind(this);
   }
@@ -339,6 +349,8 @@ class Atext extends React.Component {
   // same time.
   //
   // Also update pin state whenever it changes.
+
+  // TODO! Use prevProps and prevState here!!
   onUpdate() {
     const props = this.props as AtextProps;
     const state = this.state as AtextState;
@@ -623,107 +635,25 @@ class Atext extends React.Component {
     }
   }
 
-  pinnedClick(e: any) {
-    const { isPinned } = this.props as AtextProps;
-    if (!isPinned) return;
-    const link = ofClass(['prevchaplink', 'nextchaplink'], e.target);
-    if (!link) return;
-    e.stopPropagation();
-    const r = textChange(e.currentTarget, link.type === 'nextchaplink');
-    if (r)
-      this.setState((prevState: AtextState) => {
-        const { pin } = prevState;
-        const state = { pin: { ...pin, ...r } };
-        return state;
-      });
-  }
-
-  // start dragging the notebox resizing bar?
-  bbMouseDown(e: any) {
-    e.stopPropagation();
-    const { noteBoxResizing } = this.state as AtextState;
-    const targ = ofClass('bb', e.target);
-    if (targ !== null) {
-      this.setState({ noteBoxResizing: [e.clientY, e.clientY] });
-    } else if (noteBoxResizing !== null)
-      this.setState({ noteBoxResizing: null });
-  }
-
-  // notebox resize bar dragging...
-  bbMouseMove(e: any) {
-    const { noteBoxResizing } = this.state as AtextState;
-    const { handler, noteBoxHeight, maximizeNoteBox } = this
-      .props as AtextProps;
-    if (noteBoxResizing === null) return;
-
-    const targ = ofClass('atext', e.target);
-    if (targ === null) return;
-
-    e.stopPropagation();
-    e.preventDefault();
-
-    if (maximizeNoteBox > 0) handler(e);
-
-    const [initial] = noteBoxResizing;
-
-    // moved above the top?
-    const height = noteBoxHeight + initial - e.clientY;
-    const stopHeight = targ.element.clientHeight - C.TextHeaderHeight;
-    if (height >= stopHeight - C.TextBBTopMargin) {
-      this.bbMouseUp(
-        e,
-        [initial, noteBoxHeight + initial - stopHeight + C.TextBBTopMargin + 5],
-        true
-      );
-      return;
-    }
-
-    // moved below the bottom?
-    if (height <= C.TextBBBottomMargin) {
-      this.bbMouseUp(
-        e,
-        [initial, noteBoxHeight + initial - C.TextBBBottomMargin - 5],
-        false
-      );
-      return;
-    }
-
-    // otherwise follow the mouse...
-    this.setState({ noteBoxResizing: [initial, e.clientY] });
-  }
-
-  bbMouseLeave() {
-    const { noteBoxResizing } = this.state as AtextState;
-    if (noteBoxResizing) {
-      this.setState({ noteBoxResizing: null });
-    }
-  }
-
   // stop notebox resizing?
-  bbMouseUp(e: any, nbr?: number[], maximize?: boolean) {
+  bbMouseUp(this: Atext, e: any, nbr?: number[], maximize?: boolean) {
     const { noteBoxResizing } = this.state as AtextState;
-    const { handler } = this.props as AtextProps;
+    const props = this.props as AtextProps;
     if (noteBoxResizing === null) return;
     e.stopPropagation();
     const newnbr = nbr || noteBoxResizing;
     this.setState({ noteBoxResizing: null });
     e.type = 'mouseup';
-    handler(e, newnbr, maximize);
+    props.xulswordHandler(e, newnbr, maximize);
   }
 
   render() {
     const state = this.state as AtextState;
     const props = this.props as AtextProps;
-    const { noteBoxResizing, pin } = state;
-    const {
-      columns,
-      isPinned,
-      handler,
-      maximizeNoteBox,
-      module,
-      n,
-      noteBoxHeight,
-    } = props;
+    const { handler } = this;
+    const { noteBoxResizing, pin, versePerLine } = state;
+    const { columns, isPinned, maximizeNoteBox, module, n, noteBoxHeight } =
+      props;
 
     // Check isPinned and collect the props/state combination to render.
     const newPin = Atext.copyProps(pin && isPinned ? pin : props, C.PinProps);
@@ -756,6 +686,7 @@ class Atext extends React.Component {
     if (appIsRTL) cls += ' chromedir-rtl';
     if (isPinned) cls += ' pinned';
     if (doMaximizeNB) cls += ' noteboxMaximized';
+    if (versePerLine) cls += ' verse-per-line';
 
     return (
       <Vbox
@@ -763,14 +694,16 @@ class Atext extends React.Component {
         className={xulClass(`atext ${cls}`, props)}
         style={{ ...props.style, position: 'relative' }}
         data-wnum={n}
-        onClick={(e) => {
-          this.pinnedClick(e);
-          if (!e.isPropagationStopped()) handler(e);
-        }}
-        onMouseDown={this.bbMouseDown}
-        onMouseMove={this.bbMouseMove}
+        data-module={module}
+        onDoubleClick={handler}
+        onClick={handler}
+        onWheel={handler}
+        onMouseOver={handler}
+        onMouseOut={handler}
+        onMouseDown={handler}
+        onMouseMove={handler}
         onMouseUp={this.bbMouseUp}
-        onMouseLeave={this.bbMouseLeave}
+        onMouseLeave={handler}
       >
         <div
           className="sbcontrols"

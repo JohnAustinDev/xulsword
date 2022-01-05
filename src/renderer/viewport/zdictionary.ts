@@ -185,3 +185,145 @@ export function getDictEntryHTML(
 
   return html;
 }
+
+export function getStrongsModAndKey(snclass: string) {
+  const res = { mod: null as null | string, key: null as null | string };
+
+  const parts = snclass.split('_');
+  if (!parts || !parts[1]) return res;
+
+  [, res.key] = parts;
+  res.key = res.key.replace(/ /g, ''); // why?
+
+  switch (parts[0]) {
+    case 'S': {
+      // Strongs Hebrew or Greek tags
+      let feature = null;
+      if (res.key.charAt(0) === 'H') {
+        feature = 'hebrewDef';
+      } else if (res.key.charAt(0) === 'G') {
+        if (Number(res.key.substring(1)) >= 5627) return res; // SWORD filters these out- not valid it says
+        feature = 'greekDef';
+      }
+      if (feature) {
+        res.mod = G.Prefs.getCharPref(`popup.selection.${feature}`) || null;
+      }
+      if (!res.mod) {
+        res.key = null;
+        return res;
+      }
+
+      const styp = feature === 'hebrewDef' ? 'H' : 'G';
+      const snum = Number(res.key.substring(1));
+      if (Number.isNaN(Number(snum))) {
+        res.key = null;
+        return res;
+      }
+      const pad4 =
+        String('000').substring(0, 3 - (String(snum).length - 1)) +
+        String(snum);
+
+      // possible keys in order of likelyhood
+      const keys = [
+        `0${pad4}`,
+        `${styp}${pad4}`,
+        `${pad4}`,
+        `${styp}${snum}`,
+        `${snum}`,
+        `${styp}0${pad4}`,
+      ];
+
+      // try out key possibilities until we find a correct key for this mod
+      if (res.mod) {
+        let k;
+        for (k = 0; k < keys.length; k += 1) {
+          try {
+            if (G.LibSword.getDictionaryEntry(res.mod, keys[k])) break;
+          } catch (er) {
+            res.mod = null;
+            break;
+          }
+        }
+        if (res.mod && k < keys.length) res.key = keys[k];
+      }
+      break;
+    }
+
+    case 'RM': {
+      // Robinson's Greek parts of speech tags (used by KJV)
+      if (G.FeatureModules.greekParse.includes('Robinson'))
+        res.mod = 'Robinson';
+      break;
+    }
+
+    case 'SM': {
+      // no lookup module available for these yet...
+      res.mod =
+        G.Prefs.getCharPref('popup.selection.greekParse') ||
+        G.FeatureModules.greekParse[0] ||
+        null;
+      break;
+    }
+
+    default: {
+      // meaning of tag is unknown
+      console.log(`Unknown Strongs type: '${parts[0]}'`);
+      res.key = null;
+    }
+  }
+
+  return res;
+}
+
+// Builds HTML text which displays lemma information from numberList.
+// numberList form: (S|WT|SM|RM)_(G|H)#
+export function getLemmaHTML(
+  strongsClassArray: string[],
+  matchingPhrase: string,
+  sourcemod: string
+) {
+  // Start building html
+  let html = '';
+  let sep = '';
+  let info;
+  for (let i = 0; i < strongsClassArray.length; i += 1) {
+    info = getStrongsModAndKey(strongsClassArray[i]);
+
+    // get a button to search for this Strong's number
+    let buttonHTML = '';
+    if (
+      /^S_/.test(strongsClassArray[i]) &&
+      !/^S_(DSS|MT)/.test(strongsClassArray[i])
+    ) {
+      // DSS|MT for SPVar module
+      buttonHTML += '<button type="button" class="snbut" ';
+      buttonHTML += `title="${
+        info.mod ? info.mod : 'Program'
+      }:${strongsClassArray[i].replace(/^[^_]+_/, '')}.${sourcemod}">`;
+      buttonHTML += strongsClassArray[i].replace(/^[^_]+_/, '');
+      buttonHTML += '</button>';
+    }
+
+    if (info.key && info.mod) {
+      if (Number(info.key) === 0) continue; // skip G tags with no number
+      const entry = G.LibSword.getDictionaryEntry(info.mod, info.key);
+      if (entry) {
+        html +=
+          sep +
+          buttonHTML +
+          markup2html(replaceLinks(entry, info.mod), info.mod);
+      } else html += sep + buttonHTML + info.key;
+    } else
+      html +=
+        sep + buttonHTML + strongsClassArray[i].replace(/S_(DSS|MT)_/g, '$1: '); // DSS|MT for SPVar module
+
+    sep = '<div class="lemma-sep"></div>';
+  }
+
+  // Add heading now that we know module styling
+  html = `<div class="lemma-html cs-${
+    info && info.mod ? info.mod : 'Program'
+  }"><div class="lemma-header">${matchingPhrase}</div>${html}<div>`;
+
+  return html;
+}

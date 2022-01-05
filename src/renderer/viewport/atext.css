@@ -160,3 +160,387 @@ html.chromedir-rtl .atext .text-win {
 .atext.pinned .nb {
   background: white;
 }
+
+/* Header Links */
+.navlink {
+  color: blue;
+  margin: 10px;
+  cursor: default;
+}
+.navlink-span {
+  font-family: ariel;
+}
+.prevchaplink,
+.nextchaplink {
+  text-decoration: underline;
+  cursor: pointer;
+}
+.prevchaplink.disabled,
+.nextchaplink.disabled {
+  color: grey;
+  text-decoration: none;
+  cursor: default;
+}
+.prevchaplink.disabled:hover,
+.nextchaplink.disabled:hover {
+  text-decoration: none;
+}
+
+/* Bible & Commentary chapter/page header */
+.chapterhead {
+  padding-top: 26px;
+}
+.chapnotice {
+  font-size: 1em !important;
+  margin: 0px 10px 10px 10px;
+}
+.chapnotice.empty {
+  display: none;
+}
+.noticelink-c {
+  text-align: center;
+}
+.noticelink {
+  text-decoration: underline;
+  color: blue;
+  cursor: pointer;
+}
+.noticetext {
+  display: none;
+}
+.chaptitle {
+  float: left;
+  font-size: 1.6em;
+  font-weight: bold;
+  color: rgb(110, 85, 110);
+}
+.atext.rtl-text .chaptitle {
+  float: right;
+}
+.chapbk,
+.chapch {
+  white-space: nowrap;
+}
+.chapbk {
+  display: none;
+  margin-bottom: 0.5em;
+}
+.chapterhead.chapterfirst .chapbk {
+  display: block;
+}
+.atext.pinned .chapbk {
+  display: block;
+}
+.chapinfo {
+  float: right;
+  min-width: 40px;
+  color: rgb(110, 85, 110);
+}
+.atext.rtl-text .chapinfo {
+  float: left;
+}
+.listenlink {
+  visibility: hidden;
+  display: inline-block;
+  background: url('../images/listen0.png');
+  width: 45px;
+  height: 37px;
+  position: relative;
+  top: -0.8em;
+}
+.listenlink.hasAudio {
+  visibility: visible;
+}
+.listenlink:hover {
+  background: url('../images/listen1.png');
+  cursor: pointer;
+}
+.atext.Genbks .listenlink {
+  position: absolute;
+  top: 0px;
+  left: 52px;
+}
+.introlink {
+  font-size: 1.2em;
+  text-decoration: underline;
+  color: blue;
+  cursor: pointer;
+}
+.introlink.empty {
+  display: none;
+}
+.origselect select {
+  margin-top: 1em;
+}
+.head-line-break {
+  clear: both;
+  margin-bottom: 30px;
+}
+.introtext {
+  display: none;
+}
+
+/* Interlinear display */
+.interB {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+.interS {
+  width: 50px;
+  border-top: 1px solid blue;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.matchingStrongs {
+  background: yellow;
+}
+.atext.Texts .un-hilight {
+  background: yellow;
+}
+
+/* Bible footnotes */
+.fntable {
+  display: table;
+  border-collapse: separate;
+  border-spacing: 0px 1px;
+  margin-inline-start: 10px;
+}
+.popup-text .fntable {
+  width: 100%;
+}
+.fnrow {
+  display: table-row;
+  padding-inline-end: 16px;
+}
+.fncol1 {
+  display: table-cell;
+  width: 6px;
+  vertical-align: top;
+  padding-top: 8px;
+}
+.crtwisty {
+  width: 9px;
+  height: 9px;
+  background: url(../images/twisty-open.png);
+  position: relative;
+  top: -2px;
+}
+.cropened .crtwisty {
+  background: url(../images/twisty-close.png);
+}
+.fncol2 {
+  display: table-cell;
+  visibility: hidden;
+  vertical-align: top;
+  padding-top: 12px;
+}
+.fndash {
+  width: 6px;
+  height: 2px;
+  border-top: 1px solid rgb(150, 150, 150);
+}
+.fncol3 {
+  display: table-cell;
+  visibility: hidden;
+  width: 6px;
+  border-top: 1px solid rgb(150, 150, 150);
+  border-left: 1px solid rgb(150, 150, 150);
+  border-bottom: 1px solid rgb(150, 150, 150);
+}
+.cropened .fncol2,
+.cropened .fncol3 {
+  visibility: visible;
+}
+html.chromedir-rtl .fncol3 {
+  border-left: none;
+  border-right: 1px solid rgb(150, 150, 150);
+}
+.fncol4 {
+  display: table-cell;
+  text-align: end;
+  white-space: nowrap;
+  vertical-align: top;
+  padding-top: 2px;
+}
+.fnlink {
+  text-decoration: underline;
+  cursor: pointer;
+  color: blue;
+}
+.fncol5 {
+  display: table-cell;
+  padding: 0px 4px 0px 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+.fnselected .fncol5 {
+  border: 1px outset yellow;
+  background: rgb(255, 243, 255);
+}
+.crref {
+  text-decoration: underline;
+  cursor: pointer;
+  color: blue;
+}
+.cropened .crref:after {
+  content: ': ';
+}
+.crtext {
+  display: none;
+}
+.cropened .crtext {
+  display: inline;
+}
+.cropened .crtext.opposing-program-direction {
+  display: inline-block;
+}
+.cr-sep {
+  display: inline;
+}
+.cr-sep:after {
+  content: ';';
+  padding-inline-end: 0.5em;
+}
+.cropened .cr-sep {
+  display: block;
+  border-top: 1px solid grey;
+  margin: 10px;
+}
+.cropened .cr-sep:after {
+  content: '';
+  padding-inline-end: 0em;
+}
+.fntext.opposing-program-direction {
+  display: inline-block;
+}
+.noteBoxUserNote {
+  font-style: italic;
+}
+
+/* Other footnotes */
+.nlist {
+  clear: both;
+  border-top: 1px solid grey;
+  margin: 24px 0px 0px 0px;
+  padding: 10px 0px 10px 0px;
+}
+.nlist:first-of-type {
+  margin-top: 50px;
+}
+
+/* Dictionary styles */
+.Dicts .nb {
+  overflow: hidden;
+}
+.dictentry {
+  display: table;
+  height: 100%;
+  width: 100%;
+}
+.dictentry > div {
+  display: table-cell;
+  vertical-align: middle;
+}
+.dictlist {
+  width: calc(100% + 8px);
+  height: 100%;
+  padding: 16px;
+}
+.dictlist .textboxparent {
+  height: 16px;
+}
+.dictlist input {
+  width: calc(100% - 8px);
+}
+.dictlist .keylist {
+  margin-top: 10px;
+  max-height: calc(100% - 30px);
+  overflow: auto;
+}
+.dictlist .key {
+  cursor: pointer;
+}
+.dictselectkey {
+  background: highlight;
+  color: white;
+}
+.dict-description {
+  font-weight: bold;
+}
+.dict-sep {
+  border-top: 3px solid grey;
+  margin: 10px;
+}
+.dict-key-heading {
+  font-weight: bold;
+}
+
+/* HTML TABLES */
+.sb table tr td {
+  border: 1px outset grey;
+  padding: 10px;
+}
+.sb td .head1 {
+  font-size: 1em !important;
+}
+.sb td .head2 {
+  font-size: 1em !important;
+}
+
+/* PRINTING STYLES */
+@media print {
+  .pagebreak {
+    page-break-after: always;
+    margin: 40px;
+  }
+  .navlink,
+  .chapinfo {
+    display: none !important;
+  }
+  .noticelink {
+    display: none;
+  }
+  .noticetext {
+    display: block;
+  }
+  .chapterhead .chapbk {
+    display: block;
+  }
+  .interS {
+    border-top: 1px solid black;
+  }
+  * {
+    text-decoration: none !important;
+  }
+  .dtl,
+  .sr {
+    color: inherit;
+  }
+  .atext.Texts .un-hilight {
+    background: transparent;
+  }
+  .fnlink {
+    color: inherit;
+  }
+  .crref {
+    color: inherit;
+  }
+  .crref:after {
+    content: ': ';
+  }
+  .crtext {
+    display: inline;
+  }
+  .crtext.opposing-program-direction {
+    display: inline-block;
+  }
+  .cr-sep {
+    display: block;
+    border-top: none;
+    margin: 10px;
+  }
+  .cr-sep:after {
+    content: '';
+    padding-inline-end: 0em;
+  }
+}

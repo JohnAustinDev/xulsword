@@ -388,38 +388,38 @@ h3 {
 }
 .x-PM {
 }
-.atext.verse-per-line .p-end,
-.atext.verse-per-line .lg-end,
-.atext.verse-per-linetrue .list-end,
-.atext.verse-per-line .lb,
-.atext.verse-per-line .line,
-.atext.verse-per-line .item {
+.verse-per-line .p-end,
+.verse-per-line .lg-end,
+.verse-per-linetrue .list-end,
+.verse-per-line .lb,
+.verse-per-line .line,
+.verse-per-line .item {
   display: inline;
   margin: 0.25em;
   text-indent: 0px;
   padding: 0px;
 }
-.atext.verse-per-line .p-milestone,
-.atext.verse-per-line .p-start,
-.atext.verse-per-line .lg-start,
-.atext.verse-per-line .list-start,
-.atext.verse-per-line .x-p-indent,
-.atext.verse-per-line .lb + .lb,
-.atext.verse-per-line br,
+.verse-per-line .p-milestone,
+.verse-per-line .p-start,
+.verse-per-line .lg-start,
+.verse-per-line .list-start,
+.verse-per-line .x-p-indent,
+.verse-per-line .lb + .lb,
+.verse-per-line br,
 .interB .lg-start:first-child,
 .interB .lg-end:last-child,
 .interB .list-start:first-child,
 .interB .list-end:last-child {
   display: none;
 }
-.atext.verse-per-line .x-p,
-.atext.verse-per-line .indent0,
-.atext.verse-per-line .indent1,
-.atext.verse-per-line .indent2,
-.atext.verse-per-line .indent3,
-.atext.verse-per-line .indent4,
-.atext.verse-per-line .x-lg,
-.atext.verse-per-line .x-list {
+.verse-per-line .x-p,
+.verse-per-line .indent0,
+.verse-per-line .indent1,
+.verse-per-line .indent2,
+.verse-per-line .indent3,
+.verse-per-line .indent4,
+.verse-per-line .x-lg,
+.verse-per-line .x-list {
   text-indent: 0em;
   margin: 0px;
 }
@@ -464,7 +464,7 @@ h3 {
   float: right;
   margin-left: 3em;
 }
-.atext.rtl-text .x-selah {
+.rtl-text .x-selah {
   float: left;
   margin-left: 0;
   margin-right: 3em;
@@ -480,26 +480,26 @@ h3 {
   position: absolute;
   top: 0px;
   left: -25px;
-  background: url('../images/versePerLine.png');
+  background: url('./images/versePerLine.png');
   background-position: 0px 0px;
   width: 17px;
   height: 20px;
 }
-.atexttrl-text .versePerLineButton > div {
+.rtl-text .versePerLineButton > div {
   left: auto;
   right: -25px;
   transform: scaleX(-1);
 }
-.atext.verse-per-line .versePerLineButton > div {
+.verse-per-line .versePerLineButton > div {
   background-position: -34px 0px;
 }
-.atext .versePerLineButton > div:hover {
+.versePerLineButton > div:hover {
   background-position: -17px 0px;
 }
-.atext.verse-per-line .versePerLineButton > div:hover {
+.verse-per-line .versePerLineButton > div:hover {
   background-position: -51px 0px;
 }
-.atext.verse-per-line .vs {
+.verse-per-line .vs {
   display: block;
 }
 

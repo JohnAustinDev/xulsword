@@ -2,8 +2,43 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-// Dummy func used as place holder
-const func = () => {};
+declare global {
+  interface Window {
+    ipc: any;
+    shell: any;
+  }
+}
+
+// Default values for these keys must be set in the default Pref file
+// or an error will likely be thrown.
+export interface StateDefault {
+  book: string;
+  chapter: number;
+  verse: number;
+
+  history: string[];
+  historyIndex: number;
+
+  show: ShowType;
+
+  place: PlaceType;
+
+  tabs: string[][];
+  modules: (string | undefined)[];
+  ilModules: (string | undefined)[];
+  mtModules: (string | undefined)[];
+  keys: string[];
+
+  selection: string;
+  flagScroll: number[];
+  isPinned: boolean[];
+  noteBoxHeight: number[];
+  maximizeNoteBox: number[];
+  showChooser: boolean;
+
+  chooser: 'bible' | 'genbook' | 'none';
+  numDisplayedWindows: number;
+}
 
 export type SwordFilterType =
   'Headings' |
@@ -19,7 +54,7 @@ export type SwordFilterType =
 
 export type SwordFilterValueType = 'Off' | 'On'
 
-export interface ShowType {
+export type ShowType  = {
   headings: boolean;
   footnotes: boolean;
   crossrefs: boolean;
@@ -33,20 +68,36 @@ export interface ShowType {
   redwords: boolean;
 }
 
-export interface PlaceType {
+export type PlaceType = {
   footnotes: 'notebox' | 'popup';
   crossrefs: 'notebox' | 'popup';
   usernotes: 'notebox' | 'popup';
 }
 
-export interface BookType {
+export type BookType = {
   sName: string;
   bName: string;
   bNameL: string;
 }
 
-export interface ConfigType {
+export type ConfigType = {
   [index: string]: string;
+}
+
+export type FeatureType = {
+  // SWORD standard
+  strongsNumbers: string[];
+  greekDef: string[];
+  hebrewDef: string[];
+  greekParse: string[];
+  hebrewParse: string[];
+  dailyDevotion: { [i: string]: string };
+  glossary: string[];
+  images: string[];
+  noParagraphs: string[]; // should be typeset as verse-per-line
+  // xulsword features
+  greek: string[];
+  hebrew: string[];
 }
 
 export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
@@ -57,7 +108,7 @@ export type ModTypes =
 | 'Lexicons / Dictionaries'
 | 'Generic Books';
 
-export interface TabType {
+export type TabType = {
   module: string;
   type: ModTypes;
   version: string;
@@ -98,6 +149,10 @@ export type DirsDirectories = {
   xsLocale: string;
   xsModsCommon: string;
 };
+
+// Dummy func used as place holder
+const func = () => {};
+
 export const PrefsPublic = {
   getPrefOrCreate: func as unknown as (key: string, type: 'string' | 'number' | 'boolean' | 'complex', defval: any, aStore?: string) => any,
   getCharPref: func as unknown as (key: string, aStore?: string) => string,
@@ -161,14 +216,13 @@ export const CommandsPublic = {
   printPreview: func as unknown as () => void,
   printPassage: func as unknown as () => void,
   print: func as unknown as () => void,
-  search: func as unknown as () => void,
+  search: func as unknown as (str: string, options: any) => void,
   copyPassage: func as unknown as () => void,
   openFontsColors: func as unknown as () => void,
   openBookmarksManager: func as unknown as () => void,
   openNewBookmarkDialog: func as unknown as () => void,
   openNewUserNoteDialog: func as unknown as () => void,
   openHelp: func as unknown as () => void,
-  openTextWindow: func as unknown as () => void,
 }
 
 // This GPublic object will be used at runtime to create two different
@@ -199,6 +253,8 @@ export const GPublic = {
   resolveHtmlPath: func as unknown,
   setGlobalMenuFromPrefs: func as unknown,
   setGlobalStateFromPrefs: func as unknown,
+  openWindow: func as unknown,
+  openDialog: func as unknown,
   globalReset: func as unknown,
 
   // Global objects with methods and/or data
@@ -219,7 +275,7 @@ export interface GType {
   ModuleConfigs: { [i: string]: ConfigType };
   ModuleConfigDefault: ConfigType;
   FontFaceConfigs: ConfigType[];
-  FeatureModules: { [i: string]: any };
+  FeatureModules: FeatureType;
   AvailableBooks: { [i: string]: string[] };
 
   OPSYS: 'string';
@@ -227,6 +283,8 @@ export interface GType {
   resolveHtmlPath: (htmlfile: string) => string;
   setGlobalMenuFromPrefs: (menu?: Electron.Menu) => void;
   setGlobalStateFromPrefs: (prefs?: string | string[]) => void;
+  openWindow: (type: string, params: Electron.BrowserWindowConstructorOptions) => number;
+  openDialog: (type: string, params: Electron.BrowserWindowConstructorOptions) => any;
   globalReset: () => void;
 
   Prefs: typeof PrefsPublic;

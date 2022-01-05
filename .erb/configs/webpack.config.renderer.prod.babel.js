@@ -59,8 +59,10 @@ export default merge(baseConfig, {
 
   entry: {
     // Entry points and output files (one for each kind of BrowserWindow)
-    xulsword:  entryConfig('xulsword', 'xulsword.tsx'),
     splash: entryConfig('splash', 'splash.tsx'),
+    xulsword: entryConfig('xulsword', 'xulsword.tsx'),
+    viewport: entryConfig('viewport', 'viewportWin.tsx'),
+    popup: entryConfig('popup', 'popupWin.tsx'),
   },
 
   output: {
@@ -193,7 +195,9 @@ export default merge(baseConfig, {
     }),
 
     // Entry point html files (one plugin for each kind of BrowserWindow)
+    new HtmlWebpackPlugin(htmlConfig('splash')),
     new HtmlWebpackPlugin(htmlConfig('xulsword')),
-    new HtmlWebpackPlugin(htmlConfig('splash'))
+    new HtmlWebpackPlugin(htmlConfig('viewport')),
+    new HtmlWebpackPlugin(htmlConfig('popup'))
   ],
 });

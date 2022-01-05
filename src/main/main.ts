@@ -3,8 +3,6 @@
 
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
-import path from 'path';
-import fs from 'fs';
 import { app, BrowserWindow, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -12,12 +10,11 @@ import i18n from 'i18next';
 import { GPublic } from '../type';
 import C from '../constant';
 import MenuBuilder from './menu';
-import { resolveHtmlPath, jsdump } from './mutil';
+import { jsdump } from './mutil';
 import G from './mg';
 import LibSword from './modules/libsword';
 
 const i18nBackendMain = require('i18next-fs-backend');
-const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
 let t: (key: string, options?: any) => string;
 
@@ -37,10 +34,6 @@ export default class AppUpdater {
 const xsWindow = {
   main: null as BrowserWindow | null,
   splash: null as BrowserWindow | null,
-};
-
-const getAssetPath = (...paths: string[]): string => {
-  return path.join(G.Dirs.path.xsAsset, ...paths);
 };
 
 const isDevelopment =
@@ -92,6 +85,23 @@ ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
   event.returnValue = ret;
 });
 
+ipcMain.on('window', (event: IpcMainEvent, type: string, ...args: any[]) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win) return;
+  switch (type) {
+    case 'close': {
+      win.close();
+      break;
+    }
+    case 'title': {
+      win.setTitle(args[0]);
+      break;
+    }
+    default:
+      throw Error(`Unknown window ipcMain event: '${type}'`);
+  }
+});
+
 ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win) {
@@ -107,127 +117,63 @@ ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
   }
 });
 
-const createWindow = (
-  name: string,
-  params: Electron.BrowserWindowConstructorOptions | undefined
-) => {
-  const newWindow = new BrowserWindow({
-    show: false,
-    useContentSize: true,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      enableRemoteModule: false,
-      additionalArguments: [name], // will be appended to process.argv in the renderer
-    },
-    ...params,
-  });
+const openMainWindow = () => {
+  let options = {
+    title: t('programTitle'),
+    fullscreenable: true,
+    width: 1024,
+    height: 728,
+  };
 
-  newWindow.loadURL(resolveHtmlPath(`${name}.html`));
-
-  // Bind i18next-electron-fs-backend providing IPC to renderer processes
-  i18nBackendRenderer.mainBindings(ipcMain, newWindow, fs);
-
-  // Unbind i18next-electron-fs-backend from window upon close to prevent
-  // access of closed window. Since the binding is anonymous, all are
-  // removed, and other windows get new ones added back.
-  newWindow.on('close', () => {
-    i18nBackendRenderer.clearMainBindings(ipcMain);
-    BrowserWindow.getAllWindows().forEach((w) => {
-      if (w !== newWindow) {
-        i18nBackendRenderer.mainBindings(ipcMain, w, fs);
+  let persistWinPref;
+  try {
+    persistWinPref = G.Prefs.getComplexValue(`persisted_windows`);
+  } catch {
+    persistWinPref = null;
+  }
+  type WindowArgs = { type: string; options: any };
+  const persistedWindows: WindowArgs[] = [];
+  if (persistWinPref) {
+    G.Prefs.setComplexValue(`persisted_windows`, undefined);
+    Object.entries(persistWinPref).forEach((entry) => {
+      const args = entry[1] as WindowArgs;
+      if (args.type === 'xulsword') {
+        options = args.options;
+      } else {
+        persistedWindows.push(args);
       }
     });
-  });
-
-  newWindow.on('resize', () => {
-    const size = newWindow.getSize();
-    newWindow.webContents.send('resize', size);
-  });
-
-  return newWindow;
-};
-
-const openSplashWindow = () => {
-  const splashWindow = createWindow(
-    'splash',
-    isDevelopment && C.DEVELSPLASH === 2
-      ? {
-          title: 'xulsword',
-          width: 500,
-          height: 400,
-        }
-      : {
-          title: 'xulsword',
-          width: 500,
-          height: 375,
-          alwaysOnTop: true,
-          frame: false,
-          transparent: true,
-        }
-  );
-
-  return splashWindow;
-};
-
-const openMainWindow = () => {
-  const name = 'xulsword';
-  // Open to Prefs size/location
-  let x;
-  let y;
-  try {
-    x = G.Prefs.getIntPref(`window.${name}.x`);
-    y = G.Prefs.getIntPref(`window.${name}.y`);
-  } catch {
-    x = undefined;
-    y = undefined;
   }
-  const width = G.Prefs.getPrefOrCreate(
-    `window.${name}.width`,
-    'number',
-    1024
-  ) as number;
-  const height = G.Prefs.getPrefOrCreate(
-    `window.${name}.height`,
-    'number',
-    728
-  ) as number;
 
-  const mainWin = createWindow(name, {
-    title: t('programTitle'),
-    icon: getAssetPath('icon.png'),
-    width,
-    height,
-    x,
-    y,
-  });
+  G.Prefs.setComplexValue(`windows`, undefined);
+  const mainWin = BrowserWindow.fromId(G.openWindow('xulsword', options));
 
-  if (mainWin === null) {
+  if (!mainWin) {
     return null;
-  }
-
-  function saveBounds() {
-    const w = mainWin.getNormalBounds();
-    const c = mainWin.getContentBounds();
-    G.Prefs.setIntPref(`window.${name}.width`, c.width);
-    G.Prefs.setIntPref(`window.${name}.height`, c.height);
-    G.Prefs.setIntPref(`window.${name}.x`, c.x);
-    // The 12 works for Ubuntu 20
-    G.Prefs.setIntPref(`window.${name}.y`, w.y - (w.height - c.height) - 12);
   }
 
   const menuBuilder = new MenuBuilder(mainWin, i18n);
   menuBuilder.buildMenu();
 
   mainWin.on('close', () => {
-    saveBounds();
-    if (xsWindow.main !== null) xsWindow.main.webContents.send('close');
+    // Persist any open windows for the next restart
+    G.Prefs.setComplexValue(
+      `persisted_windows`,
+      G.Prefs.getComplexValue(`windows`)
+    );
+    // Close all other open windows
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (w !== mainWin) w.close();
+    });
   });
 
   mainWin.on('closed', () => {
     xsWindow.main = null;
     jsdump('NOTE: mainWindow closed...');
+  });
+
+  persistedWindows.forEach((win) => {
+    G.openWindow(win.type, win.options);
   });
 
   return mainWin;
@@ -289,8 +235,27 @@ const start = async () => {
 
   t = (key: string, options?: any) => i18n.t(key, options);
 
-  if (!(C.DEVELSPLASH === 1 && isDevelopment))
-    xsWindow.splash = openSplashWindow();
+  if (!(C.DEVELSPLASH === 1 && isDevelopment)) {
+    xsWindow.splash = BrowserWindow.fromId(
+      G.openDialog(
+        'splash',
+        isDevelopment && C.DEVELSPLASH === 2
+          ? {
+              title: 'xulsword',
+              width: 500,
+              height: 400,
+            }
+          : {
+              title: 'xulsword',
+              width: 500,
+              height: 375,
+              alwaysOnTop: true,
+              frame: false,
+              transparent: true,
+            }
+      )
+    );
+  }
 
   // Initialize napi libxulsword as LibSword
   LibSword.initLibsword();

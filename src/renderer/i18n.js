@@ -6,7 +6,7 @@ import C from '../constant';
 import G from './rg';
 
 const isDevelopment =
-  window.c.process.NODE_ENV() === 'development' || window.c.process.DEBUG_PROD() === 'true';
+  window.shell.process.NODE_ENV() === 'development' || window.shell.process.DEBUG_PROD() === 'true';
 
 const className = window.location.pathname.split('\\').pop().split('/').pop().split('.').shift();
 

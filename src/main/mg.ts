@@ -3,11 +3,11 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import path from 'path';
 import fs from 'fs';
-import { BrowserWindow, Menu } from 'electron';
+import { BrowserWindow, Menu, ipcMain } from 'electron';
 import i18next from 'i18next';
 import { GType, GPublic, TabType, BookType, ModTypes } from '../type';
 import C from '../constant';
-import { isASCII } from '../common';
+import { isASCII, openWindowXS } from '../common';
 import Dirsx from './modules/dirs';
 import Prefsx from './modules/prefs';
 import Commandsx from './commands';
@@ -22,6 +22,8 @@ import {
 import { jsdump, resolveHtmlPath } from './mutil';
 import nsILocalFile from './components/nsILocalFile';
 import LibSwordx from './modules/libsword';
+
+const i18nBackendRenderer = require('i18next-electron-fs-backend');
 
 // This G object is for use in the main process, and it shares the same
 // interface as the renderer's G object. Properties of this object
@@ -76,6 +78,85 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
       } else {
         broadcast();
       }
+    },
+    openDialog: (
+      type: string,
+      options: Electron.BrowserWindowConstructorOptions
+    ) => {
+      const ret = {};
+      windowOptions(type, options);
+
+      const win = new BrowserWindow(options);
+
+      win.loadURL(resolveHtmlPath(`${type}.html`));
+
+      win.once('ready-to-show', () => {
+        win.show();
+        win.focus();
+      });
+
+      win.on('resize', () => {
+        const size = win.getSize();
+        win.webContents.send('resize', size);
+      });
+
+      windowInitI18n(win);
+
+      return ret;
+    },
+    openWindow: (
+      type: string,
+      options: Electron.BrowserWindowConstructorOptions
+    ): number => {
+      windowOptions(type, options);
+
+      // Set bounds for viewport and popup type windows
+      if (type === 'viewport' || type === 'popup') {
+        const ops = options as any;
+        const xs = windowBounds();
+        const eb = ops?.boundingClientRect;
+        if (xs && eb) {
+          options.width = eb.width;
+          options.height = eb.height;
+          options.x = xs.x + eb.x;
+          options.y = xs.y + eb.y;
+        }
+      }
+
+      const win = new BrowserWindow(options);
+
+      win.loadURL(resolveHtmlPath(`${type}.html`));
+
+      Prefsx.setComplexValue(`windows.${win.id}`, { type, options });
+
+      // All Windows are created with BrowserWindow.show = false.
+      // This means that the window will be shown after either:
+      // (params.show === true) Electron's 'ready-to-show' event.
+      // (params.show === false) The window's custom 'did-finish-render' event.
+      // IMPORTANT: If params.show is false, the 'did-finish-render' event must
+      // be explicitly initiated by the window via IPC or it will never be shown.
+      if (options?.show) {
+        win.once('ready-to-show', () => {
+          win.show();
+          win.focus();
+        });
+      }
+
+      win.on('resize', () => {
+        const prefs = Prefsx.getComplexValue(`window.${win.id}`);
+        const b = windowBounds(win);
+        Prefsx.setComplexValue(`window.${win.id}`, { ...prefs, ...b });
+        const size = win.getSize();
+        win.webContents.send('resize', size);
+      });
+
+      windowInitI18n(win);
+
+      win.once('close', () => {
+        Prefsx.setComplexValue(`windows.${win.id}`, undefined);
+      });
+
+      return win.id;
     },
 
     LibSword: LibSwordx as typeof LibSwordx,
@@ -360,4 +441,61 @@ function setMenuFromPrefs(menu: Electron.Menu) {
     }
     if (i.submenu) setMenuFromPrefs(i.submenu);
   });
+}
+
+function windowOptions(type: string, options: any) {
+  // All windows share these options
+  options.show = false;
+  options.icon = path.join(Dirsx.path.xsAsset, 'icon.png');
+  if (!options.webPreferences) options.webPreferences = {};
+  options.webPreferences.preload = path.join(__dirname, 'preload.js');
+  options.webPreferences.contextIsolation = true;
+  options.webPreferences.nodeIntegration = false;
+  options.webPreferences.enableRemoteModule = false;
+  if (Array.isArray(options.webPreferences.additionalArguments))
+    options.webPreferences.additionalArguments.unshift(type);
+  else options.webPreferences.additionalArguments = [type];
+}
+
+function windowInitI18n(win: BrowserWindow) {
+  // Bind i18next-electron-fs-backend providing IPC to renderer processes
+  i18nBackendRenderer.mainBindings(ipcMain, win, fs);
+  // Unbind i18next-electron-fs-backend from window upon close to prevent
+  // access of closed window. Since the binding is anonymous, all are
+  // removed, and other windows get new ones added back.
+  win.once('close', () => {
+    i18nBackendRenderer.clearMainBindings(ipcMain);
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (w !== win) {
+        i18nBackendRenderer.mainBindings(ipcMain, w, fs);
+      }
+    });
+    if (win !== null) win.webContents.send('close');
+  });
+}
+
+function xulswordWindow(): BrowserWindow | null {
+  let win: BrowserWindow | null = null;
+  const windows = Prefsx.getComplexValue(`windows`);
+  Object.entries(windows).forEach((window) => {
+    const [id, args] = window as any;
+    if (args?.type && args.type === 'xulsword') {
+      win = BrowserWindow.fromId(id);
+    }
+  });
+  return win;
+}
+
+function windowBounds(winx?: BrowserWindow) {
+  const win = winx || xulswordWindow();
+  if (!win) return null;
+  const w = win.getNormalBounds();
+  const c = win.getContentBounds();
+  return {
+    width: c.width,
+    height: c.height,
+    x: c.x,
+    // The 12 works for Ubuntu 20 at least
+    y: w.y - (w.height - c.height) - 12,
+  };
 }

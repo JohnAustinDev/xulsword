@@ -91,7 +91,7 @@ const C = {
   SCROLLTYPECENTERALWAYS: 4, // put selected verse in the middle even if verse is already visible or verse 1
   SCROLLTYPEEND: 5, // put selected verse at the end
   SCROLLTYPEENDSELECT: 6, // put selected verse at the end, then select the first visible verse without scrolling
-  // SCROLLTYPEDELTA: 7, // scroll GenBook by given delta in pixels
+  SCROLLTYPEDELTA: 7, // scroll GenBook by given delta in pixels
 
   BIN: { win32: 'dll', linux: 'so', darwin: 'dylib' },
 

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -8,7 +9,7 @@ import React from 'react';
 import { render } from 'react-dom';
 import { Translation } from 'react-i18next';
 import i18next from 'i18next';
-import { PlaceType, ShowType } from '../../type';
+import { StateDefault } from '../../type';
 import { compareObjects, deepClone, dString } from '../../common';
 import C from '../../constant';
 import i18nInit from '../i18n';
@@ -27,8 +28,8 @@ import Spacer from '../libxul/spacer';
 import Textbox from '../libxul/textbox';
 import Viewport from '../viewport/viewport';
 import G from '../rg';
-// eslint-disable-next-line import/no-cycle
-import { xulswordHandler, handleViewport as handleVP } from './handlers';
+import handlerX from './xulswordH';
+import xulswordHandlerX from './xulswordHandler';
 import '../global-htm.css';
 import './xulsword.css';
 
@@ -41,37 +42,6 @@ export const propTypes = {
 };
 
 export type XulswordProps = XulProps;
-
-// Default values for these keys must be set in the default Pref file
-// or an error will likely be thrown.
-export interface StateDefault {
-  book: string;
-  chapter: number;
-  verse: number;
-
-  history: string[];
-  historyIndex: number;
-
-  show: ShowType;
-
-  place: PlaceType;
-
-  tabs: string[][];
-  modules: (string | undefined)[];
-  ilModules: (string | undefined)[];
-  mtModules: (string | undefined)[];
-  keys: string[];
-
-  selection: string;
-  flagScroll: number[];
-  isPinned: boolean[];
-  noteBoxHeight: number[];
-  maximizeNoteBox: number[];
-  showChooser: boolean;
-
-  chooser: 'bible' | 'genbook' | 'none';
-  numDisplayedWindows: number;
-}
 
 // The following state values are not stored in Prefs, but take
 // default values in Xulsword constructor.
@@ -93,9 +63,11 @@ export default class Xulsword extends React.Component {
 
   handler: any;
 
-  handleViewport: any;
+  xulswordHandler: any;
 
   historyTO: NodeJS.Timeout | undefined;
+
+  mouseWheel: { TO: number; atext: HTMLElement | null; count: number };
 
   lastSetPrefs: { [i: string]: any };
 
@@ -133,11 +105,12 @@ export default class Xulsword extends React.Component {
     this.setHistory = this.setHistory.bind(this);
     this.closeMenupopups = this.closeMenupopups.bind(this);
 
-    this.handler = xulswordHandler.bind(this);
-    this.handleViewport = handleVP.bind(this);
+    this.handler = handlerX.bind(this);
+    this.xulswordHandler = xulswordHandlerX.bind(this);
     this.lastSetPrefs = {};
     this.versification = undefined;
     this.v11nmod = undefined;
+    this.mouseWheel = { TO: 0, atext: null, count: 0 };
   }
 
   // Return values of state Prefs. If prefsToGet is undefined, all state prefs
@@ -181,7 +154,7 @@ export default class Xulsword extends React.Component {
   // Compare state s to the previously set Prefs and do nothing if there
   // were no changes. Otherwise, if this component has an id, persist its
   // latest state changes to Prefs (except those in stateNoPersist) and
-  // then setGlobalMenuFromPrefs()
+  // then setGlobalMenuFromPrefs() which in turn notifies other windows.
   updateGlobalState = (s: XulswordState) => {
     const { id } = this.props as XulswordProps;
     if (!id) return;
@@ -355,7 +328,7 @@ export default class Xulsword extends React.Component {
       })}`
     );
 
-    const { handler, handleViewport } = this;
+    const { handler, xulswordHandler } = this;
 
     this.updateGlobalState(state);
 
@@ -561,9 +534,9 @@ export default class Xulsword extends React.Component {
 
             <Hbox flex="1">
               <Viewport
-                key={vpreset}
+                key={[vpreset, showChooser].join('.')}
                 id="main-viewport"
-                handler={handleViewport}
+                xulswordHandler={xulswordHandler}
                 book={book}
                 chapter={chapter}
                 verse={verse}

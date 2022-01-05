@@ -18,6 +18,12 @@ import {
   ref2ProgramLocaleText,
 } from '../rutil';
 import G from '../rg';
+// eslint-disable-next-line import/no-cycle
+import Xulsword, { XulswordState } from '../xulsword/xulsword';
+// eslint-disable-next-line import/no-cycle
+import Atext, { AtextProps, AtextState } from './atext';
+// eslint-disable-next-line import/no-cycle
+import ViewportWin from './viewportWin';
 
 function ascendingVerse(a: HTMLElement, b: HTMLElement) {
   const t1 = 'un';
@@ -132,6 +138,8 @@ export function getChapterHeading(props: {
   book: string | undefined;
   chapter: number | undefined;
   module: string | undefined;
+  ilModuleOption: string[] | undefined;
+  ilModule: string | undefined;
 }) {
   if (!props.book || !props.chapter || !props.module)
     return { textHTML: '', intronotes: '' };
@@ -203,8 +211,11 @@ export function getChapterHeading(props: {
     1,
     props.module,
   ].join('.')}">${i18next.t('IntroLink', toptions)}</div>`;
-  /*
-  if (props.ilModuleOption.length > 1) {
+  if (
+    props.ilModule &&
+    props.ilModuleOption &&
+    props.ilModuleOption.length > 1
+  ) {
     html += '<div class="origselect">';
     html += '<select>';
     props.ilModuleOption.forEach((m) => {
@@ -217,7 +228,7 @@ export function getChapterHeading(props: {
     });
     html += '</select>';
     html += '</div>';
-  } */
+  }
   html += '</div>';
 
   html += '</div>';
@@ -381,7 +392,7 @@ function getRefHTML(
 // The 'notes' argument can be HTML or a DOM element which is either a single
 // note or a container with note child/children
 export function getNoteHTML(
-  notes: string | HTMLDivElement,
+  notes: string | HTMLElement,
   mod: string,
   show: ShowType,
   openCRs: boolean,
@@ -392,7 +403,7 @@ export function getNoteHTML(
 
   const w = wx || 0; // w is only needed for unique id creation
 
-  let noteContainer: HTMLDivElement;
+  let noteContainer: HTMLElement;
   if (typeof notes === 'string') {
     noteContainer = document.createElement('div');
     sanitizeHTML(noteContainer, notes);
@@ -829,6 +840,110 @@ export function scroll(
   }
 
   return null;
+}
+
+export function wheelscroll(caller: Xulsword | ViewportWin | Atext) {
+  const { atext, count } = caller.mouseWheel;
+  if (!atext) return;
+
+  // get number of verses by which to scroll
+  const c2 = Math.round(count / 3);
+  let dv = 2 * c2 - Math.abs(c2) / c2;
+  caller.mouseWheel.count = 0;
+  if (!dv) return;
+
+  const match = atext.className.match(/\bcs-(\S+)\b/);
+  if (!match) return;
+  const { wnum } = atext.dataset;
+  const isSingleColumn = atext.classList.contains('show1');
+  const i = Number(wnum) - 1;
+  const module = match[1];
+  const { type } = G.Tab[module];
+  const isPinned = atext.classList.contains('pinned');
+  const xulsword = caller as Xulsword;
+  const atextprops = caller.props as AtextProps;
+  const xulswordstate = xulsword.state as XulswordState;
+  const versification =
+    'versification' in caller
+      ? xulsword.versification
+      : atextprops.versification;
+
+  const sb = atext.getElementsByClassName('sb')[0];
+
+  let v;
+
+  // GenBook scrolls differently than versekey modules
+  if (type === C.GENBOOK) {
+    const scrollType = C.SCROLLTYPEDELTA;
+    const scrollDelta = dv * 20; // scroll delta in pixels
+  }
+
+  // else scrolling versekey modules
+  else {
+    // get first verse which begins in window
+    v = sb.firstChild as HTMLElement | null;
+    while (v && !verseIsVisible(v)) {
+      v = v.nextSibling as HTMLElement | null;
+    }
+    if (!v) return;
+
+    // if this is a multi-column versekey window, shift the verse according to scroll wheel delta
+    if (!atext.classList.contains('show1')) {
+      let nv = v;
+      while (dv > 0) {
+        if (nv) nv = nv.nextSibling as HTMLElement;
+        while (nv && !nv.classList.contains('vs')) {
+          nv = nv.nextSibling as HTMLElement;
+        }
+        dv -= 1;
+        if (nv && nv.classList.contains('vs')) v = nv;
+      }
+      while (dv < 0) {
+        if (nv) nv = nv.previousSibling as HTMLElement;
+        while (nv && !nv.classList.contains('vs')) {
+          nv = nv.previousSibling as HTMLElement;
+        }
+        dv += 1;
+        if (nv && nv.classList.contains('vs')) v = nv;
+      }
+    }
+
+    const p = getElementInfo(v);
+    if (versification && p && p.bk && p.ch && p.vs) {
+      if (isPinned) {
+        caller.setState((prevState: AtextState) => {
+          return {
+            pin: {
+              ...prevState.pin,
+              book: p.bk,
+              chapter: p.ch,
+              verse: p.vs,
+              flagScroll: C.SCROLLTYPEBEG,
+            },
+          };
+        });
+      } else {
+        const { modules } = xulswordstate;
+        const [book, chapter, verse] = G.LibSword.convertLocation(
+          G.LibSword.getVerseSystem(module),
+          [p.bk, p.ch, p.vs, p.vs].join('.'),
+          versification
+        ).split('.');
+        const s = { book, chapter, verse };
+        const flagScroll = [] as number[];
+        for (let x = 0; x < C.NW; x += 1) {
+          const m = modules[x];
+          const self1col = x === i && isSingleColumn;
+          flagScroll.push(
+            !self1col && m && G.Tab[m].isVerseKey
+              ? C.SCROLLTYPEBEG
+              : C.SCROLLTYPENONE
+          );
+        }
+        caller.setState({ ...s, flagScroll });
+      }
+    }
+  }
 }
 
 export function highlight(

@@ -66,5 +66,12 @@
 
     "chooser": "bible",
     "numDisplayedWindows": 2
+  },
+  "popup": {
+    "selection": {
+      "hebrewDef": "",
+      "greekDef": "",
+      "greekParse": ""
+    }
   }
 }

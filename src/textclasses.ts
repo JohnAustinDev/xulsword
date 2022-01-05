@@ -12,10 +12,10 @@
 // dt, and dtl class may have multiple ";" or " " separated references
 // in their titles.
 
-export interface TextInfo {
+export type TextInfo = {
   type: string | null;
   title: string | null;
-  reflist: string | null;
+  reflist: string[] | null;
   bk: string | null;
   ch: string | number | null;
   vs: number | null;
@@ -34,7 +34,7 @@ type Value = TextInfoIndex & {
   re: RegExp
 }
 
-interface TextClassesType {
+type TextClassesType = {
   vs: Value[];
   fn: Value[];
   cr: Value[];

@@ -31,7 +31,7 @@ const propTypes = {
   ...xulPropTypes,
   anid: PropTypes.string,
   columns: PropTypes.number.isRequired,
-  handler: PropTypes.func.isRequired,
+  xulswordHandler: PropTypes.func.isRequired,
   isPinned: PropTypes.bool.isRequired,
   module: PropTypes.string,
   n: PropTypes.number.isRequired,
@@ -44,7 +44,7 @@ const propTypes = {
 interface TabsProps extends XulProps {
   anid: string;
   columns: number;
-  handler: (e: any) => void;
+  xulswordHandler: (e: any) => void;
   isPinned: boolean;
   module: string | undefined;
   n: number;
@@ -189,8 +189,15 @@ class Tabs extends React.Component {
 
   render() {
     const { multiTabs, multiTabMenupopup } = this.state as TabsState;
-    const { module, handler, isPinned, n, tabs, ilModule, ilModuleOption } =
-      this.props as TabsProps;
+    const {
+      module,
+      isPinned,
+      n,
+      tabs,
+      ilModule,
+      ilModuleOption,
+      xulswordHandler,
+    } = this.props as TabsProps;
 
     let ilTabLabel = i18next.t('ORIGLabelTab');
     if (!ilTabLabel) ilTabLabel = 'ilt';
@@ -207,7 +214,10 @@ class Tabs extends React.Component {
     if (multiTabMenupopup) cls += ' open';
 
     return (
-      <div {...htmlAttribs(`tabs ${cls}`, this.props)} onClick={handler}>
+      <div
+        {...htmlAttribs(`tabs ${cls}`, this.props)}
+        onClick={xulswordHandler}
+      >
         {module && isPinned && this.getTab(module, 'reg-tab', 'active')}
         {tabs.map((m: string) => {
           if (isPinned || !m || multiTabs.includes(m)) return null;

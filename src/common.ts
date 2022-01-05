@@ -10,7 +10,7 @@ export function escapeRE(text: string) {
   return text.replace(ESCAPE_RE, '\\$1');
 }
 
-function decodeOSISRef(aRef: string) {
+export function decodeOSISRef(aRef: string) {
   let ret = aRef;
   const re = new RegExp(/_(\d+)_/);
   let m = aRef.match(re);
@@ -515,4 +515,113 @@ export function internetPermission(G: GType) {
   G.Prefs.setBoolPref('SessionHasInternetPermission', haveInternetPermission);
 
   return haveInternetPermission;
+}
+
+// Return the viewport window in which this element resides.
+// Note: null means unknown window, but 0 means popup window.
+export function getContextWindow(elemx: HTMLElement | null) {
+  let elem = elemx;
+  while (
+    elem &&
+    (!elem.id ||
+      (!/^(text|tabs)\d+$/.test(elem.id) && !/^npopup$/.test(elem.id)))
+  ) {
+    elem = elem.parentNode as HTMLElement | null;
+  }
+  if (!elem) return null;
+  if (elem.id === 'npopup') return 0;
+  return Number(elem.id.substring(4));
+}
+
+// Return the module context in which the element resides, NOT the
+// module associated with the data of the element itself.
+export function getContextModule(elem: HTMLElement) {
+  let p;
+
+  // first let's see if we're in a verse
+  let telem = elem as HTMLElement | null;
+  while (telem && !telem.classList.contains('vs')) {
+    telem = telem.parentNode as HTMLElement | null;
+  }
+  if (telem) {
+    p = getElementInfo(telem);
+    if (p) return p.mod;
+  }
+
+  // then see if we're in a viewport window, and use its module
+  const atext = ofClass(['atext'], elem);
+  if (atext) return atext.element.dataset.module;
+
+  // are we in cross reference text?
+  telem = elem as HTMLElement | null;
+  while (telem && !telem.classList.contains('crtext')) {
+    telem = telem.parentNode as HTMLElement | null;
+  }
+  const match = telem?.className.match(/\bcs-(\S+)\b/);
+  if (match) return match[1];
+
+  // in a search lexicon list?
+  telem = elem as HTMLElement | null;
+  while (telem && !telem.classList.contains('snlist')) {
+    telem = telem.parentNode as HTMLElement | null;
+  }
+  if (telem) return telem.getAttribute('contextModule');
+
+  // otherwise see if we're in a search results list
+  telem = elem as HTMLElement | null;
+  while (telem && !telem.classList.contains('slist')) {
+    telem = telem.parentNode as HTMLElement | null;
+  }
+  if (telem) {
+    p = getElementInfo(telem);
+    if (p) return p.mod;
+  }
+
+  return null;
+}
+
+// Removes white-space, trailing or leading punctuation, "x" (note symbol),
+// and leading digits (for verse numbers)
+export function cleanDoubleClickSelection(sel: string) {
+  let punc = String.fromCharCode(8220); // “
+  punc += String.fromCharCode(8221); // ”
+  punc += ',!":;\\-\\?\\(\\)';
+  const re = new RegExp(`(^[${punc}]+|[${punc}]+$)`, 'g');
+  let r = sel.replace(re, '');
+  r = sel.replace(/\s+/g, ''); // remove white-space
+  r = r.replace(/^\d+/, ''); // remove verse numbers
+
+  return r;
+}
+
+// This function returns the FIRST rule matching the selector from the
+// given style sheet, or the first of all style sheets if sheet not specified.
+export function getCSS(selectorStr: string, sheetIndex?: number) {
+  const selector = new RegExp(`^${escapeRE(selectorStr)}`);
+
+  let ss1 = 0;
+  let ss2 = document.styleSheets.length - 1;
+  if (sheetIndex !== undefined && (sheetIndex < ss1 || sheetIndex > ss2)) {
+    return null;
+  }
+  if (sheetIndex != null) {
+    ss1 = sheetIndex;
+    ss2 = sheetIndex;
+  }
+
+  let myRule = null;
+  let zend;
+  for (let ssn = ss1; ssn <= ss2; ssn += 1) {
+    try {
+      zend = document.styleSheets[ssn].cssRules.length;
+    } catch (er) {
+      zend = 0;
+    }
+    for (let z = 0; z < zend; z += 1) {
+      myRule = document.styleSheets[ssn].cssRules[z];
+      if (myRule.cssText.search(selector) !== -1)
+        return { rule: myRule, sheet: ssn, index: z };
+    }
+  }
+  return null;
 }
