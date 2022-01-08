@@ -2,11 +2,12 @@
 import React from 'react';
 import C from '../../constant';
 import { ofClass } from '../../common';
+import G from '../rg';
+import Popup from '../popup/popup';
+import Viewport, { ViewportProps, ViewportState } from './viewport';
 
 import '../libxul/xul.css';
 import './viewport.css';
-import G from '../rg';
-import Viewport, { ViewportProps } from './viewport';
 
 export default function handler(this: Viewport, es: React.SyntheticEvent) {
   const { modules, place, show } = this.props as ViewportProps;
@@ -21,38 +22,17 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
     case 'click': {
       const e = es as React.MouseEvent;
       const targ = ofClass(
-        [
-          'fn',
-          'sn',
-          'cr',
-          'sr',
-          'dt',
-          'dtl',
-          'popupBackLink',
-          'popupCloseLink',
-        ],
+        ['sr', 'dt', 'dtl', 'popupCloseLink', 'towindow'],
         target
       );
       if (targ === null) return;
       e.preventDefault();
       const elem = targ.element;
-      const ppar = ofClass(['npopup'], target);
-      const popupParent = ppar?.element;
       switch (targ.type) {
-        case 'fn':
-        case 'sn':
-        case 'cr': {
-          if (popupParent) {
-            this.setState({ popup: elem });
-          }
-          break;
-        }
         case 'sr':
         case 'dt':
         case 'dtl':
-        case 'popupBackLink':
           if (
-            popupParent ||
             !elem.classList.contains('x-target_self') ||
             type !== C.DICTIONARY
           ) {
@@ -60,6 +40,7 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
             es.stopPropagation();
           }
           break;
+        case 'towindow':
         case 'popupCloseLink': {
           this.setState({ popup: null });
           break;
@@ -71,53 +52,74 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
 
     case 'mouseover': {
       const e = es as React.MouseEvent;
+      const { popupDelayTO } = this;
+      const { popup } = this.state as ViewportState;
+      if (popupDelayTO) clearTimeout(popupDelayTO);
       const targ = ofClass(
         ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'noticelink'],
-        target
+        target,
+        true
       );
       if (targ === null) return;
       e.preventDefault();
       const elem = targ.element;
       const ppar = ofClass(['npopup'], target);
       const popupParent = ppar?.element;
-      switch (targ.type) {
-        case 'cr':
-          if (place.crossrefs !== 'notebox') {
-            this.setState({ popup: elem });
-          }
-          break;
-        case 'fn':
-          // genbk fn are embedded in text
-          if (!popupParent && type === C.GENBOOK) return;
-          if (place.footnotes !== 'notebox') {
-            this.setState({ popup: elem });
-          }
-          break;
-        case 'un':
-          if (
-            place.usernotes !== 'notebox' ||
-            (type !== C.BIBLE && type !== C.COMMENTARY)
-          ) {
-            this.setState({ popup: elem });
-          }
-          break;
-        case 'sn':
-          if (show.strongs) {
-            this.setState({ popup: elem });
-          }
-          break;
-        case 'sr':
-        case 'dt':
-        case 'dtl':
-        case 'introlink':
-        case 'noticelink':
-          this.setState({ popup: elem });
-          break;
-        default:
+      if (!popupParent) {
+        let openPopup = false;
+        switch (targ.type) {
+          case 'cr':
+            if (place.crossrefs === 'popup') openPopup = true;
+            break;
+          case 'fn':
+            // genbk fn are embedded in text
+            if (type === C.GENBOOK || place.footnotes === 'popup') {
+              openPopup = true;
+            }
+            break;
+          case 'un':
+            if (
+              place.usernotes === 'popup' ||
+              (type !== C.BIBLE && type !== C.COMMENTARY)
+            ) {
+              openPopup = true;
+            }
+            break;
+          case 'sn':
+            if (show.strongs) openPopup = true;
+            break;
+          case 'sr':
+          case 'dt':
+          case 'dtl':
+          case 'introlink':
+          case 'noticelink':
+            openPopup = true;
+            break;
+          default:
+        }
+        if (openPopup && popup !== elem) {
+          if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
+          this.popupDelayTO = setTimeout(
+            () => this.setState({ popup: elem }),
+            targ.type === 'sn' ? Popup.POPUPDELAY_STRONGS : Popup.POPUPDELAY
+          );
+        }
       }
       break;
     }
 
+    case 'mouseout': {
+      if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
+      break;
+    }
+
+    case 'mouseleave': {
+      const { popup } = this.state as ViewportState;
+      if (popup) this.setState({ popup: null });
+      break;
+    }
+
     default:
+      throw Error(`Unhandled viewportH event type: '${es.type}'`);
   }
 }

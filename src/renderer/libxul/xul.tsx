@@ -36,7 +36,7 @@ export const xulDefaultProps = {
 // PropTypes checking for XUL attributes
 export const xulPropTypes = {
   align: PropTypes.oneOf(['start', 'center', 'end', 'baseline', 'stretch']),
-  children: PropTypes.node,
+  children: PropTypes.oneOfType([PropTypes.node, PropTypes.array]),
   className: PropTypes.string,
   dir: PropTypes.oneOf(['reverse']),
   flex: PropTypes.string,
@@ -61,6 +61,7 @@ export const xulPropTypes = {
   onMouseOut: PropTypes.func,
   onMouseMove: PropTypes.func,
   onMouseUp: PropTypes.func,
+  onMouseEnter: PropTypes.func,
   onMouseLeave: PropTypes.func,
   onWheel: PropTypes.func,
 };
@@ -73,6 +74,7 @@ export interface XulProps {
     | React.ReactNode[]
     | PropTypes.ReactElementLike
     | PropTypes.ReactElementLike[]
+    | React.ReactPortal
     | undefined
     | null;
   className?: string | undefined;
@@ -99,6 +101,7 @@ export interface XulProps {
   onMouseOut?: (e: React.SyntheticEvent<any>) => void;
   onMouseMove?: (e: React.SyntheticEvent<any>) => void;
   onMouseUp?: (e: React.SyntheticEvent<any>) => void;
+  onMouseEnter?: (e: React.SyntheticEvent<any>) => void;
   onMouseLeave?: (e: React.SyntheticEvent<any>) => void;
   onWheel?: (e: React.SyntheticEvent<any>) => void;
 }
@@ -115,6 +118,7 @@ const events = [
   'onMouseOut',
   'onMouseMove',
   'onMouseUp',
+  'onMouseEnter',
   'onMouseLeave',
   'onWheel',
 ];

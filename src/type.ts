@@ -36,7 +36,6 @@ export interface StateDefault {
   maximizeNoteBox: number[];
   showChooser: boolean;
 
-  chooser: 'bible' | 'genbook' | 'none';
   numDisplayedWindows: number;
 }
 

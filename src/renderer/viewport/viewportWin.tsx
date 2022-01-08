@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -14,10 +15,8 @@ import i18nInit from '../i18n';
 import { jsdump } from '../rutil';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
-// eslint-disable-next-line import/no-cycle
 import Viewport from './viewport';
 import G from '../rg';
-// eslint-disable-next-line import/no-cycle
 import xulswordHandlerX from '../xulsword/xulswordHandler';
 import '../global-htm.css';
 import '../xulsword/xulsword.css';
@@ -34,9 +33,15 @@ export type ViewportWinProps = XulProps;
 
 // The following state values are not stored in Prefs, but take
 // default values in Xulsword constructor.
-export const stateNoPref = {
+const stateNoPref: any = {
   vpreset: 0,
 };
+Object.entries(JSON.parse(window.shell.process.argv().pop())).forEach(
+  (entry) => {
+    const [name, value] = entry;
+    stateNoPref[name] = value;
+  }
+);
 
 export type ViewportWinState = typeof stateNoPref & StateDefault;
 
@@ -193,37 +198,29 @@ export default class ViewportWin extends React.Component {
       noteBoxHeight,
       maximizeNoteBox,
       showChooser,
-      chooser,
       vpreset,
     } = state;
-    let { versification } = this;
 
     jsdump(
       `Rendering ViewportWin ${JSON.stringify({
         ...state,
-        tabs: '',
+        tabs: 'not-printed',
       })}`
     );
 
     const { xulswordHandler } = this;
+    let { versification } = this;
 
     this.updateGlobalState(state);
 
     // Get versification of chooser and history menu
-    this.v11nmod = modules.find((m, i) => {
+    this.v11nmod = modules.find((m: string, i: number) => {
       return i < numDisplayedWindows && m && G.Tab[m].isVerseKey;
     });
     versification = this.v11nmod ? G.Tab[this.v11nmod].v11n : undefined;
 
-    const minWidth =
-      (chooser !== 'none' && showChooser ? 300 : 0) + 200 * numDisplayedWindows;
-
     return (
-      <Vbox
-        {...this.props}
-        onClick={this.closeMenupopups}
-        style={{ minWidth: `${minWidth}px` }}
-      >
+      <Vbox {...this.props} onClick={this.closeMenupopups}>
         <Hbox flex="1">
           <Viewport
             key={[vpreset, showChooser].join('.')}
@@ -245,7 +242,6 @@ export default class ViewportWin extends React.Component {
             noteBoxHeight={noteBoxHeight}
             maximizeNoteBox={maximizeNoteBox}
             showChooser={false}
-            chooser={chooser}
             numDisplayedWindows={numDisplayedWindows}
             ownWindow
             versification={versification}

@@ -55,7 +55,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       );
       if (targ === null) return;
       e.preventDefault();
-      let popupParent: any = ofClass(['popup'], target);
+      let popupParent: any = ofClass(['npopup'], target);
       popupParent = popupParent ? popupParent.element : null;
       const elem = targ.element;
       const p = getElementInfo(elem);
@@ -215,7 +215,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     case 'mouseover': {
       const targ = ofClass(['cr', 'fn', 'sn', 'un', 'image-container'], target);
       if (targ === null) return;
-      let popupParent: any = ofClass(['popup'], target);
+      let popupParent: any = ofClass(['npopup'], target);
       popupParent = popupParent ? popupParent.element : null;
       const elem = targ.element;
       const p = getElementInfo(elem);
@@ -322,8 +322,6 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
 
     case 'mouseout': {
       const e = es as React.MouseEvent;
-      // TODO! if (popup.showPopupID) window.clearTimeout(popup.showPopupID);
-
       // Remove any footnote hilighting
       if (atext) {
         const nbc = atext.lastChild as HTMLElement;

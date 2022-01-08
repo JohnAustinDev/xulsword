@@ -297,13 +297,18 @@ export function compareObjects(obj1: any, obj2: any, deep = false): boolean {
 // not share any of the class-names, null is returned.
 export function ofClass(
   search: string | string[],
-  element: HTMLElement
+  element: HTMLElement,
+  selfonly = false
 ): { element: HTMLElement; type: string } | null {
   let elm = element;
   let typ;
   const s = Array.isArray(search) ? search : [search];
-  // eslint-disable-next-line @typescript-eslint/no-loop-func
-  while (elm && !s.some((x) => elm.classList && elm.classList.contains(x))) {
+  while (
+    !selfonly &&
+    elm &&
+    // eslint-disable-next-line @typescript-eslint/no-loop-func
+    !s.some((x) => elm.classList && elm.classList.contains(x))
+  ) {
     elm = elm.parentNode as HTMLElement;
   }
   if (elm && elm.classList) {
@@ -515,22 +520,6 @@ export function internetPermission(G: GType) {
   G.Prefs.setBoolPref('SessionHasInternetPermission', haveInternetPermission);
 
   return haveInternetPermission;
-}
-
-// Return the viewport window in which this element resides.
-// Note: null means unknown window, but 0 means popup window.
-export function getContextWindow(elemx: HTMLElement | null) {
-  let elem = elemx;
-  while (
-    elem &&
-    (!elem.id ||
-      (!/^(text|tabs)\d+$/.test(elem.id) && !/^npopup$/.test(elem.id)))
-  ) {
-    elem = elem.parentNode as HTMLElement | null;
-  }
-  if (!elem) return null;
-  if (elem.id === 'npopup') return 0;
-  return Number(elem.id.substring(4));
 }
 
 // Return the module context in which the element resides, NOT the

@@ -349,8 +349,6 @@ class Atext extends React.Component {
   // same time.
   //
   // Also update pin state whenever it changes.
-
-  // TODO! Use prevProps and prevState here!!
   onUpdate() {
     const props = this.props as AtextProps;
     const state = this.state as AtextState;
@@ -695,6 +693,7 @@ class Atext extends React.Component {
         style={{ ...props.style, position: 'relative' }}
         data-wnum={n}
         data-module={module}
+        data-columns={columns}
         onDoubleClick={handler}
         onClick={handler}
         onWheel={handler}

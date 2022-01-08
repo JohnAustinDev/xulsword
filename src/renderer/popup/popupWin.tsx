@@ -16,7 +16,7 @@ i18nInit(['xulsword'])
   .then(() =>
     render(
       <Vbox pack="start" height="100%">
-        <Popup showelem={window.shell.process.argv()[1]} />
+        <Popup showelem={JSON.parse(window.shell.process.argv().pop())} />
       </Vbox>,
       document.getElementById('root')
     )

@@ -1,0 +1,281 @@
+/* Make sure these npopup styles are NOT inherited from container! */
+.npopup {
+  position: absolute;
+  text-align: start;
+  color: black;
+  font-weight: normal;
+  font-style: normal;
+  text-indent: 0px;
+}
+.npopup.empty:not(.ownWindow) {
+  display: none;
+}
+.sb .hl .npopup div,
+.sb .hl .npopup span {
+  /* override a text-htm.css rule */
+  color: black;
+}
+.npopupRL {
+  /* a relative container so that popupTX can be absolute */
+  position: relative;
+}
+.npopupTX {
+  font-size: 1.1em;
+  cursor: default;
+  padding: 10px 20px 20px 14px;
+}
+
+/* REGULAR (NON-WINDOW) POPUP STYLES */
+.npopup {
+  z-index: 100;
+  position: absolute; /* insure popup falls out of page layout */
+  height: 0px;
+  overflow: visible;
+  left: 30px;
+  width: 100%;
+}
+html.chromedir-rtl .npopup {
+  left: auto;
+  right: 30px;
+}
+.nb .npopup {
+  width: 100%;
+  left: 40px;
+}
+html.chromedir-rtl .nb .npopup {
+  left: auto;
+  right: 40px;
+}
+.search-content .npopup {
+  width: 400px;
+}
+.npopupBOX {
+  position: absolute;
+  overflow: auto;
+  width: calc(100% - 30px);
+  max-height: 300px; /* dynamic in popup.js */
+  background: rgb(245, 220, 255);
+  border: 1px solid black;
+  border-radius: 5px;
+  box-shadow: 3px 3px 5px 6px #ccc;
+  margin: 0px 20px 10px 0px;
+
+  /* Insure popup appears above the element, covering it.
+"top" value should be in px for Javascript. */
+  top: -20px;
+  left: -20px;
+}
+.text-rtl .npopupBOX {
+  margin: 0px 0px 10px 20px;
+  padding: 22px 14px 20px 20px;
+
+  left: auto;
+  right: -20px;
+}
+.search-content .npopupBOX {
+  width: 100%;
+  margin: 0px;
+}
+.search-content .slist > a .npopupBOX {
+  left: 0px;
+}
+html.chromedir-rtl .search-content .slist > a .npopupBOX {
+  left: calc(40px - 100%);
+}
+/* Strong's popups are offset so that their underlying text
+can be read after the popup is open. "top" values here must
+be in px for Javascript. */
+.sn .npopup {
+  height: 100px;
+}
+.sn .npopupRL {
+  top: -12px;
+  height: calc(100px + 12px);
+}
+.sn .npopupBOX {
+  top: 100px;
+}
+
+/* WINDOWED POPUP STYLES */
+html.popup {
+  background: rgb(245, 220, 255);
+  padding: 0px;
+  margin: 0px;
+  overflow: auto;
+}
+.npopup.ownWindow {
+  display: block;
+  margin: 0px;
+  padding: 0px;
+  height: 100%;
+}
+
+/* FOR ALL POPUPS */
+.popupheader {
+  margin: 0px 0px 40px 0px;
+}
+.towindow {
+  float: left;
+  margin-inline-end: 10px;
+  background: url('../images/towindow.png');
+  width: 20px;
+  height: 20px;
+}
+.towindow:hover {
+  background-position: 20px;
+}
+.popupBackLink,
+.popupCloseLink {
+  float: left;
+  color: blue;
+  cursor: default;
+}
+.popupBackLink:hover,
+.popupCloseLink:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+.draghandle {
+  cursor: move;
+  float: left;
+  position: relative;
+  top: 6px;
+  margin-inline-start: 6px;
+  background-image: url('../images/draghandle.png');
+  height: 12px;
+  width: 40px;
+}
+html.chromedir-rtl .towindow,
+html.chromedir-rtl .popupBackLink,
+html.chromedir-rtl .popupCloseLink,
+html.chromedir-rtl .draghandle {
+  float: right;
+}
+.popup-mod-select {
+  float: right;
+  font-size: 0.8em;
+  text-align: center;
+  padding-top: 3px;
+}
+html.chromedir-rtl .popup-mod-select {
+  float: left;
+}
+.popup-text {
+  width: 100%;
+  clear: both;
+}
+.popup-noteAddress {
+  display: none;
+}
+
+/* footnote styles */
+.npopup .fntable {
+  margin: 0px;
+}
+.npopup .fncol2,
+.npopup .fncol3,
+.npopup .fncol4 {
+  display: none;
+}
+
+/* Strong's numbers dictionary entry display */
+.snbut {
+  position: relative;
+  top: -9px;
+  float: right;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  margin-inline-start: 10px;
+  margin-inline-end: 0px;
+}
+.snbut:after {
+  display: inline-block;
+  content: url(../images/search.png);
+  width: 30px;
+  height: 18px;
+  overflow: hidden;
+  margin-inline-start: 16px;
+}
+.lemma-header {
+  font-weight: bold;
+}
+.lemma-html {
+  white-space: normal;
+}
+.lemma-sep {
+  border-top: 3px solid grey;
+  margin: 10px;
+}
+
+/* .strongs- classes come from TEI markup like StrongsHebrew */
+/*
+.markup-entryFree,
+.markup-foreign,
+.markup-xr
+.markup-form
+.markup-note
+.markup-pos
+.markup-gramGrp
+*/
+.markup-title {
+  display: none;
+}
+.markup-sense,
+.markup-pron,
+.markup-orth,
+.markup-orth-trans,
+.markup-entry,
+.markup-etym-note {
+  display: block;
+}
+.markup-sense {
+  padding-inline-start: 6px;
+  padding-bottom: 1em;
+}
+.markup-def,
+.markup-cit {
+  font-style: italic;
+}
+.markup-usg,
+.markup-emph {
+  font-weight: bold;
+}
+.markup-quote:before,
+.markup-quote:after {
+  content: '"';
+}
+
+/* TEI rend attribute classes */
+.markup_bold {
+  font-weight: bold;
+}
+.markup_illuminated {
+  float: left;
+  font-size: xx-large;
+  padding: 4px 8px 0px 4px;
+}
+.markup_italic {
+  font-style: italic;
+}
+.markup_line-through {
+  text-decoration: line-through;
+}
+.markup_small-caps {
+}
+.markup_sub {
+  vertical-align: sub;
+  font-size: smaller;
+}
+.markup_super {
+  vertical-align: super;
+  font-size: smaller;
+}
+.markup_underline {
+  text-decoration: underline;
+}
+.markup_normal {
+  font-style: normal;
+  font-weight: normal;
+  vertical-align: baseline;
+  font-size: medium;
+}

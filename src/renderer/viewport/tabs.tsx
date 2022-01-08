@@ -216,6 +216,7 @@ class Tabs extends React.Component {
     return (
       <div
         {...htmlAttribs(`tabs ${cls}`, this.props)}
+        data-wnum={n}
         onClick={xulswordHandler}
       >
         {module && isPinned && this.getTab(module, 'reg-tab', 'active')}

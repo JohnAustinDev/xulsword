@@ -7,7 +7,7 @@ import { BrowserWindow, Menu, ipcMain } from 'electron';
 import i18next from 'i18next';
 import { GType, GPublic, TabType, BookType, ModTypes } from '../type';
 import C from '../constant';
-import { isASCII, openWindowXS } from '../common';
+import { isASCII } from '../common';
 import Dirsx from './modules/dirs';
 import Prefsx from './modules/prefs';
 import Commandsx from './commands';
@@ -53,15 +53,18 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
       const m = menu || Menu.getApplicationMenu();
       if (m !== null) setMenuFromPrefs(m);
     },
+
     resolveHtmlPath: (s: string) => {
       return resolveHtmlPath(s);
     },
+
     globalReset: () => {
       G.reset();
       BrowserWindow.getAllWindows().forEach((w) => {
         w.webContents.send('reset');
       });
     },
+
     setGlobalStateFromPrefs: (prefs?: string | string[]) => {
       function broadcast() {
         BrowserWindow.getAllWindows().forEach((w) => {
@@ -79,6 +82,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
         broadcast();
       }
     },
+
     openDialog: (
       type: string,
       options: Electron.BrowserWindowConstructorOptions
@@ -104,37 +108,40 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
 
       return ret;
     },
+
     openWindow: (
       type: string,
       options: Electron.BrowserWindowConstructorOptions
     ): number => {
       windowOptions(type, options);
-
       // Set bounds for viewport and popup type windows
       if (type === 'viewport' || type === 'popup') {
         const ops = options as any;
         const xs = windowBounds();
-        const eb = ops?.boundingClientRect;
+        const eb = ops?.openWithBounds;
         if (xs && eb) {
           options.width = eb.width;
-          options.height = eb.height;
+          options.height = eb.height + 100;
           options.x = xs.x + eb.x;
-          options.y = xs.y + eb.y;
+          options.y = xs.y + eb.y - 100;
         }
+        if (ops?.openWithBounds) delete ops.openWithBounds;
       }
 
       const win = new BrowserWindow(options);
 
       win.loadURL(resolveHtmlPath(`${type}.html`));
 
-      Prefsx.setComplexValue(`windows.${win.id}`, { type, options });
+      Prefsx.setComplexValue(`window.w${win.id}`, { type, options });
+
+      if (type === 'viewport' || type === 'popup') win.removeMenu();
 
       // All Windows are created with BrowserWindow.show = false.
       // This means that the window will be shown after either:
       // (params.show === true) Electron's 'ready-to-show' event.
       // (params.show === false) The window's custom 'did-finish-render' event.
       // IMPORTANT: If params.show is false, the 'did-finish-render' event must
-      // be explicitly initiated by the window via IPC or it will never be shown.
+      // be explicitly called by the window via IPC or it will never be shown.
       if (options?.show) {
         win.once('ready-to-show', () => {
           win.show();
@@ -143,18 +150,27 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
       }
 
       win.on('resize', () => {
-        const prefs = Prefsx.getComplexValue(`window.${win.id}`);
+        const args = Prefsx.getComplexValue(`window.w${win.id}`);
         const b = windowBounds(win);
-        Prefsx.setComplexValue(`window.${win.id}`, { ...prefs, ...b });
+        args.options = { ...args.options, ...b };
+        Prefsx.setComplexValue(`window.w${win.id}`, args);
         const size = win.getSize();
         win.webContents.send('resize', size);
       });
 
+      win.on('move', () => {
+        const args = Prefsx.getComplexValue(`window.w${win.id}`);
+        const b = windowBounds(win);
+        args.options = { ...args.options, ...b };
+        Prefsx.setComplexValue(`window.w${win.id}`, args);
+      });
+
       windowInitI18n(win);
 
-      win.once('close', () => {
-        Prefsx.setComplexValue(`windows.${win.id}`, undefined);
-      });
+      function closer(id: number) {
+        return () => Prefsx.setComplexValue(`window.w${id}`, undefined);
+      }
+      win.once('closed', closer(win.id));
 
       return win.id;
     },
@@ -452,9 +468,8 @@ function windowOptions(type: string, options: any) {
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.enableRemoteModule = false;
-  if (Array.isArray(options.webPreferences.additionalArguments))
-    options.webPreferences.additionalArguments.unshift(type);
-  else options.webPreferences.additionalArguments = [type];
+  if (!Array.isArray(options.webPreferences.additionalArguments))
+    options.webPreferences.additionalArguments = [type];
 }
 
 function windowInitI18n(win: BrowserWindow) {
@@ -476,9 +491,10 @@ function windowInitI18n(win: BrowserWindow) {
 
 function xulswordWindow(): BrowserWindow | null {
   let win: BrowserWindow | null = null;
-  const windows = Prefsx.getComplexValue(`windows`);
+  const windows = Prefsx.getComplexValue(`window`);
   Object.entries(windows).forEach((window) => {
-    const [id, args] = window as any;
+    const [ids, args] = window as any;
+    const id = Number(ids.substring(1));
     if (args?.type && args.type === 'xulsword') {
       win = BrowserWindow.fromId(id);
     }

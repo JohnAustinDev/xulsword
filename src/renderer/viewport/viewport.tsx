@@ -9,10 +9,11 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { PlaceType, ShowType } from '../../type';
 import C from '../../constant';
-import { findBookGroup } from '../../common';
+import { findBookGroup, getElementInfo, stringHash } from '../../common';
 import Popup from '../popup/popup';
 import G from '../rg';
 import { jsdump } from '../rutil';
@@ -61,7 +62,6 @@ const propTypes = {
 
   numDisplayedWindows: PropTypes.number.isRequired,
   ownWindow: PropTypes.bool.isRequired,
-  chooser: PropTypes.string.isRequired,
   versification: PropTypes.string,
 
   xulswordHandler: PropTypes.func.isRequired,
@@ -90,7 +90,6 @@ export interface ViewportProps extends XulProps {
 
   numDisplayedWindows: number;
   ownWindow: boolean;
-  chooser: string;
   versification: string | undefined;
 
   xulswordHandler: (e: any) => void;
@@ -107,6 +106,10 @@ class Viewport extends React.Component {
   static propTypes: typeof propTypes;
 
   handler: (e: React.SyntheticEvent) => void;
+
+  popupDelayTO: NodeJS.Timeout | undefined;
+
+  delayHandlerTO: NodeJS.Timeout | undefined;
 
   constructor(props: ViewportProps) {
     super(props);
@@ -148,7 +151,6 @@ class Viewport extends React.Component {
       book,
       chapter,
       verse,
-      chooser,
       tabs,
       modules,
       ilModules,
@@ -168,6 +170,10 @@ class Viewport extends React.Component {
       xulswordHandler,
     } = this.props as ViewportProps;
     const { reset, popup } = this.state as ViewportState;
+
+    const chooser = modules.some((m) => m && G.Tab[m].type === C.GENBOOK)
+      ? 'genbook'
+      : 'bible';
 
     const firstUnpinnedBible = modules.find((m, i) => {
       return (
@@ -301,12 +307,19 @@ class Viewport extends React.Component {
       if (columns[x]) textComps.push(x);
     }
 
+    const showingChooser = showChooser || chooser === 'genbook';
+    const minWidth = (showingChooser ? 300 : 0) + 200 * numDisplayedWindows;
+
     let cls = '';
-    if (props.ownWindow) cls += ' ownWindow';
+    if (ownWindow) cls += ' ownWindow';
 
     return (
-      <Hbox {...props} className={xulClass(`viewport ${cls}`, props)}>
-        {!showChooser && chooser !== 'none' && (
+      <Hbox
+        {...props}
+        className={xulClass(`viewport ${cls}`, props)}
+        style={{ minWidth: `${minWidth}px` }}
+      >
+        {!ownWindow && !showChooser && chooser !== 'genbook' && (
           <button
             type="button"
             className="open-chooser"
@@ -314,7 +327,7 @@ class Viewport extends React.Component {
           />
         )}
 
-        {showChooser && chooser !== 'none' && (
+        {showingChooser && (
           <Chooser
             type={chooser}
             selection={book}
@@ -332,7 +345,7 @@ class Viewport extends React.Component {
           onClick={xulswordHandler}
           onKeyDown={xulswordHandler}
           onWheel={xulswordHandler}
-          onMouseOver={handler}
+          onMouseOut={handler}
         >
           <div className="tabrow">
             {tabComps.map((i) => {
@@ -362,9 +375,23 @@ class Viewport extends React.Component {
             })}
           </div>
 
-          <Popup showelem={popup} />
+          <Hbox
+            className="textrow userFontSize"
+            flex="1"
+            onClick={handler}
+            onMouseOver={handler}
+            onMouseOut={handler}
+          >
+            {popup &&
+              ReactDOM.createPortal(
+                <Popup
+                  showelem={popup}
+                  handler={handler}
+                  key={stringHash(getElementInfo(popup))}
+                />,
+                popup
+              )}
 
-          <Hbox className="textrow userFontSize" flex="1">
             {textComps.map((i) => {
               return (
                 <Atext

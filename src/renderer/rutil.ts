@@ -7,9 +7,12 @@ import {
   dString,
   escapeRE,
   findBookNum,
+  getElementInfo,
   guiDirection,
   iString,
+  ofClass,
 } from '../common';
+import { TextInfo } from '../textclasses';
 import G from './rg';
 
 interface LocObject {
@@ -530,4 +533,26 @@ export function findAVerseText(
   }
 
   return ret;
+}
+
+export function getPopupInfo(elem: HTMLElement): TextInfo {
+  let info = getElementInfo(elem);
+  if (!info) {
+    const c = ofClass(['introlink', 'noticelink'], elem);
+    const atext = ofClass(['atext'], elem);
+    info = {
+      type: c?.type || 'introlink',
+      title: elem.title,
+      reflist: [''],
+      bk: '',
+      ch: 0,
+      vs: 0,
+      lv: 0,
+      mod: atext?.element.dataset.module,
+      osisref: '',
+      nid: 0,
+      ntype: '',
+    } as TextInfo;
+  }
+  return info;
 }

@@ -27,9 +27,10 @@ export default function handler(
   const state = this.state as XulswordState;
   const { modules } = state;
   const target = es.target as HTMLElement;
-  const atxt = ofClass(['atext'], target);
-  const atext = atxt?.element;
-  const n = Number(atext?.dataset.wnum);
+  const mcls = ofClass(['atext', 'tabs'], target);
+  const atext = mcls && mcls.type === 'atext' ? mcls.element : null;
+  const tabs = mcls && mcls.type === 'tabs' ? mcls.element : null;
+  const n = Number(atext ? atext.dataset.wnum : tabs?.dataset.wnum);
   const i = n - 1;
   const isPinned = atext?.classList.contains('pinned');
   const module = modules[i];
@@ -72,10 +73,36 @@ export default function handler(
       switch (targ.type) {
         case 'text-win': {
           if (atext) {
+            const newWinNoPref: any = {
+              isPinned: [true, true, true],
+              numDisplayedWindows: Number(atext.dataset.columns),
+            };
+            Object.entries(state).forEach((entry) => {
+              const [name, value] = entry;
+              if (
+                !(name in newWinNoPref) &&
+                name !== 'history' &&
+                Array.isArray(value)
+              ) {
+                const shvalue = value.slice();
+                for (let x = 1; x < n; x += 1) {
+                  shvalue.push(shvalue.shift());
+                }
+                newWinNoPref[name] = shvalue;
+              }
+            });
+            const b = atext.getBoundingClientRect();
             const options = {
               title: 'viewport',
-              webPreferences: { additionalArguments: [] },
-              boundingClientRect: atext.getBoundingClientRect(),
+              webPreferences: {
+                additionalArguments: ['viewport', JSON.stringify(newWinNoPref)],
+              },
+              openWithBounds: {
+                x: Math.round(b.x),
+                y: Math.round(b.y),
+                width: Math.round(b.width),
+                height: Math.round(b.height),
+              },
             };
             G.openWindow('viewport', options);
           }

@@ -64,7 +64,6 @@
     "maximizeNoteBox": [0, 0, 0],
     "showChooser": true,
 
-    "chooser": "bible",
     "numDisplayedWindows": 2
   },
   "popup": {

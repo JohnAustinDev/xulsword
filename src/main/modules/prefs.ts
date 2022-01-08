@@ -3,6 +3,7 @@
 import path from 'path';
 import fs from 'fs';
 import { PrefsPublic } from '../../type';
+import { deepClone } from '../../common';
 import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import { jsdump } from '../mutil';
@@ -215,7 +216,7 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
       if (k in p) delete p[k];
       else return true;
     } else {
-      p[k] = value;
+      p[k] = deepClone(value);
     }
 
     // If not writeOnChange, then data is persisted only when app is closed.

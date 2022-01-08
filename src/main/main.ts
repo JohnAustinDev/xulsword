@@ -127,14 +127,14 @@ const openMainWindow = () => {
 
   let persistWinPref;
   try {
-    persistWinPref = G.Prefs.getComplexValue(`persisted_windows`);
+    persistWinPref = G.Prefs.getComplexValue(`window_persisted`);
   } catch {
     persistWinPref = null;
   }
   type WindowArgs = { type: string; options: any };
   const persistedWindows: WindowArgs[] = [];
   if (persistWinPref) {
-    G.Prefs.setComplexValue(`persisted_windows`, undefined);
+    G.Prefs.setComplexValue(`window_persisted`, undefined);
     Object.entries(persistWinPref).forEach((entry) => {
       const args = entry[1] as WindowArgs;
       if (args.type === 'xulsword') {
@@ -145,7 +145,7 @@ const openMainWindow = () => {
     });
   }
 
-  G.Prefs.setComplexValue(`windows`, undefined);
+  G.Prefs.setComplexValue(`window`, undefined);
   const mainWin = BrowserWindow.fromId(G.openWindow('xulsword', options));
 
   if (!mainWin) {
@@ -158,8 +158,8 @@ const openMainWindow = () => {
   mainWin.on('close', () => {
     // Persist any open windows for the next restart
     G.Prefs.setComplexValue(
-      `persisted_windows`,
-      G.Prefs.getComplexValue(`windows`)
+      `window_persisted`,
+      G.Prefs.getComplexValue(`window`)
     );
     // Close all other open windows
     BrowserWindow.getAllWindows().forEach((w) => {
@@ -172,8 +172,8 @@ const openMainWindow = () => {
     jsdump('NOTE: mainWindow closed...');
   });
 
-  persistedWindows.forEach((win) => {
-    G.openWindow(win.type, win.options);
+  persistedWindows.forEach((winid) => {
+    G.openWindow(winid.type, winid.options);
   });
 
   return mainWin;

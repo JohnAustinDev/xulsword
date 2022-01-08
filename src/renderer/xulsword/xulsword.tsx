@@ -314,7 +314,6 @@ export default class Xulsword extends React.Component {
       noteBoxHeight,
       maximizeNoteBox,
       showChooser,
-      chooser,
       bsreset,
       vpreset,
     } = state;
@@ -346,20 +345,13 @@ export default class Xulsword extends React.Component {
       }, 1000);
     }
 
-    const minWidth =
-      (chooser !== 'none' && showChooser ? 300 : 0) + 200 * numDisplayedWindows;
-
     const navdisabled =
       !versification || isPinned.every((p, i) => i >= numDisplayedWindows || p);
 
     return (
       <Translation>
         {(t) => (
-          <Vbox
-            {...this.props}
-            onClick={this.closeMenupopups}
-            style={{ minWidth: `${minWidth}px` }}
-          >
+          <Vbox {...this.props} onClick={this.closeMenupopups}>
             <Hbox id="main-controlbar" className="controlbar">
               <Spacer width="17px" orient="vertical" />
 
@@ -553,7 +545,6 @@ export default class Xulsword extends React.Component {
                 noteBoxHeight={noteBoxHeight}
                 maximizeNoteBox={maximizeNoteBox}
                 showChooser={showChooser}
-                chooser={chooser}
                 numDisplayedWindows={numDisplayedWindows}
                 ownWindow={false}
                 versification={versification}
