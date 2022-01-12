@@ -119,18 +119,36 @@ function normalizeOsisReference(refx: string, bibleMod: string) {
 }
 
 // Turns headings on before reading introductions
-function getIntroductions(mod: string, vkeytext: string) {
+export function getIntroductions(mod: string, vkeytext: string) {
   if (!(mod in G.Tab) || G.Tab[mod].isVerseKey) {
     return { textHTML: '', intronotes: '' };
   }
 
   G.LibSword.setGlobalOption('Headings', 'On');
 
-  const intro = G.LibSword.getIntroductions(mod, vkeytext);
+  let intro = G.LibSword.getIntroductions(mod, vkeytext);
   const notes = G.LibSword.getNotes();
 
   const x = G.Prefs.getBoolPref('xulsword.show.headings') ? 1 : 0;
   G.LibSword.setGlobalOption('Headings', C.SwordFilterValues[x]);
+
+  if (
+    !intro ||
+    intro.length < 10 ||
+    /^\s*$/.test(intro.replace(/<[^>]*>/g, ''))
+  )
+    intro = '';
+
+  // MAJOR CLUDGE! As it is now, if any portion of HTML returned by
+  // LibSword is not well-formed, then the entire page is broken.
+  // Setting intro (which is not well-formed for all RusVZh chapters)
+  // to an element and reading again insures HTML string is well formed at least.
+  if (intro) {
+    const tmp = document.createElement('div');
+    sanitizeHTML(tmp, intro);
+    intro = tmp.innerHTML;
+  }
+
   return { textHTML: intro, intronotes: notes };
 }
 
@@ -151,22 +169,6 @@ export function getChapterHeading(props: {
     props.module,
     `${props.book} ${props.chapter}`
   );
-  if (
-    !intro.textHTML ||
-    intro.textHTML.length < 10 ||
-    /^\s*$/.test(intro.textHTML.replace(/<[^>]*>/g, ''))
-  )
-    intro.textHTML = '';
-
-  // MAJOR CLUDGE! All this string processing should be replaced by DOM instructions. As it is now,
-  // if any portion of HTML returned by LibSword is not well-formed, then the entire page is broken.
-  // Setting intro (which is not well-formed for all RusVZh chapters) to an element and reading again
-  // insures HTML string is well formed at least.
-  if (intro.textHTML) {
-    const tmp = document.createElement('div');
-    sanitizeHTML(tmp, intro.textHTML);
-    intro.textHTML = tmp.innerHTML;
-  }
 
   let lt = G.LibSword.getModuleInformation(props.module, 'NoticeLink');
   if (lt === C.NOTFOUND) lt = '';
@@ -389,15 +391,20 @@ function getRefHTML(
   return html;
 }
 
-// The 'notes' argument can be HTML or a DOM element which is either a single
-// note or a container with note child/children
+// The 'notes' argument is an element or HTML containing one or more nlist
+// notes. An nlist note element contains a single verse-key textual note.
 export function getNoteHTML(
   notes: string | HTMLElement,
   mod: string,
-  show: ShowType,
-  openCRs: boolean,
-  wx: number,
-  keepTextNotes: boolean
+  show:
+    | {
+        [key in keyof ShowType]?: boolean;
+      }
+    | null, // null to show all types of notes
+  wx = 0,
+  openCRs = false,
+  keepTextNotes = false,
+  keepOnlyNote = '' // title of a single note to keep
 ) {
   if (!notes) return '';
 
@@ -407,10 +414,10 @@ export function getNoteHTML(
   if (typeof notes === 'string') {
     noteContainer = document.createElement('div');
     sanitizeHTML(noteContainer, notes);
-  } else if (notes.className === 'nlist') {
+  } else {
     noteContainer = document.createElement('div');
     noteContainer.appendChild(notes);
-  } else noteContainer = notes;
+  }
 
   let note: any[] = [];
   const nodelist = noteContainer.getElementsByClassName('nlist');
@@ -426,7 +433,7 @@ export function getNoteHTML(
     // Now parse each note in the chapter separately
     for (let n = 0; n < note.length; n += 1) {
       const p = getElementInfo(note[n]);
-      if (p) {
+      if (p && (!keepOnlyNote || p.title === keepOnlyNote)) {
         let body = note[n].innerHTML;
 
         // Check if this note should be displayed, and if not then skip it
@@ -434,7 +441,7 @@ export function getNoteHTML(
         Object.entries(notetypes).forEach((entry) => {
           const [ntype, tx] = entry;
           const type = tx as keyof ShowType;
-          if (p.ntype === ntype && !show[type]) p.ntype = null;
+          if (p.ntype === ntype && show && !show[type]) p.ntype = null;
         });
         if (p.ntype) {
           // Display this note as a row in the main table

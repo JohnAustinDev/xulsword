@@ -289,7 +289,7 @@ export function getLemmaHTML(
   for (let i = 0; i < strongsClassArray.length; i += 1) {
     info = getStrongsModAndKey(strongsClassArray[i]);
 
-    // get a button to search for this Strong's number
+    // add a button to search for this Strong's number
     let buttonHTML = '';
     if (
       /^S_/.test(strongsClassArray[i]) &&

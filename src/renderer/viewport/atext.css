@@ -305,9 +305,6 @@ html.chromedir-rtl .atext .text-win {
   border-spacing: 0px 1px;
   margin-inline-start: 10px;
 }
-.popup-text .fntable {
-  width: 100%;
-}
 .fnrow {
   display: table-row;
   padding-inline-end: 16px;

@@ -242,26 +242,27 @@ export function sanitizeHTML(parent: HTMLElement, html: string) {
 }
 
 export function stringHash(...args: any): string {
-  let r = '';
+  const r: string[] = [];
   args.forEach((arg: any) => {
-    if (arg === null) return 'null';
-    if (arg === undefined) return 'undefined';
-    if (typeof arg !== 'object') {
-      return `${arg}`;
+    if (arg === null) r.push('null');
+    else if (arg === undefined) r.push('undefined');
+    else if (typeof arg !== 'object') {
+      r.push(`${arg}`);
+    } else {
+      Object.entries(arg)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .forEach((entry) => {
+          const [p, v] = entry;
+          if (typeof v !== 'object') {
+            r.push(`${p}:${v}`);
+          } else {
+            r.push(`${p}:${stringHash(v)}`);
+          }
+        });
     }
-    Object.entries(arg)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .forEach((entry) => {
-        const [p, v] = entry;
-        if (typeof v !== 'object') {
-          r += `${p}:${v},`;
-        } else {
-          r += `${p}:${stringHash(v)},`;
-        }
-      });
-    return r;
   });
-  return r;
+
+  return r.join(',');
 }
 
 // Firefox Add-On validation throws warnings about eval(uneval(obj)), so

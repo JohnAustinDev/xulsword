@@ -35,21 +35,21 @@ type Value = TextInfoIndex & {
 }
 
 type TextClassesType = {
-  vs: Value[];
-  fn: Value[];
-  cr: Value[];
-  un: Value[];
-  sr: Value[];
-  gfn: Value[];
-  dt: Value[];
-  dtl: Value[];
-  snbut: Value[];
-  fnrow: Value[];
-  fnlink: Value[];
-  crref: Value[];
-  nlist: Value[];
-  slist: Value[];
-  listenlink: Value[];
+  vs: Value[]; // verse
+  fn: Value[]; // textual footnote marker (in verse-key modules)
+  gfn: Value[]; // textual footnote marker (in non-verse-key modules)
+  cr: Value[]; // cross-reference note marker in verse-key modules (may include a list of references)
+  un: Value[]; // user note marker
+  sr: Value[]; // scripture reference link
+  dt: Value[]; // x-glossary link
+  dtl: Value[]; // x-glosslink link or dictionary target-self link
+  snbut: Value[]; // strong's number search button
+  slist: Value[]; // member of LibSword search results list
+  nlist: Value[]; // member of LibSword note list
+  fnrow: Value[]; // notebox note-list row
+  fnlink: Value[]; // notebox note-list row source link
+  crref: Value[]; // notebox note-list cross-reference link
+  listenlink: Value[]; // audio link
 };
 
 const TextClasses: TextClassesType = {

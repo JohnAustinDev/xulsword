@@ -14,46 +14,67 @@ import PropTypes from 'prop-types';
 import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { FeatureType } from '../../type';
 import C from '../../constant';
-import {
-  getContextModule,
-  ofClass,
-  sanitizeHTML,
-  stringHash,
-} from '../../common';
+import { deepClone, sanitizeHTML, stringHash } from '../../common';
+import { TextInfo } from '../../textclasses';
 import G from '../rg';
 import { getCompanionModules, getPopupInfo } from '../rutil';
-import { getNoteHTML } from '../viewport/zversekey';
+import { getIntroductions, getNoteHTML } from '../viewport/zversekey';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import popupH from './popupH';
-import '../global-htm.css';
 import '../libsword.css';
 import './popup.css';
 
 const defaultProps = {
   ...xulDefaultProps,
-  handler: undefined,
+  isWindow: false,
+  elemY: undefined,
+  onMouseLeftPopup: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  showelem: PropTypes.oneOfType([PropTypes.object, PropTypes.string])
-    .isRequired,
-  handler: PropTypes.func,
+  elemhtml: PropTypes.arrayOf(PropTypes.string).isRequired,
+  eleminfo: PropTypes.arrayOf(PropTypes.object).isRequired,
+  elemY: PropTypes.arrayOf(PropTypes.number),
+  isWindow: PropTypes.bool,
+  onPopupClick: PropTypes.func.isRequired,
+  onSelectChange: PropTypes.func.isRequired,
+  onMouseLeftPopup: PropTypes.func,
 };
 
 export interface PopupProps extends XulProps {
-  // showelem must be an HTMLElement for a normal popup. But
-  // it must be a stringified HTMLElement for a windowed popup.
-  showelem: HTMLElement | string;
-  handler: (e: React.SyntheticEvent) => void | undefined;
+  elemhtml: string[]; // outerHTML of target elements
+  eleminfo: TextInfo[]; // overwrite elemhtml info (ie for select options)
+  elemY: number[] | undefined; // Screen y position of target elements
+  isWindow: boolean; // Windowed mode or normal?
+  onPopupClick: (e: React.SyntheticEvent) => void;
+  onSelectChange: (e: React.SyntheticEvent) => void;
+  onMouseLeftPopup: (e: React.SyntheticEvent) => void | undefined;
 }
 
 export interface PopupState {
-  history: string[];
-  y: number[];
   dragging: boolean;
   drag: { x: number[]; y: number[] };
+  prevElemY: number[] | undefined;
 }
+
+// To show/hide a popup, either Popup should be rendered, or not.
+// Popup shows information about particular types of elements (a
+// list of verses for a cross-reference note, or information about
+// a Strong's number for a Strong's link, etc.). The outerHTML
+// string of the target element must be supplied on the elemhtml
+// prop. Extra information associated with the target element may
+// be provided using the eleminfo prop (and this info supercedes any
+// TextInfo of the outerHTML). Both elemhtml and eleminfo props are
+// arrays because a Popup may be updated to show information about
+// other elements that appear within the popup, with a back link
+// appearing when there are previous views to return to. To use
+// Popup as a windowed popup, it should be rendered as a child of a
+// visible parent element and isWindow should be true. To use as a
+// regular popup, Popup should be rendered using a React portal to
+// a target element in which it will appear (usually the same
+// element as elemhtml[0] but this is not necessary), and isWindow
+// should be false (the default).
 
 class Popup extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -66,53 +87,42 @@ class Popup extends React.Component {
 
   npopup: React.RefObject<HTMLDivElement>;
 
-  selectRef: { [i: string]: string }; // Remember selections while popup is open
-
-  lemmaInfo: { snlist: string[]; entry: string; module: string } | undefined;
-
   handler: (e: React.MouseEvent) => void;
 
   constructor(props: PopupProps) {
     super(props);
 
     this.state = {
-      history: [],
-      y: [],
+      // eslint-disable-next-line react/no-unused-state
       dragging: false,
       drag: { x: [], y: [] },
+      prevElemY: [],
     };
 
     this.npopup = React.createRef();
-    this.selectRef = {};
-    this.lemmaInfo = undefined;
 
     this.handler = popupH.bind(this);
     this.updateContent = this.updateContent.bind(this);
+    this.popupTop = this.popupTop.bind(this);
+    this.element = this.element.bind(this);
     this.setTitle = this.setTitle.bind(this);
-    this.modSelect = this.modSelect.bind(this);
+    this.selector = this.selector.bind(this);
     this.checkPopupPosition = this.checkPopupPosition.bind(this);
-    this.select = this.select.bind(this);
-    this.selectFeature = this.selectFeature.bind(this);
-    this.referenceBible = this.referenceBible.bind(this);
   }
 
   componentDidMount() {
-    this.componentDidUpdate();
+    this.updateContent();
   }
 
   componentDidUpdate() {
-    const { showelem } = this.props as PopupProps;
-    const isWindow = typeof showelem === 'string';
-    if (isWindow) this.setTitle();
-    else this.checkPopupPosition();
     this.updateContent();
   }
 
   setTitle() {
     const { npopup } = this;
-    const { showelem } = this.props as PopupProps;
+    const { isWindow } = this.props as PopupProps;
     const popup = npopup?.current;
-    if (!showelem && popup) {
+    if (isWindow && popup) {
       let title = '';
       const pts = popup.getElementsByClassName('popup-text');
       if (pts?.length) {
@@ -126,37 +136,65 @@ class Popup extends React.Component {
     }
   }
 
-  // if popup is overflowing the bottom of the window, then move it up
-  checkPopupPosition() {
+  element() {
+    const props = this.props as PopupProps;
+    const { elemhtml, eleminfo } = props;
+    if (!elemhtml.length) throw Error(`Popup has no element.`);
+    const elemHTML = elemhtml[elemhtml.length - 1];
+    const reninfo =
+      eleminfo && eleminfo.length === elemhtml.length
+        ? eleminfo[eleminfo.length - 1]
+        : {};
+    const div = document.createElement('div');
+    div.innerHTML = elemHTML;
+    const elem = div.firstChild as HTMLElement | null;
+    if (!elem)
+      throw Error(`Popup was given a malformed element: '${elemHTML}'`);
+    const info = { ...getPopupInfo(elem), ...reninfo };
+    if (!info)
+      throw Error(
+        `Popup elemhtml and eleminfo provided no info: '${elemHTML}'`
+      );
+    return { info, elem, elemHTML };
+  }
+
+  popupTop(type: string | null) {
+    const { elemY: y } = this.props as PopupProps;
+    const { drag } = this.state as PopupState;
+    let top = y && y.length > 1 ? y[y.length - 1] - y[0] : 0;
+    // gapInit is gap between mouse and top of popup when it first opens
+    const gapInit = type === 'sn' ? 80 : 20;
+    // gapMy is the current gap (which may be negative)
+    const gapMy = y && y.length > 1 ? -40 : gapInit;
+    top += gapMy;
+    if (drag.y[0]) top += drag.y[1] - drag.y[0];
+    return top;
+  }
+
+  // if popup is overflowing the bottom of the window, then drag it up
+  checkPopupPosition(newstate: PopupState) {
     const { npopup } = this;
-    const { showelem } = this.props as PopupProps;
+    const { isWindow, elemY } = this.props as PopupProps;
+    const { drag, dragging } = this.state as PopupState;
+    if (dragging) return;
     const popup = npopup?.current;
-    const isWindow = typeof showelem === 'string';
-    if (!isWindow && showelem && popup) {
-      const rls = popup.getElementsByClassName('npopupRL');
+    if (!isWindow && popup && elemY) {
+      const margin = 22;
       const boxs = popup.getElementsByClassName('npopupBOX');
-      if (rls && boxs) {
-        const rl = rls[0] as HTMLElement;
+      if (boxs) {
         const box = boxs[0] as HTMLElement;
-        const margin = 30; // allow margin between bottom of window
-
-        let pupRLtop = Number(
-          window.getComputedStyle(rl).top.replace('px', '')
-        );
-        let pupBOXtop = Number(
-          window.getComputedStyle(box).top.replace('px', '')
-        );
-        if (Number.isNaN(Number(pupRLtop))) pupRLtop = 0;
-        if (Number.isNaN(Number(pupBOXtop))) pupBOXtop = 0;
-
-        const parentY = showelem.getBoundingClientRect().y;
-
-        const pupbot = parentY + pupRLtop + pupBOXtop + box.offsetHeight;
-
-        if (pupbot > window.innerHeight) {
-          pupBOXtop =
-            window.innerHeight - parentY - pupRLtop - box.offsetHeight;
-          box.style.top = `${Number(pupBOXtop - margin)}px`;
+        const boxbottom = box.getBoundingClientRect().bottom;
+        const viewportHeight = window.innerHeight;
+        if (boxbottom > viewportHeight - margin) {
+          const dragup = Math.round(boxbottom + margin - viewportHeight);
+          if (!drag.y[0]) {
+            const handles = box.getElementsByClassName('draghandle');
+            const handle = handles[0] as HTMLElement;
+            const draghandleY = Math.round(handle.getBoundingClientRect().y);
+            newstate.drag.y[0] = draghandleY;
+            newstate.drag.y[1] = draghandleY;
+          }
+          newstate.drag.y[1] -= dragup;
         }
       }
     }
@@ -166,191 +204,152 @@ class Popup extends React.Component {
     const { npopup } = this;
     const props = this.props as PopupProps;
     const state = this.state as PopupState;
-    const { history } = state;
-    const { showelem } = props;
-    const tx = npopup?.current?.firstChild?.firstChild?.firstChild as any;
-    if (!tx || !npopup.current) return;
-    const thiselem = history.length ? history[history.length - 1] : showelem;
-    let elem: HTMLElement;
-    if (typeof thiselem === 'string') {
-      const div = document.createElement('div');
-      div.innerHTML = thiselem;
-      elem = div.firstChild as HTMLElement;
-    } else elem = thiselem;
-    const info = getPopupInfo(elem);
-    if (!info) return;
-    if (tx.lastChild?.dataset.info === stringHash(info)) return;
-    const { type, title, reflist, bk, ch, mod } = info;
+    const { isWindow } = props;
+    const pts = npopup?.current?.getElementsByClassName('popup-text');
+    if (!npopup.current || !pts) throw Error(`Popup.updateContent no npopup.`);
+    const pt = pts[0] as HTMLElement;
+    const { info, elem } = this.element();
+    const { type, reflist, bk, ch, mod, title } = info;
 
-    const referenceBible = mod ? this.referenceBible(mod) : null;
-    const atxt = ofClass(['atext'], elem);
-    const n = atxt ? Number(atxt.element.dataset.wnum) : null;
-
-    let html = '';
-    switch (type) {
-      case 'cr':
-      case 'fn':
-      case 'un': {
-        if (mod && referenceBible) {
-          if (n !== null) {
-            // must read the entire chapter text before any notes can be read
-            G.LibSword.getChapterText(mod, `${bk} ${ch}`);
-            const rawnotes = G.LibSword.getNotes();
-            if (rawnotes) {
-              // TODO! Improve this note search method
-              const noteContainer = document.createElement('div');
-              sanitizeHTML(noteContainer, rawnotes);
-              let myNote = null as HTMLElement | null;
-              const notes = noteContainer.getElementsByClassName('nlist');
-              Array.from(notes).forEach((nt) => {
-                const note = nt as HTMLElement;
-                if (!myNote && note?.title === `${type}.${title}`) {
-                  myNote = note;
-                }
-              });
-              if (myNote) {
-                html = getNoteHTML(
-                  myNote,
-                  referenceBible,
-                  G.Prefs.getComplexValue('xulsword.show'),
-                  true,
-                  1,
-                  false
-                );
-                html += `<div class="popup-noteAddress is_${type}">${myNote.outerHTML}</div>`;
-              }
-            }
-          }
-        }
-        break;
-      }
-
-      case 'sr': {
-        if (mod && referenceBible) {
-          let mynote;
-          if (!reflist || reflist[0] === 'unavailable') {
-            let entry = elem.innerHTML;
-            // elem may have npopup as an appended child. So we need to
-            // remove it to get the note.
-            let i = entry.indexOf('class="npopup ');
-            if (i !== -1) {
-              i = entry.lastIndexOf('<', i);
-              entry = entry.substring(0, i);
-            }
-          } else mynote = reflist.join(';');
-          const myNote = `<div class="nlist" title="cr.1.0.0.0.${referenceBible}">${mynote}</div>`;
-
-          html = getNoteHTML(
-            myNote,
-            referenceBible,
-            G.Prefs.getComplexValue('xulsword.show'),
-            true,
-            1,
-            true
-          );
-          html += `<div class="popup-noteAddress is_${type}">${myNote}</div>`;
-        }
-        break;
-      }
-
-      case 'dtl':
-      case 'dt': {
-        if (reflist) {
-          const dnames = [];
-          let dword = '';
-          for (let i = 0; i < reflist.length; i += 1) {
-            if (reflist[i]) {
-              const colon = reflist[i].indexOf(':');
-              if (colon !== -1) dnames.push(reflist[i].substring(0, colon));
-              if (!dword) dword = reflist[i].substring(colon + 1);
-            }
-          }
-          html = getDictEntryHTML(dword, dnames.join(';'));
-        }
-        break;
-      }
-
-      case 'sn': {
-        const module = elem.dataset.contextModule || getContextModule(elem);
-        if (module) {
-          const snlist = Array.from(elem.classList);
-          if (snlist && snlist.length > 1) {
-            snlist.shift();
-            let entry = elem.innerHTML;
-            // elem may have npopup as an appended child. So we need to remove it to get note.
-            let i = entry.indexOf('class="npopup"');
-            if (i !== -1) {
-              i = entry.lastIndexOf('<', i);
-              entry = entry.substring(0, i);
-            }
-            this.lemmaInfo = { snlist, entry, module };
-            html = getLemmaHTML(snlist, entry, module);
-          }
-        }
-        break;
-      }
-
-      case 'introlink': {
-        if (n) {
-          const atext = document.getElementsByClassName(`text${n}`);
-          const intros = atext
-            ? atext[0].getElementsByClassName('introtext')
-            : null;
-          if (intros) {
-            Array.from(intros).forEach((elx) => {
-              const el = elx as HTMLElement;
-              if (el.title === elem.title) html = el.innerHTML;
-            });
-          }
-        }
-        break;
-      }
-
-      case 'noticelink': {
-        if (n) {
-          const atext = document.getElementsByClassName(`text${n}`);
-          const noticelink = atext
-            ? atext[0].getElementsByClassName('noticetext')
-            : null;
-          if (noticelink) html = noticelink[0].innerHTML;
-        }
-        break;
-      }
-
-      default:
-        throw Error(`Unhandled popup type '${type}'.`);
+    const s = {} as PopupState;
+    const pelemY = state.prevElemY;
+    const telemY = props.elemY;
+    if (pelemY && telemY && pelemY.length !== telemY.length) {
+      const { drag } = state;
+      if (drag.y.length)
+        drag.y[0] += telemY[telemY.length - 1] - pelemY[pelemY.length - 1];
+      s.drag = deepClone(drag);
+      s.prevElemY = deepClone(telemY);
     }
 
-    Array.from(tx.getElementsByClassName('popup-text')).forEach((el: any) =>
-      el.remove()
-    );
-    const cont = document.createElement('div');
-    cont.classList.add('popup-text');
-    cont.dataset.info = stringHash(info);
-    sanitizeHTML(cont, html);
-    tx.appendChild(cont);
-    if (html) npopup.current.classList.remove('empty');
-    else npopup.current.classList.add('empty');
+    const infokey = stringHash(type, reflist, bk, ch, mod);
+    if (!pt.dataset.infokey || pt.dataset.infokey !== infokey) {
+      if (isWindow) this.setTitle();
+
+      let html = '';
+      switch (type) {
+        case 'cr':
+        case 'fn':
+        case 'un': {
+          if (mod && bk && ch && title) {
+            // getChapterText must be called before getNotes
+            G.LibSword.getChapterText(mod, `${bk}.${ch}`);
+            const notes = G.LibSword.getNotes();
+            // note element's title does not include type, but note's nlist does
+            html = getNoteHTML(
+              notes,
+              mod,
+              null,
+              0,
+              true,
+              true,
+              `${type}.${title}`
+            );
+          }
+          break;
+        }
+
+        case 'sr': {
+          if (mod) {
+            let refbible = mod;
+            if (G.Tab[mod]?.type !== C.BIBLE) {
+              const aref = getCompanionModules(mod);
+              if (aref.length) {
+                const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
+                if (bible) [refbible] = bible;
+              }
+            }
+            const mynote =
+              reflist && reflist[0] !== 'unavailable'
+                ? reflist.join(';')
+                : elem.innerHTML;
+
+            html = getNoteHTML(
+              `<div class="nlist" title="cr.1.0.0.0.${refbible}">${mynote}</div>`,
+              refbible,
+              null,
+              0,
+              true,
+              true
+            );
+          }
+          break;
+        }
+
+        case 'dtl':
+        case 'dt': {
+          if (reflist) {
+            const dnames: string[] = [];
+            let dword = '';
+            reflist.forEach((ref) => {
+              if (ref) {
+                const colon = ref.indexOf(':');
+                if (colon !== -1) dnames.push(ref.substring(0, colon));
+                if (!dword) dword = ref.substring(colon + 1);
+              }
+            });
+            html = getDictEntryHTML(dword, dnames.join(';'));
+          }
+          break;
+        }
+
+        case 'sn': {
+          if (mod) {
+            const snlist = Array.from(elem.classList);
+            if (snlist && snlist.length > 1) {
+              snlist.shift();
+              html = getLemmaHTML(snlist, elem.innerHTML, mod);
+            }
+          }
+          break;
+        }
+
+        case 'introlink': {
+          if (mod && bk && ch) {
+            const intro = getIntroductions(mod, `${bk}.${ch}`);
+            if (intro && intro.textHTML) html = intro.textHTML;
+          }
+          break;
+        }
+
+        case 'noticelink': {
+          if (mod) html = G.LibSword.getModuleInformation(mod, 'NoticeText');
+          break;
+        }
+
+        default:
+          throw Error(`Unhandled popup type '${type}'.`);
+      }
+
+      pt.dataset.infokey = infokey;
+      sanitizeHTML(pt, html);
+
+      const parent = npopup.current.parentNode as HTMLElement | null;
+      if (!isWindow && parent) {
+        if (html) parent.classList.remove('empty');
+        else parent.classList.add('empty');
+      }
+
+      this.checkPopupPosition(s);
+    }
+    if (Object.keys(s).length) this.setState(s);
   }
 
-  modSelect(
+  selector(
     mods: string[],
     selected: string | null,
-    module: string,
-    feature: string
+    module?: string | undefined,
+    feature?: string | undefined
   ) {
-    const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      if (module) this.select(e, module);
-      else this.selectFeature(e, feature);
-    };
-
+    const props = this.props as PopupProps;
+    if (!module && !feature) return null;
     return (
       <select
         className="popup-mod-select"
         value={selected || undefined}
         data-module={module}
         data-feature={feature}
-        onChange={onChange}
+        onChange={props.onSelectChange}
       >
         {mods.map((mod) => (
           <option
@@ -365,100 +364,18 @@ class Popup extends React.Component {
     );
   }
 
-  select(e: React.ChangeEvent<HTMLSelectElement>, msrc: string) {
-    const target = e.target as HTMLSelectElement;
-    const { npopup } = this;
-    const popup = npopup?.current;
-    const mod = target.value;
-    this.selectRef[msrc] = mod;
-    if (popup) {
-      const pts = popup.getElementsByClassName('popup-text');
-      if (!pts) return false;
-      const pt = pts[0] as HTMLElement;
-      const ns = pt.getElementsByClassName('popup-noteAddress');
-      if (!ns) return false;
-      const n = ns[0];
-      let h = getNoteHTML(
-        n.innerHTML,
-        mod,
-        G.Prefs.getComplexValue('xulsword.show'),
-        true,
-        1,
-        /(^|\s+)is_sr(\s+|$)/.test(n.className)
-      );
-      h += `<div class="${n.className}" style="display:none;">${n.innerHTML}</div>`;
-      sanitizeHTML(pt, h);
-      this.setTitle();
-      return true;
-    }
-    return false;
-  }
-
-  selectFeature(e: React.ChangeEvent<HTMLSelectElement>, feature: string) {
-    const target = e.target as HTMLSelectElement;
-    const { npopup } = this;
-    const popup = npopup?.current;
-    const mod = target.value;
-    if (popup) {
-      const pts = popup.getElementsByClassName('popup-text');
-      if (!pts) return;
-      const pt = pts[0] as HTMLElement;
-      G.Prefs.setCharPref(`popup.selection.${feature}`, mod);
-      if (this.lemmaInfo) {
-        sanitizeHTML(
-          pt,
-          getLemmaHTML(
-            this.lemmaInfo.snlist,
-            this.lemmaInfo.entry,
-            this.lemmaInfo.module
-          )
-        );
-      }
-      this.setTitle();
-    }
-  }
-
-  referenceBible(mod: string) {
-    // Dictionary modules may have a "Companion" conf entry
-    let referenceBible;
-    if (mod && mod in this.selectRef) {
-      referenceBible = this.selectRef[mod];
-    } else {
-      referenceBible = mod;
-      if (
-        referenceBible &&
-        referenceBible in G.Tab &&
-        G.Tab[referenceBible].type === C.DICTIONARY
-      ) {
-        const aref = getCompanionModules(referenceBible);
-        if (aref.length && aref[0] in G.Tab) [referenceBible] = aref;
-      }
-    }
-    return referenceBible;
-  }
-
   render() {
     const props = this.props as PopupProps;
     const state = this.state as PopupState;
     const { handler, npopup } = this;
-    const { dragging, drag, history, y } = state;
-    const { showelem } = props;
-
-    const thiselem = history.length ? history[history.length - 1] : showelem;
-    let elem: HTMLElement;
-    if (typeof thiselem === 'string') {
-      const div = document.createElement('div');
-      div.innerHTML = thiselem;
-      elem = div.firstChild as HTMLElement;
-    } else elem = thiselem;
-    const y2 = y.length ? y[y.length - 1] : 0;
-    const info = getPopupInfo(elem);
-    if (!info) return null;
+    const { drag } = state;
+    const { elemhtml, isWindow } = props;
+    const { info, elem } = this.element();
     const { type, mod } = info;
 
-    const bmods = [];
+    const allBibleModules = [];
     for (let t = 0; t < G.Tabs.length; t += 1) {
-      if (G.Tabs[t].type === C.BIBLE) bmods.push(G.Tabs[t].module);
+      if (G.Tabs[t].type === C.BIBLE) allBibleModules.push(G.Tabs[t].module);
     }
 
     const textFeature: { [key in keyof FeatureType]?: RegExp } = {
@@ -468,59 +385,60 @@ class Popup extends React.Component {
     };
 
     let boxlocation;
-    if (typeof showelem !== 'string') {
+    if (!isWindow) {
+      // Popup position is kept relative to the element in
+      // which it was initially opened.
       const maxHeight = window.innerHeight / 2;
-      const leftd = drag ? drag.x[1] - drag.x[0] : 0;
+      const leftd = drag.x[0] ? drag.x[1] - drag.x[0] : 0;
       const left = window.shell.process.argv()[0] === 'search' ? leftd : 'auto';
-      let top = drag ? drag.y[1] - drag.y[0] : 0;
-      if (history.length > 1) {
-        const y1 = showelem.getBoundingClientRect().y;
-        top += y1 - y2;
-      }
-      top -= 20;
       boxlocation = {
-        top: `${top}px`,
+        top: `${this.popupTop(type)}px`,
         left: `${left}px`,
         maxHeight: `${maxHeight}px`,
       };
     }
 
+    let refbible = mod;
+    if (mod && type === 'sr' && G.Tab[mod]?.type !== C.BIBLE) {
+      const aref = getCompanionModules(mod);
+      const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
+      if (bible) [refbible] = bible;
+    }
+
     let cls = `userFontSize cs-program`;
-    if (typeof showelem === 'string') cls += ` ownWindow`;
+    if (isWindow) cls += ` ownWindow`;
 
     return (
       <div
         className={`npopup ${cls}`}
         ref={npopup}
-        onMouseLeave={props.handler}
+        onMouseLeave={props.onMouseLeftPopup}
       >
         <div className="npopupRL">
           <div className="npopupBOX" style={boxlocation}>
             <div
               className="npopupTX cs-Program"
-              onClick={handler}
+              onClick={props.onPopupClick}
               onMouseDown={handler}
               onMouseMove={handler}
               onMouseUp={handler}
-              style={{ cursor: dragging ? 'move' : 'default' }}
             >
               <div className="popupheader">
-                {showelem && <div className="towindow" />}
-                {history.length > 0 && (
+                {!isWindow && <div className="towindow" />}
+                {elemhtml.length > 1 && (
                   <a className="popupBackLink">{i18next.t('back')}</a>
                 )}
-                {!history.length && (
+                {elemhtml.length === 1 && (
                   <a className="popupCloseLink">{i18next.t('close')}</a>
                 )}
-                {showelem && <div className="draghandle" />}
+                {!isWindow && <div className="draghandle" />}
               </div>
 
-              {mod &&
+              {refbible &&
                 (type === 'cr' || type === 'sr') &&
-                this.modSelect(bmods, this.referenceBible(mod), mod, '')}
+                this.selector(allBibleModules, refbible, refbible)}
 
               {type === 'sn' &&
-                showelem &&
                 Object.entries(textFeature).forEach((entry) => {
                   const feature = entry[0] as
                     | 'hebrewDef'
@@ -528,14 +446,16 @@ class Popup extends React.Component {
                     | 'greekParse';
                   const regex = entry[1];
                   if (regex.test(elem.className)) {
-                    this.modSelect(
+                    this.selector(
                       G.FeatureModules[feature],
                       G.Prefs.getCharPref(`popup.selection.${feature}`),
-                      '',
+                      undefined,
                       feature
                     );
                   }
                 })}
+
+              <div className="popup-text" />
             </div>
           </div>
         </div>

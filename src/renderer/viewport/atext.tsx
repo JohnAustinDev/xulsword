@@ -17,7 +17,12 @@ import {
   SwordFilterValueType,
 } from '../../type';
 import C from '../../constant';
-import { compareObjects, dString, stringHash } from '../../common';
+import {
+  compareObjects,
+  dString,
+  sanitizeHTML,
+  stringHash,
+} from '../../common';
 import G from '../rg';
 import {
   xulDefaultProps,
@@ -268,7 +273,7 @@ class Atext extends React.Component {
           return shownb[s];
         })
       )
-        r.noteHTML += getNoteHTML(r.notes, module, shownb, false, n, false);
+        r.noteHTML += getNoteHTML(r.notes, module, shownb, n);
     }
 
     // Localize verse numbers to match the module
@@ -573,8 +578,8 @@ class Atext extends React.Component {
       let fntable = nbe.firstChild as HTMLElement | null;
       switch (flag) {
         case 'overwrite':
-          sbe.innerHTML = response.textHTML;
-          nbe.innerHTML = `<div class="fntable">${response.noteHTML}</div>`;
+          sanitizeHTML(sbe, response.textHTML);
+          sanitizeHTML(nbe, `<div class="fntable">${response.noteHTML}</div>`);
           this.notes = response.notes;
           this.intronotes = response.intronotes;
           console.log(
@@ -583,10 +588,13 @@ class Atext extends React.Component {
           break;
         case 'prepend': {
           if (fntable) {
-            sbe.innerHTML = response.textHTML + sbe.innerHTML;
-            nbe.innerHTML = `<div class="fntable">${
-              response.noteHTML + fntable.innerHTML
-            }</div>`;
+            sanitizeHTML(sbe, response.textHTML + sbe.innerHTML);
+            sanitizeHTML(
+              nbe,
+              `<div class="fntable">${
+                response.noteHTML + fntable.innerHTML
+              }</div>`
+            );
             this.notes = response.notes + this.notes;
             this.intronotes = response.intronotes + this.intronotes;
             console.log(
@@ -597,10 +605,13 @@ class Atext extends React.Component {
         }
         case 'append': {
           if (fntable) {
-            sbe.innerHTML += response.textHTML;
-            nbe.innerHTML = `<div class="fntable">${
-              fntable.innerHTML + response.noteHTML
-            }</div>`;
+            sanitizeHTML(sbe, sbe.innerHTML + response.textHTML);
+            sanitizeHTML(
+              nbe,
+              `<div class="fntable">${
+                fntable.innerHTML + response.noteHTML
+              }</div>`
+            );
             this.notes += response.notes;
             this.intronotes += response.intronotes;
             console.log(

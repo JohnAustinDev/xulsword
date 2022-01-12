@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 /* eslint-disable import/no-cycle */
 /* eslint-disable no-continue */
 /* eslint-disable prefer-destructuring */
@@ -13,7 +14,8 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import { PlaceType, ShowType } from '../../type';
 import C from '../../constant';
-import { findBookGroup, getElementInfo, stringHash } from '../../common';
+import { findBookGroup } from '../../common';
+import { TextInfo } from '../../textclasses';
 import Popup from '../popup/popup';
 import G from '../rg';
 import { jsdump } from '../rutil';
@@ -25,7 +27,7 @@ import {
   delayHandler,
 } from '../libxul/xul';
 import Chooser from './chooser';
-import handlerH from './viewportH';
+import handlerH, { popupHandler as popupHandlerH } from './viewportH';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Tabs from './tabs';
 import Atext from './atext';
@@ -48,9 +50,7 @@ const propTypes = {
   mtModules: PropTypes.arrayOf(PropTypes.string).isRequired,
   keys: PropTypes.arrayOf(PropTypes.string).isRequired,
 
-  // eslint-disable-next-line react/forbid-prop-types
   show: PropTypes.object.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
   place: PropTypes.object.isRequired,
 
   selection: PropTypes.string,
@@ -96,7 +96,10 @@ export interface ViewportProps extends XulProps {
 }
 
 export interface ViewportState {
-  popup: HTMLElement | null;
+  elemhtml: string[];
+  eleminfo: TextInfo[];
+  elemY: number[];
+  popupPosition: HTMLElement | null;
   reset: number;
 }
 
@@ -107,6 +110,8 @@ class Viewport extends React.Component {
 
   handler: (e: React.SyntheticEvent) => void;
 
+  popupHandler: (e: React.SyntheticEvent) => void;
+
   popupDelayTO: NodeJS.Timeout | undefined;
 
   delayHandlerTO: NodeJS.Timeout | undefined;
@@ -115,11 +120,15 @@ class Viewport extends React.Component {
     super(props);
 
     this.state = {
-      popup: null,
+      elemhtml: [],
+      eleminfo: [],
+      elemY: [],
+      popupPosition: null,
       reset: 0,
     };
 
     this.handler = handlerH.bind(this);
+    this.popupHandler = popupHandlerH.bind(this);
 
     window.ipc.renderer.on('reset', () => {
       G.reset();
@@ -144,7 +153,7 @@ class Viewport extends React.Component {
 
   render() {
     jsdump(`Rendering Viewport ${JSON.stringify(this.state)}`);
-    const { handler } = this;
+    const { handler, popupHandler } = this;
     const props = this.props as ViewportProps;
     const {
       id,
@@ -169,7 +178,8 @@ class Viewport extends React.Component {
       versification,
       xulswordHandler,
     } = this.props as ViewportProps;
-    const { reset, popup } = this.state as ViewportState;
+    const { reset, elemhtml, eleminfo, elemY, popupPosition } = this
+      .state as ViewportState;
 
     const chooser = modules.some((m) => m && G.Tab[m].type === C.GENBOOK)
       ? 'genbook'
@@ -378,18 +388,21 @@ class Viewport extends React.Component {
           <Hbox
             className="textrow userFontSize"
             flex="1"
-            onClick={handler}
             onMouseOver={handler}
             onMouseOut={handler}
           >
-            {popup &&
+            {popupPosition &&
+              elemhtml.length &&
               ReactDOM.createPortal(
                 <Popup
-                  showelem={popup}
-                  handler={handler}
-                  key={stringHash(getElementInfo(popup))}
+                  elemhtml={elemhtml}
+                  eleminfo={eleminfo}
+                  elemY={elemY}
+                  onPopupClick={popupHandler}
+                  onSelectChange={popupHandler}
+                  onMouseLeftPopup={popupHandler}
                 />,
-                popup
+                popupPosition
               )}
 
             {textComps.map((i) => {

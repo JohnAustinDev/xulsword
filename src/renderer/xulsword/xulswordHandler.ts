@@ -56,10 +56,8 @@ export default function handler(
           'prevchaplink',
           'nextchaplink',
           'keylist',
-          'sr',
           'dt',
           'dtl',
-          'popupBackLink',
           'fnlink',
           'crref',
           'origoption',
@@ -249,11 +247,13 @@ export default function handler(
           }
           break;
         }
-        case 'sr':
         case 'dt':
         case 'dtl':
-        case 'popupBackLink':
-          if (p && typeof p.osisref === 'string') {
+          if (
+            p &&
+            typeof p.osisref === 'string' &&
+            elem.classList.contains('x-target_self')
+          ) {
             this.setState((prevState: XulswordState) => {
               const { keys, flagScroll } = prevState;
               const str = p.osisref as string;

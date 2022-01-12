@@ -7,7 +7,10 @@
   font-style: normal;
   text-indent: 0px;
 }
-.npopup.empty:not(.ownWindow) {
+.empty {
+  cursor: help !important;
+}
+.empty > .npopup:not(.ownWindow) {
   display: none;
 }
 .sb .hl .npopup div,
@@ -24,6 +27,10 @@
   cursor: default;
   padding: 10px 20px 20px 14px;
 }
+.popup-text {
+  width: 100%;
+  clear: both;
+}
 
 /* REGULAR (NON-WINDOW) POPUP STYLES */
 .npopup {
@@ -31,12 +38,12 @@
   position: absolute; /* insure popup falls out of page layout */
   height: 0px;
   overflow: visible;
-  left: 30px;
+  left: 15px;
   width: 100%;
 }
 html.chromedir-rtl .npopup {
   left: auto;
-  right: 30px;
+  right: 15px;
 }
 .nb .npopup {
   width: 100%;
@@ -59,11 +66,6 @@ html.chromedir-rtl .nb .npopup {
   border-radius: 5px;
   box-shadow: 3px 3px 5px 6px #ccc;
   margin: 0px 20px 10px 0px;
-
-  /* Insure popup appears above the element, covering it.
-"top" value should be in px for Javascript. */
-  top: -20px;
-  left: -20px;
 }
 .text-rtl .npopupBOX {
   margin: 0px 0px 10px 20px;
@@ -81,19 +83,6 @@ html.chromedir-rtl .nb .npopup {
 }
 html.chromedir-rtl .search-content .slist > a .npopupBOX {
   left: calc(40px - 100%);
-}
-/* Strong's popups are offset so that their underlying text
-can be read after the popup is open. "top" values here must
-be in px for Javascript. */
-.sn .npopup {
-  height: 100px;
-}
-.sn .npopupRL {
-  top: -12px;
-  height: calc(100px + 12px);
-}
-.sn .npopupBOX {
-  top: 100px;
 }
 
 /* WINDOWED POPUP STYLES */
@@ -160,17 +149,11 @@ html.chromedir-rtl .draghandle {
 html.chromedir-rtl .popup-mod-select {
   float: left;
 }
-.popup-text {
-  width: 100%;
-  clear: both;
-}
-.popup-noteAddress {
-  display: none;
-}
 
 /* footnote styles */
 .npopup .fntable {
   margin: 0px;
+  width: 100%;
 }
 .npopup .fncol2,
 .npopup .fncol3,
