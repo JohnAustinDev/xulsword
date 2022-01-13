@@ -1,9 +1,10 @@
 /* eslint-disable import/no-cycle */
 import React from 'react';
 import C from '../../constant';
-import { getContextModule, getElementInfo, ofClass } from '../../common';
+import { getContextModule, ofClass } from '../../common';
 import { TextInfo } from '../../textclasses';
 import G from '../rg';
+import { getPopupInfo } from '../rutil';
 import Popup from '../popup/popup';
 import PopupWin from '../popup/popupWin';
 import Viewport, { ViewportProps, ViewportState } from './viewport';
@@ -24,12 +25,12 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
     case 'mouseover': {
       const e = es as React.MouseEvent;
       const { popupDelayTO } = this;
-      const { popupPosition } = this.state as ViewportState;
+      const { popupParent } = this.state as ViewportState;
       if (popupDelayTO) clearTimeout(popupDelayTO);
       const ppar = ofClass(['npopup'], target);
-      const popupParent = ppar?.element;
+      const parent = ppar?.element;
       // Only mouseovers outside of a popup which are not 'x-target_self' are handled here.
-      if (popupParent) return;
+      if (parent) return;
       const targ = ofClass(
         ['cr', 'fn', 'un', 'sn', 'sr', 'dt', 'dtl', 'introlink', 'noticelink'],
         target,
@@ -39,9 +40,9 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
         return;
       e.preventDefault();
       const elem = targ.element;
-      const elemY = elem.getBoundingClientRect().y;
       let openPopup = false;
-      const info = getElementInfo(elem);
+      let gap = 0;
+      const info = getPopupInfo(elem);
       if (info && targ.type === 'sn') info.mod = getContextModule(elem) || null;
       switch (targ.type) {
         case 'cr':
@@ -64,6 +65,7 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
         case 'sn':
           if (show.strongs) {
             openPopup = true;
+            gap = 80;
           }
           break;
         case 'sr':
@@ -75,16 +77,19 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
           break;
         default:
       }
-      if (openPopup && popupPosition !== elem) {
+      if (openPopup && popupParent !== elem) {
         if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
         this.popupDelayTO = setTimeout(
-          () =>
-            this.setState({
+          () => {
+            const s: Partial<ViewportState> = {
               elemhtml: [elem.outerHTML],
-              eleminfo: [info],
-              elemY: [Math.round(elemY)],
-              popupPosition: elem,
-            }),
+              eleminfo: [info || ({} as TextInfo)],
+              gap,
+              keepY: undefined,
+              popupParent: elem,
+            };
+            this.setState(s);
+          },
           targ.type === 'sn' ? Popup.POPUPDELAY_STRONGS : Popup.POPUPDELAY
         );
       }
@@ -105,6 +110,7 @@ export function popupHandler(
   this: Viewport | PopupWin,
   es: React.SyntheticEvent
 ) {
+  const { popupParent } = this.state as ViewportState;
   const target = es.target as HTMLElement;
   switch (es.type) {
     case 'click': {
@@ -120,17 +126,17 @@ export function popupHandler(
           'popupCloseLink',
           'popupBackLink',
           'towindow',
+          'pupselect',
           'npopup',
         ],
         target
       );
-      // Ignore popup ancestors when testing type
-      if (targ === null || targ.type === 'npopup') return;
+      // Require popupParent but don't search beyond it when testing type!
+      if (!popupParent || targ === null || targ.type === 'npopup') return;
       e.preventDefault();
       e.stopPropagation();
       const elem = targ.element;
-      const pupY = elem.getBoundingClientRect().y;
-      const info = getElementInfo(elem);
+      const info = getPopupInfo(elem);
       if (info && targ.type === 'sn') info.mod = getContextModule(elem) || null;
       switch (targ.type) {
         case 'fn':
@@ -140,32 +146,36 @@ export function popupHandler(
         case 'dt':
         case 'dtl': {
           this.setState((prevState: ViewportState) => {
-            const { elemhtml, eleminfo, elemY } = prevState;
+            const { elemhtml, eleminfo } = prevState;
+            const popupY = popupParent.getBoundingClientRect().y;
             elemhtml.push(elem.outerHTML);
             eleminfo.push(info || ({} as TextInfo));
-            elemY.push(Math.round(pupY));
-            return { elemhtml, eleminfo, elemY };
+            const gap = e.clientY - popupY - 40;
+            const mouseY = e.clientY;
+            return { elemhtml, eleminfo, gap, mouseY };
           });
           break;
         }
         case 'popupCloseLink': {
           const popupWin = ofClass(['popupWin'], target);
           if (popupWin) window.ipc.renderer.send('window', 'close');
-          else this.setState({ popupPosition: null });
+          else {
+            const s: Partial<ViewportState> = { popupParent: null };
+            this.setState(s);
+          }
           break;
         }
         case 'popupBackLink': {
           this.setState((prevState: ViewportState) => {
-            const { elemhtml, eleminfo, elemY } = prevState;
+            const { elemhtml, eleminfo } = prevState;
             elemhtml.pop();
             eleminfo.pop();
-            elemY.pop();
-            return { elemhtml, eleminfo, elemY };
+            return { elemhtml, eleminfo };
           });
           break;
         }
         case 'towindow': {
-          const { elemhtml, eleminfo, elemY } = this.state as ViewportState;
+          const { elemhtml, eleminfo } = this.state as ViewportState;
           const boxes = document.getElementsByClassName('npopupBOX');
           const box = boxes ? boxes[0] : (null as HTMLElement | null);
           if (box) {
@@ -177,7 +187,6 @@ export function popupHandler(
                   'popup',
                   JSON.stringify(elemhtml),
                   JSON.stringify(eleminfo),
-                  JSON.stringify(elemY),
                 ],
               },
               openWithBounds: {
@@ -188,7 +197,8 @@ export function popupHandler(
               },
             };
             G.openWindow('popup', options);
-            this.setState({ popupPosition: null });
+            const s: Partial<ViewportState> = { popupParent: null };
+            this.setState(s);
           }
           break;
         }
@@ -214,7 +224,11 @@ export function popupHandler(
           if (t.dataset.feature) {
             G.Prefs.setCharPref(`popup.selection.${t.dataset.feature}`, value);
           }
-          return { eleminfo };
+          const s: Partial<ViewportState> = {
+            eleminfo,
+            keepY: target.getBoundingClientRect().y,
+          };
+          return s;
         });
       } else {
         throw Error(
@@ -224,8 +238,10 @@ export function popupHandler(
       break;
     }
     case 'mouseleave': {
-      const { popupPosition } = this.state as ViewportState;
-      if (popupPosition) this.setState({ popupPosition: null });
+      if (popupParent) {
+        const s: Partial<ViewportState> = { popupParent: null };
+        this.setState(s);
+      }
       break;
     }
     default:

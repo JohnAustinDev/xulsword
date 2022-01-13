@@ -538,7 +538,7 @@ export function findAVerseText(
 export function getPopupInfo(elem: HTMLElement): TextInfo {
   let info = getElementInfo(elem);
   if (!info) {
-    const c = ofClass(['introlink', 'noticelink'], elem);
+    const c = ofClass(['sn', 'introlink', 'noticelink'], elem);
     const atext = ofClass(['atext'], elem);
     info = {
       type: c?.type || 'introlink',

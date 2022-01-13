@@ -1,6 +1,10 @@
-/* Make sure these npopup styles are NOT inherited from container! */
 .npopup {
   position: absolute;
+  z-index: 100;
+  width: calc(100% - 30px);
+  left: 15px;
+  margin: auto 20px 10px 0px;
+  /* Make sure these npopup styles are NOT inherited from container! */
   text-align: start;
   color: black;
   font-weight: normal;
@@ -10,88 +14,33 @@
 .empty {
   cursor: help !important;
 }
-.empty > .npopup:not(.ownWindow) {
+/*.empty > .npopup:not(.ownWindow) {
   display: none;
-}
+}*/
 .sb .hl .npopup div,
 .sb .hl .npopup span {
-  /* override a text-htm.css rule */
   color: black;
 }
-.npopupRL {
-  /* a relative container so that popupTX can be absolute */
-  position: relative;
+html.chromedir-rtl .npopup {
+  left: auto;
+  right: 15px;
 }
 .npopupTX {
   font-size: 1.1em;
-  cursor: default;
+  overflow: auto;
   padding: 10px 20px 20px 14px;
+  background: rgb(245, 220, 255);
+  border: 1px solid black;
+  border-radius: 5px;
+  box-shadow: 3px 3px 5px 6px #ccc;
+  cursor: default;
 }
 .popup-text {
   width: 100%;
   clear: both;
 }
 
-/* REGULAR (NON-WINDOW) POPUP STYLES */
-.npopup {
-  z-index: 100;
-  position: absolute; /* insure popup falls out of page layout */
-  height: 0px;
-  overflow: visible;
-  left: 15px;
-  width: 100%;
-}
-html.chromedir-rtl .npopup {
-  left: auto;
-  right: 15px;
-}
-.nb .npopup {
-  width: 100%;
-  left: 40px;
-}
-html.chromedir-rtl .nb .npopup {
-  left: auto;
-  right: 40px;
-}
-.search-content .npopup {
-  width: 400px;
-}
-.npopupBOX {
-  position: absolute;
-  overflow: auto;
-  width: calc(100% - 30px);
-  max-height: 300px; /* dynamic in popup.js */
-  background: rgb(245, 220, 255);
-  border: 1px solid black;
-  border-radius: 5px;
-  box-shadow: 3px 3px 5px 6px #ccc;
-  margin: 0px 20px 10px 0px;
-}
-.text-rtl .npopupBOX {
-  margin: 0px 0px 10px 20px;
-  padding: 22px 14px 20px 20px;
-
-  left: auto;
-  right: -20px;
-}
-.search-content .npopupBOX {
-  width: 100%;
-  margin: 0px;
-}
-.search-content .slist > a .npopupBOX {
-  left: 0px;
-}
-html.chromedir-rtl .search-content .slist > a .npopupBOX {
-  left: calc(40px - 100%);
-}
-
 /* WINDOWED POPUP STYLES */
-html.popup {
-  background: rgb(245, 220, 255);
-  padding: 0px;
-  margin: 0px;
-  overflow: auto;
-}
 .npopup.ownWindow {
   display: block;
   margin: 0px;

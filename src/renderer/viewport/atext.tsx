@@ -79,6 +79,8 @@ const propTypes = {
   versification: PropTypes.string,
 };
 
+// TODO! wheel-scroll all windows together, popup blocks wheelscroll
+
 // Atext's properties. NOTE: property types are checked, but property values are not.
 const atextProps = {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

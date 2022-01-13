@@ -98,8 +98,9 @@ export interface ViewportProps extends XulProps {
 export interface ViewportState {
   elemhtml: string[];
   eleminfo: TextInfo[];
-  elemY: number[];
-  popupPosition: HTMLElement | null;
+  gap: number;
+  keepY: number | undefined;
+  popupParent: HTMLElement | null;
   reset: number;
 }
 
@@ -122,8 +123,9 @@ class Viewport extends React.Component {
     this.state = {
       elemhtml: [],
       eleminfo: [],
-      elemY: [],
-      popupPosition: null,
+      gap: 0,
+      keepY: undefined,
+      popupParent: null,
       reset: 0,
     };
 
@@ -178,7 +180,7 @@ class Viewport extends React.Component {
       versification,
       xulswordHandler,
     } = this.props as ViewportProps;
-    const { reset, elemhtml, eleminfo, elemY, popupPosition } = this
+    const { reset, elemhtml, eleminfo, gap, keepY, popupParent } = this
       .state as ViewportState;
 
     const chooser = modules.some((m) => m && G.Tab[m].type === C.GENBOOK)
@@ -391,18 +393,19 @@ class Viewport extends React.Component {
             onMouseOver={handler}
             onMouseOut={handler}
           >
-            {popupPosition &&
+            {popupParent &&
               elemhtml.length &&
               ReactDOM.createPortal(
                 <Popup
                   elemhtml={elemhtml}
                   eleminfo={eleminfo}
-                  elemY={elemY}
+                  gap={gap}
+                  keepY={keepY}
                   onPopupClick={popupHandler}
                   onSelectChange={popupHandler}
                   onMouseLeftPopup={popupHandler}
                 />,
-                popupPosition
+                popupParent
               )}
 
             {textComps.map((i) => {
