@@ -16,7 +16,7 @@ export interface StateDefault {
   chapter: number;
   verse: number;
 
-  history: string[];
+  history: HistoryTypeVK[];
   historyIndex: number;
 
   show: ShowType;
@@ -71,6 +71,14 @@ export type PlaceType = {
   footnotes: 'notebox' | 'popup';
   crossrefs: 'notebox' | 'popup';
   usernotes: 'notebox' | 'popup';
+}
+
+export type HistoryTypeVK = {
+  book: string;
+  chapter: number;
+  verse: number;
+  selection: string;
+  v11n: string;
 }
 
 export type BookType = {

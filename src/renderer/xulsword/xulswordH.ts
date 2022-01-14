@@ -12,7 +12,6 @@ import Xulsword, { XulswordState } from './xulsword';
 
 export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
   const state = this.state as XulswordState;
-  const { versification, v11nmod } = this;
   switch (e.type) {
     case 'click':
       switch (e.currentTarget.id) {
@@ -21,15 +20,14 @@ export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
           break;
         case 'historymenu': {
           e.stopPropagation();
-          if (versification) {
-            this.setState((prevState: XulswordState) => {
-              return {
-                historyMenupopup: prevState.historyMenupopup
-                  ? undefined
-                  : this.historyMenu(versification),
-              };
-            });
-          }
+          this.setState((prevState: XulswordState) => {
+            if (!prevState.versification) return null;
+            return {
+              historyMenupopup: prevState.historyMenupopup
+                ? undefined
+                : this.historyMenu(prevState),
+            };
+          });
           break;
         }
         case 'forward':
@@ -45,22 +43,37 @@ export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
 
         case 'prevchap':
           this.setState((prevState: XulswordState) => {
-            return chapterChange(prevState.book, prevState.chapter, -1);
+            const r: Partial<XulswordState> | null = chapterChange(
+              prevState.book,
+              prevState.chapter,
+              -1
+            );
+            if (r) r.selection = '';
+            return r;
           });
           break;
         case 'nextchap': {
-          if (v11nmod) {
-            this.setState((prevState: XulswordState) => {
-              const maxch = G.LibSword.getMaxChapter(v11nmod, prevState.book);
-              return chapterChange(prevState.book, prevState.chapter, 1, maxch);
-            });
-          }
+          this.setState((prevState: XulswordState) => {
+            const { v11nmod } = prevState;
+            if (!v11nmod) return null;
+            const maxch = G.LibSword.getMaxChapter(v11nmod, prevState.book);
+            const r: Partial<XulswordState> | null = chapterChange(
+              prevState.book,
+              prevState.chapter,
+              1,
+              maxch
+            );
+            if (r) r.selection = '';
+            return r;
+          });
           break;
         }
         case 'prevverse':
           this.setState((prevState: XulswordState) => {
+            const { v11nmod } = prevState;
+            if (!v11nmod) return null;
             const r = verseChange(
-              this.v11nmod,
+              v11nmod,
               prevState.book,
               prevState.chapter,
               prevState.verse,
@@ -73,8 +86,10 @@ export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
           break;
         case 'nextverse':
           this.setState((prevState: XulswordState) => {
+            const { v11nmod } = prevState;
+            if (!v11nmod) return null;
             const r = verseChange(
-              this.v11nmod,
+              v11nmod,
               prevState.book,
               prevState.chapter,
               prevState.verse,
@@ -156,19 +171,28 @@ export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
           break;
         }
         case 'chapter__input': {
-          if (v11nmod) {
-            this.setState((prevState: XulswordState) => {
-              const maxch = G.LibSword.getMaxChapter(v11nmod, prevState.book);
-              return chapterChange(prevState.book, Number(value), 0, maxch);
-            });
-          }
+          this.setState((prevState: XulswordState) => {
+            const { v11nmod } = prevState;
+            if (!v11nmod) return null;
+            const maxch = G.LibSword.getMaxChapter(v11nmod, prevState.book);
+            const r: Partial<XulswordState> | null = chapterChange(
+              prevState.book,
+              Number(value),
+              0,
+              maxch
+            );
+            if (r) r.selection = '';
+            return r;
+          });
           break;
         }
 
         case 'verse__input':
           this.setState((prevState: XulswordState) => {
+            const { v11nmod } = prevState;
+            if (!v11nmod) return null;
             const r = verseChange(
-              this.v11nmod,
+              v11nmod,
               prevState.book,
               prevState.chapter,
               Number(value)

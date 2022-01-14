@@ -228,11 +228,13 @@ class Viewport extends React.Component implements PopupParent {
     }
 
     // Hide, disable or enable interlinear (ORIG) tabs:
-    // An interlinear tab is hidden if the window has no ilModuleOption (see logic above).
-    // Otherwise:
-    //   It is visible and disabled if selected module/bookGroup does not support ilModuleOption or if ilModule is the selected module.
-    //   It is visible and active if there is an ilModule and it is an ilModuleOption.
-    //   It is visible but inactive otherwise.
+    // An interlinear tab is hidden if the window has no ilModuleOption
+    //   (see logic above). Otherwise:
+    // It is visible and disabled if selected module/bookGroup does
+    //   not support ilModuleOption or if ilModule is the selected module.
+    // It is visible and active if there is an ilModule and it is an
+    //   ilModuleOption.
+    // It is visible but inactive otherwise.
     const ilMods = ilModules.slice();
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       ilMods[x] = ''; // visible and inactive (or hidden if no ilModuleOption)

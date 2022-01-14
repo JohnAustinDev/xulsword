@@ -871,8 +871,8 @@ export function wheelscroll(caller: Xulsword | ViewportWin | Atext) {
   const atextprops = caller.props as AtextProps;
   const xulswordstate = xulsword.state as XulswordState;
   const versification =
-    'versification' in caller
-      ? xulsword.versification
+    'versification' in caller.state
+      ? xulswordstate.versification
       : atextprops.versification;
 
   const sb = atext.getElementsByClassName('sb')[0];
