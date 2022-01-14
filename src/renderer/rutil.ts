@@ -541,7 +541,7 @@ export function getPopupInfo(elem: HTMLElement): TextInfo {
     const c = ofClass(['sn', 'introlink', 'noticelink'], elem);
     const atext = ofClass(['atext'], elem);
     info = {
-      type: c?.type || 'introlink',
+      type: c?.type || 'unknown',
       title: elem.title,
       reflist: [''],
       bk: '',

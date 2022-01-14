@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable import/no-cycle */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -11,7 +12,12 @@
 import React from 'react';
 import i18next from 'i18next';
 import PropTypes from 'prop-types';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import {
+  htmlAttribs,
+  xulDefaultProps,
+  XulProps,
+  xulPropTypes,
+} from '../libxul/xul';
 import { FeatureType } from '../../type';
 import C from '../../constant';
 import { sanitizeHTML, stringHash } from '../../common';
@@ -36,7 +42,6 @@ const propTypes = {
   elemhtml: PropTypes.arrayOf(PropTypes.string).isRequired,
   eleminfo: PropTypes.arrayOf(PropTypes.object).isRequired,
   gap: PropTypes.number,
-  keepY: PropTypes.number,
   isWindow: PropTypes.bool,
   onPopupClick: PropTypes.func.isRequired,
   onSelectChange: PropTypes.func.isRequired,
@@ -44,10 +49,10 @@ const propTypes = {
 };
 
 export interface PopupProps extends XulProps {
+  key: string; // key must be properly set to insure popup gets updated
   elemhtml: string[]; // outerHTML of target element
   eleminfo: TextInfo[]; // extra target element info (ie for select options)
   gap: number | undefined; // Pixel distance between target element and top of popup window
-  keepY: number | undefined; // Mouse pointer position to insure popup is under it
   isWindow: boolean; // True to use an opsys window as popup
   onPopupClick: (e: React.SyntheticEvent) => void;
   onSelectChange: (e: React.SyntheticEvent) => void;
@@ -55,10 +60,12 @@ export interface PopupProps extends XulProps {
 }
 
 export interface PopupState {
-  topcorrection: number;
-  dragging: boolean;
-  drag: { x: number[]; y: number[] };
-  prevgap: number | undefined;
+  drag: {
+    dragging: boolean;
+    adjustment: number; // keep popup bottom edge on the viewport
+    x: number[];
+    y: number[];
+  } | null;
 }
 
 // To show/hide a popup, either Popup should be rendered, or not.
@@ -70,14 +77,14 @@ export interface PopupState {
 // be provided using the eleminfo prop (and this info supercedes any
 // TextInfo from the outerHTML). Both elemhtml and eleminfo props are
 // arrays because a Popup may be updated to show information about
-// other elements that may appear within the popup, and a back link
-// will appear when there are previous views to return to. To use
-// Popup as a windowed popup, it should be rendered as the child of a
-// visible parent element and isWindow should be true. To use as a
-// regular popup, Popup should be rendered using a React portal to
-// a target element in which it will appear (usually the same
-// element as elemhtml[0] but this is not necessary), and isWindow
-// should be false (the default).
+// other elements appearing within the popup, and a back link will
+// appear when there are previous views to return to. To use Popup as
+// a windowed popup, it should be rendered as the child of a visible
+// parent element and isWindow should be true. To use as a regular
+// popup, Popup should be rendered using a React portal to a target
+// element within which it will appear (usually the same element as
+// elemhtml[0] but this is not necessary), and isWindow should be
+// false (the default).
 
 class Popup extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -96,11 +103,7 @@ class Popup extends React.Component {
     super(props);
 
     this.state = {
-      // eslint-disable-next-line react/no-unused-state
-      topcorrection: 0,
-      dragging: false,
-      drag: { x: [], y: [] },
-      prevgap: undefined,
+      drag: null,
     };
 
     this.npopup = React.createRef();
@@ -156,83 +159,69 @@ class Popup extends React.Component {
     const info = { ...getPopupInfo(elem), ...reninfo };
     if (!info)
       throw Error(
-        `Popup elemhtml and eleminfo provided no info: '${elemHTML}'`
+        `Neither Popup elemhtml or eleminfo provided info: '${elemHTML}'`
       );
     return { info, elem, elemHTML };
   }
 
-  // if popup is overflowing the bottom of the window, then drag it up
-  positionPopup(news: PopupState) {
+  // Set root location of popup, and if it is overflowing the bottom of
+  // the viewport, then drag it up.
+  positionPopup() {
     const { npopup } = this;
-    const { isWindow, gap, keepY } = this.props as PopupProps;
-    const { dragging, topcorrection } = this.state as PopupState;
-    if (dragging || isWindow) return;
-    const popup = npopup?.current;
-    const parent = popup?.parentNode as HTMLElement | null;
-    if (popup && parent) {
-      // Set top border of npopup to the parent element's y location
-      let scrolltop = 0;
-      let test = parent as any;
-      while (test) {
-        if (test.scrollTop) {
-          scrolltop += test.scrollTop;
-          test = null;
-        } else test = test.parentNode;
-      }
-      popup.style.top = `${parent.offsetTop - scrolltop}px`;
-      const margin = 22;
-      const boxs = popup.getElementsByClassName('npopupTX');
-      if (boxs) {
-        const box = boxs[0] as HTMLElement;
-        const boxbottom = box.getBoundingClientRect().bottom;
-        const viewportHeight = window.innerHeight;
-        // Insure popup doesn't go beyond the bottom of the screen
-        if (boxbottom > viewportHeight - margin) {
-          news.topcorrection =
-            topcorrection - Math.round(boxbottom + margin - viewportHeight);
+    const { isWindow, gap } = this.props as PopupProps;
+    const state = this.state as PopupState;
+    if (!state.drag && !isWindow) {
+      const popup = npopup?.current;
+      const parent = popup?.parentNode as HTMLElement | null;
+      if (popup && parent) {
+        const drag = {
+          dragging: false,
+          adjustment: 0,
+          y: [],
+          x: [],
+        };
+        // Set top border of npopup to the parent element's y location
+        let scrolltop = 0;
+        let test = parent as any;
+        while (test) {
+          if (test.scrollTop) {
+            scrolltop += test.scrollTop;
+            test = null;
+          } else test = test.parentNode;
         }
-        // Insure popup is over the mouse pointer
-        if (keepY !== undefined) {
-          const ntc = news.topcorrection || topcorrection || 0;
-          const parentY = parent.getBoundingClientRect().y;
-          const puptop = parentY + (gap || 0) + ntc;
-          const pupbot = puptop + popup.offsetHeight;
-          if (keepY + 5 < puptop) {
-            news.topcorrection = ntc - puptop + keepY - 15;
-          }
-          if (keepY - 5 > pupbot) {
-            news.topcorrection = ntc + keepY - pupbot + 15;
+        popup.style.top = `${parent.offsetTop - scrolltop}px`;
+        // Adjust the popup upward if it would extend beyond the bottom of the screen
+        const margin = 22;
+        const box = popup.firstChild as HTMLElement | null;
+        if (box) {
+          const boxbottom = box.getBoundingClientRect().bottom;
+          const viewportHeight = window.innerHeight;
+          if (boxbottom > viewportHeight - margin) {
+            const adjustment = Math.round(viewportHeight - boxbottom - margin);
+            drag.adjustment = adjustment;
+            box.style.top = `${(gap || 0) + adjustment}px`;
           }
         }
+        this.setState({ drag });
       }
     }
   }
 
+  // Write popup contents from LibSword, and update state if popup
+  // is repositioned.
   update() {
     const { npopup } = this;
     const props = this.props as PopupProps;
-    const state = this.state as PopupState;
-    const { gap, isWindow } = props;
-    const { prevgap } = state;
+    const { isWindow } = props;
     const pts = npopup?.current?.getElementsByClassName('popup-text');
     if (!npopup.current || !pts) throw Error(`Popup.updateContent no npopup.`);
     const pt = pts[0] as HTMLElement;
     const { info, elem } = this.element();
-    const { type, reflist, bk, ch, mod, title } = info;
-    const s = {} as PopupState;
-
-    if (gap !== prevgap) {
-      s.prevgap = gap;
-      s.drag = { x: [], y: [] };
-      s.topcorrection = 0;
-    }
+    // ntype is used to store cross-reference display module
+    const { type, reflist, bk, ch, mod, title, ntype } = info;
 
     const infokey = stringHash(type, reflist, bk, ch, mod);
-    if (
-      !pt.dataset.infokey ||
-      gap !== prevgap ||
-      pt.dataset.infokey !== infokey
-    ) {
+    if (!pt.dataset.infokey || pt.dataset.infokey !== infokey) {
       if (isWindow) this.setTitle();
 
       let html = '';
@@ -241,6 +230,7 @@ class Popup extends React.Component {
         case 'fn':
         case 'un': {
           if (mod && bk && ch && title) {
+            const displaymod = ntype || mod;
             // getChapterText must be called before getNotes
             G.LibSword.getChapterText(mod, `${bk}.${ch}`);
             const notes = G.LibSword.getNotes();
@@ -339,9 +329,8 @@ class Popup extends React.Component {
         else parent.classList.add('empty');
       }
 
-      this.positionPopup(s);
+      this.positionPopup();
     }
-    if (Object.keys(s).length) this.setState(s);
   }
 
   selector(
@@ -354,6 +343,9 @@ class Popup extends React.Component {
     if (!module && !feature) return null;
     return (
       <select
+        key={mods
+          .concat([selected || '', module || '', feature || ''])
+          .join('.')}
         className="popup-mod-select"
         value={selected || undefined}
         data-module={module}
@@ -377,7 +369,7 @@ class Popup extends React.Component {
     const props = this.props as PopupProps;
     const state = this.state as PopupState;
     const { handler, npopup } = this;
-    const { drag, topcorrection, prevgap } = state;
+    const { drag } = state;
     const { elemhtml, gap, isWindow } = props;
     const { info, elem } = this.element();
     const { type, mod } = info;
@@ -395,18 +387,11 @@ class Popup extends React.Component {
 
     let boxlocation;
     if (!isWindow) {
-      let dy0 = drag.y[0] || 0;
-      let dy1 = drag.y[1] || 0;
-      let toc = topcorrection;
-      if (gap !== prevgap) {
-        dy0 = 0;
-        dy1 = 0;
-        toc = 0;
-      }
       const maxHeight = window.innerHeight / 2;
-      const leftd = drag.x[0] ? drag.x[1] - drag.x[0] : 0;
+      const leftd = drag && drag.x[0] ? drag.x[1] - drag.x[0] : 0;
       const left = window.shell.process.argv()[0] === 'search' ? leftd : 'auto';
-      const top = (gap || 0) + toc + dy1 - dy0;
+      let top = gap || 0;
+      if (drag) top += drag.adjustment + (drag.y[1] || 0) - (drag.y[0] || 0);
       boxlocation = {
         marginTop: `${top}px`,
         marginLeft: `${left}px`,
@@ -422,11 +407,11 @@ class Popup extends React.Component {
     }
 
     let cls = `userFontSize cs-program`;
-    if (isWindow) cls += ` ownWindow`;
+    if (isWindow) cls += ` ownWindow viewport`;
 
     return (
       <div
-        className={`npopup ${cls}`}
+        {...htmlAttribs(`npopup ${cls}`, props)}
         ref={npopup}
         onMouseLeave={props.onMouseLeftPopup}
       >
@@ -436,6 +421,7 @@ class Popup extends React.Component {
           onMouseDown={handler}
           onMouseMove={handler}
           onMouseUp={handler}
+          onMouseLeave={props.onMouseLeftPopup}
           style={boxlocation}
         >
           <div className="popupheader">
@@ -454,20 +440,26 @@ class Popup extends React.Component {
             this.selector(allBibleModules, refbible, refbible)}
 
           {type === 'sn' &&
-            Object.entries(textFeature).forEach((entry) => {
+            Object.entries(textFeature).map((entry) => {
               const feature = entry[0] as
                 | 'hebrewDef'
                 | 'greekDef'
                 | 'greekParse';
               const regex = entry[1];
               if (regex.test(elem.className)) {
-                this.selector(
-                  G.FeatureModules[feature],
-                  G.Prefs.getCharPref(`popup.selection.${feature}`),
-                  undefined,
-                  feature
-                );
+                const fmods = G.FeatureModules[feature];
+                if (fmods?.length) {
+                  let selmod = G.Prefs.getCharPref(
+                    `popup.selection.${feature}`
+                  );
+                  if (!selmod) {
+                    [selmod] = fmods;
+                    G.Prefs.setCharPref(`popup.selection.${feature}`, selmod);
+                  }
+                  return this.selector(fmods, selmod, undefined, feature);
+                }
               }
+              return null;
             })}
 
           <div className="popup-text" />
@@ -479,6 +471,6 @@ class Popup extends React.Component {
 Popup.defaultProps = defaultProps;
 Popup.propTypes = propTypes;
 Popup.POPUPDELAY = 250;
-Popup.POPUPDELAY_STRONGS = 1000;
+Popup.POPUPDELAY_STRONGS = 600;
 
 export default Popup;

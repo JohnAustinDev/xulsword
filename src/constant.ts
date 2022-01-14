@@ -23,6 +23,7 @@ const C = {
   GENBOOK: 'Generic Books' as ModTypes,
   NOTFOUND: 'Not Found',
   NOMODULES: 'No Modules',
+  CONFSEP: '<nx>',
   BMFileReturn: '\r\n', // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
   DEFAULTLOCALE: 'en',
   DLGSTD: 'centerscreen,modal,resizable',

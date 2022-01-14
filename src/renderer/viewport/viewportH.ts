@@ -77,7 +77,7 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
           break;
         default:
       }
-      if (openPopup && popupParent !== elem) {
+      if (openPopup && !popupParent) {
         if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
         this.popupDelayTO = setTimeout(
           () => {
@@ -85,7 +85,6 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
               elemhtml: [elem.outerHTML],
               eleminfo: [info || ({} as TextInfo)],
               gap,
-              keepY: undefined,
               popupParent: elem,
             };
             this.setState(s);
@@ -110,8 +109,9 @@ export function popupHandler(
   this: Viewport | PopupWin,
   es: React.SyntheticEvent
 ) {
-  const { popupParent } = this.state as ViewportState;
+  const { popupParent, popupHold } = this.state as ViewportState;
   const target = es.target as HTMLElement;
+  const parent = popupParent || document.getElementById('root');
   switch (es.type) {
     case 'click': {
       const e = es as React.MouseEvent;
@@ -131,12 +131,13 @@ export function popupHandler(
         ],
         target
       );
-      // Require popupParent but don't search beyond it when testing type!
-      if (!popupParent || targ === null || targ.type === 'npopup') return;
+      // Require popup or window parent but don't search beyond npopup when testing type
+      if (!parent || targ === null || targ.type === 'npopup') return;
       e.preventDefault();
       e.stopPropagation();
       const elem = targ.element;
       const info = getPopupInfo(elem);
+      const popupY = parent.getBoundingClientRect().y;
       if (info && targ.type === 'sn') info.mod = getContextModule(elem) || null;
       switch (targ.type) {
         case 'fn':
@@ -147,18 +148,22 @@ export function popupHandler(
         case 'dtl': {
           this.setState((prevState: ViewportState) => {
             const { elemhtml, eleminfo } = prevState;
-            const popupY = popupParent.getBoundingClientRect().y;
             elemhtml.push(elem.outerHTML);
             eleminfo.push(info || ({} as TextInfo));
-            const gap = e.clientY - popupY - 40;
-            const mouseY = e.clientY;
-            return { elemhtml, eleminfo, gap, mouseY };
+            // set the gap so as to position popup under the mouse
+            const gap = Math.round(e.clientY - popupY - 40);
+            const s: Partial<ViewportState> = {
+              elemhtml,
+              eleminfo,
+              gap,
+            };
+            return s;
           });
           break;
         }
         case 'popupCloseLink': {
-          const popupWin = ofClass(['popupWin'], target);
-          if (popupWin) window.ipc.renderer.send('window', 'close');
+          if (parent !== popupParent)
+            window.ipc.renderer.send('window', 'close');
           else {
             const s: Partial<ViewportState> = { popupParent: null };
             this.setState(s);
@@ -170,13 +175,20 @@ export function popupHandler(
             const { elemhtml, eleminfo } = prevState;
             elemhtml.pop();
             eleminfo.pop();
-            return { elemhtml, eleminfo };
+            // set the gap so as to position popup under the mouse
+            const gap = Math.round(e.clientY - popupY - 40);
+            const s: Partial<ViewportState> = {
+              elemhtml,
+              eleminfo,
+              gap,
+            };
+            return s;
           });
           break;
         }
         case 'towindow': {
           const { elemhtml, eleminfo } = this.state as ViewportState;
-          const boxes = document.getElementsByClassName('npopupBOX');
+          const boxes = parent.getElementsByClassName('npopupTX');
           const box = boxes ? boxes[0] : (null as HTMLElement | null);
           if (box) {
             const b = box.getBoundingClientRect();
@@ -219,14 +231,18 @@ export function popupHandler(
           if (t.dataset.module && eleminfo.length) {
             // Not converting v11n here, because elemhtml text nodes would need
             // conversion if reflist is not provided.
-            eleminfo[eleminfo.length - 1].mod = value;
+            eleminfo[eleminfo.length - 1].ntype = value;
           }
           if (t.dataset.feature) {
             G.Prefs.setCharPref(`popup.selection.${t.dataset.feature}`, value);
           }
+          // Making a selection from a long dropdown may put the mouse outside
+          // the popup after selection. So hold the popup open until the mouse
+          // moves over the popup and then it leaves again.
           const s: Partial<ViewportState> = {
             eleminfo,
-            keepY: target.getBoundingClientRect().y,
+            popupHold: true,
+            popupReset: prevState.popupReset + 1,
           };
           return s;
         });
@@ -237,8 +253,17 @@ export function popupHandler(
       }
       break;
     }
+
+    case 'mousemove': {
+      if (popupHold) {
+        const s: Partial<ViewportState> = { popupHold: false };
+        this.setState(s);
+      }
+      break;
+    }
+
     case 'mouseleave': {
-      if (popupParent) {
+      if (parent && !popupHold) {
         const s: Partial<ViewportState> = { popupParent: null };
         this.setState(s);
       }

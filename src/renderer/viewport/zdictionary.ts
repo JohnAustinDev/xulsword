@@ -186,38 +186,42 @@ export function getDictEntryHTML(
   return html;
 }
 
-export function getStrongsModAndKey(snclass: string) {
-  const res = { mod: null as null | string, key: null as null | string };
-
+export function getStrongsModAndKey(snclass: string): {
+  mod: string | null;
+  key: string | null;
+} {
+  let type = null;
+  let key = null;
+  let mod = null;
   const parts = snclass.split('_');
-  if (!parts || !parts[1]) return res;
+  if (!parts || !parts[1]) return { mod, key };
 
-  [, res.key] = parts;
-  res.key = res.key.replace(/ /g, ''); // why?
+  [type, key] = parts;
+  key = key.replace(/ /g, ''); // why?
 
-  switch (parts[0]) {
+  switch (type) {
     case 'S': {
       // Strongs Hebrew or Greek tags
       let feature = null;
-      if (res.key.charAt(0) === 'H') {
+      if (key.charAt(0) === 'H') {
         feature = 'hebrewDef';
-      } else if (res.key.charAt(0) === 'G') {
-        if (Number(res.key.substring(1)) >= 5627) return res; // SWORD filters these out- not valid it says
+      } else if (key.charAt(0) === 'G') {
+        if (Number(key.substring(1)) >= 5627) return { mod, key }; // SWORD filters these out- not valid it says
         feature = 'greekDef';
       }
       if (feature) {
-        res.mod = G.Prefs.getCharPref(`popup.selection.${feature}`) || null;
+        mod = G.Prefs.getCharPref(`popup.selection.${feature}`) || null;
       }
-      if (!res.mod) {
-        res.key = null;
-        return res;
+      if (!mod) {
+        key = null;
+        return { mod, key };
       }
 
       const styp = feature === 'hebrewDef' ? 'H' : 'G';
-      const snum = Number(res.key.substring(1));
+      const snum = Number(key.substring(1));
       if (Number.isNaN(Number(snum))) {
-        res.key = null;
-        return res;
+        key = null;
+        return { mod, key };
       }
       const pad4 =
         String('000').substring(0, 3 - (String(snum).length - 1)) +
@@ -234,31 +238,30 @@ export function getStrongsModAndKey(snclass: string) {
       ];
 
       // try out key possibilities until we find a correct key for this mod
-      if (res.mod) {
+      if (mod) {
         let k;
         for (k = 0; k < keys.length; k += 1) {
           try {
-            if (G.LibSword.getDictionaryEntry(res.mod, keys[k])) break;
+            if (G.LibSword.getDictionaryEntry(mod, keys[k])) break;
           } catch (er) {
-            res.mod = null;
+            mod = null;
             break;
           }
         }
-        if (res.mod && k < keys.length) res.key = keys[k];
+        if (mod && k < keys.length) key = keys[k];
       }
       break;
     }
 
     case 'RM': {
       // Robinson's Greek parts of speech tags (used by KJV)
-      if (G.FeatureModules.greekParse.includes('Robinson'))
-        res.mod = 'Robinson';
+      if (G.FeatureModules.greekParse.includes('Robinson')) mod = 'Robinson';
       break;
     }
 
     case 'SM': {
       // no lookup module available for these yet...
-      res.mod =
+      mod =
         G.Prefs.getCharPref('popup.selection.greekParse') ||
         G.FeatureModules.greekParse[0] ||
         null;
@@ -267,12 +270,12 @@ export function getStrongsModAndKey(snclass: string) {
 
     default: {
       // meaning of tag is unknown
-      console.log(`Unknown Strongs type: '${parts[0]}'`);
-      res.key = null;
+      console.log(`Unknown Strongs type: '${type}'`);
+      key = null;
     }
   }
 
-  return res;
+  return { mod, key };
 }
 
 // Builds HTML text which displays lemma information from numberList.

@@ -14,9 +14,9 @@
 .empty {
   cursor: help !important;
 }
-/*.empty > .npopup:not(.ownWindow) {
+.empty > .npopup:not(.ownWindow) {
   display: none;
-}*/
+}
 .sb .hl .npopup div,
 .sb .hl .npopup span {
   color: black;
@@ -42,10 +42,21 @@ html.chromedir-rtl .npopup {
 
 /* WINDOWED POPUP STYLES */
 .npopup.ownWindow {
-  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  left: 0px;
+  right: 0px;
   margin: 0px;
   padding: 0px;
+  padding-bottom: 30px;
+}
+.ownWindow .npopupTX {
+  border: none;
   height: 100%;
+}
+.viewport.ownWindow {
+  padding-inline-start: 0px;
 }
 
 /* FOR ALL POPUPS */
@@ -104,6 +115,7 @@ html.chromedir-rtl .popup-mod-select {
   margin: 0px;
   width: 100%;
 }
+.npopup .crtwisty,
 .npopup .fncol2,
 .npopup .fncol3,
 .npopup .fncol4 {

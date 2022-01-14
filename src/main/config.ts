@@ -173,7 +173,7 @@ export function getFontFaceConfigs() {
   // @font-face CSS entry and use it for this module.
   const mods = LibSword.getModuleList();
   if (mods && mods !== C.NOMODULES) {
-    const modulelist = mods.split('<nx>');
+    const modulelist = mods.split(C.CONFSEP);
     const modules = modulelist.map((m: string) => m.split(';')[0]);
     modules.forEach((m) => {
       const url = fontURL(m);
@@ -343,7 +343,7 @@ export function getModuleConfigs() {
   // Gets list of available modules
   const mods = LibSword.getModuleList();
   if (!mods || mods === C.NOMODULES) return false;
-  const modules = mods.split('<nx>');
+  const modules = mods.split(C.CONFSEP);
 
   for (let m = 0; m < modules.length; m += 1) {
     const [mod, type] = modules[m].split(';');
@@ -393,7 +393,7 @@ export function getModuleConfigs() {
 }
 
 export function getFeatureModules() {
-  // These CrossWire SWORD standard module features
+  // These are CrossWire SWORD standard module features
   const sword = {
     strongsNumbers: [] as string[],
     greekDef: [] as string[],
@@ -413,7 +413,7 @@ export function getFeatureModules() {
 
   const modlist = LibSword.getModuleList();
   if (modlist === C.NOMODULES) return { ...sword, ...xulsword };
-  modlist.split('<nx>').forEach((m) => {
+  modlist.split(C.CONFSEP).forEach((m) => {
     const [module, type] = m.split(';');
     let mlang = LibSword.getModuleInformation(module, 'Lang');
     const dash = mlang.indexOf('-');
@@ -434,14 +434,16 @@ export function getFeatureModules() {
     );
     if (!notStrongsKeyed.test(module)) {
       const feature = LibSword.getModuleInformation(module, 'Feature');
+      const features = feature.split(C.CONFSEP);
       Object.keys(sword).forEach((k) => {
-        const property = (k.substring(0, 1).toLowerCase +
-          k.substring(1)) as keyof typeof sword;
-        if (feature.search(k) !== -1) {
-          if (property === 'dailyDevotion') {
-            sword[property][module] = 'DailyDevotionToday';
+        const swordk = k as keyof typeof sword;
+        const swordf =
+          swordk.substring(0, 1).toUpperCase() + swordk.substring(1);
+        if (features.includes(swordf)) {
+          if (swordk === 'dailyDevotion') {
+            sword[swordk][module] = 'DailyDevotionToday';
           } else {
-            sword[property].push(module);
+            sword[swordk].push(module);
           }
         }
       });

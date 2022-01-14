@@ -116,14 +116,16 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
       windowOptions(type, options);
       // Set bounds for viewport and popup type windows
       if (type === 'viewport' || type === 'popup') {
+        const heightAdj = type === 'viewport' ? 100 : 0;
+        const topAdj = type === 'viewport' ? 50 : 26;
         const ops = options as any;
         const xs = windowBounds();
         const eb = ops?.openWithBounds;
         if (xs && eb) {
           options.width = eb.width;
-          options.height = eb.height + 100;
+          options.height = eb.height + heightAdj;
           options.x = xs.x + eb.x;
-          options.y = xs.y + eb.y - 100;
+          options.y = xs.y + eb.y - heightAdj + topAdj;
         }
         if (ops?.openWithBounds) delete ops.openWithBounds;
       }

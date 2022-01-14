@@ -52,6 +52,7 @@ type TextClassesType = {
   listenlink: Value[]; // audio link
 };
 
+// TODO! Use data-attribute(s) instead of title to store data. Title causes annoying tooltip popups etc.!
 const TextClasses: TextClassesType = {
   vs:     [ { re:new RegExp(/^(([^.]+)\.(\d+)\.(\d+))\.(\d+)\.([^.]+)$/),                                      bk:2,    ch:3,     vs:4,    lv:5,     mod:6, osisref:1 } ],
   fn:     [ { re:new RegExp(/^(\d+)\.(unavailable)\.([^.]+)$/),                                         nid:1, bk:null, ch:null,  vs:null, lv:null,  mod:3, osisref:2 },
