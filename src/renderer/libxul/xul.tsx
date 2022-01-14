@@ -127,7 +127,7 @@ const enums = ['align', 'dir', 'orient', 'pack', 'type'];
 const bools = ['checked', 'disabled', 'hidden', 'readonly'];
 // const cssAttribs = styles.concat(enums).concat(bools);
 
-// These XUL event listeners are registered on elements
+// These XUL event listeners are registered on HTML elements
 export const xulEvents = (props: any): XulProps => {
   const p: any = {};
   events.forEach((x) => {
@@ -136,8 +136,9 @@ export const xulEvents = (props: any): XulProps => {
   return p;
 };
 
-// These XUL attributes number values (with or without qualifiers) are
-// converted to a standard HTML element CSS style value.
+// Convert all props to a corresponding CSS style attribute.
+// These props take number values with or without qualifiers
+// just like XUL.
 export const xulStyle = (props: any): React.CSSProperties | undefined => {
   const s = {} as React.CSSProperties;
   // width
@@ -163,7 +164,8 @@ export const xulStyle = (props: any): React.CSSProperties | undefined => {
   return Object.keys(s).length ? s : undefined;
 };
 
-// XUL attribute booleans and enums are converted to CSS classes.
+// Convert all props to corresponding CSS classes, adding any
+// requested additional classes in the processes.
 export const xulClass = (classes: string | string[], props: any) => {
   const c0 = [props.tooltip ? 'tooltip' : ''];
   const c1 = Array.isArray(classes) ? classes : classes.split(/\s+/);
@@ -173,15 +175,18 @@ export const xulClass = (classes: string | string[], props: any) => {
     props[c] && !/^false$/i.test(props[c]) ? `${c}` : ''
   );
   const set = [...new Set(c0.concat(c1, c2, c3, c4).filter(Boolean))];
-  return set.join(' ');
+  return { className: set.join(' ') };
 };
 
+// Convert all props to corresponding HTML element attribtues.
+// This should be used to pass props to all HTML elements and
+// should only used on HTML elements (not React components).
 export const htmlAttribs = (className: string, props: any) => {
   if (props === null) return {};
   const r: any = {
     id: props.id,
     lang: props.lang,
-    className: xulClass(className, props),
+    ...xulClass(className, props),
     style: {
       ...xulStyle(props),
       ...props.style,
@@ -196,6 +201,18 @@ export const htmlAttribs = (className: string, props: any) => {
   });
 
   return r;
+};
+
+// Use handle() on the top level element of a React component when it
+// handles one of the xulEvents. Otherwise any event of that type on
+// a component instance would never be called.
+export const handle = (name: string, func: (e: any) => any, props: any) => {
+  return {
+    [name]: (e: any) => {
+      if (typeof func === 'function') func(e);
+      if (typeof props[name] === 'function') props[name](e);
+    },
+  };
 };
 
 // Use a default if value is null

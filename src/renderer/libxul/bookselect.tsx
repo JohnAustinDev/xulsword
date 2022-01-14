@@ -218,7 +218,7 @@ class Bookselect extends React.Component {
     }
 
     return (
-      <Box {...this.props} className={xulClass('bookselect', props)}>
+      <Box {...this.props} {...xulClass('bookselect', props)}>
         <Stack>
           <Box style={xulStyle(props)}>
             <Menulist

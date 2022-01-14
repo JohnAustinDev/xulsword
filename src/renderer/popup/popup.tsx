@@ -13,6 +13,7 @@ import React from 'react';
 import i18next from 'i18next';
 import PropTypes from 'prop-types';
 import {
+  handle,
   htmlAttribs,
   xulDefaultProps,
   XulProps,
@@ -412,8 +413,8 @@ class Popup extends React.Component {
     return (
       <div
         {...htmlAttribs(`npopup ${cls}`, props)}
+        {...handle('onMouseLeave', props.onMouseLeftPopup, props)}
         ref={npopup}
-        onMouseLeave={props.onMouseLeftPopup}
       >
         <div
           className="npopupTX cs-Program"

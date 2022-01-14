@@ -8,15 +8,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/jsx-props-no-spreading */
-
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import { PlaceType, ShowType } from '../../type';
 import C from '../../constant';
 import { findBookGroup } from '../../common';
-import { TextInfo } from '../../textclasses';
 import Popup from '../popup/popup';
+import {
+  popupParentHandler as popupParentHandlerH,
+  popupHandler as popupHandlerH,
+  PopupParent,
+  PopupParentState,
+  PopupParentProps,
+} from '../popup/popupParentH';
 import G from '../rg';
 import { jsdump } from '../rutil';
 import {
@@ -26,9 +30,8 @@ import {
   XulProps,
   delayHandler,
 } from '../libxul/xul';
-import Chooser from './chooser';
-import handlerH, { popupHandler as popupHandlerH } from './viewportH';
 import { Hbox, Vbox } from '../libxul/boxes';
+import Chooser from './chooser';
 import Tabs from './tabs';
 import Atext from './atext';
 import '../libxul/xul.css';
@@ -67,50 +70,45 @@ const propTypes = {
   xulswordHandler: PropTypes.func.isRequired,
 };
 
-export interface ViewportProps extends XulProps {
-  book: string;
-  chapter: number;
-  verse: number;
+export type ViewportProps = PopupParentProps &
+  XulProps & {
+    book: string;
+    chapter: number;
+    verse: number;
 
-  tabs: string[][];
-  modules: (string | undefined)[];
-  ilModules: (string | undefined)[];
-  mtModules: (string | undefined)[];
-  keys: string[];
+    tabs: string[][];
+    modules: (string | undefined)[];
+    ilModules: (string | undefined)[];
+    mtModules: (string | undefined)[];
+    keys: string[];
 
-  show: ShowType;
-  place: PlaceType;
+    selection: string | undefined;
+    flagScroll: number[];
+    isPinned: boolean[];
+    noteBoxHeight: number[];
+    maximizeNoteBox: number[];
+    showChooser: boolean;
 
-  selection: string | undefined;
-  flagScroll: number[];
-  isPinned: boolean[];
-  noteBoxHeight: number[];
-  maximizeNoteBox: number[];
-  showChooser: boolean;
+    numDisplayedWindows: number;
+    ownWindow: boolean;
+    versification: string | undefined;
 
-  numDisplayedWindows: number;
-  ownWindow: boolean;
-  versification: string | undefined;
+    xulswordHandler: (e: any) => void;
+  };
 
-  xulswordHandler: (e: any) => void;
-}
-
-export interface ViewportState {
-  elemhtml: string[]; // popup target element html
-  eleminfo: TextInfo[]; // popup target element info
-  gap: number; // popup gap
-  popupHold: boolean; // hold popup open
-  popupParent: HTMLElement | null; // popup location
-  popupReset: number; // increment to manually update popup
+type ViewportState = PopupParentState & {
   reset: number;
-}
+};
 
-class Viewport extends React.Component {
+class Viewport extends React.Component implements PopupParent {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
-  handler: (e: React.SyntheticEvent) => void;
+  popupParentHandler: (
+    es: React.SyntheticEvent,
+    module: string | undefined
+  ) => void;
 
   popupHandler: (e: React.SyntheticEvent) => void;
 
@@ -132,7 +130,7 @@ class Viewport extends React.Component {
     };
     this.state = s;
 
-    this.handler = handlerH.bind(this);
+    this.popupParentHandler = popupParentHandlerH.bind(this);
     this.popupHandler = popupHandlerH.bind(this);
 
     window.ipc.renderer.on('reset', () => {
@@ -158,7 +156,7 @@ class Viewport extends React.Component {
 
   render() {
     jsdump(`Rendering Viewport ${JSON.stringify(this.state)}`);
-    const { handler, popupHandler } = this;
+    const { popupParentHandler, popupHandler } = this;
     const props = this.props as ViewportProps;
     const {
       id,
@@ -331,7 +329,7 @@ class Viewport extends React.Component {
     return (
       <Hbox
         {...props}
-        className={xulClass(`viewport ${cls}`, props)}
+        {...xulClass(`viewport ${cls}`, props)}
         style={{ minWidth: `${minWidth}px` }}
       >
         {!ownWindow && !showChooser && chooser !== 'genbook' && (
@@ -360,7 +358,6 @@ class Viewport extends React.Component {
           onClick={xulswordHandler}
           onKeyDown={xulswordHandler}
           onWheel={xulswordHandler}
-          onMouseOut={handler}
         >
           <div className="tabrow">
             {tabComps.map((i) => {
@@ -390,12 +387,7 @@ class Viewport extends React.Component {
             })}
           </div>
 
-          <Hbox
-            className="textrow userFontSize"
-            flex="1"
-            onMouseOver={handler}
-            onMouseOut={handler}
-          >
+          <Hbox className="textrow userFontSize" flex="1">
             {popupParent &&
               elemhtml.length &&
               ReactDOM.createPortal(
@@ -440,6 +432,8 @@ class Viewport extends React.Component {
                     flexShrink: `${numDisplayedWindows - columns[i]}`,
                   }}
                   xulswordHandler={xulswordHandler}
+                  onMouseOut={(e) => popupParentHandler(e, modules[i])}
+                  onMouseOver={(e) => popupParentHandler(e, modules[i])}
                 />
               );
             })}

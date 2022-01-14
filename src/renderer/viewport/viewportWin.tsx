@@ -13,7 +13,7 @@ import { compareObjects, deepClone } from '../../common';
 import C from '../../constant';
 import i18nInit from '../i18n';
 import { jsdump } from '../rutil';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import { handle, xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Viewport from './viewport';
 import G from '../rg';
@@ -220,7 +220,10 @@ export default class ViewportWin extends React.Component {
     versification = this.v11nmod ? G.Tab[this.v11nmod].v11n : undefined;
 
     return (
-      <Vbox {...this.props} onClick={this.closeMenupopups}>
+      <Vbox
+        {...this.props}
+        {...handle('onClick', this.closeMenupopups, this.props)}
+      >
         <Hbox flex="1">
           <Viewport
             key={[vpreset, showChooser].join('.')}

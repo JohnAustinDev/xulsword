@@ -41,7 +41,7 @@ interface MenulistProps extends XulProps {
 
 function Menulist(props: MenulistProps) {
   return (
-    <Box {...props} className={xulClass('menulist', props)}>
+    <Box {...props} {...xulClass('menulist', props)}>
       <select
         id={props.id ? `${props.id}__select` : undefined}
         disabled={props.disabled}

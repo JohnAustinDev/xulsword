@@ -14,6 +14,7 @@ import {
   xulPropTypes,
   XulProps,
   htmlAttribs,
+  handle,
 } from '../libxul/xul';
 import Button from '../libxul/button';
 import Menupopup from '../libxul/menupopup';
@@ -216,8 +217,8 @@ class Tabs extends React.Component {
     return (
       <div
         {...htmlAttribs(`tabs ${cls}`, this.props)}
+        {...handle('onClick', xulswordHandler, this.props)}
         data-wnum={n}
-        onClick={xulswordHandler}
       >
         {module && isPinned && this.getTab(module, 'reg-tab', 'active')}
         {tabs.map((m: string) => {

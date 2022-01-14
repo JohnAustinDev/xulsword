@@ -133,7 +133,7 @@ class Textbox extends React.Component {
     const value = props.disabled ? props.value : state.value;
 
     return (
-      <Box {...props} className={xulClass('textbox', props)}>
+      <Box {...props} {...xulClass('textbox', props)}>
         {useTextArea && (
           <textarea
             id={`${props.id}__textarea`}

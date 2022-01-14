@@ -1,31 +1,52 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-cycle */
 import React from 'react';
 import C from '../../constant';
+import { PlaceType, ShowType } from '../../type';
 import { getContextModule, ofClass } from '../../common';
 import { TextInfo } from '../../textclasses';
 import G from '../rg';
 import { getPopupInfo } from '../rutil';
-import Popup from '../popup/popup';
-import PopupWin from '../popup/popupWin';
-import Viewport, { ViewportProps, ViewportState } from './viewport';
+import Popup from './popup';
 
-import '../libxul/xul.css';
-import './viewport.css';
+export interface PopupParent {
+  state: React.Component['state'];
+  props: React.Component['props'];
+  setState: React.Component['setState'];
+  popupHandler: typeof popupHandler;
+  popupDelayTO?: NodeJS.Timeout | undefined;
+  popupParentHandler?: typeof popupParentHandler;
+}
 
-export default function handler(this: Viewport, es: React.SyntheticEvent) {
-  const { modules, place, show } = this.props as ViewportProps;
+export type PopupParentProps = {
+  place: PlaceType;
+  show: ShowType;
+};
+
+export type PopupParentState = {
+  elemhtml: string[]; // popup target element html
+  eleminfo: TextInfo[]; // popup target element info
+  popupReset: number; // increment this to re-mount popup
+  gap?: number; // popup gap
+  popupHold?: boolean; // hold popup open
+  popupParent?: HTMLElement | null; // popup location
+};
+
+export function popupParentHandler(
+  this: PopupParent,
+  es: React.SyntheticEvent,
+  module: string | undefined
+) {
+  const state = this.state as PopupParentState;
+  const props = this.props as PopupParentProps;
+  const { place, show } = props;
   const target = es.target as HTMLElement;
-  const atxt = ofClass(['atext'], target);
-  const atext = atxt?.element;
-  const n = Number(atext?.dataset.wnum);
-  const i = n - 1;
-  const module = modules[i];
   const type = module ? G.Tab[module].type : null;
   switch (es.type) {
     case 'mouseover': {
       const e = es as React.MouseEvent;
       const { popupDelayTO } = this;
-      const { popupParent } = this.state as ViewportState;
+      const { popupParent } = state;
       if (popupDelayTO) clearTimeout(popupDelayTO);
       const ppar = ofClass(['npopup'], target);
       const parent = ppar?.element;
@@ -81,7 +102,7 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
         if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
         this.popupDelayTO = setTimeout(
           () => {
-            const s: Partial<ViewportState> = {
+            const s: Partial<PopupParentState> = {
               elemhtml: [elem.outerHTML],
               eleminfo: [info || ({} as TextInfo)],
               gap,
@@ -101,15 +122,13 @@ export default function handler(this: Viewport, es: React.SyntheticEvent) {
     }
 
     default:
-      throw Error(`Unhandled viewportH event type: '${es.type}'`);
+      throw Error(`Unhandled popupParentH event type: '${es.type}'`);
   }
 }
 
-export function popupHandler(
-  this: Viewport | PopupWin,
-  es: React.SyntheticEvent
-) {
-  const { popupParent, popupHold } = this.state as ViewportState;
+export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
+  const state = this.state as PopupParentState;
+  const { popupParent, popupHold } = state;
   const target = es.target as HTMLElement;
   const parent = popupParent || document.getElementById('root');
   switch (es.type) {
@@ -146,13 +165,13 @@ export function popupHandler(
         case 'sr':
         case 'dt':
         case 'dtl': {
-          this.setState((prevState: ViewportState) => {
+          this.setState((prevState: PopupParentState) => {
             const { elemhtml, eleminfo } = prevState;
             elemhtml.push(elem.outerHTML);
             eleminfo.push(info || ({} as TextInfo));
             // set the gap so as to position popup under the mouse
             const gap = Math.round(e.clientY - popupY - 40);
-            const s: Partial<ViewportState> = {
+            const s: Partial<PopupParentState> = {
               elemhtml,
               eleminfo,
               gap,
@@ -165,19 +184,19 @@ export function popupHandler(
           if (parent !== popupParent)
             window.ipc.renderer.send('window', 'close');
           else {
-            const s: Partial<ViewportState> = { popupParent: null };
+            const s: Partial<PopupParentState> = { popupParent: null };
             this.setState(s);
           }
           break;
         }
         case 'popupBackLink': {
-          this.setState((prevState: ViewportState) => {
+          this.setState((prevState: PopupParentState) => {
             const { elemhtml, eleminfo } = prevState;
             elemhtml.pop();
             eleminfo.pop();
             // set the gap so as to position popup under the mouse
             const gap = Math.round(e.clientY - popupY - 40);
-            const s: Partial<ViewportState> = {
+            const s: Partial<PopupParentState> = {
               elemhtml,
               eleminfo,
               gap,
@@ -187,7 +206,7 @@ export function popupHandler(
           break;
         }
         case 'towindow': {
-          const { elemhtml, eleminfo } = this.state as ViewportState;
+          const { elemhtml, eleminfo } = state;
           const boxes = parent.getElementsByClassName('npopupTX');
           const box = boxes ? boxes[0] : (null as HTMLElement | null);
           if (box) {
@@ -209,7 +228,7 @@ export function popupHandler(
               },
             };
             G.openWindow('popup', options);
-            const s: Partial<ViewportState> = { popupParent: null };
+            const s: Partial<PopupParentState> = { popupParent: null };
             this.setState(s);
           }
           break;
@@ -226,7 +245,7 @@ export function popupHandler(
       if (select) {
         const t = select.element as HTMLSelectElement;
         const { value } = t;
-        this.setState((prevState: ViewportState) => {
+        this.setState((prevState: PopupParentState) => {
           const { eleminfo } = prevState;
           if (t.dataset.module && eleminfo.length) {
             // Not converting v11n here, because elemhtml text nodes would need
@@ -239,7 +258,7 @@ export function popupHandler(
           // Making a selection from a long dropdown may put the mouse outside
           // the popup after selection. So hold the popup open until the mouse
           // moves over the popup and then it leaves again.
-          const s: Partial<ViewportState> = {
+          const s: Partial<PopupParentState> = {
             eleminfo,
             popupHold: true,
             popupReset: prevState.popupReset + 1,
@@ -256,7 +275,7 @@ export function popupHandler(
 
     case 'mousemove': {
       if (popupHold) {
-        const s: Partial<ViewportState> = { popupHold: false };
+        const s: Partial<PopupParentState> = { popupHold: false };
         this.setState(s);
       }
       break;
@@ -264,7 +283,7 @@ export function popupHandler(
 
     case 'mouseleave': {
       if (parent && !popupHold) {
-        const s: Partial<ViewportState> = { popupParent: null };
+        const s: Partial<PopupParentState> = { popupParent: null };
         this.setState(s);
       }
       break;

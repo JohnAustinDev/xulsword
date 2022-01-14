@@ -235,7 +235,7 @@ class Bibleselect extends React.Component {
     }
 
     return (
-      <Hbox {...this.props} className={xulClass('bibleselect', this.props)}>
+      <Hbox {...this.props} {...xulClass('bibleselect', this.props)}>
         <Bookselect
           id={`${pid}__bsbook`}
           className="bsbook"

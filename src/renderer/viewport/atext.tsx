@@ -29,6 +29,7 @@ import {
   xulPropTypes,
   XulProps,
   xulClass,
+  handle,
 } from '../libxul/xul';
 import { Vbox, Hbox, Box } from '../libxul/boxes';
 // eslint-disable-next-line import/no-cycle
@@ -646,7 +647,7 @@ class Atext extends React.Component {
     }
   }
 
-  // stop notebox resizing?
+  // stop notebox resizing and call xulswordHandler
   bbMouseUp(this: Atext, e: any, nbr?: number[], maximize?: boolean) {
     const { noteBoxResizing } = this.state as AtextState;
     const props = this.props as AtextProps;
@@ -661,7 +662,7 @@ class Atext extends React.Component {
   render() {
     const state = this.state as AtextState;
     const props = this.props as AtextProps;
-    const { handler } = this;
+    const { handler, bbMouseUp } = this;
     const { noteBoxResizing, pin, versePerLine } = state;
     const { columns, isPinned, maximizeNoteBox, module, n, noteBoxHeight } =
       props;
@@ -702,20 +703,20 @@ class Atext extends React.Component {
     return (
       <Vbox
         {...props}
-        className={xulClass(`atext ${cls}`, props)}
+        {...xulClass(`atext ${cls}`, props)}
+        {...handle('onDoubleClick', handler, props)}
+        {...handle('onClick', handler, props)}
+        {...handle('onWheel', handler, props)}
+        {...handle('onMouseOver', handler, props)}
+        {...handle('onMouseOut', handler, props)}
+        {...handle('onMouseDown', handler, props)}
+        {...handle('onMouseMove', handler, props)}
+        {...handle('onMouseUp', bbMouseUp, props)}
+        {...handle('onMouseLeave', handler, props)}
         style={{ ...props.style, position: 'relative' }}
         data-wnum={n}
         data-module={module}
         data-columns={columns}
-        onDoubleClick={handler}
-        onClick={handler}
-        onWheel={handler}
-        onMouseOver={handler}
-        onMouseOut={handler}
-        onMouseDown={handler}
-        onMouseMove={handler}
-        onMouseUp={this.bbMouseUp}
-        onMouseLeave={handler}
       >
         <div
           className="sbcontrols"

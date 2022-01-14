@@ -13,8 +13,12 @@ import {
   xulPropTypes,
 } from '../libxul/xul';
 import { Vbox } from '../libxul/boxes';
-import { ViewportState } from '../viewport/viewport';
-import { popupHandler } from '../viewport/viewportH';
+import {
+  popupHandler as popupHandlerH,
+  PopupParent,
+  PopupParentState,
+  PopupParentProps,
+} from './popupParentH';
 import Popup from './popup';
 import '../global-htm.css';
 import '../libxul/xul.css';
@@ -35,44 +39,42 @@ const propTypes = {
   ...xulPropTypes,
 };
 
-type PopupWinProps = XulProps;
+type PopupWinProps = PopupParentProps & XulProps;
 
-type PopupWinState = Pick<
-  ViewportState,
-  'elemhtml' | 'eleminfo' | 'popupReset'
->;
+type PopupWinState = PopupParentState;
 
-export default class PopupWin extends React.Component {
+export default class PopupWin extends React.Component implements PopupParent {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
 
-  handler: (e: React.SyntheticEvent) => void;
+  popupHandler: (e: React.SyntheticEvent) => void;
 
   constructor(props: PopupWinProps) {
     super(props);
 
-    this.state = {
+    const s: PopupWinState = {
       elemhtml: elemhtmlWin || [],
       eleminfo: eleminfoWin || [],
       popupReset: 0,
     };
+    this.state = s;
 
-    this.handler = popupHandler.bind(this);
+    this.popupHandler = popupHandlerH.bind(this);
   }
 
   render() {
-    const { handler } = this;
+    const { popupHandler } = this;
     const { elemhtml, eleminfo, popupReset } = this.state as PopupWinState;
 
     return (
-      <Vbox {...this.props} className={xulClass('popupWin', this.props)}>
+      <Vbox {...this.props} {...xulClass('popupWin', this.props)}>
         <Popup
           key={popupReset}
           elemhtml={elemhtml}
           eleminfo={eleminfo}
-          onPopupClick={handler}
-          onSelectChange={handler}
+          onPopupClick={popupHandler}
+          onSelectChange={popupHandler}
           isWindow
         />
       </Vbox>

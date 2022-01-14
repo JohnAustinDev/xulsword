@@ -19,7 +19,7 @@ import {
   dotStringLoc2ObjectLoc,
   jsdump,
 } from '../rutil';
-import { xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import { handle, xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import Button from '../libxul/button';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Menupopup from '../libxul/menupopup';
@@ -351,7 +351,10 @@ export default class Xulsword extends React.Component {
     return (
       <Translation>
         {(t) => (
-          <Vbox {...this.props} onClick={this.closeMenupopups}>
+          <Vbox
+            {...this.props}
+            {...handle('onClick', this.closeMenupopups, this.props)}
+          >
             <Hbox id="main-controlbar" className="controlbar">
               <Spacer width="17px" orient="vertical" />
 
