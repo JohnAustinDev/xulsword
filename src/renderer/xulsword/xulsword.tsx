@@ -8,12 +8,17 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { Translation } from 'react-i18next';
-import i18next from 'i18next';
 import { HistoryTypeVK, StateDefault } from '../../type';
-import { compareObjects, deepClone, dString } from '../../common';
+import { dString } from '../../common';
 import C from '../../constant';
 import i18nInit from '../i18n';
-import { dotString2LocaleString, jsdump } from '../rutil';
+import {
+  dotString2LocaleString,
+  jsdump,
+  onSetWindowStates,
+  getStatePref,
+  updateGlobalState,
+} from '../rutil';
 import { handle, xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import Button from '../libxul/button';
 import { Hbox, Vbox } from '../libxul/boxes';
@@ -30,11 +35,47 @@ import './xulsword.css';
 
 import type { MouseWheel } from './xulswordHandler';
 
-export const defaultProps = {
+const maxHistoryMenuLength = 20;
+
+export function updateVersification(component: React.Component) {
+  const {
+    modules,
+    numDisplayedWindows,
+    v11nmod: mod,
+    versification: v11n,
+  } = component.state as any;
+  const v11nmod = modules.find((m: string, i: number) => {
+    return i < numDisplayedWindows && m && G.Tab[m].isVerseKey;
+  });
+  const versification = v11nmod ? G.Tab[v11nmod].v11n : undefined;
+  if (mod !== v11nmod || v11n !== versification) {
+    component.setState({ v11nmod, versification });
+  }
+}
+
+export function closeMenupopups(component: React.Component) {
+  const { historyMenupopup } = component.state as any;
+  let reset = 0;
+  Array.from(document.getElementsByClassName('tabs')).forEach((t) => {
+    if (t.classList.contains('open')) reset += 1;
+  });
+  if (reset || historyMenupopup) {
+    component.setState((prevState) => {
+      let { vpreset } = prevState as XulswordState;
+      if (reset) vpreset += 1;
+      const s: any = {};
+      if (reset) s.vpreset = vpreset + 1;
+      if (historyMenupopup) s.historyMenupopup = undefined;
+      return s;
+    });
+  }
+}
+
+const defaultProps = {
   ...xulDefaultProps,
 };
 
-export const propTypes = {
+const propTypes = {
   ...xulPropTypes,
 };
 
@@ -42,7 +83,7 @@ export type XulswordProps = XulProps;
 
 // The following state values are not stored in Prefs, but take
 // these default values in Xulsword constructor.
-export const stateNoPref = {
+export const notStatePref = {
   versification: '',
   v11nmod: '',
   historyMenupopup: undefined,
@@ -51,9 +92,7 @@ export const stateNoPref = {
   searchDisabled: true,
 };
 
-export type XulswordState = typeof stateNoPref & StateDefault;
-
-const maxHistoryMenuLength = 20;
+export type XulswordState = typeof notStatePref & StateDefault;
 
 export default class Xulsword extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -74,31 +113,15 @@ export default class Xulsword extends React.Component {
     super(props);
 
     this.state = {
-      ...stateNoPref,
-      ...this.getStatePrefs(),
+      ...notStatePref,
+      ...getStatePref(this, null, notStatePref),
     };
 
-    // Listener for set-window-states IPC channel requesting we set state from prefs.
-    window.ipc.renderer.on('set-window-states', (prefs: string | string[]) => {
-      const state = this.getStatePrefs(prefs);
-      const lng = G.Prefs.getCharPref(C.LOCALEPREF);
-      if (lng !== i18next.language) {
-        i18next.changeLanguage(lng, (err) => {
-          if (err) throw Error(err);
-          G.reset();
-          this.setState(state);
-        });
-      } else {
-        this.setState(state);
-      }
-    });
+    onSetWindowStates(this);
 
-    this.getStatePrefs = this.getStatePrefs.bind(this);
-    this.updateGlobalState = this.updateGlobalState.bind(this);
     this.historyMenu = this.historyMenu.bind(this);
     this.addHistory = this.addHistory.bind(this);
     this.setHistory = this.setHistory.bind(this);
-    this.closeMenupopups = this.closeMenupopups.bind(this);
 
     this.handler = handlerH.bind(this);
     this.xulswordHandler = xulswordHandlerH.bind(this);
@@ -107,95 +130,12 @@ export default class Xulsword extends React.Component {
   }
 
   componentDidMount() {
-    this.componentDidUpdate();
+    updateVersification(this);
   }
 
   componentDidUpdate() {
-    const {
-      modules,
-      numDisplayedWindows,
-      v11nmod: mod,
-      versification: v11n,
-    } = this.state as XulswordState;
-    // Change versification of chooser and history menu if needed
-    const v11nmod = modules.find((m, i) => {
-      return i < numDisplayedWindows && m && G.Tab[m].isVerseKey;
-    });
-    const versification = v11nmod ? G.Tab[v11nmod].v11n : undefined;
-    if (mod !== v11nmod || v11n !== versification) {
-      this.setState({ v11nmod, versification });
-    }
+    updateVersification(this);
   }
-
-  // Return values of state Prefs. If prefsToGet is undefined, all state prefs
-  // will be returned. NOTE: The whole initial pref object (after the id) is
-  // returned if any of its descendants is requested.
-  getStatePrefs = (prefsToGet?: string | string[]): { [i: string]: any } => {
-    const { id } = this.props as XulswordProps;
-    const store = G.Prefs.getStore();
-    if (!id || !store) {
-      return {};
-    }
-    let prefs: undefined | string[];
-    if (prefsToGet) {
-      if (!Array.isArray(prefsToGet)) prefs = [prefsToGet];
-      else {
-        prefs = prefsToGet;
-      }
-      prefs = prefs.map((p) => {
-        return p.split('.')[1];
-      });
-    }
-    const state: any = {};
-    Object.entries(store).forEach((entry) => {
-      const [canid, value] = entry;
-      if (canid === id && typeof value === 'object') {
-        Object.entries(value).forEach((entry2) => {
-          const [s, v] = entry2;
-          if (
-            !(s in stateNoPref) &&
-            (prefs === undefined || prefs.includes(s))
-          ) {
-            state[s] = v;
-          }
-        });
-      }
-    });
-
-    return state;
-  };
-
-  // Compare state s to the previously set Prefs and do nothing if there
-  // were no changes. Otherwise, if this component has an id, persist its
-  // latest state changes to Prefs (except those in stateNoPersist) and
-  // then setGlobalMenuFromPrefs() which in turn notifies other windows.
-  updateGlobalState = (s: XulswordState) => {
-    const { id } = this.props as XulswordProps;
-    if (!id) return;
-    let prefsChanged = false;
-    Object.entries(s).forEach((entry) => {
-      const [name, value] = entry;
-      const type = typeof value;
-      const pref = `${id}.${name}`;
-      const lastval =
-        pref in this.lastSetPrefs ? this.lastSetPrefs[pref] : undefined;
-      const thisval = type === 'object' ? deepClone(value) : value;
-      if (!(name in stateNoPref) && !compareObjects(lastval, thisval)) {
-        if (type === 'string') {
-          G.Prefs.setCharPref(pref, value as string);
-        } else if (type === 'number') {
-          G.Prefs.setIntPref(pref, value as number);
-        } else if (type === 'boolean') {
-          G.Prefs.setBoolPref(pref, value as boolean);
-        } else {
-          G.Prefs.setComplexValue(pref, value);
-        }
-        this.lastSetPrefs[pref] = thisval;
-        prefsChanged = true;
-      }
-    });
-    if (prefsChanged) G.setGlobalMenuFromPrefs();
-  };
 
   // A history item has the form HistoryTypeVK and only the last
   // verse selection viewed for a chapter will be saved in history.
@@ -334,21 +274,6 @@ export default class Xulsword extends React.Component {
     );
   };
 
-  closeMenupopups = () => {
-    const { historyMenupopup } = this.state as XulswordState;
-    let reset = 0;
-    Array.from(document.getElementsByClassName('tabs')).forEach((t) => {
-      if (t.classList.contains('open')) reset += 1;
-    });
-    if (reset || historyMenupopup) {
-      this.setState((prevState) => {
-        let { vpreset } = prevState as XulswordState;
-        if (reset) vpreset += 1;
-        return { vpreset, historyMenupopup: undefined };
-      });
-    }
-  };
-
   render() {
     const state = this.state as XulswordState;
     const {
@@ -378,9 +303,9 @@ export default class Xulsword extends React.Component {
       versification,
     } = state;
 
-    const { handler, xulswordHandler } = this;
+    const { handler, xulswordHandler, lastSetPrefs } = this;
 
-    this.updateGlobalState(state);
+    updateGlobalState(this, lastSetPrefs, notStatePref);
 
     // Add page to history after a short delay
     if (versification) {
@@ -410,7 +335,7 @@ export default class Xulsword extends React.Component {
         {(t) => (
           <Vbox
             {...this.props}
-            {...handle('onClick', this.closeMenupopups, this.props)}
+            {...handle('onClick', () => closeMenupopups(this), this.props)}
           >
             <Hbox id="main-controlbar" className="controlbar">
               <Spacer width="17px" orient="vertical" />
