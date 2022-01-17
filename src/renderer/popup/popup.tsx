@@ -1,5 +1,4 @@
 /* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable import/no-cycle */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable max-classes-per-file */
@@ -22,7 +21,6 @@ import {
 import { FeatureType } from '../../type';
 import C from '../../constant';
 import { sanitizeHTML, stringHash } from '../../common';
-import { TextInfo } from '../../textclasses';
 import G from '../rg';
 import { getCompanionModules, getPopupInfo } from '../rutil';
 import { getIntroductions, getNoteHTML } from '../viewport/zversekey';
@@ -30,6 +28,8 @@ import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import popupH from './popupH';
 import '../libsword.css';
 import './popup.css';
+
+import type { TextInfo } from '../../textclasses';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -91,10 +91,6 @@ class Popup extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
-
-  static POPUPDELAY: number;
-
-  static POPUPDELAY_STRONGS: number;
 
   npopup: React.RefObject<HTMLDivElement>;
 
@@ -471,7 +467,5 @@ class Popup extends React.Component {
 }
 Popup.defaultProps = defaultProps;
 Popup.propTypes = propTypes;
-Popup.POPUPDELAY = 250;
-Popup.POPUPDELAY_STRONGS = 600;
 
 export default Popup;

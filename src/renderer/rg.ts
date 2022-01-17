@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { GType, GPublic } from '../type';
+import type { GType } from '../type';
+import { GPublic } from '../type';
 
 // This G object is for use in renderer processes, and it shares the same
 // interface as a main process G object. Both G objects are built auto-

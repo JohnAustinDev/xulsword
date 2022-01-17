@@ -1,7 +1,8 @@
 /* eslint-disable no-continue */
-import { SwordFilterType, SwordFilterValueType } from '../../type';
 import C from '../../constant';
 import G from '../rg';
+
+import type { SwordFilterType, SwordFilterValueType } from '../../type';
 
 // class must be a string or a regular-expression to match a string
 function replaceTags(entry: string, tag: string, subclass?: string | RegExp) {

@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable import/no-cycle */
 import React from 'react';
 import C from '../../constant';
-import { PlaceType, ShowType } from '../../type';
 import { getContextModule, ofClass } from '../../common';
-import { TextInfo } from '../../textclasses';
 import G from '../rg';
 import { getPopupInfo } from '../rutil';
-import Popup from './popup';
+
+import type { TextInfo } from '../../textclasses';
+import type { PlaceType, ShowType } from '../../type';
+
+const POPUPDELAY = 250;
+const POPUPDELAY_STRONGS = 600;
 
 export interface PopupParent {
   state: React.Component['state'];
@@ -110,7 +112,7 @@ export function popupParentHandler(
             };
             this.setState(s);
           },
-          targ.type === 'sn' ? Popup.POPUPDELAY_STRONGS : Popup.POPUPDELAY
+          targ.type === 'sn' ? POPUPDELAY_STRONGS : POPUPDELAY
         );
       }
       break;

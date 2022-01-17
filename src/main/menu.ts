@@ -10,10 +10,11 @@ import {
   MenuItem,
 } from 'electron';
 import path from 'path';
-import { TabTypes } from '../type';
 import C from '../constant';
 import Commands from './commands';
 import G from './mg';
+
+import type { TabTypes } from '../type';
 
 type Modifiers =
   | 'CommandOrControl'

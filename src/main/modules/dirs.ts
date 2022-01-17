@@ -3,8 +3,9 @@
 import { app } from 'electron';
 import path from 'path';
 import C from '../../constant';
-import { DirsDirectories, DirsPublic } from '../../type';
 import nsILocalFile from '../components/nsILocalFile';
+
+import type { DirsDirectories, DirsPublic } from '../../type';
 
 const Dirs = { path: {} } as typeof DirsPublic;
 

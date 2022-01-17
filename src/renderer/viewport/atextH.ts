@@ -1,3 +1,4 @@
+/* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import C from '../../constant';
@@ -8,10 +9,10 @@ import {
   ofClass,
 } from '../../common';
 import G from '../rg';
-// eslint-disable-next-line import/no-cycle
-import Atext, { AtextProps, AtextState } from './atext';
-// eslint-disable-next-line import/no-cycle
 import { textChange, wheelscroll } from './zversekey';
+
+import type Atext from './atext';
+import type { AtextProps, AtextState } from './atext';
 
 let MatchingStrongs: any;
 let AddedRules: any[] = [];

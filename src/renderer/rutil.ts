@@ -12,8 +12,9 @@ import {
   iString,
   ofClass,
 } from '../common';
-import { TextInfo } from '../textclasses';
 import G from './rg';
+
+import type { TextInfo } from '../textclasses';
 
 interface LocObject {
   book: string | null;

@@ -7,7 +7,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { BookType } from '../../type';
 import Tooltip from './tooltip';
 import {
   xulClass,
@@ -25,6 +24,8 @@ import { parseLocation } from '../rutil';
 import G from '../rg';
 import './xul.css';
 import './bookselect.css';
+
+import type { BookType } from '../../type';
 
 // XUL Bookselect
 // This component contains an overlapping Textbox and Menulist.

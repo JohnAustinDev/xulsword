@@ -6,16 +6,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable react/jsx-props-no-spreading */
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import i18next from 'i18next';
-import {
-  PlaceType,
-  ShowType,
-  SwordFilterType,
-  SwordFilterValueType,
-} from '../../type';
 import C from '../../constant';
 import {
   compareObjects,
@@ -32,7 +25,6 @@ import {
   handle,
 } from '../libxul/xul';
 import { Vbox, Hbox, Box } from '../libxul/boxes';
-// eslint-disable-next-line import/no-cycle
 import {
   getNoteHTML,
   getChapterHeading,
@@ -41,12 +33,18 @@ import {
   trimNotes,
   findVerseElement,
 } from './zversekey';
-// eslint-disable-next-line import/no-cycle
+import { getDictEntryHTML, getDictSortedKeyList } from './zdictionary';
 import handlerH from './atextH';
 import '../libxul/xul.css';
 import '../libsword.css';
 import './atext.css';
-import { getDictEntryHTML, getDictSortedKeyList } from './zdictionary';
+
+import type {
+  PlaceType,
+  ShowType,
+  SwordFilterType,
+  SwordFilterValueType,
+} from '../../type';
 
 const memoize = require('memoizee');
 

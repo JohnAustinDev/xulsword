@@ -1,7 +1,8 @@
+/* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable import/no-cycle */
 import { ofClass } from '../../common';
-import Popup, { PopupState } from './popup';
+import type Popup from './popup';
+import type { PopupState } from './popup';
 
 export default function handler(this: Popup, e: React.MouseEvent) {
   const target = e.target as HTMLElement;

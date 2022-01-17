@@ -1,5 +1,4 @@
 /* eslint-disable react/no-unused-state */
-/* eslint-disable import/no-cycle */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 import React from 'react';

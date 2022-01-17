@@ -1,5 +1,4 @@
 /* eslint-disable react/forbid-prop-types */
-/* eslint-disable import/no-cycle */
 /* eslint-disable no-continue */
 /* eslint-disable prefer-destructuring */
 /* eslint-disable jsx-a11y/control-has-associated-label */

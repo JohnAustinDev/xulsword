@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { BrowserWindow, Menu, ipcMain } from 'electron';
 import i18next from 'i18next';
-import { GType, GPublic, TabType, BookType, ModTypes } from '../type';
+import { GPublic } from '../type';
 import C from '../constant';
 import { isASCII } from '../common';
 import Dirsx from './modules/dirs';
@@ -22,6 +22,8 @@ import {
 import { jsdump, resolveHtmlPath } from './mutil';
 import nsILocalFile from './components/nsILocalFile';
 import LibSwordx from './modules/libsword';
+
+import type { GType, TabType, BookType, ModTypes } from '../type';
 
 const i18nBackendRenderer = require('i18next-electron-fs-backend');
 

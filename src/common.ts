@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
 import C from './constant';
-import { GType } from './type';
-import TextClasses, { TextInfo } from './textclasses';
+import type { GType } from './type';
+import TextClasses from './textclasses';
+
+import type { TextInfo } from './textclasses';
 
 export function escapeRE(text: string) {
   // eslint-disable-next-line no-useless-escape

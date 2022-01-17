@@ -1,4 +1,4 @@
-/* eslint-disable import/no-cycle */
+/* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
@@ -10,22 +10,27 @@ import {
   getElementInfo,
   ofClass,
 } from '../../common';
-import { textChange, wheelscroll } from '../viewport/zversekey';
 import Atext from '../viewport/atext';
+import { textChange, wheelscroll } from '../viewport/zversekey';
 import { convertDotString } from '../rutil';
 import G from '../rg';
-import Xulsword, { XulswordState } from './xulsword';
-import ViewportWin from '../viewport/viewportWin';
+
+import type { XulswordState } from './xulsword';
+
+export type MouseWheel = {
+  atext: HTMLElement;
+  count: 0;
+  TO: number | undefined;
+};
 
 export default function handler(
-  this: Xulsword | ViewportWin,
+  this: React.Component,
   es: React.SyntheticEvent<any>,
   noteboxResizing?: number[],
   maximize?: boolean
 ) {
-  const { versification } = this;
   const state = this.state as XulswordState;
-  const { modules } = state;
+  const { modules, versification } = state;
   const target = es.target as HTMLElement;
   const mcls = ofClass(['atext', 'tabs'], target);
   const atext = mcls && mcls.type === 'atext' ? mcls.element : null;
@@ -164,8 +169,8 @@ export default function handler(
           } = targ.element.dataset;
           if (m) {
             const from = [b, c, v, G.Tab[m].v11n].join('.');
-            const to = this.versification
-              ? convertDotString(from, this.versification)
+            const to = versification
+              ? convertDotString(from, versification)
               : from;
             const [book, chapter, verse] = to.split('.');
             this.setState({
@@ -366,12 +371,19 @@ export default function handler(
 
     case 'wheel': {
       const e = es as React.MouseEvent;
-      if (atext && type !== C.DICTIONARY && !ofClass(['nbc'], target)) {
-        this.mouseWheel.atext = atext;
-        this.mouseWheel.count += e.detail;
-        if (this.mouseWheel.TO) window.clearTimeout(this.mouseWheel.TO);
-        this.mouseWheel.TO = window.setTimeout(() => {
-          wheelscroll(this);
+      const t = this as any;
+      if (
+        'mouseWheel' in t &&
+        atext &&
+        type !== C.DICTIONARY &&
+        !ofClass(['nbc'], target)
+      ) {
+        const m = t.mouseWheel as MouseWheel;
+        m.atext = atext;
+        m.count += e.detail;
+        if (m.TO) window.clearTimeout(m.TO);
+        m.TO = window.setTimeout(() => {
+          wheelscroll(t);
         }, 250);
       }
       break;

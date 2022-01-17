@@ -1,4 +1,3 @@
-/* eslint-disable import/no-cycle */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -8,7 +7,6 @@
 import React from 'react';
 import { render } from 'react-dom';
 import i18next from 'i18next';
-import { StateDefault } from '../../type';
 import { compareObjects, deepClone } from '../../common';
 import C from '../../constant';
 import i18nInit from '../i18n';
@@ -21,11 +19,13 @@ import xulswordHandlerX from '../xulsword/xulswordHandler';
 import '../global-htm.css';
 import '../xulsword/xulsword.css';
 
-export const defaultProps = {
+import type { StateDefault } from '../../type';
+
+const defaultProps = {
   ...xulDefaultProps,
 };
 
-export const propTypes = {
+const propTypes = {
   ...xulPropTypes,
 };
 

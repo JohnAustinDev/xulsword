@@ -1,14 +1,14 @@
+/* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
 import C from '../../constant';
-// eslint-disable-next-line import/no-cycle
 import { chapterChange, verseChange } from '../viewport/zversekey';
-// eslint-disable-next-line import/no-cycle
 import { jsdump, parseLocation } from '../rutil';
 import G from '../rg';
-// eslint-disable-next-line import/no-cycle
-import Xulsword, { XulswordState } from './xulsword';
+
+import type Xulsword from './xulsword';
+import type { XulswordState } from './xulsword';
 
 export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
   const state = this.state as XulswordState;

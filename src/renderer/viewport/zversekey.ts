@@ -1,7 +1,7 @@
+/* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
 import i18next from 'i18next';
-import { ShowType } from '../../type';
 import C from '../../constant';
 import {
   dString,
@@ -18,12 +18,13 @@ import {
   ref2ProgramLocaleText,
 } from '../rutil';
 import G from '../rg';
-// eslint-disable-next-line import/no-cycle
-import Xulsword, { XulswordState } from '../xulsword/xulsword';
-// eslint-disable-next-line import/no-cycle
-import Atext, { AtextProps, AtextState } from './atext';
-// eslint-disable-next-line import/no-cycle
-import ViewportWin from './viewportWin';
+
+import type { ShowType } from '../../type';
+import type Xulsword from '../xulsword/xulsword';
+import type { XulswordState } from '../xulsword/xulsword';
+import type Atext from './atext';
+import type { AtextProps, AtextState } from './atext';
+import type ViewportWin from './viewportWin';
 
 function ascendingVerse(a: HTMLElement, b: HTMLElement) {
   const t1 = 'un';

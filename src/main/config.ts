@@ -3,7 +3,6 @@
 import path from 'path';
 import i18next from 'i18next';
 import C from '../constant';
-import { ConfigType, GType } from '../type';
 import { deepClone } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
@@ -11,6 +10,8 @@ import { jsdump } from './mutil';
 import nsILocalFile from './components/nsILocalFile';
 import LibSword from './modules/libsword';
 // import getFontFamily from './fontfamily';
+
+import type { ConfigType, GType } from '../type';
 
 // Config's properties are all the properties which Config type objects will have.
 // The Config property objects map the property for its various uses:

@@ -2,12 +2,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-continue */
 /* eslint-disable new-cap */
-import { LibSwordPublic, SwordFilterType } from '../../type';
 import C from '../../constant';
 import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
 import { jsdump } from '../mutil';
+
+import type { LibSwordPublic, SwordFilterType } from '../../type';
 
 const { libxulsword } = require('libxulsword');
 
