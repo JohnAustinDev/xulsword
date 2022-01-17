@@ -448,7 +448,7 @@ export function getNoteHTML(
           // Display this note as a row in the main table
           t += `<div id="w${w}.footnote.${p.title}" `;
           t += `title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}" `;
-          t += `class="fnrow ${openCRs ? 'cropened' : 'crclosed'}">`;
+          t += `class="fnrow ${openCRs ? 'cropened' : ''}">`;
 
           // Write cell #1: an expander link for cross references only
           t += '<div class="fncol1">';

@@ -15,7 +15,7 @@ import { textChange, wheelscroll } from '../viewport/zversekey';
 import { convertDotString } from '../rutil';
 import G from '../rg';
 
-import type { XulswordState } from './xulsword';
+import type { StateDefault } from '../../type';
 
 export type MouseWheel = {
   atext: HTMLElement | null;
@@ -29,8 +29,10 @@ export default function handler(
   noteboxResizing?: number[],
   maximize?: boolean
 ) {
-  const state = this.state as XulswordState;
-  const { modules, versification } = state;
+  const statex = this.state as any;
+  const { versification } = statex;
+  const state = this.state as StateDefault;
+  const { modules } = state;
   const target = es.target as HTMLElement;
   const mcls = ofClass(['atext', 'tabs'], target);
   const atext = mcls && mcls.type === 'atext' ? mcls.element : null;
@@ -114,7 +116,7 @@ export default function handler(
         case 'text-pin': {
           const c = ofClass(['show1', 'show2', 'show3'], target);
           const columns = c ? Number(c.type.substring(c.type.length - 1)) : 1;
-          this.setState((prevState: XulswordState) => {
+          this.setState((prevState: StateDefault) => {
             const { isPinned: ip } = prevState;
             for (let x = i; x < columns + i; x += 1) {
               ip[x] = !ip[x];
@@ -168,7 +170,7 @@ export default function handler(
             verse: v,
           } = targ.element.dataset;
           if (m) {
-            const from = [b, c, v, G.Tab[m].v11n].join('.');
+            const from = [b, c, v, v, G.Tab[m].v11n].join('.');
             const to = versification
               ? convertDotString(from, versification)
               : from;
@@ -192,7 +194,7 @@ export default function handler(
         }
         case 'notebox-maximizer': {
           if (atext) {
-            this.setState((prevState: XulswordState) => {
+            this.setState((prevState: StateDefault) => {
               const { maximizeNoteBox, noteBoxHeight } = prevState;
               if (maximizeNoteBox[i] > 0) {
                 noteBoxHeight[i] = maximizeNoteBox[i];
@@ -217,13 +219,13 @@ export default function handler(
           const m = targ.element.dataset.module;
           if (m && m !== 'disabled' && !state.isPinned[i]) {
             if (targ.type === 'ilt-tab') {
-              this.setState((prevState: XulswordState) => {
+              this.setState((prevState: StateDefault) => {
                 const { ilModules } = prevState;
                 ilModules[i] = ilModules[i] ? '' : m;
                 return { ilModules };
               });
             } else {
-              this.setState((prevState: XulswordState) => {
+              this.setState((prevState: StateDefault) => {
                 const { modules: mods, mtModules } = prevState;
                 mods[i] = m;
                 if (targ.type === 'mto-tab' || targ.type === 'mts-tab') {
@@ -259,7 +261,7 @@ export default function handler(
             typeof p.osisref === 'string' &&
             elem.classList.contains('x-target_self')
           ) {
-            this.setState((prevState: XulswordState) => {
+            this.setState((prevState: StateDefault) => {
               const { keys, flagScroll } = prevState;
               const str = p.osisref as string;
               keys[i] = decodeOSISRef(str.replace(/^[^:]+:/, ''));
@@ -270,7 +272,7 @@ export default function handler(
           break;
         case 'keylist': {
           if (atext && target.title) {
-            this.setState((prevState: XulswordState) => {
+            this.setState((prevState: StateDefault) => {
               const { keys } = prevState;
               keys[i] = decodeURIComponent(target.title);
               return { keys };
@@ -297,7 +299,7 @@ export default function handler(
                   [p.bk, p.ch, p.vs, lvv].join('.'),
                   versification
                 ).split('.');
-                this.setState((prevState: XulswordState) => {
+                this.setState((prevState: StateDefault) => {
                   let { flagScroll } = prevState;
                   flagScroll = flagScroll.map(() => C.SCROLLTYPECENTER);
                   return {
@@ -319,7 +321,7 @@ export default function handler(
           const value = elem.getAttribute('value');
           if (value) {
             const [, , , mod] = value.split('.');
-            this.setState((prevState: XulswordState) => {
+            this.setState((prevState: StateDefault) => {
               const { ilModules } = prevState;
               ilModules[i] = mod;
               return { ilModules };
@@ -358,7 +360,7 @@ export default function handler(
             }
           } else {
             select.style.color = '';
-            this.setState((prevState: XulswordState) => {
+            this.setState((prevState: StateDefault) => {
               const { keys } = prevState;
               [, , keys[i]] = firstMatch;
               return { keys };
@@ -393,7 +395,7 @@ export default function handler(
     // the bb bar is being dragged while maximizeNoteBox > 0.
     case 'mousemove': {
       this.setState((prevState) => {
-        const { maximizeNoteBox } = prevState as XulswordState;
+        const { maximizeNoteBox } = prevState as StateDefault;
         maximizeNoteBox[i] = 0;
         return { maximizeNoteBox };
       });
@@ -403,7 +405,7 @@ export default function handler(
     // mouseup events passed from Atext's handler.
     case 'mouseup': {
       if (noteboxResizing) {
-        this.setState((prevState: XulswordState) => {
+        this.setState((prevState: StateDefault) => {
           const { maximizeNoteBox, noteBoxHeight } = prevState;
           const [initial, final] = noteboxResizing;
           if (maximize) maximizeNoteBox[i] = noteBoxHeight[i];

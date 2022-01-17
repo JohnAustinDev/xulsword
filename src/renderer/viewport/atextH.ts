@@ -80,12 +80,8 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
             const id = `w${n}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`;
             const cr = document.getElementById(id);
             if (cr) {
-              const tog = ofClass(['cropened', 'crclosed'], cr);
-              if (tog) {
-                tog.element.classList.toggle('cropened');
-                tog.element.classList.toggle('crclosed');
-                scroll2Note(atext, id);
-              }
+              cr.classList.toggle('cropened');
+              scroll2Note(atext, id);
             }
           }
           break;
@@ -114,10 +110,11 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           break;
 
         // Notebox cross-reference twisty toggle
-        case 'crtwisty':
-          elem.classList.toggle('cropened');
-          elem.classList.toggle('crclosed');
+        case 'crtwisty': {
+          const row = ofClass(['fnrow'], elem);
+          if (row) row.element.classList.toggle('cropened');
           break;
+        }
 
         case 'gfn': {
           if (p && p.title) {
@@ -197,7 +194,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       break;
     }
 
-    case 'doubleclick': {
+    case 'dblclick': {
       // Get selected text
       const selob = window.getSelection();
       if (selob) {

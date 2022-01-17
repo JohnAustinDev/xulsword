@@ -81,8 +81,8 @@ const propTypes = {
 
 export type XulswordProps = XulProps;
 
-// The following state values are not stored in Prefs, but take
-// these default values in Xulsword constructor.
+// These state values are not stored in Prefs, but take
+// on the following values in the Xulsword constructor.
 export const notStatePref = {
   versification: '',
   v11nmod: '',
