@@ -5,12 +5,12 @@ import i18next from 'i18next';
 import C from '../../constant';
 import {
   dString,
-  getElementInfo,
   getLocalizedChapterTerm,
   isASCII,
   ofClass,
   sanitizeHTML,
 } from '../../common';
+import { getElementInfo } from '../../libswordElemInfo';
 import {
   findAVerseText,
   jsdump,

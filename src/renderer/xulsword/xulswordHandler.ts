@@ -7,9 +7,9 @@ import {
   decodeOSISRef,
   escapeRE,
   firstIndexOfBookGroup,
-  getElementInfo,
   ofClass,
 } from '../../common';
+import { getElementInfo } from '../../libswordElemInfo';
 import Atext from '../viewport/atext';
 import { textChange, wheelscroll } from '../viewport/zversekey';
 import { convertDotString } from '../rutil';

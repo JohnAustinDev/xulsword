@@ -69,7 +69,7 @@ export default class PopupWin extends React.Component implements PopupParent {
     return (
       <Vbox {...this.props} {...xulClass('popupWin', this.props)}>
         <Popup
-          key={popupReset}
+          key={[elemhtml.length, popupReset].join('.')}
           elemhtml={elemhtml}
           eleminfo={eleminfo}
           onPopupClick={popupHandler}

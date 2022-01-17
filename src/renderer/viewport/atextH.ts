@@ -2,12 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import C from '../../constant';
-import {
-  cleanDoubleClickSelection,
-  getCSS,
-  getElementInfo,
-  ofClass,
-} from '../../common';
+import { cleanDoubleClickSelection, getCSS, ofClass } from '../../common';
+import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { textChange, wheelscroll } from './zversekey';
 
@@ -262,7 +258,8 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                 document.styleSheets[document.styleSheets.length - 1];
               const index = sheet.cssRules.length;
               if (!MatchingStrongs) {
-                MatchingStrongs = getCSS('.matchingStrongs {'); // Read from CSS stylesheet
+                // Read from CSS stylesheet
+                MatchingStrongs = getCSS('.matchingStrongs {');
               }
               try {
                 sheet.insertRule(
@@ -330,11 +327,8 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
 
       // Remove any dynamically added Strong's classes from CSS stylesheet,
       // unless we're now over npopup
-      let over = e.relatedTarget as HTMLElement | null;
-      while (over && (!over.id || !/^npopup$/.test(over.id))) {
-        over = over.parentNode as HTMLElement | null;
-      }
-      if (!over) {
+      const nowover = e.relatedTarget as HTMLElement | null;
+      if (!nowover?.classList.contains('npopup')) {
         for (let x = AddedRules.length - 1; x >= 0; x -= 1) {
           AddedRules[x].sheet.deleteRule(AddedRules[x].index);
         }

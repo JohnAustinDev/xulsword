@@ -154,7 +154,6 @@ class Viewport extends React.Component implements PopupParent {
   }
 
   render() {
-    jsdump(`Rendering Viewport ${JSON.stringify(this.state)}`);
     const { popupParentHandler, popupHandler } = this;
     const props = this.props as ViewportProps;
     const {
@@ -257,14 +256,15 @@ class Viewport extends React.Component implements PopupParent {
     }
 
     // Figure out the number of columns that will be shown for each text
-    // in order to fill the number of visible windows.
+    // in order to fill the number of visible windows. Some module types
+    // or configurations only support single column layout, like DICT.
     const columns: number[] = [];
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       columns[x] = 1;
       const mod = modules[x];
-      if (!mod || G.Tab[mod].type === C.DICTIONARY) continue;
       let ilActive =
         !!ilModuleOptions[x][0] && !!ilMods[x] && ilMods[x] !== 'disabled';
+      if (!mod || G.Tab[mod].type === C.DICTIONARY || ilActive) continue;
       const key = `${modules[x]} ${ilActive} ${!!isPinned[x]}`;
       let f = x + 1;
       for (;;) {
@@ -327,6 +327,14 @@ class Viewport extends React.Component implements PopupParent {
     let cls = '';
     if (ownWindow) cls += ' ownWindow';
 
+    jsdump(
+      `Rendering Viewport ${JSON.stringify({
+        state: this.state,
+        ilModuleOptions,
+        ilMods,
+      })}`
+    );
+
     return (
       <Hbox
         {...props}
@@ -382,7 +390,6 @@ class Viewport extends React.Component implements PopupParent {
                   ilModule={ilMods[i]}
                   ilModuleOption={ilModuleOptions[i]}
                   mtModule={mtModules[i]}
-                  xulswordHandler={xulswordHandler}
                 />
               );
             })}

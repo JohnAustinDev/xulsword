@@ -2,9 +2,6 @@
 import i18next from 'i18next';
 import C from './constant';
 import type { GType } from './type';
-import TextClasses from './textclasses';
-
-import type { TextInfo } from './textclasses';
 
 export function escapeRE(text: string) {
   // eslint-disable-next-line no-useless-escape
@@ -22,132 +19,6 @@ export function decodeOSISRef(aRef: string) {
     m = aRef.match(re);
   }
   return ret;
-}
-
-// This function will accept either raw HTML or a DOM element as "elem"
-// NOTES ABOUT ENCODING:
-// - nid: encoded with encodeURIComponent (for use in HTML tags)
-// - osisref: encoded with _cp_ encoding (UTF8, and some other chars, require encoding in osisRef attributes)
-// - reflist: is an array of UTF8 strings
-// - ch: is UTF8 (may be a number or a key)
-// - all other properties: are ASCII
-export function getElementInfo(elem: 'string' | HTMLElement): TextInfo | null {
-  // Info is parsed from className and title, so start by getting each
-  let className;
-  let title;
-  if (typeof elem === 'string') {
-    // If elem is string HTML, parse only the first tag
-    const mt = elem.match(/^[^<]*<[^>]+title\s*=\s*["']([^"']*)["']/);
-    if (mt !== null) [, title] = mt;
-    const mc = elem.match(/^[^<]*<[^>]+class\s*=\s*["']([^"']*)["']/);
-    if (mc !== null) [, className] = mc;
-    if (!title || !className) return null;
-  } else {
-    if (!elem.className || !elem.title) return null;
-    className = elem.className;
-    title = elem.title;
-  }
-
-  // jsdump("getElementInfo class=" + className + ", title=" + title);
-
-  // Read info using TextClasses...
-  const r: TextInfo = {
-    type: null,
-    title: null,
-    reflist: null,
-    bk: null,
-    ch: null,
-    vs: null,
-    lv: null,
-    mod: null,
-    osisref: null,
-    nid: null,
-    ntype: null,
-  };
-
-  const mt = className.match(/^([^\-\s]*)/);
-  let t = null;
-  if (mt !== null) [, t] = mt;
-  if (t === null || !(t in TextClasses)) return null;
-  const type = t as keyof typeof TextClasses;
-
-  r.type = type;
-  r.title = title;
-  let unmatched = true;
-  for (let i = 0; i < TextClasses[type].length; i += 1) {
-    const m = title.match(TextClasses[type][i].re);
-    // eslint-disable-next-line no-continue
-    if (!m) continue;
-    unmatched = false;
-    // jsdump("i=" + i + "\n" + uneval(m));
-    const entries = Object.entries(TextClasses[type][i]);
-    entries.forEach((entry) => {
-      const [prop, value] = entry;
-      if (prop !== 're') {
-        const p = prop as keyof TextInfo;
-        const val = value as number | null;
-        if (val !== null && m[val] !== null) {
-          r[p] = m[val] as any;
-        }
-
-        let parsed = r[p] as any;
-
-        // convert integers into Number type, rather than String type
-        if (
-          typeof parsed === 'string' &&
-          parsed.indexOf('.') === -1 &&
-          Number(parsed)
-        ) {
-          r[p] = Number(parsed) as any;
-          return;
-        }
-
-        if (parsed !== null) {
-          // decode properties which need decodeURIComponent
-          if (['osisref', 'reflist', 'ch'].includes(p)) {
-            parsed = decodeURIComponent(parsed) as any;
-          }
-
-          // fix incorrect dictionary osisRefs for backward compatibility to <2.23
-          if (p === 'osisref' && ['dtl', 'dt'].includes(type)) {
-            parsed = parsed.replace(/(^|\s)([^.:]+)\./g, '$1$2:');
-          }
-
-          // convert reflist into arrays
-          if (p === 'reflist') {
-            if (['dtl', 'dt'].includes(type)) {
-              // Backward Compatibility to < 2.23
-              if (parsed.indexOf(':') === -1) {
-                parsed = parsed.replace(/ /g, '_32_');
-                parsed = parsed.replace(/;/g, ' ');
-                parsed = parsed.replace(/((^|\s)\w+)\./g, '$1:');
-              }
-              parsed = parsed.split(/ +/);
-            } else if (type === 'sr') {
-              parsed = parsed.split(';');
-            } else {
-              throw Error(`Unknown type of reflist: ${type}`);
-            }
-
-            // decode properties which need decodeOSISRef
-            for (let x = 0; x < parsed.length; x += 1) {
-              parsed[x] = decodeOSISRef(parsed[x]);
-            }
-          }
-
-          if (p === 'ch') parsed = decodeOSISRef(parsed);
-        }
-        r[p] = parsed;
-      }
-    });
-
-    break;
-  }
-  if (unmatched) return null;
-
-  // jsdump(uneval(r));
-
-  return r;
 }
 
 export function bookGroupLength(bookGroup: string) {
@@ -224,16 +95,6 @@ export function findBookGroup(
       return r;
     }
     ileft -= bgl;
-  }
-  return null;
-}
-
-// Returns the number of a given long book name
-function findBookNumL(G: GType, bText: string | null): number | null {
-  for (let b = 0; b < G.Books.length; b += 1) {
-    if (G.Books[b].bNameL === bText) {
-      return b;
-    }
   }
   return null;
 }
@@ -435,46 +296,6 @@ export function isProgramPortable() {
   return false;
 }
 
-export function openWindowXS(
-  url: string,
-  name: string,
-  args: any,
-  windowtype: string,
-  parentWindow: any
-) {
-  throw Error('openWindowXS not yet implemented');
-  /*
-  if (!parentWindow) parentWindow = window;
-
-  var existingWin = null;
-  if (windowtype) {
-    existingWin = Components.classes['@mozilla.org/appshell/window-mediator;1'].
-    getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow(windowtype);
-  }
-  else name += "-" + Math.round(10000*Math.random());
-
-  if (existingWin) {
-    existingWin.focus();
-    return existingWin;
-  }
-
-  return window.open(url, name, args);
-  */
-}
-
-export function closeWindowXS(aWindow: any) {
-  throw Error('closeWindowXS not yet implemented');
-  /*
-  if (typeof(G.AllWindows) == "object" &&
-      G.AllWindows instanceof Array &&
-      G.AllWindows.length) {
-    var i = G.AllWindows.indexOf(aWindow);
-    if (i != -1) G.AllWindows.splice(i, 1);
-  }
-  aWindow.close();
-  */
-}
-
 // Returns whether the user has given permission to use Internet during
 // this session, and prompts the user if the answer is unknown.
 export function internetPermission(G: GType) {
@@ -523,53 +344,6 @@ export function internetPermission(G: GType) {
   G.Prefs.setBoolPref('SessionHasInternetPermission', haveInternetPermission);
 
   return haveInternetPermission;
-}
-
-// Return the module context in which the element resides, NOT the
-// module associated with the data of the element itself.
-export function getContextModule(elem: HTMLElement) {
-  let p;
-
-  // first let's see if we're in a verse
-  let telem = elem as HTMLElement | null;
-  while (telem && !telem.classList.contains('vs')) {
-    telem = telem.parentNode as HTMLElement | null;
-  }
-  if (telem) {
-    p = getElementInfo(telem);
-    if (p) return p.mod;
-  }
-
-  // then see if we're in a viewport window, and use its module
-  const atext = ofClass(['atext'], elem);
-  if (atext) return atext.element.dataset.module;
-
-  // are we in cross reference text?
-  telem = elem as HTMLElement | null;
-  while (telem && !telem.classList.contains('crtext')) {
-    telem = telem.parentNode as HTMLElement | null;
-  }
-  const match = telem?.className.match(/\bcs-(\S+)\b/);
-  if (match) return match[1];
-
-  // in a search lexicon list?
-  telem = elem as HTMLElement | null;
-  while (telem && !telem.classList.contains('snlist')) {
-    telem = telem.parentNode as HTMLElement | null;
-  }
-  if (telem) return telem.getAttribute('contextModule');
-
-  // otherwise see if we're in a search results list
-  telem = elem as HTMLElement | null;
-  while (telem && !telem.classList.contains('slist')) {
-    telem = telem.parentNode as HTMLElement | null;
-  }
-  if (telem) {
-    p = getElementInfo(telem);
-    if (p) return p.mod;
-  }
-
-  return null;
 }
 
 // Removes white-space, trailing or leading punctuation, "x" (note symbol),

@@ -1,19 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import C from '../../constant';
-import { getContextModule, ofClass } from '../../common';
+import { ofClass } from '../../common';
+import { getPopupInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { getPopupInfo } from '../rutil';
+import { getContextModule } from '../rutil';
 
-import type { TextInfo } from '../../textclasses';
+import type { ElemInfo } from '../../libswordElemInfo';
 import type { PlaceType, ShowType } from '../../type';
 
 const POPUPDELAY = 250;
 const POPUPDELAY_STRONGS = 600;
 
 export interface PopupParent {
-  state: React.Component['state'];
-  props: React.Component['props'];
+  state: React.ComponentState;
+  props: React.ComponentProps<any>;
   setState: React.Component['setState'];
   popupHandler: typeof popupHandler;
   popupDelayTO?: NodeJS.Timeout | undefined;
@@ -27,9 +28,9 @@ export type PopupParentProps = {
 
 export type PopupParentState = {
   elemhtml: string[]; // popup target element html
-  eleminfo: TextInfo[]; // popup target element info
+  eleminfo: ElemInfo[]; // popup target element info
   popupReset: number; // increment this to re-mount popup
-  gap?: number; // popup gap
+  gap?: number; // gap between target element and top of popup
   popupHold?: boolean; // hold popup open
   popupParent?: HTMLElement | null; // popup location
 };
@@ -106,7 +107,7 @@ export function popupParentHandler(
           () => {
             const s: Partial<PopupParentState> = {
               elemhtml: [elem.outerHTML],
-              eleminfo: [info || ({} as TextInfo)],
+              eleminfo: [info || ({} as ElemInfo)],
               gap,
               popupParent: elem,
             };
@@ -170,7 +171,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           this.setState((prevState: PopupParentState) => {
             const { elemhtml, eleminfo } = prevState;
             elemhtml.push(elem.outerHTML);
-            eleminfo.push(info || ({} as TextInfo));
+            eleminfo.push(info || ({} as ElemInfo));
             // set the gap so as to position popup under the mouse
             const gap = Math.round(e.clientY - popupY - 40);
             const s: Partial<PopupParentState> = {
@@ -248,11 +249,13 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         const t = select.element as HTMLSelectElement;
         const { value } = t;
         this.setState((prevState: PopupParentState) => {
-          const { eleminfo } = prevState;
+          const { elemhtml, eleminfo } = prevState;
           if (t.dataset.module && eleminfo.length) {
+            const orig = getPopupInfo(elemhtml[elemhtml.length - 1]);
             // Not converting v11n here, because elemhtml text nodes would need
             // conversion if reflist is not provided.
-            eleminfo[eleminfo.length - 1].ntype = value;
+            eleminfo[eleminfo.length - 1].ntype = orig.mod;
+            eleminfo[eleminfo.length - 1].mod = value;
           }
           if (t.dataset.feature) {
             G.Prefs.setCharPref(`popup.selection.${t.dataset.feature}`, value);

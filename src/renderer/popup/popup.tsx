@@ -21,15 +21,16 @@ import {
 import { FeatureType } from '../../type';
 import C from '../../constant';
 import { sanitizeHTML, stringHash } from '../../common';
+import { getPopupInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { getCompanionModules, getPopupInfo } from '../rutil';
+import { getCompanionModules } from '../rutil';
 import { getIntroductions, getNoteHTML } from '../viewport/zversekey';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import popupH from './popupH';
 import '../libsword.css';
 import './popup.css';
 
-import type { TextInfo } from '../../textclasses';
+import type { ElemInfo } from '../../libswordElemInfo';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -50,11 +51,13 @@ const propTypes = {
 };
 
 export interface PopupProps extends XulProps {
-  key: string; // key must be properly set to insure popup gets updated
+  // key must be properly set for popup to update, like:
+  // key={[gap, elemhtml.length, popupReset].join('.')}
+  key: string;
   elemhtml: string[]; // outerHTML of target element
-  eleminfo: TextInfo[]; // extra target element info (ie for select options)
+  eleminfo: ElemInfo[]; // extra target element info (ie for select options)
   gap: number | undefined; // Pixel distance between target element and top of popup window
-  isWindow: boolean; // True to use an opsys window as popup
+  isWindow: boolean; // Set to true to use popup in a fixed location
   onPopupClick: (e: React.SyntheticEvent) => void;
   onSelectChange: (e: React.SyntheticEvent) => void;
   onMouseLeftPopup: (e: React.SyntheticEvent) => void | undefined;
@@ -76,7 +79,7 @@ export interface PopupState {
 // string of a target element must be supplied on the elemhtml
 // prop. Extra information associated with the target element may
 // be provided using the eleminfo prop (and this info supercedes any
-// TextInfo from the outerHTML). Both elemhtml and eleminfo props are
+// ElemInfo from the outerHTML). Both elemhtml and eleminfo props are
 // arrays because a Popup may be updated to show information about
 // other elements appearing within the popup, and a back link will
 // appear when there are previous views to return to. To use Popup as
@@ -227,11 +230,10 @@ class Popup extends React.Component {
         case 'fn':
         case 'un': {
           if (mod && bk && ch && title) {
-            const displaymod = ntype || mod;
             // getChapterText must be called before getNotes
-            G.LibSword.getChapterText(mod, `${bk}.${ch}`);
+            G.LibSword.getChapterText(ntype || mod, `${bk}.${ch}`);
             const notes = G.LibSword.getNotes();
-            // note element's title does not include type, but note's nlist does
+            // a note element's title does not include type, but its nlist does
             html = getNoteHTML(
               notes,
               mod,

@@ -4,20 +4,18 @@
 import React from 'react';
 import i18next from 'i18next';
 import C from '../constant';
+import { getElementInfo } from '../libswordElemInfo';
 import {
   compareObjects,
   deepClone,
   dString,
   escapeRE,
   findBookNum,
-  getElementInfo,
   guiDirection,
   iString,
   ofClass,
 } from '../common';
 import G from './rg';
-
-import type { TextInfo } from '../textclasses';
 
 interface LocObject {
   book: string | null;
@@ -246,6 +244,53 @@ function compareAgainstLocale(
   }
 
   return count;
+}
+
+// Return the module context in which the element resides, NOT the
+// module associated with the data of the element itself.
+export function getContextModule(elem: HTMLElement) {
+  let p;
+
+  // first let's see if we're in a verse
+  let telem = elem as HTMLElement | null;
+  while (telem?.classList && !telem.classList.contains('vs')) {
+    telem = telem.parentNode as HTMLElement | null;
+  }
+  if (telem) {
+    p = getElementInfo(telem);
+    if (p) return p.mod;
+  }
+
+  // then see if we're in a viewport window, and use its module
+  const atext = ofClass(['atext'], elem);
+  if (atext) return atext.element.dataset.module;
+
+  // are we in cross reference text?
+  telem = elem as HTMLElement | null;
+  while (telem?.classList && !telem.classList.contains('crtext')) {
+    telem = telem.parentNode as HTMLElement | null;
+  }
+  const match = telem?.className.match(/\bcs-(\S+)\b/);
+  if (match) return match[1];
+
+  // in a search lexicon list?
+  telem = elem as HTMLElement | null;
+  while (telem?.classList && !telem.classList.contains('snlist')) {
+    telem = telem.parentNode as HTMLElement | null;
+  }
+  if (telem) return telem.getAttribute('contextModule');
+
+  // otherwise see if we're in a search results list
+  telem = elem as HTMLElement | null;
+  while (telem?.classList && !telem.classList.contains('slist')) {
+    telem = telem.parentNode as HTMLElement | null;
+  }
+  if (telem) {
+    p = getElementInfo(telem);
+    if (p) return p.mod;
+  }
+
+  return null;
 }
 
 // Takes a string and tries to parse out a book name and version
@@ -537,28 +582,6 @@ export function findAVerseText(
   }
 
   return ret;
-}
-
-export function getPopupInfo(elem: HTMLElement): TextInfo {
-  let info = getElementInfo(elem);
-  if (!info) {
-    const c = ofClass(['sn', 'introlink', 'noticelink'], elem);
-    const atext = ofClass(['atext'], elem);
-    info = {
-      type: c?.type || 'unknown',
-      title: elem.title,
-      reflist: [''],
-      bk: '',
-      ch: 0,
-      vs: 0,
-      lv: 0,
-      mod: atext?.element.dataset.module,
-      osisref: '',
-      nid: 0,
-      ntype: '',
-    } as TextInfo;
-  }
-  return info;
 }
 
 // Return the values of component state Prefs. Component state Prefs are
