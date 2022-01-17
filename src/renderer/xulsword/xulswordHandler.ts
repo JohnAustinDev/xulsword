@@ -18,7 +18,7 @@ import G from '../rg';
 import type { XulswordState } from './xulsword';
 
 export type MouseWheel = {
-  atext: HTMLElement;
+  atext: HTMLElement | null;
   count: 0;
   TO: number | undefined;
 };

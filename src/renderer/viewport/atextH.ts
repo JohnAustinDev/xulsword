@@ -350,10 +350,11 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       const e = es as React.MouseEvent;
       if (type !== C.DICTIONARY && !ofClass(['nbc'], target)) {
         if (isPinned) {
-          this.mouseWheel.atext = atext;
-          this.mouseWheel.count += e.detail;
-          if (this.mouseWheel.TO) window.clearTimeout(this.mouseWheel.TO);
-          this.mouseWheel.TO = window.setTimeout(() => {
+          const { mouseWheel: m } = this;
+          m.atext = atext;
+          m.count += e.detail;
+          if (m.TO) window.clearTimeout(m.TO);
+          m.TO = window.setTimeout(() => {
             wheelscroll(this);
           }, 250);
         }

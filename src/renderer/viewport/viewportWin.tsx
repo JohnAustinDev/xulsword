@@ -15,11 +15,12 @@ import { handle, xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Viewport from './viewport';
 import G from '../rg';
-import xulswordHandlerX from '../xulsword/xulswordHandler';
+import xulswordHandlerH from '../xulsword/xulswordHandler';
 import '../global-htm.css';
 import '../xulsword/xulsword.css';
 
 import type { StateDefault } from '../../type';
+import type { MouseWheel } from '../xulsword/xulswordHandler';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -52,7 +53,7 @@ export default class ViewportWin extends React.Component {
 
   xulswordHandler: any;
 
-  mouseWheel: { TO: number; atext: HTMLElement | null; count: number };
+  mouseWheel: MouseWheel;
 
   lastSetPrefs: { [i: string]: any };
 
@@ -87,7 +88,7 @@ export default class ViewportWin extends React.Component {
     this.updateGlobalState = this.updateGlobalState.bind(this);
     this.closeMenupopups = this.closeMenupopups.bind(this);
 
-    this.xulswordHandler = xulswordHandlerX.bind(this);
+    this.xulswordHandler = xulswordHandlerH.bind(this);
     this.lastSetPrefs = {};
     this.versification = undefined;
     this.v11nmod = undefined;

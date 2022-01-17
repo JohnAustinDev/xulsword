@@ -39,6 +39,7 @@ import '../libxul/xul.css';
 import '../libsword.css';
 import './atext.css';
 
+import type { MouseWheel } from '../xulsword/xulswordHandler';
 import type {
   PlaceType,
   ShowType,
@@ -303,7 +304,7 @@ class Atext extends React.Component {
 
   handler: (e: React.SyntheticEvent) => void;
 
-  mouseWheel: { TO: number; atext: HTMLElement | null; count: number };
+  mouseWheel: MouseWheel;
 
   sbref: React.RefObject<HTMLDivElement>;
 

@@ -28,6 +28,8 @@ import xulswordHandlerH from './xulswordHandler';
 import '../global-htm.css';
 import './xulsword.css';
 
+import type { MouseWheel } from './xulswordHandler';
+
 export const defaultProps = {
   ...xulDefaultProps,
 };
@@ -64,7 +66,7 @@ export default class Xulsword extends React.Component {
 
   historyTO: NodeJS.Timeout | undefined;
 
-  mouseWheel: { TO: number; atext: HTMLElement | null; count: number };
+  mouseWheel: MouseWheel;
 
   lastSetPrefs: { [i: string]: any };
 
