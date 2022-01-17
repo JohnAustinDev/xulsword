@@ -315,6 +315,11 @@ class Popup extends React.Component {
           break;
         }
 
+        case 'unknown': {
+          console.log(`Unknown popup: '${elem.className}'`);
+          break;
+        }
+
         default:
           throw Error(`Unhandled popup type '${type}'.`);
       }

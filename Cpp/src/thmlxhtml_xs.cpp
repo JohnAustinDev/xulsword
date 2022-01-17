@@ -29,7 +29,7 @@
 #include <url.h>
 
 SWORD_NAMESPACE_START
- 
+
 
 const char *ThMLXHTMLXS::getHeader() const {
   return "\
@@ -43,7 +43,7 @@ ThMLXHTMLXS::MyUserData::MyUserData(const SWModule *module, const SWKey *key) : 
   if (module) {
     version = module->getName();
     isBiblicalText = (!strcmp(module->getType(), "Biblical Texts"));
-  } 
+  }
 }
 
 
@@ -173,7 +173,7 @@ ThMLXHTMLXS::ThMLXHTMLXS() {
 
 bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData *userData) {
   if (!substituteToken(buf, token)) { // manually process if it wasn't a simple substitution
-    MyUserData *u = (MyUserData *)userData;   
+    MyUserData *u = (MyUserData *)userData;
 
     XMLTag tag(token);
     if ((!tag.isEndTag()) && (!tag.isEmpty()))
@@ -254,7 +254,7 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
 
        }
-       
+
       }
     }
     // <note> tag
@@ -274,14 +274,14 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
             mclass = "cr";
           }
           if (vkey) {
-            buf.appendFormatted("<span class=\"%s\" title=\"%s.%s.%s\"></span>",
+            buf.appendFormatted("<span class=\"%s\" data-title=\"%s.%s.%s\"></span>",
               mclass.c_str(),
-              footnoteNumber.c_str(), 
+              footnoteNumber.c_str(),
               vkey->getOSISRef(),
               userData->module->getName());
           }
           else {
-            buf.appendFormatted("<span class=\"gfn\" title=\"%s.%s.%s\">%s</span>",
+            buf.appendFormatted("<span class=\"gfn\" data-title=\"%s.%s.%s\">%s</span>",
               footnoteNumber.c_str(),
               mclass.c_str(),
               userData->module->getName(),
@@ -303,10 +303,10 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       if (!tag.isEndTag()) {
         if (!tag.isEmpty()) {
           if (tag.getAttribute("passage")) {
-            buf.appendFormatted("<a class=\"sr\" title=\"%s.%s\">", tag.getAttribute("passage"), userData->module->getName());
+            buf.appendFormatted("<a class=\"sr\" data-title=\"%s.%s\">", tag.getAttribute("passage"), userData->module->getName());
           }
           else {
-            buf.appendFormatted("<a class=\"sr\" title=\"unavailable.%s\">", userData->module->getName());
+            buf.appendFormatted("<a class=\"sr\" data-title=\"unavailable.%s\">", userData->module->getName());
           }
         }
       }
@@ -353,7 +353,7 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         imagename += userData->module->getConfigEntry("AbsoluteDataPath");
       while (c != d)        // move bits into the name.
           imagename += *(c++);
-          
+
       imagename.replaceBytes("\\", '/');
 
       buf.append("<div class=\"image-container\">");

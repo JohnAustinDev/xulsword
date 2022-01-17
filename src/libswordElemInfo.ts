@@ -55,7 +55,6 @@ type ElemTypesType = {
   listenlink: Value[]; // audio link
 };
 
-// TODO! Use data-attribute(s) instead of title to store data. Title causes annoying tooltip popups etc.!
 const TitleFormat: ElemTypesType = {
   vs:     [ { re:new RegExp(/^(([^.]+)\.(\d+)\.(\d+))\.(\d+)\.([^.]+)$/),                                      bk:2,    ch:3,     vs:4,    lv:5,     mod:6, osisref:1 } ],
   fn:     [ { re:new RegExp(/^(\d+)\.(unavailable)\.([^.]+)$/),                                         nid:1, bk:null, ch:null,  vs:null, lv:null,  mod:3, osisref:2 },
@@ -92,23 +91,21 @@ const TitleFormat: ElemTypesType = {
 // - ch: is UTF8 (may be a number or a key)
 // - all other properties: are ASCII
 export function getElementInfo(elem: string | HTMLElement): ElemInfo | null {
-  // Info is parsed from className and title, so start by getting each
+  // Info is parsed from className and dataTitle, so start by getting each
   let className;
   let title;
   if (typeof elem === 'string') {
     // If elem is string HTML, parse only the first tag
-    const mt = elem.match(/^[^<]*<[^>]+title\s*=\s*["']([^"']*)["']/);
+    const mt = elem.match(/^[^<]*<[^>]+data-title\s*=\s*["']([^"']*)["']/);
     if (mt !== null) [, title] = mt;
     const mc = elem.match(/^[^<]*<[^>]+class\s*=\s*["']([^"']*)["']/);
     if (mc !== null) [, className] = mc;
     if (!title || !className) return null;
   } else {
-    if (!elem.className || !elem.title) return null;
+    if (!elem.className || !elem.dataset.title) return null;
     className = elem.className;
-    title = elem.title;
+    title = elem.dataset.title;
   }
-
-  // jsdump("getElementInfo class=" + className + ", title=" + title);
 
   // Read info using ...
   const r: ElemInfo = {

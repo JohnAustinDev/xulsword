@@ -56,7 +56,7 @@ TEIXHTMLXS::TEIXHTMLXS() {
   addAllowedEscapeString("gt");
 
   setTokenCaseSensitive(true);
-  
+
   //  addTokenSubstitute("lg",  "<br />");
   //  addTokenSubstitute("/lg", "<br />");
 
@@ -83,7 +83,7 @@ TEIXHTMLXS::MyUserDataXS::MyUserDataXS(const SWModule *module, const SWKey *key)
     version = "";
   }
   consecutiveNewlines = 0;
-  
+
   // variables unique to TEIXHTMLXS
   referenceTag = "";
 }
@@ -93,16 +93,16 @@ TEIXHTMLXS::MyUserDataXS::~MyUserDataXS() {
   delete hiStack;
   delete titleStack;
   delete lineStack;
-  
+
   // variables unique to TEIXHTMLXS
   delete htmlTagStack;
   delete pStack;
 }
 
-// This is used to output HTML tags and to update the HTML tag list so 
-// that rendered text will not be returned with open tags. For this 
-// function to work as intended, only a single opening or closing tag 
-// can be included anywhere in t. Partial (unfinished) start tags are 
+// This is used to output HTML tags and to update the HTML tag list so
+// that rendered text will not be returned with open tags. For this
+// function to work as intended, only a single opening or closing tag
+// can be included anywhere in t. Partial (unfinished) start tags are
 // allowed.
 void TEIXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
 
@@ -110,21 +110,21 @@ void TEIXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
     u->lastSuspendSegment += t;
     return;
   }
-  
+
   SWBuf tag;
   char *tcopy = new char [ strlen(t) + 1 ];
   strcpy(tcopy, t);
   char *tagStart = strchr(tcopy, '<');
   if (tagStart) {tag = strtok(tagStart, "</ >");}
-  
+
   bool singleton = (
-    !strcmp(tag.c_str(), "br") || 
-    !strcmp(tag.c_str(), "hr") || 
+    !strcmp(tag.c_str(), "br") ||
+    !strcmp(tag.c_str(), "hr") ||
     !strcmp(tag.c_str(), "img")
   );
-  
+
   bool keepTag = true;
-  
+
   if (!singleton) {
     if (tagStart && *(tagStart+1) == '/') {
       keepTag = (!u->htmlTagStack->empty() && !strcmp(u->htmlTagStack->top().c_str(), tag.c_str()));
@@ -135,9 +135,9 @@ void TEIXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
       u->htmlTagStack->push(SWBuf(tag.c_str()));
     }
   }
-  
+
   if (keepTag) {o += t;}
-  
+
   delete(tcopy);
 }
 
@@ -149,7 +149,7 @@ char TEIXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *modu
   bool inEsc = false;
   SWBuf lastTextNode;
   MyUserDataXS *userData = (MyUserDataXS *)createUserData(module, key);
-  
+
 
   SWBuf orig = text;
   from = orig.getRawData();
@@ -181,7 +181,7 @@ char TEIXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *modu
       if (*from == ';') {
         intoken = inEsc = false;
         userData->lastTextNode = lastTextNode;
-        
+
         if (!userData->suspendTextPassThru)  { //if text through is disabled no tokens should pass, too
           handleEscapeString(text, token, userData);
         }
@@ -219,7 +219,7 @@ char TEIXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *modu
     }
 
   }
-  
+
   // THE MAIN PURPOSE OF THIS OVERRIDE FUNCTION: is to insure all opened HTML tags are closed
   while (!userData->htmlTagStack->empty()) {
     text.append((SWBuf)"</" + userData->htmlTagStack->top().c_str() + ">");
@@ -238,12 +238,12 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
   if (!sub) {
   // manually process if it wasn't a simple substitution
     XMLTag tag(token);
-    
+
     // BEGIN: TAGS FROM teixhtml.cpp WHICH ARE NOT OSIS TAGS
     // <entryFree>
     if (!strcmp(tag.getName(), "entryFree")) {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {
-        SWBuf n = tag.getAttribute("n");        
+        SWBuf n = tag.getAttribute("n");
         if (n != "") {
           outHtmlTag("<span class=\"entryFree\">", buf, u);
           outText(n, buf, u);
@@ -275,13 +275,13 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
     }
 
     // <pos>, <gen>, <case>, <gram>, <number>, <mood>, <pron>, <def> <tr> <orth> <etym> <usg>
-    else if (!strcmp(tag.getName(), "pos") || 
-         !strcmp(tag.getName(), "gen") || 
-         !strcmp(tag.getName(), "case") || 
-         !strcmp(tag.getName(), "gram") || 
-         !strcmp(tag.getName(), "number") || 
+    else if (!strcmp(tag.getName(), "pos") ||
+         !strcmp(tag.getName(), "gen") ||
+         !strcmp(tag.getName(), "case") ||
+         !strcmp(tag.getName(), "gram") ||
+         !strcmp(tag.getName(), "number") ||
          !strcmp(tag.getName(), "pron") ||
-         !strcmp(tag.getName(), "def") || 
+         !strcmp(tag.getName(), "def") ||
          !strcmp(tag.getName(), "tr") ||
          !strcmp(tag.getName(), "orth") ||
          !strcmp(tag.getName(), "etym") ||
@@ -289,7 +289,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
          !strcmp(tag.getName(), "quote")||
          !strcmp(tag.getName(), "cit")||
          !strcmp(tag.getName(), "persName")||
-         !strcmp(tag.getName(), "oVar")) 
+         !strcmp(tag.getName(), "oVar"))
          {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {
         outHtmlTag("<span class=\"", buf, u);
@@ -312,7 +312,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
     // <graphic> image tag
     else if (!strcmp(tag.getName(), "graphic")) {
       const char *url = tag.getAttribute("url");
-      if (url) {    // assert we have a url attribute 
+      if (url) {    // assert we have a url attribute
         SWBuf filepath;
         if (userData->module) {
           filepath = userData->module->getConfigEntry("AbsoluteDataPath");
@@ -321,7 +321,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         }
         filepath += url;
         filepath.replaceBytes("\\", '/');
-        outHtmlTag(SWBuf().appendFormatted("<div class=\"image-container %s %s\">", 
+        outHtmlTag(SWBuf().appendFormatted("<div class=\"image-container %s %s\">",
             (tag.getAttribute("type") ? tag.getAttribute("type"):""),
             (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")
           ).c_str(), buf, u);
@@ -332,7 +332,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       }
     }
     // END: TAGS FROM teixhtml.cpp WHICH ARE NOT OSIS TAGS
-    
+
     // BEGIN: OSIS TAGS FROM osisxhtml_xs.cpp
     // <w> tag
     else if (!strcmp(tag.getName(), "w")) {
@@ -441,14 +441,14 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
                   mclass.append(tag.getAttribute("subType"));
                 }
               }
-              buf.appendFormatted("<span class=\"%s\" title=\"%s.%s.%s\"></span>",
+              buf.appendFormatted("<span class=\"%s\" data-title=\"%s.%s.%s\"></span>",
               mclass.c_str(),
-              footnoteNumber.c_str(), 
+              footnoteNumber.c_str(),
               vkey->getOSISRef(),
               userData->module->getName());
             }
             else {
-              buf.appendFormatted("<span class=\"gfn\" title=\"%s.%s.%s\">%s</span>",
+              buf.appendFormatted("<span class=\"gfn\" data-title=\"%s.%s.%s\">%s</span>",
                 footnoteNumber.c_str(),
                 mclass.c_str(),
                 userData->module->getName(),
@@ -466,9 +466,9 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
     }
 
     // <p> paragraph, <lg> linegroup tags and <list>
-    // NOTE: Milestone p is illegal OSIS, but is handled anyway. Non-milestone 
-    // versions of these three tags should not be found in versified Bibles, 
-    // so it is not necessary to open/close u->wordsOfChrist (OSIS container 
+    // NOTE: Milestone p is illegal OSIS, but is handled anyway. Non-milestone
+    // versions of these three tags should not be found in versified Bibles,
+    // so it is not necessary to open/close u->wordsOfChrist (OSIS container
     // tags could break wordsOfChrist presentation).
     else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg") || !strcmp(tag.getName(), "list")) {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {  // non-milestone start tag
@@ -526,7 +526,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
 
     // <reference> tag (this TEI filter also handles <ref> with "target" attributes treated as osisRefs)
     else if (!strcmp(tag.getName(), "reference") || !strcmp(tag.getName(), "ref")) {
-      if (!u->inXRefNote) { // only show these if we're not in an xref note       
+      if (!u->inXRefNote) { // only show these if we're not in an xref note
         if ((!tag.isEndTag()) && (!tag.isEmpty())) {
           SWBuf referenceInfo = "";
           if ((tag.getAttribute("osisRef"))) referenceInfo = tag.getAttribute("osisRef");
@@ -550,7 +550,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
             referenceClass = "dtl";
             if (tag.getAttribute("subType") && !strcmp("x-target_self", tag.getAttribute("subType"))) {
               referenceClass.append(" "); referenceClass.append(tag.getAttribute("subType"));
-            }     
+            }
           }
           else {
             u->referenceTag = "span";
@@ -569,7 +569,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
                 char mychar = buf.charAt(i);
                 if      (etag==-1 && mychar=='>') {etag=i;}
                 else if (etag!=-1 && insertpoint==-1 && mychar=='"') {insertpoint=i;}
-                else if (etag!=-1 && insertpoint!=-1 && mychar==match[mi]) {mi--;} 
+                else if (etag!=-1 && insertpoint!=-1 && mychar==match[mi]) {mi--;}
                 else {mi = 15;}
                 if (mychar=='<') {stag=i;}
               }
@@ -587,7 +587,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
             else if (lenAfterTrim < lenBeforeTrim) buf += ' ';
           }
           // "self:" appears in at least the BDBGlosses_Strongs module
-          if (referenceInfo.startsWith("self:")) { 
+          if (referenceInfo.startsWith("self:")) {
             referenceInfo << 5;
             // Don't output links to the current entry (circular links)
             if (referenceInfo == userData->module->getKeyText()) {
@@ -598,7 +598,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
             referenceInfo.insert(0, userData->module->getName());
           }
           SWBuf tmpbuf;
-          tmpbuf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", u->referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
+          tmpbuf.appendFormatted("<%s class=\"%s\" data-title=\"%s.%s\">", u->referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
           outHtmlTag(tmpbuf, buf, u);
         }
         if (tag.isEndTag() && u->referenceTag != "") {
@@ -610,7 +610,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
     }
 
     // <l> poetry, <item> list-item
-    // NOTE: <l> and <item> should not be nested according to my reading of OSIS 
+    // NOTE: <l> and <item> should not be nested according to my reading of OSIS
     // schema, but nesting is handled anyway. Also <l> allows the "level" attribute,
     // while <item> does not, however both attributes are always handled anyway.
     else if (!strcmp(tag.getName(), "l") || !strcmp(tag.getName(), "item")) {
@@ -692,8 +692,8 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       }
       // old xulsword modules use x-p-indent (pre SWORD 1.7)
       else {
-        outText("<div class=\"", buf, u); 
-        outText(tag.getAttribute("type"), buf, u); 
+        outText("<div class=\"", buf, u);
+        outText(tag.getAttribute("type"), buf, u);
         outText(subType.c_str(), buf, u);
         outText("\"></div>", buf, u);
       }
@@ -775,7 +775,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       }
     }
 
-    // divineName  
+    // divineName
     else if (!strcmp(tag.getName(), "divineName")) {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {
         u->suspendTextPassThru = (++u->suspendLevel);
@@ -786,8 +786,8 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         if (lastText.size()) {
           scratch.setFormatted("<span class=\"divineName\">%s</span>", lastText.c_str());
           outText(scratch.c_str(), buf, u);
-        }               
-      } 
+        }
+      }
     }
 
     // <hi> text highlighting
@@ -821,7 +821,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
           outHtmlTag("<i>", buf, u);
         }
         u->hiStack->push(tag.toString());
-        
+
         // create separate span from any subType
         if (tag.getAttribute("subType")) {
           SWBuf htag = "<span class=\"";
@@ -923,13 +923,13 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         }
       }
     }
-    
+
     // <transChange>
     else if (!strcmp(tag.getName(), "transChange")) {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {
         SWBuf type = tag.getAttribute("type");
         u->lastTransChange = type;
-        
+
         outHtmlTag("<span class=\"transChange", buf, u);
         if (type.length()) {
           outText(" transChange-", buf, u);
@@ -947,7 +947,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
     // image
     else if (!strcmp(tag.getName(), "figure")) {
       const char *src = tag.getAttribute("src");
-      if (src) {    // assert we have a src attribute 
+      if (src) {    // assert we have a src attribute
         SWBuf filepath;
         if (userData->module) {
           filepath = userData->module->getConfigEntry("AbsoluteDataPath");
@@ -957,8 +957,8 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         filepath += src;
 
             filepath.replaceBytes("\\", '/');
-      
-          outHtmlTag(SWBuf().appendFormatted("<div class=\"image-container %s %s\">", 
+
+          outHtmlTag(SWBuf().appendFormatted("<div class=\"image-container %s %s\">",
               (tag.getAttribute("type") ? tag.getAttribute("type"):""),
               (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")
             ).c_str(), buf, u);
@@ -988,7 +988,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
           mtag.append(type);
           SWBuf subType = tag.getAttribute("subType");
           if (type.length() || subType.length()) {
-            mtag.append(" class=\""); 
+            mtag.append(" class=\"");
             mtag.append(type);
             mtag.append(" ");
             mtag.append(subType);
@@ -1010,7 +1010,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       if (!tag.isEndTag()) {
         SWBuf title = tag.getAttribute("expansion");
         outHtmlTag("<abbr title=\"", buf, u);
-        outText(title, buf, u); 
+        outText(title, buf, u);
         outText("\">", buf, u);
       }
       else if (tag.isEndTag()) {
@@ -1026,7 +1026,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         SWBuf type = tag.getAttribute("type");
         SWBuf subType = tag.getAttribute("subType");
         if (type.length() || subType.length()) {
-          outText(" class=\"", buf, u); 
+          outText(" class=\"", buf, u);
           outText(type, buf, u);
           outText(" ", buf, u);
           outText(subType, buf, u);
@@ -1046,7 +1046,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         SWBuf type = tag.getAttribute("type");
         SWBuf subType = tag.getAttribute("subType");
         if (type.length() || subType.length()) {
-          outText(" class=\"", buf, u); 
+          outText(" class=\"", buf, u);
           outText(type, buf, u);
           outText(" ", buf, u);
           outText(subType, buf, u);
@@ -1064,7 +1064,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         SWBuf type = tag.getAttribute("type");
         SWBuf subType = tag.getAttribute("subType");
         if (type.length() || subType.length()) {
-          outText(" class=\"", buf, u); 
+          outText(" class=\"", buf, u);
           outText(type, buf, u);
           outText(" ", buf, u);
           outText(subType, buf, u);
@@ -1077,7 +1077,7 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       }
     }
     // END: OSIS TAGS FROM osisxhtml_xs.cpp
-    
+
     else {
       return false;  // we still didn't handle token
     }

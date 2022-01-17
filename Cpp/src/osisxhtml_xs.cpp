@@ -59,7 +59,7 @@ OSISXHTMLXS::OSISXHTMLXS() {
   addAllowedEscapeString("gt");
 
   setTokenCaseSensitive(true);
-  
+
   //  addTokenSubstitute("lg",  "<br />");
   //  addTokenSubstitute("/lg", "<br />");
 
@@ -86,7 +86,7 @@ OSISXHTMLXS::MyUserDataXS::MyUserDataXS(const SWModule *module, const SWKey *key
     version = "";
   }
   consecutiveNewlines = 0;
-  
+
   // variables unique to OSISXHTMLXS
   referenceTag = "";
 }
@@ -96,16 +96,16 @@ OSISXHTMLXS::MyUserDataXS::~MyUserDataXS() {
   delete hiStack;
   delete titleStack;
   delete lineStack;
-  
+
   // variables unique to OSISXHTMLXS
   delete htmlTagStack;
   delete pStack;
 }
 
-// This is used to output HTML tags and to update the HTML tag list so 
-// that rendered text will not be returned with open tags. For this 
-// function to work as intended, only a single opening or closing tag 
-// can be included anywhere in t. Partial (unfinished) start tags are 
+// This is used to output HTML tags and to update the HTML tag list so
+// that rendered text will not be returned with open tags. For this
+// function to work as intended, only a single opening or closing tag
+// can be included anywhere in t. Partial (unfinished) start tags are
 // allowed.
 void OSISXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
 
@@ -113,21 +113,21 @@ void OSISXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
     u->lastSuspendSegment += t;
     return;
   }
-  
+
   SWBuf tag;
   char *tcopy = new char [ strlen(t) + 1 ];
   strcpy(tcopy, t);
   char *tagStart = strchr(tcopy, '<');
   if (tagStart) {tag = strtok(tagStart, "</ >");}
-  
+
   bool singleton = (
-    !strcmp(tag.c_str(), "br") || 
-    !strcmp(tag.c_str(), "hr") || 
+    !strcmp(tag.c_str(), "br") ||
+    !strcmp(tag.c_str(), "hr") ||
     !strcmp(tag.c_str(), "img")
   );
-  
+
   bool keepTag = true;
-  
+
   if (!singleton) {
     if (tagStart && *(tagStart+1) == '/') {
       keepTag = (!u->htmlTagStack->empty() && !strcmp(u->htmlTagStack->top().c_str(), tag.c_str()));
@@ -138,9 +138,9 @@ void OSISXHTMLXS::outHtmlTag(const char * t, SWBuf &o, MyUserDataXS *u) {
       u->htmlTagStack->push(SWBuf(tag.c_str()));
     }
   }
-  
+
   if (keepTag) {o += t;}
-  
+
   delete(tcopy);
 }
 
@@ -152,7 +152,7 @@ char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *mod
   bool inEsc = false;
   SWBuf lastTextNode;
   MyUserDataXS *userData = (MyUserDataXS *)createUserData(module, key);
-  
+
 
   SWBuf orig = text;
   from = orig.getRawData();
@@ -184,7 +184,7 @@ char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *mod
       if (*from == ';') {
         intoken = inEsc = false;
         userData->lastTextNode = lastTextNode;
-        
+
         if (!userData->suspendTextPassThru)  { //if text through is disabled no tokens should pass, too
           handleEscapeString(text, token, userData);
         }
@@ -222,7 +222,7 @@ char OSISXHTMLXS::processText(SWBuf &text, const SWKey *key, const SWModule *mod
     }
 
   }
-  
+
   // THE MAIN PURPOSE OF THIS OVERRIDE FUNCTION: is to insure all opened HTML tags are closed
   while (!userData->htmlTagStack->empty()) {
     text.append((SWBuf)"</" + userData->htmlTagStack->top().c_str() + ">");
@@ -241,7 +241,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
   if (!sub) {
   // manually process if it wasn't a simple substitution
     XMLTag tag(token);
-    
+
     // <w> tag
     if (!strcmp(tag.getName(), "w")) {
       VerseKey *vkey;
@@ -349,14 +349,14 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
                   mclass.append(tag.getAttribute("subType"));
                 }
               }
-              buf.appendFormatted("<span class=\"%s\" title=\"%s.%s.%s\"></span>",
+              buf.appendFormatted("<span class=\"%s\" data-title=\"%s.%s.%s\"></span>",
               mclass.c_str(),
-              footnoteNumber.c_str(), 
+              footnoteNumber.c_str(),
               vkey->getOSISRef(),
               userData->module->getName());
             }
             else {
-              buf.appendFormatted("<span class=\"gfn\" title=\"%s.%s.%s\">%s</span>",
+              buf.appendFormatted("<span class=\"gfn\" data-title=\"%s.%s.%s\">%s</span>",
                 footnoteNumber.c_str(),
                 mclass.c_str(),
                 userData->module->getName(),
@@ -374,9 +374,9 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
     }
 
     // <p> paragraph, <lg> linegroup tags and <list>
-    // NOTE: Milestone p is illegal OSIS, but is handled anyway. Non-milestone 
-    // versions of these three tags should not be found in versified Bibles, 
-    // so it is not necessary to open/close u->wordsOfChrist (OSIS container 
+    // NOTE: Milestone p is illegal OSIS, but is handled anyway. Non-milestone
+    // versions of these three tags should not be found in versified Bibles,
+    // so it is not necessary to open/close u->wordsOfChrist (OSIS container
     // tags could break wordsOfChrist presentation).
     else if (!strcmp(tag.getName(), "p") || !strcmp(tag.getName(), "lg") || !strcmp(tag.getName(), "list")) {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {  // non-milestone start tag
@@ -434,7 +434,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
 
     // <reference> tag
     else if (!strcmp(tag.getName(), "reference")) {
-      if (!u->inXRefNote) { // only show these if we're not in an xref note       
+      if (!u->inXRefNote) { // only show these if we're not in an xref note
         if ((!tag.isEndTag()) && (!tag.isEmpty())) {
           SWBuf referenceInfo = "";
           if ((tag.getAttribute("osisRef"))) referenceInfo = tag.getAttribute("osisRef");
@@ -452,7 +452,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
             referenceClass = "dtl";
             if (tag.getAttribute("subType") && !strcmp("x-target_self", tag.getAttribute("subType"))) {
               referenceClass.append(" "); referenceClass.append(tag.getAttribute("subType"));
-            }     
+            }
           }
           else {
             u->referenceTag = "span";
@@ -471,7 +471,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
                 char mychar = buf.charAt(i);
                 if      (etag==-1 && mychar=='>') {etag=i;}
                 else if (etag!=-1 && insertpoint==-1 && mychar=='"') {insertpoint=i;}
-                else if (etag!=-1 && insertpoint!=-1 && mychar==match[mi]) {mi--;} 
+                else if (etag!=-1 && insertpoint!=-1 && mychar==match[mi]) {mi--;}
                 else {mi = 15;}
                 if (mychar=='<') {stag=i;}
               }
@@ -494,7 +494,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
             referenceInfo.insert(0, userData->module->getName());
           }
           SWBuf tmpbuf;
-          tmpbuf.appendFormatted("<%s class=\"%s\" title=\"%s.%s\">", u->referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
+          tmpbuf.appendFormatted("<%s class=\"%s\" data-title=\"%s.%s\">", u->referenceTag.c_str(), referenceClass.c_str(), referenceInfo.c_str(), userData->module->getName());
           outHtmlTag(tmpbuf, buf, u);
         }
         if (tag.isEndTag()) {
@@ -506,7 +506,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
     }
 
     // <l> poetry, <item> list-item
-    // NOTE: <l> and <item> should not be nested according to my reading of OSIS 
+    // NOTE: <l> and <item> should not be nested according to my reading of OSIS
     // schema, but nesting is handled anyway. Also <l> allows the "level" attribute,
     // while <item> does not, however both attributes are always handled anyway.
     else if (!strcmp(tag.getName(), "l") || !strcmp(tag.getName(), "item")) {
@@ -588,8 +588,8 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       }
       // old xulsword modules use x-p-indent (pre SWORD 1.7)
       else {
-        outText("<div class=\"", buf, u); 
-        outText(tag.getAttribute("type"), buf, u); 
+        outText("<div class=\"", buf, u);
+        outText(tag.getAttribute("type"), buf, u);
         outText(subType.c_str(), buf, u);
         outText("\"></div>", buf, u);
       }
@@ -671,7 +671,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       }
     }
 
-    // divineName  
+    // divineName
     else if (!strcmp(tag.getName(), "divineName")) {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {
         u->suspendTextPassThru = (++u->suspendLevel);
@@ -682,8 +682,8 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         if (lastText.size()) {
           scratch.setFormatted("<span class=\"divineName\">%s</span>", lastText.c_str());
           outText(scratch.c_str(), buf, u);
-        }               
-      } 
+        }
+      }
     }
 
     // <hi> text highlighting
@@ -717,7 +717,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
           outHtmlTag("<i>", buf, u);
         }
         u->hiStack->push(tag.toString());
-        
+
         // create separate span from any subType
         if (tag.getAttribute("subType")) {
           SWBuf htag = "<span class=\"";
@@ -819,13 +819,13 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         }
       }
     }
-    
+
     // <transChange>
     else if (!strcmp(tag.getName(), "transChange")) {
       if ((!tag.isEndTag()) && (!tag.isEmpty())) {
         SWBuf type = tag.getAttribute("type");
         u->lastTransChange = type;
-        
+
         outHtmlTag("<span class=\"transChange", buf, u);
         if (type.length()) {
           outText(" transChange-", buf, u);
@@ -843,7 +843,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
     // image
     else if (!strcmp(tag.getName(), "figure")) {
       const char *src = tag.getAttribute("src");
-      if (src) {    // assert we have a src attribute 
+      if (src) {    // assert we have a src attribute
         SWBuf filepath;
         if (userData->module) {
           filepath = userData->module->getConfigEntry("AbsoluteDataPath");
@@ -853,8 +853,8 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         filepath += src;
 
             filepath.replaceBytes("\\", '/');
-      
-          outHtmlTag(SWBuf().appendFormatted("<div class=\"image-container %s %s\">", 
+
+          outHtmlTag(SWBuf().appendFormatted("<div class=\"image-container %s %s\">",
               (tag.getAttribute("type") ? tag.getAttribute("type"):""),
               (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")
             ).c_str(), buf, u);
@@ -884,7 +884,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
           mtag.append("div");
           SWBuf subType = tag.getAttribute("subType");
           if (type.length() || subType.length()) {
-            mtag.append(" class=\""); 
+            mtag.append(" class=\"");
             mtag.append(type);
             mtag.append(" ");
             mtag.append(subType);
@@ -906,7 +906,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       if (!tag.isEndTag()) {
         SWBuf title = tag.getAttribute("expansion");
         outHtmlTag("<abbr title=\"", buf, u);
-        outText(title, buf, u); 
+        outText(title, buf, u);
         outText("\">", buf, u);
       }
       else if (tag.isEndTag()) {
@@ -922,7 +922,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         SWBuf type = tag.getAttribute("type");
         SWBuf subType = tag.getAttribute("subType");
         if (type.length() || subType.length()) {
-          outText(" class=\"", buf, u); 
+          outText(" class=\"", buf, u);
           outText(type, buf, u);
           outText(" ", buf, u);
           outText(subType, buf, u);
@@ -942,7 +942,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         SWBuf type = tag.getAttribute("type");
         SWBuf subType = tag.getAttribute("subType");
         if (type.length() || subType.length()) {
-          outText(" class=\"", buf, u); 
+          outText(" class=\"", buf, u);
           outText(type, buf, u);
           outText(" ", buf, u);
           outText(subType, buf, u);
@@ -960,7 +960,7 @@ bool OSISXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
         SWBuf type = tag.getAttribute("type");
         SWBuf subType = tag.getAttribute("subType");
         if (type.length() || subType.length()) {
-          outText(" class=\"", buf, u); 
+          outText(" class=\"", buf, u);
           outText(type, buf, u);
           outText(" ", buf, u);
           outText(subType, buf, u);

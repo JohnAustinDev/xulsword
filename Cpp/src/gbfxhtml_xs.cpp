@@ -20,7 +20,7 @@
  *
  */
 
- 
+
 #include <stdlib.h>
 #include <gbfxhtmlxs.h>
 #include <swmodule.h>
@@ -41,14 +41,14 @@ const char *GBFXHTMLXS::getHeader() const {
 
 GBFXHTMLXS::MyUserData::MyUserData(const SWModule *module, const SWKey *key) : BasicFilterUserData(module, key) {
   if (module) {
-    version = module->getName(); 
-  } 
+    version = module->getName();
+  }
 }
 
 GBFXHTMLXS::GBFXHTMLXS() {
   setTokenStart("<");
   setTokenEnd(">");
-  
+
   setTokenCaseSensitive(true);
 
   //addTokenSubstitute("Rf", ")</small></font>");
@@ -80,7 +80,7 @@ GBFXHTMLXS::GBFXHTMLXS() {
   addTokenSubstitute("JR", "<div align=\"right\">"); // right align begin
   addTokenSubstitute("JC", "<div align=\"center\">"); // center align begin
   addTokenSubstitute("JL", "</div>"); // align end
-  
+
   renderNoteNumbers = false;
 }
 
@@ -91,16 +91,16 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
 
   if (!substituteToken(buf, token)) {
     XMLTag tag(token);
-    
+
   if (!strncmp(token, "WG", 2) || !strncmp(token, "WH", 2) || !strncmp(token, "WTG", 3) || !strncmp(token, "WTH", 3)) { // strong's numbers
-    
+
     SWBuf styp;
     int tl = 2;
     if (!strncmp(token, "WG", 2))  {styp = "S_G";}
     if (!strncmp(token, "WH", 2))  {styp = "S_H";}
     if (!strncmp(token, "WTG", 3)) {styp = "SM_G"; tl = 3;}
     if (!strncmp(token, "WTH", 3)) {styp = "SM_H"; tl = 3;}
-    
+
     VerseKey *vkey;
       // see if we have a VerseKey * or descendant
       SWTRY {
@@ -117,7 +117,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
         bool p1fixed = false;
         bool append = false;
         int si = stlen;
-        
+
         for (int i = buf.length()-1; i>=0; i--) {
           char I = buf.charAt(i);
           if (!p2fixed && (I=='<')) {
@@ -164,7 +164,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
           buf.insert(p2, "</span>");
         }
       }
-      else {     
+      else {
         buf.append("<");
         buf.append(token);
         buf.append(">");
@@ -196,17 +196,17 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       }
       SWCATCH ( ... ) { }
       if (vkey) {
-        buf.appendFormatted("<span class=\"fn\" title=\"%s.%s.%s\"></span>",
-              footnoteNumber.c_str(), 
+        buf.appendFormatted("<span class=\"fn\" data-title=\"%s.%s.%s\"></span>",
+              footnoteNumber.c_str(),
               vkey->getOSISRef(),
               userData->module->getName());
       }
       else {
-        buf.appendFormatted("<span class=\"gfn\" title=\"%s.fn.%s\"></span>",
-              footnoteNumber.c_str(), 
+        buf.appendFormatted("<span class=\"gfn\" data-title=\"%s.fn.%s\"></span>",
+              footnoteNumber.c_str(),
               userData->module->getName());
       }
-      
+
       u->suspendTextPassThru = true;
     }
     else if (!strcmp(tag.getName(), "Rf")) {
@@ -226,7 +226,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
       // let's let text resume to output again
       u->suspendTextPassThru = false;
     }
-    
+
     else if (!strncmp(token, "RF", 2)) {
       if (u->hasFootnotePreTag) {
         u->hasFootnotePreTag = false;
@@ -237,8 +237,8 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
 */
     else if (!strncmp(token, "FN", 2)) {
       buf += "<font face=\"";
-      for (tok = token + 2; *tok; tok++)        
-        if(*tok != '\"')      
+      for (tok = token + 2; *tok; tok++)
+        if(*tok != '\"')
           buf += *tok;
       buf += "\">";
     }
@@ -246,7 +246,7 @@ bool GBFXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
     else if (!strncmp(token, "CA", 2)) {  // ASCII value
       buf += (char)atoi(&token[2]);
     }
-    
+
     else {
       return false;
     }
