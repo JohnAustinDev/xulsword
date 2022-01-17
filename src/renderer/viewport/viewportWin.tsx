@@ -62,9 +62,11 @@ export default class ViewportWin extends React.Component {
   constructor(props: ViewportWinProps) {
     super(props);
 
+    const statePref = props.id ? getStatePref(props.id, null) : undefined;
+
     this.state = {
       ...notStatePref,
-      ...getStatePref(this, null, notStatePref),
+      ...statePref,
     };
 
     onSetWindowStates(this);
@@ -76,6 +78,7 @@ export default class ViewportWin extends React.Component {
 
   render() {
     const state = this.state as ViewportWinState;
+    const props = this.props as ViewportWinProps;
     const {
       book,
       chapter,
@@ -97,6 +100,10 @@ export default class ViewportWin extends React.Component {
       vpreset,
       versification,
     } = state;
+    const { id } = props;
+    const { lastSetPrefs, xulswordHandler } = this;
+
+    if (id) updateGlobalState(id, state, lastSetPrefs, notStatePref);
 
     jsdump(
       `Rendering ViewportWin ${JSON.stringify({
@@ -104,10 +111,6 @@ export default class ViewportWin extends React.Component {
         tabs: 'not-printed',
       })}`
     );
-
-    const { xulswordHandler } = this;
-
-    updateGlobalState(this, this.lastSetPrefs, notStatePref);
 
     return (
       <Vbox

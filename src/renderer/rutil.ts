@@ -1,6 +1,7 @@
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/prefer-default-export */
+import React from 'react';
 import i18next from 'i18next';
 import C from '../constant';
 import {
@@ -567,13 +568,12 @@ export function getPopupInfo(elem: HTMLElement): TextInfo {
 // NOTE: The whole initial pref object (after the id) is returned if any of
 // its descendants is requested.
 export function getStatePref(
-  component: React.Component,
+  id: string,
   prefsToGet?: string | string[] | null,
   ignore?: any
 ): {
   [i: string]: any;
 } {
-  const { id } = component.props as any;
   const store = G.Prefs.getStore();
   if (!id || !store) {
     return {};
@@ -594,7 +594,10 @@ export function getStatePref(
     if (canid === id && typeof value === 'object') {
       Object.entries(value).forEach((entry2) => {
         const [s, v] = entry2;
-        if (!(s in ignore) && (prefs === undefined || prefs.includes(s))) {
+        if (
+          (!ignore || !(s in ignore)) &&
+          (prefs === undefined || prefs.includes(s))
+        ) {
           state[s] = v;
         }
       });
@@ -604,20 +607,23 @@ export function getStatePref(
   return state;
 }
 
-// Calling this function registeres a set-window-states listener that, when
+// Calling this function registers a set-window-states listener that, when
 // called upon, will read component state Prefs and write them to new state.
 export function onSetWindowStates(component: React.Component) {
   window.ipc.renderer.on('set-window-states', (prefs: string | string[]) => {
-    const state = getStatePref(component, prefs);
-    const lng = G.Prefs.getCharPref(C.LOCALEPREF);
-    if (lng !== i18next.language) {
-      i18next.changeLanguage(lng, (err) => {
-        if (err) throw Error(err);
-        G.reset();
+    const { id } = component.props as any;
+    if (id) {
+      const state = getStatePref(id, prefs);
+      const lng = G.Prefs.getCharPref(C.LOCALEPREF);
+      if (lng !== i18next.language) {
+        i18next.changeLanguage(lng, (err) => {
+          if (err) throw Error(err);
+          G.reset();
+          component.setState(state);
+        });
+      } else {
         component.setState(state);
-      });
-    } else {
-      component.setState(state);
+      }
     }
   });
 }
@@ -627,31 +633,32 @@ export function onSetWindowStates(component: React.Component) {
 // ignore) and then setGlobalMenuFromPrefs() will notify other windows of the
 // changes.
 export function updateGlobalState(
-  component: React.Component,
-  lastStatePrefs: any,
-  ignore?: any
+  id: string,
+  state: React.ComponentState,
+  lastStatePrefs: { [i: string]: any },
+  ignore?: { [i: string]: any }
 ) {
-  const { id } = component.props as any;
-  if (!id) return;
   let prefsChanged = false;
-  Object.entries(component.state).forEach((entry) => {
+  Object.entries(state).forEach((entry) => {
     const [name, value] = entry;
-    const type = typeof value;
-    const pref = `${id}.${name}`;
-    const lastval = lastStatePrefs[pref];
-    const thisval = type === 'object' ? deepClone(value) : value;
-    if (ignore?.name === undefined && !compareObjects(lastval, thisval)) {
-      if (type === 'string') {
-        G.Prefs.setCharPref(pref, value as string);
-      } else if (type === 'number') {
-        G.Prefs.setIntPref(pref, value as number);
-      } else if (type === 'boolean') {
-        G.Prefs.setBoolPref(pref, value as boolean);
-      } else {
-        G.Prefs.setComplexValue(pref, value);
+    if (!ignore || !(name in ignore)) {
+      const type = typeof value;
+      const pref = `${id}.${name}`;
+      const lastval = lastStatePrefs[pref];
+      const thisval = type === 'object' ? deepClone(value) : value;
+      if (!compareObjects(lastval, thisval)) {
+        if (type === 'string') {
+          G.Prefs.setCharPref(pref, value as string);
+        } else if (type === 'number') {
+          G.Prefs.setIntPref(pref, value as number);
+        } else if (type === 'boolean') {
+          G.Prefs.setBoolPref(pref, value as boolean);
+        } else {
+          G.Prefs.setComplexValue(pref, value);
+        }
+        lastStatePrefs[pref] = thisval;
+        prefsChanged = true;
       }
-      lastStatePrefs[pref] = thisval;
-      prefsChanged = true;
     }
   });
   if (prefsChanged) G.setGlobalMenuFromPrefs();

@@ -112,9 +112,11 @@ export default class Xulsword extends React.Component {
   constructor(props: XulswordProps) {
     super(props);
 
+    const statePref = props.id ? getStatePref(props.id, null) : undefined;
+
     this.state = {
       ...notStatePref,
-      ...getStatePref(this, null, notStatePref),
+      ...statePref,
     };
 
     onSetWindowStates(this);
@@ -276,6 +278,7 @@ export default class Xulsword extends React.Component {
 
   render() {
     const state = this.state as XulswordState;
+    const props = this.props as XulswordProps;
     const {
       book,
       chapter,
@@ -302,10 +305,10 @@ export default class Xulsword extends React.Component {
       vpreset,
       versification,
     } = state;
-
+    const { id } = props;
     const { handler, xulswordHandler, lastSetPrefs } = this;
 
-    updateGlobalState(this, lastSetPrefs, notStatePref);
+    if (id) updateGlobalState(id, state, lastSetPrefs, notStatePref);
 
     // Add page to history after a short delay
     if (versification) {
