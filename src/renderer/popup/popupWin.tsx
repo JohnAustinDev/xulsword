@@ -87,5 +87,5 @@ i18nInit(['xulsword'])
   .then(() =>
     render(<PopupWin height="100%" />, document.getElementById('root'))
   )
-  .then(() => window.ipc.renderer.send('did-finish-render'))
+  .then(() => window.ipc.renderer.send('window', 'did-finish-render'))
   .catch((e: string | Error) => jsdump(e));

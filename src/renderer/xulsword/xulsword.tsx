@@ -550,7 +550,10 @@ Xulsword.propTypes = propTypes;
 
 function loadedXUL() {
   jsdump('RUNNING loadedXUL()!');
-  window.ipc.renderer.send('did-finish-render');
+  window.ipc.renderer.send('window', 'did-finish-render');
+  setTimeout(() => {
+    window.ipc.renderer.send('window', 'move-to-back');
+  }, 100);
 }
 
 function unloadXUL() {

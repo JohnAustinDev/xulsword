@@ -764,7 +764,7 @@ Atext.libswordResponseMemoized = memoize(Atext.libswordResponse, {
   normalizer: (...args: any) =>
     args.map((arg: any) => stringHash(arg)).join('+'),
 });
-window.ipc.renderer.on('reset', () => {
+window.ipc.renderer.on('perform-resets', () => {
   const m = Atext.libswordResponseMemoized as any;
   m.clear();
   Atext.cacheReset();

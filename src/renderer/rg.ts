@@ -8,8 +8,6 @@ import { GPublic } from '../type';
 // this object access data and objects via IPC to the main process G object.
 // Local readonly data is cached.
 
-const R = window.ipc.renderer;
-
 const base: Pick<GType, 'reset' | 'cache'> = {
   cache: {},
 
@@ -29,14 +27,14 @@ entries.forEach((entry) => {
     Object.defineProperty(G, name, {
       get() {
         if (!(name in this.cache)) {
-          this.cache[name] = R.sendSync('global', name);
+          this.cache[name] = window.ipc.renderer.sendSync('global', name);
         }
         return this.cache[name];
       },
     });
   } else if (typeof val === 'function') {
     g[name] = (...args: any[]) => {
-      return R.sendSync('global', name, ...args);
+      return window.ipc.renderer.sendSync('global', name, ...args);
     };
   } else if (typeof val === 'object') {
     const methods = Object.getOwnPropertyNames(val);
@@ -49,14 +47,14 @@ entries.forEach((entry) => {
         Object.defineProperty(g[name], m, {
           get() {
             if (!(key in G.cache)) {
-              G.cache[key] = R.sendSync('global', name, m);
+              G.cache[key] = window.ipc.renderer.sendSync('global', name, m);
             }
             return G.cache[key];
           },
         });
       } else {
         g[name][m] = (...args: unknown[]) => {
-          return R.sendSync('global', name, m, ...args);
+          return window.ipc.renderer.sendSync('global', name, m, ...args);
         };
       }
     });

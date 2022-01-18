@@ -97,23 +97,26 @@ ipcMain.on('window', (event: IpcMainEvent, type: string, ...args: any[]) => {
       win.setTitle(args[0]);
       break;
     }
+    case 'did-finish-render': {
+      if (win === xsWindow.main && process.env.START_MINIMIZED) {
+        win.minimize();
+      } else {
+        win.show();
+        win.focus();
+      }
+      if (win === xsWindow.main && xsWindow.splash) {
+        xsWindow.splash.close();
+      }
+      break;
+    }
+    case 'move-to-back': {
+      BrowserWindow.getAllWindows().forEach((w) => {
+        if (w !== win) w.moveTop();
+      });
+      break;
+    }
     default:
       throw Error(`Unknown window ipcMain event: '${type}'`);
-  }
-});
-
-ipcMain.on('did-finish-render', (event: IpcMainEvent) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  if (win) {
-    if (win === xsWindow.main && process.env.START_MINIMIZED) {
-      win.minimize();
-    } else {
-      win.show();
-      win.focus();
-    }
-    if (win === xsWindow.main && xsWindow.splash) {
-      xsWindow.splash.close();
-    }
   }
 });
 

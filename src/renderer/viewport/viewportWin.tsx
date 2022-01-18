@@ -152,7 +152,7 @@ ViewportWin.propTypes = propTypes;
 
 function loadedXUL() {
   jsdump('RUNNING loadedXUL()!');
-  window.ipc.renderer.send('did-finish-render');
+  window.ipc.renderer.send('window', 'did-finish-render');
 }
 
 function unloadXUL() {

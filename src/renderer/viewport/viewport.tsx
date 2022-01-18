@@ -132,7 +132,7 @@ class Viewport extends React.Component implements PopupParent {
     this.popupParentHandler = popupParentHandlerH.bind(this);
     this.popupHandler = popupHandlerH.bind(this);
 
-    window.ipc.renderer.on('reset', () => {
+    window.ipc.renderer.on('perform-resets', () => {
       G.reset();
       this.setState((prevState: ViewportState) => {
         return { reset: prevState.reset + 1 };

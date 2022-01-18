@@ -630,25 +630,28 @@ export function getStatePref(
   return state;
 }
 
-// Calling this function registers a set-window-states listener that, when
+// Calling this function registers a update-state-from-pref listener that, when
 // called upon, will read component state Prefs and write them to new state.
 export function onSetWindowStates(component: React.Component) {
-  window.ipc.renderer.on('set-window-states', (prefs: string | string[]) => {
-    const { id } = component.props as any;
-    if (id) {
-      const state = getStatePref(id, prefs);
-      const lng = G.Prefs.getCharPref(C.LOCALEPREF);
-      if (lng !== i18next.language) {
-        i18next.changeLanguage(lng, (err) => {
-          if (err) throw Error(err);
-          G.reset();
+  window.ipc.renderer.on(
+    'update-state-from-pref',
+    (prefs: string | string[]) => {
+      const { id } = component.props as any;
+      if (id) {
+        const state = getStatePref(id, prefs);
+        const lng = G.Prefs.getCharPref(C.LOCALEPREF);
+        if (lng !== i18next.language) {
+          i18next.changeLanguage(lng, (err) => {
+            if (err) throw Error(err);
+            G.reset();
+            component.setState(state);
+          });
+        } else {
           component.setState(state);
-        });
-      } else {
-        component.setState(state);
+        }
       }
     }
-  });
+  );
 }
 
 // Compare component state to lastStatePrefs and do nothing if they are the same.

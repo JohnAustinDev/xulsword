@@ -28,5 +28,5 @@ render(
     )}
   </Translation>,
   document.getElementById('root')
-)).then(() => {window.ipc.renderer.send('did-finish-render'); return true;})
+)).then(() => {window.ipc.renderer.send('window', 'did-finish-render'); return true;})
   .catch((e: string | Error) => jsdump(e));

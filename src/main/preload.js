@@ -21,13 +21,12 @@ contextBridge.exposeInMainWorld('shell', {
 });
 
 const validChannels = [
-  'global',
-  'close',
-  'resize',
-  'set-window-states',
-  'did-finish-render',
-  'reset',
-  'window',
+  'global', // to/from main for use by the G object
+  'window', // to main to perform window operations (move-to-back, close, etc.)
+  'close', // from main upon parent window close
+  'resize', // from main upon parent window resize
+  'update-state-from-pref', // from main when state-prefs should be updated
+  'perform-resets', // from main when resets should be performed
 ];
 
 contextBridge.exposeInMainWorld('ipc', {
