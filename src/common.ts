@@ -9,16 +9,26 @@ export function escapeRE(text: string) {
   return text.replace(ESCAPE_RE, '\\$1');
 }
 
+// Decode an osisRef that was encoded using _(\d+)_ encoding, where
+// special characters are encoded as Unicode char-code numbers with
+// an underscore before and after. If the osisRef includes a work
+// prefix, it will be left as-is.
 export function decodeOSISRef(aRef: string) {
-  let ret = aRef;
   const re = new RegExp(/_(\d+)_/);
-  let m = aRef.match(re);
+  let work = '';
+  let targ = aRef;
+  const colon = aRef.indexOf(':');
+  if (colon !== -1) {
+    work = aRef.substring(0, colon);
+    targ = aRef.substring(colon + 1);
+  }
+  let m = targ.match(re);
   while (m) {
     const r = String.fromCharCode(Number(m[1]));
-    ret = aRef.replace(new RegExp(escapeRE(m[0]), 'g'), r);
-    m = aRef.match(re);
+    targ = targ.replaceAll(m[0], r);
+    m = targ.match(re);
   }
-  return ret;
+  return work ? `${work}:${targ}` : targ;
 }
 
 export function bookGroupLength(bookGroup: string) {
