@@ -258,7 +258,10 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
             eleminfo[eleminfo.length - 1].mod = value;
           }
           if (t.dataset.feature) {
-            G.Prefs.setCharPref(`popup.selection.${t.dataset.feature}`, value);
+            G.Prefs.setCharPref(
+              `global.popup.selection.${t.dataset.feature}`,
+              value
+            );
           }
           // Making a selection from a long dropdown may put the mouse outside
           // the popup after selection. So hold the popup open until the mouse

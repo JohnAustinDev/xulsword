@@ -458,11 +458,14 @@ class Popup extends React.Component {
                 const fmods = G.FeatureModules[feature];
                 if (fmods?.length) {
                   let selmod = G.Prefs.getCharPref(
-                    `popup.selection.${feature}`
+                    `global.popup.selection.${feature}`
                   );
                   if (!selmod) {
                     [selmod] = fmods;
-                    G.Prefs.setCharPref(`popup.selection.${feature}`, selmod);
+                    G.Prefs.setCharPref(
+                      `global.popup.selection.${feature}`,
+                      selmod
+                    );
                   }
                   return this.selector(fmods, selmod, undefined, feature);
                 }

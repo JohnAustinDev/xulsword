@@ -125,24 +125,14 @@ const openMainWindow = () => {
     height: 728,
   };
 
-  let allWindowsClosed;
-  try {
-    allWindowsClosed = G.Prefs.getBoolPref(`allWindowsClosed`);
-  } catch {
-    allWindowsClosed = null;
-  }
-  G.Prefs.setBoolPref(`allWindowsClosed`, false);
-  let persistWinPref;
-  try {
-    persistWinPref = G.Prefs.getComplexValue(`window_persisted`);
-  } catch {
-    persistWinPref = null;
-  }
+  const windowsClosed = G.Prefs.getBoolPref(`WindowsClosed`);
+  G.Prefs.setBoolPref(`WindowsClosed`, false);
+  const persistWinPref = G.Prefs.getComplexValue(`PersistedWindows`);
   type WindowArgs = { type: string; options: any };
   const persistedWindows: WindowArgs[] = [];
   if (persistWinPref) {
-    G.Prefs.setComplexValue(`window_persisted`, undefined);
-    if (allWindowsClosed) {
+    G.Prefs.setComplexValue(`PersistedWindows`, undefined);
+    if (windowsClosed) {
       Object.entries(persistWinPref).forEach((entry) => {
         const args = entry[1] as WindowArgs;
         if (args.type === 'xulsword') {
@@ -167,8 +157,8 @@ const openMainWindow = () => {
   mainWin.on('close', () => {
     // Persist any open windows for the next restart
     G.Prefs.setComplexValue(
-      `window_persisted`,
-      G.Prefs.getComplexValue(`window`)
+      `PersistedWindows`,
+      G.Prefs.getComplexValue(`Windows`)
     );
     // Close all other open windows
     BrowserWindow.getAllWindows().forEach((w) => {
@@ -280,7 +270,7 @@ const start = async () => {
  */
 
 app.on('window-all-closed', () => {
-  G.Prefs.setBoolPref(`allWindowsClosed`, true);
+  G.Prefs.setBoolPref(`WindowsClosed`, true);
 
   // Write all prefs to disk when app closes
   G.Prefs.writeAllStores();

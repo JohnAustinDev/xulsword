@@ -4,6 +4,9 @@
   "MinUIversion": "3.10",
   "LibxulswordVersion": "1.4.5",
   "HelpEmailAddress": "",
+  "WindowsClosed": true,
+  "Windows": {},
+  "PersistedWindows": {},
   "global": {
     "fontSize": 2,
     "locale": "en",
@@ -22,7 +25,14 @@
       ["tt-Cyrl", "Татар теле"],
       ["uz-Cyrl", "Ўзбекча"],
       ["uz-Latn", "O‘zbekcha"]
-    ]
+    ],
+    "popup": {
+      "selection": {
+        "hebrewDef": "",
+        "greekDef": "",
+        "greekParse": ""
+      }
+    }
   },
   "xulsword": {
     "book": "",
@@ -65,12 +75,5 @@
     "showChooser": true,
 
     "numDisplayedWindows": 2
-  },
-  "popup": {
-    "selection": {
-      "hebrewDef": "",
-      "greekDef": "",
-      "greekParse": ""
-    }
   }
 }

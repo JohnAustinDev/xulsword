@@ -136,7 +136,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
 
       win.loadURL(resolveHtmlPath(`${type}.html`));
 
-      Prefsx.setComplexValue(`window.w${win.id}`, { type, options });
+      Prefsx.setComplexValue(`Windows.w${win.id}`, { type, options });
 
       if (type === 'viewport' || type === 'popup') win.removeMenu();
 
@@ -154,25 +154,25 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
       }
 
       win.on('resize', () => {
-        const args = Prefsx.getComplexValue(`window.w${win.id}`);
+        const args = Prefsx.getComplexValue(`Windows.w${win.id}`);
         const b = windowBounds(win);
         args.options = { ...args.options, ...b };
-        Prefsx.setComplexValue(`window.w${win.id}`, args);
+        Prefsx.setComplexValue(`Windows.w${win.id}`, args);
         const size = win.getSize();
         win.webContents.send('resize', size);
       });
 
       win.on('move', () => {
-        const args = Prefsx.getComplexValue(`window.w${win.id}`);
+        const args = Prefsx.getComplexValue(`Windows.w${win.id}`);
         const b = windowBounds(win);
         args.options = { ...args.options, ...b };
-        Prefsx.setComplexValue(`window.w${win.id}`, args);
+        Prefsx.setComplexValue(`Windows.w${win.id}`, args);
       });
 
       windowInitI18n(win);
 
       function closer(id: number) {
-        return () => Prefsx.setComplexValue(`window.w${id}`, undefined);
+        return () => Prefsx.setComplexValue(`Windows.w${id}`, undefined);
       }
       win.once('closed', closer(win.id));
 

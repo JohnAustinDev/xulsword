@@ -211,7 +211,7 @@ export function getStrongsModAndKey(snclass: string): {
         feature = 'greekDef';
       }
       if (feature) {
-        mod = G.Prefs.getCharPref(`popup.selection.${feature}`) || null;
+        mod = G.Prefs.getCharPref(`global.popup.selection.${feature}`) || null;
       }
       if (!mod) {
         key = null;
@@ -263,7 +263,7 @@ export function getStrongsModAndKey(snclass: string): {
     case 'SM': {
       // no lookup module available for these yet...
       mod =
-        G.Prefs.getCharPref('popup.selection.greekParse') ||
+        G.Prefs.getCharPref('global.popup.selection.greekParse') ||
         G.FeatureModules.greekParse[0] ||
         null;
       break;
