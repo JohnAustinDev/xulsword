@@ -51,7 +51,7 @@ const propTypes = {
 };
 
 export interface PopupProps extends XulProps {
-  // key must be properly set for popup to update, like:
+  // key must be set correctly for popup to update, like:
   // key={[gap, elemhtml.length, popupReset].join('.')}
   key: string;
   elemhtml: string[]; // outerHTML of target element
@@ -129,16 +129,20 @@ class Popup extends React.Component {
     const { isWindow } = this.props as PopupProps;
     const popup = npopup?.current;
     if (isWindow && popup) {
-      let title = '';
-      const pts = popup.getElementsByClassName('popup-text');
-      if (pts?.length) {
-        const pt = pts[0] as HTMLElement;
-        let html = pt.innerHTML.replace(/(\s*&nbsp;\s*)+/g, ' ');
-        html = html.replace(/^.*?class="cs-[^>]*>/, ''); // find module text
-        html = html.replace(/<[^>]*>/g, ''); // remove all tags
-        title = `${html.substring(0, html.indexOf(' ', 24))}…`; // shortens it
-        window.ipc.renderer.send('window', 'title', title);
+      const search = ['crref', 'lemma-header', 'popup-text'];
+      let title;
+      for (let x = 0; !title && x < search.length; x += 1) {
+        const els = popup.getElementsByClassName(search[x]);
+        if (els && els[0]) {
+          const elem = els[0] as HTMLElement;
+          title = elem?.textContent;
+          title = title?.replace(/[\n\s]+/g, ' ');
+          if (title && title.length > 24) {
+            title = `${title.substring(0, title.indexOf(' ', 24))}…`;
+          }
+        }
       }
+      if (title) window.ipc.renderer.send('window', 'title', title);
     }
   }
 
@@ -222,8 +226,6 @@ class Popup extends React.Component {
 
     const infokey = stringHash(type, reflist, bk, ch, mod);
     if (!pt.dataset.infokey || pt.dataset.infokey !== infokey) {
-      if (isWindow) this.setTitle();
-
       let html = '';
       switch (type) {
         case 'cr':
@@ -332,6 +334,8 @@ class Popup extends React.Component {
         if (html) parent.classList.remove('empty');
         else parent.classList.add('empty');
       }
+
+      if (isWindow) this.setTitle();
 
       this.positionPopup();
     }

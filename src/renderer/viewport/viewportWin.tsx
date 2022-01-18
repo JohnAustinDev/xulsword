@@ -57,7 +57,7 @@ export default class ViewportWin extends React.Component {
 
   mouseWheel: MouseWheel;
 
-  lastSetPrefs: { [i: string]: any };
+  lastSavedPref: { [i: string]: any };
 
   constructor(props: ViewportWinProps) {
     super(props);
@@ -72,7 +72,7 @@ export default class ViewportWin extends React.Component {
     onSetWindowStates(this);
 
     this.xulswordHandler = xulswordHandlerH.bind(this);
-    this.lastSetPrefs = {};
+    this.lastSavedPref = {};
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
   }
 
@@ -101,7 +101,7 @@ export default class ViewportWin extends React.Component {
       versification,
     } = state;
     const { id } = props;
-    const { lastSetPrefs, xulswordHandler } = this;
+    const { lastSavedPref: lastSetPrefs, xulswordHandler } = this;
 
     if (id) updateGlobalState(id, state, lastSetPrefs, notStatePref);
 

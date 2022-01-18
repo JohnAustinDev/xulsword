@@ -1,10 +1,9 @@
-/* eslint-disable react/no-did-update-set-state */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import { render } from 'react-dom';
 import { Translation } from 'react-i18next';
@@ -37,6 +36,7 @@ import type { MouseWheel } from './xulswordHandler';
 
 const maxHistoryMenuLength = 20;
 
+// Also used by viewportWin
 export function updateVersification(component: React.Component) {
   const {
     modules,
@@ -53,6 +53,7 @@ export function updateVersification(component: React.Component) {
   }
 }
 
+// Also used by viewportWin
 export function closeMenupopups(component: React.Component) {
   const { historyMenupopup } = component.state as any;
   let reset = 0;
@@ -83,7 +84,7 @@ export type XulswordProps = XulProps;
 
 // These state values are not stored in Prefs, but take
 // on the following values in the Xulsword constructor.
-export const notStatePref = {
+const notStatePref = {
   versification: '',
   v11nmod: '',
   historyMenupopup: undefined,
@@ -107,7 +108,7 @@ export default class Xulsword extends React.Component {
 
   mouseWheel: MouseWheel;
 
-  lastSetPrefs: { [i: string]: any };
+  lastStatePref: { [i: string]: any };
 
   constructor(props: XulswordProps) {
     super(props);
@@ -127,7 +128,7 @@ export default class Xulsword extends React.Component {
 
     this.handler = handlerH.bind(this);
     this.xulswordHandler = xulswordHandlerH.bind(this);
-    this.lastSetPrefs = {};
+    this.lastStatePref = {};
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
   }
 
@@ -306,7 +307,7 @@ export default class Xulsword extends React.Component {
       versification,
     } = state;
     const { id } = props;
-    const { handler, xulswordHandler, lastSetPrefs } = this;
+    const { handler, xulswordHandler, lastStatePref: lastSetPrefs } = this;
 
     if (id) updateGlobalState(id, state, lastSetPrefs, notStatePref);
 
