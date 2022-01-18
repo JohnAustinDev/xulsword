@@ -39,7 +39,7 @@ import '../libxul/xul.css';
 import '../libsword.css';
 import './atext.css';
 
-import type { MouseWheel } from '../xulsword/xulswordHandler';
+import type { MouseWheel } from './viewportParentH';
 import type {
   PlaceType,
   ShowType,
@@ -229,7 +229,7 @@ class Atext extends React.Component {
           let html = '';
           Atext.cache.keyList[module].forEach((k1: any) => {
             const k2 = encodeURIComponent(k1);
-            html += `<div class="key ${k2} title="${k2}">${k1}</div>`;
+            html += `<div class="key ${k2} data-title="${k2}">${k1}</div>`;
           });
           Atext.cache.keyHTML[module] = html;
         }
@@ -529,12 +529,13 @@ class Atext extends React.Component {
       }
       // Trim multi-column Bible notes
       if (columns > 1) {
-        const empty = !trimNotes(sbe, nbe, module);
+        const empty = !trimNotes(sbe, nbe);
         const nbc = nbe.parentNode as any;
-        if (empty && !nbc.classList.contains('noteboxEmpty')) {
-          nbc.classList.add('noteboxEmpty');
-        } else if (!empty && nbc.classList.contains('noteboxEmpty')) {
-          nbc.classList.remove('noteboxEmpty');
+        if (
+          (empty && !nbc.classList.contains('noteboxEmpty')) ||
+          (!empty && nbc.classList.contains('noteboxEmpty'))
+        ) {
+          nbc.classList.toggle('noteboxEmpty');
         }
       }
       if (type === C.BIBLE) {
@@ -639,10 +640,11 @@ class Atext extends React.Component {
         if (originalch !== undefined) libsword.chapter = originalch;
       }
       const nbc = nbe.parentNode as any;
-      if (!fntable?.innerHTML && !nbc.classList.contains('noteboxEmpty'))
-        nbc.classList.add('noteboxEmpty');
-      if (fntable?.innerHTML && nbc.classList.contains('noteboxEmpty'))
-        nbc.classList.remove('noteboxEmpty');
+      if (
+        (!fntable?.innerHTML && !nbc.classList.contains('noteboxEmpty')) ||
+        (fntable?.innerHTML && nbc.classList.contains('noteboxEmpty'))
+      )
+        nbc.classList.toggle('noteboxEmpty');
     }
   }
 

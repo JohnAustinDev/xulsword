@@ -117,9 +117,9 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     ): number => {
       windowOptions(type, options);
       // Set bounds for viewport and popup type windows
-      if (type === 'viewport' || type === 'popup') {
-        const heightAdj = type === 'viewport' ? 100 : 0;
-        const topAdj = type === 'viewport' ? 50 : 26;
+      if (type === 'viewportWin' || type === 'popupWin') {
+        const heightAdj = type === 'viewportWin' ? 100 : 0;
+        const topAdj = type === 'viewportWin' ? 50 : 26;
         const ops = options as any;
         const xs = windowBounds();
         const eb = ops?.openWithBounds;
@@ -138,7 +138,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
 
       Prefsx.setComplexValue(`Windows.w${win.id}`, { type, options });
 
-      if (type === 'viewport' || type === 'popup') win.removeMenu();
+      if (type === 'viewportWin' || type === 'popupWin') win.removeMenu();
 
       // All Windows are created with BrowserWindow.show = false.
       // This means that the window will be shown after either:
@@ -495,11 +495,11 @@ function windowInitI18n(win: BrowserWindow) {
 
 function xulswordWindow(): BrowserWindow | null {
   let win: BrowserWindow | null = null;
-  const windows = Prefsx.getComplexValue(`window`);
+  const windows = Prefsx.getComplexValue(`Windows`);
   Object.entries(windows).forEach((window) => {
     const [ids, args] = window as any;
     const id = Number(ids.substring(1));
-    if (args?.type && args.type === 'xulsword') {
+    if (!Number.isNaN(id) && args?.type && args.type === 'xulsword') {
       win = BrowserWindow.fromId(id);
     }
   });

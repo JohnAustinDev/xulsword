@@ -72,7 +72,10 @@ function markup2html(entry: string, mod: string) {
         mtitle = `${mtitle}.${mod}`;
         mclass = 'dtl';
       }
-      html = html.replace(p[0], `<span class="${mclass}" title="${mtitle}">`);
+      html = html.replace(
+        p[0],
+        `<span class="${mclass}" data-title="${mtitle}">`
+      );
     }
   } while (html !== html2);
 
@@ -301,7 +304,7 @@ export function getLemmaHTML(
     ) {
       // DSS|MT for SPVar module
       buttonHTML += '<button type="button" class="snbut" ';
-      buttonHTML += `title="${
+      buttonHTML += `data-title="${
         info.mod ? info.mod : 'Program'
       }:${strongsClassArray[i].replace(/^[^_]+_/, '')}.${sourcemod}">`;
       buttonHTML += strongsClassArray[i].replace(/^[^_]+_/, '');

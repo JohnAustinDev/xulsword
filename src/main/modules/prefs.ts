@@ -72,7 +72,9 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
     key.split('.').forEach((d) => {
       if (!keyExists || !(d in p)) {
         if (defval === undefined) {
-          throw Error(`no key and no default: ${key} of ${aStore} store`);
+          throw Error(
+            `missing key and no default: '${key}' of '${aStore}' store`
+          );
         }
         keyExists = false;
         return;

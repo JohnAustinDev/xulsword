@@ -215,12 +215,12 @@ export function getPopupInfo(elem: string | HTMLElement): ElemInfo {
     let atext: ReturnType<typeof ofClass> | undefined;
     if (typeof elem !== 'string') {
       const c = ofClass(['sn', 'introlink', 'noticelink'], elem);
-      title = c?.element.title;
+      title = c?.element.dataset.title;
       type = c?.type;
       atext = ofClass(['atext'], elem);
     } else {
       // If elem is a string, parse only the first tag
-      const mt = elem.match(/^[^<]*<[^>]+title\s*=\s*["']([^"']*)["']/);
+      const mt = elem.match(/^[^<]*<[^>]+data-title\s*=\s*["']([^"']*)["']/);
       if (mt !== null) [, title] = mt;
       const mc = elem.match(/^[^<]*<[^>]+class\s*=\s*["']([^"']*)["']/);
       if (mc !== null) {

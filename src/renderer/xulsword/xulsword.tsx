@@ -10,6 +10,7 @@ import { Translation } from 'react-i18next';
 import { HistoryTypeVK, StateDefault } from '../../type';
 import { dString } from '../../common';
 import C from '../../constant';
+import G from '../rg';
 import i18nInit from '../i18n';
 import {
   dotString2LocaleString,
@@ -26,51 +27,17 @@ import Bookselect from '../libxul/bookselect';
 import Spacer from '../libxul/spacer';
 import Textbox from '../libxul/textbox';
 import Viewport from '../viewport/viewport';
-import G from '../rg';
+import xulswordHandlerH, {
+  closeMenupopups,
+  updateVersification,
+} from '../viewport/viewportParentH';
 import handlerH from './xulswordH';
-import xulswordHandlerH from './xulswordHandler';
 import '../global-htm.css';
 import './xulsword.css';
 
-import type { MouseWheel } from './xulswordHandler';
+import type { MouseWheel } from '../viewport/viewportParentH';
 
 const maxHistoryMenuLength = 20;
-
-// Also used by viewportWin
-export function updateVersification(component: React.Component) {
-  const {
-    modules,
-    numDisplayedWindows,
-    v11nmod: mod,
-    versification: v11n,
-  } = component.state as any;
-  const v11nmod = modules.find((m: string, i: number) => {
-    return i < numDisplayedWindows && m && G.Tab[m].isVerseKey;
-  });
-  const versification = v11nmod ? G.Tab[v11nmod].v11n : undefined;
-  if (mod !== v11nmod || v11n !== versification) {
-    component.setState({ v11nmod, versification });
-  }
-}
-
-// Also used by viewportWin
-export function closeMenupopups(component: React.Component) {
-  const { historyMenupopup } = component.state as any;
-  let reset = 0;
-  Array.from(document.getElementsByClassName('tabs')).forEach((t) => {
-    if (t.classList.contains('open')) reset += 1;
-  });
-  if (reset || historyMenupopup) {
-    component.setState((prevState) => {
-      let { vpreset } = prevState as XulswordState;
-      if (reset) vpreset += 1;
-      const s: any = {};
-      if (reset) s.vpreset = vpreset + 1;
-      if (historyMenupopup) s.historyMenupopup = undefined;
-      return s;
-    });
-  }
-}
 
 const defaultProps = {
   ...xulDefaultProps,

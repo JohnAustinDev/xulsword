@@ -265,7 +265,7 @@ class Popup extends React.Component {
                 : elem.innerHTML;
 
             html = getNoteHTML(
-              `<div class="nlist" title="cr.1.0.0.0.${refbible}">${mynote}</div>`,
+              `<div class="nlist" data-title="cr.1.0.0.0.${refbible}">${mynote}</div>`,
               refbible,
               null,
               0,

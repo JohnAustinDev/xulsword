@@ -16,13 +16,15 @@ import {
 import { handle, xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Viewport from './viewport';
-import { closeMenupopups } from '../xulsword/xulsword';
-import xulswordHandlerH from '../xulsword/xulswordHandler';
+import xulswordHandlerH, {
+  closeMenupopups,
+  updateVersification,
+} from './viewportParentH';
 import '../global-htm.css';
 import '../xulsword/xulsword.css';
 
 import type { StateDefault } from '../../type';
-import type { MouseWheel } from '../xulsword/xulswordHandler';
+import type { MouseWheel } from './viewportParentH';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -62,7 +64,9 @@ export default class ViewportWin extends React.Component {
   constructor(props: ViewportWinProps) {
     super(props);
 
-    const statePref = props.id ? getStatePref(props.id, null) : undefined;
+    const statePref = props.id
+      ? getStatePref(props.id, null, notStatePref)
+      : undefined;
 
     this.state = {
       ...notStatePref,
@@ -74,6 +78,14 @@ export default class ViewportWin extends React.Component {
     this.xulswordHandler = xulswordHandlerH.bind(this);
     this.lastSavedPref = {};
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
+  }
+
+  componentDidMount() {
+    updateVersification(this);
+  }
+
+  componentDidUpdate() {
+    updateVersification(this);
   }
 
   render() {
@@ -162,7 +174,7 @@ function unloadXUL() {
 i18nInit(['xulsword'])
   .then(() =>
     render(
-      // Must have the same id as Xulsword component so state will be shared.
+      // Must have the same id as Xulsword component so that state will be shared.
       <ViewportWin id="xulsword" pack="start" height="100%" />,
       document.getElementById('root')
     )

@@ -218,7 +218,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               title: 'popup',
               webPreferences: {
                 additionalArguments: [
-                  'popup',
+                  'popupWin',
                   JSON.stringify(elemhtml),
                   JSON.stringify(eleminfo),
                 ],
@@ -230,7 +230,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
                 height: Math.round(b.height),
               },
             };
-            G.openWindow('popup', options);
+            G.openWindow('popupWin', options);
             const s: Partial<PopupParentState> = { popupParent: null };
             this.setState(s);
           }

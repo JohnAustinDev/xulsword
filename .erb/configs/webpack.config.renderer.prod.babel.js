@@ -15,6 +15,29 @@ import webpackPaths from './webpack.paths.js';
 import checkNodeEnv from '../scripts/check-node-env';
 import deleteSourceMaps from '../scripts/delete-source-maps';
 
+const xulswordWindows = ['splash', 'xulsword', 'viewport/viewportWin', 'popup/popupWin'];
+
+const entries = {};
+xulswordWindows.forEach((xsw) => {
+  let name = xsw;
+  let dir = xsw;
+  let file = `${xsw}.tsx`;
+  if (xsw.indexOf('/') !== -1) {
+    const p = xsw.split('/');
+    name = p[p.length - 1];
+    [dir] = p;
+    p.shift();
+    file = p.join('/');
+  }
+  entries[name] = {
+    import: [
+      'core-js',
+      'regenerator-runtime/runtime',
+      path.join(webpackPaths.srcRendererPath, dir + '/' + name)
+    ]
+  };
+});
+
 checkNodeEnv('production');
 deleteSourceMaps();
 
@@ -25,31 +48,6 @@ const devtoolsConfig =
       }
     : {};
 
-function entryConfig(dir, name) {
-  return {
-    import: [
-      'core-js',
-      'regenerator-runtime/runtime',
-      path.join(webpackPaths.srcRendererPath, dir + '/' + name)
-    ]
-  };
-}
-
-function htmlConfig(name) {
-  return {
-    filename: name + '.html',
-    template: path.join(webpackPaths.srcRendererPath, 'template.html'),
-    chunks: [name],
-    minify: {
-      collapseWhitespace: true,
-      removeAttributeQuotes: true,
-      removeComments: true,
-    },
-    isBrowser: false,
-    isDevelopment: process.env.NODE_ENV !== 'production',
-  };
-}
-
 export default merge(baseConfig, {
   ...devtoolsConfig,
 
@@ -57,13 +55,7 @@ export default merge(baseConfig, {
 
   target: ['web', 'electron-renderer'],
 
-  entry: {
-    // Entry points and output files (one for each kind of BrowserWindow)
-    splash: entryConfig('splash', 'splash.tsx'),
-    xulsword: entryConfig('xulsword', 'xulsword.tsx'),
-    viewport: entryConfig('viewport', 'viewportWin.tsx'),
-    popup: entryConfig('popup', 'popupWin.tsx'),
-  },
+  entry: entries,
 
   output: {
     path: webpackPaths.distRendererPath,
@@ -194,10 +186,23 @@ export default merge(baseConfig, {
       openAnalyzer: process.env.OPEN_ANALYZER === 'true',
     }),
 
-    // Entry point html files (one plugin for each kind of BrowserWindow)
-    new HtmlWebpackPlugin(htmlConfig('splash')),
-    new HtmlWebpackPlugin(htmlConfig('xulsword')),
-    new HtmlWebpackPlugin(htmlConfig('viewport')),
-    new HtmlWebpackPlugin(htmlConfig('popup'))
-  ],
+  ].concat(xulswordWindows.map((xsw) => {
+    let name = xsw;
+    if (xsw.indexOf('/') !== -1) {
+      const p = xsw.split('/');
+      name = p[p.length - 1];
+    }
+    return new HtmlWebpackPlugin({
+      filename: name + '.html',
+      template: path.join(webpackPaths.srcRendererPath, 'template.html'),
+      chunks: [name],
+      minify: {
+        collapseWhitespace: true,
+        removeAttributeQuotes: true,
+        removeComments: true,
+      },
+      isBrowser: false,
+      isDevelopment: process.env.NODE_ENV !== 'production',
+    });
+  })),
 });

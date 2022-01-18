@@ -10,8 +10,8 @@ import {
   ofClass,
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
-import Atext from '../viewport/atext';
-import { textChange, wheelscroll } from '../viewport/zversekey';
+import Atext from './atext';
+import { textChange, wheelscroll } from './zversekey';
 import { convertDotString } from '../rutil';
 import G from '../rg';
 
@@ -22,6 +22,40 @@ export type MouseWheel = {
   count: 0;
   TO: number | undefined;
 };
+
+export function updateVersification(component: React.Component) {
+  const {
+    modules,
+    numDisplayedWindows,
+    v11nmod: mod,
+    versification: v11n,
+  } = component.state as any;
+  const v11nmod = modules.find((m: string, i: number) => {
+    return i < numDisplayedWindows && m && G.Tab[m].isVerseKey;
+  });
+  const versification = v11nmod ? G.Tab[v11nmod].v11n : undefined;
+  if (mod !== v11nmod || v11n !== versification) {
+    component.setState({ v11nmod, versification });
+  }
+}
+
+export function closeMenupopups(component: React.Component) {
+  const { historyMenupopup } = component.state as any;
+  let reset = 0;
+  Array.from(document.getElementsByClassName('tabs')).forEach((t) => {
+    if (t.classList.contains('open')) reset += 1;
+  });
+  if (reset || historyMenupopup) {
+    component.setState((prevState: any) => {
+      let { vpreset } = prevState;
+      if (reset) vpreset += 1;
+      const s: any = {};
+      if (reset) s.vpreset = vpreset + 1;
+      if (historyMenupopup) s.historyMenupopup = undefined;
+      return s;
+    });
+  }
+}
 
 export default function handler(
   this: React.Component,
@@ -78,29 +112,32 @@ export default function handler(
       switch (targ.type) {
         case 'text-win': {
           if (atext) {
-            const newWinNoPref: any = {
+            const notStatePref: any = {
               isPinned: [true, true, true],
               numDisplayedWindows: Number(atext.dataset.columns),
+              history: [],
+              historyIndex: 0,
             };
             Object.entries(state).forEach((entry) => {
               const [name, value] = entry;
-              if (
-                !(name in newWinNoPref) &&
-                name !== 'history' &&
-                Array.isArray(value)
-              ) {
-                const shvalue = value.slice();
-                for (let x = 1; x < n; x += 1) {
-                  shvalue.push(shvalue.shift());
-                }
-                newWinNoPref[name] = shvalue;
+              if (!(name in notStatePref)) {
+                if (Array.isArray(value)) {
+                  const shvalue = value.slice();
+                  for (let x = 1; x < n; x += 1) {
+                    shvalue.push(shvalue.shift());
+                  }
+                  notStatePref[name] = shvalue;
+                } else notStatePref[name] = value;
               }
             });
             const b = atext.getBoundingClientRect();
             const options = {
               title: 'viewport',
               webPreferences: {
-                additionalArguments: ['viewport', JSON.stringify(newWinNoPref)],
+                additionalArguments: [
+                  'viewportWin',
+                  JSON.stringify(notStatePref),
+                ],
               },
               openWithBounds: {
                 x: Math.round(b.x),
@@ -109,7 +146,7 @@ export default function handler(
                 height: Math.round(b.height),
               },
             };
-            G.openWindow('viewport', options);
+            G.openWindow('viewportWin', options);
           }
           break;
         }
@@ -271,10 +308,11 @@ export default function handler(
           }
           break;
         case 'keylist': {
-          if (atext && target.title) {
+          const title = target?.dataset.title;
+          if (atext && title) {
             this.setState((prevState: StateDefault) => {
               const { keys } = prevState;
-              keys[i] = decodeURIComponent(target.title);
+              keys[i] = decodeURIComponent(title);
               return { keys };
             });
             const keytextbox = atext.getElementsByClassName('keytextbox');

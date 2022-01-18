@@ -119,7 +119,8 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
             // popup.npopupTX.getElementsByClassName('gfn');
             else gfns = atext.getElementsByClassName('gfn');
             Array.from(gfns).forEach((gfn: any) => {
-              if (gfn !== elem && gfn.title === p.title) gfn.scrollIntoView();
+              if (gfn !== elem && gfn.dataset.title === p.title)
+                gfn.scrollIntoView();
             });
           }
           break;

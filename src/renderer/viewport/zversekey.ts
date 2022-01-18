@@ -202,18 +202,17 @@ export function getChapterHeading(props: {
   html += '</div>';
 
   html += '<div class="chapinfo">';
-  html += `<div class="listenlink" title="${[
+  html += `<div class="listenlink" data-title="${[
     props.book,
     props.chapter,
     1,
     props.module,
   ].join('.')}"></div>`;
-  html += `<div class="introlink${!intro.textHTML ? ' empty' : ''}" title="${[
-    props.book,
-    props.chapter,
-    1,
-    props.module,
-  ].join('.')}">${i18next.t('IntroLink', toptions)}</div>`;
+  html += `<div class="introlink${
+    !intro.textHTML ? ' empty' : ''
+  }" data-title="${[props.book, props.chapter, 1, props.module].join(
+    '.'
+  )}">${i18next.t('IntroLink', toptions)}</div>`;
   if (
     props.ilModule &&
     props.ilModuleOption &&
@@ -238,12 +237,11 @@ export function getChapterHeading(props: {
 
   html += '<div class="head-line-break"></div>';
 
-  html += `<div class="introtext${!intro.textHTML ? ' empty' : ''}" title="${[
-    props.book,
-    props.chapter,
-    1,
-    props.module,
-  ].join('.')}">${intro.textHTML ? intro.textHTML : ''}</div>`;
+  html += `<div class="introtext${
+    !intro.textHTML ? ' empty' : ''
+  }" data-title="${[props.book, props.chapter, 1, props.module].join('.')}">${
+    intro.textHTML ? intro.textHTML : ''
+  }</div>`;
 
   return { textHTML: html, intronotes: intro.intronotes };
 }
@@ -374,7 +372,7 @@ function getRefHTML(
     if (aVerse.location) {
       const rmod = G.Tabs[aVerse.tabindex].module;
       html += sep;
-      html += `<a class="crref" title="${aVerse.location}.${rmod}">`;
+      html += `<a class="crref" data-title="${aVerse.location}.${rmod}">`;
       html += ref2ProgramLocaleText(aVerse.location);
       html += '</a>';
       html += `<span class="crtext cs-${rmod}${
@@ -447,7 +445,7 @@ export function getNoteHTML(
         if (p.ntype) {
           // Display this note as a row in the main table
           t += `<div id="w${w}.footnote.${p.title}" `;
-          t += `title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}" `;
+          t += `data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}" `;
           t += `class="fnrow ${openCRs ? 'cropened' : ''}">`;
 
           // Write cell #1: an expander link for cross references only
@@ -470,7 +468,7 @@ export function getNoteHTML(
               : '&lrm;';
           t += '<div class="fncol4">';
           if (p.ch && p.vs) {
-            t += `<a class="fnlink" title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}">`;
+            t += `<a class="fnlink" data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}">`;
             t += `<i>${dString(p.ch, lov)}:${modDirectionEntity}${dString(
               p.vs,
               lov
@@ -990,11 +988,7 @@ export function highlight(
   }
 }
 
-export function trimNotes(
-  sbe: HTMLElement,
-  nbe: HTMLElement,
-  module: string
-): boolean {
+export function trimNotes(sbe: HTMLElement, nbe: HTMLElement): boolean {
   let havefn = false;
 
   // get first chapter/verse
@@ -1054,8 +1048,8 @@ export function findVerseElement(
 ): HTMLElement | null {
   let c = sbe.firstChild as HTMLElement | null;
   while (c) {
-    if (c.classList?.contains('vs') && 'title' in c) {
-      const [, ch, vs] = c.title.split('.');
+    if (c.classList?.contains('vs') && c.dataset.title) {
+      const [, ch, vs] = c.dataset.title.split('.');
       if (Number(ch) === chapter && Number(vs) === verse) {
         return c;
       }

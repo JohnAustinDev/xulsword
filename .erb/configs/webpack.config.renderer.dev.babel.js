@@ -10,6 +10,31 @@ import webpackPaths from './webpack.paths.js';
 import checkNodeEnv from '../scripts/check-node-env';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 
+const xulswordWindows = ['splash', 'xulsword', 'viewport/viewportWin', 'popup/popupWin'];
+
+const entries = {};
+xulswordWindows.forEach((xsw) => {
+  let name = xsw;
+  let dir = xsw;
+  let file = `${xsw}.tsx`;
+  if (xsw.indexOf('/') !== -1) {
+    const p = xsw.split('/');
+    name = p[p.length - 1];
+    [dir] = p;
+    p.shift();
+    file = p.join('/');
+  }
+  entries[name] = {
+    import: [
+      'webpack-dev-server/client?http://localhost:1212/dist',
+      'webpack/hot/only-dev-server',
+      'core-js',
+      'regenerator-runtime/runtime',
+      path.join(webpackPaths.srcRendererPath, dir + '/' + file)
+    ]
+  };
+});
+
 // When an ESLint server is running, we can't set the NODE_ENV so we'll check if it's
 // at the dev webpack config is not accidentally run in a production environment
 if (process.env.NODE_ENV === 'production') {
@@ -38,35 +63,6 @@ if (
   execSync('yarn postinstall');
 }
 
-function entryConfig(dir, name) {
-  return {
-    import: [
-      'webpack-dev-server/client?http://localhost:1212/dist',
-      'webpack/hot/only-dev-server',
-      'core-js',
-      'regenerator-runtime/runtime',
-      path.join(webpackPaths.srcRendererPath, dir + '/' + name)
-    ]
-  };
-};
-
-function htmlConfig(name) {
-  return {
-    filename: path.join(name + '.html'),
-    template: path.join(webpackPaths.srcRendererPath, 'template.html'),
-    chunks: [name],
-    minify: {
-      collapseWhitespace: true,
-      removeAttributeQuotes: true,
-      removeComments: true,
-    },
-    isBrowser: false,
-    env: process.env.NODE_ENV,
-    isDevelopment: process.env.NODE_ENV !== 'production',
-    nodeModules: webpackPaths.appNodeModulesPath,
-  };
-};
-
 export default merge(baseConfig, {
   devtool: 'source-map',
 
@@ -74,13 +70,7 @@ export default merge(baseConfig, {
 
   target: ['web', 'electron-renderer'],
 
-  entry: {
-    // Entry points and output files (one for each html file)
-    splash: entryConfig('splash', 'splash.tsx'),
-    xulsword: entryConfig('xulsword', 'xulsword.tsx'),
-    viewport: entryConfig('viewport', 'viewportWin.tsx'),
-    popup: entryConfig('popup', 'popupWin.tsx'),
-  },
+  entry: entries,
 
   output: {
     path: webpackPaths.distRendererPath,
@@ -280,12 +270,27 @@ export default merge(baseConfig, {
 
     new ReactRefreshWebpackPlugin(),
 
-    // Entry point html files (one plugin for each kind of BrowserWindow)
-    new HtmlWebpackPlugin(htmlConfig('splash')),
-    new HtmlWebpackPlugin(htmlConfig('xulsword')),
-    new HtmlWebpackPlugin(htmlConfig('viewport')),
-    new HtmlWebpackPlugin(htmlConfig('popup'))
-  ],
+  ].concat(xulswordWindows.map((xsw) => {
+    let name = xsw;
+    if (xsw.indexOf('/') !== -1) {
+      const p = xsw.split('/');
+      name = p[p.length - 1];
+    }
+    return new HtmlWebpackPlugin({
+      filename: path.join(name + '.html'),
+      template: path.join(webpackPaths.srcRendererPath, 'template.html'),
+      chunks: [name],
+      minify: {
+        collapseWhitespace: true,
+        removeAttributeQuotes: true,
+        removeComments: true,
+      },
+      isBrowser: false,
+      env: process.env.NODE_ENV,
+      isDevelopment: process.env.NODE_ENV !== 'production',
+      nodeModules: webpackPaths.appNodeModulesPath,
+    });
+  })),
 
   node: {
     __dirname: false,

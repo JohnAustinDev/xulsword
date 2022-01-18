@@ -147,7 +147,7 @@ const openMainWindow = () => {
     }
   }
 
-  G.Prefs.setComplexValue(`window`, undefined);
+  G.Prefs.setComplexValue(`Windows`, undefined);
   const mainWin = BrowserWindow.fromId(G.openWindow('xulsword', options));
 
   if (!mainWin) {
