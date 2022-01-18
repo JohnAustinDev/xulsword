@@ -57,7 +57,7 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  xulswordHandler: PropTypes.func.isRequired,
+  onMaximizeNoteBox: PropTypes.func.isRequired,
   anid: PropTypes.string,
   n: PropTypes.number.isRequired,
   columns: PropTypes.number.isRequired,
@@ -84,7 +84,7 @@ const propTypes = {
 // Atext's properties. NOTE: property types are checked, but property values are not.
 const atextProps = {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  xulswordHandler: (
+  onMaximizeNoteBox: (
     _e: React.SyntheticEvent<any>,
     _noteboxResizing?: number[],
     _maximize?: boolean
@@ -646,7 +646,7 @@ class Atext extends React.Component {
     }
   }
 
-  // stop notebox resizing and call xulswordHandler
+  // This is also called by onMouseMove when bb moves beyond min/max.
   bbMouseUp(this: Atext, e: any, nbr?: number[], maximize?: boolean) {
     const { noteBoxResizing } = this.state as AtextState;
     const props = this.props as AtextProps;
@@ -655,7 +655,7 @@ class Atext extends React.Component {
     const newnbr = nbr || noteBoxResizing;
     this.setState({ noteBoxResizing: null });
     e.type = 'mouseup';
-    props.xulswordHandler(e, newnbr, maximize);
+    props.onMaximizeNoteBox(e, newnbr, maximize);
   }
 
   render() {
@@ -707,11 +707,11 @@ class Atext extends React.Component {
         {...handle('onClick', handler, props)}
         {...handle('onWheel', handler, props)}
         {...handle('onMouseOver', handler, props)}
+        {...handle('onMouseLeave', handler, props)}
         {...handle('onMouseOut', handler, props)}
         {...handle('onMouseDown', handler, props)}
         {...handle('onMouseMove', handler, props)}
         {...handle('onMouseUp', bbMouseUp, props)}
-        {...handle('onMouseLeave', handler, props)}
         style={{ ...props.style, position: 'relative' }}
         data-wnum={n}
         data-module={module}

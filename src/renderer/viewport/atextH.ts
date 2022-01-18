@@ -370,7 +370,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     case 'mousemove': {
       const e = es as React.MouseEvent;
       const { noteBoxResizing } = this.state as AtextState;
-      const { noteBoxHeight, maximizeNoteBox, xulswordHandler } = this
+      const { noteBoxHeight, maximizeNoteBox, onMaximizeNoteBox } = this
         .props as AtextProps;
       if (noteBoxResizing) {
         const targ = ofClass('atext', target);
@@ -378,7 +378,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           e.stopPropagation();
           e.preventDefault();
 
-          if (maximizeNoteBox > 0) xulswordHandler(e);
+          if (maximizeNoteBox > 0) onMaximizeNoteBox(e);
 
           const [initial] = noteBoxResizing;
 

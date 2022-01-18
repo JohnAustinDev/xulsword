@@ -69,7 +69,7 @@ const propTypes = {
   xulswordHandler: PropTypes.func.isRequired,
 };
 
-export type ViewportProps = PopupParentProps &
+type ViewportProps = PopupParentProps &
   XulProps & {
     book: string;
     chapter: number;
@@ -340,13 +340,10 @@ class Viewport extends React.Component implements PopupParent {
         {...props}
         {...xulClass(`viewport ${cls}`, props)}
         style={{ minWidth: `${minWidth}px` }}
+        onClick={xulswordHandler}
       >
         {!ownWindow && !showChooser && chooser !== 'genbook' && (
-          <button
-            type="button"
-            className="open-chooser"
-            onClick={xulswordHandler}
-          />
+          <button type="button" className="open-chooser" />
         )}
 
         {showingChooser && (
@@ -356,15 +353,13 @@ class Viewport extends React.Component implements PopupParent {
             headingsModule={firstUnpinnedBible}
             availableBooksModule={firstUnpinnedVerseKey}
             versification={versification}
-            onClick={xulswordHandler}
-            xulswordHandler={xulswordHandler}
+            onCloseChooserClick={xulswordHandler}
           />
         )}
 
         <Vbox
           className={`textarea show${numDisplayedWindows}`}
           flex="1"
-          onClick={xulswordHandler}
           onKeyDown={xulswordHandler}
           onWheel={xulswordHandler}
         >
@@ -439,7 +434,7 @@ class Viewport extends React.Component implements PopupParent {
                     flexGrow: `${columns[i]}`,
                     flexShrink: `${numDisplayedWindows - columns[i]}`,
                   }}
-                  xulswordHandler={xulswordHandler}
+                  onMaximizeNoteBox={xulswordHandler}
                   onMouseOut={(e) => popupParentHandler(e, modules[i])}
                   onMouseOver={(e) => popupParentHandler(e, modules[i])}
                 />

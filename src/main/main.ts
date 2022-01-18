@@ -125,6 +125,13 @@ const openMainWindow = () => {
     height: 728,
   };
 
+  let allWindowsClosed;
+  try {
+    allWindowsClosed = G.Prefs.getBoolPref(`allWindowsClosed`);
+  } catch {
+    allWindowsClosed = null;
+  }
+  G.Prefs.setBoolPref(`allWindowsClosed`, false);
   let persistWinPref;
   try {
     persistWinPref = G.Prefs.getComplexValue(`window_persisted`);
@@ -135,14 +142,16 @@ const openMainWindow = () => {
   const persistedWindows: WindowArgs[] = [];
   if (persistWinPref) {
     G.Prefs.setComplexValue(`window_persisted`, undefined);
-    Object.entries(persistWinPref).forEach((entry) => {
-      const args = entry[1] as WindowArgs;
-      if (args.type === 'xulsword') {
-        options = args.options;
-      } else {
-        persistedWindows.push(args);
-      }
-    });
+    if (allWindowsClosed) {
+      Object.entries(persistWinPref).forEach((entry) => {
+        const args = entry[1] as WindowArgs;
+        if (args.type === 'xulsword') {
+          options = args.options;
+        } else {
+          persistedWindows.push(args);
+        }
+      });
+    }
   }
 
   G.Prefs.setComplexValue(`window`, undefined);
@@ -271,6 +280,8 @@ const start = async () => {
  */
 
 app.on('window-all-closed', () => {
+  G.Prefs.setBoolPref(`allWindowsClosed`, true);
+
   // Write all prefs to disk when app closes
   G.Prefs.writeAllStores();
 

@@ -33,7 +33,7 @@ import './chooser.css';
 const defaultProps = {
   ...xulDefaultProps,
   bookGroups: ['ot', 'nt'],
-  xulswordHandler: undefined,
+  onCloseChooserClick: undefined,
   headingsModule: undefined,
   availableBooksModule: undefined,
   hideUnavailableBooks: false,
@@ -45,7 +45,7 @@ const defaultProps = {
 const propTypes = {
   ...xulPropTypes,
   bookGroups: PropTypes.arrayOf(PropTypes.string),
-  xulswordHandler: PropTypes.func.isRequired,
+  onCloseChooserClick: PropTypes.func.isRequired,
   headingsModule: PropTypes.string,
   availableBooksModule: PropTypes.string,
   hideUnavailableBooks: PropTypes.bool,
@@ -56,7 +56,7 @@ const propTypes = {
 
 interface ChooserProps extends XulProps {
   bookGroups: string[];
-  xulswordHandler: (e: any) => void;
+  onCloseChooserClick: (e: any) => void;
   headingsModule: string | undefined;
   availableBooksModule: string | undefined;
   hideUnavailableBooks: boolean;
@@ -463,7 +463,7 @@ class Chooser extends React.Component {
 
   render() {
     const props = this.props as ChooserProps;
-    const { availableBooksModule, selection, type, xulswordHandler } = this
+    const { availableBooksModule, selection, type, onCloseChooserClick } = this
       .props as ChooserProps;
     const { bookGroup, slideIndex } = this.state as ChooserState;
     if (type === 'none') return [];
@@ -476,7 +476,7 @@ class Chooser extends React.Component {
         <Vbox height="100%">
           <Hbox height="20px" className="fadetop" />
           <Hbox flex="5" className={`container ${bookGroup}`}>
-            <div className="close-chooser" onClick={xulswordHandler} />
+            <div className="close-chooser" onClick={onCloseChooserClick} />
             <Vbox width="26px">
               {props.bookGroups.map((bg) => {
                 const selected = bg === bookGroup ? 'selected' : '';
