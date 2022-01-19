@@ -5,12 +5,10 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import chalk from 'chalk';
 import { merge } from 'webpack-merge';
 import { spawn, execSync } from 'child_process';
-import baseConfig from './webpack.config.base';
+import baseConfig, { xulswordWindows } from './webpack.config.base';
 import webpackPaths from './webpack.paths.js';
 import checkNodeEnv from '../scripts/check-node-env';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
-
-const xulswordWindows = ['splash', 'xulsword', 'viewport/viewportWin', 'popup/popupWin'];
 
 const entries = {};
 xulswordWindows.forEach((xsw) => {

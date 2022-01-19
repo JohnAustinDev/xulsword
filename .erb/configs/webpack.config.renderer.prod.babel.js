@@ -10,12 +10,10 @@ import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import { merge } from 'webpack-merge';
 import TerserPlugin from 'terser-webpack-plugin';
-import baseConfig from './webpack.config.base';
+import baseConfig, { xulswordWindows } from './webpack.config.base';
 import webpackPaths from './webpack.paths.js';
 import checkNodeEnv from '../scripts/check-node-env';
 import deleteSourceMaps from '../scripts/delete-source-maps';
-
-const xulswordWindows = ['splash', 'xulsword', 'viewport/viewportWin', 'popup/popupWin'];
 
 const entries = {};
 xulswordWindows.forEach((xsw) => {
