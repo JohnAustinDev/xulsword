@@ -475,6 +475,7 @@ function windowOptions(type: string, options: any) {
   options.webPreferences.enableRemoteModule = false;
   if (!Array.isArray(options.webPreferences.additionalArguments))
     options.webPreferences.additionalArguments = [type];
+  options.webPreferences.webSecurity = true;
 }
 
 function windowInitI18n(win: BrowserWindow) {
