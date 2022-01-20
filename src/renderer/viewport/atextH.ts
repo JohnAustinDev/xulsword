@@ -47,6 +47,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           'nextchaplink',
           'versePerLineButton',
           'image-container',
+          'dictkeyinput',
         ],
         target
       );
@@ -182,6 +183,12 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
                 img[0].offsetLeft;
             }
           }
+          break;
+        }
+
+        case 'dictkeyinput': {
+          const input = elem as HTMLInputElement;
+          input.select();
           break;
         }
 

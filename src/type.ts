@@ -232,6 +232,12 @@ export const CommandsPublic = {
   openHelp: func as unknown as () => void,
 }
 
+// See electron shell api. Any electron shell property can be added
+// here and it will become available in G.
+export const ShellPublic = {
+  beep: func as unknown as () => void,
+}
+
 // This GPublic object will be used at runtime to create two different
 // types of G objects sharing the same GType interface: one will be
 // used in the main process and the other in renderer processes. The
@@ -269,6 +275,7 @@ export const GPublic = {
   LibSword: LibSwordPublic,
   Dirs: DirsPublic,
   Commands: CommandsPublic,
+  Shell: ShellPublic,
 };
 
 export interface GType {
@@ -298,6 +305,7 @@ export interface GType {
   LibSword: typeof LibSwordPublic;
   Dirs: typeof DirsPublic;
   Commands: typeof CommandsPublic;
+  Shell: typeof ShellPublic;
 
   cache: { [i: string]: any };
   reset: () => void;

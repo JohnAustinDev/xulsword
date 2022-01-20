@@ -10,10 +10,11 @@ import {
   ofClass,
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
+import G from '../rg';
+import { convertDotString } from '../rutil';
+import { delayHandler } from '../libxul/xul';
 import Atext from './atext';
 import { textChange, wheelscroll } from './zversekey';
-import { convertDotString } from '../rutil';
-import G from '../rg';
 
 import type { StateDefault } from '../../type';
 
@@ -370,34 +371,36 @@ export default function handler(
 
     case 'keydown': {
       const e = es as React.KeyboardEvent;
-      const targ = ofClass(['keytextbox'], target);
+      const targ = ofClass(['dictkeyinput'], target);
       if (targ && module) {
-        e.preventDefault();
         e.stopPropagation();
-        const select = targ.element as HTMLSelectElement;
-        const { value } = select;
-        if (!value) {
-          select.style.color = '';
-        } else if (Atext?.cache?.keyList) {
-          const re = new RegExp(`(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`, 'i');
-          const firstMatch = `${Atext.cache.keyList[module].join(
-            '<nx>'
-          )}<nx>`.match(re);
-          if (!firstMatch) {
-            if (e.key !== 'backspace') {
-              // eslint-disable-next-line no-console
-              console.log('\u0007');
-              select.style.color = 'red';
-            }
-          } else {
+        delayHandler(
+          this,
+          (select, mod) => {
+            const { value } = select;
             select.style.color = '';
-            this.setState((prevState: StateDefault) => {
-              const { keys } = prevState;
-              [, , keys[i]] = firstMatch;
-              return { keys };
-            });
-          }
-        }
+            if (value && Atext?.cache?.keyList) {
+              const re = new RegExp(
+                `(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`,
+                'i'
+              );
+              const firstMatch = `${Atext.cache.keyList[mod].join(
+                '<nx>'
+              )}<nx>`.match(re);
+              if (firstMatch) {
+                this.setState((prevState: StateDefault) => {
+                  const { keys } = prevState;
+                  [, , keys[i]] = firstMatch;
+                  return { keys };
+                });
+              } else if (e.key !== 'backspace') {
+                G.Shell.beep();
+                select.style.color = 'red';
+              }
+            }
+          },
+          1000
+        )(targ.element, module);
       }
       break;
     }

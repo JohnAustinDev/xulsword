@@ -444,7 +444,7 @@ html.chromedir-rtl .fncol3 {
   height: 100%;
   padding: 16px;
 }
-.dictlist .textboxparent {
+.dictlist .headerbox {
   height: 16px;
 }
 .dictlist input {
@@ -469,7 +469,7 @@ html.chromedir-rtl .fncol3 {
   border-top: 3px solid grey;
   margin: 10px;
 }
-.dict-key-heading {
+.dict-entry-heading {
   font-weight: bold;
 }
 

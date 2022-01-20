@@ -3,9 +3,9 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import path from 'path';
 import fs from 'fs';
-import { BrowserWindow, Menu, ipcMain } from 'electron';
+import { BrowserWindow, Menu, ipcMain, shell } from 'electron';
 import i18next from 'i18next';
-import { GPublic } from '../type';
+import { GPublic, ShellPublic } from '../type';
 import C from '../constant';
 import { isASCII } from '../common';
 import Dirsx from './modules/dirs';
@@ -183,6 +183,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     Prefs: Prefsx as typeof Prefsx,
     Dirs: Dirsx as typeof Dirsx,
     Commands: Commandsx as typeof Commandsx,
+    Shell: shell as typeof ShellPublic,
   },
 
   reset() {

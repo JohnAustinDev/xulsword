@@ -229,12 +229,13 @@ class Atext extends React.Component {
         if (!Atext.cache.keyHTML || !(module in Atext.cache.keyHTML)) {
           let html = '';
           Atext.cache.keyList[module].forEach((k1: any) => {
-            html += `<div class="dict-key">${k1}</div>`;
+            const id = stringHash(k1);
+            html += `<div id="${id}" class="dict-key">${k1}</div>`;
           });
           Atext.cache.keyHTML[module] = html;
         }
 
-        // Return the results
+        // Set the final results
         const de = getDictEntryHTML(key, module, true);
         r.textHTML += `<div class="dictentry">${de}</div>`;
 
@@ -243,9 +244,10 @@ class Atext extends React.Component {
           sel,
           '$1 dictselectkey$2'
         );
-        r.noteHTML += `<div class="dictlist">
-            <div class="textboxparent">
-              <input type="text" value="${key}" class="cs-${module} keytextbox"/ >
+        r.noteHTML += `
+          <div class="dictlist">
+            <div class="headerbox">
+              <input type="text" value="${key}" class="cs-${module} dictkeyinput" spellcheck="false"/ >
             </div>
             <div class="keylist">${list}</div>
           </div>`;
@@ -253,6 +255,7 @@ class Atext extends React.Component {
       }
       case C.GENBOOK: {
         r.textHTML += G.LibSword.getGenBookChapterText(module, modkey);
+        r.noteHTML += G.LibSword.getNotes();
         break;
       }
       default:
@@ -477,7 +480,7 @@ class Atext extends React.Component {
           }
         }
       }
-      // Scroll if needed
+      // Scroll as needed
       if (
         newScroll.flagScroll !== C.SCROLLTYPENONE &&
         (update || scrollkey !== sbe.dataset.scroll) &&
@@ -521,6 +524,28 @@ class Atext extends React.Component {
                 'xulsword.flagScroll',
               ]);
             }, 1);
+          }
+        }
+      } else if (update && type === C.DICTIONARY) {
+        const { modkey } = newLibSword;
+        const id = stringHash(modkey);
+        const keyelem = document.getElementById(id);
+        if (keyelem) {
+          keyelem.scrollIntoView();
+          let st = keyelem.parentNode?.parentNode as HTMLElement | null;
+          while (st) {
+            if (st.scrollTop) st.scrollTop = 0;
+            st = st.parentNode as HTMLElement | null;
+          }
+          const dictlist = keyelem.parentNode?.parentNode as HTMLElement | null;
+          if (dictlist) {
+            const dki = dictlist.getElementsByClassName(
+              'dictkeyinput'
+            ) as unknown as HTMLInputElement[] | null;
+            if (dki) {
+              dki[0].focus();
+              dki[0].select();
+            }
           }
         }
       }

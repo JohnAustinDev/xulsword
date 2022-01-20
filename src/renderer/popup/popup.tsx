@@ -256,7 +256,7 @@ class Popup extends React.Component {
               const aref = getCompanionModules(mod);
               if (aref.length) {
                 const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
-                if (bible) [refbible] = bible;
+                if (bible) refbible = bible;
               }
             }
             const mynote =
@@ -411,7 +411,7 @@ class Popup extends React.Component {
     if (mod && type === 'sr' && G.Tab[mod]?.type !== C.BIBLE) {
       const aref = getCompanionModules(mod);
       const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
-      if (bible) [refbible] = bible;
+      if (bible) refbible = bible;
     }
 
     let cls = `userFontSize cs-program`;

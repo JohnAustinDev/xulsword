@@ -185,7 +185,11 @@ export function getDictEntryHTML(
   if (!html) return '';
 
   // Add a heading
-  html = `<div class="cs-${mods[0]}"><div class="dict-key-heading cd-${mods[0]}">${key}:</div>${html}</div>`;
+  html = `
+    <div class="cs-${mods[0]}">
+      <div class="dict-entry-heading cd-${mods[0]}">${key}:</div>
+      ${html}
+    </div>`;
 
   return html;
 }
