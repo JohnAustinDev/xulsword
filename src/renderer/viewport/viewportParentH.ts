@@ -96,7 +96,7 @@ export default function handler(
           'ilt-tab', // the interlinear tab
           'prevchaplink',
           'nextchaplink',
-          'keylist',
+          'dict-key',
           'dt',
           'dtl',
           'fnlink',
@@ -307,21 +307,14 @@ export default function handler(
             });
           }
           break;
-        case 'keylist': {
-          const title = target?.dataset.title;
-          if (atext && title) {
+        case 'dict-key': {
+          const key = elem.innerText;
+          if (atext && key) {
             this.setState((prevState: StateDefault) => {
               const { keys } = prevState;
-              keys[i] = decodeURIComponent(title);
+              keys[i] = key;
               return { keys };
             });
-            const keytextbox = atext.getElementsByClassName('keytextbox');
-            if (keytextbox) {
-              const ktb = keytextbox[0] as HTMLElement;
-              setTimeout(() => {
-                ktb.focus();
-              }, 1);
-            }
           }
           break;
         }

@@ -4,9 +4,7 @@ import C from './constant';
 import type { GType } from './type';
 
 export function escapeRE(text: string) {
-  // eslint-disable-next-line no-useless-escape
-  const ESCAPE_RE = /([\-\[\]\(\)\{\}\=\!\+\*\.\:\^\$\?\|\/\\])/g;
-  return text.replace(ESCAPE_RE, '\\$1');
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // Decode an osisRef that was encoded using _(\d+)_ encoding, where

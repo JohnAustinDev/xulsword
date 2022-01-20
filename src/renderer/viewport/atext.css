@@ -455,11 +455,11 @@ html.chromedir-rtl .fncol3 {
   max-height: calc(100% - 30px);
   overflow: auto;
 }
-.dictlist .key {
+.dictlist .dict-key {
   cursor: pointer;
 }
 .dictselectkey {
-  background: highlight;
+  background: #1e90ff;
   color: white;
 }
 .dict-description {

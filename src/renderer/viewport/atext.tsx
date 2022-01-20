@@ -13,6 +13,7 @@ import C from '../../constant';
 import {
   compareObjects,
   dString,
+  escapeRE,
   sanitizeHTML,
   stringHash,
 } from '../../common';
@@ -228,22 +229,25 @@ class Atext extends React.Component {
         if (!Atext.cache.keyHTML || !(module in Atext.cache.keyHTML)) {
           let html = '';
           Atext.cache.keyList[module].forEach((k1: any) => {
-            const k2 = encodeURIComponent(k1);
-            html += `<div class="key ${k2} data-title="${k2}">${k1}</div>`;
+            html += `<div class="dict-key">${k1}</div>`;
           });
           Atext.cache.keyHTML[module] = html;
         }
 
         // Return the results
-        r.textHTML += `<div class="dictentry">${getDictEntryHTML(
-          key,
-          module,
-          true
-        )}</div>`;
+        const de = getDictEntryHTML(key, module, true);
+        r.textHTML += `<div class="dictentry">${de}</div>`;
 
+        const sel = new RegExp(`(dict-key)(">${escapeRE(key)}<)`);
+        const list = Atext.cache.keyHTML[module].replace(
+          sel,
+          '$1 dictselectkey$2'
+        );
         r.noteHTML += `<div class="dictlist">
-            <div class="textboxparent"><input type="text" value="${key}" class="cs-${module} keytextbox"/ ></div>
-            <div class="keylist">${Atext.cache.keyHTML[module]}</div>
+            <div class="textboxparent">
+              <input type="text" value="${key}" class="cs-${module} keytextbox"/ >
+            </div>
+            <div class="keylist">${list}</div>
           </div>`;
         break;
       }
@@ -555,6 +559,8 @@ class Atext extends React.Component {
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
+      const isDict =
+        libsword.module && G.Tab[libsword.module].type === C.DICTIONARY;
       let chfirst;
       let chlast;
       let originalch;
@@ -578,28 +584,21 @@ class Atext extends React.Component {
         libsword.chapter = chlast;
       }
       const response = Atext.libswordResponseMemoized(libsword, n);
-      let fntable = nbe.firstChild as HTMLElement | null;
+      let fntable = (!isDict ? nbe.firstChild : null) as HTMLElement | null;
+      let sb;
+      let nb;
       switch (flag) {
         case 'overwrite':
-          sanitizeHTML(sbe, response.textHTML);
-          sanitizeHTML(nbe, `<div class="fntable">${response.noteHTML}</div>`);
-          this.notes = response.notes;
-          this.intronotes = response.intronotes;
+          sb = response.textHTML;
+          nb = response.noteHTML;
           console.log(
             `writeLibSword2DOM(${libsword.chapter}, ${n}, 'overwrite')`
           );
           break;
         case 'prepend': {
           if (fntable) {
-            sanitizeHTML(sbe, response.textHTML + sbe.innerHTML);
-            sanitizeHTML(
-              nbe,
-              `<div class="fntable">${
-                response.noteHTML + fntable.innerHTML
-              }</div>`
-            );
-            this.notes = response.notes + this.notes;
-            this.intronotes = response.intronotes + this.intronotes;
+            sb = response.textHTML + sbe.innerHTML;
+            nb = response.noteHTML + fntable.innerHTML;
             console.log(
               `writeLibSword2DOM(${libsword.chapter}, ${n}, 'prepend')`
             );
@@ -608,15 +607,8 @@ class Atext extends React.Component {
         }
         case 'append': {
           if (fntable) {
-            sanitizeHTML(sbe, sbe.innerHTML + response.textHTML);
-            sanitizeHTML(
-              nbe,
-              `<div class="fntable">${
-                fntable.innerHTML + response.noteHTML
-              }</div>`
-            );
-            this.notes += response.notes;
-            this.intronotes += response.intronotes;
+            sb = sbe.innerHTML + response.textHTML;
+            nb = fntable.innerHTML + response.noteHTML;
             console.log(
               `writeLibSword2DOM(${libsword.chapter}, ${n}, 'append')`
             );
@@ -626,6 +618,11 @@ class Atext extends React.Component {
         default:
           throw Error('writeLibSword unrecognized flag');
       }
+      if (nb !== undefined && !isDict) {
+        nb = `<div class="fntable">${nb}</div>`;
+      }
+      if (sb !== undefined) sanitizeHTML(sbe, sb);
+      if (nb !== undefined) sanitizeHTML(nbe, nb);
       fntable = nbe.firstChild as HTMLElement | null;
       sbe.dataset.libsword = stringHash({ ...libsword, chapter: 0 }, n);
       sbe.dataset.scroll = undefined;
