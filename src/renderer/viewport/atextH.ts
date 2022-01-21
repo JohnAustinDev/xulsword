@@ -128,59 +128,30 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
         }
 
         case 'image-container': {
-          const img = elem.getElementsByTagName('img');
-          if (
-            img &&
-            img.length &&
-            window.getComputedStyle(img[0], null).cursor !== 'not-allowed'
-          ) {
-            let scrollbox = elem.parentNode as HTMLElement | null;
-            while (
-              scrollbox &&
-              scrollbox.scrollHeight <= scrollbox.clientHeight
-            ) {
-              scrollbox = scrollbox.parentNode as HTMLElement | null;
-            }
-            let mouseYinit;
-            let mouseXinit;
-            let sbox;
-            if (scrollbox) {
-              sbox = scrollbox.getBoundingClientRect();
-              const scrollYinit = scrollbox.scrollTop;
-              const scrollXinit = scrollbox.scrollLeft;
-              mouseYinit =
-                (e.clientY - sbox.top - (img[0].offsetTop - scrollYinit)) /
-                img[0].offsetHeight;
-              mouseXinit =
-                (e.clientX - sbox.left - (img[0].offsetLeft - scrollXinit)) /
-                img[0].offsetWidth;
-            }
-
-            if (img[0].offsetWidth < img[0].naturalWidth)
-              img[0].style.width = `${img[0].naturalWidth}px`;
-            else img[0].style.width = '';
-            if (img[0].offsetWidth < img[0].naturalWidth)
-              img[0].style.cursor = 'zoom-in';
-            else if (img[0].style.width) img[0].style.cursor = 'zoom-out';
-            else img[0].style.cursor = '';
-
-            // scroll image to our click location
-            if (
-              scrollbox &&
-              sbox &&
-              mouseYinit !== undefined &&
-              mouseXinit !== undefined
-            ) {
-              scrollbox.scrollTop =
-                mouseYinit * img[0].offsetHeight -
-                e.clientY +
-                sbox.top +
-                img[0].offsetTop;
-              scrollbox.scrollLeft =
-                mouseXinit * img[0].offsetWidth -
-                e.clientX +
-                sbox.left +
-                img[0].offsetLeft;
+          const cont = elem;
+          const imgs = cont.getElementsByTagName('img');
+          if (imgs && imgs.length) {
+            const img = imgs[0];
+            const style = window.getComputedStyle(img, null);
+            if (style.cursor !== 'not-allowed') {
+              const cbox = cont.getBoundingClientRect();
+              cont.style.width = `${Math.round(cbox.width)}px`;
+              cont.style.height = `${Math.round(cbox.height)}px`;
+              if (img.offsetWidth < img.naturalWidth)
+                img.style.width = `${img.naturalWidth}px`;
+              else img.style.width = '';
+              if (img.offsetWidth < img.naturalWidth)
+                img.style.cursor = 'zoom-in';
+              else if (img.style.width) img.style.cursor = 'zoom-out';
+              else img.style.cursor = '';
+              const contMouseY = e.clientY - cbox.top;
+              const imgMouseY =
+                contMouseY * (img.offsetHeight / cont.offsetHeight);
+              cont.scrollTop = imgMouseY - (1 / 2) * cont.offsetHeight;
+              const contMouseX = e.clientX - cbox.left;
+              const imgMouseX =
+                contMouseX * (img.offsetWidth / cont.offsetWidth);
+              cont.scrollLeft = imgMouseX - (1 / 2) * cont.offsetHeight;
             }
           }
           break;

@@ -60,6 +60,25 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
       return resolveHtmlPath(s);
     },
 
+    inlineFile: (
+      fpath: string,
+      encoding = 'base64' as BufferEncoding
+    ): string => {
+      const file = new nsILocalFile(fpath);
+      const mimeTypes = {
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif',
+      } as any;
+      const contentType =
+        // eslint-disable-next-line no-useless-escape
+        mimeTypes[fpath.replace(/^.*\.([^\.]+)$/, '$1').toLowerCase()];
+      if (!file.exists() || !contentType) return '';
+      const rawbuf = file.readBuf();
+      return `data:${contentType};${encoding},${rawbuf.toString(encoding)}`;
+    },
+
     globalReset: () => {
       G.reset();
       BrowserWindow.getAllWindows().forEach((w) => {

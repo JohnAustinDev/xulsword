@@ -425,6 +425,8 @@ h3 {
 }
 .image-container {
   text-align: center;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 .image-container img {
   width: 100%;

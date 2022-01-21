@@ -264,6 +264,7 @@ export const GPublic = {
 
   // Global functions
   resolveHtmlPath: func as unknown,
+  inlineFile: func as unknown,
   setGlobalMenuFromPrefs: func as unknown,
   setGlobalStateFromPrefs: func as unknown,
   openWindow: func as unknown,
@@ -295,6 +296,7 @@ export interface GType {
   OPSYS: 'string';
 
   resolveHtmlPath: (htmlfile: string) => string;
+  inlineFile: (path: string, encoding: 'base64' | 'utf8') => string;
   setGlobalMenuFromPrefs: (menu?: Electron.Menu) => void;
   setGlobalStateFromPrefs: (prefs?: string | string[]) => void;
   openWindow: (type: string, params: Electron.BrowserWindowConstructorOptions) => number;

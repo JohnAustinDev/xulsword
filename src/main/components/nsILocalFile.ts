@@ -135,8 +135,17 @@ export default class nsILocalFile {
 
   // This was not part of nsILocalFile, but added for convenience. Reads UTF-8
   // encoded file contents and returns as string.
-  readFile(): string {
-    return fs.readFileSync(this.path, { encoding: 'utf-8' });
+  readFile(options?: any): string {
+    const ops = options || {};
+    ops.encoding = 'utf-8';
+    return fs.readFileSync(this.path, ops) as unknown as string;
+  }
+
+  // This was not part of nsILocalFile, but added for convenience.
+  readBuf(options?: any): Buffer {
+    const ops = options || {};
+    ops.encoding = null;
+    return fs.readFileSync(this.path, ops);
   }
 
   remove(recursive = false) {

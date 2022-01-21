@@ -170,7 +170,7 @@ class Viewport extends React.Component implements PopupParent {
       keys,
       selection,
       flagScroll,
-      isPinned,
+      isPinned: isPinned0,
       noteBoxHeight,
       maximizeNoteBox,
       showChooser,
@@ -181,6 +181,9 @@ class Viewport extends React.Component implements PopupParent {
     } = this.props as ViewportProps;
     const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = this
       .state as ViewportState;
+
+    const isVerseKey = modules.map((m) => Boolean(m && G.Tab[m].isVerseKey));
+    const isPinned = isPinned0.map((ip, i) => ip && isVerseKey[i]);
 
     const chooser = modules.some((m) => m && G.Tab[m].type === C.GENBOOK)
       ? 'genbook'

@@ -31,6 +31,21 @@ export function jsdump(msg: string | Error) {
   console.log(msg);
 }
 
+// Read libsword data-src attribute file URLs and convert them into src inline data.
+export function libswordImgSrc(container: HTMLElement) {
+  Array.from(container.getElementsByTagName('img')).forEach((img) => {
+    if (img.dataset.src) {
+      // Show red box on failure
+      let src =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==';
+      const m = img.dataset.src.match(/^file:\/\/(.*)$/i);
+      if (m) src = G.inlineFile(m[1], 'base64');
+      img.src = src;
+      img.removeAttribute('data-src');
+    }
+  });
+}
+
 export function getModuleLongType(aModule: string): string | undefined {
   const moduleList = G.LibSword.getModuleList();
   if (moduleList === C.NOMODULES) return undefined;

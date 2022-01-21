@@ -38,7 +38,8 @@ html.chromedir-rtl .atext .text-pin {
 .atext .text-pin:hover {
   background: url(../images/pushpin2.png);
 }
-.atext.Dicts .text-pin {
+.atext.Dicts .text-pin,
+.atext.Genbks .text-pin {
   display: none;
 }
 html.chromedir-ltr .atext .text-pin,

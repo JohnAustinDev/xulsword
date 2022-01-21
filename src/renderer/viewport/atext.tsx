@@ -18,6 +18,7 @@ import {
   stringHash,
 } from '../../common';
 import G from '../rg';
+import { libswordImgSrc } from '../rutil';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -646,8 +647,14 @@ class Atext extends React.Component {
       if (nb !== undefined && !isDict) {
         nb = `<div class="fntable">${nb}</div>`;
       }
-      if (sb !== undefined) sanitizeHTML(sbe, sb);
-      if (nb !== undefined) sanitizeHTML(nbe, nb);
+      if (sb !== undefined) {
+        sanitizeHTML(sbe, sb);
+        libswordImgSrc(sbe);
+      }
+      if (nb !== undefined) {
+        sanitizeHTML(nbe, nb);
+        libswordImgSrc(nbe);
+      }
       fntable = nbe.firstChild as HTMLElement | null;
       sbe.dataset.libsword = stringHash({ ...libsword, chapter: 0 }, n);
       sbe.dataset.scroll = undefined;

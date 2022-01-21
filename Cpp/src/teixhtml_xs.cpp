@@ -325,7 +325,8 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
             (tag.getAttribute("type") ? tag.getAttribute("type"):""),
             (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")
           ).c_str(), buf, u);
-        outHtmlTag("<img src=\"File://", buf, u);
+        // Secure src file URLs require front-end handling
+        outHtmlTag("<img src=\"data:,\" alt data-src=\"File://", buf, u);
         outText(filepath, buf, u);
         outText("\">", buf, u);
         outHtmlTag("</div>", buf, u);
@@ -962,7 +963,8 @@ bool TEIXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData 
               (tag.getAttribute("type") ? tag.getAttribute("type"):""),
               (tag.getAttribute("subType") ? tag.getAttribute("subType"):"")
             ).c_str(), buf, u);
-          outHtmlTag("<img src=\"File://", buf, u);
+          // Secure src file URLs require front-end handling
+          outHtmlTag("<img src=\"data:,\" alt data-src=\"File://", buf, u);
           outText(filepath, buf, u);
           outText("\">", buf, u);
           outHtmlTag("</div>", buf, u);

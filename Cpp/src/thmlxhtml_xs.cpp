@@ -357,7 +357,8 @@ bool ThMLXHTMLXS::handleToken(SWBuf &buf, const char *token, BasicFilterUserData
       imagename.replaceBytes("\\", '/');
 
       buf.append("<div class=\"image-container\">");
-      buf.append("<img src=\"File://");
+      // Secure src file URLs require front-end handling
+      buf.append("<img src=\"data:,\" alt data-src=\"File://");
       buf.append(imagename.c_str());
       buf.append("\"></div>");
     }

@@ -23,7 +23,7 @@ import C from '../../constant';
 import { sanitizeHTML, stringHash } from '../../common';
 import { getPopupInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { getCompanionModules } from '../rutil';
+import { getCompanionModules, libswordImgSrc } from '../rutil';
 import { getIntroductions, getNoteHTML } from '../viewport/zversekey';
 import { getDictEntryHTML, getLemmaHTML } from '../viewport/zdictionary';
 import popupH from './popupH';
@@ -328,6 +328,7 @@ class Popup extends React.Component {
 
       pt.dataset.infokey = infokey;
       sanitizeHTML(pt, html);
+      libswordImgSrc(pt);
 
       const parent = npopup.current.parentNode as HTMLElement | null;
       if (!isWindow && parent) {
