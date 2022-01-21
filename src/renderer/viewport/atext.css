@@ -177,14 +177,14 @@ html.chromedir-rtl .atext .text-win {
   text-decoration: underline;
   cursor: pointer;
 }
-.prevchaplink.disabled,
-.nextchaplink.disabled {
+.atext.prev-disabled .prevchaplink,
+.atext.next-disabled .nextchaplink {
   color: grey;
   text-decoration: none;
   cursor: default;
 }
-.prevchaplink.disabled:hover,
-.nextchaplink.disabled:hover {
+.atext.prev-disabled .prevchaplink:hover,
+.atext.next-disabled .nextchaplink:hover {
   text-decoration: none;
 }
 
@@ -453,7 +453,7 @@ html.chromedir-rtl .fncol3 {
 }
 .dictlist .keylist {
   margin-top: 10px;
-  max-height: calc(100% - 30px);
+  max-height: calc(100% - 45px);
   overflow: auto;
 }
 .dictlist .dict-key {

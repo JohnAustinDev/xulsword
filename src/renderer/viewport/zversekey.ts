@@ -19,7 +19,7 @@ import {
 } from '../rutil';
 import G from '../rg';
 
-import type { ShowType } from '../../type';
+import type { ShowType, StateDefault } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type Atext from './atext';
@@ -1179,19 +1179,42 @@ export function pageChange(atext: HTMLElement, next: boolean) {
 }
 
 // Change a dictionary to the previous or next key.
-function dictionaryChange(atext: HTMLElement, next: boolean) {
-  console.log(`dictionaryChange not implemented yet.`);
+function dictionaryChange(
+  atext: HTMLElement,
+  next: boolean,
+  prevState?: StateDefault
+) {
+  const keyels = atext.getElementsByClassName('dictselectkey');
+  const w = atext.dataset.wnum;
+  if (keyels && w) {
+    let key = keyels[0] as any;
+    key = next ? key.nextSibling : key.previousSibling;
+    const newkey = key?.innerText;
+    if (newkey) {
+      const keys = prevState ? prevState.keys : [];
+      keys[Number(w) - 1] = newkey;
+      return { keys };
+    }
+  }
   return null;
 }
 
 // Change a general book to the previous or next chapter.
-function genbookChange(atext: HTMLElement, next: boolean) {
+function genbookChange(
+  atext: HTMLElement,
+  next: boolean,
+  prevState?: StateDefault
+) {
   console.log(`genbookChange not implemented yet.`);
   return null;
 }
 
 // Handle prev/next event of Atext by returning a new state, or null.
-export function textChange(atext: HTMLElement, next: boolean) {
+export function textChange(
+  atext: HTMLElement,
+  next: boolean,
+  prevState?: StateDefault
+) {
   const classes = ofClass(['Texts', 'Comms', 'Dicts', 'Genbks'], atext);
   const type = classes?.type ? classes.type : null;
   if (!type) return null;
@@ -1239,9 +1262,9 @@ export function textChange(atext: HTMLElement, next: boolean) {
       break;
     }
     case 'Dicts':
-      return dictionaryChange(atext, next);
+      return dictionaryChange(atext, next, prevState);
     case 'Genbks':
-      return genbookChange(atext, next);
+      return genbookChange(atext, next, prevState);
     default:
   }
   return null;

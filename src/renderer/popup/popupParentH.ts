@@ -9,8 +9,8 @@ import { getContextModule } from '../rutil';
 import type { ElemInfo } from '../../libswordElemInfo';
 import type { PlaceType, ShowType } from '../../type';
 
-const POPUPDELAY = 250;
-const POPUPDELAY_STRONGS = 600;
+const POPUPDELAY = 200;
+const POPUPDELAY_STRONGS = 500;
 
 export interface PopupParent {
   state: React.ComponentState;

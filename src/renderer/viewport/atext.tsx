@@ -14,6 +14,7 @@ import {
   compareObjects,
   dString,
   escapeRE,
+  ofClass,
   sanitizeHTML,
   stringHash,
 } from '../../common';
@@ -34,6 +35,7 @@ import {
   scroll,
   trimNotes,
   findVerseElement,
+  textChange,
 } from './zversekey';
 import { getDictEntryHTML, getDictSortedKeyList } from './zdictionary';
 import handlerH from './atextH';
@@ -674,6 +676,22 @@ class Atext extends React.Component {
         (fntable?.innerHTML && nbc.classList.contains('noteboxEmpty'))
       )
         nbc.classList.toggle('noteboxEmpty');
+      setTimeout(() => {
+        const atextc = ofClass(['atext'], sbe);
+        if (atextc) {
+          const atext = atextc.element;
+          const prev = textChange(atext, false);
+          const next = textChange(atext, true);
+          const prevdis = atext.classList.contains('prev-disabled');
+          const nextdis = atext.classList.contains('next-disabled');
+          if ((!prev && !prevdis) || (prev && prevdis)) {
+            atext.classList.toggle('prev-disabled');
+          }
+          if ((!next && !nextdis) || (next && nextdis)) {
+            atext.classList.toggle('next-disabled');
+          }
+        }
+      }, 1);
     }
   }
 
@@ -709,8 +727,6 @@ class Atext extends React.Component {
     const nextArrow = appIsRTL
       ? String.fromCharCode(8592)
       : String.fromCharCode(8594);
-    const disablePrev = textIsVerseKey && newPin?.chapter < 2;
-    const disableNext = false;
 
     // Notebox logic etc.
     const doMaximizeNB =
@@ -759,12 +775,8 @@ class Atext extends React.Component {
         <Box className="hd" height={`${C.TextHeaderHeight}px`}>
           <div className="navlink">
             <span className="navlink-span">{prevArrow}</span>
-            <a className={`prevchaplink ${disablePrev ? 'disabled' : ''}`}>
-              {i18next.t('PrevChaptext')}
-            </a>{' '}
-            <a className={`nextchaplink ${disableNext ? 'disabled' : ''}`}>
-              {i18next.t('NextChaptext')}
-            </a>{' '}
+            <a className="prevchaplink">{i18next.t('PrevChaptext')}</a>{' '}
+            <a className="nextchaplink">{i18next.t('NextChaptext')}</a>{' '}
             <span className="navlink-span">{nextArrow}</span>
           </div>
         </Box>

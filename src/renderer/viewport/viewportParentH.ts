@@ -280,15 +280,17 @@ export default function handler(
         }
         case 'prevchaplink': {
           if (atext && !isPinned) {
-            const s = textChange(atext, false);
-            if (s) this.setState(s);
+            this.setState((prevState: StateDefault) => {
+              return textChange(atext, false, prevState);
+            });
           }
           break;
         }
         case 'nextchaplink': {
           if (atext && !isPinned) {
-            const s = textChange(atext, true);
-            if (s) this.setState(s);
+            this.setState((prevState: StateDefault) => {
+              return textChange(atext, true, prevState);
+            });
           }
           break;
         }
@@ -336,8 +338,8 @@ export default function handler(
                   flagScroll = flagScroll.map(() => C.SCROLLTYPECENTER);
                   return {
                     book: bk,
-                    chapter: ch,
-                    verse: vs,
+                    chapter: Number(ch),
+                    verse: Number(vs),
                     flagScroll,
                     selection: [bk, ch, vs, lv].join('.'),
                   };

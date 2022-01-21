@@ -1,9 +1,9 @@
 .npopup {
   position: absolute;
   z-index: 100;
-  width: calc(100% - 30px);
+  width: calc(100% - 20px);
   left: 15px;
-  margin: auto 20px 10px 0px;
+  margin: auto 0px 10px -6px;
   /* Make sure these npopup styles are NOT inherited from container! */
   text-align: start;
   color: black;
