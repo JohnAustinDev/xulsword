@@ -1,7 +1,6 @@
 /* eslint-disable no-continue */
 import C from '../../constant';
 import G from '../rg';
-import { libswordImgSrc } from '../rutil';
 
 import type { SwordFilterType, SwordFilterValueType } from '../../type';
 

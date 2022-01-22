@@ -179,21 +179,24 @@ export const xulClass = (classes: string | string[], props: any) => {
 };
 
 // Convert all props to corresponding HTML element attribtues.
-// This should be used to pass props to all HTML elements and
-// should only used on HTML elements (not React components).
+// This must be used to pass props to all HTML elements and
+// must only used on HTML elements (not React components).
 export const htmlAttribs = (className: string, props: any) => {
   if (props === null) return {};
   const r: any = {
-    id: props.id,
-    lang: props.lang,
     ...xulClass(className, props),
-    style: {
-      ...xulStyle(props),
-      ...props.style,
-    },
-    ref: props.domref,
     ...xulEvents(props),
   };
+  if (props.id) r.id = props.id;
+  if (props.lang) r.lang = props.lang;
+  if (props.domref) r.ref = props.domref;
+  const style = {
+    ...xulStyle(props),
+    ...props.style,
+  };
+  if (Object.keys(style).length) {
+    r.style = style;
+  }
 
   Object.entries(props).forEach((entry) => {
     const [p, val] = entry;
@@ -204,8 +207,8 @@ export const htmlAttribs = (className: string, props: any) => {
 };
 
 // Use handle() on the top level element of a React component when it
-// handles one of the xulEvents. Otherwise any event of that type on
-// a component instance would never be called.
+// handles a xulEvent. Otherwise any event of that type on a component
+// instance would never be called.
 export const handle = (name: string, func: (e: any) => any, props: any) => {
   return {
     [name]: (e: any) => {

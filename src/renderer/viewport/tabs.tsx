@@ -24,12 +24,10 @@ import './tabs.css';
 
 const defaultProps = {
   ...xulDefaultProps,
-  anid: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
-  anid: PropTypes.string,
   columns: PropTypes.number.isRequired,
   isPinned: PropTypes.bool.isRequired,
   module: PropTypes.string,
@@ -41,7 +39,6 @@ const propTypes = {
 };
 
 interface TabsProps extends XulProps {
-  anid: string;
   columns: number;
   isPinned: boolean;
   module: string | undefined;
@@ -64,6 +61,8 @@ class Tabs extends React.Component {
 
   static propTypes: typeof propTypes;
 
+  tabsref: React.RefObject<HTMLDivElement>;
+
   constructor(props: TabsProps) {
     super(props);
 
@@ -72,6 +71,7 @@ class Tabs extends React.Component {
       multiTabMenupopup: null,
       multiTabs: [],
     };
+    this.tabsref = React.createRef();
     this.checkTabWidth = this.checkTabWidth.bind(this);
     this.multiTabButtonClick = this.multiTabButtonClick.bind(this);
     this.getTab = this.getTab.bind(this);
@@ -127,14 +127,12 @@ class Tabs extends React.Component {
 
   // Move 1 or 2 tabs to the multi-tab if there are any overflowing
   checkTabWidth() {
-    const { anid, n, tabs } = this.props as TabsProps;
+    const { tabsref } = this;
+    const { tabs } = this.props as TabsProps;
     const { multiTabs } = this.state as TabsState;
     const newMultiTabs = multiTabs.slice();
-    const parent = anid
-      ? document.getElementById(anid)
-      : document.getElementsByTagName('body')[0];
-    const tabcont = parent?.getElementsByClassName(`tabs${n}`)[0];
-    if (tabcont && tabcont.scrollWidth > tabcont.clientWidth) {
+    const tabsdiv = tabsref.current;
+    if (tabsdiv && tabsdiv.scrollWidth > tabsdiv.clientWidth) {
       // Add 1 or 2 tabs to the multi-tab.
       let nm = multiTabs.length ? 1 : 2;
       let last: string | null = multiTabs[0];
@@ -205,7 +203,11 @@ class Tabs extends React.Component {
     if (multiTabMenupopup) cls += ' open';
 
     return (
-      <div {...htmlAttribs(`tabs ${cls}`, this.props)} data-wnum={n}>
+      <div
+        {...htmlAttribs(`tabs ${cls}`, this.props)}
+        ref={this.tabsref}
+        data-wnum={n}
+      >
         {module && isPinned && this.getTab(module, 'reg-tab', 'active')}
         {tabs.map((m: string) => {
           if (isPinned || !m || multiTabs.includes(m)) return null;

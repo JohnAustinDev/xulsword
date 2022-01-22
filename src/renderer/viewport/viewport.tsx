@@ -379,7 +379,6 @@ class Viewport extends React.Component implements PopupParent {
                     ilMods[i],
                     mtModules[i],
                   ].join('_')}
-                  anid={id}
                   n={Number(i + 1)}
                   columns={columns[i]}
                   isPinned={isPinnedTabs[i]}
@@ -414,7 +413,10 @@ class Viewport extends React.Component implements PopupParent {
               return (
                 <Atext
                   key={[i, reset].join('.')}
-                  anid={id}
+                  style={{
+                    flexGrow: `${columns[i]}`,
+                    flexShrink: `${numDisplayedWindows - columns[i]}`,
+                  }}
                   n={Number(i + 1)}
                   ownWindow={ownWindow}
                   book={locs[i][0]}
@@ -433,10 +435,6 @@ class Viewport extends React.Component implements PopupParent {
                   isPinned={isPinned[i]}
                   noteBoxHeight={noteBoxHeight[i]}
                   maximizeNoteBox={maximizeNoteBox[i]}
-                  style={{
-                    flexGrow: `${columns[i]}`,
-                    flexShrink: `${numDisplayedWindows - columns[i]}`,
-                  }}
                   onMaximizeNoteBox={xulswordHandler}
                   onMouseOut={(e) => popupParentHandler(e, modules[i])}
                   onMouseOver={(e) => popupParentHandler(e, modules[i])}

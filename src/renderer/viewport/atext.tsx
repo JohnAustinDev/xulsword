@@ -12,8 +12,6 @@ import i18next from 'i18next';
 import C from '../../constant';
 import {
   compareObjects,
-  dString,
-  escapeRE,
   ofClass,
   sanitizeHTML,
   stringHash,
@@ -28,41 +26,30 @@ import {
   handle,
 } from '../libxul/xul';
 import { Vbox, Hbox, Box } from '../libxul/boxes';
+import { libswordText } from './ztext';
 import {
-  getNoteHTML,
-  getChapterHeading,
   highlight,
   scroll,
   trimNotes,
   findVerseElement,
   textChange,
 } from './zversekey';
-import { getDictEntryHTML, getDictSortedKeyList } from './zdictionary';
 import handlerH from './atextH';
 import '../libxul/xul.css';
 import '../libsword.css';
 import './atext.css';
 
 import type { MouseWheel } from './viewportParentH';
-import type {
-  PlaceType,
-  ShowType,
-  SwordFilterType,
-  SwordFilterValueType,
-} from '../../type';
-
-const memoize = require('memoizee');
+import type { PlaceType, ShowType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
-  anid: undefined,
   ownWindow: false,
 };
 
 const propTypes = {
   ...xulPropTypes,
   onMaximizeNoteBox: PropTypes.func.isRequired,
-  anid: PropTypes.string,
   n: PropTypes.number.isRequired,
   columns: PropTypes.number.isRequired,
   book: PropTypes.string.isRequired,
@@ -83,17 +70,13 @@ const propTypes = {
   versification: PropTypes.string,
 };
 
-// TODO! wheel-scroll all windows together, popup blocks wheelscroll
-
-// Atext's properties. NOTE: property types are checked, but property values are not.
+// Atext's properties. NOTE: property types are used, but property values are not.
 const atextProps = {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onMaximizeNoteBox: (
     _e: React.SyntheticEvent<any>,
     _noteboxResizing?: number[],
     _maximize?: boolean
   ): void => {},
-  anid: '',
   n: 0,
   columns: 0,
   book: '',
@@ -116,7 +99,7 @@ const atextProps = {
 
 export type AtextProps = XulProps & typeof atextProps;
 
-type LibSwordResponse = {
+export type LibSwordResponse = {
   textHTML: string;
   noteHTML: string;
   notes: string;
@@ -129,22 +112,22 @@ export interface AtextState {
   noteBoxResizing: number[] | null;
 }
 
+const memoize = require('memoizee');
+
+const libswordResponseMemoized = memoize(libswordText, {
+  max: 100, // remember up to 100 LibSword responses
+  normalizer: (...args: any) =>
+    args.map((arg: any) => stringHash(arg)).join('+'),
+});
+window.ipc.renderer.on('perform-resets', () => {
+  libswordResponseMemoized.clear();
+});
+
 // XUL Atext
 class Atext extends React.Component {
   static defaultProps: typeof defaultProps;
 
   static propTypes: typeof propTypes;
-
-  static cache: any;
-
-  static libswordResponseMemoized: (
-    props: AtextProps,
-    n: number
-  ) => LibSwordResponse;
-
-  static cacheReset() {
-    Atext.cache = { keyList: [], keyHTML: [] };
-  }
 
   static copyProps(source: any, which: any) {
     const p: any = {};
@@ -154,164 +137,6 @@ class Atext extends React.Component {
     return p;
   }
 
-  static libswordResponse(props: AtextProps, n: number): LibSwordResponse {
-    const { module, ilModule, book, chapter, modkey, place, show } = props;
-
-    const r = {
-      headHTML: '',
-      textHTML: '',
-      noteHTML: '',
-      notes: '',
-      intronotes: '',
-    };
-
-    if (!module) return r;
-
-    const { type } = G.Tab[module];
-    let moduleLocale = G.ModuleConfigs[module].AssociatedLocale;
-    if (moduleLocale === C.NOTFOUND) moduleLocale = '';
-
-    // Set SWORD filter options
-    const options = {} as { [key in SwordFilterType]: SwordFilterValueType };
-    Object.entries(C.SwordFilters).forEach((entry) => {
-      const sword = entry[0] as SwordFilterType;
-      let showi = show[entry[1]] ? 1 : 0;
-      if (C.AlwaysOn[type].includes(sword)) showi = 1;
-      options[sword] = C.SwordFilterValues[showi];
-    });
-    if (ilModule) {
-      const [, on] = C.SwordFilterValues;
-      options["Strong's Numbers"] = on;
-      options['Morphological Tags'] = on;
-    }
-    G.LibSword.setGlobalOptions(options);
-
-    // Read Libsword according to module type
-    switch (type) {
-      case C.BIBLE: {
-        if (ilModule) {
-          r.textHTML += G.LibSword.getChapterTextMulti(
-            `${module},${ilModule}`,
-            `${book}.${chapter}`
-          ).replace(/interV2/gm, `cs-${ilModule}`);
-        } else {
-          r.textHTML += G.LibSword.getChapterText(module, `${book}.${chapter}`);
-          r.notes += G.LibSword.getNotes();
-        }
-        break;
-      }
-      case C.COMMENTARY: {
-        r.textHTML += G.LibSword.getChapterText(module, `${book}.${chapter}`);
-        r.notes += G.LibSword.getNotes();
-        break;
-      }
-      case C.DICTIONARY: {
-        // For dictionaries, noteHTML is a key selector. Cache both
-        // the keyList and the key selector for a big speedup.
-        if (!Atext.cache.keyList || !(module in Atext.cache.keyList)) {
-          let list = G.LibSword.getAllDictionaryKeys(module).split('<nx>');
-          list.pop();
-          const sort = G.LibSword.getModuleInformation(module, 'KeySort');
-          if (sort !== C.NOTFOUND) {
-            list = getDictSortedKeyList(list, `${sort}0123456789`);
-          }
-          Atext.cache.keyList[module] = list;
-        }
-
-        // Get the actual key.
-        let key = modkey;
-        if (!key) [key] = Atext.cache.keyList[module];
-        if (key === 'DailyDevotionToday') {
-          const today = new Date();
-          const mo = today.getMonth() + 1;
-          const dy = today.getDate();
-          key = `${mo < 10 ? '0' : ''}${String(mo)}.${dy < 10 ? '0' : ''}${dy}`;
-        }
-
-        // Build and cache the selector list.
-        if (!Atext.cache.keyHTML || !(module in Atext.cache.keyHTML)) {
-          let html = '';
-          Atext.cache.keyList[module].forEach((k1: any) => {
-            const id = stringHash(k1);
-            html += `<div id="${id}" class="dict-key">${k1}</div>`;
-          });
-          Atext.cache.keyHTML[module] = html;
-        }
-
-        // Set the final results
-        const de = getDictEntryHTML(key, module, true);
-        r.textHTML += `<div class="dictentry">${de}</div>`;
-
-        const sel = new RegExp(`(dict-key)(">${escapeRE(key)}<)`);
-        const list = Atext.cache.keyHTML[module].replace(
-          sel,
-          '$1 dictselectkey$2'
-        );
-        r.noteHTML += `
-          <div class="dictlist">
-            <div class="headerbox">
-              <input type="text" value="${key}" class="cs-${module} dictkeyinput" spellcheck="false"/ >
-            </div>
-            <div class="keylist">${list}</div>
-          </div>`;
-        break;
-      }
-      case C.GENBOOK: {
-        r.textHTML += G.LibSword.getGenBookChapterText(module, modkey);
-        r.noteHTML += G.LibSword.getNotes();
-        break;
-      }
-      default:
-    }
-
-    // Add usernotes to text
-    if (props.show.usernotes) Atext.addUserNotes(r, props);
-
-    // handle footnotes.
-    // NOTE: This step is by far the slowest part of Atext render,
-    // particularly when crossrefs include many links.
-    if (G.Tab[module].isVerseKey) {
-      const notetypes: (keyof PlaceType)[] = [
-        'footnotes',
-        'crossrefs',
-        'usernotes',
-      ];
-      const shownb: any = {};
-      notetypes.forEach((nt) => {
-        shownb[nt] = show[nt] && place[nt] === 'notebox';
-      });
-      if (
-        Object.keys(shownb).some((s) => {
-          return shownb[s];
-        })
-      )
-        r.noteHTML += getNoteHTML(r.notes, module, shownb, n);
-    }
-
-    // Localize verse numbers to match the module
-    if (
-      G.Tab[module].isVerseKey &&
-      moduleLocale &&
-      dString(1, moduleLocale) !== dString(1, 'en')
-    ) {
-      const verseNm = new RegExp('(<sup class="versenum">)(\\d+)(</sup>)', 'g');
-      r.textHTML = r.textHTML.replace(verseNm, (_str, p1, p2, p3) => {
-        return p1 + dString(p2, moduleLocale) + p3;
-      });
-    }
-
-    // Add chapter heading and intronotes
-    if (G.Tab[module].isVerseKey && show.headings && r.textHTML) {
-      const headInfo = getChapterHeading(props);
-      r.textHTML = headInfo.textHTML + r.textHTML;
-      r.intronotes = headInfo.intronotes;
-    }
-
-    return r;
-  }
-
-  static addUserNotes(content: LibSwordResponse, props: AtextProps) {}
-
   handler: (e: React.SyntheticEvent) => void;
 
   mouseWheel: MouseWheel;
@@ -319,10 +144,6 @@ class Atext extends React.Component {
   sbref: React.RefObject<HTMLDivElement>;
 
   nbref: React.RefObject<HTMLDivElement>;
-
-  notes: string;
-
-  intronotes: string;
 
   constructor(props: AtextProps) {
     super(props);
@@ -334,19 +155,13 @@ class Atext extends React.Component {
     };
 
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
-
     this.sbref = React.createRef();
-
     this.nbref = React.createRef();
 
-    this.notes = '';
-
-    this.intronotes = '';
-
-    this.handler = handlerH.bind(this);
-    this.bbMouseUp = this.bbMouseUp.bind(this);
     this.onUpdate = this.onUpdate.bind(this);
     this.writeLibSword2DOM = this.writeLibSword2DOM.bind(this);
+    this.handler = handlerH.bind(this);
+    this.bbMouseUp = this.bbMouseUp.bind(this);
   }
 
   componentDidMount() {
@@ -357,15 +172,18 @@ class Atext extends React.Component {
     this.onUpdate();
   }
 
-  // Check if sb already contains the necessary LibSword response
-  // and if not, memoize the required response(s) and update sb
-  // contents. Do any srolling, highlighting or footnote adjustments.
-  // NOTE: the related hashes must be stored on the sb HTML element
-  // itself, because the sb element may be silently replaced by React
+  // The render() function of the Atext component does not render the
+  // actual text content from LibSword. This onUpdate function uses
+  // LibSword to write text to the already rendered component's sb
+  // (scripture box) and nb (not box) divs. It first checks if sb
+  // already contains the necessary LibSword response and if not,
+  // memoizes the required response and updates sb and nb contents.
+  // It then does any srolling, highlighting, footnote adjustments
+  // etc. that must wait until Atext contains the LibSword response.
+  // NOTE: the related hashes must be stored on the HTML element
+  // itself, because DOM elements may be silently replaced by React
   // and storing it there insures the hashes are invalidated at the
-  // same time.
-  //
-  // Also update pin state whenever it changes.
+  // same time. Finally, the pin state is updated if it has changed.
   onUpdate() {
     const props = this.props as AtextProps;
     const state = this.state as AtextState;
@@ -483,7 +301,7 @@ class Atext extends React.Component {
           }
         }
       }
-      // Scroll as needed
+      // SCROLL
       if (
         newScroll.flagScroll !== C.SCROLLTYPENONE &&
         (update || scrollkey !== sbe.dataset.scroll) &&
@@ -531,7 +349,7 @@ class Atext extends React.Component {
         }
       } else if (update && type === C.DICTIONARY) {
         const { modkey } = newLibSword;
-        const id = stringHash(modkey);
+        const id = stringHash(`${n}.${modkey}`);
         const keyelem = document.getElementById(id);
         if (keyelem) {
           keyelem.scrollIntoView();
@@ -552,14 +370,13 @@ class Atext extends React.Component {
           }
         }
       }
-      // Highlight if needed
+      // HIGHLIGHT
       if (type === C.BIBLE && pin && selection !== pin.selection) {
         highlight(sbe, selection, module, versification);
         console.log(
           `highlight(sbe, ${selection}, ${module}, ${versification})`
         );
       }
-      // Trim multi-column Bible notes
       if (columns > 1) {
         const empty = !trimNotes(sbe, nbe);
         const nbc = nbe.parentNode as any;
@@ -570,6 +387,7 @@ class Atext extends React.Component {
           nbc.classList.toggle('noteboxEmpty');
         }
       }
+      // AUDIO LINKS
       if (type === C.BIBLE) {
         // window.setTimeout(function () {BibleTexts.updateAudioLinks(w);}, 0);
       }
@@ -611,7 +429,7 @@ class Atext extends React.Component {
         chlast += 1;
         libsword.chapter = chlast;
       }
-      const response = Atext.libswordResponseMemoized(libsword, n);
+      const response = libswordResponseMemoized(libsword, n);
       let fntable = (!isDict ? nbe.firstChild : null) as HTMLElement | null;
       let sb;
       let nb;
@@ -711,15 +529,11 @@ class Atext extends React.Component {
     const state = this.state as AtextState;
     const props = this.props as AtextProps;
     const { handler, bbMouseUp } = this;
-    const { noteBoxResizing, pin, versePerLine } = state;
+    const { noteBoxResizing, versePerLine } = state;
     const { columns, isPinned, maximizeNoteBox, module, n, noteBoxHeight } =
       props;
 
-    // Check isPinned and collect the props/state combination to render.
-    const newPin = Atext.copyProps(pin && isPinned ? pin : props, C.PinProps);
-
     // Header logic etc.
-    const textIsVerseKey = module && G.Tab[module].isVerseKey;
     const appIsRTL = G.ProgramConfig?.direction === 'rtl';
     const prevArrow = appIsRTL
       ? String.fromCharCode(8594)
@@ -728,7 +542,7 @@ class Atext extends React.Component {
       ? String.fromCharCode(8592)
       : String.fromCharCode(8594);
 
-    // Notebox logic etc.
+    // Notebox height
     const doMaximizeNB =
       noteBoxResizing === null && columns !== 1 && maximizeNoteBox > 0;
     let bbtop;
@@ -759,15 +573,11 @@ class Atext extends React.Component {
         {...handle('onMouseDown', handler, props)}
         {...handle('onMouseMove', handler, props)}
         {...handle('onMouseUp', bbMouseUp, props)}
-        style={{ ...props.style, position: 'relative' }}
         data-wnum={n}
         data-module={module}
         data-columns={columns}
       >
-        <div
-          className="sbcontrols"
-          style={{ position: 'absolute', top: '0px' }}
-        >
+        <div className="sbcontrols">
           <div className="text-pin" />
           <div className="text-win" />
         </div>
@@ -801,16 +611,5 @@ class Atext extends React.Component {
 }
 Atext.defaultProps = defaultProps;
 Atext.propTypes = propTypes;
-Atext.cacheReset();
-Atext.libswordResponseMemoized = memoize(Atext.libswordResponse, {
-  max: 20, // remember up to 20 LibSword responses
-  normalizer: (...args: any) =>
-    args.map((arg: any) => stringHash(arg)).join('+'),
-});
-window.ipc.renderer.on('perform-resets', () => {
-  const m = Atext.libswordResponseMemoized as any;
-  m.clear();
-  Atext.cacheReset();
-});
 
 export default Atext;

@@ -84,6 +84,10 @@ html.chromedir-rtl .atext .text-win {
 .atext.show3 .sb {
   column-count: 3;
 }
+.atext .sbcontrols {
+  position: absolute;
+  top: 0px;
+}
 
 .atext .nbc {
   width: 100%;

@@ -57,7 +57,7 @@ export interface PopupProps extends XulProps {
   elemhtml: string[]; // outerHTML of target element
   eleminfo: ElemInfo[]; // extra target element info (ie for select options)
   gap: number | undefined; // Pixel distance between target element and top of popup window
-  isWindow: boolean; // Set to true to use popup in a fixed location
+  isWindow: boolean; // Set to true to use popup in windowed mode
   onPopupClick: (e: React.SyntheticEvent) => void;
   onSelectChange: (e: React.SyntheticEvent) => void;
   onMouseLeftPopup: (e: React.SyntheticEvent) => void | undefined;
