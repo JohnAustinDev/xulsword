@@ -15,7 +15,7 @@
 .chooser {
   font-size: 15px;
 }
-.chooser .container {
+.chooser .slide-container {
   position: relative;
   margin-inline-start: 10px;
   padding: 6px 6px 6px 3px;
@@ -54,7 +54,7 @@ html.chromedir-rtl .chooser .bookgroup:last-child {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 8px;
 }
-.chooser .container .bookgroup.selected {
+.chooser .slide-container .bookgroup.selected {
   background: rgb(230, 200, 255);
 }
 .chooser .bookgroup .label {

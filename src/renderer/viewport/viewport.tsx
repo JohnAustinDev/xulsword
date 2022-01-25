@@ -113,8 +113,6 @@ class Viewport extends React.Component implements PopupParent {
 
   popupDelayTO: NodeJS.Timeout | undefined;
 
-  delayHandlerTO: NodeJS.Timeout | undefined;
-
   constructor(props: ViewportProps) {
     super(props);
 
@@ -157,7 +155,6 @@ class Viewport extends React.Component implements PopupParent {
     const { popupParentHandler, popupHandler } = this;
     const props = this.props as ViewportProps;
     const {
-      id,
       book,
       chapter,
       verse,
@@ -351,6 +348,7 @@ class Viewport extends React.Component implements PopupParent {
 
         {showingChooser && (
           <Chooser
+            key={reset}
             type={chooser}
             selection={book}
             headingsModule={firstUnpinnedBible}

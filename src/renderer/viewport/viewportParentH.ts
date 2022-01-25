@@ -13,7 +13,7 @@ import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { convertDotString } from '../rutil';
 import { delayHandler } from '../libxul/xul';
-import Atext from './atext';
+import { TextCache } from './ztext';
 import { textChange, wheelscroll } from './zversekey';
 
 import type { StateDefault } from '../../type';
@@ -254,8 +254,13 @@ export default function handler(
         case 'mts-tab':
         case 'mto-tab':
         case 'ilt-tab': {
-          const m = targ.element.dataset.module;
-          if (m && m !== 'disabled' && !state.isPinned[i]) {
+          const m = elem.dataset.module;
+          if (
+            m &&
+            m !== 'disabled' &&
+            !elem.classList.contains('disabled') &&
+            !state.isPinned[i]
+          ) {
             if (targ.type === 'ilt-tab') {
               this.setState((prevState: StateDefault) => {
                 const { ilModules } = prevState;
@@ -381,12 +386,12 @@ export default function handler(
           (select, mod) => {
             const { value } = select;
             select.style.color = '';
-            if (value && Atext?.cache?.keyList) {
+            if (value && TextCache.dict.keyList) {
               const re = new RegExp(
                 `(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`,
                 'i'
               );
-              const firstMatch = `${Atext.cache.keyList[mod].join(
+              const firstMatch = `${TextCache.dict.keyList[mod].join(
                 '<nx>'
               )}<nx>`.match(re);
               if (firstMatch) {

@@ -17,7 +17,8 @@ type TextCacheType = {
 
 // TextCache is used rather than memoization, because there is a strictly
 // limited number of cache possibliities (one per module).
-let TextCache: TextCacheType = { dict: { keyList: {}, keyHTML: {} } };
+// eslint-disable-next-line import/no-mutable-exports
+export let TextCache: TextCacheType = { dict: { keyList: {}, keyHTML: {} } };
 window.ipc.renderer.on('perform-resets', () => {
   TextCache = { dict: { keyList: {}, keyHTML: {} } };
 });

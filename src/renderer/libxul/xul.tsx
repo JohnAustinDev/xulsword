@@ -136,9 +136,9 @@ export const xulEvents = (props: any): XulProps => {
   return p;
 };
 
-// Convert all props to a corresponding CSS style attribute.
+// Convert certain XUL props to a corresponding CSS style attribute.
 // These props take number values with or without qualifiers
-// just like XUL.
+// for XUL backward compatibility.
 export const xulStyle = (props: any): React.CSSProperties | undefined => {
   const s = {} as React.CSSProperties;
   // width
@@ -164,7 +164,7 @@ export const xulStyle = (props: any): React.CSSProperties | undefined => {
   return Object.keys(s).length ? s : undefined;
 };
 
-// Convert all props to corresponding CSS classes, adding any
+// Convert certain XUL props to corresponding CSS classes, adding any
 // requested additional classes in the processes.
 export const xulClass = (classes: string | string[], props: any) => {
   const c0 = [props.tooltip ? 'tooltip' : ''];
@@ -180,7 +180,7 @@ export const xulClass = (classes: string | string[], props: any) => {
 
 // Convert all props to corresponding HTML element attribtues.
 // This must be used to pass props to all HTML elements and
-// must only used on HTML elements (not React components).
+// must only used on HTML elements (not on React components).
 export const htmlAttribs = (className: string, props: any) => {
   if (props === null) return {};
   const r: any = {
@@ -206,8 +206,8 @@ export const htmlAttribs = (className: string, props: any) => {
   return r;
 };
 
-// Use handle() on the top level element of a React component when it
-// handles a xulEvent. Otherwise any event of that type on a component
+// Use handle() when a xulEvent is registered on a React component's top-level
+// element. Otherwise any event of that same type registered on a component
 // instance would never be called.
 export const handle = (name: string, func: (e: any) => any, props: any) => {
   return {
@@ -218,21 +218,22 @@ export const handle = (name: string, func: (e: any) => any, props: any) => {
   };
 };
 
-// Use a default if value is null
+// Use a default value if the prop value is undefined
 export const propd = (defVal: any, value: any) => {
   return value !== undefined ? value : defVal;
 };
 
-// Delay event handling by ms milliseconds with a single
-// (most recent) event being handled after the delay.
+// Delay any function by ms milliseconds with only a
+// single (most recent) instance called after the delay.
 export function delayHandler(
   caller: any,
   callback: (...args: any) => void,
-  ms: number | string
+  ms: number | string,
+  nameTO = 'delayHandlerTO'
 ) {
   return (...args: any[]) => {
-    clearTimeout(caller.delayHandlerTO);
-    caller.delayHandlerTO = setTimeout(() => {
+    clearTimeout(caller[nameTO]);
+    caller[nameTO] = setTimeout(() => {
       callback.call(caller, ...args);
     }, Number(ms) || 0);
   };
