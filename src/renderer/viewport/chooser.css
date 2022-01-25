@@ -1,3 +1,6 @@
+.chooser {
+  height: 100%;
+}
 .chooser .fadetop,
 .chooser .fadebot {
   position: relative; /* get z-index to work */

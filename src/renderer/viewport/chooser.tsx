@@ -22,7 +22,6 @@ import {
   xulPropTypes,
   XulProps,
   addClass,
-  htmlAttribs,
   delayHandler,
   handle,
 } from '../libxul/xul';
@@ -266,72 +265,71 @@ class Chooser extends React.Component {
     });
 
     return (
-      <div {...htmlAttribs(`chooser ${type}`, props)} onMouseOut={handler}>
-        <Vbox height="100%">
-          <Hbox className="fadetop" />
+      <Vbox {...addClass(`chooser ${type}`, props)} onMouseOut={handler}>
+        <Hbox className="fadetop" />
 
-          <Hbox flex="5" className="chooser-container">
-            <div className="close-chooser" onClick={onCloseChooserClick} />
+        <Hbox flex="5" className="chooser-container">
+          <div className="close-chooser" onClick={onCloseChooserClick} />
 
-            <Vbox className="bookgroup-selector">
-              {props.bookGroups.map((bg) => {
-                const selected = bg === bookGroup ? 'selected' : '';
-                return (
-                  <Vbox
-                    key={bg}
-                    className={`bookgroup ${selected}`}
-                    flex="50%"
-                    pack="center"
-                    align="center"
-                    onMouseEnter={handler}
-                    data-bookgroup={bg}
-                  >
-                    {useLabelImage[bg] && (
-                      <div key={bg} className={`label ${bg}`} />
-                    )}
-                    {!useLabelImage[bg] &&
-                      [...label[bg]].map((l, i) => {
-                        // eslint-disable-next-line react/no-array-index-key
-                        return <div key={i}>{l}</div>;
-                      })}
-                  </Vbox>
-                );
-              })}
-            </Vbox>
+          <Vbox className="bookgroup-selector">
+            {props.bookGroups.map((bg) => {
+              const selected = bg === bookGroup ? 'selected' : '';
+              return (
+                <Vbox
+                  key={bg}
+                  className={`bookgroup ${selected}`}
+                  flex="50%"
+                  pack="center"
+                  align="center"
+                  onMouseEnter={handler}
+                  data-bookgroup={bg}
+                >
+                  {useLabelImage[bg] && (
+                    <div key={bg} className={`label ${bg}`} />
+                  )}
+                  {!useLabelImage[bg] &&
+                    [...label[bg]].map((l, i) => {
+                      // eslint-disable-next-line react/no-array-index-key
+                      return <div key={i}>{l}</div>;
+                    })}
+                </Vbox>
+              );
+            })}
+          </Vbox>
 
-            <Vbox className="book-list" onWheel={handler} domref={containerRef}>
-              {
-                // This 'sizer' BookGroupList is only used to set chooser width
-              }
-              <BookGroupList
-                className="sizer"
-                availableBooks={[longestBook]}
-                hideUnavailableBooks
-                versification={versification}
-                domref={rowRef}
-                style={{ visibility: 'hidden' }}
-              />
-              {
-                // This is the real BookGroupList...
-              }
-              <BookGroupList
-                bookGroup={bookGroup}
-                selection={selection}
-                availableBooks={availableBooks}
-                versification={versification}
-                domref={sliderRef}
-                style={{
-                  position: 'absolute',
-                  top: `${-1 * slideIndex[bookGroup] * rowHeight}px`,
-                }}
-                handler={handler}
-              />
-            </Vbox>
-          </Hbox>
+          <Vbox className="book-list" onWheel={handler} domref={containerRef}>
+            {
+              // This 'sizer' BookGroupList is only used to set chooser width
+              // according to the longest book name of all bookGroups.
+            }
+            <BookGroupList
+              className="sizer"
+              availableBooks={[longestBook]}
+              hideUnavailableBooks
+              versification={versification}
+              domref={rowRef}
+              style={{ visibility: 'hidden' }}
+            />
+            {
+              // This is the real BookGroupList...
+            }
+            <BookGroupList
+              bookGroup={bookGroup}
+              selection={selection}
+              availableBooks={availableBooks}
+              versification={versification}
+              domref={sliderRef}
+              style={{
+                position: 'absolute',
+                top: `${-1 * slideIndex[bookGroup] * rowHeight}px`,
+              }}
+              handler={handler}
+            />
+          </Vbox>
+        </Hbox>
 
-          <Hbox flex="1" className="fadebot" />
-        </Vbox>
-      </div>
+        <Hbox flex="1" className="fadebot" />
+      </Vbox>
     );
   }
 }
