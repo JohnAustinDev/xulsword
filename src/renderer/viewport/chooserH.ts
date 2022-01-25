@@ -1,8 +1,8 @@
 /* eslint-disable import/no-duplicates */
 import { ofClass, sanitizeHTML } from 'common';
 import React from 'react';
-import { delayHandler } from 'renderer/libxul/xul';
-import G from 'renderer/rg';
+import G from '../rg';
+import { delayHandler } from '../libxul/xul';
 
 import type Chooser from './chooser';
 import type { ChooserProps, ChooserState } from './chooser';
@@ -10,10 +10,16 @@ import type { ChooserProps, ChooserState } from './chooser';
 export default function handler(this: Chooser, es: React.SyntheticEvent): void {
   const target = es.target as HTMLElement;
   switch (es.type) {
+    case 'click': {
+      const e = es as React.MouseEvent;
+      e.currentTarget.classList.remove('show');
+      break;
+    }
+
     case 'mouseenter': {
       const e = es as React.MouseEvent;
       const targ = ofClass(
-        ['bookgroup', 'bookname', 'chaptermenucell'],
+        ['bookgroup', 'bookgroupitem', 'chaptermenucell'],
         target
       );
       if (!targ) return;
@@ -27,23 +33,21 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
             state.bookGroup !== bookgroup &&
             bookGroups.includes(bookgroup)
           )
-            delayHandler(
-              this,
+            delayHandler.bind(this)(
               () => {
                 this.setState({ bookGroup: bookgroup });
               },
-              300
+              300,
+              'bookgroupTO'
             )(es);
           break;
         }
 
-        case 'bookname': {
-          if (this.slideReady) {
-            const { mouseScroll } = this;
-            if (e.clientY < mouseScroll.top) this.startSlidingDown(e, 65);
-            else if (e.clientY > mouseScroll.bottom) this.startSlidingUp(e, 65);
-            else this.stopSliding();
-          }
+        case 'bookgroupitem': {
+          const { mouseScroll } = this;
+          if (e.clientY < mouseScroll.top) this.startSlidingDown(e, 65);
+          else if (e.clientY > mouseScroll.bottom) this.startSlidingUp(e, 65);
+          else this.stopSliding();
           break;
         }
 
@@ -124,9 +128,14 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
       break;
     }
 
+    case 'mouseout': {
+      if (this.chaptermenuTO) clearTimeout(this.chaptermenuTO);
+      break;
+    }
+
     case 'mouseleave': {
       const e = es as React.MouseEvent;
-      if (this.delayHandlerTO) clearTimeout(this.delayHandlerTO);
+      if (this.chaptermenuTO) clearTimeout(this.chaptermenuTO);
       const chmenu = ofClass(['chaptermenu'], target);
       const relatedTarget = e.relatedTarget as HTMLElement | null;
       if (chmenu && relatedTarget) {

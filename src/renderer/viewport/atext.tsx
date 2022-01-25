@@ -22,7 +22,7 @@ import {
   xulDefaultProps,
   xulPropTypes,
   XulProps,
-  xulClass,
+  addClass,
   handle,
 } from '../libxul/xul';
 import { Vbox, Hbox, Box } from '../libxul/boxes';
@@ -562,8 +562,7 @@ class Atext extends React.Component {
 
     return (
       <Vbox
-        {...props}
-        {...xulClass(`atext ${cls}`, props)}
+        {...addClass(`atext ${cls}`, props)}
         {...handle('onDoubleClick', handler, props)}
         {...handle('onClick', handler, props)}
         {...handle('onWheel', handler, props)}

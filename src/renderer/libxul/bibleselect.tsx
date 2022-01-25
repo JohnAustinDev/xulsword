@@ -6,7 +6,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import C from '../../constant';
-import { xulClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
+import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import Bookselect from './bookselect';
 import { Hbox } from './boxes';
 import Label from './label';
@@ -235,7 +235,7 @@ class Bibleselect extends React.Component {
     }
 
     return (
-      <Hbox {...this.props} {...xulClass('bibleselect', this.props)}>
+      <Hbox {...addClass('bibleselect', this.props)}>
         <Bookselect
           id={`${pid}__bsbook`}
           className="bsbook"

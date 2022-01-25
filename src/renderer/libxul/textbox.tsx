@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import Tooltip from './tooltip';
 import {
   delayHandler,
-  xulClass,
+  addClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
@@ -116,7 +116,7 @@ class Textbox extends React.Component {
     ) {
       this.setState({ value: e.target.value });
       if (timeout && typeof onChange === 'function') {
-        delayHandler(this, (evt) => onChange(evt), timeout)(e);
+        delayHandler.bind(this)((evt) => onChange(evt), timeout)(e);
         e.stopPropagation();
       }
     } else {
@@ -133,7 +133,7 @@ class Textbox extends React.Component {
     const value = props.disabled ? props.value : state.value;
 
     return (
-      <Box {...props} {...xulClass('textbox', props)}>
+      <Box {...addClass('textbox', props)}>
         {useTextArea && (
           <textarea
             id={`${props.id}__textarea`}

@@ -127,13 +127,12 @@ const enums = ['align', 'dir', 'orient', 'pack', 'type'];
 const bools = ['checked', 'disabled', 'hidden', 'readonly'];
 // const cssAttribs = styles.concat(enums).concat(bools);
 
-// These XUL event listeners are registered on HTML elements
-export const xulEvents = (props: any): XulProps => {
-  const p: any = {};
-  events.forEach((x) => {
-    p[x] = props[x];
-  });
-  return p;
+// Returns props unchanged except having additional class name(s).
+export const addClass = (classes: string | string[], props: any) => {
+  const c = typeof classes === 'string' ? classes.split(' ') : classes;
+  const cp = props.className ? props.className.split(' ') : [];
+  const className = c.concat(cp).filter(Boolean).join(' ');
+  return { ...props, className };
 };
 
 // Convert certain XUL props to a corresponding CSS style attribute.
@@ -178,9 +177,18 @@ export const xulClass = (classes: string | string[], props: any) => {
   return { className: set.join(' ') };
 };
 
+// These XUL event listeners are registered on HTML elements
+export const xulEvents = (props: any): XulProps => {
+  const p: any = {};
+  events.forEach((x) => {
+    p[x] = props[x];
+  });
+  return p;
+};
+
 // Convert all props to corresponding HTML element attribtues.
-// This must be used to pass props to all HTML elements and
-// must only used on HTML elements (not on React components).
+// This must be used to pass props to all HTML elements but
+// should only used on HTML elements (not on React components).
 export const htmlAttribs = (className: string, props: any) => {
   if (props === null) return {};
   const r: any = {
@@ -209,32 +217,27 @@ export const htmlAttribs = (className: string, props: any) => {
 // Use handle() when a xulEvent is registered on a React component's top-level
 // element. Otherwise any event of that same type registered on a component
 // instance would never be called.
-export const handle = (name: string, func: (e: any) => any, props: any) => {
+export const handle = (name: string, func?: (e: any) => any, props?: any) => {
   return {
     [name]: (e: any) => {
       if (typeof func === 'function') func(e);
-      if (typeof props[name] === 'function') props[name](e);
+      if (props && typeof props[name] === 'function') props[name](e);
     },
   };
-};
-
-// Use a default value if the prop value is undefined
-export const propd = (defVal: any, value: any) => {
-  return value !== undefined ? value : defVal;
 };
 
 // Delay any function by ms milliseconds with only a
 // single (most recent) instance called after the delay.
 export function delayHandler(
-  caller: any,
-  callback: (...args: any) => void,
+  this: any,
+  handler: (...args: any) => void | undefined,
   ms: number | string,
   nameTO = 'delayHandlerTO'
 ) {
   return (...args: any[]) => {
-    clearTimeout(caller[nameTO]);
-    caller[nameTO] = setTimeout(() => {
-      callback.call(caller, ...args);
+    clearTimeout(this[nameTO]);
+    this[nameTO] = setTimeout(() => {
+      handler.call(this, ...args);
     }, Number(ms) || 0);
   };
 }

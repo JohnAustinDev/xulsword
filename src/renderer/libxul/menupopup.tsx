@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { Vbox } from './boxes';
-import { xulClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
+import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
 import './xul.css';
 import './menupopup.css';
 
@@ -19,7 +19,7 @@ const propTypes = {
 
 function Menupopup(props: XulProps) {
   return (
-    <Vbox {...props} {...xulClass('menupopup', props)} pack="start">
+    <Vbox {...addClass('menupopup', props)} pack="start">
       {props.children}
     </Vbox>
   );

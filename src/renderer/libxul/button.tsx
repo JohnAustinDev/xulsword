@@ -6,13 +6,7 @@ import PropTypes from 'prop-types';
 import { Box } from './boxes';
 import Label from './label';
 import Tooltip from './tooltip';
-import {
-  propd,
-  xulDefaultProps,
-  xulPropTypes,
-  XulProps,
-  htmlAttribs,
-} from './xul';
+import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 import './button.css';
 
@@ -51,31 +45,44 @@ interface ButtonProps extends XulProps {
 }
 
 function Button(props: ButtonProps) {
+  const {
+    align,
+    children,
+    disabled,
+    dir,
+    dlgType,
+    label,
+    orient,
+    pack,
+    tooltip,
+  } = props;
+  const alignx = align !== undefined ? align : 'center';
+  const packx = pack !== undefined ? pack : 'center';
   return (
     <button
-      {...htmlAttribs(`button ${props.dlgType}`, props)}
-      disabled={props.disabled}
+      {...htmlAttribs(`button ${dlgType}`, props)}
+      disabled={disabled}
       type="button"
     >
       <Box
         className="button-box"
-        align={propd('center', props.align)}
-        pack={propd('center', props.pack)}
         flex="1"
-        dir={props.dir}
-        orient={props.orient}
+        align={alignx}
+        pack={packx}
+        dir={dir}
+        orient={orient}
       >
         <div className="button-icon" />
 
         {props.label !== undefined && (
-          <Label className="button-text" value={props.label} />
+          <Label className="button-text" value={label} />
         )}
       </Box>
 
-      <Tooltip tip={props.tooltip} />
+      <Tooltip tip={tooltip} />
 
-      {props.type === 'menu' && props.children && (
-        <div className="menu">{props.children}</div>
+      {props.type === 'menu' && children && (
+        <div className="menu">{children}</div>
       )}
     </button>
   );

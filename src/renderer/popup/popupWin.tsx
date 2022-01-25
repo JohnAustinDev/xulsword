@@ -6,7 +6,7 @@ import { render } from 'react-dom';
 import i18nInit from '../i18n';
 import { jsdump } from '../rutil';
 import {
-  xulClass,
+  addClass,
   xulDefaultProps,
   XulProps,
   xulPropTypes,
@@ -67,7 +67,7 @@ export default class PopupWin extends React.Component implements PopupParent {
     const { elemhtml, eleminfo, popupReset } = this.state as PopupWinState;
 
     return (
-      <Vbox {...this.props} {...xulClass('popupWin', this.props)}>
+      <Vbox {...addClass('popupWin', this.props)}>
         <Popup
           key={[elemhtml.length, popupReset].join('.')}
           elemhtml={elemhtml}

@@ -86,7 +86,7 @@ export default function handler(
           'text-win',
           'chaptermenucell',
           'heading-link',
-          'bookname',
+          'bookgroupitem',
           'bookgroup',
           'open-chooser',
           'close-chooser',
@@ -176,7 +176,7 @@ export default function handler(
           }
           break;
         }
-        case 'bookname': {
+        case 'bookgroupitem': {
           const { book } = targ.element.dataset;
           if (book) {
             this.setState({
@@ -381,33 +381,26 @@ export default function handler(
       const targ = ofClass(['dictkeyinput'], target);
       if (targ && module) {
         e.stopPropagation();
-        delayHandler(
-          this,
-          (select, mod) => {
-            const { value } = select;
-            select.style.color = '';
-            if (value && TextCache.dict.keyList) {
-              const re = new RegExp(
-                `(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`,
-                'i'
-              );
-              const firstMatch = `${TextCache.dict.keyList[mod].join(
-                '<nx>'
-              )}<nx>`.match(re);
-              if (firstMatch) {
-                this.setState((prevState: StateDefault) => {
-                  const { keys } = prevState;
-                  [, , keys[i]] = firstMatch;
-                  return { keys };
-                });
-              } else if (e.key !== 'backspace') {
-                G.Shell.beep();
-                select.style.color = 'red';
-              }
+        delayHandler.bind(this)((select: HTMLSelectElement, mod: string) => {
+          const { value } = select;
+          select.style.color = '';
+          if (value && TextCache.dict.keyList) {
+            const re = new RegExp(`(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`, 'i');
+            const firstMatch = `${TextCache.dict.keyList[mod].join(
+              '<nx>'
+            )}<nx>`.match(re);
+            if (firstMatch) {
+              this.setState((prevState: StateDefault) => {
+                const { keys } = prevState;
+                [, , keys[i]] = firstMatch;
+                return { keys };
+              });
+            } else if (e.key !== 'backspace') {
+              G.Shell.beep();
+              select.style.color = 'red';
             }
-          },
-          1000
-        )(targ.element, module);
+          }
+        }, 1000)(targ.element, module);
       }
       break;
     }

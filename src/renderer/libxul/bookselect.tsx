@@ -9,7 +9,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from './tooltip';
 import {
-  xulClass,
+  addClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
@@ -219,7 +219,7 @@ class Bookselect extends React.Component {
     }
 
     return (
-      <Box {...this.props} {...xulClass('bookselect', props)}>
+      <Box {...addClass('bookselect', props)}>
         <Stack>
           <Box style={xulStyle(props)}>
             <Menulist

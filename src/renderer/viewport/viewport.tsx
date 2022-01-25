@@ -23,7 +23,7 @@ import {
 import G from '../rg';
 import { jsdump } from '../rutil';
 import {
-  xulClass,
+  addClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
@@ -139,15 +139,11 @@ class Viewport extends React.Component implements PopupParent {
 
     window.ipc.renderer.on(
       'resize',
-      delayHandler(
-        this,
-        () => {
-          this.setState((prevState: ViewportState) => {
-            return { reset: prevState.reset + 1 };
-          });
-        },
-        500
-      )
+      delayHandler.bind(this)(() => {
+        this.setState((prevState: ViewportState) => {
+          return { reset: prevState.reset + 1 };
+        });
+      }, 500)
     );
   }
 
@@ -337,8 +333,7 @@ class Viewport extends React.Component implements PopupParent {
 
     return (
       <Hbox
-        {...props}
-        {...xulClass(`viewport ${cls}`, props)}
+        {...addClass(`viewport ${cls}`, props)}
         style={{ minWidth: `${minWidth}px` }}
         onClick={xulswordHandler}
       >
