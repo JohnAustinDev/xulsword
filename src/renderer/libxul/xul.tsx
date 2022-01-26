@@ -214,10 +214,14 @@ export const htmlAttribs = (className: string, props: any) => {
   return r;
 };
 
-// Use handle() when a xulEvent is registered on a React component's top-level
-// element. Otherwise any event of that same type registered on a component
-// instance would never be called.
-export const handle = (name: string, func?: (e: any) => any, props?: any) => {
+// Use topHandle() when a xulEvent is registered on a React component's top-
+// level element. Otherwise any event of that same type registered on a
+// component instance would never be called.
+export const topHandle = (
+  name: string,
+  func?: (e: any) => any,
+  props?: any
+) => {
   return {
     [name]: (e: any) => {
       if (typeof func === 'function') func(e);

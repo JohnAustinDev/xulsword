@@ -21,7 +21,7 @@ export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
         case 'historymenu': {
           e.stopPropagation();
           this.setState((prevState: XulswordState) => {
-            if (!prevState.versification) return null;
+            if (!prevState.windowV11n) return null;
             return {
               historyMenupopup: prevState.historyMenupopup
                 ? undefined

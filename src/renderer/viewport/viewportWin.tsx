@@ -13,7 +13,12 @@ import {
   onSetWindowStates,
   updateGlobalState,
 } from '../rutil';
-import { handle, xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import {
+  topHandle,
+  xulDefaultProps,
+  XulProps,
+  xulPropTypes,
+} from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Viewport from './viewport';
 import xulswordHandlerH, {
@@ -35,8 +40,8 @@ const propTypes = {
 
 export type ViewportWinProps = XulProps;
 
-// The following state values are not stored in Prefs, but take
-// default values in Xulsword constructor.
+// The following initial state values do not come from Prefs, but from the
+// window's ARGV or constants. Neither are these state keys written to Prefs.
 const notStatePref: any = {
   vpreset: 0,
 };
@@ -109,7 +114,7 @@ export default class ViewportWin extends React.Component {
       maximizeNoteBox,
       showChooser,
       vpreset,
-      versification,
+      windowV11n,
     } = state;
     const { id } = props;
     const { lastSavedPref: lastSetPrefs, xulswordHandler } = this;
@@ -126,7 +131,7 @@ export default class ViewportWin extends React.Component {
     return (
       <Vbox
         {...this.props}
-        {...handle('onClick', () => closeMenupopups(this), this.props)}
+        {...topHandle('onClick', () => closeMenupopups(this), this.props)}
       >
         <Hbox flex="1">
           <Viewport
@@ -151,7 +156,7 @@ export default class ViewportWin extends React.Component {
             showChooser={false}
             numDisplayedWindows={numDisplayedWindows}
             ownWindow
-            versification={versification}
+            windowV11n={windowV11n}
           />
         </Hbox>
       </Vbox>

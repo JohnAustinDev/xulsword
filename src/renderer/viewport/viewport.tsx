@@ -64,7 +64,7 @@ const propTypes = {
 
   numDisplayedWindows: PropTypes.number.isRequired,
   ownWindow: PropTypes.bool.isRequired,
-  versification: PropTypes.string,
+  windowV11n: PropTypes.string,
 
   xulswordHandler: PropTypes.func.isRequired,
 };
@@ -90,7 +90,7 @@ type ViewportProps = PopupParentProps &
 
     numDisplayedWindows: number;
     ownWindow: boolean;
-    versification: string | undefined;
+    windowV11n: string | undefined;
 
     xulswordHandler: (e: any) => void;
   };
@@ -169,7 +169,7 @@ class Viewport extends React.Component implements PopupParent {
       showChooser,
       numDisplayedWindows,
       ownWindow,
-      versification,
+      windowV11n,
       xulswordHandler,
     } = this.props as ViewportProps;
     const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = this
@@ -288,17 +288,17 @@ class Viewport extends React.Component implements PopupParent {
       x += columns[x] - 1;
     }
 
-    // Each text's book/chapter/verse should apply to the main versification.
+    // Each text's book/chapter/verse must be in the windowV11n.
     let locs: any = [];
     for (let x = 0; x < C.NW; x += 1) {
       locs.push(`${book}.${chapter}.${verse}.${verse}`);
     }
     for (let x = 0; x < numDisplayedWindows; x += 1) {
       const m = modules[x];
-      if (m && G.Tab[m].isVerseKey && versification) {
-        if (G.Tab[m].v11n !== versification) {
+      if (m && G.Tab[m].isVerseKey && windowV11n) {
+        if (G.Tab[m].v11n !== windowV11n) {
           locs[x] = G.LibSword.convertLocation(
-            versification,
+            windowV11n,
             locs[x],
             G.Tab[m].v11n
           );
@@ -348,7 +348,7 @@ class Viewport extends React.Component implements PopupParent {
             selection={book}
             headingsModule={firstUnpinnedBible}
             availableBooksModule={firstUnpinnedVerseKey}
-            versification={versification}
+            windowV11n={windowV11n}
             onCloseChooserClick={xulswordHandler}
           />
         )}
@@ -415,7 +415,7 @@ class Viewport extends React.Component implements PopupParent {
                   book={locs[i][0]}
                   chapter={Number(locs[i][1])}
                   verse={Number(locs[i][2])}
-                  versification={versification}
+                  windowV11n={windowV11n}
                   columns={columns[i]}
                   module={modules[i]}
                   ilModule={ilMods[i]}

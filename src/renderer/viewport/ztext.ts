@@ -103,7 +103,7 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
       if (!TextCache.dict.keyHTML || !(module in TextCache.dict.keyHTML)) {
         let html = '';
         TextCache.dict.keyList[module].forEach((k1: any) => {
-          const id = `${n}.${stringHash(k1)}`;
+          const id = `${stringHash(k1)}.0`;
           html += `<div id="${id}" class="dict-key">${k1}</div>`;
         });
         TextCache.dict.keyHTML[module] = html;
@@ -114,10 +114,9 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
       r.textHTML += `<div class="dictentry">${de}</div>`;
 
       const sel = new RegExp(`(dict-key)(">${escapeRE(key)}<)`);
-      const list = TextCache.dict.keyHTML[module].replace(
-        sel,
-        '$1 dictselectkey$2'
-      );
+      const list = TextCache.dict.keyHTML[module]
+        .replace(sel, '$1 dictselectkey$2')
+        .replace(/(?<=id="[^"]+\.)0(?=")/g, n.toString());
       r.noteHTML += `
           <div class="dictlist">
             <div class="headerbox">

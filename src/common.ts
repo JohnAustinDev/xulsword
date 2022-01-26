@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
 import C from './constant';
@@ -117,10 +118,8 @@ export function stringHashNum(str: string): number {
   let hash = 0;
   if (str.length === 0) return hash;
   for (let i = 0; i < str.length; i += 1) {
-    const chr = str.charCodeAt(i);
-    // eslint-disable-next-line no-bitwise
-    hash = (hash << 5) - hash + chr;
-    // eslint-disable-next-line no-bitwise
+    const code = str.charCodeAt(i);
+    hash = (hash << 5) - hash + code;
     hash |= 0; // Convert to 32bit integer
   }
   return hash;
@@ -149,7 +148,9 @@ export function stringHash(...args: any): string {
     }
   });
 
-  return `x${stringHashNum(r.join('y'))}`;
+  const num = stringHashNum(r.join('y'));
+
+  return `x${num < 0 ? 'm' : ''}${Math.abs(num)}`;
 }
 
 // Firefox Add-On validation throws warnings about eval(uneval(obj)), so

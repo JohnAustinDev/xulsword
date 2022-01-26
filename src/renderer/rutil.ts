@@ -46,6 +46,31 @@ export function libswordImgSrc(container: HTMLElement) {
   });
 }
 
+// Javascript's scrollIntoView() also scrolls ancestors in ugly
+// ways. So this util sets scrollTop of all ancestors greater than
+// ancestor away, to zero. At this time (Jan 2022) Electron (Chrome)
+// scrollIntoView() arguments do not work. So percent 0 scrolls elem
+// to the top, 50 to the middle and 100 to the bottom.
+export function scrollIntoView(
+  elem: HTMLElement,
+  ancestor: HTMLElement,
+  percent = 30
+) {
+  elem.scrollIntoView();
+  let st: HTMLElement | null = elem;
+  let skip = true;
+  let adjust = true;
+  while (st) {
+    if (skip && adjust && st.scrollTop > 0) {
+      st.scrollTop -= (st.clientHeight - elem.offsetHeight) * (percent / 100);
+      adjust = false;
+    }
+    if (!skip && st.scrollTop) st.scrollTop = 0;
+    if (st === ancestor) skip = false;
+    st = st.parentNode as HTMLElement | null;
+  }
+}
+
 export function getModuleLongType(aModule: string): string | undefined {
   const moduleList = G.LibSword.getModuleList();
   if (moduleList === C.NOMODULES) return undefined;

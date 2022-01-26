@@ -869,10 +869,10 @@ export function wheelscroll(caller: Xulsword | ViewportWin | Atext) {
   const xulsword = caller as Xulsword;
   const atextprops = caller.props as AtextProps;
   const xulswordstate = xulsword.state as XulswordState;
-  const versification =
-    'versification' in caller.state
-      ? xulswordstate.versification
-      : atextprops.versification;
+  const windowV11n =
+    'windowV11n' in caller.state
+      ? xulswordstate.windowV11n
+      : atextprops.windowV11n;
 
   const sb = atext.getElementsByClassName('sb')[0];
 
@@ -880,6 +880,7 @@ export function wheelscroll(caller: Xulsword | ViewportWin | Atext) {
 
   // GenBook scrolls differently than versekey modules
   if (type === C.GENBOOK) {
+    // TODO! Scroll GenBooks
     const scrollType = C.SCROLLTYPEDELTA;
     const scrollDelta = dv * 20; // scroll delta in pixels
   }
@@ -915,7 +916,7 @@ export function wheelscroll(caller: Xulsword | ViewportWin | Atext) {
     }
 
     const p = getElementInfo(v);
-    if (versification && p && p.bk && p.ch && p.vs) {
+    if (windowV11n && p && p.bk && p.ch && p.vs) {
       if (isPinned) {
         caller.setState((prevState: AtextState) => {
           return {
@@ -933,7 +934,7 @@ export function wheelscroll(caller: Xulsword | ViewportWin | Atext) {
         const [book, chapter, verse] = G.LibSword.convertLocation(
           G.LibSword.getVerseSystem(module),
           [p.bk, p.ch, p.vs, p.vs].join('.'),
-          versification
+          windowV11n
         ).split('.');
         const s = { book, chapter, verse };
         const flagScroll = [] as number[];
@@ -956,17 +957,17 @@ export function highlight(
   sbe: HTMLElement,
   selection: string,
   module: string,
-  versification: string | undefined
+  windowV11n: string | undefined
 ) {
   // First unhilight everything
   Array.from(sbe.getElementsByClassName('hl')).forEach((v) => {
     v.classList.remove('hl');
   });
 
-  if (!selection || !versification) return;
+  if (!selection || !windowV11n) return;
 
   const [book, ch, vs, lv] = G.LibSword.convertLocation(
-    versification,
+    windowV11n,
     selection,
     G.Tab[module].v11n
   ).split('.');

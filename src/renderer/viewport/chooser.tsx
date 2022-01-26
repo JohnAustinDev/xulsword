@@ -23,7 +23,7 @@ import {
   XulProps,
   addClass,
   delayHandler,
-  handle,
+  topHandle,
 } from '../libxul/xul';
 import '../libxul/xul.css';
 import handlerH from './chooserH';
@@ -38,7 +38,7 @@ const defaultProps = {
   hideUnavailableBooks: false,
   selection: '',
   type: 'bible',
-  versification: '',
+  windowV11n: '',
 };
 
 const propTypes = {
@@ -50,7 +50,7 @@ const propTypes = {
   hideUnavailableBooks: PropTypes.bool,
   selection: PropTypes.string.isRequired,
   type: PropTypes.oneOf(['bible', 'genbook', 'none']).isRequired,
-  versification: PropTypes.string.isRequired,
+  windowV11n: PropTypes.string.isRequired,
 };
 
 export interface ChooserProps extends XulProps {
@@ -61,7 +61,7 @@ export interface ChooserProps extends XulProps {
   hideUnavailableBooks: boolean;
   selection: string;
   type: string;
-  versification: string;
+  windowV11n: string;
 }
 
 export interface ChooserState {
@@ -71,6 +71,8 @@ export interface ChooserState {
   // book-item in each bookGroup slider
   slideIndex: { [i: string]: number };
 }
+
+let chooserCompRef: Chooser | undefined;
 
 class Chooser extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -99,6 +101,7 @@ class Chooser extends React.Component {
 
   constructor(props: ChooserProps) {
     super(props);
+    chooserCompRef = this;
 
     let bookGroup = findBookGroup(G, props.selection)?.group;
     if (!bookGroup || !props.bookGroups.includes(bookGroup))
@@ -131,7 +134,6 @@ class Chooser extends React.Component {
     this.startSlidingDown = this.startSlidingDown.bind(this);
     this.stopSliding = this.stopSliding.bind(this);
     this.handler = handlerH.bind(this);
-    chooserDelayHandler = delayHandler.bind(this);
 
     if (props.selection) {
       setTimeout(() => {
@@ -245,7 +247,7 @@ class Chooser extends React.Component {
       availableBooksModule,
       selection,
       type,
-      versification,
+      windowV11n,
       onCloseChooserClick,
     } = props;
     const { bookGroup, slideIndex } = state;
@@ -299,14 +301,14 @@ class Chooser extends React.Component {
 
           <Vbox className="book-list" onWheel={handler} domref={containerRef}>
             {
-              // This 'sizer' BookGroupList is only used to set chooser width
-              // according to the longest book name of all bookGroups.
+              // This 'sizer' BookGroupList has one row and is only needed to set
+              // chooser width according to the longest book name of all bookGroups.
             }
             <BookGroupList
               className="sizer"
               availableBooks={[longestBook]}
               hideUnavailableBooks
-              versification={versification}
+              windowV11n={windowV11n}
               domref={rowRef}
               style={{ visibility: 'hidden' }}
             />
@@ -317,7 +319,7 @@ class Chooser extends React.Component {
               bookGroup={bookGroup}
               selection={selection}
               availableBooks={availableBooks}
-              versification={versification}
+              windowV11n={windowV11n}
               domref={sliderRef}
               style={{
                 position: 'absolute',
@@ -340,7 +342,7 @@ export default Chooser;
 
 function BookGroupList(
   props: {
-    versification: string;
+    windowV11n: string;
     bookGroup?: string | undefined;
     selection?: string | undefined;
     availableBooks?: string[] | undefined;
@@ -353,18 +355,18 @@ function BookGroupList(
     selection,
     availableBooks,
     hideUnavailableBooks,
-    versification,
+    windowV11n,
     handler,
   } = props;
-  const bkindexes = [];
+  const listBookIndexes = [];
   if (bookGroup) {
     for (let i = 0; i < bookGroupLength(bookGroup); i += 1) {
-      bkindexes.push(findBookNum(G, bookGroup, i));
+      listBookIndexes.push(findBookNum(G, bookGroup, i));
     }
-  } else G.Books.forEach((_b, i) => bkindexes.push(i));
+  } else G.Books.forEach((_b, i) => listBookIndexes.push(i));
   return (
     <Vbox {...addClass('bookgrouplist', props)}>
-      {bkindexes.map((b) => {
+      {listBookIndexes.map((b) => {
         if (b === null) return null;
         const bk = G.Books[b];
         const classes = [];
@@ -378,7 +380,7 @@ function BookGroupList(
             key={bk.sName}
             sName={bk.sName}
             classes={classes}
-            versification={versification}
+            windowV11n={windowV11n}
             handler={handler}
           />
         );
@@ -397,18 +399,18 @@ BookGroupList.defaultProps = {
 function BookGroupItem(
   props: {
     sName: string;
-    versification: string;
+    windowV11n: string;
     classes?: string[] | undefined;
     handler?: (e: React.SyntheticEvent) => void | undefined;
   } & XulProps
 ) {
-  const { sName, classes, handler, versification } = props;
-  const hasAudio = false;
+  const { sName, classes, handler, windowV11n } = props;
+  const hasAudio = false; // TODO! add audio icons for available audio
   const c = classes || [];
   return (
     <Hbox
       {...addClass(['bookgroupitem'].concat(c), props)}
-      {...handle('onMouseEnter', handler, props)}
+      {...topHandle('onMouseEnter', handler, props)}
       data-book={sName}
     >
       <div className="label">{G.Book[sName].bName}</div>
@@ -417,11 +419,7 @@ function BookGroupItem(
 
       <div key="charrow" className="charrow" />
 
-      <ChapterMenu
-        sName={sName}
-        versification={versification}
-        handler={handler}
-      />
+      <ChapterMenu sName={sName} windowV11n={windowV11n} handler={handler} />
     </Hbox>
   );
 }
@@ -430,21 +428,19 @@ BookGroupItem.defaultProps = {
   handler: undefined,
 };
 
-let chooserDelayHandler: typeof delayHandler | undefined;
-
 function ChapterMenu(props: {
   sName: string;
-  versification: string;
+  windowV11n: string;
   handler?: (e: React.SyntheticEvent) => void;
 }) {
-  const { sName, versification, handler } = props;
+  const { sName, windowV11n, handler } = props;
   const dlyhandler =
-    handler && chooserDelayHandler
-      ? chooserDelayHandler(handler, 400, 'chaptermenuTO')
+    handler && chooserCompRef
+      ? delayHandler.bind(chooserCompRef)(handler, 400, 'chaptermenuTO')
       : undefined;
   const chmenuCells = [];
   let ch = 1;
-  const lastch = G.LibSword.getMaxChapter(versification, sName);
+  const lastch = G.LibSword.getMaxChapter(windowV11n, sName);
   for (let row = 1; row <= 1 + lastch / 10; row += 1) {
     const cells = [];
     for (let col = 1; col <= 10; col += 1) {
@@ -474,7 +470,7 @@ function ChapterMenu(props: {
   }
   return (
     <div
-      key={[versification, sName].join('.')}
+      key={[windowV11n, sName].join('.')}
       className="chaptermenu"
       onClick={handler}
     >

@@ -19,7 +19,13 @@ import {
   getStatePref,
   updateGlobalState,
 } from '../rutil';
-import { handle, xulDefaultProps, XulProps, xulPropTypes } from '../libxul/xul';
+import {
+  addClass,
+  topHandle,
+  xulDefaultProps,
+  XulProps,
+  xulPropTypes,
+} from '../libxul/xul';
 import Button from '../libxul/button';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Menupopup from '../libxul/menupopup';
@@ -49,10 +55,10 @@ const propTypes = {
 
 export type XulswordProps = XulProps;
 
-// These state values are not stored in Prefs, but take
-// on the following values in the Xulsword constructor.
+// The following initial state values do not come from Prefs, but from
+// these constants. Neither are these state keys written to Prefs.
 const notStatePref = {
-  versification: '',
+  windowV11n: '',
   v11nmod: '',
   historyMenupopup: undefined,
   bsreset: 0,
@@ -107,29 +113,33 @@ export default class Xulsword extends React.Component {
     updateVersification(this);
   }
 
-  // A history item has the form HistoryTypeVK and only the last
-  // verse selection viewed for a chapter will be saved in history.
-  // This function inserts a history entry at the current historyIndex.
+  // A history item has the type HistoryTypeVK and only a single
+  // verse selection for a chapter will be successively saved in
+  // history. If add is supplied, its v11n must be the same as
+  // windowV11n or nothing will be recorded. The history entry
+  // will be recorded at the current historyIndex, and the history
+  // array size will be limited to maxHistoryMenuLength.
   addHistory = (add?: HistoryTypeVK): void => {
     const {
       book,
       chapter,
       verse,
       selection,
-      versification,
+      windowV11n,
       history,
       historyIndex,
     } = this.state as XulswordState;
-    if (!book || !versification) return;
+    if (!book || !windowV11n || (add && add.v11n !== windowV11n)) return;
     const newhist: HistoryTypeVK = add || {
       book,
       chapter,
       verse,
-      v11n: versification,
+      v11n: windowV11n,
       selection,
     };
     // Don't record multiple entries for the same chapter, and convert vlln
-    // before comparing.
+    // before comparing so duplicate history is not recorded when v11nmod
+    // switches to a different module with a different v11n.
     if (history[historyIndex]) {
       const { book: hbk, chapter: hch, v11n: hv11n } = history[historyIndex];
       const { book: nbk, chapter: nch, v11n: nv11n } = newhist;
@@ -140,7 +150,6 @@ export default class Xulsword extends React.Component {
       )}`.split('.');
       if (hbk === nbks && hch === Number(nchs)) return;
     }
-    // Then add a new history entry to the array and check array length.
     this.setState((prevState: XulswordState) => {
       prevState.history.splice(prevState.historyIndex, 0, newhist);
       if (prevState.history.length > maxHistoryMenuLength) {
@@ -150,26 +159,26 @@ export default class Xulsword extends React.Component {
     });
   };
 
-  // Set location to history[index] and move history[index]
-  // to history[0] if promote is true.
+  // Set scripture location state to a particular history index. Also, if
+  // promote is true, move that history entry to history[0].
   setHistory = (index: number, promote = false): void => {
     const { history: h } = this.state as XulswordState;
     if (index < 0 || index > h.length - 1 || index > maxHistoryMenuLength)
       return;
     this.setState((prevState: XulswordState) => {
-      const { history, versification, flagScroll } = prevState as XulswordState;
-      if (!versification) return null;
+      const { history, windowV11n, flagScroll } = prevState as XulswordState;
+      if (!windowV11n) return null;
       // To update state to a history index without changing the selected
-      // modules, history needs to be converted to the current versification.
+      // modules, history needs to be converted to the current windowV11n.
       const { book: bk, chapter: ch, v11n, selection: sel } = history[index];
       const [bks, chs] = G.LibSword.convertLocation(
         v11n,
         [bk, ch].join('.'),
-        versification
+        windowV11n
       ).split('.');
       const book = bks;
       const chapter = Number(chs);
-      const selection = G.LibSword.convertLocation(v11n, sel, versification);
+      const selection = G.LibSword.convertLocation(v11n, sel, windowV11n);
       if (promote) {
         const targ = history.splice(index, 1);
         history.splice(0, 0, targ[0]);
@@ -193,9 +202,9 @@ export default class Xulsword extends React.Component {
     });
   };
 
-  // Build and return a history menupopup
+  // Build and return a history menupopup from state.
   historyMenu = (state: XulswordState) => {
-    const { history, historyIndex, versification } = state;
+    const { history, historyIndex, windowV11n } = state;
     let is = historyIndex - Math.round(maxHistoryMenuLength / 2);
     if (is < 0) is = 0;
     let ie = is + maxHistoryMenuLength;
@@ -211,14 +220,14 @@ export default class Xulsword extends React.Component {
           const [bks, chs] = G.LibSword.convertLocation(
             v11n,
             [bk, ch].join('.'),
-            versification
+            windowV11n
           ).split('.');
           const location = [bks, chs];
           if (histitem.selection) {
             const [b, c, v, l] = G.LibSword.convertLocation(
               v11n,
               histitem.selection,
-              versification
+              windowV11n
             ).split('.');
             if (bks === b && chs === c && Number(v) > 1) {
               location.push(v);
@@ -247,6 +256,7 @@ export default class Xulsword extends React.Component {
   render() {
     const state = this.state as XulswordState;
     const props = this.props as XulswordProps;
+    const { handler, xulswordHandler, lastStatePref } = this;
     const {
       book,
       chapter,
@@ -271,15 +281,14 @@ export default class Xulsword extends React.Component {
       showChooser,
       bsreset,
       vpreset,
-      versification,
+      windowV11n,
     } = state;
     const { id } = props;
-    const { handler, xulswordHandler, lastStatePref: lastSetPrefs } = this;
 
-    if (id) updateGlobalState(id, state, lastSetPrefs, notStatePref);
+    if (id) updateGlobalState(id, state, lastStatePref, notStatePref);
 
     // Add page to history after a short delay
-    if (versification) {
+    if (windowV11n) {
       if (this.historyTO) clearTimeout(this.historyTO);
       this.historyTO = setTimeout(() => {
         return this.addHistory();
@@ -287,7 +296,7 @@ export default class Xulsword extends React.Component {
     }
 
     const navdisabled =
-      !versification || isPinned.every((p, i) => i >= numDisplayedWindows || p);
+      !windowV11n || isPinned.every((p, i) => i >= numDisplayedWindows || p);
 
     jsdump(
       `Rendering Xulsword ${JSON.stringify({
@@ -297,7 +306,7 @@ export default class Xulsword extends React.Component {
         show: 'not_printed',
         place: 'not_printed',
         historyMenupopup: !!historyMenupopup,
-        versification,
+        windowV11n,
       })}`
     );
 
@@ -305,8 +314,8 @@ export default class Xulsword extends React.Component {
       <Translation>
         {(t) => (
           <Vbox
-            {...this.props}
-            {...handle('onClick', () => closeMenupopups(this), this.props)}
+            {...addClass('xulsword', props)}
+            {...topHandle('onClick', () => closeMenupopups(this), props)}
           >
             <Hbox id="main-controlbar" className="controlbar">
               <Spacer width="17px" orient="vertical" />
@@ -503,7 +512,7 @@ export default class Xulsword extends React.Component {
                 showChooser={showChooser}
                 numDisplayedWindows={numDisplayedWindows}
                 ownWindow={false}
-                versification={versification}
+                windowV11n={windowV11n}
               />
             </Hbox>
           </Vbox>

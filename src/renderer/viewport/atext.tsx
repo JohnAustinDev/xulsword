@@ -17,13 +17,13 @@ import {
   stringHash,
 } from '../../common';
 import G from '../rg';
-import { libswordImgSrc } from '../rutil';
+import { libswordImgSrc, scrollIntoView } from '../rutil';
 import {
   xulDefaultProps,
   xulPropTypes,
   XulProps,
   addClass,
-  handle,
+  topHandle,
 } from '../libxul/xul';
 import { Vbox, Hbox, Box } from '../libxul/boxes';
 import { libswordText } from './ztext';
@@ -67,7 +67,7 @@ const propTypes = {
   show: PropTypes.object.isRequired,
   place: PropTypes.object.isRequired,
   ownWindow: PropTypes.bool,
-  versification: PropTypes.string,
+  windowV11n: PropTypes.string,
 };
 
 // Atext's properties. NOTE: property types are used, but property values are not.
@@ -94,7 +94,7 @@ const atextProps = {
   show: {} as ShowType,
   place: {} as PlaceType,
   ownWindow: false,
-  versification: '' as string | undefined, // v11n of the viewport (not necessarily of the text)
+  windowV11n: '' as string | undefined, // v11n of the viewport (not necessarily of the text)
 };
 
 export type AtextProps = XulProps & typeof atextProps;
@@ -187,7 +187,7 @@ class Atext extends React.Component {
   onUpdate() {
     const props = this.props as AtextProps;
     const state = this.state as AtextState;
-    const { columns, isPinned, n, versification } = props;
+    const { columns, isPinned, n, windowV11n } = props;
     const { pin } = state as AtextState;
     const { sbref, nbref } = this;
 
@@ -311,12 +311,12 @@ class Atext extends React.Component {
         let s = scroll(sbe, newScroll);
         console.log(`scroll(sbe, ${JSON.stringify(newScroll)})`);
         // pageChange('prev') requires another setState to update bk.ch.vs
-        if (s && versification) {
+        if (s && windowV11n) {
           let { book: bk, chapter: ch, verse: vs } = s as any;
           [bk, ch, vs] = G.LibSword.convertLocation(
             G.Tab[newScroll.module].v11n,
             [bk, ch, vs, vs].join('.'),
-            versification
+            windowV11n
           ).split('.');
           s = {
             book: bk,
@@ -349,15 +349,10 @@ class Atext extends React.Component {
         }
       } else if (update && type === C.DICTIONARY) {
         const { modkey } = newLibSword;
-        const id = stringHash(`${n}.${modkey}`);
+        const id = `${stringHash(modkey)}.${n}`;
         const keyelem = document.getElementById(id);
         if (keyelem) {
-          keyelem.scrollIntoView();
-          let st = keyelem.parentNode?.parentNode as HTMLElement | null;
-          while (st) {
-            if (st.scrollTop) st.scrollTop = 0;
-            st = st.parentNode as HTMLElement | null;
-          }
+          scrollIntoView(keyelem, nbe);
           const dictlist = keyelem.parentNode?.parentNode as HTMLElement | null;
           if (dictlist) {
             const dki = dictlist.getElementsByClassName(
@@ -372,10 +367,8 @@ class Atext extends React.Component {
       }
       // HIGHLIGHT
       if (type === C.BIBLE && pin && selection !== pin.selection) {
-        highlight(sbe, selection, module, versification);
-        console.log(
-          `highlight(sbe, ${selection}, ${module}, ${versification})`
-        );
+        highlight(sbe, selection, module, windowV11n);
+        console.log(`highlight(sbe, ${selection}, ${module}, ${windowV11n})`);
       }
       if (columns > 1) {
         const empty = !trimNotes(sbe, nbe);
@@ -565,15 +558,15 @@ class Atext extends React.Component {
     return (
       <Vbox
         {...addClass(`atext ${cls}`, props)}
-        {...handle('onDoubleClick', handler, props)}
-        {...handle('onClick', handler, props)}
-        {...handle('onWheel', handler, props)}
-        {...handle('onMouseOver', handler, props)}
-        {...handle('onMouseLeave', handler, props)}
-        {...handle('onMouseOut', handler, props)}
-        {...handle('onMouseDown', handler, props)}
-        {...handle('onMouseMove', handler, props)}
-        {...handle('onMouseUp', bbMouseUp, props)}
+        {...topHandle('onDoubleClick', handler, props)}
+        {...topHandle('onClick', handler, props)}
+        {...topHandle('onWheel', handler, props)}
+        {...topHandle('onMouseOver', handler, props)}
+        {...topHandle('onMouseLeave', handler, props)}
+        {...topHandle('onMouseOut', handler, props)}
+        {...topHandle('onMouseDown', handler, props)}
+        {...topHandle('onMouseMove', handler, props)}
+        {...topHandle('onMouseUp', bbMouseUp, props)}
         data-wnum={n}
         data-module={module}
         data-columns={columns}

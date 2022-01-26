@@ -5,6 +5,7 @@ import C from '../../constant';
 import { cleanDoubleClickSelection, getCSS, ofClass } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
+import { scrollIntoView } from '../rutil';
 import { textChange, wheelscroll } from './zversekey';
 
 import type Atext from './atext';
@@ -20,9 +21,7 @@ function scroll2Note(atext: HTMLElement, id: string) {
   const note = document.getElementById(id);
   if (!note) return false;
   note.classList.add('fnselected');
-  note.scrollIntoView();
-  const vp = document.getElementById('main-viewport');
-  if (vp) vp.scrollTop = 0; // fix scrollIntoView issue
+  scrollIntoView(note, atext);
   return true;
 }
 
@@ -117,11 +116,10 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           if (p && p.title) {
             let gfns;
             if (popupParent) gfns = [];
-            // popup.npopupTX.getElementsByClassName('gfn');
             else gfns = atext.getElementsByClassName('gfn');
             Array.from(gfns).forEach((gfn: any) => {
               if (gfn !== elem && gfn.dataset.title === p.title)
-                gfn.scrollIntoView();
+                scrollIntoView(gfn, atext);
             });
           }
           break;

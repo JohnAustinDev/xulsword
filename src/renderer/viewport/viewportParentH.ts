@@ -28,15 +28,15 @@ export function updateVersification(component: React.Component) {
   const {
     modules,
     numDisplayedWindows,
-    v11nmod: mod,
-    versification: v11n,
+    v11nmod: currentMod,
+    windowV11n,
   } = component.state as any;
   const v11nmod = modules.find((m: string, i: number) => {
     return i < numDisplayedWindows && m && G.Tab[m].isVerseKey;
   });
-  const versification = v11nmod ? G.Tab[v11nmod].v11n : undefined;
-  if (mod !== v11nmod || v11n !== versification) {
-    component.setState({ v11nmod, versification });
+  const modV11n = v11nmod ? G.Tab[v11nmod].v11n : undefined;
+  if (currentMod !== v11nmod || windowV11n !== modV11n) {
+    component.setState({ v11nmod, windowV11n: modV11n });
   }
 }
 
@@ -65,7 +65,7 @@ export default function handler(
   maximize?: boolean
 ) {
   const statex = this.state as any;
-  const { versification } = statex;
+  const { windowV11n } = statex;
   const state = this.state as StateDefault;
   const { modules } = state;
   const target = es.target as HTMLElement;
@@ -210,9 +210,7 @@ export default function handler(
           } = targ.element.dataset;
           if (m) {
             const from = [b, c, v, v, G.Tab[m].v11n].join('.');
-            const to = versification
-              ? convertDotString(from, versification)
-              : from;
+            const to = windowV11n ? convertDotString(from, windowV11n) : from;
             const [book, chapter, verse] = to.split('.');
             this.setState({
               book,
@@ -329,7 +327,7 @@ export default function handler(
         }
         case 'fnlink':
         case 'crref': {
-          if (versification && module && p && p.mod && p.bk && p.ch && p.vs) {
+          if (windowV11n && module && p && p.mod && p.bk && p.ch && p.vs) {
             switch (type) {
               case C.BIBLE:
               case C.COMMENTARY: {
@@ -337,7 +335,7 @@ export default function handler(
                 const [bk, ch, vs, lv] = G.LibSword.convertLocation(
                   G.LibSword.getVerseSystem(p.mod),
                   [p.bk, p.ch, p.vs, lvv].join('.'),
-                  versification
+                  windowV11n
                 ).split('.');
                 this.setState((prevState: StateDefault) => {
                   let { flagScroll } = prevState;

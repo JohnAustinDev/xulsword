@@ -446,7 +446,6 @@ html.chromedir-rtl .fncol3 {
 }
 .dictlist {
   width: calc(100% + 8px);
-  height: 100%;
   padding: 16px;
 }
 .dictlist .headerbox {
@@ -457,7 +456,7 @@ html.chromedir-rtl .fncol3 {
 }
 .dictlist .keylist {
   margin-top: 10px;
-  max-height: calc(100% - 45px);
+  max-height: calc(100% - 13px);
   overflow: auto;
 }
 .dictlist .dict-key {
