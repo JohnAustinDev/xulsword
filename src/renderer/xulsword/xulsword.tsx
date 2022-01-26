@@ -214,8 +214,6 @@ export default class Xulsword extends React.Component {
     return (
       <Menupopup>
         {items.map((histitem, i) => {
-          // Displayed book and chapter are from history, but any
-          // verse or lastverse are from the selection.
           const { book: bk, chapter: ch, v11n } = histitem;
           const [bks, chs] = G.LibSword.convertLocation(
             v11n,
@@ -223,6 +221,7 @@ export default class Xulsword extends React.Component {
             windowV11n
           ).split('.');
           const location = [bks, chs];
+          // Any verse or lastverse comes from selection.
           if (histitem.selection) {
             const [b, c, v, l] = G.LibSword.convertLocation(
               v11n,
@@ -238,12 +237,12 @@ export default class Xulsword extends React.Component {
           const selected = index === historyIndex ? 'selected' : '';
           return (
             <div
+              key={[selected, index, histitem].join('.')}
               className={selected}
               onClick={(e) => {
                 this.setHistory(index, true);
                 e.stopPropagation();
               }}
-              key={[selected, index, histitem].join('.')}
             >
               {dotString2LocaleString(location.join('.'), true)}
             </div>

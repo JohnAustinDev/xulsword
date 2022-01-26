@@ -522,102 +522,91 @@ export function ref2ProgramLocaleText(reference: string, notHTML?: boolean) {
   return dString(retv);
 }
 
-// "location" may have the forms:
-// "Matt 3:5", "John 3:16-John 3:21", "John.3", "John.3.5", "John.3.16-John.3.16.21", or "John.3.7.10".
-// If "version" is not a Bible, or does not have the book where "location" is, then an alternate
-// Bible version is used and the location is converted to the new verse system. NOTE! returned
-// location is "." delimited type! Returns "" if verse text cannot be found in any Bible module.
+// Input location may have the forms:
+// Matt 3:5, John 3:16-John 3:21, John.3, John.3.5, John.3.16-John.3.16.21, or John.3.7.10.
+// If version is not a Bible, or does not have the book where location is, then an alternate
+// Bible version is used and the location is converted to the new verse system.
+//
+// Returned location is always dot delimited: book.ch.vs.lv
+// Returned module is the module in which the verse was found.
+// Returned text is empty string if verse text cannot be found in any Bible module.
 //
 // Is module a Bible, or does module specify another reference Bible in its config file? Then use that.
 // If version does not yield verse text, then look at visible tabs in their order.
 // If visible tabs do not yield verse text, then look at hidden tabs in their order.
 export function findAVerseText(
-  version: string,
-  location: string,
+  module: string,
+  locationIn: string,
   tabs: string[],
-  keepTextNotes: boolean
-): { tabindex: number; location: string; text: string } | null {
-  if (!(version in G.Tab)) return null;
-  const ret = { tabindex: G.Tab[version].index, location, text: '' };
+  keepNotes: boolean
+): { module: string; location: string; text: string } | null {
+  if (!(module in G.Tab)) return null;
+
+  // Convert input location to dot format
+  const { v11n } = G.Tab[module];
+  const location = G.LibSword.convertLocation(v11n, locationIn, v11n);
+  let text = '';
+  let ret = { module, location, text };
 
   // Is version a Bible, or does version specify a Bible?
-  let bibleVersion = null;
+  let bible = null;
   let bibleLocation = location;
-  if (getModuleLongType(version) === C.BIBLE) bibleVersion = version;
-  else if (
-    !G.Prefs.getPrefOrCreate('DontReadReferenceBible', 'boolean', false)
-  ) {
-    bibleVersion = getCompanionModules(version);
-    bibleVersion =
-      !bibleVersion.length || !(bibleVersion[0] in G.Tab)
-        ? null
-        : bibleVersion[0];
-    if (bibleVersion)
+  if (getModuleLongType(module) === C.BIBLE) bible = module;
+  else {
+    bible = getCompanionModules(module);
+    bible = !bible.length || !(bible[0] in G.Tab) ? null : bible[0];
+    if (bible)
       bibleLocation = G.LibSword.convertLocation(
-        G.Tab[version].v11n,
+        G.Tab[module].v11n,
         location,
-        G.Tab[bibleVersion].v11n
+        G.Tab[bible].v11n
       );
   }
   // If we have a Bible, try it first.
-  if (bibleVersion && bibleVersion in G.Tab) {
-    let text;
+  if (bible && bible in G.Tab) {
     try {
-      text = G.LibSword.getVerseText(
-        bibleVersion,
-        bibleLocation,
-        keepTextNotes
-      ).replace(/\n/g, ' ');
+      text = G.LibSword.getVerseText(bible, bibleLocation, keepNotes).replace(
+        /\n/g,
+        ' '
+      );
     } catch (er) {
       text = '';
     }
     if (text && text.length > 7) {
-      const vsys = G.Tab[bibleVersion].v11n;
-      ret.tabindex = G.Tab[bibleVersion].index;
-      ret.location = G.LibSword.convertLocation(vsys, location, vsys);
+      ret.module = bible;
+      ret.location = location;
       ret.text = text;
       return ret;
     }
   }
 
   // Passed version does not yield verse text. So now look at tabs...
-  const m = location.match(/^\W*(\w+)/);
-  if (!m) return null;
-  const [, book] = m;
+  const [book] = location.split('.');
   for (let v = 0; v < G.Tabs.length; v += 1) {
-    if (G.Tabs[v].module !== C.BIBLE) continue;
-    const abooks = G.AvailableBooks[G.Tabs[v].module];
+    const tab = G.Tabs[v];
+    if (tab.module !== C.BIBLE) continue;
+    const abooks = G.AvailableBooks[tab.module];
     let ab;
     for (ab = 0; ab < abooks.length; ab += 1) {
       if (abooks[ab] === book) break;
     }
     if (ab === abooks.length) continue;
     const tlocation = G.LibSword.convertLocation(
-      G.Tab[version].v11n,
+      G.Tab[module].v11n,
       location,
-      G.Tabs[v].v11n
+      tab.v11n
     );
-    const text = G.LibSword.getVerseText(
-      G.Tabs[v].module,
-      tlocation,
-      keepTextNotes
-    ).replace(/\n/g, ' ');
+    text = G.LibSword.getVerseText(tab.module, tlocation, keepNotes).replace(
+      /\n/g,
+      ' '
+    );
     if (text && text.length > 7) {
+      const r = { module: tab.module, location: tlocation, text };
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If
-      // no visible tab match is found, this saved result will be returned
-      const vsys = G.Tabs[v].v11n;
-      if (tabs.includes(G.Tabs[v].module)) {
-        ret.tabindex = v;
-        ret.location = G.LibSword.convertLocation(vsys, tlocation, vsys);
-        ret.text = text;
-        return ret;
-      }
-      if (!ret.text) {
-        ret.tabindex = v;
-        ret.location = G.LibSword.convertLocation(vsys, tlocation, vsys);
-        ret.text = text;
-      }
+      // no visible tab match is found, this saved result will be returned.
+      if (tabs.includes(tab.module)) return r;
+      if (!ret.text) ret = r;
     }
   }
 

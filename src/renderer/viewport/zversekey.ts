@@ -365,12 +365,12 @@ function getRefHTML(
       aVerse = {
         text: `(${ref[i]} ??)`,
         location: r.ref,
-        tabindex: G.Tab[mod].index,
+        module: mod,
       };
     if (/^\s*$/.test(aVerse.text)) aVerse.text = '-----';
 
     if (aVerse.location) {
-      const rmod = G.Tabs[aVerse.tabindex].module;
+      const rmod = aVerse.module;
       html += sep;
       html += `<a class="crref" data-title="${aVerse.location}.${rmod}">`;
       html += ref2ProgramLocaleText(aVerse.location);

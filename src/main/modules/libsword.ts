@@ -438,7 +438,6 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     if (!from.startsWith('Synodal')) from = 'KJV';
     let to = toVerseSystem;
     if (!to.startsWith('Synodal')) to = 'KJV';
-    if (from === to) return vkeytext;
     return libxulsword.ConvertLocation(from, vkeytext, to);
   },
 
