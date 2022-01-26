@@ -52,7 +52,17 @@ html.chromedir-rtl .viewport .chooser {
 .viewport .show3 .tabs {
   width: 33.33%;
 }
+.viewport .textarea {
+  min-width: 1px; /* allows textarea to schrink below minimum content size */
+  margin-bottom: 12px;
+}
+.viewport .textrow {
+  width: 100%;
+}
 
+.viewport.ownWindow {
+  padding: 0 15px;
+}
 .viewport.ownWindow .tabs:not(.none) ~ .tabs {
   display: none;
 }
@@ -69,15 +79,9 @@ a dictionary (which cannot be linked), this situation needs this special CSS: */
 .viewport.ownWindow .textarea .text.Dicts:first-child {
   display: flex;
 }
-
-.viewport .textarea {
-  min-width: 1px; /* allows textarea to schrink below minimum content size */
-  margin-bottom: 12px;
+.viewport.ownWindow .atext {
+  margin: 0;
 }
-.viewport .textrow {
-  width: 100%;
-}
-
 .viewport.ownWindow .text-win {
   display: none;
 }

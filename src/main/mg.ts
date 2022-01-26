@@ -35,7 +35,7 @@ const i18nBackendRenderer = require('i18next-electron-fs-backend');
 const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
   cache: {},
 
-  // Permanently store references for use by getters
+  // Permanently store references to be used by G
   refs: {
     Books: () => getBooks(),
     Book: () => getBook(),
@@ -107,71 +107,73 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     openDialog: (
       type: string,
       options: Electron.BrowserWindowConstructorOptions
-    ) => {
-      const ret = {};
+    ): number => {
+      const { show } = options;
       windowOptions(type, options);
-
       const win = new BrowserWindow(options);
-
       win.loadURL(resolveHtmlPath(`${type}.html`));
-
-      win.once('ready-to-show', () => {
-        win.show();
-        win.focus();
-      });
-
+      win.removeMenu();
+      if (show) {
+        win.once('ready-to-show', () => {
+          win.show();
+          win.focus();
+        });
+      }
       win.on('resize', () => {
         const size = win.getSize();
         win.webContents.send('resize', size);
       });
-
       windowInitI18n(win);
-
-      return ret;
+      return win.id;
     },
 
     openWindow: (
       type: string,
       options: Electron.BrowserWindowConstructorOptions
     ): number => {
+      const { show } = options;
       windowOptions(type, options);
       // Set bounds for viewport and popup type windows
       if (type === 'viewportWin' || type === 'popupWin') {
-        const heightAdj = type === 'viewportWin' ? 100 : 0;
-        const topAdj = type === 'viewportWin' ? 50 : 26;
+        let adj = {
+          h: 50,
+          t: 35,
+          w: 30,
+        };
+        if (type === 'popupWin') {
+          adj = {
+            h: 0,
+            t: 26,
+            w: 0,
+          };
+        }
         const ops = options as any;
         const xs = windowBounds();
         const eb = ops?.openWithBounds;
         if (xs && eb) {
-          options.width = eb.width;
-          options.height = eb.height + heightAdj;
-          options.x = xs.x + eb.x;
-          options.y = xs.y + eb.y - heightAdj + topAdj;
+          options.width = eb.width + adj.w;
+          options.height = eb.height + adj.h;
+          options.x = xs.x + eb.x - adj.w / 2;
+          options.y = xs.y + eb.y - adj.h + adj.t;
         }
         if (ops?.openWithBounds) delete ops.openWithBounds;
       }
-
       const win = new BrowserWindow(options);
-
       win.loadURL(resolveHtmlPath(`${type}.html`));
-
       Prefsx.setComplexValue(`Windows.w${win.id}`, { type, options });
-
       if (type === 'viewportWin' || type === 'popupWin') win.removeMenu();
-
       // All Windows are created with BrowserWindow.show = false.
       // This means that the window will be shown after either:
       // (params.show === true) Electron's 'ready-to-show' event.
       // (params.show === false) The window's custom 'did-finish-render' event.
       // IMPORTANT: If params.show is false, the 'did-finish-render' event must
       // be explicitly called by the window via IPC or it will never be shown.
-      if (options?.show) {
+      if (show) {
         win.once('ready-to-show', () => {
           win.show();
           win.focus();
         });
       }
-
       win.on('resize', () => {
         const args = Prefsx.getComplexValue(`Windows.w${win.id}`);
         const b = windowBounds(win);
@@ -180,21 +182,17 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
         const size = win.getSize();
         win.webContents.send('resize', size);
       });
-
       win.on('move', () => {
         const args = Prefsx.getComplexValue(`Windows.w${win.id}`);
         const b = windowBounds(win);
         args.options = { ...args.options, ...b };
         Prefsx.setComplexValue(`Windows.w${win.id}`, args);
       });
-
       windowInitI18n(win);
-
       function closer(id: number) {
         return () => Prefsx.setComplexValue(`Windows.w${id}`, undefined);
       }
       win.once('closed', closer(win.id));
-
       return win.id;
     },
 

@@ -152,15 +152,16 @@ export default function handler(
           break;
         }
         case 'text-pin': {
-          const c = ofClass(['show1', 'show2', 'show3'], target);
-          const columns = c ? Number(c.type.substring(c.type.length - 1)) : 1;
-          this.setState((prevState: StateDefault) => {
-            const { isPinned: ip } = prevState;
-            for (let x = i; x < columns + i; x += 1) {
-              ip[x] = !ip[x];
-            }
-            return { isPinned: ip };
-          });
+          if (atext && module) {
+            const { columns } = atext.dataset;
+            this.setState((prevState: StateDefault) => {
+              const { isPinned: ip } = prevState;
+              for (let x = i; x < Number(columns) + i; x += 1) {
+                ip[x] = !ip[x];
+              }
+              return { isPinned: ip };
+            });
+          }
           break;
         }
         case 'bookgroup': {

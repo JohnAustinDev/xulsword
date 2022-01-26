@@ -391,6 +391,23 @@ class Atext extends React.Component {
       if (type === C.BIBLE) {
         // window.setTimeout(function () {BibleTexts.updateAudioLinks(w);}, 0);
       }
+      // PREV / NEXT LINKS
+      setTimeout(() => {
+        const atextc = ofClass(['atext'], sbe);
+        if (atextc) {
+          const atext = atextc.element;
+          const prev = textChange(atext, false);
+          const next = textChange(atext, true);
+          const prevdis = atext.classList.contains('prev-disabled');
+          const nextdis = atext.classList.contains('next-disabled');
+          if ((!prev && !prevdis) || (prev && prevdis)) {
+            atext.classList.toggle('prev-disabled');
+          }
+          if ((!next && !nextdis) || (next && nextdis)) {
+            atext.classList.toggle('next-disabled');
+          }
+        }
+      }, 1);
     }
     if (Object.keys(newState).length) this.setState(newState);
   }
@@ -494,22 +511,6 @@ class Atext extends React.Component {
         (fntable?.innerHTML && nbc.classList.contains('noteboxEmpty'))
       )
         nbc.classList.toggle('noteboxEmpty');
-      setTimeout(() => {
-        const atextc = ofClass(['atext'], sbe);
-        if (atextc) {
-          const atext = atextc.element;
-          const prev = textChange(atext, false);
-          const next = textChange(atext, true);
-          const prevdis = atext.classList.contains('prev-disabled');
-          const nextdis = atext.classList.contains('next-disabled');
-          if ((!prev && !prevdis) || (prev && prevdis)) {
-            atext.classList.toggle('prev-disabled');
-          }
-          if ((!next && !nextdis) || (next && nextdis)) {
-            atext.classList.toggle('next-disabled');
-          }
-        }
-      }, 1);
     }
   }
 
@@ -553,6 +554,7 @@ class Atext extends React.Component {
 
     // Class list
     let cls = `text text${n} show${columns} userFontSize`;
+    cls += ' prev-disabled next-disabled';
     if (module) cls += ` ${G.Tab[module].tabType}`;
     if (module && G.Tab[module].isRTL) cls += ' rtl-text';
     if (appIsRTL) cls += ' chromedir-rtl';

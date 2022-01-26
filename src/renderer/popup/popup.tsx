@@ -1,3 +1,4 @@
+/* eslint-disable no-empty */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -31,6 +32,24 @@ import '../libsword.css';
 import './popup.css';
 
 import type { ElemInfo } from '../../libswordElemInfo';
+
+function getRefBible(mod: string | null, type: string | null): string | null {
+  let refbible = mod;
+  if (mod && type === 'sr' && G.Tab[mod]?.type !== C.BIBLE) {
+    const aref = getCompanionModules(mod);
+    const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
+    if (bible) refbible = bible;
+  }
+  if (refbible && (type === 'cr' || type === 'sr')) {
+    // default prefs.js doesn't have this key since mod is unknown
+    refbible = G.Prefs.getPrefOrCreate(
+      `global.popup.selection.${refbible}`,
+      'string',
+      refbible
+    );
+  }
+  return refbible;
+}
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -212,7 +231,7 @@ class Popup extends React.Component {
   }
 
   // Write popup contents from LibSword, and update state if popup
-  // is repositioned.
+  // was repositioned.
   update() {
     const { npopup } = this;
     const props = this.props as PopupProps;
@@ -221,8 +240,7 @@ class Popup extends React.Component {
     if (!npopup.current || !pts) throw Error(`Popup.updateContent no npopup.`);
     const pt = pts[0] as HTMLElement;
     const { info, elem } = this.element();
-    // ntype is used to store cross-reference display module
-    const { type, reflist, bk, ch, mod, title, ntype } = info;
+    const { type, reflist, bk, ch, mod, title } = info;
 
     const infokey = stringHash(type, reflist, bk, ch, mod);
     if (!pt.dataset.infokey || pt.dataset.infokey !== infokey) {
@@ -233,12 +251,12 @@ class Popup extends React.Component {
         case 'un': {
           if (mod && bk && ch && title) {
             // getChapterText must be called before getNotes
-            G.LibSword.getChapterText(ntype || mod, `${bk}.${ch}`);
+            G.LibSword.getChapterText(mod, `${bk}.${ch}`);
             const notes = G.LibSword.getNotes();
             // a note element's title does not include type, but its nlist does
             html = getNoteHTML(
               notes,
-              mod,
+              type === 'cr' ? getRefBible(mod, type) || mod : mod,
               null,
               0,
               true,
@@ -251,19 +269,11 @@ class Popup extends React.Component {
 
         case 'sr': {
           if (mod) {
-            let refbible = mod;
-            if (G.Tab[mod]?.type !== C.BIBLE) {
-              const aref = getCompanionModules(mod);
-              if (aref.length) {
-                const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
-                if (bible) refbible = bible;
-              }
-            }
+            const refbible = getRefBible(mod, type) || mod;
             const mynote =
               reflist && reflist[0] !== 'unavailable'
                 ? reflist.join(';')
                 : elem.innerHTML;
-
             html = getNoteHTML(
               `<div class="nlist" data-title="cr.1.0.0.0.${refbible}">${mynote}</div>`,
               refbible,
@@ -272,6 +282,17 @@ class Popup extends React.Component {
               true,
               true
             );
+          }
+          break;
+        }
+
+        case 'sn': {
+          if (mod) {
+            const snlist = Array.from(elem.classList);
+            if (snlist && snlist.length > 1) {
+              snlist.shift();
+              html = getLemmaHTML(snlist, elem.innerHTML, mod);
+            }
           }
           break;
         }
@@ -289,17 +310,6 @@ class Popup extends React.Component {
               }
             });
             html = getDictEntryHTML(dword, dnames.join(';'));
-          }
-          break;
-        }
-
-        case 'sn': {
-          if (mod) {
-            const snlist = Array.from(elem.classList);
-            if (snlist && snlist.length > 1) {
-              snlist.shift();
-              html = getLemmaHTML(snlist, elem.innerHTML, mod);
-            }
           }
           break;
         }
@@ -381,7 +391,7 @@ class Popup extends React.Component {
     const { drag } = state;
     const { elemhtml, gap, isWindow } = props;
     const { info, elem } = this.element();
-    const { type, mod } = info;
+    const { mod, type } = info;
 
     const allBibleModules = [];
     for (let t = 0; t < G.Tabs.length; t += 1) {
@@ -408,12 +418,7 @@ class Popup extends React.Component {
       };
     }
 
-    let refbible = mod;
-    if (mod && type === 'sr' && G.Tab[mod]?.type !== C.BIBLE) {
-      const aref = getCompanionModules(mod);
-      const bible = aref.find((m) => G.Tab[m]?.type === C.BIBLE);
-      if (bible) refbible = bible;
-    }
+    const refbible = getRefBible(mod, type);
 
     let cls = `userFontSize cs-program`;
     if (isWindow) cls += ` ownWindow viewport`;

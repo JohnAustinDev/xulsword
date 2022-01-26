@@ -21,7 +21,6 @@ import xulswordHandlerH, {
   updateVersification,
 } from './viewportParentH';
 import '../global-htm.css';
-import '../xulsword/xulsword.css';
 
 import type { StateDefault } from '../../type';
 import type { MouseWheel } from './viewportParentH';

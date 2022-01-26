@@ -180,10 +180,10 @@ html.chromedir-rtl .bookgrouplist {
 html.chromedir-rtl .bookgroupitem .charrow {
   background: url(../images/arrow-rtl.png);
 }
-.bookgroupitem:hover .charrow {
+.bookgroupitem:not(.disabled):hover .charrow {
   background: url(../images/arrow2.png);
 }
-html.chromedir-rtl .bookgroupitem:hover .charrow {
+html.chromedir-rtl .bookgroupitem:not(.disabled):hover .charrow {
   background: url(../images/arrow2-rtl.png);
 }
 

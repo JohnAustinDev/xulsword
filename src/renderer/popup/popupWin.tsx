@@ -21,7 +21,6 @@ import {
 import Popup from './popup';
 import '../global-htm.css';
 import '../libxul/xul.css';
-import '../viewport/viewport.css';
 import '../viewport/atext.css';
 
 // Initial state arguments must be passed by the window

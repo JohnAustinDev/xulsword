@@ -252,10 +252,9 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           const { elemhtml, eleminfo } = prevState;
           if (t.dataset.module && eleminfo.length) {
             const orig = getPopupInfo(elemhtml[elemhtml.length - 1]);
-            // Not converting v11n here, because elemhtml text nodes would need
-            // conversion if reflist is not provided.
-            eleminfo[eleminfo.length - 1].ntype = orig.mod;
-            eleminfo[eleminfo.length - 1].mod = value;
+            if (orig.mod && value) {
+              G.Prefs.setCharPref(`global.popup.selection.${orig.mod}`, value);
+            }
           }
           if (t.dataset.feature) {
             G.Prefs.setCharPref(
