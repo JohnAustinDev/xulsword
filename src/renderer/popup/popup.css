@@ -58,7 +58,7 @@ html.chromedir-rtl .npopup {
 
 /* FOR ALL POPUPS */
 .popupheader {
-  margin: 0px 0px 40px 0px;
+  margin: 0px 0px 15px 0px;
 }
 .towindow {
   float: left;
@@ -102,6 +102,7 @@ html.chromedir-rtl .draghandle {
   font-size: 0.8em;
   text-align: center;
   padding-top: 3px;
+  margin-bottom: 15px;
 }
 html.chromedir-rtl .popup-mod-select {
   float: left;
@@ -122,9 +123,8 @@ html.chromedir-rtl .popup-mod-select {
 /* Strong's numbers dictionary entry display */
 .snbut {
   position: relative;
-  top: -9px;
+  top: -6px;
   float: right;
-  margin-top: 5px;
   margin-bottom: 5px;
   margin-inline-start: 10px;
   margin-inline-end: 0px;
