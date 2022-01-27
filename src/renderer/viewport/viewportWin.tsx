@@ -21,7 +21,7 @@ import {
 } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Viewport from './viewport';
-import xulswordHandlerH, {
+import viewportParentH, {
   closeMenupopups,
   updateVersification,
 } from './viewportParentH';
@@ -59,7 +59,7 @@ export default class ViewportWin extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  xulswordHandler: any;
+  viewportParentHandler: any;
 
   mouseWheel: MouseWheel;
 
@@ -79,7 +79,7 @@ export default class ViewportWin extends React.Component {
 
     onSetWindowStates(this);
 
-    this.xulswordHandler = xulswordHandlerH.bind(this);
+    this.viewportParentHandler = viewportParentH.bind(this);
     this.lastSavedPref = {};
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
   }
@@ -117,7 +117,7 @@ export default class ViewportWin extends React.Component {
       windowV11n,
     } = state;
     const { id } = props;
-    const { lastSavedPref: lastSetPrefs, xulswordHandler } = this;
+    const { lastSavedPref: lastSetPrefs, viewportParentHandler } = this;
 
     if (id) updateGlobalState(id, state, lastSetPrefs, notStatePref);
 
@@ -137,7 +137,7 @@ export default class ViewportWin extends React.Component {
           <Viewport
             key={[vpreset, showChooser].join('.')}
             id="main-viewport"
-            xulswordHandler={xulswordHandler}
+            parentHandler={viewportParentHandler}
             book={book}
             chapter={chapter}
             verse={verse}

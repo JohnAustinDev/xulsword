@@ -6,7 +6,7 @@ import { cleanDoubleClickSelection, getCSS, ofClass } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { scrollIntoView } from '../rutil';
-import { textChange, wheelscroll } from './zversekey';
+import { textChange, aTextWheelScroll } from './zversekey';
 
 import type Atext from './atext';
 import type { AtextProps, AtextState } from './atext';
@@ -315,15 +315,15 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
     }
 
     case 'wheel': {
-      const e = es as React.MouseEvent;
+      const e = es as React.WheelEvent;
       if (type !== C.DICTIONARY && !ofClass(['nbc'], target)) {
         if (isPinned) {
           const { mouseWheel: m } = this;
           m.atext = atext;
-          m.count += e.detail;
+          m.count += Math.round(e.deltaY / 80);
           if (m.TO) window.clearTimeout(m.TO);
           m.TO = window.setTimeout(() => {
-            wheelscroll(this);
+            aTextWheelScroll(this);
           }, 250);
         }
       }

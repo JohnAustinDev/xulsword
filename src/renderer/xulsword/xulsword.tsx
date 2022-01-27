@@ -33,7 +33,7 @@ import Bookselect from '../libxul/bookselect';
 import Spacer from '../libxul/spacer';
 import Textbox from '../libxul/textbox';
 import Viewport from '../viewport/viewport';
-import xulswordHandlerH, {
+import viewportParentH, {
   closeMenupopups,
   updateVersification,
 } from '../viewport/viewportParentH';
@@ -75,7 +75,7 @@ export default class Xulsword extends React.Component {
 
   handler: any;
 
-  xulswordHandler: any;
+  viewportParentHandler: any;
 
   historyTO: NodeJS.Timeout | undefined;
 
@@ -100,7 +100,7 @@ export default class Xulsword extends React.Component {
     this.setHistory = this.setHistory.bind(this);
 
     this.handler = handlerH.bind(this);
-    this.xulswordHandler = xulswordHandlerH.bind(this);
+    this.viewportParentHandler = viewportParentH.bind(this);
     this.lastStatePref = {};
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
   }
@@ -255,7 +255,7 @@ export default class Xulsword extends React.Component {
   render() {
     const state = this.state as XulswordState;
     const props = this.props as XulswordProps;
-    const { handler, xulswordHandler, lastStatePref } = this;
+    const { handler, viewportParentHandler, lastStatePref } = this;
     const {
       book,
       chapter,
@@ -492,7 +492,7 @@ export default class Xulsword extends React.Component {
               <Viewport
                 key={[vpreset, showChooser].join('.')}
                 id="main-viewport"
-                xulswordHandler={xulswordHandler}
+                parentHandler={viewportParentHandler}
                 book={book}
                 chapter={chapter}
                 verse={verse}

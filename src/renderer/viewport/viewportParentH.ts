@@ -14,7 +14,7 @@ import G from '../rg';
 import { convertDotString } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { TextCache } from './ztext';
-import { textChange, wheelscroll } from './zversekey';
+import { textChange, aTextWheelScroll } from './zversekey';
 
 import type { StateDefault } from '../../type';
 
@@ -405,7 +405,7 @@ export default function handler(
     }
 
     case 'wheel': {
-      const e = es as React.MouseEvent;
+      const e = es as React.WheelEvent;
       const t = this as any;
       if (
         'mouseWheel' in t &&
@@ -415,10 +415,10 @@ export default function handler(
       ) {
         const m = t.mouseWheel as MouseWheel;
         m.atext = atext;
-        m.count += e.detail;
+        m.count += Math.round(e.deltaY / 80);
         if (m.TO) window.clearTimeout(m.TO);
         m.TO = window.setTimeout(() => {
-          wheelscroll(t);
+          aTextWheelScroll(t);
         }, 250);
       }
       break;

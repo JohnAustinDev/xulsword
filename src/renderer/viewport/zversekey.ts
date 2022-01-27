@@ -848,24 +848,28 @@ export function scroll(
   return null;
 }
 
-export function wheelscroll(caller: Xulsword | ViewportWin | Atext) {
+export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
   const { atext, count } = caller.mouseWheel;
   if (!atext) return;
-
-  // get number of verses by which to scroll
-  const c2 = Math.round(count / 3);
-  let dv = 2 * c2 - Math.abs(c2) / c2;
-  caller.mouseWheel.count = 0;
-  if (!dv) return;
-
-  const match = atext.className.match(/\bcs-(\S+)\b/);
-  if (!match) return;
-  const { wnum } = atext.dataset;
-  const isSingleColumn = atext.classList.contains('show1');
+  const { module, wnum } = atext.dataset;
+  let { columns, ispinned } = atext.dataset as any;
+  if (!wnum || !module) return;
+  columns = Number(columns);
+  ispinned = ispinned === 'true';
   const i = Number(wnum) - 1;
-  const module = match[1];
   const { type } = G.Tab[module];
-  const isPinned = atext.classList.contains('pinned');
+
+  caller.mouseWheel.count = 0;
+  if (!count) return;
+
+  if (type === C.GENBOOK) {
+    // GenBook scrolls differently than versekey modules
+    // TODO! Scroll GenBooks
+    const scrollType = C.SCROLLTYPEDELTA;
+    const scrollDelta = count * 20; // scroll delta in pixels
+    return;
+  }
+
   const xulsword = caller as Xulsword;
   const atextprops = caller.props as AtextProps;
   const xulswordstate = xulsword.state as XulswordState;
@@ -876,71 +880,67 @@ export function wheelscroll(caller: Xulsword | ViewportWin | Atext) {
 
   const sb = atext.getElementsByClassName('sb')[0];
 
-  let v;
-
-  // GenBook scrolls differently than versekey modules
-  if (type === C.GENBOOK) {
-    // TODO! Scroll GenBooks
-    const scrollType = C.SCROLLTYPEDELTA;
-    const scrollDelta = dv * 20; // scroll delta in pixels
+  // get first verse which begins in window
+  let v = sb.firstChild as HTMLElement | null;
+  while (v && !verseIsVisible(v)) {
+    v = v.nextSibling as HTMLElement | null;
   }
+  if (!v) return;
 
-  // else scrolling versekey modules
-  else {
-    // get first verse which begins in window
-    v = sb.firstChild as HTMLElement | null;
-    while (v && !verseIsVisible(v)) {
-      v = v.nextSibling as HTMLElement | null;
-    }
-    if (!v) return;
-
-    // if this is a multi-column versekey window, shift the verse according to scroll wheel delta
-    if (!atext.classList.contains('show1')) {
-      let nv = v;
-      while (dv > 0) {
-        if (nv) nv = nv.nextSibling as HTMLElement;
-        while (nv && !nv.classList.contains('vs')) {
-          nv = nv.nextSibling as HTMLElement;
-        }
-        dv -= 1;
-        if (nv && nv.classList.contains('vs')) v = nv;
+  // if this is a multi-column versekey window, shift the
+  // verse according to scroll wheel delta
+  if (columns > 1) {
+    let dv = count;
+    let nv = v;
+    while (dv > 0) {
+      if (nv) nv = nv.nextSibling as HTMLElement;
+      while (nv && !nv.classList.contains('vs')) {
+        nv = nv.nextSibling as HTMLElement;
       }
-      while (dv < 0) {
-        if (nv) nv = nv.previousSibling as HTMLElement;
-        while (nv && !nv.classList.contains('vs')) {
-          nv = nv.previousSibling as HTMLElement;
-        }
-        dv += 1;
-        if (nv && nv.classList.contains('vs')) v = nv;
-      }
+      dv -= 1;
+      if (nv && nv.classList.contains('vs')) v = nv;
     }
-
-    const p = getElementInfo(v);
-    if (windowV11n && p && p.bk && p.ch && p.vs) {
-      if (isPinned) {
+    while (dv < 0) {
+      if (nv) nv = nv.previousSibling as HTMLElement;
+      while (nv && !nv.classList.contains('vs')) {
+        nv = nv.previousSibling as HTMLElement;
+      }
+      dv += 1;
+      if (nv && nv.classList.contains('vs')) v = nv;
+    }
+  }
+  // Scroll to verse v
+  const p = getElementInfo(v);
+  if (windowV11n && p) {
+    const { bk, ch, vs } = p;
+    if (bk && ch && vs) {
+      if (ispinned) {
         caller.setState((prevState: AtextState) => {
-          return {
-            pin: {
-              ...prevState.pin,
-              book: p.bk,
-              chapter: p.ch,
-              verse: p.vs,
-              flagScroll: C.SCROLLTYPEBEG,
-            },
+          const pin: Partial<AtextState['pin']> = {
+            ...prevState.pin,
+            book: bk,
+            chapter: Number(ch),
+            verse: vs,
+            flagScroll: C.SCROLLTYPEBEG,
           };
+          return { pin };
         });
       } else {
         const { modules } = xulswordstate;
         const [book, chapter, verse] = G.LibSword.convertLocation(
           G.LibSword.getVerseSystem(module),
-          [p.bk, p.ch, p.vs, p.vs].join('.'),
+          [bk, ch, vs, vs].join('.'),
           windowV11n
         ).split('.');
-        const s = { book, chapter, verse };
+        const s: Partial<StateDefault> = {
+          book,
+          chapter: Number(chapter),
+          verse: Number(verse),
+        };
         const flagScroll = [] as number[];
         for (let x = 0; x < C.NW; x += 1) {
           const m = modules[x];
-          const self1col = x === i && isSingleColumn;
+          const self1col = x === i && columns === 1;
           flagScroll.push(
             !self1col && m && G.Tab[m].isVerseKey
               ? C.SCROLLTYPEBEG

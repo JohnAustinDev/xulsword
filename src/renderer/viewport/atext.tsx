@@ -148,11 +148,12 @@ class Atext extends React.Component {
   constructor(props: AtextProps) {
     super(props);
 
-    this.state = {
+    const s: AtextState = {
       pin: null,
       versePerLine: false,
       noteBoxResizing: null,
     };
+    this.state = s;
 
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
     this.sbref = React.createRef();
@@ -179,11 +180,11 @@ class Atext extends React.Component {
   // already contains the necessary LibSword response and if not,
   // memoizes the required response and updates sb and nb contents.
   // It then does any srolling, highlighting, footnote adjustments
-  // etc. that must wait until Atext contains the LibSword response.
-  // NOTE: the related hashes must be stored on the HTML element
-  // itself, because DOM elements may be silently replaced by React
-  // and storing it there insures the hashes are invalidated at the
-  // same time. Finally, the pin state is updated if it has changed.
+  // etc. which must wait until Atext contains the LibSword response.
+  // Finally, the pin state is updated if it has changed.  NOTE: the
+  // related hashes must be stored on the HTML element itself, because
+  // DOM elements may be silently replaced by React and storing it
+  // there insures the hashes are invalidated at the same time.
   onUpdate() {
     const props = this.props as AtextProps;
     const state = this.state as AtextState;
@@ -213,8 +214,7 @@ class Atext extends React.Component {
       );
       const writekey = stringHash({ ...newLibSword, chapter: 0 }, n);
       const scrollkey = stringHash(newScroll);
-      // Overwrite current innerHTML if needed
-      let update = false;
+      let update = false; // update current innerHTML as needed
       if (!isVerseKey) {
         update = writekey !== sbe.dataset.libsword;
         if (update) this.writeLibSword2DOM(newLibSword, n, 'overwrite');
@@ -223,29 +223,28 @@ class Atext extends React.Component {
         let chlast;
         if ('chfirst' in sbe.dataset) chfirst = Number(sbe.dataset.chfirst);
         if ('chlast' in sbe.dataset) chlast = Number(sbe.dataset.chlast);
-        if (
+        update =
+          writekey !== sbe.dataset.libsword ||
           !(
             chfirst &&
             chlast &&
             newLibSword.chapter >= chfirst &&
             newLibSword.chapter <= chlast
           ) ||
-          chlast - chfirst > 10 ||
-          writekey !== sbe.dataset.libsword
-        ) {
-          update = true;
+          chlast - chfirst > 10;
+        if (update) {
           this.writeLibSword2DOM(newLibSword, n, 'overwrite');
           chfirst = Number(sbe.dataset.chfirst);
           chlast = Number(sbe.dataset.chlast);
         }
         // Prepare for Bible column scrolling if needed
         if (
-          newScroll.flagScroll !== C.SCROLLTYPENONE &&
-          (update || scrollkey !== sbe.dataset.scroll) &&
-          type === C.BIBLE &&
-          columns > 1 &&
           chfirst &&
-          chlast
+          chlast &&
+          columns > 1 &&
+          type === C.BIBLE &&
+          newScroll.flagScroll !== C.SCROLLTYPENONE &&
+          (update || scrollkey !== sbe.dataset.scroll)
         ) {
           const rtl = G.ModuleConfigs[module].direction === 'rtl';
           let v = findVerseElement(sbe, newLibSword.chapter, verse);
@@ -570,6 +569,7 @@ class Atext extends React.Component {
         data-wnum={n}
         data-module={module}
         data-columns={columns}
+        data-ispinned={isPinned}
       >
         <div className="sbcontrols">
           <div className="text-pin" />

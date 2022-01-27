@@ -66,7 +66,7 @@ const propTypes = {
   ownWindow: PropTypes.bool.isRequired,
   windowV11n: PropTypes.string,
 
-  xulswordHandler: PropTypes.func.isRequired,
+  parentHandler: PropTypes.func.isRequired,
 };
 
 type ViewportProps = PopupParentProps &
@@ -92,7 +92,7 @@ type ViewportProps = PopupParentProps &
     ownWindow: boolean;
     windowV11n: string | undefined;
 
-    xulswordHandler: (e: any) => void;
+    parentHandler: (e: any) => void;
   };
 
 type ViewportState = PopupParentState & {
@@ -111,7 +111,7 @@ class Viewport extends React.Component implements PopupParent {
 
   popupHandler: (e: React.SyntheticEvent) => void;
 
-  popupDelayTO: NodeJS.Timeout | undefined;
+  popupDelayTO: NodeJS.Timeout | undefined | null;
 
   constructor(props: ViewportProps) {
     super(props);
@@ -170,7 +170,7 @@ class Viewport extends React.Component implements PopupParent {
       numDisplayedWindows,
       ownWindow,
       windowV11n,
-      xulswordHandler,
+      parentHandler,
     } = this.props as ViewportProps;
     const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = this
       .state as ViewportState;
@@ -335,7 +335,7 @@ class Viewport extends React.Component implements PopupParent {
       <Hbox
         {...addClass(`viewport ${cls}`, props)}
         style={{ minWidth: `${minWidth}px` }}
-        onClick={xulswordHandler}
+        onClick={parentHandler}
       >
         {!ownWindow && !showChooser && chooser !== 'genbook' && (
           <button type="button" className="open-chooser" />
@@ -349,15 +349,15 @@ class Viewport extends React.Component implements PopupParent {
             headingsModule={firstUnpinnedBible}
             availableBooksModule={firstUnpinnedVerseKey}
             windowV11n={windowV11n}
-            onCloseChooserClick={xulswordHandler}
+            onCloseChooserClick={parentHandler}
           />
         )}
 
         <Vbox
           className={`textarea show${numDisplayedWindows}`}
           flex="1"
-          onKeyDown={xulswordHandler}
-          onWheel={xulswordHandler}
+          onKeyDown={parentHandler}
+          onWheel={parentHandler}
         >
           <div className="tabrow">
             {tabComps.map((i) => {
@@ -428,7 +428,11 @@ class Viewport extends React.Component implements PopupParent {
                   isPinned={isPinned[i]}
                   noteBoxHeight={noteBoxHeight[i]}
                   maximizeNoteBox={maximizeNoteBox[i]}
-                  onMaximizeNoteBox={xulswordHandler}
+                  onMaximizeNoteBox={parentHandler}
+                  onWheel={(e) => {
+                    parentHandler(e);
+                    popupParentHandler(e, modules[i]);
+                  }}
                   onMouseOut={(e) => popupParentHandler(e, modules[i])}
                   onMouseOver={(e) => popupParentHandler(e, modules[i])}
                 />

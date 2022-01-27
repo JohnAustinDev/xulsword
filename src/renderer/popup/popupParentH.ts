@@ -17,7 +17,7 @@ export interface PopupParent {
   props: React.ComponentProps<any>;
   setState: React.Component['setState'];
   popupHandler: typeof popupHandler;
-  popupDelayTO?: NodeJS.Timeout | undefined;
+  popupDelayTO?: NodeJS.Timeout | undefined | null;
   popupParentHandler?: typeof popupParentHandler;
 }
 
@@ -101,7 +101,7 @@ export function popupParentHandler(
           break;
         default:
       }
-      if (openPopup && !popupParent) {
+      if (openPopup && !popupParent && this.popupDelayTO !== null) {
         if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
         this.popupDelayTO = setTimeout(
           () => {
@@ -121,6 +121,16 @@ export function popupParentHandler(
 
     case 'mouseout': {
       if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
+      break;
+    }
+
+    case 'wheel': {
+      // block popup for a short time when mouse-wheel is turned
+      if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
+      this.popupDelayTO = null; // block popup
+      setTimeout(() => {
+        this.popupDelayTO = undefined; // re-enable popup
+      }, 1000);
       break;
     }
 
@@ -243,6 +253,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
       }
       break;
     }
+
     case 'change': {
       const select = ofClass(['popup-mod-select'], target);
       if (select) {
@@ -295,6 +306,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
       }
       break;
     }
+
     default:
       throw Error(`Unhandled popupHandler event type: '${es.type}'`);
   }
