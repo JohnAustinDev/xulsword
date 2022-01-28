@@ -1,6 +1,7 @@
 /* eslint-disable import/no-duplicates */
-import { ofClass, sanitizeHTML } from 'common';
 import React from 'react';
+import { ofClass, sanitizeHTML } from '../../common';
+import C from '../../constant';
 import G from '../rg';
 import { delayHandler } from '../libxul/xul';
 
@@ -37,7 +38,7 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
               () => {
                 this.setState({ bookGroup: bookgroup });
               },
-              300,
+              C.UI.Chooser.bookgroupHoverDelay,
               'bookgroupTO'
             )(es);
           break;
@@ -129,13 +130,13 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
     }
 
     case 'mouseout': {
-      if (this.chaptermenuTO) clearTimeout(this.chaptermenuTO);
+      if (this.headingmenuTO) clearTimeout(this.headingmenuTO);
       break;
     }
 
     case 'mouseleave': {
       const e = es as React.MouseEvent;
-      if (this.chaptermenuTO) clearTimeout(this.chaptermenuTO);
+      if (this.headingmenuTO) clearTimeout(this.headingmenuTO);
       const chmenu = ofClass(['chaptermenu'], target);
       const relatedTarget = e.relatedTarget as HTMLElement | null;
       if (chmenu && relatedTarget) {
@@ -148,7 +149,8 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
 
     case 'wheel': {
       const e = es as React.WheelEvent;
-      const wheelD = Math.round(e.deltaY / 40);
+      const { rowHeight } = this;
+      const wheelD = Math.round(e.deltaY / rowHeight);
       if (e.deltaY < 0) this.slideDown(-1 * wheelD);
       else if (e.deltaY > 0) this.slideUp(wheelD);
       break;

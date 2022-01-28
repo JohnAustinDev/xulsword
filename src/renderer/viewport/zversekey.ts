@@ -4,6 +4,7 @@
 import i18next from 'i18next';
 import C from '../../constant';
 import {
+  deepClone,
   dString,
   getLocalizedChapterTerm,
   isASCII,
@@ -19,7 +20,7 @@ import {
 } from '../rutil';
 import G from '../rg';
 
-import type { ShowType, StateDefault } from '../../type';
+import type { ShowType, XulswordStatePref } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type Atext from './atext';
@@ -537,8 +538,11 @@ export function getNoteHTML(
   return t;
 }
 
-// returns true if velem is a visible verse element in window w, false otherwise
-function verseIsVisible(v: HTMLElement): boolean {
+// Returns true if v is a visible verse element, false otherwise. If
+// ignoreNotebox is true, v is considered visible even if its behind
+// the notebox (useful for multi-column scrolling to prevent notebox
+// flashing).
+function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
   // return false if we're not a verse
   if (!v?.classList?.contains('vs') || !('parentNode' in v)) return false;
   const sb = v.parentNode as HTMLElement;
@@ -574,6 +578,7 @@ function verseIsVisible(v: HTMLElement): boolean {
 
     // are we in the last visible column but under the footnote box?
     if (
+      !ignoreNotebox &&
       v.offsetLeft > sb.offsetWidth - 1.1 * nb.offsetWidth &&
       v.offsetTop + v.offsetHeight > atext.offsetHeight - nbc.offsetHeight
     ) {
@@ -600,7 +605,8 @@ function verseIsVisible(v: HTMLElement): boolean {
   return true;
 }
 
-export function scroll(
+// Implement the Atext C.VSCROLL API (see constant.ts)
+export function versekeyScroll(
   sbe: HTMLElement,
   scrollProps: {
     module: string;
@@ -610,7 +616,7 @@ export function scroll(
     flagScroll: number;
     columns: number;
   }
-) {
+): Partial<XulswordStatePref> | null {
   const { module, book, chapter, verse, flagScroll, columns } = scrollProps;
 
   sbe.scrollLeft = 0; // commentary may have been non-zero
@@ -650,7 +656,7 @@ export function scroll(
     if (vt && vt.offsetTop) vOffsetTop -= vt.offsetTop;
   }
 
-  let flagScroll2 = flagScroll;
+  let fs2 = flagScroll;
   // some special rules for commentaries
   if (G.Tab[module].type === C.COMMENTARY) {
     // if part of commentary element is already visible, don't rescroll
@@ -663,36 +669,30 @@ export function scroll(
 
     // commentaries should never scroll verse to middle, only to top
     if (
-      flagScroll === C.SCROLLTYPECENTER ||
-      flagScroll === C.SCROLLTYPECENTERALWAYS
+      flagScroll === C.VSCROLL.center ||
+      flagScroll === C.VSCROLL.centerAlways
     )
-      flagScroll2 = C.SCROLLTYPEBEG;
+      fs2 = C.VSCROLL.verse;
   }
-
-  // if this is verse 1 then SCROLLTYPEBEG and SCROLLTYPECENTER both become SCROLLTYPECHAP
-  if (
-    verse === 1 &&
-    (flagScroll2 === C.SCROLLTYPEBEG || flagScroll2 === C.SCROLLTYPECENTER)
-  ) {
-    flagScroll2 = C.SCROLLTYPECHAP;
+  // if this is verse 1 then VSCROLL.verse and VSCROLL.center both become SCROLL.chapter
+  if (verse === 1 && (fs2 === C.VSCROLL.verse || fs2 === C.VSCROLL.center)) {
+    fs2 = C.VSCROLL.chapter;
   }
+  const flagScroll2 = fs2;
 
   // scroll single column windows...
   if (columns === 1) {
     switch (flagScroll2) {
-      // don't scroll (for links this becomes SCROLLTYPECENTER)
-      case C.SCROLLTYPENONE:
-        break;
       // scroll to top
-      case C.SCROLLTYPECHAP:
+      case C.VSCROLL.chapter:
         sbe.scrollTop = 0;
         break;
       // put selected verse at the top of the window or link
-      case C.SCROLLTYPEBEG:
+      case C.VSCROLL.verse:
         sbe.scrollTop = vOffsetTop;
         break;
       // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
-      case C.SCROLLTYPECENTER:
+      case C.VSCROLL.center:
         if (
           verse !== 1 &&
           (vOffsetTop + v.offsetHeight > sbe.scrollTop + sbe.offsetHeight ||
@@ -710,7 +710,7 @@ export function scroll(
         }
         break;
       // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
-      case C.SCROLLTYPECENTERALWAYS: {
+      case C.VSCROLL.centerAlways: {
         const middle = Math.round(
           vOffsetTop - sbe.offsetHeight / 2 + v.offsetHeight / 2
         );
@@ -721,15 +721,35 @@ export function scroll(
         }
         break;
       }
-      // put selected verse at the end of the window or link, and don't change selection
-      case C.SCROLLTYPEEND:
+      // put selected verse at the end of the window or link
+      case C.VSCROLL.end:
+      case C.VSCROLL.endAndUpdate: {
         sbe.scrollTop = vOffsetTop + v.offsetHeight - sbe.offsetHeight;
+        if (flagScroll2 === C.VSCROLL.endAndUpdate) {
+          let ffc = sbe.firstChild as HTMLElement | null;
+          while (ffc) {
+            const p = getElementInfo(ffc);
+            if (p) {
+              const { bk, ch, vs, type } = p;
+              if (
+                bk &&
+                ch &&
+                vs &&
+                type === 'vs' &&
+                ffc.offsetTop > sbe.scrollTop
+              )
+                return {
+                  book: bk,
+                  chapter: Number(ch),
+                  verse: Number(vs),
+                };
+            }
+            ffc = ffc.nextSibling as HTMLElement | null;
+          }
+        }
         break;
-      // put selected verse at the end of the window or link, then select first verse of link or verse 1
-      case C.SCROLLTYPEENDSELECT:
-        sbe.scrollTop = vOffsetTop + v.offsetHeight - sbe.offsetHeight;
-        // set Location to first visible verse- not implemented because not yet used
-        break;
+      }
+
       default:
         throw Error(`Unsupported flagScroll "${flagScroll2}"`);
     }
@@ -737,11 +757,11 @@ export function scroll(
 
   // or scroll multi-column windows...
   else if (
-    !(flagScroll2 === C.SCROLLTYPECENTER && (verse === 1 || verseIsVisible(v)))
+    !(flagScroll2 === C.VSCROLL.center && (verse === 1 || verseIsVisible(v)))
   ) {
     switch (flagScroll2) {
       // scroll to top
-      case C.SCROLLTYPECHAP: {
+      case C.VSCROLL.chapter: {
         // hide all verses previous to scroll verse's chapter
         let vs = sbe.lastChild as HTMLElement | null;
         let show = true;
@@ -756,7 +776,7 @@ export function scroll(
         break;
       }
       // put selected verse at the top of the window or link
-      case C.SCROLLTYPEBEG: {
+      case C.VSCROLL.verse: {
         // Hide all verses before the scroll verse. If the scroll verse is immediately preceded by
         // consecutive non-verse (heading) elements, then show them.
         let vs = sbe.lastChild as HTMLElement | null;
@@ -776,10 +796,8 @@ export function scroll(
         }
         break;
       }
-      case C.SCROLLTYPENONE: // don't scroll (for links this becomes SCROLLTYPECENTER)
-      case C.SCROLLTYPECENTER: // put selected verse in the middle of the window or link, unless verse is already entirely visible or verse 1
-      case C.SCROLLTYPECENTERALWAYS: {
-        // put selected verse in the middle of the window or link, even if verse is already visible or verse 1
+      case C.VSCROLL.center:
+      case C.VSCROLL.centerAlways: {
         // hide all elements before verse
         let vs = sbe.firstChild as HTMLElement | null;
         let show = false;
@@ -804,8 +822,8 @@ export function scroll(
         break;
       }
       // put selected verse at the end of the window or link, and don't change selection
-      case C.SCROLLTYPEEND:
-      case C.SCROLLTYPEENDSELECT: {
+      case C.VSCROLL.end:
+      case C.VSCROLL.endAndUpdate: {
         // put selected verse at the end of the window or link, then select first verse of link or verse 1
         // show all verses
         let lc = sbe.lastChild as HTMLElement | null;
@@ -820,21 +838,25 @@ export function scroll(
           fc = fc.nextSibling as HTMLElement | null;
         }
 
-        if (flagScroll2 === C.SCROLLTYPEENDSELECT) {
+        if (flagScroll2 === C.VSCROLL.endAndUpdate) {
           let ffc = sbe.firstChild as HTMLElement | null;
           while (ffc) {
             const p = getElementInfo(ffc);
-            if (
-              p &&
-              p.type === 'vs' &&
-              ffc.style &&
-              ffc.style.display !== 'none'
-            ) {
-              return {
-                book: p.bk,
-                chapter: Number(p.ch),
-                verse: Number(p.vs),
-              };
+            if (p) {
+              const { bk, ch, vs, type } = p;
+              if (
+                bk &&
+                ch &&
+                vs &&
+                type === 'vs' &&
+                ffc.style &&
+                ffc.style.display !== 'none'
+              )
+                return {
+                  book: bk,
+                  chapter: Number(ch),
+                  verse: Number(vs),
+                };
             }
             ffc = ffc.nextSibling as HTMLElement | null;
           }
@@ -848,6 +870,7 @@ export function scroll(
   return null;
 }
 
+// Set caller verse and scrollFlag state after wheel events.
 export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
   const { atext, count } = caller.mouseWheel;
   if (!atext) return;
@@ -858,6 +881,7 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
   ispinned = ispinned === 'true';
   const i = Number(wnum) - 1;
   const { type } = G.Tab[module];
+  const stateType = 'windowV11n' in caller.state ? 'viewportparent' : 'atext';
 
   caller.mouseWheel.count = 0;
   if (!count) return;
@@ -865,7 +889,7 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
   if (type === C.GENBOOK) {
     // GenBook scrolls differently than versekey modules
     // TODO! Scroll GenBooks
-    const scrollType = C.SCROLLTYPEDELTA;
+    // const scrollType = C.SCROLLTYPEDELTA;
     const scrollDelta = count * 20; // scroll delta in pixels
     return;
   }
@@ -874,9 +898,7 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
   const atextprops = caller.props as AtextProps;
   const xulswordstate = xulsword.state as XulswordState;
   const windowV11n =
-    'windowV11n' in caller.state
-      ? xulswordstate.windowV11n
-      : atextprops.windowV11n;
+    stateType === 'atext' ? atextprops.windowV11n : xulswordstate.windowV11n;
 
   const sb = atext.getElementsByClassName('sb')[0];
 
@@ -914,39 +936,35 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
   if (windowV11n && p) {
     const { bk, ch, vs } = p;
     if (bk && ch && vs) {
-      if (ispinned) {
+      const mysf = columns === 1 ? C.VSCROLL.none : C.VSCROLL.verse;
+      if (ispinned && stateType === 'atext') {
         caller.setState((prevState: AtextState) => {
           const pin: Partial<AtextState['pin']> = {
             ...prevState.pin,
             book: bk,
             chapter: Number(ch),
             verse: vs,
-            flagScroll: C.SCROLLTYPEBEG,
+            flagScroll: mysf,
           };
           return { pin };
         });
-      } else {
-        const { modules } = xulswordstate;
+      } else if (stateType === 'viewportparent') {
         const [book, chapter, verse] = G.LibSword.convertLocation(
           G.LibSword.getVerseSystem(module),
           [bk, ch, vs, vs].join('.'),
           windowV11n
         ).split('.');
-        const s: Partial<StateDefault> = {
+        const flagScroll = [] as number[];
+        for (let x = 0; x < C.NW; x += 1) {
+          flagScroll.push(C.VSCROLL.verse);
+        }
+        flagScroll[i] = mysf;
+        const s: Partial<XulswordStatePref> = {
           book,
           chapter: Number(chapter),
           verse: Number(verse),
+          flagScroll,
         };
-        const flagScroll = [] as number[];
-        for (let x = 0; x < C.NW; x += 1) {
-          const m = modules[x];
-          const self1col = x === i && columns === 1;
-          flagScroll.push(
-            !self1col && m && G.Tab[m].isVerseKey
-              ? C.SCROLLTYPEBEG
-              : C.SCROLLTYPENONE
-          );
-        }
         caller.setState({ ...s, flagScroll });
       }
     }
@@ -994,13 +1012,13 @@ export function trimNotes(sbe: HTMLElement, nbe: HTMLElement): boolean {
 
   // get first chapter/verse
   let vf = sbe.firstChild as HTMLElement | null;
-  while (vf && !verseIsVisible(vf)) {
+  while (vf && !verseIsVisible(vf, true)) {
     vf = vf.nextSibling as HTMLElement | null;
   }
 
   // get last chapter/verse
   let vl = sbe.lastChild as HTMLElement | null;
-  while (vl && !verseIsVisible(vl)) {
+  while (vl && !verseIsVisible(vl, true)) {
     vl = vl.previousSibling as HTMLElement | null;
   }
 
@@ -1069,7 +1087,7 @@ export function chapterChange(
   ch: number,
   chDelta?: number,
   maxchapter?: number
-) {
+): Partial<XulswordStatePref> | null {
   const chapter = chDelta ? ch + chDelta : ch;
   if (chapter < 1) return null;
   if (maxchapter && chapter > maxchapter) return null;
@@ -1077,7 +1095,6 @@ export function chapterChange(
     book: bk,
     chapter,
     verse: 1,
-    flagScroll: [C.SCROLLTYPECHAP, C.SCROLLTYPECHAP, C.SCROLLTYPECHAP],
   };
 }
 
@@ -1090,7 +1107,7 @@ export function verseChange(
   ch: number,
   vs: number,
   vsDelta?: number
-) {
+): Partial<XulswordStatePref> | null {
   if (!v11nmod) return null;
   let book = bk;
   let chapter = ch;
@@ -1100,7 +1117,7 @@ export function verseChange(
   if (verse < 1) {
     if (!vsDelta) return null;
     ps = chapterChange(bk, ch, -1);
-    if (!ps) return null;
+    if (!ps || !ps.book || !ps.chapter) return null;
     verse = G.LibSword.getMaxVerse(v11nmod, `${ps.book}.${ps.chapter}`);
     book = ps.book;
     chapter = ps.chapter;
@@ -1108,7 +1125,7 @@ export function verseChange(
     if (!vsDelta) return null;
     const maxch = G.LibSword.getMaxChapter(v11nmod, bk);
     ps = chapterChange(bk, ch, 1, maxch);
-    if (!ps) return null;
+    if (!ps || !ps.book || !ps.chapter) return null;
     verse = 1;
     book = ps.book;
     chapter = ps.chapter;
@@ -1117,11 +1134,6 @@ export function verseChange(
     book,
     chapter,
     verse,
-    flagScroll: [
-      C.SCROLLTYPECENTERALWAYS,
-      C.SCROLLTYPECENTERALWAYS,
-      C.SCROLLTYPECENTERALWAYS,
-    ],
   };
 }
 
@@ -1130,22 +1142,10 @@ export function verseChange(
 //
 
 // For multi-column Bibles only.
-export function pageChange(atext: HTMLElement, next: boolean) {
-  const match = atext.className.match(/\btext(\d+)\b/);
-  if (!match || !match[1]) return null;
-  const i = Number(match[1]) - 1;
-  const isPinned = atext.classList.contains('pinned');
-  let flagScroll: number | number[] = next
-    ? C.SCROLLTYPEBEG
-    : C.SCROLLTYPEENDSELECT;
-  // flagScroll is an array for non-pinned state, or a single value for pinned state.
-  if (!isPinned) {
-    const fi = flagScroll;
-    flagScroll = [];
-    for (let x = 0; x < C.NW; x += 1) {
-      flagScroll.push(x === i ? fi : C.SCROLLTYPECENTERALWAYS);
-    }
-  }
+export function pageChange(
+  atext: HTMLElement,
+  next: boolean
+): Partial<XulswordStatePref> | null {
   if (!next) {
     let firstVerse: HTMLElement | undefined;
     Array.from(atext.getElementsByClassName('vs')).forEach((v: any) => {
@@ -1157,7 +1157,6 @@ export function pageChange(atext: HTMLElement, next: boolean) {
     return {
       chapter: Number(ei.ch),
       verse: Number(ei.vs),
-      flagScroll,
     };
   }
   if (next) {
@@ -1173,100 +1172,131 @@ export function pageChange(atext: HTMLElement, next: boolean) {
     return {
       chapter: Number(ei.ch),
       verse: Number(ei.vs),
-      flagScroll,
     };
   }
   return null;
 }
 
 // Change a dictionary to the previous or next key.
-function dictionaryChange(
-  atext: HTMLElement,
-  next: boolean,
-  prevState?: StateDefault
-) {
+function dictionaryChange(atext: HTMLElement, next: boolean): string | null {
   const keyels = atext.getElementsByClassName('dictselectkey');
-  const w = atext.dataset.wnum;
-  if (keyels && w) {
+  let newkey;
+  if (keyels) {
     let key = keyels[0] as any;
     key = next ? key.nextSibling : key.previousSibling;
-    const newkey = key?.innerText;
-    if (newkey) {
-      const keys = prevState ? prevState.keys : [];
-      keys[Number(w) - 1] = newkey;
-      return { keys };
-    }
+    newkey = key?.innerText;
   }
-  return null;
+  return newkey || null;
 }
 
+// TODO!
 // Change a general book to the previous or next chapter.
-function genbookChange(
-  atext: HTMLElement,
-  next: boolean,
-  prevState?: StateDefault
-) {
+function genbookChange(atext: HTMLElement, next: boolean): string | null {
   console.log(`genbookChange not implemented yet.`);
   return null;
 }
 
-// Handle prev/next event of Atext by returning a new state, or null.
+// Handle Atext prev/next event by returning a new state, or null if the
+// request is not possible.
 export function textChange(
   atext: HTMLElement,
   next: boolean,
-  prevState?: StateDefault
-) {
-  const classes = ofClass(['Texts', 'Comms', 'Dicts', 'Genbks'], atext);
-  const type = classes?.type ? classes.type : null;
-  if (!type) return null;
+  prevState: AtextState | XulswordStatePref
+): Partial<AtextState> | Partial<XulswordStatePref> | null {
+  const { columns: cx, module, wnum } = atext.dataset;
+  const columns = Number(cx);
+  if (!columns || !module || !wnum) return null;
+  const i = Number(wnum) - 1;
+  const { type } = G.Tab[module];
   const sbe = atext.getElementsByClassName('sb')[0];
-  // Comms and Genbks use scrollLeft for multi-column paging
-  if (sbe && (type === 'Comms' || type === 'Genbks')) {
-    if (sbe.scrollLeft > 0) {
-      const wwin = atext.clientWidth - 4; // 4 = 2 x border-width
-      let twin = wwin * Math.floor(sbe.scrollLeft / wwin);
-      if (twin >= sbe.scrollLeft) twin -= wwin;
-      sbe.scrollLeft = twin;
-      if (sbe.scrollLeft < 0) sbe.scrollLeft = 0;
-      return null;
-    }
-  }
+  const statetype = 'keys' in prevState ? 'xulsword' : 'atext';
+  let s;
   switch (type) {
-    case 'Texts':
-    case 'Comms': {
-      if (type === 'Texts' && !atext.classList.contains('show1')) {
-        return pageChange(atext, next);
-      }
-      let firstVerse: HTMLElement | undefined;
-      Array.from(sbe.getElementsByClassName('vs')).forEach((v) => {
-        const verse = v as HTMLElement;
-        if (!firstVerse && verse.style.display !== 'none') firstVerse = verse;
-      });
-      if (firstVerse) {
-        const i = getElementInfo(firstVerse);
-        if (i && i.bk && i.ch) {
-          if (next) {
-            const match = sbe.className.match(/\bcs-(\S+)\b/);
-            if (match) {
-              const module = match[1];
-              return chapterChange(
-                i.bk,
-                Number(i.ch),
+    case C.BIBLE:
+    case C.COMMENTARY: {
+      if (type === C.BIBLE && columns > 1) {
+        s = pageChange(atext, next);
+      } else {
+        let firstVerse: HTMLElement | undefined;
+        Array.from(sbe.getElementsByClassName('vs')).forEach((v) => {
+          const verse = v as HTMLElement;
+          if (!firstVerse && verse.style.display !== 'none') firstVerse = verse;
+        });
+        if (firstVerse) {
+          const p = getElementInfo(firstVerse);
+          if (module && p && p.bk && p.ch) {
+            if (next) {
+              s = chapterChange(
+                p.bk,
+                Number(p.ch),
                 1,
-                G.LibSword.getMaxChapter(module, i.bk)
+                G.LibSword.getMaxChapter(module, p.bk)
               );
+            } else {
+              s = chapterChange(p.bk, Number(p.ch), -1);
             }
           }
-          return chapterChange(i.bk, Number(i.ch), -1);
         }
       }
       break;
     }
-    case 'Dicts':
-      return dictionaryChange(atext, next, prevState);
-    case 'Genbks':
-      return genbookChange(atext, next, prevState);
+    case C.GENBOOK:
+    case C.DICTIONARY: {
+      const key =
+        type === C.DICTIONARY
+          ? dictionaryChange(atext, next)
+          : genbookChange(atext, next);
+      if (key) {
+        if (statetype === 'atext') {
+          const ps = prevState as AtextState;
+          const pin = deepClone(ps.pin);
+          pin.modkey = key;
+          s = { pin };
+        } else if (statetype === 'xulsword') {
+          const ps = prevState as XulswordStatePref;
+          const keys = ps.keys.slice();
+          keys[i] = key;
+          s = { keys };
+        }
+      }
+      break;
+    }
     default:
   }
-  return null;
+  if (!s) return null;
+  if (statetype === 'atext') {
+    const ps = prevState as AtextState;
+    s = { pin: { ...ps.pin, ...s } };
+  }
+  let mysf: number | undefined;
+  if (type === C.BIBLE && columns > 1) {
+    mysf = next ? C.VSCROLL.verse : C.VSCROLL.endAndUpdate;
+  } else if (type === C.BIBLE || type === C.COMMENTARY) {
+    mysf = C.VSCROLL.chapter;
+  }
+  if (mysf !== undefined) {
+    if (statetype === 'atext') {
+      const ss = s as AtextState;
+      if (ss.pin) ss.pin.flagScroll = mysf;
+    } else if (statetype === 'xulsword') {
+      const ps = prevState as XulswordStatePref;
+      const flagScroll: number[] = ps.flagScroll.slice();
+      const ats = document.getElementsByClassName(`atext`);
+      Array.from(ats).forEach((at) => {
+        const a = at as HTMLElement;
+        const { wnum: w, columns: c } = a.dataset;
+        if (mysf && w && c) {
+          flagScroll[Number(w) - 1] =
+            c && Number(c) > 1 ? mysf : C.VSCROLL.centerAlways;
+        }
+      });
+      const ss = s as XulswordStatePref;
+      ss.flagScroll = flagScroll;
+    }
+  }
+  if (type === C.BIBLE && statetype === 'xulsword') {
+    const ss = s as XulswordStatePref;
+    ss.selection = '';
+  }
+  return s;
 }

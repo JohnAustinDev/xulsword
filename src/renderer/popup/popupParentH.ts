@@ -9,15 +9,13 @@ import { getContextModule } from '../rutil';
 import type { ElemInfo } from '../../libswordElemInfo';
 import type { PlaceType, ShowType } from '../../type';
 
-const POPUPDELAY = 200;
-const POPUPDELAY_STRONGS = 500;
-
 export interface PopupParent {
   state: React.ComponentState;
   props: React.ComponentProps<any>;
   setState: React.Component['setState'];
   popupHandler: typeof popupHandler;
   popupDelayTO?: NodeJS.Timeout | undefined | null;
+  popupUnblockTO?: NodeJS.Timeout | undefined;
   popupParentHandler?: typeof popupParentHandler;
 }
 
@@ -65,7 +63,7 @@ export function popupParentHandler(
       e.preventDefault();
       const elem = targ.element;
       let openPopup = false;
-      let gap = 0;
+      let gap = C.UI.Popup.openGap;
       const info = getPopupInfo(elem);
       if (info && targ.type === 'sn') info.mod = getContextModule(elem) || null;
       switch (targ.type) {
@@ -89,7 +87,7 @@ export function popupParentHandler(
         case 'sn':
           if (show.strongs) {
             openPopup = true;
-            gap = 80;
+            gap = C.UI.Popup.strongsOpenGap;
           }
           break;
         case 'sr':
@@ -113,7 +111,9 @@ export function popupParentHandler(
             };
             this.setState(s);
           },
-          targ.type === 'sn' ? POPUPDELAY_STRONGS : POPUPDELAY
+          targ.type === 'sn'
+            ? C.UI.Popup.strongsOpenDelay
+            : C.UI.Popup.openDelay
         );
       }
       break;
@@ -128,9 +128,10 @@ export function popupParentHandler(
       // block popup for a short time when mouse-wheel is turned
       if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
       this.popupDelayTO = null; // block popup
-      setTimeout(() => {
-        this.popupDelayTO = undefined; // re-enable popup
-      }, 1000);
+      if (this.popupUnblockTO) clearTimeout(this.popupUnblockTO);
+      this.popupUnblockTO = setTimeout(() => {
+        this.popupDelayTO = undefined; // unblock popup
+      }, C.UI.Popup.wheelDeadTime);
       break;
     }
 

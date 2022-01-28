@@ -27,7 +27,7 @@ import viewportParentH, {
 } from './viewportParentH';
 import '../global-htm.css';
 
-import type { StateDefault } from '../../type';
+import type { XulswordStatePref } from '../../type';
 import type { MouseWheel } from './viewportParentH';
 
 const defaultProps = {
@@ -52,7 +52,7 @@ Object.entries(JSON.parse(window.shell.process.argv().pop())).forEach(
   }
 );
 
-export type ViewportWinState = typeof notStatePref & StateDefault;
+export type ViewportWinState = typeof notStatePref & XulswordStatePref;
 
 export default class ViewportWin extends React.Component {
   static defaultProps: typeof defaultProps;

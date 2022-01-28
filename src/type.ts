@@ -9,18 +9,18 @@ declare global {
   }
 }
 
-// Default values for these keys must be set in the default Pref file
-// or an error will likely be thrown.
-export interface StateDefault {
+// Default values for these keys must be set in the default Pref file's
+// xulsword object or an error will likely be thrown.
+export interface XulswordStatePref {
   book: string;
   chapter: number;
   verse: number;
+  selection: string;
 
   history: HistoryTypeVK[];
   historyIndex: number;
 
   show: ShowType;
-
   place: PlaceType;
 
   tabs: string[][];
@@ -29,7 +29,6 @@ export interface StateDefault {
   mtModules: (string | undefined)[];
   keys: string[];
 
-  selection: string;
   flagScroll: number[];
   isPinned: boolean[];
   noteBoxHeight: number[];

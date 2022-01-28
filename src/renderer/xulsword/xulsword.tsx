@@ -7,7 +7,7 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { Translation } from 'react-i18next';
-import { HistoryTypeVK, StateDefault } from '../../type';
+import { HistoryTypeVK, XulswordStatePref } from '../../type';
 import { dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -66,7 +66,7 @@ const notStatePref = {
   searchDisabled: true,
 };
 
-export type XulswordState = typeof notStatePref & StateDefault;
+export type XulswordState = typeof notStatePref & XulswordStatePref;
 
 export default class Xulsword extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -170,24 +170,20 @@ export default class Xulsword extends React.Component {
       if (!windowV11n) return null;
       // To update state to a history index without changing the selected
       // modules, history needs to be converted to the current windowV11n.
-      const { book: bk, chapter: ch, v11n, selection: sel } = history[index];
-      const [bks, chs] = G.LibSword.convertLocation(
+      let { book, chapter, verse, selection } = history[index];
+      const { v11n } = history[index];
+      const [bks, chs, vss] = G.LibSword.convertLocation(
         v11n,
-        [bk, ch].join('.'),
+        [book, chapter, verse].join('.'),
         windowV11n
       ).split('.');
-      const book = bks;
-      const chapter = Number(chs);
-      const selection = G.LibSword.convertLocation(v11n, sel, windowV11n);
+      book = bks;
+      chapter = Number(chs);
+      verse = Number(vss);
+      selection = G.LibSword.convertLocation(v11n, selection, windowV11n);
       if (promote) {
         const targ = history.splice(index, 1);
         history.splice(0, 0, targ[0]);
-      }
-      // If selection is interesting, scroll to it
-      if (selection && selection.split('.').length > 2) {
-        for (let x = 0; x < flagScroll.length; x += 1) {
-          flagScroll[x] = C.SCROLLTYPECENTER;
-        }
       }
       return {
         history,
@@ -195,9 +191,9 @@ export default class Xulsword extends React.Component {
         historyMenupopup: undefined,
         book,
         chapter,
-        verse: 1,
+        verse,
         selection,
-        flagScroll,
+        flagScroll: flagScroll.map(() => C.VSCROLL.center),
       };
     });
   };
@@ -496,6 +492,7 @@ export default class Xulsword extends React.Component {
                 book={book}
                 chapter={chapter}
                 verse={verse}
+                selection={selection}
                 tabs={tabs}
                 modules={modules}
                 ilModules={ilModules}
@@ -503,7 +500,6 @@ export default class Xulsword extends React.Component {
                 show={show}
                 place={place}
                 keys={keys}
-                selection={selection}
                 flagScroll={flagScroll}
                 isPinned={isPinned}
                 noteBoxHeight={noteBoxHeight}

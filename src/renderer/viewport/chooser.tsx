@@ -15,6 +15,7 @@ import {
   findBookGroup,
   findBookNum,
 } from '../../common';
+import C from '../../constant';
 import G from '../rg';
 import { Hbox, Vbox } from '../libxul/boxes';
 import {
@@ -83,7 +84,7 @@ class Chooser extends React.Component {
 
   bookgroupTO: NodeJS.Timeout | undefined;
 
-  chaptermenuTO: NodeJS.Timeout | undefined;
+  headingmenuTO: NodeJS.Timeout | undefined;
 
   longestBook: string; // to determine chooser width
 
@@ -130,9 +131,6 @@ class Chooser extends React.Component {
     this.sliderRef = React.createRef();
     this.rowRef = React.createRef();
 
-    this.startSlidingUp = this.startSlidingUp.bind(this);
-    this.startSlidingDown = this.startSlidingDown.bind(this);
-    this.stopSliding = this.stopSliding.bind(this);
     this.handler = handlerH.bind(this);
 
     if (props.selection) {
@@ -148,7 +146,10 @@ class Chooser extends React.Component {
     const row = rowRef?.current;
     if (container && row) {
       const b = container.getBoundingClientRect();
-      this.mouseScroll = { top: b.top + 120, bottom: b.bottom - 120 };
+      this.mouseScroll = {
+        top: b.top + C.UI.Chooser.mouseScrollMargin,
+        bottom: b.bottom - C.UI.Chooser.mouseScrollMargin,
+      };
       this.rowHeight = row.clientHeight - 2;
     }
   }
@@ -436,7 +437,11 @@ function ChapterMenu(props: {
   const { sName, windowV11n, handler } = props;
   const dlyhandler =
     handler && chooserCompRef
-      ? delayHandler.bind(chooserCompRef)(handler, 400, 'chaptermenuTO')
+      ? delayHandler.bind(chooserCompRef)(
+          handler,
+          C.UI.Chooser.headingMenuOpenDelay,
+          'headingmenuTO'
+        )
       : undefined;
   const chmenuCells = [];
   let ch = 1;

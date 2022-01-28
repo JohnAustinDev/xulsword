@@ -427,6 +427,7 @@ class Popup extends React.Component {
       <div
         {...htmlAttribs(`npopup ${cls}`, props)}
         {...topHandle('onMouseLeave', props.onMouseLeftPopup, props)}
+        onWheel={(e) => e.stopPropagation()}
         ref={npopup}
       >
         <div
@@ -447,37 +448,37 @@ class Popup extends React.Component {
               <a className="popupCloseLink">{i18next.t('close')}</a>
             )}
             {!isWindow && <div className="draghandle" />}
-          </div>
 
-          {refbible &&
-            (type === 'cr' || type === 'sr') &&
-            this.selector(allBibleModules, refbible, refbible)}
+            {refbible &&
+              (type === 'cr' || type === 'sr') &&
+              this.selector(allBibleModules, refbible, refbible)}
 
-          {type === 'sn' &&
-            Object.entries(textFeature).map((entry) => {
-              const feature = entry[0] as
-                | 'hebrewDef'
-                | 'greekDef'
-                | 'greekParse';
-              const regex = entry[1];
-              if (regex.test(elem.className)) {
-                const fmods = G.FeatureModules[feature];
-                if (fmods?.length) {
-                  let selmod = G.Prefs.getCharPref(
-                    `global.popup.selection.${feature}`
-                  );
-                  if (!selmod) {
-                    [selmod] = fmods;
-                    G.Prefs.setCharPref(
-                      `global.popup.selection.${feature}`,
-                      selmod
+            {type === 'sn' &&
+              Object.entries(textFeature).map((entry) => {
+                const feature = entry[0] as
+                  | 'hebrewDef'
+                  | 'greekDef'
+                  | 'greekParse';
+                const regex = entry[1];
+                if (regex.test(elem.className)) {
+                  const fmods = G.FeatureModules[feature];
+                  if (fmods?.length) {
+                    let selmod = G.Prefs.getCharPref(
+                      `global.popup.selection.${feature}`
                     );
+                    if (!selmod) {
+                      [selmod] = fmods;
+                      G.Prefs.setCharPref(
+                        `global.popup.selection.${feature}`,
+                        selmod
+                      );
+                    }
+                    return this.selector(fmods, selmod, undefined, feature);
                   }
-                  return this.selector(fmods, selmod, undefined, feature);
                 }
-              }
-              return null;
-            })}
+                return null;
+              })}
+          </div>
 
           <div className="popup-text" />
         </div>

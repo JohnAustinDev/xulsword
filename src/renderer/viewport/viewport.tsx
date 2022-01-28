@@ -113,6 +113,8 @@ class Viewport extends React.Component implements PopupParent {
 
   popupDelayTO: NodeJS.Timeout | undefined | null;
 
+  popupUnblockTO: NodeJS.Timeout | undefined;
+
   constructor(props: ViewportProps) {
     super(props);
 
@@ -143,7 +145,7 @@ class Viewport extends React.Component implements PopupParent {
         this.setState((prevState: ViewportState) => {
           return { reset: prevState.reset + 1 };
         });
-      }, 500)
+      }, C.UI.Window.resizeDelay)
     );
   }
 

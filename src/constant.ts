@@ -84,15 +84,16 @@ const C = {
   BOOKGROUPS: ['ot', 'nt'],
   NW: 3, // max number of text windows a single viewport supports
 
-  // scrolling
-  SCROLLTYPENONE: 0, // don't scroll single-column windows, but scroll multi-column windows to center.
-  SCROLLTYPECHAP: 1, // scroll to top of current chapter
-  SCROLLTYPEBEG: 2, // put selected verse at the top
-  SCROLLTYPECENTER: 3, // put selected verse in the middle, unless verse is already visible or is verse 1
-  SCROLLTYPECENTERALWAYS: 4, // put selected verse in the middle even if verse is already visible or verse 1
-  SCROLLTYPEEND: 5, // put selected verse at the end
-  SCROLLTYPEENDSELECT: 6, // put selected verse at the end, then select the first visible verse without scrolling
-  SCROLLTYPEDELTA: 7, // scroll GenBook by given delta in pixels
+  // Versekey (that is Bible and commentary) verse scrolling
+  VSCROLL: {
+    none: 0, // skip the scroll step (which is after Atext render)
+    chapter: 1, // put state chapter heading at the top
+    verse: 2, // put state verse at the top
+    center: 3, // put state verse in the middle, unless verse is already visible or is verse 1
+    centerAlways: 4, // try to put state verse in the middle in any case
+    end: 5, // put state verse at the end
+    endAndUpdate: 6, // put state verse at the end, then change state to the resulting first visible verse
+  },
 
   BIN: { win32: 'dll', linux: 'so', darwin: 'dylib' },
 
@@ -114,6 +115,29 @@ const C = {
   VISITEDDATE: 12,
   NAMELOCALE: 13,
   NOTELOCALE: 14,
+
+  // xulsword UI constants
+  UI: {
+    Window: {
+      resizeDelay: 500, // ms between window resize and update
+    },
+    Chooser: {
+      bookgroupHoverDelay: 300, // ms until bookGroup is changed
+      mouseScrollMargin: 80, // px inward from top or bottom border
+      headingMenuOpenDelay: 400, // ms until BIble heading menu opens
+    },
+    Popup: {
+      openGap: 0, // open popup px below target element
+      strongsOpenGap: 80, // px
+      openDelay: 200, // ms between hover and popup opening
+      strongsOpenDelay: 1000, // ms
+      wheelDeadTime: 1000, // ms of dead-time after wheel-scroll
+    },
+    Atext: {
+      dictKeyInputDelay: 1000, // ms between keydown and update
+      wheelScrollDelay: 25, // ms between UI updates while scrolling
+    },
+  },
 
   SwordFilterValues: [] as SwordFilterValueType[],
 
@@ -145,7 +169,7 @@ const C = {
   MINPROGVERSTAG: null as any,
   MINVERSION: '1.0',
 
-  // These props can be 'pinned' to become independant state properties.
+  // These Atext props can be 'pinned' to become independant state properties.
   // NOTE: property types are important, but property values are not.
   PinProps: {
     book: '',
@@ -158,7 +182,7 @@ const C = {
     modkey: '',
   },
 
-  // These props are used by LibSword. If these props all have the same values
+  // These Atext props are used by LibSword. If these props all have the same values
   // as the previous rendering, the LibSword response will also be the same.
   // NOTE: property types are important, but property values are not.
   LibSwordPropsTexts: {
@@ -191,7 +215,7 @@ const C = {
   },
   LibSwordProps: {} as { [key in ModTypes]: { [i: string]: any } },
 
-  // These props are used to scroll text. If these props all have the
+  // These Atext props are used to scroll text. If these props all have the
   // same values as the previous rendering, and the same is true for
   // the LibSwordProps, then scrolling is also unnecessary.
   // NOTE: property types are important, but property values are not.

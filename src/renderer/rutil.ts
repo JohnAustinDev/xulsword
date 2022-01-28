@@ -659,6 +659,25 @@ export function getStatePref(
   return state;
 }
 
+// Write state to Prefs and then update all window states from statePrefs.
+export function setStatePref(id: string, state: Partial<React.ComponentState>) {
+  const prefs: string[] = [];
+  Object.entries(state).forEach((entry) => {
+    const [key, value] = entry;
+    if (value !== undefined) {
+      const pref = `${id}.${key}`;
+      if (typeof value === 'string') G.Prefs.setCharPref(pref, value);
+      else if (typeof value === 'number') G.Prefs.setIntPref(pref, value);
+      else if (typeof value === 'boolean') G.Prefs.setBoolPref(pref, value);
+      else G.Prefs.setComplexValue(pref, value);
+      prefs.push(pref);
+    }
+  });
+  setTimeout(() => {
+    G.setGlobalStateFromPrefs(prefs);
+  }, 1);
+}
+
 // Calling this function registers a update-state-from-pref listener that, when
 // called upon, will read component state Prefs and write them to new state.
 export function onSetWindowStates(component: React.Component) {

@@ -60,13 +60,9 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
         case 'prevchaplink':
         case 'nextchaplink': {
           if (isPinned) {
-            const r = textChange(atext, targ.type === 'nextchaplink');
-            if (r)
-              this.setState((prevState: AtextState) => {
-                const { pin } = prevState;
-                const s = { pin: { ...pin, ...r } };
-                return s;
-              });
+            this.setState((prevState: AtextState) => {
+              return textChange(atext, targ.type === 'nextchaplink', prevState);
+            });
           }
           break;
         }
@@ -324,7 +320,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           if (m.TO) window.clearTimeout(m.TO);
           m.TO = window.setTimeout(() => {
             aTextWheelScroll(this);
-          }, 250);
+          }, C.UI.Atext.wheelScrollDelay);
         }
       }
       break;

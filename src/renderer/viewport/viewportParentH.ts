@@ -16,7 +16,7 @@ import { delayHandler } from '../libxul/xul';
 import { TextCache } from './ztext';
 import { textChange, aTextWheelScroll } from './zversekey';
 
-import type { StateDefault } from '../../type';
+import type { XulswordStatePref } from '../../type';
 
 export type MouseWheel = {
   atext: HTMLElement | null;
@@ -66,7 +66,7 @@ export default function handler(
 ) {
   const statex = this.state as any;
   const { windowV11n } = statex;
-  const state = this.state as StateDefault;
+  const state = this.state as XulswordStatePref;
   const { modules } = state;
   const target = es.target as HTMLElement;
   const mcls = ofClass(['atext', 'tabs'], target);
@@ -154,7 +154,7 @@ export default function handler(
         case 'text-pin': {
           if (atext && module) {
             const { columns } = atext.dataset;
-            this.setState((prevState: StateDefault) => {
+            this.setState((prevState: XulswordStatePref) => {
               const { isPinned: ip } = prevState;
               for (let x = i; x < Number(columns) + i; x += 1) {
                 ip[x] = !ip[x];
@@ -231,7 +231,7 @@ export default function handler(
         }
         case 'notebox-maximizer': {
           if (atext) {
-            this.setState((prevState: StateDefault) => {
+            this.setState((prevState: XulswordStatePref) => {
               const { maximizeNoteBox, noteBoxHeight } = prevState;
               if (maximizeNoteBox[i] > 0) {
                 noteBoxHeight[i] = maximizeNoteBox[i];
@@ -261,13 +261,13 @@ export default function handler(
             !state.isPinned[i]
           ) {
             if (targ.type === 'ilt-tab') {
-              this.setState((prevState: StateDefault) => {
+              this.setState((prevState: XulswordStatePref) => {
                 const { ilModules } = prevState;
                 ilModules[i] = ilModules[i] ? '' : m;
                 return { ilModules };
               });
             } else {
-              this.setState((prevState: StateDefault) => {
+              this.setState((prevState: XulswordStatePref) => {
                 const { modules: mods, mtModules } = prevState;
                 mods[i] = m;
                 if (targ.type === 'mto-tab' || targ.type === 'mts-tab') {
@@ -284,7 +284,7 @@ export default function handler(
         }
         case 'prevchaplink': {
           if (atext && !isPinned) {
-            this.setState((prevState: StateDefault) => {
+            this.setState((prevState: XulswordStatePref) => {
               return textChange(atext, false, prevState);
             });
           }
@@ -292,7 +292,7 @@ export default function handler(
         }
         case 'nextchaplink': {
           if (atext && !isPinned) {
-            this.setState((prevState: StateDefault) => {
+            this.setState((prevState: XulswordStatePref) => {
               return textChange(atext, true, prevState);
             });
           }
@@ -305,19 +305,18 @@ export default function handler(
             typeof p.osisref === 'string' &&
             elem.classList.contains('x-target_self')
           ) {
-            this.setState((prevState: StateDefault) => {
-              const { keys, flagScroll } = prevState;
+            this.setState((prevState: XulswordStatePref) => {
+              const { keys } = prevState;
               const str = p.osisref as string;
               keys[i] = decodeOSISRef(str.replace(/^[^:]+:/, ''));
-              flagScroll[i] = C.SCROLLTYPECHAP;
-              return { keys, flagScroll };
+              return { keys };
             });
           }
           break;
         case 'dict-key': {
           const key = elem.innerText;
           if (atext && key) {
-            this.setState((prevState: StateDefault) => {
+            this.setState((prevState: XulswordStatePref) => {
               const { keys } = prevState;
               keys[i] = key;
               return { keys };
@@ -337,9 +336,9 @@ export default function handler(
                   [p.bk, p.ch, p.vs, lvv].join('.'),
                   windowV11n
                 ).split('.');
-                this.setState((prevState: StateDefault) => {
+                this.setState((prevState: XulswordStatePref) => {
                   let { flagScroll } = prevState;
-                  flagScroll = flagScroll.map(() => C.SCROLLTYPECENTER);
+                  flagScroll = flagScroll.map(() => C.VSCROLL.center);
                   return {
                     book: bk,
                     chapter: Number(ch),
@@ -359,7 +358,7 @@ export default function handler(
           const value = elem.getAttribute('value');
           if (value) {
             const [, , , mod] = value.split('.');
-            this.setState((prevState: StateDefault) => {
+            this.setState((prevState: XulswordStatePref) => {
               const { ilModules } = prevState;
               ilModules[i] = mod;
               return { ilModules };
@@ -389,7 +388,7 @@ export default function handler(
               '<nx>'
             )}<nx>`.match(re);
             if (firstMatch) {
-              this.setState((prevState: StateDefault) => {
+              this.setState((prevState: XulswordStatePref) => {
                 const { keys } = prevState;
                 [, , keys[i]] = firstMatch;
                 return { keys };
@@ -399,7 +398,7 @@ export default function handler(
               select.style.color = 'red';
             }
           }
-        }, 1000)(targ.element, module);
+        }, C.UI.Atext.dictKeyInputDelay)(targ.element, module);
       }
       break;
     }
@@ -419,7 +418,7 @@ export default function handler(
         if (m.TO) window.clearTimeout(m.TO);
         m.TO = window.setTimeout(() => {
           aTextWheelScroll(t);
-        }, 250);
+        }, C.UI.Atext.wheelScrollDelay);
       }
       break;
     }
@@ -428,7 +427,7 @@ export default function handler(
     // the bb bar is being dragged while maximizeNoteBox > 0.
     case 'mousemove': {
       this.setState((prevState) => {
-        const { maximizeNoteBox } = prevState as StateDefault;
+        const { maximizeNoteBox } = prevState as XulswordStatePref;
         maximizeNoteBox[i] = 0;
         return { maximizeNoteBox };
       });
@@ -438,7 +437,7 @@ export default function handler(
     // mouseup events passed from Atext's handler.
     case 'mouseup': {
       if (noteboxResizing) {
-        this.setState((prevState: StateDefault) => {
+        this.setState((prevState: XulswordStatePref) => {
           const { maximizeNoteBox, noteBoxHeight } = prevState;
           const [initial, final] = noteboxResizing;
           if (maximize) maximizeNoteBox[i] = noteBoxHeight[i];

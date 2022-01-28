@@ -38,6 +38,7 @@
     "book": "",
     "chapter": 1,
     "verse": 1,
+    "selection": "",
 
     "history": [],
     "historyIndex": 0,
@@ -67,7 +68,6 @@
     "mtModules": ["", "", ""],
     "keys": ["", "", ""],
 
-    "selection": "",
     "flagScroll": [1, 1, 1],
     "isPinned": [false, false, false],
     "noteBoxHeight": [200, 200, 200],

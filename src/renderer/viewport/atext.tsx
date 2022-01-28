@@ -17,7 +17,7 @@ import {
   stringHash,
 } from '../../common';
 import G from '../rg';
-import { libswordImgSrc, scrollIntoView } from '../rutil';
+import { libswordImgSrc, scrollIntoView, setStatePref } from '../rutil';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -29,7 +29,7 @@ import { Vbox, Hbox, Box } from '../libxul/boxes';
 import { libswordText } from './ztext';
 import {
   highlight,
-  scroll,
+  versekeyScroll,
   trimNotes,
   findVerseElement,
   textChange,
@@ -243,7 +243,7 @@ class Atext extends React.Component {
           chlast &&
           columns > 1 &&
           type === C.BIBLE &&
-          newScroll.flagScroll !== C.SCROLLTYPENONE &&
+          newScroll.flagScroll !== C.VSCROLL.none &&
           (update || scrollkey !== sbe.dataset.scroll)
         ) {
           const rtl = G.ModuleConfigs[module].direction === 'rtl';
@@ -302,48 +302,38 @@ class Atext extends React.Component {
       }
       // SCROLL
       if (
-        newScroll.flagScroll !== C.SCROLLTYPENONE &&
+        newScroll.flagScroll !== C.VSCROLL.none &&
         (update || scrollkey !== sbe.dataset.scroll) &&
         isVerseKey
       ) {
         sbe.dataset.scroll = scrollkey;
-        let s = scroll(sbe, newScroll);
-        console.log(`scroll(sbe, ${JSON.stringify(newScroll)})`);
-        // pageChange('prev') requires another setState to update bk.ch.vs
-        if (s && windowV11n) {
-          let { book: bk, chapter: ch, verse: vs } = s as any;
-          [bk, ch, vs] = G.LibSword.convertLocation(
+        const s = versekeyScroll(sbe, newScroll);
+        if (
+          newScroll.flagScroll === C.VSCROLL.endAndUpdate &&
+          s &&
+          windowV11n
+        ) {
+          const { book: bk, chapter: ch, verse: vs } = s;
+          const [bks, chs, vss] = G.LibSword.convertLocation(
             G.Tab[newScroll.module].v11n,
             [bk, ch, vs, vs].join('.'),
             windowV11n
           ).split('.');
-          s = {
-            book: bk,
-            chapter: Number(ch),
-            verse: Number(vs),
-          };
+          s.book = bks;
+          s.chapter = Number(chs);
+          s.verse = Number(vss);
           if (isPinned) {
             newState = {
               ...newState,
-              pin: { ...newPin, ...s, flagScroll: C.SCROLLTYPENONE },
+              pin: { ...newPin, ...s, flagScroll: C.VSCROLL.none },
             };
           } else {
-            G.Prefs.setCharPref('xulsword.book', bk);
-            G.Prefs.setIntPref('xulsword.chapter', Number(ch));
-            G.Prefs.setIntPref('xulsword.verse', Number(vs));
-            G.Prefs.setComplexValue('xulsword.flagScroll', [
-              C.SCROLLTYPENONE,
-              C.SCROLLTYPENONE,
-              C.SCROLLTYPENONE,
-            ]);
-            setTimeout(() => {
-              G.setGlobalStateFromPrefs([
-                'xulsword.book',
-                'xulsword.chapter',
-                'xulsword.verse',
-                'xulsword.flagScroll',
-              ]);
-            }, 1);
+            const fs = [];
+            for (let x = 0; x < C.NW; x += 1) {
+              fs.push(C.VSCROLL.none);
+            }
+            s.flagScroll = fs;
+            setStatePref('xulsword', s);
           }
         }
       } else if (update && type === C.DICTIONARY) {
@@ -367,7 +357,6 @@ class Atext extends React.Component {
       // HIGHLIGHT
       if (type === C.BIBLE && pin && selection !== pin.selection) {
         highlight(sbe, selection, module, windowV11n);
-        console.log(`highlight(sbe, ${selection}, ${module}, ${windowV11n})`);
       }
       if (columns > 1) {
         const empty = !trimNotes(sbe, nbe);
@@ -388,8 +377,8 @@ class Atext extends React.Component {
         const atextc = ofClass(['atext'], sbe);
         if (atextc) {
           const atext = atextc.element;
-          const prev = textChange(atext, false);
-          const next = textChange(atext, true);
+          const prev = textChange(atext, false, state);
+          const next = textChange(atext, true, state);
           const prevdis = atext.classList.contains('prev-disabled');
           const nextdis = atext.classList.contains('next-disabled');
           if ((!prev && !prevdis) || (prev && prevdis)) {

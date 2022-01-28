@@ -43,61 +43,64 @@ export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
 
         case 'prevchap':
           this.setState((prevState: XulswordState) => {
-            const r: Partial<XulswordState> | null = chapterChange(
-              prevState.book,
-              prevState.chapter,
-              -1
-            );
-            if (r) r.selection = '';
-            return r;
+            const { flagScroll } = prevState;
+            const s = chapterChange(prevState.book, prevState.chapter, -1);
+            if (!s) return null;
+            s.selection = '';
+            s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
+            return s;
           });
           break;
         case 'nextchap': {
           this.setState((prevState: XulswordState) => {
-            const { v11nmod } = prevState;
+            const { v11nmod, flagScroll } = prevState;
             if (!v11nmod) return null;
             const maxch = G.LibSword.getMaxChapter(v11nmod, prevState.book);
-            const r: Partial<XulswordState> | null = chapterChange(
+            const s = chapterChange(
               prevState.book,
               prevState.chapter,
               1,
               maxch
             );
-            if (r) r.selection = '';
-            return r;
+            if (!s) return null;
+            s.selection = '';
+            s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
+            return s;
           });
           break;
         }
         case 'prevverse':
           this.setState((prevState: XulswordState) => {
-            const { v11nmod } = prevState;
+            const { v11nmod, flagScroll } = prevState;
             if (!v11nmod) return null;
-            const r = verseChange(
+            const s = verseChange(
               v11nmod,
               prevState.book,
               prevState.chapter,
               prevState.verse,
               -1
-            ) as any;
-            if (!r) return null;
-            r.selection = [r.book, r.chapter, r.verse, r.verse].join('.');
-            return r;
+            );
+            if (!s) return null;
+            s.selection = [s.book, s.chapter, s.verse, s.verse].join('.');
+            s.flagScroll = flagScroll.map(() => C.VSCROLL.centerAlways);
+            return s;
           });
           break;
         case 'nextverse':
           this.setState((prevState: XulswordState) => {
-            const { v11nmod } = prevState;
+            const { v11nmod, flagScroll } = prevState;
             if (!v11nmod) return null;
-            const r = verseChange(
+            const s = verseChange(
               v11nmod,
               prevState.book,
               prevState.chapter,
               prevState.verse,
               1
-            ) as any;
-            if (!r) return null;
-            r.selection = [r.book, r.chapter, r.verse, r.verse].join('.');
-            return r;
+            );
+            if (!s) return null;
+            s.selection = [s.book, s.chapter, s.verse, s.verse].join('.');
+            s.flagScroll = flagScroll.map(() => C.VSCROLL.centerAlways);
+            return s;
           });
           break;
 
@@ -161,7 +164,7 @@ export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
                 const selection = [book, chapter, verse, lastverse].join('.');
                 const flagScroll = [];
                 for (let x = 0; x < C.NW; x += 1) {
-                  flagScroll.push(C.SCROLLTYPECENTER);
+                  flagScroll.push(C.VSCROLL.center);
                 }
                 return { book, chapter, verse, selection, bsreset, flagScroll };
               }
@@ -172,34 +175,32 @@ export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
         }
         case 'chapter__input': {
           this.setState((prevState: XulswordState) => {
-            const { v11nmod } = prevState;
+            const { v11nmod, flagScroll } = prevState;
             if (!v11nmod) return null;
             const maxch = G.LibSword.getMaxChapter(v11nmod, prevState.book);
-            const r: Partial<XulswordState> | null = chapterChange(
-              prevState.book,
-              Number(value),
-              0,
-              maxch
-            );
-            if (r) r.selection = '';
-            return r;
+            const s = chapterChange(prevState.book, Number(value), 0, maxch);
+            if (!s) return null;
+            s.selection = '';
+            s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
+            return s;
           });
           break;
         }
 
         case 'verse__input':
           this.setState((prevState: XulswordState) => {
-            const { v11nmod } = prevState;
+            const { v11nmod, flagScroll } = prevState;
             if (!v11nmod) return null;
-            const r = verseChange(
+            const s = verseChange(
               v11nmod,
               prevState.book,
               prevState.chapter,
               Number(value)
-            ) as any;
-            if (!r) return null;
-            r.selection = [r.book, r.chapter, r.verse, r.verse].join('.');
-            return r;
+            );
+            if (!s) return null;
+            s.selection = [s.book, s.chapter, s.verse, s.verse].join('.');
+            s.flagScroll = flagScroll.map(() => C.VSCROLL.centerAlways);
+            return s;
           });
           break;
 
