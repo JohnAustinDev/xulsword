@@ -82,7 +82,6 @@ const C = {
   NumOT: 39,
   NumNT: 27,
   BOOKGROUPS: ['ot', 'nt'],
-  NW: 3, // max number of text windows a single viewport supports
 
   // Versekey (that is Bible and commentary) verse scrolling
   VSCROLL: {
@@ -120,6 +119,9 @@ const C = {
   UI: {
     Window: {
       resizeDelay: 500, // ms between window resize and update
+    },
+    Viewport: {
+      minPanelWidth: 200, // px
     },
     Chooser: {
       bookgroupHoverDelay: 300, // ms until bookGroup is changed

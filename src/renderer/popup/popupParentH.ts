@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import C from '../../constant';
-import { ofClass } from '../../common';
+import { JSON_stringify, ofClass } from '../../common';
 import { getPopupInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { getContextModule } from '../rutil';
@@ -230,8 +230,8 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               webPreferences: {
                 additionalArguments: [
                   'popupWin',
-                  JSON.stringify(elemhtml),
-                  JSON.stringify(eleminfo),
+                  JSON_stringify(elemhtml),
+                  JSON_stringify(eleminfo),
                 ],
               },
               openWithBounds: {

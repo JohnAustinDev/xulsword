@@ -38,6 +38,7 @@
     "book": "",
     "chapter": 1,
     "verse": 1,
+    "keys": [],
     "selection": "",
 
     "history": [],
@@ -62,18 +63,15 @@
       "usernotes": "popup"
     },
 
-    "tabs": [[""], [""], [""]],
-    "modules": ["", "", ""],
-    "ilModules": ["", "", ""],
-    "mtModules": ["", "", ""],
-    "keys": ["", "", ""],
-
-    "flagScroll": [1, 1, 1],
-    "isPinned": [false, false, false],
-    "noteBoxHeight": [200, 200, 200],
-    "maximizeNoteBox": [0, 0, 0],
     "showChooser": true,
+    "tabs": [],
+    "panels": ["", "", null],
+    "ilModules": [],
+    "mtModules": [],
 
-    "numDisplayedWindows": 2
+    "flagScroll": [],
+    "isPinned": [],
+    "noteBoxHeight": [],
+    "maximizeNoteBox": []
   }
 }

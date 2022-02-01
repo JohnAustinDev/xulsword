@@ -15,6 +15,7 @@ export interface XulswordStatePref {
   book: string;
   chapter: number;
   verse: number;
+  keys: (string | null)[];
   selection: string;
 
   history: HistoryTypeVK[];
@@ -23,19 +24,16 @@ export interface XulswordStatePref {
   show: ShowType;
   place: PlaceType;
 
-  tabs: string[][];
-  modules: (string | undefined)[];
-  ilModules: (string | undefined)[];
-  mtModules: (string | undefined)[];
-  keys: string[];
+  showChooser: boolean;
+  tabs: (string[] | null)[];
+  panels: (string | null)[];
+  ilModules: (string | null)[];
+  mtModules: (string | null)[];
 
   flagScroll: number[];
   isPinned: boolean[];
   noteBoxHeight: number[];
   maximizeNoteBox: number[];
-  showChooser: boolean;
-
-  numDisplayedWindows: number;
 }
 
 export type SwordFilterType =

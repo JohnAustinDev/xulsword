@@ -152,6 +152,7 @@ export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
         case 'book__textbox__input':
         case 'book__menulist__select': {
           this.setState((prevState: XulswordState) => {
+            const { flagScroll: pfs } = prevState;
             // reset Bookselect even if book doesn't change
             const bsreset = prevState.bsreset + 1;
             const location = parseLocation(value);
@@ -162,11 +163,16 @@ export default function handler(this: Xulsword, e: React.SyntheticEvent<any>) {
                 if (!chapter) chapter = 1;
                 if (!verse) verse = 1;
                 const selection = [book, chapter, verse, lastverse].join('.');
-                const flagScroll = [];
-                for (let x = 0; x < C.NW; x += 1) {
-                  flagScroll.push(C.VSCROLL.center);
-                }
-                return { book, chapter, verse, selection, bsreset, flagScroll };
+                const flagScroll = pfs.map(() => C.VSCROLL.center);
+                const s: Partial<XulswordState> = {
+                  book,
+                  chapter,
+                  verse,
+                  selection,
+                  bsreset,
+                  flagScroll,
+                };
+                return s;
               }
             }
             return { bsreset };

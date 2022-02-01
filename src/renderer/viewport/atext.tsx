@@ -50,7 +50,7 @@ const defaultProps = {
 const propTypes = {
   ...xulPropTypes,
   onMaximizeNoteBox: PropTypes.func.isRequired,
-  n: PropTypes.number.isRequired,
+  panelIndex: PropTypes.number.isRequired,
   columns: PropTypes.number.isRequired,
   book: PropTypes.string.isRequired,
   chapter: PropTypes.number.isRequired,
@@ -58,12 +58,12 @@ const propTypes = {
   module: PropTypes.string,
   ilModule: PropTypes.string,
   ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
-  modkey: PropTypes.string.isRequired,
+  modkey: PropTypes.string,
   selection: PropTypes.string,
-  flagScroll: PropTypes.number.isRequired,
+  flagScroll: PropTypes.number,
   isPinned: PropTypes.bool.isRequired,
-  noteBoxHeight: PropTypes.number.isRequired,
-  maximizeNoteBox: PropTypes.number.isRequired,
+  noteBoxHeight: PropTypes.number,
+  maximizeNoteBox: PropTypes.number,
   show: PropTypes.object.isRequired,
   place: PropTypes.object.isRequired,
   ownWindow: PropTypes.bool,
@@ -77,7 +77,7 @@ const atextProps = {
     _noteboxResizing?: number[],
     _maximize?: boolean
   ): void => {},
-  n: 0,
+  panelIndex: 0,
   columns: 0,
   book: '',
   chapter: 0,
@@ -87,7 +87,7 @@ const atextProps = {
   ilModuleOption: [] as string[],
   modkey: '',
   selection: '' as string | undefined,
-  flagScroll: 0,
+  flagScroll: 0 as number | undefined,
   isPinned: false,
   noteBoxHeight: 0,
   maximizeNoteBox: 0,
@@ -188,7 +188,7 @@ class Atext extends React.Component {
   onUpdate() {
     const props = this.props as AtextProps;
     const state = this.state as AtextState;
-    const { columns, isPinned, n, windowV11n } = props;
+    const { columns, isPinned, panelIndex, windowV11n } = props;
     const { pin } = state as AtextState;
     const { sbref, nbref } = this;
 
@@ -212,12 +212,13 @@ class Atext extends React.Component {
         { ...props, ...newPin },
         C.ScrollProps[type]
       );
-      const writekey = stringHash({ ...newLibSword, chapter: 0 }, n);
+      const writekey = stringHash({ ...newLibSword, chapter: 0 }, panelIndex);
       const scrollkey = stringHash(newScroll);
       let update = false; // update current innerHTML as needed
       if (!isVerseKey) {
         update = writekey !== sbe.dataset.libsword;
-        if (update) this.writeLibSword2DOM(newLibSword, n, 'overwrite');
+        if (update)
+          this.writeLibSword2DOM(newLibSword, panelIndex, 'overwrite');
       } else {
         let chfirst;
         let chlast;
@@ -233,7 +234,7 @@ class Atext extends React.Component {
           ) ||
           chlast - chfirst > 10;
         if (update) {
-          this.writeLibSword2DOM(newLibSword, n, 'overwrite');
+          this.writeLibSword2DOM(newLibSword, panelIndex, 'overwrite');
           chfirst = Number(sbe.dataset.chfirst);
           chlast = Number(sbe.dataset.chlast);
         }
@@ -267,7 +268,7 @@ class Atext extends React.Component {
               (rtl && v.offsetLeft >= 0))
           ) {
             update = true;
-            this.writeLibSword2DOM(newLibSword, n, 'prepend');
+            this.writeLibSword2DOM(newLibSword, panelIndex, 'prepend');
             v = findVerseElement(sbe, newLibSword.chapter, verse);
             chfirst -= 1;
           }
@@ -293,7 +294,7 @@ class Atext extends React.Component {
               (rtl && last.offsetLeft - v.offsetLeft >= 0))
           ) {
             update = true;
-            this.writeLibSword2DOM(newLibSword, n, 'append');
+            this.writeLibSword2DOM(newLibSword, panelIndex, 'append');
             v = findVerseElement(sbe, newLibSword.chapter, verse);
             last = sbe.lastChild as HTMLElement | null;
             chlast += 1;
@@ -329,16 +330,14 @@ class Atext extends React.Component {
             };
           } else {
             const fs = [];
-            for (let x = 0; x < C.NW; x += 1) {
-              fs.push(C.VSCROLL.none);
-            }
+            fs[panelIndex] = C.VSCROLL.none;
             s.flagScroll = fs;
             setStatePref('xulsword', s);
           }
         }
       } else if (update && type === C.DICTIONARY) {
         const { modkey } = newLibSword;
-        const id = `${stringHash(modkey)}.${n}`;
+        const id = `${stringHash(modkey)}.${panelIndex}`;
         const keyelem = document.getElementById(id);
         if (keyelem) {
           scrollIntoView(keyelem, nbe);
@@ -377,8 +376,8 @@ class Atext extends React.Component {
         const atextc = ofClass(['atext'], sbe);
         if (atextc) {
           const atext = atextc.element;
-          const prev = textChange(atext, false, state);
-          const next = textChange(atext, true, state);
+          const prev = textChange(atext, false);
+          const next = textChange(atext, true);
           const prevdis = atext.classList.contains('prev-disabled');
           const nextdis = atext.classList.contains('next-disabled');
           if ((!prev && !prevdis) || (prev && prevdis)) {
@@ -396,7 +395,7 @@ class Atext extends React.Component {
   // Write a LibSword response to the DOM.
   writeLibSword2DOM(
     libsword: AtextProps,
-    n: number,
+    i: number,
     flag: 'overwrite' | 'prepend' | 'append'
   ) {
     const { sbref, nbref } = this;
@@ -427,7 +426,7 @@ class Atext extends React.Component {
         chlast += 1;
         libsword.chapter = chlast;
       }
-      const response = libswordResponseMemoized(libsword, n);
+      const response = libswordResponseMemoized(libsword, i);
       let fntable = (!isDict ? nbe.firstChild : null) as HTMLElement | null;
       let sb;
       let nb;
@@ -436,7 +435,7 @@ class Atext extends React.Component {
           sb = response.textHTML;
           nb = response.noteHTML;
           console.log(
-            `writeLibSword2DOM(${libsword.chapter}, ${n}, 'overwrite')`
+            `writeLibSword2DOM(${libsword.chapter}, ${i}, 'overwrite')`
           );
           break;
         case 'prepend': {
@@ -444,7 +443,7 @@ class Atext extends React.Component {
             sb = response.textHTML + sbe.innerHTML;
             nb = response.noteHTML + fntable.innerHTML;
             console.log(
-              `writeLibSword2DOM(${libsword.chapter}, ${n}, 'prepend')`
+              `writeLibSword2DOM(${libsword.chapter}, ${i}, 'prepend')`
             );
           }
           break;
@@ -454,7 +453,7 @@ class Atext extends React.Component {
             sb = sbe.innerHTML + response.textHTML;
             nb = fntable.innerHTML + response.noteHTML;
             console.log(
-              `writeLibSword2DOM(${libsword.chapter}, ${n}, 'append')`
+              `writeLibSword2DOM(${libsword.chapter}, ${i}, 'append')`
             );
           }
           break;
@@ -474,7 +473,7 @@ class Atext extends React.Component {
         libswordImgSrc(nbe);
       }
       fntable = nbe.firstChild as HTMLElement | null;
-      sbe.dataset.libsword = stringHash({ ...libsword, chapter: 0 }, n);
+      sbe.dataset.libsword = stringHash({ ...libsword, chapter: 0 }, i);
       sbe.dataset.scroll = undefined;
       if ('chapter' in libsword) {
         if (flag === 'overwrite') {
@@ -512,8 +511,15 @@ class Atext extends React.Component {
     const props = this.props as AtextProps;
     const { handler, bbMouseUp } = this;
     const { noteBoxResizing, versePerLine } = state;
-    const { columns, isPinned, maximizeNoteBox, module, n, noteBoxHeight } =
-      props;
+    const {
+      columns,
+      isPinned,
+      maximizeNoteBox,
+      module,
+      panelIndex,
+      noteBoxHeight,
+      ownWindow,
+    } = props;
 
     // Header logic etc.
     const appIsRTL = G.ProgramConfig?.direction === 'rtl';
@@ -523,6 +529,7 @@ class Atext extends React.Component {
     const nextArrow = appIsRTL
       ? String.fromCharCode(8592)
       : String.fromCharCode(8594);
+    const isVerseKey = module && G.Tab[module].isVerseKey;
 
     // Notebox height
     const doMaximizeNB =
@@ -534,7 +541,7 @@ class Atext extends React.Component {
     }
 
     // Class list
-    let cls = `text text${n} show${columns} userFontSize`;
+    let cls = `text text${panelIndex} columns${columns} userFontSize`;
     cls += ' prev-disabled next-disabled';
     if (module) cls += ` ${G.Tab[module].tabType}`;
     if (module && G.Tab[module].isRTL) cls += ' rtl-text';
@@ -555,14 +562,14 @@ class Atext extends React.Component {
         {...topHandle('onMouseDown', handler, props)}
         {...topHandle('onMouseMove', handler, props)}
         {...topHandle('onMouseUp', bbMouseUp, props)}
-        data-wnum={n}
+        data-index={panelIndex}
         data-module={module}
         data-columns={columns}
         data-ispinned={isPinned}
       >
         <div className="sbcontrols">
-          <div className="text-pin" />
-          <div className="text-win" />
+          {isVerseKey && <div className="text-pin" />}
+          {!ownWindow && <div className="text-win" />}
         </div>
 
         <Box className="hd" height={`${C.TextHeaderHeight}px`}>

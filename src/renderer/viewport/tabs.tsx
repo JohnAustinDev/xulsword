@@ -28,10 +28,9 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  columns: PropTypes.number.isRequired,
   isPinned: PropTypes.bool.isRequired,
   module: PropTypes.string,
-  n: PropTypes.number.isRequired,
+  panelIndex: PropTypes.number.isRequired,
   tabs: PropTypes.arrayOf(PropTypes.string).isRequired,
   ilModule: PropTypes.string,
   ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -39,10 +38,9 @@ const propTypes = {
 };
 
 interface TabsProps extends XulProps {
-  columns: number;
   isPinned: boolean;
   module: string | undefined;
-  n: number;
+  panelIndex: number;
   tabs: string[];
   ilModule: string | undefined;
   ilModuleOption: (string | undefined)[];
@@ -99,16 +97,16 @@ class Tabs extends React.Component {
     classes: string,
     children: any = null
   ) {
-    const { n } = this.props as TabsProps;
+    const { panelIndex: i } = this.props as TabsProps;
     const tabType = !m || type === 'ilt-tab' ? 'Texts' : G.Tab[m].tabType;
     const label =
       !m || type === 'ilt-tab' ? i18next.t('ORIGLabelTab') : G.Tab[m].label;
     return (
       <div
-        key={`${type}_${n}_${m}`}
+        key={`${type}_${i}_${m}`}
         className={`${type} tab tab${tabType} ${classes}`}
         data-module={m}
-        data-wnum={n}
+        data-index={i}
       >
         <div className="tab-label">{label}</div>
         {children}
@@ -185,8 +183,8 @@ class Tabs extends React.Component {
 
   render() {
     const { multiTabs, multiTabMenupopup } = this.state as TabsState;
-    const { module, isPinned, n, tabs, ilModule, ilModuleOption } = this
-      .props as TabsProps;
+    const { module, isPinned, panelIndex, tabs, ilModule, ilModuleOption } =
+      this.props as TabsProps;
 
     let ilTabLabel = i18next.t('ORIGLabelTab');
     if (!ilTabLabel) ilTabLabel = 'ilt';
@@ -197,7 +195,7 @@ class Tabs extends React.Component {
     if (ilModule) ilcls = 'active';
     if (ilModule === 'disabled') ilcls = 'disabled';
 
-    let cls = `tabs${n}`;
+    let cls = `tabs${panelIndex}`;
     if (module && G.Tab[module].isRTL) cls += ' rtl';
     if (isPinned) cls += ' pinned';
     if (multiTabMenupopup) cls += ' open';
@@ -206,7 +204,8 @@ class Tabs extends React.Component {
       <div
         {...htmlAttribs(`tabs ${cls}`, this.props)}
         ref={this.tabsref}
-        data-wnum={n}
+        data-index={panelIndex}
+        data-ispinned={isPinned}
       >
         {module && isPinned && this.getTab(module, 'reg-tab', 'active')}
         {tabs.map((m: string) => {

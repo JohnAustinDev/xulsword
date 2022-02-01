@@ -5,7 +5,9 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
+import PropTypes from 'prop-types';
 import { render } from 'react-dom';
+import { JSON_parse } from '../../common';
 import i18nInit from '../i18n';
 import {
   getStatePref,
@@ -24,6 +26,7 @@ import Viewport from './viewport';
 import viewportParentH, {
   closeMenupopups,
   updateVersification,
+  vpWinNotStatePref,
 } from './viewportParentH';
 import '../global-htm.css';
 
@@ -40,19 +43,16 @@ const propTypes = {
 
 export type ViewportWinProps = XulProps;
 
-// The following initial state values do not come from Prefs, but from the
-// window's ARGV or constants. Neither are these state keys written to Prefs.
-const notStatePref: any = {
-  vpreset: 0,
-};
-Object.entries(JSON.parse(window.shell.process.argv().pop())).forEach(
+Object.entries(JSON_parse(window.shell.process.argv().pop())).forEach(
   (entry) => {
-    const [name, value] = entry;
-    notStatePref[name] = value;
+    const [n, value] = entry;
+    const name = n as keyof typeof vpWinNotStatePref;
+    const nsp: any = vpWinNotStatePref;
+    nsp[name] = value;
   }
 );
 
-export type ViewportWinState = typeof notStatePref & XulswordStatePref;
+export type ViewportWinState = typeof vpWinNotStatePref & XulswordStatePref;
 
 export default class ViewportWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -68,14 +68,17 @@ export default class ViewportWin extends React.Component {
   constructor(props: ViewportWinProps) {
     super(props);
 
-    const statePref = props.id
-      ? getStatePref(props.id, null, notStatePref)
-      : undefined;
-
-    this.state = {
-      ...notStatePref,
-      ...statePref,
-    };
+    if (props.id === 'xulsword') {
+      const statePref = getStatePref(props.id, null, vpWinNotStatePref) as Omit<
+        XulswordStatePref,
+        keyof typeof vpWinNotStatePref
+      >;
+      const s: ViewportWinState = {
+        ...statePref,
+        ...vpWinNotStatePref,
+      };
+      this.state = s;
+    } else throw Error(`ViewportWin id must be 'xulsword'`);
 
     onSetWindowStates(this);
 
@@ -102,11 +105,10 @@ export default class ViewportWin extends React.Component {
       show,
       place,
       tabs,
-      modules,
+      panels,
       ilModules,
       mtModules,
       keys,
-      numDisplayedWindows,
       selection,
       flagScroll,
       isPinned,
@@ -119,12 +121,13 @@ export default class ViewportWin extends React.Component {
     const { id } = props;
     const { lastSavedPref: lastSetPrefs, viewportParentHandler } = this;
 
-    if (id) updateGlobalState(id, state, lastSetPrefs, notStatePref);
+    if (id) updateGlobalState(id, state, lastSetPrefs, vpWinNotStatePref);
 
+    const short = false;
     jsdump(
       `Rendering ViewportWin ${JSON.stringify({
         ...state,
-        tabs: 'not-printed',
+        tabs: short ? 'not-printed' : tabs,
       })}`
     );
 
@@ -142,7 +145,7 @@ export default class ViewportWin extends React.Component {
             chapter={chapter}
             verse={verse}
             tabs={tabs}
-            modules={modules}
+            panels={panels}
             ilModules={ilModules}
             mtModules={mtModules}
             show={show}
@@ -154,7 +157,6 @@ export default class ViewportWin extends React.Component {
             noteBoxHeight={noteBoxHeight}
             maximizeNoteBox={maximizeNoteBox}
             showChooser={false}
-            numDisplayedWindows={numDisplayedWindows}
             ownWindow
             windowV11n={windowV11n}
           />

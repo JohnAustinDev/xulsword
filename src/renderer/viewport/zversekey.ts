@@ -8,7 +8,6 @@ import {
   dString,
   getLocalizedChapterTerm,
   isASCII,
-  ofClass,
   sanitizeHTML,
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
@@ -874,12 +873,12 @@ export function versekeyScroll(
 export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
   const { atext, count } = caller.mouseWheel;
   if (!atext) return;
-  const { module, wnum } = atext.dataset;
+  const { module, index: i } = atext.dataset;
   let { columns, ispinned } = atext.dataset as any;
-  if (!wnum || !module) return;
+  if (!module) return;
   columns = Number(columns);
   ispinned = ispinned === 'true';
-  const i = Number(wnum) - 1;
+  const index = Number(i);
   const { type } = G.Tab[module];
   const stateType = 'windowV11n' in caller.state ? 'viewportparent' : 'atext';
 
@@ -954,11 +953,8 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
           [bk, ch, vs, vs].join('.'),
           windowV11n
         ).split('.');
-        const flagScroll = [] as number[];
-        for (let x = 0; x < C.NW; x += 1) {
-          flagScroll.push(C.VSCROLL.verse);
-        }
-        flagScroll[i] = mysf;
+        const flagScroll = xulswordstate.flagScroll.map(() => C.VSCROLL.verse);
+        flagScroll[index] = mysf;
         const s: Partial<XulswordStatePref> = {
           book,
           chapter: Number(chapter),
@@ -1201,15 +1197,17 @@ function genbookChange(atext: HTMLElement, next: boolean): string | null {
 export function textChange(
   atext: HTMLElement,
   next: boolean,
-  prevState: AtextState | XulswordStatePref
+  prevState?: AtextState | XulswordStatePref
 ): Partial<AtextState> | Partial<XulswordStatePref> | null {
-  const { columns: cx, module, wnum } = atext.dataset;
+  const { columns: cx, module, index: i } = atext.dataset;
   const columns = Number(cx);
-  if (!columns || !module || !wnum) return null;
-  const i = Number(wnum) - 1;
+  if (!columns || !module) return null;
+  const index = Number(i);
   const { type } = G.Tab[module];
   const sbe = atext.getElementsByClassName('sb')[0];
-  const statetype = 'keys' in prevState ? 'xulsword' : 'atext';
+  let statetype = 'none';
+  if (prevState && 'keys' in prevState) statetype = 'xulsword';
+  else if (prevState) statetype = 'atext';
   let s;
   switch (type) {
     case C.BIBLE:
@@ -1255,8 +1253,10 @@ export function textChange(
         } else if (statetype === 'xulsword') {
           const ps = prevState as XulswordStatePref;
           const keys = ps.keys.slice();
-          keys[i] = key;
+          keys[index] = key;
           s = { keys };
+        } else {
+          s = { keys: [key] };
         }
       }
       break;
@@ -1264,6 +1264,7 @@ export function textChange(
     default:
   }
   if (!s) return null;
+  if (statetype === 'none') return s;
   if (statetype === 'atext') {
     const ps = prevState as AtextState;
     s = { pin: { ...ps.pin, ...s } };
@@ -1284,9 +1285,9 @@ export function textChange(
       const ats = document.getElementsByClassName(`atext`);
       Array.from(ats).forEach((at) => {
         const a = at as HTMLElement;
-        const { wnum: w, columns: c } = a.dataset;
-        if (mysf && w && c) {
-          flagScroll[Number(w) - 1] =
+        const { index: inx, columns: c } = a.dataset;
+        if (mysf && inx && c) {
+          flagScroll[Number(inx)] =
             c && Number(c) > 1 ? mysf : C.VSCROLL.centerAlways;
         }
       });

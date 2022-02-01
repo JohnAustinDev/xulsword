@@ -36,54 +36,23 @@ html.chromedir-rtl .viewport .chooser {
 .viewport.chooser-hidden .chooser {
   display: none;
 }
-
 .viewport .tabrow {
   width: 100%;
   padding-top: 14px;
   white-space: nowrap;
 }
-
-.viewport .show1 .tabs {
-  width: 100%;
-}
-.viewport .show2 .tabs {
-  width: 50%;
-}
-.viewport .show3 .tabs {
-  width: 33.33%;
-}
 .viewport .textarea {
-  min-width: 1px; /* allows textarea to schrink below minimum content size */
+  min-width: 1px; /* allows textarea to shrink below minimum content size */
   margin-bottom: 12px;
 }
 .viewport .textrow {
   width: 100%;
 }
-
 .viewport.ownWindow {
   padding: 0 15px;
 }
-.viewport.ownWindow .tabs:not(.none) ~ .tabs {
-  display: none;
-}
-/* Very special situation: Windowed viewports show only one text. If
-it happens to be a linked text which is unpinned and then switched to become
-a dictionary (which cannot be linked), this situation needs this special CSS: */
-.viewport.ownWindow .textarea .tabs.Dicts,
-.viewport.ownWindow .textarea .text.Dicts {
-  display: none;
-}
-.viewport.ownWindow .textarea .tabs.none + .tabs.Dicts,
-.viewport.ownWindow .textarea .tabs.Dicts:first-child,
-.viewport.ownWindow .textarea .text.none + .text.Dicts,
-.viewport.ownWindow .textarea .text.Dicts:first-child {
-  display: flex;
-}
 .viewport.ownWindow .atext {
   margin: 0;
-}
-.viewport.ownWindow .text-win {
-  display: none;
 }
 
 /* PRINTING STYLES */

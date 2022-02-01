@@ -45,24 +45,23 @@ const propTypes = {
   book: PropTypes.string.isRequired,
   chapter: PropTypes.number.isRequired,
   verse: PropTypes.number.isRequired,
-
-  tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
-  modules: PropTypes.arrayOf(PropTypes.string).isRequired,
-  ilModules: PropTypes.arrayOf(PropTypes.string).isRequired,
-  mtModules: PropTypes.arrayOf(PropTypes.string).isRequired,
   keys: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selection: PropTypes.string,
 
   show: PropTypes.object.isRequired,
   place: PropTypes.object.isRequired,
 
-  selection: PropTypes.string,
+  showChooser: PropTypes.bool.isRequired,
+  tabs: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
+  panels: PropTypes.arrayOf(PropTypes.string).isRequired,
+  ilModules: PropTypes.arrayOf(PropTypes.string).isRequired,
+  mtModules: PropTypes.arrayOf(PropTypes.string).isRequired,
+
   flagScroll: PropTypes.arrayOf(PropTypes.number).isRequired,
   isPinned: PropTypes.arrayOf(PropTypes.bool).isRequired,
   noteBoxHeight: PropTypes.arrayOf(PropTypes.number).isRequired,
   maximizeNoteBox: PropTypes.arrayOf(PropTypes.number).isRequired,
-  showChooser: PropTypes.bool.isRequired,
 
-  numDisplayedWindows: PropTypes.number.isRequired,
   ownWindow: PropTypes.bool.isRequired,
   windowV11n: PropTypes.string,
 
@@ -74,21 +73,17 @@ type ViewportProps = PopupParentProps &
     book: string;
     chapter: number;
     verse: number;
-
-    tabs: string[][];
-    modules: (string | undefined)[];
+    keys: (string | undefined)[];
+    selection: string | undefined;
+    showChooser: boolean;
+    tabs: (string[] | undefined)[];
+    panels: (string | null)[];
     ilModules: (string | undefined)[];
     mtModules: (string | undefined)[];
-    keys: string[];
-
-    selection: string | undefined;
     flagScroll: number[];
     isPinned: boolean[];
     noteBoxHeight: number[];
     maximizeNoteBox: number[];
-    showChooser: boolean;
-
-    numDisplayedWindows: number;
     ownWindow: boolean;
     windowV11n: string | undefined;
 
@@ -156,20 +151,19 @@ class Viewport extends React.Component implements PopupParent {
       book,
       chapter,
       verse,
-      tabs,
-      modules,
-      ilModules,
-      mtModules,
-      show,
-      place,
       keys,
       selection,
+      show,
+      place,
+      tabs,
+      panels,
+      ilModules: ilModules0,
+      mtModules,
       flagScroll,
       isPinned: isPinned0,
       noteBoxHeight,
       maximizeNoteBox,
       showChooser,
-      numDisplayedWindows,
       ownWindow,
       windowV11n,
       parentHandler,
@@ -177,150 +171,184 @@ class Viewport extends React.Component implements PopupParent {
     const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = this
       .state as ViewportState;
 
-    const isVerseKey = modules.map((m) => Boolean(m && G.Tab[m].isVerseKey));
-    const isPinned = isPinned0.map((ip, i) => ip && isVerseKey[i]);
-
-    const chooser = modules.some((m) => m && G.Tab[m].type === C.GENBOOK)
+    const chooser = panels.some((m) => m && G.Tab[m].type === C.GENBOOK)
       ? 'genbook'
       : 'bible';
 
-    const firstUnpinnedBible = modules.find((m, i) => {
-      return (
-        i < numDisplayedWindows &&
-        !ilModules[i] &&
-        m &&
-        !isPinned[i] &&
-        G.Tab[m].type === C.BIBLE
-      );
+    // Only versekey panels can be pinned
+    const isVerseKey = panels.map((m) => Boolean(m && G.Tab[m].isVerseKey));
+    const isPinned = panels.map((_m, i) => isPinned0[i] && isVerseKey[i]);
+
+    const firstUnpinnedBible = panels.find((m, i) => {
+      return m && !isPinned[i] && G.Tab[m].type === C.BIBLE;
     });
 
-    const firstUnpinnedVerseKey = modules.find((m, i) => {
-      return (
-        i < numDisplayedWindows && m && !isPinned[i] && G.Tab[m].isVerseKey
-      );
+    const firstUnpinnedVerseKey = panels.find((m, i) => {
+      return m && !isPinned[i] && G.Tab[m].isVerseKey;
     });
 
-    // Get interlinear module options
-    const ilModuleOptions: any = [];
-    for (let x = 0; x < C.NW; x += 1) {
-      ilModuleOptions.push(['']);
-    }
-    const windowHasILOptions = [false, false, false];
-    for (let x = 0; x < numDisplayedWindows; x += 1) {
-      const windowHasBible = tabs[x].some((t) => {
-        return t && G.Tab[t].type === C.BIBLE;
-      });
-      if (windowHasBible && book) {
-        windowHasILOptions[x] = Boolean(
+    // Get each panel's interlinear module options according to book
+    const ilModuleOptions = panels.map(() => ['']);
+    const panelHasILOptions = panels.map(() => false);
+    panels.forEach((_panel: string | null, i: number) => {
+      const tabbank = tabs[i];
+      const panelHasBible =
+        tabbank &&
+        tabbank.some((t) => {
+          return t && G.Tab[t].type === C.BIBLE;
+        });
+      if (panelHasBible && book) {
+        panelHasILOptions[i] = Boolean(
           G.FeatureModules.hebrew[0] || G.FeatureModules.greek[0]
         );
         const bkinfo = findBookGroup(G, book);
         if (bkinfo && (bkinfo.group === 'ot' || bkinfo.group === 'nt')) {
           const ml =
             G.FeatureModules[bkinfo.group === 'nt' ? 'greek' : 'hebrew'];
-          if (ml.length) ilModuleOptions[x] = ml;
+          if (ml.length) ilModuleOptions[i] = ml;
         }
       }
-    }
+    });
 
-    // Hide, disable or enable interlinear (ORIG) tabs:
-    // An interlinear tab is hidden if the window has no ilModuleOption
+    // Hide, disable or enable each panel's interlinear (ORIG) tab:
+    // The interlinear tab is hidden if the panel has no ilModuleOption
     //   (see logic above). Otherwise:
     // It is visible and disabled if selected module/bookGroup does
     //   not support ilModuleOption or if ilModule is the selected module.
-    // It is visible and active if there is an ilModule and it is an
-    //   ilModuleOption.
+    // It is visible and active if ilModule is set to an ilModuleOption.
     // It is visible but inactive otherwise.
-    const ilMods = ilModules.slice();
-    for (let x = 0; x < numDisplayedWindows; x += 1) {
-      ilMods[x] = ''; // visible and inactive (or hidden if no ilModuleOption)
-      let ilpref = ilModules[x];
+    const ilModules = ilModules0.slice();
+    panels.forEach((panel, i) => {
+      ilModules[i] = ''; // visible and inactive (or hidden if no ilModuleOption)
+      let ilpref = ilModules0[i];
       if (ilpref === 'disabled') ilpref = undefined;
-      const selmod = modules[x];
       if (
-        windowHasILOptions &&
-        (!ilModuleOptions[x] ||
-          (selmod && G.Tab[selmod].type !== C.BIBLE) ||
-          (selmod && selmod === ilModuleOptions[x][0]))
+        panelHasILOptions[i] &&
+        (!ilModuleOptions[i] ||
+          (panel && G.Tab[panel].type !== C.BIBLE) ||
+          (panel && panel === ilModuleOptions[i][0]))
       ) {
-        ilMods[x] = 'disabled'; // visible and disabled
+        ilModules[i] = 'disabled'; // visible and disabled
       } else if (
         ilpref &&
-        ilModuleOptions[x][0] &&
-        ilModuleOptions[x].includes(ilpref)
+        ilModuleOptions[i][0] &&
+        ilModuleOptions[i].includes(ilpref)
       ) {
-        ilMods[x] = ilpref; // visible and active
+        ilModules[i] = ilpref; // visible and active
+      }
+    });
+
+    // Figure out the relative width of each panel due to adjacent panels
+    // sharing common module and isPinned settings etc. In such case, the
+    // first panel of the matching group will widen to take up the whole
+    // width while the following matching panels will shrink to zero width.
+    // A value of null is given for null or undefined panels.
+    const panelWidths: (number | null)[] = [];
+    for (let i = 0; i < panels.length; i += 1) {
+      const panel = panels[i];
+      panelWidths[i] = panel || panel === '' ? 1 : null;
+      if (panel) {
+        const key = [panel, !!ilModules[i], !!isPinned[i]].join('.');
+        let f = i + 1;
+        for (;;) {
+          if (f === panels.length) break;
+          const modulef = panels[f];
+          if (
+            !modulef ||
+            [modulef, !!ilModules[f], !!isPinned[f]].join('.') !== key
+          )
+            break;
+          const panelWidthsx = panelWidths as number[];
+          panelWidthsx[i] += 1;
+          panelWidths[f] = 0;
+          f += 1;
+        }
+        i += f - i - 1;
       }
     }
 
-    // Figure out the number of columns that will be shown for each text
-    // in order to fill the number of visible windows. Some module types
-    // or configurations only support single column layout, like DICT.
-    const columns: number[] = [];
-    for (let x = 0; x < numDisplayedWindows; x += 1) {
-      columns[x] = 1;
-      const mod = modules[x];
-      let ilActive =
-        !!ilModuleOptions[x][0] && !!ilMods[x] && ilMods[x] !== 'disabled';
-      if (!mod || G.Tab[mod].type === C.DICTIONARY || ilActive) continue;
-      const key = `${modules[x]} ${ilActive} ${!!isPinned[x]}`;
-      let f = x + 1;
-      for (;;) {
-        if (f === numDisplayedWindows) break;
-        const module = modules[f];
-        ilActive =
-          !!ilModuleOptions[f][0] && !!ilMods[f] && ilMods[f] !== 'disabled';
-        if (!module || key !== `${module} ${ilActive} ${!!isPinned[f]}`) break;
-        columns[x] += 1;
-        columns[f] = 0;
-        f += 1;
-      }
-      x += f - x - 1;
-    }
-
-    // Pin each tab bank of multi-column texts (two or more tab
-    // banks are associated with any multi-column text).
-    const isPinnedTabs = isPinned;
-    for (let x = 0; x < numDisplayedWindows; x += 1) {
-      let c = columns[x] - 1;
-      while (c) {
-        isPinnedTabs[x + c] = isPinned[x];
-        c -= 1;
-      }
-      x += columns[x] - 1;
-    }
-
-    // Each text's book/chapter/verse must be in the windowV11n.
-    let locs: any = [];
-    for (let x = 0; x < C.NW; x += 1) {
-      locs.push(`${book}.${chapter}.${verse}.${verse}`);
-    }
-    for (let x = 0; x < numDisplayedWindows; x += 1) {
-      const m = modules[x];
-      if (m && G.Tab[m].isVerseKey && windowV11n) {
-        if (G.Tab[m].v11n !== windowV11n) {
-          locs[x] = G.LibSword.convertLocation(
-            windowV11n,
-            locs[x],
-            G.Tab[m].v11n
-          );
+    // The tabs and panels props are used to determine how many banks of tabs
+    // will be shown, which tabs are in each bank and how wide the bank is,
+    // and how many panels will be shown and how wide the panel is.
+    // - tabs: (string[] | null)[]
+    // Where string[] is a tab bank, and null tab banks are not drawn.
+    // - panels: (string | null)[]
+    // Where string is a panel's selected module, and null panels are not drawn.
+    // These two props work together as follows:
+    // - The length of the panels array determines the possible number of panels.
+    // - Panels which are null or undefined will not be rendered, and neither will
+    //   the tab bank sharing the same index (whether the tab bank is null or not).
+    // - A panel with a null tab bank will not be shown IF a previous panel has
+    //   width, because the previous panel's width will be increased by an
+    //   additional column. The previous panel's tab bank width will also grow
+    //   accordingly.
+    const tabWidths: (number | null)[] = panels.map((panel, i) => {
+      let r: number | null = tabs[i] ? 1 : 0;
+      if (!panel && panel !== '') r = null;
+      return r;
+    });
+    if (tabs.length) {
+      for (let i = panels.length - 1; i >= 0; i -= 1) {
+        if ((panels[i] || panels[i] === '') && !tabs[i] && i > 0) {
+          let ut = i - 1;
+          let numPanels = 1;
+          while (ut > -1 && (!panelWidths[ut] || !tabWidths[ut])) {
+            if (panelWidths[ut] !== null) {
+              numPanels += 1;
+              tabWidths[ut] = 0;
+              panelWidths[ut] = 0;
+            }
+            ut -= 1;
+          }
+          if (ut > -1) {
+            panelWidths[i] = 0;
+            tabWidths[ut] = 1 + numPanels;
+            panelWidths[ut] = 1 + numPanels;
+          }
+          i = ut;
         }
       }
     }
-    locs = locs.map((l: any) => l.split('.'));
 
-    const tabComps: number[] = [];
-    for (let x = 0; x < numDisplayedWindows; x += 1) {
-      tabComps.push(x);
-    }
+    // Some wide panels will be rendered in multiple columns, making them
+    // easier to read. Dictionary modules do not support multi-columm layout,
+    // and interlinear display is better without it.
+    const columns = panelWidths.map((c, i) => {
+      const panel = panels[i];
+      const type = panel ? G.Tab[panel].type : null;
+      const ilActive =
+        !!ilModuleOptions[i][0] &&
+        !!ilModules[i] &&
+        ilModules[i] !== 'disabled';
+      return ilActive || type === C.DICTIONARY ? 1 : c;
+    });
 
-    const textComps: number[] = [];
-    for (let x = 0; x < columns.length; x += 1) {
-      if (columns[x]) textComps.push(x);
-    }
+    // Each text's book/chapter/verse must be in the windowV11n.
+    const loc: any = [];
+    panels.forEach(() => {
+      loc.push(`${book}.${chapter}.${verse}.${verse}`);
+    });
+    panels.forEach((panel, i) => {
+      if (panel && G.Tab[panel].isVerseKey && windowV11n) {
+        if (G.Tab[panel].v11n !== windowV11n) {
+          loc[i] = G.LibSword.convertLocation(
+            windowV11n,
+            loc[i],
+            G.Tab[panel].v11n
+          );
+        }
+      }
+    });
+    const locs = loc.map((li: string) => li.split('.'));
+
+    const numPanels = panels.filter((m) => m || m === '').length;
+    console.log(numPanels);
+    console.log(tabWidths);
+    console.log(panelWidths);
 
     const showingChooser = showChooser || chooser === 'genbook';
-    const minWidth = (showingChooser ? 300 : 0) + 200 * numDisplayedWindows;
+    const minWidth =
+      (showingChooser ? 300 : 0) + C.UI.Viewport.minPanelWidth * numPanels;
 
     let cls = '';
     if (ownWindow) cls += ' ownWindow';
@@ -329,7 +357,7 @@ class Viewport extends React.Component implements PopupParent {
       `Rendering Viewport ${JSON.stringify({
         state: this.state,
         ilModuleOptions,
-        ilMods,
+        ilMods: ilModules,
       })}`
     );
 
@@ -356,34 +384,42 @@ class Viewport extends React.Component implements PopupParent {
         )}
 
         <Vbox
-          className={`textarea show${numDisplayedWindows}`}
+          className="textarea"
           flex="1"
           onKeyDown={parentHandler}
           onWheel={parentHandler}
         >
           <div className="tabrow">
-            {tabComps.map((i) => {
-              return (
-                <Tabs
-                  key={[
-                    i,
-                    reset,
-                    isPinned.toString(),
-                    columns.toString(),
-                    tabs[i].toString(),
-                    ilMods[i],
-                    mtModules[i],
-                  ].join('_')}
-                  n={Number(i + 1)}
-                  columns={columns[i]}
-                  isPinned={isPinnedTabs[i]}
-                  module={modules[i]}
-                  tabs={tabs[i]}
-                  ilModule={ilMods[i]}
-                  ilModuleOption={ilModuleOptions[i]}
-                  mtModule={mtModules[i]}
-                />
-              );
+            {panels.map((_p: string | null, i: number) => {
+              const tabWidth = tabWidths[i];
+              if (tabWidth) {
+                const width = `${Math.round(100 * (tabWidth / numPanels))}%`;
+                const tabsi = tabs[i];
+                const key = [
+                  i,
+                  reset,
+                  isPinned[i],
+                  tabWidth,
+                  tabsi ? tabsi.toString() : 'none',
+                  ilModules[i],
+                  mtModules[i],
+                ].join('_');
+                if (!tabsi) return <Hbox key={key} style={{ width }} />;
+                return (
+                  <Tabs
+                    key={key}
+                    style={{ width }}
+                    panelIndex={i}
+                    isPinned={isPinned[i]}
+                    module={panels[i]}
+                    tabs={tabsi}
+                    ilModule={ilModules[i]}
+                    ilModuleOption={ilModuleOptions[i]}
+                    mtModule={mtModules[i]}
+                  />
+                );
+              }
+              return null;
             })}
           </div>
 
@@ -404,41 +440,46 @@ class Viewport extends React.Component implements PopupParent {
                 popupParent
               )}
 
-            {textComps.map((i) => {
-              return (
-                <Atext
-                  key={[i, reset].join('.')}
-                  style={{
-                    flexGrow: `${columns[i]}`,
-                    flexShrink: `${numDisplayedWindows - columns[i]}`,
-                  }}
-                  n={Number(i + 1)}
-                  ownWindow={ownWindow}
-                  book={locs[i][0]}
-                  chapter={Number(locs[i][1])}
-                  verse={Number(locs[i][2])}
-                  windowV11n={windowV11n}
-                  columns={columns[i]}
-                  module={modules[i]}
-                  ilModule={ilMods[i]}
-                  ilModuleOption={ilModuleOptions[i]}
-                  show={show}
-                  place={place}
-                  modkey={keys[i]}
-                  selection={selection}
-                  flagScroll={flagScroll[i]}
-                  isPinned={isPinned[i]}
-                  noteBoxHeight={noteBoxHeight[i]}
-                  maximizeNoteBox={maximizeNoteBox[i]}
-                  onMaximizeNoteBox={parentHandler}
-                  onWheel={(e) => {
-                    parentHandler(e);
-                    popupParentHandler(e, modules[i]);
-                  }}
-                  onMouseOut={(e) => popupParentHandler(e, modules[i])}
-                  onMouseOver={(e) => popupParentHandler(e, modules[i])}
-                />
-              );
+            {panels.map((panel: string | null, i: number) => {
+              const panelWidth = panelWidths[i];
+              const column = columns[i];
+              if (panelWidth && column && (panel || panel === '')) {
+                return (
+                  <Atext
+                    key={[i, reset].join('.')}
+                    style={{
+                      flexGrow: `${panelWidths[i]}`,
+                      flexShrink: `${numPanels - panelWidth}`,
+                    }}
+                    panelIndex={i}
+                    ownWindow={ownWindow}
+                    book={locs[i][0]}
+                    chapter={Number(locs[i][1])}
+                    verse={Number(locs[i][2])}
+                    windowV11n={windowV11n}
+                    columns={column}
+                    module={panels[i]}
+                    ilModule={ilModules[i]}
+                    ilModuleOption={ilModuleOptions[i]}
+                    show={show}
+                    place={place}
+                    modkey={keys[i]}
+                    selection={selection}
+                    flagScroll={flagScroll[i]}
+                    isPinned={isPinned[i]}
+                    noteBoxHeight={noteBoxHeight[i]}
+                    maximizeNoteBox={maximizeNoteBox[i]}
+                    onMaximizeNoteBox={parentHandler}
+                    onWheel={(e) => {
+                      parentHandler(e);
+                      popupParentHandler(e, panel);
+                    }}
+                    onMouseOut={(e) => popupParentHandler(e, panel)}
+                    onMouseOver={(e) => popupParentHandler(e, panel)}
+                  />
+                );
+              }
+              return null;
             })}
           </Hbox>
         </Vbox>

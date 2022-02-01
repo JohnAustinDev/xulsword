@@ -7,6 +7,7 @@ import {
   decodeOSISRef,
   escapeRE,
   firstIndexOfBookGroup,
+  JSON_stringify,
   ofClass,
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
@@ -17,6 +18,8 @@ import { TextCache } from './ztext';
 import { textChange, aTextWheelScroll } from './zversekey';
 
 import type { XulswordStatePref } from '../../type';
+import type { XulswordState } from '../xulsword/xulsword';
+import type { ViewportWinState } from './viewportWin';
 
 export type MouseWheel = {
   atext: HTMLElement | null;
@@ -24,16 +27,27 @@ export type MouseWheel = {
   TO: number | undefined;
 };
 
+// The following are viewportWin notStatePref keys (values are not used)
+export const vpWinNotStatePref = {
+  history: [] as any[],
+  historyIndex: 0,
+  tabs: [] as (string[] | null)[],
+  panels: [] as (string | null)[],
+  ilModules: [] as (string | null)[],
+  mtModules: [] as (string | null)[],
+  flagScroll: [] as number[],
+  isPinned: [true, true, true],
+  noteBoxHeight: [] as number[],
+  maximizeNoteBox: [] as number[],
+  v11nmod: '',
+  windowV11n: '',
+  vpreset: 0,
+};
+
 export function updateVersification(component: React.Component) {
-  const {
-    modules,
-    numDisplayedWindows,
-    v11nmod: currentMod,
-    windowV11n,
-  } = component.state as any;
-  const v11nmod = modules.find((m: string, i: number) => {
-    return i < numDisplayedWindows && m && G.Tab[m].isVerseKey;
-  });
+  const state = component.state as XulswordState | ViewportWinState;
+  const { panels, v11nmod: currentMod, windowV11n } = state;
+  const v11nmod = panels.find((m: string | null) => m && G.Tab[m].isVerseKey);
   const modV11n = v11nmod ? G.Tab[v11nmod].v11n : undefined;
   if (currentMod !== v11nmod || windowV11n !== modV11n) {
     component.setState({ v11nmod, windowV11n: modV11n });
@@ -66,17 +80,17 @@ export default function handler(
 ) {
   const statex = this.state as any;
   const { windowV11n } = statex;
-  const state = this.state as XulswordStatePref;
-  const { modules } = state;
+  const state = this.state as XulswordState;
+  const { panels } = state;
   const target = es.target as HTMLElement;
   const mcls = ofClass(['atext', 'tabs'], target);
   const atext = mcls && mcls.type === 'atext' ? mcls.element : null;
   const tabs = mcls && mcls.type === 'tabs' ? mcls.element : null;
-  const n = Number(atext ? atext.dataset.wnum : tabs?.dataset.wnum);
-  const i = n - 1;
-  const isPinned = atext?.classList.contains('pinned');
-  const module = modules[i];
-  const type = module ? G.Tab[module].type : null;
+  const index = Number(atext ? atext.dataset.index : tabs?.dataset.index);
+  const isps = atext ? atext.dataset.ispinned : tabs?.dataset.ispinned;
+  const isPinned = isps === 'true';
+  const panel = panels[index];
+  const type = panel ? G.Tab[panel].type : null;
   switch (es.type) {
     case 'click': {
       const e = es as React.MouseEvent;
@@ -112,32 +126,32 @@ export default function handler(
       const p = getElementInfo(elem);
       switch (targ.type) {
         case 'text-win': {
-          if (atext) {
-            const notStatePref: any = {
-              isPinned: [true, true, true],
-              numDisplayedWindows: Number(atext.dataset.columns),
-              history: [],
-              historyIndex: 0,
-            };
-            Object.entries(state).forEach((entry) => {
-              const [name, value] = entry;
-              if (!(name in notStatePref)) {
-                if (Array.isArray(value)) {
-                  const shvalue = value.slice();
-                  for (let x = 1; x < n; x += 1) {
-                    shvalue.push(shvalue.shift());
-                  }
-                  notStatePref[name] = shvalue;
-                } else notStatePref[name] = value;
-              }
+          const cols = atext?.dataset.columns;
+          if (atext && cols !== undefined) {
+            const columns = Number(cols);
+            const notStatePref: Partial<XulswordState> = {};
+            Object.entries(vpWinNotStatePref).forEach((entry) => {
+              const name = entry[0] as keyof typeof vpWinNotStatePref;
+              const nsp = notStatePref as any;
+              nsp[name] = state[name];
             });
+            const vpwPanels: any[] = [];
+            const vpwTabs: any[] = [];
+            notStatePref.panels?.forEach((pnl, i) => {
+              const { tabs: tbs } = notStatePref;
+              vpwTabs[i] = index === i && tbs && tbs[i] ? tbs[i] : undefined;
+              vpwPanels[i] =
+                index <= i && i < index + columns ? pnl : undefined;
+            });
+            notStatePref.panels = vpwPanels;
+            notStatePref.tabs = vpwTabs;
             const b = atext.getBoundingClientRect();
             const options = {
               title: 'viewport',
               webPreferences: {
                 additionalArguments: [
                   'viewportWin',
-                  JSON.stringify(notStatePref),
+                  JSON_stringify(notStatePref),
                 ],
               },
               openWithBounds: {
@@ -152,12 +166,13 @@ export default function handler(
           break;
         }
         case 'text-pin': {
-          if (atext && module) {
+          if (atext && panel) {
             const { columns } = atext.dataset;
             this.setState((prevState: XulswordStatePref) => {
               const { isPinned: ip } = prevState;
-              for (let x = i; x < Number(columns) + i; x += 1) {
-                ip[x] = !ip[x];
+              const newv = ip[index];
+              for (let x = index; x < Number(columns) + index; x += 1) {
+                ip[x] = !newv;
               }
               return { isPinned: ip };
             });
@@ -233,12 +248,12 @@ export default function handler(
           if (atext) {
             this.setState((prevState: XulswordStatePref) => {
               const { maximizeNoteBox, noteBoxHeight } = prevState;
-              if (maximizeNoteBox[i] > 0) {
-                noteBoxHeight[i] = maximizeNoteBox[i];
-                maximizeNoteBox[i] = 0;
+              if (maximizeNoteBox[index] > 0) {
+                noteBoxHeight[index] = maximizeNoteBox[index];
+                maximizeNoteBox[index] = 0;
               } else {
-                maximizeNoteBox[i] = noteBoxHeight[i];
-                noteBoxHeight[i] =
+                maximizeNoteBox[index] = noteBoxHeight[index];
+                noteBoxHeight[index] =
                   atext.clientHeight -
                   C.TextHeaderHeight -
                   C.TextBBTopMargin -
@@ -258,25 +273,31 @@ export default function handler(
             m &&
             m !== 'disabled' &&
             !elem.classList.contains('disabled') &&
-            !state.isPinned[i]
+            !state.isPinned[index]
           ) {
             if (targ.type === 'ilt-tab') {
               this.setState((prevState: XulswordStatePref) => {
                 const { ilModules } = prevState;
-                ilModules[i] = ilModules[i] ? '' : m;
-                return { ilModules };
+                const s: Partial<XulswordStatePref> = {
+                  ilModules: ilModules.slice(),
+                };
+                if (!s.ilModules) s.ilModules = [];
+                s.ilModules[index] = ilModules[index] ? '' : m;
+                return s;
               });
             } else {
               this.setState((prevState: XulswordStatePref) => {
-                const { modules: mods, mtModules } = prevState;
-                mods[i] = m;
-                if (targ.type === 'mto-tab' || targ.type === 'mts-tab') {
-                  mtModules[i] = m;
-                }
-                return {
-                  modules: mods,
-                  mtModules,
+                const { panels: pans, mtModules } = prevState;
+                const s: Partial<XulswordStatePref> = {
+                  panels: pans.slice(),
                 };
+                if (!s.panels) s.panels = [];
+                s.panels[index] = m;
+                if (targ.type === 'mto-tab' || targ.type === 'mts-tab') {
+                  s.mtModules = mtModules.slice();
+                  s.mtModules[index] = m;
+                }
+                return s;
               });
             }
           }
@@ -308,7 +329,7 @@ export default function handler(
             this.setState((prevState: XulswordStatePref) => {
               const { keys } = prevState;
               const str = p.osisref as string;
-              keys[i] = decodeOSISRef(str.replace(/^[^:]+:/, ''));
+              keys[index] = decodeOSISRef(str.replace(/^[^:]+:/, ''));
               return { keys };
             });
           }
@@ -318,7 +339,7 @@ export default function handler(
           if (atext && key) {
             this.setState((prevState: XulswordStatePref) => {
               const { keys } = prevState;
-              keys[i] = key;
+              keys[index] = key;
               return { keys };
             });
           }
@@ -326,7 +347,7 @@ export default function handler(
         }
         case 'fnlink':
         case 'crref': {
-          if (windowV11n && module && p && p.mod && p.bk && p.ch && p.vs) {
+          if (windowV11n && panel && p && p.mod && p.bk && p.ch && p.vs) {
             switch (type) {
               case C.BIBLE:
               case C.COMMENTARY: {
@@ -360,7 +381,7 @@ export default function handler(
             const [, , , mod] = value.split('.');
             this.setState((prevState: XulswordStatePref) => {
               const { ilModules } = prevState;
-              ilModules[i] = mod;
+              ilModules[index] = mod;
               return { ilModules };
             });
           }
@@ -377,7 +398,7 @@ export default function handler(
     case 'keydown': {
       const e = es as React.KeyboardEvent;
       const targ = ofClass(['dictkeyinput'], target);
-      if (targ && module) {
+      if (targ && panel) {
         e.stopPropagation();
         delayHandler.bind(this)((select: HTMLSelectElement, mod: string) => {
           const { value } = select;
@@ -390,7 +411,7 @@ export default function handler(
             if (firstMatch) {
               this.setState((prevState: XulswordStatePref) => {
                 const { keys } = prevState;
-                [, , keys[i]] = firstMatch;
+                [, , keys[index]] = firstMatch;
                 return { keys };
               });
             } else if (e.key !== 'backspace') {
@@ -398,7 +419,7 @@ export default function handler(
               select.style.color = 'red';
             }
           }
-        }, C.UI.Atext.dictKeyInputDelay)(targ.element, module);
+        }, C.UI.Atext.dictKeyInputDelay)(targ.element, panel);
       }
       break;
     }
@@ -428,7 +449,7 @@ export default function handler(
     case 'mousemove': {
       this.setState((prevState) => {
         const { maximizeNoteBox } = prevState as XulswordStatePref;
-        maximizeNoteBox[i] = 0;
+        maximizeNoteBox[index] = 0;
         return { maximizeNoteBox };
       });
       break;
@@ -440,8 +461,8 @@ export default function handler(
         this.setState((prevState: XulswordStatePref) => {
           const { maximizeNoteBox, noteBoxHeight } = prevState;
           const [initial, final] = noteboxResizing;
-          if (maximize) maximizeNoteBox[i] = noteBoxHeight[i];
-          noteBoxHeight[i] += initial - final;
+          if (maximize) maximizeNoteBox[index] = noteBoxHeight[index];
+          noteBoxHeight[index] += initial - final;
           return { maximizeNoteBox, noteBoxHeight };
         });
       }

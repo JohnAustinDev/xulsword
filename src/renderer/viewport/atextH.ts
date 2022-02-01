@@ -11,8 +11,8 @@ import { textChange, aTextWheelScroll } from './zversekey';
 import type Atext from './atext';
 import type { AtextProps, AtextState } from './atext';
 
-let MatchingStrongs: any;
-let AddedRules: any[] = [];
+let MatchingStrongs: { rule: CSSRule; sheet: number; index: number } | null;
+let AddedRules: { sheet: CSSStyleSheet; index: number }[] = [];
 
 function scroll2Note(atext: HTMLElement, id: string) {
   Array.from(atext.getElementsByClassName('fnselected')).forEach((note) => {
@@ -27,8 +27,7 @@ function scroll2Note(atext: HTMLElement, id: string) {
 
 export default function handler(this: Atext, es: React.SyntheticEvent) {
   const props = this.props as AtextProps;
-  const { isPinned, module, n, place } = props;
-  const i = n - 1;
+  const { isPinned, module, panelIndex: index, place } = props;
   const target = es.target as HTMLElement;
   const atext = es.currentTarget as HTMLElement;
   const type = module ? G.Tab[module].type : '';
@@ -69,7 +68,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
 
         case 'cr':
           if (!popupParent && p) {
-            const id = `w${n}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`;
+            const id = `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`;
             const cr = document.getElementById(id);
             if (cr) {
               cr.classList.toggle('cropened');
@@ -192,7 +191,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           if (p && place.crossrefs === 'notebox') {
             okay = scroll2Note(
               atext,
-              `w${n}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`
+              `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`
             );
           }
           break;
@@ -203,7 +202,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           else if (p && place.footnotes === 'notebox') {
             okay = scroll2Note(
               atext,
-              `w${n}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`
+              `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`
             );
           }
           break;
@@ -216,7 +215,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           ) {
             okay = scroll2Note(
               atext,
-              `w${n}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`
+              `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`
             );
           }
           break;
@@ -229,22 +228,17 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
             if (/^S_\w*\d+$/.test(cls)) {
               const sheet =
                 document.styleSheets[document.styleSheets.length - 1];
-              const index = sheet.cssRules.length;
+              const i = sheet.cssRules.length;
               if (!MatchingStrongs) {
                 // Read from CSS stylesheet
                 MatchingStrongs = getCSS('.matchingStrongs {');
               }
-              try {
+              if (MatchingStrongs) {
                 sheet.insertRule(
-                  MatchingStrongs.rule.cssText.replace(
-                    'matchingStrongs',
-                    classes[i]
-                  ),
-                  index
+                  MatchingStrongs.rule.cssText.replace('matchingStrongs', cls),
+                  i
                 );
-                AddedRules.push({ sheet, index });
-              } catch (er) {
-                console.log(`Strong's class insertion failed: '${cls}'`);
+                AddedRules.push({ sheet, index: i });
               }
             }
           });
@@ -274,7 +268,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       if (!okay) {
         // report the problem for debugging
         if (okay === false) {
-          let msg = `w=${n !== null ? n : 'null'}\nclass=${elem.className}`;
+          let msg = `w=${index}\nclass=${elem.className}`;
           if (p) {
             Object.entries(p).forEach((entry) => {
               const [m, val] = entry;
@@ -302,9 +296,9 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       // unless we're now over npopup
       const nowover = e.relatedTarget as HTMLElement | null;
       if (!nowover?.classList.contains('npopup')) {
-        for (let x = AddedRules.length - 1; x >= 0; x -= 1) {
-          AddedRules[x].sheet.deleteRule(AddedRules[x].index);
-        }
+        AddedRules.reverse().forEach((r) => {
+          r.sheet.deleteRule(r.index);
+        });
         AddedRules = [];
       }
       break;

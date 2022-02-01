@@ -66,6 +66,15 @@ const notStatePref = {
   searchDisabled: true,
 };
 
+// These are state pref panel arrays that don't require default values in
+// default prefs.js, since they could be variable size arrays.
+const statePrefPanelDefault: Partial<XulswordStatePref> = {
+  isPinned: [false],
+  flagScroll: [1],
+  noteBoxHeight: [200],
+  maximizeNoteBox: [0],
+};
+
 export type XulswordState = typeof notStatePref & XulswordStatePref;
 
 export default class Xulsword extends React.Component {
@@ -86,12 +95,24 @@ export default class Xulsword extends React.Component {
   constructor(props: XulswordProps) {
     super(props);
 
-    const statePref = props.id ? getStatePref(props.id, null) : undefined;
-
-    this.state = {
-      ...notStatePref,
-      ...statePref,
-    };
+    if (props.id === 'xulsword') {
+      const s: XulswordState = {
+        ...notStatePref,
+        ...(getStatePref(props.id, null) as XulswordStatePref),
+      };
+      // If any statePrefPanelDefault arrays are still 0 length, fill them.
+      const sx = s as any;
+      Object.entries(statePrefPanelDefault).forEach((entry) => {
+        const [key, val] = entry;
+        const sval = sx[key];
+        if (!sval.length && key && Array.isArray(val)) {
+          sx.panels.forEach((_p: any, i: string) => {
+            if (sx[key][i] === undefined) [sx[key][i]] = val;
+          });
+        }
+      });
+      this.state = s;
+    } else throw Error(`Xulsword id must be 'xulsword'`);
 
     onSetWindowStates(this);
 
@@ -263,11 +284,10 @@ export default class Xulsword extends React.Component {
       place,
       searchDisabled,
       tabs,
-      modules,
+      panels,
       ilModules,
       mtModules,
       keys,
-      numDisplayedWindows,
       selection,
       flagScroll,
       isPinned,
@@ -291,15 +311,16 @@ export default class Xulsword extends React.Component {
     }
 
     const navdisabled =
-      !windowV11n || isPinned.every((p, i) => i >= numDisplayedWindows || p);
+      !windowV11n || isPinned.every((p, i) => p || !panels[i]);
 
+    const short = false;
     jsdump(
       `Rendering Xulsword ${JSON.stringify({
         ...state,
         history: history.length,
-        tabs: 'not_printed',
-        show: 'not_printed',
-        place: 'not_printed',
+        tabs: short ? 'not_printed' : tabs,
+        show: short ? 'not_printed' : show,
+        place: short ? 'not_printed' : place,
         historyMenupopup: !!historyMenupopup,
         windowV11n,
       })}`
@@ -494,7 +515,7 @@ export default class Xulsword extends React.Component {
                 verse={verse}
                 selection={selection}
                 tabs={tabs}
-                modules={modules}
+                panels={panels}
                 ilModules={ilModules}
                 mtModules={mtModules}
                 show={show}
@@ -505,7 +526,6 @@ export default class Xulsword extends React.Component {
                 noteBoxHeight={noteBoxHeight}
                 maximizeNoteBox={maximizeNoteBox}
                 showChooser={showChooser}
-                numDisplayedWindows={numDisplayedWindows}
                 ownWindow={false}
                 windowV11n={windowV11n}
               />

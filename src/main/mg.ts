@@ -7,7 +7,7 @@ import { BrowserWindow, Menu, ipcMain, shell } from 'electron';
 import i18next from 'i18next';
 import { GPublic, ShellPublic } from '../type';
 import C from '../constant';
-import { isASCII } from '../common';
+import { isASCII, JSON_parse } from '../common';
 import Dirsx from './modules/dirs';
 import Prefsx from './modules/prefs';
 import Commandsx from './commands';
@@ -285,7 +285,7 @@ function getBooks(): { sName: string; bName: string; bNameL: string }[] {
   const raw = fs.readFileSync(stfile);
   let data;
   if (raw && raw.length) {
-    const json = JSON.parse(raw.toString());
+    const json = JSON_parse(raw.toString());
     if (json && typeof json === 'object') {
       data = json;
     } else {
@@ -467,7 +467,12 @@ function setMenuFromPrefs(menu: Electron.Menu) {
       }
     } else if (i.id && i.type === 'radio') {
       const [pref, str] = i.id.split('_val_');
-      if (str !== '') {
+      if (pref === 'xulsword.panels') {
+        const numPanels = Prefsx.getComplexValue(pref).filter(
+          (m: string | null) => m || m === ''
+        ).length;
+        if (numPanels === Number(str)) i.checked = true;
+      } else if (str !== '') {
         let val: string | number = str;
         if (Number(str).toString() === str) val = Number(str);
         const pval =

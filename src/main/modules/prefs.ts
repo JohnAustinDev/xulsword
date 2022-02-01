@@ -2,7 +2,7 @@
 /* eslint-disable new-cap */
 import path from 'path';
 import fs from 'fs';
-import { deepClone } from '../../common';
+import { deepClone, JSON_parse, JSON_stringify } from '../../common';
 import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import { jsdump } from '../mutil';
@@ -138,7 +138,7 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
       if (s.file.exists()) {
         const data = fs.readFileSync(s.file.path);
         if (data && data.length) {
-          const json = JSON.parse(data.toString());
+          const json = JSON_parse(data.toString());
           if (json && typeof json === 'object') {
             s.data = json;
           }
@@ -164,7 +164,7 @@ const Prefs: typeof PrefsPublic & PrefsPrivate = {
     const s = this.store[aStore];
     if (!s.data || typeof s.data !== 'object') return false;
 
-    const json = JSON.stringify(s.data, null, 2);
+    const json = JSON_stringify(s.data, null, 2);
     if (json) {
       fs.writeFileSync(s.file.path, json);
       jsdump(`NOTE: Persisted store: ${s.file.path}`);

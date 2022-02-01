@@ -11,6 +11,7 @@ import {
 } from 'electron';
 import path from 'path';
 import C from '../constant';
+import { JSON_parse, JSON_stringify } from '../common';
 import Commands from './commands';
 import G from './mg';
 
@@ -58,13 +59,14 @@ export default class MenuBuilder {
 
   static setTabs(
     type: TabTypes | 'all',
-    winLabel: string | 'all',
+    panelLabel: string | 'all',
     modOrAll: string,
     doWhat: 'show' | 'hide' | 'toggle'
   ) {
+    const panels = G.Prefs.getComplexValue('xulsword.panels');
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    const n = Number(winLabel.substring(winLabel.length - 1));
-    const windows = Number.isNaN(n) ? [1, 2, 3] : [n];
+    const pix = Number(panelLabel.substring(panelLabel.length - 1));
+    const panelIndexes = Number.isNaN(pix) ? panels.map((_p: any, i: number) => i) : [pix - 1];
 
     const modules =
       modOrAll === 'all'
@@ -73,95 +75,95 @@ export default class MenuBuilder {
           })
         : [G.Tab[modOrAll]];
 
-    const pval = G.Prefs.getComplexValue('xulsword.tabs');
-    const nval = JSON.parse(JSON.stringify(pval));
+    const pval = G.Prefs.getComplexValue('xulsword.tabs') as (string[] | null)[];
+    const nval = JSON_parse(JSON_stringify(pval)) as (string[] | null)[];
 
     // If toggling on allwindows, set them according to the clicked
     // menuitem, and not each item separately.
     let doWhat2 = doWhat;
-    if (doWhat === 'toggle' && winLabel === 'menu.view.allwindows') {
+    if (doWhat === 'toggle' && panelLabel === 'menu.view.allwindows') {
       const m = modules[0];
-      const val = m !== null && pval.every((wn: any) => wn?.includes(m.module));
-      doWhat2 = val ? 'hide' : 'show';
+      const dwh = m !== null && pval.every((t: any) => t === undefined || t?.includes(m.module));
+      doWhat2 = dwh ? 'hide' : 'show';
     }
-
-    windows.forEach((w) => {
-      modules.forEach((t) => {
-        if (t) {
+    panelIndexes.forEach((pi: number) => {
+      modules.forEach((m) => {
+        if (m) {
+          const tabbank = pval[pi];
+          const ntabbank = nval[pi];
           const show =
             doWhat2 === 'toggle'
-              ? !pval[w - 1].includes(t.module)
+              ? !tabbank || !tabbank.includes(m.module)
               : doWhat2 === 'show';
-          if (show && !pval[w - 1].includes(t.module)) {
-            nval[w - 1].push(t.module);
-          } else if (!show && pval[w - 1].includes(t.module)) {
-            nval[w - 1].splice(nval[w - 1].indexOf(t.module), 1);
+          if (show && (!tabbank || !tabbank.includes(m.module))) {
+            if (ntabbank) ntabbank.push(m.module);
+            // if creating a tab bank, create tab banks before it as well
+            else panels.forEach((_p: any, i: number) => {
+              if (!nval[i]) nval[i] = i === pi ? [m.module] : [];
+            });
+          } else if (!show && ntabbank && tabbank && tabbank.includes(m.module)) {
+            ntabbank.splice(ntabbank.indexOf(m.module), 1);
           }
         }
       });
     });
 
-    nval.forEach((tabs: string[], i: number) => {
-      const tmp = tabs.filter(Boolean);
-      nval[i] = tmp.sort(MenuBuilder.tabOrder);
-    });
-
-    // Insure module vars aren't pointing to modules which have no tab.
-    const prefs = ['xulsword.modules', 'xulsword.mtModules'];
-    const used: any = {};
-    prefs.forEach((p) => {
-      const ms = G.Prefs.getComplexValue(p);
-      let save = false;
-      ms.forEach((m: any, i: any) => {
-        if (!nval[i].includes(m)) {
-          save = true;
-          ms[i] = undefined;
-          // Rather than leave a window's display module undefined, we
-          // can choose a new module, and choose a book too if none is
-          // already selected.
-          if (p === 'xulsword.modules') {
-            let it = 0;
-            let nextmod = nval[i][it];
-            while(nextmod in used && it + 1 < nval[i].length) {
-              it += 1;
-              nextmod = nval[i][it];
-            }
-            ms[i] = nextmod;
-            used[nextmod] = true;
-            let bk = G.Prefs.getCharPref('xulsword.book');
-            if (!bk && nextmod && G.Tab[nextmod].isVerseKey) {
-              [bk] = G.AvailableBooks[nextmod];
-              if (bk) {
-                G.Prefs.setCharPref('xulsword.book', bk);
-              }
-            }
-          }
-        }
-      });
-      if (save) G.Prefs.setComplexValue(p, ms);
-    });
-
-    // If user is setting tabs for a window that is not open, then open it.
-    if (windows.length === 1) {
-      let ndw = G.Prefs.getIntPref('xulsword.numDisplayedWindows');
-      for (let w = 2; w <= windows[0]; w += 1) {
-        if (w > ndw) ndw = w;
+    nval.forEach((tabs, i: number) => {
+      if (tabs) {
+        const tmp = tabs.filter(Boolean);
+        nval[i] = tmp.sort(MenuBuilder.tabOrder);
       }
-      G.Prefs.setIntPref('xulsword.numDisplayedWindows', ndw);
-    }
+    });
 
+    // If user is setting tabs for a panel that is not open, then open it.
+    if (panelIndexes.length === 1 && panels[panelIndexes[0]] === null)
+      panels[panelIndexes[0]] = '';
+
+    // Insure a panel's module vars point to modules within the panel's tab bank,
+    // and rather than leave a panel's display module as empty string, we can
+    // choose a new module, and choose a book too if none is already selected.
+    const mtm = G.Prefs.getComplexValue('xulsword.mtModules');
+    const nmtm = mtm.map((m: string | null, i: number) => {
+      const nvali = nval[i];
+      return m && nvali && nvali.includes(m) ? m : undefined;
+    });
+    G.Prefs.setComplexValue('xulsword.mtModules', nmtm);
+    const used: any = {};
+    panels.forEach((m: string | null, i: number) => {
+      const nvali = nval[i];
+      if (m !== null && nvali && nvali.length && !nvali.includes(m)) {
+        panels[i] = '';
+        let it = 0;
+        let nextmod = nvali[it];
+        while(nextmod in used && it + 1 < nvali.length) {
+          it += 1;
+          nextmod = nvali[it];
+        }
+        panels[i] = nextmod;
+        used[nextmod] = true;
+        let bk = G.Prefs.getCharPref('xulsword.book');
+        if (!bk && nextmod && G.Tab[nextmod].isVerseKey) {
+          [bk] = G.AvailableBooks[nextmod];
+          if (bk) {
+            G.Prefs.setCharPref('xulsword.book', bk);
+          }
+        }
+      }
+    });
+
+    G.Prefs.setComplexValue('xulsword.panels', panels);
     G.Prefs.setComplexValue('xulsword.tabs', nval);
 
     // Update global states corresponding to prefs which could have been changed.
     G.setGlobalStateFromPrefs([
       'xulsword.tabs',
-      'xulsword.modules',
+      'xulsword.panels',
       'xulsword.mtModules',
       'xulsword.book',
-      'xulsword.numDisplayedWindows'
     ]);
   }
 
+  // Sort tabs to particular order
   static tabOrder(as: string, bs: string) {
     const a = G.Tab[as];
     const b = G.Tab[bs];
@@ -226,41 +228,44 @@ export default class MenuBuilder {
     });
   }
 
-  static tabs: [string, TabTypes][] = [
+  static showtabs: [string, TabTypes][] = [
     ['showtexttabs', 'Texts'],
     ['showcommtabs', 'Comms'],
     ['showbooktabs', 'Genbks'],
     ['showdicttabs', 'Dicts'],
   ];
 
-  static winLabels = [
-    'menu.view.window1',
-    'menu.view.window2',
-    'menu.view.window3',
-    'menu.view.allwindows',
-  ];
+  static panelLabels = (() => {
+    const panelLabels: string[] = [];
+    G.Prefs.getComplexValue('xulsword.panels')
+      .forEach((_panel: string | null, i: number) => {
+      panelLabels.push(`menu.view.window${i + 1}`);
+    });
+    panelLabels.push('menu.view.allwindows');
+    return panelLabels;
+  })();
 
   static updateTabMenus(menu: Menu) {
-    MenuBuilder.tabs.forEach((tb) => {
-      const [tab, type] = tb;
+    MenuBuilder.showtabs.forEach((showtab) => {
+      const [tab, type] = showtab;
       let disableParent = true;
-      MenuBuilder.winLabels.forEach((wl) => {
-        const win = Number(wl.substring(wl.length - 1));
-        const tabmenu = menu.getMenuItemById(`menu_${tab}_${wl}`);
+      MenuBuilder.panelLabels.forEach((pl) => {
+        const panelIndex = Number(pl.substring(pl.length - 1));
+        const tabmenu = menu.getMenuItemById(`menu_${tab}_${pl}`);
         const submenu = tabmenu?.submenu;
-        if (!submenu) throw Error(`No tabmenu: menu_${tab}_${wl}`);
+        if (!submenu) throw Error(`No tabmenu: menu_${tab}_${pl}`);
         const { items } = submenu;
-        while (items[0].id !== `showAll_${tab}_${wl}`) items.shift();
+        while (items[0].id !== `showAll_${tab}_${pl}`) items.shift();
         G.Tabs.reverse().forEach((t) => {
           if (t.tabType === type) {
             disableParent = false;
             const newItem = new MenuItem({
-              id: `showtab_${win}_${t.module}`,
+              id: `showtab_${panelIndex}_${t.module}`,
               label: t.label + (t.description ? ` --- ${t.description}` : ''),
               type: 'checkbox',
               // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
               click: () => {
-                MenuBuilder.setTabs(type, wl, t.module, 'toggle');
+                MenuBuilder.setTabs(type, pl, t.module, 'toggle');
               },
             });
             submenu.insert(0, newItem);
@@ -273,7 +278,12 @@ export default class MenuBuilder {
   }
 
   // Read locale key, appending & before shortcut key and escaping other &s.
-  ts(key: string, sckey?: string): string {
+  ts(keyx: string, sckey?: string): string {
+    // CLUDGE:
+    let key = keyx;
+    if (key.startsWith('menu.view.window') && Number(key.substring(key.length - 1)) > 3)
+      key = 'menu.view.window3';
+
     let text = this.i18n.t(key);
     const sckey2 = sckey || `${key}.sc`;
     if (text) {
@@ -467,30 +477,30 @@ export default class MenuBuilder {
       };
     });
 
-    const textTabs = MenuBuilder.tabs.map((t) => {
+    const textTabs = MenuBuilder.showtabs.map((t) => {
       const [tab, type] = t;
       return {
         id: `parent_${tab}`,
         label: this.ts(`menu.view.${tab}`),
         icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
         submenu: [
-          ...MenuBuilder.winLabels.map((wl: any) => {
+          ...MenuBuilder.panelLabels.map((pl: any) => {
             return {
-              label: this.ts(wl),
-              id: `menu_${tab}_${wl}`,
+              label: this.ts(pl),
+              id: `menu_${tab}_${pl}`,
               submenu: [
                 {
-                  id: `showAll_${tab}_${wl}`,
+                  id: `showAll_${tab}_${pl}`,
                   label: this.ts('menu.view.showAll'),
                   click: () => {
-                    MenuBuilder.setTabs(type, wl, 'all', 'show');
+                    MenuBuilder.setTabs(type, pl, 'all', 'show');
                   },
                 },
                 {
-                  id: `hideAll_${tab}_${wl}`,
+                  id: `hideAll_${tab}_${pl}`,
                   label: this.ts('menu.view.hideAll'),
                   click: () => {
-                    MenuBuilder.setTabs(type, wl, 'all', 'hide');
+                    MenuBuilder.setTabs(type, pl, 'all', 'hide');
                   },
                 },
               ],
@@ -531,22 +541,22 @@ export default class MenuBuilder {
         ...textTabs,
         {
           label: this.ts('menu.view.showAll'),
-          submenu: MenuBuilder.winLabels.map((wl: any) => {
+          submenu: MenuBuilder.panelLabels.map((pl: any) => {
             return {
-              label: this.ts(wl),
+              label: this.ts(pl),
               click: () => {
-                MenuBuilder.setTabs('all', wl, 'all', 'show');
+                MenuBuilder.setTabs('all', pl, 'all', 'show');
               },
             };
           }),
         },
         {
           label: this.ts('menu.view.hideAll'),
-          submenu: MenuBuilder.winLabels.map((wl: any) => {
+          submenu: MenuBuilder.panelLabels.map((pl: any) => {
             return {
-              label: this.ts(wl),
+              label: this.ts(pl),
               click: () => {
-                MenuBuilder.setTabs('all', wl, 'all', 'hide');
+                MenuBuilder.setTabs('all', pl, 'all', 'hide');
               },
             };
           }),
@@ -670,35 +680,28 @@ export default class MenuBuilder {
       ],
     };
 
+    const panelpref = 'xulsword.panels';
+    const panelarray = G.Prefs.getComplexValue(panelpref);
     const subMenuWindows = {
       role: 'windowMenu',
       label: this.ts('menu.windows'),
-      submenu: [
-        {
-          label: this.ts('menu.windows.1win'),
-          id: 'xulsword.numDisplayedWindows_val_1',
+      submenu: panelarray.map((_p: string | null, i: number) => {
+        const n = i + 1;
+        let num = n;
+        if (num > 3) num = 3;
+        return {
+          label: this.ts(`menu.windows.${num}win`),
+          id: `xulsword.panels_val_${n}`,
           type: 'radio',
           click: () => {
-            MenuBuilder.radioSwitch('xulsword.numDisplayedWindows', 1);
+            const newpans = panelarray.map((panel: string | null, x: number) => {
+              return x > i ? null : panel || '';
+            });
+            G.Prefs.setComplexValue(panelpref, newpans);
+            G.setGlobalStateFromPrefs(panelpref);
           },
-        },
-        {
-          label: this.ts('menu.windows.2win'),
-          id: 'xulsword.numDisplayedWindows_val_2',
-          type: 'radio',
-          click: () => {
-            MenuBuilder.radioSwitch('xulsword.numDisplayedWindows', 2);
-          },
-        },
-        {
-          label: this.ts('menu.windows.3win'),
-          id: 'xulsword.numDisplayedWindows_val_3',
-          type: 'radio',
-          click: () => {
-            MenuBuilder.radioSwitch('xulsword.numDisplayedWindows', 3);
-          },
-        },
-      ],
+        };
+      }),
     };
 
     const subMenuHelp = {

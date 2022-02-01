@@ -153,10 +153,38 @@ export function stringHash(...args: any): string {
   return `x${num < 0 ? 'm' : ''}${Math.abs(num)}`;
 }
 
+// JSON does not encode Javascript undefined, functions or symbols. So
+// what is specially encoded here can be recovered using JSON_parse(string).
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function JSON_stringify(x: any, _func?: null, space?: number): string {
+  return JSON.stringify(
+    x,
+    (_k, v) => {
+      return v === undefined ? '_undefined_' : v;
+    },
+    space
+  );
+}
+// NOTE: It is not possible to 100% recover arrays with undefined values
+// using the JSON.parse reviver, because the reviver specification requires
+// deletion of undefined array elements rather than setting to undefined.
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function JSON_parse(s: string, anyx?: Exclude<any, undefined>): any {
+  const any = anyx !== undefined ? anyx : JSON.parse(s);
+  if (any === undefined || any === null) return any;
+  if (typeof any === 'object') {
+    Object.entries(any).forEach((entry) => {
+      const [k, v] = entry;
+      any[k] = v === '_undefined_' ? undefined : JSON_parse('', v);
+    });
+  }
+  return any;
+}
+
 // Firefox Add-On validation throws warnings about eval(uneval(obj)), so
 // this is an alternate way...
 export function deepClone(obj: any) {
-  return JSON.parse(JSON.stringify(obj));
+  return JSON_parse(JSON_stringify(obj));
 }
 
 export function compareObjects(obj1: any, obj2: any, deep = false): boolean {
@@ -387,7 +415,10 @@ export function cleanDoubleClickSelection(sel: string) {
 
 // This function returns the FIRST rule matching the selector from the
 // given style sheet, or the first of all style sheets if sheet not specified.
-export function getCSS(selectorStr: string, sheetIndex?: number) {
+export function getCSS(
+  selectorStr: string,
+  sheetIndex?: number
+): { rule: CSSRule; sheet: number; index: number } | null {
   const selector = new RegExp(`^${escapeRE(selectorStr)}`);
 
   let ss1 = 0;

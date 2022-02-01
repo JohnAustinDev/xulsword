@@ -3,6 +3,7 @@
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import { render } from 'react-dom';
+import { JSON_parse } from '../../common';
 import i18nInit from '../i18n';
 import { jsdump } from '../rutil';
 import {
@@ -26,8 +27,8 @@ import '../viewport/atext.css';
 // Initial state arguments must be passed by the window
 // opener, or the popupWin will not show anything.
 const argv = window.shell.process.argv();
-const eleminfoWin = JSON.parse(argv.pop());
-const elemhtmlWin = JSON.parse(argv.pop());
+const eleminfoWin = JSON_parse(argv.pop());
+const elemhtmlWin = JSON_parse(argv.pop());
 
 const defaultProps = {
   ...xulDefaultProps,
