@@ -583,12 +583,21 @@ class Atext extends React.Component {
 
         <Vbox
           className={`sb cs-${module}`}
+          style={columns > 1 ? { columnCount: columns } : undefined}
           domref={this.sbref}
           pack="start"
           flex="1"
         />
 
-        <Vbox className="nbc" height={`${noteBoxHeight}px`}>
+        <Vbox
+          className="nbc"
+          height={`${noteBoxHeight}px`}
+          style={
+            columns > 1
+              ? { width: `calc(${100 / columns}% - 10px)` }
+              : undefined
+          }
+        >
           <Hbox>
             <div className={`bb ${bbtop ? 'moving' : ''}`} style={bbtop} />
             <div className="notebox-maximizer" />

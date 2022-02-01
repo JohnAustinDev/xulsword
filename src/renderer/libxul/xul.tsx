@@ -47,7 +47,9 @@ export const xulPropTypes = {
   orient: PropTypes.oneOf(['horizontal', 'vertical']),
   pack: PropTypes.oneOf(['start', 'center', 'end']),
   domref: PropTypes.any,
-  style: PropTypes.objectOf(PropTypes.string),
+  style: PropTypes.objectOf(
+    PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  ),
   width: PropTypes.string,
 
   onClick: PropTypes.func,

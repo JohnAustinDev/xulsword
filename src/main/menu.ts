@@ -1,5 +1,4 @@
 /* eslint-disable no-nested-ternary */
-/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   app,
@@ -66,7 +65,9 @@ export default class MenuBuilder {
     const panels = G.Prefs.getComplexValue('xulsword.panels');
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     const pix = Number(panelLabel.substring(panelLabel.length - 1));
-    const panelIndexes = Number.isNaN(pix) ? panels.map((_p: any, i: number) => i) : [pix - 1];
+    const panelIndexes = Number.isNaN(pix)
+      ? panels.map((_p: any, i: number) => i)
+      : [pix - 1];
 
     const modules =
       modOrAll === 'all'
@@ -75,7 +76,10 @@ export default class MenuBuilder {
           })
         : [G.Tab[modOrAll]];
 
-    const pval = G.Prefs.getComplexValue('xulsword.tabs') as (string[] | null)[];
+    const pval = G.Prefs.getComplexValue('xulsword.tabs') as (
+      | string[]
+      | null
+    )[];
     const nval = JSON_parse(JSON_stringify(pval)) as (string[] | null)[];
 
     // If toggling on allwindows, set them according to the clicked
@@ -83,7 +87,9 @@ export default class MenuBuilder {
     let doWhat2 = doWhat;
     if (doWhat === 'toggle' && panelLabel === 'menu.view.allwindows') {
       const m = modules[0];
-      const dwh = m !== null && pval.every((t: any) => t === undefined || t?.includes(m.module));
+      const dwh =
+        m !== null &&
+        pval.every((t: any) => t === undefined || t?.includes(m.module));
       doWhat2 = dwh ? 'hide' : 'show';
     }
     panelIndexes.forEach((pi: number) => {
@@ -98,10 +104,16 @@ export default class MenuBuilder {
           if (show && (!tabbank || !tabbank.includes(m.module))) {
             if (ntabbank) ntabbank.push(m.module);
             // if creating a tab bank, create tab banks before it as well
-            else panels.forEach((_p: any, i: number) => {
-              if (!nval[i]) nval[i] = i === pi ? [m.module] : [];
-            });
-          } else if (!show && ntabbank && tabbank && tabbank.includes(m.module)) {
+            else
+              panels.forEach((_p: any, i: number) => {
+                if (!nval[i]) nval[i] = i === pi ? [m.module] : [];
+              });
+          } else if (
+            !show &&
+            ntabbank &&
+            tabbank &&
+            tabbank.includes(m.module)
+          ) {
             ntabbank.splice(ntabbank.indexOf(m.module), 1);
           }
         }
@@ -135,7 +147,7 @@ export default class MenuBuilder {
         panels[i] = '';
         let it = 0;
         let nextmod = nvali[it];
-        while(nextmod in used && it + 1 < nvali.length) {
+        while (nextmod in used && it + 1 < nvali.length) {
           it += 1;
           nextmod = nvali[it];
         }
@@ -173,14 +185,16 @@ export default class MenuBuilder {
       const aLocale = G.ModuleConfigs[a.module]?.AssociatedLocale;
       const bLocale = G.ModuleConfigs[b.module]?.AssociatedLocale;
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
-      const aPriority = aLocale && aLocale !== C.NOTFOUND ? (aLocale === lng ? 1 : 2) : 3;
-      const bPriority = bLocale && bLocale !== C.NOTFOUND ? (bLocale === lng ? 1 : 2) : 3;
-      if (aPriority !== bPriority) return (aPriority > bPriority ? 1 : -1);
+      const aPriority =
+        aLocale && aLocale !== C.NOTFOUND ? (aLocale === lng ? 1 : 2) : 3;
+      const bPriority =
+        bLocale && bLocale !== C.NOTFOUND ? (bLocale === lng ? 1 : 2) : 3;
+      if (aPriority !== bPriority) return aPriority > bPriority ? 1 : -1;
       // Type and Priority are same. Sort by label's alpha.
-      return (a.label > b.label ? 1 : -1);
+      return a.label > b.label ? 1 : -1;
     }
     const mto = C.ModuleTypeOrder as any;
-    return (mto[a.tabType] > mto[b.tabType] ? 1 : -1);
+    return mto[a.tabType] > mto[b.tabType] ? 1 : -1;
   }
 
   mainWindow: BrowserWindow;
@@ -237,10 +251,11 @@ export default class MenuBuilder {
 
   static panelLabels = (() => {
     const panelLabels: string[] = [];
-    G.Prefs.getComplexValue('xulsword.panels')
-      .forEach((_panel: string | null, i: number) => {
-      panelLabels.push(`menu.view.window${i + 1}`);
-    });
+    G.Prefs.getComplexValue('xulsword.panels').forEach(
+      (_panel: string | null, i: number) => {
+        panelLabels.push(`menu.view.window${i + 1}`);
+      }
+    );
     panelLabels.push('menu.view.allwindows');
     return panelLabels;
   })();
@@ -281,7 +296,10 @@ export default class MenuBuilder {
   ts(keyx: string, sckey?: string): string {
     // CLUDGE:
     let key = keyx;
-    if (key.startsWith('menu.view.window') && Number(key.substring(key.length - 1)) > 3)
+    if (
+      key.startsWith('menu.view.window') &&
+      Number(key.substring(key.length - 1)) > 3
+    )
       key = 'menu.view.window3';
 
     let text = this.i18n.t(key);
@@ -432,7 +450,7 @@ export default class MenuBuilder {
       'usernotes',
       'strongs',
       'versenums',
-      'redwords'
+      'redwords',
     ];
 
     const allswitches = switches.map((x: any) => {
@@ -664,19 +682,32 @@ export default class MenuBuilder {
       submenu: [
         {
           label: this.ts('manBookmarksCmd.label'),
-          accelerator: this.tx('manBookmarksCmd.commandkey', ['CommandOrControl']),
-          click: () => {Commands.openBookmarksManager();},
+          accelerator: this.tx('manBookmarksCmd.commandkey', [
+            'CommandOrControl',
+          ]),
+          click: () => {
+            Commands.openBookmarksManager();
+          },
         },
         {
           label: this.ts('menuitem.newBookmark.label'),
-          accelerator: this.tx('addCurPageAsCmd.commandkey', ['CommandOrControl']),
-          click: () => {Commands.openNewBookmarkDialog();},
+          accelerator: this.tx('addCurPageAsCmd.commandkey', [
+            'CommandOrControl',
+          ]),
+          click: () => {
+            Commands.openNewBookmarkDialog();
+          },
         },
         {
           label: this.ts('menu.usernote.add'),
-          accelerator: this.tx('addCurPageAsCmd.commandkey', ['CommandOrControl', 'Shift']),
-          click: () => {Commands.openNewUserNoteDialog();},
-        }
+          accelerator: this.tx('addCurPageAsCmd.commandkey', [
+            'CommandOrControl',
+            'Shift',
+          ]),
+          click: () => {
+            Commands.openNewUserNoteDialog();
+          },
+        },
       ],
     };
 
@@ -694,9 +725,11 @@ export default class MenuBuilder {
           id: `xulsword.panels_val_${n}`,
           type: 'radio',
           click: () => {
-            const newpans = panelarray.map((panel: string | null, x: number) => {
-              return x > i ? null : panel || '';
-            });
+            const newpans = panelarray.map(
+              (panel: string | null, x: number) => {
+                return x > i ? null : panel || '';
+              }
+            );
             G.Prefs.setComplexValue(panelpref, newpans);
             G.setGlobalStateFromPrefs(panelpref);
           },
@@ -762,7 +795,7 @@ export default class MenuBuilder {
       process.env.NODE_ENV === 'development' ||
       process.env.DEBUG_PROD === 'true'
     )
-    applicationMenuTemplate.push(subMenuDev);
+      applicationMenuTemplate.push(subMenuDev);
 
     return applicationMenuTemplate;
   }
