@@ -253,11 +253,11 @@ export default function handler(
                 maximizeNoteBox[index] = 0;
               } else {
                 maximizeNoteBox[index] = noteBoxHeight[index];
-                noteBoxHeight[index] =
-                  atext.clientHeight -
-                  C.TextHeaderHeight -
-                  C.TextBBTopMargin -
-                  5;
+                const { columns: clsx } = atext.dataset;
+                const columns = Number(clsx);
+                let stopHeight = atext.clientHeight - C.UI.Atext.prevNextHeight;
+                if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
+                noteBoxHeight[index] = stopHeight;
               }
               return { maximizeNoteBox, noteBoxHeight };
             });
@@ -457,12 +457,22 @@ export default function handler(
 
     // mouseup events passed from Atext's handler.
     case 'mouseup': {
-      if (noteboxResizing) {
+      if (noteboxResizing && atext) {
         this.setState((prevState: XulswordStatePref) => {
           const { maximizeNoteBox, noteBoxHeight } = prevState;
           const [initial, final] = noteboxResizing;
-          if (maximize) maximizeNoteBox[index] = noteBoxHeight[index];
-          noteBoxHeight[index] += initial - final;
+          if (maximize === true) {
+            maximizeNoteBox[index] = noteBoxHeight[index];
+            const { columns: clsx } = atext.dataset;
+            const columns = Number(clsx);
+            let stopHeight = atext.clientHeight - C.UI.Atext.prevNextHeight;
+            if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
+            noteBoxHeight[index] = stopHeight;
+          } else if (maximize === false) {
+            noteBoxHeight[index] = C.UI.Atext.bbBottomMargin;
+          } else {
+            noteBoxHeight[index] += initial - final;
+          }
           return { maximizeNoteBox, noteBoxHeight };
         });
       }

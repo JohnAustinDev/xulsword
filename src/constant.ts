@@ -75,9 +75,6 @@ const C = {
   MSMOVE: 'mousemove',
   MSOVER: 'mouseover',
   MSOUT: 'mouseout',
-  TextHeaderHeight: 30,
-  TextBBTopMargin: 30,
-  TextBBBottomMargin: 30,
 
   NumOT: 39,
   NumNT: 27,
@@ -138,6 +135,9 @@ const C = {
     Atext: {
       dictKeyInputDelay: 1000, // ms between keydown and update
       wheelScrollDelay: 25, // ms between UI updates while scrolling
+      prevNextHeight: 30, // px
+      bbTopMargin: 30, // px
+      bbBottomMargin: 30, // px
     },
   },
 

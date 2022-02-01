@@ -344,36 +344,43 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
         if (targ) {
           e.stopPropagation();
           e.preventDefault();
+          const { columns: clsx } = targ.element.dataset;
+          const columns = Number(clsx);
 
           if (maximizeNoteBox > 0) onMaximizeNoteBox(e);
 
           const [initial] = noteBoxResizing;
 
           // moved above the top?
+          // nbHeightToMouse = noteBoxHeight + initial - e.clientY
+          // e.clientY = noteBoxHeight + initial - nbHeightAtMouse
+          // so set e.clientY = noteBoxHeight + initial - stopHeight
           const height = noteBoxHeight + initial - e.clientY;
-          const stopHeight = targ.element.clientHeight - C.TextHeaderHeight;
-          if (height >= stopHeight - C.TextBBTopMargin) {
+          let stopHeight =
+            targ.element.clientHeight - C.UI.Atext.prevNextHeight;
+          if (columns === 1) stopHeight -= C.UI.Atext.bbTopMargin;
+          if (height >= stopHeight) {
             this.bbMouseUp(
               e,
-              [
-                initial,
-                noteBoxHeight + initial - stopHeight + C.TextBBTopMargin + 5,
-              ],
+              [initial, noteBoxHeight + initial - stopHeight + 5],
               true
             );
           }
 
           // moved below the bottom?
-          if (height <= C.TextBBBottomMargin) {
+          else if (height <= C.UI.Atext.bbBottomMargin) {
             this.bbMouseUp(
               e,
-              [initial, noteBoxHeight + initial - C.TextBBBottomMargin - 5],
+              [
+                initial,
+                noteBoxHeight + initial - C.UI.Atext.bbBottomMargin - 5,
+              ],
               false
             );
           }
 
           // otherwise follow the mouse...
-          this.setState({ noteBoxResizing: [initial, e.clientY] });
+          else this.setState({ noteBoxResizing: [initial, e.clientY] });
         }
       }
       break;

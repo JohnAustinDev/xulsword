@@ -293,14 +293,21 @@ export default class MenuBuilder {
   }
 
   // Read locale key, appending & before shortcut key and escaping other &s.
-  ts(keyx: string, sckey?: string): string {
+  ts(key: string, sckey?: string): string {
     // CLUDGE:
-    let key = keyx;
-    if (
-      key.startsWith('menu.view.window') &&
-      Number(key.substring(key.length - 1)) > 3
-    )
-      key = 'menu.view.window3';
+    let fix;
+    [/(?<=menu\.windows\.)(\d)(?=win)/, /(?<=menu\.view\.window)(\d)/].forEach(
+      (re) => {
+        if (re.test(key)) {
+          const m = key.match(re);
+          if (m && m[1] && Number(m[1]) > 3) {
+            fix = this.i18n.t(key.replace(m[1], '3'));
+            fix = fix.replace('3', m[1]);
+          }
+        }
+      }
+    );
+    if (fix) return fix;
 
     let text = this.i18n.t(key);
     const sckey2 = sckey || `${key}.sc`;
@@ -718,10 +725,8 @@ export default class MenuBuilder {
       label: this.ts('menu.windows'),
       submenu: panelarray.map((_p: string | null, i: number) => {
         const n = i + 1;
-        let num = n;
-        if (num > 3) num = 3;
         return {
-          label: this.ts(`menu.windows.${num}win`),
+          label: this.ts(`menu.windows.${n}win`),
           id: `xulsword.panels_val_${n}`,
           type: 'radio',
           click: () => {

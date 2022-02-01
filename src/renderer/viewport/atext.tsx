@@ -572,7 +572,7 @@ class Atext extends React.Component {
           {!ownWindow && <div className="text-win" />}
         </div>
 
-        <Box className="hd" height={`${C.TextHeaderHeight}px`}>
+        <Box className="hd" height={`${C.UI.Atext.prevNextHeight}px`}>
           <div className="navlink">
             <span className="navlink-span">{prevArrow}</span>
             <a className="prevchaplink">{i18next.t('PrevChaptext')}</a>{' '}
