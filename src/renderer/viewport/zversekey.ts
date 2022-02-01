@@ -550,12 +550,9 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
   const atext = sb?.parentNode as HTMLElement;
   if (!sb || !nbc || !nb || !atext || !atext.classList.contains('atext'))
     return false;
-  let match = atext.className.match(/\bshow(\d+)\b/);
-  if (!match) return false;
-  const columns = Number(match[1]);
-  match = sb.className.match(/\bcs-(\S+)\b/);
-  if (!match) return false;
-  const module = match[1];
+  const { module, columns: clx } = atext.dataset;
+  const columns = Number(clx);
+  if (!module) return false;
 
   // return false if we're not visible or being displayed
   const style = window.getComputedStyle(v);
@@ -617,6 +614,7 @@ export function versekeyScroll(
   }
 ): Partial<XulswordStatePref> | null {
   const { module, book, chapter, verse, flagScroll, columns } = scrollProps;
+  if (flagScroll === null || flagScroll === undefined) return null;
 
   sbe.scrollLeft = 0; // commentary may have been non-zero
 
@@ -915,19 +913,19 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
     let nv = v;
     while (dv > 0) {
       if (nv) nv = nv.nextSibling as HTMLElement;
-      while (nv && !nv.classList.contains('vs')) {
+      while (nv && !nv.classList?.contains('vs')) {
         nv = nv.nextSibling as HTMLElement;
       }
       dv -= 1;
-      if (nv && nv.classList.contains('vs')) v = nv;
+      if (nv && nv.classList?.contains('vs')) v = nv;
     }
     while (dv < 0) {
       if (nv) nv = nv.previousSibling as HTMLElement;
-      while (nv && !nv.classList.contains('vs')) {
+      while (nv && !nv.classList?.contains('vs')) {
         nv = nv.previousSibling as HTMLElement;
       }
       dv += 1;
-      if (nv && nv.classList.contains('vs')) v = nv;
+      if (nv && nv.classList?.contains('vs')) v = nv;
     }
   }
   // Scroll to verse v

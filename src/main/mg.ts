@@ -51,7 +51,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
 
     OPSYS: () => process.platform,
 
-    setGlobalMenuFromPrefs: (menu?: Electron.Menu) => {
+    setGlobalMenuFromPref: (menu?: Electron.Menu) => {
       const m = menu || Menu.getApplicationMenu();
       if (m !== null) setMenuFromPrefs(m);
     },
@@ -86,10 +86,14 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
       });
     },
 
-    setGlobalStateFromPrefs: (prefs?: string | string[]) => {
+    setGlobalStateFromPref: (
+      win: BrowserWindow | null,
+      prefs?: string | string[]
+    ) => {
       function broadcast() {
         BrowserWindow.getAllWindows().forEach((w) => {
-          w.webContents.send('update-state-from-pref', prefs);
+          if (!win || w !== win)
+            w.webContents.send('update-state-from-pref', prefs);
         });
       }
       const lng = Prefsx.getCharPref(C.LOCALEPREF);

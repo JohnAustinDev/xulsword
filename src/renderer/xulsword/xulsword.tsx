@@ -17,7 +17,7 @@ import {
   jsdump,
   onSetWindowStates,
   getStatePref,
-  updateGlobalState,
+  setPrefFromState,
 } from '../rutil';
 import {
   addClass,
@@ -231,14 +231,15 @@ export default class Xulsword extends React.Component {
     return (
       <Menupopup>
         {items.map((histitem, i) => {
-          const { book: bk, chapter: ch, v11n } = histitem;
-          const [bks, chs] = G.LibSword.convertLocation(
+          const { book: bk, chapter: ch, verse: vs, v11n } = histitem;
+          const [bks, chs, vss] = G.LibSword.convertLocation(
             v11n,
-            [bk, ch].join('.'),
+            [bk, ch, vs].join('.'),
             windowV11n
           ).split('.');
-          const location = [bks, chs];
-          // Any verse or lastverse comes from selection.
+          const location = [bks, chs, vss];
+          if (vss === '1') location.pop();
+          // Verse comes from verse or selection; lastverse comes from selection.
           if (histitem.selection) {
             const [b, c, v, l] = G.LibSword.convertLocation(
               v11n,
@@ -246,8 +247,8 @@ export default class Xulsword extends React.Component {
               windowV11n
             ).split('.');
             if (bks === b && chs === c && Number(v) > 1) {
-              location.push(v);
-              if (!Number.isNaN(Number(l)) && v !== l) location.push(l);
+              location[2] = v;
+              if (!Number.isNaN(Number(l)) && v !== l) location[3] = l;
             }
           }
           const index = i + is;
@@ -300,7 +301,14 @@ export default class Xulsword extends React.Component {
     } = state;
     const { id } = props;
 
-    if (id) updateGlobalState(id, state, lastStatePref, notStatePref);
+    if (id && setPrefFromState(id, state, lastStatePref, notStatePref)) {
+      G.setGlobalStateFromPref(
+        null,
+        ['book', 'chapter', 'verse', 'selection', 'flagScroll'].map((p) => {
+          return `${id}.${p}`;
+        })
+      );
+    }
 
     // Add page to history after a short delay
     if (windowV11n) {
@@ -313,7 +321,7 @@ export default class Xulsword extends React.Component {
     const navdisabled =
       !windowV11n || isPinned.every((p, i) => p || !panels[i]);
 
-    const short = false;
+    const short = true;
     jsdump(
       `Rendering Xulsword ${JSON.stringify({
         ...state,

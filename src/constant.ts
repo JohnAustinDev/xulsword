@@ -136,7 +136,7 @@ const C = {
       dictKeyInputDelay: 1000, // ms between keydown and update
       wheelScrollDelay: 25, // ms between UI updates while scrolling
       prevNextHeight: 30, // px
-      bbTopMargin: 30, // px
+      bbTopMargin: 60, // px
       bbBottomMargin: 30, // px
     },
   },

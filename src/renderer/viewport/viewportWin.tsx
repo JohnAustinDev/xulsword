@@ -5,15 +5,15 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
-import PropTypes from 'prop-types';
 import { render } from 'react-dom';
 import { JSON_parse } from '../../common';
 import i18nInit from '../i18n';
+import G from '../rg';
 import {
   getStatePref,
   jsdump,
   onSetWindowStates,
-  updateGlobalState,
+  setPrefFromState,
 } from '../rutil';
 import {
   topHandle,
@@ -121,9 +121,16 @@ export default class ViewportWin extends React.Component {
     const { id } = props;
     const { lastSavedPref: lastSetPrefs, viewportParentHandler } = this;
 
-    if (id) updateGlobalState(id, state, lastSetPrefs, vpWinNotStatePref);
+    if (id && setPrefFromState(id, state, lastSetPrefs, vpWinNotStatePref)) {
+      G.setGlobalStateFromPref(
+        null,
+        ['book', 'chapter', 'verse', 'selection', 'flagScroll'].map((p) => {
+          return `${id}.${p}`;
+        })
+      );
+    }
 
-    const short = false;
+    const short = true;
     jsdump(
       `Rendering ViewportWin ${JSON.stringify({
         ...state,

@@ -428,6 +428,7 @@ export default function handler(
       const e = es as React.WheelEvent;
       const t = this as any;
       if (
+        !isPinned &&
         'mouseWheel' in t &&
         atext &&
         type !== C.DICTIONARY &&

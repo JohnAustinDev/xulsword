@@ -674,7 +674,7 @@ export function setStatePref(id: string, state: Partial<React.ComponentState>) {
     }
   });
   setTimeout(() => {
-    G.setGlobalStateFromPrefs(prefs);
+    G.setGlobalStateFromPref(null, prefs);
   }, 1);
 }
 
@@ -704,14 +704,14 @@ export function onSetWindowStates(component: React.Component) {
 
 // Compare component state to lastStatePrefs and do nothing if they are the same.
 // Otherwise, persist the changed state properties to Prefs (ignoring any in
-// ignore) and then setGlobalMenuFromPrefs() will notify other windows of the
-// changes.
-export function updateGlobalState(
+// ignore) and then setGlobalMenuFromPref() will update the application menu to
+// keep them in sync. Returns true if any prefs were changed, false otherwise.
+export function setPrefFromState(
   id: string,
   state: React.ComponentState,
   lastStatePrefs: { [i: string]: any },
   ignore?: { [i: string]: any }
-) {
+): boolean {
   let prefsChanged = false;
   Object.entries(state).forEach((entry) => {
     const [name, value] = entry;
@@ -735,5 +735,6 @@ export function updateGlobalState(
       }
     }
   });
-  if (prefsChanged) G.setGlobalMenuFromPrefs();
+  if (prefsChanged) G.setGlobalMenuFromPref();
+  return prefsChanged;
 }

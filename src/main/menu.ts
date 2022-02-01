@@ -31,17 +31,17 @@ interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
 }
 
 export default class MenuBuilder {
-  // Update Prefs, then setGlobalStateFromPrefs()
+  // Update Prefs, then setGlobalStateFromPref()
   static toggleSwitch(name: string | string[], value?: boolean) {
     const a = Array.isArray(name) ? name : [name];
     a.forEach((n) => {
       const v = value === undefined ? !G.Prefs.getBoolPref(n) : value;
       G.Prefs.setBoolPref(n, v);
     });
-    G.setGlobalStateFromPrefs(name);
+    G.setGlobalStateFromPref(null, name);
   }
 
-  // Update Prefs, then setGlobalStateFromPrefs()
+  // Update Prefs, then setGlobalStateFromPref()
   static radioSwitch(name: string | string[], value: any) {
     const a = Array.isArray(name) ? name : [name];
     a.forEach((n) => {
@@ -53,7 +53,7 @@ export default class MenuBuilder {
         throw Error('radioSwitch supports number or string.');
       }
     });
-    G.setGlobalStateFromPrefs(name);
+    G.setGlobalStateFromPref(null, name);
   }
 
   static setTabs(
@@ -167,7 +167,7 @@ export default class MenuBuilder {
     G.Prefs.setComplexValue('xulsword.tabs', nval);
 
     // Update global states corresponding to prefs which could have been changed.
-    G.setGlobalStateFromPrefs([
+    G.setGlobalStateFromPref(null, [
       'xulsword.tabs',
       'xulsword.panels',
       'xulsword.mtModules',
@@ -221,7 +221,7 @@ export default class MenuBuilder {
 
     const menu = Menu.buildFromTemplate(template);
     MenuBuilder.updateTabMenus(menu);
-    G.setGlobalMenuFromPrefs(menu);
+    G.setGlobalMenuFromPref(menu);
     Menu.setApplicationMenu(menu);
 
     return menu;
@@ -736,7 +736,7 @@ export default class MenuBuilder {
               }
             );
             G.Prefs.setComplexValue(panelpref, newpans);
-            G.setGlobalStateFromPrefs(panelpref);
+            G.setGlobalStateFromPref(null, panelpref);
           },
         };
       }),

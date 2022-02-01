@@ -59,12 +59,16 @@ const installExtensions = async () => {
 // Handle global variable calls from renderer
 ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
   let ret = null;
+  const win = BrowserWindow.fromWebContents(event.sender);
   if (name in GPublic) {
     const gPublic = GPublic as any;
     const g = G as any;
     if (gPublic[name] === 'readonly') {
       ret = g[name];
     } else if (typeof gPublic[name] === 'function') {
+      if (name === 'setGlobalStateFromPref') {
+        args[0] = win;
+      }
       ret = g[name](...args);
     } else if (typeof gPublic[name] === 'object') {
       const m = args.shift();

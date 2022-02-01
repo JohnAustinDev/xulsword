@@ -248,7 +248,6 @@ export const GPublic = {
   Book: 'readonly',
   Tabs: 'readonly',
   Tab: 'readonly',
-
   ProgramConfig: 'readonly',
   LocaleConfigs: 'readonly',
   ModuleConfigs: 'readonly',
@@ -256,14 +255,13 @@ export const GPublic = {
   FontFaceConfigs: 'readonly',
   FeatureModules: 'readonly',
   AvailableBooks: 'readonly',
-
   OPSYS: 'readonly',
 
   // Global functions
   resolveHtmlPath: func as unknown,
   inlineFile: func as unknown,
-  setGlobalMenuFromPrefs: func as unknown,
-  setGlobalStateFromPrefs: func as unknown,
+  setGlobalMenuFromPref: func as unknown,
+  setGlobalStateFromPref: func as unknown,
   openWindow: func as unknown,
   openDialog: func as unknown,
   globalReset: func as unknown,
@@ -281,7 +279,6 @@ export interface GType {
   Book: { [i: string]: BookType };
   Tabs: TabType[];
   Tab: { [i: string]: TabType };
-
   ProgramConfig: ConfigType;
   LocaleConfigs: { [i: string]: ConfigType };
   ModuleConfigs: { [i: string]: ConfigType };
@@ -289,13 +286,13 @@ export interface GType {
   FontFaceConfigs: ConfigType[];
   FeatureModules: FeatureType;
   AvailableBooks: { [i: string]: string[] };
-
   OPSYS: 'string';
 
   resolveHtmlPath: (htmlfile: string) => string;
   inlineFile: (path: string, encoding: 'base64' | 'utf8') => string;
-  setGlobalMenuFromPrefs: (menu?: Electron.Menu) => void;
-  setGlobalStateFromPrefs: (prefs?: string | string[]) => void;
+  setGlobalMenuFromPref: (menu?: Electron.Menu) => void;
+  // Caller win is overwritten when setGlobalStateFromPref is invoked by main process.
+  setGlobalStateFromPref: (win: null, prefs?: string | string[]) => void;
   openWindow: (type: string, params: Electron.BrowserWindowConstructorOptions) => number;
   openDialog: (type: string, params: Electron.BrowserWindowConstructorOptions) => any;
   globalReset: () => void;
