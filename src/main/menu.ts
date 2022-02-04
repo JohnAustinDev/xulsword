@@ -17,7 +17,7 @@ import G from './mg';
 import type { TabTypes } from '../type';
 
 type Modifiers =
-  | 'CommandOrControl'
+  | 'CommandOrControl' // 'accel' in XUL
   | 'Alt'
   | 'Option'
   | 'AltGr'
@@ -207,13 +207,6 @@ export default class MenuBuilder {
   }
 
   buildMenu(): Menu {
-    if (
-      process.env.NODE_ENV === 'development' ||
-      process.env.DEBUG_PROD === 'true'
-    ) {
-      this.setupDevelopmentEnvironment();
-    }
-
     const template: any =
       process.platform === 'darwin'
         ? this.buildDarwinTemplate()
@@ -225,21 +218,6 @@ export default class MenuBuilder {
     Menu.setApplicationMenu(menu);
 
     return menu;
-  }
-
-  setupDevelopmentEnvironment(): void {
-    this.mainWindow.webContents.on('context-menu', (_, props) => {
-      const { x, y } = props;
-
-      Menu.buildFromTemplate([
-        {
-          label: 'Inspect element',
-          click: () => {
-            this.mainWindow.webContents.inspectElement(x, y);
-          },
-        },
-      ]).popup({ window: this.mainWindow });
-    });
   }
 
   static showtabs: [string, TabTypes][] = [
@@ -427,26 +405,37 @@ export default class MenuBuilder {
       ],
     };
 
+    const edits = ['undo', 'redo', 'cut', 'copy', 'paste'];
     const subMenuEdit = {
       role: 'editMenu',
       label: this.ts('editMenu.label', 'editMenu.accesskey'),
-      submenu: [
-        { type: 'separator' },
-        {
-          label: this.ts('searchBut.label', 'SearchAccKey'),
-          accelerator: this.tx('SearchCommandKey', ['CommandOrControl']),
-          click: () => {
-            Commands.search();
+      submenu: edits
+        .map((ed) => {
+          return {
+            label: this.ts(`menu.edit.${ed}`),
+            accelerator: this.tx(`menu.edit.${ed}.ac`, ['CommandOrControl']),
+            click: () => {
+              Commands.edit(ed);
+            },
+          };
+        })
+        .concat([
+          { type: 'separator' } as any,
+          {
+            label: this.ts('searchBut.label', 'SearchAccKey'),
+            accelerator: this.tx('SearchCommandKey', ['CommandOrControl']),
+            click: () => {
+              Commands.search();
+            },
           },
-        },
-        {
-          label: this.ts('menu.copypassage', 'menu.copypassage.ak'),
-          accelerator: this.tx('menu.copypassage.sc', ['CommandOrControl']),
-          click: () => {
-            Commands.copyPassage();
+          {
+            label: this.ts('menu.copypassage', 'menu.copypassage.ak'),
+            accelerator: this.tx('menu.copypassage.sc', ['CommandOrControl']),
+            click: () => {
+              Commands.copyPassage();
+            },
           },
-        },
-      ],
+        ]),
     };
 
     const switches = [

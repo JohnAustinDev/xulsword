@@ -131,7 +131,7 @@ export default class ViewportWin extends React.Component {
     }
 
     const short = true;
-    jsdump(
+    console.log(
       `Rendering ViewportWin ${JSON.stringify({
         ...state,
         tabs: short ? 'not-printed' : tabs,
@@ -194,7 +194,5 @@ i18nInit(['xulsword'])
   )
   .then(() => loadedXUL())
   .catch((e: string | Error) => jsdump(e));
-
-// window.ipc.renderer.on('resize', () => {if (ViewPort) ViewPort.resize()});
 
 window.ipc.renderer.on('close', () => unloadXUL());

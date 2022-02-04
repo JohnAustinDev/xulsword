@@ -241,7 +241,7 @@ export const ShellPublic = {
 // main process G properties access functions and data directly. But
 // renderer process G properties request data through IPC from the main
 // process G object. All readonly data is cached. The cache can be
-//  cleared by G.reset().
+// cleared by G.reset().
 export const GPublic = {
   // Global data for read only use
   Books: 'readonly',

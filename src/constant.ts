@@ -117,6 +117,9 @@ const C = {
     Window: {
       resizeDelay: 500, // ms between window resize and update
     },
+    Xulsword: {
+      maxHistoryMenuLength: 20,
+    },
     Viewport: {
       minPanelWidth: 200, // px
     },

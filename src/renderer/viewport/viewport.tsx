@@ -187,7 +187,7 @@ class Viewport extends React.Component implements PopupParent {
       return m && !isPinned[i] && G.Tab[m].isVerseKey;
     });
 
-    // Get each panel's interlinear module options according to book
+    // Get each panel's interlinear module options according to testament
     const ilModuleOptions = panels.map(() => ['']);
     const panelHasILOptions = panels.map(() => false);
     panels.forEach((_panel: string | null, i: number) => {

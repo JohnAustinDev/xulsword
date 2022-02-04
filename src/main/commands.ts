@@ -35,6 +35,47 @@ const Commands = {
     console.log(`Action not implemented: print`);
   },
 
+  edit(which: string, ...args: any) {
+    switch (which) {
+      case 'undo':
+        this.undo(...args);
+        break;
+      case 'redo':
+        this.redo(...args);
+        break;
+      case 'cut':
+        this.cut(...args);
+        break;
+      case 'copy':
+        this.copy(...args);
+        break;
+      case 'paste':
+        this.paste(...args);
+        break;
+      default:
+    }
+  },
+
+  undo(...args: any) {
+    console.log(`Action not implemented: undo()`);
+  },
+
+  redo(...args: any) {
+    console.log(`Action not implemented: redo()`);
+  },
+
+  cut(...args: any) {
+    console.log(`Action not implemented: cut()`);
+  },
+
+  copy(...args: any) {
+    console.log(`Action not implemented: copy()`);
+  },
+
+  paste(...args: any) {
+    console.log(`Action not implemented: paste()`);
+  },
+
   search() {
     console.log(`Action not implemented: search()`);
   },

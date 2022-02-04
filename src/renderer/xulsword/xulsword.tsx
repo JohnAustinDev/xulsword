@@ -43,8 +43,6 @@ import './xulsword.css';
 
 import type { MouseWheel } from '../viewport/viewportParentH';
 
-const maxHistoryMenuLength = 20;
-
 const defaultProps = {
   ...xulDefaultProps,
 };
@@ -116,10 +114,6 @@ export default class Xulsword extends React.Component {
 
     onSetWindowStates(this);
 
-    this.historyMenu = this.historyMenu.bind(this);
-    this.addHistory = this.addHistory.bind(this);
-    this.setHistory = this.setHistory.bind(this);
-
     this.handler = handlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
     this.lastStatePref = {};
@@ -173,7 +167,7 @@ export default class Xulsword extends React.Component {
     }
     this.setState((prevState: XulswordState) => {
       prevState.history.splice(prevState.historyIndex, 0, newhist);
-      if (prevState.history.length > maxHistoryMenuLength) {
+      if (prevState.history.length > C.UI.Xulsword.maxHistoryMenuLength) {
         prevState.history.pop();
       }
       return { history: prevState.history };
@@ -184,7 +178,11 @@ export default class Xulsword extends React.Component {
   // promote is true, move that history entry to history[0].
   setHistory = (index: number, promote = false): void => {
     const { history: h } = this.state as XulswordState;
-    if (index < 0 || index > h.length - 1 || index > maxHistoryMenuLength)
+    if (
+      index < 0 ||
+      index > h.length - 1 ||
+      index > C.UI.Xulsword.maxHistoryMenuLength
+    )
       return;
     this.setState((prevState: XulswordState) => {
       const { history, windowV11n, flagScroll } = prevState as XulswordState;
@@ -222,9 +220,9 @@ export default class Xulsword extends React.Component {
   // Build and return a history menupopup from state.
   historyMenu = (state: XulswordState) => {
     const { history, historyIndex, windowV11n } = state;
-    let is = historyIndex - Math.round(maxHistoryMenuLength / 2);
+    let is = historyIndex - Math.round(C.UI.Xulsword.maxHistoryMenuLength / 2);
     if (is < 0) is = 0;
-    let ie = is + maxHistoryMenuLength;
+    let ie = is + C.UI.Xulsword.maxHistoryMenuLength;
     if (ie > history.length) ie = history.length;
     const items = history.slice(is, ie);
     if (!items || !items.length) return null;
@@ -322,7 +320,7 @@ export default class Xulsword extends React.Component {
       !windowV11n || isPinned.every((p, i) => p || !panels[i]);
 
     const short = true;
-    jsdump(
+    console.log(
       `Rendering Xulsword ${JSON.stringify({
         ...state,
         history: history.length,
@@ -568,7 +566,5 @@ i18nInit(['xulsword'])
   )
   .then(() => loadedXUL())
   .catch((e: string | Error) => jsdump(e));
-
-// window.ipc.renderer.on('resize', () => {if (ViewPort) ViewPort.resize()});
 
 window.ipc.renderer.on('close', () => unloadXUL());

@@ -20,6 +20,7 @@ import {
   getFeatureModules,
 } from './config';
 import { jsdump, resolveHtmlPath } from './mutil';
+import contextMenu from './contextMenu';
 import nsILocalFile from './components/nsILocalFile';
 import LibSwordx from './modules/libsword';
 
@@ -165,7 +166,9 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
       const win = new BrowserWindow(options);
       win.loadURL(resolveHtmlPath(`${type}.html`));
       Prefsx.setComplexValue(`Windows.w${win.id}`, { type, options });
+      windowInitI18n(win);
       if (type === 'viewportWin' || type === 'popupWin') win.removeMenu();
+      const disposeListeners = contextMenu(win);
       // All Windows are created with BrowserWindow.show = false.
       // This means that the window will be shown after either:
       // (params.show === true) Electron's 'ready-to-show' event.
@@ -192,11 +195,15 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
         args.options = { ...args.options, ...b };
         Prefsx.setComplexValue(`Windows.w${win.id}`, args);
       });
-      windowInitI18n(win);
-      function closer(id: number) {
-        return () => Prefsx.setComplexValue(`Windows.w${id}`, undefined);
-      }
-      win.once('closed', closer(win.id));
+      win.once(
+        'closed',
+        ((id: number, dlist: () => void) => {
+          return () => {
+            Prefsx.setComplexValue(`Windows.w${id}`, undefined);
+            if (typeof dlist === 'function') dlist();
+          };
+        })(win.id, disposeListeners)
+      );
       return win.id;
     },
 
