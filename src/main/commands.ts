@@ -76,7 +76,7 @@ const Commands = {
     console.log(`Action not implemented: paste()`);
   },
 
-  search() {
+  search(search: { module: string; searchtext: string; type: string }) {
     console.log(`Action not implemented: search()`);
   },
 
@@ -84,7 +84,7 @@ const Commands = {
     console.log(`Action not implemented: copyPassage`);
   },
 
-  openFontsColors() {
+  openFontsColors(module?: string) {
     console.log(`Action not implemented: openFontsColors`);
   },
 
@@ -100,7 +100,7 @@ const Commands = {
     console.log(`Action not implemented: openNewUserNoteDialog()`);
   },
 
-  openHelp() {
+  openHelp(module?: string) {
     console.log(`Action not implemented: openHelp()`);
   },
 };

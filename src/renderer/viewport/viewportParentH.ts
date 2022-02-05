@@ -12,7 +12,7 @@ import {
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { convertDotString } from '../rutil';
+import { convertDotString, getContextData } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { TextCache } from './ztext';
 import { textChange, aTextWheelScroll } from './zversekey';
@@ -477,6 +477,11 @@ export default function handler(
           return { maximizeNoteBox, noteBoxHeight };
         });
       }
+      break;
+    }
+
+    case 'contextmenu': {
+      G.Data.write(getContextData(target));
       break;
     }
 

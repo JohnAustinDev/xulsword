@@ -57,6 +57,7 @@
    "manBookmarksCmd.label" : "Organize Bookmarks...",
    "menu.addNewModule.label" : "Add New Modules",
    "menu.addNewModule.sc" : "A",
+   "menu.context.tab" : "Close",
    "menu.copypassage" : "Copy Passage",
    "menu.copypassage.ak" : "g",
    "menu.copypassage.sc" : "G",

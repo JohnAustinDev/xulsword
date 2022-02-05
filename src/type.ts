@@ -78,6 +78,21 @@ export type HistoryTypeVK = {
   v11n: string;
 }
 
+export type ContextData = {
+  book: string | null;
+  chapter: string | null;
+  verse: number | null;
+  lastverse: number | null;
+  module: string | null;
+  contextModule: string | null;
+  tab: string | null;
+  lemma: string | null;
+  panelIndex: number | null;
+  bookmark: unknown | null;
+  selection: string | null;
+  search: { module: string, searchtext: string, type: string } | null;
+}
+
 export type BookType = {
   sName: string;
   bName: string;
@@ -235,6 +250,14 @@ export const ShellPublic = {
   beep: func as unknown as () => void,
 }
 
+// Make data available to both main and renderer processes.
+export const DataPublic = {
+  write: func as unknown as (data: any) => void,
+  data: 'readonly' as unknown as any,
+  read: func as unknown as () => any,
+  readOnce: func as unknown as () => any,
+}
+
 // This GPublic object will be used at runtime to create two different
 // types of G objects sharing the same GType interface: one will be
 // used in the main process and the other in renderer processes. The
@@ -272,6 +295,7 @@ export const GPublic = {
   Dirs: DirsPublic,
   Commands: CommandsPublic,
   Shell: ShellPublic,
+  Data: DataPublic,
 };
 
 export interface GType {
@@ -302,6 +326,7 @@ export interface GType {
   Dirs: typeof DirsPublic;
   Commands: typeof CommandsPublic;
   Shell: typeof ShellPublic;
+  Data: typeof DataPublic;
 
   cache: { [i: string]: any };
   reset: () => void;

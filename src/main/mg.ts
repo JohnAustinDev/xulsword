@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { BrowserWindow, Menu, ipcMain, shell } from 'electron';
 import i18next from 'i18next';
-import { GPublic, ShellPublic } from '../type';
+import { DataPublic, GPublic, ShellPublic } from '../type';
 import C from '../constant';
 import { isASCII, JSON_parse } from '../common';
 import Dirsx from './modules/dirs';
@@ -19,10 +19,11 @@ import {
   getFontFaceConfigs,
   getFeatureModules,
 } from './config';
-import { jsdump, resolveHtmlPath } from './mutil';
+import { resolveHtmlPath } from './mutil';
 import contextMenu from './contextMenu';
 import nsILocalFile from './components/nsILocalFile';
 import LibSwordx from './modules/libsword';
+import Datax from './modules/data';
 
 import type { GType, TabType, BookType, ModTypes } from '../type';
 
@@ -212,6 +213,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     Dirs: Dirsx as typeof Dirsx,
     Commands: Commandsx as typeof Commandsx,
     Shell: shell as typeof ShellPublic,
+    Data: Datax as typeof DataPublic,
   },
 
   reset() {

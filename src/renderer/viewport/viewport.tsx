@@ -28,6 +28,7 @@ import {
   xulPropTypes,
   XulProps,
   delayHandler,
+  topHandle,
 } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Chooser from './chooser';
@@ -362,7 +363,8 @@ class Viewport extends React.Component implements PopupParent {
       <Hbox
         {...addClass(`viewport ${cls}`, props)}
         style={{ minWidth: `${minWidth}px` }}
-        onClick={parentHandler}
+        {...topHandle('onContextMenu', parentHandler)}
+        {...topHandle('onClick', parentHandler)}
       >
         {!ownWindow && !showChooser && chooser !== 'genbook' && (
           <button type="button" className="open-chooser" />

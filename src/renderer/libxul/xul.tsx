@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import PropTypes from 'prop-types';
+import React from 'react';
 
 // Default prop values
 export const xulDefaultProps = {
@@ -31,6 +32,7 @@ export const xulDefaultProps = {
   onMouseUp: undefined,
   onMouseLeave: undefined,
   onWheel: undefined,
+  onContextMenu: undefined,
 };
 
 // PropTypes checking for XUL attributes
@@ -66,6 +68,7 @@ export const xulPropTypes = {
   onMouseEnter: PropTypes.func,
   onMouseLeave: PropTypes.func,
   onWheel: PropTypes.func,
+  onContextMenu: PropTypes.func,
 };
 
 // IDE TypeScript checking for props
@@ -106,6 +109,7 @@ export interface XulProps {
   onMouseEnter?: (e: React.SyntheticEvent<any>) => void;
   onMouseLeave?: (e: React.SyntheticEvent<any>) => void;
   onWheel?: (e: React.SyntheticEvent<any>) => void;
+  onContextMenu?: (e: React.SyntheticEvent<any>) => void;
 }
 
 const events = [
@@ -123,6 +127,7 @@ const events = [
   'onMouseEnter',
   'onMouseLeave',
   'onWheel',
+  'onContextMenu',
 ];
 // const styles = ['width', 'height', 'flex'];
 const enums = ['align', 'dir', 'orient', 'pack', 'type'];

@@ -4,7 +4,7 @@
 import React from 'react';
 import i18next from 'i18next';
 import C from '../constant';
-import { getElementInfo } from '../libswordElemInfo';
+import { ElemInfo, getElementInfo } from '../libswordElemInfo';
 import {
   compareObjects,
   deepClone,
@@ -16,6 +16,8 @@ import {
   ofClass,
 } from '../common';
 import G from './rg';
+
+import type { ContextData } from '../type';
 
 interface LocObject {
   book: string | null;
@@ -288,7 +290,7 @@ function compareAgainstLocale(
 
 // Return the module context in which the element resides, NOT the
 // module associated with the data of the element itself.
-export function getContextModule(elem: HTMLElement) {
+export function getContextModule(elem: HTMLElement): string | null {
   let p;
 
   // first let's see if we're in a verse
@@ -303,14 +305,14 @@ export function getContextModule(elem: HTMLElement) {
 
   // then see if we're in a viewport window, and use its module
   const atext = ofClass(['atext'], elem);
-  if (atext) return atext.element.dataset.module;
+  if (atext) return atext.element.dataset.module || null;
 
   // are we in cross reference text?
   telem = elem as HTMLElement | null;
   while (telem?.classList && !telem.classList.contains('crtext')) {
     telem = telem.parentNode as HTMLElement | null;
   }
-  const match = telem?.className.match(/\bcs-(\S+)\b/);
+  const match = telem?.className && telem?.className.match(/\bcs-(\S+)\b/);
   if (match) return match[1];
 
   // in a search lexicon list?
@@ -318,7 +320,8 @@ export function getContextModule(elem: HTMLElement) {
   while (telem?.classList && !telem.classList.contains('snlist')) {
     telem = telem.parentNode as HTMLElement | null;
   }
-  if (telem) return telem.getAttribute('contextModule');
+  if (telem && 'getAttribute' in telem)
+    return telem.getAttribute('contextModule');
 
   // otherwise see if we're in a search results list
   telem = elem as HTMLElement | null;
@@ -331,6 +334,196 @@ export function getContextModule(elem: HTMLElement) {
   }
 
   return null;
+}
+
+const TargetInfo = {
+  mod: null as string | null,
+  bk: null as string | null,
+  ch: null as number | null,
+  vs: null as number | null,
+  lv: null as number | null,
+  bookmark: null as string | null,
+};
+
+// Returns target information associated with an element.
+// NOTE: bk, ch, vs, and lv may be interpreted differently depending
+// on the module type of "mod".
+function readDataFromElement(info: typeof TargetInfo, element: HTMLElement) {
+  const eleminfo = getElementInfo(element);
+  if (!eleminfo) return false;
+
+  Object.entries(eleminfo).forEach((entry) => {
+    const p0 = entry[0] as keyof ElemInfo;
+    const p = p0 as keyof typeof TargetInfo;
+    const val = entry[1] as any;
+
+    if (p0 === 'nid') {
+      /* TODO!:
+      if (!info.bookmark && BM && typeof BookmarkFuns !== undefined) {
+        const aItem = BM.RDF.GetResource(decodeURIComponent(val));
+        const aParent = ResourceFuns.getParentOfResource(aItem, BMDS);
+        if (aParent) {
+          info.bookmark = XS_window.BookmarksUtils.getSelectionFromResource(aItem, aParent);
+        }
+      }
+      */
+      return;
+    }
+
+    // first come, first served- don't overwrite existing data
+    if (!(p0 in info) || info[p] !== null) return;
+
+    // some params use "0" as a placeholder which should not be propagated
+    if (['bk', 'ch', 'vs', 'lv'].includes(p) && info[p] === 0) return;
+
+    if (val !== null && val !== undefined) info[p] = val; // got it!
+  });
+
+  return true;
+}
+
+// Read target info from an element and its parents.
+function getTargetsFromElement(
+  info: typeof TargetInfo,
+  element: HTMLElement | null
+): typeof TargetInfo {
+  let elem = element as HTMLElement | null;
+  while (elem) {
+    // if this is a user-note hilight verse, get un info from inside it
+    if (elem.className && elem.classList.contains('un-hilight')) {
+      const child = elem.getElementsByClassName('un');
+      if (child && child.length) {
+        const chl = child[0] as HTMLElement;
+        readDataFromElement(info, chl);
+      }
+    }
+    readDataFromElement(info, elem);
+    elem = elem.parentNode as HTMLElement | null;
+  }
+
+  return info;
+}
+
+// Read two targets, one from each end of the selection, merge the two and return the results.
+function getTargetsFromSelection(
+  info: typeof TargetInfo,
+  selob: Selection
+): boolean {
+  const info1 = deepClone(TargetInfo);
+  const focusNode = selob.focusNode as HTMLElement | null;
+  if (!getTargetsFromElement(info1, focusNode)) return false;
+
+  const info2 = deepClone(TargetInfo);
+  const anchorNode = selob.anchorNode as HTMLElement | null;
+  if (!getTargetsFromElement(info2, anchorNode)) return false;
+
+  // merge bookmarks
+  if (!info1.bookmark && info2.bookmark) info1.bookmark = info2.bookmark;
+
+  // merge targ2 into targ1 if mod, bk and ch are the same (otherwise ignore targ2)
+  if (
+    info1.mod &&
+    info1.mod === info2.mod &&
+    info1.bk &&
+    info1.bk === info2.bk &&
+    info1.ch &&
+    info1.ch === info2.ch
+  ) {
+    let vs =
+      info2.vs && (!info1.vs || info2.vs < info1.vs) ? info2.vs : info1.vs;
+    let lv =
+      info2.lv && (!info1.lv || info2.lv > info1.lv) ? info2.lv : info1.lv;
+
+    if (lv && !vs) vs = lv;
+    if ((vs && !lv) || lv < vs) lv = vs;
+
+    if (vs) info1.vs = vs;
+    if (lv) info1.lv = lv;
+  }
+
+  // save merged targ1 to target
+  Object.keys(TargetInfo).forEach((key) => {
+    const k = key as keyof typeof TargetInfo;
+    if (info[k] === null && info1[k] !== null) info[k] = info1[k];
+  });
+
+  return true;
+}
+
+export function getContextData(elem: HTMLElement): ContextData {
+  const atextx = ofClass(['atext'], elem);
+  const atext = atextx ? atextx.element : null;
+  const tabx = ofClass(['tab'], elem);
+  const atab = tabx ? tabx.element : null;
+
+  let module;
+  if (atext) module = atext.dataset.module;
+  else if (atab) module = atab.dataset.module;
+  module = module || null;
+
+  let panelIndexs;
+  if (atext) panelIndexs = atext.dataset.index;
+  else if (atab) panelIndexs = atab.dataset.index;
+  const panelIndex = panelIndexs ? Number(panelIndexs) : null;
+
+  const tab = atab?.dataset.module || null;
+
+  const contextModule = getContextModule(elem);
+
+  let search = null;
+  let lemma = null;
+  const snx = ofClass(['sn'], elem);
+  const lemmaArray: string[] = [];
+  if (snx && contextModule) {
+    Array.from(snx.element.classList).forEach((cls) => {
+      if (cls === 'sn') return;
+      const [type, lemmaStr] = cls.split('_');
+      if (type !== 'S' || !lemmaStr) return;
+      const lemmaNum = Number(lemmaStr.substring(1));
+      // SWORD filters >= 5627 out- not valid it says
+      if (
+        Number.isNaN(lemmaNum) ||
+        (lemmaStr.startsWith('G') && lemmaNum >= 5627)
+      )
+        return;
+      lemmaArray.push(`lemma: ${lemmaStr}`);
+    });
+    lemma = lemmaArray.length ? lemmaArray.join(' ') : null;
+    if (lemma) {
+      search = {
+        module: contextModule,
+        searchtext: lemma,
+        type: 'SearchAdvanced',
+      };
+    }
+  }
+
+  // Get targets from mouse pointer or selection
+  let selection = null;
+  const selob = getSelection();
+  const info = deepClone(TargetInfo);
+  if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
+    if (getTargetsFromSelection(info, selob)) {
+      selection = replaceASCIIcontrolChars(selob.toString());
+    }
+  } else {
+    getTargetsFromElement(info, elem);
+  }
+
+  return {
+    book: info.bk,
+    chapter: info.ch,
+    verse: info.vs,
+    lastverse: info.lv,
+    bookmark: info.bookmark,
+    module,
+    contextModule,
+    tab,
+    lemma,
+    panelIndex,
+    selection,
+    search,
+  };
 }
 
 // Takes a string and tries to parse out a book name and version
