@@ -55,16 +55,20 @@ export function updateVersification(component: React.Component) {
 }
 
 export function closeMenupopups(component: React.Component) {
-  const { historyMenupopup } = component.state as any;
+  const state = component.state as XulswordState & ViewportWinState;
+  let historyMenupopup: any;
+  if ('historyMenupopup' in component.state) {
+    historyMenupopup = state.historyMenupopup;
+  }
   let reset = 0;
   Array.from(document.getElementsByClassName('tabs')).forEach((t) => {
     if (t.classList.contains('open')) reset += 1;
   });
-  if (reset || historyMenupopup) {
-    component.setState((prevState: any) => {
+  if (state && (reset || historyMenupopup)) {
+    component.setState((prevState: typeof state) => {
       let { vpreset } = prevState;
       if (reset) vpreset += 1;
-      const s: any = {};
+      const s: Partial<typeof state> = {};
       if (reset) s.vpreset = vpreset + 1;
       if (historyMenupopup) s.historyMenupopup = undefined;
       return s;

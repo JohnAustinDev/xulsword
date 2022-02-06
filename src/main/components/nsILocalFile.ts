@@ -173,3 +173,66 @@ export default class nsILocalFile {
     return new nsILocalFile(path.dirname(this.path), nsILocalFile.NO_CREATE);
   }
 }
+
+// creates only allowable file types
+export function createSafeFile(
+  nsIFile: nsILocalFile,
+  perm: number,
+  createUnique = false
+) {
+  if (!nsIFile) return false;
+
+  // only create a file if it has one of these file extensions
+  if (!/\.(txt|xsb|rdf|conf|xpi)$/i.test(nsIFile.leafName)) {
+    return false;
+  }
+
+  if (createUnique) nsIFile.createUnique(nsILocalFile.NORMAL_FILE_TYPE, perm);
+  else nsIFile.create(nsILocalFile.NORMAL_FILE_TYPE, perm);
+
+  return true;
+}
+
+// writes to only allowable file types
+export function writeSafeFile(
+  nsIFile: nsILocalFile,
+  str: string,
+  overwrite: boolean,
+  toEncoding = 'utf8'
+) {
+  if (!nsIFile) return false;
+
+  // only write to a file if it has one of these file extensions
+  if (!/\.(txt|xsb|rdf|conf)$/i.test(nsIFile.leafName)) {
+    return false;
+  }
+
+  if (nsIFile.exists()) {
+    if (!overwrite) return false;
+    nsIFile.remove(true);
+  }
+  createSafeFile(nsIFile, C.FPERM);
+
+  nsIFile.writeFile(str, { encoding: toEncoding, mode: C.FPERM });
+
+  return true;
+}
+
+export function inlineFile(
+  fpath: string,
+  encoding = 'base64' as BufferEncoding
+): string {
+  const file = new nsILocalFile(fpath);
+  const mimeTypes = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+  } as any;
+  const contentType =
+    // eslint-disable-next-line no-useless-escape
+    mimeTypes[fpath.replace(/^.*\.([^\.]+)$/, '$1').toLowerCase()];
+  if (!file.exists() || !contentType) return '';
+  const rawbuf = file.readBuf();
+  return `data:${contentType};${encoding},${rawbuf.toString(encoding)}`;
+}

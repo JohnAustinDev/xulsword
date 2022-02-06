@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   app,
@@ -10,11 +9,11 @@ import {
 } from 'electron';
 import path from 'path';
 import C from '../constant';
-import Commands from './commands';
 import G from './mg';
+import Commands from './commands';
+import setViewportTabs from './tabs';
 
 import type { TabTypes } from '../type';
-import { setTabs } from './mutil';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -72,7 +71,7 @@ export default class MenuBuilder {
         : this.buildDefaultTemplate();
 
     const menu = Menu.buildFromTemplate(template);
-    MenuBuilder.updateTabMenus(menu);
+    MenuBuilder.buildTabMenus(menu);
     G.setGlobalMenuFromPref(menu);
     Menu.setApplicationMenu(menu);
 
@@ -97,17 +96,20 @@ export default class MenuBuilder {
     return panelLabels;
   })();
 
-  static updateTabMenus(menu: Menu) {
+  static buildTabMenus(menu: Menu) {
     MenuBuilder.showtabs.forEach((showtab) => {
-      const [tab, type] = showtab;
+      const [typekey, type] = showtab;
       let disableParent = true;
       MenuBuilder.panelLabels.forEach((pl) => {
-        const panelIndex = Number(pl.substring(pl.length - 1));
-        const tabmenu = menu.getMenuItemById(`menu_${tab}_${pl}`);
+        const panelIndex =
+          pl === 'menu.view.allwindows'
+            ? -1
+            : Number(pl.substring(pl.length - 1)) - 1;
+        const tabmenu = menu.getMenuItemById(`menu_${typekey}_${pl}`);
         const submenu = tabmenu?.submenu;
-        if (!submenu) throw Error(`No tabmenu: menu_${tab}_${pl}`);
+        if (!submenu) throw Error(`No tabmenu: menu_${typekey}_${pl}`);
         const { items } = submenu;
-        while (items[0].id !== `showAll_${tab}_${pl}`) items.shift();
+        while (items[0].id !== `showAll_${typekey}_${pl}`) items.shift();
         G.Tabs.reverse().forEach((t) => {
           if (t.tabType === type) {
             disableParent = false;
@@ -117,14 +119,14 @@ export default class MenuBuilder {
               type: 'checkbox',
               // icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
               click: () => {
-                setTabs(type, pl, t.module, 'toggle');
+                setViewportTabs(panelIndex, t.module, 'toggle');
               },
             });
             submenu.insert(0, newItem);
           }
         });
       });
-      const parent = menu.getMenuItemById(`parent_${tab}`);
+      const parent = menu.getMenuItemById(`parent_${typekey}`);
       if (parent) parent.enabled = !disableParent;
     });
   }
@@ -352,29 +354,38 @@ export default class MenuBuilder {
     });
 
     const textTabs = MenuBuilder.showtabs.map((t) => {
-      const [tab, type] = t;
+      const [typekey, type] = t;
       return {
-        id: `parent_${tab}`,
-        label: this.ts(`menu.view.${tab}`),
-        icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x16', `${tab}.png`),
+        id: `parent_${typekey}`,
+        label: this.ts(`menu.view.${typekey}`),
+        icon: path.join(
+          G.Dirs.path.xsAsset,
+          'icons',
+          '16x16',
+          `${typekey}.png`
+        ),
         submenu: [
           ...MenuBuilder.panelLabels.map((pl: any) => {
+            const panelIndex =
+              pl === 'menu.view.allwindows'
+                ? -1
+                : Number(pl.substring(pl.length - 1)) - 1;
             return {
               label: this.ts(pl),
-              id: `menu_${tab}_${pl}`,
+              id: `menu_${typekey}_${pl}`,
               submenu: [
                 {
-                  id: `showAll_${tab}_${pl}`,
+                  id: `showAll_${typekey}_${pl}`,
                   label: this.ts('menu.view.showAll'),
                   click: () => {
-                    setTabs(type, pl, 'all', 'show');
+                    setViewportTabs(panelIndex, type, 'show');
                   },
                 },
                 {
-                  id: `hideAll_${tab}_${pl}`,
+                  id: `hideAll_${typekey}_${pl}`,
                   label: this.ts('menu.view.hideAll'),
                   click: () => {
-                    setTabs(type, pl, 'all', 'hide');
+                    setViewportTabs(panelIndex, type, 'hide');
                   },
                 },
               ],
@@ -416,10 +427,14 @@ export default class MenuBuilder {
         {
           label: this.ts('menu.view.showAll'),
           submenu: MenuBuilder.panelLabels.map((pl: any) => {
+            const panelIndex =
+              pl === 'menu.view.allwindows'
+                ? -1
+                : Number(pl.substring(pl.length - 1)) - 1;
             return {
               label: this.ts(pl),
               click: () => {
-                setTabs('all', pl, 'all', 'show');
+                setViewportTabs(panelIndex, 'all', 'show');
               },
             };
           }),
@@ -427,10 +442,14 @@ export default class MenuBuilder {
         {
           label: this.ts('menu.view.hideAll'),
           submenu: MenuBuilder.panelLabels.map((pl: any) => {
+            const panelIndex =
+              pl === 'menu.view.allwindows'
+                ? -1
+                : Number(pl.substring(pl.length - 1)) - 1;
             return {
               label: this.ts(pl),
               click: () => {
-                setTabs('all', pl, 'all', 'hide');
+                setViewportTabs(panelIndex, 'all', 'hide');
               },
             };
           }),

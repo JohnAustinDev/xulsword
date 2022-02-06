@@ -4,7 +4,7 @@ import contextMenuCreator from 'electron-context-menu';
 import i18next from 'i18next';
 import Commands from './commands';
 import target from './modules/data';
-import { setTabs } from './mutil';
+import setViewportTabs from './tabs';
 
 import type { ContextData } from '../type';
 
@@ -65,7 +65,7 @@ export default function contextMenu(window: BrowserWindow): () => void {
           const mod = targ('tab');
           const panelIndex = targ('panelIndex');
           if (typeof mod === 'string' && typeof panelIndex === 'number')
-            setTabs('all', `menu.view.window${panelIndex + 1}`, mod, 'hide');
+            setViewportTabs(panelIndex, mod, 'hide');
         },
       },
     ],

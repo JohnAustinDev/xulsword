@@ -6,12 +6,26 @@ import C from '../constant';
 import { deepClone } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
-import { jsdump } from './mutil';
 import nsILocalFile from './components/nsILocalFile';
 import LibSword from './modules/libsword';
+import { jsdump } from './mutil';
 // import getFontFamily from './fontfamily';
 
 import type { ConfigType, GType } from '../type';
+
+const cache = {
+  localeConfigs: undefined as { [i: string]: ConfigType } | undefined,
+  fontFaceConfigs: undefined as ConfigType | undefined,
+  moduleConfigs: undefined as { [i: string]: ConfigType } | undefined,
+  featureModules: undefined as unknown,
+};
+
+i18next.on('languageChanged', () => {
+  Object.keys(cache).forEach((key) => {
+    const k = key as keyof typeof cache;
+    cache[k] = undefined;
+  });
+});
 
 // Config's properties are all the properties which Config type objects will have.
 // The Config property objects map the property for its various uses:
@@ -115,14 +129,16 @@ function localeConfig(locale: string) {
 }
 
 export function getLocaleConfigs() {
-  const ret = {} as { [i: string]: ConfigType };
-  ret.current = localeConfig(i18next.language);
-  Prefs.getComplexValue('global.locales').forEach((l: any) => {
-    const [lang] = l;
-    ret[lang] = localeConfig(lang);
-  });
-
-  return ret;
+  if (!cache.localeConfigs) {
+    const ret = {} as { [i: string]: ConfigType };
+    ret.current = localeConfig(i18next.language);
+    Prefs.getComplexValue('global.locales').forEach((l: any) => {
+      const [lang] = l;
+      ret[lang] = localeConfig(lang);
+    });
+    cache.localeConfigs = ret;
+  }
+  return cache.localeConfigs;
 }
 
 export function getProgramConfig() {
@@ -149,40 +165,45 @@ function fontURL(mod: string) {
 
 // Read fonts which are in xulsword's xsFonts directory
 export function getFontFaceConfigs() {
-  if (!LibSword.libSwordReady('getFontFaceConfigs')) {
-    throw Error(`getFontFaceConfigs must not be run until LibSword is ready!`);
-  }
-
-  const ret = {} as ConfigType;
-  const fontdir = Dirs.xsFonts.directoryEntries;
-  const fonts: string[] = [];
-  fontdir?.forEach((dir) => {
-    const font = new nsILocalFile(path.join(Dirs.path.xsFonts, dir));
-    if (!font.isDirectory()) fonts.push(font.path);
-  });
-
-  for (let i = 0; i < fonts.length; i += 1) {
-    const fontFamily = null; // getFontFamily(fonts[i]);
-    if (fontFamily) {
-      ret[fontFamily] = `file://${fonts[i]}`;
-      if (process.platform === 'win32')
-        ret[fontFamily] = ret[fontFamily].replace(/\\/g, '/');
+  if (!cache.fontFaceConfigs) {
+    if (!LibSword.libSwordReady('getFontFaceConfigs')) {
+      throw Error(
+        `getFontFaceConfigs must not be run until LibSword is ready!`
+      );
     }
-  }
 
-  // if fontFamily specifies a font URL, rather than a fontFamily, then create a
-  // @font-face CSS entry and use it for this module.
-  const mods = LibSword.getModuleList();
-  if (mods && mods !== C.NOMODULES) {
-    const modulelist = mods.split(C.CONFSEP);
-    const modules = modulelist.map((m: string) => m.split(';')[0]);
-    modules.forEach((m) => {
-      const url = fontURL(m);
-      if (url) ret[url.name] = url.url;
+    const ret = {} as ConfigType;
+    const fontdir = Dirs.xsFonts.directoryEntries;
+    const fonts: string[] = [];
+    fontdir?.forEach((dir) => {
+      const font = new nsILocalFile(path.join(Dirs.path.xsFonts, dir));
+      if (!font.isDirectory()) fonts.push(font.path);
     });
+
+    for (let i = 0; i < fonts.length; i += 1) {
+      const fontFamily = null; // getFontFamily(fonts[i]);
+      if (fontFamily) {
+        ret[fontFamily] = `file://${fonts[i]}`;
+        if (process.platform === 'win32')
+          ret[fontFamily] = ret[fontFamily].replace(/\\/g, '/');
+      }
+    }
+
+    // if fontFamily specifies a font URL, rather than a fontFamily, then create a
+    // @font-face CSS entry and use it for this module.
+    const mods = LibSword.getModuleList();
+    if (mods && mods !== C.NOMODULES) {
+      const modulelist = mods.split(C.CONFSEP);
+      const modules = modulelist.map((m: string) => m.split(';')[0]);
+      modules.forEach((m) => {
+        const url = fontURL(m);
+        if (url) ret[url.name] = url.url;
+      });
+    }
+    cache.fontFaceConfigs = ret;
   }
 
-  return ret;
+  return cache.fontFaceConfigs;
 }
 
 // Return a locale (if any) to associate with a module:
@@ -335,121 +356,129 @@ export function getModuleConfigDefault() {
 }
 
 export function getModuleConfigs() {
-  if (!LibSword.libSwordReady('getModuleConfigs')) {
-    throw Error(`getModuleConfigs must not be called until LibSword is ready!`);
-  }
+  if (!cache.moduleConfigs) {
+    if (!LibSword.libSwordReady('getModuleConfigs')) {
+      throw Error(
+        `getModuleConfigs must not be called until LibSword is ready!`
+      );
+    }
 
-  const ret: GType['ModuleConfigs'] = {};
+    const ret: GType['ModuleConfigs'] = {};
 
-  // Gets list of available modules
-  const mods = LibSword.getModuleList();
-  if (!mods || mods === C.NOMODULES) return false;
-  const modules = mods.split(C.CONFSEP);
+    // Gets list of available modules
+    const mods = LibSword.getModuleList();
+    if (!mods || mods === C.NOMODULES) return ret;
+    const modules = mods.split(C.CONFSEP);
 
-  for (let m = 0; m < modules.length; m += 1) {
-    const [mod, type] = modules[m].split(';');
+    for (let m = 0; m < modules.length; m += 1) {
+      const [mod, type] = modules[m].split(';');
 
-    // Weed out unsupported module types
-    if (Object.keys(C.SupportedModuleTypes).includes(type)) {
-      // Weed out incompatible module versions. The module installer shouldn't
-      // allow bad mods, but this is just in case.
-      let xsversion = LibSword.getModuleInformation(mod, C.VERSIONPAR);
-      xsversion = xsversion !== C.NOTFOUND ? xsversion : C.MINVERSION;
-      let modminxsvers;
-      try {
-        modminxsvers = Prefs.getCharPref('MinXSMversion');
-      } catch (er) {
-        modminxsvers = C.MINVERSION;
-      }
-      if (versionCompare(xsversion, modminxsvers) < 0) {
-        jsdump(
-          `ERROR: Dropping module "${mod}". xsversion:${xsversion} < modminxsvers:${modminxsvers}`
-        );
-      } else {
-        let xsengvers = LibSword.getModuleInformation(mod, 'MinimumVersion');
-        xsengvers = xsengvers !== C.NOTFOUND ? xsengvers : '0';
-        let enginevers;
+      // Weed out unsupported module types
+      if (Object.keys(C.SupportedModuleTypes).includes(type)) {
+        // Weed out incompatible module versions. The module installer shouldn't
+        // allow bad mods, but this is just in case.
+        let xsversion = LibSword.getModuleInformation(mod, C.VERSIONPAR);
+        xsversion = xsversion !== C.NOTFOUND ? xsversion : C.MINVERSION;
+        let modminxsvers;
         try {
-          enginevers = Prefs.getCharPref('EngineVersion');
+          modminxsvers = Prefs.getCharPref('MinXSMversion');
         } catch (er) {
-          enginevers = C.NOTFOUND;
+          modminxsvers = C.MINVERSION;
         }
-        if (
-          enginevers !== C.NOTFOUND &&
-          versionCompare(enginevers, xsengvers) < 0
-        ) {
+        if (versionCompare(xsversion, modminxsvers) < 0) {
           jsdump(
-            `ERROR: Dropping module "${mod}". enginevers:${enginevers} < xsengvers:${xsengvers}`
+            `ERROR: Dropping module "${mod}". xsversion:${xsversion} < modminxsvers:${modminxsvers}`
           );
         } else {
-          ret[mod] = getModuleConfig(mod);
+          let xsengvers = LibSword.getModuleInformation(mod, 'MinimumVersion');
+          xsengvers = xsengvers !== C.NOTFOUND ? xsengvers : '0';
+          let enginevers;
+          try {
+            enginevers = Prefs.getCharPref('EngineVersion');
+          } catch (er) {
+            enginevers = C.NOTFOUND;
+          }
+          if (
+            enginevers !== C.NOTFOUND &&
+            versionCompare(enginevers, xsengvers) < 0
+          ) {
+            jsdump(
+              `ERROR: Dropping module "${mod}". enginevers:${enginevers} < xsengvers:${xsengvers}`
+            );
+          } else {
+            ret[mod] = getModuleConfig(mod);
+          }
         }
+      } else {
+        jsdump(`ERROR: Dropping module "${mod}". Unsupported type "${type}".`);
       }
-    } else {
-      jsdump(`ERROR: Dropping module "${mod}". Unsupported type "${type}".`);
     }
+    cache.moduleConfigs = ret;
   }
 
-  return ret;
+  return cache.moduleConfigs;
 }
 
 export function getFeatureModules() {
-  // These are CrossWire SWORD standard module features
-  const sword = {
-    strongsNumbers: [] as string[],
-    greekDef: [] as string[],
-    hebrewDef: [] as string[],
-    greekParse: [] as string[],
-    hebrewParse: [] as string[],
-    dailyDevotion: {} as { [i: string]: string },
-    glossary: [] as string[],
-    images: [] as string[],
-    noParagraphs: [] as string[], // should be typeset as verse-per-line
-  };
-  // These are xulsword features that use certain modules
-  const xulsword = {
-    greek: [] as string[],
-    hebrew: [] as string[],
-  };
+  if (!cache.featureModules) {
+    // These are CrossWire SWORD standard module features
+    const sword = {
+      strongsNumbers: [] as string[],
+      greekDef: [] as string[],
+      hebrewDef: [] as string[],
+      greekParse: [] as string[],
+      hebrewParse: [] as string[],
+      dailyDevotion: {} as { [i: string]: string },
+      glossary: [] as string[],
+      images: [] as string[],
+      noParagraphs: [] as string[], // should be typeset as verse-per-line
+    };
+    // These are xulsword features that use certain modules
+    const xulsword = {
+      greek: [] as string[],
+      hebrew: [] as string[],
+    };
 
-  const modlist = LibSword.getModuleList();
-  if (modlist === C.NOMODULES) return { ...sword, ...xulsword };
-  modlist.split(C.CONFSEP).forEach((m) => {
-    const [module, type] = m.split(';');
-    let mlang = LibSword.getModuleInformation(module, 'Lang');
-    const dash = mlang.indexOf('-');
-    mlang = mlang.substring(0, dash === -1 ? mlang.length : dash);
-    if (module !== 'LXX' && type === C.BIBLE && /^grc$/i.test(mlang))
-      xulsword.greek.push(module);
-    else if (
-      type === C.BIBLE &&
-      /^heb?$/i.test(mlang) &&
-      !/HebModern/i.test(module)
-    )
-      xulsword.hebrew.push(module);
+    const modlist = LibSword.getModuleList();
+    if (modlist === C.NOMODULES) return { ...sword, ...xulsword };
+    modlist.split(C.CONFSEP).forEach((m) => {
+      const [module, type] = m.split(';');
+      let mlang = LibSword.getModuleInformation(module, 'Lang');
+      const dash = mlang.indexOf('-');
+      mlang = mlang.substring(0, dash === -1 ? mlang.length : dash);
+      if (module !== 'LXX' && type === C.BIBLE && /^grc$/i.test(mlang))
+        xulsword.greek.push(module);
+      else if (
+        type === C.BIBLE &&
+        /^heb?$/i.test(mlang) &&
+        !/HebModern/i.test(module)
+      )
+        xulsword.hebrew.push(module);
 
-    // These Strongs feature modules do not have Strongs number keys, and so cannot be used
-    const notStrongsKeyed = new RegExp(
-      '^(AbbottSmith|InvStrongsRealGreek|InvStrongsRealHebrew)$',
-      'i'
-    );
-    if (!notStrongsKeyed.test(module)) {
-      const feature = LibSword.getModuleInformation(module, 'Feature');
-      const features = feature.split(C.CONFSEP);
-      Object.keys(sword).forEach((k) => {
-        const swordk = k as keyof typeof sword;
-        const swordf =
-          swordk.substring(0, 1).toUpperCase() + swordk.substring(1);
-        if (features.includes(swordf)) {
-          if (swordk === 'dailyDevotion') {
-            sword[swordk][module] = 'DailyDevotionToday';
-          } else {
-            sword[swordk].push(module);
+      // These Strongs feature modules do not have Strongs number keys, and so cannot be used
+      const notStrongsKeyed = new RegExp(
+        '^(AbbottSmith|InvStrongsRealGreek|InvStrongsRealHebrew)$',
+        'i'
+      );
+      if (!notStrongsKeyed.test(module)) {
+        const feature = LibSword.getModuleInformation(module, 'Feature');
+        const features = feature.split(C.CONFSEP);
+        Object.keys(sword).forEach((k) => {
+          const swordk = k as keyof typeof sword;
+          const swordf =
+            swordk.substring(0, 1).toUpperCase() + swordk.substring(1);
+          if (features.includes(swordf)) {
+            if (swordk === 'dailyDevotion') {
+              sword[swordk][module] = 'DailyDevotionToday';
+            } else {
+              sword[swordk].push(module);
+            }
           }
-        }
-      });
-    }
-  });
+        });
+      }
+    });
+    cache.featureModules = { ...sword, ...xulsword };
+  }
 
-  return { ...sword, ...xulsword };
+  return cache.featureModules;
 }

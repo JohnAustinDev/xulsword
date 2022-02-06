@@ -398,6 +398,7 @@ class Viewport extends React.Component implements PopupParent {
                   i,
                   reset,
                   isPinned[i],
+                  panels.toString(),
                   tabWidth,
                   tabsi ? tabsi.toString() : 'none',
                   ilModules[i],
