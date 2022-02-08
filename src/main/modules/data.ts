@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DataPublic } from '../../type';
 
+// Store temporary renderer data for use in the main process, and vice versa.
 const Data: typeof DataPublic & { datastore: any } = {
   datastore: undefined,
 
   write(data: any) {
     this.datastore = data;
-    console.log(data);
   },
 
   get data() {
-    return this.datastore;
+    return this.datastore || {};
   },
 
   read() {

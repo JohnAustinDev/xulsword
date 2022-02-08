@@ -79,8 +79,9 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
 
         case 'snbut':
           if (p && p.ch && p.mod)
-            G.Commands.search(`lemma: ${p.ch}`, {
+            G.Commands.search({
               module: p.mod,
+              searchtext: `lemma: ${p.ch}`,
               type: 'SearchAdvanced',
             });
           break;
@@ -166,13 +167,10 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       // Get selected text
       const selob = window.getSelection();
       if (selob) {
-        let sel = selob.toString();
-        sel = cleanDoubleClickSelection(sel);
-        if (sel && !/^\s*$/.test(sel)) {
-          // Do a search for selected word in mod. Use cmd_xs_search because
-          // its much faster than cmd_xs_searchForSelection and can be used
-          // because our selection is only a single word.
-          G.Commands.search(sel, { module, type: 'SearchAnyWord' });
+        let searchtext = selob.toString();
+        searchtext = cleanDoubleClickSelection(searchtext);
+        if (module && searchtext && !/^\s*$/.test(searchtext)) {
+          G.Commands.search({ module, searchtext, type: 'SearchAnyWord' });
         }
       }
       break;

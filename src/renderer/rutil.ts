@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/prefer-default-export */
@@ -17,16 +18,7 @@ import {
 } from '../common';
 import G from './rg';
 
-import type { ContextData } from '../type';
-
-interface LocObject {
-  book: string | null;
-  chapter: number | null;
-  verse: number | null;
-  lastverse: number | null;
-  version: string | null;
-  v11n: string | null;
-}
+import type { ContextData, LocationTypeVK } from '../type';
 
 export function jsdump(msg: string | Error) {
   // eslint-disable-next-line no-console
@@ -157,15 +149,15 @@ export function convertDotString(from: string, tov11n: string) {
 export function dotStringLoc2ObjectLoc(
   loc: string,
   version?: string
-): LocObject {
+): LocationTypeVK {
   const retval = {
-    chapter: null,
-    book: null,
+    book: '',
+    chapter: 0,
     verse: null,
     lastverse: null,
     version: null,
     v11n: null,
-  } as LocObject;
+  } as LocationTypeVK;
   const dotLocation = loc.split('.');
   const [sn, ch, vs, lv, v11n] = dotLocation;
   if (dotLocation[0] !== null) retval.book = sn;
@@ -450,6 +442,7 @@ function getTargetsFromSelection(
   return true;
 }
 
+// Return contextual data for use by context menus.
 export function getContextData(elem: HTMLElement): ContextData {
   const atextx = ofClass(['atext'], elem);
   const atext = atextx ? atextx.element : null;
@@ -469,6 +462,7 @@ export function getContextData(elem: HTMLElement): ContextData {
   const tab = atab?.dataset.module || null;
 
   const contextModule = getContextModule(elem);
+  if (contextModule) module = contextModule;
 
   let search = null;
   let lemma = null;
@@ -489,9 +483,9 @@ export function getContextData(elem: HTMLElement): ContextData {
       lemmaArray.push(`lemma: ${lemmaStr}`);
     });
     lemma = lemmaArray.length ? lemmaArray.join(' ') : null;
-    if (lemma) {
+    if (lemma && module) {
       search = {
-        module: contextModule,
+        module,
         searchtext: lemma,
         type: 'SearchAdvanced',
       };
@@ -500,12 +494,13 @@ export function getContextData(elem: HTMLElement): ContextData {
 
   // Get targets from mouse pointer or selection
   let selection = null;
+  let selectedLocationVK = null;
   const selob = getSelection();
   const info = deepClone(TargetInfo);
   if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
-    if (getTargetsFromSelection(info, selob)) {
-      selection = replaceASCIIcontrolChars(selob.toString());
-    }
+    selection = selob.toString();
+    selectedLocationVK = parseLocation(selection);
+    getTargetsFromSelection(info, selob);
   } else {
     getTargetsFromElement(info, elem);
   }
@@ -517,11 +512,11 @@ export function getContextData(elem: HTMLElement): ContextData {
     lastverse: info.lv,
     bookmark: info.bookmark,
     module,
-    contextModule,
     tab,
     lemma,
     panelIndex,
     selection,
+    selectedLocationVK,
     search,
   };
 }
@@ -564,7 +559,7 @@ export function parseLocation(
   text: string,
   noVariations = false,
   mustBeUnique = false
-): LocObject | null {
+): LocationTypeVK | null {
   let loc2parse = text;
 
   const dot = dotStringLoc2ObjectLoc(loc2parse);
@@ -574,42 +569,36 @@ export function parseLocation(
     return dot;
   }
 
-  loc2parse = loc2parse.replace(/[“|”|(|)|[|\]|,]/g, ' ');
-  loc2parse = loc2parse.replace(/^\s+/, '');
-  loc2parse = loc2parse.replace(/\s+$/, '');
+  loc2parse = loc2parse.replace(/[^\s\p{L}\p{N}:-]/gu, '');
+  loc2parse = loc2parse.replace(/\s+/g, ' ');
+  loc2parse = loc2parse.trim();
 
   if (loc2parse === '' || loc2parse === null) {
     return null;
   }
 
   const location = {
-    book: null,
-    version: null,
-    chapter: null,
+    book: '',
+    chapter: 0,
     verse: null,
     lastverse: null,
-  } as LocObject;
+    version: null,
+  } as LocationTypeVK;
 
   let has1chap;
   let shft; // book=1, chap=2, verse=3, lastverse=4
-  // eslint-disable-next-line prettier/prettier
-  let parsed = loc2parse.match(/([^:-]+)\s+(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/);           shft=0; has1chap=false;  // book 1:2-3
-  // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+(\d+)\s*:\s*(\d+)/);        shft=0; has1chap=false;} // book 4:5
-  // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+(\d+)/);                    shft=0; has1chap=false;} // book 6
-  // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/([^:-]+)\s+[v|V].*(\d+)/);             shft=0; has1chap=true;}  // book v6 THIS VARIES WITH LOCALE!!!
-  // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/^(\d+)$/);                             shft=2; has1chap=false;} // 6
-  // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*:\s*(\d+)\s*-\s*(\d+)/);       shft=1; has1chap=false;} // 1:2-3
-  // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*:\s*(\d+)/);                   shft=1; has1chap=false;} // 4:5
-  // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/(\d+)\s*-\s*(\d+)/);                   shft=2; has1chap=false;} // 4-5
-  // eslint-disable-next-line prettier/prettier
-  if (parsed==null) {parsed = loc2parse.match(/^(.*?)$/);                             shft=0; has1chap=false;} // book
+  /* eslint-disable prettier/prettier */
+  let parsed = null;
+  if (parsed === null) {parsed = loc2parse.match(/^(.+?)\s+(\d+):(\d+)-(\d+)$/); shft=0; has1chap=false;} // book 1:2-3
+  if (parsed === null) {parsed = loc2parse.match(/^(.+?)\s+(\d+):(\d+)$/);       shft=0; has1chap=false;} // book 4:5
+  if (parsed === null) {parsed = loc2parse.match(/^(.+?)\s+(\d+)$/);             shft=0; has1chap=false;} // book 6
+  if (parsed === null) {parsed = loc2parse.match(/^(.+?)\s+[v|V].*(\d+)$/);      shft=0; has1chap=true; } // book v6 THIS VARIES WITH LOCALE!
+  if (parsed === null) {parsed = loc2parse.match(/^(\d+)$/);                     shft=2; has1chap=false;} // 6
+  if (parsed === null) {parsed = loc2parse.match(/^(\d+):(\d+)-(\d+)$/);         shft=1; has1chap=false;} // 1:2-3
+  if (parsed === null) {parsed = loc2parse.match(/^(\d+):(\d+)$/);               shft=1; has1chap=false;} // 4:5
+  if (parsed === null) {parsed = loc2parse.match(/^(\d+)-(\d+)$/);               shft=2; has1chap=false;} // 4-5
+  if (parsed === null) {parsed = loc2parse.match(/^(.*?)$/);                     shft=0; has1chap=false;} // book
+  /* eslint-enable prettier/prettier */
   // jsdump("parsed:" + parsed + " match type:" + m + "\n");
 
   if (parsed) {

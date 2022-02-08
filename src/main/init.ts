@@ -10,6 +10,7 @@ import { isASCII, JSON_parse } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
+import Cache from './modules/cache';
 import nsILocalFile from './components/nsILocalFile';
 import { jsdump } from './mutil';
 
@@ -28,24 +29,9 @@ const allBooks = ["Gen", "Exod", "Lev", "Num", "Deut", "Josh", "Judg",
     "1Pet", "2Pet", "1John", "2John", "3John", "Jude", "Rev"];
 /* eslint-enable prettier/prettier */
 
-const cache = {
-  book: undefined as { [i: string]: BookType } | undefined,
-  books: undefined as BookType[] | undefined,
-  tab: undefined as { [i: string]: TabType } | undefined,
-  tabs: undefined as TabType[] | undefined,
-  getAvailableBooks: undefined as { [i: string]: string[] } | undefined,
-};
-
-i18next.on('languageChanged', () => {
-  Object.keys(cache).forEach((key) => {
-    const k = key as keyof typeof cache;
-    cache[k] = undefined;
-  });
-});
-
-export function getBooks(): { sName: string; bName: string; bNameL: string }[] {
+export function getBooks(): BookType[] {
   // default book order is KJV
-  if (!cache.books) {
+  if (!Cache.has('books')) {
     const books = [];
     let i;
     for (i = 0; i < allBooks.length; i += 1) {
@@ -99,26 +85,26 @@ export function getBooks(): { sName: string; bName: string; bNameL: string }[] {
       const key: string = `Long${books[i].sName}`;
       if (key in data) books[i].bNameL = data[key];
     }
-    cache.books = books;
+    Cache.write('books', books);
   }
 
-  return cache.books;
+  return Cache.read('books');
 }
 
-export function getBook() {
-  if (!cache.book) {
+export function getBook(): { [i: string]: BookType } {
+  if (!Cache.has('book')) {
     const book: any = {};
     const books = getBooks();
     for (let i = 0; i < allBooks.length; i += 1) {
       book[allBooks[i]] = books[i];
     }
-    cache.book = book;
+    Cache.write('book', book);
   }
-  return cache.book;
+  return Cache.read('book');
 }
 
-export function getTabs() {
-  if (!cache.tabs) {
+export function getTabs(): TabType[] {
+  if (!Cache.has('tabs')) {
     const tabs: TabType[] = [];
     const modlist: any = LibSword.getModuleList();
     if (modlist === C.NOMODULES) return [];
@@ -204,26 +190,26 @@ export function getTabs() {
 
       i += 1;
     });
-    cache.tabs = tabs;
+    Cache.write('tabs', tabs);
   }
 
-  return cache.tabs;
+  return Cache.read('tabs');
 }
 
-export function getTab() {
-  if (!cache.tab) {
+export function getTab(): { [i: string]: TabType } {
+  if (!Cache.has('tab')) {
     const tab: { [i: string]: TabType } = {};
     const tabs = getTabs();
     tabs.forEach((t) => {
       tab[t.module] = t;
     });
-    cache.tab = tab;
+    Cache.write('tab', tab);
   }
-  return cache.tab;
+  return Cache.read('tab');
 }
 
-export function getAvailableBooks() {
-  if (!cache.getAvailableBooks) {
+export function getAvailableBooks(): { [i: string]: string[] } {
+  if (!Cache.has('getAvailableBooks')) {
     const availableBooks: any = {
       allBooks,
     };
@@ -240,10 +226,10 @@ export function getAvailableBooks() {
       }
       availableBooks[module] = books;
     });
-    cache.getAvailableBooks = availableBooks;
+    Cache.write('getAvailableBooks', availableBooks);
   }
 
-  return cache.getAvailableBooks;
+  return Cache.read('getAvailableBooks');
 }
 
 export function setMenuFromPrefs(menu: Electron.Menu) {

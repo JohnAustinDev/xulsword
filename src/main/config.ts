@@ -6,26 +6,13 @@ import C from '../constant';
 import { deepClone } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
+import Cache from './modules/cache';
 import nsILocalFile from './components/nsILocalFile';
 import LibSword from './modules/libsword';
 import { jsdump } from './mutil';
 // import getFontFamily from './fontfamily';
 
 import type { ConfigType, GType } from '../type';
-
-const cache = {
-  localeConfigs: undefined as { [i: string]: ConfigType } | undefined,
-  fontFaceConfigs: undefined as ConfigType | undefined,
-  moduleConfigs: undefined as { [i: string]: ConfigType } | undefined,
-  featureModules: undefined as unknown,
-};
-
-i18next.on('languageChanged', () => {
-  Object.keys(cache).forEach((key) => {
-    const k = key as keyof typeof cache;
-    cache[k] = undefined;
-  });
-});
 
 // Config's properties are all the properties which Config type objects will have.
 // The Config property objects map the property for its various uses:
@@ -128,17 +115,17 @@ function localeConfig(locale: string) {
   return lconfig;
 }
 
-export function getLocaleConfigs() {
-  if (!cache.localeConfigs) {
+export function getLocaleConfigs(): { [i: string]: ConfigType } {
+  if (!Cache.has('localeConfigs')) {
     const ret = {} as { [i: string]: ConfigType };
     ret.current = localeConfig(i18next.language);
     Prefs.getComplexValue('global.locales').forEach((l: any) => {
       const [lang] = l;
       ret[lang] = localeConfig(lang);
     });
-    cache.localeConfigs = ret;
+    Cache.write('localeConfigs', ret);
   }
-  return cache.localeConfigs;
+  return Cache.read('localeConfigs');
 }
 
 export function getProgramConfig() {
@@ -164,8 +151,8 @@ function fontURL(mod: string) {
 }
 
 // Read fonts which are in xulsword's xsFonts directory
-export function getFontFaceConfigs() {
-  if (!cache.fontFaceConfigs) {
+export function getFontFaceConfigs(): ConfigType {
+  if (!Cache.has('fontFaceConfigs')) {
     if (!LibSword.libSwordReady('getFontFaceConfigs')) {
       throw Error(
         `getFontFaceConfigs must not be run until LibSword is ready!`
@@ -200,10 +187,10 @@ export function getFontFaceConfigs() {
         if (url) ret[url.name] = url.url;
       });
     }
-    cache.fontFaceConfigs = ret;
+    Cache.write('fontFaceConfigs', ret);
   }
 
-  return cache.fontFaceConfigs;
+  return Cache.read('fontFaceConfigs');
 }
 
 // Return a locale (if any) to associate with a module:
@@ -355,8 +342,8 @@ export function getModuleConfigDefault() {
   return getModuleConfig('LTR_DEFAULT');
 }
 
-export function getModuleConfigs() {
-  if (!cache.moduleConfigs) {
+export function getModuleConfigs(): { [i: string]: ConfigType } {
+  if (!Cache.has('moduleConfigs')) {
     if (!LibSword.libSwordReady('getModuleConfigs')) {
       throw Error(
         `getModuleConfigs must not be called until LibSword is ready!`
@@ -413,14 +400,14 @@ export function getModuleConfigs() {
         jsdump(`ERROR: Dropping module "${mod}". Unsupported type "${type}".`);
       }
     }
-    cache.moduleConfigs = ret;
+    Cache.write('moduleConfigs', ret);
   }
 
-  return cache.moduleConfigs;
+  return Cache.read('moduleConfigs');
 }
 
 export function getFeatureModules() {
-  if (!cache.featureModules) {
+  if (!Cache.has('featureModules')) {
     // These are CrossWire SWORD standard module features
     const sword = {
       strongsNumbers: [] as string[],
@@ -477,8 +464,8 @@ export function getFeatureModules() {
         });
       }
     });
-    cache.featureModules = { ...sword, ...xulsword };
+    Cache.write('featureModules', { ...sword, ...xulsword });
   }
 
-  return cache.featureModules;
+  return Cache.read('featureModules');
 }

@@ -23,6 +23,7 @@ export const xulDefaultProps = {
   onDoubleClick: undefined,
   onChange: undefined,
   onKeyDown: undefined,
+  onKeyUp: undefined,
   onFocus: undefined,
   onBlur: undefined,
   onMouseDown: undefined,
@@ -58,6 +59,7 @@ export const xulPropTypes = {
   onDoubleClick: PropTypes.func,
   onChange: PropTypes.func,
   onKeyDown: PropTypes.func,
+  onKeyUp: PropTypes.func,
   onFocus: PropTypes.func,
   onBlur: PropTypes.func,
   onMouseDown: PropTypes.func,
@@ -99,6 +101,7 @@ export interface XulProps {
   onDoubleClick?: (e: React.SyntheticEvent<any>) => void;
   onChange?: (e: React.ChangeEvent<any>) => void;
   onKeyDown?: (e: React.KeyboardEvent<any>) => void;
+  onKeyUp?: (e: React.KeyboardEvent<any>) => void;
   onFocus?: (e: React.SyntheticEvent<any>) => void;
   onBlur?: (e: React.SyntheticEvent<any>) => void;
   onMouseDown?: (e: React.SyntheticEvent<any>) => void;
@@ -117,6 +120,7 @@ const events = [
   'onDoubleClick',
   'onChange',
   'onKeyDown',
+  'onKeyUp',
   'onFocus',
   'onBlur',
   'onMouseDown',

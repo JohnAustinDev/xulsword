@@ -10,7 +10,7 @@ import {
 import path from 'path';
 import C from '../constant';
 import G from './mg';
-import Commands from './commands';
+import Commands, { newDbItemWithDefaults } from './commands';
 import setViewportTabs from './tabs';
 
 import type { TabTypes } from '../type';
@@ -565,13 +565,11 @@ export default class MenuBuilder {
           },
         },
         {
-          label: this.ts('menuitem.newBookmark.label'),
+          label: this.ts('menu.bookmark.add'),
           accelerator: this.tx('addCurPageAsCmd.commandkey', [
             'CommandOrControl',
           ]),
-          click: () => {
-            Commands.openNewBookmarkDialog();
-          },
+          click: () => newDbItemWithDefaults(false),
         },
         {
           label: this.ts('menu.usernote.add'),
@@ -579,9 +577,7 @@ export default class MenuBuilder {
             'CommandOrControl',
             'Shift',
           ]),
-          click: () => {
-            Commands.openNewUserNoteDialog();
-          },
+          click: () => newDbItemWithDefaults(true),
         },
       ],
     };

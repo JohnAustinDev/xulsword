@@ -10,6 +10,7 @@ import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
 import Commands from './commands';
 import Data from './modules/data';
+import Cache from './modules/cache';
 import {
   getProgramConfig,
   getLocaleConfigs,
@@ -71,6 +72,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
 
     globalReset: () => {
       G.reset();
+      Cache.clear();
       BrowserWindow.getAllWindows().forEach((w) => {
         w.webContents.send('perform-resets');
       });

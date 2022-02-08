@@ -31,7 +31,7 @@
   },
   "build": {
     "productName": "xulsword",
-    "appId": "org.erb.xulsword",
+    "appId": "org.xulsword",
     "asar": false,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [

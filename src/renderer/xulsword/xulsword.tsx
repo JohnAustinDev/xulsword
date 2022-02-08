@@ -457,6 +457,12 @@ export default class Xulsword extends React.Component {
                     maxLength="24"
                     onChange={handler}
                     onKeyDown={handler}
+                    onKeyUp={(e) => {
+                      if (e.key === 'Enter') {
+                        const b = document.getElementById('searchButton');
+                        if (b) b.click();
+                      }
+                    }}
                     tooltip={t('searchbox.tooltip')}
                   />
                   <Button

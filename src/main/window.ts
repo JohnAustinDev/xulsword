@@ -144,10 +144,10 @@ export function openWindow(
   const disposeListeners = contextMenu(win);
   // All Windows are created with BrowserWindow.show = false.
   // This means that the window will be shown after either:
-  // (params.show === true) Electron's 'ready-to-show' event.
-  // (params.show === false) The window's custom 'did-finish-render' event.
+  // - (if params.show === true) Electron's 'ready-to-show' event.
+  // - (if params.show === false) The window's custom 'did-finish-render' event.
   // IMPORTANT: If params.show is false, the 'did-finish-render' event must
-  // be explicitly called by the window via IPC or it will never be shown.
+  // be explicitly called from the window or it will never be shown.
   if (show) {
     win.once('ready-to-show', () => {
       win.show();

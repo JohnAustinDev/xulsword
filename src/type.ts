@@ -78,19 +78,35 @@ export type HistoryTypeVK = {
   v11n: string;
 }
 
+export type LocationTypeVK = {
+  book: string;
+  chapter: number;
+  verse: number | null;
+  lastverse: number | null;
+  version: string | null;
+  v11n: string | null;
+}
+
 export type ContextData = {
   book: string | null;
-  chapter: string | null;
+  chapter: number | null;
   verse: number | null;
   lastverse: number | null;
   module: string | null;
-  contextModule: string | null;
   tab: string | null;
   lemma: string | null;
   panelIndex: number | null;
   bookmark: unknown | null;
   selection: string | null;
-  search: { module: string, searchtext: string, type: string } | null;
+  selectedLocationVK: LocationTypeVK | null;
+  search: SearchType | null;
+}
+
+export type SearchType = {
+  module: string;
+  searchtext: string;
+  type: 'SearchAnyWord' | 'SearchSimilar' | 'SearchExactText' | 'SearchAdvanced';
+  scope?: 'SearchAll' | string;
 }
 
 export type BookType = {
@@ -235,13 +251,35 @@ export const CommandsPublic = {
   printPreview: func as unknown as () => void,
   printPassage: func as unknown as () => void,
   print: func as unknown as () => void,
-  search: func as unknown as (str: string, options: any) => void,
+  edit: func as unknown as (which: string, ...args: any) => void,
+  undo: func as unknown as (...args: any) => void,
+  redo: func as unknown as (...args: any) => void,
+  cut: func as unknown as (...args: any) => void,
+  copy: func as unknown as (...args: any) => void,
+  paste: func as unknown as (...args: any) => void,
+  search: func as unknown as (search: SearchType) => void,
   copyPassage: func as unknown as () => void,
-  openFontsColors: func as unknown as () => void,
+  openFontsColors: func as unknown as (module: string) => void,
   openBookmarksManager: func as unknown as () => void,
-  openNewBookmarkDialog: func as unknown as () => void,
-  openNewUserNoteDialog: func as unknown as () => void,
-  openHelp: func as unknown as () => void,
+  openNewDbItemDialog: func as unknown as (
+    userNote: boolean,
+    mod: string,
+    bk: string,
+    ch: number,
+    vs: number,
+    lv?: number | null
+  ) => void,
+  openDbItemPropertiesDialog: func as unknown as (bookmark: unknown) => void,
+  deleteDbItem: func as unknown as (bookmark: unknown) => void,
+  openHelp: func as unknown as (module?: string) => void,
+  goToBibleLocation: func as unknown as (
+    v11n: string,
+    bk: string,
+    ch: number,
+    vs?: number,
+    sel?: string,
+    flagScroll?: number
+  ) => void,
 }
 
 // See electron shell api. Any electron shell property can be added
@@ -260,8 +298,8 @@ export const DataPublic = {
 
 // This GPublic object will be used at runtime to create two different
 // types of G objects sharing the same GType interface: one will be
-// used in the main process and the other in renderer processes. The
-// main process G properties access functions and data directly. But
+// available in the main process and the other in renderer processes.
+// The main process G properties access functions and data directly. But
 // renderer process G properties request data through IPC from the main
 // process G object. All readonly data is cached. The cache can be
 // cleared by G.reset().
