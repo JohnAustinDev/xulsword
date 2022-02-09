@@ -324,7 +324,7 @@ class Viewport extends React.Component implements PopupParent {
       return ilActive || type === C.DICTIONARY ? 1 : c;
     });
 
-    // Each text's book/chapter/verse is from windowV11n.
+    // Each text's book/chapter/verse must be according to windowV11n.
     const loc: any = [];
     panels.forEach(() => {
       loc.push(`${book}.${chapter}.${verse}.${verse}`);
@@ -398,7 +398,6 @@ class Viewport extends React.Component implements PopupParent {
                   i,
                   reset,
                   isPinned[i],
-                  panels.toString(),
                   tabWidth,
                   tabsi ? tabsi.toString() : 'none',
                   ilModules[i],
@@ -436,6 +435,7 @@ class Viewport extends React.Component implements PopupParent {
                   onPopupClick={popupHandler}
                   onSelectChange={popupHandler}
                   onMouseLeftPopup={popupHandler}
+                  onPopupContextMenu={popupHandler}
                 />,
                 popupParent
               )}

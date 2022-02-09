@@ -160,6 +160,7 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           'popupBackLink',
           'towindow',
           'pupselect',
+          'snbut',
           'npopup',
         ],
         target
@@ -247,6 +248,15 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           }
           break;
         }
+        case 'snbut': {
+          if (info && info.ch && info.mod)
+            G.Commands.search({
+              module: info.mod,
+              searchtext: `lemma: ${info.ch}`,
+              type: 'SearchAdvanced',
+            });
+          break;
+        }
         default:
           throw Error(
             `Unhandled popupHandler click class: '${elem.className}'`
@@ -289,6 +299,14 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
           `Unhandled popupHandler change event: '${target.className}'`
         );
       }
+      break;
+    }
+
+    case 'contextmenu': {
+      const s: Partial<PopupParentState> = {
+        popupHold: true,
+      };
+      this.setState(s);
       break;
     }
 

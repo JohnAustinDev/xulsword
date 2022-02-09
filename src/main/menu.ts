@@ -200,7 +200,6 @@ export default class MenuBuilder {
         },
         {
           label: this.ts('menu.removeModule.label', 'menu.removeModule.sc'),
-          visible: G.LibSword.hasBible(),
           click: () => {
             Commands.removeModule();
           },
@@ -271,12 +270,13 @@ export default class MenuBuilder {
       role: 'editMenu',
       label: this.ts('editMenu.label', 'editMenu.accesskey'),
       submenu: edits
-        .map((ed) => {
+        .map((edx) => {
+          const ed = edx as 'undo' | 'redo' | 'cut' | 'copy' | 'paste';
           return {
             label: this.ts(`menu.edit.${ed}`),
             accelerator: this.tx(`menu.edit.${ed}.ac`, ['CommandOrControl']),
             click: () => {
-              Commands.edit(ed);
+              if (!Commands.edit(ed)) this.mainWindow.webContents[ed]();
             },
           };
         })

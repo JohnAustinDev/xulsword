@@ -519,7 +519,7 @@ export default class Xulsword extends React.Component {
 
             <Hbox flex="1">
               <Viewport
-                key={[vpreset, showChooser].join('.')}
+                key={[vpreset, showChooser, ...panels].join('.')}
                 id="main-viewport"
                 parentHandler={viewportParentHandler}
                 book={book}

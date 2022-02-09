@@ -37,9 +37,7 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       const targ = ofClass(
         [
           'cr',
-          'gfn',
           'crtwisty',
-          'snbut',
           'listenlink',
           'prevchaplink',
           'nextchaplink',
@@ -77,15 +75,6 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           }
           break;
 
-        case 'snbut':
-          if (p && p.ch && p.mod)
-            G.Commands.search({
-              module: p.mod,
-              searchtext: `lemma: ${p.ch}`,
-              type: 'SearchAdvanced',
-            });
-          break;
-
         case 'listenlink':
           if (p && p.mod && p.ch && p.bk) {
             /* TODO!
@@ -105,19 +94,6 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
         case 'crtwisty': {
           const row = ofClass(['fnrow'], elem);
           if (row) row.element.classList.toggle('cropened');
-          break;
-        }
-
-        case 'gfn': {
-          if (p && p.title) {
-            let gfns;
-            if (popupParent) gfns = [];
-            else gfns = atext.getElementsByClassName('gfn');
-            Array.from(gfns).forEach((gfn: any) => {
-              if (gfn !== elem && gfn.dataset.title === p.title)
-                scrollIntoView(gfn, atext);
-            });
-          }
           break;
         }
 

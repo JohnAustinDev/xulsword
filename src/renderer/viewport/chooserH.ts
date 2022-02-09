@@ -139,7 +139,7 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
       if (this.headingmenuTO) clearTimeout(this.headingmenuTO);
       const chmenu = ofClass(['chaptermenu'], target);
       const relatedTarget = e.relatedTarget as HTMLElement | null;
-      if (chmenu && relatedTarget) {
+      if (chmenu && relatedTarget && relatedTarget.classList) {
         if (!relatedTarget.classList.contains('headingmenu')) {
           chmenu.element.classList.remove('show');
         }

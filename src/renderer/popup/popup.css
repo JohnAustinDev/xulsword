@@ -58,11 +58,12 @@ html.chromedir-rtl .npopup {
 
 /* FOR ALL POPUPS */
 .popupheader {
-  margin: 0px 0px 15px 0px;
+  margin: 0px 0px 20px 0px;
 }
 .towindow {
   float: left;
   margin-inline-end: 10px;
+  margin-bottom: 5px;
   background: url('../images/towindow.png');
   width: 20px;
   height: 20px;

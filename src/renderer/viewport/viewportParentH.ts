@@ -12,7 +12,7 @@ import {
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { convertDotString, getContextData } from '../rutil';
+import { convertDotString, getContextData, scrollIntoView } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { TextCache } from './ztext';
 import { textChange, aTextWheelScroll } from './zversekey';
@@ -118,6 +118,7 @@ export default function handler(
           'dict-key',
           'dt',
           'dtl',
+          'gfn',
           'fnlink',
           'crref',
           'origoption',
@@ -346,6 +347,19 @@ export default function handler(
               keys[index] = key;
               return { keys };
             });
+          }
+          break;
+        }
+        case 'gfn': {
+          if (p && p.title) {
+            const parent = ofClass(['npopup', 'atext'], target);
+            if (parent) {
+              const gfns = parent.element.getElementsByClassName('gfn');
+              Array.from(gfns).forEach((gfn: any) => {
+                if (gfn !== elem && gfn.dataset.title === p.title)
+                  scrollIntoView(gfn, parent.element);
+              });
+            }
           }
           break;
         }

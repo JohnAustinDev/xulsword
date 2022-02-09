@@ -44,48 +44,36 @@ const Commands: typeof CommandsPublic = {
     console.log(`Action not implemented: print`);
   },
 
-  edit(which: string, ...args: any) {
-    switch (which) {
-      case 'undo':
-        this.undo(...args);
-        break;
-      case 'redo':
-        this.redo(...args);
-        break;
-      case 'cut':
-        this.cut(...args);
-        break;
-      case 'copy':
-        this.copy(...args);
-        break;
-      case 'paste':
-        this.paste(...args);
-        break;
-      default:
-    }
+  edit(which, ...args) {
+    return this[which](...args);
   },
 
-  undo(...args: any) {
+  undo(...args) {
     console.log(`Action not implemented: undo(${JSON_stringify(arguments)})`);
+    return false;
   },
 
-  redo(...args: any) {
+  redo(...args) {
     console.log(`Action not implemented: redo(${JSON_stringify(arguments)})`);
+    return false;
   },
 
-  cut(...args: any) {
+  cut(...args) {
     console.log(`Action not implemented: cut(${JSON_stringify(arguments)})`);
+    return false;
   },
 
-  copy(...args: any) {
+  copy(...args) {
     console.log(`Action not implemented: copy(${JSON_stringify(arguments)})`);
+    return false;
   },
 
-  paste(...args: any) {
+  paste(...args) {
     console.log(`Action not implemented: paste(${JSON_stringify(arguments)})`);
+    return false;
   },
 
-  search(search: SearchType) {
+  search(search) {
     console.log(`Action not implemented: search(${JSON_stringify(arguments)})`);
   },
 
@@ -93,7 +81,7 @@ const Commands: typeof CommandsPublic = {
     console.log(`Action not implemented: copyPassage`);
   },
 
-  openFontsColors(module?: string) {
+  openFontsColors(module) {
     console.log(
       `Action not implemented: openFontsColors(${JSON_stringify(arguments)})`
     );
@@ -118,7 +106,7 @@ const Commands: typeof CommandsPublic = {
     );
   },
 
-  openDbItemPropertiesDialog(bookmark: unknown) {
+  openDbItemPropertiesDialog(bookmark) {
     console.log(
       `Action not implemented: openBookmarkPropertiesDialog(${JSON_stringify(
         arguments
@@ -126,20 +114,20 @@ const Commands: typeof CommandsPublic = {
     );
   },
 
-  deleteDbItem(bookmark: unknown) {
+  deleteDbItem(bookmark) {
     console.log(
       `Action not implemented: deleteBookmark(${JSON_stringify(arguments)})`
     );
   },
 
-  openHelp(module?: string) {
+  openHelp(module) {
     console.log(`Action not implemented: openHelp()`);
   },
 
   goToBibleLocation(
-    v11n: string,
-    bk: string,
-    ch: number,
+    v11n,
+    bk,
+    ch,
     vs = 1,
     sel = '',
     flagScroll = C.VSCROLL.centerAlways

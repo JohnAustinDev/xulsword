@@ -67,6 +67,7 @@ const propTypes = {
   onPopupClick: PropTypes.func.isRequired,
   onSelectChange: PropTypes.func.isRequired,
   onMouseLeftPopup: PropTypes.func,
+  onPopupContextMenu: PropTypes.func,
 };
 
 export interface PopupProps extends XulProps {
@@ -80,6 +81,7 @@ export interface PopupProps extends XulProps {
   onPopupClick: (e: React.SyntheticEvent) => void;
   onSelectChange: (e: React.SyntheticEvent) => void;
   onMouseLeftPopup: (e: React.SyntheticEvent) => void | undefined;
+  onPopupContextMenu: (e: React.SyntheticEvent) => void | undefined;
 }
 
 export interface PopupState {
@@ -427,6 +429,7 @@ class Popup extends React.Component {
       <div
         {...htmlAttribs(`npopup ${cls}`, props)}
         {...topHandle('onMouseLeave', props.onMouseLeftPopup, props)}
+        {...topHandle('onContextMenu', props.onPopupContextMenu, props)}
         onWheel={(e) => e.stopPropagation()}
         ref={npopup}
       >
