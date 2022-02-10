@@ -113,7 +113,7 @@ class Bookselect extends React.Component {
       books = abs.map((bk: string) => {
         let longName = bk;
         for (let x = 0; x < G.Books.length; x += 1) {
-          if (G.Books[x].sName === bk) longName = G.Books[x].bNameL;
+          if (G.Books[x].code === bk) longName = G.Books[x].longname;
         }
         return (
           <option key={bk} value={bk}>
@@ -124,8 +124,8 @@ class Bookselect extends React.Component {
     } else {
       books = G.Books.map((bke: BookType) => {
         return (
-          <option key={bke.sName} value={bke.sName}>
-            {bke.bNameL}
+          <option key={bke.code} value={bke.code}>
+            {bke.longname}
           </option>
         );
       });
@@ -215,7 +215,7 @@ class Bookselect extends React.Component {
     const { book } = state;
     let bookName = book;
     for (let x = 0; x < G.Books.length; x += 1) {
-      if (book && G.Books[x].sName === book) bookName = G.Books[x].bName;
+      if (book && G.Books[x].code === book) bookName = G.Books[x].name;
     }
 
     return (

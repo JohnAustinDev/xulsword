@@ -36,6 +36,9 @@
 }
 .chooser .bookgroup {
   position: relative;
+  flex-basis: 0;
+  justify-content: normal;
+  overflow: hidden;
   color: rgb(0, 0, 100);
   background: rgb(233, 233, 233);
   border: 1px outset rgb(200, 200, 200);

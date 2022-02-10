@@ -11,14 +11,18 @@ import {
   deepClone,
   dString,
   escapeRE,
-  findBookNum,
   guiDirection,
   iString,
   ofClass,
 } from '../common';
 import G from './rg';
 
-import type { ContextData, LocationTypeVK } from '../type';
+import type {
+  BookGroupType,
+  ContextData,
+  LocationTypeVK,
+  SearchType,
+} from '../type';
 
 export function jsdump(msg: string | Error) {
   // eslint-disable-next-line no-console
@@ -97,9 +101,9 @@ export function dotString2LocaleString(ref: string, notHTML: boolean): string {
   // eslint-disable-next-line prefer-const
   let [bk, ch, vs, lv] = r.split('.');
   if (vs && lv && vs === lv) lv = '';
-  const bki = findBookNum(G, bk);
-  if (bki === null) return ret;
-  ret = `${dc}${G.Books[bki].bName}`;
+  const bko = bk && bk in G.Book ? G.Book[bk] : null;
+  if (bko === null) return ret;
+  ret = `${dc}${bko.name}`;
   if (ch) {
     ret += `${dc} ${ch}`;
     if (vs) {
@@ -259,23 +263,26 @@ function compareAgainstLocale(
 ): number {
   const toptions = { lng: bookInfo.locale, ns: 'common/books' };
   let count = 0;
-  for (let i = 0; i < G.Books.length; i += 1) {
-    const keys = [G.Books[i].sName, `Long${G.Books[i].sName}`];
-    if (!noVariations) keys.push(`${G.Books[i].sName}Variations`);
-    const list = keys.map((k) => {
-      const r = i18next.t(k, toptions);
-      return !r ? null : r.split(/\s*,\s*/);
+  const bgs: BookGroupType[] = ['ot', 'nt'];
+  bgs.forEach((bg: BookGroupType) => {
+    C.SupportedBooks[bg].forEach((bk) => {
+      const keys = [G.Book[bk].code, `Long${G.Book[bk].code}`];
+      if (!noVariations) keys.push(`${G.Book[bk].code}Variations`);
+      const list = keys.map((k) => {
+        const r = i18next.t(k, toptions);
+        return !r ? null : r.split(/\s*,\s*/);
+      });
+
+      if (compareAgainstList(inbook, list, exact)) {
+        const am = G.LocaleConfigs[bookInfo.locale].AssociatedModules;
+
+        bookInfo.bookCode = G.Book[bk].code;
+        bookInfo.modules = am === C.NOTFOUND ? [] : am.split(/\s*,\s*/);
+
+        count += 1;
+      }
     });
-
-    if (compareAgainstList(inbook, list, exact)) {
-      const am = G.LocaleConfigs[bookInfo.locale].AssociatedModules;
-
-      bookInfo.bookCode = G.Books[i].sName;
-      bookInfo.modules = am === C.NOTFOUND ? [] : am.split(/\s*,\s*/);
-
-      count += 1;
-    }
-  }
+  });
 
   return count;
 }
@@ -464,7 +471,7 @@ export function getContextData(elem: HTMLElement): ContextData {
   const contextModule = getContextModule(elem);
   if (contextModule) module = contextModule;
 
-  let search = null;
+  let search: SearchType | null = null;
   let lemma = null;
   const snx = ofClass(['sn'], elem);
   const lemmaArray: string[] = [];
@@ -563,9 +570,8 @@ export function parseLocation(
   let loc2parse = text;
 
   const dot = dotStringLoc2ObjectLoc(loc2parse);
-  const bknum = findBookNum(G, dot.book as string);
-  if (bknum !== null) {
-    // if loc2parse started with a book code assume it's an osisRef
+  // if loc2parse started with a book code assume it's a valid osisRef
+  if (dot.book && dot.book in G.Book) {
     return dot;
   }
 
@@ -676,7 +682,7 @@ export function ref2ProgramLocaleText(reference: string, notHTML?: boolean) {
     const ref = refx.replace(/^\s*/, '');
     const rp = ref.split('.');
     const [bk, ch, vs, lv] = rp;
-    const bName = G.Book[bk]?.bName;
+    const bName = G.Book[bk]?.name;
     if (vs && lv && vs === lv) {
       rp.pop();
     }

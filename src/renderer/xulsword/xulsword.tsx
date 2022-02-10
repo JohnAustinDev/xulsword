@@ -456,7 +456,6 @@ export default class Xulsword extends React.Component {
                     type="search"
                     maxLength="24"
                     onChange={handler}
-                    onKeyDown={handler}
                     onKeyUp={(e) => {
                       if (e.key === 'Enter') {
                         const b = document.getElementById('searchButton');
@@ -481,7 +480,7 @@ export default class Xulsword extends React.Component {
 
               <Hbox id="optionButtons" align="start">
                 <Button
-                  id="hdbutton"
+                  id="headings"
                   orient="vertical"
                   checked={show.headings}
                   onClick={handler}
@@ -489,7 +488,7 @@ export default class Xulsword extends React.Component {
                   tooltip={t('headingsButton.tooltip')}
                 />
                 <Button
-                  id="fnbutton"
+                  id="footnotes"
                   orient="vertical"
                   checked={show.footnotes}
                   onClick={handler}
@@ -497,7 +496,7 @@ export default class Xulsword extends React.Component {
                   tooltip={t('notesButton.tooltip')}
                 />
                 <Button
-                  id="crbutton"
+                  id="crossrefs"
                   orient="vertical"
                   checked={show.crossrefs}
                   onClick={handler}
@@ -505,7 +504,7 @@ export default class Xulsword extends React.Component {
                   tooltip={t('crossrefsButton.tooltip')}
                 />
                 <Button
-                  id="dtbutton"
+                  id="dictlinks"
                   orient="vertical"
                   checked={show.dictlinks}
                   onClick={handler}

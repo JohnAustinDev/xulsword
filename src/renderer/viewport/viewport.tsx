@@ -11,7 +11,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import C from '../../constant';
-import { findBookGroup } from '../../common';
 import Popup from '../popup/popup';
 import {
   popupParentHandler as popupParentHandlerH,
@@ -202,10 +201,10 @@ class Viewport extends React.Component implements PopupParent {
         panelHasILOptions[i] = Boolean(
           G.FeatureModules.hebrew[0] || G.FeatureModules.greek[0]
         );
-        const bkinfo = findBookGroup(G, book);
-        if (bkinfo && (bkinfo.group === 'ot' || bkinfo.group === 'nt')) {
+        const bk = book in G.Book ? G.Book[book] : null;
+        if (bk && (bk.bookGroup === 'ot' || bk.bookGroup === 'nt')) {
           const ml =
-            G.FeatureModules[bkinfo.group === 'nt' ? 'greek' : 'hebrew'];
+            G.FeatureModules[bk.bookGroup === 'nt' ? 'greek' : 'hebrew'];
           if (ml.length) ilModuleOptions[i] = ml;
         }
       }
@@ -347,6 +346,12 @@ class Viewport extends React.Component implements PopupParent {
     const showingChooser = showChooser || chooser === 'genbook';
     const minWidth =
       (showingChooser ? 300 : 0) + C.UI.Viewport.minPanelWidth * numPanels;
+    const bookGroups = C.SupportedBookGroups.filter((bg) =>
+      panels.some(
+        (p) =>
+          p && G.AvailableBooks[p].some((bk) => G.Book[bk].bookGroup === bg)
+      )
+    );
 
     let cls = '';
     if (ownWindow) cls += ' ownWindow';
@@ -372,10 +377,11 @@ class Viewport extends React.Component implements PopupParent {
 
         {showingChooser && (
           <Chooser
-            key={reset}
+            key={[reset, book].join('.')}
             type={chooser}
             selection={book}
             headingsModule={firstUnpinnedBible}
+            bookGroups={bookGroups}
             availableBooksModule={firstUnpinnedVerseKey}
             windowV11n={windowV11n}
             onCloseChooserClick={parentHandler}

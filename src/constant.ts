@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type {
+  BookGroupType,
   ModTypes,
   PlaceType,
   ShowType,
@@ -11,8 +12,6 @@ import type {
 
 // Common Global Constants
 const C = {
-  FPERM: 0o666,
-  DPERM: 0o666,
   MAXVERSE: 176,
   MAXCHAPTER: 150,
   DEVELSPLASH: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
@@ -23,6 +22,73 @@ const C = {
   NOTFOUND: 'Not Found',
   NOMODULES: 'No Modules',
   CONFSEP: '<nx>',
+
+  // supportedBookGroups and supportedBooks lists were taken from:
+  // wiki.crosswire.org/OSIS_Book_Abbreviations (11/19/20)
+  SupportedBookGroups: [
+    'ot',
+    'nt',
+    'Apocrypha',
+    'Apostolic_Fathers',
+    'Armenian_Orthodox_Canon_Additions',
+    'Ethiopian_Orthodox_Canon',
+    'Peshitta_Syriac_Orthodox_Canon',
+    'Rahlfs_LXX',
+    'Rahlfs_variant_books',
+    'Vulgate_and_other_later_Latin_mss',
+    'Other',
+  ] as BookGroupType[],
+  /* eslint-disable prettier/prettier */
+  SupportedBooks: {
+    ot: [
+      'Gen','Exod','Lev','Num','Deut','Josh','Judg','Ruth','1Sam','2Sam',
+      '1Kgs','2Kgs','1Chr','2Chr','Ezra','Neh','Esth','Job','Ps','Prov',
+      'Eccl','Song','Isa','Jer','Lam','Ezek','Dan','Hos','Joel','Amos',
+      'Obad','Jonah','Mic','Nah','Hab','Zeph','Hag','Zech','Mal'
+    ],
+    nt: [
+      'Matt','Mark','Luke','John','Acts','Rom','1Cor','2Cor','Gal','Eph',
+      'Phil','Col','1Thess','2Thess','1Tim','2Tim','Titus','Phlm','Heb',
+      'Jas','1Pet','2Pet','1John','2John','3John','Jude','Rev'
+    ],
+    Apocrypha: [
+      'Tob','Jdt','EsthGr','AddEsth','Wis','SirP','Sir','Bar','EpJer',
+      'DanGr','AddDan','PrAzar','Sus','Bel','1Macc','2Macc','3Macc',
+      '4Macc','PrMan','1Esd','2Esd','AddPs'
+    ],
+    Apostolic_Fathers: [
+      '1Clem','2Clem','IgnEph','IgnMagn','IgnTrall','IgnRom','IgnPhld',
+      'IgnSmyrn','IgnPol','PolPhil','MartPol','Did','Barn','Herm',
+      'Herm.Mand','Herm.Sim','Herm.Vis','Diogn','AposCreed','PapFrag',
+      'RelElders','QuadFrag'
+    ],
+    Armenian_Orthodox_Canon_Additions: [
+      'EpCorPaul','3Cor','WSir','PrEuth','DormJohn','JosAsen','T12Patr',
+      'T12Patr.TAsh','T12Patr.TBenj','T12Patr.TDan','T12Patr.TGad',
+      'T12Patr.TIss','T12Patr.TJos','T12Patr.TJud','T12Patr.TLevi',
+      'T12Patr.TNaph','T12Patr.TReu','T12Patr.TSim','T12Patr.TZeb'
+    ],
+    Ethiopian_Orthodox_Canon: [
+      '1En','Jub','4Bar','1Meq','2Meq','3Meq','Rep','AddJer','PsJos'
+    ],
+    Peshitta_Syriac_Orthodox_Canon: [
+      '2Bar','EpBar','5ApocSyrPss','JosephusJWvi'
+    ],
+    Rahlfs_LXX: [
+      'Odes','PssSol'
+    ],
+    Rahlfs_variant_books: [
+      'JoshA','JudgB','TobS','SusTh','DanTh','BelTh'
+    ],
+    Vulgate_and_other_later_Latin_mss: [
+      'EpLao','5Ezra','4Ezra','6Ezra','PrSol','PrJer'
+    ],
+    Other: [
+      'TatDiat','PsMet'
+    ]
+  } as { [key in BookGroupType]: string[] },
+  /* eslint-enable prettier/prettier */
+
   BMFileReturn: '\r\n', // used in imported/exported bookmarks.txt because < 3.6 could only read files with this newline.
   DEFAULTLOCALE: 'en',
   DLGSTD: 'centerscreen,modal,resizable',
@@ -75,10 +141,6 @@ const C = {
   MSOVER: 'mouseover',
   MSOUT: 'mouseout',
 
-  NumOT: 39,
-  NumNT: 27,
-  BOOKGROUPS: ['ot', 'nt'],
-
   // Versekey (that is Bible and commentary) verse scrolling
   VSCROLL: {
     none: 0, // skip the scroll step (which is after Atext render)
@@ -89,10 +151,6 @@ const C = {
     end: 5, // put state verse at the end
     endAndUpdate: 6, // put state verse at the end, then change state to the resulting first visible verse
   },
-
-  BIN: { win32: 'dll', linux: 'so', darwin: 'dylib' },
-
-  IsExtension: false,
 
   // bookmark/personal-note fields
   TYPE: 0,

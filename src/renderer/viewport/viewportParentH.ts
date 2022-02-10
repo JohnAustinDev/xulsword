@@ -3,13 +3,7 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
 import C from '../../constant';
-import {
-  decodeOSISRef,
-  escapeRE,
-  firstIndexOfBookGroup,
-  JSON_stringify,
-  ofClass,
-} from '../../common';
+import { decodeOSISRef, escapeRE, JSON_stringify, ofClass } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { convertDotString, getContextData, scrollIntoView } from '../rutil';
@@ -17,7 +11,7 @@ import { delayHandler } from '../libxul/xul';
 import { TextCache } from './ztext';
 import { textChange, aTextWheelScroll } from './zversekey';
 
-import type { XulswordStatePref } from '../../type';
+import type { BookGroupType, XulswordStatePref } from '../../type';
 import type { XulswordState } from '../xulsword/xulsword';
 import type { ViewportWinState } from './viewportWin';
 
@@ -186,10 +180,11 @@ export default function handler(
         }
         case 'bookgroup': {
           const { bookgroup } = targ.element.dataset;
-          const b = bookgroup ? firstIndexOfBookGroup(bookgroup) : null;
-          if (b !== null) {
+          const bg = bookgroup as BookGroupType;
+          const bk = bookgroup ? G.Book[C.SupportedBooks[bg][0]] : null;
+          if (bk) {
             this.setState({
-              book: G.Books[b].sName,
+              book: bk.code,
               chapter: 1,
               verse: 1,
               selection: '',

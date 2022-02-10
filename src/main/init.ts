@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable new-cap */
 /* eslint-disable import/no-mutable-exports */
@@ -18,25 +19,29 @@ import type { TabType, BookType, ModTypes } from '../type';
 
 // Exported functions are called by mg.ts using runtime-generated getter functions.
 
-/* eslint-disable prettier/prettier */
-const allBooks = ["Gen", "Exod", "Lev", "Num", "Deut", "Josh", "Judg",
-    "Ruth", "1Sam", "2Sam", "1Kgs", "2Kgs", "1Chr", "2Chr", "Ezra",
-    "Neh", "Esth", "Job", "Ps", "Prov", "Eccl", "Song", "Isa", "Jer",
-    "Lam", "Ezek", "Dan", "Hos", "Joel", "Amos", "Obad", "Jonah", "Mic",
-    "Nah", "Hab", "Zeph", "Hag", "Zech", "Mal", "Matt", "Mark", "Luke",
-    "John", "Acts", "Rom", "1Cor", "2Cor", "Gal", "Eph", "Phil", "Col",
-    "1Thess", "2Thess", "1Tim", "2Tim", "Titus", "Phlm", "Heb", "Jas",
-    "1Pet", "2Pet", "1John", "2John", "3John", "Jude", "Rev"];
-/* eslint-enable prettier/prettier */
-
+// Get all supported books in locale order. NOTE: xulsword ignores individual
+// module book order in lieu of locale book order or xulsword default order
+// (see C.SupportedBooks). Doing so provides a common order for book lists
+// etc., simpler data structures, and a better experience for the user.
 export function getBooks(): BookType[] {
-  // default book order is KJV
   if (!Cache.has('books')) {
-    const books = [];
-    let i;
-    for (i = 0; i < allBooks.length; i += 1) {
-      books.push({ sName: '', bName: '', bNameL: '' });
-    }
+    let books: BookType[] = [];
+    let index = 0;
+    C.SupportedBookGroups.forEach(
+      (bookGroup: typeof C.SupportedBookGroups[any]) => {
+        C.SupportedBooks[bookGroup].forEach((code, bgi: number) => {
+          books.push({
+            code,
+            name: code,
+            longname: code,
+            bookGroup,
+            index,
+            indexInBookGroup: bgi,
+          });
+          index += 1;
+        });
+      }
+    );
     const stfile = path.join(
       Dirs.path.xsAsset,
       'locales',
@@ -45,7 +50,7 @@ export function getBooks(): BookType[] {
       'books.json'
     );
     const raw = fs.readFileSync(stfile);
-    let data;
+    let data: any;
     if (raw && raw.length) {
       const json = JSON_parse(raw.toString());
       if (json && typeof json === 'object') {
@@ -57,34 +62,32 @@ export function getBooks(): BookType[] {
       throw Error(`failed to read books.json at ${stfile}`);
     }
 
-    let x;
-    for (i = 0; i < books.length; i += 1) {
-      x = i;
+    const localeIndex = (book: BookType): number | null => {
+      const key = `${book.code}i`;
+      return key in data && Number(data[key]) ? Number(data[key]) : null;
+    };
 
-      // implement book order from xulsword locale
-      // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-      const key: string = `${allBooks[i]}i`;
-      if (key in data && Number(data[key])) {
-        x = Number(data[key]);
-        if (books[x].sName)
-          throw Error(
-            `ERROR: Two books share the same index (${x}):${books[x].sName}, ${allBooks[i]}`
-          );
+    // sort books according to xulsword locale
+    books = books.sort((a: BookType, b: BookType) => {
+      const la = localeIndex(a);
+      const lb = localeIndex(b);
+      if (la !== null && lb !== null) return la < lb ? -1 : la > lb ? 1 : 0;
+      return a.index < b.index ? -1 : a.index > b.index ? 1 : 0;
+    });
+
+    // use xulsword locale book names (using SWORD locale would be
+    // another option for some languages).
+    books.forEach((bk: BookType) => {
+      if (bk.code in data) {
+        bk.name = data[bk.code];
+        bk.longname = data[bk.code];
       }
+      const key = `Long${bk.code}`;
+      if (key in data) {
+        bk.longname = data[key];
+      }
+    });
 
-      books[x].sName = allBooks[i];
-    }
-
-    for (i = 0; i < books.length; i += 1) {
-      let bName: string = books[i].sName;
-      if (bName in data) bName = data[bName];
-      books[i].bName = bName;
-      books[i].bNameL = bName;
-
-      // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-      const key: string = `Long${books[i].sName}`;
-      if (key in data) books[i].bNameL = data[key];
-    }
     Cache.write('books', books);
   }
 
@@ -93,11 +96,10 @@ export function getBooks(): BookType[] {
 
 export function getBook(): { [i: string]: BookType } {
   if (!Cache.has('book')) {
-    const book: any = {};
-    const books = getBooks();
-    for (let i = 0; i < allBooks.length; i += 1) {
-      book[allBooks[i]] = books[i];
-    }
+    const book: { [i: string]: BookType } = {};
+    getBooks().forEach((bk: BookType) => {
+      book[bk.code] = bk;
+    });
     Cache.write('book', book);
   }
   return Cache.read('book');
@@ -209,27 +211,31 @@ export function getTab(): { [i: string]: TabType } {
 }
 
 export function getAvailableBooks(): { [i: string]: string[] } {
-  if (!Cache.has('getAvailableBooks')) {
-    const availableBooks: any = {
-      allBooks,
+  if (!Cache.has('availableBooks')) {
+    const availableBooks: { [i: string]: string[] } = {
+      allBooks: getBooks().map((bk) => bk.code),
     };
     const modlist = LibSword.getModuleList();
     if (modlist === C.NOMODULES) return availableBooks;
+    let lastvstext = '';
     modlist.split('<nx>').forEach((m: string) => {
       const [module, type] = m.split(';');
       const books: string[] = [];
       if (type === C.BIBLE || type === C.COMMENTARY) {
-        allBooks.forEach((bk) => {
-          const vt = LibSword.getVerseText(module, `${bk} 1:1`, false);
-          if (vt) books.push(bk);
+        getBooks().forEach((bk: BookType) => {
+          const vt = LibSword.getVerseText(module, `${bk.code} 1:1`, false);
+          // When books outside the verse system are read, the last verse in the
+          // verse system is returned.
+          if (vt && vt !== lastvstext) books.push(bk.code);
+          lastvstext = vt;
         });
       }
       availableBooks[module] = books;
     });
-    Cache.write('getAvailableBooks', availableBooks);
+    Cache.write('availableBooks', availableBooks);
   }
 
-  return Cache.read('getAvailableBooks');
+  return Cache.read('availableBooks');
 }
 
 export function setMenuFromPrefs(menu: Electron.Menu) {

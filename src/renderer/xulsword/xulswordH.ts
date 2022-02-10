@@ -5,19 +5,21 @@ import React from 'react';
 import C from '../../constant';
 import { ofClass } from '../../common';
 import { chapterChange, verseChange } from '../viewport/zversekey';
-import { jsdump, parseLocation } from '../rutil';
+import { parseLocation } from '../rutil';
 import G from '../rg';
 
+import type { ShowType } from '../../type';
 import type Xulsword from './xulsword';
 import type { XulswordState } from './xulsword';
 
 export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
   const state = this.state as XulswordState;
+  const target = es.target as HTMLElement;
+  const currentId = es.currentTarget.id;
   switch (es.type) {
     case 'click': {
       const e = es as React.MouseEvent;
-      const target = e.target as HTMLElement;
-      switch (e.currentTarget.id) {
+      switch (currentId) {
         case 'back': {
           this.setHistory(state.historyIndex + 1);
           break;
@@ -45,27 +47,17 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           if (tb) tb[0].select();
           break;
         }
-        case 'prevchap': {
-          this.setState((prevState: XulswordState) => {
-            const { flagScroll } = prevState;
-            const s = chapterChange(prevState.book, prevState.chapter, -1);
-            if (!s) return null;
-            s.selection = '';
-            s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
-            return s;
-          });
-          break;
-        }
+        case 'prevchap':
         case 'nextchap': {
           this.setState((prevState: XulswordState) => {
             const { v11nmod, flagScroll } = prevState;
-            if (!v11nmod) return null;
-            const maxch = G.LibSword.getMaxChapter(v11nmod, prevState.book);
             const s = chapterChange(
               prevState.book,
               prevState.chapter,
-              1,
-              maxch
+              currentId === 'prevchap' ? -1 : 1,
+              currentId === 'nextchap' && v11nmod
+                ? G.LibSword.getMaxChapter(v11nmod, prevState.book)
+                : 0
             );
             if (!s) return null;
             s.selection = '';
@@ -74,24 +66,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           });
           break;
         }
-        case 'prevverse': {
-          this.setState((prevState: XulswordState) => {
-            const { v11nmod, flagScroll } = prevState;
-            if (!v11nmod) return null;
-            const s = verseChange(
-              v11nmod,
-              prevState.book,
-              prevState.chapter,
-              prevState.verse,
-              -1
-            );
-            if (!s) return null;
-            s.selection = [s.book, s.chapter, s.verse, s.verse].join('.');
-            s.flagScroll = flagScroll.map(() => C.VSCROLL.centerAlways);
-            return s;
-          });
-          break;
-        }
+        case 'prevverse':
         case 'nextverse': {
           this.setState((prevState: XulswordState) => {
             const { v11nmod, flagScroll } = prevState;
@@ -101,7 +76,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               prevState.book,
               prevState.chapter,
               prevState.verse,
-              1
+              currentId === 'prevverse' ? -1 : 1
             );
             if (!s) return null;
             s.selection = [s.book, s.chapter, s.verse, s.verse].join('.');
@@ -125,41 +100,21 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           }
           break;
         }
-        case 'hdbutton': {
+        case 'headings':
+        case 'footnotes':
+        case 'crossrefs':
+        case 'dictlinks': {
           this.setState((prevState: XulswordState) => {
             const { show } = prevState;
-            show.headings = !show.headings;
-            return { show };
-          });
-          break;
-        }
-        case 'fnbutton': {
-          this.setState((prevState: XulswordState) => {
-            const { show } = prevState;
-            show.footnotes = !show.footnotes;
-            return { show };
-          });
-          break;
-        }
-        case 'crbutton': {
-          this.setState((prevState: XulswordState) => {
-            const { show } = prevState;
-            show.crossrefs = !show.crossrefs;
-            return { show };
-          });
-          break;
-        }
-        case 'dtbutton': {
-          this.setState((prevState: XulswordState) => {
-            const { show } = prevState;
-            show.dictlinks = !show.dictlinks;
+            const id = currentId as keyof ShowType;
+            show[id] = !show[id];
             return { show };
           });
           break;
         }
         default:
           throw Error(
-            `Unhandled xulswordHandler onClick event on '${es.currentTarget.id}'`
+            `Unhandled xulswordHandler onClick event on '${currentId}'`
           );
       }
       break;
@@ -238,26 +193,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         default:
           throw Error(
-            `Unhandled xulswordHandler onChange event on '${es.currentTarget.id}'`
-          );
-      }
-      break;
-    }
-
-    case 'keydown': {
-      const ek = es as React.KeyboardEvent;
-      const ea = es as any;
-      const id = ea.target?.id ? ea.target.id : null;
-      switch (id) {
-        case 'searchText__input': {
-          if (ek.key === 'Enter') {
-            jsdump(`search Enter not yet implemented`);
-          }
-          break;
-        }
-        default:
-          throw Error(
-            `Unhandled xulswordHandler onKeyDown event on '${es.currentTarget.id}'`
+            `Unhandled xulswordHandler onChange event on '${currentId}'`
           );
       }
       break;

@@ -429,8 +429,9 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   Ps 119:1 from 'KJV', it would return Ps.118.1.1 when converted to
   //   'Synodal' or 'EASTERN' verse systems).
   // Returned value is always of the form shortBook.chapter.verse.lastVerse
-  // NOTE: Currently libsword mapping only works for KJV, Synodal and SynodalProt,
-  // so if the verse system is other than those, it must be treated as KJV.
+  // NOTE: Currently libsword mapping only works for Gen-Rev of KJV, Synodal
+  // and SynodalProt, so if the verse system is other than those, it must be
+  // treated as KJV.
   // TODO! Implement full v11n conversion
   convertLocation(fromVerseSystem, vkeytext, toVerseSystem) {
     if (!this.libSwordReady('convertLocation')) return null;
@@ -438,7 +439,12 @@ DEFINITION OF A 'XULSWORD REFERENCE':
     if (!from.startsWith('Synodal')) from = 'KJV';
     let to = toVerseSystem;
     if (!to.startsWith('Synodal')) to = 'KJV';
-    return libxulsword.ConvertLocation(from, vkeytext, to);
+    const r = libxulsword.ConvertLocation(from, vkeytext, to);
+    // When requesting conversion of a book outside the verse system, the last
+    // book in the verse system is erroneously returned. So check for this
+    // failure and return the input unchanged in such case.
+    if (vkeytext.split('.')[0] !== r.split('.')[0]) return vkeytext;
+    return r;
   },
 
   /* ******************************************************************************

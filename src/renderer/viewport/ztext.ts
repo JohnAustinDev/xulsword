@@ -60,20 +60,32 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
   // Read Libsword according to module type
   switch (type) {
     case C.BIBLE: {
-      if (ilModule) {
-        r.textHTML += G.LibSword.getChapterTextMulti(
-          `${module},${ilModule}`,
-          `${book}.${chapter}`
-        ).replace(/interV2/gm, `cs-${ilModule}`);
-      } else {
-        r.textHTML += G.LibSword.getChapterText(module, `${book}.${chapter}`);
-        r.notes += G.LibSword.getNotes();
+      if (
+        module &&
+        module in G.AvailableBooks &&
+        G.AvailableBooks[module].includes(book)
+      ) {
+        if (ilModule) {
+          r.textHTML += G.LibSword.getChapterTextMulti(
+            `${module},${ilModule}`,
+            `${book}.${chapter}`
+          ).replace(/interV2/gm, `cs-${ilModule}`);
+        } else {
+          r.textHTML += G.LibSword.getChapterText(module, `${book}.${chapter}`);
+          r.notes += G.LibSword.getNotes();
+        }
       }
       break;
     }
     case C.COMMENTARY: {
-      r.textHTML += G.LibSword.getChapterText(module, `${book}.${chapter}`);
-      r.notes += G.LibSword.getNotes();
+      if (
+        module &&
+        module in G.AvailableBooks &&
+        G.AvailableBooks[module].includes(book)
+      ) {
+        r.textHTML += G.LibSword.getChapterText(module, `${book}.${chapter}`);
+        r.notes += G.LibSword.getNotes();
+      }
       break;
     }
     case C.DICTIONARY: {

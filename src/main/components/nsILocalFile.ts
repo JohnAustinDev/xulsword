@@ -3,7 +3,9 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import fs from 'fs';
 import path from 'path';
-import C from '../../constant';
+
+const FPERM = 0o666;
+const DPERM = 0o666;
 
 export default class nsILocalFile {
   // The file system location for this nsILocalFile instance.
@@ -159,7 +161,7 @@ export default class nsILocalFile {
   // This was not part of nsILocalFIle, but added for convenience. Writes UTF-8
   // encoded string to file.
   writeFile(str: string, options?: any) {
-    const o = options || { encoding: 'utf8', mode: C.FPERM };
+    const o = options || { encoding: 'utf8', mode: FPERM };
     fs.writeFile(this.path, str, o);
   }
 
@@ -211,9 +213,9 @@ export function writeSafeFile(
     if (!overwrite) return false;
     nsIFile.remove(true);
   }
-  createSafeFile(nsIFile, C.FPERM);
+  createSafeFile(nsIFile, FPERM);
 
-  nsIFile.writeFile(str, { encoding: toEncoding, mode: C.FPERM });
+  nsIFile.writeFile(str, { encoding: toEncoding, mode: FPERM });
 
   return true;
 }

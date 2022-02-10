@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-globals */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
@@ -9,12 +10,7 @@
 import i18next from 'i18next';
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  bookGroupLength,
-  dString,
-  findBookGroup,
-  findBookNum,
-} from '../../common';
+import { dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import { Hbox, Vbox } from '../libxul/boxes';
@@ -29,6 +25,8 @@ import {
 import '../libxul/xul.css';
 import handlerH from './chooserH';
 import './chooser.css';
+
+import type { BookGroupType, BookType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -55,7 +53,7 @@ const propTypes = {
 };
 
 export interface ChooserProps extends XulProps {
-  bookGroups: string[];
+  bookGroups: BookGroupType[];
   onCloseChooserClick: (e: any) => void;
   headingsModule: string | undefined;
   availableBooksModule: string | undefined;
@@ -67,7 +65,7 @@ export interface ChooserProps extends XulProps {
 
 export interface ChooserState {
   // The visible bookGroup
-  bookGroup: string;
+  bookGroup: BookGroupType;
   // The index (base 0) of the topmost visible
   // book-item in each bookGroup slider
   slideIndex: { [i: string]: number };
@@ -104,9 +102,11 @@ class Chooser extends React.Component {
     super(props);
     chooserCompRef = this;
 
-    let bookGroup = findBookGroup(G, props.selection)?.group;
-    if (!bookGroup || !props.bookGroups.includes(bookGroup))
-      [bookGroup] = props.bookGroups;
+    let bookGroup: BookGroupType =
+      props.selection && props.selection in G.Book
+        ? G.Book[props.selection].bookGroup
+        : props.bookGroups[0];
+    if (!props.bookGroups.includes(bookGroup)) [bookGroup] = props.bookGroups;
 
     const slideIndex: any = {};
     props.bookGroups.forEach((g) => {
@@ -117,11 +117,11 @@ class Chooser extends React.Component {
     this.state = s;
 
     let longest = 0;
-    this.longestBook = G.Books[0].sName;
+    this.longestBook = G.Books[0].code;
     G.Books.forEach((bk) => {
-      if (bk.bName.length > longest) {
-        longest = bk.bName.length;
-        this.longestBook = bk.sName;
+      if (bk.name.length > longest) {
+        longest = bk.name.length;
+        this.longestBook = bk.code;
       }
     });
 
@@ -133,7 +133,7 @@ class Chooser extends React.Component {
 
     this.handler = handlerH.bind(this);
 
-    if (props.selection) {
+    if (!props.hideUnavailableBooks && props.selection) {
       setTimeout(() => {
         this.startSlidingUp(null, 0, props.selection);
       }, 0);
@@ -198,16 +198,18 @@ class Chooser extends React.Component {
 
   slideUp(rows = 1, showBook?: string) {
     const { bookGroup, slideIndex } = this.state as ChooserState;
+    const { hideUnavailableBooks } = this.props as ChooserProps;
 
     // If showBook is set and the book is visible, then stop.
-    if (showBook && findBookGroup(G, showBook)?.group === bookGroup) {
-      const n = findBookGroup(G, showBook)?.index;
-      if (n !== undefined && n !== null) {
-        const c = n - this.numChooserRows() + 3;
-        if (slideIndex[bookGroup] > c) {
-          this.stopSliding();
-          return;
-        }
+    const shbk: BookType | null =
+      !hideUnavailableBooks && showBook && showBook in G.Book
+        ? G.Book[showBook]
+        : null;
+    if (shbk && shbk.bookGroup === bookGroup) {
+      const c = shbk.indexInBookGroup - this.numChooserRows() + 3;
+      if (slideIndex[bookGroup] > c) {
+        this.stopSliding();
+        return;
       }
     }
     const maxindex = this.maxScrollIndex();
@@ -262,16 +264,18 @@ class Chooser extends React.Component {
     const label: any = {};
     const useLabelImage: any = {};
     props.bookGroups.forEach((bg) => {
-      const tkey = `${bg.toUpperCase()}text`;
-      label[bg] = i18next.t(tkey);
-      useLabelImage[bg] = /^\s*$/.test(label[bg]);
+      const tkey = `chooserBookGroup_${bg}`;
+      if (i18next.exists(tkey)) {
+        label[bg] = i18next.t(tkey);
+        useLabelImage[bg] = /^\s*$/.test(label[bg]);
+      } else label[bg] = bg.replaceAll('_', ' ').substring(0, 12);
     });
 
     return (
       <Vbox {...addClass(`chooser ${type}`, props)} onMouseOut={handler}>
         <Hbox className="fadetop" />
 
-        <Hbox flex="5" className="chooser-container">
+        <Hbox className="chooser-container" flex="5">
           <div className="close-chooser" onClick={onCloseChooserClick} />
 
           <Vbox className="bookgroup-selector">
@@ -281,7 +285,7 @@ class Chooser extends React.Component {
                 <Vbox
                   key={bg}
                   className={`bookgroup ${selected}`}
-                  flex="50%"
+                  flex="1"
                   pack="center"
                   align="center"
                   onMouseEnter={handler}
@@ -344,7 +348,7 @@ export default Chooser;
 function BookGroupList(
   props: {
     windowV11n: string;
-    bookGroup?: string | undefined;
+    bookGroup?: BookGroupType | undefined;
     selection?: string | undefined;
     availableBooks?: string[] | undefined;
     hideUnavailableBooks?: boolean;
@@ -359,27 +363,27 @@ function BookGroupList(
     windowV11n,
     handler,
   } = props;
-  const listBookIndexes = [];
+  const listOfBookIndexes: number[] = [];
   if (bookGroup) {
-    for (let i = 0; i < bookGroupLength(bookGroup); i += 1) {
-      listBookIndexes.push(findBookNum(G, bookGroup, i));
-    }
-  } else G.Books.forEach((_b, i) => listBookIndexes.push(i));
+    C.SupportedBooks[bookGroup].forEach((code) => {
+      listOfBookIndexes.push(G.Book[code].index);
+    });
+  } else G.Books.forEach((_b, i) => listOfBookIndexes.push(i));
   return (
     <Vbox {...addClass('bookgrouplist', props)}>
-      {listBookIndexes.map((b) => {
+      {listOfBookIndexes.map((b) => {
         if (b === null) return null;
         const bk = G.Books[b];
         const classes = [];
-        if (selection && bk.sName === selection) classes.push('selected');
-        if (availableBooks && !availableBooks.includes(bk.sName)) {
+        if (selection && bk.code === selection) classes.push('selected');
+        if (availableBooks && !availableBooks.includes(bk.code)) {
           if (hideUnavailableBooks) return null;
           classes.push('disabled');
         }
         return (
           <BookGroupItem
-            key={bk.sName}
-            sName={bk.sName}
+            key={bk.code}
+            sName={bk.code}
             classes={classes}
             windowV11n={windowV11n}
             handler={handler}
@@ -414,7 +418,7 @@ function BookGroupItem(
       {...topHandle('onMouseEnter', handler, props)}
       data-book={sName}
     >
-      <div className="label">{G.Book[sName].bName}</div>
+      <div className="label">{G.Book[sName].name}</div>
 
       {hasAudio && <div className="hasAudio" />}
 

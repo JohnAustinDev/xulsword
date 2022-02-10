@@ -164,16 +164,16 @@ html.chromedir-rtl #forward .button-icon {
 #optionButtons .button.disabled {
   color: grey;
 }
-#crbutton .button-icon {
+#crossrefs .button-icon {
   background: url(../images/crossrefs.png);
 }
-#fnbutton .button-icon {
+#footnotes .button-icon {
   background: url(../images/footnotes.png);
 }
-#hdbutton .button-icon {
+#headings .button-icon {
   background: url(../images/headings.png);
 }
-#dtbutton .button-icon {
+#dictlinks .button-icon {
   background: url(../images/dict.png);
 }
 #optionButtons .button-icon {
