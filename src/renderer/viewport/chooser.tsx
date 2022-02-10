@@ -248,6 +248,7 @@ class Chooser extends React.Component {
       this;
     const {
       availableBooksModule,
+      bookGroups,
       selection,
       type,
       windowV11n,
@@ -263,7 +264,7 @@ class Chooser extends React.Component {
 
     const label: any = {};
     const useLabelImage: any = {};
-    props.bookGroups.forEach((bg) => {
+    bookGroups.forEach((bg) => {
       const tkey = `chooserBookGroup_${bg}`;
       if (i18next.exists(tkey)) {
         label[bg] = i18next.t(tkey);
@@ -279,14 +280,14 @@ class Chooser extends React.Component {
           <div className="close-chooser" onClick={onCloseChooserClick} />
 
           <Vbox className="bookgroup-selector">
-            {props.bookGroups.map((bg) => {
+            {bookGroups.map((bg) => {
               const selected = bg === bookGroup ? 'selected' : '';
               return (
                 <Vbox
                   key={bg}
                   className={`bookgroup ${selected}`}
                   flex="1"
-                  pack="center"
+                  pack={bookGroups.length > 3 ? 'start' : 'center'}
                   align="center"
                   onMouseEnter={handler}
                   data-bookgroup={bg}
