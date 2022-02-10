@@ -3,7 +3,7 @@ import { BrowserWindow } from 'electron';
 import contextMenuCreator from 'electron-context-menu';
 import i18next from 'i18next';
 import Commands, { newDbItemWithDefaults } from './commands';
-import { getTab } from './init';
+import { getTab } from './minit';
 import setViewportTabs from './tabs';
 import Data from './modules/data';
 import Prefs from './modules/prefs';

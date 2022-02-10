@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import { BrowserWindow, shell } from 'electron';
-import i18next from 'i18next';
 import { DataPublic, GPublic, ShellPublic } from '../type';
 import { inlineFile } from './components/nsILocalFile';
 import Dirs from './modules/dirs';
@@ -10,7 +9,6 @@ import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
 import Commands from './commands';
 import Data from './modules/data';
-import Cache from './modules/cache';
 import {
   getProgramConfig,
   getLocaleConfigs,
@@ -28,17 +26,17 @@ import {
   getTab,
   getAvailableBooks,
   setGlobalMenuFromPref,
-} from './init';
+  globalReset,
+} from './minit';
 
 import type { GType } from '../type';
 
 // This G object is for use in the main process, and it shares the same
-// interface as the renderer's G object. Properties of this object
-// directly access data and main process modules. The output of
-// get<function>s are cached until G.reset().
+// GPublic interface as the renderer's G object. Properties of this
+// object may directly access main process data and modules.
 
 const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
-  cache: {},
+  cache: {}, // needed only for Renderer G objects
 
   // Permanently store references to be used by G
   refs: {
@@ -70,13 +68,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
       return inlineFile(fpath, encoding);
     },
 
-    globalReset: () => {
-      G.reset();
-      Cache.clear();
-      BrowserWindow.getAllWindows().forEach((w) => {
-        w.webContents.send('perform-resets');
-      });
-    },
+    globalReset: () => globalReset(),
 
     setGlobalStateFromPref: (
       win: BrowserWindow | null,
@@ -106,7 +98,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
   },
 
   reset() {
-    this.cache = {};
+    this.cache = {}; // needed only for Renderer G objects
   },
 };
 G.refs.globalReset = G.refs.globalReset.bind(G);
@@ -144,7 +136,5 @@ entries.forEach((entry) => {
 type GPrivateMain = {
   refs: { [key in keyof typeof GPublic]: any };
 };
-
-i18next.on('languageChanged', () => G.reset());
 
 export default G as unknown as GType;

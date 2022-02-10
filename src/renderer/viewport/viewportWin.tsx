@@ -5,16 +5,10 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
-import { render } from 'react-dom';
 import { JSON_parse } from '../../common';
-import i18nInit from '../i18n';
 import G from '../rg';
-import {
-  getStatePref,
-  jsdump,
-  onSetWindowStates,
-  setPrefFromState,
-} from '../rutil';
+import launchComponent from '../rinit';
+import { getStatePref, onSetWindowState, setPrefFromState } from '../rutil';
 import {
   topHandle,
   xulDefaultProps,
@@ -43,6 +37,7 @@ const propTypes = {
 
 export type ViewportWinProps = XulProps;
 
+// Read shell arguments into initial state
 Object.entries(JSON_parse(window.shell.process.argv().pop())).forEach(
   (entry) => {
     const [n, value] = entry;
@@ -80,7 +75,7 @@ export default class ViewportWin extends React.Component {
       this.state = s;
     } else throw Error(`ViewportWin id must be 'xulsword'`);
 
-    onSetWindowStates(this);
+    onSetWindowState(this);
 
     this.viewportParentHandler = viewportParentH.bind(this);
     this.lastSavedPref = {};
@@ -175,24 +170,4 @@ export default class ViewportWin extends React.Component {
 ViewportWin.defaultProps = defaultProps;
 ViewportWin.propTypes = propTypes;
 
-function loadedXUL() {
-  jsdump('RUNNING loadedXUL()!');
-  window.ipc.renderer.send('window', 'did-finish-render');
-}
-
-function unloadXUL() {
-  jsdump('RUNNING unloadXUL()!');
-}
-
-i18nInit(['xulsword'])
-  .then(() =>
-    render(
-      // Must have the same id as Xulsword component so that state will be shared.
-      <ViewportWin id="xulsword" pack="start" height="100%" />,
-      document.getElementById('root')
-    )
-  )
-  .then(() => loadedXUL())
-  .catch((e: string | Error) => jsdump(e));
-
-window.ipc.renderer.on('close', () => unloadXUL());
+launchComponent(<ViewportWin id="xulsword" pack="start" height="100%" />);

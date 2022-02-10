@@ -2,10 +2,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
-import { render } from 'react-dom';
 import { JSON_parse } from '../../common';
-import i18nInit from '../i18n';
-import { jsdump } from '../rutil';
+import launchComponent from '../rinit';
 import {
   addClass,
   xulDefaultProps,
@@ -83,9 +81,4 @@ export default class PopupWin extends React.Component implements PopupParent {
 PopupWin.defaultProps = defaultProps;
 PopupWin.propTypes = propTypes;
 
-i18nInit(['xulsword'])
-  .then(() =>
-    render(<PopupWin height="100%" />, document.getElementById('root'))
-  )
-  .then(() => window.ipc.renderer.send('window', 'did-finish-render'))
-  .catch((e: string | Error) => jsdump(e));
+launchComponent(<PopupWin height="100%" />);

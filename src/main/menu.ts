@@ -632,14 +632,6 @@ export default class MenuBuilder {
           },
         },
         {
-          role: 'togglefullscreen',
-          label: 'Toggle &Full Screen',
-          accelerator: 'F11',
-          click: () => {
-            this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
-          },
-        },
-        {
           role: 'toggelDevTools',
           label: 'Toggle &Developer Tools',
           accelerator: 'Alt+Ctrl+I',

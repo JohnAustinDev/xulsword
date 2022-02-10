@@ -12,9 +12,9 @@ import type {
 
 // Common Global Constants
 const C = {
+  DEVELSPLASH: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
   MAXVERSE: 176,
   MAXCHAPTER: 150,
-  DEVELSPLASH: 1 as 0 | 1 | 2, // 0 normal, 1 skip, 2 debug
   BIBLE: 'Biblical Texts' as ModTypes,
   DICTIONARY: 'Lexicons / Dictionaries' as ModTypes,
   COMMENTARY: 'Commentaries' as ModTypes,

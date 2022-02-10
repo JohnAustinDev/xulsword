@@ -5,17 +5,16 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
-import { render } from 'react-dom';
 import { Translation } from 'react-i18next';
 import { HistoryTypeVK, XulswordStatePref } from '../../type';
 import { dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import i18nInit from '../i18n';
+import launchComponent from '../rinit';
 import {
   dotString2LocaleString,
   jsdump,
-  onSetWindowStates,
+  onSetWindowState,
   getStatePref,
   setPrefFromState,
 } from '../rutil';
@@ -112,7 +111,7 @@ export default class Xulsword extends React.Component {
       this.state = s;
     } else throw Error(`Xulsword id must be 'xulsword'`);
 
-    onSetWindowStates(this);
+    onSetWindowState(this);
 
     this.handler = handlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
@@ -550,26 +549,9 @@ export default class Xulsword extends React.Component {
 Xulsword.defaultProps = defaultProps;
 Xulsword.propTypes = propTypes;
 
-function loadedXUL() {
-  jsdump('RUNNING loadedXUL()!');
-  window.ipc.renderer.send('window', 'did-finish-render');
+launchComponent(<Xulsword id="xulsword" pack="start" height="100%" />, () => {
+  jsdump('Loading Xulsword!');
   setTimeout(() => {
     window.ipc.renderer.send('window', 'move-to-back');
   }, 100);
-}
-
-function unloadXUL() {
-  jsdump('RUNNING unloadXUL()!');
-}
-
-i18nInit(['xulsword'])
-  .then(() =>
-    render(
-      <Xulsword id="xulsword" pack="start" height="100%" />,
-      document.getElementById('root')
-    )
-  )
-  .then(() => loadedXUL())
-  .catch((e: string | Error) => jsdump(e));
-
-window.ipc.renderer.on('close', () => unloadXUL());
+});

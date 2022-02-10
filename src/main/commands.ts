@@ -3,7 +3,7 @@
 import { CommandsPublic, SearchType } from '../type';
 import C from '../constant';
 import { JSON_stringify } from '../common';
-import { getTab, setGlobalStateFromPref } from './init';
+import { getTab, setGlobalStateFromPref } from './minit';
 import LibSword from './modules/libsword';
 import Prefs from './modules/prefs';
 

@@ -5,6 +5,7 @@ import type Electron from 'electron';
 
 declare global {
   interface Window {
+    api: any;
     ipc: any;
     shell: any;
   }
@@ -400,8 +401,8 @@ export const DataPublic = {
 // available in the main process and the other in renderer processes.
 // The main process G properties access functions and data directly. But
 // renderer process G properties request data through IPC from the main
-// process G object. All readonly data is cached. The cache can be
-// cleared by G.reset().
+// process G object. All readonly data of the Renderer G object is cached.
+// This cache can be cleared by G.reset().
 export const GPublic = {
   // Global data for read only use
   Books: 'readonly',

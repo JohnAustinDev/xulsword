@@ -17,7 +17,8 @@ import { jsdump } from './mutil';
 
 import type { TabType, BookType, ModTypes } from '../type';
 
-// Exported functions are called by mg.ts using runtime-generated getter functions.
+// These exported GPublic functions are called by the runtime
+// auto-generated G object.
 
 // Get all supported books in locale order. NOTE: xulsword ignores individual
 // module book order in lieu of locale book order or xulsword default order
@@ -299,4 +300,11 @@ export function setGlobalStateFromPref(
   } else {
     broadcast();
   }
+}
+
+export function globalReset() {
+  Cache.clear();
+  BrowserWindow.getAllWindows().forEach((w) => {
+    w.webContents.send('perform-resets');
+  });
 }

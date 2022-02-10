@@ -868,7 +868,7 @@ export function setStatePref(id: string, state: Partial<React.ComponentState>) {
 
 // Calling this function registers a update-state-from-pref listener that, when
 // called upon, will read component state Prefs and write them to new state.
-export function onSetWindowStates(component: React.Component) {
+export function onSetWindowState(component: React.Component) {
   window.ipc.renderer.on(
     'update-state-from-pref',
     (prefs: string | string[]) => {
@@ -879,7 +879,6 @@ export function onSetWindowStates(component: React.Component) {
         if (lng !== i18next.language) {
           i18next.changeLanguage(lng, (err) => {
             if (err) throw Error(err);
-            G.reset();
             component.setState(state);
           });
         } else {

@@ -9,7 +9,7 @@ import {
   getTab,
   getTabs,
   setGlobalStateFromPref,
-} from './init';
+} from './minit';
 
 import type { TabType, TabTypes } from '../type';
 
