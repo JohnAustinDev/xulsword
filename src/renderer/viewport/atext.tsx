@@ -119,7 +119,7 @@ const libswordResponseMemoized = memoize(libswordText, {
   normalizer: (...args: any) =>
     args.map((arg: any) => stringHash(arg)).join('+'),
 });
-window.ipc.renderer.on('perform-resets', () => {
+window.ipc.renderer.on('module-reset', () => {
   libswordResponseMemoized.clear();
 });
 

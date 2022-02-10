@@ -1,4 +1,6 @@
-import { ReactElement } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable import/no-mutable-exports */
+import React, { ReactElement, useState } from 'react';
 import { render } from 'react-dom';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
@@ -106,31 +108,45 @@ export default function launchComponent(
   unloadXUL?: () => void,
   namespace = 'xulsword'
 ) {
+  function Reset(props: React.ComponentProps<any>) {
+    const [reset, setReset] = useState(0);
+    const { children } = props;
+    window.ipc.renderer.on('component-reset', () => {
+      const lng = G.Prefs.getCharPref(C.LOCALEPREF);
+      if (i18n.language !== lng) {
+        i18n.changeLanguage(lng, (err: any) => {
+          if (err) throw Error(err);
+          setReset(reset + 1);
+        });
+      } else {
+        G.reset();
+        setReset(reset + 1);
+      }
+    });
+    const delayHandlerThis = {};
+    window.ipc.renderer.on(
+      'resize',
+      delayHandler.bind(delayHandlerThis)(
+        () => {
+          setReset(reset + 1);
+        },
+        C.UI.Window.resizeDelay,
+        'resizeTO'
+      )
+    );
+    return <React.Fragment key={reset}>{children}</React.Fragment>;
+  }
+
   i18nInit([namespace])
-    .then(() => render(component, document.getElementById('root')))
+    .then(() =>
+      render(<Reset>{component}</Reset>, document.getElementById('root'))
+    )
     .then(() => {
       if (typeof loadedXUL === 'function') loadedXUL();
       window.ipc.renderer.send('window', 'did-finish-render');
       return true;
     })
     .catch((e: string | Error) => jsdump(e));
-
-  window.ipc.renderer.on('perform-resets', () => {
-    G.reset();
-    render(component, document.getElementById('root'));
-  });
-
-  const delayHandlerThis = {};
-  window.ipc.renderer.on(
-    'resize',
-    delayHandler.bind(delayHandlerThis)(
-      () => {
-        render(component, document.getElementById('root'));
-      },
-      C.UI.Window.resizeDelay,
-      'resizeTO'
-    )
-  );
 
   window.ipc.renderer.on('close', () => {
     if (typeof unloadXUL === 'function') unloadXUL();

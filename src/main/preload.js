@@ -26,7 +26,8 @@ const validChannels = [
   'close', // from main upon parent window close
   'resize', // from main upon parent window resize
   'update-state-from-pref', // from main when state-prefs should be updated
-  'perform-resets', // from main when resets should be performed
+  'component-reset', // from main when top react components should be remounted
+  'module-reset', // from main when module contents may have changed
 ];
 
 contextBridge.exposeInMainWorld('ipc', {

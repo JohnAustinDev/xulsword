@@ -8,43 +8,42 @@ import { GPublic } from '../type';
 // this object access data and objects via IPC to the main process G object.
 // Local readonly data is cached.
 
-const base: Pick<GType, 'reset' | 'cache'> = {
+const G = {
   cache: {},
 
   reset() {
     this.cache = {};
   },
-};
-
-const G = base as GType;
+} as GType;
 
 const entries = Object.entries(GPublic);
 entries.forEach((entry) => {
   const gPublic = GPublic as any;
-  const g = G as any;
-  const [name, val] = entry;
+  const Gx = G as any;
+  const [k, val] = entry;
+  const name = k as keyof GType;
   if (val === 'readonly') {
     Object.defineProperty(G, name, {
       get() {
-        if (!(name in this.cache)) {
-          this.cache[name] = window.ipc.renderer.sendSync('global', name);
+        if (!(name in G.cache)) {
+          G.cache[name] = window.ipc.renderer.sendSync('global', name);
         }
-        return this.cache[name];
+        return G.cache[name];
       },
     });
   } else if (typeof val === 'function') {
-    g[name] = (...args: any[]) => {
+    Gx[name] = (...args: any[]) => {
       return window.ipc.renderer.sendSync('global', name, ...args);
     };
   } else if (typeof val === 'object') {
     const methods = Object.getOwnPropertyNames(val);
     methods.forEach((m) => {
-      if (g[name] === undefined) {
-        g[name] = {};
+      if (G[name] === undefined) {
+        Gx[name] = {};
       }
       if (gPublic[name][m] === 'readonly') {
         const key = `${name}.${m}`;
-        Object.defineProperty(g[name], m, {
+        Object.defineProperty(Gx[name], m, {
           get() {
             if (!(key in G.cache)) {
               G.cache[key] = window.ipc.renderer.sendSync('global', name, m);
@@ -53,7 +52,7 @@ entries.forEach((entry) => {
           },
         });
       } else {
-        g[name][m] = (...args: unknown[]) => {
+        Gx[name][m] = (...args: unknown[]) => {
           return window.ipc.renderer.sendSync('global', name, m, ...args);
         };
       }

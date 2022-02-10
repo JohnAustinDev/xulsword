@@ -19,7 +19,7 @@ type TextCacheType = {
 // limited number of cache possibliities (ie. one per module).
 // eslint-disable-next-line import/no-mutable-exports
 export let TextCache: TextCacheType = { dict: { keyList: {}, keyHTML: {} } };
-window.ipc.renderer.on('perform-resets', () => {
+window.ipc.renderer.on('module-reset', () => {
   TextCache = { dict: { keyList: {}, keyHTML: {} } };
 });
 

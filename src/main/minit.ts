@@ -281,30 +281,27 @@ export function setGlobalMenuFromPref(menu?: Electron.Menu) {
   if (m !== null) setMenuFromPrefs(m);
 }
 
+export function globalReset() {
+  Cache.clear();
+  BrowserWindow.getAllWindows().forEach((w) => {
+    w.webContents.send('component-reset');
+  });
+}
+
 export function setGlobalStateFromPref(
   win: BrowserWindow | null,
   prefs?: string | string[]
 ) {
-  function broadcast() {
+  const lng = Prefs.getCharPref(C.LOCALEPREF);
+  if (lng !== i18next.language) {
+    i18next.changeLanguage(lng, (err: any) => {
+      if (err) throw Error(err);
+      globalReset();
+    });
+  } else {
     BrowserWindow.getAllWindows().forEach((w) => {
       if (!win || w !== win)
         w.webContents.send('update-state-from-pref', prefs);
     });
   }
-  const lng = Prefs.getCharPref(C.LOCALEPREF);
-  if (lng !== i18next.language) {
-    i18next.changeLanguage(lng, (err: any) => {
-      if (err) throw Error(err);
-      broadcast();
-    });
-  } else {
-    broadcast();
-  }
-}
-
-export function globalReset() {
-  Cache.clear();
-  BrowserWindow.getAllWindows().forEach((w) => {
-    w.webContents.send('perform-resets');
-  });
 }
