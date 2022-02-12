@@ -62,8 +62,8 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
     case C.BIBLE: {
       if (
         module &&
-        module in G.AvailableBooks &&
-        G.AvailableBooks[module].includes(book)
+        module in G.BooksInModule &&
+        G.BooksInModule[module].includes(book)
       ) {
         if (ilModule) {
           r.textHTML += G.LibSword.getChapterTextMulti(
@@ -80,8 +80,8 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
     case C.COMMENTARY: {
       if (
         module &&
-        module in G.AvailableBooks &&
-        G.AvailableBooks[module].includes(book)
+        module in G.BooksInModule &&
+        G.BooksInModule[module].includes(book)
       ) {
         r.textHTML += G.LibSword.getChapterText(module, `${book}.${chapter}`);
         r.notes += G.LibSword.getNotes();

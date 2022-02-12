@@ -94,10 +94,10 @@ PHP_METHOD(phpsword, getMaxChapter)
   sword_object *obj = Z_SWORD;
   sword = obj->sword;
   if (sword != NULL) {
-    char *mod; size_t l1;
+    char *v11n; size_t l1;
     char *vkeytext; size_t l2;
-    if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &mod, &l1, &vkeytext, &l2) != FAILURE) {
-      RETURN_LONG(sword->getMaxChapter(mod, vkeytext));
+    if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &v11n, &l1, &vkeytext, &l2) != FAILURE) {
+      RETURN_LONG(sword->getMaxChapter(v11n, vkeytext));
     }
   }
   RETURN_LONG(-1);
@@ -109,10 +109,10 @@ PHP_METHOD(phpsword, getMaxVerse)
   sword_object *obj = Z_SWORD;
   sword = obj->sword;
   if (sword != NULL) {
-    char *mod; size_t l1;
+    char *v11n; size_t l1;
     char *vkeytext; size_t l2;
-    if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &mod, &l1, &vkeytext, &l2) != FAILURE) {
-      RETURN_LONG(sword->getMaxVerse(mod, vkeytext));
+    if (zend_parse_parameters_throw(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &v11n, &l1, &vkeytext, &l2) != FAILURE) {
+      RETURN_LONG(sword->getMaxVerse(v11n, vkeytext));
     }
   }
   RETURN_LONG(-1);

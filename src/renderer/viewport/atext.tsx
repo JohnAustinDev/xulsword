@@ -17,7 +17,13 @@ import {
   stringHash,
 } from '../../common';
 import G from '../rg';
-import { libswordImgSrc, scrollIntoView, setStatePref } from '../rutil';
+import {
+  convertLocation,
+  getMaxChapter,
+  libswordImgSrc,
+  scrollIntoView,
+  setStatePref,
+} from '../rutil';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -40,7 +46,7 @@ import '../libsword.css';
 import './atext.css';
 
 import type { MouseWheel } from './viewportParentH';
-import type { PlaceType, ShowType } from '../../type';
+import type { PlaceType, ShowType, V11nType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -94,7 +100,7 @@ const atextProps = {
   show: {} as ShowType,
   place: {} as PlaceType,
   ownWindow: false,
-  windowV11n: '' as string | undefined, // v11n of the viewport (not necessarily of the text)
+  windowV11n: '' as V11nType | undefined, // v11n of the viewport (not necessarily of the text)
 };
 
 export type AtextProps = XulProps & typeof atextProps;
@@ -272,7 +278,7 @@ class Atext extends React.Component {
             v = findVerseElement(sbe, newLibSword.chapter, verse);
             chfirst -= 1;
           }
-          const max = G.LibSword.getMaxChapter(module, book);
+          const max = getMaxChapter(G.Tab[module].v11n || 'KJV', book);
           let last = sbe.lastChild as HTMLElement | null;
           sib = v?.nextSibling as HTMLElement | null;
           while (
@@ -315,8 +321,8 @@ class Atext extends React.Component {
           windowV11n
         ) {
           const { book: bk, chapter: ch, verse: vs } = s;
-          const [bks, chs, vss] = G.LibSword.convertLocation(
-            G.Tab[newScroll.module].v11n,
+          const [bks, chs, vss] = convertLocation(
+            G.Tab[newScroll.module].v11n || 'KJV',
             [bk, ch, vs, vs].join('.'),
             windowV11n
           ).split('.');

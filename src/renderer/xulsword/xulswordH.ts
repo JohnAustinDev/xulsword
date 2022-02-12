@@ -5,7 +5,7 @@ import React from 'react';
 import C from '../../constant';
 import { ofClass } from '../../common';
 import { chapterChange, verseChange } from '../viewport/zversekey';
-import { parseLocation } from '../rutil';
+import { getMaxChapter, parseLocation } from '../rutil';
 import G from '../rg';
 
 import type { ShowType } from '../../type';
@@ -50,13 +50,13 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'prevchap':
         case 'nextchap': {
           this.setState((prevState: XulswordState) => {
-            const { v11nmod, flagScroll } = prevState;
+            const { windowV11n, flagScroll } = prevState;
             const s = chapterChange(
               prevState.book,
               prevState.chapter,
               currentId === 'prevchap' ? -1 : 1,
-              currentId === 'nextchap' && v11nmod
-                ? G.LibSword.getMaxChapter(v11nmod, prevState.book)
+              currentId === 'nextchap' && windowV11n
+                ? getMaxChapter(windowV11n, prevState.book)
                 : 0
             );
             if (!s) return null;
@@ -69,10 +69,10 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'prevverse':
         case 'nextverse': {
           this.setState((prevState: XulswordState) => {
-            const { v11nmod, flagScroll } = prevState;
-            if (!v11nmod) return null;
+            const { windowV11n, flagScroll } = prevState;
+            if (!windowV11n) return null;
             const s = verseChange(
-              v11nmod,
+              windowV11n,
               prevState.book,
               prevState.chapter,
               prevState.verse,
@@ -157,10 +157,14 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         case 'chapter__input': {
           this.setState((prevState: XulswordState) => {
-            const { v11nmod, flagScroll } = prevState;
-            if (!v11nmod) return null;
-            const maxch = G.LibSword.getMaxChapter(v11nmod, prevState.book);
-            const s = chapterChange(prevState.book, Number(value), 0, maxch);
+            const { windowV11n, flagScroll } = prevState;
+            if (!windowV11n) return null;
+            const s = chapterChange(
+              prevState.book,
+              Number(value),
+              0,
+              getMaxChapter(windowV11n, prevState.book)
+            );
             if (!s) return null;
             s.selection = '';
             s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
@@ -170,10 +174,10 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         }
         case 'verse__input': {
           this.setState((prevState: XulswordState) => {
-            const { v11nmod, flagScroll } = prevState;
-            if (!v11nmod) return null;
+            const { windowV11n, flagScroll } = prevState;
+            if (!windowV11n) return null;
             const s = verseChange(
-              v11nmod,
+              windowV11n,
               prevState.book,
               prevState.chapter,
               Number(value)

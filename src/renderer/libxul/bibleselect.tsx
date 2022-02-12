@@ -6,6 +6,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import C from '../../constant';
+import G from '../rg';
+import { getMaxChapter, getMaxVerse } from '../rutil';
 import { addClass, xulDefaultProps, XulProps, xulPropTypes } from './xul';
 import Bookselect from './bookselect';
 import { Hbox } from './boxes';
@@ -13,7 +15,6 @@ import Label from './label';
 import Menulist from './menulist';
 import Spacer from './spacer';
 import './xul.css';
-import G from '../rg';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -204,7 +205,8 @@ class Bibleselect extends React.Component {
     }
 
     // Get updated select options
-    const lastChapter = G.LibSword.getMaxChapter(newTrans, newBook);
+    const lastChapter =
+      newTrans in G.Tab ? getMaxChapter(G.Tab[newTrans].v11n, newBook) : 0;
     const chapters = [];
     for (let x = 1; x <= lastChapter; x += 1) {
       chapters.push(
@@ -213,10 +215,10 @@ class Bibleselect extends React.Component {
         </option>
       );
     }
-    const lastverse = G.LibSword.getMaxVerse(
-      newTrans,
-      `${newBook}.${newChapter}`
-    );
+    const lastverse =
+      newTrans in G.Tab
+        ? getMaxVerse(G.Tab[newTrans].v11n, `${newBook}.${newChapter}`)
+        : 0;
     const verses = [];
     for (let x = 1; x <= lastverse; x += 1) {
       verses.push(

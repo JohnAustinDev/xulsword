@@ -5,7 +5,7 @@ import { JSON_parse, JSON_stringify } from '../common';
 import Prefs from './modules/prefs';
 import { getModuleConfigs } from './config';
 import {
-  getAvailableBooks,
+  getBooksInModule,
   getTab,
   getTabs,
   setGlobalStateFromPref,
@@ -21,7 +21,7 @@ export default function setViewportTabs(
   const tabs = getTabs();
   const tab = getTab();
   const moduleConfigs = getModuleConfigs();
-  const availableBooks = getAvailableBooks();
+  const booksInModule = getBooksInModule();
   const panels = Prefs.getComplexValue('xulsword.panels');
   const panelIndexes =
     panelIndex === -1 ? panels.map((_p: any, i: number) => i) : [panelIndex];
@@ -138,7 +138,7 @@ export default function setViewportTabs(
       used[nextmod] = true;
       let bk = Prefs.getCharPref('xulsword.book');
       if (!bk && nextmod && tab[nextmod].isVerseKey) {
-        [bk] = availableBooks[nextmod];
+        [bk] = booksInModule[nextmod];
         if (bk) {
           Prefs.setCharPref('xulsword.book', bk);
         }

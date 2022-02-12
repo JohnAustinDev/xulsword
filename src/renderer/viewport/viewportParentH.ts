@@ -6,7 +6,12 @@ import C from '../../constant';
 import { decodeOSISRef, escapeRE, JSON_stringify, ofClass } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { convertDotString, getContextData, scrollIntoView } from '../rutil';
+import {
+  convertDotString,
+  convertLocation,
+  getContextData,
+  scrollIntoView,
+} from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { TextCache } from './ztext';
 import { textChange, aTextWheelScroll } from './zversekey';
@@ -194,7 +199,7 @@ export default function handler(
         }
         case 'bookgroupitem': {
           const { book } = targ.element.dataset;
-          if (book) {
+          if (book && !targ.element.classList.contains('disabled')) {
             this.setState({
               book,
               chapter: 1,
@@ -365,8 +370,8 @@ export default function handler(
               case C.BIBLE:
               case C.COMMENTARY: {
                 const lvv = p.lv && targ.type === 'crref' ? p.lv : p.vs;
-                const [bk, ch, vs, lv] = G.LibSword.convertLocation(
-                  G.LibSword.getVerseSystem(p.mod),
+                const [bk, ch, vs, lv] = convertLocation(
+                  G.Tab[p.mod].v11n || 'KJV',
                   [p.bk, p.ch, p.vs, lvv].join('.'),
                   windowV11n
                 ).split('.');

@@ -7,6 +7,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import C from '../../constant';
+import G from '../rg';
+import { parseLocation } from '../rutil';
 import Tooltip from './tooltip';
 import {
   addClass,
@@ -20,8 +23,6 @@ import Spacer from './spacer';
 import Stack from './stack';
 import Menulist from './menulist';
 import Textbox from './textbox';
-import { parseLocation } from '../rutil';
-import G from '../rg';
 import './xul.css';
 import './bookselect.css';
 
@@ -107,9 +108,10 @@ class Bookselect extends React.Component {
     let books;
     if (trans && onlyavailablebooks) {
       const t = trans.split(/\s*,\s*/)[0];
-      const abs = G.AvailableBooks[t]
-        ? G.AvailableBooks[t]
-        : G.AvailableBooks.allBooks;
+      const abs =
+        t in G.BooksInModule
+          ? G.BooksInModule[t]
+          : C.SupportedBooks.ot.concat(C.SupportedBooks.nt);
       books = abs.map((bk: string) => {
         let longName = bk;
         for (let x = 0; x < G.Books.length; x += 1) {

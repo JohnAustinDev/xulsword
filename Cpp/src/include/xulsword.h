@@ -53,7 +53,7 @@ class StringMgrXS : public StringMgr {
   ~StringMgrXS();
   char *upperUTF8(char *text, unsigned int max = 0) const;
   char *(*ToUpperCase)(char *);
-  
+
   protected:
   virtual bool supportsUnicode() const;
 };
@@ -90,7 +90,7 @@ class xulsword {
   char *(*ToUpperCase)(char *);
   void (*ThrowJS)(const char *);
   void (*ReportProgress)(int);
-  
+
   ModMap::iterator modIterator; //Iterator for modules
 
   bool Footnotes;
@@ -114,7 +114,7 @@ class xulsword {
   ListKey SearchList;
   SWBuf MySearchVerses;
   SWBuf MySearchTexts;
-  
+
 
   protected:
   void xsThrow(const char *msg, const char *param = NULL);
@@ -134,7 +134,7 @@ class xulsword {
   public:
   xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir = NULL, bool firebibleMode = false);
   ~xulsword();
-  
+
   static StringMgrXS *MyStringMgrXS;
   static SWLogXS *MySWLogXS;
 
@@ -144,8 +144,8 @@ class xulsword {
   char *getNotes();
   char *getChapterTextMulti(const char *vkeymodlist, const char *vkeytext, bool keepnotes);
   char *getVerseText(const char *vkeymod, const char *vkeytext, bool keepnotes = false);
-  int   getMaxChapter(const char *mod, const char *vkeytext);
-  int   getMaxVerse(const char *mod, const char *vkeytext);
+  int   getMaxChapter(const char *v11n, const char *vkeytext);
+  int   getMaxVerse(const char *v11n, const char *vkeytext);
   char *getModuleBooks(const char *mod);
   char *parseVerseKey(const char *vkeymod, const char *vkeytext);
   char *getVerseSystem(const char *mod);
@@ -155,7 +155,7 @@ class xulsword {
   char *getAllDictionaryKeys(const char *lexdictmod);
   char *getGenBookChapterText(const char *gbmod, const char *treekey);
   char *getGenBookTableOfContents(const char *gbmod);
-  char *getGenBookTableOfContentsJSON(const char *gbmod);  
+  char *getGenBookTableOfContentsJSON(const char *gbmod);
   bool  luceneEnabled(const char *mod);
   int   search(const char *mod, const char *srchstr, const char *scope, int type, int flags, bool newsearch);
   ListKey *getSearchPointer();

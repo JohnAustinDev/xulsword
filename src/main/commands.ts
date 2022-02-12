@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
-import { CommandsPublic, SearchType } from '../type';
+import { CommandsPublic } from '../type';
 import C from '../constant';
 import { JSON_stringify } from '../common';
-import { getTab, setGlobalStateFromPref } from './minit';
-import LibSword from './modules/libsword';
+import { convertLocation, getTab, setGlobalStateFromPref } from './minit';
 import Prefs from './modules/prefs';
 
 const Commands: typeof CommandsPublic = {
@@ -141,15 +140,14 @@ const Commands: typeof CommandsPublic = {
     const tab = getTab();
     const panels = Prefs.getComplexValue('xulsword.panels');
     const vkm = panels.find((m: string | null) => m && tab[m].isVerseKey);
-    if (vkm && tab[vkm].v11n !== v11n) {
-      const [bks, chs, vss] = LibSword.convertLocation(
+    const vkmv11n = tab[vkm].v11n;
+    if (vkm && vkmv11n && vkmv11n !== v11n) {
+      const [bks, chs, vss] = convertLocation(
         v11n,
         [book, chapter, verse].join('.'),
-        tab[vkm].v11n
+        vkmv11n
       ).split('.');
-      const nsel = sel
-        ? LibSword.convertLocation(v11n, sel, tab[vkm].v11n)
-        : null;
+      const nsel = sel ? convertLocation(v11n, sel, vkmv11n) : null;
       book = bks;
       chapter = Number(chs);
       verse = Number(vss);

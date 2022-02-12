@@ -13,6 +13,7 @@ import PropTypes from 'prop-types';
 import { dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
+import { getMaxChapter } from '../rutil';
 import { Hbox, Vbox } from '../libxul/boxes';
 import {
   xulDefaultProps,
@@ -33,7 +34,7 @@ const defaultProps = {
   bookGroups: ['ot', 'nt'],
   onCloseChooserClick: undefined,
   headingsModule: undefined,
-  availableBooksModule: undefined,
+  availableBooks: new Set(),
   hideUnavailableBooks: false,
   selection: '',
   type: 'bible',
@@ -45,7 +46,7 @@ const propTypes = {
   bookGroups: PropTypes.arrayOf(PropTypes.string),
   onCloseChooserClick: PropTypes.func.isRequired,
   headingsModule: PropTypes.string,
-  availableBooksModule: PropTypes.string,
+  availableBooks: PropTypes.instanceOf(Set),
   hideUnavailableBooks: PropTypes.bool,
   selection: PropTypes.string.isRequired,
   type: PropTypes.oneOf(['bible', 'genbook', 'none']).isRequired,
@@ -56,7 +57,7 @@ export interface ChooserProps extends XulProps {
   bookGroups: BookGroupType[];
   onCloseChooserClick: (e: any) => void;
   headingsModule: string | undefined;
-  availableBooksModule: string | undefined;
+  availableBooks: Set<string> | undefined;
   hideUnavailableBooks: boolean;
   selection: string;
   type: string;
@@ -247,7 +248,7 @@ class Chooser extends React.Component {
     const { handler, rowHeight, longestBook, containerRef, sliderRef, rowRef } =
       this;
     const {
-      availableBooksModule,
+      availableBooks,
       bookGroups,
       selection,
       type,
@@ -257,10 +258,6 @@ class Chooser extends React.Component {
     const { bookGroup, slideIndex } = state;
 
     if (type === 'none') return [];
-
-    const availableBooks = availableBooksModule
-      ? G.AvailableBooks[availableBooksModule]
-      : [];
 
     const label: any = {};
     const useLabelImage: any = {};
@@ -312,7 +309,7 @@ class Chooser extends React.Component {
             }
             <BookGroupList
               className="sizer"
-              availableBooks={[longestBook]}
+              availableBooks={new Set([longestBook])}
               hideUnavailableBooks
               windowV11n={windowV11n}
               domref={rowRef}
@@ -351,7 +348,7 @@ function BookGroupList(
     windowV11n: string;
     bookGroup?: BookGroupType | undefined;
     selection?: string | undefined;
-    availableBooks?: string[] | undefined;
+    availableBooks?: Set<string> | undefined;
     hideUnavailableBooks?: boolean;
     handler?: (e: React.SyntheticEvent) => void | undefined;
   } & XulProps
@@ -377,7 +374,7 @@ function BookGroupList(
         const bk = G.Books[b];
         const classes = [];
         if (selection && bk.code === selection) classes.push('selected');
-        if (availableBooks && !availableBooks.includes(bk.code)) {
+        if (availableBooks && !availableBooks.has(bk.code)) {
           if (hideUnavailableBooks) return null;
           classes.push('disabled');
         }
@@ -424,8 +421,9 @@ function BookGroupItem(
       {hasAudio && <div className="hasAudio" />}
 
       <div key="charrow" className="charrow" />
-
-      <ChapterMenu sName={sName} windowV11n={windowV11n} handler={handler} />
+      {!classes?.includes('disabled') && (
+        <ChapterMenu bkcode={sName} windowV11n={windowV11n} handler={handler} />
+      )}
     </Hbox>
   );
 }
@@ -435,11 +433,11 @@ BookGroupItem.defaultProps = {
 };
 
 function ChapterMenu(props: {
-  sName: string;
+  bkcode: string;
   windowV11n: string;
   handler?: (e: React.SyntheticEvent) => void;
 }) {
-  const { sName, windowV11n, handler } = props;
+  const { bkcode, windowV11n, handler } = props;
   const dlyhandler =
     handler && chooserCompRef
       ? delayHandler.bind(chooserCompRef)(
@@ -450,15 +448,15 @@ function ChapterMenu(props: {
       : undefined;
   const chmenuCells = [];
   let ch = 1;
-  const lastch = G.LibSword.getMaxChapter(windowV11n, sName);
+  const lastch = getMaxChapter(windowV11n, bkcode);
   for (let row = 1; row <= 1 + lastch / 10; row += 1) {
     const cells = [];
     for (let col = 1; col <= 10; col += 1) {
       if (ch <= lastch) {
         cells.push(
           <div
-            key={[sName, ch].join('.')}
-            data-book={sName}
+            key={[bkcode, ch].join('.')}
+            data-book={bkcode}
             data-chapter={ch}
             className="chaptermenucell cs-Program"
             onMouseEnter={dlyhandler}
@@ -468,7 +466,7 @@ function ChapterMenu(props: {
           </div>
         );
       } else {
-        cells.push(<div key={[sName, ch].join('.')} className="emptych" />);
+        cells.push(<div key={[bkcode, ch].join('.')} className="emptych" />);
       }
       ch += 1;
     }
@@ -480,7 +478,7 @@ function ChapterMenu(props: {
   }
   return (
     <div
-      key={[windowV11n, sName].join('.')}
+      key={[windowV11n, bkcode].join('.')}
       className="chaptermenu"
       onClick={handler}
     >

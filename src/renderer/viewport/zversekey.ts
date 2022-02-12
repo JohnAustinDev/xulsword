@@ -12,14 +12,17 @@ import {
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import {
+  convertLocation,
   findAVerseText,
+  getMaxChapter,
+  getMaxVerse,
   jsdump,
   parseLocation,
   ref2ProgramLocaleText,
 } from '../rutil';
 import G from '../rg';
 
-import type { ShowType, XulswordStatePref } from '../../type';
+import type { ShowType, V11nType, XulswordStatePref } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type Atext from './atext';
@@ -76,11 +79,8 @@ function normalizeOsisReference(refx: string, bibleMod: string) {
 
     if (!/Bible/i.test(m)) {
       if (ret.mod && ret.mod in G.Tab && m in G.Tab) {
-        ref = G.LibSword.convertLocation(
-          G.Tab[m].v11n,
-          ref,
-          G.Tab[ret.mod].v11n
-        );
+        const from = G.Tab[m].v11n || 'KJV';
+        ref = convertLocation(from, ref, G.Tab[ret.mod].v11n || from);
       } else if (m in G.Tab) ret.mod = m;
       else {
         ret.mod = null;
@@ -91,8 +91,11 @@ function normalizeOsisReference(refx: string, bibleMod: string) {
 
   if (/^[^.]+\.\d+$/.test(ref)) {
     // bk.c
-    if (ret.mod)
-      ret.ref = `${ref}.1-${ref}.${G.LibSword.getMaxVerse(ret.mod, ref)}`;
+    if (ret.mod && ret.mod in G.Tab)
+      ret.ref = `${ref}.1-${ref}.${getMaxVerse(
+        G.Tab[ret.mod].v11n || 'KJV',
+        ref
+      )}`;
     else ret.ref = ref;
   }
 
@@ -946,10 +949,11 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
           return { pin };
         });
       } else if (stateType === 'viewportparent') {
-        const [book, chapter, verse] = G.LibSword.convertLocation(
-          G.LibSword.getVerseSystem(module),
+        const from = G.Tab[module].v11n || 'KJV';
+        const [book, chapter, verse] = convertLocation(
+          from,
           [bk, ch, vs, vs].join('.'),
-          windowV11n
+          windowV11n || from
         ).split('.');
         const flagScroll = xulswordstate.flagScroll.map(() => C.VSCROLL.verse);
         flagScroll[index] = mysf;
@@ -969,7 +973,7 @@ export function highlight(
   sbe: HTMLElement,
   selection: string,
   module: string,
-  windowV11n: string | undefined
+  windowV11n: V11nType | undefined
 ) {
   // First unhilight everything
   Array.from(sbe.getElementsByClassName('hl')).forEach((v) => {
@@ -978,10 +982,10 @@ export function highlight(
 
   if (!selection || !windowV11n) return;
 
-  const [book, ch, vs, lv] = G.LibSword.convertLocation(
+  const [book, ch, vs, lv] = convertLocation(
     windowV11n,
     selection,
-    G.Tab[module].v11n
+    G.Tab[module].v11n || windowV11n
   ).split('.');
   const chapter = Number(ch);
   const verse = Number(vs);
@@ -1096,28 +1100,28 @@ export function chapterChange(
 // the passed verse by a delta if possible. Returns null if a requested
 // change is not possible.
 export function verseChange(
-  v11nmod: string | undefined,
+  windowV11n: V11nType | undefined,
   bk: string,
   ch: number,
   vs: number,
   vsDelta?: number
 ): Partial<XulswordStatePref> | null {
-  if (!v11nmod) return null;
+  if (!windowV11n) return null;
   let book = bk;
   let chapter = ch;
   let verse = vsDelta ? vs + vsDelta : vs;
-  const maxvs = G.LibSword.getMaxVerse(v11nmod, `${bk}.${ch}`);
+  const maxvs = getMaxVerse(windowV11n, `${bk}.${ch}`);
   let ps;
   if (verse < 1) {
     if (!vsDelta) return null;
     ps = chapterChange(bk, ch, -1);
     if (!ps || !ps.book || !ps.chapter) return null;
-    verse = G.LibSword.getMaxVerse(v11nmod, `${ps.book}.${ps.chapter}`);
+    verse = getMaxVerse(windowV11n, `${ps.book}.${ps.chapter}`);
     book = ps.book;
     chapter = ps.chapter;
   } else if (verse > maxvs) {
     if (!vsDelta) return null;
-    const maxch = G.LibSword.getMaxChapter(v11nmod, bk);
+    const maxch = getMaxChapter(windowV11n, bk);
     ps = chapterChange(bk, ch, 1, maxch);
     if (!ps || !ps.book || !ps.chapter) return null;
     verse = 1;
@@ -1220,13 +1224,13 @@ export function textChange(
         });
         if (firstVerse) {
           const p = getElementInfo(firstVerse);
-          if (module && p && p.bk && p.ch) {
+          if (module && p && p.bk && p.ch && module in G.Tab) {
             if (next) {
               s = chapterChange(
                 p.bk,
                 Number(p.ch),
                 1,
-                G.LibSword.getMaxChapter(module, p.bk)
+                getMaxChapter(G.Tab[module].v11n || 'KJV', p.bk)
               );
             } else {
               s = chapterChange(p.bk, Number(p.ch), -1);

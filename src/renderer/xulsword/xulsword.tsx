@@ -6,7 +6,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import { Translation } from 'react-i18next';
-import { HistoryTypeVK, XulswordStatePref } from '../../type';
+import { HistoryTypeVK, V11nType, XulswordStatePref } from '../../type';
 import { dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
@@ -17,6 +17,7 @@ import {
   onSetWindowState,
   getStatePref,
   setPrefFromState,
+  convertLocation,
 } from '../rutil';
 import {
   addClass,
@@ -55,7 +56,7 @@ export type XulswordProps = XulProps;
 // The following initial state values do not come from Prefs, but from
 // these constants. Neither are these state keys written to Prefs.
 const notStatePref = {
-  windowV11n: '',
+  windowV11n: '' as V11nType | '',
   v11nmod: '',
   historyMenupopup: undefined,
   bsreset: 0,
@@ -157,7 +158,7 @@ export default class Xulsword extends React.Component {
     if (history[historyIndex]) {
       const { book: hbk, chapter: hch, v11n: hv11n } = history[historyIndex];
       const { book: nbk, chapter: nch, v11n: nv11n } = newhist;
-      const [nbks, nchs] = `${G.LibSword.convertLocation(
+      const [nbks, nchs] = `${convertLocation(
         nv11n,
         [nbk, nch].join('.'),
         hv11n
@@ -190,7 +191,7 @@ export default class Xulsword extends React.Component {
       // modules, history needs to be converted to the current windowV11n.
       let { book, chapter, verse, selection } = history[index];
       const { v11n } = history[index];
-      const [bks, chs, vss] = G.LibSword.convertLocation(
+      const [bks, chs, vss] = convertLocation(
         v11n,
         [book, chapter, verse].join('.'),
         windowV11n
@@ -198,7 +199,7 @@ export default class Xulsword extends React.Component {
       book = bks;
       chapter = Number(chs);
       verse = Number(vss);
-      selection = G.LibSword.convertLocation(v11n, selection, windowV11n);
+      selection = convertLocation(v11n, selection, windowV11n);
       if (promote) {
         const targ = history.splice(index, 1);
         history.splice(0, 0, targ[0]);
@@ -224,12 +225,12 @@ export default class Xulsword extends React.Component {
     let ie = is + C.UI.Xulsword.maxHistoryMenuLength;
     if (ie > history.length) ie = history.length;
     const items = history.slice(is, ie);
-    if (!items || !items.length) return null;
+    if (!items || !items.length || !windowV11n) return null;
     return (
       <Menupopup>
         {items.map((histitem, i) => {
           const { book: bk, chapter: ch, verse: vs, v11n } = histitem;
-          const [bks, chs, vss] = G.LibSword.convertLocation(
+          const [bks, chs, vss] = convertLocation(
             v11n,
             [bk, ch, vs].join('.'),
             windowV11n
@@ -238,7 +239,7 @@ export default class Xulsword extends React.Component {
           if (vss === '1') location.pop();
           // Verse comes from verse or selection; lastverse comes from selection.
           if (histitem.selection) {
-            const [b, c, v, l] = G.LibSword.convertLocation(
+            const [b, c, v, l] = convertLocation(
               v11n,
               histitem.selection,
               windowV11n

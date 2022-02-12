@@ -24,7 +24,8 @@ import {
   getBook,
   getTabs,
   getTab,
-  getAvailableBooks,
+  getBooksInModule,
+  getBkChsInV11n,
   setGlobalMenuFromPref,
   globalReset,
 } from './minit';
@@ -50,7 +51,8 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     ProgramConfig: () => getProgramConfig(),
     FontFaceConfigs: () => getFontFaceConfigs(),
     FeatureModules: () => getFeatureModules(),
-    AvailableBooks: () => getAvailableBooks(),
+    BooksInModule: () => getBooksInModule(),
+    BkChsInV11n: () => getBkChsInV11n(),
 
     OPSYS: () => process.platform,
 

@@ -8,6 +8,7 @@ import type {
   SwordFilterType,
   SwordFilterValueType,
   TabTypes,
+  V11nType,
 } from './type';
 
 // Common Global Constants
@@ -23,7 +24,36 @@ const C = {
   NOMODULES: 'No Modules',
   CONFSEP: '<nx>',
 
-  // supportedBookGroups and supportedBooks lists were taken from:
+  // SupportedV11ns are the versification systems supported by libxulsword's
+  // current SWORD engine. TODO: Read these from the SWORD engine.
+  SupportedV11ns: [
+    'KJV',
+    'German',
+    'KJVA',
+    'Synodal',
+    'Leningrad',
+    'NRSVA',
+    'Luther',
+    'Vulg',
+    'SynodalProt',
+    'Orthodox',
+    'LXX',
+    'NRSV',
+    'MT',
+    'Catholic',
+    'Catholic2',
+  ] as V11nType[],
+
+  // SupportedV11nMaps show which verse-systems may currently be mapped to
+  // other verse systems by libxulsword. The SWORD C++ engine currently
+  // used has no mapping capability of its own.
+  SupportedV11nMaps: {
+    KJV: ['Synodal', 'SynodalProt'],
+    Synodal: ['KJV'],
+    SynodalProt: ['KJV'],
+  } as { [key in V11nType]: V11nType[] },
+
+  // SupportedBookGroups and SupportedBooks lists were taken from:
   // wiki.crosswire.org/OSIS_Book_Abbreviations (11/19/20)
   SupportedBookGroups: [
     'ot',

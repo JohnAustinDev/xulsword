@@ -35,25 +35,25 @@ EXPORTED INTERFACE FUNCTIONS
 *********************************************************************/
 // Ruturns a xulsword instance with firebibleMode = false
 DLLEXPORT xulsword *GetXulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir) {
-  
+
   if (my_xulsword) return my_xulsword;
-  
+
   my_xulsword = new xulsword(path, toUpperCase, throwJS, reportProgress, localeDir, false);
-  
+
   SWLog::getSystemLog()->logDebug("CREATED xulsword object (firebibleMode = false)");
-  
+
   return my_xulsword;
 }
 
 // Ruturns a xulsword instance with firebibleMode = true
 DLLEXPORT xulsword *GetXulswordFB(char *path, char *(*toUpperCase)(char *), void (*throwJS)(const char *), void (*reportProgress)(int), const char *localeDir) {
-  
+
   if (my_xulswordfb) return my_xulswordfb;
-  
+
   my_xulswordfb = new xulsword(path, toUpperCase, throwJS, reportProgress, localeDir, true);
-  
+
   SWLog::getSystemLog()->logDebug("CREATED xulsword object (firebibleMode = true)");
-  
+
   return my_xulswordfb;
 }
 
@@ -81,12 +81,12 @@ DLLEXPORT char *GetVerseText(xulsword *inst, const char *vkeymod, const char *vk
   return inst->getVerseText(vkeymod, vkeytext, keepnotes);
 }
 
-DLLEXPORT int GetMaxChapter(xulsword *inst, const char *mod, const char *vkeytext) {
-  return inst->getMaxChapter(mod, vkeytext);
+DLLEXPORT int GetMaxChapter(xulsword *inst, const char *v11n, const char *vkeytext) {
+  return inst->getMaxChapter(v11n, vkeytext);
 }
 
-DLLEXPORT int GetMaxVerse(xulsword *inst, const char *mod, const char *vkeytext) {
-  return inst->getMaxVerse(mod, vkeytext);
+DLLEXPORT int GetMaxVerse(xulsword *inst, const char *v11n, const char *vkeytext) {
+  return inst->getMaxVerse(v11n, vkeytext);
 }
 
 DLLEXPORT char *GetModuleBooks(xulsword *inst, const char *mod) {
@@ -184,18 +184,18 @@ DLLEXPORT char *Translate(xulsword *inst, const char *text, const char *localeNa
 DLLEXPORT void FreeMemory(void *tofree, char *type) {
 
   if (!strcmp(type, "char")) free(tofree);
-  
+
   else if (!strcmp(type, "xulsword")) {
     if (my_xulsword == (xulsword *)tofree) {
-      
+
       SWLog::getSystemLog()->logDebug("(FreeMemory) FREEING xulsword");
-      
+
       delete my_xulsword;
       my_xulsword = NULL;
-      
+
     }
   }
-  
+
   else if (!strcmp(type, "searchPointer")) {
     ListKey *sp = (ListKey *)tofree;
     if (sp) {
@@ -211,25 +211,25 @@ DLLEXPORT void FreeLibxulsword() {
   std::cerr << "LIBXULSWORD DESTRUCTOR" << std::endl;
 
   if (my_xulsword) {
-    
+
     SWLog::getSystemLog()->logDebug("(FreeLibxulsword) FREEING xulsword");
-    
+
     delete my_xulsword;
     my_xulsword = NULL;
-    
+
   }
- 
+
   SWLog::setSystemLog(NULL);
   xulsword::MySWLogXS = NULL;
-  
+
   StringMgr::setSystemStringMgr(NULL);
   xulsword::MyStringMgrXS = NULL;
 
-/*  
+/*
   VersificationMgr::getSystemVersificationMgr(NULL);
   FileMgr::setSystemFileMgr(NULL);
   delete LocaleMgr::systemLocaleMgr;
   LocaleMgr::systemLocaleMgr = NULL;
-*/ 
+*/
 
 }

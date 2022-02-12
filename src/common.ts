@@ -369,3 +369,34 @@ export function getCSS(
   }
   return null;
 }
+
+// Convert the following reference forms:
+//   Gen, Gen 1, Gen 1:1, Gen 1:1-1, Gen 1:1 - Gen 1:1, Gen.1, Gen.1.1, Gen.1.1.1
+// To this form:
+//   Gen.1.1.1 (book.chapter.verse.lastverse)
+export function ref2DotString(vkeytext: string): string {
+  const vk = vkeytext.trim();
+  let bk = '';
+  let ch = '';
+  let vs = '';
+  let lv = '';
+  if (vk.indexOf('.') !== -1) {
+    [bk, ch, vs, lv] = vk.split('.');
+  } else {
+    vk.split(/\s*-\s*/).forEach((seg) => {
+      const [bx, cx, vx] = seg.split(/[\s:]+/);
+      if (bx && !bk) bk = bx;
+      if (cx && !ch) ch = cx;
+      if (vx) {
+        if (!vs) vs = vx;
+        else lv = vx;
+      }
+    });
+  }
+  let r = bk;
+  r += `.${ch || 1}`;
+  r += `.${vs || 1}`;
+  r += `.${lv || vs || 1}`;
+
+  return r;
+}

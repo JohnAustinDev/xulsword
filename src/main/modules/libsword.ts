@@ -3,10 +3,10 @@
 /* eslint-disable no-continue */
 /* eslint-disable new-cap */
 import C from '../../constant';
+import { jsdump } from '../mutil';
 import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
-import { jsdump } from '../mutil';
 
 import type { LibSwordPublic, SwordFilterType } from '../../type';
 
@@ -295,7 +295,7 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   is to a single verse, and the largest is to a whole chapter. Xulsword references
   take one of the following forms:
 
-  Preffered forms (because most xulsword subroutines use these forms). These forms are
+  Preferred forms (because most xulsword subroutines use these forms). These forms are
   often refered to as locations:
     Gen.5             --> Genesis chapter 5 (in this case Verse=1 and LastVerse=maxverse)
     Gen.5.6           --> Genesis chapter 5 verse 6 (in this case LastVerse=Verse)
@@ -397,21 +397,27 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   },
 
   // getMaxChapter
-  // Returns the maximum chapter number of the chapter refered to by the
-  //   xulsword reference Vkeytext, when using the verse system of Mod.
-  getMaxChapter(modname, vkeytext) {
+  // Returns the maximum chapter number of vkeytext's book in the
+  // v11n versification system.
+  // IMPORTANT: If vkeytext references a book outside the v11n the
+  // result will be erroneous! So this must be checked outside this
+  // function first, before calling.
+  getMaxChapter(v11n, vkeytext) {
     if (!this.libSwordReady('getMaxChapter')) return null;
-    const intgr = libxulsword.GetMaxChapter(modname, vkeytext);
+    const intgr = libxulsword.GetMaxChapter(v11n, vkeytext);
     this.checkerror();
     return intgr;
   },
 
   // getMaxVerse
-  // Returns the maximum verse number of the chapter refered to by the
-  //   xulsword reference Vkeytext, when using the verse system of Mod.
-  getMaxVerse(modname, vkeytext) {
+  // Returns the maximum verse number of vkeytext's chapter in the
+  // v11n versification system.
+  // IMPORTANT: If vkeytext references a chapter outside the v11n the
+  // result will be erroneous! So this must be checked outside this
+  // function first, before calling.
+  getMaxVerse(v11n, vkeytext) {
     if (!this.libSwordReady('getMaxVerse')) return null;
-    const intgr = libxulsword.GetMaxVerse(modname, vkeytext);
+    const intgr = libxulsword.GetMaxVerse(v11n, vkeytext);
     this.checkerror();
     return intgr;
   },
@@ -429,22 +435,17 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   //   Ps 119:1 from 'KJV', it would return Ps.118.1.1 when converted to
   //   'Synodal' or 'EASTERN' verse systems).
   // Returned value is always of the form shortBook.chapter.verse.lastVerse
-  // NOTE: Currently libsword mapping only works for Gen-Rev of KJV, Synodal
-  // and SynodalProt, so if the verse system is other than those, it must be
-  // treated as KJV.
+  // NOTE: Currently libsword mapping is only correct for Gen-Rev of KJV,
+  // Synodal and SynodalProt, so this must be checked before calling!
   // TODO! Implement full v11n conversion
   convertLocation(fromVerseSystem, vkeytext, toVerseSystem) {
     if (!this.libSwordReady('convertLocation')) return null;
-    let from = fromVerseSystem;
-    if (!from.startsWith('Synodal')) from = 'KJV';
-    let to = toVerseSystem;
-    if (!to.startsWith('Synodal')) to = 'KJV';
-    const r = libxulsword.ConvertLocation(from, vkeytext, to);
-    // When requesting conversion of a book outside the verse system, the last
-    // book in the verse system is erroneously returned. So check for this
-    // failure and return the input unchanged in such case.
-    if (vkeytext.split('.')[0] !== r.split('.')[0]) return vkeytext;
-    return r;
+
+    return libxulsword.ConvertLocation(
+      fromVerseSystem,
+      vkeytext,
+      toVerseSystem
+    );
   },
 
   /* ******************************************************************************

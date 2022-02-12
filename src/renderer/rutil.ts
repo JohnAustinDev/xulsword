@@ -14,6 +14,7 @@ import {
   guiDirection,
   iString,
   ofClass,
+  ref2DotString,
 } from '../common';
 import G from './rg';
 
@@ -22,6 +23,7 @@ import type {
   ContextData,
   LocationTypeVK,
   SearchType,
+  V11nType,
 } from '../type';
 
 export function jsdump(msg: string | Error) {
@@ -118,25 +120,21 @@ export function dotString2LocaleString(ref: string, notHTML: boolean): string {
 }
 
 // Takes dot-string of form bk.ch.vs.lv.v11n and returns it as tov11n verse system.
-export function convertDotString(from: string, tov11n: string) {
+export function convertDotString(from: string, tov11n: V11nType) {
   let loc = from.split('.');
   if (loc.length !== 5) {
     throw Error(`convertDotString must have form: bk.ch.vs.lv.v11n (${from})`);
   }
-  const v11n = loc.pop();
+  const v11n = loc.pop() as V11nType;
   if (v11n && v11n !== tov11n) {
     let lv = loc.pop();
     let v = loc.pop();
-    const cv = G.LibSword.convertLocation(
-      v11n,
-      `${loc.join('.')}.${v}`,
-      tov11n
-    ).split('.');
-    const clv = G.LibSword.convertLocation(
-      v11n,
-      `${loc.join('.')}.${lv}`,
-      tov11n
-    ).split('.');
+    const cv = convertLocation(v11n, `${loc.join('.')}.${v}`, tov11n).split(
+      '.'
+    );
+    const clv = convertLocation(v11n, `${loc.join('.')}.${lv}`, tov11n).split(
+      '.'
+    );
     lv = clv.pop();
     if (lv === undefined) lv = '1';
     v = cv.pop();
@@ -168,7 +166,7 @@ export function dotStringLoc2ObjectLoc(
   if (dotLocation[1] !== null) retval.chapter = Number(ch);
   if (dotLocation[2] !== null) retval.verse = Number(vs);
   if (dotLocation[3] !== null) retval.lastverse = Number(lv);
-  if (dotLocation[4] !== null) retval.v11n = v11n;
+  if (dotLocation[4] !== null) retval.v11n = v11n as V11nType;
   if (version !== null && version !== undefined) retval.version = version;
 
   return retval;
@@ -628,7 +626,7 @@ export function parseLocation(
           book.modules.forEach((mod) => {
             if (stop) return;
             location.version = mod;
-            if (mod in G.AvailableBooks && G.AvailableBooks[mod].includes(code))
+            if (mod in G.BooksInModule && G.BooksInModule[mod].includes(code))
               stop = true;
           });
         }
@@ -732,7 +730,8 @@ export function findAVerseText(
 
   // Convert input location to dot format
   const { v11n } = G.Tab[module];
-  const location = G.LibSword.convertLocation(v11n, locationIn, v11n);
+  if (!v11n) return null;
+  const location = convertLocation(v11n, locationIn, v11n);
   let text = '';
   let ret = { module, location, text };
 
@@ -743,12 +742,10 @@ export function findAVerseText(
   else {
     bible = getCompanionModules(module);
     bible = !bible.length || !(bible[0] in G.Tab) ? null : bible[0];
-    if (bible)
-      bibleLocation = G.LibSword.convertLocation(
-        G.Tab[module].v11n,
-        location,
-        G.Tab[bible].v11n
-      );
+    const tov11n = bible && G.Tab[bible].v11n;
+    if (tov11n) {
+      bibleLocation = convertLocation(v11n, location, tov11n);
+    }
   }
   // If we have a Bible, try it first.
   if (bible && bible in G.Tab) {
@@ -772,18 +769,14 @@ export function findAVerseText(
   const [book] = location.split('.');
   for (let v = 0; v < G.Tabs.length; v += 1) {
     const tab = G.Tabs[v];
-    if (tab.module !== C.BIBLE) continue;
-    const abooks = G.AvailableBooks[tab.module];
+    if (tab.module !== C.BIBLE || !tab.v11n) continue;
+    const abooks = G.BooksInModule[tab.module];
     let ab;
     for (ab = 0; ab < abooks.length; ab += 1) {
       if (abooks[ab] === book) break;
     }
     if (ab === abooks.length) continue;
-    const tlocation = G.LibSword.convertLocation(
-      G.Tab[module].v11n,
-      location,
-      tab.v11n
-    );
+    const tlocation = convertLocation(v11n, location, tab.v11n);
     text = G.LibSword.getVerseText(tab.module, tlocation, keepNotes).replace(
       /\n/g,
       ' '
@@ -924,4 +917,52 @@ export function setPrefFromState(
   });
   if (prefsChanged) G.setGlobalMenuFromPref();
   return prefsChanged;
+}
+
+// LibSword.getMaxChapter returns an erroneous number if vkeytext's
+// book is not part of v11n, so it would be necessary to check here
+// first. But a LibSword call is unnecessary with G.BooksInV11n.
+// NOTE: mutil has this same function.
+export function getMaxChapter(v11n: V11nType, vkeytext: string) {
+  const [book] = vkeytext.split(/[\s.:]/);
+  if (!(v11n in G.BkChsInV11n)) return 0;
+  if (!(book in G.BkChsInV11n[v11n])) return 0;
+  return G.BkChsInV11n[v11n][book];
+}
+
+// LibSword.getMaxVerse returns an erroneous number if vkeytext's
+// chapter is not part of v11n, so check here first.
+// NOTE: mutil has this same function.
+export function getMaxVerse(v11n: V11nType, vkeytext: string) {
+  const maxch = getMaxChapter(v11n, vkeytext);
+  return maxch ? G.LibSword.getMaxVerse(v11n, vkeytext) : 0;
+}
+
+// LibSword.convertLocation returns unpredictable locations if vkeytext's
+// book, chapter, verse and lastverse are not in fromv11n verse system.
+// Also LibSword only converts between systems in C.SupportedV11nMaps.
+// So these things must be checked before calling LibSword. NOTE: even
+// if vkeytext cannot be converted for these reasons, it still must be
+// returned as a dot delineated xulsword reference.
+// NOTE: mutil has this same function.
+export function convertLocation(
+  fromv11n: V11nType,
+  vkeytext: string,
+  tov11n: V11nType
+): string {
+  const r = ref2DotString(vkeytext);
+  if (fromv11n === tov11n) return r;
+  if (!(fromv11n in C.SupportedV11nMaps)) return r;
+  if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return r;
+  const [b, c, v, l] = r.split('.');
+  const chn = Number(c);
+  const vsn = Number(v);
+  const lvn = Number(l);
+  if (!Number.isNaN(chn) && (chn < 1 || chn > getMaxChapter(fromv11n, r)))
+    return r;
+  if (!Number.isNaN(vsn)) {
+    const maxv = 200; // slow: getMaxVerse(fromv11n, [b, c].join('.'));
+    if (vsn < 1 || vsn > maxv || lvn < vsn || lvn > maxv) return r;
+  }
+  return G.LibSword.convertLocation(fromv11n, r, tov11n);
 }

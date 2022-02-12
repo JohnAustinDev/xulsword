@@ -20,13 +20,12 @@ import {
   PopupParentProps,
 } from '../popup/popupParentH';
 import G from '../rg';
-import { jsdump } from '../rutil';
+import { convertLocation, jsdump } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
   xulPropTypes,
   XulProps,
-  delayHandler,
   topHandle,
 } from '../libxul/xul';
 import { Hbox, Vbox } from '../libxul/boxes';
@@ -35,6 +34,8 @@ import Tabs from './tabs';
 import Atext from './atext';
 import '../libxul/xul.css';
 import './viewport.css';
+
+import type { V11nType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -85,7 +86,7 @@ type ViewportProps = PopupParentProps &
     noteBoxHeight: number[];
     maximizeNoteBox: number[];
     ownWindow: boolean;
-    windowV11n: string | undefined;
+    windowV11n: V11nType | undefined;
 
     parentHandler: (e: any) => void;
   };
@@ -167,8 +168,12 @@ class Viewport extends React.Component implements PopupParent {
       return m && !isPinned[i] && G.Tab[m].type === C.BIBLE;
     });
 
-    const firstUnpinnedVerseKey = panels.find((m, i) => {
-      return m && !isPinned[i] && G.Tab[m].isVerseKey;
+    // Get all available books from unpinned versekey modules
+    const availableBooks = new Set();
+    panels.forEach((m, i) => {
+      if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
+        G.BooksInModule[m].forEach((bk) => availableBooks.add(bk));
+      }
     });
 
     // Get each panel's interlinear module options according to testament
@@ -313,13 +318,10 @@ class Viewport extends React.Component implements PopupParent {
       loc.push(`${book}.${chapter}.${verse}.${verse}`);
     });
     panels.forEach((panel, i) => {
-      if (panel && G.Tab[panel].isVerseKey && windowV11n) {
+      const tov11n = panel && G.Tab[panel].v11n;
+      if (panel && G.Tab[panel].isVerseKey && tov11n && windowV11n) {
         if (G.Tab[panel].v11n !== windowV11n) {
-          loc[i] = G.LibSword.convertLocation(
-            windowV11n,
-            loc[i],
-            G.Tab[panel].v11n
-          );
+          loc[i] = convertLocation(windowV11n, loc[i], tov11n);
         }
       }
     });
@@ -330,11 +332,13 @@ class Viewport extends React.Component implements PopupParent {
     const showingChooser = showChooser || chooser === 'genbook';
     const minWidth =
       (showingChooser ? 300 : 0) + C.UI.Viewport.minPanelWidth * numPanels;
-    const bookGroups = C.SupportedBookGroups.filter((bg) =>
-      panels.some(
-        (p) =>
-          p && G.AvailableBooks[p].some((bk) => G.Book[bk].bookGroup === bg)
-      )
+    const bookGroups = C.SupportedBookGroups.filter(
+      (bg) =>
+        ['ot', 'nt'].includes(bg) ||
+        panels.some(
+          (p) =>
+            p && G.BooksInModule[p].some((bk) => G.Book[bk].bookGroup === bg)
+        )
     );
 
     let cls = '';
@@ -366,7 +370,7 @@ class Viewport extends React.Component implements PopupParent {
             selection={book}
             headingsModule={firstUnpinnedBible}
             bookGroups={bookGroups}
-            availableBooksModule={firstUnpinnedVerseKey}
+            availableBooks={availableBooks}
             windowV11n={windowV11n}
             onCloseChooserClick={parentHandler}
           />

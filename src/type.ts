@@ -77,7 +77,7 @@ export type HistoryTypeVK = {
   chapter: number;
   verse: number;
   selection: string;
-  v11n: string;
+  v11n: V11nType;
 };
 
 export type SearchType = {
@@ -97,7 +97,7 @@ export type LocationTypeVK = {
   verse: number | null;
   lastverse: number | null;
   version: string | null;
-  v11n: string | null;
+  v11n: V11nType | null;
 };
 
 export type ContextData = {
@@ -127,6 +127,27 @@ export type BookGroupType =
   | 'Rahlfs_variant_books'
   | 'Vulgate_and_other_later_Latin_mss'
   | 'Other';
+
+export type V11nType =
+  | 'KJV'
+  | 'German'
+  | 'KJVA'
+  | 'Synodal'
+  | 'Leningrad'
+  | 'NRSVA'
+  | 'Luther'
+  | 'Vulg'
+  | 'SynodalProt'
+  | 'Orthodox'
+  | 'LXX'
+  | 'NRSV'
+  | 'MT'
+  | 'Catholic'
+  | 'Catholic2'
+  | 'Calvin'
+  | 'DarbyFr'
+  | 'NRSV'
+  | 'Segond';
 
 export type BookType = {
   code: string;
@@ -171,7 +192,7 @@ export type TabType = {
   version: string;
   lang: string;
   dir: string;
-  v11n: string;
+  v11n: V11nType | '';
   label: string;
   tabType: TabTypes;
   isCommDir: boolean;
@@ -250,10 +271,10 @@ export const LibSwordPublic = {
   libSwordReady: func as unknown as (caller: string) => boolean,
   hasBible: func as unknown as () => boolean,
   getMaxChapter: func as unknown as (
-    modname: string,
+    v11n: V11nType,
     vkeytext: string
   ) => number,
-  getMaxVerse: func as unknown as (modname: string, vkeytext: string) => number,
+  getMaxVerse: func as unknown as (v11n: V11nType, vkeytext: string) => number,
   getChapterText: func as unknown as (
     modname: string,
     vkeytext: string
@@ -270,11 +291,11 @@ export const LibSwordPublic = {
     vkeytext: string,
     keepTextNotes: boolean
   ) => string,
-  getVerseSystem: func as unknown as (modname: string) => string,
+  getVerseSystem: func as unknown as (modname: string) => V11nType,
   convertLocation: func as unknown as (
-    fromv11n: string,
+    fromv11n: V11nType,
     vkeytext: string,
-    tov11n: string
+    tov11n: V11nType
   ) => string,
   quitLibsword: func as unknown as () => void,
   pause: func as unknown as (callback: any) => void,
@@ -373,7 +394,7 @@ export const CommandsPublic = {
   deleteDbItem: func as unknown as (bookmark: unknown) => void,
   openHelp: func as unknown as (module?: string) => void,
   goToBibleLocation: func as unknown as (
-    v11n: string,
+    v11n: V11nType,
     bk: string,
     ch: number,
     vs?: number,
@@ -415,7 +436,8 @@ export const GPublic = {
   ModuleConfigDefault: 'readonly',
   FontFaceConfigs: 'readonly',
   FeatureModules: 'readonly',
-  AvailableBooks: 'readonly',
+  BooksInModule: 'readonly',
+  BkChsInV11n: 'readonly',
   OPSYS: 'readonly',
 
   // Global functions
@@ -447,7 +469,8 @@ export interface GType {
   ModuleConfigDefault: ConfigType;
   FontFaceConfigs: ConfigType[];
   FeatureModules: FeatureType;
-  AvailableBooks: { [i: string]: string[] };
+  BooksInModule: { [i: string]: string[] };
+  BkChsInV11n: { [key in V11nType]: { [i: string]: number } };
   OPSYS: 'string';
 
   resolveHtmlPath: (htmlfile: string) => string;

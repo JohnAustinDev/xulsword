@@ -1101,9 +1101,9 @@ char *xulsword::getVerseText(const char *vkeymod, const char *vkeytext, bool kee
 /********************************************************************
 GetMaxChapter
 *********************************************************************/
-int xulsword::getMaxChapter(const char *mod, const char *vkeytext) {
+int xulsword::getMaxChapter(const char *v11n, const char *vkeytext) {
   VerseKey vkey;
-  vkey.setVersificationSystem(getVerseSystemOfModule(mod));
+  vkey.setVersificationSystem(v11n);
   return textToMaxChapter(vkeytext, &vkey);
 }
 
@@ -1111,9 +1111,9 @@ int xulsword::getMaxChapter(const char *mod, const char *vkeytext) {
 /********************************************************************
 GetMaxVerse
 *********************************************************************/
-int xulsword::getMaxVerse(const char *mod, const char *vkeytext) {
+int xulsword::getMaxVerse(const char *v11n, const char *vkeytext) {
   VerseKey vkey;
-  vkey.setVersificationSystem(getVerseSystemOfModule(mod));
+  vkey.setVersificationSystem(v11n);
   return textToMaxVerse(vkeytext, &vkey);
 }
 

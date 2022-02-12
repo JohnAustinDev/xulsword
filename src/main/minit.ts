@@ -7,7 +7,7 @@ import fs from 'fs';
 import i18next from 'i18next';
 import { BrowserWindow, Menu } from 'electron';
 import C from '../constant';
-import { isASCII, JSON_parse } from '../common';
+import { isASCII, JSON_parse, ref2DotString } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
@@ -15,7 +15,7 @@ import Cache from './modules/cache';
 import nsILocalFile from './components/nsILocalFile';
 import { jsdump } from './mutil';
 
-import type { TabType, BookType, ModTypes } from '../type';
+import type { TabType, BookType, ModTypes, V11nType, GType } from '../type';
 
 // These exported GPublic functions are called by the runtime
 // auto-generated G object.
@@ -211,32 +211,143 @@ export function getTab(): { [i: string]: TabType } {
   return Cache.read('tab');
 }
 
-export function getAvailableBooks(): { [i: string]: string[] } {
-  if (!Cache.has('availableBooks')) {
-    const availableBooks: { [i: string]: string[] } = {
-      allBooks: getBooks().map((bk) => bk.code),
-    };
+type ModulesPref = {
+  [i: string]: {
+    osis: string[];
+  };
+};
+
+// The pref 'global.modules' is used to cache constly module data.
+// If 'books' is in the pref value it is used, otherwise it is added.
+// IMPORTANT: If a module is ever updated or removed, the
+// global.modules pref needs to be reset.
+export function getBooksInModule(): { [i: string]: string[] } {
+  if (!Cache.has('booksInMdule')) {
     const modlist = LibSword.getModuleList();
+    const availableBooks: { [i: string]: string[] } = {};
     if (modlist === C.NOMODULES) return availableBooks;
-    let lastvstext = '';
+    const prefmod: ModulesPref = Prefs.getComplexValue('global.modules');
+    const modules: string[] = [];
     modlist.split('<nx>').forEach((m: string) => {
       const [module, type] = m.split(';');
-      const books: string[] = [];
-      if (type === C.BIBLE || type === C.COMMENTARY) {
-        getBooks().forEach((bk: BookType) => {
-          const vt = LibSword.getVerseText(module, `${bk.code} 1:1`, false);
-          // When books outside the verse system are read, the last verse in the
-          // verse system is returned.
-          if (vt && vt !== lastvstext) books.push(bk.code);
-          lastvstext = vt;
-        });
+      modules.push(module);
+      if (!(module in prefmod)) {
+        prefmod[module] = { osis: [] };
+        if (type === C.BIBLE || type === C.COMMENTARY) {
+          // When books outside the verse system are read, the last book
+          // in the module is always read instead. So test two verses to
+          // make sure they are different.
+          const missing = LibSword.getVerseText(module, 'FAKE 1:1', false);
+          const osis: string[] = [];
+          getBooks().forEach((bk: BookType) => {
+            const text = LibSword.getVerseText(module, `${bk.code} 1:1`, false);
+            if (text === missing) {
+              const test = LibSword.getVerseText(
+                module,
+                `${bk.code} 1:2`,
+                false
+              );
+              if (text === test) return;
+            }
+            osis.push(bk.code);
+          });
+          prefmod[module].osis = osis;
+        }
       }
-      availableBooks[module] = books;
+      availableBooks[module] = prefmod[module].osis;
     });
-    Cache.write('availableBooks', availableBooks);
+    Object.keys(prefmod).forEach((module) => {
+      if (!modules.includes(module)) delete prefmod[module];
+    });
+    Prefs.setComplexValue('global.modules', prefmod);
+    Cache.write('booksInMdule', availableBooks);
   }
 
-  return Cache.read('availableBooks');
+  return Cache.read('booksInMdule');
+}
+
+export function getBkChsInV11n() {
+  if (!Cache.has('bkChsInV11n')) {
+    // Data was parsed from sword/include/*.h files
+    /* eslint-disable prettier/prettier */
+    const bkChsInV11n: GType['BkChsInV11n'] = {
+      Calvin:{sameAsKJV:1},
+      Catholic:{'1Chr':29,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Kgs':25,'2Macc':15,'2Sam':24,Amos:9,Bar:6,Dan:14,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Sir:51,Song:8,Tob:14,Wis:19,Zech:14,Zeph:3},
+      Catholic2:{'1Chr':29,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Kgs':25,'2Macc':15,'2Sam':24,Amos:9,Bar:6,Dan:14,Deut:34,Eccl:12,Esth:16,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Sir:51,Song:8,Tob:14,Wis:19,Zech:14,Zeph:3},
+      DarbyFr:{sameAsKJV:1},
+      German:{'1Chr':29,'1Kgs':22,'1Sam':31,'2Chr':36,'2Kgs':25,'2Sam':24,Amos:9,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Song:8,Zech:14,Zeph:3},
+      KJV:{'1Chr':29,'1Cor':16,'1John':5,'1Kgs':22,'1Pet':5,'1Sam':31,'1Thess':5,'1Tim':6,'2Chr':36,'2Cor':13,'2John':1,'2Kgs':25,'2Pet':3,'2Sam':24,'2Thess':3,'2Tim':4,'3John':1,Acts:28,Amos:9,Col:4,Dan:12,Deut:34,Eccl:12,Eph:6,Esth:10,Exod:40,Ezek:48,Ezra:10,Gal:6,Gen:50,Hab:3,Hag:2,Heb:13,Hos:14,Isa:66,Jas:5,Jer:52,Job:42,Joel:3,John:21,Jonah:4,Josh:24,Jude:1,Judg:21,Lam:5,Lev:27,Luke:24,Mal:4,Mark:16,Matt:28,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Phil:4,Phlm:1,Prov:31,Ps:150,Rev:22,Rom:16,Ruth:4,Song:8,Titus:3,Zech:14,Zeph:3},
+      KJVA:{'1Chr':29,'1Esd':9,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Esd':16,'2Kgs':25,'2Macc':15,'2Sam':24,AddEsth:16,Amos:9,Bar:6,Bel:1,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:3,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,PrAzar:1,PrMan:1,Prov:31,Ps:150,Ruth:4,Sir:51,Song:8,Sus:1,Tob:14,Wis:19,Zech:14,Zeph:3},
+      LXX:{'1Chr':29,'1En':108,'1Esd':9,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Kgs':25,'2Macc':15,'2Sam':24,'3Macc':7,'4Macc':18,Amos:9,Bar:5,Bel:1,Dan:12,Deut:34,Eccl:12,EpJer:1,Esth:16,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Odes:14,PrAzar:1,PrMan:1,Prov:31,Ps:151,PssSol:18,Ruth:4,Sir:51,Song:8,Sus:1,Tob:14,Wis:19,Zech:14,Zeph:3},
+      Leningrad:{'1Chr':29,'1Kgs':22,'1Sam':31,'2Chr':36,'2Kgs':25,'2Sam':24,Amos:9,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Song:8,Zech:14,Zeph:3},
+      Luther:{'1Chr':29,'1Cor':16,'1John':5,'1Kgs':22,'1Macc':16,'1Pet':5,'1Sam':31,'1Thess':5,'1Tim':6,'2Chr':36,'2Cor':13,'2John':1,'2Kgs':25,'2Macc':15,'2Pet':3,'2Sam':24,'2Thess':3,'2Tim':4,'3John':1,Acts:28,AddDan:3,AddEsth:7,Amos:9,Bar:6,Col:4,Dan:12,Deut:34,Eccl:12,Eph:6,Esth:10,Exod:40,Ezek:48,Ezra:10,Gal:6,Gen:50,Hab:3,Hag:2,Heb:13,Hos:14,Isa:66,Jas:5,Jdt:16,Jer:52,Job:42,Joel:4,John:21,Jonah:4,Josh:24,Jude:1,Judg:21,Lam:5,Lev:27,Luke:24,Mal:3,Mark:16,Matt:28,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Phil:4,Phlm:1,PrMan:1,Prov:31,Ps:150,Rev:22,Rom:16,Ruth:4,Sir:51,Song:8,Titus:3,Tob:14,Wis:19,Zech:14,Zeph:3},
+      MT:{'1Chr':29,'1Kgs':22,'1Sam':31,'2Chr':36,'2Kgs':25,'2Sam':24,Amos:9,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:3,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Song:8,Zech:14,Zeph:3},
+      NRSV:{sameAsKJV:1},
+      NRSVA:{'1Chr':29,'1Esd':9,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Esd':16,'2Kgs':25,'2Macc':15,'2Sam':24,'3Macc':7,'4Macc':18,AddPs:1,Amos:9,Bar:6,Bel:1,Dan:12,Deut:34,Eccl:12,Esth:10,EsthGr:16,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:3,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,PrAzar:1,PrMan:1,Prov:31,Ps:150,Ruth:4,Sir:51,Song:8,Sus:1,Tob:14,Wis:19,Zech:14,Zeph:3},
+      Orthodox:{'1Chr':29,'1Esd':9,'1Kgs':22,'1Macc':16,'1Sam':31,'2Chr':36,'2Kgs':25,'2Macc':15,'2Sam':24,'3Macc':7,'4Macc':18,Amos:9,Bar:5,Bel:1,Dan:12,Deut:34,Eccl:12,EpJer:1,Esth:16,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jdt:16,Jer:52,Job:42,Joel:4,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,PrMan:1,Prov:31,Ps:151,Ruth:4,Sir:51,Song:8,Sus:1,Tob:14,Wis:19,Zech:14,Zeph:3},
+      Segond:{sameAsKJV:1},
+      Synodal:{'1Chr':29,'1Cor':16,'1Esd':9,'1John':5,'1Kgs':22,'1Macc':16,'1Pet':5,'1Sam':31,'1Thess':5,'1Tim':6,'2Chr':36,'2Cor':13,'2Esd':16,'2John':1,'2Kgs':25,'2Macc':15,'2Pet':3,'2Sam':24,'2Thess':3,'2Tim':4,'3John':1,'3Macc':7,Acts:28,Amos:9,Bar:5,Col:4,Dan:14,Deut:34,Eccl:12,EpJer:1,Eph:6,Esth:10,Exod:40,Ezek:48,Ezra:10,Gal:6,Gen:50,Hab:3,Hag:2,Heb:13,Hos:14,Isa:66,Jas:5,Jdt:16,Jer:52,Job:42,Joel:3,John:21,Jonah:4,Josh:24,Jude:1,Judg:21,Lam:5,Lev:27,Luke:24,Mal:4,Mark:16,Matt:28,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Phil:4,Phlm:1,PrMan:1,Prov:31,Ps:151,Rev:22,Rom:16,Ruth:4,Sir:51,Song:8,Titus:3,Tob:14,Wis:19,Zech:14,Zeph:3},
+      SynodalProt:{'1Chr':29,'1Kgs':22,'1Sam':31,'2Chr':36,'2Kgs':25,'2Sam':24,Amos:9,Dan:12,Deut:34,Eccl:12,Esth:10,Exod:40,Ezek:48,Ezra:10,Gen:50,Hab:3,Hag:2,Hos:14,Isa:66,Jer:52,Job:42,Joel:3,Jonah:4,Josh:24,Judg:21,Lam:5,Lev:27,Mal:4,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Prov:31,Ps:150,Ruth:4,Song:8,Zech:14,Zeph:3},
+      Vulg:{'1Chr':29,'1Cor':16,'1Esd':9,'1John':5,'1Kgs':22,'1Macc':16,'1Pet':5,'1Sam':31,'1Thess':5,'1Tim':6,'2Chr':36,'2Cor':13,'2Esd':16,'2John':1,'2Kgs':25,'2Macc':15,'2Pet':3,'2Sam':24,'2Thess':3,'2Tim':4,'3John':1,Acts:28,AddPs:1,Amos:9,Bar:6,Col:4,Dan:14,Deut:34,Eccl:12,EpLao:1,Eph:6,Esth:16,Exod:40,Ezek:48,Ezra:10,Gal:6,Gen:50,Hab:3,Hag:2,Heb:13,Hos:14,Isa:66,Jas:5,Jdt:16,Jer:52,Job:42,Joel:3,John:21,Jonah:4,Josh:24,Jude:1,Judg:21,Lam:5,Lev:27,Luke:24,Mal:4,Mark:16,Matt:28,Mic:7,Nah:3,Neh:13,Num:36,Obad:1,Phil:4,Phlm:1,PrMan:1,Prov:31,Ps:150,Rev:22,Rom:16,Ruth:4,Sir:51,Song:8,Titus:3,Tob:14,Wis:19,Zech:14,Zeph:3},
+    }
+    /* eslint-enable prettier/prettier */
+    Object.entries(bkChsInV11n).forEach((entry) => {
+      const [k, val] = entry;
+      const key = k as keyof typeof bkChsInV11n;
+      if ('sameAsKJV' in val) {
+        bkChsInV11n[key] = bkChsInV11n.KJV;
+      }
+    });
+    Cache.write('bkChsInV11n', bkChsInV11n);
+  }
+
+  return Cache.read('bkChsInV11n');
+}
+
+// LibSword.getMaxChapter returns an unpredictable wrong number if
+// vkeytext's book is not part of v11n, but a LibSword call is
+// unnecessary with G.BooksInV11n. NOTE: rutil has this same function.
+export function getMaxChapter(v11n: V11nType, vkeytext: string) {
+  const [book] = vkeytext.split(/[\s.:]/);
+  const bkChsInV11n = getBkChsInV11n();
+  if (!(v11n in bkChsInV11n)) return 0;
+  if (!(book in bkChsInV11n[v11n])) return 0;
+  return bkChsInV11n[v11n][book];
+}
+
+// NOTE: rutil has this same function.
+export function getMaxVerse(v11n: V11nType, vkeytext: string) {
+  const maxch = getMaxChapter(v11n, vkeytext);
+  return maxch ? LibSword.getMaxVerse(v11n, vkeytext) : 0;
+}
+
+// LibSword.convertLocation returns unpredictable wrong locations if
+// vkeytext's book, chapter, verse and lastverse are not in fromv11n
+// verse system. Also LibSword only converts between systems in
+// C.SupportedV11nMaps. So these things must be checked before calling
+// LibSword. NOTE: even if vkeytext cannot be converted for these
+// reasons, it still must be returned as a dot delineated xulsword
+// reference. NOTE: rutil has this same function.
+export function convertLocation(
+  fromv11n: V11nType,
+  vkeytext: string,
+  tov11n: V11nType
+): string {
+  const r = ref2DotString(vkeytext);
+  if (fromv11n === tov11n) return r;
+  if (!(fromv11n in C.SupportedV11nMaps)) return r;
+  if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return r;
+  const [b, c, v, l] = r.split('.');
+  const chn = Number(c);
+  const vsn = Number(v);
+  const lvn = Number(l);
+  if (!Number.isNaN(chn) && (chn < 1 || chn > getMaxChapter(fromv11n, r)))
+    return r;
+  if (!Number.isNaN(vsn)) {
+    const maxv = 200; // slow: getMaxVerse(fromv11n, [b, c].join('.'));
+    if (vsn < 1 || vsn > maxv || lvn < vsn || lvn > maxv) return r;
+  }
+  return LibSword.convertLocation(fromv11n, r, tov11n);
 }
 
 export function setMenuFromPrefs(menu: Electron.Menu) {
