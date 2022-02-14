@@ -7,7 +7,7 @@
 import React from 'react';
 import { JSON_parse } from '../../common';
 import G from '../rg';
-import launchComponent from '../rinit';
+import renderToRoot from '../rinit';
 import { getStatePref, onSetWindowState, setPrefFromState } from '../rutil';
 import {
   topHandle,
@@ -60,6 +60,8 @@ export default class ViewportWin extends React.Component {
 
   lastSavedPref: { [i: string]: any };
 
+  listener: any[][];
+
   constructor(props: ViewportWinProps) {
     super(props);
 
@@ -75,19 +77,27 @@ export default class ViewportWin extends React.Component {
       this.state = s;
     } else throw Error(`ViewportWin id must be 'xulsword'`);
 
-    onSetWindowState(this);
-
     this.viewportParentHandler = viewportParentH.bind(this);
     this.lastSavedPref = {};
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
+
+    this.listener = [];
   }
 
   componentDidMount() {
+    this.listener.push(onSetWindowState(this));
     updateVersification(this);
   }
 
   componentDidUpdate() {
     updateVersification(this);
+  }
+
+  componentWillUnmount() {
+    this.listener.forEach((entry) => {
+      const [channel, listener] = entry;
+      window.ipc.renderer.removeListener(channel, listener);
+    });
   }
 
   render() {
@@ -170,4 +180,4 @@ export default class ViewportWin extends React.Component {
 ViewportWin.defaultProps = defaultProps;
 ViewportWin.propTypes = propTypes;
 
-launchComponent(<ViewportWin id="xulsword" pack="start" height="100%" />);
+renderToRoot(<ViewportWin id="xulsword" pack="start" height="100%" />);

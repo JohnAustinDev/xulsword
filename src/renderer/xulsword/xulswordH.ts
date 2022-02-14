@@ -15,7 +15,7 @@ import type { XulswordState } from './xulsword';
 export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
   const state = this.state as XulswordState;
   const target = es.target as HTMLElement;
-  const currentId = es.currentTarget.id;
+  const currentId = es.currentTarget?.id;
   switch (es.type) {
     case 'click': {
       const e = es as React.MouseEvent;

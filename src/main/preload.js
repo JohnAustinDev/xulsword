@@ -23,8 +23,8 @@ contextBridge.exposeInMainWorld('shell', {
 const validChannels = [
   'global', // to/from main for use by the G object
   'window', // to main to perform window operations (move-to-back, close, etc.)
-  'close', // from main upon parent window close
-  'resize', // from main upon parent window resize
+  'close', // from main upon window close
+  'resize', // from main upon window resize
   'update-state-from-pref', // from main when state-prefs should be updated
   'component-reset', // from main when top react components should be remounted
   'module-reset', // from main when module contents may have changed
@@ -73,6 +73,12 @@ contextBridge.exposeInMainWorld('ipc', {
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
         ipcRenderer.once(channel, (event, ...args) => func(...args));
+      }
+    },
+
+    removeListener(channel, func) {
+      if (validChannels.includes(channel)) {
+        ipcRenderer.removeListener(channel, func);
       }
     },
   },

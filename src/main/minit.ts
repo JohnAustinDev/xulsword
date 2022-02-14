@@ -211,61 +211,6 @@ export function getTab(): { [i: string]: TabType } {
   return Cache.read('tab');
 }
 
-type ModulesPref = {
-  [i: string]: {
-    osis: string[];
-  };
-};
-
-// The pref 'global.modules' is used to cache constly module data.
-// If 'books' is in the pref value it is used, otherwise it is added.
-// IMPORTANT: If a module is ever updated or removed, the
-// global.modules pref needs to be reset.
-export function getBooksInModule(): { [i: string]: string[] } {
-  if (!Cache.has('booksInMdule')) {
-    const modlist = LibSword.getModuleList();
-    const availableBooks: { [i: string]: string[] } = {};
-    if (modlist === C.NOMODULES) return availableBooks;
-    const prefmod: ModulesPref = Prefs.getComplexValue('global.modules');
-    const modules: string[] = [];
-    modlist.split('<nx>').forEach((m: string) => {
-      const [module, type] = m.split(';');
-      modules.push(module);
-      if (!(module in prefmod)) {
-        prefmod[module] = { osis: [] };
-        if (type === C.BIBLE || type === C.COMMENTARY) {
-          // When books outside the verse system are read, the last book
-          // in the module is always read instead. So test two verses to
-          // make sure they are different.
-          const missing = LibSword.getVerseText(module, 'FAKE 1:1', false);
-          const osis: string[] = [];
-          getBooks().forEach((bk: BookType) => {
-            const text = LibSword.getVerseText(module, `${bk.code} 1:1`, false);
-            if (text === missing) {
-              const test = LibSword.getVerseText(
-                module,
-                `${bk.code} 1:2`,
-                false
-              );
-              if (text === test) return;
-            }
-            osis.push(bk.code);
-          });
-          prefmod[module].osis = osis;
-        }
-      }
-      availableBooks[module] = prefmod[module].osis;
-    });
-    Object.keys(prefmod).forEach((module) => {
-      if (!modules.includes(module)) delete prefmod[module];
-    });
-    Prefs.setComplexValue('global.modules', prefmod);
-    Cache.write('booksInMdule', availableBooks);
-  }
-
-  return Cache.read('booksInMdule');
-}
-
 export function getBkChsInV11n() {
   if (!Cache.has('bkChsInV11n')) {
     // Data was parsed from sword/include/*.h files
@@ -304,6 +249,83 @@ export function getBkChsInV11n() {
   return Cache.read('bkChsInV11n');
 }
 
+type ModulesPref = {
+  [i: string]: {
+    osis: string[];
+  };
+};
+
+// The pref 'global.modules' is used to cache costly module data.
+// If 'books' is in the pref-value, it is used, otherwise it is added
+// to the pref-value. IMPORTANT: If a module is ever updated or removed,
+// the global.modules pref MUST be reset or updated.
+export function getBooksInModule(): { [i: string]: string[] } {
+  if (!Cache.has('booksInMdule')) {
+    const modlist = LibSword.getModuleList();
+    const availableBooks: { [i: string]: string[] } = {};
+    if (modlist === C.NOMODULES) return availableBooks;
+    const prefmod: ModulesPref = Prefs.getComplexValue('global.modules');
+    const tabs = getTabs();
+    const modules: string[] = [];
+    tabs.forEach((t: TabType) => {
+      modules.push(t.module);
+      if (!(t.module in prefmod)) {
+        prefmod[t.module] = { osis: [] };
+        if (t.v11n && (t.type === C.BIBLE || t.type === C.COMMENTARY)) {
+          const v11nbooks = Object.keys(getBkChsInV11n()[t.v11n]);
+          // When references to missing books are requested from SWORD,
+          // the previous (or last?) book in the module is usually quietly
+          // used and read from instead! The exception seems to be when a
+          // reference to the first (or following?) missing book(s) after
+          // the last included book of a module is requested, which
+          // correctly returns an empty string. In any casem when ambiguous
+          // results are returned, test two verses to make sure they are
+          // different and are not the empty string, to determine the book
+          // missing from the module.
+          // NOTE: All books are checked for each module, even those not
+          // present in a module's versification system; but since results
+          // are cached to disk, it's not too slow anyway, and many of the
+          // supported books are not present in any supported v11n,
+          // why not check them all and log any weirdness.
+          const fake = LibSword.getVerseText(t.module, 'FAKE 1:1', false);
+          const osis: string[] = [];
+          getBooks().forEach((bk: BookType) => {
+            const verse1 = LibSword.getVerseText(
+              t.module,
+              `${bk.code} 1:1`,
+              false
+            );
+            if (!verse1 || verse1 === fake) {
+              const verse2 = LibSword.getVerseText(
+                t.module,
+                `${bk.code} 1:2`,
+                false
+              );
+              if (!verse2 || verse1 === verse2) return;
+            }
+            osis.push(bk.code);
+          });
+          osis.forEach((bk) => {
+            if (!v11nbooks.includes(bk))
+              jsdump(
+                `Module: '${t.module}' contains book: '${bk}' which is not part of module's v11n: '${t.v11n}'.`
+              );
+          });
+          prefmod[t.module].osis = osis;
+        }
+      }
+      availableBooks[t.module] = prefmod[t.module].osis;
+    });
+    Object.keys(prefmod).forEach((module) => {
+      if (!modules.includes(module)) delete prefmod[module];
+    });
+    Prefs.setComplexValue('global.modules', prefmod);
+    Cache.write('booksInMdule', availableBooks);
+  }
+
+  return Cache.read('booksInMdule');
+}
+
 // LibSword.getMaxChapter returns an unpredictable wrong number if
 // vkeytext's book is not part of v11n, but a LibSword call is
 // unnecessary with G.BooksInV11n. NOTE: rutil has this same function.
@@ -321,13 +343,13 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
   return maxch ? LibSword.getMaxVerse(v11n, vkeytext) : 0;
 }
 
-// LibSword.convertLocation returns unpredictable wrong locations if
-// vkeytext's book, chapter, verse and lastverse are not in fromv11n
-// verse system. Also LibSword only converts between systems in
-// C.SupportedV11nMaps. So these things must be checked before calling
-// LibSword. NOTE: even if vkeytext cannot be converted for these
-// reasons, it still must be returned as a dot delineated xulsword
-// reference. NOTE: rutil has this same function.
+// LibSword.convertLocation returns unpredictable locations if vkeytext's
+// book, chapter, verse and lastverse are not in fromv11n verse system or
+// if the book is not included in tov11n. Also LibSword only converts
+// between systems in C.SupportedV11nMaps. So these things must be
+// checked before calling LibSword. NOTE: even if vkeytext cannot be
+// converted for these reasons, it still must be returned as a dot
+// delineated xulsword reference. NOTE: rutil has this same function.
 export function convertLocation(
   fromv11n: V11nType,
   vkeytext: string,
@@ -341,6 +363,9 @@ export function convertLocation(
   const chn = Number(c);
   const vsn = Number(v);
   const lvn = Number(l);
+  const bkChsInV11n = getBkChsInV11n();
+  if (!(tov11n in bkChsInV11n)) return r;
+  if (!(b in bkChsInV11n[tov11n])) return r;
   if (!Number.isNaN(chn) && (chn < 1 || chn > getMaxChapter(fromv11n, r)))
     return r;
   if (!Number.isNaN(vsn)) {

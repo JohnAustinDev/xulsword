@@ -1,13 +1,13 @@
 /* eslint-disable prettier/prettier */
 import React from 'react';
 import { Translation } from 'react-i18next';
-import launchComponent from '../rinit';
+import renderToRoot from '../rinit';
 import { Hbox, Vbox } from '../libxul/boxes';
 import Label from '../libxul/label';
 import Stack from '../libxul/stack';
 import '../about/about.css';
 
-launchComponent(
+renderToRoot(
 <Translation>
   {(t) => (
     <Vbox id="mainbox" flex="1">

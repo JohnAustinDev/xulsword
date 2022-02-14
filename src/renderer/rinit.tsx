@@ -102,7 +102,7 @@ i18n.on('initialized', (options) => {
   return setHTMLClass(className, options.lng);
 });
 
-export default function launchComponent(
+export default function renderToRoot(
   component: ReactElement,
   loadedXUL?: () => void,
   unloadXUL?: () => void,

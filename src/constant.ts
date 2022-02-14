@@ -45,8 +45,10 @@ const C = {
   ] as V11nType[],
 
   // SupportedV11nMaps show which verse-systems may currently be mapped to
-  // other verse systems by libxulsword. The SWORD C++ engine currently
-  // used has no mapping capability of its own.
+  // other verse systems by libxulsword. The SWORD C++ engine is not currently
+  // being used for mapping. TODO: Investigate whether SWORD can now do the
+  // mapping that's needed or not- it seems SWORD had (as?) limitations caused
+  // by incorrect assumptions about mapping requirements.
   SupportedV11nMaps: {
     KJV: ['Synodal', 'SynodalProt'],
     Synodal: ['KJV'],

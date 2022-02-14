@@ -320,9 +320,7 @@ class Viewport extends React.Component implements PopupParent {
     panels.forEach((panel, i) => {
       const tov11n = panel && G.Tab[panel].v11n;
       if (panel && G.Tab[panel].isVerseKey && tov11n && windowV11n) {
-        if (G.Tab[panel].v11n !== windowV11n) {
-          loc[i] = convertLocation(windowV11n, loc[i], tov11n);
-        }
+        loc[i] = convertLocation(windowV11n, loc[i], tov11n);
       }
     });
     const locs = loc.map((li: string) => li.split('.'));

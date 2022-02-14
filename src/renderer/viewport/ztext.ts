@@ -8,19 +8,17 @@ import { getDictEntryHTML, getDictSortedKeyList } from './zdictionary';
 
 import type { AtextProps, LibSwordResponse } from './atext';
 
+// TextCache is used rather than memoization when there is a strictly
+// limited number of cache possibliities (ie. one per module).
 type TextCacheType = {
   dict: {
     keyList: { [i: string]: string[] };
     keyHTML: { [i: string]: string };
   };
 };
-
-// TextCache is used rather than memoization when there is a strictly
-// limited number of cache possibliities (ie. one per module).
-// eslint-disable-next-line import/no-mutable-exports
-export let TextCache: TextCacheType = { dict: { keyList: {}, keyHTML: {} } };
+export const TextCache: TextCacheType = { dict: { keyList: {}, keyHTML: {} } };
 window.ipc.renderer.on('module-reset', () => {
-  TextCache = { dict: { keyList: {}, keyHTML: {} } };
+  TextCache.dict = { keyList: {}, keyHTML: {} };
 });
 
 export function addUserNotes(content: LibSwordResponse, props: AtextProps) {}

@@ -10,7 +10,7 @@ import { HistoryTypeVK, V11nType, XulswordStatePref } from '../../type';
 import { dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import launchComponent from '../rinit';
+import renderToRoot from '../rinit';
 import {
   dotString2LocaleString,
   jsdump,
@@ -90,6 +90,8 @@ export default class Xulsword extends React.Component {
 
   lastStatePref: { [i: string]: any };
 
+  listener: any[][];
+
   constructor(props: XulswordProps) {
     super(props);
 
@@ -112,20 +114,28 @@ export default class Xulsword extends React.Component {
       this.state = s;
     } else throw Error(`Xulsword id must be 'xulsword'`);
 
-    onSetWindowState(this);
-
     this.handler = handlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
     this.lastStatePref = {};
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
+
+    this.listener = [];
   }
 
   componentDidMount() {
+    this.listener.push(onSetWindowState(this));
     updateVersification(this);
   }
 
   componentDidUpdate() {
     updateVersification(this);
+  }
+
+  componentWillUnmount() {
+    this.listener.forEach((entry) => {
+      const [channel, listener] = entry;
+      window.ipc.renderer.removeListener(channel, listener);
+    });
   }
 
   // A history item has the type HistoryTypeVK and only a single
@@ -550,7 +560,7 @@ export default class Xulsword extends React.Component {
 Xulsword.defaultProps = defaultProps;
 Xulsword.propTypes = propTypes;
 
-launchComponent(<Xulsword id="xulsword" pack="start" height="100%" />, () => {
+renderToRoot(<Xulsword id="xulsword" pack="start" height="100%" />, () => {
   jsdump('Loading Xulsword!');
   setTimeout(() => {
     window.ipc.renderer.send('window', 'move-to-back');

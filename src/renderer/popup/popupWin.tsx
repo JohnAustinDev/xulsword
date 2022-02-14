@@ -3,7 +3,7 @@
 /* eslint-disable react/static-property-placement */
 import React from 'react';
 import { JSON_parse } from '../../common';
-import launchComponent from '../rinit';
+import renderToRoot from '../rinit';
 import {
   addClass,
   xulDefaultProps,
@@ -81,4 +81,4 @@ export default class PopupWin extends React.Component implements PopupParent {
 PopupWin.defaultProps = defaultProps;
 PopupWin.propTypes = propTypes;
 
-launchComponent(<PopupWin height="100%" />);
+renderToRoot(<PopupWin height="100%" />);

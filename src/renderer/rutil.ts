@@ -862,24 +862,23 @@ export function setStatePref(id: string, state: Partial<React.ComponentState>) {
 // Calling this function registers a update-state-from-pref listener that, when
 // called upon, will read component state Prefs and write them to new state.
 export function onSetWindowState(component: React.Component) {
-  window.ipc.renderer.on(
-    'update-state-from-pref',
-    (prefs: string | string[]) => {
-      const { id } = component.props as any;
-      if (id) {
-        const state = getStatePref(id, prefs);
-        const lng = G.Prefs.getCharPref(C.LOCALEPREF);
-        if (lng !== i18next.language) {
-          i18next.changeLanguage(lng, (err) => {
-            if (err) throw Error(err);
-            component.setState(state);
-          });
-        } else {
+  const listener = (prefs: string | string[]) => {
+    const { id } = component.props as any;
+    if (id) {
+      const state = getStatePref(id, prefs);
+      const lng = G.Prefs.getCharPref(C.LOCALEPREF);
+      if (lng !== i18next.language) {
+        i18next.changeLanguage(lng, (err) => {
+          if (err) throw Error(err);
           component.setState(state);
-        }
+        });
+      } else {
+        component.setState(state);
       }
     }
-  );
+  };
+  window.ipc.renderer.on('update-state-from-pref', listener);
+  return ['update-state-from-pref', listener];
 }
 
 // Compare component state to lastStatePrefs and do nothing if they are the same.
@@ -939,12 +938,12 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
 }
 
 // LibSword.convertLocation returns unpredictable locations if vkeytext's
-// book, chapter, verse and lastverse are not in fromv11n verse system.
-// Also LibSword only converts between systems in C.SupportedV11nMaps.
-// So these things must be checked before calling LibSword. NOTE: even
-// if vkeytext cannot be converted for these reasons, it still must be
-// returned as a dot delineated xulsword reference.
-// NOTE: mutil has this same function.
+// book, chapter, verse and lastverse are not in fromv11n verse system or
+// if the book is not included in tov11n. Also LibSword only converts
+// between systems in C.SupportedV11nMaps. So these things must be
+// checked before calling LibSword. NOTE: even if vkeytext cannot be
+// converted for these reasons, it still must be returned as a dot
+// delineated xulsword reference. NOTE: mutil has this same function.
 export function convertLocation(
   fromv11n: V11nType,
   vkeytext: string,
@@ -958,6 +957,8 @@ export function convertLocation(
   const chn = Number(c);
   const vsn = Number(v);
   const lvn = Number(l);
+  if (!(tov11n in G.BkChsInV11n)) return r;
+  if (!(b in G.BkChsInV11n[tov11n])) return r;
   if (!Number.isNaN(chn) && (chn < 1 || chn > getMaxChapter(fromv11n, r)))
     return r;
   if (!Number.isNaN(vsn)) {
