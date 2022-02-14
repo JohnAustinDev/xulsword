@@ -278,10 +278,10 @@ export function getBooksInModule(): { [i: string]: string[] } {
           // used and read from instead! The exception seems to be when a
           // reference to the first (or following?) missing book(s) after
           // the last included book of a module is requested, which
-          // correctly returns an empty string. In any casem when ambiguous
+          // correctly returns an empty string. In any case, when ambiguous
           // results are returned, test two verses to make sure they are
-          // different and are not the empty string, to determine the book
-          // missing from the module.
+          // different and are not the empty string, to determine whether
+          // the book is missing from the module.
           // NOTE: All books are checked for each module, even those not
           // present in a module's versification system; but since results
           // are cached to disk, it's not too slow anyway, and many of the

@@ -5,7 +5,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
-import { Translation } from 'react-i18next';
+import i18n from 'i18next';
 import { HistoryTypeVK, V11nType, XulswordStatePref } from '../../type';
 import { dString } from '../../common';
 import C from '../../constant';
@@ -326,6 +326,19 @@ export default class Xulsword extends React.Component {
       }, 1000);
     }
 
+    // Book options for Bookselect dropdown
+    const bookset: Set<string> = new Set();
+    panels.forEach((m, i) => {
+      if (m && !isPinned[i] && G.Tab[m].isVerseKey) {
+        G.BooksInModule[m].forEach((bk) => bookset.add(bk));
+      }
+    });
+    const booklist = [...bookset].sort((a: string, b: string) => {
+      if (G.Book[a].index < G.Book[b].index) return -1;
+      if (G.Book[a].index > G.Book[b].index) return 1;
+      return 0;
+    });
+
     const navdisabled =
       !windowV11n || isPinned.every((p, i) => p || !panels[i]);
 
@@ -343,217 +356,213 @@ export default class Xulsword extends React.Component {
     );
 
     return (
-      <Translation>
-        {(t) => (
-          <Vbox
-            {...addClass('xulsword', props)}
-            {...topHandle('onClick', () => closeMenupopups(this), props)}
-          >
-            <Hbox id="main-controlbar" className="controlbar">
-              <Spacer width="17px" orient="vertical" />
+      <Vbox
+        {...addClass('xulsword', props)}
+        {...topHandle('onClick', () => closeMenupopups(this), props)}
+      >
+        <Hbox id="main-controlbar" className="controlbar">
+          <Spacer width="17px" orient="vertical" />
 
-              <Vbox id="navigator-tool" pack="start">
-                <Hbox id="historyButtons" align="center">
-                  <Button
-                    id="back"
-                    flex="40%"
-                    onClick={handler}
-                    disabled={
-                      navdisabled ||
-                      !history.length ||
-                      historyIndex === history.length - 1
-                    }
-                    label={t('history.back.label')}
-                    tooltip={t('history.back.tooltip')}
-                  />
-                  <Button
-                    id="historymenu"
-                    type="menu"
-                    onClick={handler}
-                    disabled={navdisabled || history.length <= 1}
-                    tooltip={t('history.all.tooltip')}
-                  >
-                    {historyMenupopup}
-                  </Button>
-                  <Button
-                    id="forward"
-                    dir="reverse"
-                    flex="40%"
-                    onClick={handler}
-                    disabled={navdisabled || historyIndex === 0}
-                    label={t('history.forward.label')}
-                    tooltip={t('history.forward.tooltip')}
-                  />
-                </Hbox>
-
-                <Hbox id="player" pack="start" align="center" hidden>
-                  <audio controls onEnded={handler} onCanPlay={handler} />
-                  <Button
-                    id="closeplayer"
-                    onClick={handler}
-                    label={t('closeCmd.label')}
-                  />
-                </Hbox>
-
-                <Hbox id="textnav" align="center">
-                  <Bookselect
-                    id="book"
-                    sizetopopup="none"
-                    flex="1"
-                    book={book}
-                    trans={t('configuration.default_modules')}
-                    disabled={navdisabled}
-                    key={`bk${book}${bsreset}`}
-                    onChange={handler}
-                  />
-                  <Textbox
-                    id="chapter"
-                    width="50px"
-                    maxLength="3"
-                    pattern={/^[0-9]+$/}
-                    value={dString(chapter.toString())}
-                    timeout="600"
-                    disabled={navdisabled}
-                    key={`ch${chapter}`}
-                    onChange={handler}
-                    onClick={handler}
-                  />
-                  <Vbox width="28px">
-                    <Button
-                      id="nextchap"
-                      disabled={navdisabled}
-                      onClick={handler}
-                    />
-                    <Button
-                      id="prevchap"
-                      disabled={navdisabled}
-                      onClick={handler}
-                    />
-                  </Vbox>
-                  <Textbox
-                    id="verse"
-                    key={`vs${verse}`}
-                    width="50px"
-                    maxLength="3"
-                    pattern={/^[0-9]+$/}
-                    value={dString(verse.toString())}
-                    timeout="600"
-                    disabled={navdisabled}
-                    onChange={handler}
-                    onClick={handler}
-                  />
-                  <Vbox width="28px">
-                    <Button
-                      id="nextverse"
-                      disabled={navdisabled}
-                      onClick={handler}
-                    />
-                    <Button
-                      id="prevverse"
-                      disabled={navdisabled}
-                      onClick={handler}
-                    />
-                  </Vbox>
-                </Hbox>
-              </Vbox>
-
-              <Spacer flex="14%" orient="vertical" />
-
-              <Hbox id="search-tool">
-                <Vbox>
-                  <Textbox
-                    id="searchText"
-                    type="search"
-                    maxLength="24"
-                    onChange={handler}
-                    onKeyUp={(e) => {
-                      if (e.key === 'Enter') {
-                        const b = document.getElementById('searchButton');
-                        if (b) b.click();
-                      }
-                    }}
-                    tooltip={t('searchbox.tooltip')}
-                  />
-                  <Button
-                    id="searchButton"
-                    orient="horizontal"
-                    dir="reverse"
-                    disabled={searchDisabled}
-                    onClick={handler}
-                    label={t('searchBut.label')}
-                    tooltip={t('search.tooltip')}
-                  />
-                </Vbox>
-              </Hbox>
-
-              <Spacer flex="14%" orient="vertical" />
-
-              <Hbox id="optionButtons" align="start">
-                <Button
-                  id="headings"
-                  orient="vertical"
-                  checked={show.headings}
-                  onClick={handler}
-                  label={t('headingsButton.label')}
-                  tooltip={t('headingsButton.tooltip')}
-                />
-                <Button
-                  id="footnotes"
-                  orient="vertical"
-                  checked={show.footnotes}
-                  onClick={handler}
-                  label={t('notesButton.label')}
-                  tooltip={t('notesButton.tooltip')}
-                />
-                <Button
-                  id="crossrefs"
-                  orient="vertical"
-                  checked={show.crossrefs}
-                  onClick={handler}
-                  label={t('crossrefsButton.label')}
-                  tooltip={t('crossrefsButton.tooltip')}
-                />
-                <Button
-                  id="dictlinks"
-                  orient="vertical"
-                  checked={show.dictlinks}
-                  onClick={handler}
-                  label={t('dictButton.label')}
-                  tooltip={t('dictButton.tooltip')}
-                />
-              </Hbox>
-
-              <Spacer id="rightSpacer" flex="72%" orient="vertical" />
-            </Hbox>
-
-            <Hbox flex="1">
-              <Viewport
-                key={[vpreset, showChooser, ...panels].join('.')}
-                id="main-viewport"
-                parentHandler={viewportParentHandler}
-                book={book}
-                chapter={chapter}
-                verse={verse}
-                selection={selection}
-                tabs={tabs}
-                panels={panels}
-                ilModules={ilModules}
-                mtModules={mtModules}
-                show={show}
-                place={place}
-                keys={keys}
-                flagScroll={flagScroll}
-                isPinned={isPinned}
-                noteBoxHeight={noteBoxHeight}
-                maximizeNoteBox={maximizeNoteBox}
-                showChooser={showChooser}
-                ownWindow={false}
-                windowV11n={windowV11n}
+          <Vbox id="navigator-tool" pack="start">
+            <Hbox id="historyButtons" align="center">
+              <Button
+                id="back"
+                flex="40%"
+                onClick={handler}
+                disabled={
+                  navdisabled ||
+                  !history.length ||
+                  historyIndex === history.length - 1
+                }
+                label={i18n.t('history.back.label')}
+                tooltip={i18n.t('history.back.tooltip')}
+              />
+              <Button
+                id="historymenu"
+                type="menu"
+                onClick={handler}
+                disabled={navdisabled || history.length <= 1}
+                tooltip={i18n.t('history.all.tooltip')}
+              >
+                {historyMenupopup}
+              </Button>
+              <Button
+                id="forward"
+                dir="reverse"
+                flex="40%"
+                onClick={handler}
+                disabled={navdisabled || historyIndex === 0}
+                label={i18n.t('history.forward.label')}
+                tooltip={i18n.t('history.forward.tooltip')}
               />
             </Hbox>
+
+            <Hbox id="player" pack="start" align="center" hidden>
+              <audio controls onEnded={handler} onCanPlay={handler} />
+              <Button
+                id="closeplayer"
+                onClick={handler}
+                label={i18n.t('closeCmd.label')}
+              />
+            </Hbox>
+
+            <Hbox id="textnav" align="center">
+              <Bookselect
+                id="book"
+                sizetopopup="none"
+                flex="1"
+                selection={book}
+                options={booklist}
+                disabled={navdisabled}
+                key={`bk${book}${bsreset}`}
+                onChange={handler}
+              />
+              <Textbox
+                id="chapter"
+                width="50px"
+                maxLength="3"
+                pattern={/^[0-9]+$/}
+                value={dString(chapter.toString())}
+                timeout="600"
+                disabled={navdisabled}
+                key={`ch${chapter}`}
+                onChange={handler}
+                onClick={handler}
+              />
+              <Vbox width="28px">
+                <Button
+                  id="nextchap"
+                  disabled={navdisabled}
+                  onClick={handler}
+                />
+                <Button
+                  id="prevchap"
+                  disabled={navdisabled}
+                  onClick={handler}
+                />
+              </Vbox>
+              <Textbox
+                id="verse"
+                key={`vs${verse}`}
+                width="50px"
+                maxLength="3"
+                pattern={/^[0-9]+$/}
+                value={dString(verse.toString())}
+                timeout="600"
+                disabled={navdisabled}
+                onChange={handler}
+                onClick={handler}
+              />
+              <Vbox width="28px">
+                <Button
+                  id="nextverse"
+                  disabled={navdisabled}
+                  onClick={handler}
+                />
+                <Button
+                  id="prevverse"
+                  disabled={navdisabled}
+                  onClick={handler}
+                />
+              </Vbox>
+            </Hbox>
           </Vbox>
-        )}
-      </Translation>
+
+          <Spacer flex="14%" orient="vertical" />
+
+          <Hbox id="search-tool">
+            <Vbox>
+              <Textbox
+                id="searchText"
+                type="search"
+                maxLength="24"
+                onChange={handler}
+                onKeyUp={(e) => {
+                  if (e.key === 'Enter') {
+                    const b = document.getElementById('searchButton');
+                    if (b) b.click();
+                  }
+                }}
+                tooltip={i18n.t('searchbox.tooltip')}
+              />
+              <Button
+                id="searchButton"
+                orient="horizontal"
+                dir="reverse"
+                disabled={searchDisabled}
+                onClick={handler}
+                label={i18n.t('searchBut.label')}
+                tooltip={i18n.t('search.tooltip')}
+              />
+            </Vbox>
+          </Hbox>
+
+          <Spacer flex="14%" orient="vertical" />
+
+          <Hbox id="optionButtons" align="start">
+            <Button
+              id="headings"
+              orient="vertical"
+              checked={show.headings}
+              onClick={handler}
+              label={i18n.t('headingsButton.label')}
+              tooltip={i18n.t('headingsButton.tooltip')}
+            />
+            <Button
+              id="footnotes"
+              orient="vertical"
+              checked={show.footnotes}
+              onClick={handler}
+              label={i18n.t('notesButton.label')}
+              tooltip={i18n.t('notesButton.tooltip')}
+            />
+            <Button
+              id="crossrefs"
+              orient="vertical"
+              checked={show.crossrefs}
+              onClick={handler}
+              label={i18n.t('crossrefsButton.label')}
+              tooltip={i18n.t('crossrefsButton.tooltip')}
+            />
+            <Button
+              id="dictlinks"
+              orient="vertical"
+              checked={show.dictlinks}
+              onClick={handler}
+              label={i18n.t('dictButton.label')}
+              tooltip={i18n.t('dictButton.tooltip')}
+            />
+          </Hbox>
+
+          <Spacer id="rightSpacer" flex="72%" orient="vertical" />
+        </Hbox>
+
+        <Hbox flex="1">
+          <Viewport
+            key={[vpreset, showChooser, ...panels].join('.')}
+            id="main-viewport"
+            parentHandler={viewportParentHandler}
+            book={book}
+            chapter={chapter}
+            verse={verse}
+            selection={selection}
+            tabs={tabs}
+            panels={panels}
+            ilModules={ilModules}
+            mtModules={mtModules}
+            show={show}
+            place={place}
+            keys={keys}
+            flagScroll={flagScroll}
+            isPinned={isPinned}
+            noteBoxHeight={noteBoxHeight}
+            maximizeNoteBox={maximizeNoteBox}
+            showChooser={showChooser}
+            ownWindow={false}
+            windowV11n={windowV11n}
+          />
+        </Hbox>
+      </Vbox>
     );
   }
 }

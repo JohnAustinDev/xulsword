@@ -7,7 +7,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import C from '../../constant';
 import G from '../rg';
 import { parseLocation } from '../rutil';
 import Tooltip from './tooltip';
@@ -25,8 +24,6 @@ import Menulist from './menulist';
 import Textbox from './textbox';
 import './xul.css';
 import './bookselect.css';
-
-import type { BookType } from '../../type';
 
 // XUL Bookselect
 // This component contains an overlapping Textbox and Menulist.
@@ -48,31 +45,28 @@ import type { BookType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
-  book: undefined,
+  options: [],
+  selection: undefined,
   disabled: false,
-  onlyavailablebooks: false,
   sizetopopup: undefined,
   tooltip: undefined,
-  trans: '',
 };
 
 const propTypes = {
   ...xulPropTypes,
-  book: PropTypes.string,
+  options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selection: PropTypes.string,
   disabled: PropTypes.bool,
-  onlyavailablebooks: PropTypes.bool,
   sizetopopup: PropTypes.string,
   tooltip: PropTypes.string,
-  trans: PropTypes.string,
 };
 
 interface BookselectProps extends XulProps {
-  book?: string | undefined;
+  options: string[];
+  selection?: string | undefined;
   disabled?: boolean | undefined;
-  onlyavailablebooks?: boolean | undefined;
   sizetopopup?: string | undefined;
   tooltip?: string | undefined;
-  trans: string;
 }
 
 interface BookselectState {
@@ -91,7 +85,7 @@ class Bookselect extends React.Component {
   constructor(props: BookselectProps) {
     super(props);
 
-    this.state = { book: props.book, pattern: /.*/, autocomp: true };
+    this.state = { book: props.selection, pattern: /.*/, autocomp: true };
 
     this.textInput = React.createRef();
 
@@ -103,40 +97,20 @@ class Bookselect extends React.Component {
   }
 
   getBookOptions = (): PropTypes.ReactElementLike[] => {
-    const { onlyavailablebooks, trans } = this.props as BookselectProps;
+    const { options } = this.props as BookselectProps;
     const { book } = this.state as BookselectState;
-    let books;
-    if (trans && onlyavailablebooks) {
-      const t = trans.split(/\s*,\s*/)[0];
-      const abs =
-        t in G.BooksInModule
-          ? G.BooksInModule[t]
-          : C.SupportedBooks.ot.concat(C.SupportedBooks.nt);
-      books = abs.map((bk: string) => {
-        let longName = bk;
-        for (let x = 0; x < G.Books.length; x += 1) {
-          if (G.Books[x].code === bk) longName = G.Books[x].longname;
-        }
-        return (
-          <option key={bk} value={bk}>
-            {longName}
-          </option>
-        );
-      });
-    } else {
-      books = G.Books.map((bke: BookType) => {
-        return (
-          <option key={bke.code} value={bke.code}>
-            {bke.longname}
-          </option>
-        );
-      });
-    }
+    const books = options.map((bk) => {
+      return (
+        <option key={bk} value={bk}>
+          {bk in G.Book ? G.Book[bk].longname : bk}
+        </option>
+      );
+    });
 
     // If book is not defined (no selection) then first item is always
-    // selected, and thus onChange will not fire when chosen by the
-    // user. An empty selection at the top of the list means all valid
-    // selections will fire onChange.
+    // selected, and thus onChange would not fire when chosen by the
+    // user. So an empty selection at the top of the list allows all
+    // valid selections to fire onChange.
     if (!book) {
       books.unshift(<option key="no-selection" />);
     }
@@ -145,7 +119,7 @@ class Bookselect extends React.Component {
   };
 
   focusChange = (e: React.FocusEvent) => {
-    const { book } = this.props as BookselectProps;
+    const { selection: book } = this.props as BookselectProps;
     const refelem = this
       .textInput as unknown as React.RefObject<HTMLInputElement>;
     const input = refelem !== null ? refelem.current : null;
@@ -159,7 +133,7 @@ class Bookselect extends React.Component {
   };
 
   textboxKeyDown = (e: React.KeyboardEvent) => {
-    const { book, onChange } = this.props as BookselectProps;
+    const { selection: book, onChange } = this.props as BookselectProps;
     const refelem = this
       .textInput as unknown as React.RefObject<HTMLInputElement>;
     const input = refelem !== null ? refelem.current : null;
