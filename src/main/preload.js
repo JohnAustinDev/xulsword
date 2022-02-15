@@ -30,6 +30,8 @@ const validChannels = [
   'module-reset', // from main when module contents may have changed
 ];
 
+const listeners = [];
+
 contextBridge.exposeInMainWorld('ipc', {
   renderer: {
     // Trigger a channel event which ipcMain is to listen for. If a single
@@ -39,7 +41,7 @@ contextBridge.exposeInMainWorld('ipc', {
     send(channel, ...args) {
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, ...args);
-      }
+      } else throw Error(`ipc send bad channel: ${channel}`);
     },
 
     // Trigger a channel event which ipcMain is to listen for and respond to
@@ -47,7 +49,7 @@ contextBridge.exposeInMainWorld('ipc', {
     invoke(channel, ...args) {
       if (validChannels.includes(channel)) {
         ipcRenderer.invoke(channel, ...args);
-      }
+      } else throw Error(`ipc invoke bad channel: ${channel}`);
     },
 
     // Make a synchronous call to ipcMain, blocking the renderer until ipcMain
@@ -57,14 +59,18 @@ contextBridge.exposeInMainWorld('ipc', {
       if (validChannels.includes(channel)) {
         return ipcRenderer.sendSync(channel, ...args);
       }
-      return null;
+      throw Error(`ipc sendSync bad channel: ${channel}`);
     },
     // Add listener func to be called after events from a channel of ipcMain
     on(channel, func) {
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
-        ipcRenderer.on(channel, (event, ...args) => func(...args));
+        const strippedfunc = (event, ...args) => func(...args);
+        listeners.push(strippedfunc);
+        ipcRenderer.on(channel, strippedfunc);
+        return listeners.length - 1;
       }
+      throw Error(`ipc on bad channel: ${channel}`);
     },
 
     // One time listener func to be called after next event from a channel of
@@ -72,14 +78,15 @@ contextBridge.exposeInMainWorld('ipc', {
     once(channel, func) {
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
-        ipcRenderer.once(channel, (event, ...args) => func(...args));
-      }
+        const strippedfunc = (event, ...args) => func(...args);
+        ipcRenderer.once(channel, strippedfunc);
+      } else throw Error(`ipc once bad channel: ${channel}`);
     },
 
-    removeListener(channel, func) {
+    removeListener(channel, listenerIndex) {
       if (validChannels.includes(channel)) {
-        ipcRenderer.removeListener(channel, func);
-      }
+        ipcRenderer.removeListener(channel, listeners[listenerIndex]);
+      } else throw Error(`ipc removeListener bad channel: ${channel}`);
     },
   },
 });

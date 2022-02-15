@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable import/no-mutable-exports */
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { render } from 'react-dom';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
@@ -9,6 +9,38 @@ import C from '../constant';
 import G from './rg';
 import { jsdump } from './rutil';
 import { delayHandler } from './libxul/xul';
+
+// Add window type and language classes to the root html element.
+i18n.on('initialized', (options) => {
+  let className = 'unknown';
+  const path = window?.location?.pathname;
+  if (path) {
+    const dirs = path.split('/');
+    if (dirs.length) {
+      const file = dirs.pop();
+      if (file) {
+        const parts = file.split('.');
+        if (parts.length) [className] = parts;
+      }
+    }
+  }
+  function setHTMLClass(winclass: string, lng?: string) {
+    const html = document?.getElementsByTagName('html')[0];
+    if (!html) return false;
+    const classes = [winclass];
+    if (lng) classes.push(lng);
+    html.className = classes.join(' ');
+    const dir = i18n.t('locale_direction');
+    html.classList.add(`chromedir-${dir}`);
+    html.dir = dir;
+    return true;
+  }
+  i18n.on('languageChanged', (lng) => {
+    G.reset();
+    return setHTMLClass(className, lng);
+  });
+  return setHTMLClass(className, options.lng);
+});
 
 async function i18nInit(namespaces: string[]) {
   const lang = G.Prefs.getCharPref(C.LOCALEPREF);
@@ -71,36 +103,7 @@ async function i18nInit(namespaces: string[]) {
   return i18n;
 }
 
-i18n.on('initialized', (options) => {
-  let className = 'unknown';
-  const path = window?.location?.pathname;
-  if (path) {
-    const dirs = path.split('/');
-    if (dirs.length) {
-      const file = dirs.pop();
-      if (file) {
-        const parts = file.split('.');
-        if (parts.length) [className] = parts;
-      }
-    }
-  }
-  function setHTMLClass(winclass: string, lng?: string) {
-    const html = document?.getElementsByTagName('html')[0];
-    if (!html) return false;
-    const classes = [winclass];
-    if (lng) classes.push(lng);
-    html.className = classes.join(' ');
-    const dir = i18n.t('locale_direction');
-    html.classList.add(`chromedir-${dir}`);
-    html.dir = dir;
-    return true;
-  }
-  i18n.on('languageChanged', (lng) => {
-    G.reset();
-    return setHTMLClass(className, lng);
-  });
-  return setHTMLClass(className, options.lng);
-});
+const delayHandlerThis = {};
 
 export default function renderToRoot(
   component: ReactElement,
@@ -109,31 +112,40 @@ export default function renderToRoot(
   namespace = 'xulsword'
 ) {
   function Reset(props: React.ComponentProps<any>) {
-    const [reset, setReset] = useState(0);
     const { children } = props;
-    window.ipc.renderer.on('component-reset', () => {
-      const lng = G.Prefs.getCharPref(C.LOCALEPREF);
-      if (i18n.language !== lng) {
-        i18n.changeLanguage(lng, (err: any) => {
-          if (err) throw Error(err);
+    const [reset, setReset] = useState(0);
+    useEffect(() => {
+      const index = window.ipc.renderer.on('component-reset', () => {
+        const lng = G.Prefs.getCharPref(C.LOCALEPREF);
+        if (i18n.language !== lng) {
+          i18n.changeLanguage(lng, (err: any) => {
+            if (err) throw Error(err);
+            setReset(reset + 1);
+          });
+        } else {
+          G.reset();
           setReset(reset + 1);
-        });
-      } else {
-        G.reset();
-        setReset(reset + 1);
-      }
+        }
+      });
+      return () => {
+        window.ipc.renderer.removeListener('component-reset', index);
+      };
     });
-    const delayHandlerThis = {};
-    window.ipc.renderer.on(
-      'resize',
-      delayHandler.bind(delayHandlerThis)(
-        () => {
-          setReset(reset + 1);
-        },
-        C.UI.Window.resizeDelay,
-        'resizeTO'
-      )
-    );
+    useEffect(() => {
+      const index = window.ipc.renderer.on(
+        'resize',
+        delayHandler.bind(delayHandlerThis)(
+          () => {
+            setReset(reset + 1);
+          },
+          C.UI.Window.resizeDelay,
+          'resizeTO'
+        )
+      );
+      return () => {
+        window.ipc.renderer.removeListener('resize', index);
+      };
+    });
     return <React.Fragment key={reset}>{children}</React.Fragment>;
   }
 

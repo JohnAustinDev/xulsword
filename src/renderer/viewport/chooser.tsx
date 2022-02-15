@@ -27,7 +27,7 @@ import '../libxul/xul.css';
 import handlerH from './chooserH';
 import './chooser.css';
 
-import type { BookGroupType, BookType } from '../../type';
+import type { BookGroupType, BookType, V11nType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -38,7 +38,7 @@ const defaultProps = {
   hideUnavailableBooks: false,
   selection: '',
   type: 'bible',
-  windowV11n: '',
+  windowV11n: 'KJV',
 };
 
 const propTypes = {
@@ -61,7 +61,7 @@ export interface ChooserProps extends XulProps {
   hideUnavailableBooks: boolean;
   selection: string;
   type: string;
-  windowV11n: string;
+  windowV11n: V11nType;
 }
 
 export interface ChooserState {
@@ -345,7 +345,7 @@ export default Chooser;
 
 function BookGroupList(
   props: {
-    windowV11n: string;
+    windowV11n: V11nType;
     bookGroup?: BookGroupType | undefined;
     selection?: string | undefined;
     availableBooks?: Set<string> | undefined;
@@ -402,7 +402,7 @@ BookGroupList.defaultProps = {
 function BookGroupItem(
   props: {
     sName: string;
-    windowV11n: string;
+    windowV11n: V11nType;
     classes?: string[] | undefined;
     handler?: (e: React.SyntheticEvent) => void | undefined;
   } & XulProps
@@ -434,7 +434,7 @@ BookGroupItem.defaultProps = {
 
 function ChapterMenu(props: {
   bkcode: string;
-  windowV11n: string;
+  windowV11n: V11nType;
   handler?: (e: React.SyntheticEvent) => void;
 }) {
   const { bkcode, windowV11n, handler } = props;
