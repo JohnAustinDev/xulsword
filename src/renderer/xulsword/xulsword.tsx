@@ -352,6 +352,16 @@ export default class Xulsword extends React.Component {
     const navdisabled =
       !windowV11n || isPinned.every((p, i) => p || !panels[i]);
 
+    const viewportReset: string[] = [
+      vpreset.toString(),
+      showChooser.toString(),
+    ];
+    panels.forEach((m) => {
+      if (m === null) viewportReset.push('null');
+      else if (!m) viewportReset.push('und');
+      else viewportReset.push(m);
+    });
+
     const short = true;
     console.log(
       `Rendering Xulsword ${JSON.stringify({
@@ -549,7 +559,7 @@ export default class Xulsword extends React.Component {
 
         <Hbox flex="1">
           <Viewport
-            key={[vpreset, showChooser, ...panels].join('.')}
+            key={viewportReset.join('.')}
             id="main-viewport"
             parentHandler={viewportParentHandler}
             book={book}
