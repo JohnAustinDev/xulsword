@@ -26,8 +26,8 @@ const validChannels = [
   'close', // from main upon window close
   'resize', // from main upon window resize
   'update-state-from-pref', // from main when state-prefs should be updated
-  'component-reset', // from main when top react components should be remounted
-  'module-reset', // from main when module contents may have changed
+  'component-reset', // from main when window top react components should be remounted
+  'module-reset', // from main when modules or module contents may have changed
 ];
 
 const listeners = [];
@@ -61,6 +61,7 @@ contextBridge.exposeInMainWorld('ipc', {
       }
       throw Error(`ipc sendSync bad channel: ${channel}`);
     },
+
     // Add listener func to be called after events from a channel of ipcMain
     on(channel, func) {
       if (validChannels.includes(channel)) {
@@ -73,6 +74,16 @@ contextBridge.exposeInMainWorld('ipc', {
       throw Error(`ipc on bad channel: ${channel}`);
     },
 
+    // Remove the listener at the index returned by 'on' above. NOTE: listener
+    // functions themselves cannot be passed back and forth for this purpose,
+    // because they lose their identities when crossing the ipc boundary.
+    removeListener(channel, listenerIndex) {
+      if (validChannels.includes(channel)) {
+        ipcRenderer.removeListener(channel, listeners[listenerIndex]);
+        listeners[listenerIndex] = null;
+      } else throw Error(`ipc removeListener bad channel: ${channel}`);
+    },
+
     // One time listener func to be called after next event from a channel of
     // ipcMain.
     once(channel, func) {
@@ -81,12 +92,6 @@ contextBridge.exposeInMainWorld('ipc', {
         const strippedfunc = (event, ...args) => func(...args);
         ipcRenderer.once(channel, strippedfunc);
       } else throw Error(`ipc once bad channel: ${channel}`);
-    },
-
-    removeListener(channel, listenerIndex) {
-      if (validChannels.includes(channel)) {
-        ipcRenderer.removeListener(channel, listeners[listenerIndex]);
-      } else throw Error(`ipc removeListener bad channel: ${channel}`);
     },
   },
 });

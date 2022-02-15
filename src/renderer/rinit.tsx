@@ -10,7 +10,7 @@ import G from './rg';
 import { jsdump } from './rutil';
 import { delayHandler } from './libxul/xul';
 
-// Add window type and language classes to the root html element.
+// Set window type and language classes of the root html element.
 i18n.on('initialized', (options) => {
   let className = 'unknown';
   const path = window?.location?.pathname;
@@ -66,13 +66,12 @@ async function i18nInit(namespaces: string[]) {
 
   await i18n
     .use(rendererBackend)
-    // pass the i18n instance to react-i18next.
     .use(initReactI18next)
-    // init i18next
-    // for all options read: https://www.i18next.com/overview/configuration-options
     .init({
       lng: lang,
-      fallbackLng: 'en',
+      fallbackLng: isDevelopment
+        ? 'cimode'
+        : C.FallbackLanguage[lang] || ['en'],
       supportedLngs: supportedLangs,
 
       ns: namespaces.concat(['common/books', 'common/numbers']),
@@ -118,10 +117,15 @@ export default function renderToRoot(
       const index = window.ipc.renderer.on('component-reset', () => {
         const lng = G.Prefs.getCharPref(C.LOCALEPREF);
         if (i18n.language !== lng) {
-          i18n.changeLanguage(lng, (err: any) => {
-            if (err) throw Error(err);
-            setReset(reset + 1);
-          });
+          i18n
+            .loadLanguages(lng)
+            .then(() => i18n.changeLanguage(lng))
+            .then(() => {
+              return setReset(reset + 1);
+            })
+            .catch((err: any) => {
+              throw Error(err);
+            });
         } else {
           G.reset();
           setReset(reset + 1);

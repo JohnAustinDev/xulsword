@@ -24,6 +24,23 @@ const C = {
   NOMODULES: 'No Modules',
   CONFSEP: '<nx>',
 
+  FallbackLanguage: {
+    en: 'en',
+    ru: 'en',
+    'crh-Cyrl': 'ru',
+    fa: 'ru',
+    kk: 'ru',
+    ko: 'en',
+    kum: 'ru',
+    'ky-Arab': 'ru',
+    'ky-Cyrl': 'ru',
+    'ru-CA': 'ru',
+    'tk-Latn': 'ru',
+    'tt-Cyrl': 'ru',
+    'uz-Cyrl': 'ru',
+    'uz-Latn': 'ru',
+  } as { [i: string]: string },
+
   // SupportedV11ns are the versification systems supported by libxulsword's
   // current SWORD engine. TODO: Read these from the SWORD engine.
   SupportedV11ns: [
@@ -208,6 +225,7 @@ const C = {
     },
     Xulsword: {
       maxHistoryMenuLength: 20,
+      historyDelay: 1000, // ms before new location is saved
     },
     Viewport: {
       minPanelWidth: 200, // px

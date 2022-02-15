@@ -6,7 +6,7 @@ import C from '../constant';
 import { deepClone } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
-import Cache from './modules/cache';
+import Cache from '../cache';
 import nsILocalFile from './components/nsILocalFile';
 import LibSword from './modules/libsword';
 import { jsdump } from './mutil';

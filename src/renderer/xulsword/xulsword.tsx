@@ -18,9 +18,11 @@ import {
   getStatePref,
   setPrefFromState,
   convertLocation,
+  clearPending,
 } from '../rutil';
 import {
   addClass,
+  delayHandler,
   topHandle,
   xulDefaultProps,
   XulProps,
@@ -86,6 +88,10 @@ export default class Xulsword extends React.Component {
 
   historyTO: NodeJS.Timeout | undefined;
 
+  dictkeydownTO: NodeJS.Timeout | undefined;
+
+  wheelScrollTO: NodeJS.Timeout | undefined;
+
   mouseWheel: MouseWheel;
 
   lastStatePref: { [i: string]: any };
@@ -132,6 +138,7 @@ export default class Xulsword extends React.Component {
   }
 
   componentWillUnmount() {
+    clearPending(this, ['historyTO', 'dictkeydownTO', 'wheelScrollTO']);
     this.listener.forEach((entry) => {
       const [channel, listener] = entry;
       window.ipc.renderer.removeListener(channel, listener);
@@ -320,10 +327,13 @@ export default class Xulsword extends React.Component {
 
     // Add page to history after a short delay
     if (windowV11n) {
-      if (this.historyTO) clearTimeout(this.historyTO);
-      this.historyTO = setTimeout(() => {
-        return this.addHistory();
-      }, 1000);
+      delayHandler.bind(this)(
+        () => {
+          this.addHistory();
+        },
+        C.UI.Xulsword.historyDelay,
+        'historyTO'
+      )();
     }
 
     // Book options for Bookselect dropdown
@@ -573,5 +583,5 @@ renderToRoot(<Xulsword id="xulsword" pack="start" height="100%" />, () => {
   jsdump('Loading Xulsword!');
   setTimeout(() => {
     window.ipc.renderer.send('window', 'move-to-back');
-  }, 100);
+  }, 1);
 });

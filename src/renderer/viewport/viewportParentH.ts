@@ -418,26 +418,33 @@ export default function handler(
       const targ = ofClass(['dictkeyinput'], target);
       if (targ && panel) {
         e.stopPropagation();
-        delayHandler.bind(this)((select: HTMLSelectElement, mod: string) => {
-          const { value } = select;
-          select.style.color = '';
-          if (value && TextCache.dict.keyList) {
-            const re = new RegExp(`(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`, 'i');
-            const firstMatch = `${TextCache.dict.keyList[mod].join(
-              '<nx>'
-            )}<nx>`.match(re);
-            if (firstMatch) {
-              this.setState((prevState: XulswordStatePref) => {
-                const { keys } = prevState;
-                [, , keys[index]] = firstMatch;
-                return { keys };
-              });
-            } else if (e.key !== 'backspace') {
-              G.Shell.beep();
-              select.style.color = 'red';
+        delayHandler.bind(this)(
+          (select: HTMLSelectElement, mod: string) => {
+            const { value } = select;
+            select.style.color = '';
+            if (value && TextCache.dict.keyList) {
+              const re = new RegExp(
+                `(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`,
+                'i'
+              );
+              const firstMatch = `${TextCache.dict.keyList[mod].join(
+                '<nx>'
+              )}<nx>`.match(re);
+              if (firstMatch) {
+                this.setState((prevState: XulswordStatePref) => {
+                  const { keys } = prevState;
+                  [, , keys[index]] = firstMatch;
+                  return { keys };
+                });
+              } else if (e.key !== 'backspace') {
+                G.Shell.beep();
+                select.style.color = 'red';
+              }
             }
-          }
-        }, C.UI.Atext.dictKeyInputDelay)(targ.element, panel);
+          },
+          C.UI.Atext.dictKeyInputDelay,
+          'dictkeydownTO'
+        )(targ.element, panel);
       }
       break;
     }
@@ -455,10 +462,13 @@ export default function handler(
         const m = t.mouseWheel as MouseWheel;
         m.atext = atext;
         m.count += Math.round(e.deltaY / 80);
-        if (m.TO) window.clearTimeout(m.TO);
-        m.TO = window.setTimeout(() => {
-          aTextWheelScroll(t);
-        }, C.UI.Atext.wheelScrollDelay);
+        delayHandler.bind(this)(
+          (ths) => {
+            return aTextWheelScroll(ths);
+          },
+          C.UI.Atext.wheelScrollDelay,
+          'wheelScrollTO'
+        )(t);
       }
       break;
     }

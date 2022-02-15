@@ -6,6 +6,7 @@ import { cleanDoubleClickSelection, getCSS, ofClass } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { scrollIntoView } from '../rutil';
+import { delayHandler } from '../libxul/xul';
 import { textChange, aTextWheelScroll } from './zversekey';
 
 import type Atext from './atext';
@@ -285,10 +286,13 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           const { mouseWheel: m } = this;
           m.atext = atext;
           m.count += Math.round(e.deltaY / 80);
-          if (m.TO) window.clearTimeout(m.TO);
-          m.TO = window.setTimeout(() => {
-            aTextWheelScroll(this);
-          }, C.UI.Atext.wheelScrollDelay);
+          delayHandler.bind(this)(
+            (t) => {
+              aTextWheelScroll(t);
+            },
+            C.UI.Atext.wheelScrollDelay,
+            'wheelScrollTO'
+          )(this);
         }
       }
       break;

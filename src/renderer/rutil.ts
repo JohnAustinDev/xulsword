@@ -46,6 +46,24 @@ export function libswordImgSrc(container: HTMLElement) {
   });
 }
 
+export function clearPending(
+  obj: any,
+  name: string[] | string,
+  isInterval = false
+) {
+  const names = Array.isArray(name) ? name : [name];
+  names.forEach((n) => {
+    if (n in obj) {
+      const cl = obj[n];
+      if (cl) {
+        if (isInterval) clearInterval(cl);
+        else clearTimeout(cl);
+        obj[n] = undefined;
+      }
+    }
+  });
+}
+
 // Javascript's scrollIntoView() also scrolls ancestors in ugly
 // ways. So this util sets scrollTop of all ancestors greater than
 // ancestor away, to zero. At this time (Jan 2022) Electron (Chrome)
@@ -868,10 +886,15 @@ export function onSetWindowState(component: React.Component) {
       const state = getStatePref(id, prefs);
       const lng = G.Prefs.getCharPref(C.LOCALEPREF);
       if (lng !== i18next.language) {
-        i18next.changeLanguage(lng, (err) => {
-          if (err) throw Error(err);
-          component.setState(state);
-        });
+        i18next
+          .loadLanguages(lng)
+          .then(() => i18next.changeLanguage(lng))
+          .then(() => {
+            return component.setState(state);
+          })
+          .catch((err) => {
+            throw Error(err);
+          });
       } else {
         component.setState(state);
       }

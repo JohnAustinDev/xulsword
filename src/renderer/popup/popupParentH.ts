@@ -5,6 +5,7 @@ import { JSON_stringify, ofClass } from '../../common';
 import { getPopupInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { getContextModule } from '../rutil';
+import { delayHandler } from '../libxul/xul';
 
 import type { ElemInfo } from '../../libswordElemInfo';
 import type { PlaceType, ShowType } from '../../type';
@@ -99,22 +100,22 @@ export function popupParentHandler(
           break;
         default:
       }
-      if (openPopup && !popupParent && this.popupDelayTO !== null) {
-        if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
-        this.popupDelayTO = setTimeout(
-          () => {
+      if (openPopup && !popupParent) {
+        delayHandler.bind(this)(
+          (el: HTMLElement, ifo: ElemInfo, gp: number) => {
             const s: Partial<PopupParentState> = {
-              elemhtml: [elem.outerHTML],
-              eleminfo: [info || ({} as ElemInfo)],
-              gap,
-              popupParent: elem,
+              elemhtml: [el.outerHTML],
+              eleminfo: [ifo || ({} as ElemInfo)],
+              gap: gp,
+              popupParent: el,
             };
             this.setState(s);
           },
           targ.type === 'sn'
             ? C.UI.Popup.strongsOpenDelay
-            : C.UI.Popup.openDelay
-        );
+            : C.UI.Popup.openDelay,
+          'popupDelayTO'
+        )(elem, info, gap);
       }
       break;
     }
@@ -125,13 +126,18 @@ export function popupParentHandler(
     }
 
     case 'wheel': {
-      // block popup for a short time when mouse-wheel is turned
-      if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
-      this.popupDelayTO = null; // block popup
-      if (this.popupUnblockTO) clearTimeout(this.popupUnblockTO);
-      this.popupUnblockTO = setTimeout(() => {
-        this.popupDelayTO = undefined; // unblock popup
-      }, C.UI.Popup.wheelDeadTime);
+      if ('popupDelayTO' in this) {
+        // block popup for a short time when mouse-wheel is turned
+        if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
+        this.popupDelayTO = null; // blocks the popup
+        delayHandler.bind(this)(
+          (t) => {
+            t.popupDelayTO = undefined; // unblocks the popup
+          },
+          C.UI.Popup.wheelDeadTime,
+          'popupUnblockTO'
+        )(this);
+      }
       break;
     }
 

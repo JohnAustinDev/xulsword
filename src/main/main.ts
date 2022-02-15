@@ -205,11 +205,12 @@ const start = async () => {
   ];
 
   // Initialize i18n
+  const lng: string = G.Prefs.getCharPref(C.LOCALEPREF);
   await i18n
     .use(i18nBackendMain)
     .init({
-      lng: G.Prefs.getCharPref(C.LOCALEPREF),
-      fallbackLng: 'en',
+      lng,
+      fallbackLng: isDevelopment ? 'cimode' : C.FallbackLanguage[lng] || ['en'],
       supportedLngs: supportedLangs,
 
       ns: ['xulsword', 'common/config', 'common/books', 'common/numbers'],

@@ -247,7 +247,7 @@ export function delayHandler(
   this: any,
   handler: (...args: any) => void | undefined,
   ms: number | string,
-  nameTO = 'delayHandlerTO'
+  nameTO: string
 ) {
   return (...args: any[]) => {
     clearTimeout(this[nameTO]);

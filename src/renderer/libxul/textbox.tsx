@@ -4,6 +4,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { clearPending } from '../rutil';
 import Tooltip from './tooltip';
 import {
   delayHandler,
@@ -92,6 +93,8 @@ class Textbox extends React.Component {
     };
   }
 
+  changeTO: NodeJS.Timeout | undefined;
+
   constructor(props: TextboxProps) {
     super(props);
     this.state = {
@@ -101,6 +104,10 @@ class Textbox extends React.Component {
     };
 
     this.handleChange = this.handleChange.bind(this);
+  }
+
+  componentWillUnmount() {
+    clearPending(this, 'changeTO');
   }
 
   handleChange(e: TBevent) {
@@ -116,7 +123,7 @@ class Textbox extends React.Component {
     ) {
       this.setState({ value: e.target.value });
       if (timeout && typeof onChange === 'function') {
-        delayHandler.bind(this)((evt) => onChange(evt), timeout)(e);
+        delayHandler.bind(this)((evt) => onChange(evt), timeout, 'changeTO')(e);
         e.stopPropagation();
       }
     } else {

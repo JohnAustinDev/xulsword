@@ -5,6 +5,7 @@ import C from '../../constant';
 import G from '../rg';
 import { delayHandler } from '../libxul/xul';
 
+import type { BookGroupType } from '../../type';
 import type Chooser from './chooser';
 import type { ChooserProps, ChooserState } from './chooser';
 
@@ -26,7 +27,7 @@ export default function handler(this: Chooser, es: React.SyntheticEvent): void {
       if (!targ) return;
       const { bookGroups, headingsModule } = this.props as ChooserProps;
       const state = this.state as ChooserState;
-      const { bookgroup } = target.dataset;
+      const bookgroup = target.dataset.bookgroup as BookGroupType;
       switch (targ.type) {
         case 'bookgroup': {
           if (

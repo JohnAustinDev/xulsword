@@ -3,6 +3,7 @@
 import i18next from 'i18next';
 import C from './constant';
 import type { GType } from './type';
+import Cache from './cache';
 
 export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -178,67 +179,53 @@ export function isASCII(text: string) {
   return !notASCII;
 }
 
-// getDataUI(name) = t(name)
-// getLocale() = i18next.language || G.Prefs.getCharPref(C.LOCALEPREF)
-// getLocaleBundle() = i18next.getFixedT()
-
 // converts any normal digits in a string or number into localized digits
-const LocaleNumerals: { [i: string]: any } = {};
-function getDisplayNumerals(locale: string) {
-  LocaleNumerals[locale] = new Array(11);
-  LocaleNumerals[locale][10] = false;
-
-  const toptions = { lng: locale, ns: 'common/numbers' };
-  for (let i = 0; i <= 9; i += 1) {
-    const key = `n${String(i)}`;
-    const n = i18next.t(key, toptions);
-    if (n) LocaleNumerals[locale][10] = true;
-    LocaleNumerals[locale][i] = n || i;
+function getLocalizedNumerals(locale: string): string[] | null {
+  if (!Cache.has(`locnums${locale}`)) {
+    let l = null;
+    const toptions = { lng: locale, ns: 'common/numbers' };
+    for (let i = 0; i <= 9; i += 1) {
+      const key = `n${i}`;
+      if (
+        i18next.exists(key, toptions) &&
+        !/^\s*$/.test(i18next.t(key, toptions))
+      ) {
+        if (l === null) {
+          l = [];
+          for (let x = 0; x <= 9; x += 1) {
+            l.push(x.toString());
+          }
+        }
+        l[i] = i18next.t(key, toptions);
+      }
+    }
+    Cache.write(`locnums${locale}`, l);
   }
+  return Cache.read(`locnums${locale}`);
 }
-export function dString(x: string | number, locale?: string) {
+
+export function dString(string: string | number, locale?: string) {
   const loc = locale || i18next.language;
-
-  if (!(loc in LocaleNumerals)) getDisplayNumerals(loc);
-  const l = LocaleNumerals[loc];
-
-  let s = String(x);
-  if (!l[10]) return s; // then no numbers are localized
-
-  s = s.replace(/0/g, l[0]);
-  s = s.replace(/1/g, l[1]);
-  s = s.replace(/2/g, l[2]);
-  s = s.replace(/3/g, l[3]);
-  s = s.replace(/4/g, l[4]);
-  s = s.replace(/5/g, l[5]);
-  s = s.replace(/6/g, l[6]);
-  s = s.replace(/7/g, l[7]);
-  s = s.replace(/8/g, l[8]);
-  s = s.replace(/9/g, l[9]);
-
+  const l = getLocalizedNumerals(loc);
+  let s = string.toString();
+  if (l !== null) {
+    for (let i = 0; i <= 9; i += 1) {
+      s = s.replaceAll(i.toString(), l[i]);
+    }
+  }
   return s;
 }
-// converts any localized digits in a string into normal digits
-export function iString(x: number | string, locale: string) {
+
+// converts any localized digits in a string into ASCII digits
+export function iString(locstring: string | number, locale?: string) {
   const loc = locale || i18next.language;
-
-  if (!(loc in LocaleNumerals)) getDisplayNumerals(loc);
-  const l = LocaleNumerals[loc];
-
-  let s = String(x);
-  if (!l[10]) return s; // then no numbers are localized
-
-  s = s.replace(new RegExp(escapeRE(l[0]), 'g'), '0');
-  s = s.replace(new RegExp(escapeRE(l[1]), 'g'), '1');
-  s = s.replace(new RegExp(escapeRE(l[2]), 'g'), '2');
-  s = s.replace(new RegExp(escapeRE(l[3]), 'g'), '3');
-  s = s.replace(new RegExp(escapeRE(l[4]), 'g'), '4');
-  s = s.replace(new RegExp(escapeRE(l[5]), 'g'), '5');
-  s = s.replace(new RegExp(escapeRE(l[6]), 'g'), '6');
-  s = s.replace(new RegExp(escapeRE(l[7]), 'g'), '7');
-  s = s.replace(new RegExp(escapeRE(l[8]), 'g'), '8');
-  s = s.replace(new RegExp(escapeRE(l[9]), 'g'), '9');
-
+  const l = getLocalizedNumerals(loc);
+  let s = locstring.toString();
+  if (l !== null) {
+    for (let i = 0; i <= 9; i += 1) {
+      s = s.replaceAll(l[i], i.toString());
+    }
+  }
   return s;
 }
 

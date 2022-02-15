@@ -8,7 +8,12 @@ import React from 'react';
 import { JSON_parse } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
-import { getStatePref, onSetWindowState, setPrefFromState } from '../rutil';
+import {
+  clearPending,
+  getStatePref,
+  onSetWindowState,
+  setPrefFromState,
+} from '../rutil';
 import {
   topHandle,
   xulDefaultProps,
@@ -56,6 +61,10 @@ export default class ViewportWin extends React.Component {
 
   viewportParentHandler: any;
 
+  dictkeydownTO: NodeJS.Timeout | undefined;
+
+  wheelScrollTO: NodeJS.Timeout | undefined;
+
   mouseWheel: MouseWheel;
 
   lastSavedPref: { [i: string]: any };
@@ -94,6 +103,7 @@ export default class ViewportWin extends React.Component {
   }
 
   componentWillUnmount() {
+    clearPending(this, ['dictkeydownTO', 'wheelScrollTO']);
     this.listener.forEach((entry) => {
       const [channel, listener] = entry;
       window.ipc.renderer.removeListener(channel, listener);

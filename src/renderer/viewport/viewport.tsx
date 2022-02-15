@@ -20,7 +20,7 @@ import {
   PopupParentProps,
 } from '../popup/popupParentH';
 import G from '../rg';
-import { convertLocation, jsdump } from '../rutil';
+import { clearPending, convertLocation, jsdump } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -127,6 +127,10 @@ class Viewport extends React.Component implements PopupParent {
 
     this.popupParentHandler = popupParentHandlerH.bind(this);
     this.popupHandler = popupHandlerH.bind(this);
+  }
+
+  componentWillUnmount() {
+    clearPending(this, ['popupDelayTO', 'popupUnblockTO']);
   }
 
   render() {

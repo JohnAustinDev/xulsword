@@ -11,7 +11,7 @@ import { isASCII, JSON_parse, ref2DotString } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
-import Cache from './modules/cache';
+import Cache from '../cache';
 import nsILocalFile from './components/nsILocalFile';
 import { jsdump } from './mutil';
 
@@ -430,10 +430,17 @@ export function setGlobalStateFromPref(
 ) {
   const lng = Prefs.getCharPref(C.LOCALEPREF);
   if (lng !== i18next.language) {
-    i18next.changeLanguage(lng, (err: any) => {
-      if (err) throw Error(err);
-      globalReset();
-    });
+    i18next
+      .loadLanguages(lng)
+      .then(() => i18next.changeLanguage(lng))
+      .then(() => {
+        // this does component-reset which updates state from pref
+        globalReset();
+        return true;
+      })
+      .catch((err: any) => {
+        if (err) throw Error(err);
+      });
   } else {
     BrowserWindow.getAllWindows().forEach((w) => {
       if (!win || w !== win)

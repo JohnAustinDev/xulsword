@@ -18,6 +18,7 @@ import {
 } from '../../common';
 import G from '../rg';
 import {
+  clearPending,
   convertLocation,
   getMaxChapter,
   libswordImgSrc,
@@ -145,6 +146,8 @@ class Atext extends React.Component {
 
   handler: (e: React.SyntheticEvent) => void;
 
+  wheelScrollTO: NodeJS.Timeout | undefined;
+
   mouseWheel: MouseWheel;
 
   sbref: React.RefObject<HTMLDivElement>;
@@ -177,6 +180,10 @@ class Atext extends React.Component {
 
   componentDidUpdate() {
     this.onUpdate();
+  }
+
+  componentWillUnmount() {
+    clearPending(this, 'wheelScrollTO');
   }
 
   // The render() function of the Atext component does not render the

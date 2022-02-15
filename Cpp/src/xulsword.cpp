@@ -523,7 +523,7 @@ xulsword::xulsword(char *path, char *(*toUpperCase)(char *), void (*throwJS)(con
     MySWLogXS = new SWLogXS();
     SWLog::setSystemLog(MySWLogXS);
   }
-  SWLog::getSystemLog()->setLogLevel(5); // set SWORD log reporting... 5 is all stuff
+  SWLog::getSystemLog()->setLogLevel(4); // set SWORD log reporting... 5 is all stuff
   SWLog::getSystemLog()->logDebug("XULSWORD CONSTRUCTOR");
 
   ToUpperCase = toUpperCase;

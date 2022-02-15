@@ -13,7 +13,7 @@ import PropTypes from 'prop-types';
 import { dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
-import { getMaxChapter } from '../rutil';
+import { clearPending, getMaxChapter } from '../rutil';
 import { Hbox, Vbox } from '../libxul/boxes';
 import {
   xulDefaultProps,
@@ -153,6 +153,11 @@ class Chooser extends React.Component {
       };
       this.rowHeight = row.clientHeight - 2;
     }
+  }
+
+  componentWillUnmount() {
+    clearPending(this, ['bookgroupTO', 'headingmenuTO']);
+    clearPending(this, 'slideInterval', true);
   }
 
   maxScrollIndex(): number {
