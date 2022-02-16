@@ -1,23 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// Cache data with a string key
+// Cache any data according to string keys.
 const Cache = {
   storage: {} as { [i: string]: any },
 
-  has(name: string) {
-    return name in this.storage;
+  has(...args: string[]) {
+    return args.join('+') in this.storage;
   },
 
-  read(name: string) {
-    return this.storage[name];
+  read(...args: string[]) {
+    return this.storage[args.join('+')];
   },
 
-  write(name: string, value: any) {
+  write(value: any, ...args: string[]) {
+    const name = args.join('+');
     if (name in this.storage) throw Error(`Cache already exists: '${name}'`);
     this.storage[name] = value;
   },
 
-  clear(name?: string) {
+  clear(...args: string[]) {
+    const name = args.length ? args.join('+') : '';
     if (!name) this.storage = {};
     else if (name in this.storage) {
       delete this.storage[name];

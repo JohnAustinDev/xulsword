@@ -29,32 +29,6 @@ import type Atext from './atext';
 import type { AtextProps, AtextState } from './atext';
 import type ViewportWin from './viewportWin';
 
-function ascendingVerse(a: HTMLElement, b: HTMLElement) {
-  const t1 = 'un';
-  const t2 = 'fn';
-  const t3 = 'cr';
-
-  const pa = getElementInfo(a);
-  const pb = getElementInfo(b);
-
-  if (pa === null) return 1;
-  if (pb === null) return -1;
-
-  if (pa.ch === pb.ch) {
-    if (pa.vs === pb.vs) {
-      if (pa.ntype === pb.ntype) return 0;
-      if (pa.ntype === t1) return -1;
-      if (pa.ntype === t2 && pb.ntype === t3) return -1;
-      return 1;
-    }
-    return (pa.vs || 0) > (pb.vs || 0) ? 1 : -1;
-  }
-
-  if ((pa.ch || 0) < (pb.ch || 0)) return -1;
-
-  return 1;
-}
-
 // Looks for a "." delineated OSIS Scripture reference, checks, and normalizes it.
 // Reads any osisRef target:ref and returns mod=null if it's not installed.
 // Returns null if this is not an OSIS type reference.
@@ -393,10 +367,10 @@ function getRefHTML(
   return html;
 }
 
-// The 'notes' argument is an element or HTML containing one or more nlist
-// notes. An nlist note element contains a single verse-key textual note.
+// The 'notes' argument is an HTML string containing one or more nlist
+// notes. An nlist note contains a single verse-key textual note.
 export function getNoteHTML(
-  notes: string | HTMLElement,
+  notes: string,
   mod: string,
   show:
     | {
@@ -412,99 +386,103 @@ export function getNoteHTML(
 
   const w = wx || 0; // w is only needed for unique id creation
 
-  let noteContainer: HTMLElement;
-  if (typeof notes === 'string') {
-    noteContainer = document.createElement('div');
-    sanitizeHTML(noteContainer, notes);
-  } else {
-    noteContainer = document.createElement('div');
-    noteContainer.appendChild(notes);
-  }
-
-  let note: any[] = [];
-  const nodelist = noteContainer.getElementsByClassName('nlist');
-  for (let n = 0; n < nodelist.length; n += 1) {
-    note.push(nodelist[n]);
-  }
-  note = note.sort(ascendingVerse);
+  let note = notes.split(/(?=<div[^>]+class="nlist")/);
+  note = note.sort((a: string, b: string) => {
+    const t1 = 'un';
+    const t2 = 'fn';
+    const t3 = 'cr';
+    const pa = getElementInfo(a);
+    const pb = getElementInfo(b);
+    if (pa === null) return 1;
+    if (pb === null) return -1;
+    if (pa.ch === pb.ch) {
+      if (pa.vs === pb.vs) {
+        if (pa.ntype === pb.ntype) return 0;
+        if (pa.ntype === t1) return -1;
+        if (pa.ntype === t2 && pb.ntype === t3) return -1;
+        return 1;
+      }
+      return (pa.vs || 0) > (pb.vs || 0) ? 1 : -1;
+    }
+    if ((pa.ch || 0) < (pb.ch || 0)) return -1;
+    return 1;
+  });
 
   // Start building our html
   let t = '';
 
-  if (note) {
-    // Now parse each note in the chapter separately
-    for (let n = 0; n < note.length; n += 1) {
-      const p = getElementInfo(note[n]);
-      if (p && (!keepOnlyNote || p.title === keepOnlyNote)) {
-        let body = note[n].innerHTML;
+  note.forEach((anote) => {
+    const p = getElementInfo(anote);
+    if (p && (!keepOnlyNote || p.title === keepOnlyNote)) {
+      const body = anote.replace(/(^<div[^>]+>|<\/div>$)/g, '');
 
-        // Check if this note should be displayed, and if not then skip it
-        const notetypes = { fn: 'footnotes', cr: 'crossrefs', un: 'usernotes' };
-        Object.entries(notetypes).forEach((entry) => {
-          const [ntype, tx] = entry;
-          const type = tx as keyof ShowType;
-          if (p.ntype === ntype && show && !show[type]) p.ntype = null;
-        });
-        if (p.ntype) {
-          // Display this note as a row in the main table
-          t += `<div id="w${w}.footnote.${p.title}" `;
-          t += `data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}" `;
-          t += `class="fnrow ${openCRs ? 'cropened' : ''}">`;
+      // Check if this note should be displayed, and if not then skip it
+      const notetypes = { fn: 'footnotes', cr: 'crossrefs', un: 'usernotes' };
+      Object.entries(notetypes).forEach((entry) => {
+        const [ntype, tx] = entry;
+        const type = tx as keyof ShowType;
+        if (p.ntype === ntype && show && !show[type]) p.ntype = null;
+      });
+      if (p.ntype) {
+        // Display this note as a row in the main table
+        t += `<div id="w${w}.footnote.${p.title}" `;
+        t += `data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}" `;
+        t += `class="fnrow ${openCRs ? 'cropened' : ''}">`;
 
-          // Write cell #1: an expander link for cross references only
-          t += '<div class="fncol1">';
-          if (p.ntype === 'cr') {
-            t += '<div class="crtwisty"></div>';
-          }
-          t += '</div>';
+        // Write cell #1: an expander link for cross references only
+        t += '<div class="fncol1">';
+        if (p.ntype === 'cr') {
+          t += '<div class="crtwisty"></div>';
+        }
+        t += '</div>';
 
-          // These are the lines for showing expanded verse refs
-          t += '<div class="fncol2"><div class="fndash"></div></div>';
-          t += '<div class="fncol3">&nbsp;</div>';
+        // These are the lines for showing expanded verse refs
+        t += '<div class="fncol2"><div class="fndash"></div></div>';
+        t += '<div class="fncol3">&nbsp;</div>';
 
-          // Write cell #4: chapter and verse
-          let lov = G.ModuleConfigs[mod].AssociatedLocale;
-          if (lov === C.NOTFOUND) lov = i18next.language;
-          const modDirectionEntity =
-            G.ModuleConfigs[mod] && G.ModuleConfigs[mod].direction === 'rtl'
-              ? '&rlm;'
-              : '&lrm;';
-          t += '<div class="fncol4">';
-          if (p.ch && p.vs) {
-            t += `<a class="fnlink" data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}">`;
-            t += `<i>${dString(p.ch, lov)}:${modDirectionEntity}${dString(
-              p.vs,
-              lov
-            )}</i>`;
-            t += '</a>';
-            t += ' -';
-          }
-          t += '</div>';
+        // Write cell #4: chapter and verse
+        let lov = G.ModuleConfigs[mod].AssociatedLocale;
+        if (lov === C.NOTFOUND) lov = i18next.language;
+        const modDirectionEntity =
+          G.ModuleConfigs[mod] && G.ModuleConfigs[mod].direction === 'rtl'
+            ? '&rlm;'
+            : '&lrm;';
+        t += '<div class="fncol4">';
+        if (p.ch && p.vs) {
+          t += `<a class="fnlink" data-title="${p.nid}.${p.bk}.${p.ch}.${p.vs}.${p.mod}">`;
+          t += `<i>${dString(p.ch, lov)}:${modDirectionEntity}${dString(
+            p.vs,
+            lov
+          )}</i>`;
+          t += '</a>';
+          t += ' -';
+        }
+        t += '</div>';
 
-          // Write cell #5: note body
-          t += '<div class="fncol5">';
+        // Write cell #5: note body
+        t += '<div class="fncol5">';
 
-          switch (p.ntype) {
-            case 'cr':
-              // If this is a cross reference, then parse the note body for references and display them
-              t += getRefHTML(w, mod, body, keepTextNotes);
-              break;
+        switch (p.ntype) {
+          case 'cr':
+            // If this is a cross reference, then parse the note body for references and display them
+            t += getRefHTML(w, mod, body, keepTextNotes);
+            break;
 
-            case 'fn':
-              // If this is a footnote, then just write the body
-              t += `<span class="fntext cs-${
-                isASCII(body) ? C.DEFAULTLOCALE : mod
-              }${
-                G.ModuleConfigs[mod].direction !== G.ProgramConfig.direction
-                  ? ' opposing-program-direction'
-                  : ''
-              }">${body}</span>`;
-              break;
+          case 'fn':
+            // If this is a footnote, then just write the body
+            t += `<span class="fntext cs-${
+              isASCII(body) ? C.DEFAULTLOCALE : mod
+            }${
+              G.ModuleConfigs[mod].direction !== G.ProgramConfig.direction
+                ? ' opposing-program-direction'
+                : ''
+            }">${body}</span>`;
+            break;
 
-            case 'un': {
-              // If this is a usernote, then add direction entities and style
-              const unmod = null;
-              /*
+          case 'un': {
+            // If this is a usernote, then add direction entities and style
+            const unmod = null;
+            /*
               try {
                 unmod = BMDS.GetTarget(
                   BM.RDF.GetResource(decodeURIComponent(p.nid)),
@@ -516,26 +494,24 @@ export function getNoteHTML(
                 ).Value;
               } catch (er) {}
               */
-              const de =
-                unmod && G.ModuleConfigs[unmod]?.direction === 'rtl'
-                  ? '&rlm;'
-                  : '&lrm;';
-              body = `<span class="noteBoxUserNote${
-                unmod ? ` cs-${unmod}` : ''
-              }">${de}${body}${de}</span>`;
-              t += body;
-              break;
-            }
-            default:
+            const de =
+              unmod && G.ModuleConfigs[unmod]?.direction === 'rtl'
+                ? '&rlm;'
+                : '&lrm;';
+            t += `<span class="noteBoxUserNote${
+              unmod ? ` cs-${unmod}` : ''
+            }">${de}${body}${de}</span>`;
+            break;
           }
-
-          // Finish this body and this row
-          t += '</div>';
-          t += '</div>';
+          default:
         }
+
+        // Finish this body and this row
+        t += '</div>';
+        t += '</div>';
       }
     }
-  }
+  });
 
   return t;
 }

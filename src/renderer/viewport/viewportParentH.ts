@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
 import C from '../../constant';
+import Cache from '../../cache';
 import { decodeOSISRef, escapeRE, JSON_stringify, ofClass } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
@@ -13,7 +14,6 @@ import {
   scrollIntoView,
 } from '../rutil';
 import { delayHandler } from '../libxul/xul';
-import { TextCache } from './ztext';
 import { textChange, aTextWheelScroll } from './zversekey';
 
 import type { BookGroupType, XulswordStatePref } from '../../type';
@@ -422,12 +422,12 @@ export default function handler(
           (select: HTMLSelectElement, mod: string) => {
             const { value } = select;
             select.style.color = '';
-            if (value && TextCache.dict.keyList) {
+            if (value && Cache.has('keylist', mod)) {
               const re = new RegExp(
                 `(^|<nx>)(${escapeRE(value)}[^<]*)<nx>`,
                 'i'
               );
-              const firstMatch = `${TextCache.dict.keyList[mod].join(
+              const firstMatch = `${Cache.read('keylist', mod).join(
                 '<nx>'
               )}<nx>`.match(re);
               if (firstMatch) {

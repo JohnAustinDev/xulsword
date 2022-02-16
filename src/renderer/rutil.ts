@@ -900,8 +900,7 @@ export function onSetWindowState(component: React.Component) {
       }
     }
   };
-  const index = window.ipc.renderer.on('update-state-from-pref', listener);
-  return ['update-state-from-pref', index];
+  return window.ipc.renderer.on('update-state-from-pref', listener);
 }
 
 // Compare component state to lastStatePrefs and do nothing if they are the same.

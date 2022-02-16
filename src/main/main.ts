@@ -212,6 +212,7 @@ const start = async () => {
       lng,
       fallbackLng: isDevelopment ? 'cimode' : C.FallbackLanguage[lng] || ['en'],
       supportedLngs: supportedLangs,
+      preload: supportedLangs,
 
       ns: ['xulsword', 'common/config', 'common/books', 'common/numbers'],
       defaultNS: 'xulsword',

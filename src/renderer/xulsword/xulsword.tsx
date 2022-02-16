@@ -96,7 +96,7 @@ export default class Xulsword extends React.Component {
 
   lastStatePref: { [i: string]: any };
 
-  listener: any[][];
+  destroy: (() => void)[];
 
   constructor(props: XulswordProps) {
     super(props);
@@ -125,11 +125,11 @@ export default class Xulsword extends React.Component {
     this.lastStatePref = {};
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
 
-    this.listener = [];
+    this.destroy = [];
   }
 
   componentDidMount() {
-    this.listener.push(onSetWindowState(this));
+    this.destroy.push(onSetWindowState(this));
     updateVersification(this);
   }
 
@@ -139,10 +139,8 @@ export default class Xulsword extends React.Component {
 
   componentWillUnmount() {
     clearPending(this, ['historyTO', 'dictkeydownTO', 'wheelScrollTO']);
-    this.listener.forEach((entry) => {
-      const [channel, listener] = entry;
-      window.ipc.renderer.removeListener(channel, listener);
-    });
+    this.destroy.forEach((func) => func());
+    this.destroy = [];
   }
 
   // A history item has the type HistoryTypeVK and only a single

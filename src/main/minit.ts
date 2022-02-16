@@ -96,7 +96,7 @@ export function getBooks(): BookType[] {
       }
     });
 
-    Cache.write('books', books);
+    Cache.write(books, 'books');
   }
 
   return Cache.read('books');
@@ -108,7 +108,7 @@ export function getBook(): { [i: string]: BookType } {
     getBooks().forEach((bk: BookType) => {
       book[bk.code] = bk;
     });
-    Cache.write('book', book);
+    Cache.write(book, 'book');
   }
   return Cache.read('book');
 }
@@ -200,7 +200,7 @@ export function getTabs(): TabType[] {
 
       i += 1;
     });
-    Cache.write('tabs', tabs);
+    Cache.write(tabs, 'tabs');
   }
 
   return Cache.read('tabs');
@@ -213,7 +213,7 @@ export function getTab(): { [i: string]: TabType } {
     tabs.forEach((t) => {
       tab[t.module] = t;
     });
-    Cache.write('tab', tab);
+    Cache.write(tab, 'tab');
   }
   return Cache.read('tab');
 }
@@ -256,7 +256,7 @@ export function getBkChsInV11n() {
         }
       });
     });
-    Cache.write('bkChsInV11n', bkChsInV11n);
+    Cache.write(bkChsInV11n, 'bkChsInV11n');
   }
 
   return Cache.read('bkChsInV11n');
@@ -333,7 +333,7 @@ export function getBooksInModule(): { [i: string]: string[] } {
       if (!modules.includes(module)) delete prefmod[module];
     });
     Prefs.setComplexValue('global.modules', prefmod);
-    Cache.write('booksInMdule', availableBooks);
+    Cache.write(availableBooks, 'booksInMdule');
   }
 
   return Cache.read('booksInMdule');

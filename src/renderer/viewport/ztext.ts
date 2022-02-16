@@ -1,25 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PlaceType, SwordFilterType, SwordFilterValueType } from '../../type';
 import C from '../../constant';
+import Cache from '../../cache';
 import { dString, escapeRE, stringHash } from '../../common';
 import G from '../rg';
 import { getNoteHTML, getChapterHeading } from './zversekey';
 import { getDictEntryHTML, getDictSortedKeyList } from './zdictionary';
 
 import type { AtextProps, LibSwordResponse } from './atext';
-
-// TextCache is used rather than memoization when there is a strictly
-// limited number of cache possibliities (ie. one per module).
-type TextCacheType = {
-  dict: {
-    keyList: { [i: string]: string[] };
-    keyHTML: { [i: string]: string };
-  };
-};
-export const TextCache: TextCacheType = { dict: { keyList: {}, keyHTML: {} } };
-window.ipc.renderer.on('module-reset', () => {
-  TextCache.dict = { keyList: {}, keyHTML: {} };
-});
 
 export function addUserNotes(content: LibSwordResponse, props: AtextProps) {}
 
@@ -89,19 +77,22 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
     case C.DICTIONARY: {
       // For dictionaries, noteHTML is a key selector. Cache both
       // the keyList and the key selector for a big speedup.
-      if (!TextCache.dict.keyList || !(module in TextCache.dict.keyList)) {
-        let list = G.LibSword.getAllDictionaryKeys(module).split('<nx>');
+      // Cache is used rather than memoization when there is a strictly
+      // limited number of cache possibliities (ie. one per module).
+      if (!Cache.has('keylist', module)) {
+        let list: string[] =
+          G.LibSword.getAllDictionaryKeys(module).split('<nx>');
         list.pop();
         const sort = G.LibSword.getModuleInformation(module, 'KeySort');
         if (sort !== C.NOTFOUND) {
           list = getDictSortedKeyList(list, `${sort}0123456789`);
         }
-        TextCache.dict.keyList[module] = list;
+        Cache.write(list, 'keylist', module);
       }
 
       // Get the actual key.
       let key = modkey;
-      if (!key) [key] = TextCache.dict.keyList[module];
+      if (!key) [key] = Cache.read('keylist', module);
       if (key === 'DailyDevotionToday') {
         const today = new Date();
         const mo = today.getMonth() + 1;
@@ -110,21 +101,20 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
       }
 
       // Build and cache the selector list.
-      if (!TextCache.dict.keyHTML || !(module in TextCache.dict.keyHTML)) {
+      if (!Cache.has('keyHTML', module)) {
         let html = '';
-        TextCache.dict.keyList[module].forEach((k1: any) => {
+        Cache.read('keylist', module).forEach((k1: any) => {
           const id = `${stringHash(k1)}.0`;
           html += `<div id="${id}" class="dict-key">${k1}</div>`;
         });
-        TextCache.dict.keyHTML[module] = html;
+        Cache.write(html, 'keyHTML', module);
       }
 
       // Set the final results
       const de = getDictEntryHTML(key, module, true);
       r.textHTML += `<div class="dictentry">${de}</div>`;
-
       const sel = new RegExp(`(dict-key)(">${escapeRE(key)}<)`);
-      const list = TextCache.dict.keyHTML[module]
+      const list = Cache.read('keyHTML', module)
         .replace(sel, '$1 dictselectkey$2')
         .replace(/(?<=id="[^"]+\.)0(?=")/g, n.toString());
       r.noteHTML += `

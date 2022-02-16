@@ -73,6 +73,7 @@ async function i18nInit(namespaces: string[]) {
         ? 'cimode'
         : C.FallbackLanguage[lang] || ['en'],
       supportedLngs: supportedLangs,
+      preload: supportedLangs,
 
       ns: namespaces.concat(['common/books', 'common/numbers']),
 
@@ -114,7 +115,7 @@ export default function renderToRoot(
     const { children } = props;
     const [reset, setReset] = useState(0);
     useEffect(() => {
-      const index = window.ipc.renderer.on('component-reset', () => {
+      return window.ipc.renderer.on('component-reset', () => {
         const lng = G.Prefs.getCharPref(C.LOCALEPREF);
         if (i18n.language !== lng) {
           i18n
@@ -131,12 +132,9 @@ export default function renderToRoot(
           setReset(reset + 1);
         }
       });
-      return () => {
-        window.ipc.renderer.removeListener('component-reset', index);
-      };
     });
     useEffect(() => {
-      const index = window.ipc.renderer.on(
+      return window.ipc.renderer.on(
         'resize',
         delayHandler.bind(delayHandlerThis)(
           () => {
@@ -146,9 +144,6 @@ export default function renderToRoot(
           'resizeTO'
         )
       );
-      return () => {
-        window.ipc.renderer.removeListener('resize', index);
-      };
     });
     return <React.Fragment key={reset}>{children}</React.Fragment>;
   }

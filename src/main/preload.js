@@ -30,8 +30,6 @@ const validChannels = [
   'module-reset', // from main when modules or module contents may have changed
 ];
 
-const listeners = [];
-
 contextBridge.exposeInMainWorld('ipc', {
   renderer: {
     // Trigger a channel event which ipcMain is to listen for. If a single
@@ -67,21 +65,12 @@ contextBridge.exposeInMainWorld('ipc', {
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
         const strippedfunc = (event, ...args) => func(...args);
-        listeners.push(strippedfunc);
         ipcRenderer.on(channel, strippedfunc);
-        return listeners.length - 1;
+        return () => {
+          ipcRenderer.removeListener(channel, strippedfunc);
+        };
       }
       throw Error(`ipc on bad channel: ${channel}`);
-    },
-
-    // Remove the listener at the index returned by 'on' above. NOTE: listener
-    // functions themselves cannot be passed back and forth for this purpose,
-    // because they lose their identities when crossing the ipc boundary.
-    removeListener(channel, listenerIndex) {
-      if (validChannels.includes(channel)) {
-        ipcRenderer.removeListener(channel, listeners[listenerIndex]);
-        listeners[listenerIndex] = null;
-      } else throw Error(`ipc removeListener bad channel: ${channel}`);
     },
 
     // One time listener func to be called after next event from a channel of

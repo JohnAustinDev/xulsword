@@ -69,7 +69,7 @@ export default class ViewportWin extends React.Component {
 
   lastSavedPref: { [i: string]: any };
 
-  listener: any[][];
+  destroy: (() => void)[];
 
   constructor(props: ViewportWinProps) {
     super(props);
@@ -90,11 +90,11 @@ export default class ViewportWin extends React.Component {
     this.lastSavedPref = {};
     this.mouseWheel = { TO: 0, atext: null, count: 0 };
 
-    this.listener = [];
+    this.destroy = [];
   }
 
   componentDidMount() {
-    this.listener.push(onSetWindowState(this));
+    this.destroy.push(onSetWindowState(this));
     updateVersification(this);
   }
 
@@ -104,10 +104,8 @@ export default class ViewportWin extends React.Component {
 
   componentWillUnmount() {
     clearPending(this, ['dictkeydownTO', 'wheelScrollTO']);
-    this.listener.forEach((entry) => {
-      const [channel, listener] = entry;
-      window.ipc.renderer.removeListener(channel, listener);
-    });
+    this.destroy.forEach((func) => func());
+    this.destroy = [];
   }
 
   render() {

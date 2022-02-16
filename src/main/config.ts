@@ -123,7 +123,7 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
       const [lang] = l;
       ret[lang] = localeConfig(lang);
     });
-    Cache.write('localeConfigs', ret);
+    Cache.write(ret, 'localeConfigs');
   }
   return Cache.read('localeConfigs');
 }
@@ -187,7 +187,7 @@ export function getFontFaceConfigs(): ConfigType {
         if (url) ret[url.name] = url.url;
       });
     }
-    Cache.write('fontFaceConfigs', ret);
+    Cache.write(ret, 'fontFaceConfigs');
   }
 
   return Cache.read('fontFaceConfigs');
@@ -400,7 +400,7 @@ export function getModuleConfigs(): { [i: string]: ConfigType } {
         jsdump(`ERROR: Dropping module "${mod}". Unsupported type "${type}".`);
       }
     }
-    Cache.write('moduleConfigs', ret);
+    Cache.write(ret, 'moduleConfigs');
   }
 
   return Cache.read('moduleConfigs');
@@ -464,7 +464,7 @@ export function getFeatureModules() {
         });
       }
     });
-    Cache.write('featureModules', { ...sword, ...xulsword });
+    Cache.write({ ...sword, ...xulsword }, 'featureModules');
   }
 
   return Cache.read('featureModules');

@@ -181,7 +181,7 @@ export function isASCII(text: string) {
 
 // converts any normal digits in a string or number into localized digits
 function getLocalizedNumerals(locale: string): string[] | null {
-  if (!Cache.has(`locnums${locale}`)) {
+  if (!Cache.has('locnums', locale)) {
     let l = null;
     const toptions = { lng: locale, ns: 'common/numbers' };
     for (let i = 0; i <= 9; i += 1) {
@@ -199,9 +199,9 @@ function getLocalizedNumerals(locale: string): string[] | null {
         l[i] = i18next.t(key, toptions);
       }
     }
-    Cache.write(`locnums${locale}`, l);
+    Cache.write(l, 'locnums', locale);
   }
-  return Cache.read(`locnums${locale}`);
+  return Cache.read('locnums', locale);
 }
 
 export function dString(string: string | number, locale?: string) {
@@ -248,10 +248,8 @@ export function getLocalizedChapterTerm(
     lng: locale,
     ns: 'common/books',
   };
-
-  return i18next.exists(k1, toptions)
-    ? i18next.t(k1, toptions)
-    : i18next.t(k2, toptions);
+  const r1 = i18next.exists(k1, toptions) && i18next.t(k1, toptions);
+  return r1 && !/^\s*$/.test(r1) ? r1 : i18next.t(k2, toptions);
 }
 
 export function isProgramPortable() {
