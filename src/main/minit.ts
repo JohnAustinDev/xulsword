@@ -433,6 +433,8 @@ export function setGlobalMenuFromPref(menu?: Electron.Menu) {
 export function globalReset() {
   Cache.clear();
   BrowserWindow.getAllWindows().forEach((w) => {
+    w.webContents.send('cache-reset');
+    w.webContents.send('module-reset');
     w.webContents.send('component-reset');
   });
 }

@@ -28,6 +28,7 @@ const validChannels = [
   'update-state-from-pref', // from main when state-prefs should be updated
   'component-reset', // from main when window top react components should be remounted
   'module-reset', // from main when modules or module contents may have changed
+  'cache-reset', // from main when caches should be cleared
 ];
 
 contextBridge.exposeInMainWorld('ipc', {

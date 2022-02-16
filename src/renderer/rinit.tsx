@@ -6,9 +6,12 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import rendererBackend from 'i18next-electron-fs-backend';
 import C from '../constant';
+import Cache from '../cache';
 import G from './rg';
 import { jsdump } from './rutil';
 import { delayHandler } from './libxul/xul';
+
+window.ipc.renderer.on('cache-reset', () => Cache.clear);
 
 // Set window type and language classes of the root html element.
 i18n.on('initialized', (options) => {
