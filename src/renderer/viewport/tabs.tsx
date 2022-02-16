@@ -7,7 +7,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import i18next from 'i18next';
-import C from '../../constant';
 import { ofClass } from '../../common';
 import {
   xulDefaultProps,
@@ -17,7 +16,6 @@ import {
 } from '../libxul/xul';
 import Button from '../libxul/button';
 import Menupopup from '../libxul/menupopup';
-import Tooltip from '../libxul/tooltip';
 import G from '../rg';
 import '../libxul/xul.css';
 import './tabs.css';
@@ -107,6 +105,7 @@ class Tabs extends React.Component {
         className={`${type} tab tab${tabType} ${classes}`}
         data-module={m}
         data-index={i}
+        title={m ? G.Tab[m].description : undefined}
       >
         <div className="tab-label">{label}</div>
         {children}

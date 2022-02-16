@@ -18,6 +18,7 @@ export const xulDefaultProps = {
   domref: undefined,
   style: undefined,
   width: undefined,
+  title: undefined,
 
   onClick: undefined,
   onDoubleClick: undefined,
@@ -54,6 +55,7 @@ export const xulPropTypes = {
     PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   ),
   width: PropTypes.string,
+  title: PropTypes.string,
 
   onClick: PropTypes.func,
   onDoubleClick: PropTypes.func,
@@ -96,6 +98,7 @@ export interface XulProps {
   domref?: React.RefObject<any> | undefined;
   style?: React.CSSProperties | undefined;
   width?: string | undefined;
+  title?: string | undefined;
 
   onClick?: (e: React.SyntheticEvent<any>) => void;
   onDoubleClick?: (e: React.SyntheticEvent<any>) => void;
@@ -209,6 +212,7 @@ export const htmlAttribs = (className: string, props: any) => {
   if (props.id) r.id = props.id;
   if (props.lang) r.lang = props.lang;
   if (props.domref) r.ref = props.domref;
+  if (props.title) r.title = props.title;
   const style = {
     ...xulStyle(props),
     ...props.style,

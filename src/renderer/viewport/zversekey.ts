@@ -1151,14 +1151,15 @@ export function pageChange(
   return null;
 }
 
-// Change a dictionary to the previous or next key.
+// Change a dictionary to the previous or next key, or return null if that
+// was not possible.
 function dictionaryChange(atext: HTMLElement, next: boolean): string | null {
   const keyels = atext.getElementsByClassName('dictselectkey');
   let newkey;
-  if (keyels) {
+  if (keyels && keyels[0]) {
     let key = keyels[0] as any;
     key = next ? key.nextSibling : key.previousSibling;
-    newkey = key?.innerText;
+    if (key) newkey = key.innerText;
   }
   return newkey || null;
 }

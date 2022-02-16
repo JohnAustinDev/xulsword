@@ -5,7 +5,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Box } from './boxes';
 import Label from './label';
-import Tooltip from './tooltip';
 import { xulDefaultProps, xulPropTypes, XulProps, htmlAttribs } from './xul';
 import './xul.css';
 import './button.css';
@@ -63,6 +62,7 @@ function Button(props: ButtonProps) {
       {...htmlAttribs(`button ${dlgType}`, props)}
       disabled={disabled}
       type="button"
+      title={tooltip}
     >
       <Box
         className="button-box"
@@ -78,8 +78,6 @@ function Button(props: ButtonProps) {
           <Label className="button-text" value={label} />
         )}
       </Box>
-
-      <Tooltip tip={tooltip} />
 
       {props.type === 'menu' && children && (
         <div className="menu">{children}</div>

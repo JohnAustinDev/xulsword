@@ -3,7 +3,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import Tooltip from './tooltip';
 import { addClass, xulDefaultProps, xulPropTypes, XulProps } from './xul';
 import { Box } from './boxes';
 import './xul.css';
@@ -41,7 +40,7 @@ interface MenulistProps extends XulProps {
 
 function Menulist(props: MenulistProps) {
   return (
-    <Box {...addClass('menulist', props)}>
+    <Box {...addClass('menulist', props)} title={props.tooltip}>
       <select
         id={props.id ? `${props.id}__select` : undefined}
         disabled={props.disabled}
@@ -52,7 +51,6 @@ function Menulist(props: MenulistProps) {
       >
         {props.options}
       </select>
-      <Tooltip tip={props.tooltip} />
     </Box>
   );
 }

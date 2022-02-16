@@ -42,7 +42,7 @@ const C = {
   } as { [i: string]: string },
 
   // SupportedV11ns are the versification systems supported by libxulsword's
-  // current SWORD engine. TODO: Read these from the SWORD engine.
+  // current SWORD engine.
   SupportedV11ns: [
     'KJV',
     'German',
@@ -64,7 +64,7 @@ const C = {
   // SupportedV11nMaps show which verse-systems may currently be mapped to
   // other verse systems by libxulsword. The SWORD C++ engine is not currently
   // being used for mapping. TODO: Investigate whether SWORD can now do the
-  // mapping that's needed or not- it seems SWORD had (as?) limitations caused
+  // mapping that's needed or not- it seems SWORD had (has?) limitations caused
   // by incorrect assumptions about mapping requirements.
   SupportedV11nMaps: {
     KJV: ['Synodal', 'SynodalProt'],
@@ -189,17 +189,6 @@ const C = {
   MSMOVE: 'mousemove',
   MSOVER: 'mouseover',
   MSOUT: 'mouseout',
-
-  // Versekey (that is Bible and commentary) verse scrolling
-  VSCROLL: {
-    none: 0, // skip the scroll step (which is after Atext render)
-    chapter: 1, // put state chapter heading at the top
-    verse: 2, // put state verse at the top
-    center: 3, // put state verse in the middle, unless verse is already visible or is verse 1
-    centerAlways: 4, // try to put state verse in the middle in any case
-    end: 5, // put state verse at the end
-    endAndUpdate: 6, // put state verse at the end, then change state to the resulting first visible verse
-  },
 
   // bookmark/personal-note fields
   TYPE: 0,
@@ -327,8 +316,19 @@ const C = {
   },
   LibSwordProps: {} as { [key in ModTypes]: { [i: string]: any } },
 
-  // These Atext props are used to scroll text. If these props all have the
-  // same values as the previous rendering, and the same is true for
+  // Versekey (that is Bible and commentary) verse scrolling
+  VSCROLL: {
+    none: 0, // skip the scroll step (which comes after Atext render)
+    chapter: 1, // put state chapter heading at the top of the first panel
+    verse: 2, // put state verse at the top of the first panel
+    center: 3, // put state verse in the middle of the first panel, unless verse is already visible or is verse 1
+    centerAlways: 4, // try to put state verse in the middle of the first panel in any case
+    end: 5, // put state verse at the end of the last panel
+    endAndUpdate: 6, // put state verse at the end of the last panel, then change state to the resulting first visible verse
+  },
+
+  // These Atext props are used to scroll text. If these props all have
+  // the same values as the previous rendering, and the same is true of
   // the LibSwordProps, then scrolling is also unnecessary.
   // NOTE: property types are important, but property values are not.
   ScrollPropsTexts: {

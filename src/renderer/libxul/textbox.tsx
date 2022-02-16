@@ -5,7 +5,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { clearPending } from '../rutil';
-import Tooltip from './tooltip';
 import {
   delayHandler,
   addClass,
@@ -140,7 +139,7 @@ class Textbox extends React.Component {
     const value = props.disabled ? props.value : state.value;
 
     return (
-      <Box {...addClass('textbox', props)}>
+      <Box {...addClass('textbox', props)} title={props.tooltip}>
         {useTextArea && (
           <textarea
             id={`${props.id}__textarea`}
@@ -163,7 +162,6 @@ class Textbox extends React.Component {
             ref={props.inputRef}
           />
         )}
-        <Tooltip tip={props.tooltip} />
       </Box>
     );
   }

@@ -129,10 +129,6 @@ function replaceLinks(entry: string, mod: string) {
   return html;
 }
 
-export function getDictSortedKeyList(list: string[], keysort: string) {
-  return list;
-}
-
 export function getDictEntryHTML(
   key: string,
   modules: string,
