@@ -107,8 +107,10 @@ class Tabs extends React.Component {
         data-index={i}
         title={m ? G.Tab[m].description : undefined}
       >
-        <div className="tab-label">{label}</div>
-        {children}
+        <div className="border">
+          <div className="tab-label">{label}</div>
+          {children}
+        </div>
       </div>
     );
   }

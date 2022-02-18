@@ -376,10 +376,12 @@ export default class Xulsword extends React.Component {
     return (
       <Vbox
         {...addClass('xulsword', props)}
+        pack="start"
+        height="100%"
         {...topHandle('onClick', () => closeMenupopups(this), props)}
       >
-        <Hbox id="main-controlbar" className="controlbar">
-          <Spacer width="17px" orient="vertical" />
+        <Hbox id="main-controlbar" pack="start" className="controlbar">
+          <Spacer className="start-spacer" orient="vertical" />
 
           <Vbox id="navigator-tool" pack="start">
             <Hbox id="historyButtons" align="center">
@@ -486,10 +488,10 @@ export default class Xulsword extends React.Component {
             </Hbox>
           </Vbox>
 
-          <Spacer flex="14%" orient="vertical" />
+          <Spacer flex="1" orient="vertical" />
 
           <Hbox id="search-tool">
-            <Vbox>
+            <Vbox pack="start">
               <Textbox
                 id="searchText"
                 type="search"
@@ -515,7 +517,7 @@ export default class Xulsword extends React.Component {
             </Vbox>
           </Hbox>
 
-          <Spacer flex="14%" orient="vertical" />
+          <Spacer flex="1" orient="vertical" />
 
           <Hbox id="optionButtons" align="start">
             <Button
@@ -552,10 +554,10 @@ export default class Xulsword extends React.Component {
             />
           </Hbox>
 
-          <Spacer id="rightSpacer" flex="72%" orient="vertical" />
+          <Spacer flex="1" orient="vertical" />
         </Hbox>
 
-        <Hbox flex="1">
+        <Hbox pack="start" flex="1">
           <Viewport
             key={viewportReset.join('.')}
             id="main-viewport"
@@ -587,7 +589,7 @@ export default class Xulsword extends React.Component {
 Xulsword.defaultProps = defaultProps;
 Xulsword.propTypes = propTypes;
 
-renderToRoot(<Xulsword id="xulsword" pack="start" height="100%" />, () => {
+renderToRoot(<Xulsword id="xulsword" />, () => {
   jsdump('Loading Xulsword!');
   setTimeout(() => {
     window.ipc.renderer.send('window', 'move-to-back');

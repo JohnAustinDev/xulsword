@@ -176,8 +176,7 @@ class Popup extends React.Component {
       eleminfo && eleminfo.length === elemhtml.length
         ? eleminfo[eleminfo.length - 1]
         : {};
-    const div = document.createElement('div');
-    div.innerHTML = elemHTML;
+    const div = sanitizeHTML(document.createElement('div'), elemHTML);
     const elem = div.firstChild as HTMLElement | null;
     if (!elem)
       throw Error(`Popup was given a malformed element: '${elemHTML}'`);

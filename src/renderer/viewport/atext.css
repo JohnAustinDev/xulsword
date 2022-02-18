@@ -1,13 +1,15 @@
 .atext {
   position: relative;
   vertical-align: top;
-  margin: 0px 10px 0px 0px;
   font-size: 1.1em;
   background: rgb(255, 243, 255);
   border: 2px solid rgb(200, 170, 205);
   border-radius: 8px;
   height: 100%;
   flex-basis: 100%;
+}
+.atext:not(:last-child) {
+  margin-inline-end: 10px;
 }
 .atext.pinned {
   background: white; /*rgb(248,248,241);*/
@@ -65,7 +67,6 @@ html.chromedir-rtl .atext .text-win {
 
 .atext .sb {
   flex-basis: 0px;
-  color: black;
   padding: 0px 30px;
   display: flow-root;
 }
@@ -143,6 +144,7 @@ html.chromedir-rtl .atext .text-win {
 }
 
 .atext .nb {
+  height: 100%;
   font-size: 0.9em;
   overflow: auto;
   background: rgb(240, 235, 240);
@@ -160,9 +162,6 @@ html.chromedir-rtl .atext .text-win {
   color: blue;
   margin: 10px;
   cursor: default;
-}
-.navlink-span {
-  font-family: ariel;
 }
 .prevchaplink,
 .nextchaplink {
@@ -420,9 +419,6 @@ html.chromedir-rtl .fncol3 {
 }
 
 /* Dictionary styles */
-.Dicts .nb {
-  overflow: hidden;
-}
 .dictentry {
   display: table;
   height: 100%;
@@ -432,12 +428,17 @@ html.chromedir-rtl .fncol3 {
   display: table-cell;
   vertical-align: middle;
 }
+.Dicts .nb {
+  color: rgb(80, 80, 80);
+}
 .dictlist {
-  width: calc(100% + 8px);
-  padding: 16px;
+  padding: 0 16px 16px 16px;
 }
 .dictlist .headerbox {
-  height: 16px;
+  position: sticky;
+  top: 0px;
+  padding: 16px 0px 5px 0px;
+  background-color: rgb(240, 235, 240);
 }
 .dictlist input {
   width: calc(100% - 8px);

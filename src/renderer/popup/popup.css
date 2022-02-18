@@ -42,7 +42,6 @@ html.chromedir-rtl .npopup {
 
 /* WINDOWED POPUP STYLES */
 .npopup.ownWindow {
-  font-family: 'arial';
   position: relative;
   width: 100%;
   height: 100%;

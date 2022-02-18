@@ -353,7 +353,7 @@ class Atext extends React.Component {
         const id = `${stringHash(modkey)}.${panelIndex}`;
         const keyelem = document.getElementById(id);
         if (keyelem) {
-          scrollIntoView(keyelem, nbe);
+          scrollIntoView(keyelem, nbe, 40);
           const dictlist = keyelem.parentNode?.parentNode as HTMLElement | null;
           if (dictlist) {
             const dki = dictlist.getElementsByClassName(
@@ -615,7 +615,7 @@ class Atext extends React.Component {
             <div className={`bb ${bbtop ? 'moving' : ''}`} style={bbtop} />
             <div className="notebox-maximizer" />
           </Hbox>
-          <Box className="nb" domref={this.nbref} flex="1" />
+          <div className="nb" ref={this.nbref} />
         </Vbox>
       </Vbox>
     );

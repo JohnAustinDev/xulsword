@@ -1,13 +1,13 @@
 #xulsword {
   overflow: hidden;
   background-image: url(../../../assets/b2.png);
-  min-width: 600px;
 }
-#main-controlbar {
+#xulsword .controlbar {
   background-image: url(../../../assets/b2.png);
 }
-#xulsword > div {
-  min-width: 600px;
+#xulsword .controlbar .start-spacer {
+  width: 15px;
+  min-width: 15px;
 }
 #historyButtons,
 #player {
@@ -22,6 +22,9 @@
 #quit,
 #xulsword:not(.libSwordLoadFailed) #newmodule {
   display: block !important;
+}
+#xulsword .controlbar .textbox {
+  font-size: 15px;
 }
 
 /* MAIN WINDOW NAVIGATOR BUTTONS */
@@ -68,7 +71,7 @@
   padding: 2px;
 }
 #historyButtons .button-box {
-  padding: 4px 30px;
+  padding: 2px 30px;
 }
 #historypopup menuitem.selected {
   margin: 2px 4px;
@@ -106,14 +109,15 @@ html.chromedir-rtl #forward .button-icon {
   background-position: -22px 0px;
 }
 #historymenu .button-box {
-  padding: 4px 10px;
+  padding: 2px 10px;
 }
 #historymenu .button-icon {
   display: block;
-  height: 11px;
+  height: 14px;
   width: 40px;
   background-position: 0px 0px;
   background-image: url(../images/historymenu.png);
+  background-repeat: no-repeat;
 }
 #historymenu.disabled .button-icon {
   background-position: -80px 0px;
@@ -126,15 +130,15 @@ html.chromedir-rtl #forward .button-icon {
 #search-tool {
   padding-bottom: 0px;
 }
-#search-tool > vbox {
-  padding-top: 2px;
+#search-tool > .vbox {
+  padding-top: 3px;
   margin-left: 0px;
 }
 #searchButton {
   padding: 2px;
 }
 #searchButton .button-box {
-  padding: 2px;
+  padding: 1px;
 }
 #searchButton .button-icon {
   display: block;
@@ -156,7 +160,7 @@ html.chromedir-rtl #forward .button-icon {
   color: black;
 }
 #optionButtons .button-box {
-  padding: 6px;
+  padding: 4px 6px;
 }
 #optionButtons button.checked {
   color: blue;

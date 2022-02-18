@@ -76,15 +76,16 @@ export function scrollIntoView(
 ) {
   elem.scrollIntoView();
   let st: HTMLElement | null = elem;
-  let skip = true;
+  let setToZero = false;
   let adjust = true;
   while (st) {
-    if (skip && adjust && st.scrollTop > 0) {
+    const max = st.scrollHeight - st.clientHeight;
+    if (!setToZero && adjust && st.scrollTop > 0 && st.scrollTop < max) {
       st.scrollTop -= (st.clientHeight - elem.offsetHeight) * (percent / 100);
       adjust = false;
     }
-    if (!skip && st.scrollTop) st.scrollTop = 0;
-    if (st === ancestor) skip = false;
+    if (setToZero && st.scrollTop) st.scrollTop = 0;
+    if (st === ancestor) setToZero = true;
     st = st.parentNode as HTMLElement | null;
   }
 }

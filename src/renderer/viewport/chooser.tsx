@@ -32,36 +32,36 @@ import type { BookGroupType, BookType, V11nType } from '../../type';
 const defaultProps = {
   ...xulDefaultProps,
   bookGroups: ['ot', 'nt'],
-  onCloseChooserClick: undefined,
-  headingsModule: undefined,
+  selection: '',
   availableBooks: new Set(),
   hideUnavailableBooks: false,
-  selection: '',
-  type: 'bible',
+  headingsModule: undefined,
   windowV11n: 'KJV',
+  type: 'bible',
+  onCloseChooserClick: undefined,
 };
 
 const propTypes = {
   ...xulPropTypes,
   bookGroups: PropTypes.arrayOf(PropTypes.string),
-  onCloseChooserClick: PropTypes.func.isRequired,
-  headingsModule: PropTypes.string,
+  selection: PropTypes.string.isRequired,
   availableBooks: PropTypes.instanceOf(Set),
   hideUnavailableBooks: PropTypes.bool,
-  selection: PropTypes.string.isRequired,
-  type: PropTypes.oneOf(['bible', 'genbook', 'none']).isRequired,
+  headingsModule: PropTypes.string,
   windowV11n: PropTypes.string.isRequired,
+  type: PropTypes.oneOf(['bible', 'genbook', 'none']).isRequired,
+  onCloseChooserClick: PropTypes.func.isRequired,
 };
 
 export interface ChooserProps extends XulProps {
   bookGroups: BookGroupType[];
-  onCloseChooserClick: (e: any) => void;
-  headingsModule: string | undefined;
+  selection: string;
   availableBooks: Set<string> | undefined;
   hideUnavailableBooks: boolean;
-  selection: string;
-  type: string;
+  headingsModule: string | undefined;
   windowV11n: V11nType;
+  type: string;
+  onCloseChooserClick: (e: any) => void;
 }
 
 export interface ChooserState {
@@ -278,16 +278,17 @@ class Chooser extends React.Component {
       <Vbox {...addClass(`chooser ${type}`, props)} onMouseOut={handler}>
         <Hbox className="fadetop" />
 
-        <Hbox className="chooser-container" flex="5">
+        <Hbox className="chooser-container" flex="20">
           <div className="close-chooser" onClick={onCloseChooserClick} />
 
           <Vbox className="bookgroup-selector">
             {bookGroups.map((bg) => {
               const selected = bg === bookGroup ? 'selected' : '';
+              const other = !['ot', 'nt'].includes(bg) ? 'other' : '';
               return (
                 <Vbox
                   key={bg}
-                  className={`bookgroup ${selected}`}
+                  className={`bookgroup ${selected} ${other}`}
                   flex="1"
                   pack={bookGroups.length > 3 ? 'start' : 'center'}
                   align="center"

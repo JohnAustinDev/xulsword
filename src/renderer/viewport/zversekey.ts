@@ -8,7 +8,6 @@ import {
   dString,
   getLocalizedChapterTerm,
   isASCII,
-  sanitizeHTML,
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import {
@@ -116,16 +115,6 @@ export function getIntroductions(mod: string, vkeytext: string) {
     /^\s*$/.test(intro.replace(/<[^>]*>/g, ''))
   )
     intro = '';
-
-  // MAJOR CLUDGE! As it is now, if any portion of HTML returned by
-  // LibSword is not well-formed, then the entire page is broken.
-  // Setting intro (which is not well-formed for all RusVZh chapters)
-  // to an element and reading again insures HTML string is well formed at least.
-  if (intro) {
-    const tmp = document.createElement('div');
-    sanitizeHTML(tmp, intro);
-    intro = tmp.innerHTML;
-  }
 
   return { textHTML: intro, intronotes: notes };
 }
@@ -280,14 +269,11 @@ function getRefHTML(
 
         // find the footnote which is being referenced
         G.LibSword.getChapterText(rmod, rref);
-        const noteContainer = document.createElement('div');
-        sanitizeHTML(noteContainer, G.LibSword.getNotes());
-        const notes = noteContainer.getElementsByClassName('nlist');
-
+        const notes = G.LibSword.getNotes().split(/(?=<div[^>]+class="nlist")/);
         for (let x = 0; x < notes.length; x += 1) {
-          const osisID = notes[x].getAttribute('data-osisID');
-          if (osisID && osisID === rref + ext) {
-            footnote = notes[x].innerHTML;
+          const osisID = notes[x].match(/data-osisID="(.*?)"/); // getAttribute('data-osisID');
+          if (osisID && osisID[1] === rref + ext) {
+            footnote = notes[x].replace(/(^<div[^>]+>|<\/div>$)/g, '');
             break;
           }
         }

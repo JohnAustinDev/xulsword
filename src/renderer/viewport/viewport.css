@@ -1,6 +1,5 @@
 .viewport {
-  font-family: 'arial';
-  padding-inline-start: 10px;
+  padding: 10px 15px 15px 15px;
   margin: 0px;
   overflow: hidden;
   background: url(../../../assets/b2.png);
@@ -38,18 +37,13 @@ html.chromedir-rtl .viewport .chooser {
 }
 .viewport .tabrow {
   width: 100%;
-  padding-top: 14px;
   white-space: nowrap;
 }
 .viewport .textarea {
   min-width: 1px; /* allows textarea to shrink below minimum content size */
-  margin-bottom: 12px;
 }
 .viewport .textrow {
   width: 100%;
-}
-.viewport.ownWindow {
-  padding: 0 15px;
 }
 .viewport.ownWindow .atext {
   margin: 0;
