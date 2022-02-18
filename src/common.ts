@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
 import C from './constant';
-import type { GType } from './type';
+import type { GType, V11nType } from './type';
 import Cache from './cache';
 
 export function escapeRE(text: string) {
@@ -386,4 +386,37 @@ export function ref2DotString(vkeytext: string): string {
   r += `.${lv || vs || 1}`;
 
   return r;
+}
+
+// LibSword.convertLocation returns unpredictable locations if vkeytext's
+// book, chapter, verse and lastverse are not in fromv11n verse system or
+// if the book is not included in tov11n. Also LibSword only converts
+// between systems in C.SupportedV11nMaps. So these things must be
+// checked before calling LibSword.
+export function doConvertLocation(
+  bkChsInV11n: GType['BkChsInV11n'],
+  fromv11n: V11nType,
+  vkeytext: string,
+  tov11n: V11nType
+): boolean {
+  const r = ref2DotString(vkeytext);
+  if (fromv11n === tov11n) return false;
+  if (!(fromv11n in C.SupportedV11nMaps)) return false;
+  if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return false;
+  const [b, c, v, l] = r.split('.');
+  const chn = Number(c);
+  const vsn = Number(v);
+  const lvn = Number(l);
+  if (!(tov11n in bkChsInV11n)) return false;
+  if (!(b in bkChsInV11n[tov11n])) return false;
+  const maxch =
+    fromv11n in bkChsInV11n && b in bkChsInV11n[fromv11n]
+      ? bkChsInV11n[fromv11n][b]
+      : 0;
+  if (!Number.isNaN(chn) && (chn < 1 || chn > maxch)) return false;
+  if (!Number.isNaN(vsn)) {
+    const maxv = 200; // slow: getMaxVerse(fromv11n, [b, c].join('.'));
+    if (vsn < 1 || vsn > maxv || lvn < vsn || lvn > maxv) return false;
+  }
+  return true;
 }

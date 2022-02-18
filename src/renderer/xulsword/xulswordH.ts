@@ -138,7 +138,8 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               if (book) {
                 if (!chapter) chapter = 1;
                 if (!verse) verse = 1;
-                const selection = [book, chapter, verse, lastverse].join('.');
+                const selection =
+                  verse > 1 ? [book, chapter, verse, lastverse].join('.') : '';
                 const flagScroll = pfs.map(() => C.VSCROLL.center);
                 const s: Partial<XulswordState> = {
                   book,

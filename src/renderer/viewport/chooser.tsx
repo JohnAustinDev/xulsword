@@ -15,6 +15,7 @@ import C from '../../constant';
 import G from '../rg';
 import { clearPending, getMaxChapter } from '../rutil';
 import { Hbox, Vbox } from '../libxul/boxes';
+import Spacer from '../libxul/spacer';
 import {
   xulDefaultProps,
   xulPropTypes,
@@ -134,7 +135,11 @@ class Chooser extends React.Component {
 
     this.handler = handlerH.bind(this);
 
-    if (!props.hideUnavailableBooks && props.selection) {
+    if (
+      !props.hideUnavailableBooks &&
+      props.selection &&
+      C.SupportedBooks[bookGroup].includes(props.selection)
+    ) {
       setTimeout(() => {
         this.startSlidingUp(null, 0, props.selection);
       }, 0);
@@ -290,7 +295,7 @@ class Chooser extends React.Component {
                   key={bg}
                   className={`bookgroup ${selected} ${other}`}
                   flex="1"
-                  pack={bookGroups.length > 3 ? 'start' : 'center'}
+                  pack="start"
                   align="center"
                   onMouseEnter={handler}
                   data-bookgroup={bg}
@@ -298,11 +303,13 @@ class Chooser extends React.Component {
                   {useLabelImage[bg] && (
                     <div key={bg} className={`label ${bg}`} />
                   )}
+                  <Spacer orient="horizontal" flex="1" />
                   {!useLabelImage[bg] &&
                     [...label[bg]].map((l, i) => {
                       // eslint-disable-next-line react/no-array-index-key
                       return <div key={i}>{l}</div>;
                     })}
+                  <Spacer orient="horizontal" flex="1" />
                 </Vbox>
               );
             })}

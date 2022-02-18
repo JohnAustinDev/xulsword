@@ -7,7 +7,12 @@ import fs from 'fs';
 import i18next from 'i18next';
 import { BrowserWindow, Menu } from 'electron';
 import C from '../constant';
-import { isASCII, JSON_parse, ref2DotString } from '../common';
+import {
+  doConvertLocation,
+  isASCII,
+  JSON_parse,
+  ref2DotString,
+} from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
@@ -356,36 +361,15 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
   return maxch ? LibSword.getMaxVerse(v11n, vkeytext) : 0;
 }
 
-// LibSword.convertLocation returns unpredictable locations if vkeytext's
-// book, chapter, verse and lastverse are not in fromv11n verse system or
-// if the book is not included in tov11n. Also LibSword only converts
-// between systems in C.SupportedV11nMaps. So these things must be
-// checked before calling LibSword. NOTE: even if vkeytext cannot be
-// converted for these reasons, it still must be returned as a dot
-// delineated xulsword reference. NOTE: rutil has this same function.
 export function convertLocation(
   fromv11n: V11nType,
   vkeytext: string,
   tov11n: V11nType
 ): string {
   const r = ref2DotString(vkeytext);
-  if (fromv11n === tov11n) return r;
-  if (!(fromv11n in C.SupportedV11nMaps)) return r;
-  if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return r;
-  const [b, c, v, l] = r.split('.');
-  const chn = Number(c);
-  const vsn = Number(v);
-  const lvn = Number(l);
-  const bkChsInV11n = getBkChsInV11n();
-  if (!(tov11n in bkChsInV11n)) return r;
-  if (!(b in bkChsInV11n[tov11n])) return r;
-  if (!Number.isNaN(chn) && (chn < 1 || chn > getMaxChapter(fromv11n, r)))
-    return r;
-  if (!Number.isNaN(vsn)) {
-    const maxv = 200; // slow: getMaxVerse(fromv11n, [b, c].join('.'));
-    if (vsn < 1 || vsn > maxv || lvn < vsn || lvn > maxv) return r;
-  }
-  return LibSword.convertLocation(fromv11n, r, tov11n);
+  return doConvertLocation(getBkChsInV11n(), fromv11n, vkeytext, tov11n)
+    ? LibSword.convertLocation(fromv11n, r, tov11n)
+    : r;
 }
 
 export function setMenuFromPrefs(menu: Electron.Menu) {

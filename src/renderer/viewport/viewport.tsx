@@ -11,6 +11,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import C from '../../constant';
+import { stringHash } from '../../common';
 import Popup from '../popup/popup';
 import {
   popupParentHandler as popupParentHandlerH,
@@ -390,15 +391,15 @@ class Viewport extends React.Component implements PopupParent {
               if (tabWidth) {
                 const width = `${Math.round(100 * (tabWidth / numPanels))}%`;
                 const tabsi = tabs[i];
-                const key = [
+                const key = stringHash(
                   i,
                   reset,
                   isPinned[i],
                   tabWidth,
-                  tabsi ? tabsi.toString() : 'none',
+                  tabsi ? [...tabsi] : 'none',
                   ilModules[i],
-                  mtModules[i],
-                ].join('_');
+                  mtModules[i]
+                );
                 if (!tabsi) return <Hbox key={key} style={{ width }} />;
                 return (
                   <Tabs
