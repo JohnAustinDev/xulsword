@@ -128,10 +128,10 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'book__textbox__input':
         case 'book__menulist__select': {
           this.setState((prevState: XulswordState) => {
-            const { flagScroll: pfs } = prevState;
+            const { flagScroll: pfs, windowV11n } = prevState;
             // reset Bookselect even if book doesn't change
             const bsreset = prevState.bsreset + 1;
-            const location = parseLocation(value);
+            const location = parseLocation(value, windowV11n || 'KJV');
             if (location !== null) {
               // eslint-disable-next-line prefer-const
               let { book, chapter, verse, lastverse } = location;

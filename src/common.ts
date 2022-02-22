@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
 import C from './constant';
-import type { GType, V11nType } from './type';
+import type { GType, LocationVKType, V11nType } from './type';
 import Cache from './cache';
 
 export function escapeRE(text: string) {
@@ -357,66 +357,97 @@ export function getCSS(
   return null;
 }
 
+// Dot location is:
+// bk.ch or
+// bk.ch.vs or
+// bk.ch.vs.lv
+export function dotLocation2LocationVK(
+  loc: string,
+  v11n: V11nType,
+  version?: string
+): LocationVKType {
+  const retval = {
+    book: '',
+    chapter: 0,
+    verse: null,
+    lastverse: null,
+    version: null,
+    v11n,
+  } as LocationVKType;
+  const dotLocation = loc.split('.');
+  const [sn, ch, vs, lv] = dotLocation;
+  if (dotLocation[0] !== undefined) retval.book = sn;
+  if (dotLocation[1] !== undefined) retval.chapter = Number(ch);
+  if (dotLocation[2] !== undefined) retval.verse = Number(vs);
+  if (dotLocation[3] !== undefined) retval.lastverse = Number(lv);
+  if (version) retval.version = version;
+
+  return retval;
+}
+
 // Convert the following reference forms:
 //   Gen, Gen 1, Gen 1:1, Gen 1:1-1, Gen 1:1 - Gen 1:1, Gen.1, Gen.1.1, Gen.1.1.1
-// To this form:
-//   Gen.1.1.1 (book.chapter.verse.lastverse)
-export function ref2DotString(vkeytext: string): string {
+// To this type: LocationTypeVK
+export function string2LocationVK(vkeytext: string): LocationVKType {
   const vk = vkeytext.trim();
-  let bk = '';
-  let ch = '';
-  let vs = '';
-  let lv = '';
+  let book = '';
+  let chapter = '';
+  let verse = '';
+  let lastverse = '';
   if (vk.indexOf('.') !== -1) {
-    [bk, ch, vs, lv] = vk.split('.');
+    [book, chapter, verse, lastverse] = vk.split('.');
   } else {
     vk.split(/\s*-\s*/).forEach((seg) => {
       const [bx, cx, vx] = seg.split(/[\s:]+/);
-      if (bx && !bk) bk = bx;
-      if (cx && !ch) ch = cx;
+      if (bx && !book) book = bx;
+      if (cx && !chapter) chapter = cx;
       if (vx) {
-        if (!vs) vs = vx;
-        else lv = vx;
+        if (!verse) verse = vx;
+        else lastverse = vx;
       }
     });
   }
-  let r = bk;
-  r += `.${ch || 1}`;
-  r += `.${vs || 1}`;
-  r += `.${lv || vs || 1}`;
-
-  return r;
+  return {
+    book,
+    chapter: Number(chapter) || 1,
+    verse: Number(verse) || 1,
+    lastverse: Number(lastverse) || Number(verse) || 1,
+    v11n: 'KJV',
+  };
 }
 
 // LibSword.convertLocation returns unpredictable locations if vkeytext's
-// book, chapter, verse and lastverse are not in fromv11n verse system or
+// book, chapter, verse and lastverse are not in the verse system or
 // if the book is not included in tov11n. Also LibSword only converts
 // between systems in C.SupportedV11nMaps. So these things must be
-// checked before calling LibSword.
-export function doConvertLocation(
+// checked before ever calling LibSword.
+export function canDoConvertLocation(
   bkChsInV11n: GType['BkChsInV11n'],
-  fromv11n: V11nType,
-  vkeytext: string,
+  l: LocationVKType,
   tov11n: V11nType
 ): boolean {
-  const r = ref2DotString(vkeytext);
+  const fromv11n = l.v11n;
+  if (!fromv11n) throw Error(`No versification provided`);
   if (fromv11n === tov11n) return false;
   if (!(fromv11n in C.SupportedV11nMaps)) return false;
   if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return false;
-  const [b, c, v, l] = r.split('.');
-  const chn = Number(c);
-  const vsn = Number(v);
-  const lvn = Number(l);
+  const { book, chapter, verse, lastverse } = l;
   if (!(tov11n in bkChsInV11n)) return false;
-  if (!(b in bkChsInV11n[tov11n])) return false;
+  if (!(book in bkChsInV11n[tov11n])) return false;
   const maxch =
-    fromv11n in bkChsInV11n && b in bkChsInV11n[fromv11n]
-      ? bkChsInV11n[fromv11n][b]
+    fromv11n in bkChsInV11n && book in bkChsInV11n[fromv11n]
+      ? bkChsInV11n[fromv11n][book]
       : 0;
-  if (!Number.isNaN(chn) && (chn < 1 || chn > maxch)) return false;
-  if (!Number.isNaN(vsn)) {
+  if (chapter < 1 || chapter > maxch) return false;
+  if (verse) {
     const maxv = 200; // slow: getMaxVerse(fromv11n, [b, c].join('.'));
-    if (vsn < 1 || vsn > maxv || lvn < vsn || lvn > maxv) return false;
+    if (
+      verse < 1 ||
+      verse > maxv ||
+      (lastverse && lastverse < verse) ||
+      (lastverse && lastverse > maxv)
+    )
+      return false;
   }
   return true;
 }

@@ -89,7 +89,6 @@ export function openDialog(
   const { show } = options;
   windowOptions(type, options);
   const win = new BrowserWindow(options);
-  if (process.env.NODE_ENV === 'development') win.webContents.openDevTools();
   win.loadURL(resolveHtmlPath(`${type}.html`));
   win.removeMenu();
   if (show) {
@@ -138,7 +137,6 @@ export function openWindow(
     if (ops?.openWithBounds) delete ops.openWithBounds;
   }
   const win = new BrowserWindow(options);
-  if (process.env.NODE_ENV === 'development') win.webContents.openDevTools();
   win.loadURL(resolveHtmlPath(`${type}.html`));
   Prefs.setComplexValue(`Windows.w${win.id}`, { type, options });
   windowInitI18n(win);
@@ -154,6 +152,8 @@ export function openWindow(
     win.once('ready-to-show', () => {
       win.show();
       win.focus();
+      if (process.env.NODE_ENV === 'development')
+        win.webContents.openDevTools();
     });
   }
   win.on('resize', () => {

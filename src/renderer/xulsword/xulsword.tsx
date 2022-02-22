@@ -6,18 +6,18 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import i18n from 'i18next';
-import { HistoryTypeVK, V11nType, XulswordStatePref } from '../../type';
-import { dString } from '../../common';
+import { HistoryVKType, V11nType, XulswordStatePref } from '../../type';
+import { dotLocation2LocationVK, dString } from '../../common';
 import C from '../../constant';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import {
-  dotString2LocaleString,
+  locationVK2String,
   jsdump,
   onSetWindowState,
   getStatePref,
   setPrefFromState,
-  convertLocation,
+  convertLocationVK,
   clearPending,
 } from '../rutil';
 import {
@@ -149,7 +149,7 @@ export default class Xulsword extends React.Component {
   // windowV11n or nothing will be recorded. The history entry
   // will be recorded at the current historyIndex, and the history
   // array size will be limited to maxHistoryMenuLength.
-  addHistory = (add?: HistoryTypeVK): void => {
+  addHistory = (add?: HistoryVKType): void => {
     const {
       book,
       chapter,
@@ -160,7 +160,7 @@ export default class Xulsword extends React.Component {
       historyIndex,
     } = this.state as XulswordState;
     if (!book || !windowV11n || (add && add.v11n !== windowV11n)) return;
-    const newhist: HistoryTypeVK = add || {
+    const newhist: HistoryVKType = add || {
       book,
       chapter,
       verse,
@@ -172,13 +172,15 @@ export default class Xulsword extends React.Component {
     // switches to a different module with a different v11n.
     if (history[historyIndex]) {
       const { book: hbk, chapter: hch, v11n: hv11n } = history[historyIndex];
-      const { book: nbk, chapter: nch, v11n: nv11n } = newhist;
-      const [nbks, nchs] = `${convertLocation(
-        nv11n,
-        [nbk, nch].join('.'),
-        hv11n
-      )}`.split('.');
-      if (hbk === nbks && hch === Number(nchs)) return;
+      const nloc = convertLocationVK(
+        {
+          book: hbk,
+          chapter: hch,
+          v11n: hv11n,
+        },
+        windowV11n
+      );
+      if (hbk === nloc.book && hch === nloc.chapter) return;
     }
     this.setState((prevState: XulswordState) => {
       prevState.history.splice(prevState.historyIndex, 0, newhist);
@@ -206,15 +208,23 @@ export default class Xulsword extends React.Component {
       // modules, history needs to be converted to the current windowV11n.
       let { book, chapter, verse, selection } = history[index];
       const { v11n } = history[index];
-      const [bks, chs, vss] = convertLocation(
-        v11n,
-        [book, chapter, verse].join('.'),
+      const hloc = convertLocationVK(
+        { book, chapter, verse, v11n },
         windowV11n
-      ).split('.');
-      book = bks;
-      chapter = Number(chs);
-      verse = Number(vss);
-      selection = convertLocation(v11n, selection, windowV11n);
+      );
+      ({ book, chapter } = hloc);
+      const { verse: vsx } = hloc;
+      if (vsx) verse = vsx;
+      const {
+        book: b,
+        chapter: c,
+        verse: v,
+        lastverse: l,
+      } = convertLocationVK(
+        dotLocation2LocationVK(selection, v11n),
+        windowV11n
+      );
+      if (b && c) selection = [b, c, v, l].filter(Boolean).join('.');
       if (promote) {
         const targ = history.splice(index, 1);
         history.splice(0, 0, targ[0]);
@@ -244,24 +254,27 @@ export default class Xulsword extends React.Component {
     return (
       <Menupopup>
         {items.map((histitem, i) => {
-          const { book: bk, chapter: ch, verse: vs, v11n } = histitem;
-          const [bks, chs, vss] = convertLocation(
-            v11n,
-            [bk, ch, vs].join('.'),
-            windowV11n
-          ).split('.');
-          const location = [bks, chs, vss];
-          if (vss === '1') location.pop();
+          const { v11n } = histitem;
+          const location = convertLocationVK(histitem, windowV11n);
+          if (location.verse === 1) {
+            location.verse = null;
+            location.lastverse = null;
+          }
           // Verse comes from verse or selection; lastverse comes from selection.
           if (histitem.selection) {
-            const [b, c, v, l] = convertLocation(
-              v11n,
-              histitem.selection,
+            const selection = convertLocationVK(
+              dotLocation2LocationVK(histitem.selection, v11n),
               windowV11n
-            ).split('.');
-            if (bks === b && chs === c && Number(v) > 1) {
-              location[2] = v;
-              if (!Number.isNaN(Number(l)) && v !== l) location[3] = l;
+            );
+            if (
+              location.book === selection.book &&
+              location.chapter === selection.chapter &&
+              selection.verse &&
+              selection.verse > 1
+            ) {
+              location.verse = selection.verse;
+              if (selection.lastverse && selection.lastverse > selection.verse)
+                location.lastverse = selection.lastverse;
             }
           }
           const index = i + is;
@@ -275,7 +288,7 @@ export default class Xulsword extends React.Component {
                 e.stopPropagation();
               }}
             >
-              {dotString2LocaleString(location.join('.'), true)}
+              {locationVK2String(location, true)}
             </div>
           );
         })}

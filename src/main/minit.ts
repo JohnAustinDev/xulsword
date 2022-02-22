@@ -8,10 +8,11 @@ import i18next from 'i18next';
 import { BrowserWindow, Menu } from 'electron';
 import C from '../constant';
 import {
-  doConvertLocation,
+  canDoConvertLocation,
+  dotLocation2LocationVK,
   isASCII,
   JSON_parse,
-  ref2DotString,
+  string2LocationVK,
 } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
@@ -27,6 +28,7 @@ import type {
   V11nType,
   GType,
   BookGroupType,
+  LocationVKType,
 } from '../type';
 
 // These exported GPublic functions are called by the runtime
@@ -361,15 +363,21 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
   return maxch ? LibSword.getMaxVerse(v11n, vkeytext) : 0;
 }
 
-export function convertLocation(
-  fromv11n: V11nType,
-  vkeytext: string,
+export function convertLocationVK(
+  l: LocationVKType,
   tov11n: V11nType
-): string {
-  const r = ref2DotString(vkeytext);
-  return doConvertLocation(getBkChsInV11n(), fromv11n, vkeytext, tov11n)
-    ? LibSword.convertLocation(fromv11n, r, tov11n)
-    : r;
+): LocationVKType {
+  const fromv11n = l.v11n;
+  if (!canDoConvertLocation(getBkChsInV11n(), l, tov11n)) return l;
+  const conv = dotLocation2LocationVK(
+    LibSword.convertLocation(
+      fromv11n,
+      [l.book, l.chapter, l.verse, l.lastverse].filter(Boolean).join('.'),
+      tov11n
+    ),
+    tov11n
+  );
+  return conv;
 }
 
 export function setMenuFromPrefs(menu: Electron.Menu) {

@@ -9,20 +9,21 @@ import { ElemInfo, getElementInfo } from '../libswordElemInfo';
 import {
   compareObjects,
   deepClone,
-  doConvertLocation,
+  canDoConvertLocation,
+  dotLocation2LocationVK,
   dString,
   escapeRE,
   guiDirection,
   iString,
   ofClass,
-  ref2DotString,
+  string2LocationVK,
 } from '../common';
 import G from './rg';
 
 import type {
   BookGroupType,
   ContextData,
-  LocationTypeVK,
+  LocationVKType,
   SearchType,
   V11nType,
 } from '../type';
@@ -102,94 +103,146 @@ export function getModuleLongType(aModule: string): string | undefined {
     ?.split(';')[1];
 }
 
-// Converts a dot book reference into readable text in the locale language.
-// Possible inputs: bk.c.v.lv
-// Possible outputs:
-//    bk
-//    nk c
-//    bk c:v
-//    bk c:v-lv
-export function dotString2LocaleString(ref: string, notHTML: boolean): string {
+// Convert a LocationVKType to a readable string like 'Genesis 4:5-6'
+export function locationVK2String(l: LocationVKType, notHTML = false): string {
   const guidir = guiDirection(G);
 
-  const entity = guidir === 'rtl' ? '&rlm;' : '&lrm;';
-  const char =
-    guidir === 'rtl' ? String.fromCharCode(8207) : String.fromCharCode(8206);
-  const dc = notHTML ? char : entity;
+  let dc = guidir === 'rtl' ? '&rlm;' : '&lrm;';
+  if (notHTML)
+    dc =
+      guidir === 'rtl' ? String.fromCharCode(8207) : String.fromCharCode(8206);
 
-  let ret = ref;
-  let r = ref;
-  r = r.replace(/^\s*/, '');
-  // eslint-disable-next-line prefer-const
-  let [bk, ch, vs, lv] = r.split('.');
-  if (vs && lv && vs === lv) lv = '';
-  const bko = bk && bk in G.Book ? G.Book[bk] : null;
-  if (bko === null) return ret;
-  ret = `${dc}${bko.name}`;
-  if (ch) {
-    ret += `${dc} ${ch}`;
-    if (vs) {
-      ret += `${dc}:${vs}`;
-      if (lv) {
-        ret += `${dc}-${lv}`;
-      }
+  const book = l.book && l.book in G.Book ? G.Book[l.book].name : l.book;
+  let ret = dc + l.chapter ? `${book}${dc} ${l.chapter}` : book;
+  if (l.chapter && l.verse) {
+    ret += `${dc}:${l.verse}`;
+    if (l.lastverse && l.lastverse > l.verse) {
+      ret += `${dc}-${l.lastverse}`;
     }
   }
 
   return dString(ret);
 }
 
-// Takes dot-string of form bk.ch.vs.lv.v11n and returns it as tov11n verse system.
-export function convertDotString(from: string, tov11n: V11nType) {
-  let loc = from.split('.');
-  if (loc.length !== 5) {
-    throw Error(`convertDotString must have form: bk.ch.vs.lv.v11n (${from})`);
-  }
-  const v11n = loc.pop() as V11nType;
-  if (v11n && v11n !== tov11n) {
-    let lv = loc.pop();
-    let v = loc.pop();
-    const cv = convertLocation(v11n, `${loc.join('.')}.${v}`, tov11n).split(
-      '.'
-    );
-    const clv = convertLocation(v11n, `${loc.join('.')}.${lv}`, tov11n).split(
-      '.'
-    );
-    lv = clv.pop();
-    if (lv === undefined) lv = '1';
-    v = cv.pop();
-    if (v === undefined) v = '1';
-    if (cv.join('.') !== clv.join('.')) {
-      lv = v;
-    }
-    loc = cv.concat([v, lv]);
-  }
-  loc.push(tov11n);
-  return loc.join('.');
+// LibSword.getMaxChapter returns an erroneous number if vkeytext's
+// book is not part of v11n, so it would be necessary to check here
+// first. But a LibSword call is unnecessary with G.BooksInV11n.
+// NOTE: mutil has this same function.
+export function getMaxChapter(v11n: V11nType, vkeytext: string) {
+  const [book] = vkeytext.split(/[\s.:]/);
+  if (!(v11n in G.BkChsInV11n)) return 0;
+  if (!(book in G.BkChsInV11n[v11n])) return 0;
+  return G.BkChsInV11n[v11n][book];
 }
 
-export function dotStringLoc2ObjectLoc(
-  loc: string,
-  version?: string
-): LocationTypeVK {
-  const retval = {
-    book: '',
-    chapter: 0,
-    verse: null,
-    lastverse: null,
-    version: null,
-    v11n: null,
-  } as LocationTypeVK;
-  const dotLocation = loc.split('.');
-  const [sn, ch, vs, lv, v11n] = dotLocation;
-  if (dotLocation[0] !== undefined) retval.book = sn;
-  if (dotLocation[1] !== undefined) retval.chapter = Number(ch);
-  if (dotLocation[2] !== undefined) retval.verse = Number(vs);
-  if (dotLocation[3] !== undefined) retval.lastverse = Number(lv);
-  if (dotLocation[4] !== undefined) retval.v11n = v11n as V11nType;
-  if (version) retval.version = version;
+// LibSword.getMaxVerse returns an erroneous number if vkeytext's
+// chapter is not part of v11n, so check here first.
+// NOTE: mutil has this same function.
+export function getMaxVerse(v11n: V11nType, vkeytext: string) {
+  const maxch = getMaxChapter(v11n, vkeytext);
+  return maxch ? G.LibSword.getMaxVerse(v11n, vkeytext) : 0;
+}
 
-  return retval;
+export function convertLocationVK(
+  l: LocationVKType,
+  tov11n: V11nType
+): LocationVKType {
+  const fromv11n = l.v11n;
+  if (!canDoConvertLocation(G.BkChsInV11n, l, tov11n)) return l;
+  const conv = dotLocation2LocationVK(
+    G.LibSword.convertLocation(
+      fromv11n,
+      [l.book, l.chapter, l.verse, l.lastverse].filter(Boolean).join('.'),
+      tov11n
+    ),
+    tov11n
+  );
+  return conv;
+}
+
+// Input location may have the forms:
+// Matt 3:5, John 3:16-John 3:21, John.3, John.3.5, John.3.16-John.3.16.21, or John.3.7.10.
+// If version is not a Bible, or does not have the book where location is, then an alternate
+// Bible version is used and the location is converted to the new verse system.
+//
+// The returned LocationVKType applies to the returned text that was found.
+// Null is returned if verse text cannot be found in any Bible module.
+//
+// Is module a Bible, or does module specify another reference Bible in its config file? Then use that.
+// If version does not yield verse text, then look at visible tabs in their order.
+// If visible tabs do not yield verse text, then look at hidden tabs in their order.
+export function findAVerseText(
+  module: string,
+  reference: string,
+  tabs: string[],
+  keepNotes: boolean
+): (LocationVKType & { text: string }) | null {
+  if (!(module in G.Tab)) return null;
+
+  const { v11n } = G.Tab[module];
+  if (!v11n) return null;
+  let location = { ...string2LocationVK(reference), text: '' };
+  location.v11n = v11n;
+
+  // Is module a Bible, or does it specify a Bible?
+  if (getModuleLongType(module) === C.BIBLE) {
+    location.version = module;
+  } else {
+    const bibles = getCompanionModules(module);
+    const bible = !bibles.length || !(bibles[0] in G.Tab) ? null : bibles[0];
+    const tov11n = bible && G.Tab[bible].v11n;
+    if (tov11n) {
+      location.version = bible;
+      location = { ...convertLocationVK(location, tov11n), text: '' };
+    }
+  }
+
+  // If we have a Bible, try it first.
+  if (location.version && location.version in G.Tab) {
+    location.text = G.LibSword.getVerseText(
+      location.version,
+      [location.book, location.chapter, location.verse, location.lastverse]
+        .filter(Boolean)
+        .join('.'),
+      keepNotes
+    ).replace(/\n/g, ' ');
+    if (location.text && location.text.length > 7) {
+      return location;
+    }
+    location.text = '';
+  }
+
+  // Passed version did not yield verse text. So now look at tabs...
+  const { book } = location;
+  for (let v = 0; v < G.Tabs.length; v += 1) {
+    const tab = G.Tabs[v];
+    if (tab.module !== C.BIBLE || !tab.v11n) continue;
+    const abooks = G.BooksInModule[tab.module];
+    let ab;
+    for (ab = 0; ab < abooks.length; ab += 1) {
+      if (abooks[ab] === book) break;
+    }
+    if (ab === abooks.length) continue;
+    const tlocation = convertLocationVK(location, tab.v11n);
+    const text = G.LibSword.getVerseText(
+      tab.module,
+      [tlocation.book, tlocation.chapter, tlocation.verse, tlocation.lastverse]
+        .filter(Boolean)
+        .join('.'),
+      keepNotes
+    ).replace(/\n/g, ' ');
+    if (text && text.length > 7) {
+      // We have a valid result. If this version's tab is showing, then return it
+      // otherwise save this result (unless a valid result was already saved). If
+      // no visible tab match is found, this saved result will be returned.
+      if (!location.text) {
+        location = { ...tlocation, text };
+      }
+      if (tabs.includes(tab.module)) return location;
+    }
+  }
+
+  return location.text ? location : null;
 }
 
 // Replaces character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
@@ -489,6 +542,10 @@ export function getContextData(elem: HTMLElement): ContextData {
   const contextModule = getContextModule(elem);
   if (contextModule) module = contextModule;
 
+  const v11n =
+    (contextModule && contextModule in G.Tab && G.Tab[contextModule].v11n) ||
+    'KJV';
+
   let search: SearchType | null = null;
   let lemma = null;
   const snx = ofClass(['sn'], elem);
@@ -524,7 +581,7 @@ export function getContextData(elem: HTMLElement): ContextData {
   const info = deepClone(TargetInfo);
   if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
     selection = selob.toString();
-    selectedLocationVK = parseLocation(selection);
+    selectedLocationVK = parseLocation(selection, v11n);
     getTargetsFromSelection(info, selob);
   } else {
     getTargetsFromElement(info, elem);
@@ -582,12 +639,13 @@ function identifyBook(
 // then a result will only be returned if it is the only possible match.
 export function parseLocation(
   text: string,
+  v11n: V11nType,
   noVariations = false,
   mustBeUnique = false
-): LocationTypeVK | null {
+): LocationVKType | null {
   let loc2parse = text;
 
-  const dot = dotStringLoc2ObjectLoc(loc2parse);
+  const dot = dotLocation2LocationVK(loc2parse, v11n);
   // if loc2parse started with a book code assume it's a valid osisRef
   if (dot.book && dot.book in G.Book) {
     return dot;
@@ -602,12 +660,13 @@ export function parseLocation(
   }
 
   const location = {
+    v11n,
     book: '',
     chapter: 0,
     verse: null,
     lastverse: null,
     version: null,
-  } as LocationTypeVK;
+  } as LocationVKType;
 
   let has1chap;
   let shft; // book=1, chap=2, verse=3, lastverse=4
@@ -646,6 +705,7 @@ export function parseLocation(
           book.modules.forEach((mod) => {
             if (stop) return;
             location.version = mod;
+            location.v11n = (mod in G.Tab && G.Tab[mod].v11n) || 'KJV';
             if (mod in G.BooksInModule && G.BooksInModule[mod].includes(code))
               stop = true;
           });
@@ -675,143 +735,6 @@ export function getCompanionModules(mod: string) {
   const cms = G.LibSword.getModuleInformation(mod, 'Companion');
   if (cms !== C.NOTFOUND) return cms.split(/\s*,\s*/);
   return [];
-}
-
-// Converts a short book reference into readable text in the locale language, and can handle from-to cases
-// Possible inputs: bk.c.v[.lv][-bk.c.v[.lv]]
-// Possible outputs:
-//    bk c:v
-//    bk c:v-lv
-//    bk c:v-lv, bk c:v-lv
-export function ref2ProgramLocaleText(reference: string, notHTML?: boolean) {
-  let separator = '';
-
-  const localeRTL = G.LocaleConfigs[i18next.language].direction === 'rtl';
-  const entity = localeRTL ? '&rlm;' : '&lrm;';
-  const char = localeRTL
-    ? String.fromCharCode(8207)
-    : String.fromCharCode(8206);
-
-  const dc = notHTML ? char : entity;
-
-  let retv = dc;
-  reference.split('-').forEach((refx) => {
-    // Some ref names returned by xulsword have a leading space!! Remove it first...
-    const ref = refx.replace(/^\s*/, '');
-    const rp = ref.split('.');
-    const [bk, ch, vs, lv] = rp;
-    const bName = G.Book[bk]?.name;
-    if (vs && lv && vs === lv) {
-      rp.pop();
-    }
-    if (rp.length === 4) {
-      if (!bName) {
-        jsdump(`WARNING: Didn't find ref >${ref}< in ref2ProgramLocaleText\n`);
-      } else if (separator) {
-        retv += `${dc}-${lv}`;
-      } else {
-        retv += `${separator}${bName}${dc} ${ch}:${dc}${vs}${dc}-${lv}`;
-      }
-      separator = ', ';
-    } else if (rp.length === 3) {
-      if (!bName) {
-        jsdump(`WARNING: Didn't find ref >${ref}< in ref2ProgramLocaleText\n`);
-      } else if (separator) {
-        retv += `${dc}-${vs}`;
-      } else {
-        retv += `${separator}${bName}${dc} ${ch}:${dc}${vs}`;
-      }
-      separator = `${dc} ${dc}-${dc} `;
-    }
-  });
-
-  return dString(retv);
-}
-
-// Input location may have the forms:
-// Matt 3:5, John 3:16-John 3:21, John.3, John.3.5, John.3.16-John.3.16.21, or John.3.7.10.
-// If version is not a Bible, or does not have the book where location is, then an alternate
-// Bible version is used and the location is converted to the new verse system.
-//
-// Returned location is always dot delimited: book.ch.vs.lv
-// Returned module is the module in which the verse was found.
-// Returned text is empty string if verse text cannot be found in any Bible module.
-//
-// Is module a Bible, or does module specify another reference Bible in its config file? Then use that.
-// If version does not yield verse text, then look at visible tabs in their order.
-// If visible tabs do not yield verse text, then look at hidden tabs in their order.
-export function findAVerseText(
-  module: string,
-  locationIn: string,
-  tabs: string[],
-  keepNotes: boolean
-): { module: string; location: string; text: string } | null {
-  if (!(module in G.Tab)) return null;
-
-  // Convert input location to dot format
-  const { v11n } = G.Tab[module];
-  if (!v11n) return null;
-  const location = convertLocation(v11n, locationIn, v11n);
-  let text = '';
-  let ret = { module, location, text };
-
-  // Is version a Bible, or does version specify a Bible?
-  let bible = null;
-  let bibleLocation = location;
-  if (getModuleLongType(module) === C.BIBLE) bible = module;
-  else {
-    bible = getCompanionModules(module);
-    bible = !bible.length || !(bible[0] in G.Tab) ? null : bible[0];
-    const tov11n = bible && G.Tab[bible].v11n;
-    if (tov11n) {
-      bibleLocation = convertLocation(v11n, location, tov11n);
-    }
-  }
-  // If we have a Bible, try it first.
-  if (bible && bible in G.Tab) {
-    try {
-      text = G.LibSword.getVerseText(bible, bibleLocation, keepNotes).replace(
-        /\n/g,
-        ' '
-      );
-    } catch (er) {
-      text = '';
-    }
-    if (text && text.length > 7) {
-      ret.module = bible;
-      ret.location = location;
-      ret.text = text;
-      return ret;
-    }
-  }
-
-  // Passed version does not yield verse text. So now look at tabs...
-  const [book] = location.split('.');
-  for (let v = 0; v < G.Tabs.length; v += 1) {
-    const tab = G.Tabs[v];
-    if (tab.module !== C.BIBLE || !tab.v11n) continue;
-    const abooks = G.BooksInModule[tab.module];
-    let ab;
-    for (ab = 0; ab < abooks.length; ab += 1) {
-      if (abooks[ab] === book) break;
-    }
-    if (ab === abooks.length) continue;
-    const tlocation = convertLocation(v11n, location, tab.v11n);
-    text = G.LibSword.getVerseText(tab.module, tlocation, keepNotes).replace(
-      /\n/g,
-      ' '
-    );
-    if (text && text.length > 7) {
-      const r = { module: tab.module, location: tlocation, text };
-      // We have a valid result. If this version's tab is showing, then return it
-      // otherwise save this result (unless a valid result was already saved). If
-      // no visible tab match is found, this saved result will be returned.
-      if (tabs.includes(tab.module)) return r;
-      if (!ret.text) ret = r;
-    }
-  }
-
-  return ret;
 }
 
 // Return the values of component state Prefs. Component state Prefs are
@@ -940,34 +863,4 @@ export function setPrefFromState(
   });
   if (prefsChanged) G.setGlobalMenuFromPref();
   return prefsChanged;
-}
-
-// LibSword.getMaxChapter returns an erroneous number if vkeytext's
-// book is not part of v11n, so it would be necessary to check here
-// first. But a LibSword call is unnecessary with G.BooksInV11n.
-// NOTE: mutil has this same function.
-export function getMaxChapter(v11n: V11nType, vkeytext: string) {
-  const [book] = vkeytext.split(/[\s.:]/);
-  if (!(v11n in G.BkChsInV11n)) return 0;
-  if (!(book in G.BkChsInV11n[v11n])) return 0;
-  return G.BkChsInV11n[v11n][book];
-}
-
-// LibSword.getMaxVerse returns an erroneous number if vkeytext's
-// chapter is not part of v11n, so check here first.
-// NOTE: mutil has this same function.
-export function getMaxVerse(v11n: V11nType, vkeytext: string) {
-  const maxch = getMaxChapter(v11n, vkeytext);
-  return maxch ? G.LibSword.getMaxVerse(v11n, vkeytext) : 0;
-}
-
-export function convertLocation(
-  fromv11n: V11nType,
-  vkeytext: string,
-  tov11n: V11nType
-): string {
-  const r = ref2DotString(vkeytext);
-  return doConvertLocation(G.BkChsInV11n, fromv11n, vkeytext, tov11n)
-    ? G.LibSword.convertLocation(fromv11n, r, tov11n)
-    : r;
 }

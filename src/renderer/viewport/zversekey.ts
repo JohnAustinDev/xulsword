@@ -5,94 +5,107 @@ import i18next from 'i18next';
 import C from '../../constant';
 import {
   deepClone,
+  dotLocation2LocationVK,
   dString,
   getLocalizedChapterTerm,
   isASCII,
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import {
-  convertLocation,
+  convertLocationVK,
   findAVerseText,
   getMaxChapter,
   getMaxVerse,
   jsdump,
+  locationVK2String,
   parseLocation,
-  ref2ProgramLocaleText,
 } from '../rutil';
 import G from '../rg';
 
-import type { ShowType, V11nType, XulswordStatePref } from '../../type';
+import type {
+  LocationVKType,
+  ShowType,
+  V11nType,
+  XulswordStatePref,
+} from '../../type';
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type Atext from './atext';
 import type { AtextProps, AtextState } from './atext';
 import type ViewportWin from './viewportWin';
 
-// Looks for a "." delineated OSIS Scripture reference, checks, and normalizes it.
-// Reads any osisRef target:ref and returns mod=null if it's not installed.
-// Returns null if this is not an OSIS type reference.
-// Converts book.c to book.c.vfirst-book.c.vlast
-// And returns one of the following forms:
-// a)   book.c.v
-// b)   book.c.v-book.c.v
-function normalizeOsisReference(refx: string, bibleMod: string) {
-  let ref = refx;
+// Returns a normalized osisRef in the v11n of module if module is
+// intalled. If it's not installed, return.module is null. If ref
+// is not an osisRef null is returned. The osisRef is normalized by
+// converting book.c to book.c.1-book.c.last when possible, and
+// always returning one of the following forms:
+// book.c
+// book.c.v
+// book.c.v-v
+// book.c.v-book.c.v
+function normalizeOsisReference(osisRef: string, module: string) {
+  let ref = osisRef;
 
-  const ret = { mod: bibleMod as string | null, ref: null as string | null };
-  if (ref.search('null') !== -1) return ret;
+  const r: { osisRef: string; module: string | null } | null = {
+    osisRef: '',
+    module: module in G.Tab ? module : null,
+  };
+  ref = ref.trim();
+  const modulev11n = module in G.Tab && G.Tab[module].v11n;
 
-  ref = ref.replace(/^\s+/, ''); // remove beginning white space
-  ref = ref.replace(/\s+$/, ''); // remove trailing white space
-
-  // does osisRef have a target module?
+  // Change module to any osisRef work prefix, and convert the references to v11n.
   const tm = ref.match(/^(\w+):/);
   if (tm) {
     const [, m] = tm;
+    const mv11n = m in G.Tab && G.Tab[m].v11n;
     ref = ref.replace(/^\w+:/, '');
-
-    if (!/Bible/i.test(m)) {
-      if (ret.mod && ret.mod in G.Tab && m in G.Tab) {
-        const from = G.Tab[m].v11n || 'KJV';
-        ref = convertLocation(from, ref, G.Tab[ret.mod].v11n || from);
-      } else if (m in G.Tab) ret.mod = m;
-      else {
-        ret.mod = null;
-        jsdump('WARN: Target module is not installed!');
-      }
+    if (mv11n && modulev11n) {
+      const rss: LocationVKType[] = [];
+      ref.split('-').forEach((rs) => {
+        let rs2 = dotLocation2LocationVK(rs, mv11n, m);
+        if (!/Bible/i.test(m) && r.module && r.module in G.Tab && m in G.Tab) {
+          rs2 = convertLocationVK(rs2, modulev11n);
+        }
+        rss.push(rs2);
+      });
+      ref = rss
+        .map((l) => {
+          if (!l.book || !l.chapter) return null;
+          return [l.book, l.chapter, l.verse].filter(Boolean).join('.');
+        })
+        .filter(Boolean)
+        .join('-');
     }
   }
 
   if (/^[^.]+\.\d+$/.test(ref)) {
     // bk.c
-    if (ret.mod && ret.mod in G.Tab)
-      ret.ref = `${ref}.1-${ref}.${getMaxVerse(
-        G.Tab[ret.mod].v11n || 'KJV',
-        ref
-      )}`;
-    else ret.ref = ref;
+    if (modulev11n)
+      r.osisRef = `${ref}.1-${ref}.${getMaxVerse(modulev11n, ref)}`;
+    else r.osisRef = ref;
+    return r;
   }
 
-  if (/^[^.]+\.\d+\.\d+$/.test(ref))
+  if (/^[^.]+\.\d+\.\d+$/.test(ref)) {
     // bk.c.v
-    ret.ref = ref;
-
-  if (/^[^.]+\.\d+\.\d+\.\d+$/.test(ref)) {
-    // bk.c.v1.v2
-    const p = ref.match(/^(([^.]+\.\d+)\.\d+)\.(\d+)$/);
-    if (p) ret.ref = `${p[1]}-${p[2]}.${p[3]}`;
+    r.osisRef = ref;
+    return r;
   }
 
-  if (/^[^.]+\.\d+\.\d+-\d+$/.test(ref)) {
+  const p = ref.match(/(^[^.]+\.\d+\.)(\d+)-(\d+)$/);
+  if (p) {
     // bk.c.v1-v2
-    const p = ref.match(/(^[^.]+\.\d+\.)(\d+)-(\d+)$/);
-    if (p) ret.ref = `${p[1]}${p[2]}-${p[1]}${p[3]}`;
+    r.osisRef = `${p[1]}${p[2]}-${p[1]}${p[3]}`;
+    return r;
   }
 
-  if (/^[^.]+\.\d+\.\d+-[^.]+\.\d+\.\d+$/.test(ref))
+  if (/^[^.]+\.\d+\.\d+-[^.]+\.\d+\.\d+$/.test(ref)) {
     // bk.c.v-bk.c.v
-    ret.ref = ref;
+    r.osisRef = ref;
+    return r;
+  }
 
-  return ret;
+  return null;
 }
 
 // Turns headings on before reading introductions
@@ -213,29 +226,30 @@ export function getChapterHeading(props: {
 }
 
 // This function tries to read a ";" separated list of Scripture
-// references and return HTML which describes the references and their
-// texts. It looks for OSIS type references as well as free
-// hand references which may include ","s. It will supply missing
-// book, chapter, and verse information using context and/or
-// previously read information (as is often the case after a ",").
-// This function also may look through multiple Bible texts until it
-// finds the passage. It also takes care of verse system
-// conversions (KJV and Synodal only, right now).
+// references and returns HTML of the reference texts. It looks for
+// osisRef type references as well as free hand references which
+// may include commas. It will supply missing book, chapter, and verse
+// information using previously read information (as is often the
+// case after a comma). When necessary. this function will look through
+// other Bible versions until it finds a version that includes the
+// passage. It also takes care of verse system conversions in that process.
 function getRefHTML(
-  w: number,
+  refsx: string,
   mod: string,
-  body: string,
-  keepTextNotes: boolean
-) {
-  const ref = body.split(/\s*;\s*/);
+  w = 0,
+  keepTextNotes = false
+): string {
+  const v11nx = mod in G.Tab ? G.Tab[mod].v11n : '';
+  const v11n = v11nx || 'KJV';
 
   // are there any commas? then add the sub refs to the list...
-  for (let i = 0; i < ref.length; i += 1) {
-    const verses = ref[i].split(/\s*,\s*/);
+  const refs = refsx.split(/\s*;\s*/);
+  for (let i = 0; i < refs.length; i += 1) {
+    const verses = refs[i].split(/\s*,\s*/);
     if (verses.length !== 1) {
       let r = 1;
       for (let v = 0; v < verses.length; v += 1) {
-        ref.splice(i + 1 - r, r, verses[v]);
+        refs.splice(i + 1 - r, r, verses[v]);
         i += 1;
         i -= r;
         r = 0;
@@ -245,28 +259,22 @@ function getRefHTML(
 
   const tabs = G.Prefs.getComplexValue('xulsword.tabs');
 
-  // set default starting values, which may be used to fill in missing
-  // values which were intended to be assumed from context
-  let bk = G.Prefs.getCharPref('xulsword.book') as string | null;
-  let ch = G.Prefs.getIntPref('xulsword.chapter') as number | null;
-  let vs = 1 as number | null;
-
+  let bk = '';
+  let ch = 0;
+  let vs = 0;
   let html = '';
   let sep = '';
-  for (let i = 0; i < ref.length; i += 1) {
-    if (!ref[i]) continue;
-    let failed = false;
+  refs.forEach((ref) => {
+    if (!ref) return;
 
     // is this a reference to a footnote?
-    if (ref[i].indexOf('!') !== -1) {
+    if (ref.indexOf('!') !== -1) {
       let footnote = '-----';
-
-      const m = ref[i].match(/^\s*(([^:]+):)?([^!:]+)(!.*?)\s*$/);
+      const m = ref.match(/^\s*(([^:]+):)?([^!:]+)(!.*?)\s*$/);
       if (m) {
         const rmod = m[1] ? m[2] : mod;
         const rref = m[3];
         const ext = m[4];
-
         // find the footnote which is being referenced
         G.LibSword.getChapterText(rmod, rref);
         const notes = G.LibSword.getNotes().split(/(?=<div[^>]+class="nlist")/);
@@ -278,7 +286,6 @@ function getRefHTML(
           }
         }
       }
-
       html += sep;
       html += `<span class="fntext cs-${
         isASCII(footnote) ? C.DEFAULTLOCALE : mod
@@ -288,67 +295,89 @@ function getRefHTML(
           : ''
       }">${footnote}</span>`;
       sep = '<span class="cr-sep"></span>';
-
-      continue;
+      return;
     }
 
     // is this ref an osisRef type reference?
-    let r = normalizeOsisReference(ref[i], mod);
+    let r = normalizeOsisReference(ref, mod);
 
     // if not, then parse it and fill in any missing values from context
-    if (!r.ref) {
-      const loc = parseLocation(ref[i], false, true);
+    if (!r) {
+      r = { osisRef: '', module: mod };
+      const loc = parseLocation(ref, v11n, false, true);
       if (loc) {
         bk = loc.book || bk;
         ch = loc.chapter || ch;
         vs = loc.verse || vs;
 
-        r.ref = `${bk}.${ch}.${vs}`;
+        r.osisRef = [bk, ch, vs].filter(Boolean).join('.');
 
-        if (loc.lastverse) {
-          r.ref += `-${bk}.${ch}.${loc.lastverse}`;
+        if (bk && ch && vs && loc.lastverse && loc.lastverse > vs) {
+          r.osisRef += `-${bk}.${ch}.${loc.lastverse}`;
         }
-
-        r = normalizeOsisReference(r.ref, mod);
-
-        if (!r.ref) failed = true;
-      } else failed = true;
+        r = normalizeOsisReference(r.osisRef, mod);
+      }
     }
-    if (failed) {
+    if (!r) {
       // then reset our context, since we may have missed something along the way
-      bk = null;
-      ch = null;
-      vs = null;
-      continue;
+      bk = '';
+      ch = 0;
+      vs = 0;
+      return;
     }
-    let aVerse;
-    if (r.mod && r.ref)
-      aVerse = findAVerseText(r.mod, r.ref, tabs[w], keepTextNotes);
-    if (!aVerse)
-      aVerse = {
-        text: `(${ref[i]} ??)`,
-        location: r.ref,
-        module: mod,
-      };
-    if (/^\s*$/.test(aVerse.text)) aVerse.text = '-----';
-
-    if (aVerse.location) {
-      const rmod = aVerse.module;
-      html += sep;
-      html += `<a class="crref" data-title="${aVerse.location}.${rmod}">`;
-      html += ref2ProgramLocaleText(aVerse.location);
-      html += '</a>';
-      html += `<span class="crtext cs-${rmod}${
-        G.ModuleConfigs[rmod].direction !== G.ProgramConfig.direction
-          ? ' opposing-program-direction'
-          : ''
-      }">`;
-      html += aVerse.text + (rmod !== mod ? ` (${G.Tab[rmod].label})` : '');
-      html += '</span>';
-
-      sep = '<span class="cr-sep"></span>';
+    let aVerse:
+      | (LocationVKType & {
+          text: string;
+        })
+      | null = null;
+    if (r.module && r.osisRef)
+      aVerse = findAVerseText(r.module, r.osisRef, tabs[w], keepTextNotes);
+    if (!aVerse) {
+      r.osisRef.split('-').forEach((or) => {
+        if (!aVerse)
+          aVerse = {
+            ...dotLocation2LocationVK(or, v11n, mod),
+            text: `(${ref} ??)`,
+          };
+        else {
+          const last = dotLocation2LocationVK(or, v11n, mod);
+          if (
+            last.book === aVerse.book &&
+            last.chapter === aVerse.chapter &&
+            last.verse
+          ) {
+            aVerse.lastverse = last.verse;
+          }
+        }
+      });
     }
-  }
+    if (!aVerse) return;
+    const { book, chapter } = aVerse;
+    let { verse, lastverse, version, text } = aVerse;
+    if (/^\s*$/.test(text)) text = '-----';
+    if (!verse) verse = 1;
+    if (!lastverse) lastverse = verse;
+    version = version || mod;
+    html += sep;
+    html += `<a class="crref" data-title="${[
+      book,
+      chapter,
+      verse,
+      lastverse,
+      version,
+    ].join('.')}">`;
+    html += locationVK2String(aVerse);
+    html += '</a>';
+    html += `<span class="crtext cs-${version}${
+      G.ModuleConfigs[version].direction !== G.ProgramConfig.direction
+        ? ' opposing-program-direction'
+        : ''
+    }">`;
+    html += text + (version !== mod ? ` (${G.Tab[version].label})` : '');
+    html += '</span>';
+
+    sep = '<span class="cr-sep"></span>';
+  });
 
   return html;
 }
@@ -451,7 +480,7 @@ export function getNoteHTML(
         switch (p.ntype) {
           case 'cr':
             // If this is a cross reference, then parse the note body for references and display them
-            t += getRefHTML(w, mod, body, keepTextNotes);
+            t += getRefHTML(body, mod, w, keepTextNotes);
             break;
 
           case 'fn':
@@ -912,17 +941,23 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
         });
       } else if (stateType === 'viewportparent') {
         const from = G.Tab[module].v11n || 'KJV';
-        const [book, chapter, verse] = convertLocation(
-          from,
-          [bk, ch, vs, vs].join('.'),
-          windowV11n || from
-        ).split('.');
+        const loc = convertLocationVK(
+          {
+            book: bk,
+            chapter: Number(ch),
+            verse: vs,
+            lastverse: vs,
+            v11n: from,
+          },
+          windowV11n || 'KJV'
+        );
+        const { book, chapter, verse } = loc;
         const flagScroll = xulswordstate.flagScroll.map(() => C.VSCROLL.verse);
         flagScroll[index] = mysf;
         const s: Partial<XulswordStatePref> = {
           book,
-          chapter: Number(chapter),
-          verse: Number(verse),
+          chapter,
+          verse: verse || 1,
           flagScroll,
         };
         caller.setState({ ...s, flagScroll });
@@ -943,27 +978,24 @@ export function highlight(
   });
 
   if (!selection || !windowV11n) return;
-
-  const [book, ch, vs, lv] = convertLocation(
-    windowV11n,
-    selection,
+  const { book, chapter, verse, lastverse } = convertLocationVK(
+    dotLocation2LocationVK(selection, windowV11n, module),
     G.Tab[module].v11n || windowV11n
-  ).split('.');
-  const chapter = Number(ch);
-  const verse = Number(vs);
-  const lastverse = Number(lv);
+  );
+  if (verse) {
+    const lv = lastverse || verse;
+    // Then find the verse element(s) to highlight
+    let av = sbe.firstChild as HTMLElement | null;
+    while (av) {
+      const v = getElementInfo(av);
+      if (v && v.type === 'vs') {
+        let hi = v.bk === book && v.ch === chapter;
+        if (!v.lv || !v.vs || v.lv < verse || v.vs > lv) hi = false;
+        if (hi) av.classList.add('hl');
+      }
 
-  // Then find the verse element(s) to highlight
-  let av = sbe.firstChild as HTMLElement | null;
-  while (av) {
-    const v = getElementInfo(av);
-    if (v && v.type === 'vs') {
-      let hi = v.bk === book && v.ch === chapter;
-      if (!v.lv || !v.vs || v.lv < verse || v.vs > lastverse) hi = false;
-      if (hi) av.classList.add('hl');
+      av = av.nextSibling as HTMLElement | null;
     }
-
-    av = av.nextSibling as HTMLElement | null;
   }
 }
 

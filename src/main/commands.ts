@@ -2,8 +2,8 @@
 /* eslint-disable prefer-rest-params */
 import { CommandsPublic } from '../type';
 import C from '../constant';
-import { JSON_stringify } from '../common';
-import { convertLocation, getTab, setGlobalStateFromPref } from './minit';
+import { dotLocation2LocationVK, JSON_stringify } from '../common';
+import { convertLocationVK, getTab, setGlobalStateFromPref } from './minit';
 import Prefs from './modules/prefs';
 
 const Commands: typeof CommandsPublic = {
@@ -142,16 +142,21 @@ const Commands: typeof CommandsPublic = {
     const vkm = panels.find((m: string | null) => m && tab[m].isVerseKey);
     const vkmv11n = tab[vkm].v11n;
     if (vkm && vkmv11n && vkmv11n !== v11n) {
-      const [bks, chs, vss] = convertLocation(
-        v11n,
-        [book, chapter, verse].join('.'),
-        vkmv11n
-      ).split('.');
-      const nsel = sel ? convertLocation(v11n, sel, vkmv11n) : null;
-      book = bks;
-      chapter = Number(chs);
-      verse = Number(vss);
-      selection = nsel || '';
+      const loc = convertLocationVK({ book, chapter, verse, v11n }, vkmv11n);
+      ({ book, chapter } = loc);
+      verse = loc.verse || 1;
+      const soc = sel
+        ? convertLocationVK(dotLocation2LocationVK(sel, v11n), vkmv11n)
+        : null;
+      selection =
+        (soc &&
+          [
+            soc.book,
+            soc.chapter,
+            soc.verse || 1,
+            soc.lastverse || soc.verse || 1,
+          ].join('.')) ||
+        '';
     }
     const fs = panels.map(() => flagScroll);
     Prefs.setCharPref('xulsword.book', book);

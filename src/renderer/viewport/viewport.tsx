@@ -21,7 +21,7 @@ import {
   PopupParentProps,
 } from '../popup/popupParentH';
 import G from '../rg';
-import { clearPending, convertLocation, jsdump } from '../rutil';
+import { clearPending, convertLocationVK, jsdump } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -36,7 +36,7 @@ import Atext from './atext';
 import '../libxul/xul.css';
 import './viewport.css';
 
-import type { V11nType } from '../../type';
+import type { LocationVKType, V11nType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -318,17 +318,21 @@ class Viewport extends React.Component implements PopupParent {
     });
 
     // Each text's book/chapter/verse must be according to windowV11n.
-    const loc: any = [];
+    const locs: LocationVKType[] = [];
     panels.forEach(() => {
-      loc.push(`${book}.${chapter}.${verse}.${verse}`);
+      locs.push({
+        book,
+        chapter,
+        verse,
+        v11n: windowV11n || 'KJV',
+      });
     });
     panels.forEach((panel, i) => {
       const tov11n = panel && G.Tab[panel].v11n;
       if (panel && G.Tab[panel].isVerseKey && tov11n && windowV11n) {
-        loc[i] = convertLocation(windowV11n, loc[i], tov11n);
+        locs[i] = convertLocationVK(locs[i], tov11n);
       }
     });
-    const locs = loc.map((li: string) => li.split('.'));
 
     const numPanels = panels.filter((m) => m || m === '').length;
 
@@ -450,9 +454,9 @@ class Viewport extends React.Component implements PopupParent {
                     }}
                     panelIndex={i}
                     ownWindow={ownWindow}
-                    book={locs[i][0]}
-                    chapter={Number(locs[i][1])}
-                    verse={Number(locs[i][2])}
+                    book={locs[i].book}
+                    chapter={locs[i].chapter}
+                    verse={locs[i].verse || 1}
                     windowV11n={windowV11n}
                     columns={column}
                     module={panels[i]}

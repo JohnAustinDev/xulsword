@@ -20,7 +20,7 @@ export interface XulswordStatePref {
   keys: (string | null)[];
   selection: string;
 
-  history: HistoryTypeVK[];
+  history: HistoryVKType[];
   historyIndex: number;
 
   show: ShowType;
@@ -72,12 +72,12 @@ export type PlaceType = {
   usernotes: 'notebox' | 'popup';
 };
 
-export type HistoryTypeVK = {
+export type HistoryVKType = {
+  v11n: V11nType;
   book: string;
   chapter: number;
   verse: number;
   selection: string;
-  v11n: V11nType;
 };
 
 export type SearchType = {
@@ -91,13 +91,13 @@ export type SearchType = {
   scope?: 'SearchAll' | string;
 };
 
-export type LocationTypeVK = {
+export type LocationVKType = {
+  v11n: V11nType;
   book: string;
   chapter: number;
-  verse: number | null;
-  lastverse: number | null;
-  version: string | null;
-  v11n: V11nType | null;
+  verse?: number | null;
+  lastverse?: number | null;
+  version?: string | null;
 };
 
 export type ContextData = {
@@ -111,7 +111,7 @@ export type ContextData = {
   panelIndex: number | null;
   bookmark: unknown | null;
   selection: string | null;
-  selectedLocationVK: LocationTypeVK | null;
+  selectedLocationVK: LocationVKType | null;
   search: SearchType | null;
 };
 

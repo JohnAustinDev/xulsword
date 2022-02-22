@@ -162,7 +162,7 @@ class Bookselect extends React.Component {
   textboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { autocomp } = this.state as BookselectState;
     if (autocomp) {
-      const bk = parseLocation(e.target.value, true, true);
+      const bk = parseLocation(e.target.value, 'KJV', true, true);
       if (bk !== null && bk.book !== null) {
         this.setState({
           book: bk.book,

@@ -19,7 +19,7 @@ import {
 import G from '../rg';
 import {
   clearPending,
-  convertLocation,
+  convertLocationVK,
   getMaxChapter,
   libswordImgSrc,
   scrollIntoView,
@@ -327,25 +327,32 @@ class Atext extends React.Component {
           s &&
           windowV11n
         ) {
-          const { book: bk, chapter: ch, verse: vs } = s;
-          const [bks, chs, vss] = convertLocation(
-            G.Tab[newScroll.module].v11n || 'KJV',
-            [bk, ch, vs, vs].join('.'),
-            windowV11n
-          ).split('.');
-          s.book = bks;
-          s.chapter = Number(chs);
-          s.verse = Number(vss);
-          if (isPinned) {
-            newState = {
-              ...newState,
-              pin: { ...newPin, ...s, flagScroll: C.VSCROLL.none },
-            };
-          } else {
-            const fs = [];
-            fs[panelIndex] = C.VSCROLL.none;
-            s.flagScroll = fs;
-            setStatePref('xulsword', s);
+          const { book: bk, chapter, verse: vs } = s;
+          if (bk && chapter && vs) {
+            const loc = convertLocationVK(
+              {
+                book: bk,
+                chapter,
+                verse: vs,
+                lastverse: vs,
+                v11n: G.Tab[newScroll.module].v11n || 'KJV',
+              },
+              windowV11n
+            );
+            s.book = loc.book;
+            s.chapter = loc.chapter;
+            s.verse = loc.verse || 1;
+            if (isPinned) {
+              newState = {
+                ...newState,
+                pin: { ...newPin, ...s, flagScroll: C.VSCROLL.none },
+              };
+            } else {
+              const fs = [];
+              fs[panelIndex] = C.VSCROLL.none;
+              s.flagScroll = fs;
+              setStatePref('xulsword', s);
+            }
           }
         }
       } else if (update && type === C.DICTIONARY) {

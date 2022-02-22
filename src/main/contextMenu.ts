@@ -8,7 +8,7 @@ import setViewportTabs from './tabs';
 import Data from './modules/data';
 import Prefs from './modules/prefs';
 
-import type { ContextData, LocationTypeVK } from '../type';
+import type { ContextData, LocationVKType } from '../type';
 
 export default function contextMenu(window: BrowserWindow): () => void {
   const cm = Data as { data: ContextData };
@@ -108,7 +108,7 @@ export default function contextMenu(window: BrowserWindow): () => void {
         enabled: Boolean(cm.data.selectedLocationVK),
         click: ((data) => {
           return () => {
-            const loc = data.selectedLocationVK as LocationTypeVK;
+            const loc = data.selectedLocationVK as LocationVKType;
             if (typeof loc === 'object') {
               const tab = getTab();
               const modv11n =
@@ -145,7 +145,7 @@ export default function contextMenu(window: BrowserWindow): () => void {
               const vkm = panels.find(
                 (m: string | null) => m && m in tab && tab[m].isVerseKey
               );
-              let v11n = vkm ? tab[vkm].v11n : 'KJV';
+              let v11n = (vkm && tab[vkm].v11n) || 'KJV';
               let book = Prefs.getCharPref('xulsword.book');
               let chapter = Prefs.getIntPref('xulsword.chapter');
               if (data.book && data.chapter) {
@@ -153,7 +153,7 @@ export default function contextMenu(window: BrowserWindow): () => void {
                 chapter = data.chapter as number;
                 const mod = data.module as string | null;
                 if (mod && mod in tab) {
-                  v11n = tab[mod].v11n;
+                  v11n = tab[mod].v11n || 'KJV';
                 }
               }
               let lastverse = data.lastverse as number | null;

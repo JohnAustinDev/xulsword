@@ -7,12 +7,7 @@ import Cache from '../../cache';
 import { decodeOSISRef, escapeRE, JSON_stringify, ofClass } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import {
-  convertDotString,
-  convertLocation,
-  getContextData,
-  scrollIntoView,
-} from '../rutil';
+import { convertLocationVK, getContextData, scrollIntoView } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { textChange, aTextWheelScroll } from './zversekey';
 
@@ -228,14 +223,17 @@ export default function handler(
             chapter: c,
             verse: v,
           } = targ.element.dataset;
-          if (m) {
-            const from = [b, c, v, v, G.Tab[m].v11n].join('.');
-            const to = windowV11n ? convertDotString(from, windowV11n) : from;
-            const [book, chapter, verse] = to.split('.');
+          const v11n = m && G.Tab[m].v11n;
+          if (b && v && m && v11n) {
+            const l = convertLocationVK(
+              { book: b, chapter: Number(c), verse: Number(v), v11n },
+              windowV11n
+            );
+            const { book, chapter, verse } = l;
             this.setState({
               book,
-              chapter: Number(chapter),
-              verse: Number(verse),
+              chapter,
+              verse,
               selection: '',
             });
           }
@@ -370,20 +368,30 @@ export default function handler(
               case C.BIBLE:
               case C.COMMENTARY: {
                 const lvv = p.lv && targ.type === 'crref' ? p.lv : p.vs;
-                const [bk, ch, vs, lv] = convertLocation(
-                  G.Tab[p.mod].v11n || 'KJV',
-                  [p.bk, p.ch, p.vs, lvv].join('.'),
+                const loc = convertLocationVK(
+                  {
+                    book: p.bk,
+                    chapter: Number(p.ch),
+                    verse: p.vs,
+                    lastverse: lvv,
+                    v11n: G.Tab[p.mod].v11n || 'KJV',
+                  },
                   windowV11n
-                ).split('.');
+                );
+                const { book, chapter, verse, lastverse } = loc;
                 this.setState((prevState: XulswordStatePref) => {
                   let { flagScroll } = prevState;
                   flagScroll = flagScroll.map(() => C.VSCROLL.center);
+                  const lv =
+                    book && chapter && verse && lastverse && lastverse > verse
+                      ? lastverse
+                      : 0;
                   return {
-                    book: bk,
-                    chapter: Number(ch),
-                    verse: Number(vs),
+                    book,
+                    chapter,
+                    verse: verse || 1,
                     flagScroll,
-                    selection: [bk, ch, vs, lv].join('.'),
+                    selection: lv ? [book, chapter, verse, lv].join('.') : '',
                   };
                 });
                 break;

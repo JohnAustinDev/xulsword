@@ -107,6 +107,8 @@ ipcMain.on('window', (event: IpcMainEvent, type: string, ...args: any[]) => {
       if (win === xsWindow.main && xsWindow.splash) {
         xsWindow.splash.close();
       }
+      if (process.env.NODE_ENV === 'development')
+        win.webContents.openDevTools();
       break;
     }
     case 'move-to-back': {
