@@ -147,22 +147,24 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               // eslint-disable-next-line prefer-const
               let { book, chapter, verse, lastverse } = location;
               if (book) {
-                if (!chapter) chapter = 1;
-                if (!verse) verse = 1;
-                const selection =
-                  book && chapter && verse > 1
-                    ? { book, chapter, verse, lastverse, v11n }
-                    : null;
-                const flagScroll = pfs.map(() => C.VSCROLL.center);
-                const s: Partial<XulswordState> = {
+                const s: Partial<XulswordState> | null = verseChange(
+                  v11n,
                   book,
                   chapter,
-                  verse,
-                  selection,
-                  bsreset,
-                  flagScroll,
-                };
-                return s;
+                  verse || 1,
+                  0
+                );
+                if (s) {
+                  const selection =
+                    chapter && verse
+                      ? { book, chapter, verse, lastverse, v11n }
+                      : null;
+                  const flagScroll = pfs.map(() => C.VSCROLL.center);
+                  s.selection = selection;
+                  s.bsreset = bsreset;
+                  s.flagScroll = flagScroll;
+                  return s;
+                }
               }
             }
             return { bsreset };
@@ -173,16 +175,20 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           this.setState((prevState: XulswordState) => {
             const { windowV11n, flagScroll } = prevState;
             if (!windowV11n) return null;
+            // reset Bookselect even if book doesn't change
+            const bsreset = prevState.bsreset + 1;
             const s = chapterChange(
               prevState.book,
               Number(value),
               0,
               getMaxChapter(windowV11n, prevState.book)
             );
-            if (!s) return null;
-            s.selection = null;
-            s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
-            return s;
+            if (s) {
+              s.selection = null;
+              s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
+              return s;
+            }
+            return { bsreset };
           });
           break;
         }
@@ -190,25 +196,30 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
           this.setState((prevState: XulswordState) => {
             const { windowV11n, flagScroll } = prevState;
             if (!windowV11n) return null;
+            // reset Bookselect even if book doesn't change
+            const bsreset = prevState.bsreset + 1;
             const s = verseChange(
               windowV11n,
               prevState.book,
               prevState.chapter,
               Number(value)
             );
-            if (!s) return null;
-            s.selection =
-              s.book && s.chapter
-                ? {
-                    book: s.book,
-                    chapter: s.chapter,
-                    verse: s.verse,
-                    lastverse: s.verse,
-                    v11n: windowV11n,
-                  }
-                : null;
-            s.flagScroll = flagScroll.map(() => C.VSCROLL.centerAlways);
-            return s;
+            if (s) {
+              const { book, chapter, verse } = s;
+              s.selection =
+                book && chapter
+                  ? {
+                      book,
+                      chapter,
+                      verse,
+                      lastverse: verse,
+                      v11n: windowV11n,
+                    }
+                  : null;
+              s.flagScroll = flagScroll.map(() => C.VSCROLL.centerAlways);
+              return s;
+            }
+            return { bsreset };
           });
           break;
         }
