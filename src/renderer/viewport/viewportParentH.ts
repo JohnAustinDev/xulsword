@@ -7,7 +7,7 @@ import Cache from '../../cache';
 import { decodeOSISRef, escapeRE, JSON_stringify, ofClass } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { convertLocationVK, getContextData, scrollIntoView } from '../rutil';
+import { getContextData, scrollIntoView, verseKey } from '../rutil';
 import { delayHandler } from '../libxul/xul';
 import { textChange, aTextWheelScroll } from './zversekey';
 
@@ -225,11 +225,10 @@ export default function handler(
           } = targ.element.dataset;
           const v11n = m && G.Tab[m].v11n;
           if (b && v && m && v11n) {
-            const l = convertLocationVK(
+            const { book, chapter, verse } = verseKey(
               { book: b, chapter: Number(c), verse: Number(v), v11n },
               windowV11n
-            );
-            const { book, chapter, verse } = l;
+            ).location();
             this.setState({
               book,
               chapter,
@@ -368,7 +367,7 @@ export default function handler(
               case C.BIBLE:
               case C.COMMENTARY: {
                 const lvv = p.lv && targ.type === 'crref' ? p.lv : p.vs;
-                const loc = convertLocationVK(
+                const { book, chapter, verse, lastverse } = verseKey(
                   {
                     book: p.bk,
                     chapter: Number(p.ch),
@@ -377,8 +376,7 @@ export default function handler(
                     v11n: G.Tab[p.mod].v11n || 'KJV',
                   },
                   windowV11n
-                );
-                const { book, chapter, verse, lastverse } = loc;
+                ).location();
                 this.setState((prevState: XulswordStatePref) => {
                   let { flagScroll } = prevState;
                   flagScroll = flagScroll.map(() => C.VSCROLL.center);

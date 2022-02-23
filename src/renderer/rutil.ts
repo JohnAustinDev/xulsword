@@ -5,26 +5,17 @@
 import React from 'react';
 import i18next from 'i18next';
 import C from '../constant';
+import RefParser, { RefParserOptionsType } from '../refparse';
+import VerseKey from '../versekey';
 import { ElemInfo, getElementInfo } from '../libswordElemInfo';
-import {
-  compareObjects,
-  deepClone,
-  canDoConvertLocation,
-  dotLocation2LocationVK,
-  dString,
-  escapeRE,
-  guiDirection,
-  iString,
-  ofClass,
-  string2LocationVK,
-} from '../common';
+import { compareObjects, deepClone, ofClass } from '../common';
 import G from './rg';
 
 import type {
-  BookGroupType,
   ContextData,
   LocationVKType,
   SearchType,
+  TextVKType,
   V11nType,
 } from '../type';
 
@@ -92,38 +83,6 @@ export function scrollIntoView(
   }
 }
 
-export function getModuleLongType(aModule: string): string | undefined {
-  const moduleList = G.LibSword.getModuleList();
-  if (moduleList === C.NOMODULES) return undefined;
-  return moduleList
-    .split('<nx>')
-    .find((m) => {
-      return m.startsWith(`${aModule};`);
-    })
-    ?.split(';')[1];
-}
-
-// Convert a LocationVKType to a readable string like 'Genesis 4:5-6'
-export function locationVK2String(l: LocationVKType, notHTML = false): string {
-  const guidir = guiDirection(G);
-
-  let dc = guidir === 'rtl' ? '&rlm;' : '&lrm;';
-  if (notHTML)
-    dc =
-      guidir === 'rtl' ? String.fromCharCode(8207) : String.fromCharCode(8206);
-
-  const book = l.book && l.book in G.Book ? G.Book[l.book].name : l.book;
-  let ret = dc + l.chapter ? `${book}${dc} ${l.chapter}` : book;
-  if (l.chapter && l.verse) {
-    ret += `${dc}:${l.verse}`;
-    if (l.lastverse && l.lastverse > l.verse) {
-      ret += `${dc}-${l.lastverse}`;
-    }
-  }
-
-  return dString(ret);
-}
-
 // LibSword.getMaxChapter returns an erroneous number if vkeytext's
 // book is not part of v11n, so it would be necessary to check here
 // first. But a LibSword call is unnecessary with G.BooksInV11n.
@@ -143,21 +102,44 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
   return maxch ? G.LibSword.getMaxVerse(v11n, vkeytext) : 0;
 }
 
-export function convertLocationVK(
-  l: LocationVKType,
-  tov11n: V11nType
-): LocationVKType {
-  const fromv11n = l.v11n;
-  if (!canDoConvertLocation(G.BkChsInV11n, l, tov11n)) return l;
-  const conv = dotLocation2LocationVK(
-    G.LibSword.convertLocation(
-      fromv11n,
-      [l.book, l.chapter, l.verse, l.lastverse].filter(Boolean).join('.'),
-      tov11n
-    ),
-    tov11n
+export function refParser(options?: RefParserOptionsType): RefParser {
+  const gfunctions = {
+    Book: () => {
+      return G.Book;
+    },
+  };
+  const localesAccessor = () => {
+    const locs: string[][] = G.Prefs.getComplexValue('global.locales');
+    return locs.map((val) => val[0]);
+  };
+  return new RefParser(gfunctions, localesAccessor, options);
+}
+
+export function verseKey(
+  versekey: LocationVKType | string,
+  v11n?: V11nType
+): VerseKey {
+  const lscl = (fromv11n: V11nType, vkeytext: string, tov11n: V11nType) => {
+    return G.LibSword.convertLocation(fromv11n, vkeytext, tov11n);
+  };
+  const gfunctions = {
+    Book: () => {
+      return G.Book;
+    },
+    BkChsInV11n: () => {
+      return G.BkChsInV11n;
+    },
+    Tab: () => {
+      return G.Tab;
+    },
+  };
+  return new VerseKey(
+    refParser({ noOsisCode: true }),
+    lscl,
+    gfunctions,
+    versekey,
+    v11n
   );
-  return conv;
 }
 
 // Input location may have the forms:
@@ -172,48 +154,49 @@ export function convertLocationVK(
 // If version does not yield verse text, then look at visible tabs in their order.
 // If visible tabs do not yield verse text, then look at hidden tabs in their order.
 export function findAVerseText(
+  reference: LocationVKType | string,
   module: string,
-  reference: string,
   tabs: string[],
   keepNotes: boolean
-): (LocationVKType & { text: string }) | null {
+): TextVKType | null {
   if (!(module in G.Tab)) return null;
-
   const { v11n } = G.Tab[module];
   if (!v11n) return null;
-  let location = { ...string2LocationVK(reference), text: '' };
-  location.v11n = v11n;
+
+  const r: TextVKType = {
+    versekey: verseKey(reference, v11n),
+    text: '',
+    version: '',
+  };
 
   // Is module a Bible, or does it specify a Bible?
-  if (getModuleLongType(module) === C.BIBLE) {
-    location.version = module;
+  if (module in G.Tab && G.Tab[module].type === C.BIBLE) {
+    r.version = module;
   } else {
     const bibles = getCompanionModules(module);
     const bible = !bibles.length || !(bibles[0] in G.Tab) ? null : bibles[0];
     const tov11n = bible && G.Tab[bible].v11n;
     if (tov11n) {
-      location.version = bible;
-      location = { ...convertLocationVK(location, tov11n), text: '' };
+      r.version = bible;
+      r.versekey.v11n = tov11n;
     }
   }
 
   // If we have a Bible, try it first.
-  if (location.version && location.version in G.Tab) {
-    location.text = G.LibSword.getVerseText(
-      location.version,
-      [location.book, location.chapter, location.verse, location.lastverse]
-        .filter(Boolean)
-        .join('.'),
+  if (r.version && r.version in G.Tab) {
+    r.text = G.LibSword.getVerseText(
+      r.version,
+      r.versekey.osisRef(),
       keepNotes
     ).replace(/\n/g, ' ');
-    if (location.text && location.text.length > 7) {
-      return location;
+    if (r.text && r.text.length > 7) {
+      return r;
     }
-    location.text = '';
+    r.text = '';
   }
 
-  // Passed version did not yield verse text. So now look at tabs...
-  const { book } = location;
+  // Module did not yield verse text. So now look at tabs...
+  const { book } = r.versekey;
   for (let v = 0; v < G.Tabs.length; v += 1) {
     const tab = G.Tabs[v];
     if (tab.module !== C.BIBLE || !tab.v11n) continue;
@@ -223,139 +206,25 @@ export function findAVerseText(
       if (abooks[ab] === book) break;
     }
     if (ab === abooks.length) continue;
-    const tlocation = convertLocationVK(location, tab.v11n);
     const text = G.LibSword.getVerseText(
       tab.module,
-      [tlocation.book, tlocation.chapter, tlocation.verse, tlocation.lastverse]
-        .filter(Boolean)
-        .join('.'),
+      r.versekey.osisRef(tab.v11n),
       keepNotes
     ).replace(/\n/g, ' ');
     if (text && text.length > 7) {
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If
       // no visible tab match is found, this saved result will be returned.
-      if (!location.text) {
-        location = { ...tlocation, text };
+      if (!r.text) {
+        r.text = text;
+        r.version = tab.module;
+        r.versekey.v11n = tab.v11n;
       }
-      if (tabs.includes(tab.module)) return location;
+      if (tabs.includes(tab.module)) return r;
     }
   }
 
-  return location.text ? location : null;
-}
-
-// Replaces character with codes <32 with " " (these may occur in text/footnotes at times- code 30 is used for sure)
-function replaceASCIIcontrolChars(s: string) {
-  let string = s;
-  for (let i = 0; i < string.length; i += 1) {
-    const c = string.charCodeAt(i);
-    if (c < 32) string = `${string.substring(0, i)} ${string.substring(i + 1)}`;
-  }
-
-  return string;
-}
-
-// Breaks a book name up into "name" and "number". EX: 1st John-->"John","1"
-// If the name has no number associated with it, 0 is returned as number.
-function getBookNameParts(string: string, locale: string) {
-  let bname = string;
-  bname = bname.replace(/^\s+/, '');
-  bname = bname.replace(/\s+$/, '');
-  bname = replaceASCIIcontrolChars(bname);
-  bname = iString(bname, locale);
-
-  const parts = bname.split(' ');
-
-  let number = 0;
-  let name = '';
-  let sp = '';
-  parts.forEach((p) => {
-    const fnum = p.match(/(\d+)/);
-    if (fnum) {
-      number = Number(fnum[1]);
-      if (parts.length === 1) {
-        name = p.replace(String(number), '');
-      }
-    } else if (p) {
-      name += sp + p;
-      sp = ' ';
-    }
-  });
-
-  return { number, name, locale };
-}
-
-// Compares inbook against each item in the list and returns true only if:
-//   exact ? one is equal to the other
-//  !exact ? one is equal to, or a truncated version of the other.
-function compareAgainstList(
-  inbook: { number: number; name: string; locale: string },
-  list: (string[] | null)[],
-  exact: boolean
-) {
-  let s;
-  let l;
-  let isMatch = false;
-  list.forEach((a) => {
-    if (isMatch || a === null) return;
-    a.forEach((v) => {
-      if (isMatch || !v) return;
-      const testbook = getBookNameParts(v, inbook.locale);
-      if (inbook.number === testbook.number) {
-        if (testbook.name.length < inbook.name.length) {
-          s = testbook.name;
-          l = inbook.name;
-        } else {
-          s = inbook.name;
-          l = testbook.name;
-        }
-        const sre = exact
-          ? new RegExp(`^${escapeRE(s)}$`, 'i')
-          : new RegExp(`^${escapeRE(s)}`, 'i');
-        if (l.search(sre) !== -1) isMatch = true;
-      }
-    });
-  });
-
-  return isMatch;
-}
-
-// cycle through each book name (including short, long, + variations) of each locale
-function compareAgainstLocale(
-  inbook: { number: number; name: string; locale: string },
-  exact: boolean,
-  noVariations: boolean,
-  bookInfo: {
-    bookCode: string | null;
-    modules: string[] | null;
-    locale: string;
-  }
-): number {
-  const toptions = { lng: bookInfo.locale, ns: 'common/books' };
-  let count = 0;
-  const bgs: BookGroupType[] = ['ot', 'nt'];
-  bgs.forEach((bg: BookGroupType) => {
-    C.SupportedBooks[bg].forEach((bk) => {
-      const keys = [G.Book[bk].code, `Long${G.Book[bk].code}`];
-      if (!noVariations) keys.push(`${G.Book[bk].code}Variations`);
-      const list = keys.map((k) => {
-        const r = i18next.t(k, toptions);
-        return !r ? null : r.split(/\s*,\s*/);
-      });
-
-      if (compareAgainstList(inbook, list, exact)) {
-        const am = G.LocaleConfigs[bookInfo.locale].AssociatedModules;
-
-        bookInfo.bookCode = G.Book[bk].code;
-        bookInfo.modules = am === C.NOTFOUND ? [] : am.split(/\s*,\s*/);
-
-        count += 1;
-      }
-    });
-  });
-
-  return count;
+  return r.text ? r : null;
 }
 
 // Return the module context in which the element resides, NOT the
@@ -521,6 +390,7 @@ function getTargetsFromSelection(
 }
 
 // Return contextual data for use by context menus.
+const parser = refParser({ uncertain: true });
 export function getContextData(elem: HTMLElement): ContextData {
   const atextx = ofClass(['atext'], elem);
   const atext = atextx ? atextx.element : null;
@@ -578,20 +448,29 @@ export function getContextData(elem: HTMLElement): ContextData {
   let selection = null;
   let selectedLocationVK = null;
   const selob = getSelection();
-  const info = deepClone(TargetInfo);
+  const info = deepClone(TargetInfo) as typeof TargetInfo;
   if (selob && !selob.isCollapsed && !/^\s*$/.test(selob.toString())) {
     selection = selob.toString();
-    selectedLocationVK = parseLocation(selection, v11n);
+    selectedLocationVK = parser.parse(selection, v11n)?.location || null;
     getTargetsFromSelection(info, selob);
   } else {
     getTargetsFromElement(info, elem);
   }
 
+  const iv11n =
+    (info.mod && info.mod in G.Tab && G.Tab[info.mod].v11n) || 'KJV';
+  const locationVK = info.bk
+    ? {
+        v11n: iv11n,
+        book: info.bk,
+        chapter: info.ch || 1,
+        verse: info.vs,
+        lastverse: info.lv,
+      }
+    : null;
+
   return {
-    book: info.bk,
-    chapter: info.ch,
-    verse: info.vs,
-    lastverse: info.lv,
+    locationVK,
     bookmark: info.bookmark,
     module,
     tab,
@@ -601,134 +480,6 @@ export function getContextData(elem: HTMLElement): ContextData {
     selectedLocationVK,
     search,
   };
-}
-
-// Takes a string and tries to parse out a book name and version
-// null is returned if parsing is unsuccessful
-function identifyBook(
-  book: string,
-  locale: string,
-  noVariations: boolean,
-  mustBeUnique: boolean
-): {
-  bookCode: null | string;
-  modules: null | string[];
-  locale: null | string;
-} | null {
-  const r = { bookCode: null, modules: null, locale };
-  const miss = { bookCode: null, modules: null, locale };
-
-  // book number is separated from the name to allow for variations in
-  // the number's suffix/prefix and placement (ie before or after book name).
-  const inbook = getBookNameParts(book, locale);
-
-  // look for exact match over all locales, if not found look for partial match
-  let count = compareAgainstLocale(inbook, true, noVariations, r);
-  if (mustBeUnique && count > 1) return miss;
-
-  if (!count) count = compareAgainstLocale(inbook, false, noVariations, r);
-  if (mustBeUnique && count > 1) return miss;
-
-  return r;
-}
-
-// Tries to parse a string to return a book code, chapter, verses, and module name.
-// If the string fails to parse, null is returned. Information that cannot be
-// determined from the parsed string is returned as null. If noVariations is true
-// then book locale name varitaions will not be considered. If mustBeUnique is true,
-// then a result will only be returned if it is the only possible match.
-export function parseLocation(
-  text: string,
-  v11n: V11nType,
-  noVariations = false,
-  mustBeUnique = false
-): LocationVKType | null {
-  let loc2parse = text;
-
-  const dot = dotLocation2LocationVK(loc2parse, v11n);
-  // if loc2parse started with a book code assume it's a valid osisRef
-  if (dot.book && dot.book in G.Book) {
-    return dot;
-  }
-
-  loc2parse = loc2parse.replace(/[^\s\p{L}\p{N}:-]/gu, '');
-  loc2parse = loc2parse.replace(/\s+/g, ' ');
-  loc2parse = loc2parse.trim();
-
-  if (loc2parse === '' || loc2parse === null) {
-    return null;
-  }
-
-  const location = {
-    v11n,
-    book: '',
-    chapter: 0,
-    verse: null,
-    lastverse: null,
-    version: null,
-  } as LocationVKType;
-
-  let has1chap;
-  let shft; // book=1, chap=2, verse=3, lastverse=4
-  /* eslint-disable prettier/prettier */
-  let parsed = null;
-  if (parsed === null) {parsed = loc2parse.match(/^(.+?)\s+(\d+):(\d+)-(\d+)$/); shft=0; has1chap=false;} // book 1:2-3
-  if (parsed === null) {parsed = loc2parse.match(/^(.+?)\s+(\d+):(\d+)$/);       shft=0; has1chap=false;} // book 4:5
-  if (parsed === null) {parsed = loc2parse.match(/^(.+?)\s+(\d+)$/);             shft=0; has1chap=false;} // book 6
-  if (parsed === null) {parsed = loc2parse.match(/^(.+?)\s+[v|V].*(\d+)$/);      shft=0; has1chap=true; } // book v6 THIS VARIES WITH LOCALE!
-  if (parsed === null) {parsed = loc2parse.match(/^(\d+)$/);                     shft=2; has1chap=false;} // 6
-  if (parsed === null) {parsed = loc2parse.match(/^(\d+):(\d+)-(\d+)$/);         shft=1; has1chap=false;} // 1:2-3
-  if (parsed === null) {parsed = loc2parse.match(/^(\d+):(\d+)$/);               shft=1; has1chap=false;} // 4:5
-  if (parsed === null) {parsed = loc2parse.match(/^(\d+)-(\d+)$/);               shft=2; has1chap=false;} // 4-5
-  if (parsed === null) {parsed = loc2parse.match(/^(.*?)$/);                     shft=0; has1chap=false;} // book
-  /* eslint-enable prettier/prettier */
-  // jsdump("parsed:" + parsed + " match type:" + m + "\n");
-
-  if (parsed) {
-    while (shft) {
-      parsed.splice(1, 0);
-      shft -= 1;
-    }
-    if (has1chap) parsed.splice(2, 0, '1'); // insert chapter=1 if book has only one chapter
-    if (parsed[1]) {
-      const book = identifyBook(
-        parsed[1].replace(/["'«»“”.?]/g, ''),
-        G.Prefs.getCharPref(C.LOCALEPREF),
-        noVariations,
-        mustBeUnique
-      );
-      if (book && book.bookCode) {
-        const code = book.bookCode;
-        location.book = code;
-        if (book.modules) {
-          let stop = false;
-          book.modules.forEach((mod) => {
-            if (stop) return;
-            location.version = mod;
-            location.v11n = (mod in G.Tab && G.Tab[mod].v11n) || 'KJV';
-            if (mod in G.BooksInModule && G.BooksInModule[mod].includes(code))
-              stop = true;
-          });
-        }
-      } else {
-        return null;
-      }
-    }
-    if (parsed[2]) {
-      location.chapter = Number(parsed[2]) > 0 ? Number(parsed[2]) : 1;
-    }
-    if (parsed[3]) {
-      location.verse = Number(parsed[3]) > 0 ? Number(parsed[3]) : 1;
-    }
-    if (parsed[4]) {
-      location.lastverse = Number(parsed[4]) > 0 ? Number(parsed[4]) : 1;
-    }
-  } else {
-    return null;
-  }
-
-  // jsdump(uneval(location));
-  return location;
 }
 
 export function getCompanionModules(mod: string) {

@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import type Electron from 'electron';
+import type VerseKey from 'versekey';
 
 declare global {
   interface Window {
@@ -18,7 +19,7 @@ export interface XulswordStatePref {
   chapter: number;
   verse: number;
   keys: (string | null)[];
-  selection: string;
+  selection: LocationVKType | null;
 
   history: HistoryVKType[];
   historyIndex: number;
@@ -72,14 +73,6 @@ export type PlaceType = {
   usernotes: 'notebox' | 'popup';
 };
 
-export type HistoryVKType = {
-  v11n: V11nType;
-  book: string;
-  chapter: number;
-  verse: number;
-  selection: string;
-};
-
 export type SearchType = {
   module: string;
   searchtext: string;
@@ -91,20 +84,48 @@ export type SearchType = {
   scope?: 'SearchAll' | string;
 };
 
+export type V11nType =
+  | 'KJV'
+  | 'German'
+  | 'KJVA'
+  | 'Synodal'
+  | 'Leningrad'
+  | 'NRSVA'
+  | 'Luther'
+  | 'Vulg'
+  | 'SynodalProt'
+  | 'Orthodox'
+  | 'LXX'
+  | 'NRSV'
+  | 'MT'
+  | 'Catholic'
+  | 'Catholic2'
+  | 'Calvin'
+  | 'DarbyFr'
+  | 'NRSV'
+  | 'Segond';
+
 export type LocationVKType = {
   v11n: V11nType;
   book: string;
   chapter: number;
   verse?: number | null;
   lastverse?: number | null;
-  version?: string | null;
+};
+
+export type TextVKType = {
+  versekey: VerseKey;
+  version: string;
+  text: string;
+};
+
+export type HistoryVKType = {
+  location: LocationVKType;
+  selection: LocationVKType | null;
 };
 
 export type ContextData = {
-  book: string | null;
-  chapter: number | null;
-  verse: number | null;
-  lastverse: number | null;
+  locationVK: LocationVKType | null;
   module: string | null;
   tab: string | null;
   lemma: string | null;
@@ -127,27 +148,6 @@ export type BookGroupType =
   | 'Rahlfs_variant_books'
   | 'Vulgate_and_other_later_Latin_mss'
   | 'Other';
-
-export type V11nType =
-  | 'KJV'
-  | 'German'
-  | 'KJVA'
-  | 'Synodal'
-  | 'Leningrad'
-  | 'NRSVA'
-  | 'Luther'
-  | 'Vulg'
-  | 'SynodalProt'
-  | 'Orthodox'
-  | 'LXX'
-  | 'NRSV'
-  | 'MT'
-  | 'Catholic'
-  | 'Catholic2'
-  | 'Calvin'
-  | 'DarbyFr'
-  | 'NRSV'
-  | 'Segond';
 
 export type BookType = {
   code: string;

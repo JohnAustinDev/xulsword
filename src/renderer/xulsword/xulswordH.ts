@@ -1,16 +1,17 @@
 /* eslint-disable import/no-duplicates */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-loop-func */
 import React from 'react';
 import C from '../../constant';
 import { ofClass } from '../../common';
 import { chapterChange, verseChange } from '../viewport/zversekey';
-import { getMaxChapter, parseLocation } from '../rutil';
+import { getMaxChapter, refParser } from '../rutil';
 import G from '../rg';
 
 import type { ShowType } from '../../type';
 import type Xulsword from './xulsword';
 import type { XulswordState } from './xulsword';
+
+const parser = refParser();
 
 export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
   const state = this.state as XulswordState;
@@ -60,7 +61,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 : 0
             );
             if (!s) return null;
-            s.selection = '';
+            s.selection = null;
             s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
             return s;
           });
@@ -79,7 +80,16 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               currentId === 'prevverse' ? -1 : 1
             );
             if (!s) return null;
-            s.selection = [s.book, s.chapter, s.verse, s.verse].join('.');
+            s.selection =
+              s.book && s.chapter
+                ? {
+                    book: s.book,
+                    chapter: s.chapter,
+                    verse: s.verse,
+                    lastverse: s.verse,
+                    v11n: windowV11n,
+                  }
+                : null;
             s.flagScroll = flagScroll.map(() => C.VSCROLL.centerAlways);
             return s;
           });
@@ -131,15 +141,18 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
             const { flagScroll: pfs, windowV11n } = prevState;
             // reset Bookselect even if book doesn't change
             const bsreset = prevState.bsreset + 1;
-            const location = parseLocation(value, windowV11n || 'KJV');
-            if (location !== null) {
+            const v11n = windowV11n || 'KJV';
+            const location = parser.parse(value, v11n)?.location;
+            if (location) {
               // eslint-disable-next-line prefer-const
               let { book, chapter, verse, lastverse } = location;
               if (book) {
                 if (!chapter) chapter = 1;
                 if (!verse) verse = 1;
                 const selection =
-                  verse > 1 ? [book, chapter, verse, lastverse].join('.') : '';
+                  book && chapter && verse > 1
+                    ? { book, chapter, verse, lastverse, v11n }
+                    : null;
                 const flagScroll = pfs.map(() => C.VSCROLL.center);
                 const s: Partial<XulswordState> = {
                   book,
@@ -167,7 +180,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               getMaxChapter(windowV11n, prevState.book)
             );
             if (!s) return null;
-            s.selection = '';
+            s.selection = null;
             s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
             return s;
           });
@@ -184,7 +197,16 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
               Number(value)
             );
             if (!s) return null;
-            s.selection = [s.book, s.chapter, s.verse, s.verse].join('.');
+            s.selection =
+              s.book && s.chapter
+                ? {
+                    book: s.book,
+                    chapter: s.chapter,
+                    verse: s.verse,
+                    lastverse: s.verse,
+                    v11n: windowV11n,
+                  }
+                : null;
             s.flagScroll = flagScroll.map(() => C.VSCROLL.centerAlways);
             return s;
           });

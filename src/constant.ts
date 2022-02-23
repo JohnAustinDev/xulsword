@@ -2,6 +2,7 @@
 
 import type {
   BookGroupType,
+  LocationVKType,
   ModTypes,
   PlaceType,
   ShowType,
@@ -276,7 +277,7 @@ const C = {
     book: '',
     chapter: 0,
     verse: 0,
-    selection: '',
+    selection: null as LocationVKType | null,
     flagScroll: 0,
     module: '',
     ilModule: '',

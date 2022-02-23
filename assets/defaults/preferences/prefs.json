@@ -40,7 +40,7 @@
     "chapter": 1,
     "verse": 1,
     "keys": [],
-    "selection": "",
+    "selection": null,
 
     "history": [],
     "historyIndex": 0,

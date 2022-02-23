@@ -7,19 +7,16 @@ import fs from 'fs';
 import i18next from 'i18next';
 import { BrowserWindow, Menu } from 'electron';
 import C from '../constant';
-import {
-  canDoConvertLocation,
-  dotLocation2LocationVK,
-  isASCII,
-  JSON_parse,
-  string2LocationVK,
-} from '../common';
+import VerseKey from '../versekey';
+import RefParser, { RefParserOptionsType } from '../refparse';
+import { isASCII, JSON_parse } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import LibSword from './modules/libsword';
 import Cache from '../cache';
 import nsILocalFile from './components/nsILocalFile';
 import { jsdump } from './mutil';
+import { getLocaleConfigs } from './config';
 
 import type {
   TabType,
@@ -363,21 +360,44 @@ export function getMaxVerse(v11n: V11nType, vkeytext: string) {
   return maxch ? LibSword.getMaxVerse(v11n, vkeytext) : 0;
 }
 
-export function convertLocationVK(
-  l: LocationVKType,
-  tov11n: V11nType
-): LocationVKType {
-  const fromv11n = l.v11n;
-  if (!canDoConvertLocation(getBkChsInV11n(), l, tov11n)) return l;
-  const conv = dotLocation2LocationVK(
-    LibSword.convertLocation(
-      fromv11n,
-      [l.book, l.chapter, l.verse, l.lastverse].filter(Boolean).join('.'),
-      tov11n
-    ),
-    tov11n
+export function refParser(options?: RefParserOptionsType): RefParser {
+  const gfunctions = {
+    Book: () => {
+      return getBook();
+    },
+  };
+  const localesAccessor = () => {
+    const locs: string[][] = Prefs.getComplexValue('global.locales');
+    return locs.map((val) => val[0]);
+  };
+  return new RefParser(gfunctions, localesAccessor, options);
+}
+
+export function verseKey(
+  versekey: LocationVKType | string,
+  v11n?: V11nType
+): VerseKey {
+  const lscl = (fromv11n: V11nType, vkeytext: string, tov11n: V11nType) => {
+    return LibSword.convertLocation(fromv11n, vkeytext, tov11n);
+  };
+  const gfunctions = {
+    Book: () => {
+      return getBook();
+    },
+    BkChsInV11n: () => {
+      return getBkChsInV11n();
+    },
+    Tab: () => {
+      return getTab();
+    },
+  };
+  return new VerseKey(
+    refParser({ noOsisCode: true }),
+    lscl,
+    gfunctions,
+    versekey,
+    v11n
   );
-  return conv;
 }
 
 export function setMenuFromPrefs(menu: Electron.Menu) {

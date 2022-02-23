@@ -19,7 +19,7 @@ import {
 import G from '../rg';
 import {
   clearPending,
-  convertLocationVK,
+  verseKey,
   getMaxChapter,
   libswordImgSrc,
   scrollIntoView,
@@ -47,7 +47,7 @@ import '../libsword.css';
 import './atext.css';
 
 import type { MouseWheel } from './viewportParentH';
-import type { PlaceType, ShowType, V11nType } from '../../type';
+import type { LocationVKType, PlaceType, ShowType, V11nType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -66,7 +66,7 @@ const propTypes = {
   ilModule: PropTypes.string,
   ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
   modkey: PropTypes.string,
-  selection: PropTypes.string,
+  selection: PropTypes.object,
   flagScroll: PropTypes.number,
   isPinned: PropTypes.bool.isRequired,
   noteBoxHeight: PropTypes.number,
@@ -93,7 +93,7 @@ const atextProps = {
   ilModule: '' as string | undefined,
   ilModuleOption: [] as string[],
   modkey: '',
-  selection: '' as string | undefined,
+  selection: null as LocationVKType | null,
   flagScroll: 0 as number | undefined,
   isPinned: false,
   noteBoxHeight: 0,
@@ -209,7 +209,10 @@ class Atext extends React.Component {
     const nbe = nbref !== null ? nbref.current : null;
 
     let newState = {};
-    const newPin = Atext.copyProps(pin && isPinned ? pin : props, C.PinProps);
+    const newPin = Atext.copyProps(
+      pin && isPinned ? pin : props,
+      C.PinProps
+    ) as typeof C.PinProps;
     const { book, verse, selection, module } = newPin;
     if (!compareObjects(newPin, pin)) newState = { ...newState, pin: newPin };
     if (module && sbe && nbe) {
@@ -329,7 +332,7 @@ class Atext extends React.Component {
         ) {
           const { book: bk, chapter, verse: vs } = s;
           if (bk && chapter && vs) {
-            const loc = convertLocationVK(
+            const loc = verseKey(
               {
                 book: bk,
                 chapter,
@@ -374,7 +377,7 @@ class Atext extends React.Component {
         }
       }
       // HIGHLIGHT
-      if (type === C.BIBLE && pin && selection !== pin.selection) {
+      if (type === C.BIBLE && pin && selection && selection !== pin.selection) {
         highlight(sbe, selection, module, windowV11n);
       }
       if (columns > 1) {

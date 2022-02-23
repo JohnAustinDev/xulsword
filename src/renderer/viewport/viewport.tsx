@@ -21,7 +21,7 @@ import {
   PopupParentProps,
 } from '../popup/popupParentH';
 import G from '../rg';
-import { clearPending, convertLocationVK, jsdump } from '../rutil';
+import { clearPending, verseKey, jsdump } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -48,7 +48,7 @@ const propTypes = {
   chapter: PropTypes.number.isRequired,
   verse: PropTypes.number.isRequired,
   keys: PropTypes.arrayOf(PropTypes.string).isRequired,
-  selection: PropTypes.string,
+  selection: PropTypes.object,
 
   show: PropTypes.object.isRequired,
   place: PropTypes.object.isRequired,
@@ -76,7 +76,7 @@ type ViewportProps = PopupParentProps &
     chapter: number;
     verse: number;
     keys: (string | undefined)[];
-    selection: string | undefined;
+    selection: LocationVKType | null;
     showChooser: boolean;
     tabs: (string[] | undefined)[];
     panels: (string | null)[];
@@ -319,19 +319,19 @@ class Viewport extends React.Component implements PopupParent {
 
     // Each text's book/chapter/verse must be according to windowV11n.
     const locs: LocationVKType[] = [];
-    panels.forEach(() => {
-      locs.push({
-        book,
-        chapter,
-        verse,
-        v11n: windowV11n || 'KJV',
-      });
-    });
-    panels.forEach((panel, i) => {
+    panels.forEach((panel) => {
       const tov11n = panel && G.Tab[panel].v11n;
-      if (panel && G.Tab[panel].isVerseKey && tov11n && windowV11n) {
-        locs[i] = convertLocationVK(locs[i], tov11n);
-      }
+      locs.push(
+        verseKey(
+          {
+            book,
+            chapter,
+            verse,
+            v11n: windowV11n || 'KJV',
+          },
+          tov11n || undefined
+        ).location()
+      );
     });
 
     const numPanels = panels.filter((m) => m || m === '').length;

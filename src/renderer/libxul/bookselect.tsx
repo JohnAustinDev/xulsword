@@ -8,7 +8,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import G from '../rg';
-import { parseLocation } from '../rutil';
+import { refParser } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -23,6 +23,12 @@ import Menulist from './menulist';
 import Textbox from './textbox';
 import './xul.css';
 import './bookselect.css';
+
+const parser = refParser({
+  noOsisCode: true,
+  noOtherLocale: true,
+  noVariations: true,
+});
 
 // XUL Bookselect
 // This component contains an overlapping Textbox and Menulist.
@@ -162,10 +168,10 @@ class Bookselect extends React.Component {
   textboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { autocomp } = this.state as BookselectState;
     if (autocomp) {
-      const bk = parseLocation(e.target.value, 'KJV', true, true);
-      if (bk !== null && bk.book !== null) {
+      const loc = parser.parse(e.target.value, 'KJV')?.location;
+      if (loc) {
         this.setState({
-          book: bk.book,
+          book: loc.book,
           pattern: /[\s\d.:-]+$/,
           autocomp: false,
         });

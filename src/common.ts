@@ -1,8 +1,6 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
-import C from './constant';
-import type { GType, LocationVKType, V11nType } from './type';
 import Cache from './cache';
 
 export function escapeRE(text: string) {
@@ -231,13 +229,6 @@ export function iString(locstring: string | number, locale?: string) {
   return s;
 }
 
-export function guiDirection(G: GType) {
-  const locale = G.Prefs.getCharPref(C.LOCALEPREF);
-  const c = G.LocaleConfigs[locale];
-  if (c && c.direction) return c.direction;
-  return 'ltr';
-}
-
 export function getLocalizedChapterTerm(
   book: string,
   chapter: number,
@@ -252,60 +243,6 @@ export function getLocalizedChapterTerm(
   };
   const r1 = i18next.exists(k1, toptions) && i18next.t(k1, toptions);
   return r1 && !/^\s*$/.test(r1) ? r1 : i18next.t(k2, toptions);
-}
-
-export function isProgramPortable() {
-  return false;
-}
-
-// Returns whether the user has given permission to use Internet during
-// this session, and prompts the user if the answer is unknown.
-export function internetPermission(G: GType) {
-  // prefs.clearUserPref("HaveInternetPermission");
-
-  // never allow access to internet until we have express permission!
-  const haveInternetPermission =
-    G.Prefs.getPrefOrCreate('HaveInternetPermission', 'boolean', false) ||
-    G.Prefs.getPrefOrCreate('SessionHasInternetPermission', 'boolean', false);
-
-  if (!haveInternetPermission) {
-    /*
-    var bundle = getCurrentLocaleBundle("dialogs/addRepositoryModule/addRepositoryModule.properties");
-    var title = bundle.GetStringFromName("arm.internetPromptTitle");
-    var msg = bundle.GetStringFromName("arm.internetPromptMessage");
-    msg += "\n\n";
-    msg += bundle.GetStringFromName("arm.wishToContinue");
-    var cbText = bundle.GetStringFromName("arm.rememberMyChoice");
-
-    var result = {};
-    var dlg = win.openDialog(
-      "chrome://xulsword/content/dialogs/dialog/dialog.xul",
-      "dlg",
-      DLGSTD,
-      result,
-      fixWindowTitle(title),
-      msg,
-      DLGALERT,
-      DLGYESNO,
-      null,
-      null,
-      cbText
-    );
-    haveInternetPermission = result.ok;
-
-    // if user wants this choice to be permanent...
-    if (result.checked2) {
-      prefs.setBoolPref("HaveInternetPermission", haveInternetPermission);
-
-      // there is no way for regular users to undo this, so I've commented it out...
-      //prefs.setBoolPref("AllowNoInternetAccess", !haveInternetPermission);
-    }
-    */
-  }
-
-  G.Prefs.setBoolPref('SessionHasInternetPermission', haveInternetPermission);
-
-  return haveInternetPermission;
 }
 
 // Removes white-space, trailing or leading punctuation, "x" (note symbol),
@@ -355,99 +292,4 @@ export function getCSS(
     }
   }
   return null;
-}
-
-// Dot location is:
-// bk.ch or
-// bk.ch.vs or
-// bk.ch.vs.lv
-export function dotLocation2LocationVK(
-  loc: string,
-  v11n: V11nType,
-  version?: string
-): LocationVKType {
-  const retval = {
-    book: '',
-    chapter: 0,
-    verse: null,
-    lastverse: null,
-    version: null,
-    v11n,
-  } as LocationVKType;
-  const dotLocation = loc.split('.');
-  const [sn, ch, vs, lv] = dotLocation;
-  if (dotLocation[0] !== undefined) retval.book = sn;
-  if (dotLocation[1] !== undefined) retval.chapter = Number(ch);
-  if (dotLocation[2] !== undefined) retval.verse = Number(vs);
-  if (dotLocation[3] !== undefined) retval.lastverse = Number(lv);
-  if (version) retval.version = version;
-
-  return retval;
-}
-
-// Convert the following reference forms:
-//   Gen, Gen 1, Gen 1:1, Gen 1:1-1, Gen 1:1 - Gen 1:1, Gen.1, Gen.1.1, Gen.1.1.1
-// To this type: LocationTypeVK
-export function string2LocationVK(vkeytext: string): LocationVKType {
-  const vk = vkeytext.trim();
-  let book = '';
-  let chapter = '';
-  let verse = '';
-  let lastverse = '';
-  if (vk.indexOf('.') !== -1) {
-    [book, chapter, verse, lastverse] = vk.split('.');
-  } else {
-    vk.split(/\s*-\s*/).forEach((seg) => {
-      const [bx, cx, vx] = seg.split(/[\s:]+/);
-      if (bx && !book) book = bx;
-      if (cx && !chapter) chapter = cx;
-      if (vx) {
-        if (!verse) verse = vx;
-        else lastverse = vx;
-      }
-    });
-  }
-  return {
-    book,
-    chapter: Number(chapter) || 1,
-    verse: Number(verse) || 1,
-    lastverse: Number(lastverse) || Number(verse) || 1,
-    v11n: 'KJV',
-  };
-}
-
-// LibSword.convertLocation returns unpredictable locations if vkeytext's
-// book, chapter, verse and lastverse are not in the verse system or
-// if the book is not included in tov11n. Also LibSword only converts
-// between systems in C.SupportedV11nMaps. So these things must be
-// checked before ever calling LibSword.
-export function canDoConvertLocation(
-  bkChsInV11n: GType['BkChsInV11n'],
-  l: LocationVKType,
-  tov11n: V11nType
-): boolean {
-  const fromv11n = l.v11n;
-  if (!fromv11n) throw Error(`No versification provided`);
-  if (fromv11n === tov11n) return false;
-  if (!(fromv11n in C.SupportedV11nMaps)) return false;
-  if (!C.SupportedV11nMaps[fromv11n].includes(tov11n)) return false;
-  const { book, chapter, verse, lastverse } = l;
-  if (!(tov11n in bkChsInV11n)) return false;
-  if (!(book in bkChsInV11n[tov11n])) return false;
-  const maxch =
-    fromv11n in bkChsInV11n && book in bkChsInV11n[fromv11n]
-      ? bkChsInV11n[fromv11n][book]
-      : 0;
-  if (chapter < 1 || chapter > maxch) return false;
-  if (verse) {
-    const maxv = 200; // slow: getMaxVerse(fromv11n, [b, c].join('.'));
-    if (
-      verse < 1 ||
-      verse > maxv ||
-      (lastverse && lastverse < verse) ||
-      (lastverse && lastverse > maxv)
-    )
-      return false;
-  }
-  return true;
 }

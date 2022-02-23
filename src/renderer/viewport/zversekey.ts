@@ -5,21 +5,12 @@ import i18next from 'i18next';
 import C from '../../constant';
 import {
   deepClone,
-  dotLocation2LocationVK,
   dString,
   getLocalizedChapterTerm,
   isASCII,
 } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
-import {
-  convertLocationVK,
-  findAVerseText,
-  getMaxChapter,
-  getMaxVerse,
-  jsdump,
-  locationVK2String,
-  parseLocation,
-} from '../rutil';
+import { findAVerseText, getMaxChapter, getMaxVerse, verseKey } from '../rutil';
 import G from '../rg';
 
 import type {
@@ -33,80 +24,6 @@ import type { XulswordState } from '../xulsword/xulsword';
 import type Atext from './atext';
 import type { AtextProps, AtextState } from './atext';
 import type ViewportWin from './viewportWin';
-
-// Returns a normalized osisRef in the v11n of module if module is
-// intalled. If it's not installed, return.module is null. If ref
-// is not an osisRef null is returned. The osisRef is normalized by
-// converting book.c to book.c.1-book.c.last when possible, and
-// always returning one of the following forms:
-// book.c
-// book.c.v
-// book.c.v-v
-// book.c.v-book.c.v
-function normalizeOsisReference(osisRef: string, module: string) {
-  let ref = osisRef;
-
-  const r: { osisRef: string; module: string | null } | null = {
-    osisRef: '',
-    module: module in G.Tab ? module : null,
-  };
-  ref = ref.trim();
-  const modulev11n = module in G.Tab && G.Tab[module].v11n;
-
-  // Change module to any osisRef work prefix, and convert the references to v11n.
-  const tm = ref.match(/^(\w+):/);
-  if (tm) {
-    const [, m] = tm;
-    const mv11n = m in G.Tab && G.Tab[m].v11n;
-    ref = ref.replace(/^\w+:/, '');
-    if (mv11n && modulev11n) {
-      const rss: LocationVKType[] = [];
-      ref.split('-').forEach((rs) => {
-        let rs2 = dotLocation2LocationVK(rs, mv11n, m);
-        if (!/Bible/i.test(m) && r.module && r.module in G.Tab && m in G.Tab) {
-          rs2 = convertLocationVK(rs2, modulev11n);
-        }
-        rss.push(rs2);
-      });
-      ref = rss
-        .map((l) => {
-          if (!l.book || !l.chapter) return null;
-          return [l.book, l.chapter, l.verse].filter(Boolean).join('.');
-        })
-        .filter(Boolean)
-        .join('-');
-    }
-  }
-
-  if (/^[^.]+\.\d+$/.test(ref)) {
-    // bk.c
-    if (modulev11n)
-      r.osisRef = `${ref}.1-${ref}.${getMaxVerse(modulev11n, ref)}`;
-    else r.osisRef = ref;
-    return r;
-  }
-
-  if (/^[^.]+\.\d+\.\d+$/.test(ref)) {
-    // bk.c.v
-    r.osisRef = ref;
-    return r;
-  }
-
-  const p = ref.match(/(^[^.]+\.\d+\.)(\d+)-(\d+)$/);
-  if (p) {
-    // bk.c.v1-v2
-    r.osisRef = `${p[1]}${p[2]}-${p[1]}${p[3]}`;
-    return r;
-  }
-
-  if (/^[^.]+\.\d+\.\d+-[^.]+\.\d+\.\d+$/.test(ref)) {
-    // bk.c.v-bk.c.v
-    r.osisRef = ref;
-    return r;
-  }
-
-  return null;
-}
 
 // Turns headings on before reading introductions
 export function getIntroductions(mod: string, vkeytext: string) {
@@ -230,17 +147,16 @@ export function getChapterHeading(props: {
 // osisRef type references as well as free hand references which
 // may include commas. It will supply missing book, chapter, and verse
 // information using previously read information (as is often the
-// case after a comma). When necessary. this function will look through
+// case after a comma). When necessary, this function will look through
 // other Bible versions until it finds a version that includes the
-// passage. It also takes care of verse system conversions in that process.
+// passage. It also takes care of verse system conversions in the process.
 function getRefHTML(
   refsx: string,
   mod: string,
   w = 0,
   keepTextNotes = false
 ): string {
-  const v11nx = mod in G.Tab ? G.Tab[mod].v11n : '';
-  const v11n = v11nx || 'KJV';
+  const v11n = (mod in G.Tab && G.Tab[mod].v11n) || 'KJV';
 
   // are there any commas? then add the sub refs to the list...
   const refs = refsx.split(/\s*;\s*/);
@@ -298,62 +214,56 @@ function getRefHTML(
       return;
     }
 
-    // is this ref an osisRef type reference?
-    let r = normalizeOsisReference(ref, mod);
+    // Try and parse out a complete reference
+    const r = verseKey(ref, (mod in G.Tab && G.Tab[mod].v11n) || undefined);
 
-    // if not, then parse it and fill in any missing values from context
-    if (!r) {
-      r = { osisRef: '', module: mod };
-      const loc = parseLocation(ref, v11n, false, true);
-      if (loc) {
-        bk = loc.book || bk;
-        ch = loc.chapter || ch;
-        vs = loc.verse || vs;
-
-        r.osisRef = [bk, ch, vs].filter(Boolean).join('.');
-
-        if (bk && ch && vs && loc.lastverse && loc.lastverse > vs) {
-          r.osisRef += `-${bk}.${ch}.${loc.lastverse}`;
+    // if not, then try and manually parse it and fill in any missing values
+    // from the previous pass
+    if (!r.book && bk) {
+      const ref2 = ref.replace(/[^\w\d:.-]+/g, '');
+      const match = ref2.match(/^(\d+)(?::(\d+))?(?:-(\d+))?/);
+      if (match) {
+        const [, chvs1, vrs, chvs2] = match;
+        r.book = bk;
+        if (vrs) {
+          r.chapter = Number(chvs1);
+          r.verse = Number(vrs);
+          r.lastverse = chvs2 ? Number(chvs2) : null;
+        } else if (ch && vs) {
+          r.chapter = ch;
+          r.verse = Number(chvs1);
+          r.lastverse = chvs2 ? Number(chvs2) : null;
+        } else {
+          r.chapter = Number(chvs1);
+          r.verse = null;
+          r.lastverse = null;
         }
-        r = normalizeOsisReference(r.osisRef, mod);
       }
     }
-    if (!r) {
+
+    if (r.book) {
+      bk = r.book;
+      ch = r.chapter;
+      vs = r.verse || 0;
+    } else {
       // then reset our context, since we may have missed something along the way
       bk = '';
       ch = 0;
       vs = 0;
       return;
     }
-    let aVerse:
-      | (LocationVKType & {
-          text: string;
-        })
-      | null = null;
-    if (r.module && r.osisRef)
-      aVerse = findAVerseText(r.module, r.osisRef, tabs[w], keepTextNotes);
-    if (!aVerse) {
-      r.osisRef.split('-').forEach((or) => {
-        if (!aVerse)
-          aVerse = {
-            ...dotLocation2LocationVK(or, v11n, mod),
-            text: `(${ref} ??)`,
-          };
-        else {
-          const last = dotLocation2LocationVK(or, v11n, mod);
-          if (
-            last.book === aVerse.book &&
-            last.chapter === aVerse.chapter &&
-            last.verse
-          ) {
-            aVerse.lastverse = last.verse;
-          }
-        }
-      });
-    }
+
+    const aVerse = findAVerseText(
+      r.location(v11n),
+      mod,
+      tabs[w],
+      keepTextNotes
+    );
     if (!aVerse) return;
-    const { book, chapter } = aVerse;
-    let { verse, lastverse, version, text } = aVerse;
+    const { versekey } = aVerse;
+    const { book, chapter } = versekey;
+    let { verse, lastverse } = versekey;
+    let { version, text } = aVerse;
     if (/^\s*$/.test(text)) text = '-----';
     if (!verse) verse = 1;
     if (!lastverse) lastverse = verse;
@@ -366,7 +276,7 @@ function getRefHTML(
       lastverse,
       version,
     ].join('.')}">`;
-    html += locationVK2String(aVerse);
+    html += aVerse.versekey.readable();
     html += '</a>';
     html += `<span class="crtext cs-${version}${
       G.ModuleConfigs[version].direction !== G.ProgramConfig.direction
@@ -940,18 +850,13 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
           return { pin };
         });
       } else if (stateType === 'viewportparent') {
-        const from = G.Tab[module].v11n || 'KJV';
-        const loc = convertLocationVK(
-          {
-            book: bk,
-            chapter: Number(ch),
-            verse: vs,
-            lastverse: vs,
-            v11n: from,
-          },
-          windowV11n || 'KJV'
-        );
-        const { book, chapter, verse } = loc;
+        const { book, chapter, verse } = verseKey({
+          book: bk,
+          chapter: Number(ch),
+          verse: vs,
+          lastverse: vs,
+          v11n: G.Tab[module].v11n || 'KJV',
+        }).location(windowV11n);
         const flagScroll = xulswordstate.flagScroll.map(() => C.VSCROLL.verse);
         flagScroll[index] = mysf;
         const s: Partial<XulswordStatePref> = {
@@ -968,7 +873,7 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
 
 export function highlight(
   sbe: HTMLElement,
-  selection: string,
+  selection: LocationVKType,
   module: string,
   windowV11n: V11nType | undefined
 ) {
@@ -978,10 +883,10 @@ export function highlight(
   });
 
   if (!selection || !windowV11n) return;
-  const { book, chapter, verse, lastverse } = convertLocationVK(
-    dotLocation2LocationVK(selection, windowV11n, module),
-    G.Tab[module].v11n || windowV11n
-  );
+  const { book, chapter, verse, lastverse } = verseKey(
+    selection,
+    windowV11n
+  ).location(G.Tab[module].v11n || windowV11n);
   if (verse) {
     const lv = lastverse || verse;
     // Then find the verse element(s) to highlight
@@ -1294,7 +1199,7 @@ export function textChange(
   }
   if (type === C.BIBLE && statetype === 'xulsword') {
     const ss = s as XulswordStatePref;
-    ss.selection = '';
+    ss.selection = null;
   }
   return s;
 }
