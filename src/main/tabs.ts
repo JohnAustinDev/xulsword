@@ -11,7 +11,7 @@ import {
   setGlobalStateFromPref,
 } from './minit';
 
-import type { TabType, TabTypes } from '../type';
+import type { TabType, TabTypes, XulswordStatePref } from '../type';
 
 export default function setViewportTabs(
   panelIndex: number, // -1 selects all panels
@@ -22,7 +22,9 @@ export default function setViewportTabs(
   const tab = getTab();
   const moduleConfigs = getModuleConfigs();
   const booksInModule = getBooksInModule();
-  const panels = Prefs.getComplexValue('xulsword.panels');
+  const panels = Prefs.getComplexValue(
+    'xulsword.panels'
+  ) as XulswordStatePref['panels'];
   const panelIndexes =
     panelIndex === -1 ? panels.map((_p: any, i: number) => i) : [panelIndex];
 
@@ -43,8 +45,10 @@ export default function setViewportTabs(
       modules = [tab[whichTabs]];
   }
 
-  const pval = Prefs.getComplexValue('xulsword.tabs') as (string[] | null)[];
-  const nval = JSON_parse(JSON_stringify(pval)) as (string[] | null)[];
+  const pval = Prefs.getComplexValue(
+    'xulsword.tabs'
+  ) as XulswordStatePref['tabs'];
+  const nval = JSON_parse(JSON_stringify(pval)) as XulswordStatePref['tabs'];
 
   // Set the tab bank of each panel in panelIndexes. If toggling on allwindows,
   // set tabs according to the previous state of the clicked menuitem's tab,
@@ -117,7 +121,9 @@ export default function setViewportTabs(
   // panel's tab bank, and rather than leave a panel's display module as
   // empty string, we can choose some module, and choose a book too if none
   // is already selected.
-  const mtm = Prefs.getComplexValue('xulsword.mtModules');
+  const mtm = Prefs.getComplexValue(
+    'xulsword.mtModules'
+  ) as XulswordStatePref['mtModules'];
   const nmtm = mtm.map((m: string | null, i: number) => {
     const nvali = nval[i];
     return m && nvali && nvali.includes(m) ? m : undefined;
@@ -136,11 +142,17 @@ export default function setViewportTabs(
       }
       panels[i] = nextmod;
       used[nextmod] = true;
-      let bk = Prefs.getCharPref('xulsword.book');
-      if (!bk && nextmod && tab[nextmod].isVerseKey) {
-        [bk] = booksInModule[nextmod];
-        if (bk) {
-          Prefs.setCharPref('xulsword.book', bk);
+      const loc = Prefs.getComplexValue(
+        'xulsword.location'
+      ) as XulswordStatePref['location'];
+      if ((!loc || !loc.book) && nextmod && tab[nextmod].isVerseKey) {
+        const [book] = booksInModule[nextmod];
+        if (book) {
+          Prefs.setComplexValue('xulsword.location', {
+            book,
+            chapter: 1,
+            v11n: tab[nextmod].v11n || 'KJV',
+          });
         }
       }
     }
@@ -151,7 +163,7 @@ export default function setViewportTabs(
   setGlobalStateFromPref(null, [
     'xulsword.tabs',
     'xulsword.panels',
+    'xulsword.location',
     'xulsword.mtModules',
-    'xulsword.book',
   ]);
 }

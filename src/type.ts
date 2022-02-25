@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type Electron from 'electron';
-import type VerseKey from 'versekey';
-
 declare global {
   interface Window {
     api: any;
@@ -12,14 +9,13 @@ declare global {
   }
 }
 
-// Default values for these keys must be set in the default Pref file's
-// xulsword object or an error will be thrown.
+// Default values for these keys must be set in the default
+// JSON Pref file or an error will be thrown.
 export interface XulswordStatePref {
-  book: string;
-  chapter: number;
-  verse: number;
-  keys: (string | null)[];
+  location: LocationVKType | null;
   selection: LocationVKType | null;
+
+  keys: (string | null)[];
 
   history: HistoryVKType[];
   historyIndex: number;
@@ -114,8 +110,8 @@ export type LocationVKType = {
 };
 
 export type TextVKType = {
-  versekey: VerseKey;
-  version: string;
+  location: LocationVKType;
+  module: string;
   text: string;
 };
 
@@ -125,6 +121,7 @@ export type HistoryVKType = {
 };
 
 export type ContextData = {
+  search: SearchType | null;
   locationVK: LocationVKType | null;
   module: string | null;
   tab: string | null;
@@ -132,8 +129,7 @@ export type ContextData = {
   panelIndex: number | null;
   bookmark: unknown | null;
   selection: string | null;
-  selectedLocationVK: LocationVKType | null;
-  search: SearchType | null;
+  selectionParsedVK: LocationVKType | null;
 };
 
 export type BookGroupType =
@@ -153,8 +149,8 @@ export type BookType = {
   code: string;
   name: string;
   longname: string;
-  bookGroup: BookGroupType;
   index: number;
+  bookGroup: BookGroupType;
   indexInBookGroup: number;
 };
 
@@ -178,13 +174,13 @@ export type FeatureType = {
   hebrew: string[];
 };
 
-export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
-
 export type ModTypes =
   | 'Biblical Texts'
   | 'Commentaries'
   | 'Lexicons / Dictionaries'
   | 'Generic Books';
+
+export type TabTypes = 'Texts' | 'Comms' | 'Dicts' | 'Genbks';
 
 export type TabType = {
   module: string;
@@ -206,9 +202,6 @@ export type TabType = {
   audioCode: string;
 };
 
-export const DirsPublic = {
-  path: 'readonly' as unknown as DirsDirectories,
-};
 export type DirsDirectories = {
   TmpD: string;
   xsAsset: string;
@@ -226,6 +219,10 @@ export type DirsDirectories = {
   xsVideo: string;
   xsLocale: string;
   xsModsCommon: string;
+};
+
+export const DirsPublic = {
+  path: 'readonly' as unknown as DirsDirectories,
 };
 
 // Dummy func used as place holder
@@ -266,6 +263,7 @@ export const PrefsPublic = {
   getStore: func as unknown as (aStore?: string) => { [s: string]: any },
   writeAllStores: func as unknown as () => void,
 };
+
 export const LibSwordPublic = {
   initLibsword: func as unknown as () => boolean,
   libSwordReady: func as unknown as (caller: string) => boolean,
@@ -384,21 +382,14 @@ export const CommandsPublic = {
   openBookmarksManager: func as unknown as () => void,
   openNewDbItemDialog: func as unknown as (
     userNote: boolean,
-    mod: string,
-    bk: string,
-    ch: number,
-    vs: number,
-    lv?: number | null
+    textvk: TextVKType
   ) => void,
   openDbItemPropertiesDialog: func as unknown as (bookmark: unknown) => void,
   deleteDbItem: func as unknown as (bookmark: unknown) => void,
   openHelp: func as unknown as (module?: string) => void,
-  goToBibleLocation: func as unknown as (
-    v11n: V11nType,
-    bk: string,
-    ch: number,
-    vs?: number,
-    sel?: string,
+  goToLocationVK: func as unknown as (
+    location: LocationVKType,
+    selection: LocationVKType,
     flagScroll?: number
   ) => void,
 };

@@ -44,11 +44,10 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  book: PropTypes.string.isRequired,
-  chapter: PropTypes.number.isRequired,
-  verse: PropTypes.number.isRequired,
-  keys: PropTypes.arrayOf(PropTypes.string).isRequired,
+  location: PropTypes.object,
   selection: PropTypes.object,
+
+  keys: PropTypes.arrayOf(PropTypes.string).isRequired,
 
   show: PropTypes.object.isRequired,
   place: PropTypes.object.isRequired,
@@ -65,18 +64,15 @@ const propTypes = {
   maximizeNoteBox: PropTypes.arrayOf(PropTypes.number).isRequired,
 
   ownWindow: PropTypes.bool.isRequired,
-  windowV11n: PropTypes.string,
 
   parentHandler: PropTypes.func.isRequired,
 };
 
 type ViewportProps = PopupParentProps &
   XulProps & {
-    book: string;
-    chapter: number;
-    verse: number;
-    keys: (string | undefined)[];
+    location: LocationVKType | null;
     selection: LocationVKType | null;
+    keys: (string | undefined)[];
     showChooser: boolean;
     tabs: (string[] | undefined)[];
     panels: (string | null)[];
@@ -87,7 +83,6 @@ type ViewportProps = PopupParentProps &
     noteBoxHeight: number[];
     maximizeNoteBox: number[];
     ownWindow: boolean;
-    windowV11n: V11nType | undefined;
 
     parentHandler: (e: any) => void;
   };
@@ -138,11 +133,9 @@ class Viewport extends React.Component implements PopupParent {
     const { popupParentHandler, popupHandler } = this;
     const props = this.props as ViewportProps;
     const {
-      book,
-      chapter,
-      verse,
-      keys,
+      location,
       selection,
+      keys,
       show,
       place,
       tabs,
@@ -155,7 +148,6 @@ class Viewport extends React.Component implements PopupParent {
       maximizeNoteBox,
       showChooser,
       ownWindow,
-      windowV11n,
       parentHandler,
     } = this.props as ViewportProps;
     const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = this
@@ -191,11 +183,11 @@ class Viewport extends React.Component implements PopupParent {
         tabbank.some((t) => {
           return t && G.Tab[t].type === C.BIBLE;
         });
-      if (panelHasBible && book) {
+      if (panelHasBible && location?.book) {
         panelHasILOptions[i] = Boolean(
           G.FeatureModules.hebrew[0] || G.FeatureModules.greek[0]
         );
-        const bk = book in G.Book ? G.Book[book] : null;
+        const bk = location.book in G.Book ? G.Book[location.book] : null;
         if (bk && (bk.bookGroup === 'ot' || bk.bookGroup === 'nt')) {
           const ml =
             G.FeatureModules[bk.bookGroup === 'nt' ? 'greek' : 'hebrew'];
@@ -317,22 +309,14 @@ class Viewport extends React.Component implements PopupParent {
       return ilActive || type === C.DICTIONARY ? 1 : c;
     });
 
-    // Each text's book/chapter/verse must be according to windowV11n.
+    // Each text's book/chapter/verse must be according to location v11n.
     const locs: LocationVKType[] = [];
-    panels.forEach((panel) => {
-      const tov11n = panel && G.Tab[panel].v11n;
-      locs.push(
-        verseKey(
-          {
-            book,
-            chapter,
-            verse,
-            v11n: windowV11n || 'KJV',
-          },
-          tov11n || undefined
-        ).location()
-      );
-    });
+    if (location) {
+      panels.forEach((panel) => {
+        const tov11n = panel && G.Tab[panel].v11n;
+        locs.push(verseKey(location, tov11n || undefined).location());
+      });
+    }
 
     const numPanels = panels.filter((m) => m || m === '').length;
 
@@ -372,13 +356,13 @@ class Viewport extends React.Component implements PopupParent {
 
         {showingChooser && (
           <Chooser
-            key={[reset, book].join('.')}
+            key={[reset, location?.book].join('.')}
             type={chooser}
-            selection={book}
+            selection={location?.book}
+            v11n={location?.v11n}
             headingsModule={firstUnpinnedBible}
             bookGroups={bookGroups}
             availableBooks={availableBooks}
-            windowV11n={windowV11n}
             onCloseChooserClick={parentHandler}
           />
         )}
@@ -453,23 +437,20 @@ class Viewport extends React.Component implements PopupParent {
                       flexShrink: `${numPanels - panelWidth}`,
                     }}
                     panelIndex={i}
-                    ownWindow={ownWindow}
-                    book={locs[i].book}
-                    chapter={locs[i].chapter}
-                    verse={locs[i].verse || 1}
-                    windowV11n={windowV11n}
-                    columns={column}
+                    location={locs[i]}
+                    selection={selection}
                     module={panels[i]}
+                    modkey={keys[i]}
                     ilModule={ilModules[i]}
                     ilModuleOption={ilModuleOptions[i]}
+                    columns={column}
                     show={show}
                     place={place}
-                    modkey={keys[i]}
-                    selection={selection}
                     flagScroll={flagScroll[i]}
                     isPinned={isPinned[i]}
                     noteBoxHeight={noteBoxHeight[i]}
                     maximizeNoteBox={maximizeNoteBox[i]}
+                    ownWindow={ownWindow}
                     onMaximizeNoteBox={parentHandler}
                     onWheel={(e) => {
                       parentHandler(e);

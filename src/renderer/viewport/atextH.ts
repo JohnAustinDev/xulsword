@@ -7,7 +7,8 @@ import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { scrollIntoView } from '../rutil';
 import { delayHandler } from '../libxul/xul';
-import { textChange, aTextWheelScroll } from './zversekey';
+import { aTextWheelScroll } from './zversekey';
+import { textChange } from './ztext';
 
 import type Atext from './atext';
 import type { AtextProps, AtextState } from './atext';

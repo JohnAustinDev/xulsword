@@ -26,6 +26,7 @@ import type {
   GType,
   BookGroupType,
   LocationVKType,
+  XulswordStatePref,
 } from '../type';
 
 // These exported GPublic functions are called by the runtime
@@ -407,11 +408,13 @@ export function setMenuFromPrefs(menu: Electron.Menu) {
       const [type, pi, mod] = i.id.split('_');
       if (type === 'showtab') {
         const panelIndex = Number(pi);
-        const pval = Prefs.getComplexValue('xulsword.tabs');
+        const pval = Prefs.getComplexValue(
+          'xulsword.tabs'
+        ) as XulswordStatePref['tabs'];
         if (panelIndex === -1) {
           i.checked = pval.every((p: any) => p?.includes(mod));
         } else {
-          i.checked = pval[panelIndex]?.includes(mod);
+          i.checked = Boolean(pval[panelIndex]?.includes(mod));
         }
       } else {
         i.checked = Prefs.getBoolPref(i.id);

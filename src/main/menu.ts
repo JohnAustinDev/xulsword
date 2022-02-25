@@ -13,7 +13,8 @@ import G from './mg';
 import Commands, { newDbItemWithDefaults } from './commands';
 import setViewportTabs from './tabs';
 
-import type { TabTypes } from '../type';
+import type { TabTypes, XulswordStatePref } from '../type';
+import { verseKey } from './minit';
 
 type Modifiers =
   | 'CommandOrControl' // 'accel' in XUL
@@ -87,11 +88,12 @@ export default class MenuBuilder {
 
   static panelLabels = (() => {
     const panelLabels: string[] = [];
-    G.Prefs.getComplexValue('xulsword.panels').forEach(
-      (_panel: string | null, i: number) => {
-        panelLabels.push(`menu.view.window${i + 1}`);
-      }
-    );
+    const panels = G.Prefs.getComplexValue(
+      'xulsword.panels'
+    ) as XulswordStatePref['panels'];
+    panels.forEach((_panel: string | null, i: number) => {
+      panelLabels.push(`menu.view.window${i + 1}`);
+    });
     panelLabels.push('menu.view.allwindows');
     return panelLabels;
   })();
@@ -552,6 +554,12 @@ export default class MenuBuilder {
       ],
     };
 
+    const dummy = {
+      location: verseKey('Gen.1.1').location(),
+      module: 'KJV',
+      text: '',
+    };
+
     const subMenuBookmarks = {
       label: this.ts('bookmarksMenu.label', 'bookmarksMenu.accesskey'),
       submenu: [
@@ -569,7 +577,7 @@ export default class MenuBuilder {
           accelerator: this.tx('addCurPageAsCmd.commandkey', [
             'CommandOrControl',
           ]),
-          click: () => newDbItemWithDefaults(false),
+          click: () => newDbItemWithDefaults(false, dummy),
         },
         {
           label: this.ts('menu.usernote.add'),
@@ -577,13 +585,15 @@ export default class MenuBuilder {
             'CommandOrControl',
             'Shift',
           ]),
-          click: () => newDbItemWithDefaults(true),
+          click: () => newDbItemWithDefaults(true, dummy),
         },
       ],
     };
 
     const panelpref = 'xulsword.panels';
-    const panelarray = G.Prefs.getComplexValue(panelpref);
+    const panelarray = G.Prefs.getComplexValue(
+      panelpref
+    ) as XulswordStatePref['panels'];
     const subMenuWindows = {
       role: 'windowMenu',
       label: this.ts('menu.windows'),

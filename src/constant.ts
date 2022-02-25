@@ -274,9 +274,7 @@ const C = {
   // These Atext props can be 'pinned' to become independant state properties.
   // NOTE: property types are important, but property values are not.
   PinProps: {
-    book: '',
-    chapter: 0,
-    verse: 0,
+    location: null as LocationVKType | null,
     selection: null as LocationVKType | null,
     flagScroll: 0,
     module: '',
@@ -288,20 +286,16 @@ const C = {
   // as the previous rendering, the LibSword response will also be the same.
   // NOTE: property types are important, but property values are not.
   LibSwordPropsTexts: {
-    book: '',
-    chapter: 0,
+    location: null as LocationVKType | null,
     module: '',
-    windowV11n: '',
     show: {} as ShowType,
     place: {} as PlaceType,
     columns: 0,
     ilModule: '',
   },
   LibSwordPropsComms: {
-    book: '',
-    chapter: 0,
+    location: null as LocationVKType | null,
     module: '',
-    windowV11n: '',
     show: {} as ShowType,
     place: {} as PlaceType,
   },
@@ -332,19 +326,9 @@ const C = {
   // the same values as the previous rendering, and the same is true of
   // the LibSwordProps, then scrolling is also unnecessary.
   // NOTE: property types are important, but property values are not.
-  ScrollPropsTexts: {
+  ScrollPropsVK: {
     module: '',
-    book: '',
-    chapter: '',
-    verse: 0,
-    columns: 0,
-    flagScroll: 0,
-  },
-  ScrollPropsComms: {
-    module: '',
-    book: '',
-    chapter: '',
-    verse: 0,
+    location: null as LocationVKType | null,
     columns: 0,
     flagScroll: 0,
   },
@@ -381,8 +365,8 @@ C.LibSwordProps[C.COMMENTARY] = C.LibSwordPropsComms;
 C.LibSwordProps[C.DICTIONARY] = C.LibSwordPropsDicts;
 C.LibSwordProps[C.GENBOOK] = C.LibSwordPropsGenbks;
 
-C.ScrollProps[C.BIBLE] = C.ScrollPropsTexts;
-C.ScrollProps[C.COMMENTARY] = C.ScrollPropsComms;
+C.ScrollProps[C.BIBLE] = C.ScrollPropsVK;
+C.ScrollProps[C.COMMENTARY] = C.ScrollPropsVK;
 C.ScrollProps[C.DICTIONARY] = C.ScrollPropsDicts;
 C.ScrollProps[C.GENBOOK] = C.ScrollPropsGenbks;
 

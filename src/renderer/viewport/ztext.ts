@@ -1,19 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PlaceType, SwordFilterType, SwordFilterValueType } from '../../type';
+
 import C from '../../constant';
 import Cache from '../../cache';
-import { dString, escapeRE, stringHash } from '../../common';
+import { deepClone, dString, escapeRE, stringHash } from '../../common';
+import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
-import { getNoteHTML, getChapterHeading } from './zversekey';
+import {
+  getNoteHTML,
+  getChapterHeading,
+  chapterChange,
+  pageChange,
+} from './zversekey';
 import { getDictEntryHTML } from './zdictionary';
 
-import type { AtextProps, LibSwordResponse } from './atext';
+import type { AtextProps, AtextState, LibSwordResponse } from './atext';
+import type {
+  LocationVKType,
+  PlaceType,
+  SwordFilterType,
+  SwordFilterValueType,
+  XulswordStatePref,
+} from '../../type';
 
 export function addUserNotes(content: LibSwordResponse, props: AtextProps) {}
 
 export function libswordText(props: AtextProps, n: number): LibSwordResponse {
-  const { module, ilModule, book, chapter, modkey, place, show } = props;
-
   const r = {
     headHTML: '',
     textHTML: '',
@@ -21,8 +32,9 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
     notes: '',
     intronotes: '',
   };
-
-  if (!module) return r;
+  const { module, ilModule, location, modkey, place, show } = props;
+  if (!module || !location) return r;
+  const { book, chapter } = location;
 
   const { type } = G.Tab[module];
   let moduleLocale = G.ModuleConfigs[module].AssociatedLocale;
@@ -253,4 +265,140 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
   }
 
   return r;
+}
+
+// Change a dictionary to the previous or next key, or return null if that
+// was not possible.
+function dictionaryChange(atext: HTMLElement, next: boolean): string | null {
+  const keyels = atext.getElementsByClassName('dictselectkey');
+  let newkey;
+  if (keyels && keyels[0]) {
+    let key = keyels[0] as any;
+    key = next ? key.nextSibling : key.previousSibling;
+    if (key) newkey = key.innerText;
+  }
+  return newkey || null;
+}
+
+// TODO!
+// Change a general book to the previous or next chapter.
+function genbookChange(atext: HTMLElement, next: boolean): string | null {
+  console.log(`genbookChange not implemented yet.`);
+  return null;
+}
+
+// Handle Atext prev/next event by returning a new state, or null if the
+// request is not possible. IMPORTANT: If prevState is not provided, the
+// returned state will be incomplete and should only be used as a boolean
+// test of whether the requested change is possible.
+export function textChange(
+  atext: HTMLElement,
+  next: boolean,
+  prevState?: AtextState | XulswordStatePref
+): Partial<AtextState> | Partial<XulswordStatePref> | null {
+  const { columns: cx, module, index: i } = atext.dataset;
+  const columns = Number(cx);
+  if (!columns || !module) return null;
+  const index = Number(i);
+  const { type } = G.Tab[module];
+  const sbe = atext.getElementsByClassName('sb')[0];
+  let atextPrevState: AtextState | null = null;
+  let xulswordPrevState: XulswordStatePref | null = null;
+  if (prevState) {
+    atextPrevState = ('pin' in prevState && prevState) || null;
+    xulswordPrevState = ('location' in prevState && prevState) || null;
+  }
+  let sxulsword: Partial<XulswordStatePref> | null = null;
+  let satext: Partial<AtextState> | null = null;
+  switch (type) {
+    case C.BIBLE:
+    case C.COMMENTARY: {
+      let location;
+      if (type === C.BIBLE && columns > 1) {
+        location = pageChange(atext, next, prevState);
+      } else {
+        let firstVerse: HTMLElement | undefined;
+        Array.from(sbe.getElementsByClassName('vs')).forEach((v) => {
+          const verse = v as HTMLElement;
+          if (!firstVerse && verse.style.display !== 'none') firstVerse = verse;
+        });
+        if (firstVerse) {
+          const p = getElementInfo(firstVerse);
+          if (p && p.bk && p.ch && module && module in G.Tab) {
+            const mv11n = G.Tab[module].v11n || 'KJV';
+            const vk: LocationVKType = {
+              book: p.bk,
+              chapter: Number(p.ch),
+              v11n: mv11n,
+            };
+            if (next) {
+              location = chapterChange(vk, 1);
+            } else {
+              location = chapterChange(vk, -1);
+            }
+          }
+        }
+      }
+      if (location) {
+        if (!atextPrevState) {
+          sxulsword = { location };
+        } else if (atextPrevState.pin) {
+          satext = { pin: { ...atextPrevState.pin, location } };
+        }
+      }
+      break;
+    }
+    case C.GENBOOK:
+    case C.DICTIONARY: {
+      const key =
+        type === C.DICTIONARY
+          ? dictionaryChange(atext, next)
+          : genbookChange(atext, next);
+      if (key) {
+        if (atextPrevState) {
+          const pin = deepClone(atextPrevState.pin);
+          pin.modkey = key;
+          satext = { pin };
+        } else if (xulswordPrevState) {
+          const keys = xulswordPrevState.keys.slice();
+          keys[index] = key;
+          sxulsword = { keys };
+        } else {
+          sxulsword = { keys: [key] };
+        }
+      }
+      break;
+    }
+    default:
+  }
+  if (!satext && !sxulsword) return null;
+  if (!prevState) return sxulsword || satext;
+  let mysf: number | undefined;
+  if (type === C.BIBLE && columns > 1) {
+    mysf = next ? C.VSCROLL.verse : C.VSCROLL.endAndUpdate;
+  } else if (type === C.BIBLE || type === C.COMMENTARY) {
+    mysf = C.VSCROLL.chapter;
+  }
+  if (mysf !== undefined) {
+    if (atextPrevState && satext) {
+      if (satext.pin) satext.pin.flagScroll = mysf;
+    } else if (xulswordPrevState && sxulsword) {
+      const flagScroll: number[] = xulswordPrevState.flagScroll.slice();
+      const ats = document.getElementsByClassName(`atext`);
+      Array.from(ats).forEach((at) => {
+        const a = at as HTMLElement;
+        const { index: inx, columns: c } = a.dataset;
+        if (mysf && inx && c) {
+          flagScroll[Number(inx)] =
+            c && Number(c) > 1 ? mysf : C.VSCROLL.centerAlways;
+        }
+      });
+      sxulsword.flagScroll = flagScroll;
+    }
+  }
+  if (type === C.BIBLE && xulswordPrevState && sxulsword) {
+    sxulsword.selection = null;
+  }
+  const ret = atextPrevState ? satext : sxulsword;
+  return ret && Object.keys(ret).length ? ret : null;
 }

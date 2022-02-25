@@ -9,7 +9,8 @@ import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { getContextData, scrollIntoView, verseKey } from '../rutil';
 import { delayHandler } from '../libxul/xul';
-import { textChange, aTextWheelScroll } from './zversekey';
+import { textChange } from './ztext';
+import { aTextWheelScroll, chapterChange } from './zversekey';
 
 import type { BookGroupType, XulswordStatePref } from '../../type';
 import type { XulswordState } from '../xulsword/xulsword';
@@ -33,20 +34,8 @@ export const vpWinNotStatePref = {
   isPinned: [true, true, true],
   noteBoxHeight: [] as number[],
   maximizeNoteBox: [] as number[],
-  v11nmod: '',
-  windowV11n: '',
   vpreset: 0,
 };
-
-export function updateVersification(component: React.Component) {
-  const state = component.state as XulswordState | ViewportWinState;
-  const { panels, v11nmod: currentMod, windowV11n } = state;
-  const v11nmod = panels.find((m: string | null) => m && G.Tab[m].isVerseKey);
-  const modV11n = v11nmod ? G.Tab[v11nmod].v11n : undefined;
-  if (currentMod !== v11nmod || windowV11n !== modV11n) {
-    component.setState({ v11nmod, windowV11n: modV11n });
-  }
-}
 
 export function closeMenupopups(component: React.Component) {
   const state = component.state as XulswordState & ViewportWinState;
@@ -76,9 +65,8 @@ export default function handler(
   noteboxResizing?: number[],
   maximize?: boolean
 ) {
-  const statex = this.state as any;
-  const { windowV11n } = statex;
-  const state = this.state as XulswordState;
+  const state = this.state as XulswordState | ViewportWinState;
+  const { location } = state;
   const { panels } = state;
   const target = es.target as HTMLElement;
   const mcls = ofClass(['atext', 'tabs'], target);
@@ -184,10 +172,13 @@ export default function handler(
           const bk = bookgroup ? G.Book[C.SupportedBooks[bg][0]] : null;
           if (bk) {
             this.setState({
-              book: bk.code,
-              chapter: 1,
-              verse: 1,
-              selection: '',
+              location: {
+                book: bk.code,
+                chapter: 1,
+                verse: 1,
+                v11n: location?.v11n || 'KJV',
+              },
+              selection: null,
             });
           }
           break;
@@ -196,23 +187,31 @@ export default function handler(
           const { book } = targ.element.dataset;
           if (book && !targ.element.classList.contains('disabled')) {
             this.setState({
-              book,
-              chapter: 1,
-              verse: 1,
-              selection: '',
+              location: {
+                book,
+                chapter: 1,
+                verse: 1,
+                v11n: location?.v11n || 'KJV',
+              },
+              selection: null,
             });
           }
           break;
         }
         case 'chaptermenucell': {
           const { book, chapter } = targ.element.dataset;
-          if (chapter) {
-            this.setState({
+          if (book && chapter) {
+            const newloc = chapterChange({
               book,
               chapter: Number(chapter),
-              verse: 1,
-              selection: '',
+              v11n: location?.v11n || 'KJV',
             });
+            if (newloc) {
+              this.setState({
+                location: newloc,
+                selection: null,
+              });
+            }
           }
           break;
         }
@@ -223,17 +222,15 @@ export default function handler(
             chapter: c,
             verse: v,
           } = targ.element.dataset;
-          const v11n = m && G.Tab[m].v11n;
-          if (b && v && m && v11n) {
-            const { book, chapter, verse } = verseKey(
+          const v11n = (m && G.Tab[m].v11n) || 'KJV';
+          if (location && m && b && v) {
+            const newloc = verseKey(
               { book: b, chapter: Number(c), verse: Number(v), v11n },
-              windowV11n
+              location.v11n
             ).location();
             this.setState({
-              book,
-              chapter,
-              verse,
-              selection: '',
+              location: newloc,
+              selection: null,
             });
           }
           break;
@@ -362,35 +359,28 @@ export default function handler(
         }
         case 'fnlink':
         case 'crref': {
-          if (windowV11n && panel && p && p.mod && p.bk && p.ch && p.vs) {
+          if (location && p?.bk && p.ch) {
             switch (type) {
               case C.BIBLE:
               case C.COMMENTARY: {
-                const lvv = p.lv && targ.type === 'crref' ? p.lv : p.vs;
-                const { book, chapter, verse, lastverse } = verseKey(
+                const newloc = verseKey(
                   {
                     book: p.bk,
                     chapter: Number(p.ch),
                     verse: p.vs,
-                    lastverse: lvv,
-                    v11n: G.Tab[p.mod].v11n || 'KJV',
+                    lastverse: p.lv,
+                    v11n: (p.mod && G.Tab[p.mod].v11n) || 'KJV',
                   },
-                  windowV11n
+                  location.v11n
                 ).location();
                 this.setState((prevState: XulswordStatePref) => {
-                  let { flagScroll } = prevState;
-                  flagScroll = flagScroll.map(() => C.VSCROLL.center);
-                  const lv =
-                    book && chapter && verse && lastverse && lastverse > verse
-                      ? lastverse
-                      : 0;
-                  return {
-                    book,
-                    chapter,
-                    verse: verse || 1,
-                    flagScroll,
-                    selection: lv ? [book, chapter, verse, lv].join('.') : '',
+                  const { flagScroll } = prevState;
+                  const s: Partial<XulswordStatePref> = {
+                    location: newloc,
+                    selection: newloc,
+                    flagScroll: flagScroll.map(() => C.VSCROLL.center),
                   };
+                  return s;
                 });
                 break;
               }

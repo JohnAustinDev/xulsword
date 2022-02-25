@@ -4,7 +4,7 @@ import React from 'react';
 import C from '../../constant';
 import { ofClass } from '../../common';
 import { chapterChange, verseChange } from '../viewport/zversekey';
-import { getMaxChapter, refParser } from '../rutil';
+import { refParser, verseKey } from '../rutil';
 import G from '../rg';
 
 import type { ShowType } from '../../type';
@@ -28,7 +28,7 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'historymenu': {
           e.stopPropagation();
           this.setState((prevState: XulswordState) => {
-            if (!prevState.windowV11n) return null;
+            if (!prevState.location) return null;
             return {
               historyMenupopup: prevState.historyMenupopup
                 ? undefined
@@ -51,52 +51,49 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'prevchap':
         case 'nextchap': {
           this.setState((prevState: XulswordState) => {
-            const { windowV11n, flagScroll } = prevState;
-            const s = chapterChange(
-              prevState.book,
-              prevState.chapter,
-              currentId === 'prevchap' ? -1 : 1,
-              currentId === 'nextchap' && windowV11n
-                ? getMaxChapter(windowV11n, prevState.book)
-                : 0
-            );
-            if (!s) return null;
-            s.selection = null;
-            s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
-            return s;
+            const { location, flagScroll } = prevState;
+            if (location) {
+              const newloc = chapterChange(
+                location,
+                currentId === 'prevchap' ? -1 : 1
+              );
+              if (newloc) {
+                const s: Partial<XulswordState> = {
+                  location: newloc,
+                  selection: null,
+                  flagScroll: flagScroll.map(() => C.VSCROLL.chapter),
+                };
+                return s;
+              }
+            }
+            return null;
           });
           break;
         }
         case 'prevverse':
         case 'nextverse': {
           this.setState((prevState: XulswordState) => {
-            const { windowV11n, flagScroll } = prevState;
-            if (!windowV11n) return null;
-            const s = verseChange(
-              windowV11n,
-              prevState.book,
-              prevState.chapter,
-              prevState.verse,
-              currentId === 'prevverse' ? -1 : 1
-            );
-            if (!s) return null;
-            s.selection =
-              s.book && s.chapter
-                ? {
-                    book: s.book,
-                    chapter: s.chapter,
-                    verse: s.verse,
-                    lastverse: s.verse,
-                    v11n: windowV11n,
-                  }
-                : null;
-            s.flagScroll = flagScroll.map(() => C.VSCROLL.centerAlways);
-            return s;
+            const { location, flagScroll } = prevState;
+            if (location) {
+              const newloc = verseChange(
+                location,
+                currentId === 'prevverse' ? -1 : 1
+              );
+              if (newloc) {
+                const s: Partial<XulswordState> = {
+                  location: newloc,
+                  selection: newloc,
+                  flagScroll: flagScroll.map(() => C.VSCROLL.centerAlways),
+                };
+                return s;
+              }
+            }
+            return null;
           });
           break;
         }
         case 'searchButton': {
-          let module = state.v11nmod;
+          let module = state.panels.find((m) => m);
           if (!module && G.Tabs.length) module = G.Tabs[0].module;
           const tbp = document.getElementById('searchText');
           const tb = tbp && tbp.getElementsByTagName('input');
@@ -138,86 +135,52 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
         case 'book__textbox__input':
         case 'book__menulist__select': {
           this.setState((prevState: XulswordState) => {
-            const { flagScroll: pfs, windowV11n } = prevState;
-            // reset Bookselect even if book doesn't change
+            const { flagScroll, location } = prevState;
+            // reset Bookselect on Enter key even if book doesn't change
             const bsreset = prevState.bsreset + 1;
-            const v11n = windowV11n || 'KJV';
-            const location = parser.parse(value, v11n)?.location;
-            if (location) {
-              // eslint-disable-next-line prefer-const
-              let { book, chapter, verse, lastverse } = location;
-              if (book) {
-                const s: Partial<XulswordState> | null = verseChange(
-                  v11n,
-                  book,
-                  chapter,
-                  verse || 1,
-                  0
-                );
-                if (s) {
-                  const selection =
-                    chapter && verse
-                      ? { book, chapter, verse, lastverse, v11n }
-                      : null;
-                  const flagScroll = pfs.map(() => C.VSCROLL.center);
-                  s.selection = selection;
-                  s.bsreset = bsreset;
-                  s.flagScroll = flagScroll;
-                  return s;
-                }
-              }
-            }
-            return { bsreset };
-          });
-          break;
-        }
-        case 'chapter__input': {
-          this.setState((prevState: XulswordState) => {
-            const { windowV11n, flagScroll } = prevState;
-            if (!windowV11n) return null;
-            // reset Bookselect even if book doesn't change
-            const bsreset = prevState.bsreset + 1;
-            const s = chapterChange(
-              prevState.book,
-              Number(value),
-              0,
-              getMaxChapter(windowV11n, prevState.book)
-            );
-            if (s) {
-              s.selection = null;
-              s.flagScroll = flagScroll.map(() => C.VSCROLL.chapter);
+            const newloc = parser.parse(
+              value,
+              location?.v11n || 'KJV'
+            )?.location;
+            // Check that the entered location exists.
+            if (newloc && verseChange(newloc, 0)) {
+              const s: Partial<XulswordState> = {
+                location: newloc,
+                selection: newloc,
+                flagScroll: flagScroll.map(() => C.VSCROLL.center),
+                bsreset,
+              };
               return s;
             }
             return { bsreset };
           });
           break;
         }
+        case 'chapter__input':
         case 'verse__input': {
           this.setState((prevState: XulswordState) => {
-            const { windowV11n, flagScroll } = prevState;
-            if (!windowV11n) return null;
-            // reset Bookselect even if book doesn't change
+            const { flagScroll, location } = prevState;
+            // reset Bookselect on Enter key even if chapter doesn't change
             const bsreset = prevState.bsreset + 1;
-            const s = verseChange(
-              windowV11n,
-              prevState.book,
-              prevState.chapter,
-              Number(value)
-            );
-            if (s) {
-              const { book, chapter, verse } = s;
-              s.selection =
-                book && chapter
-                  ? {
-                      book,
-                      chapter,
-                      verse,
-                      lastverse: verse,
-                      v11n: windowV11n,
-                    }
-                  : null;
-              s.flagScroll = flagScroll.map(() => C.VSCROLL.centerAlways);
-              return s;
+            if (location) {
+              const pvk = verseKey(location);
+              let newloc;
+              if (currentId === 'chapter__input') {
+                pvk.chapter = Number(value);
+                newloc = chapterChange(pvk.location());
+              } else {
+                pvk.verse = Number(value);
+                newloc = verseChange(pvk.location());
+              }
+              if (newloc) {
+                const s: Partial<XulswordState> = {
+                  location: newloc,
+                  selection: newloc,
+                  flagScroll: flagScroll.map(() => C.VSCROLL.chapter),
+                  bsreset,
+                };
+                return s;
+              }
             }
             return { bsreset };
           });

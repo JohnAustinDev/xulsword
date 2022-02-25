@@ -16,7 +16,7 @@ import G from '../rg';
 import type {
   LocationVKType,
   ShowType,
-  V11nType,
+  TextVKType,
   XulswordStatePref,
 } from '../../type';
 import type Xulsword from '../xulsword/xulsword';
@@ -50,22 +50,18 @@ export function getIntroductions(mod: string, vkeytext: string) {
 }
 
 export function getChapterHeading(props: {
-  book: string | undefined;
-  chapter: number | undefined;
+  location: LocationVKType | null;
   module: string | undefined;
   ilModuleOption: string[] | undefined;
   ilModule: string | undefined;
 }) {
-  if (!props.book || !props.chapter || !props.module)
-    return { textHTML: '', intronotes: '' };
+  if (!props.location || !props.module) return { textHTML: '', intronotes: '' };
+  const { book, chapter } = props.location;
   let l = G.ModuleConfigs[props.module]?.AssociatedLocale;
   if (!l || l === C.NOTFOUND) l = i18next.language; // otherwise use current program locale
   const toptions = { lng: l, ns: 'common/books' };
 
-  const intro = getIntroductions(
-    props.module,
-    `${props.book} ${props.chapter}`
-  );
+  const intro = getIntroductions(props.module, `${book} ${chapter}`);
 
   let lt = G.LibSword.getModuleInformation(props.module, 'NoticeLink');
   if (lt === C.NOTFOUND) lt = '';
@@ -75,7 +71,7 @@ export function getChapterHeading(props: {
   // current program locale if no associated locale is installed. But notice-link
   // is always cs-module style.
   let html = `<div class="chapterhead${
-    props.chapter === 1 ? ' chapterfirst' : ''
+    chapter === 1 ? ' chapterfirst' : ''
   } cs-${l}">`;
 
   html += `<div class="chapnotice cs-${props.module}${!lt ? ' empty' : ''}">`;
@@ -89,26 +85,27 @@ export function getChapterHeading(props: {
   html += '</div>';
 
   html += '<div class="chaptitle" >';
-  html += `<div class="chapbk">${i18next.t(props.book, toptions)}</div>`;
+  html += `<div class="chapbk">${i18next.t(book, toptions)}</div>`;
   html += `<div class="chapch">${getLocalizedChapterTerm(
-    props.book,
-    props.chapter,
+    book,
+    chapter,
     l
   )}</div>`;
   html += '</div>';
 
   html += '<div class="chapinfo">';
   html += `<div class="listenlink" data-title="${[
-    props.book,
-    props.chapter,
+    book,
+    chapter,
     1,
     props.module,
   ].join('.')}"></div>`;
   html += `<div class="introlink${
     !intro.textHTML ? ' empty' : ''
-  }" data-title="${[props.book, props.chapter, 1, props.module].join(
-    '.'
-  )}">${i18next.t('IntroLink', toptions)}</div>`;
+  }" data-title="${[book, chapter, 1, props.module].join('.')}">${i18next.t(
+    'IntroLink',
+    toptions
+  )}</div>`;
   if (
     props.ilModule &&
     props.ilModuleOption &&
@@ -118,11 +115,9 @@ export function getChapterHeading(props: {
     html += '<select>';
     props.ilModuleOption.forEach((m) => {
       const selected = m === props.ilModule;
-      html += `<option class="origoption cs-${G.Tab[m].locName}" value="${
-        props.book
-      }.1.1.${m}"${selected ? ' selected="selected"' : ''}>${
-        G.Tab[m].label
-      }</option>`;
+      html += `<option class="origoption cs-${m}" value="${book}.1.1.${m}"${
+        selected ? ' selected="selected"' : ''
+      }>${G.Tab[m].label}</option>`;
     });
     html += '</select>';
     html += '</div>';
@@ -135,7 +130,7 @@ export function getChapterHeading(props: {
 
   html += `<div class="introtext${
     !intro.textHTML ? ' empty' : ''
-  }" data-title="${[props.book, props.chapter, 1, props.module].join('.')}">${
+  }" data-title="${[book, chapter, 1, props.module].join('.')}">${
     intro.textHTML ? intro.textHTML : ''
   }</div>`;
 
@@ -173,7 +168,9 @@ function getRefHTML(
     }
   }
 
-  const tabs = G.Prefs.getComplexValue('xulsword.tabs');
+  const tabs = G.Prefs.getComplexValue(
+    'xulsword.tabs'
+  ) as XulswordStatePref['tabs'];
 
   let bk = '';
   let ch = 0;
@@ -253,37 +250,34 @@ function getRefHTML(
       return;
     }
 
-    const aVerse = findAVerseText(
-      r.location(v11n),
-      mod,
-      tabs[w],
-      keepTextNotes
-    );
-    if (!aVerse) return;
-    const { versekey } = aVerse;
-    const { book, chapter } = versekey;
-    let { verse, lastverse } = versekey;
-    let { version, text } = aVerse;
-    if (/^\s*$/.test(text)) text = '-----';
+    const aText: TextVKType = {
+      location: r.location(v11n),
+      module: mod,
+      text: '',
+    };
+    if (!findAVerseText(aText, tabs[w], keepTextNotes)) return;
+
+    const { module, location, text } = aText;
+    const { book, chapter } = location;
+    let { verse, lastverse } = location;
     if (!verse) verse = 1;
     if (!lastverse) lastverse = verse;
-    version = version || mod;
     html += sep;
     html += `<a class="crref" data-title="${[
       book,
       chapter,
       verse,
       lastverse,
-      version,
+      module,
     ].join('.')}">`;
-    html += aVerse.versekey.readable();
+    html += verseKey(aText.location).readable();
     html += '</a>';
-    html += `<span class="crtext cs-${version}${
-      G.ModuleConfigs[version].direction !== G.ProgramConfig.direction
+    html += `<span class="crtext cs-${module}${
+      G.ModuleConfigs[module].direction !== G.ProgramConfig.direction
         ? ' opposing-program-direction'
         : ''
     }">`;
-    html += text + (version !== mod ? ` (${G.Tab[version].label})` : '');
+    html += text + (module !== mod ? ` (${G.Tab[module].label})` : '');
     html += '</span>';
 
     sep = '<span class="cr-sep"></span>';
@@ -509,16 +503,16 @@ function verseIsVisible(v: HTMLElement, ignoreNotebox = false): boolean {
 export function versekeyScroll(
   sbe: HTMLElement,
   scrollProps: {
-    module: string;
-    book: string;
-    chapter: number;
-    verse: number;
+    module: string | undefined;
+    location: LocationVKType | null;
     flagScroll: number;
     columns: number;
   }
-): Partial<XulswordStatePref> | null {
-  const { module, book, chapter, verse, flagScroll, columns } = scrollProps;
-  if (flagScroll === null || flagScroll === undefined) return null;
+): LocationVKType | null {
+  const { module, location, flagScroll, columns } = scrollProps;
+  if (!location) return null;
+  const { book, chapter, verse } = location;
+  if (!verse || flagScroll === null || flagScroll === undefined) return null;
 
   sbe.scrollLeft = 0; // commentary may have been non-zero
 
@@ -559,7 +553,7 @@ export function versekeyScroll(
 
   let fs2 = flagScroll;
   // some special rules for commentaries
-  if (G.Tab[module].type === C.COMMENTARY) {
+  if (module && G.Tab[module].type === C.COMMENTARY) {
     // if part of commentary element is already visible, don't rescroll
     if (
       vOffsetTop < sbe.scrollTop &&
@@ -643,6 +637,8 @@ export function versekeyScroll(
                   book: bk,
                   chapter: Number(ch),
                   verse: Number(vs),
+                  v11n:
+                    (module && module in G.Tab && G.Tab[module].v11n) || 'KJV',
                 };
             }
             ffc = ffc.nextSibling as HTMLElement | null;
@@ -757,6 +753,8 @@ export function versekeyScroll(
                   book: bk,
                   chapter: Number(ch),
                   verse: Number(vs),
+                  v11n:
+                    (module && module in G.Tab && G.Tab[module].v11n) || 'KJV',
                 };
             }
             ffc = ffc.nextSibling as HTMLElement | null;
@@ -782,7 +780,9 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
   ispinned = ispinned === 'true';
   const index = Number(i);
   const { type } = G.Tab[module];
-  const stateType = 'windowV11n' in caller.state ? 'viewportparent' : 'atext';
+  const state = caller.state as XulswordState & AtextState;
+  const sxulsword: XulswordState | null = state.location ? state : null;
+  const satext: AtextState | null = state.pin ? state : null;
 
   caller.mouseWheel.count = 0;
   if (!count) return;
@@ -794,12 +794,6 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
     const scrollDelta = count * 20; // scroll delta in pixels
     return;
   }
-
-  const xulsword = caller as Xulsword;
-  const atextprops = caller.props as AtextProps;
-  const xulswordstate = xulsword.state as XulswordState;
-  const windowV11n =
-    stateType === 'atext' ? atextprops.windowV11n : xulswordstate.windowV11n;
 
   const sb = atext.getElementsByClassName('sb')[0];
 
@@ -834,38 +828,47 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
   }
   // Scroll to verse v
   const p = getElementInfo(v);
-  if (windowV11n && p) {
+  if (p) {
     const { bk, ch, vs } = p;
     if (bk && ch && vs) {
       const mysf = columns === 1 ? C.VSCROLL.none : C.VSCROLL.verse;
-      if (ispinned && stateType === 'atext') {
+      if (ispinned && satext) {
         caller.setState((prevState: AtextState) => {
           const pin: Partial<AtextState['pin']> = {
-            ...prevState.pin,
+            ...deepClone(prevState.pin),
+            flagScroll: mysf,
+          };
+          if (pin && pin.location) {
+            pin.location.book = bk;
+            pin.location.chapter = Number(ch);
+            pin.location.verse = vs;
+            return { pin };
+          }
+          return null;
+        });
+      } else if (sxulsword) {
+        caller.setState((prevState: XulswordState) => {
+          const { location } = prevState;
+          const { book, chapter, verse } = verseKey({
             book: bk,
             chapter: Number(ch),
             verse: vs,
-            flagScroll: mysf,
+            v11n: G.Tab[module].v11n || 'KJV',
+          }).location(location?.v11n);
+          const flagScroll = sxulsword.flagScroll.map(() => C.VSCROLL.verse);
+          flagScroll[index] = mysf;
+          const s: Partial<XulswordStatePref> = {
+            location: { ...deepClone(prevState.location) },
+            flagScroll,
           };
-          return { pin };
+          if (s.location) {
+            s.location.book = book;
+            s.location.chapter = chapter;
+            s.location.verse = verse || 1;
+            return s;
+          }
+          return null;
         });
-      } else if (stateType === 'viewportparent') {
-        const { book, chapter, verse } = verseKey({
-          book: bk,
-          chapter: Number(ch),
-          verse: vs,
-          lastverse: vs,
-          v11n: G.Tab[module].v11n || 'KJV',
-        }).location(windowV11n);
-        const flagScroll = xulswordstate.flagScroll.map(() => C.VSCROLL.verse);
-        flagScroll[index] = mysf;
-        const s: Partial<XulswordStatePref> = {
-          book,
-          chapter,
-          verse: verse || 1,
-          flagScroll,
-        };
-        caller.setState({ ...s, flagScroll });
       }
     }
   }
@@ -874,19 +877,18 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
 export function highlight(
   sbe: HTMLElement,
   selection: LocationVKType,
-  module: string,
-  windowV11n: V11nType | undefined
+  module: string
 ) {
   // First unhilight everything
   Array.from(sbe.getElementsByClassName('hl')).forEach((v) => {
     v.classList.remove('hl');
   });
 
-  if (!selection || !windowV11n) return;
+  if (!selection) return;
   const { book, chapter, verse, lastverse } = verseKey(
     selection,
-    windowV11n
-  ).location(G.Tab[module].v11n || windowV11n);
+    G.Tab[module].v11n || undefined
+  ).location();
   if (verse) {
     const lv = lastverse || verse;
     // Then find the verse element(s) to highlight
@@ -980,49 +982,47 @@ export function findVerseElement(
 // change is not possible. NOTE: This function currently considers changes
 // between books as not possible, although this could be done.
 export function chapterChange(
-  bk: string,
-  ch: number,
-  chDelta?: number,
-  maxchapter?: number
-): Partial<XulswordStatePref> | null {
-  const chapter = chDelta ? ch + chDelta : ch;
+  location: LocationVKType | null,
+  chDelta?: number
+): LocationVKType | null {
+  if (!location) return null;
+  const { book } = location;
+  let { chapter } = location;
+  if (chDelta) chapter += chDelta;
   if (chapter < 1) return null;
-  if (maxchapter && chapter > maxchapter) return null;
-  return {
-    book: bk,
-    chapter,
-    verse: 1,
-  };
+  const maxchapter = getMaxChapter(location.v11n, location.book);
+  if (!maxchapter || chapter > maxchapter) return null;
+  location.book = book;
+  location.chapter = chapter;
+  location.verse = 1;
+  return location;
 }
 
 // For versekey modules only. Change to a particular bk.ch.vs or change
 // the passed verse by a delta if possible. Returns null if a requested
 // change is not possible.
 export function verseChange(
-  windowV11n: V11nType | undefined,
-  bk: string,
-  ch: number,
-  vs: number,
+  location: LocationVKType | null,
   vsDelta?: number
-): Partial<XulswordStatePref> | null {
-  if (!windowV11n) return null;
-  let book = bk;
-  let chapter = ch;
-  let verse = vsDelta ? vs + vsDelta : vs;
-  const maxvs = getMaxVerse(windowV11n, `${bk}.${ch}`);
+): LocationVKType | null {
+  if (!location) return null;
+  let { book, chapter, verse } = location;
+  const { v11n } = location;
+  if (!verse) return null;
+  if (vsDelta) verse += vsDelta;
+  const maxvs = getMaxVerse(v11n, [book, chapter].join('.'));
   let ps;
   if (verse < 1) {
     if (!vsDelta) return null;
-    ps = chapterChange(bk, ch, -1);
-    if (!ps || !ps.book || !ps.chapter) return null;
-    verse = getMaxVerse(windowV11n, `${ps.book}.${ps.chapter}`);
+    ps = chapterChange(location, -1);
+    if (!ps) return null;
+    verse = getMaxVerse(v11n, `${ps.book}.${ps.chapter}`);
     book = ps.book;
     chapter = ps.chapter;
   } else if (verse > maxvs) {
     if (!vsDelta) return null;
-    const maxch = getMaxChapter(windowV11n, bk);
-    ps = chapterChange(bk, ch, 1, maxch);
-    if (!ps || !ps.book || !ps.chapter) return null;
+    ps = chapterChange(location, 1);
+    if (!ps) return null;
     verse = 1;
     book = ps.book;
     chapter = ps.chapter;
@@ -1031,6 +1031,7 @@ export function verseChange(
     book,
     chapter,
     verse,
+    v11n,
   };
 }
 
@@ -1038,11 +1039,20 @@ export function verseChange(
 // Atext previous/next functions:
 //
 
-// For multi-column Bibles only.
+// For multi-column Bibles only. IMPORTANT: If prevState is not provided,
+// the returned state may be of the wrong type and must only be used as a
+// boolean test of whether the requested change is possible or not.
 export function pageChange(
   atext: HTMLElement,
-  next: boolean
-): Partial<XulswordStatePref> | null {
+  next: boolean,
+  prevState?: AtextState | XulswordStatePref
+): LocationVKType | null {
+  const ps = prevState as AtextState & XulswordStatePref;
+  const ploc: LocationVKType | null = ps?.pin?.location || ps?.location;
+  const { book, v11n } = {
+    book: ploc?.book || 'Gen',
+    v11n: ploc?.v11n || 'KJV',
+  };
   if (!next) {
     let firstVerse: HTMLElement | undefined;
     Array.from(atext.getElementsByClassName('vs')).forEach((v: any) => {
@@ -1052,8 +1062,10 @@ export function pageChange(
     const ei = getElementInfo(firstVerse);
     if (!ei) return null;
     return {
+      book,
       chapter: Number(ei.ch),
       verse: Number(ei.vs),
+      v11n,
     };
   }
   if (next) {
@@ -1067,139 +1079,11 @@ export function pageChange(
     const ei = getElementInfo(lastVerse);
     if (!ei) return null;
     return {
+      book,
       chapter: Number(ei.ch),
       verse: Number(ei.vs),
+      v11n,
     };
   }
   return null;
-}
-
-// Change a dictionary to the previous or next key, or return null if that
-// was not possible.
-function dictionaryChange(atext: HTMLElement, next: boolean): string | null {
-  const keyels = atext.getElementsByClassName('dictselectkey');
-  let newkey;
-  if (keyels && keyels[0]) {
-    let key = keyels[0] as any;
-    key = next ? key.nextSibling : key.previousSibling;
-    if (key) newkey = key.innerText;
-  }
-  return newkey || null;
-}
-
-// TODO!
-// Change a general book to the previous or next chapter.
-function genbookChange(atext: HTMLElement, next: boolean): string | null {
-  console.log(`genbookChange not implemented yet.`);
-  return null;
-}
-
-// Handle Atext prev/next event by returning a new state, or null if the
-// request is not possible.
-export function textChange(
-  atext: HTMLElement,
-  next: boolean,
-  prevState?: AtextState | XulswordStatePref
-): Partial<AtextState> | Partial<XulswordStatePref> | null {
-  const { columns: cx, module, index: i } = atext.dataset;
-  const columns = Number(cx);
-  if (!columns || !module) return null;
-  const index = Number(i);
-  const { type } = G.Tab[module];
-  const sbe = atext.getElementsByClassName('sb')[0];
-  let statetype = 'none';
-  if (prevState && 'keys' in prevState) statetype = 'xulsword';
-  else if (prevState) statetype = 'atext';
-  let s;
-  switch (type) {
-    case C.BIBLE:
-    case C.COMMENTARY: {
-      if (type === C.BIBLE && columns > 1) {
-        s = pageChange(atext, next);
-      } else {
-        let firstVerse: HTMLElement | undefined;
-        Array.from(sbe.getElementsByClassName('vs')).forEach((v) => {
-          const verse = v as HTMLElement;
-          if (!firstVerse && verse.style.display !== 'none') firstVerse = verse;
-        });
-        if (firstVerse) {
-          const p = getElementInfo(firstVerse);
-          if (module && p && p.bk && p.ch && module in G.Tab) {
-            if (next) {
-              s = chapterChange(
-                p.bk,
-                Number(p.ch),
-                1,
-                getMaxChapter(G.Tab[module].v11n || 'KJV', p.bk)
-              );
-            } else {
-              s = chapterChange(p.bk, Number(p.ch), -1);
-            }
-          }
-        }
-      }
-      break;
-    }
-    case C.GENBOOK:
-    case C.DICTIONARY: {
-      const key =
-        type === C.DICTIONARY
-          ? dictionaryChange(atext, next)
-          : genbookChange(atext, next);
-      if (key) {
-        if (statetype === 'atext') {
-          const ps = prevState as AtextState;
-          const pin = deepClone(ps.pin);
-          pin.modkey = key;
-          s = { pin };
-        } else if (statetype === 'xulsword') {
-          const ps = prevState as XulswordStatePref;
-          const keys = ps.keys.slice();
-          keys[index] = key;
-          s = { keys };
-        } else {
-          s = { keys: [key] };
-        }
-      }
-      break;
-    }
-    default:
-  }
-  if (!s) return null;
-  if (statetype === 'none') return s;
-  if (statetype === 'atext') {
-    const ps = prevState as AtextState;
-    s = { pin: { ...ps.pin, ...s } };
-  }
-  let mysf: number | undefined;
-  if (type === C.BIBLE && columns > 1) {
-    mysf = next ? C.VSCROLL.verse : C.VSCROLL.endAndUpdate;
-  } else if (type === C.BIBLE || type === C.COMMENTARY) {
-    mysf = C.VSCROLL.chapter;
-  }
-  if (mysf !== undefined) {
-    if (statetype === 'atext') {
-      const ss = s as AtextState;
-      if (ss.pin) ss.pin.flagScroll = mysf;
-    } else if (statetype === 'xulsword') {
-      const ps = prevState as XulswordStatePref;
-      const flagScroll: number[] = ps.flagScroll.slice();
-      const ats = document.getElementsByClassName(`atext`);
-      Array.from(ats).forEach((at) => {
-        const a = at as HTMLElement;
-        const { index: inx, columns: c } = a.dataset;
-        if (mysf && inx && c) {
-          flagScroll[Number(inx)] =
-            c && Number(c) > 1 ? mysf : C.VSCROLL.centerAlways;
-        }
-      });
-      const ss = s as XulswordStatePref;
-      ss.flagScroll = flagScroll;
-    }
-  }
-  if (type === C.BIBLE && statetype === 'xulsword') {
-    const ss = s as XulswordStatePref;
-    ss.selection = null;
-  }
-  return s;
 }

@@ -36,11 +36,10 @@
     }
   },
   "xulsword": {
-    "book": "",
-    "chapter": 1,
-    "verse": 1,
-    "keys": [],
+    "location": null,
     "selection": null,
+
+    "keys": [],
 
     "history": [],
     "historyIndex": 0,

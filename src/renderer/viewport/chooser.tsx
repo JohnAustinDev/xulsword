@@ -37,7 +37,7 @@ const defaultProps = {
   availableBooks: new Set(),
   hideUnavailableBooks: false,
   headingsModule: undefined,
-  windowV11n: 'KJV',
+  v11n: 'KJV',
   type: 'bible',
   onCloseChooserClick: undefined,
 };
@@ -49,7 +49,7 @@ const propTypes = {
   availableBooks: PropTypes.instanceOf(Set),
   hideUnavailableBooks: PropTypes.bool,
   headingsModule: PropTypes.string,
-  windowV11n: PropTypes.string.isRequired,
+  v11n: PropTypes.string.isRequired,
   type: PropTypes.oneOf(['bible', 'genbook', 'none']).isRequired,
   onCloseChooserClick: PropTypes.func.isRequired,
 };
@@ -60,7 +60,7 @@ export interface ChooserProps extends XulProps {
   availableBooks: Set<string> | undefined;
   hideUnavailableBooks: boolean;
   headingsModule: string | undefined;
-  windowV11n: V11nType;
+  v11n: V11nType;
   type: string;
   onCloseChooserClick: (e: any) => void;
 }
@@ -262,7 +262,7 @@ class Chooser extends React.Component {
       bookGroups,
       selection,
       type,
-      windowV11n,
+      v11n,
       onCloseChooserClick,
     } = props;
     const { bookGroup, slideIndex } = state;
@@ -324,7 +324,7 @@ class Chooser extends React.Component {
               className="sizer"
               availableBooks={new Set([longestBook])}
               hideUnavailableBooks
-              windowV11n={windowV11n}
+              v11n={v11n}
               domref={rowRef}
               style={{ visibility: 'hidden' }}
             />
@@ -335,7 +335,7 @@ class Chooser extends React.Component {
               bookGroup={bookGroup}
               selection={selection}
               availableBooks={availableBooks}
-              windowV11n={windowV11n}
+              v11n={v11n}
               domref={sliderRef}
               style={{
                 position: 'absolute',
@@ -358,7 +358,7 @@ export default Chooser;
 
 function BookGroupList(
   props: {
-    windowV11n: V11nType;
+    v11n: V11nType;
     bookGroup?: BookGroupType | undefined;
     selection?: string | undefined;
     availableBooks?: Set<string> | undefined;
@@ -371,7 +371,7 @@ function BookGroupList(
     selection,
     availableBooks,
     hideUnavailableBooks,
-    windowV11n,
+    v11n,
     handler,
   } = props;
   const listOfBookIndexes: number[] = [];
@@ -396,7 +396,7 @@ function BookGroupList(
             key={bk.code}
             sName={bk.code}
             classes={classes}
-            windowV11n={windowV11n}
+            v11n={v11n}
             handler={handler}
           />
         );
@@ -415,12 +415,12 @@ BookGroupList.defaultProps = {
 function BookGroupItem(
   props: {
     sName: string;
-    windowV11n: V11nType;
+    v11n: V11nType;
     classes?: string[] | undefined;
     handler?: (e: React.SyntheticEvent) => void | undefined;
   } & XulProps
 ) {
-  const { sName, classes, handler, windowV11n } = props;
+  const { sName, classes, handler, v11n } = props;
   const hasAudio = false; // TODO! add audio icons for available audio
   const c = classes || [];
   return (
@@ -435,7 +435,7 @@ function BookGroupItem(
 
       <div key="charrow" className="charrow" />
       {!classes?.includes('disabled') && (
-        <ChapterMenu bkcode={sName} windowV11n={windowV11n} handler={handler} />
+        <ChapterMenu bkcode={sName} v11n={v11n} handler={handler} />
       )}
     </Hbox>
   );
@@ -447,10 +447,10 @@ BookGroupItem.defaultProps = {
 
 function ChapterMenu(props: {
   bkcode: string;
-  windowV11n: V11nType;
+  v11n: V11nType;
   handler?: (e: React.SyntheticEvent) => void;
 }) {
-  const { bkcode, windowV11n, handler } = props;
+  const { bkcode, v11n, handler } = props;
   const dlyhandler =
     handler && chooserCompRef
       ? delayHandler.bind(chooserCompRef)(
@@ -461,7 +461,7 @@ function ChapterMenu(props: {
       : undefined;
   const chmenuCells = [];
   let ch = 1;
-  const lastch = getMaxChapter(windowV11n, bkcode);
+  const lastch = getMaxChapter(v11n, bkcode);
   for (let row = 1; row <= 1 + lastch / 10; row += 1) {
     const cells = [];
     for (let col = 1; col <= 10; col += 1) {
@@ -491,7 +491,7 @@ function ChapterMenu(props: {
   }
   return (
     <div
-      key={[windowV11n, bkcode].join('.')}
+      key={[v11n, bkcode].join('.')}
       className="chaptermenu"
       onClick={handler}
     >

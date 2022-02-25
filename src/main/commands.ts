@@ -1,10 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
-import { CommandsPublic } from '../type';
 import C from '../constant';
 import { JSON_stringify } from '../common';
-import { verseKey, getTab, setGlobalStateFromPref } from './minit';
+import { verseKey, getTab, setGlobalStateFromPref, getTabs } from './minit';
 import Prefs from './modules/prefs';
+
+import type {
+  CommandsPublic,
+  LocationVKType,
+  TextVKType,
+  XulswordStatePref,
+} from '../type';
 
 const Commands: typeof CommandsPublic = {
   addRepositoryModule() {
@@ -90,14 +96,7 @@ const Commands: typeof CommandsPublic = {
     console.log(`Action not implemented: openBookmarksManager()`);
   },
 
-  openNewDbItemDialog(
-    userNote: boolean,
-    mod: string,
-    bk: string,
-    ch: number,
-    vs: number,
-    lv?: number | null
-  ) {
+  openNewDbItemDialog(userNote: boolean, textvk: TextVKType) {
     console.log(
       `Action not implemented: openNewBookmarkDialog(${JSON_stringify(
         arguments
@@ -123,49 +122,29 @@ const Commands: typeof CommandsPublic = {
     console.log(`Action not implemented: openHelp()`);
   },
 
-  goToBibleLocation(
-    v11n,
-    bk,
-    ch,
-    vs = 1,
-    sel = '',
+  goToLocationVK(
+    location: LocationVKType,
+    selection: LocationVKType,
     flagScroll = C.VSCROLL.centerAlways
   ) {
     // To go to a verse system location without also changing xulsword's current
     // versekey module requires this location be converted into the current v11n.
-    let book = bk;
-    let chapter = ch;
-    let verse = vs;
-    let selection = sel;
-    const tab = getTab();
-    const panels = Prefs.getComplexValue('xulsword.panels');
-    const vkm = panels.find((m: string | null) => m && tab[m].isVerseKey);
-    const vkmv11n = tab[vkm].v11n;
-    if (vkm && vkmv11n && vkmv11n !== v11n) {
-      const loc = verseKey({ book, chapter, verse, v11n }, vkmv11n);
-      ({ book, chapter } = loc);
-      verse = loc.verse || 1;
-      const soc = sel ? verseKey(sel, v11n).location(vkmv11n) : null;
-      selection =
-        (soc &&
-          [
-            soc.book,
-            soc.chapter,
-            soc.verse || 1,
-            soc.lastverse || soc.verse || 1,
-          ].join('.')) ||
-        '';
-    }
-    const fs = panels.map(() => flagScroll);
-    Prefs.setCharPref('xulsword.book', book);
-    Prefs.setIntPref('xulsword.chapter', chapter);
-    Prefs.setIntPref('xulsword.verse', verse);
-    Prefs.setCharPref('xulsword.selection', selection);
-    Prefs.setComplexValue('xulsword.flagScroll', fs);
+    const ploc = Prefs.getComplexValue(
+      'xulsword.location'
+    ) as XulswordStatePref['location'];
+    const panels = Prefs.getComplexValue(
+      'xulsword.panels'
+    ) as XulswordStatePref['panels'];
+    const loc = verseKey(location, ploc?.v11n || 'KJV');
+    const sel = verseKey(selection, ploc?.v11n || 'KJV');
+    Prefs.setComplexValue('xulsword.location', loc.location());
+    Prefs.setComplexValue('xulsword.selection', sel.location());
+    Prefs.setComplexValue(
+      'xulsword.flagScroll',
+      panels.map(() => flagScroll)
+    );
     setGlobalStateFromPref(null, [
-      'xulsword.book',
-      'xulsword.chapter',
-      'xulsword.verse',
+      'xulsword.location',
       'xulsword.selection',
       'xulsword.flagScroll',
     ]);
@@ -176,29 +155,39 @@ export default Commands;
 
 export function newDbItemWithDefaults(
   userNote: boolean,
-  mod?: string,
-  bk?: string,
-  ch?: number,
-  vs?: number,
-  lv?: number | null
+  textvk: TextVKType | null
 ) {
   const tab = getTab();
-  const panels = Prefs.getComplexValue('xulsword.panels');
+  const tabs = getTabs();
+  const panels = Prefs.getComplexValue(
+    'xulsword.panels'
+  ) as XulswordStatePref['panels'];
   const vkm = panels.find(
     (m: string | null) => m && m in tab && tab[m].isVerseKey
   );
   if (vkm) {
-    let verse = Prefs.getIntPref('xulsword.verse');
-    let lastverse = verse;
-    const sel = Prefs.getCharPref('xulsword.selection');
-    if (sel) [, , verse, lastverse] = sel.split('.').map((x) => Number(x));
-    Commands.openNewDbItemDialog(
-      userNote,
-      mod || vkm,
-      bk || Prefs.getCharPref('xulsword.book'),
-      ch || Prefs.getIntPref('xulsword.chapter'),
-      vs || verse,
-      lv || lastverse
-    );
+    const loc = Prefs.getComplexValue(
+      'xulsword.location'
+    ) as XulswordStatePref['location'];
+    const sel = Prefs.getComplexValue(
+      'xulsword.selection'
+    ) as XulswordStatePref['selection'];
+    const textvk2 = {
+      module: textvk?.module || tabs[0].module,
+      text: textvk?.text || '',
+      location: {
+        book: textvk?.location?.book || loc?.book || '',
+        chapter: textvk?.location?.chapter || loc?.chapter || 0,
+        verse: textvk?.location?.verse || sel?.verse || loc?.verse || null,
+        lastverse:
+          textvk?.location?.lastverse ||
+          sel?.lastverse ||
+          loc?.lastverse ||
+          null,
+        v11n: textvk?.location?.v11n || loc?.v11n || 'KJV',
+      },
+    };
+
+    Commands.openNewDbItemDialog(userNote, textvk2);
   }
 }

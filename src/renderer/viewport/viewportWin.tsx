@@ -24,7 +24,6 @@ import { Hbox, Vbox } from '../libxul/boxes';
 import Viewport from './viewport';
 import viewportParentH, {
   closeMenupopups,
-  updateVersification,
   vpWinNotStatePref,
 } from './viewportParentH';
 import '../global-htm.css';
@@ -95,11 +94,6 @@ export default class ViewportWin extends React.Component {
 
   componentDidMount() {
     this.destroy.push(onSetWindowState(this));
-    updateVersification(this);
-  }
-
-  componentDidUpdate() {
-    updateVersification(this);
   }
 
   componentWillUnmount() {
@@ -112,24 +106,21 @@ export default class ViewportWin extends React.Component {
     const state = this.state as ViewportWinState;
     const props = this.props as ViewportWinProps;
     const {
-      book,
-      chapter,
-      verse,
-      show,
-      place,
-      tabs,
-      panels,
+      location,
+      selection,
+      keys,
       ilModules,
       mtModules,
-      keys,
-      selection,
+      tabs,
+      panels,
+      show,
+      place,
       flagScroll,
       isPinned,
       noteBoxHeight,
       maximizeNoteBox,
       showChooser,
       vpreset,
-      windowV11n,
     } = state;
     const { id } = props;
     const { lastSavedPref: lastSetPrefs, viewportParentHandler } = this;
@@ -160,25 +151,22 @@ export default class ViewportWin extends React.Component {
           <Viewport
             key={[vpreset, showChooser].join('.')}
             id="main-viewport"
-            parentHandler={viewportParentHandler}
-            book={book}
-            chapter={chapter}
-            verse={verse}
-            tabs={tabs}
-            panels={panels}
+            location={location}
+            selection={selection}
+            keys={keys}
             ilModules={ilModules}
             mtModules={mtModules}
+            tabs={tabs}
+            panels={panels}
             show={show}
             place={place}
-            keys={keys}
-            selection={selection}
             flagScroll={flagScroll}
             isPinned={isPinned}
             noteBoxHeight={noteBoxHeight}
             maximizeNoteBox={maximizeNoteBox}
             showChooser={false}
             ownWindow
-            windowV11n={windowV11n}
+            parentHandler={viewportParentHandler}
           />
         </Hbox>
       </Vbox>

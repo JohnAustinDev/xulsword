@@ -142,61 +142,48 @@ export function verseKey(
   );
 }
 
-// Input location may have the forms:
-// Matt 3:5, John 3:16-John 3:21, John.3, John.3.5, John.3.16-John.3.16.21, or John.3.7.10.
-// If version is not a Bible, or does not have the book where location is, then an alternate
-// Bible version is used and the location is converted to the new verse system.
-//
-// The returned LocationVKType applies to the returned text that was found.
-// Null is returned if verse text cannot be found in any Bible module.
-//
-// Is module a Bible, or does module specify another reference Bible in its config file? Then use that.
-// If version does not yield verse text, then look at visible tabs in their order.
-// If visible tabs do not yield verse text, then look at hidden tabs in their order.
+// If textvk module is not a Bible, or does not contain the location, then an alternate
+// module is used. First any companion module is checked, and if it does not have the
+// text, then visible tabs are searched in order. If still not found, all tabs are
+// searched in order. The textvk object reference is updated in place for any located
+// text and module. If a text was found, true is returned. Otherwise false is returned.
 export function findAVerseText(
-  reference: LocationVKType | string,
-  module: string,
-  tabs: string[],
+  textvk: TextVKType,
+  tabs: string[] | null,
   keepNotes: boolean
-): TextVKType | null {
-  if (!(module in G.Tab)) return null;
-  const { v11n } = G.Tab[module];
-  if (!v11n) return null;
-
-  const r: TextVKType = {
-    versekey: verseKey(reference, v11n),
-    text: '',
-    version: '',
-  };
-
-  // Is module a Bible, or does it specify a Bible?
-  if (module in G.Tab && G.Tab[module].type === C.BIBLE) {
-    r.version = module;
-  } else {
-    const bibles = getCompanionModules(module);
+): boolean {
+  const vk = verseKey(textvk.location);
+  // Is module a Bible, or is there a companion Bible?
+  if (!(textvk.module in G.Tab) || G.Tab[textvk.module].type !== C.BIBLE) {
+    const bibles = getCompanionModules(textvk.module);
     const bible = !bibles.length || !(bibles[0] in G.Tab) ? null : bibles[0];
     const tov11n = bible && G.Tab[bible].v11n;
     if (tov11n) {
-      r.version = bible;
-      r.versekey.v11n = tov11n;
+      vk.v11n = tov11n;
+      textvk.module = bible;
+      textvk.location = vk.location();
     }
   }
 
-  // If we have a Bible, try it first.
-  if (r.version && r.version in G.Tab) {
-    r.text = G.LibSword.getVerseText(
-      r.version,
-      r.versekey.osisRef(),
+  // If we have a Bible, try it.
+  if (
+    textvk.module &&
+    textvk.module in G.Tab &&
+    G.Tab[textvk.module].type === C.BIBLE
+  ) {
+    textvk.text = G.LibSword.getVerseText(
+      textvk.module,
+      vk.osisRef(),
       keepNotes
     ).replace(/\n/g, ' ');
-    if (r.text && r.text.length > 7) {
-      return r;
+    if (textvk.text && textvk.text.length > 7) {
+      return true;
     }
-    r.text = '';
+    textvk.text = '';
   }
 
-  // Module did not yield verse text. So now look at tabs...
-  const { book } = r.versekey;
+  // Still no verse text. So now look at tabs...
+  const { book } = vk;
   for (let v = 0; v < G.Tabs.length; v += 1) {
     const tab = G.Tabs[v];
     if (tab.module !== C.BIBLE || !tab.v11n) continue;
@@ -208,23 +195,24 @@ export function findAVerseText(
     if (ab === abooks.length) continue;
     const text = G.LibSword.getVerseText(
       tab.module,
-      r.versekey.osisRef(tab.v11n),
+      vk.osisRef(tab.v11n),
       keepNotes
     ).replace(/\n/g, ' ');
     if (text && text.length > 7) {
       // We have a valid result. If this version's tab is showing, then return it
       // otherwise save this result (unless a valid result was already saved). If
       // no visible tab match is found, this saved result will be returned.
-      if (!r.text) {
-        r.text = text;
-        r.version = tab.module;
-        r.versekey.v11n = tab.v11n;
+      if (!textvk.text) {
+        textvk.text = text;
+        textvk.module = tab.module;
+        vk.v11n = tab.v11n;
+        textvk.location = vk.location();
       }
-      if (tabs.includes(tab.module)) return r;
+      if (tabs && tabs.includes(tab.module)) return true;
     }
   }
 
-  return r.text ? r : null;
+  return Boolean(textvk.text);
 }
 
 // Return the module context in which the element resides, NOT the
@@ -477,7 +465,7 @@ export function getContextData(elem: HTMLElement): ContextData {
     lemma,
     panelIndex,
     selection,
-    selectedLocationVK,
+    selectionParsedVK: selectedLocationVK,
     search,
   };
 }

@@ -33,13 +33,12 @@ import {
   topHandle,
 } from '../libxul/xul';
 import { Vbox, Hbox, Box } from '../libxul/boxes';
-import { libswordText } from './ztext';
+import { libswordText, textChange } from './ztext';
 import {
   highlight,
   versekeyScroll,
   trimNotes,
   findVerseElement,
-  textChange,
 } from './zversekey';
 import handlerH from './atextH';
 import '../libxul/xul.css';
@@ -47,7 +46,7 @@ import '../libsword.css';
 import './atext.css';
 
 import type { MouseWheel } from './viewportParentH';
-import type { LocationVKType, PlaceType, ShowType, V11nType } from '../../type';
+import type { LocationVKType, PlaceType, ShowType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -59,9 +58,7 @@ const propTypes = {
   onMaximizeNoteBox: PropTypes.func.isRequired,
   panelIndex: PropTypes.number.isRequired,
   columns: PropTypes.number.isRequired,
-  book: PropTypes.string.isRequired,
-  chapter: PropTypes.number.isRequired,
-  verse: PropTypes.number.isRequired,
+  location: PropTypes.object,
   module: PropTypes.string,
   ilModule: PropTypes.string,
   ilModuleOption: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -74,7 +71,6 @@ const propTypes = {
   show: PropTypes.object.isRequired,
   place: PropTypes.object.isRequired,
   ownWindow: PropTypes.bool,
-  windowV11n: PropTypes.string,
 };
 
 // Atext's properties. NOTE: property types are used, but property values are not.
@@ -84,25 +80,22 @@ const atextProps = {
     _noteboxResizing?: number[],
     _maximize?: boolean
   ): void => {},
-  panelIndex: 0,
-  columns: 0,
-  book: '',
-  chapter: 0,
-  verse: 0,
+  panelIndex: 0 as number,
+  columns: 0 as number,
+  location: null as LocationVKType | null,
   module: '' as string | undefined,
   ilModule: '' as string | undefined,
   ilModuleOption: [] as string[],
-  modkey: '',
+  modkey: '' as string,
   selection: null as LocationVKType | null,
   flagScroll: 0 as number | undefined,
-  isPinned: false,
-  noteBoxHeight: 0,
-  maximizeNoteBox: 0,
+  isPinned: false as boolean,
+  noteBoxHeight: 0 as number,
+  maximizeNoteBox: 0 as number,
   show: {} as ShowType,
   place: {} as PlaceType,
-  ownWindow: false,
-  windowV11n: '' as V11nType | undefined, // v11n of the viewport (not necessarily of the text)
-};
+  ownWindow: false as boolean,
+} as const;
 
 export type AtextProps = XulProps & typeof atextProps;
 
@@ -201,19 +194,19 @@ class Atext extends React.Component {
   onUpdate() {
     const props = this.props as AtextProps;
     const state = this.state as AtextState;
-    const { columns, isPinned, panelIndex, windowV11n } = props;
+    const { columns, isPinned, panelIndex } = props;
     const { pin } = state as AtextState;
     const { sbref, nbref } = this;
 
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
 
-    let newState = {};
+    let newState: Partial<AtextState> = {};
     const newPin = Atext.copyProps(
       pin && isPinned ? pin : props,
       C.PinProps
     ) as typeof C.PinProps;
-    const { book, verse, selection, module } = newPin;
+    const { selection, module } = newPin;
     if (!compareObjects(newPin, pin)) newState = { ...newState, pin: newPin };
     if (module && sbe && nbe) {
       const { type, isVerseKey } = G.Tab[module];
@@ -223,11 +216,11 @@ class Atext extends React.Component {
           ...newPin,
         },
         C.LibSwordProps[type]
-      );
+      ) as Partial<AtextProps>;
       const newScroll = Atext.copyProps(
         { ...props, ...newPin },
         C.ScrollProps[type]
-      );
+      ) as Partial<AtextProps>;
       const writekey = stringHash({ ...newLibSword, chapter: 0 }, panelIndex);
       const scrollkey = stringHash(newScroll);
       let update = false; // update current innerHTML as needed
@@ -235,7 +228,7 @@ class Atext extends React.Component {
         update = writekey !== sbe.dataset.libsword;
         if (update)
           this.writeLibSword2DOM(newLibSword, panelIndex, 'overwrite');
-      } else {
+      } else if (newLibSword.location) {
         let chfirst;
         let chlast;
         if ('chfirst' in sbe.dataset) chfirst = Number(sbe.dataset.chfirst);
@@ -245,8 +238,8 @@ class Atext extends React.Component {
           !(
             chfirst &&
             chlast &&
-            newLibSword.chapter >= chfirst &&
-            newLibSword.chapter <= chlast
+            newLibSword.location.chapter >= chfirst &&
+            newLibSword.location.chapter <= chlast
           ) ||
           chlast - chfirst > 10;
         if (update) {
@@ -264,7 +257,11 @@ class Atext extends React.Component {
           (update || scrollkey !== sbe.dataset.scroll)
         ) {
           const rtl = G.ModuleConfigs[module].direction === 'rtl';
-          let v = findVerseElement(sbe, newLibSword.chapter, verse);
+          let v = findVerseElement(
+            sbe,
+            newLibSword.location.chapter,
+            newLibSword.location.verse || 1
+          );
           if (v) v.style.display = '';
           let sib = v?.previousSibling as HTMLElement | null;
           while (
@@ -285,10 +282,17 @@ class Atext extends React.Component {
           ) {
             update = true;
             this.writeLibSword2DOM(newLibSword, panelIndex, 'prepend');
-            v = findVerseElement(sbe, newLibSword.chapter, verse);
+            v = findVerseElement(
+              sbe,
+              newLibSword.location.chapter,
+              newLibSword.location.verse || 1
+            );
             chfirst -= 1;
           }
-          const max = getMaxChapter(G.Tab[module].v11n || 'KJV', book);
+          const max = getMaxChapter(
+            G.Tab[module].v11n || 'KJV',
+            newLibSword.location.book
+          );
           let last = sbe.lastChild as HTMLElement | null;
           sib = v?.nextSibling as HTMLElement | null;
           while (
@@ -311,7 +315,11 @@ class Atext extends React.Component {
           ) {
             update = true;
             this.writeLibSword2DOM(newLibSword, panelIndex, 'append');
-            v = findVerseElement(sbe, newLibSword.chapter, verse);
+            v = findVerseElement(
+              sbe,
+              newLibSword.location.chapter,
+              newLibSword.location.verse || 1
+            );
             last = sbe.lastChild as HTMLElement | null;
             chlast += 1;
           }
@@ -324,38 +332,25 @@ class Atext extends React.Component {
         isVerseKey
       ) {
         sbe.dataset.scroll = scrollkey;
-        const s = versekeyScroll(sbe, newScroll);
-        if (
-          newScroll.flagScroll === C.VSCROLL.endAndUpdate &&
-          s &&
-          windowV11n
-        ) {
-          const { book: bk, chapter, verse: vs } = s;
-          if (bk && chapter && vs) {
-            const loc = verseKey(
-              {
-                book: bk,
-                chapter,
-                verse: vs,
-                lastverse: vs,
-                v11n: G.Tab[newScroll.module].v11n || 'KJV',
+        const location = versekeyScroll(
+          sbe,
+          newScroll as typeof C.ScrollPropsVK
+        );
+        if (location) {
+          const loc = verseKey(location).location(newLibSword.location?.v11n);
+          if (isPinned) {
+            newState = {
+              ...newState,
+              pin: {
+                ...newPin,
+                location: loc,
+                flagScroll: C.VSCROLL.none,
               },
-              windowV11n
-            );
-            s.book = loc.book;
-            s.chapter = loc.chapter;
-            s.verse = loc.verse || 1;
-            if (isPinned) {
-              newState = {
-                ...newState,
-                pin: { ...newPin, ...s, flagScroll: C.VSCROLL.none },
-              };
-            } else {
-              const fs = [];
-              fs[panelIndex] = C.VSCROLL.none;
-              s.flagScroll = fs;
-              setStatePref('xulsword', s);
-            }
+            };
+          } else {
+            const fs = [];
+            fs[panelIndex] = C.VSCROLL.none;
+            setStatePref('xulsword', { location: loc, flagScroll: fs });
           }
         }
       } else if (update && type === C.DICTIONARY) {
@@ -377,8 +372,8 @@ class Atext extends React.Component {
         }
       }
       // HIGHLIGHT
-      if (type === C.BIBLE && pin && selection && selection !== pin.selection) {
-        highlight(sbe, selection, module, windowV11n);
+      if (selection && !isPinned && type === C.BIBLE) {
+        highlight(sbe, selection, module);
       }
       if (columns > 1) {
         const empty = !trimNotes(sbe, nbe);
@@ -417,7 +412,7 @@ class Atext extends React.Component {
 
   // Write a LibSword response to the DOM.
   writeLibSword2DOM(
-    libsword: AtextProps,
+    libsword: Partial<AtextProps>,
     i: number,
     flag: 'overwrite' | 'prepend' | 'append'
   ) {
@@ -425,29 +420,30 @@ class Atext extends React.Component {
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
+      const { location } = libsword;
       const isDict =
         libsword.module && G.Tab[libsword.module].type === C.DICTIONARY;
       let chfirst;
       let chlast;
       let originalch;
-      if ('chapter' in libsword) {
-        originalch = libsword.chapter;
+      if (location) {
+        originalch = location.chapter;
         chfirst =
           'chfirst' in sbe.dataset
             ? Number(sbe.dataset.chfirst)
-            : libsword.chapter;
+            : location.chapter;
         chlast =
           'chlast' in sbe.dataset
             ? Number(sbe.dataset.chlast)
-            : libsword.chapter;
-      }
-      if (chfirst && flag === 'prepend') {
-        chfirst -= 1;
-        libsword.chapter = chfirst;
-      }
-      if (chlast && flag === 'append') {
-        chlast += 1;
-        libsword.chapter = chlast;
+            : location.chapter;
+        if (chfirst && flag === 'prepend') {
+          chfirst -= 1;
+          location.chapter = chfirst;
+        }
+        if (chlast && flag === 'append') {
+          chlast += 1;
+          location.chapter = chlast;
+        }
       }
       const response = libswordResponseMemoized(libsword, i);
       let fntable = (!isDict ? nbe.firstChild : null) as HTMLElement | null;
@@ -457,17 +453,11 @@ class Atext extends React.Component {
         case 'overwrite':
           sb = response.textHTML;
           nb = response.noteHTML;
-          console.log(
-            `writeLibSword2DOM(${libsword.chapter}, ${i}, 'overwrite')`
-          );
           break;
         case 'prepend': {
           if (fntable) {
             sb = response.textHTML + sbe.innerHTML;
             nb = response.noteHTML + fntable.innerHTML;
-            console.log(
-              `writeLibSword2DOM(${libsword.chapter}, ${i}, 'prepend')`
-            );
           }
           break;
         }
@@ -475,9 +465,6 @@ class Atext extends React.Component {
           if (fntable) {
             sb = sbe.innerHTML + response.textHTML;
             nb = fntable.innerHTML + response.noteHTML;
-            console.log(
-              `writeLibSword2DOM(${libsword.chapter}, ${i}, 'append')`
-            );
           }
           break;
         }
@@ -498,15 +485,15 @@ class Atext extends React.Component {
       fntable = nbe.firstChild as HTMLElement | null;
       sbe.dataset.libsword = stringHash({ ...libsword, chapter: 0 }, i);
       sbe.dataset.scroll = undefined;
-      if ('chapter' in libsword) {
+      if (location) {
         if (flag === 'overwrite') {
-          sbe.dataset.chfirst = libsword.chapter.toString();
-          sbe.dataset.chlast = libsword.chapter.toString();
+          sbe.dataset.chfirst = location.chapter.toString();
+          sbe.dataset.chlast = location.chapter.toString();
         } else {
           sbe.dataset.chfirst = chfirst ? chfirst.toString() : '999';
           sbe.dataset.chlast = chlast ? chlast.toString() : '0';
         }
-        if (originalch !== undefined) libsword.chapter = originalch;
+        if (originalch !== undefined) location.chapter = originalch;
       }
       const nbc = nbe.parentNode as any;
       if (
