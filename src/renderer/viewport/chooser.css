@@ -180,6 +180,12 @@ html.chromedir-rtl .bookgrouplist {
   border: 1px inset black;
   cursor: default;
 }
+.bookgroupitem.disabled.selected {
+  background: rgb(194, 190, 190);
+  color: rgb(139, 138, 138);
+  border: 1px inset black;
+  cursor: default;
+}
 .bookgroupitem .label {
   flex-basis: 100%;
   flex-shrink: 1;

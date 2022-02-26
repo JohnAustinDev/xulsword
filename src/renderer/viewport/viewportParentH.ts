@@ -13,16 +13,12 @@ import { textChange } from './ztext';
 import { aTextWheelScroll, chapterChange } from './zversekey';
 
 import type { BookGroupType, XulswordStatePref } from '../../type';
+import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
+import type ViewportWin from './viewportWin';
 import type { ViewportWinState } from './viewportWin';
+import type { AtextState } from './atext';
 
-export type MouseWheel = {
-  atext: HTMLElement | null;
-  count: 0;
-  TO: number | undefined;
-};
-
-// The following are viewportWin notStatePref keys (values are not used)
 export const vpWinNotStatePref = {
   history: [] as any[],
   historyIndex: 0,
@@ -30,7 +26,6 @@ export const vpWinNotStatePref = {
   panels: [] as (string | null)[],
   ilModules: [] as (string | null)[],
   mtModules: [] as (string | null)[],
-  flagScroll: [] as number[],
   isPinned: [true, true, true],
   noteBoxHeight: [] as number[],
   maximizeNoteBox: [] as number[],
@@ -60,7 +55,7 @@ export function closeMenupopups(component: React.Component) {
 }
 
 export default function handler(
-  this: React.Component,
+  this: Xulsword | ViewportWin,
   es: React.SyntheticEvent<any>,
   noteboxResizing?: number[],
   maximize?: boolean
@@ -115,30 +110,51 @@ export default function handler(
         case 'text-win': {
           const cols = atext?.dataset.columns;
           if (atext && cols !== undefined) {
-            const columns = Number(cols);
-            const notStatePref: Partial<XulswordState> = {};
+            const b = atext.getBoundingClientRect();
+            // Save new window's XulswordState
+            const xulswordState: Partial<XulswordState> = {};
             Object.entries(vpWinNotStatePref).forEach((entry) => {
               const name = entry[0] as keyof typeof vpWinNotStatePref;
-              const nsp = notStatePref as any;
+              const nsp = xulswordState as any;
               nsp[name] = state[name];
             });
+            // Set new window's unused tabs & panels to undefined
             const vpwPanels: any[] = [];
             const vpwTabs: any[] = [];
-            notStatePref.panels?.forEach((pnl, i) => {
-              const { tabs: tbs } = notStatePref;
+            xulswordState.panels?.forEach((pnl, i) => {
+              const { tabs: tbs } = xulswordState;
               vpwTabs[i] = index === i && tbs && tbs[i] ? tbs[i] : undefined;
               vpwPanels[i] =
-                index <= i && i < index + columns ? pnl : undefined;
+                index <= i && i < index + Number(cols) ? pnl : undefined;
             });
-            notStatePref.panels = vpwPanels;
-            notStatePref.tabs = vpwTabs;
-            const b = atext.getBoundingClientRect();
+            xulswordState.panels = vpwPanels;
+            xulswordState.tabs = vpwTabs;
+            // Save new window's Atext states
+            const atextStates: { [i: string]: Partial<AtextState> } = {};
+            if ('atextRefs' in this) {
+              vpwPanels.forEach((pnl, i) => {
+                if (pnl) {
+                  const ref = this.atextRefs[i];
+                  if (ref?.current) {
+                    const ats = ref.current.state as AtextState;
+                    const s: Partial<AtextState> = {
+                      pin: ats.pin,
+                      versePerLine: ats.versePerLine,
+                    };
+                    atextStates[`atext${i}State`] = s;
+                  }
+                }
+              });
+            }
             const options = {
               title: 'viewport',
               webPreferences: {
                 additionalArguments: [
                   'viewportWin',
-                  JSON_stringify(notStatePref),
+                  JSON_stringify({
+                    xulswordState,
+                    ...atextStates,
+                  }),
                 ],
               },
               openWithBounds: {
@@ -447,24 +463,13 @@ export default function handler(
 
     case 'wheel': {
       const e = es as React.WheelEvent;
-      const t = this as any;
       if (
         !isPinned &&
-        'mouseWheel' in t &&
         atext &&
         type !== C.DICTIONARY &&
         !ofClass(['nbc'], target)
       ) {
-        const m = t.mouseWheel as MouseWheel;
-        m.atext = atext;
-        m.count += Math.round(e.deltaY / 80);
-        delayHandler.bind(this)(
-          (ths) => {
-            return aTextWheelScroll(ths);
-          },
-          C.UI.Atext.wheelScrollDelay,
-          'wheelScrollTO'
-        )(t);
+        aTextWheelScroll(e, atext, this);
       }
       break;
     }

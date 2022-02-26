@@ -36,7 +36,7 @@ import Atext from './atext';
 import '../libxul/xul.css';
 import './viewport.css';
 
-import type { LocationVKType, V11nType } from '../../type';
+import type { LocationVKType } from '../../type';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -62,10 +62,10 @@ const propTypes = {
   isPinned: PropTypes.arrayOf(PropTypes.bool).isRequired,
   noteBoxHeight: PropTypes.arrayOf(PropTypes.number).isRequired,
   maximizeNoteBox: PropTypes.arrayOf(PropTypes.number).isRequired,
-
   ownWindow: PropTypes.bool.isRequired,
 
   parentHandler: PropTypes.func.isRequired,
+  atextRefs: PropTypes.arrayOf(PropTypes.object),
 };
 
 type ViewportProps = PopupParentProps &
@@ -85,6 +85,7 @@ type ViewportProps = PopupParentProps &
     ownWindow: boolean;
 
     parentHandler: (e: any) => void;
+    atextRefs: React.RefObject<Atext>[];
   };
 
 type ViewportState = PopupParentState & {
@@ -149,6 +150,7 @@ class Viewport extends React.Component implements PopupParent {
       showChooser,
       ownWindow,
       parentHandler,
+      atextRefs,
     } = this.props as ViewportProps;
     const { reset, elemhtml, eleminfo, gap, popupParent, popupReset } = this
       .state as ViewportState;
@@ -312,15 +314,29 @@ class Viewport extends React.Component implements PopupParent {
     // Each text's book/chapter/verse must be according to location v11n.
     const locs: LocationVKType[] = [];
     if (location) {
-      panels.forEach((panel) => {
+      const { book, chapter, verse: vs, v11n } = location;
+      panels.forEach((panel, i) => {
         const tov11n = panel && G.Tab[panel].v11n;
-        locs.push(verseKey(location, tov11n || undefined).location());
+        // Verse is unnecessary when flagScroll <= 1, so keep it at 1 to
+        // prevent extra Atext render cycles.
+        const verse = (flagScroll[i] > 1 && vs) || 1;
+        locs.push(
+          verseKey(
+            { book, chapter, verse, v11n },
+            tov11n || undefined
+          ).location()
+        );
       });
     }
 
     const numPanels = panels.filter((m) => m || m === '').length;
 
     const showingChooser = showChooser || chooser === 'genbook';
+    const chooserV11n =
+      panels.reduce(
+        (p, c) => p || (c && c in G.Tab && G.Tab[c].v11n) || null,
+        null
+      ) || 'KJV';
     const minWidth =
       (showingChooser ? 300 : 0) + C.UI.Viewport.minPanelWidth * numPanels;
     const bookGroups = C.SupportedBookGroups.filter(
@@ -359,7 +375,7 @@ class Viewport extends React.Component implements PopupParent {
             key={[reset, location?.book].join('.')}
             type={chooser}
             selection={location?.book}
-            v11n={location?.v11n}
+            v11n={chooserV11n}
             headingsModule={firstUnpinnedBible}
             bookGroups={bookGroups}
             availableBooks={availableBooks}
@@ -367,12 +383,7 @@ class Viewport extends React.Component implements PopupParent {
           />
         )}
 
-        <Vbox
-          className="textarea"
-          flex="1"
-          onKeyDown={parentHandler}
-          onWheel={parentHandler}
-        >
+        <Vbox className="textarea" flex="1" onKeyDown={parentHandler}>
           <div className="tabrow">
             {panels.map((_p: string | null, i: number) => {
               const tabWidth = tabWidths[i];
@@ -409,6 +420,7 @@ class Viewport extends React.Component implements PopupParent {
 
           <Hbox className="textrow userFontSize" flex="1">
             {popupParent &&
+              elemhtml &&
               elemhtml.length &&
               ReactDOM.createPortal(
                 <Popup
@@ -458,6 +470,7 @@ class Viewport extends React.Component implements PopupParent {
                     }}
                     onMouseOut={(e) => popupParentHandler(e, panel)}
                     onMouseOver={(e) => popupParentHandler(e, panel)}
+                    ref={atextRefs[i]}
                   />
                 );
               }

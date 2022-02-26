@@ -3,15 +3,11 @@
 /* eslint-disable no-continue */
 import i18next from 'i18next';
 import C from '../../constant';
-import {
-  deepClone,
-  dString,
-  getLocalizedChapterTerm,
-  isASCII,
-} from '../../common';
+import { dString, getLocalizedChapterTerm, isASCII } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import { findAVerseText, getMaxChapter, getMaxVerse, verseKey } from '../rutil';
 import G from '../rg';
+import { delayHandler } from '../libxul/xul';
 
 import type {
   LocationVKType,
@@ -22,8 +18,9 @@ import type {
 import type Xulsword from '../xulsword/xulsword';
 import type { XulswordState } from '../xulsword/xulsword';
 import type Atext from './atext';
-import type { AtextProps, AtextState } from './atext';
+import type { AtextState } from './atext';
 import type ViewportWin from './viewportWin';
+import type { ViewportWinState } from './viewportWin';
 
 // Turns headings on before reading introductions
 export function getIntroductions(mod: string, vkeytext: string) {
@@ -770,29 +767,22 @@ export function versekeyScroll(
 }
 
 // Set caller verse and scrollFlag state after wheel events.
-export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
-  const { atext, count } = caller.mouseWheel;
-  if (!atext) return;
-  const { module, index: i } = atext.dataset;
-  let { columns, ispinned } = atext.dataset as any;
-  if (!module) return;
-  columns = Number(columns);
-  ispinned = ispinned === 'true';
-  const index = Number(i);
-  const { type } = G.Tab[module];
-  const state = caller.state as XulswordState & AtextState;
-  const sxulsword: XulswordState | null = state.location ? state : null;
-  const satext: AtextState | null = state.pin ? state : null;
-
-  caller.mouseWheel.count = 0;
-  if (!count) return;
+function aTextWheelScroll3(
+  atext: HTMLElement,
+  location: LocationVKType,
+  count: number
+): LocationVKType | null {
+  const { module, columns } = atext.dataset;
+  if (!module) return null;
+  const { type, v11n: tmp } = G.Tab[module];
+  const v11n = tmp || 'KJV';
 
   if (type === C.GENBOOK) {
     // GenBook scrolls differently than versekey modules
     // TODO! Scroll GenBooks
     // const scrollType = C.SCROLLTYPEDELTA;
     const scrollDelta = count * 20; // scroll delta in pixels
-    return;
+    return null;
   }
 
   const sb = atext.getElementsByClassName('sb')[0];
@@ -802,11 +792,11 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
   while (v && !verseIsVisible(v)) {
     v = v.nextSibling as HTMLElement | null;
   }
-  if (!v) return;
+  if (!v) return null;
 
   // if this is a multi-column versekey window, shift the
   // verse according to scroll wheel delta
-  if (columns > 1) {
+  if (Number(columns) > 1) {
     let dv = count;
     let nv = v;
     while (dv > 0) {
@@ -826,51 +816,73 @@ export function aTextWheelScroll(caller: Xulsword | ViewportWin | Atext) {
       if (nv && nv.classList?.contains('vs')) v = nv;
     }
   }
-  // Scroll to verse v
+  // Return location of target verse v
   const p = getElementInfo(v);
   if (p) {
-    const { bk, ch, vs } = p;
-    if (bk && ch && vs) {
-      const mysf = columns === 1 ? C.VSCROLL.none : C.VSCROLL.verse;
-      if (ispinned && satext) {
-        caller.setState((prevState: AtextState) => {
-          const pin: Partial<AtextState['pin']> = {
-            ...deepClone(prevState.pin),
-            flagScroll: mysf,
-          };
-          if (pin && pin.location) {
-            pin.location.book = bk;
-            pin.location.chapter = Number(ch);
-            pin.location.verse = vs;
-            return { pin };
-          }
-          return null;
-        });
-      } else if (sxulsword) {
-        caller.setState((prevState: XulswordState) => {
-          const { location } = prevState;
-          const { book, chapter, verse } = verseKey({
-            book: bk,
-            chapter: Number(ch),
-            verse: vs,
-            v11n: G.Tab[module].v11n || 'KJV',
-          }).location(location?.v11n);
-          const flagScroll = sxulsword.flagScroll.map(() => C.VSCROLL.verse);
-          flagScroll[index] = mysf;
-          const s: Partial<XulswordStatePref> = {
-            location: { ...deepClone(prevState.location) },
-            flagScroll,
-          };
-          if (s.location) {
-            s.location.book = book;
-            s.location.chapter = chapter;
-            s.location.verse = verse || 1;
-            return s;
-          }
-          return null;
-        });
+    const { bk: book, ch, vs: verse } = p;
+    const chapter = Number(ch);
+    if (book && chapter && verse) {
+      return verseKey({ book, chapter, verse, v11n }).location(location.v11n);
+    }
+  }
+  return null;
+}
+
+function aTextWheelScroll2(
+  count: number,
+  atext: HTMLElement,
+  prevState: XulswordState | ViewportWinState | AtextState
+) {
+  const atextstate = 'pin' in prevState ? prevState : null;
+  const otherstate = 'location' in prevState ? prevState : null;
+  const location = atextstate?.pin?.location || otherstate?.location;
+  if (location) {
+    const newloc = aTextWheelScroll3(atext, location, count);
+    if (newloc) {
+      const { columns, index } = atext.dataset;
+      if (otherstate) {
+        const flagScroll = otherstate.flagScroll.map(() => C.VSCROLL.verse);
+        if (columns === '1') flagScroll[Number(index)] = C.VSCROLL.none;
+        return { location: newloc, flagScroll };
+      }
+      if (atextstate?.pin) {
+        return {
+          pin: {
+            ...atextstate.pin,
+            location: newloc,
+            flagScroll: columns === '1' ? C.VSCROLL.none : C.VSCROLL.verse,
+          },
+        };
       }
     }
+  }
+  return null;
+}
+
+let WheelSteps = 0;
+export function aTextWheelScroll(
+  e: React.WheelEvent,
+  atext: HTMLElement,
+  caller: Xulsword | ViewportWin | Atext
+) {
+  WheelSteps += Math.round(e.deltaY / 80);
+  if (WheelSteps) {
+    const { columns } = atext.dataset;
+    delayHandler.bind(caller)(
+      () => {
+        caller.setState(
+          (prevState: XulswordState | ViewportWinState | AtextState) => {
+            const s = aTextWheelScroll2(WheelSteps, atext, prevState);
+            WheelSteps = 0;
+            return s;
+          }
+        );
+      },
+      columns === '1'
+        ? C.UI.Atext.wheelScrollDelay
+        : C.UI.Atext.multiColWheelScrollDelay,
+      'wheelScrollTO'
+    )();
   }
 }
 

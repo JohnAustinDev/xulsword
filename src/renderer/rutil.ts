@@ -8,7 +8,7 @@ import C from '../constant';
 import RefParser, { RefParserOptionsType } from '../refparse';
 import VerseKey from '../versekey';
 import { ElemInfo, getElementInfo } from '../libswordElemInfo';
-import { compareObjects, deepClone, ofClass } from '../common';
+import { compareObjects, deepClone, JSON_parse, ofClass } from '../common';
 import G from './rg';
 
 import type {
@@ -22,6 +22,22 @@ import type {
 export function jsdump(msg: string | Error) {
   // eslint-disable-next-line no-console
   console.log(msg);
+}
+
+// This function will retrieve the last argument passed to a window (as
+// webPreferences.additionalArguments) look for a particular key, and
+// return its value if found. Xulsword passes these arguments in a single
+// object as key value pairs so that any React component in the hierarchy
+// may retrieve data specifically provided for it.
+export function windowArgument(key: string) {
+  const arg = window.shell.process.argv().at(-1);
+  if (typeof arg === 'string' && arg.includes('{')) {
+    const argobj = JSON_parse(arg);
+    if (key in argobj) {
+      return argobj[key];
+    }
+  }
+  return null;
 }
 
 // Read libsword data-src attribute file URLs and convert them into src inline data.

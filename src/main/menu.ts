@@ -309,6 +309,7 @@ export default class MenuBuilder {
       'dictlinks',
       'usernotes',
       'strongs',
+      'morph',
       'versenums',
       'redwords',
     ];
@@ -317,17 +318,25 @@ export default class MenuBuilder {
       return `xulsword.show.${x}`;
     });
 
-    const textSwitches = switches.map((key) => {
-      return {
-        label: this.ts(`menu.view.${key}`),
-        id: `xulsword.show.${key}`,
-        type: 'checkbox',
-        icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x14', `${key}.png`),
-        click: () => {
-          MenuBuilder.toggleSwitch(`xulsword.show.${key}`);
-        },
-      };
-    });
+    const textSwitches = switches
+      .filter((s) => {
+        return s !== 'morph'; // this options does not have a menu item
+      })
+      .map((key) => {
+        return {
+          label: this.ts(`menu.view.${key}`),
+          id: `xulsword.show.${key}`,
+          type: 'checkbox',
+          icon: path.join(G.Dirs.path.xsAsset, 'icons', '16x14', `${key}.png`),
+          click: () => {
+            const keys = [`xulsword.show.${key}`];
+            if (key === 'strongs') {
+              keys.push(`xulsword.show.morph`); // switch these two together
+            }
+            MenuBuilder.toggleSwitch(keys);
+          },
+        };
+      });
 
     const radios = ['footnotes', 'crossrefs', 'usernotes'];
 

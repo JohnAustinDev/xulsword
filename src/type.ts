@@ -51,13 +51,13 @@ export type SwordFilterValueType = 'Off' | 'On';
 
 export type ShowType = {
   headings: boolean;
+  versenums: boolean;
+  usernotes: boolean;
   footnotes: boolean;
   crossrefs: boolean;
   dictlinks: boolean;
-  versenums: boolean;
   strongs: boolean;
   morph: boolean;
-  usernotes: boolean;
   hebcantillation: boolean;
   hebvowelpoints: boolean;
   redwords: boolean;
@@ -468,7 +468,11 @@ export interface GType {
   inlineFile: (path: string, encoding: 'base64' | 'utf8') => string;
   setGlobalMenuFromPref: (menu?: Electron.Menu) => void;
   // Caller win is overwritten when setGlobalStateFromPref is invoked by main process.
-  setGlobalStateFromPref: (win: null, prefs?: string | string[]) => void;
+  setGlobalStateFromPref: (
+    win: null,
+    prefs?: string | string[],
+    unfocusedUpdate?: boolean
+  ) => void;
   openWindow: (
     type: string,
     params: Electron.BrowserWindowConstructorOptions

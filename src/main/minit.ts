@@ -456,25 +456,31 @@ export function globalReset() {
 
 export function setGlobalStateFromPref(
   win: BrowserWindow | null,
-  prefs?: string | string[]
+  prefs?: string | string[],
+  unfocusedUpdate = false
 ) {
-  const lng = Prefs.getCharPref(C.LOCALEPREF);
-  if (lng !== i18next.language) {
-    i18next
-      .loadLanguages(lng)
-      .then(() => i18next.changeLanguage(lng))
-      .then(() => {
-        // this does component-reset which updates state from pref
-        globalReset();
-        return true;
-      })
-      .catch((err: any) => {
-        if (err) throw Error(err);
+  // Normally only the focused window is allowed to update other windows,
+  // otherwise loops may occur.
+  if (unfocusedUpdate || !win || win === BrowserWindow.getFocusedWindow()) {
+    const lng = Prefs.getCharPref(C.LOCALEPREF);
+    if (lng !== i18next.language) {
+      i18next
+        .loadLanguages(lng)
+        .then(() => i18next.changeLanguage(lng))
+        .then(() => {
+          // this does component-reset which updates state from pref
+          globalReset();
+          return true;
+        })
+        .catch((err: any) => {
+          if (err) throw Error(err);
+        });
+    } else {
+      BrowserWindow.getAllWindows().forEach((w) => {
+        // Never update the calling window.
+        if (!win || w !== win)
+          w.webContents.send('update-state-from-pref', prefs);
       });
-  } else {
-    BrowserWindow.getAllWindows().forEach((w) => {
-      if (!win || w !== win)
-        w.webContents.send('update-state-from-pref', prefs);
-    });
+    }
   }
 }

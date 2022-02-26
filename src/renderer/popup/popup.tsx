@@ -60,8 +60,8 @@ const defaultProps = {
 
 const propTypes = {
   ...xulPropTypes,
-  elemhtml: PropTypes.arrayOf(PropTypes.string).isRequired,
-  eleminfo: PropTypes.arrayOf(PropTypes.object).isRequired,
+  elemhtml: PropTypes.arrayOf(PropTypes.string),
+  eleminfo: PropTypes.arrayOf(PropTypes.object),
   gap: PropTypes.number,
   isWindow: PropTypes.bool,
   onPopupClick: PropTypes.func.isRequired,
@@ -74,8 +74,8 @@ export interface PopupProps extends XulProps {
   // key must be set correctly for popup to update, like:
   // key={[gap, elemhtml.length, popupReset].join('.')}
   key: string;
-  elemhtml: string[]; // outerHTML of target element
-  eleminfo: ElemInfo[]; // extra target element info (ie for select options)
+  elemhtml: string[] | null; // outerHTML of target element
+  eleminfo: ElemInfo[] | null; // extra target element info (ie for select options)
   gap: number | undefined; // Pixel distance between target element and top of popup window
   isWindow: boolean; // Set to true to use popup in windowed mode
   onPopupClick: (e: React.SyntheticEvent) => void;
@@ -170,7 +170,7 @@ class Popup extends React.Component {
   element() {
     const props = this.props as PopupProps;
     const { elemhtml, eleminfo } = props;
-    if (!elemhtml.length) throw Error(`Popup has no element.`);
+    if (!elemhtml || !elemhtml.length) return null;
     const elemHTML = elemhtml[elemhtml.length - 1];
     const reninfo =
       eleminfo && eleminfo.length === elemhtml.length
@@ -240,7 +240,9 @@ class Popup extends React.Component {
     const pts = npopup?.current?.getElementsByClassName('popup-text');
     if (!npopup.current || !pts) throw Error(`Popup.updateContent no npopup.`);
     const pt = pts[0] as HTMLElement;
-    const { info, elem } = this.element();
+    const element = this.element();
+    if (!element) return;
+    const { info, elem } = element;
     const { type, reflist, bk, ch, mod, title } = info;
 
     const infokey = stringHash(type, reflist, bk, ch, mod);
@@ -391,7 +393,11 @@ class Popup extends React.Component {
     const { handler, npopup } = this;
     const { drag } = state;
     const { elemhtml, gap, isWindow } = props;
-    const { info, elem } = this.element();
+    const element = this.element();
+    const { info, elem } = element || {
+      info: { mod: '', type: '' },
+      elem: null,
+    };
     const { mod, type } = info;
 
     const allBibleModules = [];
@@ -443,10 +449,10 @@ class Popup extends React.Component {
         >
           <div className="popupheader">
             {!isWindow && <div className="towindow" />}
-            {elemhtml.length > 1 && (
+            {elemhtml && elemhtml.length > 1 && (
               <a className="popupBackLink">{i18next.t('back')}</a>
             )}
-            {elemhtml.length === 1 && (
+            {elemhtml && elemhtml.length === 1 && (
               <a className="popupCloseLink">{i18next.t('close')}</a>
             )}
             {!isWindow && <div className="draghandle" />}
@@ -456,6 +462,7 @@ class Popup extends React.Component {
               this.selector(allBibleModules, refbible, refbible)}
 
             {type === 'sn' &&
+              elem &&
               Object.entries(textFeature).map((entry) => {
                 const feature = entry[0] as
                   | 'hebrewDef'

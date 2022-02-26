@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/no-unused-state */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/static-property-placement */
 import React from 'react';
-import { JSON_parse } from '../../common';
 import renderToRoot from '../rinit';
+import { windowArgument } from '../rutil';
 import {
   addClass,
   xulDefaultProps,
@@ -21,12 +22,6 @@ import Popup from './popup';
 import '../global-htm.css';
 import '../libxul/xul.css';
 import '../viewport/atext.css';
-
-// Initial state arguments must be passed by the window
-// opener, or the popupWin will not show anything.
-const argv = window.shell.process.argv();
-const eleminfoWin = JSON_parse(argv.pop());
-const elemhtmlWin = JSON_parse(argv.pop());
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -50,12 +45,17 @@ export default class PopupWin extends React.Component implements PopupParent {
   constructor(props: PopupWinProps) {
     super(props);
 
-    const s: PopupWinState = {
-      elemhtml: elemhtmlWin || [],
-      eleminfo: eleminfoWin || [],
+    const initialState: PopupWinState = {
+      elemhtml: null,
+      eleminfo: null,
       popupReset: 0,
     };
-    this.state = s;
+    const windowState = windowArgument('popupState') as Partial<PopupWinState>;
+
+    this.state = {
+      ...initialState,
+      ...windowState,
+    };
 
     this.popupHandler = popupHandlerH.bind(this);
   }
@@ -67,7 +67,7 @@ export default class PopupWin extends React.Component implements PopupParent {
     return (
       <Vbox {...addClass('popupWin', this.props)}>
         <Popup
-          key={[elemhtml.length, popupReset].join('.')}
+          key={[elemhtml && elemhtml.length, popupReset].join('.')}
           elemhtml={elemhtml}
           eleminfo={eleminfo}
           onPopupClick={popupHandler}

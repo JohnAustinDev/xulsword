@@ -5,7 +5,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/media-has-caption */
 import React from 'react';
-import { JSON_parse } from '../../common';
 import G from '../rg';
 import renderToRoot from '../rinit';
 import {
@@ -13,6 +12,7 @@ import {
   getStatePref,
   onSetWindowState,
   setPrefFromState,
+  windowArgument,
 } from '../rutil';
 import {
   topHandle,
@@ -29,7 +29,7 @@ import viewportParentH, {
 import '../global-htm.css';
 
 import type { XulswordStatePref } from '../../type';
-import type { MouseWheel } from './viewportParentH';
+import type Atext from './atext';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -41,17 +41,7 @@ const propTypes = {
 
 export type ViewportWinProps = XulProps;
 
-// Read shell arguments into initial state
-Object.entries(JSON_parse(window.shell.process.argv().pop())).forEach(
-  (entry) => {
-    const [n, value] = entry;
-    const name = n as keyof typeof vpWinNotStatePref;
-    const nsp: any = vpWinNotStatePref;
-    nsp[name] = value;
-  }
-);
-
-export type ViewportWinState = typeof vpWinNotStatePref & XulswordStatePref;
+export type ViewportWinState = XulswordStatePref & typeof vpWinNotStatePref;
 
 export default class ViewportWin extends React.Component {
   static defaultProps: typeof defaultProps;
@@ -64,32 +54,40 @@ export default class ViewportWin extends React.Component {
 
   wheelScrollTO: NodeJS.Timeout | undefined;
 
-  mouseWheel: MouseWheel;
-
   lastSavedPref: { [i: string]: any };
 
   destroy: (() => void)[];
 
+  atextRefs: React.RefObject<Atext>[];
+
   constructor(props: ViewportWinProps) {
     super(props);
 
-    if (props.id === 'xulsword') {
-      const statePref = getStatePref(props.id, null, vpWinNotStatePref) as Omit<
-        XulswordStatePref,
-        keyof typeof vpWinNotStatePref
-      >;
-      const s: ViewportWinState = {
-        ...statePref,
-        ...vpWinNotStatePref,
-      };
-      this.state = s;
-    } else throw Error(`ViewportWin id must be 'xulsword'`);
+    if (props.id !== 'xulsword')
+      throw Error(`ViewportWin id must be 'xulsword'`);
+    const statePref = getStatePref(props.id, null, vpWinNotStatePref) as Omit<
+      XulswordStatePref,
+      keyof typeof vpWinNotStatePref
+    >;
+    const windowState = windowArgument(
+      'xulswordState'
+    ) as typeof vpWinNotStatePref;
+    const s: ViewportWinState = {
+      ...statePref,
+      ...vpWinNotStatePref,
+      ...windowState,
+    };
+    this.state = s;
 
     this.viewportParentHandler = viewportParentH.bind(this);
     this.lastSavedPref = {};
-    this.mouseWheel = { TO: 0, atext: null, count: 0 };
 
     this.destroy = [];
+
+    this.atextRefs = [];
+    s.panels.forEach((p) => {
+      this.atextRefs.push(React.createRef());
+    });
   }
 
   componentDidMount() {
@@ -123,12 +121,12 @@ export default class ViewportWin extends React.Component {
       vpreset,
     } = state;
     const { id } = props;
-    const { lastSavedPref: lastSetPrefs, viewportParentHandler } = this;
+    const { atextRefs, lastSavedPref, viewportParentHandler } = this;
 
-    if (id && setPrefFromState(id, state, lastSetPrefs, vpWinNotStatePref)) {
+    if (id && setPrefFromState(id, state, lastSavedPref, vpWinNotStatePref)) {
       G.setGlobalStateFromPref(
         null,
-        ['book', 'chapter', 'verse', 'selection', 'flagScroll'].map((p) => {
+        ['location', 'selection', 'flagScroll'].map((p) => {
           return `${id}.${p}`;
         })
       );
@@ -167,6 +165,7 @@ export default class ViewportWin extends React.Component {
             showChooser={false}
             ownWindow
             parentHandler={viewportParentHandler}
+            atextRefs={atextRefs}
           />
         </Hbox>
       </Vbox>

@@ -39,7 +39,7 @@ import '../global-htm.css';
 import './xulsword.css';
 
 import type { HistoryVKType, XulswordStatePref } from '../../type';
-import type { MouseWheel } from '../viewport/viewportParentH';
+import type Atext from '../viewport/atext';
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -86,40 +86,43 @@ export default class Xulsword extends React.Component {
 
   wheelScrollTO: NodeJS.Timeout | undefined;
 
-  mouseWheel: MouseWheel;
-
   lastStatePref: { [i: string]: any };
 
   destroy: (() => void)[];
 
+  atextRefs: React.RefObject<Atext>[];
+
   constructor(props: XulswordProps) {
     super(props);
 
-    if (props.id === 'xulsword') {
-      const s: XulswordState = {
-        ...notStatePref,
-        ...(getStatePref(props.id, null) as XulswordStatePref),
-      };
-      // If any statePrefPanelDefault arrays are still 0 length, fill them.
-      const sx = s as any;
-      Object.entries(statePrefPanelDefault).forEach((entry) => {
-        const [key, val] = entry;
-        const sval = sx[key];
-        if (!sval.length && key && Array.isArray(val)) {
-          sx.panels.forEach((_p: any, i: string) => {
-            if (sx[key][i] === undefined) [sx[key][i]] = val;
-          });
-        }
-      });
-      this.state = s;
-    } else throw Error(`Xulsword id must be 'xulsword'`);
+    if (props.id !== 'xulsword') throw Error(`Xulsword id must be 'xulsword'`);
+    const s: XulswordState = {
+      ...notStatePref,
+      ...(getStatePref(props.id, null) as XulswordStatePref),
+    };
+    // If any statePrefPanelDefault arrays are still 0 length, fill them.
+    const sx = s as any;
+    Object.entries(statePrefPanelDefault).forEach((entry) => {
+      const [key, val] = entry;
+      const sval = sx[key];
+      if (!sval.length && key && Array.isArray(val)) {
+        sx.panels.forEach((_p: any, i: string) => {
+          if (sx[key][i] === undefined) [sx[key][i]] = val;
+        });
+      }
+    });
+    this.state = s;
 
     this.handler = handlerH.bind(this);
     this.viewportParentHandler = viewportParentH.bind(this);
     this.lastStatePref = {};
-    this.mouseWheel = { TO: 0, atext: null, count: 0 };
 
     this.destroy = [];
+
+    this.atextRefs = [];
+    s.panels.forEach((p) => {
+      this.atextRefs.push(React.createRef());
+    });
   }
 
   componentDidMount() {
@@ -244,7 +247,7 @@ export default class Xulsword extends React.Component {
   render() {
     const state = this.state as XulswordState;
     const props = this.props as XulswordProps;
-    const { handler, viewportParentHandler, lastStatePref } = this;
+    const { atextRefs, handler, viewportParentHandler, lastStatePref } = this;
     const {
       location,
       selection,
@@ -272,7 +275,7 @@ export default class Xulsword extends React.Component {
     if (id && setPrefFromState(id, state, lastStatePref, notStatePref)) {
       G.setGlobalStateFromPref(
         null,
-        ['location', 'selection', 'flagScroll'].map((p) => {
+        ['location', 'selection', 'flagScroll', 'show'].map((p) => {
           return `${id}.${p}`;
         })
       );
@@ -530,6 +533,7 @@ export default class Xulsword extends React.Component {
             maximizeNoteBox={maximizeNoteBox}
             showChooser={showChooser}
             ownWindow={false}
+            atextRefs={atextRefs}
           />
         </Hbox>
       </Vbox>

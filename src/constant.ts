@@ -234,7 +234,8 @@ const C = {
     },
     Atext: {
       dictKeyInputDelay: 1000, // ms between keydown and update
-      wheelScrollDelay: 25, // ms between UI updates while scrolling
+      wheelScrollDelay: 500, // ms between UI updates while scrolling
+      multiColWheelScrollDelay: 100,
       prevNextHeight: 30, // px
       bbTopMargin: 60, // px
       bbBottomMargin: 30, // px

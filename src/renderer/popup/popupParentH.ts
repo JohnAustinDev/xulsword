@@ -26,8 +26,8 @@ export type PopupParentProps = {
 };
 
 export type PopupParentState = {
-  elemhtml: string[]; // popup target element html
-  eleminfo: ElemInfo[]; // popup target element info
+  elemhtml: string[] | null; // popup target element html
+  eleminfo: ElemInfo[] | null; // popup target element info
   popupReset: number; // increment this to re-mount popup
   gap?: number; // gap between target element and top of popup
   popupHold?: boolean; // hold popup open
@@ -187,7 +187,9 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'dt':
         case 'dtl': {
           this.setState((prevState: PopupParentState) => {
-            const { elemhtml, eleminfo } = prevState;
+            let { elemhtml, eleminfo } = prevState;
+            if (elemhtml === null) elemhtml = [];
+            if (eleminfo === null) eleminfo = [];
             elemhtml.push(elem.outerHTML);
             eleminfo.push(info || ({} as ElemInfo));
             // set the gap so as to position popup under the mouse
@@ -213,16 +215,19 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         case 'popupBackLink': {
           this.setState((prevState: PopupParentState) => {
             const { elemhtml, eleminfo } = prevState;
-            elemhtml.pop();
-            eleminfo.pop();
-            // set the gap so as to position popup under the mouse
-            const gap = Math.round(e.clientY - popupY - 40);
-            const s: Partial<PopupParentState> = {
-              elemhtml,
-              eleminfo,
-              gap,
-            };
-            return s;
+            if (elemhtml && eleminfo) {
+              elemhtml.pop();
+              eleminfo.pop();
+              // set the gap so as to position popup under the mouse
+              const gap = Math.round(e.clientY - popupY - 40);
+              const s: Partial<PopupParentState> = {
+                elemhtml,
+                eleminfo,
+                gap,
+              };
+              return s;
+            }
+            return null;
           });
           break;
         }
@@ -237,8 +242,12 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               webPreferences: {
                 additionalArguments: [
                   'popupWin',
-                  JSON_stringify(elemhtml),
-                  JSON_stringify(eleminfo),
+                  JSON_stringify({
+                    popupState: {
+                      elemhtml,
+                      eleminfo,
+                    },
+                  }),
                 ],
               },
               openWithBounds: {
@@ -278,7 +287,13 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
         const { value } = t;
         this.setState((prevState: PopupParentState) => {
           const { elemhtml, eleminfo } = prevState;
-          if (t.dataset.module && eleminfo.length) {
+          if (
+            t.dataset.module &&
+            elemhtml &&
+            elemhtml.length &&
+            eleminfo &&
+            eleminfo.length
+          ) {
             const orig = getPopupInfo(elemhtml[elemhtml.length - 1]);
             if (orig.mod && value) {
               G.Prefs.setCharPref(`global.popup.selection.${orig.mod}`, value);

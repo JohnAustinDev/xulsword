@@ -89,7 +89,10 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           break;
 
         case 'versePerLineButton':
-          atext.classList.toggle('verse-per-line');
+          this.setState((prevState: AtextState) => {
+            const { versePerLine } = prevState;
+            return { versePerLine: !versePerLine };
+          });
           break;
 
         // Notebox cross-reference twisty toggle
@@ -282,19 +285,8 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
 
     case 'wheel': {
       const e = es as React.WheelEvent;
-      if (type !== C.DICTIONARY && !ofClass(['nbc'], target)) {
-        if (isPinned) {
-          const { mouseWheel: m } = this;
-          m.atext = atext;
-          m.count += Math.round(e.deltaY / 80);
-          delayHandler.bind(this)(
-            (t) => {
-              aTextWheelScroll(t);
-            },
-            C.UI.Atext.wheelScrollDelay,
-            'wheelScrollTO'
-          )(this);
-        }
+      if (isPinned && type !== C.DICTIONARY && !ofClass(['nbc'], target)) {
+        aTextWheelScroll(e, atext, this);
       }
       break;
     }

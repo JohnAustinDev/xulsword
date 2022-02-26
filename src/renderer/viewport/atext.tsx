@@ -24,6 +24,7 @@ import {
   libswordImgSrc,
   scrollIntoView,
   setStatePref,
+  windowArgument,
 } from '../rutil';
 import {
   xulDefaultProps,
@@ -45,8 +46,18 @@ import '../libxul/xul.css';
 import '../libsword.css';
 import './atext.css';
 
-import type { MouseWheel } from './viewportParentH';
 import type { LocationVKType, PlaceType, ShowType } from '../../type';
+
+const memoize = require('memoizee');
+
+const libswordResponseMemoized = memoize(libswordText, {
+  max: 100, // remember up to 100 LibSword responses
+  normalizer: (...args: any) =>
+    args.map((arg: any) => stringHash(arg)).join('+'),
+});
+window.ipc.renderer.on('module-reset', () => {
+  libswordResponseMemoized.clear();
+});
 
 const defaultProps = {
   ...xulDefaultProps,
@@ -106,22 +117,13 @@ export type LibSwordResponse = {
   intronotes: string;
 };
 
-export interface AtextState {
-  pin: typeof C.PinProps | null;
-  versePerLine: boolean;
-  noteBoxResizing: number[] | null;
-}
+export const atextInitialState = {
+  pin: null as typeof C.PinProps | null,
+  versePerLine: false as boolean,
+  noteBoxResizing: null as number[] | null,
+};
 
-const memoize = require('memoizee');
-
-const libswordResponseMemoized = memoize(libswordText, {
-  max: 100, // remember up to 100 LibSword responses
-  normalizer: (...args: any) =>
-    args.map((arg: any) => stringHash(arg)).join('+'),
-});
-window.ipc.renderer.on('module-reset', () => {
-  libswordResponseMemoized.clear();
-});
+export type AtextState = typeof atextInitialState;
 
 // XUL Atext
 class Atext extends React.Component {
@@ -141,8 +143,6 @@ class Atext extends React.Component {
 
   wheelScrollTO: NodeJS.Timeout | undefined;
 
-  mouseWheel: MouseWheel;
-
   sbref: React.RefObject<HTMLDivElement>;
 
   nbref: React.RefObject<HTMLDivElement>;
@@ -150,14 +150,16 @@ class Atext extends React.Component {
   constructor(props: AtextProps) {
     super(props);
 
+    const windowState = windowArgument(
+      `atext${props.panelIndex}State`
+    ) as Partial<AtextState>;
+
     const s: AtextState = {
-      pin: null,
-      versePerLine: false,
-      noteBoxResizing: null,
+      ...atextInitialState,
+      ...windowState,
     };
     this.state = s;
 
-    this.mouseWheel = { TO: 0, atext: null, count: 0 };
     this.sbref = React.createRef();
     this.nbref = React.createRef();
 
