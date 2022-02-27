@@ -182,21 +182,19 @@ export default class Xulsword extends React.Component {
       // To update state to a history index without changing the selected
       // modules, history needs to be converted to the current v11n.
       const { location: hloc, selection: hsel } = history[index];
-      const { book, chapter, verse } = verseKey(hloc, location.v11n);
-      const selection = hsel ? verseKey(hsel, location.v11n).location() : null;
+      const newloc = verseKey(hloc, location.v11n).location();
+      const newsel = hsel ? verseKey(hsel, location.v11n).location() : null;
       if (promote) {
         const targ = history.splice(index, 1);
         history.splice(0, 0, targ[0]);
       }
       return {
+        location: newloc,
+        selection: newsel,
+        flagScroll: flagScroll.map(() => C.VSCROLL.center),
         history,
         historyIndex: promote ? 0 : index,
         historyMenupopup: undefined,
-        book,
-        chapter,
-        verse,
-        selection,
-        flagScroll: flagScroll.map(() => C.VSCROLL.center),
       };
     });
   };

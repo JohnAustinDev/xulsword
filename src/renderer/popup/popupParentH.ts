@@ -10,6 +10,8 @@ import { delayHandler } from '../libxul/xul';
 import type { ElemInfo } from '../../libswordElemInfo';
 import type { PlaceType, ShowType } from '../../type';
 
+let WheelScrolling = false;
+
 export interface PopupParent {
   state: React.ComponentState;
   props: React.ComponentProps<any>;
@@ -127,16 +129,29 @@ export function popupParentHandler(
 
     case 'wheel': {
       if ('popupDelayTO' in this) {
-        // block popup for a short time when mouse-wheel is turned
+        // Block popup for a time when mouse-wheel is turned, and then
+        // wait until the mouse moves again to re-enable the popup.
         if (this.popupDelayTO) clearTimeout(this.popupDelayTO);
         this.popupDelayTO = null; // blocks the popup
+        WheelScrolling = true;
         delayHandler.bind(this)(
-          (t) => {
-            t.popupDelayTO = undefined; // unblocks the popup
+          () => {
+            WheelScrolling = false;
           },
           C.UI.Popup.wheelDeadTime,
           'popupUnblockTO'
         )(this);
+      }
+      break;
+    }
+
+    case 'mousemove': {
+      if (
+        'popupDelayTO' in this &&
+        this.popupDelayTO === null &&
+        !WheelScrolling
+      ) {
+        this.popupDelayTO = undefined; // unblocks the popup
       }
       break;
     }

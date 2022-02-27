@@ -132,12 +132,31 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
       if (!('id' in es.target)) return;
       const { id, value } = es.target as any;
       switch (id) {
-        case 'book__textbox__input':
         case 'book__menulist__select': {
           this.setState((prevState: XulswordState) => {
             const { flagScroll, location } = prevState;
-            // reset Bookselect on Enter key even if book doesn't change
-            const bsreset = prevState.bsreset + 1;
+            if (location) {
+              const newloc = verseKey({
+                book: value,
+                chapter: 1,
+                verse: 1,
+                v11n: location.v11n,
+              });
+              const s: Partial<XulswordState> = {
+                location: newloc.location(),
+                selection: newloc.location(),
+                flagScroll: flagScroll.map(() => C.VSCROLL.center),
+                bsreset: prevState.bsreset + 1,
+              };
+              return s;
+            }
+            return null;
+          });
+          break;
+        }
+        case 'book__textbox__input': {
+          this.setState((prevState: XulswordState) => {
+            const { flagScroll, location } = prevState;
             const newloc = parser.parse(
               value,
               location?.v11n || 'KJV'
@@ -148,11 +167,11 @@ export default function handler(this: Xulsword, es: React.SyntheticEvent<any>) {
                 location: newloc,
                 selection: newloc,
                 flagScroll: flagScroll.map(() => C.VSCROLL.center),
-                bsreset,
+                bsreset: prevState.bsreset + 1,
               };
               return s;
             }
-            return { bsreset };
+            return { bsreset: prevState.bsreset + 1 };
           });
           break;
         }

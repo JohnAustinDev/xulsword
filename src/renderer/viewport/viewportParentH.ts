@@ -4,7 +4,14 @@
 import React from 'react';
 import C from '../../constant';
 import Cache from '../../cache';
-import { decodeOSISRef, escapeRE, JSON_stringify, ofClass } from '../../common';
+import {
+  copyProps,
+  decodeOSISRef,
+  deepClone,
+  escapeRE,
+  JSON_stringify,
+  ofClass,
+} from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { getContextData, scrollIntoView, verseKey } from '../rutil';
@@ -51,6 +58,101 @@ export function closeMenupopups(component: React.Component) {
       if (historyMenupopup) s.historyMenupopup = undefined;
       return s;
     });
+  }
+}
+
+// Set viewportParent state or, if the target panel is pinned, the panel's
+// Atext.pin state will be updated instead. This setState should be called
+// any time an event is to modify a C.PinProps state.
+function setState(
+  comp: Xulsword | ViewportWin,
+  atext: HTMLElement,
+  func: (prevState: typeof C.PinProps) => Partial<typeof C.PinProps> | null
+) {
+  const { index, ispinned } = atext.dataset;
+  const panelIndex = Number(index);
+  const isPinned = ispinned === 'true';
+  if (!isPinned) {
+    comp.setState((prevState: XulswordState | ViewportWinState) => {
+      const { location, selection, flagScroll, panels, ilModules, keys } =
+        prevState;
+      const pinProps: typeof C.PinProps = {
+        location,
+        selection,
+        flagScroll: flagScroll[panelIndex],
+        module: panels[panelIndex],
+        ilModule: ilModules[panelIndex],
+        modkey: keys[panelIndex],
+      };
+      const newPinProps = func(pinProps);
+      if (newPinProps) {
+        const s: Partial<XulswordState> = {};
+        Object.keys(C.PinProps).forEach((key) => {
+          switch (key) {
+            case 'location':
+            case 'selection': {
+              s[key] = newPinProps[key];
+              break;
+            }
+            case 'flagScroll': {
+              const mysf = newPinProps.flagScroll;
+              const fs: number[] = prevState.flagScroll.slice();
+              if (mysf !== undefined) {
+                const ats = document.getElementsByClassName(`atext`);
+                Array.from(ats).forEach((at) => {
+                  const a = at as HTMLElement;
+                  const { index: inx, columns: c } = a.dataset;
+                  if (mysf && inx && c) {
+                    fs[Number(inx)] =
+                      c && Number(c) > 1 ? mysf : C.VSCROLL.centerAlways;
+                  }
+                });
+              }
+              s.flagScroll = fs;
+              break;
+            }
+            case 'module':
+            case 'ilModule':
+            case 'modkey': {
+              const map = {
+                module: 'panels',
+                ilModule: 'ilModules',
+                modkey: 'keys',
+              } as const;
+              const ps = deepClone(prevState[map[key]]);
+              if (ps[panelIndex]) {
+                ps[panelIndex] = newPinProps[key];
+                s[map[key]] = ps;
+              }
+              break;
+            }
+            default:
+              throw Error(`Unhandled PinProp '${key}'`);
+          }
+        });
+        return Object.keys(s).length ? s : null;
+      }
+      return null;
+    });
+  } else {
+    const atextcomp = comp.atextRefs[panelIndex];
+    if (atextcomp?.current) {
+      atextcomp.current.setState((prevState: AtextState) => {
+        if (prevState.pin) {
+          const newPinProps = func(prevState.pin);
+          if (newPinProps && prevState.pin) {
+            const s: Partial<AtextState> = {
+              pin: {
+                ...prevState.pin,
+                ...newPinProps,
+              },
+            };
+            return s;
+          }
+        }
+        return null;
+      });
+    }
   }
 }
 
@@ -318,18 +420,11 @@ export default function handler(
           }
           break;
         }
-        case 'prevchaplink': {
-          if (atext && !isPinned) {
-            this.setState((prevState: XulswordStatePref) => {
-              return textChange(atext, false, prevState);
-            });
-          }
-          break;
-        }
+        case 'prevchaplink':
         case 'nextchaplink': {
-          if (atext && !isPinned) {
-            this.setState((prevState: XulswordStatePref) => {
-              return textChange(atext, true, prevState);
+          if (atext) {
+            setState(this, atext, (prevState: typeof C.PinProps) => {
+              return textChange(atext, targ.type === 'nextchaplink', prevState);
             });
           }
           break;
@@ -339,23 +434,22 @@ export default function handler(
           if (
             p &&
             typeof p.osisref === 'string' &&
-            elem.classList.contains('x-target_self')
+            elem.classList.contains('x-target_self') &&
+            atext
           ) {
-            this.setState((prevState: XulswordStatePref) => {
-              const { keys } = prevState;
+            setState(this, atext, (prevState: typeof C.PinProps) => {
+              let { modkey } = prevState;
               const str = p.osisref as string;
-              keys[index] = decodeOSISRef(str.replace(/^[^:]+:/, ''));
-              return { keys };
+              modkey = decodeOSISRef(str.replace(/^[^:]+:/, ''));
+              return { modkey };
             });
           }
           break;
         case 'dict-key': {
           const key = elem.innerText;
           if (atext && key) {
-            this.setState((prevState: XulswordStatePref) => {
-              const { keys } = prevState;
-              keys[index] = key;
-              return { keys };
+            setState(this, atext, () => {
+              return { modkey: key };
             });
           }
           break;
@@ -375,7 +469,7 @@ export default function handler(
         }
         case 'fnlink':
         case 'crref': {
-          if (location && p?.bk && p.ch) {
+          if (atext && location && p?.bk && p.ch) {
             switch (type) {
               case C.BIBLE:
               case C.COMMENTARY: {
@@ -389,12 +483,11 @@ export default function handler(
                   },
                   location.v11n
                 ).location();
-                this.setState((prevState: XulswordStatePref) => {
-                  const { flagScroll } = prevState;
-                  const s: Partial<XulswordStatePref> = {
+                setState(this, atext, () => {
+                  const s: Partial<typeof C.PinProps> = {
                     location: newloc,
                     selection: newloc,
-                    flagScroll: flagScroll.map(() => C.VSCROLL.center),
+                    flagScroll: C.VSCROLL.center,
                   };
                   return s;
                 });
@@ -407,12 +500,10 @@ export default function handler(
         }
         case 'origoption': {
           const value = elem.getAttribute('value');
-          if (value) {
+          if (value && atext) {
             const [, , , mod] = value.split('.');
-            this.setState((prevState: XulswordStatePref) => {
-              const { ilModules } = prevState;
-              ilModules[index] = mod;
-              return { ilModules };
+            setState(this, atext, () => {
+              return { ilModule: mod };
             });
           }
           break;
@@ -428,7 +519,7 @@ export default function handler(
     case 'keydown': {
       const e = es as React.KeyboardEvent;
       const targ = ofClass(['dictkeyinput'], target);
-      if (targ && panel) {
+      if (targ && panel && atext) {
         e.stopPropagation();
         delayHandler.bind(this)(
           (select: HTMLSelectElement, mod: string) => {
@@ -443,10 +534,8 @@ export default function handler(
                 '<nx>'
               )}<nx>`.match(re);
               if (firstMatch) {
-                this.setState((prevState: XulswordStatePref) => {
-                  const { keys } = prevState;
-                  [, , keys[index]] = firstMatch;
-                  return { keys };
+                setState(this, atext, () => {
+                  return { modkey: firstMatch[2] };
                 });
               } else if (e.key !== 'backspace') {
                 G.Shell.beep();

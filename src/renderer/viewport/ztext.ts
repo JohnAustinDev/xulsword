@@ -287,41 +287,31 @@ function genbookChange(atext: HTMLElement, next: boolean): string | null {
   return null;
 }
 
-// Handle Atext prev/next event by returning a new state, or null if the
-// request is not possible. IMPORTANT: If prevState is not provided, the
-// returned state will be incomplete and should only be used as a boolean
-// test of whether the requested change is possible.
+// Handle Atext prev/next event by returning a new PinProps state, or null
+// if the request is not possible. IMPORTANT: If prevState is not provided,
+// the returned state will be incomplete and should only be used as a boolean
+// test of whether the requested change is possible or not.
 export function textChange(
   atext: HTMLElement,
   next: boolean,
-  prevState?: AtextState | XulswordStatePref
-): Partial<AtextState> | Partial<XulswordStatePref> | null {
-  const { columns: cx, module, index: i } = atext.dataset;
+  prevState?: typeof C.PinProps
+): typeof C.PinProps | null {
+  const { columns: cx, module } = atext.dataset;
   const columns = Number(cx);
   if (!columns || !module) return null;
-  const index = Number(i);
   const { type } = G.Tab[module];
   const sbe = atext.getElementsByClassName('sb')[0];
-  let atextPrevState: AtextState | null = null;
-  let xulswordPrevState: XulswordStatePref | null = null;
-  if (prevState) {
-    atextPrevState = ('pin' in prevState && prevState) || null;
-    xulswordPrevState = ('location' in prevState && prevState) || null;
-  }
-  let sxulsword: Partial<XulswordStatePref> | null = null;
-  let satext: Partial<AtextState> | null = null;
+  const newPinProps = prevState || C.PinProps;
   switch (type) {
     case C.BIBLE:
     case C.COMMENTARY: {
       let location;
       if (type === C.BIBLE && columns > 1) {
-        location = pageChange(atext, next, prevState);
+        location = pageChange(atext, next);
       } else {
-        let firstVerse: HTMLElement | undefined;
-        Array.from(sbe.getElementsByClassName('vs')).forEach((v) => {
-          const verse = v as HTMLElement;
-          if (!firstVerse && verse.style.display !== 'none') firstVerse = verse;
-        });
+        const firstVerse = sbe.getElementsByClassName('vs')[0] as
+          | HTMLElement
+          | undefined;
         if (firstVerse) {
           const p = getElementInfo(firstVerse);
           if (p && p.bk && p.ch && module && module in G.Tab) {
@@ -329,6 +319,7 @@ export function textChange(
             const vk: LocationVKType = {
               book: p.bk,
               chapter: Number(p.ch),
+              verse: 1,
               v11n: mv11n,
             };
             if (next) {
@@ -340,12 +331,8 @@ export function textChange(
         }
       }
       if (location) {
-        if (!atextPrevState) {
-          sxulsword = { location };
-        } else if (atextPrevState.pin) {
-          satext = { pin: { ...atextPrevState.pin, location } };
-        }
-      }
+        newPinProps.location = location;
+      } else return null;
       break;
     }
     case C.GENBOOK:
@@ -355,50 +342,21 @@ export function textChange(
           ? dictionaryChange(atext, next)
           : genbookChange(atext, next);
       if (key) {
-        if (atextPrevState) {
-          const pin = deepClone(atextPrevState.pin);
-          pin.modkey = key;
-          satext = { pin };
-        } else if (xulswordPrevState) {
-          const keys = xulswordPrevState.keys.slice();
-          keys[index] = key;
-          sxulsword = { keys };
-        } else {
-          sxulsword = { keys: [key] };
-        }
-      }
+        newPinProps.modkey = key;
+      } else return null;
       break;
     }
     default:
   }
-  if (!satext && !sxulsword) return null;
-  if (!prevState) return sxulsword || satext;
-  let mysf: number | undefined;
+  if (!prevState) return newPinProps;
+  newPinProps.flagScroll = 0;
   if (type === C.BIBLE && columns > 1) {
-    mysf = next ? C.VSCROLL.verse : C.VSCROLL.endAndUpdate;
+    newPinProps.flagScroll = next ? C.VSCROLL.verse : C.VSCROLL.endAndUpdate;
   } else if (type === C.BIBLE || type === C.COMMENTARY) {
-    mysf = C.VSCROLL.chapter;
+    newPinProps.flagScroll = C.VSCROLL.chapter;
   }
-  if (mysf !== undefined) {
-    if (atextPrevState && satext) {
-      if (satext.pin) satext.pin.flagScroll = mysf;
-    } else if (xulswordPrevState && sxulsword) {
-      const flagScroll: number[] = xulswordPrevState.flagScroll.slice();
-      const ats = document.getElementsByClassName(`atext`);
-      Array.from(ats).forEach((at) => {
-        const a = at as HTMLElement;
-        const { index: inx, columns: c } = a.dataset;
-        if (mysf && inx && c) {
-          flagScroll[Number(inx)] =
-            c && Number(c) > 1 ? mysf : C.VSCROLL.centerAlways;
-        }
-      });
-      sxulsword.flagScroll = flagScroll;
-    }
+  if (type === C.BIBLE) {
+    newPinProps.selection = null;
   }
-  if (type === C.BIBLE && xulswordPrevState && sxulsword) {
-    sxulsword.selection = null;
-  }
-  const ret = atextPrevState ? satext : sxulsword;
-  return ret && Object.keys(ret).length ? ret : null;
+  return newPinProps && Object.keys(newPinProps).length ? newPinProps : null;
 }

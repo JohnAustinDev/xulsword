@@ -234,7 +234,7 @@ const C = {
     },
     Atext: {
       dictKeyInputDelay: 1000, // ms between keydown and update
-      wheelScrollDelay: 500, // ms between UI updates while scrolling
+      wheelScrollDelay: 300, // ms between UI updates while scrolling
       multiColWheelScrollDelay: 100,
       prevNextHeight: 30, // px
       bbTopMargin: 60, // px
@@ -278,9 +278,9 @@ const C = {
     location: null as LocationVKType | null,
     selection: null as LocationVKType | null,
     flagScroll: 0,
-    module: '',
-    ilModule: '',
-    modkey: '',
+    module: '' as string | null,
+    ilModule: '' as string | null,
+    modkey: '' as string | null,
   },
 
   // These Atext props are used by LibSword. If these props all have the same values

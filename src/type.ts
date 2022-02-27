@@ -128,6 +128,7 @@ export type ContextData = {
   lemma: string | null;
   panelIndex: number | null;
   bookmark: unknown | null;
+  isPinned: boolean;
   selection: string | null;
   selectionParsedVK: LocationVKType | null;
 };

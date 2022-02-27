@@ -7,6 +7,14 @@ export function escapeRE(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+export function copyProps(source: any, which: any) {
+  const p: any = {};
+  Object.keys(which).forEach((k) => {
+    p[k] = k in source ? source[k] : undefined;
+  });
+  return p;
+}
+
 // Decode an osisRef that was encoded using _(\d+)_ encoding, where
 // special characters are encoded as Unicode char-code numbers with
 // an underscore before and after. If the osisRef includes a work

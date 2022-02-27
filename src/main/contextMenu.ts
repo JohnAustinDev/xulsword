@@ -115,7 +115,7 @@ export default function contextMenu(window: BrowserWindow): () => void {
       },
       {
         label: i18next.t('menu.context.selectVerse'),
-        visible: Object.keys(cm.data).length > 0,
+        visible: Object.keys(cm.data).length > 0 && !cm.data.isPinned,
         enabled: Boolean(cm.data.locationVK),
         click: ((data) => {
           return () => {

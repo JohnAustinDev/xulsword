@@ -12,6 +12,7 @@ import i18next from 'i18next';
 import C from '../../constant';
 import {
   compareObjects,
+  copyProps,
   ofClass,
   sanitizeHTML,
   stringHash,
@@ -131,14 +132,6 @@ class Atext extends React.Component {
 
   static propTypes: typeof propTypes;
 
-  static copyProps(source: any, which: any) {
-    const p: any = {};
-    Object.keys(which).forEach((k) => {
-      p[k] = k in source ? source[k] : undefined;
-    });
-    return p;
-  }
-
   handler: (e: React.SyntheticEvent) => void;
 
   wheelScrollTO: NodeJS.Timeout | undefined;
@@ -204,33 +197,43 @@ class Atext extends React.Component {
     const nbe = nbref !== null ? nbref.current : null;
 
     let newState: Partial<AtextState> = {};
-    const newPin = Atext.copyProps(
+    const pinProps = copyProps(
       pin && isPinned ? pin : props,
       C.PinProps
     ) as typeof C.PinProps;
-    const { selection, module } = newPin;
-    if (!compareObjects(newPin, pin)) newState = { ...newState, pin: newPin };
+    const { selection, module } = pinProps;
+    if (!compareObjects(pinProps, pin))
+      newState = { ...newState, pin: pinProps };
     if (module && sbe && nbe) {
       const { type, isVerseKey } = G.Tab[module];
-      const newLibSword = Atext.copyProps(
+      // scrollProps are current props that effect scrolling
+      const scrollProps = copyProps(
+        { ...props, ...pinProps },
+        C.ScrollProps[type]
+      ) as Partial<AtextProps>;
+      const scrollkey = stringHash(scrollProps);
+      // libswordProps are current props that effect LibSword output
+      const libswordProps = copyProps(
         {
           ...props,
-          ...newPin,
+          ...pinProps,
         },
         C.LibSwordProps[type]
       ) as Partial<AtextProps>;
-      const newScroll = Atext.copyProps(
-        { ...props, ...newPin },
-        C.ScrollProps[type]
-      ) as Partial<AtextProps>;
-      const writekey = stringHash({ ...newLibSword, chapter: 0 }, panelIndex);
-      const scrollkey = stringHash(newScroll);
-      let update = false; // update current innerHTML as needed
+      // NOTE: chapter has its own dataset attribute so is removed from writekey
+      const writekey = stringHash(
+        {
+          ...libswordProps,
+          location: { ...libswordProps.location, chapter: 0 },
+        },
+        panelIndex
+      );
+      let update = false; // update current innerHTML?
       if (!isVerseKey) {
         update = writekey !== sbe.dataset.libsword;
         if (update)
-          this.writeLibSword2DOM(newLibSword, panelIndex, 'overwrite');
-      } else if (newLibSword.location) {
+          this.writeLibSword2DOM(libswordProps, panelIndex, 'overwrite');
+      } else if (libswordProps.location) {
         let chfirst;
         let chlast;
         if ('chfirst' in sbe.dataset) chfirst = Number(sbe.dataset.chfirst);
@@ -240,12 +243,12 @@ class Atext extends React.Component {
           !(
             chfirst &&
             chlast &&
-            newLibSword.location.chapter >= chfirst &&
-            newLibSword.location.chapter <= chlast
+            libswordProps.location.chapter >= chfirst &&
+            libswordProps.location.chapter <= chlast
           ) ||
           chlast - chfirst > 10;
         if (update) {
-          this.writeLibSword2DOM(newLibSword, panelIndex, 'overwrite');
+          this.writeLibSword2DOM(libswordProps, panelIndex, 'overwrite');
           chfirst = Number(sbe.dataset.chfirst);
           chlast = Number(sbe.dataset.chlast);
         }
@@ -255,14 +258,14 @@ class Atext extends React.Component {
           chlast &&
           columns > 1 &&
           type === C.BIBLE &&
-          newScroll.flagScroll !== C.VSCROLL.none &&
+          scrollProps.flagScroll !== C.VSCROLL.none &&
           (update || scrollkey !== sbe.dataset.scroll)
         ) {
           const rtl = G.ModuleConfigs[module].direction === 'rtl';
           let v = findVerseElement(
             sbe,
-            newLibSword.location.chapter,
-            newLibSword.location.verse || 1
+            libswordProps.location.chapter,
+            libswordProps.location.verse || 1
           );
           if (v) v.style.display = '';
           let sib = v?.previousSibling as HTMLElement | null;
@@ -283,17 +286,17 @@ class Atext extends React.Component {
               (rtl && v.offsetLeft >= 0))
           ) {
             update = true;
-            this.writeLibSword2DOM(newLibSword, panelIndex, 'prepend');
+            this.writeLibSword2DOM(libswordProps, panelIndex, 'prepend');
             v = findVerseElement(
               sbe,
-              newLibSword.location.chapter,
-              newLibSword.location.verse || 1
+              libswordProps.location.chapter,
+              libswordProps.location.verse || 1
             );
             chfirst -= 1;
           }
           const max = getMaxChapter(
             G.Tab[module].v11n || 'KJV',
-            newLibSword.location.book
+            libswordProps.location.book
           );
           let last = sbe.lastChild as HTMLElement | null;
           sib = v?.nextSibling as HTMLElement | null;
@@ -316,11 +319,11 @@ class Atext extends React.Component {
               (rtl && last.offsetLeft - v.offsetLeft >= 0))
           ) {
             update = true;
-            this.writeLibSword2DOM(newLibSword, panelIndex, 'append');
+            this.writeLibSword2DOM(libswordProps, panelIndex, 'append');
             v = findVerseElement(
               sbe,
-              newLibSword.location.chapter,
-              newLibSword.location.verse || 1
+              libswordProps.location.chapter,
+              libswordProps.location.verse || 1
             );
             last = sbe.lastChild as HTMLElement | null;
             chlast += 1;
@@ -328,23 +331,23 @@ class Atext extends React.Component {
         }
       }
       // SCROLL
-      if (
-        newScroll.flagScroll !== C.VSCROLL.none &&
+      const doscroll =
+        scrollProps.flagScroll !== C.VSCROLL.none &&
         (update || scrollkey !== sbe.dataset.scroll) &&
-        isVerseKey
-      ) {
+        isVerseKey;
+      if (doscroll) {
         sbe.dataset.scroll = scrollkey;
         const location = versekeyScroll(
           sbe,
-          newScroll as typeof C.ScrollPropsVK
+          scrollProps as typeof C.ScrollPropsVK
         );
         if (location) {
-          const loc = verseKey(location).location(newLibSword.location?.v11n);
+          const loc = verseKey(location).location(libswordProps.location?.v11n);
           if (isPinned) {
             newState = {
               ...newState,
               pin: {
-                ...newPin,
+                ...pinProps,
                 location: loc,
                 flagScroll: C.VSCROLL.none,
               },
@@ -356,7 +359,7 @@ class Atext extends React.Component {
           }
         }
       } else if (update && type === C.DICTIONARY) {
-        const { modkey } = newLibSword;
+        const { modkey } = libswordProps;
         const id = `${stringHash(modkey)}.${panelIndex}`;
         const keyelem = document.getElementById(id);
         if (keyelem) {
@@ -374,10 +377,11 @@ class Atext extends React.Component {
         }
       }
       // HIGHLIGHT
-      if (selection && !isPinned && type === C.BIBLE) {
+      if (update && !isPinned && selection && type === C.BIBLE) {
         highlight(sbe, selection, module);
       }
-      if (columns > 1) {
+      // TRIM NOTES
+      if (columns > 1 && (update || doscroll)) {
         const empty = !trimNotes(sbe, nbe);
         const nbc = nbe.parentNode as any;
         if (
@@ -414,7 +418,7 @@ class Atext extends React.Component {
 
   // Write a LibSword response to the DOM.
   writeLibSword2DOM(
-    libsword: Partial<AtextProps>,
+    libswordProps: Partial<AtextProps>,
     i: number,
     flag: 'overwrite' | 'prepend' | 'append'
   ) {
@@ -422,9 +426,10 @@ class Atext extends React.Component {
     const sbe = sbref !== null ? sbref.current : null;
     const nbe = nbref !== null ? nbref.current : null;
     if (sbe && nbe) {
-      const { location } = libsword;
+      const { location } = libswordProps;
       const isDict =
-        libsword.module && G.Tab[libsword.module].type === C.DICTIONARY;
+        libswordProps.module &&
+        G.Tab[libswordProps.module].type === C.DICTIONARY;
       let chfirst;
       let chlast;
       let originalch;
@@ -447,7 +452,7 @@ class Atext extends React.Component {
           location.chapter = chlast;
         }
       }
-      const response = libswordResponseMemoized(libsword, i);
+      const response = libswordResponseMemoized(libswordProps, i);
       let fntable = (!isDict ? nbe.firstChild : null) as HTMLElement | null;
       let sb;
       let nb;
@@ -485,7 +490,13 @@ class Atext extends React.Component {
         libswordImgSrc(nbe);
       }
       fntable = nbe.firstChild as HTMLElement | null;
-      sbe.dataset.libsword = stringHash({ ...libsword, chapter: 0 }, i);
+      sbe.dataset.libsword = stringHash(
+        {
+          ...libswordProps,
+          location: { ...libswordProps.location, chapter: 0 },
+        },
+        i
+      );
       sbe.dataset.scroll = undefined;
       if (location) {
         if (flag === 'overwrite') {

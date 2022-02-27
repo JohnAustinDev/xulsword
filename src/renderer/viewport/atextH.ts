@@ -6,9 +6,7 @@ import { cleanDoubleClickSelection, getCSS, ofClass } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import { scrollIntoView } from '../rutil';
-import { delayHandler } from '../libxul/xul';
 import { aTextWheelScroll } from './zversekey';
-import { textChange } from './ztext';
 
 import type Atext from './atext';
 import type { AtextProps, AtextState } from './atext';
@@ -41,8 +39,6 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
           'cr',
           'crtwisty',
           'listenlink',
-          'prevchaplink',
-          'nextchaplink',
           'versePerLineButton',
           'image-container',
           'dictkeyinput',
@@ -56,16 +52,6 @@ export default function handler(this: Atext, es: React.SyntheticEvent) {
       const elem = targ.element;
       const p = getElementInfo(elem);
       switch (targ.type) {
-        case 'prevchaplink':
-        case 'nextchaplink': {
-          if (isPinned) {
-            this.setState((prevState: AtextState) => {
-              return textChange(atext, targ.type === 'nextchaplink', prevState);
-            });
-          }
-          break;
-        }
-
         case 'cr':
           if (!popupParent && p) {
             const id = `w${index}.footnote.${p.type}.${p.nid}.${p.osisref}.${p.mod}`;

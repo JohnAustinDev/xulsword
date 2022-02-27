@@ -213,7 +213,7 @@ function getRefHTML(
 
     // if not, then try and manually parse it and fill in any missing values
     // from the previous pass
-    if (!r.book && bk) {
+    if (bk && !r.book) {
       const ref2 = ref.replace(/[^\w\d:.-]+/g, '');
       const match = ref2.match(/^(\d+)(?::(\d+))?(?:-(\d+))?/);
       if (match) {
@@ -1051,51 +1051,51 @@ export function verseChange(
 // Atext previous/next functions:
 //
 
-// For multi-column Bibles only. IMPORTANT: If prevState is not provided,
-// the returned state may be of the wrong type and must only be used as a
-// boolean test of whether the requested change is possible or not.
+// For multi-column Bibles only.
 export function pageChange(
   atext: HTMLElement,
-  next: boolean,
-  prevState?: AtextState | XulswordStatePref
+  next: boolean
 ): LocationVKType | null {
-  const ps = prevState as AtextState & XulswordStatePref;
-  const ploc: LocationVKType | null = ps?.pin?.location || ps?.location;
-  const { book, v11n } = {
-    book: ploc?.book || 'Gen',
-    v11n: ploc?.v11n || 'KJV',
-  };
   if (!next) {
     let firstVerse: HTMLElement | undefined;
     Array.from(atext.getElementsByClassName('vs')).forEach((v: any) => {
       if (!firstVerse && verseIsVisible(v)) firstVerse = v;
     });
-    if (!firstVerse) return null;
-    const ei = getElementInfo(firstVerse);
-    if (!ei) return null;
-    return {
-      book,
-      chapter: Number(ei.ch),
-      verse: Number(ei.vs),
-      v11n,
-    };
-  }
-  if (next) {
+    if (firstVerse) {
+      const ei = getElementInfo(firstVerse);
+      if (ei && (Number(ei.ch) !== 1 || ei.vs !== 1)) {
+        return {
+          book: ei.bk || 'Gen',
+          chapter: Number(ei.ch),
+          verse: ei.vs,
+          v11n: (ei.mod && ei.mod in G.Tab && G.Tab[ei.mod].v11n) || 'KJV',
+        };
+      }
+    }
+  } else {
     let lastVerse: HTMLElement | undefined;
     Array.from(atext.getElementsByClassName('vs'))
       .reverse()
       .forEach((v: any) => {
         if (!lastVerse && verseIsVisible(v)) lastVerse = v;
       });
-    if (!lastVerse) return null;
-    const ei = getElementInfo(lastVerse);
-    if (!ei) return null;
-    return {
-      book,
-      chapter: Number(ei.ch),
-      verse: Number(ei.vs),
-      v11n,
-    };
+    if (lastVerse) {
+      const ei = getElementInfo(lastVerse);
+      if (ei) {
+        const v11n = (ei.mod && ei.mod in G.Tab && G.Tab[ei.mod].v11n) || 'KJV';
+        const vk = verseKey({
+          book: ei.bk || 'Gen',
+          chapter: Number(ei.ch),
+          verse: ei.vs,
+          v11n,
+        });
+        if (
+          vk.chapter !== getMaxChapter(v11n, vk.osisRef()) ||
+          vk.verse !== getMaxVerse(v11n, vk.osisRef())
+        )
+          return vk.location();
+      }
+    }
   }
   return null;
 }

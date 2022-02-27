@@ -470,6 +470,7 @@ class Viewport extends React.Component implements PopupParent {
                     }}
                     onMouseOut={(e) => popupParentHandler(e, panel)}
                     onMouseOver={(e) => popupParentHandler(e, panel)}
+                    onMouseMove={(e) => popupParentHandler(e, panel)}
                     ref={atextRefs[i]}
                   />
                 );

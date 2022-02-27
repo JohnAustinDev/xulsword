@@ -411,6 +411,8 @@ export function getContextData(elem: HTMLElement): ContextData {
   else if (atab) panelIndexs = atab.dataset.index;
   const panelIndex = panelIndexs ? Number(panelIndexs) : null;
 
+  const isPinned = Boolean(atext && atext.dataset.ispinned === 'true');
+
   const tab = atab?.dataset.module || null;
 
   const contextModule = getContextModule(elem);
@@ -480,6 +482,7 @@ export function getContextData(elem: HTMLElement): ContextData {
     tab,
     lemma,
     panelIndex,
+    isPinned,
     selection,
     selectionParsedVK: selectedLocationVK,
     search,
