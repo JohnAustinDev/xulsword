@@ -141,8 +141,7 @@ export function getDictEntryHTML(
     Object.entries(C.SwordFilters).forEach((entry) => {
       const sword = entry[0] as SwordFilterType;
       if (C.AlwaysOn[C.DICTIONARY].includes(sword)) {
-        const on = C.SwordFilterValues[1];
-        options[sword] = on;
+        [, options[sword]] = C.SwordFilterValues;
       }
     });
     G.LibSword.setGlobalOptions(options);

@@ -2,7 +2,7 @@
 
 import C from '../../constant';
 import Cache from '../../cache';
-import { deepClone, dString, escapeRE, stringHash } from '../../common';
+import { dString, escapeRE, stringHash } from '../../common';
 import { getElementInfo } from '../../libswordElemInfo';
 import G from '../rg';
 import {
@@ -13,13 +13,12 @@ import {
 } from './zversekey';
 import { getDictEntryHTML } from './zdictionary';
 
-import type { AtextProps, AtextState, LibSwordResponse } from './atext';
+import type { AtextProps, LibSwordResponse } from './atext';
 import type {
   LocationVKType,
   PlaceType,
   SwordFilterType,
   SwordFilterValueType,
-  XulswordStatePref,
 } from '../../type';
 
 export function addUserNotes(content: LibSwordResponse, props: AtextProps) {}
@@ -33,8 +32,7 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
     intronotes: '',
   };
   const { module, ilModule, location, modkey, place, show } = props;
-  if (!module || !location) return r;
-  const { book, chapter } = location;
+  if (!module) return r;
 
   const { type } = G.Tab[module];
   let moduleLocale = G.ModuleConfigs[module].AssociatedLocale;
@@ -53,23 +51,30 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
     options["Strong's Numbers"] = on;
     options['Morphological Tags'] = on;
   }
-  G.LibSword.setGlobalOptions(options);
 
   // Read Libsword according to module type
   switch (type) {
     case C.BIBLE: {
       if (
+        location &&
         module &&
         module in G.BooksInModule &&
-        G.BooksInModule[module].includes(book)
+        G.BooksInModule[module].includes(location.book)
       ) {
+        const { book, chapter } = location;
         if (ilModule) {
           r.textHTML += G.LibSword.getChapterTextMulti(
             `${module},${ilModule}`,
-            `${book}.${chapter}`
+            `${book}.${chapter}`,
+            false,
+            options
           ).replace(/interV2/gm, `cs-${ilModule}`);
         } else {
-          r.textHTML += G.LibSword.getChapterText(module, `${book}.${chapter}`);
+          r.textHTML += G.LibSword.getChapterText(
+            module,
+            `${book}.${chapter}`,
+            options
+          );
           r.notes += G.LibSword.getNotes();
         }
       }
@@ -77,16 +82,23 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
     }
     case C.COMMENTARY: {
       if (
+        location &&
         module &&
         module in G.BooksInModule &&
-        G.BooksInModule[module].includes(book)
+        G.BooksInModule[module].includes(location.book)
       ) {
-        r.textHTML += G.LibSword.getChapterText(module, `${book}.${chapter}`);
+        const { book, chapter } = location;
+        r.textHTML += G.LibSword.getChapterText(
+          module,
+          `${book}.${chapter}`,
+          options
+        );
         r.notes += G.LibSword.getNotes();
       }
       break;
     }
     case C.DICTIONARY: {
+      G.LibSword.setGlobalOptions(options);
       // For dictionaries, noteHTML is a key selector. Cache both
       // the keyList and the key selector for a big speedup.
       // Cache is used rather than memoization when there is a strictly
@@ -214,7 +226,7 @@ export function libswordText(props: AtextProps, n: number): LibSwordResponse {
       break;
     }
     case C.GENBOOK: {
-      r.textHTML += G.LibSword.getGenBookChapterText(module, modkey);
+      r.textHTML += G.LibSword.getGenBookChapterText(module, modkey, options);
       r.noteHTML += G.LibSword.getNotes();
       break;
     }

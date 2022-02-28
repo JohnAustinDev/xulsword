@@ -8,7 +8,11 @@ import nsILocalFile from '../components/nsILocalFile';
 import Dirs from './dirs';
 import Prefs from './prefs';
 
-import type { LibSwordPublic, SwordFilterType } from '../../type';
+import type {
+  LibSwordPublic,
+  SwordFilterType,
+  SwordFilterValueType,
+} from '../../type';
 
 const { libxulsword } = require('libxulsword');
 
@@ -317,7 +321,12 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Will return a chapter of text with footnote markers from module Vkeymod.
   // Vkeymod must be a module having a key type of versekey (Bibles & commentaries),
   // otherwise null is returned.
-  getChapterText(modname, vkeytext) {
+  getChapterText(
+    modname,
+    vkeytext,
+    options?: { [key in SwordFilterType]?: SwordFilterValueType }
+  ) {
+    if (options) this.setGlobalOptions(options);
     if (!this.libSwordReady('getChapterText')) return null;
     const chapterText = libxulsword.GetChapterText(modname, vkeytext);
     this.checkerror();
@@ -326,15 +335,21 @@ DEFINITION OF A 'XULSWORD REFERENCE':
 
   // getChapterTextMulti
   // Will return chapter text in interlinear style.
-  // Footnote markers are NOT included.
+  // Footnote markers are NOT included unless keepnotes is true.
   // Vkeymodlist is formatted as follows: 'UZV,TR,RSTE'. The first module must be a
   //   versekey module or an error is returned. If any successive module is not a
   //   versekey module, it is simply ignored. Verse numbers retured are those of
   //   the first module listed, subsequent modules return the same reference as
   //   that returned by the first, even though it may have come from a different
   //   chapter or verse number than did the first.
-  getChapterTextMulti(modstrlist, vkeytext, keepnotes = false) {
+  getChapterTextMulti(
+    modstrlist,
+    vkeytext,
+    keepnotes = false,
+    options?: { [key in SwordFilterType]?: SwordFilterValueType }
+  ) {
     if (!this.libSwordReady('getChapterTextMulti')) return null;
+    if (options) this.setGlobalOptions(options);
     const chapterTextMulti = libxulsword.GetChapterTextMulti(
       modstrlist,
       vkeytext,
@@ -466,8 +481,13 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // Will return the dictionary entry, or '' if the entry is not found.
   // An exception is thrown if the dictionary itself is not found, or if the
   //   Lexdictmod is not of type StrKey.
-  getDictionaryEntry(lexdictmod, key) {
+  getDictionaryEntry(
+    lexdictmod,
+    key,
+    options?: { [key in SwordFilterType]?: SwordFilterValueType }
+  ) {
     if (!this.libSwordReady('getDictionaryEntry')) return null;
+    if (options) this.setGlobalOptions(options);
     const dictionaryEntry = libxulsword.GetDictionaryEntry(lexdictmod, key);
     this.checkerror();
     return dictionaryEntry;
@@ -486,8 +506,13 @@ DEFINITION OF A 'XULSWORD REFERENCE':
   // getGenBookChapterText
   // Returns chapter text for key Treekey in GenBook module Gbmod.
   // Returns an error if module Gbmod is not a TreeKey mod.
-  getGenBookChapterText(gbmod, treekey) {
+  getGenBookChapterText(
+    gbmod,
+    treekey,
+    options?: { [key in SwordFilterType]?: SwordFilterValueType }
+  ) {
     if (!this.libSwordReady('getGenBookChapterText')) return null;
+    if (options) this.setGlobalOptions(options);
     const genBookChapterText = libxulsword.GetGenBookChapterText(
       gbmod,
       treekey

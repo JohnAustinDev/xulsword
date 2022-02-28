@@ -276,11 +276,14 @@ export const LibSwordPublic = {
   getMaxVerse: func as unknown as (v11n: V11nType, vkeytext: string) => number,
   getChapterText: func as unknown as (
     modname: string,
-    vkeytext: string
+    vkeytext: string,
+    options?: { [key in SwordFilterType]?: SwordFilterValueType }
   ) => string,
   getChapterTextMulti: func as unknown as (
     modstrlist: string,
-    vkeytext: string
+    vkeytext: string,
+    keepnotes?: boolean,
+    options?: { [key in SwordFilterType]?: SwordFilterValueType }
   ) => string,
   getFootnotes: func as unknown as () => string,
   getCrossRefs: func as unknown as () => string,
@@ -305,12 +308,14 @@ export const LibSwordPublic = {
   ) => string,
   getDictionaryEntry: func as unknown as (
     lexdictmod: string,
-    key: string
+    key: string,
+    options?: { [key in SwordFilterType]?: SwordFilterValueType }
   ) => string,
   getAllDictionaryKeys: func as unknown as (lexdictmod: string) => string,
   getGenBookChapterText: func as unknown as (
     gbmod: string,
-    treekey: string
+    treekey: string,
+    options?: { [key in SwordFilterType]?: SwordFilterValueType }
   ) => string,
   getGenBookTableOfContents: func as unknown as (gbmod: string) => string,
   luceneEnabled: func as unknown as (modname: string) => boolean,

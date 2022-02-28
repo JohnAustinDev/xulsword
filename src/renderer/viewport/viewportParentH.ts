@@ -5,7 +5,6 @@ import React from 'react';
 import C from '../../constant';
 import Cache from '../../cache';
 import {
-  copyProps,
   decodeOSISRef,
   deepClone,
   escapeRE,
@@ -63,7 +62,7 @@ export function closeMenupopups(component: React.Component) {
 
 // Set viewportParent state or, if the target panel is pinned, the panel's
 // Atext.pin state will be updated instead. This setState should be called
-// any time an event is to modify a C.PinProps state.
+// any time the event handler modifies a C.PinProps state.
 function setState(
   comp: Xulsword | ViewportWin,
   atext: HTMLElement,
@@ -87,47 +86,48 @@ function setState(
       const newPinProps = func(pinProps);
       if (newPinProps) {
         const s: Partial<XulswordState> = {};
-        Object.keys(C.PinProps).forEach((key) => {
-          switch (key) {
-            case 'location':
-            case 'selection': {
-              s[key] = newPinProps[key];
-              break;
-            }
-            case 'flagScroll': {
-              const mysf = newPinProps.flagScroll;
-              const fs: number[] = prevState.flagScroll.slice();
-              if (mysf !== undefined) {
-                const ats = document.getElementsByClassName(`atext`);
-                Array.from(ats).forEach((at) => {
-                  const a = at as HTMLElement;
-                  const { index: inx, columns: c } = a.dataset;
-                  if (mysf && inx && c) {
-                    fs[Number(inx)] =
-                      c && Number(c) > 1 ? mysf : C.VSCROLL.centerAlways;
-                  }
-                });
+        Object.keys(C.PinProps).forEach((k: string) => {
+          const key = k as keyof typeof C.PinProps;
+          if (key in newPinProps) {
+            switch (key) {
+              case 'location':
+              case 'selection': {
+                s[key] = newPinProps[key];
+                break;
               }
-              s.flagScroll = fs;
-              break;
-            }
-            case 'module':
-            case 'ilModule':
-            case 'modkey': {
-              const map = {
-                module: 'panels',
-                ilModule: 'ilModules',
-                modkey: 'keys',
-              } as const;
-              const ps = deepClone(prevState[map[key]]);
-              if (ps[panelIndex]) {
+              case 'flagScroll': {
+                const mysf = newPinProps.flagScroll;
+                const fs: number[] = prevState.flagScroll.slice();
+                if (mysf !== undefined) {
+                  const ats = document.getElementsByClassName(`atext`);
+                  Array.from(ats).forEach((at) => {
+                    const a = at as HTMLElement;
+                    const { index: inx, columns: c } = a.dataset;
+                    if (mysf && inx && c) {
+                      fs[Number(inx)] =
+                        c && Number(c) > 1 ? mysf : C.VSCROLL.centerAlways;
+                    }
+                  });
+                }
+                s.flagScroll = fs;
+                break;
+              }
+              case 'module':
+              case 'ilModule':
+              case 'modkey': {
+                const map = {
+                  module: 'panels',
+                  ilModule: 'ilModules',
+                  modkey: 'keys',
+                } as const;
+                const ps = deepClone(prevState[map[key]]);
                 ps[panelIndex] = newPinProps[key];
                 s[map[key]] = ps;
+                break;
               }
-              break;
+              default:
+                throw Error(`Unhandled PinProp '${key}'`);
             }
-            default:
-              throw Error(`Unhandled PinProp '${key}'`);
           }
         });
         return Object.keys(s).length ? s : null;
