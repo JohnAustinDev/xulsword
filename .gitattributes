@@ -1,6 +1,38 @@
-*       text    eol=lf
-*.exe   binary
+# Line endings can be a real problem when committing to a git repo from 
+# both Windows and Linux/MacOS operating systems, and there are two
+# separate issues to deal with:
+#
+# NORMALIZATION (having consistent LF line endings in the repository)
+# There are two ways to normalize text file line endings. The first 
+# solution is core.autocrlf, but this requires that each contributer be 
+# responsible for setting it properly and it overrides all eol settings 
+# in this .gitattributes file. The more reliable option is to use a 
+# .gitattributes file containing '*  text=auto' so that text files that 
+# any contributer introduces to the repository will have their line 
+# endings normalized to LF.
+
+# All text files committed to the repository are normalized to LF. Git 
+# recognizes files encoded as ASCII or UTF-8 as text files.
+*  text=auto
+
+# CHECKED OUT FILES (line endings of checked-out files)
+# All text files in this repository have LF line endings, but Windows 
+# users may prefer checked-out files to have CRLF endings. There are two 
+# ways to affect checked-out line endings. First, core.autocrlf=true 
+# causes all checked out text files to have CRLF line endings, but 
+# core.autocrlf overrides this .gitattributes file, meaning .sh files 
+# would also get CRLF line endings for instance. The other option is 
+# .gitattributes with '*.vcproj text eol=crlf', but these effect all 
+# operating systems the same, and thus are only meaningful for operating 
+# system centric text files and are overridden by core.autocrlf anyways 
+# (and are thus unreliable).
+#
+
+# Denote files that are binary and should never be modified.
+*.docx  binary
+*.idx   binary
 *.png   binary
+*.exe   binary
 *.jpg   binary
 *.jpeg  binary
 *.ico   binary
@@ -10,3 +42,12 @@
 *.ttf   binary
 *.woff  binary
 *.woff2 binary
+
+# UPSHOT: 
+# Linux hosts may or may not have (it's redundant due to * text=auto):
+# core.autocrlf=input
+# Windows hosts may have (if CRLF text files are desired in checkout):
+# core.autocrlf=true
+# Otherwise Windows users will have LF line endings in checkout.
+# Either way, check-ins will be normalized to LF because of * text=auto
+
