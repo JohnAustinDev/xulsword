@@ -3,7 +3,7 @@ import fs from 'fs';
 import { jsdump } from './mutil';
 
 // return a font file's fontFamily value
-export default function getFontFamily(fontpath: string) {
+export default function getFontFamily(fontpath) {
   const data = [];
 
   const fd = fs.openSync(fontpath, 'r');
@@ -16,21 +16,21 @@ export default function getFontFamily(fontpath: string) {
       stop = true;
       return null;
     }
-    return r;
+    return r[0];
   };
 
   // decimal to character
-  const chr = (val: number) => {
+  const chr = (val) => {
     return String.fromCharCode(val);
   };
 
   // unsigned short to decimal
-  const ushort = (b1: number, b2: number) => {
+  const ushort = (b1, b2) => {
     return 256 * b1 + b2;
   };
 
   // unsigned long to decimal
-  const ulong = (b1: number, b2: number, b3: number, b4: number) => {
+  const ulong = (b1, b2, b3, b4) => {
     return 16777216 * b1 + 65536 * b2 + 256 * b3 + b4;
   };
 

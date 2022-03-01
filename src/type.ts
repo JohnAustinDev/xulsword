@@ -464,7 +464,7 @@ export interface GType {
   LocaleConfigs: { [i: string]: ConfigType };
   ModuleConfigs: { [i: string]: ConfigType };
   ModuleConfigDefault: ConfigType;
-  FontFaceConfigs: ConfigType[];
+  FontFaceConfigs: { [i: string]: string };
   FeatureModules: FeatureType;
   BooksInModule: { [i: string]: string[] };
   BkChsInV11n: { [key in V11nType]: { [i: string]: number } };

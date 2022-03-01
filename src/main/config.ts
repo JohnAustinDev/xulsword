@@ -13,6 +13,7 @@ import { jsdump } from './mutil';
 // import getFontFamily from './fontfamily';
 
 import type { ConfigType, GType } from '../type';
+import getFontFamily from './fontfamily';
 
 // Config's properties are all the properties which Config type objects will have.
 // The Config property objects map the property for its various uses:
@@ -31,7 +32,6 @@ const Config = {
   AssociatedModules:{ modConf:null, localeConf:"DefaultModule", CSS:null },
   AssociatedLocale: { modConf:"Lang", localeConf:null, CSS:null },
   StyleRule:        { modConf:null, localeConf:null, CSS:null },
-  TreeStyleRule:    { modConf:null, localeConf:null, CSS:null },
   PreferredCSSXHTML:{ modConf:"PreferredCSSXHTML", localeConf:null, CSS:null }
 };
 
@@ -107,11 +107,6 @@ function localeConfig(locale: string) {
 
   // Save the CSS style rules for this locale, which may be appended to CSS stylesheets
   lconfig.StyleRule = createStyleRule(`.cs-${locale}`, lconfig);
-  lconfig.TreeStyleRule = createStyleRule(
-    `treechildren::-moz-tree-cell-text(${locale})`,
-    lconfig
-  );
-
   return lconfig;
 }
 
@@ -131,11 +126,6 @@ export function getLocaleConfigs(): { [i: string]: ConfigType } {
 export function getProgramConfig() {
   const ret = deepClone(localeConfig(i18next.language));
   ret.StyleRule = createStyleRule('.cs-Program', ret);
-  ret.TreeStyleRule = createStyleRule(
-    'treechildren::-moz-tree-cell-text(Program)',
-    ret
-  );
-
   return ret;
 }
 
@@ -150,8 +140,12 @@ function fontURL(mod: string) {
     : null;
 }
 
-// Read fonts which are in xulsword's xsFonts directory
-export function getFontFaceConfigs(): ConfigType {
+// Read fonts which are in xulsword's xsFonts directory.
+// The pref 'global.fonts' is used to cache costly font data.
+// If 'font' is in the pref-value, it is used, otherwise it is added
+// to the pref-value. IMPORTANT: If a font is ever updated or removed,
+// the global.fonts pref MUST be reset or updated.
+export function getFontFaceConfigs(): { [i: string]: string } {
   if (!Cache.has('fontFaceConfigs')) {
     if (!LibSword.libSwordReady('getFontFaceConfigs')) {
       throw Error(
@@ -159,27 +153,49 @@ export function getFontFaceConfigs(): ConfigType {
       );
     }
 
-    const ret = {} as ConfigType;
+    const ret = {} as { [i: string]: string };
+    let fonts = Prefs.getComplexValue('global.fonts') as {
+      [i: string]: string;
+    };
     const fontdir = Dirs.xsFonts.directoryEntries;
-    const fonts: string[] = [];
-    fontdir?.forEach((dir) => {
-      const font = new nsILocalFile(path.join(Dirs.path.xsFonts, dir));
-      if (!font.isDirectory()) fonts.push(font.path);
-    });
-
-    for (let i = 0; i < fonts.length; i += 1) {
-      const fontFamily = null; // getFontFamily(fonts[i]);
-      if (fontFamily) {
-        ret[fontFamily] = `file://${fonts[i]}`;
-        if (process.platform === 'win32')
-          ret[fontFamily] = ret[fontFamily].replace(/\\/g, '/');
+    let reread = false;
+    fontdir?.forEach((file) => {
+      if (!Object.keys(fonts).includes(file)) {
+        reread = true;
       }
+    });
+    if (reread) {
+      fonts = {};
+      fontdir?.forEach((file) => {
+        const font = new nsILocalFile(path.join(Dirs.path.xsFonts, file));
+        if (!font.isDirectory()) {
+          const fontFamily = getFontFamily(font.path);
+          if (fontFamily) fonts[file] = fontFamily;
+          else fonts[file] = 'unknown';
+        } else fonts[file] = 'dir';
+      });
+      Prefs.setComplexValue('global.fonts', fonts);
     }
+    Object.entries(fonts).forEach((entry) => {
+      const [file, fontFamily] = entry;
+      ret[fontFamily] = `file://${file}`;
+    });
 
     // if fontFamily specifies a font URL, rather than a fontFamily, then create a
     // @font-face CSS entry and use it for this module.
     const mods = LibSword.getModuleList();
-    if (mods && mods !== C.NOMODULES) {
+    const disable =
+      !Prefs.getPrefOrCreate(
+        'global.HaveInternetPermission',
+        'boolean',
+        false
+      ) &&
+      !Prefs.getPrefOrCreate(
+        'global.SessionHasInternetPermission',
+        'boolean',
+        false
+      );
+    if (!disable && mods && mods !== C.NOMODULES) {
       const modulelist = mods.split(C.CONFSEP);
       const modules = modulelist.map((m: string) => m.split(';')[0]);
       modules.forEach((m) => {
@@ -307,12 +323,6 @@ function getModuleConfig(mod: string) {
 
   // Save the CSS style rules for this module, which can be appended to CSS stylesheets
   moduleConfig.StyleRule = createStyleRule(`.cs-${mod}`, moduleConfig);
-  // "m" is prepended to mod because some module names begin with a digit,
-  // which would otherwise result in an invalid selector
-  moduleConfig.TreeStyleRule = createStyleRule(
-    `treechildren::-moz-tree-cell-text(m${mod})`,
-    moduleConfig
-  );
 
   return moduleConfig;
 }

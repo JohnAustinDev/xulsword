@@ -6,6 +6,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import rendererBackend from 'i18next-electron-fs-backend';
 import C from '../constant';
+import { getCSS } from '../common';
 import Cache from '../cache';
 import G from './rg';
 import { jsdump } from './rutil';
@@ -38,10 +39,53 @@ i18n.on('initialized', (options) => {
     html.dir = dir;
     return true;
   }
+  function getStyleSheetHREF(sheet: CSSStyleSheet): string {
+    if (sheet.ownerNode) {
+      const name = sheet.ownerNode.nodeName;
+      if (name === 'LINK') {
+        const owner = sheet.ownerNode as HTMLLinkElement;
+        return owner.href;
+      }
+      if (name === 'xml-stylesheet') {
+        const { textContent } = sheet.ownerNode;
+        if (textContent) {
+          const m = textContent.match(/href\s*=\s*["']([^"']*)["']/);
+          return m ? m[1] : '';
+        }
+      }
+    }
+    return '';
+  }
   i18n.on('languageChanged', (lng) => {
     G.reset();
     return setHTMLClass(className, lng);
   });
+
+  // Append locale, module and font CSS rules to a dynamic stylesheet
+  const style = document.createElement('style');
+  document.head.appendChild(style);
+  const { sheet } = style;
+  if (sheet) {
+    const configs = Object.values(G.LocaleConfigs)
+      .concat(Object.values(G.ModuleConfigs))
+      .concat(G.ModuleConfigDefault)
+      .concat(G.ProgramConfig);
+    ['StyleRule'].forEach((configProp) => {
+      configs.forEach((config) => {
+        const ex = getCSS(config[configProp].replace(/\s*\{.*$/, ''), sheet);
+        if (ex) sheet.deleteRule(ex.index);
+        sheet.insertRule(config[configProp], sheet.cssRules.length);
+      });
+    });
+    Object.entries(G.FontFaceConfigs).forEach((entry) => {
+      const [name, src] = entry;
+      const rule = `@font-face {font-family:'${name}'; src:url("'${src}'");}`;
+      const ex = getCSS(rule.replace(/src:.*$/, ''), sheet);
+      if (ex) sheet.deleteRule(ex.index);
+      sheet.insertRule(rule, sheet.cssRules.length);
+    });
+    console.log(sheet);
+  }
   return setHTMLClass(className, options.lng);
 });
 

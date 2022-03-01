@@ -268,36 +268,22 @@ export function cleanDoubleClickSelection(sel: string) {
 }
 
 // This function returns the FIRST rule matching the selector from the
-// given style sheet, or the first of all style sheets if sheet not specified.
+// given style sheet, or the first of any style sheet if sheet is not
+// specified.
 export function getCSS(
   selectorStr: string,
-  sheetIndex?: number
-): { rule: CSSRule; sheet: number; index: number } | null {
+  aSheet?: CSSStyleSheet
+): { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null {
   const selector = new RegExp(`^${escapeRE(selectorStr)}`);
-
-  let ss1 = 0;
-  let ss2 = document.styleSheets.length - 1;
-  if (sheetIndex !== undefined && (sheetIndex < ss1 || sheetIndex > ss2)) {
-    return null;
-  }
-  if (sheetIndex != null) {
-    ss1 = sheetIndex;
-    ss2 = sheetIndex;
-  }
-
-  let myRule = null;
-  let zend;
-  for (let ssn = ss1; ssn <= ss2; ssn += 1) {
-    try {
-      zend = document.styleSheets[ssn].cssRules.length;
-    } catch (er) {
-      zend = 0;
-    }
-    for (let z = 0; z < zend; z += 1) {
-      myRule = document.styleSheets[ssn].cssRules[z];
-      if (myRule.cssText.search(selector) !== -1)
-        return { rule: myRule, sheet: ssn, index: z };
-    }
-  }
-  return null;
+  const sheets = aSheet ? [aSheet] : Array.from(document.styleSheets);
+  let result: { sheet: CSSStyleSheet; rule: CSSRule; index: number } | null =
+    null;
+  sheets.forEach((sheet) => {
+    Array.from(sheet.cssRules).forEach((rule, index) => {
+      if (!result && selector.test(rule.cssText)) {
+        result = { sheet, rule, index };
+      }
+    });
+  });
+  return result;
 }

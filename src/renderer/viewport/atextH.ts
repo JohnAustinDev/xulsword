@@ -11,7 +11,11 @@ import { aTextWheelScroll } from './zversekey';
 import type Atext from './atext';
 import type { AtextProps, AtextState } from './atext';
 
-let MatchingStrongs: { rule: CSSRule; sheet: number; index: number } | null;
+let MatchingStrongs: {
+  sheet: CSSStyleSheet;
+  rule: CSSRule;
+  index: number;
+} | null;
 let AddedRules: { sheet: CSSStyleSheet; index: number }[] = [];
 
 function scroll2Note(atext: HTMLElement, id: string) {
