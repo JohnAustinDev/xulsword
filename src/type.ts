@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+import type { BrowserWindow } from 'electron';
+
 declare global {
   interface Window {
     api: any;
@@ -384,7 +386,10 @@ export const CommandsPublic = {
   paste: func as unknown as (...args: any) => boolean,
   search: func as unknown as (search: SearchType) => void,
   copyPassage: func as unknown as () => void,
-  openFontsColors: func as unknown as (module?: string) => void,
+  openFontsColors: func as unknown as (
+    module?: string | null,
+    window?: BrowserWindow | null
+  ) => void,
   openBookmarksManager: func as unknown as () => void,
   openNewDbItemDialog: func as unknown as (
     userNote: boolean,

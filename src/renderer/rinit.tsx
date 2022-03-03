@@ -6,6 +6,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import rendererBackend from 'i18next-electron-fs-backend';
 import C from '../constant';
+import { JSON_parse } from '../common';
 import Cache from '../cache';
 import G from './rg';
 import DynamicStyleSheet from './style';
@@ -18,24 +19,12 @@ window.ipc.renderer.on('cache-reset', () => Cache.clear);
 
 // Set window type and language classes of the root html element.
 i18n.on('initialized', (options) => {
-  let className = 'unknown';
-  const path = window?.location?.pathname;
-  if (path) {
-    const dirs = path.split('/');
-    if (dirs.length) {
-      const file = dirs.pop();
-      if (file) {
-        const parts = file.split('.');
-        if (parts.length) [className] = parts;
-      }
-    }
-  }
-  function setHTMLClass(winclass: string, lng?: string) {
+  const arg = JSON_parse(window.shell.process.argv().at(-1));
+  const classes = arg?.classes || ['unknown'];
+  function setHTMLClass(classarray: string[]) {
     const html = document?.getElementsByTagName('html')[0];
     if (!html) return false;
-    const classes = [winclass];
-    if (lng) classes.push(lng);
-    html.className = classes.join(' ');
+    html.className = classarray.join(' ');
     const dir = i18n.t('locale_direction');
     html.classList.add(`chromedir-${dir}`);
     html.dir = dir;
@@ -44,11 +33,11 @@ i18n.on('initialized', (options) => {
   i18n.on('languageChanged', (lng) => {
     G.reset();
     DynamicStyleSheet.update();
-    return setHTMLClass(className, lng);
+    return setHTMLClass(classes.concat(lng));
   });
 
   DynamicStyleSheet.update();
-  return setHTMLClass(className, options.lng);
+  return setHTMLClass(classes.concat(options.lng));
 });
 
 async function i18nInit(namespaces: string[]) {

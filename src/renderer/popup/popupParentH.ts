@@ -256,7 +256,6 @@ export function popupHandler(this: PopupParent, es: React.SyntheticEvent) {
               title: 'popup',
               webPreferences: {
                 additionalArguments: [
-                  'popupWin',
                   JSON_stringify({
                     popupState: {
                       elemhtml,

@@ -175,9 +175,7 @@ export const xulStyle = (props: any): React.CSSProperties | undefined => {
 
   // flex
   if (props.flex !== undefined) {
-    s.flexGrow = props.flex.includes('%')
-      ? parseFloat(props.flex) / 100.0
-      : props.flex;
+    s.flexGrow = props.flex.replace(/\D/, '');
     s.flexShrink = s.flexGrow;
   }
 

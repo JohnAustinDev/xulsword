@@ -3,6 +3,7 @@
 import path from 'path';
 import fs from 'fs';
 import { BrowserWindow, ipcMain } from 'electron';
+import { JSON_parse, JSON_stringify } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 
@@ -23,8 +24,14 @@ if (process.env.NODE_ENV === 'development') {
   };
 }
 
-function windowOptions(type: string, options: any) {
-  // All windows share these options
+// All Windows are created with BrowserWindow.show = false.
+// This means that the window will be shown after either:
+// - (if params.show === true) Electron's 'ready-to-show' event.
+// - (if params.show === false) The window's custom 'did-finish-render' event.
+// IMPORTANT: If params.show is false, the 'did-finish-render' event must
+// be explicitly called from the window or it will never be shown.
+function windowOptions(name: string, type: string, options: any) {
+  // All windows must have these same options.
   options.show = false;
   options.icon = path.join(Dirs.path.xsAsset, 'icon.png');
   if (!options.webPreferences) options.webPreferences = {};
@@ -32,9 +39,35 @@ function windowOptions(type: string, options: any) {
   options.webPreferences.contextIsolation = true;
   options.webPreferences.nodeIntegration = false;
   options.webPreferences.enableRemoteModule = false;
-  if (!Array.isArray(options.webPreferences.additionalArguments))
-    options.webPreferences.additionalArguments = [type];
   options.webPreferences.webSecurity = true;
+  if (!Array.isArray(options.webPreferences.additionalArguments))
+    options.webPreferences.additionalArguments = ['{}'];
+  if (typeof options.webPreferences.additionalArguments[0] !== 'string')
+    throw Error(
+      `Window additionalArguments must be a JSON_stringify { key: value } string.`
+    );
+  const args = JSON_parse(options.webPreferences.additionalArguments[0]);
+  args.classes =
+    'classes' in args && Array.isArray(args.classes)
+      ? args.classes.concat([name, type])
+      : [name, type];
+  options.webPreferences.additionalArguments[0] = JSON_stringify(args);
+  // Dialog windows have these defaults (while regular windows just
+  // have Electron defaults).
+  if (type === 'dialog') {
+    Object.entries({
+      enablePreferredSizeMode: true,
+      resizable: false,
+      fullscreenable: false,
+      skipTaskbar: true,
+    }).forEach((entry) => {
+      const [pro, val] = entry;
+      if (!(pro in options)) {
+        options[pro] = val;
+      }
+    });
+  }
+  // console.log(options);
 }
 
 function windowInitI18n(win: BrowserWindow) {
@@ -81,14 +114,16 @@ function windowBounds(winx?: BrowserWindow) {
   };
 }
 
+// Dialog windows are not saved in user prefs and also get different
+// default options from windowOptions() than regular windows.
 export function openDialog(
-  type: string,
+  name: string,
   options: Electron.BrowserWindowConstructorOptions
 ): number {
   const { show } = options;
-  windowOptions(type, options);
+  windowOptions(name, 'dialog', options);
   const win = new BrowserWindow(options);
-  win.loadURL(resolveHtmlPath(`${type}.html`));
+  win.loadURL(resolveHtmlPath(`${name}.html`));
   win.removeMenu();
   if (show) {
     win.once('ready-to-show', () => {
@@ -105,19 +140,19 @@ export function openDialog(
 }
 
 export function openWindow(
-  type: string,
+  name: string,
   options: Electron.BrowserWindowConstructorOptions
 ): number {
   const { show } = options;
-  windowOptions(type, options);
+  windowOptions(name, 'window', options);
   // Set bounds for viewport and popup type windows
-  if (type === 'viewportWin' || type === 'popupWin') {
+  if (name === 'viewportWin' || name === 'popupWin') {
     let adj = {
       h: 50,
       t: 35,
       w: 30,
     };
-    if (type === 'popupWin') {
+    if (name === 'popupWin') {
       adj = {
         h: 0,
         t: 26,
@@ -136,22 +171,15 @@ export function openWindow(
     if (ops?.openWithBounds) delete ops.openWithBounds;
   }
   const win = new BrowserWindow(options);
-  win.loadURL(resolveHtmlPath(`${type}.html`));
-  Prefs.setComplexValue(`Windows.w${win.id}`, { type, options });
+  win.loadURL(resolveHtmlPath(`${name}.html`));
+  // win.webContents.openDevTools();
+  Prefs.setComplexValue(`Windows.w${win.id}`, { type: name, options });
   windowInitI18n(win);
-  if (type === 'viewportWin' || type === 'popupWin') win.removeMenu();
-  // All Windows are created with BrowserWindow.show = false.
-  // This means that the window will be shown after either:
-  // - (if params.show === true) Electron's 'ready-to-show' event.
-  // - (if params.show === false) The window's custom 'did-finish-render' event.
-  // IMPORTANT: If params.show is false, the 'did-finish-render' event must
-  // be explicitly called from the window or it will never be shown.
+  if (name === 'viewportWin' || name === 'popupWin') win.removeMenu();
   if (show) {
     win.once('ready-to-show', () => {
       win.show();
       win.focus();
-      if (process.env.NODE_ENV === 'development')
-        win.webContents.openDevTools();
     });
   }
   win.on('resize', () => {

@@ -518,7 +518,7 @@ export default class MenuBuilder {
             {
               label: this.ts('fontsAndColors.label'),
               click: () => {
-                Commands.openFontsColors();
+                Commands.openFontsColors(null, this.mainWindow);
               },
             },
           ],

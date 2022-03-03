@@ -252,7 +252,6 @@ export default function handler(
               title: 'viewport',
               webPreferences: {
                 additionalArguments: [
-                  'viewportWin',
                   JSON_stringify({
                     xulswordState,
                     ...atextStates,

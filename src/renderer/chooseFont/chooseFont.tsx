@@ -32,7 +32,7 @@ const propTypes = {
 type ChooseFontWinProps = XulProps;
 
 type ChooseFontWinState = {
-  module: string;
+  module: string | null;
   restoreDefault: boolean;
   fontSize: string;
   lineHeight: string;
@@ -98,9 +98,9 @@ export default class ChooseFontWin extends React.Component {
         <Groupbox caption={i18n.t('fontsAndColors.label')}>
           <Grid id="fontsGrid">
             <Columns>
+              <Column width="min-content" />
               <Column />
-              <Column />
-              <Column />
+              <Column width="min-content" />
               <Column />
             </Columns>
             <Rows>
@@ -110,7 +110,7 @@ export default class ChooseFontWin extends React.Component {
                   value={`${i18n.t('chooseModule.label')}:`}
                 />
                 <Hbox pack="start" align="baseline">
-                  <Menulist id="chooseMod" value={module}>
+                  <Menulist id="chooseMod" value={module || undefined}>
                     {Object.keys(C.SupportedModuleTypes).map((typ) => {
                       const type = typ as ModTypes;
                       return (

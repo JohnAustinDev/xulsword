@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-rest-params */
+import { BrowserWindow } from 'electron';
+import i18n from 'i18next';
 import C from '../constant';
 import { JSON_stringify } from '../common';
 import { verseKey, getTab, setGlobalStateFromPref, getTabs } from './minit';
 import Prefs from './modules/prefs';
-import { openWindow } from './window';
+import { openDialog } from './window';
 
 import type {
   CommandsPublic,
@@ -13,7 +15,13 @@ import type {
   XulswordStatePref,
 } from '../type';
 
-const Commands: typeof CommandsPublic = {
+type CommandsPrivate = {
+  browserWindow: BrowserWindow | null;
+};
+
+const Commands: typeof CommandsPublic & CommandsPrivate = {
+  browserWindow: null,
+
   addRepositoryModule() {
     console.log(`Action not implemented: addRepositoryModule`);
   },
@@ -87,12 +95,14 @@ const Commands: typeof CommandsPublic = {
     console.log(`Action not implemented: copyPassage`);
   },
 
-  openFontsColors(module) {
+  openFontsColors(module, window) {
     const options = {
-      title: 'chooseFont',
+      title: i18n.t('fontsAndColors.label'),
+      parent: window || this.browserWindow || undefined,
+      width: 650,
+      height: 300,
       webPreferences: {
         additionalArguments: [
-          'chooseFontWin',
           JSON_stringify({
             chooseFontState: {
               module,
@@ -101,7 +111,7 @@ const Commands: typeof CommandsPublic = {
         ],
       },
     };
-    openWindow('chooseFont', options);
+    openDialog('chooseFont', options);
   },
 
   openBookmarksManager() {

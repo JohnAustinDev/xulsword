@@ -72,6 +72,7 @@ ipcMain.on('global', (event: IpcMainEvent, name: string, ...args: any[]) => {
       if (gPublic[name][m] === 'readonly') {
         ret = g[name][m];
       } else if (typeof gPublic[name][m] === 'function') {
+        if ('browserWindow' in g[name]) g[name].browserWindow = win;
         ret = g[name][m](...args);
       } else {
         throw Error(`Unhandled method type for ${name}.${m}`);
