@@ -156,7 +156,7 @@ export type BookType = {
 };
 
 export type ConfigType = {
-  [index: string]: string;
+  [index: string]: string | null;
 };
 
 export type FeatureType = {
@@ -191,13 +191,13 @@ export type TabType = {
   dir: string;
   v11n: V11nType | '';
   label: string;
+  labelClass: string;
   tabType: TabTypes;
   isCommDir: boolean;
   isVerseKey: boolean;
   isRTL: boolean;
   index: number;
   description: string;
-  locName: string;
   conf: string;
   audio: { [index: string]: string };
   audioCode: string;
@@ -436,6 +436,7 @@ export const GPublic = {
   BooksInModule: 'readonly',
   BkChsInV11n: 'readonly',
   OPSYS: 'readonly',
+  SystemFonts: 'readonly',
 
   // Global functions
   resolveHtmlPath: func as unknown,
@@ -469,6 +470,7 @@ export interface GType {
   BooksInModule: { [i: string]: string[] };
   BkChsInV11n: { [key in V11nType]: { [i: string]: number } };
   OPSYS: 'string';
+  SystemFonts: string[];
 
   resolveHtmlPath: (htmlfile: string) => string;
   inlineFile: (path: string, encoding: 'base64' | 'utf8') => string;

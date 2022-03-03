@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import React from 'react';
 import i18n from 'i18next';
 import renderToRoot from '../rinit';
@@ -19,4 +18,5 @@ renderToRoot(
         </Hbox>
       </Vbox>
     </Stack>
-  </Vbox>);
+  </Vbox>
+);

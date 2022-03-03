@@ -35,7 +35,6 @@ import Textbox from '../libxul/textbox';
 import Viewport from '../viewport/viewport';
 import viewportParentH, { closeMenupopups } from '../viewport/viewportParentH';
 import handlerH from './xulswordH';
-import '../global-htm.css';
 import './xulsword.css';
 
 import type { HistoryVKType, XulswordStatePref } from '../../type';

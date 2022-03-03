@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# This script installs dependencies and builds the libxulsword 
+# This script installs dependencies and builds the libxulsword
 # dynamic library and libxulsword native node-module.
 
 if [[ $EUID -eq 0 ]]; then
-   echo "This script should not be run as root. Exiting..." 
+   echo "This script should not be run as root. Exiting..."
    exit 1
 fi
 
@@ -50,7 +50,7 @@ if [ "$CONTEXT" = "xsguest" ]; then
 fi
 
 
-# Install node.js using nvm so our dev environment can use the latest  
+# Install node.js using nvm so our dev environment can use the latest
 # LTS version of node.js. Then install yarn and dependant node modules.
 cd "$XULSWORD/xulsword"
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
@@ -97,8 +97,8 @@ if [ ! -e "$XULSWORD/Cpp/clucene" ]; then
     patch < $XULSWORD/Cpp/patch/patch-src-shared-CLucene-config-repl_tchar.h.diff
     popd
   fi
-  
-  # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump. 
+
+  # Stop this dumb clucene error for searches beginning with a wildcard, which results in a core dump.
   sed -i 's/!allowLeadingWildcard/!true/g' "$XULSWORD/Cpp/clucene/src/core/CLucene/queryParser/QueryParser.cpp"
 
   mkdir ./clucene/build
@@ -115,12 +115,12 @@ if [ ! -e "$XULSWORD/Cpp/sword" ]; then
   cd "$XULSWORD/Cpp"
   svn checkout -r $swordRev http://crosswire.org/svn/sword/trunk sword
   mkdir ./sword/build
-  
+
   # The sword CMakeLists.txt expects this header to be here, so add it
   cd "$XULSWORD/Cpp/install/usr/local/lib"
   mkdir CLucene
   cp "$XULSWORD/Cpp/clucene/build/src/shared/CLucene/clucene-config.h" ./CLucene/clucene-config.h
-  
+
   cd "$XULSWORD/Cpp/sword/build"
   cmake -G "Unix Makefiles" -D SWORD_NO_ICU="No" -D CLUCENE_LIBRARY_DIR="$XULSWORD/Cpp/install/usr/local/lib" -D CLUCENE_LIBRARY="$XULSWORD/Cpp/install/usr/local/lib/libclucene-core.$LIB_EXT" -D CMAKE_INCLUDE_PATH="$XULSWORD/Cpp/install/usr/local/include" -D CMAKE_LIBRARY_PATH="$XULSWORD/Cpp/install/usr/local/lib" ..
   make DESTDIR="$XULSWORD/Cpp/install" install

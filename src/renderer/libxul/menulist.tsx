@@ -50,6 +50,7 @@ function Menulist(props: MenulistProps) {
         onChange={props.onChange}
       >
         {props.options}
+        {props.children}
       </select>
     </Box>
   );

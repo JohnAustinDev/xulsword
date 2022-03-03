@@ -28,6 +28,7 @@ import {
   getBkChsInV11n,
   setGlobalMenuFromPref,
   globalReset,
+  getSystemFonts,
 } from './minit';
 
 import type { GType } from '../type';
@@ -53,6 +54,7 @@ const G: Pick<GType, 'reset' | 'cache'> & GPrivateMain = {
     FeatureModules: () => getFeatureModules(),
     BooksInModule: () => getBooksInModule(),
     BkChsInV11n: () => getBkChsInV11n(),
+    SystemFonts: () => getSystemFonts(),
 
     OPSYS: () => process.platform,
 

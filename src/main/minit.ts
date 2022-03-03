@@ -16,7 +16,6 @@ import LibSword from './modules/libsword';
 import Cache from '../cache';
 import nsILocalFile from './components/nsILocalFile';
 import { jsdump } from './mutil';
-import { getLocaleConfigs } from './config';
 
 import type {
   TabType,
@@ -28,6 +27,18 @@ import type {
   LocationVKType,
   XulswordStatePref,
 } from '../type';
+
+const fontList = require('font-list');
+
+setTimeout(() => {
+  fontList
+    .getFonts()
+    .then((fonts: string[]) => {
+      Cache.write(fonts, 'fontList');
+      return true;
+    })
+    .catch((err: any) => console.log(err));
+}, 2000);
 
 // These exported GPublic functions are called by the runtime
 // auto-generated G object.
@@ -186,6 +197,7 @@ export function getTabs(): TabType[] {
         v11n: isVerseKey ? LibSword.getVerseSystem(module) : '',
         dir,
         label,
+        labelClass: `cs-${isASCII(label) ? 'LTR_DEFAULT' : module}`,
         tabType,
         isVerseKey,
         isRTL: /^rt.?l$/i.test(
@@ -193,7 +205,6 @@ export function getTabs(): TabType[] {
         ),
         index: i,
         description: LibSword.getModuleInformation(module, 'Description'),
-        locName: isASCII(label) ? 'LTR_DEFAULT' : module,
         conf,
         isCommDir,
         audio: {}, // will be filled in later
@@ -399,6 +410,11 @@ export function verseKey(
     versekey,
     v11n
   );
+}
+
+export function getSystemFonts() {
+  // System fonts are read asynchronously 2 seconds after startup
+  return Cache.has('fontList') ? Cache.read('fontList') : [];
 }
 
 export function setMenuFromPrefs(menu: Electron.Menu) {

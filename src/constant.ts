@@ -25,6 +25,27 @@ const C = {
   NOMODULES: 'No Modules',
   CONFSEP: '<nx>',
 
+  // These are all the properties which Config type objects will have.
+  // The Config object specifies keys into the following data sources:
+  //   modConf = a module config file entry
+  //   localeConf = a locale config.json entry
+  // It also specifies any corresponding CSS property if there is one.
+/* eslint-disable prettier/prettier */
+  Config: {
+    direction:        { modConf:"Direction",         localeConf:"Direction",      CSS:"direction" },
+    fontFamily:       { modConf:"Font",              localeConf:"Font",           CSS:"font-family" },
+    fontSizeAdjust:   { modConf:"FontSizeAdjust",    localeConf:"FontSizeAdjust", CSS:"font-size-adjust" },
+    lineHeight:       { modConf:"LineHeight",        localeConf:"LineHeight",     CSS:"line-height" },
+    fontSize:         { modConf:"FontSize",          localeConf:"FontSize",       CSS:"font-size" },
+    color:            { modConf:"FontColor",         localeConf:"FontColor",      CSS:"color" },
+    background:       { modConf:"FontBackground",    localeConf:"FontBackground", CSS:"background" },
+    AssociatedModules:{ modConf:null,                localeConf:"DefaultModule",  CSS:null },
+    AssociatedLocale: { modConf:"Lang",              localeConf:null,             CSS:null },
+    StyleRule:        { modConf:null,                localeConf:null,             CSS:null },
+    PreferredCSSXHTML:{ modConf:"PreferredCSSXHTML", localeConf:null,             CSS:null }
+  },
+  /* eslint-enable prettier/prettier */
+
   FallbackLanguage: {
     en: 'en',
     ru: 'en',

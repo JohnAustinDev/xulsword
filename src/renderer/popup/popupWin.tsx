@@ -19,9 +19,6 @@ import {
   PopupParentProps,
 } from './popupParentH';
 import Popup from './popup';
-import '../global-htm.css';
-import '../libxul/xul.css';
-import '../viewport/atext.css';
 
 const defaultProps = {
   ...xulDefaultProps,

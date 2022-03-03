@@ -3,7 +3,7 @@
 import path from 'path';
 import i18next from 'i18next';
 import C from '../constant';
-import { deepClone } from '../common';
+import { createStyleRule, deepClone } from '../common';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 import Cache from '../cache';
@@ -15,97 +15,33 @@ import { jsdump } from './mutil';
 import type { ConfigType, GType } from '../type';
 import getFontFamily from './fontfamily';
 
-// Config's properties are all the properties which Config type objects will have.
-// The Config property objects map the property for its various uses:
-//   - modConf = Name of a possible entry in a module's .conf file
-//   - localeConf = Name of a possible property in a locale's config.properties file
-//   - CSS = Name of a possible corresponding CSS property (should also be specified in cs-Program style)
-/* eslint-disable prettier/prettier */
-const Config = {
-  direction:        { modConf:"Direction", localeConf:"Direction", CSS:"direction" },
-  fontFamily:       { modConf:"Font", localeConf:"Font", CSS:"font-family" },
-  fontSizeAdjust:   { modConf:"FontSizeAdjust", localeConf:"FontSizeAdjust", CSS:"font-size-adjust" },
-  lineHeight:       { modConf:"LineHeight", localeConf:"LineHeight", CSS:"line-height" },
-  fontSize:         { modConf:"FontSize", localeConf:"FontSize", CSS:"font-size" },
-  color:            { modConf:"FontColor", localeConf:"FontColor", CSS:"color" },
-  background:       { modConf:"FontBackground", localeConf:"FontBackground", CSS:"background" },
-  AssociatedModules:{ modConf:null, localeConf:"DefaultModule", CSS:null },
-  AssociatedLocale: { modConf:"Lang", localeConf:null, CSS:null },
-  StyleRule:        { modConf:null, localeConf:null, CSS:null },
-  PreferredCSSXHTML:{ modConf:"PreferredCSSXHTML", localeConf:null, CSS:null }
-};
-
-const LocaleConfigDefaultCSS: ConfigType = {
-  fontFamily: "'Arial'",
-  direction: 'ltr',
-  fontSizeAdjust: 'none',
-  lineHeight: 'unspecified',
-  fontSize: 'unspecified',
-  color: 'unspecified',
-  background: 'unspecified',
-};
-
-function getModuleConfigDefaultCSS(): ConfigType {
-  return {
-    fontFamily: Prefs.getPrefOrCreate('user.fontFamily.default', 'string', "'Arial'"),
-    direction: Prefs.getPrefOrCreate('user.direction.default', 'string', 'ltr'),
-    fontSizeAdjust: Prefs.getPrefOrCreate('user.fontSizeAdjust.default', 'string', 'none'),
-    lineHeight: Prefs.getPrefOrCreate('user.lineHeight.default', 'string', '1.6em'),
-    fontSize: Prefs.getPrefOrCreate('user.fontSize.default', 'string', '1em'),
-    color: Prefs.getPrefOrCreate('user.color.default', 'string', '#202020'),
-    background: Prefs.getPrefOrCreate('user.background.default', 'string', 'unspecified'),
-  };
-}
-/* eslint-enable prettier/prettier */
-
-function createStyleRule(selector: string, config: ConfigType) {
-  let rule = `${selector} {`;
-  const entries = Object.entries(Config);
-  entries.forEach((entry) => {
-    const [key, val]: [string, { [i: string]: string | null }] = entry;
-    if (!val.CSS || config[key] === 'unspecified') return;
-    rule += `${val.CSS}: ${config[key]}; `;
-  });
-  rule += '}';
-
-  return rule;
-}
-
 function localeConfig(locale: string) {
   const lconfig = {} as ConfigType;
   const toptions = { lng: locale, ns: 'common/config' };
 
-  // All config properties should have a valid value, and it must not be null.
-  // Read values from locale's config.properties file
-  const entries = Object.entries(Config);
-  entries.forEach((entry) => {
+  // All config properties should be present, having a valid value or null.
+  // Read any values from locale's config.json file.
+  Object.entries(C.Config).forEach((entry) => {
     const [key, val]: [string, { [i: string]: string | null }] = entry;
-    if (typeof val.localeConf !== 'string') return;
-
-    const k = key as keyof typeof LocaleConfigDefaultCSS;
-    const def =
-      typeof LocaleConfigDefaultCSS[k] === 'string'
-        ? LocaleConfigDefaultCSS[k]
-        : null;
-
-    let r = i18next.t(val.localeConf, toptions);
-    if (/^\s*$/.test(r)) r = C.NOTFOUND;
-
-    if (r === C.NOTFOUND && val.CSS && def) {
-      r = def;
+    let r = val.localeConf;
+    if (val.localeConf !== null) {
+      r = i18next.exists(val.localeConf, toptions)
+        ? i18next.t(val.localeConf, toptions)
+        : '';
     }
-
     lconfig[key] = r;
   });
 
   lconfig.AssociatedLocale = locale;
 
   // Insure there are single quotes around font names
-  lconfig.fontFamily = lconfig.fontFamily.replace(/"/g, "'");
-  if (lconfig.fontFamily !== C.NOTFOUND && !/'.*'/.test(lconfig.fontFamily))
-    lconfig.fontFamily = `'${lconfig.fontFamily}'`;
+  if (lconfig.fontFamily) {
+    lconfig.fontFamily = lconfig.fontFamily.replace(/"/g, "'");
+    if (!/'.*'/.test(lconfig.fontFamily))
+      lconfig.fontFamily = `'${lconfig.fontFamily}'`;
+  }
 
-  // Save the CSS style rules for this locale, which may be appended to CSS stylesheets
+  // Make the CSS style rules for this locale, which may be appended to CSS stylesheets
   lconfig.StyleRule = createStyleRule(`.cs-${locale}`, lconfig);
   return lconfig;
 }
@@ -261,52 +197,34 @@ function getModuleConfig(mod: string) {
   }
   const moduleConfig: ConfigType = {};
 
-  const moduleConfigDefaultCSS = getModuleConfigDefaultCSS();
-
-  // All config members should have a valid value, and it must not be null.
+  // All config properties should be present, having a valid value or null.
   // Read values from module's .conf file
-  const entries = Object.entries(Config);
-  entries.forEach((entry) => {
-    const [p, v] = entry;
-    let val = '';
-    if (typeof v.modConf !== 'string') return;
-    if (mod !== 'LTR_DEFAULT') {
-      val = LibSword.getModuleInformation(mod, v.modConf);
+  Object.entries(C.Config).forEach((entry) => {
+    const [prop, key] = entry;
+    let r = null;
+    if (key.modConf) {
+      if (mod !== 'LTR_DEFAULT') {
+        r = LibSword.getModuleInformation(mod, key.modConf);
+        if (r === C.NOTFOUND) r = null;
+      }
     }
-
-    if (/^\s*$/.test(val)) val = C.NOTFOUND;
-
-    if (
-      val === C.NOTFOUND &&
-      v.CSS &&
-      typeof moduleConfigDefaultCSS[p] === 'string'
-    ) {
-      val = moduleConfigDefaultCSS[p];
-    }
-
-    // allow user to overwrite module defaults
-    try {
-      const userVal = Prefs.getCharPref(`user.${p}.${mod}`);
-      if (userVal) val = userVal;
-    } catch (er) {
-      /* ignore */
-    }
-
-    moduleConfig[p] = val;
+    moduleConfig[prop] = r;
   });
 
   // Assign associated locales
   if (mod !== 'LTR_DEFAULT') {
     const lom = getLocaleOfModule(mod);
-    moduleConfig.AssociatedLocale = lom || C.NOTFOUND;
+    moduleConfig.AssociatedLocale = lom || null;
   } else {
     moduleConfig.AssociatedLocale = C.DEFAULTLOCALE;
-    moduleConfig.AssociatedModules = C.NOTFOUND;
+    moduleConfig.AssociatedModules = null;
   }
 
   // Normalize direction value
   moduleConfig.direction =
-    moduleConfig.direction.search(/RtoL/i) !== -1 ? 'rtl' : 'ltr';
+    moduleConfig.direction && moduleConfig.direction.search(/RtoL/i) !== -1
+      ? 'rtl'
+      : 'ltr';
 
   // if fontFamily specifies a font URL, rather than a fontFamily, then create a
   // @font-face CSS entry and use it for this module.
@@ -314,16 +232,13 @@ function getModuleConfig(mod: string) {
   if (url) moduleConfig.fontFamily = url.name;
 
   // Insure there are single quotes around font names
-  moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/"/g, "'");
-  if (
-    moduleConfig.fontFamily !== C.NOTFOUND &&
-    !/'.*'/.test(moduleConfig.fontFamily)
-  )
-    moduleConfig.fontFamily = `'${moduleConfig.fontFamily}'`;
-
+  if (moduleConfig.fontFamily) {
+    moduleConfig.fontFamily = moduleConfig.fontFamily.replace(/"/g, "'");
+    if (!/'.*'/.test(moduleConfig.fontFamily))
+      moduleConfig.fontFamily = `'${moduleConfig.fontFamily}'`;
+  }
   // Save the CSS style rules for this module, which can be appended to CSS stylesheets
   moduleConfig.StyleRule = createStyleRule(`.cs-${mod}`, moduleConfig);
-
   return moduleConfig;
 }
 

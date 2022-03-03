@@ -74,5 +74,6 @@
     "isPinned": [],
     "noteBoxHeight": [],
     "maximizeNoteBox": []
-  }
+  },
+  "style": {}
 }

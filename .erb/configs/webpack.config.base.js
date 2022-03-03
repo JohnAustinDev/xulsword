@@ -7,7 +7,7 @@ import webpack from 'webpack';
 import webpackPaths from './webpack.paths.js';
 import { dependencies as externals } from '../../build/app/package.json';
 
-export const xulswordWindows = ['splash', 'xulsword', 'viewport/viewportWin', 'popup/popupWin'];
+export const xulswordWindows = ['splash', 'xulsword', 'viewport/viewportWin', 'popup/popupWin', 'chooseFont'];
 
 export default {
   externals: [...Object.keys(externals || {})],

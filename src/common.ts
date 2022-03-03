@@ -1,6 +1,8 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import i18next from 'i18next';
+import C from './constant';
+import type { ConfigType } from './type';
 import Cache from './cache';
 
 export function escapeRE(text: string) {
@@ -286,4 +288,16 @@ export function getCSS(
     });
   });
   return result;
+}
+
+export function createStyleRule(selector: string, config: ConfigType) {
+  let rule = `${selector} {`;
+  Object.entries(C.Config).forEach((entry) => {
+    const [key, val]: [string, { [i: string]: string | null }] = entry;
+    if (val.CSS && config[key]) {
+      rule += `${val.CSS}: ${config[key]}; `;
+    }
+  });
+  rule += '}';
+  return rule;
 }

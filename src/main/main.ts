@@ -13,6 +13,7 @@ import MenuBuilder from './menu';
 import { jsdump } from './mutil';
 import G from './mg';
 import LibSword from './modules/libsword';
+import contextMenu from './contextMenu';
 
 const i18nBackendMain = require('i18next-fs-backend');
 
@@ -89,6 +90,17 @@ ipcMain.on('window', (event: IpcMainEvent, type: string, ...args: any[]) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
   switch (type) {
+    case 'add-context-menu': {
+      win.once(
+        'closed',
+        ((dlist: () => void) => {
+          return () => {
+            if (typeof dlist === 'function') dlist();
+          };
+        })(contextMenu(win))
+      );
+      break;
+    }
     case 'close': {
       win.close();
       break;

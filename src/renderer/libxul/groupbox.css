@@ -1,0 +1,19 @@
+.groupbox {
+  margin: 5px;
+  padding: 5px;
+}
+
+.groupbox .groupbox-body {
+  padding-inline-start: 10px;
+}
+
+.groupbox .caption {
+  margin-bottom: 2px;
+  font-weight: bold;
+}
+
+.groupbox .caption-text {
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-inline-start: 1px;
+}

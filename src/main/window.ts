@@ -3,7 +3,6 @@
 import path from 'path';
 import fs from 'fs';
 import { BrowserWindow, ipcMain } from 'electron';
-import contextMenu from './contextMenu';
 import Dirs from './modules/dirs';
 import Prefs from './modules/prefs';
 
@@ -141,7 +140,6 @@ export function openWindow(
   Prefs.setComplexValue(`Windows.w${win.id}`, { type, options });
   windowInitI18n(win);
   if (type === 'viewportWin' || type === 'popupWin') win.removeMenu();
-  const disposeListeners = contextMenu(win);
   // All Windows are created with BrowserWindow.show = false.
   // This means that the window will be shown after either:
   // - (if params.show === true) Electron's 'ready-to-show' event.
@@ -172,12 +170,11 @@ export function openWindow(
   });
   win.once(
     'closed',
-    ((id: number, dlist: () => void) => {
+    ((id: number) => {
       return () => {
         Prefs.setComplexValue(`Windows.w${id}`, undefined);
-        if (typeof dlist === 'function') dlist();
       };
-    })(win.id, disposeListeners)
+    })(win.id)
   );
   return win.id;
 }

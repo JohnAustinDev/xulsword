@@ -26,7 +26,6 @@ import viewportParentH, {
   closeMenupopups,
   vpWinNotStatePref,
 } from './viewportParentH';
-import '../global-htm.css';
 
 import type { XulswordStatePref } from '../../type';
 import type Atext from './atext';

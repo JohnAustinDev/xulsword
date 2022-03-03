@@ -146,7 +146,14 @@ export const addClass = (classes: string | string[], props: any) => {
   const c = typeof classes === 'string' ? classes.split(' ') : classes;
   const cp = props.className ? props.className.split(' ') : [];
   const className = c.concat(cp).filter(Boolean).join(' ');
-  return { ...props, className };
+  const r: any = {};
+  Object.entries(props).forEach((entry) => {
+    if (entry[1] !== undefined) {
+      [, r[entry[0]]] = entry;
+    }
+  });
+  r.className = className;
+  return r;
 };
 
 // Convert certain XUL props to a corresponding CSS style attribute.
@@ -195,7 +202,7 @@ export const xulClass = (classes: string | string[], props: any) => {
 export const xulEvents = (props: any): XulProps => {
   const p: any = {};
   events.forEach((x) => {
-    p[x] = props[x];
+    if (props[x] !== undefined) p[x] = props[x];
   });
   return p;
 };

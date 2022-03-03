@@ -7,6 +7,9 @@ body,
   margin: 0;
   overflow: hidden;
 }
+#root {
+  background-image: url(../../assets/b2.png);
+}
 /* UI classes which are dynamically updated */
 .userFontSize {
   font-size: 12px;
@@ -21,4 +24,22 @@ body,
 
 .RTL {
   direction: rtl;
+}
+
+/* Groupbox global */
+html .groupbox {
+  border: 1px solid rgb(200, 200, 200);
+  border-radius: 4px;
+  margin-top: 1em;
+}
+.groupbox .caption-text {
+  background: whitesmoke;
+  padding: 0 2px;
+}
+.groupbox .groupbox-title {
+  display: block;
+  white-space: nowrap;
+  margin-top: -0.9em;
+  margin-bottom: 4px;
+  font-weight: bold;
 }

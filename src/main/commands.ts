@@ -4,6 +4,7 @@ import C from '../constant';
 import { JSON_stringify } from '../common';
 import { verseKey, getTab, setGlobalStateFromPref, getTabs } from './minit';
 import Prefs from './modules/prefs';
+import { openWindow } from './window';
 
 import type {
   CommandsPublic,
@@ -87,9 +88,20 @@ const Commands: typeof CommandsPublic = {
   },
 
   openFontsColors(module) {
-    console.log(
-      `Action not implemented: openFontsColors(${JSON_stringify(arguments)})`
-    );
+    const options = {
+      title: 'chooseFont',
+      webPreferences: {
+        additionalArguments: [
+          'chooseFontWin',
+          JSON_stringify({
+            chooseFontState: {
+              module,
+            },
+          }),
+        ],
+      },
+    };
+    openWindow('chooseFont', options);
   },
 
   openBookmarksManager() {

@@ -151,6 +151,7 @@ export default function setViewportTabs(
           Prefs.setComplexValue('xulsword.location', {
             book,
             chapter: 1,
+            verse: 1,
             v11n: tab[nextmod].v11n || 'KJV',
           });
         }
